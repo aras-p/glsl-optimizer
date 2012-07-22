@@ -117,6 +117,8 @@ struct st_context
       GLuint num_vertex_textures;
 
       GLuint poly_stipple[32];  /**< In OpenGL's bottom-to-top order */
+
+      GLuint fb_orientation;
    } state;
 
    char vendor[100];

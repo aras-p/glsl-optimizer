@@ -33,6 +33,7 @@
  
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_cb_bitmap.h"
 #include "st_cb_fbo.h"
 #include "st_texture.h"
 #include "pipe/p_context.h"
@@ -103,6 +104,9 @@ update_framebuffer_state( struct st_context *st )
    struct st_renderbuffer *strb;
    GLuint i;
 
+   st_flush_bitmap_cache(st);
+
+   st->state.fb_orientation = st_fb_orientation(fb);
    framebuffer->width = fb->Width;
    framebuffer->height = fb->Height;
 

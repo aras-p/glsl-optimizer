@@ -335,9 +335,8 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
 			 struct pipe_resource **vbuf,
 			 unsigned *vbuf_offset)
 {
-   const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
-   const GLfloat fb_width = (GLfloat)fb->Width;
-   const GLfloat fb_height = (GLfloat)fb->Height;
+   const GLfloat fb_width = (GLfloat)st->state.framebuffer.width;
+   const GLfloat fb_height = (GLfloat)st->state.framebuffer.height;
    const GLfloat x0 = (GLfloat)x;
    const GLfloat x1 = (GLfloat)(x + width);
    const GLfloat y0 = (GLfloat)y;
@@ -502,10 +501,9 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
 
    /* viewport state: viewport matching window dims */
    {
-      const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
-      const GLboolean invert = (st_fb_orientation(fb) == Y_0_TOP);
-      const GLfloat width = (GLfloat)fb->Width;
-      const GLfloat height = (GLfloat)fb->Height;
+      const GLboolean invert = st->state.fb_orientation == Y_0_TOP;
+      const GLfloat width = (GLfloat)st->state.framebuffer.width;
+      const GLfloat height = (GLfloat)st->state.framebuffer.height;
       struct pipe_viewport_state vp;
       vp.scale[0] =  0.5f * width;
       vp.scale[1] = height * (invert ? -0.5f : 0.5f);
@@ -636,43 +634,41 @@ st_flush_bitmap_cache(struct st_context *st)
    if (!st->bitmap.cache->empty) {
       struct bitmap_cache *cache = st->bitmap.cache;
 
-      if (st->ctx->DrawBuffer) {
-         struct pipe_context *pipe = st->pipe;
-         struct pipe_sampler_view *sv;
+      struct pipe_context *pipe = st->pipe;
+      struct pipe_sampler_view *sv;
 
-         assert(cache->xmin <= cache->xmax);
- 
-/*         printf("flush size %d x %d  at %d, %d\n",
-                cache->xmax - cache->xmin,
-                cache->ymax - cache->ymin,
-                cache->xpos, cache->ypos);
+      assert(cache->xmin <= cache->xmax);
+
+/*    printf("flush size %d x %d  at %d, %d\n",
+             cache->xmax - cache->xmin,
+             cache->ymax - cache->ymin,
+             cache->xpos, cache->ypos);
 */
 
-         /* The texture transfer has been mapped until now.
+      /* The texture transfer has been mapped until now.
           * So unmap and release the texture transfer before drawing.
           */
-         if (cache->trans) {
-            if (0)
-               print_cache(cache);
-            pipe_transfer_unmap(pipe, cache->trans);
-            cache->buffer = NULL;
+      if (cache->trans) {
+         if (0)
+            print_cache(cache);
+         pipe_transfer_unmap(pipe, cache->trans);
+         cache->buffer = NULL;
 
-            pipe->transfer_destroy(pipe, cache->trans);
-            cache->trans = NULL;
-         }
+         pipe->transfer_destroy(pipe, cache->trans);
+         cache->trans = NULL;
+      }
 
-         sv = st_create_texture_sampler_view(st->pipe, cache->texture);
-         if (sv) {
-            draw_bitmap_quad(st->ctx,
-                             cache->xpos,
-                             cache->ypos,
-                             cache->zpos,
-                             BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
-                             sv,
-                             cache->color);
+      sv = st_create_texture_sampler_view(st->pipe, cache->texture);
+      if (sv) {
+         draw_bitmap_quad(st->ctx,
+                          cache->xpos,
+                          cache->ypos,
+                          cache->zpos,
+                          BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
+                          sv,
+                          cache->color);
 
-            pipe_sampler_view_reference(&sv, NULL);
-         }
+         pipe_sampler_view_reference(&sv, NULL);
       }
 
       /* release/free the texture */
