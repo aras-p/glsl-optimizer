@@ -91,6 +91,10 @@ _mesa_base_format_to_integer_format(GLenum format);
 extern GLboolean
 _mesa_base_format_has_channel(GLenum base_format, GLenum pname);
 
+extern GLenum
+_mesa_error_check_format_and_type(const struct gl_context *ctx,
+                                  GLenum format, GLenum type);
+
 
 #ifdef __cplusplus
 }

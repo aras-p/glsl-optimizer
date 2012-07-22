@@ -38,10 +38,6 @@ _mesa_swap2( GLushort *p, GLuint n );
 extern void
 _mesa_swap4( GLuint *p, GLuint n );
 
-extern GLenum
-_mesa_error_check_format_and_type(const struct gl_context *ctx,
-                                  GLenum format, GLenum type);
-
 extern GLintptr
 _mesa_image_offset( GLuint dimensions,
                     const struct gl_pixelstore_attrib *packing,

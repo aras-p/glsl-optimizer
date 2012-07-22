@@ -960,3 +960,370 @@ _mesa_base_format_has_channel(GLenum base_format, GLenum pname)
 
    return GL_FALSE;
 }
+
+
+/**
+ * Do error checking of format/type combinations for glReadPixels,
+ * glDrawPixels and glTex[Sub]Image.  Note that depending on the format
+ * and type values, we may either generate GL_INVALID_OPERATION or
+ * GL_INVALID_ENUM.
+ *
+ * \param format pixel format.
+ * \param type pixel type.
+ *
+ * \return GL_INVALID_ENUM, GL_INVALID_OPERATION or GL_NO_ERROR
+ */
+GLenum
+_mesa_error_check_format_and_type(const struct gl_context *ctx,
+                                  GLenum format, GLenum type)
+{
+   /* special type-based checks (see glReadPixels, glDrawPixels error lists) */
+   switch (type) {
+   case GL_BITMAP:
+      if (format != GL_COLOR_INDEX && format != GL_STENCIL_INDEX) {
+         return GL_INVALID_ENUM;
+      }
+      break;
+
+   case GL_UNSIGNED_BYTE_3_3_2:
+   case GL_UNSIGNED_BYTE_2_3_3_REV:
+   case GL_UNSIGNED_SHORT_5_6_5:
+   case GL_UNSIGNED_SHORT_5_6_5_REV:
+      if (format == GL_RGB) {
+         break; /* OK */
+      }
+      if (format == GL_RGB_INTEGER_EXT &&
+          ctx->Extensions.ARB_texture_rgb10_a2ui) {
+         break; /* OK */
+      }
+      return GL_INVALID_OPERATION;
+
+   case GL_UNSIGNED_SHORT_4_4_4_4:
+   case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+   case GL_UNSIGNED_SHORT_5_5_5_1:
+   case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+   case GL_UNSIGNED_INT_8_8_8_8:
+   case GL_UNSIGNED_INT_8_8_8_8_REV:
+   case GL_UNSIGNED_INT_10_10_10_2:
+   case GL_UNSIGNED_INT_2_10_10_10_REV:
+      if (format == GL_RGBA ||
+          format == GL_BGRA ||
+          format == GL_ABGR_EXT) {
+         break; /* OK */
+      }
+      if ((format == GL_RGBA_INTEGER_EXT || format == GL_BGRA_INTEGER_EXT) &&
+          ctx->Extensions.ARB_texture_rgb10_a2ui) {
+         break; /* OK */
+      }
+      return GL_INVALID_OPERATION;
+
+   case GL_UNSIGNED_INT_24_8:
+      if (!ctx->Extensions.EXT_packed_depth_stencil) {
+         return GL_INVALID_ENUM;
+      }
+      if (format != GL_DEPTH_STENCIL) {
+         return GL_INVALID_OPERATION;
+      }
+      return GL_NO_ERROR;
+
+   case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+      if (!ctx->Extensions.ARB_depth_buffer_float) {
+         return GL_INVALID_ENUM;
+      }
+      if (format != GL_DEPTH_STENCIL) {
+         return GL_INVALID_OPERATION;
+      }
+      return GL_NO_ERROR;
+
+   case GL_UNSIGNED_INT_10F_11F_11F_REV:
+      if (!ctx->Extensions.EXT_packed_float) {
+         return GL_INVALID_ENUM;
+      }
+      if (format != GL_RGB) {
+         return GL_INVALID_OPERATION;
+      }
+      return GL_NO_ERROR;
+
+   default:
+      ; /* fall-through */
+   }
+
+   /* now, for each format, check the type for compatibility */
+   switch (format) {
+      case GL_COLOR_INDEX:
+      case GL_STENCIL_INDEX:
+         switch (type) {
+            case GL_BITMAP:
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            case GL_FLOAT:
+               return GL_NO_ERROR;
+            case GL_HALF_FLOAT:
+               return ctx->Extensions.ARB_half_float_pixel
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      case GL_RED:
+      case GL_GREEN:
+      case GL_BLUE:
+      case GL_ALPHA:
+#if 0 /* not legal!  see table 3.6 of the 1.5 spec */
+      case GL_INTENSITY:
+#endif
+      case GL_LUMINANCE:
+      case GL_LUMINANCE_ALPHA:
+      case GL_DEPTH_COMPONENT:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            case GL_FLOAT:
+               return GL_NO_ERROR;
+            case GL_HALF_FLOAT:
+               return ctx->Extensions.ARB_half_float_pixel
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      case GL_RG:
+	 if (!ctx->Extensions.ARB_texture_rg)
+	    return GL_INVALID_ENUM;
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            case GL_FLOAT:
+               return GL_NO_ERROR;
+            case GL_HALF_FLOAT:
+               return ctx->Extensions.ARB_half_float_pixel
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      case GL_RGB:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            case GL_FLOAT:
+            case GL_UNSIGNED_BYTE_3_3_2:
+            case GL_UNSIGNED_BYTE_2_3_3_REV:
+            case GL_UNSIGNED_SHORT_5_6_5:
+            case GL_UNSIGNED_SHORT_5_6_5_REV:
+               return GL_NO_ERROR;
+            case GL_HALF_FLOAT:
+               return ctx->Extensions.ARB_half_float_pixel
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            case GL_UNSIGNED_INT_5_9_9_9_REV:
+               return ctx->Extensions.EXT_texture_shared_exponent
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            case GL_UNSIGNED_INT_10F_11F_11F_REV:
+               return ctx->Extensions.EXT_packed_float
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      case GL_BGR:
+         switch (type) {
+            /* NOTE: no packed types are supported with BGR.  That's
+             * intentional, according to the GL spec.
+             */
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            case GL_FLOAT:
+               return GL_NO_ERROR;
+            case GL_HALF_FLOAT:
+               return ctx->Extensions.ARB_half_float_pixel
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      case GL_RGBA:
+      case GL_BGRA:
+      case GL_ABGR_EXT:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            case GL_FLOAT:
+            case GL_UNSIGNED_SHORT_4_4_4_4:
+            case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+            case GL_UNSIGNED_SHORT_5_5_5_1:
+            case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+            case GL_UNSIGNED_INT_8_8_8_8:
+            case GL_UNSIGNED_INT_8_8_8_8_REV:
+            case GL_UNSIGNED_INT_10_10_10_2:
+            case GL_UNSIGNED_INT_2_10_10_10_REV:
+               return GL_NO_ERROR;
+            case GL_HALF_FLOAT:
+               return ctx->Extensions.ARB_half_float_pixel
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      case GL_YCBCR_MESA:
+         if (!ctx->Extensions.MESA_ycbcr_texture)
+            return GL_INVALID_ENUM;
+         if (type == GL_UNSIGNED_SHORT_8_8_MESA ||
+             type == GL_UNSIGNED_SHORT_8_8_REV_MESA)
+            return GL_NO_ERROR;
+         else
+            return GL_INVALID_OPERATION;
+
+      case GL_DEPTH_STENCIL_EXT:
+         if (ctx->Extensions.EXT_packed_depth_stencil &&
+             type == GL_UNSIGNED_INT_24_8)
+            return GL_NO_ERROR;
+         else if (ctx->Extensions.ARB_depth_buffer_float &&
+             type == GL_FLOAT_32_UNSIGNED_INT_24_8_REV)
+            return GL_NO_ERROR;
+         else
+            return GL_INVALID_ENUM;
+
+      case GL_DUDV_ATI:
+      case GL_DU8DV8_ATI:
+         if (!ctx->Extensions.ATI_envmap_bumpmap)
+            return GL_INVALID_ENUM;
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            case GL_FLOAT:
+               return GL_NO_ERROR;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      /* integer-valued formats */
+      case GL_RED_INTEGER_EXT:
+      case GL_GREEN_INTEGER_EXT:
+      case GL_BLUE_INTEGER_EXT:
+      case GL_ALPHA_INTEGER_EXT:
+      case GL_RG_INTEGER:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+               return (ctx->VersionMajor >= 3 ||
+                       ctx->Extensions.EXT_texture_integer)
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      case GL_RGB_INTEGER_EXT:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+               return (ctx->VersionMajor >= 3 ||
+                       ctx->Extensions.EXT_texture_integer)
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            case GL_UNSIGNED_BYTE_3_3_2:
+            case GL_UNSIGNED_BYTE_2_3_3_REV:
+            case GL_UNSIGNED_SHORT_5_6_5:
+            case GL_UNSIGNED_SHORT_5_6_5_REV:
+               return ctx->Extensions.ARB_texture_rgb10_a2ui
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      case GL_BGR_INTEGER_EXT:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+            /* NOTE: no packed formats w/ BGR format */
+               return (ctx->VersionMajor >= 3 ||
+                       ctx->Extensions.EXT_texture_integer)
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      case GL_RGBA_INTEGER_EXT:
+      case GL_BGRA_INTEGER_EXT:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+               return (ctx->VersionMajor >= 3 ||
+                       ctx->Extensions.EXT_texture_integer)
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            case GL_UNSIGNED_SHORT_4_4_4_4:
+            case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+            case GL_UNSIGNED_SHORT_5_5_5_1:
+            case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+            case GL_UNSIGNED_INT_8_8_8_8:
+            case GL_UNSIGNED_INT_8_8_8_8_REV:
+            case GL_UNSIGNED_INT_10_10_10_2:
+            case GL_UNSIGNED_INT_2_10_10_10_REV:
+               return ctx->Extensions.ARB_texture_rgb10_a2ui
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      case GL_LUMINANCE_INTEGER_EXT:
+      case GL_LUMINANCE_ALPHA_INTEGER_EXT:
+         switch (type) {
+            case GL_BYTE:
+            case GL_UNSIGNED_BYTE:
+            case GL_SHORT:
+            case GL_UNSIGNED_SHORT:
+            case GL_INT:
+            case GL_UNSIGNED_INT:
+               return ctx->Extensions.EXT_texture_integer
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+            default:
+               return GL_INVALID_ENUM;
+         }
+
+      default:
+         return GL_INVALID_ENUM;
+   }
+   return GL_NO_ERROR;
+}
