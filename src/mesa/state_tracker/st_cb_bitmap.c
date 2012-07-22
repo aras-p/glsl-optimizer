@@ -684,16 +684,6 @@ st_flush_bitmap_cache(struct st_context *st)
 
 
 /**
- * Flush bitmap cache.
- */
-void
-st_flush_bitmap( struct st_context *st )
-{
-   st_flush_bitmap_cache(st);
-}
-
-
-/**
  * Try to accumulate this glBitmap call in the bitmap cache.
  * \return  GL_TRUE for success, GL_FALSE if bitmap is too large, etc.
  */

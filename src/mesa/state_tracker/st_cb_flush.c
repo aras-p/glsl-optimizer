@@ -81,7 +81,7 @@ void st_flush( struct st_context *st,
 {
    FLUSH_CURRENT(st->ctx, 0);
 
-   st_flush_bitmap(st);
+   st_flush_bitmap_cache(st);
 
    st->pipe->flush( st->pipe, fence );
 }

@@ -58,12 +58,6 @@ st_make_bitmap_fragment_program(struct st_context *st,
 extern void
 st_flush_bitmap_cache(struct st_context *st);
 
-/* Flush bitmap cache and release vertex buffer.  Needed at end of
- * frame to avoid synchronous rendering.
- */
-extern void
-st_flush_bitmap(struct st_context *st);
-
 #else
 
 static INLINE void
