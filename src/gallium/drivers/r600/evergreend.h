@@ -749,6 +749,7 @@
 #define     V_02880C_EXPORT_DB_FULL                    0x00
 #define     V_02880C_EXPORT_DB_FOUR16                  0x01
 #define     V_02880C_EXPORT_DB_TWO                     0x02
+#define   S_02880C_ALPHA_TO_MASK_DISABLE(x)            (((x) & 0x1) << 12)
 
 #define R_028A00_PA_SU_POINT_SIZE                    0x028A00
 #define   S_028A00_HEIGHT(x)                           (((x) & 0xFFFF) << 0)
@@ -1896,6 +1897,12 @@
 #define R_028B50_VGT_STRMOUT_BASE_OFFSET_HI_3	     0x028B50
 #define R_028B54_VGT_SHADER_STAGES_EN                0x00028B54
 #define R_028B70_DB_ALPHA_TO_MASK                    0x00028B70
+#define   S_028B70_ALPHA_TO_MASK_ENABLE(x)		(((x) & 0x1) << 0)
+#define   S_028B70_ALPHA_TO_MASK_OFFSET0(x)		(((x) & 0x3) << 8)
+#define   S_028B70_ALPHA_TO_MASK_OFFSET1(x)		(((x) & 0x3) << 10)
+#define   S_028B70_ALPHA_TO_MASK_OFFSET2(x)		(((x) & 0x3) << 12)
+#define   S_028B70_ALPHA_TO_MASK_OFFSET3(x)		(((x) & 0x3) << 14)
+#define   S_028B70_OFFSET_ROUND(x)			(((x) & 0x1) << 16)
 #define R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL       0x00028B78
 #define   S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(x)      (((x) & 0xFF) << 0)
 #define   G_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(x)      (((x) >> 0) & 0xFF)

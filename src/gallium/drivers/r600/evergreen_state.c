@@ -743,6 +743,13 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 		r600_pipe_state_add_reg(rstate, R_028780_CB_BLEND0_CONTROL + i * 4, blend_cntl[i]);
 	}
 
+	r600_pipe_state_add_reg(rstate, R_028B70_DB_ALPHA_TO_MASK,
+				S_028B70_ALPHA_TO_MASK_ENABLE(state->alpha_to_coverage) |
+				S_028B70_ALPHA_TO_MASK_OFFSET0(2) |
+				S_028B70_ALPHA_TO_MASK_OFFSET1(2) |
+				S_028B70_ALPHA_TO_MASK_OFFSET2(2) |
+				S_028B70_ALPHA_TO_MASK_OFFSET3(2));
+
 	blend->alpha_to_one = state->alpha_to_one;
 	return rstate;
 }
@@ -2011,7 +2018,6 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_context_reg(cb, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
 	r600_store_context_reg(cb, R_028818_PA_CL_VTE_CNTL, 0x0000043F);
 	r600_store_context_reg(cb, R_028820_PA_CL_NANINF_CNTL, 0);
-	r600_store_context_reg(cb, R_028B70_DB_ALPHA_TO_MASK, 0x0000AA00);
 
 	r600_store_context_reg_seq(cb, CM_R_028BDC_PA_SC_LINE_CNTL, 2);
 	r600_store_value(cb, 0x00000400); /* CM_R_028BDC_PA_SC_LINE_CNTL */
@@ -2496,8 +2502,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028AC4_DB_SRESULTS_COMPARE_STATE1 */
 	r600_store_value(cb, 0); /* R_028AC8_DB_PRELOAD_CONTROL */
 
-	r600_store_context_reg(cb, R_028B70_DB_ALPHA_TO_MASK, 0x0000AA00);
-
 	r600_store_context_reg_seq(cb, R_028C00_PA_SC_LINE_CNTL, 2);
 	r600_store_value(cb, 0x00000400); /* R_028C00_PA_SC_LINE_CNTL */
 	r600_store_value(cb, 0); /* R_028C04_PA_SC_AA_CONFIG */
@@ -2812,7 +2816,8 @@ void evergreen_update_dual_export_state(struct r600_context * rctx)
 
 	unsigned db_shader_control = rctx->ps_shader->current->db_shader_control |
 			S_02880C_DUAL_EXPORT_ENABLE(dual_export) |
-			S_02880C_DB_SOURCE_FORMAT(db_source_format);
+			S_02880C_DB_SOURCE_FORMAT(db_source_format) |
+			S_02880C_ALPHA_TO_MASK_DISABLE(rctx->cb0_is_integer);
 
 	if (db_shader_control != rctx->db_shader_control) {
 		struct r600_pipe_state rstate;

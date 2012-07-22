@@ -754,6 +754,13 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 			r600_pipe_state_add_reg(rstate, R_028804_CB_BLEND_CONTROL, bc);
 	}
 
+	r600_pipe_state_add_reg(rstate, R_028D44_DB_ALPHA_TO_MASK,
+				S_028D44_ALPHA_TO_MASK_ENABLE(state->alpha_to_coverage) |
+				S_028D44_ALPHA_TO_MASK_OFFSET0(2) |
+				S_028D44_ALPHA_TO_MASK_OFFSET1(2) |
+				S_028D44_ALPHA_TO_MASK_OFFSET2(2) |
+				S_028D44_ALPHA_TO_MASK_OFFSET3(2));
+
 	blend->alpha_to_one = state->alpha_to_one;
 	return rstate;
 }
@@ -2119,8 +2126,6 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_context_reg_seq(cb, R_028D2C_DB_SRESULTS_COMPARE_STATE1, 2);
 	r600_store_value(cb, 0); /* R_028D2C_DB_SRESULTS_COMPARE_STATE1 */
 	r600_store_value(cb, 0); /* R_028D30_DB_PRELOAD_CONTROL */
-
-	r600_store_context_reg(cb, R_028D44_DB_ALPHA_TO_MASK, 0xAA00);
 
 	r600_store_context_reg(cb, R_028820_PA_CL_NANINF_CNTL, 0);
 	r600_store_context_reg(cb, R_028A48_PA_SC_MPASS_PS_CNTL, 0);

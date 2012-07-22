@@ -2253,6 +2253,12 @@
 #define R_028D2C_DB_SRESULTS_COMPARE_STATE1          0x028D2C
 #define R_028D30_DB_PRELOAD_CONTROL                  0x028D30
 #define R_028D44_DB_ALPHA_TO_MASK                    0x028D44
+#define   S_028D44_ALPHA_TO_MASK_ENABLE(x)		(((x) & 0x1) << 0)
+#define   S_028D44_ALPHA_TO_MASK_OFFSET0(x)		(((x) & 0x3) << 8)
+#define   S_028D44_ALPHA_TO_MASK_OFFSET1(x)		(((x) & 0x3) << 10)
+#define   S_028D44_ALPHA_TO_MASK_OFFSET2(x)		(((x) & 0x3) << 12)
+#define   S_028D44_ALPHA_TO_MASK_OFFSET3(x)		(((x) & 0x3) << 14)
+#define   S_028D44_OFFSET_ROUND(x)			(((x) & 0x1) << 16)
 #define R_028868_SQ_PGM_RESOURCES_VS                 0x028868
 #define R_0286CC_SPI_PS_IN_CONTROL_0                 0x0286CC
 #define R_0286D0_SPI_PS_IN_CONTROL_1                 0x0286D0
