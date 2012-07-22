@@ -46,6 +46,30 @@ _mesa_is_enum_format_integer(GLenum format);
 extern GLboolean
 _mesa_is_enum_format_or_type_integer(GLenum format, GLenum type);
 
+extern GLboolean
+_mesa_is_color_format(GLenum format);
+
+extern GLboolean
+_mesa_is_depth_format(GLenum format);
+
+extern GLboolean
+_mesa_is_stencil_format(GLenum format);
+
+extern GLboolean
+_mesa_is_ycbcr_format(GLenum format);
+
+extern GLboolean
+_mesa_is_depthstencil_format(GLenum format);
+
+extern GLboolean
+_mesa_is_depth_or_stencil_format(GLenum format);
+
+extern GLboolean
+_mesa_is_dudv_format(GLenum format);
+
+extern GLboolean
+_mesa_is_compressed_format(struct gl_context *ctx, GLenum format);
+
 extern GLenum
 _mesa_base_format_to_integer_format(GLenum format);
 

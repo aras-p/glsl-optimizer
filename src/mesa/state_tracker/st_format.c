@@ -34,6 +34,7 @@
 
 #include "main/imports.h"
 #include "main/context.h"
+#include "main/glformats.h"
 #include "main/texstore.h"
 #include "main/image.h"
 #include "main/macros.h"

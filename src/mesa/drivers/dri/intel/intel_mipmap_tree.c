@@ -37,7 +37,7 @@
 
 #include "main/enums.h"
 #include "main/formats.h"
-#include "main/image.h"
+#include "main/glformats.h"
 #include "main/texcompress_etc.h"
 #include "main/teximage.h"
 

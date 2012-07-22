@@ -35,6 +35,7 @@
 #include "context.h"
 #include "formats.h"
 #include "format_unpack.h"
+#include "glformats.h"
 #include "image.h"
 #include "mfeatures.h"
 #include "mtypes.h"

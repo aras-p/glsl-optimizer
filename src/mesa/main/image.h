@@ -58,30 +58,6 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
                                   GLenum format, GLenum type);
 
 extern GLboolean
-_mesa_is_color_format(GLenum format);
-
-extern GLboolean
-_mesa_is_depth_format(GLenum format);
-
-extern GLboolean
-_mesa_is_stencil_format(GLenum format);
-
-extern GLboolean
-_mesa_is_ycbcr_format(GLenum format);
-
-extern GLboolean
-_mesa_is_depthstencil_format(GLenum format);
-
-extern GLboolean
-_mesa_is_depth_or_stencil_format(GLenum format);
-
-extern GLboolean
-_mesa_is_dudv_format(GLenum format);
-
-extern GLboolean
-_mesa_is_compressed_format(struct gl_context *ctx, GLenum format);
-
-extern GLboolean
 _mesa_base_format_has_channel(GLenum base_format, GLenum pname);
 
 extern GLintptr

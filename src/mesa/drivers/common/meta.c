@@ -46,6 +46,7 @@
 #include "main/fbobject.h"
 #include "main/feedback.h"
 #include "main/formats.h"
+#include "main/glformats.h"
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/matrix.h"
