@@ -1142,10 +1142,6 @@ static void evergreen_set_polygon_stipple(struct pipe_context *ctx,
 {
 }
 
-static void evergreen_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
-{
-}
-
 static void evergreen_get_scissor_rect(struct r600_context *rctx,
 				       unsigned tl_x, unsigned tl_y, unsigned br_x, unsigned br_y,
 				       uint32_t *tl, uint32_t *br)
@@ -1834,6 +1830,26 @@ static void evergreen_emit_ps_sampler(struct r600_context *rctx, struct r600_ato
 	evergreen_emit_sampler(rctx, &rctx->ps_samplers, 0, R_00A400_TD_PS_SAMPLER0_BORDER_INDEX);
 }
 
+static void evergreen_emit_sample_mask(struct r600_context *rctx, struct r600_atom *a)
+{
+	struct r600_sample_mask *s = (struct r600_sample_mask*)a;
+	uint8_t mask = s->sample_mask;
+
+	r600_write_context_reg(rctx->cs, R_028C3C_PA_SC_AA_MASK,
+			       mask | (mask << 8) | (mask << 16) | (mask << 24));
+}
+
+static void cayman_emit_sample_mask(struct r600_context *rctx, struct r600_atom *a)
+{
+	struct r600_sample_mask *s = (struct r600_sample_mask*)a;
+	struct radeon_winsys_cs *cs = rctx->cs;
+	uint16_t mask = s->sample_mask;
+
+	r600_write_context_reg_seq(cs, CM_R_028C38_PA_SC_AA_MASK_X0Y0_X1Y0, 2);
+	r600_write_value(cs, mask | (mask << 16)); /* X0Y0_X1Y0 */
+	r600_write_value(cs, mask | (mask << 16)); /* X0Y1_X1Y1 */
+}
+
 void evergreen_init_state_functions(struct r600_context *rctx)
 {
 	r600_init_atom(&rctx->cb_misc_state.atom, evergreen_emit_cb_misc_state, 0, 0);
@@ -1849,6 +1865,13 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(&rctx->cs_shader_state.atom, evergreen_emit_cs_shader, 0, 0);
 	r600_init_atom(&rctx->vs_samplers.atom_sampler, evergreen_emit_vs_sampler, 0, 0);
 	r600_init_atom(&rctx->ps_samplers.atom_sampler, evergreen_emit_ps_sampler, 0, 0);
+
+	if (rctx->chip_class == EVERGREEN)
+		r600_init_atom(&rctx->sample_mask.atom, evergreen_emit_sample_mask, 3, 0);
+	else
+		r600_init_atom(&rctx->sample_mask.atom, cayman_emit_sample_mask, 4, 0);
+	rctx->sample_mask.sample_mask = ~0;
+	r600_atom_dirty(rctx, &rctx->sample_mask.atom);
 
 	rctx->context.create_blend_state = evergreen_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
@@ -1879,7 +1902,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_fragment_sampler_views = evergreen_set_ps_sampler_views;
 	rctx->context.set_framebuffer_state = evergreen_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = evergreen_set_polygon_stipple;
-	rctx->context.set_sample_mask = evergreen_set_sample_mask;
+	rctx->context.set_sample_mask = r600_set_sample_mask;
 	rctx->context.set_scissor_state = evergreen_set_scissor_state;
 	rctx->context.set_stencil_ref = r600_set_pipe_stencil_ref;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
@@ -1992,10 +2015,6 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028404_VGT_MIN_VTX_INDX */
 
 	r600_store_ctl_const(cb, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0);
-
-	r600_store_context_reg_seq(cb, CM_R_028C38_PA_SC_AA_MASK_X0Y0_X1Y0, 2);
-	r600_store_value(cb, ~0); /* CM_R_028C38_PA_SC_AA_MASK_X0Y0_X1Y0 */
-	r600_store_value(cb, ~0); /* CM_R_028C3C_PA_SC_AA_MASK_X0Y1_X1Y1 */
 
 	r600_store_context_reg_seq(cb, R_028028_DB_STENCIL_CLEAR, 2);
 	r600_store_value(cb, 0); /* R_028028_DB_STENCIL_CLEAR */
@@ -2512,8 +2531,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0x3F800000); /* R_028C14_PA_CL_GB_HORZ_CLIP_ADJ */
 	r600_store_value(cb, 0x3F800000); /* R_028C18_PA_CL_GB_HORZ_DISC_ADJ */
 	r600_store_value(cb, 0); /* R_028C1C_PA_SC_AA_SAMPLE_LOCS_0 */
-
-	r600_store_context_reg(cb, R_028C3C_PA_SC_AA_MASK, ~0);
 
 	r600_store_context_reg_seq(cb, R_028240_PA_SC_GENERIC_SCISSOR_TL, 2);
 	r600_store_value(cb, 0); /* R_028240_PA_SC_GENERIC_SCISSOR_TL */

@@ -955,6 +955,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	if (ctx->chip_class <= R700) {
 		r600_atom_dirty(ctx, &ctx->seamless_cube_map.atom);
 	}
+	r600_atom_dirty(ctx, &ctx->sample_mask.atom);
 
 	ctx->vertex_buffer_state.dirty_mask = ctx->vertex_buffer_state.enabled_mask;
 	r600_vertex_buffers_dirty(ctx);

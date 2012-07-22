@@ -976,6 +976,17 @@ void r600_set_so_targets(struct pipe_context *ctx,
 	rctx->streamout_append_bitmask = append_bitmask;
 }
 
+void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
+{
+	struct r600_context *rctx = (struct r600_context*)pipe;
+
+	if (rctx->sample_mask.sample_mask == (uint16_t)sample_mask)
+		return;
+
+	rctx->sample_mask.sample_mask = sample_mask;
+	r600_atom_dirty(rctx, &rctx->sample_mask.atom);
+}
+
 static void r600_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;

@@ -69,6 +69,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 		if (rctx->states[R600_PIPE_STATE_STENCIL_REF]) {
 			util_blitter_save_stencil_ref(rctx->blitter, &rctx->stencil_ref);
 		}
+                util_blitter_save_sample_mask(rctx->blitter, rctx->sample_mask.sample_mask);
 	}
 
 	if (op & R600_SAVE_FRAMEBUFFER)

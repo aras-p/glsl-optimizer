@@ -1136,10 +1136,6 @@ static void r600_set_polygon_stipple(struct pipe_context *ctx,
 {
 }
 
-static void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
-{
-}
-
 void r600_set_scissor_state(struct r600_context *rctx,
 			    const struct pipe_scissor_state *state)
 {
@@ -1754,6 +1750,15 @@ static void r600_emit_seamless_cube_map(struct r600_context *rctx, struct r600_a
 	r600_write_config_reg(cs, R_009508_TA_CNTL_AUX, tmp);
 }
 
+static void r600_emit_sample_mask(struct r600_context *rctx, struct r600_atom *a)
+{
+	struct r600_sample_mask *s = (struct r600_sample_mask*)a;
+	uint8_t mask = s->sample_mask;
+
+	r600_write_context_reg(rctx->cs, R_028C48_PA_SC_AA_MASK,
+			       mask | (mask << 8) | (mask << 16) | (mask << 24));
+}
+
 void r600_init_state_functions(struct r600_context *rctx)
 {
 	r600_init_atom(&rctx->seamless_cube_map.atom, r600_emit_seamless_cube_map, 3, 0);
@@ -1772,6 +1777,10 @@ void r600_init_state_functions(struct r600_context *rctx)
 	 */
 	r600_init_atom(&rctx->vs_samplers.atom_sampler, r600_emit_vs_sampler, 0, EMIT_EARLY);
 	r600_init_atom(&rctx->ps_samplers.atom_sampler, r600_emit_ps_sampler, 0, EMIT_EARLY);
+
+	r600_init_atom(&rctx->sample_mask.atom, r600_emit_sample_mask, 3, 0);
+	rctx->sample_mask.sample_mask = ~0;
+	r600_atom_dirty(rctx, &rctx->sample_mask.atom);
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;
@@ -2165,8 +2174,6 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0);          /* R_028C34_CB_CLRCMP_SRC */
 	r600_store_value(cb, 0xFF);       /* R_028C38_CB_CLRCMP_DST */
 	r600_store_value(cb, 0xFFFFFFFF); /* R_028C3C_CB_CLRCMP_MSK */
-
-	r600_store_context_reg(cb, R_028C48_PA_SC_AA_MASK, 0xFFFFFFFF);
 
 	r600_store_context_reg_seq(cb, R_028030_PA_SC_SCREEN_SCISSOR_TL, 2);
 	r600_store_value(cb, 0); /* R_028030_PA_SC_SCREEN_SCISSOR_TL */

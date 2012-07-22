@@ -106,6 +106,11 @@ struct r600_cs_shader_state {
 	struct r600_pipe_compute *shader;
 };
 
+struct r600_sample_mask {
+	struct r600_atom atom;
+	uint16_t sample_mask; /* there are only 8 bits on EG, 16 bits on Cayman */
+};
+
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
@@ -379,6 +384,7 @@ struct r600_context {
 	struct r600_textures_info	ps_samplers;
 	struct r600_seamless_cube_map	seamless_cube_map;
 	struct r600_cs_shader_state	cs_shader_state;
+	struct r600_sample_mask		sample_mask;
 
 	struct radeon_winsys_cs	*cs;
 
@@ -600,6 +606,7 @@ void r600_set_so_targets(struct pipe_context *ctx,
 			 unsigned num_targets,
 			 struct pipe_stream_output_target **targets,
 			 unsigned append_bitmask);
+void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask);
 void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
 			       const struct pipe_stencil_ref *state);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
