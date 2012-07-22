@@ -94,6 +94,8 @@ struct blitter_context
    struct pipe_framebuffer_state saved_fb_state;  /**< framebuffer state */
    struct pipe_stencil_ref saved_stencil_ref;     /**< stencil ref */
    struct pipe_viewport_state saved_viewport;
+   boolean is_sample_mask_saved;
+   unsigned saved_sample_mask;
 
    int saved_num_sampler_states;
    void *saved_sampler_states[PIPE_MAX_SAMPLERS];
@@ -416,6 +418,14 @@ util_blitter_save_so_targets(struct blitter_context *blitter,
    for (i = 0; i < num_targets; i++)
       pipe_so_target_reference(&blitter->saved_so_targets[i],
                                targets[i]);
+}
+
+static INLINE void
+util_blitter_save_sample_mask(struct blitter_context *blitter,
+                              unsigned sample_mask)
+{
+   blitter->is_sample_mask_saved = TRUE;
+   blitter->saved_sample_mask = sample_mask;
 }
 
 #ifdef __cplusplus

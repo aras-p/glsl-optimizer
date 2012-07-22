@@ -439,6 +439,12 @@ static void blitter_restore_fragment_states(struct blitter_context_priv *ctx)
    pipe->bind_blend_state(pipe, ctx->base.saved_blend_state);
    ctx->base.saved_blend_state = INVALID_PTR;
 
+   /* Sample mask. */
+   if (ctx->base.is_sample_mask_saved) {
+      pipe->set_sample_mask(pipe, ctx->base.saved_sample_mask);
+      ctx->base.is_sample_mask_saved = FALSE;
+   }
+
    /* Miscellaneous states. */
    /* XXX check whether these are saved and whether they need to be restored
     * (depending on the operation) */
@@ -848,6 +854,7 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
       pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    }
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, num_cbufs, int_format));
+   pipe->set_sample_mask(pipe, ~0);
 
    blitter_set_common_draw_rect_state(ctx);
    blitter_set_dst_dimensions(ctx, width, height);
@@ -1097,6 +1104,7 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
 
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    pipe->set_framebuffer_state(pipe, &fb_state);
+   pipe->set_sample_mask(pipe, ~0);
 
    blitter_set_common_draw_rect_state(ctx);
    blitter_set_dst_dimensions(ctx, dst->width, dst->height);
@@ -1184,6 +1192,7 @@ void util_blitter_clear_render_target(struct blitter_context *blitter,
    fb_state.cbufs[0] = dstsurf;
    fb_state.zsbuf = 0;
    pipe->set_framebuffer_state(pipe, &fb_state);
+   pipe->set_sample_mask(pipe, ~0);
 
    blitter_set_common_draw_rect_state(ctx);
    blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
@@ -1249,6 +1258,7 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
    fb_state.cbufs[0] = 0;
    fb_state.zsbuf = dstsurf;
    pipe->set_framebuffer_state(pipe, &fb_state);
+   pipe->set_sample_mask(pipe, ~0);
 
    blitter_set_common_draw_rect_state(ctx);
    blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
