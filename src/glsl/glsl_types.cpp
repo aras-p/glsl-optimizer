@@ -694,14 +694,19 @@ glsl_type::std140_base_alignment(bool row_major) const
     *     row vectors with <C> components each, according to rule (4).
     */
    if (this->is_matrix()) {
-      const struct glsl_type *vec_type;
+      const struct glsl_type *vec_type, *array_type;
+      int c = this->matrix_columns;
+      int r = this->vector_elements;
+
       if (row_major) {
-	 vec_type = get_instance(GLSL_TYPE_FLOAT, this->vector_elements, 1);
+	 vec_type = get_instance(GLSL_TYPE_FLOAT, c, 1);
+	 array_type = glsl_type::get_array_instance(vec_type, r);
       } else {
-	 vec_type = get_instance(GLSL_TYPE_FLOAT, this->matrix_columns, 1);
+	 vec_type = get_instance(GLSL_TYPE_FLOAT, r, 1);
+	 array_type = glsl_type::get_array_instance(vec_type, c);
       }
 
-      return vec_type->std140_base_alignment(false);
+      return array_type->std140_base_alignment(false);
    }
 
    /* (9) If the member is a structure, the base alignment of the
