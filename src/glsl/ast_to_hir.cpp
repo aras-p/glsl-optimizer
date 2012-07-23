@@ -4054,11 +4054,15 @@ ast_uniform_block::hir(exec_list *instructions,
 	 ubo_var->Type = var->type;
 	 ubo_var->Buffer = ubo - state->uniform_blocks;
 	 ubo_var->Offset = 0; /* Assigned at link time. */
-	 ubo_var->RowMajor = block_row_major;
-	 if (decl_list->type->qualifier.flags.q.row_major)
-	    ubo_var->RowMajor = true;
-	 else if (decl_list->type->qualifier.flags.q.column_major)
-	    ubo_var->RowMajor = false;
+
+	 if (var->type->is_matrix() ||
+	     (var->type->is_array() && var->type->fields.array->is_matrix())) {
+	    ubo_var->RowMajor = block_row_major;
+	    if (decl_list->type->qualifier.flags.q.row_major)
+	       ubo_var->RowMajor = true;
+	    else if (decl_list->type->qualifier.flags.q.column_major)
+	       ubo_var->RowMajor = false;
+	 }
 
 	 /* From the GL_ARB_uniform_buffer_object spec:
 	  *
