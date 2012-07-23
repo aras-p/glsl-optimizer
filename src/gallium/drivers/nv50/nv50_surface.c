@@ -637,14 +637,14 @@ nv50_blitctx_get_color_mask_and_fp(struct nv50_blitctx *blit,
    switch (format) {
    case PIPE_FORMAT_Z24X8_UNORM:
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-      blit->fp_offset = 160;
+      blit->fp_offset = 0xb0;
       if (mask & PIPE_MASK_Z)
          blit->color_mask |= 0x0111;
       if (mask & PIPE_MASK_S)
          blit->color_mask |= 0x1000;
       break;
    case PIPE_FORMAT_S8_UINT_Z24_UNORM:
-      blit->fp_offset = 24;
+      blit->fp_offset = 0x18;
       if (mask & PIPE_MASK_Z)
          blit->color_mask |= 0x1110;
       if (mask & PIPE_MASK_S)
