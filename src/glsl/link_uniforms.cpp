@@ -223,7 +223,8 @@ public:
       this->shader_shadow_samplers = 0;
    }
 
-   void set_and_process(struct gl_shader *shader,
+   void set_and_process(struct gl_shader_program *prog,
+			struct gl_shader *shader,
 			ir_variable *var)
    {
       ubo_var = NULL;
@@ -231,7 +232,16 @@ public:
 	 struct gl_uniform_block *block =
 	    &shader->UniformBlocks[var->uniform_block];
 
-	 ubo_block_index = var->uniform_block;
+	 ubo_block_index = -1;
+	 for (unsigned i = 0; i < prog->NumUniformBlocks; i++) {
+	    if (!strcmp(prog->UniformBlocks[i].Name,
+			shader->UniformBlocks[var->uniform_block].Name)) {
+	       ubo_block_index = i;
+	       break;
+	    }
+	 }
+	 assert(ubo_block_index != -1);
+
 	 ubo_var_index = var->location;
 	 ubo_var = &block->Uniforms[var->location];
 	 ubo_byte_offset = ubo_var->Offset;
@@ -598,7 +608,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 	 if (strncmp("gl_", var->name, 3) == 0)
 	    continue;
 
-	 parcel.set_and_process(prog->_LinkedShaders[i], var);
+	 parcel.set_and_process(prog, prog->_LinkedShaders[i], var);
       }
 
       prog->_LinkedShaders[i]->active_samplers = parcel.shader_samplers_used;
