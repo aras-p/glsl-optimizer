@@ -102,7 +102,6 @@ int get_compute_resource_num(void);
 #define evergreen_mult_reg_set(res, index, array) evergreen_mult_reg_set_(res, index, array, sizeof(array))
 
 void evergreen_set_rat(struct r600_pipe_compute *pipe, int id, struct r600_resource* bo, int start, int size);
-void evergreen_set_lds(struct r600_pipe_compute *pipe, int num_lds, int size, int num_waves);
 void evergreen_set_gds(struct r600_pipe_compute *pipe, uint32_t addr, uint32_t size);
 void evergreen_set_export(struct r600_pipe_compute *pipe, struct r600_resource* bo, int offset, int size);
 void evergreen_set_loop_const(struct r600_pipe_compute *pipe, int id, int count, int init, int inc);

@@ -301,25 +301,6 @@ void evergreen_set_rat(
         r600_context_pipe_state_set(pipe->ctx, state);
 }
 
-void evergreen_set_lds(
-	struct r600_pipe_compute *pipe,
-	int num_lds,
-	int size,
-	int num_waves)
-{
-	struct evergreen_compute_resource* res =
-		get_empty_res(pipe, COMPUTE_RESOURCE_LDS, 0);
-
-	if (pipe->ctx->chip_class < CAYMAN) {
-		evergreen_reg_set(res, R_008E2C_SQ_LDS_RESOURCE_MGMT,
-			S_008E2C_NUM_LS_LDS(num_lds));
-	} else {
-		evergreen_reg_set(res, CM_R_0286FC_SPI_LDS_MGMT,
-					S_0286FC_NUM_LS_LDS(num_lds));
-	}
-	evergreen_reg_set(res, CM_R_0288E8_SQ_LDS_ALLOC, size | num_waves << 14);
-}
-
 void evergreen_set_gds(
 	struct r600_pipe_compute *pipe,
 	uint32_t addr,

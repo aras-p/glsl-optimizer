@@ -249,37 +249,21 @@ void evergreen_compute_upload_input(
 						shader->input_size, 0);
 }
 
-void evergreen_direct_dispatch(
-		struct pipe_context *ctx_,
+static void evergreen_emit_direct_dispatch(
+		struct r600_context *rctx,
 		const uint *block_layout, const uint *grid_layout)
 {
-	/* This struct r600_context* must be called rctx, because the
-	 * r600_pipe_state_add_reg macro assumes there is a local variable
-	 * of type struct r600_context* called rctx.
-	 */
-	struct r600_context *rctx = (struct r600_context *)ctx_;
-	struct r600_pipe_compute *shader = rctx->cs_shader_state.shader;
-
 	int i;
-
-	struct evergreen_compute_resource* res = get_empty_res(shader,
-		COMPUTE_RESOURCE_DISPATCH, 0);
-
-	/* Set CB_TARGET_MASK */
-	evergreen_reg_set(res, R_028238_CB_TARGET_MASK, rctx->compute_cb_target_mask);
-
-	evergreen_reg_set(res, R_00899C_VGT_COMPUTE_START_X, 0);
-	evergreen_reg_set(res, R_0089A0_VGT_COMPUTE_START_Y, 0);
-	evergreen_reg_set(res, R_0089A4_VGT_COMPUTE_START_Z, 0);
-
-	evergreen_reg_set(res, R_0286EC_SPI_COMPUTE_NUM_THREAD_X, block_layout[0]);
-	evergreen_reg_set(res, R_0286F0_SPI_COMPUTE_NUM_THREAD_Y, block_layout[1]);
-	evergreen_reg_set(res, R_0286F4_SPI_COMPUTE_NUM_THREAD_Z, block_layout[2]);
-
+	struct radeon_winsys_cs *cs = rctx->cs;
+	unsigned num_waves;
+	unsigned num_pipes = rctx->screen->info.r600_max_pipes;
+	unsigned wave_divisor = (16 * num_pipes);
 	int group_size = 1;
-
 	int grid_size = 1;
+	/* XXX: Enable lds and get size from cs_shader_state */
+	unsigned lds_size = 0;
 
+	/* Calculate group_size/grid_size */
 	for (i = 0; i < 3; i++) {
 		group_size *= block_layout[i];
 	}
@@ -288,18 +272,50 @@ void evergreen_direct_dispatch(
 		grid_size *= grid_layout[i];
 	}
 
-	evergreen_reg_set(res, R_008970_VGT_NUM_INDICES, group_size);
-	evergreen_reg_set(res, R_0089AC_VGT_COMPUTE_THREAD_GROUP_SIZE, group_size);
+	/* num_waves = ceil((tg_size.x * tg_size.y, tg_size.z) / (16 * num_pipes)) */
+	num_waves = (block_layout[0] * block_layout[1] * block_layout[2] +
+			wave_divisor - 1) / wave_divisor;
 
-	evergreen_emit_raw_value(res, PKT3C(PKT3_DISPATCH_DIRECT, 3, 0));
-	evergreen_emit_raw_value(res, grid_layout[0]);
-	evergreen_emit_raw_value(res, grid_layout[1]);
-	evergreen_emit_raw_value(res, grid_layout[2]);
-	///VGT_DISPATCH_INITIATOR = COMPUTE_SHADER_EN
-	evergreen_emit_raw_value(res, 1);
+	COMPUTE_DBG("Using %u pipes, there are %u wavefronts per thread block\n",
+							num_pipes, num_waves);
+
+	/* XXX: Partition the LDS between PS/CS.  By default half (4096 dwords
+	 * on Evergreen) oes to Pixel Shaders and half goes to Compute Shaders.
+	 * We may need to allocat the entire LDS space for Compute Shaders.
+	 *
+	 * EG: R_008E2C_SQ_LDS_RESOURCE_MGMT := S_008E2C_NUM_LS_LDS(lds_dwords)
+	 * CM: CM_R_0286FC_SPI_LDS_MGMT :=  S_0286FC_NUM_LS_LDS(lds_dwords)
+	 */
+
+	r600_write_config_reg(cs, R_008970_VGT_NUM_INDICES, group_size);
+
+	r600_write_config_reg_seq(cs, R_00899C_VGT_COMPUTE_START_X, 3);
+	r600_write_value(cs, 0); /* R_00899C_VGT_COMPUTE_START_X */
+	r600_write_value(cs, 0); /* R_0089A0_VGT_COMPUTE_START_Y */
+	r600_write_value(cs, 0); /* R_0089A4_VGT_COMPUTE_START_Z */
+
+	r600_write_config_reg(cs, R_0089AC_VGT_COMPUTE_THREAD_GROUP_SIZE,
+								group_size);
+
+	r600_write_compute_context_reg_seq(cs, R_0286EC_SPI_COMPUTE_NUM_THREAD_X, 3);
+	r600_write_value(cs, block_layout[0]); /* R_0286EC_SPI_COMPUTE_NUM_THREAD_X */
+	r600_write_value(cs, block_layout[1]); /* R_0286F0_SPI_COMPUTE_NUM_THREAD_Y */
+	r600_write_value(cs, block_layout[2]); /* R_0286F4_SPI_COMPUTE_NUM_THREAD_Z */
+
+	r600_write_compute_context_reg(cs, CM_R_0288E8_SQ_LDS_ALLOC,
+					lds_size | (num_waves << 14));
+
+	/* Dispatch packet */
+	r600_write_value(cs, PKT3C(PKT3_DISPATCH_DIRECT, 3, 0));
+	r600_write_value(cs, grid_layout[0]);
+	r600_write_value(cs, grid_layout[1]);
+	r600_write_value(cs, grid_layout[2]);
+	/* VGT_DISPATCH_INITIATOR = COMPUTE_SHADER_EN */
+	r600_write_value(cs, 1);
 }
 
-static void compute_emit_cs(struct r600_context *ctx)
+static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
+		const uint *grid_layout)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	int i;
@@ -329,6 +345,11 @@ static void compute_emit_cs(struct r600_context *ctx)
 	/* Emit cb_state */
         cb_state = ctx->states[R600_PIPE_STATE_FRAMEBUFFER];
 	r600_context_pipe_state_emit(ctx, cb_state, RADEON_CP_PACKET3_COMPUTE_MODE);
+
+	/* Set CB_TARGET_MASK  XXX: Use cb_misc_state */
+	r600_write_compute_context_reg(cs, R_028238_CB_TARGET_MASK,
+					ctx->compute_cb_target_mask);
+
 
 	/* Emit vertex buffer state */
 	ctx->cs_vertex_buffer_state.atom.num_dw = 12 * util_bitcount(ctx->cs_vertex_buffer_state.dirty_mask);
@@ -369,6 +390,9 @@ static void compute_emit_cs(struct r600_context *ctx)
 			}
 		}
 	}
+
+	/* Emit dispatch state and dispatch packet */
+	evergreen_emit_direct_dispatch(ctx, block_layout, grid_layout);
 
 	/* r600_flush_framebuffer() updates the cb_flush_flags and then
 	 * calls r600_emit_atom() on the ctx->surface_sync_cmd.atom, which emits
@@ -438,24 +462,12 @@ static void evergreen_launch_grid(
 		const uint *block_layout, const uint *grid_layout,
 		uint32_t pc, const void *input)
 {
+	struct r600_context *ctx = (struct r600_context *)ctx_;
+
 	COMPUTE_DBG("PC: %i\n", pc);
 
-	struct r600_context *ctx = (struct r600_context *)ctx_;
-	unsigned num_waves;
-	unsigned num_pipes = ctx->screen->info.r600_max_pipes;
-	unsigned wave_divisor = (16 * num_pipes);
-
-	/* num_waves = ceil((tg_size.x * tg_size.y, tg_size.z) / (16 * num_pipes)) */
-	num_waves = (block_layout[0] * block_layout[1] * block_layout[2] +
-			wave_divisor - 1) / wave_divisor;
-
-	COMPUTE_DBG("Using %u pipes, there are %u wavefronts per thread block\n",
-							num_pipes, num_waves);
-
-	evergreen_set_lds(ctx->cs_shader_state.shader, 0, 0, num_waves);
 	evergreen_compute_upload_input(ctx_, block_layout, grid_layout, input);
-	evergreen_direct_dispatch(ctx_, block_layout, grid_layout);
-	compute_emit_cs(ctx);
+	compute_emit_cs(ctx, block_layout, grid_layout);
 }
 
 static void evergreen_set_compute_resources(struct pipe_context * ctx_,
