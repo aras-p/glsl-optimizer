@@ -478,10 +478,11 @@ util_blit_pixels(struct blit_state *ctx,
 
    /*
     * Check for simple case:  no format conversion, no flipping, no stretching,
-    * no overlapping.
+    * no overlapping, same number of samples.
     * Filter mode should not matter since there's no stretching.
     */
    if (formats_compatible(src_format, dst_format) &&
+       src_tex->nr_samples == dst->texture->nr_samples &&
        is_stencil == blit_stencil &&
        is_depth == blit_depth &&
        srcX0 < srcX1 &&
