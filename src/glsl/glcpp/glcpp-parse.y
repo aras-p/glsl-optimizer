@@ -190,6 +190,14 @@ line:
 	control_line {
 		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "\n");
 	}
+|	HASH_LINE pp_tokens NEWLINE {
+		if (parser->skip_stack == NULL ||
+		    parser->skip_stack->type == SKIP_NO_SKIP)
+		{
+			_glcpp_parser_expand_and_lex_from (parser,
+							   LINE_EXPANDED, $2);
+		}
+	}
 |	text_line {
 		_glcpp_parser_print_expanded_token_list (parser, $1);
 		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "\n");
@@ -243,14 +251,6 @@ control_line:
 			ralloc_free (macro);
 		}
 		ralloc_free ($2);
-	}
-|	HASH_LINE pp_tokens NEWLINE {
-		if (parser->skip_stack == NULL ||
-		    parser->skip_stack->type == SKIP_NO_SKIP)
-		{
-			_glcpp_parser_expand_and_lex_from (parser,
-							   LINE_EXPANDED, $2);
-		}
 	}
 |	HASH_IF conditional_tokens NEWLINE {
 		/* Be careful to only evaluate the 'if' expression if
