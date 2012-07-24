@@ -1572,7 +1572,7 @@ static void build_array_pointsize( struct tnl_program *p )
 
 static void build_tnl_program( struct tnl_program *p )
 {
-   /* Emit the program, starting with modelviewproject:
+   /* Emit the program, starting with the modelview, projection transforms:
     */
    build_hpos(p);
 
