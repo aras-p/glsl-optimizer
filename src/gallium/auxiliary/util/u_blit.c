@@ -507,6 +507,12 @@ util_blit_pixels(struct blit_state *ctx,
       return;
    }
 
+   /* XXX Reading multisample textures is unimplemented. */
+   assert(src_tex->nr_samples <= 1);
+   if (src_tex->nr_samples > 1) {
+      return;
+   }
+
    /* It's a mistake to call this function with a stencil format and
     * without shader stencil export. We don't do software fallbacks here.
     * Ignore stencil and only copy depth.
