@@ -513,7 +513,7 @@ static GLboolean invert_matrix_3d_general( GLmatrix *mat )
 
    det = pos + neg;
 
-   if (det*det < 1e-25)
+   if (FABSF(det) < 1e-25)
       return GL_FALSE;
 
    det = 1.0F / det;
