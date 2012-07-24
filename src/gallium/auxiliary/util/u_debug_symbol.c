@@ -152,7 +152,9 @@ debug_symbol_name_dbghelp(const void *addr, char* buf, unsigned size)
 #endif
 
 #ifdef __GLIBC__
+#ifndef __UCLIBC__
 #include <execinfo.h>
+#endif
 
 /* This can only provide dynamic symbols, or binary offsets into a file.
  *
