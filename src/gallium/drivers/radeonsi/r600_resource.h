@@ -39,7 +39,7 @@ struct r600_transfer {
 };
 
 struct r600_resource_texture {
-	struct r600_resource		resource;
+	struct si_resource		resource;
 
 	/* If this resource is a depth-stencil buffer on evergreen, this contains
 	 * the depth part of the format. There is a separate stencil resource
@@ -77,11 +77,6 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 						const struct pipe_resource *base,
 						struct winsys_handle *whandle);
 
-static INLINE struct r600_resource *r600_resource(struct pipe_resource *r)
-{
-	return (struct r600_resource*)r;
-}
-
 int r600_texture_depth_flush(struct pipe_context *ctx, struct pipe_resource *texture, boolean just_create);
 
 /* r600_texture.c texture transfer functions. */
@@ -99,7 +94,7 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 
 struct r600_context;
 
-void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
+void r600_upload_const_buffer(struct r600_context *rctx, struct si_resource **rbuffer,
 			      const uint8_t *ptr, unsigned size,
 			      uint32_t *const_offset);
 

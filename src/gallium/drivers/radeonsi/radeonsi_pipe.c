@@ -61,9 +61,9 @@ static struct r600_fence *r600_create_fence(struct r600_context *rctx)
 
 	if (!rscreen->fences.bo) {
 		/* Create the shared buffer object */
-		rscreen->fences.bo = (struct r600_resource*)
-			pipe_buffer_create(&rscreen->screen, PIPE_BIND_CUSTOM,
-					   PIPE_USAGE_STAGING, 4096);
+		rscreen->fences.bo = si_resource_create_custom(&rscreen->screen,
+							       PIPE_USAGE_STAGING,
+							       4096);
 		if (!rscreen->fences.bo) {
 			R600_ERR("r600: failed to create bo for fence objects\n");
 			goto out;
@@ -119,9 +119,8 @@ static struct r600_fence *r600_create_fence(struct r600_context *rctx)
 	r600_context_emit_fence(rctx, rscreen->fences.bo, fence->index, 1);
 
 	/* Create a dummy BO so that fence_finish without a timeout can sleep waiting for completion */
-	fence->sleep_bo = (struct r600_resource*)
-			pipe_buffer_create(&rctx->screen->screen, PIPE_BIND_CUSTOM,
-					   PIPE_USAGE_STAGING, 1);
+	fence->sleep_bo = si_resource_create_custom(&rctx->screen->screen, PIPE_USAGE_STAGING, 1);
+
 	/* Add the fence as a dummy relocation. */
 	r600_context_bo_reloc(rctx, fence->sleep_bo, RADEON_USAGE_READWRITE);
 
@@ -495,7 +494,7 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 		}
 
 		rscreen->ws->buffer_unmap(rscreen->fences.bo->cs_buf);
-		pipe_resource_reference((struct pipe_resource**)&rscreen->fences.bo, NULL);
+		si_resource_reference(&rscreen->fences.bo, NULL);
 	}
 	pipe_mutex_destroy(rscreen->fences.mutex);
 
@@ -513,7 +512,7 @@ static void r600_fence_reference(struct pipe_screen *pscreen,
 	if (pipe_reference(&(*oldf)->reference, &newf->reference)) {
 		struct r600_screen *rscreen = (struct r600_screen *)pscreen;
 		pipe_mutex_lock(rscreen->fences.mutex);
-		pipe_resource_reference((struct pipe_resource**)&(*oldf)->sleep_bo, NULL);
+		si_resource_reference(&(*oldf)->sleep_bo, NULL);
 		LIST_ADDTAIL(&(*oldf)->head, &rscreen->fences.pool);
 		pipe_mutex_unlock(rscreen->fences.mutex);
 	}

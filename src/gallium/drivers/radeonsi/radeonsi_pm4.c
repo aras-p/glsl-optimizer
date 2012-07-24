@@ -69,14 +69,13 @@ void si_pm4_set_reg(struct si_pm4_state *state, unsigned reg, uint32_t val)
 }
 
 void si_pm4_add_bo(struct si_pm4_state *state,
-                   struct r600_resource *bo,
+                   struct si_resource *bo,
                    enum radeon_bo_usage usage)
 {
 	unsigned idx = state->nbo++;
 	assert(idx < SI_PM4_MAX_BO);
 
-	pipe_resource_reference((struct pipe_resource**)&state->bo[idx],
-				(struct pipe_resource*)bo);
+	si_resource_reference(&state->bo[idx], bo);
 	state->bo_usage[idx] = usage;
 }
 
@@ -120,8 +119,7 @@ void si_pm4_free_state(struct r600_context *rctx,
 	}
 
 	for (int i = 0; i < state->nbo; ++i) {
-		pipe_resource_reference((struct pipe_resource**)&state->bo[idx],
-					NULL);
+		si_resource_reference(&state->bo[idx], NULL);
 	}
 	FREE(state);
 }

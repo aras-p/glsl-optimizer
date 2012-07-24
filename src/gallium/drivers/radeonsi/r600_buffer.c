@@ -40,7 +40,7 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 				struct pipe_resource *buf)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
-	struct r600_resource *rbuffer = r600_resource(buf);
+	struct si_resource *rbuffer = si_resource(buf);
 
 	pb_reference(&rbuffer->buf, NULL);
 	FREE(rbuffer);
@@ -72,7 +72,7 @@ static struct pipe_transfer *r600_get_transfer(struct pipe_context *ctx,
 static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				      struct pipe_transfer *transfer)
 {
-	struct r600_resource *rbuffer = r600_resource(transfer->resource);
+	struct si_resource *rbuffer = si_resource(transfer->resource);
 	struct r600_context *rctx = (struct r600_context*)pipe;
 	uint8_t *data;
 
@@ -115,7 +115,7 @@ static const struct u_resource_vtbl r600_buffer_vtbl =
 };
 
 bool r600_init_resource(struct r600_screen *rscreen,
-			struct r600_resource *res,
+			struct si_resource *res,
 			unsigned size, unsigned alignment,
 			unsigned bind, unsigned usage)
 {
@@ -160,11 +160,11 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
-	struct r600_resource *rbuffer;
+	struct si_resource *rbuffer;
 	/* XXX We probably want a different alignment for buffers and textures. */
 	unsigned alignment = 4096;
 
-	rbuffer = MALLOC_STRUCT(r600_resource);
+	rbuffer = MALLOC_STRUCT(si_resource);
 
 	rbuffer->b.b = *templ;
 	pipe_reference_init(&rbuffer->b.b.reference, 1);
@@ -185,7 +185,7 @@ void r600_upload_index_buffer(struct r600_context *rctx,
 		      ib->user_buffer, &ib->offset, &ib->buffer);
 }
 
-void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
+void r600_upload_const_buffer(struct r600_context *rctx, struct si_resource **rbuffer,
 			      const uint8_t *ptr, unsigned size,
 			      uint32_t *const_offset)
 {

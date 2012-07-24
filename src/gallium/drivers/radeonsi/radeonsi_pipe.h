@@ -75,7 +75,7 @@ struct r600_atom_surface_sync {
 };
 
 struct r600_pipe_fences {
-	struct r600_resource		*bo;
+	struct si_resource		*bo;
 	unsigned			*data;
 	unsigned			next_index;
 	/* linked list of preallocated blocks */
@@ -120,7 +120,7 @@ struct r600_textures_info {
 struct r600_fence {
 	struct pipe_reference		reference;
 	unsigned			index; /* in the shared bo */
-	struct r600_resource            *sleep_bo;
+	struct si_resource            *sleep_bo;
 	struct list_head		head;
 };
 
@@ -239,7 +239,7 @@ void r600_flush_depth_textures(struct r600_context *rctx);
 
 /* r600_buffer.c */
 bool r600_init_resource(struct r600_screen *rscreen,
-			struct r600_resource *res,
+			struct si_resource *res,
 			unsigned size, unsigned alignment,
 			unsigned bind, unsigned usage);
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
@@ -323,7 +323,7 @@ static INLINE unsigned r600_pack_float_12p4(float x)
 static INLINE uint64_t r600_resource_va(struct pipe_screen *screen, struct pipe_resource *resource)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
-	struct r600_resource *rresource = (struct r600_resource*)resource;
+	struct si_resource *rresource = (struct si_resource*)resource;
 
 	return rscreen->ws->buffer_get_virtual_address(rresource->cs_buf);
 }

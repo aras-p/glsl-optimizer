@@ -36,7 +36,7 @@
 void r600_get_backend_mask(struct r600_context *ctx)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
-	struct r600_resource *buffer;
+	struct si_resource *buffer;
 	uint32_t *results;
 	unsigned num_backends = ctx->screen->info.r600_num_backends;
 	unsigned i, mask = 0;
@@ -66,9 +66,9 @@ void r600_get_backend_mask(struct r600_context *ctx)
 	/* otherwise backup path for older kernels */
 
 	/* create buffer for event data */
-	buffer = (struct r600_resource*)
-		pipe_buffer_create(&ctx->screen->screen, PIPE_BIND_CUSTOM,
-				   PIPE_USAGE_STAGING, ctx->max_db*16);
+	buffer = si_resource_create_custom(&ctx->screen->screen,
+					   PIPE_USAGE_STAGING,
+					   ctx->max_db*16);
 	if (!buffer)
 		goto err;
 
@@ -102,7 +102,7 @@ void r600_get_backend_mask(struct r600_context *ctx)
 		}
 	}
 
-	pipe_resource_reference((struct pipe_resource**)&buffer, NULL);
+	si_resource_reference(&buffer, NULL);
 
 	if (mask != 0) {
 		ctx->backend_mask = mask;
@@ -256,7 +256,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	si_pm4_reset_emitted(ctx);
 }
 
-void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)
+void r600_context_emit_fence(struct r600_context *ctx, struct si_resource *fence_bo, unsigned offset, unsigned value)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	uint64_t va;
@@ -594,8 +594,9 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 	 * being written by the gpu, hence staging is probably a good
 	 * usage pattern.
 	 */
-	query->buffer = (struct r600_resource*)
-		pipe_buffer_create(&ctx->screen->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_STAGING, buffer_size);
+	query->buffer = si_resource_create_custom(&ctx->screen->screen,
+						  PIPE_USAGE_STAGING,
+						  buffer_size);
 	if (!query->buffer) {
 		FREE(query);
 		return NULL;
@@ -605,7 +606,7 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query)
 {
-	pipe_resource_reference((struct pipe_resource**)&query->buffer, NULL);
+	si_resource_reference(&query->buffer, NULL);
 	free(query);
 }
 
@@ -709,7 +710,7 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 
 			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
 			cs->buf[cs->cdw++] =
-				r600_context_bo_reloc(ctx, r600_resource(t[i]->b.buffer),
+				r600_context_bo_reloc(ctx, si_resource(t[i]->b.buffer),
 						      RADEON_USAGE_WRITE);
 
 			if (ctx->streamout_append_bitmask & (1 << i)) {
@@ -831,7 +832,7 @@ void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_tar
 	cs->buf[cs->cdw++] = t->b.buffer_offset >> 2;
 
 	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, (struct r600_resource*)t->b.buffer,
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, (struct si_resource*)t->b.buffer,
 							     RADEON_USAGE_WRITE);
 
 	cs->buf[cs->cdw++] = PKT3(PKT3_WAIT_REG_MEM, 5, 0);

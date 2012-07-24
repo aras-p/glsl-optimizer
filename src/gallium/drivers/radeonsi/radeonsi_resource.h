@@ -24,53 +24,44 @@
  *      Christian König <christian.koenig@amd.com>
  */
 
-#ifndef RADEONSI_PM4_H
-#define RADEONSI_PM4_H
+#ifndef RADEONSI_RESOURCE_H
+#define RADEONSI_RESOURCE_H
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
+#include "util/u_transfer.h"
+#include "util/u_inlines.h"
 
-#define SI_PM4_MAX_DW	128
-#define SI_PM4_MAX_BO	32
+struct si_resource {
+	struct u_resource		b;
 
-// forward defines
-struct r600_context;
+	/* Winsys objects. */
+	struct pb_buffer		*buf;
+	struct radeon_winsys_cs_handle	*cs_buf;
 
-struct si_pm4_state
-{
-	/* PKT3_SET_*_REG handling */
-	unsigned	last_opcode;
-	unsigned	last_reg;
-	unsigned	last_pm4;
-
-	/* flush flags for SURFACE_SYNC */
-	uint32_t	cp_coher_cntl;
-
-	/* commands for the DE */
-	unsigned	ndw;
-	uint32_t	pm4[SI_PM4_MAX_DW];
-
-	/* BO's referenced by this state */
-	unsigned		nbo;
-	struct si_resource	*bo[SI_PM4_MAX_BO];
-	enum radeon_bo_usage	bo_usage[SI_PM4_MAX_BO];
+	/* Resource state. */
+	unsigned			domains;
 };
 
-void si_pm4_set_reg(struct si_pm4_state *state, unsigned reg, uint32_t val);
-void si_pm4_add_bo(struct si_pm4_state *state,
-		   struct si_resource *bo,
-		   enum radeon_bo_usage usage);
+static INLINE void
+si_resource_reference(struct si_resource **ptr, struct si_resource *res)
+{
+	pipe_resource_reference((struct pipe_resource **)ptr,
+				(struct pipe_resource *)res);
+}
 
-void si_pm4_inval_shader_cache(struct si_pm4_state *state);
-void si_pm4_inval_texture_cache(struct si_pm4_state *state);
-void si_pm4_inval_vertex_cache(struct si_pm4_state *state);
-void si_pm4_inval_fb_cache(struct si_pm4_state *state, unsigned nr_cbufs);
-void si_pm4_inval_zsbuf_cache(struct si_pm4_state *state);
+static INLINE struct si_resource *
+si_resource(struct pipe_resource *r)
+{
+        return (struct si_resource*)r;
+}
 
-void si_pm4_free_state(struct r600_context *rctx,
-		       struct si_pm4_state *state,
-		       unsigned idx);
-unsigned si_pm4_dirty_dw(struct r600_context *rctx);
-void si_pm4_emit_dirty(struct r600_context *rctx);
-void si_pm4_reset_emitted(struct r600_context *rctx);
+static INLINE struct si_resource *
+si_resource_create_custom(struct pipe_screen *screen,
+			  unsigned usage, unsigned size)
+{
+	assert(size);
+	return si_resource(pipe_buffer_create(screen,
+		PIPE_BIND_CUSTOM, usage, size));
+}
 
 #endif

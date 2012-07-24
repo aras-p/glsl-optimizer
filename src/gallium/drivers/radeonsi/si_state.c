@@ -1914,7 +1914,7 @@ static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pipe_sampler_view **resource = (struct si_pipe_sampler_view **)views;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
-	struct r600_resource *bo;
+	struct si_resource *bo;
 	int i;
 	int has_depth = 0;
 	uint64_t va;
@@ -1925,9 +1925,8 @@ static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 
 	si_pm4_inval_texture_cache(pm4);
 
-	bo = (struct r600_resource*)
-		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE,
-				   count * sizeof(resource[0]->state));
+	bo = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE,
+				       count * sizeof(resource[0]->state));
 	ptr = rctx->ws->buffer_map(bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 
 	for (i = 0; i < count; i++, ptr += sizeof(resource[0]->state)) {
@@ -1976,7 +1975,7 @@ static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pipe_sampler_state **rstates = (struct si_pipe_sampler_state **)states;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
-	struct r600_resource *bo;
+	struct si_resource *bo;
 	uint64_t va;
 	char *ptr;
 	int i;
@@ -1986,9 +1985,8 @@ static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **
 
 	si_pm4_inval_texture_cache(pm4);
 
-	bo = (struct r600_resource*)
-		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE,
-				   count * sizeof(rstates[0]->val));
+	bo = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE,
+				       count * sizeof(rstates[0]->val));
 	ptr = rctx->ws->buffer_map(bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 
 	for (i = 0; i < count; i++, ptr += sizeof(rstates[0]->val)) {
@@ -2025,7 +2023,7 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint i
 			    struct pipe_constant_buffer *cb)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_resource *rbuffer = cb ? r600_resource(cb->buffer) : NULL;
+	struct si_resource *rbuffer = cb ? si_resource(cb->buffer) : NULL;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	uint64_t va_offset;
 	uint32_t offset;
@@ -2068,7 +2066,7 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint i
 	}
 
 	if (cb->buffer != &rbuffer->b.b)
-		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
+		si_resource_reference(&rbuffer, NULL);
 }
 
 /*
@@ -2154,8 +2152,7 @@ si_create_so_target(struct pipe_context *ctx,
 	t->b.buffer_offset = buffer_offset;
 	t->b.buffer_size = buffer_size;
 
-	t->filled_size = (struct r600_resource*)
-		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_STATIC, 4);
+	t->filled_size = si_resource_create_custom(ctx->screen, PIPE_USAGE_STATIC, 4);
 	ptr = rctx->ws->buffer_map(t->filled_size->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 	memset(ptr, 0, t->filled_size->buf->size);
 	rctx->ws->buffer_unmap(t->filled_size->cs_buf);
@@ -2168,7 +2165,7 @@ static void si_so_target_destroy(struct pipe_context *ctx,
 {
 	struct r600_so_target *t = (struct r600_so_target*)target;
 	pipe_resource_reference(&t->b.buffer, NULL);
-	pipe_resource_reference((struct pipe_resource**)&t->filled_size, NULL);
+	si_resource_reference(&t->filled_size, NULL);
 	FREE(t);
 }
 

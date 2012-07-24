@@ -383,7 +383,7 @@ static void si_update_derived_state(struct r600_context *rctx)
 static void si_vertex_buffer_update(struct r600_context *rctx)
 {
 	struct pipe_context *ctx = &rctx->context;
-	struct r600_resource *rbuffer, *t_list_buffer;
+	struct si_resource *rbuffer, *t_list_buffer;
 	struct pipe_vertex_buffer *vertex_buffer;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	unsigned i, count, offset;
@@ -396,9 +396,8 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 	count = rctx->nr_vertex_buffers;
 	assert(count <= 256 / 4);
 
-	t_list_buffer = (struct r600_resource*)
-		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM,
-				   PIPE_USAGE_IMMUTABLE, 4 * 4 * count);
+	t_list_buffer = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE,
+						  4 * 4 * count);
 	if (t_list_buffer == NULL) {
 		FREE(pm4);
 		return;
@@ -416,7 +415,7 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 
 		/* bind vertex buffer once */
 		vertex_buffer = &rctx->vertex_buffer[i];
-		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
+		rbuffer = (struct si_resource*)vertex_buffer->buffer;
 		offset = 0;
 		if (vertex_buffer == NULL || rbuffer == NULL)
 			continue;
@@ -516,7 +515,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 			rdraw.vgt_index_type = V_028A7C_VGT_INDEX_16 |
 				(R600_BIG_ENDIAN ? V_028A7C_VGT_DMA_SWAP_16_BIT : 0);
 		}
-		rdraw.indices = (struct r600_resource*)ib.buffer;
+		rdraw.indices = (struct si_resource*)ib.buffer;
 		rdraw.indices_bo_offset = ib.offset;
 		rdraw.vgt_draw_initiator = V_0287F0_DI_SRC_SEL_DMA;
 	} else {

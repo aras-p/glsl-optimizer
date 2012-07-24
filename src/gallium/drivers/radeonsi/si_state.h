@@ -90,7 +90,7 @@ struct si_shader {
 struct si_pipe_shader {
 	struct si_shader		shader;
 	struct si_pm4_state		*pm4;
-	struct r600_resource		*bo;
+	struct si_resource		*bo;
 	struct si_vertex_element	vertex_elements;
 	struct tgsi_token		*tokens;
 	unsigned			num_sgprs;

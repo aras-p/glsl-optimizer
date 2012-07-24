@@ -611,8 +611,7 @@ int si_pipe_shader_create(
 	if (shader->bo == NULL) {
 		uint32_t *ptr;
 
-		shader->bo = (struct r600_resource*)
-			pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE, inst_byte_count);
+		shader->bo = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE, inst_byte_count);
 		if (shader->bo == NULL) {
 			return -ENOMEM;
 		}
@@ -634,7 +633,7 @@ int si_pipe_shader_create(
 
 void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_pipe_shader *shader)
 {
-	pipe_resource_reference((struct pipe_resource**)&shader->bo, NULL);
+	si_resource_reference(&shader->bo, NULL);
 
 	memset(&shader->shader,0,sizeof(struct si_shader));
 }

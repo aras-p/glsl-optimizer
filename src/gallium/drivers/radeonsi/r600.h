@@ -30,6 +30,8 @@
 #include "util/u_double_list.h"
 #include "util/u_transfer.h"
 
+#include "radeonsi_resource.h"
+
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
 
@@ -55,17 +57,6 @@ struct r600_tiling_info {
 	unsigned group_bytes;
 };
 
-struct r600_resource {
-	struct u_resource		b;
-
-	/* Winsys objects. */
-	struct pb_buffer		*buf;
-	struct radeon_winsys_cs_handle	*cs_buf;
-
-	/* Resource state. */
-	unsigned			domains;
-};
-
 /* R600/R700 STATES */
 struct r600_query {
 	union {
@@ -85,7 +76,7 @@ struct r600_query {
 	/* The buffer where query results are stored. It's used as a ring,
 	 * data blocks for current query are stored sequentially from
 	 * results_start to results_end, with wrapping on the buffer end */
-	struct r600_resource			*buffer;
+	struct si_resource			*buffer;
 	/* The number of dwords for begin_query or end_query. */
 	unsigned				num_cs_dw;
 	/* linked list of queries */
@@ -96,7 +87,7 @@ struct r600_so_target {
 	struct pipe_stream_output_target b;
 
 	/* The buffer where BUFFER_FILLED_SIZE is stored. */
-	struct r600_resource	*filled_size;
+	struct si_resource	*filled_size;
 	unsigned		stride;
 	unsigned		so_index;
 };
@@ -113,7 +104,7 @@ struct r600_draw {
 	uint32_t		indices_bo_offset;
 	unsigned		db_render_override;
 	unsigned		db_render_control;
-	struct r600_resource	*indices;
+	struct si_resource	*indices;
 };
 
 struct r600_context;
@@ -133,7 +124,7 @@ void r600_context_queries_suspend(struct r600_context *ctx);
 void r600_context_queries_resume(struct r600_context *ctx);
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait);
-void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
+void r600_context_emit_fence(struct r600_context *ctx, struct si_resource *fence,
                              unsigned offset, unsigned value);
 
 void r600_context_streamout_begin(struct r600_context *ctx);
