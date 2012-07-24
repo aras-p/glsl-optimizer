@@ -120,7 +120,7 @@
  * \param exec dispatch table.
  */
 struct _glapi_table *
-_mesa_create_exec_table(void)
+_mesa_create_exec_table(struct gl_context *ctx)
 {
    struct _glapi_table *exec;
 
@@ -133,7 +133,10 @@ _mesa_create_exec_table(void)
 #endif
 
    /* load the dispatch slots we understand */
-   SET_AlphaFunc(exec, _mesa_AlphaFunc);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_AlphaFunc(exec, _mesa_AlphaFunc);
+   }
+
    SET_BlendFunc(exec, _mesa_BlendFunc);
    SET_Clear(exec, _mesa_Clear);
    SET_ClearColor(exec, _mesa_ClearColor);
@@ -149,42 +152,62 @@ _mesa_create_exec_table(void)
    SET_Finish(exec, _mesa_Finish);
    SET_Flush(exec, _mesa_Flush);
    SET_FrontFace(exec, _mesa_FrontFace);
-   SET_Frustum(exec, _mesa_Frustum);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_Frustum(exec, _mesa_Frustum);
+   }
    SET_GetError(exec, _mesa_GetError);
    SET_GetFloatv(exec, _mesa_GetFloatv);
    SET_GetString(exec, _mesa_GetString);
-   SET_LineStipple(exec, _mesa_LineStipple);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_LineStipple(exec, _mesa_LineStipple);
+   }
    SET_LineWidth(exec, _mesa_LineWidth);
-   SET_LoadIdentity(exec, _mesa_LoadIdentity);
-   SET_LoadMatrixf(exec, _mesa_LoadMatrixf);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_LoadIdentity(exec, _mesa_LoadIdentity);
+      SET_LoadMatrixf(exec, _mesa_LoadMatrixf);
+   }
    SET_LogicOp(exec, _mesa_LogicOp);
-   SET_MatrixMode(exec, _mesa_MatrixMode);
-   SET_MultMatrixf(exec, _mesa_MultMatrixf);
-   SET_Ortho(exec, _mesa_Ortho);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_MatrixMode(exec, _mesa_MatrixMode);
+      SET_MultMatrixf(exec, _mesa_MultMatrixf);
+      SET_Ortho(exec, _mesa_Ortho);
+   }
    SET_PixelStorei(exec, _mesa_PixelStorei);
-   SET_PopMatrix(exec, _mesa_PopMatrix);
-   SET_PushMatrix(exec, _mesa_PushMatrix);
-   SET_Rotatef(exec, _mesa_Rotatef);
-   SET_Scalef(exec, _mesa_Scalef);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_PopMatrix(exec, _mesa_PopMatrix);
+      SET_PushMatrix(exec, _mesa_PushMatrix);
+      SET_Rotatef(exec, _mesa_Rotatef);
+      SET_Scalef(exec, _mesa_Scalef);
+   }
    SET_Scissor(exec, _mesa_Scissor);
-   SET_ShadeModel(exec, _mesa_ShadeModel);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_ShadeModel(exec, _mesa_ShadeModel);
+   }
    SET_StencilFunc(exec, _mesa_StencilFunc);
    SET_StencilMask(exec, _mesa_StencilMask);
    SET_StencilOp(exec, _mesa_StencilOp);
-   SET_TexEnvfv(exec, _mesa_TexEnvfv);
-   SET_TexEnvi(exec, _mesa_TexEnvi);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_TexEnvfv(exec, _mesa_TexEnvfv);
+      SET_TexEnvi(exec, _mesa_TexEnvi);
+   }
    SET_TexImage2D(exec, _mesa_TexImage2D);
    SET_TexParameteri(exec, _mesa_TexParameteri);
-   SET_Translatef(exec, _mesa_Translatef);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_Translatef(exec, _mesa_Translatef);
+   }
    SET_Viewport(exec, _mesa_Viewport);
 
-   _mesa_init_accum_dispatch(exec);
-   _mesa_init_dlist_dispatch(exec);
+   if (ctx->API != API_OPENGL_CORE) {
+      _mesa_init_accum_dispatch(exec);
+      _mesa_init_dlist_dispatch(exec);
+   }
 
    SET_ClearDepth(exec, _mesa_ClearDepth);
-   SET_ClearIndex(exec, _mesa_ClearIndex);
-   SET_ClipPlane(exec, _mesa_ClipPlane);
-   SET_ColorMaterial(exec, _mesa_ColorMaterial);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_ClearIndex(exec, _mesa_ClearIndex);
+      SET_ClipPlane(exec, _mesa_ClipPlane);
+      SET_ColorMaterial(exec, _mesa_ColorMaterial);
+   }
    SET_DepthFunc(exec, _mesa_DepthFunc);
    SET_DepthMask(exec, _mesa_DepthMask);
    SET_DepthRange(exec, _mesa_DepthRange);
@@ -192,43 +215,53 @@ _mesa_create_exec_table(void)
    _mesa_init_drawpix_dispatch(exec);
    _mesa_init_feedback_dispatch(exec);
 
-   SET_FogCoordPointerEXT(exec, _mesa_FogCoordPointerEXT);
-   SET_Fogf(exec, _mesa_Fogf);
-   SET_Fogfv(exec, _mesa_Fogfv);
-   SET_Fogi(exec, _mesa_Fogi);
-   SET_Fogiv(exec, _mesa_Fogiv);
-   SET_GetClipPlane(exec, _mesa_GetClipPlane);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_FogCoordPointerEXT(exec, _mesa_FogCoordPointerEXT);
+      SET_Fogf(exec, _mesa_Fogf);
+      SET_Fogfv(exec, _mesa_Fogfv);
+      SET_Fogi(exec, _mesa_Fogi);
+      SET_Fogiv(exec, _mesa_Fogiv);
+      SET_GetClipPlane(exec, _mesa_GetClipPlane);
+   }
    SET_GetBooleanv(exec, _mesa_GetBooleanv);
    SET_GetDoublev(exec, _mesa_GetDoublev);
    SET_GetIntegerv(exec, _mesa_GetIntegerv);
-   SET_GetLightfv(exec, _mesa_GetLightfv);
-   SET_GetLightiv(exec, _mesa_GetLightiv);
-   SET_GetMaterialfv(exec, _mesa_GetMaterialfv);
-   SET_GetMaterialiv(exec, _mesa_GetMaterialiv);
-   SET_GetPolygonStipple(exec, _mesa_GetPolygonStipple);
-   SET_GetTexEnvfv(exec, _mesa_GetTexEnvfv);
-   SET_GetTexEnviv(exec, _mesa_GetTexEnviv);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_GetLightfv(exec, _mesa_GetLightfv);
+      SET_GetLightiv(exec, _mesa_GetLightiv);
+      SET_GetMaterialfv(exec, _mesa_GetMaterialfv);
+      SET_GetMaterialiv(exec, _mesa_GetMaterialiv);
+      SET_GetPolygonStipple(exec, _mesa_GetPolygonStipple);
+      SET_GetTexEnvfv(exec, _mesa_GetTexEnvfv);
+      SET_GetTexEnviv(exec, _mesa_GetTexEnviv);
+   }
    SET_GetTexLevelParameterfv(exec, _mesa_GetTexLevelParameterfv);
    SET_GetTexLevelParameteriv(exec, _mesa_GetTexLevelParameteriv);
    SET_GetTexParameterfv(exec, _mesa_GetTexParameterfv);
    SET_GetTexParameteriv(exec, _mesa_GetTexParameteriv);
    SET_GetTexImage(exec, _mesa_GetTexImage);
    SET_Hint(exec, _mesa_Hint);
-   SET_IndexMask(exec, _mesa_IndexMask);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_IndexMask(exec, _mesa_IndexMask);
+   }
    SET_IsEnabled(exec, _mesa_IsEnabled);
-   SET_LightModelf(exec, _mesa_LightModelf);
-   SET_LightModelfv(exec, _mesa_LightModelfv);
-   SET_LightModeli(exec, _mesa_LightModeli);
-   SET_LightModeliv(exec, _mesa_LightModeliv);
-   SET_Lightf(exec, _mesa_Lightf);
-   SET_Lightfv(exec, _mesa_Lightfv);
-   SET_Lighti(exec, _mesa_Lighti);
-   SET_Lightiv(exec, _mesa_Lightiv);
-   SET_LoadMatrixd(exec, _mesa_LoadMatrixd);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_LightModelf(exec, _mesa_LightModelf);
+      SET_LightModelfv(exec, _mesa_LightModelfv);
+      SET_LightModeli(exec, _mesa_LightModeli);
+      SET_LightModeliv(exec, _mesa_LightModeliv);
+      SET_Lightf(exec, _mesa_Lightf);
+      SET_Lightfv(exec, _mesa_Lightfv);
+      SET_Lighti(exec, _mesa_Lighti);
+      SET_Lightiv(exec, _mesa_Lightiv);
+      SET_LoadMatrixd(exec, _mesa_LoadMatrixd);
+   }
 
    _mesa_init_eval_dispatch(exec);
 
-   SET_MultMatrixd(exec, _mesa_MultMatrixd);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_MultMatrixd(exec, _mesa_MultMatrixd);
+   }
 
    _mesa_init_pixel_dispatch(exec);
 
@@ -236,17 +269,21 @@ _mesa_create_exec_table(void)
    SET_PointSize(exec, _mesa_PointSize);
    SET_PolygonMode(exec, _mesa_PolygonMode);
    SET_PolygonOffset(exec, _mesa_PolygonOffset);
-   SET_PolygonStipple(exec, _mesa_PolygonStipple);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_PolygonStipple(exec, _mesa_PolygonStipple);
+   }
 
    _mesa_init_attrib_dispatch(exec);
    _mesa_init_rastpos_dispatch(exec);
 
    SET_ReadPixels(exec, _mesa_ReadPixels);
-   SET_Rotated(exec, _mesa_Rotated);
-   SET_Scaled(exec, _mesa_Scaled);
-   SET_SecondaryColorPointerEXT(exec, _mesa_SecondaryColorPointerEXT);
-   SET_TexEnvf(exec, _mesa_TexEnvf);
-   SET_TexEnviv(exec, _mesa_TexEnviv);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_Rotated(exec, _mesa_Rotated);
+      SET_Scaled(exec, _mesa_Scaled);
+      SET_SecondaryColorPointerEXT(exec, _mesa_SecondaryColorPointerEXT);
+      SET_TexEnvf(exec, _mesa_TexEnvf);
+      SET_TexEnviv(exec, _mesa_TexEnviv);
+   }
 
    _mesa_init_texgen_dispatch(exec);
 
@@ -254,32 +291,42 @@ _mesa_create_exec_table(void)
    SET_TexParameterf(exec, _mesa_TexParameterf);
    SET_TexParameterfv(exec, _mesa_TexParameterfv);
    SET_TexParameteriv(exec, _mesa_TexParameteriv);
-   SET_Translated(exec, _mesa_Translated);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_Translated(exec, _mesa_Translated);
+   }
 
    /* 1.1 */
    SET_BindTexture(exec, _mesa_BindTexture);
    SET_DeleteTextures(exec, _mesa_DeleteTextures);
    SET_GenTextures(exec, _mesa_GenTextures);
 #if _HAVE_FULL_GL
-   SET_AreTexturesResident(exec, _mesa_AreTexturesResident);
-   SET_ColorPointer(exec, _mesa_ColorPointer);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_AreTexturesResident(exec, _mesa_AreTexturesResident);
+      SET_ColorPointer(exec, _mesa_ColorPointer);
+   }
    SET_CopyTexImage1D(exec, _mesa_CopyTexImage1D);
    SET_CopyTexImage2D(exec, _mesa_CopyTexImage2D);
    SET_CopyTexSubImage1D(exec, _mesa_CopyTexSubImage1D);
    SET_CopyTexSubImage2D(exec, _mesa_CopyTexSubImage2D);
-   SET_DisableClientState(exec, _mesa_DisableClientState);
-   SET_EdgeFlagPointer(exec, _mesa_EdgeFlagPointer);
-   SET_EnableClientState(exec, _mesa_EnableClientState);
-   SET_GetPointerv(exec, _mesa_GetPointerv);
-   SET_IndexPointer(exec, _mesa_IndexPointer);
-   SET_InterleavedArrays(exec, _mesa_InterleavedArrays);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_DisableClientState(exec, _mesa_DisableClientState);
+      SET_EdgeFlagPointer(exec, _mesa_EdgeFlagPointer);
+      SET_EnableClientState(exec, _mesa_EnableClientState);
+      SET_GetPointerv(exec, _mesa_GetPointerv);
+      SET_IndexPointer(exec, _mesa_IndexPointer);
+      SET_InterleavedArrays(exec, _mesa_InterleavedArrays);
+   }
    SET_IsTexture(exec, _mesa_IsTexture);
-   SET_NormalPointer(exec, _mesa_NormalPointer);
-   SET_PrioritizeTextures(exec, _mesa_PrioritizeTextures);
-   SET_TexCoordPointer(exec, _mesa_TexCoordPointer);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_NormalPointer(exec, _mesa_NormalPointer);
+      SET_PrioritizeTextures(exec, _mesa_PrioritizeTextures);
+      SET_TexCoordPointer(exec, _mesa_TexCoordPointer);
+   }
    SET_TexSubImage1D(exec, _mesa_TexSubImage1D);
    SET_TexSubImage2D(exec, _mesa_TexSubImage2D);
-   SET_VertexPointer(exec, _mesa_VertexPointer);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_VertexPointer(exec, _mesa_VertexPointer);
+   }
 #endif
 
    /* 1.2 */
@@ -327,31 +374,37 @@ _mesa_create_exec_table(void)
 
    /* 11. GL_EXT_histogram */
 #if 0
-   SET_GetHistogramEXT(exec, _mesa_GetHistogram);
-   SET_GetHistogramParameterfvEXT(exec, _mesa_GetHistogramParameterfv);
-   SET_GetHistogramParameterivEXT(exec, _mesa_GetHistogramParameteriv);
-   SET_GetMinmaxEXT(exec, _mesa_GetMinmax);
-   SET_GetMinmaxParameterfvEXT(exec, _mesa_GetMinmaxParameterfv);
-   SET_GetMinmaxParameterivEXT(exec, _mesa_GetMinmaxParameteriv);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_GetHistogramEXT(exec, _mesa_GetHistogram);
+      SET_GetHistogramParameterfvEXT(exec, _mesa_GetHistogramParameterfv);
+      SET_GetHistogramParameterivEXT(exec, _mesa_GetHistogramParameteriv);
+      SET_GetMinmaxEXT(exec, _mesa_GetMinmax);
+      SET_GetMinmaxParameterfvEXT(exec, _mesa_GetMinmaxParameterfv);
+      SET_GetMinmaxParameterivEXT(exec, _mesa_GetMinmaxParameteriv);
+   }
 #endif
 
    /* 14. SGI_color_table */
 #if 0
-   SET_ColorTableSGI(exec, _mesa_ColorTable);
-   SET_ColorSubTableSGI(exec, _mesa_ColorSubTable);
-   SET_GetColorTableSGI(exec, _mesa_GetColorTable);
-   SET_GetColorTableParameterfvSGI(exec, _mesa_GetColorTableParameterfv);
-   SET_GetColorTableParameterivSGI(exec, _mesa_GetColorTableParameteriv);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_ColorTableSGI(exec, _mesa_ColorTable);
+      SET_ColorSubTableSGI(exec, _mesa_ColorSubTable);
+      SET_GetColorTableSGI(exec, _mesa_GetColorTable);
+      SET_GetColorTableParameterfvSGI(exec, _mesa_GetColorTableParameterfv);
+      SET_GetColorTableParameterivSGI(exec, _mesa_GetColorTableParameteriv);
+   }
 #endif
 
    /* 30. GL_EXT_vertex_array */
 #if _HAVE_FULL_GL
-   SET_ColorPointerEXT(exec, _mesa_ColorPointerEXT);
-   SET_EdgeFlagPointerEXT(exec, _mesa_EdgeFlagPointerEXT);
-   SET_IndexPointerEXT(exec, _mesa_IndexPointerEXT);
-   SET_NormalPointerEXT(exec, _mesa_NormalPointerEXT);
-   SET_TexCoordPointerEXT(exec, _mesa_TexCoordPointerEXT);
-   SET_VertexPointerEXT(exec, _mesa_VertexPointerEXT);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_ColorPointerEXT(exec, _mesa_ColorPointerEXT);
+      SET_EdgeFlagPointerEXT(exec, _mesa_EdgeFlagPointerEXT);
+      SET_IndexPointerEXT(exec, _mesa_IndexPointerEXT);
+      SET_NormalPointerEXT(exec, _mesa_NormalPointerEXT);
+      SET_TexCoordPointerEXT(exec, _mesa_TexCoordPointerEXT);
+      SET_VertexPointerEXT(exec, _mesa_VertexPointerEXT);
+   }
 #endif
 
    /* 37. GL_EXT_blend_minmax */
@@ -483,10 +536,12 @@ _mesa_create_exec_table(void)
 
    /* ARB 3. GL_ARB_transpose_matrix */
 #if _HAVE_FULL_GL
-   SET_LoadTransposeMatrixdARB(exec, _mesa_LoadTransposeMatrixdARB);
-   SET_LoadTransposeMatrixfARB(exec, _mesa_LoadTransposeMatrixfARB);
-   SET_MultTransposeMatrixdARB(exec, _mesa_MultTransposeMatrixdARB);
-   SET_MultTransposeMatrixfARB(exec, _mesa_MultTransposeMatrixfARB);
+   if (ctx->API != API_OPENGL_CORE) {
+      SET_LoadTransposeMatrixdARB(exec, _mesa_LoadTransposeMatrixdARB);
+      SET_LoadTransposeMatrixfARB(exec, _mesa_LoadTransposeMatrixfARB);
+      SET_MultTransposeMatrixdARB(exec, _mesa_MultTransposeMatrixdARB);
+      SET_MultTransposeMatrixfARB(exec, _mesa_MultTransposeMatrixfARB);
+   }
 #endif
 
    /* ARB 5. GL_ARB_multisample */

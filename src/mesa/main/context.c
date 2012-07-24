@@ -963,7 +963,7 @@ _mesa_initialize_context(struct gl_context *ctx,
 #if FEATURE_GL
    case API_OPENGL:
    case API_OPENGL_CORE:
-      ctx->Exec = _mesa_create_exec_table();
+      ctx->Exec = _mesa_create_exec_table(ctx);
       break;
 #endif
 #if FEATURE_ES1
