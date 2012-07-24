@@ -1733,14 +1733,14 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
       assert(dst_mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS);
       switch (dst_mt->num_samples) {
       case 4:
-         x0 = (x0 * 2) & ~3;
-         y0 = (y0 * 2) & ~3;
+         x0 = ROUND_DOWN_TO(x0 * 2, 4);
+         y0 = ROUND_DOWN_TO(y0 * 2, 4);
          x1 = ALIGN(x1 * 2, 4);
          y1 = ALIGN(y1 * 2, 4);
          break;
       case 8:
-         x0 = (x0 * 4) & ~7;
-         y0 = (y0 * 2) & ~3;
+         x0 = ROUND_DOWN_TO(x0 * 4, 8);
+         y0 = ROUND_DOWN_TO(y0 * 2, 4);
          x1 = ALIGN(x1 * 4, 8);
          y1 = ALIGN(y1 * 2, 4);
          break;
@@ -1770,8 +1770,8 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
          x_align /= (dst_mt->num_samples == 4 ? 2 : 4);
          y_align /= 2;
       }
-      x0 = (x0 & ~(x_align - 1)) * 2;
-      y0 = (y0 & ~(y_align - 1)) / 2;
+      x0 = ROUND_DOWN_TO(x0, x_align) * 2;
+      y0 = ROUND_DOWN_TO(y0, y_align) / 2;
       x1 = ALIGN(x1, x_align) * 2;
       y1 = ALIGN(y1, y_align) / 2;
       wm_prog_key.use_kill = true;
