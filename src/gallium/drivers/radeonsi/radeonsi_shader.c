@@ -554,6 +554,7 @@ int si_pipe_shader_create(
 	unsigned char * inst_bytes;
 	unsigned inst_byte_count;
 	unsigned i;
+	uint32_t *ptr;
 	bool dump;
 
 	dump = debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE);
@@ -608,23 +609,22 @@ int si_pipe_shader_create(
 	tgsi_parse_free(&si_shader_ctx.parse);
 
 	/* copy new shader */
+	si_resource_reference(&shader->bo, NULL);
+	shader->bo = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE,
+					       inst_byte_count - 12);
 	if (shader->bo == NULL) {
-		uint32_t *ptr;
-
-		shader->bo = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE, inst_byte_count);
-		if (shader->bo == NULL) {
-			return -ENOMEM;
-		}
-		ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
-		if (0 /*R600_BIG_ENDIAN*/) {
-			for (i = 0; i < (inst_byte_count-12)/4; ++i) {
-				ptr[i] = util_bswap32(*(uint32_t*)(inst_bytes+12 + i*4));
-			}
-		} else {
-			memcpy(ptr, inst_bytes + 12, inst_byte_count - 12);
-		}
-		rctx->ws->buffer_unmap(shader->bo->cs_buf);
+		return -ENOMEM;
 	}
+
+	ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
+	if (0 /*R600_BIG_ENDIAN*/) {
+		for (i = 0; i < (inst_byte_count-12)/4; ++i) {
+			ptr[i] = util_bswap32(*(uint32_t*)(inst_bytes+12 + i*4));
+		}
+	} else {
+		memcpy(ptr, inst_bytes + 12, inst_byte_count - 12);
+	}
+	rctx->ws->buffer_unmap(shader->bo->cs_buf);
 
 	free(inst_bytes);
 
