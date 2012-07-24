@@ -616,6 +616,11 @@ unsigned r600_tex_compare(unsigned compare);
 #define PKT3_PREDICATE(x)               (((x) >> 0) & 0x1)
 #define PKT3(op, count, predicate) (PKT_TYPE_S(3) | PKT_COUNT_S(count) | PKT3_IT_OPCODE_S(op) | PKT3_PREDICATE(predicate))
 
+#define RADEON_CP_PACKET3_COMPUTE_MODE 0x00000002
+
+/*Evergreen Compute packet3*/
+#define PKT3C(op, count, predicate) (PKT_TYPE_S(3) | PKT3_IT_OPCODE_S(op) | PKT_COUNT_S(count) | PKT3_PREDICATE(predicate) | RADEON_CP_PACKET3_COMPUTE_MODE)
+
 static INLINE void r600_store_value(struct r600_command_buffer *cb, unsigned value)
 {
 	cb->buf[cb->atom.num_dw++] = value;
@@ -745,6 +750,13 @@ static INLINE void r600_write_context_reg_seq(struct radeon_winsys_cs *cs, unsig
 	cs->buf[cs->cdw++] = (reg - R600_CONTEXT_REG_OFFSET) >> 2;
 }
 
+static INLINE void r600_write_compute_context_reg_seq(struct radeon_winsys_cs *cs, unsigned reg, unsigned num)
+{
+	r600_write_context_reg_seq(cs, reg, num);
+	/* Set the compute bit on the packet header */
+	cs->buf[cs->cdw - 2] |= RADEON_CP_PACKET3_COMPUTE_MODE;
+}
+
 static INLINE void r600_write_ctl_const_seq(struct radeon_winsys_cs *cs, unsigned reg, unsigned num)
 {
 	assert(reg >= R600_CTL_CONST_OFFSET);
@@ -762,6 +774,12 @@ static INLINE void r600_write_config_reg(struct radeon_winsys_cs *cs, unsigned r
 static INLINE void r600_write_context_reg(struct radeon_winsys_cs *cs, unsigned reg, unsigned value)
 {
 	r600_write_context_reg_seq(cs, reg, 1);
+	r600_write_value(cs, value);
+}
+
+static INLINE void r600_write_compute_context_reg(struct radeon_winsys_cs *cs, unsigned reg, unsigned value)
+{
+	r600_write_compute_context_reg_seq(cs, reg, 1);
 	r600_write_value(cs, value);
 }
 
