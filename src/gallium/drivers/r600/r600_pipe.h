@@ -100,6 +100,11 @@ struct r600_alphatest_state {
 	bool cb0_export_16bpc; /* from set_framebuffer_state */
 };
 
+struct r600_cs_shader_state {
+	struct r600_atom atom;
+	struct r600_pipe_compute *shader;
+};
+
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
@@ -324,7 +329,6 @@ struct r600_context {
 	struct pipe_clip_state		clip;
 	struct r600_pipe_shader_selector 	*ps_shader;
 	struct r600_pipe_shader_selector 	*vs_shader;
-	struct r600_pipe_compute	*cs_shader;
 	struct r600_pipe_rasterizer	*rasterizer;
 	struct r600_pipe_state          vgt;
 	struct r600_pipe_state          spi;
@@ -364,6 +368,7 @@ struct r600_context {
 	struct r600_constbuf_state	ps_constbuf_state;
 	struct r600_textures_info	vs_samplers;
 	struct r600_textures_info	ps_samplers;
+	struct r600_cs_shader_state	cs_shader_state;
 
 	struct radeon_winsys_cs	*cs;
 

@@ -120,6 +120,8 @@ void *evergreen_create_compute_state(
 	const const struct pipe_compute_state *cso)
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
+	struct r600_pipe_compute *shader = CALLOC_STRUCT(r600_pipe_compute);
+	void *p;
 
 #ifdef HAVE_OPENCL
 	const struct pipe_llvm_program_header * header;
@@ -130,13 +132,6 @@ void *evergreen_create_compute_state(
 	header = cso->prog;
 	code = cso->prog + sizeof(struct pipe_llvm_program_header);
 #endif
-
-	if (!ctx->screen->screen.get_param(&ctx->screen->screen,
-							PIPE_CAP_COMPUTE)) {
-		fprintf(stderr, "Compute is not supported\n");
-		return NULL;
-	}
-	struct r600_pipe_compute *shader =	CALLOC_STRUCT(r600_pipe_compute);
 
 	shader->ctx = (struct r600_context*)ctx;
 	shader->resources = (struct evergreen_compute_resource*)
@@ -151,6 +146,14 @@ void *evergreen_create_compute_state(
 
 	r600_compute_shader_create(ctx_, shader->mod, &shader->bc);
 #endif
+	shader->shader_code_bo = r600_compute_buffer_alloc_vram(ctx->screen,
+							shader->bc.ndw * 4);
+
+	p = ctx->ws->buffer_map(shader->shader_code_bo->cs_buf, ctx->cs,
+							PIPE_TRANSFER_WRITE);
+
+	memcpy(p, shader->bc.bytecode, shader->bc.ndw * 4);
+	ctx->ws->buffer_unmap(shader->shader_code_bo->cs_buf);
 	return shader;
 }
 
@@ -168,49 +171,7 @@ static void evergreen_bind_compute_state(struct pipe_context *ctx_, void *state)
 
 	COMPUTE_DBG("*** evergreen_bind_compute_state\n");
 
-	ctx->cs_shader = (struct r600_pipe_compute *)state;
-
-	if (!ctx->cs_shader->shader_code_bo) {
-
-		ctx->cs_shader->shader_code_bo =
-			r600_compute_buffer_alloc_vram(ctx->screen,
-					ctx->cs_shader->bc.ndw * 4);
-
-		void *p = ctx->ws->buffer_map(
-					ctx->cs_shader->shader_code_bo->cs_buf,
-					ctx->cs, PIPE_TRANSFER_WRITE);
-
-		memcpy(p, ctx->cs_shader->bc.bytecode, ctx->cs_shader->bc.ndw * 4);
-
-		ctx->ws->buffer_unmap(ctx->cs_shader->shader_code_bo->cs_buf);
-
-	}
-
-	struct evergreen_compute_resource* res = get_empty_res(ctx->cs_shader,
-						COMPUTE_RESOURCE_SHADER, 0);
-
-	if (ctx->chip_class < CAYMAN) {
-		evergreen_reg_set(res, R_008C0C_SQ_GPR_RESOURCE_MGMT_3,
-			S_008C0C_NUM_LS_GPRS(ctx->cs_shader->bc.ngpr));
-	}
-
-	///maybe we can use it later
-	evergreen_reg_set(res, R_0286C8_SPI_THREAD_GROUPING, 0);
-	///maybe we can use it later
-	evergreen_reg_set(res, R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2, 0);
-
-	evergreen_reg_set(res, R_0288D4_SQ_PGM_RESOURCES_LS,
-		S_0288D4_NUM_GPRS(ctx->cs_shader->bc.ngpr)
-		| S_0288D4_STACK_SIZE(ctx->cs_shader->bc.nstack));
-	evergreen_reg_set(res, R_0288D8_SQ_PGM_RESOURCES_LS_2, 0);
-
-	evergreen_reg_set(res, R_0288D0_SQ_PGM_START_LS, 0);
-	res->bo = ctx->cs_shader->shader_code_bo;
-	res->usage = RADEON_USAGE_READ;
-	res->coher_bo_size = ctx->cs_shader->bc.ndw*4;
-
-	r600_inval_shader_cache(ctx);
-
+	ctx->cs_shader_state.shader = (struct r600_pipe_compute *)state;
 }
 
 /* The kernel parameters are stored a vtx buffer (ID=0), besides the explicit
@@ -231,6 +192,7 @@ void evergreen_compute_upload_input(
 	const void *input)
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
+	struct r600_pipe_compute *shader = ctx->cs_shader_state.shader;
 	int i;
 	unsigned kernel_parameters_offset_bytes = 36;
 	uint32_t * num_work_groups_start;
@@ -238,23 +200,21 @@ void evergreen_compute_upload_input(
 	uint32_t * local_size_start;
 	uint32_t * kernel_parameters_start;
 
-	if (ctx->cs_shader->input_size == 0) {
+	if (shader->input_size == 0) {
 		return;
 	}
 
-	if (!ctx->cs_shader->kernel_param) {
-		unsigned buffer_size = ctx->cs_shader->input_size;
+	if (!shader->kernel_param) {
+		unsigned buffer_size = shader->input_size;
 
 		/* Add space for the grid dimensions */
 		buffer_size += kernel_parameters_offset_bytes * sizeof(uint);
-		ctx->cs_shader->kernel_param =
-				r600_compute_buffer_alloc_vram(ctx->screen,
-						buffer_size);
+		shader->kernel_param = r600_compute_buffer_alloc_vram(
+						ctx->screen, buffer_size);
 	}
 
 	num_work_groups_start = ctx->ws->buffer_map(
-			ctx->cs_shader->kernel_param->cs_buf,
-			ctx->cs, PIPE_TRANSFER_WRITE);
+		shader->kernel_param->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
 	global_size_start = num_work_groups_start + (3 * (sizeof(uint) /4));
 	local_size_start = global_size_start + (3 * (sizeof(uint)) / 4);
 	kernel_parameters_start = local_size_start + (3 * (sizeof(uint)) / 4);
@@ -271,22 +231,22 @@ void evergreen_compute_upload_input(
 	memcpy(local_size_start, block_layout, 3 * sizeof(uint));
 
 	/* Copy the kernel inputs */
-	memcpy(kernel_parameters_start, input, ctx->cs_shader->input_size);
+	memcpy(kernel_parameters_start, input, shader->input_size);
 
 	for (i = 0; i < (kernel_parameters_offset_bytes / 4) +
-					(ctx->cs_shader->input_size / 4); i++) {
+					(shader->input_size / 4); i++) {
 		COMPUTE_DBG("input %i : %i\n", i,
 			((unsigned*)num_work_groups_start)[i]);
 	}
 
-	ctx->ws->buffer_unmap(ctx->cs_shader->kernel_param->cs_buf);
+	ctx->ws->buffer_unmap(shader->kernel_param->cs_buf);
 
 	///ID=0 is reserved for the parameters
 	evergreen_cs_set_vertex_buffer(ctx, 0, 0,
-			(struct pipe_resource*)ctx->cs_shader->kernel_param);
+			(struct pipe_resource*)shader->kernel_param);
 	///ID=0 is reserved for parameters
-	evergreen_set_const_cache(ctx->cs_shader, 0,
-		ctx->cs_shader->kernel_param, ctx->cs_shader->input_size, 0);
+	evergreen_set_const_cache(shader, 0, shader->kernel_param,
+						shader->input_size, 0);
 }
 
 void evergreen_direct_dispatch(
@@ -298,10 +258,11 @@ void evergreen_direct_dispatch(
 	 * of type struct r600_context* called rctx.
 	 */
 	struct r600_context *rctx = (struct r600_context *)ctx_;
+	struct r600_pipe_compute *shader = rctx->cs_shader_state.shader;
 
 	int i;
 
-	struct evergreen_compute_resource* res = get_empty_res(rctx->cs_shader,
+	struct evergreen_compute_resource* res = get_empty_res(shader,
 		COMPUTE_RESOURCE_DISPATCH, 0);
 
 	/* Set CB_TARGET_MASK */
@@ -347,6 +308,8 @@ static void compute_emit_cs(struct r600_context *ctx)
 
 	struct r600_resource *onebo = NULL;
 	struct r600_pipe_state *cb_state;
+	struct evergreen_compute_resource *resources =
+					ctx->cs_shader_state.shader->resources;
 
 	/* Initialize all the registers common to both 3D and compute.  Some
 	 * 3D only register will be initialized by this atom as well, but
@@ -373,34 +336,37 @@ static void compute_emit_cs(struct r600_context *ctx)
 	ctx->cs_vertex_buffer_state.atom.num_dw = 12 * util_bitcount(ctx->cs_vertex_buffer_state.dirty_mask);
 	r600_emit_atom(ctx, &ctx->cs_vertex_buffer_state.atom);
 
+	/* Emit compute shader state */
+	r600_emit_atom(ctx, &ctx->cs_shader_state.atom);
+
 	for (i = 0; i < get_compute_resource_num(); i++) {
-		if (ctx->cs_shader->resources[i].enabled) {
+		if (resources[i].enabled) {
 			int j;
 			COMPUTE_DBG("resnum: %i, cdw: %i\n", i, cs->cdw);
 
-			for (j = 0; j < ctx->cs_shader->resources[i].cs_end; j++) {
-				if (ctx->cs_shader->resources[i].do_reloc[j]) {
-					assert(ctx->cs_shader->resources[i].bo);
+			for (j = 0; j < resources[i].cs_end; j++) {
+				if (resources[i].do_reloc[j]) {
+					assert(resources[i].bo);
 					evergreen_emit_ctx_reloc(ctx,
-						ctx->cs_shader->resources[i].bo,
-						ctx->cs_shader->resources[i].usage);
+						resources[i].bo,
+						resources[i].usage);
 				}
 
-				cs->buf[cs->cdw++] = ctx->cs_shader->resources[i].cs[j];
+				cs->buf[cs->cdw++] = resources[i].cs[j];
 			}
 
-			if (ctx->cs_shader->resources[i].bo) {
-				onebo = ctx->cs_shader->resources[i].bo;
+			if (resources[i].bo) {
+				onebo = resources[i].bo;
 				evergreen_emit_ctx_reloc(ctx,
-					ctx->cs_shader->resources[i].bo,
-					ctx->cs_shader->resources[i].usage);
+					resources[i].bo,
+					resources[i].usage);
 
 				///special case for textures
-				if (ctx->cs_shader->resources[i].do_reloc
-					[ctx->cs_shader->resources[i].cs_end] == 2) {
+				if (resources[i].do_reloc
+					[resources[i].cs_end] == 2) {
 					evergreen_emit_ctx_reloc(ctx,
-						ctx->cs_shader->resources[i].bo,
-						ctx->cs_shader->resources[i].usage);
+						resources[i].bo,
+						resources[i].usage);
 				}
 			}
 		}
@@ -439,6 +405,36 @@ static void compute_emit_cs(struct r600_context *ctx)
 
 }
 
+
+/**
+ * Emit function for r600_cs_shader_state atom
+ */
+void evergreen_emit_cs_shader(
+		struct r600_context *rctx,
+		struct r600_atom *atom)
+{
+	struct r600_cs_shader_state *state =
+					(struct r600_cs_shader_state*)atom;
+	struct r600_pipe_compute *shader = state->shader;
+	struct radeon_winsys_cs *cs = rctx->cs;
+	uint64_t va;
+
+	va = r600_resource_va(&rctx->screen->screen, &shader->shader_code_bo->b.b);
+
+	r600_write_compute_context_reg_seq(cs, R_0288D0_SQ_PGM_START_LS, 3);
+	r600_write_value(cs, va >> 8); /* R_0288D0_SQ_PGM_START_LS */
+	r600_write_value(cs,           /* R_0288D4_SQ_PGM_RESOURCES_LS */
+			S_0288D4_NUM_GPRS(shader->bc.ngpr)
+			| S_0288D4_STACK_SIZE(shader->bc.nstack));
+	r600_write_value(cs, 0);	/* R_0288D8_SQ_PGM_RESOURCES_LS_2 */
+
+	r600_write_value(cs, PKT3C(PKT3_NOP, 0, 0));
+	r600_write_value(cs, r600_context_bo_reloc(rctx, shader->shader_code_bo,
+							RADEON_USAGE_READ));
+
+	r600_inval_shader_cache(rctx);
+}
+
 static void evergreen_launch_grid(
 		struct pipe_context *ctx_,
 		const uint *block_layout, const uint *grid_layout,
@@ -458,7 +454,7 @@ static void evergreen_launch_grid(
 	COMPUTE_DBG("Using %u pipes, there are %u wavefronts per thread block\n",
 							num_pipes, num_waves);
 
-	evergreen_set_lds(ctx->cs_shader, 0, 0, num_waves);
+	evergreen_set_lds(ctx->cs_shader_state.shader, 0, 0, num_waves);
 	evergreen_compute_upload_input(ctx_, block_layout, grid_layout, input);
 	evergreen_direct_dispatch(ctx_, block_layout, grid_layout);
 	compute_emit_cs(ctx);
@@ -485,7 +481,7 @@ static void evergreen_set_compute_resources(struct pipe_context * ctx_,
 			if (resources[i]->base.writable) {
 				assert(i+1 < 12);
 
-				evergreen_set_rat(ctx->cs_shader, i+1,
+				evergreen_set_rat(ctx->cs_shader_state.shader, i+1,
 				(struct r600_resource *)resources[i]->base.texture,
 				buffer->chunk->start_in_dw*4,
 				resources[i]->base.texture->width0);
@@ -511,7 +507,7 @@ static void evergreen_set_cs_sampler_view(struct pipe_context *ctx_,
 			assert(i+1 < 12);
 			///FETCH0 = VTX0 (param buffer),
 			//FETCH1 = VTX1 (global buffer pool), FETCH2... = TEX
-			evergreen_set_tex_resource(ctx->cs_shader, resource[i], i+2);
+			evergreen_set_tex_resource(ctx->cs_shader_state.shader, resource[i], i+2);
 		}
 	}
 }
@@ -528,7 +524,8 @@ static void evergreen_bind_compute_sampler_states(
 
 	for (int i = 0; i < num_samplers; i++) {
 		if (samplers[i]) {
-			evergreen_set_sampler_resource(ctx->cs_shader, samplers[i], i);
+			evergreen_set_sampler_resource(
+				ctx->cs_shader_state.shader, samplers[i], i);
 		}
 	}
 }
@@ -561,7 +558,7 @@ static void evergreen_set_global_binding(
 		*(handles[i]) = buffers[i]->chunk->start_in_dw * 4;
 	}
 
-	evergreen_set_rat(ctx->cs_shader, 0, pool->bo, 0, pool->size_in_dw * 4);
+	evergreen_set_rat(ctx->cs_shader_state.shader, 0, pool->bo, 0, pool->size_in_dw * 4);
 	evergreen_cs_set_vertex_buffer(ctx, 1, 0,
 				(struct pipe_resource*)pool->bo);
 }

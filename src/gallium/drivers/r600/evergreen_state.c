@@ -1912,6 +1912,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(&rctx->ps_constbuf_state.atom, evergreen_emit_ps_constant_buffers, 0, 0);
 	r600_init_atom(&rctx->vs_samplers.views.atom, evergreen_emit_vs_sampler_views, 0, 0);
 	r600_init_atom(&rctx->ps_samplers.views.atom, evergreen_emit_ps_sampler_views, 0, 0);
+	r600_init_atom(&rctx->cs_shader_state.atom, evergreen_emit_cs_shader, 0, 0);
 
 	rctx->context.create_blend_state = evergreen_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
