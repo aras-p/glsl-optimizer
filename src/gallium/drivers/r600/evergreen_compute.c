@@ -268,8 +268,6 @@ void evergreen_direct_dispatch(
 	/* Set CB_TARGET_MASK */
 	evergreen_reg_set(res, R_028238_CB_TARGET_MASK, rctx->compute_cb_target_mask);
 
-	evergreen_reg_set(res, R_008958_VGT_PRIMITIVE_TYPE, V_008958_DI_PT_POINTLIST);
-
 	evergreen_reg_set(res, R_00899C_VGT_COMPUTE_START_X, 0);
 	evergreen_reg_set(res, R_0089A0_VGT_COMPUTE_START_Y, 0);
 	evergreen_reg_set(res, R_0089A4_VGT_COMPUTE_START_Z, 0);
@@ -633,6 +631,11 @@ void evergreen_init_atom_start_compute_cs(struct r600_context *ctx)
 	}
 
 	/* Config Registers */
+
+	/* The primitive type always needs to be POINTLIST for compute. */
+	r600_store_config_reg(cb, R_008958_VGT_PRIMITIVE_TYPE,
+						V_008958_DI_PT_POINTLIST);
+
 	if (ctx->chip_class < CAYMAN) {
 
 		/* These registers control which simds can be used by each stage.
