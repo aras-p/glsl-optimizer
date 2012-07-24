@@ -29,6 +29,7 @@
 #include "nouveau_util.h"
 
 #include "main/bufferobj.h"
+#include "main/glformats.h"
 #include "main/image.h"
 
 /* Arbitrary pushbuf length we can assume we can get with a single
