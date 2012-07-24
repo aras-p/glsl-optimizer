@@ -114,7 +114,7 @@ struct cso_context {
    struct pipe_framebuffer_state fb, fb_saved;
    struct pipe_viewport_state vp, vp_saved;
    struct pipe_blend_color blend_color;
-   unsigned sample_mask;
+   unsigned sample_mask, sample_mask_saved;
    struct pipe_stencil_ref stencil_ref, stencil_ref_saved;
 };
 
@@ -265,6 +265,7 @@ struct cso_context *cso_create_context( struct pipe_context *pipe )
                                    ctx);
 
    ctx->pipe = pipe;
+   ctx->sample_mask_saved = ~0;
 
    cso_init_vbuf(ctx);
 
@@ -689,6 +690,16 @@ enum pipe_error cso_set_sample_mask(struct cso_context *ctx,
       ctx->pipe->set_sample_mask(ctx->pipe, sample_mask);
    }
    return PIPE_OK;
+}
+
+void cso_save_sample_mask(struct cso_context *ctx)
+{
+   ctx->sample_mask_saved = ctx->sample_mask;
+}
+
+void cso_restore_sample_mask(struct cso_context *ctx)
+{
+   cso_set_sample_mask(ctx, ctx->sample_mask_saved);
 }
 
 enum pipe_error cso_set_stencil_ref(struct cso_context *ctx,
