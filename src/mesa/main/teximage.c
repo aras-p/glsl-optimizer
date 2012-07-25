@@ -28,7 +28,7 @@
  * Texture image-related functions.
  */
 
-
+#include <stdbool.h>
 #include "glheader.h"
 #include "bufferobj.h"
 #include "context.h"
@@ -2670,13 +2670,23 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+   bool valid_target;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if ((target == GL_TEXTURE_2D &&
-        !ctx->Extensions.OES_EGL_image) ||
-       (target == GL_TEXTURE_EXTERNAL_OES &&
-        !ctx->Extensions.OES_EGL_image_external)) {
+   switch (target) {
+   case GL_TEXTURE_2D:
+      valid_target = ctx->Extensions.OES_EGL_image;
+      break;
+   case GL_TEXTURE_EXTERNAL_OES:
+      valid_target = ctx->Extensions.OES_EGL_image_external;
+      break;
+   default:
+      valid_target = false;
+      break;
+   }
+
+   if (!valid_target) {
       _mesa_error(ctx, GL_INVALID_ENUM,
 		  "glEGLImageTargetTexture2D(target=%d)", target);
       return;

@@ -3114,11 +3114,6 @@
 		<param name="target" type="GLenum"/>
 		<param name="image" type="GLeglImageOES"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_TEXTURE_EXTERNAL_OES" category="OES_EGL_image_external"/>
-	</desc>
 </template>
 
 <template name="EGLImageTargetRenderbufferStorage">
