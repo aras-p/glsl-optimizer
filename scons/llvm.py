@@ -180,9 +180,6 @@ def generate(env):
 
             components = ['engine', 'bitwriter', 'x86asmprinter']
 
-            if llvm_version >= distutils.version.LooseVersion('3.2'):
-                components.append('instrumentation')
-
             if llvm_version >= distutils.version.LooseVersion('3.1'):
                 components.append('mcjit')
 
