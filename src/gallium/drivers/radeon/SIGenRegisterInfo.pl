@@ -167,7 +167,8 @@ def AllReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
     (add VReg_32, SReg_32)
 >;
 
-def CCReg : RegisterClass<"AMDGPU", [f32], 32, (add VCC, SCC)>;
+def SCCReg : RegisterClass<"AMDGPU", [i1], 1, (add SCC)>;
+def VCCReg : RegisterClass<"AMDGPU", [i1], 1, (add VCC)>;
 
 STRING
 
@@ -264,6 +265,12 @@ sub print_reg_class {
     print "def $reg_name : $reg_prefix\_$reg_width <$i, \"$reg_name\", [ ", join(',', @sub_regs) , "]>;\n";
     push (@registers, $reg_name);
   }
+
+  #Add VCC to SReg_64
+  if ($class_prefix eq 'SReg' and $reg_width == 64) {
+    push (@registers, 'VCC')
+  }
+
   my $reg_list = join(', ', @registers);
 
   print "def $class_prefix\_$reg_width : RegisterClass<\"AMDGPU\", [" . join (', ', @types) . "], $reg_width,\n  (add $reg_list)\n>{\n";

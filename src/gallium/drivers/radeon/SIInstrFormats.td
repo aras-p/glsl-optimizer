@@ -121,8 +121,8 @@ multiclass VOPC_64 <bits<8> op, string opName, list<dag> pattern> {
 }
 
 class SOPC_32 <bits<7> op, string opName, list<dag> pattern>
-  : SOPC <op, (outs CCReg:$dst), (ins SReg_32:$src0, SReg_32:$src1), opName, pattern>;
+  : SOPC <op, (outs SCCReg:$dst), (ins SReg_32:$src0, SReg_32:$src1), opName, pattern>;
 
 class SOPC_64 <bits<7> op, string opName, list<dag> pattern>
-  : SOPC <op, (outs CCReg:$dst), (ins SReg_64:$src0, SReg_64:$src1), opName, pattern>;
+  : SOPC <op, (outs SCCReg:$dst), (ins SReg_64:$src0, SReg_64:$src1), opName, pattern>;
 
