@@ -329,6 +329,7 @@ static LLVMValueRef fetch_constant(
 
 	LLVMValueRef const_ptr;
 	LLVMValueRef offset;
+	LLVMValueRef load;
 
 	/* XXX: Assume the pointer to the constant buffer is being stored in
 	 * SGPR[0:1] */
@@ -340,7 +341,8 @@ static LLVMValueRef fetch_constant(
 	offset = lp_build_const_int32(base->gallivm,
 					(reg->Register.Index * 4) + swizzle);
 
-	return build_indexed_load(base->gallivm, const_ptr, offset);
+	load = build_indexed_load(base->gallivm, const_ptr, offset);
+	return bitcast(bld_base, type, load);
 }
 
 /* XXX: This is partially implemented for VS only at this point.  It is not complete */
