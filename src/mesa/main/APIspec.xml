@@ -2476,10 +2476,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="pointer" type="GLvoid **" size="dynamic"/>
 	</proto>
-
-	<desc name="pname">
-		<value name="GL_VERTEX_ATTRIB_ARRAY_POINTER"/>
-	</desc>
 </template>
 
 <template name="GetBufferPointer" direction="get">
