@@ -1843,12 +1843,6 @@
 		<param name="data" type="const GLvoid *"/>
 		<param name="usage" type="GLenum"/>
 	</proto>
-
-	<desc name="usage">
-		<value name="GL_STATIC_DRAW"/>
-		<value name="GL_DYNAMIC_DRAW"/>
-		<value name="GL_STREAM_DRAW" category="GLES2.0"/>
-	</desc>
 </template>
 
 <template name="BufferSubData">

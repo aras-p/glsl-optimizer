@@ -30,7 +30,7 @@
  * \author Brian Paul, Ian Romanick
  */
 
-
+#include <stdbool.h>
 #include "glheader.h"
 #include "enums.h"
 #include "hash.h"
@@ -1009,6 +1009,7 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
+   bool valid_usage;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
@@ -1024,18 +1025,30 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
 
    switch (usage) {
    case GL_STREAM_DRAW_ARB:
+      valid_usage = (ctx->API != API_OPENGLES);
+      break;
+
+   case GL_STATIC_DRAW_ARB:
+   case GL_DYNAMIC_DRAW_ARB:
+      valid_usage = true;
+      break;
+
    case GL_STREAM_READ_ARB:
    case GL_STREAM_COPY_ARB:
-   case GL_STATIC_DRAW_ARB:
    case GL_STATIC_READ_ARB:
    case GL_STATIC_COPY_ARB:
-   case GL_DYNAMIC_DRAW_ARB:
    case GL_DYNAMIC_READ_ARB:
    case GL_DYNAMIC_COPY_ARB:
-      /* OK */
+      valid_usage = _mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx);
       break;
+
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBufferDataARB(usage)");
+      valid_usage = false;
+      break;
+   }
+
+   if (!valid_usage) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBufferData(usage)");
       return;
    }
 
