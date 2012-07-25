@@ -383,17 +383,17 @@ static void si_update_derived_state(struct r600_context *rctx)
 static void si_vertex_buffer_update(struct r600_context *rctx)
 {
 	struct pipe_context *ctx = &rctx->context;
-	struct si_resource *rbuffer, *t_list_buffer;
-	struct pipe_vertex_buffer *vertex_buffer;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
-	unsigned i, count, offset;
+	bool bound[PIPE_MAX_ATTRIBS] = {};
+	struct si_resource *t_list_buffer;
+	unsigned i, count;
 	uint32_t *ptr;
 	uint64_t va;
 
 	si_pm4_inval_vertex_cache(pm4);
 
 	/* bind vertex buffer once */
-	count = rctx->nr_vertex_buffers;
+	count = rctx->vertex_elements->count;
 	assert(count <= 256 / 4);
 
 	t_list_buffer = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE,
@@ -402,70 +402,50 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 		FREE(pm4);
 		return;
 	}
+	si_pm4_add_bo(pm4, t_list_buffer, RADEON_USAGE_READ);
 
 	ptr = (uint32_t*)rctx->ws->buffer_map(t_list_buffer->cs_buf,
 					      rctx->cs,
 					      PIPE_TRANSFER_WRITE);
 
 	for (i = 0 ; i < count; i++, ptr += 4) {
-		struct pipe_vertex_element *velem = &rctx->vertex_elements->elements[i];
-		const struct util_format_description *desc;
-		unsigned data_format, num_format;
-		int first_non_void;
+		struct pipe_vertex_element *ve = &rctx->vertex_elements->elements[i];
+		struct pipe_vertex_buffer *vb;
+		struct si_resource *rbuffer;
+		unsigned offset;
 
-		/* bind vertex buffer once */
-		vertex_buffer = &rctx->vertex_buffer[i];
-		rbuffer = (struct si_resource*)vertex_buffer->buffer;
-		offset = 0;
-		if (vertex_buffer == NULL || rbuffer == NULL)
+		if (ve->vertex_buffer_index >= rctx->nr_vertex_buffers)
 			continue;
-		offset += vertex_buffer->buffer_offset;
+
+		vb = &rctx->vertex_buffer[ve->vertex_buffer_index];
+		rbuffer = (struct si_resource*)vb->buffer;
+		if (rbuffer == NULL)
+			continue;
+
+		offset = 0;
+		offset += vb->buffer_offset;
+		offset += ve->src_offset;
 
 		va = r600_resource_va(ctx->screen, (void*)rbuffer);
 		va += offset;
 
-		desc = util_format_description(velem->src_format);
-		first_non_void = util_format_get_first_non_void_channel(velem->src_format);
-		data_format = si_translate_vertexformat(ctx->screen,
-							velem->src_format,
-							desc, first_non_void);
-
-		switch (desc->channel[first_non_void].type) {
-		case UTIL_FORMAT_TYPE_FIXED:
-			num_format = V_008F0C_BUF_NUM_FORMAT_USCALED; /* XXX */
-			break;
-		case UTIL_FORMAT_TYPE_SIGNED:
-			num_format = V_008F0C_BUF_NUM_FORMAT_SNORM;
-			break;
-		case UTIL_FORMAT_TYPE_UNSIGNED:
-			num_format = V_008F0C_BUF_NUM_FORMAT_UNORM;
-			break;
-		case UTIL_FORMAT_TYPE_FLOAT:
-		default:
-			num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
-		}
-
 		/* Fill in T# buffer resource description */
 		ptr[0] = va & 0xFFFFFFFF;
 		ptr[1] = (S_008F04_BASE_ADDRESS_HI(va >> 32) |
-			  S_008F04_STRIDE(vertex_buffer->stride));
-		if (vertex_buffer->stride > 0)
-			ptr[2] = ((vertex_buffer->buffer->width0 - offset) /
-				  vertex_buffer->stride);
+			  S_008F04_STRIDE(vb->stride));
+		if (vb->stride > 0)
+			ptr[2] = (vb->buffer->width0 - offset) / vb->stride;
 		else
-			ptr[2] = vertex_buffer->buffer->width0 - offset;
-		ptr[3] = (S_008F0C_DST_SEL_X(si_map_swizzle(desc->swizzle[0])) |
-			  S_008F0C_DST_SEL_Y(si_map_swizzle(desc->swizzle[1])) |
-			  S_008F0C_DST_SEL_Z(si_map_swizzle(desc->swizzle[2])) |
-			  S_008F0C_DST_SEL_W(si_map_swizzle(desc->swizzle[3])) |
-			  S_008F0C_NUM_FORMAT(num_format) |
-			  S_008F0C_DATA_FORMAT(data_format));
+			ptr[2] = vb->buffer->width0 - offset;
+		ptr[3] = rctx->vertex_elements->rsrc_word3[i];
 
-		si_pm4_add_bo(pm4, rbuffer, RADEON_USAGE_READ);
+		if (!bound[ve->vertex_buffer_index]) {
+			si_pm4_add_bo(pm4, rbuffer, RADEON_USAGE_READ);
+			bound[ve->vertex_buffer_index] = true;
+		}
 	}
 
 	va = r600_resource_va(ctx->screen, (void*)t_list_buffer);
-	si_pm4_add_bo(pm4, t_list_buffer, RADEON_USAGE_READ);
 	si_pm4_set_reg(pm4, R_00B148_SPI_SHADER_USER_DATA_VS_6, va);
 	si_pm4_set_reg(pm4, R_00B14C_SPI_SHADER_USER_DATA_VS_7, va >> 32);
 	si_pm4_set_state(rctx, vertex_buffers, pm4);

@@ -63,8 +63,9 @@ struct si_state_dsa {
 
 struct si_vertex_element
 {
-        unsigned                        count;
-        struct pipe_vertex_element      elements[PIPE_MAX_ATTRIBS];
+	unsigned			count;
+	uint32_t			rsrc_word3[PIPE_MAX_ATTRIBS];
+	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
 };
 
 struct si_shader_io {
@@ -157,10 +158,6 @@ union si_state {
 	} while(0);
 
 /* si_state.c */
-uint32_t si_translate_vertexformat(struct pipe_screen *screen,
-				   enum pipe_format format,
-				   const struct util_format_description *desc,
-				   int first_non_void);
 bool si_is_format_supported(struct pipe_screen *screen,
 			    enum pipe_format format,
 			    enum pipe_texture_target target,

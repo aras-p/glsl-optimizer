@@ -182,7 +182,7 @@ static void declare_input_vs(
 	struct lp_build_context * uint = &si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
 	struct lp_build_context * base = &si_shader_ctx->radeon_bld.soa.bld_base.base;
 	struct r600_context *rctx = si_shader_ctx->rctx;
-	struct pipe_vertex_element *velem = &rctx->vertex_elements->elements[input_index];
+	//struct pipe_vertex_element *velem = &rctx->vertex_elements->elements[input_index];
 	unsigned chan;
 
 	/* Load the T list */
@@ -191,12 +191,12 @@ static void declare_input_vs(
  	 * now */
 	t_list_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_V4I32, 6);
 
-	t_offset = lp_build_const_int32(base->gallivm, velem->vertex_buffer_index);
+	t_offset = lp_build_const_int32(base->gallivm, input_index);
 
 	t_list = build_indexed_load(base->gallivm, t_list_ptr, t_offset);
 
 	/* Build the attribute offset */
-	attribute_offset = lp_build_const_int32(base->gallivm, velem->src_offset);
+	attribute_offset = lp_build_const_int32(base->gallivm, 0);
 
 	/* Load the buffer index is always, which is always stored in VGPR0
 	 * for Vertex Shaders */

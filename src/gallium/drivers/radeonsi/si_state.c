@@ -1226,10 +1226,10 @@ static bool si_is_sampler_format_supported(struct pipe_screen *screen, enum pipe
 				      util_format_get_first_non_void_channel(format)) != ~0U;
 }
 
-uint32_t si_translate_vertexformat(struct pipe_screen *screen,
-				   enum pipe_format format,
-				   const struct util_format_description *desc,
-				   int first_non_void)
+static uint32_t si_translate_vertexformat(struct pipe_screen *screen,
+					  enum pipe_format format,
+					  const struct util_format_description *desc,
+					  int first_non_void)
 {
 	uint32_t result;
 
@@ -2078,12 +2078,45 @@ static void *si_create_vertex_elements(struct pipe_context *ctx,
 				       const struct pipe_vertex_element *elements)
 {
 	struct si_vertex_element *v = CALLOC_STRUCT(si_vertex_element);
+	int i;
 
-	assert(count < 32);
+	assert(count < PIPE_MAX_ATTRIBS);
 	if (!v)
 		return NULL;
 
 	v->count = count;
+	for (i = 0; i < count; ++i) {
+		const struct util_format_description *desc;
+		unsigned data_format, num_format;
+		int first_non_void;
+
+		desc = util_format_description(elements[i].src_format);
+		first_non_void = util_format_get_first_non_void_channel(elements[i].src_format);
+		data_format = si_translate_vertexformat(ctx->screen, elements[i].src_format,
+							desc, first_non_void);
+
+		switch (desc->channel[first_non_void].type) {
+		case UTIL_FORMAT_TYPE_FIXED:
+			num_format = V_008F0C_BUF_NUM_FORMAT_USCALED; /* XXX */
+			break;
+		case UTIL_FORMAT_TYPE_SIGNED:
+			num_format = V_008F0C_BUF_NUM_FORMAT_SNORM;
+			break;
+		case UTIL_FORMAT_TYPE_UNSIGNED:
+			num_format = V_008F0C_BUF_NUM_FORMAT_UNORM;
+			break;
+		case UTIL_FORMAT_TYPE_FLOAT:
+		default:
+			num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
+		}
+
+		v->rsrc_word3[i] = S_008F0C_DST_SEL_X(si_map_swizzle(desc->swizzle[0])) |
+				   S_008F0C_DST_SEL_Y(si_map_swizzle(desc->swizzle[1])) |
+				   S_008F0C_DST_SEL_Z(si_map_swizzle(desc->swizzle[2])) |
+				   S_008F0C_DST_SEL_W(si_map_swizzle(desc->swizzle[3])) |
+				   S_008F0C_NUM_FORMAT(num_format) |
+				   S_008F0C_DATA_FORMAT(data_format);
+	}
 	memcpy(v->elements, elements, sizeof(struct pipe_vertex_element) * count);
 
 	return v;
