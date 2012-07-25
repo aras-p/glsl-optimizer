@@ -354,17 +354,15 @@ void GLAPIENTRY
 _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
                       const GLvoid *ptr)
 {
-   GLbitfield legalTypes = (SHORT_BIT | INT_BIT |
-                            HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
-                            FIXED_ES_BIT |
-                            UNSIGNED_INT_2_10_10_10_REV_BIT |
-                            INT_2_10_10_10_REV_BIT);
    GET_CURRENT_CONTEXT(ctx);
+   GLbitfield legalTypes = (ctx->API == API_OPENGLES)
+      ? (BYTE_BIT | SHORT_BIT | FLOAT_BIT | FIXED_ES_BIT)
+      : (SHORT_BIT | INT_BIT |
+         HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
+         UNSIGNED_INT_2_10_10_10_REV_BIT |
+         INT_2_10_10_10_REV_BIT);
    const GLuint unit = ctx->Array.ActiveTexture;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   if (ctx->API == API_OPENGLES)
-      legalTypes |= BYTE_BIT;
 
    update_array(ctx, "glTexCoordPointer", VERT_ATTRIB_TEX(unit),
                 legalTypes, 1, 4,
