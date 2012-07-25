@@ -249,15 +249,14 @@ update_array(struct gl_context *ctx,
 void GLAPIENTRY
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
-   GLbitfield legalTypes = (SHORT_BIT | INT_BIT | FLOAT_BIT |
-                            DOUBLE_BIT | HALF_BIT | FIXED_ES_BIT |
-                            UNSIGNED_INT_2_10_10_10_REV_BIT |
-                            INT_2_10_10_10_REV_BIT);
    GET_CURRENT_CONTEXT(ctx);
+   GLbitfield legalTypes = (ctx->API == API_OPENGLES)
+      ? (BYTE_BIT | SHORT_BIT | FLOAT_BIT | FIXED_ES_BIT)
+      : (SHORT_BIT | INT_BIT | FLOAT_BIT |
+         DOUBLE_BIT | HALF_BIT |
+         UNSIGNED_INT_2_10_10_10_REV_BIT |
+         INT_2_10_10_10_REV_BIT);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   if (ctx->API == API_OPENGLES)
-      legalTypes |= BYTE_BIT;
 
    update_array(ctx, "glVertexPointer", VERT_ATTRIB_POS,
                 legalTypes, 2, 4,
