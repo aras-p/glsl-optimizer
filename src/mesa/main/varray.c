@@ -150,6 +150,11 @@ update_array(struct gl_context *ctx,
                              | UNSIGNED_INT_2_10_10_10_REV_BIT
                              | INT_2_10_10_10_REV_BIT);
       }
+
+      /* BGRA ordering is not supported in ES contexts.
+       */
+      if (sizeMax == BGRA_OR_4)
+         sizeMax = 4;
    } else {
       legalTypesMask &= ~FIXED_ES_BIT;
 
