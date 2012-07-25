@@ -1350,12 +1350,6 @@
 		<param name="pointer" type="const GLvoid *"/>
 	</proto>
 
-	<desc name="size" error="GL_INVALID_VALUE">
-		<value name="2"/>
-		<value name="3"/>
-		<value name="4"/>
-	</desc>
-
 	<desc name="type">
 		<value name="GL_BYTE"/>
 		<value name="GL_SHORT"/>
