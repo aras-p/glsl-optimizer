@@ -1950,8 +1950,8 @@ mip_filter_linear_2d_linear_repeat_POT(
          float rgbax[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
          int c;
 
-         img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], level0,   samp->faces[j], tgsi_sampler_lod_bias, &rgbax[0][j]);
-         img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], level0+1, samp->faces[j], tgsi_sampler_lod_bias, &rgbax[0][j]);
+         img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], level0,   samp->faces[j], tgsi_sampler_lod_bias, &rgbax[0][0]);
+         img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], level0+1, samp->faces[j], tgsi_sampler_lod_bias, &rgbax[0][1]);
 
          for (c = 0; c < TGSI_NUM_CHANNELS; c++)
             rgba[c][j] = lerp(levelBlend, rgbax[c][0], rgbax[c][1]);
