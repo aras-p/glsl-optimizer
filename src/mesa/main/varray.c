@@ -133,16 +133,32 @@ update_array(struct gl_context *ctx,
    GLsizei elementSize;
    GLenum format = GL_RGBA;
 
-   if (ctx->API != API_OPENGLES && ctx->API != API_OPENGLES2) {
-      /* fixed point arrays / data is only allowed with OpenGL ES 1.x/2.0 */
+   if (_mesa_is_gles(ctx)) {
+      /* Once Mesa gets support for GL_OES_vertex_half_float this mask will
+       * change.  Adding support for this extension isn't quite as trivial as
+       * we'd like because ES uses a different enum value for GL_HALF_FLOAT.
+       */
+      legalTypesMask &= ~(FIXED_GL_BIT | HALF_BIT | DOUBLE_BIT);
+
+      /* GL_INT and GL_UNSIGNED_INT data is not allowed in OpenGL ES until
+       * 3.0.  The 2_10_10_10 types are added in OpenGL ES 3.0 or
+       * GL_OES_vertex_type_10_10_10_2.
+       */
+      if (ctx->Version < 30) {
+         legalTypesMask &= ~(UNSIGNED_INT_BIT
+                             | INT_BIT
+                             | UNSIGNED_INT_2_10_10_10_REV_BIT
+                             | INT_2_10_10_10_REV_BIT);
+      }
+   } else {
       legalTypesMask &= ~FIXED_ES_BIT;
-   }
-   if (!ctx->Extensions.ARB_ES2_compatibility) {
-      legalTypesMask &= ~FIXED_GL_BIT;
-   }
-   if (!ctx->Extensions.ARB_vertex_type_2_10_10_10_rev) {
-      legalTypesMask &= ~(UNSIGNED_INT_2_10_10_10_REV_BIT |
-                          INT_2_10_10_10_REV_BIT);
+
+      if (!ctx->Extensions.ARB_ES2_compatibility)
+         legalTypesMask &= ~FIXED_GL_BIT;
+
+      if (!ctx->Extensions.ARB_vertex_type_2_10_10_10_rev)
+         legalTypesMask &= ~(UNSIGNED_INT_2_10_10_10_REV_BIT |
+                             INT_2_10_10_10_REV_BIT);
    }
 
    typeBit = type_to_bit(ctx, type);
