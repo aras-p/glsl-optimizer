@@ -56,6 +56,11 @@ class SIOperand <ValueType vt, dag opInfo>: Operand <vt> {
   let MIOperandInfo = opInfo;
 }
 
+def IMM16bit : ImmLeaf <
+  i16,
+  [{return isInt<16>(Imm);}]
+>;
+
 def IMM8bit : ImmLeaf <
   i32,
   [{return (int32_t)Imm >= 0 && (int32_t)Imm <= 0xff;}]
@@ -299,6 +304,8 @@ class SOPC <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{22-16} = op;
   let Inst{31-23} = 0x17e;
   let EncodingType = 8; // SIInstrEncodingType::SOPC
+
+  let DisableEncoding = "$dst";
 }
 
 class SOPK <bits<5> op, dag outs, dag ins, string asm, list<dag> pattern> :
@@ -314,11 +321,11 @@ class SOPK <bits<5> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let EncodingType = 9; // SIInstrEncodingType::SOPK
 }
 
-class SOPP <bits<7> op, dag ins, string asm> : Enc32 <
+class SOPP <bits<7> op, dag ins, string asm, list<dag> pattern> : Enc32 <
   (outs),
   ins,
   asm,
-  [] > {
+  pattern > {
 
   bits <16> SIMM16;
 

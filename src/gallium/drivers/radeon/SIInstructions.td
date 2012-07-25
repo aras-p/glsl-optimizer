@@ -77,7 +77,26 @@ def S_ABS_I32 : SOP1_32 <0x00000034, "S_ABS_I32", []>;
 def S_MOV_FED_B32 : SOP1_32 <0x00000035, "S_MOV_FED_B32", []>;
 def S_MOVK_I32 : SOPK_32 <0x00000000, "S_MOVK_I32", []>;
 def S_CMOVK_I32 : SOPK_32 <0x00000002, "S_CMOVK_I32", []>;
-def S_CMPK_EQ_I32 : SOPK_32 <0x00000003, "S_CMPK_EQ_I32", []>;
+
+/*
+This instruction is disabled for now until we can figure out how to teach
+the instruction selector to correctly use the  S_CMP* vs V_CMP*
+instructions.
+
+When this instruction is enabled the code generator sometimes produces this
+invalid sequence:
+
+SCC = S_CMPK_EQ_I32 SGPR0, imm
+VCC = COPY SCC
+VGPR0 = V_CNDMASK VCC, VGPR0, VGPR1
+
+def S_CMPK_EQ_I32 : SOPK <
+  0x00000003, (outs SCCReg:$dst), (ins SReg_32:$src0, i32imm:$src1),
+  "S_CMPK_EQ_I32",
+  [(set SCCReg:$dst, (setcc SReg_32:$src0, imm:$src1, SETEQ))]
+>;
+*/
+
 def S_CMPK_LG_I32 : SOPK_32 <0x00000004, "S_CMPK_LG_I32", []>;
 def S_CMPK_GT_I32 : SOPK_32 <0x00000005, "S_CMPK_GT_I32", []>;
 def S_CMPK_GE_I32 : SOPK_32 <0x00000006, "S_CMPK_GE_I32", []>;
@@ -97,9 +116,12 @@ def S_SETREG_B32 : SOPK_32 <0x00000013, "S_SETREG_B32", []>;
 def S_GETREG_REGRD_B32 : SOPK_32 <0x00000014, "S_GETREG_REGRD_B32", []>;
 //def S_SETREG_IMM32_B32 : SOPK_32 <0x00000015, "S_SETREG_IMM32_B32", []>;
 //def EXP : EXP_ <0x00000000, "EXP", []>;
+
 defm V_CMP_F_F32 : VOPC_32 <0x00000000, "V_CMP_F_F32", []>;
 defm V_CMP_LT_F32 : VOPC_32 <0x00000001, "V_CMP_LT_F32", []>;
-defm V_CMP_EQ_F32 : VOPC_32 <0x00000002, "V_CMP_EQ_F32", []>;
+defm V_CMP_EQ_F32 : VOPC_32 <0x00000002, "V_CMP_EQ_F32",
+  [(set VCCReg:$dst, (setcc (f32 AllReg_32:$src0), VReg_32:$src1, COND_EQ))]
+>;
 defm V_CMP_LE_F32 : VOPC_32 <0x00000003, "V_CMP_LE_F32", []>;
 defm V_CMP_GT_F32 : VOPC_32 <0x00000004, "V_CMP_GT_F32", []>;
 defm V_CMP_LG_F32 : VOPC_32 <0x00000005, "V_CMP_LG_F32", []>;
@@ -110,7 +132,9 @@ defm V_CMP_NGE_F32 : VOPC_32 <0x00000009, "V_CMP_NGE_F32", []>;
 defm V_CMP_NLG_F32 : VOPC_32 <0x0000000a, "V_CMP_NLG_F32", []>;
 defm V_CMP_NGT_F32 : VOPC_32 <0x0000000b, "V_CMP_NGT_F32", []>;
 defm V_CMP_NLE_F32 : VOPC_32 <0x0000000c, "V_CMP_NLE_F32", []>;
-defm V_CMP_NEQ_F32 : VOPC_32 <0x0000000d, "V_CMP_NEQ_F32", []>;
+defm V_CMP_NEQ_F32 : VOPC_32 <0x0000000d, "V_CMP_NEQ_F32",
+  [(set VCCReg:$dst, (setcc (f32 AllReg_32:$src0), VReg_32:$src1, COND_NE))]
+>;
 defm V_CMP_NLT_F32 : VOPC_32 <0x0000000e, "V_CMP_NLT_F32", []>;
 defm V_CMP_TRU_F32 : VOPC_32 <0x0000000f, "V_CMP_TRU_F32", []>;
 defm V_CMPX_F_F32 : VOPC_32 <0x00000010, "V_CMPX_F_F32", []>;
@@ -227,10 +251,14 @@ defm V_CMPSX_NLT_F64 : VOPC_64 <0x0000007e, "V_CMPSX_NLT_F64", []>;
 defm V_CMPSX_TRU_F64 : VOPC_64 <0x0000007f, "V_CMPSX_TRU_F64", []>;
 defm V_CMP_F_I32 : VOPC_32 <0x00000080, "V_CMP_F_I32", []>;
 defm V_CMP_LT_I32 : VOPC_32 <0x00000081, "V_CMP_LT_I32", []>;
-defm V_CMP_EQ_I32 : VOPC_32 <0x00000082, "V_CMP_EQ_I32", []>;
+defm V_CMP_EQ_I32 : VOPC_32 <0x00000082, "V_CMP_EQ_I32",
+  [(set VCCReg:$dst, (setcc (i32 AllReg_32:$src0), VReg_32:$src1, SETEQ))]
+>;
 defm V_CMP_LE_I32 : VOPC_32 <0x00000083, "V_CMP_LE_I32", []>;
 defm V_CMP_GT_I32 : VOPC_32 <0x00000084, "V_CMP_GT_I32", []>;
-defm V_CMP_NE_I32 : VOPC_32 <0x00000085, "V_CMP_NE_I32", []>;
+defm V_CMP_NE_I32 : VOPC_32 <0x00000085, "V_CMP_NE_I32",
+  [(set VCCReg:$dst, (setcc (i32 AllReg_32:$src0), VReg_32:$src1, SETNE))]
+>;
 defm V_CMP_GE_I32 : VOPC_32 <0x00000086, "V_CMP_GE_I32", []>;
 defm V_CMP_T_I32 : VOPC_32 <0x00000087, "V_CMP_T_I32", []>;
 defm V_CMPX_F_I32 : VOPC_32 <0x00000090, "V_CMPX_F_I32", []>;
@@ -565,19 +593,52 @@ def V_INTERP_MOV_F32 : VINTRP <
 
 //def V_INTERP_MOV_F32 : VINTRP_32 <0x00000002, "V_INTERP_MOV_F32", []>;
 //def S_NOP : SOPP_ <0x00000000, "S_NOP", []>;
-def S_ENDPGM : SOPP <0x00000001, (ins), "S_ENDPGM"> {
+
+let isTerminator = 1 in {
+
+def S_ENDPGM : SOPP <0x00000001, (ins), "S_ENDPGM", []> {
   let SIMM16 = 0;
-  let isTerminator = 1;
 }
-//def S_BRANCH : SOPP_ <0x00000002, "S_BRANCH", []>;
-//def S_CBRANCH_SCC0 : SOPP_SCC0 <0x00000004, "S_CBRANCH_SCC0", []>;
-//def S_CBRANCH_SCC1 : SOPP_SCC1 <0x00000005, "S_CBRANCH_SCC1", []>;
-//def S_CBRANCH_VCCZ : SOPP_ <0x00000006, "S_CBRANCH_VCCZ", []>;
-//def S_CBRANCH_VCCNZ : SOPP_ <0x00000007, "S_CBRANCH_VCCNZ", []>;
+
+let isBranch = 1 in {
+def S_BRANCH : SOPP <
+  0x00000002, (ins brtarget:$target), "S_BRANCH",
+  []
+>;
+
+let DisableEncoding = "$scc" in {
+def S_CBRANCH_SCC0 : SOPP <
+  0x00000004, (ins brtarget:$target, SCCReg:$scc),
+  "S_CBRANCH_SCC0", []
+>;
+def S_CBRANCH_SCC1 : SOPP <
+  0x00000005, (ins brtarget:$target, SCCReg:$scc),
+  "S_CBRANCH_SCC1",
+  []
+>;
+} // End DisableEncoding = "$scc"
+
+def S_CBRANCH_VCCZ : SOPP <
+  0x00000006, (ins brtarget:$target, VCCReg:$vcc),
+  "S_CBRANCH_VCCZ",
+  []
+>;
+def S_CBRANCH_VCCNZ : SOPP <
+  0x00000007, (ins brtarget:$target, VCCReg:$vcc),
+  "S_CBRANCH_VCCNZ",
+  []
+>;
 //def S_CBRANCH_EXECZ : SOPP_ <0x00000008, "S_CBRANCH_EXECZ", []>;
 //def S_CBRANCH_EXECNZ : SOPP_ <0x00000009, "S_CBRANCH_EXECNZ", []>;
+
+
+} // End isBranch = 1
+} // End isTerminator = 1
+
 //def S_BARRIER : SOPP_ <0x0000000a, "S_BARRIER", []>;
-def S_WAITCNT : SOPP <0x0000000c, (ins i32imm:$simm16), "S_WAITCNT $simm16">;
+def S_WAITCNT : SOPP <0x0000000c, (ins i32imm:$simm16), "S_WAITCNT $simm16",
+  []
+>;
 //def S_SETHALT : SOPP_ <0x0000000d, "S_SETHALT", []>;
 //def S_SLEEP : SOPP_ <0x0000000e, "S_SLEEP", []>;
 //def S_SETPRIO : SOPP_ <0x0000000f, "S_SETPRIO", []>;
@@ -597,6 +658,13 @@ def V_CNDMASK_B32 : VOP2 <0x00000000, (outs VReg_32:$dst),
 
   let DisableEncoding = "$vcc";
 }
+
+//f32 pattern for V_CNDMASK_B32
+def : Pat <
+  (f32 (select VCCReg:$vcc, AllReg_32:$src0, VReg_32:$src1)),
+  (V_CNDMASK_B32 VCCReg:$vcc, AllReg_32:$src0, VReg_32:$src1)
+>;
+
 defm V_READLANE_B32 : VOP2_32 <0x00000001, "V_READLANE_B32", []>;
 defm V_WRITELANE_B32 : VOP2_32 <0x00000002, "V_WRITELANE_B32", []>;
 
@@ -744,8 +812,21 @@ def S_MIN_I32 : SOP2_32 <0x00000006, "S_MIN_I32", []>;
 def S_MIN_U32 : SOP2_32 <0x00000007, "S_MIN_U32", []>;
 def S_MAX_I32 : SOP2_32 <0x00000008, "S_MAX_I32", []>;
 def S_MAX_U32 : SOP2_32 <0x00000009, "S_MAX_U32", []>;
-def S_CSELECT_B32 : SOP2_32 <0x0000000a, "S_CSELECT_B32", []>;
+
+def S_CSELECT_B32 : SOP2 <
+  0x0000000a, (outs SReg_32:$dst),
+  (ins SReg_32:$src0, SReg_32:$src1, SCCReg:$scc), "S_CSELECT_B32",
+  [(set (i32 SReg_32:$dst), (select SCCReg:$scc, SReg_32:$src0, SReg_32:$src1))]
+>;
+
 def S_CSELECT_B64 : SOP2_64 <0x0000000b, "S_CSELECT_B64", []>;
+
+// f32 pattern for S_CSELECT_B32
+def : Pat <
+  (f32 (select SCCReg:$scc, SReg_32:$src0, SReg_32:$src1)),
+  (S_CSELECT_B32 SReg_32:$src0, SReg_32:$src1, SCCReg:$scc)
+>;
+
 def S_AND_B32 : SOP2_32 <0x0000000e, "S_AND_B32", []>;
 
 def S_AND_B64 : SOP2_64 <0x0000000f, "S_AND_B64",
@@ -802,7 +883,6 @@ def S_MOV_IMM_I32 : SOP1 <
   "S_MOV_IMM_I32",
   [(set SReg_32:$dst, (imm:$src0))]
 >;
-
 
 let isCodeGenOnly = 1, isPseudo = 1 in {
 
@@ -877,6 +957,24 @@ def VS_LOAD_BUFFER_INDEX : InstSI <
 
 } // end usesCustomInserter 
 
+// SI Psuedo branch instructions.  These are used by the CFG structurizer pass
+// and should be lowered to ISA instructions prior to codegen.
+
+let isBranch = 1, isTerminator = 1 in {
+def SI_IF_NZ : InstSI <
+  (outs),
+  (ins brtarget:$target, VCCReg:$vcc),
+  "SI_BRANCH_NZ",
+  [(IL_brcond bb:$target, VCCReg:$vcc)]
+>;
+
+def SI_IF_Z : InstSI <
+  (outs),
+  (ins brtarget:$target, VCCReg:$vcc),
+  "SI_BRANCH_Z",
+  []
+>;
+} // end isBranch = 1, isTerminator = 1
 } // end IsCodeGenOnly, isPseudo
 
 /* int_SI_vs_load_input */

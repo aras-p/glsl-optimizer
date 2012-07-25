@@ -2785,6 +2785,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   static int getBranchNzeroOpcode(int oldOpcode) {
     switch(oldOpcode) {
       ExpandCaseToAllScalarReturn(AMDGPU::BRANCH_COND, AMDGPU::IF_LOGICALNZ);
+      case AMDGPU::SI_IF_NZ: return AMDGPU::SI_IF_NZ;
     default:
       assert(0 && "internal error");
     };
@@ -2794,6 +2795,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   static int getBranchZeroOpcode(int oldOpcode) {
     switch(oldOpcode) {
       ExpandCaseToAllScalarReturn(AMDGPU::BRANCH_COND, AMDGPU::IF_LOGICALZ);
+      case AMDGPU::SI_IF_Z: return AMDGPU::SI_IF_Z;
     default:
       assert(0 && "internal error");
     };
@@ -2845,6 +2847,8 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   static bool isCondBranch(MachineInstr *instr) {
     switch (instr->getOpcode()) {
       ExpandCaseToAllScalarTypes(AMDGPU::BRANCH_COND);
+      case AMDGPU::SI_IF_NZ:
+      case AMDGPU::SI_IF_Z:
       break;
     default:
       return false;
