@@ -1780,28 +1780,6 @@
 		<param name="stride" type="GLsizei"/>
 		<param name="pointer" type="const GLvoid *"/>
 	</proto>
-
-	<desc name="type" error="GL_INVALID_VALUE">
-		<value name="GL_BYTE"/>
-		<value name="GL_UNSIGNED_BYTE"/>
-		<value name="GL_SHORT"/>
-		<value name="GL_UNSIGNED_SHORT"/>
-		<value name="GL_FLOAT"/>
-		<value name="GL_FIXED"/>
-		<value name="GL_HALF_FLOAT_OES" category="OES_vertex_half_float"/>
-		<value name="GL_UNSIGNED_INT_10_10_10_2_OES" category="OES_vertex_type_10_10_10_2"/>
-		<value name="GL_INT_10_10_10_2_OES" category="OES_vertex_type_10_10_10_2"/>
-	</desc>
-
-	<desc name="type" category="OES_vertex_type_10_10_10_2">
-		<value name="GL_UNSIGNED_INT_10_10_10_2_OES"/>
-		<value name="GL_INT_10_10_10_2_OES"/>
-
-		<desc name="size">
-			<value name="3"/>
-			<value name="4"/>
-		</desc>
-	</desc>
 </template>
 
 <template name="EnableVertexAttribArray">
