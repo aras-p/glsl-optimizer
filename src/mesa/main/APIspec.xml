@@ -1196,16 +1196,6 @@
 		<param name="first" type="GLint"/>
 		<param name="count" type="GLsizei"/>
 	</proto>
-
-	<desc name="mode">
-		<value name="GL_POINTS"/>
-		<value name="GL_LINES"/>
-		<value name="GL_LINE_LOOP"/>
-		<value name="GL_LINE_STRIP"/>
-		<value name="GL_TRIANGLES"/>
-		<value name="GL_TRIANGLE_STRIP"/>
-		<value name="GL_TRIANGLE_FAN"/>
-	</desc>
 </template>
 
 <template name="DrawElements">
@@ -1216,16 +1206,6 @@
 		<param name="type" type="GLenum"/>
 		<param name="indices" type="const GLvoid *"/>
 	</proto>
-
-	<desc name="mode">
-		<value name="GL_POINTS"/>
-		<value name="GL_LINES"/>
-		<value name="GL_LINE_LOOP"/>
-		<value name="GL_LINE_STRIP"/>
-		<value name="GL_TRIANGLES"/>
-		<value name="GL_TRIANGLE_STRIP"/>
-		<value name="GL_TRIANGLE_FAN"/>
-	</desc>
 </template>
 
 <template name="EnableClientState">
@@ -2179,16 +2159,6 @@
 		<param name="count" type="const GLsizei *"/>
 		<param name="primcount" type="GLsizei"/>
 	</proto>
-
-	<desc name="mode">
-		<value name="GL_POINTS"/>
-		<value name="GL_LINES"/>
-		<value name="GL_LINE_LOOP"/>
-		<value name="GL_LINE_STRIP"/>
-		<value name="GL_TRIANGLES"/>
-		<value name="GL_TRIANGLE_STRIP"/>
-		<value name="GL_TRIANGLE_FAN"/>
-	</desc>
 </template>
 
 <template name="MultiDrawElements">
@@ -2200,16 +2170,6 @@
 		<param name="indices" type="const GLvoid **"/>
 		<param name="primcount" type="GLsizei"/>
 	</proto>
-
-	<desc name="mode">
-		<value name="GL_POINTS"/>
-		<value name="GL_LINES"/>
-		<value name="GL_LINE_LOOP"/>
-		<value name="GL_LINE_STRIP"/>
-		<value name="GL_TRIANGLES"/>
-		<value name="GL_TRIANGLE_STRIP"/>
-		<value name="GL_TRIANGLE_FAN"/>
-	</desc>
 </template>
 
 <template name="EGLImageTargetTexture2D">

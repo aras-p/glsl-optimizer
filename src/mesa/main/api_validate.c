@@ -220,16 +220,19 @@ _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
    case GL_TRIANGLES:
    case GL_TRIANGLE_STRIP:
    case GL_TRIANGLE_FAN:
+      valid_enum = true;
+      break;
    case GL_QUADS:
    case GL_QUAD_STRIP:
    case GL_POLYGON:
-      valid_enum = true;
+      valid_enum = (ctx->API == API_OPENGL);
       break;
    case GL_LINES_ADJACENCY:
    case GL_LINE_STRIP_ADJACENCY:
    case GL_TRIANGLES_ADJACENCY:
    case GL_TRIANGLE_STRIP_ADJACENCY:
-      valid_enum = (ctx->Extensions.ARB_geometry_shader4);
+      valid_enum = _mesa_is_desktop_gl(ctx)
+         && ctx->Extensions.ARB_geometry_shader4;
       break;
    default:
       valid_enum = false;
