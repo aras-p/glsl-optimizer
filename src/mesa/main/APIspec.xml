@@ -198,11 +198,6 @@
 		<param name="stride" type="GLsizei"/>
 		<param name="pointer" type="const GLvoid *"/>
 	</proto>
-
-	<desc name="type">
-		<value name="GL_FLOAT"/>
-		<value name="GL_FIXED"/>
-	</desc>
 </template>
 
 <template name="Scissor">
