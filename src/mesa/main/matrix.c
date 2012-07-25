@@ -658,8 +658,7 @@ void _mesa_update_modelview_project( struct gl_context *ctx, GLuint new_state )
  * \param dirtyFlag dirty flag.
  * 
  * Allocates an array of \p maxDepth elements for the matrix stack and calls
- * _math_matrix_ctr() and _math_matrix_alloc_inv() for each element to
- * initialize it.
+ * _math_matrix_ctr() for each element to initialize it.
  */
 static void
 init_matrix_stack( struct gl_matrix_stack *stack,
@@ -674,7 +673,6 @@ init_matrix_stack( struct gl_matrix_stack *stack,
    stack->Stack = (GLmatrix *) CALLOC(maxDepth * sizeof(GLmatrix));
    for (i = 0; i < maxDepth; i++) {
       _math_matrix_ctr(&stack->Stack[i]);
-      _math_matrix_alloc_inv(&stack->Stack[i]);
    }
    stack->Top = stack->Stack;
 }
