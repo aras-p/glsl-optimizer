@@ -1814,10 +1814,6 @@
 		<param name="target" type="GLenum"/>
 		<param name="access" type="GLenum"/>
 	</proto>
-
-	<desc name="access">
-		<value name="GL_WRITE_ONLY_OES"/>
-	</desc>
 </template>
 
 <template name="UnmapBuffer" direction="get">

@@ -1135,20 +1135,29 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    struct gl_buffer_object * bufObj;
    GLbitfield accessFlags;
    void *map;
+   bool valid_access;
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, NULL);
 
    switch (access) {
    case GL_READ_ONLY_ARB:
       accessFlags = GL_MAP_READ_BIT;
+      valid_access = _mesa_is_desktop_gl(ctx);
       break;
    case GL_WRITE_ONLY_ARB:
       accessFlags = GL_MAP_WRITE_BIT;
+      valid_access = true;
       break;
    case GL_READ_WRITE_ARB:
       accessFlags = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+      valid_access = _mesa_is_desktop_gl(ctx);
       break;
    default:
+      valid_access = false;
+      break;
+   }
+
+   if (!valid_access) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glMapBufferARB(access)");
       return NULL;
    }
