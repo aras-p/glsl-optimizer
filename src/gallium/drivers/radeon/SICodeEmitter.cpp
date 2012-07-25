@@ -23,6 +23,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetMachine.h"
 
+#include <map>
 #include <stdio.h>
 
 #define LITERAL_REG 255
@@ -37,7 +38,15 @@ namespace {
     static char ID;
     formatted_raw_ostream &_OS;
     const TargetMachine *TM;
-    void emitState(MachineFunction & MF);
+
+    //Program Info
+    unsigned MaxSGPR;
+    unsigned MaxVGPR;
+    unsigned CurrentInstrIndex;
+    std::map<int, unsigned> BBIndexes;
+
+    void InitProgramInfo(MachineFunction &MF);
+    void EmitState(MachineFunction & MF);
     void emitInstr(MachineInstr &MI);
 
     void outputBytes(uint64_t value, unsigned bytes);
@@ -46,7 +55,7 @@ namespace {
 
   public:
     SICodeEmitter(formatted_raw_ostream &OS) : MachineFunctionPass(ID),
-        _OS(OS), TM(NULL) { }
+        _OS(OS), TM(NULL), MaxSGPR(0), MaxVGPR(0), CurrentInstrIndex(0) { }
     const char *getPassName() const { return "SI Code Emitter"; }
     bool runOnMachineFunction(MachineFunction &MF);
 
@@ -81,21 +90,28 @@ FunctionPass *llvm::createSICodeEmitterPass(formatted_raw_ostream &OS) {
   return new SICodeEmitter(OS);
 }
 
-void SICodeEmitter::emitState(MachineFunction & MF)
-{
-  unsigned maxSGPR = 0;
-  unsigned maxVGPR = 0;
+void SICodeEmitter::EmitState(MachineFunction & MF) {
+  SIMachineFunctionInfo * MFI = MF.getInfo<SIMachineFunctionInfo>();
+  outputBytes(MaxSGPR + 1, 4);
+  outputBytes(MaxVGPR + 1, 4);
+  outputBytes(MFI->spi_ps_input_addr, 4);
+}
+
+void SICodeEmitter::InitProgramInfo(MachineFunction &MF) {
+  unsigned InstrIndex = 0;
   bool VCCUsed = false;
   const SIRegisterInfo * RI =
                 static_cast<const SIRegisterInfo*>(TM->getRegisterInfo());
-  SIMachineFunctionInfo * MFI = MF.getInfo<SIMachineFunctionInfo>();
 
   for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
                                                   BB != BB_E; ++BB) {
     MachineBasicBlock &MBB = *BB;
+    BBIndexes[MBB.getNumber()] = InstrIndex;
+    InstrIndex += MBB.size();
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
-                                                      I != E; ++I) {
+                                                    I != E; ++I) {
       MachineInstr &MI = *I;
+
       unsigned numOperands = MI.getNumOperands();
       for (unsigned op_idx = 0; op_idx < numOperands; op_idx++) {
         MachineOperand & MO = MI.getOperand(op_idx);
@@ -139,19 +155,16 @@ void SICodeEmitter::emitState(MachineFunction & MF)
         hwReg = RI->getHWRegNum(reg);
         maxUsed = ((hwReg + 1) * width) - 1;
         if (isSGPR) {
-          maxSGPR = maxUsed > maxSGPR ? maxUsed : maxSGPR;
+          MaxSGPR = maxUsed > MaxSGPR ? maxUsed : MaxSGPR;
         } else {
-          maxVGPR = maxUsed > maxVGPR ? maxUsed : maxVGPR;
+          MaxVGPR = maxUsed > MaxVGPR ? maxUsed : MaxVGPR;
         }
       }
     }
   }
   if (VCCUsed) {
-    maxSGPR += 2;
+    MaxSGPR += 2;
   }
-  outputBytes(maxSGPR + 1, 4);
-  outputBytes(maxVGPR + 1, 4);
-  outputBytes(MFI->spi_ps_input_addr, 4);
 }
 
 bool SICodeEmitter::runOnMachineFunction(MachineFunction &MF)
@@ -163,7 +176,9 @@ bool SICodeEmitter::runOnMachineFunction(MachineFunction &MF)
     MF.dump();
   }
 
-  emitState(MF);
+  InitProgramInfo(MF);
+
+  EmitState(MF);
 
   for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
                                                   BB != BB_E; ++BB) {
@@ -173,6 +188,7 @@ bool SICodeEmitter::runOnMachineFunction(MachineFunction &MF)
       MachineInstr &MI = *I;
       if (MI.getOpcode() != AMDGPU::KILL && MI.getOpcode() != AMDGPU::RETURN) {
         emitInstr(MI);
+        CurrentInstrIndex++;
       }
     }
   }
@@ -216,6 +232,10 @@ uint64_t SICodeEmitter::getMachineOpValue(const MachineInstr &MI,
     // XXX: Not all instructions can use inline literals
     // XXX: We should make sure this is a 32-bit constant
     return LITERAL_REG | (MO.getFPImm()->getValueAPF().bitcastToAPInt().getZExtValue() << 32);
+
+  case MachineOperand::MO_MachineBasicBlock:
+    return (*BBIndexes.find(MI.getParent()->getNumber())).second -
+           CurrentInstrIndex - 1;
   default:
     llvm_unreachable("Encoding of this operand type is not supported yet.");
     break;
