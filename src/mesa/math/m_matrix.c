@@ -329,7 +329,7 @@ _math_matrix_print( const GLmatrix *m )
 /*@{*/
 
 /**
- * Swaps the values of two floating pointer variables.
+ * Swaps the values of two floating point variables.
  *
  * Used by invert_matrix_general() to swap the row pointers.
  */
