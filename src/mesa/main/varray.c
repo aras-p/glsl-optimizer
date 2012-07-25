@@ -590,12 +590,15 @@ get_vertex_array_attrib(struct gl_context *ctx, GLuint index, GLenum pname,
    case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:
       return array->BufferObj->Name;
    case GL_VERTEX_ATTRIB_ARRAY_INTEGER:
-      if (ctx->Version >= 30 || ctx->Extensions.EXT_gpu_shader4) {
+      if ((_mesa_is_desktop_gl(ctx)
+           && (ctx->Version >= 30 || ctx->Extensions.EXT_gpu_shader4))
+          || _mesa_is_gles3(ctx)) {
          return array->Integer;
       }
       goto error;
    case GL_VERTEX_ATTRIB_ARRAY_DIVISOR_ARB:
-      if (ctx->Extensions.ARB_instanced_arrays) {
+      if ((_mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_instanced_arrays)
+          || _mesa_is_gles3(ctx)) {
          return array->InstanceDivisor;
       }
       goto error;
@@ -613,7 +616,13 @@ static const GLfloat *
 get_current_attrib(struct gl_context *ctx, GLuint index, const char *function)
 {
    if (index == 0) {
-      if (ctx->API != API_OPENGLES2) {
+      /* In OpenGL 3.1 attribute 0 becomes non-magic, just like in OpenGL ES
+       * 2.0.  Note that we cannot just check for API_OPENGL_CORE here because
+       * that will erroneously allow this usage in a 3.0 forward-compatible
+       * context too.
+       */
+      if ((ctx->API != API_OPENGL_CORE || ctx->Version < 31)
+          && ctx->API != API_OPENGLES2) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION, "%s(index==0)", function);
 	 return NULL;
       }

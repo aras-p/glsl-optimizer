@@ -1622,22 +1622,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="pname">
-		<value name="GL_VERTEX_ATTRIB_ARRAY_ENABLED"/>
-		<value name="GL_VERTEX_ATTRIB_ARRAY_SIZE"/>
-		<value name="GL_VERTEX_ATTRIB_ARRAY_STRIDE"/>
-		<value name="GL_VERTEX_ATTRIB_ARRAY_TYPE"/>
-		<value name="GL_VERTEX_ATTRIB_ARRAY_NORMALIZED"/>
-		<value name="GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING"/>
-
-		<desc name="params" vector_size="1" convert="false"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_CURRENT_VERTEX_ATTRIB"/>
-		<desc name="params" vector_size="16?" convert="false"/>
-	</desc>
 </template>
 
 <template name="GetVertexAttribPointer" direction="get">
