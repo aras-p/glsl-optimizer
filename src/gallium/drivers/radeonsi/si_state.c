@@ -1649,7 +1649,10 @@ static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 
 	rctx->shader_dirty = true;
 	rctx->vs_shader = shader;
-	si_pm4_bind_state(rctx, vs, shader->pm4);
+
+	if (shader) {
+		si_pm4_bind_state(rctx, vs, shader->pm4);
+	}
 }
 
 static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
@@ -1662,7 +1665,10 @@ static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 
 	rctx->shader_dirty = true;
 	rctx->ps_shader = shader;
-	si_pm4_bind_state(rctx, ps, shader->pm4);
+
+	if (shader) {
+		si_pm4_bind_state(rctx, ps, shader->pm4);
+	}
 }
 
 static void si_delete_vs_shader(struct pipe_context *ctx, void *state)
