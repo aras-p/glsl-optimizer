@@ -140,6 +140,7 @@ def generate(env):
     env['gcc'] = 'gcc' in os.path.basename(env['CC']).split('-')
     env['msvc'] = env['CC'] == 'cl'
     env['suncc'] = env['platform'] == 'sunos' and os.path.basename(env['CC']) == 'cc'
+    env['clang'] = env['CC'] == 'clang'
 
     if env['msvc'] and env['toolchain'] == 'default' and env['machine'] == 'x86_64':
         # MSVC x64 support is broken in earlier versions of scons
@@ -482,7 +483,7 @@ def generate(env):
     env.Append(SHLINKFLAGS = shlinkflags)
 
     # We have C++ in several libraries, so always link with the C++ compiler
-    if env['gcc']:
+    if env['gcc'] or env['clang']:
         env['LINK'] = env['CXX']
 
     # Default libs
