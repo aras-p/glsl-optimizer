@@ -1806,11 +1806,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLvoid **" size="dynamic"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_ARRAY_BUFFER"/>
-		<value name="GL_ELEMENT_ARRAY_BUFFER"/>
-	</desc>
 </template>
 
 <template name="MapBuffer" direction="get">
@@ -1819,11 +1814,6 @@
 		<param name="target" type="GLenum"/>
 		<param name="access" type="GLenum"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_ARRAY_BUFFER"/>
-		<value name="GL_ELEMENT_ARRAY_BUFFER"/>
-	</desc>
 
 	<desc name="access">
 		<value name="GL_WRITE_ONLY_OES"/>
@@ -1835,11 +1825,6 @@
 		<return type="GLboolean"/>
 		<param name="target" type="GLenum"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_ARRAY_BUFFER"/>
-		<value name="GL_ELEMENT_ARRAY_BUFFER"/>
-	</desc>
 </template>
 
 <template name="BindBuffer">
@@ -1848,11 +1833,6 @@
 		<param name="target" type="GLenum"/>
 		<param name="buffer" type="GLuint"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_ARRAY_BUFFER"/>
-		<value name="GL_ELEMENT_ARRAY_BUFFER"/>
-	</desc>
 </template>
 
 <template name="BufferData">
@@ -1863,11 +1843,6 @@
 		<param name="data" type="const GLvoid *"/>
 		<param name="usage" type="GLenum"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_ARRAY_BUFFER"/>
-		<value name="GL_ELEMENT_ARRAY_BUFFER"/>
-	</desc>
 
 	<desc name="usage">
 		<value name="GL_STATIC_DRAW"/>
@@ -1884,11 +1859,6 @@
 		<param name="size" type="GLsizeiptr"/>
 		<param name="data" type="const GLvoid *"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_ARRAY_BUFFER"/>
-		<value name="GL_ELEMENT_ARRAY_BUFFER"/>
-	</desc>
 </template>
 
 <template name="DeleteBuffers">
@@ -1914,11 +1884,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_ARRAY_BUFFER"/>
-		<value name="GL_ELEMENT_ARRAY_BUFFER"/>
-	</desc>
 
 	<desc name="pname">
 		<value name="GL_BUFFER_SIZE"/>

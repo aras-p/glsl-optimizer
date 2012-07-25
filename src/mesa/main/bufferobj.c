@@ -68,6 +68,12 @@ static struct gl_buffer_object DummyBufferObject;
 static inline struct gl_buffer_object **
 get_buffer_target(struct gl_context *ctx, GLenum target)
 {
+   /* Other targets are only supported in desktop OpenGL and OpenGL ES 3.0.
+    */
+   if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx)
+       && target != GL_ARRAY_BUFFER && target != GL_ELEMENT_ARRAY_BUFFER)
+      return NULL;
+
    switch (target) {
    case GL_ARRAY_BUFFER_ARB:
       return &ctx->Array.ArrayBufferObj;
@@ -89,7 +95,8 @@ get_buffer_target(struct gl_context *ctx, GLenum target)
       break;
 #endif
    case GL_TEXTURE_BUFFER:
-      if (ctx->Extensions.ARB_texture_buffer_object) {
+      if (_mesa_is_desktop_gl(ctx)
+          && ctx->Extensions.ARB_texture_buffer_object) {
          return &ctx->Texture.BufferObject;
       }
       break;
