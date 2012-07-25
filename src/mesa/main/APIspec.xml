@@ -1329,14 +1329,6 @@
 		<param name="stride" type="GLsizei"/>
 		<param name="pointer" type="const GLvoid *"/>
 	</proto>
-
-	<desc name="type">
-		<value name="GL_BYTE"/>
-		<value name="GL_SHORT"/>
-		<value name="GL_FLOAT"/>
-		<value name="GL_FIXED"/>
-		<value name="GL_HALF_FLOAT_OES" category="OES_vertex_half_float"/>
-	</desc>
 </template>
 
 <template name="TexCoordPointer">

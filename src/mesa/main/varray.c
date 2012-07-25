@@ -268,12 +268,13 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 void GLAPIENTRY
 _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
 {
-   const GLbitfield legalTypes = (BYTE_BIT | SHORT_BIT | INT_BIT |
-                                  HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
-                                  FIXED_ES_BIT |
-                                  UNSIGNED_INT_2_10_10_10_REV_BIT |
-                                  INT_2_10_10_10_REV_BIT);
    GET_CURRENT_CONTEXT(ctx);
+   const GLbitfield legalTypes = (ctx->API == API_OPENGLES)
+      ? (BYTE_BIT | SHORT_BIT | FLOAT_BIT | FIXED_ES_BIT)
+      : (BYTE_BIT | SHORT_BIT | INT_BIT |
+         HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
+         UNSIGNED_INT_2_10_10_10_REV_BIT |
+         INT_2_10_10_10_REV_BIT);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    update_array(ctx, "glNormalPointer", VERT_ATTRIB_NORMAL,
