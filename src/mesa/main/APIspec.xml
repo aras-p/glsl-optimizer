@@ -631,43 +631,6 @@
 		<param name="sfactor" type="GLenum"/>
 		<param name="dfactor" type="GLenum"/>
 	</proto>
-
-	<desc name="sfactor">
-		<value name="GL_ZERO"/>
-		<value name="GL_ONE"/>
-		<value name="GL_SRC_COLOR"/>
-		<value name="GL_ONE_MINUS_SRC_COLOR"/>
-		<value name="GL_SRC_ALPHA"/>
-		<value name="GL_ONE_MINUS_SRC_ALPHA"/>
-		<value name="GL_DST_ALPHA"/>
-		<value name="GL_ONE_MINUS_DST_ALPHA"/>
-		<value name="GL_DST_COLOR"/>
-		<value name="GL_ONE_MINUS_DST_COLOR"/>
-		<value name="GL_SRC_ALPHA_SATURATE"/>
-
-		<value name="GL_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_CONSTANT_ALPHA" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_ALPHA" category="GLES2.0"/>
-	</desc>
-
-	<desc name="dfactor">
-		<value name="GL_ZERO"/>
-		<value name="GL_ONE"/>
-		<value name="GL_SRC_COLOR"/>
-		<value name="GL_ONE_MINUS_SRC_COLOR"/>
-		<value name="GL_SRC_ALPHA"/>
-		<value name="GL_ONE_MINUS_SRC_ALPHA"/>
-		<value name="GL_DST_ALPHA"/>
-		<value name="GL_ONE_MINUS_DST_ALPHA"/>
-		<value name="GL_DST_COLOR"/>
-		<value name="GL_ONE_MINUS_DST_COLOR"/>
-
-		<value name="GL_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_CONSTANT_ALPHA" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_ALPHA" category="GLES2.0"/>
-	</desc>
 </template>
 
 <template name="LogicOp">
@@ -1600,80 +1563,6 @@
 		<param name="srcAlpha" type="GLenum"/>
 		<param name="dstAlpha" type="GLenum"/>
 	</proto>
-
-	<desc name="srcRGB">
-		<value name="GL_ZERO"/>
-		<value name="GL_ONE"/>
-		<value name="GL_SRC_COLOR"/>
-		<value name="GL_ONE_MINUS_SRC_COLOR"/>
-		<value name="GL_SRC_ALPHA"/>
-		<value name="GL_ONE_MINUS_SRC_ALPHA"/>
-		<value name="GL_DST_ALPHA"/>
-		<value name="GL_ONE_MINUS_DST_ALPHA"/>
-		<value name="GL_DST_COLOR"/>
-		<value name="GL_ONE_MINUS_DST_COLOR"/>
-		<value name="GL_SRC_ALPHA_SATURATE"/>
-
-		<value name="GL_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_CONSTANT_ALPHA" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_ALPHA" category="GLES2.0"/>
-	</desc>
-
-	<desc name="dstRGB">
-		<value name="GL_ZERO"/>
-		<value name="GL_ONE"/>
-		<value name="GL_SRC_COLOR"/>
-		<value name="GL_ONE_MINUS_SRC_COLOR"/>
-		<value name="GL_SRC_ALPHA"/>
-		<value name="GL_ONE_MINUS_SRC_ALPHA"/>
-		<value name="GL_DST_ALPHA"/>
-		<value name="GL_ONE_MINUS_DST_ALPHA"/>
-		<value name="GL_DST_COLOR"/>
-		<value name="GL_ONE_MINUS_DST_COLOR"/>
-
-		<value name="GL_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_CONSTANT_ALPHA" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_ALPHA" category="GLES2.0"/>
-	</desc>
-
-	<desc name="srcAlpha">
-		<value name="GL_ZERO"/>
-		<value name="GL_ONE"/>
-		<value name="GL_SRC_COLOR"/>
-		<value name="GL_ONE_MINUS_SRC_COLOR"/>
-		<value name="GL_SRC_ALPHA"/>
-		<value name="GL_ONE_MINUS_SRC_ALPHA"/>
-		<value name="GL_DST_ALPHA"/>
-		<value name="GL_ONE_MINUS_DST_ALPHA"/>
-		<value name="GL_DST_COLOR"/>
-		<value name="GL_ONE_MINUS_DST_COLOR"/>
-		<value name="GL_SRC_ALPHA_SATURATE"/>
-
-		<value name="GL_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_CONSTANT_ALPHA" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_ALPHA" category="GLES2.0"/>
-	</desc>
-
-	<desc name="dstAlpha">
-		<value name="GL_ZERO"/>
-		<value name="GL_ONE"/>
-		<value name="GL_SRC_COLOR"/>
-		<value name="GL_ONE_MINUS_SRC_COLOR"/>
-		<value name="GL_SRC_ALPHA"/>
-		<value name="GL_ONE_MINUS_SRC_ALPHA"/>
-		<value name="GL_DST_ALPHA"/>
-		<value name="GL_ONE_MINUS_DST_ALPHA"/>
-		<value name="GL_DST_COLOR"/>
-		<value name="GL_ONE_MINUS_DST_COLOR"/>
-
-		<value name="GL_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_COLOR" category="GLES2.0"/>
-		<value name="GL_CONSTANT_ALPHA" category="GLES2.0"/>
-		<value name="GL_ONE_MINUS_CONSTANT_ALPHA" category="GLES2.0"/>
-	</desc>
 </template>
 
 <template name="PointParameter">
