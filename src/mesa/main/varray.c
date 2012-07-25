@@ -294,10 +294,11 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
          HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
          UNSIGNED_INT_2_10_10_10_REV_BIT |
          INT_2_10_10_10_REV_BIT);
+   const GLint sizeMin = (ctx->API == API_OPENGLES) ? 4 : 3;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    update_array(ctx, "glColorPointer", VERT_ATTRIB_COLOR0,
-                legalTypes, 3, BGRA_OR_4,
+                legalTypes, sizeMin, BGRA_OR_4,
                 size, type, stride, GL_TRUE, GL_FALSE, ptr);
 }
 
