@@ -2490,10 +2490,6 @@
 		<value name="GL_ARRAY_BUFFER"/>
 		<value name="GL_ELEMENT_ARRAY_BUFFER"/>
 	</desc>
-
-	<desc name="pname">
-		<value name="GL_BUFFER_MAP_POINTER_OES"/>
-	</desc>
 </template>
 
 <template name="MapBuffer" direction="get">
