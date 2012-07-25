@@ -38,6 +38,8 @@ class SITargetLowering : public AMDGPUTargetLowering
   void lowerUSE_SGPR(MachineInstr *MI, MachineFunction * MF,
                      MachineRegisterInfo & MRI) const;
 
+  SDValue Loweri1ContextSwitch(SDValue Op, SelectionDAG &DAG,
+                                           unsigned VCCNode) const;
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
 
@@ -47,6 +49,7 @@ public:
                                               MachineBasicBlock * BB) const;
   virtual EVT getSetCCResultType(EVT VT) const;
   virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+  virtual const char* getTargetNodeName(unsigned Opcode) const;
 };
 
 } // End namespace llvm

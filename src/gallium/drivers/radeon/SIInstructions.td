@@ -745,7 +745,13 @@ def S_MAX_U32 : SOP2_32 <0x00000009, "S_MAX_U32", []>;
 def S_CSELECT_B32 : SOP2_32 <0x0000000a, "S_CSELECT_B32", []>;
 def S_CSELECT_B64 : SOP2_64 <0x0000000b, "S_CSELECT_B64", []>;
 def S_AND_B32 : SOP2_32 <0x0000000e, "S_AND_B32", []>;
-def S_AND_B64 : SOP2_64 <0x0000000f, "S_AND_B64", []>;
+
+def S_AND_B64 : SOP2_64 <0x0000000f, "S_AND_B64",
+  [(set SReg_64:$dst, (and SReg_64:$src0, SReg_64:$src1))]
+>;
+def S_AND_VCC : SOP2_VCC <0x0000000f, "S_AND_B64",
+  [(set VCCReg:$vcc, (SIvcc_and SReg_64:$src0, SReg_64:$src1))]
+>;
 def S_OR_B32 : SOP2_32 <0x00000010, "S_OR_B32", []>;
 def S_OR_B64 : SOP2_64 <0x00000011, "S_OR_B64", []>;
 def S_XOR_B32 : SOP2_32 <0x00000012, "S_XOR_B32", []>;
@@ -916,6 +922,16 @@ def : BitConvert <i32, f32, VReg_32>;
 
 def : BitConvert <f32, i32, SReg_32>;
 def : BitConvert <f32, i32, VReg_32>;
+
+def : Pat <
+  (i64 (SIvcc_bitcast VCCReg:$vcc)),
+  (S_MOV_B64 (COPY_TO_REGCLASS VCCReg:$vcc, SReg_64))
+>;
+
+def : Pat <
+  (i1 (SIvcc_bitcast SReg_64:$vcc)),
+  (COPY_TO_REGCLASS SReg_64:$vcc, VCCReg)
+>;
 
 /*
 def : Pat<

@@ -7,7 +7,26 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// SI DAG Profiles
+//===----------------------------------------------------------------------===//
+def SDTVCCBinaryOp : SDTypeProfile<1, 2, [
+  SDTCisInt<0>, SDTCisInt<1>, SDTCisSameAs<1, 2>
+]>;
 
+//===----------------------------------------------------------------------===//
+// SI DAG Nodes
+//===----------------------------------------------------------------------===//
+
+// and operation on 64-bit wide vcc
+def SIvcc_and : SDNode<"SIISD::VCC_AND", SDTVCCBinaryOp,
+  [SDNPCommutative, SDNPAssociative]
+>;
+
+// Special bitcast node for sharing VCC register between VALU and SALU
+def SIvcc_bitcast : SDNode<"SIISD::VCC_BITCAST",
+  SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisInt<1>]>
+>;
 
 class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
     AMDGPUInst<outs, ins, asm, pattern> {

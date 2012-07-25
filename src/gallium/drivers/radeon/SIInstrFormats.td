@@ -41,6 +41,9 @@ class SOP2_32 <bits<7> op, string opName, list<dag> pattern>
 class SOP2_64 <bits<7> op, string opName, list<dag> pattern>
   : SOP2 <op, (outs SReg_64:$dst), (ins SReg_64:$src0, SReg_64:$src1), opName, pattern>;
 
+class SOP2_VCC <bits<7> op, string opName, list<dag> pattern>
+  : SOP2 <op, (outs VCCReg:$vcc), (ins SReg_64:$src0, SReg_64:$src1), opName, pattern>;
+
 class VOP1_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
                    string opName, list<dag> pattern> : 
   VOP1 <
