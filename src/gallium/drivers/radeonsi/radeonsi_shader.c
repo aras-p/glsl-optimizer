@@ -229,8 +229,9 @@ static void declare_input_vs(
 
 	/* Load the buffer index is always, which is always stored in VGPR0
 	 * for Vertex Shaders */
-	buffer_index_reg = lp_build_intrinsic(base->gallivm->builder,
-		"llvm.SI.vs.load.buffer.index", uint->elem_type, NULL, 0);
+	buffer_index_reg = build_intrinsic(base->gallivm->builder,
+		"llvm.SI.vs.load.buffer.index", uint->elem_type, NULL, 0,
+		LLVMReadNoneAttribute);
 
 	vec4_type = LLVMVectorType(base->elem_type, 4);
 	args[0] = t_list;

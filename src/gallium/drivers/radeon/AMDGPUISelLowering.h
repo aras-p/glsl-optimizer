@@ -39,6 +39,12 @@ protected:
                  MachineRegisterInfo & MRI, const TargetInstrInfo * TII,
 		 unsigned reg) const;
 
+  /// CreateLiveInRegister - Helper function that adds Reg to the LiveIn list
+  /// of the DAG's MachineFunction.  This returns a Register SDNode representing
+  /// Reg. 
+  SDValue CreateLiveInRegister(SelectionDAG &DAG, const TargetRegisterClass *RC,
+                                                  unsigned Reg, EVT VT) const;
+
   bool isHWTrueValue(SDValue Op) const;
   bool isHWFalseValue(SDValue Op) const;
 

@@ -32,7 +32,6 @@ bool AMDGPU::isPlaceHolderOpcode(unsigned opcode)
   switch (opcode) {
   default: return false;
   case AMDGPU::RETURN:
-  case AMDGPU::LOAD_INPUT:
   case AMDGPU::LAST:
   case AMDGPU::MASK_WRITE:
   case AMDGPU::RESERVE_REG:

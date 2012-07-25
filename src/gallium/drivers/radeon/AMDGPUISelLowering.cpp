@@ -15,6 +15,7 @@
 #include "AMDILIntrinsicInfo.h"
 #include "AMDGPUUtil.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
@@ -315,6 +316,21 @@ void AMDGPUTargetLowering::addLiveIn(MachineInstr * MI,
     const TargetInstrInfo * TII, unsigned reg) const
 {
   AMDGPU::utilAddLiveIn(MF, MRI, TII, reg, MI->getOperand(0).getReg());
+}
+
+SDValue AMDGPUTargetLowering::CreateLiveInRegister(SelectionDAG &DAG,
+                                                  const TargetRegisterClass *RC,
+                                                   unsigned Reg, EVT VT) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  unsigned VirtualRegister;
+  if (!MRI.isLiveIn(Reg)) {
+    VirtualRegister = MRI.createVirtualRegister(RC);
+    MRI.addLiveIn(Reg, VirtualRegister);
+  } else {
+    VirtualRegister = MRI.getLiveInVirtReg(Reg);
+  }
+  return DAG.getRegister(VirtualRegister, VT);
 }
 
 #define NODE_NAME_CASE(node) case AMDGPUISD::node: return #node;

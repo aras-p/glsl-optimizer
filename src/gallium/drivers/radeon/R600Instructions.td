@@ -1105,14 +1105,6 @@ class R600PreloadInst <string asm, Intrinsic intr> : AMDGPUInst <
   [(set R600_TReg32:$dst, (intr))]
 >;
 
-def TGID_X : R600PreloadInst <"TGID_X", int_r600_read_tgid_x>;
-def TGID_Y : R600PreloadInst <"TGID_Y", int_r600_read_tgid_y>;
-def TGID_Z : R600PreloadInst <"TGID_Z", int_r600_read_tgid_z>;
-
-def TIDIG_X : R600PreloadInst <"TIDIG_X", int_r600_read_tidig_x>;
-def TIDIG_Y : R600PreloadInst <"TIDIG_Y", int_r600_read_tidig_y>;
-def TIDIG_Z : R600PreloadInst <"TIDIG_Z", int_r600_read_tidig_z>;
-
 def NGROUPS_X : R600PreloadInst <"NGROUPS_X", int_r600_read_ngroups_x>;
 def NGROUPS_Y : R600PreloadInst <"NGROUPS_Y", int_r600_read_ngroups_y>;
 def NGROUPS_Z : R600PreloadInst <"NGROUPS_Z", int_r600_read_ngroups_z>;
@@ -1136,13 +1128,6 @@ def R600_LOAD_CONST : AMDGPUShaderInst <
   (ins i32imm:$src0),
   "R600_LOAD_CONST $dst, $src0",
   [(set R600_Reg32:$dst, (int_AMDGPU_load_const imm:$src0))]
->;
-
-def LOAD_INPUT : AMDGPUShaderInst <
-  (outs R600_Reg32:$dst),
-  (ins i32imm:$src),
-  "LOAD_INPUT $dst, $src",
-  [(set R600_Reg32:$dst, (int_R600_load_input imm:$src))]
 >;
 
 def RESERVE_REG : AMDGPUShaderInst <

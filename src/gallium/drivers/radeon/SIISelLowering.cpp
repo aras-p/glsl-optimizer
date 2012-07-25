@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SIISelLowering.h"
+#include "AMDILIntrinsicInfo.h"
 #include "SIInstrInfo.h"
 #include "SIRegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -43,6 +44,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::ADD, MVT::i32, Legal);
 
   setOperationAction(ISD::BR_CC, MVT::i32, Custom);
+
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
@@ -126,10 +129,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   case AMDGPU::USE_SGPR_32:
   case AMDGPU::USE_SGPR_64:
     lowerUSE_SGPR(MI, BB->getParent(), MRI);
-    MI->eraseFromParent();
-    break;
-  case AMDGPU::VS_LOAD_BUFFER_INDEX:
-    addLiveIn(MI, BB->getParent(), MRI, TII, AMDGPU::VGPR0);
     MI->eraseFromParent();
     break;
   }
@@ -241,7 +240,20 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
   case ISD::BR_CC: return LowerBR_CC(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::AND: return Loweri1ContextSwitch(Op, DAG, ISD::AND);
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntrinsicID =
+                         cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+    EVT VT = Op.getValueType();
+    switch (IntrinsicID) {
+    case AMDGPUIntrinsic::SI_vs_load_buffer_index:
+      return CreateLiveInRegister(DAG, &AMDGPU::VReg_32RegClass,
+                                  AMDGPU::VGPR0, VT);
+    default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
+    }
+    break;
   }
+  }
+  return SDValue();
 }
 
 /// Loweri1ContextSwitch - The function is for lowering i1 operations on the

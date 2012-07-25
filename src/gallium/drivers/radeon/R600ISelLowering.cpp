@@ -38,6 +38,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
 
   setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
   setOperationAction(ISD::ROTL, MVT::i32, Custom);
 
@@ -58,24 +59,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 
   switch (MI->getOpcode()) {
   default: return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
-  case AMDGPU::TGID_X:
-    addLiveIn(MI, MF, MRI, TII, AMDGPU::T1_X);
-    break;
-  case AMDGPU::TGID_Y:
-    addLiveIn(MI, MF, MRI, TII, AMDGPU::T1_Y);
-    break;
-  case AMDGPU::TGID_Z:
-    addLiveIn(MI, MF, MRI, TII, AMDGPU::T1_Z);
-    break;
-  case AMDGPU::TIDIG_X:
-    addLiveIn(MI, MF, MRI, TII, AMDGPU::T0_X);
-    break;
-  case AMDGPU::TIDIG_Y:
-    addLiveIn(MI, MF, MRI, TII, AMDGPU::T0_Y);
-    break;
-  case AMDGPU::TIDIG_Z:
-    addLiveIn(MI, MF, MRI, TII, AMDGPU::T0_Z);
-    break;
   case AMDGPU::NGROUPS_X:
     lowerImplicitParameter(MI, *BB, MRI, 0);
     break;
@@ -132,14 +115,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::COPY))
                   .addOperand(MI->getOperand(0))
                   .addReg(ConstantReg);
-      break;
-    }
-
-  case AMDGPU::LOAD_INPUT:
-    {
-      int64_t RegIndex = MI->getOperand(1).getImm();
-      addLiveIn(MI, MF, MRI, TII,
-                AMDGPU::R600_TReg32RegClass.getRegister(RegIndex));
       break;
     }
 
@@ -264,6 +239,8 @@ void R600TargetLowering::lowerImplicitParameter(MachineInstr *MI, MachineBasicBl
 // Custom DAG Lowering Operations
 //===----------------------------------------------------------------------===//
 
+using namespace llvm::Intrinsic;
+using namespace llvm::AMDGPUIntrinsic;
 
 SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
 {
@@ -288,11 +265,47 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
       }
       return DAG.getCopyToReg(Chain, Op.getDebugLoc(), Reg, Op.getOperand(2));
     }
-    default: return SDValue();
+    // default for switch(IntrinsicID)
+    default: break;
     }
+    // break out of case ISD::INTRINSIC_VOID in switch(Op.getOpcode())
     break;
   }
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntrinsicID =
+                         cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+    EVT VT = Op.getValueType();
+    switch(IntrinsicID) {
+    default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
+    case AMDGPUIntrinsic::R600_load_input: {
+      int64_t RegIndex = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+      unsigned Reg = AMDGPU::R600_TReg32RegClass.getRegister(RegIndex);
+      return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass, Reg, VT);
+    }
+    case r600_read_tgid_x:
+      return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+                                  AMDGPU::T1_X, VT);
+    case r600_read_tgid_y:
+      return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+                                  AMDGPU::T1_Y, VT);
+    case r600_read_tgid_z:
+      return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+                                  AMDGPU::T1_Z, VT);
+    case r600_read_tidig_x:
+      return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+                                  AMDGPU::T0_X, VT);
+    case r600_read_tidig_y:
+      return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+                                  AMDGPU::T0_Y, VT);
+    case r600_read_tidig_z:
+      return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+                                  AMDGPU::T0_Z, VT);
+    }
+    // break out of case ISD::INTRINSIC_WO_CHAIN in switch(Op.getOpcode())
+    break;
   }
+  } // end switch(Op.getOpcode())
+  return SDValue();
 }
 
 SDValue R600TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const

@@ -970,15 +970,6 @@ def USE_SGPR_64 : InstSI <
   [(set (i64 SReg_64:$dst), (load_user_sgpr imm:$src0))]
 >;
 
-def VS_LOAD_BUFFER_INDEX : InstSI <
-  (outs VReg_32:$dst),
-  (ins),
-  "VS_LOAD_BUFFER_INDEX",
-  [(set VReg_32:$dst, (int_SI_vs_load_buffer_index))]> {
-
-  field bits<32> Inst = 0;
-}
-
 } // end usesCustomInserter 
 
 // SI Psuedo branch instructions.  These are used by the CFG structurizer pass
@@ -1057,13 +1048,6 @@ def : Pat <
   (i1 (SIvcc_bitcast SReg_64:$vcc)),
   (COPY_TO_REGCLASS SReg_64:$vcc, VCCReg)
 >;
-
-/*
-def : Pat<
-  (int_SI_vs_load_buffer_index),
-  (COPY_TO_REGCLASS (f32 VGPR0), VReg_32)
->; 
-*/ 
 
 /********** ===================== **********/
 /********** Interpolation Paterns **********/
