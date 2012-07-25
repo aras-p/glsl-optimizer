@@ -27,6 +27,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::f32, &AMDGPU::VReg_32RegClass);
   addRegisterClass(MVT::i32, &AMDGPU::VReg_32RegClass);
   addRegisterClass(MVT::i64, &AMDGPU::VReg_64RegClass);
+  addRegisterClass(MVT::i1, &AMDGPU::SCCRegRegClass);
+  addRegisterClass(MVT::i1, &AMDGPU::VCCRegRegClass);
 
   addRegisterClass(MVT::v4i32, &AMDGPU::SReg_128RegClass);
   addRegisterClass(MVT::v8i32, &AMDGPU::SReg_256RegClass);
