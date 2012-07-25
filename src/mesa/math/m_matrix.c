@@ -45,7 +45,6 @@
  * \defgroup MatFlags MAT_FLAG_XXX-flags
  *
  * Bitmasks to indicate different kinds of 4x4 matrices in GLmatrix::flags
- * It would be nice to make all these flags private to m_matrix.c
  */
 /*@{*/
 #define MAT_FLAG_IDENTITY       0     /**< is an identity matrix flag.
