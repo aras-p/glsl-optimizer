@@ -361,11 +361,12 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
          HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
          UNSIGNED_INT_2_10_10_10_REV_BIT |
          INT_2_10_10_10_REV_BIT);
+   const GLint sizeMin = (ctx->API == API_OPENGLES) ? 2 : 1;
    const GLuint unit = ctx->Array.ActiveTexture;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    update_array(ctx, "glTexCoordPointer", VERT_ATTRIB_TEX(unit),
-                legalTypes, 1, 4,
+                legalTypes, sizeMin, 4,
                 size, type, stride, GL_FALSE, GL_FALSE,
                 ptr);
 }
