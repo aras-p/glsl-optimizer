@@ -44,6 +44,7 @@ public:
   SITargetLowering(TargetMachine &tm);
   virtual MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr * MI,
                                               MachineBasicBlock * BB) const;
+  virtual EVT getSetCCResultType(EVT VT) const;
   virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 };
 

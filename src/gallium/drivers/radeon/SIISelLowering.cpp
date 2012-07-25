@@ -194,6 +194,11 @@ void SITargetLowering::lowerUSE_SGPR(MachineInstr *MI,
   addLiveIn(MI, MF, MRI, TII, newReg); 
 }
 
+EVT SITargetLowering::getSetCCResultType(EVT VT) const
+{
+  return MVT::i1;
+}
+
 //===----------------------------------------------------------------------===//
 // Custom DAG Lowering Operations
 //===----------------------------------------------------------------------===//
