@@ -46,6 +46,9 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
+  setTargetDAGCombine(ISD::SELECT_CC);
+
+  setTargetDAGCombine(ISD::SETCC);
 }
 
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
@@ -281,6 +284,56 @@ SDValue SITargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
 
   SDValue Cond = DAG.getNode(ISD::SETCC, DL, MVT::i1, LHS, RHS, CC);
   return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
+}
+
+//===----------------------------------------------------------------------===//
+// Custom DAG optimizations
+//===----------------------------------------------------------------------===//
+
+SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
+                                            DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+  DebugLoc DL = N->getDebugLoc();
+  EVT VT = N->getValueType(0);
+
+  switch (N->getOpcode()) {
+    default: break;
+    case ISD::SELECT_CC: {
+      N->dump();
+      ConstantSDNode *True, *False;
+      // i1 selectcc(l, r, -1, 0, cc) -> i1 setcc(l, r, cc)
+      if ((True = dyn_cast<ConstantSDNode>(N->getOperand(2)))
+          && (False = dyn_cast<ConstantSDNode>(N->getOperand(3)))
+          && True->isAllOnesValue()
+          && False->isNullValue()
+          && VT == MVT::i1) {
+        return DAG.getNode(ISD::SETCC, DL, VT, N->getOperand(0),
+                           N->getOperand(1), N->getOperand(4));
+
+      }
+      break;
+    }
+    case ISD::SETCC: {
+      SDValue Arg0 = N->getOperand(0);
+      SDValue Arg1 = N->getOperand(1);
+      SDValue CC = N->getOperand(2);
+      ConstantSDNode * C = NULL;
+      ISD::CondCode CCOp = dyn_cast<CondCodeSDNode>(CC)->get();
+
+      // i1 setcc (sext(i1), 0, setne) -> i1 setcc(i1, 0, setne)
+      if (VT == MVT::i1
+          && Arg0.getOpcode() == ISD::SIGN_EXTEND
+          && Arg0.getOperand(0).getValueType() == MVT::i1
+          && (C = dyn_cast<ConstantSDNode>(Arg1))
+          && C->isNullValue()
+          && CCOp == ISD::SETNE) {
+        return SimplifySetCC(VT, Arg0.getOperand(0),
+                             DAG.getConstant(0, MVT::i1), CCOp, true, DCI, DL);
+      }
+      break;
+    }
+  }
+  return SDValue();
 }
 
 #define NODE_NAME_CASE(node) case SIISD::node: return #node;

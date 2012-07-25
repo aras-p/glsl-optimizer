@@ -49,6 +49,7 @@ public:
                                               MachineBasicBlock * BB) const;
   virtual EVT getSetCCResultType(EVT VT) const;
   virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+  virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   virtual const char* getTargetNodeName(unsigned Opcode) const;
 };
 
