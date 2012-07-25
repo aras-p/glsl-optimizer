@@ -31,6 +31,7 @@
 #include "mtypes.h"
 #include "enums.h"
 #include "vbo/vbo.h"
+#include <stdbool.h>
 
 
 /**
@@ -262,6 +263,26 @@ _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
    return GL_TRUE;
 }
 
+/**
+ * Verify that the element type is valid.
+ *
+ * Generates \c GL_INVALID_ENUM and returns \c false if it is not.
+ */
+static bool
+valid_elements_type(struct gl_context *ctx, GLenum type, const char *name)
+{
+   switch (type) {
+   case GL_UNSIGNED_BYTE:
+   case GL_UNSIGNED_SHORT:
+   case GL_UNSIGNED_INT:
+      return true;
+
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(type = %s)", name,
+                  _mesa_lookup_enum_by_nr(type));
+      return false;
+   }
+}
 
 /**
  * Error checking for glDrawElements().  Includes parameter checking
@@ -286,13 +307,8 @@ _mesa_validate_DrawElements(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   if (type != GL_UNSIGNED_INT &&
-       type != GL_UNSIGNED_BYTE &&
-       type != GL_UNSIGNED_SHORT)
-   {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
+   if (!valid_elements_type(ctx, type, "glDrawElements"))
       return GL_FALSE;
-   }
 
    if (!check_valid_to_render(ctx, "glDrawElements"))
       return GL_FALSE;
@@ -348,13 +364,8 @@ _mesa_validate_MultiDrawElements(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   if (type != GL_UNSIGNED_INT &&
-       type != GL_UNSIGNED_BYTE &&
-       type != GL_UNSIGNED_SHORT)
-   {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glMultiDrawElements(type)" );
+   if (!valid_elements_type(ctx, type, "glMultiDrawElements"))
       return GL_FALSE;
-   }
 
    if (!check_valid_to_render(ctx, "glMultiDrawElements"))
       return GL_FALSE;
@@ -419,12 +430,8 @@ _mesa_validate_DrawRangeElements(struct gl_context *ctx, GLenum mode,
       return GL_FALSE;
    }
 
-   if (type != GL_UNSIGNED_INT &&
-       type != GL_UNSIGNED_BYTE &&
-       type != GL_UNSIGNED_SHORT) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawRangeElements(type)" );
+   if (!valid_elements_type(ctx, type, "glDrawRangeElements"))
       return GL_FALSE;
-   }
 
    if (!check_valid_to_render(ctx, "glDrawRangeElements"))
       return GL_FALSE;
@@ -548,13 +555,8 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   if (type != GL_UNSIGNED_INT &&
-       type != GL_UNSIGNED_BYTE &&
-       type != GL_UNSIGNED_SHORT) {
-      _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glDrawElementsInstanced(type=0x%x)", type);
+   if (!valid_elements_type(ctx, type, "glDrawElementsInstanced"))
       return GL_FALSE;
-   }
 
    if (numInstances <= 0) {
       if (numInstances < 0)
