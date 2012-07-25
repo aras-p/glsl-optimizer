@@ -1222,13 +1222,6 @@
 	<desc name="size" error="GL_INVALID_VALUE">
 		<value name="4"/>
 	</desc>
-
-	<desc name="type">
-		<value name="GL_UNSIGNED_BYTE"/>
-		<value name="GL_FLOAT"/>
-		<value name="GL_FIXED"/>
-		<value name="GL_HALF_FLOAT_OES" category="OES_vertex_half_float"/>
-	</desc>
 </template>
 
 <template name="DisableClientState">
