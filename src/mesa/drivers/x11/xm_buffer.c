@@ -446,14 +446,43 @@ xmesa_MapRenderbuffer(struct gl_context *ctx,
       }
       else {
          /* this must be a pixmap/window renderbuffer */
+         int (*old_handler)(XMesaDisplay *, XErrorEvent *);
          int y2 = rb->Height - y - h;
 
          assert(xrb->pixmap);
+
+         /* Install error handler for XGetImage() in case the the window
+          * isn't mapped.  If we fail we'll create a temporary XImage.
+          */
+         mesaXErrorFlag = 0;
+         old_handler = XSetErrorHandler(mesaHandleXError);
 
          /* read pixel data out of the pixmap/window into an XImage */
          ximage = XGetImage(xrb->Parent->display,
                             xrb->pixmap, x, y2, w, h,
                             AllPlanes, ZPixmap);
+
+         XSetErrorHandler(old_handler);
+
+         if (mesaXErrorFlag) {
+            /* create new, temporary XImage */
+            int bytes_per_line =
+               _mesa_format_row_stride(xrb->Base.Base.Format,
+                                       xrb->Base.Base.Width);
+            char *image = (char *) malloc(bytes_per_line *
+                                          xrb->Base.Base.Height);
+            ximage = XCreateImage(xrb->Parent->display,
+                                  xrb->Parent->xm_visual->visinfo->visual,
+                                  xrb->Parent->xm_visual->visinfo->depth,
+                                  ZPixmap, /* format */
+                                  0, /* offset */
+                                  image, /* data */
+                                  xrb->Base.Base.Width,
+                                  xrb->Base.Base.Height,
+                                  8, /* pad */
+                                  bytes_per_line);
+         }
+
          if (!ximage) {
             *mapOut = NULL;
             *rowStrideOut = 0;
