@@ -2016,11 +2016,6 @@
 		<return type="GLuint"/>
 		<param name="type" type="GLenum"/>
 	</proto>
-
-	<desc name="type">
-		<value name="GL_VERTEX_SHADER"/>
-		<value name="GL_FRAGMENT_SHADER"/>
-	</desc>
 </template>
 
 <template name="ShaderSource">

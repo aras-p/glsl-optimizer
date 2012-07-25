@@ -177,7 +177,7 @@ validate_shader_target(const struct gl_context *ctx, GLenum type)
 #endif
 #if FEATURE_ARB_geometry_shader4
    case GL_GEOMETRY_SHADER_ARB:
-      return ctx->Extensions.ARB_geometry_shader4;
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_geometry_shader4;
 #endif
    default:
       return false;
