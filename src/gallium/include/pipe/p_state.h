@@ -572,9 +572,7 @@ struct pipe_draw_info
 struct pipe_resolve_info
 {
    struct {
-      struct pipe_resource *res;
-      unsigned level;
-      unsigned layer;
+      struct pipe_surface *surface;
       int x0; /**< always left */
       int y0; /**< always top */
       int x1; /**< determines scale if PIPE_CAP_SCALED_RESOLVE is supported */
@@ -587,7 +585,7 @@ struct pipe_resolve_info
       int x0;
       int y0;
       int x1; /**< may be < x0 only if PIPE_CAP_SCALED_RESOLVE is supported */
-      int y1; /**< may be < y1 even if PIPE_CAP_SCALED_RESOLVE not supported */
+      int y1; /**< may be < y0 even if PIPE_CAP_SCALED_RESOLVE not supported */
    } src;
 
    unsigned mask; /**< PIPE_MASK_RGBA, Z, S or ZS */
