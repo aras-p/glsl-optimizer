@@ -500,7 +500,19 @@ link_assign_uniform_block_offsets(struct gl_shader *shader)
 	 ubo_var->Offset = offset;
 	 offset += size;
       }
-      block->UniformBufferSize = offset;
+
+      /* From the GL_ARB_uniform_buffer_object spec:
+       *
+       *     "For uniform blocks laid out according to [std140] rules,
+       *      the minimum buffer object size returned by the
+       *      UNIFORM_BLOCK_DATA_SIZE query is derived by taking the
+       *      offset of the last basic machine unit consumed by the
+       *      last uniform of the uniform block (including any
+       *      end-of-array or end-of-structure padding), adding one,
+       *      and rounding up to the next multiple of the base
+       *      alignment required for a vec4."
+       */
+      block->UniformBufferSize = align(offset, 16);
    }
 }
 
