@@ -3111,20 +3111,6 @@
 		<param name="range" type="GLint *"/>
 		<param name="precision" type="GLint *"/>
 	</proto>
-
-	<desc name="shadertype">
-		<value name="GL_VERTEX_SHADER"/>
-		<value name="GL_FRAGMENT_SHADER"/>
-	</desc>
-
-	<desc name="precisiontype">
-		<value name="GL_LOW_FLOAT"/>
-		<value name="GL_MEDIUM_FLOAT"/>
-		<value name="GL_HIGH_FLOAT"/>
-		<value name="GL_LOW_INT"/>
-		<value name="GL_MEDIUM_INT"/>
-		<value name="GL_HIGH_INT"/>
-	</desc>
 </template>
 
 <template name="GetUniform" direction="get">
