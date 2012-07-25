@@ -22,6 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <stdbool.h>
 #include "glheader.h"
 #include "api_validate.h"
 #include "bufferobj.h"
@@ -209,12 +210,33 @@ check_index_bounds(struct gl_context *ctx, GLsizei count, GLenum type,
 GLboolean
 _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
 {
-   if (ctx->Extensions.ARB_geometry_shader4 &&
-       mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "%s(mode=%x)", name, mode);
-      return GL_FALSE;
+   bool valid_enum;
+
+   switch (mode) {
+   case GL_POINTS:
+   case GL_LINES:
+   case GL_LINE_LOOP:
+   case GL_LINE_STRIP:
+   case GL_TRIANGLES:
+   case GL_TRIANGLE_STRIP:
+   case GL_TRIANGLE_FAN:
+   case GL_QUADS:
+   case GL_QUAD_STRIP:
+   case GL_POLYGON:
+      valid_enum = true;
+      break;
+   case GL_LINES_ADJACENCY:
+   case GL_LINE_STRIP_ADJACENCY:
+   case GL_TRIANGLES_ADJACENCY:
+   case GL_TRIANGLE_STRIP_ADJACENCY:
+      valid_enum = (ctx->Extensions.ARB_geometry_shader4);
+      break;
+   default:
+      valid_enum = false;
+      break;
    }
-   else if (mode > GL_POLYGON) {
+
+   if (!valid_enum) {
       _mesa_error(ctx, GL_INVALID_ENUM, "%s(mode=%x)", name, mode);
       return GL_FALSE;
    }
