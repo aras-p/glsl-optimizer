@@ -38,6 +38,12 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const
 {
+
+  // If we are trying to copy to or from SCC, there is a bug somewhere else in
+  // the backend.  While it may be theoretically possible to do this, it should
+  // never be necessary.
+  assert(DestReg != AMDGPU::SCC && SrcReg != AMDGPU::SCC);
+
   BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DestReg)
    .addReg(SrcReg, getKillRegState(KillSrc));
 }
