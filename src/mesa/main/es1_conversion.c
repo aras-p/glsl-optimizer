@@ -1240,16 +1240,6 @@ _es_TexParameterx(GLenum target, GLenum pname, GLfixed param)
    GLfloat converted_param;
    bool convert_param_value = true;
 
-   switch(target) {
-   case GL_TEXTURE_2D:
-   case GL_TEXTURE_CUBE_MAP:
-   case GL_TEXTURE_EXTERNAL_OES:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glTexParameterx(target=0x%x)", target);
-      return;
-   }
    switch(pname) {
    case GL_TEXTURE_WRAP_S:
    case GL_TEXTURE_WRAP_T:

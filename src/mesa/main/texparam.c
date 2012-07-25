@@ -131,35 +131,42 @@ get_texobj(struct gl_context *ctx, GLenum target, GLboolean get)
 
    switch (target) {
    case GL_TEXTURE_1D:
-      return texUnit->CurrentTex[TEXTURE_1D_INDEX];
+      if (_mesa_is_desktop_gl(ctx))
+         return texUnit->CurrentTex[TEXTURE_1D_INDEX];
+      break;
    case GL_TEXTURE_2D:
       return texUnit->CurrentTex[TEXTURE_2D_INDEX];
    case GL_TEXTURE_3D:
-      return texUnit->CurrentTex[TEXTURE_3D_INDEX];
+      if (ctx->API != API_OPENGLES)
+         return texUnit->CurrentTex[TEXTURE_3D_INDEX];
+      break;
    case GL_TEXTURE_CUBE_MAP:
       if (ctx->Extensions.ARB_texture_cube_map) {
          return texUnit->CurrentTex[TEXTURE_CUBE_INDEX];
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
-      if (ctx->Extensions.NV_texture_rectangle) {
+      if (_mesa_is_desktop_gl(ctx)
+          && ctx->Extensions.NV_texture_rectangle) {
          return texUnit->CurrentTex[TEXTURE_RECT_INDEX];
       }
       break;
    case GL_TEXTURE_1D_ARRAY_EXT:
-      if (ctx->Extensions.MESA_texture_array ||
-          ctx->Extensions.EXT_texture_array) {
+      if (_mesa_is_desktop_gl(ctx)
+          && (ctx->Extensions.MESA_texture_array ||
+              ctx->Extensions.EXT_texture_array)) {
          return texUnit->CurrentTex[TEXTURE_1D_ARRAY_INDEX];
       }
       break;
    case GL_TEXTURE_2D_ARRAY_EXT:
-      if (ctx->Extensions.MESA_texture_array ||
-          ctx->Extensions.EXT_texture_array) {
+      if ((_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx))
+          && (ctx->Extensions.MESA_texture_array ||
+              ctx->Extensions.EXT_texture_array)) {
          return texUnit->CurrentTex[TEXTURE_2D_ARRAY_INDEX];
       }
       break;
    case GL_TEXTURE_EXTERNAL_OES:
-      if (ctx->Extensions.OES_EGL_image_external) {
+      if (_mesa_is_gles(ctx) && ctx->Extensions.OES_EGL_image_external) {
          return texUnit->CurrentTex[TEXTURE_EXTERNAL_INDEX];
       }
       break;
