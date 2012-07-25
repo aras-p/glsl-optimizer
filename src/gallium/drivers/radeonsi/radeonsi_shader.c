@@ -475,6 +475,25 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 		}
 	}
 
+	if (!last_args[0]) {
+		assert(si_shader_ctx->type == TGSI_PROCESSOR_FRAGMENT);
+
+		/* Specify which components to enable */
+		last_args[0] = lp_build_const_int32(base->gallivm, 0x0);
+
+		/* Specify the target we are exporting */
+		last_args[3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_MRT);
+
+		/* Set COMPR flag to zero to export data as 32-bit */
+		last_args[4] = uint->zero;
+
+		/* dummy bits */
+		last_args[5]= uint->zero;
+		last_args[6]= uint->zero;
+		last_args[7]= uint->zero;
+		last_args[8]= uint->zero;
+	}
+
 	/* Specify whether the EXEC mask represents the valid mask */
 	last_args[1] = lp_build_const_int32(base->gallivm,
 					    si_shader_ctx->type == TGSI_PROCESSOR_FRAGMENT);
