@@ -95,6 +95,26 @@ util_make_fragment_cloneinput_shader(struct pipe_context *pipe, int num_cbufs,
                                      int input_semantic,
                                      int input_interpolate);
 
+
+extern void *
+util_make_fs_blit_msaa_color(struct pipe_context *pipe,
+                             unsigned tgsi_tex);
+
+
+extern void *
+util_make_fs_blit_msaa_depth(struct pipe_context *pipe,
+                             unsigned tgsi_tex);
+
+
+extern void *
+util_make_fs_blit_msaa_depthstencil(struct pipe_context *pipe,
+                                    unsigned tgsi_tex);
+
+
+void *
+util_make_fs_blit_msaa_stencil(struct pipe_context *pipe,
+                               unsigned tgsi_tex);
+
 #ifdef __cplusplus
 }
 #endif

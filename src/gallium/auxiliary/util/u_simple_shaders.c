@@ -40,7 +40,12 @@
 #include "pipe/p_state.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_debug.h"
+#include "util/u_memory.h"
+#include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_strings.h"
 #include "tgsi/tgsi_ureg.h"
+#include "tgsi/tgsi_text.h"
+#include <stdio.h> /* include last */
 
 
 
@@ -352,4 +357,132 @@ util_make_fragment_cloneinput_shader(struct pipe_context *pipe, int num_cbufs,
    ureg_END( ureg );
 
    return ureg_create_shader_and_destroy( ureg, pipe );
+}
+
+
+static void *
+util_make_fs_blit_msaa_gen(struct pipe_context *pipe,
+                           unsigned tgsi_tex,
+                           const char *output_semantic,
+                           const char *output_mask)
+{
+   static const char shader_templ[] =
+         "FRAG\n"
+         "DCL IN[0], GENERIC[0], LINEAR\n"
+         "DCL SAMP[0]\n"
+         "DCL OUT[0], %s\n"
+         "DCL TEMP[0]\n"
+
+         "F2U TEMP[0], IN[0]\n"
+         "TXF OUT[0]%s, TEMP[0].xyzz, SAMP[0], %s\n"
+         "END\n";
+
+   const char *type = tgsi_texture_names[tgsi_tex];
+   char text[sizeof(shader_templ)+100];
+   struct tgsi_token tokens[1000];
+   struct pipe_shader_state state = {tokens};
+
+   assert(tgsi_tex == TGSI_TEXTURE_2D_MSAA ||
+          tgsi_tex == TGSI_TEXTURE_2D_ARRAY_MSAA);
+
+   sprintf(text, shader_templ, output_semantic, output_mask, type);
+
+   if (!tgsi_text_translate(text, tokens, Elements(tokens))) {
+      puts(text);
+      assert(0);
+      return NULL;
+   }
+#if 0
+   tgsi_dump(state.tokens, 0);
+#endif
+
+   return pipe->create_fs_state(pipe, &state);
+}
+
+
+/**
+ * Make a fragment shader that sets the output color to a color
+ * fetched from a multisample texture.
+ * \param tex_target  one of PIPE_TEXTURE_x
+ */
+void *
+util_make_fs_blit_msaa_color(struct pipe_context *pipe,
+                             unsigned tgsi_tex)
+{
+   return util_make_fs_blit_msaa_gen(pipe, tgsi_tex,
+                                     "COLOR[0]", "");
+}
+
+
+/**
+ * Make a fragment shader that sets the output depth to a depth value
+ * fetched from a multisample texture.
+ * \param tex_target  one of PIPE_TEXTURE_x
+ */
+void *
+util_make_fs_blit_msaa_depth(struct pipe_context *pipe,
+                             unsigned tgsi_tex)
+{
+   return util_make_fs_blit_msaa_gen(pipe, tgsi_tex,
+                                     "POSITION", ".z");
+}
+
+
+/**
+ * Make a fragment shader that sets the output stencil to a stencil value
+ * fetched from a multisample texture.
+ * \param tex_target  one of PIPE_TEXTURE_x
+ */
+void *
+util_make_fs_blit_msaa_stencil(struct pipe_context *pipe,
+                               unsigned tgsi_tex)
+{
+   return util_make_fs_blit_msaa_gen(pipe, tgsi_tex,
+                                     "STENCIL", ".y");
+}
+
+
+/**
+ * Make a fragment shader that sets the output depth and stencil to depth
+ * and stencil values fetched from two multisample textures / samplers.
+ * The sizes of both textures should match (it should be one depth-stencil
+ * texture).
+ * \param tex_target  one of PIPE_TEXTURE_x
+ */
+void *
+util_make_fs_blit_msaa_depthstencil(struct pipe_context *pipe,
+                                    unsigned tgsi_tex)
+{
+   static const char shader_templ[] =
+         "FRAG\n"
+         "DCL IN[0], GENERIC[0], LINEAR\n"
+         "DCL SAMP[0..1]\n"
+         "DCL OUT[0], POSITION\n"
+         "DCL OUT[1], STENCIL\n"
+         "DCL TEMP[0]\n"
+
+         "F2U TEMP[0], IN[0]\n"
+         "TXF OUT[0].z, TEMP[0], SAMP[0], %s\n"
+         "TXF OUT[1].y, TEMP[0], SAMP[1], %s\n"
+         "END\n";
+
+   const char *type = tgsi_texture_names[tgsi_tex];
+   char text[sizeof(shader_templ)+100];
+   struct tgsi_token tokens[1000];
+   struct pipe_shader_state state = {tokens};
+
+   assert(tgsi_tex == TGSI_TEXTURE_2D_MSAA ||
+          tgsi_tex == TGSI_TEXTURE_2D_ARRAY_MSAA);
+
+   sprintf(text, shader_templ, type, type);
+
+   if (!tgsi_text_translate(text, tokens, Elements(tokens))) {
+      assert(0);
+      return NULL;
+   }
+#if 0
+   tgsi_dump(state.tokens, 0);
+#endif
+
+   return pipe->create_fs_state(pipe, &state);
 }

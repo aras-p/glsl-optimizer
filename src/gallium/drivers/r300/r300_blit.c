@@ -577,8 +577,8 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     src_view = r300_create_sampler_view_custom(pipe, src, &src_templ, src_width0, src_height0);
 
     r300_blitter_begin(r300, R300_COPY);
-    util_blitter_copy_texture_view(r300->blitter, dst_view, dstx, dsty,
-                                   src_view, src_box,
+    util_blitter_copy_texture_view(r300->blitter, dst_view, ~0, dstx, dsty,
+                                   src_view, 0, src_box,
                                    src_width0, src_height0, PIPE_MASK_RGBAZS);
     r300_blitter_end(r300);
 

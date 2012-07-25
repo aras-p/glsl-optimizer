@@ -178,6 +178,10 @@ boolean util_blitter_is_copy_supported(struct blitter_context *blitter,
  * a software fallback path is taken and both surfaces must be of the same
  * format.
  *
+ * Only one sample of a multisample texture can be copied and is specified by
+ * src_sample. If the destination is a multisample resource, dst_sample_mask
+ * specifies the sample mask. For single-sample resources, set dst_sample_mask
+ * to ~0.
  *
  * These states must be saved in the blitter in addition to the state objects
  * already required to be saved:
@@ -190,10 +194,10 @@ boolean util_blitter_is_copy_supported(struct blitter_context *blitter,
  */
 void util_blitter_copy_texture(struct blitter_context *blitter,
                                struct pipe_resource *dst,
-                               unsigned dst_level,
+                               unsigned dst_level, unsigned dst_sample_mask,
                                unsigned dstx, unsigned dsty, unsigned dstz,
                                struct pipe_resource *src,
-                               unsigned src_level,
+                               unsigned src_level, unsigned src_sample,
                                const struct pipe_box *srcbox);
 
 /**
@@ -218,8 +222,10 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
  */
 void util_blitter_copy_texture_view(struct blitter_context *blitter,
                                     struct pipe_surface *dst,
+                                    unsigned dst_sample_mask,
                                     unsigned dstx, unsigned dsty,
                                     struct pipe_sampler_view *src,
+                                    unsigned src_sample,
                                     const struct pipe_box *srcbox,
                                     unsigned src_width0, unsigned src_height0,
                                     unsigned mask);
