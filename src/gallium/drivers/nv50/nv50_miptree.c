@@ -37,7 +37,7 @@ nv50_tex_choose_tile_dims(unsigned nx, unsigned ny, unsigned nz)
 static uint32_t
 nv50_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
 {
-   const unsigned ms = util_logbase2(mt->base.base.nr_samples);
+   const unsigned ms = mt->ms_x + mt->ms_y;
 
    uint32_t tile_flags;
 
@@ -48,20 +48,20 @@ nv50_mt_choose_storage_type(struct nv50_miptree *mt, boolean compressed)
 
    switch (mt->base.base.format) {
    case PIPE_FORMAT_Z16_UNORM:
-      tile_flags = 0x6c + (ms << 8);
+      tile_flags = 0x6c + ms;
       break;
    case PIPE_FORMAT_S8_UINT_Z24_UNORM:
-      tile_flags = 0x18 + (ms << 8);
+      tile_flags = 0x18 + ms;
       break;
    case PIPE_FORMAT_Z24X8_UNORM:
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-      tile_flags = 0x128 + (ms << 8);
+      tile_flags = 0x128 + ms;
       break;
    case PIPE_FORMAT_Z32_FLOAT:
-      tile_flags = 0x40 + (ms << 8);
+      tile_flags = 0x40 + ms;
       break;
    case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-      tile_flags = 0x60 + (ms << 8);
+      tile_flags = 0x60 + ms;
       break;
    default:
       switch (util_format_get_blocksizebits(mt->base.base.format)) {
