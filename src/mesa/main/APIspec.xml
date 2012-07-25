@@ -855,14 +855,6 @@
 		<return type="const GLubyte *"/>
 		<param name="name" type="GLenum"/>
 	</proto>
-
-	<desc name="name">
-		<value name="GL_VENDOR"/>
-		<value name="GL_RENDERER"/>
-		<value name="GL_VERSION"/>
-		<value name="GL_EXTENSIONS"/>
-		<value name="GL_SHADING_LANGUAGE_VERSION" category="GLES2.0"/>
-	</desc>
 </template>
 
 <template name="GetTexEnv" direction="get">

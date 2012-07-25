@@ -129,23 +129,28 @@ _mesa_GetString( GLenum name )
          return (const GLubyte *) ctx->Extensions.String;
 #if FEATURE_ARB_shading_language_100 || FEATURE_ES2
       case GL_SHADING_LANGUAGE_VERSION:
+         if (ctx->API == API_OPENGLES)
+            break;
 	 return shading_language_version(ctx);
 #endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program || \
     FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
       case GL_PROGRAM_ERROR_STRING_NV:
-         if (ctx->Extensions.NV_fragment_program ||
-             ctx->Extensions.ARB_fragment_program ||
-             ctx->Extensions.NV_vertex_program ||
-             ctx->Extensions.ARB_vertex_program) {
+         if (ctx->API == API_OPENGL &&
+             (ctx->Extensions.NV_fragment_program ||
+              ctx->Extensions.ARB_fragment_program ||
+              ctx->Extensions.NV_vertex_program ||
+              ctx->Extensions.ARB_vertex_program)) {
             return (const GLubyte *) ctx->Program.ErrorString;
          }
-         /* FALL-THROUGH */
+         break;
 #endif
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
-         return (const GLubyte *) 0;
+         break;
    }
+
+   _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
+   return (const GLubyte *) 0;
 }
 
 
