@@ -473,6 +473,29 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
 
+#if FEATURE_EXT_transform_feedback
+   /* Is transform feedback available in this context?
+    */
+   const bool has_xfb =
+      (ctx->API == API_OPENGL && ctx->Extensions.EXT_transform_feedback)
+      || ctx->API == API_OPENGL_CORE
+      || _mesa_is_gles3(ctx);
+#endif
+
+#if FEATURE_ARB_geometry_shader4
+   /* Are geometry shaders available in this context?
+    */
+   const bool has_gs =
+      _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_geometry_shader4;
+#endif
+
+   /* Are uniform buffer objects available in this context?
+    */
+   const bool has_ubo =
+      (ctx->API == API_OPENGL && ctx->Extensions.ARB_uniform_buffer_object)
+      || ctx->API == API_OPENGL_CORE
+      || _mesa_is_gles3(ctx);
+
    if (!shProg) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramiv(program)");
       return;
@@ -521,34 +544,34 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
    }
 #if FEATURE_EXT_transform_feedback
    case GL_TRANSFORM_FEEDBACK_VARYINGS:
-      if (!ctx->Extensions.EXT_transform_feedback)
+      if (!has_xfb)
          break;
       *params = shProg->TransformFeedback.NumVarying;
       return;
    case GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH:
-      if (!ctx->Extensions.EXT_transform_feedback)
+      if (!has_xfb)
          break;
       *params = longest_feedback_varying_name(shProg) + 1;
       return;
    case GL_TRANSFORM_FEEDBACK_BUFFER_MODE:
-      if (!ctx->Extensions.EXT_transform_feedback)
+      if (!has_xfb)
          break;
       *params = shProg->TransformFeedback.BufferMode;
       return;
 #endif
 #if FEATURE_ARB_geometry_shader4
    case GL_GEOMETRY_VERTICES_OUT_ARB:
-      if (!ctx->Extensions.ARB_geometry_shader4)
+      if (!has_gs)
          break;
       *params = shProg->Geom.VerticesOut;
       return;
    case GL_GEOMETRY_INPUT_TYPE_ARB:
-      if (!ctx->Extensions.ARB_geometry_shader4)
+      if (!has_gs)
          break;
       *params = shProg->Geom.InputType;
       return;
    case GL_GEOMETRY_OUTPUT_TYPE_ARB:
-      if (!ctx->Extensions.ARB_geometry_shader4)
+      if (!has_gs)
          break;
       *params = shProg->Geom.OutputType;
       return;
@@ -557,7 +580,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       unsigned i;
       GLint max_len = 0;
 
-      if (!ctx->Extensions.ARB_uniform_buffer_object)
+      if (!has_ubo)
          break;
 
       for (i = 0; i < shProg->NumUniformBlocks; i++) {
@@ -573,7 +596,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       return;
    }
    case GL_ACTIVE_UNIFORM_BLOCKS:
-      if (!ctx->Extensions.ARB_uniform_buffer_object)
+      if (!has_ubo)
          break;
 
       *params = shProg->NumUniformBlocks;

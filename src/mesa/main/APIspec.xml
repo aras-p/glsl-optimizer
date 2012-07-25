@@ -1839,21 +1839,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="pname">
-		<value name="GL_DELETE_STATUS"/>
-		<value name="GL_LINK_STATUS"/>
-		<value name="GL_VALIDATE_STATUS"/>
-		<value name="GL_INFO_LOG_LENGTH"/>
-		<value name="GL_ATTACHED_SHADERS"/>
-		<value name="GL_ACTIVE_ATTRIBUTES"/>
-		<value name="GL_ACTIVE_ATTRIBUTE_MAX_LENGTH"/>
-		<value name="GL_ACTIVE_UNIFORMS"/>
-		<value name="GL_ACTIVE_UNIFORM_MAX_LENGTH"/>
-		<value name="GL_PROGRAM_BINARY_LENGTH_OES" category="OES_get_program_binary"/>
-
-		<desc name="params" convert="false"/>
-	</desc>
 </template>
 
 <template name="GetVertexAttrib" direction="get">
