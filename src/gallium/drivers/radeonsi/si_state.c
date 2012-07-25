@@ -1973,7 +1973,7 @@ out:
 
 static void si_bind_vs_sampler(struct pipe_context *ctx, unsigned count, void **states)
 {
-	assert(0);
+	assert(count == 0);
 }
 
 static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **states)
