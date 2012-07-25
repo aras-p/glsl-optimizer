@@ -1517,12 +1517,6 @@
 		<value name="GL_TRIANGLE_STRIP"/>
 		<value name="GL_TRIANGLE_FAN"/>
 	</desc>
-
-	<desc name="type">
-		<value name="GL_UNSIGNED_BYTE"/>
-		<value name="GL_UNSIGNED_SHORT"/>
-		<value name="GL_UNSIGNED_INT" category="OES_element_index_uint"/>
-	</desc>
 </template>
 
 <template name="EnableClientState">
@@ -3181,12 +3175,6 @@
 		<value name="GL_TRIANGLES"/>
 		<value name="GL_TRIANGLE_STRIP"/>
 		<value name="GL_TRIANGLE_FAN"/>
-	</desc>
-
-	<desc name="type">
-		<value name="GL_UNSIGNED_BYTE"/>
-		<value name="GL_UNSIGNED_SHORT"/>
-		<value name="GL_UNSIGNED_INT" category="OES_element_index_uint"/>
 	</desc>
 </template>
 
