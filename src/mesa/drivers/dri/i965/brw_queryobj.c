@@ -132,7 +132,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 
       if (intel->gen >= 6) {
 	  BEGIN_BATCH(4);
-	  OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+	  OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
 	  OUT_BATCH(PIPE_CONTROL_WRITE_TIMESTAMP);
 	  OUT_RELOC(query->bo,
 		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
@@ -143,7 +143,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
       
       } else {
 	  BEGIN_BATCH(4);
-	  OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+	  OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
 		  PIPE_CONTROL_WRITE_TIMESTAMP);
 	  OUT_RELOC(query->bo,
 		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
@@ -202,7 +202,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
    case GL_TIME_ELAPSED_EXT:
       if (intel->gen >= 6) {
 	  BEGIN_BATCH(4);
-	  OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+	  OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
 	  OUT_BATCH(PIPE_CONTROL_WRITE_TIMESTAMP);
 	  OUT_RELOC(query->bo,
 		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
@@ -213,7 +213,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
       
       } else {
 	  BEGIN_BATCH(4);
-	  OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+	  OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
 		  PIPE_CONTROL_WRITE_TIMESTAMP);
 	  OUT_RELOC(query->bo,
 		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
@@ -340,12 +340,12 @@ brw_emit_query_begin(struct brw_context *brw)
        BEGIN_BATCH(8);
 
        /* workaround: CS stall required before depth stall. */
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
        OUT_BATCH(PIPE_CONTROL_CS_STALL);
        OUT_BATCH(0); /* write address */
        OUT_BATCH(0); /* write data */
 
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
        OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
 	         PIPE_CONTROL_WRITE_DEPTH_COUNT);
        OUT_RELOC(brw->query.bo,
@@ -357,7 +357,7 @@ brw_emit_query_begin(struct brw_context *brw)
        
    } else {
        BEGIN_BATCH(4);
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
 	       PIPE_CONTROL_DEPTH_STALL |
 	       PIPE_CONTROL_WRITE_DEPTH_COUNT);
        /* This object could be mapped cacheable, but we don't have an exposed
@@ -397,12 +397,12 @@ brw_emit_query_end(struct brw_context *brw)
    if (intel->gen >= 6) {
        BEGIN_BATCH(8);
        /* workaround: CS stall required before depth stall. */
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
        OUT_BATCH(PIPE_CONTROL_CS_STALL);
        OUT_BATCH(0); /* write address */
        OUT_BATCH(0); /* write data */
 
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
        OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
 	         PIPE_CONTROL_WRITE_DEPTH_COUNT);
        OUT_RELOC(brw->query.bo,
@@ -414,7 +414,7 @@ brw_emit_query_end(struct brw_context *brw)
    
    } else {
        BEGIN_BATCH(4);
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
 	       PIPE_CONTROL_DEPTH_STALL |
 	       PIPE_CONTROL_WRITE_DEPTH_COUNT);
        OUT_RELOC(brw->query.bo,

@@ -216,7 +216,7 @@ upload_vs_state(struct brw_context *brw)
    intel_emit_post_sync_nonzero_flush(intel);
 
    BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
    OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
 	     PIPE_CONTROL_INSTRUCTION_FLUSH |
 	     PIPE_CONTROL_STATE_CACHE_INVALIDATE);
