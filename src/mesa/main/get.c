@@ -284,6 +284,12 @@ static const int extra_GLSL_130[] = {
    EXTRA_END
 };
 
+static const int extra_texture_buffer_object[] = {
+   EXTRA_VERSION_31,
+   EXT(ARB_texture_buffer_object),
+   EXTRA_END
+};
+
 static const int extra_ARB_uniform_buffer_object_and_geometry_shader[] = {
    EXT(ARB_uniform_buffer_object),
    EXT(ARB_geometry_shader4),
@@ -1287,15 +1293,15 @@ static const struct value_desc values[] = {
 
    /* GL_ARB_texture_buffer_object */
    { GL_MAX_TEXTURE_BUFFER_SIZE_ARB, CONTEXT_INT(Const.MaxTextureBufferSize),
-     extra_ARB_texture_buffer_object },
+     extra_texture_buffer_object },
    { GL_TEXTURE_BINDING_BUFFER_ARB, LOC_CUSTOM, TYPE_INT, 0,
-     extra_ARB_texture_buffer_object },
+     extra_texture_buffer_object },
    { GL_TEXTURE_BUFFER_DATA_STORE_BINDING_ARB, LOC_CUSTOM, TYPE_INT,
-     TEXTURE_BUFFER_INDEX, extra_ARB_texture_buffer_object },
+     TEXTURE_BUFFER_INDEX, extra_texture_buffer_object },
    { GL_TEXTURE_BUFFER_FORMAT_ARB, LOC_CUSTOM, TYPE_INT, 0,
-     extra_ARB_texture_buffer_object },
+     extra_texture_buffer_object },
    { GL_TEXTURE_BUFFER_ARB, LOC_CUSTOM, TYPE_INT, 0,
-     extra_ARB_texture_buffer_object },
+     extra_texture_buffer_object },
 
    /* GL_ARB_sampler_objects / GL 3.3 */
    { GL_SAMPLER_BINDING,
