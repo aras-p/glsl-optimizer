@@ -1929,6 +1929,16 @@ uniform_block:
 	   void *ctx = state;
 	   $$ = new(ctx) ast_uniform_block(*state->default_uniform_qualifier,
 					   $2, $4);
+
+	   if (!state->ARB_uniform_buffer_object_enable) {
+	      _mesa_glsl_error(& @1, state,
+			       "#version 140 / GL_ARB_uniform_buffer_object "
+			       "required for defining uniform blocks\n");
+	   } else if (state->ARB_uniform_buffer_object_warn) {
+	      _mesa_glsl_warning(& @1, state,
+				 "#version 140 / GL_ARB_uniform_buffer_object "
+				 "required for defining uniform blocks\n");
+	   }
 	}
 	| layout_qualifier UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
 	{
@@ -1939,6 +1949,16 @@ uniform_block:
 	      YYERROR;
 	   }
 	   $$ = new(ctx) ast_uniform_block(qual, $3, $5);
+
+	   if (!state->ARB_uniform_buffer_object_enable) {
+	      _mesa_glsl_error(& @1, state,
+			       "#version 140 / GL_ARB_uniform_buffer_object "
+			       "required for defining uniform blocks\n");
+	   } else if (state->ARB_uniform_buffer_object_warn) {
+	      _mesa_glsl_warning(& @1, state,
+				 "#version 140 / GL_ARB_uniform_buffer_object "
+				 "required for defining uniform blocks\n");
+	   }
 	}
 	;
 
