@@ -476,7 +476,8 @@ _mesa_init_current(struct gl_context *ctx)
  * Important: drivers should override these with actual limits.
  */
 static void
-init_program_limits(GLenum type, struct gl_program_constants *prog)
+init_program_limits(struct gl_context *ctx, GLenum type,
+                    struct gl_program_constants *prog)
 {
    prog->MaxInstructions = MAX_PROGRAM_INSTRUCTIONS;
    prog->MaxAluInstructions = MAX_PROGRAM_INSTRUCTIONS;
@@ -542,7 +543,9 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
    prog->LowInt = prog->HighInt = prog->MediumInt;
 
    prog->MaxUniformBlocks = 12;
-   prog->MaxCombinedUniformComponents = prog->MaxUniformComponents;
+   prog->MaxCombinedUniformComponents = (prog->MaxUniformComponents +
+                                         ctx->Const.MaxUniformBlockSize / 4 *
+                                         prog->MaxUniformBlocks);
 }
 
 
@@ -589,14 +592,21 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxSpotExponent = 128.0;
    ctx->Const.MaxViewportWidth = MAX_VIEWPORT_WIDTH;
    ctx->Const.MaxViewportHeight = MAX_VIEWPORT_HEIGHT;
+
+   /** GL_ARB_uniform_buffer_object */
+   ctx->Const.MaxCombinedUniformBlocks = 36;
+   ctx->Const.MaxUniformBufferBindings = 36;
+   ctx->Const.MaxUniformBlockSize = 16384;
+   ctx->Const.UniformBufferOffsetAlignment = 1;
+
 #if FEATURE_ARB_vertex_program
-   init_program_limits(GL_VERTEX_PROGRAM_ARB, &ctx->Const.VertexProgram);
+   init_program_limits(ctx, GL_VERTEX_PROGRAM_ARB, &ctx->Const.VertexProgram);
 #endif
 #if FEATURE_ARB_fragment_program
-   init_program_limits(GL_FRAGMENT_PROGRAM_ARB, &ctx->Const.FragmentProgram);
+   init_program_limits(ctx, GL_FRAGMENT_PROGRAM_ARB, &ctx->Const.FragmentProgram);
 #endif
 #if FEATURE_ARB_geometry_shader4
-   init_program_limits(MESA_GEOMETRY_PROGRAM, &ctx->Const.GeometryProgram);
+   init_program_limits(ctx, MESA_GEOMETRY_PROGRAM, &ctx->Const.GeometryProgram);
 #endif
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
    ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
@@ -654,12 +664,6 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxTransformFeedbackSeparateComponents = 4 * MAX_FEEDBACK_ATTRIBS;
    ctx->Const.MaxTransformFeedbackInterleavedComponents = 4 * MAX_FEEDBACK_ATTRIBS;
    ctx->Const.MaxVertexStreams = 1;
-
-   /** GL_ARB_uniform_buffer_object */
-   ctx->Const.MaxCombinedUniformBlocks = 36;
-   ctx->Const.MaxUniformBufferBindings = 36;
-   ctx->Const.MaxUniformBlockSize = 16384;
-   ctx->Const.UniformBufferOffsetAlignment = 1;
 
    /* GL 3.2: hard-coded for now: */
    ctx->Const.ProfileMask = GL_CONTEXT_COMPATIBILITY_PROFILE_BIT;
