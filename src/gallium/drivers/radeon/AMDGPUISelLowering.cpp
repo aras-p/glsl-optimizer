@@ -311,13 +311,6 @@ bool AMDGPUTargetLowering::isHWFalseValue(SDValue Op) const
   return false;
 }
 
-void AMDGPUTargetLowering::addLiveIn(MachineInstr * MI,
-    MachineFunction * MF, MachineRegisterInfo & MRI,
-    const TargetInstrInfo * TII, unsigned reg) const
-{
-  AMDGPU::utilAddLiveIn(MF, MRI, TII, reg, MI->getOperand(0).getReg());
-}
-
 SDValue AMDGPUTargetLowering::CreateLiveInRegister(SelectionDAG &DAG,
                                                   const TargetRegisterClass *RC,
                                                    unsigned Reg, EVT VT) const {

@@ -35,12 +35,11 @@ class SITargetLowering : public AMDGPUTargetLowering
               MachineBasicBlock::iterator I) const;
   void LowerSI_V_CNDLT(MachineInstr *MI, MachineBasicBlock &BB,
               MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const;
-  void lowerUSE_SGPR(MachineInstr *MI, MachineFunction * MF,
-                     MachineRegisterInfo & MRI) const;
 
   SDValue Loweri1ContextSwitch(SDValue Op, SelectionDAG &DAG,
                                            unsigned VCCNode) const;
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
 
 public:

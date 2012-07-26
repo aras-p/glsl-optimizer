@@ -29,16 +29,6 @@ private:
 
 protected:
 
-  /// addLiveIn - This functions adds reg to the live in list of the entry block
-  /// and emits a copy from reg to MI.getOperand(0).
-  ///
-  //  Some registers are loaded with values before the program
-  /// begins to execute.  The loading of these values is modeled with pseudo
-  /// instructions which are lowered using this function. 
-  void addLiveIn(MachineInstr * MI, MachineFunction * MF,
-                 MachineRegisterInfo & MRI, const TargetInstrInfo * TII,
-		 unsigned reg) const;
-
   /// CreateLiveInRegister - Helper function that adds Reg to the LiveIn list
   /// of the DAG's MachineFunction.  This returns a Register SDNode representing
   /// Reg. 

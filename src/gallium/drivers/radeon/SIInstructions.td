@@ -7,19 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-def load_user_sgpr : PatFrag<(ops node:$ptr),
-  (load node:$ptr),
-  [{
-    const Value *Src = cast<LoadSDNode>(N)->getSrcValue();
-    if (Src) {
-      PointerType * PT = dyn_cast<PointerType>(Src->getType());
-      return PT && PT->getAddressSpace() == AMDGPUAS::USER_SGPR_ADDRESS;
-    }
-    return false;
-  }]
->;
-
-
 def isSI : Predicate<"Subtarget.device()"
                             "->getGeneration() == AMDGPUDeviceInfo::HD7XXX">;
 
@@ -954,20 +941,6 @@ def SI_INTERP_CONST : InstSI <
   "SI_INTERP_CONST $dst, $attr_chan, $attr, $params",
   [(set VReg_32:$dst, (int_SI_fs_interp_constant imm:$attr_chan,
                                                  imm:$attr, SReg_32:$params))]
->;
-
-def USE_SGPR_32 : InstSI <
-  (outs SReg_32:$dst),
-  (ins i32imm:$src0),
-  "USE_SGPR_32",
-  [(set (i32 SReg_32:$dst), (load_user_sgpr imm:$src0))]
->;
-
-def USE_SGPR_64 : InstSI <
-  (outs SReg_64:$dst),
-  (ins i32imm:$src0),
-  "USE_SGPR_64",
-  [(set (i64 SReg_64:$dst), (load_user_sgpr imm:$src0))]
 >;
 
 } // end usesCustomInserter 
