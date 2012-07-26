@@ -249,10 +249,7 @@ AC_SUBST([VISIBILITY_CXXFLAGS])
 dnl These should be unnecessary, but let the user set them if they want
 AC_ARG_VAR([OPT_FLAGS], [Additional optimization flags for the compiler.
     Default is to use CFLAGS.])
-AC_ARG_VAR([ARCH_FLAGS], [Additional architecture specific flags for the
-    compiler. Default is to use CFLAGS.])
 AC_SUBST([OPT_FLAGS])
-AC_SUBST([ARCH_FLAGS])
 
 dnl
 dnl Hacks to enable 32 or 64 bit build
@@ -266,7 +263,6 @@ AC_ARG_ENABLE([32-bit],
 if test "x$enable_32bit" = xyes; then
     if test "x$GCC" = xyes; then
         CFLAGS="$CFLAGS -m32"
-        ARCH_FLAGS="$ARCH_FLAGS -m32"
         CCASFLAGS="$CCASFLAGS -m32"
     fi
     if test "x$GXX" = xyes; then
@@ -2305,9 +2301,9 @@ echo "        Static libs:     $enable_static"
 
 dnl Compiler options
 # cleanup the CFLAGS/CXXFLAGS/DEFINES vars
-cflags=`echo $CFLAGS $OPT_FLAGS $PIC_FLAGS $ARCH_FLAGS | \
+cflags=`echo $CFLAGS $OPT_FLAGS $PIC_FLAGS | \
     $SED 's/^ *//;s/  */ /;s/ *$//'`
-cxxflags=`echo $CXXFLAGS $OPT_FLAGS $PIC_FLAGS $ARCH_FLAGS | \
+cxxflags=`echo $CXXFLAGS $OPT_FLAGS $PIC_FLAGS | \
     $SED 's/^ *//;s/  */ /;s/ *$//'`
 defines=`echo $DEFINES | $SED 's/^ *//;s/  */ /;s/ *$//'`
 echo ""
