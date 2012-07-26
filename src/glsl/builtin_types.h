@@ -63,7 +63,12 @@ const glsl_type glsl_type::builtin_core_types[] = {
 };
 
 const glsl_type *const glsl_type::bool_type  = & builtin_core_types[0];
+const glsl_type *const glsl_type::bvec2_type = & builtin_core_types[1];
+const glsl_type *const glsl_type::bvec3_type = & builtin_core_types[2];
+const glsl_type *const glsl_type::bvec4_type = & builtin_core_types[3];
 const glsl_type *const glsl_type::int_type   = & builtin_core_types[4];
+const glsl_type *const glsl_type::ivec2_type = & builtin_core_types[5];
+const glsl_type *const glsl_type::ivec3_type = & builtin_core_types[6];
 const glsl_type *const glsl_type::ivec4_type = & builtin_core_types[7];
 const glsl_type *const glsl_type::float_type = & builtin_core_types[8];
 const glsl_type *const glsl_type::vec2_type = & builtin_core_types[9];
