@@ -256,11 +256,7 @@ brwCreateContext(int api,
       }
    } else if (intel->gen == 6) {
       if (intel->gt == 2) {
-	 /* This could possibly be 80, but is supposed to require
-	  * disabling of WIZ hashing (bit 6 of GT_MODE, 0x20d0) and a
-	  * GPU reset to change.
-	  */
-	 brw->max_wm_threads = 40;
+	 brw->max_wm_threads = 80;
 	 brw->max_vs_threads = 60;
 	 brw->max_gs_threads = 60;
 	 brw->urb.size = 64;            /* volume 5c.5 section 5.1 */
