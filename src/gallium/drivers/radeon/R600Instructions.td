@@ -1152,13 +1152,6 @@ def RESERVE_REG : AMDGPUShaderInst <
   [(int_AMDGPU_reserve_reg imm:$src)]
 >;
 
-def STORE_OUTPUT: AMDGPUShaderInst <
-  (outs),
-  (ins R600_Reg32:$src0, i32imm:$src1),
-  "STORE_OUTPUT $src0, $src1",
-  [(int_AMDGPU_store_output R600_Reg32:$src0, imm:$src1)]
->;
-
 def TXD: AMDGPUShaderInst <
   (outs R600_Reg128:$dst),
   (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, i32imm:$src3, i32imm:$src4),

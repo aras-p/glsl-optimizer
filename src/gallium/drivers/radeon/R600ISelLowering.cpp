@@ -37,6 +37,8 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
 
+  setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
+
   setOperationAction(ISD::ROTL, MVT::i32, Custom);
 
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
@@ -175,20 +177,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       break;
     }
 
-  case AMDGPU::STORE_OUTPUT:
-    {
-      int64_t OutputIndex = MI->getOperand(1).getImm();
-      unsigned OutputReg = AMDGPU::R600_TReg32RegClass.getRegister(OutputIndex);
-
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::COPY), OutputReg)
-                  .addOperand(MI->getOperand(0));
-
-      if (!MRI.isLiveOut(OutputReg)) {
-        MRI.addLiveOut(OutputReg);
-      }
-      break;
-    }
-
   case AMDGPU::RESERVE_REG:
     {
       R600MachineFunctionInfo * MFI = MF->getInfo<R600MachineFunctionInfo>();
@@ -285,6 +273,25 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
   case ISD::ROTL: return LowerROTL(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::SETCC: return LowerSETCC(Op, DAG);
+  case ISD::INTRINSIC_VOID: {
+    SDValue Chain = Op.getOperand(0);
+    unsigned IntrinsicID =
+                         cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+    switch (IntrinsicID) {
+    case AMDGPUIntrinsic::AMDGPU_store_output: {
+      MachineFunction &MF = DAG.getMachineFunction();
+      MachineRegisterInfo &MRI = MF.getRegInfo();
+      int64_t RegIndex = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
+      unsigned Reg = AMDGPU::R600_TReg32RegClass.getRegister(RegIndex);
+      if (!MRI.isLiveOut(Reg)) {
+        MRI.addLiveOut(Reg);
+      }
+      return DAG.getCopyToReg(Chain, Op.getDebugLoc(), Reg, Op.getOperand(2));
+    }
+    default: return SDValue();
+    }
+    break;
+  }
   }
 }
 
