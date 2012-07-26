@@ -1226,7 +1226,7 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RGBA8I_EXT:
    case GL_RGBA16I_EXT:
    case GL_RGBA32I_EXT:
-      return ctx->VersionMajor >= 3 ||
+      return ctx->Version >= 30 ||
              ctx->Extensions.EXT_texture_integer ? GL_RGBA : 0;
 
    case GL_RGB8UI_EXT:
@@ -1235,7 +1235,7 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RGB8I_EXT:
    case GL_RGB16I_EXT:
    case GL_RGB32I_EXT:
-      return ctx->VersionMajor >= 3 ||
+      return ctx->Version >= 30 ||
              ctx->Extensions.EXT_texture_integer ? GL_RGB : 0;
 
    case GL_R8UI:
@@ -1244,7 +1244,7 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_R16I:
    case GL_R32UI:
    case GL_R32I:
-      return ctx->VersionMajor >= 3 ||
+      return ctx->Version >= 30 ||
              (ctx->Extensions.ARB_texture_rg &&
               ctx->Extensions.EXT_texture_integer) ? GL_RED : 0;
 
@@ -1254,7 +1254,7 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RG16I:
    case GL_RG32UI:
    case GL_RG32I:
-      return ctx->VersionMajor >= 3 ||
+      return ctx->Version >= 30 ||
              (ctx->Extensions.ARB_texture_rg &&
               ctx->Extensions.EXT_texture_integer) ? GL_RG : 0;
 

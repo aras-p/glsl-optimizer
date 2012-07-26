@@ -652,8 +652,7 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
        * yet enforce the added restrictions of a forward-looking context, so
        * fail that too.
        */
-      if (st->ctx->VersionMajor * 10 + st->ctx->VersionMinor <
-          attribs->major * 10 + attribs->minor
+      if (st->ctx->Version < attribs->major * 10 + attribs->minor
 	  || (attribs->flags & ~ST_CONTEXT_FLAG_DEBUG) != 0) {
 	 *error = ST_CONTEXT_ERROR_BAD_VERSION;
          st_destroy_context(st);

@@ -902,7 +902,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
        * GL_PRIMITIVE_RESTART_NV (which is client state).
        */
       case GL_PRIMITIVE_RESTART:
-         if (ctx->VersionMajor * 10 + ctx->VersionMinor < 31) {
+         if (ctx->Version < 31) {
             goto invalid_enum_error;
          }
          if (ctx->Array.PrimitiveRestart != state) {
@@ -1419,7 +1419,7 @@ _mesa_IsEnabled( GLenum cap )
 
       /* GL 3.1 primitive restart */
       case GL_PRIMITIVE_RESTART:
-         if (ctx->VersionMajor * 10 + ctx->VersionMinor < 31) {
+         if (ctx->Version < 31) {
             goto invalid_enum_error;
          }
          return ctx->Array.PrimitiveRestart;

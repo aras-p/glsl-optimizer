@@ -719,7 +719,7 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       }
    }
 
-   if (ctx->VersionMajor >= 3 ||
+   if (ctx->Version >= 30 ||
        ctx->Extensions.EXT_texture_integer) {
       switch (internalFormat) {
       case GL_RGB8UI_EXT:
@@ -838,7 +838,7 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       }
    }
 
-   if (ctx->VersionMajor >= 3 ||
+   if (ctx->Version >= 30 ||
        (ctx->Extensions.ARB_texture_rg &&
         ctx->Extensions.EXT_texture_integer)) {
       switch (internalFormat) {

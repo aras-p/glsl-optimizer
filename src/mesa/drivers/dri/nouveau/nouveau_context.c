@@ -75,9 +75,7 @@ nouveau_context_create(gl_api api,
 	dri_ctx->driverPrivate = ctx;
 
 	_mesa_compute_version(ctx);
-	if (ctx->VersionMajor < major_version
-	    || (ctx->VersionMajor == major_version
-		&& ctx->VersionMinor < minor_version)) {
+	if (ctx->Version < major_version * 10 + minor_version) {
 	   nouveau_context_destroy(dri_ctx);
 	   *error = __DRI_CTX_ERROR_BAD_VERSION;
 	   return GL_FALSE;

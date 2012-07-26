@@ -1303,8 +1303,8 @@ static const struct value_desc values[] = {
 
    /* GL 3.0 */
    { GL_NUM_EXTENSIONS, LOC_CUSTOM, TYPE_INT, 0, extra_version_30 },
-   { GL_MAJOR_VERSION, CONTEXT_INT(VersionMajor), extra_version_30 },
-   { GL_MINOR_VERSION, CONTEXT_INT(VersionMinor), extra_version_30  },
+   { GL_MAJOR_VERSION, LOC_CUSTOM, TYPE_INT, 0, extra_version_30 },
+   { GL_MINOR_VERSION, LOC_CUSTOM, TYPE_INT, 0, extra_version_30  },
    { GL_CONTEXT_FLAGS, CONTEXT_INT(Const.ContextFlags), extra_version_30  },
 
    /* GL3.0 / GL_EXT_framebuffer_sRGB */
@@ -1486,6 +1486,13 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
    GLuint unit, *p;
 
    switch (d->pname) {
+   case GL_MAJOR_VERSION:
+      v->value_int = ctx->Version / 10;
+      break;
+   case GL_MINOR_VERSION:
+      v->value_int = ctx->Version % 10;
+      break;
+
    case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
    case GL_TEXTURE_3D:
@@ -1848,7 +1855,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
 static GLboolean
 check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d)
 {
-   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
+   const GLuint version = ctx->Version;
    int total, enabled;
    const int *e;
 

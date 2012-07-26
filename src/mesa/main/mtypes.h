@@ -3424,8 +3424,8 @@ struct gl_context
    /** Extension information */
    struct gl_extensions Extensions;
 
-   /** Version info */
-   GLuint VersionMajor, VersionMinor;
+   /** GL version integer, for example 31 for GL 3.1, or 20 for GLES 2.0. */
+   GLuint Version;
    char *VersionString;
 
    /** \name State attribute stack (for glPush/PopAttrib) */

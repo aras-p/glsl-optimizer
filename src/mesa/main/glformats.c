@@ -1237,7 +1237,7 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_SHORT:
             case GL_INT:
             case GL_UNSIGNED_INT:
-               return (ctx->VersionMajor >= 3 ||
+               return (ctx->Version >= 30 ||
                        ctx->Extensions.EXT_texture_integer)
                   ? GL_NO_ERROR : GL_INVALID_ENUM;
             default:
@@ -1252,7 +1252,7 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_SHORT:
             case GL_INT:
             case GL_UNSIGNED_INT:
-               return (ctx->VersionMajor >= 3 ||
+               return (ctx->Version >= 30 ||
                        ctx->Extensions.EXT_texture_integer)
                   ? GL_NO_ERROR : GL_INVALID_ENUM;
             case GL_UNSIGNED_BYTE_3_3_2:
@@ -1274,7 +1274,7 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             case GL_INT:
             case GL_UNSIGNED_INT:
             /* NOTE: no packed formats w/ BGR format */
-               return (ctx->VersionMajor >= 3 ||
+               return (ctx->Version >= 30 ||
                        ctx->Extensions.EXT_texture_integer)
                   ? GL_NO_ERROR : GL_INVALID_ENUM;
             default:
@@ -1290,7 +1290,7 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_SHORT:
             case GL_INT:
             case GL_UNSIGNED_INT:
-               return (ctx->VersionMajor >= 3 ||
+               return (ctx->Version >= 30 ||
                        ctx->Extensions.EXT_texture_integer)
                   ? GL_NO_ERROR : GL_INVALID_ENUM;
             case GL_UNSIGNED_SHORT_4_4_4_4:

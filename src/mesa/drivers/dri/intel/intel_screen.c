@@ -724,9 +724,7 @@ intelCreateContext(gl_api api,
 	 (struct gl_context *) driContextPriv->driverPrivate;
 
       _mesa_compute_version(ctx);
-      if (ctx->VersionMajor > major_version
-	  || (ctx->VersionMajor == major_version
-	      && ctx->VersionMinor >= minor_version)) {
+      if (ctx->Version >= major_version * 10 + minor_version) {
 	 return true;
       }
 
