@@ -163,8 +163,8 @@ do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
                            srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
                            mirror_x, mirror_y);
 
-   /* Mark the dst buffer as needing a HiZ resolve if necessary. */
    intel_renderbuffer_set_needs_hiz_resolve(intel_renderbuffer(dst_rb));
+   intel_renderbuffer_set_needs_downsample(intel_renderbuffer(dst_rb));
 }
 
 

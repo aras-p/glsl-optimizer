@@ -881,6 +881,16 @@ intel_blit_framebuffer(struct gl_context *ctx,
                               mask, filter);
 }
 
+/**
+ * This is a no-op except on multisample buffers shared with DRI2.
+ */
+void
+intel_renderbuffer_set_needs_downsample(struct intel_renderbuffer *irb)
+{
+   if (irb->mt && irb->mt->singlesample_mt)
+      irb->mt->need_downsample = true;
+}
+
 void
 intel_renderbuffer_set_needs_hiz_resolve(struct intel_renderbuffer *irb)
 {

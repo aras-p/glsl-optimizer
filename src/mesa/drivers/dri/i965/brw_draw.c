@@ -326,18 +326,28 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
  * If the depth buffer was written to and if it has an accompanying HiZ
  * buffer, then mark that it needs a depth resolve.
  *
- * (In the future, this will also mark needed MSAA resolves).
+ * If the color buffer is a multisample window system buffer, then
+ * mark that it needs a downsample.
  */
 static void brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct intel_renderbuffer *depth_irb =
-	 intel_get_renderbuffer(fb, BUFFER_DEPTH);
 
-   if (depth_irb && ctx->Depth.Mask) {
+   struct intel_renderbuffer *front_irb = NULL;
+   struct intel_renderbuffer *back_irb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
+   struct intel_renderbuffer *depth_irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+
+   if (intel->is_front_buffer_rendering)
+      front_irb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
+
+   if (front_irb)
+      intel_renderbuffer_set_needs_downsample(front_irb);
+   if (back_irb)
+      intel_renderbuffer_set_needs_downsample(back_irb);
+   if (depth_irb && ctx->Depth.Mask)
       intel_renderbuffer_set_needs_depth_resolve(depth_irb);
-   }
 }
 
 static int
