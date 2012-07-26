@@ -445,7 +445,7 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 		 * a segfault when mapping textures during software fallbacks.
 		 */
 		radeon_print(RADEON_FALLBACKS, RADEON_IMPORTANT,
-				"%s Trying to map texture in sowftware fallback.\n",
+				"%s Trying to map texture in software fallback.\n",
 				__func__);
 		const uint32_t srcrowstride = _mesa_format_row_stride(image->base.Base.TexFormat, image->base.Base.Width);
 		uint32_t rows = image->base.Base.Height * image->base.Base.Depth;
