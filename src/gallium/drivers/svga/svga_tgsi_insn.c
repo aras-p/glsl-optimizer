@@ -3126,6 +3126,11 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
              emit->key.fkey.tex[i].swizzle_a > PIPE_SWIZZLE_ALPHA)
             return TRUE;
       }
+
+      for (i = 0; i < emit->key.fkey.num_textures; i++) {
+         if (emit->key.fkey.tex[i].compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE)
+            return TRUE;
+      }
    }
 
    if (emit->unit == PIPE_SHADER_VERTEX) {
@@ -3149,11 +3154,6 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
        emit->info.opcode_count[TGSI_OPCODE_XPD] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_KILP] >= 1)
       return TRUE;
-
-   for (i = 0; i < emit->key.fkey.num_textures; i++) {
-      if (emit->key.fkey.tex[i].compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE)
-         return TRUE;
-   }
 
    return FALSE;
 }
