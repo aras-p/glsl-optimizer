@@ -525,10 +525,31 @@ static void si_set_pipe_stencil_ref(struct pipe_context *ctx,
  * DSA
  */
 
-/* transnates straight */
-static uint32_t si_translate_ds_func(int func)
+static uint32_t si_translate_stencil_op(int s_op)
 {
-        return func;
+	switch (s_op) {
+	case PIPE_STENCIL_OP_KEEP:
+		return V_02842C_STENCIL_KEEP;
+	case PIPE_STENCIL_OP_ZERO:
+		return V_02842C_STENCIL_ZERO;
+	case PIPE_STENCIL_OP_REPLACE:
+		return V_02842C_STENCIL_REPLACE_TEST;
+	case PIPE_STENCIL_OP_INCR:
+		return V_02842C_STENCIL_ADD_CLAMP;
+	case PIPE_STENCIL_OP_DECR:
+		return V_02842C_STENCIL_SUB_CLAMP;
+	case PIPE_STENCIL_OP_INCR_WRAP:
+		return V_02842C_STENCIL_ADD_WRAP;
+	case PIPE_STENCIL_OP_DECR_WRAP:
+		return V_02842C_STENCIL_SUB_WRAP;
+	case PIPE_STENCIL_OP_INVERT:
+		return V_02842C_STENCIL_INVERT;
+	default:
+		R600_ERR("Unknown stencil op %d", s_op);
+		assert(0);
+		break;
+	}
+	return 0;
 }
 
 static void *si_create_dsa_state(struct pipe_context *ctx,
@@ -538,6 +559,7 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 	struct si_pm4_state *pm4 = &dsa->pm4;
 	unsigned db_depth_control, /* alpha_test_control, */ alpha_ref;
 	unsigned db_render_override, db_render_control;
+	uint32_t db_stencil_control = 0;
 
 	if (dsa == NULL) {
 		return NULL;
@@ -555,17 +577,17 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 	/* stencil */
 	if (state->stencil[0].enabled) {
 		db_depth_control |= S_028800_STENCIL_ENABLE(1);
-		db_depth_control |= S_028800_STENCILFUNC(si_translate_ds_func(state->stencil[0].func));
-		//db_depth_control |= S_028800_STENCILFAIL(r600_translate_stencil_op(state->stencil[0].fail_op));
-		//db_depth_control |= S_028800_STENCILZPASS(r600_translate_stencil_op(state->stencil[0].zpass_op));
-		//db_depth_control |= S_028800_STENCILZFAIL(r600_translate_stencil_op(state->stencil[0].zfail_op));
+		db_depth_control |= S_028800_STENCILFUNC(state->stencil[0].func);
+		db_stencil_control |= S_02842C_STENCILFAIL(si_translate_stencil_op(state->stencil[0].fail_op));
+		db_stencil_control |= S_02842C_STENCILZPASS(si_translate_stencil_op(state->stencil[0].zpass_op));
+		db_stencil_control |= S_02842C_STENCILZFAIL(si_translate_stencil_op(state->stencil[0].zfail_op));
 
 		if (state->stencil[1].enabled) {
 			db_depth_control |= S_028800_BACKFACE_ENABLE(1);
-			db_depth_control |= S_028800_STENCILFUNC_BF(si_translate_ds_func(state->stencil[1].func));
-			//db_depth_control |= S_028800_STENCILFAIL_BF(r600_translate_stencil_op(state->stencil[1].fail_op));
-			//db_depth_control |= S_028800_STENCILZPASS_BF(r600_translate_stencil_op(state->stencil[1].zpass_op));
-			//db_depth_control |= S_028800_STENCILZFAIL_BF(r600_translate_stencil_op(state->stencil[1].zfail_op));
+			db_depth_control |= S_028800_STENCILFUNC_BF(state->stencil[1].func);
+			db_stencil_control |= S_02842C_STENCILFAIL_BF(si_translate_stencil_op(state->stencil[1].fail_op));
+			db_stencil_control |= S_02842C_STENCILZPASS_BF(si_translate_stencil_op(state->stencil[1].zpass_op));
+			db_stencil_control |= S_02842C_STENCILZFAIL_BF(si_translate_stencil_op(state->stencil[1].zfail_op));
 		}
 	}
 
@@ -593,6 +615,7 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 	si_pm4_set_reg(pm4, R_028800_DB_DEPTH_CONTROL, db_depth_control);
 	si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL, db_render_control);
 	si_pm4_set_reg(pm4, R_02800C_DB_RENDER_OVERRIDE, db_render_override);
+	si_pm4_set_reg(pm4, R_02842C_DB_STENCIL_CONTROL, db_stencil_control);
 	si_pm4_set_reg(pm4, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 0x0);
 	si_pm4_set_reg(pm4, R_028AC4_DB_SRESULTS_COMPARE_STATE1, 0x0);
 	si_pm4_set_reg(pm4, R_028AC8_DB_PRELOAD_CONTROL, 0x0);
@@ -2237,35 +2260,6 @@ static void si_set_so_targets(struct pipe_context *ctx,
 /*
  * Misc
  */
-#if 0
-static uint32_t r600_translate_stencil_op(int s_op)
-{
-	switch (s_op) {
-	case PIPE_STENCIL_OP_KEEP:
-		return V_028800_STENCIL_KEEP;
-	case PIPE_STENCIL_OP_ZERO:
-		return V_028800_STENCIL_ZERO;
-	case PIPE_STENCIL_OP_REPLACE:
-		return V_028800_STENCIL_REPLACE;
-	case PIPE_STENCIL_OP_INCR:
-		return V_028800_STENCIL_INCR;
-	case PIPE_STENCIL_OP_DECR:
-		return V_028800_STENCIL_DECR;
-	case PIPE_STENCIL_OP_INCR_WRAP:
-		return V_028800_STENCIL_INCR_WRAP;
-	case PIPE_STENCIL_OP_DECR_WRAP:
-		return V_028800_STENCIL_DECR_WRAP;
-	case PIPE_STENCIL_OP_INVERT:
-		return V_028800_STENCIL_INVERT;
-	default:
-		R600_ERR("Unknown stencil op %d", s_op);
-		assert(0);
-		break;
-	}
-	return 0;
-}
-#endif
-
 static void si_set_polygon_stipple(struct pipe_context *ctx,
 				   const struct pipe_poly_stipple *state)
 {
