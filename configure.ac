@@ -2118,7 +2118,6 @@ AC_SUBST([GALLIUM_MAKE_DIRS])
 
 AM_CONDITIONAL(HAVE_X11_DRIVER, echo "$DRIVER_DIRS" | grep 'x11' >/dev/null 2>&1)
 AM_CONDITIONAL(HAVE_DRI_DRIVER, echo "$DRIVER_DIRS" | grep 'dri' >/dev/null 2>&1)
-AM_CONDITIONAL(HAVE_OSMESA_DRIVER, echo "$DRIVER_DIRS" | grep 'osmesa' >/dev/null 2>&1)
 
 AM_CONDITIONAL(HAVE_X86_ASM, echo "$DEFINES" | grep 'X86_ASM' >/dev/null 2>&1)
 AM_CONDITIONAL(HAVE_X86_64_ASM, echo "$DEFINES" | grep 'X86_64_ASM' >/dev/null 2>&1)
@@ -2186,7 +2185,7 @@ AC_CONFIG_FILES([configs/current
 		src/mesa/drivers/osmesa/Makefile
 		src/mesa/drivers/x11/Makefile
 		src/mesa/gl.pc
-		src/mesa/osmesa.pc])
+		src/mesa/drivers/osmesa/osmesa.pc])
 
 dnl Sort the dirs alphabetically
 GALLIUM_TARGET_DIRS=`echo $GALLIUM_TARGET_DIRS|tr " " "\n"|sort -u|tr "\n" " "`

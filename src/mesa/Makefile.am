@@ -140,12 +140,7 @@ all-local: libmesa.la libmesagallium.la
 CLEANFILES += libmesa.a libmesagallium.a
 
 pkgconfigdir = $(libdir)/pkgconfig
-
-if HAVE_OSMESA_DRIVER
-pkgconfig_DATA = osmesa.pc
-else
 pkgconfig_DATA = gl.pc
-endif
 
 # Emacs tags
 tags:
