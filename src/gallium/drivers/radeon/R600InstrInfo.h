@@ -44,6 +44,11 @@ namespace llvm {
                            bool KillSrc) const;
 
   bool isTrig(const MachineInstr &MI) const;
+  bool isPlaceHolderOpcode(unsigned opcode) const;
+  bool isTexOp(unsigned opcode) const;
+  bool isReductionOp(unsigned opcode) const;
+  bool isCubeOp(unsigned opcode) const;
+  bool isFCOp(unsigned opcode) const;
 
   /// isVector - Vector instructions are instructions that must fill all
   /// instruction slots within an instruction group.

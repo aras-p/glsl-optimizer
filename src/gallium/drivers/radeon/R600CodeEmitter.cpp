@@ -18,7 +18,6 @@
 
 #include "AMDGPU.h"
 #include "AMDGPUCodeEmitter.h"
-#include "AMDGPUUtil.h"
 #include "AMDGPUInstrInfo.h"
 #include "AMDILUtilityFunctions.h"
 #include "R600InstrInfo.h"
@@ -48,6 +47,7 @@ private:
   const TargetMachine * TM;
   const MachineRegisterInfo * MRI;
   const R600RegisterInfo * TRI;
+  const R600InstrInfo * TII;
 
   bool IsCube;
   bool IsReduction;
@@ -148,7 +148,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   TM = &MF.getTarget();
   MRI = &MF.getRegInfo();
   TRI = static_cast<const R600RegisterInfo *>(TM->getRegisterInfo());
-  const R600InstrInfo * TII = static_cast<const R600InstrInfo *>(TM->getInstrInfo());
+  TII = static_cast<const R600InstrInfo *>(TM->getInstrInfo());
   const AMDGPUSubtarget &STM = TM->getSubtarget<AMDGPUSubtarget>();
   std::string gpu = STM.getDeviceName();
 
@@ -162,15 +162,15 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
      for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
                                                        I != E; ++I) {
           MachineInstr &MI = *I;
-	  IsReduction = AMDGPU::isReductionOp(MI.getOpcode());
+	  IsReduction = TII->isReductionOp(MI.getOpcode());
 	  IsVector = TII->isVector(MI);
-	  IsCube = AMDGPU::isCubeOp(MI.getOpcode());
+	  IsCube = TII->isCubeOp(MI.getOpcode());
           if (MI.getNumOperands() > 1 && MI.getOperand(0).isReg() && MI.getOperand(0).isDead()) {
             continue;
           }
-          if (AMDGPU::isTexOp(MI.getOpcode())) {
+          if (TII->isTexOp(MI.getOpcode())) {
             EmitTexInstr(MI);
-          } else if (AMDGPU::isFCOp(MI.getOpcode())){
+          } else if (TII->isFCOp(MI.getOpcode())){
             EmitFCInstr(MI);
           } else if (IsReduction || IsVector || IsCube) {
             IsLast = false;
@@ -238,7 +238,7 @@ void R600CodeEmitter::EmitALUInstr(MachineInstr &MI)
 
    // Some instructions are just place holder instructions that represent
    // operations that the GPU does automatically.  They should be ignored.
-  if (AMDGPU::isPlaceHolderOpcode(MI.getOpcode())) {
+  if (TII->isPlaceHolderOpcode(MI.getOpcode())) {
     return;
   }
 

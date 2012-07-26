@@ -25,6 +25,11 @@
 #define GET_INSTRINFO_ENUM
 #include "AMDGPUGenInstrInfo.inc"
 
+#define MO_FLAG_CLAMP (1 << 0)
+#define MO_FLAG_NEG   (1 << 1)
+#define MO_FLAG_ABS   (1 << 2)
+#define MO_FLAG_MASK  (1 << 3)
+
 namespace llvm {
 
 class AMDGPUTargetMachine;
