@@ -34,7 +34,6 @@ CPP_SOURCES := \
 	AMDGPUConvertToISA.cpp		\
 	AMDGPUInstrInfo.cpp		\
 	AMDGPURegisterInfo.cpp		\
-	AMDGPUUtil.cpp			\
 	R600CodeEmitter.cpp		\
 	R600ISelLowering.cpp		\
 	R600InstrInfo.cpp		\

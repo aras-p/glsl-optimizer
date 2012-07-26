@@ -19,10 +19,10 @@
 
 
 #include "AMDGPU.h"
-#include "AMDGPUUtil.h"
 #include "AMDIL.h"
 #include "SIMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
@@ -34,6 +34,9 @@ class SIAssignInterpRegsPass : public MachineFunctionPass {
 private:
   static char ID;
   TargetMachine &TM;
+
+  void AddLiveIn(MachineFunction * MF,  MachineRegisterInfo & MRI,
+                 unsigned physReg, unsigned virtReg);
 
 public:
   SIAssignInterpRegsPass(TargetMachine &tm) :
@@ -109,9 +112,25 @@ bool SIAssignInterpRegsPass::runOnMachineFunction(MachineFunction &MF)
       unsigned new_reg = AMDGPU::VReg_32RegisterClass->getRegister(used_vgprs);
       unsigned virt_reg = MRI.createVirtualRegister(AMDGPU::VReg_32RegisterClass);
       MRI.replaceRegWith(InterpUse[interp_idx].regs[reg_idx], virt_reg);
-      AMDGPU::utilAddLiveIn(&MF, MRI, TM.getInstrInfo(), new_reg, virt_reg);
+      AddLiveIn(&MF, MRI, new_reg, virt_reg);
     }
   }
 
   return false;
+}
+
+void SIAssignInterpRegsPass::AddLiveIn(MachineFunction * MF,
+                           MachineRegisterInfo & MRI,
+                           unsigned physReg, unsigned virtReg)
+{
+    const TargetInstrInfo * TII = TM.getInstrInfo();
+    if (!MRI.isLiveIn(physReg)) {
+      MRI.addLiveIn(physReg, virtReg);
+      MF->front().addLiveIn(physReg);
+      BuildMI(MF->front(), MF->front().begin(), DebugLoc(),
+              TII->get(TargetOpcode::COPY), virtReg)
+                .addReg(physReg);
+    } else {
+      MRI.replaceRegWith(virtReg, MRI.getLiveInVirtReg(physReg));
+    }
 }

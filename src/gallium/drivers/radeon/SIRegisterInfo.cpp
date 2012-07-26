@@ -14,7 +14,6 @@
 
 #include "SIRegisterInfo.h"
 #include "AMDGPUTargetMachine.h"
-#include "AMDGPUUtil.h"
 
 using namespace llvm;
 

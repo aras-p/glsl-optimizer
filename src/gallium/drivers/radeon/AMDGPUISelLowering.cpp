@@ -13,10 +13,9 @@
 
 #include "AMDGPUISelLowering.h"
 #include "AMDILIntrinsicInfo.h"
-#include "AMDGPUUtil.h"
-#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
 using namespace llvm;

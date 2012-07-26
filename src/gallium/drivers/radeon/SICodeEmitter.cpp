@@ -15,7 +15,6 @@
 
 #include "AMDGPU.h"
 #include "AMDGPUCodeEmitter.h"
-#include "AMDGPUUtil.h"
 #include "SIInstrInfo.h"
 #include "SIMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
