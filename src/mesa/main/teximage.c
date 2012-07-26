@@ -1426,16 +1426,19 @@ legal_teximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
       switch (target) {
       case GL_TEXTURE_1D:
       case GL_PROXY_TEXTURE_1D:
-         return GL_TRUE;
+         return _mesa_is_desktop_gl(ctx);
       default:
          return GL_FALSE;
       }
    case 2:
       switch (target) {
       case GL_TEXTURE_2D:
-      case GL_PROXY_TEXTURE_2D:
          return GL_TRUE;
+      case GL_PROXY_TEXTURE_2D:
+         return _mesa_is_desktop_gl(ctx);
       case GL_PROXY_TEXTURE_CUBE_MAP:
+         return _mesa_is_desktop_gl(ctx)
+            && ctx->Extensions.ARB_texture_cube_map;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
@@ -1445,23 +1448,31 @@ legal_teximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
          return ctx->Extensions.ARB_texture_cube_map;
       case GL_TEXTURE_RECTANGLE_NV:
       case GL_PROXY_TEXTURE_RECTANGLE_NV:
-         return ctx->Extensions.NV_texture_rectangle;
+         return _mesa_is_desktop_gl(ctx)
+            && ctx->Extensions.NV_texture_rectangle;
       case GL_TEXTURE_1D_ARRAY_EXT:
       case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
-         return (ctx->Extensions.MESA_texture_array ||
-                 ctx->Extensions.EXT_texture_array);
+         return _mesa_is_desktop_gl(ctx)
+            && (ctx->Extensions.MESA_texture_array ||
+                ctx->Extensions.EXT_texture_array);
       default:
          return GL_FALSE;
       }
    case 3:
       switch (target) {
       case GL_TEXTURE_3D:
-      case GL_PROXY_TEXTURE_3D:
          return GL_TRUE;
+      case GL_PROXY_TEXTURE_3D:
+         return _mesa_is_desktop_gl(ctx);
       case GL_TEXTURE_2D_ARRAY_EXT:
+         return (_mesa_is_desktop_gl(ctx)
+                 && (ctx->Extensions.MESA_texture_array ||
+                     ctx->Extensions.EXT_texture_array))
+            || _mesa_is_gles3(ctx);
       case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
-         return (ctx->Extensions.MESA_texture_array ||
-                 ctx->Extensions.EXT_texture_array);
+         return _mesa_is_desktop_gl(ctx)
+            && (ctx->Extensions.MESA_texture_array ||
+                ctx->Extensions.EXT_texture_array);
       default:
          return GL_FALSE;
       }
@@ -1483,7 +1494,7 @@ legal_texsubimage_target(struct gl_context *ctx, GLuint dims, GLenum target)
 {
    switch (dims) {
    case 1:
-      return target == GL_TEXTURE_1D;
+      return _mesa_is_desktop_gl(ctx) && target == GL_TEXTURE_1D;
    case 2:
       switch (target) {
       case GL_TEXTURE_2D:
@@ -1496,10 +1507,12 @@ legal_texsubimage_target(struct gl_context *ctx, GLuint dims, GLenum target)
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
          return ctx->Extensions.ARB_texture_cube_map;
       case GL_TEXTURE_RECTANGLE_NV:
-         return ctx->Extensions.NV_texture_rectangle;
+         return _mesa_is_desktop_gl(ctx)
+            && ctx->Extensions.NV_texture_rectangle;
       case GL_TEXTURE_1D_ARRAY_EXT:
-         return (ctx->Extensions.MESA_texture_array ||
-                 ctx->Extensions.EXT_texture_array);
+         return _mesa_is_desktop_gl(ctx)
+            && (ctx->Extensions.MESA_texture_array ||
+                ctx->Extensions.EXT_texture_array);
       default:
          return GL_FALSE;
       }
@@ -1508,8 +1521,10 @@ legal_texsubimage_target(struct gl_context *ctx, GLuint dims, GLenum target)
       case GL_TEXTURE_3D:
          return GL_TRUE;
       case GL_TEXTURE_2D_ARRAY_EXT:
-         return (ctx->Extensions.MESA_texture_array ||
-                 ctx->Extensions.EXT_texture_array);
+         return (_mesa_is_desktop_gl(ctx)
+                 && (ctx->Extensions.MESA_texture_array ||
+                     ctx->Extensions.EXT_texture_array))
+            || _mesa_is_gles3(ctx);
       default:
          return GL_FALSE;
       }

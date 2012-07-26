@@ -265,22 +265,6 @@
 		<param name="pixels" type="const GLvoid *"/>
 	</proto>
 
-	<desc name="target">
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_OES" category="OES_texture_cube_map"/>
-	</desc>
-
 	<desc name="internalFormat">
 		<value name="GL_ALPHA"/>
 
@@ -1620,22 +1604,6 @@
 		<param name="border" type="GLint"/>
 	</proto>
 
-	<desc name="target">
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_OES" category="OES_texture_cube_map"/>
-	</desc>
-
 	<desc name="internalFormat" error="GL_INVALID_VALUE">
 		<value name="GL_ALPHA"/>
 		<value name="GL_RGB"/>
@@ -1661,22 +1629,6 @@
 		<param name="width" type="GLsizei"/>
 		<param name="height" type="GLsizei"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_OES" category="OES_texture_cube_map"/>
-	</desc>
 </template>
 
 <template name="TexSubImage2D">
@@ -1692,22 +1644,6 @@
 		<param name="type" type="GLenum"/>
 		<param name="pixels" type="const GLvoid *"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_OES" category="OES_texture_cube_map"/>
-	</desc>
 
 	<desc name="format">
 		<value name="GL_ALPHA"/>
@@ -1868,10 +1804,6 @@
 		<param name="pixels" type="const GLvoid *"/>
 	</proto>
 
-	<desc name="target">
-		<value name="GL_TEXTURE_3D_OES"/>
-	</desc>
-
 	<desc name="internalFormat">
 		<value name="GL_ALPHA"/>
 		<value name="GL_RGB"/>
@@ -1951,10 +1883,6 @@
 		<param name="pixels" type="const GLvoid *"/>
 	</proto>
 
-	<desc name="target">
-		<value name="GL_TEXTURE_3D_OES"/>
-	</desc>
-
 	<desc name="format">
 		<value name="GL_ALPHA"/>
 
@@ -2023,10 +1951,6 @@
 		<param name="width" type="GLsizei"/>
 		<param name="height" type="GLsizei"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_TEXTURE_3D_OES"/>
-	</desc>
 </template>
 
 <template name="MultiTexCoord">
@@ -2055,10 +1979,6 @@
 		<param name="imagesize" type="GLsizei"/>
 		<param name="data" type="const GLvoid *"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_TEXTURE_3D_OES"/>
-	</desc>
 </template>
 
 <template name="CompressedTexSubImage3D">
@@ -2076,10 +1996,6 @@
 		<param name="imagesize" type="GLsizei"/>
 		<param name="data" type="const GLvoid *"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_TEXTURE_3D_OES"/>
-	</desc>
 </template>
 
 <template name="ActiveTexture">
@@ -2117,22 +2033,6 @@
 		<param name="data" type="const GLvoid *"/>
 	</proto>
 
-	<desc name="target">
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_OES" category="OES_texture_cube_map"/>
-	</desc>
-
 	<desc name="internalFormat">
 		<value name="GL_ETC1_RGB8_OES" category="OES_compressed_ETC1_RGB8_texture"/>
 
@@ -2165,22 +2065,6 @@
 		<param name="imageSize" type="GLsizei"/>
 		<param name="data" type="const GLvoid *"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_OES" category="OES_texture_cube_map"/>
-	</desc>
 
 	<desc name="format">
 		<value name="GL_COMPRESSED_RGB_S3TC_DXT1_EXT" category="EXT_texture_compression_dxt1"/>
