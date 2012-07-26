@@ -67,7 +67,7 @@ radeon_renderbuffer_map(struct gl_context *ctx, struct gl_renderbuffer *rb)
 	rrb->base.Map = map;
 	rrb->base.RowStride = stride;
 	/* No floating point color buffers, use GLubytes */
-	rrb->Base.ColorType = GL_UNSIGNED_BYTE;
+	rrb->base.ColorType = GL_UNSIGNED_BYTE;
 }
 
 static void
