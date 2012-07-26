@@ -95,7 +95,7 @@ program/lex.yy.c: program/program_lexer.l
 
 noinst_LTLIBRARIES = libmesa.la libmesagallium.la
 
-SRCDIR = $(top_srcdir)/src/mesa
+SRCDIR = $(top_srcdir)/src/mesa/
 include sources.mak
 
 AM_CPPFLAGS = $(API_DEFINES) $(DEFINES) $(INCLUDE_DIRS)

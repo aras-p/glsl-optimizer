@@ -20,7 +20,7 @@
 # IN THE SOFTWARE.
 
 TOP=$(top_srcdir)
-SRCDIR = $(srcdir)/..
+SRCDIR = $(srcdir)/../
 include ../sources.mak
 GLSL_SRCDIR = $(srcdir)/../../glsl
 include ../../glsl/Makefile.sources

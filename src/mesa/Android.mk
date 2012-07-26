@@ -31,7 +31,6 @@ LOCAL_PATH := $(call my-dir)
 #     MESA_GALLIUM_FILES
 #     MESA_FILES
 #     X86_FILES
-SRCDIR = .
 include $(LOCAL_PATH)/sources.mak
 
 common_CFLAGS := \
