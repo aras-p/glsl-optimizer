@@ -100,7 +100,7 @@ class SOPK_64 <bits<5> op, string opName, list<dag> pattern>
 class VOPC_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
                  string opName, list<dag> pattern> :
   VOPC <
-    op, (outs), (ins arc:$src0, vrc:$src1), opName, pattern
+    op, (ins arc:$src0, vrc:$src1), opName, pattern
   >;
 
 multiclass VOPC_32 <bits<8> op, string opName, list<dag> pattern> {

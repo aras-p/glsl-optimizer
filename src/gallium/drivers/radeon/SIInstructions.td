@@ -590,10 +590,12 @@ def S_WAITCNT : SOPP <0x0000000c, (ins i32imm:$simm16), "S_WAITCNT $simm16">;
 //def S_TTRACEDATA : SOPP_ <0x00000016, "S_TTRACEDATA", []>;
 
 /* XXX: No VOP3 version of this instruction yet */
-def V_CNDMASK_B32 : VOP2_Helper <
-  0x00000000, VReg_32, AllReg_32, "V_CNDMASK_B32", []> {
-  let VDST = 0;
-  let Uses = [VCC];
+def V_CNDMASK_B32 : VOP2 <0x00000000, (outs VReg_32:$dst),
+  (ins VCCReg:$vcc, AllReg_32:$src0, VReg_32:$src1), "V_CNDMASK_B32",
+  [(set (i32 VReg_32:$dst),
+   (select VCCReg:$vcc, AllReg_32:$src0, VReg_32:$src1))] > {
+
+  let DisableEncoding = "$vcc";
 }
 defm V_READLANE_B32 : VOP2_32 <0x00000001, "V_READLANE_B32", []>;
 defm V_WRITELANE_B32 : VOP2_32 <0x00000002, "V_WRITELANE_B32", []>;

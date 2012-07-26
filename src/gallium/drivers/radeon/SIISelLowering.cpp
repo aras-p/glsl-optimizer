@@ -179,12 +179,14 @@ void SITargetLowering::LowerSI_INTERP_CONST(MachineInstr *MI,
 void SITargetLowering::LowerSI_V_CNDLT(MachineInstr *MI, MachineBasicBlock &BB,
     MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const
 {
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_CMP_LT_F32_e32))
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_CMP_LT_F32_e32),
+          AMDGPU::VCC)
           .addOperand(MI->getOperand(1))
           .addReg(AMDGPU::SREG_LIT_0);
 
   BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_CNDMASK_B32))
           .addOperand(MI->getOperand(0))
+	  .addReg(AMDGPU::VCC)
           .addOperand(MI->getOperand(2))
           .addOperand(MI->getOperand(3));
 

@@ -407,8 +407,8 @@ class VOP3 <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let PostEncoderMethod = "VOPPostEncode";
 }
 
-class VOPC <bits<8> op, dag outs, dag ins, string asm, list<dag> pattern> :
-    Enc32 <outs, ins, asm, pattern> {
+class VOPC <bits<8> op, dag ins, string asm, list<dag> pattern> :
+    Enc32 <(outs VCCReg:$dst), ins, asm, pattern> {
 
   bits<9> SRC0;
   bits<8> VSRC1;
@@ -420,8 +420,7 @@ class VOPC <bits<8> op, dag outs, dag ins, string asm, list<dag> pattern> :
  
   let EncodingType = 15; //SIInstrEncodingType::VOPC
   let PostEncoderMethod = "VOPPostEncode";
-
-  let Defs = [VCC];
+  let DisableEncoding = "$dst";
 }
 
 class MIMG_Load_Helper <bits<7> op, string asm> : MIMG <
