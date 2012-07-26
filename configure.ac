@@ -246,11 +246,6 @@ esac
 AC_SUBST([VISIBILITY_CFLAGS])
 AC_SUBST([VISIBILITY_CXXFLAGS])
 
-dnl These should be unnecessary, but let the user set them if they want
-AC_ARG_VAR([OPT_FLAGS], [Additional optimization flags for the compiler.
-    Default is to use CFLAGS.])
-AC_SUBST([OPT_FLAGS])
-
 dnl
 dnl Hacks to enable 32 or 64 bit build
 dnl
@@ -2301,9 +2296,9 @@ echo "        Static libs:     $enable_static"
 
 dnl Compiler options
 # cleanup the CFLAGS/CXXFLAGS/DEFINES vars
-cflags=`echo $CFLAGS $OPT_FLAGS $PIC_FLAGS | \
+cflags=`echo $CFLAGS $PIC_FLAGS | \
     $SED 's/^ *//;s/  */ /;s/ *$//'`
-cxxflags=`echo $CXXFLAGS $OPT_FLAGS $PIC_FLAGS | \
+cxxflags=`echo $CXXFLAGS $PIC_FLAGS | \
     $SED 's/^ *//;s/  */ /;s/ *$//'`
 defines=`echo $DEFINES | $SED 's/^ *//;s/  */ /;s/ *$//'`
 echo ""

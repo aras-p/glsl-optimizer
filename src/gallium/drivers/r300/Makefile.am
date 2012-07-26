@@ -16,7 +16,6 @@ AM_CFLAGS = \
 	$(LLVM_CFLAGS) \
 	$(RADEON_CFLAGS) \
 	$(DEFINES) \
-	$(OPT_FLAGS) \
 	$(PIC_FLAGS)
 
 libr300_a_SOURCES = \

@@ -9,7 +9,6 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(RADEON_CFLAGS) \
 	$(DEFINES) \
-	$(OPT_FLAGS) \
 	$(PIC_FLAGS) \
 	$(VISIBILITY_CFLAGS)
 
