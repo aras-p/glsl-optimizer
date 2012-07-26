@@ -348,6 +348,8 @@ svga_translate_fragment_program( const struct svga_fragment_shader *fs,
 {
    struct svga_compile_key key;
 
+   memset(&key, 0, sizeof(key));
+
    memcpy(&key.fkey, fkey, sizeof *fkey);
 
    memcpy(key.generic_remap_table, fs->generic_remap_table,
@@ -363,6 +365,8 @@ svga_translate_vertex_program( const struct svga_vertex_shader *vs,
                                const struct svga_vs_compile_key *vkey )
 {
    struct svga_compile_key key;
+
+   memset(&key, 0, sizeof(key));
 
    memcpy(&key.vkey, vkey, sizeof *vkey);
 
