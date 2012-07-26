@@ -684,7 +684,7 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
       /* 8 bits/pixel are required for MCS data when using 4x MSAA (2 bits for
        * each sample).
        */
-      format = MESA_FORMAT_A8;
+      format = MESA_FORMAT_R8;
       break;
    case 8:
       /* 32 bits/pixel are required for MCS data when using 8x MSAA (3 bits
