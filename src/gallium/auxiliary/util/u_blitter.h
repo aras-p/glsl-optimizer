@@ -161,6 +161,16 @@ void util_blitter_clear_depth_custom(struct blitter_context *blitter,
                                      double depth, void *custom_dsa);
 
 /**
+ * Check if the blitter (with the help of the driver) can blit between
+ * the two resources.
+ * The mask is a combination of the PIPE_MASK_* flags.
+ * Set to PIPE_MASK_RGBAZS if unsure.
+ */
+boolean util_blitter_is_copy_supported(struct blitter_context *blitter,
+                                       const struct pipe_resource *dst,
+                                       const struct pipe_resource *src,
+                                       unsigned mask);
+/**
  * Copy a block of pixels from one surface to another.
  *
  * You can copy from any color format to any other color format provided
@@ -200,6 +210,9 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
  * override pipe_resource. The blitter uses them for computation of texture
  * coordinates. The dst dimensions are supplied through pipe_surface::width
  * and height.
+ *
+ * The mask is a combination of the PIPE_MASK_* flags.
+ * Set to PIPE_MASK_RGBAZS if unsure.
  *
  * NOTE: There are no checks whether the blit is actually supported.
  */

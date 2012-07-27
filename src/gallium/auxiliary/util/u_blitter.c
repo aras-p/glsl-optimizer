@@ -932,6 +932,61 @@ void util_blitter_default_src_texture(struct pipe_sampler_view *src_templ,
     src_templ->swizzle_a = PIPE_SWIZZLE_ALPHA;
 }
 
+boolean util_blitter_is_copy_supported(struct blitter_context *blitter,
+                                       const struct pipe_resource *dst,
+                                       const struct pipe_resource *src,
+                                       unsigned mask)
+{
+   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
+   struct pipe_screen *screen = ctx->base.pipe->screen;
+
+   if (dst) {
+      unsigned bind;
+      boolean is_stencil;
+      const struct util_format_description *desc =
+            util_format_description(dst->format);
+
+      is_stencil = util_format_has_stencil(desc);
+
+      /* Stencil export must be supported for stencil copy. */
+      if ((mask & PIPE_MASK_S) && is_stencil && !ctx->has_stencil_export) {
+         return FALSE;
+      }
+
+      if (is_stencil || util_format_has_depth(desc))
+         bind = PIPE_BIND_DEPTH_STENCIL;
+      else
+         bind = PIPE_BIND_RENDER_TARGET;
+
+      if (!screen->is_format_supported(screen, dst->format, dst->target,
+                                       dst->nr_samples, bind)) {
+         return FALSE;
+      }
+   }
+
+   if (src) {
+      if (!screen->is_format_supported(screen, src->format, src->target,
+                                 src->nr_samples, PIPE_BIND_SAMPLER_VIEW)) {
+         return FALSE;
+      }
+
+      /* Check stencil sampler support for stencil copy. */
+      if (util_format_has_stencil(util_format_description(src->format))) {
+         enum pipe_format stencil_format =
+               util_format_stencil_only(src->format);
+         assert(stencil_format != PIPE_FORMAT_NONE);
+
+         if (stencil_format != src->format &&
+             !screen->is_format_supported(screen, stencil_format, src->target,
+                                 src->nr_samples, PIPE_BIND_SAMPLER_VIEW)) {
+            return FALSE;
+         }
+      }
+   }
+
+   return TRUE;
+}
+
 void util_blitter_copy_texture(struct blitter_context *blitter,
                                struct pipe_resource *dst,
                                unsigned dst_level,
@@ -942,43 +997,11 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_surface *dst_view, dst_templ;
    struct pipe_sampler_view src_templ, *src_view;
-   unsigned bind;
-   boolean is_stencil, is_depth;
-   const struct util_format_description *src_desc;
 
-   /* Give up if textures are not set. */
    assert(dst && src);
-   if (!dst || !src)
-      return;
-
-   src_desc = util_format_description(src->format);
-
    assert(src->target < PIPE_MAX_TEXTURE_TYPES);
-
-   /* Is this a ZS format? */
-   is_depth = util_format_has_depth(src_desc);
-   is_stencil = util_format_has_stencil(src_desc);
-
-   if (is_depth || is_stencil)
-      bind = PIPE_BIND_DEPTH_STENCIL;
-   else
-      bind = PIPE_BIND_RENDER_TARGET;
-
-   /* Check if we can sample from and render to the surfaces. */
-   /* (assuming copying a stencil buffer is not possible) */
-   if (!screen->is_format_supported(screen, dst->format, dst->target,
-                                    dst->nr_samples, bind) ||
-       !screen->is_format_supported(screen, src->format, src->target,
-                                    src->nr_samples, PIPE_BIND_SAMPLER_VIEW)) {
-      blitter_set_running_flag(ctx);
-      util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
-                                src, src_level, srcbox);
-      blitter_unset_running_flag(ctx);
-      return;
-   }
 
    /* Initialize the surface. */
    util_blitter_default_dst_texture(&dst_templ, dst, dst_level, dstz, srcbox);
