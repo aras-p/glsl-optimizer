@@ -338,7 +338,7 @@ if env['gles']:
     env.Append(CPPDEFINES = ['FEATURE_ES1=1', 'FEATURE_ES2=1'])
 
     # generate GLES sources
-    gles_sources = []
+    gles_sources = ['main/es1_conversion.c',]
     gles_sources += env.CodeGenerate(
         target = 'main/api_exec_es1.c',
         script = 'main/es_generator.py',

@@ -1,0 +1,1508 @@
+#include <stdbool.h>
+#include "main/mfeatures.h"
+
+#ifdef FEATURE_ES1
+
+#include "api_loopback.h"
+#include "api_exec.h"
+#include "blend.h"
+#include "clear.h"
+#include "clip.h"
+#include "context.h"
+#include "depth.h"
+#include "fog.h"
+#include "imports.h"
+#include "light.h"
+#include "lines.h"
+#include "matrix.h"
+#include "multisample.h"
+#include "pixelstore.h"
+#include "points.h"
+#include "polygon.h"
+#include "readpix.h"
+#include "texenv.h"
+#include "texgen.h"
+#include "texobj.h"
+#include "texparam.h"
+#include "mtypes.h"
+#include "viewport.h"
+#include "main/drawtex.h"
+#include "vbo/vbo.h"
+
+#ifndef GL_APIENTRY
+#define GL_APIENTRY GLAPIENTRY
+#endif
+
+#include "main/es1_conversion.h"
+
+void GL_APIENTRY
+_es_AlphaFuncx(GLenum func, GLclampx ref)
+{
+   switch(func) {
+   case GL_NEVER:
+   case GL_LESS:
+   case GL_EQUAL:
+   case GL_LEQUAL:
+   case GL_GREATER:
+   case GL_NOTEQUAL:
+   case GL_GEQUAL:
+   case GL_ALWAYS:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glAlphaFuncx(func=0x%x)", func);
+      return;
+   }
+
+   _mesa_AlphaFunc(func, (GLclampf) (ref / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_ClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
+{
+   _mesa_ClearColor((GLclampf) (red / 65536.0f),
+                    (GLclampf) (green / 65536.0f),
+                    (GLclampf) (blue / 65536.0f),
+                    (GLclampf) (alpha / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_ClearDepthx(GLclampx depth)
+{
+   _mesa_ClearDepthf((GLclampf) (depth / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_ClipPlanef(GLenum plane, const GLfloat *equation)
+{
+   unsigned int i;
+   GLdouble converted_equation[4];
+
+   for (i = 0; i < Elements(converted_equation); i++) {
+      converted_equation[i] = (GLdouble) (equation[i]);
+   }
+
+   _mesa_ClipPlane(plane, converted_equation);
+}
+
+void GL_APIENTRY
+_es_ClipPlanex(GLenum plane, const GLfixed *equation)
+{
+   unsigned int i;
+   GLdouble converted_equation[4];
+
+   for (i = 0; i < Elements(converted_equation); i++) {
+      converted_equation[i] = (GLdouble) (equation[i] / 65536.0);
+   }
+
+   _mesa_ClipPlane(plane, converted_equation);
+}
+
+void GL_APIENTRY
+_es_Color4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
+{
+    _es_Color4f((GLfloat) (red / 255.0f),
+                (GLfloat) (green / 255.0f),
+                (GLfloat) (blue / 255.0f),
+                (GLfloat) (alpha / 255.0f));
+}
+
+void GL_APIENTRY
+_es_Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
+{
+    _es_Color4f((GLfloat) (red / 65536.0f),
+                (GLfloat) (green / 65536.0f),
+                (GLfloat) (blue / 65536.0f),
+                (GLfloat) (alpha / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_DepthRangex(GLclampx zNear, GLclampx zFar)
+{
+    _mesa_DepthRangef((GLclampf) (zNear / 65536.0f),
+                      (GLclampf) (zFar / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_DrawTexxOES(GLfixed x, GLfixed y, GLfixed z, GLfixed w, GLfixed h)
+{
+
+    _mesa_DrawTexf((GLfloat) (x / 65536.0f),
+                   (GLfloat) (y / 65536.0f),
+                   (GLfloat) (z / 65536.0f),
+                   (GLfloat) (w / 65536.0f),
+                   (GLfloat) (h / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_DrawTexxvOES(const GLfixed *coords)
+{
+    unsigned int i;
+    GLfloat converted_coords[5];
+
+    for (i = 0; i < Elements(converted_coords); i++) {
+        converted_coords[i] = (GLfloat) (coords[i] / 65536.0f);
+    }
+
+    _mesa_DrawTexfv(converted_coords);
+}
+
+void GL_APIENTRY
+_es_Fogx(GLenum pname, GLfixed param)
+{
+   bool convert_param_value = true;
+
+   switch(pname) {
+   case GL_FOG_MODE:
+      if (param != GL_EXP && param != GL_EXP2 && param != GL_LINEAR) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glFogx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   case GL_FOG_DENSITY:
+   case GL_FOG_START:
+   case GL_FOG_END:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glFogx(pname=0x%x)", pname);
+      return;
+   }
+
+   if (convert_param_value) {
+      _mesa_Fogf(pname, (GLfloat) (param / 65536.0f));
+   } else {
+      _mesa_Fogf(pname, (GLfloat) param);
+   }
+
+}
+
+void GL_APIENTRY
+_es_Fogxv(GLenum pname, const GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 4;
+   GLfloat converted_params[4];
+   bool convert_params_value = true;
+
+   switch(pname) {
+   case GL_FOG_MODE:
+      if (params[0] != GL_EXP && params[0] != GL_EXP2 && params[0] != GL_LINEAR) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glFogxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_FOG_COLOR:
+      n_params = 4;
+      break;
+   case GL_FOG_DENSITY:
+   case GL_FOG_START:
+   case GL_FOG_END:
+      n_params = 1;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glFogxv(pname=0x%x)", pname);
+      return;
+   }
+
+   if (convert_params_value) {
+      for (i = 0; i < n_params; i++) {
+         converted_params[i] = (GLfloat) (params[i] / 65536.0f);
+      }
+   } else {
+      for (i = 0; i < n_params; i++) {
+         converted_params[i] = (GLfloat) params[i];
+      }
+   }
+
+   _mesa_Fogfv(pname, converted_params);
+}
+
+void GL_APIENTRY
+_es_Frustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top,
+             GLfloat zNear, GLfloat zFar)
+{
+   _mesa_Frustum((GLdouble) (left),
+                 (GLdouble) (right),
+                 (GLdouble) (bottom),
+                 (GLdouble) (top),
+                 (GLdouble) (zNear),
+                 (GLdouble) (zFar));
+}
+
+void GL_APIENTRY
+_es_Frustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
+             GLfixed zNear, GLfixed zFar)
+{
+   _mesa_Frustum((GLdouble) (left / 65536.0),
+                 (GLdouble) (right / 65536.0),
+                 (GLdouble) (bottom / 65536.0),
+                 (GLdouble) (top / 65536.0),
+                 (GLdouble) (zNear / 65536.0),
+                 (GLdouble) (zFar / 65536.0));
+}
+
+void GL_APIENTRY
+_es_GetClipPlanef(GLenum plane, GLfloat *equation)
+{
+   unsigned int i;
+   GLdouble converted_equation[4];
+
+   _mesa_GetClipPlane(plane, converted_equation);
+   for (i = 0; i < Elements(converted_equation); i++) {
+      equation[i] = (GLfloat) (converted_equation[i]);
+   }
+}
+
+void GL_APIENTRY
+_es_GetClipPlanex(GLenum plane, GLfixed *equation)
+{
+   unsigned int i;
+   GLdouble converted_equation[4];
+
+   _mesa_GetClipPlane(plane, converted_equation);
+   for (i = 0; i < Elements(converted_equation); i++) {
+      equation[i] = (GLfixed) (converted_equation[i] * 65536);
+   }
+}
+
+void GL_APIENTRY
+_es_GetLightxv(GLenum light, GLenum pname, GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 4;
+   GLfloat converted_params[4];
+
+   switch(light) {
+   case GL_LIGHT0:
+   case GL_LIGHT1:
+   case GL_LIGHT2:
+   case GL_LIGHT3:
+   case GL_LIGHT4:
+   case GL_LIGHT5:
+   case GL_LIGHT6:
+   case GL_LIGHT7:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetLightxv(light=0x%x)", light);
+      return;
+   }
+   switch(pname) {
+   case GL_AMBIENT:
+   case GL_DIFFUSE:
+   case GL_SPECULAR:
+   case GL_POSITION:
+      n_params = 4;
+      break;
+   case GL_SPOT_DIRECTION:
+      n_params = 3;
+      break;
+   case GL_SPOT_EXPONENT:
+   case GL_SPOT_CUTOFF:
+   case GL_CONSTANT_ATTENUATION:
+   case GL_LINEAR_ATTENUATION:
+   case GL_QUADRATIC_ATTENUATION:
+      n_params = 1;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetLightxv(pname=0x%x)", pname);
+      return;
+   }
+
+   _mesa_GetLightfv(light, pname, converted_params);
+   for (i = 0; i < n_params; i++) {
+      params[i] = (GLint) (converted_params[i] * 65536);
+   }
+}
+
+void GL_APIENTRY
+_es_GetMaterialxv(GLenum face, GLenum pname, GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 4;
+   GLfloat converted_params[4];
+
+   switch(face) {
+   case GL_FRONT:
+   case GL_BACK:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetMaterialxv(face=0x%x)", face);
+      return;
+   }
+   switch(pname) {
+   case GL_SHININESS:
+      n_params = 1;
+      break;
+   case GL_AMBIENT:
+   case GL_DIFFUSE:
+   case GL_AMBIENT_AND_DIFFUSE:
+   case GL_SPECULAR:
+   case GL_EMISSION:
+      n_params = 4;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetMaterialxv(pname=0x%x)", pname);
+      return;
+   }
+
+   _mesa_GetMaterialfv(face, pname, converted_params);
+   for (i = 0; i < n_params; i++) {
+      params[i] = (GLint) (converted_params[i] * 65536);
+   }
+}
+
+void GL_APIENTRY
+_es_GetTexEnvxv(GLenum target, GLenum pname, GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 4;
+   GLfloat converted_params[4];
+   bool convert_params_value = true;
+
+   switch(target) {
+   case GL_POINT_SPRITE:
+      if (pname != GL_COORD_REPLACE) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glGetTexEnvxv(target=0x%x)", target);
+         return;
+      }
+      break;
+   case GL_TEXTURE_FILTER_CONTROL_EXT:
+      if (pname != GL_TEXTURE_LOD_BIAS_EXT) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glGetTexEnvxv(target=0x%x)", target);
+         return;
+      }
+      break;
+   case GL_TEXTURE_ENV:
+      if (pname != GL_TEXTURE_ENV_COLOR && pname != GL_RGB_SCALE && pname != GL_ALPHA_SCALE && pname != GL_TEXTURE_ENV_MODE && pname != GL_COMBINE_RGB && pname != GL_COMBINE_ALPHA && pname != GL_SRC0_RGB && pname != GL_SRC1_RGB && pname != GL_SRC2_RGB && pname != GL_SRC0_ALPHA && pname != GL_SRC1_ALPHA && pname != GL_SRC2_ALPHA && pname != GL_OPERAND0_RGB && pname != GL_OPERAND1_RGB && pname != GL_OPERAND2_RGB && pname != GL_OPERAND0_ALPHA && pname != GL_OPERAND1_ALPHA && pname != GL_OPERAND2_ALPHA) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glGetTexEnvxv(target=0x%x)", target);
+         return;
+      }
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetTexEnvxv(target=0x%x)", target);
+      return;
+   }
+   switch(pname) {
+   case GL_COORD_REPLACE:
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_TEXTURE_LOD_BIAS_EXT:
+      n_params = 1;
+      break;
+   case GL_TEXTURE_ENV_COLOR:
+      n_params = 4;
+      break;
+   case GL_RGB_SCALE:
+   case GL_ALPHA_SCALE:
+      n_params = 1;
+      break;
+   case GL_TEXTURE_ENV_MODE:
+   case GL_COMBINE_RGB:
+   case GL_COMBINE_ALPHA:
+   case GL_SRC0_RGB:
+   case GL_SRC1_RGB:
+   case GL_SRC2_RGB:
+   case GL_SRC0_ALPHA:
+   case GL_SRC1_ALPHA:
+   case GL_SRC2_ALPHA:
+   case GL_OPERAND0_RGB:
+   case GL_OPERAND1_RGB:
+   case GL_OPERAND2_RGB:
+   case GL_OPERAND0_ALPHA:
+   case GL_OPERAND1_ALPHA:
+   case GL_OPERAND2_ALPHA:
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetTexEnvxv(pname=0x%x)", pname);
+      return;
+   }
+
+   _mesa_GetTexEnvfv(target, pname, converted_params);
+   if (convert_params_value) {
+      for (i = 0; i < n_params; i++) {
+         params[i] = (GLint) (converted_params[i] * 65536);
+      }
+   } else {
+      for (i = 0; i < n_params; i++) {
+         params[i] = (GLfixed) converted_params[i];
+      }
+   }
+}
+
+void GL_APIENTRY
+_check_GetTexGenivOES(GLenum coord, GLenum pname, GLint *params)
+{
+   unsigned int i;
+   unsigned int n_params = 1;
+   GLfloat converted_params[1];
+
+   switch(coord) {
+   case GL_TEXTURE_GEN_STR_OES:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetTexGenivOES(coord=0x%x)", coord);
+      return;
+   }
+   switch(pname) {
+   case GL_TEXTURE_GEN_MODE:
+      n_params = 1;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetTexGenivOES(pname=0x%x)", pname);
+      return;
+   }
+
+   _es_GetTexGenfv(coord, pname, converted_params);
+   for (i = 0; i < n_params; i++) {
+      params[i] = (GLfloat) converted_params[i];
+   }
+}
+
+void GL_APIENTRY
+_check_GetTexGenxvOES(GLenum coord, GLenum pname, GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 1;
+   GLfloat converted_params[1];
+
+   switch(coord) {
+   case GL_TEXTURE_GEN_STR_OES:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetTexGenxvOES(coord=0x%x)", coord);
+      return;
+   }
+   switch(pname) {
+   case GL_TEXTURE_GEN_MODE:
+      n_params = 1;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetTexGenxvOES(pname=0x%x)", pname);
+      return;
+   }
+
+   _es_GetTexGenfv(coord, pname, converted_params);
+   for (i = 0; i < n_params; i++) {
+      params[i] = (GLfloat) converted_params[i];
+   }
+}
+
+void GL_APIENTRY
+_es_GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 4;
+   GLfloat converted_params[4];
+   bool convert_params_value = true;
+
+   switch(target) {
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_CUBE_MAP:
+   case GL_TEXTURE_EXTERNAL_OES:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetTexParameterxv(target=0x%x)", target);
+      return;
+   }
+   switch(pname) {
+   case GL_TEXTURE_WRAP_S:
+   case GL_TEXTURE_WRAP_T:
+   case GL_TEXTURE_MIN_FILTER:
+   case GL_TEXTURE_MAG_FILTER:
+   case GL_GENERATE_MIPMAP:
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_TEXTURE_CROP_RECT_OES:
+      n_params = 4;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glGetTexParameterxv(pname=0x%x)", pname);
+      return;
+   }
+
+   _mesa_GetTexParameterfv(target, pname, converted_params);
+   if (convert_params_value) {
+      for (i = 0; i < n_params; i++) {
+         params[i] = (GLint) (converted_params[i] * 65536);
+      }
+   } else {
+      for (i = 0; i < n_params; i++) {
+         params[i] = (GLfixed) converted_params[i];
+      }
+   }
+}
+
+void GL_APIENTRY
+_es_LightModelx(GLenum pname, GLfixed param)
+{
+   switch(pname) {
+   case GL_LIGHT_MODEL_TWO_SIDE:
+      if (param != GL_TRUE && param != GL_FALSE) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glLightModelx(pname=0x%x)", pname);
+         return;
+      }
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glLightModelx(pname=0x%x)", pname);
+      return;
+   }
+
+   _mesa_LightModelf(pname, (GLfloat) param);
+}
+
+void GL_APIENTRY
+_es_LightModelxv(GLenum pname, const GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 4;
+   GLfloat converted_params[4];
+   bool convert_params_value = true;
+
+   switch(pname) {
+   case GL_LIGHT_MODEL_AMBIENT:
+      n_params = 4;
+      break;
+   case GL_LIGHT_MODEL_TWO_SIDE:
+      if (params[0] != GL_TRUE && params[0] != GL_FALSE) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glLightModelxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glLightModelxv(pname=0x%x)", pname);
+      return;
+   }
+
+   if (convert_params_value) {
+      for (i = 0; i < n_params; i++) {
+         converted_params[i] = (GLfloat) (params[i] / 65536.0f);
+      }
+   } else {
+      for (i = 0; i < n_params; i++) {
+         converted_params[i] = (GLfloat) params[i];
+      }
+   }
+
+   _mesa_LightModelfv(pname, converted_params);
+}
+
+void GL_APIENTRY
+_es_Lightx(GLenum light, GLenum pname, GLfixed param)
+{
+   switch(light) {
+   case GL_LIGHT0:
+   case GL_LIGHT1:
+   case GL_LIGHT2:
+   case GL_LIGHT3:
+   case GL_LIGHT4:
+   case GL_LIGHT5:
+   case GL_LIGHT6:
+   case GL_LIGHT7:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glLightx(light=0x%x)", light);
+      return;
+   }
+   switch(pname) {
+   case GL_SPOT_EXPONENT:
+   case GL_SPOT_CUTOFF:
+   case GL_CONSTANT_ATTENUATION:
+   case GL_LINEAR_ATTENUATION:
+   case GL_QUADRATIC_ATTENUATION:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glLightx(pname=0x%x)", pname);
+      return;
+   }
+
+   _mesa_Lightf(light, pname, (GLfloat) (param / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_Lightxv(GLenum light, GLenum pname, const GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 4;
+   GLfloat converted_params[4];
+
+   switch(light) {
+   case GL_LIGHT0:
+   case GL_LIGHT1:
+   case GL_LIGHT2:
+   case GL_LIGHT3:
+   case GL_LIGHT4:
+   case GL_LIGHT5:
+   case GL_LIGHT6:
+   case GL_LIGHT7:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glLightxv(light=0x%x)", light);
+      return;
+   }
+   switch(pname) {
+   case GL_AMBIENT:
+   case GL_DIFFUSE:
+   case GL_SPECULAR:
+   case GL_POSITION:
+      n_params = 4;
+      break;
+   case GL_SPOT_DIRECTION:
+      n_params = 3;
+      break;
+   case GL_SPOT_EXPONENT:
+   case GL_SPOT_CUTOFF:
+   case GL_CONSTANT_ATTENUATION:
+   case GL_LINEAR_ATTENUATION:
+   case GL_QUADRATIC_ATTENUATION:
+      n_params = 1;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glLightxv(pname=0x%x)", pname);
+      return;
+   }
+
+   for (i = 0; i < n_params; i++) {
+      converted_params[i] = (GLfloat) (params[i] / 65536.0f);
+   }
+
+   _mesa_Lightfv(light, pname, converted_params);
+}
+
+void GL_APIENTRY
+_es_LineWidthx(GLfixed width)
+{
+   _mesa_LineWidth((GLfloat) (width / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_LoadMatrixx(const GLfixed *m)
+{
+   unsigned int i;
+   GLfloat converted_m[16];
+
+   for (i = 0; i < Elements(converted_m); i++) {
+      converted_m[i] = (GLfloat) (m[i] / 65536.0f);
+   }
+
+   _mesa_LoadMatrixf(converted_m);
+}
+
+void GL_APIENTRY
+_es_Materialx(GLenum face, GLenum pname, GLfixed param)
+{
+   switch(face) {
+   case GL_FRONT_AND_BACK:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glMaterialx(face=0x%x)", face);
+      return;
+   }
+   switch(pname) {
+   case GL_SHININESS:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glMaterialx(pname=0x%x)", pname);
+      return;
+   }
+
+   _es_Materialf(face, pname, (GLfloat) (param / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_Materialxv(GLenum face, GLenum pname, const GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 4;
+   GLfloat converted_params[4];
+
+   switch(face) {
+   case GL_FRONT_AND_BACK:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glMaterialxv(face=0x%x)", face);
+      return;
+   }
+   switch(pname) {
+   case GL_AMBIENT:
+   case GL_DIFFUSE:
+   case GL_AMBIENT_AND_DIFFUSE:
+   case GL_SPECULAR:
+   case GL_EMISSION:
+      n_params = 4;
+      break;
+   case GL_SHININESS:
+      n_params = 1;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glMaterialxv(pname=0x%x)", pname);
+      return;
+   }
+
+   for (i = 0; i < n_params; i++) {
+      converted_params[i] = (GLfloat) (params[i] / 65536.0f);
+   }
+
+   _es_Materialfv(face, pname, converted_params);
+}
+
+void GL_APIENTRY
+_es_MultMatrixx(const GLfixed *m)
+{
+   unsigned int i;
+   GLfloat converted_m[16];
+
+   for (i = 0; i < Elements(converted_m); i++) {
+      converted_m[i] = (GLfloat) (m[i] / 65536.0f);
+   }
+
+   _mesa_MultMatrixf(converted_m);
+}
+
+void GL_APIENTRY
+_es_MultiTexCoord4x(GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q)
+{
+   switch(texture) {
+   case GL_TEXTURE0:
+   case GL_TEXTURE1:
+   case GL_TEXTURE2:
+   case GL_TEXTURE3:
+   case GL_TEXTURE4:
+   case GL_TEXTURE5:
+   case GL_TEXTURE6:
+   case GL_TEXTURE7:
+   case GL_TEXTURE8:
+   case GL_TEXTURE9:
+   case GL_TEXTURE10:
+   case GL_TEXTURE11:
+   case GL_TEXTURE12:
+   case GL_TEXTURE13:
+   case GL_TEXTURE14:
+   case GL_TEXTURE15:
+   case GL_TEXTURE16:
+   case GL_TEXTURE17:
+   case GL_TEXTURE18:
+   case GL_TEXTURE19:
+   case GL_TEXTURE20:
+   case GL_TEXTURE21:
+   case GL_TEXTURE22:
+   case GL_TEXTURE23:
+   case GL_TEXTURE24:
+   case GL_TEXTURE25:
+   case GL_TEXTURE26:
+   case GL_TEXTURE27:
+   case GL_TEXTURE28:
+   case GL_TEXTURE29:
+   case GL_TEXTURE30:
+   case GL_TEXTURE31:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glMultiTexCoord4x(texture=0x%x)", texture);
+      return;
+   }
+
+
+   _es_MultiTexCoord4f(texture,
+                       (GLfloat) (s / 65536.0f),
+                       (GLfloat) (t / 65536.0f),
+                       (GLfloat) (r / 65536.0f),
+                       (GLfloat) (q / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_Normal3x(GLfixed nx, GLfixed ny, GLfixed nz)
+{
+   _es_Normal3f((GLfloat) (nx / 65536.0f),
+                (GLfloat) (ny / 65536.0f),
+                (GLfloat) (nz / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_Orthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top,
+           GLfloat zNear, GLfloat zFar)
+{
+   _mesa_Ortho((GLdouble) (left),
+               (GLdouble) (right),
+               (GLdouble) (bottom),
+               (GLdouble) (top),
+               (GLdouble) (zNear),
+               (GLdouble) (zFar));
+}
+
+void GL_APIENTRY
+_es_Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
+           GLfixed zNear, GLfixed zFar)
+{
+   _mesa_Ortho((GLdouble) (left / 65536.0),
+               (GLdouble) (right / 65536.0),
+               (GLdouble) (bottom / 65536.0),
+               (GLdouble) (top / 65536.0),
+               (GLdouble) (zNear / 65536.0),
+               (GLdouble) (zFar / 65536.0));
+}
+
+void GL_APIENTRY
+_es_PointParameterx(GLenum pname, GLfixed param)
+{
+   switch(pname) {
+   case GL_POINT_SIZE_MIN:
+   case GL_POINT_SIZE_MAX:
+   case GL_POINT_FADE_THRESHOLD_SIZE:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glPointParameterx(pname=0x%x)", pname);
+      return;
+   }
+
+   _mesa_PointParameterf(pname, (GLfloat) (param / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_PointParameterxv(GLenum pname, const GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 3;
+   GLfloat converted_params[3];
+
+   switch(pname) {
+   case GL_POINT_SIZE_MIN:
+   case GL_POINT_SIZE_MAX:
+   case GL_POINT_FADE_THRESHOLD_SIZE:
+      n_params = 1;
+      break;
+   case GL_POINT_DISTANCE_ATTENUATION:
+      n_params = 3;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glPointParameterxv(pname=0x%x)", pname);
+      return;
+   }
+
+   for (i = 0; i < n_params; i++) {
+      converted_params[i] = (GLfloat) (params[i] / 65536.0f);
+   }
+
+   _mesa_PointParameterfv(pname, converted_params);
+}
+
+void GL_APIENTRY
+_es_PointSizex(GLfixed size)
+{
+   _mesa_PointSize((GLfloat) (size / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_PolygonOffsetx(GLfixed factor, GLfixed units)
+{
+   _mesa_PolygonOffset((GLfloat) (factor / 65536.0f),
+                       (GLfloat) (units / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_Rotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
+{
+   _mesa_Rotatef((GLfloat) (angle / 65536.0f),
+                 (GLfloat) (x / 65536.0f),
+                 (GLfloat) (y / 65536.0f),
+                 (GLfloat) (z / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_SampleCoveragex(GLclampx value, GLboolean invert)
+{
+   _mesa_SampleCoverageARB((GLclampf) (value / 65536.0f),
+                           invert);
+}
+
+void GL_APIENTRY
+_es_Scalex(GLfixed x, GLfixed y, GLfixed z)
+{
+   _mesa_Scalef((GLfloat) (x / 65536.0f),
+                (GLfloat) (y / 65536.0f),
+                (GLfloat) (z / 65536.0f));
+}
+
+void GL_APIENTRY
+_es_TexEnvx(GLenum target, GLenum pname, GLfixed param)
+{
+   GLfloat converted_param;
+   bool convert_param_value = true;
+
+   switch(target) {
+   case GL_POINT_SPRITE:
+      if (pname != GL_COORD_REPLACE) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvx(target=0x%x)", target);
+         return;
+      }
+      break;
+   case GL_TEXTURE_FILTER_CONTROL_EXT:
+      if (pname != GL_TEXTURE_LOD_BIAS_EXT) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvx(target=0x%x)", target);
+         return;
+      }
+      break;
+   case GL_TEXTURE_ENV:
+      if (pname != GL_TEXTURE_ENV_MODE && pname != GL_COMBINE_RGB && pname != GL_COMBINE_ALPHA && pname != GL_RGB_SCALE && pname != GL_ALPHA_SCALE && pname != GL_SRC0_RGB && pname != GL_SRC1_RGB && pname != GL_SRC2_RGB && pname != GL_SRC0_ALPHA && pname != GL_SRC1_ALPHA && pname != GL_SRC2_ALPHA && pname != GL_OPERAND0_RGB && pname != GL_OPERAND1_RGB && pname != GL_OPERAND2_RGB && pname != GL_OPERAND0_ALPHA && pname != GL_OPERAND1_ALPHA && pname != GL_OPERAND2_ALPHA && pname != GL_TEXTURE_ENV_COLOR) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvx(target=0x%x)", target);
+         return;
+      }
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexEnvx(target=0x%x)", target);
+      return;
+   }
+   switch(pname) {
+   case GL_COORD_REPLACE:
+      if (param != GL_TRUE && param != GL_FALSE) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   case GL_TEXTURE_LOD_BIAS_EXT:
+      break;
+   case GL_TEXTURE_ENV_MODE:
+      if (param != GL_REPLACE && param != GL_MODULATE && param != GL_DECAL && param != GL_BLEND && param != GL_ADD && param != GL_COMBINE) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   case GL_COMBINE_RGB:
+      if (param != GL_REPLACE && param != GL_MODULATE && param != GL_ADD && param != GL_ADD_SIGNED && param != GL_INTERPOLATE && param != GL_SUBTRACT && param != GL_DOT3_RGB && param != GL_DOT3_RGBA) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   case GL_COMBINE_ALPHA:
+      if (param != GL_REPLACE && param != GL_MODULATE && param != GL_ADD && param != GL_ADD_SIGNED && param != GL_INTERPOLATE && param != GL_SUBTRACT) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   case GL_RGB_SCALE:
+   case GL_ALPHA_SCALE:
+      break;
+   case GL_SRC0_RGB:
+   case GL_SRC1_RGB:
+   case GL_SRC2_RGB:
+   case GL_SRC0_ALPHA:
+   case GL_SRC1_ALPHA:
+   case GL_SRC2_ALPHA:
+      if (param != GL_TEXTURE && param != GL_CONSTANT && param != GL_PRIMARY_COLOR && param != GL_PREVIOUS && param != GL_TEXTURE0 && param != GL_TEXTURE1 && param != GL_TEXTURE2 && param != GL_TEXTURE3 && param != GL_TEXTURE4 && param != GL_TEXTURE5 && param != GL_TEXTURE6 && param != GL_TEXTURE7 && param != GL_TEXTURE8 && param != GL_TEXTURE9 && param != GL_TEXTURE10 && param != GL_TEXTURE11 && param != GL_TEXTURE12 && param != GL_TEXTURE13 && param != GL_TEXTURE14 && param != GL_TEXTURE15 && param != GL_TEXTURE16 && param != GL_TEXTURE17 && param != GL_TEXTURE18 && param != GL_TEXTURE19 && param != GL_TEXTURE20 && param != GL_TEXTURE21 && param != GL_TEXTURE22 && param != GL_TEXTURE23 && param != GL_TEXTURE24 && param != GL_TEXTURE25 && param != GL_TEXTURE26 && param != GL_TEXTURE27 && param != GL_TEXTURE28 && param != GL_TEXTURE29 && param != GL_TEXTURE30 && param != GL_TEXTURE31) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   case GL_OPERAND0_RGB:
+   case GL_OPERAND1_RGB:
+   case GL_OPERAND2_RGB:
+      if (param != GL_SRC_COLOR && param != GL_ONE_MINUS_SRC_COLOR && param != GL_SRC_ALPHA && param != GL_ONE_MINUS_SRC_ALPHA) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   case GL_OPERAND0_ALPHA:
+   case GL_OPERAND1_ALPHA:
+   case GL_OPERAND2_ALPHA:
+      if (param != GL_SRC_ALPHA && param != GL_ONE_MINUS_SRC_ALPHA) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexEnvx(pname=0x%x)", pname);
+      return;
+   }
+
+   if (convert_param_value) {
+      converted_param = (GLfloat) (param / 65536.0f);
+   } else {
+      converted_param = (GLfloat) param;
+   }
+
+   _mesa_TexEnvf(target, pname, converted_param);
+}
+
+void GL_APIENTRY
+_es_TexEnvxv(GLenum target, GLenum pname, const GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 4;
+   GLfloat converted_params[4];
+   bool convert_params_value = true;
+
+   switch(target) {
+   case GL_POINT_SPRITE:
+      if (pname != GL_COORD_REPLACE) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvxv(target=0x%x)", target);
+         return;
+      }
+      break;
+   case GL_TEXTURE_FILTER_CONTROL_EXT:
+      if (pname != GL_TEXTURE_LOD_BIAS_EXT) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvxv(target=0x%x)", target);
+         return;
+      }
+      break;
+   case GL_TEXTURE_ENV:
+      if (pname != GL_TEXTURE_ENV_MODE && pname != GL_COMBINE_RGB && pname != GL_COMBINE_ALPHA && pname != GL_RGB_SCALE && pname != GL_ALPHA_SCALE && pname != GL_SRC0_RGB && pname != GL_SRC1_RGB && pname != GL_SRC2_RGB && pname != GL_SRC0_ALPHA && pname != GL_SRC1_ALPHA && pname != GL_SRC2_ALPHA && pname != GL_OPERAND0_RGB && pname != GL_OPERAND1_RGB && pname != GL_OPERAND2_RGB && pname != GL_OPERAND0_ALPHA && pname != GL_OPERAND1_ALPHA && pname != GL_OPERAND2_ALPHA && pname != GL_TEXTURE_ENV_COLOR) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvxv(target=0x%x)", target);
+         return;
+      }
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexEnvxv(target=0x%x)", target);
+      return;
+   }
+   switch(pname) {
+   case GL_COORD_REPLACE:
+      if (params[0] != GL_TRUE && params[0] != GL_FALSE) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_TEXTURE_LOD_BIAS_EXT:
+      n_params = 1;
+      break;
+   case GL_TEXTURE_ENV_MODE:
+      if (params[0] != GL_REPLACE && params[0] != GL_MODULATE && params[0] != GL_DECAL && params[0] != GL_BLEND && params[0] != GL_ADD && params[0] != GL_COMBINE) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_COMBINE_RGB:
+      if (params[0] != GL_REPLACE && params[0] != GL_MODULATE && params[0] != GL_ADD && params[0] != GL_ADD_SIGNED && params[0] != GL_INTERPOLATE && params[0] != GL_SUBTRACT && params[0] != GL_DOT3_RGB && params[0] != GL_DOT3_RGBA) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_COMBINE_ALPHA:
+      if (params[0] != GL_REPLACE && params[0] != GL_MODULATE && params[0] != GL_ADD && params[0] != GL_ADD_SIGNED && params[0] != GL_INTERPOLATE && params[0] != GL_SUBTRACT) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_RGB_SCALE:
+   case GL_ALPHA_SCALE:
+      break;
+   case GL_SRC0_RGB:
+   case GL_SRC1_RGB:
+   case GL_SRC2_RGB:
+   case GL_SRC0_ALPHA:
+   case GL_SRC1_ALPHA:
+   case GL_SRC2_ALPHA:
+      if (params[0] != GL_TEXTURE && params[0] != GL_CONSTANT && params[0] != GL_PRIMARY_COLOR && params[0] != GL_PREVIOUS && params[0] != GL_TEXTURE0 && params[0] != GL_TEXTURE1 && params[0] != GL_TEXTURE2 && params[0] != GL_TEXTURE3 && params[0] != GL_TEXTURE4 && params[0] != GL_TEXTURE5 && params[0] != GL_TEXTURE6 && params[0] != GL_TEXTURE7 && params[0] != GL_TEXTURE8 && params[0] != GL_TEXTURE9 && params[0] != GL_TEXTURE10 && params[0] != GL_TEXTURE11 && params[0] != GL_TEXTURE12 && params[0] != GL_TEXTURE13 && params[0] != GL_TEXTURE14 && params[0] != GL_TEXTURE15 && params[0] != GL_TEXTURE16 && params[0] != GL_TEXTURE17 && params[0] != GL_TEXTURE18 && params[0] != GL_TEXTURE19 && params[0] != GL_TEXTURE20 && params[0] != GL_TEXTURE21 && params[0] != GL_TEXTURE22 && params[0] != GL_TEXTURE23 && params[0] != GL_TEXTURE24 && params[0] != GL_TEXTURE25 && params[0] != GL_TEXTURE26 && params[0] != GL_TEXTURE27 && params[0] != GL_TEXTURE28 && params[0] != GL_TEXTURE29 && params[0] != GL_TEXTURE30 && params[0] != GL_TEXTURE31) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_OPERAND0_RGB:
+   case GL_OPERAND1_RGB:
+   case GL_OPERAND2_RGB:
+      if (params[0] != GL_SRC_COLOR && params[0] != GL_ONE_MINUS_SRC_COLOR && params[0] != GL_SRC_ALPHA && params[0] != GL_ONE_MINUS_SRC_ALPHA) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_OPERAND0_ALPHA:
+   case GL_OPERAND1_ALPHA:
+   case GL_OPERAND2_ALPHA:
+      if (params[0] != GL_SRC_ALPHA && params[0] != GL_ONE_MINUS_SRC_ALPHA) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexEnvxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_TEXTURE_ENV_COLOR:
+      n_params = 4;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexEnvxv(pname=0x%x)", pname);
+      return;
+   }
+
+   if (convert_params_value) {
+      for (i = 0; i < n_params; i++) {
+         converted_params[i] = (GLfloat) (params[i] / 65536.0f);
+      }
+   } else {
+      for (i = 0; i < n_params; i++) {
+         converted_params[i] = (GLfloat) params[i];
+      }
+   }
+
+   _mesa_TexEnvfv(target, pname, converted_params);
+}
+
+void GL_APIENTRY
+_check_TexGeniOES(GLenum coord, GLenum pname, GLint param)
+{
+   switch(coord) {
+   case GL_TEXTURE_GEN_STR_OES:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexGeniOES(coord=0x%x)", coord);
+      return;
+   }
+   switch(pname) {
+   case GL_TEXTURE_GEN_MODE:
+      if (param != GL_NORMAL_MAP && param != GL_REFLECTION_MAP) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexGeniOES(pname=0x%x)", pname);
+         return;
+      }
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexGeniOES(pname=0x%x)", pname);
+      return;
+   }
+
+   _es_TexGenf(coord, pname, (GLfloat) param);
+}
+
+void GL_APIENTRY
+_check_TexGenivOES(GLenum coord, GLenum pname, const GLint *params)
+{
+   unsigned int i;
+   unsigned int n_params = 1;
+   GLfloat converted_params[1];
+
+   switch(coord) {
+   case GL_TEXTURE_GEN_STR_OES:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexGenivOES(coord=0x%x)", coord);
+      return;
+   }
+   switch(pname) {
+   case GL_TEXTURE_GEN_MODE:
+      if (params[0] != GL_NORMAL_MAP && params[0] != GL_REFLECTION_MAP) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexGenivOES(pname=0x%x)", pname);
+         return;
+      }
+      n_params = 1;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexGenivOES(pname=0x%x)", pname);
+      return;
+   }
+
+   for (i = 0; i < n_params; i++) {
+      converted_params[i] = (GLfloat) params[i];
+   }
+
+   _es_TexGenfv(coord, pname, converted_params);
+}
+
+void GL_APIENTRY
+_check_TexGenxOES(GLenum coord, GLenum pname, GLfixed param)
+{
+   switch(coord) {
+   case GL_TEXTURE_GEN_STR_OES:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexGenxOES(coord=0x%x)", coord);
+      return;
+   }
+   switch(pname) {
+   case GL_TEXTURE_GEN_MODE:
+      if (param != GL_NORMAL_MAP && param != GL_REFLECTION_MAP) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexGenxOES(pname=0x%x)", pname);
+         return;
+      }
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexGenxOES(pname=0x%x)", pname);
+      return;
+   }
+
+   _es_TexGenf(coord, pname, (GLfloat) param);
+}
+
+void GL_APIENTRY
+_check_TexGenxvOES(GLenum coord, GLenum pname, const GLfixed *params)
+{
+    unsigned int i;
+    unsigned int n_params = 1;
+    GLfloat converted_params[1];
+
+    switch(coord) {
+    case GL_TEXTURE_GEN_STR_OES:
+       break;
+    default:
+       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                   "glTexGenxvOES(coord=0x%x)", coord);
+       return;
+    }
+    switch(pname) {
+    case GL_TEXTURE_GEN_MODE:
+       if (params[0] != GL_NORMAL_MAP && params[0] != GL_REFLECTION_MAP) {
+          _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                      "glTexGenxvOES(pname=0x%x)", pname);
+          return;
+       }
+       n_params = 1;
+       break;
+    default:
+       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                   "glTexGenxvOES(pname=0x%x)", pname);
+       return;
+    }
+
+    for (i = 0; i < n_params; i++) {
+       converted_params[i] = (GLfloat) params[i];
+    }
+
+    _es_TexGenfv(coord, pname, converted_params);
+}
+
+void GL_APIENTRY
+_es_TexParameterx(GLenum target, GLenum pname, GLfixed param)
+{
+   GLfloat converted_param;
+   bool convert_param_value = true;
+
+   switch(target) {
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_CUBE_MAP:
+   case GL_TEXTURE_EXTERNAL_OES:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexParameterx(target=0x%x)", target);
+      return;
+   }
+   switch(pname) {
+   case GL_TEXTURE_WRAP_S:
+   case GL_TEXTURE_WRAP_T:
+      if (param != GL_CLAMP_TO_EDGE && param != GL_REPEAT && param != GL_MIRRORED_REPEAT) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexParameterx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   case GL_TEXTURE_MIN_FILTER:
+      if (param != GL_NEAREST && param != GL_LINEAR && param != GL_NEAREST_MIPMAP_NEAREST && param != GL_NEAREST_MIPMAP_LINEAR && param != GL_LINEAR_MIPMAP_NEAREST && param != GL_LINEAR_MIPMAP_LINEAR) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexParameterx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   case GL_TEXTURE_MAG_FILTER:
+      if (param != GL_NEAREST && param != GL_LINEAR) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexParameterx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   case GL_GENERATE_MIPMAP:
+      if (param != GL_TRUE && param != GL_FALSE) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexParameterx(pname=0x%x)", pname);
+         return;
+      }
+      convert_param_value = false;
+      break;
+   case GL_TEXTURE_MAX_ANISOTROPY_EXT:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexParameterx(pname=0x%x)", pname);
+      return;
+   }
+
+   if (convert_param_value) {
+      converted_param = (GLfloat) (param / 65536.0f);
+   } else {
+      converted_param = (GLfloat) param;
+   }
+
+   _mesa_TexParameterf(target, pname, converted_param);
+}
+
+void GL_APIENTRY
+_es_TexParameterxv(GLenum target, GLenum pname, const GLfixed *params)
+{
+   unsigned int i;
+   unsigned int n_params = 4;
+   GLfloat converted_params[4];
+   bool convert_params_value = true;
+
+   switch(target) {
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_CUBE_MAP:
+   case GL_TEXTURE_EXTERNAL_OES:
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexParameterxv(target=0x%x)", target);
+      return;
+   }
+   switch(pname) {
+   case GL_TEXTURE_WRAP_S:
+   case GL_TEXTURE_WRAP_T:
+      if (params[0] != GL_CLAMP_TO_EDGE && params[0] != GL_REPEAT && params[0] != GL_MIRRORED_REPEAT) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexParameterxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_TEXTURE_MIN_FILTER:
+      if (params[0] != GL_NEAREST && params[0] != GL_LINEAR && params[0] != GL_NEAREST_MIPMAP_NEAREST && params[0] != GL_NEAREST_MIPMAP_LINEAR && params[0] != GL_LINEAR_MIPMAP_NEAREST && params[0] != GL_LINEAR_MIPMAP_LINEAR) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexParameterxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_TEXTURE_MAG_FILTER:
+      if (params[0] != GL_NEAREST && params[0] != GL_LINEAR) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexParameterxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_GENERATE_MIPMAP:
+      if (params[0] != GL_TRUE && params[0] != GL_FALSE) {
+         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                     "glTexParameterxv(pname=0x%x)", pname);
+         return;
+      }
+      convert_params_value = false;
+      n_params = 1;
+      break;
+   case GL_TEXTURE_MAX_ANISOTROPY_EXT:
+      n_params = 1;
+      break;
+   case GL_TEXTURE_CROP_RECT_OES:
+      n_params = 4;
+      break;
+   default:
+      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
+                  "glTexParameterxv(pname=0x%x)", pname);
+      return;
+   }
+
+   if (convert_params_value) {
+      for (i = 0; i < n_params; i++) {
+         converted_params[i] = (GLfloat) (params[i] / 65536.0f);
+      }
+   } else {
+      for (i = 0; i < n_params; i++) {
+         converted_params[i] = (GLfloat) params[i];
+      }
+   }
+
+   _mesa_TexParameterfv(target, pname, converted_params);
+}
+
+void GL_APIENTRY
+_es_Translatex(GLfixed x, GLfixed y, GLfixed z)
+{
+    _mesa_Translatef((GLfloat) (x / 65536.0f),
+                     (GLfloat) (y / 65536.0f),
+                     (GLfloat) (z / 65536.0f));
+}
+
+#endif /* FEATURE_ES1 */

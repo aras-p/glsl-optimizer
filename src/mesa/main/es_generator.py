@@ -201,6 +201,10 @@ print """
 #endif
 """ % (versionHeader, versionExtHeader, shortname.upper())
 
+if version == "GLES1.1":
+    print '#include "main/es1_conversion.h"'
+    print
+
 # Everyone needs these types.
 print """
 /* These types are needed for the Mesa veneer, but are not defined in
@@ -565,6 +569,9 @@ for funcName in keys:
         # endfor every recognized parameter value
 
     # endfor every param
+
+    if conversionCodeOutgoing != [] or conversionCodeIncoming != []:
+        continue
 
     # Here, the passthroughDeclarationString and passthroughCallString
     # are complete; remove the extra ", " at the front of each.
