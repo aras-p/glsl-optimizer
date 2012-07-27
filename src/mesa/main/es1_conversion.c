@@ -635,18 +635,13 @@ _es_LoadMatrixx(const GLfixed *m)
 void GL_APIENTRY
 _es_Materialx(GLenum face, GLenum pname, GLfixed param)
 {
-   switch(face) {
-   case GL_FRONT_AND_BACK:
-      break;
-   default:
+   if (face != GL_FRONT_AND_BACK) {
       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
                   "glMaterialx(face=0x%x)", face);
       return;
    }
-   switch(pname) {
-   case GL_SHININESS:
-      break;
-   default:
+
+   if (pname != GL_SHININESS) {
       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
                   "glMaterialx(pname=0x%x)", pname);
       return;
@@ -662,14 +657,12 @@ _es_Materialxv(GLenum face, GLenum pname, const GLfixed *params)
    unsigned int n_params = 4;
    GLfloat converted_params[4];
 
-   switch(face) {
-   case GL_FRONT_AND_BACK:
-      break;
-   default:
+   if (face != GL_FRONT_AND_BACK) {
       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
                   "glMaterialxv(face=0x%x)", face);
       return;
    }
+
    switch(pname) {
    case GL_AMBIENT:
    case GL_DIFFUSE:

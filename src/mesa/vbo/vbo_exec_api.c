@@ -457,10 +457,10 @@ vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
       updateMats = ALL_MATERIAL_BITS;
    }
 
-   if (face == GL_FRONT) {
+   if (ctx->API == API_OPENGL && face == GL_FRONT) {
       updateMats &= FRONT_MATERIAL_BITS;
    }
-   else if (face == GL_BACK) {
+   else if (ctx->API == API_OPENGL && face == GL_BACK) {
       updateMats &= BACK_MATERIAL_BITS;
    }
    else if (face != GL_FRONT_AND_BACK) {
@@ -506,6 +506,10 @@ vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
          MAT_ATTR(VBO_ATTRIB_MAT_BACK_SHININESS, 1, params);
       break;
    case GL_COLOR_INDEXES:
+      if (ctx->API != API_OPENGL) {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glMaterialfv(pname)");
+         return;
+      }
       if (updateMats & MAT_BIT_FRONT_INDEXES)
          MAT_ATTR(VBO_ATTRIB_MAT_FRONT_INDEXES, 3, params);
       if (updateMats & MAT_BIT_BACK_INDEXES)
