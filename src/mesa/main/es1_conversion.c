@@ -293,7 +293,6 @@ _es_GetMaterialxv(GLenum face, GLenum pname, GLfixed *params)
       break;
    case GL_AMBIENT:
    case GL_DIFFUSE:
-   case GL_AMBIENT_AND_DIFFUSE:
    case GL_SPECULAR:
    case GL_EMISSION:
       n_params = 4;

@@ -789,6 +789,10 @@ _mesa_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
 	 *params = mat[MAT_ATTRIB_SHININESS(f)][0];
 	 break;
       case GL_COLOR_INDEXES:
+         if (ctx->API != API_OPENGL) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetMaterialfv(pname)" );
+            return;
+         }
 	 params[0] = mat[MAT_ATTRIB_INDEXES(f)][0];
 	 params[1] = mat[MAT_ATTRIB_INDEXES(f)][1];
 	 params[2] = mat[MAT_ATTRIB_INDEXES(f)][2];
@@ -806,6 +810,8 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
    GLuint f;
    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* update materials */
+
+   ASSERT(ctx->API == API_OPENGL);
 
    FLUSH_CURRENT(ctx, 0); /* update ctx->Light.Material from vertex buffer */
 
