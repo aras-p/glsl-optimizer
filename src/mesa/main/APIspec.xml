@@ -482,56 +482,6 @@
 		<return type="void"/>
 		<param name="cap" type="GLenum"/>
 	</proto>
-
-	<desc name="cap" category="GLES1.1">
-		<value name="GL_NORMALIZE"/>
-		<value name="GL_RESCALE_NORMAL"/>
-
-		<range base="GL_CLIP_PLANE" from="0" to="5"/>
-		<value name="GL_CLIP_PLANE0+6"/>
-		<value name="GL_CLIP_PLANE0+7"/>
-
-		<value name="GL_FOG"/>
-		<value name="GL_LIGHTING"/>
-		<value name="GL_COLOR_MATERIAL"/>
-
-		<range base="GL_LIGHT" from="0" to="7"/>
-
-		<value name="GL_POINT_SMOOTH"/>
-		<value name="GL_LINE_SMOOTH"/>
-		<value name="GL_CULL_FACE"/>
-		<value name="GL_POLYGON_OFFSET_FILL"/>
-		<value name="GL_MULTISAMPLE"/>
-		<value name="GL_SAMPLE_ALPHA_TO_COVERAGE"/>
-		<value name="GL_SAMPLE_ALPHA_TO_ONE"/>
-		<value name="GL_SAMPLE_COVERAGE"/>
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_SCISSOR_TEST"/>
-		<value name="GL_ALPHA_TEST"/>
-		<value name="GL_STENCIL_TEST"/>
-		<value name="GL_DEPTH_TEST"/>
-		<value name="GL_BLEND"/>
-		<value name="GL_DITHER"/>
-		<value name="GL_COLOR_LOGIC_OP"/>
-
-		<value name="GL_POINT_SPRITE_OES" category="OES_point_sprite"/>
-		<value name="GL_MATRIX_PALETTE_OES" category="OES_matrix_palette"/>
-		<value name="GL_TEXTURE_CUBE_MAP_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_GEN_STR_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_EXTERNAL_OES" category="OES_EGL_image_external"/>
-	</desc>
-
-	<desc name="cap" category="GLES2.0">
-		<value name="GL_CULL_FACE"/>
-		<value name="GL_SCISSOR_TEST"/>
-		<value name="GL_POLYGON_OFFSET_FILL"/>
-		<value name="GL_SAMPLE_ALPHA_TO_COVERAGE"/>
-		<value name="GL_SAMPLE_COVERAGE"/>
-		<value name="GL_STENCIL_TEST"/>
-		<value name="GL_DEPTH_TEST"/>
-		<value name="GL_DITHER"/>
-		<value name="GL_BLEND"/>
-	</desc>
 </template>
 
 <!-- it is exactly the same as Disable -->
@@ -540,56 +490,6 @@
 		<return type="void"/>
 		<param name="cap" type="GLenum"/>
 	</proto>
-
-	<desc name="cap" category="GLES1.1">
-		<value name="GL_NORMALIZE"/>
-		<value name="GL_RESCALE_NORMAL"/>
-
-		<range base="GL_CLIP_PLANE" from="0" to="5"/>
-		<value name="GL_CLIP_PLANE0+6"/>
-		<value name="GL_CLIP_PLANE0+7"/>
-
-		<value name="GL_FOG"/>
-		<value name="GL_LIGHTING"/>
-		<value name="GL_COLOR_MATERIAL"/>
-
-		<range base="GL_LIGHT" from="0" to="7"/>
-
-		<value name="GL_POINT_SMOOTH"/>
-		<value name="GL_LINE_SMOOTH"/>
-		<value name="GL_CULL_FACE"/>
-		<value name="GL_POLYGON_OFFSET_FILL"/>
-		<value name="GL_MULTISAMPLE"/>
-		<value name="GL_SAMPLE_ALPHA_TO_COVERAGE"/>
-		<value name="GL_SAMPLE_ALPHA_TO_ONE"/>
-		<value name="GL_SAMPLE_COVERAGE"/>
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_SCISSOR_TEST"/>
-		<value name="GL_ALPHA_TEST"/>
-		<value name="GL_STENCIL_TEST"/>
-		<value name="GL_DEPTH_TEST"/>
-		<value name="GL_BLEND"/>
-		<value name="GL_DITHER"/>
-		<value name="GL_COLOR_LOGIC_OP"/>
-
-		<value name="GL_POINT_SPRITE_OES" category="OES_point_sprite"/>
-		<value name="GL_MATRIX_PALETTE_OES" category="OES_matrix_palette"/>
-		<value name="GL_TEXTURE_CUBE_MAP_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_GEN_STR_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_EXTERNAL_OES" category="OES_EGL_image_external"/>
-	</desc>
-
-	<desc name="cap" category="GLES2.0">
-		<value name="GL_CULL_FACE"/>
-		<value name="GL_SCISSOR_TEST"/>
-		<value name="GL_POLYGON_OFFSET_FILL"/>
-		<value name="GL_SAMPLE_ALPHA_TO_COVERAGE"/>
-		<value name="GL_SAMPLE_COVERAGE"/>
-		<value name="GL_STENCIL_TEST"/>
-		<value name="GL_DEPTH_TEST"/>
-		<value name="GL_DITHER"/>
-		<value name="GL_BLEND"/>
-	</desc>
 </template>
 
 <template name="Finish">
@@ -966,63 +866,6 @@
 		<return type="GLboolean"/>
 		<param name="cap" type="GLenum"/>
 	</proto>
-
-	<desc name="cap" category="GLES1.1">
-		<value name="GL_NORMALIZE"/>
-		<value name="GL_RESCALE_NORMAL"/>
-
-		<range base="GL_CLIP_PLANE" from="0" to="5"/>
-		<value name="GL_CLIP_PLANE0+6"/>
-		<value name="GL_CLIP_PLANE0+7"/>
-
-		<value name="GL_FOG"/>
-		<value name="GL_LIGHTING"/>
-		<value name="GL_COLOR_MATERIAL"/>
-
-		<range base="GL_LIGHT" from="0" to="7"/>
-
-		<value name="GL_POINT_SMOOTH"/>
-		<value name="GL_LINE_SMOOTH"/>
-		<value name="GL_CULL_FACE"/>
-		<value name="GL_POLYGON_OFFSET_FILL"/>
-		<value name="GL_MULTISAMPLE"/>
-		<value name="GL_SAMPLE_ALPHA_TO_COVERAGE"/>
-		<value name="GL_SAMPLE_ALPHA_TO_ONE"/>
-		<value name="GL_SAMPLE_COVERAGE"/>
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_SCISSOR_TEST"/>
-		<value name="GL_ALPHA_TEST"/>
-		<value name="GL_STENCIL_TEST"/>
-		<value name="GL_DEPTH_TEST"/>
-		<value name="GL_BLEND"/>
-		<value name="GL_DITHER"/>
-		<value name="GL_COLOR_LOGIC_OP"/>
-
-		<value name="GL_POINT_SPRITE_OES" category="OES_point_sprite"/>
-		<value name="GL_TEXTURE_CUBE_MAP_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_GEN_STR_OES" category="OES_texture_cube_map"/>
-
-		<value name="GL_VERTEX_ARRAY"/>
-		<value name="GL_NORMAL_ARRAY"/>
-		<value name="GL_COLOR_ARRAY"/>
-		<value name="GL_TEXTURE_COORD_ARRAY"/>
-		<value name="GL_MATRIX_INDEX_ARRAY_OES" category="OES_matrix_palette"/>
-		<value name="GL_WEIGHT_ARRAY_OES" category="OES_matrix_palette"/>
-		<value name="GL_POINT_SIZE_ARRAY_OES" category="OES_point_size_array"/>
-		<value name="GL_TEXTURE_EXTERNAL_OES" category="OES_EGL_image_external"/>
-	</desc>
-
-	<desc name="cap" category="GLES2.0">
-		<value name="GL_CULL_FACE"/>
-		<value name="GL_SCISSOR_TEST"/>
-		<value name="GL_POLYGON_OFFSET_FILL"/>
-		<value name="GL_SAMPLE_ALPHA_TO_COVERAGE"/>
-		<value name="GL_SAMPLE_COVERAGE"/>
-		<value name="GL_STENCIL_TEST"/>
-		<value name="GL_DEPTH_TEST"/>
-		<value name="GL_DITHER"/>
-		<value name="GL_BLEND"/>
-	</desc>
 </template>
 
 <template name="DepthRange">
@@ -1156,16 +999,6 @@
 		<return type="void"/>
 		<param name="array" type="GLenum"/>
 	</proto>
-
-	<desc name="array">
-		<value name="GL_VERTEX_ARRAY"/>
-		<value name="GL_NORMAL_ARRAY"/>
-		<value name="GL_COLOR_ARRAY"/>
-		<value name="GL_TEXTURE_COORD_ARRAY"/>
-		<value name="GL_MATRIX_INDEX_ARRAY_OES" category="OES_matrix_palette"/>
-		<value name="GL_WEIGHT_ARRAY_OES" category="OES_matrix_palette"/>
-		<value name="GL_POINT_SIZE_ARRAY_OES" category="OES_point_size_array"/>
-	</desc>
 </template>
 
 <template name="DrawArrays">
@@ -1192,16 +1025,6 @@
 		<return type="void"/>
 		<param name="array" type="GLenum"/>
 	</proto>
-
-	<desc name="array">
-		<value name="GL_VERTEX_ARRAY"/>
-		<value name="GL_NORMAL_ARRAY"/>
-		<value name="GL_COLOR_ARRAY"/>
-		<value name="GL_TEXTURE_COORD_ARRAY"/>
-		<value name="GL_MATRIX_INDEX_ARRAY_OES" category="OES_matrix_palette"/>
-		<value name="GL_WEIGHT_ARRAY_OES" category="OES_matrix_palette"/>
-		<value name="GL_POINT_SIZE_ARRAY_OES" category="OES_point_size_array"/>
-	</desc>
 </template>
 
 <template name="GetPointer" direction="get">
