@@ -934,10 +934,10 @@ void util_blitter_default_src_texture(struct pipe_sampler_view *src_templ,
 
 void util_blitter_copy_texture(struct blitter_context *blitter,
                                struct pipe_resource *dst,
-                               unsigned dstlevel,
+                               unsigned dst_level,
                                unsigned dstx, unsigned dsty, unsigned dstz,
                                struct pipe_resource *src,
-                               unsigned srclevel,
+                               unsigned src_level,
                                const struct pipe_box *srcbox,
                                boolean ignore_stencil)
 {
@@ -976,18 +976,18 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
        !screen->is_format_supported(screen, src->format, src->target,
                                     src->nr_samples, PIPE_BIND_SAMPLER_VIEW)) {
       blitter_set_running_flag(ctx);
-      util_resource_copy_region(pipe, dst, dstlevel, dstx, dsty, dstz,
-                                src, srclevel, srcbox);
+      util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
+                                src, src_level, srcbox);
       blitter_unset_running_flag(ctx);
       return;
    }
 
    /* Initialize the surface. */
-   util_blitter_default_dst_texture(&dst_templ, dst, dstlevel, dstz, srcbox);
+   util_blitter_default_dst_texture(&dst_templ, dst, dst_level, dstz, srcbox);
    dst_view = pipe->create_surface(pipe, dst, &dst_templ);
 
    /* Initialize the sampler view. */
-   util_blitter_default_src_texture(&src_templ, src, srclevel);
+   util_blitter_default_src_texture(&src_templ, src, src_level);
    src_view = pipe->create_sampler_view(pipe, src, &src_templ);
 
    /* Copy. */

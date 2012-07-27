@@ -187,10 +187,10 @@ void util_blitter_clear_depth_custom(struct blitter_context *blitter,
  */
 void util_blitter_copy_texture(struct blitter_context *blitter,
                                struct pipe_resource *dst,
-                               unsigned dstlevel,
+                               unsigned dst_level,
                                unsigned dstx, unsigned dsty, unsigned dstz,
                                struct pipe_resource *src,
-                               unsigned srclevel,
+                               unsigned src_level,
                                const struct pipe_box *srcbox,
                                boolean ignore_stencil);
 
