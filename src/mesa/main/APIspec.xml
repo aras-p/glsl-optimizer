@@ -2927,10 +2927,6 @@
 		<param name="level" type="GLint"/>
 		<param name="zoffset" type="GLint"/>
 	</proto>
-
-	<desc name="textarget" error="GL_INVALID_OPERATION">
-		<value name="GL_TEXTURE_3D_OES" category="OES_texture_3D"/>
-	</desc>
 </template>
 
 <template name="CheckFramebufferStatus" direction="get">
