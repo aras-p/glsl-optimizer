@@ -1504,9 +1504,9 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 {
 	struct r600_resource_texture *rtex;
 	struct r600_surface *surf;
-	unsigned level, first_layer, pitch, slice, format;
-	uint32_t db_z_info, stencil_info;
-	uint64_t offset;
+	unsigned level, pitch, slice, format;
+	uint32_t z_info, s_info;
+	uint64_t z_offs, s_offs;
 
 	if (state->zsbuf == NULL) {
 		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, 0);
@@ -1518,67 +1518,81 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	level = surf->base.u.tex.level;
 	rtex = (struct r600_resource_texture*)surf->base.texture;
 
-	first_layer = surf->base.u.tex.first_layer;
 	format = si_translate_dbformat(rtex->real_format);
 
-	offset = r600_resource_va(rctx->context.screen, surf->base.texture);
-	offset += rtex->surface.level[level].offset;
+	z_offs = r600_resource_va(rctx->context.screen, surf->base.texture);
+	z_offs += rtex->surface.level[level].offset;
+
+	s_offs = r600_resource_va(rctx->context.screen, surf->base.texture);
+	s_offs += rtex->surface.stencil_offset;
+	z_offs += rtex->surface.level[level].offset / 4;
+
+	z_offs >>= 8;
+	s_offs >>= 8;
+
 	pitch = (rtex->surface.level[level].nblk_x / 8) - 1;
 	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
 	if (slice) {
 		slice = slice - 1;
 	}
-	offset >>= 8;
 
-	si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE);
-	si_pm4_set_reg(pm4, R_028048_DB_Z_READ_BASE, offset);
-	si_pm4_set_reg(pm4, R_028050_DB_Z_WRITE_BASE, offset);
+	z_info = S_028040_FORMAT(format);
+	s_info = S_028044_FORMAT(1);
+
+	if (rtex->surface.level[level].mode == RADEON_SURF_MODE_1D) {
+		z_info |= S_028040_TILE_MODE_INDEX(4);
+		s_info |= S_028044_TILE_MODE_INDEX(4);
+
+	} else if (rtex->surface.level[level].mode == RADEON_SURF_MODE_2D) {
+		switch (format) {
+		case V_028040_Z_16:
+			z_info |= S_028040_TILE_MODE_INDEX(5);
+			s_info |= S_028044_TILE_MODE_INDEX(5);
+			break;
+		case V_028040_Z_24:
+		case V_028040_Z_32_FLOAT:
+			z_info |= S_028040_TILE_MODE_INDEX(6);
+			s_info |= S_028044_TILE_MODE_INDEX(6);
+			break;
+		default:
+			z_info |= S_028040_TILE_MODE_INDEX(7);
+			s_info |= S_028044_TILE_MODE_INDEX(7);
+		}
+
+	} else {
+		R600_ERR("Invalid DB tiling mode %d!\n",
+			 rtex->surface.level[level].mode);
+		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, 0);
+		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, 0);
+		return;
+	}
+
 	si_pm4_set_reg(pm4, R_028008_DB_DEPTH_VIEW,
 		       S_028008_SLICE_START(state->zsbuf->u.tex.first_layer) |
 		       S_028008_SLICE_MAX(state->zsbuf->u.tex.last_layer));
 
-	db_z_info = S_028040_FORMAT(format);
-	stencil_info = S_028044_FORMAT(rtex->stencil != 0);
-
-	switch (format) {
-	case V_028040_Z_16:
-		db_z_info |= S_028040_TILE_MODE_INDEX(5);
-		stencil_info |= S_028044_TILE_MODE_INDEX(5);
-		break;
-	case V_028040_Z_24:
-	case V_028040_Z_32_FLOAT:
-		db_z_info |= S_028040_TILE_MODE_INDEX(6);
-		stencil_info |= S_028044_TILE_MODE_INDEX(6);
-		break;
-	default:
-		db_z_info |= S_028040_TILE_MODE_INDEX(7);
-		stencil_info |= S_028044_TILE_MODE_INDEX(7);
-	}
-
-	if (rtex->stencil) {
-		uint64_t stencil_offset =
-			r600_texture_get_offset(rtex->stencil, level, first_layer);
-
-		stencil_offset += r600_resource_va(rctx->context.screen, (void*)rtex->stencil);
-		stencil_offset >>= 8;
-
-		si_pm4_add_bo(pm4, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
-		si_pm4_set_reg(pm4, R_02804C_DB_STENCIL_READ_BASE, stencil_offset);
-		si_pm4_set_reg(pm4, R_028054_DB_STENCIL_WRITE_BASE, stencil_offset);
-		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, stencil_info);
-	} else {
-		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, 0);
-	}
-
+	si_pm4_set_reg(pm4, R_02803C_DB_DEPTH_INFO, 0x1);
 	if (format != ~0U) {
-		si_pm4_set_reg(pm4, R_02803C_DB_DEPTH_INFO, 0x1);
-		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, db_z_info);
-		si_pm4_set_reg(pm4, R_028058_DB_DEPTH_SIZE, S_028058_PITCH_TILE_MAX(pitch));
-		si_pm4_set_reg(pm4, R_02805C_DB_DEPTH_SLICE, S_02805C_SLICE_TILE_MAX(slice));
+		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, z_info);
 
 	} else {
 		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, 0);
 	}
+
+	if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
+		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, s_info);
+	} else {
+		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, 0);
+	}
+
+	si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE);
+	si_pm4_set_reg(pm4, R_028048_DB_Z_READ_BASE, z_offs);
+	si_pm4_set_reg(pm4, R_02804C_DB_STENCIL_READ_BASE, s_offs);
+	si_pm4_set_reg(pm4, R_028050_DB_Z_WRITE_BASE, z_offs);
+	si_pm4_set_reg(pm4, R_028054_DB_STENCIL_WRITE_BASE, s_offs);
+
+	si_pm4_set_reg(pm4, R_028058_DB_DEPTH_SIZE, S_028058_PITCH_TILE_MAX(pitch));
+	si_pm4_set_reg(pm4, R_02805C_DB_DEPTH_SLICE, S_02805C_SLICE_TILE_MAX(slice));
 }
 
 static void si_set_framebuffer_state(struct pipe_context *ctx,

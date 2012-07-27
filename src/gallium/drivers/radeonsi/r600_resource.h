@@ -55,7 +55,6 @@ struct r600_resource_texture {
 	unsigned			size;
 	unsigned			depth;
 	unsigned			dirty_db;
-	struct r600_resource_texture    *stencil; /* Stencil is in a separate buffer on Evergreen. */
 	struct r600_resource_texture	*flushed_depth_texture;
 	boolean				is_flushing_texture;
 	struct radeon_surface		surface;

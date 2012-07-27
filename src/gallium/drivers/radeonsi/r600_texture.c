@@ -485,9 +485,6 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	if (rtex->flushed_depth_texture)
 		si_resource_reference(&rtex->flushed_depth_texture, NULL);
 
-	if (rtex->stencil)
-		si_resource_reference(&rtex->stencil, NULL);
-
 	pb_reference(&resource->buf, NULL);
 	FREE(rtex);
 }
@@ -543,19 +540,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 		return NULL;
 	}
 
-	/* If we initialized separate stencil for Evergreen. place it after depth. */
-	if (rtex->stencil) {
-		unsigned stencil_align, stencil_offset;
-
-		stencil_align = r600_get_base_alignment(screen, rtex->stencil->real_format, array_mode);
-		stencil_offset = align(rtex->size, stencil_align);
-
-		for (unsigned i = 0; i <= rtex->stencil->resource.b.b.last_level; i++)
-			rtex->stencil->offset[i] += stencil_offset;
-
-		rtex->size = stencil_offset + rtex->stencil->size;
-	}
-
 	/* Now create the backing buffer. */
 	if (!buf && alloc_bo) {
 		struct pipe_resource *ptex = &rtex->resource.b.b;
@@ -563,7 +547,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 
 		base_align = rtex->surface.bo_alignment;
 		if (!r600_init_resource(rscreen, resource, rtex->size, base_align, base->bind, base->usage)) {
-			si_resource_reference(&rtex->stencil, NULL);
 			FREE(rtex);
 			return NULL;
 		}
@@ -573,11 +556,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 		resource->domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
 	}
 
-	if (rtex->stencil) {
-		pb_reference(&rtex->stencil->resource.buf, rtex->resource.buf);
-		rtex->stencil->resource.cs_buf = rtex->resource.cs_buf;
-		rtex->stencil->resource.domains = rtex->resource.domains;
-	}
 	return rtex;
 }
 
