@@ -51,30 +51,40 @@ _mesa_Hint( GLenum target, GLenum mode )
 
    switch (target) {
       case GL_FOG_HINT:
+         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+            goto invalid_target;
          if (ctx->Hint.Fog == mode)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.Fog = mode;
          break;
       case GL_LINE_SMOOTH_HINT:
+         if (!_mesa_is_desktop_gl(ctx) && ctx->API != API_OPENGLES)
+            goto invalid_target;
          if (ctx->Hint.LineSmooth == mode)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.LineSmooth = mode;
          break;
       case GL_PERSPECTIVE_CORRECTION_HINT:
+         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+            goto invalid_target;
          if (ctx->Hint.PerspectiveCorrection == mode)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.PerspectiveCorrection = mode;
          break;
       case GL_POINT_SMOOTH_HINT:
+         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+            goto invalid_target;
          if (ctx->Hint.PointSmooth == mode)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.PointSmooth = mode;
          break;
       case GL_POLYGON_SMOOTH_HINT:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_target;
          if (ctx->Hint.PolygonSmooth == mode)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
@@ -83,6 +93,8 @@ _mesa_Hint( GLenum target, GLenum mode )
 
       /* GL_EXT_clip_volume_hint */
       case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
+         if (ctx->API != API_OPENGL)
+            goto invalid_target;
          if (ctx->Hint.ClipVolumeClipping == mode)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
@@ -91,6 +103,8 @@ _mesa_Hint( GLenum target, GLenum mode )
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_target;
 	 if (ctx->Hint.TextureCompression == mode)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
@@ -99,6 +113,8 @@ _mesa_Hint( GLenum target, GLenum mode )
 
       /* GL_SGIS_generate_mipmap */
       case GL_GENERATE_MIPMAP_HINT_SGIS:
+         if (ctx->API == API_OPENGL_CORE)
+            goto invalid_target;
          if (ctx->Hint.GenerateMipmap == mode)
             return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
@@ -107,10 +123,8 @@ _mesa_Hint( GLenum target, GLenum mode )
 
       /* GL_ARB_fragment_shader */
       case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
-         if (!ctx->Extensions.ARB_fragment_shader) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-            return;
-         }
+         if (ctx->API == API_OPENGLES || !ctx->Extensions.ARB_fragment_shader)
+            goto invalid_target;
          if (ctx->Hint.FragmentShaderDerivative == mode)
             return;
          FLUSH_VERTICES(ctx, _NEW_HINT);
@@ -118,13 +132,18 @@ _mesa_Hint( GLenum target, GLenum mode )
          break;
 
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-         return;
+         goto invalid_target;
    }
 
    if (ctx->Driver.Hint) {
       (*ctx->Driver.Hint)( ctx, target, mode );
    }
+
+   return;
+
+invalid_target:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
+   return;
 }
 
 

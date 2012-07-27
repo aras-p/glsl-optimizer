@@ -96,19 +96,6 @@
 		<param name="target" type="GLenum"/>
 		<param name="mode" type="GLenum"/>
 	</proto>
-
-	<desc name="target" category="GLES1.1">
-		<value name="GL_FOG_HINT"/>
-		<value name="GL_LINE_SMOOTH_HINT"/>
-		<value name="GL_PERSPECTIVE_CORRECTION_HINT"/>
-		<value name="GL_POINT_SMOOTH_HINT"/>
-	</desc>
-	<desc name="target" category="OES_standard_derivatives">
-		<value name="GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES"/>
-	</desc>
-	<desc name="target">
-		<value name="GL_GENERATE_MIPMAP_HINT"/>
-	</desc>
 </template>
 
 <template name="Light">
