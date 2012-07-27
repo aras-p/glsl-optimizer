@@ -1381,6 +1381,16 @@ compressedteximage_only_format(const struct gl_context *ctx, GLenum format)
 {
    switch (format) {
    case GL_ETC1_RGB8_OES:
+   case GL_PALETTE4_RGB8_OES:
+   case GL_PALETTE4_RGBA8_OES:
+   case GL_PALETTE4_R5_G6_B5_OES:
+   case GL_PALETTE4_RGBA4_OES:
+   case GL_PALETTE4_RGB5_A1_OES:
+   case GL_PALETTE8_RGB8_OES:
+   case GL_PALETTE8_RGBA8_OES:
+   case GL_PALETTE8_R5_G6_B5_OES:
+   case GL_PALETTE8_RGBA4_OES:
+   case GL_PALETTE8_RGB5_A1_OES:
       return GL_TRUE;
    default:
       return GL_FALSE;
