@@ -339,10 +339,10 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
     */
 
    if (brw->intel.is_haswell) {
-      surf->ss7.shader_chanel_select_r = HSW_SCS_RED;
-      surf->ss7.shader_chanel_select_g = HSW_SCS_GREEN;
-      surf->ss7.shader_chanel_select_b = HSW_SCS_BLUE;
-      surf->ss7.shader_chanel_select_a = HSW_SCS_ALPHA;
+      surf->ss7.shader_channel_select_r = HSW_SCS_RED;
+      surf->ss7.shader_channel_select_g = HSW_SCS_GREEN;
+      surf->ss7.shader_channel_select_b = HSW_SCS_BLUE;
+      surf->ss7.shader_channel_select_a = HSW_SCS_ALPHA;
    }
 
    /* Emit relocation to surface contents */
@@ -387,10 +387,10 @@ gen7_create_constant_surface(struct brw_context *brw,
    gen7_set_surface_tiling(surf, I915_TILING_NONE); /* tiling now allowed */
 
    if (brw->intel.is_haswell) {
-      surf->ss7.shader_chanel_select_r = HSW_SCS_RED;
-      surf->ss7.shader_chanel_select_g = HSW_SCS_GREEN;
-      surf->ss7.shader_chanel_select_b = HSW_SCS_BLUE;
-      surf->ss7.shader_chanel_select_a = HSW_SCS_ALPHA;
+      surf->ss7.shader_channel_select_r = HSW_SCS_RED;
+      surf->ss7.shader_channel_select_g = HSW_SCS_GREEN;
+      surf->ss7.shader_channel_select_b = HSW_SCS_BLUE;
+      surf->ss7.shader_channel_select_a = HSW_SCS_ALPHA;
    }
 
    /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
@@ -532,10 +532,10 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    }
 
    if (intel->is_haswell) {
-      surf->ss7.shader_chanel_select_r = HSW_SCS_RED;
-      surf->ss7.shader_chanel_select_g = HSW_SCS_GREEN;
-      surf->ss7.shader_chanel_select_b = HSW_SCS_BLUE;
-      surf->ss7.shader_chanel_select_a = HSW_SCS_ALPHA;
+      surf->ss7.shader_channel_select_r = HSW_SCS_RED;
+      surf->ss7.shader_channel_select_g = HSW_SCS_GREEN;
+      surf->ss7.shader_channel_select_b = HSW_SCS_BLUE;
+      surf->ss7.shader_channel_select_a = HSW_SCS_ALPHA;
    }
 
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,

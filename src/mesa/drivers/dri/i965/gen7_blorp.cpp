@@ -187,10 +187,10 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
    }
 
    if (intel->is_haswell) {
-      surf->ss7.shader_chanel_select_r = HSW_SCS_RED;
-      surf->ss7.shader_chanel_select_g = HSW_SCS_GREEN;
-      surf->ss7.shader_chanel_select_b = HSW_SCS_BLUE;
-      surf->ss7.shader_chanel_select_a = HSW_SCS_ALPHA;
+      surf->ss7.shader_channel_select_r = HSW_SCS_RED;
+      surf->ss7.shader_channel_select_g = HSW_SCS_GREEN;
+      surf->ss7.shader_channel_select_b = HSW_SCS_BLUE;
+      surf->ss7.shader_channel_select_a = HSW_SCS_ALPHA;
    }
 
    /* Emit relocation to surface contents */

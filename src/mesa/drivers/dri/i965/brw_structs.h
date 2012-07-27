@@ -881,10 +881,10 @@ struct gen7_surface_state
 
       /* Only on Haswell */
       GLuint pad0:4;
-      GLuint shader_chanel_select_a:3;
-      GLuint shader_chanel_select_b:3;
-      GLuint shader_chanel_select_g:3;
-      GLuint shader_chanel_select_r:3;
+      GLuint shader_channel_select_a:3;
+      GLuint shader_channel_select_b:3;
+      GLuint shader_channel_select_g:3;
+      GLuint shader_channel_select_r:3;
 
       GLuint alpha_clear_color:1;
       GLuint blue_clear_color:1;
