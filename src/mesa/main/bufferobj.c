@@ -1311,17 +1311,20 @@ _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params)
       *params = _mesa_bufferobj_mapped(bufObj);
       return;
    case GL_BUFFER_ACCESS_FLAGS:
-      if (!ctx->Extensions.ARB_map_buffer_range)
+      if ((!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_map_buffer_range)
+          && !_mesa_is_gles3(ctx))
          goto invalid_pname;
       *params = bufObj->AccessFlags;
       return;
    case GL_BUFFER_MAP_OFFSET:
-      if (!ctx->Extensions.ARB_map_buffer_range)
+      if ((!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_map_buffer_range)
+          && !_mesa_is_gles3(ctx))
          goto invalid_pname;
       *params = (GLint) bufObj->Offset;
       return;
    case GL_BUFFER_MAP_LENGTH:
-      if (!ctx->Extensions.ARB_map_buffer_range)
+      if ((!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_map_buffer_range)
+          && !_mesa_is_gles3(ctx))
          goto invalid_pname;
       *params = (GLint) bufObj->Length;
       return;

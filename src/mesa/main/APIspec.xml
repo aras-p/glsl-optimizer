@@ -1874,13 +1874,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="pname">
-		<value name="GL_BUFFER_SIZE"/>
-		<value name="GL_BUFFER_USAGE"/>
-		<value name="GL_BUFFER_ACCESS_OES" category="OES_mapbuffer"/>
-		<value name="GL_BUFFER_MAPPED_OES" category="OES_mapbuffer"/>
-	</desc>
 </template>
 
 <template name="IsBuffer" direction="get">
