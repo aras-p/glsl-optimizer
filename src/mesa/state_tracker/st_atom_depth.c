@@ -57,8 +57,8 @@ st_compare_func_to_pipe(GLenum func)
    STATIC_ASSERT(PIPE_FUNC_NOTEQUAL == GL_NOTEQUAL - GL_NEVER);
    STATIC_ASSERT(PIPE_FUNC_GEQUAL == GL_GEQUAL - GL_NEVER);
    STATIC_ASSERT(PIPE_FUNC_ALWAYS == GL_ALWAYS - GL_NEVER);
-   STATIC_ASSERT(func >= GL_NEVER);
-   STATIC_ASSERT(func <= GL_ALWAYS);
+   assert(func >= GL_NEVER);
+   assert(func <= GL_ALWAYS);
    return func - GL_NEVER;
 }
 
