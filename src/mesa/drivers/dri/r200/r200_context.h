@@ -442,19 +442,16 @@ struct r200_texture_state {
 #define CST_RB3D_DEPTHXY_OFFSET               3
 #define CST_CMD_2                             4
 #define CST_RE_AUX_SCISSOR_CNTL               5
-#define CST_CMD_3                             6
-#define CST_RE_SCISSOR_TL_0                   7
-#define CST_RE_SCISSOR_BR_0                   8
-#define CST_CMD_4                             9
-#define CST_SE_VAP_CNTL_STATUS                10
-#define CST_CMD_5                             11
-#define CST_RE_POINTSIZE                      12
-#define CST_CMD_6                             13
-#define CST_SE_TCL_INPUT_VTX_0                14
-#define CST_SE_TCL_INPUT_VTX_1                15
-#define CST_SE_TCL_INPUT_VTX_2                16
-#define CST_SE_TCL_INPUT_VTX_3                17
-#define CST_STATE_SIZE                        18
+#define CST_CMD_4                             6
+#define CST_SE_VAP_CNTL_STATUS                7
+#define CST_CMD_5                             8
+#define CST_RE_POINTSIZE                      9
+#define CST_CMD_6                             10
+#define CST_SE_TCL_INPUT_VTX_0                11
+#define CST_SE_TCL_INPUT_VTX_1                12
+#define CST_SE_TCL_INPUT_VTX_2                13
+#define CST_SE_TCL_INPUT_VTX_3                14
+#define CST_STATE_SIZE                        15
 
 #define PRF_CMD_0         0
 #define PRF_PP_TRI_PERF   1
@@ -462,13 +459,11 @@ struct r200_texture_state {
 #define PRF_STATE_SIZE    3
 
 
-#define SCI_CMD_0         0
-#define SCI_RE_AUX        1
-#define SCI_CMD_1         2
-#define SCI_XY_1          3
-#define SCI_CMD_2         4
-#define SCI_XY_2          5
-#define SCI_STATE_SIZE    6
+#define SCI_CMD_1         0
+#define SCI_XY_1          1
+#define SCI_CMD_2         2
+#define SCI_XY_2          3
+#define SCI_STATE_SIZE    4
 
 #define R200_QUERYOBJ_CMD_0  0
 #define R200_QUERYOBJ_DATA_0 1

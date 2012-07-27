@@ -762,7 +762,6 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.cst.cmd[CST_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_CNTL_X);
    rmesa->hw.cst.cmd[CST_CMD_1] = cmdpkt(rmesa, R200_EMIT_RB3D_DEPTHXY_OFFSET);
    rmesa->hw.cst.cmd[CST_CMD_2] = cmdpkt(rmesa, R200_EMIT_RE_AUX_SCISSOR_CNTL);
-   rmesa->hw.cst.cmd[CST_CMD_3] = cmdpkt(rmesa, R200_EMIT_RE_SCISSOR_TL_0);
    rmesa->hw.cst.cmd[CST_CMD_4] = cmdpkt(rmesa, R200_EMIT_SE_VAP_CNTL_STATUS);
    rmesa->hw.cst.cmd[CST_CMD_5] = cmdpkt(rmesa, R200_EMIT_RE_POINTSIZE);
    rmesa->hw.cst.cmd[CST_CMD_6] = cmdpkt(rmesa, R200_EMIT_TCL_INPUT_VTX_VECTOR_ADDR_0);
@@ -815,7 +814,6 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.prf.cmd[PRF_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TRI_PERF_CNTL);
    rmesa->hw.spr.cmd[SPR_CMD_0] = cmdpkt(rmesa, R200_EMIT_TCL_POINT_SPRITE_CNTL);
 
-   rmesa->hw.sci.cmd[SCI_CMD_0] = CP_PACKET0(R200_RE_AUX_SCISSOR_CNTL, 0);
    rmesa->hw.sci.cmd[SCI_CMD_1] = CP_PACKET0(R200_RE_TOP_LEFT, 0);
    rmesa->hw.sci.cmd[SCI_CMD_2] = CP_PACKET0(R200_RE_WIDTH_HEIGHT, 0);
 
@@ -1026,8 +1024,6 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.cst.cmd[CST_PP_CNTL_X] = 0;
    rmesa->hw.cst.cmd[CST_RB3D_DEPTHXY_OFFSET] = 0;
    rmesa->hw.cst.cmd[CST_RE_AUX_SCISSOR_CNTL] = 0x0;
-   rmesa->hw.cst.cmd[CST_RE_SCISSOR_TL_0] = 0;
-   rmesa->hw.cst.cmd[CST_RE_SCISSOR_BR_0] = 0;
    rmesa->hw.cst.cmd[CST_SE_VAP_CNTL_STATUS] =
 #ifdef MESA_BIG_ENDIAN
 						R200_VC_32BIT_SWAP;
