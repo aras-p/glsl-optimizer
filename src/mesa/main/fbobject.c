@@ -2362,11 +2362,10 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       }
       else {
          assert(att->Type == GL_NONE);
-         if (_mesa_is_desktop_gl(ctx)) {
+         if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
             *params = 0;
          } else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetFramebufferAttachmentParameterivEXT(pname)");
+            goto invalid_pname_enum;
          }
       }
       return;
@@ -2379,8 +2378,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
-	 _mesa_error(ctx, GL_INVALID_ENUM,
-		     "glGetFramebufferAttachmentParameterivEXT(pname)");
+         goto invalid_pname_enum;
       }
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE_EXT:
@@ -2397,12 +2395,16 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
-	 _mesa_error(ctx, GL_INVALID_ENUM,
-		     "glGetFramebufferAttachmentParameterivEXT(pname)");
+         goto invalid_pname_enum;
       }
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET_EXT:
-      if (att->Type == GL_TEXTURE) {
+      if (ctx->API == API_OPENGLES) {
+         goto invalid_pname_enum;
+      } else if (att->Type == GL_NONE) {
+         _mesa_error(ctx, err,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      } else if (att->Type == GL_TEXTURE) {
          if (att->Texture && att->Texture->Target == GL_TEXTURE_3D) {
             *params = att->Zoffset;
          }
@@ -2410,19 +2412,14 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
             *params = 0;
          }
       }
-      else if (att->Type == GL_NONE) {
-         _mesa_error(ctx, err,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
-      }
       else {
-	 _mesa_error(ctx, GL_INVALID_ENUM,
-		     "glGetFramebufferAttachmentParameterivEXT(pname)");
+         goto invalid_pname_enum;
       }
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING:
-      if (!ctx->Extensions.ARB_framebuffer_object) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      if ((!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_framebuffer_object)
+          && !_mesa_is_gles3(ctx)) {
+         goto invalid_pname_enum;
       }
       else if (att->Type == GL_NONE) {
          _mesa_error(ctx, err,
@@ -2440,10 +2437,10 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       }
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE:
-      if (!ctx->Extensions.ARB_framebuffer_object) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
-         return;
+      if ((ctx->API != API_OPENGL || !ctx->Extensions.ARB_framebuffer_object)
+          && ctx->API != API_OPENGL_CORE
+          && !_mesa_is_gles3(ctx)) {
+         goto invalid_pname_enum;
       }
       else if (att->Type == GL_NONE) {
          _mesa_error(ctx, err,
@@ -2475,9 +2472,9 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
    case GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE:
    case GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE:
    case GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE:
-      if (!ctx->Extensions.ARB_framebuffer_object) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      if ((!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_framebuffer_object)
+          && !_mesa_is_gles3(ctx)) {
+         goto invalid_pname_enum;
       }
       else if (att->Type == GL_NONE) {
          _mesa_error(ctx, err,
@@ -2505,10 +2502,15 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       }
       return;
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glGetFramebufferAttachmentParameterivEXT(pname)");
-      return;
+      goto invalid_pname_enum;
    }
+
+   return;
+
+invalid_pname_enum:
+   _mesa_error(ctx, GL_INVALID_ENUM,
+               "glGetFramebufferAttachmentParameteriv(pname)");
+   return;
 }
 
 

@@ -2194,21 +2194,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="pname">
-		<value name="GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_OES" category="OES_framebuffer_object"/>
-		<value name="GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_OES" category="OES_framebuffer_object"/>
-		<value name="GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL_OES" category="OES_framebuffer_object"/>
-		<value name="GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE_OES" category="OES_framebuffer_object"/>
-
-		<value name="GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE" category="GLES2.0"/>
-		<value name="GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME" category="GLES2.0"/>
-		<value name="GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL" category="GLES2.0"/>
-		<value name="GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE" category="GLES2.0"/>
-		<value name="GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET_OES" category="OES_texture_3D"/>
-
-		<desc name="params" vector_size="1" convert="false"/>
-	</desc>
 </template>
 
 <template name="GetRenderbufferParameter" direction="get">
