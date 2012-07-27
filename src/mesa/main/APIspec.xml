@@ -923,16 +923,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLvoid **" size="dynamic"/>
 	</proto>
-
-	<desc name="pname">
-		<value name="GL_VERTEX_ARRAY_POINTER"/>
-		<value name="GL_NORMAL_ARRAY_POINTER"/>
-		<value name="GL_COLOR_ARRAY_POINTER"/>
-		<value name="GL_TEXTURE_COORD_ARRAY_POINTER"/>
-		<value name="GL_MATRIX_INDEX_ARRAY_POINTER_OES" category="OES_matrix_palette"/>
-		<value name="GL_WEIGHT_ARRAY_POINTER_OES" category="OES_matrix_palette"/>
-		<value name="GL_POINT_SIZE_ARRAY_POINTER_OES" category="OES_point_size_array"/>
-	</desc>
 </template>
 
 <template name="Normal">
