@@ -2127,6 +2127,24 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
+   /* OpenGL ES 1.x and OpenGL ES 2.0 impose additional restrictions on the
+    * internalFormat.
+    */
+   if (_mesa_is_gles(ctx) && !_mesa_is_gles3(ctx)) {
+      switch (internalFormat) {
+      case GL_ALPHA:
+      case GL_RGB:
+      case GL_RGBA:
+      case GL_LUMINANCE:
+      case GL_LUMINANCE_ALPHA:
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glCopyTexImage%dD(internalFormat)", dimensions);
+         return GL_TRUE;
+      }
+   }
+
    baseFormat = _mesa_base_tex_format(ctx, internalFormat);
    if (baseFormat < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,

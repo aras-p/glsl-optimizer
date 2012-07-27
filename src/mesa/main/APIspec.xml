@@ -1418,14 +1418,6 @@
 		<param name="height" type="GLsizei"/>
 		<param name="border" type="GLint"/>
 	</proto>
-
-	<desc name="internalFormat" error="GL_INVALID_VALUE">
-		<value name="GL_ALPHA"/>
-		<value name="GL_RGB"/>
-		<value name="GL_RGBA"/>
-		<value name="GL_LUMINANCE"/>
-		<value name="GL_LUMINANCE_ALPHA"/>
-	</desc>
 </template>
 
 <template name="CopyTexSubImage2D">
