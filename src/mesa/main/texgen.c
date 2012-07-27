@@ -48,8 +48,14 @@
  * Return texgen state for given coordinate
  */
 static struct gl_texgen *
-get_texgen(struct gl_texture_unit *texUnit, GLenum coord)
+get_texgen(struct gl_context *ctx, struct gl_texture_unit *texUnit,
+           GLenum coord)
 {
+   if (ctx->API == API_OPENGLES) {
+      return (coord == GL_TEXTURE_GEN_STR_OES)
+         ? &texUnit->GenS : NULL;
+   }
+
    switch (coord) {
    case GL_S:
       return &texUnit->GenS;
@@ -87,7 +93,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 
    texUnit = _mesa_get_current_tex_unit(ctx);
 
-   texgen = get_texgen(texUnit, coord);
+   texgen = get_texgen(ctx, texUnit, coord);
    if (!texgen) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glTexGen(coord)");
       return;
@@ -126,6 +132,12 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
             _mesa_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
             return;
          }
+         if (ctx->API != API_OPENGL
+             && (bit & (TEXGEN_REFLECTION_MAP_NV | TEXGEN_NORMAL_MAP_NV)) == 0) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
+            return;
+         }
+
          FLUSH_VERTICES(ctx, _NEW_TEXTURE);
          texgen->Mode = mode;
          texgen->_ModeBit = bit;
@@ -134,6 +146,10 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 
    case GL_OBJECT_PLANE:
       {
+         if (ctx->API != API_OPENGL) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
+            return;
+         }
          if (TEST_EQ_4V(texgen->ObjectPlane, params))
             return;
          FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -144,6 +160,12 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
    case GL_EYE_PLANE:
       {
          GLfloat tmp[4];
+
+         if (ctx->API != API_OPENGL) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
+            return;
+         }
+
          /* Transform plane equation by the inverse modelview matrix */
          if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top)) {
             _math_matrix_analyse(ctx->ModelviewMatrixStack.Top);
@@ -206,7 +228,11 @@ _es_GetTexGenfv(GLenum coord, GLenum pname, GLfloat *params)
 void GLAPIENTRY
 _es_TexGenf(GLenum coord, GLenum pname, GLfloat param)
 {
-   ASSERT(coord == GL_TEXTURE_GEN_STR_OES);
+   if (coord != GL_TEXTURE_GEN_STR_OES) {
+      GET_CURRENT_CONTEXT(ctx);
+      _mesa_error( ctx, GL_INVALID_ENUM, "glTexGen[fx](pname)" );
+      return;
+   }
    /* set S, T, and R at the same time */
    _mesa_TexGenf(GL_S, pname, param);
    _mesa_TexGenf(GL_T, pname, param);
@@ -217,7 +243,11 @@ _es_TexGenf(GLenum coord, GLenum pname, GLfloat param)
 void GLAPIENTRY
 _es_TexGenfv(GLenum coord, GLenum pname, const GLfloat *params)
 {
-   ASSERT(coord == GL_TEXTURE_GEN_STR_OES);
+   if (coord != GL_TEXTURE_GEN_STR_OES) {
+      GET_CURRENT_CONTEXT(ctx);
+      _mesa_error( ctx, GL_INVALID_ENUM, "glTexGen[fx]v(pname)" );
+      return;
+   }
    /* set S, T, and R at the same time */
    _mesa_TexGenfv(GL_S, pname, params);
    _mesa_TexGenfv(GL_T, pname, params);
@@ -279,7 +309,7 @@ _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 
    texUnit = _mesa_get_current_tex_unit(ctx);
 
-   texgen = get_texgen(texUnit, coord);
+   texgen = get_texgen(ctx, texUnit, coord);
    if (!texgen) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexGendv(coord)");
       return;
@@ -317,7 +347,7 @@ _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 
    texUnit = _mesa_get_current_tex_unit(ctx);
 
-   texgen = get_texgen(texUnit, coord);
+   texgen = get_texgen(ctx, texUnit, coord);
    if (!texgen) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexGenfv(coord)");
       return;
@@ -355,7 +385,7 @@ _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 
    texUnit = _mesa_get_current_tex_unit(ctx);
 
-   texgen = get_texgen(texUnit, coord);
+   texgen = get_texgen(ctx, texUnit, coord);
    if (!texgen) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexGeniv(coord)");
       return;

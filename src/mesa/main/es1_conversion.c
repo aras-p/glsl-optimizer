@@ -1054,131 +1054,25 @@ _es_TexEnvxv(GLenum target, GLenum pname, const GLfixed *params)
 void GL_APIENTRY
 _check_TexGeniOES(GLenum coord, GLenum pname, GLint param)
 {
-   switch(coord) {
-   case GL_TEXTURE_GEN_STR_OES:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glTexGeniOES(coord=0x%x)", coord);
-      return;
-   }
-   switch(pname) {
-   case GL_TEXTURE_GEN_MODE:
-      if (param != GL_NORMAL_MAP && param != GL_REFLECTION_MAP) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexGeniOES(pname=0x%x)", pname);
-         return;
-      }
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glTexGeniOES(pname=0x%x)", pname);
-      return;
-   }
-
    _es_TexGenf(coord, pname, (GLfloat) param);
 }
 
 void GL_APIENTRY
 _check_TexGenivOES(GLenum coord, GLenum pname, const GLint *params)
 {
-   unsigned int i;
-   unsigned int n_params = 1;
-   GLfloat converted_params[1];
-
-   switch(coord) {
-   case GL_TEXTURE_GEN_STR_OES:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glTexGenivOES(coord=0x%x)", coord);
-      return;
-   }
-   switch(pname) {
-   case GL_TEXTURE_GEN_MODE:
-      if (params[0] != GL_NORMAL_MAP && params[0] != GL_REFLECTION_MAP) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexGenivOES(pname=0x%x)", pname);
-         return;
-      }
-      n_params = 1;
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glTexGenivOES(pname=0x%x)", pname);
-      return;
-   }
-
-   for (i = 0; i < n_params; i++) {
-      converted_params[i] = (GLfloat) params[i];
-   }
-
-   _es_TexGenfv(coord, pname, converted_params);
+   _es_TexGenf(coord, pname, (GLfloat) params[0]);
 }
 
 void GL_APIENTRY
 _check_TexGenxOES(GLenum coord, GLenum pname, GLfixed param)
 {
-   switch(coord) {
-   case GL_TEXTURE_GEN_STR_OES:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glTexGenxOES(coord=0x%x)", coord);
-      return;
-   }
-   switch(pname) {
-   case GL_TEXTURE_GEN_MODE:
-      if (param != GL_NORMAL_MAP && param != GL_REFLECTION_MAP) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexGenxOES(pname=0x%x)", pname);
-         return;
-      }
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glTexGenxOES(pname=0x%x)", pname);
-      return;
-   }
-
    _es_TexGenf(coord, pname, (GLfloat) param);
 }
 
 void GL_APIENTRY
 _check_TexGenxvOES(GLenum coord, GLenum pname, const GLfixed *params)
 {
-    unsigned int i;
-    unsigned int n_params = 1;
-    GLfloat converted_params[1];
-
-    switch(coord) {
-    case GL_TEXTURE_GEN_STR_OES:
-       break;
-    default:
-       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                   "glTexGenxvOES(coord=0x%x)", coord);
-       return;
-    }
-    switch(pname) {
-    case GL_TEXTURE_GEN_MODE:
-       if (params[0] != GL_NORMAL_MAP && params[0] != GL_REFLECTION_MAP) {
-          _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                      "glTexGenxvOES(pname=0x%x)", pname);
-          return;
-       }
-       n_params = 1;
-       break;
-    default:
-       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                   "glTexGenxvOES(pname=0x%x)", pname);
-       return;
-    }
-
-    for (i = 0; i < n_params; i++) {
-       converted_params[i] = (GLfloat) params[i];
-    }
-
-    _es_TexGenfv(coord, pname, converted_params);
+   _es_TexGenf(coord, pname, (GLfloat) params[0]);
 }
 
 void GL_APIENTRY

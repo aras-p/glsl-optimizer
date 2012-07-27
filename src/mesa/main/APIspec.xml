@@ -342,19 +342,6 @@
 			<param name="param" type="GLtype"/>
 		</vector>
 	</proto>
-
-	<desc name="coord" category="OES_texture_cube_map">
-		<value name="GL_TEXTURE_GEN_STR_OES"/>
-	</desc>
-
-	<desc name="pname" category="OES_texture_cube_map">
-		<value name="GL_TEXTURE_GEN_MODE_OES"/>
-
-		<desc name="param">
-			<value name="GL_NORMAL_MAP_OES"/>
-			<value name="GL_REFLECTION_MAP_OES"/>
-		</desc>
-	</desc>
 </template>
 
 <template name="Clear">
