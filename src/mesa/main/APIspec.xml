@@ -2169,22 +2169,6 @@
 		<param name="texture" type="GLuint"/>
 		<param name="level" type="GLint"/>
 	</proto>
-
-	<desc name="textarget" error="GL_INVALID_OPERATION">
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_POSITIVE_Z_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_X_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_OES" category="OES_texture_cube_map"/>
-	</desc>
 	<!-- According to the base specification, "level" must be 0.  But
 	     extension GL_OES_fbo_render_mipmap lifts that restriction,
 	     so no restriction is placed here. -->

@@ -2137,7 +2137,8 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
          error = GL_FALSE;
          break;
       case GL_TEXTURE_RECTANGLE:
-         error = !ctx->Extensions.NV_texture_rectangle;
+         error = _mesa_is_gles(ctx)
+            || !ctx->Extensions.NV_texture_rectangle;
          break;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
@@ -2148,7 +2149,8 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
          error = !ctx->Extensions.ARB_texture_cube_map;
          break;
       case GL_TEXTURE_2D_ARRAY:
-         error = !ctx->Extensions.EXT_texture_array;
+         error = (_mesa_is_gles(ctx) && ctx->Version < 30)
+            || !ctx->Extensions.EXT_texture_array;
          break;
       default:
          error = GL_TRUE;
