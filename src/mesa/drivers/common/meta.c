@@ -2281,8 +2281,7 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
     * Determine if we can do the glDrawPixels with texture mapping.
     */
    fallback = GL_FALSE;
-   if (ctx->_ImageTransferState ||
-       ctx->Fog.Enabled) {
+   if (ctx->Fog.Enabled) {
       fallback = GL_TRUE;
    }
 
@@ -2317,6 +2316,7 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
          texIntFormat = GL_ALPHA;
          metaExtraSave = (MESA_META_COLOR_MASK |
                           MESA_META_DEPTH_TEST |
+                          MESA_META_PIXEL_TRANSFER |
                           MESA_META_SHADER |
                           MESA_META_STENCIL_TEST);
       }
