@@ -398,63 +398,13 @@ _es_GetTexEnvxv(GLenum target, GLenum pname, GLfixed *params)
 void GL_APIENTRY
 _check_GetTexGenivOES(GLenum coord, GLenum pname, GLint *params)
 {
-   unsigned int i;
-   unsigned int n_params = 1;
-   GLfloat converted_params[1];
-
-   switch(coord) {
-   case GL_TEXTURE_GEN_STR_OES:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glGetTexGenivOES(coord=0x%x)", coord);
-      return;
-   }
-   switch(pname) {
-   case GL_TEXTURE_GEN_MODE:
-      n_params = 1;
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glGetTexGenivOES(pname=0x%x)", pname);
-      return;
-   }
-
-   _es_GetTexGenfv(coord, pname, converted_params);
-   for (i = 0; i < n_params; i++) {
-      params[i] = (GLfloat) converted_params[i];
-   }
+   _mesa_GetTexGeniv(coord, pname, params);
 }
 
 void GL_APIENTRY
 _check_GetTexGenxvOES(GLenum coord, GLenum pname, GLfixed *params)
 {
-   unsigned int i;
-   unsigned int n_params = 1;
-   GLfloat converted_params[1];
-
-   switch(coord) {
-   case GL_TEXTURE_GEN_STR_OES:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glGetTexGenxvOES(coord=0x%x)", coord);
-      return;
-   }
-   switch(pname) {
-   case GL_TEXTURE_GEN_MODE:
-      n_params = 1;
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glGetTexGenxvOES(pname=0x%x)", pname);
-      return;
-   }
-
-   _es_GetTexGenfv(coord, pname, converted_params);
-   for (i = 0; i < n_params; i++) {
-      params[i] = (GLfloat) converted_params[i];
-   }
+   _mesa_GetTexGeniv(coord, pname, (GLint *) params);
 }
 
 void GL_APIENTRY

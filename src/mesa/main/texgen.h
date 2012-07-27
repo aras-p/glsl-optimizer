@@ -48,6 +48,9 @@ _mesa_TexGeni( GLenum coord, GLenum pname, GLint param );
 extern void GLAPIENTRY
 _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params );
 
+extern void GLAPIENTRY
+_mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params );
+
 extern void
 _mesa_init_texgen_dispatch(struct _glapi_table *disp);
 

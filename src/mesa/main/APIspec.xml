@@ -672,14 +672,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="coord">
-		<value name="GL_TEXTURE_GEN_STR_OES"/>
-	</desc>
-	<desc name="pname">
-		<value name="GL_TEXTURE_GEN_MODE_OES"/>
-		<desc name="params" vector_size="1" convert="false"/>
-	</desc>
 </template>
 
 <template name="GetTexParameter" direction="get">
