@@ -153,9 +153,9 @@ static unsigned
 translate_prim(const struct gl_context *ctx, unsigned prim)
 {
    /* GL prims should match Gallium prims, spot-check a few */
-   assert(GL_POINTS == PIPE_PRIM_POINTS);
-   assert(GL_QUADS == PIPE_PRIM_QUADS);
-   assert(GL_TRIANGLE_STRIP_ADJACENCY == PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY);
+   STATIC_ASSERT(GL_POINTS == PIPE_PRIM_POINTS);
+   STATIC_ASSERT(GL_QUADS == PIPE_PRIM_QUADS);
+   STATIC_ASSERT(GL_TRIANGLE_STRIP_ADJACENCY == PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY);
 
    /* Avoid quadstrips if it's easy to do so:
     * Note: it's important to do the correct trimming if we change the

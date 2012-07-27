@@ -47,7 +47,7 @@ static void update_clip( struct st_context *st )
    const struct gl_context *ctx = st->ctx;
    bool use_eye = FALSE;
 
-   assert(sizeof(clip.ucp) <= sizeof(ctx->Transform._ClipUserPlane));
+   STATIC_ASSERT(sizeof(clip.ucp) <= sizeof(ctx->Transform._ClipUserPlane));
 
    /* if we have a vertex shader that writes clip vertex we need to pass
       the pre-projection transformed coordinates into the driver. */
