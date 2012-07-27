@@ -9,7 +9,7 @@
 
 #include "AMDILAlgorithms.tpp"
 #include "AMDILDevices.h"
-#include "AMDILInstrInfo.h"
+#include "AMDGPUInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"

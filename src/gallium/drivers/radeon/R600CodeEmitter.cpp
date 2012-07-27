@@ -19,7 +19,7 @@
 #include "AMDGPU.h"
 #include "AMDGPUCodeEmitter.h"
 #include "AMDGPUUtil.h"
-#include "AMDILInstrInfo.h"
+#include "AMDGPUInstrInfo.h"
 #include "AMDILUtilityFunctions.h"
 #include "R600InstrInfo.h"
 #include "R600RegisterInfo.h"

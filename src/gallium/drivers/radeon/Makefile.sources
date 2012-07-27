@@ -22,7 +22,6 @@ CPP_SOURCES := \
 	AMDILDeviceInfo.cpp		\
 	AMDILEvergreenDevice.cpp	\
 	AMDILFrameLowering.cpp		\
-	AMDILInstrInfo.cpp		\
 	AMDILIntrinsicInfo.cpp		\
 	AMDILISelDAGToDAG.cpp		\
 	AMDILISelLowering.cpp		\

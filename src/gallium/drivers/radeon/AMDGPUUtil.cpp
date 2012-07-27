@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUUtil.h"
+#include "AMDGPUInstrInfo.h"
 #include "AMDGPURegisterInfo.h"
 #include "AMDIL.h"
 #include "llvm/CodeGen/MachineFunction.h"

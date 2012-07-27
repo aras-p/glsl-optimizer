@@ -104,9 +104,6 @@ extern Target TheAMDILTarget;
 extern Target TheAMDGPUTarget;
 } // end namespace llvm;
 
-#define GET_INSTRINFO_ENUM
-#include "AMDGPUGenInstrInfo.inc"
-
 /// Include device information enumerations
 #include "AMDILDeviceInfo.h"
 

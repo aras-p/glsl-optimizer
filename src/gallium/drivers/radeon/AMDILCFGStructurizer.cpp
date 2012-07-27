@@ -10,8 +10,8 @@
 #define DEBUGME 0
 #define DEBUG_TYPE "structcfg"
 
+#include "AMDGPUInstrInfo.h"
 #include "AMDIL.h"
-#include "AMDILInstrInfo.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1871,8 +1871,8 @@ typename CFGStructurizer<PassT>::BlockT *
 CFGStructurizer<PassT>::addLoopEndbranchBlock(LoopT *loopRep,
                                               BlockTSmallerVector &exitingBlks,
                                               BlockTSmallerVector &exitBlks) {
-  const AMDILInstrInfo *tii =
-             static_cast<const AMDILInstrInfo *>(passRep->getTargetInstrInfo());
+  const AMDGPUInstrInfo *tii =
+             static_cast<const AMDGPUInstrInfo *>(passRep->getTargetInstrInfo());
   const TargetRegisterClass * I32RC = TRI->getCFGStructurizerRegClass(MVT::i32);
 
   RegiT endBranchReg = static_cast<int>
@@ -2892,7 +2892,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   // instruction.  Such move instruction "belong to" the loop backward-edge.
   //
   static MachineInstr *getLoopendBlockBranchInstr(MachineBasicBlock *blk) {
-    const AMDILInstrInfo * TII = static_cast<const AMDILInstrInfo *>(
+    const AMDGPUInstrInfo * TII = static_cast<const AMDGPUInstrInfo *>(
                                   blk->getParent()->getTarget().getInstrInfo());
 
     for (MachineBasicBlock::reverse_iterator iter = blk->rbegin(),
@@ -3083,8 +3083,8 @@ struct CFGStructTraits<AMDILCFGStructurizer>
                                       AMDILCFGStructurizer *passRep,
                                       RegiT regNum, int regVal) {
     MachineInstr *oldInstr = &(*instrPos);
-    const AMDILInstrInfo *tii =
-             static_cast<const AMDILInstrInfo *>(passRep->getTargetInstrInfo());
+    const AMDGPUInstrInfo *tii =
+             static_cast<const AMDGPUInstrInfo *>(passRep->getTargetInstrInfo());
     MachineBasicBlock *blk = oldInstr->getParent();
     MachineInstr *newInstr = tii->getMovImmInstr(blk->getParent(), regNum,
                                                  regVal);
@@ -3096,8 +3096,8 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   static void insertAssignInstrBefore(MachineBasicBlock *blk,
                                       AMDILCFGStructurizer *passRep,
                                       RegiT regNum, int regVal) {
-    const AMDILInstrInfo *tii =
-             static_cast<const AMDILInstrInfo *>(passRep->getTargetInstrInfo());
+    const AMDGPUInstrInfo *tii =
+             static_cast<const AMDGPUInstrInfo *>(passRep->getTargetInstrInfo());
 
     MachineInstr *newInstr = tii->getMovImmInstr(blk->getParent(), regNum,
                                                  regVal);
@@ -3116,8 +3116,8 @@ struct CFGStructTraits<AMDILCFGStructurizer>
                                        AMDILCFGStructurizer *passRep,
                                        RegiT dstReg, RegiT src1Reg,
                                        RegiT src2Reg) {
-    const AMDILInstrInfo *tii =
-             static_cast<const AMDILInstrInfo *>(passRep->getTargetInstrInfo());
+    const AMDGPUInstrInfo *tii =
+             static_cast<const AMDGPUInstrInfo *>(passRep->getTargetInstrInfo());
     MachineInstr *newInstr =
       blk->getParent()->CreateMachineInstr(tii->get(tii->getIEQOpcode()), DebugLoc());
 

@@ -15,7 +15,7 @@
 #define R600INSTRUCTIONINFO_H_
 
 #include "AMDIL.h"
-#include "AMDILInstrInfo.h"
+#include "AMDGPUInstrInfo.h"
 #include "R600RegisterInfo.h"
 
 #include <map>
