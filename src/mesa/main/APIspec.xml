@@ -2119,28 +2119,6 @@
 		<param name="width" type="GLsizei"/>
 		<param name="height" type="GLsizei"/>
 	</proto>
-
-	<desc name="internalFormat">
-		<value name="GL_DEPTH_COMPONENT16_OES" category="OES_framebuffer_object"/>
-		<value name="GL_RGBA4_OES" category="OES_framebuffer_object"/>
-		<value name="GL_RGB5_A1_OES" category="OES_framebuffer_object"/>
-		<value name="GL_RGB565_OES" category="OES_framebuffer_object"/>
-		<value name="GL_STENCIL_INDEX8_OES" category="OES_stencil8"/>
-
-		<value name="GL_DEPTH_COMPONENT16" category="GLES2.0"/>
-		<value name="GL_RGBA4" category="GLES2.0"/>
-		<value name="GL_RGB5_A1" category="GLES2.0"/>
-		<value name="GL_RGB565" category="GLES2.0"/>
-		<value name="GL_STENCIL_INDEX8" category="GLES2.0"/>
-
-		<value name="GL_DEPTH_COMPONENT24_OES" category="OES_depth24"/>
-		<value name="GL_DEPTH_COMPONENT32_OES" category="OES_depth32"/>
-		<value name="GL_RGB8_OES" category="OES_rgb8_rgba8"/>
-		<value name="GL_RGBA8_OES" category="OES_rgb8_rgba8"/>
-		<value name="GL_STENCIL_INDEX1_OES" category="OES_stencil1"/>
-		<value name="GL_STENCIL_INDEX4_OES" category="OES_stencil4"/>
-		<value name="GL_DEPTH24_STENCIL8_OES" category="OES_packed_depth_stencil"/>
-	</desc>
 </template>
 
 <template name="FramebufferRenderbuffer">

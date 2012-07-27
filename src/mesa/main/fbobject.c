@@ -1075,13 +1075,15 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_ALPHA8:
    case GL_ALPHA12:
    case GL_ALPHA16:
-      return ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
+      return ctx->API == API_OPENGL && ctx->Extensions.ARB_framebuffer_object
+         ? GL_ALPHA : 0;
    case GL_LUMINANCE:
    case GL_LUMINANCE4:
    case GL_LUMINANCE8:
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
-      return ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE : 0;
+      return ctx->API == API_OPENGL && ctx->Extensions.ARB_framebuffer_object
+         ? GL_LUMINANCE : 0;
    case GL_LUMINANCE_ALPHA:
    case GL_LUMINANCE4_ALPHA4:
    case GL_LUMINANCE6_ALPHA2:
@@ -1089,139 +1091,190 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_LUMINANCE12_ALPHA4:
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
-      return ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE_ALPHA : 0;
+      return ctx->API == API_OPENGL && ctx->Extensions.ARB_framebuffer_object
+         ? GL_LUMINANCE_ALPHA : 0;
    case GL_INTENSITY:
    case GL_INTENSITY4:
    case GL_INTENSITY8:
    case GL_INTENSITY12:
    case GL_INTENSITY16:
-      return ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
+      return ctx->API == API_OPENGL && ctx->Extensions.ARB_framebuffer_object
+         ? GL_INTENSITY : 0;
+   case GL_RGB8:
+      return GL_RGB;
    case GL_RGB:
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
-   case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
+      return _mesa_is_desktop_gl(ctx) ? GL_RGB : 0;
    case GL_SRGB8_EXT:
-      return GL_RGB;
-   case GL_RGBA:
-   case GL_RGBA2:
+      return _mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx) ? GL_RGB : 0;
    case GL_RGBA4:
    case GL_RGB5_A1:
    case GL_RGBA8:
-   case GL_RGB10_A2:
+      return GL_RGBA;
+   case GL_RGBA:
+   case GL_RGBA2:
    case GL_RGBA12:
    case GL_RGBA16:
+      return _mesa_is_desktop_gl(ctx) ? GL_RGBA : 0;
+   case GL_RGB10_A2:
    case GL_SRGB8_ALPHA8_EXT:
-      return GL_RGBA;
+      return _mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx) ? GL_RGBA : 0;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
    case GL_STENCIL_INDEX4_EXT:
-   case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
+      /* There are extensions for GL_STENCIL_INDEX1 and GL_STENCIL_INDEX4 in
+       * OpenGL ES, but Mesa does not currently support them.
+       */
+      return _mesa_is_desktop_gl(ctx) ? GL_STENCIL_INDEX : 0;
+   case GL_STENCIL_INDEX8_EXT:
       return GL_STENCIL_INDEX;
    case GL_DEPTH_COMPONENT:
+   case GL_DEPTH_COMPONENT32:
+      return _mesa_is_desktop_gl(ctx) ? GL_DEPTH_COMPONENT : 0;
    case GL_DEPTH_COMPONENT16:
    case GL_DEPTH_COMPONENT24:
-   case GL_DEPTH_COMPONENT32:
       return GL_DEPTH_COMPONENT;
    case GL_DEPTH_STENCIL_EXT:
+      return _mesa_is_desktop_gl(ctx)
+         && ctx->Extensions.EXT_packed_depth_stencil
+         ? GL_DEPTH_STENCIL_EXT : 0;
    case GL_DEPTH24_STENCIL8_EXT:
-      if (ctx->Extensions.EXT_packed_depth_stencil)
-         return GL_DEPTH_STENCIL_EXT;
-      else
-         return 0;
+      return ctx->Extensions.EXT_packed_depth_stencil
+         ? GL_DEPTH_STENCIL_EXT : 0;
    case GL_DEPTH_COMPONENT32F:
-      if (ctx->Extensions.ARB_depth_buffer_float)
-         return GL_DEPTH_COMPONENT;
-      else
-         return 0;
+      return ctx->Version >= 30
+         || (ctx->API == API_OPENGL && ctx->Extensions.ARB_depth_buffer_float)
+         ? GL_DEPTH_COMPONENT : 0;
    case GL_DEPTH32F_STENCIL8:
-      if (ctx->Extensions.ARB_depth_buffer_float)
-         return GL_DEPTH_STENCIL;
-      else
-         return 0;
+      return ctx->Version >= 30
+         || (ctx->API == API_OPENGL && ctx->Extensions.ARB_depth_buffer_float)
+         ? GL_DEPTH_STENCIL : 0;
    case GL_RED:
-   case GL_R8:
    case GL_R16:
-      return ctx->Extensions.ARB_texture_rg ? GL_RED : 0;
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_texture_rg
+         ? GL_RED : 0;
+   case GL_R8:
+      return ctx->API != API_OPENGLES && ctx->Extensions.ARB_texture_rg
+         ? GL_RED : 0;
    case GL_RG:
-   case GL_RG8:
    case GL_RG16:
-      return ctx->Extensions.ARB_texture_rg ? GL_RG : 0;
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_texture_rg
+         ? GL_RG : 0;
+   case GL_RG8:
+      return ctx->API != API_OPENGLES && ctx->Extensions.ARB_texture_rg
+         ? GL_RG : 0;
    /* signed normalized texture formats */
-   case GL_RED_SNORM:
    case GL_R8_SNORM:
+      return ctx->Version >= 30
+         || (ctx->API == API_OPENGL && ctx->Extensions.EXT_texture_snorm)
+         ? GL_RED : 0;
+   case GL_RED_SNORM:
    case GL_R16_SNORM:
-      return ctx->Extensions.EXT_texture_snorm ? GL_RED : 0;
-   case GL_RG_SNORM:
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_snorm
+         ? GL_RED : 0;
    case GL_RG8_SNORM:
+      return ctx->Version >= 30
+         || (ctx->API == API_OPENGL && ctx->Extensions.EXT_texture_snorm)
+         ? GL_RG : 0;
+   case GL_RG_SNORM:
    case GL_RG16_SNORM:
-      return ctx->Extensions.EXT_texture_snorm ? GL_RG : 0;
-   case GL_RGB_SNORM:
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_snorm
+         ? GL_RG : 0;
    case GL_RGB8_SNORM:
+      return ctx->Version >= 30
+         || (ctx->API == API_OPENGL && ctx->Extensions.EXT_texture_snorm)
+         ? GL_RGB : 0;
+   case GL_RGB_SNORM:
    case GL_RGB16_SNORM:
-      return ctx->Extensions.EXT_texture_snorm ? GL_RGB : 0;
-   case GL_RGBA_SNORM:
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_snorm
+         ? GL_RGB : 0;
    case GL_RGBA8_SNORM:
+      return ctx->Version >= 30
+         || (ctx->API == API_OPENGL && ctx->Extensions.EXT_texture_snorm)
+         ? GL_RGBA : 0;
+   case GL_RGBA_SNORM:
    case GL_RGBA16_SNORM:
-      return ctx->Extensions.EXT_texture_snorm ? GL_RGBA : 0;
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_snorm
+         ? GL_RGBA : 0;
    case GL_ALPHA_SNORM:
    case GL_ALPHA8_SNORM:
    case GL_ALPHA16_SNORM:
-      return ctx->Extensions.EXT_texture_snorm &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.EXT_texture_snorm &&
              ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
    case GL_LUMINANCE_SNORM:
    case GL_LUMINANCE8_SNORM:
    case GL_LUMINANCE16_SNORM:
-      return ctx->Extensions.EXT_texture_snorm &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.EXT_texture_snorm &&
              ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE : 0;
    case GL_LUMINANCE_ALPHA_SNORM:
    case GL_LUMINANCE8_ALPHA8_SNORM:
    case GL_LUMINANCE16_ALPHA16_SNORM:
-      return ctx->Extensions.EXT_texture_snorm &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.EXT_texture_snorm &&
              ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE_ALPHA : 0;
    case GL_INTENSITY_SNORM:
    case GL_INTENSITY8_SNORM:
    case GL_INTENSITY16_SNORM:
-      return ctx->Extensions.EXT_texture_snorm &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.EXT_texture_snorm &&
              ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
    case GL_R16F:
    case GL_R32F:
-      return ctx->Extensions.ARB_texture_rg &&
-             ctx->Extensions.ARB_texture_float ? GL_RED : 0;
+      return ctx->Version >= 30
+         || (ctx->API == API_OPENGL &&
+             ctx->Extensions.ARB_texture_rg &&
+             ctx->Extensions.ARB_texture_float) ? GL_RED : 0;
    case GL_RG16F:
    case GL_RG32F:
-      return ctx->Extensions.ARB_texture_rg &&
-             ctx->Extensions.ARB_texture_float ? GL_RG : 0;
+      return ctx->Version >= 30
+         || (ctx->API == API_OPENGL &&
+             ctx->Extensions.ARB_texture_rg &&
+             ctx->Extensions.ARB_texture_float) ? GL_RG : 0;
    case GL_RGB16F:
    case GL_RGB32F:
-      return ctx->Extensions.ARB_texture_float ? GL_RGB : 0;
+      return (_mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_texture_float)
+         || _mesa_is_gles3(ctx)
+         ? GL_RGB : 0;
    case GL_RGBA16F:
    case GL_RGBA32F:
-      return ctx->Extensions.ARB_texture_float ? GL_RGBA : 0;
+      return (_mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_texture_float)
+         || _mesa_is_gles3(ctx)
+         ? GL_RGBA : 0;
    case GL_ALPHA16F_ARB:
    case GL_ALPHA32F_ARB:
-      return ctx->Extensions.ARB_texture_float &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.ARB_texture_float &&
              ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
    case GL_LUMINANCE16F_ARB:
    case GL_LUMINANCE32F_ARB:
-      return ctx->Extensions.ARB_texture_float &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.ARB_texture_float &&
              ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE : 0;
    case GL_LUMINANCE_ALPHA16F_ARB:
    case GL_LUMINANCE_ALPHA32F_ARB:
-      return ctx->Extensions.ARB_texture_float &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.ARB_texture_float &&
              ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE_ALPHA : 0;
    case GL_INTENSITY16F_ARB:
    case GL_INTENSITY32F_ARB:
-      return ctx->Extensions.ARB_texture_float &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.ARB_texture_float &&
              ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
    case GL_RGB9_E5:
-      return ctx->Extensions.EXT_texture_shared_exponent ? GL_RGB : 0;
+      return (_mesa_is_desktop_gl(ctx)
+              && ctx->Extensions.EXT_texture_shared_exponent)
+         || _mesa_is_gles3(ctx) ? GL_RGB : 0;
    case GL_R11F_G11F_B10F:
-      return ctx->Extensions.EXT_packed_float ? GL_RGB : 0;
+      return (_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_packed_float)
+         || _mesa_is_gles3(ctx) ? GL_RGB : 0;
 
    case GL_RGBA8UI_EXT:
    case GL_RGBA16UI_EXT:
@@ -1229,8 +1282,9 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RGBA8I_EXT:
    case GL_RGBA16I_EXT:
    case GL_RGBA32I_EXT:
-      return ctx->Version >= 30 ||
-             ctx->Extensions.EXT_texture_integer ? GL_RGBA : 0;
+      return ctx->Version >= 30
+         || (_mesa_is_desktop_gl(ctx) &&
+             ctx->Extensions.EXT_texture_integer) ? GL_RGBA : 0;
 
    case GL_RGB8UI_EXT:
    case GL_RGB16UI_EXT:
@@ -1238,8 +1292,9 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RGB8I_EXT:
    case GL_RGB16I_EXT:
    case GL_RGB32I_EXT:
-      return ctx->Version >= 30 ||
-             ctx->Extensions.EXT_texture_integer ? GL_RGB : 0;
+      return ctx->Version >= 30
+         || (_mesa_is_desktop_gl(ctx) &&
+             ctx->Extensions.EXT_texture_integer) ? GL_RGB : 0;
 
    case GL_R8UI:
    case GL_R8I:
@@ -1247,9 +1302,10 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_R16I:
    case GL_R32UI:
    case GL_R32I:
-      return ctx->Version >= 30 ||
-             (ctx->Extensions.ARB_texture_rg &&
-              ctx->Extensions.EXT_texture_integer) ? GL_RED : 0;
+      return ctx->Version >= 30
+         || (_mesa_is_desktop_gl(ctx) &&
+             ctx->Extensions.ARB_texture_rg &&
+             ctx->Extensions.EXT_texture_integer) ? GL_RED : 0;
 
    case GL_RG8UI:
    case GL_RG8I:
@@ -1257,9 +1313,10 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RG16I:
    case GL_RG32UI:
    case GL_RG32I:
-      return ctx->Version >= 30 ||
-             (ctx->Extensions.ARB_texture_rg &&
-              ctx->Extensions.EXT_texture_integer) ? GL_RG : 0;
+      return ctx->Version >= 30
+         || (_mesa_is_desktop_gl(ctx) &&
+             ctx->Extensions.ARB_texture_rg &&
+             ctx->Extensions.EXT_texture_integer) ? GL_RG : 0;
 
    case GL_INTENSITY8I_EXT:
    case GL_INTENSITY8UI_EXT:
@@ -1267,7 +1324,8 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_INTENSITY16UI_EXT:
    case GL_INTENSITY32I_EXT:
    case GL_INTENSITY32UI_EXT:
-      return ctx->Extensions.EXT_texture_integer &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.EXT_texture_integer &&
              ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
 
    case GL_LUMINANCE8I_EXT:
@@ -1276,7 +1334,8 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_LUMINANCE16UI_EXT:
    case GL_LUMINANCE32I_EXT:
    case GL_LUMINANCE32UI_EXT:
-      return ctx->Extensions.EXT_texture_integer &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.EXT_texture_integer &&
              ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE : 0;
 
    case GL_LUMINANCE_ALPHA8I_EXT:
@@ -1285,7 +1344,8 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_LUMINANCE_ALPHA16UI_EXT:
    case GL_LUMINANCE_ALPHA32I_EXT:
    case GL_LUMINANCE_ALPHA32UI_EXT:
-      return ctx->Extensions.EXT_texture_integer &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.EXT_texture_integer &&
              ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE_ALPHA : 0;
 
    case GL_ALPHA8I_EXT:
@@ -1294,14 +1354,18 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_ALPHA16UI_EXT:
    case GL_ALPHA32I_EXT:
    case GL_ALPHA32UI_EXT:
-      return ctx->Extensions.EXT_texture_integer &&
+      return ctx->API == API_OPENGL &&
+             ctx->Extensions.EXT_texture_integer &&
              ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
 
    case GL_RGB10_A2UI:
-      return ctx->Extensions.ARB_texture_rgb10_a2ui ? GL_RGBA : 0;
+      return (_mesa_is_desktop_gl(ctx) &&
+              ctx->Extensions.ARB_texture_rgb10_a2ui)
+         || _mesa_is_gles3(ctx) ? GL_RGBA : 0;
 
    case GL_RGB565:
-      return ctx->Extensions.ARB_ES2_compatibility ? GL_RGB : 0;
+      return _mesa_is_gles(ctx) || ctx->Extensions.ARB_ES2_compatibility
+         ? GL_RGB : 0;
    default:
       return 0;
    }
