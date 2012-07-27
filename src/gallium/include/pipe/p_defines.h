@@ -102,6 +102,7 @@ enum pipe_error {
 #define PIPE_MASK_Z  0x10
 #define PIPE_MASK_S  0x20
 #define PIPE_MASK_ZS 0x30
+#define PIPE_MASK_RGBAZS (PIPE_MASK_RGBA|PIPE_MASK_ZS)
 
 
 /**
