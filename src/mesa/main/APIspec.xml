@@ -1174,22 +1174,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="pname">
-		<value name="GL_TEXTURE_WRAP_S"/>
-		<value name="GL_TEXTURE_WRAP_T"/>
-		<value name="GL_TEXTURE_WRAP_R_OES" category="OES_texture_3D"/>
-		<value name="GL_TEXTURE_MIN_FILTER"/>
-		<value name="GL_TEXTURE_MAG_FILTER"/>
-		<value name="GL_GENERATE_MIPMAP" category="GLES1.1"/>
-
-		<desc name="params" vector_size="1" convert="false"/>
-	</desc>
-
-	<desc name="pname" category="OES_draw_texture">
-		<value name="GL_TEXTURE_CROP_RECT_OES"/>
-		<desc name="params" vector_size="4"/>
-	</desc>
 </template>
 
 <template name="IsEnabled" direction="get">
