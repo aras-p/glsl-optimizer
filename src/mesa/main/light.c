@@ -466,6 +466,8 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
          COPY_4V( ctx->Light.Model.Ambient, params );
          break;
       case GL_LIGHT_MODEL_LOCAL_VIEWER:
+         if (ctx->API != API_OPENGL)
+            goto invalid_pname;
          newbool = (params[0]!=0.0);
 	 if (ctx->Light.Model.LocalViewer == newbool)
 	    return;
@@ -484,6 +486,8 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
             ctx->_TriangleCaps &= ~DD_TRI_LIGHT_TWOSIDE;
          break;
       case GL_LIGHT_MODEL_COLOR_CONTROL:
+         if (ctx->API != API_OPENGL)
+            goto invalid_pname;
          if (params[0] == (GLfloat) GL_SINGLE_COLOR)
 	    newenum = GL_SINGLE_COLOR;
          else if (params[0] == (GLfloat) GL_SEPARATE_SPECULAR_COLOR)
@@ -499,12 +503,17 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
 	 ctx->Light.Model.ColorControl = newenum;
          break;
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glLightModel(pname=0x%x)", pname );
-         break;
+         goto invalid_pname;
    }
 
    if (ctx->Driver.LightModelfv)
       ctx->Driver.LightModelfv( ctx, pname, params );
+
+   return;
+
+invalid_pname:
+   _mesa_error( ctx, GL_INVALID_ENUM, "glLightModel(pname=0x%x)", pname );
+   return;
 }
 
 

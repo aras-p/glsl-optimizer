@@ -508,20 +508,6 @@ _es_GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params)
 void GL_APIENTRY
 _es_LightModelx(GLenum pname, GLfixed param)
 {
-   switch(pname) {
-   case GL_LIGHT_MODEL_TWO_SIDE:
-      if (param != GL_TRUE && param != GL_FALSE) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glLightModelx(pname=0x%x)", pname);
-         return;
-      }
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glLightModelx(pname=0x%x)", pname);
-      return;
-   }
-
    _mesa_LightModelf(pname, (GLfloat) param);
 }
 
@@ -538,11 +524,6 @@ _es_LightModelxv(GLenum pname, const GLfixed *params)
       n_params = 4;
       break;
    case GL_LIGHT_MODEL_TWO_SIDE:
-      if (params[0] != GL_TRUE && params[0] != GL_FALSE) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glLightModelxv(pname=0x%x)", pname);
-         return;
-      }
       convert_params_value = false;
       n_params = 1;
       break;
