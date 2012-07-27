@@ -242,35 +242,7 @@ AMDGPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                     int FrameIndex,
                                     const TargetRegisterClass *RC,
                                     const TargetRegisterInfo *TRI) const {
-  unsigned int Opc = 0;
-  // MachineInstr *curMI = MI;
-  MachineFunction &MF = *(MBB.getParent());
-  MachineFrameInfo &MFI = *MF.getFrameInfo();
-  
-  DebugLoc DL;
-  switch (RC->getID()) {
-  case AMDGPU::GPRF32RegClassID:
-    Opc = AMDGPU::PRIVATESTORE_f32;
-    break;
-  case AMDGPU::GPRI32RegClassID:
-    Opc = AMDGPU::PRIVATESTORE_i32;
-    break;
-  }
-  if (MI != MBB.end()) DL = MI->getDebugLoc();
-  MachineMemOperand *MMO =
-   new MachineMemOperand(
-        MachinePointerInfo::getFixedStack(FrameIndex),
-                          MachineMemOperand::MOLoad,
-                          MFI.getObjectSize(FrameIndex),
-                          MFI.getObjectAlignment(FrameIndex));
-  if (MI != MBB.end()) {
-    DL = MI->getDebugLoc();
-  }
-  BuildMI(MBB, MI, DL, get(Opc))
-    .addReg(SrcReg, getKillRegState(isKill))
-    .addFrameIndex(FrameIndex)
-    .addMemOperand(MMO)
-    .addImm(0);
+  assert(!"Not Implemented");
 }
 
 void
@@ -279,34 +251,9 @@ AMDGPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                      unsigned DestReg, int FrameIndex,
                                      const TargetRegisterClass *RC,
                                      const TargetRegisterInfo *TRI) const {
-  unsigned int Opc = 0;
-  MachineFunction &MF = *(MBB.getParent());
-  MachineFrameInfo &MFI = *MF.getFrameInfo();
-  DebugLoc DL;
-  switch (RC->getID()) {
-  case AMDGPU::GPRF32RegClassID:
-    Opc = AMDGPU::PRIVATELOAD_f32;
-    break;
-  case AMDGPU::GPRI32RegClassID:
-    Opc = AMDGPU::PRIVATELOAD_i32;
-    break;
-  }
-
-  MachineMemOperand *MMO =
-    new MachineMemOperand(
-        MachinePointerInfo::getFixedStack(FrameIndex),
-                          MachineMemOperand::MOLoad,
-                          MFI.getObjectSize(FrameIndex),
-                          MFI.getObjectAlignment(FrameIndex));
-  if (MI != MBB.end()) {
-    DL = MI->getDebugLoc();
-  }
-  BuildMI(MBB, MI, DL, get(Opc))
-    .addReg(DestReg, RegState::Define)
-    .addFrameIndex(FrameIndex)
-    .addMemOperand(MMO)
-    .addImm(0);
+  assert(!"Not Implemented");
 }
+
 MachineInstr *
 AMDGPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                       MachineInstr *MI,

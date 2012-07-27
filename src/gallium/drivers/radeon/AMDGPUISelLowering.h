@@ -43,6 +43,18 @@ protected:
 public:
   AMDGPUTargetLowering(TargetMachine &TM);
 
+  virtual SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
+                             bool isVarArg,
+                             const SmallVectorImpl<ISD::InputArg> &Ins,
+                             DebugLoc DL, SelectionDAG &DAG,
+                             SmallVectorImpl<SDValue> &InVals) const;
+
+  virtual SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
+                              bool isVarArg,
+                              const SmallVectorImpl<ISD::OutputArg> &Outs,
+                              const SmallVectorImpl<SDValue> &OutVals,
+                              DebugLoc DL, SelectionDAG &DAG) const;
+
   virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerIntrinsicIABS(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerIntrinsicLRP(SDValue Op, SelectionDAG &DAG) const;

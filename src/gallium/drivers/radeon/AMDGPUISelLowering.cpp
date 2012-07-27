@@ -35,6 +35,41 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::UREM, MVT::i32, Expand);
 }
 
+//===---------------------------------------------------------------------===//
+// TargetLowering Callbacks
+//===---------------------------------------------------------------------===//
+
+SDValue AMDGPUTargetLowering::LowerFormalArguments(
+                                      SDValue Chain,
+                                      CallingConv::ID CallConv,
+                                      bool isVarArg,
+                                      const SmallVectorImpl<ISD::InputArg> &Ins,
+                                      DebugLoc DL, SelectionDAG &DAG,
+                                      SmallVectorImpl<SDValue> &InVals) const
+{
+  // Lowering of arguments happens in R600LowerKernelParameters, so we can
+  // ignore the arguments here.
+  for (unsigned i = 0, e = Ins.size(); i < e; ++i) {
+    InVals.push_back(SDValue());
+  }
+  return Chain;
+}
+
+SDValue AMDGPUTargetLowering::LowerReturn(
+                                     SDValue Chain,
+                                     CallingConv::ID CallConv,
+                                     bool isVarArg,
+                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                     const SmallVectorImpl<SDValue> &OutVals,
+                                     DebugLoc DL, SelectionDAG &DAG) const
+{
+  return DAG.getNode(AMDILISD::RET_FLAG, DL, MVT::Other, Chain);
+}
+
+//===---------------------------------------------------------------------===//
+// Target specific lowering
+//===---------------------------------------------------------------------===//
+
 SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     const
 {

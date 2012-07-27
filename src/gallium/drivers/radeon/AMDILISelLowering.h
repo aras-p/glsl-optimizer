@@ -90,73 +90,6 @@ namespace llvm
       // we don't want to use a f2d instruction.
       bool ShouldShrinkFPConstant(EVT VT) const;
 
-      /// getFunctionAlignment - Return the Log2 alignment of this
-      /// function.
-      virtual unsigned int
-        getFunctionAlignment(const Function *F) const;
-
-    private:
-      CCAssignFn*
-        CCAssignFnForNode(unsigned int CC) const;
-
-      SDValue LowerCallResult(SDValue Chain,
-          SDValue InFlag,
-          CallingConv::ID CallConv,
-          bool isVarArg,
-          const SmallVectorImpl<ISD::InputArg> &Ins,
-          DebugLoc dl,
-          SelectionDAG &DAG,
-          SmallVectorImpl<SDValue> &InVals) const;
-
-      SDValue LowerMemArgument(SDValue Chain,
-          CallingConv::ID CallConv,
-          const SmallVectorImpl<ISD::InputArg> &ArgInfo,
-          DebugLoc dl, SelectionDAG &DAG,
-          const CCValAssign &VA,  MachineFrameInfo *MFI,
-          unsigned i) const;
-
-      SDValue LowerMemOpCallTo(SDValue Chain, SDValue StackPtr,
-          SDValue Arg,
-          DebugLoc dl, SelectionDAG &DAG,
-          const CCValAssign &VA,
-          ISD::ArgFlagsTy Flags) const;
-
-      virtual SDValue
-        LowerFormalArguments(SDValue Chain,
-            CallingConv::ID CallConv, bool isVarArg,
-            const SmallVectorImpl<ISD::InputArg> &Ins,
-            DebugLoc dl, SelectionDAG &DAG,
-            SmallVectorImpl<SDValue> &InVals) const;
-
-      virtual SDValue
-        LowerCall(SDValue Chain, SDValue Callee,
-            CallingConv::ID CallConv, bool isVarArg, bool doesNotRet,
-            bool &isTailCall,
-            const SmallVectorImpl<ISD::OutputArg> &Outs,
-            const SmallVectorImpl<SDValue> &OutVals,
-            const SmallVectorImpl<ISD::InputArg> &Ins,
-            DebugLoc dl, SelectionDAG &DAG,
-            SmallVectorImpl<SDValue> &InVals) const;
-
-      virtual SDValue
-        LowerReturn(SDValue Chain,
-            CallingConv::ID CallConv, bool isVarArg,
-            const SmallVectorImpl<ISD::OutputArg> &Outs,
-            const SmallVectorImpl<SDValue> &OutVals,
-            DebugLoc dl, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerJumpTable(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
-
-      SDValue
-        LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const;
-
       SDValue
         LowerSREM(SDValue Op, SelectionDAG &DAG) const;
       SDValue
@@ -188,9 +121,6 @@ namespace llvm
 
       EVT
         genIntType(uint32_t size = 32, uint32_t numEle = 1) const;
-
-      SDValue
-        LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
 
       SDValue
         LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;

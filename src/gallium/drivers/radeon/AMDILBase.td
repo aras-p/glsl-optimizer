@@ -76,7 +76,6 @@ def FeatureDumpCode : SubtargetFeature <"DumpCode",
 
 
 include "AMDILRegisterInfo.td"
-include "AMDILCallingConv.td"
 include "AMDILInstrInfo.td"
 
 def AMDILInstrInfo : InstrInfo {}
