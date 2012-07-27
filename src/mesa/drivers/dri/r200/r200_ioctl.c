@@ -57,8 +57,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 static void r200Clear( struct gl_context *ctx, GLbitfield mask )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint flags = 0;
-   GLuint orig_mask = mask;
+   GLuint hwmask, swmask;
+   GLuint hwbits = BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT |
+                   BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL |
+                   BUFFER_BIT_COLOR0;
 
    if ( R200_DEBUG & RADEON_IOCTL ) {
 	   if (rmesa->radeon.sarea)
@@ -69,36 +71,19 @@ static void r200Clear( struct gl_context *ctx, GLbitfield mask )
 
    radeonFlush( ctx );
 
-   if ( mask & BUFFER_BIT_FRONT_LEFT ) {
-      flags |= RADEON_FRONT;
-      mask &= ~BUFFER_BIT_FRONT_LEFT;
-   }
+   hwmask = mask & hwbits;
+   swmask = mask & ~hwbits;
 
-   if ( mask & BUFFER_BIT_BACK_LEFT ) {
-      flags |= RADEON_BACK;
-      mask &= ~BUFFER_BIT_BACK_LEFT;
-   }
-
-   if ( mask & BUFFER_BIT_DEPTH ) {
-      flags |= RADEON_DEPTH;
-      mask &= ~BUFFER_BIT_DEPTH;
-   }
-
-   if ( (mask & BUFFER_BIT_STENCIL) ) {
-      flags |= RADEON_STENCIL;
-      mask &= ~BUFFER_BIT_STENCIL;
-   }
-
-   if ( mask ) {
+   if ( swmask ) {
       if (R200_DEBUG & RADEON_FALLBACKS)
-	 fprintf(stderr, "%s: swrast clear, mask: %x\n", __FUNCTION__, mask);
-      _swrast_Clear( ctx, mask );
+	 fprintf(stderr, "%s: swrast clear, mask: %x\n", __FUNCTION__, swmask);
+      _swrast_Clear( ctx, swmask );
    }
 
-   if ( !flags )
+   if ( !hwmask )
       return;
 
-   radeonUserClear(ctx, orig_mask);
+   radeonUserClear(ctx, hwmask);
 }
 
 GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
