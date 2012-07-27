@@ -9,7 +9,6 @@
 
 // Include AMDIL TD files
 include "AMDILBase.td"
-include "AMDILVersion.td"
 
 // Include AMDGPU TD files
 include "R600Schedule.td"
