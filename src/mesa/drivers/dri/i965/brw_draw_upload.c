@@ -721,6 +721,16 @@ static void brw_emit_vertices(struct brw_context *brw)
       uint32_t comp2 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp3 = BRW_VE1_COMPONENT_STORE_SRC;
 
+      /* The gen4 driver expects edgeflag to come in as a float, and passes
+       * that float on to the tests in the clipper.  Mesa's current vertex
+       * attribute value for EdgeFlag is stored as a float, which works out.
+       * glEdgeFlagPointer, on the other hand, gives us an unnormalized
+       * integer ubyte.  Just rewrite that to convert to a float.
+       */
+      if (input->attrib == VERT_ATTRIB_EDGEFLAG &&
+          format == BRW_SURFACEFORMAT_R8_UINT)
+         format = BRW_SURFACEFORMAT_R8_SSCALED;
+
       switch (input->glarray->Size) {
       case 0: comp0 = BRW_VE1_COMPONENT_STORE_0;
       case 1: comp1 = BRW_VE1_COMPONENT_STORE_0;
