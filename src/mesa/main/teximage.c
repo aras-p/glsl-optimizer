@@ -50,6 +50,12 @@
 #include "glformats.h"
 
 
+/* Inexplicably, GL_HALF_FLOAT_OES has a different value than GL_HALF_FLOAT.
+ */
+#ifndef GL_HALF_FLOAT_OES
+#define GL_HALF_FLOAT_OES 0x8D61
+#endif
+
 /**
  * State changes which we care about for glCopyTex[Sub]Image() calls.
  * In particular, we care about pixel transfer state and buffer state
@@ -1552,6 +1558,68 @@ mutable_tex_object(struct gl_context *ctx, GLenum target)
 }
 
 
+GLenum
+_mesa_es_error_check_format_and_type(GLenum format, GLenum type,
+                                     unsigned dimensions)
+{
+   bool type_valid = true;
+
+   switch (format) {
+   case GL_ALPHA:
+   case GL_LUMINANCE:
+   case GL_LUMINANCE_ALPHA:
+      type_valid = (type == GL_UNSIGNED_BYTE
+                    || type == GL_FLOAT
+                    || type == GL_HALF_FLOAT_OES);
+      break;
+
+   case GL_RGB:
+      type_valid = (type == GL_UNSIGNED_BYTE
+                    || type == GL_UNSIGNED_SHORT_5_6_5
+                    || type == GL_FLOAT
+                    || type == GL_HALF_FLOAT_OES);
+      break;
+
+   case GL_RGBA:
+      type_valid = (type == GL_UNSIGNED_BYTE
+                    || type == GL_UNSIGNED_SHORT_4_4_4_4
+                    || type == GL_UNSIGNED_SHORT_5_5_5_1
+                    || type == GL_FLOAT
+                    || type == GL_HALF_FLOAT_OES
+                    || type == GL_UNSIGNED_INT_2_10_10_10_REV);
+      break;
+
+   case GL_DEPTH_COMPONENT:
+      /* This format is filtered against invalid dimensionalities elsewhere.
+       */
+      type_valid = (type == GL_UNSIGNED_SHORT
+                    || type == GL_UNSIGNED_INT);
+      break;
+
+   case GL_DEPTH_STENCIL:
+      /* This format is filtered against invalid dimensionalities elsewhere.
+       */
+      type_valid = (type == GL_UNSIGNED_INT_24_8);
+      break;
+
+   case GL_BGRA_EXT:
+      type_valid = (type == GL_UNSIGNED_BYTE);
+
+      /* This feels like a bug in the EXT_texture_format_BGRA8888 spec, but
+       * the format does not appear to be allowed for 3D textures in OpenGL
+       * ES.
+       */
+      if (dimensions != 2)
+         return GL_INVALID_VALUE;
+
+      break;
+
+   default:
+      return GL_INVALID_VALUE;
+   }
+
+   return type_valid ? GL_NO_ERROR : GL_INVALID_OPERATION;
+}
 
 /**
  * Test the glTexImage[123]D() parameters for errors.
@@ -1621,6 +1689,32 @@ texture_error_check( struct gl_context *ctx,
                      "glTexImage%dD(width, height or depth < 0)", dimensions);
       }
       return GL_TRUE;
+   }
+
+   /* OpenGL ES 1.x and OpenGL ES 2.0 impose additional restrictions on the
+    * combinations of format, internalFormat, and type that can be used.
+    * Formats and types that require additional extensions (e.g., GL_FLOAT
+    * requires GL_OES_texture_float) are filtered elsewhere.
+    */
+   if (_mesa_is_gles(ctx) && !_mesa_is_gles3(ctx)) {
+      if (format != internalFormat) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glTexImage%dD(format = %s, internalFormat = %s)",
+                     dimensions,
+                     _mesa_lookup_enum_by_nr(format),
+                     _mesa_lookup_enum_by_nr(internalFormat));
+         return GL_TRUE;
+      }
+
+      err = _mesa_es_error_check_format_and_type(format, type, dimensions);
+      if (err != GL_NO_ERROR) {
+         _mesa_error(ctx, err,
+                     "glTexImage%dD(format = %s, type = %s)",
+                     dimensions,
+                     _mesa_lookup_enum_by_nr(format),
+                     _mesa_lookup_enum_by_nr(type));
+         return GL_TRUE;
+      }
    }
 
    /* Do this simple check before calling the TestProxyTexImage() function */
