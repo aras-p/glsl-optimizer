@@ -141,6 +141,8 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
          update_fog_scale(ctx);
          break;
       case GL_FOG_INDEX:
+         if (ctx->API != API_OPENGL)
+            goto invalid_pname;
  	 if (ctx->Fog.Index == *params)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_FOG);
@@ -161,7 +163,7 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
          break;
       case GL_FOG_COORDINATE_SOURCE_EXT: {
 	 GLenum p = (GLenum) (GLint) *params;
-         if (!ctx->Extensions.EXT_fog_coord ||
+         if (ctx->API != API_OPENGL || !ctx->Extensions.EXT_fog_coord ||
              (p != GL_FOG_COORDINATE_EXT && p != GL_FRAGMENT_DEPTH_EXT)) {
 	    _mesa_error(ctx, GL_INVALID_ENUM, "glFog");
 	    return;
@@ -174,7 +176,7 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
       }
       case GL_FOG_DISTANCE_MODE_NV: {
 	 GLenum p = (GLenum) (GLint) *params;
-         if (!ctx->Extensions.NV_fog_distance ||
+         if (ctx->API != API_OPENGL || !ctx->Extensions.NV_fog_distance ||
              (p != GL_EYE_RADIAL_NV && p != GL_EYE_PLANE && p != GL_EYE_PLANE_ABSOLUTE_NV)) {
 	    _mesa_error(ctx, GL_INVALID_ENUM, "glFog");
 	    return;
@@ -186,13 +188,18 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 	 break;
       }
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glFog" );
-         return;
+         goto invalid_pname;
    }
 
    if (ctx->Driver.Fogfv) {
       (*ctx->Driver.Fogfv)( ctx, pname, params );
    }
+
+   return;
+
+invalid_pname:
+   _mesa_error( ctx, GL_INVALID_ENUM, "glFog" );
+   return;
 }
 
 

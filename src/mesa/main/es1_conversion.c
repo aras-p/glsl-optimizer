@@ -134,28 +134,7 @@ _es_DrawTexxvOES(const GLfixed *coords)
 void GL_APIENTRY
 _es_Fogx(GLenum pname, GLfixed param)
 {
-   bool convert_param_value = true;
-
-   switch(pname) {
-   case GL_FOG_MODE:
-      if (param != GL_EXP && param != GL_EXP2 && param != GL_LINEAR) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glFogx(pname=0x%x)", pname);
-         return;
-      }
-      convert_param_value = false;
-      break;
-   case GL_FOG_DENSITY:
-   case GL_FOG_START:
-   case GL_FOG_END:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glFogx(pname=0x%x)", pname);
-      return;
-   }
-
-   if (convert_param_value) {
+   if (pname != GL_FOG_MODE) {
       _mesa_Fogf(pname, (GLfloat) (param / 65536.0f));
    } else {
       _mesa_Fogf(pname, (GLfloat) param);
@@ -173,11 +152,6 @@ _es_Fogxv(GLenum pname, const GLfixed *params)
 
    switch(pname) {
    case GL_FOG_MODE:
-      if (params[0] != GL_EXP && params[0] != GL_EXP2 && params[0] != GL_LINEAR) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glFogxv(pname=0x%x)", pname);
-         return;
-      }
       convert_params_value = false;
       n_params = 1;
       break;
