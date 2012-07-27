@@ -238,7 +238,7 @@ brwCreateContext(int api,
    /* WM maximum threads is number of EUs times number of threads per EU. */
    if (intel->gen >= 7) {
       if (intel->gt == 1) {
-	 brw->max_wm_threads = 86;
+	 brw->max_wm_threads = 48;
 	 brw->max_vs_threads = 36;
 	 brw->max_gs_threads = 36;
 	 brw->urb.size = 128;
