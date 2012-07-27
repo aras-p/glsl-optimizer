@@ -216,7 +216,8 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
                                     unsigned dstx, unsigned dsty,
                                     struct pipe_sampler_view *src,
                                     const struct pipe_box *srcbox,
-                                    unsigned src_width0, unsigned src_height0);
+                                    unsigned src_width0, unsigned src_height0,
+                                    unsigned mask);
 
 /**
  * Helper function to initialize a view for copy_texture_view.

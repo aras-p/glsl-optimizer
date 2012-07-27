@@ -579,7 +579,7 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     r300_blitter_begin(r300, R300_COPY);
     util_blitter_copy_texture_view(r300->blitter, dst_view, dstx, dsty,
                                    src_view, src_box,
-                                   src_width0, src_height0);
+                                   src_width0, src_height0, PIPE_MASK_RGBAZS);
     r300_blitter_end(r300);
 
     pipe_surface_reference(&dst_view, NULL);

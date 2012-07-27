@@ -992,7 +992,8 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
 
    /* Copy. */
    util_blitter_copy_texture_view(blitter, dst_view, dstx, dsty, src_view,
-                                  srcbox, src->width0, src->height0);
+                                  srcbox, src->width0, src->height0,
+                                  PIPE_MASK_RGBAZS);
 
    pipe_surface_reference(&dst_view, NULL);
    pipe_sampler_view_reference(&src_view, NULL);
@@ -1003,7 +1004,8 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
                                     unsigned dstx, unsigned dsty,
                                     struct pipe_sampler_view *src,
                                     const struct pipe_box *srcbox,
-                                    unsigned src_width0, unsigned src_height0)
+                                    unsigned src_width0, unsigned src_height0,
+                                    unsigned mask)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
@@ -1011,19 +1013,19 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
    enum pipe_texture_target src_target = src->texture->target;
    unsigned width = srcbox->width;
    unsigned height = srcbox->height;
-   boolean is_stencil, is_depth;
+   boolean blit_stencil, blit_depth;
    const struct util_format_description *src_desc =
          util_format_description(src->format);
 
-   is_depth = util_format_has_depth(src_desc);
-   is_stencil = util_format_has_stencil(src_desc);
+   blit_depth = util_format_has_depth(src_desc) && (mask & PIPE_MASK_Z);
+   blit_stencil = util_format_has_stencil(src_desc) && (mask & PIPE_MASK_S);
 
    /* If you want a fallback for stencil copies,
     * use util_blitter_copy_texture. */
-   if (is_stencil && !ctx->has_stencil_export) {
-      is_stencil = FALSE;
+   if (blit_stencil && !ctx->has_stencil_export) {
+      blit_stencil = FALSE;
 
-      if (!is_depth)
+      if (!blit_depth)
          return;
    }
 
@@ -1047,15 +1049,15 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
    fb_state.width = dst->width;
    fb_state.height = dst->height;
 
-   if (is_depth || is_stencil) {
+   if (blit_depth || blit_stencil) {
       pipe->bind_blend_state(pipe, ctx->blend_keep_color);
 
-      if (is_depth && is_stencil) {
+      if (blit_depth && blit_stencil) {
          pipe->bind_depth_stencil_alpha_state(pipe,
                                               ctx->dsa_write_depth_stencil);
          pipe->bind_fs_state(pipe,
                blitter_get_fs_texfetch_depthstencil(ctx, src_target));
-      } else if (is_depth) {
+      } else if (blit_depth) {
          pipe->bind_depth_stencil_alpha_state(pipe,
                                               ctx->dsa_write_depth_keep_stencil);
          pipe->bind_fs_state(pipe,
@@ -1080,7 +1082,7 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
       fb_state.zsbuf = 0;
    }
 
-   if (is_depth && is_stencil) {
+   if (blit_depth && blit_stencil) {
       /* Setup two samplers, one for depth and the other one for stencil. */
       struct pipe_sampler_view templ;
       struct pipe_sampler_view *views[2];
