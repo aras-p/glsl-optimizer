@@ -6,7 +6,6 @@
 #include "radeon_texture.h"
 
 void radeonUserClear(struct gl_context *ctx, GLuint mask);
-void radeonRecalcScissorRects(radeonContextPtr radeon);
 void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( struct gl_context *ctx );
 void radeonScissor(struct gl_context* ctx, GLint x, GLint y, GLsizei w, GLsizei h);

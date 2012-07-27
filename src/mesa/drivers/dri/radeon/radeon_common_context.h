@@ -122,10 +122,6 @@ struct radeon_depthbuffer_state {
 struct radeon_scissor_state {
 	drm_clip_rect_t rect;
 	GLboolean enabled;
-
-	GLuint numClipRects;	/* Cliprects active */
-	GLuint numAllocedClipRects;	/* Cliprects available */
-	drm_clip_rect_t *pClipRects;
 };
 
 struct radeon_state_atom {

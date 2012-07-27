@@ -67,57 +67,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Scissoring
  */
 
-static GLboolean intersect_rect(drm_clip_rect_t * out,
-				drm_clip_rect_t * a, drm_clip_rect_t * b)
-{
-	*out = *a;
-	if (b->x1 > out->x1)
-		out->x1 = b->x1;
-	if (b->y1 > out->y1)
-		out->y1 = b->y1;
-	if (b->x2 < out->x2)
-		out->x2 = b->x2;
-	if (b->y2 < out->y2)
-		out->y2 = b->y2;
-	if (out->x1 >= out->x2)
-		return GL_FALSE;
-	if (out->y1 >= out->y2)
-		return GL_FALSE;
-	return GL_TRUE;
-}
-
-void radeonRecalcScissorRects(radeonContextPtr radeon)
-{
-	struct gl_context *ctx = radeon->glCtx;
-	drm_clip_rect_t bounds;
-
-	bounds.x1 = 0;
-	bounds.y1 = 0;
-	bounds.x2 = ctx->DrawBuffer->Width;
-	bounds.y2 = ctx->DrawBuffer->Height;
-
-	if (!radeon->state.scissor.numAllocedClipRects) {
-		radeon->state.scissor.numAllocedClipRects = 1;
-		radeon->state.scissor.pClipRects =
-			MALLOC(sizeof(drm_clip_rect_t));
-
-		if (radeon->state.scissor.pClipRects == NULL) {
-			radeon->state.scissor.numAllocedClipRects = 0;
-			return;
-		}
-	}
-
-	radeon->state.scissor.numClipRects = 0;
-	if (intersect_rect(radeon->state.scissor.pClipRects,
-			   &bounds,
-			   &radeon->state.scissor.rect)) {
-		radeon->state.scissor.numClipRects = 1;
-	}
-
-	if (radeon->vtbl.update_scissor)
-	   radeon->vtbl.update_scissor(radeon->glCtx);
-}
-
 /**
  * Update cliprects and scissors.
  */
@@ -149,7 +98,7 @@ void radeonSetCliprects(radeonContextPtr radeon)
 	}
 
 	if (radeon->state.scissor.enabled)
-		radeonRecalcScissorRects(radeon);
+		radeonUpdateScissor(radeon->glCtx);
 
 }
 
@@ -187,7 +136,8 @@ void radeonUpdateScissor( struct gl_context *ctx )
 	rmesa->state.scissor.rect.x2 = CLAMP(x2,  min_x, max_x);
 	rmesa->state.scissor.rect.y2 = CLAMP(y2,  min_y, max_y);
 
-	radeonRecalcScissorRects( rmesa );
+	if (rmesa->vtbl.update_scissor)
+	   rmesa->vtbl.update_scissor(ctx);
 }
 
 /* =============================================================

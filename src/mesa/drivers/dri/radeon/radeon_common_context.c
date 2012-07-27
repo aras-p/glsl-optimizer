@@ -260,10 +260,6 @@ void radeonDestroyContext(__DRIcontext *driContextPriv )
 
 	radeon_destroy_atom_list(radeon);
 
-	if (radeon->state.scissor.pClipRects) {
-		FREE(radeon->state.scissor.pClipRects);
-		radeon->state.scissor.pClipRects = 0;
-	}
 #ifdef RADEON_BO_TRACK
 	track = fopen("/tmp/tracklog", "w");
 	if (track) {
