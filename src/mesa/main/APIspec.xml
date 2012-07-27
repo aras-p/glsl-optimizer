@@ -591,59 +591,6 @@
 		<param name="type" type="GLenum"/>
 		<param name="pixels" type="GLvoid *"/>
 	</proto>
-
-	<!-- Technically, only two combinations are actually allowed:
-	     GL_RGBA/GL_UNSIGNED_BYTE, and some implementation-specific
-	     internal preferred combination.  I don't know what that is, so I'm
-	     allowing any valid combination for now; the underlying support
-	     should fail when necessary.-->
-	<desc name="format">
-		<value name="GL_ALPHA"/>
-		<desc name="type" error="GL_INVALID_OPERATION">
-			<value name="GL_UNSIGNED_BYTE"/>
-		</desc>
-	</desc>
-
-	<desc name="format">
-		<value name="GL_RGB"/>
-		<desc name="type" error="GL_INVALID_OPERATION">
-			<value name="GL_UNSIGNED_BYTE"/>
-			<value name="GL_UNSIGNED_SHORT_5_6_5"/>
-		</desc>
-	</desc>
-
-	<desc name="format">
-		<value name="GL_RGBA"/>
-		<desc name="type" error="GL_INVALID_OPERATION">
-			<value name="GL_UNSIGNED_BYTE"/>
-			<value name="GL_UNSIGNED_SHORT_4_4_4_4"/>
-			<value name="GL_UNSIGNED_SHORT_5_5_5_1"/>
-		</desc>
-	</desc>
-
-	<desc name="format">
-		<value name="GL_LUMINANCE"/>
-		<desc name="type" error="GL_INVALID_OPERATION">
-			<value name="GL_UNSIGNED_BYTE"/>
-		</desc>
-	</desc>
-
-	<desc name="format">
-		<value name="GL_LUMINANCE_ALPHA"/>
-		<desc name="type" error="GL_INVALID_OPERATION">
-			<value name="GL_UNSIGNED_BYTE"/>
-		</desc>
-	</desc>
-
-	<desc name="format" category="EXT_read_format_bgra">
-		<value name="GL_BGRA_EXT"/>
-
-		<desc name="type" error="GL_INVALID_OPERATION">
-			<value name="GL_UNSIGNED_BYTE"/>
-			<value name="GL_UNSIGNED_SHORT_4_4_4_4_REV_EXT"/>
-			<value name="GL_UNSIGNED_SHORT_1_5_5_5_REV_EXT"/>
-		</desc>
-	</desc>
 </template>
 
 <template name="GetClipPlane" direction="get">

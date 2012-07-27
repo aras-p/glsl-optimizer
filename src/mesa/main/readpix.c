@@ -38,7 +38,13 @@
 #include "state.h"
 #include "glformats.h"
 #include "fbobject.h"
+#include "teximage.h"
 
+/* Inexplicably, GL_HALF_FLOAT_OES has a different value than GL_HALF_FLOAT.
+ */
+#ifndef GL_HALF_FLOAT_OES
+#define GL_HALF_FLOAT_OES 0x8D61
+#endif
 
 /**
  * Tries to implement glReadPixels() of GL_DEPTH_COMPONENT using memcpy of the
@@ -697,6 +703,33 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
       _mesa_error( ctx, GL_INVALID_VALUE,
                    "glReadPixels(width=%d height=%d)", width, height );
       return;
+   }
+
+   /* OpenGL ES 1.x and OpenGL ES 2.0 impose additional restrictions on the
+    * combinations of format and type that can be used.
+    *
+    * Technically, only two combinations are actually allowed:
+    * GL_RGBA/GL_UNSIGNED_BYTE, and some implementation-specific internal
+    * preferred combination.  This code doesn't know what that preferred
+    * combination is, and Mesa can handle anything valid.  Just work instead.
+    */
+   if (_mesa_is_gles(ctx) && ctx->Version < 30) {
+      err = _mesa_es_error_check_format_and_type(format, type, 2);
+      if (err == GL_NO_ERROR) {
+         if (type == GL_FLOAT || type == GL_HALF_FLOAT_OES) {
+            err = GL_INVALID_OPERATION;
+         } else if (format == GL_DEPTH_COMPONENT
+                    || format == GL_DEPTH_STENCIL) {
+            err = GL_INVALID_ENUM;
+         }
+      }
+
+      if (err != GL_NO_ERROR) {
+         _mesa_error(ctx, err, "glReadPixels(invalid format %s and/or type %s)",
+                     _mesa_lookup_enum_by_nr(format),
+                     _mesa_lookup_enum_by_nr(type));
+         return;
+      }
    }
 
    if (ctx->NewState)
