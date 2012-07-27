@@ -1237,41 +1237,11 @@ _check_TexGenxvOES(GLenum coord, GLenum pname, const GLfixed *params)
 void GL_APIENTRY
 _es_TexParameterx(GLenum target, GLenum pname, GLfixed param)
 {
-   GLfloat converted_param;
-   bool convert_param_value = true;
-
-   switch(pname) {
-   case GL_TEXTURE_WRAP_S:
-   case GL_TEXTURE_WRAP_T:
-      convert_param_value = false;
-      break;
-   case GL_TEXTURE_MIN_FILTER:
-   case GL_TEXTURE_MAG_FILTER:
-      convert_param_value = false;
-      break;
-   case GL_GENERATE_MIPMAP:
-      if (param != GL_TRUE && param != GL_FALSE) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexParameterx(pname=0x%x)", pname);
-         return;
-      }
-      convert_param_value = false;
-      break;
-   case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glTexParameterx(pname=0x%x)", pname);
-      return;
-   }
-
-   if (convert_param_value) {
-      converted_param = (GLfloat) (param / 65536.0f);
+   if (pname == GL_TEXTURE_MAX_ANISOTROPY_EXT) {
+      _mesa_TexParameterf(target, pname, (GLfloat) (param / 65536.0f));
    } else {
-      converted_param = (GLfloat) param;
+      _mesa_TexParameterf(target, pname, (GLfloat) param);
    }
-
-   _mesa_TexParameterf(target, pname, converted_param);
 }
 
 void GL_APIENTRY
@@ -1300,15 +1270,7 @@ _es_TexParameterxv(GLenum target, GLenum pname, const GLfixed *params)
       break;
    case GL_TEXTURE_MIN_FILTER:
    case GL_TEXTURE_MAG_FILTER:
-      convert_params_value = false;
-      n_params = 1;
-      break;
    case GL_GENERATE_MIPMAP:
-      if (params[0] != GL_TRUE && params[0] != GL_FALSE) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexParameterxv(pname=0x%x)", pname);
-         return;
-      }
       convert_params_value = false;
       n_params = 1;
       break;
