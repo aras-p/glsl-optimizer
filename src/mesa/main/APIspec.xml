@@ -1731,14 +1731,6 @@
 		<param name="target" type="GLenum"/>
 		<param name="texture" type="GLuint"/>
 	</proto>
-
-	<desc name="target">
-		<value name="GL_TEXTURE_2D"/>
-		<value name="GL_TEXTURE_CUBE_MAP" category="GLES2.0"/>
-		<value name="GL_TEXTURE_CUBE_MAP_OES" category="OES_texture_cube_map"/>
-		<value name="GL_TEXTURE_3D_OES" category="OES_texture_3D"/>
-		<value name="GL_TEXTURE_EXTERNAL_OES" category="OES_EGL_image_external"/>
-	</desc>
 </template>
 
 <template name="DeleteTextures">
