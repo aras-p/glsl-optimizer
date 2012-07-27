@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDILISelLowering.h"
+#include "AMDGPURegisterInfo.h"
 #include "AMDILDevices.h"
 #include "AMDILIntrinsicInfo.h"
-#include "AMDILRegisterInfo.h"
 #include "AMDILSubtarget.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/CallingConv.h"

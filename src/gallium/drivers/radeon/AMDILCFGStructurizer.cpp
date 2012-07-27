@@ -12,7 +12,6 @@
 
 #include "AMDIL.h"
 #include "AMDILInstrInfo.h"
-#include "AMDILRegisterInfo.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SmallVector.h"
@@ -296,10 +295,10 @@ public:
   ~CFGStructurizer();
 
   /// Perform the CFG structurization
-  bool run(FuncT &Func, PassT &Pass, const AMDILRegisterInfo *tri);
+  bool run(FuncT &Func, PassT &Pass, const AMDGPURegisterInfo *tri);
 
   /// Perform the CFG preparation
-  bool prepare(FuncT &Func, PassT &Pass, const AMDILRegisterInfo *tri);
+  bool prepare(FuncT &Func, PassT &Pass, const AMDGPURegisterInfo *tri);
 
 private:
   void   orderBlocks();
@@ -403,7 +402,7 @@ private:
   BlockInfoMap blockInfoMap;
   LoopLandInfoMap loopLandInfoMap;
   SmallVector<BlockT *, DEFAULT_VEC_SLOTS> orderedBlks;
-  const AMDILRegisterInfo *TRI;
+  const AMDGPURegisterInfo *TRI;
 
 };  //template class CFGStructurizer
 
@@ -420,7 +419,7 @@ template<class PassT> CFGStructurizer<PassT>::~CFGStructurizer() {
 
 template<class PassT>
 bool CFGStructurizer<PassT>::prepare(FuncT &func, PassT &pass,
-                                     const AMDILRegisterInfo * tri) {
+                                     const AMDGPURegisterInfo * tri) {
   passRep = &pass;
   funcRep = &func;
   TRI = tri;
@@ -509,7 +508,7 @@ bool CFGStructurizer<PassT>::prepare(FuncT &func, PassT &pass,
 
 template<class PassT>
 bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
-    const AMDILRegisterInfo * tri) {
+    const AMDGPURegisterInfo * tri) {
   passRep = &pass;
   funcRep = &func;
   TRI = tri;
@@ -2634,7 +2633,7 @@ public:
 protected:
   TargetMachine &TM;
   const TargetInstrInfo *TII;
-  const AMDILRegisterInfo *TRI;
+  const AMDGPURegisterInfo *TRI;
 
 public:
   AMDILCFGStructurizer(char &pid, TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
@@ -2650,7 +2649,7 @@ private:
 AMDILCFGStructurizer::AMDILCFGStructurizer(char &pid, TargetMachine &tm
                                            AMDIL_OPT_LEVEL_DECL)
 : MachineFunctionPass(pid), TM(tm), TII(tm.getInstrInfo()),
-  TRI(static_cast<const AMDILRegisterInfo *>(tm.getRegisterInfo())
+  TRI(static_cast<const AMDGPURegisterInfo *>(tm.getRegisterInfo())
   ) {
 }
 

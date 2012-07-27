@@ -14,7 +14,7 @@
 #ifndef AMDILINSTRUCTIONINFO_H_
 #define AMDILINSTRUCTIONINFO_H_
 
-#include "AMDILRegisterInfo.h"
+#include "AMDGPURegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
@@ -27,7 +27,7 @@ namespace llvm {
   //class AMDILTargetMachine;
 class AMDILInstrInfo : public AMDGPUGenInstrInfo {
 private:
-  const AMDILRegisterInfo RI;
+  const AMDGPURegisterInfo RI;
   TargetMachine &TM;
   bool getNextBranchInstr(MachineBasicBlock::iterator &iter,
                           MachineBasicBlock &MBB) const;
@@ -38,7 +38,7 @@ public:
   // getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   // such, whenever a client has an instance of instruction info, it should
   // always be able to get register info as well (through this method).
-  const AMDILRegisterInfo &getRegisterInfo() const;
+  const AMDGPURegisterInfo &getRegisterInfo() const;
 
   bool isCoalescableExtInstr(const MachineInstr &MI, unsigned &SrcReg,
                              unsigned &DstReg, unsigned &SubIdx) const;

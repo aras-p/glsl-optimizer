@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "AMDGPUISelLowering.h" // For AMDGPUISD
+#include "AMDGPURegisterInfo.h"
 #include "AMDILDevices.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/ADT/ValueMap.h"

@@ -32,7 +32,7 @@ AMDILInstrInfo::AMDILInstrInfo(TargetMachine &tm)
     TM(tm) {
 }
 
-const AMDILRegisterInfo &AMDILInstrInfo::getRegisterInfo() const {
+const AMDGPURegisterInfo &AMDILInstrInfo::getRegisterInfo() const {
   return RI;
 }
 
