@@ -1,4 +1,4 @@
-//===-- AMDILCodeEmitter.h - AMDIL Code Emitter interface -----------------===//
+//===-- AMDGPUCodeEmitter.h - AMDGPU Code Emitter interface -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,12 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDILCODEEMITTER_H
-#define AMDILCODEEMITTER_H
+#ifndef AMDGPUCODEEMITTER_H
+#define AMDGPUCODEEMITTER_H
 
 namespace llvm {
 
-  class AMDILCodeEmitter {
+  class AMDGPUCodeEmitter {
   public:
     uint64_t getBinaryCodeForInstr(const MachineInstr &MI) const;
     virtual uint64_t getMachineOpValue(const MachineInstr &MI,
@@ -45,4 +45,4 @@ namespace llvm {
 
 } // End namespace llvm
 
-#endif // AMDILCODEEMITTER_H
+#endif // AMDGPUCODEEMITTER_H

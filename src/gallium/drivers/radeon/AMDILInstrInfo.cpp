@@ -27,7 +27,7 @@
 using namespace llvm;
 
 AMDILInstrInfo::AMDILInstrInfo(TargetMachine &tm)
-  : AMDILGenInstrInfo(),
+  : AMDGPUGenInstrInfo(),
     RI(tm, *this),
     TM(tm) {
 }

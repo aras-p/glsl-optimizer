@@ -34,7 +34,7 @@ namespace llvm
     };
   }
 
-  struct AMDILRegisterInfo : public AMDILGenRegisterInfo
+  struct AMDILRegisterInfo : public AMDGPUGenRegisterInfo
   {
     TargetMachine &TM;
     const TargetInstrInfo &TII;

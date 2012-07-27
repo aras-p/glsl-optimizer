@@ -29,7 +29,7 @@ using namespace llvm;
 
 AMDILRegisterInfo::AMDILRegisterInfo(TargetMachine &tm,
     const TargetInstrInfo &tii)
-: AMDILGenRegisterInfo(0), // RA???
+: AMDGPUGenRegisterInfo(0), // RA???
   TM(tm), TII(tii)
 {
   baseOffset = 0;

@@ -17,8 +17,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPU.h"
+#include "AMDGPUCodeEmitter.h"
 #include "AMDGPUUtil.h"
-#include "AMDILCodeEmitter.h"
 #include "AMDILInstrInfo.h"
 #include "AMDILUtilityFunctions.h"
 #include "R600InstrInfo.h"
@@ -39,7 +39,7 @@ using namespace llvm;
 
 namespace {
 
-class R600CodeEmitter : public MachineFunctionPass, public AMDILCodeEmitter {
+class R600CodeEmitter : public MachineFunctionPass, public AMDGPUCodeEmitter {
 
 private:
 

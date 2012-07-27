@@ -89,9 +89,10 @@ def AMDILInstrInfo : InstrInfo {}
 //===----------------------------------------------------------------------===//
 // Declare the target which we are implementing
 //===----------------------------------------------------------------------===//
-def AMDILAsmWriter : AsmWriter {
-    string AsmWriterClassName = "AsmPrinter";
+def AMDGPUAsmWriter : AsmWriter {
+    string AsmWriterClassName = "InstPrinter";
     int Variant = 0;
+    bit isMCAsmWriter = 1;
 }
 
 def AMDILAsmParser : AsmParser {
@@ -105,9 +106,9 @@ def AMDILAsmParser : AsmParser {
 }
 
 
-def AMDIL : Target {
+def AMDGPU : Target {
   // Pull in Instruction Info:
   let InstructionSet = AMDILInstrInfo;
-  let AssemblyWriters = [AMDILAsmWriter];
+  let AssemblyWriters = [AMDGPUAsmWriter];
   let AssemblyParsers = [AMDILAsmParser];
 }

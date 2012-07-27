@@ -14,8 +14,8 @@
 
 
 #include "AMDGPU.h"
+#include "AMDGPUCodeEmitter.h"
 #include "AMDGPUUtil.h"
-#include "AMDILCodeEmitter.h"
 #include "SIInstrInfo.h"
 #include "SIMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -32,7 +32,7 @@ using namespace llvm;
 
 namespace {
 
-  class SICodeEmitter : public MachineFunctionPass, public AMDILCodeEmitter {
+  class SICodeEmitter : public MachineFunctionPass, public AMDGPUCodeEmitter {
 
   private:
     static char ID;

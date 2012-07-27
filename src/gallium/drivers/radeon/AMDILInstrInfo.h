@@ -25,7 +25,7 @@ namespace llvm {
   // instruction info tracks.
   //
   //class AMDILTargetMachine;
-class AMDILInstrInfo : public AMDILGenInstrInfo {
+class AMDILInstrInfo : public AMDGPUGenInstrInfo {
 private:
   const AMDILRegisterInfo RI;
   TargetMachine &TM;

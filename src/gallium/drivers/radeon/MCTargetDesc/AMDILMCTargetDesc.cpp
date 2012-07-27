@@ -19,26 +19,26 @@
 
 using namespace llvm;
 
-static MCInstrInfo *createAMDILMCInstrInfo() {
+static MCInstrInfo *createAMDGPUMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
-  InitAMDILMCInstrInfo(X);
+  InitAMDGPUMCInstrInfo(X);
   return X;
 }
 
-static MCRegisterInfo *createAMDILMCRegisterInfo(StringRef TT) {
+static MCRegisterInfo *createAMDGPUMCRegisterInfo(StringRef TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitAMDILMCRegisterInfo(X, 0);
+  InitAMDGPUMCRegisterInfo(X, 0);
   return X;
 }
 
-static MCSubtargetInfo *createAMDILMCSubtargetInfo(StringRef TT, StringRef CPU,
+static MCSubtargetInfo *createAMDGPUMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                    StringRef FS) {
   MCSubtargetInfo * X = new MCSubtargetInfo();
-  InitAMDILMCSubtargetInfo(X, TT, CPU, FS);
+  InitAMDGPUMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 
-static MCCodeGenInfo *createAMDILMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+static MCCodeGenInfo *createAMDGPUMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                                CodeModel::Model CM,
                                                CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -50,12 +50,12 @@ extern "C" void LLVMInitializeAMDGPUTargetMC() {
 
   RegisterMCAsmInfo<AMDILMCAsmInfo> Y(TheAMDGPUTarget);
 
-  TargetRegistry::RegisterMCCodeGenInfo(TheAMDGPUTarget, createAMDILMCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(TheAMDGPUTarget, createAMDGPUMCCodeGenInfo);
 
-  TargetRegistry::RegisterMCInstrInfo(TheAMDGPUTarget, createAMDILMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheAMDGPUTarget, createAMDGPUMCInstrInfo);
 
-  TargetRegistry::RegisterMCRegInfo(TheAMDGPUTarget, createAMDILMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheAMDGPUTarget, createAMDGPUMCRegisterInfo);
 
-  TargetRegistry::RegisterMCSubtargetInfo(TheAMDGPUTarget, createAMDILMCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheAMDGPUTarget, createAMDGPUMCSubtargetInfo);
 
 }
