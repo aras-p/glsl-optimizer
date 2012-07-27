@@ -324,6 +324,8 @@ static void brw_upload_vs_prog(struct brw_context *brw)
             = _mesa_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
       }
    }
+
+   /* _NEW_POLYGON */
    key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
 			ctx->Polygon.BackMode != GL_FILL);
 
