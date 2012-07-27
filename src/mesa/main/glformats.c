@@ -790,37 +790,45 @@ _mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
    switch (format) {
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      return ctx->Extensions.EXT_texture_compression_s3tc;
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      return ctx->Extensions.EXT_texture_compression_s3tc;
+      return _mesa_is_desktop_gl(ctx)
+         && ctx->Extensions.EXT_texture_compression_s3tc;
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
    case GL_RGBA_S3TC:
    case GL_RGBA4_S3TC:
-      return ctx->Extensions.S3_s3tc;
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.S3_s3tc;
    case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-      return ctx->Extensions.EXT_texture_sRGB
+      return _mesa_is_desktop_gl(ctx)
+         && ctx->Extensions.EXT_texture_sRGB
          && ctx->Extensions.EXT_texture_compression_s3tc;
    case GL_COMPRESSED_RGB_FXT1_3DFX:
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
-      return ctx->Extensions.TDFX_texture_compression_FXT1;
+      return _mesa_is_desktop_gl(ctx)
+         && ctx->Extensions.TDFX_texture_compression_FXT1;
    case GL_COMPRESSED_RED_RGTC1:
    case GL_COMPRESSED_SIGNED_RED_RGTC1:
    case GL_COMPRESSED_RG_RGTC2:
    case GL_COMPRESSED_SIGNED_RG_RGTC2:
-      return ctx->Extensions.ARB_texture_compression_rgtc;
+      return _mesa_is_desktop_gl(ctx)
+         && ctx->Extensions.ARB_texture_compression_rgtc;
    case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
    case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
    case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
    case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
-      return ctx->Extensions.EXT_texture_compression_latc;
+      return ctx->API == API_OPENGL
+         && ctx->Extensions.EXT_texture_compression_latc;
    case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
-      return ctx->Extensions.ATI_texture_compression_3dc;
+      return ctx->API == API_OPENGL
+         && ctx->Extensions.ATI_texture_compression_3dc;
    case GL_ETC1_RGB8_OES:
-      return ctx->Extensions.OES_compressed_ETC1_RGB8_texture;
+      return _mesa_is_gles(ctx)
+         && ctx->Extensions.OES_compressed_ETC1_RGB8_texture;
 #if FEATURE_ES
    case GL_PALETTE4_RGB8_OES:
    case GL_PALETTE4_RGBA8_OES:
