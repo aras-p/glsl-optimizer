@@ -108,8 +108,8 @@ static void inline emit_tx_setup(struct r200_context *r200,
     uint32_t txformat = R200_TXFORMAT_NON_POWER2;
     BATCH_LOCALS(&r200->radeon);
 
-    assert(width <= 2047);
-    assert(height <= 2047);
+    assert(width <= 2048);
+    assert(height <= 2048);
     assert(offset % 32 == 0);
 
     /* XXX others?  BE/LE? */
@@ -341,8 +341,8 @@ static inline void emit_cb_setup(struct r200_context *r200,
     OUT_BATCH_REGVAL(R200_RE_AUX_SCISSOR_CNTL, 0);
     OUT_BATCH_REGVAL(R200_RE_CNTL, 0);
     OUT_BATCH_REGVAL(RADEON_RE_TOP_LEFT, 0);
-    OUT_BATCH_REGVAL(RADEON_RE_WIDTH_HEIGHT, ((width << RADEON_RE_WIDTH_SHIFT) |
-					      (height << RADEON_RE_HEIGHT_SHIFT)));
+    OUT_BATCH_REGVAL(RADEON_RE_WIDTH_HEIGHT, (((width - 1) << RADEON_RE_WIDTH_SHIFT) |
+					      ((height - 1) << RADEON_RE_HEIGHT_SHIFT)));
     OUT_BATCH_REGVAL(RADEON_RB3D_PLANEMASK, 0xffffffff);
     OUT_BATCH_REGVAL(RADEON_RB3D_BLENDCNTL, RADEON_SRC_BLEND_GL_ONE | RADEON_DST_BLEND_GL_ZERO);
     OUT_BATCH_REGVAL(RADEON_RB3D_CNTL, dst_format);
