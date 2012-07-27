@@ -2270,6 +2270,17 @@ vec4_visitor::emit_urb_slot(int mrf, int vert_result)
          emit_clip_distances(hw_reg, (vert_result - VERT_RESULT_CLIP_DIST0) * 4);
       }
       break;
+   case VERT_RESULT_EDGE:
+      /* This is present when doing unfilled polygons.  We're supposed to copy
+       * the edge flag from the user-provided vertex array
+       * (glEdgeFlagPointer), or otherwise we'll copy from the current value
+       * of that attribute (starts as 1.0f).  This is then used in clipping to
+       * determine which edges should be drawn as wireframe.
+       */
+      current_annotation = "edge flag";
+      emit(MOV(reg, src_reg(dst_reg(ATTR, VERT_ATTRIB_EDGEFLAG,
+                                    glsl_type::float_type, WRITEMASK_XYZW))));
+      break;
    case BRW_VERT_RESULT_PAD:
       /* No need to write to this slot */
       break;
@@ -2325,8 +2336,6 @@ vec4_visitor::emit_urb_writes()
     * requirements for length alignment.
     */
    assert ((max_usable_mrf - base_mrf) % 2 == 0);
-
-   /* FINISHME: edgeflag */
 
    /* First mrf is the g0-based message header containing URB handles and such,
     * which is implied in VS_OPCODE_URB_WRITE.
