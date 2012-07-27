@@ -187,7 +187,7 @@ _mesa_MatrixMode( GLenum mode )
    case GL_MATRIX5_NV:
    case GL_MATRIX6_NV:
    case GL_MATRIX7_NV:
-      if (ctx->Extensions.NV_vertex_program) {
+      if (ctx->API == API_OPENGL && ctx->Extensions.NV_vertex_program) {
          ctx->CurrentStack = &ctx->ProgramMatrixStack[mode - GL_MATRIX0_NV];
       }
       else {
@@ -203,8 +203,9 @@ _mesa_MatrixMode( GLenum mode )
    case GL_MATRIX5_ARB:
    case GL_MATRIX6_ARB:
    case GL_MATRIX7_ARB:
-      if (ctx->Extensions.ARB_vertex_program ||
-          ctx->Extensions.ARB_fragment_program) {
+      if (ctx->API == API_OPENGL
+          && (ctx->Extensions.ARB_vertex_program ||
+              ctx->Extensions.ARB_fragment_program)) {
          const GLuint m = mode - GL_MATRIX0_ARB;
          if (m > ctx->Const.MaxProgramMatrices) {
             _mesa_error(ctx, GL_INVALID_ENUM,

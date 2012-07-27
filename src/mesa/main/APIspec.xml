@@ -803,13 +803,6 @@
 		<return type="void"/>
 		<param name="mode" type="GLenum"/>
 	</proto>
-
-	<desc name="mode">
-		<value name="GL_MODELVIEW"/>
-		<value name="GL_PROJECTION"/>
-		<value name="GL_TEXTURE"/>
-		<value name="GL_MATRIX_PALETTE_OES" category="OES_matrix_palette"/>
-	</desc>
 </template>
 
 <template name="MultMatrix">
