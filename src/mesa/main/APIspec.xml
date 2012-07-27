@@ -2203,34 +2203,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="pname" category="OES_framebuffer_object">
-		<value name="GL_RENDERBUFFER_WIDTH_OES"/>
-		<value name="GL_RENDERBUFFER_HEIGHT_OES"/>
-		<value name="GL_RENDERBUFFER_INTERNAL_FORMAT_OES"/>
-		<value name="GL_RENDERBUFFER_RED_SIZE_OES"/>
-		<value name="GL_RENDERBUFFER_GREEN_SIZE_OES"/>
-		<value name="GL_RENDERBUFFER_BLUE_SIZE_OES"/>
-		<value name="GL_RENDERBUFFER_ALPHA_SIZE_OES"/>
-		<value name="GL_RENDERBUFFER_DEPTH_SIZE_OES"/>
-		<value name="GL_RENDERBUFFER_STENCIL_SIZE_OES"/>
-
-		<desc name="params" vector_size="1" convert="false"/>
-	</desc>
-
-	<desc name="pname" category="GLES2.0">
-		<value name="GL_RENDERBUFFER_WIDTH"/>
-		<value name="GL_RENDERBUFFER_HEIGHT"/>
-		<value name="GL_RENDERBUFFER_INTERNAL_FORMAT"/>
-		<value name="GL_RENDERBUFFER_RED_SIZE"/>
-		<value name="GL_RENDERBUFFER_GREEN_SIZE"/>
-		<value name="GL_RENDERBUFFER_BLUE_SIZE"/>
-		<value name="GL_RENDERBUFFER_ALPHA_SIZE"/>
-		<value name="GL_RENDERBUFFER_DEPTH_SIZE"/>
-		<value name="GL_RENDERBUFFER_STENCIL_SIZE"/>
-
-		<desc name="params" vector_size="1" convert="false"/>
-	</desc>
 </template>
 
 <template name="IsRenderbuffer" direction="get">

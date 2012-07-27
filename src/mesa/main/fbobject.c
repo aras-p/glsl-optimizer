@@ -1572,7 +1572,8 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
       *params = get_component_bits(pname, rb->_BaseFormat, rb->Format);
       break;
    case GL_RENDERBUFFER_SAMPLES:
-      if (ctx->Extensions.ARB_framebuffer_object) {
+      if ((_mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_framebuffer_object)
+          || _mesa_is_gles3(ctx)) {
          *params = rb->NumSamples;
          break;
       }
