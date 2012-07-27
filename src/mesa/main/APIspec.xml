@@ -306,10 +306,6 @@
 		</desc>
 	</desc>
 
-	<desc name="border" error="GL_INVALID_VALUE">
-		<value name="0"/>
-	</desc>
-
 	<desc name="format">
 		<value name="GL_ALPHA"/>
 
@@ -1571,10 +1567,6 @@
 		<value name="GL_RGBA"/>
 		<value name="GL_LUMINANCE"/>
 		<value name="GL_LUMINANCE_ALPHA"/>
-	</desc>
-
-	<desc name="border" error="GL_INVALID_VALUE">
-		<value name="0"/>
 	</desc>
 </template>
 
