@@ -7,7 +7,6 @@
 //
 //==-----------------------------------------------------------------------===//
 
-#include "AMDILAlgorithms.tpp"
 #include "AMDILDevices.h"
 #include "AMDGPUInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
@@ -131,6 +130,25 @@ private:
   SmallVector<CallInst *, 16> isConstVec;
 }; // class AMDILPeepholeOpt
   char AMDILPeepholeOpt::ID = 0;
+
+// A template function that has two levels of looping before calling the
+// function with a pointer to the current iterator.
+template<class InputIterator, class SecondIterator, class Function>
+Function safeNestedForEach(InputIterator First, InputIterator Last,
+                              SecondIterator S, Function F)
+{
+  for ( ; First != Last; ++First) {
+    SecondIterator sf, sl;
+    for (sf = First->begin(), sl = First->end();
+         sf != sl; )  {
+      if (!F(&sf)) {
+        ++sf;
+      } 
+    }
+  }
+  return F;
+}
+
 } // anonymous namespace
 
 namespace llvm {
