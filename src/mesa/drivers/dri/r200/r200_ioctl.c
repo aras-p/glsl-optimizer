@@ -86,32 +86,6 @@ static void r200Clear( struct gl_context *ctx, GLbitfield mask )
    radeonUserClear(ctx, hwmask);
 }
 
-GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
-			   GLint size )
-{
-   ptrdiff_t offset = (char *)pointer - (char *)rmesa->radeon.radeonScreen->gartTextures.map;
-   int valid = (size >= 0 &&
-		offset >= 0 &&
-		offset + size < rmesa->radeon.radeonScreen->gartTextures.size);
-
-   if (R200_DEBUG & RADEON_IOCTL)
-      fprintf(stderr, "r200IsGartMemory( %p ) : %d\n", pointer, valid );
-
-   return valid;
-}
-
-
-GLuint r200GartOffsetFromVirtual( r200ContextPtr rmesa, const GLvoid *pointer )
-{
-   ptrdiff_t offset = (char *)pointer - (char *)rmesa->radeon.radeonScreen->gartTextures.map;
-
-   if (offset < 0 || offset > rmesa->radeon.radeonScreen->gartTextures.size)
-      return ~0;
-   else
-      return rmesa->radeon.radeonScreen->gart_texture_offset + offset;
-}
-
-
 
 void r200InitIoctlFuncs( struct dd_function_table *functions )
 {

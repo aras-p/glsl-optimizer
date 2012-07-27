@@ -65,12 +65,6 @@ extern void r200EmitAOS(r200ContextPtr rmesa, GLuint nr, GLuint offset);
 
 extern void r200InitIoctlFuncs( struct dd_function_table *functions );
 
-extern GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
-				   GLint size );
-
-extern GLuint r200GartOffsetFromVirtual( r200ContextPtr rmesa, 
-					 const GLvoid *pointer );
-
 void r200SetUpAtomList( r200ContextPtr rmesa );
 
 /* ================================================================
