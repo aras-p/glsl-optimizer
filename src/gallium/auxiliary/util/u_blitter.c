@@ -938,8 +938,7 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
                                unsigned dstx, unsigned dsty, unsigned dstz,
                                struct pipe_resource *src,
                                unsigned src_level,
-                               const struct pipe_box *srcbox,
-                               boolean ignore_stencil)
+                               const struct pipe_box *srcbox)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
@@ -970,8 +969,7 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
 
    /* Check if we can sample from and render to the surfaces. */
    /* (assuming copying a stencil buffer is not possible) */
-   if ((!ignore_stencil && is_stencil && !ctx->has_stencil_export) ||
-       !screen->is_format_supported(screen, dst->format, dst->target,
+   if (!screen->is_format_supported(screen, dst->format, dst->target,
                                     dst->nr_samples, bind) ||
        !screen->is_format_supported(screen, src->format, src->target,
                                     src->nr_samples, PIPE_BIND_SAMPLER_VIEW)) {

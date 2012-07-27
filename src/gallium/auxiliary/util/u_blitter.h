@@ -168,13 +168,6 @@ void util_blitter_clear_depth_custom(struct blitter_context *blitter,
  * a software fallback path is taken and both surfaces must be of the same
  * format.
  *
- * The same holds for depth-stencil formats with the exception that stencil
- * cannot be copied unless you set ignore_stencil to FALSE. In that case,
- * a software fallback path is taken and both surfaces must be of the same
- * format. If the shader stencil export is supported, stencil copy is always
- * accelerated.
- *
- * Use pipe_screen->is_format_supported to know your options.
  *
  * These states must be saved in the blitter in addition to the state objects
  * already required to be saved:
@@ -191,8 +184,7 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
                                unsigned dstx, unsigned dsty, unsigned dstz,
                                struct pipe_resource *src,
                                unsigned src_level,
-                               const struct pipe_box *srcbox,
-                               boolean ignore_stencil);
+                               const struct pipe_box *srcbox);
 
 /**
  * Same as util_blitter_copy_texture, but dst and src are pipe_surface and

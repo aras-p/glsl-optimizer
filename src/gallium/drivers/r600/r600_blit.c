@@ -393,7 +393,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
 	util_blitter_copy_texture(rctx->blitter, dst, dst_level, dstx, dsty, dstz,
-				  src, src_level, psbox, TRUE);
+				  src, src_level, psbox);
 	r600_blitter_end(ctx);
 
 	if (restore_orig[0])
