@@ -92,10 +92,10 @@ const char *tgsi_texture_names[TGSI_TEXTURE_COUNT] =
    "SHADOW1D",
    "SHADOW2D",
    "SHADOWRECT",
-   "1DARRAY",
-   "2DARRAY",
-   "SHADOW1DARRAY",
-   "SHADOW2DARRAY",
+   "1D_ARRAY",
+   "2D_ARRAY",
+   "SHADOW1D_ARRAY",
+   "SHADOW2D_ARRAY",
    "SHADOWCUBE",
    "UNKNOWN"
 };
