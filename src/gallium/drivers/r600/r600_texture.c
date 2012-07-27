@@ -419,40 +419,6 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 	rtex->size = offset;
 }
 
-/* Figure out whether u_blitter will fallback to a transfer operation.
- * If so, don't use a staging resource.
- */
-static boolean permit_hardware_blit(struct pipe_screen *screen,
-					const struct pipe_resource *res)
-{
-	unsigned bind;
-
-	if (util_format_is_depth_or_stencil(res->format))
-		bind = PIPE_BIND_DEPTH_STENCIL;
-	else
-		bind = PIPE_BIND_RENDER_TARGET;
-
-	/* hackaround for S3TC */
-	if (util_format_is_compressed(res->format))
-		return TRUE;
-
-	if (!screen->is_format_supported(screen,
-				res->format,
-				res->target,
-				res->nr_samples,
-                                bind))
-		return FALSE;
-
-	if (!screen->is_format_supported(screen,
-				res->format,
-				res->target,
-				res->nr_samples,
-                                PIPE_BIND_SAMPLER_VIEW))
-		return FALSE;
-
-	return TRUE;
-}
-
 static boolean r600_texture_get_handle(struct pipe_screen* screen,
 					struct pipe_resource *ptex,
 					struct winsys_handle *whandle)
@@ -577,10 +543,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 		/* Proceed in creating the depth buffer. */
 	}
 
-	/* only mark depth textures the HW can hit as depth textures */
-	if (util_format_is_depth_or_stencil(rtex->real_format) &&
-			permit_hardware_blit(screen, base))
-		rtex->is_depth = true;
+	/* don't include stencil-only formats which we don't support for rendering */
+	rtex->is_depth = util_format_has_depth(util_format_description(rtex->resource.b.b.format));
 
 	r600_setup_miptree(screen, rtex, array_mode);
 	if (rscreen->use_surface_alloc) {
@@ -648,8 +612,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 		if (rscreen->use_surface_alloc &&
 		    !(templ->bind & PIPE_BIND_SCANOUT) &&
 		    templ->usage != PIPE_USAGE_STAGING &&
-		    templ->usage != PIPE_USAGE_STREAM &&
-		    permit_hardware_blit(screen, templ)) {
+		    templ->usage != PIPE_USAGE_STREAM) {
 			array_mode = V_038000_ARRAY_2D_TILED_THIN1;
 		} else if (util_format_is_compressed(templ->format)) {
 			array_mode = V_038000_ARRAY_1D_TILED_THIN1;
@@ -824,8 +787,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		use_staging_texture = TRUE;
 	}
 
-	if (!permit_hardware_blit(ctx->screen, texture) ||
-		(texture->flags & R600_RESOURCE_FLAG_TRANSFER)) {
+	if (texture->flags & R600_RESOURCE_FLAG_TRANSFER) {
 		use_staging_texture = FALSE;
 	}
 

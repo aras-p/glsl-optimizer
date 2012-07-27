@@ -322,9 +322,27 @@ static void r600_compressed_to_blittable(struct pipe_resource *tex,
 	rtex->surface.level[level].npix_y = util_format_get_nblocksy(orig->format, orig->npix_y);
 }
 
-static void r600_reset_blittable_to_compressed(struct pipe_resource *tex,
-					       unsigned level,
-					       struct texture_orig_info *orig)
+static void r600_change_format(struct pipe_resource *tex,
+			       unsigned level,
+			       struct texture_orig_info *orig,
+			       enum pipe_format format)
+{
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
+
+	orig->format = tex->format;
+	orig->width0 = tex->width0;
+	orig->height0 = tex->height0;
+	orig->npix0_x = rtex->surface.level[0].npix_x;
+	orig->npix0_y = rtex->surface.level[0].npix_y;
+	orig->npix_x = rtex->surface.level[level].npix_x;
+	orig->npix_y = rtex->surface.level[level].npix_y;
+
+	tex->format = format;
+}
+
+static void r600_reset_blittable_to_orig(struct pipe_resource *tex,
+					 unsigned level,
+					 struct texture_orig_info *orig)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
 
@@ -349,7 +367,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	struct r600_resource_texture *rsrc = (struct r600_resource_texture*)src;
 	struct texture_orig_info orig_info[2];
 	struct pipe_box sbox;
-	const struct pipe_box *psbox;
+	const struct pipe_box *psbox = src_box;
 	boolean restore_orig[2];
 
 	memset(orig_info, 0, sizeof(orig_info));
@@ -372,7 +390,8 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 	restore_orig[0] = restore_orig[1] = FALSE;
 
-	if (util_format_is_compressed(src->format)) {
+	if (util_format_is_compressed(src->format) &&
+	    util_format_is_compressed(dst->format)) {
 		r600_compressed_to_blittable(src, src_level, &orig_info[0]);
 		restore_orig[0] = TRUE;
 		sbox.x = util_format_get_nblocksx(orig_info[0].format, src_box->x);
@@ -382,15 +401,36 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		sbox.height = util_format_get_nblocksy(orig_info[0].format, src_box->height);
 		sbox.depth = src_box->depth;
 		psbox=&sbox;
-	} else
-		psbox=src_box;
 
-	if (util_format_is_compressed(dst->format)) {
 		r600_compressed_to_blittable(dst, dst_level, &orig_info[1]);
 		restore_orig[1] = TRUE;
 		/* translate the dst box as well */
 		dstx = util_format_get_nblocksx(orig_info[1].format, dstx);
 		dsty = util_format_get_nblocksy(orig_info[1].format, dsty);
+	} else if (!util_blitter_is_copy_supported(rctx->blitter, dst, src,
+						   PIPE_MASK_RGBAZS)) {
+		unsigned blocksize = util_format_get_blocksize(src->format);
+
+		switch (blocksize) {
+		case 1:
+			r600_change_format(src, src_level, &orig_info[0],
+					   PIPE_FORMAT_R8_UNORM);
+			r600_change_format(dst, dst_level, &orig_info[1],
+					   PIPE_FORMAT_R8_UNORM);
+			break;
+		case 4:
+			r600_change_format(src, src_level, &orig_info[0],
+					   PIPE_FORMAT_R8G8B8A8_UNORM);
+			r600_change_format(dst, dst_level, &orig_info[1],
+					   PIPE_FORMAT_R8G8B8A8_UNORM);
+			break;
+		default:
+			fprintf(stderr, "Unhandled format %s with blocksize %u\n",
+				util_format_short_name(src->format), blocksize);
+			assert(0);
+		}
+		restore_orig[0] = TRUE;
+		restore_orig[1] = TRUE;
 	}
 
 	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
@@ -399,10 +439,10 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	r600_blitter_end(ctx);
 
 	if (restore_orig[0])
-		r600_reset_blittable_to_compressed(src, src_level, &orig_info[0]);
+		r600_reset_blittable_to_orig(src, src_level, &orig_info[0]);
 
 	if (restore_orig[1])
-		r600_reset_blittable_to_compressed(dst, dst_level, &orig_info[1]);
+		r600_reset_blittable_to_orig(dst, dst_level, &orig_info[1]);
 }
 
 void r600_init_blit_functions(struct r600_context *rctx)
