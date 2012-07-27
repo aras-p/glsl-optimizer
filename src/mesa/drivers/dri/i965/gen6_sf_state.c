@@ -122,7 +122,7 @@ upload_sf_state(struct brw_context *brw)
    int i;
    /* _NEW_BUFFER */
    bool render_to_fbo = _mesa_is_user_fbo(brw->intel.ctx.DrawBuffer);
-   bool multisampled_fbo = ctx->DrawBuffer->Visual.sampleBuffers;
+   bool multisampled_fbo = ctx->DrawBuffer->Visual.samples > 1;
 
    int attr = 0, input_index = 0;
    int urb_entry_read_offset = 1;

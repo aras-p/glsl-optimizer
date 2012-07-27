@@ -1582,7 +1582,7 @@ inline intel_msaa_layout
 compute_msaa_layout_for_pipeline(struct brw_context *brw, unsigned num_samples,
                                  intel_msaa_layout true_layout)
 {
-   if (num_samples == 0) {
+   if (num_samples <= 1) {
       /* When configuring the GPU for non-MSAA, we can still accommodate IMS
        * format buffers, by transforming coordinates appropriately.
        */
@@ -1652,7 +1652,7 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
          dst.num_samples = 0;
    }
 
-   if (dst.map_stencil_as_y_tiled && dst.num_samples > 0) {
+   if (dst.map_stencil_as_y_tiled && dst.num_samples > 1) {
       /* If the destination surface is a W-tiled multisampled stencil buffer
        * that we're mapping as Y tiled, then we need to arrange for the WM
        * program to run once per sample rather than once per pixel, because
@@ -1662,7 +1662,7 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
       wm_prog_key.persample_msaa_dispatch = true;
    }
 
-   if (src.num_samples > 0 && dst.num_samples > 0) {
+   if (src.num_samples > 0 && dst.num_samples > 1) {
       /* We are blitting from a multisample buffer to a multisample buffer, so
        * we must preserve samples within a pixel.  This means we have to
        * arrange for the WM program to run once per sample rather than once
@@ -1679,7 +1679,7 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    GLenum base_format = _mesa_get_format_base_format(src_mt->format);
    if (base_format != GL_DEPTH_COMPONENT && /* TODO: what about depth/stencil? */
        base_format != GL_STENCIL_INDEX &&
-       src_mt->num_samples > 0 && dst_mt->num_samples == 0) {
+       src_mt->num_samples > 1 && dst_mt->num_samples <= 1) {
       /* We are downsampling a color buffer, so blend. */
       wm_prog_key.blend = true;
    }
@@ -1717,7 +1717,7 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    wm_push_consts.x_transform.setup(src_x0, dst_x0, dst_x1, mirror_x);
    wm_push_consts.y_transform.setup(src_y0, dst_y0, dst_y1, mirror_y);
 
-   if (dst.num_samples == 0 && dst_mt->num_samples > 0) {
+   if (dst.num_samples <= 1 && dst_mt->num_samples > 1) {
       /* We must expand the rectangle we send through the rendering pipeline,
        * to account for the fact that we are mapping the destination region as
        * single-sampled when it is in fact multisampled.  We must also align

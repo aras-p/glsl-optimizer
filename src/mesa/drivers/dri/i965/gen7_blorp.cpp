@@ -373,7 +373,7 @@ gen7_blorp_emit_sf_config(struct brw_context *brw,
       OUT_BATCH(_3DSTATE_SF << 16 | (7 - 2));
       OUT_BATCH(params->depth_format <<
                 GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT);
-      OUT_BATCH(params->num_samples > 0 ? GEN6_SF_MSRAST_ON_PATTERN : 0);
+      OUT_BATCH(params->num_samples > 1 ? GEN6_SF_MSRAST_ON_PATTERN : 0);
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);
@@ -432,7 +432,7 @@ gen7_blorp_emit_wm_config(struct brw_context *brw,
       dw1 |= GEN7_WM_DISPATCH_ENABLE; /* We are rendering */
    }
 
-      if (params->num_samples > 0) {
+      if (params->num_samples > 1) {
          dw1 |= GEN7_WM_MSRAST_ON_PATTERN;
          if (prog_data && prog_data->persample_msaa_dispatch)
             dw2 |= GEN7_WM_MSDISPMODE_PERSAMPLE;

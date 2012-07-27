@@ -99,7 +99,7 @@ upload_wm_state(struct brw_context *brw)
    uint32_t dw2, dw4, dw5, dw6;
 
    /* _NEW_BUFFERS */
-   bool multisampled_fbo = ctx->DrawBuffer->Visual.sampleBuffers;
+   bool multisampled_fbo = ctx->DrawBuffer->Visual.samples > 1;
 
     /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params == 0) {

@@ -61,7 +61,7 @@ gen7_set_surface_msaa(struct gen7_surface_state *surf, unsigned num_samples,
 {
    if (num_samples > 4)
       surf->ss4.num_multisamples = GEN7_SURFACE_MULTISAMPLECOUNT_8;
-   else if (num_samples > 0)
+   else if (num_samples > 1)
       surf->ss4.num_multisamples = GEN7_SURFACE_MULTISAMPLECOUNT_4;
    else
       surf->ss4.num_multisamples = GEN7_SURFACE_MULTISAMPLECOUNT_1;
@@ -280,7 +280,7 @@ gen7_update_texture_surface(struct gl_context *ctx, GLuint unit)
 
    /* We don't support MSAA for textures. */
    assert(!mt->array_spacing_lod0);
-   assert(mt->num_samples == 0);
+   assert(mt->num_samples <= 1);
 
    intel_miptree_get_dimensions_for_image(firstImage, &width, &height, &depth);
 

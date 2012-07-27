@@ -415,7 +415,7 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
    uint32_t wm_surf_offset;
    uint32_t width, height;
    surface->get_miplevel_dims(&width, &height);
-   if (surface->num_samples > 0) { /* TODO: seems clumsy */
+   if (surface->num_samples > 1) { /* TODO: seems clumsy */
       width /= 2;
       height /= 2;
    }
@@ -685,7 +685,7 @@ gen6_blorp_emit_sf_config(struct brw_context *brw,
              1 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
              0 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT);
    OUT_BATCH(0); /* dw2 */
-   OUT_BATCH(params->num_samples > 0 ? GEN6_SF_MSRAST_ON_PATTERN : 0);
+   OUT_BATCH(params->num_samples > 1 ? GEN6_SF_MSRAST_ON_PATTERN : 0);
    for (int i = 0; i < 16; ++i)
       OUT_BATCH(0);
    ADVANCE_BATCH();
@@ -744,7 +744,7 @@ gen6_blorp_emit_wm_config(struct brw_context *brw,
       dw5 |= GEN6_WM_DISPATCH_ENABLE; /* We are rendering */
    }
 
-   if (params->num_samples > 0) {
+   if (params->num_samples > 1) {
       dw6 |= GEN6_WM_MSRAST_ON_PATTERN;
       if (prog_data && prog_data->persample_msaa_dispatch)
          dw6 |= GEN6_WM_MSDISPMODE_PERSAMPLE;

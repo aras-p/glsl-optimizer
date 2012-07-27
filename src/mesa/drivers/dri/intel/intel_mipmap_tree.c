@@ -128,7 +128,7 @@ intel_miptree_create_internal(struct intel_context *intel,
 	 intel->vtbl.is_hiz_depth_format(intel, format)))) {
       /* MSAA stencil surfaces always use IMS layout. */
       enum intel_msaa_layout msaa_layout =
-         num_samples > 0 ? INTEL_MSAA_LAYOUT_IMS : INTEL_MSAA_LAYOUT_NONE;
+         num_samples > 1 ? INTEL_MSAA_LAYOUT_IMS : INTEL_MSAA_LAYOUT_NONE;
       mt->stencil_mt = intel_miptree_create(intel,
                                             mt->target,
                                             MESA_FORMAT_S8,
@@ -335,7 +335,7 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
    uint32_t depth = 1;
    enum intel_msaa_layout msaa_layout = INTEL_MSAA_LAYOUT_NONE;
 
-   if (num_samples > 0) {
+   if (num_samples > 1) {
       /* Adjust width/height/depth for MSAA */
       msaa_layout = compute_msaa_layout(intel, format);
       if (msaa_layout == INTEL_MSAA_LAYOUT_IMS) {
@@ -383,7 +383,7 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
             height = ALIGN(height, 2) * 2;
             break;
          default:
-            /* num_samples should already have been quantized to 0, 4, or
+            /* num_samples should already have been quantized to 0, 1, 4, or
              * 8.
              */
             assert(false);

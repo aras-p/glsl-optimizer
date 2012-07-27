@@ -42,7 +42,7 @@ upload_wm_state(struct brw_context *brw)
    uint32_t dw1, dw2;
 
    /* _NEW_BUFFERS */
-   bool multisampled_fbo = ctx->DrawBuffer->Visual.sampleBuffers;
+   bool multisampled_fbo = ctx->DrawBuffer->Visual.samples > 1;
 
    dw1 = dw2 = 0;
    dw1 |= GEN7_WM_STATISTICS_ENABLE;

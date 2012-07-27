@@ -42,6 +42,7 @@ gen6_emit_3dstate_multisample(struct brw_context *brw,
 
    switch (num_samples) {
    case 0:
+   case 1:
       number_of_multisamples = MS_NUMSAMPLES_1;
       break;
    case 4:
@@ -121,7 +122,7 @@ gen6_emit_3dstate_sample_mask(struct brw_context *brw,
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_SAMPLE_MASK << 16 | (2 - 2));
-   if (num_samples > 0) {
+   if (num_samples > 1) {
       int coverage_int = (int) (num_samples * coverage + 0.5);
       uint32_t coverage_bits = (1 << coverage_int) - 1;
       if (coverage_invert)

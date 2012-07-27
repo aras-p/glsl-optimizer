@@ -161,7 +161,7 @@ upload_sf_state(struct brw_context *brw)
    float point_size;
    /* _NEW_BUFFERS */
    bool render_to_fbo = _mesa_is_user_fbo(brw->intel.ctx.DrawBuffer);
-   bool multisampled_fbo = ctx->DrawBuffer->Visual.sampleBuffers;
+   bool multisampled_fbo = ctx->DrawBuffer->Visual.samples > 1;
 
    dw1 = GEN6_SF_STATISTICS_ENABLE |
          GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;

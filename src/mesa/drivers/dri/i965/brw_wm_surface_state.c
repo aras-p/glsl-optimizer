@@ -645,7 +645,7 @@ brw_get_surface_tiling_bits(uint32_t tiling)
 uint32_t
 brw_get_surface_num_multisamples(unsigned num_samples)
 {
-   if (num_samples > 0)
+   if (num_samples > 1)
       return BRW_SURFACE_MULTISAMPLECOUNT_4;
    else
       return BRW_SURFACE_MULTISAMPLECOUNT_1;
@@ -987,7 +987,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  6 * 4, 32, &brw->wm.surf_offset[unit]);
 
-   if (fb->Visual.samples > 0) {
+   if (fb->Visual.samples > 1) {
       /* On Gen6, null render targets seem to cause GPU hangs when
        * multisampling.  So work around this problem by rendering into dummy
        * color buffer.
