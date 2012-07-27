@@ -2009,6 +2009,8 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
    if (border < 0 || border > 1 ||
        ((target == GL_TEXTURE_RECTANGLE_NV ||
          target == GL_PROXY_TEXTURE_RECTANGLE_NV) && border != 0)) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCopyTexImage%dD(border=%d)", dimensions, border);
       return GL_TRUE;
    }
 
