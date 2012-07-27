@@ -10,39 +10,62 @@
 // This file defines all of the amdil-specific intrinsics
 //
 //===---------------------------------------------------------------===//
+//===--------------------------------------------------------------------===//
+// Intrinsic classes
+// Generic versions of the above classes but for Target specific intrinsics
+// instead of SDNode patterns.
+//===--------------------------------------------------------------------===//
+let TargetPrefix = "AMDIL", isTarget = 1 in {
+     class VoidIntLong :
+          Intrinsic<[llvm_i64_ty], [], []>;
+     class VoidIntInt :
+          Intrinsic<[llvm_i32_ty], [], []>;
+     class VoidIntBool :
+          Intrinsic<[llvm_i32_ty], [], []>;
+     class UnaryIntInt :
+          Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+     class UnaryIntFloat :
+          Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+     class ConvertIntFTOI :
+          Intrinsic<[llvm_anyint_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+     class ConvertIntITOF :
+          Intrinsic<[llvm_anyfloat_ty], [llvm_anyint_ty], [IntrNoMem]>;
+     class UnaryIntNoRetInt :
+          Intrinsic<[], [llvm_anyint_ty], []>;
+     class UnaryIntNoRetFloat :
+          Intrinsic<[], [llvm_anyfloat_ty], []>;
+     class BinaryIntInt :
+          Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+     class BinaryIntFloat :
+          Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+     class BinaryIntNoRetInt :
+          Intrinsic<[], [llvm_anyint_ty, LLVMMatchType<0>], []>;
+     class BinaryIntNoRetFloat :
+          Intrinsic<[], [llvm_anyfloat_ty, LLVMMatchType<0>], []>;
+     class TernaryIntInt :
+          Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>,
+          LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+     class TernaryIntFloat :
+          Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>,
+          LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+     class QuaternaryIntInt :
+          Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>,
+          LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+     class UnaryAtomicInt :
+          Intrinsic<[llvm_i32_ty], [llvm_ptr_ty, llvm_i32_ty], [IntrReadWriteArgMem]>;
+     class BinaryAtomicInt :
+          Intrinsic<[llvm_i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_i32_ty], [IntrReadWriteArgMem]>;
+     class TernaryAtomicInt :
+          Intrinsic<[llvm_i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty]>;
+     class UnaryAtomicIntNoRet :
+          Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty], [IntrReadWriteArgMem]>;
+     class BinaryAtomicIntNoRet :
+          Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty, llvm_i32_ty], [IntrReadWriteArgMem]>;
+     class TernaryAtomicIntNoRet :
+          Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrReadWriteArgMem]>;
+}
 
 let TargetPrefix = "AMDIL", isTarget = 1 in {
-//------------- Synchronization Functions - OpenCL 6.11.9 --------------------//
-  def int_AMDIL_fence   : GCCBuiltin<"mem_fence">,
-        UnaryIntNoRetInt;
-  def int_AMDIL_fence_global   : GCCBuiltin<"mem_fence_global">,
-        UnaryIntNoRetInt;
-  def int_AMDIL_fence_local   : GCCBuiltin<"mem_fence_local">,
-        UnaryIntNoRetInt;
-  def int_AMDIL_fence_region   : GCCBuiltin<"mem_fence_region">,
-        UnaryIntNoRetInt;
-  def int_AMDIL_fence_read_only   : GCCBuiltin<"read_mem_fence">,
-        UnaryIntNoRetInt;
-  def int_AMDIL_fence_read_only_global   : GCCBuiltin<"read_mem_fence_global">,
-        UnaryIntNoRetInt;
-  def int_AMDIL_fence_read_only_local   : GCCBuiltin<"read_mem_fence_local">,
-        UnaryIntNoRetInt;
-  def int_AMDIL_fence_read_only_region : GCCBuiltin<"read_mem_fence_region">,
-        UnaryIntNoRetInt;
-  def int_AMDIL_fence_write_only   : GCCBuiltin<"write_mem_fence">,
-        UnaryIntNoRetInt;
-  def int_AMDIL_fence_write_only_global   : GCCBuiltin<"write_mem_fence_global">,
-        UnaryIntNoRetInt;
-  def int_AMDIL_fence_write_only_local   : GCCBuiltin<"write_mem_fence_local">,
-        UnaryIntNoRetInt;
-  def int_AMDIL_fence_write_only_region : GCCBuiltin<"write_mem_fence_region">,
-        UnaryIntNoRetInt;
-
-  def int_AMDIL_early_exit : GCCBuiltin<"__amdil_early_exit">,
-        UnaryIntNoRetInt;
-
-  def int_AMDIL_cmov_logical  : GCCBuiltin<"__amdil_cmov_logical">,
-          TernaryIntInt;
   def int_AMDIL_fabs : GCCBuiltin<"__amdil_fabs">, UnaryIntFloat;
   def int_AMDIL_abs : GCCBuiltin<"__amdil_abs">, UnaryIntInt;
 
@@ -221,485 +244,4 @@ let TargetPrefix = "AMDIL", isTarget = 1 in {
   def int_AMDIL_dp4 : GCCBuiltin<"__amdil_dp4">,
         Intrinsic<[llvm_float_ty], [llvm_v4f32_ty,
           llvm_v4f32_ty], []>;
-//===---------------------- Image functions begin ------------------------===//
-  def int_AMDIL_image1d_write : GCCBuiltin<"__amdil_image1d_write">,
-      Intrinsic<[], [llvm_ptr_ty, llvm_v2i32_ty, llvm_v4i32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image1d_read_norm  : GCCBuiltin<"__amdil_image1d_read_norm">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image1d_read_unnorm  : GCCBuiltin<"__amdil_image1d_read_unnorm">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image1d_info0 : GCCBuiltin<"__amdil_image1d_info0">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], []>;
-
-  def int_AMDIL_image1d_info1 : GCCBuiltin<"__amdil_image1d_info1">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], []>;
-
- def int_AMDIL_image1d_array_write : GCCBuiltin<"__amdil_image1d_array_write">,
-      Intrinsic<[], [llvm_ptr_ty, llvm_v2i32_ty, llvm_v4i32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image1d_array_read_norm  : GCCBuiltin<"__amdil_image1d_array_read_norm">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image1d_array_read_unnorm  : GCCBuiltin<"__amdil_image1d_array_read_unnorm">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image1d_array_info0 : GCCBuiltin<"__amdil_image1d_array_info0">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], []>;
-
-  def int_AMDIL_image1d_array_info1 : GCCBuiltin<"__amdil_image1d_array_info1">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], []>;
-
- def int_AMDIL_image2d_write : GCCBuiltin<"__amdil_image2d_write">,
-      Intrinsic<[], [llvm_ptr_ty, llvm_v2i32_ty, llvm_v4i32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image2d_read_norm  : GCCBuiltin<"__amdil_image2d_read_norm">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image2d_read_unnorm  : GCCBuiltin<"__amdil_image2d_read_unnorm">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image2d_info0 : GCCBuiltin<"__amdil_image2d_info0">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], []>;
-
-  def int_AMDIL_image2d_info1 : GCCBuiltin<"__amdil_image2d_info1">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], []>;
-
- def int_AMDIL_image2d_array_write : GCCBuiltin<"__amdil_image2d_array_write">,
-      Intrinsic<[], [llvm_ptr_ty, llvm_v2i32_ty, llvm_v4i32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image2d_array_read_norm  : GCCBuiltin<"__amdil_image2d_array_read_norm">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image2d_array_read_unnorm  : GCCBuiltin<"__amdil_image2d_array_read_unnorm">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image2d_array_info0 : GCCBuiltin<"__amdil_image2d_array_info0">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], []>;
-
-  def int_AMDIL_image2d_array_info1 : GCCBuiltin<"__amdil_image2d_array_info1">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], []>;
-
-  def int_AMDIL_image3d_write : GCCBuiltin<"__amdil_image3d_write">,
-         Intrinsic<[], [llvm_ptr_ty, llvm_v4i32_ty, llvm_v4i32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image3d_read_norm  : GCCBuiltin<"__amdil_image3d_read_norm">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image3d_read_unnorm  : GCCBuiltin<"__amdil_image3d_read_unnorm">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty, llvm_i32_ty, llvm_v4f32_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_image3d_info0 : GCCBuiltin<"__amdil_image3d_info0">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], []>;
-
-  def int_AMDIL_image3d_info1 : GCCBuiltin<"__amdil_image3d_info1">,
-      Intrinsic<[llvm_v4i32_ty], [llvm_ptr_ty], []>;
-
-//===---------------------- Image functions end --------------------------===//
-
-  def int_AMDIL_append_alloc_i32 : GCCBuiltin<"__amdil_append_alloc">,
-      Intrinsic<[llvm_i32_ty], [llvm_ptr_ty], [IntrReadWriteArgMem]>;
-  def int_AMDIL_append_consume_i32 : GCCBuiltin<"__amdil_append_consume">,
-      Intrinsic<[llvm_i32_ty], [llvm_ptr_ty], [IntrReadWriteArgMem]>;
-  def int_AMDIL_append_alloc_i32_noret : GCCBuiltin<"__amdil_append_alloc_noret">,
-      Intrinsic<[llvm_i32_ty], [llvm_ptr_ty], [IntrReadWriteArgMem]>;
-  def int_AMDIL_append_consume_i32_noret : GCCBuiltin<"__amdil_append_consume_noret">,
-      Intrinsic<[llvm_i32_ty], [llvm_ptr_ty], [IntrReadWriteArgMem]>;
-
-  def int_AMDIL_get_global_id : GCCBuiltin<"__amdil_get_global_id_int">,
-      Intrinsic<[llvm_v4i32_ty], [], []>;
-  def int_AMDIL_get_local_id : GCCBuiltin<"__amdil_get_local_id_int">,
-      Intrinsic<[llvm_v4i32_ty], [], []>;
-  def int_AMDIL_get_group_id : GCCBuiltin<"__amdil_get_group_id_int">,
-      Intrinsic<[llvm_v4i32_ty], [], []>;
-  def int_AMDIL_get_num_groups : GCCBuiltin<"__amdil_get_num_groups_int">,
-      Intrinsic<[llvm_v4i32_ty], [], []>;
-  def int_AMDIL_get_local_size : GCCBuiltin<"__amdil_get_local_size_int">,
-      Intrinsic<[llvm_v4i32_ty], [], []>;
-  def int_AMDIL_get_global_size : GCCBuiltin<"__amdil_get_global_size_int">,
-      Intrinsic<[llvm_v4i32_ty], [], []>;
-  def int_AMDIL_get_global_offset : GCCBuiltin<"__amdil_get_global_offset_int">,
-      Intrinsic<[llvm_v4i32_ty], [], []>;
-  def int_AMDIL_get_work_dim : GCCBuiltin<"get_work_dim">,
-      Intrinsic<[llvm_i32_ty], [], []>;
-  def int_AMDIL_get_printf_offset : GCCBuiltin<"__amdil_get_printf_offset">,
-      Intrinsic<[llvm_i32_ty], []>;
-  def int_AMDIL_get_printf_size : GCCBuiltin<"__amdil_get_printf_size">,
-      Intrinsic<[llvm_i32_ty], []>;
-
-/// Intrinsics for atomic instructions with no return value
-/// Signed 32 bit integer atomics for global address space
-def int_AMDIL_atomic_add_gi32_noret : GCCBuiltin<"__atomic_add_gi32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_sub_gi32_noret : GCCBuiltin<"__atomic_sub_gi32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_rsub_gi32_noret : GCCBuiltin<"__atomic_rsub_gi32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_xchg_gi32_noret : GCCBuiltin<"__atomic_xchg_gi32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_inc_gi32_noret : GCCBuiltin<"__atomic_inc_gi32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_dec_gi32_noret : GCCBuiltin<"__atomic_dec_gi32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_cmpxchg_gi32_noret : GCCBuiltin<"__atomic_cmpxchg_gi32_noret">,
-    TernaryAtomicIntNoRet;
-def int_AMDIL_atomic_min_gi32_noret : GCCBuiltin<"__atomic_min_gi32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_max_gi32_noret : GCCBuiltin<"__atomic_max_gi32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_and_gi32_noret : GCCBuiltin<"__atomic_and_gi32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_or_gi32_noret : GCCBuiltin<"__atomic_or_gi32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_xor_gi32_noret : GCCBuiltin<"__atomic_xor_gi32_noret">,
-    BinaryAtomicIntNoRet;
-
-
-
-/// Unsigned 32 bit integer atomics for global address space
-def int_AMDIL_atomic_add_gu32_noret : GCCBuiltin<"__atomic_add_gu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_sub_gu32_noret : GCCBuiltin<"__atomic_sub_gu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_rsub_gu32_noret : GCCBuiltin<"__atomic_rsub_gu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_xchg_gu32_noret : GCCBuiltin<"__atomic_xchg_gu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_inc_gu32_noret : GCCBuiltin<"__atomic_inc_gu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_dec_gu32_noret : GCCBuiltin<"__atomic_dec_gu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_cmpxchg_gu32_noret : GCCBuiltin<"__atomic_cmpxchg_gu32_noret">,
-    TernaryAtomicIntNoRet;
-def int_AMDIL_atomic_min_gu32_noret : GCCBuiltin<"__atomic_min_gu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_max_gu32_noret : GCCBuiltin<"__atomic_max_gu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_and_gu32_noret : GCCBuiltin<"__atomic_and_gu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_or_gu32_noret : GCCBuiltin<"__atomic_or_gu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_xor_gu32_noret : GCCBuiltin<"__atomic_xor_gu32_noret">,
-    BinaryAtomicIntNoRet;
-
-
-/// Intrinsics for atomic instructions with a return value
-/// Signed 32 bit integer atomics for global address space
-def int_AMDIL_atomic_add_gi32 : GCCBuiltin<"__atomic_add_gi32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_sub_gi32 : GCCBuiltin<"__atomic_sub_gi32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_rsub_gi32 : GCCBuiltin<"__atomic_rsub_gi32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_xchg_gi32 : GCCBuiltin<"__atomic_xchg_gi32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_inc_gi32 : GCCBuiltin<"__atomic_inc_gi32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_dec_gi32 : GCCBuiltin<"__atomic_dec_gi32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_cmpxchg_gi32 : GCCBuiltin<"__atomic_cmpxchg_gi32">,
-    TernaryAtomicInt;
-def int_AMDIL_atomic_min_gi32 : GCCBuiltin<"__atomic_min_gi32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_max_gi32 : GCCBuiltin<"__atomic_max_gi32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_and_gi32 : GCCBuiltin<"__atomic_and_gi32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_or_gi32 : GCCBuiltin<"__atomic_or_gi32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_xor_gi32 : GCCBuiltin<"__atomic_xor_gi32">,
-    BinaryAtomicInt;
-
-/// 32 bit float atomics required by OpenCL
-def int_AMDIL_atomic_xchg_gf32 : GCCBuiltin<"__atomic_xchg_gf32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_xchg_gf32_noret : GCCBuiltin<"__atomic_xchg_gf32_noret">,
-    BinaryAtomicIntNoRet;
-
-/// Unsigned 32 bit integer atomics for global address space
-def int_AMDIL_atomic_add_gu32 : GCCBuiltin<"__atomic_add_gu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_sub_gu32 : GCCBuiltin<"__atomic_sub_gu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_rsub_gu32 : GCCBuiltin<"__atomic_rsub_gu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_xchg_gu32 : GCCBuiltin<"__atomic_xchg_gu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_inc_gu32 : GCCBuiltin<"__atomic_inc_gu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_dec_gu32 : GCCBuiltin<"__atomic_dec_gu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_cmpxchg_gu32 : GCCBuiltin<"__atomic_cmpxchg_gu32">,
-    TernaryAtomicInt;
-def int_AMDIL_atomic_min_gu32 : GCCBuiltin<"__atomic_min_gu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_max_gu32 : GCCBuiltin<"__atomic_max_gu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_and_gu32 : GCCBuiltin<"__atomic_and_gu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_or_gu32 : GCCBuiltin<"__atomic_or_gu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_xor_gu32 : GCCBuiltin<"__atomic_xor_gu32">,
-    BinaryAtomicInt;
-
-
-/// Intrinsics for atomic instructions with no return value
-/// Signed 32 bit integer atomics for local address space
-def int_AMDIL_atomic_add_li32_noret : GCCBuiltin<"__atomic_add_li32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_sub_li32_noret : GCCBuiltin<"__atomic_sub_li32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_rsub_li32_noret : GCCBuiltin<"__atomic_rsub_li32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_xchg_li32_noret : GCCBuiltin<"__atomic_xchg_li32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_inc_li32_noret : GCCBuiltin<"__atomic_inc_li32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_dec_li32_noret : GCCBuiltin<"__atomic_dec_li32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_cmpxchg_li32_noret : GCCBuiltin<"__atomic_cmpxchg_li32_noret">,
-    TernaryAtomicIntNoRet;
-def int_AMDIL_atomic_min_li32_noret : GCCBuiltin<"__atomic_min_li32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_max_li32_noret : GCCBuiltin<"__atomic_max_li32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_and_li32_noret : GCCBuiltin<"__atomic_and_li32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_or_li32_noret : GCCBuiltin<"__atomic_or_li32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_mskor_li32_noret : GCCBuiltin<"__atomic_mskor_li32_noret">,
-    TernaryAtomicIntNoRet;
-def int_AMDIL_atomic_xor_li32_noret : GCCBuiltin<"__atomic_xor_li32_noret">,
-    BinaryAtomicIntNoRet;
-
-/// Signed 32 bit integer atomics for region address space
-def int_AMDIL_atomic_add_ri32_noret : GCCBuiltin<"__atomic_add_ri32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_sub_ri32_noret : GCCBuiltin<"__atomic_sub_ri32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_rsub_ri32_noret : GCCBuiltin<"__atomic_rsub_ri32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_xchg_ri32_noret : GCCBuiltin<"__atomic_xchg_ri32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_inc_ri32_noret : GCCBuiltin<"__atomic_inc_ri32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_dec_ri32_noret : GCCBuiltin<"__atomic_dec_ri32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_cmpxchg_ri32_noret : GCCBuiltin<"__atomic_cmpxchg_ri32_noret">,
-    TernaryAtomicIntNoRet;
-def int_AMDIL_atomic_min_ri32_noret : GCCBuiltin<"__atomic_min_ri32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_max_ri32_noret : GCCBuiltin<"__atomic_max_ri32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_and_ri32_noret : GCCBuiltin<"__atomic_and_ri32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_or_ri32_noret : GCCBuiltin<"__atomic_or_ri32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_mskor_ri32_noret : GCCBuiltin<"__atomic_mskor_ri32_noret">,
-    TernaryAtomicIntNoRet;
-def int_AMDIL_atomic_xor_ri32_noret : GCCBuiltin<"__atomic_xor_ri32_noret">,
-    BinaryAtomicIntNoRet;
-
-
-
-/// Unsigned 32 bit integer atomics for local address space
-def int_AMDIL_atomic_add_lu32_noret : GCCBuiltin<"__atomic_add_lu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_sub_lu32_noret : GCCBuiltin<"__atomic_sub_lu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_rsub_lu32_noret : GCCBuiltin<"__atomic_rsub_lu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_xchg_lu32_noret : GCCBuiltin<"__atomic_xchg_lu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_inc_lu32_noret : GCCBuiltin<"__atomic_inc_lu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_dec_lu32_noret : GCCBuiltin<"__atomic_dec_lu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_cmpxchg_lu32_noret : GCCBuiltin<"__atomic_cmpxchg_lu32_noret">,
-    TernaryAtomicIntNoRet;
-def int_AMDIL_atomic_min_lu32_noret : GCCBuiltin<"__atomic_min_lu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_max_lu32_noret : GCCBuiltin<"__atomic_max_lu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_and_lu32_noret : GCCBuiltin<"__atomic_and_lu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_or_lu32_noret : GCCBuiltin<"__atomic_or_lu32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_mskor_lu32_noret : GCCBuiltin<"__atomic_mskor_lu32_noret">,
-    TernaryAtomicIntNoRet;
-def int_AMDIL_atomic_xor_lu32_noret : GCCBuiltin<"__atomic_xor_lu32_noret">,
-    BinaryAtomicIntNoRet;
-
-/// Unsigned 32 bit integer atomics for region address space
-def int_AMDIL_atomic_add_ru32_noret : GCCBuiltin<"__atomic_add_ru32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_sub_ru32_noret : GCCBuiltin<"__atomic_sub_ru32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_rsub_ru32_noret : GCCBuiltin<"__atomic_rsub_ru32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_xchg_ru32_noret : GCCBuiltin<"__atomic_xchg_ru32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_inc_ru32_noret : GCCBuiltin<"__atomic_inc_ru32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_dec_ru32_noret : GCCBuiltin<"__atomic_dec_ru32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_cmpxchg_ru32_noret : GCCBuiltin<"__atomic_cmpxchg_ru32_noret">,
-    TernaryAtomicIntNoRet;
-def int_AMDIL_atomic_min_ru32_noret : GCCBuiltin<"__atomic_min_ru32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_max_ru32_noret : GCCBuiltin<"__atomic_max_ru32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_and_ru32_noret : GCCBuiltin<"__atomic_and_ru32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_or_ru32_noret : GCCBuiltin<"__atomic_or_ru32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_mskor_ru32_noret : GCCBuiltin<"__atomic_mskor_ru32_noret">,
-    TernaryAtomicIntNoRet;
-def int_AMDIL_atomic_xor_ru32_noret : GCCBuiltin<"__atomic_xor_ru32_noret">,
-    BinaryAtomicIntNoRet;
-
-def int_AMDIL_get_cycle_count : GCCBuiltin<"__amdil_get_cycle_count">,
-    VoidIntLong;
-
-def int_AMDIL_compute_unit_id : GCCBuiltin<"__amdil_compute_unit_id">,
-    VoidIntInt;
-
-def int_AMDIL_wavefront_id : GCCBuiltin<"__amdil_wavefront_id">,
-    VoidIntInt;
-
-
-/// Intrinsics for atomic instructions with a return value
-/// Signed 32 bit integer atomics for local address space
-def int_AMDIL_atomic_add_li32 : GCCBuiltin<"__atomic_add_li32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_sub_li32 : GCCBuiltin<"__atomic_sub_li32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_rsub_li32 : GCCBuiltin<"__atomic_rsub_li32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_xchg_li32 : GCCBuiltin<"__atomic_xchg_li32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_inc_li32 : GCCBuiltin<"__atomic_inc_li32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_dec_li32 : GCCBuiltin<"__atomic_dec_li32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_cmpxchg_li32 : GCCBuiltin<"__atomic_cmpxchg_li32">,
-    TernaryAtomicInt;
-def int_AMDIL_atomic_min_li32 : GCCBuiltin<"__atomic_min_li32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_max_li32 : GCCBuiltin<"__atomic_max_li32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_and_li32 : GCCBuiltin<"__atomic_and_li32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_or_li32 : GCCBuiltin<"__atomic_or_li32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_mskor_li32 : GCCBuiltin<"__atomic_mskor_li32">,
-    TernaryAtomicInt;
-def int_AMDIL_atomic_xor_li32 : GCCBuiltin<"__atomic_xor_li32">,
-    BinaryAtomicInt;
-
-/// Signed 32 bit integer atomics for region address space
-def int_AMDIL_atomic_add_ri32 : GCCBuiltin<"__atomic_add_ri32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_sub_ri32 : GCCBuiltin<"__atomic_sub_ri32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_rsub_ri32 : GCCBuiltin<"__atomic_rsub_ri32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_xchg_ri32 : GCCBuiltin<"__atomic_xchg_ri32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_inc_ri32 : GCCBuiltin<"__atomic_inc_ri32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_dec_ri32 : GCCBuiltin<"__atomic_dec_ri32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_cmpxchg_ri32 : GCCBuiltin<"__atomic_cmpxchg_ri32">,
-    TernaryAtomicInt;
-def int_AMDIL_atomic_min_ri32 : GCCBuiltin<"__atomic_min_ri32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_max_ri32 : GCCBuiltin<"__atomic_max_ri32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_and_ri32 : GCCBuiltin<"__atomic_and_ri32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_or_ri32 : GCCBuiltin<"__atomic_or_ri32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_mskor_ri32 : GCCBuiltin<"__atomic_mskor_ri32">,
-    TernaryAtomicInt;
-def int_AMDIL_atomic_xor_ri32 : GCCBuiltin<"__atomic_xor_ri32">,
-    BinaryAtomicInt;
-
-/// 32 bit float atomics required by OpenCL
-def int_AMDIL_atomic_xchg_lf32 : GCCBuiltin<"__atomic_xchg_lf32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_xchg_lf32_noret : GCCBuiltin<"__atomic_xchg_lf32_noret">,
-    BinaryAtomicIntNoRet;
-def int_AMDIL_atomic_xchg_rf32 : GCCBuiltin<"__atomic_xchg_rf32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_xchg_rf32_noret : GCCBuiltin<"__atomic_xchg_rf32_noret">,
-    BinaryAtomicIntNoRet;
-
-/// Unsigned 32 bit integer atomics for local address space
-def int_AMDIL_atomic_add_lu32 : GCCBuiltin<"__atomic_add_lu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_sub_lu32 : GCCBuiltin<"__atomic_sub_lu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_rsub_lu32 : GCCBuiltin<"__atomic_rsub_lu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_xchg_lu32 : GCCBuiltin<"__atomic_xchg_lu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_inc_lu32 : GCCBuiltin<"__atomic_inc_lu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_dec_lu32 : GCCBuiltin<"__atomic_dec_lu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_cmpxchg_lu32 : GCCBuiltin<"__atomic_cmpxchg_lu32">,
-    TernaryAtomicInt;
-def int_AMDIL_atomic_min_lu32 : GCCBuiltin<"__atomic_min_lu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_max_lu32 : GCCBuiltin<"__atomic_max_lu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_and_lu32 : GCCBuiltin<"__atomic_and_lu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_or_lu32 : GCCBuiltin<"__atomic_or_lu32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_mskor_lu32 : GCCBuiltin<"__atomic_mskor_lu32">,
-    TernaryAtomicInt;
-def int_AMDIL_atomic_xor_lu32 : GCCBuiltin<"__atomic_xor_lu32">,
-    BinaryAtomicInt;
-
-/// Unsigned 32 bit integer atomics for region address space
-def int_AMDIL_atomic_add_ru32 : GCCBuiltin<"__atomic_add_ru32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_sub_ru32 : GCCBuiltin<"__atomic_sub_ru32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_rsub_ru32 : GCCBuiltin<"__atomic_rsub_ru32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_xchg_ru32 : GCCBuiltin<"__atomic_xchg_ru32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_inc_ru32 : GCCBuiltin<"__atomic_inc_ru32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_dec_ru32 : GCCBuiltin<"__atomic_dec_ru32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_cmpxchg_ru32 : GCCBuiltin<"__atomic_cmpxchg_ru32">,
-    TernaryAtomicInt;
-def int_AMDIL_atomic_min_ru32 : GCCBuiltin<"__atomic_min_ru32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_max_ru32 : GCCBuiltin<"__atomic_max_ru32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_and_ru32 : GCCBuiltin<"__atomic_and_ru32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_or_ru32 : GCCBuiltin<"__atomic_or_ru32">,
-    BinaryAtomicInt;
-def int_AMDIL_atomic_mskor_ru32 : GCCBuiltin<"__atomic_mskor_ru32">,
-    TernaryAtomicInt;
-def int_AMDIL_atomic_xor_ru32 : GCCBuiltin<"__atomic_xor_ru32">,
-    BinaryAtomicInt;
-
-/// Semaphore signal/wait/init
-def int_AMDIL_semaphore_init : GCCBuiltin<"__amdil_semaphore_init">,
-    Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty]>;
-def int_AMDIL_semaphore_wait : GCCBuiltin<"__amdil_semaphore_wait">,
-    Intrinsic<[], [llvm_ptr_ty]>;
-def int_AMDIL_semaphore_signal : GCCBuiltin<"__amdil_semaphore_signal">,
-    Intrinsic<[], [llvm_ptr_ty]>;
-def int_AMDIL_semaphore_size   : GCCBuiltin<"__amdil_max_semaphore_size">,
-    Intrinsic<[llvm_i32_ty], []>;
 }

@@ -10,6 +10,24 @@
 // Include AMDIL TD files
 include "AMDILBase.td"
 
+
+def AMDGPUInstrInfo : InstrInfo {}
+
+//===----------------------------------------------------------------------===//
+// Declare the target which we are implementing
+//===----------------------------------------------------------------------===//
+def AMDGPUAsmWriter : AsmWriter {
+    string AsmWriterClassName = "InstPrinter";
+    int Variant = 0;
+    bit isMCAsmWriter = 1;
+}
+
+def AMDGPU : Target {
+  // Pull in Instruction Info:
+  let InstructionSet = AMDGPUInstrInfo;
+  let AssemblyWriters = [AMDGPUAsmWriter];
+}
+
 // Include AMDGPU TD files
 include "R600Schedule.td"
 include "SISchedule.td"

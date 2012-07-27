@@ -78,36 +78,3 @@ def FeatureDumpCode : SubtargetFeature <"DumpCode",
 include "AMDILRegisterInfo.td"
 include "AMDILInstrInfo.td"
 
-def AMDILInstrInfo : InstrInfo {}
-
-//===----------------------------------------------------------------------===//
-// AMDIL processors supported.
-//===----------------------------------------------------------------------===//
-//include "Processors.td"
-
-//===----------------------------------------------------------------------===//
-// Declare the target which we are implementing
-//===----------------------------------------------------------------------===//
-def AMDGPUAsmWriter : AsmWriter {
-    string AsmWriterClassName = "InstPrinter";
-    int Variant = 0;
-    bit isMCAsmWriter = 1;
-}
-
-def AMDILAsmParser : AsmParser {
-    string AsmParserClassName = "AsmParser";
-    int Variant = 0;
-
-    string CommentDelimiter = ";";
-
-    string RegisterPrefix = "r";
-
-}
-
-
-def AMDGPU : Target {
-  // Pull in Instruction Info:
-  let InstructionSet = AMDILInstrInfo;
-  let AssemblyWriters = [AMDGPUAsmWriter];
-  let AssemblyParsers = [AMDILAsmParser];
-}
