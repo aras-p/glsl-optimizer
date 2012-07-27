@@ -3030,14 +3030,6 @@
 		<param name="pname" type="GLenum"/>
 		<vector name="params" type="GLtype *" size="dynamic"/>
 	</proto>
-
-	<desc name="pname">
-		<value name="GL_SHADER_TYPE"/>
-		<value name="GL_COMPILE_STATUS"/>
-		<value name="GL_DELETE_STATUS"/>
-		<value name="GL_INFO_LOG_LENGTH"/>
-		<value name="GL_SHADER_SOURCE_LENGTH"/>
-	</desc>
 </template>
 
 <template name="GetAttachedShaders" direction="get">
