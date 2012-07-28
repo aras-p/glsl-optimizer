@@ -759,246 +759,102 @@ _es_Scalex(GLfixed x, GLfixed y, GLfixed z)
 void GL_APIENTRY
 _es_TexEnvx(GLenum target, GLenum pname, GLfixed param)
 {
-   GLfloat converted_param;
-   bool convert_param_value = true;
-
    switch(target) {
    case GL_POINT_SPRITE:
-      if (pname != GL_COORD_REPLACE) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvx(target=0x%x)", target);
-         return;
-      }
-      break;
    case GL_TEXTURE_FILTER_CONTROL_EXT:
-      if (pname != GL_TEXTURE_LOD_BIAS_EXT) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvx(target=0x%x)", target);
-         return;
-      }
-      break;
    case GL_TEXTURE_ENV:
-      if (pname != GL_TEXTURE_ENV_MODE && pname != GL_COMBINE_RGB && pname != GL_COMBINE_ALPHA && pname != GL_RGB_SCALE && pname != GL_ALPHA_SCALE && pname != GL_SRC0_RGB && pname != GL_SRC1_RGB && pname != GL_SRC2_RGB && pname != GL_SRC0_ALPHA && pname != GL_SRC1_ALPHA && pname != GL_SRC2_ALPHA && pname != GL_OPERAND0_RGB && pname != GL_OPERAND1_RGB && pname != GL_OPERAND2_RGB && pname != GL_OPERAND0_ALPHA && pname != GL_OPERAND1_ALPHA && pname != GL_OPERAND2_ALPHA && pname != GL_TEXTURE_ENV_COLOR) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvx(target=0x%x)", target);
-         return;
-      }
       break;
    default:
       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
                   "glTexEnvx(target=0x%x)", target);
       return;
    }
+
    switch(pname) {
    case GL_COORD_REPLACE:
-      if (param != GL_TRUE && param != GL_FALSE) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvx(pname=0x%x)", pname);
-         return;
-      }
-      convert_param_value = false;
-      break;
-   case GL_TEXTURE_LOD_BIAS_EXT:
-      break;
    case GL_TEXTURE_ENV_MODE:
-      if (param != GL_REPLACE && param != GL_MODULATE && param != GL_DECAL && param != GL_BLEND && param != GL_ADD && param != GL_COMBINE) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvx(pname=0x%x)", pname);
-         return;
-      }
-      convert_param_value = false;
-      break;
    case GL_COMBINE_RGB:
-      if (param != GL_REPLACE && param != GL_MODULATE && param != GL_ADD && param != GL_ADD_SIGNED && param != GL_INTERPOLATE && param != GL_SUBTRACT && param != GL_DOT3_RGB && param != GL_DOT3_RGBA) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvx(pname=0x%x)", pname);
-         return;
-      }
-      convert_param_value = false;
-      break;
    case GL_COMBINE_ALPHA:
-      if (param != GL_REPLACE && param != GL_MODULATE && param != GL_ADD && param != GL_ADD_SIGNED && param != GL_INTERPOLATE && param != GL_SUBTRACT) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvx(pname=0x%x)", pname);
-         return;
-      }
-      convert_param_value = false;
-      break;
-   case GL_RGB_SCALE:
-   case GL_ALPHA_SCALE:
-      break;
    case GL_SRC0_RGB:
    case GL_SRC1_RGB:
    case GL_SRC2_RGB:
    case GL_SRC0_ALPHA:
    case GL_SRC1_ALPHA:
    case GL_SRC2_ALPHA:
-      convert_param_value = false;
-      break;
    case GL_OPERAND0_RGB:
    case GL_OPERAND1_RGB:
    case GL_OPERAND2_RGB:
-      if (param != GL_SRC_COLOR && param != GL_ONE_MINUS_SRC_COLOR && param != GL_SRC_ALPHA && param != GL_ONE_MINUS_SRC_ALPHA) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvx(pname=0x%x)", pname);
-         return;
-      }
-      convert_param_value = false;
-      break;
    case GL_OPERAND0_ALPHA:
    case GL_OPERAND1_ALPHA:
    case GL_OPERAND2_ALPHA:
-      if (param != GL_SRC_ALPHA && param != GL_ONE_MINUS_SRC_ALPHA) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvx(pname=0x%x)", pname);
-         return;
-      }
-      convert_param_value = false;
+      _mesa_TexEnvf(target, pname, (GLfloat) param);
+      break;
+   case GL_TEXTURE_LOD_BIAS_EXT:
+   case GL_RGB_SCALE:
+   case GL_ALPHA_SCALE:
+      _mesa_TexEnvf(target, pname, (GLfloat) (param / 65536.0f));
       break;
    default:
       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
                   "glTexEnvx(pname=0x%x)", pname);
       return;
    }
-
-   if (convert_param_value) {
-      converted_param = (GLfloat) (param / 65536.0f);
-   } else {
-      converted_param = (GLfloat) param;
-   }
-
-   _mesa_TexEnvf(target, pname, converted_param);
 }
 
 void GL_APIENTRY
 _es_TexEnvxv(GLenum target, GLenum pname, const GLfixed *params)
 {
-   unsigned int i;
-   unsigned int n_params = 4;
-   GLfloat converted_params[4];
-   bool convert_params_value = true;
-
    switch(target) {
    case GL_POINT_SPRITE:
-      if (pname != GL_COORD_REPLACE) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvxv(target=0x%x)", target);
-         return;
-      }
-      break;
    case GL_TEXTURE_FILTER_CONTROL_EXT:
-      if (pname != GL_TEXTURE_LOD_BIAS_EXT) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvxv(target=0x%x)", target);
-         return;
-      }
-      break;
    case GL_TEXTURE_ENV:
-      if (pname != GL_TEXTURE_ENV_MODE && pname != GL_COMBINE_RGB && pname != GL_COMBINE_ALPHA && pname != GL_RGB_SCALE && pname != GL_ALPHA_SCALE && pname != GL_SRC0_RGB && pname != GL_SRC1_RGB && pname != GL_SRC2_RGB && pname != GL_SRC0_ALPHA && pname != GL_SRC1_ALPHA && pname != GL_SRC2_ALPHA && pname != GL_OPERAND0_RGB && pname != GL_OPERAND1_RGB && pname != GL_OPERAND2_RGB && pname != GL_OPERAND0_ALPHA && pname != GL_OPERAND1_ALPHA && pname != GL_OPERAND2_ALPHA && pname != GL_TEXTURE_ENV_COLOR) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvxv(target=0x%x)", target);
-         return;
-      }
       break;
    default:
       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
                   "glTexEnvxv(target=0x%x)", target);
       return;
    }
+
    switch(pname) {
    case GL_COORD_REPLACE:
-      if (params[0] != GL_TRUE && params[0] != GL_FALSE) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvxv(pname=0x%x)", pname);
-         return;
-      }
-      convert_params_value = false;
-      n_params = 1;
-      break;
-   case GL_TEXTURE_LOD_BIAS_EXT:
-      n_params = 1;
-      break;
    case GL_TEXTURE_ENV_MODE:
-      if (params[0] != GL_REPLACE && params[0] != GL_MODULATE && params[0] != GL_DECAL && params[0] != GL_BLEND && params[0] != GL_ADD && params[0] != GL_COMBINE) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvxv(pname=0x%x)", pname);
-         return;
-      }
-      convert_params_value = false;
-      n_params = 1;
-      break;
    case GL_COMBINE_RGB:
-      if (params[0] != GL_REPLACE && params[0] != GL_MODULATE && params[0] != GL_ADD && params[0] != GL_ADD_SIGNED && params[0] != GL_INTERPOLATE && params[0] != GL_SUBTRACT && params[0] != GL_DOT3_RGB && params[0] != GL_DOT3_RGBA) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvxv(pname=0x%x)", pname);
-         return;
-      }
-      convert_params_value = false;
-      n_params = 1;
-      break;
    case GL_COMBINE_ALPHA:
-      if (params[0] != GL_REPLACE && params[0] != GL_MODULATE && params[0] != GL_ADD && params[0] != GL_ADD_SIGNED && params[0] != GL_INTERPOLATE && params[0] != GL_SUBTRACT) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvxv(pname=0x%x)", pname);
-         return;
-      }
-      convert_params_value = false;
-      n_params = 1;
-      break;
-   case GL_RGB_SCALE:
-   case GL_ALPHA_SCALE:
-      break;
    case GL_SRC0_RGB:
    case GL_SRC1_RGB:
    case GL_SRC2_RGB:
    case GL_SRC0_ALPHA:
    case GL_SRC1_ALPHA:
    case GL_SRC2_ALPHA:
-      convert_params_value = false;
-      n_params = 1;
-      break;
    case GL_OPERAND0_RGB:
    case GL_OPERAND1_RGB:
    case GL_OPERAND2_RGB:
-      if (params[0] != GL_SRC_COLOR && params[0] != GL_ONE_MINUS_SRC_COLOR && params[0] != GL_SRC_ALPHA && params[0] != GL_ONE_MINUS_SRC_ALPHA) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvxv(pname=0x%x)", pname);
-         return;
-      }
-      convert_params_value = false;
-      n_params = 1;
-      break;
    case GL_OPERAND0_ALPHA:
    case GL_OPERAND1_ALPHA:
    case GL_OPERAND2_ALPHA:
-      if (params[0] != GL_SRC_ALPHA && params[0] != GL_ONE_MINUS_SRC_ALPHA) {
-         _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                     "glTexEnvxv(pname=0x%x)", pname);
-         return;
+      _mesa_TexEnvf(target, pname, (GLfloat) params[0]);
+      break;
+   case GL_TEXTURE_LOD_BIAS_EXT:
+   case GL_RGB_SCALE:
+   case GL_ALPHA_SCALE:
+      _mesa_TexEnvf(target, pname, (GLfloat) (params[0] / 65536.0f));
+      break;
+   case GL_TEXTURE_ENV_COLOR: {
+      unsigned int i;
+      GLfloat converted_params[4];
+
+      for (i = 0; i < Elements(converted_params); i++) {
+         converted_params[i] = (GLfloat) (params[i] / 65536.0f);
       }
-      convert_params_value = false;
-      n_params = 1;
+
+      _mesa_TexEnvfv(target, pname, converted_params);
       break;
-   case GL_TEXTURE_ENV_COLOR:
-      n_params = 4;
-      break;
+   }
    default:
       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
                   "glTexEnvxv(pname=0x%x)", pname);
       return;
    }
-
-   if (convert_params_value) {
-      for (i = 0; i < n_params; i++) {
-         converted_params[i] = (GLfloat) (params[i] / 65536.0f);
-      }
-   } else {
-      for (i = 0; i < n_params; i++) {
-         converted_params[i] = (GLfloat) params[i];
-      }
-   }
-
-   _mesa_TexEnvfv(target, pname, converted_params);
 }
 
 void GL_APIENTRY

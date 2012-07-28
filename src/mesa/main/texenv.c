@@ -122,7 +122,8 @@ set_combiner_mode(struct gl_context *ctx,
       break;
    case GL_DOT3_RGB_EXT:
    case GL_DOT3_RGBA_EXT:
-      legal = (ctx->Extensions.EXT_texture_env_dot3 &&
+      legal = (ctx->API == API_OPENGL &&
+               ctx->Extensions.EXT_texture_env_dot3 &&
                pname == GL_COMBINE_RGB);
       break;
    case GL_DOT3_RGB:
@@ -133,10 +134,12 @@ set_combiner_mode(struct gl_context *ctx,
    case GL_MODULATE_ADD_ATI:
    case GL_MODULATE_SIGNED_ADD_ATI:
    case GL_MODULATE_SUBTRACT_ATI:
-      legal = ctx->Extensions.ATI_texture_env_combine3;
+      legal = (ctx->API == API_OPENGL &&
+               ctx->Extensions.ATI_texture_env_combine3);
       break;
    case GL_BUMP_ENVMAP_ATI:
-      legal = (ctx->Extensions.ATI_envmap_bumpmap &&
+      legal = (ctx->API == API_OPENGL &&
+               ctx->Extensions.ATI_envmap_bumpmap &&
                pname == GL_COMBINE_RGB);
       break;
    default:
@@ -203,7 +206,8 @@ set_combiner_source(struct gl_context *ctx,
       return;
    }
 
-   if ((term == 3) && !ctx->Extensions.NV_texture_env_combine4) {
+   if ((term == 3) && (ctx->API != API_OPENGL
+                       || !ctx->Extensions.NV_texture_env_combine4)) {
       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
       return;
    }
@@ -232,11 +236,13 @@ set_combiner_source(struct gl_context *ctx,
                param - GL_TEXTURE0 < ctx->Const.MaxTextureUnits);
       break;
    case GL_ZERO:
-      legal = (ctx->Extensions.ATI_texture_env_combine3 ||
-               ctx->Extensions.NV_texture_env_combine4);
+      legal = (ctx->API == API_OPENGL &&
+               (ctx->Extensions.ATI_texture_env_combine3 ||
+                ctx->Extensions.NV_texture_env_combine4));
       break;
    case GL_ONE:
-      legal = ctx->Extensions.ATI_texture_env_combine3;
+      legal = (ctx->API == API_OPENGL &&
+               ctx->Extensions.ATI_texture_env_combine3);
       break;
    default:
       legal = GL_FALSE;
@@ -287,7 +293,8 @@ set_combiner_operand(struct gl_context *ctx,
       return;
    }
 
-   if ((term == 3) && !ctx->Extensions.NV_texture_env_combine4) {
+   if ((term == 3) && (ctx->API != API_OPENGL
+                       || !ctx->Extensions.NV_texture_env_combine4)) {
       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
       return;
    }
@@ -301,8 +308,8 @@ set_combiner_operand(struct gl_context *ctx,
    case GL_SRC_COLOR:
    case GL_ONE_MINUS_SRC_COLOR:
       /* The color input can only be used with GL_OPERAND[01]_RGB in the EXT
-       * version.  In the ARB and NV versions they can be used for any RGB
-       * operand.
+       * version.  In the ARB and NV versions and OpenGL ES 1.x they can be
+       * used for any RGB operand.
        */
       legal = !alpha
 	 && ((term < 2) || ctx->Extensions.ARB_texture_env_combine
@@ -311,7 +318,7 @@ set_combiner_operand(struct gl_context *ctx,
    case GL_ONE_MINUS_SRC_ALPHA:
       /* GL_ONE_MINUS_SRC_ALPHA can only be used with
        * GL_OPERAND[01]_(RGB|ALPHA) in the EXT version.  In the ARB and NV
-       * versions it can be used for any operand.
+       * versions and OpenGL ES 1.x it can be used for any operand.
        */
       legal = (term < 2) || ctx->Extensions.ARB_texture_env_combine
 	 || ctx->Extensions.NV_texture_env_combine4;
@@ -435,7 +442,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
          set_combiner_scale(ctx, texUnit, pname, param[0]);
 	 break;
       case GL_BUMP_TARGET_ATI:
-         if (!ctx->Extensions.ATI_envmap_bumpmap) {
+         if (ctx->API != API_OPENGL || !ctx->Extensions.ATI_envmap_bumpmap) {
 	    _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname=0x%x)", pname );
 	    return;
 	 }
