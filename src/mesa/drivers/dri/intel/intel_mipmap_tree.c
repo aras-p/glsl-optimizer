@@ -1448,20 +1448,22 @@ intel_miptree_unmap_depthstencil(struct intel_context *intel,
    free(map->buffer);
 }
 
-void
-intel_miptree_map(struct intel_context *intel,
-		  struct intel_mipmap_tree *mt,
-		  unsigned int level,
-		  unsigned int slice,
-		  unsigned int x,
-		  unsigned int y,
-		  unsigned int w,
-		  unsigned int h,
-		  GLbitfield mode,
-		  void **out_ptr,
-		  int *out_stride)
+static void
+intel_miptree_map_singlesample(struct intel_context *intel,
+                               struct intel_mipmap_tree *mt,
+                               unsigned int level,
+                               unsigned int slice,
+                               unsigned int x,
+                               unsigned int y,
+                               unsigned int w,
+                               unsigned int h,
+                               GLbitfield mode,
+                               void **out_ptr,
+                               int *out_stride)
 {
    struct intel_miptree_map *map;
+
+   assert(mt->num_samples <= 1);
 
    map = calloc(1, sizeof(struct intel_miptree_map));
    if (!map){
@@ -1507,13 +1509,15 @@ intel_miptree_map(struct intel_context *intel,
    }
 }
 
-void
-intel_miptree_unmap(struct intel_context *intel,
-		    struct intel_mipmap_tree *mt,
-		    unsigned int level,
-		    unsigned int slice)
+static void
+intel_miptree_unmap_singlesample(struct intel_context *intel,
+                                 struct intel_mipmap_tree *mt,
+                                 unsigned int level,
+                                 unsigned int slice)
 {
    struct intel_miptree_map *map = mt->level[level].slice[slice].map;
+
+   assert(mt->num_samples <= 1);
 
    if (!map)
       return;
@@ -1535,4 +1539,33 @@ intel_miptree_unmap(struct intel_context *intel,
 
    mt->level[level].slice[slice].map = NULL;
    free(map);
+}
+
+void
+intel_miptree_map(struct intel_context *intel,
+		  struct intel_mipmap_tree *mt,
+		  unsigned int level,
+		  unsigned int slice,
+		  unsigned int x,
+		  unsigned int y,
+		  unsigned int w,
+		  unsigned int h,
+		  GLbitfield mode,
+		  void **out_ptr,
+		  int *out_stride)
+{
+   intel_miptree_map_singlesample(intel, mt,
+                                  level, slice,
+                                  x, y, w, h,
+                                  mode,
+                                  out_ptr, out_stride);
+}
+
+void
+intel_miptree_unmap(struct intel_context *intel,
+		    struct intel_mipmap_tree *mt,
+		    unsigned int level,
+		    unsigned int slice)
+{
+   intel_miptree_unmap_singlesample(intel, mt, level, slice);
 }
