@@ -171,7 +171,7 @@ _mesa_PointParameterfv( GLenum pname, const GLfloat *params)
 	  * differ.  In ARB_point_sprite the POINT_SPRITE_R_MODE is
 	  * always ZERO.  NV_point_sprite adds the S and R modes.
 	  */
-         if (ctx->Extensions.NV_point_sprite) {
+         if (_mesa_is_desktop_gl(ctx) && ctx->Extensions.NV_point_sprite) {
             GLenum value = (GLenum) params[0];
             if (value != GL_ZERO && value != GL_S && value != GL_R) {
                _mesa_error(ctx, GL_INVALID_VALUE,

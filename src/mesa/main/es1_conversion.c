@@ -676,17 +676,6 @@ _es_Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
 void GL_APIENTRY
 _es_PointParameterx(GLenum pname, GLfixed param)
 {
-   switch(pname) {
-   case GL_POINT_SIZE_MIN:
-   case GL_POINT_SIZE_MAX:
-   case GL_POINT_FADE_THRESHOLD_SIZE:
-      break;
-   default:
-      _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
-                  "glPointParameterx(pname=0x%x)", pname);
-      return;
-   }
-
    _mesa_PointParameterf(pname, (GLfloat) (param / 65536.0f));
 }
 

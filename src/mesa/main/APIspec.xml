@@ -929,19 +929,6 @@
 			<param name="param" type="GLtype"/>
 		</vector>
 	</proto>
-
-	<desc name="pname">
-		<value name="GL_POINT_SIZE_MIN"/>
-		<value name="GL_POINT_SIZE_MAX"/>
-		<value name="GL_POINT_FADE_THRESHOLD_SIZE"/>
-
-		<desc name="params" vector_size="1"/>
-	</desc>
-
-	<desc name="pname">
-		<value name="GL_POINT_DISTANCE_ATTENUATION"/>
-		<desc name="params" vector_size="3"/>
-	</desc>
 </template>
 
 <template name="VertexAttrib">
