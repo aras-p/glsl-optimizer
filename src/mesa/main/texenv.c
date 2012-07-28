@@ -588,7 +588,7 @@ get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
       return texUnit->Combine.SourceRGB[rgb_idx];
    }
    case GL_SOURCE3_RGB_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
+      if (ctx->API == API_OPENGL && ctx->Extensions.NV_texture_env_combine4) {
          return texUnit->Combine.SourceRGB[3];
       }
       else {
@@ -602,7 +602,7 @@ get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
       return texUnit->Combine.SourceA[alpha_idx];
    }
    case GL_SOURCE3_ALPHA_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
+      if (ctx->API == API_OPENGL && ctx->Extensions.NV_texture_env_combine4) {
          return texUnit->Combine.SourceA[3];
       }
       else {
@@ -616,7 +616,7 @@ get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
       return texUnit->Combine.OperandRGB[op_rgb];
    }
    case GL_OPERAND3_RGB_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
+      if (ctx->API == API_OPENGL && ctx->Extensions.NV_texture_env_combine4) {
          return texUnit->Combine.OperandRGB[3];
       }
       else {
@@ -630,7 +630,7 @@ get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
       return texUnit->Combine.OperandA[op_alpha];
    }
    case GL_OPERAND3_ALPHA_NV:
-      if (ctx->Extensions.NV_texture_env_combine4) {
+      if (ctx->API == API_OPENGL && ctx->Extensions.NV_texture_env_combine4) {
          return texUnit->Combine.OperandA[3];
       }
       else {
@@ -643,7 +643,7 @@ get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
       return 1 << texUnit->Combine.ScaleShiftA;
    case GL_BUMP_TARGET_ATI:
       /* spec doesn't say so, but I think this should be queryable */
-      if (ctx->Extensions.ATI_envmap_bumpmap) {
+      if (ctx->API == API_OPENGL && ctx->Extensions.ATI_envmap_bumpmap) {
          return texUnit->BumpTarget;
       }
       else {
