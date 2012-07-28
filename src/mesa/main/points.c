@@ -104,81 +104,67 @@ _mesa_PointParameterfv( GLenum pname, const GLfloat *params)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   /* Drivers that support point sprites must also support point parameters.
+    * If point parameters aren't supported, then this function shouldn't even
+    * exist.
+    */
+   ASSERT(!(ctx->Extensions.ARB_point_sprite
+            || ctx->Extensions.NV_point_sprite)
+          || ctx->Extensions.EXT_point_parameters);
+
+   if (!ctx->Extensions.EXT_point_parameters) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "unsupported function called (unsupported extension)");
+      return;
+   }
+
    switch (pname) {
       case GL_DISTANCE_ATTENUATION_EXT:
-         if (ctx->Extensions.EXT_point_parameters) {
-            if (TEST_EQ_3V(ctx->Point.Params, params))
-	       return;
-	    FLUSH_VERTICES(ctx, _NEW_POINT);
-            COPY_3V(ctx->Point.Params, params);
-            ctx->Point._Attenuated = (ctx->Point.Params[0] != 1.0 ||
-                                      ctx->Point.Params[1] != 0.0 ||
-                                      ctx->Point.Params[2] != 0.0);
-
-            if (ctx->Point._Attenuated)
-               ctx->_TriangleCaps |= DD_POINT_ATTEN;
-            else
-               ctx->_TriangleCaps &= ~DD_POINT_ATTEN;
-         }
-         else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glPointParameterf[v]{EXT,ARB}(pname)");
+         if (TEST_EQ_3V(ctx->Point.Params, params))
             return;
-         }
+         FLUSH_VERTICES(ctx, _NEW_POINT);
+         COPY_3V(ctx->Point.Params, params);
+         ctx->Point._Attenuated = (ctx->Point.Params[0] != 1.0 ||
+                                   ctx->Point.Params[1] != 0.0 ||
+                                   ctx->Point.Params[2] != 0.0);
+
+         if (ctx->Point._Attenuated)
+            ctx->_TriangleCaps |= DD_POINT_ATTEN;
+         else
+            ctx->_TriangleCaps &= ~DD_POINT_ATTEN;
          break;
       case GL_POINT_SIZE_MIN_EXT:
-         if (ctx->Extensions.EXT_point_parameters) {
-            if (params[0] < 0.0F) {
-               _mesa_error( ctx, GL_INVALID_VALUE,
-                            "glPointParameterf[v]{EXT,ARB}(param)" );
-               return;
-            }
-            if (ctx->Point.MinSize == params[0])
-               return;
-            FLUSH_VERTICES(ctx, _NEW_POINT);
-            ctx->Point.MinSize = params[0];
-         }
-         else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glPointParameterf[v]{EXT,ARB}(pname)");
+         if (params[0] < 0.0F) {
+            _mesa_error( ctx, GL_INVALID_VALUE,
+                         "glPointParameterf[v]{EXT,ARB}(param)" );
             return;
          }
+         if (ctx->Point.MinSize == params[0])
+            return;
+         FLUSH_VERTICES(ctx, _NEW_POINT);
+         ctx->Point.MinSize = params[0];
          break;
       case GL_POINT_SIZE_MAX_EXT:
-         if (ctx->Extensions.EXT_point_parameters) {
-            if (params[0] < 0.0F) {
-               _mesa_error( ctx, GL_INVALID_VALUE,
-                            "glPointParameterf[v]{EXT,ARB}(param)" );
-               return;
-            }
-            if (ctx->Point.MaxSize == params[0])
-               return;
-            FLUSH_VERTICES(ctx, _NEW_POINT);
-            ctx->Point.MaxSize = params[0];
-         }
-         else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glPointParameterf[v]{EXT,ARB}(pname)");
+         if (params[0] < 0.0F) {
+            _mesa_error( ctx, GL_INVALID_VALUE,
+                         "glPointParameterf[v]{EXT,ARB}(param)" );
             return;
          }
+         if (ctx->Point.MaxSize == params[0])
+            return;
+         FLUSH_VERTICES(ctx, _NEW_POINT);
+         ctx->Point.MaxSize = params[0];
          break;
       case GL_POINT_FADE_THRESHOLD_SIZE_EXT:
-         if (ctx->Extensions.EXT_point_parameters) {
-            if (params[0] < 0.0F) {
-               _mesa_error( ctx, GL_INVALID_VALUE,
-                            "glPointParameterf[v]{EXT,ARB}(param)" );
-               return;
-            }
-            if (ctx->Point.Threshold == params[0])
-               return;
-            FLUSH_VERTICES(ctx, _NEW_POINT);
-            ctx->Point.Threshold = params[0];
-         }
-         else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glPointParameterf[v]{EXT,ARB}(pname)");
+         if (params[0] < 0.0F) {
+            _mesa_error( ctx, GL_INVALID_VALUE,
+                         "glPointParameterf[v]{EXT,ARB}(param)" );
             return;
          }
+         if (ctx->Point.Threshold == params[0])
+            return;
+         FLUSH_VERTICES(ctx, _NEW_POINT);
+         ctx->Point.Threshold = params[0];
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
          /* This is one area where ARB_point_sprite and NV_point_sprite
