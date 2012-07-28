@@ -1008,6 +1008,7 @@ enum brw_message_target {
 # define BRW_VE0_FORMAT_SHIFT		16
 # define BRW_VE0_VALID			(1 << 26)
 # define GEN6_VE0_VALID			(1 << 25)
+# define GEN6_VE0_EDGE_FLAG_ENABLE	(1 << 15)
 # define BRW_VE0_SRC_OFFSET_SHIFT	0
 # define BRW_VE1_COMPONENT_NOSTORE	0
 # define BRW_VE1_COMPONENT_STORE_SRC	1

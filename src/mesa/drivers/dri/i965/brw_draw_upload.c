@@ -366,6 +366,18 @@ static void brw_prepare_vertices(struct brw_context *brw)
    struct brw_vertex_element *upload[VERT_ATTRIB_MAX];
    GLuint nr_uploads = 0;
 
+   /* _NEW_POLYGON
+    *
+    * On gen6+, edge flags don't end up in the VUE (either in or out of the
+    * VS).  Instead, they're uploaded as the last vertex element, and the data
+    * is passed sideband through the fixed function units.  So, we need to
+    * prepare the vertex buffer for it, but it's not present in inputs_read.
+    */
+   if (intel->gen >= 6 && (ctx->Polygon.FrontMode != GL_FILL ||
+                           ctx->Polygon.BackMode != GL_FILL)) {
+      vs_inputs |= VERT_BIT_EDGEFLAG;
+   }
+
    /* First build an array of pointers to ve's in vb.inputs_read
     */
    if (0)
@@ -707,6 +719,8 @@ static void brw_emit_vertices(struct brw_context *brw)
       assert(nr_elements <= 18);
    }
 
+   struct brw_vertex_element *gen6_edgeflag_input = NULL;
+
    BEGIN_BATCH(1 + nr_elements * 2);
    OUT_BATCH((_3DSTATE_VERTEX_ELEMENTS << 16) | (2 * nr_elements - 1));
    for (i = 0; i < brw->vb.nr_enabled; i++) {
@@ -727,9 +741,19 @@ static void brw_emit_vertices(struct brw_context *brw)
        * glEdgeFlagPointer, on the other hand, gives us an unnormalized
        * integer ubyte.  Just rewrite that to convert to a float.
        */
-      if (input->attrib == VERT_ATTRIB_EDGEFLAG &&
-          format == BRW_SURFACEFORMAT_R8_UINT)
-         format = BRW_SURFACEFORMAT_R8_SSCALED;
+      if (input->attrib == VERT_ATTRIB_EDGEFLAG) {
+         /* Gen6+ passes edgeflag as sideband along with the vertex, instead
+          * of in the VUE.  We have to upload it sideband as the last vertex
+          * element according to the B-Spec.
+          */
+         if (intel->gen >= 6) {
+            gen6_edgeflag_input = input;
+            continue;
+         }
+
+         if (format == BRW_SURFACEFORMAT_R8_UINT)
+            format = BRW_SURFACEFORMAT_R8_SSCALED;
+      }
 
       switch (input->glarray->Size) {
       case 0: comp0 = BRW_VE1_COMPONENT_STORE_0;
@@ -765,6 +789,24 @@ static void brw_emit_vertices(struct brw_context *brw)
                     ((i * 4) << BRW_VE1_DST_OFFSET_SHIFT));
    }
 
+   if (intel->gen >= 6 && gen6_edgeflag_input) {
+      uint32_t format = get_surface_type(gen6_edgeflag_input->glarray->Type,
+                                         gen6_edgeflag_input->glarray->Size,
+                                         gen6_edgeflag_input->glarray->Format,
+                                         gen6_edgeflag_input->glarray->Normalized,
+                                         gen6_edgeflag_input->glarray->Integer);
+
+      OUT_BATCH((gen6_edgeflag_input->buffer << GEN6_VE0_INDEX_SHIFT) |
+                GEN6_VE0_VALID |
+                GEN6_VE0_EDGE_FLAG_ENABLE |
+                (format << BRW_VE0_FORMAT_SHIFT) |
+                (gen6_edgeflag_input->offset << BRW_VE0_SRC_OFFSET_SHIFT));
+      OUT_BATCH((BRW_VE1_COMPONENT_STORE_SRC << BRW_VE1_COMPONENT_0_SHIFT) |
+                (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_1_SHIFT) |
+                (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_2_SHIFT) |
+                (BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_3_SHIFT));
+   }
+
    if (brw->vs.prog_data->uses_vertexid) {
       uint32_t dw0 = 0, dw1 = 0;
 
@@ -793,7 +835,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 
 const struct brw_tracked_state brw_vertices = {
    .dirty = {
-      .mesa = 0,
+      .mesa = _NEW_POLYGON,
       .brw = BRW_NEW_BATCH | BRW_NEW_VERTICES,
       .cache = CACHE_NEW_VS_PROG,
    },

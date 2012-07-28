@@ -326,8 +326,10 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    }
 
    /* _NEW_POLYGON */
-   key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
-			ctx->Polygon.BackMode != GL_FILL);
+   if (intel->gen < 6) {
+      key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
+                           ctx->Polygon.BackMode != GL_FILL);
+   }
 
    /* _NEW_LIGHT | _NEW_BUFFERS */
    key.clamp_vertex_color = ctx->Light._ClampVertexColor;
