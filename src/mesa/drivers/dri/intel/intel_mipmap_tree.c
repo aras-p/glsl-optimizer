@@ -1448,6 +1448,52 @@ intel_miptree_unmap_depthstencil(struct intel_context *intel,
    free(map->buffer);
 }
 
+/**
+ * Create and attach a map to the miptree at (level, slice). Return the
+ * attached map.
+ */
+static struct intel_miptree_map*
+intel_miptree_attach_map(struct intel_mipmap_tree *mt,
+                         unsigned int level,
+                         unsigned int slice,
+                         unsigned int x,
+                         unsigned int y,
+                         unsigned int w,
+                         unsigned int h,
+                         GLbitfield mode)
+{
+   struct intel_miptree_map *map = calloc(1, sizeof(*map));
+
+   if (!map)
+      return NULL;
+
+   assert(mt->level[level].slice[slice].map == NULL);
+   mt->level[level].slice[slice].map = map;
+
+   map->mode = mode;
+   map->x = x;
+   map->y = y;
+   map->w = w;
+   map->h = h;
+
+   return map;
+}
+
+/**
+ * Release the map at (level, slice).
+ */
+static void
+intel_miptree_release_map(struct intel_mipmap_tree *mt,
+                         unsigned int level,
+                         unsigned int slice)
+{
+   struct intel_miptree_map **map;
+
+   map = &mt->level[level].slice[slice].map;
+   free(*map);
+   *map = NULL;
+}
+
 static void
 intel_miptree_map_singlesample(struct intel_context *intel,
                                struct intel_mipmap_tree *mt,
@@ -1465,20 +1511,12 @@ intel_miptree_map_singlesample(struct intel_context *intel,
 
    assert(mt->num_samples <= 1);
 
-   map = calloc(1, sizeof(struct intel_miptree_map));
+   map = intel_miptree_attach_map(mt, level, slice, x, y, w, h, mode);
    if (!map){
       *out_ptr = NULL;
       *out_stride = 0;
       return;
    }
-
-   assert(!mt->level[level].slice[slice].map);
-   mt->level[level].slice[slice].map = map;
-   map->mode = mode;
-   map->x = x;
-   map->y = y;
-   map->w = w;
-   map->h = h;
 
    intel_miptree_slice_resolve_depth(intel, mt, level, slice);
    if (map->mode & GL_MAP_WRITE_BIT) {
@@ -1503,10 +1541,8 @@ intel_miptree_map_singlesample(struct intel_context *intel,
    *out_ptr = map->ptr;
    *out_stride = map->stride;
 
-   if (map->ptr == NULL) {
-      mt->level[level].slice[slice].map = NULL;
-      free(map);
-   }
+   if (map->ptr == NULL)
+      intel_miptree_release_map(mt, level, slice);
 }
 
 static void
@@ -1537,8 +1573,7 @@ intel_miptree_unmap_singlesample(struct intel_context *intel,
       intel_miptree_unmap_gtt(intel, mt, map, level, slice);
    }
 
-   mt->level[level].slice[slice].map = NULL;
-   free(map);
+   intel_miptree_release_map(mt, level, slice);
 }
 
 void
