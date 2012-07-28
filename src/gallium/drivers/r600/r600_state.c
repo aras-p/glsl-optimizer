@@ -1684,8 +1684,10 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 		db_render_override |= S_028D10_NOOP_CULL_DISABLE(1);
 	}
 	if (a->flush_depthstencil_through_cb) {
-		db_render_control |= S_028D0C_DEPTH_COPY_ENABLE(1) |
-				     S_028D0C_STENCIL_COPY_ENABLE(1) |
+		assert(a->copy_depth || a->copy_stencil);
+
+		db_render_control |= S_028D0C_DEPTH_COPY_ENABLE(a->copy_depth) |
+				     S_028D0C_STENCIL_COPY_ENABLE(a->copy_stencil) |
 				     S_028D0C_COPY_CENTROID(1);
 	}
 

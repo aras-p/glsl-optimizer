@@ -1722,9 +1722,12 @@ static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_
 		db_count_control |= S_028004_PERFECT_ZPASS_COUNTS(1);
 		db_render_override |= S_02800C_NOOP_CULL_DISABLE(1);
 	}
+
 	if (a->flush_depthstencil_through_cb) {
-		db_render_control |= S_028000_DEPTH_COPY_ENABLE(1) |
-				     S_028000_STENCIL_COPY_ENABLE(1) |
+		assert(a->copy_depth || a->copy_stencil);
+
+		db_render_control |= S_028000_DEPTH_COPY_ENABLE(a->copy_depth) |
+				     S_028000_STENCIL_COPY_ENABLE(a->copy_stencil) |
 				     S_028000_COPY_CENTROID(1);
 	}
 

@@ -80,6 +80,7 @@ struct r600_db_misc_state {
 	struct r600_atom atom;
 	bool occlusion_query_enabled;
 	bool flush_depthstencil_through_cb;
+	bool copy_depth, copy_stencil;
 };
 
 struct r600_cb_misc_state {

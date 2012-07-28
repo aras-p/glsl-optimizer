@@ -130,6 +130,8 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 	float depth = 1.0f;
 	struct r600_resource_texture *flushed_depth_texture = staging ?
 			staging : texture->flushed_depth_texture;
+	const struct util_format_description *desc =
+		util_format_description(texture->resource.b.b.format);
 
 	if (!staging && !texture->dirty_db_mask)
 		return;
@@ -138,11 +140,11 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 	    rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
 		depth = 0.0f;
 
-	if (!rctx->db_misc_state.flush_depthstencil_through_cb) {
-		/* Enable decompression in DB_RENDER_CONTROL */
-		rctx->db_misc_state.flush_depthstencil_through_cb = true;
-		r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
-	}
+	/* Enable decompression in DB_RENDER_CONTROL */
+	rctx->db_misc_state.flush_depthstencil_through_cb = true;
+	rctx->db_misc_state.copy_depth = util_format_has_depth(desc);
+	rctx->db_misc_state.copy_stencil = util_format_has_stencil(desc);
+	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 
 	for (level = first_level; level <= last_level; level++) {
 		if (!staging && !(texture->dirty_db_mask & (1 << level)))
