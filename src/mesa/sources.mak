@@ -6,7 +6,6 @@
 # this is part of MAIN_FILES
 MAIN_ES_FILES = \
 	$(BUILDDIR)main/api_exec_es1.c \
-	$(BUILDDIR)main/api_exec_es2.c \
 	$(SRCDIR)main/es1_conversion.c
 
 MAIN_FILES = \

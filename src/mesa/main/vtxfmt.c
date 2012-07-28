@@ -218,8 +218,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
 void
 _mesa_install_exec_vtxfmt(struct gl_context *ctx, const GLvertexformat *vfmt)
 {
-   if (_mesa_is_desktop_gl(ctx))
-      install_vtxfmt( ctx, ctx->Exec, vfmt );
+   install_vtxfmt( ctx, ctx->Exec, vfmt );
 }
 
 

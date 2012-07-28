@@ -35,13 +35,10 @@ sources := \
 	main/api_exec_es1.c \
 	main/api_exec_es1_dispatch.h \
 	main/api_exec_es1_remap_helper.h \
-	main/api_exec_es2.c \
-	main/api_exec_es2_dispatch.h \
 	program/program_parse.tab.c \
 	program/lex.yy.c \
 	main/dispatch.h \
-	main/remap_helper.h \
-	main/api_exec_es2_remap_helper.h
+	main/remap_helper.h
 
 LOCAL_SRC_FILES := $(filter-out $(sources), $(LOCAL_SRC_FILES))
 
@@ -99,9 +96,6 @@ $(intermediates)/main/api_exec_%_remap_helper.h: PRIVATE_XML := -f $(glapi)/gl_a
 
 $(intermediates)/main/api_exec_es1.c: $(es_src_deps)
 	$(call es-gen, -V GLES1.1)
-
-$(intermediates)/main/api_exec_es2.c: $(es_src_deps)
-	$(call es-gen, -V GLES2.0)
 
 $(intermediates)/main/api_exec_%_dispatch.h: $(es_hdr_deps)
 	$(call es-gen, -c $* -m remap_table)

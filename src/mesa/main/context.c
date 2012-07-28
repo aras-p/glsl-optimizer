@@ -431,7 +431,7 @@ one_time_init( struct gl_context *ctx )
        * when an app is linked to libGLES*, there are not enough dynamic
        * entries.
        */
-      if (_mesa_is_desktop_gl(ctx))
+      if (_mesa_is_desktop_gl(ctx) || ctx->API == API_OPENGLES2)
          _mesa_init_remap_table();
    }
 
@@ -964,20 +964,16 @@ _mesa_initialize_context(struct gl_context *ctx,
 #if FEATURE_dispatch
    /* setup the API dispatch tables */
    switch (ctx->API) {
-#if FEATURE_GL
+#if FEATURE_GL || FEATURE_ES2
    case API_OPENGL:
    case API_OPENGL_CORE:
+   case API_OPENGLES2:
       ctx->Exec = _mesa_create_exec_table(ctx);
       break;
 #endif
 #if FEATURE_ES1
    case API_OPENGLES:
       ctx->Exec = _mesa_create_exec_table_es1();
-      break;
-#endif
-#if FEATURE_ES2
-   case API_OPENGLES2:
-      ctx->Exec = _mesa_create_exec_table_es2();
       break;
 #endif
    default:

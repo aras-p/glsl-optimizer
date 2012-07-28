@@ -51,10 +51,7 @@ BUILT_SOURCES = \
 	main/git_sha1.h \
 	main/api_exec_es1_dispatch.h \
 	main/api_exec_es1_remap_helper.h \
-	main/api_exec_es2_dispatch.h \
-	main/api_exec_es2_remap_helper.h \
 	main/api_exec_es1.c \
-	main/api_exec_es2.c \
 	program/program_parse.tab.c \
 	program/program_parse.tab.h \
 	program/lex.yy.c
@@ -70,21 +67,9 @@ main/api_exec_es1_remap_helper.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_remap_d
 
 main/api_exec_es1.o: main/api_exec_es1_dispatch.h main/api_exec_es1_remap_helper.h
 
-main/api_exec_es2_dispatch.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_dispatch_deps)
-	$(call glapi_gen_dispatch,$<,es2)
-
-main/api_exec_es2_remap_helper.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_remap_deps)
-	$(call glapi_gen_remap,$<,es2)
-
-main/api_exec_es2.o: main/api_exec_es2_dispatch.h main/api_exec_es2_remap_helper.h
-
 main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
 	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/main/es_generator.py \
 	  -S $(srcdir)/main/APIspec.xml -V GLES1.1 > $@
-
-main/api_exec_es2.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
-	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/main/es_generator.py \
-	  -S $(srcdir)/main/APIspec.xml -V GLES2.0 > $@
 
 program/program_parse.tab.c program/program_parse.tab.h: program/program_parse.y
 	$(MKDIR_P) program
