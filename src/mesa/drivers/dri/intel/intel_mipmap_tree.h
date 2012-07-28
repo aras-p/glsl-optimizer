@@ -79,6 +79,12 @@ struct intel_miptree_map {
    void *ptr;
    /** Stride of the mapping. */
    int stride;
+
+   /**
+    * intel_mipmap_tree::singlesample_mt is temporary storage that persists
+    * only for the duration of the map.
+    */
+   bool singlesample_mt_is_tmp;
 };
 
 /**
@@ -210,6 +216,18 @@ struct intel_mipmap_tree
    GLuint cpp;
    GLuint num_samples;
    bool compressed;
+
+   /**
+    * If num_samples > 0, then singlesample_width0 is the value that width0
+    * would have if instead a singlesample miptree were created. Note that,
+    * for non-interleaved msaa layouts, the two values are the same.
+    *
+    * If num_samples == 0, then singlesample_width0 is undefined.
+    */
+   uint32_t singlesample_width0;
+
+   /** \see singlesample_width0 */
+   uint32_t singlesample_height0;
 
    /**
     * For 1D array, 2D array, cube, and 2D multisampled surfaces on Gen7: true
