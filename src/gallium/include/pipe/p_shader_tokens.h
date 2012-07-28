@@ -355,6 +355,7 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_BGNSUB              100
 #define TGSI_OPCODE_ENDLOOP             101
 #define TGSI_OPCODE_ENDSUB              102
+#define TGSI_OPCODE_TXQ_LZ              103 /* TXQ for mipmap level 0 */
                                 /* gap */
 #define TGSI_OPCODE_NOP                 107
                                 /* gap */
@@ -504,8 +505,10 @@ struct tgsi_instruction_label
 #define TGSI_TEXTURE_SHADOW1D_ARRAY 11
 #define TGSI_TEXTURE_SHADOW2D_ARRAY 12
 #define TGSI_TEXTURE_SHADOWCUBE     13
-#define TGSI_TEXTURE_UNKNOWN        14
-#define TGSI_TEXTURE_COUNT          15
+#define TGSI_TEXTURE_2D_MSAA        14
+#define TGSI_TEXTURE_2D_ARRAY_MSAA  15
+#define TGSI_TEXTURE_UNKNOWN        16
+#define TGSI_TEXTURE_COUNT          17
 
 struct tgsi_instruction_texture
 {

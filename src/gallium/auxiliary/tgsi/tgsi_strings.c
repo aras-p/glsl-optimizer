@@ -97,6 +97,8 @@ const char *tgsi_texture_names[TGSI_TEXTURE_COUNT] =
    "SHADOW1D_ARRAY",
    "SHADOW2D_ARRAY",
    "SHADOWCUBE",
+   "2D_MSAA",
+   "2D_ARRAY_MSAA",
    "UNKNOWN"
 };
 
