@@ -213,7 +213,7 @@ expanded_line:
 		parser->new_line_number = $2;
 		ralloc_asprintf_rewrite_tail (&parser->output,
 					      &parser->output_length,
-					      "#line %" PRIiMAX,
+					      "#line %" PRIiMAX "\n",
 					      $2);
 	}
 |	LINE_EXPANDED integer_constant integer_constant NEWLINE {
@@ -223,7 +223,7 @@ expanded_line:
 		parser->new_source_number = $3;
 		ralloc_asprintf_rewrite_tail (&parser->output,
 					      &parser->output_length,
-					      "#line %" PRIiMAX " %" PRIiMAX,
+					      "#line %" PRIiMAX " %" PRIiMAX "\n",
 					      $2, $3);
 	}
 ;
