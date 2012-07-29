@@ -66,8 +66,13 @@
        {{ 0,  0,  0,  0}, { 0,  0,  0,  0}, {0, 0, 0, 0}, {0, 0, 0, 0}}}
 
 
+#ifdef __GNUC__
+#define NAN __builtin_nan("")
+#define INF __builtin_inf()
+#else
 #define NAN (0.0 / 0.0)
 #define INF (1.0 / 0.0)
+#endif
 
 /**
  * Test cases.
