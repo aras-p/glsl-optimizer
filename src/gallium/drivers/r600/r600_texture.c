@@ -232,7 +232,8 @@ static void r600_texture_set_array_mode(struct pipe_screen *screen,
 	}
 }
 
-static int r600_init_surface(struct radeon_surface *surface,
+static int r600_init_surface(struct r600_screen *rscreen,
+			     struct radeon_surface *surface,
 			     const struct pipe_resource *ptex,
 			     unsigned array_mode,
 			     bool is_transfer, bool is_flushed_depth)
@@ -252,11 +253,19 @@ static int r600_init_surface(struct radeon_surface *surface,
 	surface->blk_d = 1;
 	surface->array_size = 1;
 	surface->last_level = ptex->last_level;
-	surface->bpe = util_format_get_blocksize(ptex->format);
-	/* align byte per element on dword */
-	if (surface->bpe == 3) {
-		surface->bpe = 4;
+
+	if (rscreen->chip_class >= EVERGREEN &&
+	    !is_transfer && !is_flushed_depth &&
+	    ptex->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT) {
+		surface->bpe = 4; /* stencil is allocated separately on evergreen */
+	} else {
+		surface->bpe = util_format_get_blocksize(ptex->format);
+		/* align byte per element on dword */
+		if (surface->bpe == 3) {
+			surface->bpe = 4;
+		}
 	}
+
 	surface->nsamples = 1;
 	surface->flags = 0;
 	switch (array_mode) {
@@ -647,7 +656,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 		}
 	}
 
-	r = r600_init_surface(&surface, templ, array_mode,
+	r = r600_init_surface(rscreen, &surface, templ, array_mode,
 			      templ->flags & R600_RESOURCE_FLAG_TRANSFER,
 			      templ->flags & R600_RESOURCE_FLAG_FLUSHED_DEPTH);
 	if (r) {
@@ -730,7 +739,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	else
 		array_mode = 0;
 
-	r = r600_init_surface(&surface, templ, array_mode, false, false);
+	r = r600_init_surface(rscreen, &surface, templ, array_mode, false, false);
 	if (r) {
 		return NULL;
 	}
