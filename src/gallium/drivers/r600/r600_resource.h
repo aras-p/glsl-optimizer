@@ -52,7 +52,6 @@ struct r600_resource_texture {
 
 	unsigned			offset[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			pitch_in_bytes[PIPE_MAX_TEXTURE_LEVELS];  /* transfer */
-	unsigned			pitch_in_blocks[PIPE_MAX_TEXTURE_LEVELS]; /* texture resource */
 	unsigned			layer_size[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			array_mode[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			pitch_override;
@@ -61,7 +60,6 @@ struct r600_resource_texture {
 	bool				is_depth;
 	bool				is_rat;
 	unsigned			dirty_db_mask; /* each bit says if that miplevel is dirty */
-	struct r600_resource_texture    *stencil; /* Stencil is in a separate buffer on Evergreen. */
 	struct r600_resource_texture	*flushed_depth_texture;
 	boolean				is_flushing_texture;
 	struct radeon_surface		surface;
@@ -71,7 +69,6 @@ struct r600_resource_texture {
 
 struct r600_surface {
 	struct pipe_surface		base;
-	unsigned			aligned_height;
 };
 
 void r600_resource_destroy(struct pipe_screen *screen, struct pipe_resource *res);

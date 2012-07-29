@@ -156,8 +156,6 @@ struct r600_screen {
 	struct r600_tiling_info		tiling_info;
 	struct r600_pipe_fences		fences;
 
-	bool				use_surface_alloc;
-
 	/*for compute global memory binding, we allocate stuff here, instead of
 	 * buffers.
 	 * XXX: Not sure if this is the best place for global_pool.  Also,

@@ -998,49 +998,36 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 
 	endian = r600_colorformat_endian_swap(format);
 
-	if (!rscreen->use_surface_alloc) {
-		height = texture->height0;
-		depth = texture->depth0;
-		width = texture->width0;
-		pitch = align(tmp->pitch_in_blocks[0] *
-				util_format_get_blockwidth(state->format), 8);
-		array_mode = tmp->array_mode[0];
-		tile_type = tmp->tile_type;
-		tile_split = 0;
-		macro_aspect = 0;
-		bankw = 0;
-		bankh = 0;
-	} else {
-		width = tmp->surface.level[0].npix_x;
-		height = tmp->surface.level[0].npix_y;
-		depth = tmp->surface.level[0].npix_z;
-		pitch = tmp->surface.level[0].nblk_x * util_format_get_blockwidth(state->format);
-		tile_type = tmp->tile_type;
+	width = tmp->surface.level[0].npix_x;
+	height = tmp->surface.level[0].npix_y;
+	depth = tmp->surface.level[0].npix_z;
+	pitch = tmp->surface.level[0].nblk_x * util_format_get_blockwidth(state->format);
+	tile_type = tmp->tile_type;
 
-		switch (tmp->surface.level[0].mode) {
-		case RADEON_SURF_MODE_LINEAR_ALIGNED:
-			array_mode = V_028C70_ARRAY_LINEAR_ALIGNED;
-			break;
-		case RADEON_SURF_MODE_2D:
-			array_mode = V_028C70_ARRAY_2D_TILED_THIN1;
-			break;
-		case RADEON_SURF_MODE_1D:
-			array_mode = V_028C70_ARRAY_1D_TILED_THIN1;
-			break;
-		case RADEON_SURF_MODE_LINEAR:
-		default:
-			array_mode = V_028C70_ARRAY_LINEAR_GENERAL;
-			break;
-		}
-		tile_split = tmp->surface.tile_split;
-		macro_aspect = tmp->surface.mtilea;
-		bankw = tmp->surface.bankw;
-		bankh = tmp->surface.bankh;
-		tile_split = eg_tile_split(tile_split);
-		macro_aspect = eg_macro_tile_aspect(macro_aspect);
-		bankw = eg_bank_wh(bankw);
-		bankh = eg_bank_wh(bankh);
+	switch (tmp->surface.level[0].mode) {
+	case RADEON_SURF_MODE_LINEAR_ALIGNED:
+		array_mode = V_028C70_ARRAY_LINEAR_ALIGNED;
+		break;
+	case RADEON_SURF_MODE_2D:
+		array_mode = V_028C70_ARRAY_2D_TILED_THIN1;
+		break;
+	case RADEON_SURF_MODE_1D:
+		array_mode = V_028C70_ARRAY_1D_TILED_THIN1;
+		break;
+	case RADEON_SURF_MODE_LINEAR:
+	default:
+		array_mode = V_028C70_ARRAY_LINEAR_GENERAL;
+		break;
 	}
+	tile_split = tmp->surface.tile_split;
+	macro_aspect = tmp->surface.mtilea;
+	bankw = tmp->surface.bankw;
+	bankh = tmp->surface.bankh;
+	tile_split = eg_tile_split(tile_split);
+	macro_aspect = eg_macro_tile_aspect(macro_aspect);
+	bankw = eg_bank_wh(bankw);
+	bankh = eg_bank_wh(bankh);
+
 	/* 128 bit formats require tile type = 1 */
 	if (rscreen->chip_class == CAYMAN) {
 		if (util_format_get_blocksize(state->format) >= 16)
@@ -1276,66 +1263,45 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		assert(rtex);
 	}
 
-	/* XXX quite sure for dx10+ hw don't need any offset hacks */
-	if (!rscreen->use_surface_alloc) {
-		offset = r600_texture_get_offset(rtex,
-				level, state->cbufs[cb]->u.tex.first_layer);
-		pitch = rtex->pitch_in_blocks[level] / 8 - 1;
-		slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64;
-		if (slice) {
-			slice = slice - 1;
-		}
-		color_info = S_028C70_ARRAY_MODE(rtex->array_mode[level]);
-		tile_split = 0;
-		macro_aspect = 0;
-		bankw = 0;
-		bankh = 0;
-		if (rtex->array_mode[level] > V_028C70_ARRAY_LINEAR_ALIGNED) {
-			tile_type = rtex->tile_type;
-		} else {
-			/* workaround for linear buffers */
-			tile_type = 1;
-		}
-	} else {
-		offset = rtex->surface.level[level].offset;
-		if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
-			offset += rtex->surface.level[level].slice_size *
-				  state->cbufs[cb]->u.tex.first_layer;
-		}
-		pitch = (rtex->surface.level[level].nblk_x) / 8 - 1;
-		slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
-		if (slice) {
-			slice = slice - 1;
-		}
-		color_info = 0;
-		switch (rtex->surface.level[level].mode) {
-		case RADEON_SURF_MODE_LINEAR_ALIGNED:
-			color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_LINEAR_ALIGNED);
-			tile_type = 1;
-			break;
-		case RADEON_SURF_MODE_1D:
-			color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_1D_TILED_THIN1);
-			tile_type = rtex->tile_type;
-			break;
-		case RADEON_SURF_MODE_2D:
-			color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_2D_TILED_THIN1);
-			tile_type = rtex->tile_type;
-			break;
-		case RADEON_SURF_MODE_LINEAR:
-		default:
-			color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_LINEAR_GENERAL);
-			tile_type = 1;
-			break;
-		}
-		tile_split = rtex->surface.tile_split;
-		macro_aspect = rtex->surface.mtilea;
-		bankw = rtex->surface.bankw;
-		bankh = rtex->surface.bankh;
-		tile_split = eg_tile_split(tile_split);
-		macro_aspect = eg_macro_tile_aspect(macro_aspect);
-		bankw = eg_bank_wh(bankw);
-		bankh = eg_bank_wh(bankh);
+	offset = rtex->surface.level[level].offset;
+	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
+		offset += rtex->surface.level[level].slice_size *
+			  state->cbufs[cb]->u.tex.first_layer;
 	}
+	pitch = (rtex->surface.level[level].nblk_x) / 8 - 1;
+	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
+	if (slice) {
+		slice = slice - 1;
+	}
+	color_info = 0;
+	switch (rtex->surface.level[level].mode) {
+	case RADEON_SURF_MODE_LINEAR_ALIGNED:
+		color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_LINEAR_ALIGNED);
+		tile_type = 1;
+		break;
+	case RADEON_SURF_MODE_1D:
+		color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_1D_TILED_THIN1);
+		tile_type = rtex->tile_type;
+		break;
+	case RADEON_SURF_MODE_2D:
+		color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_2D_TILED_THIN1);
+		tile_type = rtex->tile_type;
+		break;
+	case RADEON_SURF_MODE_LINEAR:
+	default:
+		color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_LINEAR_GENERAL);
+		tile_type = 1;
+		break;
+	}
+	tile_split = rtex->surface.tile_split;
+	macro_aspect = rtex->surface.mtilea;
+	bankw = rtex->surface.bankw;
+	bankh = rtex->surface.bankh;
+	tile_split = eg_tile_split(tile_split);
+	macro_aspect = eg_macro_tile_aspect(macro_aspect);
+	bankw = eg_bank_wh(bankw);
+	bankh = eg_bank_wh(bankh);
+
 	/* 128 bit formats require tile type = 1 */
 	if (rscreen->chip_class == CAYMAN) {
 		if (util_format_get_blocksize(surf->base.format) >= 16)
@@ -1470,21 +1436,15 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	r600_pipe_state_add_reg(rstate,
 				R_028C68_CB_COLOR0_SLICE + cb * 0x3C,
 				S_028C68_SLICE_TILE_MAX(slice));
-	if (!rscreen->use_surface_alloc) {
+	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
 		r600_pipe_state_add_reg(rstate,
 					R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
 					0x00000000);
 	} else {
-		if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
-			r600_pipe_state_add_reg(rstate,
-						R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
-						0x00000000);
-		} else {
-			r600_pipe_state_add_reg(rstate,
-						R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
-						S_028C6C_SLICE_START(state->cbufs[cb]->u.tex.first_layer) |
-						S_028C6C_SLICE_MAX(state->cbufs[cb]->u.tex.last_layer));
-		}
+		r600_pipe_state_add_reg(rstate,
+					R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
+					S_028C6C_SLICE_START(state->cbufs[cb]->u.tex.first_layer) |
+					S_028C6C_SLICE_MAX(state->cbufs[cb]->u.tex.last_layer));
 	}
 	r600_pipe_state_add_reg_bo(rstate,
 				R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C,
@@ -1499,7 +1459,7 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 	struct r600_resource_texture *rtex;
 	struct r600_surface *surf;
 	uint64_t offset;
-	unsigned level, first_layer, pitch, slice, format, array_mode;
+	unsigned level, pitch, slice, format, array_mode;
 	unsigned macro_aspect, tile_split, bankh, bankw, z_info, nbanks;
 
 	if (state->zsbuf == NULL)
@@ -1508,54 +1468,35 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 	surf = (struct r600_surface *)state->zsbuf;
 	level = surf->base.u.tex.level;
 	rtex = (struct r600_resource_texture*)surf->base.texture;
-	first_layer = surf->base.u.tex.first_layer;
 	format = r600_translate_dbformat(surf->base.format);
 	assert(format != ~0);
 
 	offset = r600_resource_va(rctx->context.screen, surf->base.texture);
-	/* XXX remove this once tiling is properly supported */
-	if (!rscreen->use_surface_alloc) {
-		/* XXX remove this once tiling is properly supported */
-		array_mode = rtex->array_mode[level] ? rtex->array_mode[level] :
-				V_028C70_ARRAY_1D_TILED_THIN1;
-
-		offset += r600_texture_get_offset(rtex, level, first_layer);
-		pitch = (rtex->pitch_in_blocks[level] / 8) - 1;
-		slice = ((rtex->pitch_in_blocks[level] * surf->aligned_height) / 64);
-		if (slice) {
-			slice = slice - 1;
-		}
-		tile_split = 0;
-		macro_aspect = 0;
-		bankw = 0;
-		bankh = 0;
-	} else {
-		offset += rtex->surface.level[level].offset;
-		pitch = (rtex->surface.level[level].nblk_x / 8) - 1;
-		slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
-		if (slice) {
-			slice = slice - 1;
-		}
-		switch (rtex->surface.level[level].mode) {
-		case RADEON_SURF_MODE_2D:
-			array_mode = V_028C70_ARRAY_2D_TILED_THIN1;
-			break;
-		case RADEON_SURF_MODE_1D:
-		case RADEON_SURF_MODE_LINEAR_ALIGNED:
-		case RADEON_SURF_MODE_LINEAR:
-		default:
-			array_mode = V_028C70_ARRAY_1D_TILED_THIN1;
-			break;
-		}
-		tile_split = rtex->surface.tile_split;
-		macro_aspect = rtex->surface.mtilea;
-		bankw = rtex->surface.bankw;
-		bankh = rtex->surface.bankh;
-		tile_split = eg_tile_split(tile_split);
-		macro_aspect = eg_macro_tile_aspect(macro_aspect);
-		bankw = eg_bank_wh(bankw);
-		bankh = eg_bank_wh(bankh);
+	offset += rtex->surface.level[level].offset;
+	pitch = (rtex->surface.level[level].nblk_x / 8) - 1;
+	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
+	if (slice) {
+		slice = slice - 1;
 	}
+	switch (rtex->surface.level[level].mode) {
+	case RADEON_SURF_MODE_2D:
+		array_mode = V_028C70_ARRAY_2D_TILED_THIN1;
+		break;
+	case RADEON_SURF_MODE_1D:
+	case RADEON_SURF_MODE_LINEAR_ALIGNED:
+	case RADEON_SURF_MODE_LINEAR:
+	default:
+		array_mode = V_028C70_ARRAY_1D_TILED_THIN1;
+		break;
+	}
+	tile_split = rtex->surface.tile_split;
+	macro_aspect = rtex->surface.mtilea;
+	bankw = rtex->surface.bankw;
+	bankh = rtex->surface.bankh;
+	tile_split = eg_tile_split(tile_split);
+	macro_aspect = eg_macro_tile_aspect(macro_aspect);
+	bankw = eg_bank_wh(bankw);
+	bankh = eg_bank_wh(bankh);
 	nbanks = eg_num_banks(rscreen->tiling_info.num_banks);
 	offset >>= 8;
 
@@ -1571,61 +1512,38 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 				offset, &rtex->resource, RADEON_USAGE_READWRITE);
 	r600_pipe_state_add_reg_bo(rstate, R_028050_DB_Z_WRITE_BASE,
 				offset, &rtex->resource, RADEON_USAGE_READWRITE);
-	if (!rscreen->use_surface_alloc) {
-		r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW,
-					0x00000000);
-	} else {
-		r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW,
-					S_028008_SLICE_START(state->zsbuf->u.tex.first_layer) |
-					S_028008_SLICE_MAX(state->zsbuf->u.tex.last_layer));
-	}
+	r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW,
+				S_028008_SLICE_START(state->zsbuf->u.tex.first_layer) |
+				S_028008_SLICE_MAX(state->zsbuf->u.tex.last_layer));
 
-	if (rtex->stencil) {
-		uint64_t stencil_offset =
-			r600_texture_get_offset(rtex->stencil, level, first_layer);
-		unsigned stile_split;
+	if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
+		uint64_t stencil_offset = rtex->surface.stencil_offset;
+		unsigned stile_split = rtex->surface.stencil_tile_split;
 
-		stile_split = eg_tile_split(rtex->stencil->surface.tile_split);
-		stencil_offset += r600_resource_va(rctx->context.screen, (void*)rtex->stencil);
+		stile_split = eg_tile_split(stile_split);
+		stencil_offset += r600_resource_va(rctx->context.screen, surf->base.texture);
+		stencil_offset += rtex->surface.level[level].offset / 4;
 		stencil_offset >>= 8;
 
 		r600_pipe_state_add_reg_bo(rstate, R_02804C_DB_STENCIL_READ_BASE,
-					stencil_offset, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
+					stencil_offset, &rtex->resource,
+					RADEON_USAGE_READWRITE);
 		r600_pipe_state_add_reg_bo(rstate, R_028054_DB_STENCIL_WRITE_BASE,
-					stencil_offset, &rtex->stencil->resource, RADEON_USAGE_READWRITE);
+					stencil_offset, &rtex->resource,
+					RADEON_USAGE_READWRITE);
 		r600_pipe_state_add_reg_bo(rstate, R_028044_DB_STENCIL_INFO,
 					1 | S_028044_TILE_SPLIT(stile_split),
-					&rtex->stencil->resource, RADEON_USAGE_READWRITE);
+					&rtex->resource,
+					RADEON_USAGE_READWRITE);
 	} else {
-		if (rscreen->use_surface_alloc && rtex->surface.flags & RADEON_SURF_SBUFFER) {
-			uint64_t stencil_offset = rtex->surface.stencil_offset;
-			unsigned stile_split = rtex->surface.stencil_tile_split;
-
-			stile_split = eg_tile_split(stile_split);
-			stencil_offset += r600_resource_va(rctx->context.screen, surf->base.texture);
-			stencil_offset += rtex->surface.level[level].offset / 4;
-			stencil_offset >>= 8;
-
-			r600_pipe_state_add_reg_bo(rstate, R_02804C_DB_STENCIL_READ_BASE,
-						stencil_offset, &rtex->resource,
-						RADEON_USAGE_READWRITE);
-			r600_pipe_state_add_reg_bo(rstate, R_028054_DB_STENCIL_WRITE_BASE,
-						stencil_offset, &rtex->resource,
-						RADEON_USAGE_READWRITE);
-			r600_pipe_state_add_reg_bo(rstate, R_028044_DB_STENCIL_INFO,
-						1 | S_028044_TILE_SPLIT(stile_split),
-						&rtex->resource,
-						RADEON_USAGE_READWRITE);
-		} else {
-			r600_pipe_state_add_reg_bo(rstate, R_02804C_DB_STENCIL_READ_BASE,
-						offset, &rtex->resource,
-						RADEON_USAGE_READWRITE);
-			r600_pipe_state_add_reg_bo(rstate, R_028054_DB_STENCIL_WRITE_BASE,
-						offset, &rtex->resource,
-						RADEON_USAGE_READWRITE);
-			r600_pipe_state_add_reg_bo(rstate, R_028044_DB_STENCIL_INFO,
-						1, NULL, RADEON_USAGE_READWRITE);
-		}
+		r600_pipe_state_add_reg_bo(rstate, R_02804C_DB_STENCIL_READ_BASE,
+					offset, &rtex->resource,
+					RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg_bo(rstate, R_028054_DB_STENCIL_WRITE_BASE,
+					offset, &rtex->resource,
+					RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg_bo(rstate, R_028044_DB_STENCIL_INFO,
+					1, NULL, RADEON_USAGE_READWRITE);
 	}
 
 	r600_pipe_state_add_reg_bo(rstate, R_028040_DB_Z_INFO, z_info,

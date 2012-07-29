@@ -502,7 +502,7 @@ void evergreen_set_tex_resource(
 	height = view->base.texture->height0;
 	depth = view->base.texture->depth0;
 
-	pitch = align(tmp->pitch_in_blocks[0] *
+	pitch = align(tmp->surface.level[0].nblk_x *
 		util_format_get_blockwidth(tmp->real_format), 8);
 	array_mode = tmp->array_mode[0];
 	tile_type = tmp->tile_type;
