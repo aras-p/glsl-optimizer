@@ -34,13 +34,6 @@ namespace llvm
       SELECT_CC,   // Select the correct conditional instruction
       UMUL,        // 32bit unsigned multiplication
       DIV_INF,      // Divide with infinity returned on zero divisor
-      CMP,
-      IL_CC_I_GT,
-      IL_CC_I_LT,
-      IL_CC_I_GE,
-      IL_CC_I_LE,
-      IL_CC_I_EQ,
-      IL_CC_I_NE,
       RET_FLAG,
       BRANCH_COND,
       LAST_ISD_NUMBER

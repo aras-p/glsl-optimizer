@@ -96,10 +96,6 @@ def SDTIL_GenVecBuild : SDTypeProfile<1, 1, [
 def SDTIL_BRCond : SDTypeProfile<0, 2, [
     SDTCisVT<0, OtherVT>
     ]>;
-// Comparison instruction
-def SDTIL_Cmp  : SDTypeProfile<1, 3, [
-    SDTCisSameAs<0, 2>, SDTCisSameAs<2,3>, SDTCisVT<1, i32>
-    ]>;
 
 //===--------------------------------------------------------------------===//
 // Custom Selection DAG Nodes
@@ -108,11 +104,6 @@ def SDTIL_Cmp  : SDTypeProfile<1, 3, [
 // Flow Control DAG Nodes
 //===----------------------------------------------------------------------===//
 def IL_brcond      : SDNode<"AMDILISD::BRANCH_COND", SDTIL_BRCond, [SDNPHasChain]>;
-
-//===----------------------------------------------------------------------===//
-// Comparison DAG Nodes
-//===----------------------------------------------------------------------===//
-def IL_cmp       : SDNode<"AMDILISD::CMP", SDTIL_Cmp>;
 
 //===----------------------------------------------------------------------===//
 // Call/Return DAG Nodes
@@ -167,77 +158,6 @@ def ADDR : ComplexPattern<i32, 2, "SelectADDR", [], []>;
 def ADDRF : ComplexPattern<i32, 2, "SelectADDR", [frameindex], []>;
 def ADDR64 : ComplexPattern<i64, 2, "SelectADDR64", [], []>;
 def ADDR64F : ComplexPattern<i64, 2, "SelectADDR64", [frameindex], []>;
-
-
-//===----------------------------------------------------------------------===//
-// Conditional Instruction Pattern Leafs
-//===----------------------------------------------------------------------===//
-class IL_CC_Op<int N> : PatLeaf<(i32 N)>;
-def IL_CC_D_EQ  : IL_CC_Op<0>;
-def IL_CC_D_GE  : IL_CC_Op<1>;
-def IL_CC_D_LT  : IL_CC_Op<2>;
-def IL_CC_D_NE  : IL_CC_Op<3>;
-def IL_CC_F_EQ  : IL_CC_Op<4>;
-def IL_CC_F_GE  : IL_CC_Op<5>;
-def IL_CC_F_LT  : IL_CC_Op<6>;
-def IL_CC_F_NE  : IL_CC_Op<7>;
-def IL_CC_I_EQ  : IL_CC_Op<8>;
-def IL_CC_I_GE  : IL_CC_Op<9>;
-def IL_CC_I_LT  : IL_CC_Op<10>;
-def IL_CC_I_NE  : IL_CC_Op<11>;
-def IL_CC_U_GE  : IL_CC_Op<12>;
-def IL_CC_U_LT  : IL_CC_Op<13>;
-// Pseudo IL comparison instructions that aren't natively supported
-def IL_CC_F_GT  : IL_CC_Op<14>;
-def IL_CC_U_GT  : IL_CC_Op<15>;
-def IL_CC_I_GT  : IL_CC_Op<16>;
-def IL_CC_D_GT  : IL_CC_Op<17>;
-def IL_CC_F_LE  : IL_CC_Op<18>;
-def IL_CC_U_LE  : IL_CC_Op<19>;
-def IL_CC_I_LE  : IL_CC_Op<20>;
-def IL_CC_D_LE  : IL_CC_Op<21>;
-def IL_CC_F_UNE : IL_CC_Op<22>;
-def IL_CC_F_UEQ : IL_CC_Op<23>;
-def IL_CC_F_ULT : IL_CC_Op<24>;
-def IL_CC_F_UGT : IL_CC_Op<25>;
-def IL_CC_F_ULE : IL_CC_Op<26>;
-def IL_CC_F_UGE : IL_CC_Op<27>;
-def IL_CC_F_ONE : IL_CC_Op<28>;
-def IL_CC_F_OEQ : IL_CC_Op<29>;
-def IL_CC_F_OLT : IL_CC_Op<30>;
-def IL_CC_F_OGT : IL_CC_Op<31>;
-def IL_CC_F_OLE : IL_CC_Op<32>;
-def IL_CC_F_OGE : IL_CC_Op<33>;
-def IL_CC_D_UNE : IL_CC_Op<34>;
-def IL_CC_D_UEQ : IL_CC_Op<35>;
-def IL_CC_D_ULT : IL_CC_Op<36>;
-def IL_CC_D_UGT : IL_CC_Op<37>;
-def IL_CC_D_ULE : IL_CC_Op<38>;
-def IL_CC_D_UGE : IL_CC_Op<39>;
-def IL_CC_D_ONE : IL_CC_Op<30>;
-def IL_CC_D_OEQ : IL_CC_Op<41>;
-def IL_CC_D_OLT : IL_CC_Op<42>;
-def IL_CC_D_OGT : IL_CC_Op<43>;
-def IL_CC_D_OLE : IL_CC_Op<44>;
-def IL_CC_D_OGE : IL_CC_Op<45>;
-def IL_CC_U_EQ  : IL_CC_Op<46>;
-def IL_CC_U_NE  : IL_CC_Op<47>;
-def IL_CC_F_O   : IL_CC_Op<48>;
-def IL_CC_D_O   : IL_CC_Op<49>;
-def IL_CC_F_UO  : IL_CC_Op<50>;
-def IL_CC_D_UO  : IL_CC_Op<51>;
-def IL_CC_L_LE  : IL_CC_Op<52>;
-def IL_CC_L_GE  : IL_CC_Op<53>;
-def IL_CC_L_EQ  : IL_CC_Op<54>;
-def IL_CC_L_NE  : IL_CC_Op<55>;
-def IL_CC_L_LT  : IL_CC_Op<56>;
-def IL_CC_L_GT  : IL_CC_Op<57>;
-def IL_CC_UL_LE  : IL_CC_Op<58>;
-def IL_CC_UL_GE  : IL_CC_Op<59>;
-def IL_CC_UL_EQ  : IL_CC_Op<60>;
-def IL_CC_UL_NE  : IL_CC_Op<61>;
-def IL_CC_UL_LT  : IL_CC_Op<62>;
-def IL_CC_UL_GT  : IL_CC_Op<63>;
 
 //===----------------------------------------------------------------------===//
 // Instruction format classes
