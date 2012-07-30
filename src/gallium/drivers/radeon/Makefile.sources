@@ -28,7 +28,6 @@ CPP_SOURCES := \
 	AMDILNIDevice.cpp		\
 	AMDILPeepholeOptimizer.cpp	\
 	AMDILSIDevice.cpp		\
-	AMDILSubtarget.cpp		\
 	AMDGPUSubtarget.cpp		\
 	AMDGPUTargetMachine.cpp		\
 	AMDGPUISelLowering.cpp		\

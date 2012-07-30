@@ -15,7 +15,7 @@
 #include "AMDGPURegisterInfo.h"
 #include "AMDILDevices.h"
 #include "AMDILIntrinsicInfo.h"
-#include "AMDILSubtarget.h"
+#include "AMDGPUSubtarget.h"
 #include "AMDILUtilityFunctions.h"
 #include "llvm/CallingConv.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -149,7 +149,7 @@ void AMDGPUTargetLowering::InitAMDILLowering()
   size_t numIntTypes = sizeof(IntTypes) / sizeof(*IntTypes);
   size_t numVectorTypes = sizeof(VectorTypes) / sizeof(*VectorTypes);
 
-  const AMDILSubtarget &STM = getTargetMachine().getSubtarget<AMDILSubtarget>();
+  const AMDGPUSubtarget &STM = getTargetMachine().getSubtarget<AMDGPUSubtarget>();
   // These are the current register classes that are
   // supported
 

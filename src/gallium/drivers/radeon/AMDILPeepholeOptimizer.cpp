@@ -125,7 +125,7 @@ private:
 
   LLVMContext *mCTX;
   Function *mF;
-  const AMDILSubtarget *mSTM;
+  const AMDGPUSubtarget *mSTM;
   SmallVector< std::pair<CallInst *, Function *>, 16> atomicFuncs;
   SmallVector<CallInst *, 16> isConstVec;
 }; // class AMDILPeepholeOpt
@@ -275,7 +275,7 @@ AMDILPeepholeOpt::runOnFunction(Function &MF)
 {
   mChanged = false;
   mF = &MF;
-  mSTM = &TM.getSubtarget<AMDILSubtarget>();
+  mSTM = &TM.getSubtarget<AMDGPUSubtarget>();
   if (mDebug) {
     MF.dump();
   }
@@ -841,7 +841,7 @@ AMDILPeepholeOpt::optimizeBitExtract(Instruction *inst)
 bool
 AMDILPeepholeOpt::expandBFI(CallInst *CI)
 {
-  if (!CI || mSTM->calVersion() <= CAL_VERSION_SC_150) {
+  if (!CI) {
     return false;
   }
   Value *LHS = CI->getOperand(CI->getNumOperands() - 1);
@@ -880,7 +880,7 @@ AMDILPeepholeOpt::expandBFI(CallInst *CI)
 bool
 AMDILPeepholeOpt::expandBFM(CallInst *CI)
 {
-  if (!CI || mSTM->calVersion() <= CAL_VERSION_SC_150) {
+  if (!CI) {
     return false;
   }
   Value *LHS = CI->getOperand(CI->getNumOperands() - 1);

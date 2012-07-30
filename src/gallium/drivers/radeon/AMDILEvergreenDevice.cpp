@@ -13,7 +13,7 @@
 
 using namespace llvm;
 
-AMDILEvergreenDevice::AMDILEvergreenDevice(AMDILSubtarget *ST)
+AMDILEvergreenDevice::AMDILEvergreenDevice(AMDGPUSubtarget *ST)
 : AMDILDevice(ST) {
   setCaps();
   std::string name = ST->getDeviceName();
@@ -56,11 +56,7 @@ uint32_t AMDILEvergreenDevice::getResourceID(uint32_t id) const {
     break;
   case CONSTANT_ID:
   case RAW_UAV_ID:
-    if (mSTM->calVersion() >= CAL_VERSION_GLOBAL_RETURN_BUFFER) {
-      return GLOBAL_RETURN_RAW_UAV_ID;
-    } else {
-      return DEFAULT_RAW_UAV_ID;
-    }
+    return GLOBAL_RETURN_RAW_UAV_ID;
   case GLOBAL_ID:
   case ARENA_UAV_ID:
     return DEFAULT_ARENA_UAV_ID;
@@ -97,10 +93,8 @@ uint32_t AMDILEvergreenDevice::getGeneration() const {
 void AMDILEvergreenDevice::setCaps() {
   mSWBits.set(AMDILDeviceInfo::ArenaSegment);
   mHWBits.set(AMDILDeviceInfo::ArenaUAV);
-  if (mSTM->calVersion() >= CAL_VERSION_SC_140) {
-    mHWBits.set(AMDILDeviceInfo::HW64BitDivMod);
-    mSWBits.reset(AMDILDeviceInfo::HW64BitDivMod);
-  } 
+  mHWBits.set(AMDILDeviceInfo::HW64BitDivMod);
+  mSWBits.reset(AMDILDeviceInfo::HW64BitDivMod);
   mSWBits.set(AMDILDeviceInfo::Signed24BitOps);
   if (mSTM->isOverride(AMDILDeviceInfo::ByteStores)) {
     mHWBits.set(AMDILDeviceInfo::ByteStores);
@@ -116,23 +110,15 @@ void AMDILEvergreenDevice::setCaps() {
   if (mSTM->isOverride(AMDILDeviceInfo::NoAlias)) {
     mHWBits.set(AMDILDeviceInfo::NoAlias);
   }
-  if (mSTM->calVersion() > CAL_VERSION_GLOBAL_RETURN_BUFFER) {
-    mHWBits.set(AMDILDeviceInfo::CachedMem);
-  }
+  mHWBits.set(AMDILDeviceInfo::CachedMem);
   if (mSTM->isOverride(AMDILDeviceInfo::MultiUAV)) {
     mHWBits.set(AMDILDeviceInfo::MultiUAV);
   }
-  if (mSTM->calVersion() > CAL_VERSION_SC_136) {
-    mHWBits.set(AMDILDeviceInfo::ByteLDSOps);
-    mSWBits.reset(AMDILDeviceInfo::ByteLDSOps);
-    mHWBits.set(AMDILDeviceInfo::ArenaVectors);
-  } else {
-    mSWBits.set(AMDILDeviceInfo::ArenaVectors);
-  }
-  if (mSTM->calVersion() > CAL_VERSION_SC_137) {
-    mHWBits.set(AMDILDeviceInfo::LongOps);
-    mSWBits.reset(AMDILDeviceInfo::LongOps);
-  }
+  mHWBits.set(AMDILDeviceInfo::ByteLDSOps);
+  mSWBits.reset(AMDILDeviceInfo::ByteLDSOps);
+  mHWBits.set(AMDILDeviceInfo::ArenaVectors);
+  mHWBits.set(AMDILDeviceInfo::LongOps);
+  mSWBits.reset(AMDILDeviceInfo::LongOps);
   mHWBits.set(AMDILDeviceInfo::TmrReg);
 }
 
@@ -146,7 +132,7 @@ AMDILEvergreenDevice::getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) con
 #endif
 }
 
-AMDILCypressDevice::AMDILCypressDevice(AMDILSubtarget *ST)
+AMDILCypressDevice::AMDILCypressDevice(AMDGPUSubtarget *ST)
   : AMDILEvergreenDevice(ST) {
   setCaps();
 }
@@ -162,7 +148,7 @@ void AMDILCypressDevice::setCaps() {
 }
 
 
-AMDILCedarDevice::AMDILCedarDevice(AMDILSubtarget *ST)
+AMDILCedarDevice::AMDILCedarDevice(AMDGPUSubtarget *ST)
   : AMDILEvergreenDevice(ST) {
   setCaps();
 }
@@ -178,7 +164,7 @@ size_t AMDILCedarDevice::getWavefrontSize() const {
   return AMDILDevice::QuarterWavefrontSize;
 }
 
-AMDILRedwoodDevice::AMDILRedwoodDevice(AMDILSubtarget *ST)
+AMDILRedwoodDevice::AMDILRedwoodDevice(AMDGPUSubtarget *ST)
   : AMDILEvergreenDevice(ST) {
   setCaps();
 }

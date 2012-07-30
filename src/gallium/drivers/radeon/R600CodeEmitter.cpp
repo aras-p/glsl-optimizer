@@ -148,7 +148,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   TRI = static_cast<const R600RegisterInfo *>(TM->getRegisterInfo());
   const R600InstrInfo * TII = static_cast<const R600InstrInfo *>(TM->getInstrInfo());
-  const AMDILSubtarget &STM = TM->getSubtarget<AMDILSubtarget>();
+  const AMDGPUSubtarget &STM = TM->getSubtarget<AMDGPUSubtarget>();
   std::string gpu = STM.getDeviceName();
 
   if (STM.dumpCode()) {

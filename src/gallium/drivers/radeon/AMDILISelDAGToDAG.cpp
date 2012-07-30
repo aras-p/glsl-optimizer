@@ -36,7 +36,7 @@ namespace {
 class AMDILDAGToDAGISel : public SelectionDAGISel {
   // Subtarget - Keep a pointer to the AMDIL Subtarget around so that we can
   // make the right decision when generating code for different targets.
-  const AMDILSubtarget &Subtarget;
+  const AMDGPUSubtarget &Subtarget;
 public:
   AMDILDAGToDAGISel(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
   virtual ~AMDILDAGToDAGISel();
@@ -86,7 +86,7 @@ FunctionPass *llvm::createAMDILISelDag(TargetMachine &TM
 
 AMDILDAGToDAGISel::AMDILDAGToDAGISel(TargetMachine &TM
                                       AMDIL_OPT_LEVEL_DECL)
-  : SelectionDAGISel(TM AMDIL_OPT_LEVEL_VAR), Subtarget(TM.getSubtarget<AMDILSubtarget>())
+  : SelectionDAGISel(TM AMDIL_OPT_LEVEL_VAR), Subtarget(TM.getSubtarget<AMDGPUSubtarget>())
 {
 }
 

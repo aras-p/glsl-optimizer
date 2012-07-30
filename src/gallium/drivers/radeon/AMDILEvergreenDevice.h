@@ -17,10 +17,10 @@
 #ifndef _AMDILEVERGREENDEVICE_H_
 #define _AMDILEVERGREENDEVICE_H_
 #include "AMDILDevice.h"
-#include "AMDILSubtarget.h"
+#include "AMDGPUSubtarget.h"
 
 namespace llvm {
-  class AMDILSubtarget;
+  class AMDGPUSubtarget;
 //===----------------------------------------------------------------------===//
 // Evergreen generation of devices and their respective sub classes
 //===----------------------------------------------------------------------===//
@@ -32,7 +32,7 @@ namespace llvm {
 // that capabilities of the 'Juniper' cards, also known as the HD57XX.
 class AMDILEvergreenDevice : public AMDILDevice {
 public:
-  AMDILEvergreenDevice(AMDILSubtarget *ST);
+  AMDILEvergreenDevice(AMDGPUSubtarget *ST);
   virtual ~AMDILEvergreenDevice();
   virtual size_t getMaxLDSSize() const;
   virtual size_t getMaxGDSSize() const;
@@ -52,7 +52,7 @@ protected:
 // and HD59XX cards.
 class AMDILCypressDevice : public AMDILEvergreenDevice {
 public:
-  AMDILCypressDevice(AMDILSubtarget *ST);
+  AMDILCypressDevice(AMDGPUSubtarget *ST);
   virtual ~AMDILCypressDevice();
 private:
   virtual void setCaps();
@@ -65,7 +65,7 @@ private:
 // HD54XX and HD53XX series of cards.
 class AMDILCedarDevice : public AMDILEvergreenDevice {
 public:
-  AMDILCedarDevice(AMDILSubtarget *ST);
+  AMDILCedarDevice(AMDGPUSubtarget *ST);
   virtual ~AMDILCedarDevice();
   virtual size_t getWavefrontSize() const;
 private:
@@ -78,7 +78,7 @@ private:
 // the HD55XX and HD56XX series of cards.
 class AMDILRedwoodDevice : public AMDILEvergreenDevice {
 public:
-  AMDILRedwoodDevice(AMDILSubtarget *ST);
+  AMDILRedwoodDevice(AMDGPUSubtarget *ST);
   virtual ~AMDILRedwoodDevice();
   virtual size_t getWavefrontSize() const;
 private:

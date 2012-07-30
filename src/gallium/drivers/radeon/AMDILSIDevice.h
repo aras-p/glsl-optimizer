@@ -17,10 +17,10 @@
 #ifndef _AMDILSIDEVICE_H_
 #define _AMDILSIDEVICE_H_
 #include "AMDILEvergreenDevice.h"
-#include "AMDILSubtarget.h"
+#include "AMDGPUSubtarget.h"
 
 namespace llvm {
-  class AMDILSubtarget;
+  class AMDGPUSubtarget;
 //===---------------------------------------------------------------------===//
 // SI generation of devices and their respective sub classes
 //===---------------------------------------------------------------------===//
@@ -33,7 +33,7 @@ namespace llvm {
 
   class AMDILSIDevice : public AMDILEvergreenDevice {
     public:
-      AMDILSIDevice(AMDILSubtarget*);
+      AMDILSIDevice(AMDGPUSubtarget*);
       virtual ~AMDILSIDevice();
       virtual size_t getMaxLDSSize() const;
       virtual uint32_t getGeneration() const;

@@ -78,7 +78,7 @@ bool AMDGPUTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                                      DisableVerify);
   assert(fail);
 
-  const AMDILSubtarget &STM = getSubtarget<AMDILSubtarget>();
+  const AMDGPUSubtarget &STM = getSubtarget<AMDGPUSubtarget>();
   std::string gpu = STM.getDeviceName();
   if (gpu == "SI") {
     PM.add(createSICodeEmitterPass(Out));
@@ -119,7 +119,7 @@ TargetPassConfig *AMDGPUTargetMachine::createPassConfig(PassManagerBase &PM) {
 bool
 AMDGPUPassConfig::addPreISel()
 {
-  const AMDILSubtarget &ST = TM->getSubtarget<AMDILSubtarget>();
+  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
   if (ST.device()->getGeneration() <= AMDILDeviceInfo::HD6XXX) {
     PM->add(createR600KernelParametersPass(
                      getAMDGPUTargetMachine().getTargetData()));
@@ -134,7 +134,7 @@ bool AMDGPUPassConfig::addInstSelector() {
 }
 
 bool AMDGPUPassConfig::addPreRegAlloc() {
-  const AMDILSubtarget &ST = TM->getSubtarget<AMDILSubtarget>();
+  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
 
   if (ST.device()->getGeneration() > AMDILDeviceInfo::HD6XXX) {
     PM->add(createSIAssignInterpRegsPass(*TM));

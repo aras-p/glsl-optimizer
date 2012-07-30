@@ -7,6 +7,7 @@
 //
 //==-----------------------------------------------------------------------===//
 #include "AMDIL7XXDevice.h"
+#include "AMDGPUSubtarget.h"
 #ifdef UPSTREAM_LLVM
 #include "AMDIL7XXAsmPrinter.h"
 #endif
@@ -14,7 +15,7 @@
 
 using namespace llvm;
 
-AMDIL7XXDevice::AMDIL7XXDevice(AMDILSubtarget *ST) : AMDILDevice(ST)
+AMDIL7XXDevice::AMDIL7XXDevice(AMDGPUSubtarget *ST) : AMDILDevice(ST)
 {
   setCaps();
   std::string name = mSTM->getDeviceName();
@@ -101,7 +102,7 @@ AMDIL7XXDevice::getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const
 #endif
 }
 
-AMDIL770Device::AMDIL770Device(AMDILSubtarget *ST): AMDIL7XXDevice(ST)
+AMDIL770Device::AMDIL770Device(AMDGPUSubtarget *ST): AMDIL7XXDevice(ST)
 {
   setCaps();
 }
@@ -127,7 +128,7 @@ size_t AMDIL770Device::getWavefrontSize() const
   return AMDILDevice::WavefrontSize;
 }
 
-AMDIL710Device::AMDIL710Device(AMDILSubtarget *ST) : AMDIL7XXDevice(ST)
+AMDIL710Device::AMDIL710Device(AMDGPUSubtarget *ST) : AMDIL7XXDevice(ST)
 {
 }
 

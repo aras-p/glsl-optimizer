@@ -15,7 +15,7 @@
 namespace llvm
 {
   class AMDILDevice;
-  class AMDILSubtarget;
+  class AMDGPUSubtarget;
   namespace AMDILDeviceInfo
   {
     // Each Capabilities can be executed using a hardware instruction,
@@ -83,7 +83,8 @@ namespace llvm
 
 
   AMDILDevice*
-    getDeviceFromName(const std::string &name, AMDILSubtarget *ptr, bool is64bit = false, bool is64on32bit = false);
+    getDeviceFromName(const std::string &name, AMDGPUSubtarget *ptr,
+                      bool is64bit = false, bool is64on32bit = false);
   } // namespace AMDILDeviceInfo
 } // namespace llvm
 #endif // _AMDILDEVICEINFO_H_

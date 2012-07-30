@@ -17,10 +17,10 @@
 #ifndef _AMDILNIDEVICE_H_
 #define _AMDILNIDEVICE_H_
 #include "AMDILEvergreenDevice.h"
-#include "AMDILSubtarget.h"
+#include "AMDGPUSubtarget.h"
 
 namespace llvm {
-  class AMDILSubtarget;
+  class AMDGPUSubtarget;
 //===---------------------------------------------------------------------===//
 // NI generation of devices and their respective sub classes
 //===---------------------------------------------------------------------===//
@@ -33,7 +33,7 @@ namespace llvm {
 
   class AMDILNIDevice : public AMDILEvergreenDevice {
     public:
-      AMDILNIDevice(AMDILSubtarget*);
+      AMDILNIDevice(AMDGPUSubtarget*);
       virtual ~AMDILNIDevice();
       virtual size_t getMaxLDSSize() const;
       virtual uint32_t getGeneration() const;
@@ -48,7 +48,7 @@ namespace llvm {
      
   class AMDILCaymanDevice: public AMDILNIDevice {
     public:
-      AMDILCaymanDevice(AMDILSubtarget*);
+      AMDILCaymanDevice(AMDGPUSubtarget*);
       virtual ~AMDILCaymanDevice();
     private:
       virtual void setCaps();

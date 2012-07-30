@@ -8,11 +8,11 @@
 //==-----------------------------------------------------------------------===//
 #include "AMDILNIDevice.h"
 #include "AMDILEvergreenDevice.h"
-#include "AMDILSubtarget.h"
+#include "AMDGPUSubtarget.h"
 
 using namespace llvm;
 
-AMDILNIDevice::AMDILNIDevice(AMDILSubtarget *ST)
+AMDILNIDevice::AMDILNIDevice(AMDGPUSubtarget *ST)
   : AMDILEvergreenDevice(ST)
 {
   std::string name = ST->getDeviceName();
@@ -47,7 +47,7 @@ AMDILNIDevice::getGeneration() const
 }
 
 
-AMDILCaymanDevice::AMDILCaymanDevice(AMDILSubtarget *ST)
+AMDILCaymanDevice::AMDILCaymanDevice(AMDGPUSubtarget *ST)
   : AMDILNIDevice(ST)
 {
   setCaps();

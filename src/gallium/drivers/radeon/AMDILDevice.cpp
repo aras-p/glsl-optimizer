@@ -7,11 +7,11 @@
 //
 //==-----------------------------------------------------------------------===//
 #include "AMDILDevice.h"
-#include "AMDILSubtarget.h"
+#include "AMDGPUSubtarget.h"
 
 using namespace llvm;
 // Default implementation for all of the classes.
-AMDILDevice::AMDILDevice(AMDILSubtarget *ST) : mSTM(ST)
+AMDILDevice::AMDILDevice(AMDGPUSubtarget *ST) : mSTM(ST)
 {
   mHWBits.resize(AMDILDeviceInfo::MaxNumberCapabilities);
   mSWBits.resize(AMDILDeviceInfo::MaxNumberCapabilities);

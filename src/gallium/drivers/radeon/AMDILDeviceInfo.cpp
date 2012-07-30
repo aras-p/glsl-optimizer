@@ -11,13 +11,14 @@
 //
 //==-----------------------------------------------------------------------===//
 #include "AMDILDevices.h"
-#include "AMDILSubtarget.h"
+#include "AMDGPUSubtarget.h"
 
 using namespace llvm;
 namespace llvm {
 namespace AMDILDeviceInfo {
     AMDILDevice*
-getDeviceFromName(const std::string &deviceName, AMDILSubtarget *ptr, bool is64bit, bool is64on32bit)
+getDeviceFromName(const std::string &deviceName, AMDGPUSubtarget *ptr,
+                  bool is64bit, bool is64on32bit)
 {
     if (deviceName.c_str()[2] == '7') {
         switch (deviceName.c_str()[3]) {

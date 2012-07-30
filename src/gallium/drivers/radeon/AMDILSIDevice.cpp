@@ -9,11 +9,11 @@
 #include "AMDILSIDevice.h"
 #include "AMDILEvergreenDevice.h"
 #include "AMDILNIDevice.h"
-#include "AMDILSubtarget.h"
+#include "AMDGPUSubtarget.h"
 
 using namespace llvm;
 
-AMDILSIDevice::AMDILSIDevice(AMDILSubtarget *ST)
+AMDILSIDevice::AMDILSIDevice(AMDGPUSubtarget *ST)
   : AMDILEvergreenDevice(ST)
 {
 }

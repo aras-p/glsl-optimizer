@@ -20,7 +20,7 @@
 #include "llvm/ADT/BitVector.h"
 
 namespace llvm {
-  class AMDILSubtarget;
+  class AMDGPUSubtarget;
   class AMDILAsmPrinter;
   class AMDILPointerManager;
   class AsmPrinter;
@@ -30,7 +30,7 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 class AMDILDevice {
 public:
-  AMDILDevice(AMDILSubtarget *ST);
+  AMDILDevice(AMDGPUSubtarget *ST);
   virtual ~AMDILDevice();
 
   // Enum values for the various memory types.
@@ -111,7 +111,7 @@ protected:
   virtual void setCaps();
   llvm::BitVector mHWBits;
   llvm::BitVector mSWBits;
-  AMDILSubtarget *mSTM;
+  AMDGPUSubtarget *mSTM;
   uint32_t mDeviceFlag;
 private:
   AMDILDeviceInfo::ExecutionMode

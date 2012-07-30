@@ -13,7 +13,7 @@
 
 #include "R600InstrInfo.h"
 #include "AMDGPUTargetMachine.h"
-#include "AMDILSubtarget.h"
+#include "AMDGPUSubtarget.h"
 #include "R600RegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 
@@ -103,5 +103,5 @@ DFAPacketizer *R600InstrInfo::CreateTargetScheduleState(const TargetMachine *TM,
     const ScheduleDAG *DAG) const
 {
   const InstrItineraryData *II = TM->getInstrItineraryData();
-  return TM->getSubtarget<AMDILSubtarget>().createDFAPacketizer(II);
+  return TM->getSubtarget<AMDGPUSubtarget>().createDFAPacketizer(II);
 }

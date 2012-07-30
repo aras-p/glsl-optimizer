@@ -171,7 +171,7 @@ void SICodeEmitter::InitProgramInfo(MachineFunction &MF) {
 bool SICodeEmitter::runOnMachineFunction(MachineFunction &MF)
 {
   TM = &MF.getTarget();
-  const AMDILSubtarget &STM = TM->getSubtarget<AMDILSubtarget>();
+  const AMDGPUSubtarget &STM = TM->getSubtarget<AMDGPUSubtarget>();
 
   if (STM.dumpCode()) {
     MF.dump();

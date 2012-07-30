@@ -17,10 +17,9 @@
 #ifndef _AMDIL7XXDEVICEIMPL_H_
 #define _AMDIL7XXDEVICEIMPL_H_
 #include "AMDILDevice.h"
-#include "AMDILSubtarget.h"
 
 namespace llvm {
-class AMDILSubtarget;
+class AMDGPUSubtarget;
 
 //===----------------------------------------------------------------------===//
 // 7XX generation of devices and their respective sub classes
@@ -32,7 +31,7 @@ class AMDILSubtarget;
 // compliant and nothing more.
 class AMDIL7XXDevice : public AMDILDevice {
 public:
-  AMDIL7XXDevice(AMDILSubtarget *ST);
+  AMDIL7XXDevice(AMDGPUSubtarget *ST);
   virtual ~AMDIL7XXDevice();
   virtual size_t getMaxLDSSize() const;
   virtual size_t getWavefrontSize() const;
@@ -52,7 +51,7 @@ protected:
 // and has a larger wavefront size.
 class AMDIL770Device : public AMDIL7XXDevice {
 public:
-  AMDIL770Device(AMDILSubtarget *ST);
+  AMDIL770Device(AMDGPUSubtarget *ST);
   virtual ~AMDIL770Device();
   virtual size_t getWavefrontSize() const;
 private:
@@ -64,7 +63,7 @@ private:
 // functions in order to correctly specify this information.
 class AMDIL710Device : public AMDIL7XXDevice {
 public:
-  AMDIL710Device(AMDILSubtarget *ST);
+  AMDIL710Device(AMDGPUSubtarget *ST);
   virtual ~AMDIL710Device();
   virtual size_t getWavefrontSize() const;
 }; // AMDIL710Device
