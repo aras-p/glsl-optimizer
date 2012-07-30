@@ -81,7 +81,7 @@ const unsigned int RESERVED_FUNCS = 1024;
 #define AMDIL_OPT_LEVEL_VAR_NO_COMMA
 
 namespace llvm {
-class AMDILInstrPrinter;
+class AMDGPUInstrPrinter;
 class FunctionPass;
 class MCAsmInfo;
 class raw_ostream;
@@ -90,15 +90,15 @@ class TargetMachine;
 
 /// Instruction selection passes.
 FunctionPass*
-  createAMDILISelDag(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
+  createAMDGPUISelDag(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 FunctionPass*
-  createAMDILPeepholeOpt(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
+  createAMDGPUPeepholeOpt(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 
 /// Pre emit passes.
 FunctionPass*
-  createAMDILCFGPreparationPass(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
+  createAMDGPUCFGPreparationPass(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 FunctionPass*
-  createAMDILCFGStructurizerPass(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
+  createAMDGPUCFGStructurizerPass(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
 
 extern Target TheAMDILTarget;
 extern Target TheAMDGPUTarget;
@@ -114,7 +114,7 @@ namespace llvm {
 /// however on the GPU, each address space points to
 /// a seperate piece of memory that is unique from other
 /// memory locations.
-namespace AMDILAS {
+namespace AMDGPUAS {
 enum AddressSpaces {
   PRIVATE_ADDRESS  = 0, // Address space for private memory.
   GLOBAL_ADDRESS   = 1, // Address space for global memory (RAT0, VTX0).
@@ -165,7 +165,7 @@ typedef union ResourceRec {
   unsigned short u16all;
 } InstrResEnc;
 
-} // namespace AMDILAS
+} // namespace AMDGPUAS
 
 } // end namespace llvm
 #endif // AMDIL_H_

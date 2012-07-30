@@ -430,7 +430,7 @@ bool CFGStructurizer<PassT>::prepare(FuncT &func, PassT &pass,
   //to do, if not reducible flow graph, make it so ???
 
   if (DEBUGME) {
-        errs() << "AMDILCFGStructurizer::prepare\n";
+        errs() << "AMDGPUCFGStructurizer::prepare\n";
     //func.viewCFG();
     //func.viewCFGOnly();
     //func.dump();
@@ -517,7 +517,7 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
 
   //Assume reducible CFG...
   if (DEBUGME) {
-    errs() << "AMDILCFGStructurizer::run\n";
+    errs() << "AMDGPUCFGStructurizer::run\n";
     //errs() << func.getFunction()->getNameStr() << "\n";
     func.viewCFG();
     //func.viewCFGOnly();
@@ -2104,7 +2104,7 @@ void CFGStructurizer<PassT>::migrateInstruction(BlockT *srcBlk,
                                                 BlockT *dstBlk,
                                                 InstrIterator insertPos) {
   InstrIterator spliceEnd;
-  //look for the input branchinstr, not the AMDIL branchinstr
+  //look for the input branchinstr, not the AMDGPU branchinstr
   InstrT *branchInstr = CFGTraits::getNormalBlockBranchInstr(srcBlk);
   if (branchInstr == NULL) {
     if (DEBUGME) {
@@ -2609,7 +2609,7 @@ CFGStructurizer<PassT>::findNearestCommonPostDom
 
 //===----------------------------------------------------------------------===//
 //
-// CFGStructurizer for AMDIL
+// CFGStructurizer for AMDGPU
 //
 //===----------------------------------------------------------------------===//
 
@@ -2618,7 +2618,7 @@ using namespace llvmCFGStruct;
 
 namespace llvm
 {
-class AMDILCFGStructurizer : public MachineFunctionPass
+class AMDGPUCFGStructurizer : public MachineFunctionPass
 {
 public:
   typedef MachineInstr              InstructionType;
@@ -2636,24 +2636,24 @@ protected:
   const AMDGPURegisterInfo *TRI;
 
 public:
-  AMDILCFGStructurizer(char &pid, TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
+  AMDGPUCFGStructurizer(char &pid, TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
   const TargetInstrInfo *getTargetInstrInfo() const;
   //bool runOnMachineFunction(MachineFunction &F);
 
 private:
 
-};   //end of class AMDILCFGStructurizer
+};   //end of class AMDGPUCFGStructurizer
 
-//char AMDILCFGStructurizer::ID = 0;
+//char AMDGPUCFGStructurizer::ID = 0;
 } //end of namespace llvm
-AMDILCFGStructurizer::AMDILCFGStructurizer(char &pid, TargetMachine &tm
+AMDGPUCFGStructurizer::AMDGPUCFGStructurizer(char &pid, TargetMachine &tm
                                            AMDIL_OPT_LEVEL_DECL)
 : MachineFunctionPass(pid), TM(tm), TII(tm.getInstrInfo()),
   TRI(static_cast<const AMDGPURegisterInfo *>(tm.getRegisterInfo())
   ) {
 }
 
-const TargetInstrInfo *AMDILCFGStructurizer::getTargetInstrInfo() const {
+const TargetInstrInfo *AMDGPUCFGStructurizer::getTargetInstrInfo() const {
   return TII;
 }
 //===----------------------------------------------------------------------===//
@@ -2667,13 +2667,13 @@ using namespace llvmCFGStruct;
 
 namespace llvm
 {
-class AMDILCFGPrepare : public AMDILCFGStructurizer
+class AMDGPUCFGPrepare : public AMDGPUCFGStructurizer
 {
 public:
   static char ID;
 
 public:
-  AMDILCFGPrepare(TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
+  AMDGPUCFGPrepare(TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
 
   virtual const char *getPassName() const;
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -2682,20 +2682,20 @@ public:
 
 private:
 
-};   //end of class AMDILCFGPrepare
+};   //end of class AMDGPUCFGPrepare
 
-char AMDILCFGPrepare::ID = 0;
+char AMDGPUCFGPrepare::ID = 0;
 } //end of namespace llvm
 
-AMDILCFGPrepare::AMDILCFGPrepare(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
-  : AMDILCFGStructurizer(ID, tm  AMDIL_OPT_LEVEL_VAR) 
+AMDGPUCFGPrepare::AMDGPUCFGPrepare(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
+  : AMDGPUCFGStructurizer(ID, tm  AMDIL_OPT_LEVEL_VAR) 
 {
 }
-const char *AMDILCFGPrepare::getPassName() const {
+const char *AMDGPUCFGPrepare::getPassName() const {
   return "AMD IL Control Flow Graph Preparation Pass";
 }
 
-void AMDILCFGPrepare::getAnalysisUsage(AnalysisUsage &AU) const {
+void AMDGPUCFGPrepare::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<MachineFunctionAnalysis>();
   AU.addRequired<MachineFunctionAnalysis>();
   AU.addRequired<MachineDominatorTree>();
@@ -2714,34 +2714,34 @@ using namespace llvmCFGStruct;
 
 namespace llvm
 {
-class AMDILCFGPerform : public AMDILCFGStructurizer
+class AMDGPUCFGPerform : public AMDGPUCFGStructurizer
 {
 public:
   static char ID;
 
 public:
-  AMDILCFGPerform(TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
+  AMDGPUCFGPerform(TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
   virtual const char *getPassName() const;
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   bool runOnMachineFunction(MachineFunction &F);
 
 private:
 
-};   //end of class AMDILCFGPerform
+};   //end of class AMDGPUCFGPerform
 
-char AMDILCFGPerform::ID = 0;
+char AMDGPUCFGPerform::ID = 0;
 } //end of namespace llvm
 
-  AMDILCFGPerform::AMDILCFGPerform(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
-: AMDILCFGStructurizer(ID, tm AMDIL_OPT_LEVEL_VAR)
+  AMDGPUCFGPerform::AMDGPUCFGPerform(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
+: AMDGPUCFGStructurizer(ID, tm AMDIL_OPT_LEVEL_VAR)
 {
 }
 
-const char *AMDILCFGPerform::getPassName() const {
+const char *AMDGPUCFGPerform::getPassName() const {
   return "AMD IL Control Flow Graph structurizer Pass";
 }
 
-void AMDILCFGPerform::getAnalysisUsage(AnalysisUsage &AU) const {
+void AMDGPUCFGPerform::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<MachineFunctionAnalysis>();
   AU.addRequired<MachineFunctionAnalysis>();
   AU.addRequired<MachineDominatorTree>();
@@ -2751,15 +2751,15 @@ void AMDILCFGPerform::getAnalysisUsage(AnalysisUsage &AU) const {
 
 //===----------------------------------------------------------------------===//
 //
-// CFGStructTraits<AMDILCFGStructurizer>
+// CFGStructTraits<AMDGPUCFGStructurizer>
 //
 //===----------------------------------------------------------------------===//
 
 namespace llvmCFGStruct
 {
-// this class is tailor to the AMDIL backend
+// this class is tailor to the AMDGPU backend
 template<>
-struct CFGStructTraits<AMDILCFGStructurizer>
+struct CFGStructTraits<AMDGPUCFGStructurizer>
 {
   typedef int RegiT;
 
@@ -2971,12 +2971,12 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   }//getInstrPos
 
   static MachineInstr *insertInstrBefore(MachineBasicBlock *blk, int newOpcode,
-                                         AMDILCFGStructurizer *passRep) {
+                                         AMDGPUCFGStructurizer *passRep) {
     return insertInstrBefore(blk,newOpcode,passRep,DebugLoc());
   } //insertInstrBefore
 
   static MachineInstr *insertInstrBefore(MachineBasicBlock *blk, int newOpcode,
-                                         AMDILCFGStructurizer *passRep, DebugLoc DL) {
+                                         AMDGPUCFGStructurizer *passRep, DebugLoc DL) {
     const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
     MachineInstr *newInstr =
       blk->getParent()->CreateMachineInstr(tii->get(newOpcode), DL);
@@ -2994,12 +2994,12 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   } //insertInstrBefore
 
   static void insertInstrEnd(MachineBasicBlock *blk, int newOpcode,
-                             AMDILCFGStructurizer *passRep) {
+                             AMDGPUCFGStructurizer *passRep) {
     insertInstrEnd(blk,newOpcode,passRep,DebugLoc());
   } //insertInstrEnd
 
   static void insertInstrEnd(MachineBasicBlock *blk, int newOpcode,
-                             AMDILCFGStructurizer *passRep, DebugLoc DL) {
+                             AMDGPUCFGStructurizer *passRep, DebugLoc DL) {
     const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
    MachineInstr *newInstr = blk->getParent()
       ->CreateMachineInstr(tii->get(newOpcode), DL);
@@ -3012,7 +3012,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
 
   static MachineInstr *insertInstrBefore(MachineBasicBlock::iterator instrPos,
                                          int newOpcode, 
-                                         AMDILCFGStructurizer *passRep) {
+                                         AMDGPUCFGStructurizer *passRep) {
     MachineInstr *oldInstr = &(*instrPos);
     const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
     MachineBasicBlock *blk = oldInstr->getParent();
@@ -3029,7 +3029,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
 
   static void insertCondBranchBefore(MachineBasicBlock::iterator instrPos,
                                      int newOpcode,
-                                     AMDILCFGStructurizer *passRep,
+                                     AMDGPUCFGStructurizer *passRep,
 									 DebugLoc DL) {
     MachineInstr *oldInstr = &(*instrPos);
     const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
@@ -3049,7 +3049,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   static void insertCondBranchBefore(MachineBasicBlock *blk,
                                      MachineBasicBlock::iterator insertPos,
                                      int newOpcode,
-                                     AMDILCFGStructurizer *passRep,
+                                     AMDGPUCFGStructurizer *passRep,
                                      RegiT regNum,
 									 DebugLoc DL) {
     const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
@@ -3066,7 +3066,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
 
   static void insertCondBranchEnd(MachineBasicBlock *blk,
                                   int newOpcode,
-                                  AMDILCFGStructurizer *passRep,
+                                  AMDGPUCFGStructurizer *passRep,
                                   RegiT regNum) {
     const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
     MachineInstr *newInstr =
@@ -3080,7 +3080,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
 
 
   static void insertAssignInstrBefore(MachineBasicBlock::iterator instrPos,
-                                      AMDILCFGStructurizer *passRep,
+                                      AMDGPUCFGStructurizer *passRep,
                                       RegiT regNum, int regVal) {
     MachineInstr *oldInstr = &(*instrPos);
     const AMDGPUInstrInfo *tii =
@@ -3094,7 +3094,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   } //insertAssignInstrBefore
 
   static void insertAssignInstrBefore(MachineBasicBlock *blk,
-                                      AMDILCFGStructurizer *passRep,
+                                      AMDGPUCFGStructurizer *passRep,
                                       RegiT regNum, int regVal) {
     const AMDGPUInstrInfo *tii =
              static_cast<const AMDGPUInstrInfo *>(passRep->getTargetInstrInfo());
@@ -3113,7 +3113,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
 
   static void insertCompareInstrBefore(MachineBasicBlock *blk,
                                        MachineBasicBlock::iterator instrPos,
-                                       AMDILCFGStructurizer *passRep,
+                                       AMDGPUCFGStructurizer *passRep,
                                        RegiT dstReg, RegiT src1Reg,
                                        RegiT src2Reg) {
     const AMDGPUInstrInfo *tii =
@@ -3153,7 +3153,7 @@ struct CFGStructTraits<AMDILCFGStructurizer>
   }
 
   //MachineBasicBlock::ReplaceUsesOfBlockWith doesn't serve the purpose because
-  //the AMDIL instruction is not recognized as terminator fix this and retire
+  //the AMDGPU instruction is not recognized as terminator fix this and retire
   //this routine
   static void replaceInstrUseOfBlockWith(MachineBasicBlock *srcBlk,
                                          MachineBasicBlock *oldBlk,
@@ -3196,41 +3196,41 @@ struct CFGStructTraits<AMDILCFGStructurizer>
 
   } //wrapup
 
-  static MachineDominatorTree *getDominatorTree(AMDILCFGStructurizer &pass) {
+  static MachineDominatorTree *getDominatorTree(AMDGPUCFGStructurizer &pass) {
     return &pass.getAnalysis<MachineDominatorTree>();
   }
 
   static MachinePostDominatorTree*
-  getPostDominatorTree(AMDILCFGStructurizer &pass) {
+  getPostDominatorTree(AMDGPUCFGStructurizer &pass) {
     return &pass.getAnalysis<MachinePostDominatorTree>();
   }
 
-  static MachineLoopInfo *getLoopInfo(AMDILCFGStructurizer &pass) {
+  static MachineLoopInfo *getLoopInfo(AMDGPUCFGStructurizer &pass) {
     return &pass.getAnalysis<MachineLoopInfo>();
   }
 }; // template class CFGStructTraits
 } //end of namespace llvm
 
-// createAMDILCFGPreparationPass- Returns a pass
-FunctionPass *llvm::createAMDILCFGPreparationPass(TargetMachine &tm
+// createAMDGPUCFGPreparationPass- Returns a pass
+FunctionPass *llvm::createAMDGPUCFGPreparationPass(TargetMachine &tm
                                                   AMDIL_OPT_LEVEL_DECL) {
-  return new AMDILCFGPrepare(tm  AMDIL_OPT_LEVEL_VAR);
+  return new AMDGPUCFGPrepare(tm  AMDIL_OPT_LEVEL_VAR);
 }
 
-bool AMDILCFGPrepare::runOnMachineFunction(MachineFunction &func) {
-  return llvmCFGStruct::CFGStructurizer<AMDILCFGStructurizer>().prepare(func,
+bool AMDGPUCFGPrepare::runOnMachineFunction(MachineFunction &func) {
+  return llvmCFGStruct::CFGStructurizer<AMDGPUCFGStructurizer>().prepare(func,
                                                                         *this,
                                                                         TRI);
 }
 
-// createAMDILCFGStructurizerPass- Returns a pass
-FunctionPass *llvm::createAMDILCFGStructurizerPass(TargetMachine &tm
+// createAMDGPUCFGStructurizerPass- Returns a pass
+FunctionPass *llvm::createAMDGPUCFGStructurizerPass(TargetMachine &tm
                                                    AMDIL_OPT_LEVEL_DECL) {
-  return new AMDILCFGPerform(tm  AMDIL_OPT_LEVEL_VAR);
+  return new AMDGPUCFGPerform(tm  AMDIL_OPT_LEVEL_VAR);
 }
 
-bool AMDILCFGPerform::runOnMachineFunction(MachineFunction &func) {
-  return llvmCFGStruct::CFGStructurizer<AMDILCFGStructurizer>().run(func,
+bool AMDGPUCFGPerform::runOnMachineFunction(MachineFunction &func) {
+  return llvmCFGStruct::CFGStructurizer<AMDGPUCFGStructurizer>().run(func,
                                                                     *this,
                                                                     TRI);
 }

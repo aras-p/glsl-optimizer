@@ -193,7 +193,7 @@ def load_param : PatFrag<(ops node:$ptr),
                            const Value *Src = cast<LoadSDNode>(N)->getSrcValue();
                            if (Src) {
                                 PointerType * PT = dyn_cast<PointerType>(Src->getType());
-                                return PT && PT->getAddressSpace() == AMDILAS::PARAM_I_ADDRESS;
+                                return PT && PT->getAddressSpace() == AMDGPUAS::PARAM_I_ADDRESS;
                            }
                            return false;
                           }]>;
@@ -229,23 +229,23 @@ def load_param : PatFrag<(ops node:$ptr),
 //}
 */
 def isR600 : Predicate<"Subtarget.device()"
-                            "->getGeneration() == AMDILDeviceInfo::HD4XXX">;
+                            "->getGeneration() == AMDGPUDeviceInfo::HD4XXX">;
 def isR700 : Predicate<"Subtarget.device()"
-                            "->getGeneration() == AMDILDeviceInfo::HD4XXX &&"
+                            "->getGeneration() == AMDGPUDeviceInfo::HD4XXX &&"
                             "Subtarget.device()->getDeviceFlag()"
                             ">= OCL_DEVICE_RV710">;
 def isEG : Predicate<"Subtarget.device()"
-                            "->getGeneration() >= AMDILDeviceInfo::HD5XXX && "
+                            "->getGeneration() >= AMDGPUDeviceInfo::HD5XXX && "
                             "Subtarget.device()->getDeviceFlag() != OCL_DEVICE_CAYMAN">;
 def isCayman : Predicate<"Subtarget.device()"
                             "->getDeviceFlag() == OCL_DEVICE_CAYMAN">;
 def isEGorCayman : Predicate<"Subtarget.device()"
-                            "->getGeneration() == AMDILDeviceInfo::HD5XXX"
+                            "->getGeneration() == AMDGPUDeviceInfo::HD5XXX"
 			    "|| Subtarget.device()->getGeneration() =="
-			    "AMDILDeviceInfo::HD6XXX">;
+			    "AMDGPUDeviceInfo::HD6XXX">;
 
 def isR600toCayman : Predicate<
-                     "Subtarget.device()->getGeneration() <= AMDILDeviceInfo::HD6XXX">;
+                     "Subtarget.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX">;
 
 
 let Predicates = [isR600toCayman] in { 

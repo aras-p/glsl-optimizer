@@ -37,12 +37,12 @@ namespace {
 
 class OpaqueType;
 
-class LLVM_LIBRARY_VISIBILITY AMDILPeepholeOpt : public FunctionPass {
+class LLVM_LIBRARY_VISIBILITY AMDGPUPeepholeOpt : public FunctionPass {
 public:
   TargetMachine &TM;
   static char ID;
-  AMDILPeepholeOpt(TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
-  ~AMDILPeepholeOpt();
+  AMDGPUPeepholeOpt(TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
+  ~AMDGPUPeepholeOpt();
   const char *getPassName() const;
   bool runOnFunction(Function &F);
   bool doInitialization(Module &M);
@@ -128,8 +128,8 @@ private:
   const AMDGPUSubtarget *mSTM;
   SmallVector< std::pair<CallInst *, Function *>, 16> atomicFuncs;
   SmallVector<CallInst *, 16> isConstVec;
-}; // class AMDILPeepholeOpt
-  char AMDILPeepholeOpt::ID = 0;
+}; // class AMDGPUPeepholeOpt
+  char AMDGPUPeepholeOpt::ID = 0;
 
 // A template function that has two levels of looping before calling the
 // function with a pointer to the current iterator.
@@ -153,13 +153,13 @@ Function safeNestedForEach(InputIterator First, InputIterator Last,
 
 namespace llvm {
   FunctionPass *
-  createAMDILPeepholeOpt(TargetMachine &tm AMDIL_OPT_LEVEL_DECL) 
+  createAMDGPUPeepholeOpt(TargetMachine &tm AMDIL_OPT_LEVEL_DECL) 
   {
-    return new AMDILPeepholeOpt(tm AMDIL_OPT_LEVEL_VAR);
+    return new AMDGPUPeepholeOpt(tm AMDIL_OPT_LEVEL_VAR);
   }
 } // llvm namespace
 
-AMDILPeepholeOpt::AMDILPeepholeOpt(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
+AMDGPUPeepholeOpt::AMDGPUPeepholeOpt(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
   : FunctionPass(ID), TM(tm) 
 {
   mDebug = false;
@@ -167,14 +167,14 @@ AMDILPeepholeOpt::AMDILPeepholeOpt(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
 
 }
 
-AMDILPeepholeOpt::~AMDILPeepholeOpt() 
+AMDGPUPeepholeOpt::~AMDGPUPeepholeOpt() 
 {
 }
 
 const char *
-AMDILPeepholeOpt::getPassName() const 
+AMDGPUPeepholeOpt::getPassName() const 
 {
-  return "AMDIL PeepHole Optimization Pass";
+  return "AMDGPU PeepHole Optimization Pass";
 }
 
 bool 
@@ -207,7 +207,7 @@ containsPointerType(Type *Ty)
 }
 
 bool 
-AMDILPeepholeOpt::dumpAllIntoArena(Function &F) 
+AMDGPUPeepholeOpt::dumpAllIntoArena(Function &F) 
 {
   bool dumpAll = false;
   for (Function::const_arg_iterator cab = F.arg_begin(),
@@ -233,7 +233,7 @@ AMDILPeepholeOpt::dumpAllIntoArena(Function &F)
   return dumpAll;
 }
 void
-AMDILPeepholeOpt::doIsConstCallConversionIfNeeded()
+AMDGPUPeepholeOpt::doIsConstCallConversionIfNeeded()
 {
   if (isConstVec.empty()) {
     return;
@@ -250,7 +250,7 @@ AMDILPeepholeOpt::doIsConstCallConversionIfNeeded()
   isConstVec.clear();
 }
 void 
-AMDILPeepholeOpt::doAtomicConversionIfNeeded(Function &F) 
+AMDGPUPeepholeOpt::doAtomicConversionIfNeeded(Function &F) 
 {
   // Don't do anything if we don't have any atomic operations.
   if (atomicFuncs.empty()) {
@@ -271,7 +271,7 @@ AMDILPeepholeOpt::doAtomicConversionIfNeeded(Function &F)
 }
 
 bool 
-AMDILPeepholeOpt::runOnFunction(Function &MF) 
+AMDGPUPeepholeOpt::runOnFunction(Function &MF) 
 {
   mChanged = false;
   mF = &MF;
@@ -282,7 +282,7 @@ AMDILPeepholeOpt::runOnFunction(Function &MF)
   mCTX = &MF.getType()->getContext();
   mConvertAtomics = true;
   safeNestedForEach(MF.begin(), MF.end(), MF.begin()->begin(),
-     std::bind1st(std::mem_fun(&AMDILPeepholeOpt::instLevelOptimizations),
+     std::bind1st(std::mem_fun(&AMDGPUPeepholeOpt::instLevelOptimizations),
                   this));
 
   doAtomicConversionIfNeeded(MF);
@@ -295,7 +295,7 @@ AMDILPeepholeOpt::runOnFunction(Function &MF)
 }
 
 bool 
-AMDILPeepholeOpt::optimizeCallInst(BasicBlock::iterator *bbb) 
+AMDGPUPeepholeOpt::optimizeCallInst(BasicBlock::iterator *bbb) 
 {
   Instruction *inst = (*bbb);
   CallInst *CI = dyn_cast<CallInst>(inst);
@@ -372,8 +372,8 @@ AMDILPeepholeOpt::optimizeCallInst(BasicBlock::iterator *bbb)
     atomicFuncs.push_back(std::make_pair <CallInst*, Function*>(CI, F));
   }
   
-  if (!mSTM->device()->isSupported(AMDILDeviceInfo::ArenaSegment)
-      && !mSTM->device()->isSupported(AMDILDeviceInfo::MultiUAV)) {
+  if (!mSTM->device()->isSupported(AMDGPUDeviceInfo::ArenaSegment)
+      && !mSTM->device()->isSupported(AMDGPUDeviceInfo::MultiUAV)) {
     return false;
   }
   if (!mConvertAtomics) {
@@ -387,7 +387,7 @@ AMDILPeepholeOpt::optimizeCallInst(BasicBlock::iterator *bbb)
 }
 
 bool
-AMDILPeepholeOpt::setupBitInsert(Instruction *base, 
+AMDGPUPeepholeOpt::setupBitInsert(Instruction *base, 
     Instruction *&src, 
     Constant *&mask, 
     Constant *&shift)
@@ -440,7 +440,7 @@ AMDILPeepholeOpt::setupBitInsert(Instruction *base,
   return true;
 }
 bool
-AMDILPeepholeOpt::optimizeBitInsert(Instruction *inst) 
+AMDGPUPeepholeOpt::optimizeBitInsert(Instruction *inst) 
 {
   if (!inst) {
     return false;
@@ -463,7 +463,7 @@ AMDILPeepholeOpt::optimizeBitInsert(Instruction *inst)
   // (A & B) | ((D & E) << F) when B ^ E == 0 && (1 << F) >= B
   // (A & B) | (D << F) when (1 << F) >= B
   // (A << C) | (D & E) when (1 << C) >= E
-  if (mSTM->device()->getGeneration() == AMDILDeviceInfo::HD4XXX) {
+  if (mSTM->device()->getGeneration() == AMDGPUDeviceInfo::HD4XXX) {
     // The HD4XXX hardware doesn't support the ubit_insert instruction.
     return false;
   }
@@ -680,7 +680,7 @@ AMDILPeepholeOpt::optimizeBitInsert(Instruction *inst)
 }
 
 bool 
-AMDILPeepholeOpt::optimizeBitExtract(Instruction *inst) 
+AMDGPUPeepholeOpt::optimizeBitExtract(Instruction *inst) 
 {
   if (!inst) {
     return false;
@@ -703,7 +703,7 @@ AMDILPeepholeOpt::optimizeBitExtract(Instruction *inst)
   // __amdil_ubit_extract(log2(C), B, A) The function __amdil_[u|i]bit_extract
   // can be found in Section 7.9 of the ATI IL spec of the stream SDK for
   // Evergreen hardware.
-  if (mSTM->device()->getGeneration() == AMDILDeviceInfo::HD4XXX) {
+  if (mSTM->device()->getGeneration() == AMDGPUDeviceInfo::HD4XXX) {
     // This does not work on HD4XXX hardware.
     return false;
   }
@@ -839,7 +839,7 @@ AMDILPeepholeOpt::optimizeBitExtract(Instruction *inst)
 }
 
 bool
-AMDILPeepholeOpt::expandBFI(CallInst *CI)
+AMDGPUPeepholeOpt::expandBFI(CallInst *CI)
 {
   if (!CI) {
     return false;
@@ -878,7 +878,7 @@ AMDILPeepholeOpt::expandBFI(CallInst *CI)
 }
 
 bool
-AMDILPeepholeOpt::expandBFM(CallInst *CI)
+AMDGPUPeepholeOpt::expandBFM(CallInst *CI)
 {
   if (!CI) {
     return false;
@@ -922,7 +922,7 @@ AMDILPeepholeOpt::expandBFM(CallInst *CI)
 }
 
 bool
-AMDILPeepholeOpt::instLevelOptimizations(BasicBlock::iterator *bbb) 
+AMDGPUPeepholeOpt::instLevelOptimizations(BasicBlock::iterator *bbb) 
 {
   Instruction *inst = (*bbb);
   if (optimizeCallInst(bbb)) {
@@ -940,7 +940,7 @@ AMDILPeepholeOpt::instLevelOptimizations(BasicBlock::iterator *bbb)
   return false;
 }
 bool
-AMDILPeepholeOpt::correctMisalignedMemOp(Instruction *inst)
+AMDGPUPeepholeOpt::correctMisalignedMemOp(Instruction *inst)
 {
   LoadInst *linst = dyn_cast<LoadInst>(inst);
   StoreInst *sinst = dyn_cast<StoreInst>(inst);
@@ -974,7 +974,7 @@ AMDILPeepholeOpt::correctMisalignedMemOp(Instruction *inst)
   return false;
 }
 bool 
-AMDILPeepholeOpt::isSigned24BitOps(CallInst *CI) 
+AMDGPUPeepholeOpt::isSigned24BitOps(CallInst *CI) 
 {
   if (!CI) {
     return false;
@@ -985,14 +985,14 @@ AMDILPeepholeOpt::isSigned24BitOps(CallInst *CI)
       && namePrefix != "__amdil__imul24_high") {
     return false;
   }
-  if (mSTM->device()->usesHardware(AMDILDeviceInfo::Signed24BitOps)) {
+  if (mSTM->device()->usesHardware(AMDGPUDeviceInfo::Signed24BitOps)) {
     return false;
   }
   return true;
 }
 
 void 
-AMDILPeepholeOpt::expandSigned24BitOps(CallInst *CI) 
+AMDGPUPeepholeOpt::expandSigned24BitOps(CallInst *CI) 
 {
   assert(isSigned24BitOps(CI) && "Must be a "
       "signed 24 bit operation to call this function!");
@@ -1064,7 +1064,7 @@ AMDILPeepholeOpt::expandSigned24BitOps(CallInst *CI)
 }
 
 bool 
-AMDILPeepholeOpt::isRWGLocalOpt(CallInst *CI) 
+AMDGPUPeepholeOpt::isRWGLocalOpt(CallInst *CI) 
 {
   return (CI != NULL
           && CI->getOperand(CI->getNumOperands() - 1)->getName() 
@@ -1072,12 +1072,12 @@ AMDILPeepholeOpt::isRWGLocalOpt(CallInst *CI)
 }
 
 bool 
-AMDILPeepholeOpt::convertAccurateDivide(CallInst *CI) 
+AMDGPUPeepholeOpt::convertAccurateDivide(CallInst *CI) 
 {
   if (!CI) {
     return false;
   }
-  if (mSTM->device()->getGeneration() == AMDILDeviceInfo::HD6XXX
+  if (mSTM->device()->getGeneration() == AMDGPUDeviceInfo::HD6XXX
       && (mSTM->getDeviceName() == "cayman")) {
     return false;
   }
@@ -1086,7 +1086,7 @@ AMDILPeepholeOpt::convertAccurateDivide(CallInst *CI)
 }
 
 void 
-AMDILPeepholeOpt::expandAccurateDivide(CallInst *CI) 
+AMDGPUPeepholeOpt::expandAccurateDivide(CallInst *CI) 
 {
   assert(convertAccurateDivide(CI)
          && "expanding accurate divide can only happen if it is expandable!");
@@ -1097,7 +1097,7 @@ AMDILPeepholeOpt::expandAccurateDivide(CallInst *CI)
 }
 
 bool
-AMDILPeepholeOpt::propagateSamplerInst(CallInst *CI)
+AMDGPUPeepholeOpt::propagateSamplerInst(CallInst *CI)
 {
   if (optLevel != CodeGenOpt::None) {
     return false;
@@ -1125,7 +1125,7 @@ AMDILPeepholeOpt::propagateSamplerInst(CallInst *CI)
     return false;
   }
 
-  if (lInst->getPointerAddressSpace() != AMDILAS::PRIVATE_ADDRESS) {
+  if (lInst->getPointerAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS) {
     return false;
   }
 
@@ -1152,26 +1152,26 @@ AMDILPeepholeOpt::propagateSamplerInst(CallInst *CI)
 }
 
 bool 
-AMDILPeepholeOpt::doInitialization(Module &M) 
+AMDGPUPeepholeOpt::doInitialization(Module &M) 
 {
   return false;
 }
 
 bool 
-AMDILPeepholeOpt::doFinalization(Module &M) 
+AMDGPUPeepholeOpt::doFinalization(Module &M) 
 {
   return false;
 }
 
 void 
-AMDILPeepholeOpt::getAnalysisUsage(AnalysisUsage &AU) const 
+AMDGPUPeepholeOpt::getAnalysisUsage(AnalysisUsage &AU) const 
 {
   AU.addRequired<MachineFunctionAnalysis>();
   FunctionPass::getAnalysisUsage(AU);
   AU.setPreservesAll();
 }
 
-size_t AMDILPeepholeOpt::getTypeSize(Type * const T, bool dereferencePtr) {
+size_t AMDGPUPeepholeOpt::getTypeSize(Type * const T, bool dereferencePtr) {
   size_t size = 0;
   if (!T) {
     return size;
@@ -1209,7 +1209,7 @@ size_t AMDILPeepholeOpt::getTypeSize(Type * const T, bool dereferencePtr) {
   return size;
 }
 
-size_t AMDILPeepholeOpt::getTypeSize(StructType * const ST,
+size_t AMDGPUPeepholeOpt::getTypeSize(StructType * const ST,
     bool dereferencePtr) {
   size_t size = 0;
   if (!ST) {
@@ -1225,37 +1225,37 @@ size_t AMDILPeepholeOpt::getTypeSize(StructType * const ST,
   return size;
 }
 
-size_t AMDILPeepholeOpt::getTypeSize(IntegerType * const IT,
+size_t AMDGPUPeepholeOpt::getTypeSize(IntegerType * const IT,
     bool dereferencePtr) {
   return IT ? (IT->getBitWidth() >> 3) : 0;
 }
 
-size_t AMDILPeepholeOpt::getTypeSize(FunctionType * const FT,
+size_t AMDGPUPeepholeOpt::getTypeSize(FunctionType * const FT,
     bool dereferencePtr) {
     assert(0 && "Should not be able to calculate the size of an function type");
     return 0;
 }
 
-size_t AMDILPeepholeOpt::getTypeSize(ArrayType * const AT,
+size_t AMDGPUPeepholeOpt::getTypeSize(ArrayType * const AT,
     bool dereferencePtr) {
   return (size_t)(AT ? (getTypeSize(AT->getElementType(),
                                     dereferencePtr) * AT->getNumElements())
                      : 0);
 }
 
-size_t AMDILPeepholeOpt::getTypeSize(VectorType * const VT,
+size_t AMDGPUPeepholeOpt::getTypeSize(VectorType * const VT,
     bool dereferencePtr) {
   return VT ? (VT->getBitWidth() >> 3) : 0;
 }
 
-size_t AMDILPeepholeOpt::getTypeSize(PointerType * const PT,
+size_t AMDGPUPeepholeOpt::getTypeSize(PointerType * const PT,
     bool dereferencePtr) {
   if (!PT) {
     return 0;
   }
   Type *CT = PT->getElementType();
   if (CT->getTypeID() == Type::StructTyID &&
-      PT->getAddressSpace() == AMDILAS::PRIVATE_ADDRESS) {
+      PT->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS) {
     return getTypeSize(dyn_cast<StructType>(CT));
   } else if (dereferencePtr) {
     size_t size = 0;
@@ -1268,7 +1268,7 @@ size_t AMDILPeepholeOpt::getTypeSize(PointerType * const PT,
   }
 }
 
-size_t AMDILPeepholeOpt::getTypeSize(OpaqueType * const OT,
+size_t AMDGPUPeepholeOpt::getTypeSize(OpaqueType * const OT,
     bool dereferencePtr) {
   //assert(0 && "Should not be able to calculate the size of an opaque type");
   return 4;

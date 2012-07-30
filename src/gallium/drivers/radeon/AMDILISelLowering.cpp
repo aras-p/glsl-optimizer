@@ -223,7 +223,7 @@ void AMDGPUTargetLowering::InitAMDILLowering()
     setOperationAction(ISD::SELECT, VT, Expand);
 
   }
-  if (STM.device()->isSupported(AMDILDeviceInfo::LongOps)) {
+  if (STM.device()->isSupported(AMDGPUDeviceInfo::LongOps)) {
     setOperationAction(ISD::MULHU, MVT::i64, Expand);
     setOperationAction(ISD::MULHU, MVT::v2i64, Expand);
     setOperationAction(ISD::MULHS, MVT::i64, Expand);
@@ -237,7 +237,7 @@ void AMDGPUTargetLowering::InitAMDILLowering()
     setOperationAction(ISD::ZERO_EXTEND, MVT::v2i64, Expand);
     setOperationAction(ISD::ANY_EXTEND, MVT::v2i64, Expand);
   }
-  if (STM.device()->isSupported(AMDILDeviceInfo::DoubleOps)) {
+  if (STM.device()->isSupported(AMDGPUDeviceInfo::DoubleOps)) {
     // we support loading/storing v2f64 but not operations on the type
     setOperationAction(ISD::FADD, MVT::v2f64, Expand);
     setOperationAction(ISD::FSUB, MVT::v2f64, Expand);

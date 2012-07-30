@@ -20,20 +20,20 @@ namespace llvm {
   class TargetMachine;
   namespace AMDGPUIntrinsic {
     enum ID {
-      last_non_AMDIL_intrinsic = Intrinsic::num_intrinsics - 1,
+      last_non_AMDGPU_intrinsic = Intrinsic::num_intrinsics - 1,
 #define GET_INTRINSIC_ENUM_VALUES
 #include "AMDGPUGenIntrinsics.inc"
 #undef GET_INTRINSIC_ENUM_VALUES
-      , num_AMDIL_intrinsics
+      , num_AMDGPU_intrinsics
     };
 
   }
 
 
-  class AMDILIntrinsicInfo : public TargetIntrinsicInfo {
+  class AMDGPUIntrinsicInfo : public TargetIntrinsicInfo {
     TargetMachine *mTM;
     public:
-      AMDILIntrinsicInfo(TargetMachine *tm);
+      AMDGPUIntrinsicInfo(TargetMachine *tm);
       std::string getName(unsigned int IntrId, Type **Tys = 0,
           unsigned int numTys = 0) const;
       unsigned int lookupName(const char *Name, unsigned int Len) const;
@@ -41,7 +41,7 @@ namespace llvm {
       Function *getDeclaration(Module *M, unsigned int ID,
           Type **Tys = 0,
           unsigned int numTys = 0) const;
-  }; // AMDILIntrinsicInfo
+  }; // AMDGPUIntrinsicInfo
 }
 
 #endif // _AMDIL_INTRINSICS_H_

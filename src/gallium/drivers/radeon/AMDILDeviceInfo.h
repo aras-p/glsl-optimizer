@@ -14,9 +14,9 @@
 
 namespace llvm
 {
-  class AMDILDevice;
+  class AMDGPUDevice;
   class AMDGPUSubtarget;
-  namespace AMDILDeviceInfo
+  namespace AMDGPUDeviceInfo
   {
     // Each Capabilities can be executed using a hardware instruction,
     // emulated with a sequence of software instructions, or not
@@ -82,7 +82,7 @@ namespace llvm
     };
 
 
-  AMDILDevice*
+  AMDGPUDevice*
     getDeviceFromName(const std::string &name, AMDGPUSubtarget *ptr,
                       bool is64bit = false, bool is64on32bit = false);
   } // namespace AMDILDeviceInfo

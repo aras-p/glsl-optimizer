@@ -26,14 +26,14 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 
 
-// The AMDILEvergreenDevice is the base device class for all of the Evergreen
+// The AMDGPUEvergreenDevice is the base device class for all of the Evergreen
 // series of cards. This class contains information required to differentiate
-// the Evergreen device from the generic AMDILDevice. This device represents
+// the Evergreen device from the generic AMDGPUDevice. This device represents
 // that capabilities of the 'Juniper' cards, also known as the HD57XX.
-class AMDILEvergreenDevice : public AMDILDevice {
+class AMDGPUEvergreenDevice : public AMDGPUDevice {
 public:
-  AMDILEvergreenDevice(AMDGPUSubtarget *ST);
-  virtual ~AMDILEvergreenDevice();
+  AMDGPUEvergreenDevice(AMDGPUSubtarget *ST);
+  virtual ~AMDGPUEvergreenDevice();
   virtual size_t getMaxLDSSize() const;
   virtual size_t getMaxGDSSize() const;
   virtual size_t getWavefrontSize() const;
@@ -44,46 +44,46 @@ public:
     getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const;
 protected:
   virtual void setCaps();
-}; // AMDILEvergreenDevice
+}; // AMDGPUEvergreenDevice
 
-// The AMDILCypressDevice is similiar to the AMDILEvergreenDevice, except it has
+// The AMDGPUCypressDevice is similiar to the AMDGPUEvergreenDevice, except it has
 // support for double precision operations. This device is used to represent
 // both the Cypress and Hemlock cards, which are commercially known as HD58XX
 // and HD59XX cards.
-class AMDILCypressDevice : public AMDILEvergreenDevice {
+class AMDGPUCypressDevice : public AMDGPUEvergreenDevice {
 public:
-  AMDILCypressDevice(AMDGPUSubtarget *ST);
-  virtual ~AMDILCypressDevice();
+  AMDGPUCypressDevice(AMDGPUSubtarget *ST);
+  virtual ~AMDGPUCypressDevice();
 private:
   virtual void setCaps();
-}; // AMDILCypressDevice
+}; // AMDGPUCypressDevice
 
 
-// The AMDILCedarDevice is the class that represents all of the 'Cedar' based
-// devices. This class differs from the base AMDILEvergreenDevice in that the
+// The AMDGPUCedarDevice is the class that represents all of the 'Cedar' based
+// devices. This class differs from the base AMDGPUEvergreenDevice in that the
 // device is a ~quarter of the 'Juniper'. These are commercially known as the
 // HD54XX and HD53XX series of cards.
-class AMDILCedarDevice : public AMDILEvergreenDevice {
+class AMDGPUCedarDevice : public AMDGPUEvergreenDevice {
 public:
-  AMDILCedarDevice(AMDGPUSubtarget *ST);
-  virtual ~AMDILCedarDevice();
+  AMDGPUCedarDevice(AMDGPUSubtarget *ST);
+  virtual ~AMDGPUCedarDevice();
   virtual size_t getWavefrontSize() const;
 private:
   virtual void setCaps();
-}; // AMDILCedarDevice
+}; // AMDGPUCedarDevice
 
-// The AMDILRedwoodDevice is the class the represents all of the 'Redwood' based
+// The AMDGPURedwoodDevice is the class the represents all of the 'Redwood' based
 // devices. This class differs from the base class, in that these devices are
 // considered about half of a 'Juniper' device. These are commercially known as
 // the HD55XX and HD56XX series of cards.
-class AMDILRedwoodDevice : public AMDILEvergreenDevice {
+class AMDGPURedwoodDevice : public AMDGPUEvergreenDevice {
 public:
-  AMDILRedwoodDevice(AMDGPUSubtarget *ST);
-  virtual ~AMDILRedwoodDevice();
+  AMDGPURedwoodDevice(AMDGPUSubtarget *ST);
+  virtual ~AMDGPURedwoodDevice();
   virtual size_t getWavefrontSize() const;
 private:
   virtual void setCaps();
-}; // AMDILRedwoodDevice
+}; // AMDGPURedwoodDevice
   
 } // namespace llvm
-#endif // _AMDILEVERGREENDEVICE_H_
+#endif // _AMDGPUEVERGREENDEVICE_H_

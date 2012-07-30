@@ -249,9 +249,9 @@ void R600KernelParameters::Propagate(Value* V, const Twine& Name, bool IsIndirec
   unsigned Addrspace;
 
   if (IsIndirect) {
-    Addrspace = AMDILAS::PARAM_I_ADDRESS;
+    Addrspace = AMDGPUAS::PARAM_I_ADDRESS;
   }  else {
-    Addrspace = AMDILAS::PARAM_D_ADDRESS;
+    Addrspace = AMDGPUAS::PARAM_D_ADDRESS;
   }
 
   if (GEP and GEP->getType()->getAddressSpace() != Addrspace) {
@@ -321,9 +321,9 @@ Value* R600KernelParameters::ConstantRead(Function *Fun, Param &P) {
   unsigned Addrspace;
 
   if (P.IsIndirect) {
-    Addrspace = AMDILAS::PARAM_I_ADDRESS;
+    Addrspace = AMDGPUAS::PARAM_I_ADDRESS;
   } else {
-    Addrspace = AMDILAS::PARAM_D_ADDRESS;
+    Addrspace = AMDGPUAS::PARAM_D_ADDRESS;
   }
 
   Argument *Arg = dyn_cast<Argument>(P.Val);

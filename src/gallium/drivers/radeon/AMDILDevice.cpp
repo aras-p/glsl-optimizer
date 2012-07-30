@@ -11,122 +11,122 @@
 
 using namespace llvm;
 // Default implementation for all of the classes.
-AMDILDevice::AMDILDevice(AMDGPUSubtarget *ST) : mSTM(ST)
+AMDGPUDevice::AMDGPUDevice(AMDGPUSubtarget *ST) : mSTM(ST)
 {
-  mHWBits.resize(AMDILDeviceInfo::MaxNumberCapabilities);
-  mSWBits.resize(AMDILDeviceInfo::MaxNumberCapabilities);
+  mHWBits.resize(AMDGPUDeviceInfo::MaxNumberCapabilities);
+  mSWBits.resize(AMDGPUDeviceInfo::MaxNumberCapabilities);
   setCaps();
   mDeviceFlag = OCL_DEVICE_ALL;
 }
 
-AMDILDevice::~AMDILDevice()
+AMDGPUDevice::~AMDGPUDevice()
 {
     mHWBits.clear();
     mSWBits.clear();
 }
 
-size_t AMDILDevice::getMaxGDSSize() const
+size_t AMDGPUDevice::getMaxGDSSize() const
 {
   return 0;
 }
 
 uint32_t 
-AMDILDevice::getDeviceFlag() const
+AMDGPUDevice::getDeviceFlag() const
 {
   return mDeviceFlag;
 }
 
-size_t AMDILDevice::getMaxNumCBs() const
+size_t AMDGPUDevice::getMaxNumCBs() const
 {
-  if (usesHardware(AMDILDeviceInfo::ConstantMem)) {
+  if (usesHardware(AMDGPUDeviceInfo::ConstantMem)) {
     return HW_MAX_NUM_CB;
   }
 
   return 0;
 }
 
-size_t AMDILDevice::getMaxCBSize() const
+size_t AMDGPUDevice::getMaxCBSize() const
 {
-  if (usesHardware(AMDILDeviceInfo::ConstantMem)) {
+  if (usesHardware(AMDGPUDeviceInfo::ConstantMem)) {
     return MAX_CB_SIZE;
   }
 
   return 0;
 }
 
-size_t AMDILDevice::getMaxScratchSize() const
+size_t AMDGPUDevice::getMaxScratchSize() const
 {
   return 65536;
 }
 
-uint32_t AMDILDevice::getStackAlignment() const
+uint32_t AMDGPUDevice::getStackAlignment() const
 {
   return 16;
 }
 
-void AMDILDevice::setCaps()
+void AMDGPUDevice::setCaps()
 {
-  mSWBits.set(AMDILDeviceInfo::HalfOps);
-  mSWBits.set(AMDILDeviceInfo::ByteOps);
-  mSWBits.set(AMDILDeviceInfo::ShortOps);
-  mSWBits.set(AMDILDeviceInfo::HW64BitDivMod);
-  if (mSTM->isOverride(AMDILDeviceInfo::NoInline)) {
-    mSWBits.set(AMDILDeviceInfo::NoInline);
+  mSWBits.set(AMDGPUDeviceInfo::HalfOps);
+  mSWBits.set(AMDGPUDeviceInfo::ByteOps);
+  mSWBits.set(AMDGPUDeviceInfo::ShortOps);
+  mSWBits.set(AMDGPUDeviceInfo::HW64BitDivMod);
+  if (mSTM->isOverride(AMDGPUDeviceInfo::NoInline)) {
+    mSWBits.set(AMDGPUDeviceInfo::NoInline);
   }
-  if (mSTM->isOverride(AMDILDeviceInfo::MacroDB)) {
-    mSWBits.set(AMDILDeviceInfo::MacroDB);
+  if (mSTM->isOverride(AMDGPUDeviceInfo::MacroDB)) {
+    mSWBits.set(AMDGPUDeviceInfo::MacroDB);
   }
-  if (mSTM->isOverride(AMDILDeviceInfo::Debug)) {
-    mSWBits.set(AMDILDeviceInfo::ConstantMem);
+  if (mSTM->isOverride(AMDGPUDeviceInfo::Debug)) {
+    mSWBits.set(AMDGPUDeviceInfo::ConstantMem);
   } else {
-    mHWBits.set(AMDILDeviceInfo::ConstantMem);
+    mHWBits.set(AMDGPUDeviceInfo::ConstantMem);
   }
-  if (mSTM->isOverride(AMDILDeviceInfo::Debug)) {
-    mSWBits.set(AMDILDeviceInfo::PrivateMem);
+  if (mSTM->isOverride(AMDGPUDeviceInfo::Debug)) {
+    mSWBits.set(AMDGPUDeviceInfo::PrivateMem);
   } else {
-    mHWBits.set(AMDILDeviceInfo::PrivateMem);
+    mHWBits.set(AMDGPUDeviceInfo::PrivateMem);
   }
-  if (mSTM->isOverride(AMDILDeviceInfo::BarrierDetect)) {
-    mSWBits.set(AMDILDeviceInfo::BarrierDetect);
+  if (mSTM->isOverride(AMDGPUDeviceInfo::BarrierDetect)) {
+    mSWBits.set(AMDGPUDeviceInfo::BarrierDetect);
   }
-  mSWBits.set(AMDILDeviceInfo::ByteLDSOps);
-  mSWBits.set(AMDILDeviceInfo::LongOps);
+  mSWBits.set(AMDGPUDeviceInfo::ByteLDSOps);
+  mSWBits.set(AMDGPUDeviceInfo::LongOps);
 }
 
-AMDILDeviceInfo::ExecutionMode
-AMDILDevice::getExecutionMode(AMDILDeviceInfo::Caps Caps) const
+AMDGPUDeviceInfo::ExecutionMode
+AMDGPUDevice::getExecutionMode(AMDGPUDeviceInfo::Caps Caps) const
 {
   if (mHWBits[Caps]) {
     assert(!mSWBits[Caps] && "Cannot set both SW and HW caps");
-    return AMDILDeviceInfo::Hardware;
+    return AMDGPUDeviceInfo::Hardware;
   }
 
   if (mSWBits[Caps]) {
     assert(!mHWBits[Caps] && "Cannot set both SW and HW caps");
-    return AMDILDeviceInfo::Software;
+    return AMDGPUDeviceInfo::Software;
   }
 
-  return AMDILDeviceInfo::Unsupported;
+  return AMDGPUDeviceInfo::Unsupported;
 
 }
 
-bool AMDILDevice::isSupported(AMDILDeviceInfo::Caps Mode) const
+bool AMDGPUDevice::isSupported(AMDGPUDeviceInfo::Caps Mode) const
 {
-  return getExecutionMode(Mode) != AMDILDeviceInfo::Unsupported;
+  return getExecutionMode(Mode) != AMDGPUDeviceInfo::Unsupported;
 }
 
-bool AMDILDevice::usesHardware(AMDILDeviceInfo::Caps Mode) const
+bool AMDGPUDevice::usesHardware(AMDGPUDeviceInfo::Caps Mode) const
 {
-  return getExecutionMode(Mode) == AMDILDeviceInfo::Hardware;
+  return getExecutionMode(Mode) == AMDGPUDeviceInfo::Hardware;
 }
 
-bool AMDILDevice::usesSoftware(AMDILDeviceInfo::Caps Mode) const
+bool AMDGPUDevice::usesSoftware(AMDGPUDeviceInfo::Caps Mode) const
 {
-  return getExecutionMode(Mode) == AMDILDeviceInfo::Software;
+  return getExecutionMode(Mode) == AMDGPUDeviceInfo::Software;
 }
 
 std::string
-AMDILDevice::getDataLayout() const
+AMDGPUDevice::getDataLayout() const
 {
     return std::string("e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16"
       "-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f80:32:32"

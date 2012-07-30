@@ -30,8 +30,8 @@ class AMDGPUTargetMachine : public LLVMTargetMachine {
 
   AMDGPUSubtarget Subtarget;
   const TargetData DataLayout;
-  AMDILFrameLowering FrameLowering;
-  AMDILIntrinsicInfo IntrinsicInfo;
+  AMDGPUFrameLowering FrameLowering;
+  AMDGPUIntrinsicInfo IntrinsicInfo;
   const AMDGPUInstrInfo * InstrInfo;
   AMDGPUTargetLowering * TLInfo;
   const InstrItineraryData* InstrItins;
@@ -44,10 +44,10 @@ public:
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
    ~AMDGPUTargetMachine();
-   virtual const AMDILFrameLowering* getFrameLowering() const {
+   virtual const AMDGPUFrameLowering* getFrameLowering() const {
      return &FrameLowering;
    }
-   virtual const AMDILIntrinsicInfo* getIntrinsicInfo() const {
+   virtual const AMDGPUIntrinsicInfo* getIntrinsicInfo() const {
      return &IntrinsicInfo;
    }
    virtual const AMDGPUInstrInfo *getInstrInfo() const {return InstrInfo;}

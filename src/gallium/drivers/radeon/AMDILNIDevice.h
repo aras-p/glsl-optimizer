@@ -25,35 +25,35 @@ namespace llvm {
 // NI generation of devices and their respective sub classes
 //===---------------------------------------------------------------------===//
 
-// The AMDILNIDevice is the base class for all Northern Island series of
-// cards. It is very similiar to the AMDILEvergreenDevice, with the major
+// The AMDGPUNIDevice is the base class for all Northern Island series of
+// cards. It is very similiar to the AMDGPUEvergreenDevice, with the major
 // exception being differences in wavefront size and hardware capabilities.  The
 // NI devices are all 64 wide wavefronts and also add support for signed 24 bit
 // integer operations
 
-  class AMDILNIDevice : public AMDILEvergreenDevice {
+  class AMDGPUNIDevice : public AMDGPUEvergreenDevice {
     public:
-      AMDILNIDevice(AMDGPUSubtarget*);
-      virtual ~AMDILNIDevice();
+      AMDGPUNIDevice(AMDGPUSubtarget*);
+      virtual ~AMDGPUNIDevice();
       virtual size_t getMaxLDSSize() const;
       virtual uint32_t getGeneration() const;
     protected:
-  }; // AMDILNIDevice
+  }; // AMDGPUNIDevice
 
-// Just as the AMDILCypressDevice is the double capable version of the
-// AMDILEvergreenDevice, the AMDILCaymanDevice is the double capable version of
-// the AMDILNIDevice.  The other major difference that is not as useful from
+// Just as the AMDGPUCypressDevice is the double capable version of the
+// AMDGPUEvergreenDevice, the AMDGPUCaymanDevice is the double capable version of
+// the AMDGPUNIDevice.  The other major difference that is not as useful from
 // standpoint is that the Cayman Device has 4 wide ALU's, whereas the rest of the
 // NI family is a 5 wide.
      
-  class AMDILCaymanDevice: public AMDILNIDevice {
+  class AMDGPUCaymanDevice: public AMDGPUNIDevice {
     public:
-      AMDILCaymanDevice(AMDGPUSubtarget*);
-      virtual ~AMDILCaymanDevice();
+      AMDGPUCaymanDevice(AMDGPUSubtarget*);
+      virtual ~AMDGPUCaymanDevice();
     private:
       virtual void setCaps();
-  }; // AMDILCaymanDevice
+  }; // AMDGPUCaymanDevice
 
-  static const unsigned int MAX_LDS_SIZE_900 = AMDILDevice::MAX_LDS_SIZE_800;
+  static const unsigned int MAX_LDS_SIZE_900 = AMDGPUDevice::MAX_LDS_SIZE_800;
 } // namespace llvm
 #endif // _AMDILNIDEVICE_H_

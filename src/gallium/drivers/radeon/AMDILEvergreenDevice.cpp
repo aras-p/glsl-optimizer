@@ -13,8 +13,8 @@
 
 using namespace llvm;
 
-AMDILEvergreenDevice::AMDILEvergreenDevice(AMDGPUSubtarget *ST)
-: AMDILDevice(ST) {
+AMDGPUEvergreenDevice::AMDGPUEvergreenDevice(AMDGPUSubtarget *ST)
+: AMDGPUDevice(ST) {
   setCaps();
   std::string name = ST->getDeviceName();
   if (name == "cedar") {
@@ -28,28 +28,28 @@ AMDILEvergreenDevice::AMDILEvergreenDevice(AMDGPUSubtarget *ST)
   }
 }
 
-AMDILEvergreenDevice::~AMDILEvergreenDevice() {
+AMDGPUEvergreenDevice::~AMDGPUEvergreenDevice() {
 }
 
-size_t AMDILEvergreenDevice::getMaxLDSSize() const {
-  if (usesHardware(AMDILDeviceInfo::LocalMem)) {
+size_t AMDGPUEvergreenDevice::getMaxLDSSize() const {
+  if (usesHardware(AMDGPUDeviceInfo::LocalMem)) {
     return MAX_LDS_SIZE_800;
   } else {
     return 0;
   }
 }
-size_t AMDILEvergreenDevice::getMaxGDSSize() const {
-  if (usesHardware(AMDILDeviceInfo::RegionMem)) {
+size_t AMDGPUEvergreenDevice::getMaxGDSSize() const {
+  if (usesHardware(AMDGPUDeviceInfo::RegionMem)) {
     return MAX_LDS_SIZE_800;
   } else {
     return 0;
   }
 }
-uint32_t AMDILEvergreenDevice::getMaxNumUAVs() const {
+uint32_t AMDGPUEvergreenDevice::getMaxNumUAVs() const {
   return 12;
 }
 
-uint32_t AMDILEvergreenDevice::getResourceID(uint32_t id) const {
+uint32_t AMDGPUEvergreenDevice::getResourceID(uint32_t id) const {
   switch(id) {
   default:
     assert(0 && "ID type passed in is unknown!");
@@ -61,19 +61,19 @@ uint32_t AMDILEvergreenDevice::getResourceID(uint32_t id) const {
   case ARENA_UAV_ID:
     return DEFAULT_ARENA_UAV_ID;
   case LDS_ID:
-    if (usesHardware(AMDILDeviceInfo::LocalMem)) {
+    if (usesHardware(AMDGPUDeviceInfo::LocalMem)) {
       return DEFAULT_LDS_ID;
     } else {
       return DEFAULT_ARENA_UAV_ID;
     }
   case GDS_ID:
-    if (usesHardware(AMDILDeviceInfo::RegionMem)) {
+    if (usesHardware(AMDGPUDeviceInfo::RegionMem)) {
       return DEFAULT_GDS_ID;
     } else {
       return DEFAULT_ARENA_UAV_ID;
     }
   case SCRATCH_ID:
-    if (usesHardware(AMDILDeviceInfo::PrivateMem)) {
+    if (usesHardware(AMDGPUDeviceInfo::PrivateMem)) {
       return DEFAULT_SCRATCH_ID;
     } else {
       return DEFAULT_ARENA_UAV_ID;
@@ -82,101 +82,101 @@ uint32_t AMDILEvergreenDevice::getResourceID(uint32_t id) const {
   return 0;
 }
 
-size_t AMDILEvergreenDevice::getWavefrontSize() const {
-  return AMDILDevice::WavefrontSize;
+size_t AMDGPUEvergreenDevice::getWavefrontSize() const {
+  return AMDGPUDevice::WavefrontSize;
 }
 
-uint32_t AMDILEvergreenDevice::getGeneration() const {
-  return AMDILDeviceInfo::HD5XXX;
+uint32_t AMDGPUEvergreenDevice::getGeneration() const {
+  return AMDGPUDeviceInfo::HD5XXX;
 }
 
-void AMDILEvergreenDevice::setCaps() {
-  mSWBits.set(AMDILDeviceInfo::ArenaSegment);
-  mHWBits.set(AMDILDeviceInfo::ArenaUAV);
-  mHWBits.set(AMDILDeviceInfo::HW64BitDivMod);
-  mSWBits.reset(AMDILDeviceInfo::HW64BitDivMod);
-  mSWBits.set(AMDILDeviceInfo::Signed24BitOps);
-  if (mSTM->isOverride(AMDILDeviceInfo::ByteStores)) {
-    mHWBits.set(AMDILDeviceInfo::ByteStores);
+void AMDGPUEvergreenDevice::setCaps() {
+  mSWBits.set(AMDGPUDeviceInfo::ArenaSegment);
+  mHWBits.set(AMDGPUDeviceInfo::ArenaUAV);
+  mHWBits.set(AMDGPUDeviceInfo::HW64BitDivMod);
+  mSWBits.reset(AMDGPUDeviceInfo::HW64BitDivMod);
+  mSWBits.set(AMDGPUDeviceInfo::Signed24BitOps);
+  if (mSTM->isOverride(AMDGPUDeviceInfo::ByteStores)) {
+    mHWBits.set(AMDGPUDeviceInfo::ByteStores);
   }
-  if (mSTM->isOverride(AMDILDeviceInfo::Debug)) {
-    mSWBits.set(AMDILDeviceInfo::LocalMem);
-    mSWBits.set(AMDILDeviceInfo::RegionMem);
+  if (mSTM->isOverride(AMDGPUDeviceInfo::Debug)) {
+    mSWBits.set(AMDGPUDeviceInfo::LocalMem);
+    mSWBits.set(AMDGPUDeviceInfo::RegionMem);
   } else {
-    mHWBits.set(AMDILDeviceInfo::LocalMem);
-    mHWBits.set(AMDILDeviceInfo::RegionMem);
+    mHWBits.set(AMDGPUDeviceInfo::LocalMem);
+    mHWBits.set(AMDGPUDeviceInfo::RegionMem);
   }
-  mHWBits.set(AMDILDeviceInfo::Images);
-  if (mSTM->isOverride(AMDILDeviceInfo::NoAlias)) {
-    mHWBits.set(AMDILDeviceInfo::NoAlias);
+  mHWBits.set(AMDGPUDeviceInfo::Images);
+  if (mSTM->isOverride(AMDGPUDeviceInfo::NoAlias)) {
+    mHWBits.set(AMDGPUDeviceInfo::NoAlias);
   }
-  mHWBits.set(AMDILDeviceInfo::CachedMem);
-  if (mSTM->isOverride(AMDILDeviceInfo::MultiUAV)) {
-    mHWBits.set(AMDILDeviceInfo::MultiUAV);
+  mHWBits.set(AMDGPUDeviceInfo::CachedMem);
+  if (mSTM->isOverride(AMDGPUDeviceInfo::MultiUAV)) {
+    mHWBits.set(AMDGPUDeviceInfo::MultiUAV);
   }
-  mHWBits.set(AMDILDeviceInfo::ByteLDSOps);
-  mSWBits.reset(AMDILDeviceInfo::ByteLDSOps);
-  mHWBits.set(AMDILDeviceInfo::ArenaVectors);
-  mHWBits.set(AMDILDeviceInfo::LongOps);
-  mSWBits.reset(AMDILDeviceInfo::LongOps);
-  mHWBits.set(AMDILDeviceInfo::TmrReg);
+  mHWBits.set(AMDGPUDeviceInfo::ByteLDSOps);
+  mSWBits.reset(AMDGPUDeviceInfo::ByteLDSOps);
+  mHWBits.set(AMDGPUDeviceInfo::ArenaVectors);
+  mHWBits.set(AMDGPUDeviceInfo::LongOps);
+  mSWBits.reset(AMDGPUDeviceInfo::LongOps);
+  mHWBits.set(AMDGPUDeviceInfo::TmrReg);
 }
 
 AsmPrinter*
-AMDILEvergreenDevice::getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const
+AMDGPUEvergreenDevice::getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const
 {
 #ifdef UPSTREAM_LLVM
-  return new AMDILEGAsmPrinter(TM, Streamer);
+  return new AMDGPUEGAsmPrinter(TM, Streamer);
 #else
   return NULL;
 #endif
 }
 
-AMDILCypressDevice::AMDILCypressDevice(AMDGPUSubtarget *ST)
-  : AMDILEvergreenDevice(ST) {
+AMDGPUCypressDevice::AMDGPUCypressDevice(AMDGPUSubtarget *ST)
+  : AMDGPUEvergreenDevice(ST) {
   setCaps();
 }
 
-AMDILCypressDevice::~AMDILCypressDevice() {
+AMDGPUCypressDevice::~AMDGPUCypressDevice() {
 }
 
-void AMDILCypressDevice::setCaps() {
-  if (mSTM->isOverride(AMDILDeviceInfo::DoubleOps)) {
-    mHWBits.set(AMDILDeviceInfo::DoubleOps);
-    mHWBits.set(AMDILDeviceInfo::FMA);
+void AMDGPUCypressDevice::setCaps() {
+  if (mSTM->isOverride(AMDGPUDeviceInfo::DoubleOps)) {
+    mHWBits.set(AMDGPUDeviceInfo::DoubleOps);
+    mHWBits.set(AMDGPUDeviceInfo::FMA);
   }
 }
 
 
-AMDILCedarDevice::AMDILCedarDevice(AMDGPUSubtarget *ST)
-  : AMDILEvergreenDevice(ST) {
+AMDGPUCedarDevice::AMDGPUCedarDevice(AMDGPUSubtarget *ST)
+  : AMDGPUEvergreenDevice(ST) {
   setCaps();
 }
 
-AMDILCedarDevice::~AMDILCedarDevice() {
+AMDGPUCedarDevice::~AMDGPUCedarDevice() {
 }
 
-void AMDILCedarDevice::setCaps() {
-  mSWBits.set(AMDILDeviceInfo::FMA);
+void AMDGPUCedarDevice::setCaps() {
+  mSWBits.set(AMDGPUDeviceInfo::FMA);
 }
 
-size_t AMDILCedarDevice::getWavefrontSize() const {
-  return AMDILDevice::QuarterWavefrontSize;
+size_t AMDGPUCedarDevice::getWavefrontSize() const {
+  return AMDGPUDevice::QuarterWavefrontSize;
 }
 
-AMDILRedwoodDevice::AMDILRedwoodDevice(AMDGPUSubtarget *ST)
-  : AMDILEvergreenDevice(ST) {
+AMDGPURedwoodDevice::AMDGPURedwoodDevice(AMDGPUSubtarget *ST)
+  : AMDGPUEvergreenDevice(ST) {
   setCaps();
 }
 
-AMDILRedwoodDevice::~AMDILRedwoodDevice()
+AMDGPURedwoodDevice::~AMDGPURedwoodDevice()
 {
 }
 
-void AMDILRedwoodDevice::setCaps() {
-  mSWBits.set(AMDILDeviceInfo::FMA);
+void AMDGPURedwoodDevice::setCaps() {
+  mSWBits.set(AMDGPUDeviceInfo::FMA);
 }
 
-size_t AMDILRedwoodDevice::getWavefrontSize() const {
-  return AMDILDevice::HalfWavefrontSize;
+size_t AMDGPURedwoodDevice::getWavefrontSize() const {
+  return AMDGPUDevice::HalfWavefrontSize;
 }

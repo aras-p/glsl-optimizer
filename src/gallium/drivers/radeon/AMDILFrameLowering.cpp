@@ -14,40 +14,40 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 
 using namespace llvm;
-AMDILFrameLowering::AMDILFrameLowering(StackDirection D, unsigned StackAl,
+AMDGPUFrameLowering::AMDGPUFrameLowering(StackDirection D, unsigned StackAl,
     int LAO, unsigned TransAl)
   : TargetFrameLowering(D, StackAl, LAO, TransAl)
 {
 }
 
-AMDILFrameLowering::~AMDILFrameLowering()
+AMDGPUFrameLowering::~AMDGPUFrameLowering()
 {
 }
 
 /// getFrameIndexOffset - Returns the displacement from the frame register to
 /// the stack frame of the specified index.
-int AMDILFrameLowering::getFrameIndexOffset(const MachineFunction &MF,
+int AMDGPUFrameLowering::getFrameIndexOffset(const MachineFunction &MF,
                                          int FI) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return MFI->getObjectOffset(FI);
 }
 
 const TargetFrameLowering::SpillSlot *
-AMDILFrameLowering::getCalleeSavedSpillSlots(unsigned &NumEntries) const
+AMDGPUFrameLowering::getCalleeSavedSpillSlots(unsigned &NumEntries) const
 {
   NumEntries = 0;
   return 0;
 }
 void
-AMDILFrameLowering::emitPrologue(MachineFunction &MF) const
+AMDGPUFrameLowering::emitPrologue(MachineFunction &MF) const
 {
 }
 void
-AMDILFrameLowering::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
+AMDGPUFrameLowering::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
 {
 }
 bool
-AMDILFrameLowering::hasFP(const MachineFunction &MF) const
+AMDGPUFrameLowering::hasFP(const MachineFunction &MF) const
 {
   return false;
 }

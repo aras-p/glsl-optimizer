@@ -28,8 +28,8 @@ namespace llvm {
 class AMDGPUSubtarget : public AMDGPUGenSubtargetInfo
 {
 private:
-  bool CapsOverride[AMDILDeviceInfo::MaxNumberCapabilities];
-  const AMDILDevice *mDevice;
+  bool CapsOverride[AMDGPUDeviceInfo::MaxNumberCapabilities];
+  const AMDGPUDevice *mDevice;
   size_t mDefaultSize[3];
   size_t mMinimumSize[3];
   std::string mDevName;
@@ -46,12 +46,12 @@ public:
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
   virtual void ParseSubtargetFeatures(llvm::StringRef CPU, llvm::StringRef FS);
 
-  bool isOverride(AMDILDeviceInfo::Caps) const;
+  bool isOverride(AMDGPUDeviceInfo::Caps) const;
   bool is64bit() const;
 
   // Helper functions to simplify if statements
   bool isTargetELF() const;
-  const AMDILDevice* device() const;
+  const AMDGPUDevice* device() const;
   std::string getDataLayout() const;
   std::string getDeviceName() const;
   virtual size_t getDefaultSize(uint32_t dim) const;

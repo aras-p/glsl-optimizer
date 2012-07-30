@@ -13,7 +13,7 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
     InstrItins = getInstrItineraryForCPU(CPU);
 
   memset(CapsOverride, 0, sizeof(*CapsOverride)
-      * AMDILDeviceInfo::MaxNumberCapabilities);
+      * AMDGPUDeviceInfo::MaxNumberCapabilities);
   // Default card
   StringRef GPU = CPU;
   mIs64bit = false;
@@ -22,7 +22,7 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
   mDefaultSize[2] = 1;
   ParseSubtargetFeatures(GPU, FS);
   mDevName = GPU;
-  mDevice = AMDILDeviceInfo::getDeviceFromName(mDevName, this, mIs64bit);
+  mDevice = AMDGPUDeviceInfo::getDeviceFromName(mDevName, this, mIs64bit);
 }
 
 AMDGPUSubtarget::~AMDGPUSubtarget()
@@ -31,9 +31,9 @@ AMDGPUSubtarget::~AMDGPUSubtarget()
 }
 
 bool
-AMDGPUSubtarget::isOverride(AMDILDeviceInfo::Caps caps) const
+AMDGPUSubtarget::isOverride(AMDGPUDeviceInfo::Caps caps) const
 {
-  assert(caps < AMDILDeviceInfo::MaxNumberCapabilities &&
+  assert(caps < AMDGPUDeviceInfo::MaxNumberCapabilities &&
       "Caps index is out of bounds!");
   return CapsOverride[caps];
 }
@@ -75,7 +75,7 @@ AMDGPUSubtarget::getDeviceName() const
 {
   return mDevName;
 }
-const AMDILDevice *
+const AMDGPUDevice *
 AMDGPUSubtarget::device() const
 {
   return mDevice;

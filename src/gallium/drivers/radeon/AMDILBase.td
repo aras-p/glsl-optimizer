@@ -19,35 +19,35 @@ def NullALU : InstrItinClass;
 // AMDIL Subtarget features.
 //===----------------------------------------------------------------------===//
 def FeatureFP64     : SubtargetFeature<"fp64",
-        "CapsOverride[AMDILDeviceInfo::DoubleOps]",
+        "CapsOverride[AMDGPUDeviceInfo::DoubleOps]",
         "true",
         "Enable 64bit double precision operations">;
 def FeatureByteAddress    : SubtargetFeature<"byte_addressable_store",
-        "CapsOverride[AMDILDeviceInfo::ByteStores]",
+        "CapsOverride[AMDGPUDeviceInfo::ByteStores]",
         "true",
         "Enable byte addressable stores">;
 def FeatureBarrierDetect : SubtargetFeature<"barrier_detect",
-        "CapsOverride[AMDILDeviceInfo::BarrierDetect]",
+        "CapsOverride[AMDGPUDeviceInfo::BarrierDetect]",
         "true",
         "Enable duplicate barrier detection(HD5XXX or later).">;
 def FeatureImages : SubtargetFeature<"images",
-        "CapsOverride[AMDILDeviceInfo::Images]",
+        "CapsOverride[AMDGPUDeviceInfo::Images]",
         "true",
         "Enable image functions">;
 def FeatureMultiUAV : SubtargetFeature<"multi_uav",
-        "CapsOverride[AMDILDeviceInfo::MultiUAV]",
+        "CapsOverride[AMDGPUDeviceInfo::MultiUAV]",
         "true",
         "Generate multiple UAV code(HD5XXX family or later)">;
 def FeatureMacroDB : SubtargetFeature<"macrodb",
-        "CapsOverride[AMDILDeviceInfo::MacroDB]",
+        "CapsOverride[AMDGPUDeviceInfo::MacroDB]",
         "true",
         "Use internal macrodb, instead of macrodb in driver">;
 def FeatureNoAlias : SubtargetFeature<"noalias",
-        "CapsOverride[AMDILDeviceInfo::NoAlias]",
+        "CapsOverride[AMDGPUDeviceInfo::NoAlias]",
         "true",
         "assert that all kernel argument pointers are not aliased">;
 def FeatureNoInline : SubtargetFeature<"no-inline",
-        "CapsOverride[AMDILDeviceInfo::NoInline]",
+        "CapsOverride[AMDGPUDeviceInfo::NoInline]",
         "true",
         "specify whether to not inline functions">;
 
@@ -61,7 +61,7 @@ def Feature32on64BitPtr : SubtargetFeature<"64on32BitPtr",
         "false",
         "Specify if 64bit sized pointers with 32bit addressing should be used.">;
 def FeatureDebug : SubtargetFeature<"debug",
-        "CapsOverride[AMDILDeviceInfo::Debug]",
+        "CapsOverride[AMDGPUDeviceInfo::Debug]",
         "true",
         "Debug mode is enabled, so disable hardware accelerated address spaces.">;
 def FeatureDumpCode : SubtargetFeature <"DumpCode",

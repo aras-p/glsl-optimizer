@@ -13,18 +13,18 @@
 
 using namespace llvm;
 
-AMDILSIDevice::AMDILSIDevice(AMDGPUSubtarget *ST)
-  : AMDILEvergreenDevice(ST)
+AMDGPUSIDevice::AMDGPUSIDevice(AMDGPUSubtarget *ST)
+  : AMDGPUEvergreenDevice(ST)
 {
 }
-AMDILSIDevice::~AMDILSIDevice()
+AMDGPUSIDevice::~AMDGPUSIDevice()
 {
 }
 
 size_t
-AMDILSIDevice::getMaxLDSSize() const
+AMDGPUSIDevice::getMaxLDSSize() const
 {
-  if (usesHardware(AMDILDeviceInfo::LocalMem)) {
+  if (usesHardware(AMDGPUDeviceInfo::LocalMem)) {
     return MAX_LDS_SIZE_900;
   } else {
     return 0;
@@ -32,13 +32,13 @@ AMDILSIDevice::getMaxLDSSize() const
 }
 
 uint32_t
-AMDILSIDevice::getGeneration() const
+AMDGPUSIDevice::getGeneration() const
 {
-  return AMDILDeviceInfo::HD7XXX;
+  return AMDGPUDeviceInfo::HD7XXX;
 }
 
 std::string
-AMDILSIDevice::getDataLayout() const
+AMDGPUSIDevice::getDataLayout() const
 {
     return std::string("e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16"
       "-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f80:32:32"

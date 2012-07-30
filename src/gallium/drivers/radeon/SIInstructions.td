@@ -13,7 +13,7 @@ def load_user_sgpr : PatFrag<(ops node:$ptr),
     const Value *Src = cast<LoadSDNode>(N)->getSrcValue();
     if (Src) {
       PointerType * PT = dyn_cast<PointerType>(Src->getType());
-      return PT && PT->getAddressSpace() == AMDILAS::USER_SGPR_ADDRESS;
+      return PT && PT->getAddressSpace() == AMDGPUAS::USER_SGPR_ADDRESS;
     }
     return false;
   }]
@@ -21,7 +21,7 @@ def load_user_sgpr : PatFrag<(ops node:$ptr),
 
 
 def isSI : Predicate<"Subtarget.device()"
-                            "->getGeneration() == AMDILDeviceInfo::HD7XXX">;
+                            "->getGeneration() == AMDGPUDeviceInfo::HD7XXX">;
 
 let Predicates = [isSI] in {
 

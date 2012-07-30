@@ -24,13 +24,13 @@ using namespace llvm;
 #include "AMDGPUGenIntrinsics.inc"
 #undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 
-AMDILIntrinsicInfo::AMDILIntrinsicInfo(TargetMachine *tm) 
+AMDGPUIntrinsicInfo::AMDGPUIntrinsicInfo(TargetMachine *tm) 
   : TargetIntrinsicInfo(), mTM(tm)
 {
 }
 
 std::string 
-AMDILIntrinsicInfo::getName(unsigned int IntrID, Type **Tys,
+AMDGPUIntrinsicInfo::getName(unsigned int IntrID, Type **Tys,
     unsigned int numTys) const 
 {
   static const char* const names[] = {
@@ -40,11 +40,11 @@ AMDILIntrinsicInfo::getName(unsigned int IntrID, Type **Tys,
   };
 
   //assert(!isOverloaded(IntrID)
-  //&& "AMDIL Intrinsics are not overloaded");
+  //&& "AMDGPU Intrinsics are not overloaded");
   if (IntrID < Intrinsic::num_intrinsics) {
     return 0;
   }
-  assert(IntrID < AMDGPUIntrinsic::num_AMDIL_intrinsics
+  assert(IntrID < AMDGPUIntrinsic::num_AMDGPU_intrinsics
       && "Invalid intrinsic ID");
 
   std::string Result(names[IntrID - Intrinsic::num_intrinsics]);
@@ -52,7 +52,7 @@ AMDILIntrinsicInfo::getName(unsigned int IntrID, Type **Tys,
 }
 
 unsigned int
-AMDILIntrinsicInfo::lookupName(const char *Name, unsigned int Len) const 
+AMDGPUIntrinsicInfo::lookupName(const char *Name, unsigned int Len) const 
 {
 #define GET_FUNCTION_RECOGNIZER
 #include "AMDGPUGenIntrinsics.inc"
@@ -68,7 +68,7 @@ AMDILIntrinsicInfo::lookupName(const char *Name, unsigned int Len) const
 }
 
 bool 
-AMDILIntrinsicInfo::isOverloaded(unsigned id) const 
+AMDGPUIntrinsicInfo::isOverloaded(unsigned id) const 
 {
   // Overload Table
 #define GET_INTRINSIC_OVERLOAD_TABLE
@@ -82,7 +82,7 @@ AMDILIntrinsicInfo::isOverloaded(unsigned id) const
 #undef GET_INTRINSIC_ATTRIBUTES
 
 Function*
-AMDILIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
+AMDGPUIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
     Type **Tys,
     unsigned numTys) const 
 {

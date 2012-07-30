@@ -14,40 +14,40 @@
 // Predicate that is set to true if the hardware supports double precision
 // divide
 def HasHWDDiv                 : Predicate<"Subtarget.device()"
-                           "->getGeneration() > AMDILDeviceInfo::HD4XXX && "
-              "Subtarget.device()->usesHardware(AMDILDeviceInfo::DoubleOps)">;
+                           "->getGeneration() > AMDGPUDeviceInfo::HD4XXX && "
+              "Subtarget.device()->usesHardware(AMDGPUDeviceInfo::DoubleOps)">;
 
 // Predicate that is set to true if the hardware supports double, but not double
 // precision divide in hardware
 def HasSWDDiv             : Predicate<"Subtarget.device()"
-                           "->getGeneration() == AMDILDeviceInfo::HD4XXX &&"
-              "Subtarget.device()->usesHardware(AMDILDeviceInfo::DoubleOps)">;
+                           "->getGeneration() == AMDGPUDeviceInfo::HD4XXX &&"
+              "Subtarget.device()->usesHardware(AMDGPUDeviceInfo::DoubleOps)">;
 
 // Predicate that is set to true if the hardware support 24bit signed
 // math ops. Otherwise a software expansion to 32bit math ops is used instead.
 def HasHWSign24Bit          : Predicate<"Subtarget.device()"
-                            "->getGeneration() > AMDILDeviceInfo::HD5XXX">;
+                            "->getGeneration() > AMDGPUDeviceInfo::HD5XXX">;
 
 // Predicate that is set to true if 64bit operations are supported or not
 def HasHW64Bit              : Predicate<"Subtarget.device()"
-                            "->usesHardware(AMDILDeviceInfo::LongOps)">;
+                            "->usesHardware(AMDGPUDeviceInfo::LongOps)">;
 def HasSW64Bit              : Predicate<"Subtarget.device()"
-                            "->usesSoftware(AMDILDeviceInfo::LongOps)">;
+                            "->usesSoftware(AMDGPUDeviceInfo::LongOps)">;
 
 // Predicate that is set to true if the timer register is supported
 def HasTmrRegister          : Predicate<"Subtarget.device()"
-                            "->isSupported(AMDILDeviceInfo::TmrReg)">;
+                            "->isSupported(AMDGPUDeviceInfo::TmrReg)">;
 // Predicate that is true if we are at least evergreen series
 def HasDeviceIDInst         : Predicate<"Subtarget.device()"
-                            "->getGeneration() >= AMDILDeviceInfo::HD5XXX">;
+                            "->getGeneration() >= AMDGPUDeviceInfo::HD5XXX">;
 
 // Predicate that is true if we have region address space.
 def hasRegionAS             : Predicate<"Subtarget.device()"
-                            "->usesHardware(AMDILDeviceInfo::RegionMem)">;
+                            "->usesHardware(AMDGPUDeviceInfo::RegionMem)">;
 
 // Predicate that is false if we don't have region address space.
 def noRegionAS             : Predicate<"!Subtarget.device()"
-                            "->isSupported(AMDILDeviceInfo::RegionMem)">;
+                            "->isSupported(AMDGPUDeviceInfo::RegionMem)">;
 
 
 // Predicate that is set to true if 64bit Mul is supported in the IL or not
@@ -55,14 +55,14 @@ def HasHW64Mul              : Predicate<"Subtarget.calVersion()"
                                           ">= CAL_VERSION_SC_139"
                                           "&& Subtarget.device()"
                                           "->getGeneration() >="
-                                          "AMDILDeviceInfo::HD5XXX">;
+                                          "AMDGPUDeviceInfo::HD5XXX">;
 def HasSW64Mul              : Predicate<"Subtarget.calVersion()" 
                                           "< CAL_VERSION_SC_139">;
 // Predicate that is set to true if 64bit Div/Mod is supported in the IL or not
 def HasHW64DivMod           : Predicate<"Subtarget.device()"
-                            "->usesHardware(AMDILDeviceInfo::HW64BitDivMod)">;
+                            "->usesHardware(AMDGPUDeviceInfo::HW64BitDivMod)">;
 def HasSW64DivMod           : Predicate<"Subtarget.device()"
-                            "->usesSoftware(AMDILDeviceInfo::HW64BitDivMod)">;
+                            "->usesSoftware(AMDGPUDeviceInfo::HW64BitDivMod)">;
 
 // Predicate that is set to true if 64bit pointer are used.
 def Has64BitPtr             : Predicate<"Subtarget.is64bit()">;

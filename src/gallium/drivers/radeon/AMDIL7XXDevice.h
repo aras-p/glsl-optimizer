@@ -25,14 +25,14 @@ class AMDGPUSubtarget;
 // 7XX generation of devices and their respective sub classes
 //===----------------------------------------------------------------------===//
 
-// The AMDIL7XXDevice class represents the generic 7XX device. All 7XX
-// devices are derived from this class. The AMDIL7XX device will only
+// The AMDGPU7XXDevice class represents the generic 7XX device. All 7XX
+// devices are derived from this class. The AMDGPU7XX device will only
 // support the minimal features that are required to be considered OpenCL 1.0
 // compliant and nothing more.
-class AMDIL7XXDevice : public AMDILDevice {
+class AMDGPU7XXDevice : public AMDGPUDevice {
 public:
-  AMDIL7XXDevice(AMDGPUSubtarget *ST);
-  virtual ~AMDIL7XXDevice();
+  AMDGPU7XXDevice(AMDGPUSubtarget *ST);
+  virtual ~AMDGPU7XXDevice();
   virtual size_t getMaxLDSSize() const;
   virtual size_t getWavefrontSize() const;
   virtual uint32_t getGeneration() const;
@@ -43,30 +43,30 @@ public:
 
 protected:
   virtual void setCaps();
-}; // AMDIL7XXDevice
+}; // AMDGPU7XXDevice
 
-// The AMDIL770Device class represents the RV770 chip and it's
+// The AMDGPU770Device class represents the RV770 chip and it's
 // derivative cards. The difference between this device and the base
 // class is this device device adds support for double precision
 // and has a larger wavefront size.
-class AMDIL770Device : public AMDIL7XXDevice {
+class AMDGPU770Device : public AMDGPU7XXDevice {
 public:
-  AMDIL770Device(AMDGPUSubtarget *ST);
-  virtual ~AMDIL770Device();
+  AMDGPU770Device(AMDGPUSubtarget *ST);
+  virtual ~AMDGPU770Device();
   virtual size_t getWavefrontSize() const;
 private:
   virtual void setCaps();
-}; // AMDIL770Device
+}; // AMDGPU770Device
 
-// The AMDIL710Device class derives from the 7XX base class, but this
+// The AMDGPU710Device class derives from the 7XX base class, but this
 // class is a smaller derivative, so we need to overload some of the
 // functions in order to correctly specify this information.
-class AMDIL710Device : public AMDIL7XXDevice {
+class AMDGPU710Device : public AMDGPU7XXDevice {
 public:
-  AMDIL710Device(AMDGPUSubtarget *ST);
-  virtual ~AMDIL710Device();
+  AMDGPU710Device(AMDGPUSubtarget *ST);
+  virtual ~AMDGPU710Device();
   virtual size_t getWavefrontSize() const;
-}; // AMDIL710Device
+}; // AMDGPU710Device
 
 } // namespace llvm
 #endif // _AMDILDEVICEIMPL_H_

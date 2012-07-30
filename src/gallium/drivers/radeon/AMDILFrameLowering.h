@@ -23,17 +23,17 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetFrameLowering.h"
 
-/// Information about the stack frame layout on the AMDIL targets. It holds
+/// Information about the stack frame layout on the AMDGPU targets. It holds
 /// the direction of the stack growth, the known stack alignment on entry to
 /// each function, and the offset to the locals area.
 /// See TargetFrameInfo for more comments.
 
 namespace llvm {
-  class AMDILFrameLowering : public TargetFrameLowering {
+  class AMDGPUFrameLowering : public TargetFrameLowering {
     public:
-      AMDILFrameLowering(StackDirection D, unsigned StackAl, int LAO, unsigned
+      AMDGPUFrameLowering(StackDirection D, unsigned StackAl, int LAO, unsigned
           TransAl = 1);
-      virtual ~AMDILFrameLowering();
+      virtual ~AMDGPUFrameLowering();
       virtual int getFrameIndexOffset(const MachineFunction &MF,
                                          int FI) const;
       virtual const SpillSlot *
@@ -41,6 +41,6 @@ namespace llvm {
       virtual void emitPrologue(MachineFunction &MF) const;
       virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
       virtual bool hasFP(const MachineFunction &MF) const;
-  }; // class AMDILFrameLowering
+  }; // class AMDGPUFrameLowering
 } // namespace llvm
 #endif // _AMDILFRAME_LOWERING_H_
