@@ -598,6 +598,9 @@ translate_tex_format(gl_format mesa_format,
 		     GLenum depth_mode,
 		     GLenum srgb_decode)
 {
+   if (srgb_decode == GL_SKIP_DECODE_EXT)
+      mesa_format = _mesa_get_srgb_format_linear(mesa_format);
+
    switch( mesa_format ) {
 
    case MESA_FORMAT_Z16:
@@ -612,14 +615,6 @@ translate_tex_format(gl_format mesa_format,
 
    case MESA_FORMAT_Z32_FLOAT_X24S8:
       return BRW_SURFACEFORMAT_R32G32_FLOAT;
-
-   case MESA_FORMAT_SARGB8:
-   case MESA_FORMAT_SLA8:
-   case MESA_FORMAT_SL8:
-      if (srgb_decode == GL_DECODE_EXT)
-	 return brw_format_for_mesa_format(mesa_format);
-      else if (srgb_decode == GL_SKIP_DECODE_EXT)
-	 return brw_format_for_mesa_format(_mesa_get_srgb_format_linear(mesa_format));
 
    case MESA_FORMAT_RGBA_FLOAT32:
       /* The value of this BRW_SURFACEFORMAT is 0, which tricks the
