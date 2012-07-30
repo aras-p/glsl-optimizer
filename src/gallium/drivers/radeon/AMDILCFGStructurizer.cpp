@@ -2636,7 +2636,7 @@ protected:
   const AMDGPURegisterInfo *TRI;
 
 public:
-  AMDGPUCFGStructurizer(char &pid, TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
+  AMDGPUCFGStructurizer(char &pid, TargetMachine &tm);
   const TargetInstrInfo *getTargetInstrInfo() const;
   //bool runOnMachineFunction(MachineFunction &F);
 
@@ -2647,7 +2647,7 @@ private:
 //char AMDGPUCFGStructurizer::ID = 0;
 } //end of namespace llvm
 AMDGPUCFGStructurizer::AMDGPUCFGStructurizer(char &pid, TargetMachine &tm
-                                           AMDIL_OPT_LEVEL_DECL)
+                                          )
 : MachineFunctionPass(pid), TM(tm), TII(tm.getInstrInfo()),
   TRI(static_cast<const AMDGPURegisterInfo *>(tm.getRegisterInfo())
   ) {
@@ -2673,7 +2673,7 @@ public:
   static char ID;
 
 public:
-  AMDGPUCFGPrepare(TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
+  AMDGPUCFGPrepare(TargetMachine &tm);
 
   virtual const char *getPassName() const;
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -2687,8 +2687,8 @@ private:
 char AMDGPUCFGPrepare::ID = 0;
 } //end of namespace llvm
 
-AMDGPUCFGPrepare::AMDGPUCFGPrepare(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
-  : AMDGPUCFGStructurizer(ID, tm  AMDIL_OPT_LEVEL_VAR) 
+AMDGPUCFGPrepare::AMDGPUCFGPrepare(TargetMachine &tm)
+  : AMDGPUCFGStructurizer(ID, tm ) 
 {
 }
 const char *AMDGPUCFGPrepare::getPassName() const {
@@ -2720,7 +2720,7 @@ public:
   static char ID;
 
 public:
-  AMDGPUCFGPerform(TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
+  AMDGPUCFGPerform(TargetMachine &tm);
   virtual const char *getPassName() const;
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   bool runOnMachineFunction(MachineFunction &F);
@@ -2732,8 +2732,8 @@ private:
 char AMDGPUCFGPerform::ID = 0;
 } //end of namespace llvm
 
-  AMDGPUCFGPerform::AMDGPUCFGPerform(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
-: AMDGPUCFGStructurizer(ID, tm AMDIL_OPT_LEVEL_VAR)
+  AMDGPUCFGPerform::AMDGPUCFGPerform(TargetMachine &tm)
+: AMDGPUCFGStructurizer(ID, tm)
 {
 }
 
@@ -3213,8 +3213,8 @@ struct CFGStructTraits<AMDGPUCFGStructurizer>
 
 // createAMDGPUCFGPreparationPass- Returns a pass
 FunctionPass *llvm::createAMDGPUCFGPreparationPass(TargetMachine &tm
-                                                  AMDIL_OPT_LEVEL_DECL) {
-  return new AMDGPUCFGPrepare(tm  AMDIL_OPT_LEVEL_VAR);
+                                                 ) {
+  return new AMDGPUCFGPrepare(tm );
 }
 
 bool AMDGPUCFGPrepare::runOnMachineFunction(MachineFunction &func) {
@@ -3225,8 +3225,8 @@ bool AMDGPUCFGPrepare::runOnMachineFunction(MachineFunction &func) {
 
 // createAMDGPUCFGStructurizerPass- Returns a pass
 FunctionPass *llvm::createAMDGPUCFGStructurizerPass(TargetMachine &tm
-                                                   AMDIL_OPT_LEVEL_DECL) {
-  return new AMDGPUCFGPerform(tm  AMDIL_OPT_LEVEL_VAR);
+                                                  ) {
+  return new AMDGPUCFGPerform(tm );
 }
 
 bool AMDGPUCFGPerform::runOnMachineFunction(MachineFunction &func) {

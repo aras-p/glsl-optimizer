@@ -41,7 +41,7 @@ class LLVM_LIBRARY_VISIBILITY AMDGPUPeepholeOpt : public FunctionPass {
 public:
   TargetMachine &TM;
   static char ID;
-  AMDGPUPeepholeOpt(TargetMachine &tm AMDIL_OPT_LEVEL_DECL);
+  AMDGPUPeepholeOpt(TargetMachine &tm);
   ~AMDGPUPeepholeOpt();
   const char *getPassName() const;
   bool runOnFunction(Function &F);
@@ -153,13 +153,13 @@ Function safeNestedForEach(InputIterator First, InputIterator Last,
 
 namespace llvm {
   FunctionPass *
-  createAMDGPUPeepholeOpt(TargetMachine &tm AMDIL_OPT_LEVEL_DECL) 
+  createAMDGPUPeepholeOpt(TargetMachine &tm) 
   {
-    return new AMDGPUPeepholeOpt(tm AMDIL_OPT_LEVEL_VAR);
+    return new AMDGPUPeepholeOpt(tm);
   }
 } // llvm namespace
 
-AMDGPUPeepholeOpt::AMDGPUPeepholeOpt(TargetMachine &tm AMDIL_OPT_LEVEL_DECL)
+AMDGPUPeepholeOpt::AMDGPUPeepholeOpt(TargetMachine &tm)
   : FunctionPass(ID), TM(tm) 
 {
   mDebug = false;

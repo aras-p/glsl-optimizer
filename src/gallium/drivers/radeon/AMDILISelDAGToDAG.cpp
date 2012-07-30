@@ -38,7 +38,7 @@ class AMDGPUDAGToDAGISel : public SelectionDAGISel {
   // make the right decision when generating code for different targets.
   const AMDGPUSubtarget &Subtarget;
 public:
-  AMDGPUDAGToDAGISel(TargetMachine &TM AMDIL_OPT_LEVEL_DECL);
+  AMDGPUDAGToDAGISel(TargetMachine &TM);
   virtual ~AMDGPUDAGToDAGISel();
 
   SDNode *Select(SDNode *N);
@@ -80,13 +80,13 @@ private:
 // DAG, ready for instruction scheduling.
 //
 FunctionPass *llvm::createAMDGPUISelDag(TargetMachine &TM
-                                        AMDIL_OPT_LEVEL_DECL) {
-  return new AMDGPUDAGToDAGISel(TM AMDIL_OPT_LEVEL_VAR);
+                                       ) {
+  return new AMDGPUDAGToDAGISel(TM);
 }
 
 AMDGPUDAGToDAGISel::AMDGPUDAGToDAGISel(TargetMachine &TM
-                                      AMDIL_OPT_LEVEL_DECL)
-  : SelectionDAGISel(TM AMDIL_OPT_LEVEL_VAR), Subtarget(TM.getSubtarget<AMDGPUSubtarget>())
+                                     )
+  : SelectionDAGISel(TM), Subtarget(TM.getSubtarget<AMDGPUSubtarget>())
 {
 }
 
