@@ -1437,7 +1437,7 @@ void
 _math_matrix_copy( GLmatrix *to, const GLmatrix *from )
 {
    memcpy( to->m, from->m, sizeof(Identity) );
-   memcpy(to->inv, from->inv, sizeof(from->inv));
+   memcpy(to->inv, from->inv, sizeof(*from->inv));
    to->flags = from->flags;
    to->type = from->type;
 }
