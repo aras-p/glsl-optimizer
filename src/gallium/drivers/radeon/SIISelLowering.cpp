@@ -15,7 +15,9 @@
 #include "SIISelLowering.h"
 #include "SIInstrInfo.h"
 #include "SIRegisterInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 
 using namespace llvm;
 
@@ -267,7 +269,7 @@ SDValue SITargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const
       CC);
 
   Result = DAG.getNode(
-      AMDILISD::BRANCH_COND,
+      AMDGPUISD::BRANCH_COND,
       CmpValue.getDebugLoc(),
       MVT::Other, Chain,
       JumpT, CmpValue);

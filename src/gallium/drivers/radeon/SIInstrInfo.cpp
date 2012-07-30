@@ -14,6 +14,7 @@
 
 #include "SIInstrInfo.h"
 #include "AMDGPUTargetMachine.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCInstrDesc.h"
 

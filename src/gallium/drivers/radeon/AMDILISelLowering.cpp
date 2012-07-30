@@ -7,12 +7,11 @@
 //
 //==-----------------------------------------------------------------------===//
 //
-// This file implements the interfaces that AMDIL uses to lower LLVM code into a
-// selection DAG.
+// This file contains TargetLowering functions borrowed from AMDLI.
 //
 //===----------------------------------------------------------------------===//
 
-#include "AMDILISelLowering.h"
+#include "AMDGPUISelLowering.h"
 #include "AMDGPURegisterInfo.h"
 #include "AMDILDevices.h"
 #include "AMDILIntrinsicInfo.h"
@@ -33,8 +32,6 @@
 #include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
-#define ISDBITCAST  ISD::BITCAST
-#define MVTGLUE     MVT::Glue
 //===----------------------------------------------------------------------===//
 // Calling Convention Implementation
 //===----------------------------------------------------------------------===//
@@ -43,6 +40,8 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 // TargetLowering Implementation Help Functions Begin
 //===----------------------------------------------------------------------===//
+namespace llvm {
+namespace AMDGPU {
   static SDValue
 getConversionNode(SelectionDAG &DAG, SDValue& Src, SDValue& Dst, bool asType)
 {
@@ -61,7 +60,7 @@ getConversionNode(SelectionDAG &DAG, SDValue& Src, SDValue& Dst, bool asType)
       Src = DAG.getSExtOrTrunc(Src, DL, dvt);
     }
   } else if (svt.isInteger()) {
-    unsigned opcode = (asType) ? ISDBITCAST : ISD::SINT_TO_FP;
+    unsigned opcode = (asType) ? ISD::BITCAST : ISD::SINT_TO_FP;
     if (!svt.bitsEq(dvt)) {
       if (dvt.getSimpleVT().SimpleTy == MVT::f32) {
         Src = DAG.getSExtOrTrunc(Src, DL, MVT::i32);
@@ -73,7 +72,7 @@ getConversionNode(SelectionDAG &DAG, SDValue& Src, SDValue& Dst, bool asType)
     }
     Src = DAG.getNode(opcode, DL, dvt, Src);
   } else if (dvt.isInteger()) {
-    unsigned opcode = (asType) ? ISDBITCAST : ISD::FP_TO_SINT;
+    unsigned opcode = (asType) ? ISD::BITCAST : ISD::FP_TO_SINT;
     if (svt.getSimpleVT().SimpleTy == MVT::f32) {
       Src = DAG.getNode(opcode, DL, MVT::i32, Src);
     } else if (svt.getSimpleVT().SimpleTy == MVT::f64) {
@@ -86,6 +85,9 @@ getConversionNode(SelectionDAG &DAG, SDValue& Src, SDValue& Dst, bool asType)
   return Src;
 }
 
+} // End namespace AMDPGU
+} // End namespace llvm
+
 //===----------------------------------------------------------------------===//
 // TargetLowering Implementation Help Functions End
 //===----------------------------------------------------------------------===//
@@ -93,8 +95,7 @@ getConversionNode(SelectionDAG &DAG, SDValue& Src, SDValue& Dst, bool asType)
 //===----------------------------------------------------------------------===//
 // TargetLowering Class Implementation Begins
 //===----------------------------------------------------------------------===//
-  AMDILTargetLowering::AMDILTargetLowering(TargetMachine &TM)
-: TargetLowering(TM, new TargetLoweringObjectFileELF())
+void AMDGPUTargetLowering::InitAMDILLowering()
 {
   int types[] =
   {
@@ -167,9 +168,6 @@ getConversionNode(SelectionDAG &DAG, SDValue& Src, SDValue& Dst, bool asType)
     setOperationAction(ISD::BRIND, VT, Expand);
     // TODO: Implement custom UREM/SREM routines
     setOperationAction(ISD::SREM, VT, Expand);
-    setOperationAction(ISD::GlobalAddress, VT, Custom);
-    setOperationAction(ISD::JumpTable, VT, Custom);
-    setOperationAction(ISD::ConstantPool, VT, Custom);
     setOperationAction(ISD::SELECT, VT, Custom);
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
     setOperationAction(ISD::UMUL_LOHI, VT, Expand);
@@ -273,6 +271,7 @@ getConversionNode(SelectionDAG &DAG, SDValue& Src, SDValue& Dst, bool asType)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::Other, Expand);
 
   setOperationAction(ISD::BUILD_VECTOR, MVT::Other, Custom);
+
   // Use the default implementation.
   setOperationAction(ISD::ConstantFP        , MVT::f32    , Legal);
   setOperationAction(ISD::Constant          , MVT::i32    , Legal);
@@ -293,32 +292,15 @@ getConversionNode(SelectionDAG &DAG, SDValue& Src, SDValue& Dst, bool asType)
 #undef numFloatTypes
 }
 
-const char *
-AMDILTargetLowering::getTargetNodeName(unsigned Opcode) const
-{
-  switch (Opcode) {
-    default: return 0;
-    case AMDILISD::CMOVLOG:  return "AMDILISD::CMOVLOG";
-    case AMDILISD::MAD:  return "AMDILISD::MAD";
-    case AMDILISD::CALL:  return "AMDILISD::CALL";
-    case AMDILISD::SELECT_CC: return "AMDILISD::SELECT_CC";
-    case AMDILISD::UMUL: return "AMDILISD::UMUL";
-    case AMDILISD::DIV_INF: return "AMDILISD::DIV_INF";
-    case AMDILISD::VBUILD: return "AMDILISD::VBUILD";
-    case AMDILISD::RET_FLAG: return "AMDILISD::RET_FLAG";
-    case AMDILISD::BRANCH_COND: return "AMDILISD::BRANCH_COND";
-
-  };
-}
 bool
-AMDILTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
+AMDGPUTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     const CallInst &I, unsigned Intrinsic) const
 {
   return false;
 }
 // The backend supports 32 and 64 bit floating point immediates
 bool
-AMDILTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const
+AMDGPUTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const
 {
   if (VT.getScalarType().getSimpleVT().SimpleTy == MVT::f32
       || VT.getScalarType().getSimpleVT().SimpleTy == MVT::f64) {
@@ -329,7 +311,7 @@ AMDILTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const
 }
 
 bool
-AMDILTargetLowering::ShouldShrinkFPConstant(EVT VT) const
+AMDGPUTargetLowering::ShouldShrinkFPConstant(EVT VT) const
 {
   if (VT.getScalarType().getSimpleVT().SimpleTy == MVT::f32
       || VT.getScalarType().getSimpleVT().SimpleTy == MVT::f64) {
@@ -345,7 +327,7 @@ AMDILTargetLowering::ShouldShrinkFPConstant(EVT VT) const
 // combiner.
 
 void
-AMDILTargetLowering::computeMaskedBitsForTargetNode(
+AMDGPUTargetLowering::computeMaskedBitsForTargetNode(
     const SDValue Op,
     APInt &KnownZero,
     APInt &KnownOne,
@@ -357,7 +339,7 @@ AMDILTargetLowering::computeMaskedBitsForTargetNode(
   KnownZero = KnownOne = APInt(KnownOne.getBitWidth(), 0); // Don't know anything
   switch (Op.getOpcode()) {
     default: break;
-    case AMDILISD::SELECT_CC:
+    case ISD::SELECT_CC:
              DAG.ComputeMaskedBits(
                  Op.getOperand(1),
                  KnownZero,
@@ -384,47 +366,8 @@ AMDILTargetLowering::computeMaskedBitsForTargetNode(
 //                           Other Lowering Hooks
 //===----------------------------------------------------------------------===//
 
-// Recursively assign SDNodeOrdering to any unordered nodes
-// This is necessary to maintain source ordering of instructions
-// under -O0 to avoid odd-looking "skipping around" issues.
-  static const SDValue
-Ordered( SelectionDAG &DAG, unsigned order, const SDValue New )
-{
-  if (order != 0 && DAG.GetOrdering( New.getNode() ) == 0) {
-    DAG.AssignOrdering( New.getNode(), order );
-    for (unsigned i = 0, e = New.getNumOperands(); i < e; ++i)
-      Ordered( DAG, order, New.getOperand(i) );
-  }
-  return New;
-}
-
-#define LOWER(A) \
-  case ISD:: A: \
-return Ordered( DAG, DAG.GetOrdering( Op.getNode() ), Lower##A(Op, DAG) )
-
 SDValue
-AMDILTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
-{
-  switch (Op.getOpcode()) {
-    default:
-      Op.getNode()->dump();
-      assert(0 && "Custom lowering code for this"
-          "instruction is not implemented yet!");
-      break;
-      LOWER(SDIV);
-      LOWER(SREM);
-      LOWER(BUILD_VECTOR);
-      LOWER(SELECT);
-      LOWER(SIGN_EXTEND_INREG);
-      LOWER(BRCOND);
-  }
-  return Op;
-}
-
-#undef LOWER
-
-SDValue
-AMDILTargetLowering::LowerSDIV(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerSDIV(SDValue Op, SelectionDAG &DAG) const
 {
   EVT OVT = Op.getValueType();
   SDValue DST;
@@ -442,7 +385,7 @@ AMDILTargetLowering::LowerSDIV(SDValue Op, SelectionDAG &DAG) const
 }
 
 SDValue
-AMDILTargetLowering::LowerSREM(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerSREM(SDValue Op, SelectionDAG &DAG) const
 {
   EVT OVT = Op.getValueType();
   SDValue DST;
@@ -461,7 +404,7 @@ AMDILTargetLowering::LowerSREM(SDValue Op, SelectionDAG &DAG) const
 }
 
 SDValue
-AMDILTargetLowering::LowerBUILD_VECTOR( SDValue Op, SelectionDAG &DAG ) const
+AMDGPUTargetLowering::LowerBUILD_VECTOR( SDValue Op, SelectionDAG &DAG ) const
 {
   EVT VT = Op.getValueType();
   SDValue Nodes1;
@@ -469,7 +412,7 @@ AMDILTargetLowering::LowerBUILD_VECTOR( SDValue Op, SelectionDAG &DAG ) const
   SDValue third;
   SDValue fourth;
   DebugLoc DL = Op.getDebugLoc();
-  Nodes1 = DAG.getNode(AMDILISD::VBUILD,
+  Nodes1 = DAG.getNode(AMDGPUISD::VBUILD,
       DL,
       VT, Op.getOperand(0));
 #if 0
@@ -527,21 +470,21 @@ AMDILTargetLowering::LowerBUILD_VECTOR( SDValue Op, SelectionDAG &DAG ) const
 }
 
 SDValue
-AMDILTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const
 {
   SDValue Cond = Op.getOperand(0);
   SDValue LHS = Op.getOperand(1);
   SDValue RHS = Op.getOperand(2);
   DebugLoc DL = Op.getDebugLoc();
-  Cond = getConversionNode(DAG, Cond, Op, true);
-  Cond = DAG.getNode(AMDILISD::CMOVLOG,
+  Cond = AMDGPU::getConversionNode(DAG, Cond, Op, true);
+  Cond = DAG.getNode(AMDGPUISD::CMOVLOG,
       DL,
       Op.getValueType(), Cond, LHS, RHS);
   return Cond;
 }
 
 SDValue
-AMDILTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const
 {
   SDValue Data = Op.getOperand(0);
   VTSDNode *BaseType = cast<VTSDNode>(Op.getOperand(1));
@@ -572,7 +515,7 @@ AMDILTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const
   return Data;
 }
 EVT
-AMDILTargetLowering::genIntType(uint32_t size, uint32_t numEle) const
+AMDGPUTargetLowering::genIntType(uint32_t size, uint32_t numEle) const
 {
   int iSize = (size * numEle);
   int vEle = (iSize >> ((size == 64) ? 6 : 5));
@@ -595,14 +538,14 @@ AMDILTargetLowering::genIntType(uint32_t size, uint32_t numEle) const
 }
 
 SDValue
-AMDILTargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const
 {
   SDValue Chain = Op.getOperand(0);
   SDValue Cond  = Op.getOperand(1);
   SDValue Jump  = Op.getOperand(2);
   SDValue Result;
   Result = DAG.getNode(
-      AMDILISD::BRANCH_COND,
+      AMDGPUISD::BRANCH_COND,
       Op.getDebugLoc(),
       Op.getValueType(),
       Chain, Jump, Cond);
@@ -610,7 +553,7 @@ AMDILTargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const
 }
 
 SDValue
-AMDILTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const
 {
   DebugLoc DL = Op.getDebugLoc();
   EVT OVT = Op.getValueType();
@@ -654,7 +597,7 @@ AMDILTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const
   SDValue fb = DAG.getNode(ISD::SINT_TO_FP, DL, FLTTY, ib);
 
   // float fq = native_divide(fa, fb);
-  SDValue fq = DAG.getNode(AMDILISD::DIV_INF, DL, FLTTY, fa, fb);
+  SDValue fq = DAG.getNode(AMDGPUISD::DIV_INF, DL, FLTTY, fa, fb);
 
   // fq = trunc(fq);
   fq = DAG.getNode(ISD::FTRUNC, DL, FLTTY, fq);
@@ -663,7 +606,7 @@ AMDILTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const
   SDValue fqneg = DAG.getNode(ISD::FNEG, DL, FLTTY, fq);
 
   // float fr = mad(fqneg, fb, fa);
-  SDValue fr = DAG.getNode(AMDILISD::MAD, DL, FLTTY, fqneg, fb, fa);
+  SDValue fr = DAG.getNode(AMDGPUISD::MAD, DL, FLTTY, fqneg, fb, fa);
 
   // int iq = (int)fq;
   SDValue iq = DAG.getNode(ISD::FP_TO_SINT, DL, INTTY, fq);
@@ -682,7 +625,7 @@ AMDILTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const
     cv = DAG.getSetCC(DL, INTTY, fr, fb, ISD::SETOGE);
   }
   // jq = (cv ? jq : 0);
-  jq = DAG.getNode(AMDILISD::CMOVLOG, DL, OVT, cv, jq, 
+  jq = DAG.getNode(AMDGPUISD::CMOVLOG, DL, OVT, cv, jq, 
       DAG.getConstant(0, OVT));
   // dst = iq + jq;
   iq = DAG.getSExtOrTrunc(iq, DL, OVT);
@@ -691,7 +634,7 @@ AMDILTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const
 }
 
 SDValue
-AMDILTargetLowering::LowerSDIV32(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerSDIV32(SDValue Op, SelectionDAG &DAG) const
 {
   DebugLoc DL = Op.getDebugLoc();
   EVT OVT = Op.getValueType();
@@ -758,13 +701,13 @@ AMDILTargetLowering::LowerSDIV32(SDValue Op, SelectionDAG &DAG) const
 }
 
 SDValue
-AMDILTargetLowering::LowerSDIV64(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerSDIV64(SDValue Op, SelectionDAG &DAG) const
 {
   return SDValue(Op.getNode(), 0);
 }
 
 SDValue
-AMDILTargetLowering::LowerSREM8(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerSREM8(SDValue Op, SelectionDAG &DAG) const
 {
   DebugLoc DL = Op.getDebugLoc();
   EVT OVT = Op.getValueType();
@@ -782,7 +725,7 @@ AMDILTargetLowering::LowerSREM8(SDValue Op, SelectionDAG &DAG) const
 }
 
 SDValue
-AMDILTargetLowering::LowerSREM16(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerSREM16(SDValue Op, SelectionDAG &DAG) const
 {
   DebugLoc DL = Op.getDebugLoc();
   EVT OVT = Op.getValueType();
@@ -800,7 +743,7 @@ AMDILTargetLowering::LowerSREM16(SDValue Op, SelectionDAG &DAG) const
 }
 
 SDValue
-AMDILTargetLowering::LowerSREM32(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerSREM32(SDValue Op, SelectionDAG &DAG) const
 {
   DebugLoc DL = Op.getDebugLoc();
   EVT OVT = Op.getValueType();
@@ -849,7 +792,7 @@ AMDILTargetLowering::LowerSREM32(SDValue Op, SelectionDAG &DAG) const
   SDValue r20 = DAG.getNode(ISD::UREM, DL, OVT, r0, r1);
 
   // umul r20, r20, r1
-  r20 = DAG.getNode(AMDILISD::UMUL, DL, OVT, r20, r1);
+  r20 = DAG.getNode(AMDGPUISD::UMUL, DL, OVT, r20, r1);
 
   // sub r0, r0, r20
   r0 = DAG.getNode(ISD::SUB, DL, OVT, r0, r20);
@@ -863,7 +806,7 @@ AMDILTargetLowering::LowerSREM32(SDValue Op, SelectionDAG &DAG) const
 }
 
 SDValue
-AMDILTargetLowering::LowerSREM64(SDValue Op, SelectionDAG &DAG) const
+AMDGPUTargetLowering::LowerSREM64(SDValue Op, SelectionDAG &DAG) const
 {
   return SDValue(Op.getNode(), 0);
 }

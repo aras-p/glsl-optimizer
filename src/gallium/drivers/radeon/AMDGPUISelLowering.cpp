@@ -14,13 +14,19 @@
 #include "AMDGPUISelLowering.h"
 #include "AMDILIntrinsicInfo.h"
 #include "AMDGPUUtil.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
 using namespace llvm;
 
 AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
-  AMDILTargetLowering(TM)
+  TargetLowering(TM, new TargetLoweringObjectFileELF())
 {
+
+  // Initialize target lowering borrowed from AMDIL
+  InitAMDILLowering();
+
   // We need to custom lower some of the intrinsics
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
@@ -63,7 +69,7 @@ SDValue AMDGPUTargetLowering::LowerReturn(
                                      const SmallVectorImpl<SDValue> &OutVals,
                                      DebugLoc DL, SelectionDAG &DAG) const
 {
-  return DAG.getNode(AMDILISD::RET_FLAG, DL, MVT::Other, Chain);
+  return DAG.getNode(AMDGPUISD::RET_FLAG, DL, MVT::Other, Chain);
 }
 
 //===---------------------------------------------------------------------===//
@@ -74,10 +80,23 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     const
 {
   switch (Op.getOpcode()) {
-  default: return AMDILTargetLowering::LowerOperation(Op, DAG);
+  default:
+    Op.getNode()->dump();
+    assert(0 && "Custom lowering code for this"
+        "instruction is not implemented yet!");
+    break;
+  // AMDIL DAG lowering
+  case ISD::SDIV: return LowerSDIV(Op, DAG);
+  case ISD::SREM: return LowerSREM(Op, DAG);
+  case ISD::BUILD_VECTOR: return LowerBUILD_VECTOR(Op, DAG);
+  case ISD::SELECT: return LowerSELECT(Op, DAG);
+  case ISD::SIGN_EXTEND_INREG: return LowerSIGN_EXTEND_INREG(Op, DAG);
+  case ISD::BRCOND: return LowerBRCOND(Op, DAG);
+  // AMDGPU DAG lowering
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   }
+  return Op;
 }
 
 SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
@@ -100,7 +119,7 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     case AMDGPUIntrinsic::AMDIL_fraction:
       return DAG.getNode(AMDGPUISD::FRACT, DL, VT, Op.getOperand(1));
     case AMDGPUIntrinsic::AMDIL_mad:
-      return DAG.getNode(AMDILISD::MAD, DL, VT, Op.getOperand(1),
+      return DAG.getNode(AMDGPUISD::MAD, DL, VT, Op.getOperand(1),
                               Op.getOperand(2), Op.getOperand(3));
     case AMDGPUIntrinsic::AMDIL_max:
       return DAG.getNode(AMDGPUISD::FMAX, DL, VT, Op.getOperand(1),
@@ -152,7 +171,7 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicLRP(SDValue Op,
                                 Op.getOperand(1));
   SDValue OneSubAC = DAG.getNode(ISD::FMUL, DL, VT, OneSubA,
                                                     Op.getOperand(3));
-  return DAG.getNode(AMDILISD::MAD, DL, VT, Op.getOperand(1),
+  return DAG.getNode(AMDGPUISD::MAD, DL, VT, Op.getOperand(1),
                                                Op.getOperand(2),
                                                OneSubAC);
 }
@@ -304,8 +323,18 @@ void AMDGPUTargetLowering::addLiveIn(MachineInstr * MI,
 const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const
 {
   switch (Opcode) {
-  default: return AMDILTargetLowering::getTargetNodeName(Opcode);
+  default: return 0;
+  // AMDIL DAG nodes
+  NODE_NAME_CASE(CMOVLOG);
+  NODE_NAME_CASE(MAD);
+  NODE_NAME_CASE(CALL);
+  NODE_NAME_CASE(UMUL);
+  NODE_NAME_CASE(DIV_INF);
+  NODE_NAME_CASE(VBUILD);
+  NODE_NAME_CASE(RET_FLAG);
+  NODE_NAME_CASE(BRANCH_COND);
 
+  // AMDGPU DAG nodes
   NODE_NAME_CASE(FRACT)
   NODE_NAME_CASE(FMAX)
   NODE_NAME_CASE(SMAX)

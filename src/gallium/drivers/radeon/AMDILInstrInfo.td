@@ -103,32 +103,32 @@ def SDTIL_BRCond : SDTypeProfile<0, 2, [
 //===----------------------------------------------------------------------===//
 // Flow Control DAG Nodes
 //===----------------------------------------------------------------------===//
-def IL_brcond      : SDNode<"AMDILISD::BRANCH_COND", SDTIL_BRCond, [SDNPHasChain]>;
+def IL_brcond      : SDNode<"AMDGPUISD::BRANCH_COND", SDTIL_BRCond, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // Call/Return DAG Nodes
 //===----------------------------------------------------------------------===//
-def IL_retflag       : SDNode<"AMDILISD::RET_FLAG", SDTNone,
+def IL_retflag       : SDNode<"AMDGPUISD::RET_FLAG", SDTNone,
     [SDNPHasChain, SDNPOptInGlue]>;
 
 //===--------------------------------------------------------------------===//
 // Instructions
 //===--------------------------------------------------------------------===//
 // Floating point math functions
-def IL_cmov_logical : SDNode<"AMDILISD::CMOVLOG", SDTIL_GenTernaryOp>;
-def IL_div_inf      : SDNode<"AMDILISD::DIV_INF", SDTIL_GenBinaryOp>;
-def IL_mad          : SDNode<"AMDILISD::MAD", SDTIL_GenTernaryOp>;
+def IL_cmov_logical : SDNode<"AMDGPUISD::CMOVLOG", SDTIL_GenTernaryOp>;
+def IL_div_inf      : SDNode<"AMDGPUISD::DIV_INF", SDTIL_GenBinaryOp>;
+def IL_mad          : SDNode<"AMDGPUISD::MAD", SDTIL_GenTernaryOp>;
 
 //===----------------------------------------------------------------------===//
 // Integer functions
 //===----------------------------------------------------------------------===//
-def IL_umul        : SDNode<"AMDILISD::UMUL"    , SDTIntBinOp,
+def IL_umul        : SDNode<"AMDGPUISD::UMUL"    , SDTIntBinOp,
     [SDNPCommutative, SDNPAssociative]>;
 
 //===----------------------------------------------------------------------===//
 // Vector functions
 //===----------------------------------------------------------------------===//
-def IL_vbuild     : SDNode<"AMDILISD::VBUILD", SDTIL_GenVecBuild,
+def IL_vbuild     : SDNode<"AMDGPUISD::VBUILD", SDTIL_GenVecBuild,
     []>;
 
 //===--------------------------------------------------------------------===//

@@ -16,7 +16,9 @@
 #include "AMDGPUUtil.h"
 #include "R600InstrInfo.h"
 #include "R600MachineFunctionInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 
 using namespace llvm;
 
@@ -300,7 +302,7 @@ SDValue R600TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const
       DAG.getConstant(0, MVT::i32),
       CC);
   Result = DAG.getNode(
-      AMDILISD::BRANCH_COND,
+      AMDGPUISD::BRANCH_COND,
       CmpValue.getDebugLoc(),
       MVT::Other, Chain,
       JumpT, CmpValue);

@@ -15,6 +15,7 @@
 #include "AMDGPUTargetMachine.h"
 #include "AMDILSubtarget.h"
 #include "R600RegisterInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 
 #define GET_INSTRINFO_CTOR
 #include "AMDGPUGenDFAPacketizer.inc"
