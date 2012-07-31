@@ -334,7 +334,7 @@ dst_reg address_reg = dst_reg(PROGRAM_ADDRESS, WRITEMASK_X);
 static int
 swizzle_for_size(int size)
 {
-   int size_swizzles[4] = {
+   static const int size_swizzles[4] = {
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z),
