@@ -153,10 +153,7 @@ nv30_resource_resolve(struct pipe_context *pipe,
 
    define_rect(info->src.res, 0, 0, info->src.x0, info->src.y0,
                info->src.x1 - info->src.x0, info->src.y1 - info->src.y0, &src);
-   define_rect(info->dst.surface->texture,
-               info->dst.surface->u.tex.level,
-               info->dst.surface->u.tex.first_layer,
-               info->dst.x0, info->dst.y0,
+   define_rect(info->dst.res, info->dst.level, 0, info->dst.x0, info->dst.y0,
                info->dst.x1 - info->dst.x0, info->dst.y1 - info->dst.y0, &dst);
 
    nv30_transfer_rect(nv30, BILINEAR, &src, &dst);

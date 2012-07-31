@@ -436,7 +436,6 @@ struct nv50_blitctx
       unsigned num_samplers[3];
       struct pipe_sampler_view *texture[2];
       struct nv50_tsc_entry *sampler[2];
-      enum pipe_format format;
       unsigned dirty;
    } saved;
    struct nv50_program vp;
@@ -662,19 +661,26 @@ nv50_blitctx_get_color_mask_and_fp(struct nv50_blitctx *blit,
 }
 
 static void
-nv50_blit_set_dst(struct nv50_context *nv50, struct pipe_surface *surf,
-                  struct nv50_blitctx *blit)
+nv50_blit_set_dst(struct nv50_context *nv50,
+                  struct pipe_resource *res, unsigned level, unsigned layer)
 {
-   blit->saved.format = surf->format;
+   struct pipe_context *pipe = &nv50->base.pipe;
+   struct pipe_surface templ;
 
-   if (util_format_is_depth_or_stencil(surf->format))
-      surf->format = nv50_blit_zeta_to_colour_format(surf->format);
+   if (util_format_is_depth_or_stencil(res->format))
+      templ.format = nv50_blit_zeta_to_colour_format(res->format);
+   else
+      templ.format = res->format;
 
-   nv50->framebuffer.cbufs[0] = surf;
+   templ.usage = PIPE_USAGE_STREAM;
+   templ.u.tex.level = level;
+   templ.u.tex.first_layer = templ.u.tex.last_layer = layer;
+
+   nv50->framebuffer.cbufs[0] = nv50_miptree_surface_new(pipe, res, &templ);
    nv50->framebuffer.nr_cbufs = 1;
    nv50->framebuffer.zsbuf = NULL;
-   nv50->framebuffer.width = surf->width;
-   nv50->framebuffer.height = surf->height;
+   nv50->framebuffer.width = nv50->framebuffer.cbufs[0]->width;
+   nv50->framebuffer.height = nv50->framebuffer.cbufs[0]->height;
 }
 
 static INLINE void
@@ -816,7 +822,7 @@ nv50_blitctx_post_blit(struct nv50_context *nv50, struct nv50_blitctx *blit)
 {
    int s;
 
-   nv50->framebuffer.cbufs[0]->format = blit->saved.format;
+   pipe_surface_reference(&nv50->framebuffer.cbufs[0], NULL);
 
    nv50->framebuffer.width = blit->saved.fb.width;
    nv50->framebuffer.height = blit->saved.fb.height;
@@ -856,7 +862,7 @@ nv50_resource_resolve(struct pipe_context *pipe,
    struct nv50_blitctx *blit = screen->blitctx;
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct pipe_resource *src = info->src.res;
-   struct pipe_resource *dst = info->dst.surface->texture;
+   struct pipe_resource *dst = info->dst.res;
    float x0, x1, y0, y1, z;
    float x_range, y_range;
 
@@ -866,8 +872,8 @@ nv50_resource_resolve(struct pipe_context *pipe,
 
    nv50_blitctx_pre_blit(blit, nv50);
 
-   nv50_blit_set_dst(nv50, info->dst.surface, blit);
-   nv50_blit_set_src(nv50, src, 0, info->src.layer);
+   nv50_blit_set_dst(nv50, dst, info->dst.level, info->dst.layer);
+   nv50_blit_set_src(nv50, src, 0,               info->src.layer);
 
    nv50_blitctx_prepare_state(blit);
 

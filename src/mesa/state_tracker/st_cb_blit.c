@@ -80,8 +80,9 @@ st_BlitFramebuffer_resolve(struct gl_context *ctx,
 
       info->src.res = srcRb->texture;
       info->src.layer = srcRb->surface->u.tex.first_layer;
-
-      info->dst.surface = dstRb->surface;
+      info->dst.res = dstRb->texture;
+      info->dst.level = dstRb->surface->u.tex.level;
+      info->dst.layer = dstRb->surface->u.tex.first_layer;
 
       st->pipe->resource_resolve(st->pipe, info);
    }
@@ -113,8 +114,9 @@ st_BlitFramebuffer_resolve(struct gl_context *ctx,
 
          info->src.res = srcRb->texture;
          info->src.layer = srcRb->surface->u.tex.first_layer;
-
-         info->dst.surface = dstRb->surface;
+         info->dst.res = dstRb->texture;
+         info->dst.level = dstRb->surface->u.tex.level;
+         info->dst.layer = dstRb->surface->u.tex.first_layer;
 
          st->pipe->resource_resolve(st->pipe, info);
       }
@@ -128,8 +130,9 @@ st_BlitFramebuffer_resolve(struct gl_context *ctx,
 
          info->src.res = srcRb->texture;
          info->src.layer = srcRb->surface->u.tex.first_layer;
-
-         info->dst.surface = dstRb->surface;
+         info->dst.res = dstRb->texture;
+         info->dst.level = dstRb->surface->u.tex.level;
+         info->dst.layer = dstRb->surface->u.tex.first_layer;
 
          st->pipe->resource_resolve(st->pipe, info);
       }

@@ -1272,7 +1272,11 @@ static void r300_resource_resolve(struct pipe_context *pipe,
     srcsurf = pipe->create_surface(pipe, info->src.res, &surf_tmpl);
     /* XXX Offset both surfaces by x0,y1. */
 
-    dstsurf = info->dst.surface;
+    surf_tmpl.format = info->dst.res->format;
+    surf_tmpl.u.tex.level = info->dst.level;
+    surf_tmpl.u.tex.first_layer =
+    surf_tmpl.u.tex.last_layer = info->dst.layer;
+    dstsurf = pipe->create_surface(pipe, info->dst.res, &surf_tmpl);
 
     DBG(r300, DBG_DRAW, "r300: Resolving resource...\n");
 
@@ -1298,6 +1302,7 @@ static void r300_resource_resolve(struct pipe_context *pipe,
     r300_mark_atom_dirty(r300, &r300->aa_state);
 
     pipe_surface_reference(&srcsurf, NULL);
+    pipe_surface_reference(&dstsurf, NULL);
 }
 
 void r300_init_render_functions(struct r300_context *r300)
