@@ -51,7 +51,6 @@
 #include <stdint.h>
 #endif
 #include "GL/glxproto.h"
-#include "glapi/glapitable.h"
 #include "glxconfig.h"
 #include "glxhash.h"
 #if defined( PTHREADS )

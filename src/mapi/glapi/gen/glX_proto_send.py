@@ -423,7 +423,10 @@ __indirect_get_proc_address(const char *name)
 				print ''
 				print '#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)'
 				print '    if (gc->isDirect) {'
-				print '    %sGET_DISPATCH()->%s(%s);' % (ret_string, func.name, func.get_called_parameter_string())
+				print '        const _glapi_proc *const table = GET_DISPATCH();'
+				print '        PFNGL%sPROC p =' % (name.upper())
+				print '            (PFNGL%sPROC) table[%d];' % (name.upper(), func.offset)
+				print '    %sp(%s);' % (ret_string, func.get_called_parameter_string())
 				print '    } else'
 				print '#endif'
 				print '    {'

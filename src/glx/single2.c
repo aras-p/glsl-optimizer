@@ -35,7 +35,6 @@
 #include "glxextensions.h"
 #include "indirect.h"
 #include "indirect_vertex_array.h"
-#include "glapitable.h"
 #include "glapi.h"
 #ifdef USE_XCB
 #include <xcb/xcb.h>
@@ -943,7 +942,11 @@ glAreTexturesResidentEXT(GLsizei n, const GLuint * textures,
    struct glx_context *const gc = __glXGetCurrentContext();
 
    if (gc->isDirect) {
-      return GET_DISPATCH()->AreTexturesResident(n, textures, residences);
+      const _glapi_proc *const table = (_glapi_proc *) GET_DISPATCH();
+      PFNGLARETEXTURESRESIDENTEXTPROC p =
+         (PFNGLARETEXTURESRESIDENTEXTPROC) table[332];
+
+      return p(n, textures, residences);
    }
    else {
       struct glx_context *const gc = __glXGetCurrentContext();

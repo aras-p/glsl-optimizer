@@ -30,7 +30,6 @@
 
 #include "packsingle.h"
 #include "indirect.h"
-#include "glapitable.h"
 #include "glapi.h"
 #include "glthread.h"
 #include <GL/glxproto.h>
@@ -117,8 +116,11 @@ void gl_dispatch_stub_GetSeparableFilterEXT (GLenum target, GLenum format,
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    if (gc->isDirect) {
-      GET_DISPATCH()->GetSeparableFilter(target, format, type,
-                                         row, column, span);
+      const _glapi_proc *const table = (_glapi_proc *) GET_DISPATCH();
+      PFNGLGETSEPARABLEFILTEREXTPROC p =
+         (PFNGLGETSEPARABLEFILTEREXTPROC) table[359];
+
+      p(target, format, type, row, column, span);
       return;
    }
    else
