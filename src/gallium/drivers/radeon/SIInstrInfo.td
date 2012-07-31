@@ -475,6 +475,13 @@ class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBU
 
 multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass,
 			ValueType vt> {
+  def _IMM : SMRD <
+              op,
+              (outs dstClass:$dst),
+              (ins SMRDmemri:$src0),
+              asm,
+              [(set (vt dstClass:$dst), (constant_load ADDR_Offset8:$src0))]
+  >;
 
   def _SGPR : SMRD <
               op,
@@ -482,14 +489,6 @@ multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass dstClass,
               (ins SMRDmemrr:$src0),
               asm,
               [(set (vt dstClass:$dst), (constant_load ADDR_Reg:$src0))]
-  >;
-
-  def _IMM : SMRD <
-              op,
-              (outs dstClass:$dst),
-              (ins SMRDmemri:$src0),
-              asm,
-              [(set (vt dstClass:$dst), (constant_load ADDR_Offset8:$src0))]
   >;
 }
 
