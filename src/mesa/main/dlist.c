@@ -482,6 +482,9 @@ typedef enum
    OPCODE_DRAW_TRANSFORM_FEEDBACK_INSTANCED,
    OPCODE_DRAW_TRANSFORM_FEEDBACK_STREAM_INSTANCED,
 
+   /* ARB_uniform_buffer_object */
+   OPCODE_UNIFORM_BLOCK_BINDING,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -7582,6 +7585,23 @@ save_EndConditionalRender(void)
    }
 }
 
+static void GLAPIENTRY
+save_UniformBlockBinding(GLuint prog, GLuint index, GLuint binding)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_UNIFORM_BLOCK_BINDING, 3);
+   if (n) {
+      n[1].ui = prog;
+      n[2].ui = index;
+      n[3].ui = binding;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_UniformBlockBinding(ctx->Exec, (prog, index, binding));
+   }
+}
+
 
 /**
  * Save an error-generating command into display list.
@@ -8875,6 +8895,10 @@ execute_list(struct gl_context *ctx, GLuint list)
             break;
          case OPCODE_END_CONDITIONAL_RENDER:
             CALL_EndConditionalRenderNV(ctx->Exec, ());
+            break;
+
+         case OPCODE_UNIFORM_BLOCK_BINDING:
+            CALL_UniformBlockBinding(ctx->Exec, (n[1].ui, n[2].ui, n[3].ui));
             break;
 
          case OPCODE_CONTINUE:
@@ -10631,6 +10655,9 @@ _mesa_create_save_table(void)
 
    /* GL_ARB_debug_output (no dlist support) */
    _mesa_init_errors_dispatch(table);
+
+   /* GL_ARB_uniform_buffer_object */
+   SET_UniformBlockBinding(table, save_UniformBlockBinding);
 
    /* GL_NV_primitive_restart */
    SET_PrimitiveRestartIndexNV(table, _mesa_PrimitiveRestartIndex);
