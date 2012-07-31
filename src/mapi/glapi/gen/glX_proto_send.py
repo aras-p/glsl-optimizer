@@ -928,6 +928,7 @@ class PrintGlxProtoInit_c(gl_XML.gl_print_base):
 #include "indirect_init.h"
 #include "indirect.h"
 #include "glapi.h"
+#include <assert.h>
 
 
 /**
@@ -945,26 +946,24 @@ static int NoOp(void)
  */
 struct _glapi_table * __glXNewIndirectAPI( void )
 {
-    struct _glapi_table *glAPI;
-    GLuint entries;
+    _glapi_proc *table;
+    unsigned entries;
+    unsigned i;
+    int o;
 
     entries = _glapi_get_dispatch_table_size();
-    glAPI = (struct _glapi_table *) Xmalloc(entries * sizeof(void *));
+    table = (_glapi_proc *) Xmalloc(entries * sizeof(_glapi_proc));
 
     /* first, set all entries to point to no-op functions */
-    {
-       int i;
-       void **dispatch = (void **) glAPI;
-       for (i = 0; i < entries; i++) {
-          dispatch[i] = (void *) NoOp;
-       }
+    for (i = 0; i < entries; i++) {
+       table[i] = (_glapi_proc) NoOp;
     }
 
     /* now, initialize the entries we understand */"""
 
 	def printRealFooter(self):
 		print """
-    return glAPI;
+    return (struct _glapi_table *) table;
 }
 """
 		return
@@ -973,14 +972,22 @@ struct _glapi_table * __glXNewIndirectAPI( void )
 	def printBody(self, api):
 		for [name, number] in api.categoryIterate():
 			if number != None:
-				preamble = '\n    /* %3u. %s */\n\n' % (int(number), name)
+				preamble = '\n    /* %3u. %s */\n' % (int(number), name)
 			else:
-				preamble = '\n    /* %s */\n\n' % (name)
+				preamble = '\n    /* %s */\n' % (name)
 
 			for func in api.functionIterateByCategory(name):
 				if func.client_supported_for_indirect():
-					print '%s    glAPI->%s = __indirect_gl%s;' % (preamble, func.name, func.name)
-					preamble = ''
+					if preamble:
+						print preamble
+						preamble = None
+
+					if func.is_abi():
+						print '    table[{offset}] = (_glapi_proc) __indirect_gl{name};'.format(name = func.name, offset = func.offset)
+					else:
+						print '    o = _glapi_get_proc_offset("gl{0}");'.format(func.name)
+						print '    assert(o > 0);'
+						print '    table[o] = (_glapi_proc) __indirect_gl{0};'.format(func.name)
 
 		return
 
