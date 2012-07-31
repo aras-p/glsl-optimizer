@@ -8,10 +8,10 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- rnndb/nv50_texture.xml (   8111 bytes, from 2012-04-29 11:17:45)
-- ./rnndb/copyright.xml  (   6452 bytes, from 2011-08-11 18:25:12)
-- ./rnndb/nvchipsets.xml (   3701 bytes, from 2012-03-22 20:40:59)
-- ./rnndb/nv50_defs.xml  (   5468 bytes, from 2011-08-11 18:25:12)
+- rnndb/nv50_texture.xml (   8180 bytes, from 2012-07-31 11:07:50)
+- ./rnndb/copyright.xml  (   6452 bytes, from 2011-07-10 21:35:25)
+- ./rnndb/nvchipsets.xml (   3736 bytes, from 2012-07-31 11:01:16)
+- ./rnndb/nv50_defs.xml  (   5468 bytes, from 2011-07-10 21:35:25)
 
 Copyright (C) 2006-2012 by the following authors:
 - Artur Huillet <arthur.huillet@free.fr> (ahuillet)
@@ -242,6 +242,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV50_TSC_0_SHADOW_COMPARE_ENABLE			0x00000200
 #define NV50_TSC_0_SHADOW_COMPARE_FUNC__MASK			0x00001c00
 #define NV50_TSC_0_SHADOW_COMPARE_FUNC__SHIFT			10
+#define NV50_TSC_0_SRGB_CONVERSION_ALLOWED			0x00002000
 #define NV50_TSC_0_BOX_S__MASK					0x0001c000
 #define NV50_TSC_0_BOX_S__SHIFT					14
 #define NV50_TSC_0_BOX_T__MASK					0x000e0000
