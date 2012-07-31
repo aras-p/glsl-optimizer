@@ -391,5 +391,5 @@ bool AMDGPUDAGToDAGISel::SelectADDRReg(SDValue Addr, SDValue& Base,
   Base = Addr.getOperand(0);
   Offset = Addr.getOperand(1);
 
-  return false;
+  return true;
 }
