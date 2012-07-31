@@ -154,7 +154,7 @@ void SICodeEmitter::InitProgramInfo(MachineFunction &MF) {
           assert("!Unknown register class");
         }
         hwReg = RI->getHWRegNum(reg);
-        maxUsed = ((hwReg + 1) * width) - 1;
+        maxUsed = hwReg + width - 1;
         if (isSGPR) {
           MaxSGPR = maxUsed > MaxSGPR ? maxUsed : MaxSGPR;
         } else {
