@@ -122,23 +122,6 @@ struct _mesa_glsl_parse_state {
 
       /* ARB_draw_buffers */
       unsigned MaxDrawBuffers;
-
-      /**
-       * Set of GLSL versions supported by the current context
-       *
-       * Knowing that version X is supported doesn't mean that versions before
-       * X are also supported.  Version 1.00 is only supported in an ES2
-       * context or when GL_ARB_ES2_compatibility is supported.  In an OpenGL
-       * 3.0 "forward compatible" context, GLSL 1.10 and 1.20 are \b not
-       * supported.
-       */
-      /*@{*/
-      unsigned GLSL_100ES:1;
-      unsigned GLSL_110:1;
-      unsigned GLSL_120:1;
-      unsigned GLSL_130:1;
-      unsigned GLSL_140:1;
-      /*@}*/
    } Const;
 
    /**

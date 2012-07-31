@@ -85,23 +85,11 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 
    this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
 
-   /* Note: Once the OpenGL 3.0 'forward compatible' context or the OpenGL 3.2
-    * Core context is supported, this logic will need change.  Older versions of
-    * GLSL are no longer supported outside the compatibility contexts of 3.x.
-    */
-   this->Const.GLSL_100ES = (ctx->API == API_OPENGLES2)
-      || ctx->Extensions.ARB_ES2_compatibility;
-   bool is_desktop_gl = _mesa_is_desktop_gl(ctx);
-   this->Const.GLSL_110 = is_desktop_gl;
-   this->Const.GLSL_120 = is_desktop_gl && (ctx->Const.GLSLVersion >= 120);
-   this->Const.GLSL_130 = is_desktop_gl && (ctx->Const.GLSLVersion >= 130);
-   this->Const.GLSL_140 = is_desktop_gl && (ctx->Const.GLSLVersion >= 140);
-
    const unsigned lowest_version =
       (ctx->API == API_OPENGLES2) || ctx->Extensions.ARB_ES2_compatibility
       ? 100 : 110;
    const unsigned highest_version =
-      is_desktop_gl ? ctx->Const.GLSLVersion : 100;
+      _mesa_is_desktop_gl(ctx) ? ctx->Const.GLSLVersion : 100;
    char *supported = ralloc_strdup(this, "");
 
    for (unsigned ver = lowest_version; ver <= highest_version; ver += 10) {

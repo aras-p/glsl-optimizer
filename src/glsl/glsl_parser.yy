@@ -29,6 +29,7 @@
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
+#include "main/context.h"
 
 #define YYLEX_PARAM state->scanner
 
@@ -259,19 +260,25 @@ version_statement:
 	   switch ($2) {
 	   case 100:
 	      state->es_shader = true;
-	      supported = state->Const.GLSL_100ES;
+	      supported = state->ctx->API == API_OPENGLES2 ||
+		          state->ctx->Extensions.ARB_ES2_compatibility;
 	      break;
 	   case 110:
-	      supported = state->Const.GLSL_110;
-	      break;
 	   case 120:
-	      supported = state->Const.GLSL_120;
-	      break;
+	      /* FINISHME: Once the OpenGL 3.0 'forward compatible' context or
+	       * the OpenGL 3.2 Core context is supported, this logic will need
+	       * change.  Older versions of GLSL are no longer supported
+	       * outside the compatibility contexts of 3.x.
+	       */
 	   case 130:
-	      supported = state->Const.GLSL_130;
-	      break;
 	   case 140:
-	      supported = state->Const.GLSL_140;
+	   case 150:
+	   case 330:
+	   case 400:
+	   case 410:
+	   case 420:
+	      supported = _mesa_is_desktop_gl(state->ctx) &&
+			  ((unsigned) $2) <= state->ctx->Const.GLSLVersion;
 	      break;
 	   default:
 	      supported = false;
