@@ -884,6 +884,18 @@ def S_MOV_IMM_I32 : SOP1 <
   [(set SReg_32:$dst, (imm:$src0))]
 >;
 
+// i64 immediates aren't really supported in hardware, but LLVM will use the i64
+// type for indices on load and store instructions.  The pattern for
+// S_MOV_IMM_I64 will only match i64 immediates that can fit into 32-bits,
+// which the hardware can handle.
+def S_MOV_IMM_I64 : SOP1 <
+  0x3,
+  (outs SReg_64:$dst),
+  (ins i64Literal:$src0),
+  "S_MOV_IMM_I64 $dst, $src0",
+  [(set SReg_64:$dst, (IMM32bitIn64bit:$src0))]
+>;
+
 let isCodeGenOnly = 1, isPseudo = 1 in {
 
 def SET_M0 : InstSI <
