@@ -1,3 +1,4 @@
+if !HAVE_SHARED_GLAPI
 AM_CPPFLAGS = \
 	-I$(top_builddir)/src/gtest/include \
 	-I$(top_builddir)/src/mapi \
@@ -13,3 +14,4 @@ glapi_test_LDADD = \
 	$(top_builddir)/src/mapi/glapi/libglapi.la \
 	$(top_builddir)/src/gtest/libgtest.la \
 	-lpthread
+endif
