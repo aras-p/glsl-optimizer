@@ -886,6 +886,13 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
             }
          }
 
+         /* unbind UBO binding points */
+         for (j = 0; j < ctx->Const.MaxUniformBufferBindings; j++) {
+            if (ctx->UniformBufferBindings[j].BufferObject == bufObj) {
+               _mesa_BindBufferBase( GL_UNIFORM_BUFFER, j, 0 );
+            }
+         }
+
          if (ctx->UniformBuffer == bufObj) {
             _mesa_BindBufferARB( GL_UNIFORM_BUFFER, 0 );
          }
