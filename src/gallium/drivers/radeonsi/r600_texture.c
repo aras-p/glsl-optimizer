@@ -567,12 +567,14 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	unsigned array_mode = 0;
 	int r;
 
+#if 0
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
 	    !(templ->bind & PIPE_BIND_SCANOUT)) {
 		if (permit_hardware_blit(screen, templ)) {
 			array_mode = V_009910_ARRAY_2D_TILED_THIN1;
 		}
 	}
+#endif
 
 	r = r600_init_surface(&surface, templ, array_mode);
 	if (r) {
