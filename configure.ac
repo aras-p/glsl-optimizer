@@ -470,13 +470,6 @@ if test "x$enable_asm" = xyes; then
             ;;
         esac
         ;;
-    powerpc)
-        case "$host_os" in
-        linux*)
-            asm_arch=ppc
-            ;;
-        esac
-        ;;
     sparc*)
         case "$host_os" in
         linux*)
