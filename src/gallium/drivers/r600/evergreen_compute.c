@@ -96,7 +96,9 @@ static void evergreen_cs_set_vertex_buffer(
 	vb->buffer = buffer;
 	vb->user_buffer = NULL;
 
-	rctx->flags |= rctx->has_vertex_cache ? R600_CONTEXT_VTX_FLUSH : R600_CONTEXT_TEX_FLUSH;
+	/* The vertex instructions in the compute shaders use the texture cache,
+	 * so we need to invalidate it. */
+	rctx->flags |= R600_CONTEXT_TEX_FLUSH;
 	state->enabled_mask |= 1 << vb_index;
 	state->dirty_mask |= 1 << vb_index;
 	r600_atom_dirty(rctx, &state->atom);
