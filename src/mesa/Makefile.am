@@ -77,20 +77,20 @@ main/api_exec_es2_remap_helper.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_remap_d
 main/api_exec_es2.o: main/api_exec_es2_dispatch.h main/api_exec_es2_remap_helper.h
 
 main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
-	$(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/main/es_generator.py \
+	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/main/es_generator.py \
 	  -S $(srcdir)/main/APIspec.xml -V GLES1.1 > $@
 
 main/api_exec_es2.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
-	$(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/main/es_generator.py \
+	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/main/es_generator.py \
 	  -S $(srcdir)/main/APIspec.xml -V GLES2.0 > $@
 
 program/program_parse.tab.c program/program_parse.tab.h: program/program_parse.y
 	mkdir -p program
-	$(YACC) -v -d --output=program/program_parse.tab.c $<
+	$(AM_V_GEN) $(YACC) -v -d --output=program/program_parse.tab.c $<
 
 program/lex.yy.c: program/program_lexer.l
 	mkdir -p program
-	$(LEX) --never-interactive --outfile=$@ $<
+	$(AM_V_GEN) $(LEX) --never-interactive --outfile=$@ $<
 
 noinst_LTLIBRARIES = libmesa.la libmesagallium.la
 
