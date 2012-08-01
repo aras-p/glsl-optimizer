@@ -92,8 +92,8 @@ glsl_parser.cc glsl_parser.h: glsl_parser.yy
 BUILT_SOURCES = glsl_parser.h builtin_function.cpp
 CLEANFILES = glsl_lexer.cc glsl_parser.cc $(BUILT_SOURCES)
 
-builtin_function.cpp: builtins/profiles/* builtins/ir/* builtins/glsl/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py builtin_compiler$(EXEEXT)
-	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) builtins/tools/generate_builtins.py ./builtin_compiler > builtin_function.cpp || rm -f builtin_function.cpp
+builtin_function.cpp: $(srcdir)/builtins/profiles/* $(srcdir)/builtins/ir/* $(srcdir)/builtins/glsl/* $(srcdir)/builtins/tools/generate_builtins.py $(srcdir)/builtins/tools/texture_builtins.py builtin_compiler$(EXEEXT)
+	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/builtins/tools/generate_builtins.py ./builtin_compiler > builtin_function.cpp || rm -f builtin_function.cpp
 
 glcpp/libglcpp.la:
 	cd glcpp ; $(MAKE) $(AM_MAKEFLAGS)
