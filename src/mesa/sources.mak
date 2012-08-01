@@ -372,12 +372,6 @@ MESA_GALLIUM_OBJECTS = \
 COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_FILES:.c=.o)
 
 
-### Other archives/libraries
-
-GLSL_LIBS = \
-	$(top_builddir)/src/glsl/libglsl.a
-
-
 ### Include directories
 
 INCLUDE_DIRS = \
