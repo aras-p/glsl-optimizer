@@ -284,11 +284,11 @@ dnl explicitly requested. If both disabled, set to static since shared
 dnl was explicitly requested.
 case "x$enable_static$enable_shared" in
 xyesyes )
-    AC_MSG_WARN([Can't build static and shared libraries, disabling shared])
+    AC_MSG_WARN([Cannot build static and shared libraries, disabling shared])
     enable_shared=no
     ;;
 xnono )
-    AC_MSG_WARN([Can't disable both static and shared libraries, enabling static])
+    AC_MSG_WARN([Cannot disable both static and shared libraries, enabling static])
     enable_static=yes
     ;;
 esac
@@ -873,7 +873,7 @@ PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED],
 if test "x$enable_dri" = xyes; then
     # DRI must be shared, I think
     if test "$enable_static" = yes; then
-        AC_MSG_ERROR([Can't use static libraries for DRI drivers])
+        AC_MSG_ERROR([Cannot use static libraries for DRI drivers])
     fi
 
     # not a hard requirement as swrast does not depend on it
@@ -1126,7 +1126,7 @@ yes)
     dri_drivers=`IFS=', '; echo $with_dri_drivers`
     for driver in $dri_drivers; do
         test -d "$srcdir/src/mesa/drivers/dri/$driver" || \
-            AC_MSG_ERROR([DRI driver directory '$driver' doesn't exist])
+            AC_MSG_ERROR([DRI driver directory '$driver' does not exist])
     done
     DRI_DIRS="$dri_drivers"
     if test -n "$DRI_DIRS" -a "x$enable_opengl" != xyes; then
