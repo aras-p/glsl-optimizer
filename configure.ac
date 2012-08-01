@@ -26,10 +26,6 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 LT_PREREQ([2.2])
 LT_INIT([disable-static])
 
-dnl Save user CFLAGS and CXXFLAGS so one can override the default ones
-USER_CFLAGS="$CFLAGS"
-USER_CXXFLAGS="$CXXFLAGS"
-
 dnl Versions for external dependencies
 LIBDRM_REQUIRED=2.4.24
 LIBDRM_RADEON_REQUIRED=2.4.31
