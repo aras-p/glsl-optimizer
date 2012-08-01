@@ -240,15 +240,21 @@ struct r600_pipe_shader {
 };
 
 struct r600_pipe_sampler_state {
-	struct r600_pipe_state		rstate;
-	boolean seamless_cube_map;
+	uint32_t			tex_sampler_words[3];
+	uint32_t			border_color[4];
+	bool				border_color_use;
+	bool				seamless_cube_map;
 };
 
 /* needed for blitter save */
 #define NUM_TEX_UNITS 16
 
-struct r600_samplerview_state
-{
+struct r600_seamless_cube_map {
+	struct r600_atom		atom;
+	bool				enabled;
+};
+
+struct r600_samplerview_state {
 	struct r600_atom		atom;
 	struct r600_pipe_sampler_view	*views[NUM_TEX_UNITS];
 	uint32_t			enabled_mask;
@@ -258,17 +264,16 @@ struct r600_samplerview_state
 
 struct r600_textures_info {
 	struct r600_samplerview_state	views;
-
+	struct r600_atom		atom_sampler;
 	struct r600_pipe_sampler_state	*samplers[NUM_TEX_UNITS];
 	unsigned			n_samplers;
-	bool				samplers_dirty;
 	bool				is_array_sampler[NUM_TEX_UNITS];
 };
 
 struct r600_fence {
 	struct pipe_reference		reference;
 	unsigned			index; /* in the shared bo */
-	struct r600_resource            *sleep_bo;
+	struct r600_resource		*sleep_bo;
 	struct list_head		head;
 };
 
@@ -367,6 +372,7 @@ struct r600_context {
 	struct r600_constbuf_state	ps_constbuf_state;
 	struct r600_textures_info	vs_samplers;
 	struct r600_textures_info	ps_samplers;
+	struct r600_seamless_cube_map	seamless_cube_map;
 	struct r600_cs_shader_state	cs_shader_state;
 
 	struct radeon_winsys_cs	*cs;
@@ -502,7 +508,6 @@ void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader 
 /* r600_state.c */
 void r600_set_scissor_state(struct r600_context *rctx,
 			    const struct pipe_scissor_state *state);
-void r600_update_sampler_states(struct r600_context *rctx);
 void r600_init_state_functions(struct r600_context *rctx);
 void r600_init_atom_start_cs(struct r600_context *rctx);
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
@@ -550,6 +555,8 @@ void r600_set_sampler_views(struct r600_context *rctx,
 			    struct r600_textures_info *dst,
 			    unsigned count,
 			    struct pipe_sampler_view **views);
+void r600_bind_vs_samplers(struct pipe_context *ctx, unsigned count, void **states);
+void r600_bind_ps_samplers(struct pipe_context *ctx, unsigned count, void **states);
 void *r600_create_vertex_elements(struct pipe_context *ctx,
 				  unsigned count,
 				  const struct pipe_vertex_element *elements);
@@ -563,6 +570,7 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state);
 void r600_delete_rs_state(struct pipe_context *ctx, void *state);
 void r600_sampler_view_destroy(struct pipe_context *ctx,
 			       struct pipe_sampler_view *state);
+void r600_delete_sampler(struct pipe_context *ctx, void *state);
 void r600_delete_state(struct pipe_context *ctx, void *state);
 void r600_bind_vertex_elements(struct pipe_context *ctx, void *state);
 void *r600_create_shader_state_ps(struct pipe_context *ctx,

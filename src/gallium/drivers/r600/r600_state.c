@@ -932,7 +932,6 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 					const struct pipe_sampler_state *state)
 {
 	struct r600_pipe_sampler_state *ss = CALLOC_STRUCT(r600_pipe_sampler_state);
-	struct r600_pipe_state *rstate;
 	union util_color uc;
 	unsigned aniso_flag_offset = state->max_anisotropy > 1 ? 4 : 0;
 
@@ -941,31 +940,36 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 	}
 
 	ss->seamless_cube_map = state->seamless_cube_map;
-	rstate = &ss->rstate;
-	rstate->id = R600_PIPE_STATE_SAMPLER;
+	ss->border_color_use = false;
 	util_pack_color(state->border_color.f, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
-	r600_pipe_state_add_reg_noblock(rstate, R_03C000_SQ_TEX_SAMPLER_WORD0_0,
-					S_03C000_CLAMP_X(r600_tex_wrap(state->wrap_s)) |
-					S_03C000_CLAMP_Y(r600_tex_wrap(state->wrap_t)) |
-					S_03C000_CLAMP_Z(r600_tex_wrap(state->wrap_r)) |
-					S_03C000_XY_MAG_FILTER(r600_tex_filter(state->mag_img_filter) | aniso_flag_offset) |
-					S_03C000_XY_MIN_FILTER(r600_tex_filter(state->min_img_filter) | aniso_flag_offset) |
-					S_03C000_MIP_FILTER(r600_tex_mipfilter(state->min_mip_filter)) |
-					S_03C000_MAX_ANISO(r600_tex_aniso_filter(state->max_anisotropy)) |
-					S_03C000_DEPTH_COMPARE_FUNCTION(r600_tex_compare(state->compare_func)) |
-					S_03C000_BORDER_COLOR_TYPE(uc.ui ? V_03C000_SQ_TEX_BORDER_COLOR_REGISTER : 0), NULL, 0);
-	r600_pipe_state_add_reg_noblock(rstate, R_03C004_SQ_TEX_SAMPLER_WORD1_0,
-					S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 6)) |
-					S_03C004_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 6)) |
-					S_03C004_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 6)), NULL, 0);
-	r600_pipe_state_add_reg_noblock(rstate, R_03C008_SQ_TEX_SAMPLER_WORD2_0, S_03C008_TYPE(1), NULL, 0);
+	/* R_03C000_SQ_TEX_SAMPLER_WORD0_0 */
+	ss->tex_sampler_words[0] = S_03C000_CLAMP_X(r600_tex_wrap(state->wrap_s)) |
+				S_03C000_CLAMP_Y(r600_tex_wrap(state->wrap_t)) |
+				S_03C000_CLAMP_Z(r600_tex_wrap(state->wrap_r)) |
+				S_03C000_XY_MAG_FILTER(r600_tex_filter(state->mag_img_filter) | aniso_flag_offset) |
+				S_03C000_XY_MIN_FILTER(r600_tex_filter(state->min_img_filter) | aniso_flag_offset) |
+				S_03C000_MIP_FILTER(r600_tex_mipfilter(state->min_mip_filter)) |
+				S_03C000_MAX_ANISO(r600_tex_aniso_filter(state->max_anisotropy)) |
+				S_03C000_DEPTH_COMPARE_FUNCTION(r600_tex_compare(state->compare_func)) |
+				S_03C000_BORDER_COLOR_TYPE(uc.ui ? V_03C000_SQ_TEX_BORDER_COLOR_REGISTER : 0);
+	/* R_03C004_SQ_TEX_SAMPLER_WORD1_0 */
+	ss->tex_sampler_words[1] = S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 6)) |
+				S_03C004_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 6)) |
+				S_03C004_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 6));
+	/* R_03C008_SQ_TEX_SAMPLER_WORD2_0 */
+	ss->tex_sampler_words[2] = S_03C008_TYPE(1);
 	if (uc.ui) {
-		r600_pipe_state_add_reg_noblock(rstate, R_00A400_TD_PS_SAMPLER0_BORDER_RED, fui(state->border_color.f[0]), NULL, 0);
-		r600_pipe_state_add_reg_noblock(rstate, R_00A404_TD_PS_SAMPLER0_BORDER_GREEN, fui(state->border_color.f[1]), NULL, 0);
-		r600_pipe_state_add_reg_noblock(rstate, R_00A408_TD_PS_SAMPLER0_BORDER_BLUE, fui(state->border_color.f[2]), NULL, 0);
-		r600_pipe_state_add_reg_noblock(rstate, R_00A40C_TD_PS_SAMPLER0_BORDER_ALPHA, fui(state->border_color.f[3]), NULL, 0);
+		ss->border_color_use = true;
+		/* R_00A400_TD_PS_SAMPLER0_BORDER_RED */
+		ss->border_color[0] = fui(state->border_color.f[0]);
+		/* R_00A404_TD_PS_SAMPLER0_BORDER_GREEN */
+		ss->border_color[1] = fui(state->border_color.f[1]);
+		/* R_00A408_TD_PS_SAMPLER0_BORDER_BLUE */
+		ss->border_color[2] = fui(state->border_color.f[2]);
+		/* R_00A40C_TD_PS_SAMPLER0_BORDER_ALPHA */
+		ss->border_color[3] = fui(state->border_color.f[3]);
 	}
-	return rstate;
+	return ss;
 }
 
 static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *ctx,
@@ -1084,93 +1088,6 @@ static void r600_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	r600_set_sampler_views(rctx, &rctx->ps_samplers, count, views);
-}
-
-static void r600_set_seamless_cubemap(struct r600_context *rctx, boolean enable)
-{
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	if (rstate == NULL)
-		return;
-
-	rstate->id = R600_PIPE_STATE_SEAMLESS_CUBEMAP;
-	r600_pipe_state_add_reg(rstate, R_009508_TA_CNTL_AUX,
-				(enable ? 0 : S_009508_DISABLE_CUBE_WRAP(1)) |
-				S_009508_DISABLE_CUBE_ANISO(1) |
-				S_009508_SYNC_GRADIENT(1) |
-				S_009508_SYNC_WALKER(1) |
-				S_009508_SYNC_ALIGNER(1));
-
-	free(rctx->states[R600_PIPE_STATE_SEAMLESS_CUBEMAP]);
-	rctx->states[R600_PIPE_STATE_SEAMLESS_CUBEMAP] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
-}
-
-static void r600_bind_samplers(struct r600_context *rctx,
-			       struct r600_textures_info *dst,
-			       unsigned count, void **states)
-{
-	memcpy(dst->samplers, states, sizeof(void*) * count);
-	dst->n_samplers = count;
-	dst->samplers_dirty = true;
-}
-
-static void r600_bind_vs_samplers(struct pipe_context *ctx, unsigned count, void **states)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	r600_bind_samplers(rctx, &rctx->vs_samplers, count, states);
-}
-
-static void r600_bind_ps_samplers(struct pipe_context *ctx, unsigned count, void **states)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	r600_bind_samplers(rctx, &rctx->ps_samplers, count, states);
-}
-
-static void r600_update_samplers(struct r600_context *rctx,
-				 struct r600_textures_info *tex,
-				 void (*set_sampler)(struct r600_context*, struct r600_pipe_state*, unsigned))
-{
-	unsigned i;
-
-	if (tex->samplers_dirty) {
-		int seamless = -1;
-		for (i = 0; i < tex->n_samplers; i++) {
-			if (!tex->samplers[i])
-				continue;
-
-			/* TEX_ARRAY_OVERRIDE must be set for array textures to disable
-			 * filtering between layers.
-			 * Don't update TEX_ARRAY_OVERRIDE if we don't have the sampler view. */
-			if (tex->views.views[i]) {
-				if (tex->views.views[i]->base.texture->target == PIPE_TEXTURE_1D_ARRAY ||
-				    tex->views.views[i]->base.texture->target == PIPE_TEXTURE_2D_ARRAY) {
-					tex->samplers[i]->rstate.regs[0].value |= S_03C000_TEX_ARRAY_OVERRIDE(1);
-					tex->is_array_sampler[i] = true;
-				} else {
-					tex->samplers[i]->rstate.regs[0].value &= C_03C000_TEX_ARRAY_OVERRIDE;
-					tex->is_array_sampler[i] = false;
-				}
-			}
-
-			set_sampler(rctx, &tex->samplers[i]->rstate, i);
-
-			if (tex->samplers[i])
-				seamless = tex->samplers[i]->seamless_cube_map;
-		}
-
-		if (seamless != -1)
-			r600_set_seamless_cubemap(rctx, seamless);
-
-		tex->samplers_dirty = false;
-	}
-}
-
-void r600_update_sampler_states(struct r600_context *rctx)
-{
-	r600_update_samplers(rctx, &rctx->vs_samplers,
-			     r600_context_pipe_state_set_vs_sampler);
-	r600_update_samplers(rctx, &rctx->ps_samplers,
-			     r600_context_pipe_state_set_ps_sampler);
 }
 
 static void r600_set_clip_state(struct pipe_context *ctx,
@@ -1764,8 +1681,79 @@ static void r600_emit_ps_sampler_views(struct r600_context *rctx, struct r600_at
 	r600_emit_sampler_views(rctx, &rctx->ps_samplers.views, R600_MAX_CONST_BUFFERS);
 }
 
+static void r600_emit_sampler(struct r600_context *rctx,
+				struct r600_textures_info *texinfo,
+				unsigned resource_id_base,
+				unsigned border_color_reg)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	unsigned i;
+
+	for (i = 0; i < texinfo->n_samplers; i++) {
+
+		if (texinfo->samplers[i] == NULL) {
+			continue;
+		}
+
+		/* TEX_ARRAY_OVERRIDE must be set for array textures to disable
+		 * filtering between layers.
+		 * Don't update TEX_ARRAY_OVERRIDE if we don't have the sampler view.
+		 */
+		if (texinfo->views.views[i]) {
+			if (texinfo->views.views[i]->base.texture->target == PIPE_TEXTURE_1D_ARRAY ||
+			    texinfo->views.views[i]->base.texture->target == PIPE_TEXTURE_2D_ARRAY) {
+				texinfo->samplers[i]->tex_sampler_words[0] |= S_03C000_TEX_ARRAY_OVERRIDE(1);
+				texinfo->is_array_sampler[i] = true;
+			} else {
+				texinfo->samplers[i]->tex_sampler_words[0] &= C_03C000_TEX_ARRAY_OVERRIDE;
+				texinfo->is_array_sampler[i] = false;
+			}
+		}
+
+		r600_write_value(cs, PKT3(PKT3_SET_SAMPLER, 3, 0));
+		r600_write_value(cs, (resource_id_base + i) * 3);
+		r600_write_array(cs, 3, texinfo->samplers[i]->tex_sampler_words);
+
+		if (texinfo->samplers[i]->border_color_use) {
+			unsigned offset;
+
+			offset = border_color_reg;
+			offset += i * 16;
+			r600_write_config_reg_seq(cs, offset, 4);
+			r600_write_array(cs, 4, texinfo->samplers[i]->border_color);
+		}
+	}
+}
+
+static void r600_emit_vs_sampler(struct r600_context *rctx, struct r600_atom *atom)
+{
+	r600_emit_sampler(rctx, &rctx->vs_samplers, 18, R_00A600_TD_VS_SAMPLER0_BORDER_RED);
+}
+
+static void r600_emit_ps_sampler(struct r600_context *rctx, struct r600_atom *atom)
+{
+	r600_emit_sampler(rctx, &rctx->ps_samplers, 0, R_00A400_TD_PS_SAMPLER0_BORDER_RED);
+}
+
+static void r600_emit_seamless_cube_map(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	unsigned tmp;
+
+	tmp = S_009508_DISABLE_CUBE_ANISO(1) |
+		S_009508_SYNC_GRADIENT(1) |
+		S_009508_SYNC_WALKER(1) |
+		S_009508_SYNC_ALIGNER(1);
+	if (!rctx->seamless_cube_map.enabled) {
+		tmp |= S_009508_DISABLE_CUBE_WRAP(1);
+	}
+	r600_write_config_reg(cs, R_009508_TA_CNTL_AUX, tmp);
+}
+
 void r600_init_state_functions(struct r600_context *rctx)
 {
+	r600_init_atom(&rctx->seamless_cube_map.atom, r600_emit_seamless_cube_map, 3, 0);
+	r600_atom_dirty(rctx, &rctx->seamless_cube_map.atom);
 	r600_init_atom(&rctx->cb_misc_state.atom, r600_emit_cb_misc_state, 0, 0);
 	r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
 	r600_init_atom(&rctx->db_misc_state.atom, r600_emit_db_misc_state, 4, 0);
@@ -1775,6 +1763,11 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(&rctx->ps_constbuf_state.atom, r600_emit_ps_constant_buffers, 0, 0);
 	r600_init_atom(&rctx->vs_samplers.views.atom, r600_emit_vs_sampler_views, 0, 0);
 	r600_init_atom(&rctx->ps_samplers.views.atom, r600_emit_ps_sampler_views, 0, 0);
+	/* sampler must be emited before TA_CNTL_AUX otherwise DISABLE_CUBE_WRAP change
+	 * does not take effect
+	 */
+	r600_init_atom(&rctx->vs_samplers.atom_sampler, r600_emit_vs_sampler, 0, EMIT_EARLY);
+	r600_init_atom(&rctx->ps_samplers.atom_sampler, r600_emit_ps_sampler, 0, EMIT_EARLY);
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;
@@ -1796,7 +1789,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.delete_depth_stencil_alpha_state = r600_delete_state;
 	rctx->context.delete_fs_state = r600_delete_ps_shader;
 	rctx->context.delete_rasterizer_state = r600_delete_rs_state;
-	rctx->context.delete_sampler_state = r600_delete_state;
+	rctx->context.delete_sampler_state = r600_delete_sampler;
 	rctx->context.delete_vertex_elements_state = r600_delete_vertex_element;
 	rctx->context.delete_vs_state = r600_delete_vs_shader;
 	rctx->context.set_blend_color = r600_set_blend_color;

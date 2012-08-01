@@ -182,6 +182,7 @@ struct r600_so_target {
 
 #define R600_CONTEXT_DRAW_PENDING	(1 << 0)
 #define R600_CONTEXT_DST_CACHES_DIRTY	(1 << 1)
+#define R600_PARTIAL_FLUSH		(1 << 2)
 
 struct r600_context;
 struct r600_screen;
@@ -191,8 +192,6 @@ int r600_context_init(struct r600_context *ctx);
 void r600_context_fini(struct r600_context *ctx);
 void r600_context_pipe_state_emit(struct r600_context *ctx, struct r600_pipe_state *state, unsigned pkt_flags);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
-void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
-void r600_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void r600_context_flush(struct r600_context *ctx, unsigned flags);
 
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
@@ -208,8 +207,6 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block, unsigned pkt_flags);
 
 int evergreen_context_init(struct r600_context *ctx);
-void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
-void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 
 void _r600_pipe_state_add_reg_bo(struct r600_context *ctx,
 				 struct r600_pipe_state *state,

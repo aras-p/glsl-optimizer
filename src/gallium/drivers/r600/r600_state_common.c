@@ -369,6 +369,59 @@ void r600_sampler_view_destroy(struct pipe_context *ctx,
 	FREE(resource);
 }
 
+static void r600_bind_samplers(struct r600_context *rctx,
+			       struct r600_textures_info *dst,
+			       unsigned count, void **states)
+{
+	int seamless_cube_map = -1;
+	unsigned i;
+
+	memcpy(dst->samplers, states, sizeof(void*) * count);
+	dst->n_samplers = count;
+	dst->atom_sampler.num_dw = 0;
+
+	for (i = 0; i < count; i++) {
+		struct r600_pipe_sampler_state *sampler = states[i];
+
+		if (sampler == NULL) {
+			continue;
+		}
+		if (sampler->border_color_use) {
+			dst->atom_sampler.num_dw += 11;
+			rctx->flags |= R600_PARTIAL_FLUSH;
+		} else {
+			dst->atom_sampler.num_dw += 5;
+		}
+		seamless_cube_map = sampler->seamless_cube_map;
+	}
+	if (rctx->chip_class <= R700 && seamless_cube_map != -1 && seamless_cube_map != rctx->seamless_cube_map.enabled) {
+		/* change in TA_CNTL_AUX need a pipeline flush */
+		rctx->flags |= R600_PARTIAL_FLUSH;
+		rctx->seamless_cube_map.enabled = seamless_cube_map;
+		r600_atom_dirty(rctx, &rctx->seamless_cube_map.atom);
+	}
+	if (dst->atom_sampler.num_dw) {
+		r600_atom_dirty(rctx, &dst->atom_sampler);
+	}
+}
+
+void r600_bind_vs_samplers(struct pipe_context *ctx, unsigned count, void **states)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	r600_bind_samplers(rctx, &rctx->vs_samplers, count, states);
+}
+
+void r600_bind_ps_samplers(struct pipe_context *ctx, unsigned count, void **states)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	r600_bind_samplers(rctx, &rctx->ps_samplers, count, states);
+}
+
+void r600_delete_sampler(struct pipe_context *ctx, void *state)
+{
+	free(state);
+}
+
 void r600_delete_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -532,7 +585,7 @@ void r600_set_sampler_views(struct r600_context *rctx,
 			if (rctx->chip_class <= R700 &&
 			    (rviews[i]->base.texture->target == PIPE_TEXTURE_1D_ARRAY ||
 			     rviews[i]->base.texture->target == PIPE_TEXTURE_2D_ARRAY) != dst->is_array_sampler[i]) {
-				dst->samplers_dirty = true;
+				r600_atom_dirty(rctx, &dst->atom_sampler);
 			}
 
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views.views[i], views[i]);
@@ -935,10 +988,6 @@ static void r600_update_derived_state(struct r600_context *rctx)
 		}
 	}
 
-	if (rctx->chip_class < EVERGREEN) {
-		r600_update_sampler_states(rctx);
-	}
-
 	r600_shader_select(ctx, rctx->ps_shader, &ps_dirty);
 
 	if (rctx->ps_shader && ((rctx->sprite_coord_enable &&
@@ -1010,6 +1059,13 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	}
 
 	r600_update_derived_state(rctx);
+
+	/* partial flush triggered by border color change */
+	if (rctx->flags & R600_PARTIAL_FLUSH) {
+		rctx->flags &= ~R600_PARTIAL_FLUSH;
+		r600_write_value(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		r600_write_value(cs, EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4));
+	}
 
 	if (info.indexed) {
 		/* Initialize the index buffer struct. */
