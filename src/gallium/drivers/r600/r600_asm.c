@@ -927,7 +927,8 @@ static int replace_gpr_with_pv_ps(struct r600_bytecode *bc,
 
 			if (bc->chip_class < CAYMAN) {
 				if (alu->src[src].sel == gpr[4] &&
-				    alu->src[src].chan == chan[4]) {
+				    alu->src[src].chan == chan[4] &&
+				    alu_prev->pred_sel == alu->pred_sel) {
 					alu->src[src].sel = V_SQ_ALU_SRC_PS;
 					alu->src[src].chan = 0;
 					continue;
@@ -936,7 +937,8 @@ static int replace_gpr_with_pv_ps(struct r600_bytecode *bc,
 
 			for (j = 0; j < 4; ++j) {
 				if (alu->src[src].sel == gpr[j] &&
-					alu->src[src].chan == j) {
+					alu->src[src].chan == j &&
+				      alu_prev->pred_sel == alu->pred_sel) {
 					alu->src[src].sel = V_SQ_ALU_SRC_PV;
 					alu->src[src].chan = chan[j];
 					break;
