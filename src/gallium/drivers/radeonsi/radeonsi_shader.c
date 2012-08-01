@@ -355,6 +355,8 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 				&si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
 	struct tgsi_parse_context *parse = &si_shader_ctx->parse;
 	LLVMValueRef last_args[9] = { 0 };
+	unsigned color_count = 0;
+	unsigned param_count = 0;
 
 	while (!tgsi_parse_end_of_tokens(parse)) {
 		/* XXX: component_bits controls which components of the output
@@ -369,8 +371,6 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 		LLVMValueRef args[9];
 		unsigned target;
 		unsigned index;
-		unsigned color_count = 0;
-		unsigned param_count = 0;
 		int i;
 
 		tgsi_parse_token(parse);
@@ -384,17 +384,18 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 			shader->input[i].sid = d->Semantic.Index;
 			shader->input[i].interpolate = d->Interp.Interpolate;
 			shader->input[i].centroid = d->Interp.Centroid;
-			break;
+			continue;
+
 		case TGSI_FILE_OUTPUT:
 			i = shader->noutput++;
 			shader->output[i].name = d->Semantic.Name;
 			shader->output[i].sid = d->Semantic.Index;
 			shader->output[i].interpolate = d->Interp.Interpolate;
 			break;
-		}
 
-		if (d->Declaration.File != TGSI_FILE_OUTPUT)
+		default:
 			continue;
+		}
 
 		for (index = d->Range.First; index <= d->Range.Last; index++) {
 			for (chan = 0; chan < 4; chan++ ) {
