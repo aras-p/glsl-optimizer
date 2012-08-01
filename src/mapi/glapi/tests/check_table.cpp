@@ -37,10 +37,10 @@ struct name_offset {
 extern const struct name_offset linux_gl_abi[];
 extern const struct name_offset known_dispatch[];
 
-TEST(GetProcAddress, ABINameByOffset)
+TEST(GetProcAddress, ABIOffsetByName)
 {
    /* 408 functions have had their locations in the dispatch table set since
-    * the danw of time.  Verify that all of these functions are at the correct
+    * the dawn of time.  Verify that all of these functions are at the correct
     * locations.
     */
    for (unsigned i = 0; linux_gl_abi[i].name != NULL; i++) {
@@ -50,10 +50,10 @@ TEST(GetProcAddress, ABINameByOffset)
    }
 }
 
-TEST(GetProcAddress, ABIOffsetByName)
+TEST(GetProcAddress, ABINameByOffset)
 {
    /* 408 functions have had their locations in the dispatch table set since
-    * the danw of time.  Verify that all of these functions are at the correct
+    * the dawn of time.  Verify that all of these functions are at the correct
     * locations.
     */
    for (unsigned i = 0; linux_gl_abi[i].name != NULL; i++) {
