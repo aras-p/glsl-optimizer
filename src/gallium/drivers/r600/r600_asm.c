@@ -1424,7 +1424,7 @@ int r600_bytecode_add_alu_type(struct r600_bytecode *bc, const struct r600_bytec
 		if (bc->cf_last->inst == BC_INST(bc, V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU) &&
 			type == BC_INST(bc, V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE)) {
 			LIST_FOR_EACH_ENTRY(lalu, &bc->cf_last->alu, list) {
-				if (lalu->predicate) {
+				if (lalu->execute_mask) {
 					bc->force_add_cf = 1;
 					break;
 				}
@@ -1755,6 +1755,7 @@ static int r600_bytecode_alu_build(struct r600_bytecode *bc, struct r600_bytecod
 				S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
 				S_SQ_ALU_WORD0_SRC1_NEG(alu->src[1].neg) |
 				S_SQ_ALU_WORD0_INDEX_MODE(alu->index_mode) |
+				S_SQ_ALU_WORD0_PRED_SEL(alu->pred_sel) |
 				S_SQ_ALU_WORD0_LAST(alu->last);
 
 	if (alu->is_op3) {
@@ -1779,8 +1780,8 @@ static int r600_bytecode_alu_build(struct r600_bytecode *bc, struct r600_bytecod
 					S_SQ_ALU_WORD1_OP2_OMOD(alu->omod) |
 					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->inst) |
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle) |
-					S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
-					S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
+					S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->execute_mask) |
+					S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->update_pred);
 	}
 	return 0;
 }
@@ -2467,6 +2468,7 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 			fprintf(stderr, "CHAN:%d ", alu->src[1].chan);
 			fprintf(stderr, "NEG:%d ", alu->src[1].neg);
 			fprintf(stderr, "IM:%d) ", alu->index_mode);
+			fprintf(stderr, "PRED_SEL:%d ", alu->pred_sel);
 			fprintf(stderr, "LAST:%d)\n", alu->last);
 			id++;
 			fprintf(stderr, "%04d %08X %c ", id, bc->bytecode[id], alu->last ? '*' : ' ');
@@ -2486,8 +2488,8 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 				fprintf(stderr, "SRC1_ABS:%d ", alu->src[1].abs);
 				fprintf(stderr, "WRITE_MASK:%d ", alu->dst.write);
 				fprintf(stderr, "OMOD:%d ", alu->omod);
-				fprintf(stderr, "EXECUTE_MASK:%d ", alu->predicate);
-				fprintf(stderr, "UPDATE_PRED:%d\n", alu->predicate);
+				fprintf(stderr, "EXECUTE_MASK:%d ", alu->execute_mask);
+				fprintf(stderr, "UPDATE_PRED:%d\n", alu->update_pred);
 			}
 
 			id++;

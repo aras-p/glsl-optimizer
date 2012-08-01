@@ -53,7 +53,9 @@ struct r600_bytecode_alu {
 	unsigned			inst;
 	unsigned			last;
 	unsigned			is_op3;
-	unsigned			predicate;
+	unsigned			execute_mask;
+	unsigned			update_pred;
+	unsigned			pred_sel;
 	unsigned			bank_swizzle;
 	unsigned			bank_swizzle_force;
 	unsigned			omod;

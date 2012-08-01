@@ -310,7 +310,7 @@ static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
 	alu.inst = inst0 | (inst1 << 8);
 	alu.last = bytes[bytes_read++];
 	alu.is_op3 = bytes[bytes_read++];
-	alu.predicate = bytes[bytes_read++];
+	alu.pred_sel = bytes[bytes_read++];
 	alu.bank_swizzle = bytes[bytes_read++];
 	alu.bank_swizzle_force = bytes[bytes_read++];
 	alu.omod = bytes[bytes_read++];
@@ -330,7 +330,8 @@ static void llvm_if(struct r600_shader_ctx *ctx, struct r600_bytecode_alu * alu,
 	unsigned pred_inst)
 {
 	alu->inst = pred_inst; 
-	alu->predicate = 1;
+	alu->execute_mask = 1;
+	alu->update_pred = 1;
 	alu->dst.write = 0;
 	alu->src[1].sel = V_SQ_ALU_SRC_0;
 	alu->src[1].chan = 0;
@@ -4854,7 +4855,8 @@ static int emit_logic_pred(struct r600_shader_ctx *ctx, int opcode)
 
 	memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 	alu.inst = opcode;
-	alu.predicate = 1;
+	alu.execute_mask = 1;
+	alu.update_pred = 1;
 
 	alu.dst.sel = ctx->temp_reg;
 	alu.dst.write = 1;

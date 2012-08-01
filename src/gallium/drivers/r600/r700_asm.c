@@ -43,6 +43,7 @@ int r700_bytecode_alu_build(struct r600_bytecode *bc, struct r600_bytecode_alu *
 		S_SQ_ALU_WORD0_SRC1_REL(alu->src[1].rel) |
 		S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
 		S_SQ_ALU_WORD0_SRC1_NEG(alu->src[1].neg) |
+		S_SQ_ALU_WORD0_PRED_SEL(alu->pred_sel) |
 		S_SQ_ALU_WORD0_LAST(alu->last);
 
 	/* don't replace gpr by pv or ps for destination register */
@@ -68,8 +69,8 @@ int r700_bytecode_alu_build(struct r600_bytecode *bc, struct r600_bytecode_alu *
 					S_SQ_ALU_WORD1_OP2_OMOD(alu->omod) |
 					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->inst) |
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle) |
-			                S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
-		 	                S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
+			                S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->execute_mask) |
+			                S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->update_pred);
 	}
 	return 0;
 }
