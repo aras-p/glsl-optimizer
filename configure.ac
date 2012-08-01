@@ -2153,6 +2153,7 @@ AC_CONFIG_FILES([configs/current
 		src/mapi/glapi/gen/Makefile
 		src/mapi/shared-glapi/Makefile
 		src/mapi/glapi/tests/Makefile
+		src/mapi/shared-glapi/tests/Makefile
 		src/gtest/Makefile
 		src/mesa/Makefile
 		src/mesa/libdricore/Makefile
