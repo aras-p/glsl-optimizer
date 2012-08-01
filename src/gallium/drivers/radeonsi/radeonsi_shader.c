@@ -529,14 +529,14 @@ static void tex_fetch_args(
 	/* Resource */
 	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V8I32, 4);
 	offset = lp_build_const_int32(bld_base->base.gallivm,
-				  8 * emit_data->inst->Src[1].Register.Index);
+				  emit_data->inst->Src[1].Register.Index);
 	emit_data->args[2] = build_indexed_load(bld_base->base.gallivm,
 						ptr, offset);
 
 	/* Sampler */
 	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V4I32, 2);
 	offset = lp_build_const_int32(bld_base->base.gallivm,
-				  4 * emit_data->inst->Src[1].Register.Index);
+				  emit_data->inst->Src[1].Register.Index);
 	emit_data->args[3] = build_indexed_load(bld_base->base.gallivm,
 						ptr, offset);
 
