@@ -1452,26 +1452,21 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 				&rtex->resource, RADEON_USAGE_READWRITE);
 }
 
-static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
-			 const struct pipe_framebuffer_state *state)
+static void evergreen_init_depth_surface(struct r600_context *rctx,
+					 struct r600_surface *surf)
 {
 	struct r600_screen *rscreen = rctx->screen;
-	struct r600_resource_texture *rtex;
-	struct r600_surface *surf;
+	struct pipe_screen *screen = &rscreen->screen;
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)surf->base.texture;
 	uint64_t offset;
 	unsigned level, pitch, slice, format, array_mode;
-	unsigned macro_aspect, tile_split, bankh, bankw, z_info, nbanks;
+	unsigned macro_aspect, tile_split, bankh, bankw, nbanks;
 
-	if (state->zsbuf == NULL)
-		return;
-
-	surf = (struct r600_surface *)state->zsbuf;
 	level = surf->base.u.tex.level;
-	rtex = (struct r600_resource_texture*)surf->base.texture;
 	format = r600_translate_dbformat(surf->base.format);
 	assert(format != ~0);
 
-	offset = r600_resource_va(rctx->context.screen, surf->base.texture);
+	offset = r600_resource_va(screen, surf->base.texture);
 	offset += rtex->surface.level[level].offset;
 	pitch = (rtex->surface.level[level].nblk_x / 8) - 1;
 	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
@@ -1500,65 +1495,45 @@ static void evergreen_db(struct r600_context *rctx, struct r600_pipe_state *rsta
 	nbanks = eg_num_banks(rscreen->tiling_info.num_banks);
 	offset >>= 8;
 
-	z_info = S_028040_ARRAY_MODE(array_mode) |
-		 S_028040_FORMAT(format) |
-		 S_028040_TILE_SPLIT(tile_split)|
-		 S_028040_NUM_BANKS(nbanks) |
-		 S_028040_BANK_WIDTH(bankw) |
-		 S_028040_BANK_HEIGHT(bankh) |
-		 S_028040_MACRO_TILE_ASPECT(macro_aspect);
-
-	r600_pipe_state_add_reg_bo(rstate, R_028048_DB_Z_READ_BASE,
-				offset, &rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg_bo(rstate, R_028050_DB_Z_WRITE_BASE,
-				offset, &rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW,
-				S_028008_SLICE_START(state->zsbuf->u.tex.first_layer) |
-				S_028008_SLICE_MAX(state->zsbuf->u.tex.last_layer));
+	surf->db_depth_info = S_028040_ARRAY_MODE(array_mode) |
+			      S_028040_FORMAT(format) |
+			      S_028040_TILE_SPLIT(tile_split)|
+			      S_028040_NUM_BANKS(nbanks) |
+			      S_028040_BANK_WIDTH(bankw) |
+			      S_028040_BANK_HEIGHT(bankh) |
+			      S_028040_MACRO_TILE_ASPECT(macro_aspect);
+	surf->db_depth_base = offset;
+	surf->db_depth_view = S_028008_SLICE_START(surf->base.u.tex.first_layer) |
+			      S_028008_SLICE_MAX(surf->base.u.tex.last_layer);
+	surf->db_depth_size = S_028058_PITCH_TILE_MAX(pitch);
+	surf->db_depth_slice = S_02805C_SLICE_TILE_MAX(slice);
 
 	if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
 		uint64_t stencil_offset = rtex->surface.stencil_offset;
 		unsigned stile_split = rtex->surface.stencil_tile_split;
 
 		stile_split = eg_tile_split(stile_split);
-		stencil_offset += r600_resource_va(rctx->context.screen, surf->base.texture);
+		stencil_offset += r600_resource_va(screen, surf->base.texture);
 		stencil_offset += rtex->surface.level[level].offset / 4;
 		stencil_offset >>= 8;
 
-		r600_pipe_state_add_reg_bo(rstate, R_02804C_DB_STENCIL_READ_BASE,
-					stencil_offset, &rtex->resource,
-					RADEON_USAGE_READWRITE);
-		r600_pipe_state_add_reg_bo(rstate, R_028054_DB_STENCIL_WRITE_BASE,
-					stencil_offset, &rtex->resource,
-					RADEON_USAGE_READWRITE);
-		r600_pipe_state_add_reg_bo(rstate, R_028044_DB_STENCIL_INFO,
-					1 | S_028044_TILE_SPLIT(stile_split),
-					&rtex->resource,
-					RADEON_USAGE_READWRITE);
+		surf->db_stencil_base = stencil_offset;
+		surf->db_stencil_info = 1 | S_028044_TILE_SPLIT(stile_split);
 	} else {
-		r600_pipe_state_add_reg_bo(rstate, R_02804C_DB_STENCIL_READ_BASE,
-					offset, &rtex->resource,
-					RADEON_USAGE_READWRITE);
-		r600_pipe_state_add_reg_bo(rstate, R_028054_DB_STENCIL_WRITE_BASE,
-					offset, &rtex->resource,
-					RADEON_USAGE_READWRITE);
-		r600_pipe_state_add_reg_bo(rstate, R_028044_DB_STENCIL_INFO,
-					1, NULL, RADEON_USAGE_READWRITE);
+		surf->db_stencil_base = offset;
+		surf->db_stencil_info = 1;
 	}
 
-	r600_pipe_state_add_reg_bo(rstate, R_028040_DB_Z_INFO, z_info,
-				&rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg(rstate, R_028058_DB_DEPTH_SIZE,
-				S_028058_PITCH_TILE_MAX(pitch));
-	r600_pipe_state_add_reg(rstate, R_02805C_DB_DEPTH_SLICE,
-				S_02805C_SLICE_TILE_MAX(slice));
+	surf->depth_initialized = true;
 }
 
 static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
-					const struct pipe_framebuffer_state *state)
+					    const struct pipe_framebuffer_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
+	struct r600_surface *surf;
+	struct r600_resource *res;
 	uint32_t tl, br;
 	int i;
 
@@ -1586,7 +1561,30 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 
 	if (state->zsbuf) {
-		evergreen_db(rctx, rstate, state);
+		surf = (struct r600_surface*)state->zsbuf;
+		res = (struct r600_resource*)surf->base.texture;
+
+		if (!surf->depth_initialized) {
+			evergreen_init_depth_surface(rctx, surf);
+		}
+
+		r600_pipe_state_add_reg_bo(rstate, R_028048_DB_Z_READ_BASE, surf->db_depth_base,
+					   res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg_bo(rstate, R_028050_DB_Z_WRITE_BASE, surf->db_depth_base,
+					   res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW, surf->db_depth_view);
+
+		r600_pipe_state_add_reg_bo(rstate, R_02804C_DB_STENCIL_READ_BASE, surf->db_stencil_base,
+					   res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg_bo(rstate, R_028054_DB_STENCIL_WRITE_BASE, surf->db_stencil_base,
+					   res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg_bo(rstate, R_028044_DB_STENCIL_INFO, surf->db_stencil_info,
+					   res, RADEON_USAGE_READWRITE);
+
+		r600_pipe_state_add_reg_bo(rstate, R_028040_DB_Z_INFO, surf->db_depth_info,
+					   res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028058_DB_DEPTH_SIZE, surf->db_depth_size);
+		r600_pipe_state_add_reg(rstate, R_02805C_DB_DEPTH_SLICE, surf->db_depth_slice);
 	}
 
 	evergreen_get_scissor_rect(rctx, 0, 0, state->width, state->height, &tl, &br);

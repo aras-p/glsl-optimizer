@@ -1461,19 +1461,13 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 				   0, &rtex->resource, RADEON_USAGE_READWRITE);
 }
 
-static void r600_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
-			const struct pipe_framebuffer_state *state)
+static void r600_init_depth_surface(struct r600_context *rctx,
+				    struct r600_surface *surf)
 {
-	struct r600_resource_texture *rtex;
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)surf->base.texture;
 	unsigned level, pitch, slice, format, offset, array_mode;
 
-	if (state->zsbuf == NULL)
-		return;
-
-	level = state->zsbuf->u.tex.level;
-
-	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
-
+	level = surf->base.u.tex.level;
 	offset = rtex->surface.level[level].offset;
 	pitch = rtex->surface.level[level].nblk_x / 8 - 1;
 	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
@@ -1492,21 +1486,17 @@ static void r600_db(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		break;
 	}
 
-	format = r600_translate_dbformat(state->zsbuf->format);
+	format = r600_translate_dbformat(surf->base.format);
 	assert(format != ~0);
 
-	r600_pipe_state_add_reg_bo(rstate, R_02800C_DB_DEPTH_BASE,
-				offset >> 8, &rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg(rstate, R_028000_DB_DEPTH_SIZE,
-				S_028000_PITCH_TILE_MAX(pitch) | S_028000_SLICE_TILE_MAX(slice));
-	r600_pipe_state_add_reg(rstate, R_028004_DB_DEPTH_VIEW,
-				S_028004_SLICE_START(state->zsbuf->u.tex.first_layer) |
-				S_028004_SLICE_MAX(state->zsbuf->u.tex.last_layer));
-	r600_pipe_state_add_reg_bo(rstate, R_028010_DB_DEPTH_INFO,
-				S_028010_ARRAY_MODE(array_mode) | S_028010_FORMAT(format),
-				&rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg(rstate, R_028D34_DB_PREFETCH_LIMIT,
-				(rtex->surface.level[level].nblk_y / 8) - 1);
+	surf->db_depth_info = S_028010_ARRAY_MODE(array_mode) | S_028010_FORMAT(format);
+	surf->db_depth_base = offset >> 8;
+	surf->db_depth_view = S_028004_SLICE_START(surf->base.u.tex.first_layer) |
+			      S_028004_SLICE_MAX(surf->base.u.tex.last_layer);
+	surf->db_depth_size = S_028000_PITCH_TILE_MAX(pitch) | S_028000_SLICE_TILE_MAX(slice);
+	surf->db_prefetch_limit = (rtex->surface.level[level].nblk_y / 8) - 1;
+
+	surf->depth_initialized = true;
 }
 
 static void r600_set_framebuffer_state(struct pipe_context *ctx,
@@ -1514,6 +1504,8 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
+	struct r600_surface *surf;
+	struct r600_resource *res;
 	uint32_t tl, br;
 
 	if (rstate == NULL)
@@ -1534,7 +1526,20 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		r600_cb(rctx, rstate, state, i);
 	}
 	if (state->zsbuf) {
-		r600_db(rctx, rstate, state);
+		surf = (struct r600_surface*)state->zsbuf;
+		res = (struct r600_resource*)surf->base.texture;
+
+		if (!surf->depth_initialized) {
+			r600_init_depth_surface(rctx, surf);
+		}
+
+		r600_pipe_state_add_reg_bo(rstate, R_02800C_DB_DEPTH_BASE, surf->db_depth_base,
+					   res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028000_DB_DEPTH_SIZE, surf->db_depth_size);
+		r600_pipe_state_add_reg(rstate, R_028004_DB_DEPTH_VIEW, surf->db_depth_view);
+		r600_pipe_state_add_reg_bo(rstate, R_028010_DB_DEPTH_INFO, surf->db_depth_info,
+					   res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028D34_DB_PREFETCH_LIMIT, surf->db_prefetch_limit);
 	}
 
 	tl = S_028240_TL_X(0) | S_028240_TL_Y(0) | S_028240_WINDOW_OFFSET_DISABLE(1);

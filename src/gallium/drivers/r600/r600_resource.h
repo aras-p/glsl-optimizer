@@ -69,6 +69,18 @@ struct r600_resource_texture {
 
 struct r600_surface {
 	struct pipe_surface		base;
+
+	bool depth_initialized;
+
+	/* DB registers. */
+	unsigned db_depth_info;		/* DB_Z_INFO (EG) or DB_DEPTH_INFO (r600) */
+	unsigned db_depth_base;		/* DB_Z_READ/WRITE_BASE (EG) or DB_DEPTH_BASE (r600) */
+	unsigned db_depth_view;
+	unsigned db_depth_size;
+	unsigned db_depth_slice;	/* EG only */
+	unsigned db_stencil_base;	/* EG only */
+	unsigned db_stencil_info;	/* EG only */
+	unsigned db_prefetch_limit;	/* R600 only */
 };
 
 void r600_resource_destroy(struct pipe_screen *screen, struct pipe_resource *res);
