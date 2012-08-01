@@ -519,8 +519,8 @@ static void tex_fetch_args(
 	LLVMValueRef offset;
 
 	/* WriteMask */
-	emit_data->args[0] = lp_build_const_int32(bld_base->base.gallivm,
-				emit_data->inst->Dst[0].Register.WriteMask);
+	/* XXX: should be optimized using emit_data->inst->Dst[0].Register.WriteMask*/
+	emit_data->args[0] = lp_build_const_int32(bld_base->base.gallivm, 0xf);
 
 	/* Coordinates */
 	/* XXX: Not all sample instructions need 4 address arguments. */
