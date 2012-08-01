@@ -131,8 +131,8 @@ struct intel_mipmap_level
       /** \} */
 
       /**
-       * Pointer to mapping information, present across
-       * intel_tex_image_map()/unmap of the slice.
+       * Mapping information. Persistent for the duration of
+       * intel_miptree_map/unmap on this slice.
        */
       struct intel_miptree_map *map;
    } *slice;
