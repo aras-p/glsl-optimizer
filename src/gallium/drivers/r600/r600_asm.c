@@ -1048,7 +1048,25 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 		return r;
 
 	for (i = 0; i < max_slots; ++i) {
+		if (prev[i]) {
+		      if (prev[i]->pred_sel)
+			      return 0;
+		      if (is_alu_once_inst(bc, prev[i]))
+			      return 0;
+		}
+		if (slots[i]) {
+			if (slots[i]->pred_sel)
+				return 0;
+			if (is_alu_once_inst(bc, slots[i]))
+				return 0;
+		}
+	}
+
+	for (i = 0; i < max_slots; ++i) {
 		struct r600_bytecode_alu *alu;
+
+		if (num_once_inst > 0)
+		   return 0;
 
 		/* check number of literals */
 		if (prev[i]) {
