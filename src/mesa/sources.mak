@@ -378,6 +378,7 @@ INCLUDE_DIRS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/glsl \
 	-I$(top_builddir)/src/glsl \
+	-I$(top_srcdir)/src/glsl/glcpp \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_builddir)/src/mesa \
 	-I$(top_srcdir)/src/mesa/main \
