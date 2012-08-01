@@ -2057,6 +2057,7 @@ fs_visitor::emit_fb_writes()
    int nr = base_mrf;
    int reg_width = c->dispatch_width / 8;
    bool do_dual_src = this->dual_src_output.file != BAD_FILE;
+   bool src0_alpha_to_render_target = false;
 
    if (c->dispatch_width == 16 && do_dual_src) {
       fail("GL_ARB_blend_func_extended not yet supported in 16-wide.");
@@ -2078,6 +2079,10 @@ fs_visitor::emit_fb_writes()
    }
 
    if (header_present) {
+      src0_alpha_to_render_target = intel->gen >= 6 &&
+				    !do_dual_src &&
+				    c->key.nr_color_regions > 1 &&
+				    c->key.sample_alpha_to_coverage;
       /* m2, m3 header */
       nr += 2;
    }
@@ -2094,6 +2099,8 @@ fs_visitor::emit_fb_writes()
    nr += 4 * reg_width;
    if (do_dual_src)
       nr += 4;
+   if (src0_alpha_to_render_target)
+      nr += reg_width;
 
    if (c->source_depth_to_render_target) {
       if (intel->gen == 6 && c->dispatch_width == 16) {
@@ -2165,13 +2172,32 @@ fs_visitor::emit_fb_writes()
       this->current_annotation = ralloc_asprintf(this->mem_ctx,
 						 "FB write target %d",
 						 target);
+      /* If src0_alpha_to_render_target is true, include source zero alpha
+       * data in RenderTargetWrite message for targets > 0.
+       */
+      int write_color_mrf = color_mrf;
+      if (src0_alpha_to_render_target && target != 0) {
+         fs_inst *inst;
+         fs_reg color = outputs[0];
+         color.reg_offset += 3;
+
+         inst = emit(BRW_OPCODE_MOV,
+		     fs_reg(MRF, write_color_mrf, color.type),
+		     color);
+         inst->saturate = c->key.clamp_fragment_color;
+         write_color_mrf = color_mrf + reg_width;
+      }
+
       for (unsigned i = 0; i < this->output_components[target]; i++)
-	 emit_color_write(target, i, color_mrf);
+         emit_color_write(target, i, write_color_mrf);
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
       inst->target = target;
       inst->base_mrf = base_mrf;
-      inst->mlen = nr - base_mrf;
+      if (src0_alpha_to_render_target && target == 0)
+         inst->mlen = nr - base_mrf - reg_width;
+      else
+         inst->mlen = nr - base_mrf;
       if (target == c->key.nr_color_regions - 1)
 	 inst->eot = true;
       inst->header_present = header_present;

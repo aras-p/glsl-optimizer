@@ -59,6 +59,18 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 		 retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
 	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
+         if (inst->target > 0 &&
+	     c->key.nr_color_regions > 1 &&
+	     c->key.sample_alpha_to_coverage) {
+            /* Set "Source0 Alpha Present to RenderTarget" bit in message
+             * header.
+             */
+            brw_OR(p,
+		   vec1(retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD)),
+		   vec1(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD)),
+		   brw_imm_ud(0x1 << 11));
+         }
+
 	 if (inst->target > 0) {
 	    /* Set the render target index for choosing BLEND_STATE. */
 	    brw_MOV(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,

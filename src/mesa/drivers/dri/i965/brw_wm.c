@@ -633,6 +633,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    /* _NEW_BUFFERS */
    key->nr_color_regions = ctx->DrawBuffer->_NumColorDrawBuffers;
+  /* _NEW_MULTISAMPLE */
+   key->sample_alpha_to_coverage = ctx->Multisample.SampleAlphaToCoverage;
 
    /* CACHE_NEW_VS_PROG */
    key->vp_outputs_written = brw->vs.prog_data->outputs_written;
