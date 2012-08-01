@@ -64,15 +64,6 @@ unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 	return rtex->offset[level] + layer * rtex->layer_size[level];
 }
 
-static unsigned mip_minify(unsigned size, unsigned level)
-{
-	unsigned val;
-	val = u_minify(size, level);
-	if (level > 0)
-		val = util_next_power_of_two(val);
-	return val;
-}
-
 static int r600_init_surface(struct r600_screen *rscreen,
 			     struct radeon_surface *surface,
 			     const struct pipe_resource *ptex,
@@ -351,25 +342,22 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 
 static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 						struct pipe_resource *texture,
-						const struct pipe_surface *surf_tmpl)
+						const struct pipe_surface *templ)
 {
 	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
-	unsigned level = surf_tmpl->u.tex.level;
+	unsigned level = templ->u.tex.level;
 
-	assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
+	assert(templ->u.tex.first_layer == templ->u.tex.last_layer);
 	if (surface == NULL)
 		return NULL;
 	pipe_reference_init(&surface->base.reference, 1);
 	pipe_resource_reference(&surface->base.texture, texture);
 	surface->base.context = pipe;
-	surface->base.format = surf_tmpl->format;
-	surface->base.width = mip_minify(texture->width0, level);
-	surface->base.height = mip_minify(texture->height0, level);
-	surface->base.usage = surf_tmpl->usage;
-	surface->base.texture = texture;
-	surface->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
-	surface->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
-	surface->base.u.tex.level = level;
+	surface->base.format = templ->format;
+	surface->base.width = u_minify(texture->width0, level);
+	surface->base.height = u_minify(texture->height0, level);
+	surface->base.usage = templ->usage;
+	surface->base.u = templ->u;
 	return &surface->base;
 }
 
