@@ -712,7 +712,7 @@ default_driver="xlib"
 
 case "$host_os" in
 linux*)
-    default_driver="dri";;
+    default_driver="dri"
     ;;
 *freebsd* | dragonfly* | *netbsd*)
     case "$host_cpu" in
