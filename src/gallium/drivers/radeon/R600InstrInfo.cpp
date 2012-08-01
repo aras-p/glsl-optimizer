@@ -16,6 +16,7 @@
 #include "AMDGPUSubtarget.h"
 #include "R600RegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "AMDILUtilityFunctions.h"
 
 #define GET_INSTRINFO_CTOR
 #include "AMDGPUGenDFAPacketizer.inc"
@@ -59,6 +60,7 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       BuildMI(MBB, MI, DL, get(AMDGPU::MOV))
               .addReg(RI.getSubReg(DestReg, subRegMap[i]), RegState::Define)
               .addReg(RI.getSubReg(SrcReg, subRegMap[i]))
+              .addReg(0) // PREDICATE_BIT
               .addReg(DestReg, RegState::Define | RegState::Implicit);
     }
   } else {
@@ -68,7 +70,8 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
            && !AMDGPU::R600_Reg128RegClass.contains(SrcReg));
 
     BuildMI(MBB, MI, DL, get(AMDGPU::MOV), DestReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+      .addReg(SrcReg, getKillRegState(KillSrc))
+      .addReg(0); // PREDICATE_BIT
   }
 }
 
@@ -79,6 +82,7 @@ MachineInstr * R600InstrInfo::getMovImmInstr(MachineFunction *MF,
   MachineInstrBuilder(MI).addReg(DstReg, RegState::Define);
   MachineInstrBuilder(MI).addReg(AMDGPU::ALU_LITERAL_X);
   MachineInstrBuilder(MI).addImm(Imm);
+  MachineInstrBuilder(MI).addReg(0); // PREDICATE_BIT
 
   return MI;
 }
@@ -182,4 +186,28 @@ DFAPacketizer *R600InstrInfo::CreateTargetScheduleState(const TargetMachine *TM,
 {
   const InstrItineraryData *II = TM->getInstrItineraryData();
   return TM->getSubtarget<AMDGPUSubtarget>().createDFAPacketizer(II);
+}
+
+bool
+R600InstrInfo::isPredicated(const MachineInstr *MI) const
+{
+  int idx = MI->findFirstPredOperandIdx();
+  if (idx < 0)
+    return false;
+
+  MI->dump();
+  unsigned Reg = MI->getOperand(idx).getReg();
+  switch (Reg) {
+  default: return false;
+  case AMDGPU::PRED_SEL_ONE:
+  case AMDGPU::PRED_SEL_ZERO:
+  case AMDGPU::PREDICATE_BIT:
+    return true;
+  }
+}
+
+bool
+R600InstrInfo::isPredicable(MachineInstr *MI) const
+{
+  return AMDGPUInstrInfo::isPredicable(MI);
 }

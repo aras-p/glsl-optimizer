@@ -235,12 +235,17 @@ void R600CodeEmitter::EmitALUInstr(MachineInstr &MI)
 {
 
   unsigned numOperands = MI.getNumExplicitOperands();
+  if(MI.findFirstPredOperandIdx() > -1)
+    numOperands--;
 
    // Some instructions are just place holder instructions that represent
    // operations that the GPU does automatically.  They should be ignored.
   if (TII->isPlaceHolderOpcode(MI.getOpcode())) {
     return;
   }
+
+  if(MI.getOpcode() == AMDGPU::PRED_X)
+    numOperands = 2;
 
   // XXX Check if instruction writes a result
   if (numOperands < 1) {
@@ -343,7 +348,7 @@ void R600CodeEmitter::EmitSrc(const MachineOperand & MO, int chan_override)
 
 void R600CodeEmitter::EmitDst(const MachineOperand & MO)
 {
-  if (MO.isReg()) {
+  if (MO.isReg() && MO.getReg() != AMDGPU::PREDICATE_BIT) {
     // Emit the destination register index (1 byte)
     EmitByte(getHWReg(MO.getReg()));
 
@@ -396,8 +401,31 @@ void R600CodeEmitter::EmitALU(MachineInstr &MI, unsigned numSrc)
     EmitByte(0);
   }
 
-  // XXX: Emit predicate (1 byte)
-  EmitByte(0);
+  // XXX: Emit push modifier
+    if(MI.getOperand(1).getTargetFlags() & MO_FLAG_PUSH) {
+    EmitByte(1);
+  } else {
+    EmitByte(0);
+  }
+
+    // XXX: Emit predicate (1 byte)
+  int predidx = MI.findFirstPredOperandIdx();
+  if (predidx > -1)
+    switch(MI.getOperand(predidx).getReg()) {
+    case AMDGPU::PRED_SEL_ZERO:
+      EmitByte(2);
+      break;
+    case AMDGPU::PRED_SEL_ONE:
+      EmitByte(3);
+      break;
+    default:
+      EmitByte(0);
+      break;
+    }
+  else {
+    EmitByte(0);
+  }
+
 
   // XXX: Emit bank swizzle. (1 byte)  Do we need this?  It looks like
   // r600_asm.c sets it.

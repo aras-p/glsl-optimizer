@@ -69,6 +69,10 @@ def NEG_HALF : R600Reg<"-0.5">;
 def NEG_ONE : R600Reg<"-1.0">;
 def PV_X : R600Reg<"pv.x">;
 def ALU_LITERAL_X : R600Reg<"literal.x">;
+def PREDICATE_BIT : R600Reg<"PredicateBit">;
+def PRED_SEL_OFF: R600Reg<"Pred_sel_off">;
+def PRED_SEL_ZERO : R600Reg<"Pred_sel_zero">;
+def PRED_SEL_ONE : R600Reg<"Pred_sel_one">;
 
 def R600_CReg32 : RegisterClass <"AMDGPU", [f32, i32], 32, (add
     $creg_list)>;
@@ -83,6 +87,12 @@ def R600_Reg32 : RegisterClass <"AMDGPU", [f32, i32], 32, (add
     R600_TReg32,
     R600_CReg32,
     ZERO, HALF, ONE, ONE_INT, PV_X, ALU_LITERAL_X, NEG_ONE, NEG_HALF)>;
+
+def R600_Predicate : RegisterClass <"AMDGPU", [i32], 32, (add
+    PRED_SEL_OFF, PRED_SEL_ZERO, PRED_SEL_ONE)>;
+
+def R600_Predicate_Bit: RegisterClass <"AMDGPU", [i32], 32, (add
+    PREDICATE_BIT)>;
 
 def R600_Reg128 : RegisterClass<"AMDGPU", [v4f32, v4i32], 128, (add
     $t128_string)>

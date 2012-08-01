@@ -69,13 +69,16 @@ class R600_ALU {
   
 }
 
+def R600_Pred : PredicateOperand<i32, (ops R600_Predicate),
+                                     (ops PRED_SEL_OFF)>;
+
 
 class R600_1OP <bits<32> inst, string opName, list<dag> pattern,
                 InstrItinClass itin = AnyALU> :
   InstR600 <inst,
           (outs R600_Reg32:$dst),
-          (ins R600_Reg32:$src, variable_ops),
-          !strconcat(opName, " $dst, $src"),
+          (ins R600_Reg32:$src, R600_Pred:$p, variable_ops),
+          !strconcat(opName, " $dst, $src ($p)"),
           pattern,
           itin
   >;
@@ -84,7 +87,7 @@ class R600_2OP <bits<32> inst, string opName, list<dag> pattern,
                 InstrItinClass itin = AnyALU> :
   InstR600 <inst,
           (outs R600_Reg32:$dst),
-          (ins R600_Reg32:$src0, R600_Reg32:$src1, variable_ops),
+          (ins R600_Reg32:$src0, R600_Reg32:$src1,R600_Pred:$p, variable_ops),
           !strconcat(opName, " $dst, $src0, $src1"),
           pattern,
           itin
@@ -94,13 +97,29 @@ class R600_3OP <bits<32> inst, string opName, list<dag> pattern,
                 InstrItinClass itin = AnyALU> :
   InstR600 <inst,
           (outs R600_Reg32:$dst),
-          (ins R600_Reg32:$src0, R600_Reg32:$src1, R600_Reg32:$src2, variable_ops),
+          (ins R600_Reg32:$src0, R600_Reg32:$src1, R600_Reg32:$src2,R600_Pred:$p, variable_ops),
           !strconcat(opName, " $dst, $src0, $src1, $src2"),
           pattern,
           itin>{
 
     let Op3 = 1;
   }
+
+
+
+def PRED_X : AMDGPUInst <(outs R600_Predicate_Bit:$dst),
+           (ins R600_Reg32:$src0, i32imm:$src1),
+           "PRED $dst, $src0, $src1",
+           []>
+{
+  let DisableEncoding = "$src0";
+  field bits<32> Inst;
+  bits<32> src1;
+
+  let Inst = src1;
+}
+
+
 
 class R600_REDUCTION <bits<32> inst, dag ins, string asm, list<dag> pattern,
                       InstrItinClass itin = VecALU> :
@@ -341,7 +360,7 @@ def MOV : R600_1OP <0x19, "MOV", []>;
 
 class MOV_IMM <ValueType vt, Operand immType> : InstR600 <0x19,
   (outs R600_Reg32:$dst),
-  (ins R600_Reg32:$alu_literal, immType:$imm),
+  (ins R600_Reg32:$alu_literal, R600_Pred:$p, immType:$imm),
   "MOV_IMM $dst, $imm",
   [], AnyALU
 >;

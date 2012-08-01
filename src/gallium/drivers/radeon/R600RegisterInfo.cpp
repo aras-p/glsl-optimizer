@@ -37,6 +37,10 @@ BitVector R600RegisterInfo::getReservedRegs(const MachineFunction &MF) const
   Reserved.set(AMDGPU::NEG_ONE);
   Reserved.set(AMDGPU::PV_X);
   Reserved.set(AMDGPU::ALU_LITERAL_X);
+  Reserved.set(AMDGPU::PREDICATE_BIT);
+  Reserved.set(AMDGPU::PRED_SEL_OFF);
+  Reserved.set(AMDGPU::PRED_SEL_ZERO);
+  Reserved.set(AMDGPU::PRED_SEL_ONE);
 
   for (TargetRegisterClass::iterator I = AMDGPU::R600_CReg32RegClass.begin(),
                         E = AMDGPU::R600_CReg32RegClass.end(); I != E; ++I) {
@@ -72,6 +76,11 @@ unsigned R600RegisterInfo::getHWRegIndex(unsigned reg) const
   case AMDGPU::HALF:
   case AMDGPU::NEG_HALF: return 252;
   case AMDGPU::ALU_LITERAL_X: return 253;
+  case AMDGPU::PREDICATE_BIT:
+  case AMDGPU::PRED_SEL_OFF:
+  case AMDGPU::PRED_SEL_ZERO:
+  case AMDGPU::PRED_SEL_ONE:
+    return 0;
   default: return getHWRegIndexGen(reg);
   }
 }
@@ -86,6 +95,10 @@ unsigned R600RegisterInfo::getHWRegChan(unsigned reg) const
   case AMDGPU::HALF:
   case AMDGPU::NEG_HALF:
   case AMDGPU::ALU_LITERAL_X:
+  case AMDGPU::PREDICATE_BIT:
+  case AMDGPU::PRED_SEL_OFF:
+  case AMDGPU::PRED_SEL_ZERO:
+  case AMDGPU::PRED_SEL_ONE:
     return 0;
   default: return getHWRegChanGen(reg);
   }

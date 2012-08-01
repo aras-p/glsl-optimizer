@@ -62,6 +62,9 @@ namespace llvm {
 
   DFAPacketizer *CreateTargetScheduleState(const TargetMachine *TM,
                                            const ScheduleDAG *DAG) const;
+  bool isPredicated(const MachineInstr *MI) const;
+
+  bool isPredicable(MachineInstr *MI) const;
 };
 
 } // End llvm namespace

@@ -90,21 +90,24 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
     MI->getOperand(0).addTargetFlag(MO_FLAG_CLAMP);
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
            .addOperand(MI->getOperand(0))
-           .addOperand(MI->getOperand(1));
+           .addOperand(MI->getOperand(1))
+           .addReg(AMDGPU::PRED_SEL_OFF);
     break;
 
   case AMDGPU::FABS_R600:
     MI->getOperand(1).addTargetFlag(MO_FLAG_ABS);
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
            .addOperand(MI->getOperand(0))
-           .addOperand(MI->getOperand(1));
+           .addOperand(MI->getOperand(1))
+           .addReg(AMDGPU::PRED_SEL_OFF);
     break;
 
   case AMDGPU::FNEG_R600:
     MI->getOperand(1).addTargetFlag(MO_FLAG_NEG);
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
             .addOperand(MI->getOperand(0))
-            .addOperand(MI->getOperand(1));
+            .addOperand(MI->getOperand(1))
+            .addReg(AMDGPU::PRED_SEL_OFF);
     break;
 
   case AMDGPU::R600_LOAD_CONST:
@@ -141,10 +144,12 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       // this way and it didn't produce the correct results.
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV), ShiftValue)
               .addReg(AMDGPU::ALU_LITERAL_X)
+              .addReg(AMDGPU::PRED_SEL_OFF)
               .addImm(2);
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::LSHR_eg), NewAddr)
               .addOperand(MI->getOperand(1))
-              .addReg(ShiftValue);
+              .addReg(ShiftValue)
+              .addReg(AMDGPU::PRED_SEL_OFF);
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(MI->getOpcode()))
               .addOperand(MI->getOperand(0))
               .addReg(NewAddr);
