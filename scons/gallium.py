@@ -141,6 +141,7 @@ def generate(env):
     env['msvc'] = env['CC'] == 'cl'
     env['suncc'] = env['platform'] == 'sunos' and os.path.basename(env['CC']) == 'cc'
     env['clang'] = env['CC'] == 'clang'
+    env['icc'] = 'icc' == os.path.basename(env['CC'])
 
     if env['msvc'] and env['toolchain'] == 'default' and env['machine'] == 'x86_64':
         # MSVC x64 support is broken in earlier versions of scons
@@ -154,6 +155,7 @@ def generate(env):
     gcc = env['gcc']
     msvc = env['msvc']
     suncc = env['suncc']
+    icc = env['icc']
 
     # Determine whether we are cross compiling; in particular, whether we need
     # to compile code generators with a different compiler as the target code.
@@ -382,6 +384,10 @@ def generate(env):
             cflags += [
                 '-Wdeclaration-after-statement',
             ]
+    if icc:
+        cflags += [
+            '-std=gnu99',
+        ]
     if msvc:
         # See also:
         # - http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx

@@ -4,7 +4,7 @@ env = env.Clone()
 
 env.PkgUseModules('DRM')
 
-if env['gcc'] or env['clang']:
+if env['gcc'] or env['clang'] or env['icc']:
     env.Append(CCFLAGS = ['-fvisibility=hidden'])
     env.Append(CPPDEFINES = [
         'HAVE_STDINT_H', 
