@@ -29,6 +29,7 @@
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
+#include <llvm/CodeGen/Passes.h>
 
 using namespace llvm;
 
@@ -148,6 +149,8 @@ bool AMDGPUPassConfig::addPostRegAlloc() {
 }
 
 bool AMDGPUPassConfig::addPreSched2() {
+
+  addPass(IfConverterID);
   return false;
 }
 
