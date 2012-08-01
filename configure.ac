@@ -689,9 +689,9 @@ AC_SUBST([API_DEFINES])
 
 AC_ARG_ENABLE([shared-glapi],
     [AS_HELP_STRING([--enable-shared-glapi],
-        [EXPERIMENTAL.  Enable shared glapi for OpenGL @<:@default=no@:>@])],
+        [Enable shared glapi for OpenGL @<:@default=yes@:>@])],
     [enable_shared_glapi="$enableval"],
-    [enable_shared_glapi=no])
+    [enable_shared_glapi=yes])
 
 SHARED_GLAPI="0"
 if test "x$enable_shared_glapi" = xyes; then
