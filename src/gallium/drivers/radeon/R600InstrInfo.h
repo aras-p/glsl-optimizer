@@ -64,6 +64,9 @@ namespace llvm {
 
   DFAPacketizer *CreateTargetScheduleState(const TargetMachine *TM,
                                            const ScheduleDAG *DAG) const;
+
+  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
+
   bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB, MachineBasicBlock *&FBB,
                      SmallVectorImpl<MachineOperand> &Cond, bool AllowModify) const;
 
@@ -74,6 +77,40 @@ namespace llvm {
   bool isPredicated(const MachineInstr *MI) const;
 
   bool isPredicable(MachineInstr *MI) const;
+
+  bool
+   isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumCyles,
+                             const BranchProbability &Probability) const;
+
+  bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCyles,
+                           unsigned ExtraPredCycles,
+                           const BranchProbability &Probability) const ;
+
+  bool
+   isProfitableToIfCvt(MachineBasicBlock &TMBB,
+                       unsigned NumTCycles, unsigned ExtraTCycles,
+                       MachineBasicBlock &FMBB,
+                       unsigned NumFCycles, unsigned ExtraFCycles,
+                       const BranchProbability &Probability) const;
+
+  bool DefinesPredicate(MachineInstr *MI,
+                                  std::vector<MachineOperand> &Pred) const;
+
+  bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
+                         const SmallVectorImpl<MachineOperand> &Pred2) const;
+
+  bool isProfitableToUnpredicate(MachineBasicBlock &TMBB,
+                                          MachineBasicBlock &FMBB) const;
+
+  bool PredicateInstruction(MachineInstr *MI,
+                        const SmallVectorImpl<MachineOperand> &Pred) const;
+
+  int getInstrLatency(const InstrItineraryData *ItinData,
+                              const MachineInstr *MI,
+                              unsigned *PredCost = 0) const;
+
+  virtual int getInstrLatency(const InstrItineraryData *ItinData,
+                              SDNode *Node) const { return 1;}
 };
 
 } // End llvm namespace

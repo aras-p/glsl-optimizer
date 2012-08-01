@@ -17,7 +17,6 @@
 #include "R600RegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "AMDILUtilityFunctions.h"
-#include "AMDGPUUtil.h"
 
 #define GET_INSTRINFO_CTOR
 #include "AMDGPUGenDFAPacketizer.inc"
@@ -391,7 +390,6 @@ R600InstrInfo::isPredicated(const MachineInstr *MI) const
   if (idx < 0)
     return false;
 
-  MI->dump();
   unsigned Reg = MI->getOperand(idx).getReg();
   switch (Reg) {
   default: return false;
@@ -406,4 +404,118 @@ bool
 R600InstrInfo::isPredicable(MachineInstr *MI) const
 {
   return AMDGPUInstrInfo::isPredicable(MI);
+}
+
+
+bool
+R600InstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
+                                   unsigned NumCyles,
+                                   unsigned ExtraPredCycles,
+                                   const BranchProbability &Probability) const{
+  return true;
+}
+
+bool
+R600InstrInfo::isProfitableToIfCvt(MachineBasicBlock &TMBB,
+                                   unsigned NumTCycles,
+                                   unsigned ExtraTCycles,
+                                   MachineBasicBlock &FMBB,
+                                   unsigned NumFCycles,
+                                   unsigned ExtraFCycles,
+                                   const BranchProbability &Probability) const
+{
+  return true;
+}
+
+bool
+R600InstrInfo::isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
+                                         unsigned NumCyles,
+                                         const BranchProbability &Probability)
+                                         const
+{
+  return true;
+}
+
+bool
+R600InstrInfo::isProfitableToUnpredicate(MachineBasicBlock &TMBB,
+                                         MachineBasicBlock &FMBB) const
+{
+  return false;
+}
+
+
+bool
+R600InstrInfo::ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const
+{
+  MachineOperand &MO = Cond[1];
+  switch (MO.getImm()) {
+  case OPCODE_IS_ZERO_INT:
+    MO.setImm(OPCODE_IS_NOT_ZERO_INT);
+    break;
+  case OPCODE_IS_NOT_ZERO_INT:
+    MO.setImm(OPCODE_IS_ZERO_INT);
+    break;
+  case OPCODE_IS_ZERO:
+    MO.setImm(OPCODE_IS_NOT_ZERO);
+    break;
+  case OPCODE_IS_NOT_ZERO:
+    MO.setImm(OPCODE_IS_ZERO);
+    break;
+  default:
+    return true;
+  }
+
+  MachineOperand &MO2 = Cond[2];
+  switch (MO2.getReg()) {
+  case AMDGPU::PRED_SEL_ZERO:
+    MO2.setReg(AMDGPU::PRED_SEL_ONE);
+    break;
+  case AMDGPU::PRED_SEL_ONE:
+    MO2.setReg(AMDGPU::PRED_SEL_ZERO);
+    break;
+  default:
+    return true;
+  }
+  return false;
+}
+
+bool
+R600InstrInfo::DefinesPredicate(MachineInstr *MI,
+                                std::vector<MachineOperand> &Pred) const
+{
+  return isPredicateSetter(MI->getOpcode());
+}
+
+
+bool
+R600InstrInfo::SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
+                       const SmallVectorImpl<MachineOperand> &Pred2) const
+{
+  return false;
+}
+
+
+bool
+R600InstrInfo::PredicateInstruction(MachineInstr *MI,
+                      const SmallVectorImpl<MachineOperand> &Pred) const
+{
+  int PIdx = MI->findFirstPredOperandIdx();
+
+  if (PIdx != -1) {
+    MachineOperand &PMO = MI->getOperand(PIdx);
+    PMO.setReg(Pred[2].getReg());
+    MachineInstrBuilder(MI).addReg(AMDGPU::PREDICATE_BIT, RegState::Implicit);
+    return true;
+  }
+
+  return false;
+}
+
+int R600InstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
+                                   const MachineInstr *MI,
+                                   unsigned *PredCost) const
+{
+  if (PredCost)
+    *PredCost = 2;
+  return 2;
 }
