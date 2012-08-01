@@ -85,11 +85,11 @@ main/api_exec_es2.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py m
 	  -S $(srcdir)/main/APIspec.xml -V GLES2.0 > $@
 
 program/program_parse.tab.c program/program_parse.tab.h: program/program_parse.y
-	mkdir -p program
+	$(MKDIR_P) program
 	$(AM_V_GEN) $(YACC) -v -d --output=program/program_parse.tab.c $<
 
 program/lex.yy.c: program/program_lexer.l
-	mkdir -p program
+	$(MKDIR_P) program
 	$(AM_V_GEN) $(LEX) --never-interactive --outfile=$@ $<
 
 noinst_LTLIBRARIES = libmesa.la libmesagallium.la
