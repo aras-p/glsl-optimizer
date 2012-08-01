@@ -39,13 +39,19 @@ class PrintGlTable(gl_XML.gl_print_base):
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
+		self.ifdef_emitted = False;
 		return
 
 
 	def printBody(self, api):
 		for f in api.functionIterateByOffset():
+			if not f.is_abi() and not self.ifdef_emitted:
+				print '#if !defined HAVE_SHARED_GLAPI'
+				self.ifdef_emitted = True
 			arg_string = f.get_parameter_string()
 			print '   %s (GLAPIENTRYP %s)(%s); /* %d */' % (f.return_type, f.name, arg_string, f.offset)
+
+		print '#endif /* !defined HAVE_SHARED_GLAPI */'
 
 
 	def printRealHeader(self):
