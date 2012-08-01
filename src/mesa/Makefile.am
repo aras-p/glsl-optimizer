@@ -77,11 +77,11 @@ main/api_exec_es2_remap_helper.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_remap_d
 main/api_exec_es2.o: main/api_exec_es2_dispatch.h main/api_exec_es2_remap_helper.h
 
 main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
-	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py \
+	$(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/main/es_generator.py \
 	  -S $(srcdir)/main/APIspec.xml -V GLES1.1 > $@
 
 main/api_exec_es2.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
-	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py \
+	$(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/main/es_generator.py \
 	  -S $(srcdir)/main/APIspec.xml -V GLES2.0 > $@
 
 program/program_parse.tab.c program/program_parse.tab.h: program/program_parse.y
