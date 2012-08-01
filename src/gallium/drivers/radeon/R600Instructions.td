@@ -121,6 +121,15 @@ def PRED_X : AMDGPUInst <(outs R600_Predicate_Bit:$dst),
 
 
 
+let isTerminator = 1, isBranch = 1 in {
+def JUMP : InstR600 <0x10,
+          (outs),
+          (ins brtarget:$target, R600_Pred:$p),
+          "JUMP $target ($p)",
+          [], AnyALU
+  >;
+}
+
 class R600_REDUCTION <bits<32> inst, dag ins, string asm, list<dag> pattern,
                       InstrItinClass itin = VecALU> :
   InstR600 <inst,
