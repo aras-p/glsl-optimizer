@@ -121,7 +121,7 @@ apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
    /* This conversion was added in GLSL 1.20.  If the compilation mode is
     * GLSL 1.10, the conversion is skipped.
     */
-   if (state->language_version < 120)
+   if (!state->is_version(120, 0))
       return false;
 
    /* From page 27 (page 33 of the PDF) of the GLSL 1.50 spec:
@@ -1660,15 +1660,18 @@ ast_expression::hir(exec_list *instructions,
           array->type->element_type()->is_sampler() &&
           const_index == NULL) {
 
-	 if (state->language_version == 100) {
-	    _mesa_glsl_warning(&loc, state,
-			       "sampler arrays indexed with non-constant "
-			       "expressions is optional in GLSL ES 1.00");
-	 } else if (state->language_version < 130) {
-	    _mesa_glsl_warning(&loc, state,
-			       "sampler arrays indexed with non-constant "
-			       "expressions is forbidden in GLSL 1.30 and "
-			       "later");
+         if (!state->is_version(130, 100)) {
+            if (state->es_shader) {
+               _mesa_glsl_warning(&loc, state,
+                                  "sampler arrays indexed with non-constant "
+                                  "expressions is optional in %s",
+                                  state->get_version_string());
+            } else {
+               _mesa_glsl_warning(&loc, state,
+                                  "sampler arrays indexed with non-constant "
+                                  "expressions will be forbidden in GLSL 1.30 and "
+                                  "later");
+            }
 	 } else {
 	    _mesa_glsl_error(&loc, state,
 			     "sampler arrays indexed with non-constant "
@@ -2288,7 +2291,7 @@ get_variable_being_redeclared(ir_variable *var, ast_declaration *decl,
        *    * gl_Color
        *    * gl_SecondaryColor
        */
-   } else if (state->language_version >= 130
+   } else if (state->is_version(130, 0)
 	      && (strcmp(var->name, "gl_FrontColor") == 0
 		  || strcmp(var->name, "gl_BackColor") == 0
 		  || strcmp(var->name, "gl_FrontSecondaryColor") == 0
@@ -2611,7 +2614,7 @@ ast_declarator_list::hir(exec_list *instructions,
        * This is relaxed in GLSL 1.30.  It is also relaxed by any extension
        * that adds the 'layout' keyword.
        */
-      if ((state->language_version < 130)
+      if (!state->is_version(130, 0)
 	  && !state->ARB_explicit_attrib_location_enable
 	  && !state->ARB_fragment_coord_conventions_enable) {
 	 if (this->type->qualifier.flags.q.out) {
@@ -2712,7 +2715,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	       break;
 	    case GLSL_TYPE_UINT:
 	    case GLSL_TYPE_INT:
-	       if (state->language_version > 120)
+	       if (state->is_version(120, 0))
 		  break;
 	       /* FALLTHROUGH */
 	    default:
@@ -2741,7 +2744,7 @@ ast_declarator_list::hir(exec_list *instructions,
        *    vector, then it must be qualified with the interpolation qualifier
        *    flat."
        */
-      if (state->language_version >= 130
+      if (state->is_version(130, 0)
           && state->target == vertex_shader
           && state->current_function == NULL
           && var->type->is_integer()
@@ -2761,7 +2764,7 @@ ast_declarator_list::hir(exec_list *instructions,
        *    centroid in, out, or centroid out in a declaration. They do not apply
        *    to the deprecated storage qualifiers varying or centroid varying."
        */
-      if (state->language_version >= 130
+      if (state->is_version(130, 0)
           && this->type->qualifier.has_interpolation()
           && this->type->qualifier.flags.q.varying) {
 
@@ -2787,7 +2790,7 @@ ast_declarator_list::hir(exec_list *instructions,
        *    shader (in) can be further qualified with one or more of these
        *    interpolation qualifiers"
        */
-      if (state->language_version >= 130
+      if (state->is_version(130, 0)
           && this->type->qualifier.has_interpolation()) {
 
          const char *i = this->type->qualifier.interpolation_string();
@@ -2817,7 +2820,7 @@ ast_declarator_list::hir(exec_list *instructions,
       /* From section 4.3.4 of the GLSL 1.30 spec:
        *    "It is an error to use centroid in in a vertex shader."
        */
-      if (state->language_version >= 130
+      if (state->is_version(130, 0)
           && this->type->qualifier.flags.q.centroid
           && this->type->qualifier.flags.q.in
           && state->target == vertex_shader) {
@@ -3161,7 +3164,8 @@ ast_function::hir(exec_list *instructions,
     *
     * Note that this language does not appear in GLSL 1.10.
     */
-   if ((state->current_function != NULL) && (state->language_version != 110)) {
+   if ((state->current_function != NULL) &&
+       state->is_version(120, 100)) {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state,
 		       "declaration of function `%s' not allowed within "

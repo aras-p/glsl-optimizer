@@ -310,9 +310,10 @@ pragma_statement:
 	| PRAGMA_OPTIMIZE_OFF EOL
 	| PRAGMA_INVARIANT_ALL EOL
 	{
-	   if (state->language_version == 110) {
+	   if (!state->is_version(120, 100)) {
 	      _mesa_glsl_warning(& @1, state,
-				 "pragma `invariant(all)' not supported in %s",
+				 "pragma `invariant(all)' not supported in %s "
+                                 "(GLSL ES 1.00 or GLSL 1.20 required).",
 				 state->get_version_string());
 	   } else {
 	      state->all_invariant = true;

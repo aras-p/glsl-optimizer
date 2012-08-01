@@ -277,7 +277,7 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
     *
     * Function calls were first allowed to be constant expressions in GLSL 1.20.
     */
-   if (state->language_version >= 120) {
+   if (state->is_version(120, 0)) {
       ir_constant *value = sig->constant_expression_value(actual_parameters, NULL);
       if (value != NULL) {
 	 return value;

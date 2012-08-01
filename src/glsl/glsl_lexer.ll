@@ -103,7 +103,7 @@ literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
 
    if (value > UINT_MAX) {
       /* Note that signed 0xffffffff is valid, not out of range! */
-      if (state->language_version >= 130) {
+      if (state->is_version(130, 0)) {
 	 _mesa_glsl_error(lloc, state,
 			  "Literal value `%s' out of range", text);
       } else {
@@ -333,7 +333,7 @@ struct		return STRUCT;
 void		return VOID_TOK;
 
 layout		{
-		  if ((yyextra->language_version >= 140)
+		  if ((yyextra->is_version(140, 0))
 		      || yyextra->AMD_conservative_depth_enable
 		      || yyextra->ARB_conservative_depth_enable
 		      || yyextra->ARB_explicit_attrib_location_enable

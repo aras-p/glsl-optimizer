@@ -290,16 +290,18 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
    }
 
    if (state->ARB_texture_rectangle_enable ||
-       state->language_version >= 140) {
+       state->is_version(140, 0)) {
       glsl_type::generate_ARB_texture_rectangle_types(state->symbols,
 					   state->ARB_texture_rectangle_warn);
    }
-   if (state->OES_texture_3D_enable && state->language_version == 100) {
+   if (state->OES_texture_3D_enable
+       && state->is_version(0, 100)) {
       glsl_type::generate_OES_texture_3D_types(state->symbols,
 					       state->OES_texture_3D_warn);
    }
 
-   if (state->EXT_texture_array_enable && state->language_version < 130) {
+   if (state->EXT_texture_array_enable
+       && !state->is_version(130, 0)) {
       // These are already included in 130; don't create twice.
       glsl_type::generate_EXT_texture_array_types(state->symbols,
 				       state->EXT_texture_array_warn);
