@@ -232,7 +232,7 @@ uint64_t SICodeEmitter::getMachineOpValue(const MachineInstr &MI,
   case MachineOperand::MO_FPImmediate:
     // XXX: Not all instructions can use inline literals
     // XXX: We should make sure this is a 32-bit constant
-    return LITERAL_REG | (MO.getFPImm()->getValueAPF().bitcastToAPInt().getZExtValue() << 32);
+    return LITERAL_REG;
 
   case MachineOperand::MO_MachineBasicBlock:
     return (*BBIndexes.find(MI.getParent()->getNumber())).second -
@@ -321,13 +321,26 @@ uint64_t SICodeEmitter::VOPPostEncode(const MachineInstr &MI,
 
   // Add one to skip over the destination reg operand.
   for (unsigned opIdx = 1; opIdx < numSrcOps + 1; opIdx++) {
-    if (!MI.getOperand(opIdx).isReg()) {
+    const MachineOperand &MO = MI.getOperand(opIdx);
+    switch(MO.getType()) {
+    case MachineOperand::MO_Register:
+      {
+        unsigned reg = MI.getOperand(opIdx).getReg();
+        if (AMDGPU::VReg_32RegClass.contains(reg)
+            || AMDGPU::VReg_64RegClass.contains(reg)) {
+          Value |= (VGPR_BIT(opIdx)) << vgprBitOffset;
+        }
+      }
+      break;
+
+    case MachineOperand::MO_FPImmediate:
+      // XXX: Not all instructions can use inline literals
+      // XXX: We should make sure this is a 32-bit constant
+      Value |= (MO.getFPImm()->getValueAPF().bitcastToAPInt().getZExtValue() << 32);
       continue;
-    }
-    unsigned reg = MI.getOperand(opIdx).getReg();
-    if (AMDGPU::VReg_32RegClass.contains(reg)
-        || AMDGPU::VReg_64RegClass.contains(reg)) {
-      Value |= (VGPR_BIT(opIdx)) << vgprBitOffset;
+
+    default:
+      break;
     }
   }
   return Value;
