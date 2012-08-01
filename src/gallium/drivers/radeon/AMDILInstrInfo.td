@@ -217,7 +217,7 @@ include "AMDILIntrinsics.td"
 // Custom Inserter for Branches and returns, this eventually will be a
 // seperate pass
 //===---------------------------------------------------------------------===//
-let isTerminator = 1 in {
+let isTerminator = 1, usesCustomInserter = 1 in {
   def BRANCH : ILFormat<(outs), (ins brtarget:$target),
       "; Pseudo unconditional branch instruction",
       [(br bb:$target)]>;

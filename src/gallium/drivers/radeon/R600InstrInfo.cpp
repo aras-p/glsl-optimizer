@@ -17,6 +17,7 @@
 #include "R600RegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "AMDILUtilityFunctions.h"
+#include "AMDGPUUtil.h"
 
 #define GET_INSTRINFO_CTOR
 #include "AMDGPUGenDFAPacketizer.inc"
@@ -94,6 +95,8 @@ unsigned R600InstrInfo::getIEQOpcode() const
 
 bool R600InstrInfo::isMov(unsigned Opcode) const
 {
+
+
   switch(Opcode) {
   default: return false;
   case AMDGPU::MOV:
@@ -186,6 +189,199 @@ DFAPacketizer *R600InstrInfo::CreateTargetScheduleState(const TargetMachine *TM,
 {
   const InstrItineraryData *II = TM->getInstrItineraryData();
   return TM->getSubtarget<AMDGPUSubtarget>().createDFAPacketizer(II);
+}
+
+static bool
+isPredicateSetter(unsigned opcode)
+{
+  switch (opcode) {
+  case AMDGPU::PRED_X:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static MachineInstr *
+findFirstPredicateSetterFrom(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator I)
+{
+  while (I != MBB.begin()) {
+    --I;
+    MachineInstr *MI = I;
+    if (isPredicateSetter(MI->getOpcode()))
+      return MI;
+  }
+
+  return NULL;
+}
+
+bool
+R600InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
+                             MachineBasicBlock *&TBB,
+                             MachineBasicBlock *&FBB,
+                             SmallVectorImpl<MachineOperand> &Cond,
+                             bool AllowModify) const
+{
+  // Most of the following comes from the ARM implementation of AnalyzeBranch
+
+  // If the block has no terminators, it just falls into the block after it.
+  MachineBasicBlock::iterator I = MBB.end();
+  if (I == MBB.begin())
+    return false;
+  --I;
+  while (I->isDebugValue()) {
+    if (I == MBB.begin())
+      return false;
+    --I;
+  }
+  if (static_cast<MachineInstr *>(I)->getOpcode() != AMDGPU::JUMP) {
+    return false;
+  }
+
+  // Get the last instruction in the block.
+  MachineInstr *LastInst = I;
+
+  // If there is only one terminator instruction, process it.
+  unsigned LastOpc = LastInst->getOpcode();
+  if (I == MBB.begin() ||
+      static_cast<MachineInstr *>(--I)->getOpcode() != AMDGPU::JUMP) {
+    if (LastOpc == AMDGPU::JUMP) {
+      if(!isPredicated(LastInst)) {
+        TBB = LastInst->getOperand(0).getMBB();
+        return false;
+      } else {
+        MachineInstr *predSet = I;
+        while (!isPredicateSetter(predSet->getOpcode())) {
+          predSet = --I;
+        }
+        TBB = LastInst->getOperand(0).getMBB();
+        Cond.push_back(predSet->getOperand(1));
+        Cond.push_back(predSet->getOperand(2));
+        Cond.push_back(MachineOperand::CreateReg(AMDGPU::PRED_SEL_ONE, false));
+        return false;
+      }
+    }
+    return true;  // Can't handle indirect branch.
+  }
+
+  // Get the instruction before it if it is a terminator.
+  MachineInstr *SecondLastInst = I;
+  unsigned SecondLastOpc = SecondLastInst->getOpcode();
+
+  // If the block ends with a B and a Bcc, handle it.
+  if (SecondLastOpc == AMDGPU::JUMP &&
+      isPredicated(SecondLastInst) &&
+      LastOpc == AMDGPU::JUMP &&
+      !isPredicated(LastInst)) {
+    MachineInstr *predSet = --I;
+    while (!isPredicateSetter(predSet->getOpcode())) {
+      predSet = --I;
+    }
+    TBB = SecondLastInst->getOperand(0).getMBB();
+    FBB = LastInst->getOperand(0).getMBB();
+    Cond.push_back(predSet->getOperand(1));
+    Cond.push_back(predSet->getOperand(2));
+    Cond.push_back(MachineOperand::CreateReg(AMDGPU::PRED_SEL_ONE, false));
+    return false;
+  }
+
+  // Otherwise, can't handle this.
+  return true;
+}
+
+int R600InstrInfo::getBranchInstr(const MachineOperand &op) const {
+  const MachineInstr *MI = op.getParent();
+
+  switch (MI->getDesc().OpInfo->RegClass) {
+  default: // FIXME: fallthrough??
+  case AMDGPU::GPRI32RegClassID: return AMDGPU::BRANCH_COND_i32;
+  case AMDGPU::GPRF32RegClassID: return AMDGPU::BRANCH_COND_f32;
+  };
+}
+
+unsigned
+R600InstrInfo::InsertBranch(MachineBasicBlock &MBB,
+                            MachineBasicBlock *TBB,
+                            MachineBasicBlock *FBB,
+                            const SmallVectorImpl<MachineOperand> &Cond,
+                            DebugLoc DL) const
+{
+  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+
+  if (FBB == 0) {
+    if (Cond.empty()) {
+      BuildMI(&MBB, DL, get(AMDGPU::JUMP)).addMBB(TBB).addReg(0);
+      return 1;
+    } else {
+      MachineInstr *PredSet = findFirstPredicateSetterFrom(MBB, MBB.end());
+      assert(PredSet && "No previous predicate !");
+      PredSet->getOperand(1).addTargetFlag(1<<4);
+      PredSet->getOperand(2).setImm(Cond[1].getImm());
+
+      BuildMI(&MBB, DL, get(AMDGPU::JUMP))
+             .addMBB(TBB)
+             .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
+      return 1;
+    }
+  } else {
+    MachineInstr *PredSet = findFirstPredicateSetterFrom(MBB, MBB.end());
+    assert(PredSet && "No previous predicate !");
+    PredSet->getOperand(1).addTargetFlag(1<<4);
+    PredSet->getOperand(2).setImm(Cond[1].getImm());
+    BuildMI(&MBB, DL, get(AMDGPU::JUMP))
+            .addMBB(TBB)
+            .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
+    BuildMI(&MBB, DL, get(AMDGPU::JUMP)).addMBB(FBB).addReg(0);
+    return 2;
+  }
+}
+
+unsigned
+R600InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const
+{
+
+  // Note : we leave PRED* instructions there.
+  // They may be needed when predicating instructions.
+
+  MachineBasicBlock::iterator I = MBB.end();
+
+  if (I == MBB.begin()) {
+    return 0;
+  }
+  --I;
+  switch (I->getOpcode()) {
+  default:
+    return 0;
+  case AMDGPU::JUMP:
+    if (isPredicated(I)) {
+      MachineInstr *predSet = findFirstPredicateSetterFrom(MBB, I);
+      char flag = predSet->getOperand(1).getTargetFlags() & (~(1<<4));
+      predSet->getOperand(1).setTargetFlags(flag);
+    }
+    I->eraseFromParent();
+    break;
+  }
+  I = MBB.end();
+
+  if (I == MBB.begin()) {
+    return 1;
+  }
+  --I;
+  switch (I->getOpcode()) {
+    // FIXME: only one case??
+  default:
+    return 1;
+  case AMDGPU::JUMP:
+    if (isPredicated(I)) {
+      MachineInstr *predSet = findFirstPredicateSetterFrom(MBB, I);
+      char flag = predSet->getOperand(1).getTargetFlags() & (~(1<<4));
+      predSet->getOperand(1).setTargetFlags(flag);
+    }
+    I->eraseFromParent();
+    break;
+  }
+  return 2;
 }
 
 bool

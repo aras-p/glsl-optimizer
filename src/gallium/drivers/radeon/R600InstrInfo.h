@@ -34,6 +34,8 @@ namespace llvm {
   const R600RegisterInfo RI;
   AMDGPUTargetMachine &TM;
 
+  int getBranchInstr(const MachineOperand &op) const;
+
   public:
   explicit R600InstrInfo(AMDGPUTargetMachine &tm);
 
@@ -62,6 +64,13 @@ namespace llvm {
 
   DFAPacketizer *CreateTargetScheduleState(const TargetMachine *TM,
                                            const ScheduleDAG *DAG) const;
+  bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB, MachineBasicBlock *&FBB,
+                     SmallVectorImpl<MachineOperand> &Cond, bool AllowModify) const;
+
+  unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB, MachineBasicBlock *FBB, const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const;
+
+  unsigned RemoveBranch(MachineBasicBlock &MBB) const;
+
   bool isPredicated(const MachineInstr *MI) const;
 
   bool isPredicable(MachineInstr *MI) const;

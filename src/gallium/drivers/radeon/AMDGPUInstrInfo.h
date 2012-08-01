@@ -49,8 +49,6 @@ private:
   TargetMachine &TM;
   bool getNextBranchInstr(MachineBasicBlock::iterator &iter,
                           MachineBasicBlock &MBB) const;
-  unsigned int getBranchInstr(const MachineOperand &op) const;
-
 public:
   explicit AMDGPUInstrInfo(TargetMachine &tm);
 
@@ -77,18 +75,6 @@ public:
                         MachineBasicBlock::iterator &MBBI,
                         LiveVariables *LV) const;
 
-  bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
-                     MachineBasicBlock *&FBB,
-                     SmallVectorImpl<MachineOperand> &Cond,
-                     bool AllowModify) const;
-
-  unsigned RemoveBranch(MachineBasicBlock &MBB) const;
-
-  unsigned
-  InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-               MachineBasicBlock *FBB,
-               const SmallVectorImpl<MachineOperand> &Cond,
-               DebugLoc DL) const;
 
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, DebugLoc DL,
