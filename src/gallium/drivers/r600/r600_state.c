@@ -1281,31 +1281,29 @@ static void r600_set_viewport_state(struct pipe_context *ctx,
 	r600_context_pipe_state_set(rctx, rstate);
 }
 
-static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
-			const struct pipe_framebuffer_state *state, int cb)
+static void r600_init_color_surface(struct r600_context *rctx,
+				    struct r600_surface *surf)
 {
-	struct r600_resource_texture *rtex;
-	struct r600_surface *surf;
-	unsigned level = state->cbufs[cb]->u.tex.level;
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)surf->base.texture;
+	unsigned level = surf->base.u.tex.level;
 	unsigned pitch, slice;
 	unsigned color_info;
 	unsigned format, swap, ntype, endian;
 	unsigned offset;
 	const struct util_format_description *desc;
 	int i;
-	bool blend_bypass = 0, blend_clamp = 1, alphatest_bypass;
-
-	surf = (struct r600_surface *)state->cbufs[cb];
-	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
+	bool blend_bypass = 0, blend_clamp = 1;
 
 	if (rtex->is_depth && !rtex->is_flushing_texture) {
+		r600_init_flushed_depth_texture(&rctx->context, surf->base.texture, NULL);
 		rtex = rtex->flushed_depth_texture;
+		assert(rtex);
 	}
 
 	offset = rtex->surface.level[level].offset;
 	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
 		offset += rtex->surface.level[level].slice_size *
-			  state->cbufs[cb]->u.tex.first_layer;
+			  surf->base.u.tex.first_layer;
 	}
 	pitch = rtex->surface.level[level].nblk_x / 8 - 1;
 	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
@@ -1373,14 +1371,7 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		blend_bypass = 1;
 	}
 
-	/* Alpha-test is done on the first colorbuffer only. */
-	if (cb == 0) {
-		alphatest_bypass = ntype == V_0280A0_NUMBER_UINT || ntype == V_0280A0_NUMBER_SINT;
-		if (rctx->alphatest_state.bypass != alphatest_bypass) {
-			rctx->alphatest_state.bypass = alphatest_bypass;
-			r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
-		}
-	}
+	surf->alphatest_bypass = ntype == V_0280A0_NUMBER_UINT || ntype == V_0280A0_NUMBER_SINT;
 
 	color_info |= S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
@@ -1406,8 +1397,7 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		    G_0280A0_BLEND_CLAMP(color_info) &&
 		    !G_0280A0_BLEND_FLOAT32(color_info)) {
 			color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
-		} else {
-			rctx->export_16bpc = false;
+			surf->export_16bpc = true;
 		}
 	} else {
 		/* EXPORT_NORM can be enabled if:
@@ -1421,44 +1411,22 @@ static void r600_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		    (desc->channel[i].size < 17 &&
 		     desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT))) {
 			color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
-		} else {
-			rctx->export_16bpc = false;
+			surf->export_16bpc = true;
 		}
 	}
 
-	/* for possible dual-src MRT write color info 1 */
-	if (cb == 0 && rctx->framebuffer.nr_cbufs == 1) {
-		r600_pipe_state_add_reg_bo(rstate,
-				R_0280A0_CB_COLOR0_INFO + 1 * 4,
-				color_info, &rtex->resource, RADEON_USAGE_READWRITE);
+	surf->cb_color_base = offset >> 8;
+	surf->cb_color_info = color_info;
+	surf->cb_color_size = S_028060_PITCH_TILE_MAX(pitch) |
+			      S_028060_SLICE_TILE_MAX(slice);
+	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
+		surf->cb_color_view = 0;
+	} else {
+		surf->cb_color_view = S_028080_SLICE_START(surf->base.u.tex.first_layer) |
+				      S_028080_SLICE_MAX(surf->base.u.tex.last_layer);
 	}
 
-	r600_pipe_state_add_reg_bo(rstate,
-				R_028040_CB_COLOR0_BASE + cb * 4,
-				offset >> 8, &rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg_bo(rstate,
-				R_0280A0_CB_COLOR0_INFO + cb * 4,
-				color_info, &rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg(rstate,
-				R_028060_CB_COLOR0_SIZE + cb * 4,
-				S_028060_PITCH_TILE_MAX(pitch) |
-				S_028060_SLICE_TILE_MAX(slice));
-	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
-		r600_pipe_state_add_reg(rstate,
-					R_028080_CB_COLOR0_VIEW + cb * 4,
-					0x00000000);
-	} else {
-		r600_pipe_state_add_reg(rstate,
-					R_028080_CB_COLOR0_VIEW + cb * 4,
-					S_028080_SLICE_START(state->cbufs[cb]->u.tex.first_layer) |
-					S_028080_SLICE_MAX(state->cbufs[cb]->u.tex.last_layer));
-	}
-	r600_pipe_state_add_reg_bo(rstate,
-				   R_0280E0_CB_COLOR0_FRAG + cb * 4,
-				   0, &rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg_bo(rstate,
-				   R_0280C0_CB_COLOR0_TILE + cb * 4,
-				   0, &rtex->resource, RADEON_USAGE_READWRITE);
+	surf->color_initialized = true;
 }
 
 static void r600_init_depth_surface(struct r600_context *rctx,
@@ -1506,7 +1474,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	struct r600_surface *surf;
 	struct r600_resource *res;
-	uint32_t tl, br;
+	uint32_t tl, br, i;
 
 	if (rstate == NULL)
 		return;
@@ -1522,9 +1490,48 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	rctx->export_16bpc = true;
 	rctx->nr_cbufs = state->nr_cbufs;
 
-	for (int i = 0; i < state->nr_cbufs; i++) {
-		r600_cb(rctx, rstate, state, i);
+	for (i = 0; i < state->nr_cbufs; i++) {
+		surf = (struct r600_surface*)state->cbufs[i];
+		res = (struct r600_resource*)surf->base.texture;
+
+		if (!surf->color_initialized) {
+			r600_init_color_surface(rctx, surf);
+		}
+
+		if (!surf->export_16bpc) {
+			rctx->export_16bpc = false;
+		}
+
+		r600_pipe_state_add_reg_bo(rstate, R_028040_CB_COLOR0_BASE + i * 4,
+					   surf->cb_color_base, res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg_bo(rstate, R_0280A0_CB_COLOR0_INFO + i * 4,
+					   surf->cb_color_info, res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028060_CB_COLOR0_SIZE + i * 4,
+					surf->cb_color_size);
+		r600_pipe_state_add_reg(rstate, R_028080_CB_COLOR0_VIEW + i * 4,
+					surf->cb_color_view);
+		r600_pipe_state_add_reg_bo(rstate, R_0280E0_CB_COLOR0_FRAG + i * 4,
+					   surf->cb_color_frag, res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg_bo(rstate, R_0280C0_CB_COLOR0_TILE + i * 4,
+					   surf->cb_color_tile, res, RADEON_USAGE_READWRITE);
 	}
+	/* set CB_COLOR1_INFO for possible dual-src blending */
+	if (i == 1) {
+		r600_pipe_state_add_reg_bo(rstate, R_0280A0_CB_COLOR0_INFO + 1 * 4,
+					   surf->cb_color_info, res, RADEON_USAGE_READWRITE);
+		i++;
+	}
+
+	/* Update alpha-test state dependencies.
+	 * Alpha-test is done on the first colorbuffer only. */
+	if (state->nr_cbufs) {
+		surf = (struct r600_surface*)state->cbufs[0];
+		if (rctx->alphatest_state.bypass != surf->alphatest_bypass) {
+			rctx->alphatest_state.bypass = surf->alphatest_bypass;
+			r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+		}
+	}
+
 	if (state->zsbuf) {
 		surf = (struct r600_surface*)state->zsbuf;
 		res = (struct r600_resource*)surf->base.texture;

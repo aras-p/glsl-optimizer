@@ -70,7 +70,24 @@ struct r600_resource_texture {
 struct r600_surface {
 	struct pipe_surface		base;
 
+	bool color_initialized;
 	bool depth_initialized;
+
+	/* Misc. color flags. */
+	bool alphatest_bypass;
+	bool export_16bpc;
+
+	/* Color registers. */
+	unsigned cb_color_info;
+	unsigned cb_color_base;
+	unsigned cb_color_view;
+	unsigned cb_color_size;		/* R600 only */
+	unsigned cb_color_frag;		/* R600 only */
+	unsigned cb_color_tile;		/* R600 only */
+	unsigned cb_color_dim;		/* EG only */
+	unsigned cb_color_pitch;	/* EG only */
+	unsigned cb_color_slice;	/* EG only */
+	unsigned cb_color_attrib;	/* EG only */
 
 	/* DB registers. */
 	unsigned db_depth_info;		/* DB_Z_INFO (EG) or DB_DEPTH_INFO (r600) */

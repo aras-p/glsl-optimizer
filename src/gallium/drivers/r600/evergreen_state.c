@@ -1235,14 +1235,13 @@ static void evergreen_set_viewport_state(struct pipe_context *ctx,
 	r600_context_pipe_state_set(rctx, rstate);
 }
 
-void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
-			 const struct pipe_framebuffer_state *state, int cb)
+void evergreen_init_color_surface(struct r600_context *rctx,
+				  struct r600_surface *surf)
 {
 	struct r600_screen *rscreen = rctx->screen;
-	struct r600_resource_texture *rtex;
-	struct pipe_resource * pipe_tex;
-	struct r600_surface *surf;
-	unsigned level = state->cbufs[cb]->u.tex.level;
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)surf->base.texture;
+	struct pipe_resource *pipe_tex = surf->base.texture;
+	unsigned level = surf->base.u.tex.level;
 	unsigned pitch, slice;
 	unsigned color_info, color_attrib, color_dim = 0;
 	unsigned format, swap, ntype, endian;
@@ -1250,15 +1249,10 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	unsigned tile_type, macro_aspect, tile_split, bankh, bankw, nbanks;
 	const struct util_format_description *desc;
 	int i;
-	bool blend_clamp = 0, blend_bypass = 0, alphatest_bypass;
-
-	surf = (struct r600_surface *)state->cbufs[cb];
-	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
-	pipe_tex = state->cbufs[cb]->texture;
+	bool blend_clamp = 0, blend_bypass = 0;
 
 	if (rtex->is_depth && !rtex->is_flushing_texture) {
-		r600_init_flushed_depth_texture(&rctx->context,
-				state->cbufs[cb]->texture, NULL);
+		r600_init_flushed_depth_texture(&rctx->context, pipe_tex, NULL);
 		rtex = rtex->flushed_depth_texture;
 		assert(rtex);
 	}
@@ -1266,7 +1260,7 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	offset = rtex->surface.level[level].offset;
 	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
 		offset += rtex->surface.level[level].slice_size *
-			  state->cbufs[cb]->u.tex.first_layer;
+			  surf->base.u.tex.first_layer;
 	}
 	pitch = (rtex->surface.level[level].nblk_x) / 8 - 1;
 	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
@@ -1363,14 +1357,7 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 		blend_bypass = 1;
 	}
 
-	/* Alpha-test is done on the first colorbuffer only. */
-	if (cb == 0) {
-		alphatest_bypass = ntype == V_028C70_NUMBER_UINT || ntype == V_028C70_NUMBER_SINT;
-		if (rctx->alphatest_state.bypass != alphatest_bypass) {
-			rctx->alphatest_state.bypass = alphatest_bypass;
-			r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
-		}
-	}
+	surf->alphatest_bypass = ntype == V_028C70_NUMBER_UINT || ntype == V_028C70_NUMBER_SINT;
 
 	color_info |= S_028C70_FORMAT(format) |
 		S_028C70_COMP_SWAP(swap) |
@@ -1391,8 +1378,6 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	 * - 11-bit or smaller UNORM/SNORM/SRGB
 	 * - 16-bit or smaller FLOAT
 	 */
-	/* XXX: This should probably be the same for all CBs if we want
-	 * useful alpha tests. */
 	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
 	    ((desc->channel[i].size < 12 &&
 	      desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
@@ -1400,56 +1385,27 @@ void evergreen_cb(struct r600_context *rctx, struct r600_pipe_state *rstate,
 	     (desc->channel[i].size < 17 &&
 	      desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT))) {
 		color_info |= S_028C70_SOURCE_FORMAT(V_028C70_EXPORT_4C_16BPC);
-	} else {
-		rctx->export_16bpc = false;
+		surf->export_16bpc = true;
 	}
 
-	/* Alpha-test is done on the first colorbuffer only. */
-	if (cb == 0 && rctx->alphatest_state.cb0_export_16bpc != rctx->export_16bpc) {
-		rctx->alphatest_state.cb0_export_16bpc = rctx->export_16bpc;
-		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
-	}
-
-	/* for possible dual-src MRT */
-	if (cb == 0 && rctx->framebuffer.nr_cbufs == 1 && !rtex->is_rat) {
-		r600_pipe_state_add_reg_bo(rstate,
-				R_028C70_CB_COLOR0_INFO + 1 * 0x3C,
-				color_info, &rtex->resource, RADEON_USAGE_READWRITE);
-	}
-
-	offset += r600_resource_va(rctx->context.screen, state->cbufs[cb]->texture);
+	offset += r600_resource_va(rctx->context.screen, pipe_tex);
 	offset >>= 8;
 
 	/* XXX handle enabling of CB beyond BASE8 which has different offset */
-	r600_pipe_state_add_reg_bo(rstate,
-				R_028C60_CB_COLOR0_BASE + cb * 0x3C,
-				offset, &rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg(rstate,
-				R_028C78_CB_COLOR0_DIM + cb * 0x3C,
-				color_dim);
-	r600_pipe_state_add_reg_bo(rstate,
-				R_028C70_CB_COLOR0_INFO + cb * 0x3C,
-				color_info, &rtex->resource, RADEON_USAGE_READWRITE);
-	r600_pipe_state_add_reg(rstate,
-				R_028C64_CB_COLOR0_PITCH + cb * 0x3C,
-				S_028C64_PITCH_TILE_MAX(pitch));
-	r600_pipe_state_add_reg(rstate,
-				R_028C68_CB_COLOR0_SLICE + cb * 0x3C,
-				S_028C68_SLICE_TILE_MAX(slice));
+	surf->cb_color_base = offset;
+	surf->cb_color_dim = color_dim;
+	surf->cb_color_info = color_info;
+	surf->cb_color_pitch = S_028C64_PITCH_TILE_MAX(pitch);
+	surf->cb_color_slice = S_028C68_SLICE_TILE_MAX(slice);
 	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
-		r600_pipe_state_add_reg(rstate,
-					R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
-					0x00000000);
+		surf->cb_color_view = 0;
 	} else {
-		r600_pipe_state_add_reg(rstate,
-					R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
-					S_028C6C_SLICE_START(state->cbufs[cb]->u.tex.first_layer) |
-					S_028C6C_SLICE_MAX(state->cbufs[cb]->u.tex.last_layer));
+		surf->cb_color_view = S_028C6C_SLICE_START(surf->base.u.tex.first_layer) |
+				      S_028C6C_SLICE_MAX(surf->base.u.tex.last_layer);
 	}
-	r600_pipe_state_add_reg_bo(rstate,
-				R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C,
-				color_attrib,
-				&rtex->resource, RADEON_USAGE_READWRITE);
+	surf->cb_color_attrib = color_attrib;
+
+	surf->color_initialized = true;
 }
 
 static void evergreen_init_depth_surface(struct r600_context *rctx,
@@ -1550,14 +1506,56 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	/* build states */
 	rctx->export_16bpc = true;
 	rctx->nr_cbufs = state->nr_cbufs;
+
 	for (i = 0; i < state->nr_cbufs; i++) {
-		evergreen_cb(rctx, rstate, state, i);
+		surf = (struct r600_surface*)state->cbufs[i];
+		res = (struct r600_resource*)surf->base.texture;
+
+		if (!surf->color_initialized) {
+			evergreen_init_color_surface(rctx, surf);
+		}
+
+		if (!surf->export_16bpc) {
+			rctx->export_16bpc = false;
+		}
+
+		r600_pipe_state_add_reg_bo(rstate, R_028C60_CB_COLOR0_BASE + i * 0x3C,
+					   surf->cb_color_base, res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028C78_CB_COLOR0_DIM + i * 0x3C,
+					surf->cb_color_dim);
+		r600_pipe_state_add_reg_bo(rstate, R_028C70_CB_COLOR0_INFO + i * 0x3C,
+					   surf->cb_color_info, res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028C64_CB_COLOR0_PITCH + i * 0x3C,
+					surf->cb_color_pitch);
+		r600_pipe_state_add_reg(rstate, R_028C68_CB_COLOR0_SLICE + i * 0x3C,
+					surf->cb_color_slice);
+		r600_pipe_state_add_reg(rstate, R_028C6C_CB_COLOR0_VIEW + i * 0x3C,
+					surf->cb_color_view);
+		r600_pipe_state_add_reg_bo(rstate, R_028C74_CB_COLOR0_ATTRIB + i * 0x3C,
+					   surf->cb_color_attrib, res, RADEON_USAGE_READWRITE);
 	}
-	/* CB_COLOR1_INFO is already initialized for possible dual-src blending */
-	if (i == 1)
+	/* set CB_COLOR1_INFO for possible dual-src blending */
+	if (i == 1 && !((struct r600_resource_texture*)res)->is_rat) {
+		r600_pipe_state_add_reg_bo(rstate, R_028C70_CB_COLOR0_INFO + 1 * 0x3C,
+					   surf->cb_color_info, res, RADEON_USAGE_READWRITE);
 		i++;
+	}
 	for (; i < 8 ; i++) {
 		r600_pipe_state_add_reg(rstate, R_028C70_CB_COLOR0_INFO + i * 0x3C, 0);
+	}
+
+	/* Update alpha-test state dependencies.
+	 * Alpha-test is done on the first colorbuffer only. */
+	if (state->nr_cbufs) {
+		surf = (struct r600_surface*)state->cbufs[0];
+		if (rctx->alphatest_state.bypass != surf->alphatest_bypass) {
+			rctx->alphatest_state.bypass = surf->alphatest_bypass;
+			r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+		}
+		if (rctx->alphatest_state.cb0_export_16bpc != surf->export_16bpc) {
+			rctx->alphatest_state.cb0_export_16bpc = surf->export_16bpc;
+			r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+		}
 	}
 
 	if (state->zsbuf) {
@@ -1605,6 +1603,11 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	if (rctx->cb_misc_state.nr_cbufs != state->nr_cbufs) {
 		rctx->cb_misc_state.nr_cbufs = state->nr_cbufs;
 		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
+	}
+
+	if (state->nr_cbufs == 0 && rctx->alphatest_state.bypass) {
+		rctx->alphatest_state.bypass = false;
+		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
 	}
 }
 
