@@ -26,6 +26,7 @@
  **************************************************************************/
 
 
+#include <math.h>
 #include <float.h>
 
 #include "pipe/p_config.h"
@@ -65,14 +66,6 @@
        {{ 0,  0,  0,  0}, { 0,  0,  0,  0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, \
        {{ 0,  0,  0,  0}, { 0,  0,  0,  0}, {0, 0, 0, 0}, {0, 0, 0, 0}}}
 
-
-#ifdef __GNUC__
-#define NAN __builtin_nan("")
-#define INF __builtin_inf()
-#else
-#define NAN (0.0 / 0.0)
-#define INF (1.0 / 0.0)
-#endif
 
 /**
  * Test cases.
@@ -911,8 +904,8 @@ util_format_test_cases[] =
    {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xffff), UNPACKED_1x1(       -NAN, 0.0, 0.0, 1.0)},
 
    /* Inf */
-   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7c00), UNPACKED_1x1(        INF, 0.0, 0.0, 1.0)},
-   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xfc00), UNPACKED_1x1(       -INF, 0.0, 0.0, 1.0)},
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x7c00), UNPACKED_1x1(        INFINITY, 0.0, 0.0, 1.0)},
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xfc00), UNPACKED_1x1(       -INFINITY, 0.0, 0.0, 1.0)},
 
 #endif
 
