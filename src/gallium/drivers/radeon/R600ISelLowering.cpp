@@ -254,18 +254,22 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 void R600TargetLowering::lowerImplicitParameter(MachineInstr *MI, MachineBasicBlock &BB,
     MachineRegisterInfo & MRI, unsigned dword_offset) const
 {
+  unsigned ByteOffset = dword_offset * 4;
+
+  // We shouldn't be using an offset wider than 16-bits for implicit parameters.
+  assert(isInt<16>(ByteOffset));
+
   MachineBasicBlock::iterator I = *MI;
   unsigned PtrReg = MRI.createVirtualRegister(&AMDGPU::R600_TReg32_XRegClass);
   MRI.setRegClass(MI->getOperand(0).getReg(), &AMDGPU::R600_TReg32_XRegClass);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::MOV), PtrReg)
-          .addReg(AMDGPU::ALU_LITERAL_X)
-          .addImm(dword_offset * 4);
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::COPY), PtrReg)
+          .addReg(AMDGPU::ZERO);
 
   BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::VTX_READ_PARAM_i32_eg))
           .addOperand(MI->getOperand(0))
           .addReg(PtrReg)
-          .addImm(0);
+          .addImm(ByteOffset);
 }
 
 //===----------------------------------------------------------------------===//
