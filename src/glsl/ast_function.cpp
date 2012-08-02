@@ -324,7 +324,8 @@ match_function_by_name(const char *name,
       goto done; /* no match */
 
    /* Is the function hidden by a variable (impossible in 1.10)? */
-   if (state->language_version != 110 && state->symbols->get_variable(name))
+   if (!state->symbols->separate_function_namespace
+       && state->symbols->get_variable(name))
       goto done; /* no match */
 
    if (f != NULL) {

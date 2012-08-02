@@ -66,7 +66,7 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 {
    _mesa_glsl_initialize_variables(instructions, state);
 
-   state->symbols->language_version = state->language_version;
+   state->symbols->separate_function_namespace = state->language_version == 110;
 
    state->current_function = NULL;
 
