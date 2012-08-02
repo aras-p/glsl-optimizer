@@ -28,17 +28,6 @@ extern "C" {
 #include "main/enums.h"
 }
 
-/* Stub this out because the real Mesa implementation is tied into a
- * bunch of the GL_ARB_debug infrastructure.  This results in pulling
- * in most of libmesa.a and a cacade of missing symbols, etc.
- */
-extern "C" void
-_mesa_warning( struct gl_context *ctx, const char *fmtString, ... )
-{
-   (void) ctx;
-   (void) fmtString;
-}
-
 struct enum_info {
    int value;
    const char *name;
