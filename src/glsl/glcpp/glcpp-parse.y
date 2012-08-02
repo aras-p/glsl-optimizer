@@ -340,6 +340,9 @@ control_line:
 |	HASH_VERSION integer_constant NEWLINE {
 		_glcpp_parser_handle_version_declaration(parser, $2, NULL);
 	}
+|	HASH_VERSION integer_constant IDENTIFIER NEWLINE {
+		_glcpp_parser_handle_version_declaration(parser, $2, $3);
+	}
 |	HASH NEWLINE
 ;
 
@@ -2023,6 +2026,11 @@ static void
 _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t version,
                                          const char *es_identifier)
 {
+	/* Note: We assume that if any identifier is present, it means ES.
+         * The GLSL parser will double-check that the identifier is correct.
+	 */
+	bool is_es = es_identifier != NULL;
+
 	macro_t *macro = hash_table_find (parser->defines, "__VERSION__");
 	if (macro) {
 		hash_table_remove (parser->defines, "__VERSION__");
@@ -2031,15 +2039,20 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 	add_builtin_define (parser, "__VERSION__", version);
 
 	if (version == 100)
+		is_es = true;
+	if (is_es)
 		add_builtin_define (parser, "GL_ES", 1);
 
-	/* Currently, all ES2 implementations support highp in the
-	 * fragment shader, so we always define this macro in ES2.
+	/* Currently, all ES2/ES3 implementations support highp in the
+	 * fragment shader, so we always define this macro in ES2/ES3.
 	 * If we ever get a driver that doesn't support highp, we'll
 	 * need to add a flag to the gl_context and check that here.
 	 */
-	if (version >= 130 || version == 100)
+	if (version >= 130 || is_es)
 		add_builtin_define (parser, "GL_FRAGMENT_PRECISION_HIGH", 1);
 
-	ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "#version %" PRIiMAX, version);
+	ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length,
+                                      "#version %" PRIiMAX "%s%s", version,
+                                      es_identifier ? " " : "",
+                                      es_identifier ? es_identifier : "");
 }
