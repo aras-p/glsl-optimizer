@@ -178,38 +178,72 @@ _mesa_glsl_parse_state::check_version(unsigned required_glsl_version,
  * Process a GLSL #version directive.
  *
  * \param version is the integer that follows the #version token.
+ *
+ * \param ident is a string identifier that follows the integer, if any is
+ * present.  Otherwise NULL.
  */
 void
-_mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version)
+_mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
+                                                  const char *ident)
 {
+   bool es_token_present = false;
+   if (ident) {
+      if (strcmp(ident, "es") == 0) {
+         es_token_present = true;
+      } else {
+         _mesa_glsl_error(locp, this,
+                          "Illegal text following version number\n");
+      }
+   }
+
    bool supported = false;
 
-   switch (version) {
-   case 100:
+   if (es_token_present) {
       this->es_shader = true;
-      supported = this->ctx->API == API_OPENGLES2 ||
-         this->ctx->Extensions.ARB_ES2_compatibility;
-      break;
-   case 110:
-   case 120:
-      /* FINISHME: Once the OpenGL 3.0 'forward compatible' context or
-       * the OpenGL 3.2 Core context is supported, this logic will need
-       * change.  Older versions of GLSL are no longer supported
-       * outside the compatibility contexts of 3.x.
-       */
-   case 130:
-   case 140:
-   case 150:
-   case 330:
-   case 400:
-   case 410:
-   case 420:
-      supported = _mesa_is_desktop_gl(this->ctx) &&
-         ((unsigned) version) <= this->ctx->Const.GLSLVersion;
-      break;
-   default:
-      supported = false;
-      break;
+      switch (version) {
+      case 100:
+         _mesa_glsl_error(locp, this,
+                          "GLSL 1.00 ES should be selected using "
+                          "`#version 100'\n");
+         supported = this->ctx->API == API_OPENGLES2 ||
+            this->ctx->Extensions.ARB_ES2_compatibility;
+         break;
+      case 300:
+         supported = _mesa_is_gles3(this->ctx) ||
+	    this->ctx->Extensions.ARB_ES3_compatibility;
+         break;
+      default:
+         supported = false;
+         break;
+      }
+   } else {
+      switch (version) {
+      case 100:
+         this->es_shader = true;
+         supported = this->ctx->API == API_OPENGLES2 ||
+            this->ctx->Extensions.ARB_ES2_compatibility;
+         break;
+      case 110:
+      case 120:
+         /* FINISHME: Once the OpenGL 3.0 'forward compatible' context or
+          * the OpenGL 3.2 Core context is supported, this logic will need
+          * change.  Older versions of GLSL are no longer supported
+          * outside the compatibility contexts of 3.x.
+          */
+      case 130:
+      case 140:
+      case 150:
+      case 330:
+      case 400:
+      case 410:
+      case 420:
+         supported = _mesa_is_desktop_gl(this->ctx) &&
+            ((unsigned) version) <= this->ctx->Const.GLSLVersion;
+         break;
+      default:
+         supported = false;
+         break;
+      }
    }
 
    this->language_version = version;
@@ -219,6 +253,25 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version)
                        "Supported versions are: %s\n",
                        this->get_version_string(),
                        this->supported_version_string);
+
+      /* On exit, the language_version must be set to a valid value.
+       * Later calls to _mesa_glsl_initialize_types will misbehave if
+       * the version is invalid.
+       */
+      switch (this->ctx->API) {
+      case API_OPENGL_COMPAT:
+      case API_OPENGL_CORE:
+	 this->language_version = this->ctx->Const.GLSLVersion;
+	 break;
+
+      case API_OPENGLES:
+	 assert(!"Should not get here.");
+	 /* FALLTHROUGH */
+
+      case API_OPENGLES2:
+	 this->language_version = 100;
+	 break;
+      }
    }
 
    if (this->language_version >= 140) {

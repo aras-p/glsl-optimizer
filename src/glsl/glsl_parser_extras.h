@@ -136,7 +136,8 @@ struct _mesa_glsl_parse_state {
       return check_version(130, 300, locp, "bit-wise operations are forbidden");
    }
 
-   void process_version_directive(YYLTYPE *locp, int version);
+   void process_version_directive(YYLTYPE *locp, int version,
+                                  const char *ident);
 
    struct gl_context *const ctx;
    void *scanner;

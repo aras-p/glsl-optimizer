@@ -261,8 +261,12 @@ version_statement:
 	/* blank - no #version specified: defaults are already set */
 	| VERSION_TOK INTCONSTANT EOL
 	{
-           state->process_version_directive(&@2, $2);
+           state->process_version_directive(&@2, $2, NULL);
 	}
+        | VERSION_TOK INTCONSTANT any_identifier EOL
+        {
+           state->process_version_directive(&@2, $2, $3);
+        }
 	;
 
 pragma_statement:
