@@ -30,6 +30,7 @@
 #include "util/u_pack_color.h"
 #include "tgsi/tgsi_parse.h"
 #include "radeonsi_pipe.h"
+#include "radeonsi_shader.h"
 #include "si_state.h"
 #include "sid.h"
 

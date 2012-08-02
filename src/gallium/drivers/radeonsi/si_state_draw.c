@@ -29,6 +29,7 @@
 #include "util/u_blitter.h"
 #include "tgsi/tgsi_parse.h"
 #include "radeonsi_pipe.h"
+#include "radeonsi_shader.h"
 #include "si_state.h"
 #include "sid.h"
 

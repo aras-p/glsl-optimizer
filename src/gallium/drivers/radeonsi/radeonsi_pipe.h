@@ -262,10 +262,6 @@ void r600_init_query_functions(struct r600_context *rctx);
 /* r600_resource.c */
 void r600_init_context_resource_functions(struct r600_context *r600);
 
-/* radeonsi_shader.c */
-int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader);
-void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_pipe_shader *shader);
-
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);
 void r600_init_surface_functions(struct r600_context *r600);

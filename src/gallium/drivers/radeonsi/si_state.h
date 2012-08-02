@@ -68,40 +68,6 @@ struct si_vertex_element
 	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
 };
 
-struct si_shader_io {
-	unsigned		name;
-	unsigned		gpr;
-	unsigned		done;
-	int			sid;
-	unsigned		param_offset;
-	unsigned		interpolate;
-	bool			centroid;
-};
-
-struct si_shader {
-	unsigned		ninput;
-	unsigned		noutput;
-	struct si_shader_io	input[32];
-	struct si_shader_io	output[32];
-	bool			uses_kill;
-	bool			fs_write_all;
-	unsigned		nr_cbufs;
-};
-
-struct si_pipe_shader {
-	struct si_shader		shader;
-	struct si_pm4_state		*pm4;
-	struct si_resource		*bo;
-	struct si_vertex_element	vertex_elements;
-	struct tgsi_token		*tokens;
-	unsigned			num_sgprs;
-	unsigned			num_vgprs;
-	unsigned			spi_ps_input_ena;
-	unsigned			sprite_coord_enable;
-	struct pipe_stream_output_info	so;
-	unsigned			so_strides[4];
-};
-
 union si_state {
 	struct {
 		struct si_pm4_state		*init;
