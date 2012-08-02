@@ -449,7 +449,7 @@ modulus_result_type(const struct glsl_type *type_a,
    if (state->language_version < 130) {
       _mesa_glsl_error(loc, state,
                        "operator '%%' is reserved in %s",
-                       state->version_string);
+                       state->get_version_string());
       return glsl_type::error_type;
    }
 
@@ -2618,13 +2618,13 @@ ast_declarator_list::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state,
 			     "`out' qualifier in declaration of `%s' "
 			     "only valid for function parameters in %s.",
-			     decl->identifier, state->version_string);
+			     decl->identifier, state->get_version_string());
 	 }
 	 if (this->type->qualifier.flags.q.in) {
 	    _mesa_glsl_error(& loc, state,
 			     "`in' qualifier in declaration of `%s' "
 			     "only valid for function parameters in %s.",
-			     decl->identifier, state->version_string);
+			     decl->identifier, state->get_version_string());
 	 }
 	 /* FINISHME: Test for other invalid qualifiers. */
       }

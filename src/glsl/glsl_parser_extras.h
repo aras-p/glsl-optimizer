@@ -80,6 +80,16 @@ struct _mesa_glsl_parse_state {
       ralloc_free(mem);
    }
 
+   /**
+    * Generate a string representing the GLSL version currently being compiled
+    * (useful for error messages).
+    */
+   const char *get_version_string()
+   {
+      return glsl_compute_version_string(this, this->es_shader,
+                                         this->language_version);
+   }
+
    struct gl_context *const ctx;
    void *scanner;
    exec_list translation_unit;
@@ -91,7 +101,6 @@ struct _mesa_glsl_parse_state {
 
    bool es_shader;
    unsigned language_version;
-   const char *version_string;
    enum _mesa_glsl_parser_targets target;
 
    /**
