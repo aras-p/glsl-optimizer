@@ -828,13 +828,12 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
        GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
    };
 
+   static const uint8_t singlesample_samples[1] = {0};
+
    GLenum fb_format[3];
    GLenum fb_type[3];
-   uint8_t depth_bits[4], stencil_bits[4], msaa_samples_array[1];
-   int color;
+   uint8_t depth_bits[4], stencil_bits[4];
    __DRIconfig **configs = NULL;
-
-   msaa_samples_array[0] = 0;
 
    fb_format[0] = GL_RGB;
    fb_type[0] = GL_UNSIGNED_SHORT_5_6_5;
@@ -845,21 +844,21 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
    fb_format[2] = GL_BGRA;
    fb_type[2] = GL_UNSIGNED_INT_8_8_8_8_REV;
 
-   depth_bits[0] = 0;
-   stencil_bits[0] = 0;
-
    /* Generate a rich set of useful configs that do not include an
     * accumulation buffer.
     */
-   for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
+   for (int i = 0; i < ARRAY_SIZE(fb_format); i++) {
       __DRIconfig **new_configs;
-      int depth_factor;
+      const int num_depth_stencil_bits = 2;
 
       /* Starting with DRI2 protocol version 1.1 we can request a depth/stencil
        * buffer that has a different number of bits per pixel than the color
        * buffer.  This isn't yet supported here.
        */
-      if (fb_type[color] == GL_UNSIGNED_SHORT_5_6_5) {
+      depth_bits[0] = 0;
+      stencil_bits[0] = 0;
+
+      if (fb_type[i] == GL_UNSIGNED_SHORT_5_6_5) {
          depth_bits[1] = 16;
          stencil_bits[1] = 0;
       } else {
@@ -867,16 +866,13 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
          stencil_bits[1] = 8;
       }
 
-      depth_factor = 2;
-
-      new_configs = driCreateConfigs(fb_format[color], fb_type[color],
+      new_configs = driCreateConfigs(fb_format[i], fb_type[i],
                                      depth_bits,
                                      stencil_bits,
-                                     depth_factor,
+                                     num_depth_stencil_bits,
                                      back_buffer_modes,
                                      ARRAY_SIZE(back_buffer_modes),
-                                     msaa_samples_array,
-                                     ARRAY_SIZE(msaa_samples_array),
+                                     singlesample_samples, 1,
                                      false);
       configs = driConcatConfigs(configs, new_configs);
    }
@@ -884,10 +880,10 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
    /* Generate the minimum possible set of configs that include an
     * accumulation buffer.
     */
-   for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
+   for (int i = 0; i < ARRAY_SIZE(fb_format); i++) {
       __DRIconfig **new_configs;
 
-      if (fb_type[color] == GL_UNSIGNED_SHORT_5_6_5) {
+      if (fb_type[i] == GL_UNSIGNED_SHORT_5_6_5) {
          depth_bits[0] = 16;
          stencil_bits[0] = 0;
       } else {
@@ -895,10 +891,10 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
          stencil_bits[0] = 8;
       }
 
-      new_configs = driCreateConfigs(fb_format[color], fb_type[color],
+      new_configs = driCreateConfigs(fb_format[i], fb_type[i],
                                      depth_bits, stencil_bits, 1,
                                      back_buffer_modes + 1, 1,
-                                     msaa_samples_array, 1,
+                                     singlesample_samples, 1,
                                      true);
       configs = driConcatConfigs(configs, new_configs);
    }
