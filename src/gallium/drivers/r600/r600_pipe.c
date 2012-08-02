@@ -250,6 +250,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		if (r600_context_init(rctx))
 			goto fail;
 		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
+		rctx->custom_blend_resolve = r600_create_resolve_blend(rctx);
+		rctx->custom_blend_decompress = r600_create_decompress_blend(rctx);
 		rctx->has_vertex_cache = !(rctx->family == CHIP_RV610 ||
 					   rctx->family == CHIP_RV620 ||
 					   rctx->family == CHIP_RS780 ||

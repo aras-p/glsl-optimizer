@@ -164,6 +164,10 @@
 #define R_008964_VGT_STRMOUT_BUFFER_FILLED_SIZE_1    0x008964 /* read-only */
 #define R_008968_VGT_STRMOUT_BUFFER_FILLED_SIZE_2    0x008968 /* read-only */
 #define R_00896C_VGT_STRMOUT_BUFFER_FILLED_SIZE_3    0x00896C /* read-only */
+#define R_008B40_PA_SC_AA_SAMPLE_LOCS_2S                0x008B40
+#define R_008B44_PA_SC_AA_SAMPLE_LOCS_4S                0x008B44
+#define R_008B48_PA_SC_AA_SAMPLE_LOCS_8S_WD0            0x008B48
+#define R_008B4C_PA_SC_AA_SAMPLE_LOCS_8S_WD1            0x008B4C
 #define R_008C00_SQ_CONFIG                           0x00008C00
 #define   S_008C00_VC_ENABLE(x)                        (((x) & 0x1) << 0)
 #define   G_008C00_VC_ENABLE(x)                        (((x) >> 0) & 0x1)
@@ -303,6 +307,9 @@
 #define     V_0280A0_SWAP_STD_REV                      0x00000002
 #define     V_0280A0_SWAP_ALT_REV                      0x00000003
 #define   S_0280A0_TILE_MODE(x)                        (((x) & 0x3) << 18)
+#define     V_0280A0_TILE_DISABLE			0
+#define     V_0280A0_CLEAR_ENABLE			1
+#define     V_0280A0_FRAG_ENABLE			2
 #define   G_0280A0_TILE_MODE(x)                        (((x) >> 18) & 0x3)
 #define   C_0280A0_TILE_MODE                           0xFFF3FFFF
 #define   S_0280A0_BLEND_CLAMP(x)                      (((x) & 0x1) << 20)
@@ -422,6 +429,14 @@
 #define		V_028808_DISABLE			1
 #define   G_028808_SPECIAL_OP(x)                       (((x) >> 4) & 0x7)
 #define   C_028808_SPECIAL_OP                          0xFFFFFF8F
+#define     V_028808_SPECIAL_NORMAL                     0x00
+#define     V_028808_SPECIAL_DISABLE                    0x01
+#define     V_028808_SPECIAL_FAST_CLEAR                 0x02
+#define     V_028808_SPECIAL_FORCE_CLEAR                0x03
+#define     V_028808_SPECIAL_EXPAND_COLOR               0x04
+#define     V_028808_SPECIAL_EXPAND_TEXTURE             0x05
+#define     V_028808_SPECIAL_EXPAND_SAMPLES             0x06
+#define     V_028808_SPECIAL_RESOLVE_BOX                0x07
 #define   S_028808_PER_MRT_BLEND(x)                    (((x) & 0x1) << 7)
 #define   G_028808_PER_MRT_BLEND(x)                    (((x) >> 7) & 0x1)
 #define   C_028808_PER_MRT_BLEND                       0xFFFFFF7F
@@ -1482,6 +1497,8 @@
 #define R_0280B4_CB_COLOR5_INFO                      0x0280B4
 #define R_0280B8_CB_COLOR6_INFO                      0x0280B8
 #define R_0280BC_CB_COLOR7_INFO                      0x0280BC
+#define R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX           0x028C1C
+#define R_028C20_PA_SC_AA_SAMPLE_LOCS_8D_WD1_MCTX    0x028C20
 #define R_028C30_CB_CLRCMP_CONTROL                   0x028C30
 #define   S_028C30_CLRCMP_FCN_SRC(x)                   (((x) & 0x7) << 0)
 #define   G_028C30_CLRCMP_FCN_SRC(x)                   (((x) >> 0) & 0x7)
@@ -2166,6 +2183,9 @@
 #define R_0286D4_SPI_INTERP_CONTROL_0                0x0286D4
 #define R_028A48_PA_SC_MPASS_PS_CNTL                 0x028A48
 #define R_028C00_PA_SC_LINE_CNTL                     0x028C00
+#define   S_028C00_EXPAND_LINE_WIDTH(x)                (((x) & 0x1) << 9)
+#define   G_028C00_EXPAND_LINE_WIDTH(x)                (((x) >> 9) & 0x1)
+#define   C_028C00_EXPAND_LINE_WIDTH                   0xFFFFFDFF
 #define   S_028C00_LAST_PIXEL(x)                       (((x) & 0x1) << 10)
 #define   G_028C00_LAST_PIXEL(x)                       (((x) >> 10) & 0x1)
 #define   C_028C00_LAST_PIXEL                          0xFFFFFBFF

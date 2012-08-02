@@ -99,7 +99,7 @@ static uint32_t r600_translate_blend_factor(int blend_fact)
 	return 0;
 }
 
-static unsigned r600_tex_dim(unsigned dim)
+static unsigned r600_tex_dim(unsigned dim, unsigned nr_samples)
 {
 	switch (dim) {
 	default:
@@ -109,9 +109,11 @@ static unsigned r600_tex_dim(unsigned dim)
 		return V_038000_SQ_TEX_DIM_1D_ARRAY;
 	case PIPE_TEXTURE_2D:
 	case PIPE_TEXTURE_RECT:
-		return V_038000_SQ_TEX_DIM_2D;
+		return nr_samples > 1 ? V_038000_SQ_TEX_DIM_2D_MSAA :
+					V_038000_SQ_TEX_DIM_2D;
 	case PIPE_TEXTURE_2D_ARRAY:
-		return V_038000_SQ_TEX_DIM_2D_ARRAY;
+		return nr_samples > 1 ? V_038000_SQ_TEX_DIM_2D_ARRAY_MSAA :
+					V_038000_SQ_TEX_DIM_2D_ARRAY;
 	case PIPE_TEXTURE_3D:
 		return V_038000_SQ_TEX_DIM_3D;
 	case PIPE_TEXTURE_CUBE:
@@ -570,6 +572,7 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 				 unsigned sample_count,
 				 unsigned usage)
 {
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	unsigned retval = 0;
 
 	if (target >= PIPE_MAX_TEXTURE_TYPES) {
@@ -580,9 +583,30 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 	if (!util_format_is_supported(format, usage))
 		return FALSE;
 
-	/* Multisample */
-	if (sample_count > 1)
-		return FALSE;
+	if (sample_count > 1) {
+		if (rscreen->info.drm_minor < 21)
+			return FALSE;
+		if (rscreen->chip_class != R700)
+			return FALSE;
+
+		switch (sample_count) {
+		case 2:
+		case 4:
+		case 8:
+			break;
+		default:
+			return FALSE;
+		}
+
+		/* require render-target support for multisample resources */
+		if (util_format_is_depth_or_stencil(format)) {
+			usage |= PIPE_BIND_DEPTH_STENCIL;
+		} else if (util_format_is_pure_integer(format)) {
+			return FALSE;
+		} else {
+			usage |= PIPE_BIND_RENDER_TARGET;
+		}
+	}
 
 	if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
 	    r600_is_sampler_format_supported(screen, format)) {
@@ -669,13 +693,14 @@ void r600_polygon_offset_update(struct r600_context *rctx)
 	}
 }
 
-static void *r600_create_blend_state(struct pipe_context *ctx,
-					const struct pipe_blend_state *state)
+static void *r600_create_blend_state_mode(struct pipe_context *ctx,
+					  const struct pipe_blend_state *state,
+					  int mode)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
 	struct r600_pipe_state *rstate;
-	uint32_t color_control = 0, target_mask;
+	uint32_t color_control = 0, target_mask = 0;
 
 	if (blend == NULL) {
 		return NULL;
@@ -684,11 +709,10 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 
 	rstate->id = R600_PIPE_STATE_BLEND;
 
-	target_mask = 0;
-
 	/* R600 does not support per-MRT blends */
 	if (rctx->family > CHIP_R600)
 		color_control |= S_028808_PER_MRT_BLEND(1);
+
 	if (state->logicop_enable) {
 		color_control |= (state->logicop_func << 16) | (state->logicop_func << 20);
 	} else {
@@ -712,7 +736,7 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 	}
 
 	if (target_mask)
-		color_control |= S_028808_SPECIAL_OP(V_028808_NORMAL);
+		color_control |= S_028808_SPECIAL_OP(mode);
 	else
 		color_control |= S_028808_SPECIAL_OP(V_028808_DISABLE);
 
@@ -763,6 +787,13 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 
 	blend->alpha_to_one = state->alpha_to_one;
 	return rstate;
+}
+
+
+static void *r600_create_blend_state(struct pipe_context *ctx,
+				     const struct pipe_blend_state *state)
+{
+	return r600_create_blend_state_mode(ctx, state, V_028808_SPECIAL_NORMAL);
 }
 
 static void *r600_create_dsa_state(struct pipe_context *ctx,
@@ -897,12 +928,14 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 
 	if (rctx->chip_class >= R700) {
 		sc_mode_cntl =
+			S_028A4C_MSAA_ENABLE(state->multisample) |
 			S_028A4C_FORCE_EOV_CNTDWN_ENABLE(1) |
 			S_028A4C_FORCE_EOV_REZ_ENABLE(1) |
 			S_028A4C_R700_ZMM_LINE_OFFSET(1) |
 			S_028A4C_R700_VPORT_SCISSOR_ENABLE(state->scissor);
 	} else {
 		sc_mode_cntl =
+			S_028A4C_MSAA_ENABLE(state->multisample) |
 			S_028A4C_WALK_ALIGN8_PRIM_FITS_ST(1) |
 			S_028A4C_FORCE_EOV_CNTDWN_ENABLE(1);
 		rs->scissor_enable = state->scissor;
@@ -1051,7 +1084,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	}
 
 	view->tex_resource = &tmp->resource;
-	view->tex_resource_words[0] = (S_038000_DIM(r600_tex_dim(texture->target)) |
+	view->tex_resource_words[0] = (S_038000_DIM(r600_tex_dim(texture->target, texture->nr_samples)) |
 				       S_038000_TILE_MODE(array_mode) |
 				       S_038000_TILE_TYPE(tile_type) |
 				       S_038000_PITCH((pitch / 8) - 1) |
@@ -1070,9 +1103,14 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 				       S_038010_REQUEST_SIZE(1) |
 				       S_038010_ENDIAN_SWAP(endian) |
 				       S_038010_BASE_LEVEL(0));
-	view->tex_resource_words[5] = (S_038014_LAST_LEVEL(last_level) |
-				       S_038014_BASE_ARRAY(state->u.tex.first_layer) |
+	view->tex_resource_words[5] = (S_038014_BASE_ARRAY(state->u.tex.first_layer) |
 				       S_038014_LAST_ARRAY(state->u.tex.last_layer));
+	if (texture->nr_samples > 1) {
+		/* LAST_LEVEL holds log2(nr_samples) for multisample textures */
+		view->tex_resource_words[5] |= S_038014_LAST_LEVEL(util_logbase2(texture->nr_samples));
+	} else {
+		view->tex_resource_words[5] |= S_038014_LAST_LEVEL(last_level);
+	}
 	view->tex_resource_words[6] = (S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
 				       S_038018_MAX_ANISO(4 /* max 16 samples */));
 	return &view->base;
@@ -1329,9 +1367,25 @@ static void r600_init_color_surface(struct r600_context *rctx,
 	}
 
 	surf->cb_color_base = offset >> 8;
-	surf->cb_color_info = color_info;
 	surf->cb_color_size = S_028060_PITCH_TILE_MAX(pitch) |
 			      S_028060_SLICE_TILE_MAX(slice);
+	surf->cb_color_fmask = surf->cb_color_base;
+	surf->cb_color_cmask = surf->cb_color_base;
+
+	if (rtex->cmask_size) {
+		surf->cb_color_cmask = rtex->cmask_offset >> 8;
+		surf->cb_color_mask |= S_028100_CMASK_BLOCK_MAX(rtex->cmask_slice_tile_max);
+
+		if (rtex->fmask_size) {
+			color_info |= S_0280A0_TILE_MODE(V_0280A0_FRAG_ENABLE);
+			surf->cb_color_fmask = rtex->fmask_offset >> 8;
+			surf->cb_color_mask |= S_028100_FMASK_TILE_MAX(slice);
+		} else { /* cmask only */
+			color_info |= S_0280A0_TILE_MODE(V_0280A0_CLEAR_ENABLE);
+		}
+	}
+	surf->cb_color_info = color_info;
+
 	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
 		surf->cb_color_view = 0;
 	} else {
@@ -1380,6 +1434,72 @@ static void r600_init_depth_surface(struct r600_context *rctx,
 	surf->depth_initialized = true;
 }
 
+#define FILL_SREG(s0x, s0y, s1x, s1y, s2x, s2y, s3x, s3y)  \
+	(((s0x) & 0xf) | (((s0y) & 0xf) << 4) |		   \
+	(((s1x) & 0xf) << 8) | (((s1y) & 0xf) << 12) |	   \
+	(((s2x) & 0xf) << 16) | (((s2y) & 0xf) << 20) |	   \
+	 (((s3x) & 0xf) << 24) | (((s3y) & 0xf) << 28))
+
+static uint32_t r600_set_ms_pos(struct pipe_context *ctx, struct r600_pipe_state *rstate, int nsample)
+{
+	static uint32_t sample_locs_2x[] = {
+		FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
+		FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
+	};
+	static unsigned max_dist_2x = 4;
+	static uint32_t sample_locs_4x[] = {
+		FILL_SREG(-2, -2, 2, 2, -6, 6, 6, -6),
+		FILL_SREG(-2, -2, 2, 2, -6, 6, 6, -6),
+	};
+	static unsigned max_dist_4x = 6;
+	static uint32_t sample_locs_8x[] = {
+		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
+		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
+	};
+	static unsigned max_dist_8x = 8;
+	struct r600_context *rctx = (struct r600_context *)ctx;
+
+	if (rctx->family == CHIP_R600) {
+		switch (nsample) {
+		case 0:
+		case 1:
+			return 0;
+		case 2:
+			r600_pipe_state_add_reg(rstate, R_008B40_PA_SC_AA_SAMPLE_LOCS_2S, sample_locs_2x[0]);
+			return max_dist_2x;
+		case 4:
+			r600_pipe_state_add_reg(rstate, R_008B44_PA_SC_AA_SAMPLE_LOCS_4S, sample_locs_4x[0]);
+			return max_dist_4x;
+		case 8:
+			r600_pipe_state_add_reg(rstate, R_008B48_PA_SC_AA_SAMPLE_LOCS_8S_WD0, sample_locs_8x[0]);
+			r600_pipe_state_add_reg(rstate, R_008B4C_PA_SC_AA_SAMPLE_LOCS_8S_WD1, sample_locs_8x[1]);
+			return max_dist_8x;
+		}
+	} else {
+		switch (nsample) {
+		case 0:
+		case 1:
+			r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX, 0);
+			r600_pipe_state_add_reg(rstate, R_028C20_PA_SC_AA_SAMPLE_LOCS_8D_WD1_MCTX, 0);
+			return 0;
+		case 2:
+			r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX, sample_locs_2x[0]);
+			r600_pipe_state_add_reg(rstate, R_028C20_PA_SC_AA_SAMPLE_LOCS_8D_WD1_MCTX, sample_locs_2x[1]);
+			return max_dist_2x;
+		case 4:
+			r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX, sample_locs_4x[0]);
+			r600_pipe_state_add_reg(rstate, R_028C20_PA_SC_AA_SAMPLE_LOCS_8D_WD1_MCTX, sample_locs_4x[1]);
+			return max_dist_4x;
+		case 8:
+			r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX, sample_locs_8x[0]);
+			r600_pipe_state_add_reg(rstate, R_028C20_PA_SC_AA_SAMPLE_LOCS_8D_WD1_MCTX, sample_locs_8x[1]);
+			return max_dist_8x;
+		}
+	}
+	R600_ERR("Invalid nr_samples %i\n", nsample);
+	return 0;
+}
+
 static void r600_set_framebuffer_state(struct pipe_context *ctx,
 					const struct pipe_framebuffer_state *state)
 {
@@ -1387,7 +1507,8 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	struct r600_surface *surf;
 	struct r600_resource *res;
-	uint32_t tl, br, i;
+	struct r600_texture *rtex;
+	uint32_t tl, br, i, nr_samples, max_dist;
 
 	if (rstate == NULL)
 		return;
@@ -1399,15 +1520,17 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
 
-	/* build states */
+	/* Colorbuffers. */
 	rctx->export_16bpc = true;
 	rctx->nr_cbufs = state->nr_cbufs;
 	rctx->cb0_is_integer = state->nr_cbufs &&
 			       util_format_is_pure_integer(state->cbufs[0]->format);
+	rctx->compressed_cb_mask = 0;
 
 	for (i = 0; i < state->nr_cbufs; i++) {
 		surf = (struct r600_surface*)state->cbufs[i];
 		res = (struct r600_resource*)surf->base.texture;
+		rtex = (struct r600_texture*)res;
 
 		if (!surf->color_initialized) {
 			r600_init_color_surface(rctx, surf);
@@ -1429,6 +1552,12 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 					   surf->cb_color_fmask, res, RADEON_USAGE_READWRITE);
 		r600_pipe_state_add_reg_bo(rstate, R_0280C0_CB_COLOR0_TILE + i * 4,
 					   surf->cb_color_cmask, res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028100_CB_COLOR0_MASK + i * 4,
+					surf->cb_color_mask);
+
+		if (rtex->fmask_size && rtex->cmask_size) {
+			rctx->compressed_cb_mask |= 1 << i;
+		}
 	}
 	/* set CB_COLOR1_INFO for possible dual-src blending */
 	if (i == 1) {
@@ -1450,6 +1579,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		}
 	}
 
+	/* ZS buffer. */
 	if (state->zsbuf) {
 		surf = (struct r600_surface*)state->zsbuf;
 		res = (struct r600_resource*)surf->base.texture;
@@ -1467,6 +1597,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		r600_pipe_state_add_reg(rstate, R_028D34_DB_PREFETCH_LIMIT, surf->db_prefetch_limit);
 	}
 
+	/* Framebuffer dimensions. */
 	tl = S_028240_TL_X(0) | S_028240_TL_Y(0) | S_028240_WINDOW_OFFSET_DISABLE(1);
 	br = S_028244_BR_X(state->width) | S_028244_BR_Y(state->height);
 
@@ -1475,15 +1606,41 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate,
 				R_028208_PA_SC_WINDOW_SCISSOR_BR, br);
 
-	/* Always enable the first colorbuffer in CB_SHADER_CONTROL. This
-	 * will assure that the alpha-test will work even if there is
-	 * no colorbuffer bound. */
-	r600_pipe_state_add_reg(rstate, R_0287A0_CB_SHADER_CONTROL,
-				(1ull << MAX2(state->nr_cbufs, 1)) - 1);
+	/* If we're doing MSAA resolve... */
+	if (state->nr_cbufs == 2 &&
+	    state->cbufs[0]->texture->nr_samples > 1 &&
+	    state->cbufs[1]->texture->nr_samples <= 1) {
+		r600_pipe_state_add_reg(rstate, R_0287A0_CB_SHADER_CONTROL, 1);
+	} else {
+		/* Always enable the first colorbuffer in CB_SHADER_CONTROL. This
+		 * will assure that the alpha-test will work even if there is
+		 * no colorbuffer bound. */
+		r600_pipe_state_add_reg(rstate, R_0287A0_CB_SHADER_CONTROL,
+					(1ull << MAX2(state->nr_cbufs, 1)) - 1);
+	}
 
-	if (state->nr_cbufs == 0 && rctx->alphatest_state.bypass) {
-		rctx->alphatest_state.bypass = false;
-		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+	/* Multisampling */
+	if (state->nr_cbufs)
+		nr_samples = state->cbufs[0]->texture->nr_samples;
+	else if (state->zsbuf)
+		nr_samples = state->zsbuf->texture->nr_samples;
+	else
+		nr_samples = 0;
+
+	max_dist = r600_set_ms_pos(ctx, rstate, nr_samples);
+
+	if (nr_samples > 1) {
+		unsigned log_samples = util_logbase2(nr_samples);
+
+		r600_pipe_state_add_reg(rstate, R_028C00_PA_SC_LINE_CNTL,
+					S_028C00_LAST_PIXEL(1) |
+					S_028C00_EXPAND_LINE_WIDTH(1));
+		r600_pipe_state_add_reg(rstate, R_028C04_PA_SC_AA_CONFIG,
+					S_028C04_MSAA_NUM_SAMPLES(log_samples) |
+					S_028C04_MAX_SAMPLE_DIST(max_dist));
+	} else {
+		r600_pipe_state_add_reg(rstate, R_028C00_PA_SC_LINE_CNTL, S_028C00_LAST_PIXEL(1));
+		r600_pipe_state_add_reg(rstate, R_028C04_PA_SC_AA_CONFIG, 0);
 	}
 
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
@@ -1497,6 +1654,11 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	if (rctx->cb_misc_state.nr_cbufs != state->nr_cbufs) {
 		rctx->cb_misc_state.nr_cbufs = state->nr_cbufs;
 		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
+	}
+
+	if (state->nr_cbufs == 0 && rctx->alphatest_state.bypass) {
+		rctx->alphatest_state.bypass = false;
+		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
 	}
 }
 
@@ -1538,7 +1700,8 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 
 		db_render_control |= S_028D0C_DEPTH_COPY_ENABLE(a->copy_depth) |
 				     S_028D0C_STENCIL_COPY_ENABLE(a->copy_stencil) |
-				     S_028D0C_COPY_CENTROID(1);
+				     S_028D0C_COPY_CENTROID(1) |
+				     S_028D0C_COPY_SAMPLE(a->copy_sample);
 	}
 
 	r600_write_context_reg_seq(cs, R_028D0C_DB_RENDER_CONTROL, 2);
@@ -1888,7 +2051,6 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	enum radeon_family family;
 	struct r600_command_buffer *cb = &rctx->start_cs_cmd;
 	uint32_t tmp;
-	unsigned i;
 
 	r600_init_command_buffer(cb, 256, EMIT_EARLY);
 
@@ -2141,28 +2303,17 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_context_reg(cb, R_028820_PA_CL_NANINF_CNTL, 0);
 	r600_store_context_reg(cb, R_028A48_PA_SC_MPASS_PS_CNTL, 0);
 
-	r600_store_context_reg_seq(cb, R_028C00_PA_SC_LINE_CNTL, 2);
-	r600_store_value(cb, 0x400); /* R_028C00_PA_SC_LINE_CNTL */
-	r600_store_value(cb, 0); /* R_028C04_PA_SC_AA_CONFIG */
-
-	r600_store_context_reg_seq(cb, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 6);
+	r600_store_context_reg_seq(cb, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 4);
 	r600_store_value(cb, 0x3F800000); /* R_028C0C_PA_CL_GB_VERT_CLIP_ADJ */
 	r600_store_value(cb, 0x3F800000); /* R_028C10_PA_CL_GB_VERT_DISC_ADJ */
 	r600_store_value(cb, 0x3F800000); /* R_028C14_PA_CL_GB_HORZ_CLIP_ADJ */
 	r600_store_value(cb, 0x3F800000); /* R_028C18_PA_CL_GB_HORZ_DISC_ADJ */
-	r600_store_value(cb, 0); /* R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX */
-	r600_store_value(cb, 0); /* R_028C20_PA_SC_AA_SAMPLE_LOCS_8S_WD1_MCTX */
 
 	r600_store_context_reg_seq(cb, R_0282D0_PA_SC_VPORT_ZMIN_0, 2);
 	r600_store_value(cb, 0); /* R_0282D0_PA_SC_VPORT_ZMIN_0 */
 	r600_store_value(cb, 0x3F800000); /* R_0282D4_PA_SC_VPORT_ZMAX_0 */
 
 	r600_store_context_reg(cb, R_028818_PA_CL_VTE_CNTL, 0x43F);
-
-	r600_store_context_reg_seq(cb, R_028100_CB_COLOR0_MASK, 8);
-	for (i = 0; i < 8; i++) {
-		r600_store_value(cb, 0);
-	}
 
 	r600_store_context_reg(cb, R_028200_PA_SC_WINDOW_OFFSET, 0);
 	r600_store_context_reg(cb, R_02820C_PA_SC_CLIPRECT_RULE, 0xFFFF);
@@ -2384,6 +2535,30 @@ void r600_fetch_shader(struct pipe_context *ctx,
 	r600_pipe_state_add_reg_bo(rstate, R_028894_SQ_PGM_START_FS,
 				0,
 				ve->fetch_shader, RADEON_USAGE_READ);
+}
+
+void *r600_create_resolve_blend(struct r600_context *rctx)
+{
+	struct pipe_blend_state blend;
+	struct r600_pipe_state *rstate;
+
+	memset(&blend, 0, sizeof(blend));
+	blend.independent_blend_enable = true;
+	blend.rt[0].colormask = 0xf;
+	rstate = r600_create_blend_state_mode(&rctx->context, &blend, V_028808_SPECIAL_RESOLVE_BOX);
+	return rstate;
+}
+
+void *r600_create_decompress_blend(struct r600_context *rctx)
+{
+	struct pipe_blend_state blend;
+	struct r600_pipe_state *rstate;
+
+	memset(&blend, 0, sizeof(blend));
+	blend.independent_blend_enable = true;
+	blend.rt[0].colormask = 0xf;
+	rstate = r600_create_blend_state_mode(&rctx->context, &blend, V_028808_SPECIAL_EXPAND_SAMPLES);
+	return rstate;
 }
 
 void *r600_create_db_flush_dsa(struct r600_context *rctx)

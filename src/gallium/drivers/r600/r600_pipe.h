@@ -550,6 +550,8 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void r600_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
 void *r600_create_db_flush_dsa(struct r600_context *rctx);
+void *r600_create_resolve_blend(struct r600_context *rctx);
+void *r600_create_decompress_blend(struct r600_context *rctx);
 void r600_polygon_offset_update(struct r600_context *rctx);
 void r600_adjust_gprs(struct r600_context *rctx);
 boolean r600_is_format_supported(struct pipe_screen *screen,

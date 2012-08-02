@@ -87,6 +87,7 @@ struct r600_surface {
 	unsigned cb_color_fmask_slice;	/* EG only */
 	unsigned cb_color_cmask;	/* CB_COLORn_CMASK (EG) or CB_COLORn_TILE (r600) */
 	unsigned cb_color_cmask_slice;	/* EG only */
+	unsigned cb_color_mask;		/* R600 only */
 
 	/* DB registers. */
 	unsigned db_depth_info;		/* DB_Z_INFO (EG) or DB_DEPTH_INFO (r600) */

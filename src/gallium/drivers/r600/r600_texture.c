@@ -282,6 +282,11 @@ static void r600_texture_allocate_fmask(struct r600_screen *rscreen,
 		return;
 	}
 
+	/* R600-R700 errata? Anyway, this fixes colorbuffer corruption. */
+	if (rscreen->chip_class <= R700) {
+		fmask.bpe *= 2;
+	}
+
 	if (rscreen->chip_class >= EVERGREEN) {
 		fmask.bankh = nr_samples <= 4 ? 4 : 1;
 	}
@@ -379,8 +384,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 	}
 
 	if (base->nr_samples > 1 && !rtex->is_depth && alloc_bo) {
-		r600_texture_allocate_fmask(rscreen, rtex);
 		r600_texture_allocate_cmask(rscreen, rtex);
+		r600_texture_allocate_fmask(rscreen, rtex);
 	}
 
 	if (!rtex->is_depth && base->nr_samples > 1 &&
