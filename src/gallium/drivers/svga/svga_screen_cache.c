@@ -194,7 +194,7 @@ svga_screen_cache_shrink(struct svga_screen *svgascreen,
 }
 
 
-/*
+/**
  * Transfers a handle reference.
  */
 static INLINE void
@@ -331,6 +331,10 @@ svga_screen_cache_flush(struct svga_screen *svgascreen,
 }
 
 
+/**
+ * Free all the surfaces in the cache.
+ * Called when destroying the svga screen object.
+ */
 void
 svga_screen_cache_cleanup(struct svga_screen *svgascreen)
 {
@@ -381,6 +385,11 @@ svga_screen_cache_init(struct svga_screen *svgascreen)
 }
 
 
+/**
+ * Allocate a new host-side surface.  If the surface is marked as cachable,
+ * first try re-using a surface in the cache of freed surfaces.  Otherwise,
+ * allocate a new surface.
+ */
 struct svga_winsys_surface *
 svga_screen_surface_create(struct svga_screen *svgascreen,
                            struct svga_host_surface_cache_key *key)
@@ -457,6 +466,10 @@ svga_screen_surface_create(struct svga_screen *svgascreen,
 }
 
 
+/**
+ * Release a surface.  We don't actually free the surface- we put
+ * it into the cache of freed surfaces (if it's cachable).
+ */
 void
 svga_screen_surface_destroy(struct svga_screen *svgascreen,
                             const struct svga_host_surface_cache_key *key,
