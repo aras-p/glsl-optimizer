@@ -150,7 +150,7 @@ default_access_mode(const struct gl_context *ctx)
     * The difference is because GL_OES_mapbuffer only supports mapping buffers
     * write-only.
     */
-   return (ctx->API == API_OPENGLES)
+   return _mesa_is_gles(ctx)
       ? GL_MAP_WRITE_BIT : (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
 }
 
