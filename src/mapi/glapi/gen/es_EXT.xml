@@ -718,7 +718,7 @@
 
 <!-- 93. GL_NV_read_buffer -->
 <category name="NV_read_buffer">
-    <function name="ReadBufferNV" offset="assign">
+    <function name="ReadBufferNV" alias="ReadBuffer">
         <param name="mode" type="GLenum"/>
     </function>
 </category>
