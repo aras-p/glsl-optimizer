@@ -99,6 +99,21 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MI->eraseFromParent();
     break;
 
+  case AMDGPU::FNEG_SI:
+    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_MOV_B32_e64))
+                 .addOperand(MI->getOperand(0))
+                 .addOperand(MI->getOperand(1))
+                 // VSRC1-2 are unused, but we still need to fill all the
+                 // operand slots, so we just reuse the VSRC0 operand
+                 .addOperand(MI->getOperand(1))
+                 .addOperand(MI->getOperand(1))
+                 .addImm(0) // ABS
+                 .addImm(0) // CLAMP
+                 .addImm(0) // OMOD
+                 .addImm(1); // NEG
+    MI->eraseFromParent();
+    break;
+
   case AMDGPU::SI_INTERP:
     LowerSI_INTERP(MI, *BB, I, MRI);
     break;

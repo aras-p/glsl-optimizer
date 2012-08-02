@@ -1017,6 +1017,7 @@ def : Pat <
 
 def CLAMP_SI : CLAMP<VReg_32>;
 def FABS_SI : FABS<VReg_32>;
+def FNEG_SI : FNEG<VReg_32>;
 
 def : Extract_Element <f32, v4f32, VReg_128, 0, sel_x>;
 def : Extract_Element <f32, v4f32, VReg_128, 1, sel_y>;
