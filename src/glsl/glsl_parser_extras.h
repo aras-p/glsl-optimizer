@@ -59,6 +59,16 @@ struct glsl_switch_state {
 const char *
 glsl_compute_version_string(void *mem_ctx, bool is_es, unsigned version);
 
+typedef struct YYLTYPE {
+   int first_line;
+   int first_column;
+   int last_line;
+   int last_column;
+   unsigned source;
+} YYLTYPE;
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+
 struct _mesa_glsl_parse_state {
    _mesa_glsl_parse_state(struct gl_context *_ctx, GLenum target,
 			  void *mem_ctx);
@@ -89,6 +99,31 @@ struct _mesa_glsl_parse_state {
       return glsl_compute_version_string(this, this->es_shader,
                                          this->language_version);
    }
+
+   /**
+    * Determine whether the current GLSL version is sufficiently high to
+    * support a certain feature.
+    *
+    * \param required_glsl_version is the desktop GLSL version that is
+    * required to support the feature, or 0 if no version of desktop GLSL
+    * supports the feature.
+    *
+    * \param required_glsl_es_version is the GLSL ES version that is required
+    * to support the feature, or 0 if no version of GLSL ES suports the
+    * feature.
+    */
+   bool is_version(unsigned required_glsl_version,
+                   unsigned required_glsl_es_version)
+   {
+      unsigned required_version = this->es_shader ?
+         required_glsl_es_version : required_glsl_version;
+      return required_version != 0
+         && this->language_version >= required_version;
+   }
+
+   bool check_version(unsigned required_glsl_version,
+                      unsigned required_glsl_es_version,
+                      YYLTYPE *locp, const char *fmt, ...) PRINTFLIKE(5, 6);
 
    struct gl_context *const ctx;
    void *scanner;
@@ -228,16 +263,6 @@ struct _mesa_glsl_parse_state {
    struct gl_shader *builtins_to_link[16];
    unsigned num_builtins_to_link;
 };
-
-typedef struct YYLTYPE {
-   int first_line;
-   int first_column;
-   int last_line;
-   int last_column;
-   unsigned source;
-} YYLTYPE;
-# define YYLTYPE_IS_DECLARED 1
-# define YYLTYPE_IS_TRIVIAL 1
 
 # define YYLLOC_DEFAULT(Current, Rhs, N)			\
 do {								\

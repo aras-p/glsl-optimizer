@@ -123,6 +123,57 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->default_uniform_qualifier->flags.q.column_major = 1;
 }
 
+/**
+ * Determine whether the current GLSL version is sufficiently high to support
+ * a certain feature, and generate an error message if it isn't.
+ *
+ * \param required_glsl_version and \c required_glsl_es_version are
+ * interpreted as they are in _mesa_glsl_parse_state::is_version().
+ *
+ * \param locp is the parser location where the error should be reported.
+ *
+ * \param fmt (and additional arguments) constitute a printf-style error
+ * message to report if the version check fails.  Information about the
+ * current and required GLSL versions will be appended.  So, for example, if
+ * the GLSL version being compiled is 1.20, and check_version(130, 300, locp,
+ * "foo unsupported") is called, the error message will be "foo unsupported in
+ * GLSL 1.20 (GLSL 1.30 or GLSL 3.00 ES required)".
+ */
+bool
+_mesa_glsl_parse_state::check_version(unsigned required_glsl_version,
+                                      unsigned required_glsl_es_version,
+                                      YYLTYPE *locp, const char *fmt, ...)
+{
+   if (this->is_version(required_glsl_version, required_glsl_es_version))
+      return true;
+
+   va_list args;
+   va_start(args, fmt);
+   char *problem = ralloc_vasprintf(ctx, fmt, args);
+   va_end(args);
+   const char *glsl_version_string
+      = glsl_compute_version_string(ctx, false, required_glsl_version);
+   const char *glsl_es_version_string
+      = glsl_compute_version_string(ctx, true, required_glsl_es_version);
+   const char *requirement_string = "";
+   if (required_glsl_version && required_glsl_es_version) {
+      requirement_string = ralloc_asprintf(ctx, " (%s or %s required)",
+                                           glsl_version_string,
+                                           glsl_es_version_string);
+   } else if (required_glsl_version) {
+      requirement_string = ralloc_asprintf(ctx, " (%s required)",
+                                           glsl_version_string);
+   } else if (required_glsl_es_version) {
+      requirement_string = ralloc_asprintf(ctx, " (%s required)",
+                                           glsl_es_version_string);
+   }
+   _mesa_glsl_error(locp, this, "%s in %s%s.",
+                    problem, this->get_version_string(),
+                    requirement_string);
+
+   return false;
+}
+
 const char *
 _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
 {
