@@ -43,9 +43,9 @@ pp_nocolor(struct pp_queue_t *ppq, struct pipe_resource *in,
    pp_filter_set_fb(p);
    pp_filter_misc_state(p);
 
-   cso_single_sampler(p->cso, 0, &p->sampler_point);
-   cso_single_sampler_done(p->cso);
-   cso_set_fragment_sampler_views(p->cso, 1, &p->view);
+   cso_single_sampler(p->cso, PIPE_SHADER_FRAGMENT, 0, &p->sampler_point);
+   cso_single_sampler_done(p->cso, PIPE_SHADER_FRAGMENT);
+   cso_set_sampler_views(p->cso, PIPE_SHADER_FRAGMENT, 1, &p->view);
 
    cso_set_vertex_shader_handle(p->cso, ppq->shaders[n][0]);
    cso_set_fragment_shader_handle(p->cso, ppq->shaders[n][1]);

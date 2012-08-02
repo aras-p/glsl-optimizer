@@ -454,8 +454,8 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    assert(height <= (GLsizei)maxSize);
 
    cso_save_rasterizer(cso);
-   cso_save_samplers(cso);
-   cso_save_fragment_sampler_views(cso);
+   cso_save_samplers(cso, PIPE_SHADER_FRAGMENT);
+   cso_save_sampler_views(cso, PIPE_SHADER_FRAGMENT);
    cso_save_viewport(cso);
    cso_save_fragment_shader(cso);
    cso_save_stream_outputs(cso);
@@ -487,7 +487,8 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
       }
       samplers[fpv->bitmap_sampler] =
          &st->bitmap.samplers[sv->texture->target != PIPE_TEXTURE_RECT];
-      cso_set_samplers(cso, num, (const struct pipe_sampler_state **) samplers);
+      cso_set_samplers(cso, PIPE_SHADER_FRAGMENT, num,
+                       (const struct pipe_sampler_state **) samplers);
    }
 
    /* user textures, plus the bitmap texture */
@@ -496,7 +497,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
       uint num = MAX2(fpv->bitmap_sampler + 1, st->state.num_textures);
       memcpy(sampler_views, st->state.sampler_views, sizeof(sampler_views));
       sampler_views[fpv->bitmap_sampler] = sv;
-      cso_set_fragment_sampler_views(cso, num, sampler_views);
+      cso_set_sampler_views(cso, PIPE_SHADER_FRAGMENT, num, sampler_views);
    }
 
    /* viewport state: viewport matching window dims */
@@ -535,8 +536,8 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
 
    /* restore state */
    cso_restore_rasterizer(cso);
-   cso_restore_samplers(cso);
-   cso_restore_fragment_sampler_views(cso);
+   cso_restore_samplers(cso, PIPE_SHADER_FRAGMENT);
+   cso_restore_sampler_views(cso, PIPE_SHADER_FRAGMENT);
    cso_restore_viewport(cso);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);

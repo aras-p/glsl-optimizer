@@ -288,9 +288,10 @@ update_vertex_textures(struct st_context *st)
    if (ctx->Const.MaxVertexTextureImageUnits > 0) {
       GLuint numUnits = MIN2(st->state.num_vertex_textures,
                              ctx->Const.MaxVertexTextureImageUnits);
-      cso_set_vertex_sampler_views(st->cso_context,
-                                   numUnits,
-                                   st->state.sampler_vertex_views);
+      cso_set_sampler_views(st->cso_context,
+                            PIPE_SHADER_VERTEX,
+                            numUnits,
+                            st->state.sampler_vertex_views);
    }
 }
 
@@ -329,9 +330,10 @@ update_fragment_textures(struct st_context *st)
       pipe_sampler_view_reference(&st->state.sampler_views[su], sampler_view);
    }
 
-   cso_set_fragment_sampler_views(st->cso_context,
-                                  st->state.num_textures,
-                                  st->state.sampler_views);
+   cso_set_sampler_views(st->cso_context,
+                         PIPE_SHADER_FRAGMENT,
+                         st->state.num_textures,
+                         st->state.sampler_views);
 }
 
 

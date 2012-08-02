@@ -69,39 +69,29 @@ void cso_save_rasterizer(struct cso_context *cso);
 void cso_restore_rasterizer(struct cso_context *cso);
 
 
+enum pipe_error
+cso_set_samplers(struct cso_context *cso,
+                 unsigned shader_stage,
+                 unsigned count,
+                 const struct pipe_sampler_state **states);
 
-enum pipe_error cso_set_samplers( struct cso_context *cso,
-                                  unsigned count,
-                                  const struct pipe_sampler_state **states );
-void cso_save_samplers(struct cso_context *cso);
-void cso_restore_samplers(struct cso_context *cso);
+void
+cso_save_samplers(struct cso_context *cso, unsigned shader_stage);
+
+void
+cso_restore_samplers(struct cso_context *cso, unsigned shader_stage);
 
 /* Alternate interface to support state trackers that like to modify
  * samplers one at a time:
  */
-enum pipe_error cso_single_sampler( struct cso_context *cso,
-                                    unsigned nr,
-                                    const struct pipe_sampler_state *states );
-
-void cso_single_sampler_done( struct cso_context *cso );
-
-enum pipe_error cso_set_vertex_samplers(struct cso_context *cso,
-                                        unsigned count,
-                                        const struct pipe_sampler_state **states);
-
-void
-cso_save_vertex_samplers(struct cso_context *cso);
-
-void
-cso_restore_vertex_samplers(struct cso_context *cso);
-
 enum pipe_error
-cso_single_vertex_sampler(struct cso_context *cso,
-                          unsigned nr,
-                          const struct pipe_sampler_state *states);
+cso_single_sampler(struct cso_context *cso,
+                   unsigned shader_stage,
+                   unsigned count,
+                   const struct pipe_sampler_state *states);
 
 void
-cso_single_vertex_sampler_done(struct cso_context *cso);
+cso_single_sampler_done(struct cso_context *cso, unsigned shader_stage);
 
 
 enum pipe_error cso_set_vertex_elements(struct cso_context *ctx,
@@ -125,6 +115,13 @@ void cso_set_stream_outputs(struct cso_context *ctx,
 void cso_save_stream_outputs(struct cso_context *ctx);
 void cso_restore_stream_outputs(struct cso_context *ctx);
 
+
+/*
+ * We don't provide shader caching in CSO.  Most of the time the api provides
+ * object semantics for shaders anyway, and the cases where it doesn't
+ * (eg mesa's internally-generated texenv programs), it will be up to
+ * the state tracker to implement their own specialized caching.
+ */
 
 enum pipe_error cso_set_fragment_shader_handle(struct cso_context *ctx,
                                                void *handle );
@@ -184,39 +181,21 @@ void
 cso_restore_clip(struct cso_context *cso);
 
 
-/* fragment sampler view state */
-
-/*
- * We don't provide shader caching in CSO.  Most of the time the api provides
- * object semantics for shaders anyway, and the cases where it doesn't
- * (eg mesa's internally-generated texenv programs), it will be up to
- * the state tracker to implement their own specialized caching.
- */
+/* sampler view state */
 
 void
-cso_set_fragment_sampler_views(struct cso_context *cso,
-                               uint count,
-                               struct pipe_sampler_view **views);
+cso_set_sampler_views(struct cso_context *cso,
+                      unsigned shader_stage,
+                      unsigned count,
+                      struct pipe_sampler_view **views);
 
 void
-cso_save_fragment_sampler_views(struct cso_context *cso);
+cso_save_sampler_views(struct cso_context *cso, unsigned shader_stage);
 
 void
-cso_restore_fragment_sampler_views(struct cso_context *cso);
+cso_restore_sampler_views(struct cso_context *cso, unsigned shader_stage);
 
 
-/* vertex sampler view state */
-
-void
-cso_set_vertex_sampler_views(struct cso_context *cso,
-                             uint count,
-                             struct pipe_sampler_view **views);
-
-void
-cso_save_vertex_sampler_views(struct cso_context *cso);
-
-void
-cso_restore_vertex_sampler_views(struct cso_context *cso);
 
 /* drawing */
 

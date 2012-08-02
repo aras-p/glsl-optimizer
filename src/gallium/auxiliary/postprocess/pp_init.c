@@ -152,7 +152,7 @@ pp_free(struct pp_queue_t *ppq)
 
    util_destroy_blit(ppq->p->blitctx);
 
-   cso_set_fragment_sampler_views(ppq->p->cso, 0, NULL);
+   cso_set_sampler_views(ppq->p->cso, PIPE_SHADER_FRAGMENT, 0, NULL);
    cso_release_all(ppq->p->cso);
 
    for (i = 0; i < ppq->n_filters; i++) {

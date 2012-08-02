@@ -679,8 +679,8 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
 
    cso_save_rasterizer(cso);
    cso_save_viewport(cso);
-   cso_save_samplers(cso);
-   cso_save_fragment_sampler_views(cso);
+   cso_save_samplers(cso, PIPE_SHADER_FRAGMENT);
+   cso_save_sampler_views(cso, PIPE_SHADER_FRAGMENT);
    cso_save_fragment_shader(cso);
    cso_save_stream_outputs(cso);
    cso_save_vertex_shader(cso);
@@ -751,11 +751,11 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
       sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
       sampler.normalized_coords = normalized;
 
-      cso_single_sampler(cso, 0, &sampler);
+      cso_single_sampler(cso, PIPE_SHADER_FRAGMENT, 0, &sampler);
       if (num_sampler_view > 1) {
-         cso_single_sampler(cso, 1, &sampler);
+         cso_single_sampler(cso, PIPE_SHADER_FRAGMENT, 1, &sampler);
       }
-      cso_single_sampler_done(cso);
+      cso_single_sampler_done(cso, PIPE_SHADER_FRAGMENT);
    }
 
    /* viewport state: viewport matching window dims */
@@ -778,7 +778,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_set_stream_outputs(st->cso_context, 0, NULL, 0);
 
    /* texture state: */
-   cso_set_fragment_sampler_views(cso, num_sampler_view, sv);
+   cso_set_sampler_views(cso, PIPE_SHADER_FRAGMENT, num_sampler_view, sv);
 
    /* Compute Gallium window coords (y=0=top) with pixel zoom.
     * Recall that these coords are transformed by the current
@@ -804,8 +804,8 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    /* restore state */
    cso_restore_rasterizer(cso);
    cso_restore_viewport(cso);
-   cso_restore_samplers(cso);
-   cso_restore_fragment_sampler_views(cso);
+   cso_restore_samplers(cso, PIPE_SHADER_FRAGMENT);
+   cso_restore_sampler_views(cso, PIPE_SHADER_FRAGMENT);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
    cso_restore_geometry_shader(cso);

@@ -219,12 +219,12 @@ update_vertex_samplers(struct st_context *st)
 
 	 st->state.num_vertex_samplers = su + 1;
 
-	 cso_single_vertex_sampler(st->cso_context, su, sampler);
+	 cso_single_sampler(st->cso_context, PIPE_SHADER_VERTEX, su, sampler);
       } else {
-	 cso_single_vertex_sampler(st->cso_context, su, NULL);
+	 cso_single_sampler(st->cso_context, PIPE_SHADER_VERTEX, su, NULL);
       }
    }
-   cso_single_vertex_sampler_done(st->cso_context);
+   cso_single_sampler_done(st->cso_context, PIPE_SHADER_VERTEX);
 }
 
 
@@ -253,18 +253,18 @@ update_fragment_samplers(struct st_context *st)
          st->state.num_samplers = su + 1;
 
          /*printf("%s su=%u non-null\n", __FUNCTION__, su);*/
-         cso_single_sampler(st->cso_context, su, sampler);
+         cso_single_sampler(st->cso_context, PIPE_SHADER_FRAGMENT, su, sampler);
       }
       else if (samplers_used != 0 || su < old_max) {
          /*printf("%s su=%u null\n", __FUNCTION__, su);*/
-         cso_single_sampler(st->cso_context, su, NULL);
+         cso_single_sampler(st->cso_context, PIPE_SHADER_FRAGMENT, su, NULL);
       } else {
          /* if we've reset all the old views and we have no more new ones */
          break;
       }
    }
 
-   cso_single_sampler_done(st->cso_context);
+   cso_single_sampler_done(st->cso_context, PIPE_SHADER_FRAGMENT);
 }
 
 

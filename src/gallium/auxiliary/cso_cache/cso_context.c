@@ -84,8 +84,7 @@ struct cso_context {
    boolean has_geometry_shader;
    boolean has_streamout;
 
-   struct sampler_info fragment_samplers;
-   struct sampler_info vertex_samplers;
+   struct sampler_info samplers[PIPE_SHADER_TYPES];
 
    uint nr_vertex_buffers;
    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
@@ -296,8 +295,7 @@ out:
  */
 void cso_release_all( struct cso_context *ctx )
 {
-   unsigned i;
-   struct sampler_info *info;
+   unsigned i, shader;
 
    if (ctx->pipe) {
       ctx->pipe->bind_blend_state( ctx->pipe, NULL );
@@ -317,17 +315,12 @@ void cso_release_all( struct cso_context *ctx )
    }
 
    /* free fragment samplers, views */
-   info = &ctx->fragment_samplers;   
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      pipe_sampler_view_reference(&info->views[i], NULL);
-      pipe_sampler_view_reference(&info->views_saved[i], NULL);
-   }
-
-   /* free vertex samplers, views */
-   info = &ctx->vertex_samplers;   
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      pipe_sampler_view_reference(&info->views[i], NULL);
-      pipe_sampler_view_reference(&info->views_saved[i], NULL);
+   for (shader = 0; shader < Elements(ctx->samplers); shader++) {
+      struct sampler_info *info = &ctx->samplers[shader];
+      for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+         pipe_sampler_view_reference(&info->views[i], NULL);
+         pipe_sampler_view_reference(&info->views_saved[i], NULL);
+      }
    }
 
    util_unreference_framebuffer_state(&ctx->fb);
@@ -993,26 +986,19 @@ single_sampler(struct cso_context *ctx,
 
 enum pipe_error
 cso_single_sampler(struct cso_context *ctx,
+                   unsigned shader_stage,
                    unsigned idx,
                    const struct pipe_sampler_state *templ)
 {
-   return single_sampler(ctx, &ctx->fragment_samplers, idx, templ);
-}
-
-enum pipe_error
-cso_single_vertex_sampler(struct cso_context *ctx,
-                          unsigned idx,
-                          const struct pipe_sampler_state *templ)
-{
-   return single_sampler(ctx, &ctx->vertex_samplers, idx, templ);
+   return single_sampler(ctx, &ctx->samplers[shader_stage], idx, templ);
 }
 
 
 
 static void
-single_sampler_done(struct cso_context *ctx,
-                    struct sampler_info *info)
+single_sampler_done(struct cso_context *ctx, unsigned shader_stage)
 {
+   struct sampler_info *info = &ctx->samplers[shader_stage];
    unsigned i;
 
    /* find highest non-null sampler */
@@ -1033,32 +1019,32 @@ single_sampler_done(struct cso_context *ctx,
              info->nr_samplers * sizeof(void *));
       info->hw.nr_samplers = info->nr_samplers;
 
-      if (info == &ctx->fragment_samplers) {
+      switch (shader_stage) {
+      case PIPE_SHADER_FRAGMENT:
          ctx->pipe->bind_fragment_sampler_states(ctx->pipe,
                                                  info->nr_samplers,
                                                  info->samplers);
-      }
-      else if (info == &ctx->vertex_samplers) {
+         break;
+      case PIPE_SHADER_VERTEX:
          ctx->pipe->bind_vertex_sampler_states(ctx->pipe,
                                                info->nr_samplers,
                                                info->samplers);
-      }
-      else {
-         assert(0);
+         break;
+      case PIPE_SHADER_GEOMETRY:
+         ctx->pipe->bind_geometry_sampler_states(ctx->pipe,
+                                               info->nr_samplers,
+                                               info->samplers);
+         break;
+      default:
+         assert(!"bad shader type in single_sampler_done()");
       }
    }
 }
 
 void
-cso_single_sampler_done( struct cso_context *ctx )
+cso_single_sampler_done(struct cso_context *ctx, unsigned shader_stage)
 {
-   single_sampler_done(ctx, &ctx->fragment_samplers);
-}
-
-void
-cso_single_vertex_sampler_done(struct cso_context *ctx)
-{
-   single_sampler_done(ctx, &ctx->vertex_samplers);
+   single_sampler_done(ctx, shader_stage);
 }
 
 
@@ -1067,12 +1053,13 @@ cso_single_vertex_sampler_done(struct cso_context *ctx)
  * last one. Done to always try to set as many samplers
  * as possible.
  */
-static enum pipe_error
-set_samplers(struct cso_context *ctx,
-             struct sampler_info *info,
-             unsigned nr,
-             const struct pipe_sampler_state **templates)
+enum pipe_error
+cso_set_samplers(struct cso_context *ctx,
+                 unsigned shader_stage,
+                 unsigned nr,
+                 const struct pipe_sampler_state **templates)
 {
+   struct sampler_info *info = &ctx->samplers[shader_stage];
    unsigned i;
    enum pipe_error temp, error = PIPE_OK;
 
@@ -1091,82 +1078,38 @@ set_samplers(struct cso_context *ctx,
          error = temp;
    }
 
-   single_sampler_done(ctx, info);
+   single_sampler_done(ctx, shader_stage);
 
    return error;
 }
 
-enum pipe_error
-cso_set_samplers(struct cso_context *ctx,
-                 unsigned nr,
-                 const struct pipe_sampler_state **templates)
+void
+cso_save_samplers(struct cso_context *ctx, unsigned shader_stage)
 {
-   return set_samplers(ctx, &ctx->fragment_samplers, nr, templates);
-}
-
-enum pipe_error
-cso_set_vertex_samplers(struct cso_context *ctx,
-                        unsigned nr,
-                        const struct pipe_sampler_state **templates)
-{
-   return set_samplers(ctx, &ctx->vertex_samplers, nr, templates);
-}
-
-
-
-static void
-save_samplers(struct cso_context *ctx, struct sampler_info *info)
-{
+   struct sampler_info *info = &ctx->samplers[shader_stage];
    info->nr_samplers_saved = info->nr_samplers;
    memcpy(info->samplers_saved, info->samplers, sizeof(info->samplers));
 }
 
-void
-cso_save_samplers(struct cso_context *ctx)
-{
-   save_samplers(ctx, &ctx->fragment_samplers);
-}
 
 void
-cso_save_vertex_samplers(struct cso_context *ctx)
+cso_restore_samplers(struct cso_context *ctx, unsigned shader_stage)
 {
-   save_samplers(ctx, &ctx->vertex_samplers);
-}
-
-
-
-static void
-restore_samplers(struct cso_context *ctx, struct sampler_info *info)
-{
+   struct sampler_info *info = &ctx->samplers[shader_stage];
    info->nr_samplers = info->nr_samplers_saved;
    memcpy(info->samplers, info->samplers_saved, sizeof(info->samplers));
-   single_sampler_done(ctx, info);
+   single_sampler_done(ctx, shader_stage);
 }
+
 
 void
-cso_restore_samplers(struct cso_context *ctx)
+cso_set_sampler_views(struct cso_context *ctx,
+                      unsigned shader_stage,
+                      unsigned count,
+                      struct pipe_sampler_view **views)
 {
-   restore_samplers(ctx, &ctx->fragment_samplers);
-}
-
-void
-cso_restore_vertex_samplers(struct cso_context *ctx)
-{
-   restore_samplers(ctx, &ctx->vertex_samplers);
-}
-
-
-
-static void
-set_sampler_views(struct cso_context *ctx,
-                  struct sampler_info *info,
-                  void (*set_views)(struct pipe_context *,
-                                    unsigned num_views,
-                                    struct pipe_sampler_view **),
-                  uint count,
-                  struct pipe_sampler_view **views)
-{
-   uint i;
+   struct sampler_info *info = &ctx->samplers[shader_stage];
+   unsigned i;
 
    /* reference new views */
    for (i = 0; i < count; i++) {
@@ -1180,36 +1123,27 @@ set_sampler_views(struct cso_context *ctx,
    info->nr_views = count;
 
    /* bind the new sampler views */
-   set_views(ctx->pipe, count, info->views);
+   switch (shader_stage) {
+   case PIPE_SHADER_FRAGMENT:
+      ctx->pipe->set_fragment_sampler_views(ctx->pipe, count, info->views);
+      break;
+   case PIPE_SHADER_VERTEX:
+      ctx->pipe->set_vertex_sampler_views(ctx->pipe, count, info->views);
+      break;
+   case PIPE_SHADER_GEOMETRY:
+      ctx->pipe->set_geometry_sampler_views(ctx->pipe, count, info->views);
+      break;
+   default:
+      assert(!"bad shader type in cso_set_sampler_views()");
+   }
 }
+
 
 void
-cso_set_fragment_sampler_views(struct cso_context *ctx,
-                               uint count,
-                               struct pipe_sampler_view **views)
+cso_save_sampler_views(struct cso_context *ctx, unsigned shader_stage)
 {
-   set_sampler_views(ctx, &ctx->fragment_samplers,
-                     ctx->pipe->set_fragment_sampler_views,
-                     count, views);
-}
-
-void
-cso_set_vertex_sampler_views(struct cso_context *ctx,
-                             uint count,
-                             struct pipe_sampler_view **views)
-{
-   set_sampler_views(ctx, &ctx->vertex_samplers,
-                     ctx->pipe->set_vertex_sampler_views,
-                     count, views);
-}
-
-
-
-static void
-save_sampler_views(struct cso_context *ctx,
-                   struct sampler_info *info)
-{
-   uint i;
+   struct sampler_info *info = &ctx->samplers[shader_stage];
+   unsigned i;
 
    info->nr_views_saved = info->nr_views;
 
@@ -1219,29 +1153,14 @@ save_sampler_views(struct cso_context *ctx,
    }
 }
 
-void
-cso_save_fragment_sampler_views(struct cso_context *ctx)
-{
-   save_sampler_views(ctx, &ctx->fragment_samplers);
-}
 
 void
-cso_save_vertex_sampler_views(struct cso_context *ctx)
+cso_restore_sampler_views(struct cso_context *ctx, unsigned shader_stage)
 {
-   save_sampler_views(ctx, &ctx->vertex_samplers);
-}
+   struct sampler_info *info = &ctx->samplers[shader_stage];
+   unsigned i, nr_saved = info->nr_views_saved;
 
-
-static void
-restore_sampler_views(struct cso_context *ctx,
-                      struct sampler_info *info,
-                      void (*set_views)(struct pipe_context *,
-                                        unsigned num_views,
-                                        struct pipe_sampler_view **))
-{
-   uint i;
-
-   for (i = 0; i < info->nr_views_saved; i++) {
+   for (i = 0; i < nr_saved; i++) {
       pipe_sampler_view_reference(&info->views[i], NULL);
       /* move the reference from one pointer to another */
       info->views[i] = info->views_saved[i];
@@ -1252,24 +1171,22 @@ restore_sampler_views(struct cso_context *ctx,
    }
 
    /* bind the old/saved sampler views */
-   set_views(ctx->pipe, info->nr_views_saved, info->views);
+   switch (shader_stage) {
+   case PIPE_SHADER_FRAGMENT:
+      ctx->pipe->set_fragment_sampler_views(ctx->pipe, nr_saved, info->views);
+      break;
+   case PIPE_SHADER_VERTEX:
+      ctx->pipe->set_vertex_sampler_views(ctx->pipe, nr_saved, info->views);
+      break;
+   case PIPE_SHADER_GEOMETRY:
+      ctx->pipe->set_geometry_sampler_views(ctx->pipe, nr_saved, info->views);
+      break;
+   default:
+      assert(!"bad shader type in cso_restore_sampler_views()");
+   }
 
-   info->nr_views = info->nr_views_saved;
+   info->nr_views = nr_saved;
    info->nr_views_saved = 0;
-}
-
-void
-cso_restore_fragment_sampler_views(struct cso_context *ctx)
-{
-   restore_sampler_views(ctx, &ctx->fragment_samplers,
-                         ctx->pipe->set_fragment_sampler_views);
-}
-
-void
-cso_restore_vertex_sampler_views(struct cso_context *ctx)
-{
-   restore_sampler_views(ctx, &ctx->vertex_samplers,
-                         ctx->pipe->set_vertex_sampler_views);
 }
 
 
