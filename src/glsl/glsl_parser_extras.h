@@ -133,7 +133,7 @@ struct _mesa_glsl_parse_state {
 
    bool check_bitwise_operations_allowed(YYLTYPE *locp)
    {
-      return check_version(130, 0, locp, "bit-wise operations are forbidden");
+      return check_version(130, 300, locp, "bit-wise operations are forbidden");
    }
 
    struct gl_context *const ctx;

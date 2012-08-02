@@ -122,7 +122,7 @@ literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
 
    if (value > UINT_MAX) {
       /* Note that signed 0xffffffff is valid, not out of range! */
-      if (state->is_version(130, 0)) {
+      if (state->is_version(130, 300)) {
 	 _mesa_glsl_error(lloc, state,
 			  "Literal value `%s' out of range", text);
       } else {

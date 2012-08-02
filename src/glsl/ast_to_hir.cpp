@@ -445,7 +445,7 @@ modulus_result_type(const struct glsl_type *type_a,
 		    const struct glsl_type *type_b,
 		    struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
-   if (!state->check_version(130, 0, loc, "operator '%%' is reserved")) {
+   if (!state->check_version(130, 300, loc, "operator '%%' is reserved")) {
       return glsl_type::error_type;
    }
 
@@ -690,13 +690,15 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
          error_emitted = true;
 
       } else if (lhs->type->is_array() &&
-                 !state->check_version(120, 0, &lhs_loc,
+                 !state->check_version(120, 300, &lhs_loc,
                                        "whole array assignment forbidden")) {
 	 /* From page 32 (page 38 of the PDF) of the GLSL 1.10 spec:
 	  *
 	  *    "Other binary or unary expressions, non-dereferenced
 	  *     arrays, function names, swizzles with repeated fields,
 	  *     and constants cannot be l-values."
+          *
+          * The restriction on arrays is lifted in GLSL 1.20 and GLSL ES 3.00.
 	  */
 	 error_emitted = true;
       } else if (!lhs->is_lvalue()) {
@@ -1149,7 +1151,7 @@ ast_expression::hir(exec_list *instructions,
 			  "type", (this->oper == ast_equal) ? "==" : "!=");
 	 error_emitted = true;
       } else if ((op[0]->type->is_array() || op[1]->type->is_array()) &&
-                 !state->check_version(120, 0, &loc,
+                 !state->check_version(120, 300, &loc,
                                        "array comparisons forbidden")) {
 	 error_emitted = true;
       }
@@ -1416,7 +1418,7 @@ ast_expression::hir(exec_list *instructions,
        *    be of any type other than an array."
        */
       if (type->is_array() &&
-          !state->check_version(120, 0, &loc,
+          !state->check_version(120, 300, &loc,
                                 "Second and third operands of ?: operator "
                                 "cannot be arrays")) {
 	 error_emitted = true;
@@ -2602,10 +2604,10 @@ ast_declarator_list::hir(exec_list *instructions,
        *
        *     Local variables can only use the qualifier const."
        *
-       * This is relaxed in GLSL 1.30.  It is also relaxed by any extension
-       * that adds the 'layout' keyword.
+       * This is relaxed in GLSL 1.30 and GLSL ES 3.00.  It is also relaxed by
+       * any extension that adds the 'layout' keyword.
        */
-      if (!state->is_version(130, 0)
+      if (!state->is_version(130, 300)
 	  && !state->ARB_explicit_attrib_location_enable
 	  && !state->ARB_fragment_coord_conventions_enable) {
 	 if (this->type->qualifier.flags.q.out) {
@@ -2697,6 +2699,13 @@ ast_declarator_list::hir(exec_list *instructions,
 	     *    "The attribute qualifier can be used only with float,
 	     *    floating-point vectors, and matrices. Attribute variables
 	     *    cannot be declared as arrays or structures."
+             *
+             * From page 33 (page 39 of the PDF) of the GLSL ES 3.00 spec:
+             *
+             *    "Vertex shader inputs can only be float, floating-point
+             *    vectors, matrices, signed and unsigned integers and integer
+             *    vectors. Vertex shader inputs cannot be arrays or
+             *    structures."
 	     */
 	    const glsl_type *check_type = var->type->is_array()
 	       ? var->type->fields.array : var->type;
@@ -2706,7 +2715,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	       break;
 	    case GLSL_TYPE_UINT:
 	    case GLSL_TYPE_INT:
-	       if (state->is_version(120, 0))
+	       if (state->is_version(120, 300))
 		  break;
 	       /* FALLTHROUGH */
 	    default:
@@ -2733,8 +2742,16 @@ ast_declarator_list::hir(exec_list *instructions,
        *    "If a vertex output is a signed or unsigned integer or integer
        *    vector, then it must be qualified with the interpolation qualifier
        *    flat."
+       *
+       * From section 4.3.4 of the GLSL 3.00 ES spec:
+       *    "Fragment shader inputs that are signed or unsigned integers or
+       *    integer vectors must be qualified with the interpolation qualifier
+       *    flat."
+       *
+       * Since vertex outputs and fragment inputs must have matching
+       * qualifiers, these two requirements are equivalent.
        */
-      if (state->is_version(130, 0)
+      if (state->is_version(130, 300)
           && state->target == vertex_shader
           && state->current_function == NULL
           && var->type->is_integer()
@@ -2753,6 +2770,8 @@ ast_declarator_list::hir(exec_list *instructions,
        *    "interpolation qualifiers may only precede the qualifiers in,
        *    centroid in, out, or centroid out in a declaration. They do not apply
        *    to the deprecated storage qualifiers varying or centroid varying."
+       *
+       * These deprecated storage qualifiers do not exist in GLSL ES 3.00.
        */
       if (state->is_version(130, 0)
           && this->type->qualifier.has_interpolation()
@@ -2779,8 +2798,14 @@ ast_declarator_list::hir(exec_list *instructions,
        *    "Outputs from a vertex shader (out) and inputs to a fragment
        *    shader (in) can be further qualified with one or more of these
        *    interpolation qualifiers"
+       *
+       * From page 31 (page 37 of the PDF) of the GLSL ES 3.00 spec:
+       *    "These interpolation qualifiers may only precede the qualifiers
+       *    in, centroid in, out, or centroid out in a declaration. They do
+       *    not apply to inputs into a vertex shader or outputs from a
+       *    fragment shader."
        */
-      if (state->is_version(130, 0)
+      if (state->is_version(130, 300)
           && this->type->qualifier.has_interpolation()) {
 
          const char *i = this->type->qualifier.interpolation_string();
@@ -2809,8 +2834,12 @@ ast_declarator_list::hir(exec_list *instructions,
 
       /* From section 4.3.4 of the GLSL 1.30 spec:
        *    "It is an error to use centroid in in a vertex shader."
+       *
+       * From section 4.3.4 of the GLSL ES 3.00 spec:
+       *    "It is an error to use centroid in or interpolation qualifiers in
+       *    a vertex shader input."
        */
-      if (state->is_version(130, 0)
+      if (state->is_version(130, 300)
           && this->type->qualifier.flags.q.centroid
           && this->type->qualifier.flags.q.in
           && state->target == vertex_shader) {

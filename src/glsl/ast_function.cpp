@@ -275,9 +275,10 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
    /* If the function call is a constant expression, don't generate any
     * instructions; just generate an ir_constant.
     *
-    * Function calls were first allowed to be constant expressions in GLSL 1.20.
+    * Function calls were first allowed to be constant expressions in GLSL
+    * 1.20 and GLSL ES 3.00.
     */
-   if (state->is_version(120, 0)) {
+   if (state->is_version(120, 300)) {
       ir_constant *value = sig->constant_expression_value(actual_parameters, NULL);
       if (value != NULL) {
 	 return value;
@@ -1243,7 +1244,7 @@ ast_function_expression::hir(exec_list *instructions,
       }
 
       if (constructor_type->is_array()) {
-         if (!state->check_version(120, 0, &loc,
+         if (!state->check_version(120, 300, &loc,
                                    "array constructors forbidden")) {
 	    return ir_rvalue::error_value(ctx);
 	 }

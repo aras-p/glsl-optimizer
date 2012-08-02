@@ -72,7 +72,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
       }
    } else if (expr->subexpressions[1] != NULL) {
       /* Handle "method calls" in GLSL 1.20 - namely, array.length() */
-      state->check_version(120, 0, &loc, "Methods not supported");
+      state->check_version(120, 300, &loc, "Methods not supported");
 
       ast_expression *call = expr->subexpressions[1];
       assert(call->oper == ast_function_call);
