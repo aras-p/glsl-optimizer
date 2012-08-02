@@ -118,14 +118,24 @@ def S_GETREG_REGRD_B32 : SOPK_32 <0x00000014, "S_GETREG_REGRD_B32", []>;
 //def EXP : EXP_ <0x00000000, "EXP", []>;
 
 defm V_CMP_F_F32 : VOPC_32 <0x00000000, "V_CMP_F_F32", []>;
-defm V_CMP_LT_F32 : VOPC_32 <0x00000001, "V_CMP_LT_F32", []>;
+defm V_CMP_LT_F32 : VOPC_32 <0x00000001, "V_CMP_LT_F32",
+  [(set VCCReg:$dst, (setcc (f32 AllReg_32:$src0), VReg_32:$src1, COND_LT))]
+>;
 defm V_CMP_EQ_F32 : VOPC_32 <0x00000002, "V_CMP_EQ_F32",
   [(set VCCReg:$dst, (setcc (f32 AllReg_32:$src0), VReg_32:$src1, COND_EQ))]
 >;
-defm V_CMP_LE_F32 : VOPC_32 <0x00000003, "V_CMP_LE_F32", []>;
-defm V_CMP_GT_F32 : VOPC_32 <0x00000004, "V_CMP_GT_F32", []>;
-defm V_CMP_LG_F32 : VOPC_32 <0x00000005, "V_CMP_LG_F32", []>;
-defm V_CMP_GE_F32 : VOPC_32 <0x00000006, "V_CMP_GE_F32", []>;
+defm V_CMP_LE_F32 : VOPC_32 <0x00000003, "V_CMP_LE_F32",
+  [(set VCCReg:$dst, (setcc (f32 AllReg_32:$src0), VReg_32:$src1, COND_LE))]
+>;
+defm V_CMP_GT_F32 : VOPC_32 <0x00000004, "V_CMP_GT_F32",
+  [(set VCCReg:$dst, (setcc (f32 AllReg_32:$src0), VReg_32:$src1, COND_GT))]
+>;
+defm V_CMP_LG_F32 : VOPC_32 <0x00000005, "V_CMP_LG_F32",
+  [(set VCCReg:$dst, (setcc (f32 AllReg_32:$src0), VReg_32:$src1, COND_NE))]
+>;
+defm V_CMP_GE_F32 : VOPC_32 <0x00000006, "V_CMP_GE_F32",
+  [(set VCCReg:$dst, (setcc (f32 AllReg_32:$src0), VReg_32:$src1, COND_GE))]
+>;
 defm V_CMP_O_F32 : VOPC_32 <0x00000007, "V_CMP_O_F32", []>;
 defm V_CMP_U_F32 : VOPC_32 <0x00000008, "V_CMP_U_F32", []>;
 defm V_CMP_NGE_F32 : VOPC_32 <0x00000009, "V_CMP_NGE_F32", []>;
