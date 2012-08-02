@@ -55,6 +55,10 @@ struct si_pm4_state
 	enum radeon_bo_usage	bo_usage[SI_PM4_MAX_BO];
 };
 
+void si_pm4_cmd_begin(struct si_pm4_state *state, unsigned opcode);
+void si_pm4_cmd_add(struct si_pm4_state *state, uint32_t dw);
+void si_pm4_cmd_end(struct si_pm4_state *state, bool predicate);
+
 void si_pm4_set_reg(struct si_pm4_state *state, unsigned reg, uint32_t val);
 void si_pm4_add_bo(struct si_pm4_state *state,
 		   struct si_resource *bo,

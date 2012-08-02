@@ -32,9 +32,30 @@
 
 #define NUMBER_OF_STATES (sizeof(union si_state) / sizeof(struct si_pm4_state *))
 
+void si_pm4_cmd_begin(struct si_pm4_state *state, unsigned opcode)
+{
+	state->last_opcode = opcode;
+	state->last_pm4 = state->ndw++;
+}
+
+void si_pm4_cmd_add(struct si_pm4_state *state, uint32_t dw)
+{
+	state->pm4[state->ndw++] = dw;
+}
+
+void si_pm4_cmd_end(struct si_pm4_state *state, bool predicate)
+{
+	unsigned count;
+	count = state->ndw - state->last_pm4 - 2;
+	state->pm4[state->last_pm4] = PKT3(state->last_opcode,
+					   count, predicate);
+
+	assert(state->ndw <= SI_PM4_MAX_DW);
+}
+
 void si_pm4_set_reg(struct si_pm4_state *state, unsigned reg, uint32_t val)
 {
-	unsigned opcode, count;
+	unsigned opcode;
 
 	if (reg >= SI_CONFIG_REG_OFFSET && reg <= SI_CONFIG_REG_END) {
 		opcode = PKT3_SET_CONFIG_REG;
@@ -55,17 +76,13 @@ void si_pm4_set_reg(struct si_pm4_state *state, unsigned reg, uint32_t val)
 	reg >>= 2;
 
 	if (opcode != state->last_opcode || reg != (state->last_reg + 1)) {
-		state->last_opcode = opcode;
-		state->last_pm4 = state->ndw++;
-		state->pm4[state->ndw++] = reg;
+		si_pm4_cmd_begin(state, opcode);
+		si_pm4_cmd_add(state, reg);
 	}
 
 	state->last_reg = reg;
-	count = state->ndw - state->last_pm4 - 1;
-	state->pm4[state->last_pm4] = PKT3(opcode, count, 0);
-	state->pm4[state->ndw++] = val;
-
-	assert(state->ndw <= SI_PM4_MAX_DW);
+	si_pm4_cmd_add(state, val);
+	si_pm4_cmd_end(state, false);
 }
 
 void si_pm4_add_bo(struct si_pm4_state *state,
