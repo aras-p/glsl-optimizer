@@ -42,7 +42,6 @@
 #define SVGA_BUFFER_MAX_RANGES 32
 
 
-struct svga_screen;
 struct svga_context;
 struct svga_winsys_buffer;
 struct svga_winsys_surface;

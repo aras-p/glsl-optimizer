@@ -28,7 +28,6 @@
 #ifndef SVGA_RESOURCE_H
 #define SVGA_RESOURCE_H
 
-struct svga_screen;
 
 #include "util/u_debug.h"
 
