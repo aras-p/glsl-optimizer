@@ -31,6 +31,11 @@ const glsl_type glsl_type::_sampler3D_type =
    glsl_type(GL_SAMPLER_3D, GLSL_SAMPLER_DIM_3D, 0, 0, GLSL_TYPE_FLOAT,
 	     "sampler3D");
 
+const glsl_type glsl_type::_samplerCubeShadow_type =
+   glsl_type(GL_SAMPLER_CUBE_SHADOW,
+	     GLSL_SAMPLER_DIM_CUBE, 1, 0, GLSL_TYPE_FLOAT,
+             "samplerCubeShadow");
+
 const glsl_type *const glsl_type::error_type = & glsl_type::_error_type;
 const glsl_type *const glsl_type::void_type = & glsl_type::_void_type;
 

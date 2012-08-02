@@ -510,6 +510,7 @@ private:
    static const glsl_type _error_type;
    static const glsl_type _void_type;
    static const glsl_type _sampler3D_type;
+   static const glsl_type _samplerCubeShadow_type;
    static const glsl_type builtin_core_types[];
    static const glsl_type builtin_structure_types[];
    static const glsl_type builtin_110_deprecated_structure_types[];
@@ -534,9 +535,13 @@ private:
     */
    /*@{*/
    static void generate_100ES_types(glsl_symbol_table *);
-   static void generate_110_types(glsl_symbol_table *, bool add_deprecated);
-   static void generate_120_types(glsl_symbol_table *, bool add_deprecated);
-   static void generate_130_types(glsl_symbol_table *, bool add_deprecated);
+   static void generate_300ES_types(glsl_symbol_table *);
+   static void generate_110_types(glsl_symbol_table *, bool add_deprecated,
+                                  bool skip_1d);
+   static void generate_120_types(glsl_symbol_table *, bool add_deprecated,
+                                  bool skip_1d);
+   static void generate_130_types(glsl_symbol_table *, bool add_deprecated,
+                                  bool skip_1d);
    static void generate_140_types(glsl_symbol_table *);
    static void generate_ARB_texture_rectangle_types(glsl_symbol_table *, bool);
    static void generate_EXT_texture_array_types(glsl_symbol_table *, bool);
