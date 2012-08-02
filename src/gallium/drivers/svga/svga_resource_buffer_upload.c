@@ -23,21 +23,21 @@
  *
  **********************************************************/
 
-#include "svga_cmd.h"
 
+#include "os/os_thread.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
-#include "os/os_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
+#include "svga_cmd.h"
 #include "svga_context.h"
-#include "svga_screen.h"
+#include "svga_debug.h"
 #include "svga_resource_buffer.h"
 #include "svga_resource_buffer_upload.h"
+#include "svga_screen.h"
 #include "svga_winsys.h"
-#include "svga_debug.h"
 
 
 /**
