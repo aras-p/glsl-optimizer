@@ -189,19 +189,14 @@ static INLINE boolean delete_cso(struct cso_context *ctx,
    switch (type) {
    case CSO_BLEND:
       return delete_blend_state(ctx, state);
-      break;
    case CSO_SAMPLER:
       return delete_sampler_state(ctx, state);
-      break;
    case CSO_DEPTH_STENCIL_ALPHA:
       return delete_depth_stencil_state(ctx, state);
-      break;
    case CSO_RASTERIZER:
       return delete_rasterizer_state(ctx, state);
-      break;
    case CSO_VELEMENTS:
       return delete_vertex_elements(ctx, state);
-      break;
    default:
       assert(0);
       FREE(state);
