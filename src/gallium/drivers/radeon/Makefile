@@ -70,4 +70,4 @@ AMDGPUGenDFAPacketizer.inc: *.td
 
 LOADER_LIBS=$(shell llvm-config --libs bitreader asmparser)
 loader: loader.o libradeon.a
-	gcc -o loader -L/usr/local/lib $(LDFLAGS) loader.o libradeon.a $(LLVM_LIBS) $(LOADER_LIBS) -lpthread -ldl -lstdc++ -lm
+	gcc -o loader $(LLVM_LDFLAGS) -L/usr/local/lib $(LDFLAGS) loader.o libradeon.a $(LLVM_LIBS) $(LOADER_LIBS) -lpthread -ldl -lstdc++ -lm
