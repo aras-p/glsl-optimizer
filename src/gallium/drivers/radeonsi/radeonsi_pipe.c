@@ -214,8 +214,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->context.create_video_decoder = vl_create_decoder;
 	rctx->context.create_video_buffer = vl_video_buffer_create;
 
-	r600_init_common_atoms(rctx);
-
 	switch (rctx->chip_class) {
 	case TAHITI:
 		si_init_state_functions(rctx);
@@ -250,8 +248,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
-
-	LIST_INITHEAD(&rctx->dirty_states);
 
 	r600_get_backend_mask(rctx); /* this emits commands and must be last */
 

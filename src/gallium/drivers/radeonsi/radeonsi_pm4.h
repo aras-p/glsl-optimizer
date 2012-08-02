@@ -73,7 +73,10 @@ void si_pm4_inval_zsbuf_cache(struct si_pm4_state *state);
 void si_pm4_free_state(struct r600_context *rctx,
 		       struct si_pm4_state *state,
 		       unsigned idx);
+
+uint32_t si_pm4_sync_flags(struct r600_context *rctx);
 unsigned si_pm4_dirty_dw(struct r600_context *rctx);
+void si_pm4_emit(struct r600_context *rctx, struct si_pm4_state *state);
 void si_pm4_emit_dirty(struct r600_context *rctx);
 void si_pm4_reset_emitted(struct r600_context *rctx);
 

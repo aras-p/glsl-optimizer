@@ -119,17 +119,11 @@ err:
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 			boolean count_draw_in)
 {
-	struct r600_atom *state;
-
 	/* The number of dwords we already used in the CS so far. */
 	num_dw += ctx->cs->cdw;
 
 	if (count_draw_in) {
 		/* The number of dwords all the dirty states would take. */
-		LIST_FOR_EACH_ENTRY(state, &ctx->dirty_states, head) {
-			num_dw += state->num_dw;
-		}
-
 		num_dw += ctx->pm4_dirty_cdwords;
 
 		/* The upper-bound of how much a draw command would take. */
@@ -159,20 +153,25 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	}
 }
 
-static void r600_flush_framebuffer(struct r600_context *ctx, bool flush_now)
+static void r600_flush_framebuffer(struct r600_context *ctx)
 {
+	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+
 	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
 		return;
 
-	ctx->atom_surface_sync.flush_flags |=
-		r600_get_cb_flush_flags(ctx) |
-		(ctx->framebuffer.zsbuf ? S_0085F0_DB_ACTION_ENA(1) | S_0085F0_DB_DEST_BASE_ENA(1) : 0);
-
-	if (flush_now) {
-		r600_emit_atom(ctx, &ctx->atom_surface_sync.atom);
-	} else {
-		r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
-	}
+	si_cmd_surface_sync(pm4, S_0085F0_CB0_DEST_BASE_ENA(1) |
+				S_0085F0_CB1_DEST_BASE_ENA(1) |
+				S_0085F0_CB2_DEST_BASE_ENA(1) |
+				S_0085F0_CB3_DEST_BASE_ENA(1) |
+				S_0085F0_CB4_DEST_BASE_ENA(1) |
+				S_0085F0_CB5_DEST_BASE_ENA(1) |
+				S_0085F0_CB6_DEST_BASE_ENA(1) |
+				S_0085F0_CB7_DEST_BASE_ENA(1) |
+				S_0085F0_DB_ACTION_ENA(1) |
+				S_0085F0_DB_DEST_BASE_ENA(1));
+	si_pm4_emit(ctx, pm4);
+	si_pm4_free_state(ctx, pm4, ~0);
 
 	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
 }
@@ -180,7 +179,6 @@ static void r600_flush_framebuffer(struct r600_context *ctx, bool flush_now)
 void r600_context_flush(struct r600_context *ctx, unsigned flags)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
-	struct r600_block *enable_block = NULL;
 	bool queries_suspended = false;
 
 #if 0
@@ -203,7 +201,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	}
 #endif
 
-	r600_flush_framebuffer(ctx, true);
+	r600_flush_framebuffer(ctx);
 
 	/* partial flush is needed to avoid lockups on some chips with user fences */
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);

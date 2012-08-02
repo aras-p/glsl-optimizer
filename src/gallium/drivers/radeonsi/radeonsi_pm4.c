@@ -131,7 +131,7 @@ void si_pm4_free_state(struct r600_context *rctx,
 	if (state == NULL)
 		return;
 
-	if (rctx->emitted.array[idx] == state) {
+	if (idx != ~0 && rctx->emitted.array[idx] == state) {
 		rctx->emitted.array[idx] = NULL;
 	}
 
@@ -141,9 +141,8 @@ void si_pm4_free_state(struct r600_context *rctx,
 	FREE(state);
 }
 
-unsigned si_pm4_dirty_dw(struct r600_context *rctx)
+uint32_t si_pm4_sync_flags(struct r600_context *rctx)
 {
-	unsigned count = 0;
 	uint32_t cp_coher_cntl = 0;
 
 	for (int i = 0; i < NUMBER_OF_STATES; ++i) {
@@ -152,19 +151,14 @@ unsigned si_pm4_dirty_dw(struct r600_context *rctx)
 		if (!state || rctx->emitted.array[i] == state)
 			continue;
 
-		count += state->ndw;
 		cp_coher_cntl |= state->cp_coher_cntl;
 	}
-
-	//TODO
-	rctx->atom_surface_sync.flush_flags |= cp_coher_cntl;
-	r600_atom_dirty(rctx, &rctx->atom_surface_sync.atom);
-	return count;
+	return cp_coher_cntl;
 }
 
-void si_pm4_emit_dirty(struct r600_context *rctx)
+unsigned si_pm4_dirty_dw(struct r600_context *rctx)
 {
-	struct radeon_winsys_cs *cs = rctx->cs;
+	unsigned count = 0;
 
 	for (int i = 0; i < NUMBER_OF_STATES; ++i) {
 		struct si_pm4_state *state = rctx->queued.array[i];
@@ -172,14 +166,33 @@ void si_pm4_emit_dirty(struct r600_context *rctx)
 		if (!state || rctx->emitted.array[i] == state)
 			continue;
 
-		for (int j = 0; j < state->nbo; ++j) {
-			r600_context_bo_reloc(rctx, state->bo[j],
-					      state->bo_usage[j]);
-		}
+		count += state->ndw;
+	}
 
-		memcpy(&cs->buf[cs->cdw], state->pm4, state->ndw * 4);
-		cs->cdw += state->ndw;
+	return count;
+}
 
+void si_pm4_emit(struct r600_context *rctx, struct si_pm4_state *state)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	for (int i = 0; i < state->nbo; ++i) {
+		r600_context_bo_reloc(rctx, state->bo[i],
+				      state->bo_usage[i]);
+	}
+
+	memcpy(&cs->buf[cs->cdw], state->pm4, state->ndw * 4);
+	cs->cdw += state->ndw;
+}
+
+void si_pm4_emit_dirty(struct r600_context *rctx)
+{
+	for (int i = 0; i < NUMBER_OF_STATES; ++i) {
+		struct si_pm4_state *state = rctx->queued.array[i];
+
+		if (!state || rctx->emitted.array[i] == state)
+			continue;
+
+		si_pm4_emit(rctx, state);
 		rctx->emitted.array[i] = state;
 	}
 }

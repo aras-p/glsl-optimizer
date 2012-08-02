@@ -466,7 +466,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	struct pipe_draw_info info = *dinfo;
 	struct r600_draw rdraw = {};
 	struct pipe_index_buffer ib = {};
-	struct r600_atom *state = NULL, *next_state = NULL;
+	uint32_t cp_coher_cntl;
 
 	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
 	    (info.indexed && !rctx->index_buffer.buffer)) {
@@ -524,14 +524,18 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	rdraw.db_render_override = dsa->db_render_override;
 	rdraw.db_render_control = dsa->db_render_control;
 
+	cp_coher_cntl = si_pm4_sync_flags(rctx);
+	if (cp_coher_cntl) {
+		struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+		si_cmd_surface_sync(pm4, cp_coher_cntl);
+		si_pm4_set_state(rctx, sync, pm4);
+	}
+
 	/* Emit states. */
 	rctx->pm4_dirty_cdwords += si_pm4_dirty_dw(rctx);
 
 	r600_need_cs_space(rctx, 0, TRUE);
 
-	LIST_FOR_EACH_ENTRY_SAFE(state, next_state, &rctx->dirty_states, head) {
-		r600_emit_atom(rctx, state);
-	}
 	si_pm4_emit_dirty(rctx);
 	rctx->pm4_dirty_cdwords = 0;
 

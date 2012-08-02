@@ -50,30 +50,6 @@
 #define R600_BIG_ENDIAN 0
 #endif
 
-enum r600_atom_flags {
-	/* When set, atoms are added at the beginning of the dirty list
-	 * instead of the end. */
-	EMIT_EARLY = (1 << 0)
-};
-
-/* This encapsulates a state or an operation which can emitted into the GPU
- * command stream. It's not limited to states only, it can be used for anything
- * that wants to write commands into the CS (e.g. cache flushes). */
-struct r600_atom {
-	void (*emit)(struct r600_context *ctx, struct r600_atom *state);
-
-	unsigned		num_dw;
-	enum r600_atom_flags	flags;
-	bool			dirty;
-
-	struct list_head	head;
-};
-
-struct r600_atom_surface_sync {
-	struct r600_atom atom;
-	unsigned flush_flags; /* CP_COHER_CNTL */
-};
-
 struct r600_pipe_fences {
 	struct si_resource		*bo;
 	unsigned			*data;
@@ -171,10 +147,6 @@ struct r600_context {
 
 	unsigned default_ps_gprs, default_vs_gprs;
 
-	/* States based on r600_state. */
-	struct list_head		dirty_states;
-	struct r600_atom_surface_sync	atom_surface_sync;
-
 	/* Below are variables from the old r600_context.
 	 */
 	struct radeon_winsys_cs	*cs;
@@ -213,26 +185,6 @@ struct r600_context {
 	union si_state	emitted;
 };
 
-static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
-{
-	atom->emit(rctx, atom);
-	atom->dirty = false;
-	if (atom->head.next && atom->head.prev)
-		LIST_DELINIT(&atom->head);
-}
-
-static INLINE void r600_atom_dirty(struct r600_context *rctx, struct r600_atom *state)
-{
-	if (!state->dirty) {
-		if (state->flags & EMIT_EARLY) {
-			LIST_ADD(&state->head, &rctx->dirty_states);
-		} else {
-			LIST_ADDTAIL(&state->head, &rctx->dirty_states);
-		}
-		state->dirty = true;
-	}
-}
-
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_context *rctx);
 void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
@@ -270,10 +222,6 @@ unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 void r600_translate_index_buffer(struct r600_context *r600,
 				 struct pipe_index_buffer *ib,
 				 unsigned count);
-
-/* r600_state_common.c */
-void r600_init_common_atoms(struct r600_context *rctx);
-unsigned r600_get_cb_flush_flags(struct r600_context *rctx);
 
 /*
  * common helpers
