@@ -19,6 +19,9 @@ main_test_LDADD = \
 if HAVE_SHARED_GLAPI
 AM_CPPFLAGS += -DHAVE_SHARED_GLAPI
 
+main_test_SOURCES +=			\
+	dispatch_sanity.cpp
+
 main_test_LDADD += \
 	$(top_builddir)/src/mapi/shared-glapi/libglapi.la
 else
