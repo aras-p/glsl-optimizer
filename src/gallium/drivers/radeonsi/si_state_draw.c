@@ -543,7 +543,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	si_context_draw(rctx, &rdraw);
 
-	rctx->flags |= R600_CONTEXT_DST_CACHES_DIRTY | R600_CONTEXT_DRAW_PENDING;
+	rctx->flags |= R600_CONTEXT_DST_CACHES_DIRTY;
 
 	if (rctx->framebuffer.zsbuf)
 	{

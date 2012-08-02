@@ -115,19 +115,6 @@ err:
 	return;
 }
 
-static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-
-	if (!(ctx->flags & R600_CONTEXT_DRAW_PENDING))
-		return;
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
-
-	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
-}
-
 /* initialize */
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 			boolean count_draw_in)

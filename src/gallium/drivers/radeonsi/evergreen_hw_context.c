@@ -42,19 +42,6 @@ int si_context_init(struct r600_context *ctx)
 	return 0;
 }
 
-static inline void evergreen_context_ps_partial_flush(struct r600_context *ctx)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-
-	if (!(ctx->flags & R600_CONTEXT_DRAW_PENDING))
-		return;
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
-
-	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
-}
-
 void si_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
