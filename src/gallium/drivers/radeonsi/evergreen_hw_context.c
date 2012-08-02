@@ -38,7 +38,6 @@ int si_context_init(struct r600_context *ctx)
 
 	ctx->cs = ctx->ws->cs_create(ctx->ws);
 
-	r600_init_cs(ctx);
 	ctx->max_db = 8;
 	return 0;
 }

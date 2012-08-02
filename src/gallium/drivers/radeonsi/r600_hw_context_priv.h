@@ -36,11 +36,6 @@
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
 
 /*
- * r600_hw_context.c
- */
-void r600_init_cs(struct r600_context *ctx);
-
-/*
  * evergreen_hw_context.c
  */
 void evergreen_flush_vgt_streamout(struct r600_context *ctx);

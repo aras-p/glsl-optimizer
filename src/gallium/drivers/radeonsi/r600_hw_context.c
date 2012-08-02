@@ -128,18 +128,6 @@ static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
 	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
 }
 
-void r600_init_cs(struct r600_context *ctx)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-
-	/* All asics require this one */
-	cs->buf[cs->cdw++] = PKT3(PKT3_CONTEXT_CONTROL, 1, 0);
-	cs->buf[cs->cdw++] = 0x80000000;
-	cs->buf[cs->cdw++] = 0x80000000;
-
-	ctx->init_dwords = cs->cdw;
-}
-
 /* initialize */
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 			boolean count_draw_in)
@@ -209,7 +197,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	bool queries_suspended = false;
 	bool streamout_suspended = false;
 
-	if (cs->cdw == ctx->init_dwords)
+	if (!cs->cdw)
 		return;
 
 	/* suspend queries */
@@ -237,8 +225,6 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
-
-	r600_init_cs(ctx);
 
 	if (streamout_suspended) {
 		ctx->streamout_start = TRUE;

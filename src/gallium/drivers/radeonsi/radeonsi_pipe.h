@@ -181,7 +181,6 @@ struct r600_context {
 	struct radeon_winsys_cs	*cs;
 
 	unsigned		pm4_dirty_cdwords;
-	unsigned		init_dwords;
 
 	/* The list of active queries. Only one query of each type can be active. */
 	struct list_head	active_query_list;
