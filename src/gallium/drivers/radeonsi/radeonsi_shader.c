@@ -1,6 +1,7 @@
 
 #include "gallivm/lp_bld_tgsi_action.h"
 #include "gallivm/lp_bld_const.h"
+#include "gallivm/lp_bld_gather.h"
 #include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_tgsi.h"
 #include "radeon_llvm.h"
@@ -515,6 +516,7 @@ static void tex_fetch_args(
 	struct lp_build_tgsi_context * bld_base,
 	struct lp_build_emit_data * emit_data)
 {
+	const struct tgsi_full_instruction * inst = emit_data->inst;
 	LLVMValueRef ptr;
 	LLVMValueRef offset;
 
@@ -524,8 +526,27 @@ static void tex_fetch_args(
 
 	/* Coordinates */
 	/* XXX: Not all sample instructions need 4 address arguments. */
-	emit_data->args[1] = lp_build_emit_fetch(bld_base, emit_data->inst,
-							0, LP_CHAN_ALL);
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TXP) {
+		LLVMValueRef src_w;
+		unsigned chan;
+		LLVMValueRef coords[4];
+
+		emit_data->dst_type = LLVMVectorType(bld_base->base.elem_type, 4);
+		src_w = lp_build_emit_fetch(bld_base, emit_data->inst, 0, TGSI_CHAN_W);
+
+		for (chan = 0; chan < 3; chan++ ) {
+			LLVMValueRef arg = lp_build_emit_fetch(bld_base,
+							       emit_data->inst, 0, chan);
+			coords[chan] = lp_build_emit_llvm_binary(bld_base,
+								 TGSI_OPCODE_DIV,
+								 arg, src_w);
+		}
+		coords[3] = bld_base->base.one;
+		emit_data->args[1] = lp_build_gather_values(bld_base->base.gallivm,
+							    coords, 4);
+	} else
+		emit_data->args[1] = lp_build_emit_fetch(bld_base, emit_data->inst,
+							 0, LP_CHAN_ALL);
 
 	/* Resource */
 	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V8I32, 4);
@@ -588,6 +609,7 @@ int si_pipe_shader_create(
 	bld_base->emit_epilogue = si_llvm_emit_epilogue;
 
 	bld_base->op_actions[TGSI_OPCODE_TEX] = tex_action;
+	bld_base->op_actions[TGSI_OPCODE_TXP] = tex_action;
 
 	si_shader_ctx.radeon_bld.load_input = declare_input;
 	si_shader_ctx.tokens = shader->tokens;
