@@ -409,6 +409,11 @@ __DRIconfig **driConcatConfigs(__DRIconfig **a,
     __DRIconfig **all;
     int i, j, index;
 
+    if (a == NULL || a[0] == NULL)
+       return b;
+    else if (b == NULL || b[0] == NULL)
+       return a;
+
     i = 0;
     while (a[i] != NULL)
 	i++;

@@ -760,10 +760,7 @@ __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
 				     msaa_samples_array,
 				     ARRAY_SIZE(msaa_samples_array),
 				     GL_TRUE);
-      if (configs == NULL)
-	 configs = new_configs;
-      else
-	 configs = driConcatConfigs(configs, new_configs);
+      configs = driConcatConfigs(configs, new_configs);
    }
 
    if (configs == NULL) {

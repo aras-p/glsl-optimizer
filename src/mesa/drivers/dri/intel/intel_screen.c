@@ -878,10 +878,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
                                      msaa_samples_array,
                                      ARRAY_SIZE(msaa_samples_array),
                                      false);
-      if (configs == NULL)
-         configs = new_configs;
-      else
-         configs = driConcatConfigs(configs, new_configs);
+      configs = driConcatConfigs(configs, new_configs);
    }
 
    /* Generate the minimum possible set of configs that include an
@@ -903,10 +900,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
                                      back_buffer_modes + 1, 1,
                                      msaa_samples_array, 1,
                                      true);
-      if (configs == NULL)
-         configs = new_configs;
-      else
-         configs = driConcatConfigs(configs, new_configs);
+      configs = driConcatConfigs(configs, new_configs);
    }
 
    if (configs == NULL) {

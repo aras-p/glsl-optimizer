@@ -79,8 +79,7 @@ nouveau_get_configs(void)
 					  GL_TRUE);
 		assert(config);
 
-		configs = configs ? driConcatConfigs(configs, config)
-			: config;
+		configs = driConcatConfigs(configs, config);
 	}
 
 	return (const __DRIconfig **)configs;

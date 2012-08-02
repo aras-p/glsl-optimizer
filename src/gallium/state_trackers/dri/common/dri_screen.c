@@ -219,16 +219,12 @@ dri_fill_in_modes(struct dri_screen *screen,
 
    if (pixel_bits == 16) {
       configs = configs_r5g6b5;
-      if (configs_a8r8g8b8)
-         configs = configs ? driConcatConfigs(configs, configs_a8r8g8b8) : configs_a8r8g8b8;
-      if (configs_x8r8g8b8)
-	 configs = configs ? driConcatConfigs(configs, configs_x8r8g8b8) : configs_x8r8g8b8;
+      configs = driConcatConfigs(configs, configs_a8r8g8b8);
+      configs = driConcatConfigs(configs, configs_x8r8g8b8);
    } else {
       configs = configs_a8r8g8b8;
-      if (configs_x8r8g8b8)
-	 configs = configs ? driConcatConfigs(configs, configs_x8r8g8b8) : configs_x8r8g8b8;
-      if (configs_r5g6b5)
-         configs = configs ? driConcatConfigs(configs, configs_r5g6b5) : configs_r5g6b5;
+      configs = driConcatConfigs(configs, configs_x8r8g8b8);
+      configs = driConcatConfigs(configs, configs_r5g6b5);
    }
 
    if (configs == NULL) {
