@@ -174,7 +174,6 @@ struct r600_context {
 	/* States based on r600_state. */
 	struct list_head		dirty_states;
 	struct r600_atom_surface_sync	atom_surface_sync;
-	struct r600_atom		atom_r6xx_flush_and_inv;
 
 	/* Below are variables from the old r600_context.
 	 */

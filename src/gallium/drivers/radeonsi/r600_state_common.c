@@ -49,13 +49,6 @@ static void r600_emit_surface_sync(struct r600_context *rctx, struct r600_atom *
 	a->flush_flags = 0;
 }
 
-static void r600_emit_r6xx_flush_and_inv(struct r600_context *rctx, struct r600_atom *atom)
-{
-	struct radeon_winsys_cs *cs = rctx->cs;
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
-}
-
 static void r600_init_atom(struct r600_atom *atom,
 			   void (*emit)(struct r600_context *ctx, struct r600_atom *state),
 			   unsigned num_dw,
@@ -69,7 +62,6 @@ static void r600_init_atom(struct r600_atom *atom,
 void r600_init_common_atoms(struct r600_context *rctx)
 {
 	r600_init_atom(&rctx->atom_surface_sync.atom,	r600_emit_surface_sync,		5, EMIT_EARLY);
-	r600_init_atom(&rctx->atom_r6xx_flush_and_inv,	r600_emit_r6xx_flush_and_inv,	2, EMIT_EARLY);
 }
 
 unsigned r600_get_cb_flush_flags(struct r600_context *rctx)
