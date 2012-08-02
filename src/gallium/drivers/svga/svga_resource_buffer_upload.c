@@ -410,7 +410,7 @@ svga_buffer_add_range(struct svga_buffer *sbuf,
 /**
  * Copy the contents of the malloc buffer to a hardware buffer.
  */
-static INLINE enum pipe_error
+static enum pipe_error
 svga_buffer_update_hw(struct svga_screen *ss, struct svga_buffer *sbuf)
 {
    assert(!sbuf->user);
@@ -460,7 +460,7 @@ svga_buffer_update_hw(struct svga_screen *ss, struct svga_buffer *sbuf)
  *
  * Used when the buffer is too big to fit in the GMR aperture.
  */
-static INLINE enum pipe_error
+static enum pipe_error
 svga_buffer_upload_piecewise(struct svga_screen *ss,
                              struct svga_context *svga,
                              struct svga_buffer *sbuf)
