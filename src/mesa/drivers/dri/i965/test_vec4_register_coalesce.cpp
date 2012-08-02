@@ -70,7 +70,7 @@ _register_coalesce(vec4_visitor *v, const char *func)
       v->dump_instructions();
    }
 
-   v->opt_compute_to_mrf();
+   v->opt_register_coalesce();
 
    if (print) {
       printf("%s: instructions after:\n", func);
@@ -78,7 +78,7 @@ _register_coalesce(vec4_visitor *v, const char *func)
    }
 }
 
-TEST_F(register_coalesce_test, test_easy_success)
+TEST_F(register_coalesce_test, test_compute_to_mrf)
 {
    src_reg something = src_reg(v, glsl_type::float_type);
    dst_reg temp = dst_reg(v, glsl_type::float_type);
@@ -142,4 +142,58 @@ TEST_F(register_coalesce_test, test_dp4_mrf)
 
    EXPECT_EQ(dp4->dst.file, MRF);
    EXPECT_EQ(dp4->dst.writemask, WRITEMASK_Y);
+}
+
+TEST_F(register_coalesce_test, test_dp4_grf)
+{
+   src_reg some_src_1 = src_reg(v, glsl_type::vec4_type);
+   src_reg some_src_2 = src_reg(v, glsl_type::vec4_type);
+   dst_reg init;
+
+   dst_reg to = dst_reg(v, glsl_type::vec4_type);
+   dst_reg temp = dst_reg(v, glsl_type::float_type);
+
+   vec4_instruction *dp4 = v->emit(v->DP4(temp, some_src_1, some_src_2));
+   to.writemask = WRITEMASK_Y;
+   v->emit(v->MOV(to, src_reg(temp)));
+
+   /* if we don't do something with the result, the automatic dead code
+    * elimination will remove all our instructions.
+    */
+   src_reg src = src_reg(to);
+   src.negate = true;
+   v->emit(v->MOV(dst_reg(MRF, 0), src));
+
+   register_coalesce(v);
+
+   EXPECT_EQ(dp4->dst.reg, to.reg);
+   EXPECT_EQ(dp4->dst.writemask, WRITEMASK_Y);
+}
+
+TEST_F(register_coalesce_test, test_channel_mul_grf)
+{
+   src_reg some_src_1 = src_reg(v, glsl_type::vec4_type);
+   src_reg some_src_2 = src_reg(v, glsl_type::vec4_type);
+   dst_reg init;
+
+   dst_reg to = dst_reg(v, glsl_type::vec4_type);
+   dst_reg temp = dst_reg(v, glsl_type::float_type);
+
+   vec4_instruction *mul = v->emit(v->MUL(temp, some_src_1, some_src_2));
+   to.writemask = WRITEMASK_Y;
+   v->emit(v->MOV(to, src_reg(temp)));
+
+   /* if we don't do something with the result, the automatic dead code
+    * elimination will remove all our instructions.
+    */
+   src_reg src = src_reg(to);
+   src.negate = true;
+   v->emit(v->MOV(dst_reg(MRF, 0), src));
+
+   register_coalesce(v);
+
+   /* This path isn't supported yet in the reswizzling code, so we're checking
+    * that we haven't done anything bad to scalar non-DP[234]s.
+    */
+   EXPECT_NE(mul->dst.reg, to.reg);
 }

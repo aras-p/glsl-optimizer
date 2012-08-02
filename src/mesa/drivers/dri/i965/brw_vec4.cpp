@@ -680,12 +680,12 @@ vec4_instruction::reswizzle_dst(int dst_writemask, int swizzle)
 }
 
 /*
- * Tries to reduce extra MOV instructions by taking GRFs that get just
- * written and then MOVed into an MRF and making the original write of
- * the GRF write directly to the MRF instead.
+ * Tries to reduce extra MOV instructions by taking temporary GRFs that get
+ * just written and then MOVed into another reg and making the original write
+ * of the GRF write directly to the final destination instead.
  */
 bool
-vec4_visitor::opt_compute_to_mrf()
+vec4_visitor::opt_register_coalesce()
 {
    bool progress = false;
    int next_ip = 0;
@@ -699,24 +699,25 @@ vec4_visitor::opt_compute_to_mrf()
       next_ip++;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
+          (inst->dst.file != GRF && inst->dst.file != MRF) ||
 	  inst->predicate ||
-	  inst->dst.file != MRF || inst->src[0].file != GRF ||
+	  inst->src[0].file != GRF ||
 	  inst->dst.type != inst->src[0].type ||
 	  inst->src[0].abs || inst->src[0].negate || inst->src[0].reladdr)
 	 continue;
 
-      int mrf = inst->dst.reg;
+      bool to_mrf = (inst->dst.file == MRF);
 
-      /* Can't compute-to-MRF this GRF if someone else was going to
+      /* Can't coalesce this GRF if someone else was going to
        * read it later.
        */
       if (this->virtual_grf_use[inst->src[0].reg] > ip)
 	 continue;
 
-      /* We need to check interference with the MRF between this
-       * instruction and the earliest instruction involved in writing
-       * the GRF we're eliminating.  To do that, keep track of which
-       * of our source channels we've seen initialized.
+      /* We need to check interference with the final destination between this
+       * instruction and the earliest instruction involved in writing the GRF
+       * we're eliminating.  To do that, keep track of which of our source
+       * channels we've seen initialized.
        */
       bool chans_needed[4] = {false, false, false, false};
       int chans_remaining = 0;
@@ -735,8 +736,9 @@ vec4_visitor::opt_compute_to_mrf()
 	 }
       }
 
-      /* Now walk up the instruction stream trying to see if we can
-       * rewrite everything writing to the GRF into the MRF instead.
+      /* Now walk up the instruction stream trying to see if we can rewrite
+       * everything writing to the temporary to write into the destination
+       * instead.
        */
       vec4_instruction *scan_inst;
       for (scan_inst = (vec4_instruction *)inst->prev;
@@ -745,22 +747,21 @@ vec4_visitor::opt_compute_to_mrf()
 	 if (scan_inst->dst.file == GRF &&
 	     scan_inst->dst.reg == inst->src[0].reg &&
 	     scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
-	    /* Found something writing to the reg we want to turn into
-	     * a compute-to-MRF.
-	     */
+            /* Found something writing to the reg we want to coalesce away. */
+            if (to_mrf) {
+               /* SEND instructions can't have MRF as a destination. */
+               if (scan_inst->mlen)
+                  break;
 
-	    /* SEND instructions can't have MRF as a destination. */
-	    if (scan_inst->mlen)
-	       break;
-
-	    if (intel->gen >= 6) {
-	       /* gen6 math instructions must have the destination be
-		* GRF, so no compute-to-MRF for them.
-		*/
-	       if (scan_inst->is_math()) {
-		  break;
-	       }
-	    }
+               if (intel->gen >= 6) {
+                  /* gen6 math instructions must have the destination be
+                   * GRF, so no compute-to-MRF for them.
+                   */
+                  if (scan_inst->is_math()) {
+                     break;
+                  }
+               }
+            }
 
             /* If we can't handle the swizzle, bail. */
             if (!scan_inst->can_reswizzle_dst(inst->dst.writemask,
@@ -784,9 +785,8 @@ vec4_visitor::opt_compute_to_mrf()
 	       break;
 	 }
 
-	 /* We don't handle flow control here.  Most computation of
-	  * values that end up in MRFs are shortly before the MRF
-	  * write anyway.
+	 /* We don't handle flow control here.  Most computation of values
+	  * that could be coalesced happens just before their use.
 	  */
 	 if (scan_inst->opcode == BRW_OPCODE_DO ||
 	     scan_inst->opcode == BRW_OPCODE_WHILE ||
@@ -795,9 +795,11 @@ vec4_visitor::opt_compute_to_mrf()
 	    break;
 	 }
 
-	 /* You can't read from an MRF, so if someone else reads our
-	  * MRF's source GRF that we wanted to rewrite, that stops us.
-	  */
+         /* You can't read from an MRF, so if someone else reads our MRF's
+          * source GRF that we wanted to rewrite, that stops us.  If it's a
+          * GRF we're trying to coalesce to, we don't actually handle
+          * rewriting sources so bail in that case as well.
+          */
 	 bool interfered = false;
 	 for (int i = 0; i < 3; i++) {
 	    if (scan_inst->src[i].file == GRF &&
@@ -809,30 +811,41 @@ vec4_visitor::opt_compute_to_mrf()
 	 if (interfered)
 	    break;
 
-	 /* If somebody else writes our MRF here, we can't
-	  * compute-to-MRF before that.
-	  */
-	 if (scan_inst->dst.file == MRF && mrf == scan_inst->dst.reg)
+         /* If somebody else writes our destination here, we can't coalesce
+          * before that.
+          */
+         if (scan_inst->dst.file == inst->dst.file &&
+             scan_inst->dst.reg == inst->dst.reg) {
 	    break;
+         }
 
-	 if (scan_inst->mlen > 0) {
-	    /* Found a SEND instruction, which means that there are
-	     * live values in MRFs from base_mrf to base_mrf +
-	     * scan_inst->mlen - 1.  Don't go pushing our MRF write up
-	     * above it.
-	     */
-	    if (mrf >= scan_inst->base_mrf &&
-		mrf < scan_inst->base_mrf + scan_inst->mlen) {
-	       break;
-	    }
-	 }
+         /* Check for reads of the register we're trying to coalesce into.  We
+          * can't go rewriting instructions above that to put some other value
+          * in the register instead.
+          */
+         if (to_mrf && scan_inst->mlen > 0) {
+            if (inst->dst.reg >= scan_inst->base_mrf &&
+                inst->dst.reg < scan_inst->base_mrf + scan_inst->mlen) {
+               break;
+            }
+         } else {
+            for (int i = 0; i < 3; i++) {
+               if (scan_inst->src[i].file == inst->dst.file &&
+                   scan_inst->src[i].reg == inst->dst.reg &&
+                   scan_inst->src[i].reg_offset == inst->src[0].reg_offset) {
+                  interfered = true;
+               }
+            }
+            if (interfered)
+               break;
+         }
       }
 
       if (chans_remaining == 0) {
-	 /* If we've made it here, we have an inst we want to
-	  * compute-to-MRF, and a scan_inst pointing to the earliest
-	  * instruction involved in computing the value.  Now go
-	  * rewrite the instruction stream between the two.
+	 /* If we've made it here, we have an MOV we want to coalesce out, and
+	  * a scan_inst pointing to the earliest instruction involved in
+	  * computing the value.  Now go rewrite the instruction stream
+	  * between the two.
 	  */
 
 	 while (scan_inst != inst) {
@@ -841,9 +854,9 @@ vec4_visitor::opt_compute_to_mrf()
 		scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
                scan_inst->reswizzle_dst(inst->dst.writemask,
                                         inst->src[0].swizzle);
-	       scan_inst->dst.file = MRF;
-	       scan_inst->dst.reg = mrf;
-	       scan_inst->dst.reg_offset = 0;
+	       scan_inst->dst.file = inst->dst.file;
+	       scan_inst->dst.reg = inst->dst.reg;
+	       scan_inst->dst.reg_offset = inst->dst.reg_offset;
 	       scan_inst->saturate |= inst->saturate;
 	    }
 	    scan_inst = (vec4_instruction *)scan_inst->next;
@@ -1277,7 +1290,7 @@ vec4_visitor::run()
       progress = dead_code_eliminate() || progress;
       progress = opt_copy_propagation() || progress;
       progress = opt_algebraic() || progress;
-      progress = opt_compute_to_mrf() || progress;
+      progress = opt_register_coalesce() || progress;
    } while (progress);
 
 
