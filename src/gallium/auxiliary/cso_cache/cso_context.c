@@ -27,7 +27,7 @@
 
  /**
   * @file
-  * 
+  *
   * Wrap the cso cache & hash mechanisms in a simplified
   * pipe-driver-specific interface.
   *
@@ -134,7 +134,8 @@ static boolean delete_blend_state(struct cso_context *ctx, void *state)
 
 static boolean delete_depth_stencil_state(struct cso_context *ctx, void *state)
 {
-   struct cso_depth_stencil_alpha *cso = (struct cso_depth_stencil_alpha *)state;
+   struct cso_depth_stencil_alpha *cso =
+      (struct cso_depth_stencil_alpha *)state;
 
    if (ctx->depth_stencil == cso->data)
       return FALSE;
@@ -208,8 +209,9 @@ static INLINE boolean delete_cso(struct cso_context *ctx,
    return FALSE;
 }
 
-static INLINE void sanitize_hash(struct cso_hash *hash, enum cso_cache_type type,
-                                 int max_size, void *user_data)
+static INLINE void
+sanitize_hash(struct cso_hash *hash, enum cso_cache_type type,
+              int max_size, void *user_data)
 {
    struct cso_context *ctx = (struct cso_context *)user_data;
    /* if we're approach the maximum size, remove fourth of the entries
@@ -286,7 +288,7 @@ struct cso_context *cso_create_context( struct pipe_context *pipe )
    return ctx;
 
 out:
-   cso_destroy_context( ctx );      
+   cso_destroy_context( ctx );
    return NULL;
 }
 
@@ -376,10 +378,12 @@ enum pipe_error cso_set_blend(struct cso_context *ctx,
    struct cso_hash_iter iter;
    void *handle;
 
-   key_size = templ->independent_blend_enable ? sizeof(struct pipe_blend_state) :
-              (char *)&(templ->rt[1]) - (char *)templ;
+   key_size = templ->independent_blend_enable ?
+      sizeof(struct pipe_blend_state) :
+      (char *)&(templ->rt[1]) - (char *)templ;
    hash_key = cso_construct_key((void*)templ, key_size);
-   iter = cso_find_state_template(ctx->cache, hash_key, CSO_BLEND, (void*)templ, key_size);
+   iter = cso_find_state_template(ctx->cache, hash_key, CSO_BLEND,
+                                  (void*)templ, key_size);
 
    if (cso_hash_iter_is_null(iter)) {
       struct cso_blend *cso = MALLOC(sizeof(struct cso_blend));
@@ -428,28 +432,33 @@ void cso_restore_blend(struct cso_context *ctx)
 
 
 
-enum pipe_error cso_set_depth_stencil_alpha(struct cso_context *ctx,
-                                            const struct pipe_depth_stencil_alpha_state *templ)
+enum pipe_error
+cso_set_depth_stencil_alpha(struct cso_context *ctx,
+                            const struct pipe_depth_stencil_alpha_state *templ)
 {
    unsigned key_size = sizeof(struct pipe_depth_stencil_alpha_state);
    unsigned hash_key = cso_construct_key((void*)templ, key_size);
    struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
-                                                       hash_key, 
+                                                       hash_key,
                                                        CSO_DEPTH_STENCIL_ALPHA,
                                                        (void*)templ, key_size);
    void *handle;
 
    if (cso_hash_iter_is_null(iter)) {
-      struct cso_depth_stencil_alpha *cso = MALLOC(sizeof(struct cso_depth_stencil_alpha));
+      struct cso_depth_stencil_alpha *cso =
+         MALLOC(sizeof(struct cso_depth_stencil_alpha));
       if (!cso)
          return PIPE_ERROR_OUT_OF_MEMORY;
 
       memcpy(&cso->state, templ, sizeof(*templ));
-      cso->data = ctx->pipe->create_depth_stencil_alpha_state(ctx->pipe, &cso->state);
-      cso->delete_state = (cso_state_callback)ctx->pipe->delete_depth_stencil_alpha_state;
+      cso->data = ctx->pipe->create_depth_stencil_alpha_state(ctx->pipe,
+                                                              &cso->state);
+      cso->delete_state =
+         (cso_state_callback)ctx->pipe->delete_depth_stencil_alpha_state;
       cso->context = ctx->pipe;
 
-      iter = cso_insert_state(ctx->cache, hash_key, CSO_DEPTH_STENCIL_ALPHA, cso);
+      iter = cso_insert_state(ctx->cache, hash_key,
+                              CSO_DEPTH_STENCIL_ALPHA, cso);
       if (cso_hash_iter_is_null(iter)) {
          FREE(cso);
          return PIPE_ERROR_OUT_OF_MEMORY;
@@ -458,7 +467,8 @@ enum pipe_error cso_set_depth_stencil_alpha(struct cso_context *ctx,
       handle = cso->data;
    }
    else {
-      handle = ((struct cso_depth_stencil_alpha *)cso_hash_iter_data(iter))->data;
+      handle = ((struct cso_depth_stencil_alpha *)
+                cso_hash_iter_data(iter))->data;
    }
 
    if (ctx->depth_stencil != handle) {
@@ -478,7 +488,8 @@ void cso_restore_depth_stencil_alpha(struct cso_context *ctx)
 {
    if (ctx->depth_stencil != ctx->depth_stencil_saved) {
       ctx->depth_stencil = ctx->depth_stencil_saved;
-      ctx->pipe->bind_depth_stencil_alpha_state(ctx->pipe, ctx->depth_stencil_saved);
+      ctx->pipe->bind_depth_stencil_alpha_state(ctx->pipe,
+                                                ctx->depth_stencil_saved);
    }
    ctx->depth_stencil_saved = NULL;
 }
@@ -491,7 +502,8 @@ enum pipe_error cso_set_rasterizer(struct cso_context *ctx,
    unsigned key_size = sizeof(struct pipe_rasterizer_state);
    unsigned hash_key = cso_construct_key((void*)templ, key_size);
    struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
-                                                       hash_key, CSO_RASTERIZER,
+                                                       hash_key,
+                                                       CSO_RASTERIZER,
                                                        (void*)templ, key_size);
    void *handle = NULL;
 
@@ -502,7 +514,8 @@ enum pipe_error cso_set_rasterizer(struct cso_context *ctx,
 
       memcpy(&cso->state, templ, sizeof(*templ));
       cso->data = ctx->pipe->create_rasterizer_state(ctx->pipe, &cso->state);
-      cso->delete_state = (cso_state_callback)ctx->pipe->delete_rasterizer_state;
+      cso->delete_state =
+         (cso_state_callback)ctx->pipe->delete_rasterizer_state;
       cso->context = ctx->pipe;
 
       iter = cso_insert_state(ctx->cache, hash_key, CSO_RASTERIZER, cso);
@@ -701,7 +714,8 @@ void cso_save_stencil_ref(struct cso_context *ctx)
 
 void cso_restore_stencil_ref(struct cso_context *ctx)
 {
-   if (memcmp(&ctx->stencil_ref, &ctx->stencil_ref_saved, sizeof(ctx->stencil_ref))) {
+   if (memcmp(&ctx->stencil_ref, &ctx->stencil_ref_saved,
+              sizeof(ctx->stencil_ref))) {
       ctx->stencil_ref = ctx->stencil_ref_saved;
       ctx->pipe->set_stencil_ref(ctx->pipe, &ctx->stencil_ref);
    }
@@ -793,9 +807,10 @@ cso_restore_clip(struct cso_context *ctx)
    }
 }
 
-enum pipe_error cso_set_vertex_elements(struct cso_context *ctx,
-                                        unsigned count,
-                                        const struct pipe_vertex_element *states)
+enum pipe_error
+cso_set_vertex_elements(struct cso_context *ctx,
+                        unsigned count,
+                        const struct pipe_vertex_element *states)
 {
    struct u_vbuf *vbuf = ctx->vbuf;
    unsigned key_size, hash_key;
@@ -808,15 +823,18 @@ enum pipe_error cso_set_vertex_elements(struct cso_context *ctx,
       return PIPE_OK;
    }
 
-   /* need to include the count into the stored state data too.
-      Otherwise first few count pipe_vertex_elements could be identical even if count
-      is different, and there's no guarantee the hash would be different in that
-      case neither */
+   /* Need to include the count into the stored state data too.
+    * Otherwise first few count pipe_vertex_elements could be identical
+    * even if count is different, and there's no guarantee the hash would
+    * be different in that case neither.
+    */
    key_size = sizeof(struct pipe_vertex_element) * count + sizeof(unsigned);
    velems_state.count = count;
-   memcpy(velems_state.velems, states, sizeof(struct pipe_vertex_element) * count);
+   memcpy(velems_state.velems, states,
+          sizeof(struct pipe_vertex_element) * count);
    hash_key = cso_construct_key((void*)&velems_state, key_size);
-   iter = cso_find_state_template(ctx->cache, hash_key, CSO_VELEMENTS, (void*)&velems_state, key_size);
+   iter = cso_find_state_template(ctx->cache, hash_key, CSO_VELEMENTS,
+                                  (void*)&velems_state, key_size);
 
    if (cso_hash_iter_is_null(iter)) {
       struct cso_velements *cso = MALLOC(sizeof(struct cso_velements));
@@ -824,8 +842,10 @@ enum pipe_error cso_set_vertex_elements(struct cso_context *ctx,
          return PIPE_ERROR_OUT_OF_MEMORY;
 
       memcpy(&cso->state, &velems_state, key_size);
-      cso->data = ctx->pipe->create_vertex_elements_state(ctx->pipe, count, &cso->state.velems[0]);
-      cso->delete_state = (cso_state_callback)ctx->pipe->delete_vertex_elements_state;
+      cso->data = ctx->pipe->create_vertex_elements_state(ctx->pipe, count,
+                                                      &cso->state.velems[0]);
+      cso->delete_state =
+         (cso_state_callback) ctx->pipe->delete_vertex_elements_state;
       cso->context = ctx->pipe;
 
       iter = cso_insert_state(ctx->cache, hash_key, CSO_VELEMENTS, cso);
@@ -963,7 +983,8 @@ single_sampler(struct cso_context *ctx,
 
          memcpy(&cso->state, templ, sizeof(*templ));
          cso->data = ctx->pipe->create_sampler_state(ctx->pipe, &cso->state);
-         cso->delete_state = (cso_state_callback)ctx->pipe->delete_sampler_state;
+         cso->delete_state =
+            (cso_state_callback) ctx->pipe->delete_sampler_state;
          cso->context = ctx->pipe;
 
          iter = cso_insert_state(ctx->cache, hash_key, CSO_SAMPLER, cso);
@@ -1012,7 +1033,7 @@ single_sampler_done(struct cso_context *ctx, unsigned shader_stage)
    if (info->hw.nr_samplers != info->nr_samplers ||
        memcmp(info->hw.samplers,
               info->samplers,
-              info->nr_samplers * sizeof(void *)) != 0) 
+              info->nr_samplers * sizeof(void *)) != 0)
    {
       memcpy(info->hw.samplers,
              info->samplers,
