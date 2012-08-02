@@ -56,6 +56,9 @@ struct glsl_switch_state {
    bool is_switch_innermost; // if switch stmt is closest to break, ...
 };
 
+const char *
+glsl_compute_version_string(void *mem_ctx, bool is_es, unsigned version);
+
 struct _mesa_glsl_parse_state {
    _mesa_glsl_parse_state(struct gl_context *_ctx, GLenum target,
 			  void *mem_ctx);

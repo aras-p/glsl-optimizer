@@ -290,10 +290,8 @@ version_statement:
 
 	   state->language_version = $2;
 	   state->version_string =
-	      ralloc_asprintf(state, "GLSL%s %d.%02d",
-			      state->es_shader ? " ES" : "",
-			      state->language_version / 100,
-			      state->language_version % 100);
+              glsl_compute_version_string(state, state->es_shader,
+                                          state->language_version);
 
 	   if (!supported) {
 	      _mesa_glsl_error(& @2, state, "%s is not supported. "

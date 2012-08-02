@@ -37,6 +37,16 @@ extern "C" {
 #include "ir_optimization.h"
 #include "loop_analysis.h"
 
+/**
+ * Format a short human-readable description of the given GLSL version.
+ */
+const char *
+glsl_compute_version_string(void *mem_ctx, bool is_es, unsigned version)
+{
+   return ralloc_asprintf(mem_ctx, "GLSL%s %d.%02d", is_es ? " ES" : "",
+                          version / 100, version % 100);
+}
+
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 					       GLenum target, void *mem_ctx)
  : ctx(_ctx)
