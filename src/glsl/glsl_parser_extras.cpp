@@ -174,6 +174,58 @@ _mesa_glsl_parse_state::check_version(unsigned required_glsl_version,
    return false;
 }
 
+/**
+ * Process a GLSL #version directive.
+ *
+ * \param version is the integer that follows the #version token.
+ */
+void
+_mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version)
+{
+   bool supported = false;
+
+   switch (version) {
+   case 100:
+      this->es_shader = true;
+      supported = this->ctx->API == API_OPENGLES2 ||
+         this->ctx->Extensions.ARB_ES2_compatibility;
+      break;
+   case 110:
+   case 120:
+      /* FINISHME: Once the OpenGL 3.0 'forward compatible' context or
+       * the OpenGL 3.2 Core context is supported, this logic will need
+       * change.  Older versions of GLSL are no longer supported
+       * outside the compatibility contexts of 3.x.
+       */
+   case 130:
+   case 140:
+   case 150:
+   case 330:
+   case 400:
+   case 410:
+   case 420:
+      supported = _mesa_is_desktop_gl(this->ctx) &&
+         ((unsigned) version) <= this->ctx->Const.GLSLVersion;
+      break;
+   default:
+      supported = false;
+      break;
+   }
+
+   this->language_version = version;
+
+   if (!supported) {
+      _mesa_glsl_error(locp, this, "%s is not supported. "
+                       "Supported versions are: %s\n",
+                       this->get_version_string(),
+                       this->supported_version_string);
+   }
+
+   if (this->language_version >= 140) {
+      this->ARB_uniform_buffer_object_enable = true;
+   }
+}
+
 const char *
 _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
 {

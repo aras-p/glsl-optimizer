@@ -261,48 +261,7 @@ version_statement:
 	/* blank - no #version specified: defaults are already set */
 	| VERSION_TOK INTCONSTANT EOL
 	{
-	   bool supported = false;
-
-	   switch ($2) {
-	   case 100:
-	      state->es_shader = true;
-	      supported = state->ctx->API == API_OPENGLES2 ||
-		          state->ctx->Extensions.ARB_ES2_compatibility;
-	      break;
-	   case 110:
-	   case 120:
-	      /* FINISHME: Once the OpenGL 3.0 'forward compatible' context or
-	       * the OpenGL 3.2 Core context is supported, this logic will need
-	       * change.  Older versions of GLSL are no longer supported
-	       * outside the compatibility contexts of 3.x.
-	       */
-	   case 130:
-	   case 140:
-	   case 150:
-	   case 330:
-	   case 400:
-	   case 410:
-	   case 420:
-	      supported = _mesa_is_desktop_gl(state->ctx) &&
-			  ((unsigned) $2) <= state->ctx->Const.GLSLVersion;
-	      break;
-	   default:
-	      supported = false;
-	      break;
-	   }
-
-	   state->language_version = $2;
-
-	   if (!supported) {
-	      _mesa_glsl_error(& @2, state, "%s is not supported. "
-			       "Supported versions are: %s\n",
-			       state->get_version_string(),
-			       state->supported_version_string);
-	   }
-
-	   if (state->language_version >= 140) {
-	      state->ARB_uniform_buffer_object_enable = true;
-	   }
+           state->process_version_directive(&@2, $2);
 	}
 	;
 
