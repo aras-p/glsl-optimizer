@@ -179,6 +179,8 @@ _mesa_finish(struct gl_context *ctx);
 extern void
 _mesa_flush(struct gl_context *ctx);
 
+extern int
+_mesa_generic_nop(void);
 
 extern void GLAPIENTRY
 _mesa_Finish( void );

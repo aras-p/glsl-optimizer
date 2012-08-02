@@ -832,8 +832,8 @@ update_default_objects(struct gl_context *ctx)
  * This helps prevents a segfault when someone calls a GL function without
  * first checking if the extension's supported.
  */
-static int
-generic_nop(void)
+int
+_mesa_generic_nop(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -865,7 +865,7 @@ _mesa_alloc_dispatch_table(int size)
       _glapi_proc *entry = (_glapi_proc *) table;
       GLint i;
       for (i = 0; i < numEntries; i++) {
-         entry[i] = (_glapi_proc) generic_nop;
+         entry[i] = (_glapi_proc) _mesa_generic_nop;
       }
    }
    return table;
