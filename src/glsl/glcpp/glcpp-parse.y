@@ -133,6 +133,10 @@ _glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, YYLTYPE *loc,
 static void
 _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser, YYLTYPE *loc);
 
+static void
+_glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t version,
+                                         const char *ident);
+
 static int
 glcpp_parser_lex (YYSTYPE *yylval, YYLTYPE *yylloc, glcpp_parser_t *parser);
 
@@ -334,25 +338,7 @@ control_line:
 		_glcpp_parser_skip_stack_pop (parser, & @1);
 	} NEWLINE
 |	HASH_VERSION integer_constant NEWLINE {
-		macro_t *macro = hash_table_find (parser->defines, "__VERSION__");
-		if (macro) {
-			hash_table_remove (parser->defines, "__VERSION__");
-			ralloc_free (macro);
-		}
-		add_builtin_define (parser, "__VERSION__", $2);
-
-		if ($2 == 100)
-			add_builtin_define (parser, "GL_ES", 1);
-
-		/* Currently, all ES2 implementations support highp in the
-		 * fragment shader, so we always define this macro in ES2.
-		 * If we ever get a driver that doesn't support highp, we'll
-		 * need to add a flag to the gl_context and check that here.
-		 */
-		if ($2 >= 130 || $2 == 100)
-			add_builtin_define (parser, "GL_FRAGMENT_PRECISION_HIGH", 1);
-
-		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "#version %" PRIiMAX, $2);
+		_glcpp_parser_handle_version_declaration(parser, $2, NULL);
 	}
 |	HASH NEWLINE
 ;
@@ -2031,4 +2017,29 @@ _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser, YYLTYPE *loc)
 	node = parser->skip_stack;
 	parser->skip_stack = node->next;
 	ralloc_free (node);
+}
+
+static void
+_glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t version,
+                                         const char *es_identifier)
+{
+	macro_t *macro = hash_table_find (parser->defines, "__VERSION__");
+	if (macro) {
+		hash_table_remove (parser->defines, "__VERSION__");
+		ralloc_free (macro);
+	}
+	add_builtin_define (parser, "__VERSION__", version);
+
+	if (version == 100)
+		add_builtin_define (parser, "GL_ES", 1);
+
+	/* Currently, all ES2 implementations support highp in the
+	 * fragment shader, so we always define this macro in ES2.
+	 * If we ever get a driver that doesn't support highp, we'll
+	 * need to add a flag to the gl_context and check that here.
+	 */
+	if (version >= 130 || version == 100)
+		add_builtin_define (parser, "GL_FRAGMENT_PRECISION_HIGH", 1);
+
+	ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "#version %" PRIiMAX, version);
 }
