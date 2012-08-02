@@ -85,6 +85,21 @@ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
       }									\
    } while (0)
 
+/**
+ * A macro for handling keywords that have been present in GLSL since
+ * its origin, but were changed into reserved words in GLSL 3.00 ES.
+ */
+#define DEPRECATED_ES_KEYWORD(token)					\
+   do {									\
+      if (yyextra->is_version(0, 300)) {				\
+	 _mesa_glsl_error(yylloc, yyextra,				\
+			  "Illegal use of reserved word `%s'", yytext);	\
+	 return ERROR_TOK;						\
+      } else {								\
+         return token;							\
+      }									\
+   } while (0)
+
 static int
 literal_integer(char *text, int len, struct _mesa_glsl_parse_state *state,
 		YYSTYPE *lval, YYLTYPE *lloc, int base)
@@ -223,12 +238,12 @@ HASH		^{SPC}#{SPC}
 
 \n		{ yylineno++; yycolumn = 0; }
 
-attribute	return ATTRIBUTE;
+attribute	DEPRECATED_ES_KEYWORD(ATTRIBUTE);
 const		return CONST_TOK;
 bool		return BOOL_TOK;
 float		return FLOAT_TOK;
 int		return INT_TOK;
-uint		KEYWORD(130, 0, 130, 0, UINT_TOK);
+uint		KEYWORD(130, 300, 130, 300, UINT_TOK);
 
 break		return BREAK;
 continue	return CONTINUE;
@@ -246,59 +261,59 @@ bvec4		return BVEC4;
 ivec2		return IVEC2;
 ivec3		return IVEC3;
 ivec4		return IVEC4;
-uvec2		KEYWORD(130, 0, 130, 0, UVEC2);
-uvec3		KEYWORD(130, 0, 130, 0, UVEC3);
-uvec4		KEYWORD(130, 0, 130, 0, UVEC4);
+uvec2		KEYWORD(130, 300, 130, 300, UVEC2);
+uvec3		KEYWORD(130, 300, 130, 300, UVEC3);
+uvec4		KEYWORD(130, 300, 130, 300, UVEC4);
 vec2		return VEC2;
 vec3		return VEC3;
 vec4		return VEC4;
 mat2		return MAT2X2;
 mat3		return MAT3X3;
 mat4		return MAT4X4;
-mat2x2		KEYWORD(120, 0, 120, 0, MAT2X2);
-mat2x3		KEYWORD(120, 0, 120, 0, MAT2X3);
-mat2x4		KEYWORD(120, 0, 120, 0, MAT2X4);
-mat3x2		KEYWORD(120, 0, 120, 0, MAT3X2);
-mat3x3		KEYWORD(120, 0, 120, 0, MAT3X3);
-mat3x4		KEYWORD(120, 0, 120, 0, MAT3X4);
-mat4x2		KEYWORD(120, 0, 120, 0, MAT4X2);
-mat4x3		KEYWORD(120, 0, 120, 0, MAT4X3);
-mat4x4		KEYWORD(120, 0, 120, 0, MAT4X4);
+mat2x2		KEYWORD(120, 300, 120, 300, MAT2X2);
+mat2x3		KEYWORD(120, 300, 120, 300, MAT2X3);
+mat2x4		KEYWORD(120, 300, 120, 300, MAT2X4);
+mat3x2		KEYWORD(120, 300, 120, 300, MAT3X2);
+mat3x3		KEYWORD(120, 300, 120, 300, MAT3X3);
+mat3x4		KEYWORD(120, 300, 120, 300, MAT3X4);
+mat4x2		KEYWORD(120, 300, 120, 300, MAT4X2);
+mat4x3		KEYWORD(120, 300, 120, 300, MAT4X3);
+mat4x4		KEYWORD(120, 300, 120, 300, MAT4X4);
 
 in		return IN_TOK;
 out		return OUT_TOK;
 inout		return INOUT_TOK;
 uniform		return UNIFORM;
-varying		return VARYING;
-centroid	KEYWORD(120, 0, 120, 0, CENTROID);
+varying		DEPRECATED_ES_KEYWORD(VARYING);
+centroid	KEYWORD(120, 300, 120, 300, CENTROID);
 invariant	KEYWORD(120, 100, 120, 100, INVARIANT);
-flat		KEYWORD(130, 100, 130, 0, FLAT);
-smooth		KEYWORD(130, 0, 130, 0, SMOOTH);
-noperspective	KEYWORD(130, 0, 130, 0, NOPERSPECTIVE);
+flat		KEYWORD(130, 100, 130, 300, FLAT);
+smooth		KEYWORD(130, 300, 130, 300, SMOOTH);
+noperspective	KEYWORD(130, 300, 130, 0, NOPERSPECTIVE);
 
-sampler1D	return SAMPLER1D;
+sampler1D	DEPRECATED_ES_KEYWORD(SAMPLER1D);
 sampler2D	return SAMPLER2D;
 sampler3D	return SAMPLER3D;
 samplerCube	return SAMPLERCUBE;
-sampler1DArray	KEYWORD(130, 0, 130, 0, SAMPLER1DARRAY);
-sampler2DArray	KEYWORD(130, 0, 130, 0, SAMPLER2DARRAY);
-sampler1DShadow	return SAMPLER1DSHADOW;
+sampler1DArray	KEYWORD(130, 300, 130, 0, SAMPLER1DARRAY);
+sampler2DArray	KEYWORD(130, 300, 130, 300, SAMPLER2DARRAY);
+sampler1DShadow	DEPRECATED_ES_KEYWORD(SAMPLER1DSHADOW);
 sampler2DShadow	return SAMPLER2DSHADOW;
-samplerCubeShadow	KEYWORD(130, 0, 130, 0, SAMPLERCUBESHADOW);
-sampler1DArrayShadow	KEYWORD(130, 0, 130, 0, SAMPLER1DARRAYSHADOW);
-sampler2DArrayShadow	KEYWORD(130, 0, 130, 0, SAMPLER2DARRAYSHADOW);
-isampler1D		KEYWORD(130, 0, 130, 0, ISAMPLER1D);
-isampler2D		KEYWORD(130, 0, 130, 0, ISAMPLER2D);
-isampler3D		KEYWORD(130, 0, 130, 0, ISAMPLER3D);
-isamplerCube		KEYWORD(130, 0, 130, 0, ISAMPLERCUBE);
-isampler1DArray		KEYWORD(130, 0, 130, 0, ISAMPLER1DARRAY);
-isampler2DArray		KEYWORD(130, 0, 130, 0, ISAMPLER2DARRAY);
-usampler1D		KEYWORD(130, 0, 130, 0, USAMPLER1D);
-usampler2D		KEYWORD(130, 0, 130, 0, USAMPLER2D);
-usampler3D		KEYWORD(130, 0, 130, 0, USAMPLER3D);
-usamplerCube		KEYWORD(130, 0, 130, 0, USAMPLERCUBE);
-usampler1DArray		KEYWORD(130, 0, 130, 0, USAMPLER1DARRAY);
-usampler2DArray		KEYWORD(130, 0, 130, 0, USAMPLER2DARRAY);
+samplerCubeShadow	KEYWORD(130, 300, 130, 300, SAMPLERCUBESHADOW);
+sampler1DArrayShadow	KEYWORD(130, 300, 130, 0, SAMPLER1DARRAYSHADOW);
+sampler2DArrayShadow	KEYWORD(130, 300, 130, 300, SAMPLER2DARRAYSHADOW);
+isampler1D		KEYWORD(130, 300, 130, 0, ISAMPLER1D);
+isampler2D		KEYWORD(130, 300, 130, 300, ISAMPLER2D);
+isampler3D		KEYWORD(130, 300, 130, 300, ISAMPLER3D);
+isamplerCube		KEYWORD(130, 300, 130, 300, ISAMPLERCUBE);
+isampler1DArray		KEYWORD(130, 300, 130, 0, ISAMPLER1DARRAY);
+isampler2DArray		KEYWORD(130, 300, 130, 300, ISAMPLER2DARRAY);
+usampler1D		KEYWORD(130, 300, 130, 0, USAMPLER1D);
+usampler2D		KEYWORD(130, 300, 130, 300, USAMPLER2D);
+usampler3D		KEYWORD(130, 300, 130, 300, USAMPLER3D);
+usamplerCube		KEYWORD(130, 300, 130, 300, USAMPLERCUBE);
+usampler1DArray		KEYWORD(130, 300, 130, 0, USAMPLER1DARRAY);
+usampler2DArray		KEYWORD(130, 300, 130, 300, USAMPLER2DARRAY);
 
 samplerCubeArray	{
 			  if (yyextra->ARB_texture_cube_map_array_enable)
@@ -337,7 +352,7 @@ struct		return STRUCT;
 void		return VOID_TOK;
 
 layout		{
-		  if ((yyextra->is_version(140, 0))
+		  if ((yyextra->is_version(140, 300))
 		      || yyextra->AMD_conservative_depth_enable
 		      || yyextra->ARB_conservative_depth_enable
 		      || yyextra->ARB_explicit_attrib_location_enable
@@ -424,8 +439,8 @@ template	KEYWORD(110, 100, 0, 0, TEMPLATE);
 this		KEYWORD(110, 100, 0, 0, THIS);
 packed		KEYWORD_WITH_ALT(110, 100, 140, 0, yyextra->ARB_uniform_buffer_object_enable, PACKED_TOK);
 goto		KEYWORD(110, 100, 0, 0, GOTO);
-switch		KEYWORD(110, 100, 130, 0, SWITCH);
-default		KEYWORD(110, 100, 130, 0, DEFAULT);
+switch		KEYWORD(110, 100, 130, 300, SWITCH);
+default		KEYWORD(110, 100, 130, 300, DEFAULT);
 inline		KEYWORD(110, 100, 0, 0, INLINE_TOK);
 noinline	KEYWORD(110, 100, 0, 0, NOINLINE);
 volatile	KEYWORD(110, 100, 0, 0, VOLATILE);
@@ -451,9 +466,9 @@ dvec4		KEYWORD(110, 100, 400, 0, DVEC4);
 fvec2		KEYWORD(110, 100, 0, 0, FVEC2);
 fvec3		KEYWORD(110, 100, 0, 0, FVEC3);
 fvec4		KEYWORD(110, 100, 0, 0, FVEC4);
-sampler2DRect		return SAMPLER2DRECT;
+sampler2DRect		DEPRECATED_ES_KEYWORD(SAMPLER2DRECT);
 sampler3DRect		KEYWORD(110, 100, 0, 0, SAMPLER3DRECT);
-sampler2DRectShadow	return SAMPLER2DRECTSHADOW;
+sampler2DRectShadow	DEPRECATED_ES_KEYWORD(SAMPLER2DRECTSHADOW);
 sizeof		KEYWORD(110, 100, 0, 0, SIZEOF);
 cast		KEYWORD(110, 100, 0, 0, CAST);
 namespace	KEYWORD(110, 100, 0, 0, NAMESPACE);
@@ -466,45 +481,63 @@ highp		KEYWORD(120, 100, 130, 100, HIGHP);
 precision	KEYWORD(120, 100, 130, 100, PRECISION);
 
     /* Additional reserved words in GLSL 1.30. */
-case		KEYWORD(130, 0, 130, 0, CASE);
-common		KEYWORD(130, 0, 0, 0, COMMON);
-partition	KEYWORD(130, 0, 0, 0, PARTITION);
-active		KEYWORD(130, 0, 0, 0, ACTIVE);
+case		KEYWORD(130, 300, 130, 300, CASE);
+common		KEYWORD(130, 300, 0, 0, COMMON);
+partition	KEYWORD(130, 300, 0, 0, PARTITION);
+active		KEYWORD(130, 300, 0, 0, ACTIVE);
 superp		KEYWORD(130, 100, 0, 0, SUPERP);
-samplerBuffer	KEYWORD(130, 0, 140, 0, SAMPLERBUFFER);
-filter		KEYWORD(130, 0, 0, 0, FILTER);
-image1D		KEYWORD(130, 0, 0, 0, IMAGE1D);
-image2D		KEYWORD(130, 0, 0, 0, IMAGE2D);
-image3D		KEYWORD(130, 0, 0, 0, IMAGE3D);
-imageCube	KEYWORD(130, 0, 0, 0, IMAGECUBE);
-iimage1D	KEYWORD(130, 0, 0, 0, IIMAGE1D);
-iimage2D	KEYWORD(130, 0, 0, 0, IIMAGE2D);
-iimage3D	KEYWORD(130, 0, 0, 0, IIMAGE3D);
-iimageCube	KEYWORD(130, 0, 0, 0, IIMAGECUBE);
-uimage1D	KEYWORD(130, 0, 0, 0, UIMAGE1D);
-uimage2D	KEYWORD(130, 0, 0, 0, UIMAGE2D);
-uimage3D	KEYWORD(130, 0, 0, 0, UIMAGE3D);
-uimageCube	KEYWORD(130, 0, 0, 0, UIMAGECUBE);
-image1DArray	KEYWORD(130, 0, 0, 0, IMAGE1DARRAY);
-image2DArray	KEYWORD(130, 0, 0, 0, IMAGE2DARRAY);
-iimage1DArray	KEYWORD(130, 0, 0, 0, IIMAGE1DARRAY);
-iimage2DArray	KEYWORD(130, 0, 0, 0, IIMAGE2DARRAY);
-uimage1DArray	KEYWORD(130, 0, 0, 0, UIMAGE1DARRAY);
-uimage2DArray	KEYWORD(130, 0, 0, 0, UIMAGE2DARRAY);
-image1DShadow	KEYWORD(130, 0, 0, 0, IMAGE1DSHADOW);
-image2DShadow	KEYWORD(130, 0, 0, 0, IMAGE2DSHADOW);
-image1DArrayShadow KEYWORD(130, 0, 0, 0, IMAGE1DARRAYSHADOW);
-image2DArrayShadow KEYWORD(130, 0, 0, 0, IMAGE2DARRAYSHADOW);
-imageBuffer	KEYWORD(130, 0, 0, 0, IMAGEBUFFER);
-iimageBuffer	KEYWORD(130, 0, 0, 0, IIMAGEBUFFER);
-uimageBuffer	KEYWORD(130, 0, 0, 0, UIMAGEBUFFER);
+samplerBuffer	KEYWORD(130, 300, 140, 0, SAMPLERBUFFER);
+filter		KEYWORD(130, 300, 0, 0, FILTER);
+image1D		KEYWORD(130, 300, 0, 0, IMAGE1D);
+image2D		KEYWORD(130, 300, 0, 0, IMAGE2D);
+image3D		KEYWORD(130, 300, 0, 0, IMAGE3D);
+imageCube	KEYWORD(130, 300, 0, 0, IMAGECUBE);
+iimage1D	KEYWORD(130, 300, 0, 0, IIMAGE1D);
+iimage2D	KEYWORD(130, 300, 0, 0, IIMAGE2D);
+iimage3D	KEYWORD(130, 300, 0, 0, IIMAGE3D);
+iimageCube	KEYWORD(130, 300, 0, 0, IIMAGECUBE);
+uimage1D	KEYWORD(130, 300, 0, 0, UIMAGE1D);
+uimage2D	KEYWORD(130, 300, 0, 0, UIMAGE2D);
+uimage3D	KEYWORD(130, 300, 0, 0, UIMAGE3D);
+uimageCube	KEYWORD(130, 300, 0, 0, UIMAGECUBE);
+image1DArray	KEYWORD(130, 300, 0, 0, IMAGE1DARRAY);
+image2DArray	KEYWORD(130, 300, 0, 0, IMAGE2DARRAY);
+iimage1DArray	KEYWORD(130, 300, 0, 0, IIMAGE1DARRAY);
+iimage2DArray	KEYWORD(130, 300, 0, 0, IIMAGE2DARRAY);
+uimage1DArray	KEYWORD(130, 300, 0, 0, UIMAGE1DARRAY);
+uimage2DArray	KEYWORD(130, 300, 0, 0, UIMAGE2DARRAY);
+image1DShadow	KEYWORD(130, 300, 0, 0, IMAGE1DSHADOW);
+image2DShadow	KEYWORD(130, 300, 0, 0, IMAGE2DSHADOW);
+image1DArrayShadow KEYWORD(130, 300, 0, 0, IMAGE1DARRAYSHADOW);
+image2DArrayShadow KEYWORD(130, 300, 0, 0, IMAGE2DARRAYSHADOW);
+imageBuffer	KEYWORD(130, 300, 0, 0, IMAGEBUFFER);
+iimageBuffer	KEYWORD(130, 300, 0, 0, IIMAGEBUFFER);
+uimageBuffer	KEYWORD(130, 300, 0, 0, UIMAGEBUFFER);
 row_major	KEYWORD_WITH_ALT(130, 0, 140, 0, yyextra->ARB_uniform_buffer_object_enable, ROW_MAJOR);
 
     /* Additional reserved words in GLSL 1.40 */
-isampler2DRect	KEYWORD(140, 0, 140, 0, ISAMPLER2DRECT);
-usampler2DRect	KEYWORD(140, 0, 140, 0, USAMPLER2DRECT);
-isamplerBuffer	KEYWORD(140, 0, 140, 0, ISAMPLERBUFFER);
-usamplerBuffer	KEYWORD(140, 0, 140, 0, USAMPLERBUFFER);
+isampler2DRect	KEYWORD(140, 300, 140, 0, ISAMPLER2DRECT);
+usampler2DRect	KEYWORD(140, 300, 140, 0, USAMPLER2DRECT);
+isamplerBuffer	KEYWORD(140, 300, 140, 0, ISAMPLERBUFFER);
+usamplerBuffer	KEYWORD(140, 300, 140, 0, USAMPLERBUFFER);
+
+    /* Additional reserved words in GLSL ES 3.00 */
+coherent	KEYWORD(0, 300, 0, 0, COHERENT);
+restrict	KEYWORD(0, 300, 0, 0, RESTRICT);
+readonly	KEYWORD(0, 300, 0, 0, READONLY);
+writeonly	KEYWORD(0, 300, 0, 0, WRITEONLY);
+resource	KEYWORD(0, 300, 0, 0, RESOURCE);
+atomic_uint	KEYWORD(0, 300, 0, 0, ATOMIC_UINT);
+patch		KEYWORD(0, 300, 0, 0, PATCH);
+sample		KEYWORD(0, 300, 0, 0, SAMPLE);
+subroutine	KEYWORD(0, 300, 0, 0, SUBROUTINE);
+sampler2DMS	KEYWORD(0, 300, 0, 0, SAMPLER2DMS);
+isampler2DMS	KEYWORD(0, 300, 0, 0, ISAMPLER2DMS);
+usampler2DMS	KEYWORD(0, 300, 0, 0, USAMPLER2DMS);
+sampler2DMSArray KEYWORD(0, 300, 0, 0, SAMPLER2DMSARRAY);
+isampler2DMSArray KEYWORD(0, 300, 0, 0, ISAMPLER2DMSARRAY);
+usampler2DMSArray KEYWORD(0, 300, 0, 0, USAMPLER2DMSARRAY);
+
 
 [_a-zA-Z][_a-zA-Z0-9]*	{
 			    struct _mesa_glsl_parse_state *state = yyextra;
