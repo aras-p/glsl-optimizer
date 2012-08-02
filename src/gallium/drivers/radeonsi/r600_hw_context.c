@@ -182,7 +182,10 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	struct radeon_winsys_cs *cs = ctx->cs;
 	struct r600_block *enable_block = NULL;
 	bool queries_suspended = false;
+
+#if 0
 	bool streamout_suspended = false;
+#endif
 
 	if (!cs->cdw)
 		return;
@@ -193,10 +196,12 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 		queries_suspended = true;
 	}
 
+#if 0
 	if (ctx->num_cs_dw_streamout_end) {
 		r600_context_streamout_end(ctx);
 		streamout_suspended = true;
 	}
+#endif
 
 	r600_flush_framebuffer(ctx, true);
 
@@ -213,10 +218,12 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
 
+#if 0
 	if (streamout_suspended) {
 		ctx->streamout_start = TRUE;
 		ctx->streamout_append_bitmask = ~0;
 	}
+#endif
 
 	/* resume queries */
 	if (queries_suspended) {
@@ -635,131 +642,6 @@ void r600_context_queries_resume(struct r600_context *ctx)
 
 	LIST_FOR_EACH_ENTRY(query, &ctx->active_query_list, list) {
 		r600_query_begin(ctx, query);
-	}
-}
-
-void r600_context_streamout_begin(struct r600_context *ctx)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-	struct r600_so_target **t = ctx->so_targets;
-	unsigned *strides = ctx->vs_shader_so_strides;
-	unsigned buffer_en, i;
-
-	buffer_en = (ctx->num_so_targets >= 1 && t[0] ? 1 : 0) |
-		    (ctx->num_so_targets >= 2 && t[1] ? 2 : 0) |
-		    (ctx->num_so_targets >= 3 && t[2] ? 4 : 0) |
-		    (ctx->num_so_targets >= 4 && t[3] ? 8 : 0);
-
-	ctx->num_cs_dw_streamout_end =
-		12 + /* flush_vgt_streamout */
-		util_bitcount(buffer_en) * 8 +
-		3;
-
-	r600_need_cs_space(ctx,
-			   12 + /* flush_vgt_streamout */
-			   6 + /* enables */
-			   util_bitcount(buffer_en & ctx->streamout_append_bitmask) * 8 +
-			   util_bitcount(buffer_en & ~ctx->streamout_append_bitmask) * 6 +
-			   ctx->num_cs_dw_streamout_end, TRUE);
-
-	if (ctx->chip_class >= CAYMAN) {
-		evergreen_flush_vgt_streamout(ctx);
-		evergreen_set_streamout_enable(ctx, buffer_en);
-	}
-
-	for (i = 0; i < ctx->num_so_targets; i++) {
-#if 0
-		if (t[i]) {
-			t[i]->stride = strides[i];
-			t[i]->so_index = i;
-
-			cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 3, 0);
-			cs->buf[cs->cdw++] = (R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0 +
-							16*i - SI_CONTEXT_REG_OFFSET) >> 2;
-			cs->buf[cs->cdw++] = (t[i]->b.buffer_offset +
-							t[i]->b.buffer_size) >> 2; /* BUFFER_SIZE (in DW) */
-			cs->buf[cs->cdw++] = strides[i] >> 2;		   /* VTX_STRIDE (in DW) */
-			cs->buf[cs->cdw++] = 0;			   /* BUFFER_BASE */
-
-			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-			cs->buf[cs->cdw++] =
-				r600_context_bo_reloc(ctx, si_resource(t[i]->b.buffer),
-						      RADEON_USAGE_WRITE);
-
-			if (ctx->streamout_append_bitmask & (1 << i)) {
-				/* Append. */
-				cs->buf[cs->cdw++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
-				cs->buf[cs->cdw++] = STRMOUT_SELECT_BUFFER(i) |
-							       STRMOUT_OFFSET_SOURCE(STRMOUT_OFFSET_FROM_MEM); /* control */
-				cs->buf[cs->cdw++] = 0; /* unused */
-				cs->buf[cs->cdw++] = 0; /* unused */
-				cs->buf[cs->cdw++] = 0; /* src address lo */
-				cs->buf[cs->cdw++] = 0; /* src address hi */
-
-				cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-				cs->buf[cs->cdw++] =
-					r600_context_bo_reloc(ctx,  t[i]->filled_size,
-							      RADEON_USAGE_READ);
-			} else {
-				/* Start from the beginning. */
-				cs->buf[cs->cdw++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
-				cs->buf[cs->cdw++] = STRMOUT_SELECT_BUFFER(i) |
-							       STRMOUT_OFFSET_SOURCE(STRMOUT_OFFSET_FROM_PACKET); /* control */
-				cs->buf[cs->cdw++] = 0; /* unused */
-				cs->buf[cs->cdw++] = 0; /* unused */
-				cs->buf[cs->cdw++] = t[i]->b.buffer_offset >> 2; /* buffer offset in DW */
-				cs->buf[cs->cdw++] = 0; /* unused */
-			}
-		}
-#endif
-	}
-}
-
-void r600_context_streamout_end(struct r600_context *ctx)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-	struct r600_so_target **t = ctx->so_targets;
-	unsigned i, flush_flags = 0;
-
-	evergreen_flush_vgt_streamout(ctx);
-
-	for (i = 0; i < ctx->num_so_targets; i++) {
-#if 0
-		if (t[i]) {
-			cs->buf[cs->cdw++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
-			cs->buf[cs->cdw++] = STRMOUT_SELECT_BUFFER(i) |
-						       STRMOUT_OFFSET_SOURCE(STRMOUT_OFFSET_NONE) |
-						       STRMOUT_STORE_BUFFER_FILLED_SIZE; /* control */
-			cs->buf[cs->cdw++] = 0; /* dst address lo */
-			cs->buf[cs->cdw++] = 0; /* dst address hi */
-			cs->buf[cs->cdw++] = 0; /* unused */
-			cs->buf[cs->cdw++] = 0; /* unused */
-
-			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-			cs->buf[cs->cdw++] =
-				r600_context_bo_reloc(ctx,  t[i]->filled_size,
-						      RADEON_USAGE_WRITE);
-
-			flush_flags |= S_0085F0_SO0_DEST_BASE_ENA(1) << i;
-		}
-#endif
-	}
-
-	evergreen_set_streamout_enable(ctx, 0);
-
-	ctx->atom_surface_sync.flush_flags |= flush_flags;
-	r600_atom_dirty(ctx, &ctx->atom_surface_sync.atom);
-
-	ctx->num_cs_dw_streamout_end = 0;
-
-	/* XXX print some debug info */
-	for (i = 0; i < ctx->num_so_targets; i++) {
-		if (!t[i])
-			continue;
-
-		uint32_t *ptr = ctx->ws->buffer_map(t[i]->filled_size->cs_buf, ctx->cs, RADEON_USAGE_READ);
-		printf("FILLED_SIZE%i: %u\n", i, *ptr);
-		ctx->ws->buffer_unmap(t[i]->filled_size->cs_buf);
 	}
 }
 

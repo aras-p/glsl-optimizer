@@ -535,11 +535,13 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	si_pm4_emit_dirty(rctx);
 	rctx->pm4_dirty_cdwords = 0;
 
+#if 0
 	/* Enable stream out if needed. */
 	if (rctx->streamout_start) {
 		r600_context_streamout_begin(rctx);
 		rctx->streamout_start = FALSE;
 	}
+#endif
 
 	si_context_draw(rctx, &rdraw);
 

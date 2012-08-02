@@ -132,6 +132,19 @@ bool si_is_format_supported(struct pipe_screen *screen,
 void si_init_state_functions(struct r600_context *rctx);
 void si_init_config(struct r600_context *rctx);
 
+/* si_state_streamout.c */
+struct pipe_stream_output_target *
+si_create_so_target(struct pipe_context *ctx,
+		    struct pipe_resource *buffer,
+		    unsigned buffer_offset,
+		    unsigned buffer_size);
+void si_so_target_destroy(struct pipe_context *ctx,
+			  struct pipe_stream_output_target *target);
+void si_set_so_targets(struct pipe_context *ctx,
+		       unsigned num_targets,
+		       struct pipe_stream_output_target **targets,
+		       unsigned append_bitmask);
+
 /* si_state_draw.c */
 void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo);
 

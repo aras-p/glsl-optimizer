@@ -35,13 +35,6 @@
 #define PKT_COUNT_C                     0xC000FFFF
 #define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
 
-/*
- * evergreen_hw_context.c
- */
-void evergreen_flush_vgt_streamout(struct r600_context *ctx);
-void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_enable_bit);
-
-
 static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct si_resource *rbo,
 					     enum radeon_bo_usage usage)
 {

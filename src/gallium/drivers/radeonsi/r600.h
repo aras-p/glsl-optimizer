@@ -126,8 +126,6 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 void r600_context_emit_fence(struct r600_context *ctx, struct si_resource *fence,
                              unsigned offset, unsigned value);
 
-void r600_context_streamout_begin(struct r600_context *ctx);
-void r600_context_streamout_end(struct r600_context *ctx);
 void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t);
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
 
