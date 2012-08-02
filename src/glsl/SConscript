@@ -25,6 +25,10 @@ parser_env.Append(YACCFLAGS = [
     '-p', '_mesa_glsl_',
 ])
 
+# without this line scons will expect "glsl_parser.hpp" instead of
+# "glsl_parser.h", causing glsl_parser.cpp to be regenerated every time
+parser_env['YACCHXXFILESUFFIX'] = '.h'
+
 glcpp_lexer = env.CFile('glcpp/glcpp-lex.c', 'glcpp/glcpp-lex.l')
 glcpp_parser = env.CFile('glcpp/glcpp-parse.c', 'glcpp/glcpp-parse.y')
 glsl_lexer = parser_env.CXXFile('glsl_lexer.cpp', 'glsl_lexer.ll')
