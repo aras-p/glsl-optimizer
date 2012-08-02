@@ -89,7 +89,6 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   case ISD::SDIV: return LowerSDIV(Op, DAG);
   case ISD::SREM: return LowerSREM(Op, DAG);
   case ISD::BUILD_VECTOR: return LowerBUILD_VECTOR(Op, DAG);
-  case ISD::SELECT: return LowerSELECT(Op, DAG);
   case ISD::SIGN_EXTEND_INREG: return LowerSIGN_EXTEND_INREG(Op, DAG);
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   // AMDGPU DAG lowering
@@ -325,7 +324,6 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const
   switch (Opcode) {
   default: return 0;
   // AMDIL DAG nodes
-  NODE_NAME_CASE(CMOVLOG);
   NODE_NAME_CASE(MAD);
   NODE_NAME_CASE(CALL);
   NODE_NAME_CASE(UMUL);

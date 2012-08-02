@@ -426,6 +426,12 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
   // SELECT_CC operations.
   SDValue Cond = DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, HWTrue, HWFalse, CC);
 
+  // Convert floating point condition to i1
+  if (VT == MVT::f32) {
+    Cond = DAG.getNode(ISD::FP_TO_SINT, DL, MVT::i32,
+                       DAG.getNode(ISD::FNEG, DL, VT, Cond));
+  }
+
   return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
 }
 

@@ -38,57 +38,6 @@ using namespace llvm;
 #include "AMDGPUGenCallingConv.inc"
 
 //===----------------------------------------------------------------------===//
-// TargetLowering Implementation Help Functions Begin
-//===----------------------------------------------------------------------===//
-namespace llvm {
-namespace AMDGPU {
-  static SDValue
-getConversionNode(SelectionDAG &DAG, SDValue& Src, SDValue& Dst, bool asType)
-{
-  DebugLoc DL = Src.getDebugLoc();
-  EVT svt = Src.getValueType().getScalarType();
-  EVT dvt = Dst.getValueType().getScalarType();
-  if (svt.isFloatingPoint() && dvt.isFloatingPoint()) {
-    if (dvt.bitsGT(svt)) {
-      Src = DAG.getNode(ISD::FP_EXTEND, DL, dvt, Src);
-    } else if (svt.bitsLT(svt)) {
-      Src = DAG.getNode(ISD::FP_ROUND, DL, dvt, Src,
-          DAG.getConstant(1, MVT::i32));
-    }
-  } else if (svt.isInteger() && dvt.isInteger()) {
-    if (!svt.bitsEq(dvt)) {
-      Src = DAG.getSExtOrTrunc(Src, DL, dvt);
-    }
-  } else if (svt.isInteger()) {
-    unsigned opcode = (asType) ? ISD::BITCAST : ISD::SINT_TO_FP;
-    if (!svt.bitsEq(dvt)) {
-      if (dvt.getSimpleVT().SimpleTy == MVT::f32) {
-        Src = DAG.getSExtOrTrunc(Src, DL, MVT::i32);
-      } else if (dvt.getSimpleVT().SimpleTy == MVT::f64) {
-        Src = DAG.getSExtOrTrunc(Src, DL, MVT::i64);
-      } else {
-        assert(0 && "We only support 32 and 64bit fp types");
-      }
-    }
-    Src = DAG.getNode(opcode, DL, dvt, Src);
-  } else if (dvt.isInteger()) {
-    unsigned opcode = (asType) ? ISD::BITCAST : ISD::FP_TO_SINT;
-    if (svt.getSimpleVT().SimpleTy == MVT::f32) {
-      Src = DAG.getNode(opcode, DL, MVT::i32, Src);
-    } else if (svt.getSimpleVT().SimpleTy == MVT::f64) {
-      Src = DAG.getNode(opcode, DL, MVT::i64, Src);
-    } else {
-      assert(0 && "We only support 32 and 64bit fp types");
-    }
-    Src = DAG.getSExtOrTrunc(Src, DL, dvt);
-  }
-  return Src;
-}
-
-} // End namespace AMDPGU
-} // End namespace llvm
-
-//===----------------------------------------------------------------------===//
 // TargetLowering Implementation Help Functions End
 //===----------------------------------------------------------------------===//
 
@@ -168,7 +117,6 @@ void AMDGPUTargetLowering::InitAMDILLowering()
     setOperationAction(ISD::BRIND, VT, Expand);
     // TODO: Implement custom UREM/SREM routines
     setOperationAction(ISD::SREM, VT, Expand);
-    setOperationAction(ISD::SELECT, VT, Custom);
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
     setOperationAction(ISD::UMUL_LOHI, VT, Expand);
     if (VT != MVT::i64 && VT != MVT::v2i64) {
@@ -220,7 +168,6 @@ void AMDGPUTargetLowering::InitAMDILLowering()
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
     // setOperationAction(ISD::VSETCC, VT, Expand);
     setOperationAction(ISD::SELECT_CC, VT, Expand);
-    setOperationAction(ISD::SELECT, VT, Expand);
 
   }
   if (STM.device()->isSupported(AMDGPUDeviceInfo::LongOps)) {
@@ -470,20 +417,6 @@ AMDGPUTargetLowering::LowerBUILD_VECTOR( SDValue Op, SelectionDAG &DAG ) const
 }
 
 SDValue
-AMDGPUTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const
-{
-  SDValue Cond = Op.getOperand(0);
-  SDValue LHS = Op.getOperand(1);
-  SDValue RHS = Op.getOperand(2);
-  DebugLoc DL = Op.getDebugLoc();
-  Cond = AMDGPU::getConversionNode(DAG, Cond, Op, true);
-  Cond = DAG.getNode(AMDGPUISD::CMOVLOG,
-      DL,
-      Op.getValueType(), Cond, LHS, RHS);
-  return Cond;
-}
-
-SDValue
 AMDGPUTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const
 {
   SDValue Data = Op.getOperand(0);
@@ -625,7 +558,7 @@ AMDGPUTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const
     cv = DAG.getSetCC(DL, INTTY, fr, fb, ISD::SETOGE);
   }
   // jq = (cv ? jq : 0);
-  jq = DAG.getNode(AMDGPUISD::CMOVLOG, DL, OVT, cv, jq, 
+  jq = DAG.getNode(ISD::SELECT, DL, OVT, cv, jq, 
       DAG.getConstant(0, OVT));
   // dst = iq + jq;
   iq = DAG.getSExtOrTrunc(iq, DL, OVT);

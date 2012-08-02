@@ -115,7 +115,6 @@ def IL_retflag       : SDNode<"AMDGPUISD::RET_FLAG", SDTNone,
 // Instructions
 //===--------------------------------------------------------------------===//
 // Floating point math functions
-def IL_cmov_logical : SDNode<"AMDGPUISD::CMOVLOG", SDTIL_GenTernaryOp>;
 def IL_div_inf      : SDNode<"AMDGPUISD::DIV_INF", SDTIL_GenBinaryOp>;
 def IL_mad          : SDNode<"AMDGPUISD::MAD", SDTIL_GenTernaryOp>;
 
