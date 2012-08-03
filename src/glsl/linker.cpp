@@ -2421,9 +2421,17 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    unsigned min_version = UINT_MAX;
    unsigned max_version = 0;
+   const bool is_es_prog =
+      (prog->NumShaders > 0 && prog->Shaders[0]->IsES) ? true : false;
    for (unsigned i = 0; i < prog->NumShaders; i++) {
       min_version = MIN2(min_version, prog->Shaders[i]->Version);
       max_version = MAX2(max_version, prog->Shaders[i]->Version);
+
+      if (prog->Shaders[i]->IsES != is_es_prog) {
+	 linker_error(prog, "all shaders must use same shading "
+		      "language version\n");
+	 goto done;
+      }
 
       switch (prog->Shaders[i]->Type) {
       case GL_VERTEX_SHADER:
@@ -2444,10 +2452,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    /* Previous to GLSL version 1.30, different compilation units could mix and
     * match shading language versions.  With GLSL 1.30 and later, the versions
     * of all shaders must match.
+    *
+    * GLSL ES has never allowed mixing of shading language versions.
     */
-   assert(min_version >= 100);
-   assert(max_version <= 140);
-   if ((max_version >= 130 || min_version == 100)
+   if ((is_es_prog || max_version >= 130)
        && min_version != max_version) {
       linker_error(prog, "all shaders must use same shading "
 		   "language version\n");
