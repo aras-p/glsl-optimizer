@@ -435,11 +435,11 @@ static void renderer_set_samplers(struct renderer *r,
 
    /* set samplers */
    for (i = 0; i < num_views; i++)
-      cso_single_sampler(r->cso, i, &sampler);
-   cso_single_sampler_done(r->cso);
+      cso_single_sampler(r->cso, PIPE_SHADER_FRAGMENT, i, &sampler);
+   cso_single_sampler_done(r->cso, PIPE_SHADER_FRAGMENT);
 
    /* set views */
-   cso_set_fragment_sampler_views(r->cso, num_views, views);
+   cso_set_sampler_views(r->cso, PIPE_SHADER_FRAGMENT, num_views, views);
 }
 
 /**
@@ -461,8 +461,8 @@ static void renderer_set_custom_fs(struct renderer *renderer,
 
    /* set samplers and views */
    if (num_samplers) {
-      cso_set_samplers(renderer->cso, num_samplers, samplers);
-      cso_set_fragment_sampler_views(renderer->cso, num_samplers, views);
+      cso_set_samplers(renderer->cso, PIPE_SHADER_FRAGMENT, num_samplers, samplers);
+      cso_set_sampler_views(renderer->cso, PIPE_SHADER_FRAGMENT, num_samplers, views);
    }
 
    /* upload fs constant buffer */
@@ -591,8 +591,8 @@ VGboolean renderer_copy_begin(struct renderer *renderer,
    cso_save_framebuffer(renderer->cso);
    cso_save_viewport(renderer->cso);
    cso_save_blend(renderer->cso);
-   cso_save_samplers(renderer->cso);
-   cso_save_fragment_sampler_views(renderer->cso);
+   cso_save_samplers(renderer->cso, PIPE_SHADER_FRAGMENT);
+   cso_save_sampler_views(renderer->cso, PIPE_SHADER_FRAGMENT);
    cso_save_fragment_shader(renderer->cso);
    cso_save_vertex_shader(renderer->cso);
 
@@ -645,8 +645,8 @@ void renderer_copy_end(struct renderer *renderer)
    cso_restore_framebuffer(renderer->cso);
    cso_restore_viewport(renderer->cso);
    cso_restore_blend(renderer->cso);
-   cso_restore_samplers(renderer->cso);
-   cso_restore_fragment_sampler_views(renderer->cso);
+   cso_restore_samplers(renderer->cso, PIPE_SHADER_FRAGMENT);
+   cso_restore_sampler_views(renderer->cso, PIPE_SHADER_FRAGMENT);
    cso_restore_fragment_shader(renderer->cso);
    cso_restore_vertex_shader(renderer->cso);
 
@@ -665,8 +665,8 @@ VGboolean renderer_drawtex_begin(struct renderer *renderer,
       return VG_FALSE;
 
    cso_save_blend(renderer->cso);
-   cso_save_samplers(renderer->cso);
-   cso_save_fragment_sampler_views(renderer->cso);
+   cso_save_samplers(renderer->cso, PIPE_SHADER_FRAGMENT);
+   cso_save_sampler_views(renderer->cso, PIPE_SHADER_FRAGMENT);
    cso_save_fragment_shader(renderer->cso);
    cso_save_vertex_shader(renderer->cso);
 
@@ -716,8 +716,8 @@ void renderer_drawtex_end(struct renderer *renderer)
    assert(renderer->state == RENDERER_STATE_DRAWTEX);
 
    cso_restore_blend(renderer->cso);
-   cso_restore_samplers(renderer->cso);
-   cso_restore_fragment_sampler_views(renderer->cso);
+   cso_restore_samplers(renderer->cso, PIPE_SHADER_FRAGMENT);
+   cso_restore_sampler_views(renderer->cso, PIPE_SHADER_FRAGMENT);
    cso_restore_fragment_shader(renderer->cso);
    cso_restore_vertex_shader(renderer->cso);
 
@@ -889,8 +889,8 @@ VGboolean renderer_filter_begin(struct renderer *renderer,
    if (num_samplers) {
       struct pipe_resource *tex;
 
-      cso_save_samplers(renderer->cso);
-      cso_save_fragment_sampler_views(renderer->cso);
+      cso_save_samplers(renderer->cso, PIPE_SHADER_FRAGMENT);
+      cso_save_sampler_views(renderer->cso, PIPE_SHADER_FRAGMENT);
       cso_save_fragment_shader(renderer->cso);
       cso_save_vertex_shader(renderer->cso);
 
@@ -950,8 +950,8 @@ void renderer_filter_end(struct renderer *renderer)
    assert(renderer->state == RENDERER_STATE_FILTER);
 
    if (renderer->u.filter.use_sampler) {
-      cso_restore_samplers(renderer->cso);
-      cso_restore_fragment_sampler_views(renderer->cso);
+      cso_restore_samplers(renderer->cso, PIPE_SHADER_FRAGMENT);
+      cso_restore_sampler_views(renderer->cso, PIPE_SHADER_FRAGMENT);
       cso_restore_vertex_shader(renderer->cso);
    }
 
