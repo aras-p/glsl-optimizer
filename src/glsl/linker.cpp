@@ -289,8 +289,11 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
     *      operations, if present, that operate on primitives after
     *      vertex processing has occurred. Its value is undefined if
     *      the vertex shader executable does not write gl_Position."
+    *
+    * GLSL ES 3.00 is similar to GLSL 1.40--failing to write to gl_Position is
+    * not an error.
     */
-   if (prog->Version < 140) {
+   if (prog->Version < (prog->IsES ? 300 : 140)) {
       find_assignment_visitor find("gl_Position");
       find.run(shader->ir);
       if (!find.variable_found()) {
@@ -301,12 +304,15 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
 
    prog->Vert.ClipDistanceArraySize = 0;
 
-   if (prog->Version >= 130) {
+   if (!prog->IsES && prog->Version >= 130) {
       /* From section 7.1 (Vertex Shader Special Variables) of the
        * GLSL 1.30 spec:
        *
        *   "It is an error for a shader to statically write both
        *   gl_ClipVertex and gl_ClipDistance."
+       *
+       * This does not apply to GLSL ES shaders, since GLSL ES defines neither
+       * gl_ClipVertex nor gl_ClipDistance.
        */
       find_assignment_visitor clip_vertex("gl_ClipVertex");
       find_assignment_visitor clip_distance("gl_ClipDistance");
@@ -2144,7 +2150,7 @@ assign_varying_locations(struct gl_context *ctx,
       }
    }
 
-   if (ctx->API == API_OPENGLES2 || prog->Version == 100) {
+   if (ctx->API == API_OPENGLES2 || prog->IsES) {
       if (varying_vectors > ctx->Const.MaxVarying) {
          if (ctx->Const.GLSLSkipStrictMaxVaryingLimitCheck) {
             linker_warning(prog, "shader uses too many varying vectors "
@@ -2537,8 +2543,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    /* Implement the GLSL 1.30+ rule for discard vs infinite loops Do
     * it before optimization because we want most of the checks to get
     * dropped thanks to constant propagation.
+    *
+    * This rule also applies to GLSL ES 3.00.
     */
-   if (max_version >= 130) {
+   if (max_version >= (is_es_prog ? 300 : 130)) {
       struct gl_shader *sh = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
       if (sh) {
 	 lower_discard_flow(sh->ir);
@@ -2682,11 +2690,11 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       goto done;
 
    /* OpenGL ES requires that a vertex shader and a fragment shader both be
-    * present in a linked program.  By checking for use of shading language
-    * version 1.00, we also catch the GL_ARB_ES2_compatibility case.
+    * present in a linked program.  By checking prog->IsES, we also
+    * catch the GL_ARB_ES2_compatibility case.
     */
    if (!prog->InternalSeparateShader &&
-       (ctx->API == API_OPENGLES2 || prog->Version == 100)) {
+       (ctx->API == API_OPENGLES2 || prog->IsES)) {
       if (prog->_LinkedShaders[MESA_SHADER_VERTEX] == NULL) {
 	 linker_error(prog, "program lacks a vertex shader\n");
       } else if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL) {
