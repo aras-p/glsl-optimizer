@@ -829,7 +829,9 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
    };
 
    static const uint8_t singlesample_samples[1] = {0};
+   static const uint8_t multisample_samples[2]  = {4, 8};
 
+   struct intel_screen *screen = dri_screen->driverPrivate;
    GLenum fb_format[3];
    GLenum fb_type[3];
    uint8_t depth_bits[4], stencil_bits[4];
@@ -844,9 +846,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
    fb_format[2] = GL_BGRA;
    fb_type[2] = GL_UNSIGNED_INT_8_8_8_8_REV;
 
-   /* Generate a rich set of useful configs that do not include an
-    * accumulation buffer.
-    */
+   /* Generate singlesample configs without accumulation buffer. */
    for (int i = 0; i < ARRAY_SIZE(fb_format); i++) {
       __DRIconfig **new_configs;
       const int num_depth_stencil_bits = 2;
@@ -896,6 +896,54 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
                                      back_buffer_modes + 1, 1,
                                      singlesample_samples, 1,
                                      true);
+      configs = driConcatConfigs(configs, new_configs);
+   }
+
+   /* Generate multisample configs.
+    *
+    * This loop breaks early, and hence is a no-op, on gen < 6.
+    *
+    * Multisample configs must follow the singlesample configs in order to
+    * work around an X server bug present in 1.12. The X server chooses to
+    * associate the first listed RGBA888-Z24S8 config, regardless of its
+    * sample count, with the 32-bit depth visual used for compositing.
+    *
+    * Only doublebuffer configs with GLX_SWAP_UNDEFINED_OML behavior are
+    * supported.  Singlebuffer configs are not supported because no one wants
+    * them. GLX_SWAP_COPY_OML is not supported due to page flipping.
+    */
+   for (int i = 0; i < ARRAY_SIZE(fb_format); i++) {
+      if (screen->gen < 6)
+         break;
+
+      __DRIconfig **new_configs;
+      const int num_depth_stencil_bits = 2;
+      int num_msaa_modes;
+
+      depth_bits[0] = 0;
+      stencil_bits[0] = 0;
+
+      if (fb_type[i] == GL_UNSIGNED_SHORT_5_6_5) {
+         depth_bits[1] = 16;
+         stencil_bits[1] = 0;
+      } else {
+         depth_bits[1] = 24;
+         stencil_bits[1] = 8;
+      }
+
+      if (screen->gen >= 7)
+         num_msaa_modes = 2;
+      else if (screen->gen == 6)
+         num_msaa_modes = 1;
+
+      new_configs = driCreateConfigs(fb_format[i], fb_type[i],
+                                     depth_bits,
+                                     stencil_bits,
+                                     num_depth_stencil_bits,
+                                     back_buffer_modes + 1, 1,
+                                     multisample_samples,
+                                     num_msaa_modes,
+                                     false);
       configs = driConcatConfigs(configs, new_configs);
    }
 
