@@ -119,7 +119,7 @@ void si_pm4_free_state(struct r600_context *rctx,
 	}
 
 	for (int i = 0; i < state->nbo; ++i) {
-		si_resource_reference(&state->bo[idx], NULL);
+		si_resource_reference(&state->bo[i], NULL);
 	}
 	FREE(state);
 }
