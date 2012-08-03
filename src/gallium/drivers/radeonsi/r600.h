@@ -95,17 +95,6 @@ struct r600_so_target {
 #define R600_CONTEXT_DST_CACHES_DIRTY	(1 << 1)
 #define R600_CONTEXT_CHECK_EVENT_FLUSH	(1 << 2)
 
-struct r600_draw {
-	uint32_t		vgt_num_indices;
-	uint32_t		vgt_num_instances;
-	uint32_t		vgt_index_type;
-	uint32_t		vgt_draw_initiator;
-	uint32_t		indices_bo_offset;
-	unsigned		db_render_override;
-	unsigned		db_render_control;
-	struct si_resource	*indices;
-};
-
 struct r600_context;
 struct r600_screen;
 
@@ -130,6 +119,5 @@ void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_tar
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
 
 int si_context_init(struct r600_context *ctx);
-void si_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
 
 #endif
