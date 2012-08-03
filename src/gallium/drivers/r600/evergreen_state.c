@@ -743,6 +743,7 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 		r600_pipe_state_add_reg(rstate, R_028780_CB_BLEND0_CONTROL + i * 4, blend_cntl[i]);
 	}
 
+	blend->alpha_to_one = state->alpha_to_one;
 	return rstate;
 }
 
@@ -836,6 +837,7 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 		S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
 		S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip) |
 		S_028810_DX_LINEAR_ATTR_CLIP_ENA(1);
+	rs->multisample_enable = state->multisample;
 
 	/* offset */
 	rs->offset_units = state->offset_units;
@@ -1472,6 +1474,8 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	/* build states */
 	rctx->export_16bpc = true;
 	rctx->nr_cbufs = state->nr_cbufs;
+	rctx->cb0_is_integer = state->nr_cbufs &&
+			       util_format_is_pure_integer(state->cbufs[0]->format);
 
 	for (i = 0; i < state->nr_cbufs; i++) {
 		surf = (struct r600_surface*)state->cbufs[i];

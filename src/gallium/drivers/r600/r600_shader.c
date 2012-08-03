@@ -1572,6 +1572,7 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 					j--;
 					continue;
 				}
+				output[j].swizzle_w = rctx->alpha_to_one && rctx->multisample_enable && !rctx->cb0_is_integer ? 5 : 3;
 				output[j].array_base = next_pixel_base++;
 				output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 				shader->nr_ps_color_exports++;
@@ -1584,7 +1585,7 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 						output[j].swizzle_x = 0;
 						output[j].swizzle_y = 1;
 						output[j].swizzle_z = 2;
-						output[j].swizzle_w = 3;
+						output[j].swizzle_w = rctx->alpha_to_one && rctx->multisample_enable && !rctx->cb0_is_integer ? 5 : 3;
 						output[j].burst_count = 1;
 						output[j].barrier = 1;
 						output[j].array_base = next_pixel_base++;

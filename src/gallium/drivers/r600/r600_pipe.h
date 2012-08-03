@@ -180,6 +180,7 @@ struct r600_pipe_rasterizer {
 	float				offset_units;
 	float				offset_scale;
 	bool				scissor_enable;
+	bool				multisample_enable;
 };
 
 struct r600_pipe_blend {
@@ -187,6 +188,7 @@ struct r600_pipe_blend {
 	unsigned			cb_target_mask;
 	unsigned			cb_color_control;
 	bool				dual_src_blend;
+	bool				alpha_to_one;
 };
 
 struct r600_pipe_dsa {
@@ -347,6 +349,9 @@ struct r600_context {
 	boolean				flatshade;
 	boolean				export_16bpc;
 	unsigned			nr_cbufs;
+	bool				alpha_to_one;
+	bool				multisample_enable;
+	bool				cb0_is_integer;
 
 	struct u_upload_mgr	        *uploader;
 	struct util_slab_mempool	pool_transfers;

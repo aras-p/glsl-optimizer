@@ -177,6 +177,7 @@ void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 	rstate = &blend->rstate;
 	rctx->states[rstate->id] = rstate;
 	rctx->dual_src_blend = blend->dual_src_blend;
+	rctx->alpha_to_one = blend->alpha_to_one;
 	r600_context_pipe_state_set(rctx, rstate);
 
 	if (rctx->cb_misc_state.blend_colormask != blend->cb_target_mask) {
@@ -320,6 +321,7 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	rctx->two_side = rs->two_side;
 	rctx->pa_sc_line_stipple = rs->pa_sc_line_stipple;
 	rctx->pa_cl_clip_cntl = rs->pa_cl_clip_cntl;
+	rctx->multisample_enable = rs->multisample_enable;
 
 	rctx->rasterizer = rs;
 
@@ -636,7 +638,8 @@ static INLINE unsigned r600_shader_selector_key(struct pipe_context * ctx,
 
 	if (sel->type == PIPE_SHADER_FRAGMENT) {
 		key = rctx->two_side |
-				MIN2(sel->nr_ps_max_color_exports, rctx->nr_cbufs + rctx->dual_src_blend) << 1;
+		      ((rctx->alpha_to_one && rctx->multisample_enable && !rctx->cb0_is_integer) << 1) |
+		      (MIN2(sel->nr_ps_max_color_exports, rctx->nr_cbufs + rctx->dual_src_blend) << 2);
 	} else
 		key = 0;
 
