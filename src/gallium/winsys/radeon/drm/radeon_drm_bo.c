@@ -120,7 +120,7 @@ struct radeon_bomgr {
 
     /* is virtual address supported */
     bool va;
-    unsigned va_offset;
+    uint64_t va_offset;
     struct list_head va_holes;
 };
 
