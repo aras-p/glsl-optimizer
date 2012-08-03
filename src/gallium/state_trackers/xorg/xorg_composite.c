@@ -418,10 +418,12 @@ bind_samplers(struct exa_context *exa, int op,
       exa->bound_sampler_views[1] = src_view;
    }
 
-   cso_set_samplers(exa->renderer->cso, exa->num_bound_samplers,
+   cso_set_samplers(exa->renderer->cso, PIPE_SHADER_FRAGMENT,
+                    exa->num_bound_samplers,
                     (const struct pipe_sampler_state **)samplers);
-   cso_set_fragment_sampler_views(exa->renderer->cso, exa->num_bound_samplers,
-                                  exa->bound_sampler_views);
+   cso_set_sampler_views(exa->renderer->cso, PIPE_SHADER_FRAGMENT,
+                         exa->num_bound_samplers,
+                         exa->bound_sampler_views);
 }
 
 
@@ -550,8 +552,8 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
    renderer_bind_destination(exa->renderer, dst_surf, 
                              pixmap->width, pixmap->height);
    bind_blend_state(exa, PictOpSrc, NULL, NULL, NULL);
-   cso_set_samplers(exa->renderer->cso, 0, NULL);
-   cso_set_fragment_sampler_views(exa->renderer->cso, 0, NULL);
+   cso_set_samplers(exa->renderer->cso, PIPE_SHADER_FRAGMENT, 0, NULL);
+   cso_set_sampler_views(exa->renderer->cso, PIPE_SHADER_FRAGMENT, 0, NULL);
 
    shader = xorg_shaders_get(exa->renderer->shaders, vs_traits, fs_traits);
    cso_set_vertex_shader_handle(exa->renderer->cso, shader.vs);

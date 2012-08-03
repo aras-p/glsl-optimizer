@@ -482,9 +482,9 @@ bind_samplers(struct xorg_xv_port_priv *port)
    samplers[2] = &sampler;
 
 
-   cso_set_samplers(port->r->cso, 3,
+   cso_set_samplers(port->r->cso, PIPE_SHADER_FRAGMENT, 3,
                     (const struct pipe_sampler_state **)samplers);
-   cso_set_fragment_sampler_views(port->r->cso, 3, dst_views);
+   cso_set_sampler_views(port->r->cso, PIPE_SHADER_FRAGMENT, 3, dst_views);
 }
 
 static int
