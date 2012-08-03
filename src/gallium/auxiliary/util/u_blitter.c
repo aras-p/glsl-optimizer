@@ -941,13 +941,14 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
    struct pipe_sampler_view src_templ, *src_view;
    unsigned bind;
    boolean is_stencil, is_depth;
-   const struct util_format_description *src_desc =
-         util_format_description(src->format);
+   const struct util_format_description *src_desc;
 
    /* Give up if textures are not set. */
    assert(dst && src);
    if (!dst || !src)
       return;
+
+   src_desc = util_format_description(src->format);
 
    assert(src->target < PIPE_MAX_TEXTURE_TYPES);
 
