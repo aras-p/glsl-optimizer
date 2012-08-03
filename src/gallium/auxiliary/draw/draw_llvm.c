@@ -559,7 +559,7 @@ convert_to_soa(struct gallivm_state *gallivm,
       unsigned pixels_per_channel = soa_type.length / TGSI_NUM_CHANNELS;
 
       for (j = 0; j < TGSI_NUM_CHANNELS; ++j) {
-         LLVMValueRef channel[LP_MAX_VECTOR_LENGTH];
+         LLVMValueRef channel[LP_MAX_VECTOR_LENGTH] = { 0 };
 
          assert(pixels_per_channel <= LP_MAX_VECTOR_LENGTH);
 
