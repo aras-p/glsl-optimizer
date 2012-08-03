@@ -282,7 +282,7 @@ static void init_prog(struct program *p)
 static void close_prog(struct program *p)
 {
 	/* unset bound textures as well */
-	cso_set_fragment_sampler_views(p->cso, 0, NULL);
+	cso_set_sampler_views(p->cso, PIPE_SHADER_FRAGMENT, 0, NULL);
 
 	/* unset all state */
 	cso_release_all(p->cso);
@@ -323,7 +323,7 @@ static void draw(struct program *p)
 	cso_single_sampler_done(p->cso);
 
 	/* texture sampler view */
-	cso_set_fragment_sampler_views(p->cso, 1, &p->view);
+	cso_set_sampler_views(p->cso, PIPE_SHADER_FRAGMENT, 1, &p->view);
 
 	/* shaders */
 	cso_set_fragment_shader_handle(p->cso, p->fs);
