@@ -430,8 +430,8 @@ renderer_copy_prepare(struct xa_context *r,
 	sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
 	sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
 	sampler.normalized_coords = 1;
-	cso_single_sampler(r->cso, 0, &sampler);
-	cso_single_sampler_done(r->cso);
+	cso_single_sampler(r->cso, PIPE_SHADER_FRAGMENT, 0, &sampler);
+	cso_single_sampler_done(r->cso, PIPE_SHADER_FRAGMENT);
     }
 
     renderer_bind_destination(r, dst_surface,
@@ -445,7 +445,7 @@ renderer_copy_prepare(struct xa_context *r,
 	u_sampler_view_default_template(&templ,
 					src_texture, src_texture->format);
 	src_view = pipe->create_sampler_view(pipe, src_texture, &templ);
-	cso_set_fragment_sampler_views(r->cso, 1, &src_view);
+	cso_set_sampler_views(r->cso, PIPE_SHADER_FRAGMENT, 1, &src_view);
 	pipe_sampler_view_reference(&src_view, NULL);
     }
 

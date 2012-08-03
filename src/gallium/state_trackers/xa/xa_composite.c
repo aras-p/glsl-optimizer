@@ -459,9 +459,9 @@ bind_samplers(struct xa_context *ctx,
 
     }
 
-    cso_set_samplers(ctx->cso, ctx->num_bound_samplers,
+    cso_set_samplers(ctx->cso, PIPE_SHADER_FRAGMENT, ctx->num_bound_samplers,
 		     (const struct pipe_sampler_state **)samplers);
-    cso_set_fragment_sampler_views(ctx->cso, ctx->num_bound_samplers,
+    cso_set_sampler_views(ctx->cso, PIPE_SHADER_FRAGMENT, ctx->num_bound_samplers,
 				   ctx->bound_sampler_views);
 }
 
