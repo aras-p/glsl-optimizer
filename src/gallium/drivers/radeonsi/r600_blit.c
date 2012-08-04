@@ -250,7 +250,7 @@ static void r600_hw_copy_region(struct pipe_context *ctx,
 
 	r600_blitter_begin(ctx, R600_COPY);
 	util_blitter_copy_texture(rctx->blitter, dst, dst_level, dstx, dsty, dstz,
-				  src, src_level, src_box, TRUE);
+				  src, src_level, src_box);
 	r600_blitter_end(ctx);
 }
 
