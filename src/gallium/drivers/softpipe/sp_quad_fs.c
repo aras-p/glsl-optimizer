@@ -153,7 +153,7 @@ shade_begin(struct quad_stage *qs)
    softpipe->fs_variant->prepare( softpipe->fs_variant, 
                                   softpipe->fs_machine,
                                   (struct tgsi_sampler **)
-                                  softpipe->tgsi.frag_samplers_list );
+                                  softpipe->tgsi.samplers_list[PIPE_SHADER_FRAGMENT] );
 
    qs->next->begin(qs->next);
 }

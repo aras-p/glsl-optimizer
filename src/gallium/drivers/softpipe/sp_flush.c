@@ -52,14 +52,12 @@ softpipe_flush( struct pipe_context *pipe,
    draw_flush(softpipe->draw);
 
    if (flags & SP_FLUSH_TEXTURE_CACHE) {
-      for (i = 0; i < softpipe->num_fragment_sampler_views; i++) {
-         sp_flush_tex_tile_cache(softpipe->tex_cache[PIPE_SHADER_FRAGMENT][i]);
-      }
-      for (i = 0; i < softpipe->num_vertex_sampler_views; i++) {
-         sp_flush_tex_tile_cache(softpipe->tex_cache[PIPE_SHADER_VERTEX][i]);
-      }
-      for (i = 0; i < softpipe->num_geometry_sampler_views; i++) {
-         sp_flush_tex_tile_cache(softpipe->tex_cache[PIPE_SHADER_GEOMETRY][i]);
+      unsigned sh;
+
+      for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
+         for (i = 0; i < softpipe->num_sampler_views[sh]; i++) {
+            sp_flush_tex_tile_cache(softpipe->tex_cache[sh][i]);
+         }
       }
    }
 

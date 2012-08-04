@@ -305,13 +305,13 @@ update_polygon_stipple_enable(struct softpipe_context *softpipe, unsigned prim)
        softpipe->fs_variant->key.polygon_stipple) {
       const unsigned unit = softpipe->fs_variant->stipple_sampler_unit;
 
-      assert(unit >= softpipe->num_fragment_samplers);
+      assert(unit >= softpipe->num_samplers[PIPE_SHADER_FRAGMENT]);
 
       /* sampler state */
-      softpipe->fragment_samplers[unit] = softpipe->pstipple.sampler;
+      softpipe->samplers[PIPE_SHADER_FRAGMENT][unit] = softpipe->pstipple.sampler;
 
       /* sampler view */
-      pipe_sampler_view_reference(&softpipe->fragment_sampler_views[unit],
+      pipe_sampler_view_reference(&softpipe->sampler_views[PIPE_SHADER_FRAGMENT][unit],
                                   softpipe->pstipple.sampler_view);
 
       sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[PIPE_SHADER_FRAGMENT][unit],
