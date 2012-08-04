@@ -685,6 +685,9 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
 
    assert(_mesa_is_user_fbo(fb));
 
+   /* we're changing framebuffer fields here */
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+
    numImages = 0;
    fb->Width = 0;
    fb->Height = 0;
