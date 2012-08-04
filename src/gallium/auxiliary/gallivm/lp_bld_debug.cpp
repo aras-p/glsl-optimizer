@@ -81,7 +81,11 @@ lp_check_alignment(const void *ptr, unsigned alignment)
 class raw_debug_ostream :
    public llvm::raw_ostream
 {
+private:
    uint64_t pos;
+
+public:
+   raw_debug_ostream() : pos(0) { }
 
    void write_impl(const char *Ptr, size_t Size);
 
