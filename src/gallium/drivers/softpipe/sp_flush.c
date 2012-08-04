@@ -38,6 +38,7 @@
 #include "sp_state.h"
 #include "sp_tile_cache.h"
 #include "sp_tex_tile_cache.h"
+#include "util/u_memory.h"
 
 
 void
@@ -52,13 +53,13 @@ softpipe_flush( struct pipe_context *pipe,
 
    if (flags & SP_FLUSH_TEXTURE_CACHE) {
       for (i = 0; i < softpipe->num_fragment_sampler_views; i++) {
-         sp_flush_tex_tile_cache(softpipe->fragment_tex_cache[i]);
+         sp_flush_tex_tile_cache(softpipe->tex_cache[PIPE_SHADER_FRAGMENT][i]);
       }
       for (i = 0; i < softpipe->num_vertex_sampler_views; i++) {
-         sp_flush_tex_tile_cache(softpipe->vertex_tex_cache[i]);
+         sp_flush_tex_tile_cache(softpipe->tex_cache[PIPE_SHADER_VERTEX][i]);
       }
       for (i = 0; i < softpipe->num_geometry_sampler_views; i++) {
-         sp_flush_tex_tile_cache(softpipe->geometry_tex_cache[i]);
+         sp_flush_tex_tile_cache(softpipe->tex_cache[PIPE_SHADER_GEOMETRY][i]);
       }
    }
 

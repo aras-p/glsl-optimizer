@@ -202,7 +202,7 @@ softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
       pipe_sampler_view_reference(&softpipe->fragment_sampler_views[i], view);
-      sp_tex_tile_cache_set_sampler_view(softpipe->fragment_tex_cache[i], view);
+      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[PIPE_SHADER_FRAGMENT][i], view);
    }
 
    softpipe->num_fragment_sampler_views = num;
@@ -233,7 +233,7 @@ softpipe_set_vertex_sampler_views(struct pipe_context *pipe,
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
       pipe_sampler_view_reference(&softpipe->vertex_sampler_views[i], view);
-      sp_tex_tile_cache_set_sampler_view(softpipe->vertex_tex_cache[i], view);
+      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[PIPE_SHADER_VERTEX][i], view);
    }
 
    softpipe->num_vertex_sampler_views = num;
@@ -268,7 +268,7 @@ softpipe_set_geometry_sampler_views(struct pipe_context *pipe,
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
       pipe_sampler_view_reference(&softpipe->geometry_sampler_views[i], view);
-      sp_tex_tile_cache_set_sampler_view(softpipe->geometry_tex_cache[i], view);
+      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[PIPE_SHADER_GEOMETRY][i], view);
    }
 
    softpipe->num_geometry_sampler_views = num;
@@ -350,7 +350,7 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
                                  TGSI_PROCESSOR_VERTEX );
 
          sp_sampler_variant_bind_view( softpipe->tgsi.vert_samplers_list[i],
-                                       softpipe->vertex_tex_cache[i],
+                                       softpipe->tex_cache[PIPE_SHADER_VERTEX][i],
                                        softpipe->vertex_sampler_views[i] );
       }
    }
@@ -367,7 +367,7 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
 
             sp_sampler_variant_bind_view(
                softpipe->tgsi.geom_samplers_list[i],
-               softpipe->geometry_tex_cache[i],
+               softpipe->tex_cache[PIPE_SHADER_GEOMETRY][i],
                softpipe->geometry_sampler_views[i] );
          }
       }
@@ -383,7 +383,7 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
                                  TGSI_PROCESSOR_FRAGMENT );
 
          sp_sampler_variant_bind_view( softpipe->tgsi.frag_samplers_list[i],
-                                       softpipe->fragment_tex_cache[i],
+                                       softpipe->tex_cache[PIPE_SHADER_FRAGMENT][i],
                                        softpipe->fragment_sampler_views[i] );
       }
    }

@@ -184,9 +184,13 @@ struct softpipe_context {
    struct softpipe_tile_cache *zsbuf_cache;
 
    unsigned tex_timestamp;
-   struct softpipe_tex_tile_cache *fragment_tex_cache[PIPE_MAX_SAMPLERS];
-   struct softpipe_tex_tile_cache *vertex_tex_cache[PIPE_MAX_VERTEX_SAMPLERS];
-   struct softpipe_tex_tile_cache *geometry_tex_cache[PIPE_MAX_GEOMETRY_SAMPLERS];
+
+   /*
+    * Texture caches for vertex, fragment, geometry stages.
+    * Don't use PIPE_SHADER_TYPES here to avoid allocating unused memory
+    * for compute shaders.
+    */
+   struct softpipe_tex_tile_cache *tex_cache[PIPE_SHADER_GEOMETRY+1][PIPE_MAX_SAMPLERS];
 
    unsigned dump_fs : 1;
    unsigned dump_gs : 1;
