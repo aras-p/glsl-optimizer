@@ -67,88 +67,63 @@ softpipe_create_sampler_state(struct pipe_context *pipe,
 
 
 static void
-softpipe_bind_fragment_sampler_states(struct pipe_context *pipe,
-                                      unsigned num, void **sampler)
+softpipe_bind_sampler_states(struct pipe_context *pipe,
+                             unsigned shader, unsigned num, void **sampler)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    unsigned i;
 
+   assert(shader < PIPE_SHADER_TYPES);
    assert(num <= PIPE_MAX_SAMPLERS);
 
    /* Check for no-op */
-   if (num == softpipe->num_samplers[PIPE_SHADER_FRAGMENT] &&
-       !memcmp(softpipe->samplers[PIPE_SHADER_FRAGMENT], sampler, num * sizeof(void *)))
+   if (num == softpipe->num_samplers[shader] &&
+       !memcmp(softpipe->samplers[shader], sampler, num * sizeof(void *)))
       return;
 
    draw_flush(softpipe->draw);
 
    for (i = 0; i < num; ++i)
-      softpipe->samplers[PIPE_SHADER_FRAGMENT][i] = sampler[i];
+      softpipe->samplers[shader][i] = sampler[i];
    for (i = num; i < PIPE_MAX_SAMPLERS; ++i)
-      softpipe->samplers[PIPE_SHADER_FRAGMENT][i] = NULL;
+      softpipe->samplers[shader][i] = NULL;
 
-   softpipe->num_samplers[PIPE_SHADER_FRAGMENT] = num;
+   softpipe->num_samplers[shader] = num;
+
+   if (shader == PIPE_SHADER_VERTEX) {
+      draw_set_samplers(softpipe->draw,
+                        softpipe->samplers[PIPE_SHADER_VERTEX],
+                        softpipe->num_samplers[PIPE_SHADER_VERTEX]);
+   }
 
    softpipe->dirty |= SP_NEW_SAMPLER;
+}
+
+
+
+static void
+softpipe_bind_fragment_sampler_states(struct pipe_context *pipe,
+                                      unsigned num, void **samplers)
+{
+   softpipe_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, num, samplers);
 }
 
 
 static void
 softpipe_bind_vertex_sampler_states(struct pipe_context *pipe,
-                                    unsigned num_samplers,
+                                    unsigned num,
                                     void **samplers)
 {
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-   unsigned i;
-
-   assert(num_samplers <= PIPE_MAX_VERTEX_SAMPLERS);
-
-   /* Check for no-op */
-   if (num_samplers == softpipe->num_samplers[PIPE_SHADER_VERTEX] &&
-       !memcmp(softpipe->samplers[PIPE_SHADER_VERTEX], samplers, num_samplers * sizeof(void *)))
-      return;
-
-   draw_flush(softpipe->draw);
-
-   for (i = 0; i < num_samplers; ++i)
-      softpipe->samplers[PIPE_SHADER_VERTEX][i] = samplers[i];
-   for (i = num_samplers; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
-      softpipe->samplers[PIPE_SHADER_VERTEX][i] = NULL;
-
-   softpipe->num_samplers[PIPE_SHADER_VERTEX] = num_samplers;
-
-   draw_set_samplers(softpipe->draw,
-                     softpipe->samplers[PIPE_SHADER_VERTEX],
-                     softpipe->num_samplers[PIPE_SHADER_VERTEX]);
-
-   softpipe->dirty |= SP_NEW_SAMPLER;
+   softpipe_bind_sampler_states(pipe, PIPE_SHADER_VERTEX, num, samplers);
 }
+
 
 static void
 softpipe_bind_geometry_sampler_states(struct pipe_context *pipe,
-                                      unsigned num_samplers,
+                                      unsigned num,
                                       void **samplers)
 {
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-   unsigned i;
-
-   assert(num_samplers <= PIPE_MAX_GEOMETRY_SAMPLERS);
-
-   /* Check for no-op */
-   if (num_samplers == softpipe->num_samplers[PIPE_SHADER_GEOMETRY] &&
-       !memcmp(softpipe->samplers[PIPE_SHADER_GEOMETRY], samplers, num_samplers * sizeof(void *)))
-      return;
-
-   draw_flush(softpipe->draw);
-
-   for (i = 0; i < num_samplers; ++i)
-      softpipe->samplers[PIPE_SHADER_GEOMETRY][i] = samplers[i];
-   for (i = num_samplers; i < PIPE_MAX_SAMPLERS; ++i)
-      softpipe->samplers[PIPE_SHADER_GEOMETRY][i] = NULL;
-
-   softpipe->num_samplers[PIPE_SHADER_GEOMETRY] = num_samplers;
-
-   softpipe->dirty |= SP_NEW_SAMPLER;
+   softpipe_bind_sampler_states(pipe, PIPE_SHADER_GEOMETRY, num, samplers);
 }
 
 
@@ -181,9 +156,10 @@ softpipe_sampler_view_destroy(struct pipe_context *pipe,
 
 
 static void
-softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
-                                    unsigned num,
-                                    struct pipe_sampler_view **views)
+softpipe_set_sampler_views(struct pipe_context *pipe,
+                           unsigned shader,
+                           unsigned num,
+                           struct pipe_sampler_view **views)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    uint i;
@@ -191,8 +167,8 @@ softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
    assert(num <= PIPE_MAX_SAMPLERS);
 
    /* Check for no-op */
-   if (num == softpipe->num_sampler_views[PIPE_SHADER_FRAGMENT] &&
-       !memcmp(softpipe->sampler_views[PIPE_SHADER_FRAGMENT], views,
+   if (num == softpipe->num_sampler_views[shader] &&
+       !memcmp(softpipe->sampler_views[shader], views,
                num * sizeof(struct pipe_sampler_view *)))
       return;
 
@@ -201,13 +177,28 @@ softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
-      pipe_sampler_view_reference(&softpipe->sampler_views[PIPE_SHADER_FRAGMENT][i], view);
-      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[PIPE_SHADER_FRAGMENT][i], view);
+      pipe_sampler_view_reference(&softpipe->sampler_views[shader][i], view);
+      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[shader][i], view);
    }
 
-   softpipe->num_sampler_views[PIPE_SHADER_FRAGMENT] = num;
+   softpipe->num_sampler_views[shader] = num;
+
+   if (shader == PIPE_SHADER_VERTEX) {
+      draw_set_sampler_views(softpipe->draw,
+                             softpipe->sampler_views[PIPE_SHADER_VERTEX],
+                             softpipe->num_sampler_views[PIPE_SHADER_VERTEX]);
+   }
 
    softpipe->dirty |= SP_NEW_TEXTURE;
+}
+
+
+static void
+softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
+                                    unsigned num,
+                                    struct pipe_sampler_view **views)
+{
+   softpipe_set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, num, views);
 }
 
 
@@ -216,34 +207,7 @@ softpipe_set_vertex_sampler_views(struct pipe_context *pipe,
                                   unsigned num,
                                   struct pipe_sampler_view **views)
 {
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-   uint i;
-
-   assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
-
-   /* Check for no-op */
-   if (num == softpipe->num_sampler_views[PIPE_SHADER_VERTEX] &&
-       !memcmp(softpipe->sampler_views[PIPE_SHADER_VERTEX],
-               views, num * sizeof(struct pipe_sampler_view *))) {
-      return;
-   }
-
-   draw_flush(softpipe->draw);
-
-   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
-      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
-
-      pipe_sampler_view_reference(&softpipe->sampler_views[PIPE_SHADER_VERTEX][i], view);
-      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[PIPE_SHADER_VERTEX][i], view);
-   }
-
-   softpipe->num_sampler_views[PIPE_SHADER_VERTEX] = num;
-
-   draw_set_sampler_views(softpipe->draw,
-                          softpipe->sampler_views[PIPE_SHADER_VERTEX],
-                          softpipe->num_sampler_views[PIPE_SHADER_VERTEX]);
-
-   softpipe->dirty |= SP_NEW_TEXTURE;
+   softpipe_set_sampler_views(pipe, PIPE_SHADER_VERTEX, num, views);
 }
 
 
@@ -252,29 +216,7 @@ softpipe_set_geometry_sampler_views(struct pipe_context *pipe,
                                     unsigned num,
                                     struct pipe_sampler_view **views)
 {
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-   uint i;
-
-   assert(num <= PIPE_MAX_GEOMETRY_SAMPLERS);
-
-   /* Check for no-op */
-   if (num == softpipe->num_sampler_views[PIPE_SHADER_GEOMETRY] &&
-       !memcmp(softpipe->sampler_views[PIPE_SHADER_GEOMETRY], views, num * sizeof(struct pipe_sampler_view *))) {
-      return;
-   }
-
-   draw_flush(softpipe->draw);
-
-   for (i = 0; i < PIPE_MAX_GEOMETRY_SAMPLERS; i++) {
-      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
-
-      pipe_sampler_view_reference(&softpipe->sampler_views[PIPE_SHADER_GEOMETRY][i], view);
-      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[PIPE_SHADER_GEOMETRY][i], view);
-   }
-
-   softpipe->num_sampler_views[PIPE_SHADER_GEOMETRY] = num;
-
-   softpipe->dirty |= SP_NEW_TEXTURE;
+   softpipe_set_sampler_views(pipe, PIPE_SHADER_GEOMETRY, num, views);
 }
 
 
