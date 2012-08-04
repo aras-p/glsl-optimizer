@@ -48,6 +48,7 @@ initialize_context(struct gl_context *ctx, gl_api api)
     * everything in order to compile the built-in functions.
     */
    ctx->Const.GLSLVersion = 140;
+   ctx->Extensions.ARB_ES3_compatibility = true;
 
    ctx->Const.MaxClipPlanes = 8;
    ctx->Const.MaxDrawBuffers = 2;
