@@ -972,10 +972,26 @@ void util_blitter_clear_depth_custom(struct blitter_context *blitter,
 }
 
 static
-boolean is_overlap(unsigned sx1, unsigned sx2, unsigned sy1, unsigned sy2,
-                   unsigned dx1, unsigned dx2, unsigned dy1, unsigned dy2)
+boolean is_overlap(unsigned dstx, unsigned dsty, unsigned dstz,
+		   const struct pipe_box *srcbox)
 {
-   return sx1 < dx2 && sx2 > dx1 && sy1 < dy2 && sy2 > dy1;
+   struct pipe_box src = *srcbox;
+
+   if (src.width < 0) {
+      src.x += src.width;
+      src.width = -src.width;
+   }
+   if (src.height < 0) {
+      src.y += src.height;
+      src.height = -src.height;
+   }
+   if (src.depth < 0) {
+      src.z += src.depth;
+      src.depth = -src.depth;
+   }
+   return src.x < dstx+src.width && src.x+src.width > dstx &&
+          src.y < dsty+src.height && src.y+src.height > dsty &&
+          src.z < dstz+src.depth && src.z+src.depth > dstz;
 }
 
 void util_blitter_default_dst_texture(struct pipe_surface *dst_templ,
@@ -1117,8 +1133,8 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
    struct pipe_context *pipe = ctx->base.pipe;
    struct pipe_framebuffer_state fb_state;
    enum pipe_texture_target src_target = src->texture->target;
-   unsigned width = srcbox->width;
-   unsigned height = srcbox->height;
+   int abs_width = abs(srcbox->width);
+   int abs_height = abs(srcbox->height);
    boolean blit_stencil, blit_depth;
    const struct util_format_description *src_desc =
          util_format_description(src->format);
@@ -1138,8 +1154,7 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
    /* Sanity checks. */
    if (dst->texture == src->texture &&
        dst->u.tex.level == src->u.tex.first_level) {
-      assert(!is_overlap(srcbox->x, srcbox->x + width, srcbox->y, srcbox->y + height,
-                         dstx, dstx + width, dsty, dsty + height));
+      assert(!is_overlap(dstx, dsty, 0, srcbox));
    }
    /* XXX should handle 3d regions */
    assert(srcbox->depth == 1);
@@ -1230,18 +1245,18 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
        */
       union pipe_color_union coord;
       get_texcoords(src, src_width0, src_height0, srcbox->x, srcbox->y,
-                    srcbox->x+width, srcbox->y+height, coord.f);
+                    srcbox->x+srcbox->width, srcbox->y+srcbox->height, coord.f);
 
       /* Draw. */
-      blitter->draw_rectangle(blitter, dstx, dsty, dstx+width, dsty+height, 0,
+      blitter->draw_rectangle(blitter, dstx, dsty, dstx+abs_width, dsty+abs_height, 0,
                               UTIL_BLITTER_ATTRIB_TEXCOORD, &coord);
    } else {
       /* Draw the quad with the generic codepath. */
       blitter_set_texcoords(ctx, src, src_width0, src_height0, srcbox->z,
                             src_sample,
                             srcbox->x, srcbox->y,
-                            srcbox->x + width, srcbox->y + height);
-      blitter_draw(ctx, dstx, dsty, dstx+width, dsty+height, 0);
+                            srcbox->x + srcbox->width, srcbox->y + srcbox->height);
+      blitter_draw(ctx, dstx, dsty, dstx+abs_width, dsty+abs_height, 0);
    }
 
    blitter_restore_vertex_states(ctx);
