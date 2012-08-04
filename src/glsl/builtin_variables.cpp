@@ -61,6 +61,17 @@ static const builtin_variable builtin_100ES_fs_variables[] = {
    { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
 };
 
+static const builtin_variable builtin_300ES_vs_variables[] = {
+   { ir_var_system_value,  SYSTEM_VALUE_VERTEX_ID, "int",   "gl_VertexID" },
+};
+
+static const builtin_variable builtin_300ES_fs_variables[] = {
+   { ir_var_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord" },
+   { ir_var_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing" },
+   { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth" },
+   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+};
+
 static const builtin_variable builtin_110_fs_variables[] = {
    { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth" },
 };
@@ -499,12 +510,15 @@ add_builtin_constant(exec_list *instructions, glsl_symbol_table *symtab,
    return var;
 }
 
-/* Several constants in GLSL ES have different names than normal desktop GLSL.
+/**
+ * Uniforms that are common to all GLSL ES implementations.
+ *
+ * Several constants in GLSL ES have different names than normal desktop GLSL.
  * Therefore, this function should only be called on the ES path.
  */
 static void
-generate_100ES_uniforms(exec_list *instructions,
-		     struct _mesa_glsl_parse_state *state)
+generate_common_ES_uniforms(exec_list *instructions,
+                            struct _mesa_glsl_parse_state *state)
 {
    glsl_symbol_table *const symtab = state->symbols;
 
@@ -512,8 +526,6 @@ generate_100ES_uniforms(exec_list *instructions,
 			state->Const.MaxVertexAttribs);
    add_builtin_constant(instructions, symtab, "gl_MaxVertexUniformVectors",
 			state->Const.MaxVertexUniformComponents);
-   add_builtin_constant(instructions, symtab, "gl_MaxVaryingVectors",
-			state->Const.MaxVaryingFloats / 4);
    add_builtin_constant(instructions, symtab, "gl_MaxVertexTextureImageUnits",
 			state->Const.MaxVertexTextureImageUnits);
    add_builtin_constant(instructions, symtab, "gl_MaxCombinedTextureImageUnits",
@@ -525,6 +537,36 @@ generate_100ES_uniforms(exec_list *instructions,
 
    add_uniform(instructions, symtab, "gl_DepthRange",
 	       state->symbols->get_type("gl_DepthRangeParameters"));
+}
+
+static void
+generate_100ES_uniforms(exec_list *instructions,
+		     struct _mesa_glsl_parse_state *state)
+{
+   generate_common_ES_uniforms(instructions, state);
+
+   glsl_symbol_table *const symtab = state->symbols;
+
+   add_builtin_constant(instructions, symtab, "gl_MaxVaryingVectors",
+			state->Const.MaxVaryingFloats / 4);
+}
+
+static void
+generate_300ES_uniforms(exec_list *instructions,
+                        struct _mesa_glsl_parse_state *state)
+{
+   generate_common_ES_uniforms(instructions, state);
+
+   glsl_symbol_table *const symtab = state->symbols;
+
+   add_builtin_constant(instructions, symtab, "gl_MaxVertexOutputVectors",
+			state->Const.MaxVaryingFloats / 4);
+   add_builtin_constant(instructions, symtab, "gl_MaxFragmentInputVectors",
+			state->Const.MaxVaryingFloats / 4);
+   add_builtin_constant(instructions, symtab, "gl_MinProgramTexelOffset",
+                        state->Const.MinProgramTexelOffset);
+   add_builtin_constant(instructions, symtab, "gl_MaxProgramTexelOffset",
+                        state->Const.MaxProgramTexelOffset);
 }
 
 static void
@@ -657,6 +699,26 @@ generate_100ES_vs_variables(exec_list *instructions,
 				       vertex_shader);
 }
 
+static void
+generate_300ES_vs_variables(exec_list *instructions,
+                            struct _mesa_glsl_parse_state *state)
+{
+   for (unsigned i = 0; i < Elements(builtin_core_vs_variables); i++) {
+      add_builtin_variable(instructions, state->symbols,
+			   & builtin_core_vs_variables[i]);
+   }
+
+   for (unsigned i = 0; i < Elements(builtin_300ES_vs_variables); i++) {
+      add_builtin_variable(instructions, state->symbols,
+			   & builtin_300ES_vs_variables[i]);
+   }
+
+   generate_300ES_uniforms(instructions, state);
+
+   generate_ARB_draw_buffers_variables(instructions, state, false,
+				       vertex_shader);
+}
+
 
 static void
 generate_110_vs_variables(exec_list *instructions,
@@ -760,23 +822,36 @@ static void
 initialize_vs_variables(exec_list *instructions,
 			struct _mesa_glsl_parse_state *state)
 {
-
-   switch (state->language_version) {
-   case 100:
-      generate_100ES_vs_variables(instructions, state);
-      break;
-   case 110:
-      generate_110_vs_variables(instructions, state, true);
-      break;
-   case 120:
-      generate_120_vs_variables(instructions, state, true);
-      break;
-   case 130:
-      generate_130_vs_variables(instructions, state, true);
-      break;
-   case 140:
-      generate_130_vs_variables(instructions, state, false);
-      break;
+   if (state->es_shader) {
+      switch (state->language_version) {
+      case 100:
+         generate_100ES_vs_variables(instructions, state);
+         break;
+      case 300:
+         generate_300ES_vs_variables(instructions, state);
+         break;
+      default:
+         assert(!"Unexpected language version");
+         break;
+      }
+   } else {
+      switch (state->language_version) {
+      case 110:
+         generate_110_vs_variables(instructions, state, true);
+         break;
+      case 120:
+         generate_120_vs_variables(instructions, state, true);
+         break;
+      case 130:
+         generate_130_vs_variables(instructions, state, true);
+         break;
+      case 140:
+         generate_130_vs_variables(instructions, state, false);
+         break;
+      default:
+         assert(!"Unexpected language version");
+         break;
+      }
    }
 
    generate_ARB_draw_instanced_variables(instructions, state, false,
@@ -800,6 +875,25 @@ generate_100ES_fs_variables(exec_list *instructions,
    }
 
    generate_100ES_uniforms(instructions, state);
+
+   generate_ARB_draw_buffers_variables(instructions, state, false,
+				       fragment_shader);
+}
+
+static void
+generate_300ES_fs_variables(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   /* Note: we don't add builtin_core_fs_variables, because it contains
+    * gl_FragColor, which is not in GLSL 3.00 ES.
+    */
+
+   for (unsigned i = 0; i < Elements(builtin_300ES_fs_variables); i++) {
+      add_builtin_variable(instructions, state->symbols,
+			   & builtin_300ES_fs_variables[i]);
+   }
+
+   generate_300ES_uniforms(instructions, state);
 
    generate_ARB_draw_buffers_variables(instructions, state, false,
 				       fragment_shader);
@@ -865,8 +959,9 @@ generate_ARB_draw_buffers_variables(exec_list *instructions,
       mdb->warn_extension = "GL_ARB_draw_buffers";
 
    /* gl_FragData is only available in the fragment shader.
+    * It is not present in GLSL 3.00 ES.
     */
-   if (target == fragment_shader) {
+   if (target == fragment_shader && !state->is_version(0, 300)) {
       const glsl_type *const vec4_array_type =
 	 glsl_type::get_array_instance(glsl_type::vec4_type,
 				       state->Const.MaxDrawBuffers);
@@ -903,7 +998,8 @@ generate_ARB_draw_instanced_variables(exec_list *instructions,
          inst->warn_extension = "GL_ARB_draw_instanced";
    }
 
-   if (state->ARB_draw_instanced_enable || state->language_version >= 140) {
+   bool available_in_core = state->is_version(140, 300);
+   if (state->ARB_draw_instanced_enable || available_in_core) {
       /* Originally ARB_draw_instanced only specified that ARB decorated name.
        * Since no vendor actually implemented that behavior and some apps use
        * the undecorated name, the extension now specifies that both names are
@@ -914,7 +1010,7 @@ generate_ARB_draw_instanced_variables(exec_list *instructions,
 		      "gl_InstanceID", glsl_type::int_type,
 		      ir_var_system_value, SYSTEM_VALUE_INSTANCE_ID);
 
-      if (state->language_version < 140 && warn)
+      if (!available_in_core && warn)
          inst->warn_extension = "GL_ARB_draw_instanced";
    }
 }
@@ -1016,23 +1112,36 @@ static void
 initialize_fs_variables(exec_list *instructions,
 			struct _mesa_glsl_parse_state *state)
 {
-
-   switch (state->language_version) {
-   case 100:
-      generate_100ES_fs_variables(instructions, state);
-      break;
-   case 110:
-      generate_110_fs_variables(instructions, state, true);
-      break;
-   case 120:
-      generate_120_fs_variables(instructions, state, true);
-      break;
-   case 130:
-      generate_130_fs_variables(instructions, state);
-      break;
-   case 140:
-      generate_140_fs_variables(instructions, state);
-      break;
+   if (state->es_shader) {
+      switch (state->language_version) {
+      case 100:
+         generate_100ES_fs_variables(instructions, state);
+         break;
+      case 300:
+         generate_300ES_fs_variables(instructions, state);
+         break;
+      default:
+         assert(!"Unexpected language version");
+         break;
+      }
+   } else {
+      switch (state->language_version) {
+      case 110:
+         generate_110_fs_variables(instructions, state, true);
+         break;
+      case 120:
+         generate_120_fs_variables(instructions, state, true);
+         break;
+      case 130:
+         generate_130_fs_variables(instructions, state);
+         break;
+      case 140:
+         generate_140_fs_variables(instructions, state);
+         break;
+      default:
+         assert(!"Unexpected language version");
+         break;
+      }
    }
 
    if (state->ARB_shader_stencil_export_enable)
