@@ -3424,7 +3424,7 @@ static int tgsi_f2i(struct r600_shader_ctx *ctx)
 		alu.src[0].sel = ctx->temp_reg;
 		alu.src[0].chan = i;
 
-		if (i == last_inst)
+		if (i == last_inst || alu.inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT)
 			alu.last = 1;
 		r = r600_bytecode_add_alu(ctx->bc, &alu);
 		if (r)
