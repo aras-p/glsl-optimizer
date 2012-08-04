@@ -338,8 +338,6 @@ static uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_R16G16_SNORM:
 	case PIPE_FORMAT_R16G16_UINT:
 	case PIPE_FORMAT_R16G16_SINT:
-	case PIPE_FORMAT_R16G16B16_FLOAT:
-	case PIPE_FORMAT_R32G32B32_FLOAT:
 		return V_028C70_SWAP_STD;
 
 	/* 64-bit buffers. */
@@ -517,7 +515,6 @@ static uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
 		return V_028C70_COLOR_16_16_16_16;
 
-	case PIPE_FORMAT_R16G16B16_FLOAT:
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
 		return V_028C70_COLOR_16_16_16_16_FLOAT;
 
@@ -530,10 +527,6 @@ static uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_L32A32_UINT:
 	case PIPE_FORMAT_L32A32_SINT:
 		return V_028C70_COLOR_32_32;
-
-	/* 96-bit buffers. */
-	case PIPE_FORMAT_R32G32B32_FLOAT:
-		return V_028C70_COLOR_32_32_32_FLOAT;
 
 	/* 128-bit buffers. */
 	case PIPE_FORMAT_R32G32B32A32_SNORM:
