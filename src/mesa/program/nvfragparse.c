@@ -582,7 +582,7 @@ Parse_TextureImageId(struct parse_state *parseState,
       RETURN_ERROR1("Expected TEX# source");
    }
    unit = atoi((const char *) imageSrc + 3);
-   if ((unit < 0 || unit > MAX_TEXTURE_IMAGE_UNITS) ||
+   if ((unit < 0 || unit >= MAX_TEXTURE_IMAGE_UNITS) ||
        (unit == 0 && (imageSrc[3] != '0' || imageSrc[4] != 0))) {
       RETURN_ERROR1("Invalied TEX# source index");
    }
