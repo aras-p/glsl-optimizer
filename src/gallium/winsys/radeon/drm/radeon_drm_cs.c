@@ -438,6 +438,10 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_cs_context *tmp;
 
+    if (rcs->cdw > RADEON_MAX_CMDBUF_DWORDS) {
+       fprintf(stderr, "radeon: command stream overflowed\n");
+    }
+
     radeon_drm_cs_sync_flush(cs);
 
     /* Flip command streams. */
@@ -445,8 +449,8 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
     cs->csc = cs->cst;
     cs->cst = tmp;
 
-    /* If the CS is not empty, emit it in a separate thread. */
-    if (cs->base.cdw) {
+    /* If the CS is not empty or overflowed, emit it in a separate thread. */
+    if (cs->base.cdw && cs->base.cdw <= RADEON_MAX_CMDBUF_DWORDS) {
         unsigned i, crelocs = cs->cst->crelocs;
 
         cs->cst->chunks[0].length_dw = cs->base.cdw;
