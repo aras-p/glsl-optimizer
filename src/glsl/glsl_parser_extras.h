@@ -190,6 +190,10 @@ struct _mesa_glsl_parse_state {
 
       /* ARB_draw_buffers */
       unsigned MaxDrawBuffers;
+
+      /* 3.00 ES */
+      int MinProgramTexelOffset;
+      int MaxProgramTexelOffset;
    } Const;
 
    /**
