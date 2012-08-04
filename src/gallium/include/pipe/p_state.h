@@ -387,12 +387,12 @@ struct pipe_sampler_view
  */
 struct pipe_box
 {
-   unsigned x;
-   unsigned y;
-   unsigned z;
-   unsigned width;
-   unsigned height;
-   unsigned depth;
+   int x;
+   int y;
+   int z;
+   int width;
+   int height;
+   int depth;
 };
 
 
