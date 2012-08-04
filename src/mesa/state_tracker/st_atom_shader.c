@@ -85,7 +85,8 @@ update_fp( struct st_context *st )
 
    /* _NEW_FRAG_CLAMP */
    key.clamp_color = st->clamp_frag_color_in_shader &&
-                     st->ctx->Color._ClampFragmentColor;
+                     st->ctx->Color._ClampFragmentColor &&
+                     !st->ctx->DrawBuffer->_IntegerColor;
 
    st->fp_variant = st_get_fp_variant(st, stfp, &key);
 
@@ -106,7 +107,7 @@ update_fp( struct st_context *st )
 const struct st_tracked_state st_update_fp = {
    "st_update_fp",					/* name */
    {							/* dirty */
-      0,						/* mesa */
+      _NEW_BUFFERS,					/* mesa */
       ST_NEW_FRAGMENT_PROGRAM                           /* st */
    },
    update_fp  					/* update */

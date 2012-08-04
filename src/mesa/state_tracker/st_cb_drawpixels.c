@@ -697,7 +697,8 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
       struct pipe_rasterizer_state rasterizer;
       memset(&rasterizer, 0, sizeof(rasterizer));
       rasterizer.clamp_fragment_color = !st->clamp_frag_color_in_shader &&
-                                        ctx->Color._ClampFragmentColor;
+                                        ctx->Color._ClampFragmentColor &&
+                                        !ctx->DrawBuffer->_IntegerColor;
       rasterizer.gl_rasterization_rules = 1;
       rasterizer.depth_clip = !ctx->Transform.DepthClamp;
       rasterizer.scissor = ctx->Scissor.Enabled;
@@ -1026,7 +1027,8 @@ get_color_fp_variant(struct st_context *st)
                        ctx->Pixel.AlphaScale != 1.0);
    key.pixelMaps = ctx->Pixel.MapColorFlag;
    key.clamp_color = st->clamp_frag_color_in_shader &&
-                     st->ctx->Color._ClampFragmentColor;
+                     st->ctx->Color._ClampFragmentColor &&
+                     !st->ctx->DrawBuffer->_IntegerColor;
 
    fpv = st_get_fp_variant(st, st->fp, &key);
 
