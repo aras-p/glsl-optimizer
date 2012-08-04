@@ -81,6 +81,11 @@ streq_nocase_uprcase(const char *str1,
    return *str1 == 0 && *str2 == 0;
 }
 
+/* Return TRUE if both strings match.
+ * The second string is terminated by zero.
+ * The pointer to the first string is moved at end of the read word
+ * on success.
+ */
 static boolean str_match_no_case( const char **pcur, const char *str )
 {
    const char *cur = *pcur;
@@ -90,6 +95,24 @@ static boolean str_match_no_case( const char **pcur, const char *str )
       cur++;
    }
    if (*str == '\0') {
+      *pcur = cur;
+      return TRUE;
+   }
+   return FALSE;
+}
+
+/* Return TRUE if both strings match.
+ * The first string is be terminated by a non-digit non-letter non-underscore
+ * character, the second string is terminated by zero.
+ * The pointer to the first string is moved at end of the read word
+ * on success.
+ */
+static boolean str_match_nocase_whole( const char **pcur, const char *str )
+{
+   const char *cur = *pcur;
+
+   if (str_match_no_case(&cur, str) &&
+       !is_digit_alpha_underscore(cur)) {
       *pcur = cur;
       return TRUE;
    }
@@ -249,13 +272,13 @@ static boolean parse_header( struct translate_ctx *ctx )
 {
    uint processor;
 
-   if (str_match_no_case( &ctx->cur, "FRAG" ))
+   if (str_match_nocase_whole( &ctx->cur, "FRAG" ))
       processor = TGSI_PROCESSOR_FRAGMENT;
-   else if (str_match_no_case( &ctx->cur, "VERT" ))
+   else if (str_match_nocase_whole( &ctx->cur, "VERT" ))
       processor = TGSI_PROCESSOR_VERTEX;
-   else if (str_match_no_case( &ctx->cur, "GEOM" ))
+   else if (str_match_nocase_whole( &ctx->cur, "GEOM" ))
       processor = TGSI_PROCESSOR_GEOMETRY;
-   else if (str_match_no_case( &ctx->cur, "COMP" ))
+   else if (str_match_nocase_whole( &ctx->cur, "COMP" ))
       processor = TGSI_PROCESSOR_COMPUTE;
    else {
       report_error( ctx, "Unknown header" );
@@ -298,12 +321,10 @@ parse_file( const char **pcur, uint *file )
    for (i = 0; i < TGSI_FILE_COUNT; i++) {
       const char *cur = *pcur;
 
-      if (str_match_no_case( &cur, tgsi_file_names[i] )) {
-         if (!is_digit_alpha_underscore( cur )) {
-            *pcur = cur;
-            *file = i;
-            return TRUE;
-         }
+      if (str_match_nocase_whole( &cur, tgsi_file_names[i] )) {
+         *pcur = cur;
+         *file = i;
+         return TRUE;
       }
    }
    return FALSE;
@@ -806,12 +827,34 @@ parse_src_operand(
 }
 
 static boolean
-match_inst_mnemonic(const char **pcur,
-                    const struct tgsi_opcode_info *info)
+match_inst(const char **pcur,
+           unsigned *saturate,
+           const struct tgsi_opcode_info *info)
 {
-   if (str_match_no_case(pcur, info->mnemonic)) {
+   const char *cur = *pcur;
+
+   /* simple case: the whole string matches the instruction name */
+   if (str_match_nocase_whole(&cur, info->mnemonic)) {
+      *pcur = cur;
+      *saturate = TGSI_SAT_NONE;
       return TRUE;
    }
+
+   if (str_match_no_case(&cur, info->mnemonic)) {
+      /* the instruction has a suffix, figure it out */
+      if (str_match_nocase_whole(&cur, "_SAT")) {
+         *pcur = cur;
+         *saturate = TGSI_SAT_ZERO_ONE;
+         return TRUE;
+      }
+
+      if (str_match_nocase_whole(&cur, "_SATNV")) {
+         *pcur = cur;
+         *saturate = TGSI_SAT_MINUS_PLUS_ONE;
+         return TRUE;
+      }
+   }
+
    return FALSE;
 }
 
@@ -873,17 +916,10 @@ parse_instruction(
       cur = ctx->cur;
 
       info = tgsi_get_opcode_info( i );
-      if (match_inst_mnemonic(&cur, info)) {
-         if (str_match_no_case( &cur, "_SATNV" ))
-            saturate = TGSI_SAT_MINUS_PLUS_ONE;
-         else if (str_match_no_case( &cur, "_SAT" ))
-            saturate = TGSI_SAT_ZERO_ONE;
-
+      if (match_inst(&cur, &saturate, info)) {
          if (info->num_dst + info->num_src + info->is_tex == 0) {
-            if (!is_digit_alpha_underscore( cur )) {
-               ctx->cur = cur;
-               break;
-            }
+            ctx->cur = cur;
+            break;
          }
          else if (*cur == '\0' || eat_white( &cur )) {
             ctx->cur = cur;
@@ -929,12 +965,10 @@ parse_instruction(
          uint j;
 
          for (j = 0; j < TGSI_TEXTURE_COUNT; j++) {
-            if (str_match_no_case( &ctx->cur, tgsi_texture_names[j] )) {
-               if (!is_digit_alpha_underscore( ctx->cur )) {
-                  inst.Instruction.Texture = 1;
-                  inst.Texture.Texture = j;
-                  break;
-               }
+            if (str_match_nocase_whole( &ctx->cur, tgsi_texture_names[j] )) {
+               inst.Instruction.Texture = 1;
+               inst.Texture.Texture = j;
+               break;
             }
          }
          if (j == TGSI_TEXTURE_COUNT) {
@@ -1077,11 +1111,9 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       eat_opt_white( &cur );
       if (file == TGSI_FILE_RESOURCE) {
          for (i = 0; i < TGSI_TEXTURE_COUNT; i++) {
-            if (str_match_no_case(&cur, tgsi_texture_names[i])) {
-               if (!is_digit_alpha_underscore(cur)) {
-                  decl.Resource.Resource = i;
-                  break;
-               }
+            if (str_match_nocase_whole(&cur, tgsi_texture_names[i])) {
+               decl.Resource.Resource = i;
+               break;
             }
          }
          if (i == TGSI_TEXTURE_COUNT) {
@@ -1094,12 +1126,10 @@ static boolean parse_declaration( struct translate_ctx *ctx )
          while (*cur2 == ',') {
             cur2++;
             eat_opt_white(&cur2);
-            if (str_match_no_case(&cur2, "RAW") &&
-                !is_digit_alpha_underscore(cur2)) {
+            if (str_match_nocase_whole(&cur2, "RAW")) {
                decl.Resource.Raw = 1;
 
-            } else if (str_match_no_case(&cur2, "WR") &&
-                !is_digit_alpha_underscore(cur2)) {
+            } else if (str_match_nocase_whole(&cur2, "WR")) {
                decl.Resource.Writable = 1;
 
             } else {
@@ -1113,11 +1143,9 @@ static boolean parse_declaration( struct translate_ctx *ctx )
 
       } else if (file == TGSI_FILE_SAMPLER_VIEW) {
          for (i = 0; i < TGSI_TEXTURE_COUNT; i++) {
-            if (str_match_no_case(&cur, tgsi_texture_names[i])) {
-               if (!is_digit_alpha_underscore(cur)) {
-                  decl.SamplerView.Resource = i;
-                  break;
-               }
+            if (str_match_nocase_whole(&cur, tgsi_texture_names[i])) {
+               decl.SamplerView.Resource = i;
+               break;
             }
          }
          if (i == TGSI_TEXTURE_COUNT) {
@@ -1133,26 +1161,24 @@ static boolean parse_declaration( struct translate_ctx *ctx )
          eat_opt_white( &cur );
          for (j = 0; j < 4; ++j) {
             for (i = 0; i < PIPE_TYPE_COUNT; ++i) {
-               if (str_match_no_case(&cur, tgsi_type_names[i])) {
-                  if (!is_digit_alpha_underscore(cur)) {
-                     switch (j) {
-                     case 0:
-                        decl.SamplerView.ReturnTypeX = i;
-                        break;
-                     case 1:
-                        decl.SamplerView.ReturnTypeY = i;
-                        break;
-                     case 2:
-                        decl.SamplerView.ReturnTypeZ = i;
-                        break;
-                     case 3:
-                        decl.SamplerView.ReturnTypeW = i;
-                        break;
-                     default:
-                        assert(0);
-                     }
+               if (str_match_nocase_whole(&cur, tgsi_type_names[i])) {
+                  switch (j) {
+                  case 0:
+                     decl.SamplerView.ReturnTypeX = i;
                      break;
+                  case 1:
+                     decl.SamplerView.ReturnTypeY = i;
+                     break;
+                  case 2:
+                     decl.SamplerView.ReturnTypeZ = i;
+                     break;
+                  case 3:
+                     decl.SamplerView.ReturnTypeW = i;
+                     break;
+                  default:
+                     assert(0);
                   }
+                  break;
                }
             }
             if (i == PIPE_TYPE_COUNT) {
@@ -1181,8 +1207,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
          }
          ctx->cur = cur;
       } else {
-         if (str_match_no_case(&cur, "LOCAL") &&
-             !is_digit_alpha_underscore(cur)) {
+         if (str_match_nocase_whole(&cur, "LOCAL")) {
             decl.Declaration.Local = 1;
             ctx->cur = cur;
          }
@@ -1194,11 +1219,9 @@ static boolean parse_declaration( struct translate_ctx *ctx )
             eat_opt_white( &cur );
 
             for (i = 0; i < TGSI_SEMANTIC_COUNT; i++) {
-               if (str_match_no_case( &cur, tgsi_semantic_names[i] )) {
+               if (str_match_nocase_whole(&cur, tgsi_semantic_names[i])) {
                   uint index;
 
-                  if (is_digit_alpha_underscore( cur ))
-                     continue;
                   cur2 = cur;
                   eat_opt_white( &cur2 );
                   if (*cur2 == '[') {
@@ -1277,9 +1300,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       cur++;
       eat_opt_white( &cur );
       for (i = 0; i < TGSI_INTERPOLATE_COUNT; i++) {
-         if (str_match_no_case( &cur, tgsi_interpolate_names[i] )) {
-            if (is_digit_alpha_underscore( cur ))
-               continue;
+         if (str_match_nocase_whole( &cur, tgsi_interpolate_names[i] )) {
             decl.Declaration.Interpolate = 1;
             decl.Interp.Interpolate = i;
 
@@ -1320,8 +1341,7 @@ static boolean parse_immediate( struct translate_ctx *ctx )
       return FALSE;
    }
    for (type = 0; type < Elements(tgsi_immediate_type_names); ++type) {
-      if (str_match_no_case(&ctx->cur, tgsi_immediate_type_names[type]) &&
-          !is_digit_alpha_underscore(ctx->cur))
+      if (str_match_nocase_whole(&ctx->cur, tgsi_immediate_type_names[type]))
          break;
    }
    if (type == Elements(tgsi_immediate_type_names)) {
@@ -1354,7 +1374,7 @@ parse_primitive( const char **pcur, uint *primitive )
    for (i = 0; i < PIPE_PRIM_MAX; i++) {
       const char *cur = *pcur;
 
-      if (str_match_no_case( &cur, tgsi_primitive_names[i])) {
+      if (str_match_nocase_whole( &cur, tgsi_primitive_names[i])) {
          *primitive = i;
          *pcur = cur;
          return TRUE;
@@ -1371,7 +1391,7 @@ parse_fs_coord_origin( const char **pcur, uint *fs_coord_origin )
    for (i = 0; i < Elements(tgsi_fs_coord_origin_names); i++) {
       const char *cur = *pcur;
 
-      if (str_match_no_case( &cur, tgsi_fs_coord_origin_names[i])) {
+      if (str_match_nocase_whole( &cur, tgsi_fs_coord_origin_names[i])) {
          *fs_coord_origin = i;
          *pcur = cur;
          return TRUE;
@@ -1388,7 +1408,7 @@ parse_fs_coord_pixel_center( const char **pcur, uint *fs_coord_pixel_center )
    for (i = 0; i < Elements(tgsi_fs_coord_pixel_center_names); i++) {
       const char *cur = *pcur;
 
-      if (str_match_no_case( &cur, tgsi_fs_coord_pixel_center_names[i])) {
+      if (str_match_nocase_whole( &cur, tgsi_fs_coord_pixel_center_names[i])) {
          *fs_coord_pixel_center = i;
          *pcur = cur;
          return TRUE;
@@ -1495,15 +1515,15 @@ static boolean translate( struct translate_ctx *ctx )
          if (!parse_instruction( ctx, TRUE ))
             return FALSE;
       }
-      else if (str_match_no_case( &ctx->cur, "DCL" )) {
+      else if (str_match_nocase_whole( &ctx->cur, "DCL" )) {
          if (!parse_declaration( ctx ))
             return FALSE;
       }
-      else if (str_match_no_case( &ctx->cur, "IMM" )) {
+      else if (str_match_nocase_whole( &ctx->cur, "IMM" )) {
          if (!parse_immediate( ctx ))
             return FALSE;
       }
-      else if (str_match_no_case( &ctx->cur, "PROPERTY" )) {
+      else if (str_match_nocase_whole( &ctx->cur, "PROPERTY" )) {
          if (!parse_property( ctx ))
             return FALSE;
       }
