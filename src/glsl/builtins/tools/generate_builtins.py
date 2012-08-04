@@ -279,8 +279,12 @@ _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
             check = ''
 
         version = re.sub(r'_(glsl|vert|frag)$', '', profile)
-        if version.isdigit():
+        if version[0].isdigit():
+            is_es = version.endswith('es')
+            if is_es:
+                version = version[:-2]
             check += 'state->language_version == ' + version
+            check += ' && {0}state->es_shader'.format('' if is_es else '!')
         else: # an extension name
             check += 'state->' + version + '_enable'
 
