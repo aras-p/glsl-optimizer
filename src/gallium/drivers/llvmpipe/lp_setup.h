@@ -127,7 +127,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
 void
 lp_setup_set_fragment_sampler_state(struct lp_setup_context *setup,
                                     unsigned num,
-                                    const struct pipe_sampler_state **samplers);
+                                    struct pipe_sampler_state **samplers);
 
 unsigned
 lp_setup_is_resource_referenced( const struct lp_setup_context *setup,

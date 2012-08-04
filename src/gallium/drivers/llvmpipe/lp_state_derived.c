@@ -178,13 +178,13 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
 
    if (llvmpipe->dirty & (LP_NEW_SAMPLER_VIEW))
       lp_setup_set_fragment_sampler_views(llvmpipe->setup,
-                                          llvmpipe->num_fragment_sampler_views,
-                                          llvmpipe->fragment_sampler_views);
+                                          llvmpipe->num_sampler_views[PIPE_SHADER_FRAGMENT],
+                                          llvmpipe->sampler_views[PIPE_SHADER_FRAGMENT]);
 
    if (llvmpipe->dirty & (LP_NEW_SAMPLER))
       lp_setup_set_fragment_sampler_state(llvmpipe->setup,
-                                          llvmpipe->num_samplers,
-                                          llvmpipe->sampler);
+                                          llvmpipe->num_samplers[PIPE_SHADER_FRAGMENT],
+                                          llvmpipe->samplers[PIPE_SHADER_FRAGMENT]);
 
    llvmpipe->dirty = 0;
 }

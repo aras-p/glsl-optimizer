@@ -85,8 +85,8 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    }
 
    llvmpipe_prepare_vertex_sampling(lp,
-                                    lp->num_vertex_sampler_views,
-                                    lp->vertex_sampler_views);
+                                    lp->num_sampler_views[PIPE_SHADER_VERTEX],
+                                    lp->sampler_views[PIPE_SHADER_VERTEX]);
 
    /* draw! */
    draw_vbo(draw, info);

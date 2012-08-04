@@ -1645,8 +1645,8 @@ make_variant_key(struct llvmpipe_context *lp,
    for(i = 0; i < key->nr_samplers; ++i) {
       if(shader->info.base.file_mask[TGSI_FILE_SAMPLER] & (1 << i)) {
          lp_sampler_static_state(&key->sampler[i],
-				 lp->fragment_sampler_views[i],
-				 lp->sampler[i]);
+				 lp->sampler_views[PIPE_SHADER_FRAGMENT][i],
+				 lp->samplers[PIPE_SHADER_FRAGMENT][i]);
       }
    }
 }
