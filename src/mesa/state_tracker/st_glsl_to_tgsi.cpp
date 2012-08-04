@@ -4790,7 +4790,7 @@ get_mesa_program(struct gl_context *ctx,
                  struct gl_shader_program *shader_program,
                  struct gl_shader *shader)
 {
-   glsl_to_tgsi_visitor* v = new glsl_to_tgsi_visitor();
+   glsl_to_tgsi_visitor* v;
    struct gl_program *prog;
    GLenum target;
    const char *target_string;
@@ -4822,6 +4822,7 @@ get_mesa_program(struct gl_context *ctx,
    if (!prog)
       return NULL;
    prog->Parameters = _mesa_new_parameter_list();
+   v = new glsl_to_tgsi_visitor();
    v->ctx = ctx;
    v->prog = prog;
    v->shader_program = shader_program;
