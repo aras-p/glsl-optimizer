@@ -218,8 +218,6 @@ do_vs_prog(struct brw_context *brw,
       c.prog_data.inputs_read |= VERT_BIT_EDGEFLAG;
    }
 
-   brw_compute_vue_map(&c);
-
    /* Put dummy slots into the VUE for the SF to put the replaced
     * point sprite coords in.  We shouldn't need these dummy slots,
     * which take up precious URB space, but it would mean that the SF
@@ -230,6 +228,8 @@ do_vs_prog(struct brw_context *brw,
       if (c.key.point_coord_replace & (1 << i))
 	 c.prog_data.outputs_written |= BITFIELD64_BIT(VERT_RESULT_TEX0 + i);
    }
+
+   brw_compute_vue_map(&c);
 
    if (0) {
       _mesa_fprint_program_opt(stdout, &c.vp->program.Base, PROG_PRINT_DEBUG,
