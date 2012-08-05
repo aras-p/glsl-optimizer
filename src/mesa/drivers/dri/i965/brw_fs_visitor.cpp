@@ -1155,20 +1155,22 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    return inst;
 }
 
-void
-fs_visitor::visit(ir_texture *ir)
+/**
+ * Emit code to produce the coordinates for a texture lookup.
+ *
+ * Returns the fs_reg containing the texture coordinate (as opposed to
+ * setting this->result).
+ */
+fs_reg
+fs_visitor::emit_texcoord(ir_texture *ir, int sampler)
 {
    fs_inst *inst = NULL;
 
-   int sampler = _mesa_get_sampler_uniform_value(ir->sampler, prog, &fp->Base);
-   sampler = fp->Base.SamplerUnits[sampler];
+   if (!ir->coordinate)
+      return fs_reg(); /* Return the default BAD_FILE register. */
 
-   if (ir->coordinate)
-      ir->coordinate->accept(this);
+   ir->coordinate->accept(this);
    fs_reg coordinate = this->result;
-
-   /* Should be lowered by do_lower_texture_projection */
-   assert(!ir->projector);
 
    bool needs_gl_clamp = true;
 
@@ -1193,8 +1195,7 @@ fs_visitor::visit(ir_texture *ir)
 
       if (c->dispatch_width == 16) {
 	 fail("rectangle scale uniform setup not supported on 16-wide\n");
-	 this->result = fs_reg(this, ir->type);
-	 return;
+	 return fs_reg(this, ir->type);
       }
 
       scale_x = fs_reg(UNIFORM, c->prog_data.nr_params);
@@ -1269,6 +1270,21 @@ fs_visitor::visit(ir_texture *ir)
 	 }
       }
    }
+   return coordinate;
+}
+
+void
+fs_visitor::visit(ir_texture *ir)
+{
+   fs_inst *inst = NULL;
+
+   int sampler = _mesa_get_sampler_uniform_value(ir->sampler, prog, &fp->Base);
+   sampler = fp->Base.SamplerUnits[sampler];
+
+   /* Should be lowered by do_lower_texture_projection */
+   assert(!ir->projector);
+
+   fs_reg coordinate = emit_texcoord(ir, sampler);
 
    /* Writemasking doesn't eliminate channels on SIMD8 texture
     * samples, so don't worry about them.

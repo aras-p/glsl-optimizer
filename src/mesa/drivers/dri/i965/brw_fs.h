@@ -304,6 +304,7 @@ public:
    fs_reg *emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup_gen4();
    void emit_interpolation_setup_gen6();
+   fs_reg emit_texcoord(ir_texture *ir, int sampler);
    fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 			      int sampler);
    fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
