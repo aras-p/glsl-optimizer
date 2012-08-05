@@ -306,10 +306,13 @@ public:
    void emit_interpolation_setup_gen6();
    fs_reg emit_texcoord(ir_texture *ir, int sampler);
    fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      fs_reg shadow_comp, fs_reg lod, fs_reg lod2,
 			      int sampler);
    fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      fs_reg shadow_comp, fs_reg lod, fs_reg lod2,
 			      int sampler);
    fs_inst *emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      fs_reg shadow_comp, fs_reg lod, fs_reg lod2,
 			      int sampler);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0, fs_reg src1);

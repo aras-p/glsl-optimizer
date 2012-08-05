@@ -702,6 +702,7 @@ fs_visitor::visit(ir_assignment *ir)
 
 fs_inst *
 fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      fs_reg shadow_c, fs_reg lod, fs_reg dPdy,
 			      int sampler)
 {
    int mlen;
@@ -726,19 +727,14 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 	  */
 	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), fs_reg(0.0f));
 	 mlen++;
-      } else if (ir->op == ir_txb) {
-	 ir->lod_info.bias->accept(this);
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      } else if (ir->op == ir_txb || ir->op == ir_txl) {
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), lod);
 	 mlen++;
       } else {
-	 assert(ir->op == ir_txl);
-	 ir->lod_info.lod->accept(this);
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
-	 mlen++;
+         assert(!"Should not get here.");
       }
 
-      ir->shadow_comparitor->accept(this);
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), shadow_c);
       mlen++;
    } else if (ir->op == ir_tex) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
@@ -748,11 +744,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
       mlen += 3;
    } else if (ir->op == ir_txd) {
-      ir->lod_info.grad.dPdx->accept(this);
-      fs_reg dPdx = this->result;
-
-      ir->lod_info.grad.dPdy->accept(this);
-      fs_reg dPdy = this->result;
+      fs_reg &dPdx = lod;
 
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i), coordinate);
@@ -789,8 +781,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    } else if (ir->op == ir_txs) {
       /* There's no SIMD8 resinfo message on Gen4.  Use SIMD16 instead. */
       simd16 = true;
-      ir->lod_info.lod->accept(this);
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), this->result);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), lod);
       mlen += 2;
    } else {
       /* Oh joy.  gen4 doesn't have SIMD8 non-shadow-compare bias/lod
@@ -815,16 +806,8 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       /* lod/bias appears after u/v/r. */
       mlen += 6;
 
-      if (ir->op == ir_txb) {
-	 ir->lod_info.bias->accept(this);
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
-	 mlen++;
-      } else {
-	 ir->lod_info.lod->accept(this);
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, this->result.type),
-			      this->result);
-	 mlen++;
-      }
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, lod.type), lod);
+      mlen++;
 
       /* The unused upper half. */
       mlen++;
@@ -889,6 +872,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
  */
 fs_inst *
 fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      fs_reg shadow_c, fs_reg lod, fs_reg lod2,
 			      int sampler)
 {
    int mlen = 0;
@@ -934,8 +918,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    if (ir->shadow_comparitor) {
       mlen = MAX2(mlen, header_present + 4 * reg_width);
 
-      ir->shadow_comparitor->accept(this);
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), shadow_c);
       mlen += reg_width;
    }
 
@@ -945,29 +928,20 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       inst = emit(SHADER_OPCODE_TEX, dst);
       break;
    case ir_txb:
-      ir->lod_info.bias->accept(this);
       mlen = MAX2(mlen, header_present + 4 * reg_width);
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), lod);
       mlen += reg_width;
 
       inst = emit(FS_OPCODE_TXB, dst);
-
       break;
    case ir_txl:
-      ir->lod_info.lod->accept(this);
       mlen = MAX2(mlen, header_present + 4 * reg_width);
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), lod);
       mlen += reg_width;
 
       inst = emit(SHADER_OPCODE_TXL, dst);
       break;
    case ir_txd: {
-      ir->lod_info.grad.dPdx->accept(this);
-      fs_reg dPdx = this->result;
-
-      ir->lod_info.grad.dPdy->accept(this);
-      fs_reg dPdy = this->result;
-
       mlen = MAX2(mlen, header_present + 4 * reg_width); /* skip over 'ai' */
 
       /**
@@ -980,12 +954,12 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
        * - dPdx.x dPdy.x dPdx.y dPdy.y dPdx.z dPdy.z
        */
       for (int i = 0; i < ir->lod_info.grad.dPdx->type->vector_elements; i++) {
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdx);
-	 dPdx.reg_offset++;
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), lod);
+	 lod.reg_offset++;
 	 mlen += reg_width;
 
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdy);
-	 dPdy.reg_offset++;
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), lod2);
+	 lod2.reg_offset++;
 	 mlen += reg_width;
       }
 
@@ -993,18 +967,16 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       break;
    }
    case ir_txs:
-      ir->lod_info.lod->accept(this);
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), this->result);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), lod);
       mlen += reg_width;
       inst = emit(SHADER_OPCODE_TXS, dst);
       break;
    case ir_txf:
       mlen = header_present + 4 * reg_width;
 
-      ir->lod_info.lod->accept(this);
       emit(BRW_OPCODE_MOV,
 	   fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD),
-	   this->result);
+	   lod);
       inst = emit(SHADER_OPCODE_TXF, dst);
       break;
    }
@@ -1021,6 +993,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
 fs_inst *
 fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
+			      fs_reg shadow_c, fs_reg lod, fs_reg lod2,
 			      int sampler)
 {
    int mlen = 0;
@@ -1039,8 +1012,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    }
 
    if (ir->shadow_comparitor) {
-      ir->shadow_comparitor->accept(this);
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), shadow_c);
       mlen += reg_width;
    }
 
@@ -1049,24 +1021,16 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_tex:
       break;
    case ir_txb:
-      ir->lod_info.bias->accept(this);
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), lod);
       mlen += reg_width;
       break;
    case ir_txl:
-      ir->lod_info.lod->accept(this);
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), lod);
       mlen += reg_width;
       break;
    case ir_txd: {
       if (c->dispatch_width == 16)
 	 fail("Gen7 does not support sample_d/sample_d_c in SIMD16 mode.");
-
-      ir->lod_info.grad.dPdx->accept(this);
-      fs_reg dPdx = this->result;
-
-      ir->lod_info.grad.dPdy->accept(this);
-      fs_reg dPdy = this->result;
 
       /* Load dPdx and the coordinate together:
        * [hdr], [ref], x, dPdx.x, dPdy.x, y, dPdx.y, dPdy.y, z, dPdx.z, dPdy.z
@@ -1076,19 +1040,18 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 	 coordinate.reg_offset++;
 	 mlen += reg_width;
 
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdx);
-	 dPdx.reg_offset++;
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), lod);
+	 lod.reg_offset++;
 	 mlen += reg_width;
 
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), dPdy);
-	 dPdy.reg_offset++;
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), lod2);
+	 lod2.reg_offset++;
 	 mlen += reg_width;
       }
       break;
    }
    case ir_txs:
-      ir->lod_info.lod->accept(this);
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), this->result);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), lod);
       mlen += reg_width;
       break;
    case ir_txf:
@@ -1112,8 +1075,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       coordinate.reg_offset++;
       mlen += reg_width;
 
-      ir->lod_info.lod->accept(this);
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D), this->result);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D), lod);
       mlen += reg_width;
 
       for (int i = 1; i < ir->coordinate->type->vector_elements; i++) {
@@ -1284,7 +1246,40 @@ fs_visitor::visit(ir_texture *ir)
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
 
+   /* Generate code to compute all the subexpression trees.  This has to be
+    * done before loading any values into MRFs for the sampler message since
+    * generating these values may involve SEND messages that need the MRFs.
+    */
    fs_reg coordinate = emit_texcoord(ir, sampler);
+
+   fs_reg shadow_comparitor;
+   if (ir->shadow_comparitor) {
+      ir->shadow_comparitor->accept(this);
+      shadow_comparitor = this->result;
+   }
+
+   fs_reg lod, lod2;
+   switch (ir->op) {
+   case ir_tex:
+      break;
+   case ir_txb:
+      ir->lod_info.bias->accept(this);
+      lod = this->result;
+      break;
+   case ir_txd:
+      ir->lod_info.grad.dPdx->accept(this);
+      lod = this->result;
+
+      ir->lod_info.grad.dPdy->accept(this);
+      lod2 = this->result;
+      break;
+   case ir_txf:
+   case ir_txl:
+   case ir_txs:
+      ir->lod_info.lod->accept(this);
+      lod = this->result;
+      break;
+   };
 
    /* Writemasking doesn't eliminate channels on SIMD8 texture
     * samples, so don't worry about them.
@@ -1292,11 +1287,14 @@ fs_visitor::visit(ir_texture *ir)
    fs_reg dst = fs_reg(this, glsl_type::get_instance(ir->type->base_type, 4, 1));
 
    if (intel->gen >= 7) {
-      inst = emit_texture_gen7(ir, dst, coordinate, sampler);
+      inst = emit_texture_gen7(ir, dst, coordinate, shadow_comparitor,
+                               lod, lod2, sampler);
    } else if (intel->gen >= 5) {
-      inst = emit_texture_gen5(ir, dst, coordinate, sampler);
+      inst = emit_texture_gen5(ir, dst, coordinate, shadow_comparitor,
+                               lod, lod2, sampler);
    } else {
-      inst = emit_texture_gen4(ir, dst, coordinate, sampler);
+      inst = emit_texture_gen4(ir, dst, coordinate, shadow_comparitor,
+                               lod, lod2, sampler);
    }
 
    /* The header is set up by generate_tex() when necessary. */
