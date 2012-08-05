@@ -1786,6 +1786,42 @@ vec4_visitor::visit(ir_texture *ir)
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
 
+   /* Generate code to compute all the subexpression trees.  This has to be
+    * done before loading any values into MRFs for the sampler message since
+    * generating these values may involve SEND messages that need the MRFs.
+    */
+   src_reg coordinate;
+   if (ir->coordinate) {
+      ir->coordinate->accept(this);
+      coordinate = this->result;
+   }
+
+   src_reg shadow_comparitor;
+   if (ir->shadow_comparitor) {
+      ir->shadow_comparitor->accept(this);
+      shadow_comparitor = this->result;
+   }
+
+   src_reg lod, dPdx, dPdy;
+   switch (ir->op) {
+   case ir_txf:
+   case ir_txl:
+   case ir_txs:
+      ir->lod_info.lod->accept(this);
+      lod = this->result;
+      break;
+   case ir_txd:
+      ir->lod_info.grad.dPdx->accept(this);
+      dPdx = this->result;
+
+      ir->lod_info.grad.dPdy->accept(this);
+      dPdy = this->result;
+      break;
+   case ir_tex:
+   case ir_txb:
+      break;
+   }
+
    vec4_instruction *inst = NULL;
    switch (ir->op) {
    case ir_tex:
@@ -1820,10 +1856,9 @@ vec4_visitor::visit(ir_texture *ir)
    int param_base = inst->base_mrf + inst->header_present;
 
    if (ir->op == ir_txs) {
-      ir->lod_info.lod->accept(this);
       int writemask = intel->gen == 4 ? WRITEMASK_W : WRITEMASK_X;
       emit(MOV(dst_reg(MRF, param_base, ir->lod_info.lod->type, writemask),
-	   this->result));
+	   lod));
    } else {
       int i, coord_mask = 0, zero_mask = 0;
       /* Load the coordinate */
@@ -1833,7 +1868,6 @@ vec4_visitor::visit(ir_texture *ir)
       for (; i < 4; i++)
 	 zero_mask |= (1 << i);
 
-      ir->coordinate->accept(this);
       if (ir->offset && ir->op == ir_txf) {
 	 /* It appears that the ld instruction used for txf does its
 	  * address bounds check before adding in the offset.  To work
@@ -1844,7 +1878,7 @@ vec4_visitor::visit(ir_texture *ir)
 	 assert(offset);
 
 	 for (int j = 0; j < ir->coordinate->type->vector_elements; j++) {
-	    src_reg src = this->result;
+	    src_reg src = coordinate;
 	    src.swizzle = BRW_SWIZZLE4(BRW_GET_SWZ(src.swizzle, j),
 				       BRW_GET_SWZ(src.swizzle, j),
 				       BRW_GET_SWZ(src.swizzle, j),
@@ -1854,16 +1888,15 @@ vec4_visitor::visit(ir_texture *ir)
 	 }
       } else {
 	 emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, coord_mask),
-		  this->result));
+		  coordinate));
       }
       emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, zero_mask),
 	       src_reg(0)));
       /* Load the shadow comparitor */
       if (ir->shadow_comparitor) {
-	 ir->shadow_comparitor->accept(this);
 	 emit(MOV(dst_reg(MRF, param_base + 1, ir->shadow_comparitor->type,
 			  WRITEMASK_X),
-		  this->result));
+		  shadow_comparitor));
 	 inst->mlen++;
       }
 
@@ -1883,20 +1916,12 @@ vec4_visitor::visit(ir_texture *ir)
 	    mrf = param_base;
 	    writemask = WRITEMASK_Z;
 	 }
-	 ir->lod_info.lod->accept(this);
-	 emit(MOV(dst_reg(MRF, mrf, ir->lod_info.lod->type, writemask),
-		  this->result));
+	 emit(MOV(dst_reg(MRF, mrf, ir->lod_info.lod->type, writemask), lod));
       } else if (ir->op == ir_txf) {
-	 ir->lod_info.lod->accept(this);
 	 emit(MOV(dst_reg(MRF, param_base, ir->lod_info.lod->type, WRITEMASK_W),
-		  this->result));
+		  lod));
       } else if (ir->op == ir_txd) {
 	 const glsl_type *type = ir->lod_info.grad.dPdx->type;
-
-	 ir->lod_info.grad.dPdx->accept(this);
-	 src_reg dPdx = this->result;
-	 ir->lod_info.grad.dPdy->accept(this);
-	 src_reg dPdy = this->result;
 
 	 if (intel->gen >= 5) {
 	    dPdx.swizzle = BRW_SWIZZLE4(SWIZZLE_X,SWIZZLE_X,SWIZZLE_Y,SWIZZLE_Y);
