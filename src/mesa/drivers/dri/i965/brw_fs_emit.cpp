@@ -381,6 +381,27 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
       dst = vec16(dst);
    }
 
+   /* Load the message header if present.  If there's a texture offset,
+    * we need to set it up explicitly and load the offset bitfield.
+    * Otherwise, we can use an implied move from g0 to the first message reg.
+    */
+   if (inst->texture_offset) {
+      brw_push_insn_state(p);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      /* Explicitly set up the message header by copying g0 to the MRF. */
+      brw_MOV(p, retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD),
+                 retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+
+      /* Then set the offset bits in DWord 2. */
+      brw_MOV(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,
+                                     inst->base_mrf, 2), BRW_REGISTER_TYPE_UD),
+                 brw_imm_ud(inst->texture_offset));
+      brw_pop_insn_state(p);
+   } else if (inst->header_present) {
+      /* Set up an implied move from g0 to the MRF. */
+      src = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
+   }
+
    brw_SAMPLE(p,
 	      retype(dst, BRW_REGISTER_TYPE_UW),
 	      inst->base_mrf,

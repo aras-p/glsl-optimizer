@@ -1167,20 +1167,6 @@ fs_visitor::visit(ir_texture *ir)
       ir->coordinate->accept(this);
    fs_reg coordinate = this->result;
 
-   if (ir->offset != NULL && !(intel->gen == 7 && ir->op == ir_txf)) {
-      uint32_t offset_bits = brw_texture_offset(ir->offset->as_constant());
-
-      /* Explicitly set up the message header by copying g0 to msg reg m1. */
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, 1, BRW_REGISTER_TYPE_UD),
-	   fs_reg(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD)));
-
-      /* Then set the offset bits in DWord 2 of the message header. */
-      emit(BRW_OPCODE_MOV,
-	   fs_reg(retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, 1, 2),
-			 BRW_REGISTER_TYPE_UD)),
-	   fs_reg(brw_imm_uw(offset_bits)));
-   }
-
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
 
@@ -1297,13 +1283,11 @@ fs_visitor::visit(ir_texture *ir)
       inst = emit_texture_gen4(ir, dst, coordinate, sampler);
    }
 
-   /* If there's an offset, we already set up m1.  To avoid the implied move,
-    * use the null register.  Otherwise, we want an implied move from g0.
-    */
-   if (ir->offset != NULL || !inst->header_present)
-      inst->src[0] = reg_undef;
-   else
-      inst->src[0] = fs_reg(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
+   /* The header is set up by generate_tex() when necessary. */
+   inst->src[0] = reg_undef;
+
+   if (ir->offset != NULL && ir->op != ir_txf)
+      inst->texture_offset = brw_texture_offset(ir->offset->as_constant());
 
    inst->sampler = sampler;
 
