@@ -125,6 +125,17 @@ struct _mesa_glsl_parse_state {
                       unsigned required_glsl_es_version,
                       YYLTYPE *locp, const char *fmt, ...) PRINTFLIKE(5, 6);
 
+   bool check_precision_qualifiers_allowed(YYLTYPE *locp)
+   {
+      return check_version(130, 100, locp,
+                           "precision qualifiers are forbidden");
+   }
+
+   bool check_bitwise_operations_allowed(YYLTYPE *locp)
+   {
+      return check_version(130, 0, locp, "bit-wise operations are forbidden");
+   }
+
    struct gl_context *const ctx;
    void *scanner;
    exec_list translation_unit;

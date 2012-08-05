@@ -1494,32 +1494,17 @@ basic_type_specifier_nonarray:
 
 precision_qualifier:
 	HIGHP	  {
-		     if (!state->es_shader && state->language_version < 130)
-			_mesa_glsl_error(& @1, state,
-				         "precision qualifier forbidden "
-					 "in %s (1.30 or later "
-					 "required)\n",
-					 state->get_version_string());
+                     state->check_precision_qualifiers_allowed(&@1);
 
 		     $$ = ast_precision_high;
 		  }
 	| MEDIUMP {
-		     if (!state->es_shader && state->language_version < 130)
-			_mesa_glsl_error(& @1, state,
-					 "precision qualifier forbidden "
-					 "in %s (1.30 or later "
-					 "required)\n",
-					 state->get_version_string());
+                     state->check_precision_qualifiers_allowed(&@1);
 
 		     $$ = ast_precision_medium;
 		  }
 	| LOWP	  {
-		     if (!state->es_shader && state->language_version < 130)
-			_mesa_glsl_error(& @1, state,
-					 "precision qualifier forbidden "
-					 "in %s (1.30 or later "
-					 "required)\n",
-					 state->get_version_string());
+                     state->check_precision_qualifiers_allowed(&@1);
 
 		     $$ = ast_precision_low;
 		  }

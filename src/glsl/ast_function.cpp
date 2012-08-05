@@ -1243,9 +1243,8 @@ ast_function_expression::hir(exec_list *instructions,
       }
 
       if (constructor_type->is_array()) {
-	 if (state->language_version <= 110) {
-	    _mesa_glsl_error(& loc, state,
-			     "array constructors forbidden in GLSL 1.10");
+         if (!state->check_version(120, 0, &loc,
+                                   "array constructors forbidden")) {
 	    return ir_rvalue::error_value(ctx);
 	 }
 
@@ -1368,11 +1367,11 @@ ast_function_expression::hir(exec_list *instructions,
        *    "It is an error to construct matrices from other matrices. This
        *    is reserved for future use."
        */
-      if (state->language_version == 110 && matrix_parameters > 0
-	  && constructor_type->is_matrix()) {
-	 _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
-			  "matrix in GLSL 1.10",
-			  constructor_type->name);
+      if (matrix_parameters > 0
+          && constructor_type->is_matrix()
+          && !state->check_version(120, 100, &loc,
+                                   "cannot construct `%s' from a matrix",
+                                   constructor_type->name)) {
 	 return ir_rvalue::error_value(ctx);
       }
 

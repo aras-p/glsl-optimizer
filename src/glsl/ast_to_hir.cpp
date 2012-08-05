@@ -390,8 +390,7 @@ bit_logic_result_type(const struct glsl_type *type_a,
                       ast_operators op,
                       struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
-    if (state->language_version < 130) {
-       _mesa_glsl_error(loc, state, "bit operations require GLSL 1.30");
+    if (!state->check_bitwise_operations_allowed(loc)) {
        return glsl_type::error_type;
     }
 
@@ -446,10 +445,7 @@ modulus_result_type(const struct glsl_type *type_a,
 		    const struct glsl_type *type_b,
 		    struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
-   if (state->language_version < 130) {
-      _mesa_glsl_error(loc, state,
-                       "operator '%%' is reserved in %s",
-                       state->get_version_string());
+   if (!state->check_version(130, 0, loc, "operator '%%' is reserved")) {
       return glsl_type::error_type;
    }
 
@@ -553,8 +549,7 @@ shift_result_type(const struct glsl_type *type_a,
                   ast_operators op,
                   struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
-   if (state->language_version < 130) {
-      _mesa_glsl_error(loc, state, "bit operations require GLSL 1.30");
+   if (!state->check_bitwise_operations_allowed(loc)) {
       return glsl_type::error_type;
    }
 
@@ -694,15 +689,15 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
                           lhs->variable_referenced()->name);
          error_emitted = true;
 
-      } else if (state->language_version <= 110 && lhs->type->is_array()) {
+      } else if (lhs->type->is_array() &&
+                 !state->check_version(120, 0, &lhs_loc,
+                                       "whole array assignment forbidden")) {
 	 /* From page 32 (page 38 of the PDF) of the GLSL 1.10 spec:
 	  *
 	  *    "Other binary or unary expressions, non-dereferenced
 	  *     arrays, function names, swizzles with repeated fields,
 	  *     and constants cannot be l-values."
 	  */
-	 _mesa_glsl_error(&lhs_loc, state, "whole array assignment is not "
-			  "allowed in GLSL 1.10 or GLSL ES 1.00.");
 	 error_emitted = true;
       } else if (!lhs->is_lvalue()) {
 	 _mesa_glsl_error(& lhs_loc, state, "non-lvalue in assignment");
@@ -1099,9 +1094,7 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_lshift:
    case ast_rshift:
-       if (state->language_version < 130) {
-          _mesa_glsl_error(&loc, state, "operator %s requires GLSL 1.30",
-              operator_string(this->oper));
+       if (!state->check_bitwise_operations_allowed(&loc)) {
           error_emitted = true;
        }
 
@@ -1155,10 +1148,9 @@ ast_expression::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state, "operands of `%s' must have the same "
 			  "type", (this->oper == ast_equal) ? "==" : "!=");
 	 error_emitted = true;
-      } else if ((state->language_version <= 110)
-		 && (op[0]->type->is_array() || op[1]->type->is_array())) {
-	 _mesa_glsl_error(& loc, state, "array comparisons forbidden in "
-			  "GLSL 1.10");
+      } else if ((op[0]->type->is_array() || op[1]->type->is_array()) &&
+                 !state->check_version(120, 0, &loc,
+                                       "array comparisons forbidden")) {
 	 error_emitted = true;
       }
 
@@ -1185,8 +1177,7 @@ ast_expression::hir(exec_list *instructions,
    case ast_bit_not:
       op[0] = this->subexpressions[0]->hir(instructions, state);
 
-      if (state->language_version < 130) {
-	 _mesa_glsl_error(&loc, state, "bit-wise operations require GLSL 1.30");
+      if (!state->check_bitwise_operations_allowed(&loc)) {
 	 error_emitted = true;
       }
 
@@ -1424,9 +1415,10 @@ ast_expression::hir(exec_list *instructions,
        *    "The second and third expressions must be the same type, but can
        *    be of any type other than an array."
        */
-      if ((state->language_version <= 110) && type->is_array()) {
-	 _mesa_glsl_error(& loc, state, "Second and third operands of ?: "
-			  "operator must not be arrays.");
+      if (type->is_array() &&
+          !state->check_version(120, 0, &loc,
+                                "Second and third operands of ?: operator "
+                                "cannot be arrays")) {
 	 error_emitted = true;
       }
 
@@ -2358,10 +2350,9 @@ process_initializer(ir_variable *var, ast_declaration *decl,
     *    directly by an application via API commands, or indirectly by
     *    OpenGL."
     */
-   if ((state->language_version <= 110)
-       && (var->mode == ir_var_uniform)) {
-      _mesa_glsl_error(& initializer_loc, state,
-		       "cannot initialize uniforms in GLSL 1.10");
+   if (var->mode == ir_var_uniform) {
+      state->check_version(120, 0, &initializer_loc,
+                           "cannot initialize uniforms");
    }
 
    if (var->type->is_sampler()) {
@@ -2727,11 +2718,10 @@ ast_declarator_list::hir(exec_list *instructions,
 	       error_emitted = true;
 	    }
 
-	    if (!error_emitted && (state->language_version <= 130)
-		&& var->type->is_array()) {
-	       _mesa_glsl_error(& loc, state,
-				"vertex shader input / attribute cannot have "
-				"array type");
+	    if (!error_emitted && var->type->is_array() &&
+                !state->check_version(140, 0, &loc,
+                                      "vertex shader input / attribute "
+                                      "cannot have array type")) {
 	       error_emitted = true;
 	    }
 	 }
@@ -2832,13 +2822,8 @@ ast_declarator_list::hir(exec_list *instructions,
 
       /* Precision qualifiers exists only in GLSL versions 1.00 and >= 1.30.
        */
-      if (this->type->specifier->precision != ast_precision_none
-          && state->language_version != 100
-          && state->language_version < 130) {
-
-         _mesa_glsl_error(&loc, state,
-                          "precision qualifiers are supported only in GLSL ES "
-                          "1.00, and GLSL 1.30 and later");
+      if (this->type->specifier->precision != ast_precision_none) {
+         state->check_precision_qualifiers_allowed(&loc);
       }
 
 
@@ -3080,8 +3065,9 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * allowed.  This restriction is removed in GLSL 1.20, and in GLSL ES.
     */
    if ((var->mode == ir_var_inout || var->mode == ir_var_out)
-       && type->is_array() && state->language_version == 110) {
-      _mesa_glsl_error(&loc, state, "Arrays cannot be out or inout parameters in GLSL 1.10");
+       && type->is_array()
+       && !state->check_version(120, 100, &loc,
+                                "Arrays cannot be out or inout parameters")) {
       type = glsl_type::error_type;
    }
 
@@ -3876,11 +3862,7 @@ ast_type_specifier::hir(exec_list *instructions,
    YYLTYPE loc = this->get_location();
 
    if (this->precision != ast_precision_none
-       && state->language_version != 100
-       && state->language_version < 130) {
-      _mesa_glsl_error(&loc, state,
-                       "precision qualifiers exist only in "
-                       "GLSL ES 1.00, and GLSL 1.30 and later");
+       && !state->check_precision_qualifiers_allowed(&loc)) {
       return NULL;
    }
    if (this->precision != ast_precision_none
