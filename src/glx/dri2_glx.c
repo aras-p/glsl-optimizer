@@ -241,7 +241,7 @@ dri2_create_context_attribs(struct glx_screen *base,
    uint32_t major_ver = 2;
    uint32_t flags = 0;
    unsigned api;
-   int reset;
+   int reset = __DRI_CTX_RESET_NO_NOTIFICATION;
    uint32_t ctx_attribs[2 * 5];
    unsigned num_ctx_attribs = 0;
 
