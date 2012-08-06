@@ -176,6 +176,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
    fakeCtx.API = API_OPENGL_COMPAT;
    fakeCtx.Const.GLSLVersion = 140;
    fakeCtx.Extensions.ARB_ES2_compatibility = true;
+   fakeCtx.Extensions.ARB_ES3_compatibility = true;
    fakeCtx.Const.ForceGLSLExtensionsWarn = false;
    gl_shader *sh = _mesa_new_shader(NULL, 0, target);
    struct _mesa_glsl_parse_state *st =
