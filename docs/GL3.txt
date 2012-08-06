@@ -140,8 +140,8 @@ ARB_compute_shader                                   started (gallium)
 ARB_copy_image                                       not started
 ARB_debug_group                                      not started
 ARB_debug_label                                      not started
+ARB_debug_output                                     DONE
 ARB_debug_output2                                    not started
-ARB_debug_output                                     not started
 ARB_explicit_uniform_location                        not started
 ARB_fragment_layer_viewport                          not started
 ARB_framebuffer_no_attachments                       not started
