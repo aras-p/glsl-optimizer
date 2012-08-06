@@ -254,51 +254,66 @@ update_single_texture(struct st_context *st,
 }
 
 
+
 static void
-update_vertex_textures(struct st_context *st)
+update_textures(struct st_context *st,
+                unsigned shader_stage,
+                const struct gl_program *prog,
+                unsigned max_units,
+                struct pipe_sampler_view **sampler_views,
+                unsigned *num_textures)
 {
-   const struct gl_context *ctx = st->ctx;
-   struct gl_vertex_program *vprog = ctx->VertexProgram._Current;
-   GLuint su;
-   const GLuint old_max = st->state.num_vertex_textures;
-   GLbitfield samplers_used = vprog->Base.SamplersUsed;
+   const GLuint old_max = *num_textures;
+   GLbitfield samplers_used = prog->SamplersUsed;
+   GLuint unit;
 
    if (samplers_used == 0x0 && old_max == 0)
       return;
 
-   st->state.num_vertex_textures = 0;
+   *num_textures = 0;
 
    /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < ctx->Const.MaxVertexTextureImageUnits; su++, samplers_used >>= 1) {
+   for (unit = 0; unit < max_units; unit++, samplers_used >>= 1) {
       struct pipe_sampler_view *sampler_view = NULL;
 
       if (samplers_used & 1) {
+         const GLuint texUnit = prog->SamplerUnits[unit];
          GLboolean retval;
-         GLuint texUnit;
-
-         texUnit = vprog->Base.SamplerUnits[su];
 
          retval = update_single_texture(st, &sampler_view, texUnit);
          if (retval == GL_FALSE)
             continue;
 
-         st->state.num_vertex_textures = su + 1;
-      } else if (samplers_used == 0 && su >= old_max) {
+         *num_textures = unit + 1;
+      }
+      else if (samplers_used == 0 && unit >= old_max) {
          /* if we've reset all the old views and we have no more new ones */
          break;
       }
 
-      pipe_sampler_view_reference(&st->state.vertex_sampler_views[su],
-                                  sampler_view);
+      pipe_sampler_view_reference(&(sampler_views[unit]), sampler_view);
    }
 
+   cso_set_sampler_views(st->cso_context,
+                         shader_stage,
+                         MIN2(*num_textures, max_units),
+                         sampler_views);
+}
+
+
+
+static void
+update_vertex_textures(struct st_context *st)
+{
+   const struct gl_context *ctx = st->ctx;
+
    if (ctx->Const.MaxVertexTextureImageUnits > 0) {
-      GLuint numUnits = MIN2(st->state.num_vertex_textures,
-                             ctx->Const.MaxVertexTextureImageUnits);
-      cso_set_sampler_views(st->cso_context,
-                            PIPE_SHADER_VERTEX,
-                            numUnits,
-                            st->state.vertex_sampler_views);
+      update_textures(st,
+                      PIPE_SHADER_VERTEX,
+                      &ctx->VertexProgram._Current->Base,
+                      ctx->Const.MaxVertexTextureImageUnits,
+                      st->state.vertex_sampler_views,
+                      &st->state.num_vertex_textures);
    }
 }
 
@@ -307,44 +322,13 @@ static void
 update_fragment_textures(struct st_context *st)
 {
    const struct gl_context *ctx = st->ctx;
-   struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
-   GLuint su;
-   const GLuint old_max = st->state.num_fragment_textures;
-   GLbitfield samplers_used = fprog->Base.SamplersUsed;
 
-   if (samplers_used == 0x0 && old_max == 0)
-      return;
-
-   st->state.num_fragment_textures = 0;
-
-   /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++, samplers_used >>= 1) {
-      struct pipe_sampler_view *sampler_view = NULL;
-
-      if (samplers_used & 1) {
-         GLboolean retval;
-         GLuint texUnit;
-
-         texUnit = fprog->Base.SamplerUnits[su];
-
-         retval = update_single_texture(st, &sampler_view, texUnit);
-         if (retval == GL_FALSE)
-            continue;
-
-         st->state.num_fragment_textures = su + 1;
-      } else if (samplers_used == 0 && su >= old_max) {
-         /* if we've reset all the old views and we have no more new ones */
-         break;
-      }
-
-      pipe_sampler_view_reference(&st->state.fragment_sampler_views[su],
-                                  sampler_view);
-   }
-
-   cso_set_sampler_views(st->cso_context,
-                         PIPE_SHADER_FRAGMENT,
-                         st->state.num_fragment_textures,
-                         st->state.fragment_sampler_views);
+   update_textures(st,
+                   PIPE_SHADER_FRAGMENT,
+                   &ctx->FragmentProgram._Current->Base,
+                   ctx->Const.MaxTextureImageUnits,
+                   st->state.fragment_sampler_views,
+                   &st->state.num_fragment_textures);
 }
 
 
