@@ -201,27 +201,32 @@ update_vertex_samplers(struct st_context *st)
    const struct gl_context *ctx = st->ctx;
    struct gl_vertex_program *vprog = ctx->VertexProgram._Current;
    GLuint su;
+   GLuint samplers_used = vprog->Base.SamplersUsed;
+   const GLuint old_max = st->state.num_vertex_samplers;
 
    if (st->state.num_vertex_samplers == 0 && vprog->Base.SamplersUsed == 0)
        return;
+
    st->state.num_vertex_samplers = 0;
 
    /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < ctx->Const.MaxVertexTextureImageUnits; su++) {
+   for (su = 0; su < ctx->Const.MaxVertexTextureImageUnits; su++, samplers_used >>= 1) {
       struct pipe_sampler_state *sampler = st->state.vertex_samplers + su;
 
-      if (vprog->Base.SamplersUsed & (1 << su)) {
-	 GLuint texUnit;
+      if (samplers_used & 1) {
+         GLuint texUnit = vprog->Base.SamplerUnits[su];
 
-	 texUnit = vprog->Base.SamplerUnits[su];
+         convert_sampler(st, sampler, texUnit);
 
-	 convert_sampler(st, sampler, texUnit);
+         st->state.num_vertex_samplers = su + 1;
 
-	 st->state.num_vertex_samplers = su + 1;
-
-	 cso_single_sampler(st->cso_context, PIPE_SHADER_VERTEX, su, sampler);
+         cso_single_sampler(st->cso_context, PIPE_SHADER_VERTEX, su, sampler);
+      }
+      else if (samplers_used != 0 || su < old_max) {
+         cso_single_sampler(st->cso_context, PIPE_SHADER_VERTEX, su, NULL);
       } else {
-	 cso_single_sampler(st->cso_context, PIPE_SHADER_VERTEX, su, NULL);
+         /* if we've reset all the old samplers and we have no more new ones */
+         break;
       }
    }
    cso_single_sampler_done(st->cso_context, PIPE_SHADER_VERTEX);
@@ -235,7 +240,10 @@ update_fragment_samplers(struct st_context *st)
    struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
    GLuint su;
    GLuint samplers_used = fprog->Base.SamplersUsed;
-   GLuint old_max = st->state.num_fragment_samplers;
+   const GLuint old_max = st->state.num_fragment_samplers;
+
+   if (st->state.num_fragment_samplers == 0 && fprog->Base.SamplersUsed == 0)
+       return;
 
    st->state.num_fragment_samplers = 0;
 
@@ -244,22 +252,18 @@ update_fragment_samplers(struct st_context *st)
       struct pipe_sampler_state *sampler = st->state.fragment_samplers + su;
 
       if (samplers_used & 1) {
-         GLuint texUnit;
-
-         texUnit = fprog->Base.SamplerUnits[su];
+         GLuint texUnit = fprog->Base.SamplerUnits[su];
 
          convert_sampler(st, sampler, texUnit);
 
          st->state.num_fragment_samplers = su + 1;
 
-         /*printf("%s su=%u non-null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, PIPE_SHADER_FRAGMENT, su, sampler);
       }
       else if (samplers_used != 0 || su < old_max) {
-         /*printf("%s su=%u null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, PIPE_SHADER_FRAGMENT, su, NULL);
       } else {
-         /* if we've reset all the old views and we have no more new ones */
+         /* if we've reset all the old samplers and we have no more new ones */
          break;
       }
    }
