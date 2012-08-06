@@ -188,12 +188,45 @@ intelGetString(struct gl_context * ctx, GLenum name)
 	 break;
       case PCI_CHIP_HASWELL_GT1:
       case PCI_CHIP_HASWELL_GT2:
+      case PCI_CHIP_HASWELL_GT2_PLUS:
+      case PCI_CHIP_HASWELL_SDV_GT1:
+      case PCI_CHIP_HASWELL_SDV_GT2:
+      case PCI_CHIP_HASWELL_SDV_GT2_PLUS:
+      case PCI_CHIP_HASWELL_ULT_GT1:
+      case PCI_CHIP_HASWELL_ULT_GT2:
+      case PCI_CHIP_HASWELL_ULT_GT2_PLUS:
+      case PCI_CHIP_HASWELL_CRW_GT1:
+      case PCI_CHIP_HASWELL_CRW_GT2:
+      case PCI_CHIP_HASWELL_CRW_GT2_PLUS:
 	 chipset = "Intel(R) Haswell Desktop";
 	 break;
       case PCI_CHIP_HASWELL_M_GT1:
       case PCI_CHIP_HASWELL_M_GT2:
-      case PCI_CHIP_HASWELL_M_ULT_GT2:
+      case PCI_CHIP_HASWELL_M_GT2_PLUS:
+      case PCI_CHIP_HASWELL_SDV_M_GT1:
+      case PCI_CHIP_HASWELL_SDV_M_GT2:
+      case PCI_CHIP_HASWELL_SDV_M_GT2_PLUS:
+      case PCI_CHIP_HASWELL_ULT_M_GT1:
+      case PCI_CHIP_HASWELL_ULT_M_GT2:
+      case PCI_CHIP_HASWELL_ULT_M_GT2_PLUS:
+      case PCI_CHIP_HASWELL_CRW_M_GT1:
+      case PCI_CHIP_HASWELL_CRW_M_GT2:
+      case PCI_CHIP_HASWELL_CRW_M_GT2_PLUS:
 	 chipset = "Intel(R) Haswell Mobile";
+	 break;
+      case PCI_CHIP_HASWELL_S_GT1:
+      case PCI_CHIP_HASWELL_S_GT2:
+      case PCI_CHIP_HASWELL_S_GT2_PLUS:
+      case PCI_CHIP_HASWELL_SDV_S_GT1:
+      case PCI_CHIP_HASWELL_SDV_S_GT2:
+      case PCI_CHIP_HASWELL_SDV_S_GT2_PLUS:
+      case PCI_CHIP_HASWELL_ULT_S_GT1:
+      case PCI_CHIP_HASWELL_ULT_S_GT2:
+      case PCI_CHIP_HASWELL_ULT_S_GT2_PLUS:
+      case PCI_CHIP_HASWELL_CRW_S_GT1:
+      case PCI_CHIP_HASWELL_CRW_S_GT2:
+      case PCI_CHIP_HASWELL_CRW_S_GT2_PLUS:
+	 chipset = "Intel(R) Haswell Server";
 	 break;
       default:
          chipset = "Unknown Intel Chipset";
