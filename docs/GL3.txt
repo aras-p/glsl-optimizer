@@ -130,5 +130,35 @@ GL_ARB_internalformat_query                          not started
 GL_ARB_map_buffer_alignment                          not started
 
 
+GL 4.3:
+
+GLSL 4.3                                             not started
+ARB_arrays_of_arrays                                 not started
+ARB_ES3_compatibility                                not started
+ARB_clear_buffer_object                              not started
+ARB_compute_shader                                   started (gallium)
+ARB_copy_image                                       not started
+ARB_debug_group                                      not started
+ARB_debug_label                                      not started
+ARB_debug_output2                                    not started
+ARB_debug_output                                     not started
+ARB_explicit_uniform_location                        not started
+ARB_fragment_layer_viewport                          not started
+ARB_framebuffer_no_attachments                       not started
+ARB_internalformat_query2                            not started
+ARB_invalidate_subdata                               not started
+ARB_multi_draw_indirect                              not started
+ARB_program_interface_query                          not started
+ARB_robust_buffer_access_behavior                    not started
+ARB_shader_image_size                                not started
+ARB_shader_storage_buffer_object                     not started
+ARB_stencil_texturing                                not started
+ARB_texture_buffer_range                             not started
+ARB_texture_query_levels                             not started
+ARB_texture_storage_multisample                      not started
+ARB_texture_view                                     not started
+ARB_vertex_attrib_binding                            not started
+
+
 More info about these features and the work involved can be found at
 http://dri.freedesktop.org/wiki/MissingFunctionality
