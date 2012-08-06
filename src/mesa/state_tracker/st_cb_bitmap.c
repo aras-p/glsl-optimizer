@@ -480,10 +480,10 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    /* user samplers, plus our bitmap sampler */
    {
       struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
-      uint num = MAX2(fpv->bitmap_sampler + 1, st->state.num_samplers);
+      uint num = MAX2(fpv->bitmap_sampler + 1, st->state.num_fragment_samplers);
       uint i;
-      for (i = 0; i < st->state.num_samplers; i++) {
-         samplers[i] = &st->state.samplers[i];
+      for (i = 0; i < st->state.num_fragment_samplers; i++) {
+         samplers[i] = &st->state.fragment_samplers[i];
       }
       samplers[fpv->bitmap_sampler] =
          &st->bitmap.samplers[sv->texture->target != PIPE_TEXTURE_RECT];
@@ -494,8 +494,10 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    /* user textures, plus the bitmap texture */
    {
       struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
-      uint num = MAX2(fpv->bitmap_sampler + 1, st->state.num_textures);
-      memcpy(sampler_views, st->state.sampler_views, sizeof(sampler_views));
+      uint num = MAX2(fpv->bitmap_sampler + 1,
+                      st->state.num_fragment_textures);
+      memcpy(sampler_views, st->state.fragment_sampler_views,
+             sizeof(sampler_views));
       sampler_views[fpv->bitmap_sampler] = sv;
       cso_set_sampler_views(cso, PIPE_SHADER_FRAGMENT, num, sampler_views);
    }

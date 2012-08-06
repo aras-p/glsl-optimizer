@@ -281,7 +281,7 @@ update_vertex_textures(struct st_context *st)
 
          st->state.num_vertex_textures = su + 1;
       }
-      pipe_sampler_view_reference(&st->state.sampler_vertex_views[su],
+      pipe_sampler_view_reference(&st->state.vertex_sampler_views[su],
                                   sampler_view);
    }
 
@@ -291,7 +291,7 @@ update_vertex_textures(struct st_context *st)
       cso_set_sampler_views(st->cso_context,
                             PIPE_SHADER_VERTEX,
                             numUnits,
-                            st->state.sampler_vertex_views);
+                            st->state.vertex_sampler_views);
    }
 }
 
@@ -302,10 +302,10 @@ update_fragment_textures(struct st_context *st)
    const struct gl_context *ctx = st->ctx;
    struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
    GLuint su;
-   int old_max = st->state.num_textures;
+   int old_max = st->state.num_fragment_textures;
    GLbitfield samplers_used = fprog->Base.SamplersUsed;
 
-   st->state.num_textures = 0;
+   st->state.num_fragment_textures = 0;
 
    /* loop over sampler units (aka tex image units) */
    for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++, samplers_used >>= 1) {
@@ -321,19 +321,20 @@ update_fragment_textures(struct st_context *st)
          if (retval == GL_FALSE)
             continue;
 
-         st->state.num_textures = su + 1;
+         st->state.num_fragment_textures = su + 1;
       } else if (samplers_used == 0 && su >= old_max) {
          /* if we've reset all the old views and we have no more new ones */
          break;
       }
 
-      pipe_sampler_view_reference(&st->state.sampler_views[su], sampler_view);
+      pipe_sampler_view_reference(&st->state.fragment_sampler_views[su],
+                                  sampler_view);
    }
 
    cso_set_sampler_views(st->cso_context,
                          PIPE_SHADER_FRAGMENT,
-                         st->state.num_textures,
-                         st->state.sampler_views);
+                         st->state.num_fragment_textures,
+                         st->state.fragment_sampler_views);
 }
 
 

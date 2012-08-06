@@ -235,13 +235,13 @@ update_fragment_samplers(struct st_context *st)
    struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
    GLuint su;
    GLuint samplers_used = fprog->Base.SamplersUsed;
-   GLuint old_max = st->state.num_samplers;
+   GLuint old_max = st->state.num_fragment_samplers;
 
-   st->state.num_samplers = 0;
+   st->state.num_fragment_samplers = 0;
 
    /* loop over sampler units (aka tex image units) */
    for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++, samplers_used >>= 1) {
-      struct pipe_sampler_state *sampler = st->state.samplers + su;
+      struct pipe_sampler_state *sampler = st->state.fragment_samplers + su;
 
       if (samplers_used & 1) {
          GLuint texUnit;
@@ -250,7 +250,7 @@ update_fragment_samplers(struct st_context *st)
 
          convert_sampler(st, sampler, texUnit);
 
-         st->state.num_samplers = su + 1;
+         st->state.num_fragment_samplers = su + 1;
 
          /*printf("%s su=%u non-null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, PIPE_SHADER_FRAGMENT, su, sampler);
