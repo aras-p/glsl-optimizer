@@ -348,7 +348,11 @@ vec4_visitor::generate_math2_gen4(vec4_instruction *inst,
    struct brw_reg &op0 = is_int_div ? src1 : src0;
    struct brw_reg &op1 = is_int_div ? src0 : src1;
 
+   brw_push_insn_state(p);
+   brw_set_saturate(p, false);
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
    brw_MOV(p, retype(brw_message_reg(inst->base_mrf + 1), op1.type), op1);
+   brw_pop_insn_state(p);
 
    brw_math(p,
 	    dst,
