@@ -121,6 +121,23 @@ find_miptree(GLbitfield buffer_bit, struct gl_renderbuffer *rb)
    return mt;
 }
 
+void
+brw_blorp_blit_miptrees(struct intel_context *intel,
+                        struct intel_mipmap_tree *src_mt,
+                        struct intel_mipmap_tree *dst_mt,
+                        int src_x0, int src_y0,
+                        int dst_x0, int dst_y0,
+                        int dst_x1, int dst_y1,
+                        bool mirror_x, bool mirror_y)
+{
+   brw_blorp_blit_params params(brw_context(&intel->ctx),
+                                src_mt, dst_mt,
+                                src_x0, src_y0,
+                                dst_x0, dst_y0,
+                                dst_x1, dst_y1,
+                                mirror_x, mirror_y);
+   brw_blorp_exec(intel, &params);
+}
 
 static void
 do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
@@ -142,10 +159,9 @@ do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
    intel_renderbuffer_resolve_depth(intel, intel_renderbuffer(dst_rb));
 
    /* Do the blit */
-   brw_blorp_blit_params params(brw_context(ctx), src_mt, dst_mt,
-                                srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
-                                mirror_x, mirror_y);
-   brw_blorp_exec(intel, &params);
+   brw_blorp_blit_miptrees(intel, src_mt, dst_mt,
+                           srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
+                           mirror_x, mirror_y);
 
    /* Mark the dst buffer as needing a HiZ resolve if necessary. */
    intel_renderbuffer_set_needs_hiz_resolve(intel_renderbuffer(dst_rb));

@@ -30,6 +30,21 @@
 
 struct brw_context;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void
+brw_blorp_blit_miptrees(struct intel_context *intel,
+                        struct intel_mipmap_tree *src_mt,
+                        struct intel_mipmap_tree *dst_mt,
+                        int src_x0, int src_y0,
+                        int dst_x0, int dst_y0,
+                        int dst_x1, int dst_y1,
+                        bool mirror_x, bool mirror_y);
+
+#ifdef __cplusplus
+} /* end extern "C" */
 
 /**
  * Binding table indices used by BLORP.
@@ -340,3 +355,5 @@ void
 gen6_blorp_emit_drawing_rectangle(struct brw_context *brw,
                                   const brw_blorp_params *params);
 /** \} */
+
+#endif /* __cplusplus */
