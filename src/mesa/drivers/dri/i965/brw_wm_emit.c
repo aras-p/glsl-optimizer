@@ -297,13 +297,11 @@ void emit_pixel_w(struct brw_wm_compile *c,
       if (c->dispatch_width == 16) {
 	 brw_math_16(p, dst[3],
 		     BRW_MATH_FUNCTION_INV,
-		     BRW_MATH_SATURATE_NONE,
 		     2, src,
 		     BRW_MATH_PRECISION_FULL);
       } else {
 	 brw_math(p, dst[3],
 		  BRW_MATH_FUNCTION_INV,
-		  BRW_MATH_SATURATE_NONE,
 		  2, src,
 		  BRW_MATH_DATA_VECTOR,
 		  BRW_MATH_PRECISION_FULL);
@@ -890,9 +888,6 @@ void emit_math1(struct brw_wm_compile *c,
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
    int dst_chan = ffs(mask & WRITEMASK_XYZW) - 1;
-   GLuint saturate = ((mask & SATURATE) ?
-		      BRW_MATH_SATURATE_SATURATE :
-		      BRW_MATH_SATURATE_NONE);
    struct brw_reg src;
 
    if (!(mask & WRITEMASK_XYZW))
@@ -918,11 +913,11 @@ void emit_math1(struct brw_wm_compile *c,
    /* Send two messages to perform all 16 operations:
     */
    brw_push_insn_state(p);
+   brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_math(p,
 	    dst[dst_chan],
 	    function,
-	    saturate,
 	    2,
 	    src,
 	    BRW_MATH_DATA_VECTOR,
@@ -933,7 +928,6 @@ void emit_math1(struct brw_wm_compile *c,
       brw_math(p,
 	       offset(dst[dst_chan],1),
 	       function,
-	       saturate,
 	       3,
 	       sechalf(src),
 	       BRW_MATH_DATA_VECTOR,
@@ -1005,10 +999,6 @@ void emit_math2(struct brw_wm_compile *c,
 		   sechalf(src1));
       }
    } else {
-      GLuint saturate = ((mask & SATURATE) ?
-			 BRW_MATH_SATURATE_SATURATE :
-			 BRW_MATH_SATURATE_NONE);
-
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_MOV(p, brw_message_reg(3), arg1[0]);
       if (c->dispatch_width == 16) {
@@ -1016,11 +1006,11 @@ void emit_math2(struct brw_wm_compile *c,
 	 brw_MOV(p, brw_message_reg(5), sechalf(arg1[0]));
       }
 
+      brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_math(p,
 	       dst[dst_chan],
 	       function,
-	       saturate,
 	       2,
 	       arg0[0],
 	       BRW_MATH_DATA_VECTOR,
@@ -1033,7 +1023,6 @@ void emit_math2(struct brw_wm_compile *c,
 	 brw_math(p,
 		  offset(dst[dst_chan],1),
 		  function,
-		  saturate,
 		  4,
 		  sechalf(arg0[0]),
 		  BRW_MATH_DATA_VECTOR,

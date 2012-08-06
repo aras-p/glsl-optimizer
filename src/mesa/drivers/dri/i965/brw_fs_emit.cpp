@@ -160,8 +160,6 @@ fs_visitor::generate_math1_gen7(fs_inst *inst,
    assert(inst->mlen == 0);
    brw_math(p, dst,
 	    brw_math_function(inst->opcode),
-	    inst->saturate ? BRW_MATH_SATURATE_SATURATE
-			   : BRW_MATH_SATURATE_NONE,
 	    0, src0,
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
@@ -189,8 +187,6 @@ fs_visitor::generate_math1_gen6(fs_inst *inst,
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_math(p, dst,
 	    op,
-	    inst->saturate ? BRW_MATH_SATURATE_SATURATE :
-	    BRW_MATH_SATURATE_NONE,
 	    0, src0,
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
@@ -199,8 +195,6 @@ fs_visitor::generate_math1_gen6(fs_inst *inst,
       brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
       brw_math(p, sechalf(dst),
 	       op,
-	       inst->saturate ? BRW_MATH_SATURATE_SATURATE :
-	       BRW_MATH_SATURATE_NONE,
 	       0, sechalf(src0),
 	       BRW_MATH_DATA_VECTOR,
 	       BRW_MATH_PRECISION_FULL);
@@ -240,8 +234,6 @@ fs_visitor::generate_math_gen4(fs_inst *inst,
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_math(p, dst,
 	    op,
-	    inst->saturate ? BRW_MATH_SATURATE_SATURATE :
-	    BRW_MATH_SATURATE_NONE,
 	    inst->base_mrf, src,
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
@@ -250,8 +242,6 @@ fs_visitor::generate_math_gen4(fs_inst *inst,
       brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
       brw_math(p, sechalf(dst),
 	       op,
-	       inst->saturate ? BRW_MATH_SATURATE_SATURATE :
-	       BRW_MATH_SATURATE_NONE,
 	       inst->base_mrf + 1, sechalf(src),
 	       BRW_MATH_DATA_VECTOR,
 	       BRW_MATH_PRECISION_FULL);

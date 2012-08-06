@@ -429,7 +429,6 @@ static void brw_set_math_message( struct brw_compile *p,
 				  GLuint function,
 				  GLuint integer_type,
 				  bool low_precision,
-				  bool saturate,
 				  GLuint dataType )
 {
    struct brw_context *brw = p->brw;
@@ -461,22 +460,24 @@ static void brw_set_math_message( struct brw_compile *p,
       break;
    }
 
+
    brw_set_message_descriptor(p, insn, BRW_SFID_MATH,
 			      msg_length, response_length, false, false);
    if (intel->gen == 5) {
       insn->bits3.math_gen5.function = function;
       insn->bits3.math_gen5.int_type = integer_type;
       insn->bits3.math_gen5.precision = low_precision;
-      insn->bits3.math_gen5.saturate = saturate;
+      insn->bits3.math_gen5.saturate = insn->header.saturate;
       insn->bits3.math_gen5.data_type = dataType;
       insn->bits3.math_gen5.snapshot = 0;
    } else {
       insn->bits3.math.function = function;
       insn->bits3.math.int_type = integer_type;
       insn->bits3.math.precision = low_precision;
-      insn->bits3.math.saturate = saturate;
+      insn->bits3.math.saturate = insn->header.saturate;
       insn->bits3.math.data_type = dataType;
    }
+   insn->header.saturate = 0;
 }
 
 
@@ -1657,7 +1658,6 @@ void brw_WAIT (struct brw_compile *p)
 void brw_math( struct brw_compile *p,
 	       struct brw_reg dest,
 	       GLuint function,
-	       GLuint saturate,
 	       GLuint msg_reg_nr,
 	       struct brw_reg src,
 	       GLuint data_type,
@@ -1693,7 +1693,6 @@ void brw_math( struct brw_compile *p,
        * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
        */
       insn->header.destreg__conditionalmod = function;
-      insn->header.saturate = saturate;
 
       brw_set_dest(p, insn, dest);
       brw_set_src0(p, insn, src);
@@ -1714,7 +1713,6 @@ void brw_math( struct brw_compile *p,
 			   function,
 			   src.type == BRW_REGISTER_TYPE_D,
 			   precision,
-			   saturate,
 			   data_type);
    }
 }
@@ -1779,7 +1777,6 @@ void brw_math2(struct brw_compile *p,
 void brw_math_16( struct brw_compile *p,
 		  struct brw_reg dest,
 		  GLuint function,
-		  GLuint saturate,
 		  GLuint msg_reg_nr,
 		  struct brw_reg src,
 		  GLuint precision )
@@ -1794,7 +1791,6 @@ void brw_math_16( struct brw_compile *p,
        * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
        */
       insn->header.destreg__conditionalmod = function;
-      insn->header.saturate = saturate;
 
       /* Source modifiers are ignored for extended math instructions. */
       assert(!src.negate);
@@ -1822,7 +1818,6 @@ void brw_math_16( struct brw_compile *p,
 			function,
 			BRW_MATH_INTEGER_UNSIGNED,
 			precision,
-			saturate,
 			BRW_MATH_DATA_VECTOR);
 
    /* Second instruction:
@@ -1838,7 +1833,6 @@ void brw_math_16( struct brw_compile *p,
 			function,
 			BRW_MATH_INTEGER_UNSIGNED,
 			precision,
-			saturate,
 			BRW_MATH_DATA_VECTOR);
 
    brw_pop_insn_state(p);
