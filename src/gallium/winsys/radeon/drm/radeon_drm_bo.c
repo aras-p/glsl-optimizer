@@ -319,13 +319,14 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
     if (bo->ptr)
         os_munmap(bo->ptr, bo->base.size);
 
+    /* Close object. */
+    args.handle = bo->handle;
+    drmIoctl(bo->rws->fd, DRM_IOCTL_GEM_CLOSE, &args);
+
     if (mgr->va) {
         radeon_bomgr_free_va(mgr, bo->va, bo->va_size);
     }
 
-    /* Close object. */
-    args.handle = bo->handle;
-    drmIoctl(bo->rws->fd, DRM_IOCTL_GEM_CLOSE, &args);
     pipe_mutex_destroy(bo->map_mutex);
     FREE(bo);
 }
