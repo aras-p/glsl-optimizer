@@ -260,16 +260,19 @@ update_vertex_textures(struct st_context *st)
    const struct gl_context *ctx = st->ctx;
    struct gl_vertex_program *vprog = ctx->VertexProgram._Current;
    GLuint su;
+   const GLuint old_max = st->state.num_vertex_textures;
+   GLbitfield samplers_used = vprog->Base.SamplersUsed;
 
-   if (!vprog->Base.SamplersUsed && st->state.num_vertex_textures == 0)
+   if (samplers_used == 0x0 && old_max == 0)
       return;
 
    st->state.num_vertex_textures = 0;
 
    /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < ctx->Const.MaxTextureImageUnits; su++) {
+   for (su = 0; su < ctx->Const.MaxVertexTextureImageUnits; su++, samplers_used >>= 1) {
       struct pipe_sampler_view *sampler_view = NULL;
-      if (vprog->Base.SamplersUsed & (1 << su)) {
+
+      if (samplers_used & 1) {
          GLboolean retval;
          GLuint texUnit;
 
@@ -280,7 +283,11 @@ update_vertex_textures(struct st_context *st)
             continue;
 
          st->state.num_vertex_textures = su + 1;
+      } else if (samplers_used == 0 && su >= old_max) {
+         /* if we've reset all the old views and we have no more new ones */
+         break;
       }
+
       pipe_sampler_view_reference(&st->state.vertex_sampler_views[su],
                                   sampler_view);
    }
@@ -302,8 +309,11 @@ update_fragment_textures(struct st_context *st)
    const struct gl_context *ctx = st->ctx;
    struct gl_fragment_program *fprog = ctx->FragmentProgram._Current;
    GLuint su;
-   int old_max = st->state.num_fragment_textures;
+   const GLuint old_max = st->state.num_fragment_textures;
    GLbitfield samplers_used = fprog->Base.SamplersUsed;
+
+   if (samplers_used == 0x0 && old_max == 0)
+      return;
 
    st->state.num_fragment_textures = 0;
 
