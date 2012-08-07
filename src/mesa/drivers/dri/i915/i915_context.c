@@ -146,6 +146,9 @@ bool
 i915CreateContext(int api,
 		  const struct gl_config * mesaVis,
                   __DRIcontext * driContextPriv,
+                  unsigned major_version,
+                  unsigned minor_version,
+                  unsigned *error,
                   void *sharedContextPrivate)
 {
    struct dd_function_table functions;
@@ -153,8 +156,10 @@ i915CreateContext(int api,
    struct intel_context *intel = &i915->intel;
    struct gl_context *ctx = &intel->ctx;
 
-   if (!i915)
+   if (!i915) {
+      *error = __DRI_CTX_ERROR_NO_MEMORY;
       return false;
+   }
 
    i915InitVtbl(i915);
 
@@ -162,6 +167,33 @@ i915CreateContext(int api,
 
    if (!intelInitContext(intel, api, mesaVis, driContextPriv,
                          sharedContextPrivate, &functions)) {
+      FREE(i915);
+      *error = __DRI_CTX_ERROR_NO_MEMORY;
+      return false;
+   }
+
+   /* Now that the extension bits are known, filter against the requested API
+    * and version.
+    */
+   switch (api) {
+   case API_OPENGL: {
+      const unsigned max_version =
+         (ctx->Extensions.ARB_fragment_shader &&
+          ctx->Extensions.ARB_occlusion_query) ? 20 : 15;
+      const unsigned req_version = major_version * 10 + minor_version;
+
+      if (req_version > max_version) {
+         *error = __DRI_CTX_ERROR_BAD_VERSION;
+         FREE(i915);
+         return false;
+      }
+      break;
+   }
+   case API_OPENGLES:
+   case API_OPENGLES2:
+      break;
+   default:
+      *error = __DRI_CTX_ERROR_BAD_API;
       FREE(i915);
       return false;
    }

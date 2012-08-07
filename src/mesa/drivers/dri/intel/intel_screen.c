@@ -693,6 +693,9 @@ extern bool
 i915CreateContext(int api,
 		  const struct gl_config *mesaVis,
 		  __DRIcontext *driContextPriv,
+                  unsigned major_version,
+                  unsigned minor_version,
+                  unsigned *error,
 		  void *sharedContextPrivate);
 extern bool
 brwCreateContext(int api,
@@ -734,6 +737,7 @@ intelCreateContext(gl_api api,
 #ifdef I915
    if (IS_9XX(intelScreen->deviceID)) {
       success = i915CreateContext(api, mesaVis, driContextPriv,
+                                  major_version, minor_version, error,
                                   sharedContextPrivate);
    } else {
       switch (api) {

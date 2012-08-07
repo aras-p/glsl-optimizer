@@ -322,6 +322,9 @@ do {									\
 extern bool i915CreateContext(int api,
 			      const struct gl_config * mesaVis,
 			      __DRIcontext * driContextPriv,
+                              unsigned major_version,
+                              unsigned minor_version,
+                              unsigned *error,
 			      void *sharedContextPrivate);
 
 
