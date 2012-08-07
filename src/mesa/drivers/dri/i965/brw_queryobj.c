@@ -49,6 +49,20 @@ static void
 write_timestamp(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
 {
    if (intel->gen >= 6) {
+      /* Emit workaround flushes: */
+      if (intel->gen == 6) {
+         /* The timestamp write below is a non-zero post-sync op, which on
+          * Gen6 necessitates a CS stall.  CS stalls need stall at scoreboard
+          * set.  See the comments for intel_emit_post_sync_nonzero_flush().
+          */
+         BEGIN_BATCH(4);
+         OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+         OUT_BATCH(PIPE_CONTROL_CS_STALL | PIPE_CONTROL_STALL_AT_SCOREBOARD);
+         OUT_BATCH(0);
+         OUT_BATCH(0);
+         ADVANCE_BATCH();
+      }
+
       BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
       OUT_BATCH(PIPE_CONTROL_WRITE_TIMESTAMP);
