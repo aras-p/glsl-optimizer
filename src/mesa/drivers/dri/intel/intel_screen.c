@@ -663,23 +663,6 @@ intelCreateContext(gl_api api,
    struct intel_screen *intelScreen = sPriv->driverPrivate;
    bool success = false;
 
-   switch (api) {
-   case API_OPENGL:
-   case API_OPENGLES:
-      break;
-   case API_OPENGLES2:
-#ifdef I915
-      if (!IS_9XX(intelScreen->deviceID)) {
-         *error = __DRI_CTX_ERROR_BAD_API;
-         return false;
-      }
-#endif
-      break;
-   case API_OPENGL_CORE:
-      *error = __DRI_CTX_ERROR_BAD_API;
-      return GL_FALSE;
-   }
-
 #ifdef I915
    if (IS_9XX(intelScreen->deviceID)) {
       success = i915CreateContext(api, mesaVis, driContextPriv,
@@ -690,22 +673,22 @@ intelCreateContext(gl_api api,
       case API_OPENGL:
          if (major_version > 1 || minor_version > 3) {
             *error = __DRI_CTX_ERROR_BAD_VERSION;
-            return false;
+            success = false;
          }
          break;
       case API_OPENGLES:
          break;
       default:
          *error = __DRI_CTX_ERROR_BAD_API;
-         return false;
+         success = false;
       }
 
-      intelScreen->no_vbo = true;
-      success = i830CreateContext(mesaVis, driContextPriv,
-				  sharedContextPrivate);
-      if (!success) {
-         *error = __DRI_CTX_ERROR_NO_MEMORY;
-         return false;
+      if (success) {
+         intelScreen->no_vbo = true;
+         success = i830CreateContext(mesaVis, driContextPriv,
+                                     sharedContextPrivate);
+         if (!success)
+            *error = __DRI_CTX_ERROR_NO_MEMORY;
       }
    }
 #else
@@ -715,22 +698,10 @@ intelCreateContext(gl_api api,
                               error, sharedContextPrivate);
 #endif
 
-   if (success) {
-      struct gl_context *ctx =
-	 (struct gl_context *) driContextPriv->driverPrivate;
+   if (success)
+      return true;
 
-      _mesa_compute_version(ctx);
-      if (ctx->Version >= major_version * 10 + minor_version) {
-	 return true;
-      }
-
-      *error = __DRI_CTX_ERROR_BAD_VERSION;
-      intelDestroyContext(driContextPriv);
-   } else {
-      *error = __DRI_CTX_ERROR_NO_MEMORY;
-      fprintf(stderr, "Unrecognized deviceID 0x%x\n", intelScreen->deviceID);
-   }
-
+   intelDestroyContext(driContextPriv);
    return false;
 }
 
