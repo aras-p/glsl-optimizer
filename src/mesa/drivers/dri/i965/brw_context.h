@@ -1099,6 +1099,9 @@ void brwInitVtbl( struct brw_context *brw );
 bool brwCreateContext(int api,
 		      const struct gl_config *mesaVis,
 		      __DRIcontext *driContextPriv,
+                      unsigned major_version,
+                      unsigned minor_version,
+                      unsigned *error,
 		      void *sharedContextPrivate);
 
 /*======================================================================

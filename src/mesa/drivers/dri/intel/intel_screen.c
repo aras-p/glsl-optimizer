@@ -701,6 +701,9 @@ extern bool
 brwCreateContext(int api,
 	         const struct gl_config *mesaVis,
 	         __DRIcontext *driContextPriv,
+                 unsigned major_version,
+                 unsigned minor_version,
+                 unsigned *error,
 		 void *sharedContextPrivate);
 
 static GLboolean
@@ -764,8 +767,9 @@ intelCreateContext(gl_api api,
    }
 #else
    success = brwCreateContext(api, mesaVis,
-                             driContextPriv,
-                             sharedContextPrivate);
+                              driContextPriv,
+                              major_version, minor_version, error,
+                              sharedContextPrivate);
 #endif
 
    if (success) {

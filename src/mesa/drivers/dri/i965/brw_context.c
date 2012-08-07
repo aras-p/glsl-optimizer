@@ -75,27 +75,61 @@ bool
 brwCreateContext(int api,
 	         const struct gl_config *mesaVis,
 		 __DRIcontext *driContextPriv,
+                 unsigned major_version,
+                 unsigned minor_version,
+                 unsigned *error,
 	         void *sharedContextPrivate)
 {
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *screen = sPriv->driverPrivate;
    struct dd_function_table functions;
-   struct brw_context *brw = rzalloc(NULL, struct brw_context);
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
    unsigned i;
 
+   /* Filter against the requested API and version.
+    */
+   switch (api) {
+   case API_OPENGL: {
+#ifdef TEXTURE_FLOAT_ENABLED
+      const unsigned max_version =
+         (screen->gen == 6 ||
+          (screen->gen == 7 && screen->kernel_has_gen7_sol_reset))
+         ? 30 : 21;
+#else
+      const unsigned max_version = 21;
+#endif
+      const unsigned req_version = major_version * 10 + minor_version;
+
+      if (req_version > max_version) {
+         *error = __DRI_CTX_ERROR_BAD_VERSION;
+         return false;
+      }
+      break;
+   }
+   case API_OPENGLES:
+   case API_OPENGLES2:
+      break;
+   default:
+      *error = __DRI_CTX_ERROR_BAD_API;
+      return false;
+   }
+
+   struct brw_context *brw = rzalloc(NULL, struct brw_context);
    if (!brw) {
       printf("%s: failed to alloc context\n", __FUNCTION__);
+      *error = __DRI_CTX_ERROR_NO_MEMORY;
       return false;
    }
 
    brwInitDriverFunctions(screen, &functions);
 
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
+
    if (!intelInitContext( intel, api, mesaVis, driContextPriv,
 			  sharedContextPrivate, &functions )) {
       printf("%s: failed to init intel context\n", __FUNCTION__);
       FREE(brw);
+      *error = __DRI_CTX_ERROR_NO_MEMORY;
       return false;
    }
 
