@@ -49,13 +49,14 @@ static void
 write_timestamp(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
 {
    if (intel->gen >= 6) {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+      BEGIN_BATCH(5);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
       OUT_BATCH(PIPE_CONTROL_WRITE_TIMESTAMP);
       OUT_RELOC(query_bo,
                 I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
                 PIPE_CONTROL_GLOBAL_GTT_WRITE |
                 idx * sizeof(uint64_t));
+      OUT_BATCH(0);
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
