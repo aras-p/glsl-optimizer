@@ -109,6 +109,25 @@ brwCreateContext(int api,
    case API_OPENGLES:
    case API_OPENGLES2:
       break;
+   case API_OPENGL_CORE: {
+#ifdef TEXTURE_FLOAT_ENABLED
+      const unsigned max_version =
+         (screen->gen == 6 ||
+          (screen->gen == 7 && screen->kernel_has_gen7_sol_reset))
+         ? 31 : 0;
+      const unsigned req_version = major_version * 10 + minor_version;
+
+      if (req_version > max_version) {
+         *error = (max_version == 0)
+            ? __DRI_CTX_ERROR_BAD_API : __DRI_CTX_ERROR_BAD_VERSION;
+         return false;
+      }
+      break;
+#else
+      *error = __DRI_CTX_ERROR_BAD_API;
+      return false;
+#endif
+   }
    default:
       *error = __DRI_CTX_ERROR_BAD_API;
       return false;
