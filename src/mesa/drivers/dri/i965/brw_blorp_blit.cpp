@@ -146,8 +146,6 @@ do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
               GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
               bool mirror_x, bool mirror_y)
 {
-   struct gl_context *ctx = &intel->ctx;
-
    /* Find source/dst miptrees */
    struct intel_mipmap_tree *src_mt = find_miptree(buffer_bit, src_rb);
    struct intel_mipmap_tree *dst_mt = find_miptree(buffer_bit, dst_rb);

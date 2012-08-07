@@ -918,7 +918,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
 
       __DRIconfig **new_configs;
       const int num_depth_stencil_bits = 2;
-      int num_msaa_modes;
+      int num_msaa_modes = 0;
 
       depth_bits[0] = 0;
       stencil_bits[0] = 0;
