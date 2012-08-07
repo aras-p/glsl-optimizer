@@ -733,20 +733,17 @@ intelCreateContext(gl_api api,
 
 #ifdef I915
    if (IS_9XX(intelScreen->deviceID)) {
-      if (!IS_965(intelScreen->deviceID)) {
-	 success = i915CreateContext(api, mesaVis, driContextPriv,
-				     sharedContextPrivate);
-      }
+      success = i915CreateContext(api, mesaVis, driContextPriv,
+                                  sharedContextPrivate);
    } else {
       intelScreen->no_vbo = true;
       success = i830CreateContext(mesaVis, driContextPriv,
 				  sharedContextPrivate);
    }
 #else
-   if (IS_965(intelScreen->deviceID))
-      success = brwCreateContext(api, mesaVis,
-			      driContextPriv,
-			      sharedContextPrivate);
+   success = brwCreateContext(api, mesaVis,
+                             driContextPriv,
+                             sharedContextPrivate);
 #endif
 
    if (success) {
