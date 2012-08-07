@@ -773,7 +773,7 @@ is_legal_int_format_combo( const struct util_format_description *src,
 
    for (i = 0; i < nr; i++) {
       /* The signs must match. */
-      if (src->channel[i].type != src->channel[i].type) {
+      if (src->channel[i].type != dst->channel[i].type) {
          return FALSE;
       }
 
