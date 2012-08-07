@@ -244,8 +244,8 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
      * anything specific about this case.  However, none of the known flags
      * have any meaning in an ES context, so this seems safe.
      */
-    if (mesa_api != __DRI_API_OPENGL
-        && mesa_api != __DRI_API_OPENGL_CORE
+    if (mesa_api != API_OPENGL
+        && mesa_api != API_OPENGL_CORE
         && flags != 0) {
 	*error = __DRI_CTX_ERROR_BAD_FLAG;
 	return NULL;
