@@ -1128,6 +1128,14 @@ bool brwCreateContext(int api,
 		      void *sharedContextPrivate);
 
 /*======================================================================
+ * brw_misc_state.c
+ */
+void brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
+                                     struct intel_mipmap_tree *stencil_mt,
+                                     uint32_t *out_tile_mask_x,
+                                     uint32_t *out_tile_mask_y);
+
+/*======================================================================
  * brw_queryobj.c
  */
 void brw_init_queryobj_functions(struct dd_function_table *functions);

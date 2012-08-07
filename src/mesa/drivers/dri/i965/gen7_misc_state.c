@@ -48,42 +48,11 @@ static void emit_depthbuffer(struct brw_context *brw)
     */
    uint32_t draw_x = 0, draw_y = 0;
 
-   /* Masks used to determine how much of the draw_x and draw_y offsets should
-    * be performed using the fine adjustment of "depth coordinate offset X/Y"
-    * (dw5 of 3DSTATE_DEPTH_BUFFER).  Any remaining coarse adjustment will be
-    * performed by changing the base addresses of the buffers.
-    *
-    * Since the HiZ, depth, and stencil buffers all use the same "depth
-    * coordinate offset X/Y" values, we need to make sure that the coarse
-    * adjustment will be possible to apply to all three buffers.  Since coarse
-    * adjustment can only be applied in multiples of the tile size, we will OR
-    * together the tile masks of all the buffers to determine which offsets to
-    * perform as fine adjustments.
-    */
-   uint32_t tile_mask_x = 0, tile_mask_y = 0;
-
    if (drb)
       depth_mt = drb->mt;
 
-   if (depth_mt) {
+   if (depth_mt)
       hiz_mt = depth_mt->hiz_mt;
-
-      intel_region_get_tile_masks(depth_mt->region,
-                                  &tile_mask_x, &tile_mask_y, false);
-
-      if (hiz_mt) {
-         uint32_t hiz_tile_mask_x, hiz_tile_mask_y;
-         intel_region_get_tile_masks(hiz_mt->region,
-                                     &hiz_tile_mask_x, &hiz_tile_mask_y,
-                                     false);
-
-         /* Each HiZ row represents 2 rows of pixels */
-         hiz_tile_mask_y = hiz_tile_mask_y << 1 | 1;
-
-         tile_mask_x |= hiz_tile_mask_x;
-         tile_mask_y |= hiz_tile_mask_y;
-      }
-   }
 
    if (srb) {
       stencil_mt = srb->mt;
@@ -91,11 +60,11 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 stencil_mt = stencil_mt->stencil_mt;
 
       assert(stencil_mt->format == MESA_FORMAT_S8);
-
-      /* Stencil buffer uses 64x64 tiles. */
-      tile_mask_x |= 63;
-      tile_mask_y |= 63;
    }
+
+   uint32_t tile_mask_x, tile_mask_y;
+   brw_get_depthstencil_tile_masks(depth_mt, stencil_mt,
+                                   &tile_mask_x, &tile_mask_y);
 
    /* Gen7 doesn't support packed depth/stencil */
    assert(stencil_mt == NULL || depth_mt != stencil_mt);

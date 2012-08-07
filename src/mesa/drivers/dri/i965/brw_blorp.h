@@ -325,10 +325,6 @@ void
 gen6_blorp_init(struct brw_context *brw);
 
 void
-gen6_blorp_compute_tile_masks(const brw_blorp_params *params,
-                              uint32_t *tile_mask_x, uint32_t *tile_mask_y);
-
-void
 gen6_blorp_emit_batch_head(struct brw_context *brw,
                            const brw_blorp_params *params);
 

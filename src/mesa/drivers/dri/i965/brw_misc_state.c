@@ -253,6 +253,70 @@ brw_depthbuffer_format(struct brw_context *brw)
    }
 }
 
+/**
+ * Returns the mask of how many bits of x and y must be handled through the
+ * depthbuffer's draw offset x and y fields.
+ *
+ * The draw offset x/y field of the depthbuffer packet is unfortunately shared
+ * between the depth, hiz, and stencil buffers.  Because it can be hard to get
+ * all 3 to agree on this value, we want to do as much drawing offset
+ * adjustment as possible by moving the base offset of the 3 buffers, which is
+ * restricted to tile boundaries.
+ *
+ * For each buffer, the remainder must be applied through the x/y draw offset.
+ * This returns the worst-case mask of the low bits that have to go into the
+ * packet.  If the 3 buffers don't agree on the drawing offset ANDed with this
+ * mask, then we're in trouble.
+ */
+void
+brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
+                                struct intel_mipmap_tree *stencil_mt,
+                                uint32_t *out_tile_mask_x,
+                                uint32_t *out_tile_mask_y)
+{
+   uint32_t tile_mask_x = 0, tile_mask_y = 0;
+
+   if (depth_mt) {
+      intel_region_get_tile_masks(depth_mt->region,
+                                  &tile_mask_x, &tile_mask_y, false);
+
+      struct intel_mipmap_tree *hiz_mt = depth_mt->hiz_mt;
+      if (hiz_mt) {
+         uint32_t hiz_tile_mask_x, hiz_tile_mask_y;
+         intel_region_get_tile_masks(hiz_mt->region,
+                                     &hiz_tile_mask_x, &hiz_tile_mask_y, false);
+
+         /* Each HiZ row represents 2 rows of pixels */
+         hiz_tile_mask_y = hiz_tile_mask_y << 1 | 1;
+
+         tile_mask_x |= hiz_tile_mask_x;
+         tile_mask_y |= hiz_tile_mask_y;
+      }
+   }
+
+   if (stencil_mt) {
+      if (stencil_mt->stencil_mt)
+	 stencil_mt = stencil_mt->stencil_mt;
+
+      if (stencil_mt->format == MESA_FORMAT_S8) {
+         /* Separate stencil buffer uses 64x64 tiles. */
+         tile_mask_x |= 63;
+         tile_mask_y |= 63;
+      } else {
+         uint32_t stencil_tile_mask_x, stencil_tile_mask_y;
+         intel_region_get_tile_masks(stencil_mt->region,
+                                     &stencil_tile_mask_x,
+                                     &stencil_tile_mask_y, false);
+
+         tile_mask_x |= stencil_tile_mask_x;
+         tile_mask_y |= stencil_tile_mask_y;
+      }
+   }
+
+   *out_tile_mask_x = tile_mask_x;
+   *out_tile_mask_y = tile_mask_y;
+}
+
 static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
@@ -261,6 +325,7 @@ static void emit_depthbuffer(struct brw_context *brw)
    /* _NEW_BUFFERS */
    struct intel_renderbuffer *depth_irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
    struct intel_renderbuffer *stencil_irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
+   struct intel_mipmap_tree *depth_mt = NULL;
    struct intel_mipmap_tree *stencil_mt = NULL;
    struct intel_region *hiz_region = NULL;
    unsigned int len;
@@ -272,39 +337,11 @@ static void emit_depthbuffer(struct brw_context *brw)
     */
    uint32_t draw_x = 0, draw_y = 0;
 
-   /* Masks used to determine how much of the draw_x and draw_y offsets should
-    * be performed using the fine adjustment of "depth coordinate offset X/Y"
-    * (dw5 of 3DSTATE_DEPTH_BUFFER).  Any remaining coarse adjustment will be
-    * performed by changing the base addresses of the buffers.
-    *
-    * Since the HiZ, depth, and stencil buffers all use the same "depth
-    * coordinate offset X/Y" values, we need to make sure that the coarse
-    * adjustment will be possible to apply to all three buffers.  Since coarse
-    * adjustment can only be applied in multiples of the tile size, we will OR
-    * together the tile masks of all the buffers to determine which offsets to
-    * perform as fine adjustments.
-    */
-   uint32_t tile_mask_x = 0, tile_mask_y = 0;
-
-   if (depth_irb) {
-      intel_region_get_tile_masks(depth_irb->mt->region,
-                                  &tile_mask_x, &tile_mask_y, false);
-   }
-
    if (depth_irb &&
        depth_irb->mt &&
        depth_irb->mt->hiz_mt) {
+      depth_mt = depth_irb->mt;
       hiz_region = depth_irb->mt->hiz_mt->region;
-
-      uint32_t hiz_tile_mask_x, hiz_tile_mask_y;
-      intel_region_get_tile_masks(hiz_region,
-                                  &hiz_tile_mask_x, &hiz_tile_mask_y, false);
-
-      /* Each HiZ row represents 2 rows of pixels */
-      hiz_tile_mask_y = hiz_tile_mask_y << 1 | 1;
-
-      tile_mask_x |= hiz_tile_mask_x;
-      tile_mask_y |= hiz_tile_mask_y;
    }
 
    /* 3DSTATE_DEPTH_BUFFER, 3DSTATE_STENCIL_BUFFER are both
@@ -323,20 +360,12 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       if (stencil_mt->format == MESA_FORMAT_S8) {
 	 separate_stencil = true;
-
-         /* Separate stencil buffer uses 64x64 tiles. */
-         tile_mask_x |= 63;
-         tile_mask_y |= 63;
-      } else {
-         uint32_t stencil_tile_mask_x, stencil_tile_mask_y;
-         intel_region_get_tile_masks(stencil_mt->region,
-                                     &stencil_tile_mask_x,
-                                     &stencil_tile_mask_y, false);
-
-         tile_mask_x |= stencil_tile_mask_x;
-         tile_mask_y |= stencil_tile_mask_y;
       }
    }
+
+   uint32_t tile_mask_x, tile_mask_y;
+   brw_get_depthstencil_tile_masks(depth_mt, stencil_mt,
+                                   &tile_mask_x, &tile_mask_y);
 
    /* If there's a packed depth/stencil bound to stencil only, we need to
     * emit the packed depth/stencil buffer packet.
