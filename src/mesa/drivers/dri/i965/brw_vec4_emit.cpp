@@ -1023,8 +1023,18 @@ extern "C" {
 bool
 brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
 {
+   struct intel_context *intel = &c->func.brw->intel;
+   bool start_busy = false;
+   float start_time = 0;
+
    if (!prog)
       return false;
+
+   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+      start_busy = (intel->batch.last_bo &&
+                    drm_intel_bo_busy(intel->batch.last_bo));
+      start_time = get_time();
+   }
 
    struct brw_shader *shader =
      (brw_shader *) prog->_LinkedShaders[MESA_SHADER_VERTEX];
@@ -1037,8 +1047,14 @@ brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
       printf("\n\n");
    }
 
-   if (shader->compiled_once) {
-      perf_debug("Recompiling vertex shader for program %d\n", prog->Name);
+   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+      if (shader->compiled_once) {
+         perf_debug("Recompiling vertex shader for program %d\n", prog->Name);
+      }
+      if (start_busy && !drm_intel_bo_busy(intel->batch.last_bo)) {
+         perf_debug("VS compile took %.03f ms and stalled the GPU\n",
+                    (get_time() - start_time) / 1000);
+      }
    }
 
    vec4_visitor v(c, prog, shader);

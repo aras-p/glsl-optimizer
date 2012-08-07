@@ -2062,9 +2062,17 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
 	       struct gl_shader_program *prog)
 {
    struct intel_context *intel = &brw->intel;
+   bool start_busy = false;
+   float start_time = 0;
 
    if (!prog)
       return false;
+
+   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+      start_busy = (intel->batch.last_bo &&
+                    drm_intel_bo_busy(intel->batch.last_bo));
+      start_time = get_time();
+   }
 
    struct brw_shader *shader =
      (brw_shader *) prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
@@ -2108,6 +2116,11 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
       if (shader->compiled_once)
          brw_wm_debug_recompile(brw, prog, &c->key);
       shader->compiled_once = true;
+
+      if (start_busy && !drm_intel_bo_busy(intel->batch.last_bo)) {
+         perf_debug("FS compile took %.03f ms and stalled the GPU\n",
+                    (get_time() - start_time) / 1000);
+      }
    }
 
    return true;

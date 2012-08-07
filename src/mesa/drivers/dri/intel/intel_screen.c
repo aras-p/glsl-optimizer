@@ -109,6 +109,19 @@ const GLuint __driNConfigOptions = 15;
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /*USE_NEW_INTERFACE */
 
+/**
+ * For debugging purposes, this returns a time in seconds.
+ */
+double
+get_time(void)
+{
+   struct timespec tp;
+
+   clock_gettime(CLOCK_MONOTONIC, &tp);
+
+   return tp.tv_sec + tp.tv_nsec / 1000000000.0;
+}
+
 void
 aub_dump_bmp(struct gl_context *ctx)
 {
