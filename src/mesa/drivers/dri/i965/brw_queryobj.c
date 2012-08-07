@@ -87,6 +87,47 @@ write_timestamp(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
    }
 }
 
+static void
+write_depth_count(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
+{
+   if (intel->gen >= 6) {
+      BEGIN_BATCH(8);
+
+      /* workaround: CS stall required before depth stall. */
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+      OUT_BATCH(PIPE_CONTROL_CS_STALL);
+      OUT_BATCH(0); /* write address */
+      OUT_BATCH(0); /* write data */
+
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+      OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
+                PIPE_CONTROL_WRITE_DEPTH_COUNT);
+      OUT_RELOC(query_bo,
+                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                PIPE_CONTROL_GLOBAL_GTT_WRITE |
+                (idx * sizeof(uint64_t)));
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
+                PIPE_CONTROL_DEPTH_STALL |
+                PIPE_CONTROL_WRITE_DEPTH_COUNT);
+      /* This object could be mapped cacheable, but we don't have an exposed
+       * mechanism to support that.  Since it's going uncached, tell GEM that
+       * we're writing to it.  The usual clflush should be all that's required
+       * to pick up the results.
+       */
+      OUT_RELOC(query_bo,
+                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                PIPE_CONTROL_GLOBAL_GTT_WRITE |
+                (idx * sizeof(uint64_t)));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   }
+}
+
 /** Waits on the query object's BO and totals the results for this query */
 static void
 brw_queryobj_get_results(struct gl_context *ctx,
@@ -331,43 +372,7 @@ brw_emit_query_begin(struct brw_context *brw)
    if (!query || brw->query.active)
       return;
 
-   if (intel->gen >= 6) {
-       BEGIN_BATCH(8);
-
-       /* workaround: CS stall required before depth stall. */
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-       OUT_BATCH(PIPE_CONTROL_CS_STALL);
-       OUT_BATCH(0); /* write address */
-       OUT_BATCH(0); /* write data */
-
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-       OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
-	         PIPE_CONTROL_WRITE_DEPTH_COUNT);
-       OUT_RELOC(brw->query.bo,
-	         I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-		 PIPE_CONTROL_GLOBAL_GTT_WRITE |
-		 ((brw->query.index * 2) * sizeof(uint64_t)));
-       OUT_BATCH(0);
-       ADVANCE_BATCH();
-       
-   } else {
-       BEGIN_BATCH(4);
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
-	       PIPE_CONTROL_DEPTH_STALL |
-	       PIPE_CONTROL_WRITE_DEPTH_COUNT);
-       /* This object could be mapped cacheable, but we don't have an exposed
-	* mechanism to support that.  Since it's going uncached, tell GEM that
-	* we're writing to it.  The usual clflush should be all that's required
-	* to pick up the results.
-	*/
-       OUT_RELOC(brw->query.bo,
-	       I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-	       PIPE_CONTROL_GLOBAL_GTT_WRITE |
-	       ((brw->query.index * 2) * sizeof(uint64_t)));
-       OUT_BATCH(0);
-       OUT_BATCH(0);
-       ADVANCE_BATCH();
-   }
+   write_depth_count(intel, brw->query.bo, brw->query.index * 2);
 
    if (query->bo != brw->query.bo) {
       if (query->bo != NULL)
@@ -389,37 +394,7 @@ brw_emit_query_end(struct brw_context *brw)
    if (!brw->query.active)
       return;
 
-   if (intel->gen >= 6) {
-       BEGIN_BATCH(8);
-       /* workaround: CS stall required before depth stall. */
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-       OUT_BATCH(PIPE_CONTROL_CS_STALL);
-       OUT_BATCH(0); /* write address */
-       OUT_BATCH(0); /* write data */
-
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-       OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
-	         PIPE_CONTROL_WRITE_DEPTH_COUNT);
-       OUT_RELOC(brw->query.bo,
-	         I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-		 PIPE_CONTROL_GLOBAL_GTT_WRITE |
-		 ((brw->query.index * 2 + 1) * sizeof(uint64_t)));
-       OUT_BATCH(0);
-       ADVANCE_BATCH();
-   
-   } else {
-       BEGIN_BATCH(4);
-       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
-	       PIPE_CONTROL_DEPTH_STALL |
-	       PIPE_CONTROL_WRITE_DEPTH_COUNT);
-       OUT_RELOC(brw->query.bo,
-	       I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-	       PIPE_CONTROL_GLOBAL_GTT_WRITE |
-	       ((brw->query.index * 2 + 1) * sizeof(uint64_t)));
-       OUT_BATCH(0);
-       OUT_BATCH(0);
-       ADVANCE_BATCH();
-   }
+   write_depth_count(intel, brw->query.bo, brw->query.index * 2 + 1);
 
    brw->query.active = false;
    brw->query.index++;
