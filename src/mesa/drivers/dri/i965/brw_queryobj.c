@@ -91,7 +91,7 @@ static void
 write_depth_count(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
 {
    if (intel->gen >= 6) {
-      BEGIN_BATCH(8);
+      BEGIN_BATCH(9);
 
       /* workaround: CS stall required before depth stall. */
       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
@@ -99,13 +99,14 @@ write_depth_count(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
       OUT_BATCH(0); /* write address */
       OUT_BATCH(0); /* write data */
 
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
       OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
                 PIPE_CONTROL_WRITE_DEPTH_COUNT);
       OUT_RELOC(query_bo,
                 I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
                 PIPE_CONTROL_GLOBAL_GTT_WRITE |
                 (idx * sizeof(uint64_t)));
+      OUT_BATCH(0);
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
