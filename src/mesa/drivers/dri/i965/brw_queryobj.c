@@ -45,6 +45,33 @@
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
 
+static void
+write_timestamp(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
+{
+   if (intel->gen >= 6) {
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+      OUT_BATCH(PIPE_CONTROL_WRITE_TIMESTAMP);
+      OUT_RELOC(query_bo,
+                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                PIPE_CONTROL_GLOBAL_GTT_WRITE |
+                idx * sizeof(uint64_t));
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
+                PIPE_CONTROL_WRITE_TIMESTAMP);
+      OUT_RELOC(query_bo,
+                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                PIPE_CONTROL_GLOBAL_GTT_WRITE |
+                idx * sizeof(uint64_t));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   }
+}
+
 /** Waits on the query object's BO and totals the results for this query */
 static void
 brw_queryobj_get_results(struct gl_context *ctx,
@@ -127,32 +154,8 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
       drm_intel_bo_unreference(query->bo);
-      query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query",
-				     4096, 4096);
-
-      if (intel->gen >= 6) {
-	  BEGIN_BATCH(4);
-	  OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-	  OUT_BATCH(PIPE_CONTROL_WRITE_TIMESTAMP);
-	  OUT_RELOC(query->bo,
-		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-		  PIPE_CONTROL_GLOBAL_GTT_WRITE |
-		  0);
-	  OUT_BATCH(0);
-	  ADVANCE_BATCH();
-      
-      } else {
-	  BEGIN_BATCH(4);
-	  OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
-		  PIPE_CONTROL_WRITE_TIMESTAMP);
-	  OUT_RELOC(query->bo,
-		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-		  PIPE_CONTROL_GLOBAL_GTT_WRITE |
-		  0);
-	  OUT_BATCH(0);
-	  OUT_BATCH(0);
-	  ADVANCE_BATCH();
-      }
+      query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query", 4096, 4096);
+      write_timestamp(intel, query->bo, 0);
       break;
 
    case GL_SAMPLES_PASSED_ARB:
@@ -200,30 +203,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
-      if (intel->gen >= 6) {
-	  BEGIN_BATCH(4);
-	  OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-	  OUT_BATCH(PIPE_CONTROL_WRITE_TIMESTAMP);
-	  OUT_RELOC(query->bo,
-		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-		  PIPE_CONTROL_GLOBAL_GTT_WRITE |
-		  8);
-	  OUT_BATCH(0);
-	  ADVANCE_BATCH();
-      
-      } else {
-	  BEGIN_BATCH(4);
-	  OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
-		  PIPE_CONTROL_WRITE_TIMESTAMP);
-	  OUT_RELOC(query->bo,
-		  I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-		  PIPE_CONTROL_GLOBAL_GTT_WRITE |
-		  8);
-	  OUT_BATCH(0);
-	  OUT_BATCH(0);
-	  ADVANCE_BATCH();
-      }
-
+      write_timestamp(intel, query->bo, 1);
       intel_batchbuffer_flush(intel);
       break;
 
