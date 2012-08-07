@@ -736,9 +736,27 @@ intelCreateContext(gl_api api,
       success = i915CreateContext(api, mesaVis, driContextPriv,
                                   sharedContextPrivate);
    } else {
+      switch (api) {
+      case API_OPENGL:
+         if (major_version > 1 || minor_version > 3) {
+            *error = __DRI_CTX_ERROR_BAD_VERSION;
+            return false;
+         }
+         break;
+      case API_OPENGLES:
+         break;
+      default:
+         *error = __DRI_CTX_ERROR_BAD_API;
+         return false;
+      }
+
       intelScreen->no_vbo = true;
       success = i830CreateContext(mesaVis, driContextPriv,
 				  sharedContextPrivate);
+      if (!success) {
+         *error = __DRI_CTX_ERROR_NO_MEMORY;
+         return false;
+      }
    }
 #else
    success = brwCreateContext(api, mesaVis,
