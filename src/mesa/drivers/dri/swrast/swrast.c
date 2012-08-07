@@ -719,11 +719,20 @@ dri_create_context(gl_api api,
      */
     (void) flags;
 
-    if (api == API_OPENGL
-	&& (major_version > 2
-	    || (major_version == 2 && minor_version > 1))) {
-       *error = __DRI_CTX_ERROR_BAD_VERSION;
-       goto context_fail;
+    switch (api) {
+    case API_OPENGL:
+        if (major_version > 2
+	    || (major_version == 2 && minor_version > 1)) {
+            *error = __DRI_CTX_ERROR_BAD_VERSION;
+            return GL_FALSE;
+        }
+        break;
+    case API_OPENGLES:
+    case API_OPENGLES2:
+        break;
+    case API_OPENGL_CORE:
+        *error = __DRI_CTX_ERROR_BAD_API;
+        return GL_FALSE;
     }
 
     ctx = CALLOC_STRUCT(dri_context);

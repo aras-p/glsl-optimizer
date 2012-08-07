@@ -714,6 +714,23 @@ intelCreateContext(gl_api api,
    struct intel_screen *intelScreen = sPriv->driverPrivate;
    bool success = false;
 
+   switch (api) {
+   case API_OPENGL:
+   case API_OPENGLES:
+      break;
+   case API_OPENGLES2:
+#ifdef I915
+      if (!IS_9XX(intelScreen->deviceID)) {
+         *error = __DRI_CTX_ERROR_BAD_API;
+         return false;
+      }
+#endif
+      break;
+   case API_OPENGL_CORE:
+      *error = __DRI_CTX_ERROR_BAD_API;
+      return GL_FALSE;
+   }
+
 #ifdef I915
    if (IS_9XX(intelScreen->deviceID)) {
       if (!IS_965(intelScreen->deviceID)) {

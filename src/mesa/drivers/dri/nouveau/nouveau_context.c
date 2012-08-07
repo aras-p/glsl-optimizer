@@ -59,9 +59,31 @@ nouveau_context_create(gl_api api,
 	struct nouveau_context *nctx;
 	struct gl_context *ctx;
 
+	switch (api) {
+	case API_OPENGL:
+		/* Do after-the-fact version checking (below).
+		 */
+		break;
+	case API_OPENGLES:
+		/* NV10 and NV20 can support OpenGL ES 1.0 only.  Older chips
+		 * cannot do even that.
+		 */
+		if ((screen->device->chipset & 0xf0) == 0x00) {
+			*error = __DRI_CTX_ERROR_BAD_API;
+			return GL_FALSE;
+		} else if (minor_version != 0) {
+			*error = __DRI_CTX_ERROR_BAD_VERSION;
+			return GL_FALSE;
+		}
+		break;
+	case API_OPENGLES2:
+	case API_OPENGL_CORE:
+		*error = __DRI_CTX_ERROR_BAD_API;
+		return GL_FALSE;
+	}
+
 	/* API and flag filtering is handled in dri2CreateContextAttribs.
 	 */
-	(void) api;
 	(void) flags;
 
 	ctx = screen->driver->context_create(screen, visual, share_ctx);

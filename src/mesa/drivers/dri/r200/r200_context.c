@@ -212,9 +212,22 @@ GLboolean r200CreateContext( gl_api api,
    int i;
    int tcl_mode;
 
-   /* API and flag filtering is handled in dri2CreateContextAttribs.
+   switch (api) {
+   case API_OPENGL:
+      if (major_version > 1 || minor_version > 3) {
+         *error = __DRI_CTX_ERROR_BAD_VERSION;
+         return GL_FALSE;
+      }
+      break;
+   case API_OPENGLES:
+      break;
+   default:
+      *error = __DRI_CTX_ERROR_BAD_API;
+      return GL_FALSE;
+   }
+
+   /* Flag filtering is handled in dri2CreateContextAttribs.
     */
-   (void) api;
    (void) flags;
 
    assert(glVisual);
@@ -454,11 +467,6 @@ GLboolean r200CreateContext( gl_api api,
    }
 
    _mesa_compute_version(ctx);
-   if (ctx->Version < major_version * 10 + minor_version) {
-      r200DestroyContext(driContextPriv);
-      *error = __DRI_CTX_ERROR_BAD_VERSION;
-      return GL_FALSE;
-   }
 
    *error = __DRI_CTX_ERROR_SUCCESS;
    return GL_TRUE;

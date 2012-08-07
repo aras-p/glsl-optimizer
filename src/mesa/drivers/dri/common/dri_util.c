@@ -192,6 +192,8 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
 	mesa_api = API_OPENGLES2;
 	break;
     case __DRI_API_OPENGL_CORE:
+        mesa_api = API_OPENGL_CORE;
+        break;
     default:
 	*error = __DRI_CTX_ERROR_BAD_API;
 	return NULL;
@@ -216,6 +218,20 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
 	    *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
 	    return NULL;
 	}
+    }
+
+    /* Mesa does not support the GL_ARB_compatibilty extension or the
+     * compatibility profile.  This means that we treat a API_OPENGL 3.1 as
+     * API_OPENGL_CORE and reject API_OPENGL 3.2+.
+     */
+    if (mesa_api == API_OPENGL && major_version == 3 && minor_version == 1)
+       mesa_api = API_OPENGL_CORE;
+
+    if (mesa_api == API_OPENGL
+        && ((major_version > 3)
+            || (major_version == 3 && minor_version >= 2))) {
+       *error = __DRI_CTX_ERROR_BAD_API;
+       return NULL;
     }
 
     /* The EGL_KHR_create_context spec says:
