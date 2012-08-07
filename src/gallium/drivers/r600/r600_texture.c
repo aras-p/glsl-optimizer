@@ -157,7 +157,6 @@ static int r600_init_surface(struct r600_screen *rscreen,
 
 static int r600_setup_surface(struct pipe_screen *screen,
 			      struct r600_resource_texture *rtex,
-			      unsigned array_mode,
 			      unsigned pitch_in_bytes_override)
 {
 	struct pipe_resource *ptex = &rtex->resource.b.b;
@@ -259,7 +258,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 			   const struct pipe_resource *base,
 			   unsigned array_mode,
 			   unsigned pitch_in_bytes_override,
-			   unsigned max_buffer_size,
 			   struct pb_buffer *buf,
 			   boolean alloc_bo,
 			   struct radeon_surface *surface)
@@ -285,7 +283,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	rtex->is_depth = util_format_has_depth(util_format_description(rtex->resource.b.b.format));
 
 	rtex->surface = *surface;
-	r = r600_setup_surface(screen, rtex, array_mode,
+	r = r600_setup_surface(screen, rtex,
 			       pitch_in_bytes_override);
 	if (r) {
 		FREE(rtex);
@@ -337,7 +335,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 		return NULL;
 	}
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
-								  0, 0, NULL, TRUE, &surface);
+								  0, NULL, TRUE, &surface);
 }
 
 static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
@@ -407,7 +405,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 		return NULL;
 	}
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
-								  stride, 0, buf, FALSE, &surface);
+								  stride, buf, FALSE, &surface);
 }
 
 bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
