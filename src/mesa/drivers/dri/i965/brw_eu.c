@@ -141,9 +141,9 @@ void brw_set_mask_control( struct brw_compile *p, GLuint value )
    p->current->header.mask_control = value;
 }
 
-void brw_set_saturate( struct brw_compile *p, GLuint value )
+void brw_set_saturate( struct brw_compile *p, bool enable )
 {
-   p->current->header.saturate = value;
+   p->current->header.saturate = enable;
 }
 
 void brw_set_acc_write_control(struct brw_compile *p, GLuint value)
