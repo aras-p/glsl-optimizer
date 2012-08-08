@@ -323,7 +323,30 @@ compute_version_es2(struct gl_context *ctx)
                               ctx->Extensions.ARB_fragment_shader &&
                               ctx->Extensions.ARB_texture_non_power_of_two &&
                               ctx->Extensions.EXT_blend_equation_separate);
-   if (ver_2_0) {
+   /* FINISHME: This list isn't quite right. */
+   const GLboolean ver_3_0 = (ctx->Extensions.ARB_half_float_vertex &&
+                              ctx->Extensions.ARB_internalformat_query &&
+                              ctx->Extensions.ARB_map_buffer_range &&
+                              ctx->Extensions.ARB_shader_texture_lod &&
+                              ctx->Extensions.ARB_texture_float &&
+                              ctx->Extensions.ARB_texture_rg &&
+                              ctx->Extensions.ARB_texture_compression_rgtc &&
+                              ctx->Extensions.EXT_draw_buffers2 &&
+                              /* ctx->Extensions.ARB_framebuffer_object && */
+                              ctx->Extensions.EXT_framebuffer_sRGB &&
+                              ctx->Extensions.EXT_packed_float &&
+                              ctx->Extensions.EXT_texture_array &&
+                              ctx->Extensions.EXT_texture_shared_exponent &&
+                              ctx->Extensions.EXT_transform_feedback &&
+                              ctx->Extensions.NV_conditional_render &&
+                              ctx->Extensions.ARB_draw_instanced &&
+                              ctx->Extensions.ARB_uniform_buffer_object &&
+                              ctx->Extensions.EXT_texture_snorm &&
+                              ctx->Extensions.NV_primitive_restart &&
+                              ctx->Extensions.OES_depth_texture_cube_map);
+   if (ver_3_0) {
+      ctx->Version = 30;
+   } else if (ver_2_0) {
       ctx->Version = 20;
    } else {
       _mesa_problem(ctx, "Incomplete OpenGL ES 2.0 support.");
