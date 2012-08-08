@@ -94,7 +94,11 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_rgb10_a2ui = true;
 
    if (intel->gen >= 6)
-      ctx->Const.GLSLVersion = 130;
+      if (ctx->API == API_OPENGL_CORE) {
+         ctx->Const.GLSLVersion = 140;
+      } else {
+         ctx->Const.GLSLVersion = 130;
+      }
    else
       ctx->Const.GLSLVersion = 120;
    _mesa_override_glsl_version(ctx);
@@ -107,6 +111,10 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_blend_func_extended = !driQueryOptionb(&intel->optionCache, "disable_blend_func_extended");
       ctx->Extensions.ARB_draw_buffers_blend = true;
       ctx->Extensions.ARB_uniform_buffer_object = true;
+
+      if (ctx->API == API_OPENGL_CORE) {
+         ctx->Extensions.ARB_texture_buffer_object = true;
+      }
    }
 
    if (intel->gen >= 5)
