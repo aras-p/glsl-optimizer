@@ -67,9 +67,6 @@ struct winsys_handle;
 /** Opaque surface handle */
 struct svga_winsys_surface;
 
-/** Opaque buffer handle */
-struct svga_winsys_handle;
-
 
 /**
  * SVGA per-context winsys interface.
