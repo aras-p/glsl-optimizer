@@ -373,6 +373,13 @@ static void si_update_derived_state(struct r600_context *rctx)
 	if (!rctx->ps_shader->bo) {
 		si_pipe_shader_ps(ctx, rctx->ps_shader);
 	}
+	if (!rctx->ps_shader->bo) {
+		if (!rctx->dummy_pixel_shader->bo)
+			si_pipe_shader_ps(ctx, rctx->dummy_pixel_shader);
+
+		if (rctx->dummy_pixel_shader->pm4)
+			si_pm4_bind_state(rctx, vs, rctx->dummy_pixel_shader->pm4);
+	}
 
 	if (rctx->shader_dirty) {
 		si_update_spi_map(rctx);

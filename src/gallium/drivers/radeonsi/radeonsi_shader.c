@@ -627,7 +627,10 @@ int si_pipe_shader_create(
 		tgsi_dump(shader->tokens, 0);
 	}
 
-	lp_build_tgsi_llvm(bld_base, shader->tokens);
+	if (!lp_build_tgsi_llvm(bld_base, shader->tokens)) {
+		fprintf(stderr, "Failed to translate shader from TGSI to LLVM\n");
+		return -EINVAL;
+	}
 
 	radeon_llvm_finalize_module(&si_shader_ctx.radeon_bld);
 

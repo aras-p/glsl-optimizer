@@ -206,6 +206,10 @@ struct r600_context {
 	struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
 	unsigned		nr_vertex_buffers;
 
+	/* With rasterizer discard, there doesn't have to be a pixel shader.
+	 * In that case, we bind this one: */
+	struct si_pipe_shader	*dummy_pixel_shader;
+
 	/* SI state handling */
 	union si_state	queued;
 	union si_state	emitted;
