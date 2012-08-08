@@ -91,14 +91,11 @@ static void
 write_depth_count(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
 {
    if (intel->gen >= 6) {
-      BEGIN_BATCH(9);
+      /* Emit Sandybridge workaround flush: */
+      if (intel->gen == 6)
+         intel_emit_post_sync_nonzero_flush(intel);
 
-      /* workaround: CS stall required before depth stall. */
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-      OUT_BATCH(PIPE_CONTROL_CS_STALL);
-      OUT_BATCH(0); /* write address */
-      OUT_BATCH(0); /* write data */
-
+      BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
       OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
                 PIPE_CONTROL_WRITE_DEPTH_COUNT);
