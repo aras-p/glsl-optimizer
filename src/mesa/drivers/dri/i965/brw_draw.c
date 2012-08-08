@@ -440,6 +440,11 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
     */
    brw_predraw_resolve_buffers(brw);
 
+   /* This workaround has to happen outside of brw_state_upload() because it
+    * may flush the batchbuffer for a blit, affecting the state flags.
+    */
+   brw_workaround_depthstencil_alignment(brw);
+
    /* Bind all inputs, derive varying and size information:
     */
    brw_merge_inputs( brw, arrays );
