@@ -936,6 +936,32 @@ intel_renderbuffer_resolve_depth(struct intel_context *intel,
    return false;
 }
 
+void
+intel_renderbuffer_move_to_temp(struct intel_context *intel,
+                                struct intel_renderbuffer *irb)
+{
+   struct intel_texture_image *intel_image =
+      intel_texture_image(irb->tex_image);
+   struct intel_mipmap_tree *new_mt;
+   int width, height, depth;
+
+   intel_miptree_get_dimensions_for_image(irb->tex_image, &width, &height, &depth);
+
+   new_mt = intel_miptree_create(intel, irb->tex_image->TexObject->Target,
+                                 intel_image->base.Base.TexFormat,
+                                 intel_image->base.Base.Level,
+                                 intel_image->base.Base.Level,
+                                 width, height, depth,
+                                 true,
+                                 irb->mt->num_samples,
+                                 irb->mt->msaa_layout);
+
+   intel_miptree_copy_teximage(intel, intel_image, new_mt);
+   intel_miptree_reference(&irb->mt, intel_image->mt);
+   intel_renderbuffer_set_draw_offset(irb);
+   intel_miptree_release(&new_mt);
+}
+
 /**
  * Do one-time context initializations related to GL_EXT_framebuffer_object.
  * Hook in device driver functions.

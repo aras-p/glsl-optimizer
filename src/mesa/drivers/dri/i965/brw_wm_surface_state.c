@@ -1136,28 +1136,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	  * select the image.  So, instead, we just make a new single-level
 	  * miptree and render into that.
 	  */
-	 struct intel_context *intel = intel_context(ctx);
-	 struct intel_texture_image *intel_image =
-	    intel_texture_image(irb->tex_image);
-	 struct intel_mipmap_tree *new_mt;
-	 int width, height, depth;
-
-	 intel_miptree_get_dimensions_for_image(irb->tex_image, &width, &height, &depth);
-
-	 new_mt = intel_miptree_create(intel, irb->tex_image->TexObject->Target,
-				       intel_image->base.Base.TexFormat,
-				       intel_image->base.Base.Level,
-				       intel_image->base.Base.Level,
-				       width, height, depth,
-				       true,
-                                       0 /* num_samples */,
-                                       INTEL_MSAA_LAYOUT_NONE);
-
-	 intel_miptree_copy_teximage(intel, intel_image, new_mt);
-	 intel_miptree_reference(&irb->mt, intel_image->mt);
-	 intel_renderbuffer_set_draw_offset(irb);
-	 intel_miptree_release(&new_mt);
-
+	 intel_renderbuffer_move_to_temp(intel, irb);
 	 mt = irb->mt;
       }
    }
