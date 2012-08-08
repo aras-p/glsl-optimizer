@@ -477,7 +477,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_GetVertexAttribdvNV(exec, _mesa_GetVertexAttribdvNV);
       SET_GetVertexAttribfvNV(exec, _mesa_GetVertexAttribfvNV);
       SET_GetVertexAttribivNV(exec, _mesa_GetVertexAttribivNV);
-      SET_GetVertexAttribPointervNV(exec, _mesa_GetVertexAttribPointervNV);
       SET_IsProgramNV(exec, _mesa_IsProgramARB);
       SET_LoadProgramNV(exec, _mesa_LoadProgramNV);
       SET_ProgramEnvParameter4dARB(exec, _mesa_ProgramEnvParameter4dARB); /* alias to ProgramParameter4dNV */
@@ -491,6 +490,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
       /* glVertexAttrib*NV functions handled in api_loopback.c */
    }
 #endif
+   SET_GetVertexAttribPointervNV(exec, _mesa_GetVertexAttribPointervNV);
 
    /* 273. GL_APPLE_vertex_array_object */
    if (ctx->API == API_OPENGL) {
