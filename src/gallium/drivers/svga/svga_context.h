@@ -57,9 +57,7 @@ struct svga_shader
 
    struct svga_shader_result *results;
 
-   unsigned id;
-
-   boolean use_sm30;
+   unsigned id;  /**< for debugging only */
 };
 
 struct svga_fragment_shader

@@ -79,6 +79,12 @@ struct svga_compile_key {
    int8_t generic_remap_table[MAX_GENERIC_VARYING];
 };
 
+
+/**
+ * A single TGSI shader may be compiled into different variants of
+ * SVGA3D shaders depending on the compile key.  Each user shader
+ * will have a linked list of these results.
+ */
 struct svga_shader_result
 {
    const struct svga_shader *shader;
@@ -92,7 +98,8 @@ struct svga_shader_result
    const unsigned *tokens;
    unsigned nr_tokens;
 
-   /* SVGA Shader ID:
+   /** Per-context shader identifier used with SVGA_3D_CMD_SHADER_DEFINE,
+    * SVGA_3D_CMD_SET_SHADER and SVGA_3D_CMD_SHADER_DESTROY.
     */
    unsigned id;
    
