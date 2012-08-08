@@ -226,7 +226,12 @@ brw_clear(struct gl_context *ctx, GLbitfield mask)
    if (tri_mask) {
       debug_mask("tri", tri_mask);
       mask &= ~tri_mask;
-      _mesa_meta_glsl_Clear(&intel->ctx, tri_mask);
+
+      if (ctx->API == API_OPENGLES) {
+         _mesa_meta_Clear(&intel->ctx, tri_mask);
+      } else {
+         _mesa_meta_glsl_Clear(&intel->ctx, tri_mask);
+      }
    }
 
    /* Any strange buffers get passed off to swrast */
