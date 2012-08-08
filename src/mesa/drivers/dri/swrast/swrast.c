@@ -771,6 +771,8 @@ dri_create_context(gl_api api,
     _mesa_enable_sw_extensions(mesaCtx);
 
     switch (api) {
+    case API_OPENGL_CORE:
+        /* XXX fix me, fall-through for now */
     case API_OPENGL:
         _mesa_enable_1_3_extensions(mesaCtx);
         _mesa_enable_1_4_extensions(mesaCtx);
