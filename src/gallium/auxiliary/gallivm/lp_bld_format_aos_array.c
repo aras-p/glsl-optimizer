@@ -54,7 +54,7 @@ lp_build_fetch_rgba_aos_array(struct gallivm_state *gallivm,
 {
    struct lp_build_context bld;
    LLVMBuilderRef builder = gallivm->builder;
-   LLVMTypeRef src_elem_type, src_vec_type;
+   LLVMTypeRef src_vec_type;
    LLVMValueRef ptr, res = NULL;
    struct lp_type src_type;
 
@@ -68,7 +68,6 @@ lp_build_fetch_rgba_aos_array(struct gallivm_state *gallivm,
 
    assert(src_type.length <= dst_type.length);
 
-   src_elem_type = lp_build_elem_type(gallivm, src_type);
    src_vec_type  = lp_build_vec_type(gallivm,  src_type);
 
    /* Read whole vector from memory, unaligned */
