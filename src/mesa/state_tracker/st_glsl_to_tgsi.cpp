@@ -4178,6 +4178,7 @@ translate_tex_offset(struct st_translate *t,
    offset.SwizzleX = in_offset->SwizzleX;
    offset.SwizzleY = in_offset->SwizzleY;
    offset.SwizzleZ = in_offset->SwizzleZ;
+   offset.Padding = 0;
 
    return offset;
 }
