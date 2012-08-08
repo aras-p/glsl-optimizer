@@ -1309,6 +1309,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
    p.shader_program->InternalSeparateShader = GL_TRUE;
 
    state->language_version = 130;
+   state->es_shader = false;
    if (ctx->Extensions.OES_EGL_image_external)
       state->OES_EGL_image_external_enable = true;
    _mesa_glsl_initialize_types(state);
