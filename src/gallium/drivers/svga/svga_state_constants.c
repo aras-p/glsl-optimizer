@@ -262,7 +262,6 @@ static enum pipe_error
 emit_fs_consts(struct svga_context *svga, unsigned dirty)
 {
    const struct svga_shader_result *result = svga->state.hw_draw.fs;
-   const struct svga_fs_compile_key *key = &result->key.fkey;
    enum pipe_error ret = PIPE_OK;
 
    ret = emit_consts( svga, PIPE_SHADER_FRAGMENT );
@@ -273,30 +272,33 @@ emit_fs_consts(struct svga_context *svga, unsigned dirty)
     * doesn't have a 'result' struct.  It should be fixed to avoid
     * this special case, but work around it with a NULL check:
     */
-   if (result != NULL && key->num_unnormalized_coords) {
-      unsigned offset = result->shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
-      int i;
+   if (result) {
+      const struct svga_fs_compile_key *key = &result->key.fkey;
+      if (key->num_unnormalized_coords) {
+         const unsigned offset =
+            result->shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
+         unsigned i;
 
-      for (i = 0; i < key->num_textures; i++) {
-         if (key->tex[i].unnormalized) {
-            struct pipe_resource *tex = svga->curr.sampler_views[i]->texture;
-            float data[4];
+         for (i = 0; i < key->num_textures; i++) {
+            if (key->tex[i].unnormalized) {
+               struct pipe_resource *tex = svga->curr.sampler_views[i]->texture;
+               float data[4];
 
-            data[0] = 1.0 / (float)tex->width0;
-            data[1] = 1.0 / (float)tex->height0;
-            data[2] = 1.0;
-            data[3] = 1.0;
+               data[0] = 1.0f / (float) tex->width0;
+               data[1] = 1.0f / (float) tex->height0;
+               data[2] = 1.0f;
+               data[3] = 1.0f;
 
-            ret = emit_const( svga,
-                              PIPE_SHADER_FRAGMENT,
-                              key->tex[i].width_height_idx + offset,
-                              data );
-            if (ret != PIPE_OK)
-               return ret;
+               ret = emit_const(svga,
+                                PIPE_SHADER_FRAGMENT,
+                                key->tex[i].width_height_idx + offset,
+                                data);
+               if (ret != PIPE_OK) {
+                  return ret;
+               }
+            }
          }
       }
-
-      offset += key->num_unnormalized_coords;
    }
 
    return PIPE_OK;
