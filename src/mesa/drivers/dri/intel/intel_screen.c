@@ -163,36 +163,6 @@ static const __DRItexBufferExtension intelTexBufferExtension = {
 };
 
 static void
-intel_downsample_for_dri2_flush(struct intel_context *intel,
-                                __DRIdrawable *drawable)
-{
-   if (intel->gen < 6) {
-      /* MSAA is not supported, so don't waste time checking for
-       * a multisample buffer.
-       */
-      return;
-   }
-
-   struct gl_framebuffer *fb = drawable->driverPrivate;
-   struct intel_renderbuffer *rb;
-
-   /* Usually, only the back buffer will need to be downsampled. However,
-    * the front buffer will also need it if the user has rendered into it.
-    */
-   static const gl_buffer_index buffers[2] = {
-         BUFFER_BACK_LEFT,
-         BUFFER_FRONT_LEFT,
-   };
-
-   for (int i = 0; i < 2; ++i) {
-      rb = intel_get_renderbuffer(fb, buffers[i]);
-      if (rb == NULL || rb->mt == NULL)
-         continue;
-      intel_miptree_downsample(intel, rb->mt);
-   }
-}
-
-static void
 intelDRI2Flush(__DRIdrawable *drawable)
 {
    GET_CURRENT_CONTEXT(ctx);
