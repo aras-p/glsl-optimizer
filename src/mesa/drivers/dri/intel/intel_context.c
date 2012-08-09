@@ -283,6 +283,16 @@ intel_flush_front(struct gl_context *ctx)
       if (screen->dri2.loader->flushFrontBuffer != NULL &&
           driDrawable &&
           driDrawable->loaderPrivate) {
+
+         /* Downsample before flushing FAKE_FRONT_LEFT to FRONT_LEFT.
+          *
+          * This potentially downsamples both front and back buffer. It
+          * is unnecessary to downsample the back, but harms nothing except
+          * performance. And no one cares about front-buffer render
+          * performance.
+          */
+         intel_downsample_for_dri2_flush(intel, driDrawable);
+
          screen->dri2.loader->flushFrontBuffer(driDrawable,
                                                driDrawable->loaderPrivate);
 
