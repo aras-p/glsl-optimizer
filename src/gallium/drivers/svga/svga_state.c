@@ -70,8 +70,8 @@ static const struct svga_tracked_state *hw_draw_state[] =
    &svga_hw_tss_binding,
    &svga_hw_clip_planes,
    &svga_hw_vdecl,
-   &svga_hw_fs_parameters,
-   &svga_hw_vs_parameters,
+   &svga_hw_fs_constants,
+   &svga_hw_vs_constants,
    NULL
 };
 

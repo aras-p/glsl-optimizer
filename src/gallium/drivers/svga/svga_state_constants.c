@@ -303,7 +303,7 @@ emit_fs_consts(struct svga_context *svga, unsigned dirty)
 }
 
 
-struct svga_tracked_state svga_hw_fs_parameters =
+struct svga_tracked_state svga_hw_fs_constants =
 {
    "hw fs params",
    (SVGA_NEW_FS_CONST_BUFFER |
@@ -355,7 +355,7 @@ emit_vs_consts(struct svga_context *svga, unsigned dirty)
 }
 
 
-struct svga_tracked_state svga_hw_vs_parameters =
+struct svga_tracked_state svga_hw_vs_constants =
 {
    "hw vs params",
    (SVGA_NEW_PRESCALE |
