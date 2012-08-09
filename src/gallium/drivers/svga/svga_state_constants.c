@@ -336,7 +336,7 @@ emit_vs_consts(struct svga_context *svga, unsigned dirty)
    /* offset = number of constants in the VS const buffer */
    offset = result->shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
 
-   /* SVGA_NEW_VS_RESULT
+   /* SVGA_NEW_VS_PRESCALE
     * Put the viewport pre-scale/translate values into the const buffer.
     */
    if (key->need_prescale) {
