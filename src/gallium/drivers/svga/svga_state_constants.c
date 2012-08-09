@@ -320,7 +320,7 @@ static enum pipe_error
 emit_vs_consts(struct svga_context *svga, unsigned dirty)
 {
    const struct svga_shader_result *result = svga->state.hw_draw.vs;
-   const struct svga_vs_compile_key *key = &result->key.vkey;
+   const struct svga_vs_compile_key *key;
    enum pipe_error ret = PIPE_OK;
    unsigned offset;
 
@@ -328,6 +328,8 @@ emit_vs_consts(struct svga_context *svga, unsigned dirty)
     */
    if (result == NULL)
       return PIPE_OK;
+
+   key = &result->key.vkey;
 
    /* SVGA_NEW_VS_CONST_BUFFER
     */
