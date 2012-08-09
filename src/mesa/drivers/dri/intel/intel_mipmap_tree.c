@@ -1626,9 +1626,6 @@ intel_miptree_map_multisample(struct intel_context *intel,
       mt->need_downsample = true;
    }
 
-   if (mode & GL_MAP_INVALIDATE_RANGE_BIT)
-      mt->need_downsample = false;
-
    intel_miptree_downsample(intel, mt);
    intel_miptree_map_singlesample(intel, mt->singlesample_mt,
                                   level, slice,
