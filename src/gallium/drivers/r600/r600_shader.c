@@ -3745,9 +3745,10 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	int opcode;
 	/* Texture fetch instructions can only use gprs as source.
 	 * Also they cannot negate the source or take the absolute value */
-	const boolean src_requires_loading = tgsi_tex_src_requires_loading(ctx, 0);
+	const boolean src_requires_loading = inst->Instruction.Opcode != TGSI_OPCODE_TXQ_LZ &&
+                                             tgsi_tex_src_requires_loading(ctx, 0);
 	boolean src_loaded = FALSE;
-	unsigned sampler_src_reg = 1;
+	unsigned sampler_src_reg = inst->Instruction.Opcode == TGSI_OPCODE_TXQ_LZ ? 0 : 1;
 	uint8_t offset_x = 0, offset_y = 0, offset_z = 0;
 
 	src_gpr = tgsi_tex_get_src_gpr(ctx, 0);
@@ -3880,7 +3881,8 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 
 	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
 	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) &&
-	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
+	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ &&
+	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ_LZ) {
 
 		static const unsigned src0_swizzle[] = {2, 2, 0, 1};
 		static const unsigned src1_swizzle[] = {1, 0, 2, 2};
@@ -4049,7 +4051,13 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	tex.dst_sel_y = (inst->Dst[0].Register.WriteMask & 2) ? 1 : 7;
 	tex.dst_sel_z = (inst->Dst[0].Register.WriteMask & 4) ? 2 : 7;
 	tex.dst_sel_w = (inst->Dst[0].Register.WriteMask & 8) ? 3 : 7;
-	if (src_loaded) {
+
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TXQ_LZ) {
+		tex.src_sel_x = 4;
+		tex.src_sel_y = 4;
+		tex.src_sel_z = 4;
+		tex.src_sel_w = 4;
+	} else if (src_loaded) {
 		tex.src_sel_x = 0;
 		tex.src_sel_y = 1;
 		tex.src_sel_z = 2;
@@ -5308,8 +5316,8 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_BGNSUB,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ENDLOOP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_endloop},
 	{TGSI_OPCODE_ENDSUB,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXQ_LZ,	0, SQ_TEX_INST_GET_TEXTURE_RESINFO, tgsi_tex},
 	/* gap */
-	{103,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{104,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{105,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{106,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
@@ -5482,8 +5490,8 @@ static struct r600_shader_tgsi_instruction eg_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_BGNSUB,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ENDLOOP,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_endloop},
 	{TGSI_OPCODE_ENDSUB,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXQ_LZ,	0, SQ_TEX_INST_GET_TEXTURE_RESINFO, tgsi_tex},
 	/* gap */
-	{103,			0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{104,			0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{105,			0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{106,			0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
@@ -5656,8 +5664,8 @@ static struct r600_shader_tgsi_instruction cm_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_BGNSUB,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ENDLOOP,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_endloop},
 	{TGSI_OPCODE_ENDSUB,	0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXQ_LZ,	0, SQ_TEX_INST_GET_TEXTURE_RESINFO, tgsi_tex},
 	/* gap */
-	{103,			0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{104,			0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{105,			0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{106,			0, EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
