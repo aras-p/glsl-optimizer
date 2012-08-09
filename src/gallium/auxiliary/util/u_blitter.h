@@ -300,6 +300,14 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
 				       unsigned sample_mask,
 				       void *dsa_stage, float depth);
 
+void util_blitter_resolve_color_custom(struct blitter_context *blitter,
+                                       struct pipe_resource *dst,
+                                       unsigned dst_level,
+                                       unsigned dst_layer,
+                                       struct pipe_resource *src,
+                                       unsigned src_layer,
+                                       void *custom_blend);
+
 /* The functions below should be used to save currently bound constant state
  * objects inside a driver. The objects are automatically restored at the end
  * of the util_blitter_{clear, copy_region, fill_region} functions and then

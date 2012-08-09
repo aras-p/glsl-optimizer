@@ -1491,3 +1491,64 @@ void util_blitter_copy_buffer(struct blitter_context *blitter,
    blitter_unset_running_flag(ctx);
    pipe_so_target_reference(&so_target, NULL);
 }
+
+/* probably radeon specific */
+void util_blitter_resolve_color_custom(struct blitter_context *blitter,
+				       struct pipe_resource *dst,
+				       unsigned dst_level,
+				       unsigned dst_layer,
+				       struct pipe_resource *src,
+				       unsigned src_layer,
+				       void *custom_blend)
+{
+   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
+   struct pipe_context *pipe = ctx->base.pipe;
+   struct pipe_framebuffer_state fb_state;
+   struct pipe_surface *srcsurf, *dstsurf, surf_tmpl;
+
+   blitter_set_running_flag(ctx);
+   blitter_check_saved_vertex_states(ctx);
+   blitter_check_saved_fragment_states(ctx);
+
+   /* bind states */
+   pipe->bind_blend_state(pipe, custom_blend);
+   pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
+   pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 1, FALSE));
+
+   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+   surf_tmpl.format = dst->format;
+   surf_tmpl.u.tex.level = dst_level;
+   surf_tmpl.u.tex.first_layer = dst_layer;
+   surf_tmpl.u.tex.last_layer = dst_layer;
+   surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
+
+   dstsurf = pipe->create_surface(pipe, dst, &surf_tmpl);
+
+   surf_tmpl.u.tex.level = 0;
+   surf_tmpl.u.tex.first_layer = src_layer;
+   surf_tmpl.u.tex.last_layer = src_layer;
+
+   srcsurf = pipe->create_surface(pipe, src, &surf_tmpl);
+
+   /* set a framebuffer state */
+   fb_state.width = src->width0;
+   fb_state.height = src->height0;
+   fb_state.nr_cbufs = 2;
+   fb_state.cbufs[0] = srcsurf;
+   fb_state.cbufs[1] = dstsurf;
+   fb_state.zsbuf = NULL;
+   pipe->set_framebuffer_state(pipe, &fb_state);
+
+   blitter_set_common_draw_rect_state(ctx);
+   blitter_set_dst_dimensions(ctx, src->width0, src->height0);
+   blitter->draw_rectangle(blitter, 0, 0, src->width0, src->height0,
+                           0, 0, NULL);
+   blitter_restore_fb_state(ctx);
+   blitter_restore_vertex_states(ctx);
+   blitter_restore_fragment_states(ctx);
+   blitter_unset_running_flag(ctx);
+
+   pipe_surface_reference(&srcsurf, NULL);
+   pipe_surface_reference(&dstsurf, NULL);
+}

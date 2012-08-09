@@ -326,6 +326,8 @@ struct r600_context {
 	boolean				has_vertex_cache;
 	unsigned			r6xx_num_clause_temp_gprs;
 	void				*custom_dsa_flush;
+	void				*custom_blend_resolve;
+
 	struct r600_screen		*screen;
 	struct radeon_winsys		*ws;
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
@@ -465,6 +467,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx);
+void *evergreen_create_resolve_blend(struct r600_context *rctx);
 void evergreen_polygon_offset_update(struct r600_context *rctx);
 boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      enum pipe_format format,

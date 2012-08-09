@@ -42,6 +42,8 @@ enum r600_blitter_op /* bitmask */
 			     R600_DISABLE_RENDER_COND,
 
 	R600_DECOMPRESS    = R600_SAVE_FRAGMENT_STATE | R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND,
+
+	R600_COLOR_RESOLVE = R600_SAVE_FRAGMENT_STATE | R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND
 };
 
 static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op)
@@ -288,6 +290,82 @@ static void r600_copy_first_sample(struct pipe_context *ctx,
 	pipe_sampler_view_reference(&src_view, NULL);
 }
 
+static boolean is_simple_resolve(const struct pipe_resolve_info *info)
+{
+   unsigned dst_width = u_minify(info->dst.res->width0, info->dst.level);
+   unsigned dst_height = u_minify(info->dst.res->height0, info->dst.level);
+
+   return info->dst.res->format == info->src.res->format &&
+          dst_width == info->src.res->width0 &&
+          dst_height == info->src.res->height0 &&
+          info->dst.x0 == 0 &&
+          info->dst.y0 == 0 &&
+          info->dst.x1 == dst_width &&
+          info->dst.y1 == dst_height &&
+          info->src.x0 == 0 &&
+          info->src.y0 == 0 &&
+          info->src.x1 == dst_width &&
+          info->src.y1 == dst_height;
+}
+
+static void r600_color_resolve(struct pipe_context *ctx,
+			       const struct pipe_resolve_info *info)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct pipe_screen *screen = ctx->screen;
+	struct pipe_resource *tmp, templ;
+	struct pipe_box box;
+
+	assert((info->mask & PIPE_MASK_RGBA) == PIPE_MASK_RGBA);
+
+	if (is_simple_resolve(info)) {
+		r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
+		util_blitter_resolve_color_custom(rctx->blitter,
+						  info->dst.res, info->dst.level, info->dst.layer,
+						  info->src.res, info->src.layer,
+						  rctx->custom_blend_resolve);
+		r600_blitter_end(ctx);
+		return;
+	}
+
+	/* resolve into a temporary texture, then blit */
+	templ.target = PIPE_TEXTURE_2D;
+	templ.format = info->src.res->format;
+	templ.width0 = info->src.res->width0;
+	templ.height0 = info->src.res->height0;
+	templ.depth0 = 1;
+	templ.array_size = 1;
+	templ.last_level = 0;
+	templ.nr_samples = 0;
+	templ.usage = PIPE_USAGE_STATIC;
+	templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
+	templ.flags = 0;
+
+	tmp = screen->resource_create(screen, &templ);
+
+	/* XXX use scissor, so that only the needed part of the resource is resolved */
+	r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
+	util_blitter_resolve_color_custom(rctx->blitter,
+					  tmp, 0, 0,
+					  info->src.res, info->src.layer,
+					  rctx->custom_blend_resolve);
+	r600_blitter_end(ctx);
+
+	/* this is correct for upside-down blits too */
+	u_box_2d(info->src.x0,
+		 info->src.y0,
+		 info->src.x1 - info->src.x0,
+		 info->src.y1 - info->src.y0, &box);
+
+	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
+	util_blitter_copy_texture(rctx->blitter, info->dst.res, info->dst.level,
+				  ~0, info->dst.x0, info->dst.y0, info->dst.layer,
+				  tmp, 0, 0, &box);
+	r600_blitter_end(ctx);
+
+	pipe_resource_reference(&tmp, NULL);
+}
+
 static void r600_resource_resolve(struct pipe_context *ctx,
 				  const struct pipe_resolve_info *info)
 {
@@ -313,6 +391,8 @@ static void r600_resource_resolve(struct pipe_context *ctx,
 	if ((info->mask & PIPE_MASK_ZS) ||
 	    util_format_is_pure_integer(info->src.res->format)) {
 		r600_copy_first_sample(ctx, info);
+	} else {
+		r600_color_resolve(ctx, info);
 	}
 }
 

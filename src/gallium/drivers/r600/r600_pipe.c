@@ -162,6 +162,9 @@ static void r600_destroy_context(struct pipe_context *context)
 	if (rctx->custom_dsa_flush) {
 		rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush);
 	}
+	if (rctx->custom_blend_resolve) {
+		rctx->context.delete_blend_state(&rctx->context, rctx->custom_blend_resolve);
+	}
 	util_unreference_framebuffer_state(&rctx->framebuffer);
 
 	r600_context_fini(rctx);
@@ -254,6 +257,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		if (evergreen_context_init(rctx))
 			goto fail;
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
+		rctx->custom_blend_resolve = evergreen_create_resolve_blend(rctx);
 		rctx->has_vertex_cache = !(rctx->family == CHIP_CEDAR ||
 					   rctx->family == CHIP_PALM ||
 					   rctx->family == CHIP_SUMO ||

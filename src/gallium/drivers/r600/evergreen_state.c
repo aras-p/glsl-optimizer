@@ -669,8 +669,8 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 	return retval == usage;
 }
 
-static void *evergreen_create_blend_state(struct pipe_context *ctx,
-					const struct pipe_blend_state *state)
+static void *evergreen_create_blend_state_mode(struct pipe_context *ctx,
+					       const struct pipe_blend_state *state, int mode)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
@@ -706,7 +706,7 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	blend->cb_target_mask = target_mask;
 
 	if (target_mask)
-		color_control |= S_028808_MODE(V_028808_CB_NORMAL);
+		color_control |= S_028808_MODE(mode);
 	else
 		color_control |= S_028808_MODE(V_028808_CB_DISABLE);
 
@@ -754,6 +754,13 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 
 	blend->alpha_to_one = state->alpha_to_one;
 	return rstate;
+}
+
+static void *evergreen_create_blend_state(struct pipe_context *ctx,
+					const struct pipe_blend_state *state)
+{
+
+	return evergreen_create_blend_state_mode(ctx, state, V_028808_CB_NORMAL);
 }
 
 static void *evergreen_create_dsa_state(struct pipe_context *ctx,
@@ -2987,6 +2994,17 @@ void evergreen_fetch_shader(struct pipe_context *ctx,
 	r600_pipe_state_add_reg_bo(rstate, R_0288A4_SQ_PGM_START_FS,
 				r600_resource_va(ctx->screen, (void *)ve->fetch_shader) >> 8,
 				ve->fetch_shader, RADEON_USAGE_READ);
+}
+
+void *evergreen_create_resolve_blend(struct r600_context *rctx)
+{
+	struct pipe_blend_state blend;
+	struct r600_pipe_state *rstate;
+
+	memset(&blend, 0, sizeof(blend));
+	blend.rt[0].colormask = 0xf;
+	rstate = evergreen_create_blend_state_mode(&rctx->context, &blend, V_028808_CB_RESOLVE);
+	return rstate;
 }
 
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx)
