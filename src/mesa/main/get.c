@@ -707,7 +707,7 @@ static const struct value_desc values[] = {
 #endif /* FEATURE_ES1 */
 
 #if FEATURE_GL || FEATURE_ES2
-   { 0, 0, TYPE_API_MASK, API_OPENGL_BIT | API_OPENGLES2_BIT, NO_EXTRA },
+   { 0, 0, TYPE_API_MASK, API_OPENGL_BIT | API_OPENGL_CORE_BIT | API_OPENGLES2_BIT, NO_EXTRA },
    { GL_MAX_TEXTURE_COORDS_ARB, /* == GL_MAX_TEXTURE_COORDS_NV */
      CONTEXT_INT(Const.MaxTextureCoordUnits),
      extra_ARB_fragment_program_NV_fragment_program },
