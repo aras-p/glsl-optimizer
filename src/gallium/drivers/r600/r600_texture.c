@@ -98,8 +98,9 @@ static int r600_init_surface(struct r600_screen *rscreen,
 		}
 	}
 
-	surface->nsamples = 1;
+	surface->nsamples = ptex->nr_samples ? ptex->nr_samples : 1;
 	surface->flags = 0;
+
 	switch (array_mode) {
 	case V_038000_ARRAY_1D_TILED_THIN1:
 		surface->flags |= RADEON_SURF_SET(RADEON_SURF_MODE_1D, MODE);

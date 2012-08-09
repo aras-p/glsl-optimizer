@@ -155,7 +155,7 @@ static uint32_t r600_translate_blend_factor(int blend_fact)
 	return 0;
 }
 
-static unsigned r600_tex_dim(unsigned dim)
+static unsigned r600_tex_dim(unsigned dim, unsigned nr_samples)
 {
 	switch (dim) {
 	default:
@@ -165,9 +165,11 @@ static unsigned r600_tex_dim(unsigned dim)
 		return V_030000_SQ_TEX_DIM_1D_ARRAY;
 	case PIPE_TEXTURE_2D:
 	case PIPE_TEXTURE_RECT:
-		return V_030000_SQ_TEX_DIM_2D;
+		return nr_samples > 1 ? V_030000_SQ_TEX_DIM_2D_MSAA :
+					V_030000_SQ_TEX_DIM_2D;
 	case PIPE_TEXTURE_2D_ARRAY:
-		return V_030000_SQ_TEX_DIM_2D_ARRAY;
+		return nr_samples > 1 ? V_030000_SQ_TEX_DIM_2D_ARRAY_MSAA :
+					V_030000_SQ_TEX_DIM_2D_ARRAY;
 	case PIPE_TEXTURE_3D:
 		return V_030000_SQ_TEX_DIM_3D;
 	case PIPE_TEXTURE_CUBE:
@@ -884,6 +886,7 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	tmp = (unsigned)state->line_width * 8;
 	r600_pipe_state_add_reg(rstate, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp));
 	r600_pipe_state_add_reg(rstate, R_028A48_PA_SC_MODE_CNTL_0,
+				S_028A48_MSAA_ENABLE(state->multisample) |
 				S_028A48_VPORT_SCISSOR_ENABLE(state->scissor) |
 				S_028A48_LINE_STIPPLE_ENABLE(state->line_stipple_enable));
 
@@ -1049,7 +1052,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	}
 
 	view->tex_resource = &tmp->resource;
-	view->tex_resource_words[0] = (S_030000_DIM(r600_tex_dim(texture->target)) |
+	view->tex_resource_words[0] = (S_030000_DIM(r600_tex_dim(texture->target, texture->nr_samples)) |
 				       S_030000_PITCH((pitch / 8) - 1) |
 				       S_030000_TEX_WIDTH(width - 1));
 	if (rscreen->chip_class == CAYMAN)
@@ -1060,18 +1063,23 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 				       S_030004_TEX_DEPTH(depth - 1) |
 				       S_030004_ARRAY_MODE(array_mode));
 	view->tex_resource_words[2] = (tmp->offset[0] + r600_resource_va(ctx->screen, texture)) >> 8;
-	if (state->u.tex.last_level) {
+	if (state->u.tex.last_level && texture->nr_samples <= 1) {
 		view->tex_resource_words[3] = (tmp->offset[1] + r600_resource_va(ctx->screen, texture)) >> 8;
 	} else {
 		view->tex_resource_words[3] = (tmp->offset[0] + r600_resource_va(ctx->screen, texture)) >> 8;
 	}
 	view->tex_resource_words[4] = (word4 |
 				       S_030010_SRF_MODE_ALL(V_030010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
-				       S_030010_ENDIAN_SWAP(endian) |
-				       S_030010_BASE_LEVEL(state->u.tex.first_level));
-	view->tex_resource_words[5] = (S_030014_LAST_LEVEL(state->u.tex.last_level) |
-				       S_030014_BASE_ARRAY(state->u.tex.first_layer) |
-				       S_030014_LAST_ARRAY(state->u.tex.last_layer));
+				       S_030010_ENDIAN_SWAP(endian));
+	view->tex_resource_words[5] = S_030014_BASE_ARRAY(state->u.tex.first_layer) |
+				      S_030014_LAST_ARRAY(state->u.tex.last_layer);
+	if (texture->nr_samples > 1) {
+		/* LAST_LEVEL holds log2(nr_samples) for multisample textures */
+		view->tex_resource_words[5] |= S_030014_LAST_LEVEL(util_logbase2(texture->nr_samples));
+	} else {
+		view->tex_resource_words[4] |= S_030010_BASE_LEVEL(state->u.tex.first_level);
+		view->tex_resource_words[5] |= S_030014_LAST_LEVEL(state->u.tex.last_level);
+	}
 	/* aniso max 16 samples */
 	view->tex_resource_words[6] = (S_030018_MAX_ANISO(4)) |
 				      (S_030018_TILE_SPLIT(tile_split));
@@ -1454,6 +1462,142 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 	surf->depth_initialized = true;
 }
 
+#define FILL_SREG(s0x, s0y, s1x, s1y, s2x, s2y, s3x, s3y)  \
+	(((s0x) & 0xf) | (((s0y) & 0xf) << 4) |		   \
+	(((s1x) & 0xf) << 8) | (((s1y) & 0xf) << 12) |	   \
+	(((s2x) & 0xf) << 16) | (((s2y) & 0xf) << 20) |	   \
+	 (((s3x) & 0xf) << 24) | (((s3y) & 0xf) << 28))
+
+static uint32_t evergreen_set_ms_pos(struct pipe_context *ctx, struct r600_pipe_state *rstate, int nsample)
+{
+	/* 2xMSAA
+	 * There are two locations (-4, 4), (4, -4). */
+	static uint32_t sample_locs_2x[] = {
+		FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
+		FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
+		FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
+		FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
+	};
+	static unsigned max_dist_2x = 4;
+	/* 4xMSAA
+	 * There are 4 locations: (-2, -2), (2, 2), (-6, 6), (6, -6). */
+	static uint32_t sample_locs_4x[] = {
+		FILL_SREG(-2, -2, 2, 2, -6, 6, 6, -6),
+		FILL_SREG(-2, -2, 2, 2, -6, 6, 6, -6),
+		FILL_SREG(-2, -2, 2, 2, -6, 6, 6, -6),
+		FILL_SREG(-2, -2, 2, 2, -6, 6, 6, -6),
+	};
+	static unsigned max_dist_4x = 6;
+	/* 8xMSAA */
+	static uint32_t eg_sample_locs_8x[] = {
+		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
+		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
+		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
+		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
+		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
+		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
+		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
+		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
+	};
+	static uint32_t cm_sample_locs_8x[] = {
+		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
+		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
+		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
+		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
+		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
+		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
+		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
+		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
+	};
+	static unsigned max_dist_8x = 8;
+	/* 16xMSAA */
+	static uint32_t cm_sample_locs_16x[] = {
+		FILL_SREG(-7, -3, 7, 3, 1, -5, -5, 5),
+		FILL_SREG(-7, -3, 7, 3, 1, -5, -5, 5),
+		FILL_SREG(-7, -3, 7, 3, 1, -5, -5, 5),
+		FILL_SREG(-7, -3, 7, 3, 1, -5, -5, 5),
+		FILL_SREG(-3, -7, 3, 7, 5, -1, -1, 1),
+		FILL_SREG(-3, -7, 3, 7, 5, -1, -1, 1),
+		FILL_SREG(-3, -7, 3, 7, 5, -1, -1, 1),
+		FILL_SREG(-3, -7, 3, 7, 5, -1, -1, 1),
+		FILL_SREG(-8, -6, 4, 2, 2, -8, -2, 6),
+		FILL_SREG(-8, -6, 4, 2, 2, -8, -2, 6),
+		FILL_SREG(-8, -6, 4, 2, 2, -8, -2, 6),
+		FILL_SREG(-8, -6, 4, 2, 2, -8, -2, 6),
+		FILL_SREG(-4, -2, 0, 4, 6, -4, -6, 0),
+		FILL_SREG(-4, -2, 0, 4, 6, -4, -6, 0),
+		FILL_SREG(-4, -2, 0, 4, 6, -4, -6, 0),
+		FILL_SREG(-4, -2, 0, 4, 6, -4, -6, 0),
+	};
+	static unsigned max_dist_16x = 8;
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	uint32_t max_dist, num_regs, *sample_locs, i;
+
+	switch (nsample) {
+	case 2:
+		sample_locs = sample_locs_2x;
+		num_regs = Elements(sample_locs_2x);
+		max_dist = max_dist_2x;
+		break;
+	case 4:
+		sample_locs = sample_locs_4x;
+		num_regs = Elements(sample_locs_4x);
+		max_dist = max_dist_4x;
+		break;
+	case 8:
+		if (rctx->chip_class == CAYMAN) {
+			sample_locs = cm_sample_locs_8x;
+			num_regs = Elements(cm_sample_locs_8x);
+		} else {
+			sample_locs = eg_sample_locs_8x;
+			num_regs = Elements(eg_sample_locs_8x);
+		}
+		max_dist = max_dist_8x;
+		break;
+	case 16:
+		if (rctx->chip_class == CAYMAN) {
+			sample_locs = cm_sample_locs_16x;
+			num_regs = Elements(cm_sample_locs_16x);
+			max_dist = max_dist_16x;
+			break;
+		}
+		/* fall through */
+	default:
+		R600_ERR("Invalid nr_samples %i\n", nsample);
+		return 0;
+	}
+
+	/* All the regs must be initialized. Otherwise weird rendering may occur. */
+	if (rctx->chip_class == CAYMAN) {
+		r600_pipe_state_add_reg(rstate, CM_R_028BF8_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_0, sample_locs[0]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C08_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_0, sample_locs[1]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C18_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_0, sample_locs[2]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C28_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_0, sample_locs[3]);
+		if (num_regs <= 8) {
+			r600_pipe_state_add_reg(rstate, CM_R_028BFC_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_1, sample_locs[4]);
+			r600_pipe_state_add_reg(rstate, CM_R_028C0C_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_1, sample_locs[5]);
+			r600_pipe_state_add_reg(rstate, CM_R_028C1C_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_1, sample_locs[6]);
+			r600_pipe_state_add_reg(rstate, CM_R_028C2C_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_1, sample_locs[7]);
+		}
+		if (num_regs <= 16) {
+			r600_pipe_state_add_reg(rstate, CM_R_028C00_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_2, sample_locs[8]);
+			r600_pipe_state_add_reg(rstate, CM_R_028C10_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_2, sample_locs[9]);
+			r600_pipe_state_add_reg(rstate, CM_R_028C20_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_2, sample_locs[10]);
+			r600_pipe_state_add_reg(rstate, CM_R_028C30_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_2, sample_locs[11]);
+			r600_pipe_state_add_reg(rstate, CM_R_028C04_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_3, sample_locs[12]);
+			r600_pipe_state_add_reg(rstate, CM_R_028C14_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_3, sample_locs[13]);
+			r600_pipe_state_add_reg(rstate, CM_R_028C24_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_3, sample_locs[14]);
+			r600_pipe_state_add_reg(rstate, CM_R_028C34_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_3, sample_locs[15]);
+		}
+	} else {
+		for (i = 0; i < num_regs; i++) {
+			r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_0 + i*4,
+						sample_locs[i]);
+		}
+	}
+	return max_dist;
+}
+
 static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 					    const struct pipe_framebuffer_state *state)
 {
@@ -1461,8 +1605,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	struct r600_surface *surf;
 	struct r600_resource *res;
-	uint32_t tl, br;
-	int i;
+	uint32_t tl, br, i, nr_samples;
 
 	if (rstate == NULL)
 		return;
@@ -1474,7 +1617,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
 
-	/* build states */
+	/* Colorbuffers. */
 	rctx->export_16bpc = true;
 	rctx->nr_cbufs = state->nr_cbufs;
 	rctx->cb0_is_integer = state->nr_cbufs &&
@@ -1531,6 +1674,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		}
 	}
 
+	/* ZS buffer. */
 	if (state->zsbuf) {
 		surf = (struct r600_surface*)state->zsbuf;
 		res = (struct r600_resource*)surf->base.texture;
@@ -1558,12 +1702,49 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		r600_pipe_state_add_reg(rstate, R_02805C_DB_DEPTH_SLICE, surf->db_depth_slice);
 	}
 
+	/* Framebuffer dimensions. */
 	evergreen_get_scissor_rect(rctx, 0, 0, state->width, state->height, &tl, &br);
 
 	r600_pipe_state_add_reg(rstate,
 				R_028204_PA_SC_WINDOW_SCISSOR_TL, tl);
 	r600_pipe_state_add_reg(rstate,
 				R_028208_PA_SC_WINDOW_SCISSOR_BR, br);
+
+	/* Multisampling */
+	if (state->nr_cbufs)
+		nr_samples = state->cbufs[0]->texture->nr_samples;
+	else if (state->zsbuf)
+		nr_samples = state->zsbuf->texture->nr_samples;
+	else
+		nr_samples = 0;
+
+	if (nr_samples > 1) {
+		unsigned log_samples = util_logbase2(nr_samples);
+		unsigned max_dist, line_cntl, aa_config;
+
+		max_dist = evergreen_set_ms_pos(ctx, rstate, nr_samples);
+
+		line_cntl = S_028C00_LAST_PIXEL(1) |
+			    S_028C00_EXPAND_LINE_WIDTH(1);
+		aa_config = S_028C04_MSAA_NUM_SAMPLES(log_samples) |
+			    S_028C04_MAX_SAMPLE_DIST(max_dist);
+
+		if (rctx->chip_class == CAYMAN) {
+			r600_pipe_state_add_reg(rstate, CM_R_028BDC_PA_SC_LINE_CNTL, line_cntl);
+			r600_pipe_state_add_reg(rstate, CM_R_028BE0_PA_SC_AA_CONFIG, aa_config);
+		} else {
+			r600_pipe_state_add_reg(rstate, R_028C00_PA_SC_LINE_CNTL, line_cntl);
+			r600_pipe_state_add_reg(rstate, R_028C04_PA_SC_AA_CONFIG, aa_config);
+		}
+	} else {
+		if (rctx->chip_class == CAYMAN) {
+			r600_pipe_state_add_reg(rstate, CM_R_028BDC_PA_SC_LINE_CNTL, S_028C00_LAST_PIXEL(1));
+			r600_pipe_state_add_reg(rstate, CM_R_028BE0_PA_SC_AA_CONFIG, 0);
+		} else {
+			r600_pipe_state_add_reg(rstate, R_028C00_PA_SC_LINE_CNTL, S_028C00_LAST_PIXEL(1));
+			r600_pipe_state_add_reg(rstate, R_028C04_PA_SC_AA_CONFIG, 0);
+		}
+	}
 
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
 	rctx->states[R600_PIPE_STATE_FRAMEBUFFER] = rstate;
@@ -2037,10 +2218,6 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_context_reg(cb, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
 	r600_store_context_reg(cb, R_028818_PA_CL_VTE_CNTL, 0x0000043F);
 	r600_store_context_reg(cb, R_028820_PA_CL_NANINF_CNTL, 0);
-
-	r600_store_context_reg_seq(cb, CM_R_028BDC_PA_SC_LINE_CNTL, 2);
-	r600_store_value(cb, 0x00000400); /* CM_R_028BDC_PA_SC_LINE_CNTL */
-	r600_store_value(cb, 0); /* CM_R_028BE0_PA_SC_AA_CONFIG */
 
 	r600_store_context_reg_seq(cb, CM_R_028BE8_PA_CL_GB_VERT_CLIP_ADJ, 4);
 	r600_store_value(cb, 0x3F800000); /* CM_R_028BE8_PA_CL_GB_VERT_CLIP_ADJ */
@@ -2521,16 +2698,11 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028AC4_DB_SRESULTS_COMPARE_STATE1 */
 	r600_store_value(cb, 0); /* R_028AC8_DB_PRELOAD_CONTROL */
 
-	r600_store_context_reg_seq(cb, R_028C00_PA_SC_LINE_CNTL, 2);
-	r600_store_value(cb, 0x00000400); /* R_028C00_PA_SC_LINE_CNTL */
-	r600_store_value(cb, 0); /* R_028C04_PA_SC_AA_CONFIG */
-
-	r600_store_context_reg_seq(cb, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 5);
+	r600_store_context_reg_seq(cb, R_028C0C_PA_CL_GB_VERT_CLIP_ADJ, 4);
 	r600_store_value(cb, 0x3F800000); /* R_028C0C_PA_CL_GB_VERT_CLIP_ADJ */
 	r600_store_value(cb, 0x3F800000); /* R_028C10_PA_CL_GB_VERT_DISC_ADJ */
 	r600_store_value(cb, 0x3F800000); /* R_028C14_PA_CL_GB_HORZ_CLIP_ADJ */
 	r600_store_value(cb, 0x3F800000); /* R_028C18_PA_CL_GB_HORZ_DISC_ADJ */
-	r600_store_value(cb, 0); /* R_028C1C_PA_SC_AA_SAMPLE_LOCS_0 */
 
 	r600_store_context_reg_seq(cb, R_028240_PA_SC_GENERIC_SCISSOR_TL, 2);
 	r600_store_value(cb, 0); /* R_028240_PA_SC_GENERIC_SCISSOR_TL */

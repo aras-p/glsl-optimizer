@@ -477,8 +477,12 @@
 #define   S_028808_MODE(x)                             (((x) & 0x7) << 4)
 #define   G_028808_MODE(x)                             (((x) >> 4) & 0x7)
 #define   C_028808_MODE                                0xFFFFFF8F
-#define     V_028808_CB_DISABLE				0
-#define     V_028808_CB_NORMAL				1
+#define      V_028808_CB_DISABLE                       0x00000000
+#define      V_028808_CB_NORMAL                        0x00000001
+#define      V_028808_CB_ELIMINATE_FAST_CLEAR          0x00000002
+#define      V_028808_CB_RESOLVE                       0x00000003
+#define      V_028808_CB_DECOMPRESS                    0x00000004
+#define      V_028808_CB_FASK_DECOMPRESS               0x00000005
 #define   S_028808_ROP3(x)                             (((x) & 0xFF) << 16)
 #define   G_028808_ROP3(x)                             (((x) >> 16) & 0xFF)
 #define   C_028808_ROP3                                0xFF00FFFF
@@ -1939,7 +1943,16 @@
 #define   S_028B98_STREAM_2_BUFFER_EN(x)		(((x) & 0xf) << 8)
 #define   S_028B98_STREAM_3_BUFFER_EN(x)		(((x) & 0xf) << 12)
 #define R_028C00_PA_SC_LINE_CNTL                     0x00028C00
+#define   S_028C00_EXPAND_LINE_WIDTH(x)                (((x) & 0x1) << 9)
+#define   G_028C00_EXPAND_LINE_WIDTH(x)                (((x) >> 9) & 0x1)
+#define   C_028C00_EXPAND_LINE_WIDTH                   0xFFFFFDFF
+#define   S_028C00_LAST_PIXEL(x)                       (((x) & 0x1) << 10)
+#define   G_028C00_LAST_PIXEL(x)                       (((x) >> 10) & 0x1)
+#define   C_028C00_LAST_PIXEL                          0xFFFFFBFF
 #define R_028C04_PA_SC_AA_CONFIG                     0x00028C04
+#define   S_028C04_MSAA_NUM_SAMPLES(x)                  (((x) & 0x3) << 0)
+#define   S_028C04_AA_MASK_CENTROID_DTMN(x)		(((x) & 0x1) << 4)
+#define   S_028C04_MAX_SAMPLE_DIST(x)			(((x) & 0xf) << 13)
 #define R_028C08_PA_SU_VTX_CNTL                      0x00028C08
 #define   S_028C08_PIX_CENTER_HALF(x)                  (((x) & 0x1) << 0)
 #define   G_028C08_PIX_CENTER_HALF(x)                  (((x) >> 0) & 0x1)
@@ -1949,6 +1962,13 @@
 #define R_028C14_PA_CL_GB_HORZ_CLIP_ADJ              0x00028C14
 #define R_028C18_PA_CL_GB_HORZ_DISC_ADJ              0x00028C18
 #define R_028C1C_PA_SC_AA_SAMPLE_LOCS_0              0x00028C1C
+#define R_028C20_PA_SC_AA_SAMPLE_LOCS_1              0x00028C20
+#define R_028C24_PA_SC_AA_SAMPLE_LOCS_2              0x00028C24
+#define R_028C28_PA_SC_AA_SAMPLE_LOCS_3              0x00028C28
+#define R_028C2C_PA_SC_AA_SAMPLE_LOCS_4              0x00028C2C
+#define R_028C30_PA_SC_AA_SAMPLE_LOCS_5              0x00028C30
+#define R_028C34_PA_SC_AA_SAMPLE_LOCS_6              0x00028C34
+#define R_028C38_PA_SC_AA_SAMPLE_LOCS_7              0x00028C38
 #define R_028C3C_PA_SC_AA_MASK                       0x00028C3C
 #define R_028C60_CB_COLOR0_BASE                      0x00028C60
 #define R_028C6C_CB_COLOR0_VIEW                      0x00028C6C
