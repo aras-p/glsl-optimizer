@@ -457,7 +457,7 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
 	  * becomes current."
 	  */
 	 if ( obj == ctx->Array.ArrayObj ) {
-	    CALL_BindVertexArrayAPPLE( ctx->Exec, (0) );
+	    _mesa_BindVertexArray(0);
 	 }
 
 	 /* The ID is immediately freed for re-use */
