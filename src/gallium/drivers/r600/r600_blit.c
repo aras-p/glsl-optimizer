@@ -548,6 +548,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	struct pipe_box sbox;
 	const struct pipe_box *psbox = src_box;
 	boolean restore_orig[2];
+	unsigned last_sample, i;
 
 	memset(orig_info, 0, sizeof(orig_info));
 
@@ -556,6 +557,9 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		r600_copy_buffer(ctx, dst, dstx, src, src_box);
 		return;
 	}
+
+	assert(u_max_sample(dst) == u_max_sample(src));
+	last_sample = u_max_sample(dst);
 
 	/* This must be done before entering u_blitter to avoid recursion. */
 	if (rsrc->is_depth && !rsrc->is_flushing_texture) {
@@ -613,10 +617,12 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		restore_orig[1] = TRUE;
 	}
 
-	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
-	util_blitter_copy_texture(rctx->blitter, dst, dst_level, ~0, dstx, dsty, dstz,
-				  src, src_level, 0, psbox);
-	r600_blitter_end(ctx);
+	for (i = 0; i <= last_sample; i++) {
+		r600_blitter_begin(ctx, R600_COPY_TEXTURE);
+		util_blitter_copy_texture(rctx->blitter, dst, dst_level, 1 << i, dstx, dsty, dstz,
+					  src, src_level, i, psbox);
+		r600_blitter_end(ctx);
+	}
 
 	if (restore_orig[0])
 		r600_reset_blittable_to_orig(src, src_level, &orig_info[0]);
