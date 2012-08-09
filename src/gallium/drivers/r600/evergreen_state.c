@@ -620,6 +620,7 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      unsigned sample_count,
 				      unsigned usage)
 {
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	unsigned retval = 0;
 
 	if (target >= PIPE_MAX_TEXTURE_TYPES) {
@@ -630,9 +631,29 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 	if (!util_format_is_supported(format, usage))
 		return FALSE;
 
-	/* Multisample */
-	if (sample_count > 1)
-		return FALSE;
+	if (sample_count > 1) {
+		if (rscreen->info.drm_minor < 19)
+			return FALSE;
+
+		if (rscreen->chip_class != EVERGREEN)
+			return FALSE;
+
+		switch (sample_count) {
+		case 2:
+		case 4:
+		case 8:
+			break;
+		default:
+			return FALSE;
+		}
+
+		/* require render-target support for multisample resources */
+		if (util_format_is_depth_or_stencil(format)) {
+			usage |= PIPE_BIND_DEPTH_STENCIL;
+		} else {
+			usage |= PIPE_BIND_RENDER_TARGET;
+		}
+	}
 
 	if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
 	    r600_is_sampler_format_supported(screen, format)) {
