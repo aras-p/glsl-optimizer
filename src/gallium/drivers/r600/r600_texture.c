@@ -517,7 +517,8 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 
 		r600_blit_uncompress_depth(ctx, rtex, staging_depth,
 					   level, level,
-					   box->z, box->z + box->depth - 1);
+					   box->z, box->z + box->depth - 1,
+					   0, 0);
 
 		trans->transfer.stride = staging_depth->pitch_in_bytes[level];
 		trans->offset = r600_texture_get_offset(staging_depth, level, box->z);

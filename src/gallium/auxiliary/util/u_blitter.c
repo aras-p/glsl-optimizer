@@ -1383,6 +1383,7 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
 void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
 				       struct pipe_surface *zsurf,
 				       struct pipe_surface *cbsurf,
+				       unsigned sample_mask,
 				       void *dsa_stage, float depth)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
@@ -1418,6 +1419,7 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
    }
    fb_state.zsbuf = zsurf;
    pipe->set_framebuffer_state(pipe, &fb_state);
+   pipe->set_sample_mask(pipe, sample_mask);
 
    blitter_set_common_draw_rect_state(ctx);
    blitter_set_dst_dimensions(ctx, zsurf->width, zsurf->height);

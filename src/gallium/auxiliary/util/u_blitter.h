@@ -297,6 +297,7 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
 void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
 				       struct pipe_surface *zsurf,
 				       struct pipe_surface *cbsurf,
+				       unsigned sample_mask,
 				       void *dsa_stage, float depth);
 
 /* The functions below should be used to save currently bound constant state

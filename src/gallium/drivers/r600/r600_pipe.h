@@ -81,6 +81,7 @@ struct r600_db_misc_state {
 	bool occlusion_query_enabled;
 	bool flush_depthstencil_through_cb;
 	bool copy_depth, copy_stencil;
+	unsigned copy_sample;
 };
 
 struct r600_cb_misc_state {
@@ -483,9 +484,11 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 		struct r600_resource_texture *texture,
 		struct r600_resource_texture *staging,
 		unsigned first_level, unsigned last_level,
-		unsigned first_layer, unsigned last_layer);
+		unsigned first_layer, unsigned last_layer,
+		unsigned first_sample, unsigned last_sample);
 void r600_flush_depth_textures(struct r600_context *rctx,
 			       struct r600_samplerview_state *textures);
+
 /* r600_buffer.c */
 bool r600_init_resource(struct r600_screen *rscreen,
 			struct r600_resource *res,

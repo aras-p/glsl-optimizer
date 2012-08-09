@@ -120,19 +120,25 @@ static unsigned u_max_layer(struct pipe_resource *r, unsigned level)
 	}
 }
 
+static unsigned u_max_sample(struct pipe_resource *r)
+{
+	return r->nr_samples ? r->nr_samples - 1 : 0;
+}
+
 void r600_blit_uncompress_depth(struct pipe_context *ctx,
 		struct r600_resource_texture *texture,
 		struct r600_resource_texture *staging,
 		unsigned first_level, unsigned last_level,
-		unsigned first_layer, unsigned last_layer)
+		unsigned first_layer, unsigned last_layer,
+		unsigned first_sample, unsigned last_sample)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	unsigned layer, level, checked_last_layer, max_layer;
-	float depth = 1.0f;
+	unsigned layer, level, sample, checked_last_layer, max_layer, max_sample;
 	struct r600_resource_texture *flushed_depth_texture = staging ?
 			staging : texture->flushed_depth_texture;
 	const struct util_format_description *desc =
 		util_format_description(texture->resource.b.b.format);
+	float depth;
 
 	if (!staging && !texture->dirty_db_mask)
 		return;
@@ -140,12 +146,17 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
 	    rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
 		depth = 0.0f;
+	else
+		depth = 1.0f;
 
 	/* Enable decompression in DB_RENDER_CONTROL */
 	rctx->db_misc_state.flush_depthstencil_through_cb = true;
 	rctx->db_misc_state.copy_depth = util_format_has_depth(desc);
 	rctx->db_misc_state.copy_stencil = util_format_has_stencil(desc);
+	rctx->db_misc_state.copy_sample = first_sample;
 	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+
+	max_sample = u_max_sample(&texture->resource.b.b);
 
 	for (level = first_level; level <= last_level; level++) {
 		if (!staging && !(texture->dirty_db_mask & (1 << level)))
@@ -157,32 +168,45 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 		checked_last_layer = last_layer < max_layer ? last_layer : max_layer;
 
 		for (layer = first_layer; layer <= checked_last_layer; layer++) {
-			struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
+			for (sample = first_sample; sample <= last_sample; sample++) {
+				struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
 
-			surf_tmpl.format = texture->real_format;
-			surf_tmpl.u.tex.level = level;
-			surf_tmpl.u.tex.first_layer = layer;
-			surf_tmpl.u.tex.last_layer = layer;
-			surf_tmpl.usage = PIPE_BIND_DEPTH_STENCIL;
+				if (sample != rctx->db_misc_state.copy_sample) {
+					rctx->db_misc_state.copy_sample = sample;
+					r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+				}
 
-			zsurf = ctx->create_surface(ctx, &texture->resource.b.b, &surf_tmpl);
+				surf_tmpl.format = texture->real_format;
+				surf_tmpl.u.tex.level = level;
+				surf_tmpl.u.tex.first_layer = layer;
+				surf_tmpl.u.tex.last_layer = layer;
+				surf_tmpl.usage = PIPE_BIND_DEPTH_STENCIL;
 
-			surf_tmpl.format = flushed_depth_texture->real_format;
-			surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
-			cbsurf = ctx->create_surface(ctx,
-					(struct pipe_resource*)flushed_depth_texture, &surf_tmpl);
+				zsurf = ctx->create_surface(ctx, &texture->resource.b.b, &surf_tmpl);
 
-			r600_blitter_begin(ctx, R600_DECOMPRESS);
-			util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, rctx->custom_dsa_flush, depth);
-			r600_blitter_end(ctx);
+				surf_tmpl.format = flushed_depth_texture->real_format;
+				surf_tmpl.u.tex.level = level;
+				surf_tmpl.u.tex.first_layer = layer;
+				surf_tmpl.u.tex.last_layer = layer;
+				surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
+				cbsurf = ctx->create_surface(ctx,
+						&flushed_depth_texture->resource.b.b, &surf_tmpl);
 
-			pipe_surface_reference(&zsurf, NULL);
-			pipe_surface_reference(&cbsurf, NULL);
+				r600_blitter_begin(ctx, R600_DECOMPRESS);
+				util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, 1 << sample,
+								  rctx->custom_dsa_flush, depth);
+				r600_blitter_end(ctx);
+
+				pipe_surface_reference(&zsurf, NULL);
+				pipe_surface_reference(&cbsurf, NULL);
+			}
 		}
 
-		/* The texture will always be dirty if some layers aren't flushed.
-		 * I don't think this case can occur though. */
-		if (!staging && first_layer == 0 && last_layer == max_layer) {
+		/* The texture will always be dirty if some layers or samples aren't flushed.
+		 * I don't think this case occurs often though. */
+		if (!staging &&
+		    first_layer == 0 && last_layer == max_layer &&
+		    first_sample == 0 && last_sample == max_sample) {
 			texture->dirty_db_mask &= ~(1 << level);
 		}
 	}
@@ -211,10 +235,84 @@ void r600_flush_depth_textures(struct r600_context *rctx,
 		assert(tex->is_depth && !tex->is_flushing_texture);
 
 		r600_blit_uncompress_depth(&rctx->context, tex, NULL,
-					   view->u.tex.first_level,
-					   view->u.tex.last_level,
-					   0,
-					   u_max_layer(&tex->resource.b.b, view->u.tex.first_level));
+					   view->u.tex.first_level, view->u.tex.last_level,
+					   0, u_max_layer(&tex->resource.b.b, view->u.tex.first_level),
+					   0, u_max_sample(&tex->resource.b.b));
+	}
+}
+
+static void r600_copy_first_sample(struct pipe_context *ctx,
+				   const struct pipe_resolve_info *info)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_resource_texture *rsrc = (struct r600_resource_texture*)info->src.res;
+	struct pipe_surface *dst_view, dst_templ;
+	struct pipe_sampler_view src_templ, *src_view;
+	struct pipe_box box;
+
+	if (rsrc->is_depth && !rsrc->is_flushing_texture) {
+		if (!r600_init_flushed_depth_texture(ctx, info->src.res, NULL))
+			return; /* error */
+
+		/* Decompress the first sample only. */
+		r600_blit_uncompress_depth(ctx,	rsrc, NULL,
+					   0, 0,
+					   info->src.layer, info->src.layer,
+					   0, 0);
+	}
+
+	/* this is correct for upside-down blits too */
+	u_box_2d(info->src.x0,
+		 info->src.y0,
+		 info->src.x1 - info->src.x0,
+		 info->src.y1 - info->src.y0, &box);
+
+	/* Initialize the surface. */
+	util_blitter_default_dst_texture(&dst_templ, info->dst.res,
+					 info->dst.level, info->dst.layer, &box);
+	dst_view = ctx->create_surface(ctx, info->dst.res, &dst_templ);
+
+	/* Initialize the sampler view. */
+	util_blitter_default_src_texture(&src_templ, info->src.res, 0);
+	src_view = ctx->create_sampler_view(ctx, info->src.res, &src_templ);
+
+	/* Copy the first sample into dst. */
+	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
+	util_blitter_copy_texture_view(rctx->blitter, dst_view, ~0, info->dst.x0,
+				       info->dst.y0, src_view, 0, &box,
+				       info->src.res->width0, info->src.res->height0,
+				       info->mask);
+	r600_blitter_end(ctx);
+
+	pipe_surface_reference(&dst_view, NULL);
+	pipe_sampler_view_reference(&src_view, NULL);
+}
+
+static void r600_resource_resolve(struct pipe_context *ctx,
+				  const struct pipe_resolve_info *info)
+{
+	/* make sure we're doing a resolve operation */
+	assert(info->src.res->nr_samples > 1);
+	assert(info->dst.res->nr_samples <= 1);
+
+	/* limitations of multisample resources */
+	assert(info->src.res->last_level == 0);
+	assert(info->src.res->target == PIPE_TEXTURE_2D ||
+	       info->src.res->target == PIPE_TEXTURE_2D_ARRAY);
+
+	/* check if the resolve box is valid */
+	assert(info->dst.x0 < info->dst.x1);
+	assert(info->dst.y0 < info->dst.y1);
+
+	/* scaled resolve isn't allowed */
+	assert(abs(info->dst.x0 - info->dst.x1) ==
+	       abs(info->src.x0 - info->src.x1));
+	assert(abs(info->dst.y0 - info->dst.y1) ==
+	       abs(info->src.y0 - info->src.y1));
+
+	if ((info->mask & PIPE_MASK_ZS) ||
+	    util_format_is_pure_integer(info->src.res->format)) {
+		r600_copy_first_sample(ctx, info);
 	}
 }
 
@@ -386,7 +484,8 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 		r600_blit_uncompress_depth(ctx, rsrc, NULL,
 					   src_level, src_level,
-					   src_box->z, src_box->z + src_box->depth - 1);
+					   src_box->z, src_box->z + src_box->depth - 1,
+					   0, u_max_sample(src));
 	}
 
 	restore_orig[0] = restore_orig[1] = FALSE;
@@ -452,4 +551,5 @@ void r600_init_blit_functions(struct r600_context *rctx)
 	rctx->context.clear_render_target = r600_clear_render_target;
 	rctx->context.clear_depth_stencil = r600_clear_depth_stencil;
 	rctx->context.resource_copy_region = r600_resource_copy_region;
+	rctx->context.resource_resolve = r600_resource_resolve;
 }

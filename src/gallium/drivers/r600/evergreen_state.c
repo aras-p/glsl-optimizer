@@ -1801,7 +1801,8 @@ static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_
 
 		db_render_control |= S_028000_DEPTH_COPY_ENABLE(a->copy_depth) |
 				     S_028000_STENCIL_COPY_ENABLE(a->copy_stencil) |
-				     S_028000_COPY_CENTROID(1);
+				     S_028000_COPY_CENTROID(1) |
+				     S_028000_COPY_SAMPLE(a->copy_sample);
 	}
 
 	r600_write_context_reg_seq(cs, R_028000_DB_RENDER_CONTROL, 2);
