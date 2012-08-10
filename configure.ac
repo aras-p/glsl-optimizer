@@ -228,9 +228,6 @@ if test "x$GXX" = xyes; then
     # gcc's builtin memcmp is slower than glibc's
     # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43052
     CXXFLAGS="$CXXFLAGS -fno-builtin-memcmp"
-
-    # Silence C++11 warnings that we don't care about.
-    CXXFLAGS="$CXXFLAGS -Wno-narrowing"
 fi
 
 dnl even if the compiler appears to support it, using visibility attributes isn't
