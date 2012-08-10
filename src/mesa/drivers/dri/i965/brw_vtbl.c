@@ -147,6 +147,10 @@ brw_update_draw_buffer(struct intel_context *intel)
 /**
  * called from intel_batchbuffer_flush and children before sending a
  * batchbuffer off.
+ *
+ * Note that ALL state emitted here must fit in the reserved space
+ * at the end of a batchbuffer.  If you add more GPU state, increase
+ * the BATCH_RESERVED macro.
  */
 static void brw_finish_batch(struct intel_context *intel)
 {
