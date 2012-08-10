@@ -576,7 +576,7 @@ draw_num_shader_outputs(const struct draw_context *draw)
 
 /**
  * Provide TGSI sampler objects for vertex/geometry shaders that use
- * texture fetches.
+ * texture fetches.  This state only needs to be set once per context.
  * This might only be used by software drivers for the time being.
  */
 void
@@ -586,12 +586,12 @@ draw_texture_samplers(struct draw_context *draw,
                       struct tgsi_sampler **samplers)
 {
    if (shader == PIPE_SHADER_VERTEX) {
-      draw->vs.num_samplers = num_samplers;
-      draw->vs.samplers = samplers;
+      draw->vs.tgsi.num_samplers = num_samplers;
+      draw->vs.tgsi.samplers = samplers;
    } else {
       debug_assert(shader == PIPE_SHADER_GEOMETRY);
-      draw->gs.num_samplers = num_samplers;
-      draw->gs.samplers = samplers;
+      draw->gs.tgsi.num_samplers = num_samplers;
+      draw->gs.tgsi.samplers = samplers;
    }
 }
 

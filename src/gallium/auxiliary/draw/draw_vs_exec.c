@@ -69,8 +69,8 @@ vs_exec_prepare( struct draw_vertex_shader *shader,
    if (evs->machine->Tokens != shader->state.tokens) {
       tgsi_exec_machine_bind_shader(evs->machine,
                                     shader->state.tokens,
-                                    draw->vs.num_samplers,
-                                    draw->vs.samplers);
+                                    draw->vs.tgsi.num_samplers,
+                                    draw->vs.tgsi.samplers);
    }
 }
 
@@ -235,7 +235,7 @@ draw_create_vs_exec(struct draw_context *draw,
    vs->base.run_linear = vs_exec_run_linear;
    vs->base.delete = vs_exec_delete;
    vs->base.create_variant = draw_vs_create_variant_generic;
-   vs->machine = draw->vs.machine;
+   vs->machine = draw->vs.tgsi.machine;
 
    return &vs->base;
 }

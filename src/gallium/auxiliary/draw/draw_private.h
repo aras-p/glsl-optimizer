@@ -240,12 +240,14 @@ struct draw_context
       uint edgeflag_output;
       uint clipvertex_output;
       uint clipdistance_output[2];
-      /** TGSI program interpreter runtime state */
-      struct tgsi_exec_machine *machine;
 
-      uint num_samplers;
-      struct tgsi_sampler **samplers;
+      /** Fields for TGSI interpreter / execution */
+      struct {
+         struct tgsi_exec_machine *machine;
 
+         struct tgsi_sampler **samplers;
+         uint num_samplers;
+      } tgsi;
 
       const void *aligned_constants[PIPE_MAX_CONSTANT_BUFFERS];
 
@@ -265,11 +267,14 @@ struct draw_context
       uint num_gs_outputs;  /**< convenience, from geometry_shader */
       uint position_output;
 
-      /** TGSI program interpreter runtime state */
-      struct tgsi_exec_machine *machine;
+      /** Fields for TGSI interpreter / execution */
+      struct {
+         struct tgsi_exec_machine *machine;
 
-      uint num_samplers;
-      struct tgsi_sampler **samplers;
+         struct tgsi_sampler **samplers;
+         uint num_samplers;
+      } tgsi;
+
    } gs;
 
    /** Fragment shader state */

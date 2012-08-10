@@ -45,15 +45,15 @@
 boolean
 draw_gs_init( struct draw_context *draw )
 {
-   draw->gs.machine = tgsi_exec_machine_create();
-   if (!draw->gs.machine)
+   draw->gs.tgsi.machine = tgsi_exec_machine_create();
+   if (!draw->gs.tgsi.machine)
       return FALSE;
 
-   draw->gs.machine->Primitives = align_malloc(
+   draw->gs.tgsi.machine->Primitives = align_malloc(
       MAX_PRIMITIVES * sizeof(struct tgsi_exec_vector), 16);
-   if (!draw->gs.machine->Primitives)
+   if (!draw->gs.tgsi.machine->Primitives)
       return FALSE;
-   memset(draw->gs.machine->Primitives, 0,
+   memset(draw->gs.tgsi.machine->Primitives, 0,
           MAX_PRIMITIVES * sizeof(struct tgsi_exec_vector));
 
    return TRUE;
@@ -61,12 +61,12 @@ draw_gs_init( struct draw_context *draw )
 
 void draw_gs_destroy( struct draw_context *draw )
 {
-   if (!draw->gs.machine)
+   if (!draw->gs.tgsi.machine)
       return;
 
-   align_free(draw->gs.machine->Primitives);
+   align_free(draw->gs.tgsi.machine->Primitives);
 
-   tgsi_exec_machine_destroy(draw->gs.machine);
+   tgsi_exec_machine_destroy(draw->gs.tgsi.machine);
 }
 
 void
@@ -121,7 +121,7 @@ draw_create_geometry_shader(struct draw_context *draw,
          gs->max_output_vertices = gs->info.properties[i].data[0];
    }
 
-   gs->machine = draw->gs.machine;
+   gs->machine = draw->gs.tgsi.machine;
 
    if (gs)
    {
@@ -483,7 +483,7 @@ void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
    if (shader && shader->machine->Tokens != shader->state.tokens) {
       tgsi_exec_machine_bind_shader(shader->machine,
                                     shader->state.tokens,
-                                    draw->gs.num_samplers,
-                                    draw->gs.samplers);
+                                    draw->gs.tgsi.num_samplers,
+                                    draw->gs.tgsi.samplers);
    }
 }
