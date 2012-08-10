@@ -158,8 +158,10 @@ softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 
    softpipe->fs = fs;
 
-   if (fs == NULL)
-      softpipe->fs_variant = NULL;
+   /* This depends on the current fragment shader and must always be
+    * re-validated before use.
+    */
+   softpipe->fs_variant = NULL;
 
    if (state)
       draw_bind_fragment_shader(softpipe->draw,
