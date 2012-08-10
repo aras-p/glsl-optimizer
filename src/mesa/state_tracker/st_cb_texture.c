@@ -1004,14 +1004,22 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
        !do_flip) {
       /* use surface_copy() / blit */
       struct pipe_box src_box;
+      unsigned dstLevel;
+
       u_box_2d_zslice(srcX, srcY, strb->surface->u.tex.first_layer,
                       width, height, &src_box);
+
+      /* If stImage->pt is an independent image (not a pointer into a full
+       * mipmap) stImage->pt.last_level will be zero and we need to use that
+       * as the dest level.
+       */
+      dstLevel = MIN2(stImage->base.Level, stImage->pt->last_level);
 
       /* for resource_copy_region(), y=0=top, always */
       pipe->resource_copy_region(pipe,
                                  /* dest */
                                  stImage->pt,
-                                 stImage->base.Level,
+                                 dstLevel,
                                  destX, destY, destZ + stImage->base.Face,
                                  /* src */
                                  strb->texture,
