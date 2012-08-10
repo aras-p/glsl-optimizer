@@ -230,15 +230,15 @@ _intel_batchbuffer_flush(struct intel_context *intel,
 
    intel->batch.reserved_space = 0;
 
+   if (intel->vtbl.finish_batch)
+      intel->vtbl.finish_batch(intel);
+
    /* Mark the end of the buffer. */
    intel_batchbuffer_emit_dword(intel, MI_BATCH_BUFFER_END);
    if (intel->batch.used & 1) {
       /* Round batchbuffer usage to 2 DWORDs. */
       intel_batchbuffer_emit_dword(intel, MI_NOOP);
    }
-
-   if (intel->vtbl.finish_batch)
-      intel->vtbl.finish_batch(intel);
 
    intel_upload_finish(intel);
 
