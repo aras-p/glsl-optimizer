@@ -760,16 +760,15 @@ draw_set_sampler_views(struct draw_context *draw,
 {
    unsigned i;
 
-   if (shader_stage == PIPE_SHADER_VERTEX) {
-      debug_assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
+   debug_assert(num <= Elements(draw->sampler_views));
+   debug_assert(shader_stage <= PIPE_SHADER_TYPES);
 
-      for (i = 0; i < num; ++i)
-         draw->sampler_views[i] = views[i];
-      for (i = num; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
-         draw->sampler_views[i] = NULL;
+   for (i = 0; i < num; ++i)
+      draw->sampler_views[shader_stage][i] = views[i];
+   for (i = num; i < Elements(draw->sampler_views); ++i)
+      draw->sampler_views[shader_stage][i] = NULL;
 
-      draw->num_sampler_views = num;
-   }
+   draw->num_sampler_views[shader_stage] = num;
 }
 
 void
@@ -780,21 +779,20 @@ draw_set_samplers(struct draw_context *draw,
 {
    unsigned i;
 
-   if (shader_stage == PIPE_SHADER_VERTEX) {
-      debug_assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
+   debug_assert(num <= Elements(draw->samplers));
+   debug_assert(shader_stage <= PIPE_SHADER_TYPES);
 
-      for (i = 0; i < num; ++i)
-         draw->samplers[i] = samplers[i];
-      for (i = num; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
-         draw->samplers[i] = NULL;
+   for (i = 0; i < num; ++i)
+      draw->samplers[shader_stage][i] = samplers[i];
+   for (i = num; i < Elements(draw->samplers); ++i)
+      draw->samplers[shader_stage][i] = NULL;
 
-      draw->num_samplers = num;
+   draw->num_samplers[shader_stage] = num;
 
 #ifdef HAVE_LLVM
-      if (draw->llvm)
-         draw_llvm_set_sampler_state(draw);
+   if (draw->llvm && shader_stage == PIPE_SHADER_VERTEX)
+      draw_llvm_set_sampler_state(draw);
 #endif
-   }
 }
 
 void

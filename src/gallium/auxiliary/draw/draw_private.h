@@ -308,10 +308,15 @@ struct draw_context
    struct draw_llvm *llvm;
 #endif
 
-   struct pipe_sampler_view *sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
-   unsigned num_sampler_views;
-   const struct pipe_sampler_state *samplers[PIPE_MAX_VERTEX_SAMPLERS];
-   unsigned num_samplers;
+   /** Texture sampler and sampler view state.
+    * Note that we have arrays indexed by shader type.  At this time
+    * we only handle vertex and geometry shaders in the draw module, but
+    * there may be more in the future (ex: hull and tessellation).
+    */
+   struct pipe_sampler_view *sampler_views[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+   unsigned num_sampler_views[PIPE_SHADER_TYPES];
+   const struct pipe_sampler_state *samplers[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+   unsigned num_samplers[PIPE_SHADER_TYPES];
 
    void *driver_private;
 };

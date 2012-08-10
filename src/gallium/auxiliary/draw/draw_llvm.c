@@ -1351,8 +1351,8 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
 
    for (i = 0 ; i < key->nr_samplers; i++) {
       lp_sampler_static_state(&sampler[i],
-			      llvm->draw->sampler_views[i],
-			      llvm->draw->samplers[i]);
+			      llvm->draw->sampler_views[PIPE_SHADER_VERTEX][i],
+			      llvm->draw->samplers[PIPE_SHADER_VERTEX][i]);
    }
 
    return key;
@@ -1394,14 +1394,16 @@ draw_llvm_set_sampler_state(struct draw_context *draw)
 {
    unsigned i;
 
-   for (i = 0; i < draw->num_samplers; i++) {
+   for (i = 0; i < draw->num_samplers[PIPE_SHADER_VERTEX]; i++) {
       struct draw_jit_texture *jit_tex = &draw->llvm->jit_context.textures[i];
 
       if (draw->samplers[i]) {
-         jit_tex->min_lod = draw->samplers[i]->min_lod;
-         jit_tex->max_lod = draw->samplers[i]->max_lod;
-         jit_tex->lod_bias = draw->samplers[i]->lod_bias;
-         COPY_4V(jit_tex->border_color, draw->samplers[i]->border_color.f);
+         const struct pipe_sampler_state *s
+            = draw->samplers[PIPE_SHADER_VERTEX][i];
+         jit_tex->min_lod = s->min_lod;
+         jit_tex->max_lod = s->max_lod;
+         jit_tex->lod_bias = s->lod_bias;
+         COPY_4V(jit_tex->border_color, s->border_color.f);
       }
    }
 }
