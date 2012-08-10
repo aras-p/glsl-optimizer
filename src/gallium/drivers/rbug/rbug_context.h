@@ -46,17 +46,11 @@ struct rbug_context {
 
    /* current state */
    struct {
-      struct rbug_shader *fs;
-      struct rbug_shader *vs;
-      struct rbug_shader *gs;
+      struct rbug_shader *shader[PIPE_SHADER_TYPES];
 
-      struct rbug_sampler_view *fs_views[PIPE_MAX_SAMPLERS];
-      struct rbug_resource *fs_texs[PIPE_MAX_SAMPLERS];
-      unsigned num_fs_views;
-
-      struct rbug_sampler_view *vs_views[PIPE_MAX_SAMPLERS];
-      struct rbug_resource *vs_texs[PIPE_MAX_SAMPLERS];
-      unsigned num_vs_views;
+      struct rbug_sampler_view *views[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+      struct rbug_resource *texs[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+      unsigned num_views[PIPE_SHADER_TYPES];
 
       unsigned nr_cbufs;
       struct rbug_resource *cbufs[PIPE_MAX_COLOR_BUFS];
@@ -71,8 +65,7 @@ struct rbug_context {
    int draw_blocked;
 
    struct {
-      struct rbug_shader *fs;
-      struct rbug_shader *vs;
+      struct rbug_shader *shader[PIPE_SHADER_TYPES];
 
       struct rbug_resource *texture;
       struct rbug_resource *surf;

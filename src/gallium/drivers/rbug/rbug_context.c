@@ -62,17 +62,21 @@ rbug_draw_block_locked(struct rbug_context *rb_pipe, int flag)
               (rb_pipe->draw_blocker & RBUG_BLOCK_RULE)) {
       int k;
       boolean block = FALSE;
+      unsigned sh;
+
       debug_printf("%s (%p %p) (%p %p) (%p %u) (%p %u)\n", __FUNCTION__,
-                   (void *) rb_pipe->draw_rule.fs, (void *) rb_pipe->curr.fs,
-                   (void *) rb_pipe->draw_rule.vs, (void *) rb_pipe->curr.vs,
+                   (void *) rb_pipe->draw_rule.shader[PIPE_SHADER_FRAGMENT],
+                   (void *) rb_pipe->curr.shader[PIPE_SHADER_FRAGMENT],
+                   (void *) rb_pipe->draw_rule.shader[PIPE_SHADER_VERTEX],
+                   (void *) rb_pipe->curr.shader[PIPE_SHADER_VERTEX],
                    (void *) rb_pipe->draw_rule.surf, 0,
                    (void *) rb_pipe->draw_rule.texture, 0);
-      if (rb_pipe->draw_rule.fs &&
-          rb_pipe->draw_rule.fs == rb_pipe->curr.fs)
-         block = TRUE;
-      if (rb_pipe->draw_rule.vs &&
-          rb_pipe->draw_rule.vs == rb_pipe->curr.vs)
-         block = TRUE;
+      for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
+         if (rb_pipe->draw_rule.shader[sh] &&
+             rb_pipe->draw_rule.shader[sh] == rb_pipe->curr.shader[sh])
+            block = TRUE;
+      }
+
       if (rb_pipe->draw_rule.surf &&
           rb_pipe->draw_rule.surf == rb_pipe->curr.zsbuf)
             block = TRUE;
@@ -81,12 +85,13 @@ rbug_draw_block_locked(struct rbug_context *rb_pipe, int flag)
             if (rb_pipe->draw_rule.surf == rb_pipe->curr.cbufs[k])
                block = TRUE;
       if (rb_pipe->draw_rule.texture) {
-         for (k = 0; k < rb_pipe->curr.num_fs_views; k++)
-            if (rb_pipe->draw_rule.texture == rb_pipe->curr.fs_texs[k])
-               block = TRUE;
-         for (k = 0; k < rb_pipe->curr.num_vs_views; k++) {
-            if (rb_pipe->draw_rule.texture == rb_pipe->curr.vs_texs[k]) {
-               block = TRUE;
+         for (sh = 0; sh < Elements(rb_pipe->curr.num_views); sh++) {
+            for (k = 0; k < rb_pipe->curr.num_views[sh]; k++) {
+               if (rb_pipe->draw_rule.texture == rb_pipe->curr.texs[sh][k]) {
+                  block = TRUE;
+                  sh = PIPE_SHADER_TYPES; /* to break out of both loops */
+                  break;
+               }
             }
          }
       }
@@ -116,9 +121,10 @@ rbug_draw_vbo(struct pipe_context *_pipe, const struct pipe_draw_info *info)
    rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_BEFORE);
 
    pipe_mutex_lock(rb_pipe->call_mutex);
-   if (!(rb_pipe->curr.fs && rb_pipe->curr.fs->disabled) &&
-       !(rb_pipe->curr.gs && rb_pipe->curr.gs->disabled) &&
-       !(rb_pipe->curr.vs && rb_pipe->curr.vs->disabled))
+   /* XXX loop over PIPE_SHADER_x here */
+   if (!(rb_pipe->curr.shader[PIPE_SHADER_FRAGMENT] && rb_pipe->curr.shader[PIPE_SHADER_FRAGMENT]->disabled) &&
+       !(rb_pipe->curr.shader[PIPE_SHADER_GEOMETRY] && rb_pipe->curr.shader[PIPE_SHADER_GEOMETRY]->disabled) &&
+       !(rb_pipe->curr.shader[PIPE_SHADER_VERTEX] && rb_pipe->curr.shader[PIPE_SHADER_VERTEX]->disabled))
       pipe->draw_vbo(pipe, info);
    pipe_mutex_unlock(rb_pipe->call_mutex);
 
@@ -412,7 +418,7 @@ rbug_bind_fs_state(struct pipe_context *_pipe,
    pipe_mutex_lock(rb_pipe->call_mutex);
 
    fs = rbug_shader_unwrap(_fs);
-   rb_pipe->curr.fs = rbug_shader(_fs);
+   rb_pipe->curr.shader[PIPE_SHADER_FRAGMENT] = rbug_shader(_fs);
    pipe->bind_fs_state(pipe,
                        fs);
 
@@ -460,7 +466,7 @@ rbug_bind_vs_state(struct pipe_context *_pipe,
    pipe_mutex_lock(rb_pipe->call_mutex);
 
    vs = rbug_shader_unwrap(_vs);
-   rb_pipe->curr.vs = rbug_shader(_vs);
+   rb_pipe->curr.shader[PIPE_SHADER_VERTEX] = rbug_shader(_vs);
    pipe->bind_vs_state(pipe,
                        vs);
 
@@ -508,7 +514,7 @@ rbug_bind_gs_state(struct pipe_context *_pipe,
    pipe_mutex_lock(rb_pipe->call_mutex);
 
    gs = rbug_shader_unwrap(_gs);
-   rb_pipe->curr.gs = rbug_shader(_gs);
+   rb_pipe->curr.shader[PIPE_SHADER_GEOMETRY] = rbug_shader(_gs);
    pipe->bind_gs_state(pipe,
                        gs);
 
@@ -713,9 +719,11 @@ rbug_set_viewport_state(struct pipe_context *_pipe,
 }
 
 static void
-rbug_set_fragment_sampler_views(struct pipe_context *_pipe,
-                                unsigned num,
-                                struct pipe_sampler_view **_views)
+rbug_set_sampler_views(struct pipe_context *_pipe,
+                       unsigned shader,
+                       unsigned start,
+                       unsigned num,
+                       struct pipe_sampler_view **_views)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
@@ -723,25 +731,36 @@ rbug_set_fragment_sampler_views(struct pipe_context *_pipe,
    struct pipe_sampler_view **views = NULL;
    unsigned i;
 
+   assert(start == 0); /* XXX fix */
+
    /* must protect curr status */
    pipe_mutex_lock(rb_pipe->call_mutex);
 
-   rb_pipe->curr.num_fs_views = 0;
-   memset(rb_pipe->curr.fs_views, 0, sizeof(rb_pipe->curr.fs_views));
-   memset(rb_pipe->curr.fs_texs, 0, sizeof(rb_pipe->curr.fs_texs));
+   rb_pipe->curr.num_views[shader] = 0;
+   memset(rb_pipe->curr.views[shader], 0, sizeof(rb_pipe->curr.views[shader]));
+   memset(rb_pipe->curr.texs[shader], 0, sizeof(rb_pipe->curr.texs[shader]));
    memset(unwrapped_views, 0, sizeof(unwrapped_views));
 
    if (_views) {
-      rb_pipe->curr.num_fs_views = num;
+      rb_pipe->curr.num_views[shader] = num;
       for (i = 0; i < num; i++) {
-         rb_pipe->curr.fs_views[i] = rbug_sampler_view(_views[i]);
-         rb_pipe->curr.fs_texs[i] = rbug_resource(_views[i] ? _views[i]->texture : NULL);
+         rb_pipe->curr.views[shader][i] = rbug_sampler_view(_views[i]);
+         rb_pipe->curr.texs[shader][i] = rbug_resource(_views[i] ? _views[i]->texture : NULL);
          unwrapped_views[i] = rbug_sampler_view_unwrap(_views[i]);
       }
       views = unwrapped_views;
    }
 
-   pipe->set_fragment_sampler_views(pipe, num, views);
+   switch (shader) {
+   case PIPE_SHADER_VERTEX:
+      pipe->set_vertex_sampler_views(pipe, num, views);
+      break;
+   case PIPE_SHADER_FRAGMENT:
+      pipe->set_fragment_sampler_views(pipe, num, views);
+      break;
+   default:
+      assert(0);
+   }
 
    pipe_mutex_unlock(rb_pipe->call_mutex);
 }
@@ -751,33 +770,15 @@ rbug_set_vertex_sampler_views(struct pipe_context *_pipe,
                               unsigned num,
                               struct pipe_sampler_view **_views)
 {
-   struct rbug_context *rb_pipe = rbug_context(_pipe);
-   struct pipe_context *pipe = rb_pipe->pipe;
-   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
-   struct pipe_sampler_view **views = NULL;
-   unsigned i;
+   rbug_set_sampler_views(_pipe, PIPE_SHADER_VERTEX, 0, num, _views);
+}
 
-   /* must protect curr status */
-   pipe_mutex_lock(rb_pipe->call_mutex);
-
-   rb_pipe->curr.num_vs_views = 0;
-   memset(rb_pipe->curr.vs_views, 0, sizeof(rb_pipe->curr.vs_views));
-   memset(rb_pipe->curr.vs_texs, 0, sizeof(rb_pipe->curr.vs_texs));
-   memset(unwrapped_views, 0, sizeof(unwrapped_views));
-
-   if (_views) {
-      rb_pipe->curr.num_vs_views = num;
-      for (i = 0; i < num; i++) {
-         rb_pipe->curr.vs_views[i] = rbug_sampler_view(_views[i]);
-         rb_pipe->curr.vs_texs[i] = rbug_resource(_views[i]->texture);
-         unwrapped_views[i] = rbug_sampler_view_unwrap(_views[i]);
-      }
-      views = unwrapped_views;
-   }
-
-   pipe->set_vertex_sampler_views(pipe, num, views);
-
-   pipe_mutex_unlock(rb_pipe->call_mutex);
+static void
+rbug_set_fragment_sampler_views(struct pipe_context *_pipe,
+                                unsigned num,
+                                struct pipe_sampler_view **_views)
+{
+   rbug_set_sampler_views(_pipe, PIPE_SHADER_FRAGMENT, 0, num, _views);
 }
 
 static void
