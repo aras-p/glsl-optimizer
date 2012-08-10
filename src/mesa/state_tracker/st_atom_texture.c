@@ -332,7 +332,23 @@ update_fragment_textures(struct st_context *st)
 }
 
 
-const struct st_tracked_state st_update_texture = {
+static void
+update_geometry_textures(struct st_context *st)
+{
+   const struct gl_context *ctx = st->ctx;
+
+   if (ctx->GeometryProgram._Current) {
+      update_textures(st,
+                      PIPE_SHADER_GEOMETRY,
+                      &ctx->GeometryProgram._Current->Base,
+                      ctx->Const.MaxTextureImageUnits,
+                      st->state.sampler_views[PIPE_SHADER_GEOMETRY],
+                      &st->state.num_sampler_views[PIPE_SHADER_GEOMETRY]);
+   }
+}
+
+
+const struct st_tracked_state st_update_fragment_texture = {
    "st_update_texture",					/* name */
    {							/* dirty */
       _NEW_TEXTURE,					/* mesa */
@@ -349,6 +365,16 @@ const struct st_tracked_state st_update_vertex_texture = {
       ST_NEW_VERTEX_PROGRAM,				/* st */
    },
    update_vertex_textures				/* update */
+};
+
+
+const struct st_tracked_state st_update_geometry_texture = {
+   "st_update_geometry_texture",			/* name */
+   {							/* dirty */
+      _NEW_TEXTURE,					/* mesa */
+      ST_NEW_GEOMETRY_PROGRAM,				/* st */
+   },
+   update_geometry_textures				/* update */
 };
 
 
