@@ -517,14 +517,14 @@ identity_set_vertex_sampler_views(struct pipe_context *_pipe,
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_view **views = NULL;
    unsigned i;
 
    if (_views) {
       for (i = 0; i < num; i++)
          unwrapped_views[i] = identity_sampler_view_unwrap(_views[i]);
-      for (; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
+      for (; i < Elements(unwrapped_views); i++)
          unwrapped_views[i] = NULL;
 
       views = unwrapped_views;

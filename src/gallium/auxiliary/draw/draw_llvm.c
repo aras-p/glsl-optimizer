@@ -164,7 +164,7 @@ create_jit_context_type(struct gallivm_state *gallivm,
                                                  DRAW_TOTAL_CLIP_PLANES), 0);
    elem_types[3] = LLVMPointerType(float_type, 0); /* viewport */
    elem_types[4] = LLVMArrayType(texture_type,
-                                 PIPE_MAX_VERTEX_SAMPLERS); /* textures */
+                                 PIPE_MAX_SAMPLERS); /* textures */
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
 #if HAVE_LLVM < 0x0300
@@ -1371,7 +1371,7 @@ draw_llvm_set_mapped_texture(struct draw_context *draw,
    unsigned j;
    struct draw_jit_texture *jit_tex;
 
-   assert(sampler_idx < PIPE_MAX_VERTEX_SAMPLERS);
+   assert(sampler_idx < Elements(draw->llvm->jit_context.textures));
 
    jit_tex = &draw->llvm->jit_context.textures[sampler_idx];
 

@@ -105,7 +105,7 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
 {
    switch (param) {
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-      return PIPE_MAX_SAMPLERS + PIPE_MAX_VERTEX_SAMPLERS;
+      return 2 * PIPE_MAX_SAMPLERS;  /* VS + FS samplers */
    case PIPE_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_CAP_TWO_SIDED_STENCIL:
@@ -234,7 +234,7 @@ llvmpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe
           * the draw module.
           */
          if (debug_get_bool_option("DRAW_USE_LLVM", TRUE))
-            return PIPE_MAX_VERTEX_SAMPLERS;
+            return PIPE_MAX_SAMPLERS;
          else
             return 0;
       default:

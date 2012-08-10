@@ -234,11 +234,11 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
    uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS];
    const void *data[PIPE_MAX_TEXTURE_LEVELS];
 
-   assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
+   assert(num <= PIPE_MAX_SAMPLERS);
    if (!num)
       return;
 
-   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
       if (view) {

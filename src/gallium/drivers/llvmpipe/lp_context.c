@@ -69,11 +69,11 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
 
    pipe_surface_reference(&llvmpipe->framebuffer.zsbuf, NULL);
 
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+   for (i = 0; i < Elements(llvmpipe->sampler_views[0]); i++) {
       pipe_sampler_view_reference(&llvmpipe->sampler_views[PIPE_SHADER_FRAGMENT][i], NULL);
    }
 
-   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
+   for (i = 0; i < Elements(llvmpipe->sampler_views[0]); i++) {
       pipe_sampler_view_reference(&llvmpipe->sampler_views[PIPE_SHADER_VERTEX][i], NULL);
    }
 

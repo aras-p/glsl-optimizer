@@ -97,7 +97,7 @@ struct draw_jit_context
    float (*planes) [DRAW_TOTAL_CLIP_PLANES][4];
    float *viewport;
 
-   struct draw_jit_texture textures[PIPE_MAX_VERTEX_SAMPLERS];
+   struct draw_jit_texture textures[PIPE_MAX_SAMPLERS];
 };
 
 
@@ -184,7 +184,7 @@ struct draw_llvm_variant_key
 
 #define DRAW_LLVM_MAX_VARIANT_KEY_SIZE \
    (sizeof(struct draw_llvm_variant_key) +	\
-    PIPE_MAX_VERTEX_SAMPLERS * sizeof(struct lp_sampler_static_state) +	\
+    PIPE_MAX_SAMPLERS * sizeof(struct lp_sampler_static_state) +	\
     (PIPE_MAX_ATTRIBS-1) * sizeof(struct pipe_vertex_element))
 
 

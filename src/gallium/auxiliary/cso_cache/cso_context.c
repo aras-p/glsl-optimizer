@@ -256,8 +256,6 @@ struct cso_context *cso_create_context( struct pipe_context *pipe )
    if (ctx == NULL)
       goto out;
 
-   assert(PIPE_MAX_SAMPLERS == PIPE_MAX_VERTEX_SAMPLERS);
-
    ctx->cache = cso_cache_create();
    if (ctx->cache == NULL)
       goto out;

@@ -67,7 +67,7 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
 {
    switch (param) {
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-      return PIPE_MAX_SAMPLERS + PIPE_MAX_VERTEX_SAMPLERS;
+      return 2 * PIPE_MAX_SAMPLERS;  /* VS + FS */
    case PIPE_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_CAP_TWO_SIDED_STENCIL:
@@ -190,7 +190,7 @@ softpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe
             /* Softpipe doesn't yet know how to tell draw/llvm about textures */
             return 0;
 	 else
-            return PIPE_MAX_VERTEX_SAMPLERS;
+            return PIPE_MAX_SAMPLERS;
       default:
 	 if (sp_screen->use_llvm)
             return draw_get_shader_param(shader, param);

@@ -54,8 +54,8 @@ struct rbug_context {
       struct rbug_resource *fs_texs[PIPE_MAX_SAMPLERS];
       unsigned num_fs_views;
 
-      struct rbug_sampler_view *vs_views[PIPE_MAX_VERTEX_SAMPLERS];
-      struct rbug_resource *vs_texs[PIPE_MAX_VERTEX_SAMPLERS];
+      struct rbug_sampler_view *vs_views[PIPE_MAX_SAMPLERS];
+      struct rbug_resource *vs_texs[PIPE_MAX_SAMPLERS];
       unsigned num_vs_views;
 
       unsigned nr_cbufs;

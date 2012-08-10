@@ -98,7 +98,7 @@ draw_llvm_texture_member(const struct lp_sampler_dynamic_state *base,
    LLVMValueRef ptr;
    LLVMValueRef res;
 
-   debug_assert(unit < PIPE_MAX_VERTEX_SAMPLERS);
+   debug_assert(unit < PIPE_MAX_SAMPLERS);
 
    /* context[0] */
    indices[0] = lp_build_const_int32(gallivm, 0);
@@ -180,7 +180,7 @@ draw_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
 {
    struct draw_llvm_sampler_soa *sampler = (struct draw_llvm_sampler_soa *)base;
 
-   assert(unit < PIPE_MAX_VERTEX_SAMPLERS);
+   assert(unit < PIPE_MAX_SAMPLERS);
 
    lp_build_sample_soa(gallivm,
                        &sampler->dynamic_state.static_state[unit],
@@ -207,7 +207,7 @@ draw_llvm_sampler_soa_emit_size_query(const struct lp_build_sampler_soa *base,
 {
    struct draw_llvm_sampler_soa *sampler = (struct draw_llvm_sampler_soa *)base;
 
-   assert(unit < PIPE_MAX_VERTEX_SAMPLERS);
+   assert(unit < PIPE_MAX_SAMPLERS);
 
    lp_build_size_query_soa(gallivm,
                            &sampler->dynamic_state.static_state[unit],

@@ -230,7 +230,7 @@ struct i915_context {
     */
    const struct i915_blend_state           *blend;
    const struct i915_sampler_state         *sampler[PIPE_MAX_SAMPLERS];
-   struct pipe_sampler_state *vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_state *vertex_samplers[PIPE_MAX_SAMPLERS];
    const struct i915_depth_stencil_state   *depth_stencil;
    const struct i915_rasterizer_state      *rasterizer;
 
@@ -250,8 +250,8 @@ struct i915_context {
 
    unsigned dirty;
 
-   struct pipe_resource *mapped_vs_tex[PIPE_MAX_VERTEX_SAMPLERS];
-   struct i915_winsys_buffer* mapped_vs_tex_buffer[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_resource *mapped_vs_tex[PIPE_MAX_SAMPLERS];
+   struct i915_winsys_buffer* mapped_vs_tex_buffer[PIPE_MAX_SAMPLERS];
 
    unsigned num_samplers;
    unsigned num_fragment_sampler_views;

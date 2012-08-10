@@ -99,7 +99,7 @@ struct st_context
       struct pipe_depth_stencil_alpha_state depth_stencil;
       struct pipe_rasterizer_state          rasterizer;
       struct pipe_sampler_state    fragment_samplers[PIPE_MAX_SAMPLERS];
-      struct pipe_sampler_state    vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
+      struct pipe_sampler_state    vertex_samplers[PIPE_MAX_SAMPLERS];
       struct pipe_clip_state clip;
       struct {
          void *ptr;
@@ -107,7 +107,7 @@ struct st_context
       } constants[PIPE_SHADER_TYPES];
       struct pipe_framebuffer_state framebuffer;
       struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
-      struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
+      struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_SAMPLERS];
       struct pipe_scissor_state scissor;
       struct pipe_viewport_state viewport;
       unsigned sample_mask;

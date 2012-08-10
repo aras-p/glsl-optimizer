@@ -86,7 +86,7 @@ struct llvmpipe_context {
       int so_count[PIPE_MAX_SO_BUFFERS];
       int num_buffers;
    } so_target;
-   struct pipe_resource *mapped_vs_tex[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_resource *mapped_vs_tex[PIPE_MAX_SAMPLERS];
 
    unsigned num_samplers[PIPE_SHADER_TYPES];
    unsigned num_sampler_views[PIPE_SHADER_TYPES];

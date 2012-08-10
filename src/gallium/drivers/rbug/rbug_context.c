@@ -753,7 +753,7 @@ rbug_set_vertex_sampler_views(struct pipe_context *_pipe,
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
-   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_view **views = NULL;
    unsigned i;
 

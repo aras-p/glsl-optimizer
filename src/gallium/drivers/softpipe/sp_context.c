@@ -216,10 +216,6 @@ softpipe_create_context( struct pipe_screen *screen,
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
    uint i, sh;
 
-   /* Check since we have arrays[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS] */
-   STATIC_ASSERT(PIPE_MAX_SAMPLERS == PIPE_MAX_VERTEX_SAMPLERS);
-   STATIC_ASSERT(PIPE_MAX_SAMPLERS == PIPE_MAX_GEOMETRY_SAMPLERS);
-
    util_init_math();
 
    softpipe->dump_fs = debug_get_bool_option( "SOFTPIPE_DUMP_FS", FALSE );
@@ -290,13 +286,13 @@ softpipe_create_context( struct pipe_screen *screen,
 
    draw_texture_samplers(softpipe->draw,
                          PIPE_SHADER_VERTEX,
-                         PIPE_MAX_VERTEX_SAMPLERS,
+                         PIPE_MAX_SAMPLERS,
                          (struct tgsi_sampler **)
                             softpipe->tgsi.samplers_list[PIPE_SHADER_VERTEX]);
 
    draw_texture_samplers(softpipe->draw,
                          PIPE_SHADER_GEOMETRY,
-                         PIPE_MAX_GEOMETRY_SAMPLERS,
+                         PIPE_MAX_SAMPLERS,
                          (struct tgsi_sampler **)
                             softpipe->tgsi.samplers_list[PIPE_SHADER_GEOMETRY]);
 

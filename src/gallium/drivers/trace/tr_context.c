@@ -998,7 +998,7 @@ trace_context_set_vertex_sampler_views(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct trace_sampler_view *tr_view;
    struct pipe_context *pipe = tr_ctx->pipe;
-   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
    unsigned i;
 
    if (!pipe->set_vertex_sampler_views)
