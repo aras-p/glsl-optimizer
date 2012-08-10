@@ -104,8 +104,9 @@ struct cso_context {
    void *blend, *blend_saved;
    void *depth_stencil, *depth_stencil_saved;
    void *rasterizer, *rasterizer_saved;
-   void *fragment_shader, *fragment_shader_saved, *geometry_shader;
-   void *vertex_shader, *vertex_shader_saved, *geometry_shader_saved;
+   void *fragment_shader, *fragment_shader_saved;
+   void *vertex_shader, *vertex_shader_saved;
+   void *geometry_shader, *geometry_shader_saved;
    void *velements, *velements_saved;
 
    struct pipe_clip_state clip;
