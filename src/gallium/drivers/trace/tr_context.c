@@ -290,11 +290,15 @@ trace_context_create_sampler_state(struct pipe_context *_pipe,
 static INLINE void
 trace_context_bind_sampler_states(struct pipe_context *_pipe,
                                   unsigned shader,
+                                  unsigned start,
                                   unsigned num_states,
                                   void **states)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
+
+   /* remove this when we have pipe->bind_sampler_states(..., start, ...) */
+   assert(start == 0);
 
    switch (shader) {
    case PIPE_SHADER_VERTEX:
@@ -337,7 +341,8 @@ trace_context_bind_fragment_sampler_states(struct pipe_context *_pipe,
                                            unsigned num,
                                            void **states)
 {
-   trace_context_bind_sampler_states(_pipe, PIPE_SHADER_FRAGMENT, num, states);
+   trace_context_bind_sampler_states(_pipe, PIPE_SHADER_FRAGMENT,
+                                     0, num, states);
 }
 
 
@@ -346,7 +351,8 @@ trace_context_bind_vertex_sampler_states(struct pipe_context *_pipe,
                                          unsigned num,
                                          void **states)
 {
-   trace_context_bind_sampler_states(_pipe, PIPE_SHADER_VERTEX, num, states);
+   trace_context_bind_sampler_states(_pipe, PIPE_SHADER_VERTEX,
+                                     0, num, states);
 }
 
 
@@ -984,6 +990,7 @@ trace_context_surface_destroy(struct pipe_context *_pipe,
 static INLINE void
 trace_context_set_sampler_views(struct pipe_context *_pipe,
                                 unsigned shader,
+                                unsigned start,
                                 unsigned num,
                                 struct pipe_sampler_view **views)
 {
@@ -992,6 +999,9 @@ trace_context_set_sampler_views(struct pipe_context *_pipe,
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
    unsigned i;
+
+   /* remove this when we have pipe->set_sampler_views(..., start, ...) */
+   assert(start == 0);
 
    for(i = 0; i < num; ++i) {
       tr_view = trace_sampler_view(views[i]);
@@ -1041,7 +1051,7 @@ trace_context_set_fragment_sampler_views(struct pipe_context *_pipe,
                                          unsigned num,
                                          struct pipe_sampler_view **views)
 {
-   trace_context_set_sampler_views(_pipe, PIPE_SHADER_FRAGMENT, num, views);
+   trace_context_set_sampler_views(_pipe, PIPE_SHADER_FRAGMENT, 0, num, views);
 }
 
 
@@ -1050,7 +1060,7 @@ trace_context_set_vertex_sampler_views(struct pipe_context *_pipe,
                                        unsigned num,
                                        struct pipe_sampler_view **views)
 {
-   trace_context_set_sampler_views(_pipe, PIPE_SHADER_VERTEX, num, views);
+   trace_context_set_sampler_views(_pipe, PIPE_SHADER_VERTEX, 0, num, views);
 }
 
 
