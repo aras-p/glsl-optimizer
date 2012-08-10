@@ -325,6 +325,7 @@ i915_bind_vertex_sampler_states(struct pipe_context *pipe,
    i915->num_vertex_samplers = num_samplers;
 
    draw_set_samplers(i915->draw,
+                     PIPE_SHADER_VERTEX,
                      i915->vertex_samplers,
                      i915->num_vertex_samplers);
 }
@@ -405,6 +406,7 @@ i915_prepare_vertex_sampling(struct i915_context *i915)
          }
 
          draw_set_mapped_texture(i915->draw,
+                                 PIPE_SHADER_VERTEX,
                                  i,
                                  tex->width0, tex->height0, tex->depth0,
                                  view->u.tex.first_level, tex->last_level,
@@ -792,6 +794,7 @@ i915_set_vertex_sampler_views(struct pipe_context *pipe,
    i915->num_vertex_sampler_views = num;
 
    draw_set_sampler_views(i915->draw,
+                          PIPE_SHADER_VERTEX,
                           i915->vertex_sampler_views,
                           i915->num_vertex_sampler_views);
 }

@@ -139,15 +139,18 @@ draw_texture_samplers(struct draw_context *draw,
 
 void
 draw_set_sampler_views(struct draw_context *draw,
+                       unsigned shader_stage,
                        struct pipe_sampler_view **views,
                        unsigned num);
 void
 draw_set_samplers(struct draw_context *draw,
+                  unsigned shader_stage,
                   struct pipe_sampler_state **samplers,
                   unsigned num);
 
 void
 draw_set_mapped_texture(struct draw_context *draw,
+                        unsigned shader_stage,
                         unsigned sampler_idx,
                         uint32_t width, uint32_t height, uint32_t depth,
                         uint32_t first_level, uint32_t last_level,

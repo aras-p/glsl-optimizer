@@ -754,45 +754,52 @@ draw_set_so_state(struct draw_context *draw,
 
 void
 draw_set_sampler_views(struct draw_context *draw,
+                       unsigned shader_stage,
                        struct pipe_sampler_view **views,
                        unsigned num)
 {
    unsigned i;
 
-   debug_assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
+   if (shader_stage == PIPE_SHADER_VERTEX) {
+      debug_assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
 
-   for (i = 0; i < num; ++i)
-      draw->sampler_views[i] = views[i];
-   for (i = num; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
-      draw->sampler_views[i] = NULL;
+      for (i = 0; i < num; ++i)
+         draw->sampler_views[i] = views[i];
+      for (i = num; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
+         draw->sampler_views[i] = NULL;
 
-   draw->num_sampler_views = num;
+      draw->num_sampler_views = num;
+   }
 }
 
 void
 draw_set_samplers(struct draw_context *draw,
+                  unsigned shader_stage,
                   struct pipe_sampler_state **samplers,
                   unsigned num)
 {
    unsigned i;
 
-   debug_assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
+   if (shader_stage == PIPE_SHADER_VERTEX) {
+      debug_assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
 
-   for (i = 0; i < num; ++i)
-      draw->samplers[i] = samplers[i];
-   for (i = num; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
-      draw->samplers[i] = NULL;
+      for (i = 0; i < num; ++i)
+         draw->samplers[i] = samplers[i];
+      for (i = num; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
+         draw->samplers[i] = NULL;
 
-   draw->num_samplers = num;
+      draw->num_samplers = num;
 
 #ifdef HAVE_LLVM
-   if (draw->llvm)
-      draw_llvm_set_sampler_state(draw);
+      if (draw->llvm)
+         draw_llvm_set_sampler_state(draw);
 #endif
+   }
 }
 
 void
 draw_set_mapped_texture(struct draw_context *draw,
+                        unsigned shader_stage,
                         unsigned sampler_idx,
                         uint32_t width, uint32_t height, uint32_t depth,
                         uint32_t first_level, uint32_t last_level,
@@ -800,12 +807,14 @@ draw_set_mapped_texture(struct draw_context *draw,
                         uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS],
                         const void *data[PIPE_MAX_TEXTURE_LEVELS])
 {
+   if (shader_stage == PIPE_SHADER_VERTEX) {
 #ifdef HAVE_LLVM
-   if(draw->llvm)
-      draw_llvm_set_mapped_texture(draw,
-                                sampler_idx,
-                                width, height, depth, first_level, last_level,
-                                row_stride, img_stride, data);
+      if (draw->llvm)
+         draw_llvm_set_mapped_texture(draw,
+                                      sampler_idx,
+                                      width, height, depth, first_level, last_level,
+                                      row_stride, img_stride, data);
+   }
 #endif
 }
 

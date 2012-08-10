@@ -90,10 +90,11 @@ softpipe_bind_sampler_states(struct pipe_context *pipe,
 
    softpipe->num_samplers[shader] = num;
 
-   if (shader == PIPE_SHADER_VERTEX) {
+   if (shader == PIPE_SHADER_VERTEX || shader == PIPE_SHADER_GEOMETRY) {
       draw_set_samplers(softpipe->draw,
-                        softpipe->samplers[PIPE_SHADER_VERTEX],
-                        softpipe->num_samplers[PIPE_SHADER_VERTEX]);
+                        shader,
+                        softpipe->samplers[shader],
+                        softpipe->num_samplers[shader]);
    }
 
    softpipe->dirty |= SP_NEW_SAMPLER;
@@ -183,10 +184,11 @@ softpipe_set_sampler_views(struct pipe_context *pipe,
 
    softpipe->num_sampler_views[shader] = num;
 
-   if (shader == PIPE_SHADER_VERTEX) {
+   if (shader == PIPE_SHADER_VERTEX || shader == PIPE_SHADER_GEOMETRY) {
       draw_set_sampler_views(softpipe->draw,
-                             softpipe->sampler_views[PIPE_SHADER_VERTEX],
-                             softpipe->num_sampler_views[PIPE_SHADER_VERTEX]);
+                             shader,
+                             softpipe->sampler_views[shader],
+                             softpipe->num_sampler_views[shader]);
    }
 
    softpipe->dirty |= SP_NEW_TEXTURE;

@@ -88,13 +88,11 @@ llvmpipe_bind_sampler_states(struct pipe_context *pipe,
 
    llvmpipe->num_samplers[shader] = num;
 
-   /* XXX call draw_set_samplers() here for geometry shaders once
-    * draw_set_samplers() is extended to accept a shader argument.
-    */
-   if (shader == PIPE_SHADER_VERTEX) {
+   if (shader == PIPE_SHADER_VERTEX || shader == PIPE_SHADER_GEOMETRY) {
       draw_set_samplers(llvmpipe->draw,
-                        llvmpipe->samplers[PIPE_SHADER_VERTEX],
-                        llvmpipe->num_samplers[PIPE_SHADER_VERTEX]);
+                        shader,
+                        llvmpipe->samplers[shader],
+                        llvmpipe->num_samplers[shader]);
    }
 
    llvmpipe->dirty |= LP_NEW_SAMPLER;
@@ -150,13 +148,11 @@ llvmpipe_set_sampler_views(struct pipe_context *pipe,
 
    llvmpipe->num_sampler_views[shader] = num;
 
-   /* XXX call draw_set_sampler_views() here for geometry shaders once
-    * draw_set_sampler_views() is extended to accept a shader argument.
-    */
-   if (shader == PIPE_SHADER_VERTEX) {
+   if (shader == PIPE_SHADER_VERTEX || shader == PIPE_SHADER_GEOMETRY) {
       draw_set_sampler_views(llvmpipe->draw,
-                             llvmpipe->sampler_views[PIPE_SHADER_VERTEX],
-                             llvmpipe->num_sampler_views[PIPE_SHADER_VERTEX]);
+                             shader,
+                             llvmpipe->sampler_views[shader],
+                             llvmpipe->num_sampler_views[shader]);
    }
 
    llvmpipe->dirty |= LP_NEW_SAMPLER_VIEW;
@@ -279,6 +275,7 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
             assert(data[0]);
          }
          draw_set_mapped_texture(lp->draw,
+                                 PIPE_SHADER_VERTEX,
                                  i,
                                  tex->width0, tex->height0, tex->depth0,
                                  view->u.tex.first_level, tex->last_level,
