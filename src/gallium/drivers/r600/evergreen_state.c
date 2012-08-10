@@ -1123,15 +1123,13 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 static void evergreen_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
 					   struct pipe_sampler_view **views)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	r600_set_sampler_views(rctx, &rctx->vs_samplers, count, views);
+	r600_set_sampler_views(ctx, PIPE_SHADER_VERTEX, 0, count, views);
 }
 
 static void evergreen_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
 					   struct pipe_sampler_view **views)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	r600_set_sampler_views(rctx, &rctx->ps_samplers, count, views);
+	r600_set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, count, views);
 }
 
 static void evergreen_set_clip_state(struct pipe_context *ctx,

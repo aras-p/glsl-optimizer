@@ -371,12 +371,29 @@ void r600_sampler_view_destroy(struct pipe_context *ctx,
 	FREE(resource);
 }
 
-static void r600_bind_samplers(struct r600_context *rctx,
-			       struct r600_textures_info *dst,
+static void r600_bind_samplers(struct pipe_context *pipe,
+                               unsigned shader,
+			       unsigned start,
 			       unsigned count, void **states)
 {
+	struct r600_context *rctx = (struct r600_context *)pipe;
+	struct r600_textures_info *dst;
 	int seamless_cube_map = -1;
 	unsigned i;
+
+	assert(start == 0); /* XXX fix below */
+
+	switch (shader) {
+	case PIPE_SHADER_VERTEX:
+		dst = &rctx->vs_samplers;
+		break;
+	case PIPE_SHADER_FRAGMENT:
+		dst = &rctx->ps_samplers;
+		break;
+	default:
+		debug_error("bad shader in r600_bind_samplers()");
+		return;
+	}
 
 	memcpy(dst->samplers, states, sizeof(void*) * count);
 	dst->n_samplers = count;
@@ -409,14 +426,12 @@ static void r600_bind_samplers(struct r600_context *rctx,
 
 void r600_bind_vs_samplers(struct pipe_context *ctx, unsigned count, void **states)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	r600_bind_samplers(rctx, &rctx->vs_samplers, count, states);
+	r600_bind_samplers(ctx, PIPE_SHADER_VERTEX, 0, count, states);
 }
 
 void r600_bind_ps_samplers(struct pipe_context *ctx, unsigned count, void **states)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	r600_bind_samplers(rctx, &rctx->ps_samplers, count, states);
+	r600_bind_samplers(ctx, PIPE_SHADER_FRAGMENT, 0, count, states);
 }
 
 void r600_delete_sampler(struct pipe_context *ctx, void *state)
@@ -545,11 +560,14 @@ void r600_sampler_views_dirty(struct r600_context *rctx,
 	}
 }
 
-void r600_set_sampler_views(struct r600_context *rctx,
-			    struct r600_textures_info *dst,
+void r600_set_sampler_views(struct pipe_context *pipe,
+			    unsigned shader,
+			    unsigned start,
 			    unsigned count,
 			    struct pipe_sampler_view **views)
 {
+	struct r600_context *rctx = (struct r600_context *) pipe;
+	struct r600_textures_info *dst;
 	struct r600_pipe_sampler_view **rviews = (struct r600_pipe_sampler_view **)views;
 	unsigned i;
 	/* This sets 1-bit for textures with index >= count. */
@@ -558,7 +576,23 @@ void r600_set_sampler_views(struct r600_context *rctx,
 	uint32_t new_mask = 0;
 
 	/* Set textures with index >= count to NULL. */
-	uint32_t remaining_mask = dst->views.enabled_mask & disable_mask;
+	uint32_t remaining_mask;
+
+	assert(start == 0); /* XXX fix below */
+
+	switch (shader) {
+	case PIPE_SHADER_VERTEX:
+		dst = &rctx->vs_samplers;
+		break;
+	case PIPE_SHADER_FRAGMENT:
+		dst = &rctx->ps_samplers;
+		break;
+	default:
+		debug_error("bad shader in r600_set_sampler_views()");
+		return;
+	}
+
+	remaining_mask = dst->views.enabled_mask & disable_mask;
 
 	while (remaining_mask) {
 		i = u_bit_scan(&remaining_mask);
