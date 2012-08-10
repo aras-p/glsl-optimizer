@@ -96,15 +96,14 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
                         const struct pipe_sampler_view *view,
                         const struct pipe_sampler_state *sampler)
 {
-   const struct pipe_resource *texture = view->texture;
+   const struct pipe_resource *texture;
 
    memset(state, 0, sizeof *state);
 
-   if(!texture)
+   if (!sampler || !view || !view->texture)
       return;
 
-   if(!sampler)
-      return;
+   texture = view->texture;
 
    /*
     * We don't copy sampler state over unless it is actually enabled, to avoid
