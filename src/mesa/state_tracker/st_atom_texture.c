@@ -312,8 +312,8 @@ update_vertex_textures(struct st_context *st)
                       PIPE_SHADER_VERTEX,
                       &ctx->VertexProgram._Current->Base,
                       ctx->Const.MaxVertexTextureImageUnits,
-                      st->state.vertex_sampler_views,
-                      &st->state.num_vertex_textures);
+                      st->state.sampler_views[PIPE_SHADER_VERTEX],
+                      &st->state.num_sampler_views[PIPE_SHADER_VERTEX]);
    }
 }
 
@@ -327,8 +327,8 @@ update_fragment_textures(struct st_context *st)
                    PIPE_SHADER_FRAGMENT,
                    &ctx->FragmentProgram._Current->Base,
                    ctx->Const.MaxTextureImageUnits,
-                   st->state.fragment_sampler_views,
-                   &st->state.num_fragment_textures);
+                   st->state.sampler_views[PIPE_SHADER_FRAGMENT],
+                   &st->state.num_sampler_views[PIPE_SHADER_FRAGMENT]);
 }
 
 

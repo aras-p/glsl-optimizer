@@ -237,7 +237,7 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
 
 static void st_destroy_context_priv( struct st_context *st )
 {
-   uint i;
+   uint shader, i;
 
    st_destroy_atoms( st );
    st_destroy_draw( st );
@@ -248,14 +248,11 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_drawpix(st);
    st_destroy_drawtex(st);
 
-   for (i = 0; i < Elements(st->state.fragment_sampler_views); i++) {
-      pipe_sampler_view_release(st->pipe,
-                                &st->state.fragment_sampler_views[i]);
-   }
-
-   for (i = 0; i < Elements(st->state.vertex_sampler_views); i++) {
-      pipe_sampler_view_release(st->pipe,
-                                &st->state.vertex_sampler_views[i]);
+   for (shader = 0; shader < Elements(st->state.sampler_views); shader++) {
+      for (i = 0; i < Elements(st->state.sampler_views[0]); i++) {
+         pipe_sampler_view_release(st->pipe,
+                                   &st->state.sampler_views[shader][i]);
+      }
    }
 
    if (st->default_texture) {
