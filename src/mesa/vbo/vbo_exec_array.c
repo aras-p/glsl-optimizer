@@ -90,8 +90,8 @@ vbo_get_minmax_index(struct gl_context *ctx,
 		     GLuint *min_index, GLuint *max_index,
 		     const GLuint count)
 {
-   const GLboolean restart = ctx->Array.PrimitiveRestart;
-   const GLuint restartIndex = ctx->Array.RestartIndex;
+   const GLboolean restart = ctx->Array._PrimitiveRestart;
+   const GLuint restartIndex = ctx->Array._RestartIndex;
    const int index_size = vbo_sizeof_ib_type(ib->type);
    const char *indices;
    GLuint i;
@@ -536,7 +536,7 @@ vbo_handle_primitive_restart(struct gl_context *ctx,
 
    if ((ib != NULL) &&
        ctx->Const.PrimitiveRestartInSoftware &&
-       ctx->Array.PrimitiveRestart) {
+       ctx->Array._PrimitiveRestart) {
       /* Handle primitive restart in software */
       vbo_sw_primitive_restart(ctx, prim, nr_prims, ib);
    } else {
@@ -572,10 +572,10 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
    prim[0].base_instance = baseInstance;
 
    /* Implement the primitive restart index */
-   if (ctx->Array.PrimitiveRestart && ctx->Array.RestartIndex < count) {
+   if (ctx->Array._PrimitiveRestart && ctx->Array._RestartIndex < count) {
       GLuint primCount = 0;
 
-      if (ctx->Array.RestartIndex == start) {
+      if (ctx->Array._RestartIndex == start) {
          /* special case: RestartIndex at beginning */
          if (count > 1) {
             prim[0].start = start + 1;
@@ -583,7 +583,7 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
             primCount = 1;
          }
       }
-      else if (ctx->Array.RestartIndex == start + count - 1) {
+      else if (ctx->Array._RestartIndex == start + count - 1) {
          /* special case: RestartIndex at end */
          if (count > 1) {
             prim[0].start = start;
@@ -594,10 +594,10 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
       else {
          /* general case: RestartIndex in middle, split into two prims */
          prim[0].start = start;
-         prim[0].count = ctx->Array.RestartIndex - start;
+         prim[0].count = ctx->Array._RestartIndex - start;
 
          prim[1] = prim[0];
-         prim[1].start = ctx->Array.RestartIndex + 1;
+         prim[1].start = ctx->Array._RestartIndex + 1;
          prim[1].count = count - prim[1].start;
 
          primCount = 2;

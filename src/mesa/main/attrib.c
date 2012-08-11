@@ -1377,7 +1377,10 @@ copy_array_attrib(struct gl_context *ctx,
    dest->LockFirst = src->LockFirst;
    dest->LockCount = src->LockCount;
    dest->PrimitiveRestart = src->PrimitiveRestart;
+   dest->PrimitiveRestartFixedIndex = src->PrimitiveRestartFixedIndex;
+   dest->_PrimitiveRestart = src->_PrimitiveRestart;
    dest->RestartIndex = src->RestartIndex;
+   dest->_RestartIndex = src->_RestartIndex;
    /* skip NewState */
    /* skip RebindArrays */
 

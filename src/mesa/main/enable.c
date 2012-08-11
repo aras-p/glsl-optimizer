@@ -48,6 +48,20 @@
    }
 
 
+static void
+update_derived_primitive_restart_state(struct gl_context *ctx)
+{
+   /* Update derived primitive restart state.
+    */
+   if (ctx->Array.PrimitiveRestart)
+      ctx->Array._RestartIndex = ctx->Array.RestartIndex;
+   else
+      ctx->Array._RestartIndex = ~0;
+
+   ctx->Array._PrimitiveRestart = ctx->Array.PrimitiveRestart
+      || ctx->Array.PrimitiveRestartFixedIndex;
+}
+
 /**
  * Helper to enable/disable client-side state.
  */
@@ -118,6 +132,8 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
    _ae_invalidate_state(ctx, _NEW_ARRAY);
 
    *var = state;
+
+   update_derived_primitive_restart_state(ctx);
 
    if (state)
       arrayObj->_Enabled |= flag;
@@ -967,6 +983,17 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          if (ctx->Array.PrimitiveRestart != state) {
             FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
             ctx->Array.PrimitiveRestart = state;
+            update_derived_primitive_restart_state(ctx);
+         }
+         break;
+
+      case GL_PRIMITIVE_RESTART_FIXED_INDEX:
+	 if (!_mesa_is_gles3(ctx) && !ctx->Extensions.ARB_ES3_compatibility)
+            goto invalid_enum_error;
+         if (ctx->Array.PrimitiveRestartFixedIndex != state) {
+            FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
+            ctx->Array.PrimitiveRestartFixedIndex = state;
+            update_derived_primitive_restart_state(ctx);
          }
          break;
 
@@ -1541,6 +1568,12 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
          }
          return ctx->Array.PrimitiveRestart;
+
+      case GL_PRIMITIVE_RESTART_FIXED_INDEX:
+	 if (!_mesa_is_gles3(ctx) && !ctx->Extensions.ARB_ES3_compatibility) {
+            goto invalid_enum_error;
+         }
+         return ctx->Array.PrimitiveRestartFixedIndex;
 
       /* GL3.0 - GL_framebuffer_sRGB */
       case GL_FRAMEBUFFER_SRGB_EXT:

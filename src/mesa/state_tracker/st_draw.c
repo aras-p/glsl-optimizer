@@ -230,8 +230,8 @@ st_draw_vbo(struct gl_context *ctx,
       /* The VBO module handles restart for the non-indexed GLDrawArrays
        * so we only set these fields for indexed drawing:
        */
-      info.primitive_restart = ctx->Array.PrimitiveRestart;
-      info.restart_index = ctx->Array.RestartIndex;
+      info.primitive_restart = ctx->Array._PrimitiveRestart;
+      info.restart_index = ctx->Array._RestartIndex;
    }
    else {
       /* Transform feedback drawing is always non-indexed. */

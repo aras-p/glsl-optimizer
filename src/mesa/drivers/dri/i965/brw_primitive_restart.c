@@ -52,13 +52,13 @@ can_cut_index_handle_restart_index(struct gl_context *ctx,
 
    switch (ib->type) {
    case GL_UNSIGNED_BYTE:
-      cut_index_will_work = (ctx->Array.RestartIndex & 0xff) == 0xff;
+      cut_index_will_work = (ctx->Array._RestartIndex & 0xff) == 0xff;
       break;
    case GL_UNSIGNED_SHORT:
-      cut_index_will_work = (ctx->Array.RestartIndex & 0xffff) == 0xffff;
+      cut_index_will_work = (ctx->Array._RestartIndex & 0xffff) == 0xffff;
       break;
    case GL_UNSIGNED_INT:
-      cut_index_will_work = ctx->Array.RestartIndex == 0xffffffff;
+      cut_index_will_work = ctx->Array._RestartIndex == 0xffffffff;
       break;
    default:
       cut_index_will_work = false;
@@ -157,7 +157,7 @@ brw_handle_primitive_restart(struct gl_context *ctx,
    /* If PrimitiveRestart is not enabled, then we aren't concerned about
     * handling this draw.
     */
-   if (!(ctx->Array.PrimitiveRestart)) {
+   if (!(ctx->Array._PrimitiveRestart)) {
       return GL_FALSE;
    }
 

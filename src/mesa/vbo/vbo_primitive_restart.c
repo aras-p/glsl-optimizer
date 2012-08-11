@@ -171,7 +171,7 @@ vbo_sw_primitive_restart(struct gl_context *ctx,
    GLuint sub_prim_num;
    GLuint end_index;
    GLuint sub_end_index;
-   GLuint restart_index = ctx->Array.RestartIndex;
+   GLuint restart_index = ctx->Array._RestartIndex;
    struct _mesa_prim temp_prim;
    struct vbo_context *vbo = vbo_context(ctx);
    vbo_draw_func draw_prims_func = vbo->draw_prims;
