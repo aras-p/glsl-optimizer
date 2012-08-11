@@ -805,10 +805,6 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
             _mesa_TexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                                 samp->MaxAnisotropy);
          }
-         if (ctx->Extensions.ARB_shadow_ambient) {
-            _mesa_TexParameterf(target, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB,
-                                samp->CompareFailValue);
-         }
          if (ctx->Extensions.ARB_shadow) {
             _mesa_TexParameteri(target, GL_TEXTURE_COMPARE_MODE,
                                 samp->CompareMode);

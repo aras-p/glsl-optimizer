@@ -3345,34 +3345,33 @@ sample_lambda_1d_array(struct gl_context *ctx,
 
 
 /**
- * Compare texcoord against depth sample.  Return 1.0 or the ambient value.
+ * Compare texcoord against depth sample.  Return 1.0 or 0.0 value.
  */
 static inline GLfloat
-shadow_compare(GLenum function, GLfloat coord, GLfloat depthSample,
-               GLfloat ambient)
+shadow_compare(GLenum function, GLfloat coord, GLfloat depthSample)
 {
    switch (function) {
    case GL_LEQUAL:
-      return (coord <= depthSample) ? 1.0F : ambient;
+      return (coord <= depthSample) ? 1.0F : 0.0F;
    case GL_GEQUAL:
-      return (coord >= depthSample) ? 1.0F : ambient;
+      return (coord >= depthSample) ? 1.0F : 0.0F;
    case GL_LESS:
-      return (coord < depthSample) ? 1.0F : ambient;
+      return (coord < depthSample) ? 1.0F : 0.0F;
    case GL_GREATER:
-      return (coord > depthSample) ? 1.0F : ambient;
+      return (coord > depthSample) ? 1.0F : 0.0F;
    case GL_EQUAL:
-      return (coord == depthSample) ? 1.0F : ambient;
+      return (coord == depthSample) ? 1.0F : 0.0F;
    case GL_NOTEQUAL:
-      return (coord != depthSample) ? 1.0F : ambient;
+      return (coord != depthSample) ? 1.0F : 0.0F;
    case GL_ALWAYS:
       return 1.0F;
    case GL_NEVER:
-      return ambient;
+      return 0.0F;
    case GL_NONE:
       return depthSample;
    default:
       _mesa_problem(NULL, "Bad compare func in shadow_compare");
-      return ambient;
+      return 0.0F;
    }
 }
 
@@ -3384,9 +3383,9 @@ static inline GLfloat
 shadow_compare4(GLenum function, GLfloat coord,
                 GLfloat depth00, GLfloat depth01,
                 GLfloat depth10, GLfloat depth11,
-                GLfloat ambient, GLfloat wi, GLfloat wj)
+                GLfloat wi, GLfloat wj)
 {
-   const GLfloat d = (1.0F - (GLfloat) ambient) * 0.25F;
+   const GLfloat d = 0.25F;
    GLfloat luminance = 1.0F;
 
    switch (function) {
@@ -3429,13 +3428,13 @@ shadow_compare4(GLenum function, GLfloat coord,
    case GL_ALWAYS:
       return 1.0F;
    case GL_NEVER:
-      return ambient;
+      return 0.0F;
    case GL_NONE:
       /* ordinary bilinear filtering */
       return lerp_2d(wi, wj, depth00, depth10, depth01, depth11);
    default:
       _mesa_problem(NULL, "Bad compare func in sample_compare4");
-      return ambient;
+      return 0.0F;
    }
 }
 
@@ -3483,7 +3482,6 @@ sample_depth_texture( struct gl_context *ctx,
    const GLint depth = img->Depth;
    const GLuint compare_coord = (tObj->Target == GL_TEXTURE_2D_ARRAY_EXT)
        ? 3 : 2;
-   GLfloat ambient;
    GLenum function;
    GLfloat result;
 
@@ -3496,8 +3494,6 @@ sample_depth_texture( struct gl_context *ctx,
           tObj->Target == GL_TEXTURE_1D_ARRAY_EXT ||
           tObj->Target == GL_TEXTURE_2D_ARRAY_EXT ||
           tObj->Target == GL_TEXTURE_CUBE_MAP);
-
-   ambient = samp->CompareFailValue;
 
    /* XXXX if samp->MinFilter != samp->MagFilter, we're ignoring lambda */
 
@@ -3522,7 +3518,7 @@ sample_depth_texture( struct gl_context *ctx,
 
          depthRef = CLAMP(texcoords[i][compare_coord], 0.0F, 1.0F);
 
-         result = shadow_compare(function, depthRef, depthSample, ambient);
+         result = shadow_compare(function, depthRef, depthSample);
 
          switch (tObj->DepthMode) {
          case GL_LUMINANCE:
@@ -3617,7 +3613,7 @@ sample_depth_texture( struct gl_context *ctx,
 
          result = shadow_compare4(function, depthRef,
                                   depth00, depth01, depth10, depth11,
-                                  ambient, wi, wj);
+                                  wi, wj);
 
          switch (tObj->DepthMode) {
          case GL_LUMINANCE:

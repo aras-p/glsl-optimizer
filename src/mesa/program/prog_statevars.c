@@ -551,22 +551,6 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
          value[3] = ctx->Pixel.AlphaBias;
          return;
 
-      case STATE_SHADOW_AMBIENT:
-         {
-            const int unit = (int) state[2];
-            const struct gl_texture_object *texObj
-               = ctx->Texture.Unit[unit]._Current;
-            const struct gl_sampler_object *samp =
-               _mesa_get_samplerobj(ctx, unit);
-            if (texObj) {
-               value[0] =
-               value[1] =
-               value[2] =
-               value[3] = samp->CompareFailValue;
-            }
-         }
-         return;
-
       case STATE_FB_SIZE:
          value[0] = (GLfloat) (ctx->DrawBuffer->Width - 1);
          value[1] = (GLfloat) (ctx->DrawBuffer->Height - 1);
@@ -702,7 +686,6 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
          return _NEW_MODELVIEW;
 
       case STATE_TEXRECT_SCALE:
-      case STATE_SHADOW_AMBIENT:
       case STATE_ROT_MATRIX_0:
       case STATE_ROT_MATRIX_1:
 	 return _NEW_TEXTURE;
@@ -917,9 +900,6 @@ append_token(char *dst, gl_state_index k)
       break;
    case STATE_PT_BIAS:
       append(dst, "PTbias");
-      break;
-   case STATE_SHADOW_AMBIENT:
-      append(dst, "CompareFailValue");
       break;
    case STATE_FB_SIZE:
       append(dst, "FbSize");

@@ -37,17 +37,8 @@ static struct rc_src_register shadow_fail_value(struct r300_fragment_program_com
 {
 	struct rc_src_register reg = { 0, 0, 0, 0, 0, 0 };
 
-	if (compiler->enable_shadow_ambient) {
-		reg.File = RC_FILE_CONSTANT;
-		reg.Index = rc_constants_add_state(&compiler->Base.Program.Constants,
-						   RC_STATE_SHADOW_AMBIENT, tmu);
-		reg.Swizzle = RC_SWIZZLE_WWWW;
-	} else {
-		reg.File = RC_FILE_NONE;
-		reg.Swizzle = RC_SWIZZLE_0000;
-	}
-
-	reg.Swizzle = combine_swizzles(reg.Swizzle,
+	reg.File = RC_FILE_NONE;
+	reg.Swizzle = combine_swizzles(RC_SWIZZLE_0000,
 				compiler->state.unit[tmu].texture_swizzle);
 	return reg;
 }

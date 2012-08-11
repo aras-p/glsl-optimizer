@@ -114,7 +114,6 @@ struct r300_fragment_program_compiler {
 	struct rX00_fragment_program_code *code;
 	/* Optional transformations and features. */
 	struct r300_fragment_program_external_state state;
-	unsigned enable_shadow_ambient;
 	/* Register corresponding to the depthbuffer. */
 	unsigned OutputDepth;
 	/* Registers corresponding to the four colorbuffers. */

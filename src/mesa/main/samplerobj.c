@@ -130,7 +130,6 @@ _mesa_init_sampler_object(struct gl_sampler_object *sampObj, GLuint name)
    sampObj->MaxAnisotropy = 1.0F;
    sampObj->CompareMode = GL_NONE;
    sampObj->CompareFunc = GL_LEQUAL;
-   sampObj->CompareFailValue = 0.0;
    sampObj->sRGBDecode = GL_DECODE_EXT;
    sampObj->CubeMapSeamless = GL_FALSE;
 }

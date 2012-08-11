@@ -1250,7 +1250,6 @@ struct gl_sampler_object
    GLfloat MaxAnisotropy;	/**< GL_EXT_texture_filter_anisotropic */
    GLenum CompareMode;		/**< GL_ARB_shadow */
    GLenum CompareFunc;		/**< GL_ARB_shadow */
-   GLfloat CompareFailValue;    /**< GL_ARB_shadow_ambient */
    GLenum sRGBDecode;           /**< GL_DECODE_EXT or GL_SKIP_DECODE_EXT */
    GLboolean CubeMapSeamless;   /**< GL_AMD_seamless_cubemap_per_texture */
 };
@@ -2972,7 +2971,6 @@ struct gl_extensions
    GLboolean ARB_shader_texture_lod;
    GLboolean ARB_shading_language_100;
    GLboolean ARB_shadow;
-   GLboolean ARB_shadow_ambient;
    GLboolean ARB_sync;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_buffer_object;

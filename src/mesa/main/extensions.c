@@ -120,7 +120,6 @@ static const struct extension extension_table[] = {
    { "GL_ARB_shader_stencil_export",               o(ARB_shader_stencil_export),               GL,             2009 },
    { "GL_ARB_shader_texture_lod",                  o(ARB_shader_texture_lod),                  GL,             2009 },
    { "GL_ARB_shading_language_100",                o(ARB_shading_language_100),                GLL,            2003 },
-   { "GL_ARB_shadow_ambient",                      o(ARB_shadow_ambient),                      GL,             2001 },
    { "GL_ARB_shadow",                              o(ARB_shadow),                              GLL,            2001 },
    { "GL_ARB_sync",                                o(ARB_sync),                                GL,             2003 },
    { "GL_ARB_texture_border_clamp",                o(ARB_texture_border_clamp),                GLL,            2000 },
@@ -427,7 +426,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
 #endif
    ctx->Extensions.ARB_shadow = GL_TRUE;
-   ctx->Extensions.ARB_shadow_ambient = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE;
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;

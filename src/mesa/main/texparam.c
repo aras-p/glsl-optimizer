@@ -541,20 +541,6 @@ set_tex_parameterf(struct gl_context *ctx,
       }
       return GL_FALSE;
 
-   case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
-      if (ctx->Extensions.ARB_shadow_ambient) {
-         if (texObj->Sampler.CompareFailValue != params[0]) {
-            flush(ctx);
-            texObj->Sampler.CompareFailValue = CLAMP(params[0], 0.0F, 1.0F);
-            return GL_TRUE;
-         }
-      }
-      else {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                    "glTexParameter(pname=GL_TEXTURE_COMPARE_FAIL_VALUE_ARB)");
-      }
-      return GL_FALSE;
-
    case GL_TEXTURE_LOD_BIAS:
       /* NOTE: this is really part of OpenGL 1.4, not EXT_texture_lod_bias */
       if (texObj->Sampler.LodBias != params[0]) {
@@ -1136,11 +1122,6 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
             goto invalid_pname;
          *params = obj->Sampler.MaxAnisotropy;
          break;
-      case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
-         if (!ctx->Extensions.ARB_shadow_ambient)
-            goto invalid_pname;
-         *params = obj->Sampler.CompareFailValue;
-         break;
       case GL_GENERATE_MIPMAP_SGIS:
 	 *params = (GLfloat) obj->GenerateMipmap;
          break;
@@ -1281,11 +1262,6 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          if (!ctx->Extensions.EXT_texture_filter_anisotropic)
             goto invalid_pname;
          *params = (GLint) obj->Sampler.MaxAnisotropy;
-         break;
-      case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
-         if (!ctx->Extensions.ARB_shadow_ambient)
-            goto invalid_pname;
-         *params = (GLint) FLOAT_TO_INT(obj->Sampler.CompareFailValue);
          break;
       case GL_GENERATE_MIPMAP_SGIS:
 	 *params = (GLint) obj->GenerateMipmap;
