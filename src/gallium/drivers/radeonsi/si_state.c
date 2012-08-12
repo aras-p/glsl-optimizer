@@ -2004,32 +2004,22 @@ static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pipe_sampler_state **rstates = (struct si_pipe_sampler_state **)states;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
-	struct si_resource *bo;
-	uint64_t va;
-	char *ptr;
-	int i;
+	int i, j;
 
 	if (!count)
 		goto out;
 
 	si_pm4_inval_texture_cache(pm4);
 
-	bo = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE,
-				       count * sizeof(rstates[0]->val));
-	ptr = rctx->ws->buffer_map(bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
-
-	for (i = 0; i < count; i++, ptr += sizeof(rstates[0]->val)) {
-		memcpy(ptr, rstates[i]->val, sizeof(rstates[0]->val));
+	si_pm4_sh_data_begin(pm4);
+	for (i = 0; i < count; i++) {
+		for (j = 0; j < Elements(rstates[i]->val); ++j) {
+			si_pm4_sh_data_add(pm4, rstates[i]->val[j]);
+		}
 	}
-
-	rctx->ws->buffer_unmap(bo->cs_buf);
+	si_pm4_sh_data_end(pm4, R_00B038_SPI_SHADER_USER_DATA_PS_2);
 
 	memcpy(rctx->ps_samplers.samplers, states, sizeof(void*) * count);
-
-	va = r600_resource_va(ctx->screen, (void *)bo);
-	si_pm4_add_bo(pm4, bo, RADEON_USAGE_READ);
-	si_pm4_set_reg(pm4, R_00B038_SPI_SHADER_USER_DATA_PS_2, va);
-	si_pm4_set_reg(pm4, R_00B03C_SPI_SHADER_USER_DATA_PS_3, va >> 32);
 
 out:
 	si_pm4_set_state(rctx, ps_sampler, pm4);
