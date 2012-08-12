@@ -1958,22 +1958,16 @@ static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pipe_sampler_view **resource = (struct si_pipe_sampler_view **)views;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
-	struct si_resource *bo;
-	int i;
+	int i, j;
 	int has_depth = 0;
-	uint64_t va;
-	char *ptr;
 
 	if (!count)
 		goto out;
 
 	si_pm4_inval_texture_cache(pm4);
 
-	bo = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE,
-				       count * sizeof(resource[0]->state));
-	ptr = rctx->ws->buffer_map(bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
-
-	for (i = 0; i < count; i++, ptr += sizeof(resource[0]->state)) {
+	si_pm4_sh_data_begin(pm4);
+	for (i = 0; i < count; i++) {
 		struct r600_resource_texture *tex = (void *)resource[i]->base.texture;
 
 		pipe_sampler_view_reference(
@@ -1982,26 +1976,17 @@ static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 
 		si_pm4_add_bo(pm4, &tex->resource, RADEON_USAGE_READ);
 
-		if (resource[i]) {
-			if (tex->depth)
-				has_depth = 1;
-
-			memcpy(ptr, resource[i]->state, sizeof(resource[0]->state));
-		} else
-			memset(ptr, 0, sizeof(resource[0]->state));
+		for (j = 0; j < Elements(resource[i]->state); ++j) {
+			si_pm4_sh_data_add(pm4, resource[i]->state[j]);
+		}
 	}
-
-	rctx->ws->buffer_unmap(bo->cs_buf);
 
 	for (i = count; i < NUM_TEX_UNITS; i++) {
 		if (rctx->ps_samplers.views[i])
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
 	}
 
-	va = r600_resource_va(ctx->screen, (void *)bo);
-	si_pm4_add_bo(pm4, bo, RADEON_USAGE_READ);
-	si_pm4_set_reg(pm4, R_00B040_SPI_SHADER_USER_DATA_PS_4, va);
-	si_pm4_set_reg(pm4, R_00B044_SPI_SHADER_USER_DATA_PS_5, va >> 32);
+	si_pm4_sh_data_end(pm4, R_00B040_SPI_SHADER_USER_DATA_PS_4);
 
 out:
 	si_pm4_set_state(rctx, ps_sampler_views, pm4);
