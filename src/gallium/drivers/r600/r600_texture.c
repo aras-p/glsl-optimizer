@@ -257,7 +257,6 @@ static const struct u_resource_vtbl r600_texture_vtbl =
 static struct r600_resource_texture *
 r600_texture_create_object(struct pipe_screen *screen,
 			   const struct pipe_resource *base,
-			   unsigned array_mode,
 			   unsigned pitch_in_bytes_override,
 			   struct pb_buffer *buf,
 			   boolean alloc_bo,
@@ -335,7 +334,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	if (r) {
 		return NULL;
 	}
-	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
+	return (struct pipe_resource *)r600_texture_create_object(screen, templ,
 								  0, NULL, TRUE, &surface);
 }
 
@@ -405,7 +404,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	if (r) {
 		return NULL;
 	}
-	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
+	return (struct pipe_resource *)r600_texture_create_object(screen, templ,
 								  stride, buf, FALSE, &surface);
 }
 
