@@ -159,11 +159,21 @@ emit_fetch_temporary(
 {
 	struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
 	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+	if (swizzle == ~0) {
+		LLVMValueRef values[TGSI_NUM_CHANNELS] = {};
+		unsigned chan;
+		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+			values[chan] = emit_fetch_temporary(bld_base, reg, type, chan);
+		}
+		return lp_build_gather_values(bld_base->base.gallivm, values,
+						TGSI_NUM_CHANNELS);
+	}
+
 	if (reg->Register.Indirect) {
 		LLVMValueRef array_index = emit_array_index(bld, reg, swizzle);
 		LLVMValueRef ptr = LLVMBuildGEP(builder, bld->temps_array, &array_index,
 						1, "");
-	return LLVMBuildLoad(builder, ptr, "");
+		return LLVMBuildLoad(builder, ptr, "");
 	} else {
 		LLVMValueRef temp_ptr;
 		temp_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index, swizzle);
