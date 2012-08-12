@@ -61,7 +61,8 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 					unsigned level, unsigned layer)
 {
-	return rtex->offset[level] + layer * rtex->layer_size[level];
+	return rtex->surface.level[level].offset +
+	       layer * rtex->surface.level[level].slice_size;
 }
 
 static int r600_init_surface(struct r600_screen *rscreen,
@@ -182,9 +183,6 @@ static int r600_setup_surface(struct pipe_screen *screen,
 		}
 	}
 	for (i = 0; i <= ptex->last_level; i++) {
-		rtex->offset[i] = rtex->surface.level[i].offset;
-		rtex->layer_size[i] = rtex->surface.level[i].slice_size;
-		rtex->pitch_in_bytes[i] = rtex->surface.level[i].pitch_bytes;
 		switch (rtex->surface.level[i].mode) {
 		case RADEON_SURF_MODE_LINEAR_ALIGNED:
 			rtex->array_mode[i] = V_038000_ARRAY_LINEAR_ALIGNED;
@@ -223,10 +221,10 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 				       surface->tile_split,
 				       surface->stencil_tile_split,
 				       surface->mtilea,
-				       rtex->pitch_in_bytes[0]);
+				       rtex->surface.level[0].pitch_bytes);
 
 	return rscreen->ws->buffer_get_handle(resource->buf,
-					      rtex->pitch_in_bytes[0], whandle);
+					      rtex->surface.level[0].pitch_bytes, whandle);
 }
 
 static void r600_texture_destroy(struct pipe_screen *screen,
@@ -277,7 +275,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 	pipe_reference_init(&resource->b.b.reference, 1);
 	resource->b.b.screen = screen;
 	rtex->pitch_override = pitch_in_bytes_override;
-	rtex->real_format = base->format;
 
 	/* don't include stencil-only formats which we don't support for rendering */
 	rtex->is_depth = util_format_has_depth(util_format_description(rtex->resource.b.b.format));
@@ -519,7 +516,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 					   box->z, box->z + box->depth - 1,
 					   0, 0);
 
-		trans->transfer.stride = staging_depth->pitch_in_bytes[level];
+		trans->transfer.stride = staging_depth->surface.level[level].pitch_bytes;
 		trans->offset = r600_texture_get_offset(staging_depth, level, box->z);
 		trans->staging = (struct r600_resource*)staging_depth;
 		return &trans->transfer;
@@ -555,7 +552,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		}
 
 		trans->transfer.stride =
-			((struct r600_resource_texture *)trans->staging)->pitch_in_bytes[0];
+			((struct r600_resource_texture *)trans->staging)->surface.level[0].pitch_bytes;
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
 			/* Always referenced in the blit. */
@@ -563,8 +560,8 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		}
 		return &trans->transfer;
 	}
-	trans->transfer.stride = rtex->pitch_in_bytes[level];
-	trans->transfer.layer_stride = rtex->layer_size[level];
+	trans->transfer.stride = rtex->surface.level[level].pitch_bytes;
+	trans->transfer.layer_stride = rtex->surface.level[level].slice_size;
 	trans->offset = r600_texture_get_offset(rtex, level, box->z);
 	return &trans->transfer;
 }

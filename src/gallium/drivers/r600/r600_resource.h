@@ -45,14 +45,6 @@ struct r600_resource_global {
 struct r600_resource_texture {
 	struct r600_resource		resource;
 
-	/* If this resource is a depth-stencil buffer on evergreen, this contains
-	 * the depth part of the format. There is a separate stencil resource
-	 * for the stencil buffer below. */
-	enum pipe_format		real_format;
-
-	unsigned			offset[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned			pitch_in_bytes[PIPE_MAX_TEXTURE_LEVELS];  /* transfer */
-	unsigned			layer_size[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			array_mode[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			pitch_override;
 	unsigned			size;

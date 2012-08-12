@@ -523,7 +523,7 @@ void evergreen_set_tex_resource(
 	depth = view->base.texture->depth0;
 
 	pitch = align(tmp->surface.level[0].nblk_x *
-		util_format_get_blockwidth(tmp->real_format), 8);
+		util_format_get_blockwidth(tmp->resource.b.b.format), 8);
 	array_mode = tmp->array_mode[0];
 	tile_type = tmp->tile_type;
 
@@ -540,8 +540,8 @@ void evergreen_set_tex_resource(
 	evergreen_emit_raw_value(res, (S_030004_TEX_HEIGHT(height - 1) |
 				S_030004_TEX_DEPTH(depth - 1) |
 				S_030004_ARRAY_MODE(array_mode)));
-	evergreen_emit_raw_value(res, tmp->offset[0] >> 8);
-	evergreen_emit_raw_value(res, tmp->offset[0] >> 8);
+	evergreen_emit_raw_value(res, tmp->surface.level[0].offset >> 8);
+	evergreen_emit_raw_value(res, tmp->surface.level[0].offset >> 8);
 	evergreen_emit_raw_value(res, (word4 |
 				S_030010_SRF_MODE_ALL(V_030010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
 				S_030010_ENDIAN_SWAP(endian) |
@@ -558,7 +558,9 @@ void evergreen_set_tex_resource(
 
 	res->usage = RADEON_USAGE_READ;
 
-	res->coher_bo_size = tmp->offset[0] + util_format_get_blockwidth(tmp->real_format)*view->base.texture->width0*height*depth;
+	res->coher_bo_size = tmp->surface.level[0].offset +
+			     util_format_get_blockwidth(tmp->resource.b.b.format) *
+			     view->base.texture->width0*height*depth;
 
 	r600_inval_texture_cache(pipe->ctx);
 

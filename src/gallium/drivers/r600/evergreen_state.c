@@ -1090,11 +1090,11 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	view->tex_resource_words[1] = (S_030004_TEX_HEIGHT(height - 1) |
 				       S_030004_TEX_DEPTH(depth - 1) |
 				       S_030004_ARRAY_MODE(array_mode));
-	view->tex_resource_words[2] = (tmp->offset[0] + r600_resource_va(ctx->screen, texture)) >> 8;
+	view->tex_resource_words[2] = (tmp->surface.level[0].offset + r600_resource_va(ctx->screen, texture)) >> 8;
 	if (state->u.tex.last_level && texture->nr_samples <= 1) {
-		view->tex_resource_words[3] = (tmp->offset[1] + r600_resource_va(ctx->screen, texture)) >> 8;
+		view->tex_resource_words[3] = (tmp->surface.level[1].offset + r600_resource_va(ctx->screen, texture)) >> 8;
 	} else {
-		view->tex_resource_words[3] = (tmp->offset[0] + r600_resource_va(ctx->screen, texture)) >> 8;
+		view->tex_resource_words[3] = (tmp->surface.level[0].offset + r600_resource_va(ctx->screen, texture)) >> 8;
 	}
 	view->tex_resource_words[4] = (word4 |
 				       S_030010_SRF_MODE_ALL(V_030010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
