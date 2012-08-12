@@ -394,9 +394,7 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 	struct pipe_context *ctx = &rctx->context;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	bool bound[PIPE_MAX_ATTRIBS] = {};
-	struct si_resource *t_list_buffer;
 	unsigned i, count;
-	uint32_t *ptr;
 	uint64_t va;
 
 	si_pm4_inval_vertex_cache(pm4);
@@ -405,19 +403,8 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 	count = rctx->vertex_elements->count;
 	assert(count <= 256 / 4);
 
-	t_list_buffer = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE,
-						  4 * 4 * count);
-	if (t_list_buffer == NULL) {
-		FREE(pm4);
-		return;
-	}
-	si_pm4_add_bo(pm4, t_list_buffer, RADEON_USAGE_READ);
-
-	ptr = (uint32_t*)rctx->ws->buffer_map(t_list_buffer->cs_buf,
-					      rctx->cs,
-					      PIPE_TRANSFER_WRITE);
-
-	for (i = 0 ; i < count; i++, ptr += 4) {
+	si_pm4_sh_data_begin(pm4);
+	for (i = 0 ; i < count; i++) {
 		struct pipe_vertex_element *ve = &rctx->vertex_elements->elements[i];
 		struct pipe_vertex_buffer *vb;
 		struct si_resource *rbuffer;
@@ -439,24 +426,19 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 		va += offset;
 
 		/* Fill in T# buffer resource description */
-		ptr[0] = va & 0xFFFFFFFF;
-		ptr[1] = (S_008F04_BASE_ADDRESS_HI(va >> 32) |
-			  S_008F04_STRIDE(vb->stride));
-		if (vb->stride > 0)
-			ptr[2] = (vb->buffer->width0 - offset) / vb->stride;
-		else
-			ptr[2] = vb->buffer->width0 - offset;
-		ptr[3] = rctx->vertex_elements->rsrc_word3[i];
+		si_pm4_sh_data_add(pm4, va & 0xFFFFFFFF);
+		si_pm4_sh_data_add(pm4, (S_008F04_BASE_ADDRESS_HI(va >> 32) |
+					 S_008F04_STRIDE(vb->stride)));
+		si_pm4_sh_data_add(pm4, (vb->buffer->width0 - offset) /
+					 MAX2(vb->stride, 1));
+		si_pm4_sh_data_add(pm4, rctx->vertex_elements->rsrc_word3[i]);
 
 		if (!bound[ve->vertex_buffer_index]) {
 			si_pm4_add_bo(pm4, rbuffer, RADEON_USAGE_READ);
 			bound[ve->vertex_buffer_index] = true;
 		}
 	}
-
-	va = r600_resource_va(ctx->screen, (void*)t_list_buffer);
-	si_pm4_set_reg(pm4, R_00B148_SPI_SHADER_USER_DATA_VS_6, va);
-	si_pm4_set_reg(pm4, R_00B14C_SPI_SHADER_USER_DATA_VS_7, va >> 32);
+	si_pm4_sh_data_end(pm4, R_00B148_SPI_SHADER_USER_DATA_VS_6);
 	si_pm4_set_state(rctx, vertex_buffers, pm4);
 }
 
