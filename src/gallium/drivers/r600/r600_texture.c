@@ -429,7 +429,7 @@ bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 	resource.array_size = texture->array_size;
 	resource.last_level = texture->last_level;
 	resource.nr_samples = texture->nr_samples;
-	resource.usage = staging ? PIPE_USAGE_DYNAMIC : PIPE_USAGE_DEFAULT;
+	resource.usage = staging ? PIPE_USAGE_STAGING : PIPE_USAGE_STATIC;
 	resource.bind = texture->bind & ~PIPE_BIND_DEPTH_STENCIL;
 	resource.flags = texture->flags | R600_RESOURCE_FLAG_FLUSHED_DEPTH;
 
