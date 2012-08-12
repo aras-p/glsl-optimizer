@@ -585,7 +585,7 @@ set_noalias(LLVMBuilderRef builder,
 	    int nr_args)
 {
    int i;
-   for(i = 0; i < Elements(arg_types); ++i)
+   for(i = 0; i < nr_args; ++i)
       if(LLVMGetTypeKind(arg_types[i]) == LLVMPointerTypeKind)
          LLVMAddAttribute(LLVMGetParam(function, i),
 			  LLVMNoAliasAttribute);
