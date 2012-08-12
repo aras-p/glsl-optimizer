@@ -268,6 +268,7 @@ struct r600_samplerview_state {
 	uint32_t			enabled_mask;
 	uint32_t			dirty_mask;
 	uint32_t			compressed_depthtex_mask; /* which textures are depth */
+	uint32_t			compressed_colortex_mask;
 };
 
 struct r600_textures_info {
@@ -327,12 +328,14 @@ struct r600_context {
 	unsigned			r6xx_num_clause_temp_gprs;
 	void				*custom_dsa_flush;
 	void				*custom_blend_resolve;
+	void				*custom_blend_decompress;
 
 	struct r600_screen		*screen;
 	struct radeon_winsys		*ws;
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
+	unsigned			compressed_cb_mask;
 	unsigned			compute_cb_target_mask;
 	unsigned			db_shader_control;
 	unsigned			pa_sc_line_stipple;
@@ -481,6 +484,7 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 void evergreen_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx);
 void *evergreen_create_resolve_blend(struct r600_context *rctx);
+void *evergreen_create_decompress_blend(struct r600_context *rctx);
 void evergreen_polygon_offset_update(struct r600_context *rctx);
 boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      enum pipe_format format,
@@ -503,6 +507,8 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 		unsigned first_layer, unsigned last_layer,
 		unsigned first_sample, unsigned last_sample);
 void r600_decompress_depth_textures(struct r600_context *rctx,
+				    struct r600_samplerview_state *textures);
+void r600_decompress_color_textures(struct r600_context *rctx,
 				    struct r600_samplerview_state *textures);
 
 /* r600_buffer.c */

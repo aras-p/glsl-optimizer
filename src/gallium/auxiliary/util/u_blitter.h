@@ -308,6 +308,11 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
 				       unsigned sample_mask,
 				       void *dsa_stage, float depth);
 
+/* Used by r600g for color decompression. */
+void util_blitter_custom_color(struct blitter_context *blitter,
+                               struct pipe_surface *dstsurf,
+                               void *custom_blend);
+
 /* Used by r600g for MSAA color resolve. */
 void util_blitter_custom_resolve_color(struct blitter_context *blitter,
                                        struct pipe_resource *dst,

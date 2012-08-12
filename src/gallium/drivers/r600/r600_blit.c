@@ -243,6 +243,76 @@ void r600_decompress_depth_textures(struct r600_context *rctx,
 	}
 }
 
+static void r600_blit_decompress_color(struct pipe_context *ctx,
+		struct r600_texture *rtex,
+		unsigned first_level, unsigned last_level,
+		unsigned first_layer, unsigned last_layer)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	unsigned layer, level, checked_last_layer, max_layer;
+
+	if (!rtex->dirty_level_mask)
+		return;
+
+	for (level = first_level; level <= last_level; level++) {
+		if (!(rtex->dirty_level_mask & (1 << level)))
+			continue;
+
+		/* The smaller the mipmap level, the less layers there are
+		 * as far as 3D textures are concerned. */
+		max_layer = u_max_layer(&rtex->resource.b.b, level);
+		checked_last_layer = last_layer < max_layer ? last_layer : max_layer;
+
+		for (layer = first_layer; layer <= checked_last_layer; layer++) {
+			struct pipe_surface *cbsurf, surf_tmpl;
+
+			surf_tmpl.format = rtex->resource.b.b.format;
+			surf_tmpl.u.tex.level = level;
+			surf_tmpl.u.tex.first_layer = layer;
+			surf_tmpl.u.tex.last_layer = layer;
+			surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
+			cbsurf = ctx->create_surface(ctx, &rtex->resource.b.b, &surf_tmpl);
+
+			r600_blitter_begin(ctx, R600_DECOMPRESS);
+			util_blitter_custom_color(rctx->blitter, cbsurf,
+						  rctx->custom_blend_decompress);
+			r600_blitter_end(ctx);
+
+			pipe_surface_reference(&cbsurf, NULL);
+		}
+
+		/* The texture will always be dirty if some layers or samples aren't flushed.
+		 * I don't think this case occurs often though. */
+		if (first_layer == 0 && last_layer == max_layer) {
+			rtex->dirty_level_mask &= ~(1 << level);
+		}
+	}
+}
+
+void r600_decompress_color_textures(struct r600_context *rctx,
+				    struct r600_samplerview_state *textures)
+{
+	unsigned i;
+	unsigned mask = textures->compressed_colortex_mask;
+
+	while (mask) {
+		struct pipe_sampler_view *view;
+		struct r600_texture *tex;
+
+		i = u_bit_scan(&mask);
+
+		view = &textures->views[i]->base;
+		assert(view);
+
+		tex = (struct r600_texture *)view->texture;
+		assert(tex->cmask_size && tex->fmask_size);
+
+		r600_blit_decompress_color(&rctx->context, tex,
+					   view->u.tex.first_level, view->u.tex.last_level,
+					   0, u_max_layer(&tex->resource.b.b, view->u.tex.first_level));
+	}
+}
+
 static void r600_copy_first_sample(struct pipe_context *ctx,
 				   const struct pipe_resolve_info *info)
 {
@@ -261,6 +331,11 @@ static void r600_copy_first_sample(struct pipe_context *ctx,
 					   0, 0,
 					   info->src.layer, info->src.layer,
 					   0, 0);
+	}
+	if (rsrc->fmask_size && rsrc->cmask_size) {
+		r600_blit_decompress_color(ctx, rsrc,
+					   0, 0,
+					   info->src.layer, info->src.layer);
 	}
 
 	/* this is correct for upside-down blits too */
@@ -600,6 +675,10 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 					   src_level, src_level,
 					   src_box->z, src_box->z + src_box->depth - 1,
 					   0, u_max_sample(src));
+	}
+	if (rsrc->fmask_size && rsrc->cmask_size) {
+		r600_blit_decompress_color(ctx, rsrc, src_level, src_level,
+					   src_box->z, src_box->z + src_box->depth - 1);
 	}
 
 	restore_orig[0] = restore_orig[1] = FALSE;

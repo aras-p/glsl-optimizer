@@ -1426,9 +1426,9 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		r600_pipe_state_add_reg(rstate, R_028080_CB_COLOR0_VIEW + i * 4,
 					surf->cb_color_view);
 		r600_pipe_state_add_reg_bo(rstate, R_0280E0_CB_COLOR0_FRAG + i * 4,
-					   surf->cb_color_frag, res, RADEON_USAGE_READWRITE);
+					   surf->cb_color_fmask, res, RADEON_USAGE_READWRITE);
 		r600_pipe_state_add_reg_bo(rstate, R_0280C0_CB_COLOR0_TILE + i * 4,
-					   surf->cb_color_tile, res, RADEON_USAGE_READWRITE);
+					   surf->cb_color_cmask, res, RADEON_USAGE_READWRITE);
 	}
 	/* set CB_COLOR1_INFO for possible dual-src blending */
 	if (i == 1) {

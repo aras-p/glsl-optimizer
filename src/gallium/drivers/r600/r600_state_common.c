@@ -628,6 +628,12 @@ void r600_set_sampler_views(struct pipe_context *pipe,
 				dst->views.compressed_depthtex_mask &= ~(1 << i);
 			}
 
+			if (rtex->cmask_size && rtex->fmask_size) {
+				dst->views.compressed_colortex_mask |= 1 << i;
+			} else {
+				dst->views.compressed_colortex_mask &= ~(1 << i);
+			}
+
 			/* Changing from array to non-arrays textures and vice
 			 * versa requires updating TEX_ARRAY_OVERRIDE on R6xx-R7xx. */
 			if (rctx->chip_class <= R700 &&
@@ -649,6 +655,7 @@ void r600_set_sampler_views(struct pipe_context *pipe,
 	dst->views.enabled_mask |= new_mask;
 	dst->views.dirty_mask |= new_mask;
 	dst->views.compressed_depthtex_mask &= dst->views.enabled_mask;
+	dst->views.compressed_colortex_mask &= dst->views.enabled_mask;
 
 	r600_sampler_views_dirty(rctx, &dst->views);
 }
@@ -1046,6 +1053,12 @@ static void r600_update_derived_state(struct r600_context *rctx)
 		if (rctx->ps_samplers.views.compressed_depthtex_mask) {
 			r600_decompress_depth_textures(rctx, &rctx->ps_samplers.views);
 		}
+		if (rctx->vs_samplers.views.compressed_colortex_mask) {
+			r600_decompress_color_textures(rctx, &rctx->vs_samplers.views);
+		}
+		if (rctx->ps_samplers.views.compressed_colortex_mask) {
+			r600_decompress_color_textures(rctx, &rctx->ps_samplers.views);
+		}
 	}
 
 	r600_shader_select(ctx, rctx->ps_shader, &ps_dirty);
@@ -1261,6 +1274,20 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		struct r600_texture *rtex = (struct r600_texture *)surf->texture;
 
 		rtex->dirty_level_mask |= 1 << surf->u.tex.level;
+	}
+	if (rctx->compressed_cb_mask) {
+		struct pipe_surface *surf;
+		struct r600_texture *rtex;
+		unsigned mask = rctx->compressed_cb_mask;
+
+		do {
+			unsigned i = u_bit_scan(&mask);
+			surf = rctx->framebuffer.cbufs[i];
+			rtex = (struct r600_texture*)surf->texture;
+
+			rtex->dirty_level_mask |= 1 << surf->u.tex.level;
+
+		} while (mask);
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);

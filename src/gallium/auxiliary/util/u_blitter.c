@@ -1553,3 +1553,48 @@ void util_blitter_custom_resolve_color(struct blitter_context *blitter,
    pipe_surface_reference(&srcsurf, NULL);
    pipe_surface_reference(&dstsurf, NULL);
 }
+
+void util_blitter_custom_color(struct blitter_context *blitter,
+                               struct pipe_surface *dstsurf,
+                               void *custom_blend)
+{
+   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
+   struct pipe_context *pipe = ctx->base.pipe;
+   struct pipe_framebuffer_state fb_state;
+
+   assert(dstsurf->texture);
+   if (!dstsurf->texture)
+      return;
+
+   /* check the saved state */
+   blitter_set_running_flag(ctx);
+   blitter_check_saved_vertex_states(ctx);
+   blitter_check_saved_fragment_states(ctx);
+   blitter_check_saved_fb_state(ctx);
+
+   /* bind states */
+   pipe->bind_blend_state(pipe, custom_blend);
+   pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
+   pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 1, FALSE));
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
+   pipe->set_sample_mask(pipe, (1ull << MAX2(1, dstsurf->texture->nr_samples)) - 1);
+
+   /* set a framebuffer state */
+   fb_state.width = dstsurf->width;
+   fb_state.height = dstsurf->height;
+   fb_state.nr_cbufs = 1;
+   fb_state.cbufs[0] = dstsurf;
+   fb_state.zsbuf = 0;
+   pipe->set_framebuffer_state(pipe, &fb_state);
+   pipe->set_sample_mask(pipe, ~0);
+
+   blitter_set_common_draw_rect_state(ctx);
+   blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
+   blitter->draw_rectangle(blitter, 0, 0, dstsurf->width, dstsurf->height,
+                           0, 0, NULL);
+
+   blitter_restore_vertex_states(ctx);
+   blitter_restore_fragment_states(ctx);
+   blitter_restore_fb_state(ctx);
+   blitter_unset_running_flag(ctx);
+}

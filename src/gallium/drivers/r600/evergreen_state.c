@@ -1250,8 +1250,8 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 	unsigned pitch, slice;
 	unsigned color_info, color_attrib, color_dim = 0;
 	unsigned format, swap, ntype, endian;
-	uint64_t offset;
-	unsigned tile_type, macro_aspect, tile_split, bankh, bankw, nbanks;
+	uint64_t offset, base_offset;
+	unsigned tile_type, macro_aspect, tile_split, bankh, bankw, fmask_bankh, nbanks;
 	const struct util_format_description *desc;
 	int i;
 	bool blend_clamp = 0, blend_bypass = 0;
@@ -1296,10 +1296,12 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 	macro_aspect = rtex->surface.mtilea;
 	bankw = rtex->surface.bankw;
 	bankh = rtex->surface.bankh;
+	fmask_bankh = rtex->fmask_bank_height;
 	tile_split = eg_tile_split(tile_split);
 	macro_aspect = eg_macro_tile_aspect(macro_aspect);
 	bankw = eg_bank_wh(bankw);
 	bankh = eg_bank_wh(bankh);
+	fmask_bankh = eg_bank_wh(fmask_bankh);
 
 	/* 128 bit formats require tile type = 1 */
 	if (rscreen->chip_class == CAYMAN) {
@@ -1319,7 +1321,8 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 			S_028C74_BANK_WIDTH(bankw) |
 			S_028C74_BANK_HEIGHT(bankh) |
 			S_028C74_MACRO_TILE_ASPECT(macro_aspect) |
-			S_028C74_NON_DISP_TILING_ORDER(tile_type);
+			S_028C74_NON_DISP_TILING_ORDER(tile_type) |
+		        S_028C74_FMASK_BANK_HEIGHT(fmask_bankh);
 
 	ntype = V_028C70_NUMBER_UNORM;
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
@@ -1393,11 +1396,14 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 		surf->export_16bpc = true;
 	}
 
-	offset += r600_resource_va(rctx->context.screen, pipe_tex);
-	offset >>= 8;
+	if (rtex->fmask_size && rtex->cmask_size) {
+		color_info |= S_028C70_COMPRESSION(1) | S_028C70_FAST_CLEAR(1);
+	}
+
+	base_offset = r600_resource_va(rctx->context.screen, pipe_tex);
 
 	/* XXX handle enabling of CB beyond BASE8 which has different offset */
-	surf->cb_color_base = offset;
+	surf->cb_color_base = (base_offset + offset) >> 8;
 	surf->cb_color_dim = color_dim;
 	surf->cb_color_info = color_info;
 	surf->cb_color_pitch = S_028C64_PITCH_TILE_MAX(pitch);
@@ -1409,6 +1415,15 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 				      S_028C6C_SLICE_MAX(surf->base.u.tex.last_layer);
 	}
 	surf->cb_color_attrib = color_attrib;
+	if (rtex->fmask_size && rtex->cmask_size) {
+		surf->cb_color_fmask = (base_offset + rtex->fmask_offset) >> 8;
+		surf->cb_color_cmask = (base_offset + rtex->cmask_offset) >> 8;
+	} else {
+		surf->cb_color_fmask = surf->cb_color_base;
+		surf->cb_color_cmask = surf->cb_color_base;
+	}
+	surf->cb_color_fmask_slice = S_028C88_TILE_MAX(slice);
+	surf->cb_color_cmask_slice = S_028C80_TILE_MAX(rtex->cmask_slice_tile_max);
 
 	surf->color_initialized = true;
 }
@@ -1631,6 +1646,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	struct r600_surface *surf;
 	struct r600_resource *res;
+	struct r600_texture *rtex;
 	uint32_t tl, br, i, nr_samples;
 
 	if (rstate == NULL)
@@ -1648,10 +1664,12 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	rctx->nr_cbufs = state->nr_cbufs;
 	rctx->cb0_is_integer = state->nr_cbufs &&
 			       util_format_is_pure_integer(state->cbufs[0]->format);
+	rctx->compressed_cb_mask = 0;
 
 	for (i = 0; i < state->nr_cbufs; i++) {
 		surf = (struct r600_surface*)state->cbufs[i];
 		res = (struct r600_resource*)surf->base.texture;
+		rtex = (struct r600_texture*)res;
 
 		if (!surf->color_initialized) {
 			evergreen_init_color_surface(rctx, surf);
@@ -1675,6 +1693,18 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 					surf->cb_color_view);
 		r600_pipe_state_add_reg_bo(rstate, R_028C74_CB_COLOR0_ATTRIB + i * 0x3C,
 					   surf->cb_color_attrib, res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg_bo(rstate, R_028C7C_CB_COLOR0_CMASK + i * 0x3c,
+					   surf->cb_color_cmask, res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028C80_CB_COLOR0_CMASK_SLICE + i * 0x3c,
+					surf->cb_color_cmask_slice);
+		r600_pipe_state_add_reg_bo(rstate,  R_028C84_CB_COLOR0_FMASK + i * 0x3c,
+					   surf->cb_color_fmask, res, RADEON_USAGE_READWRITE);
+		r600_pipe_state_add_reg(rstate, R_028C88_CB_COLOR0_FMASK_SLICE + i * 0x3c,
+					surf->cb_color_fmask_slice);
+
+		if (rtex->fmask_size && rtex->cmask_size) {
+			rctx->compressed_cb_mask |= 1 << i;
+		}
 	}
 	/* set CB_COLOR1_INFO for possible dual-src blending */
 	if (i == 1 && !((struct r600_texture*)res)->is_rat) {
@@ -3077,6 +3107,18 @@ void *evergreen_create_resolve_blend(struct r600_context *rctx)
 	blend.independent_blend_enable = true;
 	blend.rt[0].colormask = 0xf;
 	rstate = evergreen_create_blend_state_mode(&rctx->context, &blend, V_028808_CB_RESOLVE);
+	return rstate;
+}
+
+void *evergreen_create_decompress_blend(struct r600_context *rctx)
+{
+	struct pipe_blend_state blend;
+	struct r600_pipe_state *rstate;
+
+	memset(&blend, 0, sizeof(blend));
+	blend.independent_blend_enable = true;
+	blend.rt[0].colormask = 0xf;
+	rstate = evergreen_create_blend_state_mode(&rctx->context, &blend, V_028808_CB_DECOMPRESS);
 	return rstate;
 }
 

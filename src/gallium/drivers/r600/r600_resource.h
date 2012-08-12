@@ -55,6 +55,11 @@ struct r600_texture {
 	struct r600_texture		*flushed_depth_texture;
 	boolean				is_flushing_texture;
 	struct radeon_surface		surface;
+
+	/* FMASK and CMASK can only be used with MSAA textures for now.
+	 * MSAA textures cannot have mipmaps. */
+	unsigned			fmask_offset, fmask_size, fmask_bank_height;
+	unsigned			cmask_offset, cmask_size, cmask_slice_tile_max;
 };
 
 #define R600_TEX_IS_TILED(tex, level) ((tex)->array_mode[level] != V_038000_ARRAY_LINEAR_GENERAL && (tex)->array_mode[level] != V_038000_ARRAY_LINEAR_ALIGNED)
@@ -74,12 +79,14 @@ struct r600_surface {
 	unsigned cb_color_base;
 	unsigned cb_color_view;
 	unsigned cb_color_size;		/* R600 only */
-	unsigned cb_color_frag;		/* R600 only */
-	unsigned cb_color_tile;		/* R600 only */
 	unsigned cb_color_dim;		/* EG only */
 	unsigned cb_color_pitch;	/* EG only */
 	unsigned cb_color_slice;	/* EG only */
 	unsigned cb_color_attrib;	/* EG only */
+	unsigned cb_color_fmask;	/* CB_COLORn_FMASK (EG) or CB_COLORn_FRAG (r600) */
+	unsigned cb_color_fmask_slice;	/* EG only */
+	unsigned cb_color_cmask;	/* CB_COLORn_CMASK (EG) or CB_COLORn_TILE (r600) */
+	unsigned cb_color_cmask_slice;	/* EG only */
 
 	/* DB registers. */
 	unsigned db_depth_info;		/* DB_Z_INFO (EG) or DB_DEPTH_INFO (r600) */
