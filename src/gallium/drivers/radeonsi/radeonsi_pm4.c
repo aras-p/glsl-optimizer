@@ -96,6 +96,29 @@ void si_pm4_add_bo(struct si_pm4_state *state,
 	state->bo_usage[idx] = usage;
 }
 
+void si_pm4_sh_data_begin(struct si_pm4_state *state)
+{
+	si_pm4_cmd_begin(state, PKT3_NOP);
+}
+
+void si_pm4_sh_data_add(struct si_pm4_state *state, uint32_t dw)
+{
+	si_pm4_cmd_add(state, dw);
+}
+
+void si_pm4_sh_data_end(struct si_pm4_state *state, unsigned reg)
+{
+	unsigned offs = state->last_pm4 + 1;
+	si_pm4_cmd_end(state, false);
+
+	si_pm4_cmd_begin(state, PKT3_SET_SH_REG_OFFSET);
+	si_pm4_cmd_add(state, (reg - SI_SH_REG_OFFSET) >> 2);
+	state->relocs[state->nrelocs++] = state->ndw;
+	si_pm4_cmd_add(state, offs << 2);
+	si_pm4_cmd_add(state, 0);
+	si_pm4_cmd_end(state, false);
+}
+
 void si_pm4_inval_shader_cache(struct si_pm4_state *state)
 {
 	state->cp_coher_cntl |= S_0085F0_SH_ICACHE_ACTION_ENA(1);
@@ -181,6 +204,11 @@ void si_pm4_emit(struct r600_context *rctx, struct si_pm4_state *state)
 	}
 
 	memcpy(&cs->buf[cs->cdw], state->pm4, state->ndw * 4);
+
+	for (int i = 0; i < state->nrelocs; ++i) {
+		cs->buf[cs->cdw + state->relocs[i]] += cs->cdw << 2;
+	}
+
 	cs->cdw += state->ndw;
 }
 

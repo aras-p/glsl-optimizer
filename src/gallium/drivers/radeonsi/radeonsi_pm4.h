@@ -29,8 +29,9 @@
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 
-#define SI_PM4_MAX_DW	128
-#define SI_PM4_MAX_BO	32
+#define SI_PM4_MAX_DW		128
+#define SI_PM4_MAX_BO		32
+#define SI_PM4_MAX_RELOCS	4
 
 // forward defines
 struct r600_context;
@@ -53,6 +54,10 @@ struct si_pm4_state
 	unsigned		nbo;
 	struct si_resource	*bo[SI_PM4_MAX_BO];
 	enum radeon_bo_usage	bo_usage[SI_PM4_MAX_BO];
+
+	/* relocs for shader data */
+	unsigned	nrelocs;
+	unsigned	relocs[SI_PM4_MAX_RELOCS];
 };
 
 void si_pm4_cmd_begin(struct si_pm4_state *state, unsigned opcode);
@@ -63,6 +68,10 @@ void si_pm4_set_reg(struct si_pm4_state *state, unsigned reg, uint32_t val);
 void si_pm4_add_bo(struct si_pm4_state *state,
 		   struct si_resource *bo,
 		   enum radeon_bo_usage usage);
+
+void si_pm4_sh_data_begin(struct si_pm4_state *state);
+void si_pm4_sh_data_add(struct si_pm4_state *state, uint32_t dw);
+void si_pm4_sh_data_end(struct si_pm4_state *state, unsigned reg);
 
 void si_pm4_inval_shader_cache(struct si_pm4_state *state);
 void si_pm4_inval_texture_cache(struct si_pm4_state *state);

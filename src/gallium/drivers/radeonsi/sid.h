@@ -93,6 +93,7 @@
 #define PKT3_SET_CONFIG_REG                    0x68
 #define PKT3_SET_CONTEXT_REG                   0x69
 #define PKT3_SET_SH_REG                        0x76
+#define PKT3_SET_SH_REG_OFFSET                 0x77
 
 #define PKT_TYPE_S(x)                   (((x) & 0x3) << 30)
 #define PKT_TYPE_G(x)                   (((x) >> 30) & 0x3)
