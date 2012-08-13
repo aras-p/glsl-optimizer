@@ -1743,7 +1743,7 @@ accumulator_contains(struct brw_vs_compile *c, struct brw_reg val)
    if (val.address_mode != BRW_ADDRESS_DIRECT)
       return false;
 
-   if (val.negate || val.abs)
+   if (val.negate || val.abs || val.dw1.bits.swizzle != BRW_SWIZZLE_XYZW)
       return false;
 
    switch (prev_insn->header.opcode) {
