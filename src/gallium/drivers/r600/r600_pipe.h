@@ -267,7 +267,7 @@ struct r600_samplerview_state {
 	struct r600_pipe_sampler_view	*views[NUM_TEX_UNITS];
 	uint32_t			enabled_mask;
 	uint32_t			dirty_mask;
-	uint32_t			depth_texture_mask; /* which textures are depth */
+	uint32_t			compressed_depthtex_mask; /* which textures are depth */
 };
 
 struct r600_textures_info {
@@ -496,14 +496,14 @@ void r600_copy_buffer(struct pipe_context *ctx, struct
 		      pipe_resource *dst, unsigned dstx,
 		      struct pipe_resource *src, const struct pipe_box *src_box);
 void r600_init_blit_functions(struct r600_context *rctx);
-void r600_blit_uncompress_depth(struct pipe_context *ctx,
+void r600_blit_decompress_depth(struct pipe_context *ctx,
 		struct r600_texture *texture,
 		struct r600_texture *staging,
 		unsigned first_level, unsigned last_level,
 		unsigned first_layer, unsigned last_layer,
 		unsigned first_sample, unsigned last_sample);
-void r600_flush_depth_textures(struct r600_context *rctx,
-			       struct r600_samplerview_state *textures);
+void r600_decompress_depth_textures(struct r600_context *rctx,
+				    struct r600_samplerview_state *textures);
 
 /* r600_buffer.c */
 bool r600_init_resource(struct r600_screen *rscreen,

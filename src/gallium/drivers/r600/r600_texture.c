@@ -517,7 +517,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 			return NULL;
 		}
 
-		r600_blit_uncompress_depth(ctx, rtex, staging_depth,
+		r600_blit_decompress_depth(ctx, rtex, staging_depth,
 					   level, level,
 					   box->z, box->z + box->depth - 1,
 					   0, 0);

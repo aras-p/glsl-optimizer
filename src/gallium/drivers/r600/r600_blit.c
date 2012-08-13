@@ -127,7 +127,7 @@ static unsigned u_max_sample(struct pipe_resource *r)
 	return r->nr_samples ? r->nr_samples - 1 : 0;
 }
 
-void r600_blit_uncompress_depth(struct pipe_context *ctx,
+void r600_blit_decompress_depth(struct pipe_context *ctx,
 		struct r600_texture *texture,
 		struct r600_texture *staging,
 		unsigned first_level, unsigned last_level,
@@ -142,7 +142,7 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 		util_format_description(texture->resource.b.b.format);
 	float depth;
 
-	if (!staging && !texture->dirty_db_mask)
+	if (!staging && !texture->dirty_level_mask)
 		return;
 
 	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
@@ -161,7 +161,7 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 	max_sample = u_max_sample(&texture->resource.b.b);
 
 	for (level = first_level; level <= last_level; level++) {
-		if (!staging && !(texture->dirty_db_mask & (1 << level)))
+		if (!staging && !(texture->dirty_level_mask & (1 << level)))
 			continue;
 
 		/* The smaller the mipmap level, the less layers there are
@@ -209,7 +209,7 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 		if (!staging &&
 		    first_layer == 0 && last_layer == max_layer &&
 		    first_sample == 0 && last_sample == max_sample) {
-			texture->dirty_db_mask &= ~(1 << level);
+			texture->dirty_level_mask &= ~(1 << level);
 		}
 	}
 
@@ -218,11 +218,11 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx,
 	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 }
 
-void r600_flush_depth_textures(struct r600_context *rctx,
+void r600_decompress_depth_textures(struct r600_context *rctx,
 			       struct r600_samplerview_state *textures)
 {
 	unsigned i;
-	unsigned depth_texture_mask = textures->depth_texture_mask;
+	unsigned depth_texture_mask = textures->compressed_depthtex_mask;
 
 	while (depth_texture_mask) {
 		struct pipe_sampler_view *view;
@@ -236,7 +236,7 @@ void r600_flush_depth_textures(struct r600_context *rctx,
 		tex = (struct r600_texture *)view->texture;
 		assert(tex->is_depth && !tex->is_flushing_texture);
 
-		r600_blit_uncompress_depth(&rctx->context, tex, NULL,
+		r600_blit_decompress_depth(&rctx->context, tex, NULL,
 					   view->u.tex.first_level, view->u.tex.last_level,
 					   0, u_max_layer(&tex->resource.b.b, view->u.tex.first_level),
 					   0, u_max_sample(&tex->resource.b.b));
@@ -257,7 +257,7 @@ static void r600_copy_first_sample(struct pipe_context *ctx,
 			return; /* error */
 
 		/* Decompress the first sample only. */
-		r600_blit_uncompress_depth(ctx,	rsrc, NULL,
+		r600_blit_decompress_depth(ctx,	rsrc, NULL,
 					   0, 0,
 					   info->src.layer, info->src.layer,
 					   0, 0);
@@ -596,7 +596,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		if (!r600_init_flushed_depth_texture(ctx, src, NULL))
 			return; /* error */
 
-		r600_blit_uncompress_depth(ctx, rsrc, NULL,
+		r600_blit_decompress_depth(ctx, rsrc, NULL,
 					   src_level, src_level,
 					   src_box->z, src_box->z + src_box->depth - 1,
 					   0, u_max_sample(src));

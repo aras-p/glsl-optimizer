@@ -623,9 +623,9 @@ void r600_set_sampler_views(struct pipe_context *pipe,
 				(struct r600_texture*)rviews[i]->base.texture;
 
 			if (rtex->is_depth && !rtex->is_flushing_texture) {
-				dst->views.depth_texture_mask |= 1 << i;
+				dst->views.compressed_depthtex_mask |= 1 << i;
 			} else {
-				dst->views.depth_texture_mask &= ~(1 << i);
+				dst->views.compressed_depthtex_mask &= ~(1 << i);
 			}
 
 			/* Changing from array to non-arrays textures and vice
@@ -648,7 +648,7 @@ void r600_set_sampler_views(struct pipe_context *pipe,
 	dst->views.dirty_mask &= dst->views.enabled_mask;
 	dst->views.enabled_mask |= new_mask;
 	dst->views.dirty_mask |= new_mask;
-	dst->views.depth_texture_mask &= dst->views.enabled_mask;
+	dst->views.compressed_depthtex_mask &= dst->views.enabled_mask;
 
 	r600_sampler_views_dirty(rctx, &dst->views);
 }
@@ -1039,12 +1039,12 @@ static void r600_update_derived_state(struct r600_context *rctx)
 	unsigned ps_dirty = 0, blend_override;
 
 	if (!rctx->blitter->running) {
-		/* Flush depth textures which need to be flushed. */
-		if (rctx->vs_samplers.views.depth_texture_mask) {
-			r600_flush_depth_textures(rctx, &rctx->vs_samplers.views);
+		/* Decompress textures if needed. */
+		if (rctx->vs_samplers.views.compressed_depthtex_mask) {
+			r600_decompress_depth_textures(rctx, &rctx->vs_samplers.views);
 		}
-		if (rctx->ps_samplers.views.depth_texture_mask) {
-			r600_flush_depth_textures(rctx, &rctx->ps_samplers.views);
+		if (rctx->ps_samplers.views.compressed_depthtex_mask) {
+			r600_decompress_depth_textures(rctx, &rctx->ps_samplers.views);
 		}
 	}
 
@@ -1260,7 +1260,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		struct pipe_surface *surf = rctx->framebuffer.zsbuf;
 		struct r600_texture *rtex = (struct r600_texture *)surf->texture;
 
-		rtex->dirty_db_mask |= 1 << surf->u.tex.level;
+		rtex->dirty_level_mask |= 1 << surf->u.tex.level;
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);
