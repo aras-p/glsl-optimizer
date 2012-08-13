@@ -214,4 +214,13 @@ _mesa_FramebufferTextureFaceARB(GLenum target, GLenum attachment,
                                 GLuint texture, GLint level, GLenum face);
 
 
+extern void GLAPIENTRY
+_mesa_InvalidateSubFramebuffer(GLenum target, GLsizei numAttachments,
+                               const GLenum *attachments, GLint x, GLint y,
+                               GLsizei width, GLsizei height);
+
+extern void GLAPIENTRY
+_mesa_InvalidateFramebuffer(GLenum target, GLsizei numAttachments,
+                            const GLenum *attachments);
+
 #endif /* FBOBJECT_H */

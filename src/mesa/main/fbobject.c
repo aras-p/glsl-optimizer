@@ -3006,3 +3006,144 @@ _mesa_FramebufferTextureFaceARB(GLenum target, GLenum attachment,
                "not implemented!");
 }
 #endif /* FEATURE_ARB_geometry_shader4 */
+
+static void
+invalidate_framebuffer_storage(GLenum target, GLsizei numAttachments,
+                               const GLenum *attachments, GLint x, GLint y,
+                               GLsizei width, GLsizei height, const char *name)
+{
+   int i;
+   struct gl_framebuffer *fb;
+   GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   fb = get_framebuffer_target(ctx, target);
+   if (!fb) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(target)", name);
+      return;
+   }
+
+   if (numAttachments < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "%s(numAttachments < 0)", name);
+      return;
+   }
+
+   /* The GL_ARB_invalidate_subdata spec says:
+    *
+    *     "If an attachment is specified that does not exist in the
+    *     framebuffer bound to <target>, it is ignored."
+    *
+    * It also says:
+    *
+    *     "If <attachments> contains COLOR_ATTACHMENTm and m is greater than
+    *     or equal to the value of MAX_COLOR_ATTACHMENTS, then the error
+    *     INVALID_OPERATION is generated."
+    *
+    * No mention is made of GL_AUXi being out of range.  Therefore, we allow
+    * any enum that can be allowed by the API (OpenGL ES 3.0 has a different
+    * set of retrictions).
+    */
+   for (i = 0; i < numAttachments; i++) {
+      if (_mesa_is_winsys_fbo(fb)) {
+         switch (attachments[i]) {
+         case GL_ACCUM:
+         case GL_AUX0:
+         case GL_AUX1:
+         case GL_AUX2:
+         case GL_AUX3:
+            /* Accumulation buffers and auxilary buffers were removed in
+             * OpenGL 3.1, and they never existed in OpenGL ES.
+             */
+            if (ctx->API != API_OPENGL)
+               goto invalid_enum;
+            break;
+         case GL_COLOR:
+         case GL_DEPTH:
+         case GL_STENCIL:
+            break;
+         case GL_BACK_LEFT:
+         case GL_BACK_RIGHT:
+         case GL_FRONT_LEFT:
+         case GL_FRONT_RIGHT:
+            if (!_mesa_is_desktop_gl(ctx))
+               goto invalid_enum;
+            break;
+         default:
+            goto invalid_enum;
+         }
+      } else {
+         switch (attachments[i]) {
+         case GL_DEPTH_ATTACHMENT:
+         case GL_STENCIL_ATTACHMENT:
+            break;
+         case GL_COLOR_ATTACHMENT0:
+         case GL_COLOR_ATTACHMENT1:
+         case GL_COLOR_ATTACHMENT2:
+         case GL_COLOR_ATTACHMENT3:
+         case GL_COLOR_ATTACHMENT4:
+         case GL_COLOR_ATTACHMENT5:
+         case GL_COLOR_ATTACHMENT6:
+         case GL_COLOR_ATTACHMENT7:
+         case GL_COLOR_ATTACHMENT8:
+         case GL_COLOR_ATTACHMENT9:
+         case GL_COLOR_ATTACHMENT10:
+         case GL_COLOR_ATTACHMENT11:
+         case GL_COLOR_ATTACHMENT12:
+         case GL_COLOR_ATTACHMENT13:
+         case GL_COLOR_ATTACHMENT14:
+         case GL_COLOR_ATTACHMENT15: {
+            const int k = attachments[i] - GL_COLOR_ATTACHMENT0;
+            if (k >= ctx->Const.MaxColorAttachments) {
+               _mesa_error(ctx, GL_INVALID_OPERATION,
+                           "%s(attachment >= max. color attachments)", name);
+               return;
+            }
+         }
+         default:
+            goto invalid_enum;
+         }
+      }
+   }
+
+   /* We don't actually do anything for this yet.  Just return after
+    * validating the parameters and generating the required errors.
+    */
+   return;
+
+invalid_enum:
+   _mesa_error(ctx, GL_INVALID_ENUM, "%s(attachment)", name);
+   return;
+}
+
+void GLAPIENTRY
+_mesa_InvalidateSubFramebuffer(GLenum target, GLsizei numAttachments,
+                               const GLenum *attachments, GLint x, GLint y,
+                               GLsizei width, GLsizei height)
+{
+   invalidate_framebuffer_storage(target, numAttachments, attachments,
+                                  x, y, width, height,
+                                  "glInvalidateSubFramebuffer");
+}
+
+void GLAPIENTRY
+_mesa_InvalidateFramebuffer(GLenum target, GLsizei numAttachments,
+                            const GLenum *attachments)
+{
+   /* The GL_ARB_invalidate_subdata spec says:
+    *
+    *     "The command
+    *
+    *        void InvalidateFramebuffer(enum target,
+    *                                   sizei numAttachments,
+    *                                   const enum *attachments);
+    *
+    *     is equivalent to the command InvalidateSubFramebuffer with <x>, <y>,
+    *     <width>, <height> equal to 0, 0, <MAX_VIEWPORT_DIMS[0]>,
+    *     <MAX_VIEWPORT_DIMS[1]> respectively."
+    */
+   invalidate_framebuffer_storage(target, numAttachments, attachments,
+                                  0, 0, MAX_VIEWPORT_WIDTH, MAX_VIEWPORT_HEIGHT,
+                                  "glInvalidateFramebuffer");
+}
