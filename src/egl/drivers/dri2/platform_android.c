@@ -660,18 +660,29 @@ droid_open_device(void)
    return (fd >= 0) ? dup(fd) : -1;
 }
 
+/* support versions < JellyBean */
+#ifndef ALOGW
+#define ALOGW LOGW
+#endif
+#ifndef ALOGD
+#define ALOGD LOGD
+#endif
+#ifndef ALOGI
+#define ALOGI LOGI
+#endif
+
 static void
 droid_log(EGLint level, const char *msg)
 {
    switch (level) {
    case _EGL_DEBUG:
-      LOGD("%s", msg);
+      ALOGD("%s", msg);
       break;
    case _EGL_INFO:
-      LOGI("%s", msg);
+      ALOGI("%s", msg);
       break;
    case _EGL_WARNING:
-      LOGW("%s", msg);
+      ALOGW("%s", msg);
       break;
    case _EGL_FATAL:
       LOG_FATAL("%s", msg);
