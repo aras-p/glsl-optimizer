@@ -877,7 +877,58 @@ _mesa_total_texture_memory(struct gl_context *ctx)
    return total;
 }
 
+static struct gl_texture_object *
+invalidate_tex_image_error_check(struct gl_context *ctx, GLuint texture,
+                                 GLint level, const char *name)
+{
+   /* The GL_ARB_invalidate_subdata spec says:
+    *
+    *     "If <texture> is zero or is not the name of a texture, the error
+    *     INVALID_VALUE is generated."
+    *
+    * This performs the error check in a different order than listed in the
+    * spec.  We have to get the texture object before we can validate the
+    * other parameters against values in the texture object.
+    */
+   struct gl_texture_object *const t = _mesa_lookup_texture(ctx, texture);
+   if (texture == 0 || t == NULL) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s(texture)", name);
+      return NULL;
+   }
 
+   /* The GL_ARB_invalidate_subdata spec says:
+    *
+    *     "If <level> is less than zero or greater than the base 2 logarithm
+    *     of the maximum texture width, height, or depth, the error
+    *     INVALID_VALUE is generated."
+    */
+   if (level < 0 || level > t->MaxLevel) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s(level)", name);
+      return NULL;
+   }
+
+   /* The GL_ARB_invalidate_subdata spec says:
+    *
+    *     "If the target of <texture> is TEXTURE_RECTANGLE, TEXTURE_BUFFER,
+    *     TEXTURE_2D_MULTISAMPLE, or TEXTURE_2D_MULTISAMPLE_ARRAY, and <level>
+    *     is not zero, the error INVALID_VALUE is generated."
+    */
+   if (level != 0) {
+      switch (t->Target) {
+      case GL_TEXTURE_RECTANGLE:
+      case GL_TEXTURE_BUFFER:
+      case GL_TEXTURE_2D_MULTISAMPLE:
+      case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+         _mesa_error(ctx, GL_INVALID_VALUE, "%s(level)", name);
+         return NULL;
+
+      default:
+         break;
+      }
+   }
+
+   return t;
+}
 
 /*@}*/
 
@@ -1344,6 +1395,166 @@ _mesa_unlock_context_textures( struct gl_context *ctx )
 {
    assert(ctx->Shared->TextureStateStamp == ctx->TextureStateTimestamp);
    _glthread_UNLOCK_MUTEX(ctx->Shared->TexMutex);
+}
+
+void GLAPIENTRY
+_mesa_InvalidateTexSubImage(GLuint texture, GLint level, GLint xoffset,
+                            GLint yoffset, GLint zoffset, GLsizei width,
+                            GLsizei height, GLsizei depth)
+{
+   struct gl_texture_object *t;
+   struct gl_texture_image *image;
+   GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   t = invalidate_tex_image_error_check(ctx, texture, level,
+                                        "glInvalidateTexSubImage");
+
+   /* The GL_ARB_invalidate_subdata spec says:
+    *
+    *     "...the specified subregion must be between -<b> and <dim>+<b> where
+    *     <dim> is the size of the dimension of the texture image, and <b> is
+    *     the size of the border of that texture image, otherwise
+    *     INVALID_VALUE is generated (border is not applied to dimensions that
+    *     don't exist in a given texture target)."
+    */
+   image = t->Image[0][level];
+   if (image) {
+      int xBorder;
+      int yBorder;
+      int zBorder;
+      int imageWidth;
+      int imageHeight;
+      int imageDepth;
+
+      /* The GL_ARB_invalidate_subdata spec says:
+       *
+       *     "For texture targets that don't have certain dimensions, this
+       *     command treats those dimensions as having a size of 1. For
+       *     example, to invalidate a portion of a two-dimensional texture,
+       *     the application would use <zoffset> equal to zero and <depth>
+       *     equal to one."
+       */
+      switch (t->Target) {
+      case GL_TEXTURE_BUFFER:
+         xBorder = 0;
+         yBorder = 0;
+         zBorder = 0;
+         imageWidth = 1;
+         imageHeight = 1;
+         imageDepth = 1;
+         break;
+      case GL_TEXTURE_1D:
+         xBorder = image->Border;
+         yBorder = 0;
+         zBorder = 0;
+         imageWidth = image->Width;
+         imageHeight = 1;
+         imageDepth = 1;
+         break;
+      case GL_TEXTURE_1D_ARRAY:
+         xBorder = image->Border;
+         yBorder = 0;
+         zBorder = 0;
+         imageWidth = image->Width;
+         imageHeight = image->Height;
+         imageDepth = 1;
+         break;
+      case GL_TEXTURE_2D:
+      case GL_TEXTURE_CUBE_MAP:
+      case GL_TEXTURE_RECTANGLE:
+      case GL_TEXTURE_2D_MULTISAMPLE:
+         xBorder = image->Border;
+         yBorder = image->Border;
+         zBorder = 0;
+         imageWidth = image->Width;
+         imageHeight = image->Height;
+         imageDepth = 1;
+         break;
+      case GL_TEXTURE_2D_ARRAY:
+      case GL_TEXTURE_CUBE_MAP_ARRAY:
+         xBorder = image->Border;
+         yBorder = image->Border;
+         zBorder = 0;
+         imageWidth = image->Width;
+         imageHeight = image->Height;
+         imageDepth = image->Depth;
+         break;
+      case GL_TEXTURE_3D:
+         xBorder = image->Border;
+         yBorder = image->Border;
+         zBorder = image->Border;
+         imageWidth = image->Width;
+         imageHeight = image->Height;
+         imageDepth = image->Depth;
+         break;
+      default:
+         assert(!"Should not get here.");
+         xBorder = 0;
+         yBorder = 0;
+         zBorder = 0;
+         imageWidth = 0;
+         imageHeight = 0;
+         imageDepth = 0;
+         break;
+      }
+
+      if (xoffset < -xBorder) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glInvalidateSubTexImage(xoffset)");
+         return;
+      }
+
+      if (xoffset + width > imageWidth + xBorder) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glInvalidateSubTexImage(xoffset+width)");
+         return;
+      }
+
+      if (yoffset < -yBorder) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glInvalidateSubTexImage(yoffset)");
+         return;
+      }
+
+      if (yoffset + height > imageHeight + yBorder) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glInvalidateSubTexImage(yoffset+height)");
+         return;
+      }
+
+      if (zoffset < -zBorder) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glInvalidateSubTexImage(zoffset)");
+         return;
+      }
+
+      if (zoffset + depth  > imageDepth + zBorder) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glInvalidateSubTexImage(zoffset+depth)");
+         return;
+      }
+   }
+
+   /* We don't actually do anything for this yet.  Just return after
+    * validating the parameters and generating the required errors.
+    */
+   return;
+}
+
+void GLAPIENTRY
+_mesa_InvalidateTexImage(GLuint texture, GLint level)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   invalidate_tex_image_error_check(ctx, texture, level,
+                                    "glInvalidateTexImage");
+
+   /* We don't actually do anything for this yet.  Just return after
+    * validating the parameters and generating the required errors.
+    */
+   return;
 }
 
 /*@}*/

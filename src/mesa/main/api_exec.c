@@ -827,10 +827,16 @@ _mesa_create_exec_table(struct gl_context *ctx)
    _mesa_init_sampler_object_dispatch(exec);
 #endif
 
+   if (_mesa_is_desktop_gl(ctx)) {
+      SET_InvalidateTexSubImage(exec, _mesa_InvalidateTexSubImage);
+      SET_InvalidateTexImage(exec, _mesa_InvalidateTexImage);
+   }
+
    if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       SET_InvalidateSubFramebuffer(exec, _mesa_InvalidateSubFramebuffer);
       SET_InvalidateFramebuffer(exec, _mesa_InvalidateFramebuffer);
    }
+
    return exec;
 }
 

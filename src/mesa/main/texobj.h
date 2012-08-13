@@ -152,6 +152,14 @@ _mesa_AreTexturesResident( GLsizei n, const GLuint *textures,
 extern GLboolean GLAPIENTRY
 _mesa_IsTexture( GLuint texture );
 
+extern void GLAPIENTRY
+_mesa_InvalidateTexSubImage(GLuint texture, GLint level, GLint xoffset,
+                            GLint yoffset, GLint zoffset, GLsizei width,
+                            GLsizei height, GLsizei depth);
+
+extern void GLAPIENTRY
+_mesa_InvalidateTexImage(GLuint texture, GLint level);
+
 /*@}*/
 
 
