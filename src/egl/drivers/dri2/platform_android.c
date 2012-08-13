@@ -500,6 +500,14 @@ droid_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *dpy)
       for (j = 0; dri2_dpy->driver_configs[j]; j++) {
          const EGLint surface_type = EGL_WINDOW_BIT | EGL_PBUFFER_BIT;
          struct dri2_egl_config *dri2_conf;
+         unsigned int double_buffered = 0;
+
+         dri2_dpy->core->getConfigAttrib(dri2_dpy->driver_configs[j],
+            __DRI_ATTRIB_DOUBLE_BUFFER, &double_buffered);
+
+         /* support only double buffered configs */
+         if (!double_buffered)
+            continue;
 
          dri2_conf = dri2_add_config(dpy, dri2_dpy->driver_configs[j],
                count + 1, visuals[i].size, surface_type, NULL,
@@ -525,17 +533,6 @@ droid_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *dpy)
       /* there is no front buffer so no OpenGL */
       dri2_conf->base.RenderableType &= ~EGL_OPENGL_BIT;
       dri2_conf->base.Conformant &= ~EGL_OPENGL_BIT;
-
-      /*
-       * We want to make sure GL_DRAW_BUFFER for windows or pbuffers is always
-       * GL_BACK.  For EGL configs that do not have a double DRI config, clear
-       * the surface type.
-       *
-       * This is just to be on the safe side.  dri2_add_config never sets
-       * EGL_WINDOW_BIT or EGL_PBUFFER_BIT for such configs.
-       */
-      if (!dri2_conf->dri_double_config)
-         dri2_conf->base.SurfaceType = 0;
    }
 
    return (count != 0);
