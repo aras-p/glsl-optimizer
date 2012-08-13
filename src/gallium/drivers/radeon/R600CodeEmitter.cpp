@@ -118,7 +118,8 @@ enum FCInstr {
   FC_BREAK,
   FC_BREAK_NZ_INT,
   FC_CONTINUE,
-  FC_BREAK_Z_INT
+  FC_BREAK_Z_INT,
+  FC_BREAK_NZ
 };
 
 enum TextureTypes {
@@ -525,6 +526,8 @@ void R600CodeEmitter::EmitFCInstr(MachineInstr &MI)
     instr = FC_BREAK;
     break;
   case AMDGPU::BREAK_LOGICALNZ_f32:
+    instr = FC_BREAK_NZ;
+    break;
   case AMDGPU::BREAK_LOGICALNZ_i32:
     instr = FC_BREAK_NZ_INT;
     break;
