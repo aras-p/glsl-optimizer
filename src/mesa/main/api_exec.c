@@ -653,7 +653,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
 #endif
 
    /* ARB 28. GL_ARB_vertex_buffer_object */
-   _mesa_init_bufferobj_dispatch(exec);
+   _mesa_init_bufferobj_dispatch(ctx, exec);
 
    /* ARB 29. GL_ARB_occlusion_query */
    _mesa_init_queryobj_dispatch(exec);

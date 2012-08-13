@@ -2201,7 +2201,7 @@ _mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
 }
 
 void
-_mesa_init_bufferobj_dispatch(struct _glapi_table *disp)
+_mesa_init_bufferobj_dispatch(struct gl_context *ctx, struct _glapi_table *disp)
 {
    SET_BindBufferARB(disp, _mesa_BindBufferARB);
    SET_BufferDataARB(disp, _mesa_BufferDataARB);
@@ -2214,6 +2214,9 @@ _mesa_init_bufferobj_dispatch(struct _glapi_table *disp)
    SET_IsBufferARB(disp, _mesa_IsBufferARB);
    SET_MapBufferARB(disp, _mesa_MapBufferARB);
    SET_UnmapBufferARB(disp, _mesa_UnmapBufferARB);
-   SET_BindBufferRangeEXT(disp, _mesa_BindBufferRange);
-   SET_BindBufferBaseEXT(disp, _mesa_BindBufferBase);
+
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
+      SET_BindBufferRangeEXT(disp, _mesa_BindBufferRange);
+      SET_BindBufferBaseEXT(disp, _mesa_BindBufferBase);
+   }
 }

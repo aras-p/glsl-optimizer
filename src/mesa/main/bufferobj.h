@@ -167,6 +167,7 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
                       GLuint buffer, GLintptr offset, GLsizeiptr size);
 
 extern void
-_mesa_init_bufferobj_dispatch(struct _glapi_table *disp);
+_mesa_init_bufferobj_dispatch(struct gl_context *ctx,
+                              struct _glapi_table *disp);
 
 #endif
