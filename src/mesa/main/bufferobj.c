@@ -2200,6 +2200,98 @@ _mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
    }
 }
 
+static void GLAPIENTRY
+_mesa_InvalidateBufferSubData(GLuint buffer, GLintptr offset,
+                              GLsizeiptr length)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_buffer_object *bufObj;
+   const GLintptr end = offset + length;
+
+   bufObj = _mesa_lookup_bufferobj(ctx, buffer);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glInvalidateBufferSubData(name = 0x%x) invalid object",
+                  buffer);
+      return;
+   }
+
+   /* The GL_ARB_invalidate_subdata spec says:
+    *
+    *     "An INVALID_VALUE error is generated if <offset> or <length> is
+    *     negative, or if <offset> + <length> is greater than the value of
+    *     BUFFER_SIZE."
+    */
+   if (end < 0 || end > bufObj->Size) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glInvalidateBufferSubData(invalid offset or length)");
+      return;
+   }
+
+   /* The GL_ARB_invalidate_subdata spec says:
+    *
+    *     "An INVALID_OPERATION error is generated if the buffer is currently
+    *     mapped by MapBuffer, or if the invalidate range intersects the range
+    *     currently mapped by MapBufferRange."
+    */
+   if (_mesa_bufferobj_mapped(bufObj)) {
+      const GLintptr mapEnd = bufObj->Offset + bufObj->Length;
+
+      /* The regions do not overlap if and only if the end of the discard
+       * region is before the mapped region or the start of the discard region
+       * is after the mapped region.
+       *
+       * Note that 'end' and 'mapEnd' are the first byte *after* the discard
+       * region and the mapped region, repsectively.  It is okay for that byte
+       * to be mapped (for 'end') or discarded (for 'mapEnd').
+       */
+      if (!(end <= bufObj->Offset || offset >= mapEnd)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glInvalidateBufferSubData(intersection with mapped "
+                     "range)");
+         return;
+      }
+   }
+
+   /* We don't actually do anything for this yet.  Just return after
+    * validating the parameters and generating the required errors.
+    */
+   return;
+}
+
+static void GLAPIENTRY
+_mesa_InvalidateBufferData(GLuint buffer)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_buffer_object *bufObj;
+
+   bufObj = _mesa_lookup_bufferobj(ctx, buffer);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glInvalidateBufferData(name = 0x%x) invalid object",
+                  buffer);
+      return;
+   }
+
+   /* The GL_ARB_invalidate_subdata spec says:
+    *
+    *     "An INVALID_OPERATION error is generated if the buffer is currently
+    *     mapped by MapBuffer, or if the invalidate range intersects the range
+    *     currently mapped by MapBufferRange."
+    */
+   if (_mesa_bufferobj_mapped(bufObj)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glInvalidateBufferData(intersection with mapped "
+                  "range)");
+      return;
+   }
+
+   /* We don't actually do anything for this yet.  Just return after
+    * validating the parameters and generating the required errors.
+    */
+   return;
+}
+
 void
 _mesa_init_bufferobj_dispatch(struct gl_context *ctx, struct _glapi_table *disp)
 {
@@ -2218,5 +2310,10 @@ _mesa_init_bufferobj_dispatch(struct gl_context *ctx, struct _glapi_table *disp)
    if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       SET_BindBufferRangeEXT(disp, _mesa_BindBufferRange);
       SET_BindBufferBaseEXT(disp, _mesa_BindBufferBase);
+   }
+
+   if (_mesa_is_desktop_gl(ctx)) {
+      SET_InvalidateBufferData(disp, _mesa_InvalidateBufferData);
+      SET_InvalidateBufferSubData(disp, _mesa_InvalidateBufferSubData);
    }
 }
