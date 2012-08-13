@@ -4913,7 +4913,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
       else {
          /* need to use double precision to prevent overflow problems */
          for (i = 0; i < n; i++) {
-            GLdouble z = depthValues[i] * (GLfloat) depthMax;
+            GLdouble z = depthValues[i] * (GLdouble) depthMax;
             if (z >= (GLdouble) 0xffffffff)
                zValues[i] = 0xffffffff;
             else
