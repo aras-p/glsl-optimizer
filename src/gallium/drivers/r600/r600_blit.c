@@ -320,7 +320,7 @@ static void r600_color_resolve(struct pipe_context *ctx,
 
 	if (is_simple_resolve(info)) {
 		r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
-		util_blitter_resolve_color_custom(rctx->blitter,
+		util_blitter_custom_resolve_color(rctx->blitter,
 						  info->dst.res, info->dst.level, info->dst.layer,
 						  info->src.res, info->src.layer,
 						  rctx->custom_blend_resolve);
@@ -345,7 +345,7 @@ static void r600_color_resolve(struct pipe_context *ctx,
 
 	/* XXX use scissor, so that only the needed part of the resource is resolved */
 	r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
-	util_blitter_resolve_color_custom(rctx->blitter,
+	util_blitter_custom_resolve_color(rctx->blitter,
 					  tmp, 0, 0,
 					  info->src.res, info->src.layer,
 					  rctx->custom_blend_resolve);

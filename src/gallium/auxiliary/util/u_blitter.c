@@ -962,7 +962,7 @@ void util_blitter_clear(struct blitter_context *blitter,
                              NULL, NULL);
 }
 
-void util_blitter_clear_depth_custom(struct blitter_context *blitter,
+void util_blitter_custom_clear_depth(struct blitter_context *blitter,
                                      unsigned width, unsigned height,
                                      double depth, void *custom_dsa)
 {
@@ -1493,7 +1493,7 @@ void util_blitter_copy_buffer(struct blitter_context *blitter,
 }
 
 /* probably radeon specific */
-void util_blitter_resolve_color_custom(struct blitter_context *blitter,
+void util_blitter_custom_resolve_color(struct blitter_context *blitter,
 				       struct pipe_resource *dst,
 				       unsigned dst_level,
 				       unsigned dst_layer,

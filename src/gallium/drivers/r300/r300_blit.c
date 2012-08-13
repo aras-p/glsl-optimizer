@@ -398,7 +398,7 @@ void r300_decompress_zmask(struct r300_context *r300)
     r300_mark_atom_dirty(r300, &r300->hyperz_state);
 
     r300_blitter_begin(r300, R300_DECOMPRESS);
-    util_blitter_clear_depth_custom(r300->blitter, fb->width, fb->height, 0,
+    util_blitter_custom_clear_depth(r300->blitter, fb->width, fb->height, 0,
                                     r300->dsa_decompress_zmask);
     r300_blitter_end(r300);
 

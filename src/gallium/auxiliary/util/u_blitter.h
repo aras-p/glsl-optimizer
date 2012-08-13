@@ -156,10 +156,6 @@ void util_blitter_clear(struct blitter_context *blitter,
                         const union pipe_color_union *color,
                         double depth, unsigned stencil);
 
-void util_blitter_clear_depth_custom(struct blitter_context *blitter,
-                                     unsigned width, unsigned height,
-                                     double depth, void *custom_dsa);
-
 /**
  * Check if the blitter (with the help of the driver) can blit between
  * the two resources.
@@ -294,13 +290,26 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
                                       unsigned dstx, unsigned dsty,
                                       unsigned width, unsigned height);
 
+/* The following functions are customized variants of the clear functions.
+ * Some drivers use them internally to do things like MSAA resolve
+ * and resource decompression. It usually consists of rendering a full-screen
+ * quad with a special blend or DSA state.
+ */
+
+/* Used by r300g for depth decompression. */
+void util_blitter_custom_clear_depth(struct blitter_context *blitter,
+                                     unsigned width, unsigned height,
+                                     double depth, void *custom_dsa);
+
+/* Used by r600g for depth decompression. */
 void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
 				       struct pipe_surface *zsurf,
 				       struct pipe_surface *cbsurf,
 				       unsigned sample_mask,
 				       void *dsa_stage, float depth);
 
-void util_blitter_resolve_color_custom(struct blitter_context *blitter,
+/* Used by r600g for MSAA color resolve. */
+void util_blitter_custom_resolve_color(struct blitter_context *blitter,
                                        struct pipe_resource *dst,
                                        unsigned dst_level,
                                        unsigned dst_layer,
