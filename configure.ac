@@ -1226,6 +1226,8 @@ if test "x$enable_gbm" = xyes; then
         if test "x$enable_shared_glapi" = xno; then
             AC_MSG_ERROR([gbm_dri requires --enable-shared-glapi])
         fi
+        PKG_CHECK_MODULES([LIBKMS], [libkms], [],
+                          AC_MSG_ERROR([gbm needs libkms]))
     fi
 fi
 GBM_PC_REQ_PRIV="libudev"

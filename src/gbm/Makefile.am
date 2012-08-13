@@ -7,6 +7,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/gbm/main \
 	$(LIBUDEV_CFLAGS) \
+	$(LIBKMS_CFLAGS) \
 	$(DLOPEN_CFLAGS) \
 	$(DEFINES)
 
@@ -18,7 +19,7 @@ libgbm_la_SOURCES = \
 	main/backend.c \
 	main/common.c
 libgbm_la_LDFLAGS = -version-info 1:0
-libgbm_la_LIBADD = $(LIBUDEV_LIBS) $(DLOPEN_LIBS)
+libgbm_la_LIBADD = $(LIBUDEV_LIBS) $(LIBKMS_LIBS) $(DLOPEN_LIBS)
 
 if HAVE_EGL_PLATFORM_WAYLAND
 AM_CPPFLAGS = -DHAVE_WAYLAND_PLATFORM

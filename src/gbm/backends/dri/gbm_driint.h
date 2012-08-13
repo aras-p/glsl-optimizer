@@ -30,6 +30,8 @@
 
 #include "gbmint.h"
 
+#include "libkms.h"
+
 #include "common.h"
 #include "common_drm.h"
 
@@ -40,6 +42,9 @@ struct gbm_dri_surface;
 
 struct gbm_dri_device {
    struct gbm_drm_device base;
+
+   /* Only used for cursors */
+   struct kms_driver *kms;
 
    void *driver;
 
@@ -72,6 +77,9 @@ struct gbm_dri_bo {
    struct gbm_drm_bo base;
 
    __DRIimage *image;
+
+   /* Only used for cursors */
+   struct kms_bo *bo;
 };
 
 struct gbm_dri_surface {
