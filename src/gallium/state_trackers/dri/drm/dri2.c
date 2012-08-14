@@ -314,6 +314,9 @@ dri2_allocate_buffer(__DRIscreen *sPriv,
          break;
    }
 
+   /* because we get the handle and stride */
+   bind |= PIPE_BIND_SHARED;
+
    switch (format) {
       case 32:
          pf = PIPE_FORMAT_B8G8R8A8_UNORM;
