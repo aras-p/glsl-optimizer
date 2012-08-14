@@ -13,6 +13,7 @@ The goal is to allow Makefile's and SConscript's to share source listing.
 
 class SourceListParser(object):
     def __init__(self):
+        self.symbol_table = {}
         self._reset()
 
     def _reset(self, filename=None):
@@ -20,7 +21,6 @@ class SourceListParser(object):
 
         self.line_no = 1
         self.line_cont = ''
-        self.symbol_table = {}
 
     def _error(self, msg):
         raise RuntimeError('%s:%d: %s' % (self.filename, self.line_no, msg))
@@ -125,3 +125,6 @@ class SourceListParser(object):
                 raise
 
         return self.symbol_table
+
+    def add_symbol(self, name, value):
+        self.symbol_table[name] = value

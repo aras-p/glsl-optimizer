@@ -235,6 +235,10 @@ def parse_source_list(env, filename, names=None):
     # parse the source list file
     parser = source_list.SourceListParser()
     src = env.File(filename).srcnode()
+
+    parser.add_symbol('top_srcdir', env.Dir('#').abspath)
+    parser.add_symbol('top_builddir', env['build_dir'])
+
     sym_table = parser.parse(src.abspath)
 
     if names:
