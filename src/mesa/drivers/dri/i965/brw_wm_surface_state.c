@@ -654,12 +654,14 @@ brw_get_surface_num_multisamples(unsigned num_samples)
 
 
 static void
-brw_update_buffer_texture_surface(struct gl_context *ctx, GLuint unit)
+brw_update_buffer_texture_surface(struct gl_context *ctx,
+                                  unsigned unit,
+                                  uint32_t *binding_table,
+                                  unsigned surf_index)
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = &brw->intel;
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
-   const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
    uint32_t *surf;
    struct intel_buffer_object *intel_obj =
       intel_buffer_object(tObj->BufferObject);
@@ -674,7 +676,7 @@ brw_update_buffer_texture_surface(struct gl_context *ctx, GLuint unit)
    }
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  6 * 4, 32, &brw->wm.surf_offset[surf_index]);
+			  6 * 4, 32, &binding_table[surf_index]);
 
    surf[0] = (BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
 	      (brw_format_for_mesa_format(format) << BRW_SURFACE_FORMAT_SHIFT));
@@ -687,7 +689,7 @@ brw_update_buffer_texture_surface(struct gl_context *ctx, GLuint unit)
 
       /* Emit relocation to surface contents. */
       drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			      brw->wm.surf_offset[surf_index] + 4,
+			      binding_table[surf_index] + 4,
 			      bo, 0, I915_GEM_DOMAIN_SAMPLER, 0);
 
       int w = intel_obj->Base.Size / texel_size;
@@ -706,7 +708,10 @@ brw_update_buffer_texture_surface(struct gl_context *ctx, GLuint unit)
 }
 
 static void
-brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
+brw_update_texture_surface(struct gl_context *ctx,
+                           unsigned unit,
+                           uint32_t *binding_table,
+                           unsigned surf_index)
 {
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
@@ -714,19 +719,18 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    struct intel_mipmap_tree *mt = intelObj->mt;
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
-   const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
    uint32_t *surf;
    int width, height, depth;
 
    if (tObj->Target == GL_TEXTURE_BUFFER) {
-      brw_update_buffer_texture_surface(ctx, unit);
+      brw_update_buffer_texture_surface(ctx, unit, binding_table, surf_index);
       return;
    }
 
    intel_miptree_get_dimensions_for_image(firstImage, &width, &height, &depth);
 
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
-			  6 * 4, 32, &brw->wm.surf_offset[surf_index]);
+			  6 * 4, 32, &binding_table[surf_index]);
 
    surf[0] = (translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
@@ -754,7 +758,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-			   brw->wm.surf_offset[surf_index] + 4,
+			   binding_table[surf_index] + 4,
 			   intelObj->mt->region->bo,
                            intelObj->mt->offset,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
@@ -1242,7 +1246,7 @@ brw_update_texture_surfaces(struct brw_context *brw)
 
       /* _NEW_TEXTURE */
       if (texUnit->_ReallyEnabled) {
-	 brw->intel.vtbl.update_texture_surface(ctx, i);
+	 brw->intel.vtbl.update_texture_surface(ctx, i, brw->wm.surf_offset, surf);
       } else {
          brw->wm.surf_offset[surf] = 0;
       }
