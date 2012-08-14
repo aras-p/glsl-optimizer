@@ -305,9 +305,8 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
 
    /* Resolve the depth buffer's HiZ buffer. */
    depth_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
-   if (depth_irb && depth_irb->mt) {
+   if (depth_irb)
       intel_renderbuffer_resolve_hiz(intel, depth_irb);
-   }
 
    /* Resolve depth buffer of each enabled depth texture. */
    for (int i = 0; i < BRW_MAX_TEX_UNIT; i++) {
