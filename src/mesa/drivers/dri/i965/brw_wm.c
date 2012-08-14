@@ -592,7 +592,13 @@ static void brw_wm_populate_key( struct brw_context *brw,
       key->stats_wm = brw->intel.stats_wm;
 
    /* BRW_NEW_WM_INPUT_DIMENSIONS */
-   key->proj_attrib_mask = brw->wm.input_size_masks[4-1];
+   /* Only set this for fixed function.  The optimization it enables isn't
+    * useful for programs using shaders.
+    */
+   if (ctx->Shader.CurrentFragmentProgram)
+      key->proj_attrib_mask = 0xffffffff;
+   else
+      key->proj_attrib_mask = brw->wm.input_size_masks[4-1];
 
    /* _NEW_LIGHT */
    key->flat_shade = (ctx->Light.ShadeModel == GL_FLAT);

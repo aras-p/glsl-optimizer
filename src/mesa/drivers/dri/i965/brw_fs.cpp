@@ -2155,6 +2155,9 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
       key.iz_lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
    }
 
+   if (prog->Name != 0)
+      key.proj_attrib_mask = 0xffffffff;
+
    if (intel->gen < 6)
       key.vp_outputs_written |= BITFIELD64_BIT(FRAG_ATTRIB_WPOS);
 
@@ -2162,7 +2165,8 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
       if (!(fp->Base.InputsRead & BITFIELD64_BIT(i)))
 	 continue;
 
-      key.proj_attrib_mask |= 1 << i;
+      if (prog->Name == 0)
+         key.proj_attrib_mask |= 1 << i;
 
       if (intel->gen < 6) {
          int vp_index = _mesa_vert_result_to_frag_attrib((gl_vert_result) i);
