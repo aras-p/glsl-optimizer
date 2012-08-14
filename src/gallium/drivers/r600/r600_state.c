@@ -1436,6 +1436,9 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 					   surf->cb_color_info, res, RADEON_USAGE_READWRITE);
 		i++;
 	}
+	for (; i < 8 ; i++) {
+		r600_pipe_state_add_reg(rstate, R_0280A0_CB_COLOR0_INFO + i * 4, 0);
+	}
 
 	/* Update alpha-test state dependencies.
 	 * Alpha-test is done on the first colorbuffer only. */
