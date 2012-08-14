@@ -153,8 +153,6 @@ AC_SUBST([EXTRA_LIB_PATH])
 
 dnl Cache CPPFLAGS so we can add *_INCLUDES and restore it later
 _SAVE_CPPFLAGS="$CPPFLAGS"
-AC_ARG_VAR([X11_INCLUDES],[Extra -I paths for X11 headers])
-AC_SUBST([X11_INCLUDES])
 
 dnl Compiler macros
 DEFINES=""
@@ -878,32 +876,8 @@ if test "x$enable_dri" = xyes; then
     fi
 fi
 
-dnl
-dnl Find out if X is available. The variable have_x is set if libX11 is
-dnl found to mimic AC_PATH_XTRA.
-dnl
-if test -n "$PKG_CONFIG"; then
-    AC_MSG_CHECKING([pkg-config files for X11 are available])
-    PKG_CHECK_EXISTS([x11],[
-        x11_pkgconfig=yes
-        have_x=yes
-        ],[
-        x11_pkgconfig=no
-    ])
-    AC_MSG_RESULT([$x11_pkgconfig])
-else
-    x11_pkgconfig=no
-fi
-dnl Use the autoconf macro if no pkg-config files
-if test "$x11_pkgconfig" = yes; then
-    PKG_CHECK_MODULES([X11], [x11])
-else
-    AC_PATH_XTRA
-    test -z "$X11_CFLAGS" && X11_CFLAGS="$X_CFLAGS"
-    test -z "$X11_LIBS" && X11_LIBS="$X_LIBS -lX11"
-    AC_SUBST([X11_CFLAGS])
-    AC_SUBST([X11_LIBS])
-fi
+dnl Find out if X is available.
+PKG_CHECK_MODULES([X11], [x11])
 
 dnl Try to tell the user that the --x-* options are only used when
 dnl pkg-config is not available. This must be right after AC_PATH_XTRA.
@@ -947,18 +921,10 @@ dnl
 case "x$enable_glx$enable_xlib_glx" in
 xyesyes)
     # Xlib-based GLX
-    if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES([XLIBGL], [x11 xext])
-        GL_PC_REQ_PRIV="x11 xext"
-        X11_INCLUDES="$X11_INCLUDES $XLIBGL_CFLAGS"
-        GL_LIB_DEPS="$XLIBGL_LIBS"
-    else
-        # should check these...
-        X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
-        GL_LIB_DEPS="$X_LIBS -lX11 -lXext"
-        GL_PC_LIB_PRIV="$GL_LIB_DEPS"
-        GL_PC_CFLAGS="$X11_INCLUDES"
-    fi
+    PKG_CHECK_MODULES([XLIBGL], [x11 xext])
+    GL_PC_REQ_PRIV="x11 xext"
+    X11_INCLUDES="$X11_INCLUDES $XLIBGL_CFLAGS"
+    GL_LIB_DEPS="$XLIBGL_LIBS"
     GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm -lpthread $DLOPEN_LIBS"
     GL_PC_LIB_PRIV="$GL_PC_LIB_PRIV $SELINUX_LIBS -lm -lpthread"
     ;;
@@ -975,37 +941,18 @@ xyesno)
     fi
 
     # find the DRI deps for libGL
-    if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES([XCB],[x11-xcb xcb-glx >= 1.8.1])
-        dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx"
+    dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx >= 1.8.1"
 
-        # add xf86vidmode if available
-        PKG_CHECK_MODULES([XF86VIDMODE], [xxf86vm], HAVE_XF86VIDMODE=yes, HAVE_XF86VIDMODE=no)
-        if test "$HAVE_XF86VIDMODE" = yes ; then
-            dri_modules="$dri_modules xxf86vm"
-        fi
-
-        PKG_CHECK_MODULES([DRIGL], [$dri_modules])
-        GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV $dri_modules"
-        X11_INCLUDES="$X11_INCLUDES $DRIGL_CFLAGS"
-        GL_LIB_DEPS="$DRIGL_LIBS"
-    else
-        # should check these...
-        X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
-        if test "x$HAVE_XF86VIDMODE" == xyes; then
-           GL_LIB_DEPS="$X_LIBS -lX11 -lXext -lXxf86vm -lXdamage -lXfixes"
-	else
-           GL_LIB_DEPS="$X_LIBS -lX11 -lXext -lXdamage -lXfixes"
-	fi
-        GL_PC_LIB_PRIV="$GL_LIB_DEPS"
-        GL_PC_CFLAGS="$X11_INCLUDES"
-
-        # XCB can only be used from pkg-config
-        PKG_CHECK_MODULES([XCB],[x11-xcb xcb-glx >= 1.8.1])
-        GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV x11-xcb xcb-glx"
-        X11_INCLUDES="$X11_INCLUDES $XCB_CFLAGS"
-        GL_LIB_DEPS="$GL_LIB_DEPS $XCB_LIBS"
+    # add xf86vidmode if available
+    PKG_CHECK_MODULES([XF86VIDMODE], [xxf86vm], HAVE_XF86VIDMODE=yes, HAVE_XF86VIDMODE=no)
+    if test "$HAVE_XF86VIDMODE" = yes ; then
+        dri_modules="$dri_modules xxf86vm"
     fi
+
+    PKG_CHECK_MODULES([DRIGL], [$dri_modules])
+    GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV $dri_modules"
+    X11_INCLUDES="$X11_INCLUDES $DRIGL_CFLAGS"
+    GL_LIB_DEPS="$DRIGL_LIBS"
 
     # need DRM libs, -lpthread, etc.
     GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
