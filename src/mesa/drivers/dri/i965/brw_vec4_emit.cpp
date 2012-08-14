@@ -1053,7 +1053,7 @@ brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
       }
       if (start_busy && !drm_intel_bo_busy(intel->batch.last_bo)) {
          perf_debug("VS compile took %.03f ms and stalled the GPU\n",
-                    (get_time() - start_time) / 1000);
+                    (get_time() - start_time) * 1000);
       }
    }
 

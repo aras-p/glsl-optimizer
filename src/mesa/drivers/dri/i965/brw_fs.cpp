@@ -2119,7 +2119,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
 
       if (start_busy && !drm_intel_bo_busy(intel->batch.last_bo)) {
          perf_debug("FS compile took %.03f ms and stalled the GPU\n",
-                    (get_time() - start_time) / 1000);
+                    (get_time() - start_time) * 1000);
       }
    }
 
