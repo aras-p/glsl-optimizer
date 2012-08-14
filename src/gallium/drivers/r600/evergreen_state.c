@@ -993,7 +993,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 {
 	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
 	struct r600_pipe_sampler_view *view = CALLOC_STRUCT(r600_pipe_sampler_view);
-	struct r600_resource_texture *tmp = (struct r600_resource_texture*)texture;
+	struct r600_texture *tmp = (struct r600_texture*)texture;
 	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
@@ -1244,7 +1244,7 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 				  struct r600_surface *surf)
 {
 	struct r600_screen *rscreen = rctx->screen;
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)surf->base.texture;
+	struct r600_texture *rtex = (struct r600_texture*)surf->base.texture;
 	struct pipe_resource *pipe_tex = surf->base.texture;
 	unsigned level = surf->base.u.tex.level;
 	unsigned pitch, slice;
@@ -1418,7 +1418,7 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 {
 	struct r600_screen *rscreen = rctx->screen;
 	struct pipe_screen *screen = &rscreen->screen;
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)surf->base.texture;
+	struct r600_texture *rtex = (struct r600_texture*)surf->base.texture;
 	uint64_t offset;
 	unsigned level, pitch, slice, format, array_mode;
 	unsigned macro_aspect, tile_split, bankh, bankw, nbanks;
@@ -1677,7 +1677,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 					   surf->cb_color_attrib, res, RADEON_USAGE_READWRITE);
 	}
 	/* set CB_COLOR1_INFO for possible dual-src blending */
-	if (i == 1 && !((struct r600_resource_texture*)res)->is_rat) {
+	if (i == 1 && !((struct r600_texture*)res)->is_rat) {
 		r600_pipe_state_add_reg_bo(rstate, R_028C70_CB_COLOR0_INFO + 1 * 0x3C,
 					   surf->cb_color_info, res, RADEON_USAGE_READWRITE);
 		i++;

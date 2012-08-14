@@ -58,7 +58,7 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 				  0, &sbox);
 }
 
-unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
+unsigned r600_texture_get_offset(struct r600_texture *rtex,
 					unsigned level, unsigned layer)
 {
 	return rtex->surface.level[level].offset +
@@ -158,7 +158,7 @@ static int r600_init_surface(struct r600_screen *rscreen,
 }
 
 static int r600_setup_surface(struct pipe_screen *screen,
-			      struct r600_resource_texture *rtex,
+			      struct r600_texture *rtex,
 			      unsigned pitch_in_bytes_override)
 {
 	struct pipe_resource *ptex = &rtex->resource.b.b;
@@ -206,7 +206,7 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 					struct pipe_resource *ptex,
 					struct winsys_handle *whandle)
 {
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
+	struct r600_texture *rtex = (struct r600_texture*)ptex;
 	struct r600_resource *resource = &rtex->resource;
 	struct radeon_surface *surface = &rtex->surface;
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
@@ -230,7 +230,7 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 static void r600_texture_destroy(struct pipe_screen *screen,
 				 struct pipe_resource *ptex)
 {
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
+	struct r600_texture *rtex = (struct r600_texture*)ptex;
 	struct r600_resource *resource = &rtex->resource;
 
 	if (rtex->flushed_depth_texture)
@@ -252,7 +252,7 @@ static const struct u_resource_vtbl r600_texture_vtbl =
 	NULL				/* transfer_inline_write */
 };
 
-static struct r600_resource_texture *
+static struct r600_texture *
 r600_texture_create_object(struct pipe_screen *screen,
 			   const struct pipe_resource *base,
 			   unsigned pitch_in_bytes_override,
@@ -260,12 +260,12 @@ r600_texture_create_object(struct pipe_screen *screen,
 			   boolean alloc_bo,
 			   struct radeon_surface *surface)
 {
-	struct r600_resource_texture *rtex;
+	struct r600_texture *rtex;
 	struct r600_resource *resource;
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	int r;
 
-	rtex = CALLOC_STRUCT(r600_resource_texture);
+	rtex = CALLOC_STRUCT(r600_texture);
 	if (rtex == NULL)
 		return NULL;
 
@@ -408,11 +408,11 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 
 bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
-				     struct r600_resource_texture **staging)
+				     struct r600_texture **staging)
 {
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
+	struct r600_texture *rtex = (struct r600_texture*)texture;
 	struct pipe_resource resource;
-	struct r600_resource_texture **flushed_depth_texture = staging ?
+	struct r600_texture **flushed_depth_texture = staging ?
 			staging : &rtex->flushed_depth_texture;
 
 	if (!staging && rtex->flushed_depth_texture)
@@ -433,7 +433,7 @@ bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 	if (staging)
 		resource.flags |= R600_RESOURCE_FLAG_TRANSFER;
 
-	*flushed_depth_texture = (struct r600_resource_texture *)ctx->screen->resource_create(ctx->screen, &resource);
+	*flushed_depth_texture = (struct r600_texture *)ctx->screen->resource_create(ctx->screen, &resource);
 	if (*flushed_depth_texture == NULL) {
 		R600_ERR("failed to create temporary texture to hold flushed depth\n");
 		return false;
@@ -457,7 +457,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						const struct pipe_box *box)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
+	struct r600_texture *rtex = (struct r600_texture*)texture;
 	struct pipe_resource resource;
 	struct r600_transfer *trans;
 	boolean use_staging_texture = FALSE;
@@ -503,7 +503,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		*/
 		/* XXX: when discard is true, no need to read back from depth texture
 		*/
-		struct r600_resource_texture *staging_depth;
+		struct r600_texture *staging_depth;
 
 		if (!r600_init_flushed_depth_texture(ctx, texture, &staging_depth)) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
@@ -553,7 +553,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		}
 
 		trans->transfer.stride =
-			((struct r600_resource_texture *)trans->staging)->surface.level[0].pitch_bytes;
+			((struct r600_texture *)trans->staging)->surface.level[0].pitch_bytes;
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
 			/* Always referenced in the blit. */
@@ -572,7 +572,7 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct pipe_resource *texture = transfer->resource;
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
+	struct r600_texture *rtex = (struct r600_texture*)texture;
 
 	if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtransfer->staging) {
 		if (rtex->is_depth) {
@@ -598,8 +598,8 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct radeon_winsys_cs_handle *buf;
-	struct r600_resource_texture *rtex =
-			(struct r600_resource_texture*)transfer->resource;
+	struct r600_texture *rtex =
+			(struct r600_texture*)transfer->resource;
 	enum pipe_format format = transfer->resource->format;
 	unsigned offset = 0;
 	char *map;

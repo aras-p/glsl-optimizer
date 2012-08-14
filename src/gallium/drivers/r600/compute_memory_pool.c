@@ -41,12 +41,12 @@
 #include "compute_memory_pool.h"
 #include "evergreen_compute_internal.h"
 
-static struct r600_resource_texture * create_pool_texture(struct r600_screen * screen,
+static struct r600_texture * create_pool_texture(struct r600_screen * screen,
 		unsigned size_in_dw)
 {
 
 	struct pipe_resource templ;
-	struct r600_resource_texture * tex;
+	struct r600_texture * tex;
 
 	if (size_in_dw == 0) {
 		return NULL;
@@ -62,7 +62,7 @@ static struct r600_resource_texture * create_pool_texture(struct r600_screen * s
 	templ.depth0 = 1;
 	templ.array_size = 1;
 
-	tex = (struct r600_resource_texture *)r600_texture_create(
+	tex = (struct r600_texture *)r600_texture_create(
 						&screen->screen, &templ);
 	/* XXX: Propagate this error */
 	assert(tex && "Out of memory");

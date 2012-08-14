@@ -607,8 +607,8 @@ void r600_set_sampler_views(struct pipe_context *pipe,
 		}
 
 		if (rviews[i]) {
-			struct r600_resource_texture *rtex =
-				(struct r600_resource_texture*)rviews[i]->base.texture;
+			struct r600_texture *rtex =
+				(struct r600_texture*)rviews[i]->base.texture;
 
 			if (rtex->is_depth && !rtex->is_flushing_texture) {
 				dst->views.depth_texture_mask |= 1 << i;
@@ -1237,7 +1237,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	/* Set the depth buffer as dirty. */
 	if (rctx->framebuffer.zsbuf) {
 		struct pipe_surface *surf = rctx->framebuffer.zsbuf;
-		struct r600_resource_texture *rtex = (struct r600_resource_texture *)surf->texture;
+		struct r600_texture *rtex = (struct r600_texture *)surf->texture;
 
 		rtex->dirty_db_mask |= 1 << surf->u.tex.level;
 	}

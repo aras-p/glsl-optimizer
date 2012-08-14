@@ -497,8 +497,8 @@ void evergreen_set_tex_resource(
 {
 	struct evergreen_compute_resource* res =
 		get_empty_res(pipe, COMPUTE_RESOURCE_TEX, id);
-	struct r600_resource_texture *tmp =
-		(struct r600_resource_texture*)view->base.texture;
+	struct r600_texture *tmp =
+		(struct r600_texture*)view->base.texture;
 
 	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
