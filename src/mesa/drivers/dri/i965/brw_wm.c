@@ -437,6 +437,8 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 				   struct brw_sampler_prog_key_data *key)
 {
    for (int i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+      key->swizzles[i] = SWIZZLE_NOOP;
+
       if (!prog->TexturesUsed[i])
 	 continue;
 
@@ -511,9 +513,6 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 	    if (sampler->WrapR == GL_CLAMP)
 	       key->gl_clamp_mask[2] |= 1 << i;
 	 }
-      }
-      else {
-	 key->swizzles[i] = SWIZZLE_NOOP;
       }
    }
 }
