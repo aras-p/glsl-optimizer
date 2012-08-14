@@ -143,14 +143,12 @@ static void calc_sizes( struct tracker *t )
    /* Examine vertex program output sizes to set the size_masks[] info
     * which describes the fragment program input sizes.
     */
-   for (vertRes = VERT_RESULT_TEX0; vertRes < VERT_RESULT_MAX; vertRes++) {
+   for (vertRes = 0; vertRes < VERT_RESULT_MAX; vertRes++) {
 
       /* map vertex program output index to fragment program input index */
       GLint fragAttrib = _mesa_vert_result_to_frag_attrib(vertRes);
       if (fragAttrib < 0)
          continue;
-      assert(fragAttrib >= FRAG_ATTRIB_TEX0);
-      assert(fragAttrib <= FRAG_ATTRIB_MAX);
 
       switch (get_output_size(t, vertRes)) {
       case 4: t->size_masks[4-1] |= 1 << fragAttrib;
