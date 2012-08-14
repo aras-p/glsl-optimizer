@@ -432,8 +432,11 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
     */
    brw_validate_textures( brw );
 
-   /* Resolves must occur after updating state and finalizing textures but
-    * before setting up any hardware state for this draw call.
+   intel_prepare_render(intel);
+
+   /* Resolves must occur after updating renderbuffers, updating context state,
+    * and finalizing textures but before setting up any hardware state for
+    * this draw call.
     */
    brw_predraw_resolve_buffers(brw);
 
@@ -454,8 +457,6 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
     * Note this is where brw->vs->prog_data.inputs_read is calculated,
     * so can't access it earlier.
     */
-
-   intel_prepare_render(intel);
 
    for (i = 0; i < nr_prims; i++) {
       int estimated_max_prim_size;
