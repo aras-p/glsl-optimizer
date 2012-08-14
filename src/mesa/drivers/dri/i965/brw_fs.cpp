@@ -2155,17 +2155,21 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
       key.iz_lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
    }
 
-   key.vp_outputs_written |= BITFIELD64_BIT(FRAG_ATTRIB_WPOS);
+   if (intel->gen < 6)
+      key.vp_outputs_written |= BITFIELD64_BIT(FRAG_ATTRIB_WPOS);
+
    for (int i = 0; i < FRAG_ATTRIB_MAX; i++) {
       if (!(fp->Base.InputsRead & BITFIELD64_BIT(i)))
 	 continue;
 
       key.proj_attrib_mask |= 1 << i;
 
-      int vp_index = _mesa_vert_result_to_frag_attrib((gl_vert_result) i);
+      if (intel->gen < 6) {
+         int vp_index = _mesa_vert_result_to_frag_attrib((gl_vert_result) i);
 
-      if (vp_index >= 0)
-	 key.vp_outputs_written |= BITFIELD64_BIT(vp_index);
+         if (vp_index >= 0)
+            key.vp_outputs_written |= BITFIELD64_BIT(vp_index);
+      }
    }
 
    key.clamp_fragment_color = true;

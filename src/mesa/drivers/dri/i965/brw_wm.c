@@ -636,7 +636,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
    key->sample_alpha_to_coverage = ctx->Multisample.SampleAlphaToCoverage;
 
    /* CACHE_NEW_VS_PROG */
-   key->vp_outputs_written = brw->vs.prog_data->outputs_written;
+   if (intel->gen < 6)
+      key->vp_outputs_written = brw->vs.prog_data->outputs_written;
 
    /* The unique fragment program ID */
    key->program_string_id = fp->id;
