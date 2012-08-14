@@ -2130,6 +2130,7 @@ bool
 brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);
+   struct intel_context *intel = &brw->intel;
    struct brw_wm_prog_key key;
 
    if (!prog->_LinkedShaders[MESA_SHADER_FRAGMENT])
@@ -2142,15 +2143,17 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    memset(&key, 0, sizeof(key));
 
-   if (fp->UsesKill)
-      key.iz_lookup |= IZ_PS_KILL_ALPHATEST_BIT;
+   if (intel->gen < 6) {
+      if (fp->UsesKill)
+         key.iz_lookup |= IZ_PS_KILL_ALPHATEST_BIT;
 
-   if (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH))
-      key.iz_lookup |= IZ_PS_COMPUTES_DEPTH_BIT;
+      if (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH))
+         key.iz_lookup |= IZ_PS_COMPUTES_DEPTH_BIT;
 
-   /* Just assume depth testing. */
-   key.iz_lookup |= IZ_DEPTH_TEST_ENABLE_BIT;
-   key.iz_lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
+      /* Just assume depth testing. */
+      key.iz_lookup |= IZ_DEPTH_TEST_ENABLE_BIT;
+      key.iz_lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
+   }
 
    key.vp_outputs_written |= BITFIELD64_BIT(FRAG_ATTRIB_WPOS);
    for (int i = 0; i < FRAG_ATTRIB_MAX; i++) {
