@@ -10,7 +10,7 @@ INCLUDES = -I$(TOP)/src/gallium/include \
 	   -I$(TOP)/src/gallium/winsys \
 	   $(DRIVER_INCLUDES)
 DEFINES = -DGALLIUM_TRACE -DVER_MAJOR=$(VA_MAJOR) -DVER_MINOR=$(VA_MINOR) $(DRIVER_DEFINES)
-LIBS = $(EXTRA_LIB_PATH) $(DRIVER_LIBS) -lva -lXext -lX11 -lm
+LIBS = $(DRIVER_LIBS) -lva -lXext -lX11 -lm
 STATE_TRACKER_LIB = $(TOP)/src/gallium/state_trackers/va/libvatracker.a
 
 ifeq ($(MESA_LLVM),1)

@@ -10,7 +10,7 @@ INCLUDES = -I$(TOP)/src/gallium/include \
 	   -I$(TOP)/src/gallium/winsys \
 	   $(DRIVER_INCLUDES)
 DEFINES = -DGALLIUM_TRACE -DVER_MAJOR=$(VDPAU_MAJOR) -DVER_MINOR=$(VDPAU_MINOR) $(DRIVER_DEFINES)
-LIBS = $(EXTRA_LIB_PATH) $(DRIVER_LIBS) -lvdpau -lX11-xcb -lxcb-dri2 -lm -lrt
+LIBS = $(DRIVER_LIBS) -lvdpau -lX11-xcb -lxcb-dri2 -lm -lrt
 STATE_TRACKER_LIB = $(TOP)/src/gallium/state_trackers/vdpau/libvdpautracker.a
 
 ifeq ($(MESA_LLVM),1)

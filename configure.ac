@@ -146,12 +146,8 @@ dnl LIB_DIR - library basename
 LIB_DIR=`echo $libdir | $SED 's%.*/%%'`
 AC_SUBST([LIB_DIR])
 
-dnl Cache LDFLAGS so we can add EXTRA_LIB_PATH and restore it later
+dnl Cache LDFLAGS and CPPFLAGS so we can add to them and restore later
 _SAVE_LDFLAGS="$LDFLAGS"
-AC_ARG_VAR([EXTRA_LIB_PATH],[Extra -L paths for the linker])
-AC_SUBST([EXTRA_LIB_PATH])
-
-dnl Cache CPPFLAGS so we can add *_INCLUDES and restore it later
 _SAVE_CPPFLAGS="$CPPFLAGS"
 
 dnl Compiler macros
