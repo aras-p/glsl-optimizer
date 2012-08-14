@@ -1552,6 +1552,8 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	if (rctx->framebuffer.state.zsbuf) {
 		rctx->framebuffer.atom.num_dw += 13;
+	} else if (rctx->screen->info.drm_minor >= 18) {
+		rctx->framebuffer.atom.num_dw += 3;
 	}
 	if (rctx->family > CHIP_R600 && rctx->family < CHIP_RV770) {
 		rctx->framebuffer.atom.num_dw += 2;
@@ -1753,6 +1755,10 @@ static void r600_emit_framebuffer_state(struct r600_context *rctx, struct r600_a
 		r600_write_context_reg(cs, R_028D34_DB_PREFETCH_LIMIT, surf->db_prefetch_limit);
 
 		sbu |= SURFACE_BASE_UPDATE_DEPTH;
+	} else if (rctx->screen->info.drm_minor >= 18) {
+		/* DRM 2.6.18 allows the INVALID format to disable depth/stencil.
+		 * Older kernels are out of luck. */
+		r600_write_context_reg(cs, R_028010_DB_DEPTH_INFO, S_028010_FORMAT(V_028010_DEPTH_INVALID));
 	}
 
 	/* SURFACE_BASE_UPDATE */

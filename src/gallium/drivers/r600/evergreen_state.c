@@ -1434,10 +1434,15 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 		stencil_offset >>= 8;
 
 		surf->db_stencil_base = stencil_offset;
-		surf->db_stencil_info = 1 | S_028044_TILE_SPLIT(stile_split);
+		surf->db_stencil_info = S_028044_FORMAT(V_028044_STENCIL_8) |
+					S_028044_TILE_SPLIT(stile_split);
 	} else {
 		surf->db_stencil_base = offset;
-		surf->db_stencil_info = 1;
+		/* DRM 2.6.18 allows the INVALID format to disable stencil.
+		 * Older kernels are out of luck. */
+		surf->db_stencil_info = rctx->screen->info.drm_minor >= 18 ?
+					S_028044_FORMAT(V_028044_STENCIL_INVALID) :
+					S_028044_FORMAT(V_028044_STENCIL_8);
 	}
 
 	surf->depth_initialized = true;
@@ -1575,6 +1580,8 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		rctx->framebuffer.atom.num_dw += 21;
 		if (rctx->keep_tiling_flags)
 			rctx->framebuffer.atom.num_dw += 2;
+	} else if (rctx->screen->info.drm_minor >= 18) {
+		rctx->framebuffer.atom.num_dw += 4;
 	}
 
 	r600_atom_dirty(rctx, &rctx->framebuffer.atom);
@@ -1903,6 +1910,12 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 
 		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0)); /* R_028054_DB_STENCIL_WRITE_BASE */
 		r600_write_value(cs, reloc);
+	} else if (rctx->screen->info.drm_minor >= 18) {
+		/* DRM 2.6.18 allows the INVALID format to disable depth/stencil.
+		 * Older kernels are out of luck. */
+		r600_write_context_reg_seq(cs, R_028040_DB_Z_INFO, 2);
+		r600_write_value(cs, S_028040_FORMAT(V_028040_Z_INVALID)); /* R_028040_DB_Z_INFO */
+		r600_write_value(cs, S_028044_FORMAT(V_028044_STENCIL_INVALID)); /* R_028044_DB_STENCIL_INFO */
 	}
 
 	/* Framebuffer dimensions. */

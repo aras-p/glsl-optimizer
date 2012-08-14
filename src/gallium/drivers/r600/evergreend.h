@@ -567,6 +567,8 @@
 
 #define R_028044_DB_STENCIL_INFO                     0x028044
 #define   S_028044_FORMAT(x)                           (((x) & 0x1) << 0)
+#define     V_028044_STENCIL_INVALID			0
+#define     V_028044_STENCIL_8				1
 #define   G_028044_FORMAT(x)                           (((x) >> 0) & 0x1)
 #define   C_028044_FORMAT                              0xFFFFFFFE
 #define   S_028044_TILE_SPLIT(x)                       (((x) & 0x7) << 8)
