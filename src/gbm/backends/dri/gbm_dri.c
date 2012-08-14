@@ -483,6 +483,9 @@ gbm_dri_bo_create(struct gbm_device *gbm,
    if (usage & GBM_BO_USE_WRITE)
       dri_use |= __DRI_IMAGE_USE_WRITE;
 
+   /* Gallium drivers requires shared in order to get the handle/stride */
+   dri_use |= __DRI_IMAGE_USE_SHARE;
+
    bo->image =
       dri->image->createImage(dri->screen,
                               width, height,
