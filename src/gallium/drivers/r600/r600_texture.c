@@ -290,8 +290,9 @@ r600_texture_create_object(struct pipe_screen *screen,
 	/* Now create the backing buffer. */
 	if (!buf && alloc_bo) {
 		unsigned base_align = rtex->surface.bo_alignment;
+		unsigned usage = R600_TEX_IS_TILED(rtex, 0) ? PIPE_USAGE_STATIC : base->usage;
 
-		if (!r600_init_resource(rscreen, resource, rtex->size, base_align, base->bind, base->usage)) {
+		if (!r600_init_resource(rscreen, resource, rtex->size, base_align, base->bind, usage)) {
 			FREE(rtex);
 			return NULL;
 		}
