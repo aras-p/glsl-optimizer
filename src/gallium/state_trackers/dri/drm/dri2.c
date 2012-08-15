@@ -606,6 +606,12 @@ dri2_query_image(__DRIimage *image, int attrib, int *value)
    case __DRI_IMAGE_ATTRIB_FORMAT:
       *value = image->dri_format;
       return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_WIDTH:
+      *value = image->texture->width0;
+      return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_HEIGHT:
+      *value = image->texture->height0;
+      return GL_TRUE;
    default:
       return GL_FALSE;
    }
@@ -651,7 +657,7 @@ dri2_destroy_image(__DRIimage *img)
 }
 
 static struct __DRIimageExtensionRec dri2ImageExtension = {
-    { __DRI_IMAGE, 3 },
+    { __DRI_IMAGE, 4 },
     dri2_create_image_from_name,
     dri2_create_image_from_renderbuffer,
     dri2_destroy_image,
