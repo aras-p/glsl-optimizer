@@ -142,7 +142,7 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_t
 					(struct pipe_resource*)texture->flushed_depth_texture, &surf_tmpl);
 
 			r600_blitter_begin(ctx, R600_DECOMPRESS);
-			util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, rctx->custom_dsa_flush, depth);
+			util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, ~0, rctx->custom_dsa_flush, depth);
 			r600_blitter_end(ctx);
 
 			pipe_surface_reference(&zsurf, NULL);
@@ -249,8 +249,8 @@ static void r600_hw_copy_region(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
 	r600_blitter_begin(ctx, R600_COPY);
-	util_blitter_copy_texture(rctx->blitter, dst, dst_level, dstx, dsty, dstz,
-				  src, src_level, src_box);
+	util_blitter_copy_texture(rctx->blitter, dst, dst_level, ~0, dstx, dsty, dstz,
+				  src, src_level, 0, src_box);
 	r600_blitter_end(ctx);
 }
 
