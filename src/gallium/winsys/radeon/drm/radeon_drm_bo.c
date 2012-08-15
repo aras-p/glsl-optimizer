@@ -905,7 +905,7 @@ done:
     if (stride)
         *stride = whandle->stride;
 
-    if (mgr->va) {
+    if (mgr->va && !bo->va) {
         struct drm_radeon_gem_va va;
 
         bo->va_size = ((bo->base.size + 4095) & ~4095);
