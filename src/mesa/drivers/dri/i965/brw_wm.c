@@ -366,18 +366,18 @@ brw_debug_recompile_sampler_key(const struct brw_sampler_prog_key_data *old_key,
 
    for (unsigned int i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       found |= key_debug("EXT_texture_swizzle or DEPTH_TEXTURE_MODE",
-                         key->swizzles[i], old_key->swizzles[i]);
+                         old_key->swizzles[i], key->swizzles[i]);
    }
    found |= key_debug("GL_CLAMP enabled on any texture unit's 1st coordinate",
-                      key->gl_clamp_mask[0], old_key->gl_clamp_mask[0]);
+                      old_key->gl_clamp_mask[0], key->gl_clamp_mask[0]);
    found |= key_debug("GL_CLAMP enabled on any texture unit's 2nd coordinate",
-                      key->gl_clamp_mask[1], old_key->gl_clamp_mask[1]);
+                      old_key->gl_clamp_mask[1], key->gl_clamp_mask[1]);
    found |= key_debug("GL_CLAMP enabled on any texture unit's 3rd coordinate",
-                      key->gl_clamp_mask[2], old_key->gl_clamp_mask[2]);
+                      old_key->gl_clamp_mask[2], key->gl_clamp_mask[2]);
    found |= key_debug("GL_MESA_ycbcr texturing\n",
-                      key->yuvtex_mask, old_key->yuvtex_mask);
+                      old_key->yuvtex_mask, key->yuvtex_mask);
    found |= key_debug("GL_MESA_ycbcr UV swapping\n",
-                      key->yuvtex_swap_mask, old_key->yuvtex_swap_mask);
+                      old_key->yuvtex_swap_mask, key->yuvtex_swap_mask);
 
    return found;
 }
@@ -413,18 +413,18 @@ brw_wm_debug_recompile(struct brw_context *brw,
    }
 
    found |= key_debug("alphatest, computed depth, depth test, or depth write",
-                      key->iz_lookup, old_key->iz_lookup);
-   found |= key_debug("depth statistics", key->stats_wm, old_key->stats_wm);
-   found |= key_debug("flat shading", key->flat_shade, old_key->flat_shade);
-   found |= key_debug("number of color buffers", key->nr_color_regions, old_key->nr_color_regions);
-   found |= key_debug("rendering to FBO", key->render_to_fbo, old_key->render_to_fbo);
-   found |= key_debug("fragment color clamping", key->clamp_fragment_color, old_key->clamp_fragment_color);
-   found |= key_debug("line smoothing", key->line_aa, old_key->line_aa);
-   found |= key_debug("proj_attrib_mask", key->proj_attrib_mask, old_key->proj_attrib_mask);
-   found |= key_debug("renderbuffer height", key->drawable_height, old_key->drawable_height);
-   found |= key_debug("vertex shader outputs", key->vp_outputs_written, old_key->vp_outputs_written);
+                      old_key->iz_lookup, key->iz_lookup);
+   found |= key_debug("depth statistics", old_key->stats_wm, key->stats_wm);
+   found |= key_debug("flat shading", old_key->flat_shade, key->flat_shade);
+   found |= key_debug("number of color buffers", old_key->nr_color_regions, key->nr_color_regions);
+   found |= key_debug("rendering to FBO", old_key->render_to_fbo, key->render_to_fbo);
+   found |= key_debug("fragment color clamping", old_key->clamp_fragment_color, key->clamp_fragment_color);
+   found |= key_debug("line smoothing", old_key->line_aa, key->line_aa);
+   found |= key_debug("proj_attrib_mask", old_key->proj_attrib_mask, key->proj_attrib_mask);
+   found |= key_debug("renderbuffer height", old_key->drawable_height, key->drawable_height);
+   found |= key_debug("vertex shader outputs", old_key->vp_outputs_written, key->vp_outputs_written);
 
-   found |= brw_debug_recompile_sampler_key(&key->tex, &old_key->tex);
+   found |= brw_debug_recompile_sampler_key(&old_key->tex, &key->tex);
 
    if (!found) {
       perf_debug("  Something else\n");
