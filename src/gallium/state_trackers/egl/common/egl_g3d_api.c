@@ -53,7 +53,7 @@ egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx,
 
    switch (ctx->ClientAPI) {
    case EGL_OPENGL_ES_API:
-      switch (ctx->ClientVersion) {
+      switch (ctx->ClientMajorVersion) {
       case 1:
          api = ST_API_OPENGL;
          *profile = ST_PROFILE_OPENGL_ES1;
@@ -63,8 +63,8 @@ egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx,
          *profile = ST_PROFILE_OPENGL_ES2;
          break;
       default:
-         _eglLog(_EGL_WARNING, "unknown client version %d",
-               ctx->ClientVersion);
+         _eglLog(_EGL_WARNING, "unknown client major version %d",
+               ctx->ClientMajorVersion);
          break;
       }
       break;
