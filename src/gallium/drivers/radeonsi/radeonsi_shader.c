@@ -681,6 +681,7 @@ int si_pipe_shader_create(
 	shader->num_vgprs = util_le32_to_cpu(*(uint32_t*)(inst_bytes + 4));
 	shader->spi_ps_input_ena = util_le32_to_cpu(*(uint32_t*)(inst_bytes + 8));
 
+	radeon_llvm_dispose(&si_shader_ctx.radeon_bld);
 	tgsi_parse_free(&si_shader_ctx.parse);
 
 	/* copy new shader */
