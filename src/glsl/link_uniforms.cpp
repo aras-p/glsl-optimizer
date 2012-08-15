@@ -313,7 +313,7 @@ private:
 	 const gl_texture_index target = base_type->sampler_index();
 	 const unsigned shadow = base_type->sampler_shadow;
 	 for (unsigned i = this->uniforms[id].sampler
-		 ; i < this->next_sampler
+		 ; i < MIN2(this->next_sampler, MAX_SAMPLERS)
 		 ; i++) {
 	    this->targets[i] = target;
 	    this->shader_samplers_used |= 1U << i;
