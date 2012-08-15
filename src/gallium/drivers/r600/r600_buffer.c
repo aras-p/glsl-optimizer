@@ -130,6 +130,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 			r600_set_constants_dirty_if_bound(rctx, &rctx->ps_constbuf_state, rbuffer);
 		}
 	}
+#if 0 /* this is broken (see Bug 53130) */
 	else if ((transfer->usage & PIPE_TRANSFER_DISCARD_RANGE) &&
 		 !(transfer->usage & PIPE_TRANSFER_UNSYNCHRONIZED) &&
 		 rctx->screen->has_streamout &&
@@ -149,6 +150,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 			return rctx->ws->buffer_map(rtransfer->staging->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 		}
 	}
+#endif
 
 	data = rctx->ws->buffer_map(rbuffer->cs_buf, rctx->cs, transfer->usage);
 	if (!data)
