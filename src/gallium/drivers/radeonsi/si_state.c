@@ -39,11 +39,15 @@
  */
 static void si_update_fb_blend_state(struct r600_context *rctx)
 {
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4;
 	struct si_state_blend *blend = rctx->queued.named.blend;
 	uint32_t mask;
 
-	if (pm4 == NULL || blend == NULL)
+	if (blend == NULL)
+		return;
+
+	pm4 = CALLOC_STRUCT(si_pm4_state);
+	if (pm4 == NULL)
 		return;
 
 	mask = (1ULL << ((unsigned)rctx->framebuffer.nr_cbufs * 4)) - 1;
@@ -300,14 +304,12 @@ static void si_set_viewport_state(struct pipe_context *ctx,
 static void si_update_fb_rs_state(struct r600_context *rctx)
 {
 	struct si_state_rasterizer *rs = rctx->queued.named.rasterizer;
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4;
 	unsigned offset_db_fmt_cntl = 0, depth;
 	float offset_units;
 
-	if (!rs || !rctx->framebuffer.zsbuf) {
-		FREE(pm4);
+	if (!rs || !rctx->framebuffer.zsbuf)
 		return;
-	}
 
 	offset_units = rctx->queued.named.rasterizer->offset_units;
 	switch (rctx->framebuffer.zsbuf->texture->format) {
@@ -330,6 +332,7 @@ static void si_update_fb_rs_state(struct r600_context *rctx)
 		return;
 	}
 
+	pm4 = CALLOC_STRUCT(si_pm4_state);
 	/* FIXME some of those reg can be computed with cso */
 	offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
 	si_pm4_set_reg(pm4, R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE,
@@ -2043,18 +2046,17 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint i
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_resource *rbuffer = cb ? si_resource(cb->buffer) : NULL;
-	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	struct si_pm4_state *pm4;
 	uint64_t va_offset;
 	uint32_t offset;
 
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
 	 */
-	if (cb == NULL) {
-		FREE(pm4);
+	if (cb == NULL)
 		return;
-	}
 
+	pm4 = CALLOC_STRUCT(si_pm4_state);
 	si_pm4_inval_shader_cache(pm4);
 
 	if (cb->user_buffer)
@@ -2081,7 +2083,6 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint i
 
 	default:
 		R600_ERR("unsupported %d\n", shader);
-		return;
 	}
 
 	if (cb->buffer != &rbuffer->b.b)
