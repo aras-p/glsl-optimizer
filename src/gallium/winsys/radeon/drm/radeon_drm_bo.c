@@ -246,6 +246,12 @@ static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size, ui
         waste = offset % alignment;
         waste = waste ? alignment - waste : 0;
     }
+    if (waste) {
+        n = CALLOC_STRUCT(radeon_bo_va_hole);
+        n->size = waste;
+        n->offset = offset;
+        list_add(&n->list, &mgr->va_holes);
+    }
     offset += waste;
     mgr->va_offset += size + waste;
     pipe_mutex_unlock(mgr->bo_va_mutex);
