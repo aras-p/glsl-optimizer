@@ -248,7 +248,19 @@ _mesa_init_point(struct gl_context *ctx)
    ctx->Point.MaxSize
       = MAX2(ctx->Const.MaxPointSize, ctx->Const.MaxPointSizeAA);
    ctx->Point.Threshold = 1.0;
-   ctx->Point.PointSprite = GL_FALSE; /* GL_ARB/NV_point_sprite */
+
+   /* Page 403 (page 423 of the PDF) of the OpenGL 3.0 spec says:
+    *
+    *     "Non-sprite points (section 3.4) - Enable/Disable targets
+    *     POINT_SMOOTH and POINT_SPRITE, and all associated state. Point
+    *     rasterization is always performed as though POINT_SPRITE were
+    *     enabled."
+    *
+    * In a core context, the state will default to true, and the setters and
+    * getters are disabled.
+    */
+   ctx->Point.PointSprite = (ctx->API == API_OPENGL_CORE);
+
    ctx->Point.SpriteRMode = GL_ZERO; /* GL_NV_point_sprite (only!) */
    ctx->Point.SpriteOrigin = GL_UPPER_LEFT; /* GL_ARB_point_sprite */
    for (i = 0; i < Elements(ctx->Point.CoordReplace); i++) {
