@@ -71,8 +71,6 @@ wayland_drm_display_destroy(struct native_display *ndpy)
 {
    struct wayland_drm_display *drmdpy = wayland_drm_display(ndpy);
 
-   if (drmdpy->fd)
-      close(drmdpy->fd);
    if (drmdpy->wl_drm)
       wl_drm_destroy(drmdpy->wl_drm);
    if (drmdpy->device_name)
@@ -83,6 +81,9 @@ wayland_drm_display_destroy(struct native_display *ndpy)
       wl_display_disconnect(drmdpy->base.dpy);
 
    ndpy_uninit(ndpy);
+
+   if (drmdpy->fd)
+      close(drmdpy->fd);
 
    FREE(drmdpy);
 }
