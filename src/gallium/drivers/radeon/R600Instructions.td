@@ -978,6 +978,15 @@ class VTX_READ_32_eg <bits<8> buffer_id, list<dag> pattern>
   let DST_SEL_Z        = 7;   // Masked
   let DST_SEL_W        = 7;   // Masked
   let DATA_FORMAT      = 0xD; // COLOR_32
+
+  // This is not really necessary, but there were some GPU hangs that appeared
+  // to be caused by ALU instructions in the next instruction group that wrote
+  // to the $ptr registers of the VTX_READ.  
+  // e.g.
+  // %T3_X<def> = VTX_READ_PARAM_i32_eg %T2_X<kill>, 24
+  // %T2_X<def> = MOV %ZERO
+  //Adding this constraint prevents this from happening.
+  let Constraints = "$ptr.ptr = $dst";
 }
 
 class VTX_READ_128_eg <bits<8> buffer_id, list<dag> pattern>
@@ -989,6 +998,11 @@ class VTX_READ_128_eg <bits<8> buffer_id, list<dag> pattern>
   let DST_SEL_Z        =  2;
   let DST_SEL_W        =  3;
   let DATA_FORMAT      =  0x22; // COLOR_32_32_32_32
+
+  // XXX: Need to force VTX_READ_128 instructions to write to the same register
+  // that holds its buffer address to avoid potential hangs.  We can't use
+  // the same constraint as VTX_READ_32_eg, because the $ptr.ptr and $dst
+  // registers are different sizes.
 }
 
 //===----------------------------------------------------------------------===//
