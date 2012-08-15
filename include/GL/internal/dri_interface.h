@@ -935,8 +935,7 @@ struct __DRIdri2ExtensionRec {
 
 #define __DRI_IMAGE_USE_SHARE		0x0001
 #define __DRI_IMAGE_USE_SCANOUT		0x0002
-#define __DRI_IMAGE_USE_CURSOR		0x0004
-#define __DRI_IMAGE_USE_WRITE		0x0008
+#define __DRI_IMAGE_USE_CURSOR		0x0004 /* Depricated */
 
 /**
  * queryImage attributes
@@ -983,13 +982,6 @@ struct __DRIimageExtensionRec {
     * \since 2
     */
    GLboolean (*validateUsage)(__DRIimage *image, unsigned int use);
-
-   /**
-    * Write data into image.
-    *
-    * \since 4
-    */
-   int (*write)(__DRIimage *image, const void *buf, size_t count);
 
    /**
     * Create an image out of a sub-region of a parent image.  This

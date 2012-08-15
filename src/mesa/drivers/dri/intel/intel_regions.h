@@ -144,7 +144,6 @@ intel_region_get_aligned_offset(struct intel_region *region, uint32_t x,
 struct __DRIimageRec {
    struct intel_region *region;
    GLenum internal_format;
-   uint32_t usage;
    uint32_t dri_format;
    GLuint format;
    uint32_t offset;
