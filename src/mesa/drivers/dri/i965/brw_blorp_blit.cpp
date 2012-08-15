@@ -112,9 +112,8 @@ clip_or_scissor(bool mirror, GLint &src_x0, GLint &src_x1, GLint &dst_x0,
 
 
 static struct intel_mipmap_tree *
-find_miptree(GLbitfield buffer_bit, struct gl_renderbuffer *rb)
+find_miptree(GLbitfield buffer_bit, struct intel_renderbuffer *irb)
 {
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_mipmap_tree *mt = irb->mt;
    if (buffer_bit == GL_STENCIL_BUFFER_BIT && mt->stencil_mt)
       mt = mt->stencil_mt;
@@ -141,42 +140,43 @@ brw_blorp_blit_miptrees(struct intel_context *intel,
 
 static void
 do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
-              struct gl_renderbuffer *src_rb, struct gl_renderbuffer *dst_rb,
+              struct intel_renderbuffer *src_irb,
+              struct intel_renderbuffer *dst_irb,
               GLint srcX0, GLint srcY0,
               GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
               bool mirror_x, bool mirror_y)
 {
    /* Find source/dst miptrees */
-   struct intel_mipmap_tree *src_mt = find_miptree(buffer_bit, src_rb);
-   struct intel_mipmap_tree *dst_mt = find_miptree(buffer_bit, dst_rb);
+   struct intel_mipmap_tree *src_mt = find_miptree(buffer_bit, src_irb);
+   struct intel_mipmap_tree *dst_mt = find_miptree(buffer_bit, dst_irb);
 
    /* Get ready to blit.  This includes depth resolving the src and dst
     * buffers if necessary.
     */
-   intel_renderbuffer_resolve_depth(intel, intel_renderbuffer(src_rb));
-   intel_renderbuffer_resolve_depth(intel, intel_renderbuffer(dst_rb));
+   intel_renderbuffer_resolve_depth(intel, src_irb);
+   intel_renderbuffer_resolve_depth(intel, dst_irb);
 
    /* Do the blit */
    brw_blorp_blit_miptrees(intel, src_mt, dst_mt,
                            srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
                            mirror_x, mirror_y);
 
-   intel_renderbuffer_set_needs_hiz_resolve(intel_renderbuffer(dst_rb));
-   intel_renderbuffer_set_needs_downsample(intel_renderbuffer(dst_rb));
+   intel_renderbuffer_set_needs_hiz_resolve(dst_irb);
+   intel_renderbuffer_set_needs_downsample(dst_irb);
 }
 
 
 static bool
-formats_match(GLbitfield buffer_bit, struct gl_renderbuffer *src_rb,
-              struct gl_renderbuffer *dst_rb)
+formats_match(GLbitfield buffer_bit, struct intel_renderbuffer *src_irb,
+              struct intel_renderbuffer *dst_irb)
 {
    /* Note: don't just check gl_renderbuffer::Format, because in some cases
     * multiple gl_formats resolve to the same native type in the miptree (for
     * example MESA_FORMAT_X8_Z24 and MESA_FORMAT_S8_Z24), and we can blit
     * between those formats.
     */
-   return find_miptree(buffer_bit, src_rb)->format ==
-      find_miptree(buffer_bit, dst_rb)->format;
+   return find_miptree(buffer_bit, src_irb)->format ==
+      find_miptree(buffer_bit, dst_irb)->format;
 }
 
 
@@ -243,36 +243,40 @@ try_blorp_blit(struct intel_context *intel,
    }
 
    /* Find buffers */
-   struct gl_renderbuffer *src_rb;
-   struct gl_renderbuffer *dst_rb;
+   struct intel_renderbuffer *src_irb;
+   struct intel_renderbuffer *dst_irb;
    switch (buffer_bit) {
    case GL_COLOR_BUFFER_BIT:
-      src_rb = read_fb->_ColorReadBuffer;
+      src_irb = intel_renderbuffer(read_fb->_ColorReadBuffer);
       for (unsigned i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; ++i) {
-         dst_rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
-         if (dst_rb && !formats_match(buffer_bit, src_rb, dst_rb))
+         dst_irb = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i]);
+         if (dst_irb && !formats_match(buffer_bit, src_irb, dst_irb))
             return false;
       }
       for (unsigned i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; ++i) {
-         dst_rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
-         do_blorp_blit(intel, buffer_bit, src_rb, dst_rb, srcX0, srcY0,
+         dst_irb = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i]);
+         do_blorp_blit(intel, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
                        dstX0, dstY0, dstX1, dstY1, mirror_x, mirror_y);
       }
       break;
    case GL_DEPTH_BUFFER_BIT:
-      src_rb = read_fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-      dst_rb = draw_fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-      if (!formats_match(buffer_bit, src_rb, dst_rb))
+      src_irb =
+         intel_renderbuffer(read_fb->Attachment[BUFFER_DEPTH].Renderbuffer);
+      dst_irb =
+         intel_renderbuffer(draw_fb->Attachment[BUFFER_DEPTH].Renderbuffer);
+      if (!formats_match(buffer_bit, src_irb, dst_irb))
          return false;
-      do_blorp_blit(intel, buffer_bit, src_rb, dst_rb, srcX0, srcY0,
+      do_blorp_blit(intel, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
                     dstX0, dstY0, dstX1, dstY1, mirror_x, mirror_y);
       break;
    case GL_STENCIL_BUFFER_BIT:
-      src_rb = read_fb->Attachment[BUFFER_STENCIL].Renderbuffer;
-      dst_rb = draw_fb->Attachment[BUFFER_STENCIL].Renderbuffer;
-      if (!formats_match(buffer_bit, src_rb, dst_rb))
+      src_irb =
+         intel_renderbuffer(read_fb->Attachment[BUFFER_STENCIL].Renderbuffer);
+      dst_irb =
+         intel_renderbuffer(draw_fb->Attachment[BUFFER_STENCIL].Renderbuffer);
+      if (!formats_match(buffer_bit, src_irb, dst_irb))
          return false;
-      do_blorp_blit(intel, buffer_bit, src_rb, dst_rb, srcX0, srcY0,
+      do_blorp_blit(intel, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
                     dstX0, dstY0, dstX1, dstY1, mirror_x, mirror_y);
       break;
    default:
