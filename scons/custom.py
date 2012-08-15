@@ -236,8 +236,13 @@ def parse_source_list(env, filename, names=None):
     parser = source_list.SourceListParser()
     src = env.File(filename).srcnode()
 
-    parser.add_symbol('top_srcdir', env.Dir('#').abspath)
-    parser.add_symbol('top_builddir', env['build_dir'])
+    cur_srcdir = env.Dir('.').srcnode().abspath
+    top_srcdir = env.Dir('#').abspath
+    top_builddir = os.path.join(top_srcdir, env['build_dir'])
+
+    # Populate the symbol table of the Makefile parser.
+    parser.add_symbol('top_srcdir', top_srcdir)
+    parser.add_symbol('top_builddir', top_builddir)
 
     sym_table = parser.parse(src.abspath)
 
@@ -253,7 +258,21 @@ def parse_source_list(env, filename, names=None):
     src_lists = {}
     for sym in symbols:
         val = sym_table[sym]
-        src_lists[sym] = [f for f in val.split(' ') if f]
+        srcs = []
+        for f in val.split():
+            if f:
+                # Process source paths
+                if f.startswith(top_builddir + '/src'):
+                    # Automake puts build output on a `src` subdirectory, bue
+                    # SCons does no, so strip it here.
+                    f = top_builddir + f[len(top_builddir + '/src'):]
+                if f.startswith(cur_srcdir + '/'):
+                    # Prefer relative source paths, as absolute files tend to
+                    # cause duplicate actions.
+                    f = f[len(cur_srcdir + '/'):]
+                srcs.append(f)
+
+        src_lists[sym] = srcs
 
     # if names are given, concatenate the lists
     if names:
