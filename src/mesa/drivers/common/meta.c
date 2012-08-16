@@ -3162,7 +3162,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 static GLenum
 get_temp_image_type(struct gl_context *ctx, gl_format format)
 {
-   GLenum baseFormat, type;
+   GLenum baseFormat;
 
    baseFormat = _mesa_get_format_base_format(format);
 
