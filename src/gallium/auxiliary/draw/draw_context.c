@@ -812,8 +812,8 @@ draw_set_mapped_texture(struct draw_context *draw,
                                       sampler_idx,
                                       width, height, depth, first_level, last_level,
                                       row_stride, img_stride, data);
-   }
 #endif
+   }
 }
 
 /**
