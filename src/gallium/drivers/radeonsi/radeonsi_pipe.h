@@ -186,18 +186,18 @@ struct r600_context {
 };
 
 /* r600_blit.c */
-void r600_init_blit_functions(struct r600_context *rctx);
-void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
+void si_init_blit_functions(struct r600_context *rctx);
+void si_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
 void r600_blit_push_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
-void r600_flush_depth_textures(struct r600_context *rctx);
+void si_flush_depth_textures(struct r600_context *rctx);
 
 /* r600_buffer.c */
-bool r600_init_resource(struct r600_screen *rscreen,
-			struct si_resource *res,
-			unsigned size, unsigned alignment,
-			unsigned bind, unsigned usage);
-struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
-					 const struct pipe_resource *templ);
+bool si_init_resource(struct r600_screen *rscreen,
+		      struct si_resource *res,
+		      unsigned size, unsigned alignment,
+		      unsigned bind, unsigned usage);
+struct pipe_resource *si_buffer_create(struct pipe_screen *screen,
+				       const struct pipe_resource *templ);
 void r600_upload_index_buffer(struct r600_context *rctx,
 			      struct pipe_index_buffer *ib, unsigned count);
 
@@ -214,9 +214,7 @@ void r600_init_context_resource_functions(struct r600_context *r600);
 
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);
-void r600_init_surface_functions(struct r600_context *r600);
-unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
-					unsigned level, unsigned layer);
+void si_init_surface_functions(struct r600_context *r600);
 
 /* r600_translate.c */
 void r600_translate_index_buffer(struct r600_context *r600,

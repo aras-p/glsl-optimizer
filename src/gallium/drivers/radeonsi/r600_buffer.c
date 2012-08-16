@@ -114,7 +114,7 @@ static const struct u_resource_vtbl r600_buffer_vtbl =
 	NULL	/* transfer_inline_write */
 };
 
-bool r600_init_resource(struct r600_screen *rscreen,
+bool si_init_resource(struct r600_screen *rscreen,
 			struct si_resource *res,
 			unsigned size, unsigned alignment,
 			unsigned bind, unsigned usage)
@@ -156,8 +156,8 @@ bool r600_init_resource(struct r600_screen *rscreen,
 	return true;
 }
 
-struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
-					 const struct pipe_resource *templ)
+struct pipe_resource *si_buffer_create(struct pipe_screen *screen,
+				       const struct pipe_resource *templ)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct si_resource *rbuffer;
@@ -171,7 +171,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.b.screen = screen;
 	rbuffer->b.vtbl = &r600_buffer_vtbl;
 
-	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, templ->bind, templ->usage)) {
+	if (!si_init_resource(rscreen, rbuffer, templ->width0, alignment, templ->bind, templ->usage)) {
 		FREE(rbuffer);
 		return NULL;
 	}

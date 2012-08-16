@@ -33,7 +33,7 @@
 #define GROUP_FORCE_NEW_BLOCK	0
 
 /* Get backends mask */
-void r600_get_backend_mask(struct r600_context *ctx)
+void si_get_backend_mask(struct r600_context *ctx)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	struct si_resource *buffer;
@@ -116,7 +116,7 @@ err:
 }
 
 /* initialize */
-void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
+void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 			boolean count_draw_in)
 {
 	/* The number of dwords we already used in the CS so far. */
@@ -177,7 +177,7 @@ static void r600_flush_framebuffer(struct r600_context *ctx)
 	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
 }
 
-void r600_context_flush(struct r600_context *ctx, unsigned flags)
+void si_context_flush(struct r600_context *ctx, unsigned flags)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	bool queries_suspended = false;
@@ -235,12 +235,12 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	si_pm4_reset_emitted(ctx);
 }
 
-void r600_context_emit_fence(struct r600_context *ctx, struct si_resource *fence_bo, unsigned offset, unsigned value)
+void si_context_emit_fence(struct r600_context *ctx, struct si_resource *fence_bo, unsigned offset, unsigned value)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	uint64_t va;
 
-	r600_need_cs_space(ctx, 10, FALSE);
+	si_need_cs_space(ctx, 10, FALSE);
 
 	va = r600_resource_va(&ctx->screen->screen, (void*)fence_bo);
 	va = va + (offset << 2);
@@ -364,7 +364,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	uint32_t *results;
 	uint64_t va;
 
-	r600_need_cs_space(ctx, query->num_cs_dw * 2, TRUE);
+	si_need_cs_space(ctx, query->num_cs_dw * 2, TRUE);
 
 	new_results_end = (query->results_end + query->result_size) % query->buffer->b.b.width0;
 
@@ -495,7 +495,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 	uint64_t va;
 
 	if (operation == PREDICATION_OP_CLEAR) {
-		r600_need_cs_space(ctx, 3, FALSE);
+		si_need_cs_space(ctx, 3, FALSE);
 
 		cs->buf[cs->cdw++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
 		cs->buf[cs->cdw++] = 0;
@@ -509,7 +509,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 		count = (query->buffer->b.b.width0 + query->results_end - query->results_start) % query->buffer->b.b.width0;
 		count /= query->result_size;
 
-		r600_need_cs_space(ctx, 5 * count, TRUE);
+		si_need_cs_space(ctx, 5 * count, TRUE);
 
 		op = PRED_OP(operation) | PREDICATION_DRAW_VISIBLE |
 				(flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW);
@@ -647,7 +647,7 @@ void r600_context_queries_resume(struct r600_context *ctx)
 void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
-	r600_need_cs_space(ctx, 14 + 21, TRUE);
+	si_need_cs_space(ctx, 14 + 21, TRUE);
 
 	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
 	cs->buf[cs->cdw++] = (R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET - SI_CONTEXT_REG_OFFSET) >> 2;

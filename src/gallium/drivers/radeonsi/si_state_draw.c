@@ -354,7 +354,7 @@ static void si_update_derived_state(struct r600_context *rctx)
 
 	if (!rctx->blitter->running) {
 		if (rctx->have_depth_fb || rctx->have_depth_texture)
-			r600_flush_depth_textures(rctx);
+			si_flush_depth_textures(rctx);
 	}
 
 	if ((rctx->ps_shader->shader.fs_write_all &&
@@ -551,7 +551,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	/* Emit states. */
 	rctx->pm4_dirty_cdwords += si_pm4_dirty_dw(rctx);
 
-	r600_need_cs_space(rctx, 0, TRUE);
+	si_need_cs_space(rctx, 0, TRUE);
 
 	si_pm4_emit_dirty(rctx);
 	rctx->pm4_dirty_cdwords = 0;

@@ -98,8 +98,8 @@ struct r600_so_target {
 struct r600_context;
 struct r600_screen;
 
-void r600_get_backend_mask(struct r600_context *ctx);
-void r600_context_flush(struct r600_context *ctx, unsigned flags);
+void si_get_backend_mask(struct r600_context *ctx);
+void si_context_flush(struct r600_context *ctx, unsigned flags);
 
 struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type);
 void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query);
@@ -112,11 +112,11 @@ void r600_context_queries_suspend(struct r600_context *ctx);
 void r600_context_queries_resume(struct r600_context *ctx);
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait);
-void r600_context_emit_fence(struct r600_context *ctx, struct si_resource *fence,
-                             unsigned offset, unsigned value);
+void si_context_emit_fence(struct r600_context *ctx, struct si_resource *fence,
+                           unsigned offset, unsigned value);
 
 void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_target *t);
-void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
+void si_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
 
 int si_context_init(struct r600_context *ctx);
 
