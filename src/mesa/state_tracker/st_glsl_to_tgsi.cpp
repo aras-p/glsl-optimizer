@@ -4036,7 +4036,7 @@ src_register(struct st_translate *t,
 
    case PROGRAM_TEMPORARY:
       assert(index >= 0);
-      assert(index < Elements(t->temps));
+      assert(index < (int) Elements(t->temps));
       if (ureg_dst_is_undef(t->temps[index]))
          t->temps[index] = ureg_DECL_local_temporary(t->ureg);
       return ureg_src(t->temps[index]);
@@ -4069,7 +4069,7 @@ src_register(struct st_translate *t,
       return ureg_src(t->address[index]);
 
    case PROGRAM_SYSTEM_VALUE:
-      assert(index < Elements(t->systemValues));
+      assert(index < (int) Elements(t->systemValues));
       return t->systemValues[index];
 
    default:
