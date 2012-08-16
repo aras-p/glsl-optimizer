@@ -1201,8 +1201,9 @@ SVGA3D_SetScissorRect(struct svga_winsys_context *swc,
  *----------------------------------------------------------------------
  */
 
-enum pipe_error SVGA3D_SetClipPlane(struct svga_winsys_context *swc,
-                         uint32 index, const float *plane)
+enum pipe_error
+SVGA3D_SetClipPlane(struct svga_winsys_context *swc,
+                    uint32 index, const float *plane)
 {
    SVGA3dCmdSetClipPlane *cmd;
    
