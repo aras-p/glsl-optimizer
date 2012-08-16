@@ -926,7 +926,7 @@ _mesa_pack_rgba_span_from_ints(struct gl_context *ctx, GLuint n, GLint rgba[][4]
       break;
    case GL_INT:
       /* No conversion necessary. */
-      pack_uint_from_uint_rgba(ctx, dstAddr, dstFormat, rgba, n);
+      pack_uint_from_uint_rgba(ctx, dstAddr, dstFormat, (GLuint (*)[4]) rgba, n);
       break;
    case GL_UNSIGNED_SHORT:
       pack_ushort_from_int_rgba(ctx, dstAddr, dstFormat, rgba, n);
