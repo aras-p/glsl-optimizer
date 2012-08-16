@@ -47,7 +47,9 @@ LOCAL_CFLAGS += \
 ifeq ($(strip $(MESA_ENABLE_ASM)),true)
 ifeq ($(TARGET_ARCH),x86)
 LOCAL_CFLAGS += \
-	-DUSE_X86_ASM
+	-DUSE_X86_ASM \
+	-DHAVE_DLOPEN \
+
 endif
 endif
 

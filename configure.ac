@@ -499,8 +499,9 @@ MESA_PIC_FLAGS
 
 dnl Check to see if dlopen is in default libraries (like Solaris, which
 dnl has it in libc), or if libdl is needed to get it.
-AC_CHECK_FUNC([dlopen], [],
-    [AC_CHECK_LIB([dl], [dlopen], [DLOPEN_LIBS="-ldl"])])
+AC_CHECK_FUNC([dlopen], [DEFINES="$DEFINES -DHAVE_DLOPEN"],
+    [AC_CHECK_LIB([dl], [dlopen],
+       [DEFINES="$DEFINES -DHAVE_DLOPEN"; DLOPEN_LIBS="-ldl"])])
 AC_SUBST([DLOPEN_LIBS])
 
 dnl See if posix_memalign is available

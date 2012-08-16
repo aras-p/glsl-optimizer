@@ -31,7 +31,7 @@
 #include "compiler.h"
 #include "dlopen.h"
 
-#if defined(_GNU_SOURCE) && !defined(__MINGW32__) && !defined(__blrts)
+#if defined(HAVE_DLOPEN)
 #include <dlfcn.h>
 #endif
 #if defined(_WIN32)
@@ -48,7 +48,7 @@ _mesa_dlopen(const char *libname, int flags)
 {
 #if defined(__blrts)
    return NULL;
-#elif defined(_GNU_SOURCE)
+#elif defined(HAVE_DLOPEN)
    flags = RTLD_LAZY | RTLD_GLOBAL; /* Overriding flags at this time */
    return dlopen(libname, flags);
 #elif defined(__MINGW32__)
@@ -80,7 +80,7 @@ _mesa_dlsym(void *handle, const char *fname)
    strncpy(fname2 + 1, fname, 998);
    fname2[999] = 0;
    u.v = dlsym(handle, fname2);
-#elif defined(_GNU_SOURCE)
+#elif defined(HAVE_DLOPEN)
    u.v = dlsym(handle, fname);
 #elif defined(__MINGW32__)
    u.v = (void *) GetProcAddress(handle, fname);
@@ -99,7 +99,7 @@ _mesa_dlclose(void *handle)
 {
 #if defined(__blrts)
    (void) handle;
-#elif defined(_GNU_SOURCE)
+#elif defined(HAVE_DLOPEN)
    dlclose(handle);
 #elif defined(__MINGW32__)
    FreeLibrary(handle);
