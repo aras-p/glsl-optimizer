@@ -340,6 +340,7 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 						struct pipe_resource *texture,
 						const struct pipe_surface *templ)
 {
+	struct r600_texture *rtex = (struct r600_texture*)texture;
 	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
 	unsigned level = templ->u.tex.level;
 
@@ -350,8 +351,8 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 	pipe_resource_reference(&surface->base.texture, texture);
 	surface->base.context = pipe;
 	surface->base.format = templ->format;
-	surface->base.width = u_minify(texture->width0, level);
-	surface->base.height = u_minify(texture->height0, level);
+	surface->base.width = rtex->surface.level[level].npix_x;
+	surface->base.height = rtex->surface.level[level].npix_y;
 	surface->base.usage = templ->usage;
 	surface->base.u = templ->u;
 	return &surface->base;
