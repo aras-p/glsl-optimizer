@@ -989,7 +989,8 @@ intel_miptree_updownsample(struct intel_context *intel,
    intel_miptree_slice_resolve_depth(intel, dst, 0, 0);
 
    brw_blorp_blit_miptrees(intel,
-                           src, dst,
+                           src, 0 /* level */, 0 /* layer */,
+                           dst, 0 /* level */, 0 /* layer */,
                            src_x0, src_y0,
                            dst_x0, dst_y0,
                            width, height,
@@ -997,7 +998,8 @@ intel_miptree_updownsample(struct intel_context *intel,
 
    if (src->stencil_mt) {
       brw_blorp_blit_miptrees(intel,
-                              src->stencil_mt, dst->stencil_mt,
+                              src->stencil_mt, 0 /* level */, 0 /* layer */,
+                              dst->stencil_mt, 0 /* level */, 0 /* layer */,
                               src_x0, src_y0,
                               dst_x0, dst_y0,
                               width, height,

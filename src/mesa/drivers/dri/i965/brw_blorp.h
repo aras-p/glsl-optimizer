@@ -37,7 +37,9 @@ extern "C" {
 void
 brw_blorp_blit_miptrees(struct intel_context *intel,
                         struct intel_mipmap_tree *src_mt,
+                        unsigned src_level, unsigned src_layer,
                         struct intel_mipmap_tree *dst_mt,
+                        unsigned dst_level, unsigned dst_layer,
                         int src_x0, int src_y0,
                         int dst_x0, int dst_y0,
                         int dst_x1, int dst_y1,
@@ -295,7 +297,9 @@ class brw_blorp_blit_params : public brw_blorp_params
 public:
    brw_blorp_blit_params(struct brw_context *brw,
                          struct intel_mipmap_tree *src_mt,
+                         unsigned src_level, unsigned src_layer,
                          struct intel_mipmap_tree *dst_mt,
+                         unsigned dst_level, unsigned dst_layer,
                          GLuint src_x0, GLuint src_y0,
                          GLuint dst_x0, GLuint dst_y0,
                          GLuint width, GLuint height,

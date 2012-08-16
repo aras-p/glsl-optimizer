@@ -123,14 +123,17 @@ find_miptree(GLbitfield buffer_bit, struct intel_renderbuffer *irb)
 void
 brw_blorp_blit_miptrees(struct intel_context *intel,
                         struct intel_mipmap_tree *src_mt,
+                        unsigned src_level, unsigned src_layer,
                         struct intel_mipmap_tree *dst_mt,
+                        unsigned dst_level, unsigned dst_layer,
                         int src_x0, int src_y0,
                         int dst_x0, int dst_y0,
                         int dst_x1, int dst_y1,
                         bool mirror_x, bool mirror_y)
 {
    brw_blorp_blit_params params(brw_context(&intel->ctx),
-                                src_mt, dst_mt,
+                                src_mt, src_level, src_layer,
+                                dst_mt, dst_level, dst_layer,
                                 src_x0, src_y0,
                                 dst_x0, dst_y0,
                                 dst_x1, dst_y1,
@@ -157,7 +160,9 @@ do_blorp_blit(struct intel_context *intel, GLbitfield buffer_bit,
    intel_renderbuffer_resolve_depth(intel, dst_irb);
 
    /* Do the blit */
-   brw_blorp_blit_miptrees(intel, src_mt, dst_mt,
+   brw_blorp_blit_miptrees(intel,
+                           src_mt, src_irb->mt_level, src_irb->mt_layer,
+                           dst_mt, dst_irb->mt_level, dst_irb->mt_layer,
                            srcX0, srcY0, dstX0, dstY0, dstX1, dstY1,
                            mirror_x, mirror_y);
 
@@ -1622,14 +1627,16 @@ compute_msaa_layout_for_pipeline(struct brw_context *brw, unsigned num_samples,
 
 brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
                                              struct intel_mipmap_tree *src_mt,
+                                             unsigned src_level, unsigned src_layer,
                                              struct intel_mipmap_tree *dst_mt,
+                                             unsigned dst_level, unsigned dst_layer,
                                              GLuint src_x0, GLuint src_y0,
                                              GLuint dst_x0, GLuint dst_y0,
                                              GLuint dst_x1, GLuint dst_y1,
                                              bool mirror_x, bool mirror_y)
 {
-   src.set(brw, src_mt, 0, 0);
-   dst.set(brw, dst_mt, 0, 0);
+   src.set(brw, src_mt, src_level, src_layer);
+   dst.set(brw, dst_mt, dst_level, dst_layer);
 
    use_wm_prog = true;
    memset(&wm_prog_key, 0, sizeof(wm_prog_key));
