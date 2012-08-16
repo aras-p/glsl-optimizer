@@ -122,7 +122,7 @@ def PRED_X : InstR600 <0, (outs R600_Predicate_Bit:$dst),
   let FlagOperandIdx = 3;
 }
 
-let isTerminator = 1, isBranch = 1 in {
+let isTerminator = 1, isBranch = 1, isPseudo = 1 in {
 def JUMP : InstR600 <0x10,
           (outs),
           (ins brtarget:$target, R600_Pred:$p),
