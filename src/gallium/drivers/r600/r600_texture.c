@@ -322,6 +322,10 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 		}
 	}
 
+	/* XXX tiling is broken for the 422 formats */
+	if (util_format_description(templ->format)->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED)
+		array_mode = V_038000_ARRAY_LINEAR_ALIGNED;
+
 	r = r600_init_surface(rscreen, &surface, templ, array_mode,
 			      templ->flags & R600_RESOURCE_FLAG_TRANSFER,
 			      templ->flags & R600_RESOURCE_FLAG_FLUSHED_DEPTH);
