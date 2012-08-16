@@ -33,8 +33,11 @@ private:
 
   /// lowerImplicitParameter - Each OpenCL kernel has nine implicit parameters
   /// that are stored in the first nine dwords of a Vertex Buffer.  These
-  /// implicit parameters are represented by pseudo instructions, which are
-  /// lowered to VTX_READ instructions by this function. 
+  /// implicit parameters are lowered to load instructions which retreive the
+  /// values from the Vertex Buffer.
+  SDValue LowerImplicitParameter(SelectionDAG &DAG, EVT VT,
+                                 DebugLoc DL, unsigned DwordOffset) const;
+
   void lowerImplicitParameter(MachineInstr *MI, MachineBasicBlock &BB,
       MachineRegisterInfo & MRI, unsigned dword_offset) const;
 

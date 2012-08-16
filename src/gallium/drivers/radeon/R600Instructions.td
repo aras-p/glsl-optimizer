@@ -1133,24 +1133,6 @@ class R600PreloadInst <string asm, Intrinsic intr> : AMDGPUInst <
   [(set R600_TReg32:$dst, (intr))]
 >;
 
-def NGROUPS_X : R600PreloadInst <"NGROUPS_X", int_r600_read_ngroups_x>;
-def NGROUPS_Y : R600PreloadInst <"NGROUPS_Y", int_r600_read_ngroups_y>;
-def NGROUPS_Z : R600PreloadInst <"NGROUPS_Z", int_r600_read_ngroups_z>;
-
-def GLOBAL_SIZE_X : R600PreloadInst <"GLOBAL_SIZE_X",
-                                     int_r600_read_global_size_x>;
-def GLOBAL_SIZE_Y : R600PreloadInst <"GLOBAL_SIZE_Y",
-                                     int_r600_read_global_size_y>;
-def GLOBAL_SIZE_Z : R600PreloadInst <"GLOBAL_SIZE_Z",
-                                     int_r600_read_global_size_z>;
-
-def LOCAL_SIZE_X : R600PreloadInst <"LOCAL_SIZE_X",
-                                    int_r600_read_local_size_x>;
-def LOCAL_SIZE_Y : R600PreloadInst <"LOCAL_SIZE_Y",
-                                    int_r600_read_local_size_y>;
-def LOCAL_SIZE_Z : R600PreloadInst <"LOCAL_SIZE_Z",
-                                    int_r600_read_local_size_z>;
-
 def R600_LOAD_CONST : AMDGPUShaderInst <
   (outs R600_Reg32:$dst),
   (ins i32imm:$src0),

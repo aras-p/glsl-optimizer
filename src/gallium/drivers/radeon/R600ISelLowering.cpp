@@ -58,34 +58,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 
   switch (MI->getOpcode()) {
   default: return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
-  case AMDGPU::NGROUPS_X:
-    lowerImplicitParameter(MI, *BB, MRI, 0);
-    break;
-  case AMDGPU::NGROUPS_Y:
-    lowerImplicitParameter(MI, *BB, MRI, 1);
-    break;
-  case AMDGPU::NGROUPS_Z:
-    lowerImplicitParameter(MI, *BB, MRI, 2);
-    break;
-  case AMDGPU::GLOBAL_SIZE_X:
-    lowerImplicitParameter(MI, *BB, MRI, 3);
-    break;
-  case AMDGPU::GLOBAL_SIZE_Y:
-    lowerImplicitParameter(MI, *BB, MRI, 4);
-    break;
-  case AMDGPU::GLOBAL_SIZE_Z:
-    lowerImplicitParameter(MI, *BB, MRI, 5);
-    break;
-  case AMDGPU::LOCAL_SIZE_X:
-    lowerImplicitParameter(MI, *BB, MRI, 6);
-    break;
-  case AMDGPU::LOCAL_SIZE_Y:
-    lowerImplicitParameter(MI, *BB, MRI, 7);
-    break;
-  case AMDGPU::LOCAL_SIZE_Z:
-    lowerImplicitParameter(MI, *BB, MRI, 8);
-    break;
-
   case AMDGPU::CLAMP_R600:
     MI->getOperand(0).addTargetFlag(MO_FLAG_CLAMP);
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
@@ -245,27 +217,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
   return BB;
 }
 
-void R600TargetLowering::lowerImplicitParameter(MachineInstr *MI, MachineBasicBlock &BB,
-    MachineRegisterInfo & MRI, unsigned dword_offset) const
-{
-  unsigned ByteOffset = dword_offset * 4;
-
-  // We shouldn't be using an offset wider than 16-bits for implicit parameters.
-  assert(isInt<16>(ByteOffset));
-
-  MachineBasicBlock::iterator I = *MI;
-  unsigned PtrReg = MRI.createVirtualRegister(&AMDGPU::R600_TReg32_XRegClass);
-  MRI.setRegClass(MI->getOperand(0).getReg(), &AMDGPU::R600_TReg32_XRegClass);
-
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::COPY), PtrReg)
-          .addReg(AMDGPU::ZERO);
-
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::VTX_READ_PARAM_i32_eg))
-          .addOperand(MI->getOperand(0))
-          .addReg(PtrReg)
-          .addImm(ByteOffset);
-}
-
 //===----------------------------------------------------------------------===//
 // Custom DAG Lowering Operations
 //===----------------------------------------------------------------------===//
@@ -306,6 +257,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
     unsigned IntrinsicID =
                          cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
     EVT VT = Op.getValueType();
+    DebugLoc DL = Op.getDebugLoc();
     switch(IntrinsicID) {
     default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
     case AMDGPUIntrinsic::R600_load_input: {
@@ -313,6 +265,26 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
       unsigned Reg = AMDGPU::R600_TReg32RegClass.getRegister(RegIndex);
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass, Reg, VT);
     }
+
+    case r600_read_ngroups_x:
+      return LowerImplicitParameter(DAG, VT, DL, 0);
+    case r600_read_ngroups_y:
+      return LowerImplicitParameter(DAG, VT, DL, 1);
+    case r600_read_ngroups_z:
+      return LowerImplicitParameter(DAG, VT, DL, 2);
+    case r600_read_global_size_x:
+      return LowerImplicitParameter(DAG, VT, DL, 3);
+    case r600_read_global_size_y:
+      return LowerImplicitParameter(DAG, VT, DL, 4);
+    case r600_read_global_size_z:
+      return LowerImplicitParameter(DAG, VT, DL, 5);
+    case r600_read_local_size_x:
+      return LowerImplicitParameter(DAG, VT, DL, 6);
+    case r600_read_local_size_y:
+      return LowerImplicitParameter(DAG, VT, DL, 7);
+    case r600_read_local_size_z:
+      return LowerImplicitParameter(DAG, VT, DL, 8);
+
     case r600_read_tgid_x:
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
                                   AMDGPU::T1_X, VT);
@@ -364,6 +336,22 @@ SDValue R600TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const
   return Result;
 }
 
+SDValue R600TargetLowering::LowerImplicitParameter(SelectionDAG &DAG, EVT VT,
+                                                   DebugLoc DL,
+                                                   unsigned DwordOffset) const
+{
+  unsigned ByteOffset = DwordOffset * 4;
+  PointerType * PtrType = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
+                                      AMDGPUAS::PARAM_I_ADDRESS);
+
+  // We shouldn't be using an offset wider than 16-bits for implicit parameters.
+  assert(isInt<16>(ByteOffset));
+
+  return DAG.getLoad(VT, DL, DAG.getEntryNode(),
+                     DAG.getConstant(ByteOffset, MVT::i32), // PTR
+                     MachinePointerInfo(ConstantPointerNull::get(PtrType)),
+                     false, false, false, 0);
+}
 
 SDValue R600TargetLowering::LowerROTL(SDValue Op, SelectionDAG &DAG) const
 {
