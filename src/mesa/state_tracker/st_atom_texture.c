@@ -265,7 +265,7 @@ update_textures(struct st_context *st,
 {
    const GLuint old_max = *num_textures;
    GLbitfield samplers_used = prog->SamplersUsed;
-   GLuint unit;
+   GLuint unit, new_count;
 
    if (samplers_used == 0x0 && old_max == 0)
       return;
@@ -294,9 +294,16 @@ update_textures(struct st_context *st,
       pipe_sampler_view_reference(&(sampler_views[unit]), sampler_view);
    }
 
+   /* Ex: if old_max = 3 and *num_textures = 1, we need to pass an
+    * array of views={X, NULL, NULL} to unref the old texture views
+    * at positions [1] and [2].
+    */
+   new_count = MAX2(*num_textures, old_max);
+   assert(new_count <= max_units);
+
    cso_set_sampler_views(st->cso_context,
                          shader_stage,
-                         MIN2(*num_textures, max_units),
+                         new_count,
                          sampler_views);
 }
 
