@@ -698,10 +698,7 @@ fi
 AC_SUBST([SHARED_GLAPI])
 AM_CONDITIONAL(HAVE_SHARED_GLAPI, test $SHARED_GLAPI = 1)
 
-dnl
-dnl Driver configuration. Options are xlib, dri and osmesa right now.
-dnl More later: fbdev, ...
-dnl
+dnl Driver configuration. Options are xlib, dri and osmesa.
 default_driver="xlib"
 
 case "$host_os" in
@@ -719,52 +716,30 @@ if test "x$enable_opengl" = xno; then
     default_driver="no"
 fi
 
-AC_ARG_WITH([driver],
-    [AS_HELP_STRING([--with-driver=DRIVER], [DEPRECATED])],
-    [mesa_driver="$withval"],
-    [mesa_driver=auto])
-dnl Check for valid option
-case "x$mesa_driver" in
-xxlib|xdri|xosmesa|xno)
-    if test "x$enable_dri" != xauto -o \
-            "x$enable_glx" != xauto -o \
-            "x$enable_osmesa" != xauto -o \
-            "x$enable_xlib_glx" != xauto; then
-        AC_MSG_ERROR([--with-driver=$mesa_driver is deprecated])
-    fi
-    ;;
-xauto)
-    mesa_driver="$default_driver"
-    ;;
-*)
-    AC_MSG_ERROR([Driver '$mesa_driver' is not a valid option])
-    ;;
-esac
-
-# map $mesa_driver to APIs
+# map $default_driver to APIs
 if test "x$enable_dri" = xauto; then
-    case "x$mesa_driver" in
+    case "x$default_driver" in
     xdri) enable_dri=yes ;;
     *)    enable_dri=no ;;
     esac
 fi
 
 if test "x$enable_glx" = xauto; then
-    case "x$mesa_driver" in
+    case "x$default_driver" in
     xdri|xxlib) enable_glx=yes ;;
     *)          enable_glx=no ;;
     esac
 fi
 
 if test "x$enable_osmesa" = xauto; then
-    case "x$mesa_driver" in
+    case "x$default_driver" in
     xxlib|xosmesa) enable_osmesa=yes ;;
     *)             enable_osmesa=no ;;
     esac
 fi
 
 if test "x$enable_xlib_glx" = xauto; then
-    case "x$mesa_driver" in
+    case "x$default_driver" in
     xxlib) enable_xlib_glx=yes ;;
     *)     enable_xlib_glx=no ;;
     esac
