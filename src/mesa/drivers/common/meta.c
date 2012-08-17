@@ -851,8 +851,14 @@ _mesa_meta_end(struct gl_context *ctx)
    }
 
    if (state & MESA_META_RASTERIZATION) {
-      _mesa_PolygonMode(GL_FRONT, save->FrontPolygonMode);
-      _mesa_PolygonMode(GL_BACK, save->BackPolygonMode);
+      /* Core context requires that front and back mode be the same.
+       */
+      if (ctx->API == API_OPENGL_CORE) {
+         _mesa_PolygonMode(GL_FRONT_AND_BACK, save->FrontPolygonMode);
+      } else {
+         _mesa_PolygonMode(GL_FRONT, save->FrontPolygonMode);
+         _mesa_PolygonMode(GL_BACK, save->BackPolygonMode);
+      }
       if (ctx->API == API_OPENGL) {
          _mesa_set_enable(ctx, GL_POLYGON_STIPPLE, save->PolygonStipple);
          _mesa_set_enable(ctx, GL_POLYGON_SMOOTH, save->PolygonSmooth);

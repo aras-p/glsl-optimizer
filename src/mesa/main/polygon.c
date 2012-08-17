@@ -143,6 +143,10 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
 
    switch (face) {
    case GL_FRONT:
+      if (ctx->API == API_OPENGL_CORE) {
+         _mesa_error( ctx, GL_INVALID_ENUM, "glPolygonMode(face)" );
+         return;
+      }
       if (ctx->Polygon.FrontMode == mode)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_POLYGON);
@@ -157,6 +161,10 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
       ctx->Polygon.BackMode = mode;
       break;
    case GL_BACK:
+      if (ctx->API == API_OPENGL_CORE) {
+         _mesa_error( ctx, GL_INVALID_ENUM, "glPolygonMode(face)" );
+         return;
+      }
       if (ctx->Polygon.BackMode == mode)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_POLYGON);
