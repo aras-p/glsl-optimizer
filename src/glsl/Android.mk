@@ -25,9 +25,9 @@
 
 LOCAL_PATH := $(call my-dir)
 
-GLSL_SRCDIR = .
 include $(LOCAL_PATH)/Makefile.sources
 
+GLSL_SRCDIR = .
 # ---------------------------------------
 # Build libmesa_glsl
 # ---------------------------------------
