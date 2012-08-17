@@ -481,7 +481,7 @@ dri2_setup_screen(_EGLDisplay *disp)
    assert(dri2_dpy->dri2 || dri2_dpy->swrast);
    disp->Extensions.KHR_surfaceless_context = EGL_TRUE;
 
-   if (dri2_dpy->dri2->base.version >= 3) {
+   if (dri2_dpy->dri2 && dri2_dpy->dri2->base.version >= 3) {
       disp->Extensions.KHR_create_context = EGL_TRUE;
 
       if (dri2_dpy->robustness)
