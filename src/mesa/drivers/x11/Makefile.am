@@ -62,10 +62,6 @@ lib@GL_LIB@_la_LDFLAGS = \
 	-no-undefined \
 	$(GL_LIB_DEPS)
 
-if HAVE_SHARED_GLAPI
-lib@GL_LIB@_la_LDFLAGS += -L$(top_builddir)/$(LIB_DIR) -l$(GLAPI_LIB)
-endif
-
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
 all-local: lib@GL_LIB@.la
