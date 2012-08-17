@@ -52,6 +52,7 @@ using namespace llvm;
 #ifndef EXTERNAL_LLVM
 extern "C" {
 
+void LLVMInitializeAMDGPUAsmPrinter(void);
 void LLVMInitializeAMDGPUTargetMC(void);
 void LLVMInitializeAMDGPUTarget(void);
 void LLVMInitializeAMDGPUTargetInfo(void);
@@ -93,6 +94,7 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
    LLVMInitializeAMDGPUTargetInfo();
    LLVMInitializeAMDGPUTarget();
    LLVMInitializeAMDGPUTargetMC();
+   LLVMInitializeAMDGPUAsmPrinter();
 #endif
    std::string err;
    const Target * AMDGPUTarget = TargetRegistry::lookupTarget("r600", err);
@@ -132,7 +134,7 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
    formatted_raw_ostream out(oStream);
 
    /* Optional extra paramater true / false to disable verify */
-   if (AMDGPUTargetMachine.addPassesToEmitFile(PM, out, TargetMachine::CGFT_AssemblyFile,
+   if (AMDGPUTargetMachine.addPassesToEmitFile(PM, out, TargetMachine::CGFT_ObjectFile,
                                                true)){
       fprintf(stderr, "AddingPasses failed.\n");
       return 1;

@@ -15,12 +15,24 @@
 #ifndef AMDILMCTARGETDESC_H
 #define AMDILMCTARGETDESC_H
 
+#include "llvm/ADT/StringRef.h"
+
 namespace llvm {
+class MCAsmBackend;
+class MCCodeEmitter;
+class MCContext;
+class MCInstrInfo;
+class MCRegisterInfo;
 class MCSubtargetInfo;
 class Target;
 
 extern Target TheAMDGPUTarget;
 
+MCCodeEmitter *createAMDGPUMCCodeEmitter(const MCInstrInfo &MCII,
+                                         const MCSubtargetInfo &STI,
+                                         MCContext &Ctx);
+
+MCAsmBackend *createAMDGPUAsmBackend(const Target &T, StringRef TT);
 } // End llvm namespace
 
 #define GET_REGINFO_ENUM

@@ -49,41 +49,6 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
    .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
-unsigned SIInstrInfo::getEncodingType(const MachineInstr &MI) const
-{
-  return get(MI.getOpcode()).TSFlags & SI_INSTR_FLAGS_ENCODING_MASK;
-}
-
-unsigned SIInstrInfo::getEncodingBytes(const MachineInstr &MI) const
-{
-
-  /* Instructions with literal constants are expanded to 64-bits, and
-   * the constant is stored in bits [63:32] */
-  for (unsigned i = 0; i < MI.getNumOperands(); i++) {
-    if (MI.getOperand(i).getType() == MachineOperand::MO_FPImmediate) {
-      return 8;
-    }
-  }
-
-  /* This instruction always has a literal */
-  if (MI.getOpcode() == AMDGPU::S_MOV_IMM_I32) {
-    return 8;
-  }
-
-  unsigned encoding_type = getEncodingType(MI);
-  switch (encoding_type) {
-    case SIInstrEncodingType::EXP:
-    case SIInstrEncodingType::LDS:
-    case SIInstrEncodingType::MUBUF:
-    case SIInstrEncodingType::MTBUF:
-    case SIInstrEncodingType::MIMG:
-    case SIInstrEncodingType::VOP3:
-      return 8;
-    default:
-      return 4;
-  }
-}
-
 MachineInstr * SIInstrInfo::getMovImmInstr(MachineFunction *MF, unsigned DstReg,
                                            int64_t Imm) const
 {

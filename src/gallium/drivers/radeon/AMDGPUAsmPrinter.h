@@ -12,9 +12,15 @@ public:
   explicit AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
     : AsmPrinter(TM, Streamer) { }
 
+  virtual bool runOnMachineFunction(MachineFunction &MF);
+
   virtual const char *getPassName() const {
     return "AMDGPU Assembly Printer";
   }
+
+  /// EmitProgramInfo - Emit register usage information so that the GPU driver
+  /// can correctly setup the GPU state.
+  void EmitProgramInfo(MachineFunction &MF);
 
   /// EmitInstuction - Implemented in AMDGPUMCInstLower.cpp
   virtual void EmitInstruction(const MachineInstr *MI);

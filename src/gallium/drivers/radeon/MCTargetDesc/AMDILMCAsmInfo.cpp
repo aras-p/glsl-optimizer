@@ -19,6 +19,8 @@
 using namespace llvm;
 AMDILMCAsmInfo::AMDILMCAsmInfo(const Target &T, StringRef &TT) : MCAsmInfo()
 {
+  HasSingleParameterDotFile = false;
+  WeakDefDirective = NULL;
   //===------------------------------------------------------------------===//
   HasSubsectionsViaSymbols = true;
   HasMachoZeroFillDirective = false;
@@ -67,16 +69,10 @@ AMDILMCAsmInfo::AMDILMCAsmInfo(const Target &T, StringRef &TT) : MCAsmInfo()
   LCOMMDirectiveType = LCOMM::None;
   COMMDirectiveAlignmentIsInBytes = false;
   HasDotTypeDotSizeDirective = false;
-  HasSingleParameterDotFile = true;
   HasNoDeadStrip = true;
   HasSymbolResolver = false;
   WeakRefDirective = ".weakref\t";
-  WeakDefDirective = ".weakdef\t";
   LinkOnceDirective = NULL;
-  HiddenVisibilityAttr = MCSA_Hidden;
-  HiddenDeclarationVisibilityAttr = MCSA_Hidden;
-  ProtectedVisibilityAttr = MCSA_Protected;
-
   //===--- Dwarf Emission Directives -----------------------------------===//
   HasLEB128 = true;
   SupportsDebugInformation = true;

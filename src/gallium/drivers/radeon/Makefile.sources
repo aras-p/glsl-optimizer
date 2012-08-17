@@ -13,6 +13,7 @@ GENERATED_SOURCES := \
 	AMDGPUGenEDInfo.inc		\
 	AMDGPUGenIntrinsics.inc		\
 	AMDGPUGenCodeEmitter.inc	\
+	AMDGPUGenMCCodeEmitter.inc	\
 	AMDGPUGenDFAPacketizer.inc
 
 CPP_SOURCES := \
@@ -44,14 +45,15 @@ CPP_SOURCES := \
 	R600MachineFunctionInfo.cpp	\
 	R600RegisterInfo.cpp		\
 	SIAssignInterpRegs.cpp		\
-	SICodeEmitter.cpp		\
 	SIInstrInfo.cpp			\
 	SIISelLowering.cpp		\
 	SIMachineFunctionInfo.cpp	\
 	SIRegisterInfo.cpp		\
 	InstPrinter/AMDGPUInstPrinter.cpp \
 	MCTargetDesc/AMDILMCAsmInfo.cpp	\
+	MCTargetDesc/AMDGPUAsmBackend.cpp \
 	MCTargetDesc/AMDILMCTargetDesc.cpp	\
+	MCTargetDesc/SIMCCodeEmitter.cpp \
 	TargetInfo/AMDILTargetInfo.cpp	\
 	radeon_llvm_emit.cpp
 

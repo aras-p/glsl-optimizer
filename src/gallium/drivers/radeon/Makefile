@@ -65,6 +65,9 @@ AMDGPUGenIntrinsics.inc: *.td
 AMDGPUGenCodeEmitter.inc: *.td
 	$(call tablegen, -gen-emitter, AMDGPU.td, $@)
 
+AMDGPUGenMCCodeEmitter.inc: *.td
+	$(call tablegen, -mc-emitter -gen-emitter, AMDGPU.td, $@)
+
 AMDGPUGenDFAPacketizer.inc: *.td
 	$(call tablegen, -gen-dfa-packetizer, AMDGPU.td, $@)
 

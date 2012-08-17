@@ -5,6 +5,7 @@
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -56,6 +57,15 @@ static MCInstPrinter *createAMDGPUMCInstPrinter(const Target &T,
   return new AMDGPUInstPrinter(MAI, MII, MRI);
 }
 
+static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
+                                    MCContext &Ctx, MCAsmBackend &MAB,
+                                    raw_ostream &_OS,
+                                    MCCodeEmitter *_Emitter,
+                                    bool RelaxAll,
+                                    bool NoExecStack) {
+  return createPureStreamer(Ctx, MAB, _OS, _Emitter);
+}
+
 extern "C" void LLVMInitializeAMDGPUTargetMC() {
 
   RegisterMCAsmInfo<AMDILMCAsmInfo> Y(TheAMDGPUTarget);
@@ -69,4 +79,10 @@ extern "C" void LLVMInitializeAMDGPUTargetMC() {
   TargetRegistry::RegisterMCSubtargetInfo(TheAMDGPUTarget, createAMDGPUMCSubtargetInfo);
 
   TargetRegistry::RegisterMCInstPrinter(TheAMDGPUTarget, createAMDGPUMCInstPrinter);
+
+  TargetRegistry::RegisterMCCodeEmitter(TheAMDGPUTarget, createAMDGPUMCCodeEmitter);
+
+  TargetRegistry::RegisterMCAsmBackend(TheAMDGPUTarget, createAMDGPUAsmBackend);
+
+  TargetRegistry::RegisterMCObjectStreamer(TheAMDGPUTarget, createMCStreamer);
 }
