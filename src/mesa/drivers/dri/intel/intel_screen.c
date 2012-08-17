@@ -645,6 +645,7 @@ brwCreateContext(int api,
 	         __DRIcontext *driContextPriv,
                  unsigned major_version,
                  unsigned minor_version,
+                 uint32_t flags,
                  unsigned *error,
 		 void *sharedContextPrivate);
 
@@ -710,8 +711,8 @@ intelCreateContext(gl_api api,
 #else
    success = brwCreateContext(api, mesaVis,
                               driContextPriv,
-                              major_version, minor_version, error,
-                              sharedContextPrivate);
+                              major_version, minor_version, flags,
+                              error, sharedContextPrivate);
 #endif
 
    if (success) {

@@ -77,6 +77,7 @@ brwCreateContext(int api,
 		 __DRIcontext *driContextPriv,
                  unsigned major_version,
                  unsigned minor_version,
+                 uint32_t flags,
                  unsigned *error,
 	         void *sharedContextPrivate)
 {
@@ -358,6 +359,13 @@ brwCreateContext(int api,
    ctx->Const.UniformBooleanTrue = 1;
 
    ctx->Const.ForceGLSLExtensionsWarn = driQueryOptionb(&intel->optionCache, "force_glsl_extensions_warn");
+
+   ctx->Const.ContextFlags = 0;
+   if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0)
+      ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;
+
+   if ((flags & __DRI_CTX_FLAG_DEBUG) != 0)
+      ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_DEBUG_BIT;
 
    return true;
 }
