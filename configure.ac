@@ -2199,6 +2199,7 @@ dnl Libraries
 echo ""
 echo "        Shared libs:     $enable_shared"
 echo "        Static libs:     $enable_static"
+echo "        Shared-glapi:    $enable_shared_glapi"
 
 dnl Compiler options
 # cleanup the CFLAGS/CXXFLAGS/DEFINES vars
