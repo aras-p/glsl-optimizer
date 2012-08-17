@@ -1213,6 +1213,14 @@ def MASK_WRITE : AMDGPUShaderInst <
 
 } // End usesCustomInserter = 1
 
+//===---------------------------------------------------------------------===//
+// return instruction
+//===---------------------------------------------------------------------===//
+let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in {
+  def RETURN          : ILFormat<(outs), (ins variable_ops),
+      "RETURN", [(IL_retflag)]>;
+}
+
 //===----------------------------------------------------------------------===//
 // ISel Patterns
 //===----------------------------------------------------------------------===//

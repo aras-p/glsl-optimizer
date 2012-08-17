@@ -595,8 +595,11 @@ def V_INTERP_MOV_F32 : VINTRP <
 
 let isTerminator = 1 in {
 
-def S_ENDPGM : SOPP <0x00000001, (ins), "S_ENDPGM", []> {
+def S_ENDPGM : SOPP <0x00000001, (ins), "S_ENDPGM",
+  [(IL_retflag)]> {
   let SIMM16 = 0;
+  let isBarrier = 1;
+  let hasCtrlDep = 1;
 }
 
 let isBranch = 1 in {

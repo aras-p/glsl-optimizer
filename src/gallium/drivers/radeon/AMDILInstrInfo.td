@@ -223,13 +223,6 @@ let isTerminator = 1, usesCustomInserter = 1 in {
       [(br bb:$target)]>;
   defm BRANCH_COND : BranchConditional<IL_brcond>;
 }
-//===---------------------------------------------------------------------===//
-// return instructions
-//===---------------------------------------------------------------------===//
-let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in {
-  def RETURN          : ILFormat<(outs), (ins variable_ops),
-      "RETURN", [(IL_retflag)]>;
-}
 
 //===---------------------------------------------------------------------===//
 // Flow and Program control Instructions
