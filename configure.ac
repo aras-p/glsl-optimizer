@@ -681,23 +681,6 @@ if test "x$enable_gles2" = xyes; then
 fi
 AC_SUBST([API_DEFINES])
 
-AC_ARG_ENABLE([shared-glapi],
-    [AS_HELP_STRING([--enable-shared-glapi],
-        [Enable shared glapi for OpenGL @<:@default=yes@:>@])],
-    [enable_shared_glapi="$enableval"],
-    [enable_shared_glapi=yes])
-
-SHARED_GLAPI="0"
-if test "x$enable_shared_glapi" = xyes; then
-    SHARED_GLAPI="1"
-    # libGL will use libglapi for function lookups (IN_DRI_DRIVER means to use
-    # the remap table)
-    DEFINES="$DEFINES -DIN_DRI_DRIVER"
-    SRC_DIRS="$SRC_DIRS mapi/shared-glapi"
-fi
-AC_SUBST([SHARED_GLAPI])
-AM_CONDITIONAL(HAVE_SHARED_GLAPI, test $SHARED_GLAPI = 1)
-
 if test "x$enable_glx" = xno; then
     AC_MSG_WARN([GLX disabled, disabling Xlib-GLX])
     enable_xlib_glx=no
@@ -716,6 +699,30 @@ if test "x$enable_glx" = xyes -a \
 fi
 
 AM_CONDITIONAL(HAVE_DRI, test x"$enable_dri" = xyes)
+
+AC_ARG_ENABLE([shared-glapi],
+    [AS_HELP_STRING([--enable-shared-glapi],
+        [Enable shared glapi for OpenGL @<:@default=yes@:>@])],
+    [enable_shared_glapi="$enableval"],
+    [enable_shared_glapi="$enable_dri"])
+
+# Shared GLAPI is only useful for DRI
+if test "x$enable_dri" = xno; then
+    AC_MSG_NOTICE([Shared GLAPI is only useful for DRI, disabling])
+    enable_shared_glapi=no
+fi
+
+# TODO: Get rid of SHARED_GLAPI variable
+SHARED_GLAPI="0"
+if test "x$enable_shared_glapi" = xyes; then
+    SHARED_GLAPI="1"
+    # libGL will use libglapi for function lookups (IN_DRI_DRIVER means to use
+    # the remap table)
+    DEFINES="$DEFINES -DIN_DRI_DRIVER"
+    SRC_DIRS="$SRC_DIRS mapi/shared-glapi"
+fi
+AC_SUBST([SHARED_GLAPI])
+AM_CONDITIONAL(HAVE_SHARED_GLAPI, test "x$enable_shared_glapi" = xyes)
 
 dnl
 dnl Driver specific build directories
@@ -1236,7 +1243,7 @@ if test "x$enable_gbm" = xyes; then
 
     if test "x$enable_dri" = xyes; then
         GBM_BACKEND_DIRS="$GBM_BACKEND_DIRS dri"
-        if test "$SHARED_GLAPI" -eq 0; then
+        if test "x$enable_shared_glapi" = xno; then
             AC_MSG_ERROR([gbm_dri requires --enable-shared-glapi])
         fi
     fi
