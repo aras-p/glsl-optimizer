@@ -1136,13 +1136,9 @@ get_tex_level_parameter_buffer(struct gl_context *ctx,
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSED_IMAGE_SIZE:
-         if (_mesa_is_format_compressed(texFormat) &&
-             !_mesa_is_proxy_texture(target)) {
-            *params = _mesa_format_image_size(texFormat, bo->Size, 0, 0);
-         } else {
-            _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glGetTexLevelParameter[if]v(pname)");
-         }
+         /* Always illegal for GL_TEXTURE_BUFFER */
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetTexLevelParameter[if]v(pname)");
          break;
 
       /* GL_ARB_texture_float */
