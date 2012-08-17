@@ -58,7 +58,9 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_EdgeFlag(tab, vfmt->EdgeFlag);
    }
 
-   _mesa_install_eval_vtxfmt(tab, vfmt);
+   if (ctx->API == API_OPENGL) {
+      _mesa_install_eval_vtxfmt(tab, vfmt);
+   }
 
    if (ctx->API != API_OPENGL_CORE) {
       SET_FogCoordfEXT(tab, vfmt->FogCoordfEXT);
@@ -94,7 +96,9 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_Vertex4fv(tab, vfmt->Vertex4fv);
    }
 
-   _mesa_install_dlist_vtxfmt(tab, vfmt);   /* glCallList / glCallLists */
+   if (ctx->API == API_OPENGL) {
+      _mesa_install_dlist_vtxfmt(tab, vfmt);   /* glCallList / glCallLists */
+   }
 
    if (ctx->API != API_OPENGL_CORE) {
       SET_Begin(tab, vfmt->Begin);
