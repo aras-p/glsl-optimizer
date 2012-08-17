@@ -28,6 +28,8 @@ CPP_SOURCES := \
 	AMDILNIDevice.cpp		\
 	AMDILPeepholeOptimizer.cpp	\
 	AMDILSIDevice.cpp		\
+	AMDGPUAsmPrinter.cpp \
+	AMDGPUMCInstLower.cpp \
 	AMDGPUSubtarget.cpp		\
 	AMDGPUTargetMachine.cpp		\
 	AMDGPUISelLowering.cpp		\
@@ -47,6 +49,7 @@ CPP_SOURCES := \
 	SIISelLowering.cpp		\
 	SIMachineFunctionInfo.cpp	\
 	SIRegisterInfo.cpp		\
+	InstPrinter/AMDGPUInstPrinter.cpp \
 	MCTargetDesc/AMDILMCAsmInfo.cpp	\
 	MCTargetDesc/AMDILMCTargetDesc.cpp	\
 	TargetInfo/AMDILTargetInfo.cpp	\

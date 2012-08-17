@@ -1,5 +1,6 @@
 #include "AMDILMCTargetDesc.h"
 #include "AMDILMCAsmInfo.h"
+#include "InstPrinter/AMDGPUInstPrinter.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -46,6 +47,15 @@ static MCCodeGenInfo *createAMDGPUMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
+static MCInstPrinter *createAMDGPUMCInstPrinter(const Target &T,
+                                                unsigned SyntaxVariant,
+                                                const MCAsmInfo &MAI,
+                                                const MCInstrInfo &MII,
+                                                const MCRegisterInfo &MRI,
+                                                const MCSubtargetInfo &STI) {
+  return new AMDGPUInstPrinter(MAI, MII, MRI);
+}
+
 extern "C" void LLVMInitializeAMDGPUTargetMC() {
 
   RegisterMCAsmInfo<AMDILMCAsmInfo> Y(TheAMDGPUTarget);
@@ -58,4 +68,5 @@ extern "C" void LLVMInitializeAMDGPUTargetMC() {
 
   TargetRegistry::RegisterMCSubtargetInfo(TheAMDGPUTarget, createAMDGPUMCSubtargetInfo);
 
+  TargetRegistry::RegisterMCInstPrinter(TheAMDGPUTarget, createAMDGPUMCInstPrinter);
 }
