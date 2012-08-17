@@ -257,17 +257,17 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
      *     "Forward-compatible contexts are defined only for OpenGL versions
      *     3.0 and later."
      *
-     * Moreover, Mesa can't fulfill the requirements of a forward-looking
-     * context.  Return failure if a forward-looking context is requested.
+     * Forward-looking contexts are supported by silently converting the
+     * requested API to API_OPENGL_CORE.
      *
      * In Mesa, a debug context is the same as a regular context.
      */
     if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0) {
-	*error = __DRI_CTX_ERROR_BAD_FLAG;
-	return NULL;
+       mesa_api = API_OPENGL_CORE;
     }
 
-    if ((flags & ~__DRI_CTX_FLAG_DEBUG) != 0) {
+    if ((flags & ~(__DRI_CTX_FLAG_DEBUG | __DRI_CTX_FLAG_FORWARD_COMPATIBLE))
+        != 0) {
 	*error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
 	return NULL;
     }
