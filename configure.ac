@@ -916,17 +916,10 @@ GLAPI_LIB_DEPS="-lpthread $SELINUX_LIBS"
 AC_SUBST([GLAPI_LIB_DEPS])
 
 
-dnl dri libraries are linking with mesa
-DRI_LIB_DEPS='$(TOP)/src/mesa/libmesa.la'
-GALLIUM_DRI_LIB_DEPS='$(TOP)/src/mesa/libmesa.a'
+DRI_LIB_DEPS="\$(top_builddir)/src/mesa/libdricore/libdricore${VERSION}.la"
+GALLIUM_DRI_LIB_DEPS="\$(TOP)/\$(LIB_DIR)/libdricore${VERSION}.so"
 
-dnl ... or dricore?
-if test "x$enable_dri" = xyes && test "x$driglx_direct" = xyes ; then
-    DRI_LIB_DEPS="\$(TOP)/src/mesa/libdricore/libdricore${VERSION}.la"
-    GALLIUM_DRI_LIB_DEPS="\$(TOP)/\$(LIB_DIR)/libdricore${VERSION}.so"
-    HAVE_DRICORE=yes
-fi
-AM_CONDITIONAL(HAVE_DRICORE, test x$HAVE_DRICORE = xyes)
+AM_CONDITIONAL(HAVE_DRICORE, test "x$enable_dri" = xyes)
 
 AC_SUBST([HAVE_XF86VIDMODE])
 
