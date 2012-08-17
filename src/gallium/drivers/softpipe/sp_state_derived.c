@@ -305,8 +305,6 @@ update_polygon_stipple_enable(struct softpipe_context *softpipe, unsigned prim)
        softpipe->fs_variant->key.polygon_stipple) {
       const unsigned unit = softpipe->fs_variant->stipple_sampler_unit;
 
-      assert(unit >= softpipe->num_samplers[PIPE_SHADER_FRAGMENT]);
-
       /* sampler state */
       softpipe->samplers[PIPE_SHADER_FRAGMENT][unit] = softpipe->pstipple.sampler;
 
