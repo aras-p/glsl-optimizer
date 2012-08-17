@@ -50,6 +50,9 @@ lib@GL_LIB@_la_SOURCES = \
 	xm_line.c \
 	xm_tri.c
 
+# Force usage of a C++ linker
+nodist_EXTRA_lib@GL_LIB@_la_SOURCES = dummy.cpp
+
 GL_MAJOR = 1
 GL_MINOR = 6
 GL_PATCH = 0
