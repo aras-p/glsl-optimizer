@@ -719,7 +719,7 @@ if test "x$enable_shared_glapi" = xyes; then
     # libGL will use libglapi for function lookups (IN_DRI_DRIVER means to use
     # the remap table)
     DEFINES="$DEFINES -DIN_DRI_DRIVER"
-    SRC_DIRS="$SRC_DIRS mapi/shared-glapi"
+    CORE_DIRS="mapi/shared-glapi"
 fi
 AC_SUBST([SHARED_GLAPI])
 AM_CONDITIONAL(HAVE_SHARED_GLAPI, test "x$enable_shared_glapi" = xyes)
@@ -727,10 +727,6 @@ AM_CONDITIONAL(HAVE_SHARED_GLAPI, test "x$enable_shared_glapi" = xyes)
 dnl
 dnl Driver specific build directories
 dnl
-
-dnl this variable will be prepended to SRC_DIRS and is not exported
-CORE_DIRS=""
-
 SRC_DIRS="gtest"
 GLU_DIRS="sgi"
 GALLIUM_DIRS="auxiliary drivers state_trackers"
@@ -738,13 +734,6 @@ GALLIUM_TARGET_DIRS=""
 GALLIUM_WINSYS_DIRS="sw"
 GALLIUM_DRIVERS_DIRS="galahad trace rbug noop identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
-
-# build shared-glapi if enabled for OpenGL or if OpenGL ES is enabled
-case "x$enable_shared_glapi$enable_gles1$enable_gles2" in
-x*yes*)
-    CORE_DIRS="$CORE_DIRS mapi/shared-glapi"
-    ;;
-esac
 
 # build glapi if OpenGL is enabled
 if test "x$enable_opengl" = xyes; then
