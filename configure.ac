@@ -543,19 +543,19 @@ AC_ARG_ENABLE([openvg],
 
 AC_ARG_ENABLE([dri],
     [AS_HELP_STRING([--enable-dri],
-        [enable DRI modules @<:@default=auto@:>@])],
+        [enable DRI modules @<:@default=enabled@:>@])],
     [enable_dri="$enableval"],
-    [enable_dri=auto])
+    [enable_dri=yes])
 AC_ARG_ENABLE([glx],
     [AS_HELP_STRING([--enable-glx],
-        [enable GLX library @<:@default=auto@:>@])],
+        [enable GLX library @<:@default=enabled@:>@])],
     [enable_glx="$enableval"],
-    [enable_glx=auto])
+    [enable_glx=yes])
 AC_ARG_ENABLE([osmesa],
     [AS_HELP_STRING([--enable-osmesa],
-        [enable OSMesa library @<:@default=auto@:>@])],
+        [enable OSMesa library @<:@default=disabled@:>@])],
     [enable_osmesa="$enableval"],
-    [enable_osmesa=auto])
+    [enable_osmesa=no])
 AC_ARG_ENABLE([egl],
     [AS_HELP_STRING([--disable-egl],
         [disable EGL library @<:@default=enabled@:>@])],
@@ -605,9 +605,9 @@ AC_ARG_ENABLE([opencl],
    [enable_opencl=no])
 AC_ARG_ENABLE([xlib_glx],
     [AS_HELP_STRING([--enable-xlib-glx],
-        [make GLX library Xlib-based instead of DRI-based @<:@default=disable@:>@])],
+        [make GLX library Xlib-based instead of DRI-based @<:@default=disabled@:>@])],
     [enable_xlib_glx="$enableval"],
-    [enable_xlib_glx=auto])
+    [enable_xlib_glx=no])
 AC_ARG_ENABLE([gallium_egl],
     [AS_HELP_STRING([--enable-gallium-egl],
         [enable optional EGL state tracker (not required
@@ -698,55 +698,21 @@ fi
 AC_SUBST([SHARED_GLAPI])
 AM_CONDITIONAL(HAVE_SHARED_GLAPI, test $SHARED_GLAPI = 1)
 
-dnl Driver configuration. Options are xlib, dri and osmesa.
-default_driver="xlib"
-
-case "$host_os" in
-linux*)
-    default_driver="dri"
-    ;;
-*freebsd* | dragonfly* | *netbsd*)
-    case "$host_cpu" in
-    i*86|x86_64|powerpc*|sparc*) default_driver="dri";;
-    esac
-    ;;
-esac
-
-if test "x$enable_opengl" = xno; then
-    default_driver="no"
-fi
-
-# map $default_driver to APIs
-if test "x$enable_dri" = xauto; then
-    case "x$default_driver" in
-    xdri) enable_dri=yes ;;
-    *)    enable_dri=no ;;
-    esac
-fi
-
-if test "x$enable_glx" = xauto; then
-    case "x$default_driver" in
-    xdri|xxlib) enable_glx=yes ;;
-    *)          enable_glx=no ;;
-    esac
-fi
-
-if test "x$enable_osmesa" = xauto; then
-    case "x$default_driver" in
-    xxlib|xosmesa) enable_osmesa=yes ;;
-    *)             enable_osmesa=no ;;
-    esac
-fi
-
-if test "x$enable_xlib_glx" = xauto; then
-    case "x$default_driver" in
-    xxlib) enable_xlib_glx=yes ;;
-    *)     enable_xlib_glx=no ;;
-    esac
-fi
-
 if test "x$enable_glx" = xno; then
+    AC_MSG_WARN([GLX disabled, disabling Xlib-GLX])
     enable_xlib_glx=no
+fi
+
+if test "x$enable_dri$enable_xlib_glx" = xyesyes; then
+    AC_MSG_ERROR([DRI and Xlib-GLX cannot be built together])
+fi
+
+# Disable GLX if DRI and Xlib-GLX are not enabled
+if test "x$enable_glx" = xyes -a \
+        "x$enable_dri" = xno -a \
+        "x$enable_xlib_glx" = xno; then
+    AC_MSG_WARN([Neither DRI nor Xlib-GLX enabled, disabling GLX])
+    enable_glx=no
 fi
 
 AM_CONDITIONAL(HAVE_DRI, test x"$enable_dri" = xyes)
