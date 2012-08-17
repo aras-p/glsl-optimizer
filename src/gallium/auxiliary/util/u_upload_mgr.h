@@ -56,14 +56,14 @@ struct u_upload_mgr *u_upload_create( struct pipe_context *pipe,
  */
 void u_upload_destroy( struct u_upload_mgr *upload );
 
-/* Unmap and release old upload buffer.
+/**
+ * Unmap and release old upload buffer.
  * 
  * This is like u_upload_unmap() except the upload buffer is released for
  * recycling. This should be called on real hardware flushes on systems
  * that don't support the PIPE_TRANSFER_UNSYNCHRONIZED flag, as otherwise
  * the next u_upload_buffer will cause a sync on the buffer.
  */
-
 void u_upload_flush( struct u_upload_mgr *upload );
 
 /**
@@ -86,7 +86,6 @@ void u_upload_unmap( struct u_upload_mgr *upload );
  * \param size             Size of the allocation.
  * \param out_offset       Pointer to where the new buffer offset will be returned.
  * \param outbuf           Pointer to where the upload buffer will be returned.
- * \param flushed          Whether the upload buffer was flushed.
  * \param ptr              Pointer to the allocated memory that is returned.
  */
 enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
@@ -112,7 +111,7 @@ enum pipe_error u_upload_data( struct u_upload_mgr *upload,
 
 
 /**
- * Allocate and copy an input buffer to the upload buffer.
+ * Allocate space in an upload buffer and copy an input buffer to it.
  *
  * Same as u_upload_data, except that the input data comes from a buffer
  * instead of a user pointer.
