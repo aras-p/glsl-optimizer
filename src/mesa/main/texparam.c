@@ -926,7 +926,7 @@ legal_get_tex_level_parameter_target(struct gl_context *ctx, GLenum target)
 
 static void
 get_tex_level_parameter_image(struct gl_context *ctx,
-                              struct gl_texture_object *texObj,
+                              const struct gl_texture_object *texObj,
                               GLenum target, GLint level,
                               GLenum pname, GLint *params)
 {
@@ -1073,11 +1073,10 @@ invalid_pname:
 
 static void
 get_tex_level_parameter_buffer(struct gl_context *ctx,
-                               struct gl_texture_object *texObj,
-                               GLenum target, GLint level,
+                               const struct gl_texture_object *texObj,
                                GLenum pname, GLint *params)
 {
-   struct gl_buffer_object *bo = texObj->BufferObject;
+   const struct gl_buffer_object *bo = texObj->BufferObject;
    gl_format texFormat = texObj->_BufferObjectFormat;
    GLenum internalFormat = texObj->BufferObjectFormat;
    GLenum baseFormat = _mesa_get_format_base_format(texFormat);
@@ -1216,7 +1215,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
    if (target == GL_TEXTURE_BUFFER)
-      get_tex_level_parameter_buffer(ctx, texObj, target, level, pname, params);
+      get_tex_level_parameter_buffer(ctx, texObj, pname, params);
    else
       get_tex_level_parameter_image(ctx, texObj, target, level, pname, params);
 }
