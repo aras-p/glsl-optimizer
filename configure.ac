@@ -1530,6 +1530,7 @@ dnl
 if test "x$with_gallium_drivers" != x; then
     SRC_DIRS="$SRC_DIRS gallium gallium/winsys gallium/targets"
 fi
+AM_CONDITIONAL(HAVE_GALLIUM, test "x$with_gallium_drivers" != x)
 
 AC_SUBST([LLVM_BINDIR])
 AC_SUBST([LLVM_CFLAGS])

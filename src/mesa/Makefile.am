@@ -92,7 +92,10 @@ program/lex.yy.c: program/program_lexer.l
 	$(MKDIR_P) program
 	$(AM_V_GEN) $(LEX) --never-interactive --outfile=$@ $<
 
-noinst_LTLIBRARIES = libmesa.la libmesagallium.la
+noinst_LTLIBRARIES = libmesa.la
+if HAVE_GALLIUM
+noinst_LTLIBRARIES += libmesagallium.la
+endif
 
 SRCDIR = $(top_srcdir)/src/mesa/
 BUILDDIR = $(top_builddir)/src/mesa/
@@ -142,9 +145,11 @@ libmesagallium_la_LDFLAGS =
 
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the library in the current directory.
-all-local: libmesa.la libmesagallium.la
+all-local: $(noinst_LTLIBRARIES)
 	ln -f .libs/libmesa.a .
+if HAVE_GALLIUM
 	ln -f .libs/libmesagallium.a .
+endif
 
 CLEANFILES += libmesa.a libmesagallium.a
 
