@@ -1,3 +1,4 @@
+#version 120
 uniform mat4x3 nonSqMat;
 uniform float inInit;
 void main ()

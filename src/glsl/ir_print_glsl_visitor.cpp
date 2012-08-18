@@ -127,6 +127,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		char* buffer, PrintGlslMode mode)
 {
 	if (state) {
+		if (state->version_string)
+			ralloc_asprintf_append (&buffer, "#version %i\n", state->language_version);
 		if (state->ARB_shader_texture_lod_enable)
 			ralloc_strcat (&buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
 		if (state->EXT_shader_texture_lod_enable)
