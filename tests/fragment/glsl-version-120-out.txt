@@ -1,6 +1,6 @@
 #version 120
 uniform mat4x3 nonSqMat;
-uniform float inInit;
+uniform float inInit = 13.0000;
 void main ()
 {
   vec4 v_1;

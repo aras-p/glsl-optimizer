@@ -284,6 +284,11 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
    ralloc_asprintf_append (&buffer, " ");
    print_var_name (ir);
    buffer = print_type_post(buffer, ir->type, false);
+	if (ir->constant_value)
+	{
+		ralloc_asprintf_append (&buffer, " = ");
+		visit (ir->constant_value);
+	}
 }
 
 
