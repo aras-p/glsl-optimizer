@@ -87,14 +87,14 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       case GL_ALPHA8:
       case GL_ALPHA12:
       case GL_ALPHA16:
-         return GL_ALPHA;
+         return (ctx->API != API_OPENGL_CORE) ? GL_ALPHA : -1;
       case 1:
       case GL_LUMINANCE:
       case GL_LUMINANCE4:
       case GL_LUMINANCE8:
       case GL_LUMINANCE12:
       case GL_LUMINANCE16:
-         return GL_LUMINANCE;
+         return (ctx->API != API_OPENGL_CORE) ? GL_LUMINANCE : -1;
       case 2:
       case GL_LUMINANCE_ALPHA:
       case GL_LUMINANCE4_ALPHA4:
@@ -103,14 +103,15 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       case GL_LUMINANCE12_ALPHA4:
       case GL_LUMINANCE12_ALPHA12:
       case GL_LUMINANCE16_ALPHA16:
-         return GL_LUMINANCE_ALPHA;
+         return (ctx->API != API_OPENGL_CORE) ? GL_LUMINANCE_ALPHA : -1;
       case GL_INTENSITY:
       case GL_INTENSITY4:
       case GL_INTENSITY8:
       case GL_INTENSITY12:
       case GL_INTENSITY16:
-         return GL_INTENSITY;
+         return (ctx->API != API_OPENGL_CORE) ? GL_INTENSITY : -1;
       case 3:
+         return (ctx->API != API_OPENGL_CORE) ? GL_RGB : -1;
       case GL_RGB:
       case GL_R3_G3_B2:
       case GL_RGB4:
@@ -121,6 +122,7 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       case GL_RGB16:
          return GL_RGB;
       case 4:
+         return (ctx->API != API_OPENGL_CORE) ? GL_RGBA : -1;
       case GL_RGBA:
       case GL_RGBA2:
       case GL_RGBA4:
