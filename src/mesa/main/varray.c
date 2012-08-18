@@ -133,6 +133,23 @@ update_array(struct gl_context *ctx,
    GLsizei elementSize;
    GLenum format = GL_RGBA;
 
+   /* Page 407 (page 423 of the PDF) of the OpenGL 3.0 spec says:
+    *
+    *     "Client vertex arrays - all vertex array attribute pointers must
+    *     refer to buffer objects (section 2.9.2). The default vertex array
+    *     object (the name zero) is also deprecated. Calling
+    *     VertexAttribPointer when no buffer object or no vertex array object
+    *     is bound will generate an INVALID_OPERATION error..."
+    *
+    * The check for VBOs is handled below.
+    */
+   if (ctx->API == API_OPENGL_CORE
+       && (ctx->Array.ArrayObj == ctx->Array.DefaultArrayObj)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(no array object bound)",
+                  func);
+      return;
+   }
+
    if (_mesa_is_gles(ctx)) {
       /* Once Mesa gets support for GL_OES_vertex_half_float this mask will
        * change.  Adding support for this extension isn't quite as trivial as
