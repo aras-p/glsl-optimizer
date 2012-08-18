@@ -582,7 +582,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
    /* ARB 1. GL_ARB_multitexture */
 #if _HAVE_FULL_GL
    SET_ActiveTextureARB(exec, _mesa_ActiveTextureARB);
-   if (ctx->API != API_OPENGLES2) {
+   if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       SET_ClientActiveTextureARB(exec, _mesa_ClientActiveTextureARB);
    }
 #endif

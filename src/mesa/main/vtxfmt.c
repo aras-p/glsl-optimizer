@@ -48,9 +48,8 @@ static void
 install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
                const GLvertexformat *vfmt)
 {
-   _mesa_install_arrayelt_vtxfmt(tab, vfmt);
-
    if (ctx->API != API_OPENGL_CORE) {
+      _mesa_install_arrayelt_vtxfmt(tab, vfmt);
       SET_Color3f(tab, vfmt->Color3f);
       SET_Color3fv(tab, vfmt->Color3fv);
       SET_Color4f(tab, vfmt->Color4f);
