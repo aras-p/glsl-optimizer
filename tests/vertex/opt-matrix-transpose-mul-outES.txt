@@ -40,7 +40,7 @@ void main ()
   tmpvar_8 = (tmpvar_7 * (_World2Object * _WorldSpaceLightPos0).xyz);
   tmpvar_1 = tmpvar_8;
   highp vec4 tmpvar_9;
-  tmpvar_9.w = 1.0;
+  tmpvar_9.w = 1.00000;
   tmpvar_9.xyz = _WorldSpaceCameraPos;
   highp vec3 tmpvar_10;
   tmpvar_10 = normalize ((tmpvar_8 + normalize ((tmpvar_7 * (((_World2Object * tmpvar_9).xyz * unity_Scale.w) - attrVertex.xyz)))));

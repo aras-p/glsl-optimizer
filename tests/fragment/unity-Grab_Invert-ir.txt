@@ -4,35 +4,35 @@ struct v2f {
 };
 uniform sampler2D _GrabTexture;
 vec4 frag (
-  in v2f i
+  in v2f i_1
 )
 {
-  vec4 tmpvar_1;
-  tmpvar_1 = texture2DProj (_GrabTexture, i.uv);
-  return (1.0 - tmpvar_1);
+  vec4 tmpvar_2;
+  tmpvar_2 = texture2DProj (_GrabTexture, i_1.uv);
+  return (1.00000 - tmpvar_2);
 }
 
 void main ()
 {
-  v2f xlt_i;
-  vec4 xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
-  xlt_i.vertex = tmpvar_1;
-  vec4 tmpvar_2;
-  tmpvar_2 = gl_TexCoord[0].xyzw;
-  vec4 tmpvar_3;
-  tmpvar_3 = tmpvar_2;
-  xlt_i.uv = tmpvar_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = frag (xlt_i);
+  v2f xlt_i_3;
+  vec4 xl_retval_4;
   vec4 tmpvar_5;
-  tmpvar_5 = tmpvar_4;
-  xl_retval = tmpvar_5;
+  tmpvar_5 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
+  xlt_i_3.vertex = tmpvar_5;
   vec4 tmpvar_6;
-  tmpvar_6 = xl_retval.xyzw;
+  tmpvar_6 = gl_TexCoord[0].xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
-  gl_FragData[0] = tmpvar_7;
+  xlt_i_3.uv = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = frag (xlt_i_3);
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  xl_retval_4 = tmpvar_9;
+  vec4 tmpvar_10;
+  tmpvar_10 = xl_retval_4.xyzw;
+  vec4 tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  gl_FragData[0] = tmpvar_11;
 }
 

@@ -13,19 +13,19 @@ void main ()
   tmpvar_2[2] = _Object2World[2].xyz;
   gl_Position = tmpvar_1;
   vec4 tmpvar_3;
-  tmpvar_3.yzw = vec3(0.0, 0.0, 0.0);
+  tmpvar_3.yzw = vec3(0.00000, 0.00000, 0.00000);
   tmpvar_3.x = tmpvar_1.z;
   xlv_FOG = tmpvar_3;
   vec4 tmpvar_4;
-  tmpvar_4.w = 0.0;
+  tmpvar_4.w = 0.00000;
   tmpvar_4.xyz = (tmpvar_2 * (gl_Normal * unity_Scale.w));
   gl_TexCoord[0] = tmpvar_4;
   vec4 tmpvar_5;
-  tmpvar_5.w = 0.0;
+  tmpvar_5.w = 0.00000;
   tmpvar_5.xyz = (_WorldSpaceLightPos0.xyz - (_Object2World * gl_Vertex).xyz);
   gl_TexCoord[1] = tmpvar_5;
   vec4 tmpvar_6;
-  tmpvar_6.w = 0.0;
+  tmpvar_6.w = 0.00000;
   tmpvar_6.xyz = (_LightMatrix0 * (_Object2World * gl_Vertex)).xyz;
   gl_TexCoord[2] = tmpvar_6;
 }

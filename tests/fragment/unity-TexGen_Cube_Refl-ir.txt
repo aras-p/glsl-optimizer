@@ -5,40 +5,40 @@ struct v2f {
 };
 uniform samplerCube _MainTex;
 vec4 frag (
-  in v2f i
+  in v2f i_1
 )
 {
-  vec4 tmpvar_1;
-  tmpvar_1 = textureCube (_MainTex, i.texcoord);
-  return tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = textureCube (_MainTex, i_1.texcoord);
+  return tmpvar_2;
 }
 
 void main ()
 {
-  v2f xlt_i;
-  vec4 xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
-  xlt_i.vertex = tmpvar_1;
-  vec4 tmpvar_2;
-  tmpvar_2 = gl_Color.xyzw;
-  vec4 tmpvar_3;
-  tmpvar_3 = tmpvar_2;
-  xlt_i.color = tmpvar_3;
-  vec3 tmpvar_4;
-  tmpvar_4 = gl_TexCoord[0].xyz;
-  vec3 tmpvar_5;
-  tmpvar_5 = tmpvar_4;
-  xlt_i.texcoord = tmpvar_5;
+  v2f xlt_i_3;
+  vec4 xl_retval_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
+  xlt_i_3.vertex = tmpvar_5;
   vec4 tmpvar_6;
-  tmpvar_6 = frag (xlt_i);
+  tmpvar_6 = gl_Color.xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
-  xl_retval = tmpvar_7;
-  vec4 tmpvar_8;
-  tmpvar_8 = xl_retval.xyzw;
-  vec4 tmpvar_9;
+  xlt_i_3.color = tmpvar_7;
+  vec3 tmpvar_8;
+  tmpvar_8 = gl_TexCoord[0].xyz;
+  vec3 tmpvar_9;
   tmpvar_9 = tmpvar_8;
-  gl_FragData[0] = tmpvar_9;
+  xlt_i_3.texcoord = tmpvar_9;
+  vec4 tmpvar_10;
+  tmpvar_10 = frag (xlt_i_3);
+  vec4 tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  xl_retval_4 = tmpvar_11;
+  vec4 tmpvar_12;
+  tmpvar_12 = xl_retval_4.xyzw;
+  vec4 tmpvar_13;
+  tmpvar_13 = tmpvar_12;
+  gl_FragData[0] = tmpvar_13;
 }
 

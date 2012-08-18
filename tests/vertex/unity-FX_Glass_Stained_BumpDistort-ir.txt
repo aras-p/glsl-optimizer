@@ -9,98 +9,98 @@ struct appdata_t {
   vec2 texcoord;
 };
 vec2 MultiplyUV (
-  in mat4 mat,
-  in vec2 inUV
+  in mat4 mat_1,
+  in vec2 inUV_2
 )
 {
-  vec4 temp;
-  vec4 tmpvar_1;
-  tmpvar_1.zw = vec2(0.0, 0.0);
-  tmpvar_1.x = inUV.x;
-  tmpvar_1.y = inUV.y;
-  vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  temp = tmpvar_2;
-  vec4 tmpvar_3;
-  tmpvar_3 = (mat * temp);
-  temp = tmpvar_3;
-  return temp.xy;
+  vec4 temp_3;
+  vec4 tmpvar_4;
+  tmpvar_4.zw = vec2(0.00000, 0.00000);
+  tmpvar_4.x = inUV_2.x;
+  tmpvar_4.y = inUV_2.y;
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  temp_3 = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = (mat_1 * temp_3);
+  temp_3 = tmpvar_6;
+  return temp_3.xy;
 }
 
 v2f vert (
-  in appdata_t v
+  in appdata_t v_7
 )
 {
-  float scale;
-  v2f o;
-  float tmpvar_1;
-  tmpvar_1 = 1.0;
-  scale = tmpvar_1;
-  vec4 tmpvar_2;
-  tmpvar_2 = (gl_ModelViewProjectionMatrix * v.vertex);
-  o.vertex = tmpvar_2;
-  vec2 tmpvar_3;
-  tmpvar_3.x = o.vertex.x;
-  tmpvar_3.y = (o.vertex.y * scale);
-  vec2 tmpvar_4;
-  tmpvar_4 = ((tmpvar_3 + o.vertex.w) * 0.5);
-  o.uvgrab.xy = tmpvar_4.xy.xy;
-  vec2 tmpvar_5;
-  tmpvar_5 = o.vertex.zw;
-  o.uvgrab.zw = tmpvar_5.xxxy.zw;
-  vec2 tmpvar_6;
-  tmpvar_6 = MultiplyUV (gl_TextureMatrix[1], v.texcoord);
-  vec2 tmpvar_7;
-  tmpvar_7 = tmpvar_6;
-  o.uvbump = tmpvar_7;
-  vec2 tmpvar_8;
-  tmpvar_8 = MultiplyUV (gl_TextureMatrix[2], v.texcoord);
-  vec2 tmpvar_9;
-  tmpvar_9 = tmpvar_8;
-  o.uvmain = tmpvar_9;
-  return o;
+  float scale_8;
+  v2f o_9;
+  float tmpvar_10;
+  tmpvar_10 = 1.00000;
+  scale_8 = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = (gl_ModelViewProjectionMatrix * v_7.vertex);
+  o_9.vertex = tmpvar_11;
+  vec2 tmpvar_12;
+  tmpvar_12.x = o_9.vertex.x;
+  tmpvar_12.y = (o_9.vertex.y * scale_8);
+  vec2 tmpvar_13;
+  tmpvar_13 = ((tmpvar_12 + o_9.vertex.w) * 0.500000);
+  o_9.uvgrab.xy = tmpvar_13.xy.xy;
+  vec2 tmpvar_14;
+  tmpvar_14 = o_9.vertex.zw;
+  o_9.uvgrab.zw = tmpvar_14.xxxy.zw;
+  vec2 tmpvar_15;
+  tmpvar_15 = MultiplyUV (gl_TextureMatrix[1], v_7.texcoord);
+  vec2 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  o_9.uvbump = tmpvar_16;
+  vec2 tmpvar_17;
+  tmpvar_17 = MultiplyUV (gl_TextureMatrix[2], v_7.texcoord);
+  vec2 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  o_9.uvmain = tmpvar_18;
+  return o_9;
 }
 
 void main ()
 {
-  appdata_t xlt_v;
-  v2f xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_Vertex.xyzw;
-  vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  xlt_v.vertex = tmpvar_2;
-  vec2 tmpvar_3;
-  tmpvar_3 = gl_MultiTexCoord0.xy;
-  vec2 tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  xlt_v.texcoord = tmpvar_4;
-  v2f tmpvar_5;
-  tmpvar_5 = vert (xlt_v);
-  v2f tmpvar_6;
-  tmpvar_6 = tmpvar_5;
-  xl_retval = tmpvar_6;
-  vec4 tmpvar_7;
-  tmpvar_7 = xl_retval.vertex.xyzw;
-  vec4 tmpvar_8;
-  tmpvar_8 = tmpvar_7;
-  gl_Position = tmpvar_8;
-  vec4 tmpvar_9;
-  tmpvar_9 = xl_retval.uvgrab.xyzw;
-  vec4 tmpvar_10;
-  tmpvar_10 = tmpvar_9;
-  gl_TexCoord[0] = tmpvar_10;
-  vec4 tmpvar_11;
-  tmpvar_11.zw = vec2(0.0, 0.0);
-  tmpvar_11.xy = xl_retval.uvbump.xy;
-  vec4 tmpvar_12;
-  tmpvar_12 = tmpvar_11;
-  gl_TexCoord[1] = tmpvar_12;
-  vec4 tmpvar_13;
-  tmpvar_13.zw = vec2(0.0, 0.0);
-  tmpvar_13.xy = xl_retval.uvmain.xy;
-  vec4 tmpvar_14;
-  tmpvar_14 = tmpvar_13;
-  gl_TexCoord[2] = tmpvar_14;
+  appdata_t xlt_v_19;
+  v2f xl_retval_20;
+  vec4 tmpvar_21;
+  tmpvar_21 = gl_Vertex.xyzw;
+  vec4 tmpvar_22;
+  tmpvar_22 = tmpvar_21;
+  xlt_v_19.vertex = tmpvar_22;
+  vec2 tmpvar_23;
+  tmpvar_23 = gl_MultiTexCoord0.xy;
+  vec2 tmpvar_24;
+  tmpvar_24 = tmpvar_23;
+  xlt_v_19.texcoord = tmpvar_24;
+  v2f tmpvar_25;
+  tmpvar_25 = vert (xlt_v_19);
+  v2f tmpvar_26;
+  tmpvar_26 = tmpvar_25;
+  xl_retval_20 = tmpvar_26;
+  vec4 tmpvar_27;
+  tmpvar_27 = xl_retval_20.vertex.xyzw;
+  vec4 tmpvar_28;
+  tmpvar_28 = tmpvar_27;
+  gl_Position = tmpvar_28;
+  vec4 tmpvar_29;
+  tmpvar_29 = xl_retval_20.uvgrab.xyzw;
+  vec4 tmpvar_30;
+  tmpvar_30 = tmpvar_29;
+  gl_TexCoord[0] = tmpvar_30;
+  vec4 tmpvar_31;
+  tmpvar_31.zw = vec2(0.00000, 0.00000);
+  tmpvar_31.xy = xl_retval_20.uvbump.xy;
+  vec4 tmpvar_32;
+  tmpvar_32 = tmpvar_31;
+  gl_TexCoord[1] = tmpvar_32;
+  vec4 tmpvar_33;
+  tmpvar_33.zw = vec2(0.00000, 0.00000);
+  tmpvar_33.xy = xl_retval_20.uvmain.xy;
+  vec4 tmpvar_34;
+  tmpvar_34 = tmpvar_33;
+  gl_TexCoord[2] = tmpvar_34;
 }
 

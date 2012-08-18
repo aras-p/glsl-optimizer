@@ -121,43 +121,6 @@ replace_return_with_assignment(ir_instruction *ir, void *data)
    }
 }
 
-static void rename_inlined_variable (ir_instruction* new_ir, ir_function_signature* func)
-{
-	ir_variable *new_var = new_ir->as_variable();
-	if (!new_var)
-		return;
-
-	// go through callee, see if we have any variables that match this one
-	bool progress;
-	int counter = 0;
-	do
-	{
-		progress = false;
-		foreach_iter(exec_list_iterator, iter, func->parameters)
-		{
-			const ir_variable* var = (const ir_variable*) iter.get();
-			if (!strcmp(var->name, new_var->name))
-			{
-				progress = true;
-				ralloc_asprintf_append((char**)&new_var->name, "_i%d", counter++);
-			}
-		}
-		foreach_iter(exec_list_iterator, iter, func->body)
-		{
-			ir_instruction *ir = (ir_instruction*)iter.get();
-			const ir_variable *var = ir->as_variable();
-			if (!var)
-				continue;
-			if (!strcmp(var->name, new_var->name))
-			{
-				progress = true;
-				ralloc_asprintf_append((char**)&new_var->name, "_i%d", counter++);
-			}
-		}
-	}
-	while (progress);
-}
-
 ir_rvalue *
 ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
 {
@@ -204,7 +167,6 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
 	 parameters[i] = NULL;
       } else {
 	 parameters[i] = sig_param->clone(ctx, ht);
-	 rename_inlined_variable (parameters[i], parent);
 	 parameters[i]->mode = ir_var_auto;
 
      parameters[i]->precision = (glsl_precision)parameters[i]->precision;
@@ -242,7 +204,6 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
    foreach_iter(exec_list_iterator, iter, callee->body) {
       ir_instruction *ir = (ir_instruction *)iter.get();
       ir_instruction *new_ir = ir->clone(ctx, ht);
-	  rename_inlined_variable (new_ir, parent);
 
       new_instructions.push_tail(new_ir);
       visit_tree(new_ir, replace_return_with_assignment, retval);

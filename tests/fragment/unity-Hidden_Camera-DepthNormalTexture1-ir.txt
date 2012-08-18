@@ -6,123 +6,123 @@ struct v2f {
 uniform sampler2D _MainTex;
 uniform float _Cutoff;
 void xll_clip (
-  in float x
+  in float x_1
 )
 {
-  if ((x < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
 
 vec2 EncodeViewNormalStereo (
-  in vec3 n
+  in vec3 n_2
 )
 {
-  vec2 enc;
-  float kScale;
-  float tmpvar_1;
-  tmpvar_1 = 1.7777;
-  kScale = tmpvar_1;
-  vec2 tmpvar_2;
-  tmpvar_2 = (n.xy / (n.z + 1.0));
-  enc = tmpvar_2;
-  vec2 tmpvar_3;
-  tmpvar_3 = (enc / kScale);
-  enc = tmpvar_3;
-  vec2 tmpvar_4;
-  tmpvar_4 = ((enc * 0.5) + 0.5);
-  enc = tmpvar_4;
-  return enc;
+  vec2 enc_3;
+  float kScale_4;
+  float tmpvar_5;
+  tmpvar_5 = 1.77770;
+  kScale_4 = tmpvar_5;
+  vec2 tmpvar_6;
+  tmpvar_6 = (n_2.xy / (n_2.z + 1.00000));
+  enc_3 = tmpvar_6;
+  vec2 tmpvar_7;
+  tmpvar_7 = (enc_3 / kScale_4);
+  enc_3 = tmpvar_7;
+  vec2 tmpvar_8;
+  tmpvar_8 = ((enc_3 * 0.500000) + 0.500000);
+  enc_3 = tmpvar_8;
+  return enc_3;
 }
 
 vec2 EncodeFloatRG (
-  in float v
+  in float v_9
 )
 {
-  vec2 enc;
-  float kEncodeBit;
-  vec2 kEncodeMul;
-  vec2 tmpvar_1;
-  tmpvar_1 = vec2(1.0, 255.0);
-  kEncodeMul = tmpvar_1;
-  float tmpvar_2;
-  tmpvar_2 = 0.00392157;
-  kEncodeBit = tmpvar_2;
-  vec2 tmpvar_3;
-  tmpvar_3 = (kEncodeMul * v);
-  enc = tmpvar_3;
-  vec2 tmpvar_4;
-  tmpvar_4 = fract (enc);
-  vec2 tmpvar_5;
-  tmpvar_5 = tmpvar_4;
-  enc = tmpvar_5;
-  float tmpvar_6;
-  tmpvar_6 = (enc.x - (enc.y * kEncodeBit));
-  enc.x = tmpvar_6;
-  return enc;
+  vec2 enc_10;
+  float kEncodeBit_11;
+  vec2 kEncodeMul_12;
+  vec2 tmpvar_13;
+  tmpvar_13 = vec2(1.00000, 255.000);
+  kEncodeMul_12 = tmpvar_13;
+  float tmpvar_14;
+  tmpvar_14 = 0.00392157;
+  kEncodeBit_11 = tmpvar_14;
+  vec2 tmpvar_15;
+  tmpvar_15 = (kEncodeMul_12 * v_9);
+  enc_10 = tmpvar_15;
+  vec2 tmpvar_16;
+  tmpvar_16 = fract (enc_10);
+  vec2 tmpvar_17;
+  tmpvar_17 = tmpvar_16;
+  enc_10 = tmpvar_17;
+  float tmpvar_18;
+  tmpvar_18 = (enc_10.x - (enc_10.y * kEncodeBit_11));
+  enc_10.x = tmpvar_18;
+  return enc_10;
 }
 
 vec4 EncodeDepthNormal (
-  in float depth,
-  in vec3 normal
+  in float depth_19,
+  in vec3 normal_20
 )
 {
-  vec4 enc;
-  vec2 tmpvar_1;
-  tmpvar_1 = EncodeViewNormalStereo (normal);
-  vec2 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  enc.xy = tmpvar_2.xy.xy;
-  vec2 tmpvar_3;
-  tmpvar_3 = EncodeFloatRG (depth);
-  vec2 tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  enc.zw = tmpvar_4.xxxy.zw;
-  return enc;
+  vec4 enc_21;
+  vec2 tmpvar_22;
+  tmpvar_22 = EncodeViewNormalStereo (normal_20);
+  vec2 tmpvar_23;
+  tmpvar_23 = tmpvar_22;
+  enc_21.xy = tmpvar_23.xy.xy;
+  vec2 tmpvar_24;
+  tmpvar_24 = EncodeFloatRG (depth_19);
+  vec2 tmpvar_25;
+  tmpvar_25 = tmpvar_24;
+  enc_21.zw = tmpvar_25.xxxy.zw;
+  return enc_21;
 }
 
 vec4 frag (
-  in v2f i
+  in v2f i_26
 )
 {
-  vec4 texcol;
-  vec4 tmpvar_1;
-  tmpvar_1 = texture2D (_MainTex, i.uv);
-  vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  texcol = tmpvar_2;
-  xll_clip ((texcol.w - _Cutoff));
-  vec4 tmpvar_3;
-  tmpvar_3 = EncodeDepthNormal (i.nz.w, i.nz.xyz);
-  return tmpvar_3;
+  vec4 texcol_27;
+  vec4 tmpvar_28;
+  tmpvar_28 = texture2D (_MainTex, i_26.uv);
+  vec4 tmpvar_29;
+  tmpvar_29 = tmpvar_28;
+  texcol_27 = tmpvar_29;
+  xll_clip ((texcol_27.w - _Cutoff));
+  vec4 tmpvar_30;
+  tmpvar_30 = EncodeDepthNormal (i_26.nz.w, i_26.nz.xyz);
+  return tmpvar_30;
 }
 
 void main ()
 {
-  v2f xlt_i;
-  vec4 xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
-  xlt_i.pos = tmpvar_1;
-  vec2 tmpvar_2;
-  tmpvar_2 = gl_TexCoord[0].xy;
-  vec2 tmpvar_3;
-  tmpvar_3 = tmpvar_2;
-  xlt_i.uv = tmpvar_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = gl_TexCoord[1].xyzw;
-  vec4 tmpvar_5;
-  tmpvar_5 = tmpvar_4;
-  xlt_i.nz = tmpvar_5;
-  vec4 tmpvar_6;
-  tmpvar_6 = frag (xlt_i);
-  vec4 tmpvar_7;
-  tmpvar_7 = tmpvar_6;
-  xl_retval = tmpvar_7;
-  vec4 tmpvar_8;
-  tmpvar_8 = xl_retval.xyzw;
-  vec4 tmpvar_9;
-  tmpvar_9 = tmpvar_8;
-  gl_FragData[0] = tmpvar_9;
+  v2f xlt_i_31;
+  vec4 xl_retval_32;
+  vec4 tmpvar_33;
+  tmpvar_33 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
+  xlt_i_31.pos = tmpvar_33;
+  vec2 tmpvar_34;
+  tmpvar_34 = gl_TexCoord[0].xy;
+  vec2 tmpvar_35;
+  tmpvar_35 = tmpvar_34;
+  xlt_i_31.uv = tmpvar_35;
+  vec4 tmpvar_36;
+  tmpvar_36 = gl_TexCoord[1].xyzw;
+  vec4 tmpvar_37;
+  tmpvar_37 = tmpvar_36;
+  xlt_i_31.nz = tmpvar_37;
+  vec4 tmpvar_38;
+  tmpvar_38 = frag (xlt_i_31);
+  vec4 tmpvar_39;
+  tmpvar_39 = tmpvar_38;
+  xl_retval_32 = tmpvar_39;
+  vec4 tmpvar_40;
+  tmpvar_40 = xl_retval_32.xyzw;
+  vec4 tmpvar_41;
+  tmpvar_41 = tmpvar_40;
+  gl_FragData[0] = tmpvar_41;
 }
 

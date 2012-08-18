@@ -13,23 +13,23 @@ void main ()
   tmpvar_3 = gl_TexCoord[2].xyz;
   vec3 tmpvar_4;
   tmpvar_4 = gl_TexCoord[3].xyz;
-  vec4 res;
-  vec3 viewN;
-  vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.0) - 1.0);
-  normal.z = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  vec3 tmpvar_5;
-  tmpvar_5 = normal.xyz;
-  float x;
-  x = ((texture2D (_MainTex, tmpvar_1.xy).w * _Color.w) - _Cutoff);
-  if ((x < 0.0)) {
+  vec4 res_5;
+  vec3 viewN_6;
+  vec4 normal_7;
+  normal_7.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.00000) - 1.00000);
+  normal_7.z = sqrt (((1.00000 - (normal_7.x * normal_7.x)) - (normal_7.y * normal_7.y)));
+  vec3 tmpvar_8;
+  tmpvar_8 = normal_7.xyz;
+  float x_9;
+  x_9 = ((texture2D (_MainTex, tmpvar_1.xy).w * _Color.w) - _Cutoff);
+  if ((x_9 < 0.00000)) {
     discard;
   };
-  viewN.x = dot (tmpvar_2, tmpvar_5);
-  viewN.y = dot (tmpvar_3, tmpvar_5);
-  viewN.z = dot (tmpvar_4, tmpvar_5);
-  res.xyz = ((viewN * vec3(0.5, 0.5, -0.5)) + 0.5);
-  res.w = _Shininess;
-  gl_FragData[0] = res;
+  viewN_6.x = dot (tmpvar_2, tmpvar_8);
+  viewN_6.y = dot (tmpvar_3, tmpvar_8);
+  viewN_6.z = dot (tmpvar_4, tmpvar_8);
+  res_5.xyz = ((viewN_6 * vec3(0.500000, 0.500000, -0.500000)) + 0.500000);
+  res_5.w = _Shininess;
+  gl_FragData[0] = res_5;
 }
 
