@@ -1216,6 +1216,11 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          }
       }
       else {
+         if (ctx->API == API_OPENGL_CORE) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glBindTexture");
+            return;
+         }
+
          /* if this is a new texture id, allocate a texture object now */
          newTexObj = ctx->Driver.NewTextureObject(ctx, texName, target);
          if (!newTexObj) {

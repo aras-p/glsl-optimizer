@@ -720,6 +720,10 @@ bind_buffer_object(struct gl_context *ctx, GLenum target, GLuint buffer)
    else {
       /* non-default buffer object */
       newBufObj = _mesa_lookup_bufferobj(ctx, buffer);
+      if (newBufObj == NULL && ctx->API == API_OPENGL_CORE) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glBindBuffer(non-gen name)");
+         return;
+      }
       handle_bind_buffer_gen(ctx, target, buffer, &newBufObj);
    }
    
