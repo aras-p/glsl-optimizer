@@ -233,11 +233,20 @@ update_array(struct gl_context *ctx,
       return;
    }
 
-   if (ctx->Array.ArrayObj->ARBsemantics &&
+   /* Page 29 (page 44 of the PDF) of the OpenGL 3.3 spec says:
+    *
+    *     "An INVALID_OPERATION error is generated under any of the following
+    *     conditions:
+    *
+    *     ...
+    *
+    *     * any of the *Pointer commands specifying the location and
+    *       organization of vertex array data are called while zero is bound
+    *       to the ARRAY_BUFFER buffer object binding point (see section
+    *       2.9.6), and the pointer argument is not NULL."
+    */
+   if (ptr != NULL && ctx->Array.ArrayObj->ARBsemantics &&
        !_mesa_is_bufferobj(ctx->Array.ArrayBufferObj)) {
-      /* GL_ARB_vertex_array_object requires that all arrays reside in VBOs.
-       * Generate GL_INVALID_OPERATION if that's not true.
-       */
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(non-VBO array)", func);
       return;
    }
