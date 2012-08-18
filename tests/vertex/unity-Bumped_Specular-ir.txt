@@ -41,399 +41,399 @@ uniform mat4 _Object2World;
 uniform vec4 _MainTex_ST;
 uniform vec4 _BumpMap_ST;
 mat3 xll_constructMat3 (
-  in mat4 m
+  in mat4 m_1
 )
 {
-  vec3 tmpvar_1;
-  tmpvar_1 = m[0].xyz;
   vec3 tmpvar_2;
-  tmpvar_2 = m[1].xyz;
+  tmpvar_2 = m_1[0].xyz;
   vec3 tmpvar_3;
-  tmpvar_3 = m[2].xyz;
-  mat3 tmpvar_4;
-  vec3 tmpvar_5;
-  tmpvar_5 = tmpvar_1;
-  tmpvar_4[0] = tmpvar_5;
+  tmpvar_3 = m_1[1].xyz;
+  vec3 tmpvar_4;
+  tmpvar_4 = m_1[2].xyz;
+  mat3 tmpvar_5;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_2;
-  tmpvar_4[1] = tmpvar_6;
+  tmpvar_5[0] = tmpvar_6;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_3;
-  tmpvar_4[2] = tmpvar_7;
-  return tmpvar_4;
+  tmpvar_5[1] = tmpvar_7;
+  vec3 tmpvar_8;
+  tmpvar_8 = tmpvar_4;
+  tmpvar_5[2] = tmpvar_8;
+  return tmpvar_5;
 }
 
 vec3 ShadeSH9 (
-  in vec4 normal
+  in vec4 normal_9
 )
 {
-  vec3 x3;
-  float vC;
-  vec3 x2;
-  vec4 vB;
-  vec3 x1;
-  float tmpvar_1;
-  tmpvar_1 = dot (unity_SHAr, normal);
-  float tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  x1.x = tmpvar_2;
-  float tmpvar_3;
-  tmpvar_3 = dot (unity_SHAg, normal);
-  float tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  x1.y = vec2(tmpvar_4).y;
-  float tmpvar_5;
-  tmpvar_5 = dot (unity_SHAb, normal);
-  float tmpvar_6;
-  tmpvar_6 = tmpvar_5;
-  x1.z = vec3(tmpvar_6).z;
-  vec4 tmpvar_7;
-  tmpvar_7 = (normal.xyzz * normal.yzzx);
-  vB = tmpvar_7;
-  float tmpvar_8;
-  tmpvar_8 = dot (unity_SHBr, vB);
-  float tmpvar_9;
-  tmpvar_9 = tmpvar_8;
-  x2.x = tmpvar_9;
-  float tmpvar_10;
-  tmpvar_10 = dot (unity_SHBg, vB);
-  float tmpvar_11;
-  tmpvar_11 = tmpvar_10;
-  x2.y = vec2(tmpvar_11).y;
-  float tmpvar_12;
-  tmpvar_12 = dot (unity_SHBb, vB);
-  float tmpvar_13;
-  tmpvar_13 = tmpvar_12;
-  x2.z = vec3(tmpvar_13).z;
-  float tmpvar_14;
-  tmpvar_14 = ((normal.x * normal.x) - (normal.y * normal.y));
-  vC = tmpvar_14;
-  vec3 tmpvar_15;
-  tmpvar_15 = (unity_SHC.xyz * vC);
-  x3 = tmpvar_15;
-  return ((x1 + x2) + x3);
+  vec3 x3_10;
+  float vC_11;
+  vec3 x2_12;
+  vec4 vB_13;
+  vec3 x1_14;
+  float tmpvar_15;
+  tmpvar_15 = dot (unity_SHAr, normal_9);
+  float tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  x1_14.x = tmpvar_16;
+  float tmpvar_17;
+  tmpvar_17 = dot (unity_SHAg, normal_9);
+  float tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  x1_14.y = vec2(tmpvar_18).y;
+  float tmpvar_19;
+  tmpvar_19 = dot (unity_SHAb, normal_9);
+  float tmpvar_20;
+  tmpvar_20 = tmpvar_19;
+  x1_14.z = vec3(tmpvar_20).z;
+  vec4 tmpvar_21;
+  tmpvar_21 = (normal_9.xyzz * normal_9.yzzx);
+  vB_13 = tmpvar_21;
+  float tmpvar_22;
+  tmpvar_22 = dot (unity_SHBr, vB_13);
+  float tmpvar_23;
+  tmpvar_23 = tmpvar_22;
+  x2_12.x = tmpvar_23;
+  float tmpvar_24;
+  tmpvar_24 = dot (unity_SHBg, vB_13);
+  float tmpvar_25;
+  tmpvar_25 = tmpvar_24;
+  x2_12.y = vec2(tmpvar_25).y;
+  float tmpvar_26;
+  tmpvar_26 = dot (unity_SHBb, vB_13);
+  float tmpvar_27;
+  tmpvar_27 = tmpvar_26;
+  x2_12.z = vec3(tmpvar_27).z;
+  float tmpvar_28;
+  tmpvar_28 = ((normal_9.x * normal_9.x) - (normal_9.y * normal_9.y));
+  vC_11 = tmpvar_28;
+  vec3 tmpvar_29;
+  tmpvar_29 = (unity_SHC.xyz * vC_11);
+  x3_10 = tmpvar_29;
+  return ((x1_14 + x2_12) + x3_10);
 }
 
 vec3 Shade4PointLights (
-  in vec4 lightPosX,
-  in vec4 lightPosY,
-  in vec4 lightPosZ,
-  in vec3 lightColor0,
-  in vec3 lightColor1,
-  in vec3 lightColor2,
-  in vec3 lightColor3,
-  in vec4 lightAttenSq,
-  in vec3 pos,
-  in vec3 normal
+  in vec4 lightPosX_30,
+  in vec4 lightPosY_31,
+  in vec4 lightPosZ_32,
+  in vec3 lightColor0_33,
+  in vec3 lightColor1_34,
+  in vec3 lightColor2_35,
+  in vec3 lightColor3_36,
+  in vec4 lightAttenSq_37,
+  in vec3 pos_38,
+  in vec3 normal_39
 )
 {
-  vec3 col;
-  vec4 diff;
-  vec4 atten;
-  vec4 corr;
-  vec4 ndotl;
-  vec4 lengthSq;
-  vec4 toLightZ;
-  vec4 toLightY;
-  vec4 toLightX;
-  vec4 tmpvar_1;
-  tmpvar_1 = (lightPosX - pos.x);
-  toLightX = tmpvar_1;
-  vec4 tmpvar_2;
-  tmpvar_2 = (lightPosY - pos.y);
-  toLightY = tmpvar_2;
-  vec4 tmpvar_3;
-  tmpvar_3 = (lightPosZ - pos.z);
-  toLightZ = tmpvar_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = vec4(0.0, 0.0, 0.0, 0.0);
-  lengthSq = tmpvar_4;
-  vec4 tmpvar_5;
-  tmpvar_5 = (lengthSq + (toLightX * toLightX));
-  lengthSq = tmpvar_5;
-  vec4 tmpvar_6;
-  tmpvar_6 = (lengthSq + (toLightY * toLightY));
-  lengthSq = tmpvar_6;
-  vec4 tmpvar_7;
-  tmpvar_7 = (lengthSq + (toLightZ * toLightZ));
-  lengthSq = tmpvar_7;
-  vec4 tmpvar_8;
-  tmpvar_8 = vec4(0.0, 0.0, 0.0, 0.0);
-  ndotl = tmpvar_8;
-  vec4 tmpvar_9;
-  tmpvar_9 = (ndotl + (toLightX * normal.x));
-  ndotl = tmpvar_9;
-  vec4 tmpvar_10;
-  tmpvar_10 = (ndotl + (toLightY * normal.y));
-  ndotl = tmpvar_10;
-  vec4 tmpvar_11;
-  tmpvar_11 = (ndotl + (toLightZ * normal.z));
-  ndotl = tmpvar_11;
-  vec4 tmpvar_12;
-  tmpvar_12 = inversesqrt (lengthSq);
-  vec4 tmpvar_13;
-  tmpvar_13 = tmpvar_12;
-  corr = tmpvar_13;
-  vec4 tmpvar_14;
-  tmpvar_14 = max (vec4(0.0, 0.0, 0.0, 0.0), (ndotl * corr));
-  vec4 tmpvar_15;
-  tmpvar_15 = tmpvar_14;
-  ndotl = tmpvar_15;
-  vec4 tmpvar_16;
-  tmpvar_16 = (1.0 / (1.0 + (lengthSq * lightAttenSq)));
-  atten = tmpvar_16;
-  vec4 tmpvar_17;
-  tmpvar_17 = (ndotl * atten);
-  diff = tmpvar_17;
-  vec3 tmpvar_18;
-  tmpvar_18 = vec3(0.0, 0.0, 0.0);
-  col = tmpvar_18;
-  vec3 tmpvar_19;
-  tmpvar_19 = (col + (lightColor0 * diff.x));
-  col = tmpvar_19;
-  vec3 tmpvar_20;
-  tmpvar_20 = (col + (lightColor1 * diff.y));
-  col = tmpvar_20;
-  vec3 tmpvar_21;
-  tmpvar_21 = (col + (lightColor2 * diff.z));
-  col = tmpvar_21;
-  vec3 tmpvar_22;
-  tmpvar_22 = (col + (lightColor3 * diff.w));
-  col = tmpvar_22;
-  return col;
+  vec3 col_40;
+  vec4 diff_41;
+  vec4 atten_42;
+  vec4 corr_43;
+  vec4 ndotl_44;
+  vec4 lengthSq_45;
+  vec4 toLightZ_46;
+  vec4 toLightY_47;
+  vec4 toLightX_48;
+  vec4 tmpvar_49;
+  tmpvar_49 = (lightPosX_30 - pos_38.x);
+  toLightX_48 = tmpvar_49;
+  vec4 tmpvar_50;
+  tmpvar_50 = (lightPosY_31 - pos_38.y);
+  toLightY_47 = tmpvar_50;
+  vec4 tmpvar_51;
+  tmpvar_51 = (lightPosZ_32 - pos_38.z);
+  toLightZ_46 = tmpvar_51;
+  vec4 tmpvar_52;
+  tmpvar_52 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
+  lengthSq_45 = tmpvar_52;
+  vec4 tmpvar_53;
+  tmpvar_53 = (lengthSq_45 + (toLightX_48 * toLightX_48));
+  lengthSq_45 = tmpvar_53;
+  vec4 tmpvar_54;
+  tmpvar_54 = (lengthSq_45 + (toLightY_47 * toLightY_47));
+  lengthSq_45 = tmpvar_54;
+  vec4 tmpvar_55;
+  tmpvar_55 = (lengthSq_45 + (toLightZ_46 * toLightZ_46));
+  lengthSq_45 = tmpvar_55;
+  vec4 tmpvar_56;
+  tmpvar_56 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
+  ndotl_44 = tmpvar_56;
+  vec4 tmpvar_57;
+  tmpvar_57 = (ndotl_44 + (toLightX_48 * normal_39.x));
+  ndotl_44 = tmpvar_57;
+  vec4 tmpvar_58;
+  tmpvar_58 = (ndotl_44 + (toLightY_47 * normal_39.y));
+  ndotl_44 = tmpvar_58;
+  vec4 tmpvar_59;
+  tmpvar_59 = (ndotl_44 + (toLightZ_46 * normal_39.z));
+  ndotl_44 = tmpvar_59;
+  vec4 tmpvar_60;
+  tmpvar_60 = inversesqrt (lengthSq_45);
+  vec4 tmpvar_61;
+  tmpvar_61 = tmpvar_60;
+  corr_43 = tmpvar_61;
+  vec4 tmpvar_62;
+  tmpvar_62 = max (vec4(0.00000, 0.00000, 0.00000, 0.00000), (ndotl_44 * corr_43));
+  vec4 tmpvar_63;
+  tmpvar_63 = tmpvar_62;
+  ndotl_44 = tmpvar_63;
+  vec4 tmpvar_64;
+  tmpvar_64 = (1.00000 / (1.00000 + (lengthSq_45 * lightAttenSq_37)));
+  atten_42 = tmpvar_64;
+  vec4 tmpvar_65;
+  tmpvar_65 = (ndotl_44 * atten_42);
+  diff_41 = tmpvar_65;
+  vec3 tmpvar_66;
+  tmpvar_66 = vec3(0.00000, 0.00000, 0.00000);
+  col_40 = tmpvar_66;
+  vec3 tmpvar_67;
+  tmpvar_67 = (col_40 + (lightColor0_33 * diff_41.x));
+  col_40 = tmpvar_67;
+  vec3 tmpvar_68;
+  tmpvar_68 = (col_40 + (lightColor1_34 * diff_41.y));
+  col_40 = tmpvar_68;
+  vec3 tmpvar_69;
+  tmpvar_69 = (col_40 + (lightColor2_35 * diff_41.z));
+  col_40 = tmpvar_69;
+  vec3 tmpvar_70;
+  tmpvar_70 = (col_40 + (lightColor3_36 * diff_41.w));
+  col_40 = tmpvar_70;
+  return col_40;
 }
 
 void PositionFog (
-  in vec4 v,
-  out vec4 pos,
-  out float fog
+  in vec4 v_71,
+  out vec4 pos_72,
+  out float fog_73
 )
 {
-  vec4 tmpvar_1;
-  tmpvar_1 = (gl_ModelViewProjectionMatrix * v);
-  pos = tmpvar_1;
-  float tmpvar_2;
-  tmpvar_2 = pos.z;
-  fog = tmpvar_2;
+  vec4 tmpvar_74;
+  tmpvar_74 = (gl_ModelViewProjectionMatrix * v_71);
+  pos_72 = tmpvar_74;
+  float tmpvar_75;
+  tmpvar_75 = pos_72.z;
+  fog_73 = tmpvar_75;
 }
 
 vec3 ObjSpaceViewDir (
-  in vec4 v
+  in vec4 v_76
 )
 {
-  vec3 objSpaceCameraPos;
-  vec4 tmpvar_1;
-  tmpvar_1.w = 1.0;
-  tmpvar_1.xyz = _WorldSpaceCameraPos.xyz.xyz;
-  vec3 tmpvar_2;
-  tmpvar_2 = ((_World2Object * tmpvar_1).xyz * unity_Scale.w);
-  objSpaceCameraPos = tmpvar_2;
-  return (objSpaceCameraPos - v.xyz);
+  vec3 objSpaceCameraPos_77;
+  vec4 tmpvar_78;
+  tmpvar_78.w = 1.00000;
+  tmpvar_78.xyz = _WorldSpaceCameraPos.xyz.xyz;
+  vec3 tmpvar_79;
+  tmpvar_79 = ((_World2Object * tmpvar_78).xyz * unity_Scale.w);
+  objSpaceCameraPos_77 = tmpvar_79;
+  return (objSpaceCameraPos_77 - v_76.xyz);
 }
 
 vec3 ObjSpaceLightDir (
-  in vec4 v
+  in vec4 v_80
 )
 {
-  vec3 objSpaceLightPos;
-  vec3 tmpvar_1;
-  tmpvar_1 = (_World2Object * _WorldSpaceLightPos0).xyz;
-  objSpaceLightPos = tmpvar_1;
-  return objSpaceLightPos.xyz;
+  vec3 objSpaceLightPos_81;
+  vec3 tmpvar_82;
+  tmpvar_82 = (_World2Object * _WorldSpaceLightPos0).xyz;
+  objSpaceLightPos_81 = tmpvar_82;
+  return objSpaceLightPos_81.xyz;
 }
 
 vec4 ComputeScreenPos (
-  in vec4 pos
+  in vec4 pos_83
 )
 {
-  vec4 o;
-  vec4 tmpvar_1;
-  tmpvar_1 = (pos * 0.5);
-  o = tmpvar_1;
-  vec2 tmpvar_2;
-  tmpvar_2.x = o.x;
-  tmpvar_2.y = (o.y * _ProjectionParams.x);
-  vec2 tmpvar_3;
-  tmpvar_3 = (tmpvar_2 + o.w);
-  o.xy = tmpvar_3.xy.xy;
-  vec2 tmpvar_4;
-  tmpvar_4 = pos.zw;
-  o.zw = tmpvar_4.xxxy.zw;
-  return o;
+  vec4 o_84;
+  vec4 tmpvar_85;
+  tmpvar_85 = (pos_83 * 0.500000);
+  o_84 = tmpvar_85;
+  vec2 tmpvar_86;
+  tmpvar_86.x = o_84.x;
+  tmpvar_86.y = (o_84.y * _ProjectionParams.x);
+  vec2 tmpvar_87;
+  tmpvar_87 = (tmpvar_86 + o_84.w);
+  o_84.xy = tmpvar_87.xy.xy;
+  vec2 tmpvar_88;
+  tmpvar_88 = pos_83.zw;
+  o_84.zw = tmpvar_88.xxxy.zw;
+  return o_84;
 }
 
 v2f_surf vert_surf (
-  in appdata_full v
+  in appdata_full v_89
 )
 {
-  vec3 worldPos;
-  vec3 shlight;
-  mat3 rotation;
-  vec3 binormal;
-  vec3 worldN;
-  v2f_surf o;
-  PositionFog (v.vertex, o.pos, o.fog);
-  vec2 tmpvar_1;
-  tmpvar_1 = ((v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  o.hip_pack0.xy = tmpvar_1.xy.xy;
-  vec2 tmpvar_2;
-  tmpvar_2 = ((v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
-  o.hip_pack0.zw = tmpvar_2.xxxy.zw;
-  mat3 tmpvar_3;
-  tmpvar_3 = (xll_constructMat3 (_Object2World));
-  vec3 tmpvar_4;
-  tmpvar_4 = (tmpvar_3 * (v.normal * unity_Scale.w));
-  worldN = tmpvar_4;
-  vec3 tmpvar_5;
-  tmpvar_5 = cross (v.normal, v.tangent.xyz);
-  vec3 tmpvar_6;
-  tmpvar_6 = (tmpvar_5 * v.tangent.w);
-  binormal = tmpvar_6;
-  mat3 tmpvar_7;
-  float tmpvar_8;
-  tmpvar_8 = v.tangent.x;
-  tmpvar_7[0].x = tmpvar_8;
-  float tmpvar_9;
-  tmpvar_9 = binormal.x;
-  tmpvar_7[0].y = tmpvar_9;
-  float tmpvar_10;
-  tmpvar_10 = v.normal.x;
-  tmpvar_7[0].z = tmpvar_10;
-  float tmpvar_11;
-  tmpvar_11 = v.tangent.y;
-  tmpvar_7[1].x = tmpvar_11;
-  float tmpvar_12;
-  tmpvar_12 = binormal.y;
-  tmpvar_7[1].y = tmpvar_12;
-  float tmpvar_13;
-  tmpvar_13 = v.normal.y;
-  tmpvar_7[1].z = tmpvar_13;
-  float tmpvar_14;
-  tmpvar_14 = v.tangent.z;
-  tmpvar_7[2].x = tmpvar_14;
-  float tmpvar_15;
-  tmpvar_15 = binormal.z;
-  tmpvar_7[2].y = tmpvar_15;
-  float tmpvar_16;
-  tmpvar_16 = v.normal.z;
-  tmpvar_7[2].z = tmpvar_16;
-  mat3 tmpvar_17;
-  tmpvar_17 = (tmpvar_7);
-  rotation = (tmpvar_17);
-  vec3 tmpvar_18;
-  tmpvar_18 = ObjSpaceLightDir (v.vertex);
-  vec3 tmpvar_19;
-  tmpvar_19 = (rotation * tmpvar_18);
-  o.lightDir = tmpvar_19;
-  vec3 tmpvar_20;
-  tmpvar_20 = ObjSpaceViewDir (v.vertex);
-  vec3 tmpvar_21;
-  tmpvar_21 = (rotation * tmpvar_20);
-  o.viewDir = tmpvar_21;
-  vec4 tmpvar_22;
-  tmpvar_22.w = 1.0;
-  tmpvar_22.xyz = worldN.xyz;
-  vec3 tmpvar_23;
-  tmpvar_23 = ShadeSH9 (tmpvar_22);
-  vec3 tmpvar_24;
-  tmpvar_24 = tmpvar_23;
-  shlight = tmpvar_24;
-  vec3 tmpvar_25;
-  tmpvar_25 = shlight;
-  o.vlight = tmpvar_25;
-  vec3 tmpvar_26;
-  tmpvar_26 = (_Object2World * v.vertex).xyz;
-  worldPos = tmpvar_26;
-  vec3 tmpvar_27;
-  tmpvar_27 = Shade4PointLights (unity_4LightPosX0, unity_4LightPosY0, unity_4LightPosZ0, unity_LightColor0, unity_LightColor1, unity_LightColor2, unity_LightColor3, unity_4LightAtten0, worldPos, worldN);
-  vec3 tmpvar_28;
-  tmpvar_28 = (o.vlight + tmpvar_27);
-  o.vlight = tmpvar_28;
-  vec4 tmpvar_29;
-  tmpvar_29 = ComputeScreenPos (o.pos);
-  vec4 tmpvar_30;
-  tmpvar_30 = tmpvar_29;
-  o._ShadowCoord = tmpvar_30;
-  return o;
+  vec3 worldPos_90;
+  vec3 shlight_91;
+  mat3 rotation_92;
+  vec3 binormal_93;
+  vec3 worldN_94;
+  v2f_surf o_95;
+  PositionFog (v_89.vertex, o_95.pos, o_95.fog);
+  vec2 tmpvar_96;
+  tmpvar_96 = ((v_89.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  o_95.hip_pack0.xy = tmpvar_96.xy.xy;
+  vec2 tmpvar_97;
+  tmpvar_97 = ((v_89.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
+  o_95.hip_pack0.zw = tmpvar_97.xxxy.zw;
+  mat3 tmpvar_98;
+  tmpvar_98 = (xll_constructMat3 (_Object2World));
+  vec3 tmpvar_99;
+  tmpvar_99 = (tmpvar_98 * (v_89.normal * unity_Scale.w));
+  worldN_94 = tmpvar_99;
+  vec3 tmpvar_100;
+  tmpvar_100 = cross (v_89.normal, v_89.tangent.xyz);
+  vec3 tmpvar_101;
+  tmpvar_101 = (tmpvar_100 * v_89.tangent.w);
+  binormal_93 = tmpvar_101;
+  mat3 tmpvar_102;
+  float tmpvar_103;
+  tmpvar_103 = v_89.tangent.x;
+  tmpvar_102[0].x = tmpvar_103;
+  float tmpvar_104;
+  tmpvar_104 = binormal_93.x;
+  tmpvar_102[0].y = tmpvar_104;
+  float tmpvar_105;
+  tmpvar_105 = v_89.normal.x;
+  tmpvar_102[0].z = tmpvar_105;
+  float tmpvar_106;
+  tmpvar_106 = v_89.tangent.y;
+  tmpvar_102[1].x = tmpvar_106;
+  float tmpvar_107;
+  tmpvar_107 = binormal_93.y;
+  tmpvar_102[1].y = tmpvar_107;
+  float tmpvar_108;
+  tmpvar_108 = v_89.normal.y;
+  tmpvar_102[1].z = tmpvar_108;
+  float tmpvar_109;
+  tmpvar_109 = v_89.tangent.z;
+  tmpvar_102[2].x = tmpvar_109;
+  float tmpvar_110;
+  tmpvar_110 = binormal_93.z;
+  tmpvar_102[2].y = tmpvar_110;
+  float tmpvar_111;
+  tmpvar_111 = v_89.normal.z;
+  tmpvar_102[2].z = tmpvar_111;
+  mat3 tmpvar_112;
+  tmpvar_112 = (tmpvar_102);
+  rotation_92 = (tmpvar_112);
+  vec3 tmpvar_113;
+  tmpvar_113 = ObjSpaceLightDir (v_89.vertex);
+  vec3 tmpvar_114;
+  tmpvar_114 = (rotation_92 * tmpvar_113);
+  o_95.lightDir = tmpvar_114;
+  vec3 tmpvar_115;
+  tmpvar_115 = ObjSpaceViewDir (v_89.vertex);
+  vec3 tmpvar_116;
+  tmpvar_116 = (rotation_92 * tmpvar_115);
+  o_95.viewDir = tmpvar_116;
+  vec4 tmpvar_117;
+  tmpvar_117.w = 1.00000;
+  tmpvar_117.xyz = worldN_94.xyz;
+  vec3 tmpvar_118;
+  tmpvar_118 = ShadeSH9 (tmpvar_117);
+  vec3 tmpvar_119;
+  tmpvar_119 = tmpvar_118;
+  shlight_91 = tmpvar_119;
+  vec3 tmpvar_120;
+  tmpvar_120 = shlight_91;
+  o_95.vlight = tmpvar_120;
+  vec3 tmpvar_121;
+  tmpvar_121 = (_Object2World * v_89.vertex).xyz;
+  worldPos_90 = tmpvar_121;
+  vec3 tmpvar_122;
+  tmpvar_122 = Shade4PointLights (unity_4LightPosX0, unity_4LightPosY0, unity_4LightPosZ0, unity_LightColor0, unity_LightColor1, unity_LightColor2, unity_LightColor3, unity_4LightAtten0, worldPos_90, worldN_94);
+  vec3 tmpvar_123;
+  tmpvar_123 = (o_95.vlight + tmpvar_122);
+  o_95.vlight = tmpvar_123;
+  vec4 tmpvar_124;
+  tmpvar_124 = ComputeScreenPos (o_95.pos);
+  vec4 tmpvar_125;
+  tmpvar_125 = tmpvar_124;
+  o_95._ShadowCoord = tmpvar_125;
+  return o_95;
 }
 
 void main ()
 {
-  appdata_full xlt_v;
-  v2f_surf xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_Vertex.xyzw;
-  vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  xlt_v.vertex = tmpvar_2;
-  vec4 tmpvar_3;
-  tmpvar_3 = TANGENT.xyzw;
-  vec4 tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  xlt_v.tangent = tmpvar_4;
-  vec3 tmpvar_5;
-  tmpvar_5 = gl_Normal.xyz;
-  vec3 tmpvar_6;
-  tmpvar_6 = tmpvar_5;
-  xlt_v.normal = tmpvar_6;
-  vec4 tmpvar_7;
-  tmpvar_7 = gl_MultiTexCoord0.xyzw;
-  vec4 tmpvar_8;
-  tmpvar_8 = tmpvar_7;
-  xlt_v.texcoord = tmpvar_8;
-  vec4 tmpvar_9;
-  tmpvar_9 = gl_MultiTexCoord1.xyzw;
-  vec4 tmpvar_10;
-  tmpvar_10 = tmpvar_9;
-  xlt_v.texcoord1 = tmpvar_10;
-  vec4 tmpvar_11;
-  tmpvar_11 = gl_Color.xyzw;
-  vec4 tmpvar_12;
-  tmpvar_12 = tmpvar_11;
-  xlt_v.color = tmpvar_12;
-  v2f_surf tmpvar_13;
-  tmpvar_13 = vert_surf (xlt_v);
-  v2f_surf tmpvar_14;
-  tmpvar_14 = tmpvar_13;
-  xl_retval = tmpvar_14;
-  vec4 tmpvar_15;
-  tmpvar_15 = xl_retval.pos.xyzw;
-  vec4 tmpvar_16;
-  tmpvar_16 = tmpvar_15;
-  gl_Position = tmpvar_16;
-  vec4 tmpvar_17;
-  tmpvar_17.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_17.x = xl_retval.fog;
-  vec4 tmpvar_18;
-  tmpvar_18 = tmpvar_17;
-  xlv_FOG = tmpvar_18;
-  vec4 tmpvar_19;
-  tmpvar_19 = xl_retval.hip_pack0.xyzw;
-  vec4 tmpvar_20;
-  tmpvar_20 = tmpvar_19;
-  gl_TexCoord[0] = tmpvar_20;
-  vec4 tmpvar_21;
-  tmpvar_21.w = 0.0;
-  tmpvar_21.xyz = xl_retval.viewDir.xyz;
-  vec4 tmpvar_22;
-  tmpvar_22 = tmpvar_21;
-  gl_TexCoord[1] = tmpvar_22;
-  vec4 tmpvar_23;
-  tmpvar_23.w = 0.0;
-  tmpvar_23.xyz = xl_retval.lightDir.xyz;
-  vec4 tmpvar_24;
-  tmpvar_24 = tmpvar_23;
-  gl_TexCoord[2] = tmpvar_24;
-  vec4 tmpvar_25;
-  tmpvar_25.w = 0.0;
-  tmpvar_25.xyz = xl_retval.vlight.xyz;
-  vec4 tmpvar_26;
-  tmpvar_26 = tmpvar_25;
-  gl_TexCoord[3] = tmpvar_26;
-  vec4 tmpvar_27;
-  tmpvar_27 = xl_retval._ShadowCoord.xyzw;
-  vec4 tmpvar_28;
-  tmpvar_28 = tmpvar_27;
-  gl_TexCoord[4] = tmpvar_28;
+  appdata_full xlt_v_126;
+  v2f_surf xl_retval_127;
+  vec4 tmpvar_128;
+  tmpvar_128 = gl_Vertex.xyzw;
+  vec4 tmpvar_129;
+  tmpvar_129 = tmpvar_128;
+  xlt_v_126.vertex = tmpvar_129;
+  vec4 tmpvar_130;
+  tmpvar_130 = TANGENT.xyzw;
+  vec4 tmpvar_131;
+  tmpvar_131 = tmpvar_130;
+  xlt_v_126.tangent = tmpvar_131;
+  vec3 tmpvar_132;
+  tmpvar_132 = gl_Normal.xyz;
+  vec3 tmpvar_133;
+  tmpvar_133 = tmpvar_132;
+  xlt_v_126.normal = tmpvar_133;
+  vec4 tmpvar_134;
+  tmpvar_134 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_135;
+  tmpvar_135 = tmpvar_134;
+  xlt_v_126.texcoord = tmpvar_135;
+  vec4 tmpvar_136;
+  tmpvar_136 = gl_MultiTexCoord1.xyzw;
+  vec4 tmpvar_137;
+  tmpvar_137 = tmpvar_136;
+  xlt_v_126.texcoord1 = tmpvar_137;
+  vec4 tmpvar_138;
+  tmpvar_138 = gl_Color.xyzw;
+  vec4 tmpvar_139;
+  tmpvar_139 = tmpvar_138;
+  xlt_v_126.color = tmpvar_139;
+  v2f_surf tmpvar_140;
+  tmpvar_140 = vert_surf (xlt_v_126);
+  v2f_surf tmpvar_141;
+  tmpvar_141 = tmpvar_140;
+  xl_retval_127 = tmpvar_141;
+  vec4 tmpvar_142;
+  tmpvar_142 = xl_retval_127.pos.xyzw;
+  vec4 tmpvar_143;
+  tmpvar_143 = tmpvar_142;
+  gl_Position = tmpvar_143;
+  vec4 tmpvar_144;
+  tmpvar_144.yzw = vec3(0.00000, 0.00000, 0.00000);
+  tmpvar_144.x = xl_retval_127.fog;
+  vec4 tmpvar_145;
+  tmpvar_145 = tmpvar_144;
+  xlv_FOG = tmpvar_145;
+  vec4 tmpvar_146;
+  tmpvar_146 = xl_retval_127.hip_pack0.xyzw;
+  vec4 tmpvar_147;
+  tmpvar_147 = tmpvar_146;
+  gl_TexCoord[0] = tmpvar_147;
+  vec4 tmpvar_148;
+  tmpvar_148.w = 0.00000;
+  tmpvar_148.xyz = xl_retval_127.viewDir.xyz;
+  vec4 tmpvar_149;
+  tmpvar_149 = tmpvar_148;
+  gl_TexCoord[1] = tmpvar_149;
+  vec4 tmpvar_150;
+  tmpvar_150.w = 0.00000;
+  tmpvar_150.xyz = xl_retval_127.lightDir.xyz;
+  vec4 tmpvar_151;
+  tmpvar_151 = tmpvar_150;
+  gl_TexCoord[2] = tmpvar_151;
+  vec4 tmpvar_152;
+  tmpvar_152.w = 0.00000;
+  tmpvar_152.xyz = xl_retval_127.vlight.xyz;
+  vec4 tmpvar_153;
+  tmpvar_153 = tmpvar_152;
+  gl_TexCoord[3] = tmpvar_153;
+  vec4 tmpvar_154;
+  tmpvar_154 = xl_retval_127._ShadowCoord.xyzw;
+  vec4 tmpvar_155;
+  tmpvar_155 = tmpvar_154;
+  gl_TexCoord[4] = tmpvar_155;
 }
 

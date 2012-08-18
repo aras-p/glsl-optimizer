@@ -6,13 +6,13 @@ void main ()
 {
   vec3 tmpvar_1;
   tmpvar_1 = gl_TexCoord[0].xyz;
-  float x;
-  x = ((texture2D (_MainTex, gl_TexCoord[1].xy) * _Color).w - _Cutoff);
-  if ((x < 0.0)) {
+  float x_2;
+  x_2 = ((texture2D (_MainTex, gl_TexCoord[1].xy) * _Color).w - _Cutoff);
+  if ((x_2 < 0.00000)) {
     discard;
   };
-  vec4 tmpvar_2;
-  tmpvar_2 = fract ((vec4(1.0, 255.0, 65025.0, 160580992.0) * (length (tmpvar_1) * _LightPositionRange.w)));
-  gl_FragData[0] = (tmpvar_2 - (tmpvar_2.yzww * 0.00392157));
+  vec4 tmpvar_3;
+  tmpvar_3 = fract ((vec4(1.00000, 255.000, 65025.0, 1.60581e+08) * (length (tmpvar_1) * _LightPositionRange.w)));
+  gl_FragData[0] = (tmpvar_3 - (tmpvar_3.yzww * 0.00392157));
 }
 

@@ -18,84 +18,84 @@ attribute highp vec4 _glesMultiTexCoord0;
 attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesVertex;
 vec4 ComputeScreenPos (
-  in highp vec4 pos
+  in highp vec4 pos_1
 )
 {
-  highp vec4 o;
-  highp vec4 tmpvar_1;
-  tmpvar_1 = (pos * 0.5);
-  o = tmpvar_1;
-  highp vec2 tmpvar_2;
-  tmpvar_2.x = o.x;
-  tmpvar_2.y = (o.y * _ProjectionParams.x);
-  highp vec2 tmpvar_3;
-  tmpvar_3 = (tmpvar_2 + o.w);
-  o.xy = tmpvar_3.xy.xy;
+  highp vec4 o_2;
+  highp vec4 tmpvar_3;
+  tmpvar_3 = (pos_1 * 0.500000);
+  o_2 = tmpvar_3;
   highp vec2 tmpvar_4;
-  tmpvar_4 = pos.zw;
-  o.zw = tmpvar_4.xxxy.zw;
-  return o;
+  tmpvar_4.x = o_2.x;
+  tmpvar_4.y = (o_2.y * _ProjectionParams.x);
+  highp vec2 tmpvar_5;
+  tmpvar_5 = (tmpvar_4 + o_2.w);
+  o_2.xy = tmpvar_5.xy.xy;
+  highp vec2 tmpvar_6;
+  tmpvar_6 = pos_1.zw;
+  o_2.zw = tmpvar_6.xxxy.zw;
+  return o_2;
 }
 
 v2f xlat_main (
-  in appdata v
+  in appdata v_7
 )
 {
-  v2f o;
-  highp vec4 tmpvar_1;
-  tmpvar_1 = (glstate_matrix_mvp * v.vertex);
-  o.pos = tmpvar_1;
-  highp vec4 tmpvar_2;
-  tmpvar_2 = ComputeScreenPos (o.pos);
-  highp vec4 tmpvar_3;
-  tmpvar_3 = tmpvar_2;
-  o.uv = tmpvar_3;
-  highp vec3 tmpvar_4;
-  tmpvar_4 = ((glstate_matrix_modelview0 * v.vertex).xyz * vec3(-1.0, -1.0, 1.0));
-  o.ray = tmpvar_4;
-  highp vec3 tmpvar_5;
-  tmpvar_5 = vec3(float((v.normal.z != 0.0)));
-  highp vec3 tmpvar_6;
-  tmpvar_6 = mix (o.ray, v.normal, tmpvar_5);
-  highp vec3 tmpvar_7;
-  tmpvar_7 = tmpvar_6;
-  o.ray = tmpvar_7;
-  return o;
+  v2f o_8;
+  highp vec4 tmpvar_9;
+  tmpvar_9 = (glstate_matrix_mvp * v_7.vertex);
+  o_8.pos = tmpvar_9;
+  highp vec4 tmpvar_10;
+  tmpvar_10 = ComputeScreenPos (o_8.pos);
+  highp vec4 tmpvar_11;
+  tmpvar_11 = tmpvar_10;
+  o_8.uv = tmpvar_11;
+  highp vec3 tmpvar_12;
+  tmpvar_12 = ((glstate_matrix_modelview0 * v_7.vertex).xyz * vec3(-1.00000, -1.00000, 1.00000));
+  o_8.ray = tmpvar_12;
+  highp vec3 tmpvar_13;
+  tmpvar_13 = vec3(float((v_7.normal.z != 0.00000)));
+  highp vec3 tmpvar_14;
+  tmpvar_14 = mix (o_8.ray, v_7.normal, tmpvar_13);
+  highp vec3 tmpvar_15;
+  tmpvar_15 = tmpvar_14;
+  o_8.ray = tmpvar_15;
+  return o_8;
 }
 
 void main ()
 {
-  appdata xlt_v;
-  v2f xl_retval;
-  highp vec4 tmpvar_1;
-  tmpvar_1 = _glesVertex.xyzw;
-  highp vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  xlt_v.vertex = tmpvar_2;
-  highp vec3 tmpvar_3;
-  tmpvar_3 = _glesNormal.xyz;
-  highp vec3 tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  xlt_v.normal = tmpvar_4;
-  v2f tmpvar_5;
-  tmpvar_5 = xlat_main (xlt_v);
-  v2f tmpvar_6;
-  tmpvar_6 = tmpvar_5;
-  xl_retval = tmpvar_6;
-  highp vec4 tmpvar_7;
-  tmpvar_7 = xl_retval.pos.xyzw;
-  highp vec4 tmpvar_8;
-  tmpvar_8 = tmpvar_7;
-  gl_Position = tmpvar_8;
-  highp vec4 tmpvar_9;
-  tmpvar_9 = xl_retval.uv.xyzw;
-  highp vec4 tmpvar_10;
-  tmpvar_10 = tmpvar_9;
-  xlv_TEXCOORD0 = tmpvar_10;
-  highp vec3 tmpvar_11;
-  tmpvar_11 = xl_retval.ray.xyz;
-  highp vec3 tmpvar_12;
-  tmpvar_12 = tmpvar_11;
-  xlv_TEXCOORD1 = tmpvar_12;
+  appdata xlt_v_16;
+  v2f xl_retval_17;
+  highp vec4 tmpvar_18;
+  tmpvar_18 = _glesVertex.xyzw;
+  highp vec4 tmpvar_19;
+  tmpvar_19 = tmpvar_18;
+  xlt_v_16.vertex = tmpvar_19;
+  highp vec3 tmpvar_20;
+  tmpvar_20 = _glesNormal.xyz;
+  highp vec3 tmpvar_21;
+  tmpvar_21 = tmpvar_20;
+  xlt_v_16.normal = tmpvar_21;
+  v2f tmpvar_22;
+  tmpvar_22 = xlat_main (xlt_v_16);
+  v2f tmpvar_23;
+  tmpvar_23 = tmpvar_22;
+  xl_retval_17 = tmpvar_23;
+  highp vec4 tmpvar_24;
+  tmpvar_24 = xl_retval_17.pos.xyzw;
+  highp vec4 tmpvar_25;
+  tmpvar_25 = tmpvar_24;
+  gl_Position = tmpvar_25;
+  highp vec4 tmpvar_26;
+  tmpvar_26 = xl_retval_17.uv.xyzw;
+  highp vec4 tmpvar_27;
+  tmpvar_27 = tmpvar_26;
+  xlv_TEXCOORD0 = tmpvar_27;
+  highp vec3 tmpvar_28;
+  tmpvar_28 = xl_retval_17.ray.xyz;
+  highp vec3 tmpvar_29;
+  tmpvar_29 = tmpvar_28;
+  xlv_TEXCOORD1 = tmpvar_29;
 }
 

@@ -6,7 +6,7 @@ void main ()
   tmpvar_1[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
   vec4 tmpvar_2;
-  tmpvar_2.w = 0.0;
+  tmpvar_2.w = 0.00000;
   tmpvar_2.xyz = (tmpvar_1 * gl_Normal);
   gl_TexCoord[0] = tmpvar_2;
 }

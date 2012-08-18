@@ -24,140 +24,140 @@ uniform sampler2D _LightTexture0;
 uniform vec4 _LightColor0;
 uniform vec4 _Color;
 void surf (
-  in Input IN,
-  inout SurfaceOutput o
+  in Input IN_1,
+  inout SurfaceOutput o_2
 )
 {
-  vec4 c;
-  vec4 tmpvar_1;
-  tmpvar_1 = texture2D (_MainTex, IN.uv_MainTex);
-  vec4 tmpvar_2;
-  tmpvar_2 = (tmpvar_1 * _Color);
-  c = tmpvar_2;
-  vec3 tmpvar_3;
-  tmpvar_3 = c.xyz;
-  o.Albedo = tmpvar_3;
-  float tmpvar_4;
-  tmpvar_4 = c.w;
-  o.Alpha = tmpvar_4;
+  vec4 c_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_MainTex, IN_1.uv_MainTex);
+  vec4 tmpvar_5;
+  tmpvar_5 = (tmpvar_4 * _Color);
+  c_3 = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = c_3.xyz;
+  o_2.Albedo = tmpvar_6;
+  float tmpvar_7;
+  tmpvar_7 = c_3.w;
+  o_2.Alpha = tmpvar_7;
 }
 
 vec4 LightingToonRamp (
-  in SurfaceOutput s,
-  in vec3 lightDir,
-  in float atten
+  in SurfaceOutput s_8,
+  in vec3 lightDir_9,
+  in float atten_10
 )
 {
-  vec4 c;
-  vec3 ramp;
-  float d;
-  float tmpvar_1;
-  tmpvar_1 = dot (s.Normal, lightDir);
-  float tmpvar_2;
-  tmpvar_2 = ((tmpvar_1 * 0.5) + 0.5);
-  d = tmpvar_2;
-  vec2 tmpvar_3;
-  tmpvar_3.x = d;
-  tmpvar_3.y = d;
-  vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_Ramp, tmpvar_3);
-  vec3 tmpvar_5;
-  tmpvar_5 = tmpvar_4.xyz;
-  ramp = tmpvar_5;
-  vec3 tmpvar_6;
-  tmpvar_6 = (((s.Albedo * _LightColor0.xyz) * ramp) * (atten * 2.0));
-  c.xyz = tmpvar_6.xyz.xyz;
-  float tmpvar_7;
-  tmpvar_7 = 0.0;
-  c.w = vec4(tmpvar_7).w;
-  return c;
+  vec4 c_11;
+  vec3 ramp_12;
+  float d_13;
+  float tmpvar_14;
+  tmpvar_14 = dot (s_8.Normal, lightDir_9);
+  float tmpvar_15;
+  tmpvar_15 = ((tmpvar_14 * 0.500000) + 0.500000);
+  d_13 = tmpvar_15;
+  vec2 tmpvar_16;
+  tmpvar_16.x = d_13;
+  tmpvar_16.y = d_13;
+  vec4 tmpvar_17;
+  tmpvar_17 = texture2D (_Ramp, tmpvar_16);
+  vec3 tmpvar_18;
+  tmpvar_18 = tmpvar_17.xyz;
+  ramp_12 = tmpvar_18;
+  vec3 tmpvar_19;
+  tmpvar_19 = (((s_8.Albedo * _LightColor0.xyz) * ramp_12) * (atten_10 * 2.00000));
+  c_11.xyz = tmpvar_19.xyz.xyz;
+  float tmpvar_20;
+  tmpvar_20 = 0.00000;
+  c_11.w = vec4(tmpvar_20).w;
+  return c_11;
 }
 
 vec4 frag_surf (
-  in v2f_surf IN
+  in v2f_surf IN_21
 )
 {
-  vec4 c;
-  vec3 lightDir;
-  SurfaceOutput o;
-  Input surfIN;
-  vec2 tmpvar_1;
-  tmpvar_1 = IN.hip_pack0.xy;
-  surfIN.uv_MainTex = tmpvar_1;
-  vec3 tmpvar_2;
-  tmpvar_2 = vec3(0.0, 0.0, 0.0);
-  o.Albedo = tmpvar_2;
-  vec3 tmpvar_3;
-  tmpvar_3 = vec3(0.0, 0.0, 0.0);
-  o.Emission = tmpvar_3;
-  float tmpvar_4;
-  tmpvar_4 = 0.0;
-  o.Specular = tmpvar_4;
-  float tmpvar_5;
-  tmpvar_5 = 0.0;
-  o.Alpha = tmpvar_5;
-  float tmpvar_6;
-  tmpvar_6 = 0.0;
-  o.Gloss = tmpvar_6;
-  vec3 tmpvar_7;
-  tmpvar_7 = IN.normal;
-  o.Normal = tmpvar_7;
-  surf (surfIN, o);
-  vec3 tmpvar_8;
-  tmpvar_8 = IN.lightDir;
-  lightDir = tmpvar_8;
-  vec4 tmpvar_9;
-  tmpvar_9 = texture2D (_LightTexture0, IN._LightCoord);
-  vec4 tmpvar_10;
-  tmpvar_10 = LightingToonRamp (o, lightDir, (tmpvar_9.w * 1.0));
-  vec4 tmpvar_11;
-  tmpvar_11 = tmpvar_10;
-  c = tmpvar_11;
-  float tmpvar_12;
-  tmpvar_12 = 0.0;
-  c.w = vec4(tmpvar_12).w;
-  return c;
+  vec4 c_22;
+  vec3 lightDir_23;
+  SurfaceOutput o_24;
+  Input surfIN_25;
+  vec2 tmpvar_26;
+  tmpvar_26 = IN_21.hip_pack0.xy;
+  surfIN_25.uv_MainTex = tmpvar_26;
+  vec3 tmpvar_27;
+  tmpvar_27 = vec3(0.00000, 0.00000, 0.00000);
+  o_24.Albedo = tmpvar_27;
+  vec3 tmpvar_28;
+  tmpvar_28 = vec3(0.00000, 0.00000, 0.00000);
+  o_24.Emission = tmpvar_28;
+  float tmpvar_29;
+  tmpvar_29 = 0.00000;
+  o_24.Specular = tmpvar_29;
+  float tmpvar_30;
+  tmpvar_30 = 0.00000;
+  o_24.Alpha = tmpvar_30;
+  float tmpvar_31;
+  tmpvar_31 = 0.00000;
+  o_24.Gloss = tmpvar_31;
+  vec3 tmpvar_32;
+  tmpvar_32 = IN_21.normal;
+  o_24.Normal = tmpvar_32;
+  surf (surfIN_25, o_24);
+  vec3 tmpvar_33;
+  tmpvar_33 = IN_21.lightDir;
+  lightDir_23 = tmpvar_33;
+  vec4 tmpvar_34;
+  tmpvar_34 = texture2D (_LightTexture0, IN_21._LightCoord);
+  vec4 tmpvar_35;
+  tmpvar_35 = LightingToonRamp (o_24, lightDir_23, (tmpvar_34.w * 1.00000));
+  vec4 tmpvar_36;
+  tmpvar_36 = tmpvar_35;
+  c_22 = tmpvar_36;
+  float tmpvar_37;
+  tmpvar_37 = 0.00000;
+  c_22.w = vec4(tmpvar_37).w;
+  return c_22;
 }
 
 void main ()
 {
-  v2f_surf xlt_IN;
-  vec4 xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
-  xlt_IN.pos = tmpvar_1;
-  float tmpvar_2;
-  tmpvar_2 = xlv_FOG.x;
-  xlt_IN.fog = tmpvar_2;
-  vec2 tmpvar_3;
-  tmpvar_3 = gl_TexCoord[0].xy;
-  vec2 tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  xlt_IN.hip_pack0 = tmpvar_4;
-  vec3 tmpvar_5;
-  tmpvar_5 = gl_TexCoord[1].xyz;
-  vec3 tmpvar_6;
-  tmpvar_6 = tmpvar_5;
-  xlt_IN.normal = tmpvar_6;
-  vec3 tmpvar_7;
-  tmpvar_7 = gl_TexCoord[2].xyz;
-  vec3 tmpvar_8;
-  tmpvar_8 = tmpvar_7;
-  xlt_IN.lightDir = tmpvar_8;
-  vec2 tmpvar_9;
-  tmpvar_9 = gl_TexCoord[3].xy;
-  vec2 tmpvar_10;
-  tmpvar_10 = tmpvar_9;
-  xlt_IN._LightCoord = tmpvar_10;
-  vec4 tmpvar_11;
-  tmpvar_11 = frag_surf (xlt_IN);
-  vec4 tmpvar_12;
-  tmpvar_12 = tmpvar_11;
-  xl_retval = tmpvar_12;
-  vec4 tmpvar_13;
-  tmpvar_13 = xl_retval.xyzw;
-  vec4 tmpvar_14;
-  tmpvar_14 = tmpvar_13;
-  gl_FragData[0] = tmpvar_14;
+  v2f_surf xlt_IN_38;
+  vec4 xl_retval_39;
+  vec4 tmpvar_40;
+  tmpvar_40 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
+  xlt_IN_38.pos = tmpvar_40;
+  float tmpvar_41;
+  tmpvar_41 = xlv_FOG.x;
+  xlt_IN_38.fog = tmpvar_41;
+  vec2 tmpvar_42;
+  tmpvar_42 = gl_TexCoord[0].xy;
+  vec2 tmpvar_43;
+  tmpvar_43 = tmpvar_42;
+  xlt_IN_38.hip_pack0 = tmpvar_43;
+  vec3 tmpvar_44;
+  tmpvar_44 = gl_TexCoord[1].xyz;
+  vec3 tmpvar_45;
+  tmpvar_45 = tmpvar_44;
+  xlt_IN_38.normal = tmpvar_45;
+  vec3 tmpvar_46;
+  tmpvar_46 = gl_TexCoord[2].xyz;
+  vec3 tmpvar_47;
+  tmpvar_47 = tmpvar_46;
+  xlt_IN_38.lightDir = tmpvar_47;
+  vec2 tmpvar_48;
+  tmpvar_48 = gl_TexCoord[3].xy;
+  vec2 tmpvar_49;
+  tmpvar_49 = tmpvar_48;
+  xlt_IN_38._LightCoord = tmpvar_49;
+  vec4 tmpvar_50;
+  tmpvar_50 = frag_surf (xlt_IN_38);
+  vec4 tmpvar_51;
+  tmpvar_51 = tmpvar_50;
+  xl_retval_39 = tmpvar_51;
+  vec4 tmpvar_52;
+  tmpvar_52 = xl_retval_39.xyzw;
+  vec4 tmpvar_53;
+  tmpvar_53 = tmpvar_52;
+  gl_FragData[0] = tmpvar_53;
 }
 

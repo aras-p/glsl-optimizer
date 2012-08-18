@@ -5,6 +5,6 @@ uniform sampler2D _Detail;
 uniform vec4 _Color;
 void main ()
 {
-  gl_FragData[0] = (((_Color * texture2D (_MainTex, xlv_TEXCOORD0.xy)) * texture2D (_Detail, xlv_TEXCOORD1.xy)) * 2.0);
+  gl_FragData[0] = (((_Color * texture2D (_MainTex, xlv_TEXCOORD0.xy)) * texture2D (_Detail, xlv_TEXCOORD1.xy)) * 2.00000);
 }
 

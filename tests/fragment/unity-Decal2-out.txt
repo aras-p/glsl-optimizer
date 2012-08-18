@@ -7,24 +7,24 @@ void main ()
 {
   vec4 tmpvar_1;
   tmpvar_1 = gl_TexCoord[0];
-  vec4 light;
-  vec4 c;
-  vec4 tmpvar_2;
-  tmpvar_2 = texture2D (_MainTex, tmpvar_1.xy);
-  c = tmpvar_2;
-  vec4 tmpvar_3;
-  tmpvar_3 = texture2D (_DecalTex, tmpvar_1.zw);
-  c.xyz = mix (tmpvar_2.xyz, tmpvar_3.xyz, tmpvar_3.www);
+  vec4 light_2;
+  vec4 c_3;
   vec4 tmpvar_4;
-  tmpvar_4 = (c * _Color);
-  c = tmpvar_4;
+  tmpvar_4 = texture2D (_MainTex, tmpvar_1.xy);
+  c_3 = tmpvar_4;
   vec4 tmpvar_5;
-  tmpvar_5 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1])));
-  light = tmpvar_5;
-  light.xyz = (tmpvar_5.xyz + unity_Ambient.xyz);
-  vec4 c_i0;
-  c_i0.xyz = (tmpvar_4.xyz * light.xyz);
-  c_i0.w = tmpvar_4.w;
-  gl_FragData[0] = c_i0;
+  tmpvar_5 = texture2D (_DecalTex, tmpvar_1.zw);
+  c_3.xyz = mix (tmpvar_4.xyz, tmpvar_5.xyz, tmpvar_5.www);
+  vec4 tmpvar_6;
+  tmpvar_6 = (c_3 * _Color);
+  c_3 = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1])));
+  light_2 = tmpvar_7;
+  light_2.xyz = (tmpvar_7.xyz + unity_Ambient.xyz);
+  vec4 c_8;
+  c_8.xyz = (tmpvar_6.xyz * light_2.xyz);
+  c_8.w = tmpvar_6.w;
+  gl_FragData[0] = c_8;
 }
 

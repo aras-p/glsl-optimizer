@@ -3,51 +3,51 @@ struct v2f {
   vec4 uv;
 };
 v2f vert (
-  in vec4 vertex,
-  in vec2 uv
+  in vec4 vertex_1,
+  in vec2 uv_2
 )
 {
-  float scale;
-  v2f o;
-  float tmpvar_1;
-  tmpvar_1 = 1.0;
-  scale = tmpvar_1;
-  vec4 tmpvar_2;
-  tmpvar_2 = (gl_ModelViewProjectionMatrix * vertex);
-  o.vertex = tmpvar_2;
-  vec2 tmpvar_3;
-  tmpvar_3.x = o.vertex.x;
-  tmpvar_3.y = (o.vertex.y * scale);
-  vec2 tmpvar_4;
-  tmpvar_4 = ((tmpvar_3 + o.vertex.w) * 0.5);
-  o.uv.xy = tmpvar_4.xy.xy;
-  vec2 tmpvar_5;
-  tmpvar_5 = o.vertex.zw;
-  o.uv.zw = tmpvar_5.xxxy.zw;
-  return o;
+  float scale_3;
+  v2f o_4;
+  float tmpvar_5;
+  tmpvar_5 = 1.00000;
+  scale_3 = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = (gl_ModelViewProjectionMatrix * vertex_1);
+  o_4.vertex = tmpvar_6;
+  vec2 tmpvar_7;
+  tmpvar_7.x = o_4.vertex.x;
+  tmpvar_7.y = (o_4.vertex.y * scale_3);
+  vec2 tmpvar_8;
+  tmpvar_8 = ((tmpvar_7 + o_4.vertex.w) * 0.500000);
+  o_4.uv.xy = tmpvar_8.xy.xy;
+  vec2 tmpvar_9;
+  tmpvar_9 = o_4.vertex.zw;
+  o_4.uv.zw = tmpvar_9.xxxy.zw;
+  return o_4;
 }
 
 void main ()
 {
-  v2f xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_Vertex.xyzw;
-  vec2 tmpvar_2;
-  tmpvar_2 = gl_MultiTexCoord0.xy;
-  v2f tmpvar_3;
-  tmpvar_3 = vert (tmpvar_1, tmpvar_2);
-  v2f tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  xl_retval = tmpvar_4;
-  vec4 tmpvar_5;
-  tmpvar_5 = xl_retval.vertex.xyzw;
-  vec4 tmpvar_6;
-  tmpvar_6 = tmpvar_5;
-  gl_Position = tmpvar_6;
-  vec4 tmpvar_7;
-  tmpvar_7 = xl_retval.uv.xyzw;
-  vec4 tmpvar_8;
-  tmpvar_8 = tmpvar_7;
-  gl_TexCoord[0] = tmpvar_8;
+  v2f xl_retval_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = gl_Vertex.xyzw;
+  vec2 tmpvar_12;
+  tmpvar_12 = gl_MultiTexCoord0.xy;
+  v2f tmpvar_13;
+  tmpvar_13 = vert (tmpvar_11, tmpvar_12);
+  v2f tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  xl_retval_10 = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15 = xl_retval_10.vertex.xyzw;
+  vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  gl_Position = tmpvar_16;
+  vec4 tmpvar_17;
+  tmpvar_17 = xl_retval_10.uv.xyzw;
+  vec4 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  gl_TexCoord[0] = tmpvar_18;
 }
 

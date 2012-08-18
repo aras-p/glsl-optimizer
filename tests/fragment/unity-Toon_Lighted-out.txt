@@ -5,17 +5,17 @@ uniform vec4 _LightColor0;
 uniform vec4 _Color;
 void main ()
 {
-  vec4 c;
-  vec4 c_i0_i1;
-  float tmpvar_1;
-  tmpvar_1 = ((dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz) * 0.5) + 0.5);
-  vec2 tmpvar_2;
-  tmpvar_2.x = tmpvar_1;
-  tmpvar_2.y = tmpvar_1;
-  c_i0_i1.xyz = ((((texture2D (_MainTex, gl_TexCoord[0].xy) * _Color).xyz * _LightColor0.xyz) * texture2D (_Ramp, tmpvar_2).xyz) * (texture2D (_LightTexture0, gl_TexCoord[3].xy).w * 2.0));
-  c_i0_i1.w = 0.0;
-  c = c_i0_i1;
-  c.w = 0.0;
-  gl_FragData[0] = c;
+  vec4 c_1;
+  vec4 c_2;
+  float tmpvar_3;
+  tmpvar_3 = ((dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz) * 0.500000) + 0.500000);
+  vec2 tmpvar_4;
+  tmpvar_4.x = tmpvar_3;
+  tmpvar_4.y = tmpvar_3;
+  c_2.xyz = ((((texture2D (_MainTex, gl_TexCoord[0].xy) * _Color).xyz * _LightColor0.xyz) * texture2D (_Ramp, tmpvar_4).xyz) * (texture2D (_LightTexture0, gl_TexCoord[3].xy).w * 2.00000));
+  c_2.w = 0.00000;
+  c_1 = c_2;
+  c_1.w = 0.00000;
+  gl_FragData[0] = c_1;
 }
 

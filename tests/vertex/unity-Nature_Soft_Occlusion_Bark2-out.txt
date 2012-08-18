@@ -6,24 +6,24 @@ uniform mat4 _Object2World;
 uniform vec4 _LightPositionRange;
 void main ()
 {
-  vec4 pos;
-  pos = gl_Vertex;
-  pos.xyz = (gl_Vertex.xyz * _Scale.xyz);
-  vec4 tmpvar_1;
-  tmpvar_1.w = 0.0;
-  tmpvar_1.xyz = pos.xyz;
-  pos.xyz = mix (pos.xyz, (_TerrainEngineBendTree * tmpvar_1).xyz, gl_Color.www);
-  vec3 tmpvar_2;
-  tmpvar_2.xz = vec2(0.0, 0.0);
-  tmpvar_2.y = _SquashPlaneNormal.w;
-  vec4 tmpvar_3;
-  tmpvar_3.w = 1.0;
-  tmpvar_3.xyz = mix ((pos.xyz + (dot (_SquashPlaneNormal.xyz, (tmpvar_2 - pos.xyz)) * _SquashPlaneNormal.xyz)), pos.xyz, vec3(_SquashAmount));
-  pos = tmpvar_3;
-  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_3);
+  vec4 pos_1;
+  pos_1 = gl_Vertex;
+  pos_1.xyz = (gl_Vertex.xyz * _Scale.xyz);
+  vec4 tmpvar_2;
+  tmpvar_2.w = 0.00000;
+  tmpvar_2.xyz = pos_1.xyz;
+  pos_1.xyz = mix (pos_1.xyz, (_TerrainEngineBendTree * tmpvar_2).xyz, gl_Color.www);
+  vec3 tmpvar_3;
+  tmpvar_3.xz = vec2(0.00000, 0.00000);
+  tmpvar_3.y = _SquashPlaneNormal.w;
   vec4 tmpvar_4;
-  tmpvar_4.w = 0.0;
-  tmpvar_4.xyz = ((_Object2World * tmpvar_3).xyz - _LightPositionRange.xyz);
-  gl_TexCoord[0] = tmpvar_4;
+  tmpvar_4.w = 1.00000;
+  tmpvar_4.xyz = mix ((pos_1.xyz + (dot (_SquashPlaneNormal.xyz, (tmpvar_3 - pos_1.xyz)) * _SquashPlaneNormal.xyz)), pos_1.xyz, vec3(_SquashAmount));
+  pos_1 = tmpvar_4;
+  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_4);
+  vec4 tmpvar_5;
+  tmpvar_5.w = 0.00000;
+  tmpvar_5.xyz = ((_Object2World * tmpvar_4).xyz - _LightPositionRange.xyz);
+  gl_TexCoord[0] = tmpvar_5;
 }
 

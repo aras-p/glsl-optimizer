@@ -14,121 +14,121 @@ uniform vec3 _TreeBillboardCameraRight;
 uniform vec4 _TreeBillboardCameraPos;
 uniform vec4 _TreeBillboardCameraFront;
 void TerrainBillboardTree (
-  inout vec4 pos,
-  in vec2 offset,
-  in float offsetz
+  inout vec4 pos_1,
+  in vec2 offset_2,
+  in float offsetz_3
 )
 {
-  float absRadius;
-  float billboardRootOffsetFactor;
-  float billboardModeFactor;
-  float radius;
-  float billboardAngleFactor;
-  float treeDistanceSqr;
-  vec3 treePos;
-  vec3 tmpvar_1;
-  tmpvar_1 = (pos.xyz - _TreeBillboardCameraPos.xyz);
-  treePos = tmpvar_1;
-  float tmpvar_2;
-  tmpvar_2 = dot (treePos, treePos);
-  float tmpvar_3;
-  tmpvar_3 = tmpvar_2;
-  treeDistanceSqr = tmpvar_3;
-  if ((treeDistanceSqr > _TreeBillboardDistances.x)) {
-    vec2 tmpvar_4;
-    tmpvar_4 = vec2(0.0, 0.0);
-    offset = tmpvar_4.xy.xy;
-  };
-  vec3 tmpvar_5;
-  tmpvar_5 = (pos.xyz + (_TreeBillboardCameraRight.xyz * offset.x));
-  pos.xyz = tmpvar_5.xyz.xyz;
-  float tmpvar_6;
-  tmpvar_6 = _TreeBillboardCameraPos.w;
-  billboardAngleFactor = tmpvar_6;
-  float tmpvar_7;
-  tmpvar_7 = mix (offset.y, offsetz, billboardAngleFactor);
-  float tmpvar_8;
-  tmpvar_8 = tmpvar_7;
-  radius = tmpvar_8;
-  float tmpvar_9;
-  tmpvar_9 = _TreeBillboardCameraUp.w;
-  billboardModeFactor = tmpvar_9;
-  float tmpvar_10;
-  tmpvar_10 = _TreeBillboardCameraFront.w;
-  billboardRootOffsetFactor = tmpvar_10;
-  float tmpvar_11;
-  tmpvar_11 = abs (radius);
+  float absRadius_4;
+  float billboardRootOffsetFactor_5;
+  float billboardModeFactor_6;
+  float radius_7;
+  float billboardAngleFactor_8;
+  float treeDistanceSqr_9;
+  vec3 treePos_10;
+  vec3 tmpvar_11;
+  tmpvar_11 = (pos_1.xyz - _TreeBillboardCameraPos.xyz);
+  treePos_10 = tmpvar_11;
   float tmpvar_12;
-  tmpvar_12 = tmpvar_11;
-  absRadius = tmpvar_12;
+  tmpvar_12 = dot (treePos_10, treePos_10);
   float tmpvar_13;
-  tmpvar_13 = max (0.0, radius);
-  vec3 tmpvar_14;
-  tmpvar_14 = vec3(billboardModeFactor);
+  tmpvar_13 = tmpvar_12;
+  treeDistanceSqr_9 = tmpvar_13;
+  if ((treeDistanceSqr_9 > _TreeBillboardDistances.x)) {
+    vec2 tmpvar_14;
+    tmpvar_14 = vec2(0.00000, 0.00000);
+    offset_2 = tmpvar_14.xy.xy;
+  };
   vec3 tmpvar_15;
-  tmpvar_15 = mix (((((_TreeBillboardCameraUp.xyz * tmpvar_13) * 2.0) - (vec3(0.0, 1.0, 0.0) * absRadius)) - ((_TreeBillboardCameraUp.xyz * absRadius) * billboardRootOffsetFactor)), (_TreeBillboardCameraUp.xyz * radius), tmpvar_14);
-  vec3 tmpvar_16;
-  tmpvar_16 = (pos.xyz + tmpvar_15);
-  pos.xyz = tmpvar_16.xyz.xyz;
+  tmpvar_15 = (pos_1.xyz + (_TreeBillboardCameraRight.xyz * offset_2.x));
+  pos_1.xyz = tmpvar_15.xyz.xyz;
+  float tmpvar_16;
+  tmpvar_16 = _TreeBillboardCameraPos.w;
+  billboardAngleFactor_8 = tmpvar_16;
+  float tmpvar_17;
+  tmpvar_17 = mix (offset_2.y, offsetz_3, billboardAngleFactor_8);
+  float tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  radius_7 = tmpvar_18;
+  float tmpvar_19;
+  tmpvar_19 = _TreeBillboardCameraUp.w;
+  billboardModeFactor_6 = tmpvar_19;
+  float tmpvar_20;
+  tmpvar_20 = _TreeBillboardCameraFront.w;
+  billboardRootOffsetFactor_5 = tmpvar_20;
+  float tmpvar_21;
+  tmpvar_21 = abs (radius_7);
+  float tmpvar_22;
+  tmpvar_22 = tmpvar_21;
+  absRadius_4 = tmpvar_22;
+  float tmpvar_23;
+  tmpvar_23 = max (0.00000, radius_7);
+  vec3 tmpvar_24;
+  tmpvar_24 = vec3(billboardModeFactor_6);
+  vec3 tmpvar_25;
+  tmpvar_25 = mix (((((_TreeBillboardCameraUp.xyz * tmpvar_23) * 2.00000) - (vec3(0.00000, 1.00000, 0.00000) * absRadius_4)) - ((_TreeBillboardCameraUp.xyz * absRadius_4) * billboardRootOffsetFactor_5)), (_TreeBillboardCameraUp.xyz * radius_7), tmpvar_24);
+  vec3 tmpvar_26;
+  tmpvar_26 = (pos_1.xyz + tmpvar_25);
+  pos_1.xyz = tmpvar_26.xyz.xyz;
 }
 
 v2f vert (
-  in appdata_tree_billboard v
+  in appdata_tree_billboard v_27
 )
 {
-  v2f o;
-  TerrainBillboardTree (v.vertex, v.texcoord1.xy, v.texcoord.y);
-  vec4 tmpvar_1;
-  tmpvar_1 = (gl_ModelViewProjectionMatrix * v.vertex);
-  o.pos = tmpvar_1;
-  float tmpvar_2;
-  tmpvar_2 = v.texcoord.x;
-  o.uv.x = tmpvar_2;
-  float tmpvar_3;
-  tmpvar_3 = float((v.texcoord.y > 0.0));
-  o.uv.y = vec2(tmpvar_3).y;
-  return o;
+  v2f o_28;
+  TerrainBillboardTree (v_27.vertex, v_27.texcoord1.xy, v_27.texcoord.y);
+  vec4 tmpvar_29;
+  tmpvar_29 = (gl_ModelViewProjectionMatrix * v_27.vertex);
+  o_28.pos = tmpvar_29;
+  float tmpvar_30;
+  tmpvar_30 = v_27.texcoord.x;
+  o_28.uv.x = tmpvar_30;
+  float tmpvar_31;
+  tmpvar_31 = float((v_27.texcoord.y > 0.00000));
+  o_28.uv.y = vec2(tmpvar_31).y;
+  return o_28;
 }
 
 void main ()
 {
-  appdata_tree_billboard xlt_v;
-  v2f xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_Vertex.xyzw;
-  vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  xlt_v.vertex = tmpvar_2;
-  vec4 tmpvar_3;
-  tmpvar_3 = gl_Color.xyzw;
-  vec4 tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  xlt_v.color = tmpvar_4;
-  vec4 tmpvar_5;
-  tmpvar_5 = gl_MultiTexCoord0.xyzw;
-  vec4 tmpvar_6;
-  tmpvar_6 = tmpvar_5;
-  xlt_v.texcoord = tmpvar_6;
-  vec2 tmpvar_7;
-  tmpvar_7 = gl_MultiTexCoord1.xy;
-  vec2 tmpvar_8;
-  tmpvar_8 = tmpvar_7;
-  xlt_v.texcoord1 = tmpvar_8;
-  v2f tmpvar_9;
-  tmpvar_9 = vert (xlt_v);
-  v2f tmpvar_10;
-  tmpvar_10 = tmpvar_9;
-  xl_retval = tmpvar_10;
-  vec4 tmpvar_11;
-  tmpvar_11 = xl_retval.pos.xyzw;
-  vec4 tmpvar_12;
-  tmpvar_12 = tmpvar_11;
-  gl_Position = tmpvar_12;
-  vec4 tmpvar_13;
-  tmpvar_13.zw = vec2(0.0, 0.0);
-  tmpvar_13.xy = xl_retval.uv.xy;
-  vec4 tmpvar_14;
-  tmpvar_14 = tmpvar_13;
-  gl_TexCoord[0] = tmpvar_14;
+  appdata_tree_billboard xlt_v_32;
+  v2f xl_retval_33;
+  vec4 tmpvar_34;
+  tmpvar_34 = gl_Vertex.xyzw;
+  vec4 tmpvar_35;
+  tmpvar_35 = tmpvar_34;
+  xlt_v_32.vertex = tmpvar_35;
+  vec4 tmpvar_36;
+  tmpvar_36 = gl_Color.xyzw;
+  vec4 tmpvar_37;
+  tmpvar_37 = tmpvar_36;
+  xlt_v_32.color = tmpvar_37;
+  vec4 tmpvar_38;
+  tmpvar_38 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_39;
+  tmpvar_39 = tmpvar_38;
+  xlt_v_32.texcoord = tmpvar_39;
+  vec2 tmpvar_40;
+  tmpvar_40 = gl_MultiTexCoord1.xy;
+  vec2 tmpvar_41;
+  tmpvar_41 = tmpvar_40;
+  xlt_v_32.texcoord1 = tmpvar_41;
+  v2f tmpvar_42;
+  tmpvar_42 = vert (xlt_v_32);
+  v2f tmpvar_43;
+  tmpvar_43 = tmpvar_42;
+  xl_retval_33 = tmpvar_43;
+  vec4 tmpvar_44;
+  tmpvar_44 = xl_retval_33.pos.xyzw;
+  vec4 tmpvar_45;
+  tmpvar_45 = tmpvar_44;
+  gl_Position = tmpvar_45;
+  vec4 tmpvar_46;
+  tmpvar_46.zw = vec2(0.00000, 0.00000);
+  tmpvar_46.xy = xl_retval_33.uv.xy;
+  vec4 tmpvar_47;
+  tmpvar_47 = tmpvar_46;
+  gl_TexCoord[0] = tmpvar_47;
 }
 

@@ -15,37 +15,37 @@ uniform vec4 _Color;
 uniform sampler2D _BumpSpecMap;
 void main ()
 {
-  vec4 c;
-  vec4 tmpvar_1;
-  tmpvar_1 = texture2D (_MainTex, xlv_TEXCOORD0);
-  vec3 tmpvar_2;
-  tmpvar_2 = ((tmpvar_1.xyz * _Color.xyz) * xlv_COLOR0.w);
-  vec4 tmpvar_3;
-  tmpvar_3 = texture2D (_TranslucencyMap, xlv_TEXCOORD0);
-  float tmpvar_4;
-  tmpvar_4 = (tmpvar_3.w * _Color.x);
-  vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_BumpSpecMap, xlv_TEXCOORD0);
-  vec4 normal;
-  normal.xy = ((tmpvar_5.wy * 2.0) - 1.0);
-  normal.z = sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  vec3 tmpvar_6;
-  tmpvar_6 = normal.xyz;
-  float x;
-  x = (tmpvar_1.w - _Cutoff);
-  if ((x < 0.0)) {
+  vec4 c_1;
+  vec4 tmpvar_2;
+  tmpvar_2 = texture2D (_MainTex, xlv_TEXCOORD0);
+  vec3 tmpvar_3;
+  tmpvar_3 = ((tmpvar_2.xyz * _Color.xyz) * xlv_COLOR0.w);
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_TranslucencyMap, xlv_TEXCOORD0);
+  float tmpvar_5;
+  tmpvar_5 = (tmpvar_4.w * _Color.x);
+  vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_BumpSpecMap, xlv_TEXCOORD0);
+  vec4 normal_7;
+  normal_7.xy = ((tmpvar_6.wy * 2.00000) - 1.00000);
+  normal_7.z = sqrt (((1.00000 - (normal_7.x * normal_7.x)) - (normal_7.y * normal_7.y)));
+  vec3 tmpvar_8;
+  tmpvar_8 = normal_7.xyz;
+  float x_9;
+  x_9 = (tmpvar_2.w - _Cutoff);
+  if ((x_9 < 0.00000)) {
     discard;
   };
-  vec3 tmpvar_7;
-  tmpvar_7 = normalize (xlv_TEXCOORD2);
-  vec4 c_i0_i1;
-  float tmpvar_8;
-  tmpvar_8 = dot (tmpvar_6, xlv_TEXCOORD1);
-  c_i0_i1.xyz = (tmpvar_2 * ((((mix (clamp (-(tmpvar_8), 0.0, 1.0), clamp (dot (tmpvar_7, -(xlv_TEXCOORD1)), 0.0, 1.0), _TranslucencyViewDependency) * tmpvar_3.z) * _TranslucencyColor) * 2.0) + max (0.0, ((tmpvar_8 * 0.6) + 0.4))));
-  c_i0_i1.xyz = ((c_i0_i1.xyz * _LightColor0.xyz) + (pow (max (0.0, dot (tmpvar_6, normalize ((xlv_TEXCOORD1 + tmpvar_7)))), (tmpvar_5.x * 128.0)) * tmpvar_4));
-  c_i0_i1.xyz = (c_i0_i1.xyz * mix (2.0, (texture2D (_LightTexture0, xlv_TEXCOORD3).w * 2.0), _ShadowStrength));
-  c = c_i0_i1;
-  c.w = tmpvar_1.w;
-  gl_FragData[0] = c;
+  vec3 tmpvar_10;
+  tmpvar_10 = normalize (xlv_TEXCOORD2);
+  vec4 c_11;
+  float tmpvar_12;
+  tmpvar_12 = dot (tmpvar_8, xlv_TEXCOORD1);
+  c_11.xyz = (tmpvar_3 * ((((mix (clamp (-(tmpvar_12), 0.00000, 1.00000), clamp (dot (tmpvar_10, -(xlv_TEXCOORD1)), 0.00000, 1.00000), _TranslucencyViewDependency) * tmpvar_4.z) * _TranslucencyColor) * 2.00000) + max (0.00000, ((tmpvar_12 * 0.600000) + 0.400000))));
+  c_11.xyz = ((c_11.xyz * _LightColor0.xyz) + (pow (max (0.00000, dot (tmpvar_8, normalize ((xlv_TEXCOORD1 + tmpvar_10)))), (tmpvar_6.x * 128.000)) * tmpvar_5));
+  c_11.xyz = (c_11.xyz * mix (2.00000, (texture2D (_LightTexture0, xlv_TEXCOORD3).w * 2.00000), _ShadowStrength));
+  c_1 = c_11;
+  c_1.w = tmpvar_2.w;
+  gl_FragData[0] = c_1;
 }
 

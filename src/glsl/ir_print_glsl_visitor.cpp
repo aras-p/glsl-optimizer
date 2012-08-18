@@ -58,18 +58,18 @@ struct ga_entry : public exec_node
 struct global_print_tracker {
 	global_print_tracker () {
 		mem_ctx = ralloc_context(0);
-		temp_var_counter = 0;
-		temp_var_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
+		var_counter = 0;
+		var_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 		main_function_done = false;
 	}
 	
 	~global_print_tracker() {
-		hash_table_dtor (temp_var_hash);
+		hash_table_dtor (var_hash);
 		ralloc_free(mem_ctx);
 	}
 	
-	unsigned	temp_var_counter;
-	hash_table*	temp_var_hash;
+	unsigned	var_counter;
+	hash_table*	var_hash;
 	exec_list	global_assignements;
 	void* mem_ctx;
 	bool	main_function_done;
@@ -190,16 +190,19 @@ void ir_print_glsl_visitor::indent(void)
 
 void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 {
-	if (v->mode == ir_var_temporary)
+    long id = (long)hash_table_find (globals->var_hash, v);
+	if (!id && v->mode == ir_var_temporary)
 	{
-		long tempID = (long)hash_table_find (globals->temp_var_hash, v);
-		if (tempID == 0)
-		{
-			tempID = ++globals->temp_var_counter;
-			hash_table_insert (globals->temp_var_hash, (void*)tempID, v);
-		}
-		ralloc_asprintf_append (&buffer, "tmpvar_%d", tempID);
+        id = ++globals->var_counter;
+        hash_table_insert (globals->var_hash, (void*)id, v);
 	}
+    if (id)
+    {
+        if (v->mode == ir_var_temporary)
+            ralloc_asprintf_append (&buffer, "tmpvar_%d", id);
+        else
+            ralloc_asprintf_append (&buffer, "%s_%d", v->name, id);
+    }
 	else
 	{
 		ralloc_asprintf_append (&buffer, "%s", v->name);
@@ -261,6 +264,17 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
    };
    const char *const interp[] = { "", "flat ", "noperspective " };
 
+   // give an id to any variable defined in a function that is not an uniform
+   if ((this->mode == kPrintGlslNone && ir->mode != ir_var_uniform))
+   {
+     long id = (long)hash_table_find (globals->var_hash, ir);
+     if (id == 0)
+     {
+       id = ++globals->var_counter;
+       hash_table_insert (globals->var_hash, (void*)id, ir);
+     }
+   }
+
    ralloc_asprintf_append (&buffer, "%s%s%s%s",
 	  cent, inv, mode[this->mode][ir->mode], interp[ir->interpolation]);
    print_precision (ir);
@@ -273,7 +287,6 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 
 void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 {
-   this->globals->temp_var_counter = 0;
    print_precision (ir);
    buffer = print_type(buffer, ir->return_type, true);
    ralloc_asprintf_append (&buffer, " %s (", ir->function_name());
@@ -657,9 +670,7 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 
 static char* print_float (char* buffer, float f)
 {
-	const char* fmt = "%.6g";
-	if (fabsf(fmodf(f,1.0f)) < 0.00001f)
-		fmt = "%.1f";
+	const char* fmt = "%#.6g";
 	ralloc_asprintf_append (&buffer, fmt, f);
 	return buffer;
 }
@@ -691,7 +702,11 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 
    if (ir->type->is_array()) {
       for (unsigned i = 0; i < ir->type->length; i++)
+      {
+	 if (i != 0)
+	    ralloc_asprintf_append (&buffer, ", ");
 	 ir->get_array_element(i)->accept(this);
+      }
    } else {
       bool first = true;
       for (unsigned i = 0; i < ir->type->components(); i++) {

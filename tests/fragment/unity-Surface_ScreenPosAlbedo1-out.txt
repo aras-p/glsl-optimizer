@@ -5,14 +5,14 @@ void main ()
 {
   vec4 tmpvar_1;
   tmpvar_1 = gl_TexCoord[0];
-  vec4 light;
-  vec4 tmpvar_2;
-  tmpvar_2 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1])));
-  light = tmpvar_2;
-  light.xyz = (tmpvar_2.xyz + unity_Ambient.xyz);
-  vec4 c;
-  c.xyz = (texture2D (_MainTex, ((tmpvar_1.xy / tmpvar_1.w) * vec2(2.0, 1.0))).xyz * light.xyz);
-  c.w = 0.0;
-  gl_FragData[0] = c;
+  vec4 light_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1])));
+  light_2 = tmpvar_3;
+  light_2.xyz = (tmpvar_3.xyz + unity_Ambient.xyz);
+  vec4 c_4;
+  c_4.xyz = (texture2D (_MainTex, ((tmpvar_1.xy / tmpvar_1.w) * vec2(2.00000, 1.00000))).xyz * light_2.xyz);
+  c_4.w = 0.00000;
+  gl_FragData[0] = c_4;
 }
 

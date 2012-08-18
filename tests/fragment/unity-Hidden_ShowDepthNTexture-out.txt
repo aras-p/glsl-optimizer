@@ -4,20 +4,20 @@ void main ()
 {
   vec2 tmpvar_1;
   tmpvar_1 = gl_TexCoord[0].xy;
-  vec4 col;
-  vec4 tmpvar_2;
-  tmpvar_2 = texture2D (_CameraDepthNormalsTexture, tmpvar_1);
-  vec3 n_i0;
-  vec3 tmpvar_3;
-  tmpvar_3 = ((tmpvar_2.xyz * vec3(3.5554, 3.5554, 0.0)) + vec3(-1.7777, -1.7777, 1.0));
-  float tmpvar_4;
-  tmpvar_4 = (2.0 / dot (tmpvar_3, tmpvar_3));
-  n_i0.xy = (tmpvar_4 * tmpvar_3.xy);
-  n_i0.z = (tmpvar_4 - 1.0);
-  col.x = dot (tmpvar_2.zw, vec2(1.0, 0.00392157));
-  col.y = ((n_i0.x * 0.5) + 0.5);
-  col.z = ((n_i0.y * 0.5) + 0.5);
-  col.w = texture2D (_MainTex, tmpvar_1).w;
-  gl_FragData[0] = col;
+  vec4 col_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_CameraDepthNormalsTexture, tmpvar_1);
+  vec3 n_4;
+  vec3 tmpvar_5;
+  tmpvar_5 = ((tmpvar_3.xyz * vec3(3.55540, 3.55540, 0.00000)) + vec3(-1.77770, -1.77770, 1.00000));
+  float tmpvar_6;
+  tmpvar_6 = (2.00000 / dot (tmpvar_5, tmpvar_5));
+  n_4.xy = (tmpvar_6 * tmpvar_5.xy);
+  n_4.z = (tmpvar_6 - 1.00000);
+  col_2.x = dot (tmpvar_3.zw, vec2(1.00000, 0.00392157));
+  col_2.y = ((n_4.x * 0.500000) + 0.500000);
+  col_2.z = ((n_4.y * 0.500000) + 0.500000);
+  col_2.w = texture2D (_MainTex, tmpvar_1).w;
+  gl_FragData[0] = col_2;
 }
 

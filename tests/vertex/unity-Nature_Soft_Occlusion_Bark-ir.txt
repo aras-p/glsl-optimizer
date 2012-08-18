@@ -26,226 +26,226 @@ uniform mat4 _Object2World;
 uniform vec4 _MainTex_ST;
 uniform mat4 _LightMatrix0;
 mat3 xll_constructMat3 (
-  in mat4 m
+  in mat4 m_1
 )
 {
-  vec3 tmpvar_1;
-  tmpvar_1 = m[0].xyz;
   vec3 tmpvar_2;
-  tmpvar_2 = m[1].xyz;
+  tmpvar_2 = m_1[0].xyz;
   vec3 tmpvar_3;
-  tmpvar_3 = m[2].xyz;
-  mat3 tmpvar_4;
-  vec3 tmpvar_5;
-  tmpvar_5 = tmpvar_1;
-  tmpvar_4[0] = tmpvar_5;
+  tmpvar_3 = m_1[1].xyz;
+  vec3 tmpvar_4;
+  tmpvar_4 = m_1[2].xyz;
+  mat3 tmpvar_5;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_2;
-  tmpvar_4[1] = tmpvar_6;
+  tmpvar_5[0] = tmpvar_6;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_3;
-  tmpvar_4[2] = tmpvar_7;
-  return tmpvar_4;
+  tmpvar_5[1] = tmpvar_7;
+  vec3 tmpvar_8;
+  tmpvar_8 = tmpvar_4;
+  tmpvar_5[2] = tmpvar_8;
+  return tmpvar_5;
 }
 
 vec4 Squash (
-  in vec4 pos
+  in vec4 pos_9
 )
 {
-  vec3 planeNormal;
-  vec3 planePoint;
-  vec3 projectedVertex;
-  vec3 tmpvar_1;
-  tmpvar_1 = pos.xyz;
-  projectedVertex = tmpvar_1;
-  vec3 tmpvar_2;
-  tmpvar_2.xz = vec2(0.0, 0.0);
-  tmpvar_2.y = _SquashPlaneNormal.w;
-  vec3 tmpvar_3;
-  tmpvar_3 = tmpvar_2;
-  planePoint = tmpvar_3;
-  vec3 tmpvar_4;
-  tmpvar_4 = _SquashPlaneNormal.xyz;
-  planeNormal = tmpvar_4;
-  vec3 tmpvar_5;
-  tmpvar_5 = pos.xyz;
-  float tmpvar_6;
-  tmpvar_6 = dot (planeNormal, (planePoint - tmpvar_5));
-  vec3 tmpvar_7;
-  tmpvar_7 = (projectedVertex + (tmpvar_6 * planeNormal));
-  projectedVertex = tmpvar_7;
-  vec3 tmpvar_8;
-  tmpvar_8 = vec3(_SquashAmount);
-  vec3 tmpvar_9;
-  tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
-  vec4 tmpvar_10;
-  tmpvar_10.w = 1.0;
-  tmpvar_10.xyz = tmpvar_9.xyz;
-  vec4 tmpvar_11;
-  tmpvar_11 = tmpvar_10;
-  pos = tmpvar_11;
-  return pos;
+  vec3 planeNormal_10;
+  vec3 planePoint_11;
+  vec3 projectedVertex_12;
+  vec3 tmpvar_13;
+  tmpvar_13 = pos_9.xyz;
+  projectedVertex_12 = tmpvar_13;
+  vec3 tmpvar_14;
+  tmpvar_14.xz = vec2(0.00000, 0.00000);
+  tmpvar_14.y = _SquashPlaneNormal.w;
+  vec3 tmpvar_15;
+  tmpvar_15 = tmpvar_14;
+  planePoint_11 = tmpvar_15;
+  vec3 tmpvar_16;
+  tmpvar_16 = _SquashPlaneNormal.xyz;
+  planeNormal_10 = tmpvar_16;
+  vec3 tmpvar_17;
+  tmpvar_17 = pos_9.xyz;
+  float tmpvar_18;
+  tmpvar_18 = dot (planeNormal_10, (planePoint_11 - tmpvar_17));
+  vec3 tmpvar_19;
+  tmpvar_19 = (projectedVertex_12 + (tmpvar_18 * planeNormal_10));
+  projectedVertex_12 = tmpvar_19;
+  vec3 tmpvar_20;
+  tmpvar_20 = vec3(_SquashAmount);
+  vec3 tmpvar_21;
+  tmpvar_21 = mix (projectedVertex_12, pos_9.xyz, tmpvar_20);
+  vec4 tmpvar_22;
+  tmpvar_22.w = 1.00000;
+  tmpvar_22.xyz = tmpvar_21.xyz;
+  vec4 tmpvar_23;
+  tmpvar_23 = tmpvar_22;
+  pos_9 = tmpvar_23;
+  return pos_9;
 }
 
 void TerrainAnimateTree (
-  inout vec4 pos,
-  in float alpha
+  inout vec4 pos_24,
+  in float alpha_25
 )
 {
-  vec3 bent;
-  vec3 tmpvar_1;
-  tmpvar_1 = (pos.xyz * _Scale.xyz);
-  pos.xyz = tmpvar_1.xyz.xyz;
-  vec4 tmpvar_2;
-  tmpvar_2.w = 0.0;
-  tmpvar_2.xyz = pos.xyz.xyz;
-  vec3 tmpvar_3;
-  tmpvar_3 = (_TerrainEngineBendTree * tmpvar_2).xyz;
-  bent = tmpvar_3;
-  vec3 tmpvar_4;
-  tmpvar_4 = vec3(alpha);
-  vec3 tmpvar_5;
-  tmpvar_5 = mix (pos.xyz, bent, tmpvar_4);
-  vec3 tmpvar_6;
-  tmpvar_6 = tmpvar_5;
-  pos.xyz = tmpvar_6.xyz.xyz;
-  vec4 tmpvar_7;
-  tmpvar_7 = Squash (pos);
-  vec4 tmpvar_8;
-  tmpvar_8 = tmpvar_7;
-  pos = tmpvar_8;
+  vec3 bent_26;
+  vec3 tmpvar_27;
+  tmpvar_27 = (pos_24.xyz * _Scale.xyz);
+  pos_24.xyz = tmpvar_27.xyz.xyz;
+  vec4 tmpvar_28;
+  tmpvar_28.w = 0.00000;
+  tmpvar_28.xyz = pos_24.xyz.xyz;
+  vec3 tmpvar_29;
+  tmpvar_29 = (_TerrainEngineBendTree * tmpvar_28).xyz;
+  bent_26 = tmpvar_29;
+  vec3 tmpvar_30;
+  tmpvar_30 = vec3(alpha_25);
+  vec3 tmpvar_31;
+  tmpvar_31 = mix (pos_24.xyz, bent_26, tmpvar_30);
+  vec3 tmpvar_32;
+  tmpvar_32 = tmpvar_31;
+  pos_24.xyz = tmpvar_32.xyz.xyz;
+  vec4 tmpvar_33;
+  tmpvar_33 = Squash (pos_24);
+  vec4 tmpvar_34;
+  tmpvar_34 = tmpvar_33;
+  pos_24 = tmpvar_34;
 }
 
 void treevertex (
-  inout appdata_full v
+  inout appdata_full v_35
 )
 {
-  TerrainAnimateTree (v.vertex, v.color.w);
+  TerrainAnimateTree (v_35.vertex, v_35.color.w);
 }
 
 vec3 WorldSpaceLightDir (
-  in vec4 v
+  in vec4 v_36
 )
 {
-  vec3 worldPos;
-  vec3 tmpvar_1;
-  tmpvar_1 = (_Object2World * v).xyz;
-  worldPos = tmpvar_1;
-  return (_WorldSpaceLightPos0.xyz - worldPos);
+  vec3 worldPos_37;
+  vec3 tmpvar_38;
+  tmpvar_38 = (_Object2World * v_36).xyz;
+  worldPos_37 = tmpvar_38;
+  return (_WorldSpaceLightPos0.xyz - worldPos_37);
 }
 
 void PositionFog (
-  in vec4 v,
-  out vec4 pos,
-  out float fog
+  in vec4 v_39,
+  out vec4 pos_40,
+  out float fog_41
 )
 {
-  vec4 tmpvar_1;
-  tmpvar_1 = (gl_ModelViewProjectionMatrix * v);
-  pos = tmpvar_1;
-  float tmpvar_2;
-  tmpvar_2 = pos.z;
-  fog = tmpvar_2;
+  vec4 tmpvar_42;
+  tmpvar_42 = (gl_ModelViewProjectionMatrix * v_39);
+  pos_40 = tmpvar_42;
+  float tmpvar_43;
+  tmpvar_43 = pos_40.z;
+  fog_41 = tmpvar_43;
 }
 
 v2f_surf vert_surf (
-  in appdata_full v
+  in appdata_full v_44
 )
 {
-  v2f_surf o;
-  treevertex (v);
-  PositionFog (v.vertex, o.pos, o.fog);
-  vec2 tmpvar_1;
-  tmpvar_1 = ((v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
-  o.hip_pack0 = tmpvar_1.xy.xy;
-  mat3 tmpvar_2;
-  tmpvar_2 = (xll_constructMat3 (_Object2World));
-  vec3 tmpvar_3;
-  tmpvar_3 = (tmpvar_2 * (v.normal * unity_Scale.w));
-  o.normal = tmpvar_3;
-  vec3 tmpvar_4;
-  tmpvar_4 = WorldSpaceLightDir (v.vertex);
-  vec3 tmpvar_5;
-  tmpvar_5 = tmpvar_4;
-  o.lightDir = tmpvar_5;
-  vec4 tmpvar_6;
-  tmpvar_6 = (_LightMatrix0 * (_Object2World * v.vertex));
-  o._LightCoord = tmpvar_6;
-  return o;
+  v2f_surf o_45;
+  treevertex (v_44);
+  PositionFog (v_44.vertex, o_45.pos, o_45.fog);
+  vec2 tmpvar_46;
+  tmpvar_46 = ((v_44.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  o_45.hip_pack0 = tmpvar_46.xy.xy;
+  mat3 tmpvar_47;
+  tmpvar_47 = (xll_constructMat3 (_Object2World));
+  vec3 tmpvar_48;
+  tmpvar_48 = (tmpvar_47 * (v_44.normal * unity_Scale.w));
+  o_45.normal = tmpvar_48;
+  vec3 tmpvar_49;
+  tmpvar_49 = WorldSpaceLightDir (v_44.vertex);
+  vec3 tmpvar_50;
+  tmpvar_50 = tmpvar_49;
+  o_45.lightDir = tmpvar_50;
+  vec4 tmpvar_51;
+  tmpvar_51 = (_LightMatrix0 * (_Object2World * v_44.vertex));
+  o_45._LightCoord = tmpvar_51;
+  return o_45;
 }
 
 void main ()
 {
-  appdata_full xlt_v;
-  v2f_surf xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = gl_Vertex.xyzw;
-  vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  xlt_v.vertex = tmpvar_2;
-  vec4 tmpvar_3;
-  tmpvar_3 = TANGENT.xyzw;
-  vec4 tmpvar_4;
-  tmpvar_4 = tmpvar_3;
-  xlt_v.tangent = tmpvar_4;
-  vec3 tmpvar_5;
-  tmpvar_5 = gl_Normal.xyz;
-  vec3 tmpvar_6;
-  tmpvar_6 = tmpvar_5;
-  xlt_v.normal = tmpvar_6;
-  vec4 tmpvar_7;
-  tmpvar_7 = gl_MultiTexCoord0.xyzw;
-  vec4 tmpvar_8;
-  tmpvar_8 = tmpvar_7;
-  xlt_v.texcoord = tmpvar_8;
-  vec4 tmpvar_9;
-  tmpvar_9 = gl_MultiTexCoord1.xyzw;
-  vec4 tmpvar_10;
-  tmpvar_10 = tmpvar_9;
-  xlt_v.texcoord1 = tmpvar_10;
-  vec4 tmpvar_11;
-  tmpvar_11 = gl_Color.xyzw;
-  vec4 tmpvar_12;
-  tmpvar_12 = tmpvar_11;
-  xlt_v.color = tmpvar_12;
-  v2f_surf tmpvar_13;
-  tmpvar_13 = vert_surf (xlt_v);
-  v2f_surf tmpvar_14;
-  tmpvar_14 = tmpvar_13;
-  xl_retval = tmpvar_14;
-  vec4 tmpvar_15;
-  tmpvar_15 = xl_retval.pos.xyzw;
-  vec4 tmpvar_16;
-  tmpvar_16 = tmpvar_15;
-  gl_Position = tmpvar_16;
-  vec4 tmpvar_17;
-  tmpvar_17.yzw = vec3(0.0, 0.0, 0.0);
-  tmpvar_17.x = xl_retval.fog;
-  vec4 tmpvar_18;
-  tmpvar_18 = tmpvar_17;
-  xlv_FOG = tmpvar_18;
-  vec4 tmpvar_19;
-  tmpvar_19.zw = vec2(0.0, 0.0);
-  tmpvar_19.xy = xl_retval.hip_pack0.xy;
-  vec4 tmpvar_20;
-  tmpvar_20 = tmpvar_19;
-  gl_TexCoord[0] = tmpvar_20;
-  vec4 tmpvar_21;
-  tmpvar_21.w = 0.0;
-  tmpvar_21.xyz = xl_retval.normal.xyz;
-  vec4 tmpvar_22;
-  tmpvar_22 = tmpvar_21;
-  gl_TexCoord[1] = tmpvar_22;
-  vec4 tmpvar_23;
-  tmpvar_23.w = 0.0;
-  tmpvar_23.xyz = xl_retval.lightDir.xyz;
-  vec4 tmpvar_24;
-  tmpvar_24 = tmpvar_23;
-  gl_TexCoord[2] = tmpvar_24;
-  vec4 tmpvar_25;
-  tmpvar_25 = xl_retval._LightCoord.xyzw;
-  vec4 tmpvar_26;
-  tmpvar_26 = tmpvar_25;
-  gl_TexCoord[3] = tmpvar_26;
+  appdata_full xlt_v_52;
+  v2f_surf xl_retval_53;
+  vec4 tmpvar_54;
+  tmpvar_54 = gl_Vertex.xyzw;
+  vec4 tmpvar_55;
+  tmpvar_55 = tmpvar_54;
+  xlt_v_52.vertex = tmpvar_55;
+  vec4 tmpvar_56;
+  tmpvar_56 = TANGENT.xyzw;
+  vec4 tmpvar_57;
+  tmpvar_57 = tmpvar_56;
+  xlt_v_52.tangent = tmpvar_57;
+  vec3 tmpvar_58;
+  tmpvar_58 = gl_Normal.xyz;
+  vec3 tmpvar_59;
+  tmpvar_59 = tmpvar_58;
+  xlt_v_52.normal = tmpvar_59;
+  vec4 tmpvar_60;
+  tmpvar_60 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_61;
+  tmpvar_61 = tmpvar_60;
+  xlt_v_52.texcoord = tmpvar_61;
+  vec4 tmpvar_62;
+  tmpvar_62 = gl_MultiTexCoord1.xyzw;
+  vec4 tmpvar_63;
+  tmpvar_63 = tmpvar_62;
+  xlt_v_52.texcoord1 = tmpvar_63;
+  vec4 tmpvar_64;
+  tmpvar_64 = gl_Color.xyzw;
+  vec4 tmpvar_65;
+  tmpvar_65 = tmpvar_64;
+  xlt_v_52.color = tmpvar_65;
+  v2f_surf tmpvar_66;
+  tmpvar_66 = vert_surf (xlt_v_52);
+  v2f_surf tmpvar_67;
+  tmpvar_67 = tmpvar_66;
+  xl_retval_53 = tmpvar_67;
+  vec4 tmpvar_68;
+  tmpvar_68 = xl_retval_53.pos.xyzw;
+  vec4 tmpvar_69;
+  tmpvar_69 = tmpvar_68;
+  gl_Position = tmpvar_69;
+  vec4 tmpvar_70;
+  tmpvar_70.yzw = vec3(0.00000, 0.00000, 0.00000);
+  tmpvar_70.x = xl_retval_53.fog;
+  vec4 tmpvar_71;
+  tmpvar_71 = tmpvar_70;
+  xlv_FOG = tmpvar_71;
+  vec4 tmpvar_72;
+  tmpvar_72.zw = vec2(0.00000, 0.00000);
+  tmpvar_72.xy = xl_retval_53.hip_pack0.xy;
+  vec4 tmpvar_73;
+  tmpvar_73 = tmpvar_72;
+  gl_TexCoord[0] = tmpvar_73;
+  vec4 tmpvar_74;
+  tmpvar_74.w = 0.00000;
+  tmpvar_74.xyz = xl_retval_53.normal.xyz;
+  vec4 tmpvar_75;
+  tmpvar_75 = tmpvar_74;
+  gl_TexCoord[1] = tmpvar_75;
+  vec4 tmpvar_76;
+  tmpvar_76.w = 0.00000;
+  tmpvar_76.xyz = xl_retval_53.lightDir.xyz;
+  vec4 tmpvar_77;
+  tmpvar_77 = tmpvar_76;
+  gl_TexCoord[2] = tmpvar_77;
+  vec4 tmpvar_78;
+  tmpvar_78 = xl_retval_53._LightCoord.xyzw;
+  vec4 tmpvar_79;
+  tmpvar_79 = tmpvar_78;
+  gl_TexCoord[3] = tmpvar_79;
 }
 

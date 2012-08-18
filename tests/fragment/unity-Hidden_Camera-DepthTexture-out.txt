@@ -1,11 +1,11 @@
 uniform sampler2D _MainTex;
 void main ()
 {
-  float x;
-  x = (texture2D (_MainTex, gl_TexCoord[0].xy).w - 0.001);
-  if ((x < 0.0)) {
+  float x_1;
+  x_1 = (texture2D (_MainTex, gl_TexCoord[0].xy).w - 0.00100000);
+  if ((x_1 < 0.00000)) {
     discard;
   };
-  gl_FragData[0] = vec4(0.0, 0.0, 0.0, 0.0);
+  gl_FragData[0] = vec4(0.00000, 0.00000, 0.00000, 0.00000);
 }
 

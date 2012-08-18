@@ -4,49 +4,49 @@ struct v2f {
 };
 uniform sampler2D _MainTex;
 void xll_clip (
-  in float x
+  in float x_1
 )
 {
-  if ((x < 0.0)) {
+  if ((x_1 < 0.00000)) {
     discard;
   };
 }
 
 vec4 frag (
-  in v2f i
+  in v2f i_2
 )
 {
-  vec4 texcol;
-  vec4 tmpvar_1;
-  tmpvar_1 = texture2D (_MainTex, i.uv);
-  vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
-  texcol = tmpvar_2;
-  xll_clip ((texcol.w - 0.001));
-  return vec4(0.0, 0.0, 0.0, 0.0);
+  vec4 texcol_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_MainTex, i_2.uv);
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  texcol_3 = tmpvar_5;
+  xll_clip ((texcol_3.w - 0.00100000));
+  return vec4(0.00000, 0.00000, 0.00000, 0.00000);
 }
 
 void main ()
 {
-  v2f xlt_i;
-  vec4 xl_retval;
-  vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
-  xlt_i.pos = tmpvar_1;
-  vec2 tmpvar_2;
-  tmpvar_2 = gl_TexCoord[0].xy;
-  vec2 tmpvar_3;
-  tmpvar_3 = tmpvar_2;
-  xlt_i.uv = tmpvar_3;
-  vec4 tmpvar_4;
-  tmpvar_4 = frag (xlt_i);
-  vec4 tmpvar_5;
-  tmpvar_5 = tmpvar_4;
-  xl_retval = tmpvar_5;
-  vec4 tmpvar_6;
-  tmpvar_6 = xl_retval.xyzw;
-  vec4 tmpvar_7;
-  tmpvar_7 = tmpvar_6;
-  gl_FragData[0] = tmpvar_7;
+  v2f xlt_i_6;
+  vec4 xl_retval_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
+  xlt_i_6.pos = tmpvar_8;
+  vec2 tmpvar_9;
+  tmpvar_9 = gl_TexCoord[0].xy;
+  vec2 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlt_i_6.uv = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = frag (xlt_i_6);
+  vec4 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  xl_retval_7 = tmpvar_12;
+  vec4 tmpvar_13;
+  tmpvar_13 = xl_retval_7.xyzw;
+  vec4 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  gl_FragData[0] = tmpvar_14;
 }
 
