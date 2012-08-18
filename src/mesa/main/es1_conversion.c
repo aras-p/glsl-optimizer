@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include "main/mfeatures.h"
 
-#ifdef FEATURE_ES1
+#if FEATURE_ES1
 
 #include "api_loopback.h"
 #include "api_exec.h"
