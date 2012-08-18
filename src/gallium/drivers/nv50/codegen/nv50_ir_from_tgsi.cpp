@@ -214,6 +214,8 @@ unsigned int Instruction::srcMask(unsigned int s) const
    case TGSI_OPCODE_COS:
    case TGSI_OPCODE_SIN:
       return (mask & 0x8) | ((mask & 0x7) ? 0x1 : 0x0);
+   case TGSI_OPCODE_DP2:
+      return 0x3;
    case TGSI_OPCODE_DP3:
       return 0x7;
    case TGSI_OPCODE_DP4:
