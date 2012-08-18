@@ -47,6 +47,12 @@ static PFNGLGETOBJECTPARAMETERIVARBPROC glGetObjectParameterivARB;
 #include "GL/glext.h"
 #endif
 
+
+#ifndef _MSC_VER
+#include <unistd.h>
+#endif
+
+
 static bool InitializeOpenGL ()
 {
 	bool hasGLSL = false;
