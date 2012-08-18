@@ -46,5 +46,5 @@ Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
 Notes
 -----
 
-* I haven't checked if/how it works with higher GLSL versions than the
-  default (1.10?).
+* Versions 1.10 and 1.20 are supported. 1.10 is the default, use #version 120 to specify 
+1.20.

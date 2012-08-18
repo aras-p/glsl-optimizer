@@ -32,8 +32,9 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
       ctx->Extensions.OES_standard_derivatives = GL_TRUE;
    }
 
+   ctx->Const.GLSLVersion = 120;
 
-   /* 1.10 minimums. */
+   /* 1.20 minimums. */
    ctx->Const.MaxLights = 8;
    ctx->Const.MaxClipPlanes = 8;
    ctx->Const.MaxTextureUnits = 2;
