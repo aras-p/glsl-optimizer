@@ -893,6 +893,8 @@ CodeEmitterNV50::emitFADD(const Instruction *i)
       emitForm_IMM(i);
       code[0] |= neg0 << 15;
       code[0] |= neg1 << 22;
+      if (i->saturate)
+         code[0] |= 1 << 8;
    } else
    if (i->encSize == 8) {
       code[1] = 0;
