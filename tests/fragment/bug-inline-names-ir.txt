@@ -1,0 +1,36 @@
+varying float vv;
+float foo (
+  in float v
+)
+{
+  float a;
+  float b;
+  float a;
+  float tmpvar_1;
+  tmpvar_1 = v;
+  a = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = sin (v);
+  float tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  a = tmpvar_3;
+  float tmpvar_4;
+  tmpvar_4 = a;
+  b = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = (a + b);
+  a = tmpvar_5;
+  return a;
+}
+
+void main ()
+{
+  float tmpvar_1;
+  tmpvar_1 = foo (vv);
+  vec4 tmpvar_2;
+  tmpvar_2 = vec4(tmpvar_1);
+  vec4 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  gl_FragColor = tmpvar_3;
+}
+
