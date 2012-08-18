@@ -1515,6 +1515,7 @@ void util_blitter_custom_resolve_color(struct blitter_context *blitter,
    pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 1, FALSE));
+   pipe->set_sample_mask(pipe, (1ull << MAX2(1, src->nr_samples)) - 1);
 
    memset(&surf_tmpl, 0, sizeof(surf_tmpl));
    surf_tmpl.format = dst->format;
