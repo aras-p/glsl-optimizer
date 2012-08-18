@@ -35,6 +35,7 @@
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/TargetRegistry.h>
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/Support/Threading.h>
 #include <llvm/Target/TargetData.h>
 #include <llvm/Target/TargetMachine.h>
 
@@ -56,6 +57,20 @@ void LLVMInitializeAMDGPUTarget(void);
 void LLVMInitializeAMDGPUTargetInfo(void);
 }
 #endif
+
+namespace {
+
+class LLVMEnsureMultithreaded {
+public:
+   LLVMEnsureMultithreaded()
+   {
+      llvm_start_multithreaded();
+   }
+};
+
+static LLVMEnsureMultithreaded lLVMEnsureMultithreaded;
+
+}
 
 /**
  * Compile an LLVM module to machine code.
