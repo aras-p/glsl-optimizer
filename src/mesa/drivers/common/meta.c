@@ -1825,7 +1825,7 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       "}\n";
    const char *vs_int_source =
       "#version 130\n"
-      "attribute vec4 position;\n"
+      "in vec4 position;\n"
       "void main()\n"
       "{\n"
       "   gl_Position = position;\n"
