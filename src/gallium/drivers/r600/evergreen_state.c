@@ -3074,6 +3074,7 @@ void *evergreen_create_resolve_blend(struct r600_context *rctx)
 	struct r600_pipe_state *rstate;
 
 	memset(&blend, 0, sizeof(blend));
+	blend.independent_blend_enable = true;
 	blend.rt[0].colormask = 0xf;
 	rstate = evergreen_create_blend_state_mode(&rctx->context, &blend, V_028808_CB_RESOLVE);
 	return rstate;
