@@ -7,30 +7,30 @@ void main ()
   lowp vec4 tmpvar_1;
   highp vec3 tmpvar_2;
   tmpvar_2 = xlv_nl;
-  mediump vec3 light;
-  lowp vec4 col;
-  int j;
-  j = 0;
-  lowp vec4 tmpvar_3;
-  tmpvar_3 = texture2D (_MainTex, xlv_uv);
-  col = tmpvar_3;
-  if ((tmpvar_3.w < 0.5)) {
+  mediump vec3 light_3;
+  lowp vec4 col_4;
+  int j_5;
+  j_5 = 0;
+  lowp vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_MainTex, xlv_uv);
+  col_4 = tmpvar_6;
+  if ((tmpvar_6.w < 0.500000)) {
     discard;
   };
-  light = vec3(0.0, 0.0, 0.0);
+  light_3 = vec3(0.00000, 0.00000, 0.00000);
   while (true) {
-    if ((j >= 3)) {
+    if ((j_5 >= 3)) {
       break;
     };
-    highp vec3 tmpvar_4;
-    tmpvar_4 = (light + ((col.xyz * tmpvar_2[j]) * _TerrainTreeLightColors[j].xyz));
-    light = tmpvar_4;
-    j = (j + 1);
+    highp vec3 tmpvar_7;
+    tmpvar_7 = (light_3 + ((col_4.xyz * tmpvar_2[j_5]) * _TerrainTreeLightColors[j_5].xyz));
+    light_3 = tmpvar_7;
+    j_5 = (j_5 + 1);
   };
-  mediump vec4 tmpvar_5;
-  tmpvar_5.w = 1.0;
-  tmpvar_5.xyz = light;
-  tmpvar_1 = tmpvar_5;
+  mediump vec4 tmpvar_8;
+  tmpvar_8.w = 1.00000;
+  tmpvar_8.xyz = light_3;
+  tmpvar_1 = tmpvar_8;
   gl_FragData[0] = tmpvar_1;
 }
 
