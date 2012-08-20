@@ -50,16 +50,13 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const
 {
-
-  unsigned subRegMap[4] = {AMDGPU::sel_x, AMDGPU::sel_y,
-                           AMDGPU::sel_z, AMDGPU::sel_w};
-
   if (AMDGPU::R600_Reg128RegClass.contains(DestReg)
       && AMDGPU::R600_Reg128RegClass.contains(SrcReg)) {
     for (unsigned i = 0; i < 4; i++) {
+      unsigned SubRegIndex = RI.getSubRegFromChannel(i);
       BuildMI(MBB, MI, DL, get(AMDGPU::MOV))
-              .addReg(RI.getSubReg(DestReg, subRegMap[i]), RegState::Define)
-              .addReg(RI.getSubReg(SrcReg, subRegMap[i]))
+              .addReg(RI.getSubReg(DestReg, SubRegIndex), RegState::Define)
+              .addReg(RI.getSubReg(SrcReg, SubRegIndex))
               .addReg(0) // PREDICATE_BIT
               .addReg(DestReg, RegState::Define | RegState::Implicit);
     }

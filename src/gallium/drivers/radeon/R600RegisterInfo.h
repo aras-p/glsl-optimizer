@@ -46,6 +46,10 @@ struct R600RegisterInfo : public AMDGPURegisterInfo
   /// type to use in the CFGStructurizer
   virtual const TargetRegisterClass * getCFGStructurizerRegClass(MVT VT) const;
 
+  /// getSubRegFromChannel - Return the sub reg enum value for the given
+  /// Channel (e.g. getSubRegFromChannel(0) -> AMDGPU::sel_x)
+  unsigned getSubRegFromChannel(unsigned Channel) const;
+
 private:
   /// getHWRegIndexGen - Generated function returns a register's encoding
   unsigned getHWRegIndexGen(unsigned reg) const;

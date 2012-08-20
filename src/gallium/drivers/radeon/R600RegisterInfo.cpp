@@ -112,4 +112,16 @@ const TargetRegisterClass * R600RegisterInfo::getCFGStructurizerRegClass(
   case MVT::i32: return AMDGPU::R600_TReg32RegisterClass;
   }
 }
+
+unsigned R600RegisterInfo::getSubRegFromChannel(unsigned Channel) const
+{
+  switch (Channel) {
+    default: assert(!"Invalid channel index"); return 0;
+    case 0: return AMDGPU::sel_x;
+    case 1: return AMDGPU::sel_y;
+    case 2: return AMDGPU::sel_z;
+    case 3: return AMDGPU::sel_w;
+  }
+}
+
 #include "R600HwRegInfo.include"
