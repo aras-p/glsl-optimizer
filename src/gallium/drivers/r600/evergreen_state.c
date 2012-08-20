@@ -2274,14 +2274,20 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF);
 }
 
-void evergreen_init_atom_start_cs(struct r600_context *rctx)
+void evergreen_init_common_regs(struct r600_command_buffer *cb,
+	enum chip_class ctx_chip_class,
+	enum radeon_family ctx_family,
+	int ctx_drm_minor)
 {
-	struct r600_command_buffer *cb = &rctx->start_cs_cmd;
 	int ps_prio;
 	int vs_prio;
 	int gs_prio;
 	int es_prio;
-	int hs_prio, cs_prio, ls_prio;
+
+	int hs_prio;
+	int cs_prio;
+	int ls_prio;
+
 	int num_ps_gprs;
 	int num_vs_gprs;
 	int num_gs_gprs;
@@ -2289,34 +2295,9 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	int num_hs_gprs;
 	int num_ls_gprs;
 	int num_temp_gprs;
-	int num_ps_threads;
-	int num_vs_threads;
-	int num_gs_threads;
-	int num_es_threads;
-	int num_hs_threads;
-	int num_ls_threads;
-	int num_ps_stack_entries;
-	int num_vs_stack_entries;
-	int num_gs_stack_entries;
-	int num_es_stack_entries;
-	int num_hs_stack_entries;
-	int num_ls_stack_entries;
-	enum radeon_family family;
+
 	unsigned tmp;
 
-	if (rctx->chip_class == CAYMAN) {
-		cayman_init_atom_start_cs(rctx);
-		return;
-	}
-
-	r600_init_command_buffer(cb, 256, EMIT_EARLY);
-
-	/* This must be first. */
-	r600_store_value(cb, PKT3(PKT3_CONTEXT_CONTROL, 1, 0));
-	r600_store_value(cb, 0x80000000);
-	r600_store_value(cb, 0x80000000);
-
-	family = rctx->family;
 	ps_prio = 0;
 	vs_prio = 1;
 	gs_prio = 2;
@@ -2325,7 +2306,7 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	ls_prio = 0;
 	cs_prio = 0;
 
-	switch (family) {
+	switch (ctx_family) {
 	case CHIP_CEDAR:
 	default:
 		num_ps_gprs = 93;
@@ -2335,18 +2316,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		num_es_gprs = 31;
 		num_hs_gprs = 23;
 		num_ls_gprs = 23;
-		num_ps_threads = 96;
-		num_vs_threads = 16;
-		num_gs_threads = 16;
-		num_es_threads = 16;
-		num_hs_threads = 16;
-		num_ls_threads = 16;
-		num_ps_stack_entries = 42;
-		num_vs_stack_entries = 42;
-		num_gs_stack_entries = 42;
-		num_es_stack_entries = 42;
-		num_hs_stack_entries = 42;
-		num_ls_stack_entries = 42;
 		break;
 	case CHIP_REDWOOD:
 		num_ps_gprs = 93;
@@ -2356,18 +2325,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		num_es_gprs = 31;
 		num_hs_gprs = 23;
 		num_ls_gprs = 23;
-		num_ps_threads = 128;
-		num_vs_threads = 20;
-		num_gs_threads = 20;
-		num_es_threads = 20;
-		num_hs_threads = 20;
-		num_ls_threads = 20;
-		num_ps_stack_entries = 42;
-		num_vs_stack_entries = 42;
-		num_gs_stack_entries = 42;
-		num_es_stack_entries = 42;
-		num_hs_stack_entries = 42;
-		num_ls_stack_entries = 42;
 		break;
 	case CHIP_JUNIPER:
 		num_ps_gprs = 93;
@@ -2377,18 +2334,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		num_es_gprs = 31;
 		num_hs_gprs = 23;
 		num_ls_gprs = 23;
-		num_ps_threads = 128;
-		num_vs_threads = 20;
-		num_gs_threads = 20;
-		num_es_threads = 20;
-		num_hs_threads = 20;
-		num_ls_threads = 20;
-		num_ps_stack_entries = 85;
-		num_vs_stack_entries = 85;
-		num_gs_stack_entries = 85;
-		num_es_stack_entries = 85;
-		num_hs_stack_entries = 85;
-		num_ls_stack_entries = 85;
 		break;
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
@@ -2399,18 +2344,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		num_es_gprs = 31;
 		num_hs_gprs = 23;
 		num_ls_gprs = 23;
-		num_ps_threads = 128;
-		num_vs_threads = 20;
-		num_gs_threads = 20;
-		num_es_threads = 20;
-		num_hs_threads = 20;
-		num_ls_threads = 20;
-		num_ps_stack_entries = 85;
-		num_vs_stack_entries = 85;
-		num_gs_stack_entries = 85;
-		num_es_stack_entries = 85;
-		num_hs_stack_entries = 85;
-		num_ls_stack_entries = 85;
 		break;
 	case CHIP_PALM:
 		num_ps_gprs = 93;
@@ -2420,18 +2353,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		num_es_gprs = 31;
 		num_hs_gprs = 23;
 		num_ls_gprs = 23;
-		num_ps_threads = 96;
-		num_vs_threads = 16;
-		num_gs_threads = 16;
-		num_es_threads = 16;
-		num_hs_threads = 16;
-		num_ls_threads = 16;
-		num_ps_stack_entries = 42;
-		num_vs_stack_entries = 42;
-		num_gs_stack_entries = 42;
-		num_es_stack_entries = 42;
-		num_hs_stack_entries = 42;
-		num_ls_stack_entries = 42;
 		break;
 	case CHIP_SUMO:
 		num_ps_gprs = 93;
@@ -2441,18 +2362,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		num_es_gprs = 31;
 		num_hs_gprs = 23;
 		num_ls_gprs = 23;
-		num_ps_threads = 96;
-		num_vs_threads = 25;
-		num_gs_threads = 25;
-		num_es_threads = 25;
-		num_hs_threads = 25;
-		num_ls_threads = 25;
-		num_ps_stack_entries = 42;
-		num_vs_stack_entries = 42;
-		num_gs_stack_entries = 42;
-		num_es_stack_entries = 42;
-		num_hs_stack_entries = 42;
-		num_ls_stack_entries = 42;
 		break;
 	case CHIP_SUMO2:
 		num_ps_gprs = 93;
@@ -2462,18 +2371,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		num_es_gprs = 31;
 		num_hs_gprs = 23;
 		num_ls_gprs = 23;
-		num_ps_threads = 96;
-		num_vs_threads = 25;
-		num_gs_threads = 25;
-		num_es_threads = 25;
-		num_hs_threads = 25;
-		num_ls_threads = 25;
-		num_ps_stack_entries = 85;
-		num_vs_stack_entries = 85;
-		num_gs_stack_entries = 85;
-		num_es_stack_entries = 85;
-		num_hs_stack_entries = 85;
-		num_ls_stack_entries = 85;
 		break;
 	case CHIP_BARTS:
 		num_ps_gprs = 93;
@@ -2483,18 +2380,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		num_es_gprs = 31;
 		num_hs_gprs = 23;
 		num_ls_gprs = 23;
-		num_ps_threads = 128;
-		num_vs_threads = 20;
-		num_gs_threads = 20;
-		num_es_threads = 20;
-		num_hs_threads = 20;
-		num_ls_threads = 20;
-		num_ps_stack_entries = 85;
-		num_vs_stack_entries = 85;
-		num_gs_stack_entries = 85;
-		num_es_stack_entries = 85;
-		num_hs_stack_entries = 85;
-		num_ls_stack_entries = 85;
 		break;
 	case CHIP_TURKS:
 		num_ps_gprs = 93;
@@ -2504,18 +2389,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		num_es_gprs = 31;
 		num_hs_gprs = 23;
 		num_ls_gprs = 23;
-		num_ps_threads = 128;
-		num_vs_threads = 20;
-		num_gs_threads = 20;
-		num_es_threads = 20;
-		num_hs_threads = 20;
-		num_ls_threads = 20;
-		num_ps_stack_entries = 42;
-		num_vs_stack_entries = 42;
-		num_gs_stack_entries = 42;
-		num_es_stack_entries = 42;
-		num_hs_stack_entries = 42;
-		num_ls_stack_entries = 42;
 		break;
 	case CHIP_CAICOS:
 		num_ps_gprs = 93;
@@ -2525,23 +2398,11 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		num_es_gprs = 31;
 		num_hs_gprs = 23;
 		num_ls_gprs = 23;
-		num_ps_threads = 128;
-		num_vs_threads = 10;
-		num_gs_threads = 10;
-		num_es_threads = 10;
-		num_hs_threads = 10;
-		num_ls_threads = 10;
-		num_ps_stack_entries = 42;
-		num_vs_stack_entries = 42;
-		num_gs_stack_entries = 42;
-		num_es_stack_entries = 42;
-		num_hs_stack_entries = 42;
-		num_ls_stack_entries = 42;
 		break;
 	}
 
 	tmp = 0;
-	switch (family) {
+	switch (ctx_family) {
 	case CHIP_CEDAR:
 	case CHIP_PALM:
 	case CHIP_SUMO:
@@ -2562,7 +2423,7 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	tmp |= S_008C00_ES_PRIO(es_prio);
 
 	/* enable dynamic GPR resource management */
-	if (rctx->screen->info.drm_minor >= 7) {
+	if (ctx_drm_minor >= 7) {
 		r600_store_config_reg_seq(cb, R_008C00_SQ_CONFIG, 2);
 		r600_store_value(cb, tmp); /* R_008C00_SQ_CONFIG */
 		/* always set temp clauses */
@@ -2596,10 +2457,219 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		r600_store_value(cb, tmp); /* R_008C0C_SQ_GPR_RESOURCE_MGMT_3 */
 	}
 
+	r600_store_config_reg(cb, R_008E2C_SQ_LDS_RESOURCE_MGMT,
+			      S_008E2C_NUM_PS_LDS(0x1000) | S_008E2C_NUM_LS_LDS(0x1000));
+
+	r600_store_context_reg(cb, R_028A4C_PA_SC_MODE_CNTL_1, 0);
+
+	r600_store_context_reg_seq(cb, R_028B94_VGT_STRMOUT_CONFIG, 2);
+	r600_store_value(cb, 0); /* R_028B94_VGT_STRMOUT_CONFIG */
+	r600_store_value(cb, 0); /* R_028B98_VGT_STRMOUT_BUFFER_CONFIG */
+
+	r600_store_context_reg(cb, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
+
+	r600_store_context_reg_seq(cb, R_0282D0_PA_SC_VPORT_ZMIN_0, 2);
+	r600_store_value(cb, 0); /* R_0282D0_PA_SC_VPORT_ZMIN_0 */
+	r600_store_value(cb, 0x3F800000); /* R_0282D4_PA_SC_VPORT_ZMAX_0 */
+
+	r600_store_context_reg_seq(cb, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 3);
+	r600_store_value(cb, 0); /* R_028AC0_DB_SRESULTS_COMPARE_STATE0 */
+	r600_store_value(cb, 0); /* R_028AC4_DB_SRESULTS_COMPARE_STATE1 */
+	r600_store_value(cb, 0); /* R_028AC8_DB_PRELOAD_CONTROL */
+
+	r600_store_context_reg(cb, R_028848_SQ_PGM_RESOURCES_2_PS, S_028848_SINGLE_ROUND(V_SQ_ROUND_NEAREST_EVEN));
+	r600_store_context_reg(cb, R_028864_SQ_PGM_RESOURCES_2_VS, S_028864_SINGLE_ROUND(V_SQ_ROUND_NEAREST_EVEN));
+
+	r600_store_context_reg(cb, R_028354_SX_SURFACE_SYNC, S_028354_SURFACE_SYNC_MASK(0xf));
+
+	return;
+}
+
+void evergreen_init_atom_start_cs(struct r600_context *rctx)
+{
+	struct r600_command_buffer *cb = &rctx->start_cs_cmd;
+	int num_ps_threads;
+	int num_vs_threads;
+	int num_gs_threads;
+	int num_es_threads;
+	int num_hs_threads;
+	int num_ls_threads;
+
+	int num_ps_stack_entries;
+	int num_vs_stack_entries;
+	int num_gs_stack_entries;
+	int num_es_stack_entries;
+	int num_hs_stack_entries;
+	int num_ls_stack_entries;
+	enum radeon_family family;
+	unsigned tmp;
+
+	if (rctx->chip_class == CAYMAN) {
+		cayman_init_atom_start_cs(rctx);
+		return;
+	}
+
+	r600_init_command_buffer(cb, 256, EMIT_EARLY);
+
+	/* This must be first. */
+	r600_store_value(cb, PKT3(PKT3_CONTEXT_CONTROL, 1, 0));
+	r600_store_value(cb, 0x80000000);
+	r600_store_value(cb, 0x80000000);
+
+	evergreen_init_common_regs(cb, rctx->chip_class
+			, rctx->family, rctx->screen->info.drm_minor);
+
+	family = rctx->family;
+	switch (family) {
+	case CHIP_CEDAR:
+	default:
+		num_ps_threads = 96;
+		num_vs_threads = 16;
+		num_gs_threads = 16;
+		num_es_threads = 16;
+		num_hs_threads = 16;
+		num_ls_threads = 16;
+		num_ps_stack_entries = 42;
+		num_vs_stack_entries = 42;
+		num_gs_stack_entries = 42;
+		num_es_stack_entries = 42;
+		num_hs_stack_entries = 42;
+		num_ls_stack_entries = 42;
+		break;
+	case CHIP_REDWOOD:
+		num_ps_threads = 128;
+		num_vs_threads = 20;
+		num_gs_threads = 20;
+		num_es_threads = 20;
+		num_hs_threads = 20;
+		num_ls_threads = 20;
+		num_ps_stack_entries = 42;
+		num_vs_stack_entries = 42;
+		num_gs_stack_entries = 42;
+		num_es_stack_entries = 42;
+		num_hs_stack_entries = 42;
+		num_ls_stack_entries = 42;
+		break;
+	case CHIP_JUNIPER:
+		num_ps_threads = 128;
+		num_vs_threads = 20;
+		num_gs_threads = 20;
+		num_es_threads = 20;
+		num_hs_threads = 20;
+		num_ls_threads = 20;
+		num_ps_stack_entries = 85;
+		num_vs_stack_entries = 85;
+		num_gs_stack_entries = 85;
+		num_es_stack_entries = 85;
+		num_hs_stack_entries = 85;
+		num_ls_stack_entries = 85;
+		break;
+	case CHIP_CYPRESS:
+	case CHIP_HEMLOCK:
+		num_ps_threads = 128;
+		num_vs_threads = 20;
+		num_gs_threads = 20;
+		num_es_threads = 20;
+		num_hs_threads = 20;
+		num_ls_threads = 20;
+		num_ps_stack_entries = 85;
+		num_vs_stack_entries = 85;
+		num_gs_stack_entries = 85;
+		num_es_stack_entries = 85;
+		num_hs_stack_entries = 85;
+		num_ls_stack_entries = 85;
+		break;
+	case CHIP_PALM:
+		num_ps_threads = 96;
+		num_vs_threads = 16;
+		num_gs_threads = 16;
+		num_es_threads = 16;
+		num_hs_threads = 16;
+		num_ls_threads = 16;
+		num_ps_stack_entries = 42;
+		num_vs_stack_entries = 42;
+		num_gs_stack_entries = 42;
+		num_es_stack_entries = 42;
+		num_hs_stack_entries = 42;
+		num_ls_stack_entries = 42;
+		break;
+	case CHIP_SUMO:
+		num_ps_threads = 96;
+		num_vs_threads = 25;
+		num_gs_threads = 25;
+		num_es_threads = 25;
+		num_hs_threads = 25;
+		num_ls_threads = 25;
+		num_ps_stack_entries = 42;
+		num_vs_stack_entries = 42;
+		num_gs_stack_entries = 42;
+		num_es_stack_entries = 42;
+		num_hs_stack_entries = 42;
+		num_ls_stack_entries = 42;
+		break;
+	case CHIP_SUMO2:
+		num_ps_threads = 96;
+		num_vs_threads = 25;
+		num_gs_threads = 25;
+		num_es_threads = 25;
+		num_hs_threads = 25;
+		num_ls_threads = 25;
+		num_ps_stack_entries = 85;
+		num_vs_stack_entries = 85;
+		num_gs_stack_entries = 85;
+		num_es_stack_entries = 85;
+		num_hs_stack_entries = 85;
+		num_ls_stack_entries = 85;
+		break;
+	case CHIP_BARTS:
+		num_ps_threads = 128;
+		num_vs_threads = 20;
+		num_gs_threads = 20;
+		num_es_threads = 20;
+		num_hs_threads = 20;
+		num_ls_threads = 20;
+		num_ps_stack_entries = 85;
+		num_vs_stack_entries = 85;
+		num_gs_stack_entries = 85;
+		num_es_stack_entries = 85;
+		num_hs_stack_entries = 85;
+		num_ls_stack_entries = 85;
+		break;
+	case CHIP_TURKS:
+		num_ps_threads = 128;
+		num_vs_threads = 20;
+		num_gs_threads = 20;
+		num_es_threads = 20;
+		num_hs_threads = 20;
+		num_ls_threads = 20;
+		num_ps_stack_entries = 42;
+		num_vs_stack_entries = 42;
+		num_gs_stack_entries = 42;
+		num_es_stack_entries = 42;
+		num_hs_stack_entries = 42;
+		num_ls_stack_entries = 42;
+		break;
+	case CHIP_CAICOS:
+		num_ps_threads = 128;
+		num_vs_threads = 10;
+		num_gs_threads = 10;
+		num_es_threads = 10;
+		num_hs_threads = 10;
+		num_ls_threads = 10;
+		num_ps_stack_entries = 42;
+		num_vs_stack_entries = 42;
+		num_gs_stack_entries = 42;
+		num_es_stack_entries = 42;
+		num_hs_stack_entries = 42;
+		num_ls_stack_entries = 42;
+		break;
+	}
+
 	tmp = S_008C18_NUM_PS_THREADS(num_ps_threads);
 	tmp |= S_008C18_NUM_VS_THREADS(num_vs_threads);
 	tmp |= S_008C18_NUM_GS_THREADS(num_gs_threads);
 	tmp |= S_008C18_NUM_ES_THREADS(num_es_threads);
+
 	r600_store_config_reg_seq(cb, R_008C18_SQ_THREAD_RESOURCE_MGMT_1, 5);
 	r600_store_value(cb, tmp); /* R_008C18_SQ_THREAD_RESOURCE_MGMT_1 */
 
@@ -2619,13 +2689,8 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	tmp |= S_008C28_NUM_LS_STACK_ENTRIES(num_ls_stack_entries);
 	r600_store_value(cb, tmp); /* R_008C28_SQ_STACK_RESOURCE_MGMT_3 */
 
-	r600_store_config_reg(cb, R_008E2C_SQ_LDS_RESOURCE_MGMT,
-			      S_008E2C_NUM_PS_LDS(0x1000) | S_008E2C_NUM_LS_LDS(0x1000));
-
 	r600_store_config_reg(cb, R_009100_SPI_CONFIG_CNTL, 0);
 	r600_store_config_reg(cb, R_00913C_SPI_CONFIG_CNTL_1, S_00913C_VTX_DONE_DELAY(4));
-
-	r600_store_context_reg(cb, R_028A4C_PA_SC_MODE_CNTL_1, 0);
 
 	r600_store_context_reg_seq(cb, R_028900_SQ_ESGS_RING_ITEMSIZE, 6);
 	r600_store_value(cb, 0); /* R_028900_SQ_ESGS_RING_ITEMSIZE */
@@ -2655,10 +2720,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028A38_VGT_GROUP_VECT_0_FMT_CNTL */
 	r600_store_value(cb, 0); /* R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL */
 	r600_store_value(cb, 0); /* R_028A40_VGT_GS_MODE */
-
-	r600_store_context_reg_seq(cb, R_028B94_VGT_STRMOUT_CONFIG, 2);
-	r600_store_value(cb, 0); /* R_028B94_VGT_STRMOUT_CONFIG */
-	r600_store_value(cb, 0); /* R_028B98_VGT_STRMOUT_BUFFER_CONFIG */
 
 	r600_store_context_reg_seq(cb, R_028AB4_VGT_REUSE_OFF, 2);
 	r600_store_value(cb, 0); /* R_028AB4_VGT_REUSE_OFF */
@@ -2710,11 +2771,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 
 	r600_store_context_reg(cb, R_028200_PA_SC_WINDOW_OFFSET, 0);
 	r600_store_context_reg(cb, R_02820C_PA_SC_CLIPRECT_RULE, 0xFFFF);
-	r600_store_context_reg(cb, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
-
-	r600_store_context_reg_seq(cb, R_0282D0_PA_SC_VPORT_ZMIN_0, 2);
-	r600_store_value(cb, 0); /* R_0282D0_PA_SC_VPORT_ZMIN_0 */
-	r600_store_value(cb, 0x3F800000); /* R_0282D4_PA_SC_VPORT_ZMAX_0 */
 
 	r600_store_context_reg(cb, R_0286DC_SPI_FOG_CNTL, 0);
 	r600_store_context_reg(cb, R_028818_PA_CL_VTE_CNTL, 0x0000043F);
@@ -2739,11 +2795,8 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028030_PA_SC_SCREEN_SCISSOR_TL */
 	r600_store_value(cb, S_028034_BR_X(16384) | S_028034_BR_Y(16384)); /* R_028034_PA_SC_SCREEN_SCISSOR_BR */
 
-	r600_store_context_reg(cb, R_028848_SQ_PGM_RESOURCES_2_PS, S_028848_SINGLE_ROUND(V_SQ_ROUND_NEAREST_EVEN));
-	r600_store_context_reg(cb, R_028864_SQ_PGM_RESOURCES_2_VS, S_028864_SINGLE_ROUND(V_SQ_ROUND_NEAREST_EVEN));
 	r600_store_context_reg(cb, R_0288A8_SQ_PGM_RESOURCES_FS, 0);
 
-	r600_store_context_reg(cb, R_028354_SX_SURFACE_SYNC, S_028354_SURFACE_SYNC_MASK(0xf));
 	r600_store_context_reg(cb, R_028800_DB_DEPTH_CONTROL, 0);
 	if (rctx->screen->has_streamout) {
 		r600_store_context_reg(cb, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);

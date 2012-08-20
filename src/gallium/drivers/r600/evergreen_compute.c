@@ -325,20 +325,10 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	struct evergreen_compute_resource *resources =
 					ctx->cs_shader_state.shader->resources;
 
-	/* Initialize all the registers common to both 3D and compute.  Some
-	 * 3D only register will be initialized by this atom as well, but
-	 * this is OK for now.
-	 *
-	 * See evergreen_init_atom_start_cs() or cayman_init_atom_start_cs() in
-	 * evergreen_state.c for the list of registers that are intialized by
-	 * the start_cs_cmd atom.
-	 */
-	r600_emit_atom(ctx, &ctx->start_cs_cmd.atom);
-
-	/* Initialize all the compute specific registers.
+	/* Initialize all the compute-related registers.
 	 *
 	 * See evergreen_init_atom_start_compute_cs() in this file for the list
-	 * of registers initialized by the start_compuet_cs_cmd atom.
+	 * of registers initialized by the start_compute_cs_cmd atom.
 	 */
 	r600_emit_atom(ctx, &ctx->start_compute_cs_cmd.atom);
 
@@ -590,11 +580,10 @@ void evergreen_init_atom_start_compute_cs(struct r600_context *ctx)
 	int num_threads;
 	int num_stack_entries;
 
-	/* We aren't passing the EMIT_EARLY flag as the third argument
-	 * because we will be emitting this atom manually in order to
-	 * ensure it gets emitted after the start_cs_cmd atom.
+	/* since all required registers are initialised in the
+	 * start_compute_cs_cmd atom, we can EMIT_EARLY here.
 	 */
-	r600_init_command_buffer(cb, 256, 0);
+	r600_init_command_buffer(cb, 256, EMIT_EARLY);
 	cb->pkt_flags = RADEON_CP_PACKET3_COMPUTE_MODE;
 
 	switch (ctx->family) {
@@ -643,6 +632,8 @@ void evergreen_init_atom_start_compute_cs(struct r600_context *ctx)
 	}
 
 	/* Config Registers */
+	evergreen_init_common_regs(cb, ctx->chip_class
+			, ctx->family, ctx->screen->info.drm_minor);
 
 	/* The primitive type always needs to be POINTLIST for compute. */
 	r600_store_config_reg(cb, R_008958_VGT_PRIMITIVE_TYPE,
