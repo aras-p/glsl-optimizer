@@ -5,7 +5,7 @@ TOP = ../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = $(GLU_DIRS)
+SUBDIRS = sgi
 
 
 default: $(TOP)/configs/current

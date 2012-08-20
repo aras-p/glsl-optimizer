@@ -728,7 +728,6 @@ dnl
 dnl Driver specific build directories
 dnl
 SRC_DIRS="gtest"
-GLU_DIRS="sgi"
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_TARGET_DIRS=""
 GALLIUM_WINSYS_DIRS="sw"
@@ -784,7 +783,6 @@ if test "x$enable_osmesa" = xyes; then
 fi
 
 AC_SUBST([SRC_DIRS])
-AC_SUBST([GLU_DIRS])
 AC_SUBST([DRIVER_DIRS])
 AC_SUBST([GALLIUM_DIRS])
 AC_SUBST([GALLIUM_TARGET_DIRS])
