@@ -158,6 +158,12 @@ bool AMDGPUPassConfig::addPreEmitPass() {
   PM->add(createAMDGPUCFGPreparationPass(*TM));
   PM->add(createAMDGPUCFGStructurizerPass(*TM));
 
+  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
+  if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
+    PM->add(createR600ExpandSpecialInstrsPass(*TM));
+    addPass(FinalizeMachineBundlesID);
+  }
+
   return false;
 }
 

@@ -35,6 +35,7 @@ CPP_SOURCES := \
 	AMDGPUInstrInfo.cpp		\
 	AMDGPURegisterInfo.cpp		\
 	R600CodeEmitter.cpp		\
+	R600ExpandSpecialInstrs.cpp	\
 	R600ISelLowering.cpp		\
 	R600InstrInfo.cpp		\
 	R600KernelParameters.cpp	\

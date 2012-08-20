@@ -30,6 +30,7 @@
 #define MO_FLAG_ABS   (1 << 2)
 #define MO_FLAG_MASK  (1 << 3)
 #define MO_FLAG_PUSH  (1 << 4)
+#define MO_FLAG_LAST  (1 << 5)
 
 #define OPCODE_IS_ZERO_INT 0x00000045
 #define OPCODE_IS_NOT_ZERO_INT 0x00000042
