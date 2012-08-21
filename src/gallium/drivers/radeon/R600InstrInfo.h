@@ -111,6 +111,9 @@ namespace llvm {
 
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const { return 1;}
+
+  ///AddFlag - Add one of the MO_FLAG* flags to the specified Operand.
+  void AddFlag(MachineInstr *MI, unsigned Operand, unsigned Flag) const;
 };
 
 } // End llvm namespace

@@ -518,3 +518,13 @@ int R600InstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
     *PredCost = 2;
   return 2;
 }
+
+//===----------------------------------------------------------------------===//
+// Instruction flag setters
+//===----------------------------------------------------------------------===//
+
+void R600InstrInfo::AddFlag(MachineInstr *MI, unsigned Operand,
+                            unsigned Flag) const
+{
+  MI->getOperand(Operand).addTargetFlag(Flag);
+}

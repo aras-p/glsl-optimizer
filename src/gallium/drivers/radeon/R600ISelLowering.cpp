@@ -59,28 +59,36 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
   switch (MI->getOpcode()) {
   default: return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
   case AMDGPU::CLAMP_R600:
-    MI->getOperand(0).addTargetFlag(MO_FLAG_CLAMP);
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
-           .addOperand(MI->getOperand(0))
-           .addOperand(MI->getOperand(1))
-           .addReg(AMDGPU::PRED_SEL_OFF);
-    break;
-
+    {
+      MachineInstr *NewMI =
+        BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
+               .addOperand(MI->getOperand(0))
+               .addOperand(MI->getOperand(1))
+               .addReg(AMDGPU::PRED_SEL_OFF);
+      TII->AddFlag(NewMI, 0, MO_FLAG_CLAMP);
+      break;
+    }
   case AMDGPU::FABS_R600:
-    MI->getOperand(1).addTargetFlag(MO_FLAG_ABS);
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
-           .addOperand(MI->getOperand(0))
-           .addOperand(MI->getOperand(1))
-           .addReg(AMDGPU::PRED_SEL_OFF);
-    break;
+    {
+      MachineInstr *NewMI =
+        BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
+               .addOperand(MI->getOperand(0))
+               .addOperand(MI->getOperand(1))
+               .addReg(AMDGPU::PRED_SEL_OFF);
+      TII->AddFlag(NewMI, 1, MO_FLAG_ABS);
+      break;
+    }
 
   case AMDGPU::FNEG_R600:
-    MI->getOperand(1).addTargetFlag(MO_FLAG_NEG);
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
-            .addOperand(MI->getOperand(0))
-            .addOperand(MI->getOperand(1))
-            .addReg(AMDGPU::PRED_SEL_OFF);
+    {
+      MachineInstr *NewMI =
+        BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
+                .addOperand(MI->getOperand(0))
+                .addOperand(MI->getOperand(1))
+                .addReg(AMDGPU::PRED_SEL_OFF);
+      TII->AddFlag(NewMI, 1, MO_FLAG_NEG);
     break;
+    }
 
   case AMDGPU::R600_LOAD_CONST:
     {
@@ -97,8 +105,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       unsigned maskedRegister = MI->getOperand(0).getReg();
       assert(TargetRegisterInfo::isVirtualRegister(maskedRegister));
       MachineInstr * defInstr = MRI.getVRegDef(maskedRegister);
-      MachineOperand * def = defInstr->findRegisterDefOperand(maskedRegister);
-      def->addTargetFlag(MO_FLAG_MASK);
+      TII->AddFlag(defInstr, 0, MO_FLAG_MASK);
       // Return early so the instruction is not erased
       return BB;
     }
@@ -188,29 +195,31 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
               .addReg(0);
       break;
   case AMDGPU::BRANCH_COND_f32:
-    MI->getOperand(1).addTargetFlag(MO_FLAG_PUSH);
-
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::PRED_X))
-            .addReg(AMDGPU::PREDICATE_BIT)
-            .addOperand(MI->getOperand(1))
-            .addImm(OPCODE_IS_ZERO);
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::JUMP))
-            .addOperand(MI->getOperand(0))
-            .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
-    break;
+    {
+      MachineInstr *NewMI =
+        BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::PRED_X))
+                .addReg(AMDGPU::PREDICATE_BIT)
+                .addOperand(MI->getOperand(1))
+                .addImm(OPCODE_IS_ZERO);
+      TII->AddFlag(NewMI, 1, MO_FLAG_PUSH);
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::JUMP))
+              .addOperand(MI->getOperand(0))
+              .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
+      break;
+    }
   case AMDGPU::BRANCH_COND_i32:
-    MI->getOperand(1).addTargetFlag(MO_FLAG_PUSH);
-
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::PRED_X))
-            .addReg(AMDGPU::PREDICATE_BIT)
-            .addOperand(MI->getOperand(1))
-            .addImm(OPCODE_IS_ZERO_INT);
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::JUMP))
-            .addOperand(MI->getOperand(0))
-            .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
-   break;
-
-
+    {
+      MachineInstr *NewMI =
+        BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::PRED_X))
+              .addReg(AMDGPU::PREDICATE_BIT)
+              .addOperand(MI->getOperand(1))
+              .addImm(OPCODE_IS_ZERO_INT);
+      TII->AddFlag(NewMI, 1, MO_FLAG_PUSH);
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::JUMP))
+             .addOperand(MI->getOperand(0))
+              .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
+      break;
+    }
   }
 
   MI->eraseFromParent();

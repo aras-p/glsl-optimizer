@@ -146,14 +146,13 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
         } else {
           Opcode = MI.getOpcode();
         }
-        MachineOperand NewDstOp = MachineOperand::CreateReg(DstReg, true);
-        NewDstOp.addTargetFlag(Flags);
+        MachineInstr *NewMI =
+          BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(Opcode), DstReg)
+                  .addReg(Src0)
+                  .addReg(Src1);
 
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(Opcode))
-                .addOperand(NewDstOp)
-                .addReg(Src0)
-                .addReg(Src1)
-                ->setIsInsideBundle(Chan != 0);
+        NewMI->setIsInsideBundle(Chan != 0);
+        TII->AddFlag(NewMI, 0, Flags);
       }
       MI.eraseFromParent();
     }
