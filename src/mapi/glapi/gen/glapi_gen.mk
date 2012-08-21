@@ -1,9 +1,5 @@
 # Helpers for glapi header generation
 
-ifndef top_srcdir
-$(error top_srcdir must be defined.)
-endif
-
 glapi_gen_common_deps := \
 	$(wildcard $(top_srcdir)/src/mapi/glapi/gen/*.xml) \
 	$(wildcard $(top_srcdir)/src/mapi/glapi/gen/*.py)

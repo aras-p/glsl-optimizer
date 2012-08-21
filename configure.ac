@@ -2024,6 +2024,8 @@ AC_CONFIG_FILES([configs/current
 		src/glsl/tests/Makefile
 		src/glx/Makefile
 		src/glx/tests/Makefile
+		src/mapi/es2api/Makefile
+		src/mapi/es2api/glesv2.pc
 		src/mapi/glapi/Makefile
 		src/mapi/glapi/gen/Makefile
 		src/mapi/shared-glapi/Makefile
