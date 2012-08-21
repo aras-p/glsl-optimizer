@@ -98,7 +98,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       struct gl_program *prog =
 	 ctx->Driver.NewProgram(ctx, targets[stage], shader->base.Name);
       if (!prog)
-	return NULL;
+	return false;
       prog->Parameters = _mesa_new_parameter_list();
 
       _mesa_generate_parameters_list_for_uniforms(shProg, &shader->base,
