@@ -50,7 +50,6 @@ private:
   const R600InstrInfo * TII;
 
   bool IsCube;
-  bool IsVector;
   unsigned currentElement;
   bool IsLast;
 
@@ -59,7 +58,7 @@ private:
 public:
 
   R600CodeEmitter(formatted_raw_ostream &OS) : MachineFunctionPass(ID),
-      _OS(OS), TM(NULL), IsCube(false), IsVector(false),
+      _OS(OS), TM(NULL), IsCube(false),
       IsLast(true) { }
 
   const char *getPassName() const { return "AMDGPU Machine Code Emitter"; }
@@ -161,7 +160,6 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
      for (MachineBasicBlock::instr_iterator I = MBB.instr_begin(),
                                             E = MBB.instr_end(); I != E; ++I) {
           MachineInstr &MI = *I;
-	  IsVector = TII->isVector(MI);
 	  IsCube = TII->isCubeOp(MI.getOpcode());
           if (MI.getNumOperands() > 1 && MI.getOperand(0).isReg() && MI.getOperand(0).isDead()) {
             continue;
@@ -170,7 +168,7 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
             EmitTexInstr(MI);
           } else if (TII->isFCOp(MI.getOpcode())){
             EmitFCInstr(MI);
-          } else if (IsVector || IsCube) {
+          } else if (IsCube) {
             IsLast = false;
             // XXX: On Cayman, some (all?) of the vector instructions only need
             // to fill the first three slots.
@@ -178,7 +176,6 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
               IsLast = (currentElement == 3);
               EmitALUInstr(MI);
             }
-	    IsVector = false;
 	    IsCube = false;
           } else if (MI.getOpcode() == AMDGPU::RETURN ||
                      MI.getOpcode() == AMDGPU::BUNDLE ||
@@ -348,7 +345,7 @@ void R600CodeEmitter::EmitDst(const MachineOperand & MO)
     EmitByte(getHWReg(MO.getReg()));
 
     // Emit the element of the destination register (1 byte)
-    if (IsCube || IsVector) {
+    if (IsCube) {
       EmitByte(currentElement);
     } else {
       EmitByte(TRI->getHWRegChan(MO.getReg()));
@@ -362,9 +359,7 @@ void R600CodeEmitter::EmitDst(const MachineOperand & MO)
     }
 
     // Emit writemask (1 byte).
-    if ((IsVector &&
-          currentElement != TRI->getHWRegChan(MO.getReg()))
-       || MO.getTargetFlags() & MO_FLAG_MASK) {
+    if (MO.getTargetFlags() & MO_FLAG_MASK) {
       EmitByte(0);
     } else {
       EmitByte(1);

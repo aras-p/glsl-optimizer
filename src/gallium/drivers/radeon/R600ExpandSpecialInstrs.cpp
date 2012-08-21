@@ -59,18 +59,38 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
       MachineInstr &MI = *I;
       I = llvm::next(I);
 
-      if (!TII->isReductionOp(MI.getOpcode())) {
+      bool IsReduction = TII->isReductionOp(MI.getOpcode());
+      bool IsVector = TII->isVector(MI);
+      if (!IsReduction && !IsVector) {
         continue;
       }
 
       // Expand the instruction
+      //
+      // Reduction instructions:
+      // T0_X = DP4 T1_XYZW, T2_XYZW
+      // becomes:
+      // TO_X = DP4 T1_X, T2_X
+      // TO_Y (write masked) = DP4 T1_Y, T2_Y
+      // TO_Z (write masked) = DP4 T1_Z, T2_Z
+      // TO_W (write masked) = DP4 T1_W, T2_W
+      //
+      // Vector instructions:
+      // T0_X = MULLO_INT T1_X, T2_X
+      // becomes:
+      // T0_X = MULLO_INT T1_X, T2_X
+      // T0_Y (write masked) = MULLO_INT T1_X, T2_X
+      // T0_Z (write masked) = MULLO_INT T1_X, T2_X
+      // T0_W (write masked) = MULLO_INT T1_X, T2_X
       for (unsigned Chan = 0; Chan < 4; Chan++) {
         unsigned DstReg = MI.getOperand(0).getReg();
         unsigned Src0 = MI.getOperand(1).getReg();
         unsigned Src1 = MI.getOperand(2).getReg();
-        unsigned SubRegIndex = TRI.getSubRegFromChannel(Chan);
-        unsigned NewSrc0 = TRI.getSubReg(Src0, SubRegIndex);
-        unsigned NewSrc1 = TRI.getSubReg(Src1, SubRegIndex);
+        if (IsReduction) {
+          unsigned SubRegIndex = TRI.getSubRegFromChannel(Chan);
+          Src0 = TRI.getSubReg(Src0, SubRegIndex);
+          Src1 = TRI.getSubReg(Src1, SubRegIndex);
+        }
         unsigned DstBase = TRI.getHWRegIndex(DstReg);
         unsigned NewDstReg = AMDGPU::R600_TReg32RegClass.getRegister((DstBase * 4) + Chan);
         unsigned Flags = (Chan != TRI.getHWRegChan(DstReg) ? MO_FLAG_MASK : 0);
@@ -80,8 +100,8 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
 
         BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(MI.getOpcode()))
                 .addOperand(NewDstOp)
-                .addReg(NewSrc0)
-                .addReg(NewSrc1)
+                .addReg(Src0)
+                .addReg(Src1)
                 ->setIsInsideBundle(Chan != 0);
       }
       MI.eraseFromParent();
