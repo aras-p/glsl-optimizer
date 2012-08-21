@@ -1166,7 +1166,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
  * setting this->result).
  */
 fs_reg
-fs_visitor::emit_texcoord(ir_texture *ir, int sampler)
+fs_visitor::emit_texcoord(ir_texture *ir, int texunit)
 {
    fs_inst *inst = NULL;
 
@@ -1186,13 +1186,13 @@ fs_visitor::emit_texcoord(ir_texture *ir, int sampler)
     */
    if (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_RECT &&
        (intel->gen < 6 ||
-	(intel->gen >= 6 && (c->key.tex.gl_clamp_mask[0] & (1 << sampler) ||
-			     c->key.tex.gl_clamp_mask[1] & (1 << sampler))))) {
+	(intel->gen >= 6 && (c->key.tex.gl_clamp_mask[0] & (1 << texunit) ||
+			     c->key.tex.gl_clamp_mask[1] & (1 << texunit))))) {
       struct gl_program_parameter_list *params = c->fp->program.Base.Parameters;
       int tokens[STATE_LENGTH] = {
 	 STATE_INTERNAL,
 	 STATE_TEXRECT_SCALE,
-	 sampler,
+	 texunit,
 	 0,
 	 0
       };
@@ -1239,7 +1239,7 @@ fs_visitor::emit_texcoord(ir_texture *ir, int sampler)
       needs_gl_clamp = false;
 
       for (int i = 0; i < 2; i++) {
-	 if (c->key.tex.gl_clamp_mask[i] & (1 << sampler)) {
+	 if (c->key.tex.gl_clamp_mask[i] & (1 << texunit)) {
 	    fs_reg chan = coordinate;
 	    chan.reg_offset += i;
 
@@ -1265,7 +1265,7 @@ fs_visitor::emit_texcoord(ir_texture *ir, int sampler)
    if (ir->coordinate && needs_gl_clamp) {
       for (unsigned int i = 0;
 	   i < MIN2(ir->coordinate->type->vector_elements, 3); i++) {
-	 if (c->key.tex.gl_clamp_mask[i] & (1 << sampler)) {
+	 if (c->key.tex.gl_clamp_mask[i] & (1 << texunit)) {
 	    fs_reg chan = coordinate;
 	    chan.reg_offset += i;
 
@@ -1283,7 +1283,7 @@ fs_visitor::visit(ir_texture *ir)
    fs_inst *inst = NULL;
 
    int sampler = _mesa_get_sampler_uniform_value(ir->sampler, prog, &fp->Base);
-   sampler = fp->Base.SamplerUnits[sampler];
+   int texunit = fp->Base.SamplerUnits[sampler];
 
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
@@ -1292,7 +1292,7 @@ fs_visitor::visit(ir_texture *ir)
     * done before loading any values into MRFs for the sampler message since
     * generating these values may involve SEND messages that need the MRFs.
     */
-   fs_reg coordinate = emit_texcoord(ir, sampler);
+   fs_reg coordinate = emit_texcoord(ir, texunit);
 
    fs_reg shadow_comparitor;
    if (ir->shadow_comparitor) {
@@ -1345,12 +1345,12 @@ fs_visitor::visit(ir_texture *ir)
    if (ir->offset != NULL && ir->op != ir_txf)
       inst->texture_offset = brw_texture_offset(ir->offset->as_constant());
 
-   inst->sampler = sampler;
+   inst->sampler = texunit;
 
    if (ir->shadow_comparitor)
       inst->shadow_compare = true;
 
-   swizzle_result(ir, dst, sampler);
+   swizzle_result(ir, dst, texunit);
 }
 
 /**
@@ -1358,7 +1358,7 @@ fs_visitor::visit(ir_texture *ir)
  * EXT_texture_swizzle as well as DEPTH_TEXTURE_MODE for shadow comparisons.
  */
 void
-fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
+fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int texunit)
 {
    this->result = orig_val;
 
@@ -1368,11 +1368,11 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
    if (ir->type == glsl_type::float_type) {
       /* Ignore DEPTH_TEXTURE_MODE swizzling. */
       assert(ir->sampler->type->sampler_shadow);
-   } else if (c->key.tex.swizzles[sampler] != SWIZZLE_NOOP) {
+   } else if (c->key.tex.swizzles[texunit] != SWIZZLE_NOOP) {
       fs_reg swizzled_result = fs_reg(this, glsl_type::vec4_type);
 
       for (int i = 0; i < 4; i++) {
-	 int swiz = GET_SWZ(c->key.tex.swizzles[sampler], i);
+	 int swiz = GET_SWZ(c->key.tex.swizzles[texunit], i);
 	 fs_reg l = swizzled_result;
 	 l.reg_offset += i;
 
@@ -1382,7 +1382,7 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
 	    emit(BRW_OPCODE_MOV, l, fs_reg(1.0f));
 	 } else {
 	    fs_reg r = orig_val;
-	    r.reg_offset += GET_SWZ(c->key.tex.swizzles[sampler], i);
+	    r.reg_offset += GET_SWZ(c->key.tex.swizzles[texunit], i);
 	    emit(BRW_OPCODE_MOV, l, r);
 	 }
       }
