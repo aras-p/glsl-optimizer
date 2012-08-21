@@ -28,9 +28,13 @@ class Target;
 
 extern Target TheAMDGPUTarget;
 
-MCCodeEmitter *createAMDGPUMCCodeEmitter(const MCInstrInfo &MCII,
-                                         const MCSubtargetInfo &STI,
-                                         MCContext &Ctx);
+MCCodeEmitter *createR600MCCodeEmitter(const MCInstrInfo &MCII,
+                                       const MCSubtargetInfo &STI,
+                                       MCContext &Ctx);
+
+MCCodeEmitter *createSIMCCodeEmitter(const MCInstrInfo &MCII,
+                                     const MCSubtargetInfo &STI,
+                                     MCContext &Ctx);
 
 MCAsmBackend *createAMDGPUAsmBackend(const Target &T, StringRef TT);
 } // End llvm namespace

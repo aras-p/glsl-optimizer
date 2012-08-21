@@ -25,14 +25,6 @@
 #define GET_INSTRINFO_ENUM
 #include "AMDGPUGenInstrInfo.inc"
 
-#define MO_FLAG_CLAMP (1 << 0)
-#define MO_FLAG_NEG   (1 << 1)
-#define MO_FLAG_ABS   (1 << 2)
-#define MO_FLAG_MASK  (1 << 3)
-#define MO_FLAG_PUSH  (1 << 4)
-#define MO_FLAG_LAST  (1 << 5)
-#define NUM_MO_FLAGS 6
-
 #define OPCODE_IS_ZERO_INT 0x00000045
 #define OPCODE_IS_NOT_ZERO_INT 0x00000042
 #define OPCODE_IS_ZERO 0x00000020

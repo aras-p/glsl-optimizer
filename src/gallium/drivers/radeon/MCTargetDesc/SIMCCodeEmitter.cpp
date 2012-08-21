@@ -127,14 +127,10 @@ private:
 
 } // End anonymous namespace
 
-MCCodeEmitter *llvm::createAMDGPUMCCodeEmitter(const MCInstrInfo &MCII,
-                                               const MCSubtargetInfo &STI,
-                                               MCContext &Ctx) {
-  if (STI.getFeatureBits() & AMDGPU::Feature64BitPtr) {
-    return new SIMCCodeEmitter(MCII, STI, Ctx);
-  } else {
-    return NULL;
-  }
+MCCodeEmitter *llvm::createSIMCCodeEmitter(const MCInstrInfo &MCII,
+                                           const MCSubtargetInfo &STI,
+                                           MCContext &Ctx) {
+  return new SIMCCodeEmitter(MCII, STI, Ctx);
 }
 
 void SIMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
@@ -305,5 +301,3 @@ unsigned SIMCCodeEmitter::getRegBinaryCode(unsigned reg) const {
 #define SIRegisterInfo SIMCCodeEmitter
 #include "SIRegisterGetHWRegNum.inc"
 #undef SIRegisterInfo
-
-#include "AMDGPUGenMCCodeEmitter.inc"

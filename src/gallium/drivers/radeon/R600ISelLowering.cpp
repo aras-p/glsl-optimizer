@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "R600ISelLowering.h"
+#include "R600Defines.h"
 #include "R600InstrInfo.h"
 #include "R600MachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

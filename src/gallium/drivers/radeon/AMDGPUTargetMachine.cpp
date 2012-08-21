@@ -69,32 +69,6 @@ AMDGPUTargetMachine::~AMDGPUTargetMachine()
 {
 }
 
-bool AMDGPUTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
-                                              formatted_raw_ostream &Out,
-                                              CodeGenFileType FileType,
-                                              bool DisableVerify) {
-
-  const AMDGPUSubtarget &STM = getSubtarget<AMDGPUSubtarget>();
-  std::string gpu = STM.getDeviceName();
-  if (gpu == "SI") {
-    return LLVMTargetMachine::addPassesToEmitFile(PM, Out, FileType,
-                                                     DisableVerify);
-  } else if (Subtarget.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
-    // XXX: Hack here addPassesToEmitFile will fail, but this is Ok since we are
-    // only using it to access addPassesToGenerateCode()
-    bool fail = LLVMTargetMachine::addPassesToEmitFile(PM, Out, FileType,
-                                                     DisableVerify);
-    assert(fail);
-    PM.add(createR600CodeEmitterPass(Out));
-  } else {
-    abort();
-    return true;
-  }
-  PM.add(createGCInfoDeleter());
-
-  return false;
-}
-
 namespace {
 class AMDGPUPassConfig : public TargetPassConfig {
 public:

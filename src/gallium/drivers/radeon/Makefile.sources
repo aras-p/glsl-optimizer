@@ -37,7 +37,6 @@ CPP_SOURCES := \
 	AMDGPUConvertToISA.cpp		\
 	AMDGPUInstrInfo.cpp		\
 	AMDGPURegisterInfo.cpp		\
-	R600CodeEmitter.cpp		\
 	R600ExpandSpecialInstrs.cpp	\
 	R600ISelLowering.cpp		\
 	R600InstrInfo.cpp		\
@@ -54,6 +53,7 @@ CPP_SOURCES := \
 	MCTargetDesc/AMDGPUAsmBackend.cpp \
 	MCTargetDesc/AMDILMCTargetDesc.cpp	\
 	MCTargetDesc/SIMCCodeEmitter.cpp \
+	MCTargetDesc/R600MCCodeEmitter.cpp \
 	TargetInfo/AMDILTargetInfo.cpp	\
 	radeon_llvm_emit.cpp
 

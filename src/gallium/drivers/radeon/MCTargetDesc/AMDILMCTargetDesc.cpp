@@ -57,6 +57,16 @@ static MCInstPrinter *createAMDGPUMCInstPrinter(const Target &T,
   return new AMDGPUInstPrinter(MAI, MII, MRI);
 }
 
+static MCCodeEmitter *createAMDGPUMCCodeEmitter(const MCInstrInfo &MCII,
+                                                const MCSubtargetInfo &STI,
+                                                MCContext &Ctx) {
+  if (STI.getFeatureBits() & AMDGPU::Feature64BitPtr) {
+    return createSIMCCodeEmitter(MCII, STI, Ctx);
+  } else {
+    return createR600MCCodeEmitter(MCII, STI, Ctx);
+  }
+}
+
 static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &MAB,
                                     raw_ostream &_OS,

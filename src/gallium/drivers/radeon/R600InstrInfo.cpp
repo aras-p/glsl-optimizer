@@ -14,6 +14,7 @@
 #include "R600InstrInfo.h"
 #include "AMDGPUTargetMachine.h"
 #include "AMDGPUSubtarget.h"
+#include "R600Defines.h"
 #include "R600RegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "AMDILUtilityFunctions.h"
@@ -119,28 +120,6 @@ bool R600InstrInfo::isPlaceHolderOpcode(unsigned opcode) const
   }
 }
 
-bool R600InstrInfo::isTexOp(unsigned opcode) const
-{
-  switch(opcode) {
-  default: return false;
-  case AMDGPU::TEX_LD:
-  case AMDGPU::TEX_GET_TEXTURE_RESINFO:
-  case AMDGPU::TEX_SAMPLE:
-  case AMDGPU::TEX_SAMPLE_C:
-  case AMDGPU::TEX_SAMPLE_L:
-  case AMDGPU::TEX_SAMPLE_C_L:
-  case AMDGPU::TEX_SAMPLE_LB:
-  case AMDGPU::TEX_SAMPLE_C_LB:
-  case AMDGPU::TEX_SAMPLE_G:
-  case AMDGPU::TEX_SAMPLE_C_G:
-  case AMDGPU::TEX_GET_GRADIENTS_H:
-  case AMDGPU::TEX_GET_GRADIENTS_V:
-  case AMDGPU::TEX_SET_GRADIENTS_H:
-  case AMDGPU::TEX_SET_GRADIENTS_V:
-    return true;
-  }
-}
-
 bool R600InstrInfo::isReductionOp(unsigned opcode) const
 {
   switch(opcode) {
@@ -160,27 +139,6 @@ bool R600InstrInfo::isCubeOp(unsigned opcode) const
     case AMDGPU::CUBE_eg_pseudo:
     case AMDGPU::CUBE_eg_real:
       return true;
-  }
-}
-
-
-bool R600InstrInfo::isFCOp(unsigned opcode) const
-{
-  switch(opcode) {
-  default: return false;
-  case AMDGPU::BREAK_LOGICALZ_f32:
-  case AMDGPU::BREAK_LOGICALNZ_i32:
-  case AMDGPU::BREAK_LOGICALZ_i32:
-  case AMDGPU::BREAK_LOGICALNZ_f32:
-  case AMDGPU::CONTINUE_LOGICALNZ_f32:
-  case AMDGPU::IF_LOGICALNZ_i32:
-  case AMDGPU::IF_LOGICALZ_f32:
-  case AMDGPU::ELSE:
-  case AMDGPU::ENDIF:
-  case AMDGPU::ENDLOOP:
-  case AMDGPU::IF_LOGICALNZ_f32:
-  case AMDGPU::WHILELOOP:
-    return true;
   }
 }
 
@@ -523,16 +481,14 @@ int R600InstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
 // Instruction flag getters/setters
 //===----------------------------------------------------------------------===//
 
-#define GET_FLAG_OPERAND_IDX(MI) (((MI).getDesc().TSFlags >> 7) & 0x3)
-
 bool R600InstrInfo::HasFlagOperand(const MachineInstr &MI) const
 {
-  return GET_FLAG_OPERAND_IDX(MI) != 0;
+  return GET_FLAG_OPERAND_IDX(get(MI.getOpcode()).TSFlags) != 0;
 }
 
 MachineOperand &R600InstrInfo::GetFlagOp(MachineInstr *MI) const
 {
-  unsigned FlagIndex = GET_FLAG_OPERAND_IDX(*MI);
+  unsigned FlagIndex = GET_FLAG_OPERAND_IDX(get(MI->getOpcode()).TSFlags);
   assert(FlagIndex != 0 &&
          "Instruction flags not supported for this instruction");
   MachineOperand &FlagOp = MI->getOperand(FlagIndex);
@@ -545,18 +501,6 @@ void R600InstrInfo::AddFlag(MachineInstr *MI, unsigned Operand,
 {
   MachineOperand &FlagOp = GetFlagOp(MI);
   FlagOp.setImm(FlagOp.getImm() | (Flag << (NUM_MO_FLAGS * Operand)));
-}
-
-bool R600InstrInfo::IsFlagSet(const MachineInstr &MI, unsigned Operand,
-                              unsigned Flag) const
-{
-  unsigned FlagIndex = GET_FLAG_OPERAND_IDX(MI);
-  if (FlagIndex == 0) {
-    return false;
-  }
-  assert(MI.getOperand(FlagIndex).isImm());
-  return !!((MI.getOperand(FlagIndex).getImm() >>
-            (NUM_MO_FLAGS * Operand)) & Flag);
 }
 
 void R600InstrInfo::ClearFlag(MachineInstr *MI, unsigned Operand,

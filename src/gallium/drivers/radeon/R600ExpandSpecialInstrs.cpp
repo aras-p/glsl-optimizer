@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPU.h"
+#include "R600Defines.h"
 #include "R600InstrInfo.h"
 #include "R600RegisterInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -126,7 +127,7 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
         }
 
         // Set the IsLast bit
-        Flags |= (Chan == 3 ? MO_FLAG_LAST : 0);
+        Flags |= (Chan != 3 ? MO_FLAG_NOT_LAST : 0);
 
         // Add the new instruction
         unsigned Opcode;

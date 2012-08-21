@@ -63,10 +63,6 @@ public:
    }
    virtual const TargetData* getTargetData() const { return &DataLayout; }
    virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
-   virtual bool addPassesToEmitFile(PassManagerBase &PM,
-                                              formatted_raw_ostream &Out,
-                                              CodeGenFileType FileType,
-                                              bool DisableVerify);
 };
 
 } // End namespace llvm
