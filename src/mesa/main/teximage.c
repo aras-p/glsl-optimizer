@@ -541,32 +541,6 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
 
 
 /**
- * Is the given texture format a generic compressed format?
- */
-static GLboolean
-is_generic_compressed_format(GLenum format)
-{
-   switch (format) {
-   case GL_COMPRESSED_RED:
-   case GL_COMPRESSED_RG:
-   case GL_COMPRESSED_RGB:
-   case GL_COMPRESSED_RGBA:
-   case GL_COMPRESSED_ALPHA:
-   case GL_COMPRESSED_LUMINANCE:
-   case GL_COMPRESSED_LUMINANCE_ALPHA:
-   case GL_COMPRESSED_INTENSITY:
-   case GL_COMPRESSED_SRGB:
-   case GL_COMPRESSED_SRGB_ALPHA:
-   case GL_COMPRESSED_SLUMINANCE:
-   case GL_COMPRESSED_SLUMINANCE_ALPHA:
-      return GL_TRUE;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
-/**
  * For cube map faces, return a face index in [0,5].
  * For other targets return 0;
  */
@@ -1745,8 +1719,7 @@ texture_error_check( struct gl_context *ctx,
    }
 
    /* additional checks for compressed textures */
-   if (_mesa_is_compressed_format(ctx, internalFormat) ||
-       is_generic_compressed_format(internalFormat)) {
+   if (_mesa_is_compressed_format(ctx, internalFormat)) {
       if (!target_can_be_compressed(ctx, target, internalFormat)) {
          if (!isProxy)
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -2077,8 +2050,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   if (_mesa_is_compressed_format(ctx, internalFormat) ||
-       is_generic_compressed_format(internalFormat)) {
+   if (_mesa_is_compressed_format(ctx, internalFormat)) {
       if (!target_can_be_compressed(ctx, target, internalFormat)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glCopyTexImage%dD(target)", dimensions);
