@@ -103,7 +103,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	unsigned num_sgprs, num_user_sgprs;
 	int ninterp = 0;
 	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
-	unsigned spi_baryc_cntl;
+	unsigned spi_baryc_cntl, spi_ps_input_ena;
 	uint64_t va;
 
 	if (si_pipe_shader_create(ctx, shader))
@@ -168,8 +168,19 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 			S_0286E0_LINEAR_CENTROID_CNTL(1) : S_0286E0_LINEAR_CENTER_CNTL(1);
 
 	si_pm4_set_reg(pm4, R_0286E0_SPI_BARYC_CNTL, spi_baryc_cntl);
-	si_pm4_set_reg(pm4, R_0286CC_SPI_PS_INPUT_ENA, shader->spi_ps_input_ena);
-	si_pm4_set_reg(pm4, R_0286D0_SPI_PS_INPUT_ADDR, shader->spi_ps_input_ena);
+	spi_ps_input_ena = shader->spi_ps_input_ena;
+	/* we need to enable at least one of them, otherwise we hang the GPU */
+	if (!spi_ps_input_ena & (C_0286CC_PERSP_SAMPLE_ENA |
+				 C_0286CC_PERSP_CENTROID_ENA |
+				 C_0286CC_PERSP_PULL_MODEL_ENA |
+				 C_0286CC_LINEAR_SAMPLE_ENA |
+				 C_0286CC_LINEAR_CENTER_ENA |
+				 C_0286CC_LINEAR_CENTROID_ENA |
+				 C_0286CC_LINE_STIPPLE_TEX_ENA)) {
+		spi_ps_input_ena |= S_0286CC_PERSP_SAMPLE_ENA(1);
+	}
+	si_pm4_set_reg(pm4, R_0286CC_SPI_PS_INPUT_ENA, spi_ps_input_ena);
+	si_pm4_set_reg(pm4, R_0286D0_SPI_PS_INPUT_ADDR, spi_ps_input_ena);
 	si_pm4_set_reg(pm4, R_0286D8_SPI_PS_IN_CONTROL, spi_ps_in_control);
 
 	/* XXX: Depends on Z buffer format? */
