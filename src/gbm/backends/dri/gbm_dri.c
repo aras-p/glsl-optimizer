@@ -365,6 +365,10 @@ gbm_dri_bo_import(struct gbm_device *gbm,
    unsigned dri_use = 0;
    int dri_format, width, height, gbm_format, stride, cpp, offset;
 
+   /* Required for query image WIDTH & HEIGHT */
+   if (dri->image->base.version < 4)
+      return NULL;
+
    switch (type) {
 #if HAVE_WAYLAND_PLATFORM
    case GBM_BO_IMPORT_WL_BUFFER:
