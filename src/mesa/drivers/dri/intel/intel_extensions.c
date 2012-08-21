@@ -177,13 +177,11 @@ intelInitExtensions(struct gl_context *ctx)
 	 ctx->Extensions.ARB_occlusion_query = true;
    }
 
-   if (intel->ctx.Mesa_DXTn) {
-      ctx->Extensions.ANGLE_texture_compression_dxt = true;
+   if (intel->ctx.Mesa_DXTn
+       || driQueryOptionb(&intel->optionCache, "force_s3tc_enable"))
       ctx->Extensions.EXT_texture_compression_s3tc = true;
-   }
-   else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
-      ctx->Extensions.EXT_texture_compression_s3tc = true;
-   }
+
+   ctx->Extensions.ANGLE_texture_compression_dxt = true;
 
    if (intel->gen >= 4) {
       ctx->Extensions.NV_primitive_restart = true;
