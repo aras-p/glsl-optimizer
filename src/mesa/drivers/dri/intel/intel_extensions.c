@@ -135,11 +135,9 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_seamless_cube_map = true;
       ctx->Extensions.ARB_shader_bit_encoding = true;
       ctx->Extensions.ARB_shader_texture_lod = true;
-#ifdef TEXTURE_FLOAT_ENABLED
       ctx->Extensions.ARB_texture_float = true;
       ctx->Extensions.EXT_texture_shared_exponent = true;
       ctx->Extensions.EXT_packed_float = true;
-#endif
       ctx->Extensions.ARB_texture_compression_rgtc = true;
       ctx->Extensions.ARB_texture_rg = true;
       ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = true;

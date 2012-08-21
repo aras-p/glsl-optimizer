@@ -1039,15 +1039,9 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
 static void
 set_max_gl_versions(struct intel_screen *screen)
 {
-#ifdef TEXTURE_FLOAT_ENABLED
-   bool has_texture_float = true;
-#else
-   bool has_texture_float = false;
-#endif
-
    switch (screen->gen) {
    case 7:
-      if (has_texture_float && screen->kernel_has_gen7_sol_reset) {
+      if (screen->kernel_has_gen7_sol_reset) {
          screen->max_gl_core_version = 31;
          screen->max_gl_compat_version = 30;
          screen->max_gl_es1_version = 11;
@@ -1060,17 +1054,10 @@ set_max_gl_versions(struct intel_screen *screen)
       }
       break;
    case 6:
-      if (has_texture_float) {
-         screen->max_gl_core_version = 31;
-         screen->max_gl_compat_version = 30;
-         screen->max_gl_es1_version = 11;
-         screen->max_gl_es2_version = 20;
-      } else {
-         screen->max_gl_core_version = 0;
-         screen->max_gl_compat_version = 21;
-         screen->max_gl_es1_version = 11;
-         screen->max_gl_es2_version = 20;
-      }
+      screen->max_gl_core_version = 31;
+      screen->max_gl_compat_version = 30;
+      screen->max_gl_es1_version = 11;
+      screen->max_gl_es2_version = 20;
       break;
    case 5:
    case 4:
