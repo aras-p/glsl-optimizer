@@ -2799,6 +2799,37 @@ _mesa_choose_texture_format(struct gl_context *ctx,
       }
    }
 
+   /* If the application requested compression to an S3TC format but we don't
+    * have the DTXn library, force a generic compressed format instead.
+    */
+   if (internalFormat != format) {
+      const GLenum before = internalFormat;
+
+      switch (internalFormat) {
+      case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+         if (!ctx->Mesa_DXTn)
+            internalFormat = GL_COMPRESSED_RGB;
+         break;
+      case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+      case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+         if (!ctx->Mesa_DXTn)
+            internalFormat = GL_COMPRESSED_RGBA;
+         break;
+      default:
+         break;
+      }
+
+      if (before != internalFormat) {
+         _mesa_warning(ctx,
+                       "DXT compression requested (%s), "
+                       "but libtxc_dxtn library not installed.  Using %s "
+                       "instead.",
+                       _mesa_lookup_enum_by_nr(before),
+                       _mesa_lookup_enum_by_nr(internalFormat));
+      }
+   }
+
    /* choose format from scratch */
    f = ctx->Driver.ChooseTextureFormat(ctx, texObj->Target, internalFormat,
                                        format, type);
