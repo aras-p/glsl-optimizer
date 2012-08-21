@@ -49,17 +49,14 @@ private:
   const R600RegisterInfo * TRI;
   const R600InstrInfo * TII;
 
-  bool IsCube;
   unsigned currentElement;
-  bool IsLast;
 
   unsigned section_start;
 
 public:
 
   R600CodeEmitter(formatted_raw_ostream &OS) : MachineFunctionPass(ID),
-      _OS(OS), TM(NULL), IsCube(false),
-      IsLast(true) { }
+      _OS(OS), TM(NULL) { }
 
   const char *getPassName() const { return "AMDGPU Machine Code Emitter"; }
 
@@ -70,7 +67,7 @@ public:
 private:
 
   void EmitALUInstr(MachineInstr  &MI);
-  void EmitSrc(const MachineOperand & MO, int chan_override  = -1);
+  void EmitSrc(const MachineOperand & MO);
   void EmitDst(const MachineOperand & MO);
   void EmitALU(MachineInstr &MI, unsigned numSrc);
   void EmitTexInstr(MachineInstr &MI);
@@ -160,7 +157,6 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
      for (MachineBasicBlock::instr_iterator I = MBB.instr_begin(),
                                             E = MBB.instr_end(); I != E; ++I) {
           MachineInstr &MI = *I;
-	  IsCube = TII->isCubeOp(MI.getOpcode());
           if (MI.getNumOperands() > 1 && MI.getOperand(0).isReg() && MI.getOperand(0).isDead()) {
             continue;
           }
@@ -168,15 +164,6 @@ bool R600CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
             EmitTexInstr(MI);
           } else if (TII->isFCOp(MI.getOpcode())){
             EmitFCInstr(MI);
-          } else if (IsCube) {
-            IsLast = false;
-            // XXX: On Cayman, some (all?) of the vector instructions only need
-            // to fill the first three slots.
-            for (currentElement = 0; currentElement < 4; currentElement++) {
-              IsLast = (currentElement == 3);
-              EmitALUInstr(MI);
-            }
-	    IsCube = false;
           } else if (MI.getOpcode() == AMDGPU::RETURN ||
                      MI.getOpcode() == AMDGPU::BUNDLE ||
                      MI.getOpcode() == AMDGPU::KILL) {
@@ -250,25 +237,18 @@ void R600CodeEmitter::EmitALUInstr(MachineInstr &MI)
   // Emit instruction type
   EmitByte(0);
 
-  if (IsCube) {
-    static const int cube_src_swz[] = {2, 2, 0, 1};
-    EmitSrc(MI.getOperand(1), cube_src_swz[currentElement]);
-    EmitSrc(MI.getOperand(1), cube_src_swz[3-currentElement]);
-    EmitNullBytes(SRC_BYTE_COUNT);
-  } else {
-    unsigned int opIndex;
-    for (opIndex = 1; opIndex < numOperands; opIndex++) {
-      // Literal constants are always stored as the last operand.
-      if (MI.getOperand(opIndex).isImm() || MI.getOperand(opIndex).isFPImm()) {
-        break;
-      }
-      EmitSrc(MI.getOperand(opIndex));
+  unsigned int opIndex;
+  for (opIndex = 1; opIndex < numOperands; opIndex++) {
+    // Literal constants are always stored as the last operand.
+    if (MI.getOperand(opIndex).isImm() || MI.getOperand(opIndex).isFPImm()) {
+      break;
     }
+    EmitSrc(MI.getOperand(opIndex));
+  }
 
-    // Emit zeros for unused sources
-    for ( ; opIndex < 4; opIndex++) {
-      EmitNullBytes(SRC_BYTE_COUNT);
-    }
+  // Emit zeros for unused sources
+  for ( ; opIndex < 4; opIndex++) {
+    EmitNullBytes(SRC_BYTE_COUNT);
   }
 
   EmitDst(dstOp);
@@ -276,7 +256,7 @@ void R600CodeEmitter::EmitALUInstr(MachineInstr &MI)
   EmitALU(MI, numOperands - 1);
 }
 
-void R600CodeEmitter::EmitSrc(const MachineOperand & MO, int chan_override)
+void R600CodeEmitter::EmitSrc(const MachineOperand & MO)
 {
   uint32_t value = 0;
   // Emit the source select (2 bytes).  For GPRs, this is the register index.
@@ -302,9 +282,7 @@ void R600CodeEmitter::EmitSrc(const MachineOperand & MO, int chan_override)
   }
 
   // Emit the source channel (1 byte)
-  if (chan_override != -1) {
-    EmitByte(chan_override);
-  } else if (MO.isReg()) {
+  if (MO.isReg()) {
     EmitByte(TRI->getHWRegChan(MO.getReg()));
   } else {
     EmitByte(0);
@@ -345,11 +323,7 @@ void R600CodeEmitter::EmitDst(const MachineOperand & MO)
     EmitByte(getHWReg(MO.getReg()));
 
     // Emit the element of the destination register (1 byte)
-    if (IsCube) {
-      EmitByte(currentElement);
-    } else {
-      EmitByte(TRI->getHWRegChan(MO.getReg()));
-    }
+    EmitByte(TRI->getHWRegChan(MO.getReg()));
 
     // Emit isClamped (1 byte)
     if (MO.getTargetFlags() & MO_FLAG_CLAMP) {
@@ -379,9 +353,8 @@ void R600CodeEmitter::EmitALU(MachineInstr &MI, unsigned numSrc)
   EmitTwoBytes(getBinaryCodeForInstr(MI));
 
   // Emit IsLast (for this instruction group) (1 byte)
-  if (!IsLast ||
-				(MI.isInsideBundle() &&
-				!(MI.getOperand(0).getTargetFlags() & MO_FLAG_LAST))) {
+  if (MI.isInsideBundle() &&
+      !(MI.getOperand(0).getTargetFlags() & MO_FLAG_LAST)) {
     EmitByte(0);
   } else {
     EmitByte(1);

@@ -61,7 +61,8 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
 
       bool IsReduction = TII->isReductionOp(MI.getOpcode());
       bool IsVector = TII->isVector(MI);
-      if (!IsReduction && !IsVector) {
+	    bool IsCube = TII->isCubeOp(MI.getOpcode());
+      if (!IsReduction && !IsVector && !IsCube) {
         continue;
       }
 
@@ -82,23 +83,73 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
       // T0_Y (write masked) = MULLO_INT T1_X, T2_X
       // T0_Z (write masked) = MULLO_INT T1_X, T2_X
       // T0_W (write masked) = MULLO_INT T1_X, T2_X
+      //
+      // Cube instructions:
+      // T0_XYZW = CUBE T1_XYZW
+      // becomes:
+      // TO_X = CUBE T1_Z, T1_Y
+      // T0_Y = CUBE T1_Z, T1_X
+      // T0_Z = CUBE T1_X, T1_Z
+      // T0_W = CUBE T1_Y, T1_Z
       for (unsigned Chan = 0; Chan < 4; Chan++) {
         unsigned DstReg = MI.getOperand(0).getReg();
         unsigned Src0 = MI.getOperand(1).getReg();
-        unsigned Src1 = MI.getOperand(2).getReg();
+        unsigned Src1 = 0;
+
+        // Determine the correct source registers
+        if (!IsCube) {
+          Src1 = MI.getOperand(2).getReg();
+        }
         if (IsReduction) {
           unsigned SubRegIndex = TRI.getSubRegFromChannel(Chan);
           Src0 = TRI.getSubReg(Src0, SubRegIndex);
           Src1 = TRI.getSubReg(Src1, SubRegIndex);
+        } else if (IsCube) {
+          static const int CubeSrcSwz[] = {2, 2, 0, 1};
+          unsigned SubRegIndex0 = TRI.getSubRegFromChannel(CubeSrcSwz[Chan]);
+          unsigned SubRegIndex1 = TRI.getSubRegFromChannel(CubeSrcSwz[3 - Chan]);
+          Src1 = TRI.getSubReg(Src0, SubRegIndex1);
+          Src0 = TRI.getSubReg(Src0, SubRegIndex0);
         }
-        unsigned DstBase = TRI.getHWRegIndex(DstReg);
-        unsigned NewDstReg = AMDGPU::R600_TReg32RegClass.getRegister((DstBase * 4) + Chan);
-        unsigned Flags = (Chan != TRI.getHWRegChan(DstReg) ? MO_FLAG_MASK : 0);
+
+        // Determine the correct destination registers;
+        unsigned Flags = 0;
+        if (IsCube) {
+          unsigned SubRegIndex = TRI.getSubRegFromChannel(Chan);
+          DstReg = TRI.getSubReg(DstReg, SubRegIndex);
+        } else {
+          // Mask the write if the original instruction does not write to
+          // the current Channel.
+          Flags |= (Chan != TRI.getHWRegChan(DstReg) ? MO_FLAG_MASK : 0);
+          unsigned DstBase = TRI.getHWRegIndex(DstReg);
+          DstReg = AMDGPU::R600_TReg32RegClass.getRegister((DstBase * 4) + Chan);
+        }
+
+        // Set the IsLast bit
         Flags |= (Chan == 3 ? MO_FLAG_LAST : 0);
-        MachineOperand NewDstOp = MachineOperand::CreateReg(NewDstReg, true);
+
+        // Add the new instruction
+        unsigned Opcode;
+        if (IsCube) {
+          switch (MI.getOpcode()) {
+          case AMDGPU::CUBE_r600_pseudo:
+            Opcode = AMDGPU::CUBE_r600_real;
+            break;
+          case AMDGPU::CUBE_eg_pseudo:
+            Opcode = AMDGPU::CUBE_eg_real;
+            break;
+          default:
+            assert(!"Unknown CUBE instruction");
+            Opcode = 0;
+            break;
+          }
+        } else {
+          Opcode = MI.getOpcode();
+        }
+        MachineOperand NewDstOp = MachineOperand::CreateReg(DstReg, true);
         NewDstOp.addTargetFlag(Flags);
 
-        BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(MI.getOpcode()))
+        BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(Opcode))
                 .addOperand(NewDstOp)
                 .addReg(Src0)
                 .addReg(Src1)

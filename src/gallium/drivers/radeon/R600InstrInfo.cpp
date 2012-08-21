@@ -153,8 +153,10 @@ bool R600InstrInfo::isCubeOp(unsigned opcode) const
 {
   switch(opcode) {
     default: return false;
-    case AMDGPU::CUBE_r600:
-    case AMDGPU::CUBE_eg:
+    case AMDGPU::CUBE_r600_pseudo:
+    case AMDGPU::CUBE_r600_real:
+    case AMDGPU::CUBE_eg_pseudo:
+    case AMDGPU::CUBE_eg_real:
       return true;
   }
 }

@@ -593,14 +593,25 @@ class DOT4_Common <bits<32> inst> : R600_REDUCTION <
   [(set R600_Reg32:$dst, (int_AMDGPU_dp4 R600_Reg128:$src0, R600_Reg128:$src1))]
 >;
 
-class CUBE_Common <bits<32> inst> : InstR600 <
-  inst,
-  (outs R600_Reg128:$dst),
-  (ins R600_Reg128:$src),
-  "CUBE $dst $src",
-  [(set R600_Reg128:$dst, (int_AMDGPU_cube R600_Reg128:$src))],
-  VecALU
->;
+multiclass CUBE_Common <bits<32> inst> {
+
+  def _pseudo : InstR600 <
+    inst,
+    (outs R600_Reg128:$dst),
+    (ins R600_Reg128:$src),
+    "CUBE $dst $src",
+    [(set R600_Reg128:$dst, (int_AMDGPU_cube R600_Reg128:$src))],
+    VecALU
+  >;
+
+  def _real : InstR600 <
+    inst,
+    (outs R600_Reg32:$dst),
+    (ins R600_Reg32:$src0, R600_Reg32:$src1),
+    "CUBE $dst, $src0, $src1",
+    [], VecALU
+  >;
+}
 
 class EXP_IEEE_Common <bits<32> inst> : R600_1OP <
   inst, "EXP_IEEE",
@@ -737,7 +748,7 @@ let Predicates = [isR600] in {
   def CNDGT_r600 : CNDGT_Common<0x19>;
   def CNDGE_r600 : CNDGE_Common<0x1A>;
   def DOT4_r600 : DOT4_Common<0x50>;
-  def CUBE_r600 : CUBE_Common<0x52>;
+  defm CUBE_r600 : CUBE_Common<0x52>;
   def EXP_IEEE_r600 : EXP_IEEE_Common<0x61>;
   def LOG_CLAMPED_r600 : LOG_CLAMPED_Common<0x62>;
   def LOG_IEEE_r600 : LOG_IEEE_Common<0x63>;
@@ -853,7 +864,7 @@ let Predicates = [isEGorCayman] in {
   def SIN_eg : SIN_Common<0x8D>;
   def COS_eg : COS_Common<0x8E>;
   def DOT4_eg : DOT4_Common<0xBE>;
-  def CUBE_eg : CUBE_Common<0xC0>;
+  defm CUBE_eg : CUBE_Common<0xC0>;
 
   def DIV_eg : DIV_Common<RECIP_IEEE_eg>;
   def POW_eg : POW_Common<LOG_IEEE_eg, EXP_IEEE_eg, MUL, GPRF32>;
