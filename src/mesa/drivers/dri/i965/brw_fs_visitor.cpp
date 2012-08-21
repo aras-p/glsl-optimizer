@@ -747,8 +747,7 @@ fs_visitor::visit(ir_assignment *ir)
 
 fs_inst *
 fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
-			      fs_reg shadow_c, fs_reg lod, fs_reg dPdy,
-			      int sampler)
+			      fs_reg shadow_c, fs_reg lod, fs_reg dPdy)
 {
    int mlen;
    int base_mrf = 1;
@@ -917,8 +916,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
  */
 fs_inst *
 fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
-			      fs_reg shadow_c, fs_reg lod, fs_reg lod2,
-			      int sampler)
+			      fs_reg shadow_c, fs_reg lod, fs_reg lod2)
 {
    int mlen = 0;
    int base_mrf = 2;
@@ -1038,8 +1036,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
 fs_inst *
 fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
-			      fs_reg shadow_c, fs_reg lod, fs_reg lod2,
-			      int sampler)
+			      fs_reg shadow_c, fs_reg lod, fs_reg lod2)
 {
    int mlen = 0;
    int base_mrf = 2;
@@ -1333,13 +1330,13 @@ fs_visitor::visit(ir_texture *ir)
 
    if (intel->gen >= 7) {
       inst = emit_texture_gen7(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2, sampler);
+                               lod, lod2);
    } else if (intel->gen >= 5) {
       inst = emit_texture_gen5(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2, sampler);
+                               lod, lod2);
    } else {
       inst = emit_texture_gen4(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2, sampler);
+                               lod, lod2);
    }
 
    /* The header is set up by generate_tex() when necessary. */
