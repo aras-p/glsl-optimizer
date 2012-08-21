@@ -389,6 +389,14 @@ struct r600_context {
 	struct r600_cs_shader_state	cs_shader_state;
 	struct r600_sample_mask		sample_mask;
 
+	/* current external blend state (from state tracker) */
+	struct r600_pipe_blend		*blend;
+	/* state with disabled blending - used internally with blend_override */
+	struct r600_pipe_blend		*no_blend;
+
+	/* 1 - override current blend state with no_blend, 0 - use external state */
+	unsigned	blend_override;
+
 	struct radeon_winsys_cs	*cs;
 
 	struct r600_range	*range;

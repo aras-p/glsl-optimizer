@@ -165,19 +165,15 @@ static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
 }
 
 /* common state between evergreen and r600 */
-void r600_bind_blend_state(struct pipe_context *ctx, void *state)
+
+static void r600_bind_blend_state_internal(struct r600_context *rctx,
+		struct r600_pipe_blend *blend)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_blend *blend = (struct r600_pipe_blend *)state;
 	struct r600_pipe_state *rstate;
 	bool update_cb = false;
 
-	if (state == NULL)
-		return;
 	rstate = &blend->rstate;
 	rctx->states[rstate->id] = rstate;
-	rctx->dual_src_blend = blend->dual_src_blend;
-	rctx->alpha_to_one = blend->alpha_to_one;
 	r600_context_pipe_state_set(rctx, rstate);
 
 	if (rctx->cb_misc_state.blend_colormask != blend->cb_target_mask) {
@@ -196,6 +192,22 @@ void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 	if (update_cb) {
 		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
 	}
+}
+
+void r600_bind_blend_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_pipe_blend *blend = (struct r600_pipe_blend *)state;
+
+	if (blend == NULL)
+		return;
+
+	rctx->blend = blend;
+	rctx->alpha_to_one = blend->alpha_to_one;
+	rctx->dual_src_blend = blend->dual_src_blend;
+
+	if (!rctx->blend_override)
+		r600_bind_blend_state_internal(rctx, blend);
 }
 
 void r600_set_blend_color(struct pipe_context *ctx,
@@ -1024,7 +1036,7 @@ void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
 static void r600_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
-	unsigned ps_dirty = 0;
+	unsigned ps_dirty = 0, blend_override;
 
 	if (!rctx->blitter->running) {
 		/* Flush depth textures which need to be flushed. */
@@ -1052,7 +1064,16 @@ static void r600_update_derived_state(struct r600_context *rctx)
 
 	if (ps_dirty)
 		r600_context_pipe_state_set(rctx, &rctx->ps_shader->current->rstate);
-		
+
+	blend_override = (rctx->dual_src_blend &&
+			rctx->ps_shader->current->nr_ps_color_outputs < 2);
+
+	if (blend_override != rctx->blend_override) {
+		rctx->blend_override = blend_override;
+		r600_bind_blend_state_internal(rctx,
+				blend_override ? rctx->no_blend : rctx->blend);
+	}
+
 	if (rctx->chip_class >= EVERGREEN) {
 		evergreen_update_dual_export_state(rctx);
 	} else {
