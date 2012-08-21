@@ -144,10 +144,10 @@ brw_upload_wm_unit(struct brw_context *brw)
       wm->wm4.sampler_count = 0; /* hardware requirement */
    else {
       /* CACHE_NEW_SAMPLER */
-      wm->wm4.sampler_count = (brw->sampler.count + 1) / 4;
+      wm->wm4.sampler_count = (brw->wm.sampler_count + 1) / 4;
    }
 
-   if (brw->sampler.count) {
+   if (brw->wm.sampler_count) {
       /* reloc */
       wm->wm4.sampler_state_pointer = (brw->batch.bo->offset +
 				       brw->sampler.offset) >> 5;
@@ -225,7 +225,7 @@ brw_upload_wm_unit(struct brw_context *brw)
    }
 
    /* Emit sampler state relocation */
-   if (brw->sampler.count != 0) {
+   if (brw->wm.sampler_count != 0) {
       drm_intel_bo_emit_reloc(brw->batch.bo,
 			      brw->wm.state_offset +
 			      offsetof(struct brw_wm_unit_state, wm4),

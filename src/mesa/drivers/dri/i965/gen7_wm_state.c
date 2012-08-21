@@ -162,7 +162,7 @@ upload_ps_state(struct brw_context *brw)
    dw2 = dw4 = dw5 = 0;
 
    /* CACHE_NEW_SAMPLER */
-   dw2 |= (ALIGN(brw->sampler.count, 4) / 4) << GEN7_PS_SAMPLER_COUNT_SHIFT;
+   dw2 |= (ALIGN(brw->wm.sampler_count, 4) / 4) << GEN7_PS_SAMPLER_COUNT_SHIFT;
 
    /* Use ALT floating point mode for ARB fragment programs, because they
     * require 0^0 == 1.  Even though _CurrentFragmentProgram is used for

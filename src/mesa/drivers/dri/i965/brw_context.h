@@ -1066,7 +1066,6 @@ struct brw_context
 
    /** SAMPLER_STATE count and offset */
    struct {
-      GLuint count;
       uint32_t offset;
    } sampler;
 
@@ -1110,6 +1109,8 @@ struct brw_context
 
       uint32_t bind_bo_offset;
       uint32_t surf_offset[BRW_MAX_VS_SURFACES];
+
+      uint32_t sampler_count;
    } vs;
 
    struct {
@@ -1182,6 +1183,8 @@ struct brw_context
       /** Binding table of pointers to surf_bo entries */
       uint32_t bind_bo_offset;
       uint32_t surf_offset[BRW_MAX_WM_SURFACES];
+
+      uint32_t sampler_count;
 
       struct {
          struct ra_regs *regs;

@@ -89,7 +89,7 @@ upload_vs_state(struct brw_context *brw)
    OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
    OUT_BATCH(brw->vs.prog_offset);
    OUT_BATCH(floating_point_mode |
-	     ((ALIGN(brw->sampler.count, 4)/4) << GEN6_VS_SAMPLER_COUNT_SHIFT));
+	     ((ALIGN(brw->vs.sampler_count, 4)/4) << GEN6_VS_SAMPLER_COUNT_SHIFT));
 
    if (brw->vs.prog_data->base.total_scratch) {
       OUT_RELOC(brw->vs.scratch_bo,

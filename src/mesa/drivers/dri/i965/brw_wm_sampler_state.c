@@ -377,17 +377,19 @@ brw_upload_samplers(struct brw_context *brw)
    /* ARB programs use the texture unit number as the sampler index, so we
     * need to find the highest unit used.  A bit-count will not work.
     */
-   brw->sampler.count = _mesa_fls(SamplersUsed);
+   brw->wm.sampler_count = _mesa_fls(SamplersUsed);
+   /* Currently we only use one sampler state table.  Mirror the count. */
+   brw->vs.sampler_count = brw->wm.sampler_count;
 
-   if (brw->sampler.count == 0)
+   if (brw->wm.sampler_count == 0)
       return;
 
    samplers = brw_state_batch(brw, AUB_TRACE_SAMPLER_STATE,
-			      brw->sampler.count * sizeof(*samplers),
+			      brw->wm.sampler_count * sizeof(*samplers),
 			      32, &brw->sampler.offset);
-   memset(samplers, 0, brw->sampler.count * sizeof(*samplers));
+   memset(samplers, 0, brw->wm.sampler_count * sizeof(*samplers));
 
-   for (unsigned s = 0; s < brw->sampler.count; s++) {
+   for (unsigned s = 0; s < brw->wm.sampler_count; s++) {
       if (SamplersUsed & (1 << s)) {
          const unsigned unit = (fs->SamplersUsed & (1 << s)) ?
             fs->SamplerUnits[s] : vs->SamplerUnits[s];
