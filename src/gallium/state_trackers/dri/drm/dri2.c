@@ -629,6 +629,20 @@ dri2_dup_image(__DRIimage *image, void *loaderPrivate)
    return img;
 }
 
+static GLboolean
+dri2_validate_usage(__DRIimage *image, unsigned int use)
+{
+   /*
+    * Gallium drivers are bad at adding usages to the resources
+    * once opened again in another process, which is the main use
+    * case for this, so we have to lie.
+    */
+   if (image != NULL)
+      return GL_TRUE;
+   else
+      return GL_FALSE;
+}
+
 static void
 dri2_destroy_image(__DRIimage *img)
 {
@@ -637,13 +651,14 @@ dri2_destroy_image(__DRIimage *img)
 }
 
 static struct __DRIimageExtensionRec dri2ImageExtension = {
-    { __DRI_IMAGE, 1 },
+    { __DRI_IMAGE, 3 },
     dri2_create_image_from_name,
     dri2_create_image_from_renderbuffer,
     dri2_destroy_image,
     dri2_create_image,
     dri2_query_image,
     dri2_dup_image,
+    dri2_validate_usage,
 };
 
 /*
