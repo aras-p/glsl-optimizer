@@ -109,6 +109,13 @@ void si_pm4_sh_data_add(struct si_pm4_state *state, uint32_t dw)
 void si_pm4_sh_data_end(struct si_pm4_state *state, unsigned reg)
 {
 	unsigned offs = state->last_pm4 + 1;
+
+	/* Bail if no data was added */
+	if (state->ndw == offs) {
+		state->ndw--;
+		return;
+	}
+
 	si_pm4_cmd_end(state, false);
 
 	si_pm4_cmd_begin(state, PKT3_SET_SH_REG_OFFSET);

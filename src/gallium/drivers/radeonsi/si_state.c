@@ -1971,16 +1971,18 @@ static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 
 	si_pm4_sh_data_begin(pm4);
 	for (i = 0; i < count; i++) {
-		struct r600_resource_texture *tex = (void *)resource[i]->base.texture;
-
 		pipe_sampler_view_reference(
 			(struct pipe_sampler_view **)&rctx->ps_samplers.views[i],
 			views[i]);
 
-		si_pm4_add_bo(pm4, &tex->resource, RADEON_USAGE_READ);
+		if (views[i]) {
+			struct r600_resource_texture *tex = (void *)resource[i]->base.texture;
 
-		for (j = 0; j < Elements(resource[i]->state); ++j) {
-			si_pm4_sh_data_add(pm4, resource[i]->state[j]);
+			si_pm4_add_bo(pm4, &tex->resource, RADEON_USAGE_READ);
+
+			for (j = 0; j < Elements(resource[i]->state); ++j) {
+				si_pm4_sh_data_add(pm4, resource[i]->state[j]);
+			}
 		}
 	}
 
