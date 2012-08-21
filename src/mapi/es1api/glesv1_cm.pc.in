@@ -1,12 +1,12 @@
-prefix=@INSTALL_DIR@
+prefix=@prefix@
 exec_prefix=${prefix}
-libdir=@INSTALL_LIB_DIR@
-includedir=@INSTALL_INC_DIR@
+libdir=@libdir@
+includedir=@includedir@
 
 Name: glesv1_cm
 Description: Mesa OpenGL ES 1.1 CM library
-Requires.private: @GLESv1_CM_PC_REQ_PRIV@
+Requires.private:
 Version: @VERSION@
-Libs: -L${libdir} -l@GLESv1_CM_LIB@
+Libs: -L${libdir} -lGLESv1_CM
 Libs.private: @GLESv1_CM_PC_LIB_PRIV@
-Cflags: -I${includedir} @GLESv1_CM_PC_CFLAGS@
+Cflags: -I${includedir}
