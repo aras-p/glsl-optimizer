@@ -79,8 +79,10 @@ translate_wrap_mode(GLenum wrap, bool using_nearest)
  * Upload SAMPLER_BORDER_COLOR_STATE.
  */
 void
-upload_default_color(struct brw_context *brw, struct gl_sampler_object *sampler,
-		     int unit, int ss_index)
+upload_default_color(struct brw_context *brw,
+                     struct gl_sampler_object *sampler,
+                     int unit,
+                     uint32_t *sdc_offset)
 {
    struct gl_context *ctx = &brw->ctx;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -142,7 +144,7 @@ upload_default_color(struct brw_context *brw, struct gl_sampler_object *sampler,
       struct gen5_sampler_default_color *sdc;
 
       sdc = brw_state_batch(brw, AUB_TRACE_SAMPLER_DEFAULT_COLOR,
-			    sizeof(*sdc), 32, &brw->wm.sdc_offset[ss_index]);
+			    sizeof(*sdc), 32, sdc_offset);
 
       memset(sdc, 0, sizeof(*sdc));
 
@@ -179,7 +181,7 @@ upload_default_color(struct brw_context *brw, struct gl_sampler_object *sampler,
       struct brw_sampler_default_color *sdc;
 
       sdc = brw_state_batch(brw, AUB_TRACE_SAMPLER_DEFAULT_COLOR,
-			    sizeof(*sdc), 32, &brw->wm.sdc_offset[ss_index]);
+			    sizeof(*sdc), 32, sdc_offset);
 
       COPY_4V(sdc->color, color);
    }
@@ -334,7 +336,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
       sampler->ss3.non_normalized_coord = 1;
    }
 
-   upload_default_color(brw, gl_sampler, unit, ss_index);
+   upload_default_color(brw, gl_sampler, unit, &brw->wm.sdc_offset[ss_index]);
 
    if (brw->gen >= 6) {
       sampler->ss2.default_color_pointer = brw->wm.sdc_offset[ss_index] >> 5;

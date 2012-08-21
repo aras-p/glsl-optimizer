@@ -208,7 +208,8 @@ void gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
 uint32_t translate_wrap_mode(GLenum wrap, bool using_nearest);
 void upload_default_color(struct brw_context *brw,
 			  struct gl_sampler_object *sampler,
-			  int unit, int ss_index);
+			  int unit,
+                          uint32_t *sdc_offset);
 
 /* gen6_sf_state.c */
 uint32_t
