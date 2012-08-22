@@ -55,7 +55,7 @@ fi
 
 AC_PROG_YACC
 AC_PATH_PROG([YACC_INST], $YACC)
-if test ! -f "$srcdir/src/glsl/glcpp/glcpp-parse.y"; then
+if test ! -f "$srcdir/src/glsl/glcpp/glcpp-parse.c"; then
     if test -z "$YACC_INST"; then
         AC_MSG_ERROR([yacc not found - unable to compile glcpp-parse.y])
     fi
