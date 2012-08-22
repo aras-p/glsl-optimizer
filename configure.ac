@@ -283,6 +283,8 @@ xnono )
     ;;
 esac
 
+AM_CONDITIONAL(BUILD_SHARED, test "x$enable_shared" = xyes)
+
 dnl
 dnl mklib options
 dnl
