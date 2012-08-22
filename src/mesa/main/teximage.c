@@ -1634,6 +1634,29 @@ _mesa_es_error_check_format_and_type(GLenum format, GLenum type,
 
 
 /**
+ * Return expected size of a compressed texture.
+ */
+static GLuint
+compressed_tex_size(GLsizei width, GLsizei height, GLsizei depth,
+                    GLenum glformat)
+{
+   gl_format mesaFormat = _mesa_glenum_to_compressed_format(glformat);
+   return _mesa_format_image_size(mesaFormat, width, height, depth);
+}
+
+
+/*
+ * Return compressed texture block size, in pixels.
+ */
+static void
+get_compressed_block_size(GLenum glformat, GLuint *bw, GLuint *bh)
+{
+   gl_format mesaFormat = _mesa_glenum_to_compressed_format(glformat);
+   _mesa_get_format_block_size(mesaFormat, bw, bh);
+}
+
+
+/**
  * Special value returned by error some texture error checking functions when
  * an error is detected and the proxy texture image's width/height/depth/format
  * fields should be zeroed-out.
@@ -1889,12 +1912,186 @@ texture_error_check( struct gl_context *ctx,
 }
 
 
+/**
+ * Error checking for glCompressedTexImage[123]D().
+ * \param reason  returns reason for error, if any
+ * \return error code or GL_NO_ERROR or PROXY_ERROR.
+ */
 static GLenum
 compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
                                GLenum target, GLint level,
                                GLenum internalFormat, GLsizei width,
                                GLsizei height, GLsizei depth, GLint border,
-                               GLsizei imageSize);
+                               GLsizei imageSize)
+{
+   const GLenum proxyTarget = get_proxy_target(target);
+   const GLint maxLevels = _mesa_max_texture_levels(ctx, target);
+   GLint expectedSize;
+   GLenum choose_format;
+   GLenum choose_type;
+   GLenum proxy_format;
+   GLenum error = GL_NO_ERROR;
+   char *reason = ""; /* no error */
+
+   if (!target_can_be_compressed(ctx, target, internalFormat)) {
+      reason = "target";
+      error = GL_INVALID_ENUM;
+      goto error;
+   }
+
+   /* This will detect any invalid internalFormat value */
+   if (!_mesa_is_compressed_format(ctx, internalFormat)) {
+      reason = "internalFormat";
+      error = GL_INVALID_ENUM;
+      goto error;
+   }
+
+   switch (internalFormat) {
+#if FEATURE_ES
+   case GL_PALETTE4_RGB8_OES:
+   case GL_PALETTE4_RGBA8_OES:
+   case GL_PALETTE4_R5_G6_B5_OES:
+   case GL_PALETTE4_RGBA4_OES:
+   case GL_PALETTE4_RGB5_A1_OES:
+   case GL_PALETTE8_RGB8_OES:
+   case GL_PALETTE8_RGBA8_OES:
+   case GL_PALETTE8_R5_G6_B5_OES:
+   case GL_PALETTE8_RGBA4_OES:
+   case GL_PALETTE8_RGB5_A1_OES:
+      _mesa_cpal_compressed_format_type(internalFormat, &choose_format,
+					&choose_type);
+      proxy_format = choose_format;
+
+      /* check level (note that level should be zero or less!) */
+      if (level > 0 || level < -maxLevels) {
+	 reason = "level";
+	 error = GL_INVALID_VALUE;
+         goto error;
+      }
+
+      if (dimensions != 2) {
+	 reason = "compressed paletted textures must be 2D";
+	 error = GL_INVALID_OPERATION;
+         goto error;
+      }
+
+      /* Figure out the expected texture size (in bytes).  This will be
+       * checked against the actual size later.
+       */
+      expectedSize = _mesa_cpal_compressed_size(level, internalFormat,
+						width, height);
+
+      /* This is for the benefit of the TestProxyTexImage below.  It expects
+       * level to be non-negative.  OES_compressed_paletted_texture uses a
+       * weird mechanism where the level specified to glCompressedTexImage2D
+       * is -(n-1) number of levels in the texture, and the data specifies the
+       * complete mipmap stack.  This is done to ensure the palette is the
+       * same for all levels.
+       */
+      level = -level;
+      break;
+#endif
+
+   default:
+      choose_format = GL_NONE;
+      choose_type = GL_NONE;
+      proxy_format = internalFormat;
+
+      /* check level */
+      if (level < 0 || level >= maxLevels) {
+	 reason = "level";
+	 error = GL_INVALID_VALUE;
+         goto error;
+      }
+
+      /* Figure out the expected texture size (in bytes).  This will be
+       * checked against the actual size later.
+       */
+      expectedSize = compressed_tex_size(width, height, depth, internalFormat);
+      break;
+   }
+
+   /* This should really never fail */
+   if (_mesa_base_tex_format(ctx, internalFormat) < 0) {
+      reason = "internalFormat";
+      error = GL_INVALID_ENUM;
+      goto error;
+   }
+
+   /* No compressed formats support borders at this time */
+   if (border != 0) {
+      reason = "border != 0";
+      error = GL_INVALID_VALUE;
+      goto error;
+   }
+
+   /* For cube map, width must equal height */
+   if (_mesa_is_cube_face(target) && width != height) {
+      reason = "width != height";
+      error = GL_INVALID_VALUE;
+      goto error;
+   }
+
+   /* check image size against compression block size */
+   {
+      gl_format texFormat =
+         ctx->Driver.ChooseTextureFormat(ctx, proxy_format,
+					 choose_format, choose_type);
+      GLuint bw, bh;
+
+      _mesa_get_format_block_size(texFormat, &bw, &bh);
+      if ((width > bw && width % bw > 0) ||
+          (height > bh && height % bh > 0)) {
+         /*
+          * Per GL_ARB_texture_compression:  GL_INVALID_OPERATION is
+          * generated [...] if any parameter combinations are not
+          * supported by the specific compressed internal format. 
+          */
+         reason = "invalid width or height for compression format";
+         error = GL_INVALID_OPERATION;
+         goto error;
+      }
+   }
+
+   /* check image sizes */
+   if (!ctx->Driver.TestProxyTexImage(ctx, proxyTarget, level,
+				      proxy_format, choose_format,
+				      choose_type,
+				      width, height, depth, border)) {
+      /* See error comment above */
+      if (target == proxyTarget) {
+         return PROXY_ERROR;
+      }
+      reason = "invalid width, height or format";
+      error = GL_INVALID_OPERATION;
+      goto error;
+   }
+
+   /* check image size in bytes */
+   if (expectedSize != imageSize) {
+      /* Per GL_ARB_texture_compression:  GL_INVALID_VALUE is generated [...]
+       * if <imageSize> is not consistent with the format, dimensions, and
+       * contents of the specified image.
+       */
+      reason = "imageSize inconsistant with width/height/format";
+      error = GL_INVALID_VALUE;
+      goto error;
+   }
+
+   if (!mutable_tex_object(ctx, target)) {
+      reason = "immutable texture";
+      error = GL_INVALID_OPERATION;
+      goto error;
+   }
+
+   return GL_NO_ERROR;
+
+error:
+   _mesa_error(ctx, error, "glCompressedTexImage%dD(%s)", dimensions, reason);
+   return error;
+}
+
+
 
 /**
  * Test glTexSubImage[123]D() parameters for errors.
@@ -3323,209 +3520,6 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
 /**********************************************************************/
 /******                   Compressed Textures                    ******/
 /**********************************************************************/
-
-
-/**
- * Return expected size of a compressed texture.
- */
-static GLuint
-compressed_tex_size(GLsizei width, GLsizei height, GLsizei depth,
-                    GLenum glformat)
-{
-   gl_format mesaFormat = _mesa_glenum_to_compressed_format(glformat);
-   return _mesa_format_image_size(mesaFormat, width, height, depth);
-}
-
-
-/*
- * Return compressed texture block size, in pixels.
- */
-static void
-get_compressed_block_size(GLenum glformat, GLuint *bw, GLuint *bh)
-{
-   gl_format mesaFormat = _mesa_glenum_to_compressed_format(glformat);
-   _mesa_get_format_block_size(mesaFormat, bw, bh);
-}
-
-
-/**
- * Error checking for glCompressedTexImage[123]D().
- * \param reason  returns reason for error, if any
- * \return error code or GL_NO_ERROR or PROXY_ERROR.
- */
-static GLenum
-compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
-                               GLenum target, GLint level,
-                               GLenum internalFormat, GLsizei width,
-                               GLsizei height, GLsizei depth, GLint border,
-                               GLsizei imageSize)
-{
-   const GLenum proxyTarget = get_proxy_target(target);
-   const GLint maxLevels = _mesa_max_texture_levels(ctx, target);
-   GLint expectedSize;
-   GLenum choose_format;
-   GLenum choose_type;
-   GLenum proxy_format;
-   GLenum error = GL_NO_ERROR;
-   char *reason = ""; /* no error */
-
-   if (!target_can_be_compressed(ctx, target, internalFormat)) {
-      reason = "target";
-      error = GL_INVALID_ENUM;
-      goto error;
-   }
-
-   /* This will detect any invalid internalFormat value */
-   if (!_mesa_is_compressed_format(ctx, internalFormat)) {
-      reason = "internalFormat";
-      error = GL_INVALID_ENUM;
-      goto error;
-   }
-
-   switch (internalFormat) {
-#if FEATURE_ES
-   case GL_PALETTE4_RGB8_OES:
-   case GL_PALETTE4_RGBA8_OES:
-   case GL_PALETTE4_R5_G6_B5_OES:
-   case GL_PALETTE4_RGBA4_OES:
-   case GL_PALETTE4_RGB5_A1_OES:
-   case GL_PALETTE8_RGB8_OES:
-   case GL_PALETTE8_RGBA8_OES:
-   case GL_PALETTE8_R5_G6_B5_OES:
-   case GL_PALETTE8_RGBA4_OES:
-   case GL_PALETTE8_RGB5_A1_OES:
-      _mesa_cpal_compressed_format_type(internalFormat, &choose_format,
-					&choose_type);
-      proxy_format = choose_format;
-
-      /* check level (note that level should be zero or less!) */
-      if (level > 0 || level < -maxLevels) {
-	 reason = "level";
-	 error = GL_INVALID_VALUE;
-         goto error;
-      }
-
-      if (dimensions != 2) {
-	 reason = "compressed paletted textures must be 2D";
-	 error = GL_INVALID_OPERATION;
-         goto error;
-      }
-
-      /* Figure out the expected texture size (in bytes).  This will be
-       * checked against the actual size later.
-       */
-      expectedSize = _mesa_cpal_compressed_size(level, internalFormat,
-						width, height);
-
-      /* This is for the benefit of the TestProxyTexImage below.  It expects
-       * level to be non-negative.  OES_compressed_paletted_texture uses a
-       * weird mechanism where the level specified to glCompressedTexImage2D
-       * is -(n-1) number of levels in the texture, and the data specifies the
-       * complete mipmap stack.  This is done to ensure the palette is the
-       * same for all levels.
-       */
-      level = -level;
-      break;
-#endif
-
-   default:
-      choose_format = GL_NONE;
-      choose_type = GL_NONE;
-      proxy_format = internalFormat;
-
-      /* check level */
-      if (level < 0 || level >= maxLevels) {
-	 reason = "level";
-	 error = GL_INVALID_VALUE;
-         goto error;
-      }
-
-      /* Figure out the expected texture size (in bytes).  This will be
-       * checked against the actual size later.
-       */
-      expectedSize = compressed_tex_size(width, height, depth, internalFormat);
-      break;
-   }
-
-   /* This should really never fail */
-   if (_mesa_base_tex_format(ctx, internalFormat) < 0) {
-      reason = "internalFormat";
-      error = GL_INVALID_ENUM;
-      goto error;
-   }
-
-   /* No compressed formats support borders at this time */
-   if (border != 0) {
-      reason = "border != 0";
-      error = GL_INVALID_VALUE;
-      goto error;
-   }
-
-   /* For cube map, width must equal height */
-   if (_mesa_is_cube_face(target) && width != height) {
-      reason = "width != height";
-      error = GL_INVALID_VALUE;
-      goto error;
-   }
-
-   /* check image size against compression block size */
-   {
-      gl_format texFormat =
-         ctx->Driver.ChooseTextureFormat(ctx, proxy_format,
-					 choose_format, choose_type);
-      GLuint bw, bh;
-
-      _mesa_get_format_block_size(texFormat, &bw, &bh);
-      if ((width > bw && width % bw > 0) ||
-          (height > bh && height % bh > 0)) {
-         /*
-          * Per GL_ARB_texture_compression:  GL_INVALID_OPERATION is
-          * generated [...] if any parameter combinations are not
-          * supported by the specific compressed internal format. 
-          */
-         reason = "invalid width or height for compression format";
-         error = GL_INVALID_OPERATION;
-         goto error;
-      }
-   }
-
-   /* check image sizes */
-   if (!ctx->Driver.TestProxyTexImage(ctx, proxyTarget, level,
-				      proxy_format, choose_format,
-				      choose_type,
-				      width, height, depth, border)) {
-      /* See error comment above */
-      if (target == proxyTarget) {
-         return PROXY_ERROR;
-      }
-      reason = "invalid width, height or format";
-      error = GL_INVALID_OPERATION;
-      goto error;
-   }
-
-   /* check image size in bytes */
-   if (expectedSize != imageSize) {
-      /* Per GL_ARB_texture_compression:  GL_INVALID_VALUE is generated [...]
-       * if <imageSize> is not consistent with the format, dimensions, and
-       * contents of the specified image.
-       */
-      reason = "imageSize inconsistant with width/height/format";
-      error = GL_INVALID_VALUE;
-      goto error;
-   }
-
-   if (!mutable_tex_object(ctx, target)) {
-      reason = "immutable texture";
-      error = GL_INVALID_OPERATION;
-      goto error;
-   }
-
-   return GL_NO_ERROR;
-
-error:
-   _mesa_error(ctx, error, "glCompressedTexImage%dD(%s)", dimensions, reason);
-   return error;
-}
 
 
 /**
