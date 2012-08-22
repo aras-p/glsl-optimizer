@@ -183,10 +183,6 @@ gen7_update_sampler_state(struct brw_context *brw, int unit,
 }
 
 
-/* All samplers must be uploaded in a single contiguous array, which
- * complicates various things.  However, this is still too confusing -
- * FIXME: simplify all the different new texture state flags.
- */
 static void
 gen7_upload_samplers(struct brw_context *brw)
 {
