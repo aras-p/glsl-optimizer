@@ -33,6 +33,9 @@
 #include "target-helpers/inline_debug_helper.h"
 #include "target-helpers/inline_sw_helper.h"
 
+#include "state_tracker/drm_driver.h"
+
+DRM_DRIVER_DESCRIPTOR("swrast", NULL, NULL, NULL);
 
 struct pipe_screen *
 drisw_create_screen(struct drisw_loader_funcs *lf)
