@@ -60,7 +60,6 @@ main_sources = [
     'main/debug.c',
     'main/depth.c',
     'main/dlist.c',
-    'main/dlopen.c',
     'main/drawpix.c',
     'main/drawtex.c',
     'main/enable.c',

@@ -32,7 +32,6 @@ MAIN_FILES = \
 	$(SRCDIR)main/debug.c \
 	$(SRCDIR)main/depth.c \
 	$(SRCDIR)main/dlist.c \
-	$(SRCDIR)main/dlopen.c \
 	$(SRCDIR)main/drawpix.c \
 	$(SRCDIR)main/drawtex.c \
 	$(SRCDIR)main/enable.c \
