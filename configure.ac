@@ -1196,13 +1196,10 @@ if test "x$enable_osmesa" = xyes; then
     OSMESA_PC_LIB_PRIV="-lm -lpthread $SELINUX_LIBS $DLOPEN_LIBS"
 fi
 
-OSMESA_VERSION=`echo "$VERSION" | $SED 's/\./:/g'`
-
 AC_SUBST([OSMESA_LIB_DEPS])
 AC_SUBST([OSMESA_MESA_DEPS])
 AC_SUBST([OSMESA_PC_REQ])
 AC_SUBST([OSMESA_PC_LIB_PRIV])
-AC_SUBST([OSMESA_VERSION])
 
 dnl
 dnl gbm configuration
@@ -1981,6 +1978,10 @@ AM_CONDITIONAL(HAVE_X11_DRIVER, echo "$DRIVER_DIRS" | grep 'x11' >/dev/null 2>&1
 AM_CONDITIONAL(HAVE_X86_ASM, echo "$DEFINES" | grep 'X86_ASM' >/dev/null 2>&1)
 AM_CONDITIONAL(HAVE_X86_64_ASM, echo "$DEFINES" | grep 'X86_64_ASM' >/dev/null 2>&1)
 AM_CONDITIONAL(HAVE_SPARC_ASM, echo "$DEFINES" | grep 'SPARC_ASM' >/dev/null 2>&1)
+
+# To pass as an argument to libtool's -version-number flag
+VERSION_NUMBER=`echo "$VERSION" | $SED 's/\./:/g'`
+AC_SUBST([VERSION_NUMBER])
 
 dnl prepend CORE_DIRS to SRC_DIRS
 SRC_DIRS="$CORE_DIRS $SRC_DIRS"
