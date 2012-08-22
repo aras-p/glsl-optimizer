@@ -195,6 +195,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
 				     int unit,
                                      int ss_index,
                                      struct brw_sampler_state *sampler,
+                                     uint32_t sampler_state_table_offset,
                                      uint32_t *sdc_offset)
 {
    struct gl_context *ctx = &brw->ctx;
@@ -347,7 +348,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
 					    *sdc_offset) >> 5;
 
       drm_intel_bo_emit_reloc(brw->batch.bo,
-			      brw->sampler.offset +
+			      sampler_state_table_offset +
 			      ss_index * sizeof(struct brw_sampler_state) +
 			      offsetof(struct brw_sampler_state, ss2),
 			      brw->batch.bo, *sdc_offset,
@@ -366,7 +367,10 @@ static void brw_update_sampler_state(struct brw_context *brw,
 
 
 static void
-brw_upload_samplers(struct brw_context *brw)
+brw_upload_sampler_state_table(struct brw_context *brw,
+                               uint32_t *sampler_count,
+                               uint32_t *sst_offset,
+                               uint32_t *sdc_offset)
 {
    struct gl_context *ctx = &brw->ctx;
    struct brw_sampler_state *samplers;
@@ -380,17 +384,15 @@ brw_upload_samplers(struct brw_context *brw)
    /* ARB programs use the texture unit number as the sampler index, so we
     * need to find the highest unit used.  A bit-count will not work.
     */
-   brw->wm.sampler_count = _mesa_fls(SamplersUsed);
-   /* Currently we only use one sampler state table.  Mirror the count. */
-   brw->vs.sampler_count = brw->wm.sampler_count;
+   *sampler_count = _mesa_fls(SamplersUsed);
 
-   if (brw->wm.sampler_count == 0)
+   if (*sampler_count == 0)
       return;
 
    samplers = brw_state_batch(brw, AUB_TRACE_SAMPLER_STATE,
-			      brw->wm.sampler_count * sizeof(*samplers),
-			      32, &brw->sampler.offset);
-   memset(samplers, 0, brw->wm.sampler_count * sizeof(*samplers));
+			      *sampler_count * sizeof(*samplers),
+			      32, sst_offset);
+   memset(samplers, 0, *sampler_count * sizeof(*samplers));
 
    for (unsigned s = 0; s < brw->wm.sampler_count; s++) {
       if (SamplersUsed & (1 << s)) {
@@ -398,11 +400,25 @@ brw_upload_samplers(struct brw_context *brw)
             fs->SamplerUnits[s] : vs->SamplerUnits[s];
          if (ctx->Texture.Unit[unit]._ReallyEnabled)
             brw_update_sampler_state(brw, unit, s, &samplers[s],
-                                     &brw->wm.sdc_offset[s]);
+                                     *sst_offset, &sdc_offset[s]);
       }
    }
 
    brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
+}
+
+static void
+brw_upload_samplers(struct brw_context *brw)
+{
+   brw_upload_sampler_state_table(brw,
+                                  &brw->wm.sampler_count,
+                                  &brw->wm.sampler_offset,
+                                  brw->wm.sdc_offset);
+
+   brw_upload_sampler_state_table(brw,
+                                  &brw->vs.sampler_count,
+                                  &brw->vs.sampler_offset,
+                                  brw->vs.sdc_offset);
 }
 
 const struct brw_tracked_state brw_samplers = {

@@ -157,12 +157,12 @@ brw_upload_vs_unit(struct brw_context *brw)
     */
    if (brw->vs.sampler_count) {
       vs->vs5.sampler_state_pointer =
-         (brw->batch.bo->offset + brw->sampler.offset) >> 5;
+         (brw->batch.bo->offset + brw->vs.sampler_offset) >> 5;
       drm_intel_bo_emit_reloc(brw->batch.bo,
                               brw->vs.state_offset +
                               offsetof(struct brw_vs_unit_state, vs5),
                               brw->batch.bo,
-                              brw->sampler.offset | vs->vs5.sampler_count,
+                              brw->vs.sampler_offset | vs->vs5.sampler_count,
                               I915_GEM_DOMAIN_INSTRUCTION, 0);
    }
 

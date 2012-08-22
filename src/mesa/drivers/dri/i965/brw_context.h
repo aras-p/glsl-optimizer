@@ -1064,11 +1064,6 @@ struct brw_context
       GLuint last_bufsz;
    } curbe;
 
-   /** SAMPLER_STATE count and offset */
-   struct {
-      uint32_t offset;
-   } sampler;
-
    /**
     * Layout of vertex data exiting the geometry portion of the pipleine.
     * This comes from the geometry shader if one exists, otherwise from the
@@ -1110,7 +1105,13 @@ struct brw_context
       uint32_t bind_bo_offset;
       uint32_t surf_offset[BRW_MAX_VS_SURFACES];
 
+      /** SAMPLER_STATE count and table offset */
       uint32_t sampler_count;
+      uint32_t sampler_offset;
+
+      /** Offsets in the batch to sampler default colors (texture border color)
+       */
+      uint32_t sdc_offset[BRW_MAX_TEX_UNIT];
    } vs;
 
    struct {
@@ -1153,10 +1154,6 @@ struct brw_context
    struct {
       struct brw_wm_prog_data *prog_data;
 
-      /** offsets in the batch to sampler default colors (texture border color)
-       */
-      uint32_t sdc_offset[BRW_MAX_TEX_UNIT];
-
       GLuint render_surf;
 
       drm_intel_bo *scratch_bo;
@@ -1184,7 +1181,13 @@ struct brw_context
       uint32_t bind_bo_offset;
       uint32_t surf_offset[BRW_MAX_WM_SURFACES];
 
+      /** SAMPLER_STATE count and table offset */
       uint32_t sampler_count;
+      uint32_t sampler_offset;
+
+      /** Offsets in the batch to sampler default colors (texture border color)
+       */
+      uint32_t sdc_offset[BRW_MAX_TEX_UNIT];
 
       struct {
          struct ra_regs *regs;

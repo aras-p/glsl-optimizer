@@ -48,7 +48,7 @@ upload_vs_state(struct brw_context *brw)
    /* CACHE_NEW_SAMPLER */
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS_VS << 16 | (2 - 2));
-   OUT_BATCH(brw->sampler.offset);
+   OUT_BATCH(brw->vs.sampler_offset);
    ADVANCE_BATCH();
 
    if (brw->vs.push_const_size == 0) {
