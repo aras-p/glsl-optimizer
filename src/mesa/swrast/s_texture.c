@@ -29,6 +29,7 @@
 #include "main/context.h"
 #include "main/fbobject.h"
 #include "main/teximage.h"
+#include "main/texobj.h"
 #include "swrast/swrast.h"
 #include "swrast/s_context.h"
 
@@ -246,7 +247,7 @@ _swrast_unmap_teximage(struct gl_context *ctx,
 void
 _swrast_map_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
-   const GLuint faces = texObj->Target == GL_TEXTURE_CUBE_MAP ? 6 : 1;
+   const GLuint faces = _mesa_num_tex_faces(texObj->Target);
    GLuint face, level;
 
    for (face = 0; face < faces; face++) {
@@ -267,7 +268,7 @@ _swrast_map_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 void
 _swrast_unmap_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
-   const GLuint faces = texObj->Target == GL_TEXTURE_CUBE_MAP ? 6 : 1;
+   const GLuint faces = _mesa_num_tex_faces(texObj->Target);
    GLuint face, level;
 
    for (face = 0; face < faces; face++) {

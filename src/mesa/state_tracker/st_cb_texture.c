@@ -1299,7 +1299,7 @@ st_AllocTextureStorage(struct gl_context *ctx,
                        GLsizei levels, GLsizei width,
                        GLsizei height, GLsizei depth)
 {
-   const GLuint numFaces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   const GLuint numFaces = _mesa_num_tex_faces(texObj->Target);
    struct st_context *st = st_context(ctx);
    struct st_texture_object *stObj = st_texture_object(texObj);
    GLuint ptWidth, ptHeight, ptDepth, ptLayers, bindings;

@@ -1,6 +1,7 @@
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/samplerobj.h"
+#include "main/texobj.h"
 
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
@@ -95,7 +96,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 
    /* Pull in any images not in the object's tree:
     */
-   nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   nr_faces = _mesa_num_tex_faces(intelObj->base.Target);
    for (face = 0; face < nr_faces; face++) {
       for (i = tObj->BaseLevel; i <= intelObj->_MaxLevel; i++) {
          struct intel_texture_image *intelImage =
@@ -181,7 +182,7 @@ intel_tex_map_images(struct intel_context *intel,
 		     struct intel_texture_object *intelObj,
 		     GLbitfield mode)
 {
-   GLuint nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   GLuint nr_faces = _mesa_num_tex_faces(intelObj->base.Target);
    int i, face;
 
    DBG("%s\n", __FUNCTION__);
@@ -200,7 +201,7 @@ void
 intel_tex_unmap_images(struct intel_context *intel,
 		       struct intel_texture_object *intelObj)
 {
-   GLuint nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   GLuint nr_faces = _mesa_num_tex_faces(intelObj->base.Target);
    int i, face;
 
    for (i = intelObj->base.BaseLevel; i <= intelObj->_MaxLevel; i++) {

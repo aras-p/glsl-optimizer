@@ -577,7 +577,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       GLint i;
       const GLint minLevel = baseLevel;
       const GLint maxLevel = t->_MaxLevel;
-      const GLuint numFaces = t->Target == GL_TEXTURE_CUBE_MAP ? 6 : 1;
+      const GLuint numFaces = _mesa_num_tex_faces(t->Target);
       GLuint width, height, depth, face;
 
       if (minLevel > maxLevel) {
@@ -826,7 +826,7 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
 static GLuint
 texture_size(const struct gl_texture_object *texObj)
 {
-   const GLuint numFaces = texObj->Target == GL_TEXTURE_CUBE_MAP ? 6 : 1;
+   const GLuint numFaces = _mesa_num_tex_faces(texObj->Target);
    GLuint face, level, size = 0;
 
    for (face = 0; face < numFaces; face++) {

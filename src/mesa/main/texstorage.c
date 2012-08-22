@@ -36,6 +36,7 @@
 #include "macros.h"
 #include "mfeatures.h"
 #include "teximage.h"
+#include "texobj.h"
 #include "texstorage.h"
 #include "mtypes.h"
 
@@ -128,7 +129,7 @@ setup_texstorage(struct gl_context *ctx,
                  GLsizei width, GLsizei height, GLsizei depth)
 {
    const GLenum target = texObj->Target;
-   const GLuint numFaces = (target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   const GLuint numFaces = _mesa_num_tex_faces(target);
    gl_format texFormat;
    GLint level, levelWidth = width, levelHeight = height, levelDepth = depth;
    GLuint face;
@@ -206,7 +207,7 @@ clear_image_fields(struct gl_context *ctx,
                    struct gl_texture_object *texObj)
 {
    const GLenum target = texObj->Target;
-   const GLuint numFaces = (target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   const GLuint numFaces = _mesa_num_tex_faces(target);
    GLint level;
    GLuint face;
 

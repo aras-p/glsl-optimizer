@@ -120,7 +120,7 @@ intel_alloc_texture_storage(struct gl_context *ctx,
                             GLsizei levels, GLsizei width,
                             GLsizei height, GLsizei depth)
 {
-   const int numFaces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   const int numFaces = _mesa_num_tex_faces(texObj->Target);
    int face;
    int level;
 

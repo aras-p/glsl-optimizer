@@ -198,7 +198,7 @@ radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa,
 	mt->mesaFormat = mesaFormat;
 	mt->refcount = 1;
 	mt->target = target;
-	mt->faces = (target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+	mt->faces = _mesa_num_tex_faces(target);
 	mt->baseLevel = baseLevel;
 	mt->numLevels = numLevels;
 	mt->width0 = width0;
@@ -569,7 +569,7 @@ int radeon_validate_texture_miptree(struct gl_context * ctx,
 			"%s: Using miptree %p\n", __FUNCTION__, t->mt);
 	}
 
-	const unsigned faces = texObj->Target == GL_TEXTURE_CUBE_MAP ? 6 : 1;
+	const unsigned faces = _mesa_num_tex_faces(texObj->Target);
 	unsigned face, level;
 	radeon_texture_image *img;
 	/* Validate only the levels that will actually be used during rendering */

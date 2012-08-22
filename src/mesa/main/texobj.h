@@ -78,6 +78,17 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
 }
 
 
+/**
+ * Return number of faces for a texture target.  This will be 6 for
+ * cube maps (and cube map arrays) and 1 otherwise.
+ */
+static inline GLuint
+_mesa_num_tex_faces(GLenum target)
+{
+   return target == GL_TEXTURE_CUBE_MAP ? 6 : 1;
+}
+
+
 /** Is the texture "complete" with respect to the given sampler state? */
 static inline GLboolean
 _mesa_is_texture_complete(const struct gl_texture_object *texObj,
