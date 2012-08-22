@@ -699,6 +699,8 @@ if test "x$enable_glx" = xyes -a \
 fi
 
 AM_CONDITIONAL(HAVE_DRI, test "x$enable_dri" = xyes)
+AM_CONDITIONAL(NEED_LIBMESA, test "x$enable_xlib_glx" = xyes -o \
+                                  "x$enable_osmesa" = xyes)
 
 AC_ARG_ENABLE([shared-glapi],
     [AS_HELP_STRING([--enable-shared-glapi],
