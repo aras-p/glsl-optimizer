@@ -193,11 +193,9 @@ brw_fast_clear_depth(struct gl_context *ctx)
       intel_batchbuffer_emit_mi_flush(intel);
    }
 
-   /* Now, the entire HiZ buffer contains data that needs to be resolved to the
-    * entire depth buffer (so any previous resolve records should get tossed
-    * out).
+   /* Now, the HiZ buffer contains data that needs to be resolved to the depth
+    * buffer.
     */
-   intel_resolve_map_clear(&mt->hiz_map);
    intel_renderbuffer_set_needs_depth_resolve(depth_irb);
 
    return true;
