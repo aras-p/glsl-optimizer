@@ -134,7 +134,8 @@ struct r600_context {
 	unsigned			saved_render_cond_mode;
 	/* shader information */
 	unsigned			sprite_coord_enable;
-	boolean				export_16bpc;
+	unsigned			export_16bpc;
+	unsigned			spi_shader_col_format;
 	unsigned			alpha_ref;
 	boolean				alpha_ref_dirty;
 	struct r600_textures_info	vs_samplers;

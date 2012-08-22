@@ -996,6 +996,53 @@ static uint32_t si_colorformat_endian_swap(uint32_t colorformat)
 	}
 }
 
+/* Returns the size in bits of the widest component of a CB format */
+static unsigned si_colorformat_max_comp_size(uint32_t colorformat)
+{
+	switch(colorformat) {
+	case V_028C70_COLOR_4_4_4_4:
+		return 4;
+
+	case V_028C70_COLOR_1_5_5_5:
+	case V_028C70_COLOR_5_5_5_1:
+		return 5;
+
+	case V_028C70_COLOR_5_6_5:
+		return 6;
+
+	case V_028C70_COLOR_8:
+	case V_028C70_COLOR_8_8:
+	case V_028C70_COLOR_8_8_8_8:
+		return 8;
+
+	case V_028C70_COLOR_10_10_10_2:
+	case V_028C70_COLOR_2_10_10_10:
+		return 10;
+
+	case V_028C70_COLOR_10_11_11:
+	case V_028C70_COLOR_11_11_10:
+		return 11;
+
+	case V_028C70_COLOR_16:
+	case V_028C70_COLOR_16_16:
+	case V_028C70_COLOR_16_16_16_16:
+		return 16;
+
+	case V_028C70_COLOR_8_24:
+	case V_028C70_COLOR_24_8:
+		return 24;
+
+	case V_028C70_COLOR_32:
+	case V_028C70_COLOR_32_32:
+	case V_028C70_COLOR_32_32_32_32:
+	case V_028C70_COLOR_X24_8_32_FLOAT:
+		return 32;
+	}
+
+	assert(!"Unknown maximum component size");
+	return 0;
+}
+
 static uint32_t si_translate_dbformat(enum pipe_format format)
 {
 	switch (format) {
@@ -1409,6 +1456,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	const struct util_format_description *desc;
 	int i;
 	unsigned blend_clamp = 0, blend_bypass = 0;
+	unsigned max_comp_size;
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
@@ -1549,6 +1597,17 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	}
 	si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + cb * 0x3C, color_info);
 	si_pm4_set_reg(pm4, R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C, color_attrib);
+
+	/* Determine pixel shader export format */
+	max_comp_size = si_colorformat_max_comp_size(format);
+	if (ntype == V_028C70_NUMBER_SRGB ||
+	    ((ntype == V_028C70_NUMBER_UNORM || ntype == V_028C70_NUMBER_SNORM) &&
+	     max_comp_size <= 10) ||
+	    (ntype == V_028C70_NUMBER_FLOAT && max_comp_size <= 16)) {
+		rctx->export_16bpc |= 1 << cb;
+		rctx->spi_shader_col_format |= V_028714_SPI_SHADER_FP16_ABGR << (4 * cb);
+	} else
+		rctx->spi_shader_col_format |= V_028714_SPI_SHADER_32_ABGR << (4 * cb);
 }
 
 static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
@@ -1667,9 +1726,12 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 
 	/* build states */
 	rctx->have_depth_fb = 0;
+	rctx->export_16bpc = 0;
+	rctx->spi_shader_col_format = 0;
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		si_cb(rctx, pm4, state, i);
 	}
+	assert(!(rctx->export_16bpc & ~0xff));
 	si_db(rctx, pm4, state);
 
 	shader_mask = 0;
@@ -1706,6 +1768,8 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	si_pm4_set_reg(pm4, R_028200_PA_SC_WINDOW_OFFSET, 0x00000000);
 	si_pm4_set_reg(pm4, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
 	si_pm4_set_reg(pm4, R_02823C_CB_SHADER_MASK, shader_mask);
+	si_pm4_set_reg(pm4, R_028714_SPI_SHADER_COL_FORMAT,
+		       rctx->spi_shader_col_format);
 	si_pm4_set_reg(pm4, R_028BE0_PA_SC_AA_CONFIG, 0x00000000);
 
 	si_pm4_set_state(rctx, framebuffer, pm4);
@@ -1727,9 +1791,10 @@ static INLINE unsigned si_shader_selector_key(struct pipe_context *ctx,
 	if (sel->type == PIPE_SHADER_FRAGMENT) {
 		if (sel->fs_write_all)
 			key |= rctx->framebuffer.nr_cbufs;
+		key |= rctx->export_16bpc << 4;
 		/*if (rctx->queued.named.rasterizer)
-			  key |= rctx->queued.named.rasterizer->flatshade << 4;*/
-		/*key |== rctx->two_side << 5;*/
+			  key |= rctx->queued.named.rasterizer->flatshade << 12;*/
+		/*key |== rctx->two_side << 13;*/
 	}
 
 	return key;

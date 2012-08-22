@@ -390,13 +390,47 @@ static void si_llvm_init_export_args(struct lp_build_tgsi_context *bld_base,
 	unsigned compressed = 0;
 	unsigned chan;
 
-	for (chan = 0; chan < 4; chan++ ) {
-		LLVMValueRef out_ptr =
-			si_shader_ctx->radeon_bld.soa.outputs[index][chan];
-		/* +5 because the first output value will be
-		 * the 6th argument to the intrinsic. */
-		args[chan + 5] = LLVMBuildLoad(base->gallivm->builder,
-					       out_ptr, "");
+	if (si_shader_ctx->type == TGSI_PROCESSOR_FRAGMENT) {
+		int cbuf = target - V_008DFC_SQ_EXP_MRT;
+
+		if (cbuf >= 0 && cbuf < 8) {
+			struct r600_context *rctx = si_shader_ctx->rctx;
+			compressed = (rctx->export_16bpc >> cbuf) & 0x1;
+		}
+	}
+
+	if (compressed) {
+		/* Pixel shader needs to pack output values before export */
+		for (chan = 0; chan < 2; chan++ ) {
+			LLVMValueRef *out_ptr =
+				si_shader_ctx->radeon_bld.soa.outputs[index];
+			args[0] = LLVMBuildLoad(base->gallivm->builder,
+						out_ptr[2 * chan], "");
+			args[1] = LLVMBuildLoad(base->gallivm->builder,
+						out_ptr[2 * chan + 1], "");
+			args[chan + 5] =
+				build_intrinsic(base->gallivm->builder,
+						"llvm.SI.packf16",
+						LLVMInt32TypeInContext(base->gallivm->context),
+						args, 2,
+						LLVMReadNoneAttribute);
+			args[chan + 7] = args[chan + 5];
+		}
+
+		/* Set COMPR flag */
+		args[4] = uint->one;
+	} else {
+		for (chan = 0; chan < 4; chan++ ) {
+			LLVMValueRef out_ptr =
+				si_shader_ctx->radeon_bld.soa.outputs[index][chan];
+			/* +5 because the first output value will be
+			 * the 6th argument to the intrinsic. */
+			args[chan + 5] = LLVMBuildLoad(base->gallivm->builder,
+						       out_ptr, "");
+		}
+
+		/* Clear COMPR flag */
+		args[4] = uint->zero;
 	}
 
 	/* XXX: This controls which components of the output
@@ -414,9 +448,6 @@ static void si_llvm_init_export_args(struct lp_build_tgsi_context *bld_base,
 
 	/* Specify the target we are exporting */
 	args[3] = lp_build_const_int32(base->gallivm, target);
-
-	/* Set COMPR flag */
-	args[4] = uint->zero;
 
 	/* XXX: We probably need to keep track of the output
 	 * values, so we know what we are passing to the next

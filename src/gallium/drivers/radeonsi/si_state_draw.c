@@ -186,10 +186,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	/* XXX: Depends on Z buffer format? */
 	si_pm4_set_reg(pm4, R_028710_SPI_SHADER_Z_FORMAT, 0);
 
-	/* XXX: Depends on color buffer format? */
-	si_pm4_set_reg(pm4, R_028714_SPI_SHADER_COL_FORMAT,
-		       S_028714_COL0_EXPORT_FORMAT(V_028714_SPI_SHADER_32_ABGR));
-
 	va = r600_resource_va(ctx->screen, (void *)shader->bo);
 	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
 	si_pm4_set_reg(pm4, R_00B020_SPI_SHADER_PGM_LO_PS, va >> 8);
