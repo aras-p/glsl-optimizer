@@ -120,10 +120,6 @@ _mesa_get_tex_image(struct gl_context *ctx, struct gl_texture_object *texObj,
                     GLenum target, GLint level);
 
 
-extern struct gl_texture_image *
-_mesa_get_proxy_tex_image(struct gl_context *ctx, GLenum target, GLint level);
-
-
 extern GLint
 _mesa_max_texture_levels(struct gl_context *ctx, GLenum target);
 

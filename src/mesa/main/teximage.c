@@ -839,8 +839,8 @@ _mesa_get_tex_image(struct gl_context *ctx, struct gl_texture_object *texObj,
  * \return pointer to texture image or NULL if invalid target, invalid
  *         level, or out of memory.
  */
-struct gl_texture_image *
-_mesa_get_proxy_tex_image(struct gl_context *ctx, GLenum target, GLint level)
+static struct gl_texture_image *
+get_proxy_tex_image(struct gl_context *ctx, GLenum target, GLint level)
 {
    struct gl_texture_image *texImage;
    GLuint texIndex;
@@ -2682,7 +2682,7 @@ teximage(struct gl_context *ctx, GLuint dims,
    if (_mesa_is_proxy_texture(target)) {
       /* Proxy texture: just clear or set state depending on error checking */
       struct gl_texture_image *texImage =
-         _mesa_get_proxy_tex_image(ctx, target, level);
+         get_proxy_tex_image(ctx, target, level);
 
       if (error == PROXY_ERROR) {
          /* image too large, etc.  Clear all proxy texture image parameters. */
@@ -3646,17 +3646,20 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
       struct gl_texture_image *texImage;
 
       if (!error) {
+         /* No parameter errors.  Choose a texture format and see if we
+          * can really allocate the texture.
+          */
          struct gl_texture_object *texObj =
             _mesa_get_current_tex_object(ctx, target);
          gl_format texFormat =
             _mesa_choose_texture_format(ctx, texObj, target, level,
                                         internalFormat, GL_NONE, GL_NONE);
          if (!legal_texture_size(ctx, texFormat, width, height, depth)) {
-            error = GL_OUT_OF_MEMORY;
+            error = PROXY_ERROR;
          }
       }
 
-      texImage = _mesa_get_proxy_tex_image(ctx, target, level);
+      texImage = get_proxy_tex_image(ctx, target, level);
       if (texImage) {
          if (error == PROXY_ERROR) {
             /* if error, clear all proxy texture image parameters */
