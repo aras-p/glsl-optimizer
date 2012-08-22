@@ -1367,6 +1367,8 @@ if test "x$enable_openvg" = xyes; then
     CORE_DIRS="$CORE_DIRS mapi/vgapi"
     GALLIUM_STATE_TRACKERS_DIRS="vega $GALLIUM_STATE_TRACKERS_DIRS"
     HAVE_ST_VEGA=yes
+    VG_PC_LIB_PRIV="-lm -lpthread $DLOPEN_LIBS"
+    AC_SUBST([VG_PC_LIB_PRIV])
 fi
 
 dnl
@@ -2035,6 +2037,8 @@ AC_CONFIG_FILES([configs/current
 		src/mapi/glapi/tests/Makefile
 		src/mapi/shared-glapi/Makefile
 		src/mapi/shared-glapi/tests/Makefile
+		src/mapi/vgapi/Makefile
+		src/mapi/vgapi/vg.pc
 		src/mesa/Makefile
 		src/mesa/gl.pc
 		src/mesa/drivers/Makefile

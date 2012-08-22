@@ -1,12 +1,12 @@
-prefix=@INSTALL_DIR@
+prefix=@prefix@
 exec_prefix=${prefix}
-libdir=@INSTALL_LIB_DIR@
-includedir=@INSTALL_INC_DIR@
+libdir=@libdir@
+includedir=@includedir@
 
 Name: vg
 Description: Mesa OpenVG 1.0 library
-Requires.private: @VG_PC_REQ_PRIV@
+Requires.private:
 Version: @VERSION@
-Libs: -L${libdir} -l@VG_LIB@
+Libs: -L${libdir} -lOpenVG
 Libs.private: @VG_PC_LIB_PRIV@
-Cflags: -I${includedir} @VG_PC_CFLAGS@
+Cflags: -I${includedir}
