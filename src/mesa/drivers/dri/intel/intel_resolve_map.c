@@ -29,8 +29,8 @@
 /**
  * \brief Set that the miptree slice at (level, layer) needs a resolve.
  *
- * \pre If a map element already exists with the given key, then
- *      the new and existing element value must be identical.
+ * If a map element already exists with the given key, then the value is
+ * changed to the given value of \c need.
  */
 void
 intel_resolve_map_set(struct intel_resolve_map *head,
@@ -43,7 +43,7 @@ intel_resolve_map_set(struct intel_resolve_map *head,
 
    while (*tail) {
       if ((*tail)->level == level && (*tail)->layer == layer) {
-	 assert((*tail)->need == need);
+         (*tail)->need = need;
 	 return;
       }
       prev = *tail;
