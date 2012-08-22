@@ -1258,23 +1258,71 @@ static uint32_t si_translate_vertexformat(struct pipe_screen *screen,
 					  const struct util_format_description *desc,
 					  int first_non_void)
 {
-	uint32_t result;
+	unsigned type = desc->channel[first_non_void].type;
+	int i;
 
-	if (desc->channel[first_non_void].type == UTIL_FORMAT_TYPE_FIXED)
-		return ~0;
+	if (type == UTIL_FORMAT_TYPE_FIXED)
+		return V_008F0C_BUF_DATA_FORMAT_INVALID;
 
-	result = si_translate_texformat(screen, format, desc, first_non_void);
-	if (result == V_008F0C_BUF_DATA_FORMAT_INVALID ||
-	    result > V_008F0C_BUF_DATA_FORMAT_32_32_32_32)
-		result = ~0;
+	/* See whether the components are of the same size. */
+	for (i = 0; i < desc->nr_channels; i++) {
+		if (desc->channel[first_non_void].size != desc->channel[i].size)
+			return V_008F0C_BUF_DATA_FORMAT_INVALID;
+	}
 
-	return result;
+	switch (desc->channel[first_non_void].size) {
+	case 8:
+		switch (desc->nr_channels) {
+		case 1:
+			return V_008F0C_BUF_DATA_FORMAT_8;
+		case 2:
+			return V_008F0C_BUF_DATA_FORMAT_8_8;
+		case 3:
+		case 4:
+			return V_008F0C_BUF_DATA_FORMAT_8_8_8_8;
+		}
+		break;
+	case 16:
+		switch (desc->nr_channels) {
+		case 1:
+			return V_008F0C_BUF_DATA_FORMAT_16;
+		case 2:
+			return V_008F0C_BUF_DATA_FORMAT_16_16;
+		case 3:
+		case 4:
+			return V_008F0C_BUF_DATA_FORMAT_16_16_16_16;
+		}
+		break;
+	case 32:
+		if (type != UTIL_FORMAT_TYPE_FLOAT)
+			return V_008F0C_BUF_DATA_FORMAT_INVALID;
+
+		switch (desc->nr_channels) {
+		case 1:
+			return V_008F0C_BUF_DATA_FORMAT_32;
+		case 2:
+			return V_008F0C_BUF_DATA_FORMAT_32_32;
+		case 3:
+			return V_008F0C_BUF_DATA_FORMAT_32_32_32;
+		case 4:
+			return V_008F0C_BUF_DATA_FORMAT_32_32_32_32;
+		}
+		break;
+	}
+
+	return V_008F0C_BUF_DATA_FORMAT_INVALID;
 }
 
 static bool si_is_vertex_format_supported(struct pipe_screen *screen, enum pipe_format format)
 {
-	return si_translate_vertexformat(screen, format, util_format_description(format),
-					 util_format_get_first_non_void_channel(format)) != ~0U;
+	const struct util_format_description *desc;
+	int first_non_void;
+	unsigned data_format;
+
+	desc = util_format_description(format);
+	first_non_void = util_format_get_first_non_void_channel(format);
+	data_format = si_translate_vertexformat(screen, format, desc, first_non_void);
+	return data_format != V_008F0C_BUF_DATA_FORMAT_INVALID;
 }
 
 static bool si_is_colorbuffer_format_supported(enum pipe_format format)
