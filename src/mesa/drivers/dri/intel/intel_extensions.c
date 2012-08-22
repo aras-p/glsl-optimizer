@@ -59,7 +59,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_env_crossbar = true;
    ctx->Extensions.ARB_texture_env_dot3 = true;
    ctx->Extensions.ARB_texture_storage = true;
-   ctx->Extensions.ARB_vertex_array_object = true;
    ctx->Extensions.ARB_vertex_program = true;
    ctx->Extensions.ARB_vertex_shader = true;
    ctx->Extensions.EXT_blend_color = true;
@@ -80,7 +79,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_texture_env_dot3 = true;
    ctx->Extensions.EXT_texture_filter_anisotropic = true;
    ctx->Extensions.APPLE_object_purgeable = true;
-   ctx->Extensions.APPLE_vertex_array_object = true;
    ctx->Extensions.MESA_pack_invert = true;
    ctx->Extensions.MESA_ycbcr_texture = true;
    ctx->Extensions.NV_blend_square = true;

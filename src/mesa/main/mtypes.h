@@ -2999,7 +2999,6 @@ struct gl_extensions
    GLboolean ARB_transform_feedback_instanced;
    GLboolean ARB_transpose_matrix;
    GLboolean ARB_uniform_buffer_object;
-   GLboolean ARB_vertex_array_object;
    GLboolean ARB_vertex_program;
    GLboolean ARB_vertex_shader;
    GLboolean ARB_vertex_type_2_10_10_10_rev;
@@ -3052,7 +3051,6 @@ struct gl_extensions
    /* vendor extensions */
    GLboolean AMD_seamless_cubemap_per_texture;
    GLboolean APPLE_packed_pixels;
-   GLboolean APPLE_vertex_array_object;
    GLboolean APPLE_object_purgeable;
    GLboolean ATI_envmap_bumpmap;
    GLboolean ATI_texture_compression_3dc;

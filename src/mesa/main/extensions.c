@@ -148,7 +148,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_transpose_matrix",                    o(ARB_transpose_matrix),                    GLL,            1999 },
    { "GL_ARB_uniform_buffer_object",               o(ARB_uniform_buffer_object),               GL,             2009 },
    { "GL_ARB_vertex_array_bgra",                   o(EXT_vertex_array_bgra),                   GL,             2008 },
-   { "GL_ARB_vertex_array_object",                 o(ARB_vertex_array_object),                 GL,             2006 },
+   { "GL_ARB_vertex_array_object",                 o(dummy_true),                              GL,             2006 },
    { "GL_ARB_vertex_buffer_object",                o(dummy_true),                              GLL,            2003 },
    { "GL_ARB_vertex_program",                      o(ARB_vertex_program),                      GLL,            2002 },
    { "GL_ARB_vertex_shader",                       o(ARB_vertex_shader),                       GL,             2002 },
@@ -276,7 +276,7 @@ static const struct extension extension_table[] = {
    { "GL_APPLE_object_purgeable",                  o(APPLE_object_purgeable),                  GL,             2006 },
    { "GL_APPLE_packed_pixels",                     o(APPLE_packed_pixels),                     GLL,            2002 },
    { "GL_APPLE_texture_max_level",                 o(dummy_true),                                   ES1 | ES2, 2009 },
-   { "GL_APPLE_vertex_array_object",               o(APPLE_vertex_array_object),               GLL,            2002 },
+   { "GL_APPLE_vertex_array_object",               o(dummy_true),                              GLL,            2002 },
    { "GL_ATI_blend_equation_separate",             o(EXT_blend_equation_separate),             GL,             2003 },
    { "GL_ATI_draw_buffers",                        o(dummy_true),                              GLL,            2002 },
    { "GL_ATI_envmap_bumpmap",                      o(ATI_envmap_bumpmap),                      GLL,            2001 },
@@ -438,7 +438,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_rg = GL_TRUE;
    ctx->Extensions.ARB_texture_compression_rgtc = GL_TRUE;
    ctx->Extensions.ARB_texture_storage = GL_TRUE;
-   ctx->Extensions.ARB_vertex_array_object = GL_TRUE;
 #if FEATURE_ARB_vertex_program
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
 #endif
@@ -448,7 +447,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
 #if FEATURE_ARB_sync
    ctx->Extensions.ARB_sync = GL_TRUE;
 #endif
-   ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
 #if FEATURE_APPLE_object_purgeable
    ctx->Extensions.APPLE_object_purgeable = GL_TRUE;
 #endif

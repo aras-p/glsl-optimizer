@@ -322,7 +322,6 @@ EXTRA_EXT(ARB_fragment_shader);
 EXTRA_EXT(ARB_fragment_program);
 EXTRA_EXT2(ARB_framebuffer_object, EXT_framebuffer_multisample);
 EXTRA_EXT(EXT_framebuffer_object);
-EXTRA_EXT(APPLE_vertex_array_object);
 EXTRA_EXT(ARB_seamless_cube_map);
 EXTRA_EXT(EXT_compiled_vertex_array);
 EXTRA_EXT(ARB_sync);
@@ -1214,8 +1213,7 @@ static const struct value_desc values[] = {
      extra_ARB_framebuffer_object_EXT_framebuffer_multisample },
 
    /* GL_APPLE_vertex_array_object */
-   { GL_VERTEX_ARRAY_BINDING_APPLE, ARRAY_INT(Name),
-     extra_APPLE_vertex_array_object },
+   { GL_VERTEX_ARRAY_BINDING_APPLE, ARRAY_INT(Name), NO_EXTRA },
 
    /* GL_ARB_seamless_cube_map */
    { GL_TEXTURE_CUBE_MAP_SEAMLESS,

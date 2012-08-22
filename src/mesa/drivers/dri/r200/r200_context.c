@@ -384,7 +384,6 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.ARB_texture_env_combine = true;
    ctx->Extensions.ARB_texture_env_dot3 = true;
    ctx->Extensions.ARB_texture_env_crossbar = true;
-   ctx->Extensions.ARB_vertex_array_object = true;
    ctx->Extensions.EXT_blend_color = true;
    ctx->Extensions.EXT_blend_minmax = true;
    ctx->Extensions.EXT_fog_coord = true;
@@ -393,7 +392,6 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.EXT_texture_env_dot3 = true;
    ctx->Extensions.EXT_texture_filter_anisotropic = true;
    ctx->Extensions.EXT_texture_mirror_clamp = true;
-   ctx->Extensions.APPLE_vertex_array_object = true;
    ctx->Extensions.ATI_texture_env_combine3 = true;
    ctx->Extensions.ATI_texture_mirror_once = true;
    ctx->Extensions.MESA_pack_invert = true;

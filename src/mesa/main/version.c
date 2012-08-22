@@ -137,7 +137,6 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.ARB_texture_float &&
                               ctx->Extensions.ARB_texture_rg &&
                               ctx->Extensions.ARB_texture_compression_rgtc &&
-                              ctx->Extensions.APPLE_vertex_array_object &&
                               ctx->Extensions.EXT_draw_buffers2 &&
                               ctx->Extensions.ARB_framebuffer_object &&
                               ctx->Extensions.EXT_framebuffer_sRGB &&
