@@ -521,11 +521,9 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_BindVertexArrayAPPLE(exec, _mesa_BindVertexArrayAPPLE);
       SET_GenVertexArraysAPPLE(exec, _mesa_GenVertexArraysAPPLE);
    }
-   /* Reused by ARB_vertex_array_object */
-   if (ctx->API != API_OPENGLES2) {
-      SET_DeleteVertexArraysAPPLE(exec, _mesa_DeleteVertexArraysAPPLE);
-      SET_IsVertexArrayAPPLE(exec, _mesa_IsVertexArrayAPPLE);
-   }
+   /* Reused by ARB_vertex_array_object / OES_vertex_array_object */
+   SET_DeleteVertexArraysAPPLE(exec, _mesa_DeleteVertexArraysAPPLE);
+   SET_IsVertexArrayAPPLE(exec, _mesa_IsVertexArrayAPPLE);
 
    /* 282. GL_NV_fragment_program */
 #if FEATURE_NV_fragment_program
@@ -809,11 +807,9 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_CopyBufferSubData(exec, _mesa_CopyBufferSubData);
    }
 
-   /* GL_ARB_vertex_array_object */
-   if (ctx->API != API_OPENGLES2) {
-      SET_BindVertexArray(exec, _mesa_BindVertexArray);
-      SET_GenVertexArrays(exec, _mesa_GenVertexArrays);
-   }
+   /* GL_ARB_vertex_array_object / GL_OES_vertex_array_object */
+   SET_BindVertexArray(exec, _mesa_BindVertexArray);
+   SET_GenVertexArrays(exec, _mesa_GenVertexArrays);
 
    /* GL_EXT_draw_buffers2 */
    if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {

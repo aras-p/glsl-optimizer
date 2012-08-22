@@ -535,6 +535,9 @@ static const struct value_desc values[] = {
     * GLSL: */
    { GL_MAX_CLIP_PLANES, CONTEXT_INT(Const.MaxClipPlanes), NO_EXTRA },
 
+   /* GL_{APPLE,ARB,OES}_vertex_array_object */
+   { GL_VERTEX_ARRAY_BINDING_APPLE, ARRAY_INT(Name), NO_EXTRA },
+
 #if FEATURE_GL || FEATURE_ES1
    /* Enums in OpenGL and GLES1 */
    { 0, 0, TYPE_API_MASK, API_OPENGL_BIT | API_OPENGLES_BIT | API_OPENGL_CORE_BIT, NO_EXTRA },
@@ -1211,9 +1214,6 @@ static const struct value_desc values[] = {
    /* GL_ARB_framebuffer_object */
    { GL_MAX_SAMPLES, CONTEXT_INT(Const.MaxSamples),
      extra_ARB_framebuffer_object_EXT_framebuffer_multisample },
-
-   /* GL_APPLE_vertex_array_object */
-   { GL_VERTEX_ARRAY_BINDING_APPLE, ARRAY_INT(Name), NO_EXTRA },
 
    /* GL_ARB_seamless_cube_map */
    { GL_TEXTURE_CUBE_MAP_SEAMLESS,

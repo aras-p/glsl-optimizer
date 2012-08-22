@@ -449,6 +449,11 @@ es2_api = es2_core + (
         # GL_OES_get_program_binary
         'GetProgramBinaryOES',
         'ProgramBinaryOES',
+        # GL_OES_vertex_array_object
+        'BindVertexArrayOES',
+        'DeleteVertexArraysOES',
+        'GenVertexArraysOES',
+        'IsVertexArrayOES',
         # GL_NV_draw_buffers
         'DrawBuffersNV',
         # GL_NV_read_buffer

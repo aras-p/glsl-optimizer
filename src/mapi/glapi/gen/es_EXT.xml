@@ -619,6 +619,32 @@
 
 <!-- 69. GL_EXT_multi_draw_arrays -->
 
+<!-- 71. GL_OES_vertex_array_object -->
+<category name="GL_OES_vertex_array_object" number="71">
+    <function name="BindVertexArrayOES" alias="BindVertexArray">
+        <param name="array" type="GLuint"/>
+    </function>
+
+    <function name="DeleteVertexArraysOES" alias="DeleteVertexArraysAPPLE">
+        <param name="n" type="GLsizei"/>
+        <param name="arrays" type="const GLuint *" count="n"/>
+    </function>
+
+    <function name="GenVertexArraysOES" alias="GenVertexArrays">
+        <param name="n" type="GLsizei"/>
+        <param name="arrays" type="GLuint *" output="true" count="n"/>
+    </function>
+
+    <function name="IsVertexArrayOES" alias="IsVertexArrayAPPLE">
+        <param name="array" type="GLuint"/>
+        <return type="GLboolean"/>
+    </function>
+
+    <enum name="VERTEX_ARRAY_BINDING_OES"      count="1"  value="0x85B5">
+        <size name="Get" mode="get"/>
+    </enum>
+</category>
+
 <!-- 87. GL_OES_EGL_image_external -->
 <category name="GL_OES_EGL_image_external" number="87">
     <enum name="TEXTURE_EXTERNAL_OES"                     value="0x8D65"/>
