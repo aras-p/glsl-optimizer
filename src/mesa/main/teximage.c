@@ -1631,6 +1631,16 @@ _mesa_es_error_check_format_and_type(GLenum format, GLenum type,
    return type_valid ? GL_NO_ERROR : GL_INVALID_OPERATION;
 }
 
+
+
+/**
+ * Special value returned by error some texture error checking functions when
+ * an error is detected and the proxy texture image's width/height/depth/format
+ * fields should be zeroed-out.
+ */
+#define PROXY_ERROR 2
+
+
 /**
  * Test the glTexImage[123]D() parameters for errors.
  * 
@@ -1646,13 +1656,14 @@ _mesa_es_error_check_format_and_type(GLenum format, GLenum type,
  * \param depth image depth given by the user.
  * \param border image border given by the user.
  * 
- * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
+ * \return PROXY_ERROR if there's an error that should zero-out the proxy image,
+ *         GL_TRUE if a regular GL error is found, or GL_FALSE if no error, 
  *
  * Verifies each of the parameters against the constants specified in
  * __struct gl_contextRec::Const and the supported extensions, and according
  * to the OpenGL specification.
  */
-static GLboolean
+static GLenum
 texture_error_check( struct gl_context *ctx,
                      GLuint dimensions, GLenum target,
                      GLint level, GLint internalFormat,
@@ -1742,12 +1753,16 @@ texture_error_check( struct gl_context *ctx,
                                                     type, width, height,
                                                     depth, border);
    if (!sizeOK) {
-      if (!isProxy) {
+      if (isProxy) {
+         /* No GL error is recorded, but we need to zero-out the image dims */
+         return PROXY_ERROR;
+      }
+      else {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glTexImage%dD(level=%d, width=%d, height=%d, depth=%d)",
                      dimensions, level, width, height, depth);
+         return GL_TRUE;
       }
-      return GL_TRUE;
    }
 
    /* Check internalFormat */
@@ -2636,7 +2651,7 @@ teximage(struct gl_context *ctx, GLuint dims,
          GLint border, GLenum format, GLenum type,
          const GLvoid *pixels)
 {
-   GLboolean error;
+   GLenum error;
    struct gl_pixelstore_attrib unpack_no_border;
    const struct gl_pixelstore_attrib *unpack = &ctx->Unpack;
 
@@ -2669,12 +2684,12 @@ teximage(struct gl_context *ctx, GLuint dims,
       struct gl_texture_image *texImage =
          _mesa_get_proxy_tex_image(ctx, target, level);
 
-      if (error) {
-         /* when error, clear all proxy texture image parameters */
+      if (error == PROXY_ERROR) {
+         /* image too large, etc.  Clear all proxy texture image parameters. */
          if (texImage)
             clear_teximage_fields(texImage);
       }
-      else {
+      else if (error == GL_FALSE) {
          /* no error, set the tex image parameters */
          struct gl_texture_object *texObj =
             _mesa_get_current_tex_object(ctx, target);
@@ -3268,7 +3283,7 @@ get_compressed_block_size(GLenum glformat, GLuint *bw, GLuint *bh)
 /**
  * Error checking for glCompressedTexImage[123]D().
  * \param reason  returns reason for error, if any
- * \return error code or GL_NO_ERROR.
+ * \return error code or GL_NO_ERROR or PROXY_ERROR.
  */
 static GLenum
 compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
@@ -3404,6 +3419,9 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
 				      width, height, depth, border)) {
       /* See error comment above */
       *reason = "invalid width, height or format";
+      if (target == proxyTarget) {
+         return PROXY_ERROR;
+      }
       return GL_INVALID_OPERATION;
    }
 
@@ -3640,15 +3658,19 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
 
       texImage = _mesa_get_proxy_tex_image(ctx, target, level);
       if (texImage) {
-         if (error) {
+         if (error == PROXY_ERROR) {
             /* if error, clear all proxy texture image parameters */
             clear_teximage_fields(texImage);
          }
-         else {
+         else if (error == GL_NO_ERROR) {
             /* no error: store the teximage parameters */
             _mesa_init_teximage_fields(ctx, texImage, width, height,
                                        depth, border, internalFormat,
                                        MESA_FORMAT_NONE);
+         }
+         else {
+            /* other, regular error */
+            _mesa_error(ctx, error, "glCompressedTexImage%uD(%s)", dims, reason);
          }
       }
    }
