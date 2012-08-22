@@ -1672,12 +1672,17 @@ texture_error_check( struct gl_context *ctx,
     */
    const GLboolean indexFormat = (format == GL_COLOR_INDEX);
 
+   /* Note: for proxy textures, some error conditions immediately generate
+    * a GL error in the usual way.  But others do not generate a GL error.
+    * Instead, they cause the width, height, depth, format fields of the
+    * texture image to be zeroed-out.  The GL spec seems to indicate that the
+    * zero-out behaviour is only used in cases related to memory allocation.
+    */
+
    /* Basic level check (more checking in ctx->Driver.TestProxyTexImage) */
    if (level < 0 || level >= MAX_TEXTURE_LEVELS) {
-      if (!isProxy) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glTexImage%dD(level=%d)", dimensions, level);
-      }
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glTexImage%dD(level=%d)", dimensions, level);
       return GL_TRUE;
    }
 
@@ -1686,18 +1691,14 @@ texture_error_check( struct gl_context *ctx,
        ((ctx->API != API_OPENGL ||
          target == GL_TEXTURE_RECTANGLE_NV ||
          target == GL_PROXY_TEXTURE_RECTANGLE_NV) && border != 0)) {
-      if (!isProxy) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glTexImage%dD(border=%d)", dimensions, border);
-      }
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glTexImage%dD(border=%d)", dimensions, border);
       return GL_TRUE;
    }
 
    if (width < 0 || height < 0 || depth < 0) {
-      if (!isProxy) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glTexImage%dD(width, height or depth < 0)", dimensions);
-      }
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glTexImage%dD(width, height or depth < 0)", dimensions);
       return GL_TRUE;
    }
 
@@ -1751,22 +1752,18 @@ texture_error_check( struct gl_context *ctx,
 
    /* Check internalFormat */
    if (_mesa_base_tex_format(ctx, internalFormat) < 0) {
-      if (!isProxy) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glTexImage%dD(internalFormat=%s)",
-                     dimensions, _mesa_lookup_enum_by_nr(internalFormat));
-      }
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glTexImage%dD(internalFormat=%s)",
+                  dimensions, _mesa_lookup_enum_by_nr(internalFormat));
       return GL_TRUE;
    }
 
    /* Check incoming image format and type */
    err = _mesa_error_check_format_and_type(ctx, format, type);
    if (err != GL_NO_ERROR) {
-      if (!isProxy) {
-         _mesa_error(ctx, err,
-                     "glTexImage%dD(incompatible format 0x%x, type 0x%x)",
-                     dimensions, format, type);
-      }
+      _mesa_error(ctx, err,
+                  "glTexImage%dD(incompatible format 0x%x, type 0x%x)",
+                  dimensions, format, type);
       return GL_TRUE;
    }
 
@@ -1777,10 +1774,9 @@ texture_error_check( struct gl_context *ctx,
        (_mesa_is_ycbcr_format(internalFormat) != _mesa_is_ycbcr_format(format)) ||
        (_mesa_is_depthstencil_format(internalFormat) != _mesa_is_depthstencil_format(format)) ||
        (_mesa_is_dudv_format(internalFormat) != _mesa_is_dudv_format(format))) {
-      if (!isProxy)
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glTexImage%dD(incompatible internalFormat 0x%x, format 0x%x)",
-                     dimensions, internalFormat, format);
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glTexImage%dD(incompatible internalFormat 0x%x, format 0x%x)",
+                  dimensions, internalFormat, format);
       return GL_TRUE;
    }
 
@@ -1791,7 +1787,8 @@ texture_error_check( struct gl_context *ctx,
           type != GL_UNSIGNED_SHORT_8_8_REV_MESA) {
          char message[100];
          _mesa_snprintf(message, sizeof(message),
-                        "glTexImage%dD(format/type YCBCR mismatch", dimensions);
+                        "glTexImage%dD(format/type YCBCR mismatch)",
+                        dimensions);
          _mesa_error(ctx, GL_INVALID_ENUM, "%s", message);
          return GL_TRUE; /* error */
       }
@@ -1799,18 +1796,17 @@ texture_error_check( struct gl_context *ctx,
           target != GL_PROXY_TEXTURE_2D &&
           target != GL_TEXTURE_RECTANGLE_NV &&
           target != GL_PROXY_TEXTURE_RECTANGLE_NV) {
-         if (!isProxy)
-            _mesa_error(ctx, GL_INVALID_ENUM, "glTexImage(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glTexImage%dD(bad target for YCbCr texture)",
+                     dimensions);
          return GL_TRUE;
       }
       if (border != 0) {
-         if (!isProxy) {
-            char message[100];
-            _mesa_snprintf(message, sizeof(message),
-                           "glTexImage%dD(format=GL_YCBCR_MESA and border=%d)",
-                           dimensions, border);
-            _mesa_error(ctx, GL_INVALID_VALUE, "%s", message);
-         }
+         char message[100];
+         _mesa_snprintf(message, sizeof(message),
+                        "glTexImage%dD(format=GL_YCBCR_MESA and border=%d)",
+                        dimensions, border);
+         _mesa_error(ctx, GL_INVALID_VALUE, "%s", message);
          return GL_TRUE;
       }
    }
@@ -1831,9 +1827,9 @@ texture_error_check( struct gl_context *ctx,
           target != GL_PROXY_TEXTURE_RECTANGLE_ARB &&
          !((_mesa_is_cube_face(target) || target == GL_PROXY_TEXTURE_CUBE_MAP) &&
            (ctx->Version >= 30 || ctx->Extensions.EXT_gpu_shader4))) {
-         if (!isProxy)
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glTexImage(target/internalFormat)");
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glTexImage%dD(bad target for depth texture)",
+                     dimensions);
          return GL_TRUE;
       }
    }
@@ -1841,21 +1837,18 @@ texture_error_check( struct gl_context *ctx,
    /* additional checks for compressed textures */
    if (_mesa_is_compressed_format(ctx, internalFormat)) {
       if (!target_can_be_compressed(ctx, target, internalFormat)) {
-         if (!isProxy)
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glTexImage%dD(target)", dimensions);
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glTexImage%dD(target can't be compressed)", dimensions);
          return GL_TRUE;
       }
       if (compressedteximage_only_format(ctx, internalFormat)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-               "glTexImage%dD(no compression for format)", dimensions);
+                     "glTexImage%dD(no compression for format)", dimensions);
          return GL_TRUE;
       }
       if (border != 0) {
-         if (!isProxy) {
-            _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glTexImage%dD(border!=0)", dimensions);
-         }
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glTexImage%dD(border!=0)", dimensions);
          return GL_TRUE;
       }
    }
@@ -1864,11 +1857,9 @@ texture_error_check( struct gl_context *ctx,
    if ((ctx->Version >= 30 || ctx->Extensions.EXT_texture_integer) &&
        (_mesa_is_enum_format_integer(format) !=
         _mesa_is_enum_format_integer(internalFormat))) {
-      if (!isProxy) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glTexImage%dD(integer/non-integer format mismatch)",
-                     dimensions);
-      }
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glTexImage%dD(integer/non-integer format mismatch)",
+                  dimensions);
       return GL_TRUE;
    }
 
