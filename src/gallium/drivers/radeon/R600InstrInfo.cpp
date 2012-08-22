@@ -57,6 +57,7 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       BuildMI(MBB, MI, DL, get(AMDGPU::MOV))
               .addReg(RI.getSubReg(DestReg, SubRegIndex), RegState::Define)
               .addReg(RI.getSubReg(SrcReg, SubRegIndex))
+              .addImm(0) // Flag
               .addReg(0) // PREDICATE_BIT
               .addReg(DestReg, RegState::Define | RegState::Implicit);
     }
@@ -68,6 +69,7 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
     BuildMI(MBB, MI, DL, get(AMDGPU::MOV), DestReg)
       .addReg(SrcReg, getKillRegState(KillSrc))
+      .addImm(0) // Flag
       .addReg(0); // PREDICATE_BIT
   }
 }
@@ -520,11 +522,35 @@ int R600InstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
 }
 
 //===----------------------------------------------------------------------===//
-// Instruction flag setters
+// Instruction flag getters/setters
 //===----------------------------------------------------------------------===//
+
+#define GET_FLAG_OPERAND_IDX(MI) (((MI).getDesc().TSFlags >> 7) & 0x3)
+
+bool R600InstrInfo::HasFlagOperand(const MachineInstr &MI) const
+{
+  return GET_FLAG_OPERAND_IDX(MI) != 0;
+}
 
 void R600InstrInfo::AddFlag(MachineInstr *MI, unsigned Operand,
                             unsigned Flag) const
 {
-  MI->getOperand(Operand).addTargetFlag(Flag);
+  unsigned FlagIndex = GET_FLAG_OPERAND_IDX(*MI);
+  assert(FlagIndex != 0 &&
+         "Instruction flags not supported for this instruction");
+  MachineOperand &FlagOp = MI->getOperand(FlagIndex);
+  assert(FlagOp.isImm());
+  FlagOp.setImm(FlagOp.getImm() | (Flag << (NUM_MO_FLAGS * Operand)));
+}
+
+bool R600InstrInfo::IsFlagSet(const MachineInstr &MI, unsigned Operand,
+                              unsigned Flag) const
+{
+  unsigned FlagIndex = GET_FLAG_OPERAND_IDX(MI);
+  if (FlagIndex == 0) {
+    return false;
+  }
+  assert(MI.getOperand(FlagIndex).isImm());
+  return !!((MI.getOperand(FlagIndex).getImm() >>
+            (NUM_MO_FLAGS * Operand)) & Flag);
 }

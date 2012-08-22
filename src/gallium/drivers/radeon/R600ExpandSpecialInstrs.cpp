@@ -149,7 +149,8 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
         MachineInstr *NewMI =
           BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(Opcode), DstReg)
                   .addReg(Src0)
-                  .addReg(Src1);
+                  .addReg(Src1)
+                  .addImm(0); // Flag
 
         NewMI->setIsInsideBundle(Chan != 0);
         TII->AddFlag(NewMI, 0, Flags);

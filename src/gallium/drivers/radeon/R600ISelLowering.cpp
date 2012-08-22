@@ -64,6 +64,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
         BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
                .addOperand(MI->getOperand(0))
                .addOperand(MI->getOperand(1))
+               .addImm(0) // Flags
                .addReg(AMDGPU::PRED_SEL_OFF);
       TII->AddFlag(NewMI, 0, MO_FLAG_CLAMP);
       break;
@@ -74,6 +75,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
         BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
                .addOperand(MI->getOperand(0))
                .addOperand(MI->getOperand(1))
+               .addImm(0) // Flags
                .addReg(AMDGPU::PRED_SEL_OFF);
       TII->AddFlag(NewMI, 1, MO_FLAG_ABS);
       break;
@@ -85,6 +87,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
         BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV))
                 .addOperand(MI->getOperand(0))
                 .addOperand(MI->getOperand(1))
+                .addImm(0) // Flags
                 .addReg(AMDGPU::PRED_SEL_OFF);
       TII->AddFlag(NewMI, 1, MO_FLAG_NEG);
     break;
@@ -200,7 +203,8 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
         BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::PRED_X))
                 .addReg(AMDGPU::PREDICATE_BIT)
                 .addOperand(MI->getOperand(1))
-                .addImm(OPCODE_IS_ZERO);
+                .addImm(OPCODE_IS_ZERO)
+                .addImm(0); // Flags
       TII->AddFlag(NewMI, 1, MO_FLAG_PUSH);
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::JUMP))
               .addOperand(MI->getOperand(0))
@@ -213,7 +217,8 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
         BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::PRED_X))
               .addReg(AMDGPU::PREDICATE_BIT)
               .addOperand(MI->getOperand(1))
-              .addImm(OPCODE_IS_ZERO_INT);
+              .addImm(OPCODE_IS_ZERO_INT)
+              .addImm(0); // Flags
       TII->AddFlag(NewMI, 1, MO_FLAG_PUSH);
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::JUMP))
              .addOperand(MI->getOperand(0))

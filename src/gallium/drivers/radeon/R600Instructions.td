@@ -20,7 +20,8 @@ class InstR600 <bits<32> inst, dag outs, dag ins, string asm, list<dag> pattern,
   field bits<32> Inst;
   bit Trig = 0;
   bit Op3 = 0;
-  bit isVector = 0; 
+  bit isVector = 0;
+  bits<2> FlagOperandIdx = 0;
 
   let Inst = inst;
   let Namespace = "AMDGPU";
@@ -36,6 +37,7 @@ class InstR600 <bits<32> inst, dag outs, dag ins, string asm, list<dag> pattern,
   // Vector instructions are instructions that must fill all slots in an
   // instruction group
   let TSFlags{6} = isVector;
+  let TSFlags{8-7} = FlagOperandIdx;
 }
 
 class InstR600ISA <dag outs, dag ins, string asm, list<dag> pattern> :
@@ -107,19 +109,18 @@ class R600_3OP <bits<32> inst, string opName, list<dag> pattern,
 
 
 
-def PRED_X : AMDGPUInst <(outs R600_Predicate_Bit:$dst),
-           (ins R600_Reg32:$src0, i32imm:$src1),
+def PRED_X : InstR600 <0, (outs R600_Predicate_Bit:$dst),
+           (ins R600_Reg32:$src0, i32imm:$src1, i32imm:$flags),
            "PRED $dst, $src0, $src1",
-           []>
+           [], NullALU>
 {
   let DisableEncoding = "$src0";
   field bits<32> Inst;
   bits<32> src1;
 
   let Inst = src1;
+  let FlagOperandIdx = 3;
 }
-
-
 
 let isTerminator = 1, isBranch = 1 in {
 def JUMP : InstR600 <0x10,
@@ -365,7 +366,12 @@ def FLOOR : R600_1OP <
   [(set R600_Reg32:$dst, (int_AMDGPU_floor R600_Reg32:$src))]
 >;
 
-def MOV : R600_1OP <0x19, "MOV", []>;
+def MOV : InstR600 <0x19, (outs R600_Reg32:$dst),
+                          (ins R600_Reg32:$src0, i32imm:$flags,
+                               R600_Pred:$p),
+                          "MOV $dst, $src0", [], AnyALU> {
+  let FlagOperandIdx = 2;
+}
 
 class MOV_IMM <ValueType vt, Operand immType> : InstR600 <0x19,
   (outs R600_Reg32:$dst),
@@ -386,10 +392,15 @@ def : Pat <
   (MOV_IMM_F32 (i32 ALU_LITERAL_X), fpimm:$val)
 >;
 
-def KILLGT : R600_2OP <
-  0x2D, "KILLGT",
-  []
->;
+def KILLGT : InstR600 <0x2D,
+          (outs R600_Reg32:$dst),
+          (ins R600_Reg32:$src0, R600_Reg32:$src1, i32imm:$flags, R600_Pred:$p,
+               variable_ops),
+          "KILLGT $dst, $src0, $src1, $flags ($p)",
+          [],
+          NullALU>{
+  let FlagOperandIdx = 3;
+}
 
 def AND_INT : R600_2OP <
   0x30, "AND_INT",
@@ -588,9 +599,16 @@ class CNDGE_Common <bits<32> inst> : R600_3OP <
 
 class DOT4_Common <bits<32> inst> : R600_REDUCTION <
   inst,
-  (ins R600_Reg128:$src0, R600_Reg128:$src1),
+  (ins R600_Reg128:$src0, R600_Reg128:$src1, i32imm:$flags),
   "DOT4 $dst $src0, $src1",
-  [(set R600_Reg32:$dst, (int_AMDGPU_dp4 R600_Reg128:$src0, R600_Reg128:$src1))]
+  []
+  > {
+  let FlagOperandIdx = 3;
+}
+
+class DOT4_Pat <Instruction dot4> : Pat <
+  (int_AMDGPU_dp4 R600_Reg128:$src0, R600_Reg128:$src1),
+  (dot4 R600_Reg128:$src0, R600_Reg128:$src1, 0)
 >;
 
 multiclass CUBE_Common <bits<32> inst> {
@@ -607,10 +625,12 @@ multiclass CUBE_Common <bits<32> inst> {
   def _real : InstR600 <
     inst,
     (outs R600_Reg32:$dst),
-    (ins R600_Reg32:$src0, R600_Reg32:$src1),
+    (ins R600_Reg32:$src0, R600_Reg32:$src1, i32imm:$flags),
     "CUBE $dst, $src0, $src1",
     [], VecALU
-  >;
+  >{
+    let FlagOperandIdx = 3;
+  }
 }
 
 class EXP_IEEE_Common <bits<32> inst> : R600_1OP <
@@ -748,6 +768,7 @@ let Predicates = [isR600] in {
   def CNDGT_r600 : CNDGT_Common<0x19>;
   def CNDGE_r600 : CNDGE_Common<0x1A>;
   def DOT4_r600 : DOT4_Common<0x50>;
+  def : DOT4_Pat <DOT4_r600>;
   defm CUBE_r600 : CUBE_Common<0x52>;
   def EXP_IEEE_r600 : EXP_IEEE_Common<0x61>;
   def LOG_CLAMPED_r600 : LOG_CLAMPED_Common<0x62>;
@@ -864,6 +885,7 @@ let Predicates = [isEGorCayman] in {
   def SIN_eg : SIN_Common<0x8D>;
   def COS_eg : COS_Common<0x8E>;
   def DOT4_eg : DOT4_Common<0xBE>;
+  def : DOT4_Pat <DOT4_eg>;
   defm CUBE_eg : CUBE_Common<0xC0>;
 
   def DIV_eg : DIV_Common<RECIP_IEEE_eg>;
@@ -1198,12 +1220,12 @@ def MASK_WRITE : AMDGPUShaderInst <
 // KIL Patterns
 def KILP : Pat <
   (int_AMDGPU_kilp),
-  (MASK_WRITE (KILLGT (f32 ONE), (f32 ZERO)))
+  (MASK_WRITE (KILLGT (f32 ONE), (f32 ZERO), 0))
 >;
 
 def KIL : Pat <
   (int_AMDGPU_kill R600_Reg32:$src0),
-  (MASK_WRITE (KILLGT (f32 ZERO), (f32 R600_Reg32:$src0)))
+  (MASK_WRITE (KILLGT (f32 ZERO), (f32 R600_Reg32:$src0), 0))
 >;
 
 // SGT Reverse args

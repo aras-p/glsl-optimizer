@@ -67,7 +67,7 @@ public:
 private:
 
   void EmitALUInstr(MachineInstr  &MI);
-  void EmitSrc(const MachineOperand & MO);
+  void EmitSrc(const MachineOperand & MO, unsigned SrcIdx);
   void EmitDst(const MachineOperand & MO);
   void EmitALU(MachineInstr &MI, unsigned numSrc);
   void EmitTexInstr(MachineInstr &MI);
@@ -218,6 +218,8 @@ void R600CodeEmitter::EmitALUInstr(MachineInstr &MI)
   unsigned numOperands = MI.getNumExplicitOperands();
   if(MI.findFirstPredOperandIdx() > -1)
     numOperands--;
+  if (TII->HasFlagOperand(MI))
+    numOperands--;
 
    // Some instructions are just place holder instructions that represent
    // operations that the GPU does automatically.  They should be ignored.
@@ -243,7 +245,7 @@ void R600CodeEmitter::EmitALUInstr(MachineInstr &MI)
     if (MI.getOperand(opIndex).isImm() || MI.getOperand(opIndex).isFPImm()) {
       break;
     }
-    EmitSrc(MI.getOperand(opIndex));
+    EmitSrc(MI.getOperand(opIndex), opIndex);
   }
 
   // Emit zeros for unused sources
@@ -256,8 +258,9 @@ void R600CodeEmitter::EmitALUInstr(MachineInstr &MI)
   EmitALU(MI, numOperands - 1);
 }
 
-void R600CodeEmitter::EmitSrc(const MachineOperand & MO)
+void R600CodeEmitter::EmitSrc(const MachineOperand & MO, unsigned SrcIdx)
 {
+  const MachineInstr *MI = MO.getParent();
   uint32_t value = 0;
   // Emit the source select (2 bytes).  For GPRs, this is the register index.
   // For other potential instruction operands, (e.g. constant registers) the
@@ -289,8 +292,8 @@ void R600CodeEmitter::EmitSrc(const MachineOperand & MO)
   }
 
   // XXX: Emit isNegated (1 byte)
-  if ((!(MO.getTargetFlags() & MO_FLAG_ABS))
-      && (MO.getTargetFlags() & MO_FLAG_NEG ||
+  if ((!(TII->IsFlagSet(*MI, SrcIdx, MO_FLAG_ABS)))
+      && (TII->IsFlagSet(*MI, SrcIdx, MO_FLAG_NEG) ||
      (MO.isReg() &&
       (MO.getReg() == AMDGPU::NEG_ONE || MO.getReg() == AMDGPU::NEG_HALF)))){
     EmitByte(1);
@@ -299,7 +302,7 @@ void R600CodeEmitter::EmitSrc(const MachineOperand & MO)
   }
 
   // Emit isAbsolute (1 byte)
-  if (MO.getTargetFlags() & MO_FLAG_ABS) {
+  if (TII->IsFlagSet(*MI, SrcIdx, MO_FLAG_ABS)) {
     EmitByte(1);
   } else {
     EmitByte(0);
@@ -318,6 +321,7 @@ void R600CodeEmitter::EmitSrc(const MachineOperand & MO)
 
 void R600CodeEmitter::EmitDst(const MachineOperand & MO)
 {
+  const MachineInstr *MI = MO.getParent();
   if (MO.isReg() && MO.getReg() != AMDGPU::PREDICATE_BIT) {
     // Emit the destination register index (1 byte)
     EmitByte(getHWReg(MO.getReg()));
@@ -326,14 +330,14 @@ void R600CodeEmitter::EmitDst(const MachineOperand & MO)
     EmitByte(TRI->getHWRegChan(MO.getReg()));
 
     // Emit isClamped (1 byte)
-    if (MO.getTargetFlags() & MO_FLAG_CLAMP) {
+    if (TII->IsFlagSet(*MI, 0, MO_FLAG_CLAMP)) {
       EmitByte(1);
     } else {
       EmitByte(0);
     }
 
     // Emit writemask (1 byte).
-    if (MO.getTargetFlags() & MO_FLAG_MASK) {
+    if (TII->IsFlagSet(*MI, 0, MO_FLAG_MASK)) {
       EmitByte(0);
     } else {
       EmitByte(1);
@@ -353,8 +357,7 @@ void R600CodeEmitter::EmitALU(MachineInstr &MI, unsigned numSrc)
   EmitTwoBytes(getBinaryCodeForInstr(MI));
 
   // Emit IsLast (for this instruction group) (1 byte)
-  if (MI.isInsideBundle() &&
-      !(MI.getOperand(0).getTargetFlags() & MO_FLAG_LAST)) {
+  if (MI.isInsideBundle() && !TII->IsFlagSet(MI, 0, MO_FLAG_LAST)) {
     EmitByte(0);
   } else {
     EmitByte(1);
@@ -508,7 +511,7 @@ void R600CodeEmitter::EmitFCInstr(MachineInstr &MI)
   unsigned numOperands = MI.getNumOperands();
   if (numOperands > 0) {
     assert(numOperands == 1);
-    EmitSrc(MI.getOperand(0));
+    EmitSrc(MI.getOperand(0), 0);
   } else {
     EmitNullBytes(SRC_BYTE_COUNT);
   }

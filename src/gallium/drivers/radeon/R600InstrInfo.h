@@ -112,8 +112,13 @@ namespace llvm {
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const { return 1;}
 
+  bool HasFlagOperand(const MachineInstr &MI) const;
+
   ///AddFlag - Add one of the MO_FLAG* flags to the specified Operand.
   void AddFlag(MachineInstr *MI, unsigned Operand, unsigned Flag) const;
+
+  ///IsFlagSet - Determine if the specified flag is set on this Operand.
+  bool IsFlagSet(const MachineInstr &MI, unsigned Operand, unsigned Flag) const;
 };
 
 } // End llvm namespace
@@ -127,6 +132,7 @@ namespace R600_InstFlag {
 		TRIG = (1 << 4),
 		OP3 = (1 << 5),
 		VECTOR = (1 << 6)
+    //FlagOperand bits 7, 8
 	};
 }
 
