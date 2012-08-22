@@ -2683,6 +2683,22 @@ teximage(struct gl_context *ctx, GLuint dims,
       /* Proxy texture: just clear or set state depending on error checking */
       struct gl_texture_image *texImage =
          get_proxy_tex_image(ctx, target, level);
+      gl_format texFormat = MESA_FORMAT_NONE;
+
+      if (!error) {
+         /* No parameter errors.  Choose a texture format and see if we
+          * can really allocate the texture.
+          */
+         struct gl_texture_object *texObj =
+            _mesa_get_current_tex_object(ctx, target);
+         texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
+                                                 internalFormat, format, type);
+         if (!legal_texture_size(ctx, texFormat, width, height, depth)) {
+            error = PROXY_ERROR;
+         }
+      }
+
+      texImage = get_proxy_tex_image(ctx, target, level);
 
       if (error == PROXY_ERROR) {
          /* image too large, etc.  Clear all proxy texture image parameters. */
@@ -2690,22 +2706,13 @@ teximage(struct gl_context *ctx, GLuint dims,
             clear_teximage_fields(texImage);
       }
       else if (error == GL_FALSE) {
-         /* no error, set the tex image parameters */
-         struct gl_texture_object *texObj =
-            _mesa_get_current_tex_object(ctx, target);
-         gl_format texFormat = _mesa_choose_texture_format(ctx, texObj,
-                                                           target, level,
-                                                           internalFormat,
-                                                           format, type);
-
-         if (legal_texture_size(ctx, texFormat, width, height, depth)) {
-            _mesa_init_teximage_fields(ctx, texImage, width, height,
-                                       depth, border, internalFormat,
-                                       texFormat);
-         }
-         else if (texImage) {
-            clear_teximage_fields(texImage);
-         }
+         /* no error: store the teximage parameters */
+         if (texImage)
+            _mesa_init_teximage_fields(ctx, texImage, width, height, depth,
+                                       border, internalFormat, texFormat);
+      }
+      else {
+         /* other, regular error (was already recorded) */
       }
    }
    else {
@@ -3643,7 +3650,9 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
 
    if (_mesa_is_proxy_texture(target)) {
       /* Proxy texture: just check for errors and update proxy state */
-      struct gl_texture_image *texImage;
+      struct gl_texture_image *texImage =
+         get_proxy_tex_image(ctx, target, level);
+      gl_format texFormat = MESA_FORMAT_NONE;
 
       if (!error) {
          /* No parameter errors.  Choose a texture format and see if we
@@ -3651,30 +3660,28 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
           */
          struct gl_texture_object *texObj =
             _mesa_get_current_tex_object(ctx, target);
-         gl_format texFormat =
-            _mesa_choose_texture_format(ctx, texObj, target, level,
-                                        internalFormat, GL_NONE, GL_NONE);
+         texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
+                                                 internalFormat,
+                                                 GL_NONE, GL_NONE);
          if (!legal_texture_size(ctx, texFormat, width, height, depth)) {
             error = PROXY_ERROR;
          }
       }
 
-      texImage = get_proxy_tex_image(ctx, target, level);
-      if (texImage) {
-         if (error == PROXY_ERROR) {
-            /* if error, clear all proxy texture image parameters */
+      if (error == PROXY_ERROR) {
+         /* image too large, etc.  Clear all proxy texture image parameters. */
+         if (texImage)
             clear_teximage_fields(texImage);
-         }
-         else if (error == GL_NO_ERROR) {
-            /* no error: store the teximage parameters */
-            _mesa_init_teximage_fields(ctx, texImage, width, height,
-                                       depth, border, internalFormat,
-                                       MESA_FORMAT_NONE);
-         }
-         else {
-            /* other, regular error */
-            _mesa_error(ctx, error, "glCompressedTexImage%uD(%s)", dims, reason);
-         }
+      }
+      else if (error == GL_NO_ERROR) {
+         /* no error: store the teximage parameters */
+         if (texImage)
+            _mesa_init_teximage_fields(ctx, texImage, width, height, depth,
+                                       border, internalFormat, texFormat);
+      }
+      else {
+         /* other, regular error */
+         _mesa_error(ctx, error, "glCompressedTexImage%uD(%s)", dims, reason);
       }
    }
    else {
