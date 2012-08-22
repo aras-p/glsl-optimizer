@@ -23,8 +23,8 @@
  */
 
 
-#ifndef TEXPAL_H
-#define TEXPAL_H
+#ifndef TEXCOMPRESS_CPAL_H
+#define TEXCOMPRESS_CPAL_H
 
 
 #include "main/glheader.h"
@@ -42,4 +42,4 @@ extern void
 _mesa_cpal_compressed_format_type(GLenum internalFormat, GLenum *format,
 				  GLenum *type);
 
-#endif /* TEXPAL_H */
+#endif /* TEXCOMPRESS_CPAL_H */

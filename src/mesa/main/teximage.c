@@ -42,10 +42,10 @@
 #include "mfeatures.h"
 #include "state.h"
 #include "texcompress.h"
+#include "texcompress_cpal.h"
 #include "teximage.h"
 #include "texobj.h"
 #include "texstate.h"
-#include "texpal.h"
 #include "mtypes.h"
 #include "glformats.h"
 
