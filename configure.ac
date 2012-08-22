@@ -1996,60 +1996,60 @@ CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 dnl Substitute the config
 AC_CONFIG_FILES([configs/current
 		Makefile
-		src/Makefile
-		src/gallium/Makefile
-		src/gallium/auxiliary/pipe-loader/Makefile
-		src/gallium/state_trackers/clover/Makefile
-		src/gallium/drivers/Makefile
-		src/gallium/drivers/r300/Makefile
-		src/gallium/drivers/r600/Makefile
-		src/gallium/targets/opencl/Makefile
-		src/gbm/Makefile
-		src/gbm/main/gbm.pc
+		src/egl/Makefile
 		src/egl/drivers/Makefile
 		src/egl/drivers/dri2/Makefile
 		src/egl/drivers/glx/Makefile
-		src/egl/Makefile
 		src/egl/main/Makefile
 		src/egl/main/egl.pc
 		src/egl/wayland/Makefile
+		src/egl/wayland/wayland-drm/Makefile
 		src/egl/wayland/wayland-egl/Makefile
 		src/egl/wayland/wayland-egl/wayland-egl.pc
-		src/egl/wayland/wayland-drm/Makefile
+		src/gallium/Makefile
+		src/gallium/auxiliary/pipe-loader/Makefile
+		src/gallium/drivers/Makefile
+		src/gallium/drivers/r300/Makefile
+		src/gallium/drivers/r600/Makefile
+		src/gallium/state_trackers/clover/Makefile
+		src/gallium/targets/opencl/Makefile
+		src/gbm/Makefile
+		src/gbm/main/gbm.pc
 		src/glsl/Makefile
 		src/glsl/glcpp/Makefile
 		src/glsl/tests/Makefile
 		src/glx/Makefile
 		src/glx/tests/Makefile
+		src/gtest/Makefile
+		src/Makefile
 		src/mapi/es1api/Makefile
 		src/mapi/es1api/glesv1_cm.pc
 		src/mapi/es2api/Makefile
 		src/mapi/es2api/glesv2.pc
 		src/mapi/glapi/Makefile
 		src/mapi/glapi/gen/Makefile
-		src/mapi/shared-glapi/Makefile
 		src/mapi/glapi/tests/Makefile
+		src/mapi/shared-glapi/Makefile
 		src/mapi/shared-glapi/tests/Makefile
-		src/gtest/Makefile
 		src/mesa/Makefile
-		src/mesa/libdricore/Makefile
-		src/mesa/main/tests/Makefile
-		src/mesa/x86/Makefile
-		src/mesa/x86-64/Makefile
+		src/mesa/gl.pc
 		src/mesa/drivers/Makefile
 		src/mesa/drivers/dri/dri.pc
-		src/mesa/drivers/dri/Makefile
 		src/mesa/drivers/dri/common/Makefile
 		src/mesa/drivers/dri/i915/Makefile
 		src/mesa/drivers/dri/i965/Makefile
+		src/mesa/drivers/dri/Makefile
 		src/mesa/drivers/dri/nouveau/Makefile
 		src/mesa/drivers/dri/r200/Makefile
 		src/mesa/drivers/dri/radeon/Makefile
 		src/mesa/drivers/dri/swrast/Makefile
 		src/mesa/drivers/osmesa/Makefile
+		src/mesa/drivers/osmesa/osmesa.pc
 		src/mesa/drivers/x11/Makefile
-		src/mesa/gl.pc
-		src/mesa/drivers/osmesa/osmesa.pc])
+		src/mesa/libdricore/Makefile
+		src/mesa/main/tests/Makefile
+		src/mesa/x86-64/Makefile
+		src/mesa/x86/Makefile])
 
 dnl Sort the dirs alphabetically
 GALLIUM_TARGET_DIRS=`echo $GALLIUM_TARGET_DIRS|tr " " "\n"|sort -u|tr "\n" " "`
