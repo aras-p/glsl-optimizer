@@ -1303,6 +1303,13 @@ i915ProgramStringNotify(struct gl_context * ctx,
    return true;
 }
 
+static void
+i915SamplerUniformChange(struct gl_context *ctx,
+                         GLenum target, struct gl_program *prog)
+{
+   i915ProgramStringNotify(ctx, target, prog);
+}
+
 void
 i915_update_program(struct gl_context *ctx)
 {
@@ -1456,4 +1463,5 @@ i915InitFragProgFuncs(struct dd_function_table *functions)
    functions->DeleteProgram = i915DeleteProgram;
    functions->IsProgramNative = i915IsProgramNative;
    functions->ProgramStringNotify = i915ProgramStringNotify;
+   functions->SamplerUniformChange = i915SamplerUniformChange;
 }

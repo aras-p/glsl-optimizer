@@ -1363,7 +1363,8 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
    _mesa_associate_uniform_storage(ctx, p.shader_program, fp->Parameters);
 
    _mesa_update_shader_textures_used(p.shader_program, fp);
-   (void) ctx->Driver.ProgramStringNotify(ctx, fp->Target, fp);
+   if (ctx->Driver.SamplerUniformChange)
+      ctx->Driver.SamplerUniformChange(ctx, fp->Target, fp);
 
    if (!p.shader_program->LinkStatus)
       _mesa_problem(ctx, "Failed to link fixed function fragment shader: %s\n",

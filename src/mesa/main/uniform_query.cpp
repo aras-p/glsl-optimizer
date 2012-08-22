@@ -809,7 +809,8 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
 		   sizeof(shProg->SamplerUnits));
 
 	    _mesa_update_shader_textures_used(shProg, prog);
-	    (void) ctx->Driver.ProgramStringNotify(ctx, prog->Target, prog);
+            if (ctx->Driver.SamplerUniformChange)
+	       ctx->Driver.SamplerUniformChange(ctx, prog->Target, prog);
 	 }
       }
    }

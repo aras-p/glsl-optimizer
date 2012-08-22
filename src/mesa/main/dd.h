@@ -399,6 +399,13 @@ struct dd_function_table {
    GLboolean (*ProgramStringNotify)(struct gl_context *ctx, GLenum target, 
                                     struct gl_program *prog);
 
+   /**
+    * Notify driver that the sampler uniforms for the current program have
+    * changed.  On some drivers, this may require shader recompiles.
+    */
+   void (*SamplerUniformChange)(struct gl_context *ctx, GLenum target,
+                                struct gl_program *prog);
+
    /** Query if program can be loaded onto hardware */
    GLboolean (*IsProgramNative)(struct gl_context *ctx, GLenum target, 
 				struct gl_program *prog);
