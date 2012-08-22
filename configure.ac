@@ -698,7 +698,7 @@ if test "x$enable_glx" = xyes -a \
     enable_glx=no
 fi
 
-AM_CONDITIONAL(HAVE_DRI, test x"$enable_dri" = xyes)
+AM_CONDITIONAL(HAVE_DRI, test "x$enable_dri" = xyes)
 
 AC_ARG_ENABLE([shared-glapi],
     [AS_HELP_STRING([--enable-shared-glapi],
@@ -916,8 +916,6 @@ AC_SUBST([GLAPI_LIB_DEPS])
 
 DRI_LIB_DEPS="\$(top_builddir)/src/mesa/libdricore/libdricore${VERSION}.la"
 GALLIUM_DRI_LIB_DEPS="\$(TOP)/\$(LIB_DIR)/libdricore${VERSION}.so"
-
-AM_CONDITIONAL(HAVE_DRICORE, test "x$enable_dri" = xyes)
 
 AC_SUBST([HAVE_XF86VIDMODE])
 
@@ -1977,7 +1975,6 @@ AM_CONDITIONAL(HAVE_GALLIUM_COMPUTE, test x$enable_opencl = xyes)
 AC_SUBST([GALLIUM_MAKE_DIRS])
 
 AM_CONDITIONAL(HAVE_X11_DRIVER, echo "$DRIVER_DIRS" | grep 'x11' >/dev/null 2>&1)
-AM_CONDITIONAL(HAVE_DRI_DRIVER, echo "$DRIVER_DIRS" | grep 'dri' >/dev/null 2>&1)
 
 AM_CONDITIONAL(HAVE_X86_ASM, echo "$DEFINES" | grep 'X86_ASM' >/dev/null 2>&1)
 AM_CONDITIONAL(HAVE_X86_64_ASM, echo "$DEFINES" | grep 'X86_64_ASM' >/dev/null 2>&1)

@@ -77,7 +77,7 @@ libdricore_asm_la_CPPFLAGS = $(AM_CPPFLAGS) \
         -I$(top_srcdir)/src/mesa/sparc
 endif
 
-if HAVE_DRICORE
+if HAVE_DRI
 noinst_LTLIBRARIES = libdricore-asm.la
 lib_LTLIBRARIES = libdricore@VERSION@.la
 
