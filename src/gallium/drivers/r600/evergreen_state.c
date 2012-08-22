@@ -1516,24 +1516,24 @@ static uint32_t evergreen_set_ms_pos(struct pipe_context *ctx, struct r600_pipe_
 	static unsigned max_dist_4x = 6;
 	/* 8xMSAA */
 	static uint32_t eg_sample_locs_8x[] = {
-		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
-		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
-		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
-		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
-		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
-		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
-		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
-		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
+		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
+		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
+		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
+		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
+		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
+		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
+		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
+		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
 	};
 	static uint32_t cm_sample_locs_8x[] = {
-		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
-		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
-		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
-		FILL_SREG(-2, -5, 4, -4,  1, 6, -6, -2),
-		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
-		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
-		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
-		FILL_SREG( 6,  1, 0,  0, -5, 4,  7, -8),
+		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
+		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
+		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
+		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
+		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
+		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
+		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
+		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
 	};
 	static unsigned max_dist_8x = 8;
 	/* 16xMSAA */
