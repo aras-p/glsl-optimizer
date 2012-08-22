@@ -43,7 +43,7 @@ extern gl_format
 _mesa_glenum_to_compressed_format(GLenum format);
 
 extern GLenum
-_mesa_compressed_format_to_glenum(struct gl_context *ctx, GLuint mesaFormat);
+_mesa_compressed_format_to_glenum(struct gl_context *ctx, gl_format mesaFormat);
 
 extern GLubyte *
 _mesa_compressed_image_address(GLint col, GLint row, GLint img,

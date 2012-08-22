@@ -372,7 +372,7 @@ _mesa_glenum_to_compressed_format(GLenum format)
  * internal format unchanged.
  */
 GLenum
-_mesa_compressed_format_to_glenum(struct gl_context *ctx, GLuint mesaFormat)
+_mesa_compressed_format_to_glenum(struct gl_context *ctx, gl_format mesaFormat)
 {
    switch (mesaFormat) {
 #if FEATURE_texture_fxt1
