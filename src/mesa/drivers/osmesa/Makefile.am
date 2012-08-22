@@ -45,6 +45,7 @@ lib@OSMESA_LIB@_la_LIBADD = \
 all-local: lib@OSMESA_LIB@.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
 	ln -f .libs/lib@OSMESA_LIB@.so $(top_builddir)/$(LIB_DIR)/lib@OSMESA_LIB@.so;
+	ln -f .libs/lib@OSMESA_LIB@.so.@VERSION@ $(top_builddir)/$(LIB_DIR)/lib@OSMESA_LIB@.so.@VERSION@;
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = osmesa.pc
