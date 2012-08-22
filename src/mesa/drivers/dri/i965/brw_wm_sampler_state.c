@@ -194,7 +194,8 @@ upload_default_color(struct brw_context *brw,
 static void brw_update_sampler_state(struct brw_context *brw,
 				     int unit,
                                      int ss_index,
-				     struct brw_sampler_state *sampler)
+                                     struct brw_sampler_state *sampler,
+                                     uint32_t *sdc_offset)
 {
    struct gl_context *ctx = &brw->ctx;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -336,20 +337,20 @@ static void brw_update_sampler_state(struct brw_context *brw,
       sampler->ss3.non_normalized_coord = 1;
    }
 
-   upload_default_color(brw, gl_sampler, unit, &brw->wm.sdc_offset[ss_index]);
+   upload_default_color(brw, gl_sampler, unit, sdc_offset);
 
    if (brw->gen >= 6) {
-      sampler->ss2.default_color_pointer = brw->wm.sdc_offset[ss_index] >> 5;
+      sampler->ss2.default_color_pointer = *sdc_offset >> 5;
    } else {
       /* reloc */
       sampler->ss2.default_color_pointer = (brw->batch.bo->offset +
-					    brw->wm.sdc_offset[ss_index]) >> 5;
+					    *sdc_offset) >> 5;
 
       drm_intel_bo_emit_reloc(brw->batch.bo,
 			      brw->sampler.offset +
 			      ss_index * sizeof(struct brw_sampler_state) +
 			      offsetof(struct brw_sampler_state, ss2),
-			      brw->batch.bo, brw->wm.sdc_offset[ss_index],
+			      brw->batch.bo, *sdc_offset,
 			      I915_GEM_DOMAIN_SAMPLER, 0);
    }
 
@@ -396,7 +397,8 @@ brw_upload_samplers(struct brw_context *brw)
          const unsigned unit = (fs->SamplersUsed & (1 << s)) ?
             fs->SamplerUnits[s] : vs->SamplerUnits[s];
          if (ctx->Texture.Unit[unit]._ReallyEnabled)
-            brw_update_sampler_state(brw, unit, s, &samplers[s]);
+            brw_update_sampler_state(brw, unit, s, &samplers[s],
+                                     &brw->wm.sdc_offset[s]);
       }
    }
 
