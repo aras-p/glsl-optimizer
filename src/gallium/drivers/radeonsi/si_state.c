@@ -1805,7 +1805,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	unsigned format, num_format, /*endian,*/ tiling_index;
 	uint32_t pitch = 0;
 	unsigned char state_swizzle[4], swizzle[4];
-	unsigned height, depth, width;
+	unsigned height, depth, width, offset_level, last_level;
 	int first_non_void;
 	uint64_t va;
 
@@ -1852,11 +1852,12 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	/* not supported any more */
 	//endian = si_colorformat_endian_swap(format);
 
-	height = texture->height0;
-	depth = texture->depth0;
-	width = texture->width0;
-	pitch = align(tmp->pitch_in_blocks[0] *
-		      util_format_get_blockwidth(state->format), 8);
+	offset_level = state->u.tex.first_level;
+	last_level = state->u.tex.last_level - offset_level;
+	width = tmp->surface.level[offset_level].npix_x;
+	height = tmp->surface.level[offset_level].npix_y;
+	depth = tmp->surface.level[offset_level].npix_z;
+	pitch = tmp->surface.level[offset_level].nblk_x * util_format_get_blockwidth(state->format);
 
 	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
 	        height = 1;
@@ -1907,12 +1908,9 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	}
 
 	va = r600_resource_va(ctx->screen, texture);
-	if (state->u.tex.last_level) {
-		view->state[0] = (va + tmp->offset[1]) >> 8;
-	} else {
-		view->state[0] = (va + tmp->offset[0]) >> 8;
-	}
-	view->state[1] = (S_008F14_BASE_ADDRESS_HI((va + tmp->offset[0]) >> 40) |
+	va += tmp->surface.level[offset_level].offset;
+	view->state[0] = va >> 8;
+	view->state[1] = (S_008F14_BASE_ADDRESS_HI(va >> 40) |
 			  S_008F14_DATA_FORMAT(format) |
 			  S_008F14_NUM_FORMAT(num_format));
 	view->state[2] = (S_008F18_WIDTH(width - 1) |
@@ -1921,8 +1919,8 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 			  S_008F1C_DST_SEL_Y(si_map_swizzle(swizzle[1])) |
 			  S_008F1C_DST_SEL_Z(si_map_swizzle(swizzle[2])) |
 			  S_008F1C_DST_SEL_W(si_map_swizzle(swizzle[3])) |
-			  S_008F1C_BASE_LEVEL(state->u.tex.first_level) |
-			  S_008F1C_LAST_LEVEL(state->u.tex.last_level) |
+			  S_008F1C_BASE_LEVEL(offset_level) |
+			  S_008F1C_LAST_LEVEL(last_level) |
 			  S_008F1C_TILING_INDEX(tiling_index) |
 			  S_008F1C_TYPE(si_tex_dim(texture->target)));
 	view->state[4] = (S_008F20_DEPTH(depth - 1) | S_008F20_PITCH(pitch - 1));
