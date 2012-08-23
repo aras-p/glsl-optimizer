@@ -75,7 +75,7 @@ GL 3.3:
 GLSL 3.30                                             new features in this version pretty much done
 GL_ARB_blend_func_extended                            DONE (i965, r600, softpipe)
 GL_ARB_explicit_attrib_location                       DONE (i915, i965, r300, r600, swrast)
-GL_ARB_occlusion_query2                               DONE (r300, r600, swrast)
+GL_ARB_occlusion_query2                               DONE (i965, r300, r600, swrast)
 GL_ARB_sampler_objects                                DONE (i965, r300, r600)
 GL_ARB_shader_bit_encoding                            DONE
 GL_ARB_texture_rgb10_a2ui                             DONE (i965, r600)
