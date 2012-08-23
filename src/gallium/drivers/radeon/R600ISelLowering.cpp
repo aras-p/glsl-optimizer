@@ -125,7 +125,8 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       // XXX In theory, we should be able to pass ShiftValue directly to
       // the LSHR_eg instruction as an inline literal, but I tried doing it
       // this way and it didn't produce the correct results.
-      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV), ShiftValue)
+      BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::MOV_IMM_I32),
+              ShiftValue)
               .addReg(AMDGPU::ALU_LITERAL_X)
               .addReg(AMDGPU::PRED_SEL_OFF)
               .addImm(2);
