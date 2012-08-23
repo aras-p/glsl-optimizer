@@ -3010,7 +3010,10 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, mipmap->FBO);
 
-   _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
+   if (ctx->API == API_OPENGL || ctx->API == API_OPENGLES)
+      _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
+   else
+      assert(!genMipmapSave);
 
    if (ctx->Extensions.EXT_framebuffer_sRGB) {
       _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
@@ -3149,7 +3152,8 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    _mesa_meta_end(ctx);
 
    _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
-   _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, genMipmapSave);
+   if (genMipmapSave)
+      _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, genMipmapSave);
 
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboSave);
 }
