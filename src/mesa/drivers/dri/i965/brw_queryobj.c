@@ -25,18 +25,20 @@
  *
  */
 
-/** @file support for ARB_query_object
+/** @file brw_queryobj.c
  *
- * ARB_query_object is implemented by using the PIPE_CONTROL command to stall
- * execution on the completion of previous depth tests, and write the
- * current PS_DEPTH_COUNT to a buffer object.
+ * Support for query objects (GL_ARB_occlusion_query, GL_ARB_timer_query,
+ * GL_EXT_transform_feedback, and friends).
  *
- * We use before and after counts when drawing during a query so that
- * we don't pick up other clients' query data in ours.  To reduce overhead,
- * a single BO is used to record the query data for all active queries at
- * once.  This also gives us a simple bound on how much batchbuffer space is
- * required for handling queries, so that we can be sure that we won't
- * have to emit a batchbuffer without getting the ending PS_DEPTH_COUNT.
+ * The hardware provides a PIPE_CONTROL command that can report the number of
+ * fragments that passed the depth test, or the hardware timer.  They are
+ * appropriately synced with the stage of the pipeline for our extensions'
+ * needs.
+ *
+ * To avoid getting samples from another context's rendering in our results,
+ * we capture the counts at the start and end of every batchbuffer while the
+ * query is active, and sum up the differences.  (We should do so for
+ * GL_TIME_ELAPSED as well, but don't).
  */
 #include "main/imports.h"
 
