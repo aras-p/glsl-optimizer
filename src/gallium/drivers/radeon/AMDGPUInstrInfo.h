@@ -138,7 +138,7 @@ public:
 
   /// convertToISA - Convert the AMDIL MachineInstr to a supported ISA
   /// MachineInstr
-  virtual MachineInstr * convertToISA(MachineInstr & MI, MachineFunction &MF,
+  virtual void convertToISA(MachineInstr & MI, MachineFunction &MF,
     DebugLoc DL) const;
 
 };

@@ -52,15 +52,10 @@ bool AMDGPUConvertToISAPass::runOnMachineFunction(MachineFunction &MF)
   for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
                                                   BB != BB_E; ++BB) {
     MachineBasicBlock &MBB = *BB;
-    for (MachineBasicBlock::iterator I = MBB.begin(), Next = llvm::next(I);
-         I != MBB.end(); I = Next, Next = llvm::next(I) ) {
+    for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
+                                                      I != E; ++I) {
       MachineInstr &MI = *I;
-      MachineInstr * newInstr = TII->convertToISA(MI, MF, MBB.findDebugLoc(I));
-      if (!newInstr) {
-        continue;
-      }
-      MBB.insert(I, newInstr);
-      MI.eraseFromParent();
+      TII->convertToISA(MI, MF, MBB.findDebugLoc(I));
     }
   }
   return false;

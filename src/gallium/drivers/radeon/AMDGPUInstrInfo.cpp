@@ -27,7 +27,7 @@
 using namespace llvm;
 
 AMDGPUInstrInfo::AMDGPUInstrInfo(TargetMachine &tm)
-  : AMDGPUGenInstrInfo(), RI(tm, *this), TM(tm) { }
+  : AMDGPUGenInstrInfo(0,0), RI(tm, *this), TM(tm) { }
 
 const AMDGPURegisterInfo &AMDGPUInstrInfo::getRegisterInfo() const {
   return RI;
@@ -234,16 +234,12 @@ AMDGPUInstrInfo::isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const {
   // TODO: Implement this function
   return true;
 }
-
-MachineInstr * AMDGPUInstrInfo::convertToISA(MachineInstr & MI, MachineFunction &MF,
+ 
+void AMDGPUInstrInfo::convertToISA(MachineInstr & MI, MachineFunction &MF,
     DebugLoc DL) const
 {
-  MachineInstrBuilder newInstr;
   MachineRegisterInfo &MRI = MF.getRegInfo();
   const AMDGPURegisterInfo & RI = getRegisterInfo();
-
-  // Create the new instruction
-  newInstr = BuildMI(MF, DL, TM.getInstrInfo()->get(MI.getOpcode()));
 
   for (unsigned i = 0; i < MI.getNumOperands(); i++) {
     MachineOperand &MO = MI.getOperand(i);
@@ -258,9 +254,5 @@ MachineInstr * AMDGPUInstrInfo::convertToISA(MachineInstr & MI, MachineFunction 
         MRI.setRegClass(MO.getReg(), newRegClass);
       }
     }
-    // Add the operand to the new instruction
-    newInstr.addOperand(MO);
   }
-
-  return newInstr;
 }
