@@ -2820,6 +2820,14 @@ struct gl_constants
    GLuint MaxProgramMatrices;
    GLuint MaxProgramMatrixStackDepth;
 
+   struct {
+      GLuint SamplesPassed;
+      GLuint TimeElapsed;
+      GLuint Timestamp;
+      GLuint PrimitivesGenerated;
+      GLuint PrimitivesWritten;
+   } QueryCounterBits;
+
    /** vertex array / buffer object bounds checking */
    GLboolean CheckArrayBounds;
 

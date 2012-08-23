@@ -482,7 +482,36 @@ _mesa_GetQueryIndexediv(GLenum target, GLuint index, GLenum pname,
 
    switch (pname) {
       case GL_QUERY_COUNTER_BITS_ARB:
-         *params = 8 * sizeof(q->Result);
+         switch (target) {
+         case GL_SAMPLES_PASSED:
+            *params = ctx->Const.QueryCounterBits.SamplesPassed;
+            break;
+         case GL_ANY_SAMPLES_PASSED:
+            /* The minimum value of this is 1 if it's nonzero, and the value
+             * is only ever GL_TRUE or GL_FALSE, so no sense in reporting more
+             * bits.
+             */
+            *params = 1;
+            break;
+         case GL_TIME_ELAPSED:
+            *params = ctx->Const.QueryCounterBits.TimeElapsed;
+            break;
+         case GL_TIMESTAMP:
+            *params = ctx->Const.QueryCounterBits.Timestamp;
+            break;
+         case GL_PRIMITIVES_GENERATED:
+            *params = ctx->Const.QueryCounterBits.PrimitivesGenerated;
+            break;
+         case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
+            *params = ctx->Const.QueryCounterBits.PrimitivesWritten;
+            break;
+         default:
+            _mesa_problem(ctx,
+                          "Unknown target in glGetQueryIndexediv(target = %s)",
+                          _mesa_lookup_enum_by_nr(target));
+            *params = 0;
+            break;
+         }
          break;
       case GL_CURRENT_QUERY_ARB:
          *params = q ? q->Id : 0;
@@ -716,6 +745,12 @@ _mesa_init_queryobj(struct gl_context *ctx)
 {
    ctx->Query.QueryObjects = _mesa_NewHashTable();
    ctx->Query.CurrentOcclusionObject = NULL;
+
+   ctx->Const.QueryCounterBits.SamplesPassed = 64;
+   ctx->Const.QueryCounterBits.TimeElapsed = 64;
+   ctx->Const.QueryCounterBits.Timestamp = 64;
+   ctx->Const.QueryCounterBits.PrimitivesGenerated = 64;
+   ctx->Const.QueryCounterBits.PrimitivesWritten = 64;
 }
 
 
