@@ -494,16 +494,16 @@ _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
    switch (format) {
    /* DXT formats */
    case MESA_FORMAT_RGB_DXT1:
-      fetch = _mesa_fetch_texel_2d_f_rgb_dxt1;
+      fetch = _mesa_fetch_texel_rgb_dxt1;
       break;
    case MESA_FORMAT_RGBA_DXT1:
-      fetch = _mesa_fetch_texel_2d_f_rgba_dxt1;
+      fetch = _mesa_fetch_texel_rgba_dxt1;
       break;
    case MESA_FORMAT_RGBA_DXT3:
-      fetch = _mesa_fetch_texel_2d_f_rgba_dxt3;
+      fetch = _mesa_fetch_texel_rgba_dxt3;
       break;
    case MESA_FORMAT_RGBA_DXT5:
-      fetch = _mesa_fetch_texel_2d_f_rgba_dxt5;
+      fetch = _mesa_fetch_texel_rgba_dxt5;
       break;
 
    /* FXT1 formats */

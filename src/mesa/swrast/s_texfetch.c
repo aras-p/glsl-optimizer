@@ -426,27 +426,27 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_SRGB_DXT1,
-      NULL,
-      _mesa_fetch_texel_2d_f_srgb_dxt1,
-      NULL
+      _mesa_fetch_texel_srgb_dxt1,
+      _mesa_fetch_texel_srgb_dxt1,
+      _mesa_fetch_texel_srgb_dxt1
    },
    {
       MESA_FORMAT_SRGBA_DXT1,
-      NULL,
-      _mesa_fetch_texel_2d_f_srgba_dxt1,
-      NULL
+      _mesa_fetch_texel_srgba_dxt1,
+      _mesa_fetch_texel_srgba_dxt1,
+      _mesa_fetch_texel_srgba_dxt1
    },
    {
       MESA_FORMAT_SRGBA_DXT3,
-      NULL,
-      _mesa_fetch_texel_2d_f_srgba_dxt3,
-      NULL
+      _mesa_fetch_texel_srgba_dxt3,
+      _mesa_fetch_texel_srgba_dxt3,
+      _mesa_fetch_texel_srgba_dxt3
    },
    {
       MESA_FORMAT_SRGBA_DXT5,
-      NULL,
-      _mesa_fetch_texel_2d_f_srgba_dxt5,
-      NULL
+      _mesa_fetch_texel_srgba_dxt5,
+      _mesa_fetch_texel_srgba_dxt5,
+      _mesa_fetch_texel_srgba_dxt5
    },
 
    {
@@ -463,27 +463,27 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
    },
    {
       MESA_FORMAT_RGB_DXT1,
-      NULL,
-      _mesa_fetch_texel_2d_f_rgb_dxt1,
-      NULL
+      _mesa_fetch_texel_rgb_dxt1,
+      _mesa_fetch_texel_rgb_dxt1,
+      _mesa_fetch_texel_rgb_dxt1
    },
    {
       MESA_FORMAT_RGBA_DXT1,
-      NULL,
-      _mesa_fetch_texel_2d_f_rgba_dxt1,
-      NULL
+      _mesa_fetch_texel_rgba_dxt1,
+      _mesa_fetch_texel_rgba_dxt1,
+      _mesa_fetch_texel_rgba_dxt1
    },
    {
       MESA_FORMAT_RGBA_DXT3,
-      NULL,
-      _mesa_fetch_texel_2d_f_rgba_dxt3,
-      NULL
+      _mesa_fetch_texel_rgba_dxt3,
+      _mesa_fetch_texel_rgba_dxt3,
+      _mesa_fetch_texel_rgba_dxt3
    },
    {
       MESA_FORMAT_RGBA_DXT5,
-      NULL,
-      _mesa_fetch_texel_2d_f_rgba_dxt5,
-      NULL
+      _mesa_fetch_texel_rgba_dxt5,
+      _mesa_fetch_texel_rgba_dxt5,
+      _mesa_fetch_texel_rgba_dxt5
    },
    {
       MESA_FORMAT_RGBA_FLOAT32,

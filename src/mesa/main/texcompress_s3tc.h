@@ -48,36 +48,36 @@ extern GLboolean
 _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS);
 
 extern void
-_mesa_fetch_texel_2d_f_rgb_dxt1(const struct swrast_texture_image *texImage,
-                                GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_rgb_dxt1(const struct swrast_texture_image *texImage,
+                           GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_rgba_dxt1(const struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_rgba_dxt1(const struct swrast_texture_image *texImage,
+                            GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_rgba_dxt3(const struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_rgba_dxt3(const struct swrast_texture_image *texImage,
+                            GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_rgba_dxt5(const struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_rgba_dxt5(const struct swrast_texture_image *texImage,
+                            GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_srgb_dxt1(const struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_srgb_dxt1(const struct swrast_texture_image *texImage,
+                            GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_srgba_dxt1(const struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_srgba_dxt1(const struct swrast_texture_image *texImage,
+                             GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_srgba_dxt3(const struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_srgba_dxt3(const struct swrast_texture_image *texImage,
+                             GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_srgba_dxt5(const struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_srgba_dxt5(const struct swrast_texture_image *texImage,
+                             GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
 _mesa_init_texture_s3tc(struct gl_context *ctx);
