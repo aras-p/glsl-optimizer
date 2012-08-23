@@ -4,6 +4,7 @@
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
@@ -29,6 +30,7 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (STM.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
     EmitProgramInfo(MF);
   }
+  OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
   EmitFunctionBody();
   return false;
 }
