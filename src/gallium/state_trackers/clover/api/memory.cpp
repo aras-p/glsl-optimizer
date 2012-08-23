@@ -39,7 +39,7 @@ clCreateBuffer(cl_context ctx, cl_mem_flags flags, size_t size,
    if (!size)
       throw error(CL_INVALID_BUFFER_SIZE);
 
-   if (flags & ~(CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
+   if (flags & ~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
                  CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR |
                  CL_MEM_COPY_HOST_PTR))
       throw error(CL_INVALID_VALUE);
@@ -98,7 +98,7 @@ clCreateImage2D(cl_context ctx, cl_mem_flags flags,
    if (!ctx)
       throw error(CL_INVALID_CONTEXT);
 
-   if (flags & ~(CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
+   if (flags & ~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
                  CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR |
                  CL_MEM_COPY_HOST_PTR))
       throw error(CL_INVALID_VALUE);
@@ -134,7 +134,7 @@ clCreateImage3D(cl_context ctx, cl_mem_flags flags,
    if (!ctx)
       throw error(CL_INVALID_CONTEXT);
 
-   if (flags & ~(CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
+   if (flags & ~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
                  CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR |
                  CL_MEM_COPY_HOST_PTR))
       throw error(CL_INVALID_VALUE);
@@ -168,7 +168,7 @@ clGetSupportedImageFormats(cl_context ctx, cl_mem_flags flags,
    if (!ctx)
       throw error(CL_INVALID_CONTEXT);
 
-   if (flags & ~(CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
+   if (flags & ~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
                  CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR |
                  CL_MEM_COPY_HOST_PTR))
       throw error(CL_INVALID_VALUE);
