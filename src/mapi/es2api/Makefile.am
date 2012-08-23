@@ -41,7 +41,7 @@ GLES_include_HEADERS = \
 lib_LTLIBRARIES = libGLESv2.la
 
 libGLESv2_la_SOURCES = ../mapi/entry.c glapi_mapi_tmp.h
-libGLESv2_la_LIBADD = $(GLESv2_LIB_DEPS)
+libGLESv2_la_LIBADD = $(GLESv2_LIB_DEPS) ../shared-glapi/libglapi.la
 libGLESv2_la_LDFLAGS = -version-number 2 -no-undefined
 
 include ../glapi/gen/glapi_gen.mk
