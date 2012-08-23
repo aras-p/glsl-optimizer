@@ -31,12 +31,11 @@ AM_CFLAGS = $(VISIBILITY_CFLAGS)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = glesv2.pc
 
-GLES_includedir = $(includedir)/GLES
-GLES_include_HEADERS = \
-	$(top_srcdir)/include/GLES/egl.h \
-	$(top_srcdir)/include/GLES/gl.h \
-	$(top_srcdir)/include/GLES/glext.h \
-	$(top_srcdir)/include/GLES/glplatform.h
+GLES2_includedir = $(includedir)/GLES2
+GLES2_include_HEADERS = \
+	$(top_srcdir)/include/GLES2/gl2.h \
+	$(top_srcdir)/include/GLES2/gl2ext.h \
+	$(top_srcdir)/include/GLES2/gl2platform.h
 
 lib_LTLIBRARIES = libGLESv2.la
 
