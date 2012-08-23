@@ -2007,7 +2007,9 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/drivers/r300/Makefile
 		src/gallium/drivers/r600/Makefile
 		src/gallium/state_trackers/clover/Makefile
+		src/gallium/targets/Makefile
 		src/gallium/targets/opencl/Makefile
+		src/gallium/winsys/Makefile
 		src/gbm/Makefile
 		src/gbm/main/gbm.pc
 		src/glsl/Makefile
