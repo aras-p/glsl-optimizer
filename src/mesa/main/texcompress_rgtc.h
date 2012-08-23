@@ -43,35 +43,35 @@ extern GLboolean
 _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS);
 
 extern void
-_mesa_fetch_texel_2d_f_red_rgtc1(const struct swrast_texture_image *texImage,
-				 GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_red_rgtc1(const struct swrast_texture_image *texImage,
+                            GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_signed_red_rgtc1(const struct swrast_texture_image *texImage,
-					GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_signed_red_rgtc1(const struct swrast_texture_image *texImage,
+                                   GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_rg_rgtc2(const struct swrast_texture_image *texImage,
-				 GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_rg_rgtc2(const struct swrast_texture_image *texImage,
+                           GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_signed_rg_rgtc2(const struct swrast_texture_image *texImage,
-				       GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_signed_rg_rgtc2(const struct swrast_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_l_latc1(const struct swrast_texture_image *texImage,
+_mesa_fetch_texel_l_latc1(const struct swrast_texture_image *texImage,
+                          GLint i, GLint j, GLint k, GLfloat *texel);
+
+extern void
+_mesa_fetch_texel_signed_l_latc1(const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_signed_l_latc1(const struct swrast_texture_image *texImage,
-                                        GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_la_latc2(const struct swrast_texture_image *texImage,
+                           GLint i, GLint j, GLint k, GLfloat *texel);
 
 extern void
-_mesa_fetch_texel_2d_f_la_latc2(const struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLfloat *texel);
-
-extern void
-_mesa_fetch_texel_2d_f_signed_la_latc2(const struct swrast_texture_image *texImage,
-                                       GLint i, GLint j, GLint k, GLfloat *texel);
+_mesa_fetch_texel_signed_la_latc2(const struct swrast_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLfloat *texel);
 
 #endif
