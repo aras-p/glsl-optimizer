@@ -53,8 +53,8 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 {
   if (AMDGPU::R600_Reg128RegClass.contains(DestReg)
       && AMDGPU::R600_Reg128RegClass.contains(SrcReg)) {
-    for (unsigned i = 0; i < 4; i++) {
-      unsigned SubRegIndex = RI.getSubRegFromChannel(i);
+    for (unsigned I = 0; I < 4; I++) {
+      unsigned SubRegIndex = RI.getSubRegFromChannel(I);
       BuildMI(MBB, MI, DL, get(AMDGPU::MOV))
               .addReg(RI.getSubReg(DestReg, SubRegIndex), RegState::Define)
               .addReg(RI.getSubReg(SrcReg, SubRegIndex))
@@ -108,9 +108,9 @@ bool R600InstrInfo::isMov(unsigned Opcode) const
 // Some instructions act as place holders to emulate operations that the GPU
 // hardware does automatically. This function can be used to check if
 // an opcode falls into this category.
-bool R600InstrInfo::isPlaceHolderOpcode(unsigned opcode) const
+bool R600InstrInfo::isPlaceHolderOpcode(unsigned Opcode) const
 {
-  switch (opcode) {
+  switch (Opcode) {
   default: return false;
   case AMDGPU::RETURN:
   case AMDGPU::LAST:
@@ -120,9 +120,9 @@ bool R600InstrInfo::isPlaceHolderOpcode(unsigned opcode) const
   }
 }
 
-bool R600InstrInfo::isReductionOp(unsigned opcode) const
+bool R600InstrInfo::isReductionOp(unsigned Opcode) const
 {
-  switch(opcode) {
+  switch(Opcode) {
     default: return false;
     case AMDGPU::DOT4_r600:
     case AMDGPU::DOT4_eg:
@@ -130,9 +130,9 @@ bool R600InstrInfo::isReductionOp(unsigned opcode) const
   }
 }
 
-bool R600InstrInfo::isCubeOp(unsigned opcode) const
+bool R600InstrInfo::isCubeOp(unsigned Opcode) const
 {
-  switch(opcode) {
+  switch(Opcode) {
     default: return false;
     case AMDGPU::CUBE_r600_pseudo:
     case AMDGPU::CUBE_r600_real:
@@ -150,9 +150,9 @@ DFAPacketizer *R600InstrInfo::CreateTargetScheduleState(const TargetMachine *TM,
 }
 
 static bool
-isPredicateSetter(unsigned opcode)
+isPredicateSetter(unsigned Opcode)
 {
-  switch (opcode) {
+  switch (Opcode) {
   case AMDGPU::PRED_X:
     return true;
   default:
@@ -274,7 +274,7 @@ R600InstrInfo::InsertBranch(MachineBasicBlock &MBB,
     } else {
       MachineInstr *PredSet = findFirstPredicateSetterFrom(MBB, MBB.end());
       assert(PredSet && "No previous predicate !");
-      AddFlag(PredSet, 1, MO_FLAG_PUSH);
+      addFlag(PredSet, 1, MO_FLAG_PUSH);
       PredSet->getOperand(2).setImm(Cond[1].getImm());
 
       BuildMI(&MBB, DL, get(AMDGPU::JUMP))
@@ -285,7 +285,7 @@ R600InstrInfo::InsertBranch(MachineBasicBlock &MBB,
   } else {
     MachineInstr *PredSet = findFirstPredicateSetterFrom(MBB, MBB.end());
     assert(PredSet && "No previous predicate !");
-    AddFlag(PredSet, 1, MO_FLAG_PUSH);
+    addFlag(PredSet, 1, MO_FLAG_PUSH);
     PredSet->getOperand(2).setImm(Cond[1].getImm());
     BuildMI(&MBB, DL, get(AMDGPU::JUMP))
             .addMBB(TBB)
@@ -314,7 +314,7 @@ R600InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const
   case AMDGPU::JUMP:
     if (isPredicated(I)) {
       MachineInstr *predSet = findFirstPredicateSetterFrom(MBB, I);
-      ClearFlag(predSet, 1, MO_FLAG_PUSH);
+      clearFlag(predSet, 1, MO_FLAG_PUSH);
     }
     I->eraseFromParent();
     break;
@@ -332,7 +332,7 @@ R600InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const
   case AMDGPU::JUMP:
     if (isPredicated(I)) {
       MachineInstr *predSet = findFirstPredicateSetterFrom(MBB, I);
-      ClearFlag(predSet, 1, MO_FLAG_PUSH);
+      clearFlag(predSet, 1, MO_FLAG_PUSH);
     }
     I->eraseFromParent();
     break;
@@ -481,12 +481,12 @@ int R600InstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
 // Instruction flag getters/setters
 //===----------------------------------------------------------------------===//
 
-bool R600InstrInfo::HasFlagOperand(const MachineInstr &MI) const
+bool R600InstrInfo::hasFlagOperand(const MachineInstr &MI) const
 {
   return GET_FLAG_OPERAND_IDX(get(MI.getOpcode()).TSFlags) != 0;
 }
 
-MachineOperand &R600InstrInfo::GetFlagOp(MachineInstr *MI) const
+MachineOperand &R600InstrInfo::getFlagOp(MachineInstr *MI) const
 {
   unsigned FlagIndex = GET_FLAG_OPERAND_IDX(get(MI->getOpcode()).TSFlags);
   assert(FlagIndex != 0 &&
@@ -496,17 +496,17 @@ MachineOperand &R600InstrInfo::GetFlagOp(MachineInstr *MI) const
   return FlagOp;
 }
 
-void R600InstrInfo::AddFlag(MachineInstr *MI, unsigned Operand,
+void R600InstrInfo::addFlag(MachineInstr *MI, unsigned Operand,
                             unsigned Flag) const
 {
-  MachineOperand &FlagOp = GetFlagOp(MI);
+  MachineOperand &FlagOp = getFlagOp(MI);
   FlagOp.setImm(FlagOp.getImm() | (Flag << (NUM_MO_FLAGS * Operand)));
 }
 
-void R600InstrInfo::ClearFlag(MachineInstr *MI, unsigned Operand,
+void R600InstrInfo::clearFlag(MachineInstr *MI, unsigned Operand,
                               unsigned Flag) const
 {
-  MachineOperand &FlagOp = GetFlagOp(MI);
+  MachineOperand &FlagOp = getFlagOp(MI);
   unsigned InstFlags = FlagOp.getImm();
   InstFlags &= ~(Flag << (NUM_MO_FLAGS * Operand));
   FlagOp.setImm(InstFlags);

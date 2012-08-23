@@ -1,3 +1,17 @@
+//===- AMDGPUMCInstLower.cpp - Lower AMDGPU MachineInstr to an MCInst -----===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains code to lower AMDGPU MachineInstrs to their corresponding
+// MCInst.
+//
+//===----------------------------------------------------------------------===//
+//
 
 #include "AMDGPUMCInstLower.h"
 #include "AMDGPUAsmPrinter.h"
@@ -13,7 +27,7 @@ using namespace llvm;
 
 AMDGPUMCInstLower::AMDGPUMCInstLower() { }
 
-void AMDGPUMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
+void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
 
   for (unsigned i = 0, e = MI->getNumExplicitOperands(); i != e; ++i) {
@@ -56,13 +70,13 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     while (I != MBB->end() && I->isInsideBundle()) {
       MCInst MCBundleInst;
       const MachineInstr *BundledInst = I;
-      MCInstLowering.Lower(BundledInst, MCBundleInst);
+      MCInstLowering.lower(BundledInst, MCBundleInst);
       OutStreamer.EmitInstruction(MCBundleInst);
       ++I;
     }
   } else {
     MCInst TmpInst;
-    MCInstLowering.Lower(MI, TmpInst);
+    MCInstLowering.lower(MI, TmpInst);
     OutStreamer.EmitInstruction(TmpInst);
   }
 }

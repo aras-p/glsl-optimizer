@@ -1,3 +1,15 @@
+//===-- AMDGPUSubtarget.cpp - AMDGPU Subtarget Information ----------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements the AMDGPU specific subclass of TargetSubtarget.
+//
+//===----------------------------------------------------------------------===//
 
 #include "AMDGPUSubtarget.h"
 

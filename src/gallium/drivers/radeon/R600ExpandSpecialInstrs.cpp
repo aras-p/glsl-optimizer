@@ -154,7 +154,7 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
                   .addImm(0); // Flag
 
         NewMI->setIsInsideBundle(Chan != 0);
-        TII->AddFlag(NewMI, 0, Flags);
+        TII->addFlag(NewMI, 0, Flags);
       }
       MI.eraseFromParent();
     }

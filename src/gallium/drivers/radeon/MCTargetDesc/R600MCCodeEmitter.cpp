@@ -149,12 +149,6 @@ MCCodeEmitter *llvm::createR600MCCodeEmitter(const MCInstrInfo &MCII,
 
 void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                                        SmallVectorImpl<MCFixup> &Fixups) const {
-/*
-  if (MI.getNumOperands() > 1 && MI.getOperand(0).isReg() &&
-      MI.getOperand(0).isDead()) {
-    return;
-  }
-*/
   if (isTexOp(MI.getOpcode())) {
     EmitTexInstr(MI, Fixups, OS);
   } else if (isFCOp(MI.getOpcode())){
@@ -208,12 +202,6 @@ void R600MCCodeEmitter::EmitALUInstr(const MCInst &MI,
 
   if (GET_FLAG_OPERAND_IDX(MCDesc.TSFlags) != 0)
     NumOperands--;
-
-   // Some instructions are just place holder instructions that represent
-   // operations that the GPU does automatically.  They should be ignored.
-//  if (TII->isPlaceHolderOpcode(MI.getOpcode())) {
-//    return;
-//  }
 
   if(MI.getOpcode() == AMDGPU::PRED_X)
     NumOperands = 2;

@@ -1,3 +1,15 @@
+//===-- AMDGPUAsmPrinter.h - Print AMDGPU assembly code -------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// AMDGPU Assembly printer class.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef AMDGPU_ASMPRINTER_H
 #define AMDGPU_ASMPRINTER_H

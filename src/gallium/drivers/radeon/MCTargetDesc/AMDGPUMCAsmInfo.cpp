@@ -1,4 +1,4 @@
-//===-- MCTargetDesc/AMDGPUMCAsmInfo.cpp - TODO: Add brief description -------===//
+//===-- MCTargetDesc/AMDGPUMCAsmInfo.cpp - Assembly Info ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,21 +6,14 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// TODO: Add full description
-//
-//===----------------------------------------------------------------------===//
 
 #include "AMDGPUMCAsmInfo.h"
-#ifndef NULL
-#define NULL 0
-#endif
 
 using namespace llvm;
 AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(const Target &T, StringRef &TT) : MCAsmInfo()
 {
   HasSingleParameterDotFile = false;
-  WeakDefDirective = NULL;
+  WeakDefDirective = 0;
   //===------------------------------------------------------------------===//
   HasSubsectionsViaSymbols = true;
   HasMachoZeroFillDirective = false;
@@ -51,7 +44,7 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(const Target &T, StringRef &TT) : MCAsmInfo()
   Data16bitsDirective = ".short\t";
   Data32bitsDirective = ".long\t";
   Data64bitsDirective = ".quad\t";
-  GPRel32Directive = NULL;
+  GPRel32Directive = 0;
   SunStyleELFSectionSwitchSyntax = true;
   UsesELFSectionDirectiveForBSS = true;
   HasMicrosoftFastStdCallMangling = false;
@@ -72,7 +65,7 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(const Target &T, StringRef &TT) : MCAsmInfo()
   HasNoDeadStrip = true;
   HasSymbolResolver = false;
   WeakRefDirective = ".weakref\t";
-  LinkOnceDirective = NULL;
+  LinkOnceDirective = 0;
   //===--- Dwarf Emission Directives -----------------------------------===//
   HasLEB128 = true;
   SupportsDebugInformation = true;
@@ -82,22 +75,22 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(const Target &T, StringRef &TT) : MCAsmInfo()
   DwarfUsesLabelOffsetForRanges = true;
 
   //===--- CBE Asm Translation Table -----------------------------------===//
-  AsmTransCBE = NULL;
+  AsmTransCBE = 0;
 }
 const char*
 AMDGPUMCAsmInfo::getDataASDirective(unsigned int Size, unsigned int AS) const
 {
   switch (AS) {
     default:
-      return NULL;
+      return 0;
     case 0:
-      return NULL;
+      return 0;
   };
-  return NULL;
+  return 0;
 }
 
 const MCSection*
 AMDGPUMCAsmInfo::getNonexecutableStackSection(MCContext &CTX) const
 {
-  return NULL;
+  return 0;
 }

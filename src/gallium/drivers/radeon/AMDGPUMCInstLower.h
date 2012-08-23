@@ -1,3 +1,11 @@
+//===- AMDGPUMCInstLower.h MachineInstr Lowering Interface ------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef AMDGPU_MCINSTLOWER_H
 #define AMDGPU_MCINSTLOWER_H
@@ -12,8 +20,8 @@ class AMDGPUMCInstLower {
 public:
   AMDGPUMCInstLower();
 
-  /// Lower - Lower a MachineInstr to an MCInst
-  void Lower(const MachineInstr *MI, MCInst &OutMI) const;
+  /// lower - Lower a MachineInstr to an MCInst
+  void lower(const MachineInstr *MI, MCInst &OutMI) const;
 
 };
 

@@ -110,19 +110,21 @@ namespace llvm {
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const { return 1;}
 
-  bool HasFlagOperand(const MachineInstr &MI) const;
+  ///hasFlagOperand - Returns true if this instruction has an operand for
+  /// storing target flags.
+  bool hasFlagOperand(const MachineInstr &MI) const;
 
-  ///AddFlag - Add one of the MO_FLAG* flags to the specified Operand.
-  void AddFlag(MachineInstr *MI, unsigned Operand, unsigned Flag) const;
+  ///addFlag - Add one of the MO_FLAG* flags to the specified Operand.
+  void addFlag(MachineInstr *MI, unsigned Operand, unsigned Flag) const;
 
-  ///IsFlagSet - Determine if the specified flag is set on this Operand.
-  bool IsFlagSet(const MachineInstr &MI, unsigned Operand, unsigned Flag) const;
+  ///isFlagSet - Determine if the specified flag is set on this Operand.
+  bool isFlagSet(const MachineInstr &MI, unsigned Operand, unsigned Flag) const;
 
-  ///GetFlagOp - Return the operand containing the flags for this instruction.
-  MachineOperand &GetFlagOp(MachineInstr *MI) const;
+  ///getFlagOp - Return the operand containing the flags for this instruction.
+  MachineOperand &getFlagOp(MachineInstr *MI) const;
 
-  ///ClearFlag - Clear the specified flag on the instruction.
-  void ClearFlag(MachineInstr *MI, unsigned Operand, unsigned Flag) const;
+  ///clearFlag - Clear the specified flag on the instruction.
+  void clearFlag(MachineInstr *MI, unsigned Operand, unsigned Flag) const;
 };
 
 } // End llvm namespace

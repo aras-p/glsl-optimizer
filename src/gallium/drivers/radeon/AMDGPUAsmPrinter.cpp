@@ -1,3 +1,19 @@
+//===-- AMDGPUAsmPrinter.cpp - AMDGPU Assebly printer  --------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// The AMDGPUAsmPrinter is used to print both assembly string and also binary
+// code.  When passed an MCAsmStreamer it prints assembly and when passed
+// an MCObjectStreamer it outputs binary code.
+//
+//===----------------------------------------------------------------------===//
+//
+
 
 #include "AMDGPUAsmPrinter.h"
 #include "AMDGPU.h"
