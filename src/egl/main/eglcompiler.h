@@ -110,9 +110,7 @@
  * Don't define it if using a newer Windows compiler.
  */
 #ifndef __FUNCTION__
-# if defined(__VMS)
-#  define __FUNCTION__ "VMS$NL:"
-# elif (!defined __GNUC__) && (!defined __xlC__) && \
+# if (!defined __GNUC__) && (!defined __xlC__) && \
       (!defined(_MSC_VER) || _MSC_VER < 1300)
 #  if (__STDC_VERSION__ >= 199901L) /* C99 */ || \
     (defined(__SUNPRO_C) && defined(__C99FEATURES__))

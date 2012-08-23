@@ -27,10 +27,6 @@
 #ifndef XFONTS_H
 #define XFONTS_H
 
-#ifdef __VMS
-#include <GL/vms_x_fix.h>
-#endif
-
 #include <X11/Xlib.h>
 
 

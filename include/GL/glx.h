@@ -27,21 +27,8 @@
 #define GLX_H
 
 
-#ifdef __VMS
-#include <GL/vms_x_fix.h>
-# ifdef __cplusplus
-/* VMS Xlib.h gives problems with C++.
- * this avoids a bunch of trivial warnings */
-#pragma message disable nosimpint
-#endif
-#endif
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#ifdef __VMS
-# ifdef __cplusplus
-#pragma message enable nosimpint
-#endif
-#endif
 #include <GL/gl.h>
 
 

@@ -26,10 +26,6 @@
 #ifndef GLX_HEADER_H
 #define GLX_HEADER_H
 
-#ifdef __VMS
-#include <GL/vms_x_fix.h>
-#endif
-
 #include "main/glheader.h"
 
 

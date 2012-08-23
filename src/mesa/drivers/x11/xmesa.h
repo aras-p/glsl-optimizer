@@ -64,10 +64,6 @@ and create a window, you must do the following to use the X/Mesa interface:
 #ifndef XMESA_H
 #define XMESA_H
 
-#ifdef __VMS
-#include <GL/vms_x_fix.h>
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

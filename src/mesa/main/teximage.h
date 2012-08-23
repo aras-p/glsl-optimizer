@@ -268,11 +268,6 @@ _mesa_CompressedTexImage3D(GLenum target, GLint level,
                               GLsizei height, GLsizei depth, GLint border,
                               GLsizei imageSize, const GLvoid *data);
 
-#ifdef VMS
-#define _mesa_CompressedTexSubImage1D _mesa_CompressedTexSubImage1DAR
-#define _mesa_CompressedTexSubImage2D _mesa_CompressedTexSubImage2DAR
-#define _mesa_CompressedTexSubImage3D _mesa_CompressedTexSubImage3DAR
-#endif
 extern void GLAPIENTRY
 _mesa_CompressedTexSubImage1D(GLenum target, GLint level, GLint xoffset,
                                  GLsizei width, GLenum format,
