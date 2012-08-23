@@ -316,7 +316,7 @@ R600InstrInfo::InsertBranch(MachineBasicBlock &MBB,
     } else {
       MachineInstr *PredSet = findFirstPredicateSetterFrom(MBB, MBB.end());
       assert(PredSet && "No previous predicate !");
-      PredSet->getOperand(1).addTargetFlag(1<<4);
+      AddFlag(PredSet, 1, MO_FLAG_PUSH);
       PredSet->getOperand(2).setImm(Cond[1].getImm());
 
       BuildMI(&MBB, DL, get(AMDGPU::JUMP))
@@ -327,7 +327,7 @@ R600InstrInfo::InsertBranch(MachineBasicBlock &MBB,
   } else {
     MachineInstr *PredSet = findFirstPredicateSetterFrom(MBB, MBB.end());
     assert(PredSet && "No previous predicate !");
-    PredSet->getOperand(1).addTargetFlag(1<<4);
+    AddFlag(PredSet, 1, MO_FLAG_PUSH);
     PredSet->getOperand(2).setImm(Cond[1].getImm());
     BuildMI(&MBB, DL, get(AMDGPU::JUMP))
             .addMBB(TBB)
@@ -356,8 +356,7 @@ R600InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const
   case AMDGPU::JUMP:
     if (isPredicated(I)) {
       MachineInstr *predSet = findFirstPredicateSetterFrom(MBB, I);
-      char flag = predSet->getOperand(1).getTargetFlags() & (~(1<<4));
-      predSet->getOperand(1).setTargetFlags(flag);
+      ClearFlag(predSet, 1, MO_FLAG_PUSH);
     }
     I->eraseFromParent();
     break;
@@ -375,8 +374,7 @@ R600InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const
   case AMDGPU::JUMP:
     if (isPredicated(I)) {
       MachineInstr *predSet = findFirstPredicateSetterFrom(MBB, I);
-      char flag = predSet->getOperand(1).getTargetFlags() & (~(1<<4));
-      predSet->getOperand(1).setTargetFlags(flag);
+      ClearFlag(predSet, 1, MO_FLAG_PUSH);
     }
     I->eraseFromParent();
     break;
@@ -532,14 +530,20 @@ bool R600InstrInfo::HasFlagOperand(const MachineInstr &MI) const
   return GET_FLAG_OPERAND_IDX(MI) != 0;
 }
 
-void R600InstrInfo::AddFlag(MachineInstr *MI, unsigned Operand,
-                            unsigned Flag) const
+MachineOperand &R600InstrInfo::GetFlagOp(MachineInstr *MI) const
 {
   unsigned FlagIndex = GET_FLAG_OPERAND_IDX(*MI);
   assert(FlagIndex != 0 &&
          "Instruction flags not supported for this instruction");
   MachineOperand &FlagOp = MI->getOperand(FlagIndex);
   assert(FlagOp.isImm());
+  return FlagOp;
+}
+
+void R600InstrInfo::AddFlag(MachineInstr *MI, unsigned Operand,
+                            unsigned Flag) const
+{
+  MachineOperand &FlagOp = GetFlagOp(MI);
   FlagOp.setImm(FlagOp.getImm() | (Flag << (NUM_MO_FLAGS * Operand)));
 }
 
@@ -553,4 +557,13 @@ bool R600InstrInfo::IsFlagSet(const MachineInstr &MI, unsigned Operand,
   assert(MI.getOperand(FlagIndex).isImm());
   return !!((MI.getOperand(FlagIndex).getImm() >>
             (NUM_MO_FLAGS * Operand)) & Flag);
+}
+
+void R600InstrInfo::ClearFlag(MachineInstr *MI, unsigned Operand,
+                              unsigned Flag) const
+{
+  MachineOperand &FlagOp = GetFlagOp(MI);
+  unsigned InstFlags = FlagOp.getImm();
+  InstFlags &= ~(Flag << (NUM_MO_FLAGS * Operand));
+  FlagOp.setImm(InstFlags);
 }

@@ -119,6 +119,12 @@ namespace llvm {
 
   ///IsFlagSet - Determine if the specified flag is set on this Operand.
   bool IsFlagSet(const MachineInstr &MI, unsigned Operand, unsigned Flag) const;
+
+  ///GetFlagOp - Return the operand containing the flags for this instruction.
+  MachineOperand &GetFlagOp(MachineInstr *MI) const;
+
+  ///ClearFlag - Clear the specified flag on the instruction.
+  void ClearFlag(MachineInstr *MI, unsigned Operand, unsigned Flag) const;
 };
 
 } // End llvm namespace
