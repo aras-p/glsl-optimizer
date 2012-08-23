@@ -8,9 +8,6 @@
 //==-----------------------------------------------------------------------===//
 #include "AMDIL7XXDevice.h"
 #include "AMDGPUSubtarget.h"
-#ifdef UPSTREAM_LLVM
-#include "AMDIL7XXAsmPrinter.h"
-#endif
 #include "AMDILDevice.h"
 
 using namespace llvm;
@@ -90,16 +87,6 @@ uint32_t AMDGPU7XXDevice::getResourceID(uint32_t DeviceID) const
 uint32_t AMDGPU7XXDevice::getMaxNumUAVs() const
 {
   return 1;
-}
-
-AsmPrinter*
-AMDGPU7XXDevice::getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const
-{
-#ifdef UPSTREAM_LLVM
-  return new AMDGPU7XXAsmPrinter(TM, Streamer);
-#else
-  return NULL;
-#endif
 }
 
 AMDGPU770Device::AMDGPU770Device(AMDGPUSubtarget *ST): AMDGPU7XXDevice(ST)

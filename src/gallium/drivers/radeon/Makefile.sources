@@ -49,12 +49,12 @@ CPP_SOURCES := \
 	SIMachineFunctionInfo.cpp	\
 	SIRegisterInfo.cpp		\
 	InstPrinter/AMDGPUInstPrinter.cpp \
-	MCTargetDesc/AMDILMCAsmInfo.cpp	\
+	MCTargetDesc/AMDGPUMCAsmInfo.cpp	\
 	MCTargetDesc/AMDGPUAsmBackend.cpp \
-	MCTargetDesc/AMDILMCTargetDesc.cpp	\
+	MCTargetDesc/AMDGPUMCTargetDesc.cpp	\
 	MCTargetDesc/SIMCCodeEmitter.cpp \
 	MCTargetDesc/R600MCCodeEmitter.cpp \
-	TargetInfo/AMDILTargetInfo.cpp	\
+	TargetInfo/AMDGPUTargetInfo.cpp	\
 	radeon_llvm_emit.cpp
 
 C_SOURCES := \

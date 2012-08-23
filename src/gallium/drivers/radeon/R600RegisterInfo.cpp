@@ -109,7 +109,7 @@ const TargetRegisterClass * R600RegisterInfo::getCFGStructurizerRegClass(
 {
   switch(VT.SimpleTy) {
   default:
-  case MVT::i32: return AMDGPU::R600_TReg32RegisterClass;
+  case MVT::i32: return &AMDGPU::R600_TReg32RegClass;
   }
 }
 

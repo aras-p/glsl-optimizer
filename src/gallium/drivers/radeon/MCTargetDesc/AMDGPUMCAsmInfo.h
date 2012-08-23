@@ -1,4 +1,4 @@
-//===-- MCTargetDesc/AMDILMCAsmInfo.h - TODO: Add brief description -------===//
+//===-- MCTargetDesc/AMDGPUMCAsmInfo.h - TODO: Add brief description -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,20 +11,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDILMCASMINFO_H_
-#define AMDILMCASMINFO_H_
+#ifndef AMDGPUMCASMINFO_H_
+#define AMDGPUMCASMINFO_H_
 
 #include "llvm/MC/MCAsmInfo.h"
 namespace llvm {
   class Target;
   class StringRef;
 
-  class AMDILMCAsmInfo : public MCAsmInfo {
+  class AMDGPUMCAsmInfo : public MCAsmInfo {
     public:
-      explicit AMDILMCAsmInfo(const Target &T, StringRef &TT);
+      explicit AMDGPUMCAsmInfo(const Target &T, StringRef &TT);
       const char*
         getDataASDirective(unsigned int Size, unsigned int AS) const;
       const MCSection* getNonexecutableStackSection(MCContext &CTX) const;
   };
 } // namespace llvm
-#endif // AMDILMCASMINFO_H_
+#endif // AMDGPUMCASMINFO_H_

@@ -1,4 +1,4 @@
-//===-- TargetInfo/AMDILTargetInfo.cpp - TODO: Add brief description -------===//
+//===-- TargetInfo/AMDGPUTargetInfo.cpp - TODO: Add brief description -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AMDIL.h"
+#include "AMDGPU.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
@@ -19,7 +19,7 @@ using namespace llvm;
 /// The target for the AMDGPU backend
 Target llvm::TheAMDGPUTarget;
 
-/// Extern function to initialize the targets for the AMDIL backend
+/// Extern function to initialize the targets for the AMDGPU backend
 extern "C" void LLVMInitializeAMDGPUTargetInfo() {
   RegisterTarget<Triple::r600, false>
     R600(TheAMDGPUTarget, "r600", "AMD GPUs HD2XXX-HD6XXX");

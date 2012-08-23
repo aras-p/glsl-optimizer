@@ -17,7 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "R600Defines.h"
-#include "MCTargetDesc/AMDILMCTargetDesc.h"
+#include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "MCTargetDesc/AMDGPUMCCodeEmitter.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"

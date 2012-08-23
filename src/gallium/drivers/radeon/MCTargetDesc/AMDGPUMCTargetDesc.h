@@ -1,4 +1,4 @@
-//===-- AMDILMCTargetDesc.h - AMDIL Target Descriptions -----*- C++ -*-===//
+//===-- AMDGPUMCTargetDesc.h - AMDGPU Target Descriptions -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file provides AMDIL specific target descriptions.
+// This file provides AMDGPU specific target descriptions.
 //
 //===----------------------------------------------------------------------===//
 //
 
-#ifndef AMDILMCTARGETDESC_H
-#define AMDILMCTARGETDESC_H
+#ifndef AMDGPUMCTARGETDESC_H
+#define AMDGPUMCTARGETDESC_H
 
 #include "llvm/ADT/StringRef.h"
 
@@ -48,4 +48,4 @@ MCAsmBackend *createAMDGPUAsmBackend(const Target &T, StringRef TT);
 #define GET_SUBTARGETINFO_ENUM
 #include "AMDGPUGenSubtargetInfo.inc"
 
-#endif // AMDILMCTARGETDESC_H
+#endif // AMDGPUMCTARGETDESC_H

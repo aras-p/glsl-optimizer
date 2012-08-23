@@ -21,9 +21,6 @@
 
 namespace llvm {
   class AMDGPUSubtarget;
-  class AMDGPUAsmPrinter;
-  class AMDGPUPointerManager;
-  class AsmPrinter;
   class MCStreamer;
 //===----------------------------------------------------------------------===//
 // Interface for data that is specific to a single device
@@ -83,10 +80,6 @@ public:
 
   // Get the max number of UAV's for this device.
   virtual uint32_t getMaxNumUAVs() const = 0;
-
-  // Interface to get the Asm printer for each device.
-  virtual AsmPrinter*
-    getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const = 0;
 
   // API utilizing more detailed capabilities of each family of
   // cards. If a capability is supported, then either usesHardware or

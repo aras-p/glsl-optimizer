@@ -40,8 +40,6 @@ public:
   virtual uint32_t getGeneration() const;
   virtual uint32_t getMaxNumUAVs() const;
   virtual uint32_t getResourceID(uint32_t) const;
-  virtual AsmPrinter*
-    getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const;
 protected:
   virtual void setCaps();
 }; // AMDGPUEvergreenDevice

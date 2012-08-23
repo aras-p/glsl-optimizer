@@ -25,7 +25,7 @@ using namespace llvm;
 #undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 
 AMDGPUIntrinsicInfo::AMDGPUIntrinsicInfo(TargetMachine *tm) 
-  : TargetIntrinsicInfo(), mTM(tm)
+  : TargetIntrinsicInfo()
 {
 }
 

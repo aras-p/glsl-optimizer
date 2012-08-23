@@ -54,7 +54,7 @@ const TargetRegisterClass * SIRegisterInfo::getCFGStructurizerRegClass(
 {
   switch(VT.SimpleTy) {
     default:
-    case MVT::i32: return AMDGPU::VReg_32RegisterClass;
+    case MVT::i32: return &AMDGPU::VReg_32RegClass;
   }
 }
 #include "SIRegisterGetHWRegNum.inc"

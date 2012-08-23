@@ -31,7 +31,6 @@ namespace llvm {
 
 
   class AMDGPUIntrinsicInfo : public TargetIntrinsicInfo {
-    TargetMachine *mTM;
     public:
       AMDGPUIntrinsicInfo(TargetMachine *tm);
       std::string getName(unsigned int IntrId, Type **Tys = 0,

@@ -1,5 +1,5 @@
-#include "AMDILMCTargetDesc.h"
-#include "AMDILMCAsmInfo.h"
+#include "AMDGPUMCTargetDesc.h"
+#include "AMDGPUMCAsmInfo.h"
 #include "InstPrinter/AMDGPUInstPrinter.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCCodeGenInfo.h"
@@ -78,7 +78,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
 
 extern "C" void LLVMInitializeAMDGPUTargetMC() {
 
-  RegisterMCAsmInfo<AMDILMCAsmInfo> Y(TheAMDGPUTarget);
+  RegisterMCAsmInfo<AMDGPUMCAsmInfo> Y(TheAMDGPUTarget);
 
   TargetRegistry::RegisterMCCodeGenInfo(TheAMDGPUTarget, createAMDGPUMCCodeGenInfo);
 

@@ -7,9 +7,6 @@
 //
 //==-----------------------------------------------------------------------===//
 #include "AMDILEvergreenDevice.h"
-#ifdef UPSTREAM_LLVM
-#include "AMDILEGAsmPrinter.h"
-#endif
 
 using namespace llvm;
 
@@ -120,16 +117,6 @@ void AMDGPUEvergreenDevice::setCaps() {
   mHWBits.set(AMDGPUDeviceInfo::LongOps);
   mSWBits.reset(AMDGPUDeviceInfo::LongOps);
   mHWBits.set(AMDGPUDeviceInfo::TmrReg);
-}
-
-AsmPrinter*
-AMDGPUEvergreenDevice::getAsmPrinter(TargetMachine& TM, MCStreamer &Streamer) const
-{
-#ifdef UPSTREAM_LLVM
-  return new AMDGPUEGAsmPrinter(TM, Streamer);
-#else
-  return NULL;
-#endif
 }
 
 AMDGPUCypressDevice::AMDGPUCypressDevice(AMDGPUSubtarget *ST)

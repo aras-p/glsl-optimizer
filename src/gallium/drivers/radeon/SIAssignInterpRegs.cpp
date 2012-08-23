@@ -109,8 +109,8 @@ bool SIAssignInterpRegsPass::runOnMachineFunction(MachineFunction &MF)
 
     for (unsigned reg_idx = 0; reg_idx < InterpUse[interp_idx].reg_count;
                                                   reg_idx++, used_vgprs++) {
-      unsigned new_reg = AMDGPU::VReg_32RegisterClass->getRegister(used_vgprs);
-      unsigned virt_reg = MRI.createVirtualRegister(AMDGPU::VReg_32RegisterClass);
+      unsigned new_reg = AMDGPU::VReg_32RegClass.getRegister(used_vgprs);
+      unsigned virt_reg = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
       MRI.replaceRegWith(InterpUse[interp_idx].regs[reg_idx], virt_reg);
       AddLiveIn(&MF, MRI, new_reg, virt_reg);
     }

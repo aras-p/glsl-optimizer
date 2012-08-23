@@ -118,9 +118,9 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
     {
       // Convert to DWORD address
       unsigned NewAddr = MRI.createVirtualRegister(
-                                             AMDGPU::R600_TReg32_XRegisterClass);
+                                             &AMDGPU::R600_TReg32_XRegClass);
       unsigned ShiftValue = MRI.createVirtualRegister(
-                                              AMDGPU::R600_TReg32RegisterClass);
+                                              &AMDGPU::R600_TReg32RegClass);
 
       // XXX In theory, we should be able to pass ShiftValue directly to
       // the LSHR_eg instruction as an inline literal, but I tried doing it
@@ -151,8 +151,8 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 
   case AMDGPU::TXD:
     {
-      unsigned t0 = MRI.createVirtualRegister(AMDGPU::R600_Reg128RegisterClass);
-      unsigned t1 = MRI.createVirtualRegister(AMDGPU::R600_Reg128RegisterClass);
+      unsigned t0 = MRI.createVirtualRegister(&AMDGPU::R600_Reg128RegClass);
+      unsigned t1 = MRI.createVirtualRegister(&AMDGPU::R600_Reg128RegClass);
 
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::TEX_SET_GRADIENTS_H), t0)
               .addOperand(MI->getOperand(3))

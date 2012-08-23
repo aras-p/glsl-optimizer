@@ -1,4 +1,4 @@
-//===-- MCTargetDesc/AMDILMCAsmInfo.cpp - TODO: Add brief description -------===//
+//===-- MCTargetDesc/AMDGPUMCAsmInfo.cpp - TODO: Add brief description -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,13 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AMDILMCAsmInfo.h"
+#include "AMDGPUMCAsmInfo.h"
 #ifndef NULL
 #define NULL 0
 #endif
 
 using namespace llvm;
-AMDILMCAsmInfo::AMDILMCAsmInfo(const Target &T, StringRef &TT) : MCAsmInfo()
+AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(const Target &T, StringRef &TT) : MCAsmInfo()
 {
   HasSingleParameterDotFile = false;
   WeakDefDirective = NULL;
@@ -85,7 +85,7 @@ AMDILMCAsmInfo::AMDILMCAsmInfo(const Target &T, StringRef &TT) : MCAsmInfo()
   AsmTransCBE = NULL;
 }
 const char*
-AMDILMCAsmInfo::getDataASDirective(unsigned int Size, unsigned int AS) const
+AMDGPUMCAsmInfo::getDataASDirective(unsigned int Size, unsigned int AS) const
 {
   switch (AS) {
     default:
@@ -97,7 +97,7 @@ AMDILMCAsmInfo::getDataASDirective(unsigned int Size, unsigned int AS) const
 }
 
 const MCSection*
-AMDILMCAsmInfo::getNonexecutableStackSection(MCContext &CTX) const
+AMDGPUMCAsmInfo::getNonexecutableStackSection(MCContext &CTX) const
 {
   return NULL;
 }
