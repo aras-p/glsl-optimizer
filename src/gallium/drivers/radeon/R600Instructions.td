@@ -175,7 +175,7 @@ class EG_CF_RAT <bits <8> cf_inst, bits <6> rat_inst, bits<4> rat_id, dag outs,
   bits<4>  COMP_MASK;
   bits<4>  BURST_COUNT;
   bits<1>  VPM;
-  bits<1>  EOP;
+  bits<1>  eop;
   bits<1>  MARK;
   bits<1>  BARRIER;
 
@@ -195,7 +195,7 @@ class EG_CF_RAT <bits <8> cf_inst, bits <6> rat_inst, bits<4> rat_id, dag outs,
   let Inst{47-44} = COMP_MASK;
   let Inst{51-48} = BURST_COUNT;
   let Inst{52}    = VPM;
-  let Inst{53}    = EOP;
+  let Inst{53}    = eop;
   let Inst{61-54} = cf_inst;
   let Inst{62}    = MARK;
   let Inst{63}    = BARRIER;
@@ -921,9 +921,9 @@ let Predicates = [isEGorCayman] in {
 let usesCustomInserter = 1 in {
 
 def RAT_WRITE_CACHELESS_eg : EG_CF_RAT <0x57, 0x2, 0, (outs),
-  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr),
-  "RAT_WRITE_CACHELESS_eg $rw_gpr, $index_gpr",
-  [(global_store (i32 R600_TReg32_X:$rw_gpr), R600_TReg32_X:$index_gpr)]>
+  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr, i32imm:$eop),
+  "RAT_WRITE_CACHELESS_eg $rw_gpr, $index_gpr, $eop",
+  []>
 {
   let RIM         = 0;
   /* XXX: Have a separate instruction for non-indexed writes. */
@@ -935,17 +935,21 @@ def RAT_WRITE_CACHELESS_eg : EG_CF_RAT <0x57, 0x2, 0, (outs),
   let COMP_MASK   = 1;
   let BURST_COUNT = 0;
   let VPM         = 0;
-  let EOP         = 0;
   let MARK        = 0;
   let BARRIER     = 1;
 }
 
 } // End usesCustomInserter = 1
+// i32 global_store
+def : Pat <
+  (global_store (i32 R600_TReg32_X:$val), R600_TReg32_X:$ptr),
+  (RAT_WRITE_CACHELESS_eg R600_TReg32_X:$val, R600_TReg32_X:$ptr, 0)
+>;
 
 // Floating point global_store
 def : Pat <
   (global_store (f32 R600_TReg32_X:$val), R600_TReg32_X:$ptr),
-  (RAT_WRITE_CACHELESS_eg R600_TReg32_X:$val, R600_TReg32_X:$ptr)
+  (RAT_WRITE_CACHELESS_eg R600_TReg32_X:$val, R600_TReg32_X:$ptr, 0)
 >;
 
 class VTX_READ_eg <bits<8> buffer_id, dag outs, list<dag> pattern>

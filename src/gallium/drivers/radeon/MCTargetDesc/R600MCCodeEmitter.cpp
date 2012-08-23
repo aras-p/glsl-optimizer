@@ -162,8 +162,6 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case AMDGPU::RAT_WRITE_CACHELESS_eg:
       {
         uint64_t inst = getBinaryCodeForInstr(MI, Fixups);
-        // XXX: Set End Of Program bit when necessary
-        //  inst |= (((uint64_t)1) << 53);
         EmitByte(INSTR_NATIVE, OS);
         Emit(inst, OS);
         break;

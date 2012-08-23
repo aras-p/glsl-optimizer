@@ -121,6 +121,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
                                              &AMDGPU::R600_TReg32_XRegClass);
       unsigned ShiftValue = MRI.createVirtualRegister(
                                               &AMDGPU::R600_TReg32RegClass);
+      unsigned EOP = (llvm::next(I)->getOpcode() == AMDGPU::RETURN) ? 1 : 0;
 
       // XXX In theory, we should be able to pass ShiftValue directly to
       // the LSHR_eg instruction as an inline literal, but I tried doing it
@@ -136,7 +137,8 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
               .addReg(AMDGPU::PRED_SEL_OFF);
       BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(MI->getOpcode()))
               .addOperand(MI->getOperand(0))
-              .addReg(NewAddr);
+              .addReg(NewAddr)
+              .addImm(EOP); // Set End of program bit
       break;
     }
 
