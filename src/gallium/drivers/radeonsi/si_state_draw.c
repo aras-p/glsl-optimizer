@@ -317,8 +317,8 @@ static void si_update_alpha_ref(struct r600_context *rctx)
 
 static void si_update_spi_map(struct r600_context *rctx)
 {
-	struct si_shader *ps = &rctx->ps_shader->shader;
-	struct si_shader *vs = &rctx->vs_shader->shader;
+	struct si_shader *ps = &rctx->ps_shader->current->shader;
+	struct si_shader *vs = &rctx->vs_shader->current->shader;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	unsigned i, j, tmp;
 
@@ -362,36 +362,39 @@ static void si_update_spi_map(struct r600_context *rctx)
 static void si_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
+	unsigned ps_dirty = 0;
 
 	if (!rctx->blitter->running) {
 		if (rctx->have_depth_fb || rctx->have_depth_texture)
 			si_flush_depth_textures(rctx);
 	}
 
-	if ((rctx->ps_shader->shader.fs_write_all &&
-	     (rctx->ps_shader->shader.nr_cbufs != rctx->framebuffer.nr_cbufs)) ||
-	    (rctx->sprite_coord_enable &&
-	     (rctx->ps_shader->sprite_coord_enable != rctx->sprite_coord_enable))) {
-		si_pipe_shader_destroy(&rctx->context, rctx->ps_shader);
-	}
+	si_shader_select(ctx, rctx->ps_shader, &ps_dirty);
 
 	if (rctx->alpha_ref_dirty) {
 		si_update_alpha_ref(rctx);
 	}
 
-	if (!rctx->vs_shader->bo) {
-		si_pipe_shader_vs(ctx, rctx->vs_shader);
+	if (!rctx->vs_shader->current->pm4) {
+		si_pipe_shader_vs(ctx, rctx->vs_shader->current);
 	}
 
-	if (!rctx->ps_shader->bo) {
-		si_pipe_shader_ps(ctx, rctx->ps_shader);
+	if (!rctx->ps_shader->current->pm4) {
+		si_pipe_shader_ps(ctx, rctx->ps_shader->current);
+		ps_dirty = 0;
 	}
-	if (!rctx->ps_shader->bo) {
-		if (!rctx->dummy_pixel_shader->bo)
+	if (!rctx->ps_shader->current->bo) {
+		if (!rctx->dummy_pixel_shader->pm4)
 			si_pipe_shader_ps(ctx, rctx->dummy_pixel_shader);
-
-		if (rctx->dummy_pixel_shader->pm4)
+		else
 			si_pm4_bind_state(rctx, vs, rctx->dummy_pixel_shader->pm4);
+
+		ps_dirty = 0;
+	}
+
+	if (ps_dirty) {
+		si_pm4_bind_state(rctx, ps, rctx->ps_shader->current->pm4);
+		rctx->shader_dirty = true;
 	}
 
 	if (rctx->shader_dirty) {
@@ -545,7 +548,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		r600_context_draw_opaque_count(rctx, (struct r600_so_target*)info->count_from_stream_output);
 	}
 
-	rctx->vs_shader_so_strides = rctx->vs_shader->so_strides;
+	rctx->vs_shader_so_strides = rctx->vs_shader->current->so_strides;
 
 	if (!si_update_draw_info_state(rctx, info))
 		return;

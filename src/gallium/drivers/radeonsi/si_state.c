@@ -1717,77 +1717,200 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
  * shaders
  */
 
-static void *si_create_shader_state(struct pipe_context *ctx,
-                             const struct pipe_shader_state *state)
+/* Compute the key for the hw shader variant */
+static INLINE unsigned si_shader_selector_key(struct pipe_context *ctx,
+					      struct si_pipe_shader_selector *sel)
 {
-	struct si_pipe_shader *shader = CALLOC_STRUCT(si_pipe_shader);
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	unsigned key = 0;
 
-	shader->tokens = tgsi_dup_tokens(state->tokens);
-	shader->so = state->stream_output;
+	if (sel->type == PIPE_SHADER_FRAGMENT) {
+		if (sel->fs_write_all)
+			key |= rctx->framebuffer.nr_cbufs;
+		/*if (rctx->queued.named.rasterizer)
+			  key |= rctx->queued.named.rasterizer->flatshade << 4;*/
+		/*key |== rctx->two_side << 5;*/
+	}
 
-	return shader;
+	return key;
+}
+
+/* Select the hw shader variant depending on the current state.
+ * (*dirty) is set to 1 if current variant was changed */
+int si_shader_select(struct pipe_context *ctx,
+		     struct si_pipe_shader_selector *sel,
+		     unsigned *dirty)
+{
+	unsigned key;
+	struct si_pipe_shader * shader = NULL;
+	int r;
+
+	key = si_shader_selector_key(ctx, sel);
+
+	/* Check if we don't need to change anything.
+	 * This path is also used for most shaders that don't need multiple
+	 * variants, it will cost just a computation of the key and this
+	 * test. */
+	if (likely(sel->current && sel->current->key == key)) {
+		return 0;
+	}
+
+	/* lookup if we have other variants in the list */
+	if (sel->num_shaders > 1) {
+		struct si_pipe_shader *p = sel->current, *c = p->next_variant;
+
+		while (c && c->key != key) {
+			p = c;
+			c = c->next_variant;
+		}
+
+		if (c) {
+			p->next_variant = c->next_variant;
+			shader = c;
+		}
+	}
+
+	if (unlikely(!shader)) {
+		shader = CALLOC(1, sizeof(struct si_pipe_shader));
+		shader->selector = sel;
+
+		r = si_pipe_shader_create(ctx, shader);
+		if (unlikely(r)) {
+			R600_ERR("Failed to build shader variant (type=%u, key=%u) %d\n",
+				 sel->type, key, r);
+			sel->current = NULL;
+			return r;
+		}
+
+		/* We don't know the value of fs_write_all property until we built
+		 * at least one variant, so we may need to recompute the key (include
+		 * rctx->framebuffer.nr_cbufs) after building first variant. */
+		if (sel->type == PIPE_SHADER_FRAGMENT &&
+		    sel->num_shaders == 0 &&
+		    shader->shader.fs_write_all) {
+			sel->fs_write_all = 1;
+			key = si_shader_selector_key(ctx, sel);
+		}
+
+		shader->key = key;
+		sel->num_shaders++;
+	}
+
+	if (dirty)
+		*dirty = 1;
+
+	shader->next_variant = sel->current;
+	sel->current = shader;
+
+	return 0;
+}
+
+static void *si_create_shader_state(struct pipe_context *ctx,
+				    const struct pipe_shader_state *state,
+				    unsigned pipe_shader_type)
+{
+	struct si_pipe_shader_selector *sel = CALLOC_STRUCT(si_pipe_shader_selector);
+	int r;
+
+	sel->type = pipe_shader_type;
+	sel->tokens = tgsi_dup_tokens(state->tokens);
+	sel->so = state->stream_output;
+
+	r = si_shader_select(ctx, sel, NULL);
+	if (r) {
+	    free(sel);
+	    return NULL;
+	}
+
+	return sel;
+}
+
+static void *si_create_fs_state(struct pipe_context *ctx,
+				const struct pipe_shader_state *state)
+{
+	return si_create_shader_state(ctx, state, PIPE_SHADER_FRAGMENT);
+}
+
+static void *si_create_vs_state(struct pipe_context *ctx,
+				const struct pipe_shader_state *state)
+{
+	return si_create_shader_state(ctx, state, PIPE_SHADER_VERTEX);
 }
 
 static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pipe_shader *shader = state;
+	struct si_pipe_shader_selector *sel = state;
 
-	if (rctx->vs_shader == state)
+	if (rctx->vs_shader == sel)
 		return;
 
 	rctx->shader_dirty = true;
-	rctx->vs_shader = shader;
+	rctx->vs_shader = sel;
 
-	if (shader) {
-		si_pm4_bind_state(rctx, vs, shader->pm4);
-	}
+	if (sel && sel->current)
+		si_pm4_bind_state(rctx, vs, sel->current->pm4);
+	else
+		si_pm4_bind_state(rctx, vs, rctx->dummy_pixel_shader->pm4);
 }
 
 static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pipe_shader *shader = state;
+	struct si_pipe_shader_selector *sel = state;
 
-	if (rctx->ps_shader == state)
+	if (rctx->ps_shader == sel)
 		return;
 
 	rctx->shader_dirty = true;
-	rctx->ps_shader = shader;
+	rctx->ps_shader = sel;
 
-	if (shader) {
-		si_pm4_bind_state(rctx, ps, shader->pm4);
-	}
+	if (sel && sel->current)
+		si_pm4_bind_state(rctx, ps, sel->current->pm4);
+	else
+		si_pm4_bind_state(rctx, ps, rctx->dummy_pixel_shader->pm4);
 }
+
+static void si_delete_shader_selector(struct pipe_context *ctx,
+				      struct si_pipe_shader_selector *sel)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pipe_shader *p = sel->current, *c;
+
+	while (p) {
+		c = p->next_variant;
+		si_pm4_delete_state(rctx, vs, p->pm4);
+		si_pipe_shader_destroy(ctx, p);
+		free(p);
+		p = c;
+	}
+
+	free(sel->tokens);
+	free(sel);
+ }
 
 static void si_delete_vs_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pipe_shader *shader = (struct si_pipe_shader *)state;
+	struct si_pipe_shader_selector *sel = (struct si_pipe_shader_selector *)state;
 
-	if (rctx->vs_shader == shader) {
+	if (rctx->vs_shader == sel) {
 		rctx->vs_shader = NULL;
 	}
 
-	si_pm4_delete_state(rctx, vs, shader->pm4);
-	free(shader->tokens);
-	si_pipe_shader_destroy(ctx, shader);
-	free(shader);
+	si_delete_shader_selector(ctx, sel);
 }
 
 static void si_delete_ps_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct si_pipe_shader *shader = (struct si_pipe_shader *)state;
+	struct si_pipe_shader_selector *sel = (struct si_pipe_shader_selector *)state;
 
-	if (rctx->ps_shader == shader) {
+	if (rctx->ps_shader == sel) {
 		rctx->ps_shader = NULL;
 	}
 
-	si_pm4_delete_state(rctx, ps, shader->pm4);
-	free(shader->tokens);
-	si_pipe_shader_destroy(ctx, shader);
-	free(shader);
+	si_delete_shader_selector(ctx, sel);
 }
 
 /*
@@ -2269,8 +2392,8 @@ void si_init_state_functions(struct r600_context *rctx)
 
 	rctx->context.set_framebuffer_state = si_set_framebuffer_state;
 
-	rctx->context.create_vs_state = si_create_shader_state;
-	rctx->context.create_fs_state = si_create_shader_state;
+	rctx->context.create_vs_state = si_create_vs_state;
+	rctx->context.create_fs_state = si_create_fs_state;
 	rctx->context.bind_vs_state = si_bind_vs_shader;
 	rctx->context.bind_fs_state = si_bind_ps_shader;
 	rctx->context.delete_vs_state = si_delete_vs_shader;

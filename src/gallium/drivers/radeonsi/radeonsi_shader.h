@@ -37,6 +37,25 @@ struct si_shader_io {
 	bool			centroid;
 };
 
+struct si_pipe_shader;
+
+struct si_pipe_shader_selector {
+	struct si_pipe_shader *current;
+
+	struct tgsi_token       *tokens;
+	struct pipe_stream_output_info  so;
+
+	unsigned	num_shaders;
+
+	/* PIPE_SHADER_[VERTEX|FRAGMENT|...] */
+	unsigned	type;
+
+	/* 1 when the shader contains
+	 * TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS, otherwise it's 0.
+	 * Used to determine whether we need to include nr_cbufs in the key */
+	unsigned	fs_write_all;
+};
+
 struct si_shader {
 	unsigned		ninput;
 	struct si_shader_io	input[32];
@@ -50,16 +69,17 @@ struct si_shader {
 };
 
 struct si_pipe_shader {
+	struct si_pipe_shader_selector	*selector;
+	struct si_pipe_shader		*next_variant;
 	struct si_shader		shader;
 	struct si_pm4_state		*pm4;
 	struct si_resource		*bo;
-	struct tgsi_token		*tokens;
 	unsigned			num_sgprs;
 	unsigned			num_vgprs;
 	unsigned			spi_ps_input_ena;
 	unsigned			sprite_coord_enable;
-	struct pipe_stream_output_info	so;
 	unsigned			so_strides[4];
+	unsigned			key;
 };
 
 /* radeonsi_shader.c */

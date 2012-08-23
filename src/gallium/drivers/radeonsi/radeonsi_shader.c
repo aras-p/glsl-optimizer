@@ -282,7 +282,8 @@ static void declare_input_fs(
 	switch (decl->Interp.Interpolate) {
 	case TGSI_INTERPOLATE_COLOR:
 		/* XXX: Flat shading hangs the GPU */
-		if (si_shader_ctx->rctx->queued.named.rasterizer->flatshade) {
+		if (si_shader_ctx->rctx->queued.named.rasterizer &&
+		    si_shader_ctx->rctx->queued.named.rasterizer->flatshade) {
 #if 0
 			intr_name = "llvm.SI.fs.interp.constant";
 #else
@@ -617,6 +618,7 @@ int si_pipe_shader_create(
 	struct si_pipe_shader *shader)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct si_pipe_shader_selector *sel = shader->selector;
 	struct si_shader_context si_shader_ctx;
 	struct tgsi_shader_info shader_info;
 	struct lp_build_tgsi_context * bld_base;
@@ -633,7 +635,7 @@ int si_pipe_shader_create(
 	radeon_llvm_context_init(&si_shader_ctx.radeon_bld);
 	bld_base = &si_shader_ctx.radeon_bld.soa.bld_base;
 
-	tgsi_scan_shader(shader->tokens, &shader_info);
+	tgsi_scan_shader(sel->tokens, &shader_info);
 	bld_base->info = &shader_info;
 	bld_base->emit_fetch_funcs[TGSI_FILE_CONSTANT] = fetch_constant;
 	bld_base->emit_epilogue = si_llvm_emit_epilogue;
@@ -642,7 +644,7 @@ int si_pipe_shader_create(
 	bld_base->op_actions[TGSI_OPCODE_TXP] = tex_action;
 
 	si_shader_ctx.radeon_bld.load_input = declare_input;
-	si_shader_ctx.tokens = shader->tokens;
+	si_shader_ctx.tokens = sel->tokens;
 	tgsi_parse_init(&si_shader_ctx.parse, si_shader_ctx.tokens);
 	si_shader_ctx.shader = shader;
 	si_shader_ctx.type = si_shader_ctx.parse.FullHeader.Processor.Processor;
@@ -653,10 +655,10 @@ int si_pipe_shader_create(
 	/* Dump TGSI code before doing TGSI->LLVM conversion in case the
 	 * conversion fails. */
 	if (dump) {
-		tgsi_dump(shader->tokens, 0);
+		tgsi_dump(sel->tokens, 0);
 	}
 
-	if (!lp_build_tgsi_llvm(bld_base, shader->tokens)) {
+	if (!lp_build_tgsi_llvm(bld_base, sel->tokens)) {
 		fprintf(stderr, "Failed to translate shader from TGSI to LLVM\n");
 		return -EINVAL;
 	}
@@ -710,6 +712,4 @@ int si_pipe_shader_create(
 void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_pipe_shader *shader)
 {
 	si_resource_reference(&shader->bo, NULL);
-
-	memset(&shader->shader,0,sizeof(struct si_shader));
 }
