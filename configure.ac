@@ -340,18 +340,12 @@ AC_ARG_WITH([gl-lib-name],
     [specify GL library name @<:@default=GL@:>@])],
   [GL_LIB=$withval],
   [GL_LIB=GL])
-AC_ARG_WITH([glu-lib-name],
-  [AS_HELP_STRING([--with-glu-lib-name@<:@=NAME@:>@],
-    [specify GLU library name @<:@default=GLU@:>@])],
-  [GLU_LIB=$withval],
-  [GLU_LIB=GLU])
 AC_ARG_WITH([osmesa-lib-name],
   [AS_HELP_STRING([--with-osmesa-lib-name@<:@=NAME@:>@],
     [specify OSMesa library name @<:@default=OSMesa@:>@])],
   [OSMESA_LIB=$withval],
   [OSMESA_LIB=OSMesa])
 AS_IF([test "x$GL_LIB" = xyes], [GL_LIB=GL])
-AS_IF([test "x$GLU_LIB" = xyes], [GLU_LIB=GLU])
 AS_IF([test "x$OSMESA_LIB" = xyes], [OSMESA_LIB=OSMesa])
 
 dnl
@@ -366,11 +360,9 @@ AC_ARG_ENABLE([mangling],
 if test "x${enable_mangling}" = "xyes" ; then
   DEFINES="${DEFINES} -DUSE_MGL_NAMESPACE"
   GL_LIB="Mangled${GL_LIB}"
-  GLU_LIB="Mangled${GLU_LIB}"
   OSMESA_LIB="Mangled${OSMESA_LIB}"
 fi
 AC_SUBST([GL_LIB])
-AC_SUBST([GLU_LIB])
 AC_SUBST([OSMESA_LIB])
 
 dnl
@@ -389,7 +381,6 @@ if test "x$enable_texture_float" = xyes; then
 fi
 
 GL_LIB_NAME='lib$(GL_LIB).'${LIB_EXTENSION}
-GLU_LIB_NAME='lib$(GLU_LIB).'${LIB_EXTENSION}
 OSMESA_LIB_NAME='lib$(OSMESA_LIB).'${LIB_EXTENSION}
 EGL_LIB_NAME='lib$(EGL_LIB).'${LIB_EXTENSION}
 GLESv1_CM_LIB_NAME='lib$(GLESv1_CM_LIB).'${LIB_EXTENSION}
@@ -398,7 +389,6 @@ VG_LIB_NAME='lib$(VG_LIB).'${LIB_EXTENSION}
 GLAPI_LIB_NAME='lib$(GLAPI_LIB).'${LIB_EXTENSION}
 
 GL_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GL_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
-GLU_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GLU_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 EGL_LIB_GLOB=${LIB_PREFIX_GLOB}'$(EGL_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 EGL_LIB_GLOB=${LIB_PREFIX_GLOB}'$(EGL_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 GLESv1_CM_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GLESv1_CM_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
@@ -407,7 +397,6 @@ VG_LIB_GLOB=${LIB_PREFIX_GLOB}'$(VG_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENS
 GLAPI_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GLAPI_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 
 AC_SUBST([GL_LIB_NAME])
-AC_SUBST([GLU_LIB_NAME])
 AC_SUBST([OSMESA_LIB_NAME])
 AC_SUBST([EGL_LIB_NAME])
 AC_SUBST([GLESv1_CM_LIB_NAME])
@@ -416,7 +405,6 @@ AC_SUBST([VG_LIB_NAME])
 AC_SUBST([GLAPI_LIB_NAME])
 
 AC_SUBST([GL_LIB_GLOB])
-AC_SUBST([GLU_LIB_GLOB])
 AC_SUBST([EGL_LIB_GLOB])
 AC_SUBST([GLESv1_CM_LIB_GLOB])
 AC_SUBST([GLESv2_LIB_GLOB])
@@ -1466,60 +1454,6 @@ if test "x$enable_opencl" = xyes; then
 fi
 
 dnl
-dnl GLU configuration
-dnl
-AC_ARG_ENABLE([glu],
-    [AS_HELP_STRING([--disable-glu],
-        [enable OpenGL Utility library @<:@default=enabled@:>@])],
-    [enable_glu="$enableval"],
-    [enable_glu=yes])
-
-if test "x$enable_glu" = xyes; then
-    if test "x$enable_glx" = xno -a "x$enable_osmesa" = xno; then
-        AC_MSG_NOTICE([Disabling GLU since there is no OpenGL driver])
-        enable_glu=no
-    fi
-fi
-
-if test "x$enable_glu" = xyes; then
-    SRC_DIRS="$SRC_DIRS glu"
-
-    if test "x$enable_glx" = xno; then
-        # Link libGLU to libOSMesa instead of libGL
-        GLU_LIB_DEPS=""
-        GLU_PC_REQ="osmesa"
-        if test "$enable_static" = no; then
-            GLU_MESA_DEPS='-l$(OSMESA_LIB)'
-        else
-            GLU_MESA_DEPS=""
-        fi
-    else
-        # If static, empty GLU_LIB_DEPS and add libs for programs to link
-        GLU_PC_REQ="gl"
-        GLU_PC_LIB_PRIV="-lm"
-        if test "$enable_static" = no; then
-            GLU_LIB_DEPS="-lm"
-            GLU_MESA_DEPS='-l$(GL_LIB)'
-        else
-            GLU_LIB_DEPS=""
-            GLU_MESA_DEPS=""
-        fi
-    fi
-fi
-if test "$enable_static" = no; then
-    GLU_LIB_DEPS="$GLU_LIB_DEPS $OS_CPLUSPLUS_LIBS"
-fi
-GLU_PC_LIB_PRIV="$GLU_PC_LIB_PRIV $OS_CPLUSPLUS_LIBS"
-AC_SUBST([GLU_LIB_DEPS])
-AC_SUBST([GLU_MESA_DEPS])
-AC_SUBST([GLU_PC_REQ])
-AC_SUBST([GLU_PC_REQ_PRIV])
-AC_SUBST([GLU_PC_LIB_PRIV])
-AC_SUBST([GLU_PC_CFLAGS])
-
-AC_SUBST([PROGRAM_DIRS])
-
-dnl
 dnl Gallium configuration
 dnl
 if test "x$with_gallium_drivers" != x; then
@@ -2116,7 +2050,6 @@ xyesno)
 esac
 
 echo ""
-echo "        GLU:             $enable_glu"
 
 dnl EGL
 echo ""

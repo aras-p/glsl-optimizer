@@ -27,8 +27,6 @@ if not env['embedded']:
         SConscript('glx/SConscript')
     if env['platform'] not in ['darwin', 'haiku', 'sunos']:
         SConscript('egl/main/SConscript')
-    if env['platform'] not in ['darwin']:
-        SConscript('glu/sgi/SConscript')
 
     if env['gles']:
         SConscript('mapi/shared-glapi/SConscript')
