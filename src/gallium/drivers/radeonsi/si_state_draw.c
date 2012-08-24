@@ -170,13 +170,14 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_0286E0_SPI_BARYC_CNTL, spi_baryc_cntl);
 	spi_ps_input_ena = shader->spi_ps_input_ena;
 	/* we need to enable at least one of them, otherwise we hang the GPU */
-	if (!spi_ps_input_ena & (C_0286CC_PERSP_SAMPLE_ENA |
-				 C_0286CC_PERSP_CENTROID_ENA |
-				 C_0286CC_PERSP_PULL_MODEL_ENA |
-				 C_0286CC_LINEAR_SAMPLE_ENA |
-				 C_0286CC_LINEAR_CENTER_ENA |
-				 C_0286CC_LINEAR_CENTROID_ENA |
-				 C_0286CC_LINE_STIPPLE_TEX_ENA)) {
+	if (!G_0286CC_PERSP_SAMPLE_ENA(spi_ps_input_ena) &&
+	    !G_0286CC_PERSP_CENTROID_ENA(spi_ps_input_ena) &&
+	    !G_0286CC_PERSP_PULL_MODEL_ENA(spi_ps_input_ena) &&
+	    !G_0286CC_LINEAR_SAMPLE_ENA(spi_ps_input_ena) &&
+	    !G_0286CC_LINEAR_CENTER_ENA(spi_ps_input_ena) &&
+	    !G_0286CC_LINEAR_CENTROID_ENA(spi_ps_input_ena) &&
+	    !G_0286CC_LINE_STIPPLE_TEX_ENA(spi_ps_input_ena)) {
+
 		spi_ps_input_ena |= S_0286CC_PERSP_SAMPLE_ENA(1);
 	}
 	si_pm4_set_reg(pm4, R_0286CC_SPI_PS_INPUT_ENA, spi_ps_input_ena);
