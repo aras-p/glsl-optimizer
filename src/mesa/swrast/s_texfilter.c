@@ -800,6 +800,42 @@ get_border_color(const struct gl_sampler_object *samp,
 }
 
 
+/**
+ * Put z into texel according to GL_DEPTH_MODE.
+ */
+static INLINE void
+apply_depth_mode(GLenum depthMode, GLfloat z, GLfloat texel[4])
+{
+   switch (depthMode) {
+   case GL_LUMINANCE:
+      ASSIGN_4V(texel, z, z, z, 1.0F);
+      break;
+   case GL_INTENSITY:
+      ASSIGN_4V(texel, z, z, z, z);
+      break;
+   case GL_ALPHA:
+      ASSIGN_4V(texel, 0.0F, 0.0F, 0.0F, z);
+      break;
+   case GL_RED:
+      ASSIGN_4V(texel, z, 0.0F, 0.0F, 1.0F);
+      break;
+   default:
+      _mesa_problem(NULL, "Bad depth texture mode");
+   }
+}
+
+
+/**
+ * Is the given texture a depth (or depth/stencil) texture?
+ */
+static GLboolean
+is_depth_texture(const struct gl_texture_object *tObj)
+{
+   GLenum format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
+   return format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT;
+}
+
+
 /**********************************************************************/
 /*                    1-D Texture Sampling Functions                  */
 /**********************************************************************/
@@ -2391,6 +2427,11 @@ sample_nearest_cube(struct gl_context *ctx,
       sample_2d_nearest(ctx, samp, images[tObj->BaseLevel],
                         newCoord, rgba[i]);
    }
+   if (is_depth_texture(tObj)) {
+      for (i = 0; i < n; i++) {
+         apply_depth_mode(tObj->DepthMode, rgba[i][0], rgba[i]);
+      }
+   }
 }
 
 
@@ -2409,6 +2450,11 @@ sample_linear_cube(struct gl_context *ctx,
       images = choose_cube_face(tObj, texcoords[i], newCoord);
       sample_2d_linear(ctx, samp, images[tObj->BaseLevel],
                        newCoord, rgba[i]);
+   }
+   if (is_depth_texture(tObj)) {
+      for (i = 0; i < n; i++) {
+         apply_depth_mode(tObj->DepthMode, rgba[i][0], rgba[i]);
+      }
    }
 }
 
@@ -2440,6 +2486,11 @@ sample_cube_nearest_mipmap_nearest(struct gl_context *ctx,
 
       sample_2d_nearest(ctx, samp, images[level], newCoord, rgba[i]);
    }
+   if (is_depth_texture(tObj)) {
+      for (i = 0; i < n; i++) {
+         apply_depth_mode(tObj->DepthMode, rgba[i][0], rgba[i]);
+      }
+   }
 }
 
 
@@ -2459,6 +2510,11 @@ sample_cube_linear_mipmap_nearest(struct gl_context *ctx,
       level = MAX2(level - 1, 0); /* see comment above */
       images = choose_cube_face(tObj, texcoord[i], newCoord);
       sample_2d_linear(ctx, samp, images[level], newCoord, rgba[i]);
+   }
+   if (is_depth_texture(tObj)) {
+      for (i = 0; i < n; i++) {
+         apply_depth_mode(tObj->DepthMode, rgba[i][0], rgba[i]);
+      }
    }
 }
 
@@ -2490,6 +2546,11 @@ sample_cube_nearest_mipmap_linear(struct gl_context *ctx,
          lerp_rgba(rgba[i], f, t0, t1);
       }
    }
+   if (is_depth_texture(tObj)) {
+      for (i = 0; i < n; i++) {
+         apply_depth_mode(tObj->DepthMode, rgba[i][0], rgba[i]);
+      }
+   }
 }
 
 
@@ -2518,6 +2579,11 @@ sample_cube_linear_mipmap_linear(struct gl_context *ctx,
          sample_2d_linear(ctx, samp, images[level  ], newCoord, t0);
          sample_2d_linear(ctx, samp, images[level+1], newCoord, t1);
          lerp_rgba(rgba[i], f, t0, t1);
+      }
+   }
+   if (is_depth_texture(tObj)) {
+      for (i = 0; i < n; i++) {
+         apply_depth_mode(tObj->DepthMode, rgba[i][0], rgba[i]);
       }
    }
 }
@@ -3520,23 +3586,7 @@ sample_depth_texture( struct gl_context *ctx,
 
          result = shadow_compare(function, depthRef, depthSample);
 
-         switch (tObj->DepthMode) {
-         case GL_LUMINANCE:
-            ASSIGN_4V(texel[i], result, result, result, 1.0F);
-            break;
-         case GL_INTENSITY:
-            ASSIGN_4V(texel[i], result, result, result, result);
-            break;
-         case GL_ALPHA:
-            ASSIGN_4V(texel[i], 0.0F, 0.0F, 0.0F, result);
-            break;
-         case GL_RED:
-            ASSIGN_4V(texel[i], result, 0.0F, 0.0F, 1.0F);
-            break;
-         default:
-            _mesa_problem(ctx, "Bad depth texture mode");
-            break;
-         }
+         apply_depth_mode(tObj->DepthMode, result, texel[i]);
       }
    }
    else {
@@ -3615,20 +3665,7 @@ sample_depth_texture( struct gl_context *ctx,
                                   depth00, depth01, depth10, depth11,
                                   wi, wj);
 
-         switch (tObj->DepthMode) {
-         case GL_LUMINANCE:
-            ASSIGN_4V(texel[i], result, result, result, 1.0F);
-            break;
-         case GL_INTENSITY:
-            ASSIGN_4V(texel[i], result, result, result, result);
-            break;
-         case GL_ALPHA:
-            ASSIGN_4V(texel[i], 0.0F, 0.0F, 0.0F, result);
-            break;
-         default:
-            _mesa_problem(ctx, "Bad depth texture mode");
-         }
-
+         apply_depth_mode(tObj->DepthMode, result, texel[i]);
       }  /* for */
    }  /* if filter */
 }
@@ -3676,11 +3713,10 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
    else {
       const GLboolean needLambda =
          (GLboolean) (sampler->MinFilter != sampler->MagFilter);
-      const GLenum format = t->Image[0][t->BaseLevel]->_BaseFormat;
 
       switch (t->Target) {
       case GL_TEXTURE_1D:
-         if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
+         if (is_depth_texture(t)) {
             return &sample_depth_texture;
          }
          else if (needLambda) {
@@ -3694,7 +3730,7 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
             return &sample_nearest_1d;
          }
       case GL_TEXTURE_2D:
-         if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
+         if (is_depth_texture(t)) {
             return &sample_depth_texture;
          }
          else if (needLambda) {
@@ -3741,10 +3777,7 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
             return &sample_nearest_3d;
          }
       case GL_TEXTURE_CUBE_MAP:
-         if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
-	    return &sample_depth_texture;
-	 }
-	 else if (needLambda) {
+         if (needLambda) {
             return &sample_lambda_cube;
          }
          else if (sampler->MinFilter == GL_LINEAR) {
@@ -3755,7 +3788,7 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
             return &sample_nearest_cube;
          }
       case GL_TEXTURE_RECTANGLE_NV:
-         if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
+         if (is_depth_texture(t)) {
             return &sample_depth_texture;
          }
          else if (needLambda) {
@@ -3769,7 +3802,7 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
             return &sample_nearest_rect;
          }
       case GL_TEXTURE_1D_ARRAY_EXT:
-         if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
+         if (is_depth_texture(t)) {
             return &sample_depth_texture;
          }
 	 else if (needLambda) {
@@ -3783,7 +3816,7 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
             return &sample_nearest_1d_array;
          }
       case GL_TEXTURE_2D_ARRAY_EXT:
-         if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
+         if (is_depth_texture(t)) {
             return &sample_depth_texture;
          }
 	 else if (needLambda) {
