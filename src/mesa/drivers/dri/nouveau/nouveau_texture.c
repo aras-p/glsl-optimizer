@@ -232,7 +232,8 @@ nouveau_unmap_texture_image(struct gl_context *ctx, struct gl_texture_image *ti,
 }
 
 static gl_format
-nouveau_choose_tex_format(struct gl_context *ctx, GLint internalFormat,
+nouveau_choose_tex_format(struct gl_context *ctx, GLenum target,
+                          GLint internalFormat,
 			  GLenum srcFormat, GLenum srcType)
 {
 	switch (internalFormat) {

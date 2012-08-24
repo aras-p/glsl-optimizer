@@ -63,7 +63,8 @@ st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
 				  GLenum format, GLenum type, GLboolean renderable);
 
 extern gl_format
-st_ChooseTextureFormat(struct gl_context * ctx, GLint internalFormat,
+st_ChooseTextureFormat(struct gl_context * ctx, GLenum target,
+                       GLint internalFormat,
                        GLenum format, GLenum type);
 
 

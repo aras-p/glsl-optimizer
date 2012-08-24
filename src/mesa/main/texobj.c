@@ -783,7 +783,8 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
       texObj->Sampler.MinFilter = GL_NEAREST;
       texObj->Sampler.MagFilter = GL_NEAREST;
 
-      texFormat = ctx->Driver.ChooseTextureFormat(ctx, GL_RGBA, GL_RGBA,
+      texFormat = ctx->Driver.ChooseTextureFormat(ctx, target,
+                                                  GL_RGBA, GL_RGBA,
                                                   GL_UNSIGNED_BYTE);
 
       /* need a loop here just for cube maps */

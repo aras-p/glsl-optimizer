@@ -58,6 +58,7 @@ void radeon_swrast_map_texture_images(struct gl_context *ctx, struct gl_texture_
 void radeon_swrast_unmap_texture_images(struct gl_context *ctx, struct gl_texture_object *texObj);
 
 gl_format radeonChooseTextureFormat_mesa(struct gl_context * ctx,
+                                         GLenum target,
                                          GLint internalFormat,
                                          GLenum format,
                                          GLenum type);

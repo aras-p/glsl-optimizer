@@ -632,13 +632,14 @@ viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 }
 
 static gl_format swrastChooseTextureFormat(struct gl_context * ctx,
+                                           GLenum target,
 					   GLint internalFormat,
 					   GLenum format,
 					   GLenum type)
 {
     if (internalFormat == GL_RGB)
 	return MESA_FORMAT_XRGB8888;
-    return _mesa_choose_tex_format(ctx, internalFormat, format, type);
+    return _mesa_choose_tex_format(ctx, target, internalFormat, format, type);
 }
 
 static void

@@ -237,7 +237,8 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
        * except they're less useful because you can't texture with
        * them.
        */
-      rb->Format = intel->ctx.Driver.ChooseTextureFormat(ctx, internalFormat,
+      rb->Format = intel->ctx.Driver.ChooseTextureFormat(ctx, GL_TEXTURE_2D,
+							 internalFormat,
 							 GL_NONE, GL_NONE);
       break;
    case GL_STENCIL_INDEX:

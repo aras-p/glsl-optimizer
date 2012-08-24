@@ -311,6 +311,7 @@ static gl_format radeonChoose8888TexFormat(radeonContextPtr rmesa,
 }
 
 gl_format radeonChooseTextureFormat_mesa(struct gl_context * ctx,
+					 GLenum target,
 					 GLint internalFormat,
 					 GLenum format,
 					 GLenum type)

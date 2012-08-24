@@ -189,12 +189,15 @@ struct dd_function_table {
    /*@{*/
 
    /**
-    * Choose actual hardware texture format given the user-provided source
-    * image format and type and the desired internal format.  In some
-    * cases, srcFormat and srcType can be GL_NONE.
+    * Choose actual hardware texture format given the texture target, the
+    * user-provided source image format and type and the desired internal
+    * format.  In some cases, srcFormat and srcType can be GL_NONE.
+    * Note:  target may be GL_TEXTURE_CUBE_MAP, but never
+    * GL_TEXTURE_CUBE_MAP_[POSITIVE/NEGATIVE]_[XYZ].
     * Called by glTexImage(), etc.
     */
-   gl_format (*ChooseTextureFormat)( struct gl_context *ctx, GLint internalFormat,
+   gl_format (*ChooseTextureFormat)( struct gl_context *ctx,
+                                     GLenum target, GLint internalFormat,
                                      GLenum srcFormat, GLenum srcType );
 
    /**

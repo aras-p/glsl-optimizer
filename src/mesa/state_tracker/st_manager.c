@@ -533,7 +533,7 @@ st_context_teximage(struct st_context_iface *stctxi,
       else
          internalFormat = GL_RGB;
 
-      texFormat = st_ChooseTextureFormat(ctx, internalFormat,
+      texFormat = st_ChooseTextureFormat(ctx, target, internalFormat,
                                          GL_BGRA, GL_UNSIGNED_BYTE);
 
       _mesa_init_teximage_fields(ctx, texImage,

@@ -1631,8 +1631,8 @@ st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
  * Called via ctx->Driver.ChooseTextureFormat().
  */
 gl_format
-st_ChooseTextureFormat(struct gl_context *ctx, GLint internalFormat,
-                       GLenum format, GLenum type)
+st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
+                       GLint internalFormat, GLenum format, GLenum type)
 {
    boolean want_renderable =
       internalFormat == 3 || internalFormat == 4 ||

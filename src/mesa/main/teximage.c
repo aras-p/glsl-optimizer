@@ -2035,7 +2035,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    /* check image size against compression block size */
    {
       gl_format texFormat =
-         ctx->Driver.ChooseTextureFormat(ctx, proxy_format,
+         ctx->Driver.ChooseTextureFormat(ctx, target, proxy_format,
 					 choose_format, choose_type);
       GLuint bw, bh;
 
@@ -2797,7 +2797,8 @@ _mesa_choose_texture_format(struct gl_context *ctx,
    }
 
    /* choose format from scratch */
-   f = ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
+   f = ctx->Driver.ChooseTextureFormat(ctx, texObj->Target, internalFormat,
+                                       format, type);
    ASSERT(f != MESA_FORMAT_NONE);
    return f;
 }
