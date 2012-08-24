@@ -33,7 +33,7 @@
  * Sets the sampler state for a single unit.
  */
 static void
-gen7_update_sampler_state(struct brw_context *brw, int unit,
+gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
 			  struct gen7_sampler_state *sampler)
 {
    struct intel_context *intel = &brw->intel;
@@ -168,9 +168,9 @@ gen7_update_sampler_state(struct brw_context *brw, int unit,
       sampler->ss3.non_normalized_coord = 1;
    }
 
-   upload_default_color(brw, gl_sampler, unit);
+   upload_default_color(brw, gl_sampler, unit, ss_index);
 
-   sampler->ss2.default_color_pointer = brw->wm.sdc_offset[unit] >> 5;
+   sampler->ss2.default_color_pointer = brw->wm.sdc_offset[ss_index] >> 5;
 
    if (sampler->ss0.min_filter != BRW_MAPFILTER_NEAREST)
       sampler->ss3.address_round |= BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
@@ -206,7 +206,7 @@ gen7_upload_samplers(struct brw_context *brw)
 
    for (i = 0; i < brw->sampler.count; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled)
-	 gen7_update_sampler_state(brw, i, &samplers[i]);
+	 gen7_update_sampler_state(brw, i, i, &samplers[i]);
    }
 
    brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
