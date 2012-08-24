@@ -39,6 +39,8 @@ main/git_sha1.h: main/git_sha1.h.tmp
 	@echo "updating main/git_sha1.h"
 	@if ! cmp -s main/git_sha1.h.tmp main/git_sha1.h; then \
 		mv main/git_sha1.h.tmp main/git_sha1.h ;\
+	else \
+		rm main/git_sha1.h.tmp ;\
 	fi
 
 # include glapi_gen.mk for generating glapi headers for GLES
