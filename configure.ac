@@ -1713,7 +1713,7 @@ if test "x$enable_gallium_llvm" = xyes; then
 	LLVM_CXXFLAGS=`strip_unwanted_llvm_flags "$LLVM_CONFIG --cxxflags"`
 	LLVM_INCLUDEDIR=`$LLVM_CONFIG --includedir`
 	LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
-	DEFINES="${DEFINES} -DHAVE_LLVM=`echo $LLVM_VERSION | sed -e 's/\([[0-9]]\)\.\([[0-9]]\)/0x0\10\2/g'`"
+	DEFINES="${DEFINES} -DHAVE_LLVM=0x0$LLVM_VERSION_INT"
 	MESA_LLVM=1
 
 	dnl Check for Clang interanl headers
@@ -1727,9 +1727,11 @@ if test "x$enable_gallium_llvm" = xyes; then
         fi
     else
 	MESA_LLVM=0
+	LLVM_VERSION_INT=0
     fi
 else
     MESA_LLVM=0
+    LLVM_VERSION_INT=0
 fi
 
 dnl Directory for XVMC libs
@@ -1965,6 +1967,9 @@ AM_CONDITIONAL(USE_R600_LLVM_COMPILER, test x$USE_R600_LLVM_COMPILER = xyes)
 AM_CONDITIONAL(HAVE_LOADER_GALLIUM, test x$enable_gallium_loader = xyes)
 AM_CONDITIONAL(HAVE_DRM_LOADER_GALLIUM, test x$enable_gallium_drm_loader = xyes)
 AM_CONDITIONAL(HAVE_GALLIUM_COMPUTE, test x$enable_opencl = xyes)
+AM_CONDITIONAL(HAVE_MESA_LLVM, test x$MESA_LLVM = x1)
+AM_CONDITIONAL(LLVM_NEEDS_FNORTTI, test $LLVM_VERSION_INT -ge 302)
+
 AC_SUBST([GALLIUM_MAKE_DIRS])
 
 AM_CONDITIONAL(NEED_LIBPROGRAM, test "x$with_gallium_drivers" != x -o \
@@ -2002,6 +2007,7 @@ AC_CONFIG_FILES([configs/current
 		src/egl/wayland/wayland-egl/Makefile
 		src/egl/wayland/wayland-egl/wayland-egl.pc
 		src/gallium/Makefile
+		src/gallium/auxiliary/Makefile
 		src/gallium/auxiliary/pipe-loader/Makefile
 		src/gallium/drivers/Makefile
 		src/gallium/drivers/r300/Makefile
