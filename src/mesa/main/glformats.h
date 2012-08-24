@@ -92,6 +92,9 @@ extern GLboolean
 _mesa_base_format_has_channel(GLenum base_format, GLenum pname);
 
 extern GLenum
+_mesa_generic_compressed_format_to_uncompressed_format(GLenum format);
+
+extern GLenum
 _mesa_error_check_format_and_type(const struct gl_context *ctx,
                                   GLenum format, GLenum type);
 

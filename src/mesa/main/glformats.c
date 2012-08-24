@@ -971,6 +971,45 @@ _mesa_base_format_has_channel(GLenum base_format, GLenum pname)
 
 
 /**
+ * If format is a generic compressed format, return the corresponding
+ * non-compressed format.  For other formats, return the format as-is.
+ */
+GLenum
+_mesa_generic_compressed_format_to_uncompressed_format(GLenum format)
+{
+   switch (format) {
+   case GL_COMPRESSED_RED:
+      return GL_RED;
+   case GL_COMPRESSED_RG:
+      return GL_RG;
+   case GL_COMPRESSED_RGB:
+      return GL_RGB;
+   case GL_COMPRESSED_RGBA:
+      return GL_RGBA;
+   case GL_COMPRESSED_ALPHA:
+      return GL_ALPHA;
+   case GL_COMPRESSED_LUMINANCE:
+      return GL_LUMINANCE;
+   case GL_COMPRESSED_LUMINANCE_ALPHA:
+      return GL_LUMINANCE_ALPHA;
+   case GL_COMPRESSED_INTENSITY:
+      return GL_INTENSITY;
+   /* sRGB formats */
+   case GL_COMPRESSED_SRGB:
+      return GL_SRGB;
+   case GL_COMPRESSED_SRGB_ALPHA:
+      return GL_SRGB_ALPHA;
+   case GL_COMPRESSED_SLUMINANCE:
+      return GL_SLUMINANCE;
+   case GL_COMPRESSED_SLUMINANCE_ALPHA:
+      return GL_SLUMINANCE_ALPHA;
+   default:
+      return format;
+   }
+}
+
+
+/**
  * Do error checking of format/type combinations for glReadPixels,
  * glDrawPixels and glTex[Sub]Image.  Note that depending on the format
  * and type values, we may either generate GL_INVALID_OPERATION or
