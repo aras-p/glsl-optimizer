@@ -468,7 +468,7 @@ st_context_flush(struct st_context_iface *stctxi, unsigned flags,
 
 static boolean
 st_context_teximage(struct st_context_iface *stctxi,
-                    enum st_texture_type target,
+                    enum st_texture_type tex_type,
                     int level, enum pipe_format internal_format,
                     struct pipe_resource *tex, boolean mipmap)
 {
@@ -481,8 +481,9 @@ st_context_teximage(struct st_context_iface *stctxi,
    struct st_texture_image *stImage;
    GLenum internalFormat;
    GLuint width, height, depth;
+   GLenum target;
 
-   switch (target) {
+   switch (tex_type) {
    case ST_TEXTURE_1D:
       target = GL_TEXTURE_1D;
       break;
@@ -497,7 +498,6 @@ st_context_teximage(struct st_context_iface *stctxi,
       break;
    default:
       return FALSE;
-      break;
    }
 
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
