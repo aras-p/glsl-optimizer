@@ -1,15 +1,13 @@
 include Makefile.sources
+include $(top_srcdir)/src/gallium/Automake.inc
 
 noinst_LIBRARIES = libr600.a
 
 AM_CFLAGS = \
-	-I$(top_srcdir)/src/gallium/include \
-	-I$(top_srcdir)/src/gallium/auxiliary \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/include \
+	$(GALLIUM_CFLAGS) \
 	$(RADEON_CFLAGS) \
-	$(DEFINES) \
-	$(PIC_FLAGS) \
 	$(VISIBILITY_CFLAGS)
 
 libr600_a_SOURCES = \
