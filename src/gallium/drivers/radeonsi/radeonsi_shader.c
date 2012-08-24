@@ -362,6 +362,13 @@ static LLVMValueRef fetch_constant(
 	LLVMValueRef offset;
 	LLVMValueRef load;
 
+	/* currently not supported */
+	if (reg->Register.Indirect) {
+		assert(0);
+		load = lp_build_const_int32(base->gallivm, 0);
+		return bitcast(bld_base, type, load);
+	}
+
 	/* XXX: Assume the pointer to the constant buffer is being stored in
 	 * SGPR[0:1] */
 	const_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_F32, 0);
