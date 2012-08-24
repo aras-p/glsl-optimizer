@@ -334,13 +334,14 @@ brw_upload_samplers(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_sampler_state *samplers;
-   int i;
 
-   brw->sampler.count = 0;
-   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      if (ctx->Texture.Unit[i]._ReallyEnabled)
-	 brw->sampler.count = i + 1;
-   }
+   /* BRW_NEW_VERTEX_PROGRAM and BRW_NEW_FRAGMENT_PROGRAM */
+   struct gl_program *vs = (struct gl_program *) brw->vertex_program;
+   struct gl_program *fs = (struct gl_program *) brw->fragment_program;
+
+   GLbitfield SamplersUsed = vs->SamplersUsed | fs->SamplersUsed;
+
+   brw->sampler.count = _mesa_bitcount(SamplersUsed);
 
    if (brw->sampler.count == 0)
       return;
@@ -350,9 +351,13 @@ brw_upload_samplers(struct brw_context *brw)
 			      32, &brw->sampler.offset);
    memset(samplers, 0, brw->sampler.count * sizeof(*samplers));
 
-   for (i = 0; i < brw->sampler.count; i++) {
-      if (ctx->Texture.Unit[i]._ReallyEnabled)
-	 brw_update_sampler_state(brw, i, i, &samplers[i]);
+   for (unsigned s = 0; s < brw->sampler.count; s++) {
+      if (SamplersUsed & (1 << s)) {
+         const unsigned unit = (fs->SamplersUsed & (1 << s)) ?
+            fs->SamplerUnits[s] : vs->SamplerUnits[s];
+         if (ctx->Texture.Unit[unit]._ReallyEnabled)
+            brw_update_sampler_state(brw, unit, s, &samplers[s]);
+      }
    }
 
    brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
@@ -361,7 +366,9 @@ brw_upload_samplers(struct brw_context *brw)
 const struct brw_tracked_state brw_samplers = {
    .dirty = {
       .mesa = _NEW_TEXTURE,
-      .brw = BRW_NEW_BATCH,
+      .brw = BRW_NEW_BATCH |
+             BRW_NEW_VERTEX_PROGRAM |
+             BRW_NEW_FRAGMENT_PROGRAM,
       .cache = 0
    },
    .emit = brw_upload_samplers,

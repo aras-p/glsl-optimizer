@@ -1897,7 +1897,7 @@ vec4_visitor::visit(ir_texture *ir)
    inst->header_present = ir->offset || intel->gen < 5;
    inst->base_mrf = 2;
    inst->mlen = inst->header_present + 1; /* always at least one */
-   inst->sampler = texunit;
+   inst->sampler = sampler;
    inst->dst = dst_reg(this, ir->type);
    inst->shadow_compare = ir->shadow_comparitor != NULL;
 

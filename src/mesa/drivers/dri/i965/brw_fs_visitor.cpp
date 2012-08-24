@@ -1345,7 +1345,7 @@ fs_visitor::visit(ir_texture *ir)
    if (ir->offset != NULL && ir->op != ir_txf)
       inst->texture_offset = brw_texture_offset(ir->offset->as_constant());
 
-   inst->sampler = texunit;
+   inst->sampler = sampler;
 
    if (ir->shadow_comparitor)
       inst->shadow_compare = true;

@@ -1238,22 +1238,45 @@ const struct brw_tracked_state gen6_renderbuffer_surfaces = {
 static void
 brw_update_texture_surfaces(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
 
-   for (unsigned i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-      const GLuint surf = SURF_INDEX_TEXTURE(i);
+   /* BRW_NEW_VERTEX_PROGRAM and BRW_NEW_FRAGMENT_PROGRAM:
+    * Unfortunately, we're stuck using the gl_program structs until the
+    * ARB_fragment_program front-end gets converted to GLSL IR.  These
+    * have the downside that SamplerUnits is split and only contains the
+    * mappings for samplers active in that stage.
+    */
+   struct gl_program *vs = (struct gl_program *) brw->vertex_program;
+   struct gl_program *fs = (struct gl_program *) brw->fragment_program;
 
-      /* _NEW_TEXTURE */
-      if (texUnit->_ReallyEnabled) {
-	 brw->intel.vtbl.update_texture_surface(ctx, i, brw->wm.surf_offset, surf);
-      } else {
-         brw->wm.surf_offset[surf] = 0;
+   unsigned num_samplers = _mesa_bitcount(vs->SamplersUsed | fs->SamplersUsed);
+
+   for (unsigned s = 0; s < num_samplers; s++) {
+      brw->vs.surf_offset[SURF_INDEX_VS_TEXTURE(s)] = 0;
+      brw->wm.surf_offset[SURF_INDEX_TEXTURE(s)] = 0;
+
+      if (vs->SamplersUsed & (1 << s)) {
+         const unsigned unit = vs->SamplerUnits[s];
+
+         /* _NEW_TEXTURE */
+         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+            intel->vtbl.update_texture_surface(ctx, unit,
+                                               brw->vs.surf_offset,
+                                               SURF_INDEX_VS_TEXTURE(s));
+         }
       }
 
-      /* For now, just mirror the texture setup to the VS slots. */
-      brw->vs.surf_offset[SURF_INDEX_VS_TEXTURE(i)] =
-	 brw->wm.surf_offset[surf];
+      if (fs->SamplersUsed & (1 << s)) {
+         const unsigned unit = fs->SamplerUnits[s];
+
+         /* _NEW_TEXTURE */
+         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+            intel->vtbl.update_texture_surface(ctx, unit,
+                                               brw->wm.surf_offset,
+                                               SURF_INDEX_TEXTURE(s));
+         }
+      }
    }
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
@@ -1262,7 +1285,9 @@ brw_update_texture_surfaces(struct brw_context *brw)
 const struct brw_tracked_state brw_texture_surfaces = {
    .dirty = {
       .mesa = _NEW_TEXTURE,
-      .brw = BRW_NEW_BATCH,
+      .brw = BRW_NEW_BATCH |
+             BRW_NEW_VERTEX_PROGRAM |
+             BRW_NEW_FRAGMENT_PROGRAM,
       .cache = 0
    },
    .emit = brw_update_texture_surfaces,
