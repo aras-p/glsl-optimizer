@@ -1,4 +1,5 @@
 include Makefile.sources
+include $(top_srcdir)/src/gallium/Automake.inc
 
 noinst_LIBRARIES = libr300.a
 check_PROGRAMS = r300_compiler_tests
@@ -6,18 +7,15 @@ testdir = compiler/tests
 TESTS = r300_compiler_tests
 
 AM_CFLAGS = \
-	-I$(top_srcdir)/src/gallium/include \
-	-I$(top_srcdir)/src/gallium/auxiliary \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/src/glsl \
 	-I$(top_srcdir)/src/mapi \
 	$(VISIBILITY_CFLAGS) \
+	$(GALLIUM_CFLAGS) \
 	$(LLVM_CFLAGS) \
-	$(RADEON_CFLAGS) \
-	$(DEFINES) \
-	$(PIC_FLAGS)
+	$(RADEON_CFLAGS)
 
 libr300_a_SOURCES = \
 	$(C_SOURCES) \
