@@ -760,12 +760,12 @@ draw_set_sampler_views(struct draw_context *draw,
 {
    unsigned i;
 
-   debug_assert(num <= Elements(draw->sampler_views));
-   debug_assert(shader_stage <= PIPE_SHADER_TYPES);
+   debug_assert(shader_stage < PIPE_SHADER_TYPES);
+   debug_assert(num <= PIPE_MAX_SAMPLERS);
 
    for (i = 0; i < num; ++i)
       draw->sampler_views[shader_stage][i] = views[i];
-   for (i = num; i < Elements(draw->sampler_views); ++i)
+   for (i = num; i < PIPE_MAX_SAMPLERS; ++i)
       draw->sampler_views[shader_stage][i] = NULL;
 
    draw->num_sampler_views[shader_stage] = num;
@@ -779,12 +779,12 @@ draw_set_samplers(struct draw_context *draw,
 {
    unsigned i;
 
-   debug_assert(num <= Elements(draw->samplers));
-   debug_assert(shader_stage <= PIPE_SHADER_TYPES);
+   debug_assert(shader_stage < PIPE_SHADER_TYPES);
+   debug_assert(num <= PIPE_MAX_SAMPLERS);
 
    for (i = 0; i < num; ++i)
       draw->samplers[shader_stage][i] = samplers[i];
-   for (i = num; i < Elements(draw->samplers); ++i)
+   for (i = num; i < PIPE_MAX_SAMPLERS; ++i)
       draw->samplers[shader_stage][i] = NULL;
 
    draw->num_samplers[shader_stage] = num;
