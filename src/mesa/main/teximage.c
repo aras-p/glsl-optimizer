@@ -2926,7 +2926,7 @@ teximage(struct gl_context *ctx, GLboolean compressed, GLuint dims,
       case GL_PALETTE8_RGBA4_OES:
       case GL_PALETTE8_RGB5_A1_OES:
          _mesa_cpal_compressed_teximage2d(target, level, internalFormat,
-                                          width, height, imageSize, data);
+                                          width, height, imageSize, pixels);
          return;
       }
    }
