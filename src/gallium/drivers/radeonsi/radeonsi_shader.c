@@ -376,6 +376,53 @@ static LLVMValueRef fetch_constant(
 	return bitcast(bld_base, type, load);
 }
 
+/* Initialize arguments for the shader export intrinsic */
+static void si_llvm_init_export_args(struct lp_build_tgsi_context *bld_base,
+				     struct tgsi_full_declaration *d,
+				     unsigned index,
+				     unsigned target,
+				     LLVMValueRef *args)
+{
+	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
+	struct lp_build_context *uint =
+				&si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
+	struct lp_build_context *base = &bld_base->base;
+	unsigned compressed = 0;
+	unsigned chan;
+
+	for (chan = 0; chan < 4; chan++ ) {
+		LLVMValueRef out_ptr =
+			si_shader_ctx->radeon_bld.soa.outputs[index][chan];
+		/* +5 because the first output value will be
+		 * the 6th argument to the intrinsic. */
+		args[chan + 5] = LLVMBuildLoad(base->gallivm->builder,
+					       out_ptr, "");
+	}
+
+	/* XXX: This controls which components of the output
+	 * registers actually get exported. (e.g bit 0 means export
+	 * X component, bit 1 means export Y component, etc.)  I'm
+	 * hard coding this to 0xf for now.  In the future, we might
+	 * want to do something else. */
+	args[0] = lp_build_const_int32(base->gallivm, 0xf);
+
+	/* Specify whether the EXEC mask represents the valid mask */
+	args[1] = uint->zero;
+
+	/* Specify whether this is the last export */
+	args[2] = uint->zero;
+
+	/* Specify the target we are exporting */
+	args[3] = lp_build_const_int32(base->gallivm, target);
+
+	/* Set COMPR flag */
+	args[4] = uint->zero;
+
+	/* XXX: We probably need to keep track of the output
+	 * values, so we know what we are passing to the next
+	 * stage. */
+}
+
 /* XXX: This is partially implemented for VS only at this point.  It is not complete */
 static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 {
@@ -390,13 +437,6 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 	unsigned param_count = 0;
 
 	while (!tgsi_parse_end_of_tokens(parse)) {
-		/* XXX: component_bits controls which components of the output
-		 * registers actually get exported. (e.g bit 0 means export
-		 * X component, bit 1 means export Y component, etc.)  I'm
-		 * hard coding this to 0xf for now.  In the future, we might
-		 * want to do something else. */
-		unsigned component_bits = 0xf;
-		unsigned chan;
 		struct tgsi_full_declaration *d =
 					&parse->FullToken.FullDeclaration;
 		LLVMValueRef args[9];
@@ -429,20 +469,6 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 		}
 
 		for (index = d->Range.First; index <= d->Range.Last; index++) {
-			for (chan = 0; chan < 4; chan++ ) {
-				LLVMValueRef out_ptr =
-					si_shader_ctx->radeon_bld.soa.outputs
-					[index][chan];
-				/* +5 because the first output value will be
-				 * the 6th argument to the intrinsic. */
-				args[chan + 5]= LLVMBuildLoad(
-					base->gallivm->builder,	out_ptr, "");
-			}
-
-			/* XXX: We probably need to keep track of the output
-			 * values, so we know what we are passing to the next
-			 * stage. */
-
 			/* Select the correct target */
 			switch(d->Semantic.Name) {
 			case TGSI_SEMANTIC_POSITION:
@@ -470,21 +496,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 					d->Semantic.Name);
 			}
 
-			/* Specify which components to enable */
-			args[0] = lp_build_const_int32(base->gallivm,
-								component_bits);
-
-			/* Specify whether the EXEC mask represents the valid mask */
-			args[1] = lp_build_const_int32(base->gallivm, 0);
-
-			/* Specify whether this is the last export */
-			args[2] = lp_build_const_int32(base->gallivm, 0);
-
-			/* Specify the target we are exporting */
-			args[3] = lp_build_const_int32(base->gallivm, target);
-
-			/* Set COMPR flag to zero to export data as 32-bit */
-			args[4] = uint->zero;
+			si_llvm_init_export_args(bld_base, d, index, target, args);
 
 			if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX ?
 			    (d->Semantic.Name == TGSI_SEMANTIC_POSITION) :
