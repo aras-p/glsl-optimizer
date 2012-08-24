@@ -37,7 +37,7 @@ struct st_framebuffer_iface;
 struct stw_pixelformat_info;
 
 /**
- * Windows framebuffer, derived from gl_framebuffer.
+ * Windows framebuffer.
  */
 struct stw_framebuffer
 {

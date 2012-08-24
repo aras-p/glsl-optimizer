@@ -78,7 +78,7 @@ struct stw_winsys
                            struct stw_shared_surface *surface);
 
    /**
-    * Compose into a shared (optional).
+    * Compose into a shared surface (optional).
     *
     * Blit the color buffer into a shared surface.
     *
