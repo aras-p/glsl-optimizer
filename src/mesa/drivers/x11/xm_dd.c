@@ -737,25 +737,6 @@ xmesa_update_state( struct gl_context *ctx, GLbitfield new_state )
 }
 
 
-
-/**
- * In SW, we don't really compress GL_COMPRESSED_RGB[A] textures!
- */
-static gl_format
-choose_tex_format( struct gl_context *ctx, GLint internalFormat,
-                   GLenum format, GLenum type )
-{
-   switch (internalFormat) {
-      case GL_COMPRESSED_RGB_ARB:
-         return MESA_FORMAT_RGB888;
-      case GL_COMPRESSED_RGBA_ARB:
-         return MESA_FORMAT_RGBA8888;
-      default:
-         return _mesa_choose_tex_format(ctx, internalFormat, format, type);
-   }
-}
-
-
 /**
  * Called by glViewport.
  * This is a good time for us to poll the current X window size and adjust
@@ -890,12 +871,6 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
 
    driver->MapRenderbuffer = xmesa_MapRenderbuffer;
    driver->UnmapRenderbuffer = xmesa_UnmapRenderbuffer;
-
-#if ENABLE_EXT_texure_compression_s3tc
-   driver->ChooseTextureFormat = choose_tex_format;
-#else
-   (void) choose_tex_format;
-#endif
 
 #if ENABLE_EXT_timer_query
    driver->NewQueryObject = xmesa_new_query_object;

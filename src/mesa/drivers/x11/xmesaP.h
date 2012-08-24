@@ -415,8 +415,6 @@ extern void xmesa_register_swrast_functions( struct gl_context *ctx );
 
 
 
-#define ENABLE_EXT_texure_compression_s3tc 0 /* SW texture compression */
-
 #if   defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #define ENABLE_EXT_timer_query 1 /* should have 64-bit GLuint64EXT */
 #else
