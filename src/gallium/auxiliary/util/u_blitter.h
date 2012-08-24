@@ -129,6 +129,15 @@ struct pipe_context *util_blitter_get_pipe(struct blitter_context *blitter)
    return blitter->pipe;
 }
 
+/* The default function to draw a rectangle. This can only be used
+ * inside of the draw_rectangle callback if the driver overrides it. */
+void util_blitter_draw_rectangle(struct blitter_context *blitter,
+                                 unsigned x1, unsigned y1,
+                                 unsigned x2, unsigned y2,
+                                 float depth,
+                                 enum blitter_attrib_type type,
+                                 const union pipe_color_union *attrib);
+
 /*
  * These states must be saved before any of the following functions are called:
  * - vertex buffers

@@ -123,13 +123,6 @@ struct blitter_context_priv
    boolean has_stencil_export;
 };
 
-static void blitter_draw_rectangle(struct blitter_context *blitter,
-                                   unsigned x, unsigned y,
-                                   unsigned width, unsigned height,
-                                   float depth,
-                                   enum blitter_attrib_type type,
-                                   const union pipe_color_union *attrib);
-
 
 struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 {
@@ -146,7 +139,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
       return NULL;
 
    ctx->base.pipe = pipe;
-   ctx->base.draw_rectangle = blitter_draw_rectangle;
+   ctx->base.draw_rectangle = util_blitter_draw_rectangle;
 
    /* init state objects for them to be considered invalid */
    ctx->base.saved_blend_state = INVALID_PTR;
@@ -862,12 +855,12 @@ static void blitter_draw(struct blitter_context_priv *ctx,
    pipe_resource_reference(&buf, NULL);
 }
 
-static void blitter_draw_rectangle(struct blitter_context *blitter,
-                                   unsigned x1, unsigned y1,
-                                   unsigned x2, unsigned y2,
-                                   float depth,
-                                   enum blitter_attrib_type type,
-                                   const union pipe_color_union *attrib)
+void util_blitter_draw_rectangle(struct blitter_context *blitter,
+                                 unsigned x1, unsigned y1,
+                                 unsigned x2, unsigned y2,
+                                 float depth,
+                                 enum blitter_attrib_type type,
+                                 const union pipe_color_union *attrib)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
 

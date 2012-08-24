@@ -294,6 +294,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL)
 		goto fail;
+	rctx->blitter->draw_rectangle = r600_draw_rectangle;
 
 	r600_get_backend_mask(rctx); /* this emits commands and must be last */
 

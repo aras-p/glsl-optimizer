@@ -26,6 +26,7 @@
 #ifndef R600_PIPE_H
 #define R600_PIPE_H
 
+#include "util/u_blitter.h"
 #include "util/u_slab.h"
 #include "r600.h"
 #include "r600_llvm.h"
@@ -638,6 +639,9 @@ void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask);
 void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
 			       const struct pipe_stencil_ref *state);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
+void r600_draw_rectangle(struct blitter_context *blitter,
+			 unsigned x1, unsigned y1, unsigned x2, unsigned y2, float depth,
+			 enum blitter_attrib_type type, const union pipe_color_union *attrib);
 uint32_t r600_translate_stencil_op(int s_op);
 uint32_t r600_translate_fill(uint32_t func);
 unsigned r600_tex_wrap(unsigned wrap);

@@ -27,10 +27,12 @@
 #include "r600_formats.h"
 #include "r600d.h"
 
-#include "util/u_blitter.h"
+#include "util/u_draw_quad.h"
 #include "util/u_upload_mgr.h"
 #include "tgsi/tgsi_parse.h"
 #include <byteswap.h>
+
+#define R600_PRIM_RECTANGLE_LIST PIPE_PRIM_MAX
 
 static void r600_emit_command_buffer(struct r600_context *rctx, struct r600_atom *atom)
 {
@@ -153,7 +155,8 @@ static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
 		-1,
 		-1,
 		-1,
-		-1
+		-1,
+		V_008958_DI_PT_RECTLIST
 	};
 
 	*prim = prim_conv[pprim];
@@ -1110,6 +1113,7 @@ static unsigned r600_conv_prim_to_gs_out(unsigned mode)
 		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
 		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
 		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
 		V_028A6C_OUTPRIM_TYPE_TRISTRIP
 	};
 	assert(mode < Elements(prim_conv));
@@ -1291,6 +1295,67 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);
+}
+
+void r600_draw_rectangle(struct blitter_context *blitter,
+			 unsigned x1, unsigned y1, unsigned x2, unsigned y2, float depth,
+			 enum blitter_attrib_type type, const union pipe_color_union *attrib)
+{
+	struct r600_context *rctx = (struct r600_context*)util_blitter_get_pipe(blitter);
+	struct pipe_viewport_state viewport;
+	struct pipe_resource *buf = NULL;
+	unsigned offset = 0;
+	float *vb;
+
+	if (type == UTIL_BLITTER_ATTRIB_TEXCOORD) {
+		util_blitter_draw_rectangle(blitter, x1, y1, x2, y2, depth, type, attrib);
+		return;
+	}
+
+	/* Some operations (like color resolve on r6xx) don't work
+	 * with the conventional primitive types.
+	 * One that works is PT_RECTLIST, which we use here. */
+
+	/* setup viewport */
+	viewport.scale[0] = 1.0f;
+	viewport.scale[1] = 1.0f;
+	viewport.scale[2] = 1.0f;
+	viewport.scale[3] = 1.0f;
+	viewport.translate[0] = 0.0f;
+	viewport.translate[1] = 0.0f;
+	viewport.translate[2] = 0.0f;
+	viewport.translate[3] = 0.0f;
+	rctx->context.set_viewport_state(&rctx->context, &viewport);
+
+	/* Upload vertices. The hw rectangle has only 3 vertices,
+	 * I guess the 4th one is derived from the first 3.
+	 * The vertex specification should match u_blitter's vertex element state. */
+	u_upload_alloc(rctx->uploader, 0, sizeof(float) * 24, &offset, &buf, (void**)&vb);
+	vb[0] = x1;
+	vb[1] = y1;
+	vb[2] = depth;
+	vb[3] = 1;
+
+	vb[8] = x1;
+	vb[9] = y2;
+	vb[10] = depth;
+	vb[11] = 1;
+
+	vb[16] = x2;
+	vb[17] = y1;
+	vb[18] = depth;
+	vb[19] = 1;
+
+	if (attrib) {
+		memcpy(vb+4, attrib->f, sizeof(float)*4);
+		memcpy(vb+12, attrib->f, sizeof(float)*4);
+		memcpy(vb+20, attrib->f, sizeof(float)*4);
+	}
+
+	/* draw */
+	util_draw_vertex_buffer(&rctx->context, NULL, buf, offset,
+				R600_PRIM_RECTANGLE_LIST, 3, 2);
+	pipe_resource_reference(&buf, NULL);
 }
 
 void _r600_pipe_state_add_reg_bo(struct r600_context *ctx,
