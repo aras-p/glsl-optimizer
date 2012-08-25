@@ -1049,10 +1049,7 @@ void _tnl_generic_interp( struct gl_context *ctx,
       a[j].extract( &a[j], fin, vin + a[j].vertoffset );
       a[j].extract( &a[j], fout, vout + a[j].vertoffset );
 
-      INTERP_F( t, fdst[3], fout[3], fin[3] );
-      INTERP_F( t, fdst[2], fout[2], fin[2] );
-      INTERP_F( t, fdst[1], fout[1], fin[1] );
-      INTERP_F( t, fdst[0], fout[0], fin[0] );
+      INTERP_4F(t, fdst, fout, fin);
 
       a[j].insert[4-1]( &a[j], vdst + a[j].vertoffset, fdst );
    }
