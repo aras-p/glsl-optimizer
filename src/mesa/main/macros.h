@@ -200,11 +200,16 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
               (a)[3] == (b)[3])
 
 /** Test for equality (unsigned bytes) */
+static inline GLboolean
+TEST_EQ_4UBV(const GLubyte a[4], const GLubyte b[4])
+{
 #if defined(__i386__)
-#define TEST_EQ_4UBV(DST, SRC) *((GLuint*)(DST)) == *((GLuint*)(SRC))
+   return *((const GLuint *) a) == *((const GLuint *) b);
 #else
-#define TEST_EQ_4UBV(DST, SRC) TEST_EQ_4V(DST, SRC)
+   return TEST_EQ_4V(a, b);
 #endif
+}
+
 
 /** Copy a 4-element vector */
 #define COPY_4V( DST, SRC )         \
@@ -216,30 +221,24 @@ do {                                \
 } while (0)
 
 /** Copy a 4-element unsigned byte vector */
+static inline void
+COPY_4UBV(GLubyte dst[4], const GLubyte src[4])
+{
 #if defined(__i386__)
-#define COPY_4UBV(DST, SRC)                 \
-do {                                        \
-   *((GLuint*)(DST)) = *((GLuint*)(SRC));   \
-} while (0)
+   *((GLuint *) dst) = *((GLuint *) src);
 #else
-/* The GLuint cast might fail if DST or SRC are not dword-aligned (RISC) */
-#define COPY_4UBV(DST, SRC)         \
-do {                                \
-   (DST)[0] = (SRC)[0];             \
-   (DST)[1] = (SRC)[1];             \
-   (DST)[2] = (SRC)[2];             \
-   (DST)[3] = (SRC)[3];             \
-} while (0)
+   /* The GLuint cast might fail if DST or SRC are not dword-aligned (RISC) */
+   COPY_4V(dst, src);
 #endif
+}
 
-/**
- * Copy a 4-element float vector
- * memcpy seems to be most efficient
- */
-#define COPY_4FV( DST, SRC )                  \
-do {                                          \
-   memcpy(DST, SRC, sizeof(GLfloat) * 4);     \
-} while (0)
+/** Copy a 4-element float vector */
+static inline void
+COPY_4FV(GLfloat dst[4], const GLfloat src[4])
+{
+   /* memcpy seems to be most efficient */
+   memcpy(dst, src, sizeof(GLfloat) * 4);
+}
 
 /** Copy \p SZ elements into a 4-element vector */
 #define COPY_SZ_4V(DST, SZ, SRC)  \
