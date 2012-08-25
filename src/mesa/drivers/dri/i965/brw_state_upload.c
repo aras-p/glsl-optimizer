@@ -246,6 +246,8 @@ const struct brw_tracked_state *gen7_atoms[] =
    &brw_indices,
    &brw_index_buffer,
    &brw_vertices,
+
+   &haswell_cut_index,
 };
 
 

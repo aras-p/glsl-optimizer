@@ -930,7 +930,7 @@ static void brw_emit_index_buffer(struct brw_context *brw)
    if (index_buffer == NULL)
       return;
 
-   if (brw->prim_restart.enable_cut_index) {
+   if (brw->prim_restart.enable_cut_index && !intel->is_haswell) {
       cut_index_setting = BRW_CUT_INDEX_ENABLE;
    } else {
       cut_index_setting = 0;

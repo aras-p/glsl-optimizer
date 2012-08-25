@@ -133,6 +133,7 @@ extern const struct brw_tracked_state gen7_wm_constants;
 extern const struct brw_tracked_state gen7_wm_constant_surface;
 extern const struct brw_tracked_state gen7_wm_state;
 extern const struct brw_tracked_state gen7_wm_surfaces;
+extern const struct brw_tracked_state haswell_cut_index;
 
 /* brw_misc_state.c */
 uint32_t
