@@ -215,15 +215,6 @@ do {                                \
    (DST)[3] = (SRC)[3];             \
 } while (0)
 
-/** Copy a 4-element vector with cast */
-#define COPY_4V_CAST( DST, SRC, CAST )  \
-do {                                    \
-   (DST)[0] = (CAST)(SRC)[0];           \
-   (DST)[1] = (CAST)(SRC)[1];           \
-   (DST)[2] = (CAST)(SRC)[2];           \
-   (DST)[3] = (CAST)(SRC)[3];           \
-} while (0)
-
 /** Copy a 4-element unsigned byte vector */
 #if defined(__i386__)
 #define COPY_4UBV(DST, SRC)                 \

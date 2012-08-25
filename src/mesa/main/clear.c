@@ -510,7 +510,7 @@ _mesa_ClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat *value)
             /* save color */
             clearSave = ctx->Color.ClearColor;
             /* set color */
-            COPY_4V_CAST(ctx->Color.ClearColor.f, value, GLclampf);
+            COPY_4V(ctx->Color.ClearColor.f, value);
             /* clear buffer(s) */
             ctx->Driver.Clear(ctx, mask);
             /* restore color */
