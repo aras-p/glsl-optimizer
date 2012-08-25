@@ -188,8 +188,8 @@ _swrast_add_spec_terms_line(struct gl_context *ctx,
    /* draw */
    SWRAST_CONTEXT(ctx)->SpecLine( ctx, ncv0, ncv1 );
    /* restore original colors */
-   COPY_CHAN4( ncv0->attrib[FRAG_ATTRIB_COL0], cSave[0] );
-   COPY_CHAN4( ncv1->attrib[FRAG_ATTRIB_COL0], cSave[1] );
+   COPY_CHAN4(ncv0->color, cSave[0]);
+   COPY_CHAN4(ncv1->color, cSave[1]);
 }
 
 
