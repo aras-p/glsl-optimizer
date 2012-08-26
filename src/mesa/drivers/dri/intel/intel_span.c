@@ -117,8 +117,6 @@ static void
 intel_span_resolve_buffers(struct intel_context *intel)
 {
    struct gl_context *ctx = &intel->ctx;
-   struct intel_renderbuffer *draw_irb;
-   struct intel_renderbuffer *read_irb;
    struct intel_texture_object *tex_obj;
 
    /* Resolve depth buffer of each enabled texture. */
@@ -131,14 +129,6 @@ intel_span_resolve_buffers(struct intel_context *intel)
 	 continue;
       intel_miptree_all_slices_resolve_depth(intel, tex_obj->mt);
    }
-
-   /* Resolve each attached depth buffer. */
-   draw_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
-   read_irb = intel_get_renderbuffer(ctx->ReadBuffer, BUFFER_DEPTH);
-   if (draw_irb)
-      intel_renderbuffer_resolve_depth(intel, draw_irb);
-   if (read_irb != draw_irb && read_irb)
-      intel_renderbuffer_resolve_depth(intel, read_irb);
 }
 
 /**
