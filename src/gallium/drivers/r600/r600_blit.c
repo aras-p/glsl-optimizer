@@ -145,6 +145,16 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 	if (!staging && !texture->dirty_level_mask)
 		return;
 
+	max_sample = u_max_sample(&texture->resource.b.b);
+
+	/* XXX Decompressing MSAA depth textures is broken on R6xx.
+	 * There is also a hardlock if CMASK and FMASK are not present.
+	 * Just skip this until we find out how to fix it. */
+	if (rctx->chip_class == R600 && max_sample > 0) {
+		texture->dirty_level_mask = 0;
+		return;
+	}
+
 	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
 	    rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
 		depth = 0.0f;
@@ -158,7 +168,6 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 	rctx->db_misc_state.copy_sample = first_sample;
 	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 
-	max_sample = u_max_sample(&texture->resource.b.b);
 
 	for (level = first_level; level <= last_level; level++) {
 		if (!staging && !(texture->dirty_level_mask & (1 << level)))
