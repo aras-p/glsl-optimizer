@@ -193,19 +193,3 @@ intel_translate_logic_op(GLenum opcode)
       return LOGICOP_SET;
    }
 }
-
-/* Fallback to swrast for select and feedback.
- */
-static void
-intelRenderMode(struct gl_context *ctx, GLenum mode)
-{
-   struct intel_context *intel = intel_context(ctx);
-   FALLBACK(intel, INTEL_FALLBACK_RENDERMODE, (mode != GL_RENDER));
-}
-
-
-void
-intelInitStateFuncs(struct dd_function_table *functions)
-{
-   functions->RenderMode = intelRenderMode;
-}

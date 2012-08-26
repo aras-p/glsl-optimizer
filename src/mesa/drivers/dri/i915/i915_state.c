@@ -1054,6 +1054,15 @@ i915_update_provoking_vertex(struct gl_context * ctx)
     }
 }
 
+/* Fallback to swrast for select and feedback.
+ */
+static void
+i915RenderMode(struct gl_context *ctx, GLenum mode)
+{
+   struct intel_context *intel = intel_context(ctx);
+   FALLBACK(intel, INTEL_FALLBACK_RENDERMODE, (mode != GL_RENDER));
+}
+
 void
 i915InitStateFunctions(struct dd_function_table *functions)
 {
@@ -1074,6 +1083,7 @@ i915InitStateFunctions(struct dd_function_table *functions)
    functions->PointSize = i915PointSize;
    functions->PointParameterfv = i915PointParameterfv;
    functions->PolygonStipple = i915PolygonStipple;
+   functions->RenderMode = i915RenderMode;
    functions->Scissor = i915Scissor;
    functions->ShadeModel = i915ShadeModel;
    functions->StencilFuncSeparate = i915StencilFuncSeparate;

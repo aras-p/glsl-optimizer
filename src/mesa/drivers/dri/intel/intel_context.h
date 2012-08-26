@@ -511,7 +511,6 @@ void intel_init_syncobj_functions(struct dd_function_table *functions);
 /* ================================================================
  * intel_state.c:
  */
-extern void intelInitStateFuncs(struct dd_function_table *functions);
 
 #define COMPAREFUNC_ALWAYS		0
 #define COMPAREFUNC_NEVER		0x1

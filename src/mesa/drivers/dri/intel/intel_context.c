@@ -569,7 +569,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intelInitTextureImageFuncs(functions);
    intelInitTextureSubImageFuncs(functions);
    intelInitTextureCopyImageFuncs(functions);
-   intelInitStateFuncs(functions);
    intelInitClearFuncs(functions);
    intelInitBufferFuncs(functions);
    intelInitPixelFuncs(functions);

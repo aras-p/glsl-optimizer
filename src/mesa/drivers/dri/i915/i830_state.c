@@ -1101,6 +1101,15 @@ i830_update_provoking_vertex(struct gl_context * ctx)
     }
 }
 
+/* Fallback to swrast for select and feedback.
+ */
+static void
+i830RenderMode(struct gl_context *ctx, GLenum mode)
+{
+   struct intel_context *intel = intel_context(ctx);
+   FALLBACK(intel, INTEL_FALLBACK_RENDERMODE, (mode != GL_RENDER));
+}
+
 void
 i830InitStateFuncs(struct dd_function_table *functions)
 {
@@ -1120,6 +1129,7 @@ i830InitStateFuncs(struct dd_function_table *functions)
    functions->LogicOpcode = i830LogicOp;
    functions->PointSize = i830PointSize;
    functions->PolygonStipple = i830PolygonStipple;
+   functions->RenderMode = i830RenderMode;
    functions->Scissor = i830Scissor;
    functions->ShadeModel = i830ShadeModel;
    functions->StencilFuncSeparate = i830StencilFuncSeparate;
