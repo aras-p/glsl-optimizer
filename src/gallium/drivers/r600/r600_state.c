@@ -1666,17 +1666,30 @@ static void r600_emit_cb_misc_state(struct r600_context *rctx, struct r600_atom 
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
 	struct r600_cb_misc_state *a = (struct r600_cb_misc_state*)atom;
-	unsigned fb_colormask = (1ULL << ((unsigned)a->nr_cbufs * 4)) - 1;
-	unsigned ps_colormask = (1ULL << ((unsigned)a->nr_ps_color_outputs * 4)) - 1;
-	unsigned multiwrite = a->multiwrite && a->nr_cbufs > 1;
 
-	r600_write_context_reg_seq(cs, R_028238_CB_TARGET_MASK, 2);
-	r600_write_value(cs, a->blend_colormask & fb_colormask); /* R_028238_CB_TARGET_MASK */
-	/* Always enable the first color output to make sure alpha-test works even without one. */
-	r600_write_value(cs, 0xf | (multiwrite ? fb_colormask : ps_colormask)); /* R_02823C_CB_SHADER_MASK */
-	r600_write_context_reg(cs, R_028808_CB_COLOR_CONTROL,
-			       a->cb_color_control |
-			       S_028808_MULTIWRITE_ENABLE(multiwrite));
+	if (G_028808_SPECIAL_OP(a->cb_color_control) == V_028808_SPECIAL_RESOLVE_BOX) {
+		r600_write_context_reg_seq(cs, R_028238_CB_TARGET_MASK, 2);
+		if (rctx->chip_class == R600) {
+			r600_write_value(cs, 0xff); /* R_028238_CB_TARGET_MASK */
+			r600_write_value(cs, 0xff); /* R_02823C_CB_SHADER_MASK */
+		} else {
+			r600_write_value(cs, 0xf); /* R_028238_CB_TARGET_MASK */
+			r600_write_value(cs, 0xf); /* R_02823C_CB_SHADER_MASK */
+		}
+		r600_write_context_reg(cs, R_028808_CB_COLOR_CONTROL, a->cb_color_control);
+	} else {
+		unsigned fb_colormask = (1ULL << ((unsigned)a->nr_cbufs * 4)) - 1;
+		unsigned ps_colormask = (1ULL << ((unsigned)a->nr_ps_color_outputs * 4)) - 1;
+		unsigned multiwrite = a->multiwrite && a->nr_cbufs > 1;
+
+		r600_write_context_reg_seq(cs, R_028238_CB_TARGET_MASK, 2);
+		r600_write_value(cs, a->blend_colormask & fb_colormask); /* R_028238_CB_TARGET_MASK */
+		/* Always enable the first color output to make sure alpha-test works even without one. */
+		r600_write_value(cs, 0xf | (multiwrite ? fb_colormask : ps_colormask)); /* R_02823C_CB_SHADER_MASK */
+		r600_write_context_reg(cs, R_028808_CB_COLOR_CONTROL,
+				       a->cb_color_control |
+				       S_028808_MULTIWRITE_ENABLE(multiwrite));
+	}
 }
 
 static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom *atom)
