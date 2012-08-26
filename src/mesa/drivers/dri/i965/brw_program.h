@@ -31,7 +31,7 @@ struct brw_sampler_prog_key_data {
    /**
     * EXT_texture_swizzle and DEPTH_TEXTURE_MODE swizzles.
     */
-   uint16_t swizzles[BRW_MAX_TEX_UNIT];
+   uint16_t swizzles[MAX_SAMPLERS];
 
    uint16_t gl_clamp_mask[3];
 

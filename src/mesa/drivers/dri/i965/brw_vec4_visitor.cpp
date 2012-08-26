@@ -1833,7 +1833,6 @@ void
 vec4_visitor::visit(ir_texture *ir)
 {
    int sampler = _mesa_get_sampler_uniform_value(ir->sampler, prog, &vp->Base);
-   int texunit = vp->Base.SamplerUnits[sampler];
 
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
@@ -1999,15 +1998,15 @@ vec4_visitor::visit(ir_texture *ir)
 
    emit(inst);
 
-   swizzle_result(ir, src_reg(inst->dst), texunit);
+   swizzle_result(ir, src_reg(inst->dst), sampler);
 }
 
 void
-vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, int texunit)
+vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, int sampler)
 {
    this->result = orig_val;
 
-   int s = c->key.tex.swizzles[texunit];
+   int s = c->key.tex.swizzles[sampler];
 
    if (ir->op == ir_txs || ir->type == glsl_type::float_type
 			|| s == SWIZZLE_NOOP)

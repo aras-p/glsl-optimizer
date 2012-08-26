@@ -364,7 +364,7 @@ brw_debug_recompile_sampler_key(const struct brw_sampler_prog_key_data *old_key,
 {
    bool found = false;
 
-   for (unsigned int i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+   for (unsigned int i = 0; i < MAX_SAMPLERS; i++) {
       found |= key_debug("EXT_texture_swizzle or DEPTH_TEXTURE_MODE",
                          old_key->swizzles[i], key->swizzles[i]);
    }
@@ -436,18 +436,19 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 				   const struct gl_program *prog,
 				   struct brw_sampler_prog_key_data *key)
 {
-   for (int i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      key->swizzles[i] = SWIZZLE_NOOP;
+   for (int s = 0; s < MAX_SAMPLERS; s++) {
+      key->swizzles[s] = SWIZZLE_NOOP;
 
-      if (!prog->TexturesUsed[i])
+      if (!(prog->SamplersUsed & (1 << s)))
 	 continue;
 
-      const struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
+      int unit_id = prog->SamplerUnits[s];
+      const struct gl_texture_unit *unit = &ctx->Texture.Unit[unit_id];
 
       if (unit->_ReallyEnabled && unit->_Current->Target != GL_TEXTURE_BUFFER) {
 	 const struct gl_texture_object *t = unit->_Current;
 	 const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
-	 struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, i);
+	 struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit_id);
 	 int swizzles[SWIZZLE_NIL + 1] = {
 	    SWIZZLE_X,
 	    SWIZZLE_Y,
@@ -493,12 +494,12 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 	 }
 
 	 if (img->InternalFormat == GL_YCBCR_MESA) {
-	    key->yuvtex_mask |= 1 << i;
+	    key->yuvtex_mask |= 1 << s;
 	    if (img->TexFormat == MESA_FORMAT_YCBCR)
-		key->yuvtex_swap_mask |= 1 << i;
+		key->yuvtex_swap_mask |= 1 << s;
 	 }
 
-	 key->swizzles[i] =
+	 key->swizzles[s] =
 	    MAKE_SWIZZLE4(swizzles[GET_SWZ(t->_Swizzle, 0)],
 			  swizzles[GET_SWZ(t->_Swizzle, 1)],
 			  swizzles[GET_SWZ(t->_Swizzle, 2)],
@@ -507,11 +508,11 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 	 if (sampler->MinFilter != GL_NEAREST &&
 	     sampler->MagFilter != GL_NEAREST) {
 	    if (sampler->WrapS == GL_CLAMP)
-	       key->gl_clamp_mask[0] |= 1 << i;
+	       key->gl_clamp_mask[0] |= 1 << s;
 	    if (sampler->WrapT == GL_CLAMP)
-	       key->gl_clamp_mask[1] |= 1 << i;
+	       key->gl_clamp_mask[1] |= 1 << s;
 	    if (sampler->WrapR == GL_CLAMP)
-	       key->gl_clamp_mask[2] |= 1 << i;
+	       key->gl_clamp_mask[2] |= 1 << s;
 	 }
       }
    }

@@ -1166,7 +1166,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
  * setting this->result).
  */
 fs_reg
-fs_visitor::emit_texcoord(ir_texture *ir, int texunit)
+fs_visitor::emit_texcoord(ir_texture *ir, int sampler, int texunit)
 {
    fs_inst *inst = NULL;
 
@@ -1186,8 +1186,8 @@ fs_visitor::emit_texcoord(ir_texture *ir, int texunit)
     */
    if (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_RECT &&
        (intel->gen < 6 ||
-	(intel->gen >= 6 && (c->key.tex.gl_clamp_mask[0] & (1 << texunit) ||
-			     c->key.tex.gl_clamp_mask[1] & (1 << texunit))))) {
+	(intel->gen >= 6 && (c->key.tex.gl_clamp_mask[0] & (1 << sampler) ||
+			     c->key.tex.gl_clamp_mask[1] & (1 << sampler))))) {
       struct gl_program_parameter_list *params = c->fp->program.Base.Parameters;
       int tokens[STATE_LENGTH] = {
 	 STATE_INTERNAL,
@@ -1239,7 +1239,7 @@ fs_visitor::emit_texcoord(ir_texture *ir, int texunit)
       needs_gl_clamp = false;
 
       for (int i = 0; i < 2; i++) {
-	 if (c->key.tex.gl_clamp_mask[i] & (1 << texunit)) {
+	 if (c->key.tex.gl_clamp_mask[i] & (1 << sampler)) {
 	    fs_reg chan = coordinate;
 	    chan.reg_offset += i;
 
@@ -1265,7 +1265,7 @@ fs_visitor::emit_texcoord(ir_texture *ir, int texunit)
    if (ir->coordinate && needs_gl_clamp) {
       for (unsigned int i = 0;
 	   i < MIN2(ir->coordinate->type->vector_elements, 3); i++) {
-	 if (c->key.tex.gl_clamp_mask[i] & (1 << texunit)) {
+	 if (c->key.tex.gl_clamp_mask[i] & (1 << sampler)) {
 	    fs_reg chan = coordinate;
 	    chan.reg_offset += i;
 
@@ -1292,7 +1292,7 @@ fs_visitor::visit(ir_texture *ir)
     * done before loading any values into MRFs for the sampler message since
     * generating these values may involve SEND messages that need the MRFs.
     */
-   fs_reg coordinate = emit_texcoord(ir, texunit);
+   fs_reg coordinate = emit_texcoord(ir, sampler, texunit);
 
    fs_reg shadow_comparitor;
    if (ir->shadow_comparitor) {
@@ -1350,7 +1350,7 @@ fs_visitor::visit(ir_texture *ir)
    if (ir->shadow_comparitor)
       inst->shadow_compare = true;
 
-   swizzle_result(ir, dst, texunit);
+   swizzle_result(ir, dst, sampler);
 }
 
 /**
@@ -1358,7 +1358,7 @@ fs_visitor::visit(ir_texture *ir)
  * EXT_texture_swizzle as well as DEPTH_TEXTURE_MODE for shadow comparisons.
  */
 void
-fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int texunit)
+fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
 {
    this->result = orig_val;
 
@@ -1368,11 +1368,11 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int texunit)
    if (ir->type == glsl_type::float_type) {
       /* Ignore DEPTH_TEXTURE_MODE swizzling. */
       assert(ir->sampler->type->sampler_shadow);
-   } else if (c->key.tex.swizzles[texunit] != SWIZZLE_NOOP) {
+   } else if (c->key.tex.swizzles[sampler] != SWIZZLE_NOOP) {
       fs_reg swizzled_result = fs_reg(this, glsl_type::vec4_type);
 
       for (int i = 0; i < 4; i++) {
-	 int swiz = GET_SWZ(c->key.tex.swizzles[texunit], i);
+	 int swiz = GET_SWZ(c->key.tex.swizzles[sampler], i);
 	 fs_reg l = swizzled_result;
 	 l.reg_offset += i;
 
@@ -1382,7 +1382,7 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int texunit)
 	    emit(BRW_OPCODE_MOV, l, fs_reg(1.0f));
 	 } else {
 	    fs_reg r = orig_val;
-	    r.reg_offset += GET_SWZ(c->key.tex.swizzles[texunit], i);
+	    r.reg_offset += GET_SWZ(c->key.tex.swizzles[sampler], i);
 	    emit(BRW_OPCODE_MOV, l, r);
 	 }
       }
