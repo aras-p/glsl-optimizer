@@ -587,7 +587,9 @@ static void brw_wm_populate_key( struct brw_context *brw,
    }
 
    key->line_aa = line_aa;
-   key->stats_wm = brw->intel.stats_wm;
+
+   if (intel->gen < 6)
+      key->stats_wm = brw->intel.stats_wm;
 
    /* BRW_NEW_WM_INPUT_DIMENSIONS */
    key->proj_attrib_mask = brw->wm.input_size_masks[4-1];
