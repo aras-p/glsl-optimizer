@@ -169,8 +169,10 @@ void
 intelInitSpanFuncs(struct gl_context * ctx)
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-   swdd->SpanRenderStart = intelSpanRenderStart;
-   swdd->SpanRenderFinish = intelSpanRenderFinish;
+   if (swdd) {
+      swdd->SpanRenderStart = intelSpanRenderStart;
+      swdd->SpanRenderFinish = intelSpanRenderFinish;
+   }
 }
 
 void

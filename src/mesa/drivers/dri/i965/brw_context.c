@@ -140,7 +140,9 @@ brwCreateContext(int api,
    /* Initialize swrast, tnl driver tables: */
    intelInitSpanFuncs(ctx);
 
-   TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   if (tnl)
+      tnl->Driver.RunPipeline = _tnl_run_pipeline;
 
    ctx->Const.MaxDualSourceDrawBuffers = 1;
    ctx->Const.MaxDrawBuffers = BRW_MAX_DRAW_BUFFERS;
