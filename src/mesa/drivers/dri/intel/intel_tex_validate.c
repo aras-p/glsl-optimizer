@@ -134,6 +134,9 @@ intel_tex_map_image_for_swrast(struct intel_context *intel,
    face = intel_image->base.Base.Face;
    mt = intel_image->mt;
 
+   for (int i = 0; i < mt->level[level].depth; i++)
+      intel_miptree_slice_resolve_depth(intel, mt, level, i);
+
    if (mt->target == GL_TEXTURE_3D ||
        mt->target == GL_TEXTURE_2D_ARRAY ||
        mt->target == GL_TEXTURE_1D_ARRAY) {
