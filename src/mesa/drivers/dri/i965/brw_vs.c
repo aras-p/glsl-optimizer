@@ -297,6 +297,77 @@ do_vs_prog(struct brw_context *brw,
    return true;
 }
 
+static bool
+key_debug(const char *name, int a, int b)
+{
+   if (a != b) {
+      perf_debug("  %s %d->%d\n", name, a, b);
+      return true;
+   }
+   return false;
+}
+
+void
+brw_vs_debug_recompile(struct brw_context *brw,
+                       struct gl_shader_program *prog,
+                       const struct brw_vs_prog_key *key)
+{
+   struct brw_cache_item *c = NULL;
+   const struct brw_vs_prog_key *old_key = NULL;
+   bool found = false;
+
+   perf_debug("Recompiling vertex shader for program %d\n", prog->Name);
+
+   for (unsigned int i = 0; i < brw->cache.size; i++) {
+      for (c = brw->cache.items[i]; c; c = c->next) {
+         if (c->cache_id == BRW_VS_PROG) {
+            old_key = c->key;
+
+            if (old_key->program_string_id == key->program_string_id)
+               break;
+         }
+      }
+      if (c)
+         break;
+   }
+
+   if (!c) {
+      perf_debug("  Didn't find previous compile in the shader cache for "
+                 "debug\n");
+      return;
+   }
+
+   for (unsigned int i = 0; i < VERT_ATTRIB_MAX; i++) {
+      found |= key_debug("GL_FIXED rescaling",
+                         old_key->gl_fixed_input_size[i],
+                         key->gl_fixed_input_size[i]);
+   }
+
+   found |= key_debug("user clip flags",
+                      old_key->userclip_active, key->userclip_active);
+
+   found |= key_debug("user clipping planes as push constants",
+                      old_key->nr_userclip_plane_consts,
+                      key->nr_userclip_plane_consts);
+
+   found |= key_debug("clip distance enable",
+                      old_key->uses_clip_distance, key->uses_clip_distance);
+   found |= key_debug("clip plane enable bitfield",
+                      old_key->userclip_planes_enabled_gen_4_5,
+                      key->userclip_planes_enabled_gen_4_5);
+   found |= key_debug("copy edgeflag",
+                      old_key->copy_edgeflag, key->copy_edgeflag);
+   found |= key_debug("PointCoord replace",
+                      old_key->point_coord_replace, key->point_coord_replace);
+   found |= key_debug("vertex color clamping",
+                      old_key->clamp_vertex_color, key->clamp_vertex_color);
+
+   found |= brw_debug_recompile_sampler_key(&old_key->tex, &key->tex);
+
+   if (!found) {
+      perf_debug("  Something else\n");
+   }
+}
 
 static void brw_upload_vs_prog(struct brw_context *brw)
 {

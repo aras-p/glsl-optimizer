@@ -120,5 +120,8 @@ struct brw_vs_compile {
 bool brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c);
 void brw_old_vs_emit(struct brw_vs_compile *c);
 bool brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog);
+void brw_vs_debug_recompile(struct brw_context *brw,
+                            struct gl_shader_program *prog,
+                            const struct brw_vs_prog_key *key);
 
 #endif

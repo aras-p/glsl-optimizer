@@ -1023,6 +1023,7 @@ extern "C" {
 bool
 brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
 {
+   struct brw_context *brw = c->func.brw;
    struct intel_context *intel = &c->func.brw->intel;
    bool start_busy = false;
    float start_time = 0;
@@ -1049,7 +1050,7 @@ brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
 
    if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
       if (shader->compiled_once) {
-         perf_debug("Recompiling vertex shader for program %d\n", prog->Name);
+         brw_vs_debug_recompile(brw, prog, &c->key);
       }
       if (start_busy && !drm_intel_bo_busy(intel->batch.last_bo)) {
          perf_debug("VS compile took %.03f ms and stalled the GPU\n",
