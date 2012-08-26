@@ -31,7 +31,7 @@ static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
 		    return r600_compute_global_buffer_create(screen, templ);
 		}
 		else {
-		    return r600_buffer_create(screen, templ);
+		    return r600_buffer_create(screen, templ, 4096);
 		}
 	} else {
 		return r600_texture_create(screen, templ);

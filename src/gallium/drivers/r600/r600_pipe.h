@@ -450,6 +450,13 @@ struct r600_context {
 
 	/* Index buffer. */
 	struct pipe_index_buffer index_buffer;
+
+	/* Dummy CMASK and FMASK buffers used to get around the R6xx hardware
+	 * bug where valid CMASK and FMASK are required to be present to avoid
+	 * a hardlock in certain operations but aren't actually used
+	 * for anything useful. */
+	struct r600_resource *dummy_fmask;
+	struct r600_resource *dummy_cmask;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
@@ -518,7 +525,8 @@ bool r600_init_resource(struct r600_screen *rscreen,
 			unsigned size, unsigned alignment,
 			unsigned bind, unsigned usage);
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
-					 const struct pipe_resource *templ);
+					 const struct pipe_resource *templ,
+					 unsigned alignment);
 
 /* r600_pipe.c */
 void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
@@ -552,6 +560,7 @@ void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shad
 void r600_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
 void *r600_create_db_flush_dsa(struct r600_context *rctx);
 void *r600_create_resolve_blend(struct r600_context *rctx);
+void *r700_create_resolve_blend(struct r600_context *rctx);
 void *r600_create_decompress_blend(struct r600_context *rctx);
 void r600_polygon_offset_update(struct r600_context *rctx);
 void r600_adjust_gprs(struct r600_context *rctx);

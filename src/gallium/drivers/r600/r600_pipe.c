@@ -156,6 +156,9 @@ static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_context *rctx = (struct r600_context *)context;
 
+	pipe_resource_reference((struct pipe_resource**)&rctx->dummy_cmask, NULL);
+	pipe_resource_reference((struct pipe_resource**)&rctx->dummy_fmask, NULL);
+
 	if (rctx->no_blend) {
 		rctx->context.delete_blend_state(&rctx->context, rctx->no_blend);
 	}
@@ -250,7 +253,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		if (r600_context_init(rctx))
 			goto fail;
 		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
-		rctx->custom_blend_resolve = r600_create_resolve_blend(rctx);
+		rctx->custom_blend_resolve = rctx->chip_class == R700 ? r700_create_resolve_blend(rctx)
+								      : r600_create_resolve_blend(rctx);
 		rctx->custom_blend_decompress = r600_create_decompress_blend(rctx);
 		rctx->has_vertex_cache = !(rctx->family == CHIP_RV610 ||
 					   rctx->family == CHIP_RV620 ||

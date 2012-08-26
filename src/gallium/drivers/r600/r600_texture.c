@@ -252,13 +252,15 @@ static const struct u_resource_vtbl r600_texture_vtbl =
 	NULL				/* transfer_inline_write */
 };
 
-static void r600_texture_allocate_fmask(struct r600_screen *rscreen,
-					struct r600_texture *rtex)
+/* The number of samples can be specified independently of the texture. */
+void r600_texture_get_fmask_info(struct r600_screen *rscreen,
+				 struct r600_texture *rtex,
+				 unsigned nr_samples,
+				 struct r600_fmask_info *out)
 {
 	/* FMASK is allocated pretty much like an ordinary texture.
 	 * Here we use bpe in the units of bits, not bytes. */
 	struct radeon_surface fmask = rtex->surface;
-	unsigned nr_samples = rtex->resource.b.b.nr_samples;
 
 	switch (nr_samples) {
 	case 2:
@@ -297,10 +299,23 @@ static void r600_texture_allocate_fmask(struct r600_screen *rscreen,
 	}
 	assert(fmask.level[0].mode == RADEON_SURF_MODE_2D);
 
+	out->bank_height = fmask.bankh;
+	out->alignment = MAX2(256, fmask.bo_alignment);
+	out->size = (fmask.bo_size + 7) / 8;
+}
+
+static void r600_texture_allocate_fmask(struct r600_screen *rscreen,
+					struct r600_texture *rtex)
+{
+	struct r600_fmask_info fmask;
+
+	r600_texture_get_fmask_info(rscreen, rtex,
+				    rtex->resource.b.b.nr_samples, &fmask);
+
 	/* Reserve space for FMASK while converting bits back to bytes. */
-	rtex->fmask_bank_height = fmask.bankh;
-	rtex->fmask_offset = align(rtex->size, MAX2(256, fmask.bo_alignment));
-	rtex->fmask_size = (fmask.bo_size + 7) / 8;
+	rtex->fmask_bank_height = fmask.bank_height;
+	rtex->fmask_offset = align(rtex->size, fmask.alignment);
+	rtex->fmask_size = fmask.size;
 	rtex->size = rtex->fmask_offset + rtex->fmask_size;
 #if 0
 	printf("FMASK width=%u, height=%i, bits=%u, size=%u\n",
@@ -308,8 +323,9 @@ static void r600_texture_allocate_fmask(struct r600_screen *rscreen,
 #endif
 }
 
-static void r600_texture_allocate_cmask(struct r600_screen *rscreen,
-					struct r600_texture *rtex)
+void r600_texture_get_cmask_info(struct r600_screen *rscreen,
+				 struct r600_texture *rtex,
+				 struct r600_cmask_info *out)
 {
 	unsigned cmask_tile_width = 8;
 	unsigned cmask_tile_height = 8;
@@ -331,14 +347,25 @@ static void r600_texture_allocate_cmask(struct r600_screen *rscreen,
 	unsigned base_align = num_pipes * pipe_interleave_bytes;
 	unsigned slice_bytes =
 		((pitch_elements * height * element_bits + 7) / 8) / cmask_tile_elements;
-	unsigned size = rtex->surface.array_size * align(slice_bytes, base_align);
 
 	assert(macro_tile_width % 128 == 0);
 	assert(macro_tile_height % 128 == 0);
 
-	rtex->cmask_slice_tile_max = ((pitch_elements * height) / (128*128)) - 1;
-	rtex->cmask_offset = align(rtex->size, MAX2(256, base_align));
-	rtex->cmask_size = size;
+	out->slice_tile_max = ((pitch_elements * height) / (128*128)) - 1;
+	out->alignment = MAX2(256, base_align);
+	out->size = rtex->surface.array_size * align(slice_bytes, base_align);
+}
+
+static void r600_texture_allocate_cmask(struct r600_screen *rscreen,
+					struct r600_texture *rtex)
+{
+	struct r600_cmask_info cmask;
+
+	r600_texture_get_cmask_info(rscreen, rtex, &cmask);
+
+	rtex->cmask_slice_tile_max = cmask.slice_tile_max;
+	rtex->cmask_offset = align(rtex->size, cmask.alignment);
+	rtex->cmask_size = cmask.size;
 	rtex->size = rtex->cmask_offset + rtex->cmask_size;
 #if 0
 	printf("CMASK: macro tile width = %u, macro tile height = %u, "
@@ -479,6 +506,9 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 static void r600_surface_destroy(struct pipe_context *pipe,
 				 struct pipe_surface *surface)
 {
+	struct r600_surface *surf = (struct r600_surface*)surface;
+	pipe_resource_reference((struct pipe_resource**)&surf->cb_buffer_fmask, NULL);
+	pipe_resource_reference((struct pipe_resource**)&surf->cb_buffer_cmask, NULL);
 	pipe_resource_reference(&surface->texture, NULL);
 	FREE(surface);
 }

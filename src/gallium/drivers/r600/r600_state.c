@@ -1232,9 +1232,31 @@ static void r600_set_viewport_state(struct pipe_context *ctx,
 	r600_context_pipe_state_set(rctx, rstate);
 }
 
-static void r600_init_color_surface(struct r600_context *rctx,
-				    struct r600_surface *surf)
+static struct r600_resource *r600_buffer_create_helper(struct r600_screen *rscreen,
+						       unsigned size, unsigned alignment)
 {
+	struct pipe_resource buffer;
+
+	memset(&buffer, 0, sizeof buffer);
+	buffer.target = PIPE_BUFFER;
+	buffer.format = PIPE_FORMAT_R8_UNORM;
+	buffer.bind = PIPE_BIND_CUSTOM;
+	buffer.usage = PIPE_USAGE_STATIC;
+	buffer.flags = 0;
+	buffer.width0 = size;
+	buffer.height0 = 1;
+	buffer.depth0 = 1;
+	buffer.array_size = 1;
+
+	return (struct r600_resource*)
+		r600_buffer_create(&rscreen->screen, &buffer, alignment);
+}
+
+static void r600_init_color_surface(struct r600_context *rctx,
+				    struct r600_surface *surf,
+				    bool force_cmask_fmask)
+{
+	struct r600_screen *rscreen = rctx->screen;
 	struct r600_texture *rtex = (struct r600_texture*)surf->base.texture;
 	unsigned level = surf->base.u.tex.level;
 	unsigned pitch, slice;
@@ -1366,11 +1388,18 @@ static void r600_init_color_surface(struct r600_context *rctx,
 		}
 	}
 
+	/* These might not always be initialized to zero. */
 	surf->cb_color_base = offset >> 8;
 	surf->cb_color_size = S_028060_PITCH_TILE_MAX(pitch) |
 			      S_028060_SLICE_TILE_MAX(slice);
 	surf->cb_color_fmask = surf->cb_color_base;
 	surf->cb_color_cmask = surf->cb_color_base;
+	surf->cb_color_mask = 0;
+
+	pipe_resource_reference((struct pipe_resource**)&surf->cb_buffer_cmask,
+				&rtex->resource.b.b);
+	pipe_resource_reference((struct pipe_resource**)&surf->cb_buffer_fmask,
+				&rtex->resource.b.b);
 
 	if (rtex->cmask_size) {
 		surf->cb_color_cmask = rtex->cmask_offset >> 8;
@@ -1383,7 +1412,56 @@ static void r600_init_color_surface(struct r600_context *rctx,
 		} else { /* cmask only */
 			color_info |= S_0280A0_TILE_MODE(V_0280A0_CLEAR_ENABLE);
 		}
+	} else if (force_cmask_fmask) {
+		/* Allocate dummy FMASK and CMASK if they aren't allocated already.
+		 *
+		 * R6xx needs FMASK and CMASK for the destination buffer of color resolve,
+		 * otherwise it hangs. We don't have FMASK and CMASK pre-allocated,
+		 * because it's not an MSAA buffer.
+		 */
+		struct r600_cmask_info cmask;
+		struct r600_fmask_info fmask;
+
+		r600_texture_get_cmask_info(rscreen, rtex, &cmask);
+		r600_texture_get_fmask_info(rscreen, rtex, 8, &fmask);
+
+		/* CMASK. */
+		if (!rctx->dummy_cmask ||
+		    rctx->dummy_cmask->buf->size < cmask.size ||
+		    rctx->dummy_cmask->buf->alignment % cmask.alignment != 0) {
+			struct pipe_transfer *transfer;
+			void *ptr;
+
+			pipe_resource_reference((struct pipe_resource**)&rctx->dummy_cmask, NULL);
+			rctx->dummy_cmask = r600_buffer_create_helper(rscreen, cmask.size, cmask.alignment);
+
+			/* Set the contents to 0xCC. */
+			ptr = pipe_buffer_map(&rctx->context, &rctx->dummy_cmask->b.b, PIPE_TRANSFER_WRITE, &transfer);
+			memset(ptr, 0xCC, cmask.size);
+			pipe_buffer_unmap(&rctx->context, transfer);
+		}
+		pipe_resource_reference((struct pipe_resource**)&surf->cb_buffer_cmask,
+					&rctx->dummy_cmask->b.b);
+
+		/* FMASK. */
+		if (!rctx->dummy_fmask ||
+		    rctx->dummy_fmask->buf->size < fmask.size ||
+		    rctx->dummy_fmask->buf->alignment % fmask.alignment != 0) {
+			pipe_resource_reference((struct pipe_resource**)&rctx->dummy_fmask, NULL);
+			rctx->dummy_fmask = r600_buffer_create_helper(rscreen, fmask.size, fmask.alignment);
+
+		}
+		pipe_resource_reference((struct pipe_resource**)&surf->cb_buffer_fmask,
+					&rctx->dummy_fmask->b.b);
+
+		/* Init the registers. */
+		color_info |= S_0280A0_TILE_MODE(V_0280A0_FRAG_ENABLE);
+		surf->cb_color_cmask = 0;
+		surf->cb_color_fmask = 0;
+		surf->cb_color_mask = S_028100_CMASK_BLOCK_MAX(cmask.slice_tile_max) |
+				      S_028100_FMASK_TILE_MAX(slice);
 	}
+
 	surf->cb_color_info = color_info;
 
 	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
@@ -1509,6 +1587,11 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_resource *res;
 	struct r600_texture *rtex;
 	uint32_t tl, br, i, nr_samples, max_dist;
+	bool is_resolve = state->nr_cbufs == 2 &&
+			  state->cbufs[0]->texture->nr_samples > 1 &&
+		          state->cbufs[1]->texture->nr_samples <= 1;
+	/* The resolve buffer must have CMASK and FMASK to prevent hardlocks on R6xx. */
+	bool cb1_force_cmask_fmask = rctx->chip_class == R600 && is_resolve;
 
 	if (rstate == NULL)
 		return;
@@ -1528,12 +1611,17 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	rctx->compressed_cb_mask = 0;
 
 	for (i = 0; i < state->nr_cbufs; i++) {
+		bool force_cmask_fmask = cb1_force_cmask_fmask && i == 1;
 		surf = (struct r600_surface*)state->cbufs[i];
 		res = (struct r600_resource*)surf->base.texture;
 		rtex = (struct r600_texture*)res;
 
-		if (!surf->color_initialized) {
-			r600_init_color_surface(rctx, surf);
+		if (!surf->color_initialized || force_cmask_fmask) {
+			r600_init_color_surface(rctx, surf, force_cmask_fmask);
+			if (force_cmask_fmask) {
+				/* re-initialize later without compression */
+				surf->color_initialized = false;
+			}
 		}
 
 		if (!surf->export_16bpc) {
@@ -1549,9 +1637,11 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		r600_pipe_state_add_reg(rstate, R_028080_CB_COLOR0_VIEW + i * 4,
 					surf->cb_color_view);
 		r600_pipe_state_add_reg_bo(rstate, R_0280E0_CB_COLOR0_FRAG + i * 4,
-					   surf->cb_color_fmask, res, RADEON_USAGE_READWRITE);
+					   surf->cb_color_fmask, surf->cb_buffer_fmask,
+					   RADEON_USAGE_READWRITE);
 		r600_pipe_state_add_reg_bo(rstate, R_0280C0_CB_COLOR0_TILE + i * 4,
-					   surf->cb_color_cmask, res, RADEON_USAGE_READWRITE);
+					   surf->cb_color_cmask, surf->cb_buffer_cmask,
+					   RADEON_USAGE_READWRITE);
 		r600_pipe_state_add_reg(rstate, R_028100_CB_COLOR0_MASK + i * 4,
 					surf->cb_color_mask);
 
@@ -1607,9 +1697,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 				R_028208_PA_SC_WINDOW_SCISSOR_BR, br);
 
 	/* If we're doing MSAA resolve... */
-	if (state->nr_cbufs == 2 &&
-	    state->cbufs[0]->texture->nr_samples > 1 &&
-	    state->cbufs[1]->texture->nr_samples <= 1) {
+	if (is_resolve) {
 		r600_pipe_state_add_reg(rstate, R_0287A0_CB_SHADER_CONTROL, 1);
 	} else {
 		/* Always enable the first colorbuffer in CB_SHADER_CONTROL. This
@@ -2551,6 +2639,28 @@ void r600_fetch_shader(struct pipe_context *ctx,
 }
 
 void *r600_create_resolve_blend(struct r600_context *rctx)
+{
+	struct pipe_blend_state blend;
+	struct r600_pipe_state *rstate;
+	unsigned i;
+
+	memset(&blend, 0, sizeof(blend));
+	blend.independent_blend_enable = true;
+	for (i = 0; i < 2; i++) {
+		blend.rt[i].colormask = 0xf;
+		blend.rt[i].blend_enable = 1;
+		blend.rt[i].rgb_func = PIPE_BLEND_ADD;
+		blend.rt[i].alpha_func = PIPE_BLEND_ADD;
+		blend.rt[i].rgb_src_factor = PIPE_BLENDFACTOR_ZERO;
+		blend.rt[i].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+		blend.rt[i].alpha_src_factor = PIPE_BLENDFACTOR_ZERO;
+		blend.rt[i].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+	}
+	rstate = r600_create_blend_state_mode(&rctx->context, &blend, V_028808_SPECIAL_RESOLVE_BOX);
+	return rstate;
+}
+
+void *r700_create_resolve_blend(struct r600_context *rctx)
 {
 	struct pipe_blend_state blend;
 	struct r600_pipe_state *rstate;

@@ -237,12 +237,11 @@ bool r600_init_resource(struct r600_screen *rscreen,
 }
 
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
-					 const struct pipe_resource *templ)
+					 const struct pipe_resource *templ,
+					 unsigned alignment)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct r600_resource *rbuffer;
-	/* XXX We probably want a different alignment for buffers and textures. */
-	unsigned alignment = 4096;
 
 	rbuffer = MALLOC_STRUCT(r600_resource);
 
