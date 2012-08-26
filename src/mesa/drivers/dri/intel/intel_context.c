@@ -758,10 +758,12 @@ intelInitContext(struct intel_context *intel,
    intel->prim.primitive = ~0;
 
    /* Force all software fallbacks */
+#ifdef I915
    if (driQueryOptionb(&intel->optionCache, "no_rast")) {
       fprintf(stderr, "disabling 3D rasterization\n");
       intel->no_rast = 1;
    }
+#endif
 
    if (driQueryOptionb(&intel->optionCache, "always_flush_batch")) {
       fprintf(stderr, "flushing batchbuffer before/after each draw call\n");

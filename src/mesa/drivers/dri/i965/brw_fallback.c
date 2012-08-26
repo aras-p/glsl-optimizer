@@ -43,11 +43,6 @@ static bool do_check_fallback(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
 
-   if (brw->intel.no_rast) {
-      DBG("FALLBACK: rasterization disabled\n");
-      return true;
-   }
-
    /* _NEW_RENDERMODE
     */
    if (ctx->RenderMode != GL_RENDER) {
