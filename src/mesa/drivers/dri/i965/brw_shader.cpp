@@ -70,7 +70,7 @@ brw_shader_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    if (brw->precompile && !brw_fs_precompile(ctx, prog))
       return false;
 
-   if (!brw_vs_precompile(ctx, prog))
+   if (brw->precompile && !brw_vs_precompile(ctx, prog))
       return false;
 
    return true;
