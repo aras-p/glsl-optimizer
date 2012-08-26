@@ -475,6 +475,17 @@ brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    key.program_string_id = bvp->id;
    key.clamp_vertex_color = true;
 
+   for (int i = 0; i < MAX_SAMPLERS; i++) {
+      if (vp->Base.ShadowSamplers & (1 << i)) {
+         /* Assume DEPTH_TEXTURE_MODE is the default: X, X, X, 1 */
+         key.tex.swizzles[i] =
+            MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_ONE);
+      } else {
+         /* Color sampler: assume no swizzling. */
+         key.tex.swizzles[i] = SWIZZLE_XYZW;
+      }
+   }
+
    success = do_vs_prog(brw, prog, bvp, &key);
 
    brw->vs.prog_offset = old_prog_offset;
