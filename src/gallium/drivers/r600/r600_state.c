@@ -584,9 +584,12 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 		return FALSE;
 
 	if (sample_count > 1) {
-		if (rscreen->info.drm_minor < 21)
+		if (rscreen->info.drm_minor < 22)
 			return FALSE;
-		if (rscreen->chip_class != R700)
+
+		/* R11G11B10 is broken on R6xx. */
+		if (rscreen->chip_class == R600 &&
+		    format == PIPE_FORMAT_R11G11B10_FLOAT)
 			return FALSE;
 
 		switch (sample_count) {
@@ -602,7 +605,7 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 		if (util_format_is_depth_or_stencil(format)) {
 			usage |= PIPE_BIND_DEPTH_STENCIL;
 		} else if (util_format_is_pure_integer(format)) {
-			return FALSE;
+			return FALSE; /* no integer textures */
 		} else {
 			usage |= PIPE_BIND_RENDER_TARGET;
 		}
