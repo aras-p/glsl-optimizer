@@ -458,13 +458,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	  * when we've decided if we're doing interleaved or not.
 	  */
 	 if (nr_uploads == 0) {
-	    /* Position array not properly enabled:
-	     */
-	    if (input->attrib == VERT_ATTRIB_POS && glarray->StrideB == 0) {
-               intel->Fallback = true; /* boolean, not bitfield */
-               return;
-            }
-
 	    interleaved = glarray->StrideB;
 	    ptr = glarray->Ptr;
 	 }
