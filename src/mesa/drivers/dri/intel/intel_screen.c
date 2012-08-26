@@ -85,7 +85,7 @@ PUBLIC const char __driConfigOptions[] =
 	 DRI_CONF_DESC(en, "Enable stub ARB_occlusion_query support on 915/945.")
       DRI_CONF_OPT_END
 
-      DRI_CONF_OPT_BEGIN(shader_precompile, bool, false)
+      DRI_CONF_OPT_BEGIN(shader_precompile, bool, true)
 	 DRI_CONF_DESC(en, "Perform code generation at shader link time.")
       DRI_CONF_OPT_END
    DRI_CONF_SECTION_END
