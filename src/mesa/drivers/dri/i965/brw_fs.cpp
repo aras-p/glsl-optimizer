@@ -2179,8 +2179,14 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    key.clamp_fragment_color = true;
 
    for (int i = 0; i < MAX_SAMPLERS; i++) {
-      /* FINISHME: depth compares might use (0,0,0,W) for example */
-      key.tex.swizzles[i] = SWIZZLE_XYZW;
+      if (fp->Base.ShadowSamplers & (1 << i)) {
+         /* Assume DEPTH_TEXTURE_MODE is the default: X, X, X, 1 */
+         key.tex.swizzles[i] =
+            MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_ONE);
+      } else {
+         /* Color sampler: assume no swizzling. */
+         key.tex.swizzles[i] = SWIZZLE_XYZW;
+      }
    }
 
    if (fp->Base.InputsRead & FRAG_BIT_WPOS) {
