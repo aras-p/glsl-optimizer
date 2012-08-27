@@ -459,8 +459,8 @@ struct brw_vs_prog_data {
    int num_surfaces;
 
    /* These pointers must appear last.  See brw_vs_prog_data_compare(). */
-   const float *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
-   const float *pull_param[MAX_UNIFORMS * 4];
+   const float **param;
+   const float **pull_param;
 };
 
 

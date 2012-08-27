@@ -220,6 +220,10 @@ do_vs_prog(struct brw_context *brw,
    void *mem_ctx;
    int aux_size;
    int i;
+   struct gl_shader *vs = NULL;
+
+   if (prog)
+      vs = prog->_LinkedShaders[MESA_SHADER_VERTEX];
 
    memset(&c, 0, sizeof(c));
    memcpy(&c.key, key, sizeof(*key));
@@ -228,6 +232,26 @@ do_vs_prog(struct brw_context *brw,
 
    brw_init_compile(brw, &c.func, mem_ctx);
    c.vp = vp;
+
+   /* Allocate the references to the uniforms that will end up in the
+    * prog_data associated with the compiled program, and which will be freed
+    * by the state cache.
+    */
+   int param_count;
+   if (vs) {
+      /* We add padding around uniform values below vec4 size, with the worst
+       * case being a float value that gets blown up to a vec4, so be
+       * conservative here.
+       */
+      param_count = vs->num_uniform_components * 4;
+
+      /* We also upload clip plane data as uniforms */
+      param_count += MAX_CLIP_PLANES * 4;
+   } else {
+      param_count = vp->program.Base.Parameters->NumParameters * 4;
+   }
+   c.prog_data.param = rzalloc_array(NULL, const float *, param_count);
+   c.prog_data.pull_param = rzalloc_array(NULL, const float *, param_count);
 
    c.prog_data.outputs_written = vp->program.Base.OutputsWritten;
    c.prog_data.inputs_read = vp->program.Base.InputsRead;
@@ -511,4 +535,13 @@ brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    brw->vs.prog_data = old_prog_data;
 
    return success;
+}
+
+void
+brw_vs_prog_data_free(const void *in_prog_data)
+{
+   const struct brw_vs_prog_data *prog_data = in_prog_data;
+
+   ralloc_free((void *)prog_data->param);
+   ralloc_free((void *)prog_data->pull_param);
 }
