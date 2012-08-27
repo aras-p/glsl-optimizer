@@ -989,6 +989,16 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
       goto fallback;
    }
 
+   if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
+      /* 1D arrays might be thought of as 2D images but the actual layout
+       * might not be that way.  At some points, we convert OpenGL's 1D
+       * array 'height' into gallium 'layers' and that prevents the blit
+       * utility code from doing the right thing.  Simpy use the memcpy-based
+       * fallback.
+       */
+      goto fallback;
+   }
+
    if (matching_base_formats &&
        src_format == dest_format &&
        !do_flip) {
