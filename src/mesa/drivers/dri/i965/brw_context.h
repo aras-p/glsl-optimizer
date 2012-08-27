@@ -288,7 +288,10 @@ struct brw_shader_program {
 /* Data about a particular attempt to compile a program.  Note that
  * there can be many of these, each in a different GL state
  * corresponding to a different brw_wm_prog_key struct, with different
- * compiled programs:
+ * compiled programs.
+ *
+ * Note: brw_wm_prog_data_compare() must be updated when adding fields to this
+ * struct!
  */
 struct brw_wm_prog_data {
    GLuint curb_read_length;
@@ -313,8 +316,11 @@ struct brw_wm_prog_data {
     */
    uint32_t barycentric_interp_modes;
 
-   /* Pointer to tracked values (only valid once
+   /* Pointers to tracked values (only valid once
     * _mesa_load_state_parameters has been called at runtime).
+    *
+    * These must be the last fields of the struct (see
+    * brw_wm_prog_data_compare()).
     */
    const float *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
    const float *pull_param[MAX_UNIFORMS * 4];
@@ -426,6 +432,9 @@ struct brw_gs_prog_data {
    unsigned svbi_postincrement_value;
 };
 
+/* Note: brw_vs_prog_data_compare() must be updated when adding fields to this
+ * struct!
+ */
 struct brw_vs_prog_data {
    struct brw_vue_map vue_map;
 
@@ -443,14 +452,15 @@ struct brw_vs_prog_data {
     */
    GLuint urb_entry_size;
 
-   const float *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
-   const float *pull_param[MAX_UNIFORMS * 4];
-
    bool uses_new_param_layout;
    bool uses_vertexid;
    bool userclip;
 
    int num_surfaces;
+
+   /* These pointers must appear last.  See brw_vs_prog_data_compare(). */
+   const float *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
+   const float *pull_param[MAX_UNIFORMS * 4];
 };
 
 
@@ -619,6 +629,8 @@ struct brw_cache_item {
 };   
 
 
+typedef bool (*cache_aux_compare_func)(const void *a, const void *b,
+                                       int aux_size, const void *key);
 
 struct brw_cache {
    struct brw_context *brw;
@@ -629,6 +641,13 @@ struct brw_cache {
 
    uint32_t next_offset;
    bool bo_used_by_gpu;
+
+   /**
+    * Optional functions used in determining whether the prog_data for a new
+    * cache item matches an existing cache item (in case there's relevant data
+    * outside of the prog_data).  If NULL, a plain memcmp is done.
+    */
+   cache_aux_compare_func aux_compare[BRW_MAX_CACHE];
 };
 
 

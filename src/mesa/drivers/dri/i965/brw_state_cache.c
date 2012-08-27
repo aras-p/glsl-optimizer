@@ -47,6 +47,8 @@
 #include "main/imports.h"
 #include "intel_batchbuffer.h"
 #include "brw_state.h"
+#include "brw_vs.h"
+#include "brw_wm.h"
 
 #define FILE_DEBUG_FLAG DEBUG_STATE
 
@@ -211,7 +213,12 @@ brw_try_upload_using_copy(struct brw_cache *cache,
 	    continue;
 	 }
 
-	 if (memcmp(item_aux, aux, item->aux_size) != 0) {
+         if (cache->aux_compare[result_item->cache_id]) {
+            if (!cache->aux_compare[result_item->cache_id](item_aux, aux,
+                                                           item->aux_size,
+                                                           item->key))
+               continue;
+         } else if (memcmp(item_aux, aux, item->aux_size) != 0) {
 	    continue;
 	 }
 
@@ -333,6 +340,9 @@ brw_init_caches(struct brw_context *brw)
    cache->bo = drm_intel_bo_alloc(intel->bufmgr,
 				  "program cache",
 				  4096, 64);
+
+   cache->aux_compare[BRW_VS_PROG] = brw_vs_prog_data_compare;
+   cache->aux_compare[BRW_WM_PROG] = brw_wm_prog_data_compare;
 }
 
 static void

@@ -186,6 +186,25 @@ gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx)
    }
 }
 
+bool
+brw_vs_prog_data_compare(const void *in_a, const void *in_b,
+                         int aux_size, const void *in_key)
+{
+   const struct brw_vs_prog_data *a = in_a;
+   const struct brw_vs_prog_data *b = in_b;
+
+   /* Compare all the struct up to the pointers. */
+   if (memcmp(a, b, offsetof(struct brw_vs_prog_data, param)))
+      return false;
+
+   if (memcmp(a->param, b->param, a->nr_params * sizeof(void *)))
+      return false;
+
+   if (memcmp(a->pull_param, b->pull_param, a->nr_pull_params * sizeof(void *)))
+      return false;
+
+   return true;
+}
 
 static bool
 do_vs_prog(struct brw_context *brw,

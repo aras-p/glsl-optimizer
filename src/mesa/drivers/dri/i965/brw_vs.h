@@ -123,5 +123,7 @@ bool brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog);
 void brw_vs_debug_recompile(struct brw_context *brw,
                             struct gl_shader_program *prog,
                             const struct brw_vs_prog_key *key);
+bool brw_vs_prog_data_compare(const void *a, const void *b,
+                              int aux_size, const void *key);
 
 #endif

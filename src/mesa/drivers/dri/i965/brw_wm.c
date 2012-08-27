@@ -253,6 +253,26 @@ brw_wm_payload_setup(struct brw_context *brw,
    }
 }
 
+bool
+brw_wm_prog_data_compare(const void *in_a, const void *in_b,
+                         int aux_size, const void *in_key)
+{
+   const struct brw_wm_prog_data *a = in_a;
+   const struct brw_wm_prog_data *b = in_b;
+
+   /* Compare all the struct up to the pointers. */
+   if (memcmp(a, b, offsetof(struct brw_wm_prog_data, param)))
+      return false;
+
+   if (memcmp(a->param, b->param, a->nr_params * sizeof(void *)))
+      return false;
+
+   if (memcmp(a->pull_param, b->pull_param, a->nr_pull_params * sizeof(void *)))
+      return false;
+
+   return true;
+}
+
 /**
  * All Mesa program -> GPU code generation goes through this function.
  * Depending on the instructions used (i.e. flow control instructions)
