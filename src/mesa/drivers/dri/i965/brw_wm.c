@@ -273,6 +273,15 @@ brw_wm_prog_data_compare(const void *in_a, const void *in_b,
    return true;
 }
 
+void
+brw_wm_prog_data_free(const void *in_prog_data)
+{
+   const struct brw_wm_prog_data *prog_data = in_prog_data;
+
+   ralloc_free((void *)prog_data->param);
+   ralloc_free((void *)prog_data->pull_param);
+}
+
 /**
  * All Mesa program -> GPU code generation goes through this function.
  * Depending on the instructions used (i.e. flow control instructions)
@@ -286,7 +295,11 @@ bool do_wm_prog(struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    struct brw_wm_compile *c;
    const GLuint *program;
+   struct gl_shader *fs = NULL;
    GLuint program_size;
+
+   if (prog)
+      fs = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
    c = brw->wm.compile_data;
    if (c == NULL) {
@@ -310,6 +323,28 @@ bool do_wm_prog(struct brw_context *brw,
       c->vreg = vreg;
       c->refs = refs;
    }
+
+   /* Allocate the references to the uniforms that will end up in the
+    * prog_data associated with the compiled program, and which will be freed
+    * by the state cache.
+    */
+   if (fs) {
+      int param_count = fs->num_uniform_components;
+      /* The backend also sometimes adds params for texture size. */
+      param_count += 2 * BRW_MAX_TEX_UNIT;
+
+      c->prog_data.param = rzalloc_array(c, const float *, param_count);
+      c->prog_data.pull_param = rzalloc_array(c, const float *, param_count);
+   } else {
+      /* brw_wm_pass0.c will also add references to 0.0 and 1.0 which are
+       * uploaded as push parameters.
+       */
+      int param_count = (fp->program.Base.Parameters->NumParameters + 2) * 4;
+      c->prog_data.param = rzalloc_array(c, const float *, param_count);
+      /* The old backend never does pull constants. */
+      c->prog_data.pull_param = NULL;
+   }
+
    memcpy(&c->key, key, sizeof(*key));
 
    c->fp = fp;

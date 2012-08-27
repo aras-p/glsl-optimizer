@@ -322,8 +322,8 @@ struct brw_wm_prog_data {
     * These must be the last fields of the struct (see
     * brw_wm_prog_data_compare()).
     */
-   const float *param[MAX_UNIFORMS * 4]; /* should be: BRW_MAX_CURBE */
-   const float *pull_param[MAX_UNIFORMS * 4];
+   const float **param;
+   const float **pull_param;
 };
 
 /**
@@ -631,6 +631,7 @@ struct brw_cache_item {
 
 typedef bool (*cache_aux_compare_func)(const void *a, const void *b,
                                        int aux_size, const void *key);
+typedef void (*cache_aux_free_func)(const void *aux);
 
 struct brw_cache {
    struct brw_context *brw;
@@ -648,6 +649,8 @@ struct brw_cache {
     * outside of the prog_data).  If NULL, a plain memcmp is done.
     */
    cache_aux_compare_func aux_compare[BRW_MAX_CACHE];
+   /** Optional functions for freeing other pointers attached to a prog_data. */
+   cache_aux_free_func aux_free[BRW_MAX_CACHE];
 };
 
 

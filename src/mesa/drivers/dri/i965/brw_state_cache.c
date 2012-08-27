@@ -343,6 +343,7 @@ brw_init_caches(struct brw_context *brw)
 
    cache->aux_compare[BRW_VS_PROG] = brw_vs_prog_data_compare;
    cache->aux_compare[BRW_WM_PROG] = brw_wm_prog_data_compare;
+   cache->aux_free[BRW_WM_PROG] = brw_wm_prog_data_free;
 }
 
 static void
@@ -357,6 +358,10 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    for (i = 0; i < cache->size; i++) {
       for (c = cache->items[i]; c; c = next) {
 	 next = c->next;
+         if (cache->aux_free[c->cache_id]) {
+            const void *item_aux = c->key + c->key_size;
+            cache->aux_free[c->cache_id](item_aux);
+         }
 	 free((void *)c->key);
 	 free(c);
       }

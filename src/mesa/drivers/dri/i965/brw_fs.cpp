@@ -528,8 +528,6 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
       for (unsigned int i = 0; i < type->vector_elements; i++) {
 	 unsigned int param = c->prog_data.nr_params++;
 
-	 assert(param < ARRAY_SIZE(c->prog_data.param));
-
 	 this->param_index[param] = loc;
 	 this->param_offset[param] = i;
       }
