@@ -679,6 +679,28 @@ pipe_get_tile_z(struct pipe_context *pipe,
          }
       }
       break;
+   case PIPE_FORMAT_Z32_FLOAT:
+      {
+         const float *ptrc = (const float *)(map + y * pt->stride + x*4);
+         for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+               /* convert float Z to 32-bit Z */
+               if (ptrc[j] <= 0.0) {
+                  pDest[j] = 0;
+               }
+               else if (ptrc[j] >= 1.0) {
+                  pDest[j] = 0xffffffff;
+               }
+               else {
+                  double z = ptrc[j] * 0xffffffff;
+                  pDest[j] = (uint) z;
+               }
+            }
+            pDest += dstStride;
+            ptrc += pt->stride/4;
+         }
+      }
+      break;
    default:
       assert(0);
    }
@@ -782,6 +804,20 @@ pipe_put_tile_z(struct pipe_context *pipe,
                pDest[j] = ptrc[j] >> 16;
             }
             pDest += pt->stride/2;
+            ptrc += srcStride;
+         }
+      }
+      break;
+   case PIPE_FORMAT_Z32_FLOAT:
+      {
+         float *pDest = (float *) (map + y * pt->stride + x*2);
+         for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+               /* convert 32-bit integer Z to float Z */
+               const double scale = 1.0 / 0xffffffffU;
+               pDest[j] = ptrc[j] * scale;
+            }
+            pDest += pt->stride/4;
             ptrc += srcStride;
          }
       }
