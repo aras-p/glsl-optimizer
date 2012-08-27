@@ -256,16 +256,15 @@ static struct r600_bytecode_tex *r600_bytecode_tex(void)
 
 void r600_bytecode_init(struct r600_bytecode *bc, enum chip_class chip_class, enum radeon_family family)
 {
-	if ((chip_class == R600) && (family != CHIP_RV670))
+	if ((chip_class == R600) &&
+	    (family != CHIP_RV670 && family != CHIP_RS780 && family != CHIP_RS880)) {
 		bc->ar_handling = AR_HANDLE_RV6XX;
-	else
-		bc->ar_handling = AR_HANDLE_NORMAL;
-
-	if ((chip_class == R600) && (family != CHIP_RV670 && family != CHIP_RS780 &&
-					   family != CHIP_RS880))
 		bc->r6xx_nop_after_rel_dst = 1;
-	else
+	} else {
+		bc->ar_handling = AR_HANDLE_NORMAL;
 		bc->r6xx_nop_after_rel_dst = 0;
+	}
+
 	LIST_INITHEAD(&bc->cf);
 	bc->chip_class = chip_class;
 }
