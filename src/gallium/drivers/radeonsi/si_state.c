@@ -1045,8 +1045,8 @@ static unsigned si_colorformat_max_comp_size(uint32_t colorformat)
 static uint32_t si_translate_dbformat(enum pipe_format format)
 {
 	switch (format) {
-	case PIPE_FORMAT_Z16_UNORM:
-		return V_028040_Z_16;
+	//case PIPE_FORMAT_Z16_UNORM:
+	//	return V_028040_Z_16;
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
 		return V_028040_Z_24; /* XXX no longer supported on SI */
