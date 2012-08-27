@@ -119,6 +119,7 @@ i965_CXX_FILES = \
 	brw_fs_cse.cpp \
 	brw_fs_copy_propagation.cpp \
 	brw_fs_emit.cpp \
+	brw_fs_fp.cpp \
 	brw_fs_live_variables.cpp \
 	brw_fs_visitor.cpp \
 	brw_fs_channel_expressions.cpp \

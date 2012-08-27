@@ -726,11 +726,16 @@ fs_visitor::generate_code()
 {
    int last_native_insn_offset = p->next_insn_offset;
    const char *last_annotation_string = NULL;
-   ir_instruction *last_annotation_ir = NULL;
+   const void *last_annotation_ir = NULL;
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      printf("Native code for fragment shader %d (%d-wide dispatch):\n",
-	     prog->Name, c->dispatch_width);
+      if (shader) {
+         printf("Native code for fragment shader %d (%d-wide dispatch):\n",
+                prog->Name, c->dispatch_width);
+      } else {
+         printf("Native code for fragment program %d (%d-wide dispatch):\n",
+                c->fp->program.Base.Id, c->dispatch_width);
+      }
    }
 
    fs_cfg *cfg = NULL;
@@ -762,7 +767,16 @@ fs_visitor::generate_code()
 	    last_annotation_ir = inst->ir;
 	    if (last_annotation_ir) {
 	       printf("   ");
-	       last_annotation_ir->print();
+               if (shader)
+                  ((ir_instruction *)inst->ir)->print();
+               else {
+                  const prog_instruction *fpi;
+                  fpi = (const prog_instruction *)inst->ir;
+                  printf("%d: ", (int)(fpi - fp->Base.Instructions));
+                  _mesa_fprint_instruction_opt(stdout,
+                                               fpi,
+                                               0, PROG_PRINT_DEBUG, NULL);
+               }
 	       printf("\n");
 	    }
 	 }

@@ -1999,11 +1999,15 @@ fs_visitor::run()
       /* Generate FS IR for main().  (the visitor only descends into
        * functions called "main").
        */
-      foreach_list(node, &*shader->ir) {
-	 ir_instruction *ir = (ir_instruction *)node;
-	 base_ir = ir;
-	 this->result = reg_undef;
-	 ir->accept(this);
+      if (shader) {
+         foreach_list(node, &*shader->ir) {
+            ir_instruction *ir = (ir_instruction *)node;
+            base_ir = ir;
+            this->result = reg_undef;
+            ir->accept(this);
+         }
+      } else {
+         emit_fragment_program_code();
       }
       if (failed)
 	 return false;
@@ -2084,24 +2088,26 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    bool start_busy = false;
    float start_time = 0;
 
-   if (!prog)
-      return false;
-
    if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
       start_busy = (intel->batch.last_bo &&
                     drm_intel_bo_busy(intel->batch.last_bo));
       start_time = get_time();
    }
 
-   struct brw_shader *shader =
-     (brw_shader *) prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
-   if (!shader)
-      return false;
+   struct brw_shader *shader = NULL;
+   if (prog)
+      shader = (brw_shader *) prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      printf("GLSL IR for native fragment shader %d:\n", prog->Name);
-      _mesa_print_ir(shader->ir, NULL);
-      printf("\n\n");
+      if (shader) {
+         printf("GLSL IR for native fragment shader %d:\n", prog->Name);
+         _mesa_print_ir(shader->ir, NULL);
+         printf("\n\n");
+      } else {
+         printf("ARB_fragment_program %d ir for native fragment shader\n",
+                c->fp->program.Base.Id);
+         _mesa_print_program(&c->fp->program.Base);
+      }
    }
 
    /* Now the main event: Visit the shader IR and generate our FS IR for it.

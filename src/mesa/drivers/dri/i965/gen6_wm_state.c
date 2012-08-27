@@ -151,13 +151,9 @@ upload_wm_state(struct brw_context *brw)
    dw5 |= (brw->max_wm_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
-   if (brw->wm.prog_data->dispatch_width == 8) {
-      dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
-      if (brw->wm.prog_data->prog_offset_16)
-	 dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
-   } else {
+   dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
+   if (brw->wm.prog_data->prog_offset_16)
       dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
-   }
 
    /* CACHE_NEW_WM_PROG | _NEW_COLOR */
    if (brw->wm.prog_data->dual_src_blend &&

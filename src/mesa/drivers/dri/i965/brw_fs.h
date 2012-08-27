@@ -177,7 +177,7 @@ public:
    /** @{
     * Annotation for the generated IR.  One of the two can be set.
     */
-   ir_instruction *ir;
+   const void *ir;
    const char *annotation;
    /** @} */
 };
@@ -324,6 +324,29 @@ public:
    void emit_if_gen6(ir_if *ir);
    void emit_unspill(fs_inst *inst, fs_reg reg, uint32_t spill_offset);
 
+   void emit_fragment_program_code();
+   void setup_fp_regs();
+   fs_reg get_fp_src_reg(const prog_src_register *src);
+   fs_reg get_fp_dst_reg(const prog_dst_register *dst);
+   void emit_fp_alu1(enum opcode opcode,
+                     const struct prog_instruction *fpi,
+                     fs_reg dst, fs_reg src);
+   void emit_fp_alu2(enum opcode opcode,
+                     const struct prog_instruction *fpi,
+                     fs_reg dst, fs_reg src0, fs_reg src1);
+   void emit_fp_scalar_write(const struct prog_instruction *fpi,
+                             fs_reg dst, fs_reg src);
+   void emit_fp_scalar_math(enum opcode opcode,
+                            const struct prog_instruction *fpi,
+                            fs_reg dst, fs_reg src);
+
+   void emit_fp_minmax(const struct prog_instruction *fpi,
+                       fs_reg dst, fs_reg src0, fs_reg src1);
+
+   void emit_fp_sop(uint32_t conditional_mod,
+                    const struct prog_instruction *fpi,
+                    fs_reg dst, fs_reg src0, fs_reg src1, fs_reg one);
+
    void emit_color_write(int target, int index, int first_color_mrf);
    void emit_fb_writes();
    bool try_rewrite_rhs_to_dst(ir_assignment *ir,
@@ -381,9 +404,12 @@ public:
    int max_grf;
    int urb_setup[FRAG_ATTRIB_MAX];
 
+   fs_reg *fp_temp_regs;
+   fs_reg *fp_input_regs;
+
    /** @{ debug annotation info */
    const char *current_annotation;
-   ir_instruction *base_ir;
+   const void *base_ir;
    /** @} */
 
    bool failed;

@@ -163,23 +163,8 @@ brw_upload_wm_unit(struct brw_context *brw)
    /* _NEW_COLOR */
    wm->wm5.program_uses_killpixel = fp->UsesKill || ctx->Color.AlphaEnabled;
 
-
-   /* BRW_NEW_FRAGMENT_PROGRAM
-    *
-    * If using the fragment shader backend, the program is always
-    * 8-wide.  If not, it's always 16.
-    */
-   if (ctx->Shader._CurrentFragmentProgram) {
-      struct brw_shader *shader = (struct brw_shader *)
-	 ctx->Shader._CurrentFragmentProgram->_LinkedShaders[MESA_SHADER_FRAGMENT];
-
-      if (shader != NULL && shader->ir != NULL) {
-	 wm->wm5.enable_8_pix = 1;
-	 if (brw->wm.prog_data->prog_offset_16)
-	    wm->wm5.enable_16_pix = 1;
-      }
-   }
-   if (!wm->wm5.enable_8_pix)
+   wm->wm5.enable_8_pix = 1;
+   if (brw->wm.prog_data->prog_offset_16)
       wm->wm5.enable_16_pix = 1;
 
    wm->wm5.max_threads = brw->max_wm_threads - 1;

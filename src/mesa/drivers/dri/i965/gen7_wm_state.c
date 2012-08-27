@@ -196,13 +196,9 @@ upload_ps_state(struct brw_context *brw)
    if (brw->fragment_program->Base.InputsRead != 0)
       dw4 |= GEN7_PS_ATTRIBUTE_ENABLE;
 
-   if (brw->wm.prog_data->dispatch_width == 8) {
-      dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
-      if (brw->wm.prog_data->prog_offset_16)
-	 dw4 |= GEN7_PS_16_DISPATCH_ENABLE;
-   } else {
+   dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
+   if (brw->wm.prog_data->prog_offset_16)
       dw4 |= GEN7_PS_16_DISPATCH_ENABLE;
-   }
 
    dw5 |= (brw->wm.prog_data->first_curbe_grf <<
 	   GEN7_PS_DISPATCH_START_GRF_SHIFT_0);

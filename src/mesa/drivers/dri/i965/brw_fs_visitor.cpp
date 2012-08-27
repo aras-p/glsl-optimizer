@@ -2228,8 +2228,7 @@ fs_visitor::fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
    this->c = c;
    this->p = &c->func;
    this->brw = p->brw;
-   this->fp = (struct gl_fragment_program *)
-      prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program;
+   this->fp = &c->fp->program;
    this->prog = prog;
    this->intel = &brw->intel;
    this->ctx = &intel->ctx;
