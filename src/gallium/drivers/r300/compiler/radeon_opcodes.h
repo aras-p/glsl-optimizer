@@ -175,6 +175,9 @@ typedef enum {
 	/** vec4 instruction: dst.c = src0.c */
 	RC_OPCODE_SWZ,
 
+	/** vec4 instruction: dst.c = (abs(src0.c) - fract(abs(src0.c))) * sgn(src0.c) */
+	RC_OPCODE_TRUNC,
+
 	/** special instruction, see ARB_fragment_program */
 	RC_OPCODE_XPD,
 
