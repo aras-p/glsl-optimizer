@@ -225,7 +225,9 @@ u_vbuf_set_vertex_elements_internal(struct u_vbuf *mgr, unsigned count,
    }
 
    assert(ve);
-   pipe->bind_vertex_elements_state(pipe, ve->driver_cso);
+
+   if (ve != mgr->ve)
+	   pipe->bind_vertex_elements_state(pipe, ve->driver_cso);
    return ve;
 }
 
