@@ -157,8 +157,7 @@ void SITargetLowering::LowerSI_INTERP(MachineInstr *MI, MachineBasicBlock &BB,
   MachineOperand attr = MI->getOperand(4);
   MachineOperand params = MI->getOperand(5);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_MOV_B32))
-          .addReg(AMDGPU::M0)
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
           .addOperand(params);
 
   BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_INTERP_P1_F32), tmp)
@@ -184,8 +183,7 @@ void SITargetLowering::LowerSI_INTERP_CONST(MachineInstr *MI,
   MachineOperand attr = MI->getOperand(2);
   MachineOperand params = MI->getOperand(3);
 
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_MOV_B32))
-          .addReg(AMDGPU::M0)
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
           .addOperand(params);
 
   BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_INTERP_MOV_F32))
