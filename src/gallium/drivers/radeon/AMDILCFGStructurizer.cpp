@@ -2892,6 +2892,8 @@ struct CFGStructTraits<AMDGPUCFGStructurizer>
     switch (instr->getOpcode()) {
     case AMDGPU::JUMP:
       return instr->getOperand(instr->findFirstPredOperandIdx()).getReg() == 0;
+    case AMDGPU::BRANCH:
+      return true;
     default:
       return false;
     }

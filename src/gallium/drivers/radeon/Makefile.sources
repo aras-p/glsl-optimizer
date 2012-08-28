@@ -71,6 +71,7 @@ CPP_SOURCES := \
 	SIInstrInfo.cpp			\
 	SIISelLowering.cpp		\
 	SILowerLiteralConstants.cpp		\
+	SILowerFlowControl.cpp	\
 	SIMachineFunctionInfo.cpp	\
 	SIRegisterInfo.cpp		\
 	InstPrinter/AMDGPUInstPrinter.cpp \

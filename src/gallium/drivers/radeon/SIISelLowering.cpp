@@ -78,7 +78,7 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   switch (MI->getOpcode()) {
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
-
+  case AMDGPU::BRANCH: return BB;
   case AMDGPU::CLAMP_SI:
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::V_MOV_B32_e64))
            .addOperand(MI->getOperand(0))

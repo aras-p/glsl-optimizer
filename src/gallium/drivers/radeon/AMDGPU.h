@@ -25,6 +25,7 @@ FunctionPass *createR600ExpandSpecialInstrsPass(TargetMachine &tm);
 
 // SI Passes
 FunctionPass *createSIAssignInterpRegsPass(TargetMachine &tm);
+FunctionPass *createSILowerFlowControlPass(TargetMachine &tm);
 FunctionPass *createSICodeEmitterPass(formatted_raw_ostream &OS);
 FunctionPass *createSILowerLiteralConstantsPass(TargetMachine &tm);
 
