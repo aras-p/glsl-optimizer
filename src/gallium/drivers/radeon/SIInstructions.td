@@ -959,6 +959,13 @@ def SI_INTERP_CONST : InstSI <
                                                  imm:$attr, SReg_32:$params))]
 >;
 
+def SI_KIL : InstSI <
+	(outs),
+	(ins VReg_32:$src),
+	"SI_KIL $src",
+	[(int_AMDGPU_kill VReg_32:$src)]
+>;
+
 } // end usesCustomInserter 
 
 // SI Psuedo branch instructions.  These are used by the CFG structurizer pass
