@@ -630,8 +630,19 @@ def S_CBRANCH_VCCNZ : SOPP <
   "S_CBRANCH_VCCNZ",
   []
 >;
-//def S_CBRANCH_EXECZ : SOPP_ <0x00000008, "S_CBRANCH_EXECZ", []>;
-//def S_CBRANCH_EXECNZ : SOPP_ <0x00000009, "S_CBRANCH_EXECNZ", []>;
+
+let DisableEncoding = "$exec" in {
+def S_CBRANCH_EXECZ : SOPP <
+  0x00000008, (ins brtarget:$target, EXECReg:$exec),
+  "S_CBRANCH_EXECZ",
+  []
+>;
+def S_CBRANCH_EXECNZ : SOPP <
+  0x00000009, (ins brtarget:$target, EXECReg:$exec),
+  "S_CBRANCH_EXECNZ",
+  []
+>;
+} // End DisableEncoding = "$exec"
 
 
 } // End isBranch = 1
