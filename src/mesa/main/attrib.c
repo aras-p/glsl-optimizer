@@ -989,7 +989,8 @@ _mesa_PopAttrib(void)
                _mesa_ClampColorARB(GL_CLAMP_READ_COLOR_ARB, color->ClampReadColor);
 
                /* GL_ARB_framebuffer_sRGB / GL_EXT_framebuffer_sRGB */
-               _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB, color->sRGBEnabled);
+               if (ctx->Extensions.EXT_framebuffer_sRGB)
+                  _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB, color->sRGBEnabled);
             }
             break;
          case GL_CURRENT_BIT:
