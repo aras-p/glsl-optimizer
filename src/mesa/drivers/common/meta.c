@@ -282,6 +282,8 @@ struct gen_mipmap_state
    GLuint VBO;
    GLuint FBO;
    GLuint Sampler;
+   GLuint ShaderProg;
+   GLuint IntegerShaderProg;
 };
 
 
@@ -330,6 +332,8 @@ struct gl_meta_state
 static void meta_glsl_blit_cleanup(struct gl_context *ctx, struct blit_state *blit);
 static void cleanup_temp_texture(struct gl_context *ctx, struct temp_texture *tex);
 static void meta_glsl_clear_cleanup(struct gl_context *ctx, struct clear_state *clear);
+static void meta_glsl_generate_mipmap_cleanup(struct gl_context *ctx,
+                                              struct gen_mipmap_state *mipmap);
 
 static GLuint
 compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB *source)
@@ -422,6 +426,7 @@ _mesa_meta_free(struct gl_context *ctx)
    _mesa_make_current(ctx, NULL, NULL);
    meta_glsl_blit_cleanup(ctx, &ctx->Meta->Blit);
    meta_glsl_clear_cleanup(ctx, &ctx->Meta->Clear);
+   meta_glsl_generate_mipmap_cleanup(ctx, &ctx->Meta->Mipmap);
    cleanup_temp_texture(ctx, &ctx->Meta->TempTex);
    if (old_context)
       _mesa_make_current(old_context, old_context->WinSysDrawBuffer, old_context->WinSysReadBuffer);
@@ -2913,6 +2918,157 @@ setup_texture_coords(GLenum faceTarget,
 }
 
 
+static void
+setup_ff_generate_mipmap(struct gl_context *ctx,
+                           struct gen_mipmap_state *mipmap)
+{
+   struct vertex {
+      GLfloat x, y, tex[3];
+   };
+
+   if (mipmap->ArrayObj == 0) {
+      /* one-time setup */
+      /* create vertex array object */
+      _mesa_GenVertexArraysAPPLE(1, &mipmap->ArrayObj);
+      _mesa_BindVertexArrayAPPLE(mipmap->ArrayObj);
+
+      /* create vertex array buffer */
+      _mesa_GenBuffersARB(1, &mipmap->VBO);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, mipmap->VBO);
+      /* setup vertex arrays */
+      _mesa_VertexPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
+      _mesa_TexCoordPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(tex));
+      _mesa_EnableClientState(GL_VERTEX_ARRAY);
+      _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
+   }
+
+   /* setup projection matrix */
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_LoadIdentity();
+   _mesa_Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+}
+
+
+static void
+setup_glsl_generate_mipmap(struct gl_context *ctx,
+                           struct gen_mipmap_state *mipmap)
+{
+   struct vertex {
+      GLfloat x, y, tex[3];
+   };
+
+   static const char *vs_source =
+      "attribute vec2 position;\n"
+      "attribute vec3 textureCoords;\n"
+      "varying vec3 texCoords;\n"
+      "void main()\n"
+      "{\n"
+      "   texCoords = textureCoords;\n"
+      "   gl_Position = vec4(position, 0.0, 1.0);\n"
+      "}\n";
+   static const char *fs_source =
+      "uniform sampler2D tex2d;\n"
+      "varying vec3 texCoords;\n"
+      "void main()\n"
+      "{\n"
+      "   gl_FragColor = texture2D(tex2d, texCoords.xy);\n"
+      "}\n";
+ 
+   static const char *vs_int_source =
+      "#version 130\n"
+      "in vec2 position;\n"
+      "in vec3 textureCoords;\n"
+      "out vec3 texCoords;\n"
+      "void main()\n"
+      "{\n"
+      "   texCoords = textureCoords;\n"
+      "   gl_Position = gl_Vertex;\n"
+      "}\n";
+   static const char *fs_int_source =
+      "#version 130\n"
+      "uniform isampler2D tex2d;\n"
+      "in vec3 texCoords;\n"
+      "out ivec4 out_color;\n"
+      "\n"
+      "void main()\n"
+      "{\n"
+      "   out_color = texture(tex2d, texCoords.xy);\n"
+      "}\n";
+   GLuint vs, fs;
+
+   /* Check if already initialized */
+   if (mipmap->ArrayObj != 0)
+      return;
+   /* create vertex array object */
+   _mesa_GenVertexArrays(1, &mipmap->ArrayObj);
+   _mesa_BindVertexArray(mipmap->ArrayObj);
+
+   /* create vertex array buffer */
+   _mesa_GenBuffersARB(1, &mipmap->VBO);
+   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, mipmap->VBO);
+
+   /* setup vertex arrays */
+   _mesa_VertexAttribPointerARB(0, 2, GL_FLOAT, GL_FALSE,
+                                sizeof(struct vertex), OFFSET(x));
+   _mesa_VertexAttribPointerARB(1, 3, GL_FLOAT, GL_FALSE,
+                                sizeof(struct vertex), OFFSET(tex));
+
+   vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
+   fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
+
+   mipmap->ShaderProg = _mesa_CreateProgramObjectARB();
+   _mesa_AttachShader(mipmap->ShaderProg, fs);
+   _mesa_DeleteObjectARB(fs);
+   _mesa_AttachShader(mipmap->ShaderProg, vs);
+   _mesa_DeleteObjectARB(vs);
+   _mesa_BindAttribLocationARB(mipmap->ShaderProg, 0, "position");
+   _mesa_BindAttribLocationARB(mipmap->ShaderProg, 1, "texcoords");
+   _mesa_EnableVertexAttribArrayARB(0);
+   _mesa_EnableVertexAttribArrayARB(1);
+   link_program_with_debug(ctx, mipmap->ShaderProg);
+
+   if ((_mesa_is_desktop_gl(ctx) && ctx->Const.GLSLVersion >= 130) ||
+       _mesa_is_gles3(ctx)){
+      vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_int_source);
+      fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_int_source);
+
+      mipmap->IntegerShaderProg = _mesa_CreateProgramObjectARB();
+      _mesa_AttachShader(mipmap->IntegerShaderProg, fs);
+      _mesa_DeleteObjectARB(fs);
+      _mesa_AttachShader(mipmap->IntegerShaderProg, vs);
+      _mesa_DeleteObjectARB(vs);
+      _mesa_BindAttribLocationARB(mipmap->IntegerShaderProg, 0, "position");
+      _mesa_BindAttribLocationARB(mipmap->IntegerShaderProg, 1, "texcoords");
+
+      /* Note that user-defined out attributes get automatically assigned
+       * locations starting from 0, so we don't need to explicitly
+       * BindFragDataLocation to 0.
+       */
+      link_program_with_debug(ctx, mipmap->IntegerShaderProg);
+   }
+}
+
+
+static void
+meta_glsl_generate_mipmap_cleanup(struct gl_context *ctx,
+                                 struct gen_mipmap_state *mipmap)
+{
+   if (mipmap->ArrayObj == 0)
+      return;
+   _mesa_DeleteVertexArraysAPPLE(1, &mipmap->ArrayObj);
+   mipmap->ArrayObj = 0;
+   _mesa_DeleteBuffersARB(1, &mipmap->VBO);
+   mipmap->VBO = 0;
+   _mesa_DeleteObjectARB(mipmap->ShaderProg);
+   mipmap->ShaderProg = 0;
+
+   if (mipmap->IntegerShaderProg) {
+      _mesa_DeleteObjectARB(mipmap->IntegerShaderProg);
+      mipmap->IntegerShaderProg = 0;
+   }
+}
+
+
 /**
  * Called via ctx->Driver.GenerateMipmap()
  * Note: We don't yet support 3D textures, 1D/2D array textures or texture
@@ -2933,10 +3089,12 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    const GLboolean genMipmapSave = texObj->GenerateMipmap;
    const GLenum srgbBufferSave = ctx->Color.sRGBEnabled;
    const GLuint fboSave = ctx->DrawBuffer->Name;
-   const GLuint original_active_unit = ctx->Texture.CurrentUnit;
+   const GLuint currentTexUnitSave = ctx->Texture.CurrentUnit;
+   const GLboolean use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
+                                      ctx->Extensions.ARB_fragment_shader &&
+				      (ctx->API != API_OPENGLES);
    GLenum faceTarget;
    GLuint dstLevel;
-   const GLuint border = 0;
    const GLint slice = 0;
    GLuint samplerSave;
 
@@ -2956,35 +3114,30 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
    _mesa_meta_begin(ctx, MESA_META_ALL);
 
+   /* Choose between glsl version and fixed function version of
+    * GenerateMipmap function.
+    */
+   if (use_glsl_version) {
+      setup_glsl_generate_mipmap(ctx, mipmap);
+
+      if (texObj->_IsIntegerFormat)
+         _mesa_UseProgramObjectARB(mipmap->IntegerShaderProg);
+      else
+         _mesa_UseProgramObjectARB(mipmap->ShaderProg);
+   }
+   else {
+      setup_ff_generate_mipmap(ctx, mipmap);
+      _mesa_set_enable(ctx, target, GL_TRUE);
+   }
+
+   _mesa_BindVertexArray(mipmap->ArrayObj);
+   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, mipmap->VBO);
+
    samplerSave = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
       ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
 
-   if (original_active_unit != 0)
+   if (currentTexUnitSave != 0)
       _mesa_BindTexture(target, texObj->Name);
-
-   if (mipmap->ArrayObj == 0) {
-      /* one-time setup */
-
-      /* create vertex array object */
-      _mesa_GenVertexArraysAPPLE(1, &mipmap->ArrayObj);
-      _mesa_BindVertexArrayAPPLE(mipmap->ArrayObj);
-
-      /* create vertex array buffer */
-      _mesa_GenBuffersARB(1, &mipmap->VBO);
-      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, mipmap->VBO);
-      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
-                          NULL, GL_DYNAMIC_DRAW_ARB);
-
-      /* setup vertex arrays */
-      _mesa_VertexPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
-      _mesa_TexCoordPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(tex));
-      _mesa_EnableClientState(GL_VERTEX_ARRAY);
-      _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
-   }
-   else {
-      _mesa_BindVertexArray(mipmap->ArrayObj);
-      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, mipmap->VBO);
-   }
 
    if (!mipmap->FBO) {
       _mesa_GenFramebuffersEXT(1, &mipmap->FBO);
@@ -2993,12 +3146,25 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    if (!mipmap->Sampler) {
       _mesa_GenSamplers(1, &mipmap->Sampler);
       _mesa_BindSampler(ctx->Texture.CurrentUnit, mipmap->Sampler);
-      _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+      if (use_glsl_version && texObj->_IsIntegerFormat)
+         _mesa_SamplerParameteri(mipmap->Sampler,
+	                         GL_TEXTURE_MIN_FILTER,
+	                         GL_NEAREST_MIPMAP_NEAREST);
+      else
+         _mesa_SamplerParameteri(mipmap->Sampler,
+	                         GL_TEXTURE_MIN_FILTER,
+	                         GL_LINEAR_MIPMAP_LINEAR);
+
       _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
       _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-      /* We don't want to encode or decode sRGB values; treat them as linear */
+
+      /* We don't want to encode or decode sRGB values; treat them as linear.
+       * This is not technically correct for GLES3 but we don't get any API
+       * error at the moment.
+       */
       if (ctx->Extensions.EXT_texture_sRGB_decode) {
          _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_SRGB_DECODE_EXT,
                GL_SKIP_DECODE_EXT);
@@ -3015,13 +3181,13 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    else
       assert(!genMipmapSave);
 
-   if (ctx->Extensions.EXT_framebuffer_sRGB) {
+   if ((ctx->Extensions.EXT_framebuffer_sRGB &&
+        _mesa_is_desktop_gl(ctx)) ||
+       _mesa_is_gles3(ctx)) {
       _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
    }
 
-   _mesa_set_enable(ctx, target, GL_TRUE);
-
-   /* setup texcoords (XXX what about border?) */
+  /* Setup texture coordinates */
    setup_texture_coords(faceTarget,
                         slice,
                         0, 0, /* width, height never used here */
@@ -3031,22 +3197,18 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
                         verts[3].tex);
 
    /* setup vertex positions */
-   verts[0].x = 0.0F;
-   verts[0].y = 0.0F;
-   verts[1].x = 1.0F;
-   verts[1].y = 0.0F;
-   verts[2].x = 1.0F;
-   verts[2].y = 1.0F;
-   verts[3].x = 0.0F;
-   verts[3].y = 1.0F;
-      
-   /* upload new vertex data */
-   _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
+   verts[0].x = -1.0F;
+   verts[0].y = -1.0F;
+   verts[1].x =  1.0F;
+   verts[1].y = -1.0F;
+   verts[2].x =  1.0F;
+   verts[2].y =  1.0F;
+   verts[3].x = -1.0F;
+   verts[3].y =  1.0F;
 
-   /* setup projection matrix */
-   _mesa_MatrixMode(GL_PROJECTION);
-   _mesa_LoadIdentity();
-   _mesa_Ortho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
+   /* upload vertex data */
+   _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                       verts, GL_DYNAMIC_DRAW_ARB);
 
    /* texture is already locked, unlock now */
    _mesa_unlock_texture(ctx, texObj);
@@ -3059,17 +3221,17 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       GLenum status;
 
       srcImage = _mesa_select_tex_image(ctx, texObj, faceTarget, srcLevel);
-      assert(srcImage->Border == 0); /* XXX we can fix this */
+      assert(srcImage->Border == 0);
 
-      /* src size w/out border */
-      srcWidth = srcImage->Width - 2 * border;
-      srcHeight = srcImage->Height - 2 * border;
-      srcDepth = srcImage->Depth - 2 * border;
+      /* src size */
+      srcWidth = srcImage->Width;
+      srcHeight = srcImage->Height;
+      srcDepth = srcImage->Depth;
 
-      /* new dst size w/ border */
-      dstWidth = MAX2(1, srcWidth / 2) + 2 * border;
-      dstHeight = MAX2(1, srcHeight / 2) + 2 * border;
-      dstDepth = MAX2(1, srcDepth / 2) + 2 * border;
+      /* new dst size */
+      dstWidth = MAX2(1, srcWidth / 2);
+      dstHeight = MAX2(1, srcHeight / 2);
+      dstDepth = MAX2(1, srcDepth / 2);
 
       if (dstWidth == srcImage->Width &&
           dstHeight == srcImage->Height &&
