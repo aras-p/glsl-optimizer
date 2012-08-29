@@ -523,7 +523,7 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct radeon_surface surface;
-	unsigned array_mode = 0;
+	unsigned array_mode = V_009910_ARRAY_LINEAR_ALIGNED;
 	int r;
 
 #if 0
@@ -589,7 +589,7 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct pb_buffer *buf = NULL;
 	unsigned stride = 0;
-	unsigned array_mode = 0;
+	unsigned array_mode = V_009910_ARRAY_LINEAR_ALIGNED;
 	enum radeon_bo_layout micro, macro;
 	struct radeon_surface surface;
 	int r;
@@ -614,7 +614,7 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 	else if (micro == RADEON_LAYOUT_TILED)
 		array_mode = V_009910_ARRAY_1D_TILED_THIN1;
 	else
-		array_mode = 0;
+		array_mode = V_009910_ARRAY_LINEAR_ALIGNED;
 
 	r = r600_init_surface(&surface, templ, array_mode);
 	if (r) {
