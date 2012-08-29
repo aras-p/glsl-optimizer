@@ -20,8 +20,6 @@ tablegen = $(TBLGEN) -I $(LLVM_INCLUDEDIR) $1 $2 -o $3
 
 HAVE_LLVM_INTRINSICS = $(shell grep IntrinsicsR600.td $(LLVM_INCLUDEDIR)/llvm/Intrinsics.td)
 
-gen: $(GENERATED_SOURCES)
-
 SIRegisterInfo.td: SIGenRegisterInfo.pl
 	$(PERL) $^ > $@
 
@@ -38,37 +36,37 @@ endif
 R600RegisterInfo.td: R600GenRegisterInfo.pl
 	$(PERL) $^ > $@
 
-AMDGPUGenRegisterInfo.inc: *.td
+AMDGPUGenRegisterInfo.inc: $(TD_FILES)
 	$(call tablegen, -gen-register-info, AMDGPU.td, $@)
 
-AMDGPUGenInstrInfo.inc: *.td
+AMDGPUGenInstrInfo.inc: $(TD_FILES)
 	$(call tablegen, -gen-instr-info, AMDGPU.td, $@)
 
-AMDGPUGenAsmWriter.inc: *.td
+AMDGPUGenAsmWriter.inc: $(TD_FILES)
 	$(call tablegen, -gen-asm-writer, AMDGPU.td, $@)
 
-AMDGPUGenDAGISel.inc: *.td
+AMDGPUGenDAGISel.inc: $(TD_FILES)
 	$(call tablegen, -gen-dag-isel, AMDGPU.td, $@)
 
-AMDGPUGenCallingConv.inc: *.td
+AMDGPUGenCallingConv.inc: $(TD_FILES)
 	$(call tablegen, -gen-callingconv, AMDGPU.td, $@)
 
-AMDGPUGenSubtargetInfo.inc: *.td
+AMDGPUGenSubtargetInfo.inc: $(TD_FILES)
 	$(call tablegen, -gen-subtarget, AMDGPU.td, $@)
 
-AMDGPUGenEDInfo.inc: *.td
+AMDGPUGenEDInfo.inc: $(TD_FILES)
 	$(call tablegen, -gen-enhanced-disassembly-info, AMDGPU.td, $@)
 
-AMDGPUGenIntrinsics.inc: *.td
+AMDGPUGenIntrinsics.inc: $(TD_FILES)
 	$(call tablegen, -gen-tgt-intrinsic, AMDGPU.td, $@)
 
-AMDGPUGenCodeEmitter.inc: *.td
+AMDGPUGenCodeEmitter.inc: $(TD_FILES)
 	$(call tablegen, -gen-emitter, AMDGPU.td, $@)
 
-AMDGPUGenMCCodeEmitter.inc: *.td
+AMDGPUGenMCCodeEmitter.inc: $(TD_FILES)
 	$(call tablegen, -mc-emitter -gen-emitter, AMDGPU.td, $@)
 
-AMDGPUGenDFAPacketizer.inc: *.td
+AMDGPUGenDFAPacketizer.inc: $(TD_FILES)
 	$(call tablegen, -gen-dfa-packetizer, AMDGPU.td, $@)
 
 LOADER_LIBS=$(shell llvm-config --libs bitreader asmparser)

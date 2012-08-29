@@ -1,4 +1,30 @@
 
+TD_FILES := \
+	AMDGPU.td		\
+	AMDGPUInstrInfo.td	\
+	AMDGPUInstructions.td	\
+	AMDGPUIntrinsics.td	\
+	AMDGPURegisterInfo.td	\
+	AMDILBase.td		\
+	AMDILInstrInfo.td	\
+	AMDILIntrinsics.td	\
+	AMDILRegisterInfo.td	\
+	Processors.td		\
+	R600InstrInfo.td	\
+	R600Instructions.td	\
+	R600Intrinsics.td	\
+	R600IntrinsicsNoOpenCL.td	\
+	R600IntrinsicsOpenCL.td	\
+	R600RegisterInfo.td	\
+	R600Schedule.td		\
+	SIInstrFormats.td	\
+	SIInstrInfo.td		\
+	SIInstructions.td	\
+	SIIntrinsics.td		\
+	SIRegisterInfo.td	\
+	SISchedule.td
+
+
 GENERATED_SOURCES := \
 	R600Intrinsics.td		\
 	R600RegisterInfo.td		\
