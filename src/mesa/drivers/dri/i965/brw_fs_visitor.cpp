@@ -2277,6 +2277,7 @@ fs_visitor::fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
 
    this->frag_depth = NULL;
    memset(this->outputs, 0, sizeof(this->outputs));
+   memset(this->output_components, 0, sizeof(this->output_components));
    this->first_non_payload_grf = 0;
    this->max_grf = intel->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
 
