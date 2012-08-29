@@ -685,7 +685,8 @@ const struct brw_tracked_state brw_wm_prog = {
 		_NEW_LIGHT |
 		_NEW_FRAG_CLAMP |
 		_NEW_BUFFERS |
-		_NEW_TEXTURE),
+		_NEW_TEXTURE |
+		_NEW_MULTISAMPLE),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_WM_INPUT_DIMENSIONS |
 		BRW_NEW_REDUCED_PRIMITIVE),
