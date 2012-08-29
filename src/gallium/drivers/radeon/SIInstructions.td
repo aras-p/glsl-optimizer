@@ -566,33 +566,34 @@ defm V_MOVRELSD_B32 : VOP1_32 <0x00000044, "V_MOVRELSD_B32", []>;
 def V_INTERP_P1_F32 : VINTRP <
   0x00000000,
   (outs VReg_32:$dst),
-  (ins VReg_32:$i, i32imm:$attr_chan, i32imm:$attr),
+  (ins VReg_32:$i, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
   "V_INTERP_P1_F32",
-  []
->;
+  []> {
+  let DisableEncoding = "$m0";
+}
 
 def V_INTERP_P2_F32 : VINTRP <
   0x00000001,
   (outs VReg_32:$dst),
-  (ins VReg_32:$src0, VReg_32:$j, i32imm:$attr_chan, i32imm:$attr),
+  (ins VReg_32:$src0, VReg_32:$j, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
   "V_INTERP_P2_F32",
   []> {
 
   let Constraints = "$src0 = $dst";
-  let DisableEncoding = "$src0";
+  let DisableEncoding = "$src0,$m0";
 
 }
 
 def V_INTERP_MOV_F32 : VINTRP <
   0x00000002,
   (outs VReg_32:$dst),
-  (ins i32imm:$attr_chan, i32imm:$attr),
+  (ins i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
   "V_INTERP_MOV_F32",
   []> {
   let VSRC = 0;
+  let DisableEncoding = "$m0";
 }
 
-//def V_INTERP_MOV_F32 : VINTRP_32 <0x00000002, "V_INTERP_MOV_F32", []>;
 //def S_NOP : SOPP_ <0x00000000, "S_NOP", []>;
 
 let isTerminator = 1 in {

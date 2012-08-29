@@ -171,6 +171,8 @@ def AllReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
 def SCCReg : RegisterClass<"AMDGPU", [i1], 1, (add SCC)>;
 def VCCReg : RegisterClass<"AMDGPU", [i1], 1, (add VCC)>;
 def EXECReg : RegisterClass<"AMDGPU", [i1], 1, (add EXEC)>;
+def M0Reg : RegisterClass<"AMDGPU", [i32], 32, (add M0)>;
+
 
 STRING
 

@@ -363,7 +363,6 @@ class VINTRP <bits <2> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{31-26} = 0x32; // encoding
   let EncodingType = 11; // SIInstrEncodingType::VINTRP
 
-  let Uses = [M0];
   let neverHasSideEffects = 1;
 }
 

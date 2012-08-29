@@ -32,7 +32,7 @@ class SITargetLowering : public AMDGPUTargetLowering
   void LowerSI_INTERP(MachineInstr *MI, MachineBasicBlock &BB,
               MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const;
   void LowerSI_INTERP_CONST(MachineInstr *MI, MachineBasicBlock &BB,
-              MachineBasicBlock::iterator I) const;
+              MachineBasicBlock::iterator I, MachineRegisterInfo &MRI) const;
   void LowerSI_KIL(MachineInstr *MI, MachineBasicBlock &BB,
               MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const;
   void LowerSI_V_CNDLT(MachineInstr *MI, MachineBasicBlock &BB,
