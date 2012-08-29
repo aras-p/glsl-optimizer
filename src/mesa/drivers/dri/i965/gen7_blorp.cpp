@@ -150,6 +150,7 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
     * gen6_blorp_emit_surface_state).
     */
    struct intel_region *region = surface->mt->region;
+   uint32_t tile_x, tile_y;
 
    struct gen7_surface_state *surf = (struct gen7_surface_state *)
       brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, sizeof(*surf), 32,
@@ -167,7 +168,16 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
       GEN7_SURFACE_ARYSPC_LOD0 : GEN7_SURFACE_ARYSPC_FULL;
 
    /* reloc */
-   surf->ss1.base_addr = region->bo->offset; /* No tile offsets needed */
+   surf->ss1.base_addr = surface->compute_tile_offsets(&tile_x, &tile_y);
+   surf->ss1.base_addr += region->bo->offset;
+
+   /* Note that the low bits of these fields are missing, so
+    * there's the possibility of getting in trouble.
+    */
+   assert(tile_x % 4 == 0);
+   assert(tile_y % 2 == 0);
+   surf->ss5.x_offset = tile_x / 4;
+   surf->ss5.y_offset = tile_y / 2;
 
    surf->ss2.width = width - 1;
    surf->ss2.height = height - 1;

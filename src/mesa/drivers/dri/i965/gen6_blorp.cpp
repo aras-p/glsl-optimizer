@@ -424,6 +424,7 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
       height /= 2;
    }
    struct intel_region *region = surface->mt->region;
+   uint32_t tile_x, tile_y;
 
    uint32_t *surf = (uint32_t *)
       brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
@@ -435,7 +436,8 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
               surface->brw_surfaceformat << BRW_SURFACE_FORMAT_SHIFT);
 
    /* reloc */
-   surf[1] = region->bo->offset; /* No tile offsets needed */
+   surf[1] = (surface->compute_tile_offsets(&tile_x, &tile_y) +
+              region->bo->offset);
 
    surf[2] = (0 << BRW_SURFACE_LOD_SHIFT |
               (width - 1) << BRW_SURFACE_WIDTH_SHIFT |
@@ -453,8 +455,13 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
 
    surf[4] = brw_get_surface_num_multisamples(surface->num_samples);
 
-   surf[5] = (0 << BRW_SURFACE_X_OFFSET_SHIFT |
-              0 << BRW_SURFACE_Y_OFFSET_SHIFT |
+   /* Note that the low bits of these fields are missing, so
+    * there's the possibility of getting in trouble.
+    */
+   assert(tile_x % 4 == 0);
+   assert(tile_y % 2 == 0);
+   surf[5] = ((tile_x / 4) << BRW_SURFACE_X_OFFSET_SHIFT |
+              (tile_y / 2) << BRW_SURFACE_Y_OFFSET_SHIFT |
               (surface->mt->align_h == 4 ?
                BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0));
 

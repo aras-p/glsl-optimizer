@@ -104,6 +104,8 @@ public:
             struct intel_mipmap_tree *mt,
             unsigned int level, unsigned int layer);
 
+   uint32_t compute_tile_offsets(uint32_t *tile_x, uint32_t *tile_y) const;
+
    /* Setting this flag indicates that the buffer's contents are W-tiled
     * stencil data, but the surface state should be set up for Y tiled
     * MESA_FORMAT_R8 data (this is necessary because surface states don't

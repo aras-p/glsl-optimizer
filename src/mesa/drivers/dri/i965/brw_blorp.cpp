@@ -107,6 +107,31 @@ brw_blorp_surface_info::set(struct brw_context *brw,
    }
 }
 
+
+/**
+ * Split x_offset and y_offset into a base offset (in bytes) and a remaining
+ * x/y offset (in pixels).  Note: we can't do this by calling
+ * intel_renderbuffer_tile_offsets(), because the offsets may have been
+ * adjusted to account for Y vs. W tiling differences.  So we compute it
+ * directly from the adjusted offsets.
+ */
+uint32_t
+brw_blorp_surface_info::compute_tile_offsets(uint32_t *tile_x,
+                                             uint32_t *tile_y) const
+{
+   struct intel_region *region = mt->region;
+   uint32_t mask_x, mask_y;
+
+   intel_region_get_tile_masks(region, &mask_x, &mask_y);
+
+   *tile_x = x_offset & mask_x;
+   *tile_y = y_offset & mask_y;
+
+   return intel_region_get_aligned_offset(region, x_offset & ~mask_x,
+                                          y_offset & ~mask_y);
+}
+
+
 brw_blorp_params::brw_blorp_params()
    : x0(0),
      y0(0),
