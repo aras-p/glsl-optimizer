@@ -2013,6 +2013,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/drivers/i915/Makefile
 		src/gallium/drivers/r300/Makefile
 		src/gallium/drivers/r600/Makefile
+		src/gallium/drivers/rbug/Makefile
 		src/gallium/drivers/trace/Makefile
 		src/gallium/state_trackers/clover/Makefile
 		src/gallium/targets/Makefile
