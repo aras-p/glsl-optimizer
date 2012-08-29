@@ -96,7 +96,7 @@ struct _mesa_glsl_parse_state {
     * Currently affects uniform blocks and uniform buffer variables in
     * those blocks.
     */
-   class ast_type_qualifier *default_uniform_qualifier;
+   struct ast_type_qualifier *default_uniform_qualifier;
 
    /**
     * Printable list of GLSL versions supported by the current context
