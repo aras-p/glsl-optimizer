@@ -31,7 +31,9 @@
 brw_blorp_mip_info::brw_blorp_mip_info()
    : mt(NULL),
      level(0),
-     layer(0)
+     layer(0),
+     width(0),
+     height(0)
 {
 }
 
@@ -50,6 +52,8 @@ brw_blorp_mip_info::set(struct intel_mipmap_tree *mt,
    this->mt = mt;
    this->level = level;
    this->layer = layer;
+   this->width = mt->level[level].width;
+   this->height = mt->level[level].height;
 }
 
 void
@@ -164,7 +168,8 @@ brw_hiz_op_params::brw_hiz_op_params(struct intel_mipmap_tree *mt,
    this->hiz_op = op;
 
    depth.set(mt, level, layer);
-   depth.get_miplevel_dims(&x1, &y1);
+   x1 = depth.width;
+   y1 = depth.height;
 
    assert(mt->hiz_mt != NULL);
 

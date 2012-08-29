@@ -1770,18 +1770,20 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    }
 
    if (dst.map_stencil_as_y_tiled) {
-      /* We must modify the rectangle we send through the rendering pipeline,
-       * to account for the fact that we are mapping it as Y-tiled when it is
-       * in fact W-tiled.  Y tiles have dimensions 128x32 whereas W tiles have
-       * dimensions 64x64.  We must also align it to a multiple of the tile
-       * size, because the differences between W and Y tiling formats will
-       * mean that pixels are scrambled within the tile.
+      /* We must modify the rectangle we send through the rendering pipeline
+       * (and the size of the destination surface), to account for the fact
+       * that we are mapping it as Y-tiled when it is in fact W-tiled.  Y
+       * tiles have dimensions 128x32 whereas W tiles have dimensions 64x64.
+       * We must also align it to a multiple of the tile size, because the
+       * differences between W and Y tiling formats will mean that pixels are
+       * scrambled within the tile.
        *
        * Note: if the destination surface configured to use IMS layout, then
        * the effective tile size we need to align it to is smaller, because
        * each pixel covers a 2x2 or a 4x2 block of samples.
        *
-       * TODO: what if this makes the coordinates too large?
+       * TODO: what if this makes the coordinates (or the texture size) too
+       * large?
        */
       unsigned x_align = 64, y_align = 64;
       if (dst_mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS) {
@@ -1792,7 +1794,19 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
       y0 = ROUND_DOWN_TO(y0, y_align) / 2;
       x1 = ALIGN(x1, x_align) * 2;
       y1 = ALIGN(y1, y_align) / 2;
+      dst.width *= 2;
+      dst.height /= 2;
       wm_prog_key.use_kill = true;
+   }
+
+   if (src.map_stencil_as_y_tiled) {
+      /* We must modify the size of the source surface to account for the fact
+       * that we are mapping it as Y-tiled when it is in fact W tiled.
+       *
+       * TODO: what if this makes the texture size too large?
+       */
+      src.width *= 2;
+      src.height /= 2;
    }
 }
 

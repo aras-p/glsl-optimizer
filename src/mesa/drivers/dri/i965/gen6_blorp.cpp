@@ -413,18 +413,14 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
                               uint32_t read_domains, uint32_t write_domain)
 {
    uint32_t wm_surf_offset;
-   uint32_t width, height;
-   surface->get_miplevel_dims(&width, &height);
+   uint32_t width = surface->width;
+   uint32_t height = surface->height;
    if (surface->num_samples > 1) {
       /* Since gen6 uses INTEL_MSAA_LAYOUT_IMS, width and height are measured
        * in samples.  But SURFACE_STATE wants them in pixels, so we need to
        * divide them each by 2.
        */
       width /= 2;
-      height /= 2;
-   }
-   if (surface->map_stencil_as_y_tiled) {
-      width *= 2;
       height /= 2;
    }
    struct intel_region *region = surface->mt->region;
@@ -835,9 +831,6 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
 
    /* 3DSTATE_DEPTH_BUFFER */
    {
-      uint32_t width, height;
-      params->depth.get_miplevel_dims(&width, &height);
-
       uint32_t tile_x = draw_x & tile_mask_x;
       uint32_t tile_y = draw_y & tile_mask_y;
       uint32_t offset =
@@ -881,8 +874,8 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                 offset);
       OUT_BATCH(BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1 |
-                (width + tile_x - 1) << 6 |
-                (height + tile_y - 1) << 19);
+                (params->depth.width + tile_x - 1) << 6 |
+                (params->depth.height + tile_y - 1) << 19);
       OUT_BATCH(0);
       OUT_BATCH(tile_x |
                 tile_y << 16);
