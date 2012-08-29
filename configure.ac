@@ -2029,6 +2029,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/winsys/Makefile
 		src/gallium/winsys/i915/drm/Makefile
 		src/gallium/winsys/i915/sw/Makefile
+		src/gallium/winsys/nouveau/drm/Makefile
 		src/gallium/winsys/radeon/drm/Makefile
 		src/gbm/Makefile
 		src/gbm/main/gbm.pc
