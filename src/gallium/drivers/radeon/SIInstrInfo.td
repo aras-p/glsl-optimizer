@@ -364,6 +364,7 @@ class VINTRP <bits <2> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let EncodingType = 11; // SIInstrEncodingType::VINTRP
 
   let Uses = [M0];
+  let neverHasSideEffects = 1;
 }
 
 class VOP1 <bits<8> op, dag outs, dag ins, string asm, list<dag> pattern> :

@@ -26,7 +26,7 @@ let TargetPrefix = "SI", isTarget = 1 in {
   /* Interpolation Intrinsics */
 
   def int_SI_set_M0 : Intrinsic <[llvm_i32_ty], [llvm_i32_ty]>;
-  class Interp : Intrinsic <[llvm_float_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], []>;
+  class Interp : Intrinsic <[llvm_float_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrReadMem]>;
 
   def int_SI_fs_interp_linear_center : Interp;
   def int_SI_fs_interp_linear_centroid : Interp;

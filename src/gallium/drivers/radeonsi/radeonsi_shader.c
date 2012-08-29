@@ -329,8 +329,8 @@ static void declare_input_fs(
 		args[1] = attr_number;
 		args[2] = params;
 		si_shader_ctx->radeon_bld.inputs[soa_index] =
-			lp_build_intrinsic(gallivm->builder, intr_name,
-						input_type, args, 3);
+			build_intrinsic(base->gallivm->builder, intr_name,
+				input_type, args, 3, LLVMReadOnlyAttribute);
 	}
 }
 
