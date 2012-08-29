@@ -144,6 +144,11 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
    uint32_t wm_surf_offset;
    uint32_t width, height;
    surface->get_miplevel_dims(&width, &height);
+   /* Note: since gen7 uses INTEL_MSAA_LAYOUT_CMS or INTEL_MSAA_LAYOUT_UMS for
+    * color surfaces, width and height are measured in pixels; we don't need
+    * to divide them by 2 as we do for Gen6 (see
+    * gen6_blorp_emit_surface_state).
+    */
    if (surface->map_stencil_as_y_tiled) {
       width *= 2;
       height /= 2;

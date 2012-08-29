@@ -415,7 +415,11 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
    uint32_t wm_surf_offset;
    uint32_t width, height;
    surface->get_miplevel_dims(&width, &height);
-   if (surface->num_samples > 1) { /* TODO: seems clumsy */
+   if (surface->num_samples > 1) {
+      /* Since gen6 uses INTEL_MSAA_LAYOUT_IMS, width and height are measured
+       * in samples.  But SURFACE_STATE wants them in pixels, so we need to
+       * divide them each by 2.
+       */
       width /= 2;
       height /= 2;
    }
