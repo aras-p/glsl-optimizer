@@ -239,9 +239,14 @@ uint64_t SIMCCodeEmitter::VOPPostEncode(const MCInst &MI, uint64_t Value) const{
         Value |= (VGPR_BIT(opIdx)) << vgprBitOffset;
       }
     } else if (MO.isFPImm()) {
+      union {
+        float f;
+        uint32_t i;
+      } Imm;
       // XXX: Not all instructions can use inline literals
       // XXX: We should make sure this is a 32-bit constant
-      Value |= ((uint64_t)MO.getFPImm()) << 32;
+      Imm.f = MO.getFPImm();
+      Value |= ((uint64_t)Imm.i) << 32;
     }
   }
   return Value;
