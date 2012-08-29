@@ -12,6 +12,7 @@ def isSI : Predicate<"Subtarget.device()"
 
 let Predicates = [isSI] in {
 
+let neverHasSideEffects = 1 in {
 def S_MOV_B32 : SOP1_32 <0x00000003, "S_MOV_B32", []>;
 def S_MOV_B64 : SOP1_64 <0x00000004, "S_MOV_B64", []>;
 def S_CMOV_B32 : SOP1_32 <0x00000005, "S_CMOV_B32", []>;
@@ -22,6 +23,7 @@ def S_WQM_B32 : SOP1_32 <0x00000009, "S_WQM_B32", []>;
 def S_WQM_B64 : SOP1_64 <0x0000000a, "S_WQM_B64", []>;
 def S_BREV_B32 : SOP1_32 <0x0000000b, "S_BREV_B32", []>;
 def S_BREV_B64 : SOP1_64 <0x0000000c, "S_BREV_B64", []>;
+} // End neverHasSideEffects = 1
 ////def S_BCNT0_I32_B32 : SOP1_BCNT0 <0x0000000d, "S_BCNT0_I32_B32", []>;
 ////def S_BCNT0_I32_B64 : SOP1_BCNT0 <0x0000000e, "S_BCNT0_I32_B64", []>;
 ////def S_BCNT1_I32_B32 : SOP1_BCNT1 <0x0000000f, "S_BCNT1_I32_B32", []>;
