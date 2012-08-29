@@ -367,7 +367,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
 			return 15;
 	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
-		return rscreen->info.drm_minor >= 9 ? 16384 : 0;
+		return /*rscreen->info.drm_minor >= 9 ? 16384 :*/ 0;
 	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
 		return 32;
 
