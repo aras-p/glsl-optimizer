@@ -1779,16 +1779,27 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    if (dst.map_stencil_as_y_tiled) {
       /* We must modify the rectangle we send through the rendering pipeline
        * (and the size of the destination surface), to account for the fact
-       * that we are mapping it as Y-tiled when it is in fact W-tiled.  Y
-       * tiles have dimensions 128x32 whereas W tiles have dimensions 64x64.
-       * We must also align it to a multiple of the tile size, because the
-       * differences between W and Y tiling formats will mean that pixels are
-       * scrambled within the tile.
+       * that we are mapping it as Y-tiled when it is in fact W-tiled.
+       *
+       * Both Y tiling and W tiling can be understood as organizations of
+       * 32-byte sub-tiles; within each 32-byte sub-tile, the layout of pixels
+       * is different, but the layout of the 32-byte sub-tiles within the 4k
+       * tile is the same (8 sub-tiles across by 16 sub-tiles down, in
+       * column-major order).  In Y tiling, the sub-tiles are 16 bytes wide
+       * and 2 rows high; in W tiling, they are 8 bytes wide and 4 rows high.
+       *
+       * Therefore, to account for the layout differences within the 32-byte
+       * sub-tiles, we must expand the rectangle so the X coordinates of its
+       * edges are multiples of 8 (the W sub-tile width), and its Y
+       * coordinates of its edges are multiples of 4 (the W sub-tile height).
+       * Then we need to scale the X and Y coordinates of the rectangle to
+       * account for the differences in aspect ratio between the Y and W
+       * sub-tiles.
        *
        * TODO: what if this makes the coordinates (or the texture size) too
        * large?
        */
-      const unsigned x_align = 64, y_align = 64;
+      const unsigned x_align = 8, y_align = 4;
       x0 = ROUND_DOWN_TO(x0, x_align) * 2;
       y0 = ROUND_DOWN_TO(y0, y_align) / 2;
       x1 = ALIGN(x1, x_align) * 2;
