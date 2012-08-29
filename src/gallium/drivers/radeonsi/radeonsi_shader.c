@@ -357,6 +357,7 @@ static LLVMValueRef fetch_constant(
 	unsigned swizzle)
 {
 	struct lp_build_context * base = &bld_base->base;
+	unsigned idx;
 
 	LLVMValueRef const_ptr;
 	LLVMValueRef offset;
@@ -376,8 +377,14 @@ static LLVMValueRef fetch_constant(
 	/* XXX: This assumes that the constant buffer is not packed, so
 	 * CONST[0].x will have an offset of 0 and CONST[1].x will have an
 	 * offset of 4. */
-	offset = lp_build_const_int32(base->gallivm,
-					(reg->Register.Index * 4) + swizzle);
+	idx = (reg->Register.Index * 4) + swizzle;
+
+	/* index loads above 255 are currently not supported */
+	if (idx > 255) {
+		assert(0);
+		idx = 0;
+	}
+	offset = lp_build_const_int32(base->gallivm, idx);
 
 	load = build_indexed_load(base->gallivm, const_ptr, offset);
 	return bitcast(bld_base, type, load);
