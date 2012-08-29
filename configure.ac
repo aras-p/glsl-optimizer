@@ -2033,6 +2033,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/winsys/radeon/drm/Makefile
 		src/gallium/winsys/svga/drm/Makefile
 		src/gallium/winsys/sw/Makefile
+		src/gallium/winsys/sw/dri/Makefile
 		src/gbm/Makefile
 		src/gbm/main/gbm.pc
 		src/glsl/Makefile
