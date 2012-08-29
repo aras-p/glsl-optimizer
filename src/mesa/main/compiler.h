@@ -241,6 +241,9 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
            ((x & 0x00ff0000) >>  8) |
            ((x & 0xff000000) >> 24));
 }
+#elif defined(__OpenBSD__)
+#include <sys/types.h>
+#define CPU_TO_LE32( x )	htole32( x )
 #else /*__linux__ */
 #include <sys/endian.h>
 #define CPU_TO_LE32( x )	bswap32( x )
