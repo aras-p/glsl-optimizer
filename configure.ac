@@ -2018,6 +2018,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/drivers/nvc0/Makefile
 		src/gallium/drivers/r300/Makefile
 		src/gallium/drivers/r600/Makefile
+		src/gallium/drivers/radeonsi/Makefile
 		src/gallium/drivers/rbug/Makefile
 		src/gallium/drivers/softpipe/Makefile
 		src/gallium/drivers/svga/Makefile
