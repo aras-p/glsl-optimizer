@@ -2014,6 +2014,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/drivers/llvmpipe/Makefile
 		src/gallium/drivers/nouveau/Makefile
 		src/gallium/drivers/nv30/Makefile
+		src/gallium/drivers/nv50/Makefile
 		src/gallium/drivers/r300/Makefile
 		src/gallium/drivers/r600/Makefile
 		src/gallium/drivers/rbug/Makefile
