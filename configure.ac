@@ -2036,6 +2036,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/winsys/sw/dri/Makefile
 		src/gallium/winsys/sw/fbdev/Makefile
 		src/gallium/winsys/sw/null/Makefile
+		src/gallium/winsys/sw/wayland/Makefile
 		src/gbm/Makefile
 		src/gbm/main/gbm.pc
 		src/glsl/Makefile
