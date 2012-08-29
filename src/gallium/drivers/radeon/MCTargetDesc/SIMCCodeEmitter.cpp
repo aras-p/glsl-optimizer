@@ -281,6 +281,9 @@ unsigned SIMCCodeEmitter::getEncodingBytes(const MCInst &MI) const {
 unsigned SIMCCodeEmitter::getRegBinaryCode(unsigned reg) const {
   switch (reg) {
     case AMDGPU::M0: return 124;
+    case AMDGPU::EXEC: return 126;
+    case AMDGPU::EXEC_LO: return 126;
+    case AMDGPU::EXEC_HI: return 127;
     case AMDGPU::SREG_LIT_0: return 128;
     case AMDGPU::SI_LITERAL_CONSTANT: return 255;
     default: return getHWRegNum(reg);

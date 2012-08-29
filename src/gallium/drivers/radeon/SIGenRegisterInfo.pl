@@ -88,7 +88,9 @@ class SGPR_256 <bits<8> num, string name, list<Register> subregs> :
     SI_256 <name, subregs>;
 
 def VCC : SIReg<"VCC">;
-def EXEC : SIReg<"EXEC">;
+def EXEC_LO : SIReg<"EXEC LO">;
+def EXEC_HI : SIReg<"EXEC HI">;
+def EXEC : SI_64<"EXEC", [EXEC_LO,EXEC_HI]>;
 def SCC : SIReg<"SCC">;
 def SREG_LIT_0 : SIReg <"S LIT 0">;
 def SI_LITERAL_CONSTANT : SIReg<"LITERAL CONSTANT">;
@@ -141,7 +143,7 @@ for (my $i = 0; $i < $VGPR_COUNT; $i++) {
 print <<STRING;
 
 def SReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
-    (add (sequence "SGPR%u", 0, $SGPR_MAX_IDX),  SREG_LIT_0, M0)
+    (add (sequence "SGPR%u", 0, $SGPR_MAX_IDX),  SREG_LIT_0, M0, EXEC_LO, EXEC_HI)
 >;
 
 def VReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
