@@ -2011,6 +2011,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/auxiliary/pipe-loader/Makefile
 		src/gallium/drivers/Makefile
 		src/gallium/drivers/i915/Makefile
+		src/gallium/drivers/llvmpipe/Makefile
 		src/gallium/drivers/r300/Makefile
 		src/gallium/drivers/r600/Makefile
 		src/gallium/drivers/rbug/Makefile
