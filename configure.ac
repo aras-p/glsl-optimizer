@@ -2016,6 +2016,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/drivers/r600/Makefile
 		src/gallium/drivers/rbug/Makefile
 		src/gallium/drivers/softpipe/Makefile
+		src/gallium/drivers/svga/Makefile
 		src/gallium/drivers/trace/Makefile
 		src/gallium/state_trackers/clover/Makefile
 		src/gallium/targets/Makefile
