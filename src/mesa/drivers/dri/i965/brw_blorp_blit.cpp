@@ -1785,18 +1785,10 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
        * differences between W and Y tiling formats will mean that pixels are
        * scrambled within the tile.
        *
-       * Note: if the destination surface configured to use IMS layout, then
-       * the effective tile size we need to align it to is smaller, because
-       * each pixel covers a 2x2 or a 4x2 block of samples.
-       *
        * TODO: what if this makes the coordinates (or the texture size) too
        * large?
        */
-      unsigned x_align = 64, y_align = 64;
-      if (dst_mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS) {
-         x_align /= (dst_mt->num_samples == 4 ? 2 : 4);
-         y_align /= 2;
-      }
+      const unsigned x_align = 64, y_align = 64;
       x0 = ROUND_DOWN_TO(x0, x_align) * 2;
       y0 = ROUND_DOWN_TO(y0, y_align) / 2;
       x1 = ALIGN(x1, x_align) * 2;
