@@ -823,11 +823,11 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
                                      const brw_blorp_params *params)
 {
    struct intel_context *intel = &brw->intel;
-   uint32_t draw_x, draw_y;
+   uint32_t draw_x = params->depth.x_offset;
+   uint32_t draw_y = params->depth.y_offset;
    uint32_t tile_mask_x, tile_mask_y;
 
    gen6_blorp_compute_tile_masks(params, &tile_mask_x, &tile_mask_y);
-   params->depth.get_draw_offsets(&draw_x, &draw_y);
 
    /* 3DSTATE_DEPTH_BUFFER */
    {

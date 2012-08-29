@@ -30,10 +30,10 @@
 
 brw_blorp_mip_info::brw_blorp_mip_info()
    : mt(NULL),
-     level(0),
-     layer(0),
      width(0),
-     height(0)
+     height(0),
+     x_offset(0),
+     y_offset(0)
 {
 }
 
@@ -50,10 +50,17 @@ brw_blorp_mip_info::set(struct intel_mipmap_tree *mt,
    intel_miptree_check_level_layer(mt, level, layer);
 
    this->mt = mt;
-   this->level = level;
-   this->layer = layer;
    this->width = mt->level[level].width;
    this->height = mt->level[level].height;
+
+   /* Construct a dummy renderbuffer just to extract tile offsets. */
+   struct intel_renderbuffer rb;
+   rb.mt = mt;
+   rb.mt_level = level;
+   rb.mt_layer = layer;
+   intel_renderbuffer_set_draw_offset(&rb);
+   x_offset = rb.draw_x;
+   y_offset = rb.draw_y;
 }
 
 void
@@ -105,19 +112,6 @@ brw_blorp_surface_info::set(struct brw_context *brw,
       this->brw_surfaceformat = brw->render_target_format[mt->format];
       break;
    }
-}
-
-void
-brw_blorp_mip_info::get_draw_offsets(uint32_t *draw_x, uint32_t *draw_y) const
-{
-   /* Construct a dummy renderbuffer just to extract tile offsets. */
-   struct intel_renderbuffer rb;
-   rb.mt = mt;
-   rb.mt_level = level;
-   rb.mt_layer = layer;
-   intel_renderbuffer_set_draw_offset(&rb);
-   *draw_x = rb.draw_x;
-   *draw_y = rb.draw_y;
 }
 
 brw_blorp_params::brw_blorp_params()

@@ -63,11 +63,8 @@ public:
 
    void set(struct intel_mipmap_tree *mt,
             unsigned int level, unsigned int layer);
-   void get_draw_offsets(uint32_t *draw_x, uint32_t *draw_y) const;
 
    struct intel_mipmap_tree *mt;
-   unsigned int level;
-   unsigned int layer;
 
    /**
     * Width of the miplevel to be used.  For surfaces using
@@ -80,6 +77,20 @@ public:
     * INTEL_MSAA_LAYOUT_IMS, this is measured in samples, not pixels.
     */
    uint32_t height;
+
+   /**
+    * X offset within the surface to texture from (or render to).  For
+    * surfaces using INTEL_MSAA_LAYOUT_IMS, this is measured in samples, not
+    * pixels.
+    */
+   uint32_t x_offset;
+
+   /**
+    * Y offset within the surface to texture from (or render to).  For
+    * surfaces using INTEL_MSAA_LAYOUT_IMS, this is measured in samples, not
+    * pixels.
+    */
+   uint32_t y_offset;
 };
 
 class brw_blorp_surface_info : public brw_blorp_mip_info
