@@ -132,6 +132,9 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   case AMDGPU::SI_KIL:
     LowerSI_KIL(MI, *BB, I, MRI);
     break;
+  case AMDGPU::SI_WQM:
+    LowerSI_WQM(MI, *BB, I, MRI);
+    break;
   case AMDGPU::SI_V_CNDLT:
     LowerSI_V_CNDLT(MI, *BB, I, MRI);
     break;
@@ -144,6 +147,16 @@ void SITargetLowering::AppendS_WAITCNT(MachineInstr *MI, MachineBasicBlock &BB,
 {
   BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_WAITCNT))
           .addImm(0);
+}
+
+
+void SITargetLowering::LowerSI_WQM(MachineInstr *MI, MachineBasicBlock &BB,
+    MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const
+{
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_WQM_B64), AMDGPU::EXEC)
+          .addReg(AMDGPU::EXEC);
+
+  MI->eraseFromParent();
 }
 
 void SITargetLowering::LowerSI_INTERP(MachineInstr *MI, MachineBasicBlock &BB,

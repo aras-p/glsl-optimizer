@@ -20,6 +20,7 @@ let TargetPrefix = "SI", isTarget = 1 in {
   def int_SI_load_const : Intrinsic <[llvm_float_ty], [llvm_i64_ty, llvm_i32_ty], []>;
   def int_SI_vs_load_buffer_index : Intrinsic <[llvm_i32_ty], [], [IntrNoMem]>;
   def int_SI_vs_load_input : Intrinsic <[llvm_v4f32_ty], [llvm_v4i32_ty, llvm_i16_ty, llvm_i32_ty], []> ;
+  def int_SI_wqm : Intrinsic <[], [], []>;
 
   def int_SI_sample : Intrinsic <[llvm_v4f32_ty], [llvm_i32_ty, llvm_v4f32_ty, llvm_v8i32_ty, llvm_v4i32_ty]>;
 
