@@ -23,7 +23,7 @@
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
-noinst_LIBRARIES = libradeonsi.a
+noinst_LTLIBRARIES = libradeonsi.la
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers/radeon \
@@ -32,10 +32,9 @@ AM_CPPFLAGS = \
 	$(GALLIUM_CFLAGS)
 AM_CFLAGS = $(LLVM_CFLAGS)
 
-# This is a hack until we can move the backend into the LLVM project.
-# We need to use mklib, because it splits up libradeon.a into object files
-# so that we can link it with the radeonsi objects.
-libradeonsi_a_AR = $(top_srcdir)/bin/mklib -o radeonsi -static
+libradeonsi_la_SOURCES = $(C_SOURCES)
+libradeonsi_la_LIBADD = ../radeon/libllvmradeon@VERSION@.la
 
-libradeonsi_a_SOURCES = $(C_SOURCES)
-libradeonsi_a_LIBADD = ../radeon/libradeon.a
+#XXX: Delete this when all radeonsi targets are converted to automake.
+all-local: libradeonsi.la
+	ln -f $(builddir)/.libs/libradeonsi.a $(builddir)/libradeonsi.a

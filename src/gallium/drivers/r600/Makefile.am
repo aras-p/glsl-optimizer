@@ -1,7 +1,7 @@
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
-noinst_LIBRARIES = libr600.a
+noinst_LTLIBRARIES = libr600.la
 
 AM_CFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
@@ -10,22 +10,20 @@ AM_CFLAGS = \
 	$(RADEON_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
 
-libr600_a_SOURCES = \
+libr600_la_SOURCES = \
 	$(C_SOURCES)
 
 if NEED_RADEON_GALLIUM
 
-# This is a hack until we can move the backend into the LLVM project.
-# We need to use mklib, because it splits up libradeon.a into object files
-# so that we can link it with the r600 objects.
-libr600_a_AR = $(top_srcdir)/bin/mklib -o r600 -static
-
-libr600_a_SOURCES += \
+libr600_la_SOURCES += \
 	$(LLVM_C_SOURCES) \
 	$(LLVM_CXX_SOURCES)
 
-libr600_a_LIBADD = \
-	$(top_builddir)/src/gallium/drivers/radeon/libradeon.a
+libr600_la_LIBADD = ../radeon/libllvmradeon@VERSION@.la
+
+libr600_la_LDFLAGS = \
+	$(LLVM_LDFLAGS) \
+	$(shell $(LLVM_CONFIG) --libs asmparser bitreader ipo)
 
 AM_CFLAGS += \
 	$(LLVM_CFLAGS) \
@@ -33,8 +31,6 @@ AM_CFLAGS += \
 
 AM_CXXFLAGS= \
 	$(LLVM_CXXFLAGS)
-else
-libr600_a_AR = $(AR) $(ARFLAGS)
 endif
 
 if USE_R600_LLVM_COMPILER
@@ -46,3 +42,7 @@ if HAVE_GALLIUM_COMPUTE
 AM_CFLAGS += \
 	-DHAVE_OPENCL
 endif
+
+#XXX: Delete this when all r600 targets are converted to automake.
+all-local: libr600.la
+	ln -f $(builddir)/.libs/libr600.a $(builddir)/libr600.a
