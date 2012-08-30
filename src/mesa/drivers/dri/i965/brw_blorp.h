@@ -81,8 +81,8 @@ class brw_blorp_surface_info : public brw_blorp_mip_info
 public:
    brw_blorp_surface_info();
 
-void set(struct brw_context *brw,
-         struct intel_mipmap_tree *mt,
+   void set(struct brw_context *brw,
+            struct intel_mipmap_tree *mt,
             unsigned int level, unsigned int layer);
 
    /* Setting this flag indicates that the buffer's contents are W-tiled
