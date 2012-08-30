@@ -7,15 +7,20 @@
 </head>
 <body>
 
-<h1>Mesa 8.1 Release Notes / date TBD</h1>
+<h1>Mesa 9.0 Release Notes / date TBD</h1>
 
 <p>
-Mesa 8.1 is a new development release.
+Mesa 9.0 is a new development release.
+People who are concerned with stability and reliability should stick
+with a previous release or wait for Mesa 9.0.1.
 </p>
 <p>
-Mesa 8.1 implements the OpenGL 3.0 API, but the version reported by
-glGetString(GL_VERSION) depends on the particular driver being used.
-Some drivers don't support all the features required in OpenGL 3.0.
+Mesa 9.0 implements the OpenGL 3.1 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.1.  OpenGL
+3.1 is <strong>only</strong> available if requested at context creation
+because GL_ARB_compatibility is not supported.
 </p>
 
 
