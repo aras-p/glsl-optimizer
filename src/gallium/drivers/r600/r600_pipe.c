@@ -934,14 +934,12 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	switch (rscreen->chip_class) {
 	case R600:
 	case EVERGREEN:
+	case CAYMAN:
 		rscreen->has_streamout = rscreen->info.drm_minor >= 14;
 		break;
 	case R700:
 		rscreen->has_streamout = rscreen->info.drm_minor >= 17;
 		break;
-	/* TODO: Cayman */
-	default:
-		rscreen->has_streamout = debug_get_bool_option("R600_STREAMOUT", FALSE);
 	}
 
 	if (r600_init_tiling(rscreen)) {
