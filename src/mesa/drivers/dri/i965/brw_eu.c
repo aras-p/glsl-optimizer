@@ -173,6 +173,8 @@ void brw_pop_insn_state( struct brw_compile *p )
 void
 brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
 {
+   memset(p, 0, sizeof(*p));
+
    p->brw = brw;
    /*
     * Set the initial instruction store array size to 1024, if found that
