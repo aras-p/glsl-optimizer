@@ -301,8 +301,8 @@ pipe_buffer_flush_mapped_range(struct pipe_context *pipe,
    int transfer_offset;
 
    assert(length);
-   assert(transfer->box.x <= offset);
-   assert(offset + length <= transfer->box.x + transfer->box.width);
+   assert(transfer->box.x <= (int) offset);
+   assert((int) (offset + length) <= transfer->box.x + transfer->box.width);
 
    /* Match old screen->buffer_flush_mapped_range() behaviour, where
     * offset parameter is relative to the start of the buffer, not the
