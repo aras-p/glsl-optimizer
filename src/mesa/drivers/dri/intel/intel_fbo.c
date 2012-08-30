@@ -581,7 +581,7 @@ intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
    struct intel_region *region = irb->mt->region;
    uint32_t mask_x, mask_y;
 
-   intel_region_get_tile_masks(region, &mask_x, &mask_y);
+   intel_region_get_tile_masks(region, &mask_x, &mask_y, false);
 
    *tile_x = irb->draw_x & mask_x;
    *tile_y = irb->draw_y & mask_y;

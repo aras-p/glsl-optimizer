@@ -69,12 +69,13 @@ static void emit_depthbuffer(struct brw_context *brw)
       hiz_mt = depth_mt->hiz_mt;
 
       intel_region_get_tile_masks(depth_mt->region,
-                                  &tile_mask_x, &tile_mask_y);
+                                  &tile_mask_x, &tile_mask_y, false);
 
       if (hiz_mt) {
          uint32_t hiz_tile_mask_x, hiz_tile_mask_y;
          intel_region_get_tile_masks(hiz_mt->region,
-                                     &hiz_tile_mask_x, &hiz_tile_mask_y);
+                                     &hiz_tile_mask_x, &hiz_tile_mask_y,
+                                     false);
 
          /* Each HiZ row represents 2 rows of pixels */
          hiz_tile_mask_y = hiz_tile_mask_y << 1 | 1;

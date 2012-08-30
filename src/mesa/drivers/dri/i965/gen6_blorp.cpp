@@ -58,9 +58,9 @@ gen6_blorp_compute_tile_masks(const brw_blorp_params *params,
 {
    uint32_t depth_mask_x, depth_mask_y, hiz_mask_x, hiz_mask_y;
    intel_region_get_tile_masks(params->depth.mt->region,
-                               &depth_mask_x, &depth_mask_y);
+                               &depth_mask_x, &depth_mask_y, false);
    intel_region_get_tile_masks(params->depth.mt->hiz_mt->region,
-                               &hiz_mask_x, &hiz_mask_y);
+                               &hiz_mask_x, &hiz_mask_y, false);
 
    /* Each HiZ row represents 2 rows of pixels */
    hiz_mask_y = hiz_mask_y << 1 | 1;

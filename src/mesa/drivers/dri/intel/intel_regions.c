@@ -404,11 +404,16 @@ intel_region_copy(struct intel_context *intel,
  */
 void
 intel_region_get_tile_masks(struct intel_region *region,
-                            uint32_t *mask_x, uint32_t *mask_y)
+                            uint32_t *mask_x, uint32_t *mask_y,
+                            bool map_stencil_as_y_tiled)
 {
    int cpp = region->cpp;
+   uint32_t tiling = region->tiling;
 
-   switch (region->tiling) {
+   if (map_stencil_as_y_tiled)
+      tiling = I915_TILING_Y;
+
+   switch (tiling) {
    default:
       assert(false);
    case I915_TILING_NONE:

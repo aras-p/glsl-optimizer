@@ -135,7 +135,8 @@ void _mesa_copy_rect(GLubyte * dst,
 
 void
 intel_region_get_tile_masks(struct intel_region *region,
-                            uint32_t *mask_x, uint32_t *mask_y);
+                            uint32_t *mask_x, uint32_t *mask_y,
+                            bool map_stencil_as_y_tiled);
 
 uint32_t
 intel_region_get_aligned_offset(struct intel_region *region, uint32_t x,

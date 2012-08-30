@@ -288,7 +288,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 
    if (depth_irb) {
       intel_region_get_tile_masks(depth_irb->mt->region,
-                                  &tile_mask_x, &tile_mask_y);
+                                  &tile_mask_x, &tile_mask_y, false);
    }
 
    if (depth_irb &&
@@ -298,7 +298,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       uint32_t hiz_tile_mask_x, hiz_tile_mask_y;
       intel_region_get_tile_masks(hiz_region,
-                                  &hiz_tile_mask_x, &hiz_tile_mask_y);
+                                  &hiz_tile_mask_x, &hiz_tile_mask_y, false);
 
       /* Each HiZ row represents 2 rows of pixels */
       hiz_tile_mask_y = hiz_tile_mask_y << 1 | 1;
@@ -331,7 +331,7 @@ static void emit_depthbuffer(struct brw_context *brw)
          uint32_t stencil_tile_mask_x, stencil_tile_mask_y;
          intel_region_get_tile_masks(stencil_mt->region,
                                      &stencil_tile_mask_x,
-                                     &stencil_tile_mask_y);
+                                     &stencil_tile_mask_y, false);
 
          tile_mask_x |= stencil_tile_mask_x;
          tile_mask_y |= stencil_tile_mask_y;
