@@ -75,11 +75,15 @@ _mesa_new_renderbuffer(struct gl_context *ctx, GLuint name)
 /**
  * Delete a gl_framebuffer.
  * This is the default function for renderbuffer->Delete().
+ * Drivers which subclass gl_renderbuffer should probably implement their
+ * own delete function.  But the driver might also call this function to
+ * free the object in the end.
  */
 void
 _mesa_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
-   /* no-op */
+   _glthread_DESTROY_MUTEX(rb->Mutex);
+   free(rb);
 }
 
 

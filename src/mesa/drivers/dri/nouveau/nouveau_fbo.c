@@ -107,7 +107,7 @@ nouveau_renderbuffer_del(struct gl_renderbuffer *rb)
 	struct nouveau_surface *s = &to_nouveau_renderbuffer(rb)->surface;
 
 	nouveau_surface_ref(NULL, s);
-	FREE(rb);
+	_mesa_delete_renderbuffer(rb);
 }
 
 static struct gl_renderbuffer *

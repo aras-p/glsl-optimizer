@@ -95,7 +95,7 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 
    intel_miptree_release(&irb->mt);
 
-   free(irb);
+   _mesa_delete_renderbuffer(rb);
 }
 
 /**

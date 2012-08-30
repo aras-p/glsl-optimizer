@@ -232,7 +232,7 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
    pipe_surface_reference(&strb->surface, NULL);
    pipe_resource_reference(&strb->texture, NULL);
    free(strb->data);
-   free(strb);
+   _mesa_delete_renderbuffer(rb);
 }
 
 

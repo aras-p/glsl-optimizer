@@ -268,7 +268,7 @@ swrast_delete_renderbuffer(struct gl_renderbuffer *rb)
     TRACE;
 
     free(xrb->Base.Buffer);
-    free(xrb);
+    _mesa_delete_renderbuffer(rb);
 }
 
 /* see bytes_per_line in libGL */

@@ -174,7 +174,7 @@ soft_renderbuffer_delete(struct gl_renderbuffer *rb)
       free(srb->Buffer);
       srb->Buffer = NULL;
    }
-   free(srb);
+   _mesa_delete_renderbuffer(rb);
 }
 
 
