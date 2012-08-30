@@ -1778,8 +1778,9 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
 
    if (dst.map_stencil_as_y_tiled) {
       /* We must modify the rectangle we send through the rendering pipeline
-       * (and the size of the destination surface), to account for the fact
-       * that we are mapping it as Y-tiled when it is in fact W-tiled.
+       * (and the size and x/y offset of the destination surface), to account
+       * for the fact that we are mapping it as Y-tiled when it is in fact
+       * W-tiled.
        *
        * Both Y tiling and W tiling can be understood as organizations of
        * 32-byte sub-tiles; within each 32-byte sub-tile, the layout of pixels
@@ -1794,7 +1795,25 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
        * coordinates of its edges are multiples of 4 (the W sub-tile height).
        * Then we need to scale the X and Y coordinates of the rectangle to
        * account for the differences in aspect ratio between the Y and W
-       * sub-tiles.
+       * sub-tiles.  We need to modify the layer width and height similarly.
+       *
+       * Note: Since the x/y offset of the surface will be applied using the
+       * SURFACE_STATE command packet, it will be invisible to the swizzling
+       * code in the shader; therefore it needs to be in a multiple of the
+       * 32-byte sub-tile size.  Fortunately it is, since the sub-tile is 8
+       * pixels wide and 4 pixels high (when viewed as a W-tiled stencil
+       * buffer), and the miplevel alignment used for stencil buffers is 8
+       * pixels horizontally and either 4 or 8 pixels vertically (see
+       * intel_horizontal_texture_alignment_unit() and
+       * intel_vertical_texture_alignment_unit()).
+       *
+       * Note: Also, since the SURFACE_STATE command packet can only apply
+       * offsets that are multiples of 4 pixels horizontally and 2 pixels
+       * vertically, it is important that the offsets will be multiples of
+       * these sizes after they are converted into Y-tiled coordinates.
+       * Fortunately they will be, since we know from above that the offsets
+       * are a multiple of the 32-byte sub-tile size, and in Y-tiled
+       * coordinates the sub-tile is 16 pixels wide and 2 pixels high.
        *
        * TODO: what if this makes the coordinates (or the texture size) too
        * large?
@@ -1804,19 +1823,28 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
       y0 = ROUND_DOWN_TO(y0, y_align) / 2;
       x1 = ALIGN(x1, x_align) * 2;
       y1 = ALIGN(y1, y_align) / 2;
-      dst.width *= 2;
-      dst.height /= 2;
+      dst.width = ALIGN(dst.width, x_align) * 2;
+      dst.height = ALIGN(dst.height, y_align) / 2;
+      dst.x_offset *= 2;
+      dst.y_offset /= 2;
       wm_prog_key.use_kill = true;
    }
 
    if (src.map_stencil_as_y_tiled) {
-      /* We must modify the size of the source surface to account for the fact
-       * that we are mapping it as Y-tiled when it is in fact W tiled.
+      /* We must modify the size and x/y offset of the source surface to
+       * account for the fact that we are mapping it as Y-tiled when it is in
+       * fact W tiled.
+       *
+       * See the comments above concerning x/y offset alignment for the
+       * destination surface.
        *
        * TODO: what if this makes the texture size too large?
        */
-      src.width *= 2;
-      src.height /= 2;
+      const unsigned x_align = 8, y_align = 4;
+      src.width = ALIGN(src.width, x_align) * 2;
+      src.height = ALIGN(src.height, y_align) / 2;
+      src.x_offset *= 2;
+      src.y_offset /= 2;
    }
 }
 
