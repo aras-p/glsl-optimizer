@@ -586,7 +586,7 @@ intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
    *tile_x = irb->draw_x & mask_x;
    *tile_y = irb->draw_y & mask_y;
    return intel_region_get_aligned_offset(region, irb->draw_x & ~mask_x,
-                                          irb->draw_y & ~mask_y);
+                                          irb->draw_y & ~mask_y, false);
 }
 
 /**

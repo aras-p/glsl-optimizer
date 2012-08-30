@@ -140,7 +140,7 @@ intel_region_get_tile_masks(struct intel_region *region,
 
 uint32_t
 intel_region_get_aligned_offset(struct intel_region *region, uint32_t x,
-                                uint32_t y);
+                                uint32_t y, bool map_stencil_as_y_tiled);
 
 /**
  * Used with images created with image_from_names

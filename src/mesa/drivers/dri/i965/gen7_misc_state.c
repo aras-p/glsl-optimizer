@@ -181,7 +181,8 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       offset = intel_region_get_aligned_offset(region,
                                                draw_x & ~tile_mask_x,
-                                               draw_y & ~tile_mask_y);
+                                               draw_y & ~tile_mask_y,
+                                               false);
 
       assert(region->tiling == I915_TILING_Y);
 
@@ -215,7 +216,8 @@ static void emit_depthbuffer(struct brw_context *brw)
       uint32_t hiz_offset =
          intel_region_get_aligned_offset(hiz_mt->region,
                                          draw_x & ~tile_mask_x,
-                                         (draw_y & ~tile_mask_y) / 2);
+                                         (draw_y & ~tile_mask_y) / 2,
+                                         false);
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (3 - 2));
       OUT_BATCH(hiz_mt->region->pitch * hiz_mt->region->cpp - 1);

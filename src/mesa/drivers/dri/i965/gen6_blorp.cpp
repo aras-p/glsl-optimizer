@@ -843,7 +843,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
       uint32_t offset =
          intel_region_get_aligned_offset(params->depth.mt->region,
                                          draw_x & ~tile_mask_x,
-                                         draw_y & ~tile_mask_y);
+                                         draw_y & ~tile_mask_y, false);
 
       /* According to the Sandy Bridge PRM, volume 2 part 1, pp326-327
        * (3DSTATE_DEPTH_BUFFER dw5), in the documentation for "Depth
@@ -896,7 +896,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
       uint32_t hiz_offset =
          intel_region_get_aligned_offset(hiz_region,
                                          draw_x & ~tile_mask_x,
-                                         (draw_y & ~tile_mask_y) / 2);
+                                         (draw_y & ~tile_mask_y) / 2, false);
 
       BEGIN_BATCH(3);
       OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));

@@ -437,12 +437,26 @@ intel_region_get_tile_masks(struct intel_region *region,
  */
 uint32_t
 intel_region_get_aligned_offset(struct intel_region *region, uint32_t x,
-                                uint32_t y)
+                                uint32_t y, bool map_stencil_as_y_tiled)
 {
    int cpp = region->cpp;
    uint32_t pitch = region->pitch * cpp;
+   uint32_t tiling = region->tiling;
 
-   switch (region->tiling) {
+   if (map_stencil_as_y_tiled) {
+      tiling = I915_TILING_Y;
+
+      /* When mapping a W-tiled stencil buffer as Y-tiled, each 64-high W-tile
+       * gets transformed into a 32-high Y-tile.  Accordingly, the pitch of
+       * the resulting region is twice the pitch of the original region, since
+       * each row in the Y-tiled view corresponds to two rows in the actual
+       * W-tiled surface.  So we need to correct the pitch before computing
+       * the offsets.
+       */
+      pitch *= 2;
+   }
+
+   switch (tiling) {
    default:
       assert(false);
    case I915_TILING_NONE:
