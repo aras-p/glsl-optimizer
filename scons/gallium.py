@@ -498,7 +498,8 @@ def generate(env):
 
     # Default libs
     libs = []
-    if env['platform'] in ('posix', 'linux', 'freebsd', 'darwin'):
+    print env['platform']
+    if env['platform'] in ('darwin', 'freebsd', 'linux', 'posix', 'sunos'):
         libs += ['m', 'pthread', 'dl']
     env.Append(LIBS = libs)
 
