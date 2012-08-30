@@ -502,6 +502,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 		for (index = d->Range.First; index <= d->Range.Last; index++) {
 			/* Select the correct target */
 			switch(d->Semantic.Name) {
+			case TGSI_SEMANTIC_PSIZE:
 			case TGSI_SEMANTIC_POSITION:
 				target = V_008DFC_SQ_EXP_POS;
 				break;
