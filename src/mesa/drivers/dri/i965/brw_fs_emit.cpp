@@ -469,6 +469,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
     */
    if (inst->texture_offset) {
       brw_push_insn_state(p);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       /* Explicitly set up the message header by copying g0 to the MRF. */
       brw_MOV(p, retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD),
