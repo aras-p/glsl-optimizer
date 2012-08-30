@@ -2024,6 +2024,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/drivers/svga/Makefile
 		src/gallium/drivers/trace/Makefile
 		src/gallium/state_trackers/clover/Makefile
+		src/gallium/state_trackers/dri/Makefile
 		src/gallium/targets/Makefile
 		src/gallium/targets/opencl/Makefile
 		src/gallium/winsys/Makefile
