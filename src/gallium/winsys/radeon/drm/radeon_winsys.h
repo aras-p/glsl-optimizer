@@ -108,6 +108,11 @@ enum radeon_feature_id {
 
 struct radeon_winsys {
     /**
+     * Reference counting
+     */
+    struct pipe_reference reference;
+
+    /**
      * Destroy this winsys.
      *
      * \param ws        The winsys this function is called from.

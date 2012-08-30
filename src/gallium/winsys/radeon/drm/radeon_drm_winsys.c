@@ -37,6 +37,7 @@
 
 #include "pipebuffer/pb_bufmgr.h"
 #include "util/u_memory.h"
+#include "util/u_hash_table.h"
 
 #include <xf86drm.h>
 #include <stdio.h>
@@ -89,6 +90,7 @@
 #define RADEON_INFO_TIMESTAMP 0x11
 #endif
 
+static struct util_hash_table *fd_tab = NULL;
 
 /* Enable/disable feature access for one command stream.
  * If enable == TRUE, return TRUE on success.
@@ -318,6 +320,10 @@ static void radeon_winsys_destroy(struct radeon_winsys *rws)
 {
     struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
 
+    if (!pipe_reference(&ws->base.reference, NULL)) {
+        return;
+    }
+
     pipe_mutex_destroy(ws->hyperz_owner_mutex);
     pipe_mutex_destroy(ws->cmask_owner_mutex);
 
@@ -325,6 +331,9 @@ static void radeon_winsys_destroy(struct radeon_winsys *rws)
     ws->kman->destroy(ws->kman);
     if (ws->gen >= R600) {
         radeon_surface_manager_free(ws->surf_man);
+    }
+    if (fd_tab) {
+        util_hash_table_remove(fd_tab, intptr_to_pointer(ws->fd));
     }
     FREE(rws);
 }
@@ -395,14 +404,36 @@ static uint64_t radeon_query_timestamp(struct radeon_winsys *rws)
     return ts;
 }
 
+static unsigned hash_fd(void *key)
+{
+    return pointer_to_intptr(key);
+}
+
+static int compare_fd(void *key1, void *key2)
+{
+    return pointer_to_intptr(key1) != pointer_to_intptr(key2);
+}
+
 struct radeon_winsys *radeon_drm_winsys_create(int fd)
 {
-    struct radeon_drm_winsys *ws = CALLOC_STRUCT(radeon_drm_winsys);
+    struct radeon_drm_winsys *ws;
+
+    if (!fd_tab) {
+        fd_tab = util_hash_table_create(hash_fd, compare_fd);
+    }
+
+    ws = util_hash_table_get(fd_tab, intptr_to_pointer(fd));
+    if (ws) {
+        pipe_reference(NULL, &ws->base.reference);
+        return &ws->base;
+    }
+
+    ws = CALLOC_STRUCT(radeon_drm_winsys);
     if (!ws) {
         return NULL;
     }
-
     ws->fd = fd;
+    util_hash_table_set(fd_tab, intptr_to_pointer(fd), ws);
 
     if (!do_winsys_init(ws))
         goto fail;
@@ -420,6 +451,9 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
         if (!ws->surf_man)
             goto fail;
     }
+
+    /* init reference */
+    pipe_reference_init(&ws->base.reference, 1);
 
     /* Set functions. */
     ws->base.destroy = radeon_winsys_destroy;
