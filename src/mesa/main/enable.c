@@ -765,13 +765,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL_ARB_multisample */
       case GL_MULTISAMPLE_ARB:
-         /* Technically speaking, this should not be allowed for OpenGL ES 2.0
-          * or 3.0.  However, meta really needs it.
-          */
-         if (!_mesa_meta_in_progress(ctx) && !_mesa_is_desktop_gl(ctx)
-             && ctx->API != API_OPENGLES)
+         if (!_mesa_is_desktop_gl(ctx) && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
-
          if (ctx->Multisample.Enabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
