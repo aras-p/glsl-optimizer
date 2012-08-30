@@ -1425,7 +1425,7 @@ blitframebuffer_texture(struct gl_context *ctx,
 	    _mesa_SamplerParameteri(sampler, GL_TEXTURE_SRGB_DECODE_EXT,
 				GL_SKIP_DECODE_EXT);
 	 }
-         if (_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_framebuffer_sRGB
+         if ((_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_framebuffer_sRGB)
              || _mesa_is_gles3(ctx)) {
             _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
          }
@@ -3607,7 +3607,7 @@ decompress_texture_image(struct gl_context *ctx,
       }
 
       /* No sRGB decode or encode.*/
-      if (_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_framebuffer_sRGB
+      if ((_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_framebuffer_sRGB)
           || _mesa_is_gles3(ctx)) {
          _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
       }
