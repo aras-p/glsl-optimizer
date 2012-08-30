@@ -1198,7 +1198,7 @@ st_translate_mesa_program(
     * for these, so we put all the translated regs in t->constants.
     */
    if (program->Parameters) {
-      t->constants = CALLOC( program->Parameters->NumParameters,
+      t->constants = calloc( program->Parameters->NumParameters,
                              sizeof t->constants[0] );
       if (t->constants == NULL) {
          ret = PIPE_ERROR_OUT_OF_MEMORY;
