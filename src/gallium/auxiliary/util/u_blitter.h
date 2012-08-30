@@ -329,6 +329,7 @@ void util_blitter_custom_resolve_color(struct blitter_context *blitter,
                                        unsigned dst_layer,
                                        struct pipe_resource *src,
                                        unsigned src_layer,
+				       unsigned sampled_mask,
                                        void *custom_blend);
 
 /* The functions below should be used to save currently bound constant state

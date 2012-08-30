@@ -378,6 +378,9 @@
 #define   S_028C74_BANK_HEIGHT(x)                      (((x) & 0x3) << 16)
 #define   S_028C74_MACRO_TILE_ASPECT(x)                (((x) & 0x3) << 19)
 #define   S_028C74_FMASK_BANK_HEIGHT(x)                (((x) & 0x3) << 22)
+#define   S_028C74_NUM_SAMPLES(x)                      (((x) & 0x7) << 24) /* cayman only */
+#define   S_028C74_NUM_FRAGMENTS(x)                    (((x) & 0x3) << 27) /* cayman only */
+#define   S_028C74_FORCE_DST_ALPHA_1(x)                (((x) & 0x1) << 31) /* cayman only */
 
 #define R_028C78_CB_COLOR0_DIM                         0x028C78
 #define   S_028C78_WIDTH_MAX(x)                        (((x) & 0xFFFF) << 0)
@@ -542,6 +545,7 @@
 #define     V_028040_Z_16                          0x00000001
 #define     V_028040_Z_24                          0x00000002
 #define     V_028040_Z_32_FLOAT                    0x00000003
+#define   S_028040_NUM_SAMPLES(x)                      (((x) & 0x3) << 2) /* cayman only */
 #define   S_028040_ARRAY_MODE(x)                       (((x) & 0xF) << 4)
 #define   G_028040_ARRAY_MODE(x)                       (((x) >> 4) & 0xF)
 #define   C_028040_ARRAY_MODE                          0xFFFFFF0F
@@ -1050,6 +1054,7 @@
 #define   S_030010_ENDIAN_SWAP(x)                      (((x) & 0x3) << 12)
 #define   G_030010_ENDIAN_SWAP(x)                      (((x) >> 12) & 0x3)
 #define   C_030010_ENDIAN_SWAP                         0xFFFFCFFF
+#define   S_030010_LOG2_NUM_FRAGMENTS(x)               (((x) & 0x3) << 14) /* cayman only */
 #define   S_030010_DST_SEL_X(x)                        (((x) & 0x7) << 16)
 #define   G_030010_DST_SEL_X(x)                        (((x) >> 16) & 0x7)
 #define   C_030010_DST_SEL_X                           0xFFF8FFFF
@@ -1574,6 +1579,7 @@
 #define R_028004_DB_COUNT_CONTROL                    0x00028004
 #define   S_028004_ZPASS_INCREMENT_DISABLE        (((x) & 0x1) << 0)
 #define   S_028004_PERFECT_ZPASS_COUNTS(x)        (((x) & 0x1) << 1)
+#define   S_028004_SAMPLE_RATE(x)                 (((x) & 0x7) << 4) /* cayman only */
 #define R_028008_DB_DEPTH_VIEW                       0x00028008
 #define   S_028008_SLICE_START(x)                      (((x) & 0x7FF) << 0)
 #define   G_028008_SLICE_START(x)                      (((x) >> 0) & 0x7FF)
@@ -2224,11 +2230,26 @@
 #define CM_R_0288E8_SQ_LDS_ALLOC                     0x000288E8
 
 #define CM_R_028804_DB_EQAA                          0x00028804
+#define   S_028804_MAX_ANCHOR_SAMPLES(x)		(((x) & 0x7) << 0)
+#define   S_028804_PS_ITER_SAMPLES(x)			(((x) & 0x7) << 4)
+#define   S_028804_MASK_EXPORT_NUM_SAMPLES(x)		(((x) & 0x7) << 8)
+#define   S_028804_ALPHA_TO_MASK_NUM_SAMPLES(x)		(((x) & 0x7) << 12)
+#define   S_028804_HIGH_QUALITY_INTERSECTIONS(x)	(((x) & 0x1) << 16)
+#define   S_028804_INCOHERENT_EQAA_READS(x)		(((x) & 0x1) << 17)
+#define   S_028804_INTERPOLATE_COMP_Z(x)		(((x) & 0x1) << 18)
+#define   S_028804_INTERPOLATE_SRC_Z(x)			(((x) & 0x1) << 19)
+#define   S_028804_STATIC_ANCHOR_ASSOCIATIONS(x)	(((x) & 0x1) << 20)
+#define   S_028804_ALPHA_TO_MASK_EQAA_DISABLE(x)	(((x) & 0x1) << 21)
 
 #define CM_R_028BD4_PA_SC_CENTROID_PRIORITY_0        0x00028BD4
 #define CM_R_028BD8_PA_SC_CENTROID_PRIORITY_1        0x00028BD8
 #define CM_R_028BDC_PA_SC_LINE_CNTL                  0x28bdc
 #define CM_R_028BE0_PA_SC_AA_CONFIG                  0x28be0
+#define   S_028BE0_MSAA_NUM_SAMPLES(x)                  (((x) & 0x7) << 0)
+#define   S_028BE0_AA_MASK_CENTROID_DTMN(x)		(((x) & 0x1) << 4)
+#define   S_028BE0_MAX_SAMPLE_DIST(x)			(((x) & 0xf) << 13)
+#define   S_028BE0_MSAA_EXPOSED_SAMPLES(x)		(((x) & 0x7) << 20)
+#define   S_028BE0_DETAIL_TO_EXPOSED_MODE(x)		(((x) & 0x3) << 24)
 #define CM_R_028BE4_PA_SU_VTX_CNTL                   0x28be4
 #define CM_R_028BE8_PA_CL_GB_VERT_CLIP_ADJ           0x28be8
 #define CM_R_028BEC_PA_CL_GB_VERT_DISC_ADJ           0x28bec

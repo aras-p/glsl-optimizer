@@ -260,6 +260,8 @@ static void r600_blit_decompress_color(struct pipe_context *ctx,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	unsigned layer, level, checked_last_layer, max_layer;
 
+	assert(rctx->chip_class != CAYMAN);
+
 	if (!rtex->dirty_level_mask)
 		return;
 
@@ -304,6 +306,13 @@ void r600_decompress_color_textures(struct r600_context *rctx,
 	unsigned i;
 	unsigned mask = textures->compressed_colortex_mask;
 
+	/* Cayman cannot decompress an MSAA colorbuffer,
+	 * but it can read it compressed, so skip this. */
+	assert(rctx->chip_class != CAYMAN);
+	if (rctx->chip_class == CAYMAN) {
+		return;
+	}
+
 	while (mask) {
 		struct pipe_sampler_view *view;
 		struct r600_texture *tex;
@@ -341,7 +350,7 @@ static void r600_copy_first_sample(struct pipe_context *ctx,
 					   info->src.layer, info->src.layer,
 					   0, 0);
 	}
-	if (rsrc->fmask_size && rsrc->cmask_size) {
+	if (rctx->chip_class != CAYMAN && rsrc->fmask_size && rsrc->cmask_size) {
 		r600_blit_decompress_color(ctx, rsrc,
 					   0, 0,
 					   info->src.layer, info->src.layer);
@@ -399,6 +408,8 @@ static void r600_color_resolve(struct pipe_context *ctx,
 	struct pipe_screen *screen = ctx->screen;
 	struct pipe_resource *tmp, templ;
 	struct pipe_box box;
+	unsigned sample_mask =
+		rctx->chip_class == CAYMAN ? ~0 : ((1ull << MAX2(1, info->src.res->nr_samples)) - 1);
 
 	assert((info->mask & PIPE_MASK_RGBA) == PIPE_MASK_RGBA);
 
@@ -407,7 +418,7 @@ static void r600_color_resolve(struct pipe_context *ctx,
 		util_blitter_custom_resolve_color(rctx->blitter,
 						  info->dst.res, info->dst.level, info->dst.layer,
 						  info->src.res, info->src.layer,
-						  rctx->custom_blend_resolve);
+						  sample_mask, rctx->custom_blend_resolve);
 		r600_blitter_end(ctx);
 		return;
 	}
@@ -432,7 +443,7 @@ static void r600_color_resolve(struct pipe_context *ctx,
 	util_blitter_custom_resolve_color(rctx->blitter,
 					  tmp, 0, 0,
 					  info->src.res, info->src.layer,
-					  rctx->custom_blend_resolve);
+					  sample_mask, rctx->custom_blend_resolve);
 	r600_blitter_end(ctx);
 
 	/* this is correct for upside-down blits too */
@@ -685,7 +696,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 					   src_box->z, src_box->z + src_box->depth - 1,
 					   0, u_max_sample(src));
 	}
-	if (rsrc->fmask_size && rsrc->cmask_size) {
+	if (rctx->chip_class != CAYMAN && rsrc->fmask_size && rsrc->cmask_size) {
 		r600_blit_decompress_color(ctx, rsrc, src_level, src_level,
 					   src_box->z, src_box->z + src_box->depth - 1);
 	}
@@ -748,11 +759,20 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		restore_orig[1] = TRUE;
 	}
 
-	for (i = 0; i <= last_sample; i++) {
+	/* XXX Properly implement multisample textures on Cayman. In the meantime,
+	 * copy only the first sample (which is the only one that doesn't return garbage). */
+	if (rctx->chip_class == CAYMAN) {
 		r600_blitter_begin(ctx, R600_COPY_TEXTURE);
-		util_blitter_copy_texture(rctx->blitter, dst, dst_level, 1 << i, dstx, dsty, dstz,
-					  src, src_level, i, psbox);
+		util_blitter_copy_texture(rctx->blitter, dst, dst_level, ~0, dstx, dsty, dstz,
+					  src, src_level, 0, psbox);
 		r600_blitter_end(ctx);
+	} else {
+		for (i = 0; i <= last_sample; i++) {
+			r600_blitter_begin(ctx, R600_COPY_TEXTURE);
+			util_blitter_copy_texture(rctx->blitter, dst, dst_level, 1 << i, dstx, dsty, dstz,
+						  src, src_level, i, psbox);
+			r600_blitter_end(ctx);
+		}
 	}
 
 	if (restore_orig[0])

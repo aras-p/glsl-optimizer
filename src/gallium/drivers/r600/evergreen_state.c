@@ -635,9 +635,6 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 		if (rscreen->info.drm_minor < 19)
 			return FALSE;
 
-		if (rscreen->chip_class != EVERGREEN)
-			return FALSE;
-
 		switch (sample_count) {
 		case 2:
 		case 4:
@@ -1102,8 +1099,12 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	view->tex_resource_words[5] = S_030014_BASE_ARRAY(state->u.tex.first_layer) |
 				      S_030014_LAST_ARRAY(state->u.tex.last_layer);
 	if (texture->nr_samples > 1) {
+		unsigned log_samples = util_logbase2(texture->nr_samples);
+		if (rscreen->chip_class == CAYMAN) {
+			view->tex_resource_words[4] |= S_030010_LOG2_NUM_FRAGMENTS(log_samples);
+		}
 		/* LAST_LEVEL holds log2(nr_samples) for multisample textures */
-		view->tex_resource_words[5] |= S_030014_LAST_LEVEL(util_logbase2(texture->nr_samples));
+		view->tex_resource_words[5] |= S_030014_LAST_LEVEL(log_samples);
 	} else {
 		view->tex_resource_words[4] |= S_030010_BASE_LEVEL(state->u.tex.first_level);
 		view->tex_resource_words[5] |= S_030014_LAST_LEVEL(state->u.tex.last_level);
@@ -1324,6 +1325,12 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 			S_028C74_NON_DISP_TILING_ORDER(tile_type) |
 		        S_028C74_FMASK_BANK_HEIGHT(fmask_bankh);
 
+	if (rctx->chip_class == CAYMAN && rtex->resource.b.b.nr_samples > 1) {
+		unsigned log_samples = util_logbase2(rtex->resource.b.b.nr_samples);
+		color_attrib |= S_028C74_NUM_SAMPLES(log_samples) |
+				S_028C74_NUM_FRAGMENTS(log_samples);
+	}
+
 	ntype = V_028C70_NUMBER_UNORM;
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 		ntype = V_028C70_NUMBER_SRGB;
@@ -1478,6 +1485,9 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 			      S_028040_BANK_WIDTH(bankw) |
 			      S_028040_BANK_HEIGHT(bankh) |
 			      S_028040_MACRO_TILE_ASPECT(macro_aspect);
+	if (rscreen->chip_class == CAYMAN && rtex->resource.b.b.nr_samples > 1) {
+		surf->db_depth_info |= S_028040_NUM_SAMPLES(util_logbase2(rtex->resource.b.b.nr_samples));
+	}
 	surf->db_depth_base = offset;
 	surf->db_depth_view = S_028008_SLICE_START(surf->base.u.tex.first_layer) |
 			      S_028008_SLICE_MAX(surf->base.u.tex.last_layer);
@@ -1530,7 +1540,7 @@ static uint32_t evergreen_set_ms_pos(struct pipe_context *ctx, struct r600_pipe_
 	};
 	static unsigned max_dist_4x = 6;
 	/* 8xMSAA */
-	static uint32_t eg_sample_locs_8x[] = {
+	static uint32_t sample_locs_8x[] = {
 		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
 		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
 		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
@@ -1540,7 +1550,57 @@ static uint32_t evergreen_set_ms_pos(struct pipe_context *ctx, struct r600_pipe_
 		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
 		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
 	};
-	static uint32_t cm_sample_locs_8x[] = {
+	static unsigned max_dist_8x = 8;
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	unsigned i;
+
+	switch (nsample) {
+	case 2:
+		for (i = 0; i < Elements(sample_locs_2x); i++) {
+			r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_0 + i*4,
+						sample_locs_2x[i]);
+		}
+		return max_dist_2x;
+	case 4:
+		for (i = 0; i < Elements(sample_locs_4x); i++) {
+			r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_0 + i*4,
+						sample_locs_4x[i]);
+		}
+		return max_dist_4x;
+	case 8:
+		for (i = 0; i < Elements(sample_locs_8x); i++) {
+			r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_0 + i*4,
+						sample_locs_8x[i]);
+		}
+		return max_dist_8x;
+	default:
+		R600_ERR("Invalid nr_samples %i\n", nsample);
+		return 0;
+	}
+}
+
+static uint32_t cayman_set_ms_pos(struct pipe_context *ctx, struct r600_pipe_state *rstate, int nsample)
+{
+	/* 2xMSAA
+	 * There are two locations (-4, 4), (4, -4). */
+	static uint32_t sample_locs_2x[] = {
+		FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
+		FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
+		FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
+		FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
+	};
+	static unsigned max_dist_2x = 4;
+	/* 4xMSAA
+	 * There are 4 locations: (-2, -2), (2, 2), (-6, 6), (6, -6). */
+	static uint32_t sample_locs_4x[] = {
+		FILL_SREG(-2, -2, 2, 2, -6, 6, 6, -6),
+		FILL_SREG(-2, -2, 2, 2, -6, 6, 6, -6),
+		FILL_SREG(-2, -2, 2, 2, -6, 6, 6, -6),
+		FILL_SREG(-2, -2, 2, 2, -6, 6, 6, -6),
+	};
+	static unsigned max_dist_4x = 6;
+	/* 8xMSAA */
+	static uint32_t sample_locs_8x[] = {
 		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
 		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
 		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
@@ -1552,7 +1612,7 @@ static uint32_t evergreen_set_ms_pos(struct pipe_context *ctx, struct r600_pipe_
 	};
 	static unsigned max_dist_8x = 8;
 	/* 16xMSAA */
-	static uint32_t cm_sample_locs_16x[] = {
+	static uint32_t sample_locs_16x[] = {
 		FILL_SREG(-7, -3, 7, 3, 1, -5, -5, 5),
 		FILL_SREG(-7, -3, 7, 3, 1, -5, -5, 5),
 		FILL_SREG(-7, -3, 7, 3, 1, -5, -5, 5),
@@ -1572,7 +1632,7 @@ static uint32_t evergreen_set_ms_pos(struct pipe_context *ctx, struct r600_pipe_
 	};
 	static unsigned max_dist_16x = 8;
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	uint32_t max_dist, num_regs, *sample_locs, i;
+	uint32_t max_dist, num_regs, *sample_locs;
 
 	switch (nsample) {
 	case 2:
@@ -1586,55 +1646,39 @@ static uint32_t evergreen_set_ms_pos(struct pipe_context *ctx, struct r600_pipe_
 		max_dist = max_dist_4x;
 		break;
 	case 8:
-		if (rctx->chip_class == CAYMAN) {
-			sample_locs = cm_sample_locs_8x;
-			num_regs = Elements(cm_sample_locs_8x);
-		} else {
-			sample_locs = eg_sample_locs_8x;
-			num_regs = Elements(eg_sample_locs_8x);
-		}
+		sample_locs = sample_locs_8x;
+		num_regs = Elements(sample_locs_8x);
 		max_dist = max_dist_8x;
 		break;
 	case 16:
-		if (rctx->chip_class == CAYMAN) {
-			sample_locs = cm_sample_locs_16x;
-			num_regs = Elements(cm_sample_locs_16x);
-			max_dist = max_dist_16x;
-			break;
-		}
-		/* fall through */
+		sample_locs = sample_locs_16x;
+		num_regs = Elements(sample_locs_16x);
+		max_dist = max_dist_16x;
+		break;
 	default:
 		R600_ERR("Invalid nr_samples %i\n", nsample);
 		return 0;
 	}
 
-	/* All the regs must be initialized. Otherwise weird rendering may occur. */
-	if (rctx->chip_class == CAYMAN) {
-		r600_pipe_state_add_reg(rstate, CM_R_028BF8_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_0, sample_locs[0]);
-		r600_pipe_state_add_reg(rstate, CM_R_028C08_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_0, sample_locs[1]);
-		r600_pipe_state_add_reg(rstate, CM_R_028C18_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_0, sample_locs[2]);
-		r600_pipe_state_add_reg(rstate, CM_R_028C28_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_0, sample_locs[3]);
-		if (num_regs <= 8) {
-			r600_pipe_state_add_reg(rstate, CM_R_028BFC_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_1, sample_locs[4]);
-			r600_pipe_state_add_reg(rstate, CM_R_028C0C_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_1, sample_locs[5]);
-			r600_pipe_state_add_reg(rstate, CM_R_028C1C_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_1, sample_locs[6]);
-			r600_pipe_state_add_reg(rstate, CM_R_028C2C_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_1, sample_locs[7]);
-		}
-		if (num_regs <= 16) {
-			r600_pipe_state_add_reg(rstate, CM_R_028C00_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_2, sample_locs[8]);
-			r600_pipe_state_add_reg(rstate, CM_R_028C10_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_2, sample_locs[9]);
-			r600_pipe_state_add_reg(rstate, CM_R_028C20_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_2, sample_locs[10]);
-			r600_pipe_state_add_reg(rstate, CM_R_028C30_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_2, sample_locs[11]);
-			r600_pipe_state_add_reg(rstate, CM_R_028C04_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_3, sample_locs[12]);
-			r600_pipe_state_add_reg(rstate, CM_R_028C14_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_3, sample_locs[13]);
-			r600_pipe_state_add_reg(rstate, CM_R_028C24_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_3, sample_locs[14]);
-			r600_pipe_state_add_reg(rstate, CM_R_028C34_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_3, sample_locs[15]);
-		}
-	} else {
-		for (i = 0; i < num_regs; i++) {
-			r600_pipe_state_add_reg(rstate, R_028C1C_PA_SC_AA_SAMPLE_LOCS_0 + i*4,
-						sample_locs[i]);
-		}
+	r600_pipe_state_add_reg(rstate, CM_R_028BF8_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_0, sample_locs[0]);
+	r600_pipe_state_add_reg(rstate, CM_R_028C08_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_0, sample_locs[1]);
+	r600_pipe_state_add_reg(rstate, CM_R_028C18_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_0, sample_locs[2]);
+	r600_pipe_state_add_reg(rstate, CM_R_028C28_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_0, sample_locs[3]);
+	if (num_regs <= 8) {
+		r600_pipe_state_add_reg(rstate, CM_R_028BFC_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_1, sample_locs[4]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C0C_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_1, sample_locs[5]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C1C_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_1, sample_locs[6]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C2C_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_1, sample_locs[7]);
+	}
+	if (num_regs <= 16) {
+		r600_pipe_state_add_reg(rstate, CM_R_028C00_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_2, sample_locs[8]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C10_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_2, sample_locs[9]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C20_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_2, sample_locs[10]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C30_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_2, sample_locs[11]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C04_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_3, sample_locs[12]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C14_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_3, sample_locs[13]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C24_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_3, sample_locs[14]);
+		r600_pipe_state_add_reg(rstate, CM_R_028C34_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_3, sample_locs[15]);
 	}
 	return max_dist;
 }
@@ -1647,7 +1691,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_surface *surf;
 	struct r600_resource *res;
 	struct r600_texture *rtex;
-	uint32_t tl, br, i, nr_samples;
+	uint32_t tl, br, i, nr_samples, log_samples;
 
 	if (rstate == NULL)
 		return;
@@ -1702,7 +1746,9 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		r600_pipe_state_add_reg(rstate, R_028C88_CB_COLOR0_FMASK_SLICE + i * 0x3c,
 					surf->cb_color_fmask_slice);
 
-		if (rtex->fmask_size && rtex->cmask_size) {
+		/* Cayman can fetch from a compressed MSAA colorbuffer,
+		 * so it's pointless to track them. */
+		if (rctx->chip_class != CAYMAN && rtex->fmask_size && rtex->cmask_size) {
 			rctx->compressed_cb_mask |= 1 << i;
 		}
 	}
@@ -1775,27 +1821,43 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		nr_samples = 0;
 
 	if (nr_samples > 1) {
-		unsigned log_samples = util_logbase2(nr_samples);
-		unsigned max_dist, line_cntl, aa_config;
-
-		max_dist = evergreen_set_ms_pos(ctx, rstate, nr_samples);
-
-		line_cntl = S_028C00_LAST_PIXEL(1) |
-			    S_028C00_EXPAND_LINE_WIDTH(1);
-		aa_config = S_028C04_MSAA_NUM_SAMPLES(log_samples) |
-			    S_028C04_MAX_SAMPLE_DIST(max_dist);
+		unsigned line_cntl = S_028C00_LAST_PIXEL(1) |
+				     S_028C00_EXPAND_LINE_WIDTH(1);
+		log_samples = util_logbase2(nr_samples);
 
 		if (rctx->chip_class == CAYMAN) {
+			unsigned max_dist = cayman_set_ms_pos(ctx, rstate, nr_samples);
+
 			r600_pipe_state_add_reg(rstate, CM_R_028BDC_PA_SC_LINE_CNTL, line_cntl);
-			r600_pipe_state_add_reg(rstate, CM_R_028BE0_PA_SC_AA_CONFIG, aa_config);
+			r600_pipe_state_add_reg(rstate, CM_R_028BE0_PA_SC_AA_CONFIG,
+						S_028BE0_MSAA_NUM_SAMPLES(log_samples) |
+						S_028BE0_MAX_SAMPLE_DIST(max_dist) |
+						S_028BE0_MSAA_EXPOSED_SAMPLES(log_samples));
+			r600_pipe_state_add_reg(rstate, CM_R_028804_DB_EQAA,
+						S_028804_MAX_ANCHOR_SAMPLES(log_samples) |
+						S_028804_PS_ITER_SAMPLES(log_samples) |
+						S_028804_MASK_EXPORT_NUM_SAMPLES(log_samples) |
+						S_028804_ALPHA_TO_MASK_NUM_SAMPLES(log_samples) |
+						S_028804_HIGH_QUALITY_INTERSECTIONS(1) |
+						S_028804_STATIC_ANCHOR_ASSOCIATIONS(1));
 		} else {
+			unsigned max_dist = evergreen_set_ms_pos(ctx, rstate, nr_samples);
+
 			r600_pipe_state_add_reg(rstate, R_028C00_PA_SC_LINE_CNTL, line_cntl);
-			r600_pipe_state_add_reg(rstate, R_028C04_PA_SC_AA_CONFIG, aa_config);
+			r600_pipe_state_add_reg(rstate, R_028C04_PA_SC_AA_CONFIG,
+						S_028C04_MSAA_NUM_SAMPLES(log_samples) |
+						S_028C04_MAX_SAMPLE_DIST(max_dist));
 		}
 	} else {
+		log_samples = 0;
+
 		if (rctx->chip_class == CAYMAN) {
 			r600_pipe_state_add_reg(rstate, CM_R_028BDC_PA_SC_LINE_CNTL, S_028C00_LAST_PIXEL(1));
 			r600_pipe_state_add_reg(rstate, CM_R_028BE0_PA_SC_AA_CONFIG, 0);
+			r600_pipe_state_add_reg(rstate, CM_R_028804_DB_EQAA,
+						S_028804_HIGH_QUALITY_INTERSECTIONS(1) |
+						S_028804_STATIC_ANCHOR_ASSOCIATIONS(1));
+
 		} else {
 			r600_pipe_state_add_reg(rstate, R_028C00_PA_SC_LINE_CNTL, S_028C00_LAST_PIXEL(1));
 			r600_pipe_state_add_reg(rstate, R_028C04_PA_SC_AA_CONFIG, 0);
@@ -1818,6 +1880,11 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	if (state->nr_cbufs == 0 && rctx->alphatest_state.bypass) {
 		rctx->alphatest_state.bypass = false;
 		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+	}
+
+	if (rctx->chip_class == CAYMAN && rctx->db_misc_state.log_samples != log_samples) {
+		rctx->db_misc_state.log_samples = log_samples;
+		r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 	}
 }
 
@@ -1849,6 +1916,9 @@ static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_
 
 	if (a->occlusion_query_enabled) {
 		db_count_control |= S_028004_PERFECT_ZPASS_COUNTS(1);
+		if (rctx->chip_class == CAYMAN) {
+			db_count_control |= S_028004_SAMPLE_RATE(a->log_samples);
+		}
 		db_render_override |= S_02800C_NOOP_CULL_DISABLE(1);
 	}
 
@@ -2213,8 +2283,6 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_context_reg_seq(cb, CM_R_0288E8_SQ_LDS_ALLOC, 2);
 	r600_store_value(cb, 0); /* CM_R_0288E8_SQ_LDS_ALLOC */
 	r600_store_value(cb, 0); /* R_0288EC_SQ_LDS_ALLOC_PS */
-
-	r600_store_context_reg(cb, CM_R_028804_DB_EQAA, 0x110000);
 
 	r600_store_context_reg_seq(cb, R_028380_SQ_VTX_SEMANTIC_0, 34);
 	r600_store_value(cb, 0); /* R_028380_SQ_VTX_SEMANTIC_0 */

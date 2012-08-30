@@ -83,6 +83,7 @@ struct r600_db_misc_state {
 	bool flush_depthstencil_through_cb;
 	bool copy_depth, copy_stencil;
 	unsigned copy_sample;
+	unsigned log_samples;
 };
 
 struct r600_cb_misc_state {
