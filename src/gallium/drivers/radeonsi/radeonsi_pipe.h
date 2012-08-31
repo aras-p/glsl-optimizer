@@ -41,9 +41,6 @@
 #include "r600_resource.h"
 #include "sid.h"
 
-#define R600_MAX_CONST_BUFFERS 1
-#define R600_MAX_CONST_BUFFER_SIZE 4096
-
 #ifdef PIPE_ARCH_BIG_ENDIAN
 #define R600_BIG_ENDIAN 1
 #else
