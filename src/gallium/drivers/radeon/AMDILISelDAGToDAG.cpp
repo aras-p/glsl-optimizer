@@ -337,7 +337,7 @@ bool AMDGPUDAGToDAGISel::SelectADDR8BitOffset(SDValue Addr, SDValue& Base,
       }
       // Check if the constant argument fits in 8-bits.  The offset is in bytes
       // so we need to convert it to dwords.
-      if (isInt<8>(OffsetNode->getZExtValue() >> 2)) {
+      if (isUInt<8>(OffsetNode->getZExtValue() >> 2)) {
         Match = true;
         Offset = CurDAG->getTargetConstant(OffsetNode->getZExtValue() >> 2,
                                            MVT::i32);
