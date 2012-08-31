@@ -141,12 +141,38 @@ uint32_t
 intel_region_get_aligned_offset(struct intel_region *region, uint32_t x,
                                 uint32_t y);
 
+/**
+ * Used with images created with image_from_names
+ * to help support planar images.
+ */
+struct intel_image_format {
+   int fourcc;
+   int components;
+   int nplanes;
+   struct {
+      int buffer_index;
+      int width_shift;
+      int height_shift;
+      uint32_t dri_format;
+      int cpp;
+   } planes[3];
+};
+
 struct __DRIimageRec {
    struct intel_region *region;
    GLenum internal_format;
    uint32_t dri_format;
    GLuint format;
    uint32_t offset;
+
+   /*
+    * Need to save these here between calls to
+    * image_from_names and calls to image_from_planar.
+    */
+   uint32_t strides[3];
+   uint32_t offsets[3];
+   struct intel_image_format *planar_format;
+
    void *data;
 };
 

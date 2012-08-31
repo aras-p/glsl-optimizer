@@ -923,6 +923,10 @@ struct __DRIdri2ExtensionRec {
  * __DRI_IMAGE_FORMAT_NONE is for images that aren't directly usable
  * by the driver (YUV planar formats) but serve as a base image for
  * creating sub-images for the different planes within the image.
+ *
+ * R8, GR88 and NONE should not be used with createImageFormName or
+ * createImage, and are returned by query from sub images created with
+ * createImageFromNames (NONE, see above) and fromPlane (R8 & GR88).
  */
 #define __DRI_IMAGE_FORMAT_RGB565       0x1001
 #define __DRI_IMAGE_FORMAT_XRGB8888     0x1002
@@ -937,6 +941,49 @@ struct __DRIdri2ExtensionRec {
 #define __DRI_IMAGE_USE_SCANOUT		0x0002
 #define __DRI_IMAGE_USE_CURSOR		0x0004 /* Depricated */
 
+
+/**
+ * Four CC formats that matches with WL_DRM_FORMAT_* from wayland_drm.h
+ * and GBM_FORMAT_* from gbm.h, used with createImageFromNames.
+ *
+ * \since 5
+ */
+
+#define __DRI_IMAGE_FOURCC_RGB565	0x36314752
+#define __DRI_IMAGE_FOURCC_ARGB8888	0x34325241
+#define __DRI_IMAGE_FOURCC_XRGB8888	0x34325258
+#define __DRI_IMAGE_FOURCC_ABGR8888	0x34324241
+#define __DRI_IMAGE_FOURCC_XBGR8888	0x34324258
+#define __DRI_IMAGE_FOURCC_YUV410	0x39565559
+#define __DRI_IMAGE_FOURCC_YUV411	0x31315559
+#define __DRI_IMAGE_FOURCC_YUV420	0x32315559
+#define __DRI_IMAGE_FOURCC_YUV422	0x36315559
+#define __DRI_IMAGE_FOURCC_YUV444	0x34325559
+#define __DRI_IMAGE_FOURCC_NV12		0x3231564e
+#define __DRI_IMAGE_FOURCC_NV16		0x3631564e
+#define __DRI_IMAGE_FOURCC_YUYV		0x56595559
+
+
+/**
+ * Queryable on images created by createImageFromNames.
+ *
+ * RGB and RGBA are may be usable directly as images but its still
+ * recommended to call fromPlanar with plane == 0.
+ *
+ * Y_U_V, Y_UV and Y_XUXV all requires call to fromPlanar to create
+ * usable sub-images, sampling from images return raw YUV data and
+ * color conversion needs to be done in the shader.
+ *
+ * \since 5
+ */
+
+#define __DRI_IMAGE_COMPONENTS_RGB	0x3001
+#define __DRI_IMAGE_COMPONENTS_RGBA	0x3002
+#define __DRI_IMAGE_COMPONENTS_Y_U_V	0x3003
+#define __DRI_IMAGE_COMPONENTS_Y_UV	0x3004
+#define __DRI_IMAGE_COMPONENTS_Y_XUXV	0x3005
+
+
 /**
  * queryImage attributes
  */
@@ -947,6 +994,7 @@ struct __DRIdri2ExtensionRec {
 #define __DRI_IMAGE_ATTRIB_FORMAT	0x2003 /* available in versions 3+ */
 #define __DRI_IMAGE_ATTRIB_WIDTH	0x2004 /* available in versions 4+ */
 #define __DRI_IMAGE_ATTRIB_HEIGHT	0x2005
+#define __DRI_IMAGE_ATTRIB_COMPONENTS	0x2006 /* available in versions 5+ */
 
 typedef struct __DRIimageRec          __DRIimage;
 typedef struct __DRIimageExtensionRec __DRIimageExtension;
@@ -984,6 +1032,19 @@ struct __DRIimageExtensionRec {
    GLboolean (*validateUsage)(__DRIimage *image, unsigned int use);
 
    /**
+    * Unlike createImageFromName __DRI_IMAGE_FORMAT is not but instead
+    * __DRI_IMAGE_FOURCC and strides are in bytes not pixels. Stride is
+    * also per block and not per pixel (for non-RGB, see gallium blocks).
+    *
+    * \since 5
+    */
+   __DRIimage *(*createImageFromNames)(__DRIscreen *screen,
+                                       int width, int height, int fourcc,
+                                       int *names, int num_names,
+                                       int *strides, int *offsets,
+                                       void *loaderPrivate);
+
+   /**
     * Create an image out of a sub-region of a parent image.  This
     * entry point lets us create individual __DRIimages for different
     * planes in a planar buffer (typically yuv), for example.  While a
@@ -998,10 +1059,8 @@ struct __DRIimageExtensionRec {
     *
     * \since 5
     */
-    __DRIimage *(*createSubImage)(__DRIimage *image,
-                                  int width, int height, int format,
-                                  int offset, int pitch,
-                                  void *loaderPrivate);
+    __DRIimage *(*fromPlanar)(__DRIimage *image, int plane,
+                              void *loaderPrivate);
 };
 
 

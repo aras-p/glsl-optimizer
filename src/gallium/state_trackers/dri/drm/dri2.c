@@ -574,6 +574,7 @@ dri2_create_image(__DRIscreen *_screen,
    img->level = 0;
    img->layer = 0;
    img->dri_format = format;
+   img->dri_components = 0;
 
    img->loader_private = loaderPrivate;
    return img;
@@ -612,6 +613,11 @@ dri2_query_image(__DRIimage *image, int attrib, int *value)
    case __DRI_IMAGE_ATTRIB_HEIGHT:
       *value = image->texture->height0;
       return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_COMPONENTS:
+      if (image->dri_components == 0)
+         return GL_FALSE;
+      *value = image->dri_components;
+      return GL_TRUE;
    default:
       return GL_FALSE;
    }
@@ -630,6 +636,8 @@ dri2_dup_image(__DRIimage *image, void *loaderPrivate)
    pipe_resource_reference(&img->texture, image->texture);
    img->level = image->level;
    img->layer = image->layer;
+   /* This should be 0 for sub images, but dup is also used for base images. */
+   img->dri_components = image->dri_components;
    img->loader_private = loaderPrivate;
 
    return img;
@@ -649,6 +657,76 @@ dri2_validate_usage(__DRIimage *image, unsigned int use)
       return GL_FALSE;
 }
 
+static __DRIimage *
+dri2_from_names(__DRIscreen *screen, int width, int height, int format,
+                int *names, int num_names, int *strides, int *offsets,
+                void *loaderPrivate)
+{
+   __DRIimage *img;
+   int stride, dri_components;
+
+   if (num_names != 1)
+      return NULL;
+   if (offsets[0] != 0)
+      return NULL;
+
+   switch(format) {
+   case __DRI_IMAGE_FOURCC_RGB565:
+      format = __DRI_IMAGE_FORMAT_RGB565;
+      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
+      break;
+   case __DRI_IMAGE_FOURCC_ARGB8888:
+      format = __DRI_IMAGE_FORMAT_ARGB8888;
+      dri_components = __DRI_IMAGE_COMPONENTS_RGBA;
+      break;
+   case __DRI_IMAGE_FOURCC_XRGB8888:
+      format = __DRI_IMAGE_FORMAT_XRGB8888;
+      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
+      break;
+   case __DRI_IMAGE_FOURCC_ABGR8888:
+      format = __DRI_IMAGE_FORMAT_ABGR8888;
+      dri_components = __DRI_IMAGE_COMPONENTS_RGBA;
+      break;
+   case __DRI_IMAGE_FOURCC_XBGR8888:
+      format = __DRI_IMAGE_FORMAT_XBGR8888;
+      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
+      break;
+   default:
+      return NULL;
+   }
+
+   /* Strides are in bytes not pixels. */
+   stride = strides[0] /4;
+
+   img = dri2_create_image_from_name(screen, width, height, format,
+                                     names[0], stride, loaderPrivate);
+   if (img == NULL)
+      return NULL;
+
+   img->dri_components = dri_components;
+   return img;
+}
+
+static __DRIimage *
+dri2_from_planar(__DRIimage *image, int plane, void *loaderPrivate)
+{
+   __DRIimage *img;
+
+   if (plane != 0)
+      return NULL;
+
+   if (image->dri_components == 0)
+      return NULL;
+
+   img = dri2_dup_image(image, loaderPrivate);
+   if (img == NULL)
+      return NULL;
+
+   /* set this to 0 for sub images. */
+   img->dri_components = 0;
+   return img;
+}
+
 static void
 dri2_destroy_image(__DRIimage *img)
 {
@@ -657,7 +735,7 @@ dri2_destroy_image(__DRIimage *img)
 }
 
 static struct __DRIimageExtensionRec dri2ImageExtension = {
-    { __DRI_IMAGE, 4 },
+    { __DRI_IMAGE, 5 },
     dri2_create_image_from_name,
     dri2_create_image_from_renderbuffer,
     dri2_destroy_image,
@@ -665,6 +743,8 @@ static struct __DRIimageExtensionRec dri2ImageExtension = {
     dri2_query_image,
     dri2_dup_image,
     dri2_validate_usage,
+    dri2_from_names,
+    dri2_from_planar,
 };
 
 /*

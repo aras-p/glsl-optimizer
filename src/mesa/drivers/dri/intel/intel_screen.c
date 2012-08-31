@@ -190,6 +190,59 @@ static const struct __DRI2flushExtensionRec intelFlushExtension = {
     dri2InvalidateDrawable,
 };
 
+struct intel_image_format intel_image_formats[] = {
+   { __DRI_IMAGE_FOURCC_ARGB8888, __DRI_IMAGE_COMPONENTS_RGBA, 1,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_ARGB8888, 4 } } },
+
+   { __DRI_IMAGE_FOURCC_XRGB8888, __DRI_IMAGE_COMPONENTS_RGB, 1,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_XRGB8888, 4 }, } },
+
+   { __DRI_IMAGE_FOURCC_YUV410, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 2, 2, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 2, 2, 2, __DRI_IMAGE_FORMAT_R8, 1 } } },
+
+   { __DRI_IMAGE_FOURCC_YUV411, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 2, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 2, 2, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
+
+   { __DRI_IMAGE_FOURCC_YUV420, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 1, 1, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 2, 1, 1, __DRI_IMAGE_FORMAT_R8, 1 } } },
+
+   { __DRI_IMAGE_FOURCC_YUV422, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 1, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 2, 1, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
+
+   { __DRI_IMAGE_FOURCC_YUV444, __DRI_IMAGE_COMPONENTS_Y_U_V, 3,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 2, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 } } },
+
+   { __DRI_IMAGE_FOURCC_NV12, __DRI_IMAGE_COMPONENTS_Y_UV, 2,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 1, 1, __DRI_IMAGE_FORMAT_GR88, 2 } } },
+
+   { __DRI_IMAGE_FOURCC_NV16, __DRI_IMAGE_COMPONENTS_Y_UV, 2,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_R8, 1 },
+       { 1, 1, 0, __DRI_IMAGE_FORMAT_GR88, 2 } } },
+
+   /* For YUYV buffers, we set up two overlapping DRI images and treat
+    * them as planar buffers in the compositors.  Plane 0 is GR88 and
+    * samples YU or YV pairs and places Y into the R component, while
+    * plane 1 is ARGB and samples YUYV clusters and places pairs and
+    * places U into the G component and V into A.  This lets the
+    * texture sampler interpolate the Y components correctly when
+    * sampling from plane 0, and interpolate U and V correctly when
+    * sampling from plane 1. */
+   { __DRI_IMAGE_FOURCC_YUYV, __DRI_IMAGE_COMPONENTS_Y_XUXV, 2,
+     { { 0, 0, 0, __DRI_IMAGE_FORMAT_GR88, 2 },
+       { 0, 1, 0, __DRI_IMAGE_FORMAT_ARGB8888, 4 } } }
+};
+
 static __DRIimage *
 intel_allocate_image(int dri_format, void *loaderPrivate)
 {
@@ -249,7 +302,7 @@ intel_create_image_from_name(__DRIscreen *screen,
 
     image = intel_allocate_image(format, loaderPrivate);
     if (image->format == MESA_FORMAT_NONE)
-       cpp = 0;
+       cpp = 1;
     else
        cpp = _mesa_get_format_bytes(image->format);
     image->region = intel_region_alloc_for_handle(intelScreen,
@@ -372,6 +425,11 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
    case __DRI_IMAGE_ATTRIB_HEIGHT:
       *value = image->region->height;
       return true;
+   case __DRI_IMAGE_ATTRIB_COMPONENTS:
+      if (image->planar_format == NULL)
+         return false;
+      *value = image->planar_format->components;
+      return true;
   default:
       return false;
    }
@@ -393,11 +451,15 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
    }
 
    image->internal_format = orig_image->internal_format;
+   image->planar_format   = orig_image->planar_format;
    image->dri_format      = orig_image->dri_format;
    image->format          = orig_image->format;
    image->offset          = orig_image->offset;
    image->data            = loaderPrivate;
-   
+
+   memcpy(image->strides, orig_image->strides, sizeof(image->strides));
+   memcpy(image->offsets, orig_image->offsets, sizeof(image->offsets));
+
    return image;
 }
 
@@ -413,16 +475,72 @@ intel_validate_usage(__DRIimage *image, unsigned int use)
 }
 
 static __DRIimage *
-intel_create_sub_image(__DRIimage *parent,
-                       int width, int height, int dri_format,
-                       int offset, int pitch, void *loaderPrivate)
+intel_create_image_from_names(__DRIscreen *screen,
+                              int width, int height, int fourcc,
+                              int *names, int num_names,
+                              int *strides, int *offsets,
+                              void *loaderPrivate)
 {
+    struct intel_image_format *f = NULL;
     __DRIimage *image;
-    int cpp;
+    int i, index;
+
+    if (screen == NULL || names == NULL || num_names != 1)
+        return NULL;
+
+    for (i = 0; i < ARRAY_SIZE(intel_image_formats); i++) {
+        if (intel_image_formats[i].fourcc == fourcc) {
+           f = &intel_image_formats[i];
+        }
+    }
+
+    if (f == NULL)
+        return NULL;
+
+    image = intel_create_image_from_name(screen, width, height,
+                                         __DRI_IMAGE_FORMAT_NONE,
+                                         names[0], strides[0],
+                                         loaderPrivate);
+
+    if (image == NULL)
+        return NULL;
+
+    image->planar_format = f;
+    for (i = 0; i < f->nplanes; i++) {
+        index = f->planes[i].buffer_index;
+        image->offsets[index] = offsets[index];
+        image->strides[index] = strides[index];
+    }
+
+    return image;
+}
+
+static __DRIimage *
+intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
+{
+    int width, height, offset, stride, dri_format, cpp, index, pitch;
+    struct intel_image_format *f;
     uint32_t mask_x, mask_y;
+    __DRIimage *image;
+
+    if (parent == NULL || parent->planar_format == NULL)
+        return NULL;
+
+    f = parent->planar_format;
+
+    if (plane >= f->nplanes)
+        return NULL;
+
+    width = parent->region->width >> f->planes[plane].width_shift;
+    height = parent->region->height >> f->planes[plane].height_shift;
+    dri_format = f->planes[plane].dri_format;
+    index = f->planes[plane].buffer_index;
+    offset = parent->offsets[index];
+    stride = parent->strides[index];
 
     image = intel_allocate_image(dri_format, loaderPrivate);
-    cpp = _mesa_get_format_bytes(image->format);
+    cpp = _mesa_get_format_bytes(image->format); /* safe since no none format */
+    pitch = stride / cpp;
     if (offset + height * cpp * pitch > parent->region->bo->size) {
        _mesa_warning(NULL, "intel_create_sub_image: subimage out of bounds");
        FREE(image);
@@ -463,7 +581,8 @@ static struct __DRIimageExtensionRec intelImageExtension = {
     intel_query_image,
     intel_dup_image,
     intel_validate_usage,
-    intel_create_sub_image
+    intel_create_image_from_names,
+    intel_from_planar
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
