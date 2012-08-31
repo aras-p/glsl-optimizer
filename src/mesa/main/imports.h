@@ -225,35 +225,6 @@ static inline int IS_INF_OR_NAN( float x )
 
 
 /***
- *** IS_NEGATIVE: test if float is negative
- ***/
-#if defined(USE_IEEE)
-static inline int GET_FLOAT_BITS( float x )
-{
-   fi_type fi;
-   fi.f = x;
-   return fi.i;
-}
-#define IS_NEGATIVE(x) (GET_FLOAT_BITS(x) < 0)
-#else
-#define IS_NEGATIVE(x) (x < 0.0F)
-#endif
-
-
-/***
- *** DIFFERENT_SIGNS: test if two floats have opposite signs
- ***/
-#if defined(USE_IEEE)
-#define DIFFERENT_SIGNS(x,y) ((GET_FLOAT_BITS(x) ^ GET_FLOAT_BITS(y)) & (1<<31))
-#else
-/* Could just use (x*y<0) except for the flatshading requirements.
- * Maybe there's a better way?
- */
-#define DIFFERENT_SIGNS(x,y) ((x) * (y) <= 0.0F && (x) - (y) != 0.0F)
-#endif
-
-
-/***
  *** CEILF: ceiling of float
  *** FLOORF: floor of float
  *** FABSF: absolute value of float

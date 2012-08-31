@@ -689,6 +689,38 @@ NORMALIZE_3FV(GLfloat v[3])
 }
 
 
+/** Is float value negative? */
+static inline GLboolean
+IS_NEGATIVE(float x)
+{
+#if defined(USE_IEEE)
+   fi_type fi;
+   fi.f = x;
+   return fi.i < 0;
+#else
+   return x < 0.0F;
+#endif
+}
+
+
+/** Test two floats have opposite signs */
+static inline GLboolean
+DIFFERENT_SIGNS(GLfloat x, GLfloat y)
+{
+#if defined(USE_IEEE)
+   fi_type xfi, yfi;
+   xfi.f = x;
+   yfi.f = y;
+   return (xfi.i ^ yfi.i) & (1u << 31);
+#else
+   /* Could just use (x*y<0) except for the flatshading requirements.
+    * Maybe there's a better way?
+    */
+   return ((x) * (y) <= 0.0F && (x) - (y) != 0.0F);
+#endif
+}
+
+
 /** Compute ceiling of integer quotient of A divided by B. */
 #define CEILING( A, B )  ( (A) % (B) == 0 ? (A)/(B) : (A)/(B)+1 )
 
