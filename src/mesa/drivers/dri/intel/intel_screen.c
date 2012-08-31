@@ -778,11 +778,12 @@ intelCreateContext(gl_api api,
 		   unsigned *error,
                    void *sharedContextPrivate)
 {
-   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
-   struct intel_screen *intelScreen = sPriv->driverPrivate;
    bool success = false;
 
 #ifdef I915
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
+   struct intel_screen *intelScreen = sPriv->driverPrivate;
+
    if (IS_9XX(intelScreen->deviceID)) {
       success = i915CreateContext(api, mesaVis, driContextPriv,
                                   major_version, minor_version, error,
