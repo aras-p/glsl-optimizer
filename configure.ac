@@ -2049,8 +2049,6 @@ xyesno)
     ;;
 esac
 
-echo ""
-
 dnl EGL
 echo ""
 echo "        EGL:             $enable_egl"
