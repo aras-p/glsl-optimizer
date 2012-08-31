@@ -29,6 +29,8 @@ class SITargetLowering : public AMDGPUTargetLowering
   /// write.
   void AppendS_WAITCNT(MachineInstr *MI, MachineBasicBlock &BB,
               MachineBasicBlock::iterator I) const;
+  void LowerMOV_IMM(MachineInstr *MI, MachineBasicBlock &BB,
+              MachineBasicBlock::iterator I, unsigned Opocde) const;
   void LowerSI_INTERP(MachineInstr *MI, MachineBasicBlock &BB,
               MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const;
   void LowerSI_INTERP_CONST(MachineInstr *MI, MachineBasicBlock &BB,

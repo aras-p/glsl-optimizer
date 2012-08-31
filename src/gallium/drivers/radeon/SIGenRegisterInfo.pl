@@ -91,6 +91,7 @@ def VCC : SIReg<"VCC">;
 def EXEC : SIReg<"EXEC">;
 def SCC : SIReg<"SCC">;
 def SREG_LIT_0 : SIReg <"S LIT 0">;
+def SI_LITERAL_CONSTANT : SIReg<"LITERAL CONSTANT">;
 
 def M0 : SIReg <"M0">;
 

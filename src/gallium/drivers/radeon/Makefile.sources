@@ -46,6 +46,7 @@ CPP_SOURCES := \
 	SIAssignInterpRegs.cpp		\
 	SIInstrInfo.cpp			\
 	SIISelLowering.cpp		\
+	SILowerLiteralConstants.cpp		\
 	SIMachineFunctionInfo.cpp	\
 	SIRegisterInfo.cpp		\
 	InstPrinter/AMDGPUInstPrinter.cpp \

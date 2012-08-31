@@ -22,10 +22,8 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/raw_ostream.h"
 
-#define LITERAL_REG 255
 #define VGPR_BIT(src_idx) (1ULL << (9 * src_idx - 1))
 #define SI_INSTR_FLAGS_ENCODING_MASK 0xf
-
 
 // These must be kept in sync with SIInstructions.td and also the
 // InstrEncodingInfo array in SIInstrInfo.cpp.
@@ -91,11 +89,6 @@ public:
   virtual unsigned GPR4AlignEncode(const MCInst &MI, unsigned OpNo,
                                    SmallVectorImpl<MCFixup> &Fixup) const;
 
-  /// i32LiteralEncode - Encode an i32 literal this is used as an operand
-  /// for an instruction in place of a register.
-  virtual uint64_t i32LiteralEncode(const MCInst &MI, unsigned OpNo,
-                                   SmallVectorImpl<MCFixup> &Fixup) const;
-
   /// SMRDmemriEncode - Encoding for SMRD indexed loads
   virtual uint32_t SMRDmemriEncode(const MCInst &MI, unsigned OpNo,
                                    SmallVectorImpl<MCFixup> &Fixup) const;
@@ -147,7 +140,12 @@ uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
   } else if (MO.isFPImm()) {
     // XXX: Not all instructions can use inline literals
     // XXX: We should make sure this is a 32-bit constant
-    return LITERAL_REG;
+    union {
+      float F;
+      uint32_t I;
+    } Imm;
+    Imm.F = MO.getFPImm();
+    return Imm.I;
   } else{
     llvm_unreachable("Encoding of this operand type is not supported yet.");
   }
@@ -174,12 +172,6 @@ unsigned SIMCCodeEmitter::GPR4AlignEncode(const MCInst &MI,
                                           unsigned OpNo,
                                         SmallVectorImpl<MCFixup> &Fixup) const {
   return GPRAlign(MI, OpNo, 2);
-}
-
-uint64_t SIMCCodeEmitter::i32LiteralEncode(const MCInst &MI,
-                                           unsigned OpNo,
-                                        SmallVectorImpl<MCFixup> &Fixup) const {
-  return LITERAL_REG | (MI.getOperand(OpNo).getImm() << 32);
 }
 
 #define SMRD_OFFSET_MASK 0xff
@@ -262,17 +254,13 @@ unsigned SIMCCodeEmitter::getEncodingType(const MCInst &MI) const {
 
 unsigned SIMCCodeEmitter::getEncodingBytes(const MCInst &MI) const {
 
-  // Instructions with literal constants are expanded to 64-bits, and
-  // the constant is stored in bits [63:32]
-  for (unsigned i = 0; i < MI.getNumOperands(); i++) {
-    if (MI.getOperand(i).isFPImm()) {
-      return 8;
-    }
-  }
-
-  // This instruction always has a literal
-  if (MI.getOpcode() == AMDGPU::S_MOV_IMM_I32) {
-    return 8;
+  // These instructions aren't real instructions with an encoding type, so
+  // we need to manually specify their size.
+  switch (MI.getOpcode()) {
+  default: break;
+  case AMDGPU::SI_LOAD_LITERAL_I32:
+  case AMDGPU::SI_LOAD_LITERAL_F32:
+    return 4;
   }
 
   unsigned encoding_type = getEncodingType(MI);
@@ -294,6 +282,7 @@ unsigned SIMCCodeEmitter::getRegBinaryCode(unsigned reg) const {
   switch (reg) {
     case AMDGPU::M0: return 124;
     case AMDGPU::SREG_LIT_0: return 128;
+    case AMDGPU::SI_LITERAL_CONSTANT: return 255;
     default: return getHWRegNum(reg);
   }
 }

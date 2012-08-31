@@ -887,21 +887,21 @@ def S_BFE_I64 : SOP2_64 <0x0000002a, "S_BFE_I64", []>;
 //def S_CBRANCH_G_FORK : SOP2_ <0x0000002b, "S_CBRANCH_G_FORK", []>;
 def S_ABSDIFF_I32 : SOP2_32 <0x0000002c, "S_ABSDIFF_I32", []>;
 
-class V_MOV_IMM <Operand immType, SDNode immNode> : VOP1 <
-  0x1,
+class V_MOV_IMM <Operand immType, SDNode immNode> : InstSI <
   (outs VReg_32:$dst),
   (ins immType:$src0),
   "V_MOV_IMM",
    [(set VReg_32:$dst, (immNode:$src0))]
 >;
 
+let isCodeGenOnly = 1, isPseudo = 1 in {
+
 def V_MOV_IMM_I32 : V_MOV_IMM<i32imm, imm>;
 def V_MOV_IMM_F32 : V_MOV_IMM<f32imm, fpimm>;
 
-def S_MOV_IMM_I32 : SOP1 <
-  0x3,
+def S_MOV_IMM_I32 : InstSI <
   (outs SReg_32:$dst),
-  (ins i32Literal:$src0),
+  (ins i32imm:$src0),
   "S_MOV_IMM_I32",
   [(set SReg_32:$dst, (imm:$src0))]
 >;
@@ -910,13 +910,24 @@ def S_MOV_IMM_I32 : SOP1 <
 // type for indices on load and store instructions.  The pattern for
 // S_MOV_IMM_I64 will only match i64 immediates that can fit into 32-bits,
 // which the hardware can handle.
-def S_MOV_IMM_I64 : SOP1 <
-  0x3,
+def S_MOV_IMM_I64 : InstSI <
   (outs SReg_64:$dst),
-  (ins i64Literal:$src0),
+  (ins i64imm:$src0),
   "S_MOV_IMM_I64 $dst, $src0",
   [(set SReg_64:$dst, (IMM32bitIn64bit:$src0))]
 >;
+
+} // End isCodeGenOnly, isPseudo = 1
+
+class SI_LOAD_LITERAL<Operand ImmType> :
+    Enc32 <(outs), (ins ImmType:$imm), "LOAD_LITERAL $imm", []> {
+
+  bits<32> imm;
+  let Inst{31-0} = imm;
+}
+
+def SI_LOAD_LITERAL_I32 : SI_LOAD_LITERAL<i32imm>;
+def SI_LOAD_LITERAL_F32 : SI_LOAD_LITERAL<f32imm>;
 
 let isCodeGenOnly = 1, isPseudo = 1 in {
 

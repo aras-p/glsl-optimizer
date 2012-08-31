@@ -81,9 +81,13 @@ void AMDGPUAsmPrinter::EmitProgramInfo(MachineFunction &MF) {
           VCCUsed = true;
           continue;
         }
-        if (reg == AMDGPU::EXEC) {
+        switch (reg) {
+        default: break;
+        case AMDGPU::EXEC:
+        case AMDGPU::SI_LITERAL_CONSTANT:
           continue;
         }
+
         if (AMDGPU::SReg_32RegClass.contains(reg)) {
           isSGPR = true;
           width = 1;
