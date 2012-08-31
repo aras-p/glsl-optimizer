@@ -99,6 +99,7 @@ def SMRDmemri : Operand<iPTR> {
 def ADDR_Reg     : ComplexPattern<i64, 2, "SelectADDRReg", [], []>;
 def ADDR_Offset8 : ComplexPattern<i64, 2, "SelectADDR8BitOffset", [], []>;
 
+let Uses = [EXEC] in {
 def EXP : Enc64<
   (outs),
   (ins i32imm:$en, i32imm:$tgt, i32imm:$compr, i32imm:$done, i32imm:$vm,
@@ -244,6 +245,7 @@ class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let usesCustomInserter = 1;
   let neverHasSideEffects = 1;
 }
+} // End Uses = [EXEC]
 
 class SMRD <bits<5> op, dag outs, dag ins, string asm, list<dag> pattern> :
     Enc32<outs, ins, asm, pattern> {
@@ -337,6 +339,7 @@ class SOPP <bits<7> op, dag ins, string asm, list<dag> pattern> : Enc32 <
 }
     
 
+let Uses = [EXEC] in {
 class VINTRP <bits <2> op, dag outs, dag ins, string asm, list<dag> pattern> :
     Enc32 <outs, ins, asm, pattern> {
 
@@ -430,6 +433,7 @@ class VOPC <bits<8> op, dag ins, string asm, list<dag> pattern> :
   let PostEncoderMethod = "VOPPostEncode";
   let DisableEncoding = "$dst";
 }
+} // End Uses = [EXEC]
 
 class MIMG_Load_Helper <bits<7> op, string asm> : MIMG <
   op,
