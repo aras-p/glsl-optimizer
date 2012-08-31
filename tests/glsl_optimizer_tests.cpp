@@ -134,7 +134,7 @@ static void replace_string (std::string& target, const std::string& search, cons
 	}
 }
 
-static bool CheckGLSL (bool vertex, bool gles, const char* prefix, const std::string& source)
+static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, const char* prefix, const std::string& source)
 {
 	std::string src;
 	if (gles)
@@ -165,7 +165,7 @@ static bool CheckGLSL (bool vertex, bool gles, const char* prefix, const std::st
 		char log[4096];
 		GLsizei logLength;
 		glGetInfoLogARB (shader, sizeof(log), &logLength, log);
-		printf ("  glsl compile error on %s:\n%s\n", prefix, log);
+		printf ("\n  %s: real glsl compiler error on %s:\n%s\n", testName.c_str(), prefix, log);
 		res = false;
 	}
 	glDeleteObjectARB (shader);
@@ -275,21 +275,24 @@ static void MassageFragmentForGLES (std::string& s)
 }
 
 static bool TestFile (glslopt_ctx* ctx, bool vertex,
+	const std::string& testName,
 	const std::string& inputPath,
 	const std::string& hirPath,
 	const std::string& outputPath,
 	bool gles,
 	bool doCheckGLSL)
 {
+	printf(".");
+	
 	std::string input;
 	if (!ReadStringFromFile (inputPath.c_str(), input))
 	{
-		printf ("  failed to read input file\n");
+		printf ("\n  %s: failed to read input file\n", testName.c_str());
 		return false;
 	}
 	if (doCheckGLSL)
 	{
-		if (!CheckGLSL (vertex, gles, "input", input.c_str()))
+		if (!CheckGLSL (vertex, gles, testName, "input", input.c_str()))
 			return false;
 	}
 
@@ -322,14 +325,14 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 			FILE* f = fopen (hirPath.c_str(), "wb");
 			if (!f)
 			{
-				printf ("  can't write to IR file!\n");
+				printf ("\n  %s: can't write to IR file!\n", testName.c_str());
 			}
 			else
 			{
 				fwrite (textHir.c_str(), 1, textHir.size(), f);
 				fclose (f);
 			}
-			printf ("  does not match raw output\n");
+			printf ("\n  %s: does not match raw output\n", testName.c_str());
 			res = false;
 		}
 
@@ -339,24 +342,24 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 			FILE* f = fopen (outputPath.c_str(), "wb");
 			if (!f)
 			{
-				printf ("  can't write to optimized file!\n");
+				printf ("\n  %s: can't write to optimized file!\n", testName.c_str());
 			}
 			else
 			{
 				fwrite (textOpt.c_str(), 1, textOpt.size(), f);
 				fclose (f);
 			}
-			printf ("  does not match optimized output\n");
+			printf ("\n  %s: does not match optimized output\n", testName.c_str());
 			res = false;
 		}
-		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, "raw", textHir.c_str()))
+		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, testName, "raw", textHir.c_str()))
 			res = false;
-		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, "optimized", textOpt.c_str()))
+		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, testName, "optimized", textOpt.c_str()))
 			res = false;
 	}
 	else
 	{
-		printf ("  optimize error: %s\n", glslopt_get_log(shader));
+		printf ("\n  %s: optimize error: %s\n", testName.c_str(), glslopt_get_log(shader));
 		res = false;
 	}
 
@@ -397,17 +400,16 @@ int main (int argc, const char** argv)
 		static const char* kApiOut[2] = {"-outES.txt", "-out.txt"};
 		for (int api = 0; api < 2; ++api)
 		{
-			printf ("** running %s tests for %s...\n", kTypeName[type], kAPIName[api]);
+			printf ("\n** running %s tests for %s...\n", kTypeName[type], kAPIName[api]);
 			StringVector inputFiles = GetFiles (testFolder, kApiIn[api]);
 
 			size_t n = inputFiles.size();
 			for (size_t i = 0; i < n; ++i)
 			{
 				std::string inname = inputFiles[i];
-				printf ("test %s\n", inname.c_str());
 				std::string hirname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiIR[api];
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
-				bool ok = TestFile (ctx[api], type==0, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, api==0, hasOpenGL);
+				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, api==0, hasOpenGL);
 				if (!ok)
 				{
 					++errors;
@@ -420,9 +422,9 @@ int main (int argc, const char** argv)
 	float timeDelta = float(time1-time0)/CLOCKS_PER_SEC;
 
 	if (errors != 0)
-		printf ("**** %i tests (%.2fsec), %i !!!FAILED!!!\n", tests, timeDelta, errors);
+		printf ("\n**** %i tests (%.2fsec), %i !!!FAILED!!!\n", tests, timeDelta, errors);
 	else
-		printf ("**** %i tests (%.2fsec) succeeded\n", tests, timeDelta);
+		printf ("\n**** %i tests (%.2fsec) succeeded\n", tests, timeDelta);
 
 	for (int i = 0; i < 2; ++i)
 		glslopt_cleanup (ctx[i]);
