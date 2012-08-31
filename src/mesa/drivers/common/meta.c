@@ -76,6 +76,7 @@
 #include "drivers/common/meta.h"
 #include "main/enums.h"
 #include "main/glformats.h"
+#include "../glsl/ralloc.h"
 
 
 /** Return offset in bytes of the field within a vertex struct */
@@ -286,6 +287,15 @@ struct gen_mipmap_state
    GLuint IntegerShaderProg;
 };
 
+/**
+ * State for GLSL texture sampler which is used to generate fragment
+ * shader in _mesa_meta_generate_mipmap().
+ */
+struct glsl_sampler {
+   const char *type;
+   const char *func;
+   const char *texcoords;
+};
 
 /**
  * State for texture decompression
@@ -2974,7 +2984,7 @@ setup_texture_coords(GLenum faceTarget,
 
 static void
 setup_ff_generate_mipmap(struct gl_context *ctx,
-                           struct gen_mipmap_state *mipmap)
+                         struct gen_mipmap_state *mipmap)
 {
    struct vertex {
       GLfloat x, y, tex[3];
@@ -3004,12 +3014,58 @@ setup_ff_generate_mipmap(struct gl_context *ctx,
 
 
 static void
+setup_texture_sampler(GLenum target, struct glsl_sampler *sampler)
+{
+   switch(target) {
+   case GL_TEXTURE_1D:
+      sampler->type = "sampler1D";
+      sampler->func = "texture1D";
+      sampler->texcoords = "texCoords.x";
+      break;
+   case GL_TEXTURE_2D:
+      sampler->type = "sampler2D";
+      sampler->func = "texture2D";
+      sampler->texcoords = "texCoords.xy";
+      break;
+   case GL_TEXTURE_3D:
+      /* Code for mipmap generation with 3D textures is not used yet.
+       * It's a sw fallback.
+       */
+      sampler->type = "sampler3D";
+      sampler->func = "texture3D";
+      sampler->texcoords = "texCoords";
+      break;
+   case GL_TEXTURE_CUBE_MAP:
+      sampler->type = "samplerCube";
+      sampler->func = "textureCube";
+      sampler->texcoords = "texCoords";
+      break;
+   case GL_TEXTURE_1D_ARRAY:
+      sampler->type = "sampler1DArray";
+      sampler->func = "texture1DArray";
+      sampler->texcoords = "texCoords.xy";
+      break;
+   case GL_TEXTURE_2D_ARRAY:
+      sampler->type = "sampler2DArray";
+      sampler->func = "texture2DArray";
+      sampler->texcoords = "texCoords";
+      break;
+   default:
+      _mesa_problem(NULL, "Unexpected texture target 0x%x in"
+                    " setup_texture_sampler()\n", target);
+   }
+}
+
+
+static void
 setup_glsl_generate_mipmap(struct gl_context *ctx,
-                           struct gen_mipmap_state *mipmap)
+                           struct gen_mipmap_state *mipmap,
+                           GLenum target)
 {
    struct vertex {
       GLfloat x, y, tex[3];
    };
+   struct glsl_sampler sampler;
 
    static const char *vs_source =
       "attribute vec2 position;\n"
@@ -3020,12 +3076,12 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
       "   texCoords = textureCoords;\n"
       "   gl_Position = vec4(position, 0.0, 1.0);\n"
       "}\n";
-   static const char *fs_source =
-      "uniform sampler2D tex2d;\n"
+   static const char *fs_template =
+      "uniform %s texSampler;\n"
       "varying vec3 texCoords;\n"
       "void main()\n"
       "{\n"
-      "   gl_FragColor = texture2D(tex2d, texCoords.xy);\n"
+      "   gl_FragColor = %s(texSampler, %s);\n"
       "}\n";
  
    static const char *vs_int_source =
@@ -3048,6 +3104,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
       "{\n"
       "   out_color = texture(tex2d, texCoords.xy);\n"
       "}\n";
+   char *fs_source;
    GLuint vs, fs;
 
    /* Check if already initialized */
@@ -3067,6 +3124,14 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
    _mesa_VertexAttribPointerARB(1, 3, GL_FLOAT, GL_FALSE,
                                 sizeof(struct vertex), OFFSET(tex));
 
+   /* Generate a fragment shader program appropriate for the texture target */
+   setup_texture_sampler(target, &sampler);
+   mem_ctx = ralloc_context(NULL);
+
+   fs_source = ralloc_asprintf(mem_ctx, fs_template,
+                               sampler.type, sampler.func,
+                               sampler.texcoords);
+
    vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
    fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
 
@@ -3080,6 +3145,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
    _mesa_EnableVertexAttribArrayARB(0);
    _mesa_EnableVertexAttribArrayARB(1);
    link_program_with_debug(ctx, mipmap->ShaderProg);
+   ralloc_free(mem_ctx);
 
    if ((_mesa_is_desktop_gl(ctx) && ctx->Const.GLSLVersion >= 130) ||
        _mesa_is_gles3(ctx)){
@@ -3172,7 +3238,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
     * GenerateMipmap function.
     */
    if (use_glsl_version) {
-      setup_glsl_generate_mipmap(ctx, mipmap);
+      setup_glsl_generate_mipmap(ctx, mipmap, target);
 
       if (texObj->_IsIntegerFormat)
          _mesa_UseProgramObjectARB(mipmap->IntegerShaderProg);
