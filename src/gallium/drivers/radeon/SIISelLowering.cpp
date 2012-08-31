@@ -242,9 +242,9 @@ void SITargetLowering::LowerSI_V_CNDLT(MachineInstr *MI, MachineBasicBlock &BB,
 
   BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_CNDMASK_B32))
           .addOperand(MI->getOperand(0))
-	  .addReg(AMDGPU::VCC)
           .addOperand(MI->getOperand(2))
-          .addOperand(MI->getOperand(3));
+          .addOperand(MI->getOperand(3))
+	  .addReg(AMDGPU::VCC);
 
   MI->eraseFromParent();
 }
