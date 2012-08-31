@@ -140,6 +140,8 @@ brwCreateContext(int api,
       return false;
    }
 
+   brwInitVtbl( brw );
+
    brwInitDriverFunctions(screen, &functions);
 
    struct intel_context *intel = &brw->intel;
@@ -148,12 +150,9 @@ brwCreateContext(int api,
    if (!intelInitContext( intel, api, mesaVis, driContextPriv,
 			  sharedContextPrivate, &functions )) {
       printf("%s: failed to init intel context\n", __FUNCTION__);
-      free(brw);
       *error = __DRI_CTX_ERROR_NO_MEMORY;
       return false;
    }
-
-   brwInitVtbl( brw );
 
    brw_init_surface_formats(brw);
 
