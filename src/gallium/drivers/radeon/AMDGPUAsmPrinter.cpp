@@ -106,7 +106,7 @@ void AMDGPUAsmPrinter::EmitProgramInfo(MachineFunction &MF) {
           isSGPR = true;
           width = 8;
         } else {
-          assert("!Unknown register class");
+          assert(!"Unknown register class");
         }
         hwReg = RI->getHWRegNum(reg);
         maxUsed = hwReg + width - 1;
