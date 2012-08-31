@@ -75,7 +75,7 @@ struct si_shader_context
 	struct tgsi_token * tokens;
 	struct si_pipe_shader *shader;
 	unsigned type; /* TGSI_PROCESSOR_* specifies the type of shader. */
-/*	unsigned num_inputs; */
+	unsigned ninput_emitted;
 /*	struct list_head inputs; */
 /*	unsigned * input_mappings *//* From TGSI to SI hw */
 /*	struct tgsi_shader_info info;*/
@@ -317,6 +317,14 @@ static void declare_input_fs(
 	default:
 		fprintf(stderr, "Warning: Unhandled interpolation mode.\n");
 		return;
+	}
+
+	if (!si_shader_ctx->ninput_emitted++) {
+		/* Enable whole quad mode */
+		lp_build_intrinsic(gallivm->builder,
+				   "llvm.SI.wqm",
+				   LLVMVoidTypeInContext(gallivm->context),
+				   NULL, 0);
 	}
 
 	/* XXX: Could there be more than TGSI_NUM_CHANNELS (4) ? */
@@ -689,7 +697,7 @@ int si_pipe_shader_create(
 
 	dump = debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE);
 
-	memset(&si_shader_ctx.radeon_bld, 0, sizeof(si_shader_ctx.radeon_bld));
+	memset(&si_shader_ctx, 0, sizeof(si_shader_ctx));
 	radeon_llvm_context_init(&si_shader_ctx.radeon_bld);
 	bld_base = &si_shader_ctx.radeon_bld.soa.bld_base;
 
