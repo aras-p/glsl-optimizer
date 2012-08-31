@@ -34,6 +34,7 @@
  */
 
 
+#include "util/u_debug.h"
 #include "util/u_format_yuv.h"
 
 
