@@ -214,15 +214,7 @@ brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
 const GLuint *brw_get_program( struct brw_compile *p,
 			       GLuint *sz )
 {
-   GLuint i;
-
    brw_compact_instructions(p);
-
-   /* We emit a cacheline (8 instructions) of NOPs at the end of the program to
-    * make sure that instruction prefetch doesn't wander off into some other BO.
-    */
-   for (i = 0; i < 8; i++)
-      brw_NOP(p);
 
    *sz = p->next_insn_offset;
    return (const GLuint *)p->store;
