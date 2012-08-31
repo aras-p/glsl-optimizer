@@ -326,9 +326,13 @@ _mesa_ClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
    if (syncObj->StatusFlag) {
       ret = GL_ALREADY_SIGNALED;
    } else {
-      ctx->Driver.ClientWaitSync(ctx, syncObj, flags, timeout);
+      if (timeout == 0) {
+         ret = GL_TIMEOUT_EXPIRED;
+      } else {
+         ctx->Driver.ClientWaitSync(ctx, syncObj, flags, timeout);
 
-      ret = syncObj->StatusFlag ? GL_CONDITION_SATISFIED : GL_TIMEOUT_EXPIRED;
+         ret = syncObj->StatusFlag ? GL_CONDITION_SATISFIED : GL_TIMEOUT_EXPIRED;
+      }
    }
 
    _mesa_unref_sync_object(ctx, syncObj);
