@@ -3,7 +3,6 @@ AUTOMAKE_OPTIONS = subdir-objects
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
-SUBDIRS += pipebuffer
 noinst_LTLIBRARIES = libgallium.la
 
 AM_CFLAGS = \
