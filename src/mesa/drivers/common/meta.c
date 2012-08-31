@@ -538,7 +538,9 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
          _mesa_set_enable(ctx, GL_DEPTH_TEST, GL_FALSE);
    }
 
-   if (state & MESA_META_FOG) {
+   if ((state & MESA_META_FOG)
+       && ctx->API != API_OPENGL_CORE
+       && ctx->API != API_OPENGLES2) {
       save->Fog = ctx->Fog.Enabled;
       if (ctx->Fog.Enabled)
          _mesa_set_enable(ctx, GL_FOG, GL_FALSE);
@@ -856,7 +858,9 @@ _mesa_meta_end(struct gl_context *ctx)
       _mesa_DepthMask(save->Depth.Mask);
    }
 
-   if (state & MESA_META_FOG) {
+   if ((state & MESA_META_FOG)
+       && ctx->API != API_OPENGL_CORE
+       && ctx->API != API_OPENGLES2) {
       _mesa_set_enable(ctx, GL_FOG, save->Fog);
    }
 
