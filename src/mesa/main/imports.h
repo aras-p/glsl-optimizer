@@ -156,6 +156,11 @@ static inline int isblank(int ch) { return ch == ' ' || ch == '\t'; }
 #endif
 /*@}*/
 
+#if defined(__SUNPRO_C)
+#define sqrtf(f) ((float) sqrt(f))
+#endif
+
+
 /***
  *** LOG2: Log base 2 of float
  ***/
@@ -309,50 +314,36 @@ static inline int IROUND_POS(float f)
  * Convert float to int using a fast method.  The rounding mode may vary.
  * XXX We could use an x86-64/SSE2 version here.
  */
-#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
 static inline int F_TO_I(float f)
 {
+#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
    int r;
    __asm__ ("fistpl %0" : "=m" (r) : "t" (f) : "st");
    return r;
-}
 #elif defined(USE_X86_ASM) && defined(_MSC_VER)
-static inline int F_TO_I(float f)
-{
    int r;
    _asm {
 	 fld f
 	 fistp r
 	}
    return r;
-}
-#elif defined(__WATCOMC__) && defined(__386__)
-long F_TO_I(float f);
-#pragma aux iround =                    \
-	"push   eax"                        \
-	"fistp  dword ptr [esp]"            \
-	"pop    eax"                        \
-	parm [8087]                         \
-	value [eax]                         \
-	modify exact [eax];
 #else
-#define F_TO_I(f)  IROUND(f)
+   return IROUND(f);
 #endif
+}
 
 
-/***
- *** IFLOOR: return (as an integer) floor of float
- ***/
-#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
-/*
- * IEEE floor for computers that round to nearest or even.
- * 'f' must be between -4194304 and 4194303.
- * This floor operation is done by "(iround(f + .5) + iround(f - .5)) >> 1",
- * but uses some IEEE specific tricks for better speed.
- * Contributed by Josh Vanderhoof
- */
-static inline int ifloor(float f)
+/** Return (as an integer) floor of float */
+static inline int IFLOOR(float f)
 {
+#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
+   /*
+    * IEEE floor for computers that round to nearest or even.
+    * 'f' must be between -4194304 and 4194303.
+    * This floor operation is done by "(iround(f + .5) + iround(f - .5)) >> 1",
+    * but uses some IEEE specific tricks for better speed.
+    * Contributed by Josh Vanderhoof
+    */
    int ai, bi;
    double af, bf;
    af = (3 << 22) + 0.5 + (double)f;
@@ -361,45 +352,33 @@ static inline int ifloor(float f)
    __asm__ ("fstps %0" : "=m" (ai) : "t" (af) : "st");
    __asm__ ("fstps %0" : "=m" (bi) : "t" (bf) : "st");
    return (ai - bi) >> 1;
-}
-#define IFLOOR(x)  ifloor(x)
 #elif defined(USE_IEEE)
-static inline int ifloor(float f)
-{
    int ai, bi;
    double af, bf;
    fi_type u;
-
    af = (3 << 22) + 0.5 + (double)f;
    bf = (3 << 22) + 0.5 - (double)f;
    u.f = (float) af;  ai = u.i;
    u.f = (float) bf;  bi = u.i;
    return (ai - bi) >> 1;
-}
-#define IFLOOR(x)  ifloor(x)
 #else
-static inline int ifloor(float f)
-{
    int i = IROUND(f);
    return (i > f) ? i - 1 : i;
-}
-#define IFLOOR(x)  ifloor(x)
 #endif
+}
 
 
-/***
- *** ICEIL: return (as an integer) ceiling of float
- ***/
-#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
-/*
- * IEEE ceil for computers that round to nearest or even.
- * 'f' must be between -4194304 and 4194303.
- * This ceil operation is done by "(iround(f + .5) + iround(f - .5) + 1) >> 1",
- * but uses some IEEE specific tricks for better speed.
- * Contributed by Josh Vanderhoof
- */
-static inline int iceil(float f)
+/** Return (as an integer) ceiling of float */
+static inline int ICEIL(float f)
 {
+#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
+   /*
+    * IEEE ceil for computers that round to nearest or even.
+    * 'f' must be between -4194304 and 4194303.
+    * This ceil operation is done by "(iround(f + .5) + iround(f - .5) + 1) >> 1",
+    * but uses some IEEE specific tricks for better speed.
+    * Contributed by Josh Vanderhoof
+    */
    int ai, bi;
    double af, bf;
    af = (3 << 22) + 0.5 + (double)f;
@@ -408,11 +387,7 @@ static inline int iceil(float f)
    __asm__ ("fstps %0" : "=m" (ai) : "t" (af) : "st");
    __asm__ ("fstps %0" : "=m" (bi) : "t" (bf) : "st");
    return (ai - bi + 1) >> 1;
-}
-#define ICEIL(x)  iceil(x)
 #elif defined(USE_IEEE)
-static inline int iceil(float f)
-{
    int ai, bi;
    double af, bf;
    fi_type u;
@@ -421,16 +396,11 @@ static inline int iceil(float f)
    u.f = (float) af; ai = u.i;
    u.f = (float) bf; bi = u.i;
    return (ai - bi + 1) >> 1;
-}
-#define ICEIL(x)  iceil(x)
 #else
-static inline int iceil(float f)
-{
    int i = IROUND(f);
    return (i < f) ? i + 1 : i;
-}
-#define ICEIL(x)  iceil(x)
 #endif
+}
 
 
 /**
