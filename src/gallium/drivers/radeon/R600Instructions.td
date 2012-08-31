@@ -218,9 +218,11 @@ def isR700 : Predicate<"Subtarget.device()"
                             "->getGeneration() == AMDGPUDeviceInfo::HD4XXX &&"
                             "Subtarget.device()->getDeviceFlag()"
                             ">= OCL_DEVICE_RV710">;
-def isEG : Predicate<"Subtarget.device()"
-                            "->getGeneration() >= AMDGPUDeviceInfo::HD5XXX && "
-                            "Subtarget.device()->getDeviceFlag() != OCL_DEVICE_CAYMAN">;
+def isEG : Predicate<
+  "Subtarget.device()->getGeneration() >= AMDGPUDeviceInfo::HD5XXX && "
+  "Subtarget.device()->getGeneration() < AMDGPUDeviceInfo::HD7XXX && "
+  "Subtarget.device()->getDeviceFlag() != OCL_DEVICE_CAYMAN">;
+
 def isCayman : Predicate<"Subtarget.device()"
                             "->getDeviceFlag() == OCL_DEVICE_CAYMAN">;
 def isEGorCayman : Predicate<"Subtarget.device()"
