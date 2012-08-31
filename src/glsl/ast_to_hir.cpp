@@ -2086,9 +2086,24 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 	 } else {
 	    var->location = qual->location;
 	 }
+
 	 if (qual->flags.q.explicit_index) {
-	    var->explicit_index = true;
-	    var->index = qual->index;
+            /* From the GLSL 4.30 specification, section 4.4.2 (Output
+             * Layout Qualifiers):
+             *
+             * "It is also a compile-time error if a fragment shader
+             *  sets a layout index to less than 0 or greater than 1."
+             *
+             * Older specifications don't mandate a behavior; we take
+             * this as a clarification and always generate the error.
+             */
+            if (qual->index < 0 || qual->index > 1) {
+               _mesa_glsl_error(loc, state,
+                                "explicit index may only be 0 or 1\n");
+            } else {
+               var->explicit_index = true;
+               var->index = qual->index;
+            }
 	 }
       }
    } else if (qual->flags.q.explicit_index) {
