@@ -164,41 +164,39 @@ static inline int isblank(int ch) { return ch == ' ' || ch == '\t'; }
 /***
  *** LOG2: Log base 2 of float
  ***/
-#ifdef USE_IEEE
-#if 0
-/* This is pretty fast, but not accurate enough (only 2 fractional bits).
- * Based on code from http://www.stereopsis.com/log2.html
- */
 static inline GLfloat LOG2(GLfloat x)
 {
+#ifdef USE_IEEE
+#if 0
+   /* This is pretty fast, but not accurate enough (only 2 fractional bits).
+    * Based on code from http://www.stereopsis.com/log2.html
+    */
    const GLfloat y = x * x * x * x;
    const GLuint ix = *((GLuint *) &y);
    const GLuint exp = (ix >> 23) & 0xFF;
    const GLint log2 = ((GLint) exp) - 127;
    return (GLfloat) log2 * (1.0 / 4.0);  /* 4, because of x^4 above */
-}
 #endif
-/* Pretty fast, and accurate.
- * Based on code from http://www.flipcode.com/totd/
- */
-static inline GLfloat LOG2(GLfloat val)
-{
+   /* Pretty fast, and accurate.
+    * Based on code from http://www.flipcode.com/totd/
+    */
    fi_type num;
    GLint log_2;
-   num.f = val;
+   num.f = x;
    log_2 = ((num.i >> 23) & 255) - 128;
    num.i &= ~(255 << 23);
    num.i += 127 << 23;
    num.f = ((-1.0f/3) * num.f + 2) * num.f - 2.0f/3;
    return num.f + log_2;
-}
 #else
-/*
- * NOTE: log_base_2(x) = log(x) / log(2)
- * NOTE: 1.442695 = 1/log(2).
- */
-#define LOG2(x)  ((GLfloat) (log(x) * 1.442695F))
+   /*
+    * NOTE: log_base_2(x) = log(x) / log(2)
+    * NOTE: 1.442695 = 1/log(2).
+    */
+   return (GLfloat) (log(x) * 1.442695F);
 #endif
+}
+
 
 
 /***
