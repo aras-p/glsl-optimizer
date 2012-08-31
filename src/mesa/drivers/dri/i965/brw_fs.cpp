@@ -979,7 +979,7 @@ fs_visitor::calculate_urb_setup()
        *
        * See compile_sf_prog() for more info.
        */
-      if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(FRAG_ATTRIB_PNTC))
+      if (fp->Base.InputsRead & BITFIELD64_BIT(FRAG_ATTRIB_PNTC))
          urb_setup[FRAG_ATTRIB_PNTC] = urb_next++;
    }
 
