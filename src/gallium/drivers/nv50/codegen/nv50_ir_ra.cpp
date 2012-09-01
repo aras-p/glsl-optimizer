@@ -1907,6 +1907,7 @@ RegAlloc::InsertConstraintsPass::visit(BasicBlock *bb)
             texConstraintNVC0(tex);
             break;
          case 0xe0:
+         case NVISA_GK110_CHIPSET:
             texConstraintNVE0(tex);
             break;
          default:

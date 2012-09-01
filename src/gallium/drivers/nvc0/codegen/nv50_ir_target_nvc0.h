@@ -38,6 +38,9 @@ public:
 
    virtual CodeEmitter *getCodeEmitter(Program::Type);
 
+   CodeEmitter *createCodeEmitterNVC0(Program::Type);
+   CodeEmitter *createCodeEmitterGK110(Program::Type);
+
    virtual bool runLegalizePass(Program *, CGStage stage) const;
 
    virtual void getBuiltinCode(const uint32_t **code, uint32_t *size) const;
@@ -64,7 +67,8 @@ public:
 
 private:
    void initOpInfo();
-
 };
+
+bool calculateSchedDataNVC0(const Target *, Function *);
 
 } // namespace nv50_ir

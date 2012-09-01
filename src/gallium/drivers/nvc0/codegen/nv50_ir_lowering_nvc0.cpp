@@ -157,7 +157,7 @@ private:
    const Instruction *recurseDef(const Instruction *);
 
 private:
-   LValue *r63;
+   LValue *rZero;
    const bool needTexBar;
 };
 
@@ -467,8 +467,8 @@ NVC0LegalizePostRA::visit(Function *fn)
    if (needTexBar)
       insertTextureBarriers(fn);
 
-   r63 = new_LValue(fn, FILE_GPR);
-   r63->reg.data.id = 63;
+   rZero = new_LValue(fn, FILE_GPR);
+   rZero->reg.data.id = prog->getTarget()->getFileSize(FILE_GPR);
    return true;
 }
 
@@ -478,7 +478,7 @@ NVC0LegalizePostRA::replaceZero(Instruction *i)
    for (int s = 0; i->srcExists(s); ++s) {
       ImmediateValue *imm = i->getSrc(s)->asImm();
       if (imm && imm->reg.data.u64 == 0)
-         i->setSrc(s, r63);
+         i->setSrc(s, rZero);
    }
 }
 
@@ -556,7 +556,7 @@ NVC0LegalizePostRA::visit(BasicBlock *bb)
          if (!i->getDef(0)->refCount())
             i->setDef(0, NULL);
          if (i->src(0).getFile() == FILE_IMMEDIATE)
-            i->setSrc(0, r63); // initial value must be 0
+            i->setSrc(0, rZero); // initial value must be 0
       } else
       if (i->isNop()) {
          bb->remove(i);

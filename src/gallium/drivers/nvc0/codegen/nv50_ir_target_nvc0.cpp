@@ -334,7 +334,7 @@ TargetNVC0::getFileSize(DataFile file) const
 {
    switch (file) {
    case FILE_NULL:          return 0;
-   case FILE_GPR:           return 63;
+   case FILE_GPR:           return (chipset >= NVISA_GK110_CHIPSET) ? 255 : 63;
    case FILE_PREDICATE:     return 7;
    case FILE_FLAGS:         return 1;
    case FILE_ADDRESS:       return 0;
@@ -392,7 +392,7 @@ TargetNVC0::insnCanLoad(const Instruction *i, int s,
 {
    DataFile sf = ld->src(0).getFile();
 
-   // immediate 0 can be represented by GPR $r63
+   // immediate 0 can be represented by GPR $r63/$r255
    if (sf == FILE_IMMEDIATE && ld->getSrc(0)->reg.data.u64 == 0)
       return (!i->asTex() && i->op != OP_EXPORT && i->op != OP_STORE);
 

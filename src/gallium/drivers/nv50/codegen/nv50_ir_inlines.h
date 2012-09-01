@@ -73,6 +73,31 @@ static inline unsigned int typeSizeof(DataType ty)
    }
 }
 
+static inline unsigned int typeSizeofLog2(DataType ty)
+{
+   switch (ty) {
+   case TYPE_F16:
+   case TYPE_U16:
+   case TYPE_S16:
+      return 1;
+   case TYPE_F32:
+   case TYPE_U32:
+   case TYPE_S32:
+      return 2;
+   case TYPE_F64:
+   case TYPE_U64:
+   case TYPE_S64:
+      return 3;
+   case TYPE_B96:
+   case TYPE_B128:
+      return 4;
+   case TYPE_U8:
+   case TYPE_S8:
+   default:
+      return 0;
+   }
+}
+
 static inline DataType typeOfSize(unsigned int size,
                                   bool flt = false, bool sgn = false)
 {

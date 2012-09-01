@@ -2298,6 +2298,13 @@ SchedDataCalculator::recordRd(const Value *v, const int ready)
    }
 }
 
+bool
+calculateSchedDataNVC0(const Target *targ, Function *func)
+{
+   SchedDataCalculator sched(targ);
+   return sched.run(func, true, true);
+}
+
 void
 CodeEmitterNVC0::prepareEmission(Function *func)
 {
@@ -2305,10 +2312,8 @@ CodeEmitterNVC0::prepareEmission(Function *func)
 
    CodeEmitter::prepareEmission(func);
 
-   if (targ->hasSWSched) {
-      SchedDataCalculator sched(targ);
-      sched.run(func, true, true);
-   }
+   if (targ->hasSWSched)
+      calculateSchedDataNVC0(targ, func);
 }
 
 CodeEmitterNVC0::CodeEmitterNVC0(const TargetNVC0 *target)
@@ -2321,11 +2326,19 @@ CodeEmitterNVC0::CodeEmitterNVC0(const TargetNVC0 *target)
 }
 
 CodeEmitter *
-TargetNVC0::getCodeEmitter(Program::Type type)
+TargetNVC0::createCodeEmitterNVC0(Program::Type type)
 {
    CodeEmitterNVC0 *emit = new CodeEmitterNVC0(this);
    emit->setProgramType(type);
    return emit;
+}
+
+CodeEmitter *
+TargetNVC0::getCodeEmitter(Program::Type type)
+{
+   if (chipset >= NVISA_GK110_CHIPSET)
+      return createCodeEmitterGK110(type);
+   return createCodeEmitterNVC0(type);
 }
 
 } // namespace nv50_ir
