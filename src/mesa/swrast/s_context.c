@@ -775,7 +775,7 @@ _swrast_CreateContext( struct gl_context *ctx )
     * using multiple threads, it is necessary to have one SpanArrays instance
     * per thread.
     */
-   swrast->SpanArrays = (SWspanarrays *) MALLOC(maxThreads * sizeof(SWspanarrays));
+   swrast->SpanArrays = (SWspanarrays *) malloc(maxThreads * sizeof(SWspanarrays));
    if (!swrast->SpanArrays) {
       FREE(swrast);
       return GL_FALSE;

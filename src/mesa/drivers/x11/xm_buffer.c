@@ -203,7 +203,7 @@ alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
 	    _mesa_warning(NULL, "alloc_back_buffer: XCreateImage failed.\n");
             return;
 	 }
-         b->backxrb->ximage->data = (char *) MALLOC(b->backxrb->ximage->height
+         b->backxrb->ximage->data = (char *) malloc(b->backxrb->ximage->height
                                         * b->backxrb->ximage->bytes_per_line);
          if (!b->backxrb->ximage->data) {
             _mesa_warning(NULL, "alloc_back_buffer: MALLOC failed.\n");

@@ -421,7 +421,7 @@ static GLboolean init_lighting( struct gl_context *ctx,
    struct light_stage_data *store;
    GLuint size = tnl->vb.Size;
 
-   stage->privatePtr = MALLOC(sizeof(*store));
+   stage->privatePtr = malloc(sizeof(*store));
    store = LIGHT_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;

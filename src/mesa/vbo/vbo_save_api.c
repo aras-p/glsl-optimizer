@@ -353,7 +353,7 @@ _save_compile_vertex_list(struct gl_context *ctx)
          /* If the malloc fails, we just pull the data out of the VBO
           * later instead.
           */
-         node->current_data = MALLOC(node->current_size * sizeof(GLfloat));
+         node->current_data = malloc(node->current_size * sizeof(GLfloat));
          if (node->current_data) {
             const char *buffer = (const char *) save->vertex_store->buffer;
             unsigned attr_offset = node->attrsz[0] * sizeof(GLfloat);

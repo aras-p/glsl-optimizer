@@ -90,7 +90,7 @@ nouveau_bufferobj_data(struct gl_context *ctx, GLenum target, GLsizeiptrARB size
 	    (size < 512 && usage == GL_DYNAMIC_DRAW_ARB) ||
 	    context_chipset(ctx) < 0x10) {
 		/* Heuristic: keep it in system ram */
-		nbo->sys = MALLOC(size);
+		nbo->sys = malloc(size);
 
 	} else {
 		/* Get a hardware BO */

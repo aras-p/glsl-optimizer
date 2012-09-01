@@ -322,7 +322,7 @@ _mesa_log_msg(struct gl_context *ctx, GLenum source, GLenum type,
 
    assert(!emptySlot->message && !emptySlot->length);
 
-   emptySlot->message = MALLOC(len+1);
+   emptySlot->message = malloc(len+1);
    if (emptySlot->message) {
       (void) strncpy(emptySlot->message, buf, (size_t)len);
       emptySlot->message[len] = '\0';

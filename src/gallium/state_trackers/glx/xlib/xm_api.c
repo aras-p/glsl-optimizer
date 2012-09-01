@@ -220,7 +220,7 @@ bits_per_pixel( XMesaVisual xmv )
    /* Create a temporary XImage */
    img = XCreateImage( dpy, visinfo->visual, visinfo->depth,
 		       ZPixmap, 0,           /*format, offset*/
-		       (char*) MALLOC(8),    /*data*/
+		       (char*) malloc(8),    /*data*/
 		       1, 1,                 /*width, height*/
 		       32,                   /*bitmap_pad*/
 		       0                     /*bytes_per_line*/
@@ -706,7 +706,7 @@ XMesaVisual XMesaCreateVisual( Display *display,
     * the struct but we may need some of the information contained in it
     * at a later time.
     */
-   v->visinfo = (XVisualInfo *) MALLOC(sizeof(*visinfo));
+   v->visinfo = (XVisualInfo *) malloc(sizeof(*visinfo));
    if (!v->visinfo) {
       free(v);
       return NULL;

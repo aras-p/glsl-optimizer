@@ -611,7 +611,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
        * thread.
        */
       swrast->TexelBuffer =
-	 (GLfloat *) MALLOC(ctx->Const.MaxTextureImageUnits * maxThreads *
+	 (GLfloat *) malloc(ctx->Const.MaxTextureImageUnits * maxThreads *
 			    SWRAST_MAX_WIDTH * 4 * sizeof(GLfloat));
       if (!swrast->TexelBuffer) {
 	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture_combine");

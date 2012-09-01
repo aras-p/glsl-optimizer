@@ -142,10 +142,10 @@ static GLuint countOptions (const driOptionCache *cache) {
     return count;
 }
 
-/** \brief Like strdup but using MALLOC and with error checking. */
+/** \brief Like strdup but using malloc and with error checking. */
 #define XSTRDUP(dest,source) do { \
     GLuint len = strlen (source); \
-    if (!(dest = MALLOC (len+1))) { \
+    if (!(dest = malloc(len+1))) { \
 	fprintf (stderr, "%s: %d: out of memory.\n", __FILE__, __LINE__); \
 	abort(); \
     } \
@@ -347,7 +347,7 @@ static GLboolean parseRanges (driOptionInfo *info, const XML_Char *string) {
 	if (*range == ',')
 	    ++nRanges;
 
-    if ((ranges = MALLOC (nRanges*sizeof(driOptionRange))) == NULL) {
+    if ((ranges = malloc(nRanges*sizeof(driOptionRange))) == NULL) {
 	fprintf (stderr, "%s: %d: out of memory.\n", __FILE__, __LINE__);
 	abort();
     }
@@ -702,8 +702,8 @@ void driParseOptionInfo (driOptionCache *info,
     GLuint size, log2size;
     for (size = 1, log2size = 0; size < minSize; size <<= 1, ++log2size);
     info->tableSize = log2size;
-    info->info = CALLOC (size * sizeof (driOptionInfo));
-    info->values = CALLOC (size * sizeof (driOptionValue));
+    info->info = calloc(size, sizeof (driOptionInfo));
+    info->values = calloc(size, sizeof (driOptionValue));
     if (info->info == NULL || info->values == NULL) {
 	fprintf (stderr, "%s: %d: out of memory.\n", __FILE__, __LINE__);
 	abort();
@@ -895,7 +895,7 @@ static void optConfEndElem (void *userData, const XML_Char *name) {
 static void initOptionCache (driOptionCache *cache, const driOptionCache *info) {
     cache->info = info->info;
     cache->tableSize = info->tableSize;
-    cache->values = MALLOC ((1<<info->tableSize) * sizeof (driOptionValue));
+    cache->values = malloc((1<<info->tableSize) * sizeof (driOptionValue));
     if (cache->values == NULL) {
 	fprintf (stderr, "%s: %d: out of memory.\n", __FILE__, __LINE__);
 	abort();
@@ -959,7 +959,7 @@ void driParseConfigFiles (driOptionCache *cache, const driOptionCache *info,
 
     if ((home = getenv ("HOME"))) {
 	GLuint len = strlen (home);
-	filenames[1] = MALLOC (len + 7+1);
+	filenames[1] = malloc(len + 7+1);
 	if (filenames[1] == NULL)
 	    __driUtilMessage ("Can't allocate memory for %s/.drirc.", home);
 	else {
