@@ -2591,7 +2591,7 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
    /* Storage for our result.  Ideally for an assignment we'd be using
     * the actual storage for the result here, instead.
     */
-   result_src = get_temp(glsl_type::vec4_type);
+   result_src = get_temp(ir->type);
    result_dst = st_dst_reg(result_src);
 
    switch (ir->op) {
