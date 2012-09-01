@@ -73,6 +73,10 @@
 #define PIPE_CC_ICL
 #endif
 
+#if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+#define PIPE_CC_SUNPRO
+#endif
+
 
 /*
  * Processor architecture
