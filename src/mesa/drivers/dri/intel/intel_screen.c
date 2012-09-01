@@ -248,7 +248,7 @@ intel_allocate_image(int dri_format, void *loaderPrivate)
 {
     __DRIimage *image;
 
-    image = CALLOC(sizeof *image);
+    image = calloc(1, sizeof *image);
     if (image == NULL)
 	return NULL;
 
@@ -333,7 +333,7 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
    }
 
    irb = intel_renderbuffer(rb);
-   image = CALLOC(sizeof *image);
+   image = calloc(1, sizeof *image);
    if (image == NULL)
       return NULL;
 
@@ -440,7 +440,7 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
 {
    __DRIimage *image;
 
-   image = CALLOC(sizeof *image);
+   image = calloc(1, sizeof *image);
    if (image == NULL)
       return NULL;
 
@@ -1061,7 +1061,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    }
 
    /* Allocate the private area */
-   intelScreen = CALLOC(sizeof *intelScreen);
+   intelScreen = calloc(1, sizeof *intelScreen);
    if (!intelScreen) {
       fprintf(stderr, "\nERROR!  Allocating private area failed\n");
       return false;
@@ -1143,7 +1143,7 @@ intelAllocateBuffer(__DRIscreen *screen,
    assert(attachment == __DRI_BUFFER_FRONT_LEFT ||
           attachment == __DRI_BUFFER_BACK_LEFT);
 
-   intelBuffer = CALLOC(sizeof *intelBuffer);
+   intelBuffer = calloc(1, sizeof *intelBuffer);
    if (intelBuffer == NULL)
       return NULL;
 

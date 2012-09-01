@@ -514,8 +514,8 @@ void radeonInitState( r100ContextPtr rmesa )
 #define ALLOC_STATE_IDX( ATOM, CHK, SZ, NM, FLAG, IDX )		\
    do {								\
       rmesa->hw.ATOM.cmd_size = SZ;				\
-      rmesa->hw.ATOM.cmd = (GLuint *)CALLOC(SZ * sizeof(int));	\
-      rmesa->hw.ATOM.lastcmd = (GLuint *)CALLOC(SZ * sizeof(int)); \
+      rmesa->hw.ATOM.cmd = (GLuint *) calloc(SZ, sizeof(int));          \
+      rmesa->hw.ATOM.lastcmd = (GLuint *) calloc(SZ, sizeof(int));      \
       rmesa->hw.ATOM.name = NM;						\
       rmesa->hw.ATOM.is_tcl = FLAG;					\
       rmesa->hw.ATOM.check = check_##CHK;				\

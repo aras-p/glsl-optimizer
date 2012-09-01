@@ -4680,7 +4680,8 @@ st_translate_program(
     * so we put all the translated regs in t->constants.
     */
    if (proginfo->Parameters) {
-      t->constants = (struct ureg_src *)CALLOC(proginfo->Parameters->NumParameters * sizeof(t->constants[0]));
+      t->constants = (struct ureg_src *)
+         calloc(proginfo->Parameters->NumParameters, sizeof(t->constants[0]));
       if (t->constants == NULL) {
          ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
@@ -4719,7 +4720,8 @@ st_translate_program(
    
    /* Emit immediate values.
     */
-   t->immediates = (struct ureg_src *)CALLOC(program->num_immediates * sizeof(struct ureg_src));
+   t->immediates = (struct ureg_src *)
+      calloc(program->num_immediates, sizeof(struct ureg_src));
    if (t->immediates == NULL) {
       ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto out;

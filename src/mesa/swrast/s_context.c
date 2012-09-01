@@ -720,7 +720,7 @@ GLboolean
 _swrast_CreateContext( struct gl_context *ctx )
 {
    GLuint i;
-   SWcontext *swrast = (SWcontext *)CALLOC(sizeof(SWcontext));
+   SWcontext *swrast = (SWcontext *) calloc(1, sizeof(SWcontext));
 #ifdef _OPENMP
    const GLuint maxThreads = omp_get_max_threads();
 #else

@@ -87,7 +87,7 @@ void copy_rows(void* dst, GLuint dststride, const void* src, GLuint srcstride,
  */
 struct gl_texture_image *radeonNewTextureImage(struct gl_context *ctx)
 {
-	return CALLOC(sizeof(radeon_texture_image));
+	return calloc(1, sizeof(radeon_texture_image));
 }
 
 

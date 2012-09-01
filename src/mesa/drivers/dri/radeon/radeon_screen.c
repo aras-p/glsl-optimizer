@@ -212,7 +212,7 @@ radeon_create_image_from_name(__DRIscreen *screen,
    if (name == 0)
       return NULL;
 
-   image = CALLOC(sizeof *image);
+   image = calloc(1, sizeof *image);
    if (image == NULL)
       return NULL;
 
@@ -275,7 +275,7 @@ radeon_create_image_from_renderbuffer(__DRIcontext *context,
    }
 
    rrb = radeon_renderbuffer(rb);
-   image = CALLOC(sizeof *image);
+   image = calloc(1, sizeof *image);
    if (image == NULL)
       return NULL;
 
@@ -310,7 +310,7 @@ radeon_create_image(__DRIscreen *screen,
    __DRIimage *image;
    radeonScreenPtr radeonScreen = screen->driverPrivate;
 
-   image = CALLOC(sizeof *image);
+   image = calloc(1, sizeof *image);
    if (image == NULL)
       return NULL;
 
@@ -488,7 +488,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    uint32_t device_id = 0;
 
    /* Allocate the private area */
-   screen = (radeonScreenPtr) CALLOC( sizeof(*screen) );
+   screen = (radeonScreenPtr) calloc(1, sizeof(*screen));
    if ( !screen ) {
       fprintf(stderr, "%s: Could not allocate memory for screen structure", __FUNCTION__);
       fprintf(stderr, "leaving here\n");

@@ -235,7 +235,7 @@ GLboolean r200CreateContext( gl_api api,
    assert(screen);
 
    /* Allocate the R200 context */
-   rmesa = (r200ContextPtr) CALLOC( sizeof(*rmesa) );
+   rmesa = (r200ContextPtr) calloc(1, sizeof(*rmesa));
    if ( !rmesa ) {
       *error = __DRI_CTX_ERROR_NO_MEMORY;
       return GL_FALSE;

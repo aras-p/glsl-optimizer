@@ -562,7 +562,7 @@ static GLboolean alloc_texgen_data( struct gl_context *ctx,
    struct texgen_stage_data *store;
    GLuint i;
 
-   stage->privatePtr = CALLOC(sizeof(*store));
+   stage->privatePtr = calloc(1, sizeof(*store));
    store = TEXGEN_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;
