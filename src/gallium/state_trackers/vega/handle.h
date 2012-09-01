@@ -35,6 +35,7 @@
 #define HANDLE_H
 
 #include "pipe/p_compiler.h"
+#include "util/u_debug.h"
 #include "util/u_hash_table.h"
 #include "util/u_pointer.h"
 
