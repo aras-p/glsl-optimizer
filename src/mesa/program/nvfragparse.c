@@ -1550,7 +1550,7 @@ _mesa_parse_nv_fragment_program(struct gl_context *ctx, GLenum dstTarget,
       /* install the program */
       program->Base.Target = target;
       if (program->Base.String) {
-         FREE(program->Base.String);
+         free(program->Base.String);
       }
       program->Base.String = programString;
       program->Base.Format = GL_PROGRAM_FORMAT_ASCII_ARB;

@@ -251,7 +251,7 @@ radeon_create_image_from_name(__DRIscreen *screen,
                               0);
 
    if (image->bo == NULL) {
-      FREE(image);
+      free(image);
       return NULL;
    }
 
@@ -298,7 +298,7 @@ static void
 radeon_destroy_image(__DRIimage *image)
 {
    radeon_bo_unref(image->bo);
-   FREE(image);
+   free(image);
 }
 
 static __DRIimage *
@@ -351,7 +351,7 @@ radeon_create_image(__DRIscreen *screen,
                               0);
 
    if (image->bo == NULL) {
-      FREE(image);
+      free(image);
       return NULL;
    }
 
@@ -507,7 +507,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 
    ret = radeonGetParam(sPriv, RADEON_PARAM_DEVICE_ID, &device_id);
    if (ret) {
-     FREE( screen );
+     free( screen );
      fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_DEVICE_ID): %d\n", ret);
      return NULL;
    }
@@ -561,7 +561,7 @@ radeonDestroyScreen( __DRIscreen *sPriv )
     /* free all option information */
     driDestroyOptionInfo (&screen->optionCache);
 
-    FREE( screen );
+    free( screen );
     sPriv->driverPrivate = NULL;
 }
 

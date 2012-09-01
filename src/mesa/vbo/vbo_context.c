@@ -223,7 +223,7 @@ void _vbo_DestroyContext( struct gl_context *ctx )
       vbo_exec_destroy(ctx);
       if (ctx->API == API_OPENGL)
          vbo_save_destroy(ctx);
-      FREE(vbo);
+      free(vbo);
       ctx->swtnl_im = NULL;
    }
 }

@@ -309,7 +309,7 @@ intel_create_image_from_name(__DRIscreen *screen,
 						  cpp, width, height,
 						  pitch, name, "image");
     if (image->region == NULL) {
-       FREE(image);
+       free(image);
        return NULL;
     }
 
@@ -371,7 +371,7 @@ static void
 intel_destroy_image(__DRIimage *image)
 {
     intel_region_release(&image->region);
-    FREE(image);
+    free(image);
 }
 
 static __DRIimage *
@@ -397,7 +397,7 @@ intel_create_image(__DRIscreen *screen,
    image->region =
       intel_region_alloc(intelScreen, tiling, cpp, width, height, true);
    if (image->region == NULL) {
-      FREE(image);
+      free(image);
       return NULL;
    }
    
@@ -446,7 +446,7 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
 
    intel_region_reference(&image->region, orig_image->region);
    if (image->region == NULL) {
-      FREE(image);
+      free(image);
       return NULL;
    }
 
@@ -543,13 +543,13 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     pitch = stride / cpp;
     if (offset + height * cpp * pitch > parent->region->bo->size) {
        _mesa_warning(NULL, "intel_create_sub_image: subimage out of bounds");
-       FREE(image);
+       free(image);
        return NULL;
     }
 
     image->region = calloc(sizeof(*image->region), 1);
     if (image->region == NULL) {
-       FREE(image);
+       free(image);
        return NULL;
     }
 
@@ -639,7 +639,7 @@ intelDestroyScreen(__DRIscreen * sPriv)
    _mesa_HashDeleteAll(intelScreen->named_regions, nop_callback, NULL);
    _mesa_DeleteHashTable(intelScreen->named_regions);
 
-   FREE(intelScreen);
+   free(intelScreen);
    sPriv->driverPrivate = NULL;
 }
 
@@ -1156,7 +1156,7 @@ intelAllocateBuffer(__DRIscreen *screen,
                                             true);
    
    if (intelBuffer->region == NULL) {
-	   FREE(intelBuffer);
+	   free(intelBuffer);
 	   return NULL;
    }
    

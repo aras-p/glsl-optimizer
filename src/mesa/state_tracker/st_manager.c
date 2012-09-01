@@ -430,7 +430,7 @@ st_framebuffer_create(struct st_framebuffer_iface *stfbi)
    /* add the color buffer */
    idx = stfb->Base._ColorDrawBufferIndexes[0];
    if (!st_framebuffer_add_renderbuffer(stfb, idx)) {
-      FREE(stfb);
+      free(stfb);
       return NULL;
    }
 

@@ -382,9 +382,9 @@ static GLboolean parseRanges (driOptionInfo *info, const XML_Char *string) {
 	else
 	    range = NULL;
     }
-    FREE (cp);
+    free(cp);
     if (i < nRanges) {
-	FREE (ranges);
+	free(ranges);
 	return GL_FALSE;
     } else
 	assert (range == NULL);
@@ -990,7 +990,7 @@ void driParseConfigFiles (driOptionCache *cache, const driOptionCache *info,
     }
 
     if (filenames[1])
-	FREE (filenames[1]);
+	free(filenames[1]);
 }
 
 void driDestroyOptionInfo (driOptionCache *info) {
@@ -999,18 +999,18 @@ void driDestroyOptionInfo (driOptionCache *info) {
 	GLuint i, size = 1 << info->tableSize;
 	for (i = 0; i < size; ++i) {
 	    if (info->info[i].name) {
-		FREE (info->info[i].name);
+		free(info->info[i].name);
 		if (info->info[i].ranges)
-		    FREE (info->info[i].ranges);
+		    free(info->info[i].ranges);
 	    }
 	}
-	FREE (info->info);
+	free(info->info);
     }
 }
 
 void driDestroyOptionCache (driOptionCache *cache) {
     if (cache->values)
-	FREE (cache->values);
+	free(cache->values);
 }
 
 GLboolean driCheckOption (const driOptionCache *cache, const char *name,

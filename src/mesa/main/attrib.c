@@ -1314,8 +1314,8 @@ _mesa_PopAttrib(void)
       }
 
       next = attr->next;
-      FREE( attr->data );
-      FREE( attr );
+      free(attr->data);
+      free(attr);
       attr = next;
    }
 }
@@ -1592,8 +1592,8 @@ _mesa_PopClientAttrib(void)
       }
 
       next = node->next;
-      FREE( node->data );
-      FREE( node );
+      free(node->data);
+      free(node);
       node = next;
    }
 }

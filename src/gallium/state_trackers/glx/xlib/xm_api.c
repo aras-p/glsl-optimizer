@@ -169,7 +169,7 @@ xmesa_init_display( Display *display )
             xmdpy->screen = NULL;
          }
          if (xmdpy->smapi) {
-            FREE(xmdpy->smapi);
+            free(xmdpy->smapi);
             xmdpy->smapi = NULL;
          }
 
@@ -800,8 +800,8 @@ XMesaVisual XMesaCreateVisual( Display *display,
 
    v->stvis.color_format = choose_pixel_format(v);
    if (v->stvis.color_format == PIPE_FORMAT_NONE) {
-      FREE(v->visinfo);
-      FREE(v);
+      free(v->visinfo);
+      free(v);
       return NULL;
    }
 

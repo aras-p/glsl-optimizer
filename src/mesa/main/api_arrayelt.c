@@ -1438,7 +1438,7 @@ GLboolean _ae_create_context( struct gl_context *ctx )
 void _ae_destroy_context( struct gl_context *ctx )
 {
    if ( AE_CONTEXT( ctx ) ) {
-      FREE( ctx->aelt_context );
+      free(ctx->aelt_context);
       ctx->aelt_context = NULL;
    }
 }

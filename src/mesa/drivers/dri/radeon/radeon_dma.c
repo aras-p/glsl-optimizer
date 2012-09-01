@@ -302,19 +302,19 @@ void radeonFreeDmaRegions(radeonContextPtr rmesa)
 	foreach_s(dma_bo, temp, &rmesa->dma.free) {
 		remove_from_list(dma_bo);
 	        radeon_bo_unref(dma_bo->bo);
-		FREE(dma_bo);
+		free(dma_bo);
 	}
 
 	foreach_s(dma_bo, temp, &rmesa->dma.wait) {
 		remove_from_list(dma_bo);
 	        radeon_bo_unref(dma_bo->bo);
-		FREE(dma_bo);
+		free(dma_bo);
 	}
 
 	foreach_s(dma_bo, temp, &rmesa->dma.reserved) {
 		remove_from_list(dma_bo);
 	        radeon_bo_unref(dma_bo->bo);
-		FREE(dma_bo);
+		free(dma_bo);
 	}
 }
 
@@ -344,7 +344,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 {
 	struct radeon_dma_bo *dma_bo;
 	struct radeon_dma_bo *temp;
-	const int expire_at = ++rmesa->dma.free.expire_counter + DMA_BO_FREE_TIME;
+	const int expire_at = ++rmesa->dma.free.expire_counter + DMA_BO_free_TIME;
 	const int time = rmesa->dma.free.expire_counter;
 
 	if (RADEON_DEBUG & RADEON_DMA) {
@@ -371,14 +371,14 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 			WARN_ONCE("Leaking dma buffer object!\n");
 			radeon_bo_unref(dma_bo->bo);
 			remove_from_list(dma_bo);
-			FREE(dma_bo);
+			free(dma_bo);
 			continue;
 		}
 		/* free objects that are too small to be used because of large request */
 		if (dma_bo->bo->size < rmesa->dma.minimum_size) {
 		   radeon_bo_unref(dma_bo->bo);
 		   remove_from_list(dma_bo);
-		   FREE(dma_bo);
+		   free(dma_bo);
 		   continue;
 		}
 		if (!radeon_bo_is_idle(dma_bo->bo)) {
@@ -396,7 +396,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 		if (dma_bo->bo->size < rmesa->dma.minimum_size) {
 		   radeon_bo_unref(dma_bo->bo);
 		   remove_from_list(dma_bo);
-		   FREE(dma_bo);
+		   free(dma_bo);
 		   continue;
 		}
 		remove_from_list(dma_bo);
@@ -410,7 +410,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 			break;
 		remove_from_list(dma_bo);
 	        radeon_bo_unref(dma_bo->bo);
-		FREE(dma_bo);
+		free(dma_bo);
 	}
 
 }

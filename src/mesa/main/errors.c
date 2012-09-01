@@ -391,7 +391,7 @@ _mesa_get_msg(struct gl_context *ctx, GLenum *source, GLenum *type,
    }
 
    if (msg->message != (char*)out_of_memory)
-      FREE(msg->message);
+      free(msg->message);
    msg->message = NULL;
    msg->length = 0;
 
@@ -786,7 +786,7 @@ _mesa_free_errors_data(struct gl_context *ctx)
 
             foreach_s(node, tmp, &ClientIDs->Namespaces[s][t].Severity[sev]) {
                entry = (struct gl_client_severity *)node;
-               FREE(entry);
+               free(entry);
             }
          }
       }

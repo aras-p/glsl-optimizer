@@ -4772,16 +4772,16 @@ st_translate_program(
 
 out:
    if (t) {
-      FREE(t->insn);
-      FREE(t->labels);
-      FREE(t->constants);
-      FREE(t->immediates);
+      free(t->insn);
+      free(t->labels);
+      free(t->constants);
+      free(t->immediates);
 
       if (t->error) {
          debug_printf("%s: translate error flag set\n", __FUNCTION__);
       }
 
-      FREE(t);
+      free(t);
    }
 
    return ret;

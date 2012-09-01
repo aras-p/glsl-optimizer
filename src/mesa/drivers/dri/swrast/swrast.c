@@ -504,7 +504,7 @@ drawable_fail:
     if (drawable)
 	free(drawable->row);
 
-    FREE(drawable);
+    free(drawable);
 
     return GL_FALSE;
 }
@@ -806,7 +806,7 @@ dri_create_context(gl_api api,
 
 context_fail:
 
-    FREE(ctx);
+    free(ctx);
 
     return GL_FALSE;
 }

@@ -233,7 +233,7 @@ free_vertex_store(struct gl_context *ctx,
       _mesa_reference_buffer_object(ctx, &vertex_store->bufferobj, NULL);
    }
 
-   FREE(vertex_store);
+   free(vertex_store);
 }
 
 
@@ -1575,10 +1575,10 @@ vbo_destroy_vertex_list(struct gl_context *ctx, void *data)
       free_vertex_store(ctx, node->vertex_store);
 
    if (--node->prim_store->refcount == 0)
-      FREE(node->prim_store);
+      free(node->prim_store);
 
    if (node->current_data) {
-      FREE(node->current_data);
+      free(node->current_data);
       node->current_data = NULL;
    }
 }

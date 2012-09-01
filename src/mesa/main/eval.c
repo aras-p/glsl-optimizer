@@ -416,7 +416,7 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
    map->u2 = u2;
    map->du = 1.0F / (u2 - u1);
    if (map->Points)
-      FREE( map->Points );
+      free( map->Points );
    map->Points = pnts;
 }
 
@@ -516,7 +516,7 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    map->v2 = v2;
    map->dv = 1.0F / (v2 - v1);
    if (map->Points)
-      FREE( map->Points );
+      free( map->Points );
    map->Points = pnts;
 }
 
@@ -1048,44 +1048,44 @@ void _mesa_free_eval_data( struct gl_context *ctx )
 
    /* Free evaluator data */
    if (ctx->EvalMap.Map1Vertex3.Points)
-      FREE( ctx->EvalMap.Map1Vertex3.Points );
+      free( ctx->EvalMap.Map1Vertex3.Points );
    if (ctx->EvalMap.Map1Vertex4.Points)
-      FREE( ctx->EvalMap.Map1Vertex4.Points );
+      free( ctx->EvalMap.Map1Vertex4.Points );
    if (ctx->EvalMap.Map1Index.Points)
-      FREE( ctx->EvalMap.Map1Index.Points );
+      free( ctx->EvalMap.Map1Index.Points );
    if (ctx->EvalMap.Map1Color4.Points)
-      FREE( ctx->EvalMap.Map1Color4.Points );
+      free( ctx->EvalMap.Map1Color4.Points );
    if (ctx->EvalMap.Map1Normal.Points)
-      FREE( ctx->EvalMap.Map1Normal.Points );
+      free( ctx->EvalMap.Map1Normal.Points );
    if (ctx->EvalMap.Map1Texture1.Points)
-      FREE( ctx->EvalMap.Map1Texture1.Points );
+      free( ctx->EvalMap.Map1Texture1.Points );
    if (ctx->EvalMap.Map1Texture2.Points)
-      FREE( ctx->EvalMap.Map1Texture2.Points );
+      free( ctx->EvalMap.Map1Texture2.Points );
    if (ctx->EvalMap.Map1Texture3.Points)
-      FREE( ctx->EvalMap.Map1Texture3.Points );
+      free( ctx->EvalMap.Map1Texture3.Points );
    if (ctx->EvalMap.Map1Texture4.Points)
-      FREE( ctx->EvalMap.Map1Texture4.Points );
+      free( ctx->EvalMap.Map1Texture4.Points );
    for (i = 0; i < 16; i++)
-      FREE((ctx->EvalMap.Map1Attrib[i].Points));
+      free((ctx->EvalMap.Map1Attrib[i].Points));
 
    if (ctx->EvalMap.Map2Vertex3.Points)
-      FREE( ctx->EvalMap.Map2Vertex3.Points );
+      free( ctx->EvalMap.Map2Vertex3.Points );
    if (ctx->EvalMap.Map2Vertex4.Points)
-      FREE( ctx->EvalMap.Map2Vertex4.Points );
+      free( ctx->EvalMap.Map2Vertex4.Points );
    if (ctx->EvalMap.Map2Index.Points)
-      FREE( ctx->EvalMap.Map2Index.Points );
+      free( ctx->EvalMap.Map2Index.Points );
    if (ctx->EvalMap.Map2Color4.Points)
-      FREE( ctx->EvalMap.Map2Color4.Points );
+      free( ctx->EvalMap.Map2Color4.Points );
    if (ctx->EvalMap.Map2Normal.Points)
-      FREE( ctx->EvalMap.Map2Normal.Points );
+      free( ctx->EvalMap.Map2Normal.Points );
    if (ctx->EvalMap.Map2Texture1.Points)
-      FREE( ctx->EvalMap.Map2Texture1.Points );
+      free( ctx->EvalMap.Map2Texture1.Points );
    if (ctx->EvalMap.Map2Texture2.Points)
-      FREE( ctx->EvalMap.Map2Texture2.Points );
+      free( ctx->EvalMap.Map2Texture2.Points );
    if (ctx->EvalMap.Map2Texture3.Points)
-      FREE( ctx->EvalMap.Map2Texture3.Points );
+      free( ctx->EvalMap.Map2Texture3.Points );
    if (ctx->EvalMap.Map2Texture4.Points)
-      FREE( ctx->EvalMap.Map2Texture4.Points );
+      free( ctx->EvalMap.Map2Texture4.Points );
    for (i = 0; i < 16; i++)
-      FREE((ctx->EvalMap.Map2Attrib[i].Points));
+      free((ctx->EvalMap.Map2Attrib[i].Points));
 }

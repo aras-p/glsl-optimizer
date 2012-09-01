@@ -355,13 +355,13 @@ dri_destroy_option_cache(struct dri_screen * screen)
 
    if (screen->optionCache.info) {
       for (i = 0; i < (1 << screen->optionCache.tableSize); ++i) {
-         FREE(screen->optionCache.info[i].name);
-         FREE(screen->optionCache.info[i].ranges);
+         free(screen->optionCache.info[i].name);
+         free(screen->optionCache.info[i].ranges);
       }
-      FREE(screen->optionCache.info);
+      free(screen->optionCache.info);
    }
 
-   FREE(screen->optionCache.values);
+   free(screen->optionCache.values);
 }
 
 void
@@ -383,7 +383,7 @@ dri_destroy_screen(__DRIscreen * sPriv)
 
    dri_destroy_screen_helper(screen);
 
-   FREE(screen);
+   free(screen);
    sPriv->driverPrivate = NULL;
    sPriv->extensions = NULL;
 }

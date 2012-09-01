@@ -148,7 +148,7 @@ brwCreateContext(int api,
    if (!intelInitContext( intel, api, mesaVis, driContextPriv,
 			  sharedContextPrivate, &functions )) {
       printf("%s: failed to init intel context\n", __FUNCTION__);
-      FREE(brw);
+      free(brw);
       *error = __DRI_CTX_ERROR_NO_MEMORY;
       return false;
    }

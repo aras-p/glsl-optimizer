@@ -110,7 +110,7 @@ static void free_texmat_data( struct tnl_pipeline_stage *stage )
       for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
 	 if (store->texcoord[i].data)
 	    _mesa_vector4f_free( &store->texcoord[i] );
-      FREE( store );
+      free( store );
       stage->privatePtr = NULL;
    }
 }

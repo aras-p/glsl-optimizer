@@ -155,7 +155,7 @@ void
 _mesa_delete_sampler_object(struct gl_context *ctx,
                             struct gl_sampler_object *sampObj)
 {
-   FREE(sampObj);
+   free(sampObj);
 }
 
 

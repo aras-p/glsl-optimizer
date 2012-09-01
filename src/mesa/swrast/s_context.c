@@ -777,7 +777,7 @@ _swrast_CreateContext( struct gl_context *ctx )
     */
    swrast->SpanArrays = (SWspanarrays *) malloc(maxThreads * sizeof(SWspanarrays));
    if (!swrast->SpanArrays) {
-      FREE(swrast);
+      free(swrast);
       return GL_FALSE;
    }
    for(i = 0; i < maxThreads; i++) {
@@ -828,17 +828,17 @@ _swrast_DestroyContext( struct gl_context *ctx )
       _mesa_debug(ctx, "_swrast_DestroyContext\n");
    }
 
-   FREE( swrast->SpanArrays );
+   free( swrast->SpanArrays );
    if (swrast->ZoomedArrays)
-      FREE( swrast->ZoomedArrays );
-   FREE( swrast->TexelBuffer );
+      free( swrast->ZoomedArrays );
+   free( swrast->TexelBuffer );
 
    free(swrast->stencil_temp.buf1);
    free(swrast->stencil_temp.buf2);
    free(swrast->stencil_temp.buf3);
    free(swrast->stencil_temp.buf4);
 
-   FREE( swrast );
+   free( swrast );
 
    ctx->swrast_context = 0;
 }

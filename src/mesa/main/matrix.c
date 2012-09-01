@@ -693,7 +693,7 @@ free_matrix_stack( struct gl_matrix_stack *stack )
    for (i = 0; i < stack->MaxDepth; i++) {
       _math_matrix_dtr(&stack->Stack[i]);
    }
-   FREE(stack->Stack);
+   free(stack->Stack);
    stack->Stack = stack->Top = NULL;
 }
 

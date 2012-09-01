@@ -548,7 +548,7 @@ void _tnl_free_vertices( struct gl_context *ctx )
 
       for (fp = vtx->fastpath ; fp ; fp = tmp) {
          tmp = fp->next;
-         FREE(fp->attr);
+         free(fp->attr);
 
          /* KW: At the moment, fp->func is constrained to be allocated by
           * _mesa_exec_alloc(), as the hardwired fastpaths in
@@ -557,7 +557,7 @@ void _tnl_free_vertices( struct gl_context *ctx )
           * module gets another overhaul.
           */
          _mesa_exec_free((void *) fp->func);
-         FREE(fp);
+         free(fp);
       }
 
       vtx->fastpath = NULL;

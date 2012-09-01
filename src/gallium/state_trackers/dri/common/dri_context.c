@@ -159,7 +159,7 @@ dri_create_context(gl_api api, const struct gl_config * visual,
    if (ctx && ctx->st)
       ctx->st->destroy(ctx->st);
 
-   FREE(ctx);
+   free(ctx);
    return GL_FALSE;
 }
 
@@ -172,7 +172,7 @@ dri_destroy_context(__DRIcontext * cPriv)
     * driParseConfigFiles allocated values only - the rest
     * is owned by screen optionCache.
     */
-   FREE(ctx->optionCache.values);
+   free(ctx->optionCache.values);
 
    /* No particular reason to wait for command completion before
     * destroying a context, but we flush the context here
@@ -184,7 +184,7 @@ dri_destroy_context(__DRIcontext * cPriv)
 
    if (ctx->pp) pp_free(ctx->pp);
 
-   FREE(ctx);
+   free(ctx);
 }
 
 GLboolean

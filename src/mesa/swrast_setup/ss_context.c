@@ -72,7 +72,7 @@ _swsetup_DestroyContext( struct gl_context *ctx )
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
 
    if (swsetup) {
-      FREE(swsetup);
+      free(swsetup);
       ctx->swsetup_context = 0;
    }
 

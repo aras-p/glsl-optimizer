@@ -363,7 +363,7 @@ Fake_glXUseXFont(Font font, int first, int count, int listbase)
       glEndList();
    }
 
-   FREE(bm);
+   free(bm);
    XFreeFontInfo(NULL, fs, 1);
    XFreeGC(dpy, gc);
 

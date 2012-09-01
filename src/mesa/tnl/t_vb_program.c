@@ -546,7 +546,7 @@ dtr(struct tnl_pipeline_stage *stage)
       _mesa_vector4f_free( &store->ndcCoords );
       _mesa_align_free( store->clipmask );
 
-      FREE( store );
+      free( store );
       stage->privatePtr = NULL;
    }
 }

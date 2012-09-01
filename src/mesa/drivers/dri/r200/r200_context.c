@@ -281,7 +281,7 @@ GLboolean r200CreateContext( gl_api api,
    if (!radeonInitContext(&rmesa->radeon, &functions,
 			  glVisual, driContextPriv,
 			  sharedContextPrivate)) {
-     FREE(rmesa);
+     free(rmesa);
      *error = __DRI_CTX_ERROR_NO_MEMORY;
      return GL_FALSE;
    }

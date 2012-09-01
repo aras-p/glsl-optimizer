@@ -202,9 +202,9 @@ static void radeon_destroy_atom_list(radeonContextPtr radeon)
 	struct radeon_state_atom *atom;
 
 	foreach(atom, &radeon->hw.atomlist) {
-		FREE(atom->cmd);
+		free(atom->cmd);
 		if (atom->lastcmd)
-			FREE(atom->lastcmd);
+			free(atom->lastcmd);
 	}
 
 }
@@ -267,7 +267,7 @@ void radeonDestroyContext(__DRIcontext *driContextPriv )
 		fclose(track);
 	}
 #endif
-	FREE(radeon);
+	free(radeon);
 }
 
 /* Force the context `c' to be unbound from its buffer.

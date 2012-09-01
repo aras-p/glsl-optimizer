@@ -116,7 +116,7 @@ _tnl_DestroyContext( struct gl_context *ctx )
 
    _tnl_destroy_pipeline( ctx );
 
-   FREE(tnl);
+   free(tnl);
    ctx->swtnl_context = NULL;
 }
 
