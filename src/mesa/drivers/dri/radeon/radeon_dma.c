@@ -344,7 +344,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 {
 	struct radeon_dma_bo *dma_bo;
 	struct radeon_dma_bo *temp;
-	const int expire_at = ++rmesa->dma.free.expire_counter + DMA_BO_free_TIME;
+	const int expire_at = ++rmesa->dma.free.expire_counter + DMA_BO_FREE_TIME;
 	const int time = rmesa->dma.free.expire_counter;
 
 	if (RADEON_DEBUG & RADEON_DMA) {
