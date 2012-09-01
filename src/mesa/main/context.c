@@ -921,6 +921,10 @@ _mesa_initialize_context(struct gl_context *ctx,
    ctx->WinSysDrawBuffer = NULL;
    ctx->WinSysReadBuffer = NULL;
 
+   if (_mesa_is_desktop_gl(ctx)) {
+      _mesa_override_gl_version(ctx);
+   }
+
    /* misc one-time initializations */
    one_time_init(ctx);
 
