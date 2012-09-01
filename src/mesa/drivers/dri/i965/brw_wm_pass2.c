@@ -86,7 +86,7 @@ static void init_registers( struct brw_wm_compile *c )
 
    if (intel->gen >= 6) {
       for (unsigned int j = 0; j < FRAG_ATTRIB_MAX; j++) {
-	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(j)) {
+	 if (c->fp->program.Base.InputsRead & BITFIELD64_BIT(j)) {
 	    nr_interp_regs++;
 	    prealloc_reg(c, &c->payload.input_interp[j], i++);
 	 }
