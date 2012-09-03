@@ -239,7 +239,7 @@ __glXReadPixelReply( Display *dpy, struct glx_context * gc, unsigned max_dim,
 
     size = reply.length * 4;
     if (size != 0) {
-        void * buf = Xmalloc( size );
+        void * buf = malloc( size );
 
         if ( buf == NULL ) {
             _XEatData(dpy, size);
@@ -255,7 +255,7 @@ __glXReadPixelReply( Display *dpy, struct glx_context * gc, unsigned max_dim,
 
             __glEmptyImage(gc, 3, width, height, depth, format, type,
                            buf, dest);
-            Xfree(buf);
+            free(buf);
         }
     }
 }
@@ -970,7 +970,7 @@ struct _glapi_table * __glXNewIndirectAPI( void )
     int o;
 
     entries = _glapi_get_dispatch_table_size();
-    table = (_glapi_proc *) Xmalloc(entries * sizeof(_glapi_proc));
+    table = (_glapi_proc *) malloc(entries * sizeof(_glapi_proc));
 
     /* first, set all entries to point to no-op functions */
     for (i = 0; i < entries; i++) {
