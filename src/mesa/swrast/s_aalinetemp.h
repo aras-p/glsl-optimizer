@@ -118,7 +118,7 @@ NAME(line)(struct gl_context *ctx, const SWvertex *v0, const SWvertex *v1)
    line.y1 = v1->attrib[FRAG_ATTRIB_WPOS][1];
    line.dx = line.x1 - line.x0;
    line.dy = line.y1 - line.y0;
-   line.len = SQRTF(line.dx * line.dx + line.dy * line.dy);
+   line.len = sqrtf(line.dx * line.dx + line.dy * line.dy);
    line.halfWidth = 0.5F * CLAMP(ctx->Line.Width,
                                  ctx->Const.MinLineWidthAA,
                                  ctx->Const.MaxLineWidthAA);

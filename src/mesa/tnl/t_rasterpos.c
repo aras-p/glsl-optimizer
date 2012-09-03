@@ -429,7 +429,7 @@ _tnl_RasterPos(struct gl_context *ctx, const GLfloat vObj[4])
          ctx->Current.RasterDistance = ctx->Current.Attrib[VERT_ATTRIB_FOG][0];
       else
          ctx->Current.RasterDistance =
-                        SQRTF( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );
+                        sqrtf( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );
 
       /* compute transformed normal vector (for lighting or texgen) */
       if (ctx->_NeedEyeCoords) {

@@ -1795,12 +1795,12 @@ sample_2d_footprint(struct gl_context *ctx,
 
    /*  Calculate the per anisotropic sample offsets in s,t space. */
    if (Px2 > Py2) {
-      numSamples = ceil(SQRTF(Px2));
+      numSamples = ceil(sqrtf(Px2));
       ds = ux / ((GLfloat) img->Width2);
       dt = vx / ((GLfloat) img->Height2);
    }
    else {
-      numSamples = ceil(SQRTF(Py2));
+      numSamples = ceil(sqrtf(Py2));
       ds = uy / ((GLfloat) img->Width2);
       dt = vy / ((GLfloat) img->Height2);
    }

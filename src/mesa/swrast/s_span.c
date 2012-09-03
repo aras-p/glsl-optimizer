@@ -419,8 +419,8 @@ _swrast_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
    GLfloat dvdx = texH * ((t + dtdx) / (q + dqdx) - t * invQ);
    GLfloat dudy = texW * ((s + dsdy) / (q + dqdy) - s * invQ);
    GLfloat dvdy = texH * ((t + dtdy) / (q + dqdy) - t * invQ);
-   GLfloat x = SQRTF(dudx * dudx + dvdx * dvdx);
-   GLfloat y = SQRTF(dudy * dudy + dvdy * dvdy);
+   GLfloat x = sqrtf(dudx * dudx + dvdx * dvdx);
+   GLfloat y = sqrtf(dudy * dudy + dvdy * dvdy);
    GLfloat rho = MAX2(x, y);
    GLfloat lambda = LOG2(rho);
    return lambda;

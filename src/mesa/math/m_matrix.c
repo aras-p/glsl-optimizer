@@ -856,7 +856,7 @@ _math_matrix_rotate( GLmatrix *mat,
    }
 
    if (!optimized) {
-      const GLfloat mag = SQRTF(x * x + y * y + z * z);
+      const GLfloat mag = sqrtf(x * x + y * y + z * z);
 
       if (mag <= 1.0e-4) {
          /* no rotation, leave mat as-is */

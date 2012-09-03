@@ -665,13 +665,13 @@ LEN_SQUARED_2FV(const GLfloat v[2])
 static inline GLfloat
 LEN_3FV(const GLfloat v[3])
 {
-   return SQRTF(LEN_SQUARED_3FV(v));
+   return sqrtf(LEN_SQUARED_3FV(v));
 }
 
 static inline GLfloat
 LEN_2FV(const GLfloat v[2])
 {
-   return SQRTF(LEN_SQUARED_2FV(v));
+   return sqrtf(LEN_SQUARED_2FV(v));
 }
 
 
