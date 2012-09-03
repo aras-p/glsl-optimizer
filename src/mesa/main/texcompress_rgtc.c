@@ -129,8 +129,8 @@ _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS)
       }
       blkaddr += dstRowDiff;
    }
-   if (tempImage)
-      free((void *) tempImage);
+
+   free((void *) tempImage);
 
    return GL_TRUE;
 }
@@ -176,8 +176,8 @@ _mesa_texstore_signed_red_rgtc1(TEXSTORE_PARAMS)
       }
       blkaddr += dstRowDiff;
    }
-   if (tempImage)
-      free((void *) tempImage);
+
+   free((void *) tempImage);
 
    return GL_TRUE;
 }
@@ -230,8 +230,8 @@ _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS)
       }
       blkaddr += dstRowDiff;
    }
-   if (tempImage)
-      free((void *) tempImage);
+
+   free((void *) tempImage);
 
    return GL_TRUE;
 }
@@ -285,8 +285,8 @@ _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
       }
       blkaddr += dstRowDiff;
    }
-   if (tempImage)
-      free((void *) tempImage);
+
+   free((void *) tempImage);
 
    return GL_TRUE;
 }

@@ -99,8 +99,7 @@ _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS)
    fxt1_encode(srcWidth, srcHeight, 3, pixels, srcRowStride,
                dst, dstRowStride);
 
-   if (tempImage)
-      free((void*) tempImage);
+   free((void*) tempImage);
 
    return GL_TRUE;
 }
@@ -149,8 +148,7 @@ _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
    fxt1_encode(srcWidth, srcHeight, 4, pixels, srcRowStride,
                dst, dstRowStride);
 
-   if (tempImage)
-      free((void*) tempImage);
+   free((void*) tempImage);
 
    return GL_TRUE;
 }

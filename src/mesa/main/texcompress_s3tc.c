@@ -203,8 +203,7 @@ _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS)
       _mesa_warning(ctx, "external dxt library not available: texstore_rgb_dxt1");
    }
 
-   if (tempImage)
-      free((void *) tempImage);
+   free((void *) tempImage);
 
    return GL_TRUE;
 }
@@ -256,8 +255,7 @@ _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS)
       _mesa_warning(ctx, "external dxt library not available: texstore_rgba_dxt1");
    }
 
-   if (tempImage)
-      free((void*) tempImage);
+   free((void*) tempImage);
 
    return GL_TRUE;
 }
@@ -308,8 +306,7 @@ _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS)
       _mesa_warning(ctx, "external dxt library not available: texstore_rgba_dxt3");
    }
 
-   if (tempImage)
-      free((void *) tempImage);
+   free((void *) tempImage);
 
    return GL_TRUE;
 }
@@ -360,8 +357,7 @@ _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS)
       _mesa_warning(ctx, "external dxt library not available: texstore_rgba_dxt5");
    }
 
-   if (tempImage)
-      free((void *) tempImage);
+   free((void *) tempImage);
 
    return GL_TRUE;
 }
