@@ -948,7 +948,8 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028A4C_PA_SC_MODE_CNTL, sc_mode_cntl);
 
 	r600_pipe_state_add_reg(rstate, R_028C08_PA_SU_VTX_CNTL,
-				S_028C08_PIX_CENTER_HALF(state->gl_rasterization_rules));
+				S_028C08_PIX_CENTER_HALF(state->gl_rasterization_rules) |
+				S_028C08_QUANT_MODE(V_028C08_X_1_256TH));
 
 	r600_pipe_state_add_reg(rstate, R_028DFC_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp));
 	r600_pipe_state_add_reg(rstate, R_028814_PA_SU_SC_MODE_CNTL,

@@ -2194,6 +2194,15 @@
 #define   S_028C08_PIX_CENTER_HALF(x)                  (((x) & 0x1) << 0)
 #define   G_028C08_PIX_CENTER_HALF(x)                  (((x) >> 0) & 0x1)
 #define   C_028C08_PIX_CENTER_HALF                     0xFFFFFFFE
+#define   S_028C08_QUANT_MODE(x)                       (((x) & 0x7) << 3)
+#define   G_028C08_QUANT_MODE(x)                       (((x) >> 3) & 0x7)
+#define   C_028C08_QUANT_MODE                          0xFFFFFFC7
+#define     V_028C08_X_1_16TH                          0x00
+#define     V_028C08_X_1_8TH                           0x01
+#define     V_028C08_X_1_4TH                           0x02
+#define     V_028C08_X_1_2                             0x03
+#define     V_028C08_X_1                               0x04
+#define     V_028C08_X_1_256TH                         0x05
 #define R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX           0x028C1C
 #define R_028C48_PA_SC_AA_MASK                       0x028C48
 #define R_028810_PA_CL_CLIP_CNTL                     0x028810

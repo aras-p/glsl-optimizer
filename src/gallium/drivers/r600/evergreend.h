@@ -1955,6 +1955,17 @@
 #define   S_028C08_PIX_CENTER_HALF(x)                  (((x) & 0x1) << 0)
 #define   G_028C08_PIX_CENTER_HALF(x)                  (((x) >> 0) & 0x1)
 #define   C_028C08_PIX_CENTER_HALF                     0xFFFFFFFE
+#define   S_028C08_QUANT_MODE(x)                       (((x) & 0x7) << 3)
+#define   G_028C08_QUANT_MODE(x)                       (((x) >> 3) & 0x7)
+#define   C_028C08_QUANT_MODE                          0xFFFFFFC7
+#define     V_028C08_X_1_16TH                          0x00
+#define     V_028C08_X_1_8TH                           0x01
+#define     V_028C08_X_1_4TH                           0x02
+#define     V_028C08_X_1_2                             0x03
+#define     V_028C08_X_1                               0x04
+#define     V_028C08_X_1_256TH                         0x05
+#define     V_028C08_X_1_1024TH                        0x06
+#define     V_028C08_X_1_4096TH                        0x07
 #define R_028C0C_PA_CL_GB_VERT_CLIP_ADJ              0x00028C0C
 #define R_028C10_PA_CL_GB_VERT_DISC_ADJ              0x00028C10
 #define R_028C14_PA_CL_GB_HORZ_CLIP_ADJ              0x00028C14
