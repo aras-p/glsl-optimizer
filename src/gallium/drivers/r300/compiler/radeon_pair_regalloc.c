@@ -539,7 +539,6 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 
 	unsigned int i, j, index, input_node, node_count, node_index;
 	unsigned int * node_classes;
-	unsigned int * input_classes;
 	struct rc_instruction * inst;
 	struct rc_list * var_ptr;
 	struct rc_list * variables;
@@ -554,8 +553,6 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 	node_count = rc_list_count(variables);
 	node_classes = memory_pool_malloc(&s->C->Pool,
 			node_count * sizeof(unsigned int));
-	input_classes = memory_pool_malloc(&s->C->Pool,
-			s->NumInputs * sizeof(unsigned int));
 
 	for (var_ptr = variables, node_index = 0; var_ptr;
 					var_ptr = var_ptr->Next, node_index++) {
@@ -610,7 +607,7 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 		rc_for_all_reads_mask(inst, scan_read_callback, s);
 	}
 
-	/* Create classes for input registers */
+	/* Compute the writemask for inputs. */
 	for (i = 0; i < s->NumInputs; i++) {
 		unsigned int chan, class_id, writemask = 0;
 		for (chan = 0; chan < 4; chan++) {
@@ -619,14 +616,6 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 			}
 		}
 		s->Input[i].Writemask = writemask;
-		if (!writemask) {
-			continue;
-		}
-
-		class_id = ra_alloc_reg_class(regs);
-		input_classes[i] = class_id;
-		ra_class_add_reg(regs, class_id,
-				get_reg_id(s->Input[i].Index, writemask));
 	}
 
 	ra_set_finalize(regs, NULL);
@@ -663,8 +652,6 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 		if (!s->Input[i].Writemask) {
 			continue;
 		}
-		ra_set_node_class(graph, node_count + input_node,
-							input_classes[i]);
 		for (var_ptr = variables, node_index = 0;
 				var_ptr; var_ptr = var_ptr->Next, node_index++) {
 			struct rc_variable * var = var_ptr->Item;
