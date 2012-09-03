@@ -490,6 +490,8 @@ ra_get_node_reg(struct ra_graph *g, unsigned int n)
  * input data).  These nodes do not end up in the stack during
  * ra_simplify(), and thus at ra_select() time it is as if they were
  * the first popped off the stack and assigned their fixed locations.
+ * Nodes that use this function do not need to be assigned a register
+ * class.
  *
  * Must be called before ra_simplify().
  */
