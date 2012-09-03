@@ -384,6 +384,7 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
    k = _mesa_evaluator_components( target );
    if (k == 0) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
+      return;
    }
 
    if (ustride < k) {
@@ -473,6 +474,7 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    k = _mesa_evaluator_components( target );
    if (k==0) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
+      return;
    }
 
    if (ustride < k) {
