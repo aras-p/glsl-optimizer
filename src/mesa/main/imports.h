@@ -156,10 +156,6 @@ static inline int isblank(int ch) { return ch == ' ' || ch == '\t'; }
 #endif
 /*@}*/
 
-#if defined(__SUNPRO_C)
-#define sqrtf(f) ((float) sqrt(f))
-#endif
-
 
 /***
  *** LOG2: Log base 2 of float
