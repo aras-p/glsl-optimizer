@@ -2894,6 +2894,17 @@ static const char builtin_shadow2DArray[] =
    "))\n"
    ""
 ;
+static const char builtin_shadow2DEXT[] =
+   "((function shadow2DEXT\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) sampler2DShadow sampler)\n"
+   "       (declare (in) vec3 P) )\n"
+   "     ((return (tex float (var_ref sampler) (swiz xy (var_ref P)) 0 1 (swiz z (var_ref P)) ))))\n"
+   "\n"
+   "))\n"
+   ""
+;
 static const char builtin_shadow2DGradARB[] =
    "((function shadow2DGradARB\n"
    "   (signature vec4\n"
@@ -2933,6 +2944,17 @@ static const char builtin_shadow2DProj[] =
    "       (declare (in) vec4 P) \n"
    "       (declare (in) float bias) )\n"
    "     ((return (txb vec4 (var_ref sampler) (swiz xy (var_ref P)) 0 (swiz w (var_ref P)) (swiz z (var_ref P)) (var_ref bias) ))))\n"
+   "\n"
+   "))\n"
+   ""
+;
+static const char builtin_shadow2DProjEXT[] =
+   "((function shadow2DProjEXT\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) sampler2DShadow sampler)\n"
+   "       (declare (in) vec4 P) )\n"
+   "     ((return (tex float (var_ref sampler) (swiz xy (var_ref P)) 0 (swiz w (var_ref P)) (swiz z (var_ref P)) ))))\n"
    "\n"
    "))\n"
    ""
@@ -15997,6 +16019,25 @@ static const char *functions_for_EXT_shader_texture_lod_vert [] = {
    builtin_texture2DProjGradEXT,
    builtin_textureCubeGradEXT,
 };
+static const char prototypes_for_EXT_shadow_samplers_frag[] =
+   "(\n"
+   "(function shadow2DEXT\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec3 coord))\n"
+   "    ()))\n"
+   "(function shadow2DProjEXT\n"
+   "  (signature float\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec4 coord))\n"
+   "    ())))"
+;
+static const char *functions_for_EXT_shadow_samplers_frag [] = {
+   builtin_shadow2DEXT,
+   builtin_shadow2DProjEXT,
+};
 static const char prototypes_for_EXT_texture_array_frag[] =
    "(\n"
    "(function texture1DArray\n"
@@ -16230,7 +16271,7 @@ static const char *functions_for_OES_texture_3D_vert [] = {
    builtin_texture3DProj,
    builtin_texture3DProjLod,
 };
-static gl_shader *builtin_profiles[19];
+static gl_shader *builtin_profiles[20];
 
 void *builtin_mem_ctx = NULL;
 
@@ -16369,36 +16410,43 @@ _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
                          Elements(functions_for_EXT_shader_texture_lod_vert));
    }
 
-   if (state->target == fragment_shader && state->EXT_texture_array_enable) {
+   if (state->target == fragment_shader && state->EXT_shadow_samplers_enable) {
       _mesa_read_profile(state, 14,
+                         prototypes_for_EXT_shadow_samplers_frag,
+                         functions_for_EXT_shadow_samplers_frag,
+                         Elements(functions_for_EXT_shadow_samplers_frag));
+   }
+
+   if (state->target == fragment_shader && state->EXT_texture_array_enable) {
+      _mesa_read_profile(state, 15,
                          prototypes_for_EXT_texture_array_frag,
                          functions_for_EXT_texture_array_frag,
                          Elements(functions_for_EXT_texture_array_frag));
    }
 
    if (state->target == vertex_shader && state->EXT_texture_array_enable) {
-      _mesa_read_profile(state, 15,
+      _mesa_read_profile(state, 16,
                          prototypes_for_EXT_texture_array_vert,
                          functions_for_EXT_texture_array_vert,
                          Elements(functions_for_EXT_texture_array_vert));
    }
 
    if (state->target == fragment_shader && state->OES_standard_derivatives_enable) {
-      _mesa_read_profile(state, 16,
+      _mesa_read_profile(state, 17,
                          prototypes_for_OES_standard_derivatives_frag,
                          functions_for_OES_standard_derivatives_frag,
                          Elements(functions_for_OES_standard_derivatives_frag));
    }
 
    if (state->target == fragment_shader && state->OES_texture_3D_enable) {
-      _mesa_read_profile(state, 17,
+      _mesa_read_profile(state, 18,
                          prototypes_for_OES_texture_3D_frag,
                          functions_for_OES_texture_3D_frag,
                          Elements(functions_for_OES_texture_3D_frag));
    }
 
    if (state->target == vertex_shader && state->OES_texture_3D_enable) {
-      _mesa_read_profile(state, 18,
+      _mesa_read_profile(state, 19,
                          prototypes_for_OES_texture_3D_vert,
                          functions_for_OES_texture_3D_vert,
                          Elements(functions_for_OES_texture_3D_vert));

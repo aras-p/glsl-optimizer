@@ -29,7 +29,8 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
    // Enable opengl es extensions we care about here
    if (api == API_OPENGLES2)
    {
-      ctx->Extensions.OES_standard_derivatives = GL_TRUE;
+	   ctx->Extensions.OES_standard_derivatives = GL_TRUE;
+	   ctx->Extensions.EXT_shadow_samplers = GL_TRUE;
    }
 
    ctx->Const.GLSLVersion = 120;

@@ -2882,6 +2882,7 @@ struct gl_extensions
    GLboolean EXT_vertex_array_bgra;
    GLboolean EXT_vertex_array_set;
    GLboolean OES_standard_derivatives;
+   GLboolean EXT_shadow_samplers;
    /* vendor extensions */
    GLboolean AMD_conservative_depth;
    GLboolean AMD_seamless_cubemap_per_texture;

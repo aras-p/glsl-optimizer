@@ -565,6 +565,16 @@ def generate_texture_functions(fs):
     generate_sigs("", "txl", "2DShadow", Proj)
     end_function(fs, "shadow2DProjLod")
 
+    # GL_EXT_shadow_samplers
+    start_function("shadow2DEXT")
+    generate_sigs("", "tex", "2DShadow", Single)
+    end_function(fs, "shadow2DEXT")
+
+    start_function("shadow2DProjEXT")
+    generate_sigs("", "tex", "2DShadow", Proj | Single)
+    end_function(fs, "shadow2DProjEXT")
+
+
     sys.stdout = sys.__stdout__
     return fs
 

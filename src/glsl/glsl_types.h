@@ -504,6 +504,7 @@ private:
    static void generate_ARB_texture_rectangle_types(glsl_symbol_table *, bool);
    static void generate_EXT_texture_array_types(glsl_symbol_table *, bool);
    static void generate_OES_texture_3D_types(glsl_symbol_table *, bool);
+   static void generate_EXT_shadow_samplers_types(glsl_symbol_table *, bool);
    /*@}*/
 
    /**
