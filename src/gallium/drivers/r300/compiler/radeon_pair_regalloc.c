@@ -629,7 +629,7 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 				get_reg_id(s->Input[i].Index, writemask));
 	}
 
-	ra_set_finalize(regs);
+	ra_set_finalize(regs, NULL);
 
 	graph = ra_alloc_interference_graph(regs, node_count + s->NumInputs);
 

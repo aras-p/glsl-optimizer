@@ -136,7 +136,7 @@ brw_alloc_reg_set_for_classes(struct brw_context *brw,
    }
    assert(reg == ra_reg_count);
 
-   ra_set_finalize(brw->vs.regs);
+   ra_set_finalize(brw->vs.regs, NULL);
 }
 
 void

@@ -43,7 +43,9 @@ void ra_add_reg_conflict(struct ra_regs *regs,
 void ra_add_transitive_reg_conflict(struct ra_regs *regs,
 				    unsigned int base_reg, unsigned int reg);
 void ra_class_add_reg(struct ra_regs *regs, unsigned int c, unsigned int reg);
-void ra_set_finalize(struct ra_regs *regs);
+void ra_set_num_conflicts(struct ra_regs *regs, unsigned int class_a,
+                          unsigned int class_b, unsigned int num_conflicts);
+void ra_set_finalize(struct ra_regs *regs, unsigned int **conflicts);
 /** @} */
 
 /** @{ Interference graph setup.

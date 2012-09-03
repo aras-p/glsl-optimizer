@@ -255,14 +255,25 @@ ra_class_add_reg(struct ra_regs *regs, unsigned int c, unsigned int r)
 /**
  * Must be called after all conflicts and register classes have been
  * set up and before the register set is used for allocation.
+ * To avoid costly q value computation, use the q_values paramater
+ * to pass precomputed q values to this function.
  */
 void
-ra_set_finalize(struct ra_regs *regs)
+ra_set_finalize(struct ra_regs *regs, unsigned int **q_values)
 {
    unsigned int b, c;
 
    for (b = 0; b < regs->class_count; b++) {
       regs->classes[b]->q = ralloc_array(regs, unsigned int, regs->class_count);
+   }
+
+   if (q_values) {
+      for (b = 0; b < regs->class_count; b++) {
+         for (c = 0; c < regs->class_count; c++) {
+            regs->classes[b]->q[c] = q_values[b][c];
+	 }
+      }
+      return;
    }
 
    /* Compute, for each class B and C, how many regs of B an
