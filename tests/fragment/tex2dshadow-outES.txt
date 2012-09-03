@@ -1,0 +1,10 @@
+#extension GL_EXT_shadow_samplers : enable
+varying highp vec4 xlv_TEXCOORD0;
+uniform sampler2DShadow shadowmap;
+void main ()
+{
+  highp vec3 coord_1;
+  coord_1 = xlv_TEXCOORD0.xyz;
+  gl_FragData[0] = vec4((shadow2DEXT (shadowmap, coord_1) + shadow2DProjEXT (shadowmap, xlv_TEXCOORD0)));
+}
+
