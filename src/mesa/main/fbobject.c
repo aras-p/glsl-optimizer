@@ -2792,7 +2792,8 @@ compatible_resolve_formats(const struct gl_renderbuffer *colorReadRb,
 {
    /* The simple case where we know the backing formats are the same.
     */
-   if (colorReadRb->Format == colorDrawRb->Format) {
+   if (_mesa_get_srgb_format_linear(colorReadRb->Format) ==
+       _mesa_get_srgb_format_linear(colorDrawRb->Format)) {
       return GL_TRUE;
    }
 
