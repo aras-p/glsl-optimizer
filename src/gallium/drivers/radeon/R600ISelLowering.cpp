@@ -47,7 +47,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
   setOperationAction(ISD::SETCC, MVT::i32, Custom);
-
+  setOperationAction(ISD::SETCC, MVT::f32, Custom);
   setSchedulingPreference(Sched::VLIW);
 }
 
@@ -519,14 +519,32 @@ SDValue R600TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const
   SDValue CC  = Op.getOperand(2);
   DebugLoc DL = Op.getDebugLoc();
   assert(Op.getValueType() == MVT::i32);
-  Cond = DAG.getNode(
-      ISD::SELECT_CC,
-      Op.getDebugLoc(),
-      MVT::i32,
-      LHS, RHS,
-      DAG.getConstant(-1, MVT::i32),
-      DAG.getConstant(0, MVT::i32),
-      CC);
+  if (LHS.getValueType() == MVT::i32) {
+    Cond = DAG.getNode(
+        ISD::SELECT_CC,
+        Op.getDebugLoc(),
+        MVT::i32,
+        LHS, RHS,
+        DAG.getConstant(-1, MVT::i32),
+        DAG.getConstant(0, MVT::i32),
+        CC);
+  } else if (LHS.getValueType() == MVT::f32) {
+    Cond = DAG.getNode(
+        ISD::SELECT_CC,
+        Op.getDebugLoc(),
+        MVT::f32,
+        LHS, RHS,
+        DAG.getConstantFP(1.0f, MVT::f32),
+        DAG.getConstantFP(0.0f, MVT::f32),
+        CC);
+    Cond = DAG.getNode(
+        ISD::FP_TO_SINT,
+        DL,
+        MVT::i32,
+        Cond);
+  } else {
+    assert(0 && "Not valid type for set_cc");
+  }
   Cond = DAG.getNode(
       ISD::AND,
       DL,
