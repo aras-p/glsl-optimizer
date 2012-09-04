@@ -18,7 +18,7 @@ XA_LIB = xatracker
 XA_LIB_NAME = lib$(XA_LIB).so
 XA_LIB_GLOB = lib$(XA_LIB)*.so*
 XA_LIB_DEPS = \
-	$(TOP)/src/gallium/state_trackers/xa/libxatracker.o \
+	$(TOP)/src/gallium/state_trackers/xa/.libs/libxatracker.a \
 	$(TOP)/src/gallium/winsys/svga/drm/libsvgadrm.a \
 	$(TOP)/src/gallium/drivers/svga/libsvga.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
@@ -53,7 +53,7 @@ endif
 default: $(TOP)/$(LIB_DIR)/gallium/$(XA_LIB_NAME)
 
 # Generate list of library visible symbols
-xa_symbols: $(TOP)/src/gallium/state_trackers/xa/libxatracker.o
+xa_symbols: $(TOP)/src/gallium/state_trackers/xa/.libs/libxatracker.a
 	$(NM) $< | $(GREP) ' T ' | $(AWK) '{print $$3}' > $@
 
 # Make the library
