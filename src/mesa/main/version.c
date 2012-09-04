@@ -55,6 +55,27 @@ override_version(struct gl_context *ctx)
 }
 
 /**
+ * Builds the MESA version string.
+ */
+static GLboolean
+create_version_string(struct gl_context *ctx, const char *prefix)
+{
+   static const int max = 100;
+
+   ctx->VersionString = malloc(max);
+   if (ctx->VersionString) {
+      _mesa_snprintf(ctx->VersionString, max,
+		     "%s%u.%u Mesa " MESA_VERSION_STRING
+#ifdef MESA_GIT_SHA1
+		     " (" MESA_GIT_SHA1 ")"
+#endif
+		     ,
+		     prefix,
+		     ctx->Version / 10, ctx->Version % 10);
+   }
+}
+
+/**
  * Override the context's GLSL version if the environment variable
  * MESA_GLSL_VERSION_OVERRIDE is set. Valid values for
  * MESA_GLSL_VERSION_OVERRIDE are integers, such as "130".
@@ -85,7 +106,6 @@ static void
 compute_version(struct gl_context *ctx)
 {
    GLuint major, minor;
-   static const int max = 100;
 
    const GLboolean ver_1_3 = (ctx->Extensions.ARB_texture_border_clamp &&
                               ctx->Extensions.ARB_texture_cube_map &&
@@ -224,23 +244,12 @@ compute_version(struct gl_context *ctx)
 
    override_version(ctx);
 
-   ctx->VersionString = malloc(max);
-   if (ctx->VersionString) {
-      _mesa_snprintf(ctx->VersionString, max,
-		     "%u.%u Mesa " MESA_VERSION_STRING
-#ifdef MESA_GIT_SHA1
-		     " (" MESA_GIT_SHA1 ")"
-#endif
-		     ,
-		     ctx->Version / 10, ctx->Version % 10);
-   }
+   create_version_string(ctx, "");
 }
 
 static void
 compute_version_es1(struct gl_context *ctx)
 {
-   static const int max = 100;
-
    /* OpenGL ES 1.0 is derived from OpenGL 1.3 */
    const GLboolean ver_1_0 = (ctx->Extensions.ARB_texture_env_combine &&
                               ctx->Extensions.ARB_texture_env_dot3);
@@ -256,23 +265,12 @@ compute_version_es1(struct gl_context *ctx)
       _mesa_problem(ctx, "Incomplete OpenGL ES 1.0 support.");
    }
 
-   ctx->VersionString = malloc(max);
-   if (ctx->VersionString) {
-      _mesa_snprintf(ctx->VersionString, max,
-		     "OpenGL ES-CM 1.%d Mesa " MESA_VERSION_STRING
-#ifdef MESA_GIT_SHA1
-		     " (" MESA_GIT_SHA1 ")"
-#endif
-		     ,
-		     ctx->Version % 10);
-   }
+   create_version_string(ctx, "OpenGL ES-CM ");
 }
 
 static void
 compute_version_es2(struct gl_context *ctx)
 {
-   static const int max = 100;
-
    /* OpenGL ES 2.0 is derived from OpenGL 2.0 */
    const GLboolean ver_2_0 = (ctx->Extensions.ARB_texture_cube_map &&
                               ctx->Extensions.EXT_blend_color &&
@@ -289,15 +287,7 @@ compute_version_es2(struct gl_context *ctx)
       _mesa_problem(ctx, "Incomplete OpenGL ES 2.0 support.");
    }
 
-   ctx->VersionString = malloc(max);
-   if (ctx->VersionString) {
-      _mesa_snprintf(ctx->VersionString, max,
-		     "OpenGL ES 2.0 Mesa " MESA_VERSION_STRING
-#ifdef MESA_GIT_SHA1
-		     " (" MESA_GIT_SHA1 ")"
-#endif
-		     );
-   }
+   create_version_string(ctx, "OpenGL ES ");
 }
 
 /**
