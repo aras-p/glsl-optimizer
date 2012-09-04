@@ -65,13 +65,15 @@ create_version_string(struct gl_context *ctx, const char *prefix)
    ctx->VersionString = malloc(max);
    if (ctx->VersionString) {
       _mesa_snprintf(ctx->VersionString, max,
-		     "%s%u.%u Mesa " MESA_VERSION_STRING
+		     "%s%u.%u%s Mesa " MESA_VERSION_STRING
 #ifdef MESA_GIT_SHA1
 		     " (" MESA_GIT_SHA1 ")"
 #endif
 		     ,
 		     prefix,
-		     ctx->Version / 10, ctx->Version % 10);
+		     ctx->Version / 10, ctx->Version % 10,
+		     (ctx->API == API_OPENGL_CORE) ? " (Core Profile)" : ""
+		     );
    }
 }
 
