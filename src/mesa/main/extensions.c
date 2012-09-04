@@ -927,7 +927,7 @@ _mesa_get_extension_count(struct gl_context *ctx)
 
    base = (GLboolean *) &ctx->Extensions;
    for (i = extension_table; i->name != 0; ++i) {
-      if (base[i->offset]) {
+      if (base[i->offset] && (i->api_set & (1 << ctx->API))) {
 	 ctx->Extensions.Count++;
       }
    }
@@ -947,10 +947,11 @@ _mesa_get_enabled_extension(struct gl_context *ctx, GLuint index)
    base = (GLboolean*) &ctx->Extensions;
    n = 0;
    for (i = extension_table; i->name != 0; ++i) {
-      if (n == index && base[i->offset]) {
-	 return (const GLubyte*) i->name;
-      } else if (base[i->offset]) {
-	 ++n;
+      if (base[i->offset] & (i->api_set & (1 << ctx->API))) {
+         if (n == index)
+            return (const GLubyte*) i->name;
+         else
+            ++n;
       }
    }
 
