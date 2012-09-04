@@ -34,7 +34,8 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   computeRegisterProperties();
 
   setOperationAction(ISD::BR_CC, MVT::i32, Custom);
-
+  setOperationAction(ISD::BR_CC, MVT::f32, Custom);
+  
   setOperationAction(ISD::FSUB, MVT::f32, Expand);
 
   setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
@@ -338,14 +339,28 @@ SDValue R600TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const
   SDValue JumpT  = Op.getOperand(4);
   SDValue CmpValue;
   SDValue Result;
-  CmpValue = DAG.getNode(
-      ISD::SELECT_CC,
-      Op.getDebugLoc(),
-      MVT::i32,
-      LHS, RHS,
-      DAG.getConstant(-1, MVT::i32),
-      DAG.getConstant(0, MVT::i32),
-      CC);
+  
+  if (LHS.getValueType() == MVT::i32) {
+    CmpValue = DAG.getNode(
+        ISD::SELECT_CC,
+        Op.getDebugLoc(),
+        MVT::i32,
+        LHS, RHS,
+        DAG.getConstant(-1, MVT::i32),
+        DAG.getConstant(0, MVT::i32),
+        CC);
+  } else if (LHS.getValueType() == MVT::f32) {
+    CmpValue = DAG.getNode(
+        ISD::SELECT_CC,
+        Op.getDebugLoc(),
+        MVT::f32,
+        LHS, RHS,
+        DAG.getConstantFP(1.0f, MVT::f32),
+        DAG.getConstantFP(0.0f, MVT::f32),
+        CC);
+  } else {
+    assert(0 && "Not valid type for br_cc");
+  }
   Result = DAG.getNode(
       AMDGPUISD::BRANCH_COND,
       CmpValue.getDebugLoc(),
