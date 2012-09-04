@@ -206,9 +206,21 @@ intelTexImage(struct gl_context * ctx,
               GLenum format, GLenum type, const void *pixels,
               const struct gl_pixelstore_attrib *unpack)
 {
+   bool ok;
+
    DBG("%s target %s level %d %dx%dx%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(texImage->TexObject->Target),
        texImage->Level, texImage->Width, texImage->Height, texImage->Depth);
+
+   ok = intel_texsubimage_tiled_memcpy(ctx, dims, texImage,
+                                       0, 0, 0, /*x,y,z offsets*/
+                                       texImage->Width,
+                                       texImage->Height,
+                                       texImage->Depth,
+                                       format, type, pixels, unpack,
+                                       true /*for_glTexImage*/);
+   if (ok)
+      return;
 
    /* Attempt to use the blitter for PBO image uploads.
     */
