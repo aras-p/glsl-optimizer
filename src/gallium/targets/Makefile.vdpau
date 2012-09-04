@@ -25,8 +25,6 @@ else
   endif
 endif
 
-# XXX: Hack, VDPAU public funcs aren't exported if we link to libvdpautracker.a :(
-C_SOURCES += $(TOP)/src/gallium/state_trackers/vdpau/device.c
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o)
 
