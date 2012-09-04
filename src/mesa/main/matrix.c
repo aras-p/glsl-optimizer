@@ -671,7 +671,7 @@ init_matrix_stack( struct gl_matrix_stack *stack,
    stack->MaxDepth = maxDepth;
    stack->DirtyFlag = dirtyFlag;
    /* The stack */
-   stack->Stack = (GLmatrix *) calloc(maxDepth, sizeof(GLmatrix));
+   stack->Stack = calloc(maxDepth, sizeof(GLmatrix));
    for (i = 0; i < maxDepth; i++) {
       _math_matrix_ctr(&stack->Stack[i]);
    }

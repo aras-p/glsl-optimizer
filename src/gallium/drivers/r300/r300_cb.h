@@ -82,7 +82,7 @@
     do { \
     assert(sizeof(*(ptr)) == sizeof(uint32_t)); \
     cs_count = (size); \
-    cs_ptr = (ptr) = (uint32_t*)malloc((size) * sizeof(uint32_t)); \
+    cs_ptr = (ptr) = malloc((size) * sizeof(uint32_t)); \
 } while (0)
 
 #define END_CB do { \
@@ -99,7 +99,7 @@
     uint32_t *cs_ptr = NULL; (void) cs_ptr
 
 #define NEW_CB(ptr, size) \
-    cs_ptr = (ptr) = (uint32_t*)malloc((size) * sizeof(uint32_t))
+    cs_ptr = (ptr) = malloc((size) * sizeof(uint32_t))
 
 #define BEGIN_CB(ptr, size) cs_ptr = (ptr)
 #define END_CB

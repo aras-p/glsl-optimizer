@@ -283,7 +283,7 @@ write_texture_image(struct gl_texture_object *texObj,
       GLubyte *buffer;
       char s[100];
 
-      buffer = (GLubyte *) malloc(img->Width * img->Height
+      buffer = malloc(img->Width * img->Height
                                         * img->Depth * 4);
 
       store = ctx->Pack; /* save */
@@ -332,7 +332,7 @@ _mesa_write_renderbuffer_image(const struct gl_renderbuffer *rb)
       return;
    }
 
-   buffer = (GLubyte *) malloc(rb->Width * rb->Height * 4);
+   buffer = malloc(rb->Width * rb->Height * 4);
 
    ctx->Driver.ReadPixels(ctx, 0, 0, rb->Width, rb->Height,
                           format, type, &ctx->DefaultPacking, buffer);
@@ -466,7 +466,7 @@ _mesa_dump_color_buffer(const char *filename)
    const GLuint h = ctx->DrawBuffer->Height;
    GLubyte *buf;
 
-   buf = (GLubyte *) malloc(w * h * 4);
+   buf = malloc(w * h * 4);
 
    _mesa_PushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
    _mesa_PixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -498,8 +498,8 @@ _mesa_dump_depth_buffer(const char *filename)
    GLubyte *buf2;
    GLuint i;
 
-   buf = (GLuint *) malloc(w * h * 4);  /* 4 bpp */
-   buf2 = (GLubyte *) malloc(w * h * 3); /* 3 bpp */
+   buf = malloc(w * h * 4);  /* 4 bpp */
+   buf2 = malloc(w * h * 3); /* 3 bpp */
 
    _mesa_PushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
    _mesa_PixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -534,8 +534,8 @@ _mesa_dump_stencil_buffer(const char *filename)
    GLubyte *buf2;
    GLuint i;
 
-   buf = (GLubyte *) malloc(w * h);  /* 1 bpp */
-   buf2 = (GLubyte *) malloc(w * h * 3); /* 3 bpp */
+   buf = malloc(w * h);  /* 1 bpp */
+   buf2 = malloc(w * h * 3); /* 3 bpp */
 
    _mesa_PushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
    _mesa_PixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -579,7 +579,7 @@ _mesa_dump_image(const char *filename, const void *image, GLuint w, GLuint h,
    }
    else if (format == GL_RGBA && type == GL_FLOAT) {
       /* convert floats to ubyte */
-      GLubyte *buf = (GLubyte *) malloc(w * h * 4 * sizeof(GLubyte));
+      GLubyte *buf = malloc(w * h * 4 * sizeof(GLubyte));
       const GLfloat *f = (const GLfloat *) image;
       GLuint i;
       for (i = 0; i < w * h * 4; i++) {
@@ -590,7 +590,7 @@ _mesa_dump_image(const char *filename, const void *image, GLuint w, GLuint h,
    }
    else if (format == GL_RED && type == GL_FLOAT) {
       /* convert floats to ubyte */
-      GLubyte *buf = (GLubyte *) malloc(w * h * sizeof(GLubyte));
+      GLubyte *buf = malloc(w * h * sizeof(GLubyte));
       const GLfloat *f = (const GLfloat *) image;
       GLuint i;
       for (i = 0; i < w * h; i++) {

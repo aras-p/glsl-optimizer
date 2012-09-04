@@ -101,7 +101,7 @@ _gl_context_modes_create(unsigned count, size_t minimum_size)
 
    next = &base;
    for (i = 0; i < count; i++) {
-      *next = (__GLcontextModes *) malloc(size);
+      *next = malloc(size);
       if (*next == NULL) {
          _gl_context_modes_destroy(base);
          base = NULL;
@@ -165,7 +165,7 @@ __glXQueryServerString(Display * dpy, int opcode, CARD32 screen, CARD32 name)
    length = reply.length * 4;
    numbytes = reply.size;
 
-   buf = (char *) malloc(numbytes);
+   buf = malloc(numbytes);
    if (buf != NULL) {
       _XRead(dpy, buf, numbytes);
       length -= numbytes;
@@ -619,10 +619,10 @@ __glXInitialize(Display * dpy)
    /*
     ** Allocate memory for all the pieces needed for this buffer.
     */
-   private = (XExtData *) malloc(sizeof(XExtData));
+   private = malloc(sizeof(XExtData));
    if (!private)
       return NULL;
-   dpyPriv = (__GLXdisplayPrivate *) calloc(1, sizeof(__GLXdisplayPrivate));
+   dpyPriv = calloc(1, sizeof(__GLXdisplayPrivate));
    if (!dpyPriv) {
       free(private);
       return NULL;

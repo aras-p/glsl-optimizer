@@ -260,7 +260,7 @@ _mesa_remove_dead_code_global(struct gl_program *prog)
       /*_mesa_print_program(prog);*/
    }
 
-   removeInst = (GLboolean *)
+   removeInst =
       calloc(1, prog->NumInstructions * sizeof(GLboolean));
 
    /* Determine which temps are read and written */
@@ -604,7 +604,7 @@ _mesa_remove_dead_code_local(struct gl_program *prog)
    GLboolean *removeInst;
    GLuint i, arg, rem = 0;
 
-   removeInst = (GLboolean *)
+   removeInst =
       calloc(1, prog->NumInstructions * sizeof(GLboolean));
 
    for (i = 0; i < prog->NumInstructions; i++) {
@@ -745,7 +745,7 @@ _mesa_remove_extra_moves(struct gl_program *prog)
       _mesa_print_program(prog);
    }
 
-   removeInst = (GLboolean *)
+   removeInst =
       calloc(1, prog->NumInstructions * sizeof(GLboolean));
 
    /*

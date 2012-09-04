@@ -1236,7 +1236,7 @@ Parse_PrintInstruction(struct parse_state *parseState,
    for (len = 0; str[len] != '\''; len++) /* find closing quote */
       ;
    parseState->pos += len + 1;
-   msg = (GLubyte*) malloc(len + 1);
+   msg = malloc(len + 1);
 
    memcpy(msg, str, len);
    msg[len] = 0;
@@ -1481,7 +1481,7 @@ _mesa_parse_nv_fragment_program(struct gl_context *ctx, GLenum dstTarget,
    GLubyte *programString;
 
    /* Make a null-terminated copy of the program string */
-   programString = (GLubyte *) malloc(len + 1);
+   programString = malloc(len + 1);
    if (!programString) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
       return;

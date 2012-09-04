@@ -157,7 +157,7 @@ _mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
 
    /* Alloc dest storage */
    bytes = ((width + 7) / 8 * height);
-   buffer = (GLubyte *) malloc( bytes );
+   buffer = malloc( bytes );
    if (!buffer)
       return NULL;
 
@@ -1270,7 +1270,7 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
        dstFormat == GL_LUMINANCE_ALPHA ||
        dstFormat == GL_LUMINANCE_INTEGER_EXT ||
        dstFormat == GL_LUMINANCE_ALPHA_INTEGER_EXT) {
-      luminance = (GLfloat *) malloc(n * sizeof(GLfloat));
+      luminance = malloc(n * sizeof(GLfloat));
       if (!luminance) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel packing");
          return;
@@ -4361,7 +4361,7 @@ _mesa_unpack_color_span_ubyte(struct gl_context *ctx,
    {
       GLint dstComponents;
       GLint rDst, gDst, bDst, aDst, lDst, iDst;
-      GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+      GLfloat (*rgba)[4] = malloc(4 * n * sizeof(GLfloat));
 
       if (!rgba) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
@@ -4376,7 +4376,7 @@ _mesa_unpack_color_span_ubyte(struct gl_context *ctx,
        * Extract image data and convert to RGBA floats
        */
       if (srcFormat == GL_COLOR_INDEX) {
-         GLuint *indexes = (GLuint *) malloc(n * sizeof(GLuint));
+         GLuint *indexes = malloc(n * sizeof(GLuint));
 
          if (!indexes) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
@@ -4555,7 +4555,7 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
    {
       GLint dstComponents;
       GLint rDst, gDst, bDst, aDst, lDst, iDst;
-      GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+      GLfloat (*rgba)[4] = malloc(4 * n * sizeof(GLfloat));
       GLboolean intFormat = _mesa_is_enum_format_integer(srcFormat);
 
       if (!rgba) {
@@ -4578,7 +4578,7 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
        * Extract image data and convert to RGBA floats
        */
       if (srcFormat == GL_COLOR_INDEX) {
-         GLuint *indexes = (GLuint *) malloc(n * sizeof(GLuint));
+         GLuint *indexes = malloc(n * sizeof(GLuint));
 
          if (!indexes) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
@@ -4691,7 +4691,7 @@ _mesa_unpack_color_span_uint(struct gl_context *ctx,
                              const GLvoid *source,
                              const struct gl_pixelstore_attrib *srcPacking)
 {
-   GLuint (*rgba)[4] = (GLuint (*)[4]) malloc(n * 4 * sizeof(GLfloat));
+   GLuint (*rgba)[4] = malloc(n * 4 * sizeof(GLfloat));
 
    if (!rgba) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
@@ -4869,7 +4869,7 @@ _mesa_unpack_dudv_span_byte( struct gl_context *ctx,
       GLint dstComponents;
       GLbyte *dst = dest;
       GLuint i;
-      GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+      GLfloat (*rgba)[4] = malloc(4 * n * sizeof(GLfloat));
 
       if (!rgba) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
@@ -4956,7 +4956,7 @@ _mesa_unpack_index_span( struct gl_context *ctx, GLuint n,
       /*
        * general solution
        */
-      GLuint *indexes = (GLuint *) malloc(n * sizeof(GLuint));
+      GLuint *indexes = malloc(n * sizeof(GLuint));
 
       if (!indexes) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
@@ -5007,7 +5007,7 @@ _mesa_pack_index_span( struct gl_context *ctx, GLuint n,
                        const struct gl_pixelstore_attrib *dstPacking,
                        GLbitfield transferOps )
 {
-   GLuint *indexes = (GLuint *) malloc(n * sizeof(GLuint));
+   GLuint *indexes = malloc(n * sizeof(GLuint));
 
    if (!indexes) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel packing");
@@ -5183,7 +5183,7 @@ _mesa_unpack_stencil_span( struct gl_context *ctx, GLuint n,
       /*
        * general solution
        */
-      GLuint *indexes = (GLuint *) malloc(n * sizeof(GLuint));
+      GLuint *indexes = malloc(n * sizeof(GLuint));
 
       if (!indexes) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "stencil unpacking");
@@ -5253,7 +5253,7 @@ _mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest, const GLubyte *source,
                          const struct gl_pixelstore_attrib *dstPacking )
 {
-   GLubyte *stencil = (GLubyte *) malloc(n * sizeof(GLubyte));
+   GLubyte *stencil = malloc(n * sizeof(GLubyte));
 
    if (!stencil) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "stencil packing");
@@ -5475,7 +5475,7 @@ _mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
       depthValues = (GLfloat *) dest;
    }
    else {
-      depthTemp = (GLfloat *) malloc(n * sizeof(GLfloat));
+      depthTemp = malloc(n * sizeof(GLfloat));
       if (!depthTemp) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
          return;
@@ -5656,7 +5656,7 @@ _mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
                        GLenum dstType, const GLfloat *depthSpan,
                        const struct gl_pixelstore_attrib *dstPacking )
 {
-   GLfloat *depthCopy = (GLfloat *) malloc(n * sizeof(GLfloat));
+   GLfloat *depthCopy = malloc(n * sizeof(GLfloat));
    if (!depthCopy) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel packing");
       return;
@@ -5778,8 +5778,8 @@ _mesa_pack_depth_stencil_span(struct gl_context *ctx,GLuint n,
                               const GLubyte *stencilVals,
                               const struct gl_pixelstore_attrib *dstPacking)
 {
-   GLfloat *depthCopy = (GLfloat *) malloc(n * sizeof(GLfloat));
-   GLubyte *stencilCopy = (GLubyte *) malloc(n * sizeof(GLubyte));
+   GLfloat *depthCopy = malloc(n * sizeof(GLfloat));
+   GLubyte *stencilCopy = malloc(n * sizeof(GLubyte));
    GLuint i;
 
    if (!depthCopy || !stencilCopy) {
@@ -5877,7 +5877,7 @@ _mesa_unpack_image( GLuint dimensions,
 
    {
       GLubyte *destBuffer
-         = (GLubyte *) malloc(bytesPerRow * height * depth);
+         = malloc(bytesPerRow * height * depth);
       GLubyte *dst;
       GLint img, row;
       if (!destBuffer)

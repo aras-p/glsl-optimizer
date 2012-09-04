@@ -311,7 +311,7 @@ _swrast_depth_test_span(struct gl_context *ctx, SWspan *span)
    }
    else {
       /* copy Z buffer values into temp buffer (32-bit Z values) */
-      zBufferTemp = (GLuint *) malloc(count * sizeof(GLuint));
+      zBufferTemp = malloc(count * sizeof(GLuint));
       if (!zBufferTemp)
          return 0;
 
@@ -422,7 +422,7 @@ _swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
    GLuint *zBufferTemp;
    const GLuint *zBufferVals;
 
-   zBufferTemp = (GLuint *) malloc(count * sizeof(GLuint));
+   zBufferTemp = malloc(count * sizeof(GLuint));
    if (!zBufferTemp) {
       /* don't generate a stream of OUT_OF_MEMORY errors here */
       return GL_FALSE;

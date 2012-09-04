@@ -1468,10 +1468,10 @@ _math_matrix_loadf( GLmatrix *mat, const GLfloat *m )
 void
 _math_matrix_ctr( GLmatrix *m )
 {
-   m->m = (GLfloat *) _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
+   m->m = _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
    if (m->m)
       memcpy( m->m, Identity, sizeof(Identity) );
-   m->inv = (GLfloat *) _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
+   m->inv = _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
    if (m->inv)
       memcpy( m->inv, Identity, sizeof(Identity) );
    m->type = MATRIX_IDENTITY;

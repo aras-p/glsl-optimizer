@@ -380,8 +380,7 @@ static int find_or_add_value( struct reg *reg, int val )
    if (j == reg->nalloc) {
       reg->nalloc += 5;
       reg->nalloc *= 2;
-      reg->values = (union fi *) realloc( reg->values, 
-					  reg->nalloc * sizeof(union fi) );
+      reg->values = realloc( reg->values, reg->nalloc * sizeof(union fi) );
    }
 
    reg->values[reg->nvalues++].i = val;

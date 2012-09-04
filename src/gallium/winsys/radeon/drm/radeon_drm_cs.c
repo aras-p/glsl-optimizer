@@ -284,10 +284,10 @@ static unsigned radeon_add_reloc(struct radeon_cs_context *csc,
         csc->nrelocs += 10;
 
         size = csc->nrelocs * sizeof(struct radeon_bo*);
-        csc->relocs_bo = (struct radeon_bo**)realloc(csc->relocs_bo, size);
+        csc->relocs_bo = realloc(csc->relocs_bo, size);
 
         size = csc->nrelocs * sizeof(struct drm_radeon_cs_reloc);
-        csc->relocs = (struct drm_radeon_cs_reloc*)realloc(csc->relocs, size);
+        csc->relocs = realloc(csc->relocs, size);
 
         csc->chunks[1].chunk_data = (uint64_t)(uintptr_t)csc->relocs;
     }

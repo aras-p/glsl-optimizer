@@ -326,7 +326,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    length = reply.length;
    if (length) {
       num_attributes = (use_glx_1_3) ? reply.numAttribs : length / 2;
-      data = (CARD32 *) malloc(length * sizeof(CARD32));
+      data = malloc(length * sizeof(CARD32));
       if (data == NULL) {
          /* Throw data on the floor */
          _XEatData(dpy, length);

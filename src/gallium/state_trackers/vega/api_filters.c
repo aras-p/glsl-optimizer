@@ -329,7 +329,7 @@ void vegaConvolve(VGImage dst, VGImage src,
    vg_validate_state(ctx);
 
    buffer_len = 8 + 2 * 4 * kernel_size;
-   buffer = (VGfloat*)malloc(buffer_len * sizeof(VGfloat));
+   buffer = malloc(buffer_len * sizeof(VGfloat));
 
    buffer[0] = 0.f;
    buffer[1] = 1.f;
@@ -519,7 +519,7 @@ void vegaGaussianBlur(VGImage dst, VGImage src,
                            stdDeviationX, stdDeviationY);
 
    buffer_len = 8 + 2 * 4 * kernel_size;
-   buffer = (VGfloat*)malloc(buffer_len * sizeof(VGfloat));
+   buffer = malloc(buffer_len * sizeof(VGfloat));
 
    buffer[0] = 0.f;
    buffer[1] = 1.f;

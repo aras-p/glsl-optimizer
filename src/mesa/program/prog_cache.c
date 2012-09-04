@@ -88,7 +88,7 @@ rehash(struct gl_program_cache *cache)
    cache->last = NULL;
 
    size = cache->size * 3;
-   items = (struct cache_item**) malloc(size * sizeof(*items));
+   items = malloc(size * sizeof(*items));
    memset(items, 0, size * sizeof(*items));
 
    for (i = 0; i < cache->size; i++)
@@ -141,7 +141,7 @@ _mesa_new_program_cache(void)
    struct gl_program_cache *cache = CALLOC_STRUCT(gl_program_cache);
    if (cache) {
       cache->size = 17;
-      cache->items = (struct cache_item **)
+      cache->items =
          calloc(1, cache->size * sizeof(struct cache_item));
       if (!cache->items) {
          free(cache);

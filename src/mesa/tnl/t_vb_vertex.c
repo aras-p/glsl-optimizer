@@ -245,7 +245,7 @@ static GLboolean init_vertex_stage( struct gl_context *ctx,
    _mesa_vector4f_alloc( &store->clip, 0, size, 32 );
    _mesa_vector4f_alloc( &store->proj, 0, size, 32 );
 
-   store->clipmask = (GLubyte *) _mesa_align_malloc(sizeof(GLubyte)*size, 32 );
+   store->clipmask = _mesa_align_malloc(sizeof(GLubyte)*size, 32 );
 
    if (!store->clipmask ||
        !store->eye.data ||

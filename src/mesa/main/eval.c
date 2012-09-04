@@ -218,7 +218,7 @@ GLfloat *_mesa_copy_map_points1f( GLenum target, GLint ustride, GLint uorder,
    if (!points || !size)
       return NULL;
 
-   buffer = (GLfloat *) malloc(uorder * size * sizeof(GLfloat));
+   buffer = malloc(uorder * size * sizeof(GLfloat));
 
    if (buffer)
       for (i = 0, p = buffer; i < uorder; i++, points += ustride)
@@ -242,7 +242,7 @@ GLfloat *_mesa_copy_map_points1d( GLenum target, GLint ustride, GLint uorder,
    if (!points || !size)
       return NULL;
 
-   buffer = (GLfloat *) malloc(uorder * size * sizeof(GLfloat));
+   buffer = malloc(uorder * size * sizeof(GLfloat));
 
    if (buffer)
       for (i = 0, p = buffer; i < uorder; i++, points += ustride)
@@ -286,9 +286,9 @@ GLfloat *_mesa_copy_map_points2f( GLenum target,
    hsize = (uorder > vorder ? uorder : vorder)*size;
 
    if(hsize>dsize)
-     buffer = (GLfloat *) malloc((uorder*vorder*size+hsize)*sizeof(GLfloat));
+     buffer = malloc((uorder*vorder*size+hsize)*sizeof(GLfloat));
    else
-     buffer = (GLfloat *) malloc((uorder*vorder*size+dsize)*sizeof(GLfloat));
+     buffer = malloc((uorder*vorder*size+dsize)*sizeof(GLfloat));
 
    /* compute the increment value for the u-loop */
    uinc = ustride - vorder*vstride;
@@ -329,9 +329,9 @@ GLfloat *_mesa_copy_map_points2d(GLenum target,
    hsize = (uorder > vorder ? uorder : vorder)*size;
 
    if(hsize>dsize)
-     buffer = (GLfloat *) malloc((uorder*vorder*size+hsize)*sizeof(GLfloat));
+     buffer = malloc((uorder*vorder*size+hsize)*sizeof(GLfloat));
    else
-     buffer = (GLfloat *) malloc((uorder*vorder*size+dsize)*sizeof(GLfloat));
+     buffer = malloc((uorder*vorder*size+dsize)*sizeof(GLfloat));
 
    /* compute the increment value for the u-loop */
    uinc = ustride - vorder*vstride;
@@ -940,7 +940,7 @@ init_1d_map( struct gl_1d_map *map, int n, const float *initial )
    map->Order = 1;
    map->u1 = 0.0;
    map->u2 = 1.0;
-   map->Points = (GLfloat *) malloc(n * sizeof(GLfloat));
+   map->Points = malloc(n * sizeof(GLfloat));
    if (map->Points) {
       GLint i;
       for (i=0;i<n;i++)
@@ -961,7 +961,7 @@ init_2d_map( struct gl_2d_map *map, int n, const float *initial )
    map->u2 = 1.0;
    map->v1 = 0.0;
    map->v2 = 1.0;
-   map->Points = (GLfloat *) malloc(n * sizeof(GLfloat));
+   map->Points = malloc(n * sizeof(GLfloat));
    if (map->Points) {
       GLint i;
       for (i=0;i<n;i++)

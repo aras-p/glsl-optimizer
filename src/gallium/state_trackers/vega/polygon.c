@@ -83,7 +83,7 @@ static void polygon_print(struct polygon *poly)
 
 struct polygon * polygon_create(int size)
 {
-   struct polygon *poly = (struct polygon*)malloc(sizeof(struct polygon));
+   struct polygon *poly = malloc(sizeof(struct polygon));
 
    poly->data = malloc(sizeof(float) * COMPONENTS * size);
    poly->size = size;
@@ -114,7 +114,7 @@ void polygon_destroy(struct polygon *poly)
 
 void polygon_resize(struct polygon *poly, int new_size)
 {
-   float *data = (float*)malloc(sizeof(float) * COMPONENTS * new_size);
+   float *data = malloc(sizeof(float) * COMPONENTS * new_size);
    int size = MIN2(sizeof(float) * COMPONENTS * new_size,
                    sizeof(float) * COMPONENTS * poly->size);
    memcpy(data, poly->data, size);

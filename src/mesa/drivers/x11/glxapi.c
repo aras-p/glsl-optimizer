@@ -115,7 +115,7 @@ get_dispatch(Display *dpy)
 
       if (t) {
          struct display_dispatch *d;
-         d = (struct display_dispatch *) malloc(sizeof(struct display_dispatch));
+         d = malloc(sizeof(struct display_dispatch));
          if (d) {
             d->Dpy = dpy;
             d->Table = t;

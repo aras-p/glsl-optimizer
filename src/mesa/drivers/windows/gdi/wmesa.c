@@ -35,7 +35,7 @@ static WMesaFramebuffer
 wmesa_new_framebuffer(HDC hdc, struct gl_config *visual)
 {
     WMesaFramebuffer pwfb
-        = (WMesaFramebuffer) malloc(sizeof(struct wmesa_framebuffer));
+        = malloc(sizeof(struct wmesa_framebuffer));
     if (pwfb) {
         _mesa_initialize_window_framebuffer(&pwfb->Base, visual);
         pwfb->hDC = hdc;

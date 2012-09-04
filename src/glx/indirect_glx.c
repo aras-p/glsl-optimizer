@@ -384,7 +384,7 @@ indirect_create_context(struct glx_screen *psc,
     */
 
    bufSize = (XMaxRequestSize(psc->dpy) * 4) - sz_xGLXRenderReq;
-   gc->buf = (GLubyte *) malloc(bufSize);
+   gc->buf = malloc(bufSize);
    if (!gc->buf) {
       free(gc->client_state_private);
       free(gc);

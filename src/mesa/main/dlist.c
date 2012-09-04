@@ -573,7 +573,7 @@ make_list(GLuint name, GLuint count)
 {
    struct gl_display_list *dlist = CALLOC_STRUCT(gl_display_list);
    dlist->Name = name;
-   dlist->Head = (Node *) malloc(sizeof(Node) * count);
+   dlist->Head = malloc(sizeof(Node) * count);
    dlist->Head[0].opcode = OPCODE_END_OF_LIST;
    return dlist;
 }
@@ -995,7 +995,7 @@ dlist_alloc(struct gl_context *ctx, OpCode opcode, GLuint bytes)
       Node *newblock;
       n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
       n[0].opcode = OPCODE_CONTINUE;
-      newblock = (Node *) malloc(sizeof(Node) * BLOCK_SIZE);
+      newblock = malloc(sizeof(Node) * BLOCK_SIZE);
       if (!newblock) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "Building display list");
          return NULL;
@@ -3190,7 +3190,7 @@ save_PixelMapfv(GLenum map, GLint mapsize, const GLfloat *values)
    if (n) {
       n[1].e = map;
       n[2].i = mapsize;
-      n[3].data = (void *) malloc(mapsize * sizeof(GLfloat));
+      n[3].data = malloc(mapsize * sizeof(GLfloat));
       memcpy(n[3].data, (void *) values, mapsize * sizeof(GLfloat));
    }
    if (ctx->ExecuteFlag) {
@@ -5018,7 +5018,7 @@ save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
 
    n = alloc_instruction(ctx, OPCODE_LOAD_PROGRAM_NV, 4);
    if (n) {
-      GLubyte *programCopy = (GLubyte *) malloc(len);
+      GLubyte *programCopy = malloc(len);
       if (!programCopy) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
          return;
@@ -5045,7 +5045,7 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint * ids)
 
    n = alloc_instruction(ctx, OPCODE_TRACK_MATRIX_NV, 2);
    if (n) {
-      GLuint *idCopy = (GLuint *) malloc(num * sizeof(GLuint));
+      GLuint *idCopy = malloc(num * sizeof(GLuint));
       if (!idCopy) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glRequestResidentProgramsNV");
          return;
@@ -5216,7 +5216,7 @@ save_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte * name,
 
    n = alloc_instruction(ctx, OPCODE_PROGRAM_NAMED_PARAMETER_NV, 6);
    if (n) {
-      GLubyte *nameCopy = (GLubyte *) malloc(len);
+      GLubyte *nameCopy = malloc(len);
       if (!nameCopy) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramNamedParameter4fNV");
          return;
@@ -5315,7 +5315,7 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 
    n = alloc_instruction(ctx, OPCODE_PROGRAM_STRING_ARB, 4);
    if (n) {
-      GLubyte *programCopy = (GLubyte *) malloc(len);
+      GLubyte *programCopy = malloc(len);
       if (!programCopy) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
          return;

@@ -146,7 +146,7 @@ __glXGetStringFromServer(Display * dpy, int opcode, CARD32 glxCode,
    length = reply.length * 4;
    numbytes = reply.size;
 
-   buf = (char *) malloc(numbytes);
+   buf = malloc(numbytes);
    if (buf != NULL) {
       _XRead(dpy, buf, numbytes);
       length -= numbytes;

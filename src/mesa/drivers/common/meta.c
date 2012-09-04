@@ -1660,7 +1660,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    }
 
    if (mask & GL_DEPTH_BUFFER_BIT) {
-      GLuint *tmp = (GLuint *) malloc(srcW * srcH * sizeof(GLuint));
+      GLuint *tmp = malloc(srcW * srcH * sizeof(GLuint));
       if (tmp) {
          if (!blit->DepthFP)
             init_blit_depth_pixels(ctx);
@@ -2712,7 +2712,7 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
       return;
    }
 
-   bitmap8 = (GLubyte *) malloc(width * height);
+   bitmap8 = malloc(width * height);
    if (bitmap8) {
       memset(bitmap8, bg, width * height);
       _mesa_expand_bitmap(width, height, &unpackSave, bitmap1,

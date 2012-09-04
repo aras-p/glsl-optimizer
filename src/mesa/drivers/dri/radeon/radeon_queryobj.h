@@ -42,7 +42,7 @@ void radeon_emit_queryobj(struct gl_context *ctx, struct radeon_state_atom *atom
 static inline void radeon_init_query_stateobj(radeonContextPtr radeon, int SZ)
 {
 	radeon->query.queryobj.cmd_size = (SZ);
-	radeon->query.queryobj.cmd = (uint32_t*) calloc(SZ, sizeof(uint32_t));
+	radeon->query.queryobj.cmd = calloc(SZ, sizeof(uint32_t));
 	radeon->query.queryobj.name = "queryobj";
 	radeon->query.queryobj.idx = 0;
 	radeon->query.queryobj.check = radeon_check_query_active;

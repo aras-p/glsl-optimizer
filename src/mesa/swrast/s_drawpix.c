@@ -267,7 +267,7 @@ draw_stencil_pixels( struct gl_context *ctx, GLint x, GLint y,
    GLint row;
    GLubyte *values;
 
-   values = (GLubyte *) malloc(width * sizeof(GLubyte));
+   values = malloc(width * sizeof(GLubyte));
    if (!values) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
       return;
@@ -592,7 +592,7 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
       GLuint *zValues;  /* 32-bit Z values */
       GLint i;
 
-      zValues = (GLuint *) malloc(width * sizeof(GLuint));
+      zValues = malloc(width * sizeof(GLuint));
       if (!zValues) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
          return;

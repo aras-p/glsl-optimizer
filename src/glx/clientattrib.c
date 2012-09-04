@@ -75,7 +75,7 @@ __indirect_glPushClientAttrib(GLuint mask)
 
    if (spp < &gc->attributes.stack[__GL_CLIENT_ATTRIB_STACK_DEPTH]) {
       if (!(sp = *spp)) {
-         sp = (__GLXattribute *) malloc(sizeof(__GLXattribute));
+         sp = malloc(sizeof(__GLXattribute));
          *spp = sp;
       }
       sp->mask = mask;

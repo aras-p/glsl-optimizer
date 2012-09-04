@@ -354,7 +354,7 @@ _mesa_make_temp_float_image(struct gl_context *ctx, GLuint dims,
           textureBaseFormat == GL_INTENSITY ||
           textureBaseFormat == GL_DEPTH_COMPONENT);
 
-   tempImage = (GLfloat *) malloc(srcWidth * srcHeight * srcDepth
+   tempImage = malloc(srcWidth * srcHeight * srcDepth
 				  * components * sizeof(GLfloat));
    if (!tempImage)
       return NULL;
@@ -392,7 +392,7 @@ _mesa_make_temp_float_image(struct gl_context *ctx, GLuint dims,
        */
       ASSERT(texComponents >= logComponents);
 
-      newImage = (GLfloat *) malloc(srcWidth * srcHeight * srcDepth
+      newImage = malloc(srcWidth * srcHeight * srcDepth
                                           * texComponents * sizeof(GLfloat));
       if (!newImage) {
          free(tempImage);
@@ -463,7 +463,7 @@ make_temp_uint_image(struct gl_context *ctx, GLuint dims,
           textureBaseFormat == GL_INTENSITY ||
           textureBaseFormat == GL_ALPHA);
 
-   tempImage = (GLuint *) malloc(srcWidth * srcHeight * srcDepth
+   tempImage = malloc(srcWidth * srcHeight * srcDepth
                                  * components * sizeof(GLuint));
    if (!tempImage)
       return NULL;
@@ -501,7 +501,7 @@ make_temp_uint_image(struct gl_context *ctx, GLuint dims,
        */
       ASSERT(texComponents >= logComponents);
 
-      newImage = (GLuint *) malloc(srcWidth * srcHeight * srcDepth
+      newImage = malloc(srcWidth * srcHeight * srcDepth
                                    * texComponents * sizeof(GLuint));
       if (!newImage) {
          free(tempImage);
@@ -591,7 +591,7 @@ _mesa_make_temp_ubyte_image(struct gl_context *ctx, GLuint dims,
           textureBaseFormat == GL_INTENSITY);
 
    /* unpack and transfer the source image */
-   tempImage = (GLubyte *) malloc(srcWidth * srcHeight * srcDepth
+   tempImage = malloc(srcWidth * srcHeight * srcDepth
                                        * components * sizeof(GLubyte));
    if (!tempImage) {
       return NULL;
@@ -632,7 +632,7 @@ _mesa_make_temp_ubyte_image(struct gl_context *ctx, GLuint dims,
        */
       ASSERT(texComponents >= logComponents);
 
-      newImage = (GLubyte *) malloc(srcWidth * srcHeight * srcDepth
+      newImage = malloc(srcWidth * srcHeight * srcDepth
                                          * texComponents * sizeof(GLubyte));
       if (!newImage) {
          free(tempImage);
@@ -2393,7 +2393,7 @@ _mesa_texstore_dudv8(TEXSTORE_PARAMS)
       GLbyte *tempImage, *dst, *src;
       GLint row;
 
-      tempImage = (GLbyte *) malloc(srcWidth * srcHeight * srcDepth
+      tempImage = malloc(srcWidth * srcHeight * srcDepth
                                           * components * sizeof(GLbyte));
       if (!tempImage)
          return GL_FALSE;
@@ -2797,8 +2797,8 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
    }
    else if (srcFormat == GL_DEPTH_COMPONENT ||
             srcFormat == GL_STENCIL_INDEX) {
-      GLuint *depth = (GLuint *) malloc(srcWidth * sizeof(GLuint));
-      GLubyte *stencil = (GLubyte *) malloc(srcWidth * sizeof(GLubyte));
+      GLuint *depth = malloc(srcWidth * sizeof(GLuint));
+      GLubyte *stencil = malloc(srcWidth * sizeof(GLubyte));
 
       if (!depth || !stencil) {
          free(depth);
@@ -2880,8 +2880,8 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
    ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT ||
           srcType == GL_UNSIGNED_INT_24_8_EXT);
 
-   depth = (GLuint *) malloc(srcWidth * sizeof(GLuint));
-   stencil = (GLubyte *) malloc(srcWidth * sizeof(GLubyte));
+   depth = malloc(srcWidth * sizeof(GLuint));
+   stencil = malloc(srcWidth * sizeof(GLubyte));
 
    if (!depth || !stencil) {
       free(depth);
@@ -2967,7 +2967,7 @@ _mesa_texstore_s8(TEXSTORE_PARAMS)
       const GLint srcRowStride
 	 = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType);
       GLint img, row;
-      GLubyte *stencil = (GLubyte *) malloc(srcWidth * sizeof(GLubyte));
+      GLubyte *stencil = malloc(srcWidth * sizeof(GLubyte));
 
       if (!stencil)
          return GL_FALSE;

@@ -80,7 +80,7 @@ get_tex_depth(struct gl_context *ctx, GLuint dimensions,
    const GLint height = texImage->Height;
    const GLint depth = texImage->Depth;
    GLint img, row;
-   GLfloat *depthRow = (GLfloat *) malloc(width * sizeof(GLfloat));
+   GLfloat *depthRow = malloc(width * sizeof(GLfloat));
 
    if (!depthRow) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
@@ -236,7 +236,7 @@ get_tex_rgba_compressed(struct gl_context *ctx, GLuint dimensions,
    GLuint row;
 
    /* Decompress into temp float buffer, then pack into user buffer */
-   tempImage = (GLfloat *) malloc(width * height * depth
+   tempImage = malloc(width * height * depth
                                   * 4 * sizeof(GLfloat));
    if (!tempImage) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage()");
@@ -310,7 +310,7 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
    GLboolean tex_is_uint = _mesa_is_format_unsigned(texImage->TexFormat);
 
    /* Allocate buffer for one row of texels */
-   rgba = (GLfloat (*)[4]) malloc(4 * width * sizeof(GLfloat));
+   rgba = malloc(4 * width * sizeof(GLfloat));
    rgba_uint = (GLuint (*)[4]) rgba;
    if (!rgba) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage()");

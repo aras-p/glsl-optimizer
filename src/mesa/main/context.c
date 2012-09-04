@@ -871,7 +871,7 @@ _mesa_alloc_dispatch_table(int size)
    /* should never happen, but just in case */
    numEntries = MAX2(numEntries, size);
 
-   table = (struct _glapi_table *) malloc(numEntries * sizeof(_glapi_proc));
+   table = malloc(numEntries * sizeof(_glapi_proc));
    if (table) {
       _glapi_proc *entry = (_glapi_proc *) table;
       GLint i;
@@ -1075,7 +1075,7 @@ _mesa_create_context(gl_api api,
    ASSERT(visual);
    /*ASSERT(driverContext);*/
 
-   ctx = (struct gl_context *) calloc(1, sizeof(struct gl_context));
+   ctx = calloc(1, sizeof(struct gl_context));
    if (!ctx)
       return NULL;
 

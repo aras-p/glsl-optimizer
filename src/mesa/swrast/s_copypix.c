@@ -139,7 +139,7 @@ copy_rgba_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    span.arrayAttribs = FRAG_BIT_COL0; /* we'll fill in COL0 attrib values */
 
    if (overlapping) {
-      tmpImage = (GLfloat *) malloc(width * height * sizeof(GLfloat) * 4);
+      tmpImage = malloc(width * height * sizeof(GLfloat) * 4);
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
@@ -286,7 +286,7 @@ copy_depth_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
 
    if (overlapping) {
       GLint ssy = sy;
-      tmpImage = (GLfloat *) malloc(width * height * sizeof(GLfloat));
+      tmpImage = malloc(width * height * sizeof(GLfloat));
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
@@ -303,7 +303,7 @@ copy_depth_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
       p = NULL;
    }
 
-   depth = (GLfloat *) malloc(width * sizeof(GLfloat));
+   depth = malloc(width * sizeof(GLfloat));
    if (!depth) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels()");
       goto end;
@@ -383,7 +383,7 @@ copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
 
    if (overlapping) {
       GLint ssy = sy;
-      tmpImage = (GLubyte *) malloc(width * height * sizeof(GLubyte));
+      tmpImage = malloc(width * height * sizeof(GLubyte));
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
@@ -400,7 +400,7 @@ copy_stencil_pixels( struct gl_context *ctx, GLint srcx, GLint srcy,
       p = NULL;
    }
 
-   stencil = (GLubyte *) malloc(width * sizeof(GLubyte));
+   stencil = malloc(width * sizeof(GLubyte));
    if (!stencil) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels()");
       goto end;

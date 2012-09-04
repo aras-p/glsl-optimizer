@@ -51,7 +51,7 @@ _mesa_get_cpu_string(void)
 #define MAX_STRING 50
    char *buffer;
 
-   buffer = (char *) malloc(MAX_STRING);
+   buffer = malloc(MAX_STRING);
    if (!buffer)
       return NULL;
 

@@ -244,7 +244,7 @@ static char *
 str_dup(const char *str)
 {
    char *copy;
-   copy = (char*) malloc(strlen(str) + 1);
+   copy = malloc(strlen(str) + 1);
    if (!copy)
       return NULL;
    strcpy(copy, str);

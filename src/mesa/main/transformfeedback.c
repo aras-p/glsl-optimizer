@@ -643,7 +643,7 @@ _mesa_TransformFeedbackVaryings(GLuint program, GLsizei count,
 
    /* allocate new memory for varying names */
    shProg->TransformFeedback.VaryingNames =
-      (GLchar **) malloc(count * sizeof(GLchar *));
+      malloc(count * sizeof(GLchar *));
 
    if (!shProg->TransformFeedback.VaryingNames) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTransformFeedbackVaryings()");

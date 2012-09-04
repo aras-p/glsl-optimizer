@@ -201,7 +201,7 @@ r100CreateContext( gl_api api,
    assert(screen);
 
    /* Allocate the Radeon context */
-   rmesa = (r100ContextPtr) calloc(1, sizeof(*rmesa));
+   rmesa = calloc(1, sizeof(*rmesa));
    if ( !rmesa ) {
       *error = __DRI_CTX_ERROR_NO_MEMORY;
       return GL_FALSE;

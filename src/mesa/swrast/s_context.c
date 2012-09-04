@@ -720,7 +720,7 @@ GLboolean
 _swrast_CreateContext( struct gl_context *ctx )
 {
    GLuint i;
-   SWcontext *swrast = (SWcontext *) calloc(1, sizeof(SWcontext));
+   SWcontext *swrast = calloc(1, sizeof(SWcontext));
 #ifdef _OPENMP
    const GLuint maxThreads = omp_get_max_threads();
 #else
@@ -775,7 +775,7 @@ _swrast_CreateContext( struct gl_context *ctx )
     * using multiple threads, it is necessary to have one SpanArrays instance
     * per thread.
     */
-   swrast->SpanArrays = (SWspanarrays *) malloc(maxThreads * sizeof(SWspanarrays));
+   swrast->SpanArrays = malloc(maxThreads * sizeof(SWspanarrays));
    if (!swrast->SpanArrays) {
       free(swrast);
       return GL_FALSE;
@@ -803,10 +803,10 @@ _swrast_CreateContext( struct gl_context *ctx )
 
    ctx->swrast_context = swrast;
 
-   swrast->stencil_temp.buf1 = (GLubyte *) malloc(SWRAST_MAX_WIDTH * sizeof(GLubyte));
-   swrast->stencil_temp.buf2 = (GLubyte *) malloc(SWRAST_MAX_WIDTH * sizeof(GLubyte));
-   swrast->stencil_temp.buf3 = (GLubyte *) malloc(SWRAST_MAX_WIDTH * sizeof(GLubyte));
-   swrast->stencil_temp.buf4 = (GLubyte *) malloc(SWRAST_MAX_WIDTH * sizeof(GLubyte));
+   swrast->stencil_temp.buf1 = malloc(SWRAST_MAX_WIDTH * sizeof(GLubyte));
+   swrast->stencil_temp.buf2 = malloc(SWRAST_MAX_WIDTH * sizeof(GLubyte));
+   swrast->stencil_temp.buf3 = malloc(SWRAST_MAX_WIDTH * sizeof(GLubyte));
+   swrast->stencil_temp.buf4 = malloc(SWRAST_MAX_WIDTH * sizeof(GLubyte));
 
    if (!swrast->stencil_temp.buf1 ||
        !swrast->stencil_temp.buf2 ||

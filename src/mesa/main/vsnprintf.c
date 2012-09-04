@@ -67,7 +67,7 @@ msetup(str, n)
 		return NULL;
 	if (pgsize == 0)
 		pgsize = getpagesize();
-	curobj = (char *)malloc(n + EXTRABYTES + pgsize * 2);
+	curobj = malloc(n + EXTRABYTES + pgsize * 2);
 	if (curobj == NULL)
 		return NULL;
 	e = curobj + n + EXTRABYTES;

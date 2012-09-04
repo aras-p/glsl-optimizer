@@ -87,7 +87,7 @@ void _tnl_register_fastpath( struct tnl_clipspace *vtx,
    fastpath->attr_count = vtx->attr_count;
    fastpath->match_strides = match_strides;
    fastpath->func = vtx->emit;
-   fastpath->attr = (struct tnl_attr_type *)
+   fastpath->attr =
       malloc(vtx->attr_count * sizeof(fastpath->attr[0]));
 
    for (i = 0; i < vtx->attr_count; i++) {
@@ -495,7 +495,7 @@ void _tnl_init_vertices( struct gl_context *ctx,
    if (max_vertex_size > vtx->max_vertex_size) {
       _tnl_free_vertices( ctx );
       vtx->max_vertex_size = max_vertex_size;
-      vtx->vertex_buf = (GLubyte *)_mesa_align_calloc(vb_size * max_vertex_size, 32 );
+      vtx->vertex_buf = _mesa_align_calloc(vb_size * max_vertex_size, 32 );
       invalidate_funcs(vtx);
    }
 

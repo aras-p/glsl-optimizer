@@ -224,7 +224,7 @@ compute_version(struct gl_context *ctx)
 
    override_version(ctx);
 
-   ctx->VersionString = (char *) malloc(max);
+   ctx->VersionString = malloc(max);
    if (ctx->VersionString) {
       _mesa_snprintf(ctx->VersionString, max,
 		     "%u.%u Mesa " MESA_VERSION_STRING
@@ -256,7 +256,7 @@ compute_version_es1(struct gl_context *ctx)
       _mesa_problem(ctx, "Incomplete OpenGL ES 1.0 support.");
    }
 
-   ctx->VersionString = (char *) malloc(max);
+   ctx->VersionString = malloc(max);
    if (ctx->VersionString) {
       _mesa_snprintf(ctx->VersionString, max,
 		     "OpenGL ES-CM 1.%d Mesa " MESA_VERSION_STRING
@@ -289,7 +289,7 @@ compute_version_es2(struct gl_context *ctx)
       _mesa_problem(ctx, "Incomplete OpenGL ES 2.0 support.");
    }
 
-   ctx->VersionString = (char *) malloc(max);
+   ctx->VersionString = malloc(max);
    if (ctx->VersionString) {
       _mesa_snprintf(ctx->VersionString, max,
 		     "OpenGL ES 2.0 Mesa " MESA_VERSION_STRING

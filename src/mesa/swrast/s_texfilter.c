@@ -1618,7 +1618,7 @@ create_filter_table(void)
 {
    GLuint i;
    if (!weightLut) {
-      weightLut = (GLfloat *) malloc(WEIGHT_LUT_SIZE * sizeof(GLfloat));
+      weightLut = malloc(WEIGHT_LUT_SIZE * sizeof(GLfloat));
 
       for (i = 0; i < WEIGHT_LUT_SIZE; ++i) {
          GLfloat alpha = 2;

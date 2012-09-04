@@ -2078,7 +2078,7 @@ _mesa_unpack_ubyte_rgba_row(gl_format format, GLuint n,
    default:
       /* get float values, convert to ubyte */
       {
-         GLfloat *tmp = (GLfloat *) malloc(n * 4 * sizeof(GLfloat));
+         GLfloat *tmp = malloc(n * 4 * sizeof(GLfloat));
          if (tmp) {
             GLuint i;
             _mesa_unpack_rgba_row(format, n, src, (GLfloat (*)[4]) tmp);

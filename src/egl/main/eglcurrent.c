@@ -156,7 +156,7 @@ _eglInitThreadInfo(_EGLThreadInfo *t)
 static _EGLThreadInfo *
 _eglCreateThreadInfo(void)
 {
-   _EGLThreadInfo *t = (_EGLThreadInfo *) calloc(1, sizeof(_EGLThreadInfo));
+   _EGLThreadInfo *t = calloc(1, sizeof(_EGLThreadInfo));
    if (t)
       _eglInitThreadInfo(t);
    else

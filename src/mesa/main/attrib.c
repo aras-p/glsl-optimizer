@@ -398,7 +398,7 @@ _mesa_PushAttrib(GLbitfield mask)
 
    if (mask & GL_POLYGON_STIPPLE_BIT) {
       GLuint *stipple;
-      stipple = (GLuint *) malloc( 32*sizeof(GLuint) );
+      stipple = malloc( 32*sizeof(GLuint) );
       memcpy( stipple, ctx->PolygonStipple, 32*sizeof(GLuint) );
       save_attrib_data(&head, GL_POLYGON_STIPPLE_BIT, stipple);
    }

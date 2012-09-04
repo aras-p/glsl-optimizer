@@ -69,7 +69,7 @@ _mesa_init_instructions(struct prog_instruction *inst, GLuint count)
 struct prog_instruction *
 _mesa_alloc_instructions(GLuint numInst)
 {
-   return (struct prog_instruction *)
+   return
       calloc(1, numInst * sizeof(struct prog_instruction));
 }
 

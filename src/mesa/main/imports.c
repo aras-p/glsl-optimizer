@@ -97,7 +97,7 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 
    ASSERT( alignment > 0 );
 
-   ptr = (uintptr_t) malloc(bytes + alignment + sizeof(void *));
+   ptr = malloc(bytes + alignment + sizeof(void *));
    if (!ptr)
       return NULL;
 
@@ -146,7 +146,7 @@ _mesa_align_calloc(size_t bytes, unsigned long alignment)
 
    ASSERT( alignment > 0 );
 
-   ptr = (uintptr_t) calloc(1, bytes + alignment + sizeof(void *));
+   ptr = calloc(1, bytes + alignment + sizeof(void *));
    if (!ptr)
       return NULL;
 
@@ -527,7 +527,7 @@ _mesa_strdup( const char *s )
 {
    if (s) {
       size_t l = strlen(s);
-      char *s2 = (char *) malloc(l + 1);
+      char *s2 = malloc(l + 1);
       if (s2)
          strcpy(s2, s);
       return s2;

@@ -89,7 +89,7 @@ __indirect_glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride,
       if (stride != k) {
          GLubyte *buf;
 
-         buf = (GLubyte *) malloc(compsize);
+         buf = malloc(compsize);
          if (!buf) {
             __glXSetError(gc, GL_OUT_OF_MEMORY);
             return;
@@ -152,7 +152,7 @@ __indirect_glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride,
       if (stride != k) {
          GLubyte *buf;
 
-         buf = (GLubyte *) malloc(compsize);
+         buf = malloc(compsize);
          if (!buf) {
             __glXSetError(gc, GL_OUT_OF_MEMORY);
             return;
@@ -227,7 +227,7 @@ __indirect_glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustr,
       if ((vstr != k) || (ustr != k * vord)) {
          GLdouble *buf;
 
-         buf = (GLdouble *) malloc(compsize);
+         buf = malloc(compsize);
          if (!buf) {
             __glXSetError(gc, GL_OUT_OF_MEMORY);
             return;
@@ -303,7 +303,7 @@ __indirect_glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustr,
       if ((vstr != k) || (ustr != k * vord)) {
          GLfloat *buf;
 
-         buf = (GLfloat *) malloc(compsize);
+         buf = malloc(compsize);
          if (!buf) {
             __glXSetError(gc, GL_OUT_OF_MEMORY);
             return;

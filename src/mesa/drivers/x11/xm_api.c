@@ -171,7 +171,7 @@ bits_per_pixel( XMesaVisual xmv )
    /* Create a temporary XImage */
    img = XCreateImage( dpy, visinfo->visual, visinfo->depth,
 		       ZPixmap, 0,           /*format, offset*/
-		       (char*) malloc(8),    /*data*/
+		       malloc(8),    /*data*/
 		       1, 1,                 /*width, height*/
 		       32,                   /*bitmap_pad*/
 		       0                     /*bytes_per_line*/

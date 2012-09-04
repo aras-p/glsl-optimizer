@@ -208,7 +208,7 @@ _mesa_cpal_compressed_teximage2d(GLenum target, GLint level,
 
       /* allocate and fill dest image buffer */
       if (palette) {
-         image = (GLubyte *) malloc(num_texels * info->size);
+         image = malloc(num_texels * info->size);
          paletted_to_color(info, palette, indices, num_texels, image);
       }
 

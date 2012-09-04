@@ -68,7 +68,7 @@ __indirect_glGetSeparableFilter(GLenum target, GLenum format, GLenum type,
       heightsize = __glImageSize(height, 1, 1, format, type, 0);
 
       /* Allocate a holding buffer to transform the data from */
-      rowBuf = (GLubyte *) malloc(widthsize);
+      rowBuf = malloc(widthsize);
       if (!rowBuf) {
          /* Throw data away */
          _XEatData(dpy, compsize);
@@ -82,7 +82,7 @@ __indirect_glGetSeparableFilter(GLenum target, GLenum format, GLenum type,
          __glEmptyImage(gc, 1, width, 1, 1, format, type, rowBuf, row);
          free((char *) rowBuf);
       }
-      colBuf = (GLubyte *) malloc(heightsize);
+      colBuf = malloc(heightsize);
       if (!colBuf) {
          /* Throw data away */
          _XEatData(dpy, compsize - __GLX_PAD(widthsize));
@@ -155,7 +155,7 @@ void gl_dispatch_stub_GetSeparableFilterEXT (GLenum target, GLenum format,
             const GLint heightsize =
                __glImageSize(height, 1, 1, format, type, 0);
             GLubyte *const buf =
-               (GLubyte *) malloc((widthsize > heightsize) ? widthsize : heightsize);
+               malloc((widthsize > heightsize) ? widthsize : heightsize);
 
             if (buf == NULL) {
                /* Throw data away */

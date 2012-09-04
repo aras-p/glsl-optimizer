@@ -99,7 +99,7 @@ _mesa_uniform_attach_driver_storage(struct gl_uniform_storage *uni,
 				    enum gl_uniform_driver_format format,
 				    void *data)
 {
-   uni->driver_storage = (struct gl_uniform_driver_storage*)
+   uni->driver_storage =
       realloc(uni->driver_storage,
 	      sizeof(struct gl_uniform_driver_storage)
 	      * (uni->num_driver_storage + 1));

@@ -210,7 +210,7 @@ void compute_memory_grow_pool(struct compute_memory_pool* pool,
 		COMPUTE_DBG("  Aligned size = %d\n", new_size_in_dw);
 
 		compute_memory_shadow(pool, pipe, 1);
-		pool->shadow = (uint32_t*)realloc(pool->shadow, new_size_in_dw*4);
+		pool->shadow = realloc(pool->shadow, new_size_in_dw*4);
 		pool->size_in_dw = new_size_in_dw;
 		pool->screen->screen.resource_destroy(
 			(struct pipe_screen *)pool->screen,

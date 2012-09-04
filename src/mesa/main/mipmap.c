@@ -1939,7 +1939,7 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
       }
 
       /* Map src texture image slices */
-      srcMaps = (GLubyte **) calloc(srcDepth, sizeof(GLubyte *));
+      srcMaps = calloc(srcDepth, sizeof(GLubyte *));
       if (srcMaps) {
          for (slice = 0; slice < srcDepth; slice++) {
             ctx->Driver.MapTextureImage(ctx, srcImage, slice,
@@ -1957,7 +1957,7 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
       }
 
       /* Map dst texture image slices */
-      dstMaps = (GLubyte **) calloc(dstDepth, sizeof(GLubyte *));
+      dstMaps = calloc(dstDepth, sizeof(GLubyte *));
       if (dstMaps) {
          for (slice = 0; slice < dstDepth; slice++) {
             ctx->Driver.MapTextureImage(ctx, dstImage, slice,
@@ -2053,7 +2053,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
    /* allocate storage for the temporary, uncompressed image */
    /* 20 extra bytes, just be safe when calling last FetchTexel */
    temp_src_stride = _mesa_format_row_stride(temp_format, srcImage->Width);
-   temp_src = (GLubyte *) malloc(temp_src_stride * srcImage->Height + 20);
+   temp_src = malloc(temp_src_stride * srcImage->Height + 20);
    if (!temp_src) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
       return;
@@ -2102,7 +2102,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
 
       temp_dst_stride = _mesa_format_row_stride(temp_format, dstWidth);
       if (!temp_dst) {
-	 temp_dst = (GLubyte *) malloc(temp_dst_stride * dstHeight);
+	 temp_dst = malloc(temp_dst_stride * dstHeight);
 	 if (!temp_dst) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
 	    break;

@@ -58,7 +58,7 @@ static void refill_pool(struct memory_pool * pool)
 	if (!blocksize)
 		blocksize = 2*POOL_LARGE_ALLOC;
 
-	newblock = (struct memory_block*)malloc(blocksize);
+	newblock = malloc(blocksize);
 	newblock->next = pool->blocks;
 	pool->blocks = newblock;
 
@@ -85,7 +85,7 @@ void * memory_pool_malloc(struct memory_pool * pool, unsigned int bytes)
 
 		return ptr;
 	} else {
-		struct memory_block * block = (struct memory_block*)malloc(bytes + sizeof(struct memory_block));
+		struct memory_block * block = malloc(bytes + sizeof(struct memory_block));
 
 		block->next = pool->blocks;
 		pool->blocks = block;

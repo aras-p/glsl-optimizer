@@ -382,7 +382,7 @@ static BOOL wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar,
     
     VERIFY(GetTextMetrics(fontDevice, &metric));
     
-    dibInfo = (BITMAPINFO *) calloc(sizeof(BITMAPINFO) + sizeof(RGBQUAD), 1);
+    dibInfo = calloc(sizeof(BITMAPINFO) + sizeof(RGBQUAD), 1);
     dibInfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     dibInfo->bmiHeader.biPlanes = 1;
     dibInfo->bmiHeader.biBitCount = 1;

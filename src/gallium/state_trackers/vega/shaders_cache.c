@@ -182,7 +182,7 @@ combine_shaders(const struct shader_asm_info *shaders[SHADER_STAGES], int num_sh
    out = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
 
    if (num_consts >= 1) {
-      constant = (struct ureg_src *) malloc(sizeof(struct ureg_src) * end_const);
+      constant = malloc(sizeof(struct ureg_src) * end_const);
       for (i = start_const; i < end_const; i++) {
          constant[i] = ureg_DECL_constant(ureg, i);
       }
@@ -190,14 +190,14 @@ combine_shaders(const struct shader_asm_info *shaders[SHADER_STAGES], int num_sh
    }
 
    if (num_temps >= 1) {
-      temp = (struct ureg_dst *) malloc(sizeof(struct ureg_dst) * end_temp);
+      temp = malloc(sizeof(struct ureg_dst) * end_temp);
       for (i = start_temp; i < end_temp; i++) {
          temp[i] = ureg_DECL_temporary(ureg);
       }
    }
 
    if (num_samplers >= 1) {
-      sampler = (struct ureg_src *) malloc(sizeof(struct ureg_src) * end_sampler);
+      sampler = malloc(sizeof(struct ureg_src) * end_sampler);
       for (i = start_sampler; i < end_sampler; i++) {
          sampler[i] = ureg_DECL_sampler(ureg, i);
       }

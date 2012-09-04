@@ -65,11 +65,11 @@ mmInit(unsigned ofs, unsigned size)
    if (!size) 
       return NULL;
 
-   heap = (struct mem_block *) calloc(1, sizeof(struct mem_block));
+   heap = calloc(1, sizeof(struct mem_block));
    if (!heap) 
       return NULL;
    
-   block = (struct mem_block *) calloc(1, sizeof(struct mem_block));
+   block = calloc(1, sizeof(struct mem_block));
    if (!block) {
       free(heap);
       return NULL;
@@ -103,7 +103,7 @@ SliceBlock(struct mem_block *p,
 
    /* break left  [p, newblock, p->next], then p = newblock */
    if (startofs > p->ofs) {
-      newblock = (struct mem_block*) calloc(1, sizeof(struct mem_block));
+      newblock = calloc(1, sizeof(struct mem_block));
       if (!newblock)
 	 return NULL;
       newblock->ofs = startofs;
@@ -127,7 +127,7 @@ SliceBlock(struct mem_block *p,
 
    /* break right, also [p, newblock, p->next] */
    if (size < p->size) {
-      newblock = (struct mem_block*) calloc(1, sizeof(struct mem_block));
+      newblock = calloc(1, sizeof(struct mem_block));
       if (!newblock)
 	 return NULL;
       newblock->ofs = startofs + size;

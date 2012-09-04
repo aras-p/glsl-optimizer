@@ -203,7 +203,7 @@ alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
 	    _mesa_warning(NULL, "alloc_back_buffer: XCreateImage failed.\n");
             return;
 	 }
-         b->backxrb->ximage->data = (char *) malloc(b->backxrb->ximage->height
+         b->backxrb->ximage->data = malloc(b->backxrb->ximage->height
                                         * b->backxrb->ximage->bytes_per_line);
          if (!b->backxrb->ximage->data) {
             _mesa_warning(NULL, "alloc_back_buffer: MALLOC failed.\n");
@@ -469,7 +469,7 @@ xmesa_MapRenderbuffer(struct gl_context *ctx,
             int bytes_per_line =
                _mesa_format_row_stride(xrb->Base.Base.Format,
                                        xrb->Base.Base.Width);
-            char *image = (char *) malloc(bytes_per_line *
+            char *image = malloc(bytes_per_line *
                                           xrb->Base.Base.Height);
             ximage = XCreateImage(xrb->Parent->display,
                                   xrb->Parent->xm_visual->visinfo->visual,

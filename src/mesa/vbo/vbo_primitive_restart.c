@@ -86,7 +86,7 @@ find_sub_primitives(const void *elements, unsigned element_size,
    GLuint scan_index;
    unsigned scan_num;
 
-   sub_prims = (struct sub_primitive *)
+   sub_prims =
       malloc(max_prims * sizeof(struct sub_primitive));
 
    if (!sub_prims) {

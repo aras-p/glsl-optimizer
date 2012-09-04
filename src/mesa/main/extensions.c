@@ -867,7 +867,7 @@ _mesa_make_extension_string(struct gl_context *ctx)
    if (extra_extensions != NULL)
       length += 1 + strlen(extra_extensions); /* +1 for space */
 
-   exts = (char *) calloc(ALIGN(length + 1, 4), sizeof(char));
+   exts = calloc(ALIGN(length + 1, 4), sizeof(char));
    if (exts == NULL) {
       free(extra_extensions);
       return NULL;

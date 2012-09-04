@@ -4981,7 +4981,7 @@ static void fc_set_mid(struct r600_shader_ctx *ctx, int fc_sp)
 {
 	struct r600_cf_stack_entry *sp = &ctx->bc->fc_stack[fc_sp];
 
-	sp->mid = (struct r600_bytecode_cf **)realloc((void *)sp->mid,
+	sp->mid = realloc((void *)sp->mid,
 						sizeof(struct r600_bytecode_cf *) * (sp->num_mid + 1));
 	sp->mid[sp->num_mid] = ctx->bc->cf_last;
 	sp->num_mid++;

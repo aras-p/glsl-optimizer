@@ -84,7 +84,7 @@ __glXSendLargeImage(struct glx_context * gc, GLint compsize, GLint dim,
                     GLubyte * pc, GLubyte * modes)
 {
     /* Allocate a temporary holding buffer */
-    GLubyte *buf = (GLubyte *) malloc(compsize);
+    GLubyte *buf = malloc(compsize);
     if (!buf) {
 	__glXSetError(gc, GL_OUT_OF_MEMORY);
 	return;
@@ -178,7 +178,7 @@ __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
       pc += hdrlen;
 
       /* Allocate a temporary holding buffer */
-      buf = (GLubyte *) malloc(bufsize);
+      buf = malloc(bufsize);
       if (!buf) {
          __glXSetError(gc, GL_OUT_OF_MEMORY);
          return;

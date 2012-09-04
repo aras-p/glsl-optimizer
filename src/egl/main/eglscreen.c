@@ -94,7 +94,7 @@ _eglInitScreen(_EGLScreen *screen, _EGLDisplay *dpy, EGLint num_modes)
 
    if (num_modes > _EGL_SCREEN_MAX_MODES)
       num_modes = _EGL_SCREEN_MAX_MODES;
-   screen->Modes = (_EGLMode *) calloc(num_modes, sizeof(*screen->Modes));
+   screen->Modes = calloc(num_modes, sizeof(*screen->Modes));
    screen->NumModes = (screen->Modes) ? num_modes : 0;
 }
 

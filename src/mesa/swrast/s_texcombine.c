@@ -98,14 +98,14 @@ texture_combine( struct gl_context *ctx, GLuint unit,
    GLchan (*rgbaChan)[4] = span->array->rgba;
 
    /* alloc temp pixel buffers */
-   rgba = (float4_array) malloc(4 * n * sizeof(GLfloat));
+   rgba = malloc(4 * n * sizeof(GLfloat));
    if (!rgba) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture_combine");
       return;
    }
 
    for (i = 0; i < numArgsRGB || i < numArgsA; i++) {
-      ccolor[i] = (float4_array) malloc(4 * n * sizeof(GLfloat));
+      ccolor[i] = malloc(4 * n * sizeof(GLfloat));
       if (!ccolor[i]) {
          while (i) {
             free(ccolor[i]);
@@ -611,7 +611,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
        * thread.
        */
       swrast->TexelBuffer =
-	 (GLfloat *) malloc(ctx->Const.MaxTextureImageUnits * maxThreads *
+	 malloc(ctx->Const.MaxTextureImageUnits * maxThreads *
 			    SWRAST_MAX_WIDTH * 4 * sizeof(GLfloat));
       if (!swrast->TexelBuffer) {
 	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture_combine");
@@ -619,7 +619,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
       }
    }
 
-   primary_rgba = (float4_array) malloc(span->end * 4 * sizeof(GLfloat));
+   primary_rgba = malloc(span->end * 4 * sizeof(GLfloat));
 
    if (!primary_rgba) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture_span");

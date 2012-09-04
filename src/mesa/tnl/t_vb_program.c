@@ -521,7 +521,7 @@ init_vp(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
 
    /* a few other misc allocations */
    _mesa_vector4f_alloc( &store->ndcCoords, 0, size, 32 );
-   store->clipmask = (GLubyte *) _mesa_align_malloc(sizeof(GLubyte)*size, 32 );
+   store->clipmask = _mesa_align_malloc(sizeof(GLubyte)*size, 32 );
 
    return GL_TRUE;
 }

@@ -266,7 +266,7 @@ _eglFindDisplay(_EGLPlatformType plat, void *plat_dpy)
 
    /* create a new display */
    if (!dpy) {
-      dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
+      dpy = calloc(1, sizeof(_EGLDisplay));
       if (dpy) {
          _eglInitMutex(&dpy->Mutex);
          dpy->Platform = plat;
