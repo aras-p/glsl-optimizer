@@ -711,7 +711,7 @@ DIFFERENT_SIGNS(GLfloat x, GLfloat y)
    fi_type xfi, yfi;
    xfi.f = x;
    yfi.f = y;
-   return (xfi.i ^ yfi.i) & (1u << 31);
+   return !!((xfi.i ^ yfi.i) & (1u << 31));
 #else
    /* Could just use (x*y<0) except for the flatshading requirements.
     * Maybe there's a better way?
