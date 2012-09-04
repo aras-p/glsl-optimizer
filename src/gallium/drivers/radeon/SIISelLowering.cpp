@@ -235,10 +235,10 @@ void SITargetLowering::LowerSI_KIL(MachineInstr *MI, MachineBasicBlock &BB,
 void SITargetLowering::LowerSI_V_CNDLT(MachineInstr *MI, MachineBasicBlock &BB,
     MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const
 {
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_CMP_LT_F32_e32),
+  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_CMP_GT_F32_e32),
           AMDGPU::VCC)
-          .addOperand(MI->getOperand(1))
-          .addReg(AMDGPU::SREG_LIT_0);
+          .addReg(AMDGPU::SREG_LIT_0)
+          .addOperand(MI->getOperand(1));
 
   BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::V_CNDMASK_B32))
           .addOperand(MI->getOperand(0))
