@@ -2107,6 +2107,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 			  S_008F1C_BASE_LEVEL(state->u.tex.first_level) |
 			  S_008F1C_LAST_LEVEL(state->u.tex.last_level) |
 			  S_008F1C_TILING_INDEX(tiling_index) |
+			  S_008F1C_POW2_PAD(texture->last_level > 0) |
 			  S_008F1C_TYPE(si_tex_dim(texture->target)));
 	view->state[4] = (S_008F20_DEPTH(depth - 1) | S_008F20_PITCH(pitch - 1));
 	view->state[5] = (S_008F24_BASE_ARRAY(state->u.tex.first_layer) |
