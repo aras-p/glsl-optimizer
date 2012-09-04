@@ -908,7 +908,6 @@ AC_SUBST([GLAPI_LIB_DEPS])
 
 
 DRI_LIB_DEPS="\$(top_builddir)/src/mesa/libdricore/libdricore${VERSION}.la"
-GALLIUM_DRI_LIB_DEPS="\$(TOP)/\$(LIB_DIR)/libdricore${VERSION}.so"
 
 AC_SUBST([HAVE_XF86VIDMODE])
 
