@@ -48,6 +48,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::SETCC, MVT::i32, Custom);
   setOperationAction(ISD::SETCC, MVT::f32, Custom);
+  setOperationAction(ISD::FP_TO_UINT, MVT::i1, Custom);
   setSchedulingPreference(Sched::VLIW);
 }
 
@@ -328,6 +329,27 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
   }
   } // end switch(Op.getOpcode())
   return SDValue();
+}
+
+void R600TargetLowering::ReplaceNodeResults(SDNode *N,
+                                            SmallVectorImpl<SDValue> &Results, 
+                                            SelectionDAG &DAG) const
+{
+  switch (N->getOpcode()) {
+  default: return;
+  case ISD::FP_TO_UINT: Results.push_back(LowerFPTOUINT(N->getOperand(0), DAG));
+  }
+}
+
+SDValue R600TargetLowering::LowerFPTOUINT(SDValue Op, SelectionDAG &DAG) const
+{
+  return DAG.getNode(
+      ISD::SETCC,
+      Op.getDebugLoc(),
+      MVT::i1,
+      Op, DAG.getConstantFP(0.0f, MVT::f32),
+      DAG.getCondCode(ISD::SETNE)
+      );
 }
 
 SDValue R600TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const
