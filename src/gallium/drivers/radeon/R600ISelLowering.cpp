@@ -441,32 +441,32 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
   // necessary we need to convert LHS and RHS to be the same type True and
   // False.  True and False are guaranteed to have the same type as this
   // SELECT_CC node.
-
-  if (CompareVT !=  VT) {
-    ISD::NodeType ConversionOp = ISD::DELETED_NODE;
-    if (VT == MVT::f32 && CompareVT == MVT::i32) {
-      if (isUnsignedIntSetCC(CCOpcode)) {
-        ConversionOp = ISD::UINT_TO_FP;
+  
+  if (isHWTrueValue(True) && isHWFalseValue(False)) {
+    if (CompareVT !=  VT) {
+      if (VT == MVT::f32 && CompareVT == MVT::i32) {
+        SDValue Boolean = DAG.getNode(ISD::SELECT_CC, DL, CompareVT,
+            LHS, RHS,
+            DAG.getConstant(-1, MVT::i32),
+            DAG.getConstant(0, MVT::i32),
+            CC);
+        return DAG.getNode(ISD::UINT_TO_FP, DL, VT, Boolean);
+      } else if (VT == MVT::i32 && CompareVT == MVT::f32) {
+        SDValue BoolAsFlt = DAG.getNode(ISD::SELECT_CC, DL, CompareVT,
+            LHS, RHS,
+            DAG.getConstantFP(1.0f, MVT::f32),
+            DAG.getConstantFP(0.0f, MVT::f32),
+            CC);
+        return DAG.getNode(ISD::FP_TO_UINT, DL, VT, BoolAsFlt);
       } else {
-        ConversionOp = ISD::SINT_TO_FP;
+        // I don't think there will be any other type pairings.
+        assert(!"Unhandled operand type parings in SELECT_CC");
       }
-    } else if (VT == MVT::i32 && CompareVT == MVT::f32) {
-      ConversionOp = ISD::FP_TO_SINT;
     } else {
-      // I don't think there will be any other type pairings.
-      assert(!"Unhandled operand type parings in SELECT_CC");
+      return DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, True, False, CC);
     }
-    // XXX Check the value of LHS and RHS and avoid creating sequences like
-    // (FTOI (ITOF))
-    LHS = DAG.getNode(ConversionOp, DL, VT, LHS);
-    RHS = DAG.getNode(ConversionOp, DL, VT, RHS);
   }
 
-  // If True is a hardware TRUE value and False is a hardware FALSE value or
-  // vice-versa we can handle this with a native instruction (SET* instructions).
-  if ((isHWTrueValue(True) && isHWFalseValue(False))) {
-    return DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, True, False, CC);
-  }
 
   // XXX If True is a hardware TRUE value and False is a hardware FALSE value,
   // we can handle this with a native instruction, but we need to swap true
