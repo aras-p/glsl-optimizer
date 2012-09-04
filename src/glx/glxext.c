@@ -230,10 +230,8 @@ glx_display_free(struct glx_display *priv)
    }
 
    FreeScreenConfigs(priv);
-   if (priv->serverGLXvendor)
-      free((char *) priv->serverGLXvendor);
-   if (priv->serverGLXversion)
-      free((char *) priv->serverGLXversion);
+   free((char *) priv->serverGLXvendor);
+   free((char *) priv->serverGLXversion);
 
    __glxHashDestroy(priv->glXDrawHash);
 
@@ -740,8 +738,7 @@ glx_screen_cleanup(struct glx_screen *psc)
 {
    if (psc->configs) {
       glx_config_destroy_list(psc->configs);
-      if (psc->effectiveGLXexts)
-          free(psc->effectiveGLXexts);
+      free(psc->effectiveGLXexts);
       psc->configs = NULL;   /* NOTE: just for paranoia */
    }
    if (psc->visuals) {

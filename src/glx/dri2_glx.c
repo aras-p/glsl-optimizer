@@ -126,8 +126,7 @@ dri2_destroy_context(struct glx_context *context)
 
    driReleaseDrawables(&pcp->base);
 
-   if (context->extensions)
-      free((char *) context->extensions);
+   free((char *) context->extensions);
 
    (*psc->core->destroyContext) (pcp->driContext);
 
@@ -313,8 +312,7 @@ dri2_create_context_attribs(struct glx_screen *base,
    return &pcp->base;
 
 error_exit:
-   if (pcp != NULL)
-      free(pcp);
+   free(pcp);
 
    return NULL;
 }

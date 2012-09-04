@@ -226,8 +226,6 @@ vbo_sw_primitive_restart(struct gl_context *ctx,
       }
    }
 
-   if (sub_prims) {
-      free(sub_prims);
-   }
+   free(sub_prims);
 }
 

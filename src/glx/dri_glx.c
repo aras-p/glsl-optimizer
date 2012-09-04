@@ -495,8 +495,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
    if (framebuffer.base != MAP_FAILED)
       drmUnmap((drmAddress) framebuffer.base, framebuffer.size);
 
-   if (framebuffer.dev_priv != NULL)
-      free(framebuffer.dev_priv);
+   free(framebuffer.dev_priv);
 
    if (fd >= 0)
       drmCloseOnce(fd);
@@ -516,8 +515,7 @@ dri_destroy_context(struct glx_context * context)
 
    driReleaseDrawables(&pcp->base);
 
-   if (context->extensions)
-      free((char *) context->extensions);
+   free((char *) context->extensions);
 
    (*psc->core->destroyContext) (pcp->driContext);
 

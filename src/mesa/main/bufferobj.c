@@ -264,8 +264,7 @@ _mesa_delete_buffer_object(struct gl_context *ctx,
 {
    (void) ctx;
 
-   if (bufObj->Data)
-      free(bufObj->Data);
+   free(bufObj->Data);
 
    /* assign strange values here to help w/ debugging */
    bufObj->RefCount = -1000;

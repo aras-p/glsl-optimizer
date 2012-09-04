@@ -835,8 +835,7 @@ fallback_copy_texsubimage(struct gl_context *ctx,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
       }
 
-      if (tempSrc)
-         free(tempSrc);
+      free(tempSrc);
    }
 
    st_texture_image_unmap(st, stImage);

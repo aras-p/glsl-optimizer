@@ -144,10 +144,8 @@ _swrast_free_texture_image_buffer(struct gl_context *ctx,
       swImage->Buffer = NULL;
    }
 
-   if (swImage->ImageOffsets) {
-      free(swImage->ImageOffsets);
-      swImage->ImageOffsets = NULL;
-   }
+   free(swImage->ImageOffsets);
+   swImage->ImageOffsets = NULL;
 }
 
 

@@ -611,8 +611,7 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
       close(dri2_dpy->fd);
    if (dri2_dpy->driver)
       dlclose(dri2_dpy->driver);
-   if (dri2_dpy->device_name)
-      free(dri2_dpy->device_name);
+   free(dri2_dpy->device_name);
 
    if (disp->PlatformDisplay == NULL) {
       switch (disp->Platform) {

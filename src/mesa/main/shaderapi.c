@@ -703,9 +703,7 @@ shader_source(struct gl_context *ctx, GLuint shader, const GLchar *source)
       return;
 
    /* free old shader source string and install new one */
-   if (sh->Source) {
-      free((void *) sh->Source);
-   }
+   free((void *)sh->Source);
    sh->Source = source;
    sh->CompileStatus = GL_FALSE;
 #ifdef DEBUG

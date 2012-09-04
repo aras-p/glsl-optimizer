@@ -255,8 +255,7 @@ drisw_destroy_context(struct glx_context *context)
 
    driReleaseDrawables(&pcp->base);
 
-   if (context->extensions)
-      free((char *) context->extensions);
+   free((char *) context->extensions);
 
    (*psc->core->destroyContext) (pcp->driContext);
 

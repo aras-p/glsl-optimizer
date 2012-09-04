@@ -779,9 +779,7 @@ choose_x_overlay_visual( Display *dpy, int scr,
 
       if (deepvis==NULL || vislist->depth > deepest) {
          /* YES!  found a satisfactory visual */
-         if (deepvis) {
-            free(deepvis);
-         }
+         free(deepvis);
          deepest = vislist->depth;
          deepvis = vislist;
          /* DEBUG  tt = ov->transparent_type;*/

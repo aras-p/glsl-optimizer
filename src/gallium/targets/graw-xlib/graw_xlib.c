@@ -157,8 +157,7 @@ fail:
    if (xlib_handle)
       FREE(xlib_handle);
 
-   if (visinfo)
-      free(visinfo);
+   free(visinfo);
 
    if (win)
       XDestroyWindow(graw.display, win);

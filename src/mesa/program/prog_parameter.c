@@ -80,8 +80,7 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
 {
    GLuint i;
    for (i = 0; i < paramList->NumParameters; i++) {
-      if (paramList->Parameters[i].Name)
-	 free((void *) paramList->Parameters[i].Name);
+      free((void *)paramList->Parameters[i].Name);
    }
    free(paramList->Parameters);
    if (paramList->ParameterValues)

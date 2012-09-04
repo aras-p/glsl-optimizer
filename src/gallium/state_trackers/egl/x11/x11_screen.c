@@ -95,10 +95,8 @@ x11_screen_destroy(struct x11_screen *xscr)
 {
    if (xscr->dri_fd >= 0)
       close(xscr->dri_fd);
-   if (xscr->dri_driver)
-      free(xscr->dri_driver);
-   if (xscr->dri_device)
-      free(xscr->dri_device);
+   free(xscr->dri_driver);
+   free(xscr->dri_device);
 
 #ifdef GLX_DIRECT_RENDERING
    /* xscr->glx_dpy will be destroyed with the X display */
@@ -106,8 +104,7 @@ x11_screen_destroy(struct x11_screen *xscr)
       xscr->glx_dpy->xscr = NULL;
 #endif
 
-   if (xscr->visuals)
-      free(xscr->visuals);
+   free(xscr->visuals);
    FREE(xscr);
 }
 

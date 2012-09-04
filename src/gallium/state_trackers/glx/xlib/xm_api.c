@@ -168,10 +168,8 @@ xmesa_init_display( Display *display )
             xmdpy->screen->destroy(xmdpy->screen);
             xmdpy->screen = NULL;
          }
-         if (xmdpy->smapi) {
-            free(xmdpy->smapi);
-            xmdpy->smapi = NULL;
-         }
+         free(xmdpy->smapi);
+         xmdpy->smapi = NULL;
 
          xmdpy->display = NULL;
       }

@@ -829,8 +829,7 @@ _swrast_DestroyContext( struct gl_context *ctx )
    }
 
    free( swrast->SpanArrays );
-   if (swrast->ZoomedArrays)
-      free( swrast->ZoomedArrays );
+   free( swrast->ZoomedArrays );
    free( swrast->TexelBuffer );
 
    free(swrast->stencil_temp.buf1);

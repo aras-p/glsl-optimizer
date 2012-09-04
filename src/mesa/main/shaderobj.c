@@ -124,8 +124,7 @@ _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
 static void
 _mesa_delete_shader(struct gl_context *ctx, struct gl_shader *sh)
 {
-   if (sh->Source)
-      free((void *) sh->Source);
+   free((void *)sh->Source);
    _mesa_reference_program(ctx, &sh->Program, NULL);
    ralloc_free(sh);
 }
@@ -333,10 +332,8 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
    }
    shProg->NumShaders = 0;
 
-   if (shProg->Shaders) {
-      free(shProg->Shaders);
-      shProg->Shaders = NULL;
-   }
+   free(shProg->Shaders);
+   shProg->Shaders = NULL;
 
    /* Transform feedback varying vars */
    for (i = 0; i < shProg->TransformFeedback.NumVarying; i++) {

@@ -382,8 +382,7 @@ _mesa_delete_program(struct gl_context *ctx, struct gl_program *prog)
    if (prog == &_mesa_DummyProgram)
       return;
 
-   if (prog->String)
-      free(prog->String);
+   free(prog->String);
 
    if (prog->Instructions) {
       _mesa_free_instructions(prog->Instructions, prog->NumInstructions);

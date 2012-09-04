@@ -203,8 +203,7 @@ static void radeon_destroy_atom_list(radeonContextPtr radeon)
 
 	foreach(atom, &radeon->hw.atomlist) {
 		free(atom->cmd);
-		if (atom->lastcmd)
-			free(atom->lastcmd);
+		free(atom->lastcmd);
 	}
 
 }

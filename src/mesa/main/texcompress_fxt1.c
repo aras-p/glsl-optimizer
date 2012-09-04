@@ -1361,9 +1361,7 @@ fxt1_encode (GLuint width, GLuint height, GLint comps,
    }
 
  cleanUp:
-   if (newSource != NULL) {
-      free(newSource);
-   }
+   free(newSource);
 }
 
 

@@ -717,10 +717,8 @@ intel_buffer_object_purgeable(struct gl_context * ctx,
       return intel_buffer_purgeable(intel_obj->buffer);
 
    if (option == GL_RELEASED_APPLE) {
-      if (intel_obj->sys_buffer != NULL) {
-         free(intel_obj->sys_buffer);
-         intel_obj->sys_buffer = NULL;
-      }
+      free(intel_obj->sys_buffer);
+      intel_obj->sys_buffer = NULL;
 
       return GL_RELEASED_APPLE;
    } else {

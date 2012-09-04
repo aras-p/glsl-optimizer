@@ -989,8 +989,7 @@ void driParseConfigFiles (driOptionCache *cache, const driOptionCache *info,
 	XML_ParserFree (p);
     }
 
-    if (filenames[1])
-	free(filenames[1]);
+    free(filenames[1]);
 }
 
 void driDestroyOptionInfo (driOptionCache *info) {
@@ -1000,8 +999,7 @@ void driDestroyOptionInfo (driOptionCache *info) {
 	for (i = 0; i < size; ++i) {
 	    if (info->info[i].name) {
 		free(info->info[i].name);
-		if (info->info[i].ranges)
-		    free(info->info[i].ranges);
+		free(info->info[i].ranges);
 	    }
 	}
 	free(info->info);
@@ -1009,8 +1007,7 @@ void driDestroyOptionInfo (driOptionCache *info) {
 }
 
 void driDestroyOptionCache (driOptionCache *cache) {
-    if (cache->values)
-	free(cache->values);
+    free(cache->values);
 }
 
 GLboolean driCheckOption (const driOptionCache *cache, const char *name,

@@ -1577,10 +1577,8 @@ vbo_destroy_vertex_list(struct gl_context *ctx, void *data)
    if (--node->prim_store->refcount == 0)
       free(node->prim_store);
 
-   if (node->current_data) {
-      free(node->current_data);
-      node->current_data = NULL;
-   }
+   free(node->current_data);
+   node->current_data = NULL;
 }
 
 

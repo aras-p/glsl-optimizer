@@ -238,12 +238,9 @@ combine_shaders(const struct shader_asm_info *shaders[SHADER_STAGES], int num_sh
 
    ureg_destroy(ureg);
 
-   if (temp)
-      free(temp);
-   if (constant)
-      free(constant);
-   if (sampler)
-      free(sampler);
+   free(temp);
+   free(constant);
+   free(sampler);
 
    return p;
 }

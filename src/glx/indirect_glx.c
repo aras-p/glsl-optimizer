@@ -45,14 +45,10 @@ indirect_destroy_context(struct glx_context *gc)
 {
    __glXFreeVertexArrayState(gc);
 
-   if (gc->vendor)
-      free((char *) gc->vendor);
-   if (gc->renderer)
-      free((char *) gc->renderer);
-   if (gc->version)
-      free((char *) gc->version);
-   if (gc->extensions)
-      free((char *) gc->extensions);
+   free((char *) gc->vendor);
+   free((char *) gc->renderer);
+   free((char *) gc->version);
+   free((char *) gc->extensions);
    __glFreeAttributeState(gc);
    free((char *) gc->buf);
    free((char *) gc->client_state_private);

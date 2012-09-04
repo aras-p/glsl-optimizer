@@ -1158,11 +1158,9 @@ _mesa_free_context_data( struct gl_context *ctx )
 
    _mesa_free_errors_data(ctx);
 
-   if (ctx->Extensions.String)
-      free((void *) ctx->Extensions.String);
+   free((void *)ctx->Extensions.String);
 
-   if (ctx->VersionString)
-      free(ctx->VersionString);
+   free(ctx->VersionString);
 
    /* unbind the context if it's currently bound */
    if (ctx == _mesa_get_current_context()) {

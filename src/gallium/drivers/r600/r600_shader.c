@@ -4997,10 +4997,8 @@ static void fc_pushlevel(struct r600_shader_ctx *ctx, int type)
 static void fc_poplevel(struct r600_shader_ctx *ctx)
 {
 	struct r600_cf_stack_entry *sp = &ctx->bc->fc_stack[ctx->bc->fc_sp];
-	if (sp->mid) {
-		free(sp->mid);
-		sp->mid = NULL;
-	}
+	free(sp->mid);
+	sp->mid = NULL;
 	sp->num_mid = 0;
 	sp->start = NULL;
 	sp->type = 0;

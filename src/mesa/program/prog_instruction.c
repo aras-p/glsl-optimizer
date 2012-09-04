@@ -127,10 +127,8 @@ _mesa_free_instructions(struct prog_instruction *inst, GLuint count)
 {
    GLuint i;
    for (i = 0; i < count; i++) {
-      if (inst[i].Data)
-         free(inst[i].Data);
-      if (inst[i].Comment)
-         free((char *) inst[i].Comment);
+      free(inst[i].Data);
+      free((char *)inst[i].Comment);
    }
    free(inst);
 }

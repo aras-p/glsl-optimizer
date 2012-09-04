@@ -217,9 +217,7 @@ __glXFreeDisplayPrivate(XExtData * extension)
 
    priv = (__GLXdisplayPrivate *) extension->private_data;
    FreeScreenConfigs(priv);
-   if (priv->serverGLXversion)
-      free((char *) priv->serverGLXversion);
-
+   free((char *) priv->serverGLXversion);
    free((char *) priv);
    return 0;
 }

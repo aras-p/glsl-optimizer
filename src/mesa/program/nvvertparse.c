@@ -1382,14 +1382,10 @@ _mesa_parse_nv_vertex_program(struct gl_context *ctx, GLenum dstTarget,
 
       /* install the program */
       program->Base.Target = target;
-      if (program->Base.String) {
-         free(program->Base.String);
-      }
+      free(program->Base.String);
       program->Base.String = programString;
       program->Base.Format = GL_PROGRAM_FORMAT_ASCII_ARB;
-      if (program->Base.Instructions) {
-         free(program->Base.Instructions);
-      }
+      free(program->Base.Instructions);
       program->Base.Instructions = newInst;
       program->Base.InputsRead = parseState.inputsRead;
       if (parseState.isPositionInvariant)

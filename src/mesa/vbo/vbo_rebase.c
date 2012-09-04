@@ -242,11 +242,9 @@ void vbo_rebase_prims( struct gl_context *ctx,
    ctx->Array._DrawArrays = saved_arrays;
    ctx->NewDriverState |= ctx->DriverFlags.NewArray;
    
-   if (tmp_indices)
-      free(tmp_indices);
+   free(tmp_indices);
    
-   if (tmp_prims)
-      free(tmp_prims);
+   free(tmp_prims);
 }
 
 

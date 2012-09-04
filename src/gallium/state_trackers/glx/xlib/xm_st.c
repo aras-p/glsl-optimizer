@@ -278,10 +278,8 @@ xmesa_create_st_framebuffer(XMesaDisplay xmdpy, XMesaBuffer b)
    stfbi = CALLOC_STRUCT(st_framebuffer_iface);
    xstfb = CALLOC_STRUCT(xmesa_st_framebuffer);
    if (!stfbi || !xstfb) {
-      if (stfbi)
-         free(stfbi);
-      if (xstfb)
-         free(xstfb);
+      free(stfbi);
+      free(xstfb);
       return NULL;
    }
 

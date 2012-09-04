@@ -581,8 +581,7 @@ dri2_x11_authenticate(_EGLDisplay *disp, uint32_t id)
    if (authenticate == NULL || !authenticate->authenticated)
       ret = -1;
 
-   if (authenticate)
-      free(authenticate);
+   free(authenticate);
    
    return ret;
 }

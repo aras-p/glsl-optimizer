@@ -493,9 +493,7 @@ draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
       span.array->ChanType = CHAN_TYPE;
    }
 
-   if (convImage) {
-      free(convImage);
-   }
+   free(convImage);
 
    swrast_render_finish(ctx);
 }

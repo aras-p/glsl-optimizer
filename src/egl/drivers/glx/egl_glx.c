@@ -655,10 +655,8 @@ GLX_eglTerminate(_EGLDriver *drv, _EGLDisplay *disp)
    _eglReleaseDisplayResources(drv, disp);
    _eglCleanupDisplay(disp);
 
-   if (GLX_dpy->visuals)
-      free(GLX_dpy->visuals);
-   if (GLX_dpy->fbconfigs)
-      free(GLX_dpy->fbconfigs);
+   free(GLX_dpy->visuals);
+   free(GLX_dpy->fbconfigs);
 
    if (!disp->PlatformDisplay)
       XCloseDisplay(GLX_dpy->dpy);

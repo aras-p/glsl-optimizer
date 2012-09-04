@@ -83,10 +83,8 @@ _mesa_delete_ati_fragment_shader(struct gl_context *ctx, struct ati_fragment_sha
 {
    GLuint i;
    for (i = 0; i < MAX_NUM_PASSES_ATI; i++) {
-      if (s->Instructions[i])
-         free(s->Instructions[i]);
-      if (s->SetupInst[i])
-         free(s->SetupInst[i]);
+      free(s->Instructions[i]);
+      free(s->SetupInst[i]);
    }
    free(s);
 }
@@ -342,10 +340,8 @@ _mesa_BeginFragmentShaderATI(void)
       (or, could use the same mem but would need to reinitialize) */
    /* no idea if it's allowed to redefine a shader */
    for (i = 0; i < MAX_NUM_PASSES_ATI; i++) {
-         if (ctx->ATIFragmentShader.Current->Instructions[i])
-            free(ctx->ATIFragmentShader.Current->Instructions[i]);
-         if (ctx->ATIFragmentShader.Current->SetupInst[i])
-            free(ctx->ATIFragmentShader.Current->SetupInst[i]);
+         free(ctx->ATIFragmentShader.Current->Instructions[i]);
+         free(ctx->ATIFragmentShader.Current->SetupInst[i]);
    }
 
    /* malloc the instructions here - not sure if the best place but its

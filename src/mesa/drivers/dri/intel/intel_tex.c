@@ -150,10 +150,8 @@ intel_free_texture_image_buffer(struct gl_context * ctx,
       intelImage->base.Buffer = NULL;
    }
 
-   if (intelImage->base.ImageOffsets) {
-      free(intelImage->base.ImageOffsets);
-      intelImage->base.ImageOffsets = NULL;
-   }
+   free(intelImage->base.ImageOffsets);
+   intelImage->base.ImageOffsets = NULL;
 }
 
 /**

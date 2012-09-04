@@ -115,14 +115,10 @@ __glXFreeVertexArrayState(struct glx_context * gc)
    struct array_state_vector *arrays = state->array_state;
 
    if (arrays) {
-      if (arrays->stack) {
-         free(arrays->stack);
-         arrays->stack = NULL;
-      }
-      if (arrays->arrays) {
-         free(arrays->arrays);
-         arrays->arrays = NULL;
-      }
+      free(arrays->stack);
+      arrays->stack = NULL;
+      free(arrays->arrays);
+      arrays->arrays = NULL;
       free(arrays);
       state->array_state = NULL;
    }

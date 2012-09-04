@@ -148,10 +148,8 @@ void radeonFreeTextureImageBuffer(struct gl_context *ctx, struct gl_texture_imag
 		image->base.Buffer = NULL;
 	}
 
-	if (image->base.ImageOffsets) {
-		free(image->base.ImageOffsets);
-		image->base.ImageOffsets = NULL;
-	}
+	free(image->base.ImageOffsets);
+	image->base.ImageOffsets = NULL;
 }
 
 /* Set Data pointer and additional data for mapped texture image */

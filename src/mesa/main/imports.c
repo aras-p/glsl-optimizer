@@ -218,8 +218,7 @@ _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
    void *newBuffer = malloc(newSize);
    if (newBuffer && oldBuffer && copySize > 0)
       memcpy(newBuffer, oldBuffer, copySize);
-   if (oldBuffer)
-      free(oldBuffer);
+   free(oldBuffer);
    return newBuffer;
 }
 

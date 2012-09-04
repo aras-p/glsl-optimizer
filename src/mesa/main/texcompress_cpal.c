@@ -214,8 +214,7 @@ _mesa_cpal_compressed_teximage2d(GLenum target, GLint level,
 
       _mesa_TexImage2D(target, lvl, info->format, w, h, 0,
                        info->format, info->type, image);
-      if (image)
-         free(image);
+      free(image);
 
       /* advance index pointer to point to next src mipmap */
       if (info->palette_size == 16)
