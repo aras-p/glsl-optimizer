@@ -2062,6 +2062,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/targets/dri-swrast/Makefile
 		src/gallium/targets/dri-vmwgfx/Makefile
 		src/gallium/targets/opencl/Makefile
+		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/winsys/Makefile
 		src/gallium/winsys/i915/drm/Makefile
 		src/gallium/winsys/i915/sw/Makefile
