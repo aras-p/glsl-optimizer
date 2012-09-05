@@ -44,11 +44,9 @@ static void r600_emit_command_buffer(struct r600_context *rctx, struct r600_atom
 	cs->cdw += cb->atom.num_dw;
 }
 
-void r600_init_command_buffer(struct r600_command_buffer *cb, unsigned num_dw, enum r600_atom_flags flags)
+void r600_init_command_buffer(struct r600_context *rctx, struct r600_command_buffer *cb, unsigned id, unsigned num_dw)
 {
-	cb->atom.emit = r600_emit_command_buffer;
-	cb->atom.num_dw = 0;
-	cb->atom.flags = flags;
+	r600_init_atom(rctx, &cb->atom, id, r600_emit_command_buffer, 0);
 	cb->buf = CALLOC(1, 4 * num_dw);
 	cb->max_num_dw = num_dw;
 }
@@ -79,16 +77,22 @@ static void r600_emit_r6xx_flush_and_inv(struct r600_context *rctx, struct r600_
 	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 }
 
-void r600_init_atom(struct r600_atom *atom,
+void r600_init_atom(struct r600_context *rctx,
+		    struct r600_atom *atom,
+		    unsigned id,
 		    void (*emit)(struct r600_context *ctx, struct r600_atom *state),
-		    unsigned num_dw, enum r600_atom_flags flags)
+		    unsigned num_dw)
 {
+	assert(id < R600_MAX_ATOM);
+	assert(rctx->atoms[id] == NULL);
+	rctx->atoms[id] = atom;
+	atom->id = id;
 	atom->emit = emit;
 	atom->num_dw = num_dw;
-	atom->flags = flags;
+	atom->dirty = false;
 }
 
-static void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom)
+void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
 	struct r600_alphatest_state *a = (struct r600_alphatest_state*)atom;
@@ -106,10 +110,8 @@ static void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_ato
 
 void r600_init_common_atoms(struct r600_context *rctx)
 {
-	r600_init_atom(&rctx->surface_sync_cmd.atom,	r600_emit_surface_sync,		5, EMIT_EARLY);
-	r600_init_atom(&rctx->r6xx_flush_and_inv_cmd,	r600_emit_r6xx_flush_and_inv,	2, EMIT_EARLY);
-	r600_init_atom(&rctx->alphatest_state.atom,	r600_emit_alphatest_state,	6, 0);
-	r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+	r600_init_atom(rctx, &rctx->r6xx_flush_and_inv_cmd, 2, r600_emit_r6xx_flush_and_inv, 2);
+	r600_init_atom(rctx, &rctx->surface_sync_cmd.atom, 3, r600_emit_surface_sync, 5);
 }
 
 unsigned r600_get_cb_flush_flags(struct r600_context *rctx)
@@ -1127,9 +1129,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_draw_info info = *dinfo;
 	struct pipe_index_buffer ib = {};
-	unsigned prim, ls_mask = 0;
+	unsigned prim, ls_mask = 0, i;
 	struct r600_block *dirty_block = NULL, *next_block = NULL;
-	struct r600_atom *state = NULL, *next_state = NULL;
 	struct radeon_winsys_cs *cs = rctx->cs;
 	uint64_t va;
 	uint8_t *ptr;
@@ -1221,8 +1222,11 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 	/* Emit states (the function expects that we emit at most 17 dwords here). */
 	r600_need_cs_space(rctx, 0, TRUE);
 
-	LIST_FOR_EACH_ENTRY_SAFE(state, next_state, &rctx->dirty_states, head) {
-		r600_emit_atom(rctx, state);
+	for (i = 0; i < R600_MAX_ATOM; i++) {
+		if (rctx->atoms[i] == NULL || !rctx->atoms[i]->dirty) {
+			continue;
+		}
+		r600_emit_atom(rctx, rctx->atoms[i]);
 	}
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &rctx->dirty,list) {
 		r600_context_block_emit_dirty(rctx, dirty_block, 0 /* pkt_flags */);

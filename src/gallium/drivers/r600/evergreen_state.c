@@ -2161,26 +2161,49 @@ static void cayman_emit_sample_mask(struct r600_context *rctx, struct r600_atom 
 
 void evergreen_init_state_functions(struct r600_context *rctx)
 {
-	r600_init_atom(&rctx->cb_misc_state.atom, evergreen_emit_cb_misc_state, 0, 0);
-	r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
-	r600_init_atom(&rctx->db_misc_state.atom, evergreen_emit_db_misc_state, 7, 0);
-	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
-	r600_init_atom(&rctx->vertex_buffer_state.atom, evergreen_fs_emit_vertex_buffers, 0, 0);
-	r600_init_atom(&rctx->cs_vertex_buffer_state.atom, evergreen_cs_emit_vertex_buffers, 0, 0);
-	r600_init_atom(&rctx->vs_constbuf_state.atom, evergreen_emit_vs_constant_buffers, 0, 0);
-	r600_init_atom(&rctx->ps_constbuf_state.atom, evergreen_emit_ps_constant_buffers, 0, 0);
-	r600_init_atom(&rctx->vs_samplers.views.atom, evergreen_emit_vs_sampler_views, 0, 0);
-	r600_init_atom(&rctx->ps_samplers.views.atom, evergreen_emit_ps_sampler_views, 0, 0);
-	r600_init_atom(&rctx->cs_shader_state.atom, evergreen_emit_cs_shader, 0, 0);
-	r600_init_atom(&rctx->vs_samplers.atom_sampler, evergreen_emit_vs_sampler, 0, 0);
-	r600_init_atom(&rctx->ps_samplers.atom_sampler, evergreen_emit_ps_sampler, 0, 0);
+	unsigned id = 4;
 
-	if (rctx->chip_class == EVERGREEN)
-		r600_init_atom(&rctx->sample_mask.atom, evergreen_emit_sample_mask, 3, 0);
-	else
-		r600_init_atom(&rctx->sample_mask.atom, cayman_emit_sample_mask, 4, 0);
+	/* !!!
+	 *  To avoid GPU lockup registers must be emited in a specific order
+	 * (no kidding ...). The order below is important and have been
+	 * partialy infered from analyzing fglrx command stream.
+	 *
+	 * Don't reorder atom without carefully checking the effect (GPU lockup
+	 * or piglit regression).
+	 * !!!
+	 */
+
+	/* shader const */
+	r600_init_atom(rctx, &rctx->vs_constbuf_state.atom, id++, evergreen_emit_vs_constant_buffers, 0);
+	r600_init_atom(rctx, &rctx->ps_constbuf_state.atom, id++, evergreen_emit_ps_constant_buffers, 0);
+	/* shader program */
+	r600_init_atom(rctx, &rctx->cs_shader_state.atom, id++, evergreen_emit_cs_shader, 0);
+	/* sampler */
+	r600_init_atom(rctx, &rctx->vs_samplers.atom_sampler, id++, evergreen_emit_vs_sampler, 0);
+	r600_init_atom(rctx, &rctx->ps_samplers.atom_sampler, id++, evergreen_emit_ps_sampler, 0);
+	/* resources */
+	r600_init_atom(rctx, &rctx->vertex_buffer_state.atom, id++, evergreen_fs_emit_vertex_buffers, 0);
+	r600_init_atom(rctx, &rctx->cs_vertex_buffer_state.atom, id++, evergreen_cs_emit_vertex_buffers, 0);
+	r600_init_atom(rctx, &rctx->vs_samplers.views.atom, id++, evergreen_emit_vs_sampler_views, 0);
+	r600_init_atom(rctx, &rctx->ps_samplers.views.atom, id++, evergreen_emit_ps_sampler_views, 0);
+
+	if (rctx->chip_class == EVERGREEN) {
+		r600_init_atom(rctx, &rctx->sample_mask.atom, id++, evergreen_emit_sample_mask, 3);
+	} else {
+		r600_init_atom(rctx, &rctx->sample_mask.atom, id++, cayman_emit_sample_mask, 4);
+	}
 	rctx->sample_mask.sample_mask = ~0;
 	r600_atom_dirty(rctx, &rctx->sample_mask.atom);
+
+	r600_init_atom(rctx, &rctx->cb_misc_state.atom, id++, evergreen_emit_cb_misc_state, 0);
+	r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
+
+	r600_init_atom(rctx, &rctx->alphatest_state.atom, id++, r600_emit_alphatest_state, 6);
+	r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+
+	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, evergreen_emit_db_misc_state, 7);
+	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+
 
 	rctx->context.create_blend_state = evergreen_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = evergreen_create_dsa_state;
@@ -2230,7 +2253,7 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 {
 	struct r600_command_buffer *cb = &rctx->start_cs_cmd;
 
-	r600_init_command_buffer(cb, 256, EMIT_EARLY);
+	r600_init_command_buffer(rctx, cb, 0, 256);
 
 	/* This must be first. */
 	r600_store_value(cb, PKT3(PKT3_CONTEXT_CONTROL, 1, 0));
@@ -2608,7 +2631,7 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		return;
 	}
 
-	r600_init_command_buffer(cb, 256, EMIT_EARLY);
+	r600_init_command_buffer(rctx, cb, 0, 256);
 
 	/* This must be first. */
 	r600_store_value(cb, PKT3(PKT3_CONTEXT_CONTROL, 1, 0));

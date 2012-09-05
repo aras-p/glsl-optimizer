@@ -35,6 +35,8 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
+#define R600_MAX_ATOM						17
+
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
 
@@ -44,23 +46,14 @@
 #define R600_BIG_ENDIAN 0
 #endif
 
-enum r600_atom_flags {
-	/* When set, atoms are added at the beginning of the dirty list
-	 * instead of the end. */
-	EMIT_EARLY = (1 << 0)
-};
-
 /* This encapsulates a state or an operation which can emitted into the GPU
  * command stream. It's not limited to states only, it can be used for anything
  * that wants to write commands into the CS (e.g. cache flushes). */
 struct r600_atom {
 	void (*emit)(struct r600_context *ctx, struct r600_atom *state);
-
+	unsigned		id;
 	unsigned		num_dw;
-	enum r600_atom_flags	flags;
 	bool			dirty;
-
-	struct list_head	head;
 };
 
 /* This is an atom containing GPU commands that never change.
@@ -372,8 +365,8 @@ struct r600_context {
 	unsigned default_ps_gprs, default_vs_gprs;
 
 	/* States based on r600_atom. */
-	struct list_head		dirty_states;
 	struct r600_command_buffer	start_cs_cmd; /* invariant state mostly */
+	struct r600_atom		*atoms[R600_MAX_ATOM];
 	/** Compute specific registers initializations.  The start_cs_cmd atom
 	 *  must be emitted before start_compute_cs_cmd. */
         struct r600_command_buffer      start_compute_cs_cmd;
@@ -464,20 +457,11 @@ static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *a
 {
 	atom->emit(rctx, atom);
 	atom->dirty = false;
-	if (atom->head.next && atom->head.prev)
-		LIST_DELINIT(&atom->head);
 }
 
 static INLINE void r600_atom_dirty(struct r600_context *rctx, struct r600_atom *state)
 {
-	if (!state->dirty) {
-		if (state->flags & EMIT_EARLY) {
-			LIST_ADD(&state->head, &rctx->dirty_states);
-		} else {
-			LIST_ADDTAIL(&state->head, &rctx->dirty_states);
-		}
-		state->dirty = true;
-	}
+	state->dirty = true;
 }
 
 /* evergreen_state.c */
@@ -587,9 +571,10 @@ void r600_translate_index_buffer(struct r600_context *r600,
 				 unsigned count);
 
 /* r600_state_common.c */
-void r600_init_atom(struct r600_atom *atom,
+void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom);
+void r600_init_atom(struct r600_context *rctx, struct r600_atom *atom, unsigned id,
 		    void (*emit)(struct r600_context *ctx, struct r600_atom *state),
-		    unsigned num_dw, enum r600_atom_flags flags);
+		    unsigned num_dw);
 void r600_init_common_atoms(struct r600_context *rctx);
 unsigned r600_get_cb_flush_flags(struct r600_context *rctx);
 void r600_texture_barrier(struct pipe_context *ctx);
@@ -772,7 +757,7 @@ static INLINE void eg_store_loop_const(struct r600_command_buffer *cb, unsigned 
 	r600_store_value(cb, value);
 }
 
-void r600_init_command_buffer(struct r600_command_buffer *cb, unsigned num_dw, enum r600_atom_flags flags);
+void r600_init_command_buffer(struct r600_context *rctx, struct r600_command_buffer *cb, unsigned id, unsigned num_dw);
 void r600_release_command_buffer(struct r600_command_buffer *cb);
 
 /*

@@ -2031,26 +2031,47 @@ static void r600_emit_sample_mask(struct r600_context *rctx, struct r600_atom *a
 
 void r600_init_state_functions(struct r600_context *rctx)
 {
-	r600_init_atom(&rctx->seamless_cube_map.atom, r600_emit_seamless_cube_map, 3, 0);
-	r600_atom_dirty(rctx, &rctx->seamless_cube_map.atom);
-	r600_init_atom(&rctx->cb_misc_state.atom, r600_emit_cb_misc_state, 0, 0);
-	r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
-	r600_init_atom(&rctx->db_misc_state.atom, r600_emit_db_misc_state, 4, 0);
-	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
-	r600_init_atom(&rctx->vertex_buffer_state.atom, r600_emit_vertex_buffers, 0, 0);
-	r600_init_atom(&rctx->vs_constbuf_state.atom, r600_emit_vs_constant_buffers, 0, 0);
-	r600_init_atom(&rctx->ps_constbuf_state.atom, r600_emit_ps_constant_buffers, 0, 0);
-	r600_init_atom(&rctx->vs_samplers.views.atom, r600_emit_vs_sampler_views, 0, 0);
-	r600_init_atom(&rctx->ps_samplers.views.atom, r600_emit_ps_sampler_views, 0, 0);
-	/* sampler must be emited before TA_CNTL_AUX otherwise DISABLE_CUBE_WRAP change
-	 * does not take effect
-	 */
-	r600_init_atom(&rctx->vs_samplers.atom_sampler, r600_emit_vs_sampler, 0, EMIT_EARLY);
-	r600_init_atom(&rctx->ps_samplers.atom_sampler, r600_emit_ps_sampler, 0, EMIT_EARLY);
+	unsigned id = 4;
 
-	r600_init_atom(&rctx->sample_mask.atom, r600_emit_sample_mask, 3, 0);
+	/* !!!
+	 *  To avoid GPU lockup registers must be emited in a specific order
+	 * (no kidding ...). The order below is important and have been
+	 * partialy infered from analyzing fglrx command stream.
+	 *
+	 * Don't reorder atom without carefully checking the effect (GPU lockup
+	 * or piglit regression).
+	 * !!!
+	 */
+
+	/* shader const */
+	r600_init_atom(rctx, &rctx->vs_constbuf_state.atom, id++, r600_emit_vs_constant_buffers, 0);
+	r600_init_atom(rctx, &rctx->ps_constbuf_state.atom, id++, r600_emit_ps_constant_buffers, 0);
+
+	/* sampler must be emited before TA_CNTL_AUX otherwise DISABLE_CUBE_WRAP change
+	 * does not take effect (TA_CNTL_AUX emited by r600_emit_seamless_cube_map)
+	 */
+	r600_init_atom(rctx, &rctx->vs_samplers.atom_sampler, id++, r600_emit_vs_sampler, 0);
+	r600_init_atom(rctx, &rctx->ps_samplers.atom_sampler, id++, r600_emit_ps_sampler, 0);
+	/* resource */
+	r600_init_atom(rctx, &rctx->vs_samplers.views.atom, id++, r600_emit_vs_sampler_views, 0);
+	r600_init_atom(rctx, &rctx->ps_samplers.views.atom, id++, r600_emit_ps_sampler_views, 0);
+	r600_init_atom(rctx, &rctx->vertex_buffer_state.atom, id++, r600_emit_vertex_buffers, 0);
+
+	r600_init_atom(rctx, &rctx->seamless_cube_map.atom, id++, r600_emit_seamless_cube_map, 3);
+	r600_atom_dirty(rctx, &rctx->seamless_cube_map.atom);
+
+	r600_init_atom(rctx, &rctx->sample_mask.atom, id++, r600_emit_sample_mask, 3);
 	rctx->sample_mask.sample_mask = ~0;
 	r600_atom_dirty(rctx, &rctx->sample_mask.atom);
+
+	r600_init_atom(rctx, &rctx->cb_misc_state.atom, id++, r600_emit_cb_misc_state, 0);
+	r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
+
+	r600_init_atom(rctx, &rctx->alphatest_state.atom, id++, r600_emit_alphatest_state, 6);
+	r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+
+	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, r600_emit_db_misc_state, 4);
+	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;
@@ -2157,7 +2178,7 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	struct r600_command_buffer *cb = &rctx->start_cs_cmd;
 	uint32_t tmp;
 
-	r600_init_command_buffer(cb, 256, EMIT_EARLY);
+	r600_init_command_buffer(rctx, cb, 0, 256);
 
 	/* R6xx requires this packet at the start of each command buffer */
 	if (rctx->chip_class == R600) {
