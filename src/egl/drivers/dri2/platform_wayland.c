@@ -813,11 +813,9 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.CreateImageKHR = dri2_wayland_create_image_khr;
    drv->API.Terminate = dri2_terminate;
 
-   dri2_dpy = malloc(sizeof *dri2_dpy);
+   dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
-
-   memset(dri2_dpy, 0, sizeof *dri2_dpy);
 
    disp->DriverData = (void *) dri2_dpy;
    if (disp->PlatformDisplay == NULL) {

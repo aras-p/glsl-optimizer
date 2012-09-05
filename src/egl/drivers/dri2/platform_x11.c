@@ -980,11 +980,9 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.CreateDRMImageMESA = NULL;
    drv->API.ExportDRMImageMESA = NULL;
 
-   dri2_dpy = malloc(sizeof *dri2_dpy);
+   dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
-
-   memset(dri2_dpy, 0, sizeof *dri2_dpy);
 
    disp->DriverData = (void *) dri2_dpy;
    if (disp->PlatformDisplay == NULL) {
@@ -1056,11 +1054,9 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.PostSubBufferNV = dri2_post_sub_buffer;
    drv->API.SwapInterval = dri2_swap_interval;
 
-   dri2_dpy = malloc(sizeof *dri2_dpy);
+   dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
-
-   memset(dri2_dpy, 0, sizeof *dri2_dpy);
 
    disp->DriverData = (void *) dri2_dpy;
    if (disp->PlatformDisplay == NULL) {

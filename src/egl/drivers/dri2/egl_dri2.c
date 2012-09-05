@@ -1477,11 +1477,9 @@ _eglBuiltInDriverDRI2(const char *args)
 
    (void) args;
 
-   dri2_drv = malloc(sizeof *dri2_drv);
+   dri2_drv = calloc(1, sizeof *dri2_drv);
    if (!dri2_drv)
       return NULL;
-
-   memset(dri2_drv, 0, sizeof *dri2_drv);
 
    if (!dri2_load(&dri2_drv->base)) {
       free(dri2_drv);

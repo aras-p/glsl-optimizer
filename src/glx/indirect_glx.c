@@ -352,12 +352,11 @@ indirect_create_context(struct glx_screen *psc,
    }
 
    /* Allocate our context record */
-   gc = malloc(sizeof *gc);
+   gc = calloc(1, sizeof *gc);
    if (!gc) {
       /* Out of memory */
       return NULL;
    }
-   memset(gc, 0, sizeof *gc);
 
    glx_context_init(gc, psc, mode);
    gc->isDirect = GL_FALSE;
@@ -464,11 +463,10 @@ indirect_create_screen(int screen, struct glx_display * priv)
 {
    struct glx_screen *psc;
 
-   psc = malloc(sizeof *psc);
+   psc = calloc(1, sizeof *psc);
    if (psc == NULL)
       return NULL;
 
-   memset(psc, 0, sizeof *psc);
    glx_screen_init(psc, screen, priv);
    psc->vtable = &indirect_screen_vtable;
 

@@ -173,11 +173,10 @@ applegl_create_screen(int screen, struct glx_display * priv)
 {
    struct glx_screen *psc;
 
-   psc = malloc(sizeof *psc);
+   psc = calloc(1, sizeof *psc);
    if (psc == NULL)
       return NULL;
 
-   memset(psc, 0, sizeof *psc);
    glx_screen_init(psc, screen, priv);
    psc->vtable = &applegl_screen_vtable;
 

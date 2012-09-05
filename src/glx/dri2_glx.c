@@ -198,11 +198,10 @@ dri2_create_context(struct glx_screen *base,
       shared = pcp_shared->driContext;
    }
 
-   pcp = malloc(sizeof *pcp);
+   pcp = calloc(1, sizeof *pcp);
    if (pcp == NULL)
       return NULL;
 
-   memset(pcp, 0, sizeof *pcp);
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
       free(pcp);
       return NULL;
@@ -261,13 +260,12 @@ dri2_create_context_attribs(struct glx_screen *base,
       shared = pcp_shared->driContext;
    }
 
-   pcp = malloc(sizeof *pcp);
+   pcp = calloc(1, sizeof *pcp);
    if (pcp == NULL) {
       *error = __DRI_CTX_ERROR_NO_MEMORY;
       goto error_exit;
    }
 
-   memset(pcp, 0, sizeof *pcp);
    if (!glx_context_init(&pcp->base, &psc->base, &config->base))
       goto error_exit;
 
@@ -352,11 +350,10 @@ dri2CreateDrawable(struct glx_screen *base, XID xDrawable,
    struct dri2_display *pdp;
    GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
 
-   pdraw = malloc(sizeof(*pdraw));
+   pdraw = calloc(1, sizeof(*pdraw));
    if (!pdraw)
       return NULL;
 
-   memset(pdraw, 0, sizeof *pdraw);
    pdraw->base.destroyDrawable = dri2DestroyDrawable;
    pdraw->base.xDrawable = xDrawable;
    pdraw->base.drawable = drawable;
@@ -1018,11 +1015,10 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    drm_magic_t magic;
    int i;
 
-   psc = malloc(sizeof *psc);
+   psc = calloc(1, sizeof *psc);
    if (psc == NULL)
       return NULL;
 
-   memset(psc, 0, sizeof *psc);
    psc->fd = -1;
 
    if (!glx_screen_init(&psc->base, screen, priv)) {

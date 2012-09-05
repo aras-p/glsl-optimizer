@@ -392,11 +392,10 @@ drisw_create_context(struct glx_screen *base,
       shared = pcp_shared->driContext;
    }
 
-   pcp = malloc(sizeof *pcp);
+   pcp = calloc(1, sizeof *pcp);
    if (pcp == NULL)
       return NULL;
 
-   memset(pcp, 0, sizeof *pcp);
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
       free(pcp);
       return NULL;
@@ -457,11 +456,10 @@ drisw_create_context_attribs(struct glx_screen *base,
       shared = pcp_shared->driContext;
    }
 
-   pcp = malloc(sizeof *pcp);
+   pcp = calloc(1, sizeof *pcp);
    if (pcp == NULL)
       return NULL;
 
-   memset(pcp, 0, sizeof *pcp);
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
       free(pcp);
       return NULL;
@@ -522,11 +520,10 @@ driswCreateDrawable(struct glx_screen *base, XID xDrawable,
    Bool ret;
    const __DRIswrastExtension *swrast = psc->swrast;
 
-   pdp = malloc(sizeof(*pdp));
+   pdp = calloc(1, sizeof(*pdp));
    if (!pdp)
       return NULL;
 
-   memset(pdp, 0, sizeof *pdp);
    pdp->base.xDrawable = xDrawable;
    pdp->base.drawable = drawable;
    pdp->base.psc = &psc->base;

@@ -96,13 +96,12 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 
    (void) drv;
 
-   dri2_surf = malloc(sizeof *dri2_surf);
+   dri2_surf = calloc(1, sizeof *dri2_surf);
    if (!dri2_surf) {
       _eglError(EGL_BAD_ALLOC, "dri2_create_surface");
       return NULL;
    }
 
-   memset(dri2_surf, 0, sizeof *dri2_surf);
    if (!_eglInitSurface(&dri2_surf->base, disp, type, conf, attrib_list))
       goto cleanup_surf;
 
@@ -399,11 +398,9 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    int fd = -1;
    int i;
 
-   dri2_dpy = malloc(sizeof *dri2_dpy);
+   dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
-
-   memset(dri2_dpy, 0, sizeof *dri2_dpy);
 
    disp->DriverData = (void *) dri2_dpy;
 

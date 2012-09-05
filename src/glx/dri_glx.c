@@ -593,11 +593,10 @@ dri_create_context(struct glx_screen *base,
       shared = pcp_shared->driContext;
    }
 
-   pcp = malloc(sizeof *pcp);
+   pcp = calloc(1, sizeof *pcp);
    if (pcp == NULL)
       return NULL;
 
-   memset(pcp, 0, sizeof *pcp);
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
       free(pcp);
       return NULL;
@@ -651,11 +650,10 @@ driCreateDrawable(struct glx_screen *base,
    if (xDrawable != drawable)
       return NULL;
 
-   pdp = malloc(sizeof *pdp);
+   pdp = calloc(1, sizeof *pdp);
    if (!pdp)
       return NULL;
 
-   memset(pdp, 0, sizeof *pdp);
    pdp->base.drawable = drawable;
    pdp->base.psc = &psc->base;
 
