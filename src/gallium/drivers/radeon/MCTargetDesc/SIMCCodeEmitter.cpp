@@ -280,6 +280,7 @@ unsigned SIMCCodeEmitter::getEncodingBytes(const MCInst &MI) const {
 
 unsigned SIMCCodeEmitter::getRegBinaryCode(unsigned reg) const {
   switch (reg) {
+    case AMDGPU::VCC: return 106;
     case AMDGPU::M0: return 124;
     case AMDGPU::EXEC: return 126;
     case AMDGPU::EXEC_LO: return 126;
