@@ -9875,7 +9875,7 @@ exec_MultiModeDrawElementsIBM(const GLenum * mode,
  * struct.
  */
 struct _glapi_table *
-_mesa_create_save_table(void)
+_mesa_create_save_table(const struct gl_context *ctx)
 {
    struct _glapi_table *table;
 
