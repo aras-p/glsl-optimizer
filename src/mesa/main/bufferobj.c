@@ -2332,7 +2332,9 @@ _mesa_init_bufferobj_dispatch(struct gl_context *ctx, struct _glapi_table *disp)
    SET_GenBuffersARB(disp, _mesa_GenBuffersARB);
    SET_GetBufferParameterivARB(disp, _mesa_GetBufferParameterivARB);
    SET_GetBufferPointervARB(disp, _mesa_GetBufferPointervARB);
-   SET_GetBufferSubDataARB(disp, _mesa_GetBufferSubDataARB);
+   if (ctx->API != API_OPENGLES2) {
+      SET_GetBufferSubDataARB(disp, _mesa_GetBufferSubDataARB);
+   }
    SET_IsBufferARB(disp, _mesa_IsBufferARB);
    SET_MapBufferARB(disp, _mesa_MapBufferARB);
    SET_UnmapBufferARB(disp, _mesa_UnmapBufferARB);
