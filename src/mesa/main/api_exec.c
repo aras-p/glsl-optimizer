@@ -428,8 +428,10 @@ _mesa_create_exec_table(struct gl_context *ctx)
 
    /* 54. GL_EXT_point_parameters */
 #if _HAVE_FULL_GL
-   SET_PointParameterfEXT(exec, _mesa_PointParameterf);
-   SET_PointParameterfvEXT(exec, _mesa_PointParameterfv);
+   if (ctx->API != API_OPENGLES2) {
+      SET_PointParameterfEXT(exec, _mesa_PointParameterf);
+      SET_PointParameterfvEXT(exec, _mesa_PointParameterfv);
+   }
 #endif
 
    /* 95. GL_ARB_ES2_compatibility */
@@ -527,8 +529,10 @@ _mesa_create_exec_table(struct gl_context *ctx)
 
    /* 262. GL_NV_point_sprite */
 #if _HAVE_FULL_GL
-   SET_PointParameteriNV(exec, _mesa_PointParameteri);
-   SET_PointParameterivNV(exec, _mesa_PointParameteriv);
+   if (_mesa_is_desktop_gl(ctx)) {
+      SET_PointParameteriNV(exec, _mesa_PointParameteri);
+      SET_PointParameterivNV(exec, _mesa_PointParameteriv);
+   }
 #endif
 
    /* 268. GL_EXT_stencil_two_side */
