@@ -46,7 +46,7 @@ static void
 install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
                const GLvertexformat *vfmt)
 {
-   if (ctx->API != API_OPENGL_CORE) {
+   if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       _mesa_install_arrayelt_vtxfmt(tab, vfmt);
       SET_Color3f(tab, vfmt->Color3f);
       SET_Color3fv(tab, vfmt->Color3fv);
@@ -59,7 +59,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       _mesa_install_eval_vtxfmt(tab, vfmt);
    }
 
-   if (ctx->API != API_OPENGL_CORE) {
+   if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       SET_FogCoordfEXT(tab, vfmt->FogCoordfEXT);
       SET_FogCoordfvEXT(tab, vfmt->FogCoordfvEXT);
       SET_Indexf(tab, vfmt->Indexf);
@@ -95,9 +95,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
 
    if (ctx->API == API_OPENGL) {
       _mesa_install_dlist_vtxfmt(tab, vfmt);   /* glCallList / glCallLists */
-   }
 
-   if (ctx->API != API_OPENGL_CORE) {
       SET_Begin(tab, vfmt->Begin);
       SET_End(tab, vfmt->End);
       SET_PrimitiveRestartNV(tab, vfmt->PrimitiveRestartNV);
@@ -107,33 +105,48 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
 
    SET_DrawArrays(tab, vfmt->DrawArrays);
    SET_DrawElements(tab, vfmt->DrawElements);
-   SET_DrawRangeElements(tab, vfmt->DrawRangeElements);
+   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+      SET_DrawRangeElements(tab, vfmt->DrawRangeElements);
+   }
+
    SET_MultiDrawElementsEXT(tab, vfmt->MultiDrawElementsEXT);
-   SET_DrawElementsBaseVertex(tab, vfmt->DrawElementsBaseVertex);
-   SET_DrawRangeElementsBaseVertex(tab, vfmt->DrawRangeElementsBaseVertex);
-   SET_MultiDrawElementsBaseVertex(tab, vfmt->MultiDrawElementsBaseVertex);
-   SET_DrawArraysInstancedARB(tab, vfmt->DrawArraysInstanced);
-   SET_DrawArraysInstancedBaseInstance(tab, vfmt->DrawArraysInstancedBaseInstance);
-   SET_DrawElementsInstancedARB(tab, vfmt->DrawElementsInstanced);
-   SET_DrawElementsInstancedBaseInstance(tab, vfmt->DrawElementsInstancedBaseInstance);
-   SET_DrawElementsInstancedBaseVertex(tab, vfmt->DrawElementsInstancedBaseVertex);
-   SET_DrawElementsInstancedBaseVertexBaseInstance(tab, vfmt->DrawElementsInstancedBaseVertexBaseInstance);
-   SET_DrawTransformFeedback(tab, vfmt->DrawTransformFeedback);
-   SET_DrawTransformFeedbackStream(tab, vfmt->DrawTransformFeedbackStream);
-   SET_DrawTransformFeedbackInstanced(tab,
-                                      vfmt->DrawTransformFeedbackInstanced);
-   SET_DrawTransformFeedbackStreamInstanced(tab,
-                                vfmt->DrawTransformFeedbackStreamInstanced);
+
+   if (ctx->API != API_OPENGLES2) {
+      SET_DrawElementsBaseVertex(tab, vfmt->DrawElementsBaseVertex);
+      SET_DrawRangeElementsBaseVertex(tab, vfmt->DrawRangeElementsBaseVertex);
+      SET_MultiDrawElementsBaseVertex(tab, vfmt->MultiDrawElementsBaseVertex);
+      SET_DrawArraysInstancedBaseInstance(tab, vfmt->DrawArraysInstancedBaseInstance);
+      SET_DrawElementsInstancedBaseInstance(tab, vfmt->DrawElementsInstancedBaseInstance);
+      SET_DrawElementsInstancedBaseVertex(tab, vfmt->DrawElementsInstancedBaseVertex);
+      SET_DrawElementsInstancedBaseVertexBaseInstance(tab, vfmt->DrawElementsInstancedBaseVertexBaseInstance);
+   }
+
+   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+      SET_DrawArraysInstancedARB(tab, vfmt->DrawArraysInstanced);
+      SET_DrawElementsInstancedARB(tab, vfmt->DrawElementsInstanced);
+   }
+
+   if (ctx->API != API_OPENGLES2) {
+      SET_DrawTransformFeedback(tab, vfmt->DrawTransformFeedback);
+      SET_DrawTransformFeedbackStream(tab, vfmt->DrawTransformFeedbackStream);
+      SET_DrawTransformFeedbackInstanced(tab,
+                                         vfmt->DrawTransformFeedbackInstanced);
+      SET_DrawTransformFeedbackStreamInstanced(tab,
+                                               vfmt->DrawTransformFeedbackStreamInstanced);
+   }
 
    /* GL_NV_vertex_program */
-   SET_VertexAttrib1fNV(tab, vfmt->VertexAttrib1fNV);
-   SET_VertexAttrib1fvNV(tab, vfmt->VertexAttrib1fvNV);
-   SET_VertexAttrib2fNV(tab, vfmt->VertexAttrib2fNV);
-   SET_VertexAttrib2fvNV(tab, vfmt->VertexAttrib2fvNV);
-   SET_VertexAttrib3fNV(tab, vfmt->VertexAttrib3fNV);
-   SET_VertexAttrib3fvNV(tab, vfmt->VertexAttrib3fvNV);
-   SET_VertexAttrib4fNV(tab, vfmt->VertexAttrib4fNV);
-   SET_VertexAttrib4fvNV(tab, vfmt->VertexAttrib4fvNV);
+   if (ctx->API == API_OPENGL) {
+      SET_VertexAttrib1fNV(tab, vfmt->VertexAttrib1fNV);
+      SET_VertexAttrib1fvNV(tab, vfmt->VertexAttrib1fvNV);
+      SET_VertexAttrib2fNV(tab, vfmt->VertexAttrib2fNV);
+      SET_VertexAttrib2fvNV(tab, vfmt->VertexAttrib2fvNV);
+      SET_VertexAttrib3fNV(tab, vfmt->VertexAttrib3fNV);
+      SET_VertexAttrib3fvNV(tab, vfmt->VertexAttrib3fvNV);
+      SET_VertexAttrib4fNV(tab, vfmt->VertexAttrib4fNV);
+      SET_VertexAttrib4fvNV(tab, vfmt->VertexAttrib4fvNV);
+   }
+
    SET_VertexAttrib1fARB(tab, vfmt->VertexAttrib1fARB);
    SET_VertexAttrib1fvARB(tab, vfmt->VertexAttrib1fvARB);
    SET_VertexAttrib2fARB(tab, vfmt->VertexAttrib2fARB);
@@ -144,23 +157,28 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
    SET_VertexAttrib4fvARB(tab, vfmt->VertexAttrib4fvARB);
 
    /* GL_EXT_gpu_shader4 / OpenGL 3.0 */
-   SET_VertexAttribI1iEXT(tab, vfmt->VertexAttribI1i);
-   SET_VertexAttribI2iEXT(tab, vfmt->VertexAttribI2i);
-   SET_VertexAttribI3iEXT(tab, vfmt->VertexAttribI3i);
-   SET_VertexAttribI4iEXT(tab, vfmt->VertexAttribI4i);
-   SET_VertexAttribI2ivEXT(tab, vfmt->VertexAttribI2iv);
-   SET_VertexAttribI3ivEXT(tab, vfmt->VertexAttribI3iv);
-   SET_VertexAttribI4ivEXT(tab, vfmt->VertexAttribI4iv);
+   if (ctx->API != API_OPENGLES2) {
+      SET_VertexAttribI1iEXT(tab, vfmt->VertexAttribI1i);
+      SET_VertexAttribI2iEXT(tab, vfmt->VertexAttribI2i);
+      SET_VertexAttribI3iEXT(tab, vfmt->VertexAttribI3i);
+      SET_VertexAttribI2ivEXT(tab, vfmt->VertexAttribI2iv);
+      SET_VertexAttribI3ivEXT(tab, vfmt->VertexAttribI3iv);
 
-   SET_VertexAttribI1uiEXT(tab, vfmt->VertexAttribI1ui);
-   SET_VertexAttribI2uiEXT(tab, vfmt->VertexAttribI2ui);
-   SET_VertexAttribI3uiEXT(tab, vfmt->VertexAttribI3ui);
-   SET_VertexAttribI4uiEXT(tab, vfmt->VertexAttribI4ui);
-   SET_VertexAttribI2uivEXT(tab, vfmt->VertexAttribI2uiv);
-   SET_VertexAttribI3uivEXT(tab, vfmt->VertexAttribI3uiv);
-   SET_VertexAttribI4uivEXT(tab, vfmt->VertexAttribI4uiv);
+      SET_VertexAttribI1uiEXT(tab, vfmt->VertexAttribI1ui);
+      SET_VertexAttribI2uiEXT(tab, vfmt->VertexAttribI2ui);
+      SET_VertexAttribI3uiEXT(tab, vfmt->VertexAttribI3ui);
+      SET_VertexAttribI2uivEXT(tab, vfmt->VertexAttribI2uiv);
+      SET_VertexAttribI3uivEXT(tab, vfmt->VertexAttribI3uiv);
+   }
 
-   if (ctx->API != API_OPENGL_CORE) {
+   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+      SET_VertexAttribI4iEXT(tab, vfmt->VertexAttribI4i);
+      SET_VertexAttribI4ivEXT(tab, vfmt->VertexAttribI4iv);
+      SET_VertexAttribI4uiEXT(tab, vfmt->VertexAttribI4ui);
+      SET_VertexAttribI4uivEXT(tab, vfmt->VertexAttribI4uiv);
+   }
+
+   if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       /* GL_ARB_vertex_type_10_10_10_2_rev / GL 3.3 */
       SET_VertexP2ui(tab, vfmt->VertexP2ui);
       SET_VertexP2uiv(tab, vfmt->VertexP2uiv);
@@ -199,15 +217,17 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_SecondaryColorP3uiv(tab, vfmt->SecondaryColorP3uiv);
    }
 
-   SET_VertexAttribP1ui(tab, vfmt->VertexAttribP1ui);
-   SET_VertexAttribP2ui(tab, vfmt->VertexAttribP2ui);
-   SET_VertexAttribP3ui(tab, vfmt->VertexAttribP3ui);
-   SET_VertexAttribP4ui(tab, vfmt->VertexAttribP4ui);
+   if (ctx->API != API_OPENGLES2) {
+      SET_VertexAttribP1ui(tab, vfmt->VertexAttribP1ui);
+      SET_VertexAttribP2ui(tab, vfmt->VertexAttribP2ui);
+      SET_VertexAttribP3ui(tab, vfmt->VertexAttribP3ui);
+      SET_VertexAttribP4ui(tab, vfmt->VertexAttribP4ui);
 
-   SET_VertexAttribP1uiv(tab, vfmt->VertexAttribP1uiv);
-   SET_VertexAttribP2uiv(tab, vfmt->VertexAttribP2uiv);
-   SET_VertexAttribP3uiv(tab, vfmt->VertexAttribP3uiv);
-   SET_VertexAttribP4uiv(tab, vfmt->VertexAttribP4uiv);
+      SET_VertexAttribP1uiv(tab, vfmt->VertexAttribP1uiv);
+      SET_VertexAttribP2uiv(tab, vfmt->VertexAttribP2uiv);
+      SET_VertexAttribP3uiv(tab, vfmt->VertexAttribP3uiv);
+      SET_VertexAttribP4uiv(tab, vfmt->VertexAttribP4uiv);
+   }
 }
 
 
