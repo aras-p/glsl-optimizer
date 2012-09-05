@@ -2051,6 +2051,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/state_trackers/vdpau/Makefile
 		src/gallium/state_trackers/vega/Makefile
 		src/gallium/state_trackers/xa/Makefile
+		src/gallium/state_trackers/xorg/Makefile
 		src/gallium/targets/Makefile
 		src/gallium/targets/opencl/Makefile
 		src/gallium/winsys/Makefile
