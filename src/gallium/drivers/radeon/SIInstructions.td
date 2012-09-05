@@ -674,15 +674,15 @@ def S_WAITCNT : SOPP <0x0000000c, (ins i32imm:$simm16), "S_WAITCNT $simm16",
 def V_CNDMASK_B32 : VOP2 <0x00000000, (outs VReg_32:$dst),
   (ins AllReg_32:$src0, VReg_32:$src1, VCCReg:$vcc), "V_CNDMASK_B32",
   [(set (i32 VReg_32:$dst),
-   (select VCCReg:$vcc, AllReg_32:$src0, VReg_32:$src1))] > {
+   (select VCCReg:$vcc, VReg_32:$src1, AllReg_32:$src0))] > {
 
   let DisableEncoding = "$vcc";
 }
 
 //f32 pattern for V_CNDMASK_B32
 def : Pat <
-  (f32 (select VCCReg:$vcc, AllReg_32:$src0, VReg_32:$src1)),
-  (V_CNDMASK_B32 AllReg_32:$src0, VReg_32:$src1, VCCReg:$vcc)
+  (f32 (select VCCReg:$vcc, VReg_32:$src0, AllReg_32:$src1)),
+  (V_CNDMASK_B32 AllReg_32:$src1, VReg_32:$src0, VCCReg:$vcc)
 >;
 
 defm V_READLANE_B32 : VOP2_32 <0x00000001, "V_READLANE_B32", []>;
