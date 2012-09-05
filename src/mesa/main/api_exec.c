@@ -674,11 +674,11 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_ProgramLocalParameter4fvARB(exec, _mesa_ProgramLocalParameter4fvARB);
       SET_GetProgramEnvParameterdvARB(exec, _mesa_GetProgramEnvParameterdvARB);
       SET_GetProgramEnvParameterfvARB(exec, _mesa_GetProgramEnvParameterfvARB);
+      SET_GetProgramivARB(exec, _mesa_GetProgramivARB);
       SET_GetProgramLocalParameterdvARB(exec, _mesa_GetProgramLocalParameterdvARB);
       SET_GetProgramLocalParameterfvARB(exec, _mesa_GetProgramLocalParameterfvARB);
       SET_GetProgramStringARB(exec, _mesa_GetProgramStringARB);
    }
-   SET_GetProgramivARB(exec, _mesa_GetProgramivARB);
 
    /* ARB 28. GL_ARB_vertex_buffer_object */
    _mesa_init_bufferobj_dispatch(ctx, exec);
