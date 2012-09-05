@@ -582,7 +582,8 @@ void brw_debug_compact_uncompact(struct intel_context *intel,
                                  struct brw_instruction *orig,
                                  struct brw_instruction *uncompacted)
 {
-   fprintf(stderr, "Instruction compact/uncompact changed:\n");
+   fprintf(stderr, "Instruction compact/uncompact changed (gen%d):\n",
+           intel->gen);
 
    fprintf(stderr, "  before: ");
    brw_disasm(stderr, orig, intel->gen);

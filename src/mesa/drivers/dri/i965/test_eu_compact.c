@@ -256,13 +256,10 @@ struct {
    { gen_f1_MOV_GRF_GRF },
 };
 
-int
-main(int argc, char **argv)
+static bool
+run_tests(struct brw_context *brw)
 {
-   struct brw_context *brw = calloc(1, sizeof(*brw));
-   struct intel_context *intel = &brw->intel;
-   intel->gen = 6;
-   int ret = 0;
+   bool fail = false;
 
    for (int i = 0; i < ARRAY_SIZE(tests); i++) {
       for (int align_16 = 0; align_16 <= 1; align_16++) {
@@ -279,12 +276,12 @@ main(int argc, char **argv)
 	 assert(p->nr_insn == 1);
 
 	 if (!test_compact_instruction(p, p->store[0])) {
-	    ret = 1;
+	    fail = true;
 	    continue;
 	 }
 
 	 if (!test_fuzz_compact_instruction(p, p->store[0])) {
-	    ret = 1;
+	    fail = true;
 	    continue;
 	 }
 
@@ -292,5 +289,20 @@ main(int argc, char **argv)
       }
    }
 
-   return ret;
+   return fail;
+}
+
+int
+main(int argc, char **argv)
+{
+   struct brw_context *brw = calloc(1, sizeof(*brw));
+   struct intel_context *intel = &brw->intel;
+   intel->gen = 6;
+   bool fail = false;
+
+   for (intel->gen = 6; intel->gen <= 7; intel->gen++) {
+      fail |= run_tests(brw);
+   }
+
+   return fail;
 }
