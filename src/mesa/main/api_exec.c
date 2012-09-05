@@ -188,7 +188,10 @@ _mesa_create_exec_table(struct gl_context *ctx)
       _mesa_init_dlist_dispatch(exec);
    }
 
-   SET_ClearDepth(exec, _mesa_ClearDepth);
+   if (ctx->API != API_OPENGLES2) {
+      SET_ClearDepth(exec, _mesa_ClearDepth);
+   }
+
    if (ctx->API == API_OPENGL) {
       SET_ClearIndex(exec, _mesa_ClearIndex);
       SET_ClipPlane(exec, _mesa_ClipPlane);
@@ -196,7 +199,10 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
    SET_DepthFunc(exec, _mesa_DepthFunc);
    SET_DepthMask(exec, _mesa_DepthMask);
-   SET_DepthRange(exec, _mesa_DepthRange);
+
+   if (ctx->API != API_OPENGLES2) {
+      SET_DepthRange(exec, _mesa_DepthRange);
+   }
 
    if (ctx->API != API_OPENGLES2 && ctx->API != API_OPENGL_CORE) {
       _mesa_init_drawpix_dispatch(exec);
