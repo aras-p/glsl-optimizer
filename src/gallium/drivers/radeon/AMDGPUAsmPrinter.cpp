@@ -85,6 +85,8 @@ void AMDGPUAsmPrinter::EmitProgramInfo(MachineFunction &MF) {
         default: break;
         case AMDGPU::EXEC:
         case AMDGPU::SI_LITERAL_CONSTANT:
+        case AMDGPU::SREG_LIT_0:
+        case AMDGPU::M0:
           continue;
         }
 
