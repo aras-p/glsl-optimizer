@@ -503,11 +503,13 @@ defm V_READFIRSTLANE_B32 : VOP1_32 <0x00000002, "V_READFIRSTLANE_B32", []>;
 //defm V_CVT_I32_F64 : VOP1_32 <0x00000003, "V_CVT_I32_F64", []>;
 //defm V_CVT_F64_I32 : VOP1_64 <0x00000004, "V_CVT_F64_I32", []>;
 defm V_CVT_F32_I32 : VOP1_32 <0x00000005, "V_CVT_F32_I32",
-  [(set VReg_32:$dst, (fp_to_sint AllReg_32:$src0))]
+  [(set VReg_32:$dst, (sint_to_fp AllReg_32:$src0))]
 >;
 //defm V_CVT_F32_U32 : VOP1_32 <0x00000006, "V_CVT_F32_U32", []>;
 //defm V_CVT_U32_F32 : VOP1_32 <0x00000007, "V_CVT_U32_F32", []>;
-//defm V_CVT_I32_F32 : VOP1_32 <0x00000008, "V_CVT_I32_F32", []>;
+defm V_CVT_I32_F32 : VOP1_32 <0x00000008, "V_CVT_I32_F32",
+  [(set VReg_32:$dst, (fp_to_sint AllReg_32:$src0))]
+>;
 defm V_MOV_FED_B32 : VOP1_32 <0x00000009, "V_MOV_FED_B32", []>;
 ////def V_CVT_F16_F32 : VOP1_F16 <0x0000000a, "V_CVT_F16_F32", []>;
 //defm V_CVT_F32_F16 : VOP1_32 <0x0000000b, "V_CVT_F32_F16", []>;
