@@ -241,7 +241,7 @@ if ($INDEX_FILE ne '') {
     }
     print $fh "    return $key;\n";
   }
-  print $fh "  default: return 0;\n  }\n}\n"
+  print $fh "  default: assert(!\"Unknown Register\"); return 0;\n  }\n}\n"
 }
 
 
