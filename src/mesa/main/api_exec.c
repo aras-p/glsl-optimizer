@@ -114,7 +114,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
       return NULL;
 
 #if _HAVE_FULL_GL
-   _mesa_loopback_init_api_table( exec );
+   _mesa_loopback_init_api_table(ctx, exec);
 #endif
 
    /* load the dispatch slots we understand */

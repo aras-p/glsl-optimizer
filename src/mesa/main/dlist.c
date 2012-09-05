@@ -9883,7 +9883,7 @@ _mesa_create_save_table(const struct gl_context *ctx)
    if (table == NULL)
       return NULL;
 
-   _mesa_loopback_init_api_table(table);
+   _mesa_loopback_init_api_table(ctx, table);
 
    /* GL 1.0 */
    SET_Accum(table, save_Accum);
