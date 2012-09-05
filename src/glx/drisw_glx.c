@@ -636,7 +636,6 @@ driswCreateScreen(int screen, struct glx_display *priv)
    if (psc == NULL)
       return NULL;
 
-   memset(psc, 0, sizeof *psc);
    if (!glx_screen_init(&psc->base, screen, priv)) {
       free(psc);
       return NULL;
