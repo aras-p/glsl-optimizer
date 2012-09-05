@@ -458,7 +458,9 @@ _mesa_create_exec_table(struct gl_context *ctx)
 
    /* 196. GL_MESA_resize_buffers */
 #if _HAVE_FULL_GL
-   SET_ResizeBuffersMESA(exec, _mesa_ResizeBuffersMESA);
+   if (_mesa_is_desktop_gl(ctx)) {
+      SET_ResizeBuffersMESA(exec, _mesa_ResizeBuffersMESA);
+   }
 #endif
 
    /* 197. GL_MESA_window_pos */
