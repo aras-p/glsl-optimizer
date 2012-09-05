@@ -259,11 +259,9 @@ _mesa_create_exec_table(struct gl_context *ctx)
 
    if (ctx->API != API_OPENGLES2) {
       SET_PixelStoref(exec, _mesa_PixelStoref);
-   }
 
-   SET_PointSize(exec, _mesa_PointSize);
+      SET_PointSize(exec, _mesa_PointSize);
 
-   if (ctx->API != API_OPENGLES2) {
       SET_PolygonMode(exec, _mesa_PolygonMode);
    }
 
