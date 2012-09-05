@@ -2068,6 +2068,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
 		src/gallium/targets/vdpau-r300/Makefile
+		src/gallium/targets/vdpau-r600/Makefile
 		src/gallium/winsys/Makefile
 		src/gallium/winsys/i915/drm/Makefile
 		src/gallium/winsys/i915/sw/Makefile
