@@ -82,7 +82,7 @@ extern void _mesa_test_os_sse_support( void );
 extern void _mesa_test_os_sse_exception_support( void );
 
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #ifndef STATUS_FLOAT_MULTIPLE_TRAPS
 # define STATUS_FLOAT_MULTIPLE_TRAPS (0xC00002B5L)
 #endif
@@ -110,7 +110,7 @@ static LONG WINAPI ExceptionFilter(LPEXCEPTION_POINTERS exp)
 
    return EXCEPTION_CONTINUE_EXECUTION;
 }
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
 
 /**
@@ -149,7 +149,7 @@ void _mesa_check_os_sse_support( void )
       if (ret || !enabled)
          _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
    }
-#elif defined(WIN32)
+#elif defined(_WIN32)
    LPTOP_LEVEL_EXCEPTION_FILTER oldFilter;
    
    /* Install our ExceptionFilter */

@@ -90,7 +90,7 @@ extern "C" {
 /**
  * Disable assorted warnings
  */
-#if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__)) && !defined(BUILD_FOR_SNAP)
+#if !defined(OPENSTEP) && (defined(_WIN32) && !defined(__CYGWIN__)) && !defined(BUILD_FOR_SNAP)
 #  if !defined(__GNUC__) /* mingw environment */
 #    pragma warning( disable : 4068 ) /* unknown pragma */
 #    pragma warning( disable : 4710 ) /* function 'foo' not inlined */
@@ -246,7 +246,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 
 
 
-#if !defined(CAPI) && defined(WIN32) && !defined(BUILD_FOR_SNAP)
+#if !defined(CAPI) && defined(_WIN32) && !defined(BUILD_FOR_SNAP)
 #define CAPI _cdecl
 #endif
 
@@ -256,7 +256,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
  * than GNU C
  */
 #ifndef _ASMAPI
-#if defined(WIN32) && !defined(BUILD_FOR_SNAP)/* was: !defined( __GNUC__ ) && !defined( VMS ) && !defined( __INTEL_COMPILER )*/
+#if defined(_WIN32) && !defined(BUILD_FOR_SNAP)/* was: !defined( __GNUC__ ) && !defined( VMS ) && !defined( __INTEL_COMPILER )*/
 #define _ASMAPI __cdecl
 #else
 #define _ASMAPI

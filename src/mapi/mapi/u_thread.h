@@ -153,7 +153,7 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
  * IMPORTANT: Link with multithreaded runtime library when THREADS are
  * used!
  */
-#ifdef WIN32
+#ifdef _WIN32
 
 struct u_tsd {
    DWORD key;
@@ -225,7 +225,7 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
    }
 }
 
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
 
 /*

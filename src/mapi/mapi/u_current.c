@@ -125,7 +125,7 @@ static int ThreadSafe;
 void
 u_current_destroy(void)
 {
-#if defined(THREADS) && defined(WIN32)
+#if defined(THREADS) && defined(_WIN32)
    u_tsd_destroy(&u_current_table_tsd);
    u_tsd_destroy(&u_current_user_tsd);
 #endif

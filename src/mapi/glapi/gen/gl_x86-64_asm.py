@@ -138,7 +138,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print '#  define GL_PREFIX(n) GLNAME(CONCAT(gl,n))'
 		print '# endif'
 		print ''
-		print '#if defined(PTHREADS) || defined(WIN32)'
+		print '#if defined(PTHREADS) || defined(_WIN32)'
 		print '#  define THREADS'
 		print '#endif'
 		print ''

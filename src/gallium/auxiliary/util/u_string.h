@@ -35,7 +35,7 @@
 #ifndef U_STRING_H_
 #define U_STRING_H_
 
-#if !defined(WIN32) && !defined(XF86_LIBC_H)
+#if !defined(_WIN32) && !defined(XF86_LIBC_H)
 #include <stdio.h>
 #endif
 #include <stddef.h>
@@ -64,7 +64,7 @@ util_strchrnul(const char *s, char c)
 
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 
 int util_vsnprintf(char *, size_t, const char *, va_list);
 int util_snprintf(char *str, size_t size, const char *format, ...);

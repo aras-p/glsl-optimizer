@@ -167,7 +167,7 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #else
-#ifdef WIN32
+#ifdef _WIN32
 #define vsnprintf util_vsnprintf
 #define snprintf util_snprintf
 #define HAVE_VSNPRINTF 0

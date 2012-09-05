@@ -47,7 +47,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <stdint.h>
 #endif
 #include "GL/glxproto.h"

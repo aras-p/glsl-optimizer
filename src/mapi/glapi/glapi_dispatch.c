@@ -43,7 +43,7 @@
 
 #if !(defined(USE_X86_ASM) || defined(USE_X86_64_ASM) || defined(USE_SPARC_ASM))
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define KEYWORD1 GLAPI
 #else
 #define KEYWORD1 PUBLIC

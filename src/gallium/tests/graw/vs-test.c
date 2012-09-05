@@ -23,7 +23,7 @@ unsigned show_fps = 0;
 static void usage(char *name)
 {
    fprintf(stderr, "usage: %s [ options ] shader_filename\n", name);
-#ifndef WIN32
+#ifndef _WIN32
    fprintf(stderr, "\n" );
    fprintf(stderr, "options:\n");
    fprintf(stderr, "    -fps  show frames per second\n");
