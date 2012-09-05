@@ -214,7 +214,9 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_GetClipPlane(exec, _mesa_GetClipPlane);
    }
    SET_GetBooleanv(exec, _mesa_GetBooleanv);
-   SET_GetDoublev(exec, _mesa_GetDoublev);
+   if (ctx->API != API_OPENGLES2) {
+      SET_GetDoublev(exec, _mesa_GetDoublev);
+   }
    SET_GetIntegerv(exec, _mesa_GetIntegerv);
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       SET_GetLightfv(exec, _mesa_GetLightfv);
