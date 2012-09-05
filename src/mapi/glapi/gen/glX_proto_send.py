@@ -970,7 +970,7 @@ struct _glapi_table * __glXNewIndirectAPI( void )
     int o;
 
     entries = _glapi_get_dispatch_table_size();
-    table = (_glapi_proc *) malloc(entries * sizeof(_glapi_proc));
+    table = malloc(entries * sizeof(_glapi_proc));
 
     /* first, set all entries to point to no-op functions */
     for (i = 0; i < entries; i++) {
