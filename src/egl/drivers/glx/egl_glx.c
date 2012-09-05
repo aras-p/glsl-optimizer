@@ -656,9 +656,9 @@ GLX_eglTerminate(_EGLDriver *drv, _EGLDisplay *disp)
    _eglCleanupDisplay(disp);
 
    if (GLX_dpy->visuals)
-      XFree(GLX_dpy->visuals);
+      free(GLX_dpy->visuals);
    if (GLX_dpy->fbconfigs)
-      XFree(GLX_dpy->fbconfigs);
+      free(GLX_dpy->fbconfigs);
 
    if (!disp->PlatformDisplay)
       XCloseDisplay(GLX_dpy->dpy);
@@ -909,7 +909,7 @@ GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp,
       if (vinfo) {
          GLX_surf->glx_drawable = GLX_drv->glXCreateGLXPixmap(GLX_dpy->dpy,
                vinfo, GLX_surf->drawable);
-         XFree(vinfo);
+         free(vinfo);
       }
    }
    else {

@@ -721,7 +721,7 @@ __indirect_glGetString(GLenum name)
                 */
                const size_t size = 7 + strlen((char *) s) + 4;
 
-               gc->version = Xmalloc(size);
+               gc->version = malloc(size);
                if (gc->version == NULL) {
                   /* If we couldn't allocate memory for the new string,
                    * make a best-effort and just copy the client-side version
@@ -737,7 +737,7 @@ __indirect_glGetString(GLenum name)
                else {
                   snprintf((char *) gc->version, size, "%u.%u (%s)",
                            client_major, client_minor, s);
-                  Xfree(s);
+                  free(s);
                   s = gc->version;
                }
             }
@@ -782,7 +782,7 @@ __indirect_glGetString(GLenum name)
 #endif
 
             __glXCalculateUsableGLExtensions(gc, (char *) s, major, minor);
-            XFree(s);
+            free(s);
             s = gc->extensions;
             break;
          }

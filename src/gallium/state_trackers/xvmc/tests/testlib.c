@@ -102,7 +102,7 @@ int GetPort
 					}
 				}
 
-				XFree(surface_info);
+				free(surface_info);
 			}
 		}
 	}

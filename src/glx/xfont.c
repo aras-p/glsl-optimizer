@@ -245,7 +245,7 @@ DRI_glXUseXFont(struct glx_context *CC, Font font, int first, int count, int lis
    max_bm_width = (max_width + 7) / 8;
    max_bm_height = max_height;
 
-   bm = (GLubyte *) Xmalloc((max_bm_width * max_bm_height) * sizeof(GLubyte));
+   bm = (GLubyte *) malloc((max_bm_width * max_bm_height) * sizeof(GLubyte));
    if (!bm) {
       XFreeFontInfo(NULL, fs, 1);
       __glXSetError(CC, GL_OUT_OF_MEMORY);
@@ -359,7 +359,7 @@ DRI_glXUseXFont(struct glx_context *CC, Font font, int first, int count, int lis
       glEndList();
    }
 
-   Xfree(bm);
+   free(bm);
    XFreeFontInfo(NULL, fs, 1);
    XFreeGC(dpy, gc);
 

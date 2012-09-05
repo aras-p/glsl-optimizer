@@ -509,7 +509,7 @@ __glXGetStringFromTable(const struct extension_info *ext,
       }
    }
 
-   ext_str = Xmalloc(ext_str_len + 1);
+   ext_str = malloc(ext_str_len + 1);
    if (ext_str != NULL) {
       point = ext_str;
 

@@ -174,7 +174,7 @@ int main(int argc, char **argv)
 
 	assert(XvMCDestroyContext(display, &context) == Success);
 
-	XFree(subpics);
+	free(subpics);
 	XvUngrabPort(display, port_num, CurrentTime);
 	XCloseDisplay(display);
 

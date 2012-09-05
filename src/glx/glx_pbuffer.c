@@ -326,7 +326,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    length = reply.length;
    if (length) {
       num_attributes = (use_glx_1_3) ? reply.numAttribs : length / 2;
-      data = (CARD32 *) Xmalloc(length * sizeof(CARD32));
+      data = (CARD32 *) malloc(length * sizeof(CARD32));
       if (data == NULL) {
          /* Throw data on the floor */
          _XEatData(dpy, length);
@@ -357,7 +357,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
          }
 #endif
 
-         Xfree(data);
+         free(data);
       }
    }
 
@@ -412,7 +412,7 @@ CreateDrawable(Display *dpy, struct glx_config *config,
    if (!opcode)
       return None;
 
-   glxDraw = Xmalloc(sizeof(*glxDraw));
+   glxDraw = malloc(sizeof(*glxDraw));
    if (!glxDraw)
       return None;
 
@@ -907,7 +907,7 @@ glXCreateWindow(Display * dpy, GLXFBConfig config, Window win,
       return None;
    }
 
-   XFree(visinfo);
+   free(visinfo);
 
    return win;
 #else

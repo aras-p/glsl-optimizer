@@ -147,7 +147,7 @@ graw_create_window_and_screen( int x,
    if (screen == NULL)
       goto fail;
 
-   XFree(visinfo);
+   free(visinfo);
    return screen;
 
 fail:
@@ -158,7 +158,7 @@ fail:
       FREE(xlib_handle);
 
    if (visinfo)
-      XFree(visinfo);
+      free(visinfo);
 
    if (win)
       XDestroyWindow(graw.display, win);

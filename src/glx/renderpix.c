@@ -84,7 +84,7 @@ __glXSendLargeImage(struct glx_context * gc, GLint compsize, GLint dim,
                     GLubyte * pc, GLubyte * modes)
 {
     /* Allocate a temporary holding buffer */
-    GLubyte *buf = (GLubyte *) Xmalloc(compsize);
+    GLubyte *buf = (GLubyte *) malloc(compsize);
     if (!buf) {
 	__glXSetError(gc, GL_OUT_OF_MEMORY);
 	return;
@@ -108,7 +108,7 @@ __glXSendLargeImage(struct glx_context * gc, GLint compsize, GLint dim,
     __glXSendLargeCommand(gc, gc->pc, pc - gc->pc, buf, compsize);
 
     /* Free buffer */
-    Xfree((char *) buf);
+    free((char *) buf);
 }
 
 /************************************************************************/
@@ -178,7 +178,7 @@ __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
       pc += hdrlen;
 
       /* Allocate a temporary holding buffer */
-      buf = (GLubyte *) Xmalloc(bufsize);
+      buf = (GLubyte *) malloc(bufsize);
       if (!buf) {
          __glXSetError(gc, GL_OUT_OF_MEMORY);
          return;
@@ -193,6 +193,6 @@ __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
       __glXSendLargeCommand(gc, gc->pc, (GLint) (pc - gc->pc), buf,
                             bufsize);
       /* Free buffer */
-      Xfree((char *) buf);
+      free((char *) buf);
    }
 }

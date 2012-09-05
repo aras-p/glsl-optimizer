@@ -118,7 +118,7 @@ static void
 XDestroyDrawable(struct drisw_drawable * pdp, Display * dpy, XID drawable)
 {
    XDestroyImage(pdp->ximage);
-   XFree(pdp->visinfo);
+   free(pdp->visinfo);
 
    XFreeGC(dpy, pdp->gc);
    XFreeGC(dpy, pdp->swapgc);
@@ -256,11 +256,11 @@ drisw_destroy_context(struct glx_context *context)
    driReleaseDrawables(&pcp->base);
 
    if (context->extensions)
-      XFree((char *) context->extensions);
+      free((char *) context->extensions);
 
    (*psc->core->destroyContext) (pcp->driContext);
 
-   Xfree(pcp);
+   free(pcp);
 }
 
 static int
@@ -393,13 +393,13 @@ drisw_create_context(struct glx_screen *base,
       shared = pcp_shared->driContext;
    }
 
-   pcp = Xmalloc(sizeof *pcp);
+   pcp = malloc(sizeof *pcp);
    if (pcp == NULL)
       return NULL;
 
    memset(pcp, 0, sizeof *pcp);
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
-      Xfree(pcp);
+      free(pcp);
       return NULL;
    }
 
@@ -407,7 +407,7 @@ drisw_create_context(struct glx_screen *base,
       (*psc->core->createNewContext) (psc->driScreen,
 				      config->driConfig, shared, pcp);
    if (pcp->driContext == NULL) {
-      Xfree(pcp);
+      free(pcp);
       return NULL;
    }
 
@@ -458,13 +458,13 @@ drisw_create_context_attribs(struct glx_screen *base,
       shared = pcp_shared->driContext;
    }
 
-   pcp = Xmalloc(sizeof *pcp);
+   pcp = malloc(sizeof *pcp);
    if (pcp == NULL)
       return NULL;
 
    memset(pcp, 0, sizeof *pcp);
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
-      Xfree(pcp);
+      free(pcp);
       return NULL;
    }
 
@@ -492,7 +492,7 @@ drisw_create_context_attribs(struct glx_screen *base,
 					    error,
 					    pcp);
    if (pcp->driContext == NULL) {
-      Xfree(pcp);
+      free(pcp);
       return NULL;
    }
 
@@ -510,7 +510,7 @@ driswDestroyDrawable(__GLXDRIdrawable * pdraw)
    (*psc->core->destroyDrawable) (pdp->driDrawable);
 
    XDestroyDrawable(pdp, pdraw->psc->dpy, pdraw->drawable);
-   Xfree(pdp);
+   free(pdp);
 }
 
 static __GLXDRIdrawable *
@@ -523,7 +523,7 @@ driswCreateDrawable(struct glx_screen *base, XID xDrawable,
    Bool ret;
    const __DRIswrastExtension *swrast = psc->swrast;
 
-   pdp = Xmalloc(sizeof(*pdp));
+   pdp = malloc(sizeof(*pdp));
    if (!pdp)
       return NULL;
 
@@ -534,7 +534,7 @@ driswCreateDrawable(struct glx_screen *base, XID xDrawable,
 
    ret = XCreateDrawable(pdp, psc->base.dpy, xDrawable, modes->visualID);
    if (!ret) {
-      Xfree(pdp);
+      free(pdp);
       return NULL;
    }
 
@@ -544,7 +544,7 @@ driswCreateDrawable(struct glx_screen *base, XID xDrawable,
 
    if (!pdp->driDrawable) {
       XDestroyDrawable(pdp, psc->base.dpy, xDrawable);
-      Xfree(pdp);
+      free(pdp);
       return NULL;
    }
 
@@ -636,13 +636,13 @@ driswCreateScreen(int screen, struct glx_display *priv)
    struct glx_config *configs = NULL, *visuals = NULL;
    int i;
 
-   psc = Xcalloc(1, sizeof *psc);
+   psc = calloc(1, sizeof *psc);
    if (psc == NULL)
       return NULL;
 
    memset(psc, 0, sizeof *psc);
    if (!glx_screen_init(&psc->base, screen, priv)) {
-      Xfree(psc);
+      free(psc);
       return NULL;
    }
 
@@ -713,7 +713,7 @@ driswCreateScreen(int screen, struct glx_display *priv)
    if (psc->driver)
       dlclose(psc->driver);
    glx_screen_cleanup(&psc->base);
-   Xfree(psc);
+   free(psc);
 
    CriticalErrorMessageF("failed to load driver: %s\n", SWRAST_DRIVER_NAME);
 
@@ -725,7 +725,7 @@ driswCreateScreen(int screen, struct glx_display *priv)
 static void
 driswDestroyDisplay(__GLXDRIdisplay * dpy)
 {
-   Xfree(dpy);
+   free(dpy);
 }
 
 /*
@@ -738,7 +738,7 @@ driswCreateDisplay(Display * dpy)
 {
    struct drisw_display *pdpyp;
 
-   pdpyp = Xmalloc(sizeof *pdpyp);
+   pdpyp = malloc(sizeof *pdpyp);
    if (pdpyp == NULL)
       return NULL;
 

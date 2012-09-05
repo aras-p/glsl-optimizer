@@ -340,7 +340,7 @@ createDriMode(const __DRIcoreExtension * core,
    if (driConfigs[i] == NULL)
       return NULL;
 
-   driConfig = Xmalloc(sizeof *driConfig);
+   driConfig = malloc(sizeof *driConfig);
    if (driConfig == NULL)
       return NULL;
 

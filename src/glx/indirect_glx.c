@@ -46,17 +46,17 @@ indirect_destroy_context(struct glx_context *gc)
    __glXFreeVertexArrayState(gc);
 
    if (gc->vendor)
-      XFree((char *) gc->vendor);
+      free((char *) gc->vendor);
    if (gc->renderer)
-      XFree((char *) gc->renderer);
+      free((char *) gc->renderer);
    if (gc->version)
-      XFree((char *) gc->version);
+      free((char *) gc->version);
    if (gc->extensions)
-      XFree((char *) gc->extensions);
+      free((char *) gc->extensions);
    __glFreeAttributeState(gc);
-   XFree((char *) gc->buf);
-   Xfree((char *) gc->client_state_private);
-   XFree((char *) gc);
+   free((char *) gc->buf);
+   free((char *) gc->client_state_private);
+   free((char *) gc);
 }
 
 static Bool
@@ -356,7 +356,7 @@ indirect_create_context(struct glx_screen *psc,
    }
 
    /* Allocate our context record */
-   gc = Xmalloc(sizeof *gc);
+   gc = malloc(sizeof *gc);
    if (!gc) {
       /* Out of memory */
       return NULL;
@@ -366,10 +366,10 @@ indirect_create_context(struct glx_screen *psc,
    glx_context_init(gc, psc, mode);
    gc->isDirect = GL_FALSE;
    gc->vtable = &indirect_context_vtable;
-   state = Xmalloc(sizeof(struct __GLXattributeRec));
+   state = malloc(sizeof(struct __GLXattributeRec));
    if (state == NULL) {
       /* Out of memory */
-      Xfree(gc);
+      free(gc);
       return NULL;
    }
    gc->client_state_private = state;
@@ -384,10 +384,10 @@ indirect_create_context(struct glx_screen *psc,
     */
 
    bufSize = (XMaxRequestSize(psc->dpy) * 4) - sz_xGLXRenderReq;
-   gc->buf = (GLubyte *) Xmalloc(bufSize);
+   gc->buf = (GLubyte *) malloc(bufSize);
    if (!gc->buf) {
-      Xfree(gc->client_state_private);
-      Xfree(gc);
+      free(gc->client_state_private);
+      free(gc);
       return NULL;
    }
    gc->bufSize = bufSize;
@@ -468,7 +468,7 @@ indirect_create_screen(int screen, struct glx_display * priv)
 {
    struct glx_screen *psc;
 
-   psc = Xmalloc(sizeof *psc);
+   psc = malloc(sizeof *psc);
    if (psc == NULL)
       return NULL;
 

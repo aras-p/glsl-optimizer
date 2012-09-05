@@ -89,14 +89,14 @@ __indirect_glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride,
       if (stride != k) {
          GLubyte *buf;
 
-         buf = (GLubyte *) Xmalloc(compsize);
+         buf = (GLubyte *) malloc(compsize);
          if (!buf) {
             __glXSetError(gc, GL_OUT_OF_MEMORY);
             return;
          }
          __glFillMap1d(k, order, stride, pnts, buf);
          __glXSendLargeCommand(gc, pc, 32, buf, compsize);
-         Xfree((char *) buf);
+         free((char *) buf);
       }
       else {
          /* Data is already packed.  Just send it out */
@@ -152,14 +152,14 @@ __indirect_glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride,
       if (stride != k) {
          GLubyte *buf;
 
-         buf = (GLubyte *) Xmalloc(compsize);
+         buf = (GLubyte *) malloc(compsize);
          if (!buf) {
             __glXSetError(gc, GL_OUT_OF_MEMORY);
             return;
          }
          __glFillMap1f(k, order, stride, pnts, buf);
          __glXSendLargeCommand(gc, pc, 24, buf, compsize);
-         Xfree((char *) buf);
+         free((char *) buf);
       }
       else {
          /* Data is already packed.  Just send it out */
@@ -227,7 +227,7 @@ __indirect_glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustr,
       if ((vstr != k) || (ustr != k * vord)) {
          GLdouble *buf;
 
-         buf = (GLdouble *) Xmalloc(compsize);
+         buf = (GLdouble *) malloc(compsize);
          if (!buf) {
             __glXSetError(gc, GL_OUT_OF_MEMORY);
             return;
@@ -237,7 +237,7 @@ __indirect_glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustr,
           */
          __glFillMap2d(k, uord, vord, ustr, vstr, pnts, buf);
          __glXSendLargeCommand(gc, pc, 52, buf, compsize);
-         Xfree((char *) buf);
+         free((char *) buf);
       }
       else {
          /* Data is already packed.  Just send it out */
@@ -303,7 +303,7 @@ __indirect_glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustr,
       if ((vstr != k) || (ustr != k * vord)) {
          GLfloat *buf;
 
-         buf = (GLfloat *) Xmalloc(compsize);
+         buf = (GLfloat *) malloc(compsize);
          if (!buf) {
             __glXSetError(gc, GL_OUT_OF_MEMORY);
             return;
@@ -313,7 +313,7 @@ __indirect_glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustr,
           */
          __glFillMap2f(k, uord, vord, ustr, vstr, pnts, buf);
          __glXSendLargeCommand(gc, pc, 36, buf, compsize);
-         Xfree((char *) buf);
+         free((char *) buf);
       }
       else {
          /* Data is already packed.  Just send it out */

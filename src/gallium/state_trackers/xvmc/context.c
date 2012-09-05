@@ -113,7 +113,7 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
                                     *mc_type, *surface_flags, *subpic_max_w, *subpic_max_h);
             }
 
-            XFree(surface_info);
+            free(surface_info);
          }
       }
 

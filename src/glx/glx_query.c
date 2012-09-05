@@ -56,7 +56,7 @@ __glXQueryServerString(Display * dpy, int opcode, CARD32 screen, CARD32 name)
    /* The spec doesn't mention this, but the Xorg server replies with
     * a string already terminated with '\0'. */
    uint32_t len = xcb_glx_query_server_string_string_length(reply);
-   char *buf = Xmalloc(len);
+   char *buf = malloc(len);
    memcpy(buf, xcb_glx_query_server_string_string(reply), len);
    free(reply);
 
@@ -80,7 +80,7 @@ __glXGetString(Display * dpy, int opcode, CARD32 contextTag, CARD32 name)
    /* The spec doesn't mention this, but the Xorg server replies with
     * a string already terminated with '\0'. */
    uint32_t len = xcb_glx_get_string_string_length(reply);
-   char *buf = Xmalloc(len);
+   char *buf = malloc(len);
    memcpy(buf, xcb_glx_get_string_string(reply), len);
    free(reply);
 
@@ -146,7 +146,7 @@ __glXGetStringFromServer(Display * dpy, int opcode, CARD32 glxCode,
    length = reply.length * 4;
    numbytes = reply.size;
 
-   buf = (char *) Xmalloc(numbytes);
+   buf = (char *) malloc(numbytes);
    if (buf != NULL) {
       _XRead(dpy, buf, numbytes);
       length -= numbytes;

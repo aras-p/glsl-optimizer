@@ -669,7 +669,7 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
       return None;
    }
 
-   glxDraw = Xmalloc(sizeof(*glxDraw));
+   glxDraw = malloc(sizeof(*glxDraw));
    if (!glxDraw)
       return None;
 
@@ -1267,7 +1267,7 @@ glXChooseVisual(Display * dpy, int screen, int *attribList)
                                   &visualTemplate, &i);
 
          if (newList) {
-            Xfree(visualList);
+            free(visualList);
             visualList = newList;
             best_config = config;
          }
@@ -1392,7 +1392,7 @@ __glXClientInfo(Display * dpy, int opcode)
    SyncHandle();
 #endif /* USE_XCB */
 
-   Xfree(ext_str);
+   free(ext_str);
 }
 
 
@@ -1628,7 +1628,7 @@ glXChooseFBConfig(Display * dpy, int screen,
    if ((config_list != NULL) && (list_size > 0) && (attribList != NULL)) {
       list_size = choose_visual(config_list, list_size, attribList, GL_TRUE);
       if (list_size == 0) {
-         XFree(config_list);
+         free(config_list);
          config_list = NULL;
       }
    }
@@ -1682,7 +1682,7 @@ glXGetFBConfigs(Display * dpy, int screen, int *nelements)
          }
       }
 
-      config_list = Xmalloc(num_configs * sizeof *config_list);
+      config_list = malloc(num_configs * sizeof *config_list);
       if (config_list != NULL) {
          *nelements = num_configs;
          i = 0;
@@ -2454,7 +2454,7 @@ _X_HIDDEN char *
 __glXstrdup(const char *str)
 {
    char *copy;
-   copy = (char *) Xmalloc(strlen(str) + 1);
+   copy = (char *) malloc(strlen(str) + 1);
    if (!copy)
       return NULL;
    strcpy(copy, str);

@@ -201,7 +201,7 @@ GetOverlayInfo(Display *dpy, int screen, int *numOverlays)
    if (status != Success || actualType != overlayVisualsAtom ||
        actualFormat != 32 || sizeData < 4) {
       /* something went wrong */
-      XFree((void *) ovInfo);
+      free((void *) ovInfo);
       *numOverlays = 0;
       return NULL;
    }
@@ -239,18 +239,18 @@ level_of_visual( Display *dpy, XVisualInfo *vinfo )
          /* found the visual */
          if (/*ov->transparent_type==1 &&*/ ov->layer!=0) {
             int level = ov->layer;
-            XFree((void *) overlay_info);
+            free((void *) overlay_info);
             return level;
          }
          else {
-            XFree((void *) overlay_info);
+            free((void *) overlay_info);
             return 0;
          }
       }
    }
 
    /* The visual ID was not found in the overlay list. */
-   XFree((void *) overlay_info);
+   free((void *) overlay_info);
    return 0;
 }
 
@@ -497,19 +497,19 @@ transparent_pixel( XMesaVisual glxvis )
          /* found it! */
          if (ov->transparent_type == 0) {
             /* type 0 indicates no transparency */
-            XFree((void *) overlay_info);
+            free((void *) overlay_info);
             return -1;
          }
          else {
             /* ov->value is the transparent pixel */
-            XFree((void *) overlay_info);
+            free((void *) overlay_info);
             return ov->value;
          }
       }
    }
 
    /* The visual ID was not found in the overlay list. */
-   XFree((void *) overlay_info);
+   free((void *) overlay_info);
    return -1;
 }
 
@@ -554,7 +554,7 @@ get_visual( Display *dpy, int scr, unsigned int depth, int xclass )
          return vis;
       }
       else {
-         XFree((void *) vis);
+         free((void *) vis);
          return NULL;
       }
    }
@@ -780,7 +780,7 @@ choose_x_overlay_visual( Display *dpy, int scr,
       if (deepvis==NULL || vislist->depth > deepest) {
          /* YES!  found a satisfactory visual */
          if (deepvis) {
-            XFree( deepvis );
+            free(deepvis);
          }
          deepest = vislist->depth;
          deepvis = vislist;

@@ -85,7 +85,7 @@ _gl_context_modes_destroy(__GLcontextModes * modes)
    while (modes != NULL) {
       __GLcontextModes *const next = modes->next;
 
-      Xfree(modes);
+      free(modes);
       modes = next;
    }
 }
@@ -101,7 +101,7 @@ _gl_context_modes_create(unsigned count, size_t minimum_size)
 
    next = &base;
    for (i = 0; i < count; i++) {
-      *next = (__GLcontextModes *) Xmalloc(size);
+      *next = (__GLcontextModes *) malloc(size);
       if (*next == NULL) {
          _gl_context_modes_destroy(base);
          base = NULL;
@@ -165,7 +165,7 @@ __glXQueryServerString(Display * dpy, int opcode, CARD32 screen, CARD32 name)
    length = reply.length * 4;
    numbytes = reply.size;
 
-   buf = (char *) Xmalloc(numbytes);
+   buf = (char *) malloc(numbytes);
    if (buf != NULL) {
       _XRead(dpy, buf, numbytes);
       length -= numbytes;
@@ -200,9 +200,9 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
          _gl_context_modes_destroy(psc->configs);
          psc->configs = NULL;   /* NOTE: just for paranoia */
       }
-      Xfree((char *) psc->serverGLXexts);
+      free((char *) psc->serverGLXexts);
    }
-   XFree((char *) priv->screenConfigs);
+   free((char *) priv->screenConfigs);
    priv->screenConfigs = NULL;
 }
 
@@ -218,9 +218,9 @@ __glXFreeDisplayPrivate(XExtData * extension)
    priv = (__GLXdisplayPrivate *) extension->private_data;
    FreeScreenConfigs(priv);
    if (priv->serverGLXversion)
-      Xfree((char *) priv->serverGLXversion);
+      free((char *) priv->serverGLXversion);
 
-   Xfree((char *) priv);
+   free((char *) priv);
    return 0;
 }
 
@@ -491,7 +491,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
    if (prop_size <= sizeof(buf))
       props = buf;
    else
-      props = Xmalloc(prop_size);
+      props = malloc(prop_size);
 
    /* Read each config structure and convert it into our format */
    m = modes;
@@ -506,7 +506,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
    }
 
    if (props != buf)
-      Xfree(props);
+      free(props);
 
    return modes;
 }
@@ -568,7 +568,7 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
     ** First allocate memory for the array of per screen configs.
     */
    screens = ScreenCount(dpy);
-   priv->screenConfigs = Xmalloc(screens * sizeof *priv->screenConfigs);
+   priv->screenConfigs = malloc(screens * sizeof *priv->screenConfigs);
    if (!priv->screenConfigs) {
       return GL_FALSE;
    }
@@ -581,7 +581,7 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
    }
 
    for (i = 0; i < screens; i++) {
-      psc = Xcalloc(1, sizeof *psc);
+      psc = calloc(1, sizeof *psc);
       if (!psc)
          return GL_FALSE;
       getFBConfigs(psc, priv, i);
@@ -619,12 +619,12 @@ __glXInitialize(Display * dpy)
    /*
     ** Allocate memory for all the pieces needed for this buffer.
     */
-   private = (XExtData *) Xmalloc(sizeof(XExtData));
+   private = (XExtData *) malloc(sizeof(XExtData));
    if (!private)
       return NULL;
-   dpyPriv = (__GLXdisplayPrivate *) Xcalloc(1, sizeof(__GLXdisplayPrivate));
+   dpyPriv = (__GLXdisplayPrivate *) calloc(1, sizeof(__GLXdisplayPrivate));
    if (!dpyPriv) {
-      Xfree(private);
+      free(private);
       return NULL;
    }
 
@@ -636,8 +636,8 @@ __glXInitialize(Display * dpy)
    dpyPriv->dpy = dpy;
 
    if (!AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
-      Xfree(dpyPriv);
-      Xfree(private);
+      free(dpyPriv);
+      free(private);
       return NULL;
    }
 

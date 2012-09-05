@@ -208,13 +208,13 @@ FreeScreenConfigs(struct glx_display * priv)
       if (psc->driScreen) {
          psc->driScreen->destroyScreen(psc);
       } else {
-	 Xfree(psc);
+	 free(psc);
       }
 #else
-      Xfree(psc);
+      free(psc);
 #endif
    }
-   XFree((char *) priv->screens);
+   free((char *) priv->screens);
    priv->screens = NULL;
 }
 
@@ -231,9 +231,9 @@ glx_display_free(struct glx_display *priv)
 
    FreeScreenConfigs(priv);
    if (priv->serverGLXvendor)
-      Xfree((char *) priv->serverGLXvendor);
+      free((char *) priv->serverGLXvendor);
    if (priv->serverGLXversion)
-      Xfree((char *) priv->serverGLXversion);
+      free((char *) priv->serverGLXversion);
 
    __glxHashDestroy(priv->glXDrawHash);
 
@@ -254,7 +254,7 @@ glx_display_free(struct glx_display *priv)
    priv->dri2Display = NULL;
 #endif
 
-   Xfree((char *) priv);
+   free((char *) priv);
 }
 
 static int
@@ -614,7 +614,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
    if (prop_size <= sizeof(buf))
       props = buf;
    else
-      props = Xmalloc(prop_size);
+      props = malloc(prop_size);
 
    /* Read each config structure and convert it into our format */
    m = modes;
@@ -638,7 +638,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
    }
 
    if (props != buf)
-      Xfree(props);
+      free(props);
 
    return modes;
 }
@@ -741,14 +741,14 @@ glx_screen_cleanup(struct glx_screen *psc)
    if (psc->configs) {
       glx_config_destroy_list(psc->configs);
       if (psc->effectiveGLXexts)
-          Xfree(psc->effectiveGLXexts);
+          free(psc->effectiveGLXexts);
       psc->configs = NULL;   /* NOTE: just for paranoia */
    }
    if (psc->visuals) {
       glx_config_destroy_list(psc->visuals);
       psc->visuals = NULL;   /* NOTE: just for paranoia */
    }
-   Xfree((char *) psc->serverGLXexts);
+   free((char *) psc->serverGLXexts);
 }
 
 /*
@@ -765,7 +765,7 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
     ** First allocate memory for the array of per screen configs.
     */
    screens = ScreenCount(dpy);
-   priv->screens = Xmalloc(screens * sizeof *priv->screens);
+   priv->screens = malloc(screens * sizeof *priv->screens);
    if (!priv->screens)
       return GL_FALSE;
 
@@ -823,13 +823,13 @@ __glXInitialize(Display * dpy)
    /* Drop the lock while we create the display private. */
    _XUnlockMutex(_Xglobal_lock);
 
-   dpyPriv = Xcalloc(1, sizeof *dpyPriv);
+   dpyPriv = calloc(1, sizeof *dpyPriv);
    if (!dpyPriv)
       return NULL;
 
    dpyPriv->codes = XInitExtension(dpy, __glXExtensionName);
    if (!dpyPriv->codes) {
-      Xfree(dpyPriv);
+      free(dpyPriv);
       _XUnlockMutex(_Xglobal_lock);
       return NULL;
    }
@@ -845,7 +845,7 @@ __glXInitialize(Display * dpy)
    if (!QueryVersion(dpy, dpyPriv->majorOpcode,
 		     &dpyPriv->majorVersion, &dpyPriv->minorVersion)
        || (dpyPriv->majorVersion == 1 && dpyPriv->minorVersion < 1)) {
-      Xfree(dpyPriv);
+      free(dpyPriv);
       _XUnlockMutex(_Xglobal_lock);
       return NULL;
    }
@@ -881,12 +881,12 @@ __glXInitialize(Display * dpy)
 
 #ifdef GLX_USE_APPLEGL
    if (!applegl_create_display(dpyPriv)) {
-      Xfree(dpyPriv);
+      free(dpyPriv);
       return NULL;
    }
 #endif
    if (!AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
-      Xfree(dpyPriv);
+      free(dpyPriv);
       return NULL;
    }
 

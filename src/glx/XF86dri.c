@@ -201,7 +201,7 @@ XF86DRIOpenConnection(Display * dpy, int screen, drm_handle_t * hSAREA,
    }
 
    if (rep.length) {
-      if (!(*busIdString = (char *) Xcalloc(rep.busIdStringLength + 1, 1))) {
+      if (!(*busIdString = (char *) calloc(rep.busIdStringLength + 1, 1))) {
          _XEatData(dpy, ((rep.busIdStringLength + 3) & ~3));
          UnlockDisplay(dpy);
          SyncHandle();
@@ -302,7 +302,7 @@ XF86DRIGetClientDriverName(Display * dpy, int screen,
    if (rep.length) {
       if (!
           (*clientDriverName =
-           (char *) Xcalloc(rep.clientDriverNameLength + 1, 1))) {
+           (char *) calloc(rep.clientDriverNameLength + 1, 1))) {
          _XEatData(dpy, ((rep.clientDriverNameLength + 3) & ~3));
          UnlockDisplay(dpy);
          SyncHandle();
@@ -521,7 +521,7 @@ XF86DRIGetDrawableInfo(Display * dpy, int screen, Drawable drawable,
    if (*numClipRects) {
       int len = sizeof(drm_clip_rect_t) * (*numClipRects);
 
-      *pClipRects = (drm_clip_rect_t *) Xcalloc(len, 1);
+      *pClipRects = (drm_clip_rect_t *) calloc(len, 1);
       if (*pClipRects)
          _XRead(dpy, (char *) *pClipRects, len);
    }
@@ -532,7 +532,7 @@ XF86DRIGetDrawableInfo(Display * dpy, int screen, Drawable drawable,
    if (*numBackClipRects) {
       int len = sizeof(drm_clip_rect_t) * (*numBackClipRects);
 
-      *pBackClipRects = (drm_clip_rect_t *) Xcalloc(len, 1);
+      *pBackClipRects = (drm_clip_rect_t *) calloc(len, 1);
       if (*pBackClipRects)
          _XRead(dpy, (char *) *pBackClipRects, len);
    }
@@ -582,7 +582,7 @@ XF86DRIGetDeviceInfo(Display * dpy, int screen, drm_handle_t * hFrameBuffer,
    *devPrivateSize = rep.devPrivateSize;
 
    if (rep.length) {
-      if (!(*pDevPrivate = (void *) Xcalloc(rep.devPrivateSize, 1))) {
+      if (!(*pDevPrivate = (void *) calloc(rep.devPrivateSize, 1))) {
          _XEatData(dpy, ((rep.devPrivateSize + 3) & ~3));
          UnlockDisplay(dpy);
          SyncHandle();

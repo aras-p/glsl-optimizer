@@ -127,11 +127,11 @@ dri2_destroy_context(struct glx_context *context)
    driReleaseDrawables(&pcp->base);
 
    if (context->extensions)
-      XFree((char *) context->extensions);
+      free((char *) context->extensions);
 
    (*psc->core->destroyContext) (pcp->driContext);
 
-   Xfree(pcp);
+   free(pcp);
 }
 
 static Bool
@@ -199,13 +199,13 @@ dri2_create_context(struct glx_screen *base,
       shared = pcp_shared->driContext;
    }
 
-   pcp = Xmalloc(sizeof *pcp);
+   pcp = malloc(sizeof *pcp);
    if (pcp == NULL)
       return NULL;
 
    memset(pcp, 0, sizeof *pcp);
    if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
-      Xfree(pcp);
+      free(pcp);
       return NULL;
    }
 
@@ -214,7 +214,7 @@ dri2_create_context(struct glx_screen *base,
                                       config->driConfig, shared, pcp);
 
    if (pcp->driContext == NULL) {
-      Xfree(pcp);
+      free(pcp);
       return NULL;
    }
 
@@ -262,7 +262,7 @@ dri2_create_context_attribs(struct glx_screen *base,
       shared = pcp_shared->driContext;
    }
 
-   pcp = Xmalloc(sizeof *pcp);
+   pcp = malloc(sizeof *pcp);
    if (pcp == NULL) {
       *error = __DRI_CTX_ERROR_NO_MEMORY;
       goto error_exit;
@@ -314,7 +314,7 @@ dri2_create_context_attribs(struct glx_screen *base,
 
 error_exit:
    if (pcp != NULL)
-      Xfree(pcp);
+      free(pcp);
 
    return NULL;
 }
@@ -340,7 +340,7 @@ dri2DestroyDrawable(__GLXDRIdrawable *base)
    if (pdraw->base.xDrawable != pdraw->base.drawable)
       DRI2DestroyDrawable(psc->base.dpy, pdraw->base.xDrawable);
 
-   Xfree(pdraw);
+   free(pdraw);
 }
 
 static __GLXDRIdrawable *
@@ -354,7 +354,7 @@ dri2CreateDrawable(struct glx_screen *base, XID xDrawable,
    struct dri2_display *pdp;
    GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
 
-   pdraw = Xmalloc(sizeof(*pdraw));
+   pdraw = malloc(sizeof(*pdraw));
    if (!pdraw)
       return NULL;
 
@@ -394,14 +394,14 @@ dri2CreateDrawable(struct glx_screen *base, XID xDrawable,
 
    if (!pdraw->driDrawable) {
       DRI2DestroyDrawable(psc->base.dpy, xDrawable);
-      Xfree(pdraw);
+      free(pdraw);
       return NULL;
    }
 
    if (__glxHashInsert(pdp->dri2Hash, xDrawable, pdraw)) {
       (*psc->core->destroyDrawable) (pdraw->driDrawable);
       DRI2DestroyDrawable(psc->base.dpy, xDrawable);
-      Xfree(pdraw);
+      free(pdraw);
       return None;
    }
 
@@ -633,7 +633,7 @@ dri2DestroyScreen(struct glx_screen *base)
    (*psc->core->destroyScreen) (psc->driScreen);
    driDestroyConfigs(psc->driver_configs);
    close(psc->fd);
-   Xfree(psc);
+   free(psc);
 }
 
 /**
@@ -765,7 +765,7 @@ dri2GetBuffers(__DRIdrawable * driDrawable,
    pdraw->height = *height;
    process_buffers(pdraw, buffers, *out_count);
 
-   Xfree(buffers);
+   free(buffers);
 
    return pdraw->buffers;
 }
@@ -790,7 +790,7 @@ dri2GetBuffersWithFormat(__DRIdrawable * driDrawable,
    pdraw->height = *height;
    process_buffers(pdraw, buffers, *out_count);
 
-   Xfree(buffers);
+   free(buffers);
 
    return pdraw->buffers;
 }
@@ -1020,7 +1020,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    drm_magic_t magic;
    int i;
 
-   psc = Xmalloc(sizeof *psc);
+   psc = malloc(sizeof *psc);
    if (psc == NULL)
       return NULL;
 
@@ -1028,14 +1028,14 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    psc->fd = -1;
 
    if (!glx_screen_init(&psc->base, screen, priv)) {
-      Xfree(psc);
+      free(psc);
       return NULL;
    }
 
    if (!DRI2Connect(priv->dpy, RootWindow(priv->dpy, screen),
 		    &driverName, &deviceName)) {
       glx_screen_cleanup(&psc->base);
-      XFree(psc);
+      free(psc);
       InfoMessageF("screen %d does not appear to be DRI2 capable\n", screen);
       return NULL;
    }
@@ -1153,8 +1153,8 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    psp->copySubBuffer = dri2CopySubBuffer;
    __glXEnableDirectExtension(&psc->base, "GLX_MESA_copy_sub_buffer");
 
-   Xfree(driverName);
-   Xfree(deviceName);
+   free(driverName);
+   free(deviceName);
 
    tmp = getenv("LIBGL_SHOW_FPS");
    psc->show_fps = tmp && strcmp(tmp, "1") == 0;
@@ -1176,10 +1176,10 @@ handle_error:
    if (psc->driver)
       dlclose(psc->driver);
 
-   Xfree(driverName);
-   Xfree(deviceName);
+   free(driverName);
+   free(deviceName);
    glx_screen_cleanup(&psc->base);
-   XFree(psc);
+   free(psc);
 
    return NULL;
 }
@@ -1192,7 +1192,7 @@ dri2DestroyDisplay(__GLXDRIdisplay * dpy)
    struct dri2_display *pdp = (struct dri2_display *) dpy;
 
    __glxHashDestroy(pdp->dri2Hash);
-   Xfree(dpy);
+   free(dpy);
 }
 
 _X_HIDDEN __GLXDRIdrawable *
@@ -1222,12 +1222,12 @@ dri2CreateDisplay(Display * dpy)
    if (!DRI2QueryExtension(dpy, &eventBase, &errorBase))
       return NULL;
 
-   pdp = Xmalloc(sizeof *pdp);
+   pdp = malloc(sizeof *pdp);
    if (pdp == NULL)
       return NULL;
 
    if (!DRI2QueryVersion(dpy, &pdp->driMajor, &pdp->driMinor)) {
-      Xfree(pdp);
+      free(pdp);
       return NULL;
    }
 
@@ -1253,7 +1253,7 @@ dri2CreateDisplay(Display * dpy)
 
    pdp->dri2Hash = __glxHashCreate();
    if (pdp->dri2Hash == NULL) {
-      Xfree(pdp);
+      free(pdp);
       return NULL;
    }
 

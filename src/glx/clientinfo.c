@@ -152,5 +152,5 @@ __glX_send_client_info(struct glx_display *glx_dpy)
 			  gl_extension_string);
    }
 
-   Xfree(gl_extension_string);
+   free(gl_extension_string);
 }

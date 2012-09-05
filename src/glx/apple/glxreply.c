@@ -79,7 +79,7 @@ __glXReadPixelReply(Display * dpy, struct glx_context * gc, unsigned max_dim,
 
    size = reply.length * 4;
    if (size != 0) {
-      void *buf = Xmalloc(size);
+      void *buf = malloc(size);
 
       if (buf == NULL) {
          _XEatData(dpy, size);
@@ -94,7 +94,7 @@ __glXReadPixelReply(Display * dpy, struct glx_context * gc, unsigned max_dim,
          }
 
          __glEmptyImage(gc, 3, width, height, depth, format, type, buf, dest);
-         Xfree(buf);
+         free(buf);
       }
    }
 }
