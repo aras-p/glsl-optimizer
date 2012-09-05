@@ -227,7 +227,8 @@ _mesa_sampler_uniforms_are_valid(const struct gl_shader_program *shProg,
 				 char *errMsg, size_t errMsgLength);
 
 extern void
-_mesa_init_shader_uniform_dispatch(struct _glapi_table *exec);
+_mesa_init_shader_uniform_dispatch(const struct gl_context *ctx,
+                                   struct _glapi_table *exec);
 
 extern const struct gl_program_parameter *
 get_uniform_parameter(struct gl_shader_program *shProg, GLint index);

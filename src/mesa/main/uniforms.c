@@ -804,7 +804,8 @@ _mesa_GetActiveUniformName(GLuint program, GLuint uniformIndex,
  * Plug in shader uniform-related functions into API dispatch table.
  */
 void
-_mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
+_mesa_init_shader_uniform_dispatch(const struct gl_context *ctx,
+                                   struct _glapi_table *exec)
 {
 #if FEATURE_GL
    SET_Uniform1fARB(exec, _mesa_Uniform1fARB);
@@ -833,38 +834,39 @@ _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
    SET_GetUniformivARB(exec, _mesa_GetUniformivARB);
 
    /* OpenGL 2.1 */
-   SET_UniformMatrix2x3fv(exec, _mesa_UniformMatrix2x3fv);
-   SET_UniformMatrix3x2fv(exec, _mesa_UniformMatrix3x2fv);
-   SET_UniformMatrix2x4fv(exec, _mesa_UniformMatrix2x4fv);
-   SET_UniformMatrix4x2fv(exec, _mesa_UniformMatrix4x2fv);
-   SET_UniformMatrix3x4fv(exec, _mesa_UniformMatrix3x4fv);
-   SET_UniformMatrix4x3fv(exec, _mesa_UniformMatrix4x3fv);
+   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+      SET_UniformMatrix2x3fv(exec, _mesa_UniformMatrix2x3fv);
+      SET_UniformMatrix3x2fv(exec, _mesa_UniformMatrix3x2fv);
+      SET_UniformMatrix2x4fv(exec, _mesa_UniformMatrix2x4fv);
+      SET_UniformMatrix4x2fv(exec, _mesa_UniformMatrix4x2fv);
+      SET_UniformMatrix3x4fv(exec, _mesa_UniformMatrix3x4fv);
+      SET_UniformMatrix4x3fv(exec, _mesa_UniformMatrix4x3fv);
 
-   /* OpenGL 3.0 */
-   SET_Uniform1uiEXT(exec, _mesa_Uniform1ui);
-   SET_Uniform2uiEXT(exec, _mesa_Uniform2ui);
-   SET_Uniform3uiEXT(exec, _mesa_Uniform3ui);
-   SET_Uniform4uiEXT(exec, _mesa_Uniform4ui);
-   SET_Uniform1uivEXT(exec, _mesa_Uniform1uiv);
-   SET_Uniform2uivEXT(exec, _mesa_Uniform2uiv);
-   SET_Uniform3uivEXT(exec, _mesa_Uniform3uiv);
-   SET_Uniform4uivEXT(exec, _mesa_Uniform4uiv);
-   SET_GetUniformuivEXT(exec, _mesa_GetUniformuiv);
+      /* OpenGL 3.0 */
+      SET_Uniform1uiEXT(exec, _mesa_Uniform1ui);
+      SET_Uniform2uiEXT(exec, _mesa_Uniform2ui);
+      SET_Uniform3uiEXT(exec, _mesa_Uniform3ui);
+      SET_Uniform4uiEXT(exec, _mesa_Uniform4ui);
+      SET_Uniform1uivEXT(exec, _mesa_Uniform1uiv);
+      SET_Uniform2uivEXT(exec, _mesa_Uniform2uiv);
+      SET_Uniform3uivEXT(exec, _mesa_Uniform3uiv);
+      SET_Uniform4uivEXT(exec, _mesa_Uniform4uiv);
+      SET_GetUniformuivEXT(exec, _mesa_GetUniformuiv);
 
-   /* GL_ARB_robustness */
-   SET_GetnUniformfvARB(exec, _mesa_GetnUniformfvARB);
-   SET_GetnUniformivARB(exec, _mesa_GetnUniformivARB);
-   SET_GetnUniformuivARB(exec, _mesa_GetnUniformuivARB);
-   SET_GetnUniformdvARB(exec, _mesa_GetnUniformdvARB); /* GL 4.0 */
+      /* GL_ARB_robustness */
+      SET_GetnUniformfvARB(exec, _mesa_GetnUniformfvARB);
+      SET_GetnUniformivARB(exec, _mesa_GetnUniformivARB);
+      SET_GetnUniformuivARB(exec, _mesa_GetnUniformuivARB);
+      SET_GetnUniformdvARB(exec, _mesa_GetnUniformdvARB); /* GL 4.0 */
 
-   /* GL_ARB_uniform_buffer_object / GL 3.1 */
-   SET_GetUniformBlockIndex(exec, _mesa_GetUniformBlockIndex);
-   SET_GetUniformIndices(exec, _mesa_GetUniformIndices);
-   SET_GetActiveUniformsiv(exec, _mesa_GetActiveUniformsiv);
-   SET_GetActiveUniformBlockiv(exec, _mesa_GetActiveUniformBlockiv);
-   SET_GetActiveUniformBlockName(exec, _mesa_GetActiveUniformBlockName);
-   SET_GetActiveUniformName(exec, _mesa_GetActiveUniformName);
-   SET_UniformBlockBinding(exec, _mesa_UniformBlockBinding);
-
+      /* GL_ARB_uniform_buffer_object / GL 3.1 */
+      SET_GetUniformBlockIndex(exec, _mesa_GetUniformBlockIndex);
+      SET_GetUniformIndices(exec, _mesa_GetUniformIndices);
+      SET_GetActiveUniformsiv(exec, _mesa_GetActiveUniformsiv);
+      SET_GetActiveUniformBlockiv(exec, _mesa_GetActiveUniformBlockiv);
+      SET_GetActiveUniformBlockName(exec, _mesa_GetActiveUniformBlockName);
+      SET_GetActiveUniformName(exec, _mesa_GetActiveUniformName);
+      SET_UniformBlockBinding(exec, _mesa_UniformBlockBinding);
+   }
 #endif /* FEATURE_GL */
 }

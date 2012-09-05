@@ -365,7 +365,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_StencilOpSeparate(exec, _mesa_StencilOpSeparate);
 
    _mesa_init_shader_dispatch(ctx, exec);
-   _mesa_init_shader_uniform_dispatch(exec);
+   _mesa_init_shader_uniform_dispatch(ctx, exec);
 
    /* 2. GL_EXT_blend_color */
 #if 0
