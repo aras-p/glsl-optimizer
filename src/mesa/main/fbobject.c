@@ -2979,8 +2979,8 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    /* extra checks for multisample copies... */
    if (readFb->Visual.samples > 0 || drawFb->Visual.samples > 0) {
       /* src and dest region sizes must be the same */
-      if (srcX1 - srcX0 != dstX1 - dstX0 ||
-          srcY1 - srcY0 != dstY1 - dstY0) {
+      if (abs(srcX1 - srcX0) != abs(dstX1 - dstX0) ||
+          abs(srcY1 - srcY0) != abs(dstY1 - dstY0)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                 "glBlitFramebufferEXT(bad src/dst multisample region sizes)");
          return;
