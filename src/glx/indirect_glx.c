@@ -361,14 +361,13 @@ indirect_create_context(struct glx_screen *psc,
    glx_context_init(gc, psc, mode);
    gc->isDirect = GL_FALSE;
    gc->vtable = &indirect_context_vtable;
-   state = malloc(sizeof(struct __GLXattributeRec));
+   state = calloc(1, sizeof(struct __GLXattributeRec));
    if (state == NULL) {
       /* Out of memory */
       free(gc);
       return NULL;
    }
    gc->client_state_private = state;
-   memset(gc->client_state_private, 0, sizeof(struct __GLXattributeRec));
    state->NoDrawArraysProtocol = (getenv("LIBGL_NO_DRAWARRAYS") != NULL);
 
    /*
