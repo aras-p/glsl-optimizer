@@ -1686,25 +1686,29 @@ _mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string)
  * Plug in shader-related functions into API dispatch table.
  */
 void
-_mesa_init_shader_dispatch(struct _glapi_table *exec)
+_mesa_init_shader_dispatch(const struct gl_context *ctx,
+                           struct _glapi_table *exec)
 {
 #if FEATURE_GL
    /* GL_ARB_vertex/fragment_shader */
-   SET_DeleteObjectARB(exec, _mesa_DeleteObjectARB);
-   SET_GetHandleARB(exec, _mesa_GetHandleARB);
-   SET_DetachObjectARB(exec, _mesa_DetachObjectARB);
-   SET_CreateShaderObjectARB(exec, _mesa_CreateShaderObjectARB);
+   if (ctx->API != API_OPENGLES2) {
+      SET_DeleteObjectARB(exec, _mesa_DeleteObjectARB);
+      SET_GetHandleARB(exec, _mesa_GetHandleARB);
+      SET_DetachObjectARB(exec, _mesa_DetachObjectARB);
+      SET_CreateShaderObjectARB(exec, _mesa_CreateShaderObjectARB);
+      SET_CreateProgramObjectARB(exec, _mesa_CreateProgramObjectARB);
+      SET_AttachObjectARB(exec, _mesa_AttachObjectARB);
+      SET_GetObjectParameterfvARB(exec, _mesa_GetObjectParameterfvARB);
+      SET_GetObjectParameterivARB(exec, _mesa_GetObjectParameterivARB);
+      SET_GetInfoLogARB(exec, _mesa_GetInfoLogARB);
+      SET_GetAttachedObjectsARB(exec, _mesa_GetAttachedObjectsARB);
+   }
+
    SET_ShaderSourceARB(exec, _mesa_ShaderSourceARB);
    SET_CompileShaderARB(exec, _mesa_CompileShaderARB);
-   SET_CreateProgramObjectARB(exec, _mesa_CreateProgramObjectARB);
-   SET_AttachObjectARB(exec, _mesa_AttachObjectARB);
    SET_LinkProgramARB(exec, _mesa_LinkProgramARB);
    SET_UseProgramObjectARB(exec, _mesa_UseProgramObjectARB);
    SET_ValidateProgramARB(exec, _mesa_ValidateProgramARB);
-   SET_GetObjectParameterfvARB(exec, _mesa_GetObjectParameterfvARB);
-   SET_GetObjectParameterivARB(exec, _mesa_GetObjectParameterivARB);
-   SET_GetInfoLogARB(exec, _mesa_GetInfoLogARB);
-   SET_GetAttachedObjectsARB(exec, _mesa_GetAttachedObjectsARB);
    SET_GetShaderSourceARB(exec, _mesa_GetShaderSourceARB);
 
    /* OpenGL 2.0 */
@@ -1727,15 +1731,21 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec)
    SET_GetActiveAttribARB(exec, _mesa_GetActiveAttribARB);
    SET_GetAttribLocationARB(exec, _mesa_GetAttribLocationARB);
 
-   SET_ProgramParameteriARB(exec, _mesa_ProgramParameteriARB);
+   if (ctx->API != API_OPENGLES2) {
+      SET_ProgramParameteriARB(exec, _mesa_ProgramParameteriARB);
 
-   SET_UseShaderProgramEXT(exec, _mesa_UseShaderProgramEXT);
-   SET_ActiveProgramEXT(exec, _mesa_ActiveProgramEXT);
-   SET_CreateShaderProgramEXT(exec, _mesa_CreateShaderProgramEXT);
+      SET_UseShaderProgramEXT(exec, _mesa_UseShaderProgramEXT);
+      SET_ActiveProgramEXT(exec, _mesa_ActiveProgramEXT);
+      SET_CreateShaderProgramEXT(exec, _mesa_CreateShaderProgramEXT);
+   }
 
    /* GL_EXT_gpu_shader4 / GL 3.0 */
-   SET_BindFragDataLocationEXT(exec, _mesa_BindFragDataLocation);
-   SET_GetFragDataLocationEXT(exec, _mesa_GetFragDataLocation);
+   if (ctx->API != API_OPENGLES2) {
+      SET_BindFragDataLocationEXT(exec, _mesa_BindFragDataLocation);
+   }
+   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+      SET_GetFragDataLocationEXT(exec, _mesa_GetFragDataLocation);
+   }
 
    /* GL_ARB_ES2_compatibility */
    SET_ReleaseShaderCompiler(exec, _mesa_ReleaseShaderCompiler);
@@ -1743,8 +1753,10 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec)
    SET_ShaderBinary(exec, _mesa_ShaderBinary);
 
    /* GL_ARB_blend_func_extended */
-   SET_BindFragDataLocationIndexed(exec, _mesa_BindFragDataLocationIndexed);
-   SET_GetFragDataIndex(exec, _mesa_GetFragDataIndex);
+   if (ctx->API != API_OPENGLES2) {
+      SET_BindFragDataLocationIndexed(exec, _mesa_BindFragDataLocationIndexed);
+      SET_GetFragDataIndex(exec, _mesa_GetFragDataIndex);
+   }
 #endif /* FEATURE_GL */
 }
 

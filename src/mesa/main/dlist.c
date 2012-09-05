@@ -10410,7 +10410,7 @@ _mesa_create_save_table(const struct gl_context *ctx)
    SET_BlitFramebufferEXT(table, save_BlitFramebufferEXT);
 
    /* GL_ARB_shader_objects */
-   _mesa_init_shader_dispatch(table); /* Plug in glCreate/Delete/Get, etc */
+   _mesa_init_shader_dispatch(ctx, table); /* Plug in glCreate/Delete/Get, etc */
    SET_UseProgramObjectARB(table, save_UseProgramObjectARB);
    SET_Uniform1fARB(table, save_Uniform1fARB);
    SET_Uniform2fARB(table, save_Uniform2fARB);
