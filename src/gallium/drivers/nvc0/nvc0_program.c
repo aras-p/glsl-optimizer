@@ -574,8 +574,7 @@ nvc0_program_translate(struct nvc0_program *prog, uint16_t chipset)
       NOUVEAU_ERR("shader translation failed: %i\n", ret);
       goto out;
    }
-   if (info->bin.syms) /* we don't need them yet */
-      FREE(info->bin.syms);
+   FREE(info->bin.syms);
 
    prog->code = info->bin.code;
    prog->code_size = info->bin.codeSize;
@@ -752,12 +751,9 @@ nvc0_program_destroy(struct nvc0_context *nvc0, struct nvc0_program *prog)
    if (prog->mem)
       nouveau_heap_free(&prog->mem);
 
-   if (prog->code)
-      FREE(prog->code);
-   if (prog->immd_data)
-      FREE(prog->immd_data);
-   if (prog->relocs)
-      FREE(prog->relocs);
+   FREE(prog->code);
+   FREE(prog->immd_data);
+   FREE(prog->relocs);
    if (prog->tfb) {
       if (nvc0->state.tfb == prog->tfb)
          nvc0->state.tfb = NULL;

@@ -154,8 +154,7 @@ fail:
    if (screen)
       screen->destroy(screen);
 
-   if (xlib_handle)
-      FREE(xlib_handle);
+   FREE(xlib_handle);
 
    free(visinfo);
 

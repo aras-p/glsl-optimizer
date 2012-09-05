@@ -184,9 +184,7 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
 
 fail:
    for (level = 0; level <= pt->last_level; level++) {
-      if (lpr->layout[level]) {
-         FREE(lpr->layout[level]);
-      }
+      FREE(lpr->layout[level]);
    }
 
    return FALSE;

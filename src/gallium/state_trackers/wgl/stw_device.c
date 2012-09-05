@@ -117,8 +117,7 @@ stw_init(const struct stw_winsys *stw_winsys)
    return TRUE;
 
 error1:
-   if (stw_dev->smapi)
-      FREE(stw_dev->smapi);
+   FREE(stw_dev->smapi);
    if (stw_dev->stapi)
       stw_dev->stapi->destroy(stw_dev->stapi);
 

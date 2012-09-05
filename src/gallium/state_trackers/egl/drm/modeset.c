@@ -648,10 +648,8 @@ drm_display_fini_modeset(struct native_display *ndpy)
       FREE(drmdpy->connectors);
    }
 
-   if (drmdpy->shown_surfaces) {
-      FREE(drmdpy->shown_surfaces);
-      drmdpy->shown_surfaces = NULL;
-   }
+   FREE(drmdpy->shown_surfaces);
+   drmdpy->shown_surfaces = NULL;
 
    if (drmdpy->saved_crtcs) {
       for (i = 0; i < drmdpy->resources->count_crtcs; i++) {

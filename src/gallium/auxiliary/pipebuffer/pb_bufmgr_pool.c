@@ -311,13 +311,11 @@ pool_bufmgr_create(struct pb_manager *provider,
    return SUPER(pool);
    
 failure:
-   if(pool->bufs)
-      FREE(pool->bufs);
+   FREE(pool->bufs);
    if(pool->map)
       pb_unmap(pool->buffer);
    if(pool->buffer)
       pb_reference(&pool->buffer, NULL);
-   if(pool)
-      FREE(pool);
+   FREE(pool);
    return NULL;
 }

@@ -123,8 +123,7 @@ drm_display_destroy(struct native_display *ndpy)
 {
    struct drm_display *drmdpy = drm_display(ndpy);
 
-   if (drmdpy->config)
-      FREE(drmdpy->config);
+   FREE(drmdpy->config);
 
    drm_display_fini_modeset(&drmdpy->base);
 
@@ -132,8 +131,7 @@ drm_display_destroy(struct native_display *ndpy)
    ndpy->screen = NULL;
    ndpy_uninit(ndpy);
 
-   if (drmdpy->device_name)
-      FREE(drmdpy->device_name);
+   FREE(drmdpy->device_name);
 
    if (drmdpy->own_gbm) {
       gbm_device_destroy(&drmdpy->gbmdrm->base.base);

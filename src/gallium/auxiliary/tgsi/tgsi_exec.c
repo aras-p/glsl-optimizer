@@ -653,15 +653,11 @@ tgsi_exec_machine_bind_shader(
 
    if (!tokens) {
       /* unbind and free all */
-      if (mach->Declarations) {
-         FREE( mach->Declarations );
-      }
+      FREE(mach->Declarations);
       mach->Declarations = NULL;
       mach->NumDeclarations = 0;
 
-      if (mach->Instructions) {
-         FREE( mach->Instructions );
-      }
+      FREE(mach->Instructions);
       mach->Instructions = NULL;
       mach->NumInstructions = 0;
 
@@ -804,15 +800,11 @@ tgsi_exec_machine_bind_shader(
    }
    tgsi_parse_free (&parse);
 
-   if (mach->Declarations) {
-      FREE( mach->Declarations );
-   }
+   FREE(mach->Declarations);
    mach->Declarations = declarations;
    mach->NumDeclarations = numDeclarations;
 
-   if (mach->Instructions) {
-      FREE( mach->Instructions );
-   }
+   FREE(mach->Instructions);
    mach->Instructions = instructions;
    mach->NumInstructions = numInstructions;
 }
@@ -875,10 +867,8 @@ void
 tgsi_exec_machine_destroy(struct tgsi_exec_machine *mach)
 {
    if (mach) {
-      if (mach->Instructions)
-         FREE(mach->Instructions);
-      if (mach->Declarations)
-         FREE(mach->Declarations);
+      FREE(mach->Instructions);
+      FREE(mach->Declarations);
 
       align_free(mach->Inputs);
       align_free(mach->Outputs);

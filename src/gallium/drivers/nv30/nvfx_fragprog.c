@@ -1101,10 +1101,9 @@ nvfx_fragprog_prepare(struct nv30_context* nvfx, struct nvfx_fpc *fpc)
    return TRUE;
 
 out_err:
-   if (fpc->r_temp) {
-      FREE(fpc->r_temp);
-      fpc->r_temp = NULL;
-   }
+   FREE(fpc->r_temp);
+   fpc->r_temp = NULL;
+
    tgsi_parse_free(&p);
    return FALSE;
 }
@@ -1218,8 +1217,7 @@ out:
    tgsi_parse_free(&parse);
    if(fpc)
    {
-      if (fpc->r_temp)
-         FREE(fpc->r_temp);
+      FREE(fpc->r_temp);
       util_dynarray_fini(&fpc->if_stack);
       util_dynarray_fini(&fpc->label_relocs);
       util_dynarray_fini(&fpc->imm_data);

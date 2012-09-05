@@ -287,8 +287,7 @@ if(mm->heap)
    u_mmDestroy(mm->heap);
    if(mm->map)
       pb_unmap(mm->buffer);
-   if(mm)
-      FREE(mm);
+   FREE(mm);
    return NULL;
 }
 

@@ -52,8 +52,7 @@ static VGboolean del_glyph(struct vg_font *font,
 
    glyph = (struct vg_glyph *)
       cso_hash_take(font->glyphs, (unsigned) glyphIndex);
-   if (glyph)
-      FREE(glyph);
+   FREE(glyph);
 
    return (glyph != NULL);
 }

@@ -511,8 +511,7 @@ ximage_display_destroy(struct native_display *ndpy)
 {
    struct ximage_display *xdpy = ximage_display(ndpy);
 
-   if (xdpy->configs)
-      FREE(xdpy->configs);
+   FREE(xdpy->configs);
 
    ndpy_uninit(ndpy);
 

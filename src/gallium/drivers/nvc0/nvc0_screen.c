@@ -256,8 +256,7 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
    if (screen->base.pushbuf)
       screen->base.pushbuf->user_priv = NULL;
 
-   if (screen->blitctx)
-      FREE(screen->blitctx);
+   FREE(screen->blitctx);
 
    nouveau_bo_ref(NULL, &screen->text);
    nouveau_bo_ref(NULL, &screen->uniform_bo);
@@ -269,8 +268,7 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
    nouveau_heap_destroy(&screen->lib_code);
    nouveau_heap_destroy(&screen->text_heap);
 
-   if (screen->tic.entries)
-      FREE(screen->tic.entries);
+   FREE(screen->tic.entries);
 
    nouveau_mm_destroy(screen->mm_VRAM_fe0);
 

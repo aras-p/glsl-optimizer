@@ -267,8 +267,7 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
    if (screen->base.pushbuf)
       screen->base.pushbuf->user_priv = NULL;
 
-   if (screen->blitctx)
-      FREE(screen->blitctx);
+   FREE(screen->blitctx);
 
    nouveau_bo_ref(NULL, &screen->code);
    nouveau_bo_ref(NULL, &screen->tls_bo);
@@ -281,8 +280,7 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
    nouveau_heap_destroy(&screen->gp_code_heap);
    nouveau_heap_destroy(&screen->fp_code_heap);
 
-   if (screen->tic.entries)
-      FREE(screen->tic.entries);
+   FREE(screen->tic.entries);
 
    nouveau_object_del(&screen->tesla);
    nouveau_object_del(&screen->eng2d);

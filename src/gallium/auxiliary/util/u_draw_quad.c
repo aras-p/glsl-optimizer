@@ -151,6 +151,5 @@ out:
    if (vbuf)
       pipe_resource_reference(&vbuf, NULL);
    
-   if (v)
-      FREE(v);
+   FREE(v);
 }

@@ -618,13 +618,9 @@ util_format_translate(enum pipe_format dst_format,
          src_row += src_step;
       }
 
-      if (tmp_s) {
-         FREE(tmp_s);
-      }
+      FREE(tmp_s);
 
-      if (tmp_z) {
-         FREE(tmp_z);
-      }
+      FREE(tmp_z);
 
       return;
    }

@@ -705,8 +705,7 @@ i915_texture_destroy(struct pipe_screen *screen,
       iws->buffer_destroy(iws, tex->buffer);
 
    for (i = 0; i < Elements(tex->image_offset); i++)
-      if (tex->image_offset[i])
-         FREE(tex->image_offset[i]);
+      FREE(tex->image_offset[i]);
 
    FREE(tex);
 }

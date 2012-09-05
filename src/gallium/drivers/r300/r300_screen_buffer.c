@@ -55,8 +55,7 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
 {
     struct r300_resource *rbuf = r300_resource(buf);
 
-    if (rbuf->malloced_buffer)
-        FREE(rbuf->malloced_buffer);
+    FREE(rbuf->malloced_buffer);
 
     if (rbuf->buf)
         pb_reference(&rbuf->buf, NULL);

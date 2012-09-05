@@ -343,8 +343,7 @@ nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
       NOUVEAU_ERR("shader translation failed: %i\n", ret);
       goto out;
    }
-   if (info->bin.syms) /* we don't need them yet */
-      FREE(info->bin.syms);
+   FREE(info->bin.syms);
 
    prog->code = info->bin.code;
    prog->code_size = info->bin.codeSize;
@@ -428,14 +427,11 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
    if (p->mem)
       nouveau_heap_free(&p->mem);
 
-   if (p->code)
-      FREE(p->code);
+   FREE(p->code);
 
-   if (p->fixups)
-      FREE(p->fixups);
+   FREE(p->fixups);
 
-   if (p->so)
-      FREE(p->so);
+   FREE(p->so);
 
    memset(p, 0, sizeof(*p));
 

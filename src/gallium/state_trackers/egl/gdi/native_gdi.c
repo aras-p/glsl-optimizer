@@ -358,8 +358,7 @@ gdi_display_destroy(struct native_display *ndpy)
 {
    struct gdi_display *gdpy = gdi_display(ndpy);
 
-   if (gdpy->configs)
-      FREE(gdpy->configs);
+   FREE(gdpy->configs);
 
    ndpy_uninit(ndpy);
 

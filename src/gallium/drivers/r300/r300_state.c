@@ -1840,8 +1840,7 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
 
     if (r300->screen->caps.has_tcl) {
         rc_constants_destroy(&vs->code.constants);
-        if (vs->code.constants_remap_table)
-            FREE(vs->code.constants_remap_table);
+        FREE(vs->code.constants_remap_table);
     } else {
         draw_delete_vertex_shader(r300->draw,
                 (struct draw_vertex_shader*)vs->draw_vs);

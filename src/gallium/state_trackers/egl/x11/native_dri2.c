@@ -260,8 +260,7 @@ dri2_surface_get_buffers(struct native_surface *nsurf, uint buffer_mask)
    dri2surf->server_stamp++;
    dri2surf->client_stamp = dri2surf->server_stamp;
 
-   if (dri2surf->last_xbufs)
-      FREE(dri2surf->last_xbufs);
+   FREE(dri2surf->last_xbufs);
    dri2surf->last_xbufs = xbufs;
    dri2surf->last_num_xbufs = num_outs;
 }
@@ -432,8 +431,7 @@ dri2_surface_destroy(struct native_surface *nsurf)
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
    int i;
 
-   if (dri2surf->last_xbufs)
-      FREE(dri2surf->last_xbufs);
+   FREE(dri2surf->last_xbufs);
 
    for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++) {
       struct pipe_resource *ptex = dri2surf->textures[i];
@@ -752,8 +750,7 @@ dri2_display_destroy(struct native_display *ndpy)
 {
    struct dri2_display *dri2dpy = dri2_display(ndpy);
 
-   if (dri2dpy->configs)
-      FREE(dri2dpy->configs);
+   FREE(dri2dpy->configs);
 
    if (dri2dpy->base.screen)
       dri2dpy->base.screen->destroy(dri2dpy->base.screen);

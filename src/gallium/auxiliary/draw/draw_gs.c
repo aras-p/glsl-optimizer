@@ -435,9 +435,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    shader->in_prim_idx = 0;
    shader->input_vertex_stride = input_stride;
    shader->input = input;
-   if (shader->primitive_lengths) {
-      FREE(shader->primitive_lengths);
-   }
+   FREE(shader->primitive_lengths);
    shader->primitive_lengths = MALLOC(max_out_prims * sizeof(unsigned));
 
    tgsi_exec_set_constant_buffers(machine, PIPE_MAX_CONSTANT_BUFFERS,
