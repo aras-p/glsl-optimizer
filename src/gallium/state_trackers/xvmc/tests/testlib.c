@@ -27,6 +27,7 @@
 
 #include "testlib.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 /*
 void test(int pred, const char *pred_string, const char *doc_string, const char *file, unsigned int line)

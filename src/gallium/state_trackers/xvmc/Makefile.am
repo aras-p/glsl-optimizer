@@ -35,6 +35,29 @@ libxvmctracker_la_SOURCES = \
 	subpicture.c \
 	attributes.c
 
+check_PROGRAMS = \
+	tests/test_context \
+	tests/test_surface \
+	tests/test_subpicture \
+	tests/test_blocks \
+	tests/test_rendering
+TESTS = $(check_PROGRAMS)
+noinst_PROGRAMS = tests/xvmc_bench
+
+TEST_LIBS = -lXvMCW -lXvMC -lXv -lX11
+tests_test_context_SOURCES = tests/test_context.c tests/testlib.c
+tests_test_context_LDADD = $(TEST_LIBS)
+tests_test_surface_SOURCES = tests/test_surface.c tests/testlib.c
+tests_test_surface_LDADD = $(TEST_LIBS)
+tests_test_subpicture_SOURCES = tests/test_subpicture.c tests/testlib.c
+tests_test_subpicture_LDADD = $(TEST_LIBS)
+tests_test_blocks_SOURCES = tests/test_blocks.c tests/testlib.c
+tests_test_blocks_LDADD = $(TEST_LIBS)
+tests_test_rendering_SOURCES = tests/test_rendering.c tests/testlib.c
+tests_test_rendering_LDADD = $(TEST_LIBS)
+tests_xvmc_bench_SOURCES = tests/xvmc_bench.c tests/testlib.c
+tests_xvmc_bench_LDADD = $(TEST_LIBS)
+
 #XXX: Delete this when all targets that rely on xvmctracker are converted to automake.
 all-local: libxvmctracker.la
 	ln -f $(builddir)/.libs/libxvmctracker.a $(builddir)/libxvmctracker.a

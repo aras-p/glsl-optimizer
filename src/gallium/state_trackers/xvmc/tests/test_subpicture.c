@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <error.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "testlib.h"
 
 static void PrintGUID(const char *guid)
