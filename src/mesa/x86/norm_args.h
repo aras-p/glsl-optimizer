@@ -36,10 +36,10 @@
 
 /* Offsets for normal_func arguments
  *
- * typedef void (*normal_func)( CONST GLmatrix *mat,
+ * typedef void (*normal_func)( const GLmatrix *mat,
  *                              GLfloat scale,
- *                              CONST GLvector4f *in,
- *                              CONST GLfloat lengths[],
+ *                              const GLvector4f *in,
+ *                              const GLfloat lengths[],
  *                              GLvector4f *dest );
  */
 #define OFFSET_MAT	4
