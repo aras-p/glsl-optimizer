@@ -161,17 +161,6 @@ extern "C" {
 
 
 /**
- * Some compilers don't like some of Mesa's const usage.  In those places use
- * CONST instead of const.  Pass -DNO_CONST to compilers where this matters.
- */
-#ifdef NO_CONST
-#  define CONST
-#else
-#  define CONST const
-#endif
-
-
-/**
  * __builtin_expect macros
  */
 #if !defined(__GNUC__)
