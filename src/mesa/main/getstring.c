@@ -23,7 +23,7 @@
  */
 
 
-
+#include <stdbool.h>
 #include "glheader.h"
 #include "context.h"
 #include "get.h"
@@ -307,9 +307,48 @@ _mesa_GetGraphicsResetStatusARB( void )
    GET_CURRENT_CONTEXT(ctx);
    GLenum status = GL_NO_ERROR;
 
-   if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glGetGraphicsResetStatusARB"
-                       "(always returns GL_NO_ERROR)\n");
+   /* The ARB_robustness specification says:
+    *
+    *     "If the reset notification behavior is NO_RESET_NOTIFICATION_ARB,
+    *     then the implementation will never deliver notification of reset
+    *     events, and GetGraphicsResetStatusARB will always return NO_ERROR."
+    */
+   if (ctx->Const.ResetStrategy == GL_NO_RESET_NOTIFICATION_ARB) {
+      if (MESA_VERBOSE & VERBOSE_API)
+         _mesa_debug(ctx,
+                     "glGetGraphicsResetStatusARB always returns GL_NO_ERROR "
+                     "because reset notifictation was not requested at context "
+                     "creation.\n");
+
+      return GL_NO_ERROR;
+   }
+
+   if (ctx->Driver.GetGraphicsResetStatus) {
+      /* Query the reset status of this context from the driver core.
+       */
+      status = ctx->Driver.GetGraphicsResetStatus(ctx);
+
+      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+
+      /* If this context has not been affected by a GPU reset, check to see if
+       * some other context in the share group has been affected by a reset.
+       * If another context saw a reset but this context did not, assume that
+       * this context was not guilty.
+       */
+      if (status != GL_NO_ERROR) {
+         ctx->Shared->ShareGroupReset = true;
+      } else if (ctx->Shared->ShareGroupReset && !ctx->ShareGroupReset) {
+         status = GL_INNOCENT_CONTEXT_RESET_ARB;
+      }
+
+      ctx->ShareGroupReset = ctx->Shared->ShareGroupReset;
+      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+   }
+
+   if (!ctx->Driver.GetGraphicsResetStatus && (MESA_VERBOSE & VERBOSE_API))
+      _mesa_debug(ctx,
+                  "glGetGraphicsResetStatusARB always returns GL_NO_ERROR "
+                  "because the driver doesn't track reset status.\n");
 
    return status;
 }
