@@ -108,21 +108,21 @@ typedef GLvector4f * (_XFORMAPIP clip_func)( GLvector4f *vClip,
 
 typedef void (*dotprod_func)( GLfloat *out,
 			      GLuint out_stride,
-			      CONST GLvector4f *coord_vec,
-			      CONST GLfloat plane[4] );
+			      const GLvector4f *coord_vec,
+			      const GLfloat plane[4] );
 
 typedef void (*vec_copy_func)( GLvector4f *to,
-			       CONST GLvector4f *from );
+			       const GLvector4f *from );
 
 
 
 /*
  * Functions for transformation of normals in the VB.
  */
-typedef void (_NORMAPIP normal_func)( CONST GLmatrix *mat,
+typedef void (_NORMAPIP normal_func)( const GLmatrix *mat,
 				      GLfloat scale,
-				      CONST GLvector4f *in,
-				      CONST GLfloat lengths[],
+				      const GLvector4f *in,
+				      const GLfloat lengths[],
 				      GLvector4f *dest );
 
 
@@ -142,8 +142,8 @@ typedef void (_NORMAPIP normal_func)( CONST GLmatrix *mat,
  *     parameter, to allow a unified interface.
  */
 typedef void (_XFORMAPIP transform_func)( GLvector4f *to_vec,
-					  CONST GLfloat m[16],
-					  CONST GLvector4f *from_vec );
+					  const GLfloat m[16],
+					  const GLvector4f *from_vec );
 
 
 extern dotprod_func  _mesa_dotprod_tab[5];

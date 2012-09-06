@@ -37,43 +37,43 @@
 
 
 typedef void (*trans_1f_func)(GLfloat *to,
-			      CONST void *ptr,
+			      const void *ptr,
 			      GLuint stride,
 			      GLuint start,
 			      GLuint n );
 
 typedef void (*trans_1ui_func)(GLuint *to,
-			       CONST void *ptr,
+			       const void *ptr,
 			       GLuint stride,
 			       GLuint start,
 			       GLuint n );
 
 typedef void (*trans_1ub_func)(GLubyte *to,
-			       CONST void *ptr,
+			       const void *ptr,
 			       GLuint stride,
 			       GLuint start,
 			       GLuint n );
 
 typedef void (*trans_4ub_func)(GLubyte (*to)[4],
-                               CONST void *ptr,
+                               const void *ptr,
                                GLuint stride,
                                GLuint start,
                                GLuint n );
 
 typedef void (*trans_4us_func)(GLushort (*to)[4],
-                               CONST void *ptr,
+                               const void *ptr,
                                GLuint stride,
                                GLuint start,
                                GLuint n );
 
 typedef void (*trans_4f_func)(GLfloat (*to)[4],
-			      CONST void *ptr,
+			      const void *ptr,
 			      GLuint stride,
 			      GLuint start,
 			      GLuint n );
 
 typedef void (*trans_3fn_func)(GLfloat (*to)[3],
-			      CONST void *ptr,
+			      const void *ptr,
 			      GLuint stride,
 			      GLuint start,
 			      GLuint n );
@@ -530,7 +530,7 @@ static trans_4f_func  _math_trans_4fn_tab[5][MAX_TYPES];
 
 
 static void trans_4_GLubyte_4ub_raw(GLubyte (*t)[4],
-				    CONST void *Ptr,
+				    const void *Ptr,
 				    GLuint stride,
 				    ARGS )
 {
@@ -625,7 +625,7 @@ void _math_init_translate( void )
  * Translate vector of values to GLfloat [1].
  */
 void _math_trans_1f(GLfloat *to,
-		    CONST void *ptr,
+		    const void *ptr,
 		    GLuint stride,
 		    GLenum type,
 		    GLuint start,
@@ -638,7 +638,7 @@ void _math_trans_1f(GLfloat *to,
  * Translate vector of values to GLuint [1].
  */
 void _math_trans_1ui(GLuint *to,
-		     CONST void *ptr,
+		     const void *ptr,
 		     GLuint stride,
 		     GLenum type,
 		     GLuint start,
@@ -651,7 +651,7 @@ void _math_trans_1ui(GLuint *to,
  * Translate vector of values to GLubyte [1].
  */
 void _math_trans_1ub(GLubyte *to,
-		     CONST void *ptr,
+		     const void *ptr,
 		     GLuint stride,
 		     GLenum type,
 		     GLuint start,
@@ -665,7 +665,7 @@ void _math_trans_1ub(GLubyte *to,
  * Translate vector of values to GLubyte [4].
  */
 void _math_trans_4ub(GLubyte (*to)[4],
-		     CONST void *ptr,
+		     const void *ptr,
 		     GLuint stride,
 		     GLenum type,
 		     GLuint size,
@@ -679,7 +679,7 @@ void _math_trans_4ub(GLubyte (*to)[4],
  * Translate vector of values to GLchan [4].
  */
 void _math_trans_4chan( GLchan (*to)[4],
-			CONST void *ptr,
+			const void *ptr,
 			GLuint stride,
 			GLenum type,
 			GLuint size,
@@ -699,7 +699,7 @@ void _math_trans_4chan( GLchan (*to)[4],
  * Translate vector of values to GLushort [4].
  */
 void _math_trans_4us(GLushort (*to)[4],
-		     CONST void *ptr,
+		     const void *ptr,
 		     GLuint stride,
 		     GLenum type,
 		     GLuint size,
@@ -713,7 +713,7 @@ void _math_trans_4us(GLushort (*to)[4],
  * Translate vector of values to GLfloat [4].
  */
 void _math_trans_4f(GLfloat (*to)[4],
-		    CONST void *ptr,
+		    const void *ptr,
 		    GLuint stride,
 		    GLenum type,
 		    GLuint size,
@@ -727,7 +727,7 @@ void _math_trans_4f(GLfloat (*to)[4],
  * Translate vector of values to GLfloat[4], normalized to [-1, 1].
  */
 void _math_trans_4fn(GLfloat (*to)[4],
-		    CONST void *ptr,
+		    const void *ptr,
 		    GLuint stride,
 		    GLenum type,
 		    GLuint size,
@@ -741,7 +741,7 @@ void _math_trans_4fn(GLfloat (*to)[4],
  * Translate vector of values to GLfloat[3], normalized to [-1, 1].
  */
 void _math_trans_3fn(GLfloat (*to)[3],
-		    CONST void *ptr,
+		    const void *ptr,
 		    GLuint stride,
 		    GLenum type,
 		    GLuint start,

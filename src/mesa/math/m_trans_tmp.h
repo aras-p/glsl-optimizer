@@ -29,7 +29,7 @@
 
 #ifdef DEST_4F
 static void DEST_4F( GLfloat (*t)[4],
-		     CONST void *ptr,
+		     const void *ptr,
 		     GLuint stride,
 		     ARGS )
 {
@@ -55,7 +55,7 @@ static void DEST_4F( GLfloat (*t)[4],
 
 #ifdef DEST_4FN
 static void DEST_4FN( GLfloat (*t)[4],
-		      CONST void *ptr,
+		      const void *ptr,
 		      GLuint stride,
 		      ARGS )
 {
@@ -80,7 +80,7 @@ static void DEST_4FN( GLfloat (*t)[4],
 
 #ifdef DEST_3FN
 static void DEST_3FN( GLfloat (*t)[3],
-		     CONST void *ptr,
+		     const void *ptr,
 		     GLuint stride,
 		     ARGS )
 {
@@ -102,7 +102,7 @@ static void DEST_3FN( GLfloat (*t)[3],
 
 #ifdef DEST_1F
 static void DEST_1F( GLfloat *t,
-		     CONST void *ptr,
+		     const void *ptr,
 		     GLuint stride,
 		     ARGS )
 {
@@ -122,7 +122,7 @@ static void DEST_1F( GLfloat *t,
 
 #ifdef DEST_4UB
 static void DEST_4UB( GLubyte (*t)[4],
-                      CONST void *ptr,
+                      const void *ptr,
                       GLuint stride,
                       ARGS )
 {
@@ -146,7 +146,7 @@ static void DEST_4UB( GLubyte (*t)[4],
 
 #ifdef DEST_4US
 static void DEST_4US( GLushort (*t)[4],
-                      CONST void *ptr,
+                      const void *ptr,
                       GLuint stride,
                       ARGS )
 {
@@ -170,7 +170,7 @@ static void DEST_4US( GLushort (*t)[4],
 
 #ifdef DEST_1UB
 static void DEST_1UB( GLubyte *t,
-		      CONST void *ptr,
+		      const void *ptr,
 		      GLuint stride,
 		      ARGS )
 {
@@ -191,7 +191,7 @@ static void DEST_1UB( GLubyte *t,
 
 #ifdef DEST_1UI
 static void DEST_1UI( GLuint *t,
-		      CONST void *ptr,
+		      const void *ptr,
 		      GLuint stride,
 		      ARGS )
 {
