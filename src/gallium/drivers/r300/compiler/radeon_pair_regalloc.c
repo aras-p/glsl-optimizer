@@ -32,6 +32,7 @@
 
 #include "main/glheader.h"
 #include "program/register_allocate.h"
+#include "util/u_memory.h"
 #include "ralloc.h"
 
 #include "r300_fragprog_swizzle.h"
@@ -637,6 +638,53 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 void rc_init_regalloc_state(struct rc_regalloc_state *s)
 {
 	unsigned i, j, index;
+	unsigned **ra_q_values;
+
+	/* Pre-computed q values.  This array describes the maximum number of
+	 * a class's [row] registers that are in conflict with a single
+	 * register from another class [column].
+	 *
+	 * For example:
+	 * q_values[0][2] is 3, because a register from class 2
+	 * (RC_REG_CLASS_TRIPLE) may conflict with at most 3 registers from
+	 * class 0 (RC_REG_CLASS_SINGLE) e.g. T0.xyz conflicts with T0.x, T0.y,
+	 * and T0.z.
+	 *
+	 * q_values[2][0] is 1, because a register from class 0
+	 * (RC_REG_CLASS_SINGLE) may conflict with at most 1 register from
+	 * class 2 (RC_REG_CLASS_TRIPLE) e.g. T0.x conflicts with T0.xyz
+	 *
+	 * The q values for each register class [row] will never be greater
+	 * than the maximum number of writemask combinations for that class.
+	 *
+	 * For example:
+	 *
+	 * Class 2 (RC_REG_CLASS_TRIPLE) only has 1 writemask combination,
+	 * so no value in q_values[2][0..RC_REG_CLASS_COUNT] will be greater
+	 * than 1.
+	 */
+	const unsigned q_values[RC_REG_CLASS_COUNT][RC_REG_CLASS_COUNT] = {
+	{1, 2, 3, 0, 1, 2, 3, 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2},
+	{2, 3, 3, 0, 2, 3, 3, 2, 2, 2, 3, 3, 3, 2, 2, 2, 3, 3, 3},
+	{1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1},
+	{1, 2, 3, 3, 3, 3, 3, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3},
+	{2, 3, 3, 3, 3, 3, 3, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1},
+	{1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0},
+	{1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1},
+	{1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1},
+	{1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1},
+	{1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+	};
+
 	/* Allocate the main ra data structure */
 	s->regs = ra_alloc_reg_set(NULL, R500_PFS_NUM_TEMP_REGS * RC_MASK_XYZW);
 
@@ -656,10 +704,30 @@ void rc_init_regalloc_state(struct rc_regalloc_state *s)
 		}
 	}
 
+	/* Set the q values.  The q_values array is indexed based on
+	 * the rc_reg_class ID (RC_REG_CLASS_*) which might be
+	 * different than the ID assigned to that class by ra.
+	 * This why we need to manually construct this list.
+	 */
+	ra_q_values = MALLOC(RC_REG_CLASS_COUNT * sizeof(unsigned *));
+
+	for (i = 0; i < RC_REG_CLASS_COUNT; i++) {
+		ra_q_values[i] = MALLOC(RC_REG_CLASS_COUNT * sizeof(unsigned));
+		for (j = 0; j < RC_REG_CLASS_COUNT; j++) {
+			ra_q_values[s->class_ids[i]][s->class_ids[j]] =
+							q_values[i][j];
+		}
+	}
+
 	/* Add register conflicts */
 	add_register_conflicts(s->regs, R500_PFS_NUM_TEMP_REGS);
 
-	ra_set_finalize(s->regs, NULL);
+	ra_set_finalize(s->regs, ra_q_values);
+
+	for (i = 0; i < RC_REG_CLASS_COUNT; i++) {
+		FREE(ra_q_values[i]);
+	}
+	FREE(ra_q_values);
 }
 
 void rc_destroy_regalloc_state(struct rc_regalloc_state *s)
