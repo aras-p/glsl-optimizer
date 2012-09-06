@@ -19,8 +19,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-TOP=$(top_srcdir)
-
 AM_CPPFLAGS = \
 	$(DEFINES) \
 	-I$(top_srcdir)/include \
@@ -41,6 +39,7 @@ VG_include_HEADERS = \
 
 lib_LTLIBRARIES = libOpenVG.la
 
+TOP=$(top_srcdir)
 include ../mapi/sources.mak
 libOpenVG_la_SOURCES = $(MAPI_FILES) vgapi_tmp.h
 libOpenVG_la_LIBADD = $(VG_LIB_DEPS)

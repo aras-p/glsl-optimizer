@@ -33,6 +33,3 @@ AM_CPPFLAGS = \
 	$(LIBDRM_CFLAGS)
 
 libnouveau_la_SOURCES = $(C_SOURCES)
-
-all-local: libnouveau.la
-	ln -f $(builddir)/.libs/libnouveau.a $(builddir)/libnouveau.a

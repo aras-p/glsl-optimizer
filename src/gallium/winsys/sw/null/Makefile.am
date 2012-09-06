@@ -28,7 +28,3 @@ AM_CPPFLAGS = \
 noinst_LTLIBRARIES = libws_null.la
 
 libws_null_la_SOURCES = null_sw_winsys.c
-
-#XXX: Delete this when all targets using the ws_null winsys are converted to automake.
-all-local: libws_null.la
-	ln -f $(builddir)/.libs/libws_null.a $(builddir)/libws_null.a

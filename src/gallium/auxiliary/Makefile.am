@@ -45,7 +45,3 @@ util/u_format_srgb.c: $(srcdir)/util/u_format_srgb.py
 
 util/u_format_table.c: $(srcdir)/util/u_format_table.py $(srcdir)/util/u_format_pack.py $(srcdir)/util/u_format_parse.py $(srcdir)/util/u_format.csv
 	$(AM_V_GEN) $(PYTHON2) $(srcdir)/util/u_format_table.py $(srcdir)/util/u_format.csv > $@
-
-#XXX: Delete this when all targets are converted to automake.
-all-local: libgallium.la
-	ln -f $(builddir)/.libs/libgallium.a $(builddir)/libgallium.a

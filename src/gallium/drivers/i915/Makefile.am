@@ -31,6 +31,3 @@ AM_CPPFLAGS = \
 	$(GALLIUM_CFLAGS)
 
 libi915_la_SOURCES = $(C_SOURCES)
-
-all-local: libi915.la
-	ln -f $(builddir)/.libs/libi915.a $(builddir)/libi915.a

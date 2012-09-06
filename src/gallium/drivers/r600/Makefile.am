@@ -42,7 +42,3 @@ if HAVE_GALLIUM_COMPUTE
 AM_CFLAGS += \
 	-DHAVE_OPENCL
 endif
-
-#XXX: Delete this when all r600 targets are converted to automake.
-all-local: libr600.la
-	ln -f $(builddir)/.libs/libr600.a $(builddir)/libr600.a

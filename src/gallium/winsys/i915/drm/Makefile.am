@@ -32,7 +32,3 @@ AM_CFLAGS = \
 noinst_LTLIBRARIES = libi915drm.la
 
 libi915drm_la_SOURCES = $(C_SOURCES)
-
-#XXX: Delete this when all targets using the i915 winsys are converted to automake.
-all-local: libi915drm.la
-	ln -f $(builddir)/.libs/libi915drm.a $(builddir)/libi915drm.a

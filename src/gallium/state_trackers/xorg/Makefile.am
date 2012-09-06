@@ -49,9 +49,3 @@ libxorgtracker_la_SOURCES =	\
 	xorg_renderer.c		\
 	xorg_xv.c		\
 	xorg_xvmc.c
-
-#XXX: Delete this when all targets that rely on xorgtracker are converted to automake.
-all-local: libxorgtracker.la
-	ln -f $(builddir)/.libs/libxorgtracker.a $(builddir)/libxorgtracker.a
-
-CLEANFILES = libxorgtracker.a

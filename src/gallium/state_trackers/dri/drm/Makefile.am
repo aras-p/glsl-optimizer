@@ -38,6 +38,3 @@ libdridrm_la_SOURCES = \
 	dri_screen.c \
 	dri_drawable.c \
 	dri2.c
-
-all-local: libdridrm.la
-	ln -f $(builddir)/.libs/libdridrm.a $(builddir)/libdridrm.a

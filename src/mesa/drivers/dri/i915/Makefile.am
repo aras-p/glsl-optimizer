@@ -23,9 +23,6 @@
 
 include Makefile.sources
 
-# Hack to make some of the non-automake variables work.
-TOP=$(top_builddir)
-
 AM_CFLAGS = \
 	-DI915 \
 	-I$(top_srcdir)/include \

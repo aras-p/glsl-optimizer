@@ -28,7 +28,3 @@ AM_CPPFLAGS = \
 noinst_LTLIBRARIES = libswdri.la
 
 libswdri_la_SOURCES = dri_sw_winsys.c
-
-#XXX: Delete this when all targets using the swdri winsys are converted to automake.
-all-local: libswdri.la
-	ln -f $(builddir)/.libs/libswdri.a $(builddir)/libswdri.a

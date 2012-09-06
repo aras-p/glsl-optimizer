@@ -29,7 +29,3 @@ AM_CPPFLAGS = \
 noinst_LTLIBRARIES = libws_xlib.la
 
 libws_xlib_la_SOURCES = xlib_sw_winsys.c
-
-#XXX: Delete this when all targets using the ws_xlib winsys are converted to automake.
-all-local: libws_xlib.la
-	ln -f $(builddir)/.libs/libws_xlib.a $(builddir)/libws_xlib.a

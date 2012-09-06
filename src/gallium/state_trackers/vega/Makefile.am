@@ -67,9 +67,3 @@ CLEANFILES = api_tmp.h
 api_tmp.h: $(top_srcdir)/src/mapi/vgapi/vgapi.csv $(top_srcdir)/src/mapi/mapi/mapi_abi.py
 	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(top_srcdir)/src/mapi/mapi/mapi_abi.py \
 			--printer vgapi --mode app $< > $@
-
-#XXX: Delete this when all targets that rely on vega are converted to automake.
-all-local: libvega.la
-	ln -f $(builddir)/.libs/libvega.a $(builddir)/libvega.a
-
-CLEANFILES += libvega.a

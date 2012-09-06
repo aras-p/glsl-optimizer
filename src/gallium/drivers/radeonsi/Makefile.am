@@ -34,7 +34,3 @@ AM_CFLAGS = $(LLVM_CFLAGS)
 
 libradeonsi_la_SOURCES = $(C_SOURCES)
 libradeonsi_la_LIBADD = ../radeon/libllvmradeon@VERSION@.la
-
-#XXX: Delete this when all radeonsi targets are converted to automake.
-all-local: libradeonsi.la
-	ln -f $(builddir)/.libs/libradeonsi.a $(builddir)/libradeonsi.a

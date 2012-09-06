@@ -23,9 +23,6 @@
 
 include Makefile.sources
 
-# Hack to make some of the non-automake variables work.
-TOP=$(top_builddir)
-
 AM_CFLAGS = \
 	-D__NOT_HAVE_DRM_H \
 	-I$(top_srcdir)/include \

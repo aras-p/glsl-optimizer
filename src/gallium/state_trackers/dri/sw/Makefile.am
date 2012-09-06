@@ -38,6 +38,3 @@ libdrisw_la_SOURCES = \
 	dri_screen.c \
 	dri_drawable.c \
 	drisw.c
-
-all-local: libdrisw.la
-	ln -f $(builddir)/.libs/libdrisw.a $(builddir)/libdrisw.a

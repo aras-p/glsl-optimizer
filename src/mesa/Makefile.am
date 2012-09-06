@@ -128,20 +128,9 @@ libmesagallium_la_LIBADD = \
         $(top_builddir)/src/mesa/program/libprogram.la \
         $()
 
-libmesagallium_la_LDFLAGS =
-
-if HAVE_GALLIUM
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the library in the current directory.
-all-local: $(noinst_LTLIBRARIES)
-	ln -f .libs/libmesagallium.a .
-endif
-
-CLEANFILES += libmesagallium.a
-
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gl.pc
 
 # Emacs tags
 tags:
-	etags `find . -name \*.[ch]` $(TOP)/include/GL/*.h
+	etags `find . -name \*.[ch]` $(top_srcdir)/include/GL/*.h

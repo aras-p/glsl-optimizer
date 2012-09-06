@@ -38,9 +38,3 @@ libxlib_la_SOURCES = \
 	xlib/glx_usefont.c \
 	xlib/xm_api.c \
 	xlib/xm_st.c
-
-#XXX: Delete this when all targets that rely on xlib are converted to automake.
-all-local: libxlib.la
-	ln -f $(builddir)/.libs/libxlib.a $(builddir)/xlib/libxlib.a
-
-CLEANFILES = libxlib.a

@@ -31,6 +31,3 @@ AM_CPPFLAGS = \
 	$(GALLIUM_CFLAGS)
 
 libnv50_la_SOURCES = $(C_SOURCES) $(CPP_SOURCES)
-
-all-local: libnv50.la
-	ln -f $(builddir)/.libs/libnv50.a $(builddir)/libnv50.a

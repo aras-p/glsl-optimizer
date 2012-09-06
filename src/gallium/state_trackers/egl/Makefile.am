@@ -101,9 +101,3 @@ AM_CPPFLAGS += \
 	-I$(top_srcdir)/src/gallium/winsys/sw \
 	-DHAVE_NULL_BACKEND
 endif
-
-#XXX: Delete this when all targets that rely on egl are converted to automake.
-all-local: libegl.la
-	ln -f $(builddir)/.libs/libegl.a $(builddir)/libegl.a
-
-CLEANFILES = libegl.a

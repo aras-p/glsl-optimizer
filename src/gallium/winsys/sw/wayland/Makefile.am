@@ -29,7 +29,3 @@ AM_CPPFLAGS = \
 noinst_LTLIBRARIES = libws_wayland.la
 
 libws_wayland_la_SOURCES = wayland_sw_winsys.c
-
-#XXX: Delete this when all targets using the ws_wayland winsys are converted to automake.
-all-local: libws_wayland.la
-	ln -f $(builddir)/.libs/libws_wayland.a $(builddir)/libws_wayland.a

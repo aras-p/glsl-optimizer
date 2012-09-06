@@ -58,12 +58,3 @@ endif
 noinst_LTLIBRARIES = libglapi.la
 
 libglapi_la_SOURCES = $(glapi_GLAPI_sources) $(glapi_ASM_sources) $(glapi_MAPI_sources)
-libglapi_la_LIBADD =
-libglapi_la_LDFLAGS =
-
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to libglapi.a here
-all-local: libglapi.la
-	ln -sf .libs/libglapi.a libglapi.a
-
-CLEANFILES = libglapi.a

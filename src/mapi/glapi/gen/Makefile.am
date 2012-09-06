@@ -3,9 +3,6 @@
 # Instead, when the Mesa developers update/change the API interface it's
 # up to him/her to re-run this makefile and check in the newly generated files.
 
-
-TOP = ../../../..
-
 # These are the "official" xserver indent flags from utils/modular/x-indent.sh
 XORG_INDENT_FLAGS = -linux -bad -bap -blf -bli0 -cbi0 -cdw -nce -cs -i4 -lc80 -psl -nbbo \
     -nbc -psl -nbfda -nut -nss -T pointer -T ScreenPtr -T ScrnInfoPtr -T pointer \
@@ -26,10 +23,10 @@ XORG_INDENT_FLAGS = -linux -bad -bap -blf -bli0 -cbi0 -cdw -nce -cs -i4 -lc80 -p
     -T _XFUNCPROTOBEGIN -T _XFUNCPROTOEND -T _X_EXPORT
 
 
-MESA_DIR = $(TOP)/src/mesa
-MESA_GLAPI_DIR = $(TOP)/src/mapi/glapi
-MESA_MAPI_DIR = $(TOP)/src/mapi/mapi
-MESA_GLX_DIR = $(TOP)/src/glx
+MESA_DIR = $(top_srcdir)/src/mesa
+MESA_GLAPI_DIR = $(top_srcdir)/src/mapi/glapi
+MESA_MAPI_DIR = $(top_srcdir)/src/mapi/mapi
+MESA_GLX_DIR = $(top_srcdir)/src/glx
 
 MESA_GLAPI_OUTPUTS = \
 	$(MESA_GLAPI_DIR)/glapi_mapi_tmp.h \

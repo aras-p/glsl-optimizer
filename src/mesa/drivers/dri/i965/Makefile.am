@@ -25,9 +25,6 @@ include Makefile.sources
 
 if HAVE_I965_DRI
 
-# Hack to make some of the non-automake variables work.
-TOP=$(top_builddir)
-
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/ \

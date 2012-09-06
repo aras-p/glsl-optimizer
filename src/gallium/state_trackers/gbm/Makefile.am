@@ -33,9 +33,3 @@ endif
 noinst_LTLIBRARIES = libgbm.la
 
 libgbm_la_SOURCES = gbm_drm.c
-
-#XXX: Delete this when all targets that rely on gbm are converted to automake.
-all-local: libgbm.la
-	ln -f $(builddir)/.libs/libgbm.a $(builddir)/libgbm.a
-
-CLEANFILES = libgbm.a

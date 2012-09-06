@@ -28,7 +28,3 @@ AM_CPPFLAGS = \
 noinst_LTLIBRARIES = libwsw.la
 
 libwsw_la_SOURCES = wrapper_sw_winsys.c
-
-#XXX: Delete this when all targets using the wsw winsys are converted to automake.
-all-local: libwsw.la
-	ln -f $(builddir)/.libs/libwsw.a $(builddir)/libwsw.a

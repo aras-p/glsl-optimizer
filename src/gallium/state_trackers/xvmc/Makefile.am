@@ -57,9 +57,3 @@ tests_test_rendering_SOURCES = tests/test_rendering.c tests/testlib.c
 tests_test_rendering_LDADD = $(TEST_LIBS)
 tests_xvmc_bench_SOURCES = tests/xvmc_bench.c tests/testlib.c
 tests_xvmc_bench_LDADD = $(TEST_LIBS)
-
-#XXX: Delete this when all targets that rely on xvmctracker are converted to automake.
-all-local: libxvmctracker.la
-	ln -f $(builddir)/.libs/libxvmctracker.a $(builddir)/libxvmctracker.a
-
-CLEANFILES = libxvmctracker.a

@@ -31,7 +31,3 @@ AM_CFLAGS = \
 noinst_LTLIBRARIES = libnouveaudrm.la
 
 libnouveaudrm_la_SOURCES = nouveau_drm_winsys.c
-
-#XXX: Delete this when all targets using the nouveau winsys are converted to automake.
-all-local: libnouveaudrm.la
-	ln -f $(builddir)/.libs/libnouveaudrm.a $(builddir)/libnouveaudrm.a

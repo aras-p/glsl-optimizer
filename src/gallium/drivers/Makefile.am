@@ -64,17 +64,3 @@ endif
 ################################################################################
 
 SUBDIRS += $(GALLIUM_MAKE_DIRS)
-
-# FIXME: Remove when the rest of Gallium is converted to automake.
-default: all
-
-all-local: $(noinst_LTLIBRARIES)
-if HAVE_GALAHAD_GALLIUM
-	ln -f $(builddir)/galahad/.libs/libgalahad.a $(builddir)/galahad/libgalahad.a
-endif
-if HAVE_IDENTITY_GALLIUM
-	ln -f $(builddir)/identity/.libs/libidentity.a $(builddir)/identity/libidentity.a
-endif
-if HAVE_NOOP_GALLIUM
-	ln -f $(builddir)/noop/.libs/libnoop.a $(builddir)/noop/libnoop.a
-endif

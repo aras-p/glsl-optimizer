@@ -31,6 +31,3 @@ AM_CPPFLAGS = \
 	$(GALLIUM_CFLAGS)
 
 libnv30_la_SOURCES = $(C_SOURCES)
-
-all-local: libnv30.la
-	ln -f $(builddir)/.libs/libnv30.a $(builddir)/libnv30.a

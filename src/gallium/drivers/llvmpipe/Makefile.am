@@ -105,5 +105,3 @@ lp_test_printf_SOURCES = lp_test_printf.c lp_test_main.c
 lp_test_printf_LDADD = libllvmpipe.la ../../auxiliary/libgallium.la $(LLVM_LIBS)
 nodist_EXTRA_lp_test_printf_SOURCES = dummy.cpp
 
-all-local: libllvmpipe.la
-	ln -f $(builddir)/.libs/libllvmpipe.a $(builddir)/libllvmpipe.a

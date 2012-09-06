@@ -31,6 +31,3 @@ AM_CPPFLAGS = \
 	$(GALLIUM_CFLAGS)
 
 libnvc0_la_SOURCES = $(C_SOURCES) $(CPP_SOURCES)
-
-all-local: libnvc0.la
-	ln -f $(builddir)/.libs/libnvc0.a $(builddir)/libnvc0.a

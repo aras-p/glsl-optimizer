@@ -38,8 +38,3 @@ libr300_la_SOURCES = $(C_SOURCES)
 libr300_helper_la_SOURCES = \
 	$(top_srcdir)/src/glsl/ralloc.c \
 	$(top_srcdir)/src/mesa/program/register_allocate.c
-
-#XXX: Delete this when all r300 targets are converted to automake.
-all-local: libr300.la libr300-helper.la
-	ln -f $(builddir)/.libs/libr300.a $(builddir)/libr300.a
-	ln -f $(builddir)/.libs/libr300-helper.a $(builddir)/libr300-helper.a

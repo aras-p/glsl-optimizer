@@ -35,7 +35,3 @@ libi915sw_la_SOURCES = \
 	i915_sw_buffer.c \
 	i915_sw_fence.c \
 	i915_sw_winsys.c
-
-#XXX: Delete this when all targets using the i915 winsys are converted to automake.
-all-local: libi915sw.la
-	ln -f $(builddir)/.libs/libi915sw.a $(builddir)/libi915sw.a

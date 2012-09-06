@@ -78,10 +78,3 @@ CLEANFILES = glsl_lexer.cc glsl_parser.cc $(BUILT_SOURCES) builtin_function.cpp
 
 builtin_function.cpp: $(srcdir)/builtins/profiles/* $(srcdir)/builtins/ir/* $(srcdir)/builtins/glsl/* $(srcdir)/builtins/tools/generate_builtins.py $(srcdir)/builtins/tools/texture_builtins.py builtin_compiler/builtin_compiler$(BUILD_EXEEXT)
 	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/builtins/tools/generate_builtins.py builtin_compiler/builtin_compiler$(BUILD_EXEEXT) > builtin_function.cpp || rm -f builtin_function.cpp
-
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the library in the current directory.
-all-local: libglsl.la
-	ln -f .libs/libglsl.a .
-
-CLEANFILES += libglsl.a

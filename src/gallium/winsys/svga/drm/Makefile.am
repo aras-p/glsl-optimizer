@@ -35,7 +35,3 @@ AM_CFLAGS = -std=gnu99 -D_FILE_OFFSET_BITS=64
 noinst_LTLIBRARIES = libsvgadrm.la
 
 libsvgadrm_la_SOURCES = $(C_SOURCES)
-
-#XXX: Delete this when all targets using the svga winsys are converted to automake.
-all-local: libsvgadrm.la
-	ln -f $(builddir)/.libs/libsvgadrm.a $(builddir)/libsvgadrm.a

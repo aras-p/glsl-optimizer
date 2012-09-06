@@ -38,6 +38,3 @@ librbug_la_SOURCES = \
 	rbug_context.c \
 	rbug_objects.c \
 	rbug_screen.c
-
-all-local: librbug.la
-	ln -f $(builddir)/.libs/librbug.a $(builddir)/librbug.a

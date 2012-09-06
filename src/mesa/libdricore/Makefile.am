@@ -19,7 +19,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-TOP=$(top_srcdir)
 SRCDIR=$(top_srcdir)/src/mesa/
 BUILDDIR=$(top_builddir)/src/mesa/
 include ../sources.mak

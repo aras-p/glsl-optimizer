@@ -47,9 +47,3 @@ libvdpautracker_la_SOURCES = \
 	output.c \
 	preemption.c \
 	mixer.c
-
-#XXX: Delete this when all targets that rely on vdpautracker are converted to automake.
-all-local: libvdpautracker.la
-	ln -f $(builddir)/.libs/libvdpautracker.a $(builddir)/libvdpautracker.a
-
-CLEANFILES = libvdpautracker.a

@@ -28,7 +28,3 @@ AM_CPPFLAGS = \
 noinst_LTLIBRARIES = libfbdev.la
 
 libfbdev_la_SOURCES = fbdev_sw_winsys.c
-
-#XXX: Delete this when all targets using the fbdev winsys are converted to automake.
-all-local: libfbdev.la
-	ln -f $(builddir)/.libs/libfbdev.a $(builddir)/libfbdev.a

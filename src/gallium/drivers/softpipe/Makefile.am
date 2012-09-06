@@ -59,6 +59,3 @@ libsoftpipe_la_SOURCES = \
 	sp_tex_tile_cache.c \
 	sp_tile_cache.c \
 	sp_surface.c
-
-all-local: libsoftpipe.la
-	ln -f $(builddir)/.libs/libsoftpipe.a $(builddir)/libsoftpipe.a

@@ -34,6 +34,3 @@ AM_CFLAGS = -std=gnu99
 noinst_LTLIBRARIES = libsvga.la
 
 libsvga_la_SOURCES = $(C_SOURCES)
-
-all-local: libsvga.la
-	ln -f $(builddir)/.libs/libsvga.a $(builddir)/libsvga.a
