@@ -29,10 +29,11 @@
 #include "radeon_dataflow.h"
 #include "radeon_program.h"
 #include "radeon_program_pair.h"
+#include "radeon_regalloc.h"
 #include "radeon_compiler_util.h"
 
 
-void rc_init(struct radeon_compiler * c)
+void rc_init(struct radeon_compiler * c, const struct rc_regalloc_state *rs)
 {
 	memset(c, 0, sizeof(*c));
 
@@ -40,6 +41,7 @@ void rc_init(struct radeon_compiler * c)
 	c->Program.Instructions.Prev = &c->Program.Instructions;
 	c->Program.Instructions.Next = &c->Program.Instructions;
 	c->Program.Instructions.U.I.Opcode = RC_OPCODE_ILLEGAL_OPCODE;
+	c->regalloc_state = rs;
 }
 
 void rc_destroy(struct radeon_compiler * c)

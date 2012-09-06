@@ -35,6 +35,7 @@
 #include "r300_emit.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
+#include "compiler/radeon_regalloc.h"
 
 static void r300_release_referenced_objects(struct r300_context *r300)
 {
@@ -88,6 +89,8 @@ static void r300_destroy_context(struct pipe_context* context)
 
     if (r300->cs)
         r300->rws->cs_destroy(r300->cs);
+
+    rc_destroy_regalloc_state(&r300->fs_regalloc_state);
 
     /* XXX: No way to tell if this was initialized or not? */
     util_slab_destroy(&r300->pool_transfers);
@@ -465,6 +468,9 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     }
 
     r300->hyperz_time_of_last_flush = os_time_get();
+
+    /* Register allocator state */
+    rc_init_regalloc_state(&r300->fs_regalloc_state);
 
     /* Print driver info. */
 #ifdef DEBUG

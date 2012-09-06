@@ -44,6 +44,7 @@ enum rc_program_type {
 struct radeon_compiler {
 	struct memory_pool Pool;
 	struct rc_program Program;
+	const struct rc_regalloc_state *regalloc_state;
 	enum rc_program_type type;
 	unsigned Debug:2;
 	unsigned Error:1;
@@ -77,7 +78,7 @@ struct radeon_compiler {
 	unsigned initial_num_insts; /* Number of instructions at start. */
 };
 
-void rc_init(struct radeon_compiler * c);
+void rc_init(struct radeon_compiler * c, const struct rc_regalloc_state *rs);
 void rc_destroy(struct radeon_compiler * c);
 
 void rc_debug(struct radeon_compiler * c, const char * fmt, ...);

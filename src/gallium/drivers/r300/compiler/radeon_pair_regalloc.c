@@ -39,6 +39,7 @@
 #include "radeon_compiler_util.h"
 #include "radeon_dataflow.h"
 #include "radeon_list.h"
+#include "radeon_regalloc.h"
 #include "radeon_variable.h"
 
 #define VERBOSE 0
@@ -70,45 +71,94 @@ struct regalloc_state {
 	int LoopEnd;
 };
 
-enum rc_reg_class {
-	RC_REG_CLASS_SINGLE,
-	RC_REG_CLASS_DOUBLE,
-	RC_REG_CLASS_TRIPLE,
-	RC_REG_CLASS_ALPHA,
-	RC_REG_CLASS_SINGLE_PLUS_ALPHA,
-	RC_REG_CLASS_DOUBLE_PLUS_ALPHA,
-	RC_REG_CLASS_TRIPLE_PLUS_ALPHA,
-	RC_REG_CLASS_X,
-	RC_REG_CLASS_Y,
-	RC_REG_CLASS_Z,
-	RC_REG_CLASS_XY,
-	RC_REG_CLASS_YZ,
-	RC_REG_CLASS_XZ,
-	RC_REG_CLASS_XW,
-	RC_REG_CLASS_YW,
-	RC_REG_CLASS_ZW,
-	RC_REG_CLASS_XYW,
-	RC_REG_CLASS_YZW,
-	RC_REG_CLASS_XZW,
-	RC_REG_CLASS_COUNT
-};
-
 struct rc_class {
-	enum rc_reg_class Class;
+	enum rc_reg_class ID;
 
 	unsigned int WritemaskCount;
-
-	/** This is 1 if this class is being used by the register allocator
-	 * and 0 otherwise */
-	unsigned int Used;
-
-	/** This is the ID number assigned to this class by ra. */
-	unsigned int Id;
 
 	/** List of writemasks that belong to this class */
 	unsigned int Writemasks[3];
 
 
+};
+
+static const struct rc_class rc_class_list [] = {
+	{RC_REG_CLASS_SINGLE, 3,
+		{RC_MASK_X,
+		 RC_MASK_Y,
+		 RC_MASK_Z}},
+	{RC_REG_CLASS_DOUBLE, 3,
+		{RC_MASK_X | RC_MASK_Y,
+		 RC_MASK_X | RC_MASK_Z,
+		 RC_MASK_Y | RC_MASK_Z}},
+	{RC_REG_CLASS_TRIPLE, 1,
+		{RC_MASK_X | RC_MASK_Y | RC_MASK_Z,
+		 RC_MASK_NONE,
+		 RC_MASK_NONE}},
+	{RC_REG_CLASS_ALPHA, 1,
+		{RC_MASK_W,
+		 RC_MASK_NONE,
+		 RC_MASK_NONE}},
+	{RC_REG_CLASS_SINGLE_PLUS_ALPHA, 3,
+		{RC_MASK_X | RC_MASK_W,
+		 RC_MASK_Y | RC_MASK_W,
+		 RC_MASK_Z | RC_MASK_W}},
+	{RC_REG_CLASS_DOUBLE_PLUS_ALPHA, 3,
+		{RC_MASK_X | RC_MASK_Y | RC_MASK_W,
+		 RC_MASK_X | RC_MASK_Z | RC_MASK_W,
+		 RC_MASK_Y | RC_MASK_Z | RC_MASK_W}},
+	{RC_REG_CLASS_TRIPLE_PLUS_ALPHA, 1,
+		{RC_MASK_X | RC_MASK_Y | RC_MASK_Z | RC_MASK_W,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_X, 1,
+		{RC_MASK_X,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_Y, 1,
+		{RC_MASK_Y,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_Z, 1,
+		{RC_MASK_Z,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_XY, 1,
+		{RC_MASK_X | RC_MASK_Y,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_YZ, 1,
+		{RC_MASK_Y | RC_MASK_Z,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_XZ, 1,
+		{RC_MASK_X | RC_MASK_Z,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_XW, 1,
+		{RC_MASK_X | RC_MASK_W,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_YW, 1,
+		{RC_MASK_Y | RC_MASK_W,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_ZW, 1,
+		{RC_MASK_Z | RC_MASK_W,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_XYW, 1,
+		{RC_MASK_X | RC_MASK_Y | RC_MASK_W,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_YZW, 1,
+		{RC_MASK_Y | RC_MASK_Z | RC_MASK_W,
+		RC_MASK_NONE,
+		RC_MASK_NONE}},
+	{RC_REG_CLASS_XZW, 1,
+		{RC_MASK_X | RC_MASK_Z | RC_MASK_W,
+		RC_MASK_NONE,
+		RC_MASK_NONE}}
 };
 
 static void print_live_intervals(struct live_intervals * src)
@@ -234,7 +284,7 @@ static unsigned int is_derivative(rc_opcode op)
 }
 
 static int find_class(
-	struct rc_class * classes,
+	const struct rc_class * classes,
 	unsigned int writemask,
 	unsigned int max_writemask_count)
 {
@@ -274,7 +324,7 @@ static void variable_get_class_read_cb(
 
 static enum rc_reg_class variable_get_class(
 	struct rc_variable * variable,
-	struct rc_class * classes)
+	const struct rc_class * classes)
 {
 	unsigned int i;
 	unsigned int can_change_writemask= 1;
@@ -380,7 +430,7 @@ static enum rc_reg_class variable_get_class(
 						can_change_writemask ? 3 : 1);
 done:
 	if (class_index > -1) {
-		return classes[class_index].Class;
+		return classes[class_index].ID;
 	} else {
 error:
 		rc_error(variable->C,
@@ -458,95 +508,14 @@ static void add_register_conflicts(
 
 static void do_advanced_regalloc(struct regalloc_state * s)
 {
-	struct rc_class rc_class_list [] = {
-		{RC_REG_CLASS_SINGLE, 3, 0, 0,
-			{RC_MASK_X,
-			 RC_MASK_Y,
-			 RC_MASK_Z}},
-		{RC_REG_CLASS_DOUBLE, 3, 0, 0,
-			{RC_MASK_X | RC_MASK_Y,
-			 RC_MASK_X | RC_MASK_Z,
-			 RC_MASK_Y | RC_MASK_Z}},
-		{RC_REG_CLASS_TRIPLE, 1, 0, 0,
-			{RC_MASK_X | RC_MASK_Y | RC_MASK_Z,
-			 RC_MASK_NONE,
-			 RC_MASK_NONE}},
-		{RC_REG_CLASS_ALPHA, 1, 0, 0,
-			{RC_MASK_W,
-			 RC_MASK_NONE,
-			 RC_MASK_NONE}},
-		{RC_REG_CLASS_SINGLE_PLUS_ALPHA, 3, 0, 0,
-			{RC_MASK_X | RC_MASK_W,
-			 RC_MASK_Y | RC_MASK_W,
-			 RC_MASK_Z | RC_MASK_W}},
-		{RC_REG_CLASS_DOUBLE_PLUS_ALPHA, 3, 0, 0,
-			{RC_MASK_X | RC_MASK_Y | RC_MASK_W,
-			 RC_MASK_X | RC_MASK_Z | RC_MASK_W,
-			 RC_MASK_Y | RC_MASK_Z | RC_MASK_W}},
-		{RC_REG_CLASS_TRIPLE_PLUS_ALPHA, 1, 0, 0,
-			{RC_MASK_X | RC_MASK_Y | RC_MASK_Z | RC_MASK_W,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_X, 1, 0, 0,
-			{RC_MASK_X,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_Y, 1, 0, 0,
-			{RC_MASK_Y,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_Z, 1, 0, 0,
-			{RC_MASK_Z,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_XY, 1, 0, 0,
-			{RC_MASK_X | RC_MASK_Y,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_YZ, 1, 0, 0,
-			{RC_MASK_Y | RC_MASK_Z,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_XZ, 1, 0, 0,
-			{RC_MASK_X | RC_MASK_Z,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_XW, 1, 0, 0,
-			{RC_MASK_X | RC_MASK_W,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_YW, 1, 0, 0,
-			{RC_MASK_Y | RC_MASK_W,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_ZW, 1, 0, 0,
-			{RC_MASK_Z | RC_MASK_W,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_XYW, 1, 0, 0,
-			{RC_MASK_X | RC_MASK_Y | RC_MASK_W,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_YZW, 1, 0, 0,
-			{RC_MASK_Y | RC_MASK_Z | RC_MASK_W,
-			RC_MASK_NONE,
-			RC_MASK_NONE}},
-		{RC_REG_CLASS_XZW, 1, 0, 0,
-			{RC_MASK_X | RC_MASK_Z | RC_MASK_W,
-			RC_MASK_NONE,
-			RC_MASK_NONE}}
-	};
 
-	unsigned int i, j, index, input_node, node_count, node_index;
+	unsigned int i, input_node, node_count, node_index;
 	unsigned int * node_classes;
 	struct rc_instruction * inst;
 	struct rc_list * var_ptr;
 	struct rc_list * variables;
-	struct ra_regs * regs;
 	struct ra_graph * graph;
-
-	/* Allocate the main ra data structure */
-	regs = ra_alloc_reg_set(NULL, s->C->max_temp_regs * RC_MASK_XYZW);
+	const struct rc_regalloc_state *ra_state = s->C->regalloc_state;
 
 	/* Get list of program variables */
 	variables = rc_get_variables(s->C);
@@ -561,36 +530,9 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 		rc_variable_compute_live_intervals(var_ptr->Item);
 
 		class_index = variable_get_class(var_ptr->Item,	rc_class_list);
-
-		/* If we haven't used this register class yet, mark it
-		 * as used and allocate space for it. */
-		if (!rc_class_list[class_index].Used) {
-			rc_class_list[class_index].Used = 1;
-			rc_class_list[class_index].Id = ra_alloc_reg_class(regs);
-		}
-
-		node_classes[node_index] = rc_class_list[class_index].Id;
+		node_classes[node_index] = ra_state->class_ids[class_index];
 	}
 
-
-	/* Assign registers to the classes */
-	for (i = 0; i < RC_REG_CLASS_COUNT; i++) {
-		struct rc_class class = rc_class_list[i];
-		if (!class.Used) {
-			continue;
-		}
-
-		for (index = 0; index < s->C->max_temp_regs; index++) {
-			for (j = 0; j < class.WritemaskCount; j++) {
-				int reg_id = get_reg_id(index,
-							class.Writemasks[j]);
-				ra_class_add_reg(regs, class.Id, reg_id);
-			}
-		}
-	}
-
-	/* Add register conflicts */
-	add_register_conflicts(regs, s->C->max_temp_regs);
 
 	/* Calculate live intervals for input registers */
 	for (inst = s->C->Program.Instructions.Next;
@@ -609,7 +551,7 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 
 	/* Compute the writemask for inputs. */
 	for (i = 0; i < s->NumInputs; i++) {
-		unsigned int chan, class_id, writemask = 0;
+		unsigned int chan, writemask = 0;
 		for (chan = 0; chan < 4; chan++) {
 			if (s->Input[i].Live[chan].Used) {
 				writemask |= (1 << chan);
@@ -618,9 +560,8 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 		s->Input[i].Writemask = writemask;
 	}
 
-	ra_set_finalize(regs, NULL);
-
-	graph = ra_alloc_interference_graph(regs, node_count + s->NumInputs);
+	graph = ra_alloc_interference_graph(ra_state->regs,
+						node_count + s->NumInputs);
 
 	/* Build the interference graph */
 	for (var_ptr = variables, node_index = 0; var_ptr;
@@ -691,7 +632,39 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 	}
 
 	ralloc_free(graph);
-	ralloc_free(regs);
+}
+
+void rc_init_regalloc_state(struct rc_regalloc_state *s)
+{
+	unsigned i, j, index;
+	/* Allocate the main ra data structure */
+	s->regs = ra_alloc_reg_set(NULL, R500_PFS_NUM_TEMP_REGS * RC_MASK_XYZW);
+
+	/* Create the register classes */
+	for (i = 0; i < RC_REG_CLASS_COUNT; i++) {
+		const struct rc_class *class = &rc_class_list[i];
+		s->class_ids[class->ID] = ra_alloc_reg_class(s->regs);
+
+		/* Assign registers to the classes */
+		for (index = 0; index < R500_PFS_NUM_TEMP_REGS; index++) {
+			for (j = 0; j < class->WritemaskCount; j++) {
+				int reg_id = get_reg_id(index,
+						class->Writemasks[j]);
+				ra_class_add_reg(s->regs,
+					s->class_ids[class->ID], reg_id);
+			}
+		}
+	}
+
+	/* Add register conflicts */
+	add_register_conflicts(s->regs, R500_PFS_NUM_TEMP_REGS);
+
+	ra_set_finalize(s->regs, NULL);
+}
+
+void rc_destroy_regalloc_state(struct rc_regalloc_state *s)
+{
+	ralloc_free(s->regs);
 }
 
 /**

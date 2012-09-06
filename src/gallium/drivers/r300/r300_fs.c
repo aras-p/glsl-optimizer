@@ -442,7 +442,7 @@ static void r300_translate_fragment_shader(
 
     /* Setup the compiler. */
     memset(&compiler, 0, sizeof(compiler));
-    rc_init(&compiler.Base);
+    rc_init(&compiler.Base, &r300->fs_regalloc_state);
     DBG_ON(r300, DBG_FP) ? compiler.Base.Debug |= RC_DBG_LOG : 0;
     DBG_ON(r300, DBG_P_STAT) ? compiler.Base.Debug |= RC_DBG_STATS : 0;
 
