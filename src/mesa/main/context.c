@@ -808,7 +808,6 @@ init_attrib_groups(struct gl_context *ctx)
    ctx->NewState = _NEW_ALL;
    ctx->NewDriverState = ~0;
    ctx->ErrorValue = GL_NO_ERROR;
-   ctx->ResetStatus = GL_NO_ERROR;
    ctx->varying_vp_inputs = VERT_BIT_ALL;
 
    return GL_TRUE;

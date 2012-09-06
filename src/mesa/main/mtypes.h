@@ -3903,9 +3903,6 @@ struct gl_context
 
    GLenum ErrorValue;        /**< Last error code */
 
-   /* GL_ARB_robustness */
-   GLenum ResetStatus;
-
    /**
     * Recognize and silence repeated error debug messages in buggy apps.
     */

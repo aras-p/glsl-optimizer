@@ -305,7 +305,7 @@ GLenum GLAPIENTRY
 _mesa_GetGraphicsResetStatusARB( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLenum status = ctx->ResetStatus;
+   GLenum status = GL_NO_ERROR;
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetGraphicsResetStatusARB"
