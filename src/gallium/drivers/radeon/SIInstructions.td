@@ -733,9 +733,15 @@ defm V_ASHR_I32 : VOP2_32 <0x00000017, "V_ASHR_I32", []>;
 defm V_ASHRREV_I32 : VOP2_32 <0x00000018, "V_ASHRREV_I32", []>;
 defm V_LSHL_B32 : VOP2_32 <0x00000019, "V_LSHL_B32", []>;
 defm V_LSHLREV_B32 : VOP2_32 <0x0000001a, "V_LSHLREV_B32", []>;
-defm V_AND_B32 : VOP2_32 <0x0000001b, "V_AND_B32", []>;
-defm V_OR_B32 : VOP2_32 <0x0000001c, "V_OR_B32", []>;
-defm V_XOR_B32 : VOP2_32 <0x0000001d, "V_XOR_B32", []>;
+defm V_AND_B32 : VOP2_32 <0x0000001b, "V_AND_B32",
+  [(set VReg_32:$dst, (and AllReg_32:$src0, VReg_32:$src1))]
+>;
+defm V_OR_B32 : VOP2_32 <0x0000001c, "V_OR_B32",
+  [(set VReg_32:$dst, (or AllReg_32:$src0, VReg_32:$src1))]
+>;
+defm V_XOR_B32 : VOP2_32 <0x0000001d, "V_XOR_B32",
+  [(set VReg_32:$dst, (xor AllReg_32:$src0, VReg_32:$src1))]
+>;
 defm V_BFM_B32 : VOP2_32 <0x0000001e, "V_BFM_B32", []>;
 defm V_MAC_F32 : VOP2_32 <0x0000001f, "V_MAC_F32", []>;
 defm V_MADMK_F32 : VOP2_32 <0x00000020, "V_MADMK_F32", []>;
