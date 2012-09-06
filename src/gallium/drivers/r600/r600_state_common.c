@@ -108,7 +108,7 @@ void r600_init_common_atoms(struct r600_context *rctx)
 {
 	r600_init_atom(&rctx->surface_sync_cmd.atom,	r600_emit_surface_sync,		5, EMIT_EARLY);
 	r600_init_atom(&rctx->r6xx_flush_and_inv_cmd,	r600_emit_r6xx_flush_and_inv,	2, EMIT_EARLY);
-	r600_init_atom(&rctx->alphatest_state.atom,	r600_emit_alphatest_state,	3, 0);
+	r600_init_atom(&rctx->alphatest_state.atom,	r600_emit_alphatest_state,	6, 0);
 	r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
 }
 
