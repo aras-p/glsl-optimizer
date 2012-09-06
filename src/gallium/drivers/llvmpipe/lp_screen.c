@@ -35,6 +35,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "draw/draw_context.h"
+#include "gallivm/lp_bld_type.h"
 
 #include "lp_texture.h"
 #include "lp_fence.h"
@@ -95,7 +96,9 @@ static const char *
 llvmpipe_get_name(struct pipe_screen *screen)
 {
    static char buf[100];
-   util_snprintf(buf, sizeof(buf), "llvmpipe (LLVM 0x%x)", HAVE_LLVM);
+   util_snprintf(buf, sizeof(buf), "llvmpipe (LLVM %u.%u, %u bits)",
+		 HAVE_LLVM >> 8, HAVE_LLVM & 0xff,
+		 lp_native_vector_width );
    return buf;
 }
 
