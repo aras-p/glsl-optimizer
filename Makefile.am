@@ -33,23 +33,6 @@ check-local:
 	$(MAKE) -C src/glsl/tests check
 	$(MAKE) -C src/glx/tests check
 
-clean-local:
-	-@touch $(top_builddir)/configs/current
-	-@for dir in $(SUBDIRS) ; do \
-		if [ -d $$dir ] ; then \
-			(cd $$dir && $(MAKE) clean) ; \
-		fi \
-	done
-	-@test -s $(top_builddir)/configs/current || rm -f $(top_builddir)/configs/current
-
-
-
-distclean-local:
-	-rm -rf lib*
-	-rm -f $(top_builddir)/configs/current
-	-find . '(' -name '*.o' -o -name '*.a' -o -name '*.so' -o \
-	  -name depend -o -name depend.bak ')' -exec rm -f '{}' ';'
-
 .PHONY: doxygen
 
 # Rules for making release tarballs
@@ -93,7 +76,6 @@ IGNORE_FILES = \
 
 
 parsers: configure
-	-@touch $(top_builddir)/configs/current
 	$(MAKE) -C src/glsl glsl_parser.cc glsl_parser.h glsl_lexer.cc
 	$(MAKE) -C src/glsl/glcpp glcpp-lex.c glcpp-parse.c glcpp-parse.h
 	$(MAKE) -C src/mesa/program lex.yy.c program_parse.tab.c program_parse.tab.h

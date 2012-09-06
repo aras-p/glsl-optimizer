@@ -2027,8 +2027,7 @@ CFLAGS="$CFLAGS $USER_CFLAGS"
 CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 
 dnl Substitute the config
-AC_CONFIG_FILES([configs/current
-		Makefile
+AC_CONFIG_FILES([Makefile
 		src/Makefile
 		src/egl/Makefile
 		src/egl/drivers/Makefile
