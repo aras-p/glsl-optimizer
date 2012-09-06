@@ -221,6 +221,30 @@ fs_visitor::calculate_live_intervals()
    }
 
    this->live_intervals_valid = true;
+
+   /* Note in the non-control-flow code above, that we only take def[] as the
+    * first store, and use[] as the last use.  We use this in dead code
+    * elimination, to determine when a store never gets used.  However, we
+    * also use these arrays to answer the virtual_grf_interferes() question
+    * (live interval analysis), which is used for register coalescing and
+    * register allocation.
+    *
+    * So, there's a conflict over what the array should mean: if use[]
+    * considers a def after the last use, then the dead code elimination pass
+    * never does anything (and it's an important pass!).  But if we don't
+    * include dead code, then virtual_grf_interferes() lies and we'll do
+    * horrible things like coalesce the register that is dead-code-written
+    * into another register that was live across the dead write (causing the
+    * use of the second register to take the dead write's source value instead
+    * of the coalesced MOV's source value).
+    *
+    * To resolve the conflict, immediately after calculating live intervals,
+    * detect dead code, nuke it, and if we changed anything, calculate again
+    * before returning to the caller.  Now we happen to produce def[] and
+    * use[] arrays that will work for virtual_grf_interferes().
+    */
+   if (dead_code_eliminate())
+      calculate_live_intervals();
 }
 
 bool
