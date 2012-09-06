@@ -52,6 +52,7 @@ public:
 char SIAssignInterpRegsPass::ID = 0;
 
 #define INTERP_VALUES 16
+#define REQUIRED_VALUE_MAX_INDEX 7
 
 struct interp_info {
   bool enabled;
@@ -92,14 +93,24 @@ bool SIAssignInterpRegsPass::runOnMachineFunction(MachineFunction &MF)
     return false;
   }
   MachineRegisterInfo &MRI = MF.getRegInfo();
+  bool ForceEnable = true;
 
   /* First pass, mark the interpolation values that are used. */
   for (unsigned interp_idx = 0; interp_idx < INTERP_VALUES; interp_idx++) {
     for (unsigned reg_idx = 0; reg_idx < InterpUse[interp_idx].reg_count;
                                                                reg_idx++) {
-      InterpUse[interp_idx].enabled =
+      InterpUse[interp_idx].enabled = InterpUse[interp_idx].enabled ||
                             !MRI.use_empty(InterpUse[interp_idx].regs[reg_idx]);
+      if (InterpUse[interp_idx].enabled &&
+          interp_idx <= REQUIRED_VALUE_MAX_INDEX) {
+        ForceEnable = false;
+      }
     }
+  }
+
+  // At least one interpolation mode must be enabled or else the GPU will hang.
+  if (ForceEnable) {
+    InterpUse[0].enabled = true;
   }
 
   unsigned used_vgprs = 0;
