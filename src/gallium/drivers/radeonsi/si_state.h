@@ -43,6 +43,7 @@ struct si_state_viewport {
 struct si_state_rasterizer {
 	struct si_pm4_state	pm4;
 	bool			flatshade;
+	bool			two_side;
 	unsigned		sprite_coord_enable;
 	unsigned		pa_sc_line_stipple;
 	unsigned		pa_su_sc_mode_cntl;

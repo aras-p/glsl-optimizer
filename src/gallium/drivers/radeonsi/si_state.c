@@ -379,6 +379,8 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 		return NULL;
 	}
 
+	rs->two_side = state->light_twoside;
+
 	polygon_dual_mode = (state->fill_front != PIPE_POLYGON_MODE_FILL ||
 				state->fill_back != PIPE_POLYGON_MODE_FILL);
 
@@ -1841,9 +1843,10 @@ static INLINE struct si_shader_key si_shader_selector_key(struct pipe_context *c
 		if (sel->fs_write_all)
 			key.nr_cbufs = rctx->framebuffer.nr_cbufs;
 		key.export_16bpc = rctx->export_16bpc;
-		/*if (rctx->queued.named.rasterizer)
-			  key.flatshade = rctx->queued.named.rasterizer->flatshade;*/
-		/*key.color_two_side |== rctx->two_side;*/
+		if (rctx->queued.named.rasterizer) {
+			key.color_two_side = rctx->queued.named.rasterizer->two_side;
+			/*key.flatshade = rctx->queued.named.rasterizer->flatshade;*/
+		}
 	}
 
 	return key;

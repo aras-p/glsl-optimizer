@@ -320,16 +320,59 @@ static void declare_input_fs(
 	}
 
 	/* XXX: Could there be more than TGSI_NUM_CHANNELS (4) ? */
-	for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+	if (decl->Semantic.Name == TGSI_SEMANTIC_COLOR &&
+	    si_shader_ctx->key.color_two_side) {
 		LLVMValueRef args[3];
-		LLVMValueRef llvm_chan = lp_build_const_int32(gallivm, chan);
-		unsigned soa_index = radeon_llvm_reg_index_soa(input_index, chan);
-		args[0] = llvm_chan;
-		args[1] = attr_number;
+		LLVMValueRef face, is_face_positive;
+		LLVMValueRef back_attr_number =
+			lp_build_const_int32(gallivm,
+					     shader->input[input_index].param_offset + 1);
+
+		face = build_intrinsic(gallivm->builder,
+				       "llvm.SI.fs.read.face",
+				       input_type,
+				       NULL, 0, LLVMReadNoneAttribute);
+		is_face_positive = LLVMBuildFCmp(gallivm->builder,
+						 LLVMRealUGT, face,
+						 lp_build_const_float(gallivm, 0.0f),
+						 "");
+
 		args[2] = params;
-		si_shader_ctx->radeon_bld.inputs[soa_index] =
-			build_intrinsic(base->gallivm->builder, intr_name,
-				input_type, args, 3, LLVMReadOnlyAttribute);
+		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+			LLVMValueRef llvm_chan = lp_build_const_int32(gallivm, chan);
+			unsigned soa_index = radeon_llvm_reg_index_soa(input_index, chan);
+			LLVMValueRef front, back;
+
+			args[0] = llvm_chan;
+			args[1] = attr_number;
+			front = build_intrinsic(base->gallivm->builder, intr_name,
+						input_type, args, 3, LLVMReadOnlyAttribute);
+
+			args[1] = back_attr_number;
+			back = build_intrinsic(base->gallivm->builder, intr_name,
+					       input_type, args, 3, LLVMReadOnlyAttribute);
+
+			si_shader_ctx->radeon_bld.inputs[soa_index] =
+				LLVMBuildSelect(gallivm->builder,
+						is_face_positive,
+						front,
+						back,
+						"");
+		}
+
+		shader->ninterp++;
+	} else {
+		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+			LLVMValueRef args[3];
+			LLVMValueRef llvm_chan = lp_build_const_int32(gallivm, chan);
+			unsigned soa_index = radeon_llvm_reg_index_soa(input_index, chan);
+			args[0] = llvm_chan;
+			args[1] = attr_number;
+			args[2] = params;
+			si_shader_ctx->radeon_bld.inputs[soa_index] =
+				build_intrinsic(base->gallivm->builder, intr_name,
+						input_type, args, 3, LLVMReadOnlyAttribute);
+		}
 	}
 }
 
@@ -530,6 +573,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 				break;
 			case TGSI_SEMANTIC_COLOR:
 				if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
+			case TGSI_SEMANTIC_BCOLOR:
 					target = V_008DFC_SQ_EXP_PARAM + param_count;
 					shader->output[i].param_offset = param_count;
 					param_count++;
