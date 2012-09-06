@@ -35,6 +35,7 @@
 
 
 #include <stdint.h>             /* uint32_t */
+#include <stdbool.h>
 
 #include "main/glheader.h"
 #include "main/config.h"
@@ -2812,6 +2813,17 @@ struct gl_shared_state
 
    /** GL_ARB_sampler_objects */
    struct _mesa_HashTable *SamplerObjects;
+
+   /**
+    * Some context in this share group was affected by a GPU reset
+    *
+    * On the next call to \c glGetGraphicsResetStatus, contexts that have not
+    * been affected by a GPU reset must also return
+    * \c GL_INNOCENT_CONTEXT_RESET_ARB.
+    *
+    * Once this field becomes true, it is never reset to false.
+    */
+   bool ShareGroupReset;
 };
 
 
@@ -3967,6 +3979,13 @@ struct gl_context
    const void *vdpGetProcAddress;
    struct set *vdpSurfaces;
    /*@}*/
+
+   /**
+    * Has this context observed a GPU reset in any context in the share group?
+    *
+    * Once this field becomes true, it is never reset to false.
+    */
+   GLboolean ShareGroupReset;
 };
 
 
