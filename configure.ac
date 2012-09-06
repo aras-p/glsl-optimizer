@@ -563,11 +563,13 @@ AC_ARG_ENABLE([xa],
         [enable build of the XA X Acceleration API @<:@default=no@:>@])],
     [enable_xa="$enableval"],
     [enable_xa=no])
-AC_ARG_ENABLE([d3d1x],
-    [AS_HELP_STRING([--enable-d3d1x],
-        [enable support for Direct3D 10 & 11 low-level API @<:@default=no@:>@])],
-    [enable_d3d1x="$enableval"],
-    [enable_d3d1x=no])
+dnl Broken, unmaintained. Don't want to see bug reports about it without patches.
+enable_d3d1x=no
+dnl AC_ARG_ENABLE([d3d1x],
+dnl     [AS_HELP_STRING([--enable-d3d1x],
+dnl         [enable support for Direct3D 10 & 11 low-level API @<:@default=no@:>@])],
+dnl     [enable_d3d1x="$enableval"],
+dnl     [enable_d3d1x=no])
 AC_ARG_ENABLE([gbm],
    [AS_HELP_STRING([--enable-gbm],
          [enable gbm library @<:@default=auto@:>@])],
