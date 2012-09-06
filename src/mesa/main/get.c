@@ -61,8 +61,6 @@
  * is about as concise as the specification in the old python script.
  */
 
-#undef CONST
-
 #define FLOAT_TO_BOOLEAN(X)   ( (X) ? GL_TRUE : GL_FALSE )
 #define FLOAT_TO_FIXED(F)     ( ((F) * 65536.0f > INT_MAX) ? INT_MAX : \
                                 ((F) * 65536.0f < INT_MIN) ? INT_MIN : \
