@@ -103,6 +103,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	unsigned num_sgprs, num_user_sgprs;
 	int ninterp = 0;
 	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
+	unsigned fragcoord_interp_mode = 0;
 	unsigned spi_baryc_cntl, spi_ps_input_ena;
 	uint64_t va;
 
@@ -116,6 +117,20 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	for (i = 0; i < shader->shader.ninput; i++) {
+		if (shader->shader.input[i].name == TGSI_SEMANTIC_POSITION) {
+			if (shader->shader.input[i].centroid) {
+				/* fragcoord_interp_mode will be written to
+				 * SPI_BARYC_CNTL.POS_FLOAT_LOCATION
+				 * Possible vaules:
+				 * 0 -> Position = pixel center (default)
+				 * 1 -> Position = pixel centroid
+				 * 2 -> Position = iterated sample number XXX:
+				 *                        What does this mean?
+			 	 */
+				fragcoord_interp_mode = 1;
+			}
+			continue;
+		}
 		ninterp++;
 		/* XXX: Flat shading hangs the GPU */
 		if (shader->shader.input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
@@ -166,6 +181,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	if (have_linear)
 		spi_baryc_cntl |= have_centroid ?
 			S_0286E0_LINEAR_CENTROID_CNTL(1) : S_0286E0_LINEAR_CENTER_CNTL(1);
+	spi_baryc_cntl |= S_0286E0_POS_FLOAT_LOCATION(fragcoord_interp_mode);
 
 	si_pm4_set_reg(pm4, R_0286E0_SPI_BARYC_CNTL, spi_baryc_cntl);
 	spi_ps_input_ena = shader->spi_ps_input_ena;

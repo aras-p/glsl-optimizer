@@ -261,6 +261,7 @@ static void declare_input_fs(
 	struct lp_build_context * base =
 				&si_shader_ctx->radeon_bld.soa.bld_base.base;
 	struct gallivm_state * gallivm = base->gallivm;
+	LLVMTypeRef input_type = LLVMFloatTypeInContext(gallivm->context);
 
 	/* This value is:
 	 * [15:0] NewPrimMask (Bit mask for each quad.  It is set it the
@@ -277,6 +278,20 @@ static void declare_input_fs(
 
 	/* XXX: Is this the input_index? */
 	LLVMValueRef attr_number = lp_build_const_int32(gallivm, input_index);
+
+	if (decl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
+		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+			LLVMValueRef args[1];
+			unsigned soa_index =
+				radeon_llvm_reg_index_soa(input_index, chan);
+			args[0] = lp_build_const_int32(gallivm, chan);
+			si_shader_ctx->radeon_bld.inputs[soa_index] =
+				build_intrinsic(base->gallivm->builder,
+					"llvm.SI.fs.read.pos", input_type,
+					args, 1, LLVMReadNoneAttribute);
+		}
+		return;
+	}
 
 	/* XXX: Handle all possible interpolation modes */
 	switch (decl->Interp.Interpolate) {
@@ -332,7 +347,6 @@ static void declare_input_fs(
 		LLVMValueRef args[3];
 		LLVMValueRef llvm_chan = lp_build_const_int32(gallivm, chan);
 		unsigned soa_index = radeon_llvm_reg_index_soa(input_index, chan);
-		LLVMTypeRef input_type = LLVMFloatTypeInContext(gallivm->context);
 		args[0] = llvm_chan;
 		args[1] = attr_number;
 		args[2] = params;

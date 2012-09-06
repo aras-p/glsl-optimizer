@@ -1102,6 +1102,26 @@ def : Pat <
              imm:$attr, SReg_32:$params)
 >;
 
+def : Pat <
+  (int_SI_fs_read_pos 0),
+  (f32 POS_X_FLOAT)
+>;
+
+def : Pat <
+  (int_SI_fs_read_pos 1),
+  (f32 POS_Y_FLOAT)
+>;
+
+def : Pat <
+  (int_SI_fs_read_pos 2),
+  (f32 POS_Z_FLOAT)
+>;
+
+def : Pat <
+  (int_SI_fs_read_pos 3),
+  (f32 POS_W_FLOAT)
+>;
+
 /********** ================== **********/
 /********** Intrinsic Patterns **********/
 /********** ================== **********/
