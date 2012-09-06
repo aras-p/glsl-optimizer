@@ -27,7 +27,7 @@ class SIMachineFunctionInfo : public MachineFunctionInfo {
 
   public:
     SIMachineFunctionInfo(const MachineFunction &MF);
-    unsigned spi_ps_input_addr;
+    unsigned SPIPSInputAddr;
     unsigned ShaderType;
 
 };
