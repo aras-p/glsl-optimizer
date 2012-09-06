@@ -890,6 +890,15 @@ struct dd_function_table {
                              struct gl_texture_object *texObj,
                              struct gl_texture_image *texImage,
                              const GLvoid *vdpSurface, GLuint index);
+
+   /**
+    * Query reset status for GL_ARB_robustness
+    *
+    * Per \c glGetGraphicsResetStatusARB, this function should return a
+    * non-zero value once after a reset.  If a reset is non-atomic, the
+    * non-zero status should be returned for the duration of the reset.
+    */
+   GLenum (*GetGraphicsResetStatus)(struct gl_context *ctx);
 };
 
 
