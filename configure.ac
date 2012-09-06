@@ -51,14 +51,9 @@ AC_CHECK_PROGS([MAKE], [gmake make])
 AC_CHECK_PROGS([PYTHON2], [python2 python])
 AC_PROG_SED
 AC_PROG_MKDIR_P
-AC_PATH_PROG([MKDEP], [makedepend])
 
 LT_PREREQ([2.2])
 LT_INIT([disable-static])
-
-if test "x$MKDEP" = "x"; then
-    AC_MSG_ERROR([makedepend is required to build Mesa])
-fi
 
 AC_PROG_YACC
 AC_PATH_PROG([YACC_INST], $YACC)
@@ -125,21 +120,6 @@ if test "x$GCC" = xyes -a "x$acv_mesa_CLANG" = xno; then
         AC_MSG_RESULT([yes])
     fi
 fi
-
-
-MKDEP_OPTIONS=-fdepend
-dnl Ask gcc where it's keeping its secret headers
-if test "x$GCC" = xyes; then
-    for dir in include include-fixed; do
-        GCC_INCLUDES=`$CC -print-file-name=$dir`
-        if test "x$GCC_INCLUDES" != x && \
-           test "$GCC_INCLUDES" != "$dir" && \
-           test -d "$GCC_INCLUDES"; then
-            MKDEP_OPTIONS="$MKDEP_OPTIONS -I$GCC_INCLUDES"
-        fi
-    done
-fi
-AC_SUBST([MKDEP_OPTIONS])
 
 dnl Make sure the pkg-config macros are defined
 m4_ifndef([PKG_PROG_PKG_CONFIG],
