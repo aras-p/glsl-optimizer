@@ -44,6 +44,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::i1, Custom);
 
   setOperationAction(ISD::ROTL, MVT::i32, Custom);
 
@@ -240,6 +241,29 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
               .addReg(AMDGPU::PREDICATE_BIT, RegState::Kill);
       break;
     }
+  case AMDGPU::input_perspective:
+    {
+      R600MachineFunctionInfo *MFI = MF->getInfo<R600MachineFunctionInfo>();
+
+      // XXX Be more fine about register reservation
+      for (unsigned i = 0; i < 4; i ++) {
+        unsigned ReservedReg = AMDGPU::R600_TReg32RegClass.getRegister(i);
+        MFI->ReservedRegs.push_back(ReservedReg);
+      }
+
+      switch (MI->getOperand(1).getImm()) {
+      case 0:// Perspective
+        MFI->HasPerspectiveInterpolation = true;
+        break;
+      case 1:// Linear
+        MFI->HasLinearInterpolation = true;
+        break;
+      default:
+        assert(0 && "Unknow ij index");
+      }
+
+      return BB;
+    }
   }
 
   MI->eraseFromParent();
@@ -294,7 +318,48 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const
       unsigned Reg = AMDGPU::R600_TReg32RegClass.getRegister(RegIndex);
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass, Reg, VT);
     }
-
+    case AMDGPUIntrinsic::R600_load_input_perspective: {
+      unsigned slot = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+      SDValue FullVector = DAG.getNode(
+          AMDGPUISD::INTERP,
+          DL, MVT::v4f32,
+          DAG.getConstant(0, MVT::i32), DAG.getConstant(slot / 4 , MVT::i32));
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
+        DL, VT, FullVector, DAG.getConstant(slot % 4, MVT::i32));
+    }
+    case AMDGPUIntrinsic::R600_load_input_linear: {
+      unsigned slot = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+      SDValue FullVector = DAG.getNode(
+        AMDGPUISD::INTERP,
+        DL, MVT::v4f32,
+        DAG.getConstant(1, MVT::i32), DAG.getConstant(slot / 4 , MVT::i32));
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
+        DL, VT, FullVector, DAG.getConstant(slot % 4, MVT::i32));
+    }
+    case AMDGPUIntrinsic::R600_load_input_constant: {
+      unsigned slot = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+      SDValue FullVector = DAG.getNode(
+        AMDGPUISD::INTERP_P0,
+        DL, MVT::v4f32,
+        DAG.getConstant(slot / 4 , MVT::i32));
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
+          DL, VT, FullVector, DAG.getConstant(slot % 4, MVT::i32));
+    }
+    case AMDGPUIntrinsic::R600_load_input_position: {
+      unsigned slot = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+      unsigned RegIndex = AMDGPU::R600_TReg32RegClass.getRegister(slot);
+      SDValue Reg = CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+	    RegIndex, MVT::f32);
+      if ((slot % 4) == 3) {
+        return DAG.getNode(ISD::FDIV,
+            DL, VT,
+            DAG.getConstantFP(1.0f, MVT::f32),
+            Reg);
+      } else {
+        return Reg;
+      }
+    }
+ 
     case r600_read_ngroups_x:
       return LowerImplicitParameter(DAG, VT, DL, 0);
     case r600_read_ngroups_y:
@@ -347,7 +412,28 @@ void R600TargetLowering::ReplaceNodeResults(SDNode *N,
   switch (N->getOpcode()) {
   default: return;
   case ISD::FP_TO_UINT: Results.push_back(LowerFPTOUINT(N->getOperand(0), DAG));
+  case ISD::INTRINSIC_WO_CHAIN:
+    {
+      unsigned IntrinsicID =
+          cast<ConstantSDNode>(N->getOperand(0))->getZExtValue();
+      if (IntrinsicID == AMDGPUIntrinsic::R600_load_input_face) {
+        Results.push_back(LowerInputFace(N, DAG));
+      } else {
+        return;
+      }
+    }
   }
+}
+
+SDValue R600TargetLowering::LowerInputFace(SDNode* Op, SelectionDAG &DAG) const
+{
+  unsigned slot = cast<ConstantSDNode>(Op->getOperand(1))->getZExtValue();
+  unsigned RegIndex = AMDGPU::R600_TReg32RegClass.getRegister(slot);
+  SDValue Reg = CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
+      RegIndex, MVT::f32);
+  return DAG.getNode(ISD::SETCC, Op->getDebugLoc(), MVT::i1,
+      Reg, DAG.getConstantFP(0.0f, MVT::f32),
+      DAG.getCondCode(ISD::SETUGT));
 }
 
 SDValue R600TargetLowering::LowerFPTOUINT(SDValue Op, SelectionDAG &DAG) const

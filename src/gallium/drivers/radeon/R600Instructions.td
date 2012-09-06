@@ -258,6 +258,60 @@ def isEGorCayman : Predicate<"Subtarget.device()"
 def isR600toCayman : Predicate<
                      "Subtarget.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX">;
 
+//===----------------------------------------------------------------------===//
+// Interpolation Instructions
+//===----------------------------------------------------------------------===//
+
+def INTERP: SDNode<"AMDGPUISD::INTERP",
+  SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisInt<1>, SDTCisInt<2>]>
+  >;
+
+def INTERP_P0: SDNode<"AMDGPUISD::INTERP_P0",
+  SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisInt<1>]>
+  >;
+
+let usesCustomInserter = 1 in {
+def input_perspective :  AMDGPUShaderInst <
+  (outs R600_Reg128:$dst),
+  (ins i32imm:$src0, i32imm:$src1),
+  "input_perspective $src0 $src1 : dst",
+  [(set R600_Reg128:$dst, (INTERP (i32 imm:$src0), (i32 imm:$src1)))]>;
+}  // End usesCustomInserter = 1
+
+def input_constant :  AMDGPUShaderInst <
+  (outs R600_Reg128:$dst),
+  (ins i32imm:$src),
+  "input_perspective $src : dst",
+  [(set R600_Reg128:$dst, (INTERP_P0 (i32 imm:$src)))]>;
+
+
+
+def INTERP_XY : InstR600 <0xD6,
+  (outs R600_Reg32:$dst),
+  (ins R600_Reg32:$src0, R600_Reg32:$src1, i32imm:$flags),
+  "INTERP_XY dst",
+  [], AnyALU>
+{
+  let FlagOperandIdx = 3;
+}
+
+def INTERP_ZW : InstR600 <0xD7,
+  (outs R600_Reg32:$dst),
+  (ins R600_Reg32:$src0, R600_Reg32:$src1, i32imm:$flags),
+  "INTERP_ZW dst",
+  [], AnyALU>
+{
+  let FlagOperandIdx = 3;
+}
+
+def INTERP_LOAD_P0 : InstR600 <0xE0,
+  (outs R600_Reg32:$dst),
+  (ins R600_Reg32:$src, i32imm:$flags),
+  "INTERP_LOAD_P0 dst",
+  [], AnyALU>
+{
+  let FlagOperandIdx = 2;
+}
 
 let Predicates = [isR600toCayman] in { 
 

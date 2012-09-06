@@ -119,6 +119,8 @@ enum
   SMIN,
   UMIN,
   URECIP,
+  INTERP,
+  INTERP_P0,
   LAST_AMDGPU_ISD_NUMBER
 };
 
