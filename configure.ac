@@ -321,15 +321,6 @@ esac
 AM_CONDITIONAL(BUILD_SHARED, test "x$enable_shared" = xyes)
 
 dnl
-dnl mklib options
-dnl
-AC_ARG_VAR([MKLIB_OPTIONS],[Options for the Mesa library script, mklib])
-if test "$enable_static" = yes; then
-    MKLIB_OPTIONS="$MKLIB_OPTIONS -static"
-fi
-AC_SUBST([MKLIB_OPTIONS])
-
-dnl
 dnl other compiler options
 dnl
 AC_ARG_ENABLE([debug],
