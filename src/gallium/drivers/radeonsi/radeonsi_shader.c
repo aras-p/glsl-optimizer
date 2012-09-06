@@ -538,6 +538,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 					color_count++;
 				}
 				break;
+			case TGSI_SEMANTIC_FOG:
 			case TGSI_SEMANTIC_GENERIC:
 				target = V_008DFC_SQ_EXP_PARAM + param_count;
 				shader->output[i].param_offset = param_count;
