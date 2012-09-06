@@ -71,10 +71,7 @@ if test "x$INDENT" != "xcat"; then
     AC_SUBST(INDENT_FLAGS, '-i4 -nut -br -brs -npcs -ce -TGLubyte -TGLbyte -TBool')
 fi
 
-dnl Our fallback install-sh is a symlink to minstall. Use the existing
-dnl configuration in that case.
 AC_PROG_INSTALL
-test "x$INSTALL" = "x$ac_install_sh" && INSTALL='$(MINSTALL)'
 
 dnl We need a POSIX shell for parts of the build. Assume we have one
 dnl in most cases.
