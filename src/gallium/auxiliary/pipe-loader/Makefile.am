@@ -7,8 +7,6 @@ AM_CPPFLAGS = $(DEFINES) \
 	-I$(top_srcdir)/src/gallium/auxiliary \
 	-I$(top_srcdir)/src/gallium/winsys
 
-AM_CFLAGS = $(PIC_FLAGS)
-
 noinst_LTLIBRARIES =
 
 if HAVE_LOADER_GALLIUM
@@ -22,7 +20,7 @@ libpipe_loader_la_SOURCES = \
 
 if HAVE_DRM_LOADER_GALLIUM
 libpipe_loader_la_SOURCES += pipe_loader_drm.c
-AM_CFLAGS += $(LIBDRM_CFLAGS)
+AM_CFLAGS = $(LIBDRM_CFLAGS)
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for

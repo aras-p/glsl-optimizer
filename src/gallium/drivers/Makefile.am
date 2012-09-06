@@ -4,8 +4,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/include \
 	-I$(top_srcdir)/src/gallium/auxiliary \
 	-I$(top_srcdir)/src/gallium/drivers \
-	$(DEFINES) \
-	$(PIC_FLAGS)
+	$(DEFINES)
 
 AM_CFLAGS = $(VISIBILITY_CFLAGS)
 
