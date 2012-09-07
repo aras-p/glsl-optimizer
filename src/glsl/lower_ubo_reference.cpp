@@ -165,12 +165,12 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
    const glsl_type *type = (*rvalue)->type;
    ir_variable *load_var = new(mem_ctx) ir_variable(type,
 						    "ubo_load_temp",
-						    ir_var_temporary);
+						    ir_var_temporary, (*rvalue)->get_precision());
    base_ir->insert_before(load_var);
 
    ir_variable *load_offset = new(mem_ctx) ir_variable(glsl_type::uint_type,
 						       "ubo_load_temp_offset",
-						       ir_var_temporary);
+						       ir_var_temporary, glsl_precision_undefined);
    base_ir->insert_before(load_offset);
    base_ir->insert_before(assign(load_offset, offset));
 

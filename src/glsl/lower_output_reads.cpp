@@ -95,7 +95,7 @@ output_read_remover::visit(ir_dereference_variable *ir)
    if (temp == NULL) {
       void *var_ctx = ralloc_parent(ir->var);
       temp = new(var_ctx) ir_variable(ir->var->type, ir->var->name,
-                                      ir_var_temporary);
+                                      ir_var_temporary, (glsl_precision)ir->var->precision);
       hash_table_insert(replacements, temp, ir->var);
    }
 

@@ -1888,12 +1888,6 @@ extern void
 import_prototypes(const exec_list *source, exec_list *dest,
 		  struct glsl_symbol_table *symbols, void *mem_ctx);
 
-extern bool
-ir_has_call(ir_instruction *ir);
-
-extern bool
-ir_has_call_skip_builtins(ir_instruction *ir);
-
 extern void
 do_set_program_inouts(exec_list *instructions, struct gl_program *prog,
                       bool is_fragment_shader);

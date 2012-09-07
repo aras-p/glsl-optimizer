@@ -150,7 +150,7 @@ lower_clip_distance_visitor::create_indices(ir_rvalue *old_index,
        * don't compute it twice).
        */
       ir_variable *old_index_var = new(ctx) ir_variable(
-         glsl_type::int_type, "clip_distance_index", ir_var_temporary);
+         glsl_type::int_type, "clip_distance_index", ir_var_temporary, glsl_precision_undefined);
       this->base_ir->insert_before(old_index_var);
       this->base_ir->insert_before(new(ctx) ir_assignment(
          new(ctx) ir_dereference_variable(old_index_var), old_index));
@@ -296,7 +296,7 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
           * anymore, so use a temporary array instead.
           */
          ir_variable *temp_clip_distance = new(ctx) ir_variable(
-            actual_param->type, "temp_clip_distance", ir_var_temporary);
+            actual_param->type, "temp_clip_distance", ir_var_temporary, actual_param->get_precision());
          this->base_ir->insert_before(temp_clip_distance);
          actual_param->replace_with(
             new(ctx) ir_dereference_variable(temp_clip_distance));

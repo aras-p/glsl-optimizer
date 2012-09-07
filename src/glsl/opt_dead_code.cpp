@@ -78,8 +78,7 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 	  * Don't do so if it's a shader output, though.
 	  */
 	 if (entry->var->mode != ir_var_out &&
-	     entry->var->mode != ir_var_inout &&
-	     !ir_has_call_skip_builtins(entry->assign)) {
+	     entry->var->mode != ir_var_inout) {
 	    entry->assign->remove();
 	    progress = true;
 

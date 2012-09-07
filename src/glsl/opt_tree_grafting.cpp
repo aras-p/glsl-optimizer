@@ -181,12 +181,17 @@ ir_tree_grafting_visitor::check_graft(ir_instruction *ir, ir_variable *var)
 }
 
 ir_visitor_status
+ir_tree_grafting_visitor::visit_enter(ir_assignment *ir)
+{
+	// if we're entering into assignment of different precision, leave now
+	if (ir->lhs->get_precision() != this->graft_var->precision && ir->lhs->get_precision() != glsl_precision_undefined && this->graft_var->precision != glsl_precision_undefined)
+		return visit_continue_with_parent;
+	return visit_continue;
+}
+
+ir_visitor_status
 ir_tree_grafting_visitor::visit_leave(ir_assignment *ir)
 {
-   // if we're entering into assignment of different precision, leave now
-   if (ir->lhs->get_precision() != this->graft_var->precision && ir->lhs->get_precision() != glsl_precision_undefined && this->graft_var->precision != glsl_precision_undefined)
-      return visit_continue_with_parent;
-
    if (do_graft(&ir->rhs) ||
        do_graft(&ir->condition))
       return visit_stop;

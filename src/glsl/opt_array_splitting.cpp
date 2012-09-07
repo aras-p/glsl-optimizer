@@ -307,7 +307,7 @@ ir_array_splitting_visitor::split_deref(ir_dereference **deref)
        */
       ir_variable *temp = new(entry->mem_ctx) ir_variable(deref_array->type,
 							  "undef",
-							  ir_var_temporary);
+							  ir_var_temporary, deref_array->get_precision());
       entry->components[0]->insert_before(temp);
       *deref = new(entry->mem_ctx) ir_dereference_variable(temp);
    }
@@ -368,11 +368,13 @@ optimize_split_arrays(exec_list *instructions, bool linked)
       variable_entry *entry = (variable_entry *)iter.get();
       const struct glsl_type *type = entry->var->type;
       const struct glsl_type *subtype;
+      glsl_precision subprec = (glsl_precision)entry->var->precision;
 
-      if (type->is_matrix())
+      if (type->is_matrix()) {
 	 subtype = type->column_type();
-      else
+      } else {
 	 subtype = type->fields.array;
+      }
 
       entry->mem_ctx = ralloc_parent(entry->var);
 
@@ -385,7 +387,7 @@ optimize_split_arrays(exec_list *instructions, bool linked)
 					    entry->var->name, i);
 
 	 entry->components[i] =
-	    new(entry->mem_ctx) ir_variable(subtype, name, ir_var_temporary);
+	    new(entry->mem_ctx) ir_variable(subtype, name, ir_var_temporary, subprec);
 	 entry->var->insert_before(entry->components[i]);
       }
 
