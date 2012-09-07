@@ -743,6 +743,12 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 void
 ir_print_glsl_visitor::visit(ir_call *ir)
 {
+	if (ir->return_deref)
+	{
+		visit(ir->return_deref);
+		ralloc_asprintf_append (&buffer, " = ");		
+	}
+	
    ralloc_asprintf_append (&buffer, "%s (", ir->callee_name());
    bool first = true;
    foreach_iter(exec_list_iterator, iter, *ir) {

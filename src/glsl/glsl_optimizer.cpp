@@ -39,10 +39,8 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
    ctx->Const.MaxClipPlanes = 8;
    ctx->Const.MaxTextureUnits = 2;
 
-   /* More than the 1.10 minimum to appease parser tests taken from
-    * apps that (hopefully) already checked the number of coords.
-    */
-   ctx->Const.MaxTextureCoordUnits = 4;
+   /* allow high amount */
+   ctx->Const.MaxTextureCoordUnits = 16;
 
    ctx->Const.VertexProgram.MaxAttribs = 16;
    ctx->Const.VertexProgram.MaxUniformComponents = 512;
