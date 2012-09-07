@@ -2003,6 +2003,11 @@ AC_SUBST([VDPAU_MINOR], 0)
 AC_SUBST([XVMC_MAJOR], 1)
 AC_SUBST([XVMC_MINOR], 0)
 
+AC_SUBST([XA_MAJOR], 1)
+AC_SUBST([XA_MINOR], 0)
+AC_SUBST([XA_TINY], 0)
+AC_SUBST([XA_VERSION], "$XA_MAJOR.$XA_MINOR.$XA_TINY")
+
 dnl prepend CORE_DIRS to SRC_DIRS
 SRC_DIRS="$CORE_DIRS $SRC_DIRS"
 
@@ -2074,6 +2079,8 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/targets/vdpau-r600/Makefile
 		src/gallium/targets/vdpau-radeonsi/Makefile
 		src/gallium/targets/vdpau-softpipe/Makefile
+		src/gallium/targets/xa-vmwgfx/Makefile
+		src/gallium/targets/xa-vmwgfx/xatracker.pc
 		src/gallium/targets/xorg-i915/Makefile
 		src/gallium/targets/xorg-nouveau/Makefile
 		src/gallium/targets/xorg-r300/Makefile
