@@ -504,61 +504,14 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 	 const struct gl_texture_object *t = unit->_Current;
 	 const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
 	 struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit_id);
-	 int swizzles[SWIZZLE_NIL + 1] = {
-	    SWIZZLE_X,
-	    SWIZZLE_Y,
-	    SWIZZLE_Z,
-	    SWIZZLE_W,
-	    SWIZZLE_ZERO,
-	    SWIZZLE_ONE,
-	    SWIZZLE_NIL
-	 };
 
-	 if (img->_BaseFormat == GL_DEPTH_COMPONENT ||
-	     img->_BaseFormat == GL_DEPTH_STENCIL) {
-	    /* We handle GL_DEPTH_TEXTURE_MODE here instead of as surface
-	     * format overrides because shadow comparison always returns the
-	     * result of the comparison in all channels anyway.
-	     */
-	    switch (t->DepthMode) {
-	    case GL_ALPHA:
-	       swizzles[0] = SWIZZLE_ZERO;
-	       swizzles[1] = SWIZZLE_ZERO;
-	       swizzles[2] = SWIZZLE_ZERO;
-	       swizzles[3] = SWIZZLE_X;
-	       break;
-	    case GL_LUMINANCE:
-	       swizzles[0] = SWIZZLE_X;
-	       swizzles[1] = SWIZZLE_X;
-	       swizzles[2] = SWIZZLE_X;
-	       swizzles[3] = SWIZZLE_ONE;
-	       break;
-	    case GL_INTENSITY:
-	       swizzles[0] = SWIZZLE_X;
-	       swizzles[1] = SWIZZLE_X;
-	       swizzles[2] = SWIZZLE_X;
-	       swizzles[3] = SWIZZLE_X;
-	       break;
-	    case GL_RED:
-	       swizzles[0] = SWIZZLE_X;
-	       swizzles[1] = SWIZZLE_ZERO;
-	       swizzles[2] = SWIZZLE_ZERO;
-	       swizzles[3] = SWIZZLE_ONE;
-	       break;
-	    }
-	 }
+	 key->swizzles[s] = brw_get_texture_swizzle(t);
 
 	 if (img->InternalFormat == GL_YCBCR_MESA) {
 	    key->yuvtex_mask |= 1 << s;
 	    if (img->TexFormat == MESA_FORMAT_YCBCR)
 		key->yuvtex_swap_mask |= 1 << s;
 	 }
-
-	 key->swizzles[s] =
-	    MAKE_SWIZZLE4(swizzles[GET_SWZ(t->_Swizzle, 0)],
-			  swizzles[GET_SWZ(t->_Swizzle, 1)],
-			  swizzles[GET_SWZ(t->_Swizzle, 2)],
-			  swizzles[GET_SWZ(t->_Swizzle, 3)]);
 
 	 if (sampler->MinFilter != GL_NEAREST &&
 	     sampler->MagFilter != GL_NEAREST) {

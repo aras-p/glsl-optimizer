@@ -653,6 +653,62 @@ brw_get_surface_num_multisamples(unsigned num_samples)
 }
 
 
+/**
+ * Compute the combination of DEPTH_TEXTURE_MODE and EXT_texture_swizzle
+ * swizzling.
+ */
+int
+brw_get_texture_swizzle(const struct gl_texture_object *t)
+{
+   const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
+
+   int swizzles[SWIZZLE_NIL + 1] = {
+      SWIZZLE_X,
+      SWIZZLE_Y,
+      SWIZZLE_Z,
+      SWIZZLE_W,
+      SWIZZLE_ZERO,
+      SWIZZLE_ONE,
+      SWIZZLE_NIL
+   };
+
+   if (img->_BaseFormat == GL_DEPTH_COMPONENT ||
+       img->_BaseFormat == GL_DEPTH_STENCIL) {
+      switch (t->DepthMode) {
+      case GL_ALPHA:
+         swizzles[0] = SWIZZLE_ZERO;
+         swizzles[1] = SWIZZLE_ZERO;
+         swizzles[2] = SWIZZLE_ZERO;
+         swizzles[3] = SWIZZLE_X;
+         break;
+      case GL_LUMINANCE:
+         swizzles[0] = SWIZZLE_X;
+         swizzles[1] = SWIZZLE_X;
+         swizzles[2] = SWIZZLE_X;
+         swizzles[3] = SWIZZLE_ONE;
+         break;
+      case GL_INTENSITY:
+         swizzles[0] = SWIZZLE_X;
+         swizzles[1] = SWIZZLE_X;
+         swizzles[2] = SWIZZLE_X;
+         swizzles[3] = SWIZZLE_X;
+         break;
+      case GL_RED:
+         swizzles[0] = SWIZZLE_X;
+         swizzles[1] = SWIZZLE_ZERO;
+         swizzles[2] = SWIZZLE_ZERO;
+         swizzles[3] = SWIZZLE_ONE;
+         break;
+      }
+   }
+
+   return MAKE_SWIZZLE4(swizzles[GET_SWZ(t->_Swizzle, 0)],
+                        swizzles[GET_SWZ(t->_Swizzle, 1)],
+                        swizzles[GET_SWZ(t->_Swizzle, 2)],
+                        swizzles[GET_SWZ(t->_Swizzle, 3)]);
+}
+
+
 static void
 brw_update_buffer_texture_surface(struct gl_context *ctx,
                                   unsigned unit,

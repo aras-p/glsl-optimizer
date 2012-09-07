@@ -202,6 +202,8 @@ GLuint translate_tex_format(gl_format mesa_format,
 			    GLenum depth_mode,
 			    GLenum srgb_decode);
 
+int brw_get_texture_swizzle(const struct gl_texture_object *t);
+
 /* gen7_wm_surface_state.c */
 void gen7_set_surface_tiling(struct gen7_surface_state *surf, uint32_t tiling);
 void gen7_set_surface_msaa(struct gen7_surface_state *surf,
