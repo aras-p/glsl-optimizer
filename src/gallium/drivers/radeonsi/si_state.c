@@ -2310,7 +2310,7 @@ static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **
 	si_pm4_sh_data_begin(pm4);
 	for (i = 0; i < count; i++) {
 		for (j = 0; j < Elements(rstates[i]->val); ++j) {
-			si_pm4_sh_data_add(pm4, rstates[i]->val[j]);
+			si_pm4_sh_data_add(pm4, rstates[i] ? rstates[i]->val[j] : 0);
 		}
 	}
 	si_pm4_sh_data_end(pm4, R_00B038_SPI_SHADER_USER_DATA_PS_2);
