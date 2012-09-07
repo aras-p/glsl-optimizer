@@ -93,7 +93,7 @@ public:
 
 	void indent(void);
 	void print_var_name (ir_variable* v);
-	void print_precision (ir_instruction* ir);
+	void print_precision (ir_instruction* ir, const glsl_type* type);
 
 	virtual void visit(ir_variable *);
 	virtual void visit(ir_function_signature *);
@@ -213,11 +213,11 @@ void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 	}
 }
 
-void ir_print_glsl_visitor::print_precision (ir_instruction* ir)
+void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type* type)
 {
 	if (!this->use_precision)
 		return;
-	if (ir->type && !ir->type->is_float() && (!ir->type->is_array() || !ir->type->element_type()->is_float()))
+	if (type && !type->is_float() && (!type->is_array() || !type->element_type()->is_float()))
 		return;
 	glsl_precision prec = precision_from_ir(ir);
 	if (prec == glsl_precision_high || prec == glsl_precision_undefined)
@@ -281,7 +281,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 
    ralloc_asprintf_append (&buffer, "%s%s%s%s",
 	  cent, inv, mode[this->mode][ir->mode], interp[ir->interpolation]);
-   print_precision (ir);
+   print_precision (ir, ir->type);
    buffer = print_type(buffer, ir->type, false);
    ralloc_asprintf_append (&buffer, " ");
    print_var_name (ir);
@@ -296,7 +296,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 
 void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 {
-   print_precision (ir);
+   print_precision (ir, ir->return_type);
    buffer = print_type(buffer, ir->return_type, true);
    ralloc_asprintf_append (&buffer, " %s (", ir->function_name());
 
