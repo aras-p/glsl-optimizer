@@ -20,7 +20,6 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
 
    ctx->API = api;
 
-   ctx->Extensions.ARB_draw_buffers = GL_TRUE;
    ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
    ctx->Extensions.EXT_texture_array = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
@@ -160,6 +159,7 @@ static void propagate_precision_assign(ir_instruction *ir, void *data)
 	}
 }
 
+#if 0
 static void propagate_precision_call(ir_instruction *ir, void *data)
 {
 	ir_call* call = ir->as_call();
@@ -189,6 +189,8 @@ static void propagate_precision_call(ir_instruction *ir, void *data)
 		}
 	}
 }
+#endif
+
 
 static bool propagate_precision(exec_list* list)
 {
@@ -200,7 +202,7 @@ static bool propagate_precision(exec_list* list)
 			ir_instruction* ir = (ir_instruction*)iter.get();
 			visit_tree (ir, propagate_precision_deref, &res);
 			visit_tree (ir, propagate_precision_assign, &res);
-			visit_tree (ir, propagate_precision_call, &res);
+			//visit_tree (ir, propagate_precision_call, &res);
 		}
 		anyProgress |= res;
 	} while (res);
@@ -273,7 +275,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			if (!linked) {
 				progress2 = do_dead_code_unlinked(ir); progress |= progress2; if (progress2) debug_print_ir ("After dead code unlinked", ir, state, ctx->mem_ctx);
 			} else {
-				progress2 = do_dead_code(ir); progress |= progress2; if (progress2) debug_print_ir ("After dead code", ir, state, ctx->mem_ctx);
+				progress2 = do_dead_code(ir,false); progress |= progress2; if (progress2) debug_print_ir ("After dead code", ir, state, ctx->mem_ctx);
 			}
 			progress2 = do_dead_code_local(ir); progress |= progress2; if (progress2) debug_print_ir ("After dead code local", ir, state, ctx->mem_ctx);
 			progress2 = propagate_precision (ir); progress |= progress2; if (progress2) debug_print_ir ("After prec propagation", ir, state, ctx->mem_ctx);

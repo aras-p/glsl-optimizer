@@ -42,13 +42,42 @@
 #ifndef _U_THREAD_H_
 #define _U_THREAD_H_
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "u_compiler.h"
 
-#if defined(PTHREADS) || defined(WIN32) || defined(BEOS_THREADS)
+#if defined(PTHREADS)
+#include <pthread.h> /* POSIX threads headers */
+#endif
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+#if defined(PTHREADS) || defined(_WIN32)
 #ifndef THREADS
 #define THREADS
 #endif
 #endif
+
+/*
+ * Error messages
+ */
+#define INIT_TSD_ERROR "_glthread_: failed to allocate key for thread specific data"
+#define GET_TSD_ERROR "_glthread_: failed to get thread specific data"
+#define SET_TSD_ERROR "_glthread_: thread failed to set thread specific data"
+
+
+/*
+ * Magic number to determine if a TSD object has been initialized.
+ * Kind of a hack but there doesn't appear to be a better cross-platform
+ * solution.
+ */
+#define INIT_MAGIC 0xff8adc98
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /*
  * POSIX threads. This should be your choice in the Unix world
@@ -60,11 +89,10 @@
  * proper compiling for MT-safe libc etc.
  */
 #if defined(PTHREADS)
-#include <pthread.h> /* POSIX threads headers */
 
 struct u_tsd {
    pthread_key_t key;
-   int initMagic;
+   unsigned initMagic;
 };
 
 typedef pthread_mutex_t u_mutex;
@@ -77,6 +105,46 @@ typedef pthread_mutex_t u_mutex;
 #define u_mutex_lock(name)    (void) pthread_mutex_lock(&(name))
 #define u_mutex_unlock(name)  (void) pthread_mutex_unlock(&(name))
 
+static INLINE unsigned long
+u_thread_self(void)
+{
+   return (unsigned long) pthread_self();
+}
+
+
+static INLINE void
+u_tsd_init(struct u_tsd *tsd)
+{
+   if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
+      perror(INIT_TSD_ERROR);
+      exit(-1);
+   }
+   tsd->initMagic = INIT_MAGIC;
+}
+
+
+static INLINE void *
+u_tsd_get(struct u_tsd *tsd)
+{
+   if (tsd->initMagic != INIT_MAGIC) {
+      u_tsd_init(tsd);
+   }
+   return pthread_getspecific(tsd->key);
+}
+
+
+static INLINE void
+u_tsd_set(struct u_tsd *tsd, void *ptr)
+{
+   if (tsd->initMagic != INIT_MAGIC) {
+      u_tsd_init(tsd);
+   }
+   if (pthread_setspecific(tsd->key, ptr) != 0) {
+      perror(SET_TSD_ERROR);
+      exit(-1);
+   }
+}
+
 #endif /* PTHREADS */
 
 
@@ -85,12 +153,11 @@ typedef pthread_mutex_t u_mutex;
  * IMPORTANT: Link with multithreaded runtime library when THREADS are
  * used!
  */
-#ifdef WIN32
-#include <windows.h>
+#ifdef _WIN32
 
 struct u_tsd {
    DWORD key;
-   int   initMagic;
+   unsigned initMagic;
 };
 
 typedef CRITICAL_SECTION u_mutex;
@@ -104,63 +171,61 @@ typedef CRITICAL_SECTION u_mutex;
 #define u_mutex_lock(name)    EnterCriticalSection(&name)
 #define u_mutex_unlock(name)  LeaveCriticalSection(&name)
 
-#endif /* WIN32 */
+static INLINE unsigned long
+u_thread_self(void)
+{
+   return GetCurrentThreadId();
+}
 
 
-/*
- * BeOS threads. R5.x required.
- */
-#ifdef BEOS_THREADS
+static INLINE void
+u_tsd_init(struct u_tsd *tsd)
+{
+   tsd->key = TlsAlloc();
+   if (tsd->key == TLS_OUT_OF_INDEXES) {
+      perror(INIT_TSD_ERROR);
+      exit(-1);
+   }
+   tsd->initMagic = INIT_MAGIC;
+}
 
-/* Problem with OS.h and this file on haiku */
-#ifndef __HAIKU__
-#include <kernel/OS.h>
-#endif
 
-#include <support/TLS.h>
+static INLINE void
+u_tsd_destroy(struct u_tsd *tsd)
+{
+   if (tsd->initMagic != INIT_MAGIC) {
+      return;
+   }
+   TlsFree(tsd->key);
+   tsd->initMagic = 0x0;
+}
 
-/* The only two typedefs required here
- * this is cause of the OS.h problem
- */
-#ifdef __HAIKU__
-typedef int32 thread_id;
-typedef int32 sem_id;
-#endif
 
-struct u_tsd {
-   int32        key;
-   int          initMagic;
-};
+static INLINE void *
+u_tsd_get(struct u_tsd *tsd)
+{
+   if (tsd->initMagic != INIT_MAGIC) {
+      u_tsd_init(tsd);
+   }
+   return TlsGetValue(tsd->key);
+}
 
-/* Use Benaphore, aka speeder semaphore */
-typedef struct {
-    int32   lock;
-    sem_id  sem;
-} benaphore;
-typedef benaphore u_mutex;
 
-#define u_mutex_declare_static(name) \
-   static u_mutex name = { 0, 0 }
+static INLINE void
+u_tsd_set(struct u_tsd *tsd, void *ptr)
+{
+   /* the following code assumes that the struct u_tsd has been initialized
+      to zero at creation */
+   if (tsd->initMagic != INIT_MAGIC) {
+      u_tsd_init(tsd);
+   }
+   if (TlsSetValue(tsd->key, ptr) == 0) {
+      perror(SET_TSD_ERROR);
+      exit(-1);
+   }
+}
 
-#define u_mutex_init(name) \
-   name.sem = create_sem(0, #name"_benaphore"), \
-   name.lock = 0
-
-#define u_mutex_destroy(name) \
-   delete_sem(name.sem), \
-   name.lock = 0
-
-#define u_mutex_lock(name) \
-   if (name.sem == 0) \
-      u_mutex_init(name); \
-   if (atomic_add(&(name.lock), 1) >= 1) \
-      acquire_sem(name.sem)
-
-#define u_mutex_unlock(name) \
-   if (atomic_add(&(name.lock), -1) > 1) \
-      release_sem(name.sem)
-
-#endif /* BEOS_THREADS */
+#endif /* _WIN32 */
 
 
 /*
@@ -169,7 +234,7 @@ typedef benaphore u_mutex;
 #ifndef THREADS
 
 struct u_tsd {
-   int initMagic; 
+   unsigned initMagic;
 };
 
 typedef unsigned u_mutex;
@@ -180,22 +245,43 @@ typedef unsigned u_mutex;
 #define u_mutex_lock(name)             (void) name
 #define u_mutex_unlock(name)           (void) name
 
+/*
+ * no-op functions
+ */
+
+static INLINE unsigned long
+u_thread_self(void)
+{
+   return 0;
+}
+
+
+static INLINE void
+u_tsd_init(struct u_tsd *tsd)
+{
+   (void) tsd;
+}
+
+
+static INLINE void *
+u_tsd_get(struct u_tsd *tsd)
+{
+   (void) tsd;
+   return NULL;
+}
+
+
+static INLINE void
+u_tsd_set(struct u_tsd *tsd, void *ptr)
+{
+   (void) tsd;
+   (void) ptr;
+}
 #endif /* THREADS */
 
 
-unsigned long
-u_thread_self(void);
-
-void
-u_tsd_init(struct u_tsd *tsd);
-
-void
-u_tsd_destroy(struct u_tsd *tsd); /* WIN32 only */
-
-void *
-u_tsd_get(struct u_tsd *tsd);
-
-void
-u_tsd_set(struct u_tsd *tsd, void *ptr);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _U_THREAD_H_ */

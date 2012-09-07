@@ -35,6 +35,11 @@
 #include "main/glheader.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * \name Symbolic names to some of the entries in the matrix
  *
@@ -69,7 +74,7 @@ enum GLmatrixtype {
  */
 typedef struct {
    GLfloat *m;		/**< 16 matrix elements (16-byte aligned) */
-   GLfloat *inv;	/**< optional 16-element inverse (16-byte aligned) */
+   GLfloat *inv;	/**< 16-element inverse (16-byte aligned) */
    GLuint flags;        /**< possible values determined by (of \link
                          * MatFlags MAT_FLAG_* flags\endlink)
                          */
@@ -84,9 +89,6 @@ _math_matrix_ctr( GLmatrix *m );
 
 extern void
 _math_matrix_dtr( GLmatrix *m );
-
-extern void
-_math_matrix_alloc_inv( GLmatrix *m );
 
 extern void
 _math_matrix_mul_matrix( GLmatrix *dest, const GLmatrix *a, const GLmatrix *b );
@@ -208,5 +210,9 @@ _mesa_transform_vector(GLfloat u[4], const GLfloat v[4], const GLfloat m[16]);
 
 /*@}*/
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

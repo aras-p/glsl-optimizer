@@ -44,6 +44,13 @@
 #ifndef _GLAPI_H
 #define _GLAPI_H
 
+#include "glapi/glthread.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #ifdef _GLAPI_NO_EXPORTS
 #  define _GLAPI_EXPORT
@@ -71,8 +78,6 @@
 #define _glapi_Dispatch _mglapi_Dispatch
 #define _glapi_Context _mglapi_Context
 #endif
-
-#include "glapi/glthread.h"
 
 typedef void (*_glapi_proc)(void);
 struct _glapi_table;
@@ -177,5 +182,9 @@ _glapi_noop_enable_warnings(unsigned char enable);
 _GLAPI_EXPORT void
 _glapi_set_warning_func(_glapi_proc func);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _GLAPI_H */

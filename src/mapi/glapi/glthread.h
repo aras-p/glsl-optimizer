@@ -3,6 +3,10 @@
 
 #include "mapi/u_thread.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _glthread_DECLARE_STATIC_MUTEX(name) u_mutex_declare_static(name)
 #define _glthread_INIT_MUTEX(name)           u_mutex_init(name)
 #define _glthread_DESTROY_MUTEX(name)        u_mutex_destroy(name)
@@ -16,5 +20,9 @@
 
 typedef struct u_tsd _glthread_TSD;
 typedef u_mutex _glthread_Mutex;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GLTHREAD_H */

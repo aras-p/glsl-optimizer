@@ -32,9 +32,12 @@
 #include "main/mtypes.h"
 #include "program/ir_to_mesa.h"
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
 /**
  * Internal functions
  */
@@ -98,7 +101,7 @@ extern void
 _mesa_free_shader_state(struct gl_context *ctx);
 
 
-static INLINE gl_shader_type
+static inline gl_shader_type
 _mesa_shader_type_to_index(GLenum v)
 {
    switch (v) {
@@ -115,7 +118,7 @@ _mesa_shader_type_to_index(GLenum v)
 }
 
 
-static INLINE GLenum
+static inline GLenum
 _mesa_shader_index_to_type(GLuint i)
 {
    static const GLenum enums[MESA_SHADER_TYPES] = {

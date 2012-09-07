@@ -27,6 +27,13 @@
 
 #include "glheader.h"
 #include "program/prog_parameter.h"
+#include "../glsl/glsl_types.h"
+#include "../glsl/ir_uniform.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 struct gl_program;
 struct _glapi_table;
@@ -143,6 +150,13 @@ _mesa_GetActiveUniformARB(GLhandleARB, GLuint, GLsizei, GLsizei *,
                           GLint *, GLenum *, GLcharARB *);
 
 extern void GLAPIENTRY
+_mesa_GetActiveUniformsiv(GLuint program,
+			  GLsizei uniformCount,
+			  const GLuint *uniformIndices,
+			  GLenum pname,
+			  GLint *params);
+
+extern void GLAPIENTRY
 _mesa_GetUniformfvARB(GLhandleARB, GLint, GLfloat *);
 
 extern void GLAPIENTRY
@@ -169,9 +183,9 @@ _mesa_GetnUniformdvARB(GLhandleARB, GLint, GLsizei, GLdouble *);
 extern GLint GLAPIENTRY
 _mesa_GetUniformLocationARB(GLhandleARB, const GLcharARB *);
 
-GLint
+unsigned
 _mesa_get_uniform_location(struct gl_context *ctx, struct gl_shader_program *shProg,
-			   const GLchar *name);
+			   const GLchar *name, unsigned *offset);
 
 void
 _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shader_program,
@@ -180,16 +194,43 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shader_program,
 
 void
 _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
-		     GLint cols, GLint rows,
+		     GLuint cols, GLuint rows,
                      GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values);
 
-extern void
-_mesa_update_shader_textures_used(struct gl_program *prog);
+void
+_mesa_get_uniform(struct gl_context *ctx, GLuint program, GLint location,
+		  GLsizei bufSize, enum glsl_base_type returnType,
+		  GLvoid *paramsOut);
 
+extern void
+_mesa_uniform_attach_driver_storage(struct gl_uniform_storage *,
+				    unsigned element_stride,
+				    unsigned vector_stride,
+				    enum gl_uniform_driver_format format,
+				    void *data);
+
+extern void
+_mesa_uniform_detach_all_driver_storage(struct gl_uniform_storage *uni);
+
+extern void
+_mesa_propagate_uniforms_to_driver_storage(struct gl_uniform_storage *uni,
+					   unsigned array_index,
+					   unsigned count);
+
+extern void
+_mesa_update_shader_textures_used(struct gl_shader_program *shProg,
+				  struct gl_program *prog);
+
+extern bool
+_mesa_sampler_uniforms_are_valid(const struct gl_shader_program *shProg,
+				 char *errMsg, size_t errMsgLength);
 
 extern void
 _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec);
+
+extern const struct gl_program_parameter *
+get_uniform_parameter(struct gl_shader_program *shProg, GLint index);
 
 struct gl_builtin_uniform_element {
    const char *field;
@@ -204,5 +245,62 @@ struct gl_builtin_uniform_desc {
 };
 
 extern const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[];
+
+/**
+ * \name GLSL uniform arrays and structs require special handling.
+ *
+ * The GL_ARB_shader_objects spec says that if you use
+ * glGetUniformLocation to get the location of an array, you CANNOT
+ * access other elements of the array by adding an offset to the
+ * returned location.  For example, you must call
+ * glGetUniformLocation("foo[16]") if you want to set the 16th element
+ * of the array with glUniform().
+ *
+ * HOWEVER, some other OpenGL drivers allow accessing array elements
+ * by adding an offset to the returned array location.  And some apps
+ * seem to depend on that behaviour.
+ *
+ * Mesa's gl_uniform_list doesn't directly support this since each
+ * entry in the list describes one uniform variable, not one uniform
+ * element.  We could insert dummy entries in the list for each array
+ * element after [0] but that causes complications elsewhere.
+ *
+ * We solve this problem by encoding two values in the location that's
+ * returned by glGetUniformLocation():
+ *  a) index into gl_uniform_list::Uniforms[] for the uniform
+ *  b) an array/field offset (0 for simple types)
+ *
+ * These two values are encoded in the high and low halves of a GLint.
+ * By putting the uniform number in the high part and the offset in the
+ * low part, we can support the unofficial ability to index into arrays
+ * by adding offsets to the location value.
+ */
+/*@{*/
+/**
+ * Combine the uniform's base location and the offset
+ */
+static inline GLint
+_mesa_uniform_merge_location_offset(unsigned base_location, unsigned offset)
+{
+   return (base_location << 16) | offset;
+}
+
+/**
+ * Separate the uniform base location and parameter offset
+ */
+static inline void
+_mesa_uniform_split_location_offset(GLint location, unsigned *base_location,
+				    unsigned *offset)
+{
+   *offset = location & 0xffff;
+   *base_location = location >> 16;
+}
+/*@}*/
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* UNIFORMS_H */

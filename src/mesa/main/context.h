@@ -53,6 +53,11 @@
 #include "mtypes.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 struct _glapi_table;
 
 
@@ -233,7 +238,7 @@ do {								\
  * glBegin()/glEnd() pair, with return value.
  * 
  * \param ctx GL context.
- * \param retval value to return value in case the assertion fails.
+ * \param retval value to return in case the assertion fails.
  */
 #define ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval)		\
 do {									\
@@ -274,7 +279,7 @@ do {									\
  * glBegin()/glEnd() pair and flush the vertices, with return value.
  * 
  * \param ctx GL context.
- * \param retval value to return value in case the assertion fails.
+ * \param retval value to return in case the assertion fails.
  */
 #define ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, retval)	\
 do {									\
@@ -284,6 +289,40 @@ do {									\
 
 /*@}*/
 
+
+/**
+ * Checks if the context is for Desktop GL (Compatibility or Core)
+ */
+static inline GLboolean
+_mesa_is_desktop_gl(const struct gl_context *ctx)
+{
+   return ctx->API == API_OPENGL || ctx->API == API_OPENGL_CORE;
+}
+
+
+/**
+ * Checks if the context is for any GLES version
+ */
+static inline GLboolean
+_mesa_is_gles(const struct gl_context *ctx)
+{
+   return ctx->API == API_OPENGLES || ctx->API == API_OPENGLES2;
+}
+
+
+/**
+ * Checks if the context is for GLES 3.x
+ */
+static inline GLboolean
+_mesa_is_gles3(const struct gl_context *ctx)
+{
+   return ctx->API == API_OPENGLES2 && ctx->Version >= 30;
+}
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* CONTEXT_H */

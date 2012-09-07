@@ -24,10 +24,7 @@
 #include "ir_print_visitor.h"
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
-
-extern "C" {
 #include "program/hash_table.h"
-}
 
 static void print_type(const glsl_type *t);
 
@@ -138,6 +135,10 @@ print_type(const glsl_type *t)
    }
 }
 
+void ir_print_visitor::visit(ir_rvalue *ir)
+{
+   printf("error");
+}
 
 void ir_print_visitor::visit(ir_variable *ir)
 {
@@ -244,19 +245,21 @@ void ir_print_visitor::visit(ir_texture *ir)
    ir->sampler->accept(this);
    printf(" ");
 
-   ir->coordinate->accept(this);
+   if (ir->op != ir_txs) {
+      ir->coordinate->accept(this);
 
-   printf(" ");
+      printf(" ");
 
-   if (ir->offset != NULL) {
-      ir->offset->accept(this);
-   } else {
-      printf("0");
+      if (ir->offset != NULL) {
+	 ir->offset->accept(this);
+      } else {
+	 printf("0");
+      }
+
+      printf(" ");
    }
 
-   printf(" ");
-
-   if (ir->op != ir_txf) {
+   if (ir->op != ir_txf && ir->op != ir_txs) {
       if (ir->projector)
 	 ir->projector->accept(this);
       else
@@ -280,6 +283,7 @@ void ir_print_visitor::visit(ir_texture *ir)
       break;
    case ir_txl:
    case ir_txf:
+   case ir_txs:
       ir->lod_info.lod->accept(this);
       break;
    case ir_txd:
@@ -368,8 +372,6 @@ void ir_print_visitor::visit(ir_assignment *ir)
 
 void ir_print_visitor::visit(ir_constant *ir)
 {
-   const glsl_type *const base_type = ir->type->get_base_type();
-
    printf("(constant ");
    print_type(ir->type);
    printf(" (");
@@ -390,7 +392,7 @@ void ir_print_visitor::visit(ir_constant *ir)
       for (unsigned i = 0; i < ir->type->components(); i++) {
 	 if (i != 0)
 	    printf(" ");
-	 switch (base_type->base_type) {
+	 switch (ir->type->base_type) {
 	 case GLSL_TYPE_UINT:  printf("%u", ir->value.u[i]); break;
 	 case GLSL_TYPE_INT:   printf("%d", ir->value.i[i]); break;
 	 case GLSL_TYPE_FLOAT: printf("%f", ir->value.f[i]); break;
@@ -406,7 +408,10 @@ void ir_print_visitor::visit(ir_constant *ir)
 void
 ir_print_visitor::visit(ir_call *ir)
 {
-   printf("(call %s (", ir->callee_name());
+   printf("(call %s ", ir->callee_name());
+   if (ir->return_deref)
+      ir->return_deref->accept(this);
+   printf(" (");
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 

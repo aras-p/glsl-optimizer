@@ -38,6 +38,8 @@
 #include "ir_rvalue_visitor.h"
 #include "glsl_types.h"
 
+namespace {
+
 static bool debug = false;
 
 // XXX using variable_entry2 here to avoid collision (MSVC multiply-defined
@@ -61,7 +63,11 @@ public:
    /** Number of times the variable is referenced, including assignments. */
    unsigned whole_structure_access;
 
-   bool declaration; /* If the variable had a decl in the instruction stream */
+   /* If the variable had a decl we can work with in the instruction
+    * stream.  We can't do splitting on function arguments, which
+    * don't get this variable set.
+    */
+   bool declaration;
 
    ir_variable **components;
 
@@ -171,8 +177,9 @@ ir_structure_reference_visitor::visit_enter(ir_assignment *ir)
 ir_visitor_status
 ir_structure_reference_visitor::visit_enter(ir_function_signature *ir)
 {
-   /* We don't want to descend into the function parameters and
-    * dead-code eliminate them, so just accept the body here.
+   /* We don't have logic for structure-splitting function arguments,
+    * so just look at the body instructions and not the parameter
+    * declarations.
     */
    visit_list_elements(this, &ir->body);
    return visit_continue_with_parent;
@@ -196,7 +203,6 @@ public:
    variable_entry2 *get_splitting_entry(ir_variable *var);
 
    exec_list *variable_list;
-   void *mem_ctx;
 };
 
 variable_entry2 *
@@ -302,6 +308,8 @@ ir_structure_splitting_visitor::visit_leave(ir_assignment *ir)
 
    return visit_continue;
 }
+
+} /* unnamed namespace */
 
 bool
 do_structure_splitting(exec_list *instructions)

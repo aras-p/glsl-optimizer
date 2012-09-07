@@ -392,7 +392,7 @@ struct prog_instruction
    GLuint TexSrcUnit:5;
 
    /** Source texture target, one of TEXTURE_{1D,2D,3D,CUBE,RECT}_INDEX */
-   GLuint TexSrcTarget:3;
+   GLuint TexSrcTarget:4;
 
    /** True if tex instruction should do shadow comparison */
    GLuint TexShadow:1;

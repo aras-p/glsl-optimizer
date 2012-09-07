@@ -45,8 +45,6 @@ struct gl_context;
 
 extern void _mesa_enable_sw_extensions(struct gl_context *ctx);
 
-extern void _mesa_enable_imaging_extensions(struct gl_context *ctx);
-
 extern void _mesa_enable_1_3_extensions(struct gl_context *ctx);
 
 extern void _mesa_enable_1_4_extensions(struct gl_context *ctx);
@@ -84,9 +82,6 @@ _mesa_get_enabled_extension(struct gl_context *ctx, GLuint index);
 
 /** No-op */
 #define _mesa_extensions_get_string( ctx ) "GL_EXT_texture_object"
-
-/** No-op */
-#define _mesa_enable_imaging_extensions( c ) ((void)0)
 
 /** No-op */
 #define _mesa_enable_extension( c, n ) ((void)0)

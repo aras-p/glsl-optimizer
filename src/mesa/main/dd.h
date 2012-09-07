@@ -189,132 +189,60 @@ struct dd_function_table {
    /*@{*/
 
    /**
-    * Choose actual hardware texture format given the user-provided source
-    * image format and type and the desired internal format.  In some
-    * cases, srcFormat and srcType can be GL_NONE.
+    * Choose actual hardware texture format given the texture target, the
+    * user-provided source image format and type and the desired internal
+    * format.  In some cases, srcFormat and srcType can be GL_NONE.
+    * Note:  target may be GL_TEXTURE_CUBE_MAP, but never
+    * GL_TEXTURE_CUBE_MAP_[POSITIVE/NEGATIVE]_[XYZ].
     * Called by glTexImage(), etc.
     */
-   gl_format (*ChooseTextureFormat)( struct gl_context *ctx, GLint internalFormat,
+   gl_format (*ChooseTextureFormat)( struct gl_context *ctx,
+                                     GLenum target, GLint internalFormat,
                                      GLenum srcFormat, GLenum srcType );
 
    /**
-    * Called by glTexImage1D().  Simply copy the source texture data into the
-    * destination texture memory.  The gl_texture_image fields, etc. will be
-    * fully initialized.
-    * The parameters are the same as glTexImage1D(), plus:
+    * Called by glTexImage[123]D() and glCopyTexImage[12]D()
+    * Allocate texture memory and copy the user's image to the buffer.
+    * The gl_texture_image fields, etc. will be fully initialized.
+    * The parameters are the same as glTexImage3D(), plus:
+    * \param dims  1, 2, or 3 indicating glTexImage1/2/3D()
     * \param packing describes how to unpack the source data.
-    * \param texObj is the target texture object.
-    * \param texImage is the target texture image.
+    * \param texImage is the destination texture image.
     */
-   void (*TexImage1D)( struct gl_context *ctx, GLenum target, GLint level,
-                       GLint internalFormat,
-                       GLint width, GLint border,
-                       GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage );
+   void (*TexImage)(struct gl_context *ctx, GLuint dims,
+                    struct gl_texture_image *texImage,
+                    GLenum format, GLenum type, const GLvoid *pixels,
+                    const struct gl_pixelstore_attrib *packing);
 
    /**
-    * Called by glTexImage2D().
-    * 
-    * \sa dd_function_table::TexImage1D.
+    * Called by glTexSubImage[123]D().
+    * Replace a subset of the target texture with new texel data.
     */
-   void (*TexImage2D)( struct gl_context *ctx, GLenum target, GLint level,
-                       GLint internalFormat,
-                       GLint width, GLint height, GLint border,
-                       GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage );
-   
-   /**
-    * Called by glTexImage3D().
-    * 
-    * \sa dd_function_table::TexImage1D.
-    */
-   void (*TexImage3D)( struct gl_context *ctx, GLenum target, GLint level,
-                       GLint internalFormat,
-                       GLint width, GLint height, GLint depth, GLint border,
-                       GLenum format, GLenum type, const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing,
-                       struct gl_texture_object *texObj,
-                       struct gl_texture_image *texImage );
+   void (*TexSubImage)(struct gl_context *ctx, GLuint dims,
+                       struct gl_texture_image *texImage,
+                       GLint xoffset, GLint yoffset, GLint zoffset,
+                       GLsizei width, GLsizei height, GLint depth,
+                       GLenum format, GLenum type,
+                       const GLvoid *pixels,
+                       const struct gl_pixelstore_attrib *packing);
 
-   /**
-    * Called by glTexSubImage1D().  Replace a subset of the target texture
-    * with new texel data.
-    * \sa dd_function_table::TexImage1D.
-    */
-   void (*TexSubImage1D)( struct gl_context *ctx, GLenum target, GLint level,
-                          GLint xoffset, GLsizei width,
-                          GLenum format, GLenum type,
-                          const GLvoid *pixels,
-                          const struct gl_pixelstore_attrib *packing,
-                          struct gl_texture_object *texObj,
-                          struct gl_texture_image *texImage );
-   
-   /**
-    * Called by glTexSubImage2D().
-    *
-    * \sa dd_function_table::TexSubImage1D.
-    */
-   void (*TexSubImage2D)( struct gl_context *ctx, GLenum target, GLint level,
-                          GLint xoffset, GLint yoffset,
-                          GLsizei width, GLsizei height,
-                          GLenum format, GLenum type,
-                          const GLvoid *pixels,
-                          const struct gl_pixelstore_attrib *packing,
-                          struct gl_texture_object *texObj,
-                          struct gl_texture_image *texImage );
-   
-   /**
-    * Called by glTexSubImage3D().
-    *
-    * \sa dd_function_table::TexSubImage1D.
-    */
-   void (*TexSubImage3D)( struct gl_context *ctx, GLenum target, GLint level,
-                          GLint xoffset, GLint yoffset, GLint zoffset,
-                          GLsizei width, GLsizei height, GLint depth,
-                          GLenum format, GLenum type,
-                          const GLvoid *pixels,
-                          const struct gl_pixelstore_attrib *packing,
-                          struct gl_texture_object *texObj,
-                          struct gl_texture_image *texImage );
 
    /**
     * Called by glGetTexImage().
     */
-   void (*GetTexImage)( struct gl_context *ctx, GLenum target, GLint level,
+   void (*GetTexImage)( struct gl_context *ctx,
                         GLenum format, GLenum type, GLvoid *pixels,
-                        struct gl_texture_object *texObj,
                         struct gl_texture_image *texImage );
 
    /**
-    * Called by glCopyTexSubImage1D().
-    * 
-    * Drivers should use a fallback routine from texstore.c if needed.
+    * Called by glCopyTex[Sub]Image[123]D().
     */
-   void (*CopyTexSubImage1D)( struct gl_context *ctx, GLenum target, GLint level,
-                              GLint xoffset,
-                              GLint x, GLint y, GLsizei width );
-   /**
-    * Called by glCopyTexSubImage2D().
-    * 
-    * Drivers should use a fallback routine from texstore.c if needed.
-    */
-   void (*CopyTexSubImage2D)( struct gl_context *ctx, GLenum target, GLint level,
-                              GLint xoffset, GLint yoffset,
-                              GLint x, GLint y,
-                              GLsizei width, GLsizei height );
-   /**
-    * Called by glCopyTexSubImage3D().
-    * 
-    * Drivers should use a fallback routine from texstore.c if needed.
-    */
-   void (*CopyTexSubImage3D)( struct gl_context *ctx, GLenum target, GLint level,
-                              GLint xoffset, GLint yoffset, GLint zoffset,
-                              GLint x, GLint y,
-                              GLsizei width, GLsizei height );
+   void (*CopyTexSubImage)(struct gl_context *ctx, GLuint dims,
+                           struct gl_texture_image *texImage,
+                           GLint xoffset, GLint yoffset, GLint zoffset,
+                           struct gl_renderbuffer *rb,
+                           GLint x, GLint y,
+                           GLsizei width, GLsizei height);
 
    /**
     * Called by glGenerateMipmap() or when GL_GENERATE_MIPMAP_SGIS is enabled.
@@ -342,111 +270,32 @@ struct dd_function_table {
    /*@{*/
 
    /**
-    * Called by glCompressedTexImage1D().
-    *
-    * \param target user specified.
-    * \param format user specified.
-    * \param type user specified.
-    * \param pixels user specified.
-    * \param packing indicates the image packing of pixels.
-    * \param texObj is the target texture object.
-    * \param texImage is the target texture image.  It will have the texture \p
-    * width, \p height, \p depth, \p border and \p internalFormat information.
-    *      
-    * \a retainInternalCopy is returned by this function and indicates whether
-    * core Mesa should keep an internal copy of the texture image.
+    * Called by glCompressedTexImage[123]D().
     */
-   void (*CompressedTexImage1D)( struct gl_context *ctx, GLenum target,
-                                 GLint level, GLint internalFormat,
-                                 GLsizei width, GLint border,
-                                 GLsizei imageSize, const GLvoid *data,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage );
-   /**
-    * Called by glCompressedTexImage2D().
-    *
-    * \sa dd_function_table::CompressedTexImage1D.
-    */
-   void (*CompressedTexImage2D)( struct gl_context *ctx, GLenum target,
-                                 GLint level, GLint internalFormat,
-                                 GLsizei width, GLsizei height, GLint border,
-                                 GLsizei imageSize, const GLvoid *data,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage );
-   /**
-    * Called by glCompressedTexImage3D().
-    *
-    * \sa dd_function_table::CompressedTexImage3D.
-    */
-   void (*CompressedTexImage3D)( struct gl_context *ctx, GLenum target,
-                                 GLint level, GLint internalFormat,
-                                 GLsizei width, GLsizei height, GLsizei depth,
-                                 GLint border,
-                                 GLsizei imageSize, const GLvoid *data,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage );
+   void (*CompressedTexImage)(struct gl_context *ctx, GLuint dims,
+                              struct gl_texture_image *texImage,
+                              GLsizei imageSize, const GLvoid *data);
 
    /**
-    * Called by glCompressedTexSubImage1D().
-    * 
-    * \param target user specified.
-    * \param level user specified.
-    * \param xoffset user specified.
-    * \param yoffset user specified.
-    * \param zoffset user specified.
-    * \param width user specified.
-    * \param height user specified.
-    * \param depth user specified.
-    * \param imageSize user specified.
-    * \param data user specified.
-    * \param texObj is the target texture object.
-    * \param texImage is the target texture image.  It will have the texture \p
-    * width, \p height, \p depth, \p border and \p internalFormat information.
+    * Called by glCompressedTexSubImage[123]D().
     */
-   void (*CompressedTexSubImage1D)(struct gl_context *ctx, GLenum target, GLint level,
-                                   GLint xoffset, GLsizei width,
-                                   GLenum format,
-                                   GLsizei imageSize, const GLvoid *data,
-                                   struct gl_texture_object *texObj,
-                                   struct gl_texture_image *texImage);
-   /**
-    * Called by glCompressedTexSubImage2D().
-    *
-    * \sa dd_function_table::CompressedTexImage3D.
-    */
-   void (*CompressedTexSubImage2D)(struct gl_context *ctx, GLenum target, GLint level,
-                                   GLint xoffset, GLint yoffset,
-                                   GLsizei width, GLint height,
-                                   GLenum format,
-                                   GLsizei imageSize, const GLvoid *data,
-                                   struct gl_texture_object *texObj,
-                                   struct gl_texture_image *texImage);
-   /**
-    * Called by glCompressedTexSubImage3D().
-    *
-    * \sa dd_function_table::CompressedTexImage3D.
-    */
-   void (*CompressedTexSubImage3D)(struct gl_context *ctx, GLenum target, GLint level,
-                                   GLint xoffset, GLint yoffset, GLint zoffset,
-                                   GLsizei width, GLint height, GLint depth,
-                                   GLenum format,
-                                   GLsizei imageSize, const GLvoid *data,
-                                   struct gl_texture_object *texObj,
-                                   struct gl_texture_image *texImage);
-
+   void (*CompressedTexSubImage)(struct gl_context *ctx, GLuint dims,
+                                 struct gl_texture_image *texImage,
+                                 GLint xoffset, GLint yoffset, GLint zoffset,
+                                 GLsizei width, GLint height, GLint depth,
+                                 GLenum format,
+                                 GLsizei imageSize, const GLvoid *data);
 
    /**
     * Called by glGetCompressedTexImage.
     */
-   void (*GetCompressedTexImage)(struct gl_context *ctx, GLenum target, GLint level,
-                                 GLvoid *img,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage);
-
+   void (*GetCompressedTexImage)(struct gl_context *ctx,
+                                 struct gl_texture_image *texImage,
+                                 GLvoid *data);
    /*@}*/
 
    /**
-    * \name Texture object functions
+    * \name Texture object / image functions
     */
    /*@{*/
 
@@ -457,76 +306,78 @@ struct dd_function_table {
                         struct gl_texture_object *tObj );
 
    /**
-    * Called to allocate a new texture object.
-    * A new gl_texture_object should be returned.  The driver should
-    * attach to it any device-specific info it needs.
+    * Called to allocate a new texture object.  Drivers will usually
+    * allocate/return a subclass of gl_texture_object.
     */
-   struct gl_texture_object * (*NewTextureObject)( struct gl_context *ctx, GLuint name,
-                                                   GLenum target );
+   struct gl_texture_object * (*NewTextureObject)(struct gl_context *ctx,
+                                                  GLuint name, GLenum target);
    /**
-    * Called when a texture object is about to be deallocated.  
-    *
-    * Driver should delete the gl_texture_object object and anything
-    * hanging off of it.
+    * Called to delete/free a texture object.  Drivers should free the
+    * object and any image data it contains.
     */
-   void (*DeleteTexture)( struct gl_context *ctx, struct gl_texture_object *tObj );
+   void (*DeleteTexture)(struct gl_context *ctx,
+                         struct gl_texture_object *texObj);
+
+   /** Called to allocate a new texture image object. */
+   struct gl_texture_image * (*NewTextureImage)(struct gl_context *ctx);
+
+   /** Called to free a texture image object returned by NewTextureImage() */
+   void (*DeleteTextureImage)(struct gl_context *ctx,
+                              struct gl_texture_image *);
+
+   /** Called to allocate memory for a single texture image */
+   GLboolean (*AllocTextureImageBuffer)(struct gl_context *ctx,
+                                        struct gl_texture_image *texImage);
+
+   /** Free the memory for a single texture image */
+   void (*FreeTextureImageBuffer)(struct gl_context *ctx,
+                                  struct gl_texture_image *texImage);
+
+   /** Map a slice of a texture image into user space.
+    * Note: for GL_TEXTURE_1D_ARRAY, height must be 1, y must be 0 and slice
+    * indicates the 1D array index.
+    * \param texImage  the texture image
+    * \param slice  the 3D image slice or array texture slice
+    * \param x, y, w, h  region of interest
+    * \param mode  bitmask of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT and
+    *              GL_MAP_INVALIDATE_RANGE_BIT (if writing)
+    * \param mapOut  returns start of mapping of region of interest
+    * \param rowStrideOut  returns row stride (in bytes)
+    */
+   void (*MapTextureImage)(struct gl_context *ctx,
+			   struct gl_texture_image *texImage,
+			   GLuint slice,
+			   GLuint x, GLuint y, GLuint w, GLuint h,
+			   GLbitfield mode,
+			   GLubyte **mapOut, GLint *rowStrideOut);
+
+   void (*UnmapTextureImage)(struct gl_context *ctx,
+			     struct gl_texture_image *texImage,
+			     GLuint slice);
+
+   /** For GL_ARB_texture_storage.  Allocate memory for whole mipmap stack.
+    * All the gl_texture_images in the texture object will have their
+    * dimensions, format, etc. initialized already.
+    */
+   GLboolean (*AllocTextureStorage)(struct gl_context *ctx,
+                                    struct gl_texture_object *texObj,
+                                    GLsizei levels, GLsizei width,
+                                    GLsizei height, GLsizei depth);
 
    /**
-    * Called to allocate a new texture image object.
+    * Map a renderbuffer into user space.
+    * \param mode  bitmask of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT and
+    *              GL_MAP_INVALIDATE_RANGE_BIT (if writing)
     */
-   struct gl_texture_image * (*NewTextureImage)( struct gl_context *ctx );
+   void (*MapRenderbuffer)(struct gl_context *ctx,
+			   struct gl_renderbuffer *rb,
+			   GLuint x, GLuint y, GLuint w, GLuint h,
+			   GLbitfield mode,
+			   GLubyte **mapOut, GLint *rowStrideOut);
 
-   /** 
-    * Called to free tImage->Data.
-    */
-   void (*FreeTexImageData)( struct gl_context *ctx, struct gl_texture_image *tImage );
+   void (*UnmapRenderbuffer)(struct gl_context *ctx,
+			     struct gl_renderbuffer *rb);
 
-   /** Map texture image data into user space */
-   void (*MapTexture)( struct gl_context *ctx, struct gl_texture_object *tObj );
-   /** Unmap texture images from user space */
-   void (*UnmapTexture)( struct gl_context *ctx, struct gl_texture_object *tObj );
-
-   /**
-    * Note: no context argument.  This function doesn't initially look
-    * like it belongs here, except that the driver is the only entity
-    * that knows for sure how the texture memory is allocated - via
-    * the above callbacks.  There is then an argument that the driver
-    * knows what memcpy paths might be fast.  Typically this is invoked with
-    * 
-    * to -- a pointer into texture memory allocated by NewTextureImage() above.
-    * from -- a pointer into client memory or a mesa temporary.
-    * sz -- nr bytes to copy.
-    */
-   void* (*TextureMemCpy)( void *to, const void *from, size_t sz );
-
-   /**
-    * Called by glAreTextureResident().
-    */
-   GLboolean (*IsTextureResident)( struct gl_context *ctx,
-                                   struct gl_texture_object *t );
-
-   /**
-    * Called when the texture's color lookup table is changed.
-    * 
-    * If \p tObj is NULL then the shared texture palette
-    * gl_texture_object::Palette is to be updated.
-    */
-   void (*UpdateTexturePalette)( struct gl_context *ctx,
-                                 struct gl_texture_object *tObj );
-   /*@}*/
-
-   
-   /**
-    * \name Imaging functionality
-    */
-   /*@{*/
-   void (*CopyColorTable)( struct gl_context *ctx,
-			   GLenum target, GLenum internalformat,
-			   GLint x, GLint y, GLsizei width );
-
-   void (*CopyColorSubTable)( struct gl_context *ctx,
-			      GLenum target, GLsizei start,
-			      GLint x, GLint y, GLsizei width );
    /*@}*/
 
 
@@ -547,6 +398,13 @@ struct dd_function_table {
     */
    GLboolean (*ProgramStringNotify)(struct gl_context *ctx, GLenum target, 
                                     struct gl_program *prog);
+
+   /**
+    * Notify driver that the sampler uniforms for the current program have
+    * changed.  On some drivers, this may require shader recompiles.
+    */
+   void (*SamplerUniformChange)(struct gl_context *ctx, GLenum target,
+                                struct gl_program *prog);
 
    /** Query if program can be loaded onto hardware */
    GLboolean (*IsProgramNative)(struct gl_context *ctx, GLenum target, 
@@ -592,12 +450,6 @@ struct dd_function_table {
    void (*BlendFuncSeparatei)(struct gl_context *ctx, GLuint buffer,
                               GLenum sfactorRGB, GLenum dfactorRGB,
                               GLenum sfactorA, GLenum dfactorA);
-   /** Specify clear values for the color buffers */
-   void (*ClearColor)(struct gl_context *ctx, const GLfloat color[4]);
-   /** Specify the clear value for the depth buffer */
-   void (*ClearDepth)(struct gl_context *ctx, GLclampd d);
-   /** Specify the clear value for the stencil buffer */
-   void (*ClearStencil)(struct gl_context *ctx, GLint s);
    /** Specify a plane against which all geometry is clipped */
    void (*ClipPlane)(struct gl_context *ctx, GLenum plane, const GLfloat *equation );
    /** Enable and disable writing of frame buffer color components */
@@ -698,16 +550,13 @@ struct dd_function_table {
                             const GLvoid *data, GLenum usage,
                             struct gl_buffer_object *obj );
 
-   void (*BufferSubData)( struct gl_context *ctx, GLenum target, GLintptrARB offset,
+   void (*BufferSubData)( struct gl_context *ctx, GLintptrARB offset,
 			  GLsizeiptrARB size, const GLvoid *data,
 			  struct gl_buffer_object *obj );
 
-   void (*GetBufferSubData)( struct gl_context *ctx, GLenum target,
+   void (*GetBufferSubData)( struct gl_context *ctx,
 			     GLintptrARB offset, GLsizeiptrARB size,
 			     GLvoid *data, struct gl_buffer_object *obj );
-
-   void * (*MapBuffer)( struct gl_context *ctx, GLenum target, GLenum access,
-			struct gl_buffer_object *obj );
 
    void (*CopyBufferSubData)( struct gl_context *ctx,
                               struct gl_buffer_object *src,
@@ -717,15 +566,15 @@ struct dd_function_table {
 
    /* May return NULL if MESA_MAP_NOWAIT_BIT is set in access:
     */
-   void * (*MapBufferRange)( struct gl_context *ctx, GLenum target, GLintptr offset,
+   void * (*MapBufferRange)( struct gl_context *ctx, GLintptr offset,
                              GLsizeiptr length, GLbitfield access,
                              struct gl_buffer_object *obj);
 
-   void (*FlushMappedBufferRange)(struct gl_context *ctx, GLenum target, 
+   void (*FlushMappedBufferRange)(struct gl_context *ctx,
                                   GLintptr offset, GLsizeiptr length,
                                   struct gl_buffer_object *obj);
 
-   GLboolean (*UnmapBuffer)( struct gl_context *ctx, GLenum target,
+   GLboolean (*UnmapBuffer)( struct gl_context *ctx,
 			     struct gl_buffer_object *obj );
    /*@}*/
 
@@ -811,25 +660,6 @@ struct dd_function_table {
    /*@{*/
 
    /**
-    * Bitmask of state changes that require the current T&L module to be
-    * validated, using ValidateTnlModule() below.
-    */
-   GLuint NeedValidate;
-
-   /**
-    * Validate the current T&L module. 
-    *
-    * This is called directly after UpdateState() when a state change that has
-    * occurred matches the dd_function_table::NeedValidate bitmask above.  This
-    * ensures all computed values are up to date, thus allowing the driver to
-    * decide if the current T&L module needs to be swapped out.
-    *
-    * This must be non-NULL if a driver installs a custom T&L module and sets
-    * the dd_function_table::NeedValidate bitmask, but may be NULL otherwise.
-    */
-   void (*ValidateTnlModule)( struct gl_context *ctx, GLuint new_state );
-
-   /**
     * Set by the driver-supplied T&L engine.  
     *
     * Set to PRIM_OUTSIDE_BEGIN_END when outside glBegin()/glEnd().
@@ -877,6 +707,14 @@ struct dd_function_table {
    void (*SaveFlushVertices)( struct gl_context *ctx );
 
    /**
+    * \brief Hook for drivers to prepare for a glBegin/glEnd block
+    *
+    * This hook is called in vbo_exec_Begin() before any action, including
+    * state updates, occurs.
+    */
+   void (*PrepareExecBegin)( struct gl_context *ctx );
+
+   /**
     * Give the driver the opportunity to hook in its own vtxfmt for
     * compiling optimized display lists.  This is called on each valid
     * glBegin() during list compilation.
@@ -917,6 +755,7 @@ struct dd_function_table {
     */
    void (*EndCallList)( struct gl_context *ctx );
 
+   /**@}*/
 
    /**
     * \name GL_ARB_sync interfaces
@@ -971,8 +810,6 @@ struct dd_function_table {
                                   struct gl_transform_feedback_object *obj);
    void (*ResumeTransformFeedback)(struct gl_context *ctx,
                                    struct gl_transform_feedback_object *obj);
-   void (*DrawTransformFeedback)(struct gl_context *ctx, GLenum mode,
-                                 struct gl_transform_feedback_object *obj);
 
    /**
     * \name GL_NV_texture_barrier interface
@@ -986,6 +823,12 @@ struct dd_function_table {
                                                   GLuint name);
    void (*DeleteSamplerObject)(struct gl_context *ctx,
                                struct gl_sampler_object *samp);
+
+   /**
+    * \name Return a timestamp in nanoseconds as defined by GL_ARB_timer_query.
+    * This should be equivalent to glGetInteger64v(GL_TIMESTAMP);
+    */
+   uint64_t (*GetTimestamp)(struct gl_context *ctx);
 };
 
 
@@ -1096,6 +939,70 @@ typedef struct {
    void (GLAPIENTRYP VertexAttribI3uiv)( GLuint index, const GLuint *v);
    void (GLAPIENTRYP VertexAttribI4uiv)( GLuint index, const GLuint *v);
 
+   /* GL_ARB_vertex_type_10_10_10_2_rev / GL3.3 */
+   void (GLAPIENTRYP VertexP2ui)( GLenum type, GLuint value );
+   void (GLAPIENTRYP VertexP2uiv)( GLenum type, const GLuint *value);
+
+   void (GLAPIENTRYP VertexP3ui)( GLenum type, GLuint value );
+   void (GLAPIENTRYP VertexP3uiv)( GLenum type, const GLuint *value);
+
+   void (GLAPIENTRYP VertexP4ui)( GLenum type, GLuint value );
+   void (GLAPIENTRYP VertexP4uiv)( GLenum type, const GLuint *value);
+
+   void (GLAPIENTRYP TexCoordP1ui)( GLenum type, GLuint coords );
+   void (GLAPIENTRYP TexCoordP1uiv)( GLenum type, const GLuint *coords );
+
+   void (GLAPIENTRYP TexCoordP2ui)( GLenum type, GLuint coords );
+   void (GLAPIENTRYP TexCoordP2uiv)( GLenum type, const GLuint *coords );
+
+   void (GLAPIENTRYP TexCoordP3ui)( GLenum type, GLuint coords );
+   void (GLAPIENTRYP TexCoordP3uiv)( GLenum type, const GLuint *coords );
+
+   void (GLAPIENTRYP TexCoordP4ui)( GLenum type, GLuint coords );
+   void (GLAPIENTRYP TexCoordP4uiv)( GLenum type, const GLuint *coords );
+
+   void (GLAPIENTRYP MultiTexCoordP1ui)( GLenum texture, GLenum type, GLuint coords );
+   void (GLAPIENTRYP MultiTexCoordP1uiv)( GLenum texture, GLenum type, const GLuint *coords );
+   void (GLAPIENTRYP MultiTexCoordP2ui)( GLenum texture, GLenum type, GLuint coords );
+   void (GLAPIENTRYP MultiTexCoordP2uiv)( GLenum texture, GLenum type, const GLuint *coords );
+   void (GLAPIENTRYP MultiTexCoordP3ui)( GLenum texture, GLenum type, GLuint coords );
+   void (GLAPIENTRYP MultiTexCoordP3uiv)( GLenum texture, GLenum type, const GLuint *coords );
+   void (GLAPIENTRYP MultiTexCoordP4ui)( GLenum texture, GLenum type, GLuint coords );
+   void (GLAPIENTRYP MultiTexCoordP4uiv)( GLenum texture, GLenum type, const GLuint *coords );
+
+   void (GLAPIENTRYP NormalP3ui)( GLenum type, GLuint coords );
+   void (GLAPIENTRYP NormalP3uiv)( GLenum type, const GLuint *coords );
+
+   void (GLAPIENTRYP ColorP3ui)( GLenum type, GLuint color );
+   void (GLAPIENTRYP ColorP3uiv)( GLenum type, const GLuint *color );
+
+   void (GLAPIENTRYP ColorP4ui)( GLenum type, GLuint color );
+   void (GLAPIENTRYP ColorP4uiv)( GLenum type, const GLuint *color );
+
+   void (GLAPIENTRYP SecondaryColorP3ui)( GLenum type, GLuint color );
+   void (GLAPIENTRYP SecondaryColorP3uiv)( GLenum type, const GLuint *color );
+
+   void (GLAPIENTRYP VertexAttribP1ui)( GLuint index, GLenum type,
+					GLboolean normalized, GLuint value);
+   void (GLAPIENTRYP VertexAttribP2ui)( GLuint index, GLenum type,
+					GLboolean normalized, GLuint value);
+   void (GLAPIENTRYP VertexAttribP3ui)( GLuint index, GLenum type,
+					GLboolean normalized, GLuint value);
+   void (GLAPIENTRYP VertexAttribP4ui)( GLuint index, GLenum type,
+					GLboolean normalized, GLuint value);
+   void (GLAPIENTRYP VertexAttribP1uiv)( GLuint index, GLenum type,
+					GLboolean normalized,
+					 const GLuint *value);
+   void (GLAPIENTRYP VertexAttribP2uiv)( GLuint index, GLenum type,
+					GLboolean normalized,
+					 const GLuint *value);
+   void (GLAPIENTRYP VertexAttribP3uiv)( GLuint index, GLenum type,
+					GLboolean normalized,
+					 const GLuint *value);
+   void (GLAPIENTRYP VertexAttribP4uiv)( GLuint index, GLenum type,
+					 GLboolean normalized,
+					 const GLuint *value);
+
    /*@}*/
 
    void (GLAPIENTRYP Rectf)( GLfloat, GLfloat, GLfloat, GLfloat );
@@ -1126,17 +1033,36 @@ typedef struct {
    void (GLAPIENTRYP MultiDrawElementsBaseVertex)( GLenum mode,
 						   const GLsizei *count,
 						   GLenum type,
-						   const GLvoid **indices,
+						   const GLvoid * const *indices,
 						   GLsizei primcount,
 						   const GLint *basevertex);
    void (GLAPIENTRYP DrawArraysInstanced)(GLenum mode, GLint first,
                                           GLsizei count, GLsizei primcount);
+   void (GLAPIENTRYP DrawArraysInstancedBaseInstance)(GLenum mode, GLint first,
+                                                      GLsizei count, GLsizei primcount,
+                                                      GLuint baseinstance);
    void (GLAPIENTRYP DrawElementsInstanced)(GLenum mode, GLsizei count,
                                             GLenum type, const GLvoid *indices,
                                             GLsizei primcount);
+   void (GLAPIENTRYP DrawElementsInstancedBaseInstance)(GLenum mode, GLsizei count,
+                                                        GLenum type, const GLvoid *indices,
+                                                        GLsizei primcount, GLuint baseinstance);
    void (GLAPIENTRYP DrawElementsInstancedBaseVertex)(GLenum mode, GLsizei count,
                                             GLenum type, const GLvoid *indices,
                                             GLsizei primcount, GLint basevertex);
+   void (GLAPIENTRYP DrawElementsInstancedBaseVertexBaseInstance)(GLenum mode, GLsizei count,
+                                                                  GLenum type, const GLvoid *indices,
+                                                                  GLsizei primcount, GLint basevertex,
+                                                                  GLuint baseinstance);
+   void (GLAPIENTRYP DrawTransformFeedback)(GLenum mode, GLuint name);
+   void (GLAPIENTRYP DrawTransformFeedbackStream)(GLenum mode, GLuint name,
+                                                  GLuint stream);
+   void (GLAPIENTRYP DrawTransformFeedbackInstanced)(GLenum mode, GLuint name,
+                                                     GLsizei primcount);
+   void (GLAPIENTRYP DrawTransformFeedbackStreamInstanced)(GLenum mode,
+                                                           GLuint name,
+                                                           GLuint stream,
+                                                           GLsizei primcount);
    /*@}*/
 
    /**

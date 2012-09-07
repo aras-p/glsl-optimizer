@@ -53,7 +53,7 @@
        (declare (in) float v1)
        (declare (in) float v2)
        (declare (in) bool  a))
-     ((assign (var_ref a) (var_ref v1) (var_ref v2))
+     ((assign (var_ref a) (x) (var_ref v1) (var_ref v2))
       (return (var_ref v1))))
 
    (signature vec2

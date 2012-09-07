@@ -2,26 +2,29 @@
 #define _U_COMPILER_H_
 
 /* Function inlining */
-#ifndef INLINE
+#ifndef inline
 #  ifdef __cplusplus
-#    define INLINE inline
+     /* C++ supports inline keyword */
 #  elif defined(__GNUC__)
-#    define INLINE __inline__
+#    define inline __inline__
 #  elif defined(_MSC_VER)
-#    define INLINE __inline
+#    define inline __inline
 #  elif defined(__ICL)
-#    define INLINE __inline
+#    define inline __inline
 #  elif defined(__INTEL_COMPILER)
-#    define INLINE inline
+     /* Intel compiler supports inline keyword */
 #  elif defined(__WATCOMC__) && (__WATCOMC__ >= 1100)
-#    define INLINE __inline
+#    define inline __inline
 #  elif defined(__SUNPRO_C) && defined(__C99FEATURES__)
-#    define INLINE inline
-#  elif (__STDC_VERSION__ >= 199901L) /* C99 */
-#    define INLINE inline
+     /* C99 supports inline keyword */
+#  elif (__STDC_VERSION__ >= 199901L)
+     /* C99 supports inline keyword */
 #  else
-#    define INLINE
+#    define inline
 #  endif
+#endif
+#ifndef INLINE
+#  define INLINE inline
 #endif
 
 /* Function visibility */
