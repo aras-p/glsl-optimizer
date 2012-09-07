@@ -76,6 +76,7 @@ struct si_pipe_sampler_view {
 
 struct si_pipe_sampler_state {
 	uint32_t			val[4];
+	float				border_color[4];
 };
 
 /* needed for blitter save */
@@ -137,6 +138,8 @@ struct r600_context {
 	boolean				alpha_ref_dirty;
 	struct r600_textures_info	vs_samplers;
 	struct r600_textures_info	ps_samplers;
+	struct si_resource		*border_color_table;
+	unsigned			border_color_offset;
 	boolean				shader_dirty;
 
 	struct u_upload_mgr	        *uploader;

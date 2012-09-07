@@ -27,6 +27,7 @@
 #include "util/u_memory.h"
 #include "util/u_framebuffer.h"
 #include "util/u_blitter.h"
+#include "util/u_math.h"
 #include "util/u_pack_color.h"
 #include "tgsi/tgsi_parse.h"
 #include "radeonsi_pipe.h"
@@ -2198,7 +2199,7 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 		return NULL;
 	}
 
-	util_pack_color(state->border_color.f, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+	util_pack_color(state->border_color.f, PIPE_FORMAT_A8R8G8B8_UNORM, &uc);
 	switch (uc.ui) {
 	case 0x000000FF:
 		border_color_type = V_008F3C_SQ_TEX_BORDER_COLOR_OPAQUE_BLACK;
@@ -2229,14 +2230,11 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 			  S_008F38_MIP_FILTER(si_tex_mipfilter(state->min_mip_filter)));
 	rstate->val[3] = S_008F3C_BORDER_COLOR_TYPE(border_color_type);
 
-#if 0
-	if (border_color_type == 3) {
-		si_pm4_set_reg(pm4, R_00A404_TD_PS_SAMPLER0_BORDER_RED, fui(state->border_color.f[0]));
-		si_pm4_set_reg(pm4, R_00A408_TD_PS_SAMPLER0_BORDER_GREEN, fui(state->border_color.f[1]));
-		si_pm4_set_reg(pm4, R_00A40C_TD_PS_SAMPLER0_BORDER_BLUE, fui(state->border_color.f[2]));
-		si_pm4_set_reg(pm4, R_00A410_TD_PS_SAMPLER0_BORDER_ALPHA, fui(state->border_color.f[3]));
+	if (border_color_type == V_008F3C_SQ_TEX_BORDER_COLOR_REGISTER) {
+		memcpy(rstate->border_color, state->border_color.f,
+		       sizeof(rstate->border_color));
 	}
-#endif
+
 	return rstate;
 }
 
@@ -2300,6 +2298,7 @@ static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pipe_sampler_state **rstates = (struct si_pipe_sampler_state **)states;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
+	uint32_t *border_color_table = NULL;
 	int i, j;
 
 	if (!count)
@@ -2309,11 +2308,55 @@ static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **
 
 	si_pm4_sh_data_begin(pm4);
 	for (i = 0; i < count; i++) {
+		if (rstates[i] &&
+		    G_008F3C_BORDER_COLOR_TYPE(rstates[i]->val[3]) ==
+		    V_008F3C_SQ_TEX_BORDER_COLOR_REGISTER) {
+			if (!rctx->border_color_table ||
+			    ((rctx->border_color_offset + count - i) &
+			     C_008F3C_BORDER_COLOR_PTR)) {
+				si_resource_reference(&rctx->border_color_table, NULL);
+				rctx->border_color_offset = 0;
+
+				rctx->border_color_table =
+					si_resource_create_custom(ctx->screen,
+								  PIPE_USAGE_STAGING,
+								  4096 * 4 * 4);
+			}
+
+			if (!border_color_table) {
+			        border_color_table =
+					rctx->ws->buffer_map(rctx->border_color_table->cs_buf,
+							     rctx->cs,
+							     PIPE_TRANSFER_WRITE |
+							     PIPE_TRANSFER_UNSYNCHRONIZED);
+			}
+
+			for (j = 0; j < 4; j++) {
+				union fi border_color;
+
+				border_color.f = rstates[i]->border_color[j];
+				border_color_table[4 * rctx->border_color_offset + j] =
+					util_le32_to_cpu(border_color.i);
+			}
+
+			rstates[i]->val[3] &= C_008F3C_BORDER_COLOR_PTR;
+			rstates[i]->val[3] |= S_008F3C_BORDER_COLOR_PTR(rctx->border_color_offset++);
+		}
+
 		for (j = 0; j < Elements(rstates[i]->val); ++j) {
 			si_pm4_sh_data_add(pm4, rstates[i] ? rstates[i]->val[j] : 0);
 		}
 	}
 	si_pm4_sh_data_end(pm4, R_00B038_SPI_SHADER_USER_DATA_PS_2);
+
+	if (border_color_table) {
+		uint64_t va_offset =
+			r600_resource_va(ctx->screen, (void*)rctx->border_color_table);
+
+		si_pm4_set_reg(pm4, R_028080_TA_BC_BASE_ADDR, va_offset >> 8);
+		rctx->ws->buffer_unmap(rctx->border_color_table->cs_buf);
+		si_pm4_add_bo(pm4, rctx->border_color_table, RADEON_USAGE_READ);
+	}
 
 	memcpy(rctx->ps_samplers.samplers, states, sizeof(void*) * count);
 
