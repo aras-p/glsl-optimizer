@@ -1729,6 +1729,9 @@ precision_from_ir (ir_instruction* ir)
 	ir_rvalue* rv = ir->as_rvalue();
 	if (rv)
 		return rv->get_precision();
+	ir_call* fcall = ir->as_call();
+	if (fcall && fcall->return_deref)
+		return fcall->return_deref->get_precision();
 	if (ir->ir_type == ir_type_function_signature)
 	{
 		ir_function_signature* sig = (ir_function_signature*)ir;
