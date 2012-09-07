@@ -401,15 +401,20 @@ static const char *const operator_glsl_strs[] = {
 	"log",
 	"exp2",
 	"log2",
-	"int",
-	"float",
-	"bool",
-	"float",
-	"bool",
-	"int",
-	"float",
-	"int",
-	"int",
+	"int",		// f2i
+	"int",		// f2u
+	"float",	// i2f
+	"bool",		// f2b
+	"float",	// b2f
+	"bool",		// i2b
+	"int",		// b2i
+	"float",	// u2f
+	"int",		// i2u
+	"int",		// u2i
+	"float",	// bit i2f
+	"int",		// bit f2i
+	"float",	// bit u2f
+	"int",		// bit f2u
 	"any",
 	"trunc",
 	"ceil",
@@ -454,7 +459,7 @@ static const char *const operator_glsl_strs[] = {
 void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
 	if (ir->get_num_operands() == 1) {
-		if (ir->operation >= ir_unop_f2i && ir->operation <= ir_unop_u2f) {
+		if (ir->operation >= ir_unop_f2i && ir->operation < ir_unop_any) {
 			buffer = print_type(buffer, ir->type, true);
 			ralloc_asprintf_append(&buffer, "(");
 		} else if (ir->operation == ir_unop_rcp) {
