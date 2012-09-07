@@ -33,4 +33,13 @@ FunctionPass *createAMDGPUConvertToISAPass(TargetMachine &tm);
 
 } // End namespace llvm
 
+namespace ShaderType {
+  enum Type {
+    PIXEL = 0,
+    VERTEX = 1,
+    GEOMETRY = 2,
+    COMPUTE = 3
+  };
+}
+
 #endif // AMDGPU_H

@@ -114,6 +114,13 @@ class FNEG <RegisterClass rc> : AMDGPUShaderInst <
   [(set rc:$dst, (fneg rc:$src0))]
 >;
 
+def SHADER_TYPE : AMDGPUShaderInst <
+  (outs),
+  (ins i32imm:$type),
+  "SHADER_TYPE $type",
+  [(int_AMDGPU_shader_type imm:$type)]
+>;
+
 } // End isCodeGenOnly = 1, isPseudo = 1, hasCustomInserter = 1
 
 /* Generic helper patterns for intrinsics */

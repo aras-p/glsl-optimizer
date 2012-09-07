@@ -87,6 +87,10 @@ bool SIAssignInterpRegsPass::runOnMachineFunction(MachineFunction &MF)
   };
 
   SIMachineFunctionInfo * MFI = MF.getInfo<SIMachineFunctionInfo>();
+  // This pass is only needed for pixel shaders.
+  if (MFI->ShaderType != ShaderType::PIXEL) {
+    return false;
+  }
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
   /* First pass, mark the interpolation values that are used. */

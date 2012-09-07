@@ -14,5 +14,6 @@ using namespace llvm;
 
 SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
   : MachineFunctionInfo(),
-    spi_ps_input_addr(0)
+    spi_ps_input_addr(0),
+    ShaderType(0)
   { }

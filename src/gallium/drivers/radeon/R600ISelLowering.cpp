@@ -61,6 +61,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 
   switch (MI->getOpcode()) {
   default: return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
+  case AMDGPU::SHADER_TYPE: break;
   case AMDGPU::CLAMP_R600:
     {
       MachineInstr *NewMI =

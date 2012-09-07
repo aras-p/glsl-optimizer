@@ -16,6 +16,7 @@
 #include "AMDIL.h"
 #include "AMDILIntrinsicInfo.h"
 #include "SIInstrInfo.h"
+#include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -120,6 +121,11 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
                  .addImm(0) // CLAMP
                  .addImm(0) // OMOD
                  .addImm(1); // NEG
+    MI->eraseFromParent();
+    break;
+  case AMDGPU::SHADER_TYPE:
+    BB->getParent()->getInfo<SIMachineFunctionInfo>()->ShaderType =
+                                        MI->getOperand(0).getImm();
     MI->eraseFromParent();
     break;
 
