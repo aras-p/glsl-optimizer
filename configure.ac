@@ -6,7 +6,7 @@ dnl Tell the user about autoconf.html in the --help output
 m4_divert_once([HELP_END], [
 See docs/autoconf.html for more details on the options for Mesa.])
 
-AC_INIT([Mesa], [9.0.0],
+AC_INIT([Mesa], [9.1.0],
     [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa])
 AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
