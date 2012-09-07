@@ -599,11 +599,6 @@ AC_ARG_ENABLE([vdpau],
          [enable vdpau library @<:@default=auto@:>@])],
    [enable_vdpau="$enableval"],
    [enable_vdpau=auto])
-AC_ARG_ENABLE([va],
-   [AS_HELP_STRING([--enable-va],
-         [enable va library @<:@default=auto@:>@])],
-   [enable_va="$enableval"],
-   [enable_va=auto])
 AC_ARG_ENABLE([opencl],
    [AS_HELP_STRING([--enable-opencl],
          [enable OpenCL library @<:@default=no@:>@])],
@@ -668,7 +663,6 @@ if test "x$enable_opengl" = xno -a \
         "x$enable_d3d1x" = xno -a \
         "x$enable_xvmc" = xno -a \
         "x$enable_vdpau" = xno -a \
-        "x$enable_va" = xno -a \
         "x$enable_opencl" = xno; then
     AC_MSG_ERROR([at least one API should be enabled])
 fi
@@ -1405,12 +1399,6 @@ if test "x$enable_gallium_g3dvl" = xyes; then
     if test "x$enable_vdpau" = xauto; then
 	PKG_CHECK_EXISTS([vdpau], [enable_vdpau=yes], [enable_vdpau=no])
     fi
-
-    if test "x$enable_va" = xauto; then
-	#don't enable vaapi state tracker even if package exists
-	#PKG_CHECK_EXISTS([libva], [enable_vdpau=yes], [enable_vdpau=no])
-        enable_va=no
-    fi
 fi
 
 if test "x$enable_xvmc" = xyes; then
@@ -1423,13 +1411,6 @@ if test "x$enable_vdpau" = xyes; then
     PKG_CHECK_MODULES([VDPAU], [vdpau >= 0.4.1 x11-xcb xcb-dri2 >= 1.8])
     GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS vdpau"
     HAVE_ST_VDPAU="yes"
-fi
-
-if test "x$enable_va" = xyes; then
-    PKG_CHECK_MODULES([LIBVA], [libva = 0.31.1 x11-xcb xcb-dri2 >= 1.8])
-    AC_MSG_WARN([vaapi state tracker currently unmaintained])
-    GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS va"
-    HAVE_ST_VA="yes"
 fi
 
 dnl
@@ -1714,14 +1695,6 @@ AC_ARG_WITH([vdpau-libdir],
     [VDPAU_LIB_INSTALL_DIR='${libdir}/vdpau'])
 AC_SUBST([VDPAU_LIB_INSTALL_DIR])
 
-dnl Directory for VA libs
-AC_ARG_WITH([va-libdir],
-    [AS_HELP_STRING([--with-va-libdir=DIR],
-        [directory for the VA libraries @<:@default=${libdir}/va@:>@])],
-    [VA_LIB_INSTALL_DIR="$withval"],
-    [VA_LIB_INSTALL_DIR='${libdir}/va'])
-AC_SUBST([VA_LIB_INSTALL_DIR])
-
 dnl Directory for OpenCL libs
 AC_ARG_WITH([opencl-libdir],
     [AS_HELP_STRING([--with-opencl-libdir=DIR],
@@ -1736,7 +1709,7 @@ dnl
 gallium_check_st() {
     if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes ||
 	 test "x$HAVE_ST_XA" = xyes || test "x$HAVE_ST_XVMC" = xyes ||
-	 test "x$HAVE_ST_VDPAU" = xyes || test "x$HAVE_ST_VA" = xyes; then
+	 test "x$HAVE_ST_VDPAU" = xyes; then
          if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([DRI or Xorg DDX requires libdrm >= $LIBDRM_REQUIRED])
          fi
@@ -1756,9 +1729,6 @@ gallium_check_st() {
     fi
     if test "x$HAVE_ST_VDPAU" = xyes && test "x$6" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
-    fi
-    if test "x$HAVE_ST_VA" = xyes && test "x$7" != x; then
-         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $7"
     fi
 }
 
@@ -1819,7 +1789,7 @@ if test "x$with_gallium_drivers" != x; then
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
             gallium_require_llvm "Gallium R300"
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-            gallium_check_st "radeon/drm" "dri-r300" "xorg-r300" "" "xvmc-r300" "vdpau-r300" "va-r300"
+            gallium_check_st "radeon/drm" "dri-r300" "xorg-r300" "" "xvmc-r300" "vdpau-r300"
             ;;
         xr600)
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
@@ -1835,7 +1805,7 @@ if test "x$with_gallium_drivers" != x; then
             if test "x$enable_opencl" = xyes -a "x$with_llvm_shared_libs" = xno; then
                 LLVM_LIBS="${LLVM_LIBS} `$LLVM_CONFIG --libs bitreader asmparser`"
             fi
-            gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600" "va-r600"
+            gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600"
             ;;
         xradeonsi)
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
@@ -1866,12 +1836,8 @@ if test "x$with_gallium_drivers" != x; then
             if test "x$HAVE_ST_XVMC" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS xvmc-softpipe"
             fi
-            if test "x$HAVE_ST_VA" = xyes; then
-                GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS va-softpipe"
-            fi
             if test "x$HAVE_ST_VDPAU" = xyes ||
-               test "x$HAVE_ST_XVMC" = xyes ||
-               test "x$HAVE_ST_VA" = xyes; then
+               test "x$HAVE_ST_XVMC" = xyes; then
                if test "x$HAVE_WINSYS_XLIB" != xyes; then
                   GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
                fi
