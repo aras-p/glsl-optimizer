@@ -30,7 +30,7 @@
 
 #include "../../state_trackers/xorg/xorg_winsys.h"
 #include <nouveau.h>
-#include <xorg/dri.h>
+#include <dri.h>
 #include <xf86drmMode.h>
 
 static void nouveau_xorg_identify(int flags);
