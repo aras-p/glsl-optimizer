@@ -720,13 +720,15 @@ static uint32_t si_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_R16_UINT:
 	case PIPE_FORMAT_R16_SINT:
 	case PIPE_FORMAT_R16_FLOAT:
-	case PIPE_FORMAT_R16G16_FLOAT:
 	case PIPE_FORMAT_L16_UNORM:
 	case PIPE_FORMAT_L16_SNORM:
+	case PIPE_FORMAT_L16_FLOAT:
 	case PIPE_FORMAT_I16_UNORM:
 	case PIPE_FORMAT_I16_SNORM:
+	case PIPE_FORMAT_I16_FLOAT:
 	case PIPE_FORMAT_A16_UNORM:
 	case PIPE_FORMAT_A16_SNORM:
+	case PIPE_FORMAT_A16_FLOAT:
 		return V_028C70_COLOR_16;
 
 	/* 32-bit buffers. */
@@ -767,17 +769,22 @@ static uint32_t si_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
 		return V_028C70_COLOR_X24_8_32_FLOAT;
 
+	case PIPE_FORMAT_I32_FLOAT:
+	case PIPE_FORMAT_L32_FLOAT:
 	case PIPE_FORMAT_R32_FLOAT:
+	case PIPE_FORMAT_A32_FLOAT:
 	case PIPE_FORMAT_Z32_FLOAT:
 		return V_028C70_COLOR_32;
 
 	case PIPE_FORMAT_L16A16_UNORM:
 	case PIPE_FORMAT_L16A16_SNORM:
+	case PIPE_FORMAT_L16A16_FLOAT:
 	case PIPE_FORMAT_R16G16_SSCALED:
 	case PIPE_FORMAT_R16G16_UNORM:
 	case PIPE_FORMAT_R16G16_SNORM:
 	case PIPE_FORMAT_R16G16_UINT:
 	case PIPE_FORMAT_R16G16_SINT:
+	case PIPE_FORMAT_R16G16_FLOAT:
 		return V_028C70_COLOR_16_16;
 
 	case PIPE_FORMAT_R11G11B10_FLOAT:
@@ -796,6 +803,7 @@ static uint32_t si_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
 		return V_028C70_COLOR_16_16_16_16;
 
+	case PIPE_FORMAT_L32A32_FLOAT:
 	case PIPE_FORMAT_R32G32_FLOAT:
 	case PIPE_FORMAT_R32G32_USCALED:
 	case PIPE_FORMAT_R32G32_SSCALED:
@@ -885,8 +893,10 @@ static uint32_t si_translate_colorswap(enum pipe_format format)
 
 	case PIPE_FORMAT_I16_UNORM:
 	case PIPE_FORMAT_I16_SNORM:
+	case PIPE_FORMAT_I16_FLOAT:
 	case PIPE_FORMAT_L16_UNORM:
 	case PIPE_FORMAT_L16_SNORM:
+	case PIPE_FORMAT_L16_FLOAT:
 	case PIPE_FORMAT_R16_UNORM:
 	case PIPE_FORMAT_R16_SNORM:
 	case PIPE_FORMAT_R16_UINT:
@@ -896,6 +906,7 @@ static uint32_t si_translate_colorswap(enum pipe_format format)
 
 	case PIPE_FORMAT_A16_UNORM:
 	case PIPE_FORMAT_A16_SNORM:
+	case PIPE_FORMAT_A16_FLOAT:
 		return V_028C70_SWAP_ALT_REV;
 
 	/* 32-bit buffers. */
@@ -943,6 +954,8 @@ static uint32_t si_translate_colorswap(enum pipe_format format)
 		return V_028C70_SWAP_ALT;
 
 	case PIPE_FORMAT_R11G11B10_FLOAT:
+	case PIPE_FORMAT_I32_FLOAT:
+	case PIPE_FORMAT_L32_FLOAT:
 	case PIPE_FORMAT_R32_FLOAT:
 	case PIPE_FORMAT_R32_UINT:
 	case PIPE_FORMAT_R32_SINT:
@@ -956,7 +969,11 @@ static uint32_t si_translate_colorswap(enum pipe_format format)
 
 	case PIPE_FORMAT_L16A16_UNORM:
 	case PIPE_FORMAT_L16A16_SNORM:
+	case PIPE_FORMAT_L16A16_FLOAT:
 		return V_028C70_SWAP_ALT;
+
+	case PIPE_FORMAT_A32_FLOAT:
+		return V_028C70_SWAP_ALT_REV;
 
 	/* 64-bit buffers. */
 	case PIPE_FORMAT_R32G32_FLOAT:
@@ -970,6 +987,10 @@ static uint32_t si_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_R16G16B16A16_SINT:
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
 	case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+		return V_028C70_SWAP_STD;
+
+	case PIPE_FORMAT_L32A32_FLOAT:
+		return V_028C70_SWAP_ALT;
 
 	/* 128-bit buffers. */
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
@@ -1223,8 +1244,10 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 			return V_008F14_IMG_DATA_FORMAT_32;
 		case 2:
 			return V_008F14_IMG_DATA_FORMAT_32_32;
+#if 0 /* Not supported for render targets */
 		case 3:
 			return V_008F14_IMG_DATA_FORMAT_32_32_32;
+#endif
 		case 4:
 			return V_008F14_IMG_DATA_FORMAT_32_32_32_32;
 		}
