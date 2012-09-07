@@ -171,6 +171,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	spi_ps_input_ena = shader->spi_ps_input_ena;
 	/* we need to enable at least one of them, otherwise we hang the GPU */
 	if (!G_0286CC_PERSP_SAMPLE_ENA(spi_ps_input_ena) &&
+	    !G_0286CC_PERSP_CENTER_ENA(spi_ps_input_ena) &&
 	    !G_0286CC_PERSP_CENTROID_ENA(spi_ps_input_ena) &&
 	    !G_0286CC_PERSP_PULL_MODEL_ENA(spi_ps_input_ena) &&
 	    !G_0286CC_LINEAR_SAMPLE_ENA(spi_ps_input_ena) &&
