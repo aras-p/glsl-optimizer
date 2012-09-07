@@ -476,6 +476,17 @@ static void si_llvm_init_export_args(struct lp_build_tgsi_context *bld_base,
 	 * stage. */
 }
 
+static void si_llvm_emit_prologue(struct lp_build_tgsi_context *bld_base)
+{
+	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
+	struct gallivm_state *gallivm = bld_base->base.gallivm;
+	lp_build_intrinsic_unary(gallivm->builder,
+			"llvm.AMDGPU.shader.type",
+			LLVMVoidTypeInContext(gallivm->context),
+			lp_build_const_int32(gallivm, si_shader_ctx->type));
+}
+
+
 /* XXX: This is partially implemented for VS only at this point.  It is not complete */
 static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 {
@@ -705,6 +716,7 @@ int si_pipe_shader_create(
 	tgsi_scan_shader(sel->tokens, &shader_info);
 	bld_base->info = &shader_info;
 	bld_base->emit_fetch_funcs[TGSI_FILE_CONSTANT] = fetch_constant;
+	bld_base->emit_prologue = si_llvm_emit_prologue;
 	bld_base->emit_epilogue = si_llvm_emit_epilogue;
 
 	bld_base->op_actions[TGSI_OPCODE_TEX] = tex_action;
