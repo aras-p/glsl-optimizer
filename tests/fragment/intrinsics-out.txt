@@ -6,7 +6,7 @@ void main ()
   float tmpvar_2;
   tmpvar_2 = (xlv_TEXCOORD0.x / 2.00000);
   float tmpvar_3;
-  tmpvar_3 = (fract (abs (tmpvar_2)) * 2.00000);
+  tmpvar_3 = (fract(abs(tmpvar_2)) * 2.00000);
   float tmpvar_4;
   if ((tmpvar_2 >= 0.00000)) {
     tmpvar_4 = tmpvar_3;
@@ -17,7 +17,7 @@ void main ()
   vec2 tmpvar_5;
   tmpvar_5 = (xlv_TEXCOORD0.xy / vec2(2.00000, 2.00000));
   vec2 tmpvar_6;
-  tmpvar_6 = (fract (abs (tmpvar_5)) * vec2(2.00000, 2.00000));
+  tmpvar_6 = (fract(abs(tmpvar_5)) * vec2(2.00000, 2.00000));
   float tmpvar_7;
   if ((tmpvar_5.x >= 0.00000)) {
     tmpvar_7 = tmpvar_6.x;
@@ -37,7 +37,7 @@ void main ()
   vec3 tmpvar_10;
   tmpvar_10 = (xlv_TEXCOORD0.xyz / vec3(2.00000, 2.00000, 2.00000));
   vec3 tmpvar_11;
-  tmpvar_11 = (fract (abs (tmpvar_10)) * vec3(2.00000, 2.00000, 2.00000));
+  tmpvar_11 = (fract(abs(tmpvar_10)) * vec3(2.00000, 2.00000, 2.00000));
   float tmpvar_12;
   if ((tmpvar_10.x >= 0.00000)) {
     tmpvar_12 = tmpvar_11.x;
@@ -64,7 +64,7 @@ void main ()
   vec4 tmpvar_16;
   tmpvar_16 = (xlv_TEXCOORD0 / vec4(2.00000, 2.00000, 2.00000, 2.00000));
   vec4 tmpvar_17;
-  tmpvar_17 = (fract (abs (tmpvar_16)) * vec4(2.00000, 2.00000, 2.00000, 2.00000));
+  tmpvar_17 = (fract(abs(tmpvar_16)) * vec4(2.00000, 2.00000, 2.00000, 2.00000));
   float tmpvar_18;
   if ((tmpvar_16.x >= 0.00000)) {
     tmpvar_18 = tmpvar_17.x;

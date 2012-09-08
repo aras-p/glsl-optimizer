@@ -12,7 +12,7 @@ void main ()
   vec2 tmpvar_3;
   vec4 normal_4;
   normal_4.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.00000) - 1.00000);
-  normal_4.z = sqrt (((1.00000 - (normal_4.x * normal_4.x)) - (normal_4.y * normal_4.y)));
+  normal_4.z = sqrt(((1.00000 - (normal_4.x * normal_4.x)) - (normal_4.y * normal_4.y)));
   vec4 c_5;
   c_5.xyz = (((texture2D (_MainTex, tmpvar_1.xy).xyz * _Color.xyz) * _LightColor0.xyz) * ((max (0.00000, dot (normal_4.xyz, gl_TexCoord[1].xyz)) * texture2D (_LightTexture0, gl_TexCoord[2].xy).w) * 2.00000));
   c_5.w = (texture2D (_LightMap, tmpvar_3).w * _Color.w);

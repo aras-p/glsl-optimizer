@@ -15,7 +15,7 @@ void main ()
   tmpvar_4 = texture2D (_MainTex, tmpvar_1.xy);
   vec4 normal_5;
   normal_5.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.00000) - 1.00000);
-  normal_5.z = sqrt (((1.00000 - (normal_5.x * normal_5.x)) - (normal_5.y * normal_5.y)));
+  normal_5.z = sqrt(((1.00000 - (normal_5.x * normal_5.x)) - (normal_5.y * normal_5.y)));
   vec4 c_6;
   c_6.xyz = (((tmpvar_4 * _Color).xyz * _LightColor0.xyz) * ((max (0.00000, dot (normal_5.xyz, gl_TexCoord[1].xyz)) * texture2D (_LightTexture0, gl_TexCoord[2].xy).w) * 2.00000));
   c_6.w = ((textureCube (_Cube, tmpvar_3) * tmpvar_4.w).w * _ReflectColor.w);

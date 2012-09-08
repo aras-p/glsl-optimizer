@@ -19,7 +19,7 @@ void main ()
     enc_6.xy = ((((n_2.xy / (n_2.z + 1.00000)) / 1.77770) * 0.500000) + 0.500000);
     vec2 enc_7;
     vec2 tmpvar_8;
-    tmpvar_8 = fract ((vec2(1.00000, 255.000) * tmpvar_4));
+    tmpvar_8 = fract((vec2(1.00000, 255.000) * tmpvar_4));
     enc_7 = tmpvar_8;
     enc_7.x = (tmpvar_8.x - (tmpvar_8.y * 0.00392157));
     enc_6.zw = enc_7;

@@ -13,7 +13,7 @@ void main ()
   enc_3.xy = ((((tmpvar_1.xy / (tmpvar_1.z + 1.00000)) / 1.77770) * 0.500000) + 0.500000);
   vec2 enc_4;
   vec2 tmpvar_5;
-  tmpvar_5 = fract ((vec2(1.00000, 255.000) * tmpvar_1.w));
+  tmpvar_5 = fract((vec2(1.00000, 255.000) * tmpvar_1.w));
   enc_4 = tmpvar_5;
   enc_4.x = (tmpvar_5.x - (tmpvar_5.y * 0.00392157));
   enc_3.zw = enc_4;
