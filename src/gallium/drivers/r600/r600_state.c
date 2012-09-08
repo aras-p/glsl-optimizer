@@ -592,6 +592,10 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 		    format == PIPE_FORMAT_R11G11B10_FLOAT)
 			return FALSE;
 
+		/* MSAA integer colorbuffers hang. */
+		if (util_format_is_pure_integer(format))
+			return FALSE;
+
 		switch (sample_count) {
 		case 2:
 		case 4:
@@ -599,15 +603,6 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 			break;
 		default:
 			return FALSE;
-		}
-
-		/* require render-target support for multisample resources */
-		if (util_format_is_depth_or_stencil(format)) {
-			usage |= PIPE_BIND_DEPTH_STENCIL;
-		} else if (util_format_is_pure_integer(format)) {
-			return FALSE; /* no integer textures */
-		} else {
-			usage |= PIPE_BIND_RENDER_TARGET;
 		}
 	}
 

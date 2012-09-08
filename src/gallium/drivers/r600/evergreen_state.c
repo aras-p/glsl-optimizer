@@ -643,13 +643,6 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 		default:
 			return FALSE;
 		}
-
-		/* require render-target support for multisample resources */
-		if (util_format_is_depth_or_stencil(format)) {
-			usage |= PIPE_BIND_DEPTH_STENCIL;
-		} else {
-			usage |= PIPE_BIND_RENDER_TARGET;
-		}
 	}
 
 	if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
