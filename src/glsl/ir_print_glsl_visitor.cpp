@@ -451,6 +451,30 @@ static const char *const operator_glsl_strs[] = {
 	"vectorTODO",
 };
 
+static const char *const operator_vec_glsl_strs[] = {
+	"lessThan",
+	"greaterThan",
+	"lessThanEqual",
+	"lessThanEqual",
+	"equal",
+	"notEqual",
+};
+
+
+static bool is_binop_func_like(ir_expression_operation op, const glsl_type* type)
+{
+	if (op == ir_binop_equal || 
+		op == ir_binop_nequal ||
+		op == ir_binop_mod ||
+		(op >= ir_binop_dot && op <= ir_binop_pow))
+		return true;
+	if (type->is_vector() && (op >= ir_binop_less && op <= ir_binop_nequal))
+	{
+		return true;
+	}
+	return false;
+}
+
 void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
 	if (ir->get_num_operands() == 1) {
@@ -469,10 +493,7 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 			ralloc_asprintf_append (&buffer, ")");
 		}
 	}
-	else if (ir->operation == ir_binop_equal ||
-			 ir->operation == ir_binop_nequal ||
-			 ir->operation == ir_binop_mod ||
-			 ir->operation == ir_binop_dot)
+	else if (is_binop_func_like(ir->operation, ir->type))
 	{
 		if (ir->operation == ir_binop_mod)
 		{
@@ -480,7 +501,11 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 			buffer = print_type(buffer, ir->type, true);
 			ralloc_asprintf_append (&buffer, "(");
 		}
-		ralloc_asprintf_append (&buffer, "%s (", operator_glsl_strs[ir->operation]);
+		if (ir->type->is_vector() && (ir->operation >= ir_binop_less && ir->operation <= ir_binop_nequal))
+			ralloc_asprintf_append (&buffer, "%s (", operator_vec_glsl_strs[ir->operation-ir_binop_less]);
+		else
+			ralloc_asprintf_append (&buffer, "%s (", operator_glsl_strs[ir->operation]);
+		
 		if (ir->operands[0])
 			ir->operands[0]->accept(this);
 		ralloc_asprintf_append (&buffer, ", ");
@@ -504,15 +529,54 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 
 }
 
+// [glsl_sampler_dim]
+static const char* tex_sampler_dim_func[] = {
+	"texture1D", "texture2D", "texture3D", "textureCube", "textureRect", "textureBuf",
+};
+
 
 void ir_print_glsl_visitor::visit(ir_texture *ir)
 {
-   ralloc_asprintf_append (&buffer, "(%s ", ir->opcode_string());
-
-   ir->sampler->accept(this);
-   ralloc_asprintf_append (&buffer, " ");
-
-   ir->coordinate->accept(this);
+	// texture function name
+	glsl_sampler_dim sampler_dim = (glsl_sampler_dim)ir->sampler->type->sampler_dimensionality;
+	ralloc_asprintf_append (&buffer, "%s", tex_sampler_dim_func[sampler_dim]);
+	
+	if (ir->projector)
+		ralloc_asprintf_append (&buffer, "Proj");
+	if (ir->op == ir_txl)
+		ralloc_asprintf_append (&buffer, "Lod");
+	
+	ralloc_asprintf_append (&buffer, "(");
+	
+	// sampler
+	ir->sampler->accept(this);
+	ralloc_asprintf_append (&buffer, ", ");
+	
+	// texture coordinate
+	if (!ir->projector)
+	{
+		ir->coordinate->accept(this);
+	}
+	else
+	{
+		// TODO
+	}
+	
+	// lod bias
+	if (ir->op == ir_txb)
+	{
+		ralloc_asprintf_append (&buffer, ", ");
+		ir->lod_info.bias->accept(this);
+	}
+	
+	// lod
+	if (ir->op == ir_txl)
+	{
+		ralloc_asprintf_append (&buffer, ", ");
+		ir->lod_info.lod->accept(this);
+	}
+	
+	/*
 	
    if (ir->offset != NULL) {
       ir->offset->accept(this);
@@ -552,6 +616,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
       ralloc_asprintf_append (&buffer, ")");
       break;
    };
+	 */
    ralloc_asprintf_append (&buffer, ")");
 }
 
