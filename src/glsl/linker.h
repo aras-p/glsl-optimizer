@@ -29,4 +29,12 @@ extern bool
 link_function_calls(gl_shader_program *prog, gl_shader *main,
 		    gl_shader **shader_list, unsigned num_shaders);
 
+extern struct gl_shader *
+link_intrastage_shaders(void *mem_ctx,
+						struct gl_context *ctx,
+						struct gl_shader_program *prog,
+						struct gl_shader **shader_list,
+						unsigned num_shaders);
+
+
 #endif /* GLSL_LINKER_H */

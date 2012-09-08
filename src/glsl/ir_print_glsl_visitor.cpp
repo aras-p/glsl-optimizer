@@ -365,7 +365,7 @@ void ir_print_glsl_visitor::visit(ir_function *ir)
 
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_function_signature *const sig = (ir_function_signature *) iter.get();
-      if (sig->is_defined || !sig->is_builtin)
+      if (!sig->is_builtin)
 	 found_non_builtin_proto = true;
    }
    if (!found_non_builtin_proto)
