@@ -31,7 +31,7 @@ void main ()
   gl_TexCoord[1] = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8.w = 0.00000;
-  tmpvar_8.xyz = normalize ((((_World2Object * tmpvar_4).xyz * unity_Scale.w) - gl_Vertex.xyz)).xzy;
+  tmpvar_8.xyz = normalize((((_World2Object * tmpvar_4).xyz * unity_Scale.w) - gl_Vertex.xyz)).xzy;
   gl_TexCoord[2] = tmpvar_8;
 }
 

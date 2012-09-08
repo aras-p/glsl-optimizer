@@ -11,29 +11,27 @@ uniform sampler2D _BumpMap;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0];
   vec4 tmpvar_2;
+  tmpvar_1 = gl_TexCoord[0];
   tmpvar_2 = gl_TexCoord[3];
   vec4 c_3;
   vec3 tmpvar_4;
   vec2 tmpvar_5;
   vec3 v_6;
   vec3 tmpvar_7;
-  tmpvar_7 = normalize (gl_TexCoord[1].xyz);
-  v_6 = tmpvar_7;
+  tmpvar_7 = normalize(gl_TexCoord[1].xyz);
+  v_6.xy = tmpvar_7.xy;
   v_6.z = (tmpvar_7.z + 0.420000);
   tmpvar_5 = (((texture2D (_ParallaxMap, tmpvar_1.zw).w * _Parallax) - (_Parallax / 2.00000)) * (tmpvar_7.xy / v_6.z));
   vec4 tmpvar_8;
   tmpvar_8 = texture2D (_MainTex, (tmpvar_1.xy + tmpvar_5));
   vec4 normal_9;
   normal_9.xy = ((texture2D (_BumpMap, (tmpvar_1.zw + tmpvar_5)).wy * 2.00000) - 1.00000);
-  normal_9.z = sqrt (((1.00000 - (normal_9.x * normal_9.x)) - (normal_9.y * normal_9.y)));
-  vec3 LightCoord_10;
-  LightCoord_10 = tmpvar_2.xyz;
-  vec4 c_11;
-  c_11.xyz = (((tmpvar_8 * _Color).xyz * _LightColor0.xyz) * ((max (0.00000, dot (normal_9.xyz, normalize (gl_TexCoord[2].xyz))) * ((float((tmpvar_2.z > 0.00000)) * texture2D (_LightTexture0, ((tmpvar_2.xy / tmpvar_2.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_10, LightCoord_10))).w)) * 2.00000));
-  c_11.w = ((textureCube (_Cube, tmpvar_4) * tmpvar_8.w).w * _ReflectColor.w);
-  c_3 = c_11;
+  normal_9.z = sqrt(((1.00000 - (normal_9.x * normal_9.x)) - (normal_9.y * normal_9.y)));
+  vec4 c_10;
+  c_10.xyz = (((tmpvar_8 * _Color).xyz * _LightColor0.xyz) * ((max (0.00000, dot (normal_9.xyz, normalize(gl_TexCoord[2].xyz))) * ((float((tmpvar_2.z > 0.00000)) * texture2D (_LightTexture0, ((tmpvar_2.xy / tmpvar_2.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (tmpvar_2.xyz, tmpvar_2.xyz))).w)) * 2.00000));
+  c_10.w = ((textureCube (_Cube, tmpvar_4) * tmpvar_8.w).w * _ReflectColor.w);
+  c_3.xyz = c_10.xyz;
   c_3.w = 0.00000;
   gl_FragData[0] = c_3;
 }

@@ -13,12 +13,10 @@ void main ()
   vec3 tmpvar_3;
   vec4 tmpvar_4;
   tmpvar_4 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  vec3 LightCoord_5;
-  LightCoord_5 = tmpvar_1.xyz;
-  vec4 c_6;
-  c_6.xyz = (((tmpvar_4 * _Color).xyz * _LightColor0.xyz) * ((max (0.00000, dot (gl_TexCoord[1].xyz, normalize (gl_TexCoord[2].xyz))) * ((float((tmpvar_1.z > 0.00000)) * texture2D (_LightTexture0, ((tmpvar_1.xy / tmpvar_1.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_5, LightCoord_5))).w)) * 2.00000));
-  c_6.w = ((textureCube (_Cube, tmpvar_3) * tmpvar_4.w).w * _ReflectColor.w);
-  c_2 = c_6;
+  vec4 c_5;
+  c_5.xyz = (((tmpvar_4 * _Color).xyz * _LightColor0.xyz) * ((max (0.00000, dot (gl_TexCoord[1].xyz, normalize(gl_TexCoord[2].xyz))) * ((float((tmpvar_1.z > 0.00000)) * texture2D (_LightTexture0, ((tmpvar_1.xy / tmpvar_1.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (tmpvar_1.xyz, tmpvar_1.xyz))).w)) * 2.00000));
+  c_5.w = ((textureCube (_Cube, tmpvar_3) * tmpvar_4.w).w * _ReflectColor.w);
+  c_2.xyz = c_5.xyz;
   c_2.w = 0.00000;
   gl_FragData[0] = c_2;
 }

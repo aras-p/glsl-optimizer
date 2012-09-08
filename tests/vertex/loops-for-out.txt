@@ -18,10 +18,10 @@ void main ()
   viewN_2 = (tmpvar_4 * gl_Normal);
   vec3 tmpvar_5;
   tmpvar_5 = (unity_LightPosition[0].xyz - viewpos_3);
-  lightColor_1 = (unity_LightColor[0].xyz * (max (0.00000, dot (viewN_2, normalize (tmpvar_5))) * (1.0/((1.00000 + (dot (tmpvar_5, tmpvar_5) * unity_LightAtten[0].z))))));
+  lightColor_1 = (unity_LightColor[0].xyz * (max (0.00000, dot (viewN_2, normalize(tmpvar_5))) * (1.0/((1.00000 + (dot (tmpvar_5, tmpvar_5) * unity_LightAtten[0].z))))));
   vec3 tmpvar_6;
   tmpvar_6 = (unity_LightPosition[1].xyz - viewpos_3);
-  lightColor_1 = (lightColor_1 + (unity_LightColor[1].xyz * (max (0.00000, dot (viewN_2, normalize (tmpvar_6))) * (1.0/((1.00000 + (dot (tmpvar_6, tmpvar_6) * unity_LightAtten[1].z)))))));
+  lightColor_1 = (lightColor_1 + (unity_LightColor[1].xyz * (max (0.00000, dot (viewN_2, normalize(tmpvar_6))) * (1.0/((1.00000 + (dot (tmpvar_6, tmpvar_6) * unity_LightAtten[1].z)))))));
   vec4 tmpvar_7;
   tmpvar_7.w = 1.00000;
   tmpvar_7.xyz = (lightColor_1 * 2.00000);

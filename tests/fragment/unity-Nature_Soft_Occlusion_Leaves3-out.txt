@@ -12,7 +12,7 @@ void main ()
     discard;
   };
   vec4 tmpvar_3;
-  tmpvar_3 = fract ((vec4(1.00000, 255.000, 65025.0, 1.60581e+08) * (length (tmpvar_1) * _LightPositionRange.w)));
+  tmpvar_3 = fract((vec4(1.00000, 255.000, 65025.0, 1.60581e+08) * (sqrt(dot (tmpvar_1, tmpvar_1)) * _LightPositionRange.w)));
   gl_FragData[0] = (tmpvar_3 - (tmpvar_3.yzww * 0.00392157));
 }
 
