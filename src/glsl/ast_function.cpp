@@ -108,7 +108,8 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, glsl
 	{
 		if (strncmp (sig->function_name(), "texture", 7) == 0)
 			return first_prec;
-		
+		if (strncmp (sig->function_name(), "shadow", 6) == 0)
+			return first_prec;
 	}
 	
 	// other built-in: max precision of parameters
