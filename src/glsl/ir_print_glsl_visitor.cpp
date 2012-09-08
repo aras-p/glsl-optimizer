@@ -455,7 +455,7 @@ static const char *const operator_vec_glsl_strs[] = {
 	"lessThan",
 	"greaterThan",
 	"lessThanEqual",
-	"lessThanEqual",
+	"greaterThanEqual",
 	"equal",
 	"notEqual",
 };
