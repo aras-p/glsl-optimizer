@@ -1213,6 +1213,21 @@ void util_blitter_copy_texture_view(struct blitter_context *blitter,
       pipe->bind_fragment_sampler_states(pipe, 2, samplers);
 
       pipe_sampler_view_reference(&views[1], NULL);
+   } else if (blit_stencil) {
+      /* Set a stencil-only sampler view for it not to sample depth instead. */
+      struct pipe_sampler_view templ;
+      struct pipe_sampler_view *view;
+
+      templ = *src;
+      templ.format = util_format_stencil_only(templ.format);
+      assert(templ.format != PIPE_FORMAT_NONE);
+
+      view = pipe->create_sampler_view(pipe, src->texture, &templ);
+
+      pipe->set_fragment_sampler_views(pipe, 1, &view);
+      pipe->bind_fragment_sampler_states(pipe, 1, &ctx->sampler_state);
+
+      pipe_sampler_view_reference(&view, NULL);
    } else {
       pipe->set_fragment_sampler_views(pipe, 1, &src);
       pipe->bind_fragment_sampler_states(pipe, 1, &ctx->sampler_state);
