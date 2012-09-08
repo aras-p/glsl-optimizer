@@ -77,13 +77,14 @@ struct global_print_tracker {
 
 class ir_print_glsl_visitor : public ir_visitor {
 public:
-	ir_print_glsl_visitor(char* buf, global_print_tracker* globals_, PrintGlslMode mode_, bool use_precision_)
+	ir_print_glsl_visitor(char* buf, global_print_tracker* globals_, PrintGlslMode mode_, bool use_precision_, const _mesa_glsl_parse_state* state_)
 	{
 		indentation = 0;
 		buffer = buf;
 		globals = globals_;
 		mode = mode_;
 		use_precision = use_precision_;
+		state = state_;
 	}
 
 	virtual ~ir_print_glsl_visitor()
@@ -116,6 +117,7 @@ public:
 	int indentation;
 	char* buffer;
 	global_print_tracker* globals;
+	const _mesa_glsl_parse_state* state;
 	PrintGlslMode mode;
 	bool	use_precision;
 };
@@ -175,7 +177,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			continue;
 	  }
 
-	  ir_print_glsl_visitor v (buffer, &gtracker, mode, state->es_shader);
+	  ir_print_glsl_visitor v (buffer, &gtracker, mode, state->es_shader, state);
 	  ir->accept(&v);
 	  buffer = v.buffer;
       if (ir->ir_type != ir_type_function)
@@ -546,6 +548,12 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		ralloc_asprintf_append (&buffer, "Proj");
 	if (ir->op == ir_txl)
 		ralloc_asprintf_append (&buffer, "Lod");
+	
+	if (ir->sampler->type->sampler_shadow)
+	{
+		if (state->EXT_shadow_samplers_enable && state->es_shader)
+			ralloc_asprintf_append (&buffer, "EXT");
+	}
 	
 	ralloc_asprintf_append (&buffer, " (");
 	
