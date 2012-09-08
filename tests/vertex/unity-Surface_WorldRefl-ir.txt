@@ -101,12 +101,12 @@ v2f_surf vert_surf (
   tmpvar_28 = tmpvar_27;
   viewRefl_22 = tmpvar_28;
   mat3 tmpvar_29;
-  tmpvar_29 = (xll_constructMat3 (_Object2World));
+  tmpvar_29 = xll_constructMat3 (_Object2World);
   vec3 tmpvar_30;
   tmpvar_30 = (tmpvar_29 * viewRefl_22);
   o_24.worldRefl = tmpvar_30;
   mat3 tmpvar_31;
-  tmpvar_31 = (xll_constructMat3 (_Object2World));
+  tmpvar_31 = xll_constructMat3 (_Object2World);
   vec3 tmpvar_32;
   tmpvar_32 = (tmpvar_31 * (v_21.normal * unity_Scale.w));
   o_24.normal = tmpvar_32;

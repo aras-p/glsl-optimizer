@@ -225,7 +225,7 @@ float ComputeShadow (
   tmpvar_65 = tmpvar_64;
   fade_62 = tmpvar_65;
   mat3 tmpvar_66;
-  tmpvar_66 = (xll_constructMat3 (_View2Shadow));
+  tmpvar_66 = xll_constructMat3 (_View2Shadow);
   vec3 tmpvar_67;
   tmpvar_67 = (tmpvar_66 * vec_59);
   vec_59 = tmpvar_67;

@@ -160,7 +160,7 @@ v2f_surf vert_surf (
   tmpvar_49 = ((v_42.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
   o_47.hip_pack0.zw = tmpvar_49.xxxy.zw;
   mat3 tmpvar_50;
-  tmpvar_50 = (xll_constructMat3 (_Object2World));
+  tmpvar_50 = xll_constructMat3 (_Object2World);
   vec3 tmpvar_51;
   tmpvar_51 = (tmpvar_50 * (v_42.normal * unity_Scale.w));
   worldN_46 = tmpvar_51;

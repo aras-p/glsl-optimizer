@@ -19,7 +19,7 @@ void main ()
   vec4 c_6;
   c_6.xyz = (((tmpvar_4 * _Color).xyz * _LightColor0.xyz) * ((max (0.00000, dot (normal_5.xyz, gl_TexCoord[1].xyz)) * texture2D (_LightTexture0, gl_TexCoord[2].xy).w) * 2.00000));
   c_6.w = ((textureCube (_Cube, tmpvar_3) * tmpvar_4.w).w * _ReflectColor.w);
-  c_2 = c_6;
+  c_2.xyz = c_6.xyz;
   c_2.w = 0.00000;
   gl_FragData[0] = c_2;
 }

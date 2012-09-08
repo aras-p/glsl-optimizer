@@ -40,7 +40,7 @@ v2f vert (
   tmpvar_12 = (gl_ModelViewProjectionMatrix * v_9.vertex);
   o_11.pos = tmpvar_12;
   mat3 tmpvar_13;
-  tmpvar_13 = (xll_constructMat3 (gl_ModelViewMatrixInverseTranspose));
+  tmpvar_13 = xll_constructMat3 (gl_ModelViewMatrixInverseTranspose);
   vec3 tmpvar_14;
   tmpvar_14 = (tmpvar_13 * v_9.normal);
   normal_10 = tmpvar_14;

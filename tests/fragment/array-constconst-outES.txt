@@ -10,7 +10,7 @@ void main ()
   poisson_2[5] = vec2(0.440453, -0.639399);
   poisson_2[6] = vec2(-0.757088, 0.349334);
   poisson_2[7] = vec2(0.574619, 0.685879);
-  c_1 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
+  c_1.zw = vec2(0.00000, 0.00000);
   highp vec2 tmpvar_3;
   tmpvar_3 = poisson_2[0];
   c_1.xy = tmpvar_3;

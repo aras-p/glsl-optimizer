@@ -118,7 +118,7 @@ v2f vert (
   tmpvar_38 = v_35.texcoord.xy;
   o_36.uv = tmpvar_38;
   mat3 tmpvar_39;
-  tmpvar_39 = (xll_constructMat3 (gl_ModelViewMatrixInverseTranspose));
+  tmpvar_39 = xll_constructMat3 (gl_ModelViewMatrixInverseTranspose);
   vec3 tmpvar_40;
   tmpvar_40 = (tmpvar_39 * v_35.normal);
   o_36.nz.xyz = tmpvar_40.xyz.xyz;

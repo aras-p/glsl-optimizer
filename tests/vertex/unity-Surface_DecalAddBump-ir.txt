@@ -77,7 +77,7 @@ v2f_surf vert_surf (
   tmpvar_19 = ((v_17.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   o_18.hip_pack0 = tmpvar_19.xy.xy;
   mat3 tmpvar_20;
-  tmpvar_20 = (xll_constructMat3 (_Object2World));
+  tmpvar_20 = xll_constructMat3 (_Object2World);
   vec3 tmpvar_21;
   tmpvar_21 = (tmpvar_20 * (v_17.normal * unity_Scale.w));
   o_18.normal = tmpvar_21;

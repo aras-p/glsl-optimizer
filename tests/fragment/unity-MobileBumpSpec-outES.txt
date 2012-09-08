@@ -24,7 +24,7 @@ void main ()
   spec_6 = tmpvar_8;
   c_5.xyz = ((((tmpvar_2.xyz * max (0.00000, dot (tmpvar_3, xlv_TEXCOORD2))) + spec_6) * _LightColor0.xyz) * 2.00000);
   c_5.w = 0.00000;
-  c_1 = c_5;
+  c_1.w = c_5.w;
   c_1.xyz = (c_5.xyz + (tmpvar_2.xyz * xlv_TEXCOORD3));
   gl_FragData[0] = c_1;
 }

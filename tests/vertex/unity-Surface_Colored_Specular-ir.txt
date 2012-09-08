@@ -92,7 +92,7 @@ v2f_surf vert_surf (
   tmpvar_21 = ((v_18.texcoord.xy * _SpecMap_ST.xy) + _SpecMap_ST.zw);
   o_19.hip_pack0.zw = tmpvar_21.xxxy.zw;
   mat3 tmpvar_22;
-  tmpvar_22 = (xll_constructMat3 (_Object2World));
+  tmpvar_22 = xll_constructMat3 (_Object2World);
   vec3 tmpvar_23;
   tmpvar_23 = (tmpvar_22 * (v_18.normal * unity_Scale.w));
   o_19.normal = tmpvar_23;

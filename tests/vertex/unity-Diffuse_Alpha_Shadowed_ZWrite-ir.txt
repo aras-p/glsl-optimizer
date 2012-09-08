@@ -125,7 +125,7 @@ v2f_surf vert_surf (
   tmpvar_39 = ((v_35.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   o_38.hip_pack0 = tmpvar_39.xy.xy;
   mat3 tmpvar_40;
-  tmpvar_40 = (xll_constructMat3 (_Object2World));
+  tmpvar_40 = xll_constructMat3 (_Object2World);
   vec3 tmpvar_41;
   tmpvar_41 = (tmpvar_40 * (v_35.normal * unity_Scale.w));
   worldN_37 = tmpvar_41;

@@ -83,7 +83,7 @@ v2f_surf vert_surf (
   tmpvar_20 = (_Object2World * v_17.vertex).xyz;
   o_18.worldPos = tmpvar_20;
   mat3 tmpvar_21;
-  tmpvar_21 = (xll_constructMat3 (_Object2World));
+  tmpvar_21 = xll_constructMat3 (_Object2World);
   vec3 tmpvar_22;
   tmpvar_22 = (tmpvar_21 * (v_17.normal * unity_Scale.w));
   o_18.normal = tmpvar_22;

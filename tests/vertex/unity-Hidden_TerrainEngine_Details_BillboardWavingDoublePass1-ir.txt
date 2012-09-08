@@ -277,7 +277,7 @@ v2f_surf vert_surf (
   tmpvar_99 = v_96.color;
   o_97.lop_color = tmpvar_99;
   mat3 tmpvar_100;
-  tmpvar_100 = (xll_constructMat3 (_Object2World));
+  tmpvar_100 = xll_constructMat3 (_Object2World);
   vec3 tmpvar_101;
   tmpvar_101 = (tmpvar_100 * (v_96.normal * unity_Scale.w));
   o_97.normal = tmpvar_101;

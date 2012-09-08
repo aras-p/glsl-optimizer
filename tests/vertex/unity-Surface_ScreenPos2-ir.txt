@@ -43,7 +43,7 @@ v2f_surf vert_surf (
   tmpvar_11 = (gl_ModelViewProjectionMatrix * v_9.vertex);
   o_10.pos = tmpvar_11;
   mat3 tmpvar_12;
-  tmpvar_12 = (xll_constructMat3 (gl_ModelViewMatrixInverseTranspose));
+  tmpvar_12 = xll_constructMat3 (gl_ModelViewMatrixInverseTranspose);
   vec3 tmpvar_13;
   tmpvar_13 = (tmpvar_12 * v_9.normal);
   o_10.normal = tmpvar_13;

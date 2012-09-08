@@ -4,7 +4,7 @@ void main ()
   vec4 xlat_var_output_1;
   vec4 tmpvar_2;
   tmpvar_2 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  xlat_var_output_1 = (vec4(0.191000, -0.0540000, -0.221000, 0.00000) + dot (vec3(0.299000, 0.587000, 0.114000), tmpvar_2.xyz));
+  xlat_var_output_1.xyz = (vec4(0.191000, -0.0540000, -0.221000, 0.00000) + dot (vec3(0.299000, 0.587000, 0.114000), tmpvar_2.xyz)).xyz;
   xlat_var_output_1.w = tmpvar_2.w;
   gl_FragData[0] = xlat_var_output_1;
 }

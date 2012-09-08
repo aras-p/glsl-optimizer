@@ -14,7 +14,7 @@ void main ()
   vec2 enc_4;
   vec2 tmpvar_5;
   tmpvar_5 = fract((vec2(1.00000, 255.000) * tmpvar_1.w));
-  enc_4 = tmpvar_5;
+  enc_4.y = tmpvar_5.y;
   enc_4.x = (tmpvar_5.x - (tmpvar_5.y * 0.00392157));
   enc_3.zw = enc_4;
   gl_FragData[0] = enc_3;

@@ -75,7 +75,7 @@ v2f_surf vert_surf (
   tmpvar_21 = ((v_14.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
   o_18.hip_lmap = tmpvar_21.xy.xy;
   mat3 tmpvar_22;
-  tmpvar_22 = (xll_constructMat3 (_Object2World));
+  tmpvar_22 = xll_constructMat3 (_Object2World);
   vec3 tmpvar_23;
   tmpvar_23 = (tmpvar_22 * (v_14.normal * unity_Scale.w));
   worldN_17 = tmpvar_23;

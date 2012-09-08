@@ -93,7 +93,7 @@ v2f_surf vert_surf (
   o_21.cust_foo = tmpvar_23;
   PositionFog (v_20.vertex, o_21.pos, o_21.fog);
   mat3 tmpvar_24;
-  tmpvar_24 = (xll_constructMat3 (_Object2World));
+  tmpvar_24 = xll_constructMat3 (_Object2World);
   vec3 tmpvar_25;
   tmpvar_25 = (tmpvar_24 * (v_20.normal * unity_Scale.w));
   o_21.normal = tmpvar_25;

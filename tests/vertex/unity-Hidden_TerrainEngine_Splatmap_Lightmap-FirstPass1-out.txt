@@ -21,7 +21,6 @@ void main ()
   vec4 o_5;
   vec4 tmpvar_6;
   tmpvar_6 = (tmpvar_4 * 0.500000);
-  o_5 = tmpvar_6;
   vec2 tmpvar_7;
   tmpvar_7.x = tmpvar_6.x;
   tmpvar_7.y = (tmpvar_6.y * _ProjectionParams.x);

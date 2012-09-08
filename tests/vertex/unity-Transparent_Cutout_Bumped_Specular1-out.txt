@@ -8,7 +8,6 @@ void main ()
   vec4 o_2;
   vec4 tmpvar_3;
   tmpvar_3 = (tmpvar_1 * 0.500000);
-  o_2 = tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4.x = tmpvar_3.x;
   tmpvar_4.y = (tmpvar_3.y * _ProjectionParams.x);

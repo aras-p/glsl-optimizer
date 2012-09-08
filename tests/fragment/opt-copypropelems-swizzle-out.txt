@@ -5,8 +5,8 @@ void main ()
   vec4 v_1;
   vec4 tmpvar_2;
   tmpvar_2 = texture2D (tex, uv);
-  v_1 = tmpvar_2;
-  v_1.xy = tmpvar_2.yx;
+  v_1.zw = tmpvar_2.zw;
+  v_1.y = tmpvar_2.x;
   v_1.x = -(tmpvar_2.y);
   gl_FragColor = v_1;
 }

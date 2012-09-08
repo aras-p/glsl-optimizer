@@ -9,7 +9,7 @@ void main ()
   vec2 tmpvar_3;
   tmpvar_3.y = 0.500000;
   tmpvar_3.x = (dot (tmpvar_2.xyz, vec3(0.220000, 0.707000, 0.0710000)) + _RampOffset);
-  xlat_var_output_1 = texture2D (_RampTex, tmpvar_3);
+  xlat_var_output_1.xyz = texture2D (_RampTex, tmpvar_3).xyz;
   xlat_var_output_1.w = tmpvar_2.w;
   gl_FragData[0] = xlat_var_output_1;
 }

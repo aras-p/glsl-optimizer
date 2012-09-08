@@ -59,7 +59,7 @@ vec3 ShadeMyVertexLights (
   tmpvar_21 = (UNITY_MATRIX_MV * vertex_9).xyz;
   viewpos_18 = tmpvar_21;
   mat3 tmpvar_22;
-  tmpvar_22 = (xll_constructMat3 (UNITY_MATRIX_IT_MV));
+  tmpvar_22 = xll_constructMat3 (UNITY_MATRIX_IT_MV);
   vec3 tmpvar_23;
   tmpvar_23 = (tmpvar_22 * normal_10);
   viewN_17 = tmpvar_23;
