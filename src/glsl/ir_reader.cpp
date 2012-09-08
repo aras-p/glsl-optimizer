@@ -681,6 +681,7 @@ ir_reader::read_expression(s_expression *expr)
       return NULL;
    }
    s_expression *s_arg2 = (s_expression *) s_arg1->next; // may be tail sentinel
+   s_expression *s_arg3 = s_arg2->is_tail_sentinel() ? s_arg2 : (s_expression*)s_arg2->next; // may be tail sentinel
 
    const glsl_type *type = read_type(s_type);
    if (type == NULL)
@@ -702,6 +703,7 @@ ir_reader::read_expression(s_expression *expr)
 
    ir_rvalue *arg1 = read_rvalue(s_arg1);
    ir_rvalue *arg2 = NULL;
+   ir_rvalue *arg3 = NULL;
    if (arg1 == NULL) {
       ir_read_error(NULL, "when reading first operand of %s", s_op->value());
       return NULL;
@@ -720,8 +722,28 @@ ir_reader::read_expression(s_expression *expr)
 	 return NULL;
       }
    }
-
-   return new(mem_ctx) ir_expression(op, type, arg1, arg2);
+	
+	if (num_operands == 3) {
+		if (s_arg2->is_tail_sentinel() || s_arg3->is_tail_sentinel() || !s_arg3->next->is_tail_sentinel()) {
+			ir_read_error(expr, "expected (expression <type> %s <operand> "
+						  "<operand> <operand>)", s_op->value());
+			return NULL;
+		}
+		arg2 = read_rvalue(s_arg2);
+		if (arg2 == NULL) {
+			ir_read_error(NULL, "when reading second operand of %s",
+						  s_op->value());
+			return NULL;
+		}
+		arg3 = read_rvalue(s_arg3);
+		if (arg3 == NULL) {
+			ir_read_error(NULL, "when reading third operand of %s",
+						  s_op->value());
+			return NULL;
+		}
+	}
+	
+   return new(mem_ctx) ir_expression(op, type, arg1, arg2, arg3);
 }
 
 ir_swizzle *

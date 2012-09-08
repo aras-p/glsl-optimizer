@@ -1041,6 +1041,10 @@ enum ir_expression_operation {
     */
    ir_last_binop = ir_binop_ubo_load,
 
+   ir_ternop_clamp,
+   ir_ternop_mix,
+   ir_last_ternop = ir_ternop_mix,
+	
    ir_quadop_vector,
 
    /**
@@ -1063,7 +1067,13 @@ public:
    ir_expression(int op, const struct glsl_type *type,
 		 ir_rvalue *, ir_rvalue *);
    ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1);
-
+	
+   /**
+	* Constructor for ternary operation expressions
+    */
+   ir_expression(int op, const struct glsl_type *type,
+         ir_rvalue *op0, ir_rvalue *op1, ir_rvalue *op2);
+	
    /**
     * Constructor for quad operator expressions
     */

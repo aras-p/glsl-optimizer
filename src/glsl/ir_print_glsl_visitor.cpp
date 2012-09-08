@@ -456,6 +456,9 @@ static const char *const operator_glsl_strs[] = {
 	"min",
 	"max",
 	"pow",
+	"uboloadTODO",
+	"clamp",
+	"mix",
 	"vectorTODO",
 };
 
@@ -523,7 +526,8 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 		if (ir->operation == ir_binop_mod)
             ralloc_asprintf_append (&buffer, "))");
 	}
-	else {
+	else if (ir->get_num_operands() == 2)
+	{
 		ralloc_asprintf_append (&buffer, "(");
 		if (ir->operands[0])
 			ir->operands[0]->accept(this);
@@ -534,7 +538,20 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 			ir->operands[1]->accept(this);
 		ralloc_asprintf_append (&buffer, ")");
 	}
-
+	else
+	{
+		// ternary op
+		ralloc_asprintf_append (&buffer, "%s (", operator_glsl_strs[ir->operation]);
+		if (ir->operands[0])
+			ir->operands[0]->accept(this);
+		ralloc_asprintf_append (&buffer, ", ");
+		if (ir->operands[1])
+			ir->operands[1]->accept(this);
+		ralloc_asprintf_append (&buffer, ", ");
+		if (ir->operands[2])
+			ir->operands[2]->accept(this);
+		ralloc_asprintf_append (&buffer, ")");
+	}
 }
 
 // [glsl_sampler_dim]
