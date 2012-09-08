@@ -27,7 +27,7 @@ void main ()
   vec3 tmpvar_6;
   tmpvar_6 = (tmpvar_5 * (gl_Vertex.xyz - ((_World2Object * tmpvar_4).xyz * unity_Scale.w)));
   vec3 tmpvar_7;
-  tmpvar_7 = (cross (gl_Normal, TANGENT.xyz) * TANGENT.w);
+  tmpvar_7 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_8;
   tmpvar_8[0].x = TANGENT.x;
   tmpvar_8[0].y = tmpvar_7.x;
@@ -50,7 +50,6 @@ void main ()
   vec4 o_12;
   vec4 tmpvar_13;
   tmpvar_13 = (tmpvar_3 * 0.500000);
-  o_12 = tmpvar_13;
   vec2 tmpvar_14;
   tmpvar_14.x = tmpvar_13.x;
   tmpvar_14.y = (tmpvar_13.y * _ProjectionParams.x);

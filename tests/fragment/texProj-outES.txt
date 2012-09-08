@@ -5,6 +5,6 @@ uniform sampler2DShadow shadowmap;
 uniform sampler2D tex;
 void main ()
 {
-  gl_FragColor = (((((texture2DProj (tex, vec3(uv.xy, uv.w)) + texture2DProj (tex, vec3(uv.xy, uv.z))) + texture2DProjLod (tex, vec3(uv.xy, uv.w), 1.00000)) + texture2DProjLod (tex, vec3(uv.xy, uv.z), 1.00000)) + vec4(shadow2DEXT (shadowmap, vec3(uv.xy, uv.z)))) + vec4(shadow2DProjEXT (shadowmap, vec4(uv.xy, uv.z, uv.w))));
+  gl_FragColor = (((((texture2DProj (tex, uv) + texture2DProj (tex, uv.xyz)) + texture2DProjLod (tex, uv, 1.00000)) + texture2DProjLod (tex, uv.xyz, 1.00000)) + vec4(shadow2DEXT (shadowmap, uv.xyz))) + vec4(shadow2DProjEXT (shadowmap, uv)));
 }
 

@@ -16,11 +16,11 @@ void main ()
 {
   vec4 tmpvar_1;
   vec4 tmpvar_2;
-  tmpvar_1 = gl_Vertex;
-  tmpvar_2 = TANGENT;
+  tmpvar_1.w = gl_Vertex.w;
+  tmpvar_2.w = TANGENT.w;
   tmpvar_1.xyz = (gl_Vertex.xyz * _Scale.xyz);
   vec4 pos_3;
-  pos_3 = tmpvar_1;
+  pos_3.w = tmpvar_1.w;
   vec3 bend_4;
   float tmpvar_5;
   tmpvar_5 = (dot (_Object2World[3].xyz, vec3(1.00000, 1.00000, 1.00000)) + gl_Color.x);
@@ -28,12 +28,12 @@ void main ()
   tmpvar_6.x = dot (tmpvar_1.xyz, vec3((gl_Color.y + tmpvar_5)));
   tmpvar_6.y = tmpvar_5;
   vec4 tmpvar_7;
-  tmpvar_7 = abs (((fract ((((fract (((_TimeX + tmpvar_6).xxyy * vec4(1.97500, 0.793000, 0.375000, 0.193000))) * 2.00000) - 1.00000) + 0.500000)) * 2.00000) - 1.00000));
+  tmpvar_7 = abs(((fract((((fract(((_TimeX + tmpvar_6).xxyy * vec4(1.97500, 0.793000, 0.375000, 0.193000))) * 2.00000) - 1.00000) + 0.500000)) * 2.00000) - 1.00000));
   vec4 tmpvar_8;
   tmpvar_8 = ((tmpvar_7 * tmpvar_7) * (3.00000 - (2.00000 * tmpvar_7)));
   vec2 tmpvar_9;
   tmpvar_9 = (tmpvar_8.xz + tmpvar_8.yw);
-  bend_4 = ((gl_Color.y * 0.100000) * gl_Normal);
+  bend_4.xz = ((gl_Color.y * 0.100000) * gl_Normal).xz;
   bend_4.y = (gl_MultiTexCoord1.y * 0.300000);
   pos_3.xyz = (tmpvar_1.xyz + (((tmpvar_9.xyx * bend_4) + ((_Wind.xyz * tmpvar_9.y) * gl_MultiTexCoord1.y)) * _Wind.w));
   pos_3.xyz = (pos_3.xyz + (gl_MultiTexCoord1.x * _Wind.xyz));
@@ -50,12 +50,12 @@ void main ()
   tmpvar_13.xyz = (gl_Color.w * _Color.xyz);
   tmpvar_13.w = _Color.w;
   vec3 tmpvar_14;
-  tmpvar_14 = normalize (gl_Normal);
-  tmpvar_2.xyz = normalize (TANGENT.xyz);
+  tmpvar_14 = normalize(gl_Normal);
+  tmpvar_2.xyz = normalize(TANGENT.xyz);
   vec4 tmpvar_15;
   tmpvar_15 = (gl_ModelViewProjectionMatrix * tmpvar_12);
   vec3 tmpvar_16;
-  tmpvar_16 = (cross (tmpvar_14, tmpvar_2.xyz) * TANGENT.w);
+  tmpvar_16 = (((tmpvar_14.yzx * tmpvar_2.zxy) - (tmpvar_14.zxy * tmpvar_2.yzx)) * TANGENT.w);
   mat3 tmpvar_17;
   tmpvar_17[0].x = tmpvar_2.x;
   tmpvar_17[0].y = tmpvar_16.x;

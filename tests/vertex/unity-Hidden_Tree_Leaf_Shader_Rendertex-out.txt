@@ -5,12 +5,12 @@ void main ()
 {
   vec3 lightColor_1;
   float tmpvar_2;
-  tmpvar_2 = (1.00000 - abs (TANGENT.w));
+  tmpvar_2 = (1.00000 - abs(TANGENT.w));
   vec4 tmpvar_3;
   tmpvar_3.w = 0.00000;
   tmpvar_3.xyz = gl_Normal;
   vec3 tmpvar_4;
-  tmpvar_4 = mix (gl_Normal, normalize ((tmpvar_3 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(tmpvar_2));
+  tmpvar_4 = mix (gl_Normal, normalize((tmpvar_3 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(tmpvar_2));
   lightColor_1 = gl_LightModel.ambient.xyz;
   lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[0] * max (0.00000, ((dot (_TerrainTreeLightDirections[0], tmpvar_4) * 0.500000) + 0.500000))).xyz);
   lightColor_1 = (lightColor_1 + (_TerrainTreeLightColors[1] * max (0.00000, ((dot (_TerrainTreeLightDirections[1], tmpvar_4) * 0.500000) + 0.500000))).xyz);

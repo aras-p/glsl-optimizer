@@ -12,14 +12,13 @@ void main ()
   vec4 o_2;
   vec4 tmpvar_3;
   tmpvar_3 = (tmpvar_1 * 0.500000);
-  o_2 = tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4.x = tmpvar_3.x;
   tmpvar_4.y = (tmpvar_3.y * _ProjectionParams.x);
   o_2.xy = (tmpvar_4 + tmpvar_3.w);
   o_2.zw = tmpvar_1.zw;
   vec3 tmpvar_5;
-  tmpvar_5 = (cross (gl_Normal, TANGENT.xyz) * TANGENT.w);
+  tmpvar_5 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_6;
   tmpvar_6[0].x = TANGENT.x;
   tmpvar_6[0].y = tmpvar_5.x;

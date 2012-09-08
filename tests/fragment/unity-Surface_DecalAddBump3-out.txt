@@ -11,11 +11,11 @@ void main ()
   tmpvar_3 = (texture2D (_Decal, tmpvar_1.xy).xyz * 0.500000);
   vec4 normal_4;
   normal_4.xy = ((texture2D (_DecalBump, tmpvar_1.zw).wy * 2.00000) - 1.00000);
-  normal_4.z = sqrt (((1.00000 - (normal_4.x * normal_4.x)) - (normal_4.y * normal_4.y)));
+  normal_4.z = sqrt(((1.00000 - (normal_4.x * normal_4.x)) - (normal_4.y * normal_4.y)));
   vec4 c_5;
   c_5.xyz = ((tmpvar_3 * _LightColor0.xyz) * ((max (0.00000, dot (normal_4.xyz, gl_TexCoord[1].xyz)) * texture2DProj (_ShadowMapTexture, gl_TexCoord[3]).x) * 2.00000));
   c_5.w = 0.00000;
-  c_2 = c_5;
+  c_2.w = c_5.w;
   c_2.xyz = (c_5.xyz + (tmpvar_3 * gl_TexCoord[2].xyz));
   gl_FragData[0] = c_2;
 }

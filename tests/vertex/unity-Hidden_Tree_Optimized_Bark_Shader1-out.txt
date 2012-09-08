@@ -9,10 +9,10 @@ void main ()
 {
   vec4 tmpvar_1;
   vec4 tmpvar_2;
-  tmpvar_2 = gl_Vertex;
+  tmpvar_2.w = gl_Vertex.w;
   tmpvar_2.xyz = (gl_Vertex.xyz * _Scale.xyz);
   vec4 pos_3;
-  pos_3 = tmpvar_2;
+  pos_3.w = tmpvar_2.w;
   vec3 bend_4;
   float tmpvar_5;
   tmpvar_5 = (dot (_Object2World[3].xyz, vec3(1.00000, 1.00000, 1.00000)) + gl_Color.x);
@@ -20,12 +20,12 @@ void main ()
   tmpvar_6.x = dot (tmpvar_2.xyz, vec3((gl_Color.y + tmpvar_5)));
   tmpvar_6.y = tmpvar_5;
   vec4 tmpvar_7;
-  tmpvar_7 = abs (((fract ((((fract (((_TimeX + tmpvar_6).xxyy * vec4(1.97500, 0.793000, 0.375000, 0.193000))) * 2.00000) - 1.00000) + 0.500000)) * 2.00000) - 1.00000));
+  tmpvar_7 = abs(((fract((((fract(((_TimeX + tmpvar_6).xxyy * vec4(1.97500, 0.793000, 0.375000, 0.193000))) * 2.00000) - 1.00000) + 0.500000)) * 2.00000) - 1.00000));
   vec4 tmpvar_8;
   tmpvar_8 = ((tmpvar_7 * tmpvar_7) * (3.00000 - (2.00000 * tmpvar_7)));
   vec2 tmpvar_9;
   tmpvar_9 = (tmpvar_8.xz + tmpvar_8.yw);
-  bend_4 = ((gl_Color.y * 0.100000) * gl_Normal);
+  bend_4.xz = ((gl_Color.y * 0.100000) * gl_Normal).xz;
   bend_4.y = (gl_MultiTexCoord1.y * 0.300000);
   pos_3.xyz = (tmpvar_2.xyz + (((tmpvar_9.xyx * bend_4) + ((_Wind.xyz * tmpvar_9.y) * gl_MultiTexCoord1.y)) * _Wind.w));
   pos_3.xyz = (pos_3.xyz + (gl_MultiTexCoord1.x * _Wind.xyz));
@@ -36,12 +36,10 @@ void main ()
   tmpvar_11.w = 1.00000;
   tmpvar_11.xyz = mix ((pos_3.xyz + (dot (_SquashPlaneNormal.xyz, (tmpvar_10 - pos_3.xyz)) * _SquashPlaneNormal.xyz)), pos_3.xyz, vec3(_SquashAmount));
   tmpvar_2 = tmpvar_11;
-  vec4 tmpvar_12;
-  tmpvar_12 = (gl_ModelViewProjectionMatrix * tmpvar_11);
-  tmpvar_1 = tmpvar_12;
-  tmpvar_1.z = (tmpvar_12.z + unity_LightShadowBias.x);
-  if ((tmpvar_1.z < -(tmpvar_12.w))) {
-    tmpvar_1.z = -(tmpvar_12.w);
+  tmpvar_1 = (gl_ModelViewProjectionMatrix * tmpvar_11);
+  tmpvar_1.z = (tmpvar_1.z + unity_LightShadowBias.x);
+  if ((tmpvar_1.z < -(tmpvar_1.w))) {
+    tmpvar_1.z = -(tmpvar_1.w);
   };
   gl_Position = tmpvar_1;
 }

@@ -11,10 +11,10 @@ void main ()
   tmpvar_3 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
   vec4 normal_4;
   normal_4.xy = ((texture2D (_BumpMap, tmpvar_2).wy * 2.00000) - 1.00000);
-  normal_4.z = sqrt (((1.00000 - (normal_4.x * normal_4.x)) - (normal_4.y * normal_4.y)));
+  normal_4.z = sqrt(((1.00000 - (normal_4.x * normal_4.x)) - (normal_4.y * normal_4.y)));
   vec4 tmpvar_5;
-  tmpvar_5 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1])));
-  light_1 = tmpvar_5;
+  tmpvar_5 = -(log2(texture2DProj (_LightBuffer, gl_TexCoord[1])));
+  light_1.w = tmpvar_5.w;
   light_1.xyz = (tmpvar_5.xyz + unity_Ambient.xyz);
   vec4 c_6;
   c_6.xyz = (tmpvar_3.xyz * light_1.xyz);

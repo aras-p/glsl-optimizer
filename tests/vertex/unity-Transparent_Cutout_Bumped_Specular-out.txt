@@ -7,7 +7,7 @@ void main ()
   tmpvar_1.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   tmpvar_1.zw = ((gl_MultiTexCoord0.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
   vec3 tmpvar_2;
-  tmpvar_2 = (cross (gl_Normal, TANGENT.xyz) * TANGENT.w);
+  tmpvar_2 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_3;
   tmpvar_3[0].x = TANGENT.x;
   tmpvar_3[0].y = tmpvar_2.x;

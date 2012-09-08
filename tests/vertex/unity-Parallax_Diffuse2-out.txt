@@ -19,7 +19,6 @@ void main ()
   vec4 o_4;
   vec4 tmpvar_5;
   tmpvar_5 = (tmpvar_3 * 0.500000);
-  o_4 = tmpvar_5;
   vec2 tmpvar_6;
   tmpvar_6.x = tmpvar_5.x;
   tmpvar_6.y = (tmpvar_5.y * _ProjectionParams.x);
@@ -28,7 +27,7 @@ void main ()
   tmpvar_2.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
   tmpvar_2.z = ((-((gl_ModelViewMatrix * gl_Vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w);
   vec3 tmpvar_7;
-  tmpvar_7 = (cross (gl_Normal, TANGENT.xyz) * TANGENT.w);
+  tmpvar_7 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_8;
   tmpvar_8[0].x = TANGENT.x;
   tmpvar_8[0].y = tmpvar_7.x;

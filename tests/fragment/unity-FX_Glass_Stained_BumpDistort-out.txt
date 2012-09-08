@@ -8,10 +8,10 @@ void main ()
   vec4 tmpvar_1;
   tmpvar_1 = gl_TexCoord[0];
   vec4 tmpvar_2;
-  tmpvar_2 = tmpvar_1;
+  tmpvar_2.zw = tmpvar_1.zw;
   vec4 normal_3;
   normal_3.xy = ((texture2D (_BumpMap, gl_TexCoord[1].xy).wy * 2.00000) - 1.00000);
-  normal_3.z = sqrt (((1.00000 - (normal_3.x * normal_3.x)) - (normal_3.y * normal_3.y)));
+  normal_3.z = sqrt(((1.00000 - (normal_3.x * normal_3.x)) - (normal_3.y * normal_3.y)));
   tmpvar_2.xy = ((((normal_3.xy * _BumpAmt) * _GrabTexture_TexelSize.xy) * tmpvar_1.z) + tmpvar_1.xy);
   gl_FragData[0] = (texture2DProj (_GrabTexture, tmpvar_2) * texture2D (_MainTex, gl_TexCoord[2].xy));
 }
