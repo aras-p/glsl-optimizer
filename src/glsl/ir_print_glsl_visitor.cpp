@@ -530,8 +530,8 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 }
 
 // [glsl_sampler_dim]
-static const char* tex_sampler_dim_func[] = {
-	"texture1D", "texture2D", "texture3D", "textureCube", "textureRect", "textureBuf",
+static const char* tex_sampler_dim_name[] = {
+	"1D", "2D", "3D", "Cube", "Rect", "Buf",
 };
 
 
@@ -539,7 +539,8 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 {
 	// texture function name
 	glsl_sampler_dim sampler_dim = (glsl_sampler_dim)ir->sampler->type->sampler_dimensionality;
-	ralloc_asprintf_append (&buffer, "%s", tex_sampler_dim_func[sampler_dim]);
+	ralloc_asprintf_append (&buffer, "%s", ir->sampler->type->sampler_shadow ? "shadow" : "texture");
+	ralloc_asprintf_append (&buffer, "%s", tex_sampler_dim_name[sampler_dim]);
 	
 	if (ir->projector)
 		ralloc_asprintf_append (&buffer, "Proj");
@@ -553,19 +554,31 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	ralloc_asprintf_append (&buffer, ", ");
 	
 	// texture coordinate
-	if (!ir->projector)
+	const glsl_type* uv_type = ir->coordinate->type;
+	if (ir->shadow_comparitor)
+		uv_type = glsl_type::get_instance(uv_type->base_type, uv_type->vector_elements+1, uv_type->matrix_columns);
+	if (ir->projector)
+		uv_type = glsl_type::get_instance(uv_type->base_type, uv_type->vector_elements+1, uv_type->matrix_columns);
+	if (uv_type != ir->coordinate->type)
 	{
-		ir->coordinate->accept(this);
-	}
-	else
-	{
-		const glsl_type* uv_type = ir->coordinate->type;
-		const glsl_type* proj_type = glsl_type::get_instance(uv_type->base_type, uv_type->vector_elements+1, uv_type->matrix_columns);
-		buffer = print_type(buffer, proj_type, false);
+		buffer = print_type(buffer, uv_type, false);
 		ralloc_asprintf_append (&buffer, "(");
-		ir->coordinate->accept(this);
+	}
+	
+	ir->coordinate->accept(this);
+	if (ir->shadow_comparitor)
+	{
+		ralloc_asprintf_append (&buffer, ", ");
+		ir->shadow_comparitor->accept(this);
+	}
+	if (ir->projector)
+	{
 		ralloc_asprintf_append (&buffer, ", ");
 		ir->projector->accept(this);
+	}
+	
+	if (uv_type != ir->coordinate->type)
+	{
 		ralloc_asprintf_append (&buffer, ")");
 	}
 	
