@@ -245,6 +245,54 @@ tex_storage_error_check(struct gl_context *ctx, GLuint dims, GLenum target,
    const GLboolean isProxy = _mesa_is_proxy_texture(target);
    struct gl_texture_object *texObj;
    GLuint maxDim;
+   GLboolean legalFormat;
+
+   /* check internal format - note that only sized formats are allowed */
+   switch (internalformat) {
+   case GL_ALPHA:
+   case GL_LUMINANCE:
+   case GL_LUMINANCE_ALPHA:
+   case GL_INTENSITY:
+   case GL_RED:
+   case GL_RG:
+   case GL_RGB:
+   case GL_RGBA:
+   case GL_BGRA:
+   case GL_DEPTH_COMPONENT:
+   case GL_DEPTH_STENCIL:
+   case GL_COMPRESSED_ALPHA:
+   case GL_COMPRESSED_LUMINANCE_ALPHA:
+   case GL_COMPRESSED_LUMINANCE:
+   case GL_COMPRESSED_INTENSITY:
+   case GL_COMPRESSED_RGB:
+   case GL_COMPRESSED_RGBA:
+   case GL_COMPRESSED_SRGB:
+   case GL_COMPRESSED_SRGB_ALPHA:
+   case GL_COMPRESSED_SLUMINANCE:
+   case GL_COMPRESSED_SLUMINANCE_ALPHA:
+   case GL_RED_INTEGER:
+   case GL_GREEN_INTEGER:
+   case GL_BLUE_INTEGER:
+   case GL_ALPHA_INTEGER:
+   case GL_RGB_INTEGER:
+   case GL_RGBA_INTEGER:
+   case GL_BGR_INTEGER:
+   case GL_BGRA_INTEGER:
+   case GL_LUMINANCE_INTEGER_EXT:
+   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
+      /* these unsized formats are illegal */
+      legalFormat = GL_FALSE;
+      break;
+   default:
+      legalFormat = _mesa_base_tex_format(ctx, internalformat) > 0;
+   }
+
+   if (!legalFormat) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glTexStorage%uD(internalformat = %s)", dims,
+                  _mesa_lookup_enum_by_nr(internalformat));
+      return GL_TRUE;
+   }
 
    /* size check */
    if (width < 1 || height < 1 || depth < 1) {
