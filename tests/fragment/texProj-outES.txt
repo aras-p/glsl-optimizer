@@ -1,0 +1,23 @@
+#extension GL_EXT_shader_texture_lod : enable
+#extension GL_EXT_shadow_samplers : enable
+varying highp vec4 uv;
+uniform sampler2DShadow shadowmap;
+uniform sampler2D tex;
+void main ()
+{
+  lowp vec4 c_1;
+  lowp vec4 tmpvar_2;
+  tmpvar_2 = (((texture2DProj (tex, vec3(uv.xy, uv.w)) + texture2DProj (tex, vec3(uv.xy, uv.z))) + texture2DProjLod (tex, vec3(uv.xy, uv.w), 1.00000)) + texture2DProjLod (tex, vec3(uv.xy, uv.z), 1.00000));
+  highp float tmpvar_3;
+  tmpvar_3 = shadow2DEXT (shadowmap, vec3(uv.xy, uv.z));
+  highp vec4 tmpvar_4;
+  tmpvar_4 = (tmpvar_2 + vec4(tmpvar_3));
+  c_1 = tmpvar_4;
+  highp float tmpvar_5;
+  tmpvar_5 = shadow2DProjEXT (shadowmap, vec4(uv.xy, uv.z, uv.w));
+  highp vec4 tmpvar_6;
+  tmpvar_6 = (c_1 + vec4(tmpvar_5));
+  c_1 = tmpvar_6;
+  gl_FragColor = c_1;
+}
+

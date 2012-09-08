@@ -143,6 +143,7 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		src += "#define mediump\n";
 		src += "#define highp\n";
 		src += "#define texture2DLodEXT texture2DLod\n";
+		src += "#define texture2DProjLodEXT texture2DProjLod\n";
 		src += "float shadow2DEXT (sampler2DShadow s, vec3 p) { return shadow2D(s,p).r; }\n";
 		src += "float shadow2DProjEXT (sampler2DShadow s, vec4 p) { return shadow2DProj(s,p).r; }\n";
 	}
