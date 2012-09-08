@@ -144,12 +144,14 @@ static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_p
 
 static void propagate_precision_deref(ir_instruction *ir, void *data)
 {
+	// variable -> deference
 	ir_dereference_variable* der = ir->as_dereference_variable();
 	if (der && der->get_precision() == glsl_precision_undefined && der->var->precision != glsl_precision_undefined)
 	{
 		der->set_precision ((glsl_precision)der->var->precision);
 		*(bool*)data = true;
 	}
+	// swizzle value -> swizzle
 	ir_swizzle* swz = ir->as_swizzle();
 	if (swz && swz->get_precision() == glsl_precision_undefined && swz->val->get_precision() != glsl_precision_undefined)
 	{
@@ -158,6 +160,30 @@ static void propagate_precision_deref(ir_instruction *ir, void *data)
 	}
 	
 }
+
+static void propagate_precision_expr(ir_instruction *ir, void *data)
+{
+	ir_expression* expr = ir->as_expression();
+	if (!expr)
+		return;
+	if (expr->get_precision() != glsl_precision_undefined)
+		return;
+	
+	glsl_precision prec_params_max = glsl_precision_undefined;
+	for (int i = 0; i < expr->get_num_operands(); ++i)
+	{
+		ir_rvalue* op = expr->operands[i];
+		if (op && op->get_precision() != glsl_precision_undefined)
+			prec_params_max = higher_precision (prec_params_max, op->get_precision());
+	}
+	if (expr->get_precision() != prec_params_max)
+	{
+		expr->set_precision (prec_params_max);
+		*(bool*)data = true;
+	}
+	
+}
+
 
 static void propagate_precision_assign(ir_instruction *ir, void *data)
 {
@@ -179,16 +205,17 @@ static void propagate_precision_assign(ir_instruction *ir, void *data)
 	}
 }
 
-#if 0
 static void propagate_precision_call(ir_instruction *ir, void *data)
 {
 	ir_call* call = ir->as_call();
 	if (!call)
 		return;
-	if (call->get_precision() == glsl_precision_undefined /*&& call->get_callee()->precision == glsl_precision_undefined*/)
+	if (!call->return_deref)
+		return;
+	if (call->return_deref->get_precision() == glsl_precision_undefined /*&& call->callee->precision == glsl_precision_undefined*/)
 	{
 		glsl_precision prec_params_max = glsl_precision_undefined;
-		exec_list_iterator iter_sig  = call->get_callee()->parameters.iterator();
+		exec_list_iterator iter_sig  = call->callee->parameters.iterator();
 		foreach_iter(exec_list_iterator, iter_param, call->actual_parameters)
 		{
 			ir_variable* sig_param = (ir_variable*)iter_sig.get();
@@ -202,14 +229,13 @@ static void propagate_precision_call(ir_instruction *ir, void *data)
 			
 			iter_sig.next();
 		}
-		if (call->get_precision() != prec_params_max)
+		if (call->return_deref->get_precision() != prec_params_max)
 		{
-			call->set_precision (prec_params_max);
+			call->return_deref->set_precision (prec_params_max);
 			*(bool*)data = true;
 		}
 	}
 }
-#endif
 
 
 static bool propagate_precision(exec_list* list)
@@ -222,7 +248,8 @@ static bool propagate_precision(exec_list* list)
 			ir_instruction* ir = (ir_instruction*)iter.get();
 			visit_tree (ir, propagate_precision_deref, &res);
 			visit_tree (ir, propagate_precision_assign, &res);
-			//visit_tree (ir, propagate_precision_call, &res);
+			visit_tree (ir, propagate_precision_call, &res);
+			visit_tree (ir, propagate_precision_expr, &res);
 		}
 		anyProgress |= res;
 	} while (res);
