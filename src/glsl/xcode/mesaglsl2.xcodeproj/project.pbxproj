@@ -33,13 +33,11 @@
 		2B3A6BA215FA0494000DCBE1 /* lower_clip_distance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6B9C15FA0494000DCBE1 /* lower_clip_distance.cpp */; };
 		2B3A6BA315FA0494000DCBE1 /* lower_discard_flow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6B9D15FA0494000DCBE1 /* lower_discard_flow.cpp */; };
 		2B3A6BA415FA0494000DCBE1 /* lower_output_reads.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6B9E15FA0494000DCBE1 /* lower_output_reads.cpp */; };
-		2B3A6BA515FA0494000DCBE1 /* lower_texture_projection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6B9F15FA0494000DCBE1 /* lower_texture_projection.cpp */; };
 		2B3A6BA615FA0494000DCBE1 /* lower_ubo_reference.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6BA015FA0494000DCBE1 /* lower_ubo_reference.cpp */; };
 		2B3A6BA715FA0494000DCBE1 /* opt_array_splitting.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6BA115FA0494000DCBE1 /* opt_array_splitting.cpp */; };
 		2B3A6BA815FA0494000DCBE1 /* lower_clip_distance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6B9C15FA0494000DCBE1 /* lower_clip_distance.cpp */; };
 		2B3A6BA915FA0494000DCBE1 /* lower_discard_flow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6B9D15FA0494000DCBE1 /* lower_discard_flow.cpp */; };
 		2B3A6BAA15FA0494000DCBE1 /* lower_output_reads.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6B9E15FA0494000DCBE1 /* lower_output_reads.cpp */; };
-		2B3A6BAB15FA0494000DCBE1 /* lower_texture_projection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6B9F15FA0494000DCBE1 /* lower_texture_projection.cpp */; };
 		2B3A6BAC15FA0494000DCBE1 /* lower_ubo_reference.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6BA015FA0494000DCBE1 /* lower_ubo_reference.cpp */; };
 		2B3A6BAD15FA0494000DCBE1 /* opt_array_splitting.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6BA115FA0494000DCBE1 /* opt_array_splitting.cpp */; };
 		2B3A6BD915FA08E1000DCBE1 /* ir_builder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3A6BD715FA08E1000DCBE1 /* ir_builder.cpp */; };
@@ -241,7 +239,6 @@
 		2B3A6B9C15FA0494000DCBE1 /* lower_clip_distance.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_clip_distance.cpp; path = ../lower_clip_distance.cpp; sourceTree = SOURCE_ROOT; };
 		2B3A6B9D15FA0494000DCBE1 /* lower_discard_flow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_discard_flow.cpp; path = ../lower_discard_flow.cpp; sourceTree = SOURCE_ROOT; };
 		2B3A6B9E15FA0494000DCBE1 /* lower_output_reads.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_output_reads.cpp; path = ../lower_output_reads.cpp; sourceTree = SOURCE_ROOT; };
-		2B3A6B9F15FA0494000DCBE1 /* lower_texture_projection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_texture_projection.cpp; path = ../lower_texture_projection.cpp; sourceTree = SOURCE_ROOT; };
 		2B3A6BA015FA0494000DCBE1 /* lower_ubo_reference.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_ubo_reference.cpp; path = ../lower_ubo_reference.cpp; sourceTree = SOURCE_ROOT; };
 		2B3A6BA115FA0494000DCBE1 /* opt_array_splitting.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_array_splitting.cpp; path = ../opt_array_splitting.cpp; sourceTree = SOURCE_ROOT; };
 		2B3A6BD715FA08E1000DCBE1 /* ir_builder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_builder.cpp; path = ../ir_builder.cpp; sourceTree = SOURCE_ROOT; };
@@ -511,7 +508,6 @@
 				2B38544A1293BE5000F3E692 /* lower_mat_op_to_vec.cpp */,
 				2BBA49251254706A00D42573 /* lower_noise.cpp */,
 				2B3A6B9E15FA0494000DCBE1 /* lower_output_reads.cpp */,
-				2B3A6B9F15FA0494000DCBE1 /* lower_texture_projection.cpp */,
 				2B3A6BA015FA0494000DCBE1 /* lower_ubo_reference.cpp */,
 				2BBA49261254706A00D42573 /* lower_variable_index_to_cond_assign.cpp */,
 				2B38544D1293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp */,
@@ -780,7 +776,6 @@
 				2B3A6BA215FA0494000DCBE1 /* lower_clip_distance.cpp in Sources */,
 				2B3A6BA315FA0494000DCBE1 /* lower_discard_flow.cpp in Sources */,
 				2B3A6BA415FA0494000DCBE1 /* lower_output_reads.cpp in Sources */,
-				2B3A6BA515FA0494000DCBE1 /* lower_texture_projection.cpp in Sources */,
 				2B3A6BA615FA0494000DCBE1 /* lower_ubo_reference.cpp in Sources */,
 				2B3A6BA715FA0494000DCBE1 /* opt_array_splitting.cpp in Sources */,
 				2B3A6BD915FA08E1000DCBE1 /* ir_builder.cpp in Sources */,
@@ -867,7 +862,6 @@
 				2B3A6BA815FA0494000DCBE1 /* lower_clip_distance.cpp in Sources */,
 				2B3A6BA915FA0494000DCBE1 /* lower_discard_flow.cpp in Sources */,
 				2B3A6BAA15FA0494000DCBE1 /* lower_output_reads.cpp in Sources */,
-				2B3A6BAB15FA0494000DCBE1 /* lower_texture_projection.cpp in Sources */,
 				2B3A6BAC15FA0494000DCBE1 /* lower_ubo_reference.cpp in Sources */,
 				2B3A6BAD15FA0494000DCBE1 /* opt_array_splitting.cpp in Sources */,
 				2B3A6BDA15FA08E1000DCBE1 /* ir_builder.cpp in Sources */,
