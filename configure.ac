@@ -1839,10 +1839,12 @@ if test "x$with_gallium_drivers" != x; then
     for driver in $gallium_drivers; do
         case "x$driver" in
         xsvga)
+            HAVE_GALLIUM_SVGA=yes
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga softpipe"
             gallium_check_st "svga/drm" "dri-vmwgfx" "" "xa-vmwgfx"
             ;;
         xi915)
+            HAVE_GALLIUM_I915=yes
             PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 softpipe"
             if test "x$MESA_LLVM" = x1; then
@@ -1852,12 +1854,14 @@ if test "x$with_gallium_drivers" != x; then
             gallium_check_st "i915/drm" "dri-i915" "xorg-i915"
             ;;
         xr300)
+            HAVE_GALLIUM_R300=yes
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
             gallium_require_llvm "Gallium R300"
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
             gallium_check_st "radeon/drm" "dri-r300" "xorg-r300" "" "xvmc-r300" "vdpau-r300"
             ;;
         xr600)
+            HAVE_GALLIUM_R600=yes
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
@@ -1874,6 +1878,7 @@ if test "x$with_gallium_drivers" != x; then
             gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600"
             ;;
         xradeonsi)
+            HAVE_GALLIUM_RADEONSI=yes
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
@@ -1882,14 +1887,17 @@ if test "x$with_gallium_drivers" != x; then
             gallium_check_st "radeon/drm" "dri-radeonsi" "xorg-radeonsi" "" "" "vdpau-radeonsi" ""
             ;;
         xnouveau)
+            HAVE_GALLIUM_NOUVEAU=yes
             PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NOUVEAU_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nv30 nv50 nvc0"
             gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau" "" "xvmc-nouveau" "vdpau-nouveau"
             ;;
         xswrast)
+            HAVE_GALLIUM_SOFTPIPE=yes
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS softpipe"
             if test "x$MESA_LLVM" = x1; then
+                HAVE_GALLIUM_LLVMPIPE=yes
                 GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
             fi
 
@@ -1915,6 +1923,14 @@ if test "x$with_gallium_drivers" != x; then
         esac
     done
 fi
+AM_CONDITIONAL(HAVE_GALLIUM_SVGA, test "x$HAVE_GALLIUM_SVGA" = xyes)
+AM_CONDITIONAL(HAVE_GALLIUM_I915, test "x$HAVE_GALLIUM_I915" = xyes)
+AM_CONDITIONAL(HAVE_GALLIUM_R300, test "x$HAVE_GALLIUM_R300" = xyes)
+AM_CONDITIONAL(HAVE_GALLIUM_R600, test "x$HAVE_GALLIUM_R600" = xyes)
+AM_CONDITIONAL(HAVE_GALLIUM_RADEONSI, test "x$HAVE_GALLIUM_RADEONSI" = xyes)
+AM_CONDITIONAL(HAVE_GALLIUM_NOUVEAU, test "x$HAVE_GALLIUM_NOUVEAU" = xyes)
+AM_CONDITIONAL(HAVE_GALLIUM_SOFTPIPE, test "x$HAVE_GALLIUM_SOFTPIPE" = xyes)
+AM_CONDITIONAL(HAVE_GALLIUM_LLVMPIPE, test "x$HAVE_GALLIUM_LLVMPIPE" = xyes)
 
 if test "x$enable_gallium_loader" = xyes; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/null"
