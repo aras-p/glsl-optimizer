@@ -546,7 +546,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	if (ir->op == ir_txl)
 		ralloc_asprintf_append (&buffer, "Lod");
 	
-	ralloc_asprintf_append (&buffer, "(");
+	ralloc_asprintf_append (&buffer, " (");
 	
 	// sampler
 	ir->sampler->accept(this);
