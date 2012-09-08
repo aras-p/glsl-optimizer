@@ -450,134 +450,128 @@ vec3 FxaaPixelShader (
     bool tmpvar_180;
     tmpvar_180 = tmpvar_178;
     doneP_31 = tmpvar_180;
-    bool tmpvar_181;
-    if (doneN_32) {
-      tmpvar_181 = doneP_31;
-    } else {
-      tmpvar_181 = bool(0);
-    };
-    if (tmpvar_181) {
+    if ((doneN_32 && doneP_31)) {
       break;
     };
     if (!(doneN_32)) {
-      vec2 tmpvar_182;
-      tmpvar_182 = (posN_37 - offNP_35);
-      posN_37 = tmpvar_182;
+      vec2 tmpvar_181;
+      tmpvar_181 = (posN_37 - offNP_35);
+      posN_37 = tmpvar_181;
     };
     if (!(doneP_31)) {
-      vec2 tmpvar_183;
-      tmpvar_183 = (posP_36 + offNP_35);
-      posP_36 = tmpvar_183;
+      vec2 tmpvar_182;
+      tmpvar_182 = (posP_36 + offNP_35);
+      posP_36 = tmpvar_182;
     };
-    int _post_incdec_tmp_184;
-    _post_incdec_tmp_184 = i_30;
-    int tmpvar_185;
-    tmpvar_185 = (i_30 + 1);
-    i_30 = tmpvar_185;
+    int _post_incdec_tmp_183;
+    _post_incdec_tmp_183 = i_30;
+    int tmpvar_184;
+    tmpvar_184 = (i_30 + 1);
+    i_30 = tmpvar_184;
+  };
+  float tmpvar_185;
+  if (horzSpan_42) {
+    tmpvar_185 = (pos_21.x - posN_37.x);
+  } else {
+    tmpvar_185 = (pos_21.y - posN_37.y);
   };
   float tmpvar_186;
-  if (horzSpan_42) {
-    tmpvar_186 = (pos_21.x - posN_37.x);
-  } else {
-    tmpvar_186 = (pos_21.y - posN_37.y);
-  };
+  tmpvar_186 = tmpvar_185;
+  dstN_29 = tmpvar_186;
   float tmpvar_187;
-  tmpvar_187 = tmpvar_186;
-  dstN_29 = tmpvar_187;
-  float tmpvar_188;
   if (horzSpan_42) {
-    tmpvar_188 = (posP_36.x - pos_21.x);
+    tmpvar_187 = (posP_36.x - pos_21.x);
   } else {
-    tmpvar_188 = (posP_36.y - pos_21.y);
+    tmpvar_187 = (posP_36.y - pos_21.y);
   };
-  float tmpvar_189;
-  tmpvar_189 = tmpvar_188;
-  dstP_28 = tmpvar_189;
-  bool tmpvar_190;
-  tmpvar_190 = (dstN_29 < dstP_28);
-  directionN_27 = tmpvar_190;
+  float tmpvar_188;
+  tmpvar_188 = tmpvar_187;
+  dstP_28 = tmpvar_188;
+  bool tmpvar_189;
+  tmpvar_189 = (dstN_29 < dstP_28);
+  directionN_27 = tmpvar_189;
+  float tmpvar_190;
+  if (directionN_27) {
+    tmpvar_190 = lumaEndN_34;
+  } else {
+    tmpvar_190 = lumaEndP_33;
+  };
   float tmpvar_191;
-  if (directionN_27) {
-    tmpvar_191 = lumaEndN_34;
-  } else {
-    tmpvar_191 = lumaEndP_33;
-  };
-  float tmpvar_192;
-  tmpvar_192 = tmpvar_191;
-  lumaEndN_34 = tmpvar_192;
+  tmpvar_191 = tmpvar_190;
+  lumaEndN_34 = tmpvar_191;
   if ((((lumaM_62 - lumaN_64) < 0.00000) == ((lumaEndN_34 - lumaN_64) < 0.00000))) {
-    float tmpvar_193;
-    tmpvar_193 = 0.00000;
-    lengthSign_41 = tmpvar_193;
+    float tmpvar_192;
+    tmpvar_192 = 0.00000;
+    lengthSign_41 = tmpvar_192;
   };
+  float tmpvar_193;
+  tmpvar_193 = (dstP_28 + dstN_29);
+  spanLength_26 = tmpvar_193;
   float tmpvar_194;
-  tmpvar_194 = (dstP_28 + dstN_29);
-  spanLength_26 = tmpvar_194;
-  float tmpvar_195;
   if (directionN_27) {
-    tmpvar_195 = dstN_29;
+    tmpvar_194 = dstN_29;
   } else {
-    tmpvar_195 = dstP_28;
+    tmpvar_194 = dstP_28;
   };
+  float tmpvar_195;
+  tmpvar_195 = tmpvar_194;
+  dstN_29 = tmpvar_195;
   float tmpvar_196;
-  tmpvar_196 = tmpvar_195;
-  dstN_29 = tmpvar_196;
+  tmpvar_196 = ((0.500000 + (dstN_29 * (-(1.00000) / spanLength_26))) * lengthSign_41);
+  subPixelOffset_25 = tmpvar_196;
   float tmpvar_197;
-  tmpvar_197 = ((0.500000 + (dstN_29 * (-(1.00000) / spanLength_26))) * lengthSign_41);
-  subPixelOffset_25 = tmpvar_197;
+  if (horzSpan_42) {
+    tmpvar_197 = 0.00000;
+  } else {
+    tmpvar_197 = subPixelOffset_25;
+  };
   float tmpvar_198;
   if (horzSpan_42) {
-    tmpvar_198 = 0.00000;
-  } else {
     tmpvar_198 = subPixelOffset_25;
-  };
-  float tmpvar_199;
-  if (horzSpan_42) {
-    tmpvar_199 = subPixelOffset_25;
   } else {
-    tmpvar_199 = 0.00000;
+    tmpvar_198 = 0.00000;
   };
-  vec2 tmpvar_200;
-  tmpvar_200.x = (pos_21.x + tmpvar_198);
-  tmpvar_200.y = (pos_21.y + tmpvar_199);
-  vec4 tmpvar_201;
-  tmpvar_201 = FxaaTexLod0 (tex_22, tmpvar_200);
+  vec2 tmpvar_199;
+  tmpvar_199.x = (pos_21.x + tmpvar_197);
+  tmpvar_199.y = (pos_21.y + tmpvar_198);
+  vec4 tmpvar_200;
+  tmpvar_200 = FxaaTexLod0 (tex_22, tmpvar_199);
+  vec3 tmpvar_201;
+  tmpvar_201 = tmpvar_200.xyz;
+  rgbF_24 = tmpvar_201;
   vec3 tmpvar_202;
-  tmpvar_202 = tmpvar_201.xyz;
-  rgbF_24 = tmpvar_202;
+  tmpvar_202 = FxaaLerp3 (rgbL_56, rgbF_24, blendL_53);
   vec3 tmpvar_203;
-  tmpvar_203 = FxaaLerp3 (rgbL_56, rgbF_24, blendL_53);
-  vec3 tmpvar_204;
-  tmpvar_204 = FxaaFilterReturn (tmpvar_203);
-  return tmpvar_204;
+  tmpvar_203 = FxaaFilterReturn (tmpvar_202);
+  return tmpvar_203;
 }
 
 vec4 xlat_main (
-  in vec2 uv_205
+  in vec2 uv_204
 )
 {
-  vec3 tmpvar_206;
-  tmpvar_206 = FxaaPixelShader (uv_205.xy, _MainTex, _MainTex_TexelSize.xy);
-  vec4 tmpvar_207;
-  tmpvar_207.w = 0.00000;
-  tmpvar_207.xyz = tmpvar_206.xyz.xyz;
-  return tmpvar_207;
+  vec3 tmpvar_205;
+  tmpvar_205 = FxaaPixelShader (uv_204.xy, _MainTex, _MainTex_TexelSize.xy);
+  vec4 tmpvar_206;
+  tmpvar_206.w = 0.00000;
+  tmpvar_206.xyz = tmpvar_205.xyz.xyz;
+  return tmpvar_206;
 }
 
 void main ()
 {
-  vec4 xl_retval_208;
-  vec2 tmpvar_209;
-  tmpvar_209 = xlv_TEXCOORD0.xy;
+  vec4 xl_retval_207;
+  vec2 tmpvar_208;
+  tmpvar_208 = xlv_TEXCOORD0.xy;
+  vec4 tmpvar_209;
+  tmpvar_209 = xlat_main (tmpvar_208);
   vec4 tmpvar_210;
-  tmpvar_210 = xlat_main (tmpvar_209);
+  tmpvar_210 = tmpvar_209;
+  xl_retval_207 = tmpvar_210;
   vec4 tmpvar_211;
-  tmpvar_211 = tmpvar_210;
-  xl_retval_208 = tmpvar_211;
+  tmpvar_211 = xl_retval_207.xyzw;
   vec4 tmpvar_212;
-  tmpvar_212 = xl_retval_208.xyzw;
-  vec4 tmpvar_213;
-  tmpvar_213 = tmpvar_212;
-  gl_FragData[0] = tmpvar_213;
+  tmpvar_212 = tmpvar_211;
+  gl_FragData[0] = tmpvar_212;
 }
 

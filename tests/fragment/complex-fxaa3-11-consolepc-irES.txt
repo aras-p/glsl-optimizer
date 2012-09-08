@@ -252,66 +252,60 @@ lowp vec4 FxaaPixelShader (
   tmpvar_117 = (((rgbyN2_25 + rgbyP2_24) * 0.250000) + (rgbyA_23 * 0.250000));
   rgbyB_22 = tmpvar_117;
   bool tmpvar_118;
-  if ((rgbyB_22.y < lumaMin_39)) {
-    tmpvar_118 = bool(1);
-  } else {
-    tmpvar_118 = (rgbyB_22.y > lumaMax_40);
-  };
-  bool tmpvar_119;
-  tmpvar_119 = tmpvar_118;
-  twoTap_21 = tmpvar_119;
+  tmpvar_118 = ((rgbyB_22.y < lumaMin_39) || (rgbyB_22.y > lumaMax_40));
+  twoTap_21 = tmpvar_118;
   if (twoTap_21) {
-    lowp vec3 tmpvar_120;
-    tmpvar_120 = (rgbyA_23.xyz * 0.500000);
-    rgbyB_22.xyz = tmpvar_120.xyz.xyz;
+    lowp vec3 tmpvar_119;
+    tmpvar_119 = (rgbyA_23.xyz * 0.500000);
+    rgbyB_22.xyz = tmpvar_119.xyz.xyz;
   };
   return rgbyB_22;
 }
 
 lowp vec4 xlat_main (
-  in v2f i_121
+  in v2f i_120
 )
 {
-  highp float fxaaN_122;
-  float tmpvar_123;
-  tmpvar_123 = 0.500000;
-  fxaaN_122 = tmpvar_123;
-  highp vec4 tmpvar_124;
-  tmpvar_124.x = -(fxaaN_122);
-  tmpvar_124.y = -(fxaaN_122);
-  tmpvar_124.z = fxaaN_122;
-  tmpvar_124.w = fxaaN_122;
-  lowp vec4 tmpvar_125;
-  tmpvar_125 = FxaaPixelShader (i_121.uv, i_121.uvPosPos, _MainTex, _MainTex, _MainTex, _MainTex_TexelSize.xy, (_MainTex_TexelSize.xyxy * tmpvar_124), (_MainTex_TexelSize.xyxy * vec4(-2.00000, -2.00000, 2.00000, 2.00000)), (_MainTex_TexelSize.xyxy * vec4(8.00000, 8.00000, -4.00000, -4.00000)), 0.750000, 0.166000, 0.0833000, 8.00000, 0.125000, 0.0500000, vec4(1.00000, -1.00000, 0.250000, -0.250000));
-  return tmpvar_125;
+  highp float fxaaN_121;
+  float tmpvar_122;
+  tmpvar_122 = 0.500000;
+  fxaaN_121 = tmpvar_122;
+  highp vec4 tmpvar_123;
+  tmpvar_123.x = -(fxaaN_121);
+  tmpvar_123.y = -(fxaaN_121);
+  tmpvar_123.z = fxaaN_121;
+  tmpvar_123.w = fxaaN_121;
+  lowp vec4 tmpvar_124;
+  tmpvar_124 = FxaaPixelShader (i_120.uv, i_120.uvPosPos, _MainTex, _MainTex, _MainTex, _MainTex_TexelSize.xy, (_MainTex_TexelSize.xyxy * tmpvar_123), (_MainTex_TexelSize.xyxy * vec4(-2.00000, -2.00000, 2.00000, 2.00000)), (_MainTex_TexelSize.xyxy * vec4(8.00000, 8.00000, -4.00000, -4.00000)), 0.750000, 0.166000, 0.0833000, 8.00000, 0.125000, 0.0500000, vec4(1.00000, -1.00000, 0.250000, -0.250000));
+  return tmpvar_124;
 }
 
 void main ()
 {
-  v2f xlt_i_126;
-  lowp vec4 xl_retval_127;
-  vec4 tmpvar_128;
-  tmpvar_128 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
-  xlt_i_126.pos = tmpvar_128;
+  v2f xlt_i_125;
+  lowp vec4 xl_retval_126;
+  vec4 tmpvar_127;
+  tmpvar_127 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
+  xlt_i_125.pos = tmpvar_127;
+  highp vec2 tmpvar_128;
+  tmpvar_128 = xlv_TEXCOORD0.xy;
   highp vec2 tmpvar_129;
-  tmpvar_129 = xlv_TEXCOORD0.xy;
-  highp vec2 tmpvar_130;
-  tmpvar_130 = tmpvar_129;
-  xlt_i_126.uv = tmpvar_130;
+  tmpvar_129 = tmpvar_128;
+  xlt_i_125.uv = tmpvar_129;
+  highp vec4 tmpvar_130;
+  tmpvar_130 = xlv_TEXCOORD1.xyzw;
   highp vec4 tmpvar_131;
-  tmpvar_131 = xlv_TEXCOORD1.xyzw;
-  highp vec4 tmpvar_132;
-  tmpvar_132 = tmpvar_131;
-  xlt_i_126.uvPosPos = tmpvar_132;
+  tmpvar_131 = tmpvar_130;
+  xlt_i_125.uvPosPos = tmpvar_131;
+  lowp vec4 tmpvar_132;
+  tmpvar_132 = xlat_main (xlt_i_125);
   lowp vec4 tmpvar_133;
-  tmpvar_133 = xlat_main (xlt_i_126);
+  tmpvar_133 = tmpvar_132;
+  xl_retval_126 = tmpvar_133;
   lowp vec4 tmpvar_134;
-  tmpvar_134 = tmpvar_133;
-  xl_retval_127 = tmpvar_134;
+  tmpvar_134 = xl_retval_126.xyzw;
   lowp vec4 tmpvar_135;
-  tmpvar_135 = xl_retval_127.xyzw;
-  lowp vec4 tmpvar_136;
-  tmpvar_136 = tmpvar_135;
-  gl_FragData[0] = tmpvar_136;
+  tmpvar_135 = tmpvar_134;
+  gl_FragData[0] = tmpvar_135;
 }
 
