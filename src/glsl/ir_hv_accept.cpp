@@ -193,18 +193,6 @@ ir_texture::accept(ir_hierarchical_visitor *v)
 	 return (s == visit_continue_with_parent) ? visit_continue : s;
    }
 
-   if (this->projector) {
-      s = this->projector->accept(v);
-      if (s != visit_continue)
-	 return (s == visit_continue_with_parent) ? visit_continue : s;
-   }
-
-   if (this->shadow_comparitor) {
-      s = this->shadow_comparitor->accept(v);
-      if (s != visit_continue)
-	 return (s == visit_continue_with_parent) ? visit_continue : s;
-   }
-
    if (this->offset) {
       s = this->offset->accept(v);
       if (s != visit_continue)

@@ -88,31 +88,12 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     print ")\n     ((return (" + tex_inst, return_type, "(var_ref sampler)",
 
     if tex_inst != "txs":
-        # Coordinate
-        if extra_dim > 0:
-            print "(swiz " + "xyzw"[:coord_dim] + " (var_ref P))",
-        else:
-            print "(var_ref P)",
+        print "(var_ref P)",
 
         if variant & Offset:
             print "(var_ref offset)",
         else:
             print "0",
-
-    if tex_inst != "txf" and tex_inst != "txs":
-        # Projective divisor
-        if variant & Proj:
-            print "(swiz " + "xyzw"[coord_dim + extra_dim-1] + " (var_ref P))",
-        else:
-            print "1",
-
-        # Shadow comparitor
-        if sampler_type == "2DArrayShadow" or sampler_type == "CubeShadow": # a special case:
-            print "(swiz w (var_ref P))",   # ...array layer is z; shadow is w
-        elif sampler_type.endswith("Shadow"):
-            print "(swiz z (var_ref P))",
-        else:
-            print "()",
 
     # Bias/explicit LOD/gradient:
     if tex_inst == "txb":

@@ -1367,21 +1367,19 @@ enum ir_texture_opcode {
  * appear as:
  *
  *                                    Texel offset (0 or an expression)
- *                                    | Projection divisor
- *                                    | |  Shadow comparitor
- *                                    | |  |
- *                                    v v  v
- * (tex <type> <sampler> <coordinate> 0 1 ( ))
- * (txb <type> <sampler> <coordinate> 0 1 ( ) <bias>)
- * (txl <type> <sampler> <coordinate> 0 1 ( ) <lod>)
- * (txd <type> <sampler> <coordinate> 0 1 ( ) (dPdx dPdy))
- * (txf <type> <sampler> <coordinate> 0       <lod>)
+ *                                    |
+ *                                    v
+ * (tex <type> <sampler> <coordinate> 0)
+ * (txb <type> <sampler> <coordinate> 0 <bias>)
+ * (txl <type> <sampler> <coordinate> 0 <lod>)
+ * (txd <type> <sampler> <coordinate> 0 (dPdx dPdy))
+ * (txf <type> <sampler> <coordinate> 0 <lod>)
  * (txs <type> <sampler> <lod>)
  */
 class ir_texture : public ir_rvalue {
 public:
    ir_texture(enum ir_texture_opcode op)
-      : ir_rvalue(glsl_precision_low), op(op), coordinate(NULL), projector(NULL), shadow_comparitor(NULL),
+      : ir_rvalue(glsl_precision_low), op(op), coordinate(NULL),
         offset(NULL)
    {
       this->ir_type = ir_type_texture;
@@ -1418,23 +1416,6 @@ public:
 
    /** Texture coordinate to sample */
    ir_rvalue *coordinate;
-
-   /**
-    * Value used for projective divide.
-    *
-    * If there is no projective divide (the common case), this will be
-    * \c NULL.  Optimization passes should check for this to point to a constant
-    * of 1.0 and replace that with \c NULL.
-    */
-   ir_rvalue *projector;
-
-   /**
-    * Coordinate used for comparison on shadow look-ups.
-    *
-    * If there is no shadow comparison, this will be \c NULL.  For the
-    * \c ir_txf opcode, this *must* be \c NULL.
-    */
-   ir_rvalue *shadow_comparitor;
 
    /** Texel offset. */
    ir_rvalue *offset;

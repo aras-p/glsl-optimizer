@@ -558,21 +558,32 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 static const char* tex_sampler_dim_name[] = {
 	"1D", "2D", "3D", "Cube", "Rect", "Buf",
 };
+static int tex_sampler_dim_size[] = {
+	1, 2, 3, 3, 2, 2,
+};
 
 
 void ir_print_glsl_visitor::visit(ir_texture *ir)
 {
-	// texture function name
 	glsl_sampler_dim sampler_dim = (glsl_sampler_dim)ir->sampler->type->sampler_dimensionality;
-	ralloc_asprintf_append (&buffer, "%s", ir->sampler->type->sampler_shadow ? "shadow" : "texture");
+	const bool is_shadow = ir->sampler->type->sampler_shadow;
+	const glsl_type* uv_type = ir->coordinate->type;
+	const int uv_dim = uv_type->vector_elements;
+	int sampler_uv_dim = tex_sampler_dim_size[sampler_dim];
+	if (is_shadow)
+		sampler_uv_dim = 3;
+	const bool is_proj = (uv_dim > sampler_uv_dim);
+	
+	// texture function name
+	ralloc_asprintf_append (&buffer, "%s", is_shadow ? "shadow" : "texture");
 	ralloc_asprintf_append (&buffer, "%s", tex_sampler_dim_name[sampler_dim]);
 	
-	if (ir->projector)
+	if (is_proj)
 		ralloc_asprintf_append (&buffer, "Proj");
 	if (ir->op == ir_txl)
 		ralloc_asprintf_append (&buffer, "Lod");
 	
-	if (ir->sampler->type->sampler_shadow)
+	if (is_shadow)
 	{
 		if (state->EXT_shadow_samplers_enable && state->es_shader)
 			ralloc_asprintf_append (&buffer, "EXT");
@@ -585,33 +596,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	ralloc_asprintf_append (&buffer, ", ");
 	
 	// texture coordinate
-	const glsl_type* uv_type = ir->coordinate->type;
-	if (ir->shadow_comparitor)
-		uv_type = glsl_type::get_instance(uv_type->base_type, uv_type->vector_elements+1, uv_type->matrix_columns);
-	if (ir->projector)
-		uv_type = glsl_type::get_instance(uv_type->base_type, uv_type->vector_elements+1, uv_type->matrix_columns);
-	if (uv_type != ir->coordinate->type)
-	{
-		buffer = print_type(buffer, uv_type, false);
-		ralloc_asprintf_append (&buffer, "(");
-	}
-	
 	ir->coordinate->accept(this);
-	if (ir->shadow_comparitor)
-	{
-		ralloc_asprintf_append (&buffer, ", ");
-		ir->shadow_comparitor->accept(this);
-	}
-	if (ir->projector)
-	{
-		ralloc_asprintf_append (&buffer, ", ");
-		ir->projector->accept(this);
-	}
-	
-	if (uv_type != ir->coordinate->type)
-	{
-		ralloc_asprintf_append (&buffer, ")");
-	}
 	
 	// lod bias
 	if (ir->op == ir_txb)
