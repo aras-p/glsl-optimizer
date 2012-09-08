@@ -660,8 +660,8 @@ _mesa_is_proxy_texture(GLenum target)
 /**
  * Return the proxy target which corresponds to the given texture target
  */
-static GLenum
-get_proxy_target(GLenum target)
+GLenum
+_mesa_get_proxy_target(GLenum target)
 {
    switch (target) {
    case GL_TEXTURE_1D:
@@ -692,7 +692,7 @@ get_proxy_target(GLenum target)
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
       return GL_PROXY_TEXTURE_2D_ARRAY_EXT;
    default:
-      _mesa_problem(NULL, "unexpected target in get_proxy_target()");
+      _mesa_problem(NULL, "unexpected target in _mesa_get_proxy_target()");
       return 0;
    }
 }
@@ -1703,7 +1703,7 @@ texture_error_check( struct gl_context *ctx,
                      GLint width, GLint height,
                      GLint depth, GLint border )
 {
-   const GLenum proxyTarget = get_proxy_target(target);
+   const GLenum proxyTarget = _mesa_get_proxy_target(target);
    const GLboolean isProxy = target == proxyTarget;
    GLboolean sizeOK = GL_TRUE;
    GLboolean colorFormat;
@@ -1933,7 +1933,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
                                GLsizei height, GLsizei depth, GLint border,
                                GLsizei imageSize)
 {
-   const GLenum proxyTarget = get_proxy_target(target);
+   const GLenum proxyTarget = _mesa_get_proxy_target(target);
    const GLint maxLevels = _mesa_max_texture_levels(ctx, target);
    GLint expectedSize;
    GLenum choose_format;
@@ -2308,7 +2308,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
                          GLenum target, GLint level, GLint internalFormat,
                          GLint width, GLint height, GLint border )
 {
-   const GLenum proxyTarget = get_proxy_target(target);
+   const GLenum proxyTarget = _mesa_get_proxy_target(target);
    const GLenum type = GL_FLOAT;
    GLboolean sizeOK;
    GLint baseFormat;
