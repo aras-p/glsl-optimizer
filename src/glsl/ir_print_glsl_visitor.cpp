@@ -559,7 +559,14 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	}
 	else
 	{
-		// TODO
+		const glsl_type* uv_type = ir->coordinate->type;
+		const glsl_type* proj_type = glsl_type::get_instance(uv_type->base_type, uv_type->vector_elements+1, uv_type->matrix_columns);
+		buffer = print_type(buffer, proj_type, false);
+		ralloc_asprintf_append (&buffer, "(");
+		ir->coordinate->accept(this);
+		ralloc_asprintf_append (&buffer, ", ");
+		ir->projector->accept(this);
+		ralloc_asprintf_append (&buffer, ")");
 	}
 	
 	// lod bias
