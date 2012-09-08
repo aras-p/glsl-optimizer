@@ -91,4 +91,12 @@ private:
    void recursion(const glsl_type *t, char **name, size_t name_length);
 };
 
+extern struct gl_shader *
+link_intrastage_shaders(void *mem_ctx,
+						struct gl_context *ctx,
+						struct gl_shader_program *prog,
+						struct gl_shader **shader_list,
+						unsigned num_shaders);
+
+
 #endif /* GLSL_LINKER_H */

@@ -959,7 +959,7 @@ public:
  * If this function is supplied a single shader, it is cloned, and the new
  * shader is returned.
  */
-static struct gl_shader *
+struct gl_shader *
 link_intrastage_shaders(void *mem_ctx,
 			struct gl_context *ctx,
 			struct gl_shader_program *prog,

@@ -285,8 +285,6 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	bool gles,
 	bool doCheckGLSL)
 {
-	printf(".");
-	
 	std::string input;
 	if (!ReadStringFromFile (inputPath.c_str(), input))
 	{
@@ -410,6 +408,8 @@ int main (int argc, const char** argv)
 			for (size_t i = 0; i < n; ++i)
 			{
 				std::string inname = inputFiles[i];
+				//if (inname != "ast-in.txt")
+				//	continue;
 				std::string hirname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiIR[api];
 				std::string outname = inname.substr (0,inname.size()-strlen(kApiIn[api])) + kApiOut[api];
 				bool ok = TestFile (ctx[api], type==0, inname, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, api==0, hasOpenGL);
@@ -428,6 +428,9 @@ int main (int argc, const char** argv)
 		printf ("\n**** %i tests (%.2fsec), %i !!!FAILED!!!\n", tests, timeDelta, errors);
 	else
 		printf ("\n**** %i tests (%.2fsec) succeeded\n", tests, timeDelta);
+	
+	// 3.25s
+	// with builtin call linking, 3.84s
 
 	for (int i = 0; i < 2; ++i)
 		glslopt_cleanup (ctx[i]);
