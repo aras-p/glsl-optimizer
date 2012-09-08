@@ -4,8 +4,7 @@ void main ()
 {
   vec4 col_1;
   gl_Position = gl_Vertex;
-  col_1 = max (vec4(0.00000, 0.00000, 0.00000, 0.00000), uniColors[0]);
-  col_1 = (col_1 + max (vec4(0.00000, 0.00000, 0.00000, 0.00000), uniColors[1]));
+  col_1 = (max (vec4(0.00000, 0.00000, 0.00000, 0.00000), uniColors[0]) + max (vec4(0.00000, 0.00000, 0.00000, 0.00000), uniColors[1]));
   col_1 = (col_1 + max (vec4(0.00000, 0.00000, 0.00000, 0.00000), uniColors[2]));
   col_1 = (col_1 + max (vec4(0.00000, 0.00000, 0.00000, 0.00000), uniColors[3]));
   varColor = col_1;
