@@ -32,6 +32,33 @@
 #include "ir_basic_block.h"
 #include "glsl_types.h"
 
+
+static ir_if* as_if_skip_discard (ir_instruction* ir)
+{
+	ir_if* irif = ir->as_if();
+	if (!irif)
+		return NULL;
+	if (!irif->else_instructions.is_empty())
+		return irif;
+	
+	bool only_discards = true;
+	int count = 0;
+	foreach_iter(exec_list_iterator, iter, irif->then_instructions) {
+		ir_instruction *iir = (ir_instruction *)iter.get();
+		if (!iir->as_discard())
+		{
+			only_discards = false;
+			break;
+		}
+		++count;
+	}
+	
+	if (count == 1 && only_discards)
+		return NULL;
+	
+	return irif;
+}
+
 /**
  * Calls a user function for every basic block in the instruction stream.
  *
@@ -67,7 +94,7 @@ void call_for_basic_blocks(exec_list *instructions,
       if (!leader)
 	 leader = ir;
 
-      if ((ir_if = ir->as_if())) {
+      if ((ir_if = as_if_skip_discard(ir))) {
 	 callback(leader, ir, data);
 	 leader = NULL;
 
