@@ -46,12 +46,12 @@ static inline const char* get_precision_string (glsl_precision p)
 
 struct ga_entry : public exec_node
 {
-	ga_entry(ir_assignment *ass)
+	ga_entry(ir_instruction* ir)
 	{
-		assert(ass);
-		this->ass = ass;
+		assert(ir);
+		this->ir = ir;
 	}	
-	ir_assignment* ass;
+	ir_instruction* ir;
 };
 
 
@@ -342,7 +342,7 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 		globals->main_function_done = true;
 		foreach_iter(exec_list_iterator, it, globals->global_assignements)
 		{
-			ir_assignment* as = ((ga_entry *)it.get())->ass;
+			ir_instruction* as = ((ga_entry *)it.get())->ir;
 			as->accept(this);
 			ralloc_asprintf_append(&buffer, ";\n");
 		}
@@ -717,7 +717,7 @@ void ir_print_glsl_visitor::visit(ir_dereference_record *ir)
 
 void ir_print_glsl_visitor::visit(ir_assignment *ir)
 {
-	// assignement in global scope are postponed to main function
+	// assignments in global scope are postponed to main function
 	if (this->mode != kPrintGlslNone)
 	{
 		assert (!this->globals->main_function_done);
@@ -839,6 +839,15 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 void
 ir_print_glsl_visitor::visit(ir_call *ir)
 {
+	// calls in global scope are postponed to main function
+	if (this->mode != kPrintGlslNone)
+	{
+		assert (!this->globals->main_function_done);
+		this->globals->global_assignements.push_tail (new(this->globals->mem_ctx) ga_entry(ir));
+		ralloc_asprintf_append(&buffer, "//"); // for the ; that will follow (ugly, I know)
+		return;
+	}
+	
 	if (ir->return_deref)
 	{
 		visit(ir->return_deref);
