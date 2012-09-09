@@ -116,7 +116,7 @@ apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const struct glx_config * m
       *uses_stereo = false;
    }
 
-   if (mode->doubleBufferMode) {
+   if (!offscreen && mode->doubleBufferMode) {
       attr[numattr++] = kCGLPFADoubleBuffer;
       *double_buffered = true;
    }
