@@ -18,7 +18,7 @@ void main ()
   float tmpvar_3;
   tmpvar_3 = (a_2 + 1.00000);
   float tmpvar_4;
-  tmpvar_4 = (1.0/(sqrt ((-((tmpvar_3 * tmpvar_3)) - 1.00000))));
+  tmpvar_4 = inversesqrt((-((tmpvar_3 * tmpvar_3)) - 1.00000));
   a_2 = tmpvar_4;
   gl_FragColor = vec4(tmpvar_4);
 }

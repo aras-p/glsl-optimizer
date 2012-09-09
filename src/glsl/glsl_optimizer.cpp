@@ -297,12 +297,17 @@ static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_
 		progress2 = optimize_split_arrays(ir, linked); progress |= progress2; if (progress2) debug_print_ir ("After split arrays", ir, state, ctx->mem_ctx);
 		progress2 = optimize_redundant_jumps(ir); progress |= progress2; if (progress2) debug_print_ir ("After redundant jumps", ir, state, ctx->mem_ctx);
 		
-		loop_state *ls = analyze_loop_variables(ir);
-		if (ls->loop_found) {
-			progress2 = set_loop_controls(ir, ls); progress |= progress2;
-			progress2 = unroll_loops(ir, ls, 8); progress |= progress2;
+		// do loop stuff only when linked; otherwise causes duplicate loop induction variable
+		// problems (ast-in.txt test)
+		if (linked)
+		{
+			loop_state *ls = analyze_loop_variables(ir);
+			if (ls->loop_found) {
+				progress2 = set_loop_controls(ir, ls); progress |= progress2; if (progress2) debug_print_ir ("After set loop", ir, state, ctx->mem_ctx);
+				progress2 = unroll_loops(ir, ls, 8); progress |= progress2; if (progress2) debug_print_ir ("After unroll", ir, state, ctx->mem_ctx);
+			}
+			delete ls;
 		}
-		delete ls;
 	} while (progress);
 }
 
