@@ -470,7 +470,7 @@ add_uniform(exec_list *instructions, glsl_symbol_table *symtab,
 
 static void
 add_builtin_variable(exec_list *instructions, glsl_symbol_table *symtab,
-		     const builtin_variable *proto)
+		     const builtin_variable *proto, bool use_precision)
 {
    /* Create a new variable declaration from the description supplied by
     * the caller.
@@ -480,10 +480,10 @@ add_builtin_variable(exec_list *instructions, glsl_symbol_table *symtab,
    assert(type != NULL);
 
    if (proto->mode == ir_var_uniform) {
-      add_uniform(instructions, symtab, proto->name, type, proto->prec);
+      add_uniform(instructions, symtab, proto->name, type, use_precision ? proto->prec : glsl_precision_undefined);
    } else {
       add_variable(instructions, symtab, proto->name, type, proto->mode,
-		   proto->slot, proto->prec);
+		   proto->slot, use_precision ? proto->prec : glsl_precision_undefined);
    }
 }
 
@@ -540,7 +540,7 @@ generate_110_uniforms(exec_list *instructions,
 	      ; i < Elements(builtin_110_deprecated_uniforms)
 	      ; i++) {
 	 add_builtin_variable(instructions, symtab,
-			      & builtin_110_deprecated_uniforms[i]);
+			      & builtin_110_deprecated_uniforms[i], state->es_shader);
       }
    }
 
@@ -649,7 +649,7 @@ generate_100ES_vs_variables(exec_list *instructions,
 {
    for (unsigned i = 0; i < Elements(builtin_core_vs_variables); i++) {
       add_builtin_variable(instructions, state->symbols,
-			   & builtin_core_vs_variables[i]);
+			   & builtin_core_vs_variables[i], state->es_shader);
    }
 
    generate_100ES_uniforms(instructions, state);
@@ -666,7 +666,7 @@ generate_110_vs_variables(exec_list *instructions,
 {
    for (unsigned i = 0; i < Elements(builtin_core_vs_variables); i++) {
       add_builtin_variable(instructions, state->symbols,
-			   & builtin_core_vs_variables[i]);
+			   & builtin_core_vs_variables[i], state->es_shader);
    }
 
    if (add_deprecated) {
@@ -674,7 +674,7 @@ generate_110_vs_variables(exec_list *instructions,
 	      ; i < Elements(builtin_110_deprecated_vs_variables)
 	      ; i++) {
 	 add_builtin_variable(instructions, state->symbols,
-			      & builtin_110_deprecated_vs_variables[i]);
+			      & builtin_110_deprecated_vs_variables[i], state->es_shader);
       }
    }
    generate_110_uniforms(instructions, state, add_deprecated);
@@ -732,7 +732,7 @@ generate_130_vs_variables(exec_list *instructions,
 
    for (unsigned i = 0; i < Elements(builtin_130_vs_variables); i++) {
       add_builtin_variable(instructions, state->symbols,
-			   & builtin_130_vs_variables[i]);
+			   & builtin_130_vs_variables[i], state->es_shader);
    }
 
    generate_130_uniforms(instructions, state);
@@ -792,12 +792,12 @@ generate_100ES_fs_variables(exec_list *instructions,
 {
    for (unsigned i = 0; i < Elements(builtin_core_fs_variables); i++) {
       add_builtin_variable(instructions, state->symbols,
-			   & builtin_core_fs_variables[i]);
+			   & builtin_core_fs_variables[i], state->es_shader);
    }
 
    for (unsigned i = 0; i < Elements(builtin_100ES_fs_variables); i++) {
       add_builtin_variable(instructions, state->symbols,
-			   & builtin_100ES_fs_variables[i]);
+			   & builtin_100ES_fs_variables[i], state->es_shader);
    }
 
    generate_100ES_uniforms(instructions, state);
@@ -813,12 +813,12 @@ generate_110_fs_variables(exec_list *instructions,
 {
    for (unsigned i = 0; i < Elements(builtin_core_fs_variables); i++) {
       add_builtin_variable(instructions, state->symbols,
-			   & builtin_core_fs_variables[i]);
+			   & builtin_core_fs_variables[i], state->es_shader);
    }
 
    for (unsigned i = 0; i < Elements(builtin_110_fs_variables); i++) {
       add_builtin_variable(instructions, state->symbols,
-			   & builtin_110_fs_variables[i]);
+			   & builtin_110_fs_variables[i], state->es_shader);
    }
 
    if (add_deprecated) {
@@ -826,7 +826,7 @@ generate_110_fs_variables(exec_list *instructions,
 	      ; i < Elements(builtin_110_deprecated_fs_variables)
 	      ; i++) {
 	 add_builtin_variable(instructions, state->symbols,
-			      & builtin_110_deprecated_fs_variables[i]);
+			      & builtin_110_deprecated_fs_variables[i], state->es_shader);
       }
    }
 
@@ -964,7 +964,7 @@ generate_120_fs_variables(exec_list *instructions,
 	   ; i < Elements(builtin_120_fs_variables)
 	   ; i++) {
       add_builtin_variable(instructions, state->symbols,
-			   & builtin_120_fs_variables[i]);
+			   & builtin_120_fs_variables[i], state->es_shader);
    }
 }
 
