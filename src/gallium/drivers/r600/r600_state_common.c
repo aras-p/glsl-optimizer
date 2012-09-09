@@ -533,11 +533,9 @@ void r600_sampler_views_dirty(struct r600_context *rctx,
 	}
 }
 
-void r600_set_sampler_views(struct pipe_context *pipe,
-			    unsigned shader,
-			    unsigned start,
-			    unsigned count,
-			    struct pipe_sampler_view **views)
+static void r600_set_sampler_views(struct pipe_context *pipe, unsigned shader,
+				   unsigned start, unsigned count,
+				   struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = (struct r600_context *) pipe;
 	struct r600_textures_info *dst;
@@ -620,6 +618,18 @@ void r600_set_sampler_views(struct pipe_context *pipe,
 	dst->views.compressed_colortex_mask &= dst->views.enabled_mask;
 
 	r600_sampler_views_dirty(rctx, &dst->views);
+}
+
+static void r600_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
+				      struct pipe_sampler_view **views)
+{
+	r600_set_sampler_views(ctx, PIPE_SHADER_VERTEX, 0, count, views);
+}
+
+static void r600_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
+				      struct pipe_sampler_view **views)
+{
+	r600_set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, count, views);
 }
 
 static void *r600_create_vertex_elements(struct pipe_context *ctx, unsigned count,
@@ -1473,6 +1483,8 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->context.set_stencil_ref = r600_set_pipe_stencil_ref;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
 	rctx->context.set_index_buffer = r600_set_index_buffer;
+	rctx->context.set_fragment_sampler_views = r600_set_ps_sampler_views;
+	rctx->context.set_vertex_sampler_views = r600_set_vs_sampler_views;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->context.texture_barrier = r600_texture_barrier;
 	rctx->context.create_stream_output_target = r600_create_so_target;

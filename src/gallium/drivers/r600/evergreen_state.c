@@ -1122,18 +1122,6 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	return &view->base;
 }
 
-static void evergreen_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
-					   struct pipe_sampler_view **views)
-{
-	r600_set_sampler_views(ctx, PIPE_SHADER_VERTEX, 0, count, views);
-}
-
-static void evergreen_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
-					   struct pipe_sampler_view **views)
-{
-	r600_set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, count, views);
-}
-
 static void evergreen_set_clip_state(struct pipe_context *ctx,
 				const struct pipe_clip_state *state)
 {
@@ -2215,11 +2203,9 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_sampler_state = evergreen_create_sampler_state;
 	rctx->context.create_sampler_view = evergreen_create_sampler_view;
 	rctx->context.set_clip_state = evergreen_set_clip_state;
-	rctx->context.set_fragment_sampler_views = evergreen_set_ps_sampler_views;
 	rctx->context.set_framebuffer_state = evergreen_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = evergreen_set_polygon_stipple;
 	rctx->context.set_scissor_state = evergreen_set_scissor_state;
-	rctx->context.set_vertex_sampler_views = evergreen_set_vs_sampler_views;
 	rctx->context.set_viewport_state = evergreen_set_viewport_state;
 	evergreen_init_compute_state_functions(rctx);
 }

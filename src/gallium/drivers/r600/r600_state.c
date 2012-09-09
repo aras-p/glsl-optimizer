@@ -1120,18 +1120,6 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	return &view->base;
 }
 
-static void r600_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,
-				      struct pipe_sampler_view **views)
-{
-	r600_set_sampler_views(ctx, PIPE_SHADER_VERTEX, 0, count, views);
-}
-
-static void r600_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
-				      struct pipe_sampler_view **views)
-{
-	r600_set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, count, views);
-}
-
 static void r600_set_clip_state(struct pipe_context *ctx,
 				const struct pipe_clip_state *state)
 {
@@ -2089,11 +2077,9 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_sampler_state = r600_create_sampler_state;
 	rctx->context.create_sampler_view = r600_create_sampler_view;
 	rctx->context.set_clip_state = r600_set_clip_state;
-	rctx->context.set_fragment_sampler_views = r600_set_ps_sampler_views;
 	rctx->context.set_framebuffer_state = r600_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = r600_set_polygon_stipple;
 	rctx->context.set_scissor_state = r600_pipe_set_scissor_state;
-	rctx->context.set_vertex_sampler_views = r600_set_vs_sampler_views;
 	rctx->context.set_viewport_state = r600_set_viewport_state;
 }
 

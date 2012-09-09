@@ -571,11 +571,6 @@ void r600_init_atom(struct r600_context *rctx, struct r600_atom *atom, unsigned 
 void r600_vertex_buffers_dirty(struct r600_context *rctx);
 void r600_sampler_views_dirty(struct r600_context *rctx,
 			      struct r600_samplerview_state *state);
-void r600_set_sampler_views(struct pipe_context *pipe,
-                            unsigned shader,
-                            unsigned start,
-			    unsigned count,
-			    struct pipe_sampler_view **views);
 void r600_set_max_scissor(struct r600_context *rctx);
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state);
 void r600_draw_rectangle(struct blitter_context *blitter,
