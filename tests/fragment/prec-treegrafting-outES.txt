@@ -7,6 +7,8 @@ void main ()
   mediump float tmpvar_2;
   tmpvar_2 = (med_a + (low_c / med_b));
   t_1 = tmpvar_2;
-  gl_FragColor = clamp (vec4(t_1), 0.00000, 1.00000);
+  lowp vec4 tmpvar_3;
+  tmpvar_3 = clamp (vec4(t_1), 0.00000, 1.00000);
+  gl_FragColor = tmpvar_3;
 }
 

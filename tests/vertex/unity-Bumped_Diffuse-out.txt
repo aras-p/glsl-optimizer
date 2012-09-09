@@ -3,7 +3,7 @@ uniform vec4 _BumpMap_ST;
 void main ()
 {
   vec3 tmpvar_1;
-  tmpvar_1 = (cross (gl_Normal, TANGENT.xyz) * TANGENT.w);
+  tmpvar_1 = (((gl_Normal.yzx * TANGENT.zxy) - (gl_Normal.zxy * TANGENT.yzx)) * TANGENT.w);
   mat3 tmpvar_2;
   tmpvar_2[0].x = TANGENT.x;
   tmpvar_2[0].y = tmpvar_1.x;
