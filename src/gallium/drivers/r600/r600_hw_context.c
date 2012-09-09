@@ -989,6 +989,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	bool timer_queries_suspended = false;
 	bool nontimer_queries_suspended = false;
 	bool streamout_suspended = false;
+	unsigned shader;
 
 	if (cs->cdw == ctx->start_cs_cmd.atom.num_dw)
 		return;
@@ -1053,10 +1054,11 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	ctx->vertex_buffer_state.dirty_mask = ctx->vertex_buffer_state.enabled_mask;
 	r600_vertex_buffers_dirty(ctx);
 
-	ctx->vs_constbuf_state.dirty_mask = ctx->vs_constbuf_state.enabled_mask;
-	ctx->ps_constbuf_state.dirty_mask = ctx->ps_constbuf_state.enabled_mask;
-	r600_constant_buffers_dirty(ctx, &ctx->vs_constbuf_state);
-	r600_constant_buffers_dirty(ctx, &ctx->ps_constbuf_state);
+	for (shader = 0; shader < PIPE_SHADER_TYPES; shader++) {
+		struct r600_constbuf_state *state = &ctx->constbuf_state[shader];
+		state->dirty_mask = state->enabled_mask;
+		r600_constant_buffers_dirty(ctx, state);
+	}
 
 	ctx->vs_samplers.views.dirty_mask = ctx->vs_samplers.views.enabled_mask;
 	ctx->ps_samplers.views.dirty_mask = ctx->ps_samplers.views.enabled_mask;

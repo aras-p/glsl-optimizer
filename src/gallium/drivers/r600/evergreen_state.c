@@ -2057,14 +2057,14 @@ static void evergreen_emit_constant_buffers(struct r600_context *rctx,
 
 static void evergreen_emit_vs_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
-	evergreen_emit_constant_buffers(rctx, &rctx->vs_constbuf_state, 176,
+	evergreen_emit_constant_buffers(rctx, &rctx->constbuf_state[PIPE_SHADER_VERTEX], 176,
 					R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
 					R_028980_ALU_CONST_CACHE_VS_0);
 }
 
 static void evergreen_emit_ps_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
-	evergreen_emit_constant_buffers(rctx, &rctx->ps_constbuf_state, 0,
+	evergreen_emit_constant_buffers(rctx, &rctx->constbuf_state[PIPE_SHADER_FRAGMENT], 0,
 				       R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
 				       R_028940_ALU_CONST_CACHE_PS_0);
 }
@@ -2179,8 +2179,8 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	 */
 
 	/* shader const */
-	r600_init_atom(rctx, &rctx->vs_constbuf_state.atom, id++, evergreen_emit_vs_constant_buffers, 0);
-	r600_init_atom(rctx, &rctx->ps_constbuf_state.atom, id++, evergreen_emit_ps_constant_buffers, 0);
+	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_VERTEX].atom, id++, evergreen_emit_vs_constant_buffers, 0);
+	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_FRAGMENT].atom, id++, evergreen_emit_ps_constant_buffers, 0);
 	/* shader program */
 	r600_init_atom(rctx, &rctx->cs_shader_state.atom, id++, evergreen_emit_cs_shader, 0);
 	/* sampler */

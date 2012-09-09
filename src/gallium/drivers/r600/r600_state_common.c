@@ -864,20 +864,9 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 				     struct pipe_constant_buffer *input)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_constbuf_state *state;
+	struct r600_constbuf_state *state = &rctx->constbuf_state[shader];
 	struct pipe_constant_buffer *cb;
 	const uint8_t *ptr;
-
-	switch (shader) {
-	case PIPE_SHADER_VERTEX:
-		state = &rctx->vs_constbuf_state;
-		break;
-	case PIPE_SHADER_FRAGMENT:
-		state = &rctx->ps_constbuf_state;
-		break;
-	default:
-		return;
-	}
 
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.

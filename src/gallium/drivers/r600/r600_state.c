@@ -1909,14 +1909,14 @@ static void r600_emit_constant_buffers(struct r600_context *rctx,
 
 static void r600_emit_vs_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
-	r600_emit_constant_buffers(rctx, &rctx->vs_constbuf_state, 160,
+	r600_emit_constant_buffers(rctx, &rctx->constbuf_state[PIPE_SHADER_VERTEX], 160,
 				   R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
 				   R_028980_ALU_CONST_CACHE_VS_0);
 }
 
 static void r600_emit_ps_constant_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
-	r600_emit_constant_buffers(rctx, &rctx->ps_constbuf_state, 0,
+	r600_emit_constant_buffers(rctx, &rctx->constbuf_state[PIPE_SHADER_FRAGMENT], 0,
 				   R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
 				   R_028940_ALU_CONST_CACHE_PS_0);
 }
@@ -2054,8 +2054,8 @@ void r600_init_state_functions(struct r600_context *rctx)
 	 */
 
 	/* shader const */
-	r600_init_atom(rctx, &rctx->vs_constbuf_state.atom, id++, r600_emit_vs_constant_buffers, 0);
-	r600_init_atom(rctx, &rctx->ps_constbuf_state.atom, id++, r600_emit_ps_constant_buffers, 0);
+	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_VERTEX].atom, id++, r600_emit_vs_constant_buffers, 0);
+	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_FRAGMENT].atom, id++, r600_emit_ps_constant_buffers, 0);
 
 	/* sampler must be emited before TA_CNTL_AUX otherwise DISABLE_CUBE_WRAP change
 	 * does not take effect (TA_CNTL_AUX emited by r600_emit_seamless_cube_map)

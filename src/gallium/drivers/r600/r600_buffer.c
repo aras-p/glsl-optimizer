@@ -65,21 +65,25 @@ static struct pipe_transfer *r600_get_transfer(struct pipe_context *ctx,
 }
 
 static void r600_set_constants_dirty_if_bound(struct r600_context *rctx,
-					      struct r600_constbuf_state *state,
 					      struct r600_resource *rbuffer)
 {
-	bool found = false;
-	uint32_t mask = state->enabled_mask;
+	unsigned shader;
 
-	while (mask) {
-		unsigned i = u_bit_scan(&mask);
-		if (state->cb[i].buffer == &rbuffer->b.b) {
-			found = true;
-			state->dirty_mask |= 1 << i;
+	for (shader = 0; shader < PIPE_SHADER_TYPES; shader++) {
+		struct r600_constbuf_state *state = &rctx->constbuf_state[shader];
+		bool found = false;
+		uint32_t mask = state->enabled_mask;
+
+		while (mask) {
+			unsigned i = u_bit_scan(&mask);
+			if (state->cb[i].buffer == &rbuffer->b.b) {
+				found = true;
+				state->dirty_mask |= 1 << i;
+			}
 		}
-	}
-	if (found) {
-		r600_constant_buffers_dirty(rctx, state);
+		if (found) {
+			r600_constant_buffers_dirty(rctx, state);
+		}
 	}
 }
 
@@ -126,8 +130,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				}
 			}
 			/* Constant buffers. */
-			r600_set_constants_dirty_if_bound(rctx, &rctx->vs_constbuf_state, rbuffer);
-			r600_set_constants_dirty_if_bound(rctx, &rctx->ps_constbuf_state, rbuffer);
+			r600_set_constants_dirty_if_bound(rctx, rbuffer);
 		}
 	}
 #if 0 /* this is broken (see Bug 53130) */
