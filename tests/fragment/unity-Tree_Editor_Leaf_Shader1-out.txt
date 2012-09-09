@@ -8,48 +8,40 @@ uniform float _Cutoff;
 uniform sampler2D _BumpMap;
 void main ()
 {
-  vec3 tmpvar_1;
-  vec3 tmpvar_2;
-  vec3 tmpvar_3;
-  vec3 tmpvar_4;
-  vec2 tmpvar_5;
-  vec2 tmpvar_6;
-  tmpvar_1 = gl_TexCoord[0].xyz;
-  tmpvar_2 = gl_TexCoord[1].xyz;
-  tmpvar_3 = gl_TexCoord[2].xyz;
-  tmpvar_4 = gl_TexCoord[3].xyz;
-  tmpvar_5 = gl_TexCoord[4].xy;
-  tmpvar_6 = gl_TexCoord[5].xy;
-  vec4 res_7;
-  vec4 normal_8;
-  normal_8.xy = ((texture2D (_BumpMap, tmpvar_6).wy * 2.00000) - 1.00000);
-  normal_8.z = sqrt(((1.00000 - (normal_8.x * normal_8.x)) - (normal_8.y * normal_8.y)));
-  float x_9;
-  x_9 = ((texture2D (_MainTex, tmpvar_6).w * gl_Color.w) - _Cutoff);
-  if ((x_9 < 0.00000)) {
+  vec2 tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_1 = gl_TexCoord[4].xy;
+  tmpvar_2 = gl_TexCoord[5].xy;
+  vec4 res_3;
+  vec4 normal_4;
+  normal_4.xy = ((texture2D (_BumpMap, tmpvar_2).wy * 2.00000) - 1.00000);
+  normal_4.z = sqrt(((1.00000 - (normal_4.x * normal_4.x)) - (normal_4.y * normal_4.y)));
+  float x_5;
+  x_5 = ((texture2D (_MainTex, tmpvar_2).w * gl_Color.w) - _Cutoff);
+  if ((x_5 < 0.00000)) {
     discard;
   };
-  vec4 tmpvar_10;
-  tmpvar_10 = (vec4(greaterThanEqual (tmpvar_5.xxxx, _LightSplitsNear)) * vec4(lessThan (tmpvar_5.xxxx, _LightSplitsFar)));
-  vec4 tmpvar_11;
-  tmpvar_11.w = 1.00000;
-  tmpvar_11.xyz = ((((tmpvar_1 * tmpvar_10.x) + (tmpvar_2 * tmpvar_10.y)) + (tmpvar_3 * tmpvar_10.z)) + (tmpvar_4 * tmpvar_10.w));
-  vec4 tmpvar_12;
-  tmpvar_12 = texture2D (_ShadowMapTexture, tmpvar_11.xy);
-  float tmpvar_13;
-  if ((tmpvar_12.x < tmpvar_11.z)) {
-    tmpvar_13 = _LightShadowData.x;
+  vec4 tmpvar_6;
+  tmpvar_6 = (vec4(greaterThanEqual (tmpvar_1.xxxx, _LightSplitsNear)) * vec4(lessThan (tmpvar_1.xxxx, _LightSplitsFar)));
+  vec4 tmpvar_7;
+  tmpvar_7.w = 1.00000;
+  tmpvar_7.xyz = ((((gl_TexCoord[0].xyz * tmpvar_6.x) + (gl_TexCoord[1].xyz * tmpvar_6.y)) + (gl_TexCoord[2].xyz * tmpvar_6.z)) + (gl_TexCoord[3].xyz * tmpvar_6.w));
+  vec4 tmpvar_8;
+  tmpvar_8 = texture2D (_ShadowMapTexture, tmpvar_7.xy);
+  float tmpvar_9;
+  if ((tmpvar_8.x < tmpvar_7.z)) {
+    tmpvar_9 = _LightShadowData.x;
   } else {
-    tmpvar_13 = 1.00000;
+    tmpvar_9 = 1.00000;
   };
-  res_7.x = clamp ((tmpvar_13 + clamp (tmpvar_5.y, 0.00000, 1.00000)), 0.00000, 1.00000);
-  res_7.y = 1.00000;
-  vec2 enc_14;
-  vec2 tmpvar_15;
-  tmpvar_15 = fract((vec2(1.00000, 255.000) * (1.00000 - (tmpvar_5.xxxx * _ProjectionParams.w)).x));
-  enc_14.y = tmpvar_15.y;
-  enc_14.x = (tmpvar_15.x - (tmpvar_15.y * 0.00392157));
-  res_7.zw = enc_14;
-  gl_FragData[0] = res_7;
+  res_3.x = clamp ((tmpvar_9 + clamp (tmpvar_1.y, 0.00000, 1.00000)), 0.00000, 1.00000);
+  res_3.y = 1.00000;
+  vec2 enc_10;
+  vec2 tmpvar_11;
+  tmpvar_11 = fract((vec2(1.00000, 255.000) * (1.00000 - (tmpvar_1.xxxx * _ProjectionParams.w)).x));
+  enc_10.y = tmpvar_11.y;
+  enc_10.x = (tmpvar_11.x - (tmpvar_11.y * 0.00392157));
+  res_3.zw = enc_10;
+  gl_FragData[0] = res_3;
 }
 

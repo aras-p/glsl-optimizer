@@ -5,47 +5,37 @@ uniform vec4 _LightSplitsFar;
 uniform vec4 _LightShadowData;
 void main ()
 {
-  vec3 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0].xyz;
+  vec2 tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2 = gl_TexCoord[1].xyz;
-  vec3 tmpvar_3;
-  tmpvar_3 = gl_TexCoord[2].xyz;
-  vec3 tmpvar_4;
-  tmpvar_4 = gl_TexCoord[3].xyz;
-  vec2 tmpvar_5;
-  tmpvar_5 = gl_TexCoord[4].xy;
-  vec3 tmpvar_6;
-  tmpvar_6 = gl_TexCoord[5].xyz;
-  vec4 res_7;
-  float x_8;
-  x_8 = (fract (((tmpvar_6.y + (tmpvar_6.z * 0.100000)) * 5.00000)) - 0.500000);
-  if ((x_8 < 0.00000)) {
+  tmpvar_1 = gl_TexCoord[4].xy;
+  tmpvar_2 = gl_TexCoord[5].xyz;
+  vec4 res_3;
+  float x_4;
+  x_4 = (fract(((tmpvar_2.y + (tmpvar_2.z * 0.100000)) * 5.00000)) - 0.500000);
+  if ((x_4 < 0.00000)) {
     discard;
   };
-  vec4 tmpvar_9;
-  tmpvar_9 = tmpvar_5.xxxx;
-  vec4 tmpvar_10;
-  tmpvar_10 = (vec4(greaterThanEqual (tmpvar_9, _LightSplitsNear)) * vec4(lessThan (tmpvar_9, _LightSplitsFar)));
-  vec4 tmpvar_11;
-  tmpvar_11.w = 1.00000;
-  tmpvar_11.xyz = ((((tmpvar_1 * tmpvar_10.x) + (tmpvar_2 * tmpvar_10.y)) + (tmpvar_3 * tmpvar_10.z)) + (tmpvar_4 * tmpvar_10.w));
-  vec4 tmpvar_12;
-  tmpvar_12 = texture2D (_ShadowMapTexture, tmpvar_11.xy);
-  float tmpvar_13;
-  if ((tmpvar_12.x < tmpvar_11.z)) {
-    tmpvar_13 = _LightShadowData.x;
+  vec4 tmpvar_5;
+  tmpvar_5 = (vec4(greaterThanEqual (tmpvar_1.xxxx, _LightSplitsNear)) * vec4(lessThan (tmpvar_1.xxxx, _LightSplitsFar)));
+  vec4 tmpvar_6;
+  tmpvar_6.w = 1.00000;
+  tmpvar_6.xyz = ((((gl_TexCoord[0].xyz * tmpvar_5.x) + (gl_TexCoord[1].xyz * tmpvar_5.y)) + (gl_TexCoord[2].xyz * tmpvar_5.z)) + (gl_TexCoord[3].xyz * tmpvar_5.w));
+  vec4 tmpvar_7;
+  tmpvar_7 = texture2D (_ShadowMapTexture, tmpvar_6.xy);
+  float tmpvar_8;
+  if ((tmpvar_7.x < tmpvar_6.z)) {
+    tmpvar_8 = _LightShadowData.x;
   } else {
-    tmpvar_13 = 1.00000;
+    tmpvar_8 = 1.00000;
   };
-  res_7.x = clamp ((tmpvar_13 + clamp (tmpvar_5.y, 0.00000, 1.00000)), 0.00000, 1.00000);
-  res_7.y = 1.00000;
-  vec2 enc_14;
-  vec2 tmpvar_15;
-  tmpvar_15 = fract ((vec2(1.00000, 255.000) * (1.00000 - (tmpvar_5.xxxx * _ProjectionParams.w)).x));
-  enc_14 = tmpvar_15;
-  enc_14.x = (tmpvar_15.x - (tmpvar_15.y * 0.00392157));
-  res_7.zw = enc_14;
-  gl_FragData[0] = res_7;
+  res_3.x = clamp ((tmpvar_8 + clamp (tmpvar_1.y, 0.00000, 1.00000)), 0.00000, 1.00000);
+  res_3.y = 1.00000;
+  vec2 enc_9;
+  vec2 tmpvar_10;
+  tmpvar_10 = fract((vec2(1.00000, 255.000) * (1.00000 - (tmpvar_1.xxxx * _ProjectionParams.w)).x));
+  enc_9.y = tmpvar_10.y;
+  enc_9.x = (tmpvar_10.x - (tmpvar_10.y * 0.00392157));
+  res_3.zw = enc_9;
+  gl_FragData[0] = res_3;
 }
 
