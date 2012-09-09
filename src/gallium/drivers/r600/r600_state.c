@@ -1600,12 +1600,22 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	if (rstate == NULL)
 		return;
 
-	r600_flush_framebuffer(rctx, false);
+	if (rctx->framebuffer.nr_cbufs) {
+		rctx->flags |= R600_CONTEXT_CB_FLUSH;
+	}
+	if (rctx->framebuffer.zsbuf) {
+		rctx->flags |= R600_CONTEXT_DB_FLUSH;
+	}
+	/* R6xx errata */
+	if (rctx->chip_class == R600) {
+		rctx->flags |= R600_CONTEXT_FLUSH_AND_INV;
+	}
 
 	/* unreference old buffer and reference new one */
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;
 
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
+
 
 	/* Colorbuffers. */
 	rctx->export_16bpc = true;
@@ -2125,14 +2135,7 @@ void r600_adjust_gprs(struct r600_context *rctx)
 	unsigned tmp;
 	int diff;
 
-	/* XXX: Following call moved from r600_bind_[ps|vs]_shader,
-	 * it seems eg+ doesn't need it, r6xx/7xx probably need it only for
-	 * adjusting the GPR allocation?
-	 * Do we need this if we aren't really changing config below? */
-	r600_inval_shader_cache(rctx);
-
-	if (rctx->ps_shader->current->shader.bc.ngpr > rctx->default_ps_gprs)
-	{
+	if (rctx->ps_shader->current->shader.bc.ngpr > rctx->default_ps_gprs) {
 		diff = rctx->ps_shader->current->shader.bc.ngpr - rctx->default_ps_gprs;
 		num_vs_gprs -= diff;
 		num_ps_gprs += diff;

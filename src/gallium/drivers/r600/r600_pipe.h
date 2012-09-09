@@ -65,11 +65,6 @@ struct r600_command_buffer {
 	unsigned pkt_flags;
 };
 
-struct r600_surface_sync_cmd {
-	struct r600_atom atom;
-	unsigned flush_flags; /* CP_COHER_CNTL */
-};
-
 struct r600_db_misc_state {
 	struct r600_atom atom;
 	bool occlusion_query_enabled;
@@ -370,8 +365,6 @@ struct r600_context {
 	/** Compute specific registers initializations.  The start_cs_cmd atom
 	 *  must be emitted before start_compute_cs_cmd. */
         struct r600_command_buffer      start_compute_cs_cmd;
-	struct r600_surface_sync_cmd	surface_sync_cmd;
-	struct r600_atom		r6xx_flush_and_inv_cmd;
 	struct r600_alphatest_state	alphatest_state;
 	struct r600_cb_misc_state	cb_misc_state;
 	struct r600_db_misc_state	db_misc_state;
@@ -575,8 +568,6 @@ void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom
 void r600_init_atom(struct r600_context *rctx, struct r600_atom *atom, unsigned id,
 		    void (*emit)(struct r600_context *ctx, struct r600_atom *state),
 		    unsigned num_dw);
-void r600_init_common_atoms(struct r600_context *rctx);
-unsigned r600_get_cb_flush_flags(struct r600_context *rctx);
 void r600_texture_barrier(struct pipe_context *ctx);
 void r600_set_index_buffer(struct pipe_context *ctx,
 			   const struct pipe_index_buffer *ib);

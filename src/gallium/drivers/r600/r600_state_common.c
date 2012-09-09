@@ -56,27 +56,6 @@ void r600_release_command_buffer(struct r600_command_buffer *cb)
 	FREE(cb->buf);
 }
 
-static void r600_emit_surface_sync(struct r600_context *rctx, struct r600_atom *atom)
-{
-	struct radeon_winsys_cs *cs = rctx->cs;
-	struct r600_surface_sync_cmd *a = (struct r600_surface_sync_cmd*)atom;
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-	cs->buf[cs->cdw++] = a->flush_flags;  /* CP_COHER_CNTL */
-	cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
-	cs->buf[cs->cdw++] = 0;               /* CP_COHER_BASE */
-	cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
-
-	a->flush_flags = 0;
-}
-
-static void r600_emit_r6xx_flush_and_inv(struct r600_context *rctx, struct r600_atom *atom)
-{
-	struct radeon_winsys_cs *cs = rctx->cs;
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
-}
-
 void r600_init_atom(struct r600_context *rctx,
 		    struct r600_atom *atom,
 		    unsigned id,
@@ -108,37 +87,16 @@ void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom
 	r600_write_context_reg(cs, R_028438_SX_ALPHA_REF, alpha_ref);
 }
 
-void r600_init_common_atoms(struct r600_context *rctx)
-{
-	r600_init_atom(rctx, &rctx->r6xx_flush_and_inv_cmd, 2, r600_emit_r6xx_flush_and_inv, 2);
-	r600_init_atom(rctx, &rctx->surface_sync_cmd.atom, 3, r600_emit_surface_sync, 5);
-}
-
-unsigned r600_get_cb_flush_flags(struct r600_context *rctx)
-{
-	unsigned flags = 0;
-
-	if (rctx->framebuffer.nr_cbufs) {
-		flags |= S_0085F0_CB_ACTION_ENA(1) |
-			 (((1 << rctx->framebuffer.nr_cbufs) - 1) << S_0085F0_CB0_DEST_BASE_ENA_SHIFT);
-	}
-
-	/* Workaround for broken flushing on some R6xx chipsets. */
-	if (rctx->family == CHIP_RV670 ||
-	    rctx->family == CHIP_RS780 ||
-	    rctx->family == CHIP_RS880) {
-		flags |=  S_0085F0_CB1_DEST_BASE_ENA(1) |
-			  S_0085F0_DEST_BASE_0_ENA(1);
-	}
-	return flags;
-}
-
 void r600_texture_barrier(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	rctx->surface_sync_cmd.flush_flags |= S_0085F0_TC_ACTION_ENA(1) | r600_get_cb_flush_flags(rctx);
-	r600_atom_dirty(rctx, &rctx->surface_sync_cmd.atom);
+	rctx->flags |= R600_CONTEXT_CB_FLUSH | R600_CONTEXT_TEX_FLUSH;
+
+	/* R6xx errata */
+	if (rctx->chip_class == R600) {
+		rctx->flags |= R600_CONTEXT_FLUSH_AND_INV;
+	}
 }
 
 static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
@@ -424,7 +382,7 @@ static void r600_bind_samplers(struct pipe_context *pipe,
 		}
 		if (sampler->border_color_use) {
 			dst->atom_sampler.num_dw += 11;
-			rctx->flags |= R600_PARTIAL_FLUSH;
+			rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
 		} else {
 			dst->atom_sampler.num_dw += 5;
 		}
@@ -432,7 +390,7 @@ static void r600_bind_samplers(struct pipe_context *pipe,
 	}
 	if (rctx->chip_class <= R700 && seamless_cube_map != -1 && seamless_cube_map != rctx->seamless_cube_map.enabled) {
 		/* change in TA_CNTL_AUX need a pipeline flush */
-		rctx->flags |= R600_PARTIAL_FLUSH;
+		rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
 		rctx->seamless_cube_map.enabled = seamless_cube_map;
 		r600_atom_dirty(rctx, &rctx->seamless_cube_map.atom);
 	}
@@ -477,8 +435,6 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 
 	rctx->vertex_elements = v;
 	if (v) {
-		r600_inval_shader_cache(rctx);
-
 		rctx->states[v->rstate.id] = &v->rstate;
 		r600_context_pipe_state_set(rctx, &v->rstate);
 	}
@@ -515,7 +471,7 @@ void r600_set_index_buffer(struct pipe_context *ctx,
 void r600_vertex_buffers_dirty(struct r600_context *rctx)
 {
 	if (rctx->vertex_buffer_state.dirty_mask) {
-		r600_inval_vertex_cache(rctx);
+		rctx->flags |= rctx->has_vertex_cache ? R600_CONTEXT_VTX_FLUSH : R600_CONTEXT_TEX_FLUSH;
 		rctx->vertex_buffer_state.atom.num_dw = (rctx->chip_class >= EVERGREEN ? 12 : 11) *
 					       util_bitcount(rctx->vertex_buffer_state.dirty_mask);
 		r600_atom_dirty(rctx, &rctx->vertex_buffer_state.atom);
@@ -570,7 +526,7 @@ void r600_sampler_views_dirty(struct r600_context *rctx,
 			      struct r600_samplerview_state *state)
 {
 	if (state->dirty_mask) {
-		r600_inval_texture_cache(rctx);
+		rctx->flags |= R600_CONTEXT_TEX_FLUSH;
 		state->atom.num_dw = (rctx->chip_class >= EVERGREEN ? 14 : 13) *
 				     util_bitcount(state->dirty_mask);
 		r600_atom_dirty(rctx, &state->atom);
@@ -898,7 +854,7 @@ void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state)
 {
 	if (state->dirty_mask) {
-		r600_inval_shader_cache(rctx);
+		rctx->flags |= R600_CONTEXT_SHADERCONST_FLUSH;
 		state->atom.num_dw = rctx->chip_class >= EVERGREEN ? util_bitcount(state->dirty_mask)*20
 								   : util_bitcount(state->dirty_mask)*19;
 		r600_atom_dirty(rctx, &state->atom);
@@ -1148,13 +1104,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	r600_update_derived_state(rctx);
 
-	/* partial flush triggered by border color change */
-	if (rctx->flags & R600_PARTIAL_FLUSH) {
-		rctx->flags &= ~R600_PARTIAL_FLUSH;
-		r600_write_value(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
-		r600_write_value(cs, EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4));
-	}
-
 	if (info.indexed) {
 		/* Initialize the index buffer struct. */
 		pipe_resource_reference(&ib.buffer, rctx->index_buffer.buffer);
@@ -1221,6 +1170,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 
 	/* Emit states (the function expects that we emit at most 17 dwords here). */
 	r600_need_cs_space(rctx, 0, TRUE);
+	r600_flush_emit(rctx);
 
 	for (i = 0; i < R600_MAX_ATOM; i++) {
 		if (rctx->atoms[i] == NULL || !rctx->atoms[i]->dirty) {
@@ -1274,8 +1224,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 		cs->buf[cs->cdw++] = V_0287F0_DI_SRC_SEL_AUTO_INDEX |
 					(info.count_from_stream_output ? S_0287F0_USE_OPAQUE(1) : 0);
 	}
-
-	rctx->flags |= R600_CONTEXT_DST_CACHES_DIRTY | R600_CONTEXT_DRAW_PENDING;
 
 	/* Set the depth buffer as dirty. */
 	if (rctx->framebuffer.zsbuf) {

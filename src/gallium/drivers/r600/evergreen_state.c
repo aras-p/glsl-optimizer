@@ -1697,7 +1697,12 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	if (rstate == NULL)
 		return;
 
-	r600_flush_framebuffer(rctx, false);
+	if (rctx->framebuffer.nr_cbufs) {
+		rctx->flags |= R600_CONTEXT_CB_FLUSH;
+	}
+	if (rctx->framebuffer.zsbuf) {
+		rctx->flags |= R600_CONTEXT_DB_FLUSH;
+	}
 
 	/* unreference old buffer and reference new one */
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;

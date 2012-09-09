@@ -114,19 +114,6 @@ err:
 	return;
 }
 
-void r600_context_ps_partial_flush(struct r600_context *ctx)
-{
-	struct radeon_winsys_cs *cs = ctx->cs;
-
-	if (!(ctx->flags & R600_CONTEXT_DRAW_PENDING))
-		return;
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
-
-	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
-}
-
 static void r600_init_block(struct r600_context *ctx,
 			    struct r600_block *block,
 			    const struct r600_reg *reg, int index, int nreg,
@@ -665,7 +652,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	}
 
 	/* Count in framebuffer cache flushes at the end of CS. */
-	num_dw += 7; /* one SURFACE_SYNC and CACHE_FLUSH_AND_INV (r6xx-only) */
+	num_dw += 44; /* one SURFACE_SYNC and CACHE_FLUSH_AND_INV (r6xx-only) */
 
 	/* Save 16 dwords for the fence mechanism. */
 	num_dw += 16;
@@ -693,7 +680,7 @@ void r600_context_dirty_block(struct r600_context *ctx,
 		LIST_ADDTAIL(&block->list,&ctx->dirty);
 
 		if (block->flags & REG_FLAG_FLUSH_CHANGE) {
-			r600_context_ps_partial_flush(ctx);
+			ctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
 		}
 	}
 }
@@ -861,54 +848,138 @@ out:
 	LIST_DELINIT(&block->list);
 }
 
-void r600_inval_shader_cache(struct r600_context *ctx)
+void r600_flush_emit(struct r600_context *rctx)
 {
-	ctx->surface_sync_cmd.flush_flags |= S_0085F0_SH_ACTION_ENA(1);
-	r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
-}
+	struct radeon_winsys_cs *cs = rctx->cs;
 
-void r600_inval_texture_cache(struct r600_context *ctx)
-{
-	ctx->surface_sync_cmd.flush_flags |= S_0085F0_TC_ACTION_ENA(1);
-	r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
-}
-
-void r600_inval_vertex_cache(struct r600_context *ctx)
-{
-	if (ctx->has_vertex_cache) {
-		ctx->surface_sync_cmd.flush_flags |= S_0085F0_VC_ACTION_ENA(1);
-	} else {
-		/* Some GPUs don't have the vertex cache and must use the texture cache instead. */
-		ctx->surface_sync_cmd.flush_flags |= S_0085F0_TC_ACTION_ENA(1);
-	}
-	r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
-}
-
-void r600_flush_framebuffer(struct r600_context *ctx, bool flush_now)
-{
-	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
+	if (!rctx->flags) {
 		return;
-
-	ctx->surface_sync_cmd.flush_flags |=
-		r600_get_cb_flush_flags(ctx) |
-		(ctx->framebuffer.zsbuf ? S_0085F0_DB_ACTION_ENA(1) | S_0085F0_DB_DEST_BASE_ENA(1) : 0);
-
-	if (flush_now) {
-		r600_emit_atom(ctx, &ctx->surface_sync_cmd.atom);
-	} else {
-		r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
 	}
 
-	/* Also add a complete cache flush to work around broken flushing on R6xx. */
-	if (ctx->chip_class == R600) {
-		if (flush_now) {
-			r600_emit_atom(ctx, &ctx->r6xx_flush_and_inv_cmd);
-		} else {
-			r600_atom_dirty(ctx, &ctx->r6xx_flush_and_inv_cmd);
+	if (rctx->flags & R600_CONTEXT_PS_PARTIAL_FLUSH) {
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+	}
+
+	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV) {
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
+
+		/* DB flushes are special due to errata with hyperz, we need to
+		 * insert a no-op, so that the cache has time to really flush.
+		 */
+		if (rctx->chip_class <= R700 &&
+		    rctx->flags & R600_CONTEXT_HTILE_ERRATA) {
+			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 31, 0);
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
+			cs->buf[cs->cdw++] = 0xdeadcafe;
 		}
 	}
 
-	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
+	if (rctx->flags & (R600_CONTEXT_CB_FLUSH |
+			   R600_CONTEXT_DB_FLUSH |
+		           R600_CONTEXT_SHADERCONST_FLUSH |
+		           R600_CONTEXT_TEX_FLUSH |
+		           R600_CONTEXT_VTX_FLUSH |
+		           R600_CONTEXT_STREAMOUT_FLUSH)) {
+		/* anything left (cb, vtx, shader, streamout) can be flushed
+		 * using the surface sync packet
+		 */
+		unsigned flags = 0;
+
+		if (rctx->flags & R600_CONTEXT_CB_FLUSH) {
+			flags |= S_0085F0_CB_ACTION_ENA(1) |
+				 S_0085F0_CB0_DEST_BASE_ENA(1) |
+				 S_0085F0_CB1_DEST_BASE_ENA(1) |
+				 S_0085F0_CB2_DEST_BASE_ENA(1) |
+				 S_0085F0_CB3_DEST_BASE_ENA(1) |
+				 S_0085F0_CB4_DEST_BASE_ENA(1) |
+				 S_0085F0_CB5_DEST_BASE_ENA(1) |
+				 S_0085F0_CB6_DEST_BASE_ENA(1) |
+				 S_0085F0_CB7_DEST_BASE_ENA(1);
+
+			if (rctx->chip_class >= EVERGREEN) {
+				flags |= S_0085F0_CB8_DEST_BASE_ENA(1) |
+					 S_0085F0_CB9_DEST_BASE_ENA(1) |
+					 S_0085F0_CB10_DEST_BASE_ENA(1) |
+					 S_0085F0_CB11_DEST_BASE_ENA(1);
+			}
+
+			/* RV670 errata
+			 * (CB1_DEST_BASE_ENA is also required, which is
+			 * included unconditionally above). */
+			if (rctx->family == CHIP_RV670 ||
+			    rctx->family == CHIP_RS780 ||
+			    rctx->family == CHIP_RS880) {
+				flags |= S_0085F0_DEST_BASE_0_ENA(1);
+			}
+		}
+
+		if (rctx->flags & R600_CONTEXT_STREAMOUT_FLUSH) {
+			flags |= S_0085F0_SO0_DEST_BASE_ENA(1) |
+				 S_0085F0_SO1_DEST_BASE_ENA(1) |
+				 S_0085F0_SO2_DEST_BASE_ENA(1) |
+				 S_0085F0_SO3_DEST_BASE_ENA(1) |
+				 S_0085F0_SMX_ACTION_ENA(1);
+
+			/* RV670 errata */
+			if (rctx->family == CHIP_RV670 ||
+			    rctx->family == CHIP_RS780 ||
+			    rctx->family == CHIP_RS880) {
+				flags |= S_0085F0_DEST_BASE_0_ENA(1);
+			}
+		}
+
+		flags |= (rctx->flags & R600_CONTEXT_DB_FLUSH) ? S_0085F0_DB_ACTION_ENA(1) |
+								 S_0085F0_DB_DEST_BASE_ENA(1): 0;
+		flags |= (rctx->flags & R600_CONTEXT_SHADERCONST_FLUSH) ? S_0085F0_SH_ACTION_ENA(1) : 0;
+		flags |= (rctx->flags & R600_CONTEXT_TEX_FLUSH) ? S_0085F0_TC_ACTION_ENA(1) : 0;
+		flags |= (rctx->flags & R600_CONTEXT_VTX_FLUSH) ? S_0085F0_VC_ACTION_ENA(1) : 0;
+
+		cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
+		cs->buf[cs->cdw++] = flags;           /* CP_COHER_CNTL */
+		cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
+		cs->buf[cs->cdw++] = 0;               /* CP_COHER_BASE */
+		cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
+	}
+
+	if (rctx->flags & R600_CONTEXT_WAIT_IDLE) {
+		/* wait for things to settle */
+		r600_write_config_reg(cs, R_008040_WAIT_UNTIL, S_008040_WAIT_3D_IDLE(1));
+	}
+
+	/* everything is properly flushed */
+	rctx->flags = 0;
 }
 
 void r600_context_flush(struct r600_context *ctx, unsigned flags)
@@ -937,10 +1008,18 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 		streamout_suspended = true;
 	}
 
-	r600_flush_framebuffer(ctx, true);
-
 	/* partial flush is needed to avoid lockups on some chips with user fences */
-	r600_context_ps_partial_flush(ctx);
+	ctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
+
+	/* flush the framebuffer */
+	ctx->flags |= R600_CONTEXT_CB_FLUSH | R600_CONTEXT_DB_FLUSH;
+
+	/* R6xx errata */
+	if (ctx->chip_class == R600) {
+		ctx->flags |= R600_CONTEXT_FLUSH_AND_INV;
+	}
+
+	r600_flush_emit(ctx);
 
 	/* old kernels and userspace don't set SX_MISC, so we must reset it to 0 here */
 	if (ctx->chip_class <= R700) {
@@ -958,10 +1037,6 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 	/* Begin a new CS. */
 	r600_emit_atom(ctx, &ctx->start_cs_cmd.atom);
-
-	/* Invalidate caches. */
-	r600_inval_texture_cache(ctx);
-	r600_flush_framebuffer(ctx, false);
 
 	/* Re-emit states. */
 	r600_atom_dirty(ctx, &ctx->alphatest_state.atom);
@@ -1024,7 +1099,10 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fen
 	va = r600_resource_va(&ctx->screen->screen, (void*)fence_bo);
 	va = va + (offset << 2);
 
-	r600_context_ps_partial_flush(ctx);
+	ctx->flags &= ~R600_CONTEXT_PS_PARTIAL_FLUSH;
+	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
 	cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;       /* ADDRESS_LO */
@@ -1185,7 +1263,7 @@ void r600_context_streamout_end(struct r600_context *ctx)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	struct r600_so_target **t = ctx->so_targets;
-	unsigned i, flush_flags = 0;
+	unsigned i;
 	uint64_t va;
 
 	if (ctx->chip_class >= EVERGREEN) {
@@ -1212,7 +1290,6 @@ void r600_context_streamout_end(struct r600_context *ctx)
 				r600_context_bo_reloc(ctx,  t[i]->filled_size,
 						      RADEON_USAGE_WRITE);
 
-			flush_flags |= S_0085F0_SO0_DEST_BASE_ENA(1) << i;
 		}
 	}
 
@@ -1221,22 +1298,11 @@ void r600_context_streamout_end(struct r600_context *ctx)
 	} else {
 		r600_set_streamout_enable(ctx, 0);
 	}
+	ctx->flags |= R600_CONTEXT_STREAMOUT_FLUSH;
 
-	/* This is needed to fix cache flushes on r600. */
+	/* R6xx errata */
 	if (ctx->chip_class == R600) {
-		if (ctx->family == CHIP_RV670 ||
-		    ctx->family == CHIP_RS780 ||
-		    ctx->family == CHIP_RS880) {
-			flush_flags |= S_0085F0_DEST_BASE_0_ENA(1);
-		}
-
-		r600_atom_dirty(ctx, &ctx->r6xx_flush_and_inv_cmd);
+		ctx->flags |= R600_CONTEXT_FLUSH_AND_INV;
 	}
-
-	/* Flush streamout caches. */
-	ctx->surface_sync_cmd.flush_flags |=
-		S_0085F0_SMX_ACTION_ENA(1) | flush_flags;
-	r600_atom_dirty(ctx, &ctx->surface_sync_cmd.atom);
-
 	ctx->num_cs_dw_streamout_end = 0;
 }

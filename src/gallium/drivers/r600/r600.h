@@ -180,9 +180,16 @@ struct r600_so_target {
 	unsigned		so_index;
 };
 
-#define R600_CONTEXT_DRAW_PENDING	(1 << 0)
-#define R600_CONTEXT_DST_CACHES_DIRTY	(1 << 1)
-#define R600_PARTIAL_FLUSH		(1 << 2)
+#define R600_CONTEXT_PS_PARTIAL_FLUSH		(1 << 0)
+#define R600_CONTEXT_CB_FLUSH			(1 << 1)
+#define R600_CONTEXT_DB_FLUSH			(1 << 2)
+#define R600_CONTEXT_SHADERCONST_FLUSH		(1 << 3)
+#define R600_CONTEXT_TEX_FLUSH			(1 << 4)
+#define R600_CONTEXT_VTX_FLUSH			(1 << 5)
+#define R600_CONTEXT_STREAMOUT_FLUSH		(1 << 6)
+#define R600_CONTEXT_WAIT_IDLE			(1 << 7)
+#define R600_CONTEXT_FLUSH_AND_INV		(1 << 8)
+#define R600_CONTEXT_HTILE_ERRATA		(1 << 9)
 
 struct r600_context;
 struct r600_screen;
@@ -196,10 +203,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags);
 
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
                              unsigned offset, unsigned value);
-void r600_inval_shader_cache(struct r600_context *ctx);
-void r600_inval_texture_cache(struct r600_context *ctx);
-void r600_inval_vertex_cache(struct r600_context *ctx);
-void r600_flush_framebuffer(struct r600_context *ctx, bool flush_now);
+void r600_flush_emit(struct r600_context *ctx);
 
 void r600_context_streamout_begin(struct r600_context *ctx);
 void r600_context_streamout_end(struct r600_context *ctx);

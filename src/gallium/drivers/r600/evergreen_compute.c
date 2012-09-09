@@ -96,7 +96,7 @@ static void evergreen_cs_set_vertex_buffer(
 	vb->buffer = buffer;
 	vb->user_buffer = NULL;
 
-	r600_inval_vertex_cache(rctx);
+	rctx->flags |= rctx->has_vertex_cache ? R600_CONTEXT_VTX_FLUSH : R600_CONTEXT_TEX_FLUSH;
 	state->enabled_mask |= 1 << vb_index;
 	state->dirty_mask |= 1 << vb_index;
 	r600_atom_dirty(rctx, &state->atom);
@@ -332,8 +332,11 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	 */
 	r600_emit_atom(ctx, &ctx->start_compute_cs_cmd.atom);
 
+	ctx->flags |= R600_CONTEXT_CB_FLUSH;
+	r600_flush_emit(ctx);
+
 	/* Emit cb_state */
-        cb_state = ctx->states[R600_PIPE_STATE_FRAMEBUFFER];
+	cb_state = ctx->states[R600_PIPE_STATE_FRAMEBUFFER];
 	r600_context_pipe_state_emit(ctx, cb_state, RADEON_CP_PACKET3_COMPUTE_MODE);
 
 	/* Set CB_TARGET_MASK  XXX: Use cb_misc_state */
@@ -384,15 +387,10 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	/* Emit dispatch state and dispatch packet */
 	evergreen_emit_direct_dispatch(ctx, block_layout, grid_layout);
 
-	/* r600_flush_framebuffer() updates the cb_flush_flags and then
-	 * calls r600_emit_atom() on the ctx->surface_sync_cmd.atom, which emits
-	 * a SURFACE_SYNC packet via r600_emit_surface_sync().
-	 *
-	 * XXX r600_emit_surface_sync() hardcodes the CP_COHER_SIZE to
-	 * 0xffffffff, so we will need to add a field to struct
-	 * r600_surface_sync_cmd if we want to manually set this value.
+	/* XXX evergreen_flush_emit() hardcodes the CP_COHER_SIZE to 0xffffffff
 	 */
-	r600_flush_framebuffer(ctx, true /* Flush now */);
+	ctx->flags |= R600_CONTEXT_CB_FLUSH;
+	r600_flush_emit(ctx);
 
 #if 0
 	COMPUTE_DBG("cdw: %i\n", cs->cdw);
@@ -444,7 +442,7 @@ void evergreen_emit_cs_shader(
 	r600_write_value(cs, r600_context_bo_reloc(rctx, shader->shader_code_bo,
 							RADEON_USAGE_READ));
 
-	r600_inval_shader_cache(rctx);
+	rctx->flags |= R600_CONTEXT_SHADERCONST_FLUSH;
 }
 
 static void evergreen_launch_grid(

@@ -28,7 +28,8 @@
 
 #include "r600_pipe.h"
 
-#define R600_MAX_DRAW_CS_DWORDS 16
+/* the number of CS dwords for flushing and drawing */
+#define R600_MAX_DRAW_CS_DWORDS 64
 
 /* these flags are used in register flags and added into block flags */
 #define REG_FLAG_NEED_BO 1
@@ -54,9 +55,6 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
 			      int dirty, int index);
 int r600_setup_block_table(struct r600_context *ctx);
-int r600_state_sampler_init(struct r600_context *ctx, uint32_t offset);
-void r600_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset);
-void r600_context_ps_partial_flush(struct r600_context *ctx);
 
 /*
  * evergreen_hw_context.c
