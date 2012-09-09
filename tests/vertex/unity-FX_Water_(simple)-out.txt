@@ -7,31 +7,28 @@ uniform vec4 _WaveOffset;
 void main ()
 {
   vec4 temp_1;
-  vec2 tmpvar_2[2];
-  vec4 tmpvar_3;
-  tmpvar_3 = (gl_ModelViewProjectionMatrix * gl_Vertex);
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_ModelViewProjectionMatrix * gl_Vertex);
   temp_1 = ((gl_Vertex.xzxz * _WaveScale) + _WaveOffset);
-  tmpvar_2[0] = (temp_1.xy * vec2(0.400000, 0.450000));
-  tmpvar_2[1] = temp_1.wz;
+  vec4 tmpvar_3;
+  tmpvar_3.w = 1.00000;
+  tmpvar_3.xyz = _WorldSpaceCameraPos;
+  gl_Position = tmpvar_2;
   vec4 tmpvar_4;
-  tmpvar_4.w = 1.00000;
-  tmpvar_4.xyz = _WorldSpaceCameraPos;
-  gl_Position = tmpvar_3;
+  tmpvar_4.yzw = vec3(0.00000, 0.00000, 0.00000);
+  tmpvar_4.x = tmpvar_2.z;
+  xlv_FOG = tmpvar_4;
   vec4 tmpvar_5;
-  tmpvar_5.yzw = vec3(0.00000, 0.00000, 0.00000);
-  tmpvar_5.x = tmpvar_3.z;
-  xlv_FOG = tmpvar_5;
+  tmpvar_5.zw = vec2(0.00000, 0.00000);
+  tmpvar_5.xy = (temp_1.xy * vec2(0.400000, 0.450000));
+  gl_TexCoord[0] = tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6.zw = vec2(0.00000, 0.00000);
-  tmpvar_6.xy = tmpvar_2[0];
-  gl_TexCoord[0] = tmpvar_6;
+  tmpvar_6.xy = temp_1.wz;
+  gl_TexCoord[1] = tmpvar_6;
   vec4 tmpvar_7;
-  tmpvar_7.zw = vec2(0.00000, 0.00000);
-  tmpvar_7.xy = tmpvar_2[1];
-  gl_TexCoord[1] = tmpvar_7;
-  vec4 tmpvar_8;
-  tmpvar_8.w = 0.00000;
-  tmpvar_8.xyz = normalize((((_World2Object * tmpvar_4).xyz * unity_Scale.w) - gl_Vertex.xyz)).xzy;
-  gl_TexCoord[2] = tmpvar_8;
+  tmpvar_7.w = 0.00000;
+  tmpvar_7.xyz = normalize((((_World2Object * tmpvar_3).xyz * unity_Scale.w) - gl_Vertex.xyz)).xzy;
+  gl_TexCoord[2] = tmpvar_7;
 }
 
