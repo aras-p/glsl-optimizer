@@ -6,19 +6,21 @@ void main ()
   vec2 tmpvar_1;
   tmpvar_1 = gl_TexCoord[1].xy;
   vec2 uv_2;
-  float tmpvar_3;
-  tmpvar_3 = max (0.00000, (1.00000 - length ((tmpvar_1 / _CenterRadius.zw))));
+  vec2 arg0_3;
+  arg0_3 = (tmpvar_1 / _CenterRadius.zw);
   float tmpvar_4;
-  tmpvar_4 = ((tmpvar_3 * tmpvar_3) * _Angle);
-  float tmpvar_5;
-  tmpvar_5 = sin (tmpvar_4);
+  tmpvar_4 = max (0.00000, (1.00000 - sqrt(dot (arg0_3, arg0_3))));
+  float x_5;
+  x_5 = ((tmpvar_4 * tmpvar_4) * _Angle);
   float tmpvar_6;
-  tmpvar_6 = cos (tmpvar_4);
-  uv_2.x = ((tmpvar_6 * tmpvar_1.x) - (tmpvar_5 * tmpvar_1.y));
-  uv_2.y = ((tmpvar_5 * tmpvar_1.x) + (tmpvar_6 * tmpvar_1.y));
-  vec2 tmpvar_7;
-  tmpvar_7 = (uv_2 + _CenterRadius.xy);
-  uv_2 = tmpvar_7;
-  gl_FragData[0] = texture2D (_MainTex, tmpvar_7);
+  tmpvar_6 = sin(x_5);
+  float tmpvar_7;
+  tmpvar_7 = cos(x_5);
+  uv_2.x = ((tmpvar_7 * tmpvar_1.x) - (tmpvar_6 * tmpvar_1.y));
+  uv_2.y = ((tmpvar_6 * tmpvar_1.x) + (tmpvar_7 * tmpvar_1.y));
+  vec2 tmpvar_8;
+  tmpvar_8 = (uv_2 + _CenterRadius.xy);
+  uv_2 = tmpvar_8;
+  gl_FragData[0] = texture2D (_MainTex, tmpvar_8);
 }
 

@@ -9,6 +9,8 @@ void main ()
   tmpvar_2.zw = vec2(0.00000, 0.00000);
   tmpvar_2.x = tmpvar_1.x;
   tmpvar_2.y = tmpvar_1.y;
-  gl_FragData[0] = texture2D (_MainTex, (mix ((_RotationMatrix * tmpvar_2).xy, tmpvar_1, vec2(min (1.00000, length ((tmpvar_1 / _CenterRadius.zw))))) + _CenterRadius.xy));
+  vec2 arg0_3;
+  arg0_3 = (tmpvar_1 / _CenterRadius.zw);
+  gl_FragData[0] = texture2D (_MainTex, (mix ((_RotationMatrix * tmpvar_2).xy, tmpvar_1, vec2(min (1.00000, sqrt(dot (arg0_3, arg0_3))))) + _CenterRadius.xy));
 }
 
