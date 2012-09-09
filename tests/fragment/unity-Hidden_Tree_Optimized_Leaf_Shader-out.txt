@@ -6,39 +6,34 @@ uniform sampler2D _BumpSpecMap;
 void main ()
 {
   vec2 tmpvar_1;
-  vec3 tmpvar_2;
   tmpvar_1 = gl_TexCoord[0].xy;
+  vec3 tmpvar_2;
   tmpvar_2 = gl_TexCoord[1].xyz;
   vec4 c_3;
-  float tmpvar_4;
+  vec4 tmpvar_4;
+  tmpvar_4 = texture2D (_MainTex, tmpvar_1);
   vec4 tmpvar_5;
-  tmpvar_5 = texture2D (_MainTex, tmpvar_1);
-  vec4 tmpvar_6;
-  tmpvar_6 = texture2D (_TranslucencyMap, tmpvar_1);
-  tmpvar_4 = (tmpvar_5.w * gl_Color.w);
+  tmpvar_5 = texture2D (_TranslucencyMap, tmpvar_1);
+  float tmpvar_6;
+  tmpvar_6 = (tmpvar_4.w * gl_Color.w);
   vec4 tmpvar_7;
   tmpvar_7 = texture2D (_BumpSpecMap, tmpvar_1);
   vec4 normal_8;
   normal_8.xy = ((tmpvar_7.wy * 2.00000) - 1.00000);
   normal_8.z = sqrt(((1.00000 - (normal_8.x * normal_8.x)) - (normal_8.y * normal_8.y)));
   float x_9;
-  x_9 = (tmpvar_4 - _Cutoff);
+  x_9 = (tmpvar_6 - _Cutoff);
   if ((x_9 < 0.00000)) {
     discard;
   };
   vec4 c_10;
-  vec3 col_11;
+  float tmpvar_11;
+  tmpvar_11 = dot (normal_8.xyz, tmpvar_2);
   float tmpvar_12;
-  tmpvar_12 = dot (normal_8.xyz, tmpvar_2);
-  float tmpvar_13;
-  tmpvar_13 = max (0.00000, -(tmpvar_12));
-  col_11 = ((tmpvar_5.xyz * gl_Color.xyz) * (max (0.00000, ((tmpvar_12 * 0.500000) + 0.500000)) + ((tmpvar_6.xyz * tmpvar_13) * 2.00000)));
-  vec3 tmpvar_14;
-  tmpvar_14 = ((col_11 + ((pow (max (0.00000, dot (normal_8.xyz, normalize((tmpvar_2 + normalize(gl_TexCoord[2].xyz))))), (tmpvar_7.x * 128.000)) * tmpvar_6.w) * (1.00000 - clamp (ceil(tmpvar_13), 0.00000, 1.00000)))) * _LightColor0.xyz);
-  col_11 = tmpvar_14;
-  c_10.xyz = (tmpvar_14 * 2.00000);
+  tmpvar_12 = max (0.00000, -(tmpvar_11));
+  c_10.xyz = (((((tmpvar_4.xyz * gl_Color.xyz) * (max (0.00000, ((tmpvar_11 * 0.500000) + 0.500000)) + ((tmpvar_5.xyz * tmpvar_12) * 2.00000))) + ((pow (max (0.00000, dot (normal_8.xyz, normalize((tmpvar_2 + normalize(gl_TexCoord[2].xyz))))), (tmpvar_7.x * 128.000)) * tmpvar_5.w) * (1.00000 - clamp (ceil(tmpvar_12), 0.00000, 1.00000)))) * _LightColor0.xyz) * 2.00000);
   c_3.xyz = c_10.xyz;
-  c_3.w = tmpvar_4;
+  c_3.w = tmpvar_6;
   gl_FragData[0] = c_3;
 }
 

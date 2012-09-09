@@ -42,8 +42,8 @@ void main ()
       break;
     };
     float tmpvar_15;
-    tmpvar_15 = pow (tmpvar_3[j_5], specular_9);
-    light_7 = (light_7 + (((albedo_10 * ((backContribs_6[j_5] * _TranslucencyColor) + tmpvar_2[j_5])) + (_SpecColor.xyz * (tmpvar_15 * gloss_8))) * _TerrainTreeLightColors[j_5].xyz));
+    tmpvar_15 = (pow (tmpvar_3[j_5], specular_9) * gloss_8);
+    light_7 = (light_7 + (((albedo_10 * ((backContribs_6[j_5] * _TranslucencyColor) + tmpvar_2[j_5])) + (_SpecColor.xyz * tmpvar_15)) * _TerrainTreeLightColors[j_5].xyz));
     j_5 = (j_5 + 1);
   };
   c_4.xyz = (light_7 * 2.00000);

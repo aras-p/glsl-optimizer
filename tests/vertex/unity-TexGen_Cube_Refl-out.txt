@@ -6,11 +6,11 @@ void main ()
   vec4 tmpvar_1;
   tmpvar_1.w = 1.00000;
   tmpvar_1.xyz = _WorldSpaceCameraPos;
-  vec3 i_2;
-  i_2 = -(normalize((((_World2Object * tmpvar_1).xyz * unity_Scale.w) - gl_Vertex.xyz)));
+  vec3 tmpvar_2;
+  tmpvar_2 = -(normalize((((_World2Object * tmpvar_1).xyz * unity_Scale.w) - gl_Vertex.xyz)));
   vec4 tmpvar_3;
   tmpvar_3.w = 0.00000;
-  tmpvar_3.xyz = (i_2 - (2.00000 * (dot (gl_Normal, i_2) * gl_Normal)));
+  tmpvar_3.xyz = (tmpvar_2 - (2.00000 * (dot (gl_Normal, tmpvar_2) * gl_Normal)));
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
   gl_FrontColor = gl_Color;
   vec4 tmpvar_4;

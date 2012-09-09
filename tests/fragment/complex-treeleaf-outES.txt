@@ -55,13 +55,13 @@ void main ()
   mediump float atten_18;
   atten_18 = tmpvar_16.w;
   mediump vec4 c_19;
-  mediump float spec_20;
+  mediump float tmpvar_20;
+  tmpvar_20 = dot (normal_13.xyz, lightDir_2);
   mediump float tmpvar_21;
-  tmpvar_21 = dot (normal_13.xyz, lightDir_2);
-  spec_20 = (pow (max (0.00000, dot (normal_13.xyz, normalize((lightDir_2 + viewDir_17)))), (norspc_5.x * 128.000)) * tmpvar_4);
-  c_19.xyz = (tmpvar_3 * ((((mix (clamp (-(tmpvar_21), 0.00000, 1.00000), clamp (dot (viewDir_17, -(lightDir_2)), 0.00000, 1.00000), _TranslucencyViewDependency) * trngls_6.z) * _TranslucencyColor) * 2.00000) + max (0.00000, ((tmpvar_21 * 0.600000) + 0.400000))));
+  tmpvar_21 = (pow (max (0.00000, dot (normal_13.xyz, normalize((lightDir_2 + viewDir_17)))), (norspc_5.x * 128.000)) * tmpvar_4);
+  c_19.xyz = (tmpvar_3 * ((((mix (clamp (-(tmpvar_20), 0.00000, 1.00000), clamp (dot (viewDir_17, -(lightDir_2)), 0.00000, 1.00000), _TranslucencyViewDependency) * trngls_6.z) * _TranslucencyColor) * 2.00000) + max (0.00000, ((tmpvar_20 * 0.600000) + 0.400000))));
   highp vec3 tmpvar_22;
-  tmpvar_22 = ((c_19.xyz * _LightColor0.xyz) + spec_20);
+  tmpvar_22 = ((c_19.xyz * _LightColor0.xyz) + tmpvar_21);
   c_19.xyz = tmpvar_22;
   c_19.xyz = (c_19.xyz * mix (2.00000, (atten_18 * 2.00000), _ShadowStrength));
   c_1.xyz = c_19.xyz;

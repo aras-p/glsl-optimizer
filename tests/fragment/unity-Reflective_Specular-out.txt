@@ -10,8 +10,8 @@ uniform vec4 _Color;
 void main ()
 {
   vec3 tmpvar_1;
-  vec4 tmpvar_2;
   tmpvar_1 = gl_TexCoord[1].xyz;
+  vec4 tmpvar_2;
   tmpvar_2 = gl_TexCoord[4];
   vec4 c_3;
   vec3 tmpvar_4;

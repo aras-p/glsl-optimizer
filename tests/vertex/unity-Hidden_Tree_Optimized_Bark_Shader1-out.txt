@@ -36,10 +36,12 @@ void main ()
   tmpvar_11.w = 1.00000;
   tmpvar_11.xyz = mix ((pos_3.xyz + (dot (_SquashPlaneNormal.xyz, (tmpvar_10 - pos_3.xyz)) * _SquashPlaneNormal.xyz)), pos_3.xyz, vec3(_SquashAmount));
   tmpvar_2 = tmpvar_11;
-  tmpvar_1 = (gl_ModelViewProjectionMatrix * tmpvar_11);
-  tmpvar_1.z = (tmpvar_1.z + unity_LightShadowBias.x);
-  if ((tmpvar_1.z < -(tmpvar_1.w))) {
-    tmpvar_1.z = -(tmpvar_1.w);
+  vec4 tmpvar_12;
+  tmpvar_12 = (gl_ModelViewProjectionMatrix * tmpvar_11);
+  tmpvar_1.xyw = tmpvar_12.xyw;
+  tmpvar_1.z = (tmpvar_12.z + unity_LightShadowBias.x);
+  if ((tmpvar_1.z < -(tmpvar_12.w))) {
+    tmpvar_1.z = -(tmpvar_12.w);
   };
   gl_Position = tmpvar_1;
 }

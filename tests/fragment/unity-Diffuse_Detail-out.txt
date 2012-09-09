@@ -7,8 +7,8 @@ uniform vec4 _Color;
 void main ()
 {
   vec4 tmpvar_1;
-  vec4 tmpvar_2;
   tmpvar_1 = gl_TexCoord[0];
+  vec4 tmpvar_2;
   tmpvar_2 = gl_TexCoord[3];
   vec4 c_3;
   vec4 c_4;

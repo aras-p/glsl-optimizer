@@ -6,8 +6,8 @@ uniform vec4 _LightShadowData;
 void main ()
 {
   vec2 tmpvar_1;
-  vec3 tmpvar_2;
   tmpvar_1 = gl_TexCoord[4].xy;
+  vec3 tmpvar_2;
   tmpvar_2 = gl_TexCoord[5].xyz;
   vec4 res_3;
   float x_4;

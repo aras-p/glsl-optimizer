@@ -10,12 +10,12 @@ void main ()
   arg0_3 = (tmpvar_1 / _CenterRadius.zw);
   float tmpvar_4;
   tmpvar_4 = max (0.00000, (1.00000 - sqrt(dot (arg0_3, arg0_3))));
-  float x_5;
-  x_5 = ((tmpvar_4 * tmpvar_4) * _Angle);
+  float tmpvar_5;
+  tmpvar_5 = ((tmpvar_4 * tmpvar_4) * _Angle);
   float tmpvar_6;
-  tmpvar_6 = sin(x_5);
+  tmpvar_6 = sin(tmpvar_5);
   float tmpvar_7;
-  tmpvar_7 = cos(x_5);
+  tmpvar_7 = cos(tmpvar_5);
   uv_2.x = ((tmpvar_7 * tmpvar_1.x) - (tmpvar_6 * tmpvar_1.y));
   uv_2.y = ((tmpvar_6 * tmpvar_1.x) + (tmpvar_7 * tmpvar_1.y));
   vec2 tmpvar_8;

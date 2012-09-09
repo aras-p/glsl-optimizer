@@ -10,22 +10,17 @@ void main ()
   highp vec3 tmpvar_1;
   tmpvar_1 = _glesNormal;
   highp vec4 tmpvar_2;
-  highp vec3 tmpvar_3;
   tmpvar_2 = (glstate_matrix_mvp * _glesVertex);
-  highp vec4 o_4;
-  highp vec4 tmpvar_5;
-  tmpvar_5 = (tmpvar_2 * 0.500000);
-  highp vec2 tmpvar_6;
-  tmpvar_6.x = tmpvar_5.x;
-  tmpvar_6.y = (tmpvar_5.y * _ProjectionParams.x);
-  o_4.xy = (tmpvar_6 + tmpvar_5.w);
-  o_4.zw = tmpvar_2.zw;
-  tmpvar_3 = ((glstate_matrix_modelview0 * _glesVertex).xyz * vec3(-1.00000, -1.00000, 1.00000));
-  highp vec3 tmpvar_7;
-  tmpvar_7 = mix (tmpvar_3, tmpvar_1, vec3(float((tmpvar_1.z != 0.00000))));
-  tmpvar_3 = tmpvar_7;
+  highp vec4 o_3;
+  highp vec4 tmpvar_4;
+  tmpvar_4 = (tmpvar_2 * 0.500000);
+  highp vec2 tmpvar_5;
+  tmpvar_5.x = tmpvar_4.x;
+  tmpvar_5.y = (tmpvar_4.y * _ProjectionParams.x);
+  o_3.xy = (tmpvar_5 + tmpvar_4.w);
+  o_3.zw = tmpvar_2.zw;
   gl_Position = tmpvar_2;
-  xlv_TEXCOORD0 = o_4;
-  xlv_TEXCOORD1 = tmpvar_7;
+  xlv_TEXCOORD0 = o_3;
+  xlv_TEXCOORD1 = mix (((glstate_matrix_modelview0 * _glesVertex).xyz * vec3(-1.00000, -1.00000, 1.00000)), tmpvar_1, vec3(float((tmpvar_1.z != 0.00000))));
 }
 

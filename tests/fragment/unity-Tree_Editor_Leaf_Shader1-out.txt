@@ -9,8 +9,8 @@ uniform sampler2D _BumpMap;
 void main ()
 {
   vec2 tmpvar_1;
-  vec2 tmpvar_2;
   tmpvar_1 = gl_TexCoord[4].xy;
+  vec2 tmpvar_2;
   tmpvar_2 = gl_TexCoord[5].xy;
   vec4 res_3;
   vec4 normal_4;

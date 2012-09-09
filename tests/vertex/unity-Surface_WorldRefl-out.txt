@@ -11,8 +11,8 @@ void main ()
   vec4 tmpvar_2;
   tmpvar_2.w = 1.00000;
   tmpvar_2.xyz = _WorldSpaceCameraPos;
-  vec3 i_3;
-  i_3 = (gl_Vertex.xyz - ((_World2Object * tmpvar_2).xyz * unity_Scale.w));
+  vec3 tmpvar_3;
+  tmpvar_3 = (gl_Vertex.xyz - ((_World2Object * tmpvar_2).xyz * unity_Scale.w));
   mat3 tmpvar_4;
   tmpvar_4[0] = _Object2World[0].xyz;
   tmpvar_4[1] = _Object2World[1].xyz;
@@ -28,7 +28,7 @@ void main ()
   xlv_FOG = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7.w = 0.00000;
-  tmpvar_7.xyz = (tmpvar_4 * (i_3 - (2.00000 * (dot (gl_Normal, i_3) * gl_Normal))));
+  tmpvar_7.xyz = (tmpvar_4 * (tmpvar_3 - (2.00000 * (dot (gl_Normal, tmpvar_3) * gl_Normal))));
   gl_TexCoord[0] = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8.w = 0.00000;
