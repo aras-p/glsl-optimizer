@@ -358,13 +358,6 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		shader->rawOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(ctx->mem_ctx, ""), printMode);
 	}
 	
-	// Initial optimization
-	if (!state->error && !ir->is_empty())
-	{		
-		do_optimization_passes(ir, false, state, ctx);
-		validate_ir_tree(ir);
-	}
-	
 	// Link built-in functions
 	shader->shader->symbols = state->symbols;
 	memcpy(shader->shader->builtins_to_link, state->builtins_to_link, sizeof(shader->shader->builtins_to_link[0]) * state->num_builtins_to_link);
@@ -388,7 +381,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		debug_print_ir ("==== After link ====", ir, state, ctx->mem_ctx);
 	}
 	
-	// Post-link optimization
+	// Do optimization post-link
 	if (!state->error && !ir->is_empty())
 	{		
 		const bool linked = !(options & kGlslOptionNotFullShader);
