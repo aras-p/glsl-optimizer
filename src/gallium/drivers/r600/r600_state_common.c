@@ -87,7 +87,7 @@ void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom
 	r600_write_context_reg(cs, R_028438_SX_ALPHA_REF, alpha_ref);
 }
 
-void r600_texture_barrier(struct pipe_context *ctx)
+static void r600_texture_barrier(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
@@ -157,7 +157,7 @@ static void r600_bind_blend_state_internal(struct r600_context *rctx,
 	}
 }
 
-void r600_bind_blend_state(struct pipe_context *ctx, void *state)
+static void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_blend *blend = (struct r600_pipe_blend *)state;
@@ -173,8 +173,8 @@ void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 		r600_bind_blend_state_internal(rctx, blend);
 }
 
-void r600_set_blend_color(struct pipe_context *ctx,
-			  const struct pipe_blend_color *state)
+static void r600_set_blend_color(struct pipe_context *ctx,
+				 const struct pipe_blend_color *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
@@ -219,8 +219,8 @@ static void r600_set_stencil_ref(struct pipe_context *ctx,
 	r600_context_pipe_state_set(rctx, rstate);
 }
 
-void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
-			       const struct pipe_stencil_ref *state)
+static void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
+				      const struct pipe_stencil_ref *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)rctx->states[R600_PIPE_STATE_DSA];
@@ -241,7 +241,7 @@ void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
 	r600_set_stencil_ref(ctx, &ref);
 }
 
-void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
+static void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_dsa *dsa = state;
@@ -284,7 +284,7 @@ void r600_set_max_scissor(struct r600_context *rctx)
 	r600_set_scissor_state(rctx, &scissor);
 }
 
-void r600_bind_rs_state(struct pipe_context *ctx, void *state)
+static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -323,7 +323,7 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	}
 }
 
-void r600_delete_rs_state(struct pipe_context *ctx, void *state)
+static void r600_delete_rs_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
@@ -337,8 +337,8 @@ void r600_delete_rs_state(struct pipe_context *ctx, void *state)
 	free(rs);
 }
 
-void r600_sampler_view_destroy(struct pipe_context *ctx,
-			       struct pipe_sampler_view *state)
+static void r600_sampler_view_destroy(struct pipe_context *ctx,
+				      struct pipe_sampler_view *state)
 {
 	struct r600_pipe_sampler_view *resource = (struct r600_pipe_sampler_view *)state;
 
@@ -399,22 +399,22 @@ static void r600_bind_samplers(struct pipe_context *pipe,
 	}
 }
 
-void r600_bind_vs_samplers(struct pipe_context *ctx, unsigned count, void **states)
+static void r600_bind_vs_samplers(struct pipe_context *ctx, unsigned count, void **states)
 {
 	r600_bind_samplers(ctx, PIPE_SHADER_VERTEX, 0, count, states);
 }
 
-void r600_bind_ps_samplers(struct pipe_context *ctx, unsigned count, void **states)
+static void r600_bind_ps_samplers(struct pipe_context *ctx, unsigned count, void **states)
 {
 	r600_bind_samplers(ctx, PIPE_SHADER_FRAGMENT, 0, count, states);
 }
 
-void r600_delete_sampler(struct pipe_context *ctx, void *state)
+static void r600_delete_sampler(struct pipe_context *ctx, void *state)
 {
 	free(state);
 }
 
-void r600_delete_state(struct pipe_context *ctx, void *state)
+static void r600_delete_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = (struct r600_pipe_state *)state;
@@ -428,7 +428,7 @@ void r600_delete_state(struct pipe_context *ctx, void *state)
 	free(rstate);
 }
 
-void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
+static void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
@@ -440,7 +440,7 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	}
 }
 
-void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
+static void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
@@ -455,7 +455,7 @@ void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 	FREE(state);
 }
 
-void r600_set_index_buffer(struct pipe_context *ctx,
+static void r600_set_index_buffer(struct pipe_context *ctx,
 			   const struct pipe_index_buffer *ib)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -478,7 +478,7 @@ void r600_vertex_buffers_dirty(struct r600_context *rctx)
 	}
 }
 
-void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
+static void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 			     const struct pipe_vertex_buffer *input)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -622,9 +622,8 @@ void r600_set_sampler_views(struct pipe_context *pipe,
 	r600_sampler_views_dirty(rctx, &dst->views);
 }
 
-void *r600_create_vertex_elements(struct pipe_context *ctx,
-				  unsigned count,
-				  const struct pipe_vertex_element *elements)
+static void *r600_create_vertex_elements(struct pipe_context *ctx, unsigned count,
+					 const struct pipe_vertex_element *elements)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_vertex_element *v = CALLOC_STRUCT(r600_vertex_element);
@@ -758,19 +757,19 @@ static void *r600_create_shader_state(struct pipe_context *ctx,
 	return sel;
 }
 
-void *r600_create_shader_state_ps(struct pipe_context *ctx,
-		const struct pipe_shader_state *state)
+static void *r600_create_shader_state_ps(struct pipe_context *ctx,
+					 const struct pipe_shader_state *state)
 {
 	return r600_create_shader_state(ctx, state, PIPE_SHADER_FRAGMENT);
 }
 
-void *r600_create_shader_state_vs(struct pipe_context *ctx,
-		const struct pipe_shader_state *state)
+static void *r600_create_shader_state_vs(struct pipe_context *ctx,
+					 const struct pipe_shader_state *state)
 {
 	return r600_create_shader_state(ctx, state, PIPE_SHADER_VERTEX);
 }
 
-void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
+static void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
@@ -798,7 +797,7 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 	}
 }
 
-void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
+static void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
@@ -827,7 +826,7 @@ static void r600_delete_shader_selector(struct pipe_context *ctx,
 }
 
 
-void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
+static void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_shader_selector *sel = (struct r600_pipe_shader_selector *)state;
@@ -839,7 +838,7 @@ void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
 	r600_delete_shader_selector(ctx, sel);
 }
 
-void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
+static void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_shader_selector *sel = (struct r600_pipe_shader_selector *)state;
@@ -861,8 +860,8 @@ void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf
 	}
 }
 
-void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
-			      struct pipe_constant_buffer *input)
+static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
+				     struct pipe_constant_buffer *input)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_constbuf_state *state;
@@ -926,7 +925,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	r600_constant_buffers_dirty(rctx, state);
 }
 
-struct pipe_stream_output_target *
+static struct pipe_stream_output_target *
 r600_create_so_target(struct pipe_context *ctx,
 		      struct pipe_resource *buffer,
 		      unsigned buffer_offset,
@@ -956,8 +955,8 @@ r600_create_so_target(struct pipe_context *ctx,
 	return &t->b;
 }
 
-void r600_so_target_destroy(struct pipe_context *ctx,
-			    struct pipe_stream_output_target *target)
+static void r600_so_target_destroy(struct pipe_context *ctx,
+				   struct pipe_stream_output_target *target)
 {
 	struct r600_so_target *t = (struct r600_so_target*)target;
 	pipe_resource_reference(&t->b.buffer, NULL);
@@ -965,10 +964,10 @@ void r600_so_target_destroy(struct pipe_context *ctx,
 	FREE(t);
 }
 
-void r600_set_so_targets(struct pipe_context *ctx,
-			 unsigned num_targets,
-			 struct pipe_stream_output_target **targets,
-			 unsigned append_bitmask)
+static void r600_set_so_targets(struct pipe_context *ctx,
+				unsigned num_targets,
+				struct pipe_stream_output_target **targets,
+				unsigned append_bitmask)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	unsigned i;
@@ -991,7 +990,7 @@ void r600_set_so_targets(struct pipe_context *ctx,
 	rctx->streamout_append_bitmask = append_bitmask;
 }
 
-void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
+static void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
 {
 	struct r600_context *rctx = (struct r600_context*)pipe;
 
@@ -1080,7 +1079,7 @@ static unsigned r600_conv_prim_to_gs_out(unsigned mode)
 	return prim_conv[mode];
 }
 
-void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
+static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_draw_info info = *dinfo;
@@ -1456,4 +1455,39 @@ unsigned r600_tex_compare(unsigned compare)
 	case PIPE_FUNC_ALWAYS:
 		return V_03C000_SQ_TEX_DEPTH_COMPARE_ALWAYS;
 	}
+}
+
+/* keep this at the end of this file, please */
+void r600_init_common_state_functions(struct r600_context *rctx)
+{
+	rctx->context.create_fs_state = r600_create_shader_state_ps;
+	rctx->context.create_vs_state = r600_create_shader_state_vs;
+	rctx->context.create_vertex_elements_state = r600_create_vertex_elements;
+	rctx->context.bind_blend_state = r600_bind_blend_state;
+	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
+	rctx->context.bind_fragment_sampler_states = r600_bind_ps_samplers;
+	rctx->context.bind_fs_state = r600_bind_ps_shader;
+	rctx->context.bind_rasterizer_state = r600_bind_rs_state;
+	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
+	rctx->context.bind_vertex_sampler_states = r600_bind_vs_samplers;
+	rctx->context.bind_vs_state = r600_bind_vs_shader;
+	rctx->context.delete_blend_state = r600_delete_state;
+	rctx->context.delete_depth_stencil_alpha_state = r600_delete_state;
+	rctx->context.delete_fs_state = r600_delete_ps_shader;
+	rctx->context.delete_rasterizer_state = r600_delete_rs_state;
+	rctx->context.delete_sampler_state = r600_delete_sampler;
+	rctx->context.delete_vertex_elements_state = r600_delete_vertex_element;
+	rctx->context.delete_vs_state = r600_delete_vs_shader;
+	rctx->context.set_blend_color = r600_set_blend_color;
+	rctx->context.set_constant_buffer = r600_set_constant_buffer;
+	rctx->context.set_sample_mask = r600_set_sample_mask;
+	rctx->context.set_stencil_ref = r600_set_pipe_stencil_ref;
+	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
+	rctx->context.set_index_buffer = r600_set_index_buffer;
+	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
+	rctx->context.texture_barrier = r600_texture_barrier;
+	rctx->context.create_stream_output_target = r600_create_so_target;
+	rctx->context.stream_output_target_destroy = r600_so_target_destroy;
+	rctx->context.set_stream_output_targets = r600_set_so_targets;
+	rctx->context.draw_vbo = r600_draw_vbo;
 }
