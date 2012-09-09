@@ -40,6 +40,7 @@
 #include "r600_formats.h"
 #include "compute_memory_pool.h"
 #include "evergreen_compute_internal.h"
+#include <inttypes.h>
 
 static struct r600_texture * create_pool_texture(struct r600_screen * screen,
 		unsigned size_in_dw)
@@ -375,7 +376,7 @@ void compute_memory_free(struct compute_memory_pool* pool, int64_t id)
 		}
 	}
 
-	fprintf(stderr, "Internal error, invalid id %ld "
+	fprintf(stderr, "Internal error, invalid id %"PRIi64" "
 		"for compute_memory_free\n", id);
 
 	assert(0 && "error");
