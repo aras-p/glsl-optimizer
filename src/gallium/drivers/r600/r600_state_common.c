@@ -632,6 +632,29 @@ static void r600_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
 	r600_set_sampler_views(ctx, PIPE_SHADER_FRAGMENT, 0, count, views);
 }
 
+static void r600_set_viewport_state(struct pipe_context *ctx,
+					const struct pipe_viewport_state *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
+
+	if (rstate == NULL)
+		return;
+
+	rctx->viewport = *state;
+	rstate->id = R600_PIPE_STATE_VIEWPORT;
+	r600_pipe_state_add_reg(rstate, R_02843C_PA_CL_VPORT_XSCALE_0, fui(state->scale[0]));
+	r600_pipe_state_add_reg(rstate, R_028444_PA_CL_VPORT_YSCALE_0, fui(state->scale[1]));
+	r600_pipe_state_add_reg(rstate, R_02844C_PA_CL_VPORT_ZSCALE_0, fui(state->scale[2]));
+	r600_pipe_state_add_reg(rstate, R_028440_PA_CL_VPORT_XOFFSET_0, fui(state->translate[0]));
+	r600_pipe_state_add_reg(rstate, R_028448_PA_CL_VPORT_YOFFSET_0, fui(state->translate[1]));
+	r600_pipe_state_add_reg(rstate, R_028450_PA_CL_VPORT_ZOFFSET_0, fui(state->translate[2]));
+
+	free(rctx->states[R600_PIPE_STATE_VIEWPORT]);
+	rctx->states[R600_PIPE_STATE_VIEWPORT] = rstate;
+	r600_context_pipe_state_set(rctx, rstate);
+}
+
 static void *r600_create_vertex_elements(struct pipe_context *ctx, unsigned count,
 					 const struct pipe_vertex_element *elements)
 {
@@ -1481,6 +1504,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->context.set_constant_buffer = r600_set_constant_buffer;
 	rctx->context.set_sample_mask = r600_set_sample_mask;
 	rctx->context.set_stencil_ref = r600_set_pipe_stencil_ref;
+	rctx->context.set_viewport_state = r600_set_viewport_state;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
 	rctx->context.set_index_buffer = r600_set_index_buffer;
 	rctx->context.set_fragment_sampler_views = r600_set_ps_sampler_views;
