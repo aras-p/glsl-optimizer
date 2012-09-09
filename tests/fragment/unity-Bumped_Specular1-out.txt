@@ -8,25 +8,23 @@ uniform sampler2D _BumpMap;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[0];
   vec3 tmpvar_2;
+  tmpvar_1 = gl_TexCoord[0];
   tmpvar_2 = gl_TexCoord[1].xyz;
   vec4 c_3;
   vec4 tmpvar_4;
   tmpvar_4 = texture2D (_MainTex, tmpvar_1.xy);
   vec4 normal_5;
   normal_5.xy = ((texture2D (_BumpMap, tmpvar_1.zw).wy * 2.00000) - 1.00000);
-  normal_5.z = sqrt (((1.00000 - (normal_5.x * normal_5.x)) - (normal_5.y * normal_5.y)));
-  vec3 tmpvar_6;
-  tmpvar_6 = normal_5.xyz;
-  float atten_7;
-  atten_7 = texture2D (_LightTexture0, gl_TexCoord[3].xy).w;
-  vec4 c_8;
-  float tmpvar_9;
-  tmpvar_9 = (pow (max (0.00000, dot (tmpvar_6, normalize ((tmpvar_2 + normalize (gl_TexCoord[2].xyz))))), (_Shininess * 128.000)) * tmpvar_4.w);
-  c_8.xyz = (((((tmpvar_4.xyz * _Color.xyz) * _LightColor0.xyz) * max (0.00000, dot (tmpvar_6, tmpvar_2))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_9)) * (atten_7 * 2.00000));
-  c_8.w = ((tmpvar_4.w * _Color.w) + (((_LightColor0.w * _SpecColor.w) * tmpvar_9) * atten_7));
-  c_3 = c_8;
+  normal_5.z = sqrt(((1.00000 - (normal_5.x * normal_5.x)) - (normal_5.y * normal_5.y)));
+  vec4 tmpvar_6;
+  tmpvar_6 = texture2D (_LightTexture0, gl_TexCoord[3].xy);
+  vec4 c_7;
+  float tmpvar_8;
+  tmpvar_8 = (pow (max (0.00000, dot (normal_5.xyz, normalize((tmpvar_2 + normalize(gl_TexCoord[2].xyz))))), (_Shininess * 128.000)) * tmpvar_4.w);
+  c_7.xyz = (((((tmpvar_4.xyz * _Color.xyz) * _LightColor0.xyz) * max (0.00000, dot (normal_5.xyz, tmpvar_2))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_8)) * (tmpvar_6.w * 2.00000));
+  c_7.w = ((tmpvar_4.w * _Color.w) + (((_LightColor0.w * _SpecColor.w) * tmpvar_8) * tmpvar_6.w));
+  c_3.xyz = c_7.xyz;
   c_3.w = 0.00000;
   gl_FragData[0] = c_3;
 }

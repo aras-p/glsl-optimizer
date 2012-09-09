@@ -4,20 +4,24 @@ uniform samplerCube _Cube;
 uniform sampler2D _BumpMap;
 void main ()
 {
-  vec4 c_1;
-  vec3 wn_2;
-  vec4 normal_3;
-  normal_3.xy = ((texture2D (_BumpMap, gl_TexCoord[1].xy).wy * 2.00000) - 1.00000);
-  normal_3.z = sqrt (((1.00000 - (normal_3.x * normal_3.x)) - (normal_3.y * normal_3.y)));
-  vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  wn_2.x = dot (gl_TexCoord[3].xyz, normal_3.xyz);
-  wn_2.y = dot (gl_TexCoord[4].xyz, normal_3.xyz);
-  wn_2.z = dot (gl_TexCoord[5].xyz, normal_3.xyz);
+  vec3 tmpvar_1;
+  tmpvar_1 = gl_TexCoord[2].xyz;
+  vec4 c_2;
+  vec3 wn_3;
+  vec4 normal_4;
+  normal_4.xy = ((texture2D (_BumpMap, gl_TexCoord[1].xy).wy * 2.00000) - 1.00000);
+  normal_4.z = sqrt(((1.00000 - (normal_4.x * normal_4.x)) - (normal_4.y * normal_4.y)));
   vec4 tmpvar_5;
-  tmpvar_5 = (gl_LightModel.ambient * tmpvar_4);
-  c_1 = tmpvar_5;
-  c_1.xyz = (tmpvar_5.xyz * 2.00000);
-  gl_FragData[0] = (c_1 + ((textureCube (_Cube, reflect (gl_TexCoord[2].xyz, wn_2)) * _ReflectColor) * tmpvar_4.w));
+  tmpvar_5 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  wn_3.x = dot (gl_TexCoord[3].xyz, normal_4.xyz);
+  wn_3.y = dot (gl_TexCoord[4].xyz, normal_4.xyz);
+  wn_3.z = dot (gl_TexCoord[5].xyz, normal_4.xyz);
+  vec4 tmpvar_6;
+  tmpvar_6 = (gl_LightModel.ambient * tmpvar_5);
+  c_2.w = tmpvar_6.w;
+  c_2.xyz = (tmpvar_6.xyz * 2.00000);
+  vec4 tmpvar_7;
+  tmpvar_7 = textureCube (_Cube, (tmpvar_1 - (2.00000 * (dot (wn_3, tmpvar_1) * wn_3))));
+  gl_FragData[0] = (c_2 + ((tmpvar_7 * _ReflectColor) * tmpvar_5.w));
 }
 

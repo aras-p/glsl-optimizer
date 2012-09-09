@@ -6,29 +6,27 @@ uniform vec4 _LightColor0;
 uniform sampler2D _BumpSpecMap;
 void main ()
 {
-  vec3 tmpvar_1;
-  tmpvar_1 = gl_TexCoord[3].xyz;
-  vec4 c_2;
-  vec2 tmpvar_3;
-  tmpvar_3 = gl_TexCoord[0].xy;
+  vec2 tmpvar_1;
+  vec3 tmpvar_2;
+  tmpvar_1 = gl_TexCoord[0].xy;
+  tmpvar_2 = gl_TexCoord[3].xyz;
+  vec4 c_3;
   vec4 tmpvar_4;
-  tmpvar_4 = texture2D (_BumpSpecMap, tmpvar_3);
+  tmpvar_4 = texture2D (_BumpSpecMap, tmpvar_1);
   vec4 normal_5;
   normal_5.xy = ((tmpvar_4.wy * 2.00000) - 1.00000);
-  normal_5.z = sqrt (((1.00000 - (normal_5.x * normal_5.x)) - (normal_5.y * normal_5.y)));
+  normal_5.z = sqrt(((1.00000 - (normal_5.x * normal_5.x)) - (normal_5.y * normal_5.y)));
   vec3 tmpvar_6;
-  tmpvar_6 = normal_5.xyz;
-  vec3 tmpvar_7;
-  tmpvar_7 = normalize (gl_TexCoord[1].xyz);
-  float atten_8;
-  atten_8 = (texture2D (_LightTextureB0, vec2(dot (tmpvar_1, tmpvar_1))).w * textureCube (_LightTexture0, tmpvar_1).w);
-  vec4 c_9;
-  float tmpvar_10;
-  tmpvar_10 = (pow (max (0.00000, dot (tmpvar_6, normalize ((tmpvar_7 + normalize (gl_TexCoord[2].xyz))))), (tmpvar_4.x * 128.000)) * texture2D (_TranslucencyMap, tmpvar_3).w);
-  c_9.xyz = (((((texture2D (_MainTex, tmpvar_3).xyz * gl_Color.xyz) * _LightColor0.xyz) * max (0.00000, dot (tmpvar_6, tmpvar_7))) + (_LightColor0.xyz * tmpvar_10)) * (atten_8 * 2.00000));
-  c_9.w = (((_LightColor0.w * tmpvar_10) * atten_8) * gl_Color.w);
-  c_2 = c_9;
-  c_2.w = 0.00000;
-  gl_FragData[0] = c_2;
+  tmpvar_6 = normalize(gl_TexCoord[1].xyz);
+  float atten_7;
+  atten_7 = (texture2D (_LightTextureB0, vec2(dot (tmpvar_2, tmpvar_2))).w * textureCube (_LightTexture0, tmpvar_2).w);
+  vec4 c_8;
+  float tmpvar_9;
+  tmpvar_9 = (pow (max (0.00000, dot (normal_5.xyz, normalize((tmpvar_6 + normalize(gl_TexCoord[2].xyz))))), (tmpvar_4.x * 128.000)) * texture2D (_TranslucencyMap, tmpvar_1).w);
+  c_8.xyz = (((((texture2D (_MainTex, tmpvar_1).xyz * gl_Color.xyz) * _LightColor0.xyz) * max (0.00000, dot (normal_5.xyz, tmpvar_6))) + (_LightColor0.xyz * tmpvar_9)) * (atten_7 * 2.00000));
+  c_8.w = (((_LightColor0.w * tmpvar_9) * atten_7) * gl_Color.w);
+  c_3.xyz = c_8.xyz;
+  c_3.w = 0.00000;
+  gl_FragData[0] = c_3;
 }
 

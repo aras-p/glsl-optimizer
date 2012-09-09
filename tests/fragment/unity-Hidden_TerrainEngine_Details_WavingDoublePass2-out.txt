@@ -7,20 +7,22 @@ void main ()
   vec4 tmpvar_1;
   tmpvar_1 = gl_TexCoord[1];
   vec4 light_2;
-  vec4 tmpvar_3;
-  tmpvar_3 = (texture2D (_MainTex, gl_TexCoord[0].xy) * gl_Color);
-  float x_4;
-  x_4 = (tmpvar_3.w - _Cutoff);
-  if ((x_4 < 0.00000)) {
+  float tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = (texture2D (_MainTex, gl_TexCoord[0].xy) * gl_Color);
+  tmpvar_3 = tmpvar_4.w;
+  float x_5;
+  x_5 = (tmpvar_4.w - _Cutoff);
+  if ((x_5 < 0.00000)) {
     discard;
   };
-  vec4 tmpvar_5;
-  tmpvar_5 = -(log2 (texture2DProj (_LightBuffer, tmpvar_1)));
-  light_2 = tmpvar_5;
-  light_2.xyz = (tmpvar_5.xyz + unity_Ambient.xyz);
-  vec4 c_6;
-  c_6.xyz = (tmpvar_3.xyz * light_2.xyz);
-  c_6.w = tmpvar_3.w;
-  gl_FragData[0] = c_6;
+  vec4 tmpvar_6;
+  tmpvar_6 = -(log2(texture2DProj (_LightBuffer, tmpvar_1)));
+  light_2.w = tmpvar_6.w;
+  light_2.xyz = (tmpvar_6.xyz + unity_Ambient.xyz);
+  vec4 c_7;
+  c_7.xyz = (tmpvar_4.xyz * light_2.xyz);
+  c_7.w = tmpvar_3;
+  gl_FragData[0] = c_7;
 }
 

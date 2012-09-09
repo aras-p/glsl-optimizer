@@ -45,7 +45,9 @@ void main ()
     if ((j_7 >= 3)) {
       break;
     };
-    light_9 = (light_9 + (((albedo_12 * ((backContribs_8[j_7] * _TranslucencyColor) + tmpvar_4[j_7])) + (_SpecColor.xyz * (pow (tmpvar_5[j_7], specular_11) * gloss_10))) * _TerrainTreeLightColors[j_7].xyz));
+    float tmpvar_17;
+    tmpvar_17 = pow (tmpvar_5[j_7], specular_11);
+    light_9 = (light_9 + (((albedo_12 * ((backContribs_8[j_7] * _TranslucencyColor) + tmpvar_4[j_7])) + (_SpecColor.xyz * (tmpvar_17 * gloss_10))) * _TerrainTreeLightColors[j_7].xyz));
     j_7 = (j_7 + 1);
   };
   c_6.xyz = (light_9 * 2.00000);
