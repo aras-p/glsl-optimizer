@@ -44,84 +44,85 @@ struct builtin_variable {
    int slot;
    const char *type;
    const char *name;
+   glsl_precision prec;
 };
 
 static const builtin_variable builtin_core_vs_variables[] = {
-   { ir_var_out, VERT_RESULT_HPOS, "vec4",  "gl_Position" },
-   { ir_var_out, VERT_RESULT_PSIZ, "float", "gl_PointSize" },
+   { ir_var_out, VERT_RESULT_HPOS, "vec4",  "gl_Position", glsl_precision_high },
+   { ir_var_out, VERT_RESULT_PSIZ, "float", "gl_PointSize", glsl_precision_medium },
 };
 
 static const builtin_variable builtin_core_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord" },
-   { ir_var_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing" },
-   { ir_var_out, FRAG_RESULT_COLOR, "vec4",  "gl_FragColor" },
+   { ir_var_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord", glsl_precision_medium },
+   { ir_var_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing", glsl_precision_low },
+   { ir_var_out, FRAG_RESULT_COLOR, "vec4",  "gl_FragColor", glsl_precision_medium },
 };
 
 static const builtin_variable builtin_100ES_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord", glsl_precision_medium },
 };
 
 static const builtin_variable builtin_110_fs_variables[] = {
-   { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth" },
+   { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth", glsl_precision_medium },
 };
 
 static const builtin_variable builtin_110_deprecated_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_COL0,  "vec4",  "gl_Color" },
-   { ir_var_in,  FRAG_ATTRIB_COL1,  "vec4",  "gl_SecondaryColor" },
-   { ir_var_in,  FRAG_ATTRIB_FOGC,  "float", "gl_FogFragCoord" },
+   { ir_var_in,  FRAG_ATTRIB_COL0,  "vec4",  "gl_Color", glsl_precision_medium },
+   { ir_var_in,  FRAG_ATTRIB_COL1,  "vec4",  "gl_SecondaryColor", glsl_precision_medium },
+   { ir_var_in,  FRAG_ATTRIB_FOGC,  "float", "gl_FogFragCoord", glsl_precision_medium },
 };
 
 static const builtin_variable builtin_110_deprecated_vs_variables[] = {
-   { ir_var_in,  VERT_ATTRIB_POS,         "vec4",  "gl_Vertex" },
-   { ir_var_in,  VERT_ATTRIB_NORMAL,      "vec3",  "gl_Normal" },
-   { ir_var_in,  VERT_ATTRIB_COLOR0,      "vec4",  "gl_Color" },
-   { ir_var_in,  VERT_ATTRIB_COLOR1,      "vec4",  "gl_SecondaryColor" },
-   { ir_var_in,  VERT_ATTRIB_TEX0,        "vec4",  "gl_MultiTexCoord0" },
-   { ir_var_in,  VERT_ATTRIB_TEX1,        "vec4",  "gl_MultiTexCoord1" },
-   { ir_var_in,  VERT_ATTRIB_TEX2,        "vec4",  "gl_MultiTexCoord2" },
-   { ir_var_in,  VERT_ATTRIB_TEX3,        "vec4",  "gl_MultiTexCoord3" },
-   { ir_var_in,  VERT_ATTRIB_TEX4,        "vec4",  "gl_MultiTexCoord4" },
-   { ir_var_in,  VERT_ATTRIB_TEX5,        "vec4",  "gl_MultiTexCoord5" },
-   { ir_var_in,  VERT_ATTRIB_TEX6,        "vec4",  "gl_MultiTexCoord6" },
-   { ir_var_in,  VERT_ATTRIB_TEX7,        "vec4",  "gl_MultiTexCoord7" },
-   { ir_var_in,  VERT_ATTRIB_FOG,         "float", "gl_FogCoord" },
-   { ir_var_out, VERT_RESULT_CLIP_VERTEX, "vec4",  "gl_ClipVertex" },
-   { ir_var_out, VERT_RESULT_COL0,        "vec4",  "gl_FrontColor" },
-   { ir_var_out, VERT_RESULT_BFC0,        "vec4",  "gl_BackColor" },
-   { ir_var_out, VERT_RESULT_COL1,        "vec4",  "gl_FrontSecondaryColor" },
-   { ir_var_out, VERT_RESULT_BFC1,        "vec4",  "gl_BackSecondaryColor" },
-   { ir_var_out, VERT_RESULT_FOGC,        "float", "gl_FogFragCoord" },
+   { ir_var_in,  VERT_ATTRIB_POS,         "vec4",  "gl_Vertex", glsl_precision_high },
+   { ir_var_in,  VERT_ATTRIB_NORMAL,      "vec3",  "gl_Normal", glsl_precision_medium },
+   { ir_var_in,  VERT_ATTRIB_COLOR0,      "vec4",  "gl_Color", glsl_precision_medium },
+   { ir_var_in,  VERT_ATTRIB_COLOR1,      "vec4",  "gl_SecondaryColor", glsl_precision_medium },
+   { ir_var_in,  VERT_ATTRIB_TEX0,        "vec4",  "gl_MultiTexCoord0", glsl_precision_high },
+   { ir_var_in,  VERT_ATTRIB_TEX1,        "vec4",  "gl_MultiTexCoord1", glsl_precision_high },
+   { ir_var_in,  VERT_ATTRIB_TEX2,        "vec4",  "gl_MultiTexCoord2", glsl_precision_high },
+   { ir_var_in,  VERT_ATTRIB_TEX3,        "vec4",  "gl_MultiTexCoord3", glsl_precision_high },
+   { ir_var_in,  VERT_ATTRIB_TEX4,        "vec4",  "gl_MultiTexCoord4", glsl_precision_high },
+   { ir_var_in,  VERT_ATTRIB_TEX5,        "vec4",  "gl_MultiTexCoord5", glsl_precision_high },
+   { ir_var_in,  VERT_ATTRIB_TEX6,        "vec4",  "gl_MultiTexCoord6", glsl_precision_high },
+   { ir_var_in,  VERT_ATTRIB_TEX7,        "vec4",  "gl_MultiTexCoord7", glsl_precision_high },
+   { ir_var_in,  VERT_ATTRIB_FOG,         "float", "gl_FogCoord", glsl_precision_high },
+   { ir_var_out, VERT_RESULT_CLIP_VERTEX, "vec4",  "gl_ClipVertex", glsl_precision_high },
+   { ir_var_out, VERT_RESULT_COL0,        "vec4",  "gl_FrontColor", glsl_precision_medium },
+   { ir_var_out, VERT_RESULT_BFC0,        "vec4",  "gl_BackColor", glsl_precision_medium },
+   { ir_var_out, VERT_RESULT_COL1,        "vec4",  "gl_FrontSecondaryColor", glsl_precision_medium },
+   { ir_var_out, VERT_RESULT_BFC1,        "vec4",  "gl_BackSecondaryColor", glsl_precision_medium },
+   { ir_var_out, VERT_RESULT_FOGC,        "float", "gl_FogFragCoord", glsl_precision_medium },
 };
 
 static const builtin_variable builtin_120_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord", glsl_precision_medium },
 };
 
 static const builtin_variable builtin_130_vs_variables[] = {
-   { ir_var_system_value,  SYSTEM_VALUE_VERTEX_ID, "int",   "gl_VertexID" },
+   { ir_var_system_value,  SYSTEM_VALUE_VERTEX_ID, "int",   "gl_VertexID", glsl_precision_high },
 };
 
 static const builtin_variable builtin_110_deprecated_uniforms[] = {
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrix" },
-   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrix" },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrix" },
-   { ir_var_uniform, -1, "mat3", "gl_NormalMatrix" },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixInverse" },
-   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixInverse" },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixInverse" },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixTranspose" },
-   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixTranspose" },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixTranspose" },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixInverseTranspose" },
-   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixInverseTranspose" },
-   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixInverseTranspose" },
-   { ir_var_uniform, -1, "float", "gl_NormalScale" },
-   { ir_var_uniform, -1, "gl_LightModelParameters", "gl_LightModel"},
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrix", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrix", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrix", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat3", "gl_NormalMatrix", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixInverse", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixInverse", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixInverse", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixTranspose", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixTranspose", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixTranspose", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewMatrixInverseTranspose", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat4", "gl_ProjectionMatrixInverseTranspose", glsl_precision_undefined },
+   { ir_var_uniform, -1, "mat4", "gl_ModelViewProjectionMatrixInverseTranspose", glsl_precision_undefined },
+   { ir_var_uniform, -1, "float", "gl_NormalScale", glsl_precision_undefined },
+   { ir_var_uniform, -1, "gl_LightModelParameters", "gl_LightModel", glsl_precision_undefined},
 
    /* Mesa-internal ATI_envmap_bumpmap state. */
-   { ir_var_uniform, -1, "vec2", "gl_BumpRotMatrix0MESA"},
-   { ir_var_uniform, -1, "vec2", "gl_BumpRotMatrix1MESA"},
-   { ir_var_uniform, -1, "vec4", "gl_FogParamsOptimizedMESA"},
+   { ir_var_uniform, -1, "vec2", "gl_BumpRotMatrix0MESA", glsl_precision_undefined},
+   { ir_var_uniform, -1, "vec2", "gl_BumpRotMatrix1MESA", glsl_precision_undefined},
+   { ir_var_uniform, -1, "vec4", "gl_FogParamsOptimizedMESA", glsl_precision_undefined},
 };
 
 static struct gl_builtin_uniform_element gl_DepthRange_elements[] = {
@@ -386,9 +387,9 @@ const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
 static ir_variable *
 add_variable(exec_list *instructions, glsl_symbol_table *symtab,
 	     const char *name, const glsl_type *type,
-	     enum ir_variable_mode mode, int slot)
+	     enum ir_variable_mode mode, int slot, glsl_precision prec = glsl_precision_undefined)
 {
-   ir_variable *var = new(symtab) ir_variable(type, name, mode, glsl_precision_undefined);
+   ir_variable *var = new(symtab) ir_variable(type, name, mode, prec);
 
    switch (var->mode) {
    case ir_var_auto:
@@ -421,10 +422,10 @@ add_variable(exec_list *instructions, glsl_symbol_table *symtab,
 
 static ir_variable *
 add_uniform(exec_list *instructions, glsl_symbol_table *symtab,
-	    const char *name, const glsl_type *type)
+	    const char *name, const glsl_type *type, glsl_precision prec = glsl_precision_undefined)
 {
    ir_variable *const uni =
-      add_variable(instructions, symtab, name, type, ir_var_uniform, -1);
+      add_variable(instructions, symtab, name, type, ir_var_uniform, -1, prec);
 
    unsigned i;
    for (i = 0; _mesa_builtin_uniform_desc[i].name != NULL; i++) {
@@ -479,10 +480,10 @@ add_builtin_variable(exec_list *instructions, glsl_symbol_table *symtab,
    assert(type != NULL);
 
    if (proto->mode == ir_var_uniform) {
-      add_uniform(instructions, symtab, proto->name, type);
+      add_uniform(instructions, symtab, proto->name, type, proto->prec);
    } else {
       add_variable(instructions, symtab, proto->name, type, proto->mode,
-		   proto->slot);
+		   proto->slot, proto->prec);
    }
 }
 
@@ -492,7 +493,7 @@ add_builtin_constant(exec_list *instructions, glsl_symbol_table *symtab,
 {
    ir_variable *const var = add_variable(instructions, symtab,
 					 name, glsl_type::int_type,
-					 ir_var_auto, -1);
+					 ir_var_auto, -1, glsl_precision_undefined);
    var->constant_value = new(var) ir_constant(value);
    var->constant_initializer = new(var) ir_constant(value);
    var->has_initializer = true;
@@ -524,7 +525,7 @@ generate_100ES_uniforms(exec_list *instructions,
 			state->Const.MaxFragmentUniformComponents);
 
    add_uniform(instructions, symtab, "gl_DepthRange",
-	       state->symbols->get_type("gl_DepthRangeParameters"));
+	       state->symbols->get_type("gl_DepthRangeParameters"), glsl_precision_undefined);
 }
 
 static void
