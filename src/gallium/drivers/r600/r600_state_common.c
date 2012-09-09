@@ -346,7 +346,7 @@ static void r600_sampler_view_destroy(struct pipe_context *ctx,
 	FREE(resource);
 }
 
-static void r600_bind_samplers(struct pipe_context *pipe,
+static void r600_bind_sampler_states(struct pipe_context *pipe,
                                unsigned shader,
 			       unsigned start,
 			       unsigned count, void **states)
@@ -399,17 +399,17 @@ static void r600_bind_samplers(struct pipe_context *pipe,
 	}
 }
 
-static void r600_bind_vs_samplers(struct pipe_context *ctx, unsigned count, void **states)
+static void r600_bind_vs_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
 {
-	r600_bind_samplers(ctx, PIPE_SHADER_VERTEX, 0, count, states);
+	r600_bind_sampler_states(ctx, PIPE_SHADER_VERTEX, 0, count, states);
 }
 
-static void r600_bind_ps_samplers(struct pipe_context *ctx, unsigned count, void **states)
+static void r600_bind_ps_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
 {
-	r600_bind_samplers(ctx, PIPE_SHADER_FRAGMENT, 0, count, states);
+	r600_bind_sampler_states(ctx, PIPE_SHADER_FRAGMENT, 0, count, states);
 }
 
-static void r600_delete_sampler(struct pipe_context *ctx, void *state)
+static void r600_delete_sampler_state(struct pipe_context *ctx, void *state)
 {
 	free(state);
 }
@@ -440,7 +440,7 @@ static void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	}
 }
 
-static void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
+static void r600_delete_vertex_elements(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
@@ -757,19 +757,19 @@ static void *r600_create_shader_state(struct pipe_context *ctx,
 	return sel;
 }
 
-static void *r600_create_shader_state_ps(struct pipe_context *ctx,
+static void *r600_create_ps_state(struct pipe_context *ctx,
 					 const struct pipe_shader_state *state)
 {
 	return r600_create_shader_state(ctx, state, PIPE_SHADER_FRAGMENT);
 }
 
-static void *r600_create_shader_state_vs(struct pipe_context *ctx,
+static void *r600_create_vs_state(struct pipe_context *ctx,
 					 const struct pipe_shader_state *state)
 {
 	return r600_create_shader_state(ctx, state, PIPE_SHADER_VERTEX);
 }
 
-static void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
+static void r600_bind_ps_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
@@ -797,7 +797,7 @@ static void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 	}
 }
 
-static void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
+static void r600_bind_vs_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
@@ -826,7 +826,7 @@ static void r600_delete_shader_selector(struct pipe_context *ctx,
 }
 
 
-static void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
+static void r600_delete_ps_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_shader_selector *sel = (struct r600_pipe_shader_selector *)state;
@@ -838,7 +838,7 @@ static void r600_delete_ps_shader(struct pipe_context *ctx, void *state)
 	r600_delete_shader_selector(ctx, sel);
 }
 
-static void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
+static void r600_delete_vs_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_shader_selector *sel = (struct r600_pipe_shader_selector *)state;
@@ -1460,24 +1460,24 @@ unsigned r600_tex_compare(unsigned compare)
 /* keep this at the end of this file, please */
 void r600_init_common_state_functions(struct r600_context *rctx)
 {
-	rctx->context.create_fs_state = r600_create_shader_state_ps;
-	rctx->context.create_vs_state = r600_create_shader_state_vs;
+	rctx->context.create_fs_state = r600_create_ps_state;
+	rctx->context.create_vs_state = r600_create_vs_state;
 	rctx->context.create_vertex_elements_state = r600_create_vertex_elements;
 	rctx->context.bind_blend_state = r600_bind_blend_state;
 	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
-	rctx->context.bind_fragment_sampler_states = r600_bind_ps_samplers;
-	rctx->context.bind_fs_state = r600_bind_ps_shader;
+	rctx->context.bind_fragment_sampler_states = r600_bind_ps_sampler_states;
+	rctx->context.bind_fs_state = r600_bind_ps_state;
 	rctx->context.bind_rasterizer_state = r600_bind_rs_state;
 	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
-	rctx->context.bind_vertex_sampler_states = r600_bind_vs_samplers;
-	rctx->context.bind_vs_state = r600_bind_vs_shader;
+	rctx->context.bind_vertex_sampler_states = r600_bind_vs_sampler_states;
+	rctx->context.bind_vs_state = r600_bind_vs_state;
 	rctx->context.delete_blend_state = r600_delete_state;
 	rctx->context.delete_depth_stencil_alpha_state = r600_delete_state;
-	rctx->context.delete_fs_state = r600_delete_ps_shader;
+	rctx->context.delete_fs_state = r600_delete_ps_state;
 	rctx->context.delete_rasterizer_state = r600_delete_rs_state;
-	rctx->context.delete_sampler_state = r600_delete_sampler;
-	rctx->context.delete_vertex_elements_state = r600_delete_vertex_element;
-	rctx->context.delete_vs_state = r600_delete_vs_shader;
+	rctx->context.delete_sampler_state = r600_delete_sampler_state;
+	rctx->context.delete_vertex_elements_state = r600_delete_vertex_elements;
+	rctx->context.delete_vs_state = r600_delete_vs_state;
 	rctx->context.set_blend_color = r600_set_blend_color;
 	rctx->context.set_constant_buffer = r600_set_constant_buffer;
 	rctx->context.set_sample_mask = r600_set_sample_mask;

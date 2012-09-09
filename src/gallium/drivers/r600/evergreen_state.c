@@ -2109,7 +2109,7 @@ static void evergreen_emit_ps_sampler_views(struct r600_context *rctx, struct r6
 	evergreen_emit_sampler_views(rctx, &rctx->ps_samplers.views, R600_MAX_CONST_BUFFERS);
 }
 
-static void evergreen_emit_sampler(struct r600_context *rctx,
+static void evergreen_emit_sampler_states(struct r600_context *rctx,
 				struct r600_textures_info *texinfo,
 				unsigned resource_id_base,
 				unsigned border_index_reg)
@@ -2134,14 +2134,14 @@ static void evergreen_emit_sampler(struct r600_context *rctx,
 	}
 }
 
-static void evergreen_emit_vs_sampler(struct r600_context *rctx, struct r600_atom *atom)
+static void evergreen_emit_vs_sampler_states(struct r600_context *rctx, struct r600_atom *atom)
 {
-	evergreen_emit_sampler(rctx, &rctx->vs_samplers, 18, R_00A414_TD_VS_SAMPLER0_BORDER_INDEX);
+	evergreen_emit_sampler_states(rctx, &rctx->vs_samplers, 18, R_00A414_TD_VS_SAMPLER0_BORDER_INDEX);
 }
 
-static void evergreen_emit_ps_sampler(struct r600_context *rctx, struct r600_atom *atom)
+static void evergreen_emit_ps_sampler_states(struct r600_context *rctx, struct r600_atom *atom)
 {
-	evergreen_emit_sampler(rctx, &rctx->ps_samplers, 0, R_00A400_TD_PS_SAMPLER0_BORDER_INDEX);
+	evergreen_emit_sampler_states(rctx, &rctx->ps_samplers, 0, R_00A400_TD_PS_SAMPLER0_BORDER_INDEX);
 }
 
 static void evergreen_emit_sample_mask(struct r600_context *rctx, struct r600_atom *a)
@@ -2184,8 +2184,8 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	/* shader program */
 	r600_init_atom(rctx, &rctx->cs_shader_state.atom, id++, evergreen_emit_cs_shader, 0);
 	/* sampler */
-	r600_init_atom(rctx, &rctx->vs_samplers.atom_sampler, id++, evergreen_emit_vs_sampler, 0);
-	r600_init_atom(rctx, &rctx->ps_samplers.atom_sampler, id++, evergreen_emit_ps_sampler, 0);
+	r600_init_atom(rctx, &rctx->vs_samplers.atom_sampler, id++, evergreen_emit_vs_sampler_states, 0);
+	r600_init_atom(rctx, &rctx->ps_samplers.atom_sampler, id++, evergreen_emit_ps_sampler_states, 0);
 	/* resources */
 	r600_init_atom(rctx, &rctx->vertex_buffer_state.atom, id++, evergreen_fs_emit_vertex_buffers, 0);
 	r600_init_atom(rctx, &rctx->cs_vertex_buffer_state.atom, id++, evergreen_cs_emit_vertex_buffers, 0);

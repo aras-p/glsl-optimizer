@@ -1961,7 +1961,7 @@ static void r600_emit_ps_sampler_views(struct r600_context *rctx, struct r600_at
 	r600_emit_sampler_views(rctx, &rctx->ps_samplers.views, R600_MAX_CONST_BUFFERS);
 }
 
-static void r600_emit_sampler(struct r600_context *rctx,
+static void r600_emit_sampler_states(struct r600_context *rctx,
 				struct r600_textures_info *texinfo,
 				unsigned resource_id_base,
 				unsigned border_color_reg)
@@ -2005,14 +2005,14 @@ static void r600_emit_sampler(struct r600_context *rctx,
 	}
 }
 
-static void r600_emit_vs_sampler(struct r600_context *rctx, struct r600_atom *atom)
+static void r600_emit_vs_sampler_states(struct r600_context *rctx, struct r600_atom *atom)
 {
-	r600_emit_sampler(rctx, &rctx->vs_samplers, 18, R_00A600_TD_VS_SAMPLER0_BORDER_RED);
+	r600_emit_sampler_states(rctx, &rctx->vs_samplers, 18, R_00A600_TD_VS_SAMPLER0_BORDER_RED);
 }
 
-static void r600_emit_ps_sampler(struct r600_context *rctx, struct r600_atom *atom)
+static void r600_emit_ps_sampler_states(struct r600_context *rctx, struct r600_atom *atom)
 {
-	r600_emit_sampler(rctx, &rctx->ps_samplers, 0, R_00A400_TD_PS_SAMPLER0_BORDER_RED);
+	r600_emit_sampler_states(rctx, &rctx->ps_samplers, 0, R_00A400_TD_PS_SAMPLER0_BORDER_RED);
 }
 
 static void r600_emit_seamless_cube_map(struct r600_context *rctx, struct r600_atom *atom)
@@ -2060,8 +2060,8 @@ void r600_init_state_functions(struct r600_context *rctx)
 	/* sampler must be emited before TA_CNTL_AUX otherwise DISABLE_CUBE_WRAP change
 	 * does not take effect (TA_CNTL_AUX emited by r600_emit_seamless_cube_map)
 	 */
-	r600_init_atom(rctx, &rctx->vs_samplers.atom_sampler, id++, r600_emit_vs_sampler, 0);
-	r600_init_atom(rctx, &rctx->ps_samplers.atom_sampler, id++, r600_emit_ps_sampler, 0);
+	r600_init_atom(rctx, &rctx->vs_samplers.atom_sampler, id++, r600_emit_vs_sampler_states, 0);
+	r600_init_atom(rctx, &rctx->ps_samplers.atom_sampler, id++, r600_emit_ps_sampler_states, 0);
 	/* resource */
 	r600_init_atom(rctx, &rctx->vs_samplers.views.atom, id++, r600_emit_vs_sampler_views, 0);
 	r600_init_atom(rctx, &rctx->ps_samplers.views.atom, id++, r600_emit_ps_sampler_views, 0);
