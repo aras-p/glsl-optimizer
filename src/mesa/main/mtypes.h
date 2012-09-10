@@ -3341,8 +3341,6 @@ typedef enum
    API_OPENGLES,
    API_OPENGLES2,
    API_OPENGL_CORE,
-
-   API_LAST = API_OPENGL_CORE,
 } gl_api;
 
 /**
