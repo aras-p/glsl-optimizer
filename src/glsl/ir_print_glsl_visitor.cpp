@@ -289,7 +289,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
    }
 
    ralloc_asprintf_append (&buffer, "%s%s%s%s",
-	  cent, inv, mode[decormode][ir->mode], interp[ir->interpolation]);
+	  cent, inv, interp[ir->interpolation], mode[decormode][ir->mode]);
    print_precision (ir, ir->type);
    buffer = print_type(buffer, ir->type, false);
    ralloc_asprintf_append (&buffer, " ");

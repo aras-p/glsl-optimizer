@@ -1,5 +1,5 @@
 #version 140
-out flat ivec4 colint;
+flat out ivec4 colint;
 out vec4 col;
 in vec4 icol;
 in vec4 position;
