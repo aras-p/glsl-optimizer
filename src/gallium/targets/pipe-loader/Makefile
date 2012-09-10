@@ -48,6 +48,7 @@ nouveau_SYS = $(NOUVEAU_LIBS)
 # r300 pipe driver
 r300_LIBS = \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
+	$(TOP)/src/gallium/drivers/r300/libr300-helper.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
 r300_SYS += $(RADEON_LIBS)
 

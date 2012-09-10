@@ -1,7 +1,7 @@
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
-noinst_LTLIBRARIES = libr300.la
+noinst_LTLIBRARIES = libr300.la libr300-helper.la
 check_PROGRAMS = r300_compiler_tests
 testdir = compiler/tests
 TESTS = r300_compiler_tests
@@ -26,11 +26,20 @@ r300_compiler_tests_SOURCES = \
 	$(testdir)/rc_test_helpers.c \
 	$(testdir)/unit_test.c
 
-libr300_la_SOURCES = \
-	$(C_SOURCES) \
+libr300_la_SOURCES = $(C_SOURCES)
+
+# These two files are included in libmesagallium, which is included in the dri
+# targets. So, they were added directly to r300g the dri-r300 target would have
+# duplicated symbols, and if they weren't the other *-r300 targets would fail
+# with undefined symbols.
+#
+# Solve this by building them into a separate helper library that can be linked
+# in place of libmesagallium.
+libr300_helper_la_SOURCES = \
 	$(top_srcdir)/src/glsl/ralloc.c \
 	$(top_srcdir)/src/mesa/program/register_allocate.c
 
 #XXX: Delete this when all r300 targets are converted to automake.
-all-local: libr300.la
+all-local: libr300.la libr300-helper.la
 	ln -f $(builddir)/.libs/libr300.a $(builddir)/libr300.a
+	ln -f $(builddir)/.libs/libr300-helper.a $(builddir)/libr300-helper.a

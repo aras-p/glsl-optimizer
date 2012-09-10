@@ -13,6 +13,7 @@ DRIVER_DEFINES = \
 DRIVER_PIPES = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
+	$(TOP)/src/gallium/drivers/r300/libr300-helper.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a \
 	$(TOP)/src/gallium/drivers/galahad/libgalahad.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \

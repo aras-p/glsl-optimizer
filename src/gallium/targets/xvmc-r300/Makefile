@@ -6,6 +6,7 @@ LIBBASENAME = XvMCr300
 DRIVER_INCLUDES = $(shell $(PKG_CONFIG) libdrm --cflags-only-I)
 
 PIPE_DRIVERS = \
+        $(TOP)/src/gallium/drivers/r300/libr300-helper.a \
         $(TOP)/src/gallium/drivers/r300/libr300.a \
         $(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
         $(TOP)/src/gallium/drivers/trace/libtrace.a \
