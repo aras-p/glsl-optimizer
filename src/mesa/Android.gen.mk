@@ -38,7 +38,8 @@ sources := \
 	program/program_parse.tab.c \
 	program/lex.yy.c \
 	main/dispatch.h \
-	main/remap_helper.h
+	main/remap_helper.h \
+	main/get_hash.h
 
 LOCAL_SRC_FILES := $(filter-out $(sources), $(LOCAL_SRC_FILES))
 
@@ -146,3 +147,10 @@ $(intermediates)/main/enums.c: PRIVATE_XML := -f $(glapi)/gl_and_es_API.xml
 
 $(intermediates)/main/enums.c: $(es_src_deps)
 	$(call es-gen)
+
+GET_HASH_GEN := $(LOCAL_PATH)/main/get_hash_generator.py
+GET_HASH_GEN_FLAGS := $(patsubst %,-a %,$(MESA_ENABLED_APIS))
+
+$(intermediates)/main/get_hash.h: $(glapi)/gl_and_es_API.xml \
+               $(LOCAL_PATH)/main/get_hash_params.py $(GET_HASH_GEN)
+	@$(MESA_PYTHON2) $(GET_HASH_GEN) $(GET_HASH_GEN_FLAGS) -f $< > $@

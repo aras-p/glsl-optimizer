@@ -77,7 +77,6 @@ main_sources = [
     'main/format_pack.c',
     'main/format_unpack.c',
     'main/framebuffer.c',
-    'main/get.c',
     'main/getstring.c',
     'main/glformats.c',
     'main/hash.c',
@@ -138,6 +137,10 @@ main_sources = [
     'main/version.c',
     'main/viewport.c',
     'main/vtxfmt.c',
+]
+
+glget_sources = [
+    'main/get.c',
 ]
 
 math_sources = [
@@ -320,6 +323,7 @@ common_driver_sources =	[
 
 mesa_sources = (
     main_sources +
+    glget_sources +
     math_sources +
     program_sources +
     vbo_sources +
@@ -368,6 +372,18 @@ if env['gles']:
     mesa_sources += gles_sources
 
 env.Append(CPPDEFINES = ["FEATURE_%s=1" % api for api in enabled_apis])
+
+get_hash_gen_opts = ' '.join(["-a %s" % api for api in enabled_apis])
+
+get_hash_header = env.CodeGenerate(
+      target = 'main/get_hash.h',
+      script = 'main/get_hash_generator.py',
+      source = GLAPI + 'gen/gl_and_es_API.xml',
+      command = python_cmd + ' $SCRIPT ' + get_hash_gen_opts +
+                ' -f $SOURCE > $TARGET'
+)
+
+env.Depends(glget_sources, get_hash_header)
 
 #
 # Assembly sources

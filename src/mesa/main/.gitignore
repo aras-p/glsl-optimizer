@@ -8,3 +8,5 @@ git_sha1.h.tmp
 api_exec_es1_dispatch.h
 api_exec_es1_remap_helper.h
 remap_helper.h
+get_hash.h
+get_hash.h.tmp
