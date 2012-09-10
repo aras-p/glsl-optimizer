@@ -53,14 +53,7 @@ brw_blorp_mip_info::set(struct intel_mipmap_tree *mt,
    this->width = mt->level[level].width;
    this->height = mt->level[level].height;
 
-   /* Construct a dummy renderbuffer just to extract tile offsets. */
-   struct intel_renderbuffer rb;
-   rb.mt = mt;
-   rb.mt_level = level;
-   rb.mt_layer = layer;
-   intel_renderbuffer_set_draw_offset(&rb);
-   x_offset = rb.draw_x;
-   y_offset = rb.draw_y;
+   intel_miptree_get_image_offset(mt, level, 0, layer, &x_offset, &y_offset);
 }
 
 void
