@@ -194,6 +194,23 @@ void r600_emit_blend_color(struct r600_context *rctx, struct r600_atom *atom)
 	r600_write_value(cs, fui(state->color[3])); /* R_028420_CB_BLEND_ALPHA */
 }
 
+static void r600_set_clip_state(struct pipe_context *ctx,
+				const struct pipe_clip_state *state)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct pipe_constant_buffer cb;
+
+	rctx->clip_state.state = *state;
+	r600_atom_dirty(rctx, &rctx->clip_state.atom);
+
+	cb.buffer = NULL;
+	cb.user_buffer = state->ucp;
+	cb.buffer_offset = 0;
+	cb.buffer_size = 4*4*8;
+	ctx->set_constant_buffer(ctx, PIPE_SHADER_VERTEX, 1, &cb);
+	pipe_resource_reference(&cb.buffer, NULL);
+}
+
 static void r600_set_stencil_ref(struct pipe_context *ctx,
 				 const struct r600_stencil_ref *state)
 {
@@ -1516,6 +1533,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->context.delete_vertex_elements_state = r600_delete_vertex_elements;
 	rctx->context.delete_vs_state = r600_delete_vs_state;
 	rctx->context.set_blend_color = r600_set_blend_color;
+	rctx->context.set_clip_state = r600_set_clip_state;
 	rctx->context.set_constant_buffer = r600_set_constant_buffer;
 	rctx->context.set_sample_mask = r600_set_sample_mask;
 	rctx->context.set_stencil_ref = r600_set_pipe_stencil_ref;

@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 23
+#define R600_NUM_ATOMS 24
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -97,6 +97,11 @@ struct r600_blend_color {
 	struct pipe_blend_color state;
 };
 
+struct r600_clip_state {
+	struct r600_atom atom;
+	struct pipe_clip_state state;
+};
+
 struct r600_cs_shader_state {
 	struct r600_atom atom;
 	struct r600_pipe_compute *shader;
@@ -127,7 +132,6 @@ struct r600_viewport_state {
 
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
-	R600_PIPE_STATE_CLIP,
 	R600_PIPE_STATE_SCISSOR,
 	R600_PIPE_STATE_RASTERIZER,
 	R600_PIPE_STATE_VGT,
@@ -342,7 +346,6 @@ struct r600_context {
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_cl_clip_cntl;
 	/* for saving when using blitter */
-	struct pipe_clip_state		clip;
 	struct r600_pipe_shader_selector 	*ps_shader;
 	struct r600_pipe_shader_selector 	*vs_shader;
 	struct r600_pipe_rasterizer	*rasterizer;
@@ -380,6 +383,7 @@ struct r600_context {
 	struct r600_alphatest_state	alphatest_state;
 	struct r600_blend_color		blend_color;
 	struct r600_cb_misc_state	cb_misc_state;
+	struct r600_clip_state		clip_state;
 	struct r600_db_misc_state	db_misc_state;
 	struct r600_seamless_cube_map	seamless_cube_map;
 	struct r600_stencil_ref_state	stencil_ref;

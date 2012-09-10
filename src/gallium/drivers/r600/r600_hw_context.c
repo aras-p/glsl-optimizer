@@ -373,30 +373,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028E04_PA_SU_POLY_OFFSET_FRONT_OFFSET, 0, 0},
 	{R_028E08_PA_SU_POLY_OFFSET_BACK_SCALE, 0, 0},
 	{R_028E0C_PA_SU_POLY_OFFSET_BACK_OFFSET, 0, 0},
-	{R_028E20_PA_CL_UCP0_X, 0, 0},
-	{R_028E24_PA_CL_UCP0_Y, 0, 0},
-	{R_028E28_PA_CL_UCP0_Z, 0, 0},
-	{R_028E2C_PA_CL_UCP0_W, 0, 0},
-	{R_028E30_PA_CL_UCP1_X, 0, 0},
-	{R_028E34_PA_CL_UCP1_Y, 0, 0},
-	{R_028E38_PA_CL_UCP1_Z, 0, 0},
-	{R_028E3C_PA_CL_UCP1_W, 0, 0},
-	{R_028E40_PA_CL_UCP2_X, 0, 0},
-	{R_028E44_PA_CL_UCP2_Y, 0, 0},
-	{R_028E48_PA_CL_UCP2_Z, 0, 0},
-	{R_028E4C_PA_CL_UCP2_W, 0, 0},
-	{R_028E50_PA_CL_UCP3_X, 0, 0},
-	{R_028E54_PA_CL_UCP3_Y, 0, 0},
-	{R_028E58_PA_CL_UCP3_Z, 0, 0},
-	{R_028E5C_PA_CL_UCP3_W, 0, 0},
-	{R_028E60_PA_CL_UCP4_X, 0, 0},
-	{R_028E64_PA_CL_UCP4_Y, 0, 0},
-	{R_028E68_PA_CL_UCP4_Z, 0, 0},
-	{R_028E6C_PA_CL_UCP4_W, 0, 0},
-	{R_028E70_PA_CL_UCP5_X, 0, 0},
-	{R_028E74_PA_CL_UCP5_Y, 0, 0},
-	{R_028E78_PA_CL_UCP5_Z, 0, 0},
-	{R_028E7C_PA_CL_UCP5_W, 0, 0},
 	{R_028350_SX_MISC, 0, 0},
 	{R_028380_SQ_VTX_SEMANTIC_0, 0, 0},
 	{R_028384_SQ_VTX_SEMANTIC_1, 0, 0},
@@ -1038,6 +1014,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	r600_atom_dirty(ctx, &ctx->alphatest_state.atom);
 	r600_atom_dirty(ctx, &ctx->blend_color.atom);
 	r600_atom_dirty(ctx, &ctx->cb_misc_state.atom);
+	r600_atom_dirty(ctx, &ctx->clip_state.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->sample_mask.atom);
 	r600_atom_dirty(ctx, &ctx->stencil_ref.atom);

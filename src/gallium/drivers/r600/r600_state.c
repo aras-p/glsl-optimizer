@@ -1120,43 +1120,13 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	return &view->base;
 }
 
-static void r600_set_clip_state(struct pipe_context *ctx,
-				const struct pipe_clip_state *state)
+static void r600_emit_clip_state(struct r600_context *rctx, struct r600_atom *atom)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	struct pipe_constant_buffer cb;
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct pipe_clip_state *state = &rctx->clip_state.state;
 
-	if (rstate == NULL)
-		return;
-
-	rctx->clip = *state;
-	rstate->id = R600_PIPE_STATE_CLIP;
-	for (int i = 0; i < 6; i++) {
-		r600_pipe_state_add_reg(rstate,
-					R_028E20_PA_CL_UCP0_X + i * 16,
-					fui(state->ucp[i][0]));
-		r600_pipe_state_add_reg(rstate,
-					R_028E24_PA_CL_UCP0_Y + i * 16,
-					fui(state->ucp[i][1]) );
-		r600_pipe_state_add_reg(rstate,
-					R_028E28_PA_CL_UCP0_Z + i * 16,
-					fui(state->ucp[i][2]));
-		r600_pipe_state_add_reg(rstate,
-					R_028E2C_PA_CL_UCP0_W + i * 16,
-					fui(state->ucp[i][3]));
-	}
-
-	free(rctx->states[R600_PIPE_STATE_CLIP]);
-	rctx->states[R600_PIPE_STATE_CLIP] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
-
-	cb.buffer = NULL;
-	cb.user_buffer = state->ucp;
-	cb.buffer_offset = 0;
-	cb.buffer_size = 4*4*8;
-	ctx->set_constant_buffer(ctx, PIPE_SHADER_VERTEX, 1, &cb);
-	pipe_resource_reference(&cb.buffer, NULL);
+	r600_write_context_reg_seq(cs, R_028E20_PA_CL_UCP0_X, 6*4);
+	r600_write_array(cs, 6*4, (unsigned*)state);
 }
 
 static void r600_set_polygon_stipple(struct pipe_context *ctx,
@@ -2071,6 +2041,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->alphatest_state.atom, id++, r600_emit_alphatest_state, 6);
 	r600_init_atom(rctx, &rctx->blend_color.atom, id++, r600_emit_blend_color, 6);
 	r600_init_atom(rctx, &rctx->cb_misc_state.atom, id++, r600_emit_cb_misc_state, 0);
+	r600_init_atom(rctx, &rctx->clip_state.atom, id++, r600_emit_clip_state, 26);
 	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, r600_emit_db_misc_state, 4);
 	r600_init_atom(rctx, &rctx->stencil_ref.atom, id++, r600_emit_stencil_ref, 4);
 	r600_init_atom(rctx, &rctx->viewport.atom, id++, r600_emit_viewport_state, 8);
@@ -2080,7 +2051,6 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_rasterizer_state = r600_create_rs_state;
 	rctx->context.create_sampler_state = r600_create_sampler_state;
 	rctx->context.create_sampler_view = r600_create_sampler_view;
-	rctx->context.set_clip_state = r600_set_clip_state;
 	rctx->context.set_framebuffer_state = r600_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = r600_set_polygon_stipple;
 	rctx->context.set_scissor_state = r600_pipe_set_scissor_state;
