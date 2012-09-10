@@ -416,6 +416,10 @@ struct r600_context {
 	struct list_head	active_nontimer_queries;
 	unsigned		num_cs_dw_nontimer_queries_suspend;
 
+	bool			timer_queries_suspended;
+	bool			nontimer_queries_suspended;
+	bool			streamout_suspended;
+
 	unsigned		num_cs_dw_streamout_end;
 
 	unsigned		backend_mask;

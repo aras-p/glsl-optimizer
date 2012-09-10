@@ -2065,20 +2065,12 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->vertex_buffer_state.atom, id++, r600_emit_vertex_buffers, 0);
 
 	r600_init_atom(rctx, &rctx->seamless_cube_map.atom, id++, r600_emit_seamless_cube_map, 3);
-	r600_atom_dirty(rctx, &rctx->seamless_cube_map.atom);
-
 	r600_init_atom(rctx, &rctx->sample_mask.atom, id++, r600_emit_sample_mask, 3);
 	rctx->sample_mask.sample_mask = ~0;
-	r600_atom_dirty(rctx, &rctx->sample_mask.atom);
 
 	r600_init_atom(rctx, &rctx->cb_misc_state.atom, id++, r600_emit_cb_misc_state, 0);
-	r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
-
 	r600_init_atom(rctx, &rctx->alphatest_state.atom, id++, r600_emit_alphatest_state, 6);
-	r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
-
 	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, r600_emit_db_misc_state, 4);
-	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;

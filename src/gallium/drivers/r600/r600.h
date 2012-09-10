@@ -200,6 +200,7 @@ void r600_context_fini(struct r600_context *ctx);
 void r600_context_pipe_state_emit(struct r600_context *ctx, struct r600_pipe_state *state, unsigned pkt_flags);
 void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
 void r600_context_flush(struct r600_context *ctx, unsigned flags);
+void r600_begin_new_cs(struct r600_context *ctx);
 
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence,
                              unsigned offset, unsigned value);

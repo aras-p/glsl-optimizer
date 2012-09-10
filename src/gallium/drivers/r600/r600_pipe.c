@@ -286,7 +286,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	rctx->cs = rctx->ws->cs_create(rctx->ws);
 	rctx->ws->cs_set_flush_callback(rctx->cs, r600_flush_from_winsys, rctx);
-	r600_emit_atom(rctx, &rctx->start_cs_cmd.atom);
 
         rctx->uploader = u_upload_create(&rctx->context, 1024 * 1024, 256,
                                          PIPE_BIND_INDEX_BUFFER |
@@ -299,6 +298,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		goto fail;
 	rctx->blitter->draw_rectangle = r600_draw_rectangle;
 
+	r600_begin_new_cs(rctx);
 	r600_get_backend_mask(rctx); /* this emits commands and must be last */
 
 	if (rctx->chip_class == R600)

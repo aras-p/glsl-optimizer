@@ -985,28 +985,27 @@ void r600_flush_emit(struct r600_context *rctx)
 void r600_context_flush(struct r600_context *ctx, unsigned flags)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
-	struct r600_block *enable_block = NULL;
-	bool timer_queries_suspended = false;
-	bool nontimer_queries_suspended = false;
-	bool streamout_suspended = false;
-	unsigned shader;
 
 	if (cs->cdw == ctx->start_cs_cmd.atom.num_dw)
 		return;
 
+	ctx->timer_queries_suspended = false;
+	ctx->nontimer_queries_suspended = false;
+	ctx->streamout_suspended = false;
+
 	/* suspend queries */
 	if (ctx->num_cs_dw_timer_queries_suspend) {
 		r600_suspend_timer_queries(ctx);
-		timer_queries_suspended = true;
+		ctx->timer_queries_suspended = true;
 	}
 	if (ctx->num_cs_dw_nontimer_queries_suspend) {
 		r600_suspend_nontimer_queries(ctx);
-		nontimer_queries_suspended = true;
+		ctx->nontimer_queries_suspended = true;
 	}
 
 	if (ctx->num_cs_dw_streamout_end) {
 		r600_context_streamout_end(ctx);
-		streamout_suspended = true;
+		ctx->streamout_suspended = true;
 	}
 
 	/* partial flush is needed to avoid lockups on some chips with user fences */
@@ -1032,6 +1031,14 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 	/* Flush the CS. */
 	ctx->ws->cs_flush(ctx->cs, flags);
+
+	r600_begin_new_cs(ctx);
+}
+
+void r600_begin_new_cs(struct r600_context *ctx)
+{
+	struct r600_block *enable_block = NULL;
+	unsigned shader;
 
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
@@ -1066,16 +1073,16 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 		r600_sampler_states_dirty(ctx, &samplers->states);
 	}
 
-	if (streamout_suspended) {
+	if (ctx->streamout_suspended) {
 		ctx->streamout_start = TRUE;
 		ctx->streamout_append_bitmask = ~0;
 	}
 
 	/* resume queries */
-	if (timer_queries_suspended) {
+	if (ctx->timer_queries_suspended) {
 		r600_resume_timer_queries(ctx);
 	}
-	if (nontimer_queries_suspended) {
+	if (ctx->nontimer_queries_suspended) {
 		r600_resume_nontimer_queries(ctx);
 	}
 
