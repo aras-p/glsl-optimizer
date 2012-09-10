@@ -1646,6 +1646,7 @@
 #define R_028144_ALU_CONST_BUFFER_SIZE_PS_1          0x00028144
 #define R_028180_ALU_CONST_BUFFER_SIZE_VS_0          0x00028180
 #define R_028184_ALU_CONST_BUFFER_SIZE_VS_1          0x00028184
+#define R_0281C0_ALU_CONST_BUFFER_SIZE_GS_0          0x000281C0
 #define R_028200_PA_SC_WINDOW_OFFSET                 0x00028200
 #define R_02820C_PA_SC_CLIPRECT_RULE                 0x0002820C
 #define R_028210_PA_SC_CLIPRECT_0_TL                 0x00028210
@@ -1834,6 +1835,7 @@
 #define R_028944_ALU_CONST_CACHE_PS_1                0x00028944
 #define R_028980_ALU_CONST_CACHE_VS_0                0x00028980
 #define R_028984_ALU_CONST_CACHE_VS_1                0x00028984
+#define R_0289C0_ALU_CONST_CACHE_GS_0                0x000289C0
 #define R_028A04_PA_SU_POINT_MINMAX                  0x00028A04
 #define   S_028A04_MIN_SIZE(x)                         (((x) & 0xFFFF) << 0)
 #define   G_028A04_MIN_SIZE(x)                         (((x) >> 0) & 0xFFFF)
