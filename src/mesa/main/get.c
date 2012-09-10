@@ -84,7 +84,6 @@
 
 enum value_type {
    TYPE_INVALID,
-   TYPE_API_MASK,
    TYPE_INT,
    TYPE_INT_2,
    TYPE_INT_3,
@@ -385,11 +384,6 @@ extra_NV_read_buffer_api_gl[] = {
    EXTRA_API_GL,
    EXTRA_END
 };
-
-#define API_OPENGL_BIT (1 << API_OPENGL)
-#define API_OPENGLES_BIT (1 << API_OPENGLES)
-#define API_OPENGLES2_BIT (1 << API_OPENGLES2)
-#define API_OPENGL_CORE_BIT (1 << API_OPENGL_CORE)
 
 /* This is the big table describing all the enums we accept in
  * glGet*v().  The table is partitioned into six parts: enums
