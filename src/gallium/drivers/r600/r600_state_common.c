@@ -62,7 +62,7 @@ void r600_init_atom(struct r600_context *rctx,
 		    void (*emit)(struct r600_context *ctx, struct r600_atom *state),
 		    unsigned num_dw)
 {
-	assert(id < R600_MAX_ATOM);
+	assert(id < R600_NUM_ATOMS);
 	assert(rctx->atoms[id] == NULL);
 	rctx->atoms[id] = atom;
 	atom->id = id;
@@ -197,26 +197,25 @@ static void r600_set_stencil_ref(struct pipe_context *ctx,
 				 const struct r600_stencil_ref *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 
-	if (rstate == NULL)
-		return;
+	rctx->stencil_ref.state = *state;
+	r600_atom_dirty(rctx, &rctx->stencil_ref.atom);
+}
 
-	rstate->id = R600_PIPE_STATE_STENCIL_REF;
-	r600_pipe_state_add_reg(rstate,
-				R_028430_DB_STENCILREFMASK,
-				S_028430_STENCILREF(state->ref_value[0]) |
-				S_028430_STENCILMASK(state->valuemask[0]) |
-				S_028430_STENCILWRITEMASK(state->writemask[0]));
-	r600_pipe_state_add_reg(rstate,
-				R_028434_DB_STENCILREFMASK_BF,
-				S_028434_STENCILREF_BF(state->ref_value[1]) |
-				S_028434_STENCILMASK_BF(state->valuemask[1]) |
-				S_028434_STENCILWRITEMASK_BF(state->writemask[1]));
+void r600_emit_stencil_ref(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_stencil_ref_state *a = (struct r600_stencil_ref_state*)atom;
 
-	free(rctx->states[R600_PIPE_STATE_STENCIL_REF]);
-	rctx->states[R600_PIPE_STATE_STENCIL_REF] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
+	r600_write_context_reg_seq(cs, R_028430_DB_STENCILREFMASK, 2);
+	r600_write_value(cs, /* R_028430_DB_STENCILREFMASK */
+			 S_028430_STENCILREF(a->state.ref_value[0]) |
+			 S_028430_STENCILMASK(a->state.valuemask[0]) |
+			 S_028430_STENCILWRITEMASK(a->state.writemask[0]));
+	r600_write_value(cs, /* R_028434_DB_STENCILREFMASK_BF */
+			 S_028434_STENCILREF_BF(a->state.ref_value[1]) |
+			 S_028434_STENCILMASK_BF(a->state.valuemask[1]) |
+			 S_028434_STENCILWRITEMASK_BF(a->state.writemask[1]));
 }
 
 static void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
@@ -226,7 +225,7 @@ static void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
 	struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)rctx->states[R600_PIPE_STATE_DSA];
 	struct r600_stencil_ref ref;
 
-	rctx->stencil_ref = *state;
+	rctx->stencil_ref.pipe_state = *state;
 
 	if (!dsa)
 		return;
@@ -254,8 +253,8 @@ static void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 	rctx->states[rstate->id] = rstate;
 	r600_context_pipe_state_set(rctx, rstate);
 
-	ref.ref_value[0] = rctx->stencil_ref.ref_value[0];
-	ref.ref_value[1] = rctx->stencil_ref.ref_value[1];
+	ref.ref_value[0] = rctx->stencil_ref.pipe_state.ref_value[0];
+	ref.ref_value[1] = rctx->stencil_ref.pipe_state.ref_value[1];
 	ref.valuemask[0] = dsa->valuemask[0];
 	ref.valuemask[1] = dsa->valuemask[1];
 	ref.writemask[0] = dsa->writemask[0];
@@ -1208,7 +1207,7 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	r600_need_cs_space(rctx, 0, TRUE);
 	r600_flush_emit(rctx);
 
-	for (i = 0; i < R600_MAX_ATOM; i++) {
+	for (i = 0; i < R600_NUM_ATOMS; i++) {
 		if (rctx->atoms[i] == NULL || !rctx->atoms[i]->dirty) {
 			continue;
 		}

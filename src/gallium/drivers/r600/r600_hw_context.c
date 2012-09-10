@@ -335,8 +335,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028424_CB_FOG_RED, 0, 0},
 	{R_028428_CB_FOG_GREEN, 0, 0},
 	{R_02842C_CB_FOG_BLUE, 0, 0},
-	{R_028430_DB_STENCILREFMASK, 0, 0},
-	{R_028434_DB_STENCILREFMASK_BF, 0, 0},
 	{R_028780_CB_BLEND0_CONTROL, REG_FLAG_NOT_R600, 0},
 	{R_028784_CB_BLEND1_CONTROL, REG_FLAG_NOT_R600, 0},
 	{R_028788_CB_BLEND2_CONTROL, REG_FLAG_NOT_R600, 0},
@@ -627,7 +625,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 		unsigned i;
 
 		/* The number of dwords all the dirty states would take. */
-		for (i = 0; i < R600_MAX_ATOM; i++) {
+		for (i = 0; i < R600_NUM_ATOMS; i++) {
 			if (ctx->atoms[i] && ctx->atoms[i]->dirty) {
 				num_dw += ctx->atoms[i]->num_dw;
 			}
@@ -1050,11 +1048,12 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	r600_atom_dirty(ctx, &ctx->alphatest_state.atom);
 	r600_atom_dirty(ctx, &ctx->cb_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
+	r600_atom_dirty(ctx, &ctx->sample_mask.atom);
+	r600_atom_dirty(ctx, &ctx->stencil_ref.atom);
 
 	if (ctx->chip_class <= R700) {
 		r600_atom_dirty(ctx, &ctx->seamless_cube_map.atom);
 	}
-	r600_atom_dirty(ctx, &ctx->sample_mask.atom);
 
 	ctx->vertex_buffer_state.dirty_mask = ctx->vertex_buffer_state.enabled_mask;
 	r600_vertex_buffers_dirty(ctx);
