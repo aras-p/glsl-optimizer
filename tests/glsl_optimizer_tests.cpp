@@ -12,6 +12,7 @@
 #if GOT_GFX
 
 #ifdef _MSC_VER
+#define GOT_MORE_THAN_GLSL_120 1
 #include <windows.h>
 #include <gl/GL.h>
 extern "C" {
@@ -34,12 +35,14 @@ static PFNGLGETINFOLOGARBPROC glGetInfoLogARB;
 static PFNGLGETOBJECTPARAMETERIVARBPROC glGetObjectParameterivARB;
 }
 #else
+#define GOT_MORE_THAN_GLSL_120 0
 #include <OpenGL/OpenGL.h>
 #include <AGL/agl.h>
 #include <dirent.h>
 #endif
 
 #else // GOT_GFX
+#define GOT_MORE_THAN_GLSL_120 0
 #include <cstdio>
 #include <cstring>
 #include "dirent.h"
@@ -136,9 +139,14 @@ static void replace_string (std::string& target, const std::string& search, cons
 
 static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, const char* prefix, const std::string& source)
 {
-	// For now, don't check GLSL 1.40 using system GL
+	#if !GOT_GFX
+	return true; // just assume it's ok
+	#endif
+
+	#if !GOT_MORE_THAN_GLSL_120
 	if (source.find("#version 140") != std::string::npos)
 		return true;
+	#endif
 	
 	std::string src;
 	if (gles)
@@ -160,7 +168,6 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	}
 	const char* sourcePtr = src.c_str();
 
-#if GOT_GFX
 	
 	GLhandleARB shader = glCreateShaderObjectARB (vertex ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB);
 	glShaderSourceARB (shader, 1, &sourcePtr, NULL);
@@ -178,10 +185,6 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	}
 	glDeleteObjectARB (shader);
 	return res;
-#else
-	// just assume it's ok...
-	return true;
-#endif
 }
 
 
