@@ -475,6 +475,9 @@ struct r600_context {
 	 * for anything useful. */
 	struct r600_resource *dummy_fmask;
 	struct r600_resource *dummy_cmask;
+
+	/* Last primitive type used in draw_vbo. */
+	int last_primitive_type;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)

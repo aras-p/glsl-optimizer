@@ -27,13 +27,7 @@
 #include "evergreend.h"
 #include "util/u_memory.h"
 
-static const struct r600_reg evergreen_config_reg_list[] = {
-	{R_008958_VGT_PRIMITIVE_TYPE, 0},
-};
-
-
 static const struct r600_reg cayman_config_reg_list[] = {
-	{R_008958_VGT_PRIMITIVE_TYPE, 0, 0},
 	{R_009100_SPI_CONFIG_CNTL, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
 	{R_00913C_SPI_CONFIG_CNTL_1, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
 };
@@ -148,9 +142,7 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_028A00_PA_SU_POINT_SIZE, 0, 0},
 	{R_028A04_PA_SU_POINT_MINMAX, 0, 0},
 	{R_028A08_PA_SU_LINE_CNTL, 0, 0},
-	{R_028A0C_PA_SC_LINE_STIPPLE, 0, 0},
 	{R_028A48_PA_SC_MODE_CNTL_0, 0, 0},
-	{R_028A6C_VGT_GS_OUT_PRIM_TYPE, 0, 0},
 	{R_028ABC_DB_HTILE_SURFACE, 0, 0},
 	{R_028B54_VGT_SHADER_STAGES_EN, 0, 0},
 	{R_028B70_DB_ALPHA_TO_MASK, 0, 0},
@@ -449,9 +441,7 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_028A00_PA_SU_POINT_SIZE, 0, 0},
 	{R_028A04_PA_SU_POINT_MINMAX, 0, 0},
 	{R_028A08_PA_SU_LINE_CNTL, 0, 0},
-	{R_028A0C_PA_SC_LINE_STIPPLE, 0, 0},
 	{R_028A48_PA_SC_MODE_CNTL_0, 0, 0},
-	{R_028A6C_VGT_GS_OUT_PRIM_TYPE, 0, 0},
 	{R_028ABC_DB_HTILE_SURFACE, 0, 0},
 	{R_028B54_VGT_SHADER_STAGES_EN, 0, 0},
 	{R_028B70_DB_ALPHA_TO_MASK, 0, 0},
@@ -658,15 +648,12 @@ static int evergreen_loop_const_init(struct r600_context *ctx, uint32_t offset)
 
 int evergreen_context_init(struct r600_context *ctx)
 {
-	int r;
+	int r = 0;
 
 	/* add blocks */
 	if (ctx->family >= CHIP_CAYMAN)
 		r = r600_context_add_block(ctx, cayman_config_reg_list,
 					   Elements(cayman_config_reg_list), PKT3_SET_CONFIG_REG, EVERGREEN_CONFIG_REG_OFFSET);
-	else
-		r = r600_context_add_block(ctx, evergreen_config_reg_list,
-					   Elements(evergreen_config_reg_list), PKT3_SET_CONFIG_REG, EVERGREEN_CONFIG_REG_OFFSET);
 	if (r)
 		goto out_err;
 	if (ctx->family >= CHIP_CAYMAN)

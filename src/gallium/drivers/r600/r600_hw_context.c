@@ -226,7 +226,6 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 
 /* R600/R700 configuration */
 static const struct r600_reg r600_config_reg_list[] = {
-	{R_008958_VGT_PRIMITIVE_TYPE, 0, 0},
 	{R_008B40_PA_SC_AA_SAMPLE_LOCS_2S, 0, 0},
 	{R_008B44_PA_SC_AA_SAMPLE_LOCS_4S, 0, 0},
 	{R_008B48_PA_SC_AA_SAMPLE_LOCS_8S_WD0, 0, 0},
@@ -348,7 +347,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028004_DB_DEPTH_VIEW, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028010_DB_DEPTH_INFO, REG_FLAG_NEED_BO, 0},
-	{R_028A6C_VGT_GS_OUT_PRIM_TYPE, 0, 0},
 	{R_028D24_DB_HTILE_SURFACE, 0, 0},
 	{R_028D34_DB_PREFETCH_LIMIT, 0, 0},
 	{R_028D44_DB_ALPHA_TO_MASK, 0, 0},
@@ -361,7 +359,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028A00_PA_SU_POINT_SIZE, 0, 0},
 	{R_028A04_PA_SU_POINT_MINMAX, 0, 0},
 	{R_028A08_PA_SU_LINE_CNTL, 0, 0},
-	{R_028A0C_PA_SC_LINE_STIPPLE, 0, 0},
 	{R_028C00_PA_SC_LINE_CNTL, 0, 0},
 	{R_028C04_PA_SC_AA_CONFIG, 0, 0},
 	{R_028C08_PA_SU_VTX_CNTL, 0, 0},
@@ -1069,6 +1066,9 @@ void r600_begin_new_cs(struct r600_context *ctx)
 		ctx->pm4_dirty_cdwords += enable_block->pm4_ndwords;
 		enable_block->nreg_dirty = enable_block->nreg;
 	}
+
+	/* Re-emit the primitive type. */
+	ctx->last_primitive_type = -1;
 }
 
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)

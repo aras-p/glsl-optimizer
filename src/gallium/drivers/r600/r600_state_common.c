@@ -99,9 +99,9 @@ static void r600_texture_barrier(struct pipe_context *ctx)
 	}
 }
 
-static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
+static unsigned r600_conv_pipe_prim(unsigned prim)
 {
-	static const int prim_conv[] = {
+	static const unsigned prim_conv[] = {
 		V_008958_DI_PT_POINTLIST,
 		V_008958_DI_PT_LINELIST,
 		V_008958_DI_PT_LINELOOP,
@@ -112,19 +112,13 @@ static bool r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
 		V_008958_DI_PT_QUADLIST,
 		V_008958_DI_PT_QUADSTRIP,
 		V_008958_DI_PT_POLYGON,
-		-1,
-		-1,
-		-1,
-		-1,
+		V_008958_DI_PT_LINELIST_ADJ,
+		V_008958_DI_PT_LINESTRIP_ADJ,
+		V_008958_DI_PT_TRILIST_ADJ,
+		V_008958_DI_PT_TRISTRIP_ADJ,
 		V_008958_DI_PT_RECTLIST
 	};
-
-	*prim = prim_conv[pprim];
-	if (*prim == -1) {
-		fprintf(stderr, "%s:%d unsupported %d\n", __func__, __LINE__, pprim);
-		return false;
-	}
-	return true;
+	return prim_conv[prim];
 }
 
 /* common state between evergreen and r600 */
@@ -1166,14 +1160,13 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_draw_info info = *dinfo;
 	struct pipe_index_buffer ib = {};
-	unsigned prim, ls_mask = 0, i;
+	unsigned i;
 	struct r600_block *dirty_block = NULL, *next_block = NULL;
 	struct radeon_winsys_cs *cs = rctx->cs;
 	uint64_t va;
 	uint8_t *ptr;
 
-	if ((!info.count && (info.indexed || !info.count_from_stream_output)) ||
-	    !r600_conv_pipe_prim(info.mode, &prim)) {
+	if (!info.count && (info.indexed || !info.count_from_stream_output)) {
 		assert(0);
 		return;
 	}
@@ -1207,30 +1200,17 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	if (rctx->vgt.id != R600_PIPE_STATE_VGT) {
 		rctx->vgt.id = R600_PIPE_STATE_VGT;
 		rctx->vgt.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->vgt, R_008958_VGT_PRIMITIVE_TYPE, prim);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028A6C_VGT_GS_OUT_PRIM_TYPE, 0);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias);
 		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028A0C_PA_SC_LINE_STIPPLE, 0);
 	}
 
 	rctx->vgt.nregs = 0;
-	r600_pipe_state_mod_reg(&rctx->vgt, prim);
-	r600_pipe_state_mod_reg(&rctx->vgt, r600_conv_prim_to_gs_out(info.mode));
 	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.restart_index);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.primitive_restart);
 	r600_pipe_state_mod_reg(&rctx->vgt, info.start_instance);
-
-	if (prim == V_008958_DI_PT_LINELIST)
-		ls_mask = 1;
-	else if (prim == V_008958_DI_PT_LINESTRIP ||
-		 prim == V_008958_DI_PT_LINELOOP)
-		ls_mask = 2;
-	r600_pipe_state_mod_reg(&rctx->vgt, S_028A0C_AUTO_RESET_CNTL(ls_mask) | rctx->pa_sc_line_stipple);
-
 	r600_context_pipe_state_set(rctx, &rctx->vgt);
 
 	/* Enable stream out if needed. */
@@ -1254,7 +1234,27 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	}
 	rctx->pm4_dirty_cdwords = 0;
 
-	/* draw packet */
+	/* Update the primitive type. */
+	if (rctx->last_primitive_type != info.mode) {
+		unsigned ls_mask = 0;
+
+		if (info.mode == PIPE_PRIM_LINES)
+			ls_mask = 1;
+		else if (info.mode == PIPE_PRIM_LINE_STRIP ||
+			 info.mode == PIPE_PRIM_LINE_LOOP)
+			ls_mask = 2;
+
+		r600_write_context_reg(cs, R_028A0C_PA_SC_LINE_STIPPLE,
+				       S_028A0C_AUTO_RESET_CNTL(ls_mask) | rctx->pa_sc_line_stipple);
+		r600_write_context_reg(cs, R_028A6C_VGT_GS_OUT_PRIM_TYPE,
+				       r600_conv_prim_to_gs_out(info.mode));
+		r600_write_config_reg(cs, R_008958_VGT_PRIMITIVE_TYPE,
+				      r600_conv_pipe_prim(info.mode));
+
+		rctx->last_primitive_type = info.mode;
+	}
+
+	/* Draw packets. */
 	cs->buf[cs->cdw++] = PKT3(PKT3_NUM_INSTANCES, 0, rctx->predicate_drawing);
 	cs->buf[cs->cdw++] = info.instance_count;
 	if (info.indexed) {
