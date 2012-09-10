@@ -1398,29 +1398,29 @@ print_table_stats(void)
 
    for (i = 0; i < Elements(table); i++) {
       if (!table[i])
-	 continue;
+         continue;
       count++;
       d = &values[table[i]];
       hash = (d->pname * prime_factor);
       j = 0;
       while (1) {
-	 if (values[table[hash & mask]].pname == d->pname)
-	    break;
-	 hash += prime_step;
-	 j++;
+         if (values[table[hash & mask]].pname == d->pname)
+            break;
+         hash += prime_step;
+         j++;
       }
 
       if (j < 10)
-	 collisions[j]++;
+         collisions[j]++;
       else
-	 collisions[10]++;
+         collisions[10]++;
    }
 
    printf("number of enums: %d (total %d)\n", count, Elements(values));
    for (i = 0; i < Elements(collisions) - 1; i++)
       if (collisions[i] > 0)
-	 printf("  %d enums with %d %scollisions\n",
-		collisions[i], i, i == 10 ? "or more " : "");
+         printf("  %d enums with %d %scollisions\n",
+               collisions[i], i, i == 10 ? "or more " : "");
 }
 #endif
 
