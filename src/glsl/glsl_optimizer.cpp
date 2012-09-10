@@ -33,7 +33,7 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
 	   ctx->Extensions.EXT_shadow_samplers = GL_TRUE;
    }
 
-   ctx->Const.GLSLVersion = 120;
+   ctx->Const.GLSLVersion = 140;
 
    /* 1.20 minimums. */
    ctx->Const.MaxLights = 8;

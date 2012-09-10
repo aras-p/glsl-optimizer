@@ -136,6 +136,10 @@ static void replace_string (std::string& target, const std::string& search, cons
 
 static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, const char* prefix, const std::string& source)
 {
+	// For now, don't check GLSL 1.40 using system GL
+	if (source.find("#version 140") != std::string::npos)
+		return true;
+	
 	std::string src;
 	if (gles)
 	{
