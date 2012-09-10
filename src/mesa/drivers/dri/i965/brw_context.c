@@ -580,6 +580,11 @@ brwCreateContext(gl_api api,
    struct dd_function_table functions;
    struct gl_config visual;
 
+   if (flags & ~(__DRI_CTX_FLAG_DEBUG | __DRI_CTX_FLAG_FORWARD_COMPATIBLE)) {
+      *dri_ctx_error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
+      return false;
+   }
+
    if (notify_reset) {
       *dri_ctx_error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
       return false;

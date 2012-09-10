@@ -62,9 +62,10 @@ nouveau_context_create(gl_api api,
 	struct nouveau_context *nctx;
 	struct gl_context *ctx;
 
-	/* API and flag filtering is handled in dri2CreateContextAttribs.
-	 */
-	(void) flags;
+	if (flags & ~__DRI_CTX_FLAG_DEBUG) {
+		*error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
+		return false;
+	}
 
 	if (notify_reset) {
 		*error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;

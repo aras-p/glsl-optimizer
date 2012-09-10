@@ -101,6 +101,11 @@ dri_create_context(gl_api api, const struct gl_config * visual,
       goto fail;
    }
 
+   if (flags & ~(__DRI_CTX_FLAG_DEBUG | __DRI_CTX_FLAG_FORWARD_COMPATIBLE)) {
+      *error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
+      goto fail;
+   }
+
    if (notify_reset) {
       *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
       goto fail;

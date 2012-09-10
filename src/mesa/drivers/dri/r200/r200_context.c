@@ -213,9 +213,10 @@ GLboolean r200CreateContext( gl_api api,
    int i;
    int tcl_mode;
 
-   /* Flag filtering is handled in dri2CreateContextAttribs.
-    */
-   (void) flags;
+   if (flags & ~__DRI_CTX_FLAG_DEBUG) {
+      *error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
+      return false;
+   }
 
    if (notify_reset) {
       *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
