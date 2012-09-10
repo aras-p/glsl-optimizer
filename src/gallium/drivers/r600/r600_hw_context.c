@@ -328,10 +328,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028124_CB_CLEAR_GREEN, 0, 0},
 	{R_028128_CB_CLEAR_BLUE, 0, 0},
 	{R_02812C_CB_CLEAR_ALPHA, 0, 0},
-	{R_028414_CB_BLEND_RED, 0, 0},
-	{R_028418_CB_BLEND_GREEN, 0, 0},
-	{R_02841C_CB_BLEND_BLUE, 0, 0},
-	{R_028420_CB_BLEND_ALPHA, 0, 0},
 	{R_028424_CB_FOG_RED, 0, 0},
 	{R_028428_CB_FOG_GREEN, 0, 0},
 	{R_02842C_CB_FOG_BLUE, 0, 0},
@@ -1040,6 +1036,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 
 	/* Re-emit states. */
 	r600_atom_dirty(ctx, &ctx->alphatest_state.atom);
+	r600_atom_dirty(ctx, &ctx->blend_color.atom);
 	r600_atom_dirty(ctx, &ctx->cb_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->sample_mask.atom);

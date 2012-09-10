@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 22
+#define R600_NUM_ATOMS 23
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -92,6 +92,11 @@ struct r600_alphatest_state {
 	bool cb0_export_16bpc; /* from set_framebuffer_state */
 };
 
+struct r600_blend_color {
+	struct r600_atom atom;
+	struct pipe_blend_color state;
+};
+
 struct r600_cs_shader_state {
 	struct r600_atom atom;
 	struct r600_pipe_compute *shader;
@@ -122,7 +127,6 @@ struct r600_viewport_state {
 
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
-	R600_PIPE_STATE_BLEND_COLOR,
 	R600_PIPE_STATE_CLIP,
 	R600_PIPE_STATE_SCISSOR,
 	R600_PIPE_STATE_RASTERIZER,
@@ -374,6 +378,7 @@ struct r600_context {
 	struct r600_command_buffer      start_compute_cs_cmd;
 	/* Register states. */
 	struct r600_alphatest_state	alphatest_state;
+	struct r600_blend_color		blend_color;
 	struct r600_cb_misc_state	cb_misc_state;
 	struct r600_db_misc_state	db_misc_state;
 	struct r600_seamless_cube_map	seamless_cube_map;
@@ -580,6 +585,7 @@ void r600_translate_index_buffer(struct r600_context *r600,
 /* r600_state_common.c */
 void r600_init_common_state_functions(struct r600_context *rctx);
 void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom);
+void r600_emit_blend_color(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_stencil_ref(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_viewport_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_init_atom(struct r600_context *rctx, struct r600_atom *atom, unsigned id,

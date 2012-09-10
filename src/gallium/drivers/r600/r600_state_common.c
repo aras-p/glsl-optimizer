@@ -177,20 +177,21 @@ static void r600_set_blend_color(struct pipe_context *ctx,
 				 const struct pipe_blend_color *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 
-	if (rstate == NULL)
-		return;
+	rctx->blend_color.state = *state;
+	r600_atom_dirty(rctx, &rctx->blend_color.atom);
+}
 
-	rstate->id = R600_PIPE_STATE_BLEND_COLOR;
-	r600_pipe_state_add_reg(rstate, R_028414_CB_BLEND_RED, fui(state->color[0]));
-	r600_pipe_state_add_reg(rstate, R_028418_CB_BLEND_GREEN, fui(state->color[1]));
-	r600_pipe_state_add_reg(rstate, R_02841C_CB_BLEND_BLUE, fui(state->color[2]));
-	r600_pipe_state_add_reg(rstate, R_028420_CB_BLEND_ALPHA, fui(state->color[3]));
+void r600_emit_blend_color(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct pipe_blend_color *state = &rctx->blend_color.state;
 
-	free(rctx->states[R600_PIPE_STATE_BLEND_COLOR]);
-	rctx->states[R600_PIPE_STATE_BLEND_COLOR] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
+	r600_write_context_reg_seq(cs, R_028414_CB_BLEND_RED, 4);
+	r600_write_value(cs, fui(state->color[0])); /* R_028414_CB_BLEND_RED */
+	r600_write_value(cs, fui(state->color[1])); /* R_028418_CB_BLEND_GREEN */
+	r600_write_value(cs, fui(state->color[2])); /* R_02841C_CB_BLEND_BLUE */
+	r600_write_value(cs, fui(state->color[3])); /* R_028420_CB_BLEND_ALPHA */
 }
 
 static void r600_set_stencil_ref(struct pipe_context *ctx,
