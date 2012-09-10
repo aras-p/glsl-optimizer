@@ -268,7 +268,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	{ "", "uniform ", "attribute ", "varying ", "inout ", "", "", "" },
 	{ "", "uniform ", "varying ",   "out ",     "inout ", "", "", "" },
    };
-   const char *const interp[] = { "", "flat ", "noperspective " };
+   const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
 	
 	int decormode = this->mode;
 	// GLSL 1.30 and up use "in" and "out" for everything

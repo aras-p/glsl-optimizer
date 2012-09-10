@@ -148,7 +148,7 @@ void ir_print_visitor::visit(ir_variable *ir)
    const char *const inv = (ir->invariant) ? "invariant " : "";
    const char *const mode[] = { "", "uniform ", "in ", "out ", "inout ",
 			        "const_in ", "sys ", "temporary " };
-   const char *const interp[] = { "", "flat", "noperspective" };
+   const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
 
    printf("(%s%s%s%s) ",
 	  cent, inv, mode[ir->mode], interp[ir->interpolation]);

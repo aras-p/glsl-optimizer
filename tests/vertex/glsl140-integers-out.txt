@@ -1,5 +1,5 @@
 #version 140
-out noperspective ivec4 colint;
+out flat ivec4 colint;
 out vec4 col;
 in vec4 position;
 uniform vec2 p;
