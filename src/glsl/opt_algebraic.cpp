@@ -197,7 +197,8 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    ir_expression *temp;
    unsigned int i;
 
-   assert(ir->get_num_operands() <= 2);
+   if (ir->get_num_operands() > 2)
+      return ir;
    for (i = 0; i < ir->get_num_operands(); i++) {
       if (ir->operands[i]->type->is_matrix())
 	 return ir;
