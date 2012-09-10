@@ -1385,29 +1385,37 @@ static const struct value_desc values[] = {
  * collisions for any enum (typical numbers).  And the code is very
  * simple, even though it feels a little magic. */
 
-static unsigned short table[1024];
+static unsigned short table[API_LAST + 1][1024];
 static const int prime_factor = 89, prime_step = 281;
 
 #ifdef GET_DEBUG
 static void
-print_table_stats(void)
+print_table_stats(int api)
 {
    int i, j, collisions[11], count, hash, mask;
    const struct value_desc *d;
+   const char *api_names[] = {
+      [API_OPENGL] = "GL",
+      [API_OPENGL_CORE] = "GL_CORE",
+      [API_OPENGLES] = "GLES",
+      [API_OPENGLES2] = "GLES2",
+   };
+   const char *api_name;
 
+   api_name = api < Elements(api_names) ? api_names[api] : "N/A";
    count = 0;
-   mask = Elements(table) - 1;
+   mask = Elements(table[api]) - 1;
    memset(collisions, 0, sizeof collisions);
 
-   for (i = 0; i < Elements(table); i++) {
-      if (!table[i])
+   for (i = 0; i < Elements(table[api]); i++) {
+      if (!table[api][i])
          continue;
       count++;
-      d = &values[table[i]];
+      d = &values[table[api][i]];
       hash = (d->pname * prime_factor);
       j = 0;
       while (1) {
-         if (values[table[hash & mask]].pname == d->pname)
+         if (values[table[api][hash & mask]].pname == d->pname)
             break;
          hash += prime_step;
          j++;
@@ -1419,7 +1427,8 @@ print_table_stats(void)
          collisions[10]++;
    }
 
-   printf("number of enums: %d (total %d)\n", count, Elements(values));
+   printf("number of enums for %s: %d (total %ld)\n",
+         api_name, count, Elements(values));
    for (i = 0; i < Elements(collisions) - 1; i++)
       if (collisions[i] > 0)
          printf("  %d enums with %d %scollisions\n",
@@ -1438,10 +1447,13 @@ print_table_stats(void)
 void _mesa_init_get_hash(struct gl_context *ctx)
 {
    int i, hash, index, mask;
+   int api;
    int api_mask = 0, api_bit;
 
-   mask = Elements(table) - 1;
-   api_bit = 1 << ctx->API;
+   api = ctx->API;
+
+   mask = Elements(table[api]) - 1;
+   api_bit = 1 << api;
 
    for (i = 0; i < Elements(values); i++) {
       if (values[i].type == TYPE_API_MASK) {
@@ -1454,8 +1466,8 @@ void _mesa_init_get_hash(struct gl_context *ctx)
       hash = (values[i].pname * prime_factor) & mask;
       while (1) {
          index = hash & mask;
-         if (!table[index]) {
-            table[index] = i;
+         if (!table[api][index]) {
+            table[api][index] = i;
             break;
          }
          hash += prime_step;
@@ -1986,11 +1998,13 @@ find_value(const char *func, GLenum pname, void **p, union value *v)
    struct gl_texture_unit *unit;
    int mask, hash;
    const struct value_desc *d;
+   int api;
 
-   mask = Elements(table) - 1;
+   api = ctx->API;
+   mask = Elements(table[api]) - 1;
    hash = (pname * prime_factor);
    while (1) {
-      d = &values[table[hash & mask]];
+      d = &values[table[api][hash & mask]];
 
       /* If the enum isn't valid, the hash walk ends with index 0,
        * which is the API mask entry at the beginning of values[]. */
