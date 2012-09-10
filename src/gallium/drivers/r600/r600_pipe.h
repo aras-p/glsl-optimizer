@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 25
+#define R600_NUM_ATOMS 28
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -100,6 +100,17 @@ struct r600_alphatest_state {
 	bool cb0_export_16bpc; /* from set_framebuffer_state */
 };
 
+struct r600_vgt_state {
+	struct r600_atom atom;
+	uint32_t vgt_multi_prim_ib_reset_en;
+	uint32_t vgt_multi_prim_ib_reset_indx;
+};
+
+struct r600_vgt2_state {
+	struct r600_atom atom;
+	uint32_t vgt_indx_offset;
+};
+
 struct r600_blend_color {
 	struct r600_atom atom;
 	struct pipe_blend_color state;
@@ -142,7 +153,6 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_SCISSOR,
 	R600_PIPE_STATE_RASTERIZER,
-	R600_PIPE_STATE_VGT,
 	R600_PIPE_STATE_FRAMEBUFFER,
 	R600_PIPE_STATE_DSA,
 	R600_PIPE_STATE_POLYGON_OFFSET,
@@ -356,7 +366,6 @@ struct r600_context {
 	struct r600_pipe_shader_selector 	*ps_shader;
 	struct r600_pipe_shader_selector 	*vs_shader;
 	struct r600_pipe_rasterizer	*rasterizer;
-	struct r600_pipe_state          vgt;
 	struct r600_pipe_state          spi;
 	struct pipe_query		*current_render_cond;
 	unsigned			current_render_cond_mode;
@@ -395,6 +404,8 @@ struct r600_context {
 	struct r600_db_misc_state	db_misc_state;
 	struct r600_seamless_cube_map	seamless_cube_map;
 	struct r600_stencil_ref_state	stencil_ref;
+	struct r600_vgt_state		vgt_state;
+	struct r600_vgt2_state		vgt2_state;
 	struct r600_sample_mask		sample_mask;
 	struct r600_viewport_state	viewport;
 	/* Shaders and shader resources. */
@@ -476,8 +487,9 @@ struct r600_context {
 	struct r600_resource *dummy_fmask;
 	struct r600_resource *dummy_cmask;
 
-	/* Last primitive type used in draw_vbo. */
-	int last_primitive_type;
+	/* Last draw state (-1 = unset). */
+	int			last_primitive_type; /* Last primitive type used in draw_vbo. */
+	int			last_start_instance;
 };
 
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
@@ -601,6 +613,8 @@ void r600_translate_index_buffer(struct r600_context *r600,
 void r600_init_common_state_functions(struct r600_context *rctx);
 void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_blend_color(struct r600_context *rctx, struct r600_atom *atom);
+void r600_emit_vgt_state(struct r600_context *rctx, struct r600_atom *atom);
+void r600_emit_vgt2_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_clip_misc_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_stencil_ref(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_viewport_state(struct r600_context *rctx, struct r600_atom *atom);

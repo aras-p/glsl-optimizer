@@ -188,6 +188,23 @@ void r600_emit_blend_color(struct r600_context *rctx, struct r600_atom *atom)
 	r600_write_value(cs, fui(state->color[3])); /* R_028420_CB_BLEND_ALPHA */
 }
 
+void r600_emit_vgt_state(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_vgt_state *a = (struct r600_vgt_state *)atom;
+
+	r600_write_context_reg(cs, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, a->vgt_multi_prim_ib_reset_en);
+	r600_write_context_reg(cs, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, a->vgt_multi_prim_ib_reset_indx);
+}
+
+void r600_emit_vgt2_state(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_vgt2_state *a = (struct r600_vgt2_state *)atom;
+
+	r600_write_context_reg(cs, R_028408_VGT_INDX_OFFSET, a->vgt_indx_offset);
+}
+
 static void r600_set_clip_state(struct pipe_context *ctx,
 				const struct pipe_clip_state *state)
 {
@@ -1197,26 +1214,22 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		info.index_bias = info.start;
 	}
 
-	if (rctx->vgt.id != R600_PIPE_STATE_VGT) {
-		rctx->vgt.id = R600_PIPE_STATE_VGT;
-		rctx->vgt.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->vgt, R_028408_VGT_INDX_OFFSET, info.index_bias);
-		r600_pipe_state_add_reg(&rctx->vgt, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info.restart_index);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart);
-		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance);
-	}
-
-	rctx->vgt.nregs = 0;
-	r600_pipe_state_mod_reg(&rctx->vgt, info.index_bias);
-	r600_pipe_state_mod_reg(&rctx->vgt, info.restart_index);
-	r600_pipe_state_mod_reg(&rctx->vgt, info.primitive_restart);
-	r600_pipe_state_mod_reg(&rctx->vgt, info.start_instance);
-	r600_context_pipe_state_set(rctx, &rctx->vgt);
-
 	/* Enable stream out if needed. */
 	if (rctx->streamout_start) {
 		r600_context_streamout_begin(rctx);
 		rctx->streamout_start = FALSE;
+	}
+
+	/* Set the index offset and multi primitive */
+	if (rctx->vgt2_state.vgt_indx_offset != info.index_bias) {
+		rctx->vgt2_state.vgt_indx_offset = info.index_bias;
+		r600_atom_dirty(rctx, &rctx->vgt2_state.atom);
+	}
+	if (rctx->vgt_state.vgt_multi_prim_ib_reset_en != info.primitive_restart ||
+	    rctx->vgt_state.vgt_multi_prim_ib_reset_indx != info.restart_index) {
+		rctx->vgt_state.vgt_multi_prim_ib_reset_en = info.primitive_restart;
+		rctx->vgt_state.vgt_multi_prim_ib_reset_indx = info.restart_index;
+		r600_atom_dirty(rctx, &rctx->vgt_state.atom);
 	}
 
 	/* Emit states (the function expects that we emit at most 17 dwords here). */
@@ -1233,6 +1246,12 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		r600_context_block_emit_dirty(rctx, dirty_block, 0 /* pkt_flags */);
 	}
 	rctx->pm4_dirty_cdwords = 0;
+
+	/* Update start instance. */
+	if (rctx->last_start_instance != info.start_instance) {
+		r600_write_ctl_const(cs, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance);
+		rctx->last_start_instance = info.start_instance;
+	}
 
 	/* Update the primitive type. */
 	if (rctx->last_primitive_type != info.mode) {

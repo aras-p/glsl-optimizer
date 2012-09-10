@@ -233,10 +233,6 @@ static const struct r600_reg r600_config_reg_list[] = {
 	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
 };
 
-static const struct r600_reg r600_ctl_const_list[] = {
-	{R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0},
-};
-
 static const struct r600_reg r600_context_reg_list[] = {
 	{R_028A4C_PA_SC_MODE_CNTL, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
@@ -461,9 +457,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028850_SQ_PGM_RESOURCES_PS, 0, 0},
 	{R_028854_SQ_PGM_EXPORTS_PS, 0, 0},
-	{R_028408_VGT_INDX_OFFSET, 0, 0},
-	{R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0, 0},
-	{R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0, 0},
 	{R_028C1C_PA_SC_AA_SAMPLE_LOCS_MCTX, 0, 0},
 	{R_028C20_PA_SC_AA_SAMPLE_LOCS_8S_WD1_MCTX, 0, 0},
 };
@@ -553,10 +546,6 @@ int r600_context_init(struct r600_context *ctx)
 		goto out_err;
 	r = r600_context_add_block(ctx, r600_context_reg_list,
 				   Elements(r600_context_reg_list), PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET);
-	if (r)
-		goto out_err;
-	r = r600_context_add_block(ctx, r600_ctl_const_list,
-				   Elements(r600_ctl_const_list), PKT3_SET_CTL_CONST, R600_CTL_CONST_OFFSET);
 	if (r)
 		goto out_err;
 
@@ -1017,6 +1006,8 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	r600_atom_dirty(ctx, &ctx->clip_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->clip_state.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
+	r600_atom_dirty(ctx, &ctx->vgt_state.atom);
+	r600_atom_dirty(ctx, &ctx->vgt2_state.atom);
 	r600_atom_dirty(ctx, &ctx->sample_mask.atom);
 	r600_atom_dirty(ctx, &ctx->stencil_ref.atom);
 	r600_atom_dirty(ctx, &ctx->viewport.atom);
@@ -1067,8 +1058,9 @@ void r600_begin_new_cs(struct r600_context *ctx)
 		enable_block->nreg_dirty = enable_block->nreg;
 	}
 
-	/* Re-emit the primitive type. */
+	/* Re-emit the draw state. */
 	ctx->last_primitive_type = -1;
+	ctx->last_start_instance = -1;
 }
 
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fence_bo, unsigned offset, unsigned value)

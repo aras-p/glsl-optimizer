@@ -228,11 +228,4 @@ void _r600_pipe_state_add_reg(struct r600_context *ctx,
 #define r600_pipe_state_add_reg_bo(state, offset, value, bo, usage) _r600_pipe_state_add_reg_bo(rctx, state, offset, value, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo, usage)
 #define r600_pipe_state_add_reg(state, offset, value) _r600_pipe_state_add_reg(rctx, state, offset, value, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset))
 
-static inline void r600_pipe_state_mod_reg(struct r600_pipe_state *state,
-					   uint32_t value)
-{
-	state->regs[state->nregs].value = value;
-	state->nregs++;
-}
-
 #endif

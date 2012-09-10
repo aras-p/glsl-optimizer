@@ -32,10 +32,6 @@ static const struct r600_reg cayman_config_reg_list[] = {
 	{R_00913C_SPI_CONFIG_CNTL_1, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
 };
 
-static const struct r600_reg evergreen_ctl_const_list[] = {
-	{R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0},
-};
-
 static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_028008_DB_DEPTH_VIEW, 0, 0},
 	{R_028010_DB_RENDER_OVERRIDE2, 0, 0},
@@ -62,10 +58,6 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_028250_PA_SC_VPORT_SCISSOR_0_TL, 0, 0},
 	{R_028254_PA_SC_VPORT_SCISSOR_0_BR, 0, 0},
 	{R_028350_SX_MISC, 0, 0},
-	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_028408_VGT_INDX_OFFSET, 0, 0},
-	{R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0, 0},
-	{R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_02861C_SPI_VS_OUT_ID_0, 0, 0},
 	{R_028620_SPI_VS_OUT_ID_1, 0, 0},
@@ -352,10 +344,6 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_028250_PA_SC_VPORT_SCISSOR_0_TL, 0, 0},
 	{R_028254_PA_SC_VPORT_SCISSOR_0_BR, 0, 0},
 	{R_028350_SX_MISC, 0, 0},
-	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_028408_VGT_INDX_OFFSET, 0, 0},
-	{R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, 0, 0},
-	{R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_02861C_SPI_VS_OUT_ID_0, 0, 0},
 	{R_028620_SPI_VS_OUT_ID_1, 0, 0},
@@ -662,10 +650,6 @@ int evergreen_context_init(struct r600_context *ctx)
 	else
 		r = r600_context_add_block(ctx, evergreen_context_reg_list,
 					   Elements(evergreen_context_reg_list), PKT3_SET_CONTEXT_REG, EVERGREEN_CONTEXT_REG_OFFSET);
-	if (r)
-		goto out_err;
-	r = r600_context_add_block(ctx, evergreen_ctl_const_list,
-				   Elements(evergreen_ctl_const_list), PKT3_SET_CTL_CONST, EVERGREEN_CTL_CONST_OFFSET);
 	if (r)
 		goto out_err;
 
