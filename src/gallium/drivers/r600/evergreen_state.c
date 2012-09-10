@@ -2080,23 +2080,26 @@ static void evergreen_emit_sampler_states(struct r600_context *rctx,
 				unsigned border_index_reg)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
-	unsigned i;
+	uint32_t dirty_mask = texinfo->states.dirty_mask;
 
-	for (i = 0; i < texinfo->n_samplers; i++) {
+	while (dirty_mask) {
+		struct r600_pipe_sampler_state *rstate;
+		unsigned i = u_bit_scan(&dirty_mask);
 
-		if (texinfo->samplers[i] == NULL) {
-			continue;
-		}
+		rstate = texinfo->states.states[i];
+		assert(rstate);
+
 		r600_write_value(cs, PKT3(PKT3_SET_SAMPLER, 3, 0));
 		r600_write_value(cs, (resource_id_base + i) * 3);
-		r600_write_array(cs, 3, texinfo->samplers[i]->tex_sampler_words);
+		r600_write_array(cs, 3, rstate->tex_sampler_words);
 
-		if (texinfo->samplers[i]->border_color_use) {
+		if (rstate->border_color_use) {
 			r600_write_config_reg_seq(cs, border_index_reg, 5);
 			r600_write_value(cs, i);
-			r600_write_array(cs, 4, texinfo->samplers[i]->border_color);
+			r600_write_array(cs, 4, rstate->border_color);
 		}
 	}
+	texinfo->states.dirty_mask = 0;
 }
 
 static void evergreen_emit_vs_sampler_states(struct r600_context *rctx, struct r600_atom *atom)
@@ -2149,8 +2152,8 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	/* shader program */
 	r600_init_atom(rctx, &rctx->cs_shader_state.atom, id++, evergreen_emit_cs_shader, 0);
 	/* sampler */
-	r600_init_atom(rctx, &rctx->vs_samplers.atom_sampler, id++, evergreen_emit_vs_sampler_states, 0);
-	r600_init_atom(rctx, &rctx->ps_samplers.atom_sampler, id++, evergreen_emit_ps_sampler_states, 0);
+	r600_init_atom(rctx, &rctx->vs_samplers.states.atom, id++, evergreen_emit_vs_sampler_states, 0);
+	r600_init_atom(rctx, &rctx->ps_samplers.states.atom, id++, evergreen_emit_ps_sampler_states, 0);
 	/* resources */
 	r600_init_atom(rctx, &rctx->vertex_buffer_state.atom, id++, evergreen_fs_emit_vertex_buffers, 0);
 	r600_init_atom(rctx, &rctx->cs_vertex_buffer_state.atom, id++, evergreen_cs_emit_vertex_buffers, 0);

@@ -346,6 +346,20 @@ static void r600_sampler_view_destroy(struct pipe_context *ctx,
 	FREE(resource);
 }
 
+void r600_sampler_states_dirty(struct r600_context *rctx,
+			       struct r600_sampler_states *state)
+{
+	if (state->dirty_mask) {
+		if (state->dirty_mask & state->has_bordercolor_mask) {
+			rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
+		}
+		state->atom.num_dw =
+			util_bitcount(state->dirty_mask & state->has_bordercolor_mask) * 11 +
+			util_bitcount(state->dirty_mask & ~state->has_bordercolor_mask) * 5;
+		r600_atom_dirty(rctx, &state->atom);
+	}
+}
+
 static void r600_bind_sampler_states(struct pipe_context *pipe,
                                unsigned shader,
 			       unsigned start,
@@ -353,8 +367,13 @@ static void r600_bind_sampler_states(struct pipe_context *pipe,
 {
 	struct r600_context *rctx = (struct r600_context *)pipe;
 	struct r600_textures_info *dst;
+	struct r600_pipe_sampler_state **rstates = (struct r600_pipe_sampler_state**)states;
 	int seamless_cube_map = -1;
 	unsigned i;
+	/* This sets 1-bit for states with index >= count. */
+	uint32_t disable_mask = ~((1ull << count) - 1);
+	/* These are the new states set by this function. */
+	uint32_t new_mask = 0;
 
 	assert(start == 0); /* XXX fix below */
 
@@ -370,32 +389,46 @@ static void r600_bind_sampler_states(struct pipe_context *pipe,
 		return;
 	}
 
-	memcpy(dst->samplers, states, sizeof(void*) * count);
-	dst->n_samplers = count;
-	dst->atom_sampler.num_dw = 0;
-
 	for (i = 0; i < count; i++) {
-		struct r600_pipe_sampler_state *sampler = states[i];
+		struct r600_pipe_sampler_state *rstate = rstates[i];
 
-		if (sampler == NULL) {
+		if (rstate == dst->states.states[i]) {
 			continue;
 		}
-		if (sampler->border_color_use) {
-			dst->atom_sampler.num_dw += 11;
-			rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
+
+		if (rstate) {
+			if (rstate->border_color_use) {
+				dst->states.has_bordercolor_mask |= 1 << i;
+			} else {
+				dst->states.has_bordercolor_mask &= ~(1 << i);
+			}
+			seamless_cube_map = rstate->seamless_cube_map;
+
+			new_mask |= 1 << i;
 		} else {
-			dst->atom_sampler.num_dw += 5;
+			disable_mask |= 1 << i;
 		}
-		seamless_cube_map = sampler->seamless_cube_map;
 	}
-	if (rctx->chip_class <= R700 && seamless_cube_map != -1 && seamless_cube_map != rctx->seamless_cube_map.enabled) {
+
+	memcpy(dst->states.states, rstates, sizeof(void*) * count);
+	memset(dst->states.states + count, 0, sizeof(void*) * (NUM_TEX_UNITS - count));
+
+	dst->states.enabled_mask &= ~disable_mask;
+	dst->states.dirty_mask &= dst->states.enabled_mask;
+	dst->states.enabled_mask |= new_mask;
+	dst->states.dirty_mask |= new_mask;
+	dst->states.has_bordercolor_mask &= dst->states.enabled_mask;
+
+	r600_sampler_states_dirty(rctx, &dst->states);
+
+	/* Seamless cubemap state. */
+	if (rctx->chip_class <= R700 &&
+	    seamless_cube_map != -1 &&
+	    seamless_cube_map != rctx->seamless_cube_map.enabled) {
 		/* change in TA_CNTL_AUX need a pipeline flush */
 		rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
 		rctx->seamless_cube_map.enabled = seamless_cube_map;
 		r600_atom_dirty(rctx, &rctx->seamless_cube_map.atom);
-	}
-	if (dst->atom_sampler.num_dw) {
-		r600_atom_dirty(rctx, &dst->atom_sampler);
 	}
 }
 
@@ -540,6 +573,7 @@ static void r600_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 	struct r600_context *rctx = (struct r600_context *) pipe;
 	struct r600_textures_info *dst;
 	struct r600_pipe_sampler_view **rviews = (struct r600_pipe_sampler_view **)views;
+	uint32_t dirty_sampler_states_mask = 0;
 	unsigned i;
 	/* This sets 1-bit for textures with index >= count. */
 	uint32_t disable_mask = ~((1ull << count) - 1);
@@ -594,12 +628,13 @@ static void r600_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 				dst->views.compressed_colortex_mask &= ~(1 << i);
 			}
 
-			/* Changing from array to non-arrays textures and vice
-			 * versa requires updating TEX_ARRAY_OVERRIDE on R6xx-R7xx. */
+			/* Changing from array to non-arrays textures and vice versa requires
+			 * updating TEX_ARRAY_OVERRIDE in sampler states on R6xx-R7xx. */
 			if (rctx->chip_class <= R700 &&
+			    (dst->states.enabled_mask & (1 << i)) &&
 			    (rviews[i]->base.texture->target == PIPE_TEXTURE_1D_ARRAY ||
 			     rviews[i]->base.texture->target == PIPE_TEXTURE_2D_ARRAY) != dst->is_array_sampler[i]) {
-				r600_atom_dirty(rctx, &dst->atom_sampler);
+				dirty_sampler_states_mask |= 1 << i;
 			}
 
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&dst->views.views[i], views[i]);
@@ -618,6 +653,11 @@ static void r600_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 	dst->views.compressed_colortex_mask &= dst->views.enabled_mask;
 
 	r600_sampler_views_dirty(rctx, &dst->views);
+
+	if (dirty_sampler_states_mask) {
+		dst->states.dirty_mask |= dirty_sampler_states_mask;
+		r600_sampler_states_dirty(rctx, &dst->states);
+	}
 }
 
 static void r600_set_vs_sampler_views(struct pipe_context *ctx, unsigned count,

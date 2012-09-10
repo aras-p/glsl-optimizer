@@ -79,8 +79,8 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 
 	if (op & R600_SAVE_TEXTURES) {
 		util_blitter_save_fragment_sampler_states(
-			rctx->blitter, rctx->ps_samplers.n_samplers,
-			(void**)rctx->ps_samplers.samplers);
+			rctx->blitter, util_last_bit(rctx->ps_samplers.states.enabled_mask),
+			(void**)rctx->ps_samplers.states.states);
 
 		util_blitter_save_fragment_sampler_views(
 			rctx->blitter, util_last_bit(rctx->ps_samplers.views.enabled_mask),

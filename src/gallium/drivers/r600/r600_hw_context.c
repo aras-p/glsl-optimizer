@@ -1043,9 +1043,12 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	r600_atom_dirty(ctx, &ctx->alphatest_state.atom);
 	r600_atom_dirty(ctx, &ctx->cb_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
-	/* reemit sampler, will only matter if atom_sampler.num_dw != 0 */
-	r600_atom_dirty(ctx, &ctx->vs_samplers.atom_sampler);
-	r600_atom_dirty(ctx, &ctx->ps_samplers.atom_sampler);
+
+	ctx->vs_samplers.states.dirty_mask = ctx->vs_samplers.states.enabled_mask;
+	ctx->ps_samplers.states.dirty_mask = ctx->ps_samplers.states.enabled_mask;
+	r600_sampler_states_dirty(ctx, &ctx->vs_samplers.states);
+	r600_sampler_states_dirty(ctx, &ctx->ps_samplers.states);
+
 	if (ctx->chip_class <= R700) {
 		r600_atom_dirty(ctx, &ctx->seamless_cube_map.atom);
 	}

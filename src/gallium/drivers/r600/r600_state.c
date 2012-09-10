@@ -1932,42 +1932,47 @@ static void r600_emit_sampler_states(struct r600_context *rctx,
 				unsigned border_color_reg)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
-	unsigned i;
+	uint32_t dirty_mask = texinfo->states.dirty_mask;
 
-	for (i = 0; i < texinfo->n_samplers; i++) {
+	while (dirty_mask) {
+		struct r600_pipe_sampler_state *rstate;
+		struct r600_pipe_sampler_view *rview;
+		unsigned i = u_bit_scan(&dirty_mask);
 
-		if (texinfo->samplers[i] == NULL) {
-			continue;
-		}
+		rstate = texinfo->states.states[i];
+		assert(rstate);
+		rview = texinfo->views.views[i];
 
 		/* TEX_ARRAY_OVERRIDE must be set for array textures to disable
 		 * filtering between layers.
 		 * Don't update TEX_ARRAY_OVERRIDE if we don't have the sampler view.
 		 */
-		if (texinfo->views.views[i]) {
-			if (texinfo->views.views[i]->base.texture->target == PIPE_TEXTURE_1D_ARRAY ||
-			    texinfo->views.views[i]->base.texture->target == PIPE_TEXTURE_2D_ARRAY) {
-				texinfo->samplers[i]->tex_sampler_words[0] |= S_03C000_TEX_ARRAY_OVERRIDE(1);
+		if (rview) {
+			enum pipe_texture_target target = rview->base.texture->target;
+			if (target == PIPE_TEXTURE_1D_ARRAY ||
+			    target == PIPE_TEXTURE_2D_ARRAY) {
+				rstate->tex_sampler_words[0] |= S_03C000_TEX_ARRAY_OVERRIDE(1);
 				texinfo->is_array_sampler[i] = true;
 			} else {
-				texinfo->samplers[i]->tex_sampler_words[0] &= C_03C000_TEX_ARRAY_OVERRIDE;
+				rstate->tex_sampler_words[0] &= C_03C000_TEX_ARRAY_OVERRIDE;
 				texinfo->is_array_sampler[i] = false;
 			}
 		}
 
 		r600_write_value(cs, PKT3(PKT3_SET_SAMPLER, 3, 0));
 		r600_write_value(cs, (resource_id_base + i) * 3);
-		r600_write_array(cs, 3, texinfo->samplers[i]->tex_sampler_words);
+		r600_write_array(cs, 3, rstate->tex_sampler_words);
 
-		if (texinfo->samplers[i]->border_color_use) {
+		if (rstate->border_color_use) {
 			unsigned offset;
 
 			offset = border_color_reg;
 			offset += i * 16;
 			r600_write_config_reg_seq(cs, offset, 4);
-			r600_write_array(cs, 4, texinfo->samplers[i]->border_color);
+			r600_write_array(cs, 4, rstate->border_color);
 		}
 	}
+	texinfo->states.dirty_mask = 0;
 }
 
 static void r600_emit_vs_sampler_states(struct r600_context *rctx, struct r600_atom *atom)
@@ -2025,8 +2030,8 @@ void r600_init_state_functions(struct r600_context *rctx)
 	/* sampler must be emited before TA_CNTL_AUX otherwise DISABLE_CUBE_WRAP change
 	 * does not take effect (TA_CNTL_AUX emited by r600_emit_seamless_cube_map)
 	 */
-	r600_init_atom(rctx, &rctx->vs_samplers.atom_sampler, id++, r600_emit_vs_sampler_states, 0);
-	r600_init_atom(rctx, &rctx->ps_samplers.atom_sampler, id++, r600_emit_ps_sampler_states, 0);
+	r600_init_atom(rctx, &rctx->vs_samplers.states.atom, id++, r600_emit_vs_sampler_states, 0);
+	r600_init_atom(rctx, &rctx->ps_samplers.states.atom, id++, r600_emit_ps_sampler_states, 0);
 	/* resource */
 	r600_init_atom(rctx, &rctx->vs_samplers.views.atom, id++, r600_emit_vs_sampler_views, 0);
 	r600_init_atom(rctx, &rctx->ps_samplers.views.atom, id++, r600_emit_ps_sampler_views, 0);

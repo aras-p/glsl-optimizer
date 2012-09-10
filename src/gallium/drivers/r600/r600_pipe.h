@@ -261,11 +261,17 @@ struct r600_samplerview_state {
 	uint32_t			compressed_colortex_mask;
 };
 
+struct r600_sampler_states {
+	struct r600_atom		atom;
+	struct r600_pipe_sampler_state	*states[NUM_TEX_UNITS];
+	uint32_t			enabled_mask;
+	uint32_t			dirty_mask;
+	uint32_t			has_bordercolor_mask; /* which states contain the border color */
+};
+
 struct r600_textures_info {
 	struct r600_samplerview_state	views;
-	struct r600_atom		atom_sampler;
-	struct r600_pipe_sampler_state	*samplers[NUM_TEX_UNITS];
-	unsigned			n_samplers;
+	struct r600_sampler_states	states;
 	bool				is_array_sampler[NUM_TEX_UNITS];
 };
 
@@ -571,6 +577,8 @@ void r600_init_atom(struct r600_context *rctx, struct r600_atom *atom, unsigned 
 void r600_vertex_buffers_dirty(struct r600_context *rctx);
 void r600_sampler_views_dirty(struct r600_context *rctx,
 			      struct r600_samplerview_state *state);
+void r600_sampler_states_dirty(struct r600_context *rctx,
+			       struct r600_sampler_states *state);
 void r600_set_max_scissor(struct r600_context *rctx);
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state);
 void r600_draw_rectangle(struct blitter_context *blitter,
