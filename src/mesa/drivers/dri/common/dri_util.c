@@ -306,6 +306,7 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
     unsigned major_version = 1;
     unsigned minor_version = 0;
     uint32_t flags = 0;
+    bool notify_reset = false;
 
     assert((num_attribs == 0) || (attribs != NULL));
 
@@ -344,6 +345,10 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
 	case __DRI_CTX_ATTRIB_FLAGS:
 	    flags = attribs[i * 2 + 1];
 	    break;
+        case __DRI_CTX_ATTRIB_RESET_STRATEGY:
+            notify_reset = (attribs[i * 2 + 1]
+                            != __DRI_CTX_RESET_NO_NOTIFICATION);
+            break;
 	default:
 	    /* We can't create a context that satisfies the requirements of an
 	     * attribute that we don't understand.  Return failure.
@@ -424,7 +429,7 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
 
     if (!screen->driver->CreateContext(mesa_api, modes, context,
                                        major_version, minor_version,
-                                       flags, error, shareCtx) ) {
+                                       flags, notify_reset, error, shareCtx)) {
         free(context);
         return NULL;
     }

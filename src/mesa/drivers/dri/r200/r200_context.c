@@ -201,6 +201,7 @@ GLboolean r200CreateContext( gl_api api,
 			     unsigned major_version,
 			     unsigned minor_version,
 			     uint32_t flags,
+                             bool notify_reset,
 			     unsigned *error,
 			     void *sharedContextPrivate)
 {
@@ -215,6 +216,11 @@ GLboolean r200CreateContext( gl_api api,
    /* Flag filtering is handled in dri2CreateContextAttribs.
     */
    (void) flags;
+
+   if (notify_reset) {
+      *error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
+      return false;
+   }
 
    assert(glVisual);
    assert(driContextPriv);

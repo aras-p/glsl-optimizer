@@ -57,6 +57,7 @@
 #include <GL/internal/dri_interface.h>
 #include "main/mtypes.h"
 #include "xmlconfig.h"
+#include <stdbool.h>
 
 /**
  * Extensions.
@@ -87,6 +88,7 @@ struct __DriverAPIRec {
 			       unsigned major_version,
 			       unsigned minor_version,
 			       uint32_t flags,
+                               bool notify_reset,
 			       unsigned *error,
                                void *sharedContextPrivate);
 

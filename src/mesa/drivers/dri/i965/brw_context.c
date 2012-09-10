@@ -569,6 +569,7 @@ brwCreateContext(gl_api api,
                  unsigned major_version,
                  unsigned minor_version,
                  uint32_t flags,
+                 bool notify_reset,
                  unsigned *dri_ctx_error,
 	         void *sharedContextPrivate)
 {
@@ -578,6 +579,11 @@ brwCreateContext(gl_api api,
    const struct brw_device_info *devinfo = screen->devinfo;
    struct dd_function_table functions;
    struct gl_config visual;
+
+   if (notify_reset) {
+      *dri_ctx_error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
+      return false;
+   }
 
    struct brw_context *brw = rzalloc(NULL, struct brw_context);
    if (!brw) {
