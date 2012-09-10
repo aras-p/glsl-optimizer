@@ -1,8 +1,8 @@
 #version 140
-varying noperspective ivec4 colint;
-varying vec4 col;
-attribute vec4 icol;
-attribute vec4 position;
+out noperspective ivec4 colint;
+out vec4 col;
+in vec4 icol;
+in vec4 position;
 uniform vec2 p;
 void main ()
 {

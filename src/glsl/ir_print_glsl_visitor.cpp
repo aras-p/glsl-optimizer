@@ -269,6 +269,13 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	{ "", "uniform ", "varying ",   "out ",     "inout ", "", "", "" },
    };
    const char *const interp[] = { "", "flat ", "noperspective " };
+	
+	int decormode = this->mode;
+	// GLSL 1.30 and up use "in" and "out" for everything
+	if (this->state->language_version >= 130)
+	{
+		decormode = 0;
+	}
 
    // give an id to any variable defined in a function that is not an uniform
    if ((this->mode == kPrintGlslNone && ir->mode != ir_var_uniform))
@@ -282,7 +289,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
    }
 
    ralloc_asprintf_append (&buffer, "%s%s%s%s",
-	  cent, inv, mode[this->mode][ir->mode], interp[ir->interpolation]);
+	  cent, inv, mode[decormode][ir->mode], interp[ir->interpolation]);
    print_precision (ir, ir->type);
    buffer = print_type(buffer, ir->type, false);
    ralloc_asprintf_append (&buffer, " ");
