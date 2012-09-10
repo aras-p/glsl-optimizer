@@ -220,11 +220,6 @@ void _r600_pipe_state_add_reg(struct r600_context *ctx,
 			      uint32_t offset, uint32_t value,
 			      uint32_t range_id, uint32_t block_id);
 
-void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
-				     uint32_t offset, uint32_t value,
-				     struct r600_resource *bo,
-				     enum radeon_bo_usage usage);
-
 #define r600_pipe_state_add_reg_bo(state, offset, value, bo, usage) _r600_pipe_state_add_reg_bo(rctx, state, offset, value, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo, usage)
 #define r600_pipe_state_add_reg(state, offset, value) _r600_pipe_state_add_reg(rctx, state, offset, value, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset))
 

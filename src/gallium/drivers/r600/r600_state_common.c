@@ -1398,23 +1398,6 @@ void _r600_pipe_state_add_reg(struct r600_context *ctx,
 				    range_id, block_id, NULL, 0);
 }
 
-void r600_pipe_state_add_reg_noblock(struct r600_pipe_state *state,
-				     uint32_t offset, uint32_t value,
-				     struct r600_resource *bo,
-				     enum radeon_bo_usage usage)
-{
-	if (bo) assert(usage);
-
-	state->regs[state->nregs].id = offset;
-	state->regs[state->nregs].block = NULL;
-	state->regs[state->nregs].value = value;
-	state->regs[state->nregs].bo = bo;
-	state->regs[state->nregs].bo_usage = usage;
-
-	state->nregs++;
-	assert(state->nregs < R600_BLOCK_MAX_REG);
-}
-
 uint32_t r600_translate_stencil_op(int s_op)
 {
 	switch (s_op) {
