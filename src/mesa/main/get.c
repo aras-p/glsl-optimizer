@@ -789,6 +789,15 @@ static const struct value_desc values[] = {
 
 #endif /* FEATURE_GL || FEATURE_ES2 */
 
+#if FEATURE_ES1 || FEATURE_ES2
+   { 0, 0, TYPE_API_MASK, API_OPENGLES | API_OPENGLES2_BIT, NO_EXTRA },
+   /* GL_OES_EGL_image_external */
+   { GL_TEXTURE_BINDING_EXTERNAL_OES, LOC_CUSTOM,
+     TYPE_INT, TEXTURE_EXTERNAL_INDEX, extra_OES_EGL_image_external },
+   { GL_TEXTURE_EXTERNAL_OES, LOC_CUSTOM,
+     TYPE_BOOLEAN, 0, extra_OES_EGL_image_external },
+#endif
+
 #if FEATURE_ES2
    /* Enums unique to OpenGL ES 2.0 */
    { 0, 0, TYPE_API_MASK, API_OPENGLES2_BIT, NO_EXTRA },
@@ -800,12 +809,6 @@ static const struct value_desc values[] = {
    { GL_NUM_SHADER_BINARY_FORMATS, CONST(0), NO_EXTRA },
    { GL_SHADER_BINARY_FORMATS, CONST(0), NO_EXTRA },
 #endif /* FEATURE_ES2 */
-
-   /* GL_OES_EGL_image_external */
-   { GL_TEXTURE_BINDING_EXTERNAL_OES, LOC_CUSTOM,
-     TYPE_INT, TEXTURE_EXTERNAL_INDEX, extra_OES_EGL_image_external },
-   { GL_TEXTURE_EXTERNAL_OES, LOC_CUSTOM,
-     TYPE_BOOLEAN, 0, extra_OES_EGL_image_external },
 
 #if FEATURE_GL
    /* Remaining enums are only in OpenGL */
