@@ -366,7 +366,7 @@ static void r600_bind_sampler_states(struct pipe_context *pipe,
 			       unsigned count, void **states)
 {
 	struct r600_context *rctx = (struct r600_context *)pipe;
-	struct r600_textures_info *dst;
+	struct r600_textures_info *dst = &rctx->samplers[shader];
 	struct r600_pipe_sampler_state **rstates = (struct r600_pipe_sampler_state**)states;
 	int seamless_cube_map = -1;
 	unsigned i;
@@ -376,18 +376,6 @@ static void r600_bind_sampler_states(struct pipe_context *pipe,
 	uint32_t new_mask = 0;
 
 	assert(start == 0); /* XXX fix below */
-
-	switch (shader) {
-	case PIPE_SHADER_VERTEX:
-		dst = &rctx->vs_samplers;
-		break;
-	case PIPE_SHADER_FRAGMENT:
-		dst = &rctx->ps_samplers;
-		break;
-	default:
-		debug_error("bad shader in r600_bind_samplers()");
-		return;
-	}
 
 	for (i = 0; i < count; i++) {
 		struct r600_pipe_sampler_state *rstate = rstates[i];
@@ -571,7 +559,7 @@ static void r600_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 				   struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = (struct r600_context *) pipe;
-	struct r600_textures_info *dst;
+	struct r600_textures_info *dst = &rctx->samplers[shader];
 	struct r600_pipe_sampler_view **rviews = (struct r600_pipe_sampler_view **)views;
 	uint32_t dirty_sampler_states_mask = 0;
 	unsigned i;
@@ -584,18 +572,6 @@ static void r600_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 	uint32_t remaining_mask;
 
 	assert(start == 0); /* XXX fix below */
-
-	switch (shader) {
-	case PIPE_SHADER_VERTEX:
-		dst = &rctx->vs_samplers;
-		break;
-	case PIPE_SHADER_FRAGMENT:
-		dst = &rctx->ps_samplers;
-		break;
-	default:
-		debug_error("bad shader in r600_set_sampler_views()");
-		return;
-	}
 
 	remaining_mask = dst->views.enabled_mask & disable_mask;
 
@@ -1069,18 +1045,17 @@ static void r600_update_derived_state(struct r600_context *rctx)
 	unsigned ps_dirty = 0, blend_override;
 
 	if (!rctx->blitter->running) {
+		unsigned i;
+
 		/* Decompress textures if needed. */
-		if (rctx->vs_samplers.views.compressed_depthtex_mask) {
-			r600_decompress_depth_textures(rctx, &rctx->vs_samplers.views);
-		}
-		if (rctx->ps_samplers.views.compressed_depthtex_mask) {
-			r600_decompress_depth_textures(rctx, &rctx->ps_samplers.views);
-		}
-		if (rctx->vs_samplers.views.compressed_colortex_mask) {
-			r600_decompress_color_textures(rctx, &rctx->vs_samplers.views);
-		}
-		if (rctx->ps_samplers.views.compressed_colortex_mask) {
-			r600_decompress_color_textures(rctx, &rctx->ps_samplers.views);
+		for (i = 0; i < PIPE_SHADER_TYPES; i++) {
+			struct r600_samplerview_state *views = &rctx->samplers[i].views;
+			if (views->compressed_depthtex_mask) {
+				r600_decompress_depth_textures(rctx, views);
+			}
+			if (views->compressed_colortex_mask) {
+				r600_decompress_color_textures(rctx, views);
+			}
 		}
 	}
 

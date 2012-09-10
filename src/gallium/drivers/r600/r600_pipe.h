@@ -379,8 +379,7 @@ struct r600_context {
 	/** Vertex buffers for compute shaders */
 	struct r600_vertexbuf_state	cs_vertex_buffer_state;
 	struct r600_constbuf_state	constbuf_state[PIPE_SHADER_TYPES];
-	struct r600_textures_info	vs_samplers;
-	struct r600_textures_info	ps_samplers;
+	struct r600_textures_info	samplers[PIPE_SHADER_TYPES];
 	struct r600_seamless_cube_map	seamless_cube_map;
 	struct r600_cs_shader_state	cs_shader_state;
 	struct r600_sample_mask		sample_mask;

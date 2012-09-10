@@ -1918,12 +1918,12 @@ static void r600_emit_sampler_views(struct r600_context *rctx,
 
 static void r600_emit_vs_sampler_views(struct r600_context *rctx, struct r600_atom *atom)
 {
-	r600_emit_sampler_views(rctx, &rctx->vs_samplers.views, 160 + R600_MAX_CONST_BUFFERS);
+	r600_emit_sampler_views(rctx, &rctx->samplers[PIPE_SHADER_VERTEX].views, 160 + R600_MAX_CONST_BUFFERS);
 }
 
 static void r600_emit_ps_sampler_views(struct r600_context *rctx, struct r600_atom *atom)
 {
-	r600_emit_sampler_views(rctx, &rctx->ps_samplers.views, R600_MAX_CONST_BUFFERS);
+	r600_emit_sampler_views(rctx, &rctx->samplers[PIPE_SHADER_FRAGMENT].views, R600_MAX_CONST_BUFFERS);
 }
 
 static void r600_emit_sampler_states(struct r600_context *rctx,
@@ -1977,12 +1977,12 @@ static void r600_emit_sampler_states(struct r600_context *rctx,
 
 static void r600_emit_vs_sampler_states(struct r600_context *rctx, struct r600_atom *atom)
 {
-	r600_emit_sampler_states(rctx, &rctx->vs_samplers, 18, R_00A600_TD_VS_SAMPLER0_BORDER_RED);
+	r600_emit_sampler_states(rctx, &rctx->samplers[PIPE_SHADER_VERTEX], 18, R_00A600_TD_VS_SAMPLER0_BORDER_RED);
 }
 
 static void r600_emit_ps_sampler_states(struct r600_context *rctx, struct r600_atom *atom)
 {
-	r600_emit_sampler_states(rctx, &rctx->ps_samplers, 0, R_00A400_TD_PS_SAMPLER0_BORDER_RED);
+	r600_emit_sampler_states(rctx, &rctx->samplers[PIPE_SHADER_FRAGMENT], 0, R_00A400_TD_PS_SAMPLER0_BORDER_RED);
 }
 
 static void r600_emit_seamless_cube_map(struct r600_context *rctx, struct r600_atom *atom)
@@ -2030,11 +2030,11 @@ void r600_init_state_functions(struct r600_context *rctx)
 	/* sampler must be emited before TA_CNTL_AUX otherwise DISABLE_CUBE_WRAP change
 	 * does not take effect (TA_CNTL_AUX emited by r600_emit_seamless_cube_map)
 	 */
-	r600_init_atom(rctx, &rctx->vs_samplers.states.atom, id++, r600_emit_vs_sampler_states, 0);
-	r600_init_atom(rctx, &rctx->ps_samplers.states.atom, id++, r600_emit_ps_sampler_states, 0);
+	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_VERTEX].states.atom, id++, r600_emit_vs_sampler_states, 0);
+	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_FRAGMENT].states.atom, id++, r600_emit_ps_sampler_states, 0);
 	/* resource */
-	r600_init_atom(rctx, &rctx->vs_samplers.views.atom, id++, r600_emit_vs_sampler_views, 0);
-	r600_init_atom(rctx, &rctx->ps_samplers.views.atom, id++, r600_emit_ps_sampler_views, 0);
+	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_VERTEX].views.atom, id++, r600_emit_vs_sampler_views, 0);
+	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_FRAGMENT].views.atom, id++, r600_emit_ps_sampler_views, 0);
 	r600_init_atom(rctx, &rctx->vertex_buffer_state.atom, id++, r600_emit_vertex_buffers, 0);
 
 	r600_init_atom(rctx, &rctx->seamless_cube_map.atom, id++, r600_emit_seamless_cube_map, 3);

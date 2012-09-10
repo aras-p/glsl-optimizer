@@ -1044,11 +1044,6 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	r600_atom_dirty(ctx, &ctx->cb_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
 
-	ctx->vs_samplers.states.dirty_mask = ctx->vs_samplers.states.enabled_mask;
-	ctx->ps_samplers.states.dirty_mask = ctx->ps_samplers.states.enabled_mask;
-	r600_sampler_states_dirty(ctx, &ctx->vs_samplers.states);
-	r600_sampler_states_dirty(ctx, &ctx->ps_samplers.states);
-
 	if (ctx->chip_class <= R700) {
 		r600_atom_dirty(ctx, &ctx->seamless_cube_map.atom);
 	}
@@ -1057,16 +1052,19 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	ctx->vertex_buffer_state.dirty_mask = ctx->vertex_buffer_state.enabled_mask;
 	r600_vertex_buffers_dirty(ctx);
 
+	/* Re-emit shader resources. */
 	for (shader = 0; shader < PIPE_SHADER_TYPES; shader++) {
-		struct r600_constbuf_state *state = &ctx->constbuf_state[shader];
-		state->dirty_mask = state->enabled_mask;
-		r600_constant_buffers_dirty(ctx, state);
-	}
+		struct r600_constbuf_state *constbuf = &ctx->constbuf_state[shader];
+		struct r600_textures_info *samplers = &ctx->samplers[shader];
 
-	ctx->vs_samplers.views.dirty_mask = ctx->vs_samplers.views.enabled_mask;
-	ctx->ps_samplers.views.dirty_mask = ctx->ps_samplers.views.enabled_mask;
-	r600_sampler_views_dirty(ctx, &ctx->vs_samplers.views);
-	r600_sampler_views_dirty(ctx, &ctx->ps_samplers.views);
+		constbuf->dirty_mask = constbuf->enabled_mask;
+		samplers->views.dirty_mask = samplers->views.enabled_mask;
+		samplers->states.dirty_mask = samplers->states.enabled_mask;
+
+		r600_constant_buffers_dirty(ctx, constbuf);
+		r600_sampler_views_dirty(ctx, &samplers->views);
+		r600_sampler_states_dirty(ctx, &samplers->states);
+	}
 
 	if (streamout_suspended) {
 		ctx->streamout_start = TRUE;
