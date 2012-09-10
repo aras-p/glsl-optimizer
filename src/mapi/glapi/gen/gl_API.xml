@@ -2981,7 +2981,6 @@
     <enum name="POLYGON_OFFSET_FACTOR"         count="1"  value="0x8038">
         <size name="Get" mode="get"/>
     </enum>
-    <enum name="POLYGON_OFFSET_BIAS"                      value="0x8039"/>
     <enum name="ALPHA4"                                   value="0x803B"/>
     <enum name="ALPHA8"                                   value="0x803C"/>
     <enum name="ALPHA12"                                  value="0x803D"/>
@@ -8089,6 +8088,8 @@
 </category>
 
 <category name="GL_EXT_polygon_offset" number="3">
+    <enum name="POLYGON_OFFSET_BIAS_EXT"                  value="0x8039"/>
+
     <function name="PolygonOffsetEXT" offset="assign">
         <param name="factor" type="GLfloat"/>
         <param name="bias" type="GLfloat"/>
