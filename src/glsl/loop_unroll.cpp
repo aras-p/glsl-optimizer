@@ -114,7 +114,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
     */
    loop_unroll_count count(&ir->body_instructions);
 
-   if (count.fail || count.nodes * iterations > (int)max_iterations * 5)
+   if (count.fail || count.nodes * iterations > (int)max_iterations * 10)
       return visit_continue;
 
    if (ls->num_loop_jumps > 1)
