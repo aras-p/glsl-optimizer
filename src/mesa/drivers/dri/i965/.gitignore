@@ -1,5 +1,3 @@
-Makefile
 i965_symbols_test
-libi965_dri.la
 test_eu_compact
 test_vec4_register_coalesce

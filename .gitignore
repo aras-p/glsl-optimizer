@@ -4,6 +4,7 @@
 *.ilk
 *.la
 *.lo
+*.log
 *.o
 *.obj
 *.os
@@ -17,6 +18,7 @@
 *.tar
 *.tar.bz2
 *.tar.gz
+*.trs
 *.zip
 *~
 depend
@@ -36,9 +38,9 @@ config.py
 build
 libtool
 manifest.txt
-Makefile.in
 .dir-locals.el
 .deps/
 .dirstamp
 .libs/
-/Makefile
+Makefile
+Makefile.in

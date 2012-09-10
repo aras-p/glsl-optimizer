@@ -5,4 +5,3 @@ glsl_parser.h
 glsl_parser.output
 builtin_function.cpp
 glsl_test
-/Makefile

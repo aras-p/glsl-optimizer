@@ -3,4 +3,3 @@ glcpp-lex.c
 glcpp-parse.c
 glcpp-parse.h
 glcpp-parse.output
-/Makefile

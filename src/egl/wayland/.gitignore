@@ -1,4 +1,3 @@
-Makefile
 wayland-drm-client-protocol.h
 wayland-drm-server-protocol.h
 wayland-drm-protocol.c

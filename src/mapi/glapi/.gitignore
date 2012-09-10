@@ -7,4 +7,3 @@ glapi_x86.S
 glapitable.h
 glapitemp.h
 glprocs.h
-\Makefile
