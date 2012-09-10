@@ -360,12 +360,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028208_PA_SC_WINDOW_SCISSOR_BR, 0, 0},
 	{R_028250_PA_SC_VPORT_SCISSOR_0_TL, 0, 0},
 	{R_028254_PA_SC_VPORT_SCISSOR_0_BR, 0, 0},
-	{R_02843C_PA_CL_VPORT_XSCALE_0, 0, 0},
-	{R_028440_PA_CL_VPORT_XOFFSET_0, 0, 0},
-	{R_028444_PA_CL_VPORT_YSCALE_0, 0, 0},
-	{R_028448_PA_CL_VPORT_YOFFSET_0, 0, 0},
-	{R_02844C_PA_CL_VPORT_ZSCALE_0, 0, 0},
-	{R_028450_PA_CL_VPORT_ZOFFSET_0, 0, 0},
 	{R_0286D4_SPI_INTERP_CONTROL_0, 0, 0},
 	{R_028810_PA_CL_CLIP_CNTL, 0, 0},
 	{R_028814_PA_SU_SC_MODE_CNTL, 0, 0},
@@ -1050,6 +1044,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->sample_mask.atom);
 	r600_atom_dirty(ctx, &ctx->stencil_ref.atom);
+	r600_atom_dirty(ctx, &ctx->viewport.atom);
 
 	if (ctx->chip_class <= R700) {
 		r600_atom_dirty(ctx, &ctx->seamless_cube_map.atom);

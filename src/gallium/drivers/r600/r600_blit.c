@@ -62,9 +62,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	util_blitter_save_rasterizer(rctx->blitter, rctx->states[R600_PIPE_STATE_RASTERIZER]);
 
 	if (op & R600_SAVE_FRAGMENT_STATE) {
-		if (rctx->states[R600_PIPE_STATE_VIEWPORT]) {
-			util_blitter_save_viewport(rctx->blitter, &rctx->viewport);
-		}
+		util_blitter_save_viewport(rctx->blitter, &rctx->viewport.state);
 		util_blitter_save_fragment_shader(rctx->blitter, rctx->ps_shader);
 		util_blitter_save_blend(rctx->blitter, rctx->states[R600_PIPE_STATE_BLEND]);
 		util_blitter_save_depth_stencil_alpha(rctx->blitter, rctx->states[R600_PIPE_STATE_DSA]);

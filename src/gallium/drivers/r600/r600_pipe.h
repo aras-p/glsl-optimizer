@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 21
+#define R600_NUM_ATOMS 22
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -115,12 +115,16 @@ struct r600_stencil_ref_state {
 	struct pipe_stencil_ref pipe_state;
 };
 
+struct r600_viewport_state {
+	struct r600_atom atom;
+	struct pipe_viewport_state state;
+};
+
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_BLEND_COLOR,
 	R600_PIPE_STATE_CLIP,
 	R600_PIPE_STATE_SCISSOR,
-	R600_PIPE_STATE_VIEWPORT,
 	R600_PIPE_STATE_RASTERIZER,
 	R600_PIPE_STATE_VGT,
 	R600_PIPE_STATE_FRAMEBUFFER,
@@ -334,7 +338,6 @@ struct r600_context {
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_cl_clip_cntl;
 	/* for saving when using blitter */
-	struct pipe_viewport_state	viewport;
 	struct pipe_clip_state		clip;
 	struct r600_pipe_shader_selector 	*ps_shader;
 	struct r600_pipe_shader_selector 	*vs_shader;
@@ -376,6 +379,7 @@ struct r600_context {
 	struct r600_seamless_cube_map	seamless_cube_map;
 	struct r600_stencil_ref_state	stencil_ref;
 	struct r600_sample_mask		sample_mask;
+	struct r600_viewport_state	viewport;
 	/* Shaders and shader resources. */
 	struct r600_cs_shader_state	cs_shader_state;
 	struct r600_constbuf_state	constbuf_state[PIPE_SHADER_TYPES];
@@ -577,6 +581,7 @@ void r600_translate_index_buffer(struct r600_context *r600,
 void r600_init_common_state_functions(struct r600_context *rctx);
 void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_stencil_ref(struct r600_context *rctx, struct r600_atom *atom);
+void r600_emit_viewport_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_init_atom(struct r600_context *rctx, struct r600_atom *atom, unsigned id,
 		    void (*emit)(struct r600_context *ctx, struct r600_atom *state),
 		    unsigned num_dw);

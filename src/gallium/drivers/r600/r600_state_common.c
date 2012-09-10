@@ -648,26 +648,26 @@ static void r600_set_ps_sampler_views(struct pipe_context *ctx, unsigned count,
 }
 
 static void r600_set_viewport_state(struct pipe_context *ctx,
-					const struct pipe_viewport_state *state)
+				    const struct pipe_viewport_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 
-	if (rstate == NULL)
-		return;
+	rctx->viewport.state = *state;
+	r600_atom_dirty(rctx, &rctx->viewport.atom);
+}
 
-	rctx->viewport = *state;
-	rstate->id = R600_PIPE_STATE_VIEWPORT;
-	r600_pipe_state_add_reg(rstate, R_02843C_PA_CL_VPORT_XSCALE_0, fui(state->scale[0]));
-	r600_pipe_state_add_reg(rstate, R_028444_PA_CL_VPORT_YSCALE_0, fui(state->scale[1]));
-	r600_pipe_state_add_reg(rstate, R_02844C_PA_CL_VPORT_ZSCALE_0, fui(state->scale[2]));
-	r600_pipe_state_add_reg(rstate, R_028440_PA_CL_VPORT_XOFFSET_0, fui(state->translate[0]));
-	r600_pipe_state_add_reg(rstate, R_028448_PA_CL_VPORT_YOFFSET_0, fui(state->translate[1]));
-	r600_pipe_state_add_reg(rstate, R_028450_PA_CL_VPORT_ZOFFSET_0, fui(state->translate[2]));
+void r600_emit_viewport_state(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct pipe_viewport_state *state = &rctx->viewport.state;
 
-	free(rctx->states[R600_PIPE_STATE_VIEWPORT]);
-	rctx->states[R600_PIPE_STATE_VIEWPORT] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
+	r600_write_context_reg_seq(cs, R_02843C_PA_CL_VPORT_XSCALE_0, 6);
+	r600_write_value(cs, fui(state->scale[0]));     /* R_02843C_PA_CL_VPORT_XSCALE_0  */
+	r600_write_value(cs, fui(state->translate[0])); /* R_028440_PA_CL_VPORT_XOFFSET_0 */
+	r600_write_value(cs, fui(state->scale[1]));     /* R_028444_PA_CL_VPORT_YSCALE_0  */
+	r600_write_value(cs, fui(state->translate[1])); /* R_028448_PA_CL_VPORT_YOFFSET_0 */
+	r600_write_value(cs, fui(state->scale[2]));     /* R_02844C_PA_CL_VPORT_ZSCALE_0  */
+	r600_write_value(cs, fui(state->translate[2])); /* R_028450_PA_CL_VPORT_ZOFFSET_0 */
 }
 
 static void *r600_create_vertex_elements(struct pipe_context *ctx, unsigned count,
