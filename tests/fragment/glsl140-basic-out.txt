@@ -1,0 +1,8 @@
+#version 140
+out vec4 fragCol;
+varying vec4 col;
+void main ()
+{
+  fragCol = col;
+}
+
