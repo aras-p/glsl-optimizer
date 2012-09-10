@@ -1442,20 +1442,20 @@ void _mesa_init_get_hash(struct gl_context *ctx)
 
    for (i = 0; i < Elements(values); i++) {
       if (values[i].type == TYPE_API_MASK) {
-	 api_mask = values[i].offset;
-	 continue;
+         api_mask = values[i].offset;
+         continue;
       }
       if (!(api_mask & api_bit))
-	 continue;
+         continue;
 
       hash = (values[i].pname * prime_factor) & mask;
       while (1) {
-	 index = hash & mask;
-	 if (!table[index]) {
-	    table[index] = i;
-	    break;
-	 }
-	 hash += prime_step;
+         index = hash & mask;
+         if (!table[index]) {
+            table[index] = i;
+            break;
+         }
+         hash += prime_step;
       }
    }
 
