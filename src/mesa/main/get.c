@@ -471,10 +471,10 @@ static const struct value_desc values[] = {
      extra_ARB_texture_cube_map }, /* XXX: OES_texture_cube_map */
 
    /* XXX: OES_blend_subtract */
-   { GL_BLEND_SRC_RGB_EXT, CONTEXT_ENUM(Color.Blend[0].SrcRGB), NO_EXTRA },
-   { GL_BLEND_DST_RGB_EXT, CONTEXT_ENUM(Color.Blend[0].DstRGB), NO_EXTRA },
-   { GL_BLEND_SRC_ALPHA_EXT, CONTEXT_ENUM(Color.Blend[0].SrcA), NO_EXTRA },
-   { GL_BLEND_DST_ALPHA_EXT, CONTEXT_ENUM(Color.Blend[0].DstA), NO_EXTRA },
+   { GL_BLEND_SRC_RGB, CONTEXT_ENUM(Color.Blend[0].SrcRGB), NO_EXTRA },
+   { GL_BLEND_DST_RGB, CONTEXT_ENUM(Color.Blend[0].DstRGB), NO_EXTRA },
+   { GL_BLEND_SRC_ALPHA, CONTEXT_ENUM(Color.Blend[0].SrcA), NO_EXTRA },
+   { GL_BLEND_DST_ALPHA, CONTEXT_ENUM(Color.Blend[0].DstA), NO_EXTRA },
 
    /* GL_BLEND_EQUATION_RGB, which is what we're really after, is
     * defined identically to GL_BLEND_EQUATION. */
@@ -483,7 +483,7 @@ static const struct value_desc values[] = {
 
    /* GL_ARB_texture_compression */
    { GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB, LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA },
-   { GL_COMPRESSED_TEXTURE_FORMATS_ARB, LOC_CUSTOM, TYPE_INT_N, 0, NO_EXTRA },
+   { GL_COMPRESSED_TEXTURE_FORMATS, LOC_CUSTOM, TYPE_INT_N, 0, NO_EXTRA },
 
    /* GL_ARB_multisample */
    { GL_SAMPLE_ALPHA_TO_COVERAGE_ARB,
@@ -578,7 +578,7 @@ static const struct value_desc values[] = {
      extra_flush_current },
    { GL_CURRENT_TEXTURE_COORDS, LOC_CUSTOM, TYPE_FLOAT_4, 0,
      extra_flush_current_valid_texture_unit },
-   { GL_DISTANCE_ATTENUATION_EXT, CONTEXT_FLOAT3(Point.Params[0]), NO_EXTRA },
+   { GL_POINT_DISTANCE_ATTENUATION, CONTEXT_FLOAT3(Point.Params[0]), NO_EXTRA },
    { GL_FOG, CONTEXT_BOOL(Fog.Enabled), NO_EXTRA },
    { GL_FOG_COLOR, LOC_CUSTOM, TYPE_FLOATN_4, 0, extra_new_frag_clamp },
    { GL_FOG_DENSITY, CONTEXT_FLOAT(Fog.Density), NO_EXTRA },
@@ -599,7 +599,7 @@ static const struct value_desc values[] = {
    { GL_MODELVIEW_STACK_DEPTH, LOC_CUSTOM, TYPE_INT,
      offsetof(struct gl_context, ModelviewMatrixStack.Depth), NO_EXTRA },
    { GL_NORMALIZE, CONTEXT_BOOL(Transform.Normalize), NO_EXTRA },
-   { GL_PACK_SKIP_IMAGES_EXT, CONTEXT_INT(Pack.SkipImages), NO_EXTRA },
+   { GL_PACK_SKIP_IMAGES, CONTEXT_INT(Pack.SkipImages), NO_EXTRA },
    { GL_PERSPECTIVE_CORRECTION_HINT, CONTEXT_ENUM(Hint.PerspectiveCorrection), NO_EXTRA },
    { GL_POINT_SIZE, CONTEXT_FLOAT(Point.Size), NO_EXTRA },
    { GL_POINT_SIZE_RANGE, CONTEXT_FLOAT2(Const.MinPointSizeAA), NO_EXTRA },
@@ -711,15 +711,15 @@ static const struct value_desc values[] = {
    { GL_MAX_TEXTURE_COORDS_ARB, /* == GL_MAX_TEXTURE_COORDS_NV */
      CONTEXT_INT(Const.MaxTextureCoordUnits),
      extra_ARB_fragment_program_NV_fragment_program },
-   { GL_PACK_IMAGE_HEIGHT_EXT, CONTEXT_INT(Pack.ImageHeight), NO_EXTRA },
+   { GL_PACK_IMAGE_HEIGHT, CONTEXT_INT(Pack.ImageHeight), NO_EXTRA },
    { GL_PACK_ROW_LENGTH, CONTEXT_INT(Pack.RowLength), NO_EXTRA },
    { GL_PACK_SKIP_PIXELS, CONTEXT_INT(Pack.SkipPixels), NO_EXTRA },
    { GL_PACK_SKIP_ROWS, CONTEXT_INT(Pack.SkipRows), NO_EXTRA },
    { GL_UNPACK_ROW_LENGTH, CONTEXT_INT(Unpack.RowLength), NO_EXTRA },
    { GL_UNPACK_SKIP_PIXELS, CONTEXT_INT(Unpack.SkipPixels), NO_EXTRA },
    { GL_UNPACK_SKIP_ROWS, CONTEXT_INT(Unpack.SkipRows), NO_EXTRA },
-   { GL_UNPACK_SKIP_IMAGES_EXT, CONTEXT_INT(Unpack.SkipImages), NO_EXTRA },
-   { GL_UNPACK_IMAGE_HEIGHT_EXT, CONTEXT_INT(Unpack.ImageHeight), NO_EXTRA },
+   { GL_UNPACK_SKIP_IMAGES, CONTEXT_INT(Unpack.SkipImages), NO_EXTRA },
+   { GL_UNPACK_IMAGE_HEIGHT, CONTEXT_INT(Unpack.ImageHeight), NO_EXTRA },
 
    /* GL_ARB_draw_buffers */
    { GL_MAX_DRAW_BUFFERS_ARB, CONTEXT_INT(Const.MaxDrawBuffers), NO_EXTRA },
@@ -780,7 +780,7 @@ static const struct value_desc values[] = {
      offsetof(struct gl_context, Const.Max3DTextureLevels), NO_EXTRA },
 
    /* GL_ARB_fragment_program/OES_standard_derivatives */
-   { GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB,
+   { GL_FRAGMENT_SHADER_DERIVATIVE_HINT,
      CONTEXT_ENUM(Hint.FragmentShaderDerivative), extra_ARB_fragment_shader },
 
    /* GL_NV_read_buffer */
@@ -984,31 +984,31 @@ static const struct value_desc values[] = {
    { GL_TRANSPOSE_TEXTURE_MATRIX_ARB, CONTEXT_MATRIX_T(TextureMatrixStack), NO_EXTRA },
 
    /* GL_EXT_secondary_color */
-   { GL_COLOR_SUM_EXT, CONTEXT_BOOL(Fog.ColorSumEnabled),
+   { GL_COLOR_SUM, CONTEXT_BOOL(Fog.ColorSumEnabled),
      extra_EXT_secondary_color_ARB_vertex_program },
-   { GL_CURRENT_SECONDARY_COLOR_EXT,
+   { GL_CURRENT_SECONDARY_COLOR,
      CONTEXT_FIELD(Current.Attrib[VERT_ATTRIB_COLOR1][0], TYPE_FLOATN_4),
      extra_EXT_secondary_color_flush_current },
-   { GL_SECONDARY_COLOR_ARRAY_EXT, ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_COLOR1].Enabled),
+   { GL_SECONDARY_COLOR_ARRAY, ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_COLOR1].Enabled),
      extra_EXT_secondary_color },
-   { GL_SECONDARY_COLOR_ARRAY_TYPE_EXT, ARRAY_ENUM(VertexAttrib[VERT_ATTRIB_COLOR1].Type),
+   { GL_SECONDARY_COLOR_ARRAY_TYPE, ARRAY_ENUM(VertexAttrib[VERT_ATTRIB_COLOR1].Type),
      extra_EXT_secondary_color },
-   { GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT, ARRAY_INT(VertexAttrib[VERT_ATTRIB_COLOR1].Stride),
+   { GL_SECONDARY_COLOR_ARRAY_STRIDE, ARRAY_INT(VertexAttrib[VERT_ATTRIB_COLOR1].Stride),
      extra_EXT_secondary_color },
-   { GL_SECONDARY_COLOR_ARRAY_SIZE_EXT, ARRAY_INT(VertexAttrib[VERT_ATTRIB_COLOR1].Size),
+   { GL_SECONDARY_COLOR_ARRAY_SIZE, ARRAY_INT(VertexAttrib[VERT_ATTRIB_COLOR1].Size),
      extra_EXT_secondary_color },
 
    /* GL_EXT_fog_coord */
-   { GL_CURRENT_FOG_COORDINATE_EXT,
+   { GL_CURRENT_FOG_COORDINATE,
      CONTEXT_FLOAT(Current.Attrib[VERT_ATTRIB_FOG][0]),
      extra_EXT_fog_coord_flush_current },
-   { GL_FOG_COORDINATE_ARRAY_EXT, ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_FOG].Enabled),
+   { GL_FOG_COORDINATE_ARRAY, ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_FOG].Enabled),
      extra_EXT_fog_coord },
-   { GL_FOG_COORDINATE_ARRAY_TYPE_EXT, ARRAY_ENUM(VertexAttrib[VERT_ATTRIB_FOG].Type),
+   { GL_FOG_COORDINATE_ARRAY_TYPE, ARRAY_ENUM(VertexAttrib[VERT_ATTRIB_FOG].Type),
      extra_EXT_fog_coord },
-   { GL_FOG_COORDINATE_ARRAY_STRIDE_EXT, ARRAY_INT(VertexAttrib[VERT_ATTRIB_FOG].Stride),
+   { GL_FOG_COORDINATE_ARRAY_STRIDE, ARRAY_INT(VertexAttrib[VERT_ATTRIB_FOG].Stride),
      extra_EXT_fog_coord },
-   { GL_FOG_COORDINATE_SOURCE_EXT, CONTEXT_ENUM(Fog.FogCoordinateSource),
+   { GL_FOG_COORDINATE_SOURCE, CONTEXT_ENUM(Fog.FogCoordinateSource),
      extra_EXT_fog_coord },
 
    /* GL_NV_fog_distance */
