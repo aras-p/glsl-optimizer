@@ -312,7 +312,6 @@ static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	rctx->sprite_coord_enable = rs->sprite_coord_enable;
 	rctx->two_side = rs->two_side;
 	rctx->pa_sc_line_stipple = rs->pa_sc_line_stipple;
-	rctx->pa_cl_clip_cntl = rs->pa_cl_clip_cntl;
 	rctx->multisample_enable = rs->multisample_enable;
 
 	rctx->rasterizer = rs;
@@ -324,6 +323,14 @@ static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 		evergreen_polygon_offset_update(rctx);
 	} else {
 		r600_polygon_offset_update(rctx);
+	}
+
+	/* Update clip_misc_state. */
+	if (rctx->clip_misc_state.pa_cl_clip_cntl != rs->pa_cl_clip_cntl ||
+	    rctx->clip_misc_state.clip_plane_enable != rs->clip_plane_enable) {
+		rctx->clip_misc_state.pa_cl_clip_cntl = rs->pa_cl_clip_cntl;
+		rctx->clip_misc_state.clip_plane_enable = rs->clip_plane_enable;
+		r600_atom_dirty(rctx, &rctx->clip_misc_state.atom);
 	}
 
 	/* Workaround for a missing scissor enable on r600. */
@@ -873,6 +880,14 @@ static void r600_bind_vs_state(struct pipe_context *ctx, void *state)
 
 		if (rctx->chip_class < EVERGREEN && rctx->ps_shader)
 			r600_adjust_gprs(rctx);
+
+		/* Update clip misc state. */
+		if (rctx->vs_shader->current->pa_cl_vs_out_cntl != rctx->clip_misc_state.pa_cl_vs_out_cntl ||
+		    rctx->vs_shader->current->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write) {
+			rctx->clip_misc_state.pa_cl_vs_out_cntl = rctx->vs_shader->current->pa_cl_vs_out_cntl;
+			rctx->clip_misc_state.clip_dist_write = rctx->vs_shader->current->shader.clip_dist_write;
+			r600_atom_dirty(rctx, &rctx->clip_misc_state.atom);
+		}
 	}
 }
 
@@ -1133,6 +1148,19 @@ static unsigned r600_conv_prim_to_gs_out(unsigned mode)
 	return prim_conv[mode];
 }
 
+void r600_emit_clip_misc_state(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_clip_misc_state *state = &rctx->clip_misc_state;
+
+	r600_write_context_reg(cs, R_028810_PA_CL_CLIP_CNTL,
+			       state->pa_cl_clip_cntl |
+			       (state->clip_dist_write ? 0 : state->clip_plane_enable & 0x3F));
+	r600_write_context_reg(cs, R_02881C_PA_CL_VS_OUT_CNTL,
+			       state->pa_cl_vs_out_cntl |
+			       (state->clip_plane_enable & state->clip_dist_write));
+}
+
 static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -1186,8 +1214,6 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info.primitive_restart);
 		r600_pipe_state_add_reg(&rctx->vgt, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance);
 		r600_pipe_state_add_reg(&rctx->vgt, R_028A0C_PA_SC_LINE_STIPPLE, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_02881C_PA_CL_VS_OUT_CNTL, 0);
-		r600_pipe_state_add_reg(&rctx->vgt, R_028810_PA_CL_CLIP_CNTL, 0);
 	}
 
 	rctx->vgt.nregs = 0;
@@ -1204,14 +1230,6 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		 prim == V_008958_DI_PT_LINELOOP)
 		ls_mask = 2;
 	r600_pipe_state_mod_reg(&rctx->vgt, S_028A0C_AUTO_RESET_CNTL(ls_mask) | rctx->pa_sc_line_stipple);
-	r600_pipe_state_mod_reg(&rctx->vgt,
-				rctx->vs_shader->current->pa_cl_vs_out_cntl |
-				(rctx->rasterizer->clip_plane_enable & rctx->vs_shader->current->shader.clip_dist_write));
-	r600_pipe_state_mod_reg(&rctx->vgt,
-				rctx->pa_cl_clip_cntl |
-				(rctx->vs_shader->current->shader.clip_dist_write ||
-				 rctx->vs_shader->current->shader.vs_prohibit_ucps ?
-				 0 : rctx->rasterizer->clip_plane_enable & 0x3F));
 
 	r600_context_pipe_state_set(rctx, &rctx->vgt);
 

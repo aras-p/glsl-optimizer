@@ -1324,8 +1324,7 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 					shader->fs_write_all = TRUE;
 				break;
 			case TGSI_PROPERTY_VS_PROHIBIT_UCPS:
-				if (property->u[0].Data == 1)
-					shader->vs_prohibit_ucps = TRUE;
+				/* we don't need this one */
 				break;
 			}
 			break;

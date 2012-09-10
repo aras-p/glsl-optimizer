@@ -2041,6 +2041,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->alphatest_state.atom, id++, r600_emit_alphatest_state, 6);
 	r600_init_atom(rctx, &rctx->blend_color.atom, id++, r600_emit_blend_color, 6);
 	r600_init_atom(rctx, &rctx->cb_misc_state.atom, id++, r600_emit_cb_misc_state, 7);
+	r600_init_atom(rctx, &rctx->clip_misc_state.atom, id++, r600_emit_clip_misc_state, 6);
 	r600_init_atom(rctx, &rctx->clip_state.atom, id++, r600_emit_clip_state, 26);
 	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, r600_emit_db_misc_state, 4);
 	r600_init_atom(rctx, &rctx->stencil_ref.atom, id++, r600_emit_stencil_ref, 4);

@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 24
+#define R600_NUM_ATOMS 25
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -82,6 +82,14 @@ struct r600_cb_misc_state {
 	unsigned nr_ps_color_outputs;
 	bool multiwrite;
 	bool dual_src_blend;
+};
+
+struct r600_clip_misc_state {
+	struct r600_atom atom;
+	unsigned pa_cl_clip_cntl;   /* from rasterizer    */
+	unsigned pa_cl_vs_out_cntl; /* from vertex shader */
+	unsigned clip_plane_enable; /* from rasterizer    */
+	unsigned clip_dist_write;   /* from vertex shader */
 };
 
 struct r600_alphatest_state {
@@ -344,7 +352,6 @@ struct r600_context {
 	unsigned			compute_cb_target_mask;
 	unsigned			db_shader_control;
 	unsigned			pa_sc_line_stipple;
-	unsigned			pa_cl_clip_cntl;
 	/* for saving when using blitter */
 	struct r600_pipe_shader_selector 	*ps_shader;
 	struct r600_pipe_shader_selector 	*vs_shader;
@@ -383,6 +390,7 @@ struct r600_context {
 	struct r600_alphatest_state	alphatest_state;
 	struct r600_blend_color		blend_color;
 	struct r600_cb_misc_state	cb_misc_state;
+	struct r600_clip_misc_state	clip_misc_state;
 	struct r600_clip_state		clip_state;
 	struct r600_db_misc_state	db_misc_state;
 	struct r600_seamless_cube_map	seamless_cube_map;
@@ -590,6 +598,7 @@ void r600_translate_index_buffer(struct r600_context *r600,
 void r600_init_common_state_functions(struct r600_context *rctx);
 void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_blend_color(struct r600_context *rctx, struct r600_atom *atom);
+void r600_emit_clip_misc_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_stencil_ref(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_viewport_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_init_atom(struct r600_context *rctx, struct r600_atom *atom, unsigned id,

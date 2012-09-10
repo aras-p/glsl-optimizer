@@ -47,7 +47,6 @@ struct r600_shader {
 	struct r600_shader_io	output[32];
 	boolean			uses_kill;
 	boolean			fs_write_all;
-	boolean			vs_prohibit_ucps;
 	boolean			two_side;
 	/* Number of color outputs in the TGSI shader,
 	 * sometimes it could be higher than nr_cbufs (bug?).

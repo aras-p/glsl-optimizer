@@ -357,9 +357,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028250_PA_SC_VPORT_SCISSOR_0_TL, 0, 0},
 	{R_028254_PA_SC_VPORT_SCISSOR_0_BR, 0, 0},
 	{R_0286D4_SPI_INTERP_CONTROL_0, 0, 0},
-	{R_028810_PA_CL_CLIP_CNTL, 0, 0},
 	{R_028814_PA_SU_SC_MODE_CNTL, 0, 0},
-	{R_02881C_PA_CL_VS_OUT_CNTL, 0, 0},
 	{R_028A00_PA_SU_POINT_SIZE, 0, 0},
 	{R_028A04_PA_SU_POINT_MINMAX, 0, 0},
 	{R_028A08_PA_SU_LINE_CNTL, 0, 0},
@@ -1019,6 +1017,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	r600_atom_dirty(ctx, &ctx->alphatest_state.atom);
 	r600_atom_dirty(ctx, &ctx->blend_color.atom);
 	r600_atom_dirty(ctx, &ctx->cb_misc_state.atom);
+	r600_atom_dirty(ctx, &ctx->clip_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->clip_state.atom);
 	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
 	r600_atom_dirty(ctx, &ctx->sample_mask.atom);
