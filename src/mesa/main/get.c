@@ -2004,16 +2004,18 @@ find_value(const char *func, GLenum pname, void **p, union value *v)
    mask = Elements(table[api]) - 1;
    hash = (pname * prime_factor);
    while (1) {
-      d = &values[table[api][hash & mask]];
+      int idx = table[api][hash & mask];
 
       /* If the enum isn't valid, the hash walk ends with index 0,
-       * which is the API mask entry at the beginning of values[]. */
-      if (unlikely(d->type == TYPE_API_MASK)) {
+       * pointing to the first entry of values[] which doesn't hold
+       * any valid enum. */
+      if (unlikely(idx == 0)) {
          _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=%s)", func,
                _mesa_lookup_enum_by_nr(pname));
          return &error_value;
       }
 
+      d = &values[idx];
       if (likely(d->pname == pname))
          break;
 
