@@ -599,8 +599,8 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 
 		num_dw += ctx->pm4_dirty_cdwords;
 
-		/* The upper-bound of how much a draw command would take. */
-		num_dw += R600_MAX_DRAW_CS_DWORDS;
+		/* The upper-bound of how much space a draw command would take. */
+		num_dw += R600_MAX_FLUSH_CS_DWORDS + R600_MAX_DRAW_CS_DWORDS;
 	}
 
 	/* Count in queries_suspend. */
@@ -615,11 +615,16 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 		num_dw += 3;
 	}
 
-	/* Count in framebuffer cache flushes at the end of CS. */
-	num_dw += 44; /* one SURFACE_SYNC and CACHE_FLUSH_AND_INV (r6xx-only) */
+	/* SX_MISC */
+	if (ctx->chip_class <= R700) {
+		num_dw += 3;
+	}
 
-	/* Save 16 dwords for the fence mechanism. */
-	num_dw += 16;
+	/* Count in framebuffer cache flushes at the end of CS. */
+	num_dw += R600_MAX_FLUSH_CS_DWORDS;
+
+	/* The fence at the end of CS. */
+	num_dw += 10;
 
 	/* Flush if there's not enough space. */
 	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {

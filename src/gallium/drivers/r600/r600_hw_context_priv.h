@@ -29,7 +29,8 @@
 #include "r600_pipe.h"
 
 /* the number of CS dwords for flushing and drawing */
-#define R600_MAX_DRAW_CS_DWORDS 64
+#define R600_MAX_FLUSH_CS_DWORDS 44
+#define R600_MAX_DRAW_CS_DWORDS 13
 
 /* these flags are used in register flags and added into block flags */
 #define REG_FLAG_NEED_BO 1
