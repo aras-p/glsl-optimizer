@@ -1398,6 +1398,7 @@ if test "x$enable_openvg" = xyes; then
     VG_PC_LIB_PRIV="-lm $CLOCK_LIB $PTHREAD_LIBS $DLOPEN_LIBS"
     AC_SUBST([VG_PC_LIB_PRIV])
 fi
+AM_CONDITIONAL(HAVE_OPENVG, test "x$enable_openvg" = xyes)
 
 dnl
 dnl D3D1X configuration
@@ -1514,8 +1515,10 @@ AC_SUBST([CLANG_RESOURCE_DIR])
 case "x$enable_opengl$enable_gles1$enable_gles2" in
 x*yes*)
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(GL_LIB)'
+    HAVE_OPENGL=yes
     ;;
 esac
+AM_CONDITIONAL(HAVE_OPENGL, test "x$HAVE_OPENGL" = xyes)
 
 AC_SUBST([VG_LIB_DEPS])
 AC_SUBST([EGL_CLIENT_APIS])
@@ -2072,6 +2075,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/targets/dri-radeonsi/Makefile
 		src/gallium/targets/dri-swrast/Makefile
 		src/gallium/targets/dri-vmwgfx/Makefile
+		src/gallium/targets/egl-static/Makefile
 		src/gallium/targets/opencl/Makefile
 		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
