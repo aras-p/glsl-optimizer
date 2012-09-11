@@ -29,8 +29,6 @@
 #include "mfeatures.h"
 
 
-#if FEATURE_OES_draw_texture
-
 extern void GLAPIENTRY
 _mesa_DrawTexf(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height);
 
@@ -54,8 +52,6 @@ _mesa_DrawTexx(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height);
 
 extern void GLAPIENTRY
 _mesa_DrawTexxv(const GLfixed *coords);
-
-#endif /* FEATURE_OES_draw_texture */
 
 
 #endif /* DRAWTEX_H */

@@ -34,9 +34,6 @@
 #include "cso_cache/cso_context.h"
 
 
-#if FEATURE_OES_draw_texture
-
-
 struct cached_shader
 {
    void *handle;
@@ -306,6 +303,3 @@ st_destroy_drawtex(struct st_context *st)
    }
    NumCachedShaders = 0;
 }
-
-
-#endif /* FEATURE_OES_draw_texture */

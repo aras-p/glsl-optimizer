@@ -28,9 +28,6 @@
 #include "main/mtypes.h"
 
 
-#if FEATURE_OES_draw_texture
-
-
 static void
 draw_texture(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
              GLfloat width, GLfloat height)
@@ -133,5 +130,3 @@ _mesa_DrawTexxv(const GLfixed *coords)
                 (GLfloat) coords[3] / 65536.0f,
                 (GLfloat) coords[4] / 65536.0f);
 }
-
-#endif /* FEATURE_OES_draw_texture */

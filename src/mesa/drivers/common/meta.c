@@ -3807,7 +3807,6 @@ void
 _mesa_meta_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
                    GLfloat width, GLfloat height)
 {
-#if FEATURE_OES_draw_texture
    struct drawtex_state *drawtex = &ctx->Meta->DrawTex;
    struct vertex {
       GLfloat x, y, z, st[MAX_TEXTURE_UNITS][2];
@@ -3923,5 +3922,4 @@ _mesa_meta_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
    _mesa_meta_end(ctx);
-#endif /* FEATURE_OES_draw_texture */
 }

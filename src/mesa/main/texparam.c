@@ -428,7 +428,6 @@ set_tex_parameteri(struct gl_context *ctx,
       }
       goto invalid_pname;
 
-#if FEATURE_OES_draw_texture
    case GL_TEXTURE_CROP_RECT_OES:
       if (ctx->API != API_OPENGLES || !ctx->Extensions.OES_draw_texture)
          goto invalid_pname;
@@ -438,7 +437,6 @@ set_tex_parameteri(struct gl_context *ctx,
       texObj->CropRect[2] = params[2];
       texObj->CropRect[3] = params[3];
       return GL_TRUE;
-#endif
 
    case GL_TEXTURE_SWIZZLE_R_EXT:
    case GL_TEXTURE_SWIZZLE_G_EXT:
@@ -728,8 +726,6 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
          need_update = set_tex_parameteri(ctx, texObj, pname, p);
       }
       break;
-
-#if FEATURE_OES_draw_texture
    case GL_TEXTURE_CROP_RECT_OES:
       {
          /* convert float params to int */
@@ -741,8 +737,6 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
          need_update = set_tex_parameteri(ctx, texObj, pname, iparams);
       }
       break;
-#endif
-
    case GL_TEXTURE_SWIZZLE_R_EXT:
    case GL_TEXTURE_SWIZZLE_G_EXT:
    case GL_TEXTURE_SWIZZLE_B_EXT:
@@ -1398,7 +1392,6 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 
          *params = obj->Sampler.LodBias;
          break;
-#if FEATURE_OES_draw_texture
       case GL_TEXTURE_CROP_RECT_OES:
          if (ctx->API != API_OPENGLES || !ctx->Extensions.OES_draw_texture)
             goto invalid_pname;
@@ -1408,7 +1401,6 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          params[2] = obj->CropRect[2];
          params[3] = obj->CropRect[3];
          break;
-#endif
 
       case GL_TEXTURE_SWIZZLE_R_EXT:
       case GL_TEXTURE_SWIZZLE_G_EXT:
@@ -1573,7 +1565,6 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
 
          *params = (GLint) obj->Sampler.LodBias;
          break;
-#if FEATURE_OES_draw_texture
       case GL_TEXTURE_CROP_RECT_OES:
          if (ctx->API != API_OPENGLES || !ctx->Extensions.OES_draw_texture)
             goto invalid_pname;
@@ -1583,7 +1574,6 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          params[2] = obj->CropRect[2];
          params[3] = obj->CropRect[3];
          break;
-#endif
       case GL_TEXTURE_SWIZZLE_R_EXT:
       case GL_TEXTURE_SWIZZLE_G_EXT:
       case GL_TEXTURE_SWIZZLE_B_EXT:
