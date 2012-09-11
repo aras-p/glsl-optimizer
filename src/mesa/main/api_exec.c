@@ -33,9 +33,7 @@
 #include "accum.h"
 #include "api_loopback.h"
 #include "api_exec.h"
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 #include "arbprogram.h"
-#endif
 #include "atifragshader.h"
 #include "attrib.h"
 #include "blend.h"
@@ -607,7 +605,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
 
    /* ARB 26. GL_ARB_vertex_program */
    /* ARB 27. GL_ARB_fragment_program */
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
    /* glVertexAttrib1sARB aliases glVertexAttrib1sNV */
    /* glVertexAttrib1fARB aliases glVertexAttrib1fNV */
    /* glVertexAttrib1dARB aliases glVertexAttrib1dNV */
@@ -675,7 +672,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_GetProgramStringARB(exec, _mesa_GetProgramStringARB);
    }
    SET_GetProgramivARB(exec, _mesa_GetProgramivARB);
-#endif
 
    /* ARB 28. GL_ARB_vertex_buffer_object */
    _mesa_init_bufferobj_dispatch(ctx, exec);
@@ -746,12 +742,10 @@ _mesa_create_exec_table(struct gl_context *ctx)
 #endif
 
    /* GL_EXT_gpu_program_parameters */
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
    if (ctx->API == API_OPENGL) {
       SET_ProgramEnvParameters4fvEXT(exec, _mesa_ProgramEnvParameters4fvEXT);
       SET_ProgramLocalParameters4fvEXT(exec, _mesa_ProgramLocalParameters4fvEXT);
    }
-#endif
 
    /* GL_MESA_texture_array / GL_EXT_texture_array */
    if (ctx->API != API_OPENGLES2) {

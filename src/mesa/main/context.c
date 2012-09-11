@@ -599,13 +599,10 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxUniformBlockSize = 16384;
    ctx->Const.UniformBufferOffsetAlignment = 1;
 
-#if FEATURE_ARB_vertex_program
    init_program_limits(ctx, GL_VERTEX_PROGRAM_ARB, &ctx->Const.VertexProgram);
-#endif
-#if FEATURE_ARB_fragment_program
    init_program_limits(ctx, GL_FRAGMENT_PROGRAM_ARB, &ctx->Const.FragmentProgram);
-#endif
    init_program_limits(ctx, MESA_GEOMETRY_PROGRAM, &ctx->Const.GeometryProgram);
+
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
    ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
 

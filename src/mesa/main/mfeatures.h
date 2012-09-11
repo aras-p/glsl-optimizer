@@ -84,9 +84,6 @@
 #define FEATURE_remap_table               0
 #endif
 
-#define FEATURE_ARB_fragment_program      1
-#define FEATURE_ARB_vertex_program        1
-
 #define FEATURE_ARB_framebuffer_object    FEATURE_GL
 #define FEATURE_ARB_map_buffer_range      FEATURE_GL
 #define FEATURE_ARB_pixel_buffer_object   FEATURE_GL

@@ -64,9 +64,7 @@
 #include "texstorage.h"
 #include "mtypes.h"
 #include "varray.h"
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 #include "arbprogram.h"
-#endif
 #include "nvprogram.h"
 #if FEATURE_EXT_transform_feedback
 #include "transformfeedback.h"
@@ -746,12 +744,10 @@ _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
             free(n[3].data);      /* parameter name */
             n += InstSize[n[0].opcode];
             break;
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
          case OPCODE_PROGRAM_STRING_ARB:
             free(n[4].data);      /* program string */
             n += InstSize[n[0].opcode];
             break;
-#endif
          case OPCODE_UNIFORM_1FV:
          case OPCODE_UNIFORM_2FV:
          case OPCODE_UNIFORM_3FV:
@@ -5283,8 +5279,6 @@ save_DepthBoundsEXT(GLclampd zmin, GLclampd zmax)
 
 
 
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
-
 static void GLAPIENTRY
 save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
                       const GLvoid * string)
@@ -5311,8 +5305,6 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
       CALL_ProgramStringARB(ctx->Exec, (target, format, len, string));
    }
 }
-
-#endif /* FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program */
 
 
 static void GLAPIENTRY
@@ -8430,12 +8422,10 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_DEPTH_BOUNDS_EXT:
             CALL_DepthBoundsEXT(ctx->Exec, (n[1].f, n[2].f));
             break;
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
          case OPCODE_PROGRAM_STRING_ARB:
             CALL_ProgramStringARB(ctx->Exec,
                                   (n[1].e, n[2].e, n[3].i, n[4].data));
             break;
-#endif
          case OPCODE_PROGRAM_ENV_PARAMETER_ARB:
             CALL_ProgramEnvParameter4fARB(ctx->Exec, (n[1].e, n[2].ui, n[3].f,
                                                       n[4].f, n[5].f,
@@ -10381,7 +10371,6 @@ _mesa_create_save_table(void)
 
    /* ARB 26. GL_ARB_vertex_program */
    /* ARB 27. GL_ARB_fragment_program */
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
    /* glVertexAttrib* functions alias the NV ones, handled elsewhere */
    SET_VertexAttribPointerARB(table, _mesa_VertexAttribPointerARB);
    SET_EnableVertexAttribArrayARB(table, _mesa_EnableVertexAttribArrayARB);
@@ -10411,7 +10400,6 @@ _mesa_create_save_table(void)
                                      _mesa_GetProgramLocalParameterfvARB);
    SET_GetProgramivARB(table, _mesa_GetProgramivARB);
    SET_GetProgramStringARB(table, _mesa_GetProgramStringARB);
-#endif
 
    /* ARB 28. GL_ARB_vertex_buffer_object */
    /* None of the extension's functions get compiled */
@@ -10477,10 +10465,8 @@ _mesa_create_save_table(void)
    SET_BlendEquationSeparateEXT(table, save_BlendEquationSeparateEXT);
 
    /* GL_EXT_gpu_program_parameters */
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
    SET_ProgramEnvParameters4fvEXT(table, save_ProgramEnvParameters4fvEXT);
    SET_ProgramLocalParameters4fvEXT(table, save_ProgramLocalParameters4fvEXT);
-#endif
 
    /* ARB 50. GL_ARB_map_buffer_range */
 #if FEATURE_ARB_map_buffer_range

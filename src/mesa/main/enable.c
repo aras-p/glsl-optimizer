@@ -949,7 +949,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          }
          break;
 
-#if FEATURE_ARB_fragment_program
       case GL_FRAGMENT_PROGRAM_ARB:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
@@ -959,7 +958,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_PROGRAM);
          ctx->FragmentProgram.Enabled = state;
          break;
-#endif /* FEATURE_ARB_fragment_program */
 
       /* GL_EXT_depth_bounds_test */
       case GL_DEPTH_BOUNDS_TEST_EXT:
@@ -1652,12 +1650,10 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION(EXT_stencil_two_side);
          return ctx->Stencil.TestTwoSide;
 
-#if FEATURE_ARB_fragment_program
       case GL_FRAGMENT_PROGRAM_ARB:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
          return ctx->FragmentProgram.Enabled;
-#endif /* FEATURE_ARB_fragment_program */
 
       /* GL_EXT_depth_bounds_test */
       case GL_DEPTH_BOUNDS_TEST_EXT:

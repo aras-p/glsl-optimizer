@@ -395,10 +395,8 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_draw_instanced = GL_TRUE;
    ctx->Extensions.ARB_explicit_attrib_location = GL_TRUE;
    ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
-#if FEATURE_ARB_fragment_program
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_fragment_program_shadow = GL_TRUE;
-#endif
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
 #if FEATURE_ARB_framebuffer_object
    ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
@@ -427,9 +425,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_rg = GL_TRUE;
    ctx->Extensions.ARB_texture_compression_rgtc = GL_TRUE;
    ctx->Extensions.ARB_texture_storage = GL_TRUE;
-#if FEATURE_ARB_vertex_program
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
-#endif
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
 #if FEATURE_ARB_sync
    ctx->Extensions.ARB_sync = GL_TRUE;
@@ -497,9 +493,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.NV_vertex_program1_1 = GL_TRUE;
    ctx->Extensions.NV_fragment_program = GL_TRUE;
    ctx->Extensions.NV_fragment_program_option = GL_TRUE;
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
    ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
-#endif
    _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
    if (ctx->Mesa_DXTn) {
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
