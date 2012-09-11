@@ -97,7 +97,6 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
          flag = VERT_BIT_POINT_SIZE;
          break;
 
-#if FEATURE_NV_vertex_program
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
       case GL_VERTEX_ATTRIB_ARRAY1_NV:
       case GL_VERTEX_ATTRIB_ARRAY2_NV:
@@ -122,7 +121,6 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
             flag = VERT_BIT_GENERIC(n);
          }
          break;
-#endif /* FEATURE_NV_vertex_program */
 
       /* GL_NV_primitive_restart */
       case GL_PRIMITIVE_RESTART_NV:
@@ -833,7 +831,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Point.PointSprite = state;
          break;
 
-#if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
       case GL_VERTEX_PROGRAM_ARB:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
@@ -864,8 +861,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_PROGRAM); 
          ctx->VertexProgram.TwoSideEnabled = state;
          break;
-#endif
-#if FEATURE_NV_vertex_program
+
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:
       case GL_MAP1_VERTEX_ATTRIB1_4_NV:
       case GL_MAP1_VERTEX_ATTRIB2_4_NV:
@@ -916,9 +912,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             ctx->Eval.Map2Attrib[map] = state;
          }
          break;
-#endif /* FEATURE_NV_vertex_program */
 
-#if FEATURE_NV_fragment_program
       case GL_FRAGMENT_PROGRAM_NV:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
@@ -928,7 +922,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_PROGRAM);
          ctx->FragmentProgram.Enabled = state;
          break;
-#endif /* FEATURE_NV_fragment_program */
 
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:
@@ -1549,7 +1542,6 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION2(NV_point_sprite, ARB_point_sprite)
          return ctx->Point.PointSprite;
 
-#if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
       case GL_VERTEX_PROGRAM_ARB:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
@@ -1568,8 +1560,7 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
          CHECK_EXTENSION2(ARB_vertex_program, NV_vertex_program);
          return ctx->VertexProgram.TwoSideEnabled;
-#endif
-#if FEATURE_NV_vertex_program
+
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
       case GL_VERTEX_ATTRIB_ARRAY1_NV:
       case GL_VERTEX_ATTRIB_ARRAY2_NV:
@@ -1640,15 +1631,12 @@ _mesa_IsEnabled( GLenum cap )
             const GLuint map = (GLuint) (cap - GL_MAP2_VERTEX_ATTRIB0_4_NV);
             return ctx->Eval.Map2Attrib[map];
          }
-#endif /* FEATURE_NV_vertex_program */
 
-#if FEATURE_NV_fragment_program
       case GL_FRAGMENT_PROGRAM_NV:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
          CHECK_EXTENSION(NV_fragment_program);
          return ctx->FragmentProgram.Enabled;
-#endif /* FEATURE_NV_fragment_program */
 
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:

@@ -135,8 +135,6 @@ _mesa_GetString( GLenum name )
          if (ctx->API == API_OPENGLES)
             break;
 	 return shading_language_version(ctx);
-#if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program || \
-    FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
       case GL_PROGRAM_ERROR_STRING_NV:
          if (ctx->API == API_OPENGL &&
              (ctx->Extensions.NV_fragment_program ||
@@ -146,7 +144,6 @@ _mesa_GetString( GLenum name )
             return (const GLubyte *) ctx->Program.ErrorString;
          }
          break;
-#endif
       default:
          break;
    }

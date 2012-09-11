@@ -67,9 +67,7 @@
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 #include "arbprogram.h"
 #endif
-#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "nvprogram.h"
-#endif
 #if FEATURE_EXT_transform_feedback
 #include "transformfeedback.h"
 #endif
@@ -736,7 +734,6 @@ _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
             free(n[11].data);
             n += InstSize[n[0].opcode];
             break;
-#if FEATURE_NV_vertex_program
          case OPCODE_LOAD_PROGRAM_NV:
             free(n[4].data);      /* program string */
             n += InstSize[n[0].opcode];
@@ -745,13 +742,10 @@ _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
             free(n[2].data);      /* array of program ids */
             n += InstSize[n[0].opcode];
             break;
-#endif
-#if FEATURE_NV_fragment_program
          case OPCODE_PROGRAM_NAMED_PARAMETER_NV:
             free(n[3].data);      /* parameter name */
             n += InstSize[n[0].opcode];
             break;
-#endif
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
          case OPCODE_PROGRAM_STRING_ARB:
             free(n[4].data);      /* program string */
@@ -4856,7 +4850,6 @@ save_SampleCoverageARB(GLclampf value, GLboolean invert)
 /*
  * GL_NV_vertex_program
  */
-#if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 static void GLAPIENTRY
 save_BindProgramNV(GLenum target, GLuint id)
 {
@@ -4956,9 +4949,7 @@ save_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
                                  (GLfloat) params[2], (GLfloat) params[3]);
 }
 
-#endif /* FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program || FEATURE_NV_vertex_program */
 
-#if FEATURE_NV_vertex_program
 static void GLAPIENTRY
 save_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
 {
@@ -5073,13 +5064,11 @@ save_TrackMatrixNV(GLenum target, GLuint address,
       CALL_TrackMatrixNV(ctx->Exec, (target, address, matrix, transform));
    }
 }
-#endif /* FEATURE_NV_vertex_program */
 
 
 /*
  * GL_NV_fragment_program
  */
-#if FEATURE_NV_fragment_program
 static void GLAPIENTRY
 save_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w)
@@ -5256,9 +5245,6 @@ save_ProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte * name,
                                   (GLfloat) v[1], (GLfloat) v[2],
                                   (GLfloat) v[3]);
 }
-
-#endif /* FEATURE_NV_fragment_program */
-
 
 
 /* GL_EXT_stencil_two_side */
@@ -8403,12 +8389,9 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_WINDOW_POS_ARB:   /* GL_ARB_window_pos */
             CALL_WindowPos3fMESA(ctx->Exec, (n[1].f, n[2].f, n[3].f));
             break;
-#if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
          case OPCODE_BIND_PROGRAM_NV:  /* GL_NV_vertex_program */
             CALL_BindProgramNV(ctx->Exec, (n[1].e, n[2].ui));
             break;
-#endif
-#if FEATURE_NV_vertex_program
          case OPCODE_EXECUTE_PROGRAM_NV:
             {
                GLfloat v[4];
@@ -8430,9 +8413,6 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_TRACK_MATRIX_NV:
             CALL_TrackMatrixNV(ctx->Exec, (n[1].e, n[2].ui, n[3].e, n[4].e));
             break;
-#endif
-
-#if FEATURE_NV_fragment_program
          case OPCODE_PROGRAM_LOCAL_PARAMETER_ARB:
             CALL_ProgramLocalParameter4fARB(ctx->Exec,
                                             (n[1].e, n[2].ui, n[3].f, n[4].f,
@@ -8444,8 +8424,6 @@ execute_list(struct gl_context *ctx, GLuint list)
                                                        data, n[4].f, n[5].f,
                                                        n[6].f, n[7].f));
             break;
-#endif
-
          case OPCODE_ACTIVE_STENCIL_FACE_EXT:
             CALL_ActiveStencilFaceEXT(ctx->Exec, (n[1].e));
             break;
@@ -8458,13 +8436,11 @@ execute_list(struct gl_context *ctx, GLuint list)
                                   (n[1].e, n[2].e, n[3].i, n[4].data));
             break;
 #endif
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program || FEATURE_NV_vertex_program
          case OPCODE_PROGRAM_ENV_PARAMETER_ARB:
             CALL_ProgramEnvParameter4fARB(ctx->Exec, (n[1].e, n[2].ui, n[3].f,
                                                       n[4].f, n[5].f,
                                                       n[6].f));
             break;
-#endif
          case OPCODE_BEGIN_QUERY_ARB:
             CALL_BeginQueryARB(ctx->Exec, (n[1].e, n[2].ui));
             break;
@@ -10278,7 +10254,6 @@ _mesa_create_save_table(void)
    SET_MultiModeDrawArraysIBM(table, exec_MultiModeDrawArraysIBM);
    SET_MultiModeDrawElementsIBM(table, exec_MultiModeDrawElementsIBM);
 
-#if FEATURE_NV_vertex_program
    /* 233. GL_NV_vertex_program */
    /* The following commands DO NOT go into display lists:
     * AreProgramsResidentNV, IsProgramNV, GenProgramsNV, DeleteProgramsNV,
@@ -10309,7 +10284,6 @@ _mesa_create_save_table(void)
    SET_ProgramParameters4fvNV(table, save_ProgramParameters4fvNV);
    SET_TrackMatrixNV(table, save_TrackMatrixNV);
    SET_VertexAttribPointerNV(table, _mesa_VertexAttribPointerNV);
-#endif
 
    /* 244. GL_ATI_envmap_bumpmap */
    SET_TexBumpParameterivATI(table, save_TexBumpParameterivATI);
@@ -10322,7 +10296,6 @@ _mesa_create_save_table(void)
 #endif
 
    /* 282. GL_NV_fragment_program */
-#if FEATURE_NV_fragment_program
    SET_ProgramNamedParameter4fNV(table, save_ProgramNamedParameter4fNV);
    SET_ProgramNamedParameter4dNV(table, save_ProgramNamedParameter4dNV);
    SET_ProgramNamedParameter4fvNV(table, save_ProgramNamedParameter4fvNV);
@@ -10339,7 +10312,6 @@ _mesa_create_save_table(void)
                                      _mesa_GetProgramLocalParameterdvARB);
    SET_GetProgramLocalParameterfvARB(table,
                                      _mesa_GetProgramLocalParameterfvARB);
-#endif
 
    /* 262. GL_NV_point_sprite */
    SET_PointParameteriNV(table, save_PointParameteriNV);

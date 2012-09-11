@@ -431,7 +431,6 @@ _mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 }
 
 
-#if FEATURE_NV_vertex_program
 /**
  * Set a vertex attribute array.
  * Note that these arrays DO alias the conventional GL vertex arrays
@@ -462,7 +461,6 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
                 legalTypes, 1, BGRA_OR_4,
                 size, type, stride, normalized, GL_FALSE, ptr);
 }
-#endif
 
 
 #if FEATURE_ARB_vertex_program

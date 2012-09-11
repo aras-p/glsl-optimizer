@@ -99,7 +99,5 @@
 
 #define FEATURE_APPLE_object_purgeable    FEATURE_GL
 #define FEATURE_ATI_fragment_shader       FEATURE_GL
-#define FEATURE_NV_fragment_program       FEATURE_GL
-#define FEATURE_NV_vertex_program         FEATURE_GL
 
 #endif /* FEATURES_H */

@@ -91,9 +91,7 @@
 #include "mtypes.h"
 #include "varray.h"
 #include "viewport.h"
-#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "nvprogram.h"
-#endif
 #include "shaderapi.h"
 #include "uniforms.h"
 #include "syncobj.h"
@@ -474,7 +472,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
 #endif
 
    /* 233. GL_NV_vertex_program */
-#if FEATURE_NV_vertex_program
    if (ctx->API == API_OPENGL) {
       SET_BindProgramNV(exec, _mesa_BindProgram);
       SET_DeleteProgramsNV(exec, _mesa_DeletePrograms);
@@ -502,7 +499,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_VertexAttribPointerNV(exec, _mesa_VertexAttribPointerNV);
       /* glVertexAttrib*NV functions handled in api_loopback.c */
    }
-#endif
    SET_GetVertexAttribPointervNV(exec, _mesa_GetVertexAttribPointervNV);
 
    /* 273. GL_APPLE_vertex_array_object */
@@ -515,7 +511,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_IsVertexArrayAPPLE(exec, _mesa_IsVertexArrayAPPLE);
 
    /* 282. GL_NV_fragment_program */
-#if FEATURE_NV_fragment_program
    if (ctx->API == API_OPENGL) {
       SET_ProgramNamedParameter4fNV(exec, _mesa_ProgramNamedParameter4fNV);
       SET_ProgramNamedParameter4dNV(exec, _mesa_ProgramNamedParameter4dNV);
@@ -530,7 +525,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_GetProgramLocalParameterdvARB(exec, _mesa_GetProgramLocalParameterdvARB);
       SET_GetProgramLocalParameterfvARB(exec, _mesa_GetProgramLocalParameterfvARB);
    }
-#endif
 
    /* 262. GL_NV_point_sprite */
 #if _HAVE_FULL_GL

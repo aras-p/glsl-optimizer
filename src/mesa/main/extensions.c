@@ -493,16 +493,10 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
    /*ctx->Extensions.NV_texgen_reflection = GL_TRUE;*/
-#if FEATURE_NV_vertex_program
    ctx->Extensions.NV_vertex_program = GL_TRUE;
    ctx->Extensions.NV_vertex_program1_1 = GL_TRUE;
-#endif
-#if FEATURE_NV_fragment_program
    ctx->Extensions.NV_fragment_program = GL_TRUE;
-#endif
-#if FEATURE_NV_fragment_program && FEATURE_ARB_fragment_program
    ctx->Extensions.NV_fragment_program_option = GL_TRUE;
-#endif
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
    ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
 #endif
