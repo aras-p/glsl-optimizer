@@ -89,12 +89,11 @@
 
 #define FEATURE_ARB_framebuffer_object    FEATURE_GL
 #define FEATURE_ARB_map_buffer_range      FEATURE_GL
-#define FEATURE_ARB_pixel_buffer_object   (FEATURE_GL && FEATURE_EXT_pixel_buffer_object)
+#define FEATURE_ARB_pixel_buffer_object   FEATURE_GL
 #define FEATURE_ARB_sampler_objects       FEATURE_GL
 #define FEATURE_ARB_sync                  FEATURE_GL
 
 #define FEATURE_EXT_framebuffer_blit      FEATURE_GL
-#define FEATURE_EXT_pixel_buffer_object   1
 #define FEATURE_EXT_texture_sRGB          FEATURE_GL
 #define FEATURE_EXT_transform_feedback    FEATURE_GL
 

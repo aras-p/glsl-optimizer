@@ -462,9 +462,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
 #endif
    ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
-#if FEATURE_EXT_pixel_buffer_object
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
-#endif
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
    ctx->Extensions.EXT_provoking_vertex = GL_TRUE;
    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
@@ -591,9 +589,7 @@ _mesa_enable_2_0_extensions(struct gl_context *ctx)
 void
 _mesa_enable_2_1_extensions(struct gl_context *ctx)
 {
-#if FEATURE_EXT_pixel_buffer_object
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
-#endif
 #if FEATURE_EXT_texture_sRGB
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
 #endif
