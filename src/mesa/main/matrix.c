@@ -572,7 +572,6 @@ update_projection( struct gl_context *ctx )
 {
    _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
 
-#if FEATURE_userclip
    /* Recompute clip plane positions in clipspace.  This is also done
     * in _mesa_ClipPlane().
     */
@@ -586,7 +585,6 @@ update_projection( struct gl_context *ctx )
 	 }
       }
    }
-#endif
 }
 
 

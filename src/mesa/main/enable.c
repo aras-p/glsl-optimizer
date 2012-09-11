@@ -315,7 +315,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             }
          }
          break;
-#if FEATURE_userclip
       case GL_CLIP_DISTANCE0:
       case GL_CLIP_DISTANCE1:
       case GL_CLIP_DISTANCE2:
@@ -345,7 +344,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             }               
          }
          break;
-#endif
       case GL_COLOR_MATERIAL:
          if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
