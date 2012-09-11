@@ -84,7 +84,6 @@
 #define FEATURE_remap_table               0
 #endif
 
-#define FEATURE_convolve                  FEATURE_GL
 #define FEATURE_dlist                     FEATURE_GL
 #define FEATURE_draw_read_buffer          FEATURE_GL
 #define FEATURE_drawpix                   FEATURE_GL

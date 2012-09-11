@@ -41,8 +41,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_convolve
-
 static void GLAPIENTRY
 _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, GLenum format, GLenum type, const GLvoid *image)
 {
@@ -200,6 +198,3 @@ _mesa_init_convolve_dispatch(struct _glapi_table *disp)
    SET_GetnConvolutionFilterARB(disp, _mesa_GetnConvolutionFilterARB);
    SET_GetnSeparableFilterARB(disp, _mesa_GetnSeparableFilterARB);
 }
-
-
-#endif /* FEATURE_convolve */

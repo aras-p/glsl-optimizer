@@ -33,19 +33,7 @@
 
 struct _glapi_table;
 
-
-#if FEATURE_convolve
-
 extern void
 _mesa_init_convolve_dispatch(struct _glapi_table *disp);
-
-#else /* FEATURE_convolve */
-
-static inline void
-_mesa_init_convolve_dispatch(struct _glapi_table *disp)
-{
-}
-
-#endif /* FEATURE_convolve */
 
 #endif /* CONVOLVE_H */
