@@ -39,9 +39,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_rastpos
-
-
 /**
  * Helper function for all the RasterPos functions.
  */
@@ -531,9 +528,6 @@ _mesa_init_rastpos_dispatch(struct _glapi_table *disp)
    SET_WindowPos4sMESA(disp, _mesa_WindowPos4sMESA);
    SET_WindowPos4svMESA(disp, _mesa_WindowPos4svMESA);
 }
-
-
-#endif /* FEATURE_rastpos */
 
 
 /**********************************************************************/
