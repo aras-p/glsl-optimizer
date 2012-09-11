@@ -96,10 +96,8 @@
 #if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "nvprogram.h"
 #endif
-#if FEATURE_ARB_shader_objects
 #include "shaderapi.h"
 #include "uniforms.h"
-#endif
 #include "syncobj.h"
 #include "main/dispatch.h"
 
@@ -371,10 +369,8 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_StencilMaskSeparate(exec, _mesa_StencilMaskSeparate);
    SET_StencilOpSeparate(exec, _mesa_StencilOpSeparate);
 
-#if FEATURE_ARB_shader_objects
    _mesa_init_shader_dispatch(exec);
    _mesa_init_shader_uniform_dispatch(exec);
-#endif
 
    /* 2. GL_EXT_blend_color */
 #if 0
@@ -833,12 +829,10 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 #endif
 
-#if FEATURE_ARB_geometry_shader4
    if (ctx->API != API_OPENGLES2) {
       SET_FramebufferTextureARB(exec, _mesa_FramebufferTextureARB);
       SET_FramebufferTextureFaceARB(exec, _mesa_FramebufferTextureFaceARB);
    }
-#endif
 
    if (ctx->API != API_OPENGLES2) {
       SET_ClampColorARB(exec, _mesa_ClampColorARB);

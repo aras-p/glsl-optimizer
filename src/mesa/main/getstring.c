@@ -131,12 +131,10 @@ _mesa_GetString( GLenum name )
             return (const GLubyte *) 0;
          }
          return (const GLubyte *) ctx->Extensions.String;
-#if FEATURE_ARB_shading_language_100 || FEATURE_ES2
       case GL_SHADING_LANGUAGE_VERSION:
          if (ctx->API == API_OPENGLES)
             break;
 	 return shading_language_version(ctx);
-#endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program || \
     FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
       case GL_PROGRAM_ERROR_STRING_NV:

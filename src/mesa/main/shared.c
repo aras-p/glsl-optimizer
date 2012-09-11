@@ -87,9 +87,7 @@ _mesa_alloc_shared_state(struct gl_context *ctx)
    shared->DefaultFragmentShader = _mesa_new_ati_fragment_shader(ctx, 0);
 #endif
 
-#if FEATURE_ARB_shader_objects
    shared->ShaderObjects = _mesa_NewHashTable();
-#endif
 
    shared->BufferObjects = _mesa_NewHashTable();
 
@@ -321,11 +319,9 @@ free_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
    _mesa_HashDeleteAll(shared->DisplayList, delete_displaylist_cb, ctx);
    _mesa_DeleteHashTable(shared->DisplayList);
 
-#if FEATURE_ARB_shader_objects
    _mesa_HashWalk(shared->ShaderObjects, free_shader_program_data_cb, ctx);
    _mesa_HashDeleteAll(shared->ShaderObjects, delete_shader_cb, ctx);
    _mesa_DeleteHashTable(shared->ShaderObjects);
-#endif
 
    _mesa_HashDeleteAll(shared->Programs, delete_program_cb, ctx);
    _mesa_DeleteHashTable(shared->Programs);

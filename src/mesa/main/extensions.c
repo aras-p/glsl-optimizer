@@ -405,8 +405,8 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
 #if FEATURE_ARB_framebuffer_object
    ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
 #endif
-#if FEATURE_ARB_geometry_shader4 && 0
    /* XXX re-enable when GLSL compiler again supports geometry shaders */
+#if 0
    ctx->Extensions.ARB_geometry_shader4 = GL_TRUE;
 #endif
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
@@ -415,13 +415,9 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
    ctx->Extensions.ARB_occlusion_query2 = GL_TRUE;
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
-#if FEATURE_ARB_shader_objects
    ctx->Extensions.ARB_shader_objects = GL_TRUE;
    ctx->Extensions.EXT_separate_shader_objects = GL_TRUE;
-#endif
-#if FEATURE_ARB_shading_language_100
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
-#endif
    ctx->Extensions.ARB_shadow = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE;
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
@@ -583,12 +579,8 @@ _mesa_enable_2_0_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
    ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
-#if FEATURE_ARB_shader_objects
    ctx->Extensions.ARB_shader_objects = GL_TRUE;
-#endif
-#if FEATURE_ARB_shading_language_100
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
-#endif
    ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
 }

@@ -171,10 +171,8 @@ validate_shader_target(const struct gl_context *ctx, GLenum type)
       return ctx->Extensions.ARB_fragment_shader;
    case GL_VERTEX_SHADER:
       return ctx->Extensions.ARB_vertex_shader;
-#if FEATURE_ARB_geometry_shader4
    case GL_GEOMETRY_SHADER_ARB:
       return _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_geometry_shader4;
-#endif
    default:
       return false;
    }
@@ -478,12 +476,10 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       || _mesa_is_gles3(ctx);
 #endif
 
-#if FEATURE_ARB_geometry_shader4
    /* Are geometry shaders available in this context?
     */
    const bool has_gs =
       _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_geometry_shader4;
-#endif
 
    /* Are uniform buffer objects available in this context?
     */
@@ -555,7 +551,6 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       *params = shProg->TransformFeedback.BufferMode;
       return;
 #endif
-#if FEATURE_ARB_geometry_shader4
    case GL_GEOMETRY_VERTICES_OUT_ARB:
       if (!has_gs)
          break;
@@ -571,7 +566,6 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
          break;
       *params = shProg->Geom.OutputType;
       return;
-#endif
    case GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH: {
       unsigned i;
       GLint max_len = 0;
@@ -863,7 +857,6 @@ use_shader_program(struct gl_context *ctx, GLenum type,
 	 shProg = NULL;
       }
       break;
-#if FEATURE_ARB_geometry_shader4
    case GL_GEOMETRY_SHADER_ARB:
       target = &ctx->Shader.CurrentGeometryProgram;
       if ((shProg == NULL)
@@ -871,7 +864,6 @@ use_shader_program(struct gl_context *ctx, GLenum type,
 	 shProg = NULL;
       }
       break;
-#endif
    case GL_FRAGMENT_SHADER:
       target = &ctx->Shader.CurrentFragmentProgram;
       if ((shProg == NULL)
@@ -894,11 +886,9 @@ use_shader_program(struct gl_context *ctx, GLenum type,
       case GL_VERTEX_SHADER:
 	 /* Empty for now. */
 	 break;
-#if FEATURE_ARB_geometry_shader4
       case GL_GEOMETRY_SHADER_ARB:
 	 /* Empty for now. */
 	 break;
-#endif
       case GL_FRAGMENT_SHADER:
 	 if (*target == ctx->Shader._CurrentFragmentProgram) {
 	    _mesa_reference_shader_program(ctx,
@@ -1521,8 +1511,6 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
 #endif /* FEATURE_ES2 */
 
 
-#if FEATURE_ARB_geometry_shader4
-
 void GLAPIENTRY
 _mesa_ProgramParameteriARB(GLuint program, GLenum pname, GLint value)
 {
@@ -1583,8 +1571,6 @@ _mesa_ProgramParameteriARB(GLuint program, GLenum pname, GLint value)
       break;
    }
 }
-
-#endif
 
 void
 _mesa_use_shader_program(struct gl_context *ctx, GLenum type,
@@ -1745,9 +1731,7 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec)
    SET_GetActiveAttribARB(exec, _mesa_GetActiveAttribARB);
    SET_GetAttribLocationARB(exec, _mesa_GetAttribLocationARB);
 
-#if FEATURE_ARB_geometry_shader4
    SET_ProgramParameteriARB(exec, _mesa_ProgramParameteriARB);
-#endif
 
    SET_UseShaderProgramEXT(exec, _mesa_UseShaderProgramEXT);
    SET_ActiveProgramEXT(exec, _mesa_ActiveProgramEXT);

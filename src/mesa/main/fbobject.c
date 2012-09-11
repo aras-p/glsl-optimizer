@@ -3065,7 +3065,6 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
 #endif /* FEATURE_EXT_framebuffer_blit */
 
 
-#if FEATURE_ARB_geometry_shader4
 void GLAPIENTRY
 _mesa_FramebufferTextureARB(GLenum target, GLenum attachment,
                             GLuint texture, GLint level)
@@ -3086,7 +3085,6 @@ _mesa_FramebufferTextureFaceARB(GLenum target, GLenum attachment,
                "glFramebufferTextureFaceARB "
                "not implemented!");
 }
-#endif /* FEATURE_ARB_geometry_shader4 */
 
 static void
 invalidate_framebuffer_storage(GLenum target, GLsizei numAttachments,

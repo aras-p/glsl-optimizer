@@ -605,9 +605,7 @@ _mesa_init_constants(struct gl_context *ctx)
 #if FEATURE_ARB_fragment_program
    init_program_limits(ctx, GL_FRAGMENT_PROGRAM_ARB, &ctx->Const.FragmentProgram);
 #endif
-#if FEATURE_ARB_geometry_shader4
    init_program_limits(ctx, MESA_GEOMETRY_PROGRAM, &ctx->Const.GeometryProgram);
-#endif
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
    ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
 
@@ -625,13 +623,11 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxVertexTextureImageUnits = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVarying = MAX_VARYING;
-#if FEATURE_ARB_geometry_shader4
    ctx->Const.MaxGeometryTextureImageUnits = MAX_GEOMETRY_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVertexVaryingComponents = MAX_VERTEX_VARYING_COMPONENTS;
    ctx->Const.MaxGeometryVaryingComponents = MAX_GEOMETRY_VARYING_COMPONENTS;
    ctx->Const.MaxGeometryOutputVertices = MAX_GEOMETRY_OUTPUT_VERTICES;
    ctx->Const.MaxGeometryTotalOutputComponents = MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS;
-#endif
 
    /* Shading language version */
    if (_mesa_is_desktop_gl(ctx)) {

@@ -243,11 +243,9 @@ _mesa_init_shader_program(struct gl_context *ctx, struct gl_shader_program *prog
    prog->FragDataBindings = string_to_uint_map_ctor();
    prog->FragDataIndexBindings = string_to_uint_map_ctor();
 
-#if FEATURE_ARB_geometry_shader4
    prog->Geom.VerticesOut = 0;
    prog->Geom.InputType = GL_TRIANGLES;
    prog->Geom.OutputType = GL_TRIANGLE_STRIP;
-#endif
 
    prog->InfoLog = ralloc_strdup(prog, "");
 }

@@ -106,13 +106,11 @@ _mesa_init_program(struct gl_context *ctx)
    ctx->FragmentProgram.Cache = _mesa_new_program_cache();
 #endif
 
-#if FEATURE_ARB_geometry_shader4
    ctx->GeometryProgram.Enabled = GL_FALSE;
    /* right now by default we don't have a geometry program */
    _mesa_reference_geomprog(ctx, &ctx->GeometryProgram.Current,
                             NULL);
    ctx->GeometryProgram.Cache = _mesa_new_program_cache();
-#endif
 
    /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader
@@ -138,10 +136,8 @@ _mesa_free_program_data(struct gl_context *ctx)
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current, NULL);
    _mesa_delete_shader_cache(ctx, ctx->FragmentProgram.Cache);
 #endif
-#if FEATURE_ARB_geometry_shader4
    _mesa_reference_geomprog(ctx, &ctx->GeometryProgram.Current, NULL);
    _mesa_delete_program_cache(ctx, ctx->GeometryProgram.Cache);
-#endif
    /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader
    if (ctx->ATIFragmentShader.Current) {
@@ -175,10 +171,8 @@ _mesa_update_default_objects_program(struct gl_context *ctx)
    assert(ctx->FragmentProgram.Current);
 #endif
 
-#if FEATURE_ARB_geometry_shader4
    _mesa_reference_geomprog(ctx, &ctx->GeometryProgram.Current,
                       ctx->Shared->DefaultGeometryProgram);
-#endif
 
    /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader
