@@ -1411,14 +1411,6 @@ fs_visitor::propagate_constants()
 }
 
 
-/**
- * Attempts to move immediate constants into the immediate
- * constant slot of following instructions.
- *
- * Immediate constants are a bit tricky -- they have to be in the last
- * operand slot, you can't do abs/negate on them,
- */
-
 bool
 fs_visitor::opt_algebraic()
 {
