@@ -66,9 +66,7 @@
 #include "varray.h"
 #include "arbprogram.h"
 #include "nvprogram.h"
-#if FEATURE_EXT_transform_feedback
 #include "transformfeedback.h"
-#endif
 
 #include "math/m_matrix.h"
 
@@ -10522,7 +10520,6 @@ _mesa_create_save_table(void)
    (void) save_Uniform4uiv;
 #endif
 
-#if FEATURE_EXT_transform_feedback
    /* These are not compiled into display lists: */
    SET_BindBufferBaseEXT(table, _mesa_BindBufferBase);
    SET_BindBufferOffsetEXT(table, _mesa_BindBufferOffsetEXT);
@@ -10542,7 +10539,6 @@ _mesa_create_save_table(void)
                                 save_DrawTransformFeedbackStreamInstanced);
    SET_BeginQueryIndexed(table, save_BeginQueryIndexed);
    SET_EndQueryIndexed(table, save_EndQueryIndexed);
-#endif
 
    /* GL_ARB_instanced_arrays */
    SET_VertexAttribDivisorARB(table, save_VertexAttribDivisor);

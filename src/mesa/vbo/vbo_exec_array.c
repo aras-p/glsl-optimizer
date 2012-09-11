@@ -1281,8 +1281,6 @@ vbo_exec_MultiDrawElementsBaseVertex(GLenum mode,
 				   basevertex);
 }
 
-#if FEATURE_EXT_transform_feedback
-
 static void
 vbo_draw_transform_feedback(struct gl_context *ctx, GLenum mode,
                             struct gl_transform_feedback_object *obj,
@@ -1387,8 +1385,6 @@ vbo_exec_DrawTransformFeedbackStreamInstanced(GLenum mode, GLuint name,
    vbo_draw_transform_feedback(ctx, mode, obj, stream, primcount);
 }
 
-#endif
-
 /**
  * Plug in the immediate-mode vertex array drawing commands into the
  * givven vbo_exec_context object.
@@ -1409,7 +1405,6 @@ vbo_exec_array_init( struct vbo_exec_context *exec )
    exec->vtxfmt.DrawElementsInstancedBaseInstance = vbo_exec_DrawElementsInstancedBaseInstance;
    exec->vtxfmt.DrawElementsInstancedBaseVertex = vbo_exec_DrawElementsInstancedBaseVertex;
    exec->vtxfmt.DrawElementsInstancedBaseVertexBaseInstance = vbo_exec_DrawElementsInstancedBaseVertexBaseInstance;
-#if FEATURE_EXT_transform_feedback
    exec->vtxfmt.DrawTransformFeedback = vbo_exec_DrawTransformFeedback;
    exec->vtxfmt.DrawTransformFeedbackStream =
          vbo_exec_DrawTransformFeedbackStream;
@@ -1417,7 +1412,6 @@ vbo_exec_array_init( struct vbo_exec_context *exec )
          vbo_exec_DrawTransformFeedbackInstanced;
    exec->vtxfmt.DrawTransformFeedbackStreamInstanced =
          vbo_exec_DrawTransformFeedbackStreamInstanced;
-#endif
 }
 
 
@@ -1494,12 +1488,8 @@ _mesa_MultiDrawElementsBaseVertex(GLenum mode,
 					primcount, basevertex);
 }
 
-#if FEATURE_EXT_transform_feedback
-
 void GLAPIENTRY
 _mesa_DrawTransformFeedback(GLenum mode, GLuint name)
 {
    vbo_exec_DrawTransformFeedback(mode, name);
 }
-
-#endif

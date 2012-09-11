@@ -610,8 +610,6 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
 }
 
 
-#if FEATURE_EXT_transform_feedback
-
 GLboolean
 _mesa_validate_DrawTransformFeedback(struct gl_context *ctx,
                                      GLenum mode,
@@ -656,5 +654,3 @@ _mesa_validate_DrawTransformFeedback(struct gl_context *ctx,
 
    return GL_TRUE;
 }
-
-#endif

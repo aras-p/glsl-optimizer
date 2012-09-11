@@ -44,9 +44,6 @@
 #include "program/prog_parameter.h"
 
 
-#if FEATURE_EXT_transform_feedback
-
-
 /**
  * Do reference counting of transform feedback buffers.
  */
@@ -171,40 +168,6 @@ _mesa_free_transform_feedback(struct gl_context *ctx)
 }
 
 
-#else /* FEATURE_EXT_transform_feedback */
-
-/* forward declarations */
-static struct gl_transform_feedback_object *
-new_transform_feedback(struct gl_context *ctx, GLuint name);
-
-static void
-delete_transform_feedback(struct gl_context *ctx,
-                          struct gl_transform_feedback_object *obj);
-
-/* dummy per-context init/clean-up for transform feedback */
-void
-_mesa_init_transform_feedback(struct gl_context *ctx)
-{
-   ctx->TransformFeedback.DefaultObject = new_transform_feedback(ctx, 0);
-   ctx->TransformFeedback.CurrentObject = ctx->TransformFeedback.DefaultObject;
-   _mesa_reference_buffer_object(ctx,
-                                 &ctx->TransformFeedback.CurrentBuffer,
-                                 ctx->Shared->NullBufferObj);
-}
-
-void
-_mesa_free_transform_feedback(struct gl_context *ctx)
-{
-   _mesa_reference_buffer_object(ctx,
-                                 &ctx->TransformFeedback.CurrentBuffer,
-                                 NULL);
-   ctx->TransformFeedback.CurrentObject = NULL;
-   delete_transform_feedback(ctx, ctx->TransformFeedback.DefaultObject);
-}
-
-#endif /* FEATURE_EXT_transform_feedback */
-
-
 /** Default fallback for ctx->Driver.NewTransformFeedback() */
 static struct gl_transform_feedback_object *
 new_transform_feedback(struct gl_context *ctx, GLuint name)
@@ -231,9 +194,6 @@ delete_transform_feedback(struct gl_context *ctx,
 
    free(obj);
 }
-
-
-#if FEATURE_EXT_transform_feedback
 
 
 /** Default fallback for ctx->Driver.BeginTransformFeedback() */
@@ -901,5 +861,3 @@ _mesa_ResumeTransformFeedback(void)
    assert(ctx->Driver.ResumeTransformFeedback);
    ctx->Driver.ResumeTransformFeedback(ctx, obj);
 }
-
-#endif /* FEATURE_EXT_transform_feedback */

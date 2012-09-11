@@ -84,8 +84,6 @@
 #define FEATURE_remap_table               0
 #endif
 
-#define FEATURE_EXT_transform_feedback    FEATURE_GL
-
 #define FEATURE_APPLE_object_purgeable    FEATURE_GL
 #define FEATURE_ATI_fragment_shader       FEATURE_GL
 

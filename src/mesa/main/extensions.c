@@ -463,9 +463,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
    ctx->Extensions.EXT_texture_sRGB_decode = GL_TRUE;
    ctx->Extensions.EXT_texture_swizzle = GL_TRUE;
-#if FEATURE_EXT_transform_feedback
    /*ctx->Extensions.EXT_transform_feedback = GL_TRUE;*/
-#endif
    ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;
    /*ctx->Extensions.IBM_multimode_draw_arrays = GL_TRUE;*/
    ctx->Extensions.MESA_pack_invert = GL_TRUE;

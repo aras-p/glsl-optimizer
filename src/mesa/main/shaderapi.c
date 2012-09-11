@@ -467,14 +467,12 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
 
-#if FEATURE_EXT_transform_feedback
    /* Is transform feedback available in this context?
     */
    const bool has_xfb =
       (ctx->API == API_OPENGL && ctx->Extensions.EXT_transform_feedback)
       || ctx->API == API_OPENGL_CORE
       || _mesa_is_gles3(ctx);
-#endif
 
    /* Are geometry shaders available in this context?
     */
@@ -534,7 +532,6 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       *params = max_len;
       return;
    }
-#if FEATURE_EXT_transform_feedback
    case GL_TRANSFORM_FEEDBACK_VARYINGS:
       if (!has_xfb)
          break;
@@ -550,7 +547,6 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
          break;
       *params = shProg->TransformFeedback.BufferMode;
       return;
-#endif
    case GL_GEOMETRY_VERTICES_OUT_ARB:
       if (!has_gs)
          break;

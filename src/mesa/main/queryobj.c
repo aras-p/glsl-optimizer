@@ -152,7 +152,6 @@ get_query_binding_point(struct gl_context *ctx, GLenum target)
          return &ctx->Query.CurrentTimerObject;
       else
          return NULL;
-#if FEATURE_EXT_transform_feedback
    case GL_PRIMITIVES_GENERATED:
       if (ctx->Extensions.EXT_transform_feedback)
          return &ctx->Query.PrimitivesGenerated;
@@ -163,7 +162,6 @@ get_query_binding_point(struct gl_context *ctx, GLenum target)
          return &ctx->Query.PrimitivesWritten;
       else
          return NULL;
-#endif
    default:
       return NULL;
    }

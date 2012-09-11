@@ -1021,7 +1021,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 	 }
 	 break;
 
-#if FEATURE_EXT_transform_feedback
       case GL_RASTERIZER_DISCARD:
          if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx))
             goto invalid_enum_error;
@@ -1031,7 +1030,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             ctx->RasterDiscard = state;
          }
          break;
-#endif
 
       /* GL 3.1 primitive restart.  Note: this enum is different from
        * GL_PRIMITIVE_RESTART_NV (which is client state).
@@ -1683,13 +1681,11 @@ _mesa_IsEnabled( GLenum cap )
 	 CHECK_EXTENSION(ARB_seamless_cube_map);
 	 return ctx->Texture.CubeMapSeamless;
 
-#if FEATURE_EXT_transform_feedback
       case GL_RASTERIZER_DISCARD:
          if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx))
             goto invalid_enum_error;
 	 CHECK_EXTENSION(EXT_transform_feedback);
          return ctx->RasterDiscard;
-#endif
 
       /* GL_NV_primitive_restart */
       case GL_PRIMITIVE_RESTART_NV:

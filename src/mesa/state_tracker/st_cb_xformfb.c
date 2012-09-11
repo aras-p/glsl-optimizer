@@ -48,8 +48,6 @@
 #include "util/u_inlines.h"
 #include "cso_cache/cso_context.h"
 
-#if FEATURE_EXT_transform_feedback
-
 struct st_transform_feedback_object {
    struct gl_transform_feedback_object base;
 
@@ -229,5 +227,3 @@ st_init_xformfb_functions(struct dd_function_table *functions)
    functions->PauseTransformFeedback = st_pause_transform_feedback;
    functions->ResumeTransformFeedback = st_resume_transform_feedback;
 }
-
-#endif /* FEATURE_EXT_transform_feedback */
