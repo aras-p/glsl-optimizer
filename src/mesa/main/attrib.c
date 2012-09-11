@@ -178,9 +178,6 @@ struct texture_state
 };
 
 
-#if FEATURE_attrib_stack
-
-
 /**
  * Allocate new attribute node of given type/kind.  Attach payload data.
  * Insert it into the linked list named by 'head'.
@@ -1607,9 +1604,6 @@ _mesa_init_attrib_dispatch(struct _glapi_table *disp)
    SET_PopClientAttrib(disp, _mesa_PopClientAttrib);
    SET_PushClientAttrib(disp, _mesa_PushClientAttrib);
 }
-
-
-#endif /* FEATURE_attrib_stack */
 
 
 /**
