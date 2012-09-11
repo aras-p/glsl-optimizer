@@ -84,7 +84,6 @@
 #define FEATURE_remap_table               0
 #endif
 
-#define FEATURE_accum                     FEATURE_GL
 #define FEATURE_arrayelt                  FEATURE_GL
 #define FEATURE_attrib_stack              FEATURE_GL
 /* this disables vtxfmt, api_loopback, and api_noop completely */

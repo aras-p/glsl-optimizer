@@ -36,9 +36,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_accum
-
-
 void GLAPIENTRY
 _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
 {
@@ -494,9 +491,6 @@ _mesa_accum(struct gl_context *ctx, GLenum op, GLfloat value)
       break;
    }
 }
-
-
-#endif /* FEATURE_accum */
 
 
 void 
