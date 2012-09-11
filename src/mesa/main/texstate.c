@@ -841,11 +841,9 @@ _mesa_free_texture_data(struct gl_context *ctx)
    /* GL_ARB_texture_buffer_object */
    _mesa_reference_buffer_object(ctx, &ctx->Texture.BufferObject, NULL);
 
-#if FEATURE_sampler_objects
    for (u = 0; u < Elements(ctx->Texture.Unit); u++) {
       _mesa_reference_sampler_object(ctx, &ctx->Texture.Unit[u].Sampler, NULL);
    }
-#endif
 }
 
 
