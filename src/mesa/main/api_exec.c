@@ -96,9 +96,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_GL || FEATURE_ES2
-
-
 /**
  * Initialize a dispatch table with pointers to Mesa's immediate-mode
  * commands.
@@ -757,14 +754,12 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_StencilFuncSeparateATI(exec, _mesa_StencilFuncSeparateATI);
    }
 
-#if FEATURE_ARB_framebuffer_object
    /* The ARB_fbo functions are the union of
     * GL_EXT_fbo, GL_EXT_framebuffer_blit, GL_EXT_texture_array
     */
    if (ctx->API != API_OPENGLES2) {
       SET_RenderbufferStorageMultisample(exec, _mesa_RenderbufferStorageMultisample);
    }
-#endif
 
 #if FEATURE_ARB_map_buffer_range
    if (ctx->API != API_OPENGLES2) {
@@ -898,5 +893,3 @@ _mesa_create_exec_table(struct gl_context *ctx)
 
    return exec;
 }
-
-#endif /* FEATURE_GL || FEATURE_ES2 */
