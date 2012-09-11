@@ -301,7 +301,6 @@ nouveau_finish_render_texture(struct gl_context *ctx,
 void
 nouveau_fbo_functions_init(struct dd_function_table *functions)
 {
-#if FEATURE_EXT_framebuffer_object
 	functions->NewFramebuffer = nouveau_framebuffer_new;
 	functions->NewRenderbuffer = nouveau_renderbuffer_new;
 	functions->MapRenderbuffer = nouveau_renderbuffer_map;
@@ -310,5 +309,4 @@ nouveau_fbo_functions_init(struct dd_function_table *functions)
 	functions->FramebufferRenderbuffer = nouveau_framebuffer_renderbuffer;
 	functions->RenderTexture = nouveau_render_texture;
 	functions->FinishRenderTexture = nouveau_finish_render_texture;
-#endif
 }

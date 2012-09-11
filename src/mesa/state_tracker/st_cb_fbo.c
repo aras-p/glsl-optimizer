@@ -790,7 +790,6 @@ st_UnmapRenderbuffer(struct gl_context *ctx,
 
 void st_init_fbo_functions(struct dd_function_table *functions)
 {
-#if FEATURE_EXT_framebuffer_object
    functions->NewFramebuffer = st_new_framebuffer;
    functions->NewRenderbuffer = st_new_renderbuffer;
    functions->BindFramebuffer = st_bind_framebuffer;
@@ -798,7 +797,6 @@ void st_init_fbo_functions(struct dd_function_table *functions)
    functions->RenderTexture = st_render_texture;
    functions->FinishRenderTexture = st_finish_render_texture;
    functions->ValidateFramebuffer = st_validate_framebuffer;
-#endif
 
    functions->DrawBuffers = st_DrawBuffers;
    functions->ReadBuffer = st_ReadBuffer;

@@ -46,9 +46,7 @@
 #include "dlist.h"
 #include "enums.h"
 #include "eval.h"
-#if FEATURE_EXT_framebuffer_object
 #include "fbobject.h"
-#endif
 #include "framebuffer.h"
 #include "glapi/glapi.h"
 #include "glformats.h"

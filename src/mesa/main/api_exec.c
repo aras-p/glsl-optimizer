@@ -58,9 +58,7 @@
 #include "get.h"
 #include "feedback.h"
 #include "fog.h"
-#if FEATURE_EXT_framebuffer_object
 #include "fbobject.h"
-#endif
 #include "framebuffer.h"
 #include "hint.h"
 #include "histogram.h"
@@ -727,7 +725,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_TexBumpParameterfvATI(exec, _mesa_TexBumpParameterfvATI);
    }
 
-#if FEATURE_EXT_framebuffer_object
    SET_IsRenderbufferEXT(exec, _mesa_IsRenderbufferEXT);
    SET_BindRenderbufferEXT(exec, _mesa_BindRenderbufferEXT);
    SET_DeleteRenderbuffersEXT(exec, _mesa_DeleteRenderbuffersEXT);
@@ -747,7 +744,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_FramebufferRenderbufferEXT(exec, _mesa_FramebufferRenderbufferEXT);
    SET_GetFramebufferAttachmentParameterivEXT(exec, _mesa_GetFramebufferAttachmentParameterivEXT);
    SET_GenerateMipmapEXT(exec, _mesa_GenerateMipmapEXT);
-#endif
 
 #if FEATURE_EXT_framebuffer_blit
    if (ctx->API != API_OPENGLES2) {
@@ -764,11 +760,9 @@ _mesa_create_exec_table(struct gl_context *ctx)
 #endif
 
    /* GL_MESA_texture_array / GL_EXT_texture_array */
-#if FEATURE_EXT_framebuffer_object
    if (ctx->API != API_OPENGLES2) {
       SET_FramebufferTextureLayerEXT(exec, _mesa_FramebufferTextureLayerEXT);
    }
-#endif
 
    /* GL_ATI_separate_stencil */
    if (ctx->API == API_OPENGL) {

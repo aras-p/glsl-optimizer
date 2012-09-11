@@ -124,10 +124,8 @@ _mesa_alloc_shared_state(struct gl_context *ctx)
    _glthread_INIT_MUTEX(shared->TexMutex);
    shared->TextureStateStamp = 0;
 
-#if FEATURE_EXT_framebuffer_object
    shared->FrameBuffers = _mesa_NewHashTable();
    shared->RenderBuffers = _mesa_NewHashTable();
-#endif
 
    make_empty_list(& shared->SyncObjects);
 
@@ -343,12 +341,10 @@ free_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
    _mesa_HashDeleteAll(shared->BufferObjects, delete_bufferobj_cb, ctx);
    _mesa_DeleteHashTable(shared->BufferObjects);
 
-#if FEATURE_EXT_framebuffer_object
    _mesa_HashDeleteAll(shared->FrameBuffers, delete_framebuffer_cb, ctx);
    _mesa_DeleteHashTable(shared->FrameBuffers);
    _mesa_HashDeleteAll(shared->RenderBuffers, delete_renderbuffer_cb, ctx);
    _mesa_DeleteHashTable(shared->RenderBuffers);
-#endif
 
    _mesa_reference_buffer_object(ctx, &shared->NullBufferObj, NULL);
 
