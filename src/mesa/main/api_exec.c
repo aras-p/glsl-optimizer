@@ -41,9 +41,7 @@
 #include "blend.h"
 #include "bufferobj.h"
 #include "arrayobj.h"
-#if FEATURE_draw_read_buffer
 #include "buffers.h"
-#endif
 #include "clear.h"
 #include "clip.h"
 #include "colortab.h"
@@ -144,12 +142,9 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_ColorMask(exec, _mesa_ColorMask);
    SET_CullFace(exec, _mesa_CullFace);
    SET_Disable(exec, _mesa_Disable);
-#if FEATURE_draw_read_buffer
    if (ctx->API == API_OPENGL || ctx->API == API_OPENGL_CORE)
       SET_DrawBuffer(exec, _mesa_DrawBuffer);
-
    SET_ReadBuffer(exec, _mesa_ReadBuffer);
-#endif
    SET_Enable(exec, _mesa_Enable);
    SET_Finish(exec, _mesa_Finish);
    SET_Flush(exec, _mesa_Flush);
@@ -703,9 +698,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    /* ARB 37. GL_ARB_draw_buffers */
-#if FEATURE_draw_read_buffer
    SET_DrawBuffersARB(exec, _mesa_DrawBuffersARB);
-#endif
 
    /* ARB 66. GL_ARB_sync */
    if (ctx->API != API_OPENGLES2) {
