@@ -84,9 +84,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vbo_noop.h"
 
 
-#if FEATURE_dlist
-
-
 #ifdef ERROR
 #undef ERROR
 #endif
@@ -1668,6 +1665,3 @@ vbo_save_api_init(struct vbo_save_context *save)
    ctx->ListState.ListVtxfmt.MultiDrawElementsBaseVertex = _save_OBE_MultiDrawElementsBaseVertex;
    _mesa_install_save_vtxfmt(ctx, &ctx->ListState.ListVtxfmt);
 }
-
-
-#endif /* FEATURE_dlist */

@@ -1006,7 +1006,6 @@ _mesa_initialize_context(struct gl_context *ctx,
 
    switch (ctx->API) {
    case API_OPENGL:
-#if FEATURE_dlist
       ctx->Save = _mesa_create_save_table();
       if (!ctx->Save) {
          _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
@@ -1015,7 +1014,6 @@ _mesa_initialize_context(struct gl_context *ctx,
       }
 
       _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
-#endif
    case API_OPENGL_CORE:
       break;
    case API_OPENGLES:

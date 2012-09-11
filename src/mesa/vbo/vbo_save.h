@@ -158,8 +158,6 @@ struct vbo_save_context {
    GLubyte *currentsz[VBO_ATTRIB_MAX];
 };
 
-#if FEATURE_dlist
-
 void vbo_save_init( struct gl_context *ctx );
 void vbo_save_destroy( struct gl_context *ctx );
 void vbo_save_fallback( struct gl_context *ctx, GLboolean fallback );
@@ -194,19 +192,5 @@ vbo_save_map_vertex_store(struct gl_context *ctx,
 void
 vbo_save_unmap_vertex_store(struct gl_context *ctx,
                             struct vbo_save_vertex_store *vertex_store);
-
-#else /* FEATURE_dlist */
-
-static inline void
-vbo_save_init( struct gl_context *ctx )
-{
-}
-
-static inline void
-vbo_save_destroy( struct gl_context *ctx )
-{
-}
-
-#endif /* FEATURE_dlist */
 
 #endif /* VBO_SAVE_H */

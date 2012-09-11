@@ -37,9 +37,6 @@
 #include "vbo_context.h"
 
 
-#if FEATURE_dlist
-
-
 typedef void (*attr_func)( struct gl_context *ctx, GLint target, const GLfloat * );
 
 
@@ -191,6 +188,3 @@ void vbo_loopback_vertex_list( struct gl_context *ctx,
       }
    }
 }
-
-
-#endif /* FEATURE_dlist */

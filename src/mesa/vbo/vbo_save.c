@@ -34,9 +34,6 @@
 #include "vbo_context.h"
 
 
-#if FEATURE_dlist
-
-
 static void vbo_save_callback_init( struct gl_context *ctx )
 {
    ctx->Driver.NewList = vbo_save_NewList;
@@ -131,6 +128,3 @@ void vbo_save_fallback( struct gl_context *ctx, GLboolean fallback )
    else
       save->replay_flags &= ~VBO_SAVE_FALLBACK;
 }
-
-
-#endif /* FEATURE_dlist */

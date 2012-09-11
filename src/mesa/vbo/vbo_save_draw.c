@@ -39,9 +39,6 @@
 #include "vbo_context.h"
 
 
-#if FEATURE_dlist
-
-
 /**
  * After playback, copy everything but the position from the
  * last vertex to the saved state
@@ -331,6 +328,3 @@ end:
       save->buffer_ptr = vbo_save_map_vertex_store(ctx, save->vertex_store);
    }
 }
-
-
-#endif /* FEATURE_dlist */

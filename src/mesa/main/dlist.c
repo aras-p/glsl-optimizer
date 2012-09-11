@@ -553,9 +553,6 @@ union uint64_pair
 static GLuint InstSize[OPCODE_END_OF_LIST + 1];
 
 
-#if FEATURE_dlist
-
-
 void mesa_print_display_list(GLuint list);
 
 
@@ -11076,9 +11073,6 @@ void _mesa_init_dlist_dispatch(struct _glapi_table *disp)
 }
 
 
-#endif /* FEATURE_dlist */
-
-
 /**
  * Initialize display list state for given context.
  */
@@ -11106,9 +11100,7 @@ _mesa_init_display_list(struct gl_context *ctx)
    /* Display List group */
    ctx->List.ListBase = 0;
 
-#if FEATURE_dlist
    _mesa_save_vtxfmt_init(&ctx->ListState.ListVtxfmt);
-#endif
 }
 
 

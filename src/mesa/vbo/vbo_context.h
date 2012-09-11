@@ -78,9 +78,7 @@ struct vbo_context {
    GLuint map_vp_arb[VERT_ATTRIB_MAX];
 
    struct vbo_exec_context exec;
-#if FEATURE_dlist
    struct vbo_save_context save;
-#endif
 
    /* Callback into the driver.  This must always succeed, the driver
     * is responsible for initiating any fallback actions required:

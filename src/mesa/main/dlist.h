@@ -37,8 +37,6 @@
 #include "main/mtypes.h"
 
 
-#if FEATURE_dlist
-
 #define _MESA_INIT_DLIST_VTXFMT(vfmt, impl)  \
    do {                                      \
       (vfmt)->CallList  = impl ## CallList;  \
@@ -69,32 +67,6 @@ extern void _mesa_install_dlist_vtxfmt(struct _glapi_table *disp,
                                        const GLvertexformat *vfmt);
 
 extern void _mesa_init_dlist_dispatch(struct _glapi_table *disp);
-
-#else /* FEATURE_dlist */
-
-#include "main/compiler.h"
-
-#define _MESA_INIT_DLIST_VTXFMT(vfmt, impl) do { } while (0)
-
-static inline void
-_mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
-{
-   /* there should be no list to delete */
-   ASSERT_NO_FEATURE();
-}
-
-static inline void
-_mesa_install_dlist_vtxfmt(struct _glapi_table *disp,
-                           const GLvertexformat *vfmt)
-{
-}
-
-static inline void
-_mesa_init_dlist_dispatch(struct _glapi_table *disp)
-{
-}
-
-#endif /* FEATURE_dlist */
 
 extern void _mesa_init_display_list( struct gl_context * ctx );
 
