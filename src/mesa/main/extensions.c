@@ -401,9 +401,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_fragment_program_shadow = GL_TRUE;
 #endif
-#if FEATURE_ARB_fragment_shader
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
-#endif
 #if FEATURE_ARB_framebuffer_object
    ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
 #endif
@@ -581,9 +579,7 @@ _mesa_enable_1_5_extensions(struct gl_context *ctx)
 void
 _mesa_enable_2_0_extensions(struct gl_context *ctx)
 {
-#if FEATURE_ARB_fragment_shader
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
-#endif
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
    ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;

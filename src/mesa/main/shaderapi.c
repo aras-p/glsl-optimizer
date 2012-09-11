@@ -167,10 +167,8 @@ static bool
 validate_shader_target(const struct gl_context *ctx, GLenum type)
 {
    switch (type) {
-#if FEATURE_ARB_fragment_shader
    case GL_FRAGMENT_SHADER:
       return ctx->Extensions.ARB_fragment_shader;
-#endif
    case GL_VERTEX_SHADER:
       return ctx->Extensions.ARB_vertex_shader;
 #if FEATURE_ARB_geometry_shader4
@@ -874,7 +872,6 @@ use_shader_program(struct gl_context *ctx, GLenum type,
       }
       break;
 #endif
-#if FEATURE_ARB_fragment_shader
    case GL_FRAGMENT_SHADER:
       target = &ctx->Shader.CurrentFragmentProgram;
       if ((shProg == NULL)
@@ -882,7 +879,6 @@ use_shader_program(struct gl_context *ctx, GLenum type,
 	 shProg = NULL;
       }
       break;
-#endif
    default:
       return false;
    }
@@ -903,7 +899,6 @@ use_shader_program(struct gl_context *ctx, GLenum type,
 	 /* Empty for now. */
 	 break;
 #endif
-#if FEATURE_ARB_fragment_shader
       case GL_FRAGMENT_SHADER:
 	 if (*target == ctx->Shader._CurrentFragmentProgram) {
 	    _mesa_reference_shader_program(ctx,
@@ -911,7 +906,6 @@ use_shader_program(struct gl_context *ctx, GLenum type,
 					   NULL);
 	 }
 	 break;
-#endif
       }
 
       _mesa_reference_shader_program(ctx, target, shProg);

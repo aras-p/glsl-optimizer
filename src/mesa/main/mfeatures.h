@@ -86,8 +86,7 @@
 
 #define FEATURE_ARB_fragment_program      1
 #define FEATURE_ARB_vertex_program        1
-#define FEATURE_ARB_fragment_shader       1
-#define FEATURE_ARB_shader_objects        FEATURE_ARB_fragment_shader
+#define FEATURE_ARB_shader_objects        1
 #define FEATURE_ARB_shading_language_100  FEATURE_ARB_shader_objects
 #define FEATURE_ARB_geometry_shader4      FEATURE_ARB_shader_objects
 
