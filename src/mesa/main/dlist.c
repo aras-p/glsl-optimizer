@@ -6323,7 +6323,6 @@ exec_GetUniformLocationARB(GLuint program, const GLchar *name)
 /* XXX more shader functions needed here */
 
 
-#if FEATURE_EXT_framebuffer_blit
 static void GLAPIENTRY
 save_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                         GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
@@ -6351,7 +6350,6 @@ save_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                                           mask, filter));
    }
 }
-#endif
 
 
 /** GL_EXT_provoking_vertex */
@@ -8455,14 +8453,11 @@ execute_list(struct gl_context *ctx, GLuint list)
                CALL_DrawBuffersARB(ctx->Exec, (n[1].i, buffers));
             }
             break;
-#if FEATURE_EXT_framebuffer_blit
 	 case OPCODE_BLIT_FRAMEBUFFER:
 	    CALL_BlitFramebufferEXT(ctx->Exec, (n[1].i, n[2].i, n[3].i, n[4].i,
                                                 n[5].i, n[6].i, n[7].i, n[8].i,
                                                 n[9].i, n[10].e));
 	    break;
-#endif
-
 	 case OPCODE_USE_PROGRAM:
 	    CALL_UseProgramObjectARB(ctx->Exec, (n[1].ui));
 	    break;
@@ -10422,9 +10417,7 @@ _mesa_create_save_table(void)
 
    SET_DrawBuffersARB(table, save_DrawBuffersARB);
 
-#if FEATURE_EXT_framebuffer_blit
    SET_BlitFramebufferEXT(table, save_BlitFramebufferEXT);
-#endif
 
    /* GL_ARB_shader_objects */
    _mesa_init_shader_dispatch(table); /* Plug in glCreate/Delete/Get, etc */

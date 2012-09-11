@@ -59,8 +59,6 @@ st_destroy_blit(struct st_context *st)
 }
 
 
-#if FEATURE_EXT_framebuffer_blit
-
 static void
 st_BlitFramebuffer_resolve(struct gl_context *ctx,
                            GLbitfield mask,
@@ -354,5 +352,3 @@ st_init_blit_functions(struct dd_function_table *functions)
 {
    functions->BlitFramebuffer = st_BlitFramebuffer;
 }
-
-#endif /* FEATURE_EXT_framebuffer_blit */

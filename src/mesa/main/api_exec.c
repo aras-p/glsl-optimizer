@@ -730,11 +730,9 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_GetFramebufferAttachmentParameterivEXT(exec, _mesa_GetFramebufferAttachmentParameterivEXT);
    SET_GenerateMipmapEXT(exec, _mesa_GenerateMipmapEXT);
 
-#if FEATURE_EXT_framebuffer_blit
    if (ctx->API != API_OPENGLES2) {
       SET_BlitFramebufferEXT(exec, _mesa_BlitFramebufferEXT);
    }
-#endif
 
    /* GL_EXT_gpu_program_parameters */
    if (ctx->API == API_OPENGL) {

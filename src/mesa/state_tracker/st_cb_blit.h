@@ -42,18 +42,8 @@ st_init_blit(struct st_context *st);
 extern void
 st_destroy_blit(struct st_context *st);
 
-#if FEATURE_EXT_framebuffer_blit
-
 extern void
 st_init_blit_functions(struct dd_function_table *functions);
 
-#else
-
-static INLINE void
-st_init_blit_functions(struct dd_function_table *functions)
-{
-}
-
-#endif /* FEATURE_EXT_framebuffer_blit */
 
 #endif /* ST_CB_BLIT_H */
