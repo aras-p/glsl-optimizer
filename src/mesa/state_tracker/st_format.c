@@ -127,7 +127,6 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       return PIPE_FORMAT_DXT3_RGBA;
    case MESA_FORMAT_RGBA_DXT5:
       return PIPE_FORMAT_DXT5_RGBA;
-#if FEATURE_EXT_texture_sRGB
    case MESA_FORMAT_SRGB_DXT1:
       return PIPE_FORMAT_DXT1_SRGB;
    case MESA_FORMAT_SRGBA_DXT1:
@@ -146,7 +145,6 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       return PIPE_FORMAT_A8B8G8R8_SRGB;
    case MESA_FORMAT_SARGB8:
       return PIPE_FORMAT_B8G8R8A8_SRGB;
-#endif
    case MESA_FORMAT_RGBA_FLOAT32:
       return PIPE_FORMAT_R32G32B32A32_FLOAT;
    case MESA_FORMAT_RGBA_FLOAT16:
@@ -453,7 +451,6 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_RGBA_DXT3;
    case PIPE_FORMAT_DXT5_RGBA:
       return MESA_FORMAT_RGBA_DXT5;
-#if FEATURE_EXT_texture_sRGB
    case PIPE_FORMAT_DXT1_SRGB:
       return MESA_FORMAT_SRGB_DXT1;
    case PIPE_FORMAT_DXT1_SRGBA:
@@ -472,7 +469,6 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_SRGBA8;
    case PIPE_FORMAT_B8G8R8A8_SRGB:
       return MESA_FORMAT_SARGB8;
-#endif
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       return MESA_FORMAT_RGBA_FLOAT32;
    case PIPE_FORMAT_R16G16B16A16_FLOAT:

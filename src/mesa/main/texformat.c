@@ -551,7 +551,6 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       }
    }
 
-#if FEATURE_EXT_texture_sRGB
    if (ctx->Extensions.EXT_texture_sRGB) {
       switch (internalFormat) {
          case GL_SRGB_EXT:
@@ -618,7 +617,6 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
             ; /* fallthrough */
       }
    }
-#endif /* FEATURE_EXT_texture_sRGB */
 
    if (ctx->Extensions.EXT_texture_integer) {
       switch (internalFormat) {

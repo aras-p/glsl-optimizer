@@ -57,7 +57,6 @@
 #define DXTN_LIBNAME "libtxc_dxtn.so"
 #endif
 
-#if FEATURE_EXT_texture_sRGB
 /**
  * Convert an 8-bit sRGB value from non-linear space to a
  * linear RGB value in [0, 1].
@@ -84,7 +83,6 @@ nonlinear_to_linear(GLubyte cs8)
    }
    return table[cs8];
 }
-#endif /* FEATURE_EXT_texture_sRGB */
 
 typedef void (*dxtFetchTexelFuncExt)( GLint srcRowstride, GLubyte *pixdata, GLint col, GLint row, GLvoid *texelOut );
 
@@ -475,7 +473,6 @@ _mesa_fetch_texel_rgba_dxt5(const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT(rgba[ACOMP]);
 }
 
-#if FEATURE_EXT_texture_sRGB
 void
 _mesa_fetch_texel_srgb_dxt1(const struct swrast_texture_image *texImage,
                             GLint i, GLint j, GLint k, GLfloat *texel)
@@ -527,4 +524,3 @@ _mesa_fetch_texel_srgba_dxt5(const struct swrast_texture_image *texImage,
    texel[BCOMP] = nonlinear_to_linear(rgba[BCOMP]);
    texel[ACOMP] = UBYTE_TO_FLOAT(rgba[ACOMP]);
 }
-#endif /* FEATURE_EXT_texture_sRGB */

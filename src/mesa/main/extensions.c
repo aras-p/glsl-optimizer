@@ -460,10 +460,8 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_texture_filter_anisotropic = GL_TRUE;
    ctx->Extensions.EXT_texture_mirror_clamp = GL_TRUE;
    ctx->Extensions.EXT_texture_shared_exponent = GL_TRUE;
-#if FEATURE_EXT_texture_sRGB
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
    ctx->Extensions.EXT_texture_sRGB_decode = GL_TRUE;
-#endif
    ctx->Extensions.EXT_texture_swizzle = GL_TRUE;
 #if FEATURE_EXT_transform_feedback
    /*ctx->Extensions.EXT_transform_feedback = GL_TRUE;*/
@@ -568,9 +566,7 @@ void
 _mesa_enable_2_1_extensions(struct gl_context *ctx)
 {
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
-#if FEATURE_EXT_texture_sRGB
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
-#endif
 }
 
 

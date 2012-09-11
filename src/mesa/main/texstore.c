@@ -3604,9 +3604,6 @@ _mesa_texstore_rgba_uint32(TEXSTORE_PARAMS)
 }
 
 
-
-
-#if FEATURE_EXT_texture_sRGB
 static GLboolean
 _mesa_texstore_srgb8(TEXSTORE_PARAMS)
 {
@@ -3709,17 +3706,6 @@ _mesa_texstore_sla8(TEXSTORE_PARAMS)
 			      srcAddr, srcPacking);
    return k;
 }
-
-#else
-
-/* these are used only in texstore_funcs[] below */
-#define _mesa_texstore_srgb8 NULL
-#define _mesa_texstore_srgba8 NULL
-#define _mesa_texstore_sargb8 NULL
-#define _mesa_texstore_sl8 NULL
-#define _mesa_texstore_sla8 NULL
-
-#endif /* FEATURE_EXT_texture_sRGB */
 
 static GLboolean
 _mesa_texstore_rgb9_e5(TEXSTORE_PARAMS)

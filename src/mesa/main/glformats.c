@@ -544,7 +544,6 @@ _mesa_is_color_format(GLenum format)
       case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
       case GL_COMPRESSED_RGB_FXT1_3DFX:
       case GL_COMPRESSED_RGBA_FXT1_3DFX:
-#if FEATURE_EXT_texture_sRGB
       case GL_SRGB_EXT:
       case GL_SRGB8_EXT:
       case GL_SRGB_ALPHA_EXT:
@@ -561,7 +560,6 @@ _mesa_is_color_format(GLenum format)
       case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
       case GL_COMPRESSED_SLUMINANCE_EXT:
       case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
-#endif /* FEATURE_EXT_texture_sRGB */
       case GL_COMPRESSED_RED_RGTC1:
       case GL_COMPRESSED_SIGNED_RED_RGTC1:
       case GL_COMPRESSED_RG_RGTC2:

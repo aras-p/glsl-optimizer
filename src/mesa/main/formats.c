@@ -2245,7 +2245,6 @@ _mesa_format_to_type_and_comps(gl_format format,
       *comps = 4;
       return;
 
-#if FEATURE_EXT_texture_sRGB
    case MESA_FORMAT_SRGB8:
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 3;
@@ -2263,7 +2262,6 @@ _mesa_format_to_type_and_comps(gl_format format,
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 2;
       return;
-#endif
 
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
@@ -2271,12 +2269,10 @@ _mesa_format_to_type_and_comps(gl_format format,
    case MESA_FORMAT_RGBA_DXT1:
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
-#if FEATURE_EXT_texture_sRGB
    case MESA_FORMAT_SRGB_DXT1:
    case MESA_FORMAT_SRGBA_DXT1:
    case MESA_FORMAT_SRGBA_DXT3:
    case MESA_FORMAT_SRGBA_DXT5:
-#endif
    case MESA_FORMAT_RED_RGTC1:
    case MESA_FORMAT_SIGNED_RED_RGTC1:
    case MESA_FORMAT_RG_RGTC2:
