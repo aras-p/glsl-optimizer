@@ -40,9 +40,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_pixel_transfer
-
-
 /**********************************************************************/
 /*****                    glPixelZoom                             *****/
 /**********************************************************************/
@@ -668,9 +665,6 @@ _mesa_init_pixel_dispatch(struct _glapi_table *disp)
    SET_GetnPixelMapuivARB(disp, _mesa_GetnPixelMapuivARB);
    SET_GetnPixelMapusvARB(disp, _mesa_GetnPixelMapusvARB);
 }
-
-
-#endif /* FEATURE_pixel_transfer */
 
 
 /**********************************************************************/
