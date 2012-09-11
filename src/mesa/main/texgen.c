@@ -41,9 +41,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_texgen
-
-
 /**
  * Return texgen state for given coordinate
  */
@@ -441,6 +438,3 @@ _mesa_init_texgen_dispatch(struct _glapi_table *disp)
    SET_TexGeni(disp, _mesa_TexGeni);
    SET_TexGeniv(disp, _mesa_TexGeniv);
 }
-
-
-#endif /* FEATURE_texgen */

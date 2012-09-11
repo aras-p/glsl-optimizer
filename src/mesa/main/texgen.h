@@ -34,8 +34,6 @@
 struct _glapi_table;
 
 
-#if FEATURE_texgen
-
 extern void GLAPIENTRY
 _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params );
 
@@ -63,26 +61,6 @@ _es_TexGenf(GLenum coord, GLenum pname, GLfloat param);
 
 extern void GLAPIENTRY
 _es_TexGenfv(GLenum coord, GLenum pname, const GLfloat *params);
-
-
-#else /* FEATURE_texgen */
-
-static void
-_mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
-{
-}
-
-static void inline
-_mesa_TexGeni( GLenum coord, GLenum pname, GLint param )
-{
-}
-
-static inline void
-_mesa_init_texgen_dispatch(struct _glapi_table *disp)
-{
-}
-
-#endif /* FEATURE_texgen */
 
 
 #endif /* TEXGEN_H */
