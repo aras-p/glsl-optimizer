@@ -2265,10 +2265,8 @@ _mesa_format_to_type_and_comps(gl_format format,
       return;
 #endif
 
-#if FEATURE_texture_fxt1
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
-#endif
 #if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:

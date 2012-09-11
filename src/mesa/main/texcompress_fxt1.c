@@ -42,9 +42,6 @@
 #include "swrast/s_context.h"
 
 
-#if FEATURE_texture_fxt1
-
-
 static void
 fxt1_encode (GLuint width, GLuint height, GLint comps,
              const void *source, GLint srcRowStride,
@@ -1646,6 +1643,3 @@ fxt1_decode_1 (const void *texture, GLint stride, /* in pixels */
 
    decode_1[mode](code, t, rgba);
 }
-
-
-#endif /* FEATURE_texture_fxt1 */

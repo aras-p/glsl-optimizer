@@ -289,7 +289,6 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       }
    }
 
-#if FEATURE_texture_fxt1
    if (ctx->Extensions.TDFX_texture_compression_FXT1) {
       switch (internalFormat) {
          case GL_COMPRESSED_RGB_FXT1_3DFX:
@@ -302,7 +301,6 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
             ; /* fallthrough */
       }
    }
-#endif
 
 #if FEATURE_texture_s3tc
    if (ctx->Extensions.EXT_texture_compression_s3tc) {

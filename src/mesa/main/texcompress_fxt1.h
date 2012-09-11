@@ -31,8 +31,6 @@
 
 struct swrast_texture_image;
 
-#if FEATURE_texture_fxt1
-
 extern GLboolean
 _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS);
 
@@ -46,17 +44,5 @@ _mesa_fetch_texel_2d_f_rgba_fxt1(const struct swrast_texture_image *texImage,
 extern void
 _mesa_fetch_texel_2d_f_rgb_fxt1(const struct swrast_texture_image *texImage,
                                 GLint i, GLint j, GLint k, GLfloat *texel);
-
-#else /* FEATURE_texture_fxt1 */
-
-/* these are used only in texstore_funcs[] */
-#define _mesa_texstore_rgb_fxt1 NULL
-#define _mesa_texstore_rgba_fxt1 NULL
-
-/* these are used only in texfetch_funcs[] */
-#define _mesa_fetch_texel_2d_f_rgba_fxt1 NULL
-#define _mesa_fetch_texel_2d_f_rgb_fxt1 NULL
-
-#endif /* FEATURE_texture_fxt1 */
 
 #endif /* TEXCOMPRESS_FXT1_H */
