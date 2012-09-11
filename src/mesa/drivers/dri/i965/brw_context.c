@@ -580,7 +580,9 @@ brwCreateContext(gl_api api,
    struct dd_function_table functions;
    struct gl_config visual;
 
-   if (flags & ~(__DRI_CTX_FLAG_DEBUG | __DRI_CTX_FLAG_FORWARD_COMPATIBLE)) {
+   if (flags & ~(__DRI_CTX_FLAG_DEBUG
+                 | __DRI_CTX_FLAG_FORWARD_COMPATIBLE
+                 | __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS)) {
       *dri_ctx_error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
       return false;
    }
@@ -754,6 +756,9 @@ brwCreateContext(gl_api api,
       /* Turn on some extra GL_ARB_debug_output generation. */
       brw->perf_debug = true;
    }
+
+   if ((flags & __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS) != 0)
+      ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT_ARB;
 
    brw_fs_alloc_reg_sets(brw);
    brw_vec4_alloc_reg_set(brw);
