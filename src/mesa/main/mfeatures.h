@@ -84,7 +84,6 @@
 #define FEATURE_remap_table               0
 #endif
 
-#define FEATURE_ARB_pixel_buffer_object   FEATURE_GL
 #define FEATURE_ARB_sampler_objects       FEATURE_GL
 #define FEATURE_ARB_sync                  FEATURE_GL
 
