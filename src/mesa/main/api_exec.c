@@ -810,10 +810,8 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_EndConditionalRenderNV(exec, _mesa_EndConditionalRender);
    }
 
-#if FEATURE_OES_EGL_image
    SET_EGLImageTargetTexture2DOES(exec, _mesa_EGLImageTargetTexture2DOES);
    SET_EGLImageTargetRenderbufferStorageOES(exec, _mesa_EGLImageTargetRenderbufferStorageOES);
-#endif
 
 #if FEATURE_APPLE_object_purgeable
    if (ctx->API != API_OPENGLES2) {

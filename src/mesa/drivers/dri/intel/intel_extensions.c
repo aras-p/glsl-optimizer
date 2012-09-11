@@ -86,9 +86,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.NV_vertex_program = true;
    ctx->Extensions.NV_vertex_program1_1 = true;
    ctx->Extensions.TDFX_texture_compression_FXT1 = true;
-#if FEATURE_OES_EGL_image
    ctx->Extensions.OES_EGL_image = true;
-#endif
    ctx->Extensions.OES_draw_texture = true;
    ctx->Extensions.OES_compressed_ETC1_RGB8_texture = true;
    ctx->Extensions.ARB_texture_rgb10_a2ui = true;

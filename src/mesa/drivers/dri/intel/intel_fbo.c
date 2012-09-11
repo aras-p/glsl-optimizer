@@ -279,7 +279,6 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 }
 
 
-#if FEATURE_OES_EGL_image
 static void
 intel_image_target_renderbuffer_storage(struct gl_context *ctx,
 					struct gl_renderbuffer *rb,
@@ -323,7 +322,6 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
    rb->_BaseFormat = _mesa_base_fbo_format(&intel->ctx,
 					   image->internal_format);
 }
-#endif
 
 /**
  * Called for each hardware renderbuffer when a _window_ is resized.
@@ -956,9 +954,6 @@ intel_fbo_init(struct intel_context *intel)
    intel->ctx.Driver.ResizeBuffers = intel_resize_buffers;
    intel->ctx.Driver.ValidateFramebuffer = intel_validate_framebuffer;
    intel->ctx.Driver.BlitFramebuffer = intel_blit_framebuffer;
-
-#if FEATURE_OES_EGL_image
    intel->ctx.Driver.EGLImageTargetRenderbufferStorage =
       intel_image_target_renderbuffer_storage;
-#endif   
 }

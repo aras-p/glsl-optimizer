@@ -1497,7 +1497,6 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
 }
 
 
-#if FEATURE_OES_EGL_image
 void GLAPIENTRY
 _mesa_EGLImageTargetRenderbufferStorageOES(GLenum target, GLeglImageOES image)
 {
@@ -1528,7 +1527,6 @@ _mesa_EGLImageTargetRenderbufferStorageOES(GLenum target, GLeglImageOES image)
 
    ctx->Driver.EGLImageTargetRenderbufferStorage(ctx, rb, image);
 }
-#endif
 
 
 /**

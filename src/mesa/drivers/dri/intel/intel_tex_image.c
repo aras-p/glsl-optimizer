@@ -326,7 +326,6 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
    intelSetTexBuffer2(pDRICtx, target, __DRI_TEXTURE_FORMAT_RGBA, dPriv);
 }
 
-#if FEATURE_OES_EGL_image
 static void
 intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 			      struct gl_texture_object *texObj,
@@ -347,14 +346,10 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 				  target, image->internal_format,
                                   image->format, image->offset);
 }
-#endif
 
 void
 intelInitTextureImageFuncs(struct dd_function_table *functions)
 {
    functions->TexImage = intelTexImage;
-
-#if FEATURE_OES_EGL_image
    functions->EGLImageTargetTexture2D = intel_image_target_texture_2d;
-#endif
 }

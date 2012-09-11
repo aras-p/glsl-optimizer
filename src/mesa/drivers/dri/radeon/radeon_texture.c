@@ -586,7 +586,6 @@ unsigned radeonIsFormatRenderable(gl_format mesa_format)
 	}
 }
 
-#if FEATURE_OES_EGL_image
 void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 				    struct gl_texture_object *texObj,
 				    struct gl_texture_image *texImage,
@@ -645,7 +644,6 @@ void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 	if (!radeon_miptree_matches_image(t->mt, &radeonImage->base.Base))
 		fprintf(stderr, "miptree doesn't match image\n");
 }
-#endif
 
 gl_format _radeon_texformat_rgba8888 = MESA_FORMAT_NONE;
 gl_format _radeon_texformat_argb8888 = MESA_FORMAT_NONE;
@@ -693,9 +691,7 @@ radeon_init_common_texture_funcs(radeonContextPtr radeon,
 	functions->CopyTexSubImage = radeonCopyTexSubImage;
 
 	functions->Bitmap = _mesa_meta_Bitmap;
-#if FEATURE_OES_EGL_image
 	functions->EGLImageTargetTexture2D = radeon_image_target_texture_2d;
-#endif
 
 	radeonInitTextureFormats();
 }

@@ -397,10 +397,7 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.MESA_pack_invert = true;
    ctx->Extensions.NV_blend_square = true;
    ctx->Extensions.NV_texture_rectangle = true;
-#if FEATURE_OES_EGL_image
    ctx->Extensions.OES_EGL_image = true;
-#endif
-
    ctx->Extensions.EXT_framebuffer_object = true;
    ctx->Extensions.ARB_occlusion_query = true;
 

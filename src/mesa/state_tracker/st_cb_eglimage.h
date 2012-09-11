@@ -34,18 +34,7 @@
 
 struct dd_function_table;
 
-#if FEATURE_OES_EGL_image
-
 extern void
 st_init_eglimage_functions(struct dd_function_table *functions);
-
-#else
-
-static INLINE void
-st_init_eglimage_functions(struct dd_function_table *functions)
-{
-}
-
-#endif
 
 #endif /* ST_CB_EGLIMAGE_H */

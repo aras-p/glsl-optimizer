@@ -103,7 +103,6 @@
 #define FEATURE_NV_fragment_program       FEATURE_GL
 #define FEATURE_NV_vertex_program         FEATURE_GL
 
-#define FEATURE_OES_EGL_image             1
 #define FEATURE_OES_framebuffer_object    FEATURE_ES
 #define FEATURE_OES_mapbuffer             FEATURE_ES
 

@@ -38,8 +38,6 @@
 #include "st_format.h"
 #include "st_manager.h"
 
-#if FEATURE_OES_EGL_image
-
 /**
  * Return the base format just like _mesa_base_fbo_format does.
  */
@@ -164,5 +162,3 @@ st_init_eglimage_functions(struct dd_function_table *functions)
    functions->EGLImageTargetTexture2D = st_egl_image_target_texture_2d;
    functions->EGLImageTargetRenderbufferStorage = st_egl_image_target_renderbuffer_storage;
 }
-
-#endif /* FEATURE_OES_EGL_image */

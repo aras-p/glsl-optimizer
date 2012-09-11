@@ -3134,7 +3134,6 @@ _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalFormat,
 }
 
 
-#if FEATURE_OES_EGL_image
 void GLAPIENTRY
 _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
 {
@@ -3189,7 +3188,6 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
    _mesa_unlock_texture(ctx, texObj);
 
 }
-#endif
 
 
 
