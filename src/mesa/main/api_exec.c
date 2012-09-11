@@ -761,12 +761,10 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_RenderbufferStorageMultisample(exec, _mesa_RenderbufferStorageMultisample);
    }
 
-#if FEATURE_ARB_map_buffer_range
    if (ctx->API != API_OPENGLES2) {
       SET_MapBufferRange(exec, _mesa_MapBufferRange);
       SET_FlushMappedBufferRange(exec, _mesa_FlushMappedBufferRange);
    }
-#endif
 
    /* GL_ARB_copy_buffer */
    if (ctx->API != API_OPENGLES2) {

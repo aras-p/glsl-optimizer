@@ -10469,10 +10469,8 @@ _mesa_create_save_table(void)
    SET_ProgramLocalParameters4fvEXT(table, save_ProgramLocalParameters4fvEXT);
 
    /* ARB 50. GL_ARB_map_buffer_range */
-#if FEATURE_ARB_map_buffer_range
    SET_MapBufferRange(table, _mesa_MapBufferRange); /* no dlist save */
    SET_FlushMappedBufferRange(table, _mesa_FlushMappedBufferRange); /* no dl */
-#endif
 
    /* ARB 51. GL_ARB_texture_buffer_object */
    SET_TexBufferARB(table, _mesa_TexBuffer); /* no dlist save */
