@@ -5331,8 +5331,6 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 #endif /* FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program */
 
 
-#if FEATURE_queryobj
-
 static void GLAPIENTRY
 save_BeginQueryARB(GLenum target, GLuint id)
 {
@@ -5412,8 +5410,6 @@ save_EndQueryIndexed(GLenum target, GLuint index)
       CALL_EndQueryIndexed(ctx->Exec, (target, index));
    }
 }
-
-#endif /* FEATURE_queryobj */
 
 
 static void GLAPIENTRY
@@ -8471,7 +8467,6 @@ execute_list(struct gl_context *ctx, GLuint list)
                                                       n[6].f));
             break;
 #endif
-#if FEATURE_queryobj
          case OPCODE_BEGIN_QUERY_ARB:
             CALL_BeginQueryARB(ctx->Exec, (n[1].e, n[2].ui));
             break;
@@ -8487,7 +8482,6 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_END_QUERY_INDEXED:
             CALL_EndQueryIndexed(ctx->Exec, (n[1].e, n[2].ui));
             break;
-#endif
          case OPCODE_DRAW_BUFFERS_ARB:
             {
                GLenum buffers[MAX_DRAW_BUFFERS];
@@ -10463,12 +10457,10 @@ _mesa_create_save_table(void)
    SET_MapBufferARB(table, _mesa_MapBufferARB);
    SET_UnmapBufferARB(table, _mesa_UnmapBufferARB);
 
-#if FEATURE_queryobj
    _mesa_init_queryobj_dispatch(table); /* glGetQuery, etc */
    SET_BeginQueryARB(table, save_BeginQueryARB);
    SET_EndQueryARB(table, save_EndQueryARB);
    SET_QueryCounter(table, save_QueryCounter);
-#endif
 
    SET_DrawBuffersARB(table, save_DrawBuffersARB);
 
@@ -10601,10 +10593,8 @@ _mesa_create_save_table(void)
                                       save_DrawTransformFeedbackInstanced);
    SET_DrawTransformFeedbackStreamInstanced(table,
                                 save_DrawTransformFeedbackStreamInstanced);
-#if FEATURE_queryobj
    SET_BeginQueryIndexed(table, save_BeginQueryIndexed);
    SET_EndQueryIndexed(table, save_EndQueryIndexed);
-#endif
 #endif
 
    /* GL_ARB_instanced_arrays */

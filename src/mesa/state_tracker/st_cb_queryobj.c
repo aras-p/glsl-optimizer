@@ -45,8 +45,6 @@
 #include "st_cb_bitmap.h"
 
 
-#if FEATURE_queryobj
-
 static struct gl_query_object *
 st_NewQueryObject(struct gl_context *ctx, GLuint id)
 {
@@ -194,5 +192,3 @@ void st_init_query_functions(struct dd_function_table *functions)
    functions->CheckQuery = st_CheckQuery;
    functions->GetTimestamp = st_GetTimestamp;
 }
-
-#endif /* FEATURE_queryobj */

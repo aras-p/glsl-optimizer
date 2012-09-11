@@ -32,8 +32,6 @@
 #include "main/hash.h"
 
 
-#if FEATURE_queryobj
-
 static inline struct gl_query_object *
 _mesa_lookup_query_object(struct gl_context *ctx, GLuint id)
 {
@@ -47,26 +45,6 @@ _mesa_init_query_object_functions(struct dd_function_table *driver);
 
 extern void
 _mesa_init_queryobj_dispatch(struct _glapi_table *disp);
-
-#else /* FEATURE_queryobj */
-
-static inline struct gl_query_object *
-_mesa_lookup_query_object(struct gl_context *ctx, GLuint id)
-{
-   return NULL;
-}
-
-static inline void
-_mesa_init_query_object_functions(struct dd_function_table *driver)
-{
-}
-
-static inline void
-_mesa_init_queryobj_dispatch(struct _glapi_table *disp)
-{
-}
-
-#endif /* FEATURE_queryobj */
 
 extern void
 _mesa_init_queryobj(struct gl_context *ctx);

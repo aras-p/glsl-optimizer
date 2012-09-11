@@ -34,9 +34,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_queryobj
-
-
 /**
  * Allocate a new query object.  This is a fallback routine called via
  * ctx->Driver.NewQueryObject().
@@ -732,9 +729,6 @@ _mesa_init_queryobj_dispatch(struct _glapi_table *disp)
    SET_EndQueryIndexed(disp, _mesa_EndQueryIndexed);
    SET_GetQueryIndexediv(disp, _mesa_GetQueryIndexediv);
 }
-
-
-#endif /* FEATURE_queryobj */
 
 
 /**

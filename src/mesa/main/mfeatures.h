@@ -84,7 +84,6 @@
 #define FEATURE_remap_table               0
 #endif
 
-#define FEATURE_queryobj                  FEATURE_GL
 #define FEATURE_rastpos                   FEATURE_GL
 #define FEATURE_texture_fxt1              FEATURE_GL
 #define FEATURE_texture_s3tc              FEATURE_GL

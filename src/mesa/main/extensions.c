@@ -416,10 +416,8 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
    ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
-#if FEATURE_queryobj
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
    ctx->Extensions.ARB_occlusion_query2 = GL_TRUE;
-#endif
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
 #if FEATURE_ARB_shader_objects
    ctx->Extensions.ARB_shader_objects = GL_TRUE;
