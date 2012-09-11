@@ -857,11 +857,16 @@ static struct __DRIimageExtensionRec intelImageExtension = {
     .createImageFromDmaBufs             = intel_create_image_from_dma_bufs
 };
 
+static const struct __DRIrobustnessExtensionRec dri2Robustness = {
+   { __DRI2_ROBUSTNESS, 1 }
+};
+
 static const __DRIextension *intelScreenExtensions[] = {
     &intelTexBufferExtension.base,
     &intelFlushExtension.base,
     &intelImageExtension.base,
     &dri2ConfigQueryExtension.base,
+    &dri2Robustness.base,
     NULL
 };
 
