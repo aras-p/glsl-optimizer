@@ -83,9 +83,6 @@ typedef struct {
 #define NUM_TYPES 8
 
 
-#if FEATURE_arrayelt
-
-
 static const int ColorFuncs[2][NUM_TYPES] = {
    {
       _gloffset_Color3bv,
@@ -1711,6 +1708,3 @@ void _mesa_install_arrayelt_vtxfmt(struct _glapi_table *disp,
 {
    SET_ArrayElement(disp, vfmt->ArrayElement);
 }
-
-
-#endif /* FEATURE_arrayelt */

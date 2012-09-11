@@ -31,8 +31,6 @@
 #include "main/mfeatures.h"
 #include "main/mtypes.h"
 
-#if FEATURE_arrayelt
-
 #define _MESA_INIT_ARRAYELT_VTXFMT(vfmt, impl)     \
    do {                                            \
       (vfmt)->ArrayElement = impl ## ArrayElement; \
@@ -51,34 +49,6 @@ extern void _ae_unmap_vbos( struct gl_context *ctx );
 extern void
 _mesa_install_arrayelt_vtxfmt(struct _glapi_table *disp,
                               const GLvertexformat *vfmt);
-
-#else /* FEATURE_arrayelt */
-
-#define _MESA_INIT_ARRAYELT_VTXFMT(vfmt, impl) do { } while (0)
-
-static inline GLboolean
-_ae_create_context( struct gl_context *ctx )
-{
-   return GL_TRUE;
-}
-
-static inline void
-_ae_destroy_context( struct gl_context *ctx )
-{
-}
-
-static inline void
-_ae_invalidate_state( struct gl_context *ctx, GLuint new_state )
-{
-}
-
-static inline void
-_mesa_install_arrayelt_vtxfmt(struct _glapi_table *disp,
-                              const GLvertexformat *vfmt)
-{
-}
-
-#endif /* FEATURE_arrayelt */
 
 
 #endif /* API_ARRAYELT_H */
