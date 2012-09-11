@@ -961,7 +961,6 @@ _mesa_initialize_context(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-#if FEATURE_dispatch
    /* setup the API dispatch tables */
    switch (ctx->API) {
 #if FEATURE_GL || FEATURE_ES2
@@ -985,7 +984,6 @@ _mesa_initialize_context(struct gl_context *ctx,
       _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
       return GL_FALSE;
    }
-#endif
    ctx->CurrentDispatch = ctx->Exec;
 
    ctx->FragmentProgram._MaintainTexEnvProgram

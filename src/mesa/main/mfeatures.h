@@ -84,7 +84,6 @@
 #define FEATURE_remap_table               0
 #endif
 
-#define FEATURE_dispatch                  1
 #define FEATURE_texgen                    1
 #define FEATURE_userclip                  1
 
