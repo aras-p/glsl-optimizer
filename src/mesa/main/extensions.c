@@ -523,12 +523,10 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
 #endif
    _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
-#if FEATURE_texture_s3tc
    if (ctx->Mesa_DXTn) {
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
       _mesa_enable_extension(ctx, "GL_S3_s3tc");
    }
-#endif
 }
 
 

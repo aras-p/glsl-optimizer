@@ -84,8 +84,6 @@
 #define FEATURE_remap_table               0
 #endif
 
-#define FEATURE_texture_s3tc              FEATURE_GL
-
 #define FEATURE_extra_context_init        FEATURE_ES
 #define FEATURE_point_size_array          FEATURE_ES
 

@@ -33,8 +33,6 @@
 struct gl_context;
 struct swrast_texture_image;
 
-#if FEATURE_texture_s3tc
-
 extern GLboolean
 _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS);
 
@@ -81,30 +79,5 @@ _mesa_fetch_texel_srgba_dxt5(const struct swrast_texture_image *texImage,
 
 extern void
 _mesa_init_texture_s3tc(struct gl_context *ctx);
-
-#else /* FEATURE_texture_s3tc */
-
-/* these are used only in texstore_funcs[] */
-#define _mesa_texstore_rgb_dxt1 NULL
-#define _mesa_texstore_rgba_dxt1 NULL
-#define _mesa_texstore_rgba_dxt3 NULL
-#define _mesa_texstore_rgba_dxt5 NULL
-
-/* these are used only in texfetch_funcs[] */
-#define _mesa_fetch_texel_2d_f_rgb_dxt1 NULL
-#define _mesa_fetch_texel_2d_f_rgba_dxt1 NULL
-#define _mesa_fetch_texel_2d_f_rgba_dxt3 NULL
-#define _mesa_fetch_texel_2d_f_rgba_dxt5 NULL
-#define _mesa_fetch_texel_2d_f_srgb_dxt1 NULL
-#define _mesa_fetch_texel_2d_f_srgba_dxt1 NULL
-#define _mesa_fetch_texel_2d_f_srgba_dxt3 NULL
-#define _mesa_fetch_texel_2d_f_srgba_dxt5 NULL
-
-static inline void
-_mesa_init_texture_s3tc(struct gl_context *ctx)
-{
-}
-
-#endif /* FEATURE_texture_s3tc */
 
 #endif /* TEXCOMPRESS_S3TC_H */

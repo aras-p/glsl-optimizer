@@ -47,9 +47,6 @@
 #include "swrast/s_context.h"
 
 
-#if FEATURE_texture_s3tc
-
-
 #if defined(_WIN32) || defined(WIN32)
 #define DXTN_LIBNAME "dxtn.dll"
 #define RTLD_LAZY 0
@@ -531,6 +528,3 @@ _mesa_fetch_texel_srgba_dxt5(const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT(rgba[ACOMP]);
 }
 #endif /* FEATURE_EXT_texture_sRGB */
-
-
-#endif /* FEATURE_texture_s3tc */

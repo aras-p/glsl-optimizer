@@ -2267,7 +2267,6 @@ _mesa_format_to_type_and_comps(gl_format format,
 
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
-#if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
    case MESA_FORMAT_RGBA_DXT3:
@@ -2277,7 +2276,6 @@ _mesa_format_to_type_and_comps(gl_format format,
    case MESA_FORMAT_SRGBA_DXT1:
    case MESA_FORMAT_SRGBA_DXT3:
    case MESA_FORMAT_SRGBA_DXT5:
-#endif
 #endif
    case MESA_FORMAT_RED_RGTC1:
    case MESA_FORMAT_SIGNED_RED_RGTC1:

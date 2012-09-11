@@ -302,7 +302,6 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       }
    }
 
-#if FEATURE_texture_s3tc
    if (ctx->Extensions.EXT_texture_compression_s3tc) {
       switch (internalFormat) {
          case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
@@ -336,7 +335,6 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
             ; /* fallthrough */
       }
    }
-#endif
 
    if (ctx->Extensions.ARB_texture_float) {
       switch (internalFormat) {
@@ -585,22 +583,17 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
 	    break;
          case GL_COMPRESSED_SRGB_EXT:
-#if FEATURE_texture_s3tc
             if (ctx->Extensions.EXT_texture_compression_s3tc)
 	       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGB_DXT1);
-#endif
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SRGB8);
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
 	    break;
          case GL_COMPRESSED_SRGB_ALPHA_EXT:
-#if FEATURE_texture_s3tc
             if (ctx->Extensions.EXT_texture_compression_s3tc)
 	       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA_DXT3); /* Not srgba_dxt1, see spec */
-#endif
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA8);
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
 	    break;
-#if FEATURE_texture_s3tc
          case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
             if (ctx->Extensions.EXT_texture_compression_s3tc)
 	       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGB_DXT1);
@@ -621,7 +614,6 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
 	       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA_DXT5);
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
             break;
-#endif
          default:
             ; /* fallthrough */
       }
