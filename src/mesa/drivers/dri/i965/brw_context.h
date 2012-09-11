@@ -1019,6 +1019,14 @@ struct brw_context
 
    drm_intel_context *hw_ctx;
 
+   /**
+    * Number of resets observed in the system at context creation.
+    *
+    * This is tracked in the context so that we can determine that another
+    * reset has occured.
+    */
+   uint32_t reset_count;
+
    struct intel_batchbuffer batch;
    bool no_batch_wrap;
 
