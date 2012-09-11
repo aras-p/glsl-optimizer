@@ -171,10 +171,8 @@ validate_shader_target(const struct gl_context *ctx, GLenum type)
    case GL_FRAGMENT_SHADER:
       return ctx->Extensions.ARB_fragment_shader;
 #endif
-#if FEATURE_ARB_vertex_shader
    case GL_VERTEX_SHADER:
       return ctx->Extensions.ARB_vertex_shader;
-#endif
 #if FEATURE_ARB_geometry_shader4
    case GL_GEOMETRY_SHADER_ARB:
       return _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_geometry_shader4;
@@ -860,7 +858,6 @@ use_shader_program(struct gl_context *ctx, GLenum type,
    struct gl_shader_program **target;
 
    switch (type) {
-#if FEATURE_ARB_vertex_shader
    case GL_VERTEX_SHADER:
       target = &ctx->Shader.CurrentVertexProgram;
       if ((shProg == NULL)
@@ -868,7 +865,6 @@ use_shader_program(struct gl_context *ctx, GLenum type,
 	 shProg = NULL;
       }
       break;
-#endif
 #if FEATURE_ARB_geometry_shader4
    case GL_GEOMETRY_SHADER_ARB:
       target = &ctx->Shader.CurrentGeometryProgram;
@@ -899,11 +895,9 @@ use_shader_program(struct gl_context *ctx, GLenum type,
        * semantics of glDeleteProgram are maintained.
        */
       switch (type) {
-#if FEATURE_ARB_vertex_shader
       case GL_VERTEX_SHADER:
 	 /* Empty for now. */
 	 break;
-#endif
 #if FEATURE_ARB_geometry_shader4
       case GL_GEOMETRY_SHADER_ARB:
 	 /* Empty for now. */
@@ -1752,11 +1746,10 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec)
    SET_IsProgram(exec, _mesa_IsProgram);
    SET_IsShader(exec, _mesa_IsShader);
 
-#if FEATURE_ARB_vertex_shader
+   /* GL_ARB_vertex_shader */
    SET_BindAttribLocationARB(exec, _mesa_BindAttribLocationARB);
    SET_GetActiveAttribARB(exec, _mesa_GetActiveAttribARB);
    SET_GetAttribLocationARB(exec, _mesa_GetAttribLocationARB);
-#endif
 
 #if FEATURE_ARB_geometry_shader4
    SET_ProgramParameteriARB(exec, _mesa_ProgramParameteriARB);

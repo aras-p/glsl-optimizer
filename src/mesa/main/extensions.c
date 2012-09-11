@@ -438,9 +438,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
 #if FEATURE_ARB_vertex_program
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
 #endif
-#if FEATURE_ARB_vertex_shader
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
-#endif
 #if FEATURE_ARB_sync
    ctx->Extensions.ARB_sync = GL_TRUE;
 #endif
@@ -596,9 +594,7 @@ _mesa_enable_2_0_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
 #endif
    ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
-#if FEATURE_ARB_vertex_shader
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
-#endif
 }
 
 
