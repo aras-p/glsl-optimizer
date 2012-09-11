@@ -1668,7 +1668,6 @@ _mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length)
 }
 
 
-#if FEATURE_APPLE_object_purgeable
 static GLenum
 buffer_object_purgeable(struct gl_context *ctx, GLuint name, GLenum option)
 {
@@ -2042,8 +2041,6 @@ _mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname,
                   name, objectType);
    }
 }
-
-#endif /* FEATURE_APPLE_object_purgeable */
 
 static void
 set_ubo_binding(struct gl_context *ctx,

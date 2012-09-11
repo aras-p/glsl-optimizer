@@ -10473,11 +10473,9 @@ _mesa_create_save_table(void)
    SET_ProvokingVertexEXT(table, save_ProvokingVertexEXT);
 
    /* 371. GL_APPLE_object_purgeable */
-#if FEATURE_APPLE_object_purgeable
    SET_ObjectPurgeableAPPLE(table, _mesa_ObjectPurgeableAPPLE);
    SET_ObjectUnpurgeableAPPLE(table, _mesa_ObjectUnpurgeableAPPLE);
    SET_GetObjectParameterivAPPLE(table, _mesa_GetObjectParameterivAPPLE);
-#endif
 
    /* GL_EXT_texture_integer */
    SET_ClearColorIiEXT(table, save_ClearColorIi);

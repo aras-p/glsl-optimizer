@@ -694,7 +694,6 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
    intel_batchbuffer_emit_mi_flush(intel);
 }
 
-#if FEATURE_APPLE_object_purgeable
 static GLenum
 intel_buffer_purgeable(drm_intel_bo *buffer)
 {
@@ -820,7 +819,6 @@ intel_render_object_unpurgeable(struct gl_context * ctx,
 
    return intel_buffer_unpurgeable(intel->mt->region->bo);
 }
-#endif
 
 void
 intelInitBufferObjectFuncs(struct dd_function_table *functions)
@@ -835,7 +833,6 @@ intelInitBufferObjectFuncs(struct dd_function_table *functions)
    functions->UnmapBuffer = intel_bufferobj_unmap;
    functions->CopyBufferSubData = intel_bufferobj_copy_subdata;
 
-#if FEATURE_APPLE_object_purgeable
    functions->BufferObjectPurgeable = intel_buffer_object_purgeable;
    functions->TextureObjectPurgeable = intel_texture_object_purgeable;
    functions->RenderObjectPurgeable = intel_render_object_purgeable;
@@ -843,5 +840,4 @@ intelInitBufferObjectFuncs(struct dd_function_table *functions)
    functions->BufferObjectUnpurgeable = intel_buffer_object_unpurgeable;
    functions->TextureObjectUnpurgeable = intel_texture_object_unpurgeable;
    functions->RenderObjectUnpurgeable = intel_render_object_unpurgeable;
-#endif
 }

@@ -790,13 +790,11 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_EGLImageTargetTexture2DOES(exec, _mesa_EGLImageTargetTexture2DOES);
    SET_EGLImageTargetRenderbufferStorageOES(exec, _mesa_EGLImageTargetRenderbufferStorageOES);
 
-#if FEATURE_APPLE_object_purgeable
    if (ctx->API != API_OPENGLES2) {
       SET_ObjectPurgeableAPPLE(exec, _mesa_ObjectPurgeableAPPLE);
       SET_ObjectUnpurgeableAPPLE(exec, _mesa_ObjectUnpurgeableAPPLE);
       SET_GetObjectParameterivAPPLE(exec, _mesa_GetObjectParameterivAPPLE);
    }
-#endif
 
    if (ctx->API != API_OPENGLES2) {
       SET_FramebufferTextureARB(exec, _mesa_FramebufferTextureARB);
