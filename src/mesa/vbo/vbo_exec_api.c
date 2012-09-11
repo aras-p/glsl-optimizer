@@ -550,8 +550,6 @@ vbo_exec_FlushVertices_internal(struct vbo_exec_context *exec, GLboolean unmap)
 }
 
 
-#if FEATURE_evaluators
-
 static void GLAPIENTRY vbo_exec_EvalCoord1f( GLfloat u )
 {
    GET_CURRENT_CONTEXT( ctx );
@@ -753,8 +751,6 @@ vbo_exec_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
       break;
    }
 }
-
-#endif /* FEATURE_evaluators */
 
 
 /**

@@ -301,8 +301,6 @@ _mesa_noop_Vertex4f(GLfloat a, GLfloat b, GLfloat c, GLfloat d)
 {
 }
 
-
-#if FEATURE_evaluators
 static void GLAPIENTRY
 _mesa_noop_EvalCoord1f(GLfloat a)
 {
@@ -332,8 +330,6 @@ static void GLAPIENTRY
 _mesa_noop_EvalPoint2(GLint a, GLint b)
 {
 }
-#endif /* FEATURE_evaluators */
-
 
 static void GLAPIENTRY
 _mesa_noop_Begin(GLenum mode)

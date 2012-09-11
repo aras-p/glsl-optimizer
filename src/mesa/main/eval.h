@@ -41,8 +41,6 @@
 #include "main/mtypes.h"
 
 
-#if FEATURE_evaluators
-
 #define _MESA_INIT_EVAL_VTXFMT(vfmt, impl)         \
    do {                                            \
       (vfmt)->EvalCoord1f  = impl ## EvalCoord1f;  \
@@ -82,23 +80,6 @@ _mesa_install_eval_vtxfmt(struct _glapi_table *disp,
 
 extern void
 _mesa_init_eval_dispatch(struct _glapi_table *disp);
-
-#else /* FEATURE_evaluators */
-
-#define _MESA_INIT_EVAL_VTXFMT(vfmt, impl) do { } while (0)
-
-static inline void
-_mesa_install_eval_vtxfmt(struct _glapi_table *disp,
-                          const GLvertexformat *vfmt)
-{
-}
-
-static inline void
-_mesa_init_eval_dispatch(struct _glapi_table *disp)
-{
-}
-
-#endif /* FEATURE_evaluators */
 
 extern void _mesa_init_eval( struct gl_context *ctx );
 extern void _mesa_free_eval_data( struct gl_context *ctx );

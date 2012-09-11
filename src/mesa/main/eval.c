@@ -48,9 +48,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_evaluators
-
-
 /*
  * Return the number of components per control point for any type of
  * evaluator.  Return 0 if bad target.
@@ -922,9 +919,6 @@ _mesa_init_eval_dispatch(struct _glapi_table *disp)
    SET_GetnMapfvARB(disp, _mesa_GetnMapfvARB);
    SET_GetnMapivARB(disp, _mesa_GetnMapivARB);
 }
-
-
-#endif /* FEATURE_evaluators */
 
 
 /**********************************************************************/
