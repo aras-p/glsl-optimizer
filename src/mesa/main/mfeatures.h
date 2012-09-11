@@ -84,7 +84,6 @@
 #define FEATURE_remap_table               0
 #endif
 
-#define FEATURE_drawpix                   FEATURE_GL
 #define FEATURE_evaluators                FEATURE_GL
 #define FEATURE_feedback                  FEATURE_GL
 #define FEATURE_pixel_transfer            FEATURE_GL

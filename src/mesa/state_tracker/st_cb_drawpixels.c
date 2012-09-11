@@ -71,8 +71,6 @@
 #include "cso_cache/cso_context.h"
 
 
-#if FEATURE_drawpix
-
 /**
  * Check if the given program is:
  * 0: MOVE result.color, fragment.color;
@@ -1661,5 +1659,3 @@ st_destroy_drawpix(struct st_context *st)
    if (st->drawpix.vert_shaders[1])
       cso_delete_vertex_shader(st->cso_context, st->drawpix.vert_shaders[1]);
 }
-
-#endif /* FEATURE_drawpix */

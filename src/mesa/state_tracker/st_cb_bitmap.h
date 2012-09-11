@@ -38,8 +38,6 @@ struct st_context;
 struct gl_fragment_program;
 struct st_fragment_program;
 
-#if FEATURE_drawpix
-
 extern void
 st_init_bitmap_functions(struct dd_function_table *functions);
 
@@ -58,33 +56,5 @@ st_make_bitmap_fragment_program(struct st_context *st,
 extern void
 st_flush_bitmap_cache(struct st_context *st);
 
-#else
-
-static INLINE void
-st_init_bitmap_functions(struct dd_function_table *functions)
-{
-}
-
-static INLINE void
-st_init_bitmap(struct st_context *st)
-{
-}
-
-static INLINE void
-st_destroy_bitmap(struct st_context *st)
-{
-}
-
-static INLINE void
-st_flush_bitmap_cache(struct st_context *st)
-{
-}
-
-static INLINE void
-st_flush_bitmap(struct st_context *st)
-{
-}
-
-#endif /* FEATURE_drawpix */
 
 #endif /* ST_CB_BITMAP_H */

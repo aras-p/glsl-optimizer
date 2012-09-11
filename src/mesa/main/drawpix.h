@@ -32,19 +32,8 @@
 struct _glapi_table;
 
 
-#if FEATURE_drawpix
-
 extern void
 _mesa_init_drawpix_dispatch(struct _glapi_table *disp);
-
-#else /* FEATURE_drawpix */
-
-static inline void
-_mesa_init_drawpix_dispatch(struct _glapi_table *disp)
-{
-}
-
-#endif /* FEATURE_drawpix */
 
 
 #endif /* DRAWPIX_H */

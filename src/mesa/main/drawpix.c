@@ -39,9 +39,6 @@
 #include "fbobject.h"
 
 
-#if FEATURE_drawpix
-
-
 /*
  * Execute glDrawPixels
  */
@@ -379,6 +376,3 @@ _mesa_init_drawpix_dispatch(struct _glapi_table *disp)
    SET_CopyPixels(disp, _mesa_CopyPixels);
    SET_DrawPixels(disp, _mesa_DrawPixels);
 }
-
-
-#endif /* FEATURE_drawpix */
