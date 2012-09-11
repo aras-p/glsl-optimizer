@@ -90,7 +90,6 @@ private:
   SDValue LowerSDIV24(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSDIV32(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSDIV64(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
   EVT genIntType(uint32_t size = 32, uint32_t numEle = 1) const;
   SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
@@ -105,7 +104,6 @@ enum
   // AMDIL ISD Opcodes
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   MAD,         // 32bit Fused Multiply Add instruction
-  VBUILD,      // scalar to vector mov instruction
   CALL,        // Function call based on a single integer
   UMUL,        // 32bit unsigned multiplication
   DIV_INF,      // Divide with infinity returned on zero divisor

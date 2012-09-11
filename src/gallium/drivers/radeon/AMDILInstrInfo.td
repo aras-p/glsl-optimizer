@@ -124,12 +124,6 @@ def IL_mad          : SDNode<"AMDGPUISD::MAD", SDTIL_GenTernaryOp>;
 def IL_umul        : SDNode<"AMDGPUISD::UMUL"    , SDTIntBinOp,
     [SDNPCommutative, SDNPAssociative]>;
 
-//===----------------------------------------------------------------------===//
-// Vector functions
-//===----------------------------------------------------------------------===//
-def IL_vbuild     : SDNode<"AMDGPUISD::VBUILD", SDTIL_GenVecBuild,
-    []>;
-
 //===--------------------------------------------------------------------===//
 // Custom Pattern DAG Nodes
 //===--------------------------------------------------------------------===//

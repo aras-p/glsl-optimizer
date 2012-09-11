@@ -162,7 +162,6 @@ void AMDGPUTargetLowering::InitAMDILLowering()
   {
     MVT::SimpleValueType VT = (MVT::SimpleValueType)VectorTypes[ii];
 
-    setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, VT, Expand);
     setOperationAction(ISD::SDIVREM, VT, Expand);
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
@@ -217,7 +216,6 @@ void AMDGPUTargetLowering::InitAMDILLowering()
   setOperationAction(ISD::BRIND, MVT::Other, Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::Other, Expand);
 
-  setOperationAction(ISD::BUILD_VECTOR, MVT::Other, Custom);
 
   // Use the default implementation.
   setOperationAction(ISD::ConstantFP        , MVT::f32    , Legal);
@@ -348,72 +346,6 @@ AMDGPUTargetLowering::LowerSREM(SDValue Op, SelectionDAG &DAG) const
     DST = SDValue(Op.getNode(), 0);
   }
   return DST;
-}
-
-SDValue
-AMDGPUTargetLowering::LowerBUILD_VECTOR( SDValue Op, SelectionDAG &DAG ) const
-{
-  EVT VT = Op.getValueType();
-  SDValue Nodes1;
-  SDValue second;
-  SDValue third;
-  SDValue fourth;
-  DebugLoc DL = Op.getDebugLoc();
-  Nodes1 = DAG.getNode(AMDGPUISD::VBUILD,
-      DL,
-      VT, Op.getOperand(0));
-#if 0
-  bool allEqual = true;
-  for (unsigned x = 1, y = Op.getNumOperands(); x < y; ++x) {
-    if (Op.getOperand(0) != Op.getOperand(x)) {
-      allEqual = false;
-      break;
-    }
-  }
-  if (allEqual) {
-    return Nodes1;
-  }
-#endif
-  switch(Op.getNumOperands()) {
-    default:
-    case 1:
-      break;
-    case 4:
-      fourth = Op.getOperand(3);
-      if (fourth.getOpcode() != ISD::UNDEF) {
-        Nodes1 = DAG.getNode(
-            ISD::INSERT_VECTOR_ELT,
-            DL,
-            Op.getValueType(),
-            Nodes1,
-            fourth,
-            DAG.getConstant(7, MVT::i32));
-      }
-    case 3:
-      third = Op.getOperand(2);
-      if (third.getOpcode() != ISD::UNDEF) {
-        Nodes1 = DAG.getNode(
-            ISD::INSERT_VECTOR_ELT,
-            DL,
-            Op.getValueType(),
-            Nodes1,
-            third,
-            DAG.getConstant(6, MVT::i32));
-      }
-    case 2:
-      second = Op.getOperand(1);
-      if (second.getOpcode() != ISD::UNDEF) {
-        Nodes1 = DAG.getNode(
-            ISD::INSERT_VECTOR_ELT,
-            DL,
-            Op.getValueType(),
-            Nodes1,
-            second,
-            DAG.getConstant(5, MVT::i32));
-      }
-      break;
-  };
-  return Nodes1;
 }
 
 SDValue

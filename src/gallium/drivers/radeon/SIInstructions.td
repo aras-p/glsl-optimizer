@@ -1058,8 +1058,8 @@ def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 5, sel_y>;
 def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 6, sel_z>;
 def : Insert_Element <f32, v4f32, VReg_32, VReg_128, 7, sel_w>;
 
-def : Vector_Build <v4f32, VReg_32>;
-def : Vector_Build <v4i32, SReg_32>;
+def : Vector_Build <v4f32, VReg_128, f32, VReg_32>;
+def : Vector_Build <v4i32, SReg_128, i32, SReg_32>;
 
 def : BitConvert <i32, f32, SReg_32>;
 def : BitConvert <i32, f32, VReg_32>;

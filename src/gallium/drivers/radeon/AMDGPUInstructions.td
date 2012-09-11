@@ -154,9 +154,13 @@ class Insert_Element <ValueType elem_type, ValueType vec_type,
 >;
 
 // Vector Build pattern
-class Vector_Build <ValueType vecType, RegisterClass elemClass> : Pat <
-  (IL_vbuild elemClass:$src),
-  (INSERT_SUBREG (vecType (IMPLICIT_DEF)), elemClass:$src, sel_x)
+class Vector_Build <ValueType vecType, RegisterClass vectorClass,
+                    ValueType elemType, RegisterClass elemClass> : Pat <
+  (vecType (build_vector (elemType elemClass:$x), (elemType elemClass:$y),
+                         (elemType elemClass:$z), (elemType elemClass:$w))),
+  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
+  (vecType (IMPLICIT_DEF)), elemClass:$x, sel_x), elemClass:$y, sel_y),
+                            elemClass:$z, sel_z), elemClass:$w, sel_w)
 >;
 
 // bitconvert pattern
