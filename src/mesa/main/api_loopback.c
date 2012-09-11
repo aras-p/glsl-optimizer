@@ -86,9 +86,6 @@
 #define ATTRIBI_4UI(index,x,y,z,w)   CALL_VertexAttribI4uiEXT(GET_DISPATCH(), (index,x,y,z,w))
 
 
-#if FEATURE_beginend
-
-
 static void GLAPIENTRY
 loopback_Color3b_f( GLbyte red, GLbyte green, GLbyte blue )
 {
@@ -1720,6 +1717,3 @@ _mesa_loopback_init_api_table( struct _glapi_table *dest )
    SET_VertexAttribI4ubvEXT(dest, loopback_VertexAttribI4ubv);
    SET_VertexAttribI4usvEXT(dest, loopback_VertexAttribI4usv);
 }
-
-
-#endif /* FEATURE_beginend */

@@ -550,9 +550,6 @@ vbo_exec_FlushVertices_internal(struct vbo_exec_context *exec, GLboolean unmap)
 }
 
 
-#if FEATURE_beginend
-
-
 #if FEATURE_evaluators
 
 static void GLAPIENTRY vbo_exec_EvalCoord1f( GLfloat u )
@@ -1046,74 +1043,6 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
    vfmt->VertexAttribP4ui = vbo_VertexAttribP4ui;
    vfmt->VertexAttribP4uiv = vbo_VertexAttribP4uiv;
 }
-
-
-#else /* FEATURE_beginend */
-
-
-static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
-{
-   /* silence warnings */
-   (void) vbo_Color3f;
-   (void) vbo_Color3fv;
-   (void) vbo_Color4f;
-   (void) vbo_Color4fv;
-   (void) vbo_FogCoordfEXT;
-   (void) vbo_FogCoordfvEXT;
-   (void) vbo_MultiTexCoord1f;
-   (void) vbo_MultiTexCoord1fv;
-   (void) vbo_MultiTexCoord2f;
-   (void) vbo_MultiTexCoord2fv;
-   (void) vbo_MultiTexCoord3f;
-   (void) vbo_MultiTexCoord3fv;
-   (void) vbo_MultiTexCoord4f;
-   (void) vbo_MultiTexCoord4fv;
-   (void) vbo_Normal3f;
-   (void) vbo_Normal3fv;
-   (void) vbo_SecondaryColor3fEXT;
-   (void) vbo_SecondaryColor3fvEXT;
-   (void) vbo_TexCoord1f;
-   (void) vbo_TexCoord1fv;
-   (void) vbo_TexCoord2f;
-   (void) vbo_TexCoord2fv;
-   (void) vbo_TexCoord3f;
-   (void) vbo_TexCoord3fv;
-   (void) vbo_TexCoord4f;
-   (void) vbo_TexCoord4fv;
-   (void) vbo_Vertex2f;
-   (void) vbo_Vertex2fv;
-   (void) vbo_Vertex3f;
-   (void) vbo_Vertex3fv;
-   (void) vbo_Vertex4f;
-   (void) vbo_Vertex4fv;
-
-   (void) vbo_VertexAttrib1fARB;
-   (void) vbo_VertexAttrib1fvARB;
-   (void) vbo_VertexAttrib2fARB;
-   (void) vbo_VertexAttrib2fvARB;
-   (void) vbo_VertexAttrib3fARB;
-   (void) vbo_VertexAttrib3fvARB;
-   (void) vbo_VertexAttrib4fARB;
-   (void) vbo_VertexAttrib4fvARB;
-
-   (void) vbo_VertexAttrib1fNV;
-   (void) vbo_VertexAttrib1fvNV;
-   (void) vbo_VertexAttrib2fNV;
-   (void) vbo_VertexAttrib2fvNV;
-   (void) vbo_VertexAttrib3fNV;
-   (void) vbo_VertexAttrib3fvNV;
-   (void) vbo_VertexAttrib4fNV;
-   (void) vbo_VertexAttrib4fvNV;
-
-   (void) vbo_Materialfv;
-
-   (void) vbo_EdgeFlag;
-   (void) vbo_Indexf;
-   (void) vbo_Indexfv;
-}
-
-
-#endif /* FEATURE_beginend */
 
 
 /**

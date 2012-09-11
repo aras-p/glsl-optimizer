@@ -38,9 +38,6 @@
 #include "vbo_noop.h"
 
 
-#if FEATURE_beginend
-
-
 static void
 vbo_exec_debug_verts( struct vbo_exec_context *exec )
 {
@@ -441,6 +438,3 @@ vbo_exec_vtx_flush(struct vbo_exec_context *exec, GLboolean keepUnmapped)
    exec->vtx.prim_count = 0;
    exec->vtx.vert_count = 0;
 }
-
-
-#endif /* FEATURE_beginend */

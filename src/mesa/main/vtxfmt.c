@@ -38,8 +38,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_beginend
-
 /**
  * Use the per-vertex functions found in <vfmt> to initialize the given
  * API dispatch table.
@@ -235,6 +233,3 @@ _mesa_install_save_vtxfmt(struct gl_context *ctx, const GLvertexformat *vfmt)
    if (_mesa_is_desktop_gl(ctx))
       install_vtxfmt( ctx, ctx->Save, vfmt );
 }
-
-
-#endif /* FEATURE_beginend */

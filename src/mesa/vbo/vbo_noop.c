@@ -37,9 +37,6 @@
 #include "main/mfeatures.h"
 #include "vbo/vbo_noop.h"
 
-#if FEATURE_beginend
-
-
 static void GLAPIENTRY
 _mesa_noop_EdgeFlag(GLboolean b)
 {
@@ -514,6 +511,3 @@ _mesa_using_noop_vtxfmt(const struct _glapi_table *dispatch)
 {
    return GET_Begin((struct _glapi_table *) dispatch) == _mesa_noop_Begin;
 }
-
-
-#endif /* FEATURE_beginend */
