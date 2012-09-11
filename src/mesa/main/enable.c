@@ -980,7 +980,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 	 ctx->Transform.DepthClamp = state;
 	 break;
 
-#if FEATURE_ATI_fragment_shader
       case GL_FRAGMENT_SHADER_ATI:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
@@ -990,7 +989,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 	ctx->ATIFragmentShader.Enabled = state;
         break;
-#endif
 
       /* GL_MESA_texture_array */
       case GL_TEXTURE_1D_ARRAY_EXT:
@@ -1667,13 +1665,11 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION(ARB_depth_clamp);
          return ctx->Transform.DepthClamp;
 
-#if FEATURE_ATI_fragment_shader
       case GL_FRAGMENT_SHADER_ATI:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
 	 CHECK_EXTENSION(ATI_fragment_shader);
 	 return ctx->ATIFragmentShader.Enabled;
-#endif /* FEATURE_ATI_fragment_shader */
 
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
          if (!_mesa_is_desktop_gl(ctx))

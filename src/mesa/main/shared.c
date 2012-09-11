@@ -31,9 +31,7 @@
 #include "mfeatures.h"
 #include "mtypes.h"
 #include "hash.h"
-#if FEATURE_ATI_fragment_shader
 #include "atifragshader.h"
-#endif
 #include "bufferobj.h"
 #include "shared.h"
 #include "program/program.h"
@@ -75,10 +73,8 @@ _mesa_alloc_shared_state(struct gl_context *ctx)
       gl_fragment_program(ctx->Driver.NewProgram(ctx,
                                                  GL_FRAGMENT_PROGRAM_ARB, 0));
 
-#if FEATURE_ATI_fragment_shader
    shared->ATIShaders = _mesa_NewHashTable();
    shared->DefaultFragmentShader = _mesa_new_ati_fragment_shader(ctx, 0);
-#endif
 
    shared->ShaderObjects = _mesa_NewHashTable();
 
@@ -164,7 +160,6 @@ delete_program_cb(GLuint id, void *data, void *userData)
 }
 
 
-#if FEATURE_ATI_fragment_shader
 /**
  * Callback for deleting an ATI fragment shader object.
  * Called by _mesa_HashDeleteAll().
@@ -176,7 +171,6 @@ delete_fragshader_cb(GLuint id, void *data, void *userData)
    struct gl_context *ctx = (struct gl_context *) userData;
    _mesa_delete_ati_fragment_shader(ctx, shader);
 }
-#endif
 
 
 /**
@@ -316,11 +310,9 @@ free_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
    _mesa_reference_vertprog(ctx, &shared->DefaultVertexProgram, NULL);
    _mesa_reference_fragprog(ctx, &shared->DefaultFragmentProgram, NULL);
 
-#if FEATURE_ATI_fragment_shader
    _mesa_HashDeleteAll(shared->ATIShaders, delete_fragshader_cb, ctx);
    _mesa_DeleteHashTable(shared->ATIShaders);
    _mesa_delete_ati_fragment_shader(ctx, shared->DefaultFragmentShader);
-#endif
 
    _mesa_HashDeleteAll(shared->BufferObjects, delete_bufferobj_cb, ctx);
    _mesa_DeleteHashTable(shared->BufferObjects);

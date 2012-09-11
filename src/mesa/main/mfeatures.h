@@ -84,6 +84,4 @@
 #define FEATURE_remap_table               0
 #endif
 
-#define FEATURE_ATI_fragment_shader       FEATURE_GL
-
 #endif /* FEATURES_H */

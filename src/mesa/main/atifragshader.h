@@ -63,8 +63,6 @@ struct atifs_setupinst
 };
 
 
-#if FEATURE_ATI_fragment_shader
-
 extern void
 _mesa_init_ati_fragment_shader_dispatch(struct _glapi_table *disp);
 
@@ -128,25 +126,5 @@ _mesa_AlphaFragmentOp3ATI(GLenum op, GLuint dst, GLuint dstMod, GLuint arg1,
 extern void GLAPIENTRY
 _mesa_SetFragmentShaderConstantATI(GLuint dst, const GLfloat * value);
 
-#else /* FEATURE_ATI_fragment_shader */
-
-static inline void
-_mesa_init_ati_fragment_shader_dispatch(struct _glapi_table *disp)
-{
-}
-
-static inline struct ati_fragment_shader *
-_mesa_new_ati_fragment_shader(struct gl_context *ctx, GLuint id)
-{
-   return NULL;
-}
-
-static inline void
-_mesa_delete_ati_fragment_shader(struct gl_context *ctx,
-                                 struct ati_fragment_shader *s)
-{
-}
-
-#endif /* FEATURE_ATI_fragment_shader */
 
 #endif /* ATIFRAGSHADER_H */

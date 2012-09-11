@@ -35,9 +35,7 @@
 #include "api_exec.h"
 #include "api_loopback.h"
 #include "api_validate.h"
-#if FEATURE_ATI_fragment_shader
 #include "atifragshader.h"
-#endif
 #include "config.h"
 #include "mfeatures.h"
 #include "bufferobj.h"
@@ -5437,7 +5435,6 @@ save_TexBumpParameterivATI(GLenum pname, const GLint *param)
    save_TexBumpParameterfvATI(pname, p);
 }
 
-#if FEATURE_ATI_fragment_shader
 static void GLAPIENTRY
 save_BindFragmentShaderATI(GLuint id)
 {
@@ -5471,7 +5468,6 @@ save_SetFragmentShaderConstantATI(GLuint dst, const GLfloat *value)
       CALL_SetFragmentShaderConstantATI(ctx->Exec, (dst, value));
    }
 }
-#endif
 
 static void GLAPIENTRY
 save_Attr1fNV(GLenum attr, GLfloat x)
@@ -8592,7 +8588,6 @@ execute_list(struct gl_context *ctx, GLuint list)
                CALL_TexBumpParameterfvATI(ctx->Exec, (pname, values));
             }
             break;
-#if FEATURE_ATI_fragment_shader
          case OPCODE_BIND_FRAGMENT_SHADER_ATI:
             CALL_BindFragmentShaderATI(ctx->Exec, (n[1].i));
             break;
@@ -8606,7 +8601,6 @@ execute_list(struct gl_context *ctx, GLuint list)
                CALL_SetFragmentShaderConstantATI(ctx->Exec, (dst, values));
             }
             break;
-#endif
          case OPCODE_ATTR_1F_NV:
             CALL_VertexAttrib1fNV(ctx->Exec, (n[1].e, n[2].f));
             break;
@@ -10273,10 +10267,8 @@ _mesa_create_save_table(void)
    SET_TexBumpParameterfvATI(table, save_TexBumpParameterfvATI);
 
    /* 245. GL_ATI_fragment_shader */
-#if FEATURE_ATI_fragment_shader
    SET_BindFragmentShaderATI(table, save_BindFragmentShaderATI);
    SET_SetFragmentShaderConstantATI(table, save_SetFragmentShaderConstantATI);
-#endif
 
    /* 282. GL_NV_fragment_program */
    SET_ProgramNamedParameter4fNV(table, save_ProgramNamedParameter4fNV);

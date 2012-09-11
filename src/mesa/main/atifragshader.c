@@ -32,8 +32,6 @@
 #include "main/dispatch.h"
 #include "main/atifragshader.h"
 
-#if FEATURE_ATI_fragment_shader
-
 #define MESA_DEBUG_ATI_FS 0
 
 static struct ati_fragment_shader DummyShader;
@@ -786,5 +784,3 @@ _mesa_SetFragmentShaderConstantATI(GLuint dst, const GLfloat * value)
       COPY_4V(ctx->ATIFragmentShader.GlobalConstants[dstindex], value);
    }
 }
-
-#endif /* FEATURE_ATI_fragment_shader */

@@ -109,12 +109,10 @@ _mesa_init_program(struct gl_context *ctx)
    ctx->GeometryProgram.Cache = _mesa_new_program_cache();
 
    /* XXX probably move this stuff */
-#if FEATURE_ATI_fragment_shader
    ctx->ATIFragmentShader.Enabled = GL_FALSE;
    ctx->ATIFragmentShader.Current = ctx->Shared->DefaultFragmentShader;
    assert(ctx->ATIFragmentShader.Current);
    ctx->ATIFragmentShader.Current->RefCount++;
-#endif
 }
 
 
@@ -130,15 +128,15 @@ _mesa_free_program_data(struct gl_context *ctx)
    _mesa_delete_shader_cache(ctx, ctx->FragmentProgram.Cache);
    _mesa_reference_geomprog(ctx, &ctx->GeometryProgram.Current, NULL);
    _mesa_delete_program_cache(ctx, ctx->GeometryProgram.Cache);
+
    /* XXX probably move this stuff */
-#if FEATURE_ATI_fragment_shader
    if (ctx->ATIFragmentShader.Current) {
       ctx->ATIFragmentShader.Current->RefCount--;
       if (ctx->ATIFragmentShader.Current->RefCount <= 0) {
          free(ctx->ATIFragmentShader.Current);
       }
    }
-#endif
+
    free((void *) ctx->Program.ErrorString);
 }
 
@@ -163,7 +161,6 @@ _mesa_update_default_objects_program(struct gl_context *ctx)
                       ctx->Shared->DefaultGeometryProgram);
 
    /* XXX probably move this stuff */
-#if FEATURE_ATI_fragment_shader
    if (ctx->ATIFragmentShader.Current) {
       ctx->ATIFragmentShader.Current->RefCount--;
       if (ctx->ATIFragmentShader.Current->RefCount <= 0) {
@@ -173,7 +170,6 @@ _mesa_update_default_objects_program(struct gl_context *ctx)
    ctx->ATIFragmentShader.Current = (struct ati_fragment_shader *) ctx->Shared->DefaultFragmentShader;
    assert(ctx->ATIFragmentShader.Current);
    ctx->ATIFragmentShader.Current->RefCount++;
-#endif
 }
 
 

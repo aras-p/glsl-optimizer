@@ -428,9 +428,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_sync = GL_TRUE;
    ctx->Extensions.APPLE_object_purgeable = GL_TRUE;
    ctx->Extensions.ATI_envmap_bumpmap = GL_TRUE;
-#if FEATURE_ATI_fragment_shader
    ctx->Extensions.ATI_fragment_shader = GL_TRUE;
-#endif
    ctx->Extensions.ATI_texture_compression_3dc = GL_TRUE;
    ctx->Extensions.ATI_texture_env_combine3 = GL_TRUE;
    ctx->Extensions.ATI_texture_mirror_once = GL_TRUE;
