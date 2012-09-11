@@ -704,7 +704,10 @@ defm V_MUL_LEGACY_F32 : VOP2_32 <
   0x00000007, "V_MUL_LEGACY_F32",
   [(set VReg_32:$dst, (int_AMDGPU_mul AllReg_32:$src0, VReg_32:$src1))]
 >;
-defm V_MUL_F32 : VOP2_32 <0x00000008, "V_MUL_F32", []>;
+
+defm V_MUL_F32 : VOP2_32 <0x00000008, "V_MUL_F32",
+  [(set VReg_32:$dst, (fmul AllReg_32:$src0, VReg_32:$src1))]
+>;
 //defm V_MUL_I32_I24 : VOP2_32 <0x00000009, "V_MUL_I32_I24", []>;
 //defm V_MUL_HI_I32_I24 : VOP2_32 <0x0000000a, "V_MUL_HI_I32_I24", []>;
 //defm V_MUL_U32_U24 : VOP2_32 <0x0000000b, "V_MUL_U32_U24", []>;
