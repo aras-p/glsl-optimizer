@@ -180,8 +180,11 @@ formats_match(GLbitfield buffer_bit, struct intel_renderbuffer *src_irb,
     * example MESA_FORMAT_X8_Z24 and MESA_FORMAT_S8_Z24), and we can blit
     * between those formats.
     */
-   return find_miptree(buffer_bit, src_irb)->format ==
-      find_miptree(buffer_bit, dst_irb)->format;
+   gl_format src_format = find_miptree(buffer_bit, src_irb)->format;
+   gl_format dst_format = find_miptree(buffer_bit, dst_irb)->format;
+
+   return _mesa_get_srgb_format_linear(src_format) ==
+          _mesa_get_srgb_format_linear(dst_format);
 }
 
 

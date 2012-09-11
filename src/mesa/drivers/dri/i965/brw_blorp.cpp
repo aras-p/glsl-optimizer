@@ -101,8 +101,9 @@ brw_blorp_surface_info::set(struct brw_context *brw,
        * target, even if this is the source image.  So we can convert to a
        * surface format using brw->render_target_format.
        */
-      assert(brw->format_supported_as_render_target[mt->format]);
-      this->brw_surfaceformat = brw->render_target_format[mt->format];
+      gl_format linear_format = _mesa_get_srgb_format_linear(mt->format);
+      assert(brw->format_supported_as_render_target[linear_format]);
+      this->brw_surfaceformat = brw->render_target_format[linear_format];
       break;
    }
 }
