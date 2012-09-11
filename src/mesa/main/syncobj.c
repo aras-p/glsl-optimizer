@@ -64,7 +64,6 @@
 #include "dispatch.h"
 #include "mtypes.h"
 
-#if FEATURE_ARB_sync
 #include "syncobj.h"
 
 static struct gl_sync_object *
@@ -426,5 +425,3 @@ _mesa_GetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length,
       *length = size;
    }
 }
-
-#endif /* FEATURE_ARB_sync */

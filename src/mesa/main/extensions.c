@@ -425,9 +425,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_storage = GL_TRUE;
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
-#if FEATURE_ARB_sync
    ctx->Extensions.ARB_sync = GL_TRUE;
-#endif
 #if FEATURE_APPLE_object_purgeable
    ctx->Extensions.APPLE_object_purgeable = GL_TRUE;
 #endif

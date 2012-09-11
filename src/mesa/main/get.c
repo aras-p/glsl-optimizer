@@ -2316,7 +2316,6 @@ _mesa_GetIntegerv(GLenum pname, GLint *params)
    }
 }
 
-#if FEATURE_ARB_sync
 void GLAPIENTRY
 _mesa_GetInteger64v(GLenum pname, GLint64 *params)
 {
@@ -2411,7 +2410,6 @@ _mesa_GetInteger64v(GLenum pname, GLint64 *params)
       break;
    }
 }
-#endif /* FEATURE_ARB_sync */
 
 void GLAPIENTRY
 _mesa_GetDoublev(GLenum pname, GLdouble *params)
@@ -2684,7 +2682,6 @@ _mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
    }
 }
 
-#if FEATURE_ARB_sync
 void GLAPIENTRY
 _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
 {
@@ -2709,7 +2706,6 @@ _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
       ; /* nothing - GL error was recorded */
    }
 }
-#endif /* FEATURE_ARB_sync */
 
 #if FEATURE_ES1
 void GLAPIENTRY
