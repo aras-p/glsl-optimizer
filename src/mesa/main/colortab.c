@@ -39,8 +39,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_colortable
-
 void GLAPIENTRY
 _mesa_ColorTable( GLenum target, GLenum internalFormat,
                   GLsizei width, GLenum format, GLenum type,
@@ -164,6 +162,3 @@ _mesa_init_colortable_dispatch(struct _glapi_table *disp)
    /* GL_ARB_robustness */
    SET_GetnColorTableARB(disp, _mesa_GetnColorTableARB);
 }
-
-
-#endif /* FEATURE_colortable */
