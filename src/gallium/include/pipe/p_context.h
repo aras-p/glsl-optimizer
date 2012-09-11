@@ -39,6 +39,7 @@ extern "C" {
 
 struct pipe_blend_color;
 struct pipe_blend_state;
+struct pipe_blit_info;
 struct pipe_box;
 struct pipe_clip_state;
 struct pipe_constant_buffer;
@@ -296,6 +297,12 @@ struct pipe_context {
                                 struct pipe_resource *src,
                                 unsigned src_level,
                                 const struct pipe_box *src_box);
+
+   /* Optimal hardware path for blitting pixels.
+    * Scaling, format conversion, up- and downsampling (resolve) are allowed.
+    */
+   void (*blit)(struct pipe_context *pipe,
+                const struct pipe_blit_info *info);
 
    /**
     * Resolve a multisampled resource into a non-multisampled one.

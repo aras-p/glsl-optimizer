@@ -434,6 +434,15 @@ formats, i.e., formats for which copying the bytes from the source resource
 unmodified to the destination resource will achieve the same effect of a
 textured quad blitter.. The source and destination may be the same resource,
 but overlapping blits are not permitted.
+This can be considered the equivalent of a CPU memcpy.
+
+``blit`` blits a region of a resource to a region of another resource, including
+scaling, format conversion, and up-/downsampling, as well as
+a destination clip rectangle (scissors).
+As opposed to manually drawing a textured quad, this lets the pipe driver choose
+the optimal method for blitting (like using a special 2D engine), and usually
+offers, for example, accelerated stencil-only copies even where
+PIPE_CAP_SHADER_STENCIL_EXPORT is not available.
 
 ``resource_resolve`` resolves a multisampled resource into a non-multisampled
 one. Their formats must match. This function must be present if a driver

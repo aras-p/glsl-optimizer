@@ -565,6 +565,27 @@ struct pipe_draw_info
 
 
 /**
+ * Information to describe a blit call.
+ */
+struct pipe_blit_info
+{
+   struct {
+      struct pipe_resource *resource;
+      unsigned level;
+      struct pipe_box box; /**< negative width, height only legal for src */
+      /* For pipe_surface-like format casting: */
+      enum pipe_format format; /**< must be supported for sampling (src)
+                               or rendering (dst), ZS is always supported */
+   } dst, src;
+
+   unsigned mask; /**< bitmask of PIPE_MASK_R/G/B/A/Z/S */
+   unsigned filter; /**< PIPE_TEX_FILTER_* */
+
+   boolean scissor_enable;
+   struct pipe_scissor_state scissor;
+};
+
+/**
  * Information to describe a resource_resolve call.
  */
 struct pipe_resolve_info
