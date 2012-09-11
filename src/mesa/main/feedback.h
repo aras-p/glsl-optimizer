@@ -31,8 +31,6 @@
 #include "main/mtypes.h"
 
 
-#if FEATURE_feedback
-
 extern GLint GLAPIENTRY
 _mesa_RenderMode( GLenum mode );
 
@@ -60,41 +58,6 @@ _mesa_update_hitflag( struct gl_context *ctx, GLfloat z );
 extern void
 _mesa_init_feedback_dispatch(struct _glapi_table *disp);
 
-#else /* FEATURE_feedback */
-
-#include "main/compiler.h"
-
-static inline void
-_mesa_feedback_vertex( struct gl_context *ctx,
-                       const GLfloat win[4],
-                       const GLfloat color[4],
-                       const GLfloat texcoord[4] )
-{
-   /* render mode is always GL_RENDER */
-   ASSERT_NO_FEATURE();
-}
-
-
-static inline void
-_mesa_feedback_token( struct gl_context *ctx, GLfloat token )
-{
-   /* render mode is always GL_RENDER */
-   ASSERT_NO_FEATURE();
-}
-
-static inline void
-_mesa_update_hitflag( struct gl_context *ctx, GLfloat z )
-{
-   /* render mode is always GL_RENDER */
-   ASSERT_NO_FEATURE();
-}
-
-static inline void
-_mesa_init_feedback_dispatch(struct _glapi_table *disp)
-{
-}
-
-#endif /* FEATURE_feedback */
 
 extern void
 _mesa_init_feedback( struct gl_context *ctx );

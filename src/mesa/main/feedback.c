@@ -40,9 +40,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_feedback
-
-
 #define FB_3D		0x01
 #define FB_4D		0x02
 #define FB_COLOR	0x04
@@ -513,9 +510,6 @@ _mesa_init_feedback_dispatch(struct _glapi_table *disp)
    SET_SelectBuffer(disp, _mesa_SelectBuffer);
    SET_RenderMode(disp, _mesa_RenderMode);
 }
-
-
-#endif /* FEATURE_feedback */
 
 
 /**********************************************************************/

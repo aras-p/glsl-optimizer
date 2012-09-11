@@ -179,12 +179,10 @@ struct save_state
    struct gl_query_object *CondRenderQuery;
    GLenum CondRenderMode;
 
-#if FEATURE_feedback
    /** MESA_META_SELECT_FEEDBACK */
    GLenum RenderMode;
    struct gl_selection Select;
    struct gl_feedback Feedback;
-#endif
 
    /** MESA_META_MULTISAMPLE */
    GLboolean MultisampleEnabled;
@@ -751,7 +749,6 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 	 _mesa_EndConditionalRender();
    }
 
-#if FEATURE_feedback
    if (state & MESA_META_SELECT_FEEDBACK) {
       save->RenderMode = ctx->RenderMode;
       if (ctx->RenderMode == GL_SELECT) {
@@ -762,7 +759,6 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 	 _mesa_RenderMode(GL_RENDER);
       }
    }
-#endif
 
    if (state & MESA_META_MULTISAMPLE) {
       save->MultisampleEnabled = ctx->Multisample.Enabled;
@@ -1057,7 +1053,6 @@ _mesa_meta_end(struct gl_context *ctx)
 				      save->CondRenderMode);
    }
 
-#if FEATURE_feedback
    if (state & MESA_META_SELECT_FEEDBACK) {
       if (save->RenderMode == GL_SELECT) {
 	 _mesa_RenderMode(GL_SELECT);
@@ -1067,7 +1062,6 @@ _mesa_meta_end(struct gl_context *ctx)
 	 ctx->Feedback = save->Feedback;
       }
    }
-#endif
 
    if (state & MESA_META_MULTISAMPLE) {
       if (ctx->Multisample.Enabled != save->MultisampleEnabled)

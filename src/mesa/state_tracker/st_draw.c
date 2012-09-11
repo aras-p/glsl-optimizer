@@ -278,7 +278,6 @@ st_init_draw(struct st_context *st)
 
    vbo_set_draw_func(ctx, st_draw_vbo);
 
-#if FEATURE_feedback || FEATURE_rastpos
    st->draw = draw_create(st->pipe); /* for selection/feedback */
 
    /* Disable draw options that might convert points/lines to tris, etc.
@@ -288,14 +287,11 @@ st_init_draw(struct st_context *st)
    draw_wide_point_threshold(st->draw, 1000.0f);
    draw_enable_line_stipple(st->draw, FALSE);
    draw_enable_point_sprites(st->draw, FALSE);
-#endif
 }
 
 
 void
 st_destroy_draw(struct st_context *st)
 {
-#if FEATURE_feedback || FEATURE_rastpos
    draw_destroy(st->draw);
-#endif
 }

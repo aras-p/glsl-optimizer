@@ -55,8 +55,6 @@
 #include "draw/draw_pipe.h"
 
 
-#if FEATURE_feedback
-
 /**
  * This is actually used for both feedback and selection.
  */
@@ -305,5 +303,3 @@ void st_init_feedback_functions(struct dd_function_table *functions)
 {
    functions->RenderMode = st_RenderMode;
 }
-
-#endif /* FEATURE_feedback */

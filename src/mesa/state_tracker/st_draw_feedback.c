@@ -46,8 +46,6 @@
 #include "draw/draw_context.h"
 
 
-#if FEATURE_feedback || FEATURE_rastpos
-
 /**
  * Set the (private) draw module's post-transformed vertex format when in
  * GL_SELECT or GL_FEEDBACK mode or for glRasterPos.
@@ -268,6 +266,3 @@ st_feedback_draw_vbo(struct gl_context *ctx,
    }
    draw_set_vertex_buffers(draw, 0, NULL);
 }
-
-#endif /* FEATURE_feedback || FEATURE_rastpos */
-
