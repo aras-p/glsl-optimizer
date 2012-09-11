@@ -236,11 +236,9 @@ _mesa_initialize_array_object( struct gl_context *ctx,
       case VERT_ATTRIB_EDGEFLAG:
          init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_EDGEFLAG], 1, GL_BOOL);
          break;
-#if FEATURE_point_size_array
       case VERT_ATTRIB_POINT_SIZE:
          init_array(ctx, &obj->VertexAttrib[VERT_ATTRIB_POINT_SIZE], 1, GL_FLOAT);
          break;
-#endif
       default:
          init_array(ctx, &obj->VertexAttrib[i], 4, GL_FLOAT);
          break;

@@ -261,13 +261,11 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
             goto invalid_pname;
          *params = ctx->Select.Buffer;
          break;
-#if FEATURE_point_size_array
       case GL_POINT_SIZE_ARRAY_POINTER_OES:
          if (ctx->API != API_OPENGLES)
             goto invalid_pname;
          *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Ptr;
          break;
-#endif
       case GL_DEBUG_CALLBACK_FUNCTION_ARB:
          if (!_mesa_is_desktop_gl(ctx))
             goto invalid_pname;

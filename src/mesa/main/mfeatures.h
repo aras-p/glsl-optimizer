@@ -84,8 +84,6 @@
 #define FEATURE_remap_table               0
 #endif
 
-#define FEATURE_point_size_array          FEATURE_ES
-
 #define FEATURE_es2_glsl                  FEATURE_ES2
 
 #define FEATURE_ARB_fragment_program      1

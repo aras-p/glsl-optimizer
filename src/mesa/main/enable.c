@@ -92,12 +92,10 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
          flag = VERT_BIT_COLOR1;
          break;
 
-#if FEATURE_point_size_array
       case GL_POINT_SIZE_ARRAY_OES:
          var = &arrayObj->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Enabled;
          flag = VERT_BIT_POINT_SIZE;
          break;
-#endif
 
 #if FEATURE_NV_vertex_program
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
@@ -1500,7 +1498,7 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
          CHECK_EXTENSION(EXT_secondary_color);
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled != 0);
-#if FEATURE_point_size_array
+#if FEATURE_ES
       case GL_POINT_SIZE_ARRAY_OES:
          if (ctx->API != API_OPENGLES)
             goto invalid_enum_error;
