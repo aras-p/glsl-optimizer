@@ -187,16 +187,19 @@ i915_create_context(struct pipe_screen *screen, void *priv)
    i915_init_resource_functions(i915);
    i915_init_query_functions(i915);
 
+   /* Create blitter. */
+   i915->blitter = util_blitter_create(&i915->base);
+   assert(i915->blitter);
+
+   /* must be done before installing Draw stages */
+   util_blitter_cache_all_shaders(i915->blitter);
+
    draw_install_aaline_stage(i915->draw, &i915->base);
    draw_install_aapoint_stage(i915->draw, &i915->base);
    draw_enable_point_sprites(i915->draw, TRUE);
 
    /* augmented draw pipeline clobbers state functions */
    i915_init_fixup_state_functions(i915);
-
-   /* Create blitter last - calls state creation functions. */
-   i915->blitter = util_blitter_create(&i915->base);
-   assert(i915->blitter);
 
    i915->dirty = ~0;
    i915->hardware_dirty = ~0;
