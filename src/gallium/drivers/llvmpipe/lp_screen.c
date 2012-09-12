@@ -297,6 +297,10 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
    if (!format_desc)
       return FALSE;
 
+   /* Z16 support is missing, which breaks the blit */
+   if (format == PIPE_FORMAT_Z16_UNORM)
+      return FALSE;
+
    assert(target == PIPE_BUFFER ||
           target == PIPE_TEXTURE_1D ||
           target == PIPE_TEXTURE_2D ||

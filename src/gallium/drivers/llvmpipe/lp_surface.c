@@ -172,10 +172,71 @@ lp_resource_copy(struct pipe_context *pipe,
 }
 
 
+static void lp_blit(struct pipe_context *pipe,
+                    const struct pipe_blit_info *blit_info)
+{
+   struct llvmpipe_context *lp = llvmpipe_context(pipe);
+   struct pipe_blit_info info = *blit_info;
+
+   if (info.src.resource->nr_samples > 1 &&
+       info.dst.resource->nr_samples <= 1 &&
+       !util_format_is_depth_or_stencil(info.src.resource->format) &&
+       !util_format_is_pure_integer(info.src.resource->format)) {
+      debug_printf("llvmpipe: color resolve unimplemented\n");
+      return;
+   }
+
+   if (util_try_blit_via_copy_region(pipe, &info)) {
+      return; /* done */
+   }
+
+   if (info.mask & PIPE_MASK_S) {
+      debug_printf("llvmpipe: cannot blit stencil, skipping\n");
+      info.mask &= ~PIPE_MASK_S;
+   }
+
+   if (!util_blitter_is_blit_supported(lp->blitter, &info)) {
+      debug_printf("llvmpipe: blit unsupported %s -> %s\n",
+                   util_format_short_name(info.src.resource->format),
+                   util_format_short_name(info.dst.resource->format));
+      return;
+   }
+
+   /* XXX turn off occlusion and streamout queries */
+
+   util_blitter_save_vertex_buffers(lp->blitter, lp->num_vertex_buffers,
+                                    lp->vertex_buffer);
+   util_blitter_save_vertex_elements(lp->blitter, (void*)lp->velems);
+   util_blitter_save_vertex_shader(lp->blitter, (void*)lp->vs);
+   util_blitter_save_geometry_shader(lp->blitter, (void*)lp->gs);
+   /*util_blitter_save_so_targets(lp->blitter, lp->num_so_targets,
+                     (struct pipe_stream_output_target**)lp->so_targets);*/
+   util_blitter_save_rasterizer(lp->blitter, (void*)lp->rasterizer);
+   util_blitter_save_viewport(lp->blitter, &lp->viewport);
+   util_blitter_save_scissor(lp->blitter, &lp->scissor);
+   util_blitter_save_fragment_shader(lp->blitter, lp->fs);
+   util_blitter_save_blend(lp->blitter, (void*)lp->blend);
+   util_blitter_save_depth_stencil_alpha(lp->blitter, (void*)lp->depth_stencil);
+   util_blitter_save_stencil_ref(lp->blitter, &lp->stencil_ref);
+   /*util_blitter_save_sample_mask(sp->blitter, lp->sample_mask);*/
+   util_blitter_save_framebuffer(lp->blitter, &lp->framebuffer);
+   util_blitter_save_fragment_sampler_states(lp->blitter,
+                     lp->num_samplers[PIPE_SHADER_FRAGMENT],
+                     (void**)lp->samplers[PIPE_SHADER_FRAGMENT]);
+   util_blitter_save_fragment_sampler_views(lp->blitter,
+                     lp->num_sampler_views[PIPE_SHADER_FRAGMENT],
+                     lp->sampler_views[PIPE_SHADER_FRAGMENT]);
+   util_blitter_save_render_condition(lp->blitter, lp->render_cond_query,
+                                      lp->render_cond_mode);
+   util_blitter_blit(lp->blitter, &info);
+}
+
+
 void
 llvmpipe_init_surface_functions(struct llvmpipe_context *lp)
 {
    lp->pipe.resource_copy_region = lp_resource_copy;
    lp->pipe.clear_render_target = util_clear_render_target;
    lp->pipe.clear_depth_stencil = util_clear_depth_stencil;
+   lp->pipe.blit = lp_blit;
 }

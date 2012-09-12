@@ -34,6 +34,7 @@
 #include "pipe/p_context.h"
 
 #include "draw/draw_vertex.h"
+#include "util/u_blitter.h"
 
 #include "lp_tex_sample.h"
 #include "lp_jit.h"
@@ -121,6 +122,8 @@ struct llvmpipe_context {
 
    /** The primitive drawing context */
    struct draw_context *draw;
+
+   struct blitter_context *blitter;
 
    unsigned tex_timestamp;
    boolean no_rast;

@@ -58,6 +58,10 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
 
    lp_print_counters();
 
+   if (llvmpipe->blitter) {
+      util_blitter_destroy(llvmpipe->blitter);
+   }
+
    /* This will also destroy llvmpipe->setup:
     */
    if (llvmpipe->draw)
@@ -167,6 +171,14 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
                                       llvmpipe->draw );
    if (!llvmpipe->setup)
       goto fail;
+
+   llvmpipe->blitter = util_blitter_create(&llvmpipe->pipe);
+   if (!llvmpipe->blitter) {
+      goto fail;
+   }
+
+   /* must be done before installing Draw stages */
+   util_blitter_cache_all_shaders(llvmpipe->blitter);
 
    /* plug in AA line/point stages */
    draw_install_aaline_stage(llvmpipe->draw, &llvmpipe->pipe);
