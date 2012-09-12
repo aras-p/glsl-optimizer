@@ -2,6 +2,7 @@
 #define __NV30_CONTEXT_H__
 
 #include "pipe/p_format.h"
+#include "util/u_blitter.h"
 
 #include "nv30_screen.h"
 #include "nv30_state.h"
@@ -42,6 +43,7 @@
 struct nv30_context {
    struct nouveau_context base;
    struct nv30_screen *screen;
+   struct blitter_context *blitter;
 
    struct nouveau_bufctx *bufctx;
 
@@ -124,6 +126,9 @@ struct nv30_context {
    enum {
       HW,
    } render_mode;
+
+   struct pipe_query *render_cond_query;
+   unsigned render_cond_mode;
 };
 
 static INLINE struct nv30_context *

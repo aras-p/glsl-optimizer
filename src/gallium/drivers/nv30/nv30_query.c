@@ -238,6 +238,9 @@ nv40_query_render_condition(struct pipe_context *pipe,
    struct nv30_query *q = nv30_query(pq);
    struct nouveau_pushbuf *push = nv30->base.pushbuf;
 
+   nv30->render_cond_query = pq;
+   nv30->render_cond_mode = mode;
+
    if (!pq) {
       BEGIN_NV04(push, SUBC_3D(0x1e98), 1);
       PUSH_DATA (push, 0x01000000);

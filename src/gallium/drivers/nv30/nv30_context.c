@@ -84,6 +84,9 @@ nv30_context_destroy(struct pipe_context *pipe)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
 
+   if (nv30->blitter)
+      util_blitter_destroy(nv30->blitter);
+
    if (nv30->draw)
       draw_destroy(nv30->draw);
 
@@ -170,6 +173,12 @@ nv30_context_create(struct pipe_screen *pscreen, void *priv)
    nv30_fragtex_init(pipe);
    nv40_verttex_init(pipe);
    nv30_draw_init(pipe);
+
+   nv30->blitter = util_blitter_create(pipe);
+   if (!nv30->blitter) {
+      nv30_context_destroy(pipe);
+      return NULL;
+   }
 
    return pipe;
 }
