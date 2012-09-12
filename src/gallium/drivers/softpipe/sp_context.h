@@ -32,6 +32,7 @@
 #define SP_CONTEXT_H
 
 #include "pipe/p_context.h"
+#include "util/u_blitter.h"
 
 #include "draw/draw_vertex.h"
 
@@ -169,6 +170,8 @@ struct softpipe_context {
    /** Draw module backend */
    struct vbuf_render *vbuf_backend;
    struct draw_stage *vbuf;
+
+   struct blitter_context *blitter;
 
    boolean dirty_render_cache;
 

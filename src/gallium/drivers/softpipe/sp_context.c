@@ -99,6 +99,10 @@ softpipe_destroy( struct pipe_context *pipe )
    pipe_sampler_view_reference(&softpipe->pstipple.sampler_view, NULL);
 #endif
 
+   if (softpipe->blitter) {
+      util_blitter_destroy(softpipe->blitter);
+   }
+
    if (softpipe->draw)
       draw_destroy( softpipe->draw );
 
@@ -310,6 +314,13 @@ softpipe_create_context( struct pipe_screen *screen,
    draw_set_rasterize_stage(softpipe->draw, softpipe->vbuf);
    draw_set_render(softpipe->draw, softpipe->vbuf_backend);
 
+   softpipe->blitter = util_blitter_create(&softpipe->pipe);
+   if (!softpipe->blitter) {
+      goto fail;
+   }
+
+   /* must be done before installing Draw stages */
+   util_blitter_cache_all_shaders(softpipe->blitter);
 
    /* plug in AA line/point stages */
    draw_install_aaline_stage(softpipe->draw, &softpipe->pipe);
