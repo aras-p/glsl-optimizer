@@ -33,9 +33,7 @@ LOCAL_PATH := $(call my-dir)
 #     X86_FILES
 include $(LOCAL_PATH)/sources.mak
 
-common_CFLAGS := \
-	-DFEATURE_ES1=1 \
-	-DFEATURE_ES2=1
+MESA_ENABLED_APIS := ES1 ES2
 
 common_C_INCLUDES := \
 	$(MESA_TOP)/src/mapi \
@@ -100,9 +98,10 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libmesa_dricore
 LOCAL_MODULE_CLASS := STATIC_LIBRARIES
 
+MESA_ENABLED_APIS += GL
 LOCAL_CFLAGS := \
-	$(common_CFLAGS) \
-	-DFEATURE_GL=1
+   $(common_CFLAGS) \
+   $(patsubst %,-DFEATURE_%=1,$(MESA_ENABLED_APIS))
 
 LOCAL_C_INCLUDES := \
 	$(common_C_INCLUDES)

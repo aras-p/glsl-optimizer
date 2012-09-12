@@ -16,9 +16,8 @@ env.Append(CPPPATH = [
     '#/src/mesa',
 ])
 
-env.Append(CPPDEFINES = [
-    'FEATURE_GL=1',
-])
+enabled_apis = []
+enabled_apis += ['GL']
 
 if env['platform'] == 'windows':
     env.Append(CPPDEFINES = [
@@ -335,7 +334,7 @@ GLAPI = '#src/mapi/glapi/'
 
 if env['gles']:
 
-    env.Append(CPPDEFINES = ['FEATURE_ES1=1', 'FEATURE_ES2=1'])
+    enabled_apis += ['ES1', 'ES2']
 
     # generate GLES sources
     gles_sources = ['main/es1_conversion.c',]
@@ -367,6 +366,8 @@ if env['gles']:
     env.Append(CPPPATH = [gles_headers[0].dir.up().up()])
 
     mesa_sources += gles_sources
+
+env.Append(CPPDEFINES = ["FEATURE_%s=1" % api for api in enabled_apis])
 
 #
 # Assembly sources
