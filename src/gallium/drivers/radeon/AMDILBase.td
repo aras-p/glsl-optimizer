@@ -69,6 +69,11 @@ def FeatureDumpCode : SubtargetFeature <"DumpCode",
         "true",
         "Dump MachineInstrs in the CodeEmitter">;
 
+def FeatureR600ALUInst : SubtargetFeature<"R600ALUInst",
+        "mR600ALUInst",
+        "false",
+        "Older version of ALU instructions encoding.">;
+
 
 //===----------------------------------------------------------------------===//
 // Register File, Calling Conv, Instruction Descriptions

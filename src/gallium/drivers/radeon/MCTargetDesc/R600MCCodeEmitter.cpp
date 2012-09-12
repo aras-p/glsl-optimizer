@@ -61,10 +61,9 @@ private:
   void EmitALUInstr(const MCInst &MI, SmallVectorImpl<MCFixup> &Fixups,
                     raw_ostream &OS) const;
   void EmitSrc(const MCInst &MI, unsigned OpIdx, raw_ostream &OS) const;
+  void EmitSrcISA(const MCInst &MI, unsigned OpIdx, uint64_t &Value,
+                  raw_ostream &OS) const;
   void EmitDst(const MCInst &MI, raw_ostream &OS) const;
-  void EmitALU(const MCInst &MI, unsigned numSrc,
-               SmallVectorImpl<MCFixup> &Fixups,
-               raw_ostream &OS) const;
   void EmitTexInstr(const MCInst &MI, SmallVectorImpl<MCFixup> &Fixups,
                     raw_ostream &OS) const;
   void EmitFCInstr(const MCInst &MI, raw_ostream &OS) const;
@@ -210,7 +209,18 @@ void R600MCCodeEmitter::EmitALUInstr(const MCInst &MI,
   }
 
   // Emit instruction type
-  EmitByte(0, OS);
+  EmitByte(INSTR_ALU, OS);
+
+  uint64_t InstWord01 = getBinaryCodeForInstr(MI, Fixups);
+
+  //older alu have different encoding for instructions with one or two src
+  //parameters.
+  if (STI.getFeatureBits() & AMDGPU::FeatureR600ALUInst &&
+      MI.getNumOperands() < 4) {
+    uint64_t ISAOpCode = InstWord01 & (0x3FFULL << 39);
+    InstWord01 &= ~(0x3FFULL << 39);
+    InstWord01 |= ISAOpCode << 1;
+  }
 
   unsigned int OpIndex;
   for (OpIndex = 1; OpIndex < NumOperands; OpIndex++) {
@@ -218,17 +228,64 @@ void R600MCCodeEmitter::EmitALUInstr(const MCInst &MI,
     if (MI.getOperand(OpIndex).isImm() || MI.getOperand(OpIndex).isFPImm()) {
       break;
     }
-    EmitSrc(MI, OpIndex, OS);
+    EmitSrcISA(MI, OpIndex, InstWord01, OS);
   }
 
   // Emit zeros for unused sources
   for ( ; OpIndex < 4; OpIndex++) {
-    EmitNullBytes(SRC_BYTE_COUNT, OS);
+    EmitNullBytes(SRC_BYTE_COUNT - 6, OS);
   }
 
-  EmitDst(MI, OS);
+  // Emit destination register
+  const MCOperand &dstOp = MI.getOperand(0);
+  if (dstOp.isReg() && dstOp.getReg() != AMDGPU::PREDICATE_BIT) {
+    //element of destination register
+    InstWord01 |= uint64_t(getHWRegChan(dstOp.getReg())) << 61;
 
-  EmitALU(MI, NumOperands - 1, Fixups, OS);
+    // isClamped
+    if (isFlagSet(MI, 0, MO_FLAG_CLAMP)) {
+      InstWord01 |= 1ULL << 63;
+    }
+
+    // write mask
+    if (!isFlagSet(MI, 0, MO_FLAG_MASK) && NumOperands < 4) {
+      InstWord01 |= 1ULL << 36;
+    }
+
+    // XXX: Emit relative addressing mode
+  }
+
+  // Emit ALU
+
+  // Emit IsLast (for this instruction group) (1 byte)
+  if (!isFlagSet(MI, 0, MO_FLAG_NOT_LAST)) {
+    InstWord01 |= 1ULL << 31;
+  }
+
+  // XXX: Emit push modifier
+  if(isFlagSet(MI, 1,  MO_FLAG_PUSH)) {
+    InstWord01 |= 1ULL << 34;
+  }
+
+    // XXX: Emit predicate (1 byte)
+  int PredIdx = MCDesc.findFirstPredOperandIdx();
+  if (PredIdx != -1) {
+    switch(MI.getOperand(PredIdx).getReg()) {
+    case AMDGPU::PRED_SEL_ZERO:
+      InstWord01 |= 2ULL << 29;
+      break;
+    case AMDGPU::PRED_SEL_ONE:
+      InstWord01 |= 3ULL << 29;
+      break;
+    }
+  }
+
+  //XXX: predicate
+  //XXX: bank swizzle
+  //XXX: OMOD
+  //XXX: index mode
+
+  Emit(InstWord01, OS);
 }
 
 void R600MCCodeEmitter::EmitSrc(const MCInst &MI, unsigned OpIdx,
@@ -295,99 +352,74 @@ void R600MCCodeEmitter::EmitSrc(const MCInst &MI, unsigned OpIdx,
 
 }
 
-void R600MCCodeEmitter::EmitDst(const MCInst &MI, raw_ostream &OS) const {
-
-  const MCOperand &MO = MI.getOperand(0);
-  if (MO.isReg() && MO.getReg() != AMDGPU::PREDICATE_BIT) {
-    // Emit the destination register index (1 byte)
-    EmitByte(getHWReg(MO.getReg()), OS);
-
-    // Emit the element of the destination register (1 byte)
-    EmitByte(getHWRegChan(MO.getReg()), OS);
-
-    // Emit isClamped (1 byte)
-    if (isFlagSet(MI, 0, MO_FLAG_CLAMP)) {
+void R600MCCodeEmitter::EmitSrcISA(const MCInst &MI, unsigned OpIdx,
+                                   uint64_t &Value, raw_ostream &OS) const {
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  union {
+    float f;
+    uint32_t i;
+  } InlineConstant;
+  InlineConstant.i = 0;
+  // Emit the source select (2 bytes).  For GPRs, this is the register index.
+  // For other potential instruction operands, (e.g. constant registers) the
+  // value of the source select is defined in the r600isa docs.
+  if (MO.isReg()) {
+    unsigned Reg = MO.getReg();
+    if (AMDGPUMCRegisterClasses[AMDGPU::R600_CReg32RegClassID].contains(Reg)) {
       EmitByte(1, OS);
     } else {
       EmitByte(0, OS);
     }
 
-    // Emit writemask (1 byte).
-    if (isFlagSet(MI, 0, MO_FLAG_MASK)) {
-      EmitByte(0, OS);
-    } else {
-      EmitByte(1, OS);
+    if (Reg == AMDGPU::ALU_LITERAL_X) {
+      unsigned ImmOpIndex = MI.getNumOperands() - 1;
+      MCOperand ImmOp = MI.getOperand(ImmOpIndex);
+      if (ImmOp.isFPImm()) {
+        InlineConstant.f = ImmOp.getFPImm();
+      } else {
+        assert(ImmOp.isImm());
+        InlineConstant.i = ImmOp.getImm();
+      }
     }
-
-    // XXX: Emit relative addressing mode
-    EmitByte(0, OS);
   } else {
-    // XXX: Handle other operand types.  Are there any for destination regs?
-    EmitNullBytes(DST_BYTE_COUNT, OS);
-  }
-}
-
-void R600MCCodeEmitter::EmitALU(const MCInst &MI, unsigned numSrc,
-                                SmallVectorImpl<MCFixup> &Fixups,
-                                raw_ostream &OS) const {
-  const MCInstrDesc &MCDesc = MCII.get(MI.getOpcode());
-
-  // Emit the instruction (2 bytes)
-  EmitTwoBytes(getBinaryCodeForInstr(MI, Fixups), OS);
-
-  // Emit IsLast (for this instruction group) (1 byte)
-  if (isFlagSet(MI, 0, MO_FLAG_NOT_LAST)) {
-    EmitByte(0, OS);
-  } else {
-    EmitByte(1, OS);
+    // XXX: Handle other operand types.
+    EmitTwoBytes(0, OS);
   }
 
-  // Emit isOp3 (1 byte)
-  if (numSrc == 3) {
-    EmitByte(1, OS);
-  } else {
-    EmitByte(0, OS);
+  // source channel
+  uint64_t sourceChannelValue = getHWRegChan(MO.getReg());
+  if (OpIdx == 1)
+    Value |= sourceChannelValue << 10;
+  if (OpIdx == 2)
+    Value |= sourceChannelValue << 23;
+  if (OpIdx == 3)
+    Value |= sourceChannelValue << 42;
+
+  // isNegated
+  if ((!(isFlagSet(MI, OpIdx, MO_FLAG_ABS)))
+      && (isFlagSet(MI, OpIdx, MO_FLAG_NEG) ||
+     (MO.isReg() &&
+      (MO.getReg() == AMDGPU::NEG_ONE || MO.getReg() == AMDGPU::NEG_HALF)))){
+    if (OpIdx == 1)
+      Value |= 1ULL << 12;
+    else if (OpIdx == 2)
+      Value |= 1ULL << 25;
+    else if (OpIdx == 3)
+      Value |= 1ULL << 44;
   }
 
-  // XXX: Emit push modifier
-    if(isFlagSet(MI, 1,  MO_FLAG_PUSH)) {
-    EmitByte(1, OS);
-  } else {
-    EmitByte(0, OS);
+  // isAbsolute
+  if (isFlagSet(MI, OpIdx, MO_FLAG_ABS)) {
+    assert(OpIdx < 3);
+    Value |= 1ULL << (32+OpIdx-1);
   }
 
-    // XXX: Emit predicate (1 byte)
-  int PredIdx = MCDesc.findFirstPredOperandIdx();
-  if (PredIdx > -1)
-    switch(MI.getOperand(PredIdx).getReg()) {
-    case AMDGPU::PRED_SEL_ZERO:
-      EmitByte(2, OS);
-      break;
-    case AMDGPU::PRED_SEL_ONE:
-      EmitByte(3, OS);
-      break;
-    default:
-      EmitByte(0, OS);
-      break;
-    }
-  else {
-    EmitByte(0, OS);
-  }
+  // XXX: relative addressing mode
+  // XXX: kc_bank
 
+  // Emit the literal value, if applicable (4 bytes).
+  Emit(InlineConstant.i, OS);
 
-  // XXX: Emit bank swizzle. (1 byte)  Do we need this?  It looks like
-  // r600_asm.c sets it.
-  EmitByte(0, OS);
-
-  // XXX: Emit bank_swizzle_force (1 byte) Not sure what this is for.
-  EmitByte(0, OS);
-
-  // XXX: Emit OMOD (1 byte) Not implemented.
-  EmitByte(0, OS);
-
-  // XXX: Emit index_mode.  I think this is for indirect addressing, so we
-  // don't need to worry about it.
-  EmitByte(0, OS);
 }
 
 void R600MCCodeEmitter::EmitTexInstr(const MCInst &MI,
@@ -621,9 +653,12 @@ uint64_t R600MCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                               const MCOperand &MO,
                                         SmallVectorImpl<MCFixup> &Fixup) const {
   if (MO.isReg()) {
-    return getHWReg(MO.getReg());
-  } else {
+    return getHWRegIndex(MO.getReg());
+  } else if (MO.isImm()) {
     return MO.getImm();
+  } else {
+    assert(0);
+    return 0;
   }
 }
 

@@ -293,32 +293,37 @@ static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
 				unsigned char * bytes, unsigned bytes_read)
 {
 	unsigned src_idx;
-	unsigned inst0, inst1;
-	unsigned push_modifier;
 	struct r600_bytecode_alu alu;
+	unsigned src_const_reg[3];
+	uint32_t word0, word1;
+
 	memset(&alu, 0, sizeof(alu));
 	for(src_idx = 0; src_idx < 3; src_idx++) {
-		bytes_read = r600_src_from_byte_stream(bytes, bytes_read,
-								&alu, src_idx);
+		unsigned i;
+		src_const_reg[src_idx] = bytes[bytes_read++];
+		for (i = 0; i < 4; i++) {
+			alu.src[src_idx].value |= bytes[bytes_read++] << (i * 8);
+		}
 	}
 
-	alu.dst.sel = bytes[bytes_read++];
-	alu.dst.chan = bytes[bytes_read++];
-	alu.dst.clamp = bytes[bytes_read++];
-	alu.dst.write = bytes[bytes_read++];
-	alu.dst.rel = bytes[bytes_read++];
-	inst0 = bytes[bytes_read++];
-	inst1 = bytes[bytes_read++];
-	alu.inst = inst0 | (inst1 << 8);
-	alu.last = bytes[bytes_read++];
-	alu.is_op3 = bytes[bytes_read++];
-	push_modifier = bytes[bytes_read++];
-	alu.pred_sel = bytes[bytes_read++];
-	alu.bank_swizzle = bytes[bytes_read++];
-	alu.bank_swizzle_force = bytes[bytes_read++];
-	alu.omod = bytes[bytes_read++];
-	alu.index_mode = bytes[bytes_read++];
+	word0 = i32_from_byte_stream(bytes, &bytes_read);
+	word1 = i32_from_byte_stream(bytes, &bytes_read);
 
+	switch(ctx->bc->chip_class) {
+	case R600:
+		r600_bytecode_alu_read(&alu, word0, word1);
+		break;
+	case R700:
+	case EVERGREEN:
+	case CAYMAN:
+		r700_bytecode_alu_read(&alu, word0, word1);
+		break;
+	}
+
+	for(src_idx = 0; src_idx < 3; src_idx++) {
+		if (src_const_reg[src_idx])
+			alu.src[src_idx].sel += 512;
+	}
 
 	if (alu.inst == CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE) ||
 	    alu.inst == CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE) ||
@@ -329,15 +334,14 @@ static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
 		alu.src[1].sel = V_SQ_ALU_SRC_0;
 		alu.src[1].chan = 0;
 		alu.last = 1;
-    }
+	}
 
-    if (push_modifier) {
-        alu.pred_sel = 0;
-		alu.execute_mask = 1;
+	if (alu.execute_mask) {
+		alu.pred_sel = 0;
 		r600_bytecode_add_alu_type(ctx->bc, &alu, CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE));
-	} else
+	} else {
 		r600_bytecode_add_alu(ctx->bc, &alu);
-
+	}
 
 	/* XXX: Handle other KILL instructions */
 	if (alu.inst == CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT)) {

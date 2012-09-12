@@ -36,6 +36,7 @@ private:
   bool mIs64bit;
   bool mIs32on64bit;
   bool mDumpCode;
+  bool mR600ALUInst;
 
   InstrItineraryData InstrItins;
 
@@ -56,6 +57,7 @@ public:
   std::string getDeviceName() const;
   virtual size_t getDefaultSize(uint32_t dim) const;
   bool dumpCode() const { return mDumpCode; }
+  bool r600ALUEncoding() const { return mR600ALUInst; }
 
 };
 
