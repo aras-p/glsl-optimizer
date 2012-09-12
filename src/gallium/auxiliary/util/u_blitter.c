@@ -121,6 +121,7 @@ struct blitter_context_priv
    boolean vertex_has_integers;
    boolean has_stream_out;
    boolean has_stencil_export;
+   boolean has_texture_multisample;
 };
 
 
@@ -168,6 +169,9 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->has_stencil_export =
          pipe->screen->get_param(pipe->screen,
                                  PIPE_CAP_SHADER_STENCIL_EXPORT);
+
+   ctx->has_texture_multisample =
+      pipe->screen->get_param(pipe->screen, PIPE_CAP_TEXTURE_MULTISAMPLE);
 
    /* blend state objects */
    memset(&blend, 0, sizeof(blend));
@@ -1057,6 +1061,10 @@ boolean util_blitter_is_copy_supported(struct blitter_context *blitter,
    }
 
    if (src) {
+      if (src->nr_samples > 1 && !ctx->has_texture_multisample) {
+         return FALSE;
+      }
+
       if (!screen->is_format_supported(screen, src->format, src->target,
                                  src->nr_samples, PIPE_BIND_SAMPLER_VIEW)) {
          return FALSE;
