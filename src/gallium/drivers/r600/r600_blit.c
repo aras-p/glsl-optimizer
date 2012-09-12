@@ -327,29 +327,46 @@ void r600_decompress_color_textures(struct r600_context *rctx,
 	}
 }
 
+/* Helper for decompressing a portion of a color or depth resource before
+ * blitting if any decompression is needed.
+ * The driver doesn't decompress resources automatically while u_blitter is
+ * rendering. */
+static bool r600_decompress_subresource(struct pipe_context *ctx,
+					struct pipe_resource *tex,
+					unsigned level,
+					unsigned first_layer, unsigned last_layer)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_texture *rtex = (struct r600_texture*)tex;
+
+	if (rtex->is_depth && !rtex->is_flushing_texture) {
+		if (!r600_init_flushed_depth_texture(ctx, tex, NULL))
+			return false; /* error */
+
+		r600_blit_decompress_depth(ctx, rtex, NULL,
+					   level, level,
+					   first_layer, last_layer,
+					   0, u_max_sample(tex));
+	} else if (rctx->chip_class != CAYMAN && rtex->fmask_size && rtex->cmask_size) {
+		r600_blit_decompress_color(ctx, rtex, level, level,
+					   first_layer, last_layer);
+	}
+	return true;
+}
+
 static void r600_copy_first_sample(struct pipe_context *ctx,
 				   const struct pipe_resolve_info *info)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_texture *rsrc = (struct r600_texture*)info->src.res;
 	struct pipe_surface *dst_view, dst_templ;
 	struct pipe_sampler_view src_templ, *src_view;
 	struct pipe_box box;
 
-	if (rsrc->is_depth && !rsrc->is_flushing_texture) {
-		if (!r600_init_flushed_depth_texture(ctx, info->src.res, NULL))
-			return; /* error */
-
-		/* Decompress the first sample only. */
-		r600_blit_decompress_depth(ctx,	rsrc, NULL,
-					   0, 0,
-					   info->src.layer, info->src.layer,
-					   0, 0);
-	}
-	if (rctx->chip_class != CAYMAN && rsrc->fmask_size && rsrc->cmask_size) {
-		r600_blit_decompress_color(ctx, rsrc,
-					   0, 0,
-					   info->src.layer, info->src.layer);
+	/* The driver doesn't decompress resources automatically while
+	 * u_blitter is rendering. */
+	if (!r600_decompress_subresource(ctx, info->src.res, 0,
+					 info->src.layer, info->src.layer)) {
+		return; /* error */
 	}
 
 	/* this is correct for upside-down blits too */
@@ -664,7 +681,6 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      const struct pipe_box *src_box)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_texture *rsrc = (struct r600_texture*)src;
 	struct texture_orig_info orig_info[2];
 	struct pipe_box sbox;
 	const struct pipe_box *psbox = src_box;
@@ -682,19 +698,11 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	assert(u_max_sample(dst) == u_max_sample(src));
 	last_sample = u_max_sample(dst);
 
-	/* This must be done before entering u_blitter to avoid recursion. */
-	if (rsrc->is_depth && !rsrc->is_flushing_texture) {
-		if (!r600_init_flushed_depth_texture(ctx, src, NULL))
-			return; /* error */
-
-		r600_blit_decompress_depth(ctx, rsrc, NULL,
-					   src_level, src_level,
-					   src_box->z, src_box->z + src_box->depth - 1,
-					   0, u_max_sample(src));
-	}
-	if (rctx->chip_class != CAYMAN && rsrc->fmask_size && rsrc->cmask_size) {
-		r600_blit_decompress_color(ctx, rsrc, src_level, src_level,
-					   src_box->z, src_box->z + src_box->depth - 1);
+	/* The driver doesn't decompress resources automatically while
+	 * u_blitter is rendering. */
+	if (!r600_decompress_subresource(ctx, src, src_level,
+					 src_box->z, src_box->z + src_box->depth - 1)) {
+		return; /* error */
 	}
 
 	restore_orig[0] = restore_orig[1] = FALSE;
