@@ -56,6 +56,8 @@ static void svga_destroy( struct pipe_context *pipe )
    struct svga_context *svga = svga_context( pipe );
    unsigned shader;
 
+   util_blitter_destroy(svga->blitter);
+
    svga_cleanup_framebuffer( svga );
    svga_cleanup_tss_binding( svga );
 
