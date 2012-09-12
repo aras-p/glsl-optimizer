@@ -165,6 +165,12 @@ util_dump_vertex_element(FILE *stream,
 void
 util_dump_draw_info(FILE *stream, const struct pipe_draw_info *state);
 
+void
+util_dump_box(FILE *stream, const struct pipe_box *box);
+
+void
+util_dump_blit_info(FILE *stream, const struct pipe_blit_info *info);
+
 /* FIXME: Move the other debug_dump_xxx functions out of u_debug.h into here. */
 
 

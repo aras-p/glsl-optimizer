@@ -762,3 +762,76 @@ util_dump_draw_info(FILE *stream, const struct pipe_draw_info *state)
 
    util_dump_struct_end(stream);
 }
+
+void util_dump_box(FILE *stream, const struct pipe_box *box)
+{
+   if(!box) {
+      util_dump_null(stream);
+      return;
+   }
+
+   util_dump_struct_begin(stream, "pipe_box");
+
+   util_dump_member(stream, int, box, x);
+   util_dump_member(stream, int, box, y);
+   util_dump_member(stream, int, box, z);
+   util_dump_member(stream, int, box, width);
+   util_dump_member(stream, int, box, height);
+   util_dump_member(stream, int, box, depth);
+
+   util_dump_struct_end(stream);
+}
+
+void util_dump_blit_info(FILE *stream, const struct pipe_blit_info *info)
+{
+   char mask[7];
+
+   if (!info) {
+      util_dump_null(stream);
+      return;
+   }
+
+   util_dump_struct_begin(stream, "pipe_blit_info");
+
+   util_dump_member_begin(stream, "dst");
+   util_dump_struct_begin(stream, "dst");
+   util_dump_member(stream, ptr, &info->dst, resource);
+   util_dump_member(stream, uint, &info->dst, level);
+   util_dump_member(stream, format, &info->dst, format);
+   util_dump_member_begin(stream, "box");
+   util_dump_box(stream, &info->dst.box);
+   util_dump_member_end(stream);
+   util_dump_struct_end(stream);
+   util_dump_member_end(stream);
+
+   util_dump_member_begin(stream, "src");
+   util_dump_struct_begin(stream, "src");
+   util_dump_member(stream, ptr, &info->src, resource);
+   util_dump_member(stream, uint, &info->src, level);
+   util_dump_member(stream, format, &info->src, format);
+   util_dump_member_begin(stream, "box");
+   util_dump_box(stream, &info->src.box);
+   util_dump_member_end(stream);
+   util_dump_struct_end(stream);
+   util_dump_member_end(stream);
+
+   mask[0] = (info->mask & PIPE_MASK_R) ? 'R' : '-';
+   mask[1] = (info->mask & PIPE_MASK_G) ? 'G' : '-';
+   mask[2] = (info->mask & PIPE_MASK_B) ? 'B' : '-';
+   mask[3] = (info->mask & PIPE_MASK_A) ? 'A' : '-';
+   mask[4] = (info->mask & PIPE_MASK_Z) ? 'Z' : '-';
+   mask[5] = (info->mask & PIPE_MASK_S) ? 'S' : '-';
+   mask[6] = 0;
+
+   util_dump_member_begin(stream, "mask");
+   util_dump_string(stream, mask);
+   util_dump_member_end(stream);
+   util_dump_member(stream, uint, info, filter);
+
+   util_dump_member(stream, bool, info, scissor_enable);
+   util_dump_member_begin(stream, "scissor");
+   util_dump_scissor_state(stream, &info->scissor);
+   util_dump_member_end(stream);
+
+   util_dump_struct_end(stream);
+}
