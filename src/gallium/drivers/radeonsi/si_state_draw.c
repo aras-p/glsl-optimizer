@@ -455,7 +455,7 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 		si_pm4_sh_data_add(pm4, va & 0xFFFFFFFF);
 		si_pm4_sh_data_add(pm4, (S_008F04_BASE_ADDRESS_HI(va >> 32) |
 					 S_008F04_STRIDE(vb->stride)));
-		si_pm4_sh_data_add(pm4, (vb->buffer->width0 - offset) /
+		si_pm4_sh_data_add(pm4, (vb->buffer->width0 - vb->buffer_offset) /
 					 MAX2(vb->stride, 1));
 		si_pm4_sh_data_add(pm4, rctx->vertex_elements->rsrc_word3[i]);
 
