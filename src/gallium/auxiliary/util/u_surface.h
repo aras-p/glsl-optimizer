@@ -44,16 +44,9 @@ u_surface_default_template(struct pipe_surface *view,
                            unsigned bind);
 
 extern boolean
-util_create_rgba_surface(struct pipe_context *ctx,
+util_create_rgba_texture(struct pipe_context *ctx,
                          uint width, uint height, uint bind,
-                         struct pipe_resource **textureOut,
-                         struct pipe_surface **surfaceOut);
-
-
-extern void
-util_destroy_rgba_surface(struct pipe_resource *texture,
-                          struct pipe_surface *surface);
-
+                         struct pipe_resource **textureOut);
 
 
 extern void

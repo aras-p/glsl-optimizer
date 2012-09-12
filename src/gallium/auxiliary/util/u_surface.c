@@ -66,11 +66,9 @@ u_surface_default_template(struct pipe_surface *surf,
  * \return TRUE for success, FALSE if failure
  */
 boolean
-util_create_rgba_surface(struct pipe_context *pipe,
-                         uint width, uint height,
-                         uint bind,
-                         struct pipe_resource **textureOut,
-                         struct pipe_surface **surfaceOut)
+util_create_rgba_texture(struct pipe_context *pipe,
+                         uint width, uint height, uint bind,
+                         struct pipe_resource **textureOut)
 {
    static const enum pipe_format rgbaFormats[] = {
       PIPE_FORMAT_B8G8R8A8_UNORM,
@@ -113,30 +111,8 @@ util_create_rgba_surface(struct pipe_context *pipe,
 
    /* create surface */
    u_surface_default_template(&surf_templ, *textureOut, bind);
-   /* create surface / view into texture */
-   *surfaceOut = pipe->create_surface(pipe,
-                                      *textureOut,
-                                      &surf_templ);
-   if (!*surfaceOut) {
-      pipe_resource_reference(textureOut, NULL);
-      return FALSE;
-   }
-
    return TRUE;
 }
-
-
-/**
- * Release the surface and texture from util_create_rgba_surface().
- */
-void
-util_destroy_rgba_surface(struct pipe_resource *texture,
-                          struct pipe_surface *surface)
-{
-   pipe_surface_reference(&surface, NULL);
-   pipe_resource_reference(&texture, NULL);
-}
-
 
 
 /**
