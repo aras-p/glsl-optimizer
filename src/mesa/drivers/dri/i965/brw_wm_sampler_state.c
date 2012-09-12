@@ -341,7 +341,10 @@ brw_upload_samplers(struct brw_context *brw)
 
    GLbitfield SamplersUsed = vs->SamplersUsed | fs->SamplersUsed;
 
-   brw->sampler.count = _mesa_bitcount(SamplersUsed);
+   /* ARB programs use the texture unit number as the sampler index, so we
+    * need to find the highest unit used.  A bit-count will not work.
+    */
+   brw->sampler.count = _mesa_fls(SamplersUsed);
 
    if (brw->sampler.count == 0)
       return;

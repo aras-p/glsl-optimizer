@@ -1250,7 +1250,7 @@ brw_update_texture_surfaces(struct brw_context *brw)
    struct gl_program *vs = (struct gl_program *) brw->vertex_program;
    struct gl_program *fs = (struct gl_program *) brw->fragment_program;
 
-   unsigned num_samplers = _mesa_bitcount(vs->SamplersUsed | fs->SamplersUsed);
+   unsigned num_samplers = _mesa_fls(vs->SamplersUsed | fs->SamplersUsed);
 
    for (unsigned s = 0; s < num_samplers; s++) {
       brw->vs.surf_offset[SURF_INDEX_VS_TEXTURE(s)] = 0;
