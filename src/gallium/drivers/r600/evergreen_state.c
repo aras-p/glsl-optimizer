@@ -1157,6 +1157,8 @@ static void evergreen_set_scissor_state(struct pipe_context *ctx,
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	uint32_t tl, br;
 
+	rctx->scissor = *state;
+
 	if (rstate == NULL)
 		return;
 

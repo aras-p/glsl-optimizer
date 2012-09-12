@@ -350,7 +350,7 @@ static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 			rctx->scissor_enable = rs->scissor_enable;
 
 			if (rs->scissor_enable) {
-				r600_set_scissor_state(rctx, &rctx->scissor_state);
+				r600_set_scissor_state(rctx, &rctx->scissor);
 			} else {
 				r600_set_max_scissor(rctx);
 			}

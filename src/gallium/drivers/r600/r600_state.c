@@ -593,7 +593,8 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 			return FALSE;
 
 		/* MSAA integer colorbuffers hang. */
-		if (util_format_is_pure_integer(format))
+		if (util_format_is_pure_integer(format) &&
+		    !util_format_is_depth_or_stencil(format))
 			return FALSE;
 
 		switch (sample_count) {
@@ -1156,12 +1157,10 @@ static void r600_pipe_set_scissor_state(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	if (rctx->chip_class == R600) {
-		rctx->scissor_state = *state;
+	rctx->scissor = *state;
 
-		if (!rctx->scissor_enable)
-			return;
-	}
+	if (rctx->chip_class == R600 && !rctx->scissor_enable)
+		return;
 
 	r600_set_scissor_state(rctx, state);
 }

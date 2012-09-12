@@ -379,6 +379,7 @@ struct r600_context {
 	unsigned			db_shader_control;
 	unsigned			pa_sc_line_stipple;
 	/* for saving when using blitter */
+	struct pipe_scissor_state	scissor;
 	struct r600_pipe_shader_selector 	*ps_shader;
 	struct r600_pipe_shader_selector 	*vs_shader;
 	struct r600_pipe_rasterizer	*rasterizer;
@@ -479,9 +480,8 @@ struct r600_context {
 	unsigned		streamout_append_bitmask;
 
 	/* There is no scissor enable bit on r6xx, so we must use a workaround.
-	 * These track the current scissor state. */
+	 * This tracks if the scissor is enabled. */
 	bool			scissor_enable;
-	struct pipe_scissor_state scissor_state;
 
 	/* With rasterizer discard, there doesn't have to be a pixel shader.
 	 * In that case, we bind this one: */
