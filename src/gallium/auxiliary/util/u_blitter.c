@@ -1807,3 +1807,143 @@ void util_blitter_custom_color(struct blitter_context *blitter,
    blitter_restore_render_cond(ctx);
    blitter_unset_running_flag(ctx);
 }
+
+/* Return whether this is an RGBA, Z, S, or combined ZS format.
+ */
+static unsigned get_format_mask(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(desc);
+
+   if (util_format_has_depth(desc)) {
+      if (util_format_has_stencil(desc)) {
+         return PIPE_MASK_ZS;
+      } else {
+         return PIPE_MASK_Z;
+      }
+   } else {
+      if (util_format_has_stencil(desc)) {
+         return PIPE_MASK_S;
+      } else {
+         return PIPE_MASK_RGBA;
+      }
+   }
+}
+
+/* Return if the box is totally inside the resource.
+ */
+static boolean is_box_inside_resource(const struct pipe_resource *res,
+                                      const struct pipe_box *box,
+                                      unsigned level)
+{
+   unsigned width = 1, height = 1, depth = 1;
+
+   switch (res->target) {
+   case PIPE_BUFFER:
+      width = res->width0;
+      height = 1;
+      depth = 1;
+      break;
+   case PIPE_TEXTURE_1D:
+      width = u_minify(res->width0, level);
+      height = 1;
+      depth = 1;
+      break;
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
+      width = u_minify(res->width0, level);
+      height = u_minify(res->height0, level);
+      depth = 1;
+      break;
+   case PIPE_TEXTURE_3D:
+      width = u_minify(res->width0, level);
+      height = u_minify(res->height0, level);
+      depth = u_minify(res->depth0, level);
+      break;
+   case PIPE_TEXTURE_CUBE:
+      width = u_minify(res->width0, level);
+      height = u_minify(res->height0, level);
+      depth = 6;
+      break;
+   case PIPE_TEXTURE_1D_ARRAY:
+      width = u_minify(res->width0, level);
+      height = 1;
+      depth = res->array_size;
+      break;
+   case PIPE_TEXTURE_2D_ARRAY:
+      width = u_minify(res->width0, level);
+      height = u_minify(res->height0, level);
+      depth = res->array_size;
+      break;
+   case PIPE_MAX_TEXTURE_TYPES:;
+   }
+
+   return box->x >= 0 &&
+          box->x + box->width <= width &&
+          box->y >= 0 &&
+          box->y + box->height <= height &&
+          box->z >= 0 &&
+          box->z + box->depth <= depth;
+}
+
+static unsigned get_sample_count(const struct pipe_resource *res)
+{
+   return res->nr_samples ? res->nr_samples : 1;
+}
+
+boolean util_try_blit_via_copy_region(struct pipe_context *ctx,
+                                      const struct pipe_blit_info *blit)
+{
+   unsigned mask = get_format_mask(blit->dst.format);
+
+   /* No format conversions. */
+   if (blit->src.resource->format != blit->src.format ||
+       blit->dst.resource->format != blit->dst.format ||
+       !util_is_format_compatible(
+          util_format_description(blit->src.resource->format),
+          util_format_description(blit->dst.resource->format))) {
+      return FALSE;
+   }
+
+   /* No masks, no filtering, no scissor. */
+   if ((blit->mask & mask) != mask ||
+       blit->filter != PIPE_TEX_FILTER_NEAREST ||
+       blit->scissor_enable) {
+      return FALSE;
+   }
+
+   /* No flipping. */
+   if (blit->src.box.width < 0 ||
+       blit->src.box.height < 0 ||
+       blit->src.box.depth < 0) {
+      return FALSE;
+   }
+
+   /* No scaling. */
+   if (blit->src.box.width != blit->dst.box.width ||
+       blit->src.box.height != blit->dst.box.height ||
+       blit->src.box.depth != blit->dst.box.depth) {
+      return FALSE;
+   }
+
+   /* No out-of-bounds access. */
+   if (!is_box_inside_resource(blit->src.resource, &blit->src.box,
+                               blit->src.level) ||
+       !is_box_inside_resource(blit->dst.resource, &blit->dst.box,
+                               blit->dst.level)) {
+      return FALSE;
+   }
+
+   /* Sample counts must match. */
+   if (get_sample_count(blit->src.resource) !=
+       get_sample_count(blit->dst.resource)) {
+      return FALSE;
+   }
+
+   ctx->resource_copy_region(ctx, blit->dst.resource, blit->dst.level,
+                             blit->dst.box.x, blit->dst.box.y, blit->dst.box.z,
+                             blit->src.resource, blit->src.level,
+                             &blit->src.box);
+   return TRUE;
+}
