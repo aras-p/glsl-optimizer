@@ -108,6 +108,9 @@ struct blitter_context
 
    int saved_num_so_targets;
    struct pipe_stream_output_target *saved_so_targets[PIPE_MAX_SO_BUFFERS];
+
+   struct pipe_query *saved_render_cond_query;
+   uint saved_render_cond_mode;
 };
 
 /**
@@ -473,6 +476,15 @@ util_blitter_save_sample_mask(struct blitter_context *blitter,
 {
    blitter->is_sample_mask_saved = TRUE;
    blitter->saved_sample_mask = sample_mask;
+}
+
+static INLINE void
+util_blitter_save_render_condition(struct blitter_context *blitter,
+                                   struct pipe_query *query,
+                                   uint mode)
+{
+   blitter->saved_render_cond_query = query;
+   blitter->saved_render_cond_mode = mode;
 }
 
 #ifdef __cplusplus

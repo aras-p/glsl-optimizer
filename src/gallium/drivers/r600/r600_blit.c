@@ -84,23 +84,16 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	}
 
 	if ((op & R600_DISABLE_RENDER_COND) && rctx->current_render_cond) {
-		rctx->saved_render_cond = rctx->current_render_cond;
-		rctx->saved_render_cond_mode = rctx->current_render_cond_mode;
-		rctx->context.render_condition(&rctx->context, NULL, 0);
-	}
-
+           util_blitter_save_render_condition(rctx->blitter,
+                                              rctx->current_render_cond,
+                                              rctx->current_render_cond_mode);
+        }
 }
 
 static void r600_blitter_end(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	if (rctx->saved_render_cond) {
-		rctx->context.render_condition(&rctx->context,
-					       rctx->saved_render_cond,
-					       rctx->saved_render_cond_mode);
-		rctx->saved_render_cond = NULL;
-	}
-	r600_resume_nontimer_queries(rctx);
+        r600_resume_nontimer_queries(rctx);
 }
 
 static unsigned u_max_layer(struct pipe_resource *r, unsigned level)

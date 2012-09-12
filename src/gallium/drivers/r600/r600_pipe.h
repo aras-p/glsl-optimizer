@@ -385,8 +385,6 @@ struct r600_context {
 	struct r600_pipe_state          spi;
 	struct pipe_query		*current_render_cond;
 	unsigned			current_render_cond_mode;
-	struct pipe_query		*saved_render_cond;
-	unsigned			saved_render_cond_mode;
 	/* shader information */
 	boolean				two_side;
 	boolean				spi_dirty;
