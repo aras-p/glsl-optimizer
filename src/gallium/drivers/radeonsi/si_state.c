@@ -2268,10 +2268,10 @@ static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 			struct r600_resource_texture *tex = (void *)resource[i]->base.texture;
 
 			si_pm4_add_bo(pm4, &tex->resource, RADEON_USAGE_READ);
+		}
 
-			for (j = 0; j < Elements(resource[i]->state); ++j) {
-				si_pm4_sh_data_add(pm4, resource[i]->state[j]);
-			}
+		for (j = 0; j < Elements(resource[i]->state); ++j) {
+			si_pm4_sh_data_add(pm4, resource[i] ? resource[i]->state[j] : 0);
 		}
 	}
 
