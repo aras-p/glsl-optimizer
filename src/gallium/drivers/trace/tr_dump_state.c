@@ -96,12 +96,12 @@ void trace_dump_box(const struct pipe_box *box)
 
    trace_dump_struct_begin("pipe_box");
 
-   trace_dump_member(uint, box, x);
-   trace_dump_member(uint, box, y);
-   trace_dump_member(uint, box, z);
-   trace_dump_member(uint, box, width);
-   trace_dump_member(uint, box, height);
-   trace_dump_member(uint, box, depth);
+   trace_dump_member(int, box, x);
+   trace_dump_member(int, box, y);
+   trace_dump_member(int, box, z);
+   trace_dump_member(int, box, width);
+   trace_dump_member(int, box, height);
+   trace_dump_member(int, box, depth);
 
    trace_dump_struct_end();
 }
@@ -690,6 +690,63 @@ void trace_dump_draw_info(const struct pipe_draw_info *state)
    trace_dump_member(uint, state, restart_index);
 
    trace_dump_member(ptr, state, count_from_stream_output);
+
+   trace_dump_struct_end();
+}
+
+void trace_dump_blit_info(const struct pipe_blit_info *info)
+{
+   char mask[7];
+
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if (!info) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_blit_info");
+
+   trace_dump_member_begin("dst");
+   trace_dump_struct_begin("dst");
+   trace_dump_member(resource_ptr, &info->dst, resource);
+   trace_dump_member(uint, &info->dst, level);
+   trace_dump_member(format, &info->dst, format);
+   trace_dump_member_begin("box");
+   trace_dump_box(&info->dst.box);
+   trace_dump_member_end();
+   trace_dump_struct_end();
+   trace_dump_member_end();
+
+   trace_dump_member_begin("src");
+   trace_dump_struct_begin("src");
+   trace_dump_member(resource_ptr, &info->src, resource);
+   trace_dump_member(uint, &info->src, level);
+   trace_dump_member(format, &info->src, format);
+   trace_dump_member_begin("box");
+   trace_dump_box(&info->src.box);
+   trace_dump_member_end();
+   trace_dump_struct_end();
+   trace_dump_member_end();
+
+   mask[0] = (info->mask & PIPE_MASK_R) ? 'R' : '-';
+   mask[1] = (info->mask & PIPE_MASK_G) ? 'G' : '-';
+   mask[2] = (info->mask & PIPE_MASK_B) ? 'B' : '-';
+   mask[3] = (info->mask & PIPE_MASK_A) ? 'A' : '-';
+   mask[4] = (info->mask & PIPE_MASK_Z) ? 'Z' : '-';
+   mask[5] = (info->mask & PIPE_MASK_S) ? 'S' : '-';
+   mask[6] = 0;
+
+   trace_dump_member_begin("mask");
+   trace_dump_string(mask);
+   trace_dump_member_end();
+   trace_dump_member(uint, info, filter);
+
+   trace_dump_member(bool, info, scissor_enable);
+   trace_dump_member_begin("scissor");
+   trace_dump_scissor_state(&info->scissor);
+   trace_dump_member_end();
 
    trace_dump_struct_end();
 }

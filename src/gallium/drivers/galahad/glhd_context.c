@@ -722,6 +722,31 @@ galahad_context_resource_copy_region(struct pipe_context *_pipe,
 }
 
 static void
+galahad_context_blit(struct pipe_context *_pipe,
+                     const struct pipe_blit_info *info)
+{
+   struct galahad_context *glhd_pipe = galahad_context(_pipe);
+   struct pipe_context *pipe = glhd_pipe->pipe;
+
+   if (info->dst.box.width < 0 ||
+       info->dst.box.height < 0)
+      glhd_error("Destination dimensions are negative");
+
+   if (info->filter != PIPE_TEX_FILTER_NEAREST &&
+       info->src.resource->target != PIPE_TEXTURE_3D &&
+       info->dst.box.depth != info->src.box.depth)
+      glhd_error("Filtering in z-direction on non-3D texture");
+
+   if (util_format_is_depth_or_stencil(info->dst.format) !=
+       util_format_is_depth_or_stencil(info->src.format))
+      glhd_error("Invalid format conversion: %s <- %s\n",
+                 util_format_name(info->dst.format),
+                 util_format_name(info->src.format));
+
+   pipe->blit(pipe, info);
+}
+
+static void
 galahad_context_clear(struct pipe_context *_pipe,
                unsigned buffers,
                const union pipe_color_union *color,
@@ -1054,6 +1079,7 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    //GLHD_PIPE_INIT(stream_output_target_destroy);
    //GLHD_PIPE_INIT(set_stream_output_targets);
    GLHD_PIPE_INIT(resource_copy_region);
+   GLHD_PIPE_INIT(blit);
    //GLHD_PIPE_INIT(resource_resolve);
    GLHD_PIPE_INIT(clear);
    GLHD_PIPE_INIT(clear_render_target);

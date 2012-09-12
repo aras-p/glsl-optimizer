@@ -1227,6 +1227,28 @@ trace_context_resource_copy_region(struct pipe_context *_pipe,
 
 
 static INLINE void
+trace_context_blit(struct pipe_context *_pipe,
+                   const struct pipe_blit_info *_info)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_blit_info info = *_info;
+
+   info.dst.resource = trace_resource_unwrap(tr_ctx, info.dst.resource);
+   info.src.resource = trace_resource_unwrap(tr_ctx, info.src.resource);
+
+   trace_dump_call_begin("pipe_context", "blit");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(blit_info, _info);
+
+   pipe->blit(pipe, &info);
+
+   trace_dump_call_end();
+}
+
+
+static INLINE void
 trace_context_clear(struct pipe_context *_pipe,
                     unsigned buffers,
                     const union pipe_color_union *color,
@@ -1637,6 +1659,7 @@ trace_context_create(struct trace_screen *tr_scr,
    TR_CTX_INIT(stream_output_target_destroy);
    TR_CTX_INIT(set_stream_output_targets);
    TR_CTX_INIT(resource_copy_region);
+   TR_CTX_INIT(blit);
    TR_CTX_INIT(clear);
    TR_CTX_INIT(clear_render_target);
    TR_CTX_INIT(clear_depth_stencil);

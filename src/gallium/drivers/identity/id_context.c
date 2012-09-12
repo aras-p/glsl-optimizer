@@ -633,6 +633,20 @@ identity_resource_copy_region(struct pipe_context *_pipe,
 }
 
 static void
+identity_blit(struct pipe_context *_pipe,
+              const struct pipe_blit_info *info)
+{
+   struct identity_context *id_pipe = identity_context(_pipe);
+   struct pipe_context *pipe = id_pipe->pipe;
+   struct pipe_blit_info blit = *info;
+
+   blit.src.resource = identity_resource(blit.src.resource)->resource;
+   blit.dst.resource = identity_resource(blit.dst.resource)->resource;
+
+   pipe->blit(pipe, &blit);
+}
+
+static void
 identity_clear(struct pipe_context *_pipe,
                unsigned buffers,
                const union pipe_color_union *color,
@@ -937,6 +951,7 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.transfer_unmap = identity_context_transfer_unmap;
    id_pipe->base.transfer_flush_region = identity_context_transfer_flush_region;
    id_pipe->base.transfer_inline_write = identity_context_transfer_inline_write;
+   id_pipe->base.blit = identity_blit;
 
    id_pipe->pipe = pipe;
 
