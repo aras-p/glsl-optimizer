@@ -120,6 +120,8 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe);
  */
 void util_blitter_destroy(struct blitter_context *blitter);
 
+void util_blitter_cache_all_shaders(struct blitter_context *blitter);
+
 /**
  * Return the pipe context associated with a blitter context.
  */
