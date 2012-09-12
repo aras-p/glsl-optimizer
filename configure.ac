@@ -861,13 +861,12 @@ xyesyes)
 xyesno)
     # DRI-based GLX
     PKG_CHECK_MODULES([GLPROTO], [glproto >= $GLPROTO_REQUIRED])
-    GL_PC_REQ_PRIV="glproto >= $GLPROTO_REQUIRED"
     if test x"$driglx_direct" = xyes; then
         if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([Direct rendering requires libdrm >= $LIBDRM_REQUIRED])
         fi
         PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
-        GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED"
+        GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV libdrm >= $LIBDRM_REQUIRED"
     fi
 
     # find the DRI deps for libGL
