@@ -1343,7 +1343,7 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 }
 
 void r600_draw_rectangle(struct blitter_context *blitter,
-			 unsigned x1, unsigned y1, unsigned x2, unsigned y2, float depth,
+			 int x1, int y1, int x2, int y2, float depth,
 			 enum blitter_attrib_type type, const union pipe_color_union *attrib)
 {
 	struct r600_context *rctx = (struct r600_context*)util_blitter_get_pipe(blitter);

@@ -86,8 +86,8 @@ i915_surface_copy_render(struct pipe_context *pipe,
                                             i915->saved_nr_sampler_views,
                                             i915->saved_sampler_views);
 
-   util_blitter_copy_texture(i915->blitter, dst, dst_level, ~0, dstx, dsty, dstz,
-                            src, src_level, 0, src_box);
+   util_blitter_copy_texture(i915->blitter, dst, dst_level, dstx, dsty, dstz,
+                            src, src_level, src_box, PIPE_MASK_RGBAZS, TRUE);
 }
 
 static void

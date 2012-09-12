@@ -1172,8 +1172,7 @@ void r300_draw_flush_vbuf(struct r300_context *r300)
  * would be computed and stored twice, which makes the clear/copy codepaths
  * somewhat inefficient. Instead we use a rectangular point sprite. */
 void r300_blitter_draw_rectangle(struct blitter_context *blitter,
-                                 unsigned x1, unsigned y1,
-                                 unsigned x2, unsigned y2,
+                                 int x1, int y1, int x2, int y2,
                                  float depth,
                                  enum blitter_attrib_type type,
                                  const union pipe_color_union *attrib)

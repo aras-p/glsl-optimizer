@@ -643,7 +643,7 @@ void r600_sampler_states_dirty(struct r600_context *rctx,
 void r600_set_max_scissor(struct r600_context *rctx);
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state);
 void r600_draw_rectangle(struct blitter_context *blitter,
-			 unsigned x1, unsigned y1, unsigned x2, unsigned y2, float depth,
+			 int x1, int y1, int x2, int y2, float depth,
 			 enum blitter_attrib_type type, const union pipe_color_union *attrib);
 uint32_t r600_translate_stencil_op(int s_op);
 uint32_t r600_translate_fill(uint32_t func);

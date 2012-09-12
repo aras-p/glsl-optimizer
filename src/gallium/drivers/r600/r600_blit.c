@@ -379,10 +379,11 @@ static void r600_copy_first_sample(struct pipe_context *ctx,
 
 	/* Copy the first sample into dst. */
 	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
-	util_blitter_copy_texture_view(rctx->blitter, dst_view, ~0, info->dst.x0,
-				       info->dst.y0, src_view, 0, &box,
-				       info->src.res->width0, info->src.res->height0,
-				       info->mask);
+	util_blitter_blit_generic(rctx->blitter, dst_view, info->dst.x0,
+                                  info->dst.y0, abs(box.width), abs(box.height),
+                                  src_view, &box,
+                                  info->src.res->width0, info->src.res->height0,
+                                  info->mask, PIPE_TEX_FILTER_NEAREST, NULL, FALSE);
 	r600_blitter_end(ctx);
 
 	pipe_surface_reference(&dst_view, NULL);
@@ -460,8 +461,8 @@ static void r600_color_resolve(struct pipe_context *ctx,
 
 	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
 	util_blitter_copy_texture(rctx->blitter, info->dst.res, info->dst.level,
-				  ~0, info->dst.x0, info->dst.y0, info->dst.layer,
-				  tmp, 0, 0, &box);
+				  info->dst.x0, info->dst.y0, info->dst.layer,
+				  tmp, 0, &box, PIPE_MASK_RGBAZS, FALSE);
 	r600_blitter_end(ctx);
 
 	pipe_resource_reference(&tmp, NULL);
@@ -678,7 +679,6 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	struct pipe_box sbox;
 	const struct pipe_box *psbox = src_box;
 	boolean restore_orig[2];
-	unsigned last_sample, i;
 
 	memset(orig_info, 0, sizeof(orig_info));
 
@@ -689,7 +689,6 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	}
 
 	assert(u_max_sample(dst) == u_max_sample(src));
-	last_sample = u_max_sample(dst);
 
 	/* The driver doesn't decompress resources automatically while
 	 * u_blitter is rendering. */
@@ -756,21 +755,14 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		restore_orig[1] = TRUE;
 	}
 
-	/* XXX Properly implement multisample textures on Cayman. In the meantime,
-	 * copy only the first sample (which is the only one that doesn't return garbage). */
-	if (rctx->chip_class == CAYMAN) {
-		r600_blitter_begin(ctx, R600_COPY_TEXTURE);
-		util_blitter_copy_texture(rctx->blitter, dst, dst_level, ~0, dstx, dsty, dstz,
-					  src, src_level, 0, psbox);
-		r600_blitter_end(ctx);
-	} else {
-		for (i = 0; i <= last_sample; i++) {
-			r600_blitter_begin(ctx, R600_COPY_TEXTURE);
-			util_blitter_copy_texture(rctx->blitter, dst, dst_level, 1 << i, dstx, dsty, dstz,
-						  src, src_level, i, psbox);
-			r600_blitter_end(ctx);
-		}
-	}
+	/* XXX Multisample texturing is unimplemented on Cayman. In the meantime,
+	 * copy only the first sample (which is the only one that is uncompressed
+	 * and therefore doesn't return garbage). */
+	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
+	util_blitter_copy_texture(rctx->blitter, dst, dst_level, dstx, dsty, dstz,
+				  src, src_level, psbox, PIPE_MASK_RGBAZS,
+				  rctx->chip_class != CAYMAN);
+	r600_blitter_end(ctx);
 
 	if (restore_orig[0])
 		r600_reset_blittable_to_orig(src, src_level, &orig_info[0]);
