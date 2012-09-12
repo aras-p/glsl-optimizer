@@ -54,16 +54,18 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
    draw_flush(sp->draw);
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      struct pipe_surface *cb = i < fb->nr_cbufs ? fb->cbufs[i] : NULL;
+
       /* check if changing cbuf */
-      if (sp->framebuffer.cbufs[i] != fb->cbufs[i]) {
+      if (sp->framebuffer.cbufs[i] != cb) {
          /* flush old */
          sp_flush_tile_cache(sp->cbuf_cache[i]);
 
          /* assign new */
-         pipe_surface_reference(&sp->framebuffer.cbufs[i], fb->cbufs[i]);
+         pipe_surface_reference(&sp->framebuffer.cbufs[i], cb);
 
          /* update cache */
-         sp_tile_cache_set_surface(sp->cbuf_cache[i], fb->cbufs[i]);
+         sp_tile_cache_set_surface(sp->cbuf_cache[i], cb);
       }
    }
 
