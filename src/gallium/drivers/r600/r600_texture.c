@@ -592,13 +592,6 @@ bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 	return true;
 }
 
-/* Needs adjustment for pixelformat:
- */
-static INLINE unsigned u_box_volume( const struct pipe_box *box )
-{
-	return box->width * box->depth * box->height;
-}
-
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						struct pipe_resource *texture,
 						unsigned level,
@@ -621,9 +614,6 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	if (R600_TEX_IS_TILED(rtex, level)) {
 		use_staging_texture = TRUE;
 	}
-
-	if ((usage & PIPE_TRANSFER_READ) && u_box_volume(box) > 1024)
-		use_staging_texture = TRUE;
 
 	/* Use a staging texture for uploads if the underlying BO is busy. */
 	if (!(usage & PIPE_TRANSFER_READ) &&
