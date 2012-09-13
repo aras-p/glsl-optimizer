@@ -94,6 +94,9 @@ struct lp_fragment_shader_variant
 
    lp_jit_frag_func jit_function[2];
 
+   /* Bitmask to say what cbufs are unswizzled */
+   unsigned unswizzled_cbufs;
+
    /* Total number of LLVM instructions generated */
    unsigned nr_instrs;
 

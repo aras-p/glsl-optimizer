@@ -756,6 +756,73 @@ llvmpipe_is_resource_referenced( struct pipe_context *pipe,
    return lp_setup_is_resource_referenced(llvmpipe->setup, presource);
 }
 
+boolean
+llvmpipe_is_format_unswizzled( enum pipe_format format )
+{
+   const struct util_format_description *desc = util_format_description(format);
+   unsigned chan;
+
+   if (format == PIPE_FORMAT_B8G8R8X8_UNORM || format == PIPE_FORMAT_B8G8R8A8_UNORM) {
+      return FALSE;
+   }
+
+   if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN ||
+       desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB ||
+       desc->block.width != 1 ||
+       desc->block.height != 1) {
+      return FALSE;
+   }
+
+   for (chan = 0; chan < desc->nr_channels; ++chan) {
+      if (desc->channel[chan].type == UTIL_FORMAT_TYPE_VOID && (chan + 1) == desc->nr_channels)
+         continue;
+
+      if (desc->channel[chan].type != desc->channel[0].type)
+         return FALSE;
+
+      if (desc->channel[chan].normalized != desc->channel[0].normalized)
+         return FALSE;
+
+      if (desc->channel[chan].pure_integer != desc->channel[0].pure_integer)
+         return FALSE;
+   }
+
+   /* All code assumes alpha is the last channel */
+   if (desc->nr_channels == 4 && desc->swizzle[3] < 3) {
+      return FALSE;
+   }
+
+   return TRUE;
+}
+
+
+/**
+ * Returns the largest possible alignment for a format in llvmpipe
+ */
+unsigned
+llvmpipe_get_format_alignment( enum pipe_format format )
+{
+   const struct util_format_description *desc = util_format_description(format);
+   unsigned size = 0;
+   unsigned bytes;
+   unsigned i;
+
+   for (i = 0; i < desc->nr_channels; ++i) {
+      size += desc->channel[i].size;
+   }
+
+   bytes = size / 8;
+
+   if (!util_is_power_of_two(bytes)) {
+      bytes /= desc->nr_channels;
+   }
+
+   if (bytes % 2 || bytes < 1) {
+      return 1;
+   } else {
+      return bytes;
+   }
+}
 
 
 /**

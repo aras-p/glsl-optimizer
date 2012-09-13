@@ -66,14 +66,18 @@
 struct lp_build_blend_aos_context
 {
    struct lp_build_context base;
-   
+
    LLVMValueRef src;
+   LLVMValueRef src_alpha;
    LLVMValueRef dst;
    LLVMValueRef const_;
+   LLVMValueRef const_alpha;
 
    LLVMValueRef inv_src;
+   LLVMValueRef inv_src_alpha;
    LLVMValueRef inv_dst;
    LLVMValueRef inv_const;
+   LLVMValueRef inv_const_alpha;
    LLVMValueRef saturate;
 
    LLVMValueRef rgb_src_factor;
@@ -88,14 +92,18 @@ lp_build_blend_factor_unswizzled(struct lp_build_blend_aos_context *bld,
                                  unsigned factor,
                                  boolean alpha)
 {
+   LLVMValueRef src_alpha = bld->src_alpha ? bld->src_alpha : bld->src;
+   LLVMValueRef const_alpha = bld->const_alpha ? bld->const_alpha : bld->const_;
+
    switch (factor) {
    case PIPE_BLENDFACTOR_ZERO:
       return bld->base.zero;
    case PIPE_BLENDFACTOR_ONE:
       return bld->base.one;
    case PIPE_BLENDFACTOR_SRC_COLOR:
-   case PIPE_BLENDFACTOR_SRC_ALPHA:
       return bld->src;
+   case PIPE_BLENDFACTOR_SRC_ALPHA:
+      return src_alpha;
    case PIPE_BLENDFACTOR_DST_COLOR:
    case PIPE_BLENDFACTOR_DST_ALPHA:
       return bld->dst;
@@ -106,32 +114,39 @@ lp_build_blend_factor_unswizzled(struct lp_build_blend_aos_context *bld,
          if(!bld->inv_dst)
             bld->inv_dst = lp_build_comp(&bld->base, bld->dst);
          if(!bld->saturate)
-            bld->saturate = lp_build_min(&bld->base, bld->src, bld->inv_dst);
+            bld->saturate = lp_build_min(&bld->base, src_alpha, bld->inv_dst);
          return bld->saturate;
       }
    case PIPE_BLENDFACTOR_CONST_COLOR:
-   case PIPE_BLENDFACTOR_CONST_ALPHA:
       return bld->const_;
+   case PIPE_BLENDFACTOR_CONST_ALPHA:
+      return const_alpha;
    case PIPE_BLENDFACTOR_SRC1_COLOR:
    case PIPE_BLENDFACTOR_SRC1_ALPHA:
       /* TODO */
       assert(0);
       return bld->base.zero;
    case PIPE_BLENDFACTOR_INV_SRC_COLOR:
-   case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
       if(!bld->inv_src)
          bld->inv_src = lp_build_comp(&bld->base, bld->src);
       return bld->inv_src;
+   case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+      if(!bld->inv_src_alpha)
+         bld->inv_src_alpha = lp_build_comp(&bld->base, src_alpha);
+      return bld->inv_src_alpha;
    case PIPE_BLENDFACTOR_INV_DST_COLOR:
    case PIPE_BLENDFACTOR_INV_DST_ALPHA:
       if(!bld->inv_dst)
          bld->inv_dst = lp_build_comp(&bld->base, bld->dst);
       return bld->inv_dst;
    case PIPE_BLENDFACTOR_INV_CONST_COLOR:
-   case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
       if(!bld->inv_const)
          bld->inv_const = lp_build_comp(&bld->base, bld->const_);
       return bld->inv_const;
+   case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
+      if(!bld->inv_const_alpha)
+         bld->inv_const_alpha = lp_build_comp(&bld->base, const_alpha);
+      return bld->inv_const_alpha;
    case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
    case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
       /* TODO */
@@ -190,7 +205,8 @@ lp_build_blend_swizzle(struct lp_build_blend_aos_context *bld,
                        LLVMValueRef rgb, 
                        LLVMValueRef alpha, 
                        enum lp_build_blend_swizzle rgb_swizzle,
-                       unsigned alpha_swizzle)
+                       unsigned alpha_swizzle,
+                       unsigned num_channels)
 {
    LLVMValueRef swizzled_rgb;
 
@@ -199,7 +215,7 @@ lp_build_blend_swizzle(struct lp_build_blend_aos_context *bld,
       swizzled_rgb = rgb;
       break;
    case LP_BUILD_BLEND_SWIZZLE_AAAA:
-      swizzled_rgb = lp_build_swizzle_scalar_aos(&bld->base, rgb, alpha_swizzle);
+      swizzled_rgb = lp_build_swizzle_scalar_aos(&bld->base, rgb, alpha_swizzle, num_channels);
       break;
    default:
       assert(0);
@@ -208,12 +224,12 @@ lp_build_blend_swizzle(struct lp_build_blend_aos_context *bld,
 
    if (rgb != alpha) {
       swizzled_rgb = lp_build_select_aos(&bld->base, 1 << alpha_swizzle,
-                                         alpha, swizzled_rgb);
+                                         alpha, swizzled_rgb,
+                                         num_channels);
    }
 
    return swizzled_rgb;
 }
-
 
 /**
  * @sa http://www.opengl.org/sdk/docs/man/xhtml/glBlendFuncSeparate.xml
@@ -222,17 +238,22 @@ static LLVMValueRef
 lp_build_blend_factor(struct lp_build_blend_aos_context *bld,
                       unsigned rgb_factor,
                       unsigned alpha_factor,
-                      unsigned alpha_swizzle)
+                      unsigned alpha_swizzle,
+                      unsigned num_channels)
 {
    LLVMValueRef rgb_factor_, alpha_factor_;
    enum lp_build_blend_swizzle rgb_swizzle;
+
+   if (alpha_swizzle == 0) {
+      return lp_build_blend_factor_unswizzled(bld, alpha_factor, TRUE);
+   }
 
    rgb_factor_ = lp_build_blend_factor_unswizzled(bld, rgb_factor, FALSE);
 
    if (alpha_swizzle != UTIL_FORMAT_SWIZZLE_NONE) {
       rgb_swizzle   = lp_build_blend_factor_swizzle(rgb_factor);
       alpha_factor_ = lp_build_blend_factor_unswizzled(bld, alpha_factor, TRUE);
-      return lp_build_blend_swizzle(bld, rgb_factor_, alpha_factor_, rgb_swizzle, alpha_swizzle);
+      return lp_build_blend_swizzle(bld, rgb_factor_, alpha_factor_, rgb_swizzle, alpha_swizzle, num_channels);
    } else {
       return rgb_factor_;
    }
@@ -261,18 +282,21 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
                    struct lp_type type,
                    unsigned rt,
                    LLVMValueRef src,
+                   LLVMValueRef src_alpha,
                    LLVMValueRef dst,
                    LLVMValueRef mask,
                    LLVMValueRef const_,
-                   const unsigned char swizzle[4])
+                   LLVMValueRef const_alpha,
+                   const unsigned char swizzle[4],
+                   int nr_channels)
 {
    const struct pipe_rt_blend_state * state = &blend->rt[rt];
    const struct util_format_description * desc;
    struct lp_build_blend_aos_context bld;
    LLVMValueRef src_factor, dst_factor;
    LLVMValueRef result;
-   unsigned alpha_swizzle = swizzle[3];
-   boolean fullcolormask;
+   unsigned alpha_swizzle = UTIL_FORMAT_SWIZZLE_NONE;
+   unsigned i;
 
    desc = util_format_description(cbuf_format[rt]);
 
@@ -282,20 +306,32 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
    bld.src = src;
    bld.dst = dst;
    bld.const_ = const_;
+   bld.src_alpha = src_alpha;
+   bld.const_alpha = const_alpha;
 
-   if (swizzle[3] > UTIL_FORMAT_SWIZZLE_W || swizzle[3] == swizzle[0])
-      alpha_swizzle = UTIL_FORMAT_SWIZZLE_NONE;
+   /* Find the alpha channel if not provided seperately */
+   if (!src_alpha) {
+      for (i = 0; i < 4; ++i) {
+         if (swizzle[i] == 3) {
+            alpha_swizzle = i;
+         }
+      }
+   }
 
    if (!state->blend_enable) {
       result = src;
    } else {
-      boolean rgb_alpha_same = state->rgb_src_factor == state->rgb_dst_factor && state->alpha_src_factor == state->alpha_dst_factor;
-      assert(rgb_alpha_same || alpha_swizzle != UTIL_FORMAT_SWIZZLE_NONE);
+      boolean rgb_alpha_same = (state->rgb_src_factor == state->rgb_dst_factor && state->alpha_src_factor == state->alpha_dst_factor) || nr_channels == 1;
 
       src_factor = lp_build_blend_factor(&bld, state->rgb_src_factor,
-                                         state->alpha_src_factor, alpha_swizzle);
+                                         state->alpha_src_factor,
+                                         alpha_swizzle,
+                                         nr_channels);
+
       dst_factor = lp_build_blend_factor(&bld, state->rgb_dst_factor,
-                                         state->alpha_dst_factor, alpha_swizzle);
+                                         state->alpha_dst_factor,
+                                         alpha_swizzle,
+                                         nr_channels);
 
       result = lp_build_blend(&bld.base,
                               state->rgb_func,
@@ -308,7 +344,7 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
                               rgb_alpha_same,
                               false);
 
-      if(state->rgb_func != state->alpha_func && alpha_swizzle != UTIL_FORMAT_SWIZZLE_NONE) {
+      if(state->rgb_func != state->alpha_func && nr_channels > 1 && alpha_swizzle != UTIL_FORMAT_SWIZZLE_NONE) {
          LLVMValueRef alpha;
 
          alpha = lp_build_blend(&bld.base,
@@ -326,22 +362,27 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
                                          result,
                                          alpha,
                                          LP_BUILD_BLEND_SWIZZLE_RGBA,
-                                         alpha_swizzle);
+                                         alpha_swizzle,
+                                         nr_channels);
       }
    }
 
    /* Check if color mask is necessary */
-   fullcolormask = util_format_colormask_full(util_format_description(cbuf_format[rt]), state->colormask);
-
-   if (!fullcolormask) {
+   if (!util_format_colormask_full(desc, state->colormask)) {
       LLVMValueRef color_mask;
 
-      color_mask = lp_build_const_mask_aos_swizzled(gallivm, bld.base.type, state.colormask, desc->nr_channels, swizzle);
+      color_mask = lp_build_const_mask_aos_swizzled(gallivm, bld.base.type, state->colormask, nr_channels, swizzle);
       lp_build_name(color_mask, "color_mask");
 
       /* Combine with input mask if necessary */
       if (mask) {
+         /* We can be blending floating values but masks are always integer... */
+         unsigned floating = bld.base.type.floating;
+         bld.base.type.floating = 0;
+
          mask = lp_build_and(&bld.base, color_mask, mask);
+
+         bld.base.type.floating = floating;
       } else {
          mask = color_mask;
       }

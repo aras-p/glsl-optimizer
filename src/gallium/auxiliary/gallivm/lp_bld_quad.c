@@ -31,6 +31,7 @@
 #include "lp_bld_const.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_quad.h"
+#include "lp_bld_pack.h"
 
 
 static const unsigned char
@@ -156,3 +157,52 @@ lp_build_packed_ddx_ddy_twocoord(struct lp_build_context *bld,
       return LLVMBuildSub(builder, vec2, vec1, "ddxddyddxddy");
 }
 
+
+/**
+ * Twiddle from quad format to row format
+ *
+ *   src0      src1
+ * ######### #########      #################
+ * # 0 | 1 # # 4 | 5 #      # 0 | 1 | 4 | 5 # src0
+ * #---+---# #---+---#  ->  #################
+ * # 2 | 3 # # 6 | 7 #      # 2 | 3 | 6 | 7 # src1
+ * ######### #########      #################
+ *
+ */
+void
+lp_bld_quad_twiddle(struct gallivm_state *gallivm,
+                    struct lp_type lp_dst_type,
+                    const LLVMValueRef* src,
+                    unsigned src_count,
+                    LLVMValueRef* dst)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMTypeRef dst_type_ref;
+   LLVMTypeRef type2_ref;
+   struct lp_type type2;
+   unsigned i;
+
+   assert((src_count % 2) == 0);
+
+   /* Create a type with only 2 elements */
+   type2 = lp_dst_type;
+   type2.width = (lp_dst_type.width * lp_dst_type.length) / 2;
+   type2.length = 2;
+   type2.floating = 0;
+
+   type2_ref = lp_build_vec_type(gallivm, type2);
+   dst_type_ref = lp_build_vec_type(gallivm, lp_dst_type);
+
+   for (i = 0; i < src_count; i += 2) {
+      LLVMValueRef src0, src1;
+
+      src0 = LLVMBuildBitCast(builder, src[i + 0], type2_ref, "");
+      src1 = LLVMBuildBitCast(builder, src[i + 1], type2_ref, "");
+
+      dst[i + 0] = lp_build_interleave2(gallivm, type2, src0, src1, 0);
+      dst[i + 1] = lp_build_interleave2(gallivm, type2, src0, src1, 1);
+
+      dst[i + 0] = LLVMBuildBitCast(builder, dst[i + 0], dst_type_ref, "");
+      dst[i + 1] = LLVMBuildBitCast(builder, dst[i + 1], dst_type_ref, "");
+   }
+}

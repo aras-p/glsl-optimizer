@@ -772,7 +772,7 @@ lp_build_get_mip_offsets(struct lp_build_sample_context *bld,
          offset1 = LLVMBuildLoad(builder, offset1, "");
          offsets = LLVMBuildInsertElement(builder, offsets, offset1, indexo, "");
       }
-      offsets = lp_build_swizzle_scalar_aos(&bld->int_coord_bld, offsets, 0);
+      offsets = lp_build_swizzle_scalar_aos(&bld->int_coord_bld, offsets, 0, 4);
    }
    else {
       unsigned i;
@@ -849,7 +849,7 @@ lp_build_get_level_stride_vec(struct lp_build_sample_context *bld,
          stride1 = LLVMBuildLoad(builder, stride1, "");
          stride = LLVMBuildInsertElement(builder, stride, stride1, indexo, "");
       }
-      stride = lp_build_swizzle_scalar_aos(&bld->int_coord_bld, stride, 0);
+      stride = lp_build_swizzle_scalar_aos(&bld->int_coord_bld, stride, 0, 4);
    }
    else {
       LLVMValueRef stride1;
@@ -1045,11 +1045,11 @@ lp_build_extract_image_sizes(struct lp_build_sample_context *bld,
          *out_width = size;
       }
       else if (bld->num_lods == num_quads) {
-         *out_width = lp_build_swizzle_scalar_aos(size_bld, size, 0);
+         *out_width = lp_build_swizzle_scalar_aos(size_bld, size, 0, 4);
          if (dims >= 2) {
-            *out_height = lp_build_swizzle_scalar_aos(size_bld, size, 1);
+            *out_height = lp_build_swizzle_scalar_aos(size_bld, size, 1, 4);
             if (dims == 3) {
-               *out_depth = lp_build_swizzle_scalar_aos(size_bld, size, 2);
+               *out_depth = lp_build_swizzle_scalar_aos(size_bld, size, 2, 4);
             }
          }
       }
@@ -1246,9 +1246,9 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
       signrxyz = LLVMBuildBitCast(builder, rxyz, lp_build_vec_type(gallivm, intctype), "");
       signrxyz = LLVMBuildAnd(builder, signrxyz, signmask, "");
 
-      arxs = lp_build_swizzle_scalar_aos(coord_bld, arxyz, 0);
-      arys = lp_build_swizzle_scalar_aos(coord_bld, arxyz, 1);
-      arzs = lp_build_swizzle_scalar_aos(coord_bld, arxyz, 2);
+      arxs = lp_build_swizzle_scalar_aos(coord_bld, arxyz, 0, 4);
+      arys = lp_build_swizzle_scalar_aos(coord_bld, arxyz, 1, 4);
+      arzs = lp_build_swizzle_scalar_aos(coord_bld, arxyz, 2, 4);
 
       /*
        * select x if x >= y else select y
@@ -1267,15 +1267,15 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
        * snewz = signrz * rx;
        * tnewz = -ry;
        */
-      signrxs = lp_build_swizzle_scalar_aos(cint_bld, signrxyz, 0);
+      signrxs = lp_build_swizzle_scalar_aos(cint_bld, signrxyz, 0, 4);
       snewx = LLVMBuildXor(builder, signrxs, rzneg, "");
       tnewx = ryneg;
 
-      signrys = lp_build_swizzle_scalar_aos(cint_bld, signrxyz, 1);
+      signrys = lp_build_swizzle_scalar_aos(cint_bld, signrxyz, 1, 4);
       snewy = rx;
       tnewy = LLVMBuildXor(builder, signrys, rz, "");
 
-      signrzs = lp_build_swizzle_scalar_aos(cint_bld, signrxyz, 2);
+      signrzs = lp_build_swizzle_scalar_aos(cint_bld, signrxyz, 2, 4);
       snewz = LLVMBuildXor(builder, signrzs, rx, "");
       tnewz = ryneg;
 

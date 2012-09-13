@@ -415,6 +415,81 @@ lp_build_unsigned_norm_to_float(struct gallivm_state *gallivm,
 
 
 /**
+ * Pick a suitable num_dsts for lp_build_conv to ensure optimal cases are used.
+ *
+ * Returns the number of dsts created from src
+ */
+int lp_build_conv_auto(struct gallivm_state *gallivm,
+                       struct lp_type src_type,
+                       struct lp_type* dst_type,
+                       const LLVMValueRef *src,
+                       unsigned num_srcs,
+                       LLVMValueRef *dst)
+{
+   int i;
+   int num_dsts = num_srcs;
+
+   if (src_type.floating == dst_type->floating &&
+       src_type.width == dst_type->width &&
+       src_type.length == dst_type->length &&
+       src_type.fixed == dst_type->fixed &&
+       src_type.norm == dst_type->norm &&
+       src_type.sign == dst_type->sign)
+      return num_dsts;
+
+   /* Special case 4x4f -> 1x16ub or 2x8f -> 1x16ub
+    */
+   if (src_type.floating == 1 &&
+       src_type.fixed    == 0 &&
+       src_type.sign     == 1 &&
+       src_type.norm     == 0 &&
+       src_type.width    == 32 &&
+
+       dst_type->floating == 0 &&
+       dst_type->fixed    == 0 &&
+       dst_type->sign     == 0 &&
+       dst_type->norm     == 1 &&
+       dst_type->width    == 8)
+   {
+      /* Special case 4x4f --> 1x16ub */
+      if (src_type.length == 4 && util_cpu_caps.has_sse2)
+      {
+         assert((num_srcs % 4) == 0);
+
+         num_dsts = num_srcs / 4;
+         dst_type->length = 16;
+
+         lp_build_conv(gallivm, src_type, *dst_type, src, num_srcs, dst, num_dsts);
+         return num_dsts;
+      }
+
+      /* Special case 2x8f --> 1x16ub */
+      if (src_type.length == 8 && util_cpu_caps.has_avx)
+      {
+         assert((num_srcs % 2) == 0);
+
+         num_dsts = num_srcs / 2;
+         dst_type->length = 16;
+
+         lp_build_conv(gallivm, src_type, *dst_type, src, num_srcs, dst, num_dsts);
+         return num_dsts;
+      }
+   }
+
+   /* lp_build_resize does not support M:N */
+   if (src_type.width == dst_type->width) {
+      lp_build_conv(gallivm, src_type, *dst_type, src, num_srcs, dst, num_dsts);
+   } else {
+      for (i = 0; i < num_srcs; ++i) {
+         lp_build_conv(gallivm, src_type, *dst_type, &src[i], 1, &dst[i], 1);
+      }
+   }
+
+   return num_dsts;
+}
+
+
+/**
  * Generic type conversion.
  *
  * TODO: Take a precision argument, or even better, add a new precision member

@@ -88,5 +88,14 @@ LLVMValueRef
 lp_build_packed_ddx_ddy_onecoord(struct lp_build_context *bld,
                                  LLVMValueRef a);
 
+/*
+ * Twiddle from quad format to row format
+ */
+void
+lp_bld_quad_twiddle(struct gallivm_state *gallivm,
+                    struct lp_type lp_dst_type,
+                    const LLVMValueRef* src,
+                    unsigned src_count,
+                    LLVMValueRef* dst);
 
 #endif /* LP_BLD_QUAD_H_ */

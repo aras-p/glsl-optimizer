@@ -390,7 +390,7 @@ lp_setup_try_clear( struct lp_setup_context *setup,
 
    if (flags & PIPE_CLEAR_COLOR) {
       for (i = 0; i < 4; i++)
-         color_arg.clear_color[i] = float_to_ubyte(color[i]);
+         color_arg.clear_color[i] = color[i];
    }
 
    if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
@@ -805,12 +805,24 @@ try_update_scene_state( struct lp_setup_context *setup )
 
    if(setup->dirty & LP_SETUP_NEW_BLEND_COLOR) {
       uint8_t *stored;
+      float* fstored;
       unsigned i, j;
+      unsigned size;
 
-      stored = lp_scene_alloc_aligned(scene, 4 * 16, 16);
+      /* Alloc u8_blend_color (16 x i8) and f_blend_color (4 or 8 x f32) */
+      size  = 4 * 16 * sizeof(uint8_t);
+      size += (LP_MAX_VECTOR_LENGTH / 4) * sizeof(float);
+      stored = lp_scene_alloc_aligned(scene, size, LP_MAX_VECTOR_LENGTH);
+
       if (!stored) {
          assert(!new_scene);
          return FALSE;
+      }
+
+      /* Store floating point colour */
+      fstored = (float*)(stored + 4*16);
+      for (i = 0; i < (LP_MAX_VECTOR_LENGTH / 4); ++i) {
+         fstored[i] = setup->blend_color.current.color[i % 4];
       }
 
       /* smear each blend color component across 16 ubyte elements */
@@ -821,7 +833,8 @@ try_update_scene_state( struct lp_setup_context *setup )
       }
 
       setup->blend_color.stored = stored;
-      setup->fs.current.jit_context.blend_color = setup->blend_color.stored;
+      setup->fs.current.jit_context.u8_blend_color = stored;
+      setup->fs.current.jit_context.f_blend_color = fstored;
       setup->dirty |= LP_SETUP_NEW_FS;
    }
 

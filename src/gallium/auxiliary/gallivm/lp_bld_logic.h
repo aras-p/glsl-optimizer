@@ -79,7 +79,8 @@ LLVMValueRef
 lp_build_select_aos(struct lp_build_context *bld,
                     unsigned mask,
                     LLVMValueRef a,
-                    LLVMValueRef b);
+                    LLVMValueRef b,
+                    unsigned num_channels);
 
 
 LLVMValueRef

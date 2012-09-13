@@ -70,6 +70,16 @@ lp_build_conv(struct gallivm_state *gallivm,
               const LLVMValueRef *srcs, unsigned num_srcs,
               LLVMValueRef *dsts, unsigned num_dsts);
 
+
+int
+lp_build_conv_auto(struct gallivm_state *gallivm,
+                   struct lp_type src_type,
+                   struct lp_type* dst_type,
+                   const LLVMValueRef *src,
+                   unsigned num_srcs,
+                   LLVMValueRef *dst);
+
+
 void
 lp_build_conv_mask(struct gallivm_state *gallivm,
                    struct lp_type src_type,

@@ -211,6 +211,42 @@ lp_build_concat(struct gallivm_state *gallivm,
    return tmp[0];
 }
 
+
+/**
+ * Combines vectors to reduce from num_srcs to num_dsts.
+ * Returns the number of src vectors concatenated in a single dst.
+ *
+ * num_srcs must be exactly divisible by num_dsts.
+ *
+ * e.g. For num_srcs = 4 and src = [x, y, z, w]
+ *          num_dsts = 1  dst = [xyzw]    return = 4
+ *          num_dsts = 2  dst = [xy, zw]  return = 2
+ */
+int
+lp_build_concat_n(struct gallivm_state *gallivm,
+                  struct lp_type src_type,
+                  LLVMValueRef *src,
+                  unsigned num_srcs,
+                  LLVMValueRef *dst,
+                  unsigned num_dsts)
+{
+   int size = num_srcs / num_dsts;
+   int i;
+
+   assert(num_srcs >= num_dsts);
+   assert((num_srcs % size) == 0);
+
+   if (num_srcs == num_dsts)
+      return 1;
+
+   for (i = 0; i < num_dsts; ++i) {
+      dst[i] = lp_build_concat(gallivm, &src[i * size], src_type, size);
+   }
+
+   return size;
+}
+
+
 /**
  * Interleave vector elements.
  *

@@ -256,4 +256,10 @@ llvmpipe_is_resource_referenced( struct pipe_context *pipe,
                                  struct pipe_resource *presource,
                                  unsigned level, int layer);
 
+boolean
+llvmpipe_is_format_unswizzled(enum pipe_format format);
+
+unsigned
+llvmpipe_get_format_alignment(enum pipe_format format);
+
 #endif /* LP_TEXTURE_H */

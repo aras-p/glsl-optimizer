@@ -60,10 +60,13 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
                    struct lp_type type,
                    unsigned rt,
                    LLVMValueRef src,
+                   LLVMValueRef src_alpha,
                    LLVMValueRef dst,
                    LLVMValueRef mask,
                    LLVMValueRef const_,
-                   const unsigned char swizzle[4]);
+                   LLVMValueRef const_alpha,
+                   const unsigned char swizzle[4],
+                   int nr_channels);
 
 
 void

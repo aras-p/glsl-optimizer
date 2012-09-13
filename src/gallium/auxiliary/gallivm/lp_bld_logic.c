@@ -560,7 +560,8 @@ LLVMValueRef
 lp_build_select_aos(struct lp_build_context *bld,
                     unsigned mask,
                     LLVMValueRef a,
-                    LLVMValueRef b)
+                    LLVMValueRef b,
+                    unsigned num_channels)
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
@@ -594,8 +595,8 @@ lp_build_select_aos(struct lp_build_context *bld,
       LLVMTypeRef elem_type = LLVMInt32TypeInContext(bld->gallivm->context);
       LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
 
-      for(j = 0; j < n; j += 4)
-         for(i = 0; i < 4; ++i)
+      for(j = 0; j < n; j += num_channels)
+         for(i = 0; i < num_channels; ++i)
             shuffles[j + i] = LLVMConstInt(elem_type,
                                            (mask & (1 << i) ? 0 : n) + j + i,
                                            0);
@@ -603,7 +604,7 @@ lp_build_select_aos(struct lp_build_context *bld,
       return LLVMBuildShuffleVector(builder, a, b, LLVMConstVector(shuffles, n), "");
    }
    else {
-      LLVMValueRef mask_vec = lp_build_const_mask_aos(bld->gallivm, type, mask, 4);
+      LLVMValueRef mask_vec = lp_build_const_mask_aos(bld->gallivm, type, mask, num_channels);
       return lp_build_select(bld, mask_vec, a, b);
    }
 }

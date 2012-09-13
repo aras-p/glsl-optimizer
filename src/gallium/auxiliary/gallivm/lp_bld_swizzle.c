@@ -159,20 +159,23 @@ lp_build_extract_broadcast(struct gallivm_state *gallivm,
 
 
 /**
- * Swizzle one channel into all other three channels.
+ * Swizzle one channel into other channels.
  */
 LLVMValueRef
 lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
                             LLVMValueRef a,
-                            unsigned channel)
+                            unsigned channel,
+                            unsigned num_channels)
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
    const unsigned n = type.length;
    unsigned i, j;
 
-   if(a == bld->undef || a == bld->zero || a == bld->one)
+   if(a == bld->undef || a == bld->zero || a == bld->one || num_channels == 1)
       return a;
+
+   assert(num_channels == 2 || num_channels == 4);
 
    /* XXX: SSE3 has PSHUFB which should be better than bitmasks, but forcing
     * using shuffles here actually causes worst results. More investigation is
@@ -184,11 +187,54 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
       LLVMTypeRef elem_type = LLVMInt32TypeInContext(bld->gallivm->context);
       LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
 
-      for(j = 0; j < n; j += 4)
-         for(i = 0; i < 4; ++i)
+      for(j = 0; j < n; j += num_channels)
+         for(i = 0; i < num_channels; ++i)
             shuffles[j + i] = LLVMConstInt(elem_type, j + channel, 0);
 
       return LLVMBuildShuffleVector(builder, a, bld->undef, LLVMConstVector(shuffles, n), "");
+   }
+   else if (num_channels == 2) {
+      /*
+       * Bit mask and shifts
+       *
+       *   XY XY .... XY  <= input
+       *   0Y 0Y .... 0Y
+       *   YY YY .... YY
+       *   YY YY .... YY  <= output
+       */
+      struct lp_type type2;
+      LLVMValueRef tmp = NULL;
+      int shift;
+
+      a = LLVMBuildAnd(builder, a,
+                       lp_build_const_mask_aos(bld->gallivm,
+                                               type, 1 << channel, num_channels), "");
+
+      type2 = type;
+      type2.floating = FALSE;
+      type2.width *= 2;
+      type2.length /= 2;
+
+      a = LLVMBuildBitCast(builder, a, lp_build_vec_type(bld->gallivm, type2), "");
+
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
+      shift = channel == 0 ? 1 : -1;
+#else
+      shift = channel == 0 ? -1 : 1;
+#endif
+
+      if (shift > 0) {
+         tmp = LLVMBuildShl(builder, a, lp_build_const_int_vec(bld->gallivm, type2, shift * type.width), "");
+      } else if (shift < 0) {
+         tmp = LLVMBuildLShr(builder, a, lp_build_const_int_vec(bld->gallivm, type2, -shift * type.width), "");
+      }
+
+      assert(tmp);
+      if (tmp) {
+         a = LLVMBuildOr(builder, a, tmp, "");
+      }
+
+      return LLVMBuildBitCast(builder, a, lp_build_vec_type(bld->gallivm, type), "");
    }
    else {
       /*
@@ -247,6 +293,45 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
 }
 
 
+/**
+ * Swizzle a vector consisting of an array of XYZW structs.
+ *
+ * This fills a vector of dst_len length with the swizzled channels from src.
+ *
+ * e.g. with swizzles = { 2, 1, 0 } and swizzle_count = 6 results in
+ *      RGBA RGBA = BGR BGR BG
+ *
+ * @param swizzles        the swizzle array
+ * @param num_swizzles    the number of elements in swizzles
+ * @param dst_len         the length of the result
+ */
+LLVMValueRef
+lp_build_swizzle_aos_n(struct gallivm_state* gallivm,
+                       LLVMValueRef src,
+                       const unsigned char* swizzles,
+                       unsigned num_swizzles,
+                       unsigned dst_len)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef shuffles[LP_MAX_VECTOR_WIDTH];
+   unsigned i;
+
+   assert(dst_len < LP_MAX_VECTOR_WIDTH);
+
+   for (i = 0; i < dst_len; ++i) {
+      int swizzle = swizzles[i % num_swizzles];
+
+      if (swizzle == LP_BLD_SWIZZLE_DONTCARE) {
+         shuffles[i] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
+      } else {
+         shuffles[i] = lp_build_const_int32(gallivm, swizzle);
+      }
+   }
+
+   return LLVMBuildShuffleVector(builder, src, LLVMGetUndef(LLVMTypeOf(src)), LLVMConstVector(shuffles, dst_len), "");
+}
+
+
 LLVMValueRef
 lp_build_swizzle_aos(struct lp_build_context *bld,
                      LLVMValueRef a,
@@ -272,7 +357,7 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
       case PIPE_SWIZZLE_GREEN:
       case PIPE_SWIZZLE_BLUE:
       case PIPE_SWIZZLE_ALPHA:
-         return lp_build_swizzle_scalar_aos(bld, a, swizzles[0]);
+         return lp_build_swizzle_scalar_aos(bld, a, swizzles[0], 4);
       case PIPE_SWIZZLE_ZERO:
          return bld->zero;
       case PIPE_SWIZZLE_ONE:
@@ -367,7 +452,7 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
             cond |= 1 << chan;
          }
       }
-      res = lp_build_select_aos(bld, cond, bld->one, bld->zero);
+      res = lp_build_select_aos(bld, cond, bld->one, bld->zero, 4);
 
       /*
        * Build a type where each element is an integer that cover the four
@@ -550,6 +635,44 @@ lp_build_transpose_aos(struct gallivm_state *gallivm,
    dst[1] = LLVMBuildBitCast(gallivm->builder, dst[1], single_type, "dst1");
    dst[2] = LLVMBuildBitCast(gallivm->builder, dst[2], single_type, "dst2");
    dst[3] = LLVMBuildBitCast(gallivm->builder, dst[3], single_type, "dst3");
+}
+
+
+/**
+ * Transpose from AOS <-> SOA for num_srcs
+ */
+void
+lp_build_transpose_aos_n(struct gallivm_state *gallivm,
+                         struct lp_type type,
+                         const LLVMValueRef* src,
+                         unsigned num_srcs,
+                         LLVMValueRef* dst)
+{
+   switch (num_srcs) {
+      case 1:
+         dst[0] = src[0];
+         break;
+
+      case 2:
+      {
+         /* Note: we must use a temporary incase src == dst */
+         LLVMValueRef lo, hi;
+
+         lo = lp_build_interleave2_half(gallivm, type, src[0], src[1], 0);
+         hi = lp_build_interleave2_half(gallivm, type, src[0], src[1], 1);
+
+         dst[0] = lo;
+         dst[1] = hi;
+         break;
+      }
+
+      case 4:
+         lp_build_transpose_aos(gallivm, type, src, dst);
+         break;
+
+      default:
+         assert(0);
+   };
 }
 
 

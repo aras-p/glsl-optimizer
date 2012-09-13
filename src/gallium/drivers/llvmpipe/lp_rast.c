@@ -151,47 +151,70 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
                     const union lp_rast_cmd_arg arg)
 {
    const struct lp_scene *scene = task->scene;
-   const uint8_t *clear_color = arg.clear_color;
+   uint8_t clear_color[4];
 
    unsigned i;
+   boolean gray;
 
-   LP_DBG(DEBUG_RAST, "%s 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__, 
+   for (i = 0; i < 4; ++i) {
+      clear_color[i] = float_to_ubyte(arg.clear_color[i]);
+   }
+
+   LP_DBG(DEBUG_RAST, "%s 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__,
               clear_color[0],
               clear_color[1],
               clear_color[2],
               clear_color[3]);
 
-   if (clear_color[0] == clear_color[1] &&
-       clear_color[1] == clear_color[2] &&
-       clear_color[2] == clear_color[3]) {
-      /* clear to grayscale value {x, x, x, x} */
-      for (i = 0; i < scene->fb.nr_cbufs; i++) {
-         uint8_t *ptr =
-            lp_rast_get_color_tile_pointer(task, i, LP_TEX_USAGE_WRITE_ALL);
-	 memset(ptr, clear_color[0], TILE_SIZE * TILE_SIZE * 4);
-      }
-   }
-   else {
-      /* Non-gray color.
-       * Note: if the swizzled tile layout changes (see TILE_PIXEL) this code
-       * will need to change.  It'll be pretty obvious when clearing no longer
-       * works.
-       */
-      const unsigned chunk = TILE_SIZE / 4;
-      for (i = 0; i < scene->fb.nr_cbufs; i++) {
-         uint8_t *c =
-            lp_rast_get_color_tile_pointer(task, i, LP_TEX_USAGE_WRITE_ALL);
+   gray =
+         clear_color[0] == clear_color[1] &&
+         clear_color[1] == clear_color[2] &&
+         clear_color[2] == clear_color[3];
+
+   for (i = 0; i < scene->fb.nr_cbufs; i++) {
+      if (scene->cbufs[i].unswizzled) {
+         const struct lp_scene *scene = task->scene;
+         union util_color uc;
+
+         util_pack_color(arg.clear_color,
+                         scene->fb.cbufs[i]->format, &uc);
+
+         util_fill_rect(scene->cbufs[i].map,
+                        scene->fb.cbufs[i]->format,
+                        scene->cbufs[i].stride,
+                        task->x,
+                        task->y,
+                        TILE_SIZE,
+                        TILE_SIZE,
+                        &uc);
+      } else {
+         const unsigned chunk = TILE_SIZE / 4;
+         uint8_t *ptr;
          unsigned j;
 
-         for (j = 0; j < 4 * TILE_SIZE; j++) {
-            memset(c, clear_color[0], chunk);
-            c += chunk;
-            memset(c, clear_color[1], chunk);
-            c += chunk;
-            memset(c, clear_color[2], chunk);
-            c += chunk;
-            memset(c, clear_color[3], chunk);
-            c += chunk;
+         ptr = lp_rast_get_color_tile_pointer(task, i, LP_TEX_USAGE_WRITE_ALL);
+
+         if (gray) {
+            /* clear to grayscale value {x, x, x, x} */
+
+            memset(ptr, clear_color[0], TILE_SIZE * TILE_SIZE * 4);
+         } else {
+            /* Non-gray color.
+            * Note: if the swizzled tile layout changes (see TILE_PIXEL) this code
+            * will need to change.  It'll be pretty obvious when clearing no longer
+            * works.
+            */
+
+            for (j = 0; j < 4 * TILE_SIZE; j++) {
+               memset(ptr, clear_color[0], chunk);
+               ptr += chunk;
+               memset(ptr, clear_color[1], chunk);
+               ptr += chunk;
+               memset(ptr, clear_color[2], chunk);
+               ptr += chunk;
+               memset(ptr, clear_color[3], chunk);
+               ptr += chunk;
+            }
          }
       }
    }
@@ -311,7 +334,7 @@ lp_rast_store_linear_color( struct lp_rasterizer_task *task )
       const unsigned level = cbuf->u.tex.level;
       struct llvmpipe_resource *lpt = llvmpipe_resource(cbuf->texture);
 
-      if (!task->color_tiles[buf])
+      if (scene->cbufs[buf].unswizzled || !task->color_tiles[buf])
          continue;
 
       llvmpipe_unswizzle_cbuf_tile(lpt,
@@ -358,13 +381,20 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
    for (y = 0; y < TILE_SIZE; y += 4){
       for (x = 0; x < TILE_SIZE; x += 4) {
          uint8_t *color[PIPE_MAX_COLOR_BUFS];
+         unsigned stride[PIPE_MAX_COLOR_BUFS];
          uint32_t *depth;
          unsigned i;
 
          /* color buffer */
-         for (i = 0; i < scene->fb.nr_cbufs; i++)
-            color[i] = lp_rast_get_color_block_pointer(task, i,
-                                                       tile_x + x, tile_y + y);
+         for (i = 0; i < scene->fb.nr_cbufs; i++){
+            stride[i] = scene->cbufs[i].stride;
+
+            if (scene->cbufs[i].unswizzled) {
+               color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, tile_x + x, tile_y + y);
+            } else {
+               color[i] = lp_rast_get_color_block_pointer(task, i, tile_x + x, tile_y + y);
+            }
+         }
 
          /* depth buffer */
          depth = lp_rast_get_depth_block_pointer(task, tile_x + x, tile_y + y);
@@ -380,7 +410,8 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
                                             color,
                                             depth,
                                             0xffff,
-                                            &task->vis_counter);
+                                            &task->vis_counter,
+                                            stride);
          END_JIT_CALL();
       }
    }
@@ -408,7 +439,9 @@ lp_rast_shade_tile_opaque(struct lp_rasterizer_task *task,
 
    /* this will prevent converting the layout from tiled to linear */
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
-      (void)lp_rast_get_color_tile_pointer(task, i, LP_TEX_USAGE_WRITE_ALL);
+      if (!scene->cbufs[i].unswizzled) {
+         (void)lp_rast_get_color_tile_pointer(task, i, LP_TEX_USAGE_WRITE_ALL);
+      }
    }
 
    lp_rast_shade_tile(task, arg);
@@ -431,6 +464,7 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
    struct lp_fragment_shader_variant *variant = state->variant;
    const struct lp_scene *scene = task->scene;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
+   unsigned stride[PIPE_MAX_COLOR_BUFS];
    void *depth;
    unsigned i;
 
@@ -447,15 +481,20 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
 
    /* color buffer */
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
-      color[i] = lp_rast_get_color_block_pointer(task, i, x, y);
-      assert(lp_check_alignment(color[i], 16));
+      stride[i] = scene->cbufs[i].stride;
+
+      if (scene->cbufs[i].unswizzled) {
+         color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, x, y);
+      } else {
+         color[i] = lp_rast_get_color_block_pointer(task, i, x, y);
+      }
    }
 
    /* depth buffer */
    depth = lp_rast_get_depth_block_pointer(task, x, y);
 
 
-   assert(lp_check_alignment(state->jit_context.blend_color, 16));
+   assert(lp_check_alignment(state->jit_context.u8_blend_color, 16));
 
    /* run shader on 4x4 block */
    BEGIN_JIT_CALL(state, task);
@@ -468,7 +507,8 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
                                          color,
                                          depth,
                                          mask,
-                                         &task->vis_counter);
+                                         &task->vis_counter,
+                                         stride);
    END_JIT_CALL();
 }
 

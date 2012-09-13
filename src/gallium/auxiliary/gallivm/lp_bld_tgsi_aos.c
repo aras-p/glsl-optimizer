@@ -94,7 +94,7 @@ swizzle_scalar_aos(struct lp_build_tgsi_aos_context *bld,
                    unsigned chan)
 {
    chan = bld->swizzles[chan];
-   return lp_build_swizzle_scalar_aos(&bld->bld_base.base, a, chan);
+   return lp_build_swizzle_scalar_aos(&bld->bld_base.base, a, chan, 4);
 }
 
 
@@ -623,7 +623,7 @@ lp_emit_instruction_aos(
 
    case TGSI_OPCODE_EX2:
       src0 = lp_build_emit_fetch(&bld->bld_base, inst, 0, LP_CHAN_ALL);
-      tmp0 = lp_build_swizzle_scalar_aos(&bld->bld_base.base, src0, TGSI_SWIZZLE_X);
+      tmp0 = lp_build_swizzle_scalar_aos(&bld->bld_base.base, src0, TGSI_SWIZZLE_X, TGSI_NUM_CHANNELS);
       dst0 = lp_build_exp2(&bld->bld_base.base, tmp0);
       break;
 

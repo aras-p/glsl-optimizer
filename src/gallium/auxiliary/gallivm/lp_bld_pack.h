@@ -87,6 +87,15 @@ lp_build_concat(struct gallivm_state *gallivm,
                 struct lp_type src_type,
                 unsigned num_vectors);
 
+int
+lp_build_concat_n(struct gallivm_state *gallivm,
+                  struct lp_type src_type,
+                  LLVMValueRef *src,
+                  unsigned num_srcs,
+                  LLVMValueRef *dst,
+                  unsigned num_dsts);
+
+
 LLVMValueRef
 lp_build_packs2(struct gallivm_state *gallivm,
                 struct lp_type src_type,
