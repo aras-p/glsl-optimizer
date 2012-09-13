@@ -75,6 +75,5 @@ nv30_resource_init(struct pipe_context *pipe)
    pipe->create_surface = nv30_miptree_surface_new;
    pipe->surface_destroy = nv30_miptree_surface_del;
    pipe->resource_copy_region = nv30_resource_copy_region;
-   pipe->resource_resolve = nv30_resource_resolve;
    pipe->blit = nv30_blit;
 }

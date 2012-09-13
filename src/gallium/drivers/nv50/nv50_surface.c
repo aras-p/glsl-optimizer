@@ -859,6 +859,7 @@ nv50_blitctx_post_blit(struct nv50_context *nv50, struct nv50_blitctx *blit)
        NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG | NV50_NEW_FRAGPROG);
 }
 
+#if 0
 static void
 nv50_resource_resolve(struct pipe_context *pipe,
                       const struct pipe_resolve_info *info)
@@ -955,6 +956,7 @@ nv50_resource_resolve(struct pipe_context *pipe,
 
    nv50_blitctx_post_blit(nv50, blit);
 }
+#endif
 
 boolean
 nv50_blitctx_create(struct nv50_screen *screen)
@@ -983,7 +985,6 @@ nv50_init_surface_functions(struct nv50_context *nv50)
    struct pipe_context *pipe = &nv50->base.pipe;
 
    pipe->resource_copy_region = nv50_resource_copy_region;
-   pipe->resource_resolve = nv50_resource_resolve;
    pipe->clear_render_target = nv50_clear_render_target;
    pipe->clear_depth_stencil = nv50_clear_depth_stencil;
 }

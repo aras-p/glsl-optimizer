@@ -351,67 +351,6 @@ static bool r600_decompress_subresource(struct pipe_context *ctx,
 	return true;
 }
 
-static void r600_copy_first_sample(struct pipe_context *ctx,
-				   const struct pipe_resolve_info *info)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct pipe_surface *dst_view, dst_templ;
-	struct pipe_sampler_view src_templ, *src_view;
-	struct pipe_box box;
-
-	/* The driver doesn't decompress resources automatically while
-	 * u_blitter is rendering. */
-	if (!r600_decompress_subresource(ctx, info->src.res, 0,
-					 info->src.layer, info->src.layer)) {
-		return; /* error */
-	}
-
-	/* this is correct for upside-down blits too */
-	u_box_2d(info->src.x0,
-		 info->src.y0,
-		 info->src.x1 - info->src.x0,
-		 info->src.y1 - info->src.y0, &box);
-
-	/* Initialize the surface. */
-	util_blitter_default_dst_texture(&dst_templ, info->dst.res,
-					 info->dst.level, info->dst.layer, &box);
-	dst_view = ctx->create_surface(ctx, info->dst.res, &dst_templ);
-
-	/* Initialize the sampler view. */
-	util_blitter_default_src_texture(&src_templ, info->src.res, 0);
-	src_view = ctx->create_sampler_view(ctx, info->src.res, &src_templ);
-
-	/* Copy the first sample into dst. */
-	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
-	util_blitter_blit_generic(rctx->blitter, dst_view, info->dst.x0,
-                                  info->dst.y0, abs(box.width), abs(box.height),
-                                  src_view, &box,
-                                  info->src.res->width0, info->src.res->height0,
-                                  info->mask, PIPE_TEX_FILTER_NEAREST, NULL, FALSE);
-	r600_blitter_end(ctx);
-
-	pipe_surface_reference(&dst_view, NULL);
-	pipe_sampler_view_reference(&src_view, NULL);
-}
-
-static boolean is_simple_resolve(const struct pipe_resolve_info *info)
-{
-	unsigned dst_width = u_minify(info->dst.res->width0, info->dst.level);
-	unsigned dst_height = u_minify(info->dst.res->height0, info->dst.level);
-
-	return info->dst.res->format == info->src.res->format &&
-		dst_width == info->src.res->width0 &&
-		dst_height == info->src.res->height0 &&
-		info->dst.x0 == 0 &&
-		info->dst.y0 == 0 &&
-		info->dst.x1 == dst_width &&
-		info->dst.y1 == dst_height &&
-		info->src.x0 == 0 &&
-		info->src.y0 == 0 &&
-		info->src.x1 == dst_width &&
-		info->src.y1 == dst_height;
-}
-
 static boolean is_simple_msaa_resolve(const struct pipe_blit_info *info)
 {
 	unsigned dst_width = u_minify(info->dst.resource->width0, info->dst.level);
@@ -432,96 +371,6 @@ static boolean is_simple_msaa_resolve(const struct pipe_blit_info *info)
 		info->src.box.y == 0 &&
 		info->src.box.width == dst_width &&
 		info->src.box.height == dst_height;
-}
-
-static void r600_color_resolve(struct pipe_context *ctx,
-			       const struct pipe_resolve_info *info)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct pipe_screen *screen = ctx->screen;
-	struct pipe_resource *tmp, templ;
-	struct pipe_box box;
-	unsigned sample_mask =
-		rctx->chip_class == CAYMAN ? ~0 : ((1ull << MAX2(1, info->src.res->nr_samples)) - 1);
-
-	assert((info->mask & PIPE_MASK_RGBA) == PIPE_MASK_RGBA);
-
-	if (is_simple_resolve(info)) {
-		r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
-		util_blitter_custom_resolve_color(rctx->blitter,
-						  info->dst.res, info->dst.level, info->dst.layer,
-						  info->src.res, info->src.layer,
-						  sample_mask, rctx->custom_blend_resolve);
-		r600_blitter_end(ctx);
-		return;
-	}
-
-	/* resolve into a temporary texture, then blit */
-	templ.target = PIPE_TEXTURE_2D;
-	templ.format = info->src.res->format;
-	templ.width0 = info->src.res->width0;
-	templ.height0 = info->src.res->height0;
-	templ.depth0 = 1;
-	templ.array_size = 1;
-	templ.last_level = 0;
-	templ.nr_samples = 0;
-	templ.usage = PIPE_USAGE_STATIC;
-	templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
-	templ.flags = 0;
-
-	tmp = screen->resource_create(screen, &templ);
-
-	/* XXX use scissor, so that only the needed part of the resource is resolved */
-	r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
-	util_blitter_custom_resolve_color(rctx->blitter,
-					  tmp, 0, 0,
-					  info->src.res, info->src.layer,
-					  sample_mask, rctx->custom_blend_resolve);
-	r600_blitter_end(ctx);
-
-	/* this is correct for upside-down blits too */
-	u_box_2d(info->src.x0,
-		 info->src.y0,
-		 info->src.x1 - info->src.x0,
-		 info->src.y1 - info->src.y0, &box);
-
-	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
-	util_blitter_copy_texture(rctx->blitter, info->dst.res, info->dst.level,
-				  info->dst.x0, info->dst.y0, info->dst.layer,
-				  tmp, 0, &box, PIPE_MASK_RGBAZS, FALSE);
-	r600_blitter_end(ctx);
-
-	pipe_resource_reference(&tmp, NULL);
-}
-
-static void r600_resource_resolve(struct pipe_context *ctx,
-				  const struct pipe_resolve_info *info)
-{
-	/* make sure we're doing a resolve operation */
-	assert(info->src.res->nr_samples > 1);
-	assert(info->dst.res->nr_samples <= 1);
-
-	/* limitations of multisample resources */
-	assert(info->src.res->last_level == 0);
-	assert(info->src.res->target == PIPE_TEXTURE_2D ||
-	       info->src.res->target == PIPE_TEXTURE_2D_ARRAY);
-
-	/* check if the resolve box is valid */
-	assert(info->dst.x0 < info->dst.x1);
-	assert(info->dst.y0 < info->dst.y1);
-
-	/* scaled resolve isn't allowed */
-	assert(abs(info->dst.x0 - info->dst.x1) ==
-	       abs(info->src.x0 - info->src.x1));
-	assert(abs(info->dst.y0 - info->dst.y1) ==
-	       abs(info->src.y0 - info->src.y1));
-
-	if ((info->mask & PIPE_MASK_ZS) ||
-	    util_format_is_pure_integer(info->src.res->format)) {
-		r600_copy_first_sample(ctx, info);
-	} else {
-		r600_color_resolve(ctx, info);
-	}
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
@@ -892,6 +741,5 @@ void r600_init_blit_functions(struct r600_context *rctx)
 	rctx->context.clear_render_target = r600_clear_render_target;
 	rctx->context.clear_depth_stencil = r600_clear_depth_stencil;
 	rctx->context.resource_copy_region = r600_resource_copy_region;
-	rctx->context.resource_resolve = r600_resource_resolve;
 	rctx->context.blit = r600_blit;
 }

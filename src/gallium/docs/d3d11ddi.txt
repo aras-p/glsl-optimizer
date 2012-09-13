@@ -384,7 +384,7 @@ ResourceIsStagingBusy ->
 ResourceReadAfterWriteHazard
 	- Gallium lacks this
 
-ResourceResolveSubresource -> resource_resolve
+ResourceResolveSubresource -> blit
 
 ResourceMap
 ResourceUnmap

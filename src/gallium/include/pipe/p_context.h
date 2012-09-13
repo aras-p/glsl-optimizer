@@ -281,7 +281,7 @@ struct pipe_context {
    /**
     * Resource functions for blit-like functionality
     *
-    * If a driver supports multisampling, resource_resolve must be available.
+    * If a driver supports multisampling, blit must implement color resolve.
     */
    /*@{*/
 
@@ -303,13 +303,6 @@ struct pipe_context {
     */
    void (*blit)(struct pipe_context *pipe,
                 const struct pipe_blit_info *info);
-
-   /**
-    * Resolve a multisampled resource into a non-multisampled one.
-    * Source and destination must be of the same format.
-    */
-   void (*resource_resolve)(struct pipe_context *pipe,
-                            const struct pipe_resolve_info *info);
 
    /*@}*/
 

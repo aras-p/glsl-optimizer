@@ -1755,6 +1755,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		unsigned src_subresource,
 		DXGI_FORMAT format)
 	{
+#if 0
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)dst_resource;
 		GalliumD3D11Resource<>* src = (GalliumD3D11Resource<>*)src_resource;
@@ -1778,6 +1779,7 @@ struct GalliumD3D10Device : public GalliumD3D10ScreenImpl<threadsafe>
 		info.mask = PIPE_MASK_RGBA | PIPE_MASK_ZS;
 
 		pipe->resource_resolve(pipe, &info);
+#endif
 	}
 
 #if API >= 11

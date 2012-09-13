@@ -945,6 +945,7 @@ nvc0_blitctx_post_blit(struct nvc0_context *nvc0, struct nvc0_blitctx *blit)
        NVC0_NEW_TFB_TARGETS);
 }
 
+#if 0
 static void
 nvc0_resource_resolve(struct pipe_context *pipe,
                       const struct pipe_resolve_info *info)
@@ -1047,6 +1048,7 @@ nvc0_resource_resolve(struct pipe_context *pipe,
 
    nvc0_blitctx_post_blit(nvc0, blit);
 }
+#endif
 
 boolean
 nvc0_blitctx_create(struct nvc0_screen *screen)
@@ -1076,7 +1078,6 @@ nvc0_init_surface_functions(struct nvc0_context *nvc0)
    struct pipe_context *pipe = &nvc0->base.pipe;
 
    pipe->resource_copy_region = nvc0_resource_copy_region;
-   pipe->resource_resolve = nvc0_resource_resolve;
    pipe->clear_render_target = nvc0_clear_render_target;
    pipe->clear_depth_stencil = nvc0_clear_depth_stencil;
 }

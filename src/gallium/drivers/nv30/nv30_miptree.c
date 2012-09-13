@@ -148,6 +148,7 @@ void
 nv30_resource_resolve(struct pipe_context *pipe,
                       const struct pipe_resolve_info *info)
 {
+#if 0
    struct nv30_context *nv30 = nv30_context(pipe);
    struct nv30_rect src, dst;
 
@@ -157,6 +158,7 @@ nv30_resource_resolve(struct pipe_context *pipe,
                info->dst.x1 - info->dst.x0, info->dst.y1 - info->dst.y0, &dst);
 
    nv30_transfer_rect(nv30, BILINEAR, &src, &dst);
+#endif
 }
 
 void

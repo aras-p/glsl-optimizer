@@ -1080,7 +1080,6 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    //GLHD_PIPE_INIT(set_stream_output_targets);
    GLHD_PIPE_INIT(resource_copy_region);
    GLHD_PIPE_INIT(blit);
-   //GLHD_PIPE_INIT(resource_resolve);
    GLHD_PIPE_INIT(clear);
    GLHD_PIPE_INIT(clear_render_target);
    GLHD_PIPE_INIT(clear_depth_stencil);

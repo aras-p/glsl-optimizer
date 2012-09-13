@@ -585,32 +585,6 @@ struct pipe_blit_info
    struct pipe_scissor_state scissor;
 };
 
-/**
- * Information to describe a resource_resolve call.
- */
-struct pipe_resolve_info
-{
-   struct {
-      struct pipe_resource *res;
-      unsigned level;
-      unsigned layer;
-      int x0; /**< always left */
-      int y0; /**< always top */
-      int x1; /**< determines scale if PIPE_CAP_SCALED_RESOLVE is supported */
-      int y1; /**< determines scale if PIPE_CAP_SCALED_RESOLVE is supported */
-   } dst;
-
-   struct {
-      struct pipe_resource *res;
-      unsigned layer;
-      int x0;
-      int y0;
-      int x1; /**< may be < x0 only if PIPE_CAP_SCALED_RESOLVE is supported */
-      int y1; /**< may be < y1 even if PIPE_CAP_SCALED_RESOLVE not supported */
-   } src;
-
-   unsigned mask; /**< PIPE_MASK_RGBA, Z, S or ZS */
-};
 
 /**
  * Structure used as a header for serialized LLVM programs.
