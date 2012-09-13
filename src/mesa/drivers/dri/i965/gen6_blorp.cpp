@@ -188,9 +188,9 @@ gen6_blorp_emit_vertices(struct brw_context *brw,
       float *vertex_data;
 
       const float vertices[GEN6_BLORP_VBO_SIZE] = {
-         /* v0 */ 0, 0, 0, 0,     params->x0, params->y1, 0, 1,
-         /* v1 */ 0, 0, 0, 0,     params->x1, params->y1, 0, 1,
-         /* v2 */ 0, 0, 0, 0,     params->x0, params->y0, 0, 1,
+         /* v0 */ 0, 0, 0, 0,     (float) params->x0, (float) params->y1, 0, 1,
+         /* v1 */ 0, 0, 0, 0,     (float) params->x1, (float) params->y1, 0, 1,
+         /* v2 */ 0, 0, 0, 0,     (float) params->x0, (float) params->y0, 0, 1,
       };
 
       vertex_data = (float *) brw_state_batch(brw, AUB_TRACE_VERTEX_BUFFER,
