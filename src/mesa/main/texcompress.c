@@ -275,7 +275,6 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
       }
    }
 
-#if FEATURE_ES1
    if (ctx->API == API_OPENGLES) {
       if (formats) {
 	 formats[n++] = GL_PALETTE4_RGB8_OES;
@@ -293,7 +292,6 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
 	 n += 10;
       }
    }
-#endif
 
    return n;
 }

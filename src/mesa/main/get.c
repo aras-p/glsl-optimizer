@@ -2707,7 +2707,6 @@ _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
    }
 }
 
-#if FEATURE_ES1
 void GLAPIENTRY
 _mesa_GetFixedv(GLenum pname, GLfixed *params)
 {
@@ -2793,4 +2792,3 @@ _mesa_GetFixedv(GLenum pname, GLfixed *params)
       break;
    }
 }
-#endif

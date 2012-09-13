@@ -129,12 +129,10 @@ egl_st_create_api(enum st_api_type api)
 
    switch (api) {
    case ST_API_OPENGL:
-#if FEATURE_GL || FEATURE_ES1 || FEATURE_ES2
 #if _EGL_EXTERNAL_GL
       stapi = egl_st_load_gl();
 #else
       stapi = st_gl_api_create();
-#endif
 #endif
       break;
    case ST_API_OPENVG:
