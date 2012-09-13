@@ -254,13 +254,6 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	FREE(rtex);
 }
 
-/* Needs adjustment for pixelformat:
- */
-static INLINE unsigned u_box_volume( const struct pipe_box *box )
-{
-	return box->width * box->depth * box->height;
-};
-
 static struct pipe_transfer* si_texture_get_transfer(struct pipe_context *ctx,
 						     struct pipe_resource *texture,
 						     unsigned level,
@@ -282,9 +275,6 @@ static struct pipe_transfer* si_texture_get_transfer(struct pipe_context *ctx,
 	 */
 	if (rtex->surface.level[level].mode != RADEON_SURF_MODE_LINEAR_ALIGNED &&
 	    rtex->surface.level[level].mode != RADEON_SURF_MODE_LINEAR)
-		use_staging_texture = TRUE;
-
-	if ((usage & PIPE_TRANSFER_READ) && u_box_volume(box) > 1024)
 		use_staging_texture = TRUE;
 
 	/* XXX: Use a staging texture for uploads if the underlying BO
