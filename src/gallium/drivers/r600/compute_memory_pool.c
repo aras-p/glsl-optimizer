@@ -42,35 +42,6 @@
 #include "evergreen_compute_internal.h"
 #include <inttypes.h>
 
-static struct r600_texture * create_pool_texture(struct r600_screen * screen,
-		unsigned size_in_dw)
-{
-
-	struct pipe_resource templ;
-	struct r600_texture * tex;
-
-	if (size_in_dw == 0) {
-		return NULL;
-	}
-	memset(&templ, 0, sizeof(templ));
-	templ.target = PIPE_TEXTURE_1D;
-	templ.format = PIPE_FORMAT_R32_UINT;
-	templ.bind = PIPE_BIND_CUSTOM;
-	templ.usage = PIPE_USAGE_IMMUTABLE;
-	templ.flags = 0;
-	templ.width0 = size_in_dw;
-	templ.height0 = 1;
-	templ.depth0 = 1;
-	templ.array_size = 1;
-
-	tex = (struct r600_texture *)r600_texture_create(
-						&screen->screen, &templ);
-	/* XXX: Propagate this error */
-	assert(tex && "Out of memory");
-	tex->is_rat = 1;
-	return tex;
-}
-
 /**
  * Creates a new pool
  */
@@ -99,8 +70,8 @@ static void compute_memory_pool_init(struct compute_memory_pool * pool,
 	 */
 	pool->next_id = 1;
 	pool->size_in_dw = initial_size_in_dw;
-	pool->bo = (struct r600_resource*)create_pool_texture(pool->screen,
-							pool->size_in_dw);
+	pool->bo = (struct r600_resource*)r600_compute_buffer_alloc_vram(pool->screen,
+							pool->size_in_dw * 4);
 }
 
 /**
@@ -216,9 +187,9 @@ void compute_memory_grow_pool(struct compute_memory_pool* pool,
 		pool->screen->screen.resource_destroy(
 			(struct pipe_screen *)pool->screen,
 			(struct pipe_resource *)pool->bo);
-		pool->bo = (struct r600_resource*)create_pool_texture(
+		pool->bo = (struct r600_resource*)r600_compute_buffer_alloc_vram(
 							pool->screen,
-							pool->size_in_dw);
+							pool->size_in_dw * 4);
 		compute_memory_shadow(pool, pipe, 0);
 	}
 }

@@ -295,7 +295,8 @@ void evergreen_set_rat(
 
 	surf = (struct r600_surface*)pipe->ctx->framebuffer.state.cbufs[id];
 
-	evergreen_init_color_surface(rctx, surf);
+	struct radeon_surface *rsurf = &((struct r600_texture*)surf->base.texture)->surface;
+	evergreen_init_color_surface_rat(rctx, surf);
 }
 
 void evergreen_set_gds(
