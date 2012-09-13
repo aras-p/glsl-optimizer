@@ -249,16 +249,24 @@ defm V_CMPSX_NEQ_F64 : VOPC_64 <0x0000007d, "V_CMPSX_NEQ_F64", []>;
 defm V_CMPSX_NLT_F64 : VOPC_64 <0x0000007e, "V_CMPSX_NLT_F64", []>;
 defm V_CMPSX_TRU_F64 : VOPC_64 <0x0000007f, "V_CMPSX_TRU_F64", []>;
 defm V_CMP_F_I32 : VOPC_32 <0x00000080, "V_CMP_F_I32", []>;
-defm V_CMP_LT_I32 : VOPC_32 <0x00000081, "V_CMP_LT_I32", []>;
+defm V_CMP_LT_I32 : VOPC_32 <0x00000081, "V_CMP_LT_I32",
+  [(set VCCReg:$dst, (setcc (i32 AllReg_32:$src0), VReg_32:$src1, SETLT))]
+>;
 defm V_CMP_EQ_I32 : VOPC_32 <0x00000082, "V_CMP_EQ_I32",
   [(set VCCReg:$dst, (setcc (i32 AllReg_32:$src0), VReg_32:$src1, SETEQ))]
 >;
-defm V_CMP_LE_I32 : VOPC_32 <0x00000083, "V_CMP_LE_I32", []>;
-defm V_CMP_GT_I32 : VOPC_32 <0x00000084, "V_CMP_GT_I32", []>;
+defm V_CMP_LE_I32 : VOPC_32 <0x00000083, "V_CMP_LE_I32",
+  [(set VCCReg:$dst, (setcc (i32 AllReg_32:$src0), VReg_32:$src1, SETLE))]
+>;
+defm V_CMP_GT_I32 : VOPC_32 <0x00000084, "V_CMP_GT_I32",
+  [(set VCCReg:$dst, (setcc (i32 AllReg_32:$src0), VReg_32:$src1, SETGT))]
+>;
 defm V_CMP_NE_I32 : VOPC_32 <0x00000085, "V_CMP_NE_I32",
   [(set VCCReg:$dst, (setcc (i32 AllReg_32:$src0), VReg_32:$src1, SETNE))]
 >;
-defm V_CMP_GE_I32 : VOPC_32 <0x00000086, "V_CMP_GE_I32", []>;
+defm V_CMP_GE_I32 : VOPC_32 <0x00000086, "V_CMP_GE_I32",
+  [(set VCCReg:$dst, (setcc (i32 AllReg_32:$src0), VReg_32:$src1, SETGE))]
+>;
 defm V_CMP_T_I32 : VOPC_32 <0x00000087, "V_CMP_T_I32", []>;
 defm V_CMPX_F_I32 : VOPC_32 <0x00000090, "V_CMPX_F_I32", []>;
 defm V_CMPX_LT_I32 : VOPC_32 <0x00000091, "V_CMPX_LT_I32", []>;
