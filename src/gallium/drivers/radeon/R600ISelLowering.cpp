@@ -124,7 +124,8 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       return BB;
     }
 
-  case AMDGPU::RAT_WRITE_CACHELESS_eg:
+  case AMDGPU::RAT_WRITE_CACHELESS_32_eg:
+  case AMDGPU::RAT_WRITE_CACHELESS_128_eg:
     {
       // Convert to DWORD address
       unsigned NewAddr = MRI.createVirtualRegister(

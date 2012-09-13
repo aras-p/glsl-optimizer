@@ -158,7 +158,8 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     return;
   } else {
     switch(MI.getOpcode()) {
-    case AMDGPU::RAT_WRITE_CACHELESS_eg:
+    case AMDGPU::RAT_WRITE_CACHELESS_32_eg:
+    case AMDGPU::RAT_WRITE_CACHELESS_128_eg:
       {
         uint64_t inst = getBinaryCodeForInstr(MI, Fixups);
         EmitByte(INSTR_NATIVE, OS);

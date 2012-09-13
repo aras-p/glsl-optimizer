@@ -944,10 +944,8 @@ let Predicates = [isEGorCayman] in {
 
 let usesCustomInserter = 1 in {
 
-def RAT_WRITE_CACHELESS_eg : EG_CF_RAT <0x57, 0x2, 0, (outs),
-  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr, i32imm:$eop),
-  "RAT_WRITE_CACHELESS_eg $rw_gpr, $index_gpr, $eop",
-  []>
+class RAT_WRITE_CACHELESS_eg <dag ins, bits<4> comp_mask, string name> : EG_CF_RAT <
+  0x57, 0x2, 0, (outs), ins, !strconcat(name, " $rw_gpr, $index_gpr, $eop"), []>
 {
   let RIM         = 0;
   // XXX: Have a separate instruction for non-indexed writes.
@@ -956,7 +954,7 @@ def RAT_WRITE_CACHELESS_eg : EG_CF_RAT <0x57, 0x2, 0, (outs),
   let ELEM_SIZE   = 0;
 
   let ARRAY_SIZE  = 0;
-  let COMP_MASK   = 1;
+  let COMP_MASK   = comp_mask;
   let BURST_COUNT = 0;
   let VPM         = 0;
   let MARK        = 0;
@@ -965,16 +963,34 @@ def RAT_WRITE_CACHELESS_eg : EG_CF_RAT <0x57, 0x2, 0, (outs),
 
 } // End usesCustomInserter = 1
 
+// 32-bit store
+def RAT_WRITE_CACHELESS_32_eg : RAT_WRITE_CACHELESS_eg <
+  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr, i32imm:$eop),
+  0x1, "RAT_WRITE_CACHELESS_32_eg"
+>;
+
 // i32 global_store
 def : Pat <
   (global_store (i32 R600_TReg32_X:$val), R600_TReg32_X:$ptr),
-  (RAT_WRITE_CACHELESS_eg R600_TReg32_X:$val, R600_TReg32_X:$ptr, 0)
+  (RAT_WRITE_CACHELESS_32_eg R600_TReg32_X:$val, R600_TReg32_X:$ptr, 0)
 >;
 
 // Floating point global_store
 def : Pat <
   (global_store (f32 R600_TReg32_X:$val), R600_TReg32_X:$ptr),
-  (RAT_WRITE_CACHELESS_eg R600_TReg32_X:$val, R600_TReg32_X:$ptr, 0)
+  (RAT_WRITE_CACHELESS_32_eg R600_TReg32_X:$val, R600_TReg32_X:$ptr, 0)
+>;
+
+//128-bit store
+def RAT_WRITE_CACHELESS_128_eg : RAT_WRITE_CACHELESS_eg <
+  (ins R600_Reg128:$rw_gpr, R600_TReg32_X:$index_gpr, i32imm:$eop),
+  0xf, "RAT_WRITE_CACHELESS_128"
+>;
+
+// v4f32 global store
+def : Pat <
+  (global_store (v4f32 R600_Reg128:$val), R600_TReg32_X:$ptr),
+  (RAT_WRITE_CACHELESS_128_eg R600_Reg128:$val, R600_TReg32_X:$ptr, 0)
 >;
 
 class VTX_READ_eg <bits<8> buffer_id, dag outs, list<dag> pattern>
