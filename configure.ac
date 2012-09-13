@@ -1938,12 +1938,12 @@ AM_CONDITIONAL(HAVE_GALLIUM_LLVMPIPE, test "x$HAVE_GALLIUM_LLVMPIPE" = xyes)
 if test "x$enable_gallium_loader" = xyes; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/null"
     GALLIUM_PIPE_LOADER_DEFINES="-DHAVE_PIPE_LOADER_SW"
-    GALLIUM_PIPE_LOADER_LIBS="\$(TOP)/src/gallium/auxiliary/pipe-loader/libpipe_loader.a"
-    GALLIUM_PIPE_LOADER_LIBS="$GALLIUM_PIPE_LOADER_LIBS \$(TOP)/src/gallium/winsys/sw/null/libws_null.a"
+    GALLIUM_PIPE_LOADER_LIBS="\$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la"
+    GALLIUM_PIPE_LOADER_LIBS="$GALLIUM_PIPE_LOADER_LIBS \$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la"
 
     if test "x$HAVE_WINSYS_XLIB" = xyes; then
         GALLIUM_PIPE_LOADER_DEFINES="$GALLIUM_PIPE_LOADER_DEFINES -DHAVE_PIPE_LOADER_XLIB"
-        GALLIUM_PIPE_LOADER_LIBS="$GALLIUM_PIPE_LOADER_LIBS \$(TOP)/src/gallium/winsys/sw/xlib/libws_xlib.a"
+        GALLIUM_PIPE_LOADER_LIBS="$GALLIUM_PIPE_LOADER_LIBS \$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la"
     fi
 
     if test "x$enable_gallium_drm_loader" = xyes; then
@@ -2076,6 +2076,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/targets/dri-swrast/Makefile
 		src/gallium/targets/dri-vmwgfx/Makefile
 		src/gallium/targets/egl-static/Makefile
+		src/gallium/targets/gbm/Makefile
 		src/gallium/targets/opencl/Makefile
 		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
