@@ -67,3 +67,5 @@ def AMDGPUumin : SDNode<"AMDGPUISD::UMIN", SDTIntBinOp,
 // out = (2^32 / a) + e
 // e is rounding error
 def AMDGPUurecip : SDNode<"AMDGPUISD::URECIP", SDTIntUnaryOp>;
+
+def fpow : SDNode<"ISD::FPOW", SDTFPBinOp>;

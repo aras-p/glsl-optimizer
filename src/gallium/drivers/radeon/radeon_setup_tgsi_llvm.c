@@ -980,17 +980,33 @@ build_intrinsic(LLVMBuilderRef builder,
    return LLVMBuildCall(builder, function, args, num_args, "");
 }
 
+static void build_tgsi_intrinsic(
+ const struct lp_build_tgsi_action * action,
+ struct lp_build_tgsi_context * bld_base,
+ struct lp_build_emit_data * emit_data,
+ LLVMAttribute attr)
+{
+   struct lp_build_context * base = &bld_base->base;
+   emit_data->output[emit_data->chan] = build_intrinsic(
+               base->gallivm->builder, action->intr_name,
+               emit_data->dst_type, emit_data->args,
+               emit_data->arg_count, attr);
+}
 void
 build_tgsi_intrinsic_nomem(
  const struct lp_build_tgsi_action * action,
  struct lp_build_tgsi_context * bld_base,
  struct lp_build_emit_data * emit_data)
 {
-   struct lp_build_context * base = &bld_base->base;
-   emit_data->output[emit_data->chan] = build_intrinsic(
-               base->gallivm->builder, action->intr_name,
-               emit_data->dst_type, emit_data->args,
-               emit_data->arg_count, LLVMReadNoneAttribute);
+	build_tgsi_intrinsic(action, bld_base, emit_data, LLVMReadNoneAttribute);
+}
+
+static void build_tgsi_intrinsic_readonly(
+ const struct lp_build_tgsi_action * action,
+ struct lp_build_tgsi_context * bld_base,
+ struct lp_build_emit_data * emit_data)
+{
+	build_tgsi_intrinsic(action, bld_base, emit_data, LLVMReadOnlyAttribute);
 }
 
 void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
@@ -1147,8 +1163,8 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->op_actions[TGSI_OPCODE_MAX].intr_name = "llvm.AMDIL.max.";
 	bld_base->op_actions[TGSI_OPCODE_MUL].emit = build_tgsi_intrinsic_nomem;
 	bld_base->op_actions[TGSI_OPCODE_MUL].intr_name = "llvm.AMDGPU.mul";
-	bld_base->op_actions[TGSI_OPCODE_POW].emit = build_tgsi_intrinsic_nomem;
-	bld_base->op_actions[TGSI_OPCODE_POW].intr_name = "llvm.AMDGPU.pow";
+	bld_base->op_actions[TGSI_OPCODE_POW].emit = build_tgsi_intrinsic_readonly;
+	bld_base->op_actions[TGSI_OPCODE_POW].intr_name = "llvm.pow.f32";
 	bld_base->op_actions[TGSI_OPCODE_RCP].emit = build_tgsi_intrinsic_nomem;
 	bld_base->op_actions[TGSI_OPCODE_RCP].intr_name = "llvm.AMDGPU.rcp";
 	bld_base->op_actions[TGSI_OPCODE_SSG].emit = build_tgsi_intrinsic_nomem;
