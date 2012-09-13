@@ -27,6 +27,7 @@ public:
   virtual MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr *MI,
       MachineBasicBlock * BB) const;
   virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+  virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   void ReplaceNodeResults(SDNode * N,
       SmallVectorImpl<SDValue> &Results,
       SelectionDAG &DAG) const;

@@ -50,6 +50,9 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SETCC, MVT::i32, Custom);
   setOperationAction(ISD::SETCC, MVT::f32, Custom);
   setOperationAction(ISD::FP_TO_UINT, MVT::i1, Custom);
+
+  setTargetDAGCombine(ISD::FP_ROUND);
+
   setSchedulingPreference(Sched::VLIW);
 }
 
@@ -602,4 +605,27 @@ SDValue R600TargetLowering::LowerFormalArguments(
     ParamOffsetBytes += (VT.getStoreSize());
   }
   return Chain;
+}
+
+//===----------------------------------------------------------------------===//
+// Custom DAG Optimizations
+//===----------------------------------------------------------------------===//
+
+SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
+                                              DAGCombinerInfo &DCI) const
+{
+  SelectionDAG &DAG = DCI.DAG;
+
+  switch (N->getOpcode()) {
+  // (f32 fp_round (f64 uint_to_fp a)) -> (f32 uint_to_fp a)
+  case ISD::FP_ROUND: {
+      SDValue Arg = N->getOperand(0);
+      if (Arg.getOpcode() == ISD::UINT_TO_FP && Arg.getValueType() == MVT::f64) {
+        return DAG.getNode(ISD::UINT_TO_FP, N->getDebugLoc(), N->getValueType(0),
+                           Arg.getOperand(0));
+      }
+      break;
+    }
+  }
+  return SDValue();
 }
