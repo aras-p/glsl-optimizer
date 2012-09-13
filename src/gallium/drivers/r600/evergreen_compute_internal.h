@@ -26,6 +26,7 @@
 #define EVERGREEN_COMPUTE_INTERNAL_H
 
 #include "compute_memory_pool.h"
+#include "r600_asm.h"
 
 enum evergreen_compute_resources
 {
@@ -67,21 +68,26 @@ struct number_type_and_format {
 	unsigned num_format_all;
 };
 
+struct r600_kernel {
+	unsigned count;
+#ifdef HAVE_OPENCL
+	LLVMModuleRef llvm_module;
+#endif
+	struct r600_resource *code_bo;
+	struct r600_bytecode bc;
+};
+
 struct r600_pipe_compute {
 	struct r600_context *ctx;
-	struct r600_bytecode bc;
-	struct tgsi_token *tokens;
 
+	unsigned num_kernels;
+	struct r600_kernel *kernels;
 	struct evergreen_compute_resource *resources;
 
 	unsigned local_size;
 	unsigned private_size;
 	unsigned input_size;
-#ifdef HAVE_OPENCL
-	LLVMModuleRef mod;
-#endif
 	struct r600_resource *kernel_param;
-	struct r600_resource *shader_code_bo;
 };
 
 int evergreen_compute_get_gpu_format(struct number_type_and_format* fmt, struct r600_resource *bo); ///get hw format from resource, return 0 on faliure, nonzero on success

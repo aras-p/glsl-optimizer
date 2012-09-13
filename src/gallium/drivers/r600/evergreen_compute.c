@@ -123,11 +123,11 @@ void *evergreen_create_compute_state(
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
 	struct r600_pipe_compute *shader = CALLOC_STRUCT(r600_pipe_compute);
-	void *p;
 
 #ifdef HAVE_OPENCL
 	const struct pipe_llvm_program_header * header;
 	const unsigned char * code;
+	unsigned i;
 
 	COMPUTE_DBG("*** evergreen_create_compute_state\n");
 
@@ -144,18 +144,15 @@ void *evergreen_create_compute_state(
 	shader->input_size = cso->req_input_mem;
 
 #ifdef HAVE_OPENCL 
-	shader->mod = llvm_parse_bitcode(code, header->num_bytes);
+	shader->num_kernels = llvm_get_num_kernels(code, header->num_bytes);
+	shader->kernels = CALLOC(sizeof(struct r600_kernel), shader->num_kernels);
 
-	r600_compute_shader_create(ctx_, shader->mod, &shader->bc);
+	for (i = 0; i < shader->num_kernels; i++) {
+		struct r600_kernel *kernel = &shader->kernels[i];
+		kernel->llvm_module = llvm_get_kernel_module(i, code,
+							header->num_bytes);
+	}
 #endif
-	shader->shader_code_bo = r600_compute_buffer_alloc_vram(ctx->screen,
-							shader->bc.ndw * 4);
-
-	p = ctx->ws->buffer_map(shader->shader_code_bo->cs_buf, ctx->cs,
-							PIPE_TRANSFER_WRITE);
-
-	memcpy(p, shader->bc.bytecode, shader->bc.ndw * 4);
-	ctx->ws->buffer_unmap(shader->shader_code_bo->cs_buf);
 	return shader;
 }
 
@@ -456,20 +453,21 @@ void evergreen_emit_cs_shader(
 	struct r600_cs_shader_state *state =
 					(struct r600_cs_shader_state*)atom;
 	struct r600_pipe_compute *shader = state->shader;
+	struct r600_kernel *kernel = &shader->kernels[state->kernel_index];
 	struct radeon_winsys_cs *cs = rctx->cs;
 	uint64_t va;
 
-	va = r600_resource_va(&rctx->screen->screen, &shader->shader_code_bo->b.b);
+	va = r600_resource_va(&rctx->screen->screen, &kernel->code_bo->b.b);
 
 	r600_write_compute_context_reg_seq(cs, R_0288D0_SQ_PGM_START_LS, 3);
 	r600_write_value(cs, va >> 8); /* R_0288D0_SQ_PGM_START_LS */
 	r600_write_value(cs,           /* R_0288D4_SQ_PGM_RESOURCES_LS */
-			S_0288D4_NUM_GPRS(shader->bc.ngpr)
-			| S_0288D4_STACK_SIZE(shader->bc.nstack));
+			S_0288D4_NUM_GPRS(kernel->bc.ngpr)
+			| S_0288D4_STACK_SIZE(kernel->bc.nstack));
 	r600_write_value(cs, 0);	/* R_0288D8_SQ_PGM_RESOURCES_LS_2 */
 
 	r600_write_value(cs, PKT3C(PKT3_NOP, 0, 0));
-	r600_write_value(cs, r600_context_bo_reloc(rctx, shader->shader_code_bo,
+	r600_write_value(cs, r600_context_bo_reloc(rctx, kernel->code_bo,
 							RADEON_USAGE_READ));
 
 	rctx->flags |= R600_CONTEXT_SHADERCONST_FLUSH;
@@ -481,9 +479,25 @@ static void evergreen_launch_grid(
 		uint32_t pc, const void *input)
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
+	struct r600_pipe_compute *shader = ctx->cs_shader_state.shader;
+	void *p;
 
 	COMPUTE_DBG("*** evergreen_launch_grid: pc = %u\n", pc);
 
+#ifdef HAVE_OPENCL 
+	if (!shader->kernels[pc].code_bo) {
+		struct r600_kernel *kernel = &shader->kernels[pc];
+		r600_compute_shader_create(ctx_, kernel->llvm_module, &kernel->bc);
+		kernel->code_bo = r600_compute_buffer_alloc_vram(ctx->screen,
+							kernel->bc.ndw * 4);
+		p = ctx->ws->buffer_map(kernel->code_bo->cs_buf, ctx->cs,
+							PIPE_TRANSFER_WRITE);
+		memcpy(p, kernel->bc.bytecode, kernel->bc.ndw * 4);
+		ctx->ws->buffer_unmap(kernel->code_bo->cs_buf);
+	}
+#endif
+
+	ctx->cs_shader_state.kernel_index = pc;
 	evergreen_compute_upload_input(ctx_, block_layout, grid_layout, input);
 	compute_emit_cs(ctx, block_layout, grid_layout);
 }
