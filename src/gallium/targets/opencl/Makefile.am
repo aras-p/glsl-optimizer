@@ -41,12 +41,6 @@ all-local: libOpenCL.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)
 	ln -f .libs/libOpenCL.so* $(top_builddir)/$(LIB_DIR)/
 
-install-exec-local:
-	@$(MAKE) -C $(PIPE_SRC_DIR) PIPE_INSTALL_DIR=$(OPENCL_LIB_INSTALL_DIR) install
-
-clean-local:
-	@$(MAKE) -C $(PIPE_SRC_DIR) clean
-
 # FIXME: Remove when the rest of Gallium is converted to automake.
 TOP=$(top_builddir)
 default: all

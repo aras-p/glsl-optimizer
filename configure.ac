@@ -1493,6 +1493,10 @@ if test "x$enable_opencl" = xyes; then
     enable_gallium_loader=yes
 fi
 
+if test "x$enable_gallium_gbm" = xyes || test "x$enable_opencl" = xyes; then
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS pipe-loader"
+fi
+
 dnl
 dnl Gallium configuration
 dnl
@@ -2078,6 +2082,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/targets/egl-static/Makefile
 		src/gallium/targets/gbm/Makefile
 		src/gallium/targets/opencl/Makefile
+		src/gallium/targets/pipe-loader/Makefile
 		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
 		src/gallium/targets/vdpau-r300/Makefile

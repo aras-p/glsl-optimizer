@@ -3,7 +3,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 AM_CPPFLAGS = \
 	$(GALLIUM_PIPE_LOADER_DEFINES) \
 	-DMESA_VERSION=\"$(MESA_VERSION)\" \
-	-DPIPE_SEARCH_DIR=\"$(OPENCL_LIB_INSTALL_DIR)\" \
+	-DPIPE_SEARCH_DIR=\"$(libdir)/gallium-pipe\" \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/gallium/include \
 	-I$(top_srcdir)/src/gallium/drivers \
