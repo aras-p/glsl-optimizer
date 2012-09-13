@@ -39,6 +39,9 @@ enum r600_blitter_op /* bitmask */
 	R600_COPY          = R600_SAVE_FRAMEBUFFER | R600_SAVE_TEXTURES |
 			     R600_DISABLE_RENDER_COND,
 
+	R600_BLIT          = R600_SAVE_FRAMEBUFFER | R600_SAVE_TEXTURES |
+			     R600_DISABLE_RENDER_COND,
+
 	R600_DECOMPRESS    = R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND,
 };
 
@@ -374,12 +377,37 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		r600_reset_blittable_to_compressed(dst, dst_level, &orig_info[1]);
 }
 
+static void si_blit(struct pipe_context *ctx,
+                      const struct pipe_blit_info *info)
+{
+	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct r600_resource_texture *rsrc = (struct r600_resource_texture*)info->src.resource;
+
+	assert(util_blitter_is_blit_supported(rctx->blitter, info));
+
+	if (info->src.resource->nr_samples > 1 &&
+	    info->dst.resource->nr_samples <= 1 &&
+	    !util_format_is_depth_or_stencil(info->src.resource->format) &&
+	    !util_format_is_pure_integer(info->src.resource->format)) {
+		debug_printf("radeonsi: color resolve is unimplemented\n");
+		return;
+	}
+
+	if (rsrc->depth && !rsrc->is_flushing_texture)
+		r600_texture_depth_flush(ctx, info->src.resource, FALSE);
+
+	r600_blitter_begin(ctx, R600_BLIT);
+	util_blitter_blit(rctx->blitter, info);
+	r600_blitter_end(ctx);
+}
+
 void si_init_blit_functions(struct r600_context *rctx)
 {
 	rctx->context.clear = r600_clear;
 	rctx->context.clear_render_target = r600_clear_render_target;
 	rctx->context.clear_depth_stencil = r600_clear_depth_stencil;
 	rctx->context.resource_copy_region = r600_resource_copy_region;
+	rctx->context.blit = si_blit;
 }
 
 void r600_blit_push_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
