@@ -198,7 +198,7 @@ void compute_memory_grow_pool(struct compute_memory_pool* pool,
 		"use more than 64 kb of memory");
 
 	if (!pool->bo) {
-		compute_memory_pool_init(pool, 1024 * 16);
+		compute_memory_pool_init(pool, MAX2(new_size_in_dw, 1024 * 16));
 	} else {
 		/* XXX: Growing memory pools does not work at the moment.  I think
 		 * it is because we are using fragment shaders to copy data to
