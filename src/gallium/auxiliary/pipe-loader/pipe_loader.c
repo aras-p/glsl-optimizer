@@ -92,7 +92,6 @@ pipe_loader_find_module(struct pipe_loader_device *dev,
       if (ret > 0 && ret < sizeof(path)) {
          lib = util_dl_open(path);
          if (lib) {
-            debug_printf("loaded %s\n", path);
             return lib;
          }
       }

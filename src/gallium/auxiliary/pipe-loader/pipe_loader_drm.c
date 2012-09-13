@@ -96,7 +96,6 @@ find_drm_pci_id(struct pipe_loader_drm_device *ddev)
    if (udev)
       udev_unref(udev);
 
-   debug_printf("pci id for fd %d not found\n", ddev->fd);
    return FALSE;
 }
 
@@ -126,8 +125,6 @@ find_drm_driver_name(struct pipe_loader_drm_device *ddev)
    return FALSE;
 
   found:
-   debug_printf("driver for %04x:%04x: %s\n", dev->u.pci.vendor_id,
-                dev->u.pci.chip_id, dev->driver_name);
    return TRUE;
 }
 
