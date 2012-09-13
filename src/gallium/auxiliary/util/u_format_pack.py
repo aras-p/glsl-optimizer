@@ -383,7 +383,7 @@ def conversion_expr(src_channel,
         if dst_channel.norm or dst_channel.type == FIXED:
             dst_one = get_one(dst_channel)
             if dst_channel.size <= 23:
-                value = '(%s * 0x%x)' % (value, dst_one)
+                value = 'util_iround(%s * 0x%x)' % (value, dst_one)
             else:
                 # bigger than single precision mantissa, use double
                 value = '(%s * (double)0x%x)' % (value, dst_one)
