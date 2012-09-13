@@ -452,7 +452,7 @@ static void evergreen_launch_grid(
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
 
-	COMPUTE_DBG("PC: %i\n", pc);
+	COMPUTE_DBG("*** evergreen_launch_grid: pc = %u\n", pc);
 
 	evergreen_compute_upload_input(ctx_, block_layout, grid_layout, input);
 	compute_emit_cs(ctx, block_layout, grid_layout);
@@ -814,12 +814,15 @@ void* r600_compute_global_transfer_map(
 	uint32_t* map;
 	///TODO: do it better, mapping is not possible if the pool is too big
 
+	COMPUTE_DBG("* r600_compute_global_transfer_map()\n");
+
 	if (!(map = ctx->ws->buffer_map(buffer->chunk->pool->bo->cs_buf,
 						ctx->cs, transfer->usage))) {
 		return NULL;
 	}
 
-	COMPUTE_DBG("buffer start: %lli\n", buffer->chunk->start_in_dw);
+	COMPUTE_DBG("Buffer: %p + %u (buffer offset in global memory) "
+		"+ %u (box.x)\n", map, buffer->chunk->start_in_dw, transfer->box.x);
 	return ((char*)(map + buffer->chunk->start_in_dw)) + transfer->box.x;
 }
 
@@ -833,6 +836,8 @@ void r600_compute_global_transfer_unmap(
 	struct r600_context *ctx = (struct r600_context *)ctx_;
 	struct r600_resource_global* buffer =
 		(struct r600_resource_global*)transfer->resource;
+
+	COMPUTE_DBG("* r600_compute_global_transfer_unmap()\n");
 
 	ctx->ws->buffer_unmap(buffer->chunk->pool->bo->cs_buf);
 }
@@ -852,6 +857,12 @@ struct pipe_transfer * r600_compute_global_get_transfer(
 	assert(resource->target == PIPE_BUFFER);
 	struct r600_context *rctx = (struct r600_context*)ctx_;
 	struct pipe_transfer *transfer = util_slab_alloc(&rctx->pool_transfers);
+
+	COMPUTE_DBG("* r600_compute_global_get_transfer()\n"
+			"level = %u, usage = %u, box(x = %u, y = %u, z = %u "
+			"width = %u, height = %u, depth = %u)\n", level, usage,
+			box->x, box->y, box->z, box->width, box->height,
+			box->depth);
 
 	transfer->resource = resource;
 	transfer->level = level;

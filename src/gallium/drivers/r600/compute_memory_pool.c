@@ -257,14 +257,18 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	COMPUTE_DBG("* compute_memory_finalize_pending()\n");
 
 	for (item = pool->item_list; item; item = item->next) {
-		COMPUTE_DBG("list: %i %p\n", item->start_in_dw, item->next);
+		COMPUTE_DBG("  + list: offset = %i id = %i size = %i "
+			"(%i bytes)\n",item->start_in_dw, item->id,
+			item->size_in_dw, item->size_in_dw * 4);
 	}
 
+	/* Search through the list of memory items in the pool */
 	for (item = pool->item_list; item; item = next) {
 		next = item->next;
 
-
+		/* Check if the item is pending. */
 		if (item->start_in_dw == -1) {
+			/* It is pending, so add it to the pending_list... */
 			if (end_p) {
 				end_p->next = item;
 			}
@@ -272,6 +276,7 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 				pending_list = item;
 			}
 
+			/* ... and then remove it from the item list. */
 			if (item->prev) {
 				item->prev->next = next;
 			}
@@ -283,26 +288,50 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 				next->prev = item->prev;
 			}
 
+			/* This sequence makes the item be at the end of the list */
 			item->prev = end_p;
 			item->next = NULL;
 			end_p = item;
 
+			/* Update the amount of space we will need to allocate. */
 			unallocated += item->size_in_dw+1024;
 		}
 		else {
+			/* The item is not pendng, so update the amount of space
+			 * that has already been allocated. */
 			allocated += item->size_in_dw;
 		}
 	}
 
+	/* If we require more space than the size of the pool, then grow the
+	 * pool.
+	 *
+	 * XXX: I'm pretty sure this won't work.  Imagine this scenario:
+	 *
+	 * Offset Item Size
+	 *   0    A    50
+	 * 200    B    50
+	 * 400    C    50
+	 *
+	 * Total size = 450
+	 * Allocated size = 150
+	 * Pending Item D Size = 200
+	 *
+	 * In this case, there are 300 units of free space in the pool, but
+	 * they aren't contiguous, so it will be impossible to allocate Item D.
+	 */
 	if (pool->size_in_dw < allocated+unallocated) {
 		compute_memory_grow_pool(pool, pipe, allocated+unallocated);
 	}
 
+	/* Loop through all the pending items, allocate space for them and
+	 * add them back to the item_list. */
 	for (item = pending_list; item; item = next) {
 		next = item->next;
 
 		int64_t start_in_dw;
 
+		/* Search for free space in the pool for this item. */
 		while ((start_in_dw=compute_memory_prealloc_chunk(pool,
 						item->size_in_dw)) == -1) {
 			int64_t need = item->size_in_dw+2048 -
@@ -323,6 +352,10 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 						pool->size_in_dw + need);
 			}
 		}
+		COMPUTE_DBG("  + Found space for Item %p id = %u "
+			"start_in_dw = %u (%u bytes) size_in_dw = %u (%u bytes)\n",
+			item, item->id, start_in_dw, start_in_dw * 4,
+			item->size_in_dw, item->size_in_dw * 4);
 
 		item->start_in_dw = start_in_dw;
 		item->next = NULL;
@@ -391,7 +424,8 @@ struct compute_memory_item* compute_memory_alloc(
 {
 	struct compute_memory_item *new_item;
 
-	COMPUTE_DBG("* compute_memory_alloc() size_in_dw = %ld\n", size_in_dw);
+	COMPUTE_DBG("* compute_memory_alloc() size_in_dw = %ld (%ld bytes)\n",
+			size_in_dw, 4 * size_in_dw);
 
 	new_item = (struct compute_memory_item *)
 				CALLOC(sizeof(struct compute_memory_item), 1);
@@ -413,6 +447,9 @@ struct compute_memory_item* compute_memory_alloc(
 		pool->item_list = new_item;
 	}
 
+	COMPUTE_DBG("  + Adding item %p id = %u size = %u (%u bytes)\n",
+			new_item, new_item->id, new_item->size_in_dw,
+			new_item->size_in_dw * 4);
 	return new_item;
 }
 
