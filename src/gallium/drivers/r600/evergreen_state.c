@@ -1312,8 +1312,8 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 
 	if (rtex->is_rat) {
 		color_info |= S_028C70_RAT(1);
-		color_dim = S_028C78_WIDTH_MAX(pipe_tex->width0)
-				| S_028C78_HEIGHT_MAX(pipe_tex->height0);
+		color_dim = S_028C78_WIDTH_MAX(pipe_tex->width0 & 0xffff)
+			| S_028C78_HEIGHT_MAX((pipe_tex->width0 >> 16) & 0xffff);
 	}
 
 	/* EXPORT_NORM is an optimzation that can be enabled for better
