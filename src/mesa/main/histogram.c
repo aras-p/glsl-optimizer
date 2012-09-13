@@ -32,8 +32,6 @@
 #include "main/dispatch.h"
 
 
-#if FEATURE_histogram
-
 /**********************************************************************
  * API functions
  */
@@ -169,5 +167,3 @@ _mesa_init_histogram_dispatch(struct _glapi_table *disp)
    SET_GetnHistogramARB(disp, _mesa_GetnHistogramARB);
    SET_GetnMinmaxARB(disp, _mesa_GetnMinmaxARB);
 }
-
-#endif /* FEATURE_histogram */

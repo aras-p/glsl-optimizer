@@ -41,18 +41,7 @@
 
 struct _glapi_table;
 
-#if FEATURE_histogram
-
 extern void
 _mesa_init_histogram_dispatch(struct _glapi_table *disp);
-
-#else /* FEATURE_histogram */
-
-static inline void
-_mesa_init_histogram_dispatch(struct _glapi_table *disp)
-{
-}
-
-#endif /* FEATURE_histogram */
 
 #endif /* HISTOGRAM_H */
