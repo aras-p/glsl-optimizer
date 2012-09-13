@@ -507,6 +507,10 @@ struct pipe_context {
     * grid (in block units) and working block (in thread units) to be
     * used, respectively.
     *
+    * \a pc For drivers that use PIPE_SHADER_IR_LLVM as their prefered IR,
+    * this value will be the index of the kernel in the opencl.kernels
+    * metadata list.
+    *
     * \a input will be used to initialize the INPUT resource, and it
     * should point to a buffer of at least
     * pipe_compute_state::req_input_mem bytes.

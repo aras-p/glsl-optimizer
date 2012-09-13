@@ -199,41 +199,42 @@ namespace {
       llvm::WriteBitcodeToFile(mod, bitcode_ostream);
       bitcode_ostream.flush();
 
-      llvm::Function *kernel_func;
-      std::string kernel_name;
-      compat::vector<module::argument> args;
+      for (unsigned i = 0; i < kernels.size(); ++i) {
+         llvm::Function *kernel_func;
+         std::string kernel_name;
+         compat::vector<module::argument> args;
 
-      // XXX: Support more than one kernel
-      assert(kernels.size() == 1);
+         kernel_func = kernels[i];
+         kernel_name = kernel_func->getName();
 
-      kernel_func = kernels[0];
-      kernel_name = kernel_func->getName();
+         for (llvm::Function::arg_iterator I = kernel_func->arg_begin(),
+                                      E = kernel_func->arg_end(); I != E; ++I) {
+            llvm::Argument &arg = *I;
+            llvm::Type *arg_type = arg.getType();
+            llvm::TargetData TD(kernel_func->getParent());
+            unsigned arg_size = TD.getTypeStoreSize(arg_type);
 
-      for (llvm::Function::arg_iterator I = kernel_func->arg_begin(),
-                                   E = kernel_func->arg_end(); I != E; ++I) {
-         llvm::Argument &arg = *I;
-         llvm::Type *arg_type = arg.getType();
-         llvm::TargetData TD(kernel_func->getParent());
-         unsigned arg_size = TD.getTypeStoreSize(arg_type);
-
-         if (llvm::isa<llvm::PointerType>(arg_type) && arg.hasByValAttr()) {
-            arg_type =
-               llvm::dyn_cast<llvm::PointerType>(arg_type)->getElementType();
-         }
-
-         if (arg_type->isPointerTy()) {
-            // XXX: Figure out LLVM->OpenCL address space mappings for each
-            // target.  I think we need to ask clang what these are.  For now,
-            // pretend everything is in the global address space.
-            unsigned address_space = llvm::cast<llvm::PointerType>(arg_type)->getAddressSpace();
-            switch (address_space) {
-               default:
-                  args.push_back(module::argument(module::argument::global, arg_size));
-                  break;
+            if (llvm::isa<llvm::PointerType>(arg_type) && arg.hasByValAttr()) {
+               arg_type =
+                  llvm::dyn_cast<llvm::PointerType>(arg_type)->getElementType();
             }
-         } else {
-            args.push_back(module::argument(module::argument::scalar, arg_size));
+
+            if (arg_type->isPointerTy()) {
+               // XXX: Figure out LLVM->OpenCL address space mappings for each
+               // target.  I think we need to ask clang what these are.  For now,
+               // pretend everything is in the global address space.
+               unsigned address_space = llvm::cast<llvm::PointerType>(arg_type)->getAddressSpace();
+               switch (address_space) {
+                  default:
+                     args.push_back(module::argument(module::argument::global, arg_size));
+                     break;
+               }
+            } else {
+               args.push_back(module::argument(module::argument::scalar, arg_size));
+            }
          }
+
+         m.syms.push_back(module::symbol(kernel_name, 0, i, args ));
       }
 
       header.num_bytes = llvm_bitcode.size();
@@ -241,7 +242,6 @@ namespace {
       data.insert(0, (char*)(&header), sizeof(header));
       data.insert(data.end(), llvm_bitcode.begin(),
                                   llvm_bitcode.end());
-      m.syms.push_back(module::symbol(kernel_name, 0, 0, args ));
       m.secs.push_back(module::section(0, module::section::text,
                                        header.num_bytes, data));
 
