@@ -1161,6 +1161,15 @@ class VTX_READ_GLOBAL_128_eg <ValueType vt> : VTX_READ_128_eg <1,
 def VTX_READ_GLOBAL_v4i32_eg : VTX_READ_GLOBAL_128_eg<v4i32>;
 def VTX_READ_GLOBAL_v4f32_eg : VTX_READ_GLOBAL_128_eg<v4f32>;
 
+//===----------------------------------------------------------------------===//
+// Constant Loads
+// XXX: We are currently storing all constants in the global address space.
+//===----------------------------------------------------------------------===//
+
+def CONSTANT_LOAD_eg : VTX_READ_32_eg <1,
+  [(set (f32 R600_TReg32_X:$dst), (constant_load ADDRVTX_READ:$ptr))]
+>;
+
 }
 
 let Predicates = [isCayman] in {

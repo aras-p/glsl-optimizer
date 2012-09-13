@@ -166,6 +166,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
         Emit(inst, OS);
         break;
       }
+    case AMDGPU::CONSTANT_LOAD_eg:
     case AMDGPU::VTX_READ_PARAM_i32_eg:
     case AMDGPU::VTX_READ_PARAM_f32_eg:
     case AMDGPU::VTX_READ_GLOBAL_i8_eg:
