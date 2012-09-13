@@ -74,6 +74,14 @@ def COND_LE : PatLeaf <
                      case ISD::SETLE: return true;}}}]
 >;
 
+//===----------------------------------------------------------------------===//
+// Load/Store Pattern Fragments
+//===----------------------------------------------------------------------===//
+
+def zextloadi8_global : PatFrag<(ops node:$ptr), (zextloadi8 node:$ptr), [{
+    return isGlobalLoad(dyn_cast<LoadSDNode>(N));
+}]>;
+
 class Constants {
 int TWO_PI = 0x40c90fdb;
 int PI = 0x40490fdb;

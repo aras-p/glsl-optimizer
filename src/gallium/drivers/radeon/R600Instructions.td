@@ -1059,6 +1059,17 @@ class VTX_READ_eg <bits<8> buffer_id, dag outs, list<dag> pattern>
   // Inst{127-96} = 0;
 }
 
+class VTX_READ_8_eg <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_eg <buffer_id, (outs R600_TReg32_X:$dst), pattern> {
+
+  let MEGA_FETCH_COUNT = 1;
+  let DST_SEL_X = 0;
+  let DST_SEL_Y = 7;   // Masked
+  let DST_SEL_Z = 7;   // Masked
+  let DST_SEL_W = 7;   // Masked
+  let DATA_FORMAT = 1; // FMT_8
+}
+
 class VTX_READ_32_eg <bits<8> buffer_id, list<dag> pattern>
     : VTX_READ_eg <buffer_id, (outs R600_TReg32_X:$dst), pattern> {
 
@@ -1110,6 +1121,11 @@ def VTX_READ_PARAM_f32_eg : VTX_READ_PARAM_32_eg<f32>;
 //===----------------------------------------------------------------------===//
 // VTX Read from global memory space
 //===----------------------------------------------------------------------===//
+
+// 8-bit reads
+def VTX_READ_GLOBAL_i8_eg : VTX_READ_8_eg <1,
+  [(set (i32 R600_TReg32_X:$dst), (zextloadi8_global ADDRVTX_READ:$ptr))]
+>;
 
 // 32-bit reads
 
