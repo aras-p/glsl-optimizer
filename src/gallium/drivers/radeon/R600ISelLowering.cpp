@@ -34,6 +34,9 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::i32, &AMDGPU::R600_Reg32RegClass);
   computeRegisterProperties();
 
+  setOperationAction(ISD::FADD, MVT::v4f32, Expand);
+  setOperationAction(ISD::FMUL, MVT::v4f32, Expand);
+
   setOperationAction(ISD::BR_CC, MVT::i32, Custom);
   setOperationAction(ISD::BR_CC, MVT::f32, Custom);
   
