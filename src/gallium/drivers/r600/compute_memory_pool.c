@@ -135,6 +135,11 @@ struct compute_memory_item* compute_memory_postalloc_chunk(
 	COMPUTE_DBG("* compute_memory_postalloc_chunck() start_in_dw = %ld\n",
 		start_in_dw);
 
+	/* Check if we can insert it in the front of the list */
+	if (pool->item_list && pool->item_list->start_in_dw > start_in_dw) {
+		return NULL;
+	}
+
 	for (item = pool->item_list; item; item = item->next) {
 		if (item->next) {
 			if (item->start_in_dw < start_in_dw
@@ -336,12 +341,24 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 			struct compute_memory_item *pos;
 
 			pos = compute_memory_postalloc_chunk(pool, start_in_dw);
-			item->prev = pos;
-			item->next = pos->next;
-			pos->next = item;
-
-			if (item->next) {
-				item->next->prev = item;
+			if (pos) {
+				item->prev = pos;
+				item->next = pos->next;
+				pos->next = item;
+				if (item->next) {
+					item->next->prev = item;
+				}
+			} else {
+				/* Add item to the front of the list */
+				item->next = pool->item_list->next;
+				if (pool->item_list->next) {
+					pool->item_list->next->prev = item;
+				}
+				item->prev = pool->item_list->prev;
+				if (pool->item_list->prev) {
+					pool->item_list->prev->next = item;
+				}
+				pool->item_list = item;
 			}
 		}
 		else {
