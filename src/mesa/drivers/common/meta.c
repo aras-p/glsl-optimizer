@@ -448,35 +448,6 @@ _mesa_meta_free(struct gl_context *ctx)
 
 
 /**
- * This is an alternative to _mesa_set_enable() to handle some special cases.
- * See comments inside.
- */
-static void
-meta_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
-{
-   switch (cap) {
-   case GL_MULTISAMPLE:
-      /* We need to enable/disable multisample when using GLES but this enum
-       * is not supported there.
-       */
-      if (ctx->Multisample.Enabled == state)
-         return;
-      FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
-      ctx->Multisample.Enabled = state;
-      break;
-   default:
-      _mesa_problem(ctx, "Unexpected cap in _meta_set_enable()");
-      return;
-   }
-
-   if (ctx->Driver.Enable) {
-      ctx->Driver.Enable(ctx, cap, state);
-   }
-}
-
-
-
-/**
  * Enter meta state.  This is like a light-weight version of glPushAttrib
  * but it also resets most GL state back to default values.
  *
@@ -796,7 +767,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
    if (state & MESA_META_MULTISAMPLE) {
       save->MultisampleEnabled = ctx->Multisample.Enabled;
       if (ctx->Multisample.Enabled)
-         meta_set_enable(ctx, GL_MULTISAMPLE, GL_FALSE);
+         _mesa_set_multisample(ctx, GL_FALSE);
    }
 
    /* misc */
@@ -1100,7 +1071,7 @@ _mesa_meta_end(struct gl_context *ctx)
 
    if (state & MESA_META_MULTISAMPLE) {
       if (ctx->Multisample.Enabled != save->MultisampleEnabled)
-         meta_set_enable(ctx, GL_MULTISAMPLE, save->MultisampleEnabled);
+         _mesa_set_multisample(ctx, save->MultisampleEnabled);
    }
 
    /* misc */

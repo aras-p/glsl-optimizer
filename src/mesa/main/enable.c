@@ -251,6 +251,23 @@ enable_texture(struct gl_context *ctx, GLboolean state, GLbitfield texBit)
 
 
 /**
+ * Helper function to enable or disable GL_MULTISAMPLE, skipping the check for
+ * whether the API supports it (GLES doesn't).
+ */
+void
+_mesa_set_multisample(struct gl_context *ctx, GLboolean state)
+{
+   if (ctx->Multisample.Enabled == state)
+      return;
+   FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
+   ctx->Multisample.Enabled = state;
+
+   if (ctx->Driver.Enable) {
+      ctx->Driver.Enable(ctx, GL_MULTISAMPLE, state);
+   }
+}
+
+/**
  * Helper function to enable or disable state.
  *
  * \param ctx GL context.
@@ -767,11 +784,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
       case GL_MULTISAMPLE_ARB:
          if (!_mesa_is_desktop_gl(ctx) && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
-         if (ctx->Multisample.Enabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
-         ctx->Multisample.Enabled = state;
-         break;
+         _mesa_set_multisample(ctx, state);
+         return;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
          if (ctx->Multisample.SampleAlphaToCoverage == state)
             return;
