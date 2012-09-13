@@ -645,10 +645,9 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 	case PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE:
 		if (ret) {
 			uint64_t * max_global_size = ret;
-			/* XXX: This is 64kb for now until we get the
-			 * compute memory pool working correctly.
-			 */
-			*max_global_size = 1024 * 16 * 4;
+			/* XXX: This is what the proprietary driver reports, we
+			 * may want to use a different value. */
+			*max_global_size = 201326592;
 		}
 		return sizeof(uint64_t);
 

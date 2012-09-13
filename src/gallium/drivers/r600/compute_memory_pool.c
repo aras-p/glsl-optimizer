@@ -64,10 +64,7 @@ static void compute_memory_pool_init(struct compute_memory_pool * pool,
 	COMPUTE_DBG("* compute_memory_pool_init() initial_size_in_dw = %ld\n",
 		initial_size_in_dw);
 
-	/* XXX: pool->shadow is used when the buffer needs to be resized, but
-	 * resizing does not work at the moment.
-	 * pool->shadow = (uint32_t*)CALLOC(4, pool->size_in_dw);
-	 */
+	pool->shadow = (uint32_t*)CALLOC(initial_size_in_dw, 4);
 	pool->next_id = 1;
 	pool->size_in_dw = initial_size_in_dw;
 	pool->bo = (struct r600_resource*)r600_compute_buffer_alloc_vram(pool->screen,
@@ -169,19 +166,9 @@ void compute_memory_grow_pool(struct compute_memory_pool* pool,
 
 	assert(new_size_in_dw >= pool->size_in_dw);
 
-	assert(!pool->bo && "Growing the global memory pool is not yet "
-		"supported.  You will see this message if you are trying to"
-		"use more than 64 kb of memory");
-
 	if (!pool->bo) {
 		compute_memory_pool_init(pool, MAX2(new_size_in_dw, 1024 * 16));
 	} else {
-		/* XXX: Growing memory pools does not work at the moment.  I think
-		 * it is because we are using fragment shaders to copy data to
-		 * the new texture and some of the compute registers are being
-		 * included in the 3D command stream. */
-		fprintf(stderr, "Warning: growing the global memory pool to"
-				"more than 64 kb is not yet supported\n");
 		new_size_in_dw += 1024 - (new_size_in_dw % 1024);
 
 		COMPUTE_DBG("  Aligned size = %d\n", new_size_in_dw);
