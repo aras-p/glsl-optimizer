@@ -133,8 +133,6 @@ _glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, YYLTYPE *loc,
 static void
 _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser, YYLTYPE *loc);
 
-#define yylex glcpp_parser_lex
-
 static int
 glcpp_parser_lex (YYSTYPE *yylval, YYLTYPE *yylloc, glcpp_parser_t *parser);
 
@@ -1195,12 +1193,6 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	add_builtin_define(parser, "__VERSION__", language_version);
 
 	return parser;
-}
-
-int
-glcpp_parser_parse (glcpp_parser_t *parser)
-{
-	return yyparse (parser);
 }
 
 void

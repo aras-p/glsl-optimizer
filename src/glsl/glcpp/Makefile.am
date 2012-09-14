@@ -31,7 +31,7 @@ AM_CFLAGS = \
 	$(LIBRARY_DEFINES) \
 	$(API_DEFINES)
 
-AM_YFLAGS = -v -d
+AM_YFLAGS = -v -d -p "glcpp_parser_"
 AM_LFLAGS = --nounistd -o$(LEX_OUTPUT_ROOT).c
 
 noinst_LTLIBRARIES = libglcpp.la
