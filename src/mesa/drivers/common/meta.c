@@ -623,19 +623,24 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
             if (ctx->Texture.Unit[u].Enabled ||
                 ctx->Texture.Unit[u].TexGenEnabled) {
                _mesa_ActiveTextureARB(GL_TEXTURE0 + u);
-               _mesa_set_enable(ctx, GL_TEXTURE_1D, GL_FALSE);
                _mesa_set_enable(ctx, GL_TEXTURE_2D, GL_FALSE);
-               _mesa_set_enable(ctx, GL_TEXTURE_3D, GL_FALSE);
                if (ctx->Extensions.ARB_texture_cube_map)
                   _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE);
-               if (ctx->Extensions.NV_texture_rectangle)
-                  _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE, GL_FALSE);
                if (ctx->Extensions.OES_EGL_image_external)
                   _mesa_set_enable(ctx, GL_TEXTURE_EXTERNAL_OES, GL_FALSE);
-               _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, GL_FALSE);
-               _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, GL_FALSE);
-               _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, GL_FALSE);
-               _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
+
+               if (ctx->API == API_OPENGL) {
+                  _mesa_set_enable(ctx, GL_TEXTURE_1D, GL_FALSE);
+                  _mesa_set_enable(ctx, GL_TEXTURE_3D, GL_FALSE);
+                  if (ctx->Extensions.NV_texture_rectangle)
+                     _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE, GL_FALSE);
+                  _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, GL_FALSE);
+                  _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, GL_FALSE);
+                  _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, GL_FALSE);
+                  _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
+               } else {
+                  _mesa_set_enable(ctx, GL_TEXTURE_GEN_STR_OES, GL_FALSE);
+               }
             }
          }
       }
