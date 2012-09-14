@@ -1969,7 +1969,6 @@ static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 	if (rctx->vs_shader == sel)
 		return;
 
-	rctx->shader_dirty = true;
 	rctx->vs_shader = sel;
 
 	if (sel && sel->current)
@@ -1986,7 +1985,6 @@ static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 	if (rctx->ps_shader == sel)
 		return;
 
-	rctx->shader_dirty = true;
 	rctx->ps_shader = sel;
 
 	if (sel && sel->current)

@@ -101,6 +101,9 @@ union si_state {
 #define si_pm4_block_idx(member) \
 	(offsetof(union si_state, named.member) / sizeof(struct si_pm4_state *))
 
+#define si_pm4_state_changed(rctx, member) \
+	((rctx)->queued.named.member != (rctx)->emitted.named.member)
+
 #define si_pm4_bind_state(rctx, member, value) \
 	do { \
 		(rctx)->queued.named.member = (value); \

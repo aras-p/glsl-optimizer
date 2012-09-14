@@ -406,12 +406,10 @@ static void si_update_derived_state(struct r600_context *rctx)
 
 	if (ps_dirty) {
 		si_pm4_bind_state(rctx, ps, rctx->ps_shader->current->pm4);
-		rctx->shader_dirty = true;
 	}
 
-	if (rctx->shader_dirty) {
+	if (si_pm4_state_changed(rctx, ps) || si_pm4_state_changed(rctx, vs)) {
 		si_update_spi_map(rctx);
-		rctx->shader_dirty = false;
 	}
 }
 

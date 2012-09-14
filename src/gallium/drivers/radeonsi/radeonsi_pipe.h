@@ -140,7 +140,6 @@ struct r600_context {
 	struct r600_textures_info	ps_samplers;
 	struct si_resource		*border_color_table;
 	unsigned			border_color_offset;
-	boolean				shader_dirty;
 
 	struct u_upload_mgr	        *uploader;
 	struct util_slab_mempool	pool_transfers;
