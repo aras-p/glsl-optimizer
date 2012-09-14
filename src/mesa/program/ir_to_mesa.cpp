@@ -3060,7 +3060,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
       return;
    }
 
-   state->error = preprocess(state, &source, &state->info_log,
+   state->error = glcpp_preprocess(state, &source, &state->info_log,
 			     &ctx->Extensions, ctx->API);
 
    if (ctx->Shader.Flags & GLSL_DUMP) {

@@ -216,7 +216,7 @@ int test_optpass(int argc, char **argv)
    } else {
       shader->Source = input.c_str();
       const char *source = shader->Source;
-      state->error = preprocess(state, &source, &state->info_log,
+      state->error = glcpp_preprocess(state, &source, &state->info_log,
                                 state->extensions, ctx->API) != 0;
 
       if (!state->error) {
