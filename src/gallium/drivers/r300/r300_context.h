@@ -41,6 +41,16 @@ struct r300_fragment_shader;
 struct r300_vertex_shader;
 struct r300_stencilref_context;
 
+enum colormask_swizzle {
+    COLORMASK_BGRA,
+    COLORMASK_RGBA,
+    COLORMASK_RRRR,
+    COLORMASK_AAAA,
+    COLORMASK_GRRG,
+    COLORMASK_ARRA,
+    COLORMASK_NUM_SWIZZLES
+};
+
 struct r300_atom {
     /* Name, for debugging. */
     const char* name;
@@ -66,7 +76,7 @@ struct r300_aa_state {
 struct r300_blend_state {
     struct pipe_blend_state state;
 
-    uint32_t cb_clamp[8];
+    uint32_t cb_clamp[COLORMASK_NUM_SWIZZLES][8];
     uint32_t cb_noclamp[8];
     uint32_t cb_no_readwrite[8];
 };
@@ -320,6 +330,8 @@ struct r300_surface {
 
     /* Whether the CBZB clear is allowed on the surface. */
     boolean cbzb_allowed;
+
+    unsigned colormask_swizzle;
 };
 
 struct r300_texture_desc {

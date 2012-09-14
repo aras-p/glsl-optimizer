@@ -704,10 +704,87 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
     }
 }
 
+static uint32_t r300_translate_colormask_swizzle(enum pipe_format format)
+{
+    switch (format) {
+    case PIPE_FORMAT_A8_UNORM:
+    case PIPE_FORMAT_A8_SNORM:
+    case PIPE_FORMAT_A16_UNORM:
+    case PIPE_FORMAT_A16_SNORM:
+    case PIPE_FORMAT_A16_FLOAT:
+    case PIPE_FORMAT_A32_FLOAT:
+        return COLORMASK_AAAA;
+
+    case PIPE_FORMAT_I8_UNORM:
+    case PIPE_FORMAT_I8_SNORM:
+    case PIPE_FORMAT_L8_UNORM:
+    case PIPE_FORMAT_L8_SNORM:
+    case PIPE_FORMAT_R8_UNORM:
+    case PIPE_FORMAT_R8_SNORM:
+    case PIPE_FORMAT_R32_FLOAT:
+    case PIPE_FORMAT_L32_FLOAT:
+    case PIPE_FORMAT_I32_FLOAT:
+        return COLORMASK_RRRR;
+
+    case PIPE_FORMAT_L8A8_SNORM:
+    case PIPE_FORMAT_L8A8_UNORM:
+    case PIPE_FORMAT_L16A16_UNORM:
+    case PIPE_FORMAT_L16A16_SNORM:
+    case PIPE_FORMAT_L16A16_FLOAT:
+    case PIPE_FORMAT_L32A32_FLOAT:
+        return COLORMASK_ARRA;
+
+    case PIPE_FORMAT_R8G8_SNORM:
+    case PIPE_FORMAT_R8G8_UNORM:
+    case PIPE_FORMAT_R16G16_UNORM:
+    case PIPE_FORMAT_R16G16_SNORM:
+    case PIPE_FORMAT_R16G16_FLOAT:
+    case PIPE_FORMAT_R32G32_FLOAT:
+        return COLORMASK_GRRG;
+
+    case PIPE_FORMAT_B5G6R5_UNORM:
+    case PIPE_FORMAT_B5G5R5A1_UNORM:
+    case PIPE_FORMAT_B5G5R5X1_UNORM:
+    case PIPE_FORMAT_B4G4R4A4_UNORM:
+    case PIPE_FORMAT_B4G4R4X4_UNORM:
+    case PIPE_FORMAT_B8G8R8A8_UNORM:
+    /*case PIPE_FORMAT_B8G8R8A8_SNORM:*/
+    case PIPE_FORMAT_B8G8R8X8_UNORM:
+    /*case PIPE_FORMAT_B8G8R8X8_SNORM:*/
+    case PIPE_FORMAT_B10G10R10A2_UNORM:
+        return COLORMASK_BGRA;
+
+    case PIPE_FORMAT_R8G8B8X8_UNORM:
+    /*case PIPE_FORMAT_R8G8B8X8_SNORM:*/
+    case PIPE_FORMAT_R8G8B8A8_UNORM:
+    case PIPE_FORMAT_R8G8B8A8_SNORM:
+    case PIPE_FORMAT_R10G10B10A2_UNORM:
+    case PIPE_FORMAT_R10G10B10X2_SNORM:
+    case PIPE_FORMAT_R16_UNORM:
+    case PIPE_FORMAT_R16G16B16A16_UNORM:
+    case PIPE_FORMAT_R16_SNORM:
+    case PIPE_FORMAT_R16G16B16A16_SNORM:
+    case PIPE_FORMAT_R16_FLOAT:
+    case PIPE_FORMAT_R16G16B16A16_FLOAT:
+    case PIPE_FORMAT_R32G32B32A32_FLOAT:
+    case PIPE_FORMAT_L16_UNORM:
+    case PIPE_FORMAT_L16_SNORM:
+    case PIPE_FORMAT_L16_FLOAT:
+    case PIPE_FORMAT_I16_UNORM:
+    case PIPE_FORMAT_I16_SNORM:
+    case PIPE_FORMAT_I16_FLOAT:
+        return COLORMASK_RGBA;
+
+    default:
+        return ~0; /* Unsupported. */
+    }
+}
+
 boolean r300_is_colorbuffer_format_supported(enum pipe_format format)
 {
     return r300_translate_colorformat(format) != ~0 &&
-           r300_translate_out_fmt(format) != ~0;
+           r300_translate_out_fmt(format) != ~0 &&
+           r300_translate_colormask_swizzle(format) != ~0;
 }
 
 boolean r300_is_zs_format_supported(enum pipe_format format)
@@ -827,6 +904,8 @@ static void r300_texture_setup_fb_state(struct r300_surface *surf)
                 R300_COLOR_TILE(tex->tex.macrotile[level]) |
                 R300_COLOR_MICROTILE(tex->tex.microtile);
         surf->format = r300_translate_out_fmt(surf->base.format);
+        surf->colormask_swizzle =
+            r300_translate_colormask_swizzle(surf->base.format);
     }
 }
 

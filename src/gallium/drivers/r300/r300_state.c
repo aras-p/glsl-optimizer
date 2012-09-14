@@ -169,13 +169,50 @@ static boolean blend_discard_if_src_alpha_color_1(unsigned srcRGB, unsigned srcA
             dstA == PIPE_BLENDFACTOR_ONE);
 }
 
+/* The hardware colormask is clunky a must be swizzled depending on the format.
+ * This was figured out by trial-and-error. */
 static unsigned bgra_cmask(unsigned mask)
 {
-    /* Gallium uses RGBA color ordering while R300 expects BGRA. */
-
     return ((mask & PIPE_MASK_R) << 2) |
            ((mask & PIPE_MASK_B) >> 2) |
            (mask & (PIPE_MASK_G | PIPE_MASK_A));
+}
+
+static unsigned rgba_cmask(unsigned mask)
+{
+    return mask & PIPE_MASK_RGBA;
+}
+
+static unsigned rrrr_cmask(unsigned mask)
+{
+    return (mask & PIPE_MASK_R) |
+           ((mask & PIPE_MASK_R) << 1) |
+           ((mask & PIPE_MASK_R) << 2) |
+           ((mask & PIPE_MASK_R) << 3);
+}
+
+static unsigned aaaa_cmask(unsigned mask)
+{
+    return ((mask & PIPE_MASK_A) >> 3) |
+           ((mask & PIPE_MASK_A) >> 2) |
+           ((mask & PIPE_MASK_A) >> 1) |
+           (mask & PIPE_MASK_A);
+}
+
+static unsigned grrg_cmask(unsigned mask)
+{
+    return ((mask & PIPE_MASK_R) << 1) |
+           ((mask & PIPE_MASK_R) << 2) |
+           ((mask & PIPE_MASK_G) >> 1) |
+           ((mask & PIPE_MASK_G) << 2);
+}
+
+static unsigned arra_cmask(unsigned mask)
+{
+    return ((mask & PIPE_MASK_R) << 1) |
+           ((mask & PIPE_MASK_R) << 2) |
+           ((mask & PIPE_MASK_A) >> 3) |
+           (mask & PIPE_MASK_A);
 }
 
 /* Create a new blend state based on the CSO blend state.
@@ -190,9 +227,9 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     uint32_t blend_control_noclamp = 0;    /* R300_RB3D_CBLEND: 0x4e04 */
     uint32_t alpha_blend_control = 0; /* R300_RB3D_ABLEND: 0x4e08 */
     uint32_t alpha_blend_control_noclamp = 0; /* R300_RB3D_ABLEND: 0x4e08 */
-    uint32_t color_channel_mask = 0;  /* R300_RB3D_COLOR_CHANNEL_MASK: 0x4e0c */
     uint32_t rop = 0;                 /* R300_RB3D_ROPCNTL: 0x4e18 */
     uint32_t dither = 0;              /* R300_RB3D_DITHER_CTL: 0x4e50 */
+    int i;
     CB_LOCALS;
 
     blend->state = *state;
@@ -331,20 +368,6 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
                 (state->logicop_func) << R300_RB3D_ROPCNTL_ROP_SHIFT;
     }
 
-    /* Color channel masks for all MRTs. */
-    color_channel_mask = bgra_cmask(state->rt[0].colormask);
-    if (r300screen->caps.is_r500 && state->independent_blend_enable) {
-        if (state->rt[1].blend_enable) {
-            color_channel_mask |= bgra_cmask(state->rt[1].colormask) << 4;
-        }
-        if (state->rt[2].blend_enable) {
-            color_channel_mask |= bgra_cmask(state->rt[2].colormask) << 8;
-        }
-        if (state->rt[3].blend_enable) {
-            color_channel_mask |= bgra_cmask(state->rt[3].colormask) << 12;
-        }
-    }
-
     /* Neither fglrx nor classic r300 ever set this, regardless of dithering
      * state. Since it's an optional implementation detail, we can leave it
      * out and never dither.
@@ -358,14 +381,27 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     */
 
     /* Build a command buffer. */
-    BEGIN_CB(blend->cb_clamp, 8);
-    OUT_CB_REG(R300_RB3D_ROPCNTL, rop);
-    OUT_CB_REG_SEQ(R300_RB3D_CBLEND, 3);
-    OUT_CB(blend_control);
-    OUT_CB(alpha_blend_control);
-    OUT_CB(color_channel_mask);
-    OUT_CB_REG(R300_RB3D_DITHER_CTL, dither);
-    END_CB;
+    {
+        unsigned (*func[COLORMASK_NUM_SWIZZLES])(unsigned) = {
+            bgra_cmask,
+            rgba_cmask,
+            rrrr_cmask,
+            aaaa_cmask,
+            grrg_cmask,
+            arra_cmask
+        };
+
+        for (i = 0; i < COLORMASK_NUM_SWIZZLES; i++) {
+            BEGIN_CB(blend->cb_clamp[i], 8);
+            OUT_CB_REG(R300_RB3D_ROPCNTL, rop);
+            OUT_CB_REG_SEQ(R300_RB3D_CBLEND, 3);
+            OUT_CB(blend_control);
+            OUT_CB(alpha_blend_control);
+            OUT_CB(func[i](state->rt[0].colormask));
+            OUT_CB_REG(R300_RB3D_DITHER_CTL, dither);
+            END_CB;
+        }
+    }
 
     /* Build a command buffer. */
     BEGIN_CB(blend->cb_noclamp, 8);
@@ -373,7 +409,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     OUT_CB_REG_SEQ(R300_RB3D_CBLEND, 3);
     OUT_CB(blend_control_noclamp);
     OUT_CB(alpha_blend_control_noclamp);
-    OUT_CB(color_channel_mask);
+    OUT_CB(rgba_cmask(state->rt[0].colormask));
     OUT_CB_REG(R300_RB3D_DITHER_CTL, dither);
     END_CB;
 

@@ -45,10 +45,12 @@ void r300_emit_blend_state(struct r300_context* r300,
     CS_LOCALS(r300);
 
     if (fb->nr_cbufs) {
-        if (fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16A16_FLOAT)
+        if (fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16A16_FLOAT) {
             WRITE_CS_TABLE(blend->cb_noclamp, size);
-        else
-            WRITE_CS_TABLE(blend->cb_clamp, size);
+        } else {
+            unsigned swz = r300_surface(fb->cbufs[0])->colormask_swizzle;
+            WRITE_CS_TABLE(blend->cb_clamp[swz], size);
+        }
     } else {
         WRITE_CS_TABLE(blend->cb_no_readwrite, size);
     }
