@@ -621,7 +621,7 @@ draw_set_indexes(struct draw_context *draw,
           elem_size == 2 ||
           elem_size == 4);
    draw->pt.user.elts = elements;
-   draw->pt.user.eltSize = elem_size;
+   draw->pt.user.eltSizeIB = elem_size;
 }
 
 

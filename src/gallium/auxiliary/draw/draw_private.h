@@ -174,6 +174,7 @@ struct draw_context
          /** vertex element/index buffer (ex: glDrawElements) */
          const void *elts;
          /** bytes per index (0, 1, 2 or 4) */
+         unsigned eltSizeIB;
          unsigned eltSize;
          int eltBias;
          unsigned min_index;

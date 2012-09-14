@@ -362,7 +362,7 @@ draw_pt_arrays_restart(struct draw_context *draw,
 
    assert(info->primitive_restart);
 
-   if (draw->pt.user.elts) {
+   if (draw->pt.user.eltSize) {
       /* indexed prims (draw_elements) */
       cur_start = start;
       cur_count = 0;
@@ -433,12 +433,8 @@ draw_arrays_instanced(struct draw_context *draw,
    info.count = count;
    info.start_instance = startInstance;
    info.instance_count = instanceCount;
-
-   info.indexed = (draw->pt.user.elts != NULL);
-   if (!info.indexed) {
-      info.min_index = start;
-      info.max_index = start + count - 1;
-   }
+   info.min_index = start;
+   info.max_index = start + count - 1;
 
    draw_vbo(draw, &info);
 }
@@ -465,6 +461,7 @@ draw_vbo(struct draw_context *draw,
    draw->pt.user.eltBias = info->index_bias;
    draw->pt.user.min_index = info->min_index;
    draw->pt.user.max_index = info->max_index;
+   draw->pt.user.eltSize = info->indexed ? draw->pt.user.eltSizeIB : 0;
 
    if (0)
       debug_printf("draw_vbo(mode=%u start=%u count=%u):\n",
