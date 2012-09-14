@@ -527,7 +527,9 @@ defm V_MOV_FED_B32 : VOP1_32 <0x00000009, "V_MOV_FED_B32", []>;
 defm V_FRACT_F32 : VOP1_32 <0x00000020, "V_FRACT_F32", []>;
 defm V_TRUNC_F32 : VOP1_32 <0x00000021, "V_TRUNC_F32", []>;
 defm V_CEIL_F32 : VOP1_32 <0x00000022, "V_CEIL_F32", []>;
-defm V_RNDNE_F32 : VOP1_32 <0x00000023, "V_RNDNE_F32", []>;
+defm V_RNDNE_F32 : VOP1_32 <0x00000023, "V_RNDNE_F32",
+  [(set VReg_32:$dst, (frint AllReg_32:$src0))]
+>;
 defm V_FLOOR_F32 : VOP1_32 <0x00000024, "V_FLOOR_F32", []>;
 defm V_EXP_F32 : VOP1_32 <0x00000025, "V_EXP_F32",
   [(set VReg_32:$dst, (fexp2 AllReg_32:$src0))]
