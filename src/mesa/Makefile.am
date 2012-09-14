@@ -73,7 +73,7 @@ main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py m
 
 program/program_parse.tab.c program/program_parse.tab.h: program/program_parse.y
 	$(MKDIR_P) program
-	$(AM_V_GEN) $(YACC) -v -d --output=program/program_parse.tab.c $<
+	$(AM_V_GEN) $(YACC) -p "_mesa_program_" -v -d --output=program/program_parse.tab.c $<
 
 program/lex.yy.c: program/program_lexer.l
 	$(MKDIR_P) program
