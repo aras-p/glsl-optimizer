@@ -762,10 +762,6 @@ llvmpipe_is_format_unswizzled( enum pipe_format format )
    const struct util_format_description *desc = util_format_description(format);
    unsigned chan;
 
-   if (format == PIPE_FORMAT_B8G8R8X8_UNORM || format == PIPE_FORMAT_B8G8R8A8_UNORM) {
-      return FALSE;
-   }
-
    if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN ||
        desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB ||
        desc->block.width != 1 ||
@@ -785,11 +781,6 @@ llvmpipe_is_format_unswizzled( enum pipe_format format )
 
       if (desc->channel[chan].pure_integer != desc->channel[0].pure_integer)
          return FALSE;
-   }
-
-   /* All code assumes alpha is the last channel */
-   if (desc->nr_channels == 4 && desc->swizzle[3] < 3) {
-      return FALSE;
    }
 
    return TRUE;
