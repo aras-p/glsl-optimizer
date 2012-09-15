@@ -328,7 +328,7 @@ static struct gl_builtin_uniform_element gl_NormalMatrix_elements[] = {
 
 #define STATEVAR(name) {#name, name ## _elements, Elements(name ## _elements)}
 
-const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
+static const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
    STATEVAR(gl_DepthRange),
    STATEVAR(gl_ClipPlane),
    STATEVAR(gl_Point),

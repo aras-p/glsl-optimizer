@@ -244,8 +244,6 @@ struct gl_builtin_uniform_desc {
    unsigned int num_elements;
 };
 
-extern const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[];
-
 /**
  * \name GLSL uniform arrays and structs require special handling.
  *
