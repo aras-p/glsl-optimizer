@@ -237,7 +237,7 @@ finish_pass(struct atifs_machine *machine)
    }
 }
 
-struct ati_fs_opcode_st ati_fs_opcodes[] = {
+static struct ati_fs_opcode_st ati_fs_opcodes[] = {
    {GL_ADD_ATI, 2},
    {GL_SUB_ATI, 2},
    {GL_MUL_ATI, 2},

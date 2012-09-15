@@ -25,8 +25,6 @@ struct ati_fs_opcode_st
    GLint num_src_args;
 };
 
-extern struct ati_fs_opcode_st ati_fs_opcodes[];
-
 struct atifragshader_src_register
 {
    GLuint Index;
