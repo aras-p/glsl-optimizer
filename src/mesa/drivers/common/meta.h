@@ -58,8 +58,6 @@
 #define MESA_META_MULTISAMPLE          0x100000
 /**\}*/
 
-void *mem_ctx;
-
 extern void
 _mesa_meta_init(struct gl_context *ctx);
 

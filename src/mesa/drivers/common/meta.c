@@ -78,7 +78,7 @@
 #include "main/glformats.h"
 #include "../glsl/ralloc.h"
 
-
+static void *mem_ctx;
 /** Return offset in bytes of the field within a vertex struct */
 #define OFFSET(FIELD) ((void *) offsetof(struct vertex, FIELD))
 
