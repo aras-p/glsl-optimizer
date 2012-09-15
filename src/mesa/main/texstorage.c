@@ -268,13 +268,6 @@ tex_storage_error_check(struct gl_context *ctx, GLuint dims, GLenum target,
       return GL_TRUE;
    }  
 
-   /* levels check */
-   if (levels < 1 || height < 1 || depth < 1) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glTexStorage%uD(levels < 1)",
-                  dims);
-      return GL_TRUE;
-   }  
-
    /* target check */
    if (!legal_texobj_target(ctx, dims, target)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
@@ -283,7 +276,14 @@ tex_storage_error_check(struct gl_context *ctx, GLuint dims, GLenum target,
       return GL_TRUE;
    }
 
-   /* check levels against maximum */
+   /* levels check */
+   if (levels < 1) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glTexStorage%uD(levels < 1)",
+                  dims);
+      return GL_TRUE;
+   }  
+
+   /* check levels against maximum (note different error than above) */
    if (levels > _mesa_max_texture_levels(ctx, target)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glTexStorage%uD(levels too large)", dims);
