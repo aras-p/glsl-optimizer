@@ -91,10 +91,10 @@ nonlinear_to_linear(GLubyte cs8)
 
 typedef void (*dxtFetchTexelFuncExt)( GLint srcRowstride, GLubyte *pixdata, GLint col, GLint row, GLvoid *texelOut );
 
-dxtFetchTexelFuncExt fetch_ext_rgb_dxt1 = NULL;
-dxtFetchTexelFuncExt fetch_ext_rgba_dxt1 = NULL;
-dxtFetchTexelFuncExt fetch_ext_rgba_dxt3 = NULL;
-dxtFetchTexelFuncExt fetch_ext_rgba_dxt5 = NULL;
+static dxtFetchTexelFuncExt fetch_ext_rgb_dxt1 = NULL;
+static dxtFetchTexelFuncExt fetch_ext_rgba_dxt1 = NULL;
+static dxtFetchTexelFuncExt fetch_ext_rgba_dxt3 = NULL;
+static dxtFetchTexelFuncExt fetch_ext_rgba_dxt5 = NULL;
 
 typedef void (*dxtCompressTexFuncExt)(GLint srccomps, GLint width,
                                       GLint height, const GLubyte *srcPixData,
