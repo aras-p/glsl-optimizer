@@ -40,8 +40,6 @@
 #include "texcompress_cpal.h"
 #include "teximage.h"
 
-#if FEATURE_ES
-
 
 static const struct cpal_format_info {
    GLenum cpal_format;
@@ -226,5 +224,3 @@ _mesa_cpal_compressed_teximage2d(GLenum target, GLint level,
    if (saved_align != align)
       _mesa_PixelStorei(GL_UNPACK_ALIGNMENT, saved_align);
 }
-
-#endif
