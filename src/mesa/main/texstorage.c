@@ -125,12 +125,12 @@ static void
 setup_texstorage(struct gl_context *ctx,
                  struct gl_texture_object *texObj,
                  GLuint dims,
+                 gl_format texFormat,
                  GLsizei levels, GLenum internalFormat,
                  GLsizei width, GLsizei height, GLsizei depth)
 {
    const GLenum target = texObj->Target;
    const GLuint numFaces = _mesa_num_tex_faces(target);
-   gl_format texFormat;
    GLint level, levelWidth = width, levelHeight = height, levelDepth = depth;
    GLuint face;
 
@@ -138,9 +138,6 @@ setup_texstorage(struct gl_context *ctx,
    assert(width > 0);
    assert(height > 0);
    assert(depth > 0);
-
-   texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,
-                                           internalFormat, GL_NONE, GL_NONE);
 
    /* Set up all the texture object's gl_texture_images */
    for (level = 0; level < levels; level++) {
@@ -360,19 +357,23 @@ texstorage(GLuint dims, GLenum target, GLsizei levels, GLenum internalformat,
 {
    struct gl_texture_object *texObj;
    GLboolean sizeOK;
-   GLenum proxyTarget = _mesa_get_proxy_target(target);
+   gl_format texFormat;
 
    GET_CURRENT_CONTEXT(ctx);
-
-   texObj = _mesa_get_current_tex_object(ctx, target);
 
    if (tex_storage_error_check(ctx, dims, target, levels,
                                internalformat, width, height, depth)) {
       return; /* error was recorded */
    }
 
-   sizeOK = ctx->Driver.TestProxyTexImage(ctx, proxyTarget, 0,
-                                          internalformat, GL_NONE, GL_NONE,
+   texObj = _mesa_get_current_tex_object(ctx, target);
+   assert(texObj);
+
+   texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,
+                                           internalformat, GL_NONE, GL_NONE);
+   assert(texFormat != MESA_FORMAT_NONE);
+
+   sizeOK = ctx->Driver.TestProxyTexImage(ctx, target, 0, texFormat,
                                           width, height, depth, 0);
 
    if (!sizeOK) {
@@ -388,7 +389,7 @@ texstorage(GLuint dims, GLenum target, GLsizei levels, GLenum internalformat,
       }
    }
    else {
-      setup_texstorage(ctx, texObj, dims, levels, internalformat,
+      setup_texstorage(ctx, texObj, dims, texFormat, levels, internalformat,
                        width, height, depth);
    }
 }

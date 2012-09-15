@@ -128,8 +128,8 @@ _mesa_max_texture_levels(struct gl_context *ctx, GLenum target);
 
 extern GLboolean
 _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
-                         GLint internalFormat, GLenum format, GLenum type,
-                         GLint width, GLint height, GLint depth, GLint border);
+                          gl_format format,
+                          GLint width, GLint height, GLint depth, GLint border);
 
 
 extern GLuint

@@ -251,14 +251,14 @@ struct dd_function_table {
                           struct gl_texture_object *texObj);
 
    /**
-    * Called by glTexImage[123]D when user specifies a proxy texture
-    * target.  
-    *
-    * \return GL_TRUE if the proxy test passes, or GL_FALSE if the test fails.
+    * Called by glTexImage, glCompressedTexImage, glCopyTexImage
+    * and glTexStorage to check if the dimensions of the texture image
+    * are too large.
+    * \param target  any GL_PROXY_TEXTURE_x target
+    * \return GL_TRUE if the image is OK, GL_FALSE if too large
     */
    GLboolean (*TestProxyTexImage)(struct gl_context *ctx, GLenum target,
-                                  GLint level, GLint internalFormat,
-                                  GLenum format, GLenum type,
+                                  GLint level, gl_format format,
                                   GLint width, GLint height,
                                   GLint depth, GLint border);
    /*@}*/
