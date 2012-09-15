@@ -325,11 +325,11 @@ public:
    void *mem_ctx;
 };
 
-src_reg undef_src = src_reg(PROGRAM_UNDEFINED, 0, NULL);
+static src_reg undef_src = src_reg(PROGRAM_UNDEFINED, 0, NULL);
 
-dst_reg undef_dst = dst_reg(PROGRAM_UNDEFINED, SWIZZLE_NOOP);
+static dst_reg undef_dst = dst_reg(PROGRAM_UNDEFINED, SWIZZLE_NOOP);
 
-dst_reg address_reg = dst_reg(PROGRAM_ADDRESS, WRITEMASK_X);
+static dst_reg address_reg = dst_reg(PROGRAM_ADDRESS, WRITEMASK_X);
 
 static int
 swizzle_for_size(int size)
