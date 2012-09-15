@@ -17,7 +17,7 @@ env.Prepend(CPPPATH = [
 # Make glcpp-parse.h and glsl_parser.h reachable from the include path.
 env.Append(CPPPATH = [Dir('.').abspath, Dir('glcpp').abspath])
 
-env.Append(YACCFLAGS = '-d')
+env.Append(YACCFLAGS = '-d -p "glcpp_parser_"')
 
 parser_env = env.Clone()
 parser_env.Append(YACCFLAGS = [

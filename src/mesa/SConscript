@@ -280,7 +280,7 @@ statetracker_sources = [
     'state_tracker/st_texture.c',
 ]
 
-env.Append(YACCFLAGS = '-d')
+env.Append(YACCFLAGS = '-d -p "_mesa_program_"')
 program_lex = env.CFile('program/lex.yy.c', 'program/program_lexer.l')
 program_parse = env.CFile('program/program_parse.tab.c',
                           'program/program_parse.y')
