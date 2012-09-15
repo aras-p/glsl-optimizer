@@ -105,7 +105,7 @@ void vbo_exec_invalidate_state( struct gl_context *ctx, GLuint new_state )
  * PRIMITIVES_GENERATED and TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN queries.
  */
 size_t
-count_tessellated_primitives(const struct _mesa_prim *prim)
+vbo_count_tessellated_primitives(const struct _mesa_prim *prim)
 {
    size_t num_primitives;
    switch (prim->mode) {

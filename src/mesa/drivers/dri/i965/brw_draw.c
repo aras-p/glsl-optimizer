@@ -381,7 +381,7 @@ static void
 brw_update_primitive_count(struct brw_context *brw,
                            const struct _mesa_prim *prim)
 {
-   uint32_t count = count_tessellated_primitives(prim);
+   uint32_t count = vbo_count_tessellated_primitives(prim);
    brw->sol.primitives_generated += count;
    if (brw->intel.ctx.TransformFeedback.CurrentObject->Active &&
        !brw->intel.ctx.TransformFeedback.CurrentObject->Paused) {
