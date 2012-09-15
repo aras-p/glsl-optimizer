@@ -225,7 +225,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
     print 'static gl_shader *builtin_profiles[%d];' % len(profiles)
 
     print """
-void *builtin_mem_ctx = NULL;
+static void *builtin_mem_ctx = NULL;
 
 void
 _mesa_glsl_release_functions(void)
