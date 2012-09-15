@@ -118,39 +118,42 @@ next_mipmap_level_size(GLenum target,
 }
 
 
-/**
- * Do actual memory allocation for glTexStorage1/2/3D().
- */
-static void
-setup_texstorage(struct gl_context *ctx,
-                 struct gl_texture_object *texObj,
-                 GLuint dims,
-                 gl_format texFormat,
-                 GLsizei levels, GLenum internalFormat,
-                 GLsizei width, GLsizei height, GLsizei depth)
+/** Helper to get a particular texture image in a texture object */
+static struct gl_texture_image *
+get_tex_image(struct gl_context *ctx, 
+              struct gl_texture_object *texObj,
+              GLuint face, GLuint level)
+{
+   const GLenum faceTarget =
+      (texObj->Target == GL_TEXTURE_CUBE_MAP ||
+       texObj->Target == GL_PROXY_TEXTURE_CUBE_MAP)
+      ? GL_TEXTURE_CUBE_MAP_POSITIVE_X + face : texObj->Target;
+   return _mesa_get_tex_image(ctx, texObj, faceTarget, level);
+}
+
+
+
+static GLboolean
+initialize_texture_fields(struct gl_context *ctx,
+                          struct gl_texture_object *texObj,
+                          GLint levels,
+                          GLsizei width, GLsizei height, GLsizei depth,
+                          GLenum internalFormat, gl_format texFormat)
 {
    const GLenum target = texObj->Target;
    const GLuint numFaces = _mesa_num_tex_faces(target);
    GLint level, levelWidth = width, levelHeight = height, levelDepth = depth;
    GLuint face;
 
-   assert(levels > 0);
-   assert(width > 0);
-   assert(height > 0);
-   assert(depth > 0);
-
    /* Set up all the texture object's gl_texture_images */
    for (level = 0; level < levels; level++) {
       for (face = 0; face < numFaces; face++) {
-         const GLenum faceTarget =
-            (target == GL_TEXTURE_CUBE_MAP)
-            ? GL_TEXTURE_CUBE_MAP_POSITIVE_X + face : target;
          struct gl_texture_image *texImage =
-            _mesa_get_tex_image(ctx, texObj, faceTarget, level);
+            get_tex_image(ctx, texObj, face, level);
 
 	 if (!texImage) {
-	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage%uD", dims);
-            return;
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexStorage");
+            return GL_FALSE;
 	 }
 
          _mesa_init_teximage_fields(ctx, texImage,
@@ -160,49 +163,18 @@ setup_texstorage(struct gl_context *ctx,
 
       next_mipmap_level_size(target, &levelWidth, &levelHeight, &levelDepth);
    }
-
-   assert(levelWidth > 0);
-   assert(levelHeight > 0);
-   assert(levelDepth > 0);
-
-   if (!_mesa_is_proxy_texture(texObj->Target)) {
-      /* Do actual texture memory allocation */
-      if (!ctx->Driver.AllocTextureStorage(ctx, texObj, levels,
-                                           width, height, depth)) {
-         /* Reset the texture images' info to zeros.
-          * Strictly speaking, we probably don't have to do this since
-          * generating GL_OUT_OF_MEMORY can leave things in an undefined
-          * state but this puts things in a consistent state.
-          */
-         for (level = 0; level < levels; level++) {
-            for (face = 0; face < numFaces; face++) {
-               struct gl_texture_image *texImage = texObj->Image[face][level];
-               if (texImage) {
-                  _mesa_init_teximage_fields(ctx, texImage,
-                                             0, 0, 0, 0,
-                                             GL_NONE, MESA_FORMAT_NONE);
-               }
-            }
-         }
-
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexStorage%uD", dims);
-
-         return;
-      }
-
-      /* Only set this field for non-proxy texture objects */
-      texObj->Immutable = GL_TRUE;
-   }
+   return GL_TRUE;
 }
 
 
 /**
  * Clear all fields of texture object to zeros.  Used for proxy texture tests.
+ * Used for proxy texture tests (and to clean up when a texture memory
+ * allocation fails).
  */
 static void
-clear_image_fields(struct gl_context *ctx,
-                   GLuint dims,
-                   struct gl_texture_object *texObj)
+clear_texture_fields(struct gl_context *ctx,
+                     struct gl_texture_object *texObj)
 {
    const GLenum target = texObj->Target;
    const GLuint numFaces = _mesa_num_tex_faces(target);
@@ -211,19 +183,17 @@ clear_image_fields(struct gl_context *ctx,
 
    for (level = 0; level < Elements(texObj->Image[0]); level++) {
       for (face = 0; face < numFaces; face++) {
-         const GLenum faceTarget =
-            (target == GL_TEXTURE_CUBE_MAP)
-            ? GL_TEXTURE_CUBE_MAP_POSITIVE_X + face : target;
          struct gl_texture_image *texImage =
-            _mesa_get_tex_image(ctx, texObj, faceTarget, level);
+            get_tex_image(ctx, texObj, face, level);
 
 	 if (!texImage) {
-	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexStorage%uD", dims);
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexStorage");
             return;
 	 }
 
          _mesa_init_teximage_fields(ctx, texImage,
-                                    0, 0, 0, 0, GL_NONE, MESA_FORMAT_NONE);
+                                    0, 0, 0, 0, /* w, h, d, border */
+                                    GL_NONE, MESA_FORMAT_NONE);
       }
    }
 }
@@ -356,7 +326,7 @@ texstorage(GLuint dims, GLenum target, GLsizei levels, GLenum internalformat,
            GLsizei width, GLsizei height, GLsizei depth)
 {
    struct gl_texture_object *texObj;
-   GLboolean sizeOK;
+   GLboolean sizeOK, dimensionsOK;
    gl_format texFormat;
 
    GET_CURRENT_CONTEXT(ctx);
@@ -373,24 +343,59 @@ texstorage(GLuint dims, GLenum target, GLsizei levels, GLenum internalformat,
                                            internalformat, GL_NONE, GL_NONE);
    assert(texFormat != MESA_FORMAT_NONE);
 
+   /* check that width, height, depth are legal for the mipmap level */
+   dimensionsOK = _mesa_legal_texture_dimensions(ctx, target, 0,
+                                                  width, height, depth, 0);
+
    sizeOK = ctx->Driver.TestProxyTexImage(ctx, target, 0, texFormat,
                                           width, height, depth, 0);
 
-   if (!sizeOK) {
-      if (_mesa_is_proxy_texture(texObj->Target)) {
-         /* clear all image fields for [levels] */
-         clear_image_fields(ctx, dims, texObj);
+   if (_mesa_is_proxy_texture(texObj->Target)) {
+      if (dimensionsOK && sizeOK) {
+         initialize_texture_fields(ctx, texObj, levels, width, height, depth,
+                                   internalformat, texFormat);
       }
       else {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glTexStorage%uD(invalid width, height or depth)",
-                     dims);
-         return;
+         /* clear all image fields for [levels] */
+         clear_texture_fields(ctx, texObj);
       }
    }
    else {
-      setup_texstorage(ctx, texObj, dims, texFormat, levels, internalformat,
-                       width, height, depth);
+      if (!dimensionsOK) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glTexStorage%uD(invalid width, height or depth)", dims);
+         return;
+      }
+
+      if (!sizeOK) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY,
+                     "glTexStorage%uD(texture too large)", dims);
+      }
+
+      assert(levels > 0);
+      assert(width > 0);
+      assert(height > 0);
+      assert(depth > 0);
+
+      if (!initialize_texture_fields(ctx, texObj, levels, width, height, depth,
+                                     internalformat, texFormat)) {
+         return;
+      }
+
+      /* Do actual texture memory allocation */
+      if (!ctx->Driver.AllocTextureStorage(ctx, texObj, levels,
+                                           width, height, depth)) {
+         /* Reset the texture images' info to zeros.
+          * Strictly speaking, we probably don't have to do this since
+          * generating GL_OUT_OF_MEMORY can leave things in an undefined
+          * state but this puts things in a consistent state.
+          */
+         clear_texture_fields(ctx, texObj);
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexStorage%uD", dims);
+         return;
+      }
+
+      texObj->Immutable = GL_TRUE;
    }
 }
 
