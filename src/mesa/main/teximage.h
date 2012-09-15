@@ -142,6 +142,11 @@ extern GLenum
 _mesa_es_error_check_format_and_type(GLenum format, GLenum type,
                                      unsigned dimensions);
 
+extern GLboolean
+_mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
+                               GLint level, GLint width, GLint height,
+                               GLint depth, GLint border);
+
 /**
  * Lock a texture for updating.  See also _mesa_lock_context_textures().
  */

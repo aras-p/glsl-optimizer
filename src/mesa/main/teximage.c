@@ -1209,39 +1209,17 @@ _mesa_clear_texture_image(struct gl_context *ctx,
 
 
 /**
- * This is the fallback for Driver.TestProxyTexImage().  Test the texture
- * width, height and depth against the ctx->Const limits for textures.
- *
- * A hardware driver might override this function if, for example, the
- * max 3D texture size is 512x512x64 (i.e. not a cube).
- *
- * Note that width, height, depth == 0 is not an error.  However, a
- * texture with zero width/height/depth will be considered "incomplete"
- * and texturing will effectively be disabled.
- *
- * \param target  one of GL_PROXY_TEXTURE_1D, GL_PROXY_TEXTURE_2D,
- *                GL_PROXY_TEXTURE_3D, GL_PROXY_TEXTURE_RECTANGLE_NV,
- *                GL_PROXY_TEXTURE_CUBE_MAP_ARB.
- * \param level  as passed to glTexImage
- * \param internalFormat  as passed to glTexImage
- * \param format  as passed to glTexImage
- * \param type  as passed to glTexImage
- * \param width  as passed to glTexImage
- * \param height  as passed to glTexImage
- * \param depth  as passed to glTexImage
- * \param border  as passed to glTexImage
- * \return GL_TRUE if the image is acceptable, GL_FALSE if not acceptable.
+ * Check the width, height, depth and border of a texture image
+ * against the max texture size constants.
+ * The target and level parameters will have already been validated.
+ * \return GL_TRUE if size is OK, GL_FALSE otherwise.
  */
 GLboolean
-_mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
-                          GLint internalFormat, GLenum format, GLenum type,
-                          GLint width, GLint height, GLint depth, GLint border)
+_mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
+                               GLint level, GLint width, GLint height,
+                               GLint depth, GLint border)
 {
    GLint maxSize;
-
-   (void) internalFormat;
-   (void) format;
-   (void) type;
 
    switch (target) {
    case GL_PROXY_TEXTURE_1D:
@@ -1345,9 +1323,47 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
       return GL_TRUE;
 
    default:
-      _mesa_problem(ctx, "Invalid target in _mesa_test_proxy_teximage");
+      _mesa_problem(ctx, "Invalid target in _mesa_legal_texture_dimensions()");
       return GL_FALSE;
    }
+}
+
+
+/**
+ * This is the fallback for Driver.TestProxyTexImage().  Test the texture
+ * width, height and depth against the ctx->Const limits for textures.
+ *
+ * A hardware driver might override this function if, for example, the
+ * max 3D texture size is 512x512x64 (i.e. not a cube).
+ *
+ * Note that width, height, depth == 0 is not an error.  However, a
+ * texture with zero width/height/depth will be considered "incomplete"
+ * and texturing will effectively be disabled.
+ *
+ * \param target  one of GL_PROXY_TEXTURE_1D, GL_PROXY_TEXTURE_2D,
+ *                GL_PROXY_TEXTURE_3D, GL_PROXY_TEXTURE_RECTANGLE_NV,
+ *                GL_PROXY_TEXTURE_CUBE_MAP_ARB.
+ * \param level  as passed to glTexImage
+ * \param internalFormat  as passed to glTexImage
+ * \param format  as passed to glTexImage
+ * \param type  as passed to glTexImage
+ * \param width  as passed to glTexImage
+ * \param height  as passed to glTexImage
+ * \param depth  as passed to glTexImage
+ * \param border  as passed to glTexImage
+ * \return GL_TRUE if the image is acceptable, GL_FALSE if not acceptable.
+ */
+GLboolean
+_mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
+                          GLint internalFormat, GLenum format, GLenum type,
+                          GLint width, GLint height, GLint depth, GLint border)
+{
+   (void) internalFormat;
+   (void) format;
+   (void) type;
+
+   return _mesa_legal_texture_dimensions(ctx, target, level,
+                                         width, height, depth, border);
 }
 
 
@@ -1680,6 +1696,10 @@ get_compressed_block_size(GLenum glformat, GLuint *bw, GLuint *bh)
  * Verifies each of the parameters against the constants specified in
  * __struct gl_contextRec::Const and the supported extensions, and according
  * to the OpenGL specification.
+ * Note that we don't fully error-check the width, height, depth values
+ * here.  That's done in _mesa_legal_texture_dimensions() which is used
+ * by several other GL entrypoints.  Plus, texture dims have a special
+ * interaction with proxy textures.
  */
 static GLenum
 texture_error_check( struct gl_context *ctx,
@@ -2028,6 +2048,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    }
 
    /* check image size against compression block size */
+   /* XXX possibly move this into the _mesa_legal_texture_dimensions() func */
    {
       gl_format texFormat =
          ctx->Driver.ChooseTextureFormat(ctx, target, proxy_format,
