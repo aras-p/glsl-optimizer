@@ -1210,7 +1210,7 @@ _mesa_clear_texture_image(struct gl_context *ctx,
 
 /**
  * This is the fallback for Driver.TestProxyTexImage().  Test the texture
- * level, width, height and depth against the ctx->Const limits for textures.
+ * width, height and depth against the ctx->Const limits for textures.
  *
  * A hardware driver might override this function if, for example, the
  * max 3D texture size is 512x512x64 (i.e. not a cube).
@@ -1245,8 +1245,6 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
 
    switch (target) {
    case GL_PROXY_TEXTURE_1D:
-      if (level >= ctx->Const.MaxTextureLevels)
-         return GL_FALSE;
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1); /* level zero size */
       maxSize >>= level;  /* level size */
       if (width < 2 * border || width > 2 * border + maxSize)
@@ -1258,8 +1256,6 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
       return GL_TRUE;
 
    case GL_PROXY_TEXTURE_2D:
-      if (level >= ctx->Const.MaxTextureLevels)
-         return GL_FALSE;
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
       maxSize >>= level;
       if (width < 2 * border || width > 2 * border + maxSize)
@@ -1275,8 +1271,6 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
       return GL_TRUE;
 
    case GL_PROXY_TEXTURE_3D:
-      if (level >= ctx->Const.Max3DTextureLevels)
-         return GL_FALSE;
       maxSize = 1 << (ctx->Const.Max3DTextureLevels - 1);
       maxSize >>= level;
       if (width < 2 * border || width > 2 * border + maxSize)
@@ -1306,8 +1300,6 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
       return GL_TRUE;
 
    case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-      if (level >= ctx->Const.MaxCubeTextureLevels)
-         return GL_FALSE;
       maxSize = 1 << (ctx->Const.MaxCubeTextureLevels - 1);
       maxSize >>= level;
       if (width < 2 * border || width > 2 * border + maxSize)
@@ -1323,8 +1315,6 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
       return GL_TRUE;
 
    case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
-      if (level >= ctx->Const.MaxTextureLevels)
-         return GL_FALSE;
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
       maxSize >>= level;
       if (width < 2 * border || width > 2 * border + maxSize)
@@ -1338,8 +1328,6 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
       return GL_TRUE;
 
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
-      if (level >= ctx->Const.MaxTextureLevels)
-         return GL_FALSE;
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
       maxSize >>= level;
       if (width < 2 * border || width > 2 * border + maxSize)
@@ -1676,7 +1664,7 @@ get_compressed_block_size(GLenum glformat, GLuint *bw, GLuint *bh)
  * 
  * \param ctx GL context.
  * \param dimensions texture image dimensions (must be 1, 2 or 3).
- * \param target texture target given by the user.
+ * \param target texture target given by the user (already validated).
  * \param level image level given by the user.
  * \param internalFormat internal format given by the user.
  * \param format pixel data format given by the user.
@@ -1720,8 +1708,8 @@ texture_error_check( struct gl_context *ctx,
     * zero-out behaviour is only used in cases related to memory allocation.
     */
 
-   /* Basic level check (more checking in ctx->Driver.TestProxyTexImage) */
-   if (level < 0 || level >= MAX_TEXTURE_LEVELS) {
+   /* level check */
+   if (level < 0 || level >= _mesa_max_texture_levels(ctx, target)) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glTexImage%dD(level=%d)", dimensions, level);
       return GL_TRUE;
@@ -2105,7 +2093,7 @@ error:
  * 
  * \param ctx GL context.
  * \param dimensions texture image dimensions (must be 1, 2 or 3).
- * \param target texture target given by the user.
+ * \param target texture target given by the user (already validated)
  * \param level image level given by the user.
  * \param xoffset sub-image x offset given by the user.
  * \param yoffset sub-image y offset given by the user.
@@ -2131,8 +2119,8 @@ subtexture_error_check( struct gl_context *ctx, GLuint dimensions,
 {
    GLenum err;
 
-   /* Basic level check */
-   if (level < 0 || level >= MAX_TEXTURE_LEVELS) {
+   /* level check */
+   if (level < 0 || level >= _mesa_max_texture_levels(ctx, target)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glTexSubImage2D(level=%d)", level);
       return GL_TRUE;
    }
@@ -2318,8 +2306,8 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }       
 
-   /* Basic level check (more checking in ctx->Driver.TestProxyTexImage) */
-   if (level < 0 || level >= MAX_TEXTURE_LEVELS) {
+   /* level check */
+   if (level < 0 || level >= _mesa_max_texture_levels(ctx, target)) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyTexImage%dD(level=%d)", dimensions, level);
       return GL_TRUE;
@@ -2497,7 +2485,7 @@ copytexsubimage_error_check1( struct gl_context *ctx, GLuint dimensions,
    }
 
    /* Check level */
-   if (level < 0 || level >= MAX_TEXTURE_LEVELS) {
+   if (level < 0 || level >= _mesa_max_texture_levels(ctx, target)) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyTexSubImage%dD(level=%d)", dimensions, level);
       return GL_TRUE;
