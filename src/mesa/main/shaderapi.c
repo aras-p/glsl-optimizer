@@ -1430,6 +1430,8 @@ _mesa_ValidateProgramARB(GLhandleARB program)
    validate_program(ctx, program);
 }
 
+#ifdef FEATURE_ES2
+
 void GLAPIENTRY
 _mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
                                GLint* range, GLint* precision)
@@ -1501,6 +1503,8 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
    (void) length;
    _mesa_error(ctx, GL_INVALID_OPERATION, __FUNCTION__);
 }
+
+#endif /* FEATURE_ES2 */
 
 
 void GLAPIENTRY

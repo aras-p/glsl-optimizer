@@ -1954,6 +1954,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    }
 
    switch (internalFormat) {
+#if FEATURE_ES
    case GL_PALETTE4_RGB8_OES:
    case GL_PALETTE4_RGBA8_OES:
    case GL_PALETTE4_R5_G6_B5_OES:
@@ -1996,6 +1997,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
        */
       level = -level;
       break;
+#endif
 
    default:
       choose_format = GL_NONE;
@@ -2945,11 +2947,12 @@ teximage(struct gl_context *ctx, GLboolean compressed, GLuint dims,
                                   format, type, width, height, depth, border);
    }
 
+#if FEATURE_ES
    /* Here we convert a cpal compressed image into a regular glTexImage2D
     * call by decompressing the texture.  If we really want to support cpal
     * textures in any driver this would have to be changed.
     */
-   if (ctx->API == API_OPENGLES && compressed && !error && dims == 2) {
+   if (compressed && !error && dims == 2) {
       switch (internalFormat) {
       case GL_PALETTE4_RGB8_OES:
       case GL_PALETTE4_RGBA8_OES:
@@ -2966,6 +2969,7 @@ teximage(struct gl_context *ctx, GLboolean compressed, GLuint dims,
          return;
       }
    }
+#endif
 
    if (_mesa_is_proxy_texture(target)) {
       /* Proxy texture: just clear or set state depending on error checking */

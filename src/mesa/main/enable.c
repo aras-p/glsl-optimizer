@@ -717,6 +717,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          }
          break;
 
+#if FEATURE_ES1
       case GL_TEXTURE_GEN_STR_OES:
 	 /* disable S, T, and R at the same time */
 	 {
@@ -737,6 +738,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             }
          }
          break;
+#endif
 
       /* client-side state */
       case GL_VERTEX_ARRAY:
@@ -1432,7 +1434,7 @@ _mesa_IsEnabled( GLenum cap )
             }
          }
          return GL_FALSE;
-
+#if FEATURE_ES1
       case GL_TEXTURE_GEN_STR_OES:
 	 {
             const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
@@ -1445,6 +1447,7 @@ _mesa_IsEnabled( GLenum cap )
                   ? GL_TRUE : GL_FALSE;
             }
          }
+#endif
 
       /* client-side state */
       case GL_VERTEX_ARRAY:
@@ -1482,10 +1485,12 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
          CHECK_EXTENSION(EXT_secondary_color);
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled != 0);
+#if FEATURE_ES
       case GL_POINT_SIZE_ARRAY_OES:
          if (ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Enabled != 0);
+#endif
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:

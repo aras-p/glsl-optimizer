@@ -952,14 +952,18 @@ _mesa_initialize_context(struct gl_context *ctx,
 
    /* setup the API dispatch tables */
    switch (ctx->API) {
+#if FEATURE_GL || FEATURE_ES2
    case API_OPENGL:
    case API_OPENGL_CORE:
    case API_OPENGLES2:
       ctx->Exec = _mesa_create_exec_table(ctx);
       break;
+#endif
+#if FEATURE_ES1
    case API_OPENGLES:
       ctx->Exec = _mesa_create_exec_table_es1();
       break;
+#endif
    default:
       _mesa_problem(ctx, "unknown or unsupported API");
       break;
