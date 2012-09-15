@@ -237,21 +237,6 @@ finish_pass(struct atifs_machine *machine)
    }
 }
 
-static struct ati_fs_opcode_st ati_fs_opcodes[] = {
-   {GL_ADD_ATI, 2},
-   {GL_SUB_ATI, 2},
-   {GL_MUL_ATI, 2},
-   {GL_MAD_ATI, 3},
-   {GL_LERP_ATI, 3},
-   {GL_MOV_ATI, 1},
-   {GL_CND_ATI, 3},
-   {GL_CND0_ATI, 3},
-   {GL_DOT2_ADD_ATI, 3},
-   {GL_DOT3_ATI, 2},
-   {GL_DOT4_ATI, 2}
-};
-
-
 
 static void
 handle_pass_op(struct atifs_machine *machine, struct atifs_setupinst *texinst,
