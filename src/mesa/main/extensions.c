@@ -885,7 +885,7 @@ _mesa_get_enabled_extension(struct gl_context *ctx, GLuint index)
    base = (GLboolean*) &ctx->Extensions;
    n = 0;
    for (i = extension_table; i->name != 0; ++i) {
-      if (base[i->offset] & (i->api_set & (1 << ctx->API))) {
+      if (base[i->offset] && (i->api_set & (1 << ctx->API))) {
          if (n == index)
             return (const GLubyte*) i->name;
          else
