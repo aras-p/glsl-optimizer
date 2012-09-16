@@ -3489,12 +3489,16 @@ get_temp_image_type(struct gl_context *ctx, gl_format format)
    case GL_LUMINANCE:
    case GL_LUMINANCE_ALPHA:
    case GL_INTENSITY:
-      if (ctx->DrawBuffer->Visual.redBits <= 8)
+      if (ctx->DrawBuffer->Visual.redBits <= 8) {
          return GL_UNSIGNED_BYTE;
-      else if (ctx->DrawBuffer->Visual.redBits <= 16)
+      } else if (ctx->DrawBuffer->Visual.redBits <= 16) {
          return GL_UNSIGNED_SHORT;
-      else
-         return _mesa_get_format_datatype(format);
+      } else {
+         GLenum datatype = _mesa_get_format_datatype(format);
+         if (datatype == GL_INT || datatype == GL_UNSIGNED_INT)
+            return datatype;
+         return GL_FLOAT;
+      }
    case GL_DEPTH_COMPONENT:
       return GL_UNSIGNED_INT;
    case GL_DEPTH_STENCIL:
