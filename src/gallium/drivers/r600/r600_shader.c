@@ -253,6 +253,7 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 	if (dump) {
 		r600_bytecode_dump(shader_ctx.bc);
 	}
+	free(bytes);
 	return 1;
 }
 
