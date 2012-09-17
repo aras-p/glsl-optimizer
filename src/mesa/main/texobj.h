@@ -85,7 +85,13 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
 static inline GLuint
 _mesa_num_tex_faces(GLenum target)
 {
-   return target == GL_TEXTURE_CUBE_MAP ? 6 : 1;
+   switch (target) {
+   case GL_TEXTURE_CUBE_MAP:
+   case GL_PROXY_TEXTURE_CUBE_MAP:
+      return 6;
+   default:
+      return 1;
+   }
 }
 
 
