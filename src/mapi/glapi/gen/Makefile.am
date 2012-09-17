@@ -51,7 +51,7 @@ if HAVE_SPARC_ASM
 MESA_GLAPI_ASM_OUTPUTS += $(MESA_GLAPI_DIR)/glapi_sparc.S
 endif
 
-MESA_OUTPUTS = \
+BUILT_SOURCES = \
 	$(MESA_GLAPI_OUTPUTS) \
 	$(MESA_GLAPI_ASM_OUTPUTS) \
 	$(MESA_DIR)/main/enums.c \
@@ -63,6 +63,11 @@ MESA_OUTPUTS = \
 	$(MESA_GLX_DIR)/indirect_init.c \
 	$(MESA_GLX_DIR)/indirect_size.h \
 	$(MESA_GLX_DIR)/indirect_size.c
+EXTRA_DIST= \
+	$(BUILT_SOURCES) \
+	$(MESA_GLAPI_DIR)/glapi_x86.S \
+	$(MESA_GLAPI_DIR)/glapi_x86-64.S \
+	$(MESA_GLAPI_DIR)/glapi_sparc.S
 
 ######################################################################
 
@@ -156,8 +161,6 @@ PYTHON_GEN = $(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS)
 
 ######################################################################
 
-all-local: $(MESA_OUTPUTS)
-
 xorg: check-xorg-source $(XORG_OUTPUTS)
 
 check-xorg-source:
@@ -171,7 +174,6 @@ check-xorg-source:
 
 clean-local:
 	-rm -f *~ *.pyo
-	-rm -f $(MESA_OUTPUTS)
 
 ######################################################################
 
