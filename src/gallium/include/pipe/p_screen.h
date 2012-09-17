@@ -138,6 +138,14 @@ struct pipe_screen {
                                          enum pipe_video_profile profile );
 
    /**
+    * Check if we can actually create the given resource (test the dimension,
+    * overall size, etc).  Used to implement proxy textures.
+    * \return TRUE if size is OK, FALSE if too large.
+    */
+   boolean (*can_create_resource)(struct pipe_screen *screen,
+                                  const struct pipe_resource *templat);
+                               
+   /**
     * Create a new texture object, using the given template info.
     */
    struct pipe_resource * (*resource_create)(struct pipe_screen *,

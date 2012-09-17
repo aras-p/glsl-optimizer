@@ -358,6 +358,16 @@ the maximum allowed legal value is 32.
 
 Returns TRUE if all usages can be satisfied.
 
+
+can_create_resource
+^^^^^^^^^^^^^^^^^^^
+
+Check if a resource can actually be created (but don't actually allocate any
+memory).  This is used to implement OpenGL's proxy textures.  Typically, a
+driver will simply check if the total size of the given resource is less than
+some limit.
+
+
 .. _resource_create:
 
 resource_create
