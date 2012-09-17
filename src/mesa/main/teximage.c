@@ -1372,6 +1372,7 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
     */
    uint64_t bytes = _mesa_format_image_size64(format, width, height, depth);
    uint64_t mbytes = bytes / (1024 * 1024); /* convert to MB */
+   mbytes *= _mesa_num_tex_faces(target);
    return mbytes <= (uint64_t) ctx->Const.MaxTextureMbytes;
 }
 
