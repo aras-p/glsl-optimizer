@@ -608,7 +608,7 @@ _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
 
    /* ETC2 formats */
    case MESA_FORMAT_ETC2_RGB8:
-      /* fetch = _mesa_fetch_texel_2d_f_etc2_rgb8; -- not implemented yet */
+      fetch = _mesa_fetch_texel_2d_f_etc2_rgb8;
       break;
    case MESA_FORMAT_ETC2_SRGB8:
       /* fetch = _mesa_fetch_texel_2d_f_etc2_srgb8; -- not implemented yet */
