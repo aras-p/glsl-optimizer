@@ -568,6 +568,21 @@ brw_init_surface_formats(struct brw_context *brw)
     * during glCompressedTexImage2D(). See intel_mipmap_tree::wraps_etc1.
     */
    ctx->TextureFormatSupported[MESA_FORMAT_ETC1_RGB8] = true;
+
+   /* On hardware that lacks support for ETC2, we map ETC2 to a suitable
+    * MESA_FORMAT during glCompressedTexImage2D().
+    * See intel_mipmap_tree::wraps_etc2.
+    */
+   ctx->TextureFormatSupported[MESA_FORMAT_ETC2_RGB8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ETC2_SRGB8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ETC2_RGBA8_EAC] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ETC2_R11_EAC] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ETC2_RG11_EAC] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ETC2_SIGNED_R11_EAC] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ETC2_SIGNED_RG11_EAC] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1] = true;
 }
 
 bool
