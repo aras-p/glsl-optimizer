@@ -46,6 +46,7 @@
 #define LP_MAX_TEXTURE_SIZE (1 * 1024 * 1024 * 1024ULL)  /* 1GB for now */
 #define LP_MAX_TEXTURE_2D_LEVELS 14  /* 8K x 8K for now */
 #define LP_MAX_TEXTURE_3D_LEVELS 11  /* 1K x 1K x 1K for now */
+#define LP_MAX_TEXTURE_CUBE_LEVELS 13  /* 4K x 4K for now */
 
 
 /** This must be the larger of LP_MAX_TEXTURE_2D/3D_LEVELS */

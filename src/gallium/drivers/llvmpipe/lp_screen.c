@@ -140,7 +140,7 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
       return LP_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return LP_MAX_TEXTURE_2D_LEVELS;
+      return LP_MAX_TEXTURE_CUBE_LEVELS;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
       return 1;
    case PIPE_CAP_INDEP_BLEND_ENABLE:
