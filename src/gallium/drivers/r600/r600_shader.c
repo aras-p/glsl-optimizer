@@ -5101,7 +5101,9 @@ static int tgsi_endif(struct r600_shader_ctx *ctx)
 
 static int tgsi_bgnloop(struct r600_shader_ctx *ctx)
 {
-	r600_bytecode_add_cfinst(ctx->bc, CTX_INST(V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL));
+	/* LOOP_START_DX10 ignores the LOOP_CONFIG* registers, so it is not
+	 * limited to 4096 iterations, like the other LOOP_* instructions. */
+	r600_bytecode_add_cfinst(ctx->bc, CTX_INST(V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_DX10));
 
 	fc_pushlevel(ctx, FC_LOOP);
 
