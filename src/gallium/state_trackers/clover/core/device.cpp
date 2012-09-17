@@ -144,6 +144,12 @@ _cl_device_id::max_threads_per_block() const {
       pipe, PIPE_COMPUTE_CAP_MAX_THREADS_PER_BLOCK)[0];
 }
 
+cl_ulong
+_cl_device_id::max_mem_alloc_size() const {
+   return get_compute_param<uint64_t>(pipe,
+                                      PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE)[0];
+}
+
 std::vector<size_t>
 _cl_device_id::max_block_size() const {
    auto v = get_compute_param<uint64_t>(pipe, PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE);

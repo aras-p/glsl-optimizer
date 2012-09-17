@@ -126,7 +126,8 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
                                       dev->max_images_write());
 
    case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
-      return scalar_property<cl_ulong>(buf, size, size_ret, 0);
+      return scalar_property<cl_ulong>(buf, size, size_ret,
+                                       dev->max_mem_alloc_size());
 
    case CL_DEVICE_IMAGE2D_MAX_WIDTH:
    case CL_DEVICE_IMAGE2D_MAX_HEIGHT:
