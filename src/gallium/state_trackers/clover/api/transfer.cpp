@@ -89,7 +89,7 @@ namespace {
       static mapping
       get(cl_command_queue q, memory_obj *obj, cl_map_flags flags,
           size_t offset, size_t size) {
-         return { *q, obj->resource(q), flags, true, { offset }, { size }};
+         return { *q, obj->resource(q), flags, true, { offset }, { size, 1, 1 }};
       }
    };
 
