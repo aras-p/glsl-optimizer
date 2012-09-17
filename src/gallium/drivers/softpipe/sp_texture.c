@@ -52,7 +52,8 @@
  */
 static boolean
 softpipe_resource_layout(struct pipe_screen *screen,
-                         struct softpipe_resource *spr)
+                         struct softpipe_resource *spr,
+                         boolean allocate)
 {
    struct pipe_resource *pt = &spr->base;
    unsigned level;
@@ -83,9 +84,31 @@ softpipe_resource_layout(struct pipe_screen *screen,
       depth = u_minify(depth, 1);
    }
 
-   spr->data = align_malloc(buffer_size, 16);
+   if (buffer_size > SP_MAX_TEXTURE_SIZE)
+      return FALSE;
 
-   return spr->data != NULL;
+   if (allocate) {
+      spr->data = align_malloc(buffer_size, 16);
+      return spr->data != NULL;
+   }
+   else {
+      return TRUE;
+   }
+}
+
+
+/**
+ * Check the size of the texture specified by 'res'.
+ * \return TRUE if OK, FALSE if too large.
+ */
+static boolean
+softpipe_can_create_resource(struct pipe_screen *screen,
+                             const struct pipe_resource *res)
+{
+   struct softpipe_resource spr;
+   memset(&spr, 0, sizeof(spr));
+   spr.base = *res;
+   return softpipe_resource_layout(screen, &spr, FALSE);
 }
 
 
@@ -140,7 +163,7 @@ softpipe_resource_create(struct pipe_screen *screen,
          goto fail;
    }
    else {
-      if (!softpipe_resource_layout(screen, spr))
+      if (!softpipe_resource_layout(screen, spr, TRUE))
          goto fail;
    }
     
@@ -506,4 +529,5 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
    screen->resource_destroy = softpipe_resource_destroy;
    screen->resource_from_handle = softpipe_resource_from_handle;
    screen->resource_get_handle = softpipe_resource_get_handle;
+   screen->can_create_resource = softpipe_can_create_resource;
 }
