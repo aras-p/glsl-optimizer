@@ -728,19 +728,19 @@ static void *r600_create_vertex_elements(struct pipe_context *ctx, unsigned coun
 }
 
 /* Compute the key for the hw shader variant */
-static INLINE unsigned r600_shader_selector_key(struct pipe_context * ctx,
+static INLINE struct r600_shader_key r600_shader_selector_key(struct pipe_context * ctx,
 		struct r600_pipe_shader_selector * sel)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	unsigned key;
+	struct r600_shader_key key;
+	memset(&key, 0, sizeof(key));
 
 	if (sel->type == PIPE_SHADER_FRAGMENT) {
-		key = rctx->two_side |
-		      ((rctx->alpha_to_one && rctx->multisample_enable && !rctx->cb0_is_integer) << 1) |
-		      (MIN2(sel->nr_ps_max_color_exports, rctx->nr_cbufs + rctx->dual_src_blend) << 2);
-	} else
-		key = 0;
-
+		key.color_two_side = rctx->two_side;
+		key.alpha_to_one = rctx->alpha_to_one && rctx->multisample_enable && !rctx->cb0_is_integer;
+		key.dual_src_blend = rctx->dual_src_blend;
+		key.nr_cbufs = rctx->nr_cbufs;
+	}
 	return key;
 }
 
@@ -750,7 +750,7 @@ static int r600_shader_select(struct pipe_context *ctx,
         struct r600_pipe_shader_selector* sel,
         unsigned *dirty)
 {
-	unsigned key;
+	struct r600_shader_key key;
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_shader * shader = NULL;
 	int r;
@@ -761,7 +761,7 @@ static int r600_shader_select(struct pipe_context *ctx,
 	 * This path is also used for most shaders that don't need multiple
 	 * variants, it will cost just a computation of the key and this
 	 * test. */
-	if (likely(sel->current && sel->current->key == key)) {
+	if (likely(sel->current && memcmp(&sel->current->key, &key, sizeof(key)) == 0)) {
 		return 0;
 	}
 
@@ -769,7 +769,7 @@ static int r600_shader_select(struct pipe_context *ctx,
 	if (sel->num_shaders > 1) {
 		struct r600_pipe_shader *p = sel->current, *c = p->next_variant;
 
-		while (c && c->key != key) {
+		while (c && memcmp(&c->key, &key, sizeof(key)) != 0) {
 			p = c;
 			c = c->next_variant;
 		}
@@ -784,10 +784,10 @@ static int r600_shader_select(struct pipe_context *ctx,
 		shader = CALLOC(1, sizeof(struct r600_pipe_shader));
 		shader->selector = sel;
 
-		r = r600_pipe_shader_create(ctx, shader);
+		r = r600_pipe_shader_create(ctx, shader, key);
 		if (unlikely(r)) {
-			R600_ERR("Failed to build shader variant (type=%u, key=%u) %d\n",
-					sel->type, key, r);
+			R600_ERR("Failed to build shader variant (type=%u) %d\n",
+				 sel->type, r);
 			sel->current = NULL;
 			return r;
 		}

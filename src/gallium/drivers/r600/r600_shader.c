@@ -103,9 +103,13 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 	return 0;
 }
 
-static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_shader *pipeshader);
+static int r600_shader_from_tgsi(struct r600_screen *rscreen,
+				 struct r600_pipe_shader *pipeshader,
+				 struct r600_shader_key key);
 
-int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+int r600_pipe_shader_create(struct pipe_context *ctx,
+			    struct r600_pipe_shader *shader,
+			    struct r600_shader_key key)
 {
 	static int dump_shaders = -1;
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -136,7 +140,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 			}
 		}
 	}
-	r = r600_shader_from_tgsi(rctx, shader);
+	r = r600_shader_from_tgsi(rctx->screen, shader, key);
 	if (r) {
 		R600_ERR("translation from TGSI failed !\n");
 		return r;
@@ -1165,7 +1169,9 @@ static int process_twoside_color_inputs(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
-static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_shader *pipeshader)
+static int r600_shader_from_tgsi(struct r600_screen *rscreen,
+				 struct r600_pipe_shader *pipeshader,
+				 struct r600_shader_key key)
 {
 	struct r600_shader *shader = &pipeshader->shader;
 	struct tgsi_token *tokens = pipeshader->selector->tokens;
@@ -1190,7 +1196,7 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 	ctx.shader = shader;
 	ctx.native_integers = true;
 
-	r600_bytecode_init(ctx.bc, rctx->chip_class, rctx->family);
+	r600_bytecode_init(ctx.bc, rscreen->chip_class, rscreen->family);
 	ctx.tokens = tokens;
 	tgsi_scan_shader(tokens, &ctx.info);
 	tgsi_parse_init(&ctx.parse, tokens);
@@ -1206,7 +1212,7 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 	shader->nr_ps_color_exports = 0;
 	shader->nr_ps_max_color_exports = 0;
 
-	shader->two_side = (ctx.type == TGSI_PROCESSOR_FRAGMENT) && rctx->two_side;
+	shader->two_side = key.color_two_side;
 
 	/* register allocations */
 	/* Values [0,127] correspond to GPR[0..127].
@@ -1340,7 +1346,7 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 		}
 	}
 
-	if (shader->fs_write_all && rctx->chip_class >= EVERGREEN)
+	if (shader->fs_write_all && rscreen->chip_class >= EVERGREEN)
 		shader->nr_ps_max_color_exports = 8;
 
 	if (ctx.fragcoord_input >= 0) {
@@ -1583,17 +1589,17 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 		case TGSI_PROCESSOR_FRAGMENT:
 			if (shader->output[i].name == TGSI_SEMANTIC_COLOR) {
 				/* never export more colors than the number of CBs */
-				if (next_pixel_base && next_pixel_base >= (rctx->nr_cbufs + rctx->dual_src_blend * 1)) {
+				if (next_pixel_base && next_pixel_base >= key.nr_cbufs + key.dual_src_blend) {
 					/* skip export */
 					j--;
 					continue;
 				}
-				output[j].swizzle_w = rctx->alpha_to_one && rctx->multisample_enable && !rctx->cb0_is_integer ? 5 : 3;
+				output[j].swizzle_w = key.alpha_to_one ? 5 : 3;
 				output[j].array_base = next_pixel_base++;
 				output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 				shader->nr_ps_color_exports++;
-				if (shader->fs_write_all && (rctx->chip_class >= EVERGREEN)) {
-					for (k = 1; k < rctx->nr_cbufs; k++) {
+				if (shader->fs_write_all && (rscreen->chip_class >= EVERGREEN)) {
+					for (k = 1; k < key.nr_cbufs; k++) {
 						j++;
 						memset(&output[j], 0, sizeof(struct r600_bytecode_output));
 						output[j].gpr = shader->output[i].gpr;
@@ -1601,7 +1607,7 @@ static int r600_shader_from_tgsi(struct r600_context * rctx, struct r600_pipe_sh
 						output[j].swizzle_x = 0;
 						output[j].swizzle_y = 1;
 						output[j].swizzle_z = 2;
-						output[j].swizzle_w = rctx->alpha_to_one && rctx->multisample_enable && !rctx->cb0_is_integer ? 5 : 3;
+						output[j].swizzle_w = key.alpha_to_one ? 5 : 3;
 						output[j].burst_count = 1;
 						output[j].barrier = 1;
 						output[j].array_base = next_pixel_base++;

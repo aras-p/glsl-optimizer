@@ -254,6 +254,13 @@ struct r600_pipe_shader_selector {
 	unsigned	nr_ps_max_color_exports;
 };
 
+struct r600_shader_key {
+	unsigned color_two_side:1;
+	unsigned alpha_to_one:1;
+	unsigned dual_src_blend:1;
+	unsigned nr_cbufs:4;
+};
+
 struct r600_pipe_shader {
 	struct r600_pipe_shader_selector *selector;
 	struct r600_pipe_shader	*next_variant;
@@ -266,7 +273,7 @@ struct r600_pipe_shader {
 	unsigned	flatshade;
 	unsigned	pa_cl_vs_out_cntl;
 	unsigned	nr_ps_color_outputs;
-	unsigned	key;
+	struct r600_shader_key	key;
 	unsigned		db_shader_control;
 	unsigned		ps_depth_export;
 };
@@ -567,7 +574,9 @@ void r600_resume_timer_queries(struct r600_context *ctx);
 void r600_init_context_resource_functions(struct r600_context *r600);
 
 /* r600_shader.c */
-int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+int r600_pipe_shader_create(struct pipe_context *ctx,
+			    struct r600_pipe_shader *shader,
+			    struct r600_shader_key key);
 #ifdef HAVE_OPENCL
 int r600_compute_shader_create(struct pipe_context * ctx,
 	LLVMModuleRef mod,  struct r600_bytecode * bytecode);
