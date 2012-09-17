@@ -702,10 +702,17 @@ class COS_Common <bits<32> inst> : R600_1OP <
 // Helper patterns for complex intrinsics
 //===----------------------------------------------------------------------===//
 
-class DIV_Common <InstR600 recip_ieee> : Pat<
+multiclass DIV_Common <InstR600 recip_ieee> {
+def : Pat<
   (int_AMDGPU_div R600_Reg32:$src0, R600_Reg32:$src1),
   (MUL R600_Reg32:$src0, (recip_ieee R600_Reg32:$src1))
 >;
+
+def : Pat<
+  (fdiv R600_Reg32:$src0, R600_Reg32:$src1),
+  (MUL R600_Reg32:$src0, (recip_ieee R600_Reg32:$src1))
+>;
+}
 
 class SSG_Common <InstR600 cndgt, InstR600 cndge> : Pat <
   (int_AMDGPU_ssg R600_Reg32:$src),
@@ -753,7 +760,7 @@ let Predicates = [isR600] in {
   def MULHI_UINT_r600 : MULHI_UINT_Common<0x76>;
   def RECIP_UINT_r600 : RECIP_UINT_Common <0x78>;
 
-  def DIV_r600 : DIV_Common<RECIP_IEEE_r600>;
+  defm DIV_r600 : DIV_Common<RECIP_IEEE_r600>;
   def POW_r600 : POW_Common<LOG_IEEE_r600, EXP_IEEE_r600, MUL, GPRF32>;
   def SSG_r600 : SSG_Common<CNDGT_r600, CNDGE_r600>;
   def TGSI_LIT_Z_r600 : TGSI_LIT_Z_Common<MUL_LIT_r600, LOG_CLAMPED_r600, EXP_IEEE_r600>;
@@ -849,7 +856,7 @@ let Predicates = [isEGorCayman] in {
   def : DOT4_Pat <DOT4_eg>;
   defm CUBE_eg : CUBE_Common<0xC0>;
 
-  def DIV_eg : DIV_Common<RECIP_IEEE_eg>;
+  defm DIV_eg : DIV_Common<RECIP_IEEE_eg>;
   def POW_eg : POW_Common<LOG_IEEE_eg, EXP_IEEE_eg, MUL, GPRF32>;
   def SSG_eg : SSG_Common<CNDGT_eg, CNDGE_eg>;
   def TGSI_LIT_Z_eg : TGSI_LIT_Z_Common<MUL_LIT_eg, LOG_CLAMPED_eg, EXP_IEEE_eg>;
