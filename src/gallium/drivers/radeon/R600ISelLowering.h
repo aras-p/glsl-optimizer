@@ -30,6 +30,13 @@ public:
   void ReplaceNodeResults(SDNode * N,
       SmallVectorImpl<SDValue> &Results,
       SelectionDAG &DAG) const;
+  virtual SDValue LowerFormalArguments(
+                                      SDValue Chain,
+                                      CallingConv::ID CallConv,
+                                      bool isVarArg,
+                                      const SmallVectorImpl<ISD::InputArg> &Ins,
+                                      DebugLoc DL, SelectionDAG &DAG,
+                                      SmallVectorImpl<SDValue> &InVals) const;
 private:
   const R600InstrInfo * TII;
 

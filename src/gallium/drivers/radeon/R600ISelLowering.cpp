@@ -16,6 +16,7 @@
 #include "R600Defines.h"
 #include "R600InstrInfo.h"
 #include "R600MachineFunctionInfo.h"
+#include "llvm/Argument.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -575,4 +576,31 @@ SDValue R600TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const
       DAG.getConstant(1, MVT::i32),
       Cond);
   return Cond;
+}
+
+// XXX Only kernel functions are supporte, so we can assume for now that
+// every function is a kernel function, but in the future we should use
+// separate calling conventions for kernel and non-kernel functions.
+// Only kernel functions are supported, so we can assume for now
+SDValue R600TargetLowering::LowerFormalArguments(
+                                      SDValue Chain,
+                                      CallingConv::ID CallConv,
+                                      bool isVarArg,
+                                      const SmallVectorImpl<ISD::InputArg> &Ins,
+                                      DebugLoc DL, SelectionDAG &DAG,
+                                      SmallVectorImpl<SDValue> &InVals) const
+{
+  unsigned ParamOffsetBytes = 36;
+  for (unsigned i = 0, e = Ins.size(); i < e; ++i) {
+    EVT VT = Ins[i].VT;
+    PointerType *PtrTy = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
+                                                    AMDGPUAS::PARAM_I_ADDRESS);
+    SDValue Arg = DAG.getLoad(VT, DL, DAG.getRoot(),
+                                DAG.getConstant(ParamOffsetBytes, MVT::i32),
+                                MachinePointerInfo(new Argument(PtrTy)),
+                                false, false, false, 4);
+    InVals.push_back(Arg);
+    ParamOffsetBytes += (VT.getStoreSize());
+  }
+  return Chain;
 }

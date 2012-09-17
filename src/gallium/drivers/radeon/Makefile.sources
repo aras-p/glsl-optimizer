@@ -65,7 +65,6 @@ CPP_SOURCES := \
 	R600ExpandSpecialInstrs.cpp	\
 	R600ISelLowering.cpp		\
 	R600InstrInfo.cpp		\
-	R600KernelParameters.cpp	\
 	R600MachineFunctionInfo.cpp	\
 	R600RegisterInfo.cpp		\
 	SIAssignInterpRegs.cpp		\

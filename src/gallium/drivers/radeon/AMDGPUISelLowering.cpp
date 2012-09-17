@@ -53,8 +53,6 @@ SDValue AMDGPUTargetLowering::LowerFormalArguments(
                                       DebugLoc DL, SelectionDAG &DAG,
                                       SmallVectorImpl<SDValue> &InVals) const
 {
-  // Lowering of arguments happens in R600LowerKernelParameters, so we can
-  // ignore the arguments here.
   for (unsigned i = 0, e = Ins.size(); i < e; ++i) {
     InVals.push_back(SDValue());
   }
