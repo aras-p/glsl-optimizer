@@ -433,7 +433,6 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
   SDValue True = Op.getOperand(2);
   SDValue False = Op.getOperand(3);
   SDValue CC = Op.getOperand(4);
-  ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
   SDValue Temp;
 
   // LHS and RHS are guaranteed to be the same value type
