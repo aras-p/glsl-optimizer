@@ -73,19 +73,32 @@ gl_target_to_pipe(GLenum target)
 {
    switch (target) {
    case GL_TEXTURE_1D:
+   case GL_PROXY_TEXTURE_1D:
       return PIPE_TEXTURE_1D;
    case GL_TEXTURE_2D:
+   case GL_PROXY_TEXTURE_2D:
    case GL_TEXTURE_EXTERNAL_OES:
       return PIPE_TEXTURE_2D;
    case GL_TEXTURE_RECTANGLE_NV:
+   case GL_PROXY_TEXTURE_RECTANGLE_NV:
       return PIPE_TEXTURE_RECT;
    case GL_TEXTURE_3D:
+   case GL_PROXY_TEXTURE_3D:
       return PIPE_TEXTURE_3D;
    case GL_TEXTURE_CUBE_MAP_ARB:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
       return PIPE_TEXTURE_CUBE;
    case GL_TEXTURE_1D_ARRAY_EXT:
+   case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
       return PIPE_TEXTURE_1D_ARRAY;
    case GL_TEXTURE_2D_ARRAY_EXT:
+   case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
       return PIPE_TEXTURE_2D_ARRAY;
    case GL_TEXTURE_BUFFER:
       return PIPE_BUFFER;
@@ -1357,6 +1370,52 @@ st_AllocTextureStorage(struct gl_context *ctx,
 }
 
 
+static GLboolean
+st_TestProxyTexImage(struct gl_context *ctx, GLenum target,
+                     GLint level, gl_format format,
+                     GLint width, GLint height,
+                     GLint depth, GLint border)
+{
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
+
+   if (pipe->screen->can_create_resource) {
+      /* Ask the gallium driver if the texture is too large */
+      struct gl_texture_object *texObj =
+         _mesa_get_current_tex_object(ctx, target);
+      struct pipe_resource pt;
+
+      /* Setup the pipe_resource object
+       */
+      memset(&pt, 0, sizeof(pt));
+
+      pt.target = gl_target_to_pipe(target);
+      pt.format = st_mesa_format_to_pipe_format(format);
+
+      st_gl_texture_dims_to_pipe_dims(target,
+                                      width, height, depth,
+                                      &pt.width0, &pt.height0,
+                                      &pt.depth0, &pt.array_size);
+
+      if (level == 0 && (texObj->Sampler.MinFilter == GL_LINEAR ||
+                         texObj->Sampler.MinFilter == GL_NEAREST)) {
+         /* assume just one mipmap level */
+         pt.last_level = 0;
+      }
+      else {
+         /* assume a full set of mipmaps */
+         pt.last_level = _mesa_logbase2(MAX3(width, height, depth));
+      }
+
+      return pipe->screen->can_create_resource(pipe->screen, &pt);
+   }
+   else {
+      /* Use core Mesa fallback */
+      return _mesa_test_proxy_teximage(ctx, target, level, format,
+                                       width, height, depth, border);
+   }
+}
+
 
 void
 st_init_texture_functions(struct dd_function_table *functions)
@@ -1384,7 +1443,7 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->UnmapTextureImage = st_UnmapTextureImage;
 
    /* XXX Temporary until we can query pipe's texture sizes */
-   functions->TestProxyTexImage = _mesa_test_proxy_teximage;
+   functions->TestProxyTexImage = st_TestProxyTexImage;
 
    functions->AllocTextureStorage = st_AllocTextureStorage;
 }

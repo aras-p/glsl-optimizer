@@ -117,6 +117,7 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
 {
    switch (texture) {
    case GL_TEXTURE_1D:
+   case GL_PROXY_TEXTURE_1D:
       assert(heightIn == 1);
       assert(depthIn == 1);
       *widthOut = widthIn;
@@ -125,6 +126,7 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       *layersOut = 1;
       break;
    case GL_TEXTURE_1D_ARRAY:
+   case GL_PROXY_TEXTURE_1D_ARRAY:
       assert(depthIn == 1);
       *widthOut = widthIn;
       *heightOut = 1;
@@ -132,7 +134,9 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       *layersOut = heightIn;
       break;
    case GL_TEXTURE_2D:
+   case GL_PROXY_TEXTURE_2D:
    case GL_TEXTURE_RECTANGLE:
+   case GL_PROXY_TEXTURE_RECTANGLE:
    case GL_TEXTURE_EXTERNAL_OES:
       assert(depthIn == 1);
       *widthOut = widthIn;
@@ -141,6 +145,13 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       *layersOut = 1;
       break;
    case GL_TEXTURE_CUBE_MAP:
+   case GL_PROXY_TEXTURE_CUBE_MAP:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
       assert(depthIn == 1);
       *widthOut = widthIn;
       *heightOut = heightIn;
@@ -148,6 +159,7 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       *layersOut = 6;
       break;
    case GL_TEXTURE_2D_ARRAY:
+   case GL_PROXY_TEXTURE_2D_ARRAY:
       *widthOut = widthIn;
       *heightOut = heightIn;
       *depthOut = 1;
@@ -157,6 +169,7 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       assert(0 && "Unexpected texture in st_gl_texture_dims_to_pipe_dims()");
       /* fall-through */
    case GL_TEXTURE_3D:
+   case GL_PROXY_TEXTURE_3D:
       *widthOut = widthIn;
       *heightOut = heightIn;
       *depthOut = depthIn;
