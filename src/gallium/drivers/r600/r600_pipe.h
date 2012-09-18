@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 28
+#define R600_NUM_ATOMS 29
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -126,6 +126,16 @@ struct r600_cs_shader_state {
 	struct r600_pipe_compute *shader;
 };
 
+struct r600_framebuffer {
+	struct r600_atom atom;
+	struct pipe_framebuffer_state state;
+	unsigned compressed_cb_mask;
+	unsigned nr_samples;
+	bool export_16bpc;
+	bool cb0_is_integer;
+	bool is_msaa_resolve;
+};
+
 struct r600_sample_mask {
 	struct r600_atom atom;
 	uint16_t sample_mask; /* there are only 8 bits on EG, 16 bits on Cayman */
@@ -153,7 +163,6 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_SCISSOR,
 	R600_PIPE_STATE_RASTERIZER,
-	R600_PIPE_STATE_FRAMEBUFFER,
 	R600_PIPE_STATE_DSA,
 	R600_PIPE_STATE_POLYGON_OFFSET,
 	R600_PIPE_STATE_FETCH_SHADER,
@@ -355,6 +364,7 @@ struct r600_context {
 	enum radeon_family		family;
 	enum chip_class			chip_class;
 	boolean				has_vertex_cache;
+	boolean				keep_tiling_flags;
 	unsigned			r6xx_num_clause_temp_gprs;
 	void				*custom_dsa_flush;
 	void				*custom_blend_resolve;
@@ -364,8 +374,6 @@ struct r600_context {
 	struct radeon_winsys		*ws;
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_vertex_element	*vertex_elements;
-	struct pipe_framebuffer_state	framebuffer;
-	unsigned			compressed_cb_mask;
 	unsigned			compute_cb_target_mask;
 	unsigned			db_shader_control;
 	unsigned			pa_sc_line_stipple;
@@ -383,11 +391,8 @@ struct r600_context {
 	boolean				spi_dirty;
 	unsigned			sprite_coord_enable;
 	boolean				flatshade;
-	boolean				export_16bpc;
-	unsigned			nr_cbufs;
 	bool				alpha_to_one;
 	bool				multisample_enable;
-	bool				cb0_is_integer;
 
 	struct u_upload_mgr	        *uploader;
 	struct util_slab_mempool	pool_transfers;
@@ -409,6 +414,7 @@ struct r600_context {
 	struct r600_clip_misc_state	clip_misc_state;
 	struct r600_clip_state		clip_state;
 	struct r600_db_misc_state	db_misc_state;
+	struct r600_framebuffer		framebuffer;
 	struct r600_seamless_cube_map	seamless_cube_map;
 	struct r600_stencil_ref_state	stencil_ref;
 	struct r600_vgt_state		vgt_state;

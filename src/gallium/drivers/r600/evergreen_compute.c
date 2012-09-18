@@ -323,7 +323,6 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	int i;
 
 	struct r600_resource *onebo = NULL;
-	struct r600_pipe_state *cb_state;
 	struct evergreen_compute_resource *resources =
 					ctx->cs_shader_state.shader->resources;
 
@@ -337,9 +336,32 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	ctx->flags |= R600_CONTEXT_CB_FLUSH;
 	r600_flush_emit(ctx);
 
-	/* Emit cb_state */
-	cb_state = ctx->states[R600_PIPE_STATE_FRAMEBUFFER];
-	r600_context_pipe_state_emit(ctx, cb_state, RADEON_CP_PACKET3_COMPUTE_MODE);
+	/* Emit colorbuffers. */
+	for (i = 0; i < ctx->framebuffer.state.nr_cbufs; i++) {
+		struct r600_surface *cb = (struct r600_surface*)ctx->framebuffer.state.cbufs[i];
+		unsigned reloc = r600_context_bo_reloc(ctx, (struct r600_resource*)cb->base.texture,
+						       RADEON_USAGE_READWRITE);
+
+		r600_write_compute_context_reg_seq(cs, R_028C60_CB_COLOR0_BASE + i * 0x3C, 7);
+		r600_write_value(cs, cb->cb_color_base);	/* R_028C60_CB_COLOR0_BASE */
+		r600_write_value(cs, cb->cb_color_pitch);	/* R_028C64_CB_COLOR0_PITCH */
+		r600_write_value(cs, cb->cb_color_slice);	/* R_028C68_CB_COLOR0_SLICE */
+		r600_write_value(cs, cb->cb_color_view);	/* R_028C6C_CB_COLOR0_VIEW */
+		r600_write_value(cs, cb->cb_color_info);	/* R_028C70_CB_COLOR0_INFO */
+		r600_write_value(cs, cb->cb_color_attrib);	/* R_028C74_CB_COLOR0_ATTRIB */
+		r600_write_value(cs, cb->cb_color_dim);		/* R_028C78_CB_COLOR0_DIM */
+
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0)); /* R_028C60_CB_COLOR0_BASE */
+		r600_write_value(cs, reloc);
+
+		if (!ctx->keep_tiling_flags) {
+			r600_write_value(cs, PKT3(PKT3_NOP, 0, 0)); /* R_028C70_CB_COLOR0_INFO */
+			r600_write_value(cs, reloc);
+		}
+
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0)); /* R_028C74_CB_COLOR0_ATTRIB */
+		r600_write_value(cs, reloc);
+	}
 
 	/* Set CB_TARGET_MASK  XXX: Use cb_misc_state */
 	r600_write_compute_context_reg(cs, R_028238_CB_TARGET_MASK,

@@ -71,7 +71,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	}
 
 	if (op & R600_SAVE_FRAMEBUFFER)
-		util_blitter_save_framebuffer(rctx->blitter, &rctx->framebuffer);
+		util_blitter_save_framebuffer(rctx->blitter, &rctx->framebuffer.state);
 
 	if (op & R600_SAVE_TEXTURES) {
 		util_blitter_save_fragment_sampler_states(
@@ -509,7 +509,7 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		       double depth, unsigned stencil)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct pipe_framebuffer_state *fb = &rctx->framebuffer;
+	struct pipe_framebuffer_state *fb = &rctx->framebuffer.state;
 
 	r600_blitter_begin(ctx, R600_CLEAR);
 	util_blitter_clear(rctx->blitter, fb->width, fb->height,

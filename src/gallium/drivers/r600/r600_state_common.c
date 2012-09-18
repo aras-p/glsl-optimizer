@@ -737,9 +737,11 @@ static INLINE struct r600_shader_key r600_shader_selector_key(struct pipe_contex
 
 	if (sel->type == PIPE_SHADER_FRAGMENT) {
 		key.color_two_side = rctx->two_side;
-		key.alpha_to_one = rctx->alpha_to_one && rctx->multisample_enable && !rctx->cb0_is_integer;
+		key.alpha_to_one = rctx->alpha_to_one &&
+				   rctx->multisample_enable &&
+				   !rctx->framebuffer.cb0_is_integer;
 		key.dual_src_blend = rctx->dual_src_blend;
-		key.nr_cbufs = rctx->nr_cbufs;
+		key.nr_cbufs = rctx->framebuffer.state.nr_cbufs;
 	}
 	return key;
 }
@@ -1316,20 +1318,20 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	}
 
 	/* Set the depth buffer as dirty. */
-	if (rctx->framebuffer.zsbuf) {
-		struct pipe_surface *surf = rctx->framebuffer.zsbuf;
+	if (rctx->framebuffer.state.zsbuf) {
+		struct pipe_surface *surf = rctx->framebuffer.state.zsbuf;
 		struct r600_texture *rtex = (struct r600_texture *)surf->texture;
 
 		rtex->dirty_level_mask |= 1 << surf->u.tex.level;
 	}
-	if (rctx->compressed_cb_mask) {
+	if (rctx->framebuffer.compressed_cb_mask) {
 		struct pipe_surface *surf;
 		struct r600_texture *rtex;
-		unsigned mask = rctx->compressed_cb_mask;
+		unsigned mask = rctx->framebuffer.compressed_cb_mask;
 
 		do {
 			unsigned i = u_bit_scan(&mask);
-			surf = rctx->framebuffer.cbufs[i];
+			surf = rctx->framebuffer.state.cbufs[i];
 			rtex = (struct r600_texture*)surf->texture;
 
 			rtex->dirty_level_mask |= 1 << surf->u.tex.level;
