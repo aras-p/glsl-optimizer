@@ -83,7 +83,7 @@ fs_visitor::visit(ir_variable *ir)
 	    this->output_components[i] = 4;
 	 }
       } else if (ir->location == FRAG_RESULT_DEPTH) {
-	 this->frag_depth = ir;
+	 this->frag_depth = *reg;
       } else {
 	 /* gl_FragData or a user-defined FS output */
 	 assert(ir->location >= FRAG_RESULT_DATA0 &&
@@ -2111,10 +2111,8 @@ fs_visitor::emit_fb_writes()
 
       if (c->computes_depth) {
 	 /* Hand over gl_FragDepth. */
-	 assert(this->frag_depth);
-	 fs_reg depth = *(variable_storage(this->frag_depth));
-
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, nr), depth);
+	 assert(this->frag_depth.file != BAD_FILE);
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, nr), this->frag_depth);
       } else {
 	 /* Pass through the payload depth. */
 	 emit(BRW_OPCODE_MOV, fs_reg(MRF, nr),
@@ -2275,7 +2273,6 @@ fs_visitor::fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
    else
       this->reg_null_cmp = reg_null_f;
 
-   this->frag_depth = NULL;
    memset(this->outputs, 0, sizeof(this->outputs));
    memset(this->output_components, 0, sizeof(this->output_components));
    this->first_non_payload_grf = 0;

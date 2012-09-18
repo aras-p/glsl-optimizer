@@ -370,7 +370,7 @@ public:
    int *params_remap;
 
    struct hash_table *variable_ht;
-   ir_variable *frag_depth;
+   fs_reg frag_depth;
    fs_reg outputs[BRW_MAX_DRAW_BUFFERS];
    unsigned output_components[BRW_MAX_DRAW_BUFFERS];
    fs_reg dual_src_output;
