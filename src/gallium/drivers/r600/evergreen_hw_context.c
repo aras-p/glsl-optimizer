@@ -236,20 +236,6 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{CM_R_028BE4_PA_SU_VTX_CNTL, 0, 0},
 };
 
-static int evergreen_loop_const_init(struct r600_context *ctx, uint32_t offset)
-{
-	unsigned nreg = 32;
-	struct r600_reg r600_loop_consts[32];
-	int i;
-
-	for (i = 0; i < nreg; i++) {
-		r600_loop_consts[i].offset = EVERGREEN_LOOP_CONST_OFFSET + ((offset + i) * 4);
-		r600_loop_consts[i].flags = REG_FLAG_DIRTY_ALWAYS;
-		r600_loop_consts[i].reserved = 0;
-	}
-	return r600_context_add_block(ctx, r600_loop_consts, nreg, PKT3_SET_LOOP_CONST, EVERGREEN_LOOP_CONST_OFFSET);
-}
-
 int evergreen_context_init(struct r600_context *ctx)
 {
 	int r = 0;
@@ -268,11 +254,6 @@ int evergreen_context_init(struct r600_context *ctx)
 					   Elements(evergreen_context_reg_list), PKT3_SET_CONTEXT_REG, EVERGREEN_CONTEXT_REG_OFFSET);
 	if (r)
 		goto out_err;
-
-	/* PS loop const */
-	evergreen_loop_const_init(ctx, 0);
-	/* VS loop const */
-	evergreen_loop_const_init(ctx, 32);
 
 	r = r600_setup_block_table(ctx);
 	if (r)

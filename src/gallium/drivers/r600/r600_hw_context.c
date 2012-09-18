@@ -350,20 +350,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028854_SQ_PGM_EXPORTS_PS, 0, 0},
 };
 
-static int r600_loop_const_init(struct r600_context *ctx, uint32_t offset)
-{
-	unsigned nreg = 32;
-	struct r600_reg r600_loop_consts[32];
-	int i;
-
-	for (i = 0; i < nreg; i++) {
-		r600_loop_consts[i].offset = R600_LOOP_CONST_OFFSET + ((offset + i) * 4);
-		r600_loop_consts[i].flags = REG_FLAG_DIRTY_ALWAYS;
-		r600_loop_consts[i].reserved = 0;
-	}
-	return r600_context_add_block(ctx, r600_loop_consts, nreg, PKT3_SET_LOOP_CONST, R600_LOOP_CONST_OFFSET);
-}
-
 /* initialize */
 void r600_context_fini(struct r600_context *ctx)
 {
@@ -437,11 +423,6 @@ int r600_context_init(struct r600_context *ctx)
 				   Elements(r600_context_reg_list), PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET);
 	if (r)
 		goto out_err;
-
-	/* PS loop const */
-	r600_loop_const_init(ctx, 0);
-	/* VS loop const */
-	r600_loop_const_init(ctx, 32);
 
 	r = r600_setup_block_table(ctx);
 	if (r)
