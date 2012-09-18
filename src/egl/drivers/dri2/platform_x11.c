@@ -777,10 +777,9 @@ dri2_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
    if (numRects > (int)ARRAY_SIZE(rectangles))
       return dri2_copy_region(drv, disp, draw, dri2_surf->region);
 
-   /* FIXME: Invert y here? */
    for (i = 0; i < numRects; i++) {
       rectangles[i].x = rects[i * 4];
-      rectangles[i].y = rects[i * 4 + 1];
+      rectangles[i].y = dri2_surf->base.Height - rects[i * 4 + 1] - rects[i * 4 + 3];
       rectangles[i].width = rects[i * 4 + 2];
       rectangles[i].height = rects[i * 4 + 3];
    }
