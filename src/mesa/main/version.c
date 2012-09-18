@@ -57,7 +57,7 @@ override_version(struct gl_context *ctx)
 /**
  * Builds the MESA version string.
  */
-static GLboolean
+static void
 create_version_string(struct gl_context *ctx, const char *prefix)
 {
    static const int max = 100;
