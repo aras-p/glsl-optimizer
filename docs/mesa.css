@@ -31,3 +31,33 @@ pre {
 	/*color: black;*/
 }
 
+iframe {
+  width: 19em;
+  height: 80em;
+  border: none;
+  float: left;
+}
+
+.content {
+  position: absolute;
+  left: 20em;
+  right: 10px;
+  overflow: hidden
+}
+
+.header {
+  background: black url('gears.png') 15px no-repeat;
+  margin:0;
+  padding: 5px;
+  clear:both;
+}
+
+.header h1 {
+  background: url('gears.png') right no-repeat;
+  color: white;
+  font: x-large sans-serif;
+  text-align: center;
+  height: 50px;
+  margin: 0;
+  padding-top: 30px;
+}
