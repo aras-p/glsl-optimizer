@@ -39,52 +39,6 @@
 
 #include "glsl/ralloc.h"
 
-/** Return number of src args for given instruction */
-GLuint brw_wm_nr_args( GLuint opcode )
-{
-   switch (opcode) {
-   case WM_FRONTFACING:
-   case WM_PIXELXY:
-      return 0;
-   case WM_CINTERP:
-   case WM_WPOSXY:
-   case WM_DELTAXY:
-      return 1;
-   case WM_LINTERP:
-   case WM_PIXELW:
-      return 2;
-   case WM_FB_WRITE:
-   case WM_PINTERP:
-      return 3;
-   default:
-      assert(opcode < MAX_OPCODE);
-      return _mesa_num_inst_src_regs(opcode);
-   }
-}
-
-
-GLuint brw_wm_is_scalar_result( GLuint opcode )
-{
-   switch (opcode) {
-   case OPCODE_COS:
-   case OPCODE_EX2:
-   case OPCODE_LG2:
-   case OPCODE_POW:
-   case OPCODE_RCP:
-   case OPCODE_RSQ:
-   case OPCODE_SIN:
-   case OPCODE_DP2:
-   case OPCODE_DP3:
-   case OPCODE_DP4:
-   case OPCODE_DPH:
-   case OPCODE_DST:
-      return 1;
-      
-   default:
-      return 0;
-   }
-}
-
 /**
  * Return a bitfield where bit n is set if barycentric interpolation mode n
  * (see enum brw_wm_barycentric_interp_mode) is needed by the fragment shader.
@@ -273,15 +227,7 @@ bool do_wm_prog(struct brw_context *brw,
          return false;
       }
    } else {
-      void *instruction = c->instruction;
-      void *prog_instructions = c->prog_instructions;
-      void *vreg = c->vreg;
-      void *refs = c->refs;
       memset(c, 0, sizeof(*brw->wm.compile_data));
-      c->instruction = instruction;
-      c->prog_instructions = prog_instructions;
-      c->vreg = vreg;
-      c->refs = refs;
    }
 
    /* Allocate the references to the uniforms that will end up in the
@@ -308,7 +254,6 @@ bool do_wm_prog(struct brw_context *brw,
    memcpy(&c->key, key, sizeof(*key));
 
    c->fp = fp;
-   c->env_param = brw->intel.ctx.FragmentProgram.Parameters;
 
    brw_init_compile(brw, &c->func, c);
 
