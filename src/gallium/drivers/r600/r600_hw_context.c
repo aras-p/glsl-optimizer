@@ -965,9 +965,7 @@ static void r600_flush_vgt_streamout(struct r600_context *ctx)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 
-	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONFIG_REG, 1, 0);
-	cs->buf[cs->cdw++] = (R_008490_CP_STRMOUT_CNTL - R600_CONFIG_REG_OFFSET) >> 2;
-	cs->buf[cs->cdw++] = 0;
+	r600_write_config_reg(cs, R_008490_CP_STRMOUT_CNTL, 0);
 
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SO_VGTSTREAMOUT_FLUSH) | EVENT_INDEX(0);
@@ -986,17 +984,10 @@ static void r600_set_streamout_enable(struct r600_context *ctx, unsigned buffer_
 	struct radeon_winsys_cs *cs = ctx->cs;
 
 	if (buffer_enable_bit) {
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		cs->buf[cs->cdw++] = (R_028AB0_VGT_STRMOUT_EN - R600_CONTEXT_REG_OFFSET) >> 2;
-		cs->buf[cs->cdw++] = S_028AB0_STREAMOUT(1);
-
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		cs->buf[cs->cdw++] = (R_028B20_VGT_STRMOUT_BUFFER_EN - R600_CONTEXT_REG_OFFSET) >> 2;
-		cs->buf[cs->cdw++] = buffer_enable_bit;
+		r600_write_context_reg(cs, R_028AB0_VGT_STRMOUT_EN, S_028AB0_STREAMOUT(1));
+		r600_write_context_reg(cs, R_028B20_VGT_STRMOUT_BUFFER_EN, buffer_enable_bit);
 	} else {
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		cs->buf[cs->cdw++] = (R_028AB0_VGT_STRMOUT_EN - R600_CONTEXT_REG_OFFSET) >> 2;
-		cs->buf[cs->cdw++] = S_028AB0_STREAMOUT(0);
+		r600_write_context_reg(cs, R_028AB0_VGT_STRMOUT_EN, S_028AB0_STREAMOUT(0));
 	}
 }
 
@@ -1045,13 +1036,11 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 
 			update_flags |= SURFACE_BASE_UPDATE_STRMOUT(i);
 
-			cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 3, 0);
-			cs->buf[cs->cdw++] = (R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0 +
-							16*i - R600_CONTEXT_REG_OFFSET) >> 2;
-			cs->buf[cs->cdw++] = (t[i]->b.buffer_offset +
-							t[i]->b.buffer_size) >> 2; /* BUFFER_SIZE (in DW) */
-			cs->buf[cs->cdw++] = stride_in_dw[i];		   /* VTX_STRIDE (in DW) */
-			cs->buf[cs->cdw++] = va >> 8;			   /* BUFFER_BASE */
+			r600_write_context_reg_seq(cs, R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0 + 16*i, 3);
+			r600_write_value(cs, (t[i]->b.buffer_offset +
+					      t[i]->b.buffer_size) >> 2); /* BUFFER_SIZE (in DW) */
+			r600_write_value(cs, stride_in_dw[i]);		  /* VTX_STRIDE (in DW) */
+			r600_write_value(cs, va >> 8);			  /* BUFFER_BASE */
 
 			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
 			cs->buf[cs->cdw++] =

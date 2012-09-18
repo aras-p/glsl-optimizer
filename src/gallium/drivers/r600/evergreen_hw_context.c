@@ -270,9 +270,7 @@ void evergreen_flush_vgt_streamout(struct r600_context *ctx)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 
-	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONFIG_REG, 1, 0);
-	cs->buf[cs->cdw++] = (R_0084FC_CP_STRMOUT_CNTL - EVERGREEN_CONFIG_REG_OFFSET) >> 2;
-	cs->buf[cs->cdw++] = 0;
+	r600_write_config_reg(cs, R_0084FC_CP_STRMOUT_CNTL, 0);
 
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SO_VGTSTREAMOUT_FLUSH) | EVENT_INDEX(0);
@@ -291,16 +289,10 @@ void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_en
 	struct radeon_winsys_cs *cs = ctx->cs;
 
 	if (buffer_enable_bit) {
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		cs->buf[cs->cdw++] = (R_028B94_VGT_STRMOUT_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		cs->buf[cs->cdw++] = S_028B94_STREAMOUT_0_EN(1);
-
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		cs->buf[cs->cdw++] = (R_028B98_VGT_STRMOUT_BUFFER_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		cs->buf[cs->cdw++] = S_028B98_STREAM_0_BUFFER_EN(buffer_enable_bit);
+		r600_write_context_reg_seq(cs, R_028B94_VGT_STRMOUT_CONFIG, 2);
+		r600_write_value(cs, S_028B94_STREAMOUT_0_EN(1)); /* R_028B94_VGT_STRMOUT_CONFIG */
+		r600_write_value(cs, S_028B98_STREAM_0_BUFFER_EN(buffer_enable_bit)); /* R_028B98_VGT_STRMOUT_BUFFER_CONFIG */
 	} else {
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONTEXT_REG, 1, 0);
-		cs->buf[cs->cdw++] = (R_028B94_VGT_STRMOUT_CONFIG - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
-		cs->buf[cs->cdw++] = S_028B94_STREAMOUT_0_EN(0);
+		r600_write_context_reg(cs, R_028B94_VGT_STRMOUT_CONFIG, S_028B94_STREAMOUT_0_EN(0));
 	}
 }
