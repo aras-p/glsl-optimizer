@@ -200,7 +200,7 @@ struct pipe_screen {
 
    /**
     * Wait for the fence to finish.
-    * \param timeout  in nanoseconds
+    * \param timeout  in nanoseconds (may be PIPE_TIMEOUT_INFINITE).
     */
    boolean (*fence_finish)( struct pipe_screen *screen,
                             struct pipe_fence_handle *fence,
