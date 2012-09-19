@@ -16,7 +16,7 @@
 use strict;
 use warnings;
 
-use constant CONST_REG_COUNT => 1024;
+use constant CONST_REG_COUNT => 512;
 use constant TEMP_REG_COUNT => 128;
 
 my $CREG_MAX = CONST_REG_COUNT - 1;
