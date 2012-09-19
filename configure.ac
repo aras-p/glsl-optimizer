@@ -524,6 +524,7 @@ if test "x$enable_selinux" = "xyes"; then
     SELINUX_LIBS="-lselinux"
     DEFINES="$DEFINES -DMESA_SELINUX"
 fi
+AC_SUBST([SELINUX_LIBS])
 
 dnl Options for APIs
 AC_ARG_ENABLE([opengl],
@@ -919,10 +920,6 @@ AC_SUBST([GLESv1_CM_LIB_DEPS])
 AC_SUBST([GLESv1_CM_PC_LIB_PRIV])
 AC_SUBST([GLESv2_LIB_DEPS])
 AC_SUBST([GLESv2_PC_LIB_PRIV])
-
-GLAPI_LIB_DEPS="-lpthread $SELINUX_LIBS"
-AC_SUBST([GLAPI_LIB_DEPS])
-
 
 DRI_LIB_DEPS="\$(top_builddir)/src/mesa/libdricore/libdricore${VERSION}.la"
 
