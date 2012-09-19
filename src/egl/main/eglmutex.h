@@ -31,7 +31,7 @@
 
 #include "eglcompiler.h"
 
-#ifdef PTHREADS
+#ifdef HAVE_PTHREAD
 #include <pthread.h>
 
 typedef pthread_mutex_t _EGLMutex;

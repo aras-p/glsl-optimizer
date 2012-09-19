@@ -55,7 +55,7 @@ static int next_dynamic_slot = MAPI_TABLE_NUM_STATIC;
 void
 stub_init_once(void)
 {
-#ifdef PTHREADS
+#ifdef HAVE_PTHREAD
    static pthread_once_t once = PTHREAD_ONCE_INIT;
    pthread_once(&once, entry_patch_public);
 #else

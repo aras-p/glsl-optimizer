@@ -40,7 +40,7 @@ LOCAL_CFLAGS += \
 	-DANDROID_VERSION=0x0$(major)0$(minor)
 
 LOCAL_CFLAGS += \
-	-DPTHREADS \
+	-DHAVE_PTHREAD=1 \
 	-fvisibility=hidden \
 	-Wno-sign-compare
 

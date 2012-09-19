@@ -120,7 +120,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print '\t sethi\tGL_OFF(off), %g3;\t\t\t\\'
 		print '\t.size\tfn,.-fn;'
 		print ''
-		print '#elif defined(PTHREADS)'
+		print '#elif defined(HAVE_PTHREAD)'
 		print ''
 		print '\t/* 64-bit 0x00 --> sethi %hh(_glapi_Dispatch), %g1 */'
 		print '\t/* 64-bit 0x04 --> sethi %lm(_glapi_Dispatch), %g2 */'

@@ -53,7 +53,7 @@
 #include "GL/glxproto.h"
 #include "glxconfig.h"
 #include "glxhash.h"
-#if defined( PTHREADS )
+#if defined( HAVE_PTHREAD )
 # include <pthread.h>
 #endif
 
@@ -623,7 +623,7 @@ extern void __glXPreferEGL(int state);
 extern int __glXDebug;
 
 /* This is per-thread storage in an MT environment */
-#if defined( PTHREADS )
+#if defined( HAVE_PTHREAD )
 
 extern void __glXSetCurrentContext(struct glx_context * c);
 
@@ -646,7 +646,7 @@ extern struct glx_context *__glXcurrentContext;
 #define __glXGetCurrentContext() __glXcurrentContext
 #define __glXSetCurrentContext(gc) __glXcurrentContext = gc
 
-#endif /* defined( PTHREADS ) */
+#endif /* defined( HAVE_PTHREAD ) */
 
 extern void __glXSetCurrentContextNull(void);
 
@@ -655,7 +655,7 @@ extern void __glXSetCurrentContextNull(void);
 ** Global lock for all threads in this address space using the GLX
 ** extension
 */
-#if defined( PTHREADS )
+#if defined( HAVE_PTHREAD )
 extern pthread_mutex_t __glXmutex;
 #define __glXLock()    pthread_mutex_lock(&__glXmutex)
 #define __glXUnlock()  pthread_mutex_unlock(&__glXmutex)

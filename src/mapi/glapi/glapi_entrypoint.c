@@ -136,7 +136,7 @@ extern void __glapi_sparc_icache_flush(unsigned int *);
 static void
 init_glapi_relocs( void )
 {
-#if defined(PTHREADS) || defined(GLX_USE_TLS)
+#if defined(HAVE_PTHREAD) || defined(GLX_USE_TLS)
     static const unsigned int template[] = {
 #ifdef GLX_USE_TLS
 	0x05000000, /* sethi %hi(_glapi_tls_Dispatch), %g2 */
@@ -266,7 +266,7 @@ init_glapi_relocs( void )
 _glapi_proc
 generate_entrypoint(GLuint functionOffset)
 {
-#if defined(PTHREADS) || defined(GLX_USE_TLS)
+#if defined(HAVE_PTHREAD) || defined(GLX_USE_TLS)
    static const unsigned int template[] = {
       0x07000000, /* sethi %hi(0), %g3 */
       0x8210000f, /* mov  %o7, %g1 */
@@ -337,7 +337,7 @@ fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
 void
 init_glapi_relocs_once( void )
 {
-#if defined(PTHREADS) || defined(GLX_USE_TLS)
+#if defined(HAVE_PTHREAD) || defined(GLX_USE_TLS)
    static pthread_once_t once_control = PTHREAD_ONCE_INIT;
    pthread_once( & once_control, init_glapi_relocs );
 #endif

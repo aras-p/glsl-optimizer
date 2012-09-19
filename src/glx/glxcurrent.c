@@ -33,7 +33,7 @@
  * Client-side GLX interface for current context management.
  */
 
-#ifdef PTHREADS
+#ifdef HAVE_PTHREAD
 #include <pthread.h>
 #endif
 
@@ -73,7 +73,7 @@ struct glx_context dummyContext = {
  * Current context management and locking
  */
 
-#if defined( PTHREADS )
+#if defined( HAVE_PTHREAD )
 
 _X_HIDDEN pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
 
