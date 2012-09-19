@@ -210,6 +210,15 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       _mesa_associate_uniform_storage(ctx, shProg, prog->Parameters);
 
       _mesa_reference_program(ctx, &prog, NULL);
+
+      if (ctx->Shader.Flags & GLSL_DUMP) {
+         static const char *target_strings[]
+            = { "vertex", "fragment", "geometry" };
+         printf("\n");
+         printf("GLSL IR for linked %s program %d:\n", target_strings[stage],
+                shProg->Name);
+         _mesa_print_ir(shader->base.ir, NULL);
+      }
    }
 
    if (!brw_shader_precompile(ctx, shProg))
