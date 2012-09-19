@@ -143,8 +143,14 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       bool temp = stage == MESA_SHADER_FRAGMENT;
       bool uniform = stage == MESA_SHADER_FRAGMENT;
 
-      lower_variable_index_to_cond_assign(shader->ir,
-					  input, output, temp, uniform);
+      bool lowered_variable_indexing =
+         lower_variable_index_to_cond_assign(shader->ir,
+                                             input, output, temp, uniform);
+
+      if (unlikely((INTEL_DEBUG & DEBUG_PERF) && lowered_variable_indexing)) {
+         perf_debug("Unsupported form of variable indexing in FS; falling "
+                    "back to very inefficient code generation\n");
+      }
 
       /* FINISHME: Do this before the variable index lowering. */
       lower_ubo_reference(&shader->base, shader->ir);
