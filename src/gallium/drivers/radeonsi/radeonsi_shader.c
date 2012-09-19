@@ -48,25 +48,6 @@
 #include <errno.h>
 #include <stdio.h>
 
-/*
-static ps_remap_inputs(
-	struct tgsi_llvm_context * tl_ctx,
-	unsigned tgsi_index,
-	unsigned tgsi_chan)
-{
-	:
-}
-
-struct si_input
-{
-	struct list_head head;
-	unsigned tgsi_index;
-	unsigned tgsi_chan;
-	unsigned order;
-};
-*/
-
-
 struct si_shader_context
 {
 	struct radeon_llvm_context radeon_bld;
