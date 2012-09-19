@@ -24,12 +24,14 @@ uniform_initializer_test_SOURCES =		\
 	copy_constant_to_storage_tests.cpp	\
 	set_uniform_initializer_tests.cpp	\
 	uniform_initializer_utils.cpp
-
+uniform_initializer_test_CFLAGS = 		\
+	$(PTHREAD_CFLAGS)
 uniform_initializer_test_LDADD =		\
 	$(top_builddir)/src/gtest/libgtest.la	\
 	$(top_builddir)/src/glsl/libglsl.la	\
 	$(top_builddir)/src/mesa/libmesa.la	\
-	-lpthread
+	$(PTHREAD_LIBS)
 
 ralloc_test_SOURCES = ralloc_test.cpp $(top_builddir)/src/glsl/ralloc.c
-ralloc_test_LDADD = $(top_builddir)/src/gtest/libgtest.la -lpthread
+ralloc_test_CFLAGS = $(PTHREAD_CFLAGS)
+ralloc_test_LDADD = $(top_builddir)/src/gtest/libgtest.la $(PTHREAD_LIBS)
