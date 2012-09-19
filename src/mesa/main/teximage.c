@@ -2746,7 +2746,7 @@ _mesa_choose_texture_format(struct gl_context *ctx,
    /* If the application requested compression to an S3TC format but we don't
     * have the DTXn library, force a generic compressed format instead.
     */
-   if (internalFormat != format) {
+   if (internalFormat != format && format != GL_NONE) {
       const GLenum before = internalFormat;
 
       switch (internalFormat) {
