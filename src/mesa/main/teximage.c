@@ -3523,8 +3523,10 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
 
 
 /**
- * First-part of error checking for glCompressedTexSubImage[123]D().
- * These are the checks which are independent of the destination image.
+ * Error checking for glCompressedTexSubImage[123]D().
+ * \warning  There are some bad assumptions here about the size of compressed
+ *           texture tiles (multiple of 4) used to test the validity of the
+ *           offset and size parameters.
  * \return error code or GL_NO_ERROR.
  */
 static GLenum
