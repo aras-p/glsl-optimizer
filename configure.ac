@@ -9,6 +9,7 @@ See docs/autoconf.html for more details on the options for Mesa.])
 AC_INIT([Mesa], [9.1.0],
     [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa])
 AC_CONFIG_AUX_DIR([bin])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([foreign])
 
@@ -498,6 +499,16 @@ AC_SUBST([DLOPEN_LIBS])
 
 dnl See if posix_memalign is available
 AC_CHECK_FUNC([posix_memalign], [DEFINES="$DEFINES -DHAVE_POSIX_MEMALIGN"])
+
+dnl signbit() is a macro in glibc's math.h, so AC_CHECK_FUNC fails. To handle
+dnl this, use AC_CHECK_DECLS and fallback to AC_CHECK_FUNC in case it fails.
+AC_CHECK_DECLS([signbit],[],
+               AC_CHECK_FUNC([signbit],[],
+                             AC_MSG_ERROR([could not find signbit()])),
+               [#include <math.h>])
+
+dnl Check for pthreads
+AX_PTHREAD
 
 dnl SELinux awareness.
 AC_ARG_ENABLE([selinux],
