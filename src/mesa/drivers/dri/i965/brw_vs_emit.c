@@ -98,24 +98,6 @@ static void release_tmps( struct brw_vs_compile *c )
    c->last_tmp = c->first_tmp;
 }
 
-static int
-get_first_reladdr_output(struct gl_vertex_program *vp)
-{
-   int i;
-   int first_reladdr_output = VERT_RESULT_MAX;
-
-   for (i = 0; i < vp->Base.NumInstructions; i++) {
-      struct prog_instruction *inst = vp->Base.Instructions + i;
-
-      if (inst->DstReg.File == PROGRAM_OUTPUT &&
-	  inst->DstReg.RelAddr &&
-	  inst->DstReg.Index < first_reladdr_output)
-	 first_reladdr_output = inst->DstReg.Index;
-   }
-
-   return first_reladdr_output;
-}
-
 /* Clears the record of which vp_const_buffer elements have been
  * loaded into our constant buffer registers, for the starts of new
  * blocks after control flow.
@@ -142,18 +124,11 @@ clear_current_const(struct brw_vs_compile *c)
  * Determine whether the given vertex output can be written directly to a MRF
  * or whether it has to be stored in a general-purpose register.
  */
-static inline bool can_use_direct_mrf(int vert_result,
-                                      int first_reladdr_output, int slot)
+static inline bool can_use_direct_mrf(int vert_result, int slot)
 {
    if (vert_result == VERT_RESULT_HPOS || vert_result == VERT_RESULT_PSIZ) {
       /* These never go straight into MRF's.  They are placed in the MRF by
        * epilog code.
-       */
-      return false;
-   }
-   if (first_reladdr_output <= vert_result && vert_result < VERT_RESULT_MAX) {
-      /* Relative addressing might be used to access this vert_result, so it
-       * needs to go into a general-purpose register.
        */
       return false;
    }
@@ -176,7 +151,6 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    struct intel_context *intel = &c->func.brw->intel;
    GLuint i, reg = 0, slot;
    int attributes_in_vue;
-   int first_reladdr_output;
    int max_constant;
    int constant = 0;
    struct brw_vertex_program *vp = c->vp;
@@ -327,12 +301,10 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    c->first_output = reg;
 
-   first_reladdr_output = get_first_reladdr_output(&c->vp->program);
-
    for (slot = 0; slot < c->prog_data.vue_map.num_slots; slot++) {
       int vert_result = c->prog_data.vue_map.slot_to_vert_result[slot];
       assert(vert_result < Elements(c->regs[PROGRAM_OUTPUT]));
-      if (can_use_direct_mrf(vert_result, first_reladdr_output, slot)) {
+      if (can_use_direct_mrf(vert_result, slot)) {
          c->regs[PROGRAM_OUTPUT][vert_result] = brw_message_reg(slot + 1);
       } else {
          c->regs[PROGRAM_OUTPUT][vert_result] = brw_vec8_grf(reg, 0);
@@ -1192,41 +1164,6 @@ static struct brw_reg deref( struct brw_vs_compile *c,
    return tmp;
 }
 
-static void
-move_to_reladdr_dst(struct brw_vs_compile *c,
-		    const struct prog_instruction *inst,
-		    struct brw_reg val)
-{
-   struct brw_compile *p = &c->func;
-   int reg_size = 32;
-   struct brw_reg addr_reg = c->regs[PROGRAM_ADDRESS][0];
-   struct brw_reg vp_address = retype(vec1(addr_reg), BRW_REGISTER_TYPE_D);
-   struct brw_reg base = c->regs[inst->DstReg.File][inst->DstReg.Index];
-   GLuint byte_offset = base.nr * 32 + base.subnr;
-   struct brw_reg indirect = brw_vec4_indirect(0,0);
-   struct brw_reg acc = retype(vec1(get_tmp(c)), BRW_REGISTER_TYPE_UW);
-
-   /* Because destination register indirect addressing can only use
-    * one index, we'll write each vertex's vec4 value separately.
-    */
-   val.width = BRW_WIDTH_4;
-   val.vstride = BRW_VERTICAL_STRIDE_4;
-
-   brw_push_insn_state(p);
-   brw_set_access_mode(p, BRW_ALIGN_1);
-
-   brw_MUL(p, acc, vp_address, brw_imm_uw(reg_size));
-   brw_ADD(p, brw_address_reg(0), acc, brw_imm_uw(byte_offset));
-   brw_MOV(p, indirect, val);
-
-   brw_MUL(p, acc, suboffset(vp_address, 4), brw_imm_uw(reg_size));
-   brw_ADD(p, brw_address_reg(0), acc,
-	   brw_imm_uw(byte_offset + reg_size / 2));
-   brw_MOV(p, indirect, suboffset(val, 4));
-
-   brw_pop_insn_state(p);
-}
-
 /**
  * Get brw reg corresponding to the instruction's [argIndex] src reg.
  * TODO: relative addressing!
@@ -1374,20 +1311,13 @@ static struct brw_reg get_dst( struct brw_vs_compile *c,
 {
    struct brw_reg reg;
 
+   assert(!dst.RelAddr);
+
    switch (dst.File) {
    case PROGRAM_TEMPORARY:
    case PROGRAM_OUTPUT:
-      /* register-indirect addressing is only 1x1, not VxH, for
-       * destination regs.  So, for RelAddr we'll return a temporary
-       * for the dest and do a move of the result to the RelAddr
-       * register after the instruction emit.
-       */
-      if (dst.RelAddr) {
-	 reg = get_tmp(c);
-      } else {
-	 assert(c->regs[dst.File][dst.Index].nr != 0);
-	 reg = c->regs[dst.File][dst.Index];
-      }
+      assert(c->regs[dst.File][dst.Index].nr != 0);
+      reg = c->regs[dst.File][dst.Index];
       break;
    case PROGRAM_ADDRESS:
       assert(dst.Index == 0);
@@ -1659,7 +1589,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
       len_vertex_header = 2;
    }
 
-   /* Move variable-addressed, non-overflow outputs to their MRFs. */
+   /* Move non-can_use_direct_mrf(), non-overflow to their MRFs. */
    for (slot = len_vertex_header; slot < c->prog_data.vue_map.num_slots; ++slot) {
       if (slot >= MAX_SLOTS_IN_FIRST_URB_WRITE)
          break;
@@ -2004,12 +1934,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
              || (inst->DstReg.Index == VERT_RESULT_BFC1)) {
             p->store[p->nr_insn-1].header.saturate = 1;
          }
-      }
-
-      if (inst->DstReg.RelAddr) {
-	 assert(inst->DstReg.File == PROGRAM_TEMPORARY||
-		inst->DstReg.File == PROGRAM_OUTPUT);
-	 move_to_reladdr_dst(c, inst, dst);
       }
 
       release_tmps(c);
