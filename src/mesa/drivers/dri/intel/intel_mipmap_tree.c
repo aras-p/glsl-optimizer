@@ -1292,9 +1292,10 @@ intel_miptree_map_etc1(struct intel_context *intel,
    assert(map->x == 0);
    assert(map->y == 0);
 
-   /* Each ETC1 block contains 4x4 pixels in 8 bytes. */
-   map->stride = 2 * map->w;
-   map->buffer = map->ptr = malloc(map->stride * map->h);
+   map->stride = _mesa_format_row_stride(MESA_FORMAT_ETC1_RGB8, map->w);
+   map->buffer = malloc(_mesa_format_image_size(MESA_FORMAT_ETC1_RGB8,
+                                                map->w, map->h, 1));
+   map->ptr = map->buffer;
 }
 
 static void
