@@ -105,6 +105,7 @@ _mesa_init_shader_state(struct gl_context *ctx)
 
    memset(&options, 0, sizeof(options));
    options.MaxUnrollIterations = 32;
+   options.MaxIfDepth = UINT_MAX;
 
    /* Default pragma settings */
    options.DefaultPragmas.Optimize = GL_TRUE;
