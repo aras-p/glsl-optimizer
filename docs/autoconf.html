@@ -62,83 +62,107 @@ configuration run <code>make realclean</code> before rebuilding.
 
 <p>
 Some of the generic autoconf options are used with Mesa:
-
-<ul>
-<li><code>--prefix=PREFIX</code> - This is the root directory where
+</p>
+<dl>
+<dt><code>--prefix=PREFIX</code></dt>
+<dd><p>This is the root directory where
 files will be installed by <code>make install</code>. The default is
-<code>/usr/local</code>.
-</li>
-<li><code>--exec-prefix=EPREFIX</code> - This is the root directory
+<code>/usr/local</code>.</p>
+</dd>
+
+<dt><code>--exec-prefix=EPREFIX</code></dt>
+<dd><p>This is the root directory
 where architecture-dependent files will be installed. In Mesa, this is
 only used to derive the directory for the libraries. The default is
-<code>${prefix}</code>.
-</li>
-<li><code>--libdir=LIBDIR</code> - This option specifies the directory
+<code>${prefix}</code>.</p>
+</dd>
+
+<dt><code>--libdir=LIBDIR</code></dt>
+<dd><p>This option specifies the directory
 where the GL libraries will be installed. The default is
 <code>${exec_prefix}/lib</code>. It also serves as the name of the
 library staging area in the source tree. For instance, if the option
 <code>--libdir=/usr/local/lib64</code> is used, the libraries will be
 created in a <code>lib64</code> directory at the top of the Mesa source
-tree.
-</li>
-<li><code>--enable-static, --disable-shared</code> - By default, Mesa
+tree.</p>
+</dd>
+
+<dt><code>--enable-static, --disable-shared</code></dt>
+<dd><p>By default, Mesa
 will build shared libraries. Either of these options will force static
 libraries to be built. It is not currently possible to build static and
-shared libraries in a single pass.
-</li>
-<li><code>CC, CFLAGS, CXX, CXXFLAGS</code> - These environment variables
+shared libraries in a single pass.</p>
+</dd>
+
+<dt><code>CC, CFLAGS, CXX, CXXFLAGS</code></dt>
+<dd><p>These environment variables
 control the C and C++ compilers used during the build. By default,
 <code>gcc</code> and <code>g++</code> are used with the options
-<code>"-g -O2"</code>.
-</li>
-<li><code>LDFLAGS</code> - An environment variable specifying flags to
+<code>"-g -O2"</code>.</p>
+</dd>
+
+<dt><code>LDFLAGS</code></dt>
+<dd><p>An environment variable specifying flags to
 pass when linking programs. These are normally empty, but can be used
 to direct the linker to use libraries in nonstandard directories. For
-example, <code>LDFLAGS="-L/usr/X11R6/lib"</code>.
-</li>
-<li><code>PKG_CONFIG_PATH</code> - When available, the
+example, <code>LDFLAGS="-L/usr/X11R6/lib"</code>.</p>
+</dd>
+
+<dt><code>PKG_CONFIG_PATH</code></dt>
+<dd><p>When available, the
 <code>pkg-config</code> utility is used to search for external libraries
 on the system. This environment variable is used to control the search
 path for <code>pkg-config</code>. For instance, setting
 <code>PKG_CONFIG_PATH=/usr/X11R6/lib/pkgconfig</code> will search for
 package metadata in <code>/usr/X11R6</code> before the standard
-directories.
-</li>
-</ul>
+directories.</p>
+</dd>
+</dl>
 
 <p>
 There are also a few general options for altering the Mesa build:
-<ul>
-<li><code>--with-x</code> - When the X11 development libraries are
+</p>
+<dl>
+<dt><code>--with-x</code></dt>
+<dd><p>When the X11 development libraries are
 needed, the <code>pkg-config</code> utility <a href="#pkg-config">will
 be used</a> for locating them. If they cannot be found through
 <code>pkg-config</code> a fallback routing using <code>imake</code> will
 be used. In this case, the <code>--with-x</code>,
 <code>--x-includes</code> and <code>--x-libraries</code> options can
-control the use of X for Mesa.
-</li>
-<li><code>--enable-gl-osmesa</code> - The <a href="osmesa.html">OSMesa
+control the use of X for Mesa.</p>
+</dd>
+
+<dt><code>--enable-gl-osmesa</code></dt>
+<dd><p>The <a href="osmesa.html">OSMesa
 library</a> can be built on top of libGL for drivers that provide it.
 This option controls whether to build libOSMesa. By default, this is
 enabled for the Xlib driver and disabled otherwise. Note that this
-option is different than using OSMesa as the driver.
-</li>
-<li><code>--enable-debug</code> - This option will enable compiler
-options and macros to aid in debugging the Mesa libraries.
-</li>
-<li><code>--disable-asm</code> - There are assembly routines
+option is different than using OSMesa as the driver.</p>
+</dd>
+
+<dt><code>--enable-debug</code></dt>
+<dd><p>This option will enable compiler
+options and macros to aid in debugging the Mesa libraries.</p>
+</dd>
+
+<dt><code>--disable-asm</code></dt>
+<dd><p>There are assembly routines
 available for a few architectures. These will be used by default if
 one of these architectures is detected. This option ensures that
-assembly will not be used.
-</li>
-<li><code>--enable-32-bit, --enable-64-bit</code> - By default, the
+assembly will not be used.</p>
+</dd>
+
+<dt><code>--enable-32-bit</code></dt>
+<dt><code>--enable-64-bit</code></dt>
+<dd><p>By default, the
 build will compile code as directed by the environment variables
 <code>CC</code>, <code>CFLAGS</code>, etc. If the compiler is
 <code>gcc</code>, these options offer a helper to add the compiler flags
 to force 32- or 64-bit code generation as used on the x86 and x86_64
-architectures.
-</li>
-</ul>
+architectures.</p>
+</dd>
+</dl>
 
 
 <h2 id="driver">2. Driver Options</h2>
