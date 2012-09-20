@@ -132,7 +132,7 @@ xa_surface_map(struct xa_context *ctx,
 	       struct xa_surface *srf, unsigned int usage)
 {
     void *map;
-    unsigned int transfer_direction = 0;
+    unsigned int gallium_usage = 0;
     struct pipe_context *pipe = ctx->pipe;
 
     /*
@@ -142,15 +142,23 @@ xa_surface_map(struct xa_context *ctx,
 	return NULL;
 
     if (usage & XA_MAP_READ)
-	transfer_direction |= PIPE_TRANSFER_READ;
+	gallium_usage |= PIPE_TRANSFER_READ;
     if (usage & XA_MAP_WRITE)
-	transfer_direction |= PIPE_TRANSFER_WRITE;
+	gallium_usage |= PIPE_TRANSFER_WRITE;
+    if (usage & XA_MAP_MAP_DIRECTLY)
+	gallium_usage |= PIPE_TRANSFER_MAP_DIRECTLY;
+    if (usage & XA_MAP_UNSYNCHRONIZED)
+	gallium_usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
+    if (usage & XA_MAP_DONTBLOCK)
+	gallium_usage |= PIPE_TRANSFER_DONTBLOCK;
+    if (usage & XA_MAP_DISCARD_WHOLE_RESOURCE)
+	gallium_usage |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
 
-    if (!transfer_direction)
+    if (!(gallium_usage & (PIPE_TRANSFER_READ_WRITE)))
 	return NULL;
 
     map = pipe_transfer_map(pipe, srf->tex, 0, 0,
-                            transfer_direction, 0, 0,
+                            gallium_usage, 0, 0,
                             srf->tex->width0, srf->tex->height0,
                             &srf->transfer);
     if (!map)
