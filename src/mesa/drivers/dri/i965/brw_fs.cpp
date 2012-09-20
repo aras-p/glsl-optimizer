@@ -1435,7 +1435,30 @@ fs_visitor::opt_algebraic()
 	    break;
 	 }
 
+         /* a * 0.0 = 0.0 */
+         if (inst->src[1].type == BRW_REGISTER_TYPE_F &&
+             inst->src[1].imm.f == 0.0) {
+            inst->opcode = BRW_OPCODE_MOV;
+            inst->src[0] = fs_reg(0.0f);
+            inst->src[1] = reg_undef;
+            progress = true;
+            break;
+         }
+
 	 break;
+      case BRW_OPCODE_ADD:
+         if (inst->src[1].file != IMM)
+            continue;
+
+         /* a + 0.0 = a */
+         if (inst->src[1].type == BRW_REGISTER_TYPE_F &&
+             inst->src[1].imm.f == 0.0) {
+            inst->opcode = BRW_OPCODE_MOV;
+            inst->src[1] = reg_undef;
+            progress = true;
+            break;
+         }
+         break;
       default:
 	 break;
       }
