@@ -36,6 +36,28 @@ void si_cmd_context_control(struct si_pm4_state *pm4)
 	si_pm4_cmd_end(pm4, false);
 }
 
+void si_cmd_draw_index_2(struct si_pm4_state *pm4, uint32_t max_size,
+			 uint64_t index_base, uint32_t index_count,
+			 uint32_t initiator, bool predicate)
+{
+	si_pm4_cmd_begin(pm4, PKT3_DRAW_INDEX_2);
+	si_pm4_cmd_add(pm4, max_size);
+	si_pm4_cmd_add(pm4, index_base);
+	si_pm4_cmd_add(pm4, (index_base >> 32UL) & 0xFF);
+	si_pm4_cmd_add(pm4, index_count);
+	si_pm4_cmd_add(pm4, initiator);
+	si_pm4_cmd_end(pm4, predicate);
+}
+
+void si_cmd_draw_index_auto(struct si_pm4_state *pm4, uint32_t count,
+			    uint32_t initiator, bool predicate)
+{
+	si_pm4_cmd_begin(pm4, PKT3_DRAW_INDEX_AUTO);
+	si_pm4_cmd_add(pm4, count);
+	si_pm4_cmd_add(pm4, initiator);
+	si_pm4_cmd_end(pm4, predicate);
+}
+
 void si_cmd_surface_sync(struct si_pm4_state *pm4, uint32_t cp_coher_cntl)
 {
 	si_pm4_cmd_begin(pm4, PKT3_SURFACE_SYNC);

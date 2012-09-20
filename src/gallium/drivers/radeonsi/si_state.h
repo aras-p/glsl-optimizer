@@ -160,6 +160,11 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo);
 
 /* si_commands.c */
 void si_cmd_context_control(struct si_pm4_state *pm4);
+void si_cmd_draw_index_2(struct si_pm4_state *pm4, uint32_t max_size,
+			 uint64_t index_base, uint32_t index_count,
+			 uint32_t initiator, bool predicate);
+void si_cmd_draw_index_auto(struct si_pm4_state *pm4, uint32_t count,
+			    uint32_t initiator, bool predicate);
 void si_cmd_surface_sync(struct si_pm4_state *pm4, uint32_t cp_coher_cntl);
 
 #endif

@@ -500,26 +500,20 @@ static void si_state_draw(struct r600_context *rctx,
 	si_pm4_cmd_end(pm4, rctx->predicate_drawing);
 
 	if (info->indexed) {
+		uint32_t max_size = (ib->buffer->width0 - ib->offset) /
+				 rctx->index_buffer.index_size;
 		uint64_t va;
 		va = r600_resource_va(&rctx->screen->screen, ib->buffer);
 		va += ib->offset;
 
 		si_pm4_add_bo(pm4, (struct si_resource *)ib->buffer, RADEON_USAGE_READ);
-		si_pm4_cmd_begin(pm4, PKT3_DRAW_INDEX_2);
-		si_pm4_cmd_add(pm4, (ib->buffer->width0 - ib->offset) /
-					rctx->index_buffer.index_size);
-		si_pm4_cmd_add(pm4, va);
-		si_pm4_cmd_add(pm4, (va >> 32UL) & 0xFF);
-		si_pm4_cmd_add(pm4, info->count);
-		si_pm4_cmd_add(pm4, V_0287F0_DI_SRC_SEL_DMA);
-		si_pm4_cmd_end(pm4, rctx->predicate_drawing);
+		si_cmd_draw_index_2(pm4, max_size, va, info->count,
+				    V_0287F0_DI_SRC_SEL_DMA,
+				    rctx->predicate_drawing);
 	} else {
-		si_pm4_cmd_begin(pm4, PKT3_DRAW_INDEX_AUTO);
-		si_pm4_cmd_add(pm4, info->count);
-		si_pm4_cmd_add(pm4, V_0287F0_DI_SRC_SEL_AUTO_INDEX |
-			       (info->count_from_stream_output ?
-				S_0287F0_USE_OPAQUE(1) : 0));
-		si_pm4_cmd_end(pm4, rctx->predicate_drawing);
+		uint32_t initiator = V_0287F0_DI_SRC_SEL_AUTO_INDEX;
+		initiator |= S_0287F0_USE_OPAQUE(!!info->count_from_stream_output);
+		si_cmd_draw_index_auto(pm4, info->count, initiator, rctx->predicate_drawing);
 	}
 	si_pm4_set_state(rctx, draw, pm4);
 }
