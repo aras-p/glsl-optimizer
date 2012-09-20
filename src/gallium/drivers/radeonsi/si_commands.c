@@ -28,6 +28,14 @@
 #include "radeonsi_pm4.h"
 #include "sid.h"
 
+void si_cmd_context_control(struct si_pm4_state *pm4)
+{
+	si_pm4_cmd_begin(pm4, PKT3_CONTEXT_CONTROL);
+	si_pm4_cmd_add(pm4, 0x80000000);
+	si_pm4_cmd_add(pm4, 0x80000000);
+	si_pm4_cmd_end(pm4, false);
+}
+
 void si_cmd_surface_sync(struct si_pm4_state *pm4, uint32_t cp_coher_cntl)
 {
 	si_pm4_cmd_begin(pm4, PKT3_SURFACE_SYNC);

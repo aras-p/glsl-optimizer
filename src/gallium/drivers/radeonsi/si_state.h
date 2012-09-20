@@ -159,6 +159,7 @@ void si_set_so_targets(struct pipe_context *ctx,
 void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *dinfo);
 
 /* si_commands.c */
+void si_cmd_context_control(struct si_pm4_state *pm4);
 void si_cmd_surface_sync(struct si_pm4_state *pm4, uint32_t cp_coher_cntl);
 
 #endif

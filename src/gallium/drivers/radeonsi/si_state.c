@@ -2596,10 +2596,7 @@ void si_init_config(struct r600_context *rctx)
 {
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 
-	si_pm4_cmd_begin(pm4, PKT3_CONTEXT_CONTROL);
-	si_pm4_cmd_add(pm4, 0x80000000);
-	si_pm4_cmd_add(pm4, 0x80000000);
-	si_pm4_cmd_end(pm4, false);
+	si_cmd_context_control(pm4);
 
 	si_pm4_set_reg(pm4, R_028A4C_PA_SC_MODE_CNTL_1, 0x0);
 
