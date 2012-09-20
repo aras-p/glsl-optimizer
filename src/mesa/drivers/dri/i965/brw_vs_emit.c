@@ -46,7 +46,6 @@ brw_vs_arg_can_be_immediate(enum prog_opcode opcode, int arg)
    int opcode_array[] = {
       [OPCODE_MOV] = 1,
       [OPCODE_ADD] = 2,
-      [OPCODE_CMP] = 3,
       [OPCODE_DP2] = 2,
       [OPCODE_DP3] = 2,
       [OPCODE_DP4] = 2,
@@ -54,12 +53,8 @@ brw_vs_arg_can_be_immediate(enum prog_opcode opcode, int arg)
       [OPCODE_MAX] = 2,
       [OPCODE_MIN] = 2,
       [OPCODE_MUL] = 2,
-      [OPCODE_SEQ] = 2,
       [OPCODE_SGE] = 2,
-      [OPCODE_SGT] = 2,
-      [OPCODE_SLE] = 2,
       [OPCODE_SLT] = 2,
-      [OPCODE_SNE] = 2,
       [OPCODE_XPD] = 2,
    };
 
@@ -479,21 +474,6 @@ static void emit_sop( struct brw_vs_compile *c,
    brw_set_predicate_control_flag_value(p, 0xff);
 }
 
-static void emit_seq( struct brw_vs_compile *c,
-                      struct brw_reg dst,
-                      struct brw_reg arg0,
-                      struct brw_reg arg1 )
-{
-   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_EQ);
-}
-
-static void emit_sne( struct brw_vs_compile *c,
-                      struct brw_reg dst,
-                      struct brw_reg arg0,
-                      struct brw_reg arg1 )
-{
-   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_NEQ);
-}
 static void emit_slt( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
@@ -502,56 +482,12 @@ static void emit_slt( struct brw_vs_compile *c,
    emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_L);
 }
 
-static void emit_sle( struct brw_vs_compile *c,
-		      struct brw_reg dst,
-		      struct brw_reg arg0,
-		      struct brw_reg arg1 )
-{
-   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_LE);
-}
-
-static void emit_sgt( struct brw_vs_compile *c,
-		      struct brw_reg dst,
-		      struct brw_reg arg0,
-		      struct brw_reg arg1 )
-{
-   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_G);
-}
-
 static void emit_sge( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
   emit_sop(c, dst, arg0, arg1, BRW_CONDITIONAL_GE);
-}
-
-static void emit_cmp( struct brw_compile *p,
-		      struct brw_reg dst,
-		      struct brw_reg arg0,
-		      struct brw_reg arg1,
-		      struct brw_reg arg2 )
-{
-   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0, brw_imm_f(0));
-   brw_SEL(p, dst, arg1, arg2);
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-}
-
-static void emit_sign(struct brw_vs_compile *c,
-		      struct brw_reg dst,
-		      struct brw_reg arg0)
-{
-   struct brw_compile *p = &c->func;
-
-   brw_MOV(p, dst, brw_imm_f(0));
-
-   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0, brw_imm_f(0));
-   brw_MOV(p, dst, brw_imm_f(-1.0));
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-
-   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, arg0, brw_imm_f(0));
-   brw_MOV(p, dst, brw_imm_f(1.0));
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
 static void emit_max( struct brw_compile *p, 
@@ -1822,9 +1758,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 	    brw_MOV(p, brw_acc_reg(), args[2]);
 	 brw_MAC(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_CMP:
-	 emit_cmp(p, dst, args[0], args[1], args[2]);
-	 break;
       case OPCODE_MAX:
 	 emit_max(p, dst, args[0], args[1]);
 	 break;
@@ -1847,30 +1780,15 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 	 emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, brw_abs(args[0]), BRW_MATH_PRECISION_FULL);
 	 break;
 
-      case OPCODE_SEQ:
-         unalias2(c, dst, args[0], args[1], emit_seq);
-         break;
       case OPCODE_SIN:
 	 emit_math1(c, BRW_MATH_FUNCTION_SIN, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
-      case OPCODE_SNE:
-         unalias2(c, dst, args[0], args[1], emit_sne);
-         break;
       case OPCODE_SGE:
          unalias2(c, dst, args[0], args[1], emit_sge);
 	 break;
-      case OPCODE_SGT:
-         unalias2(c, dst, args[0], args[1], emit_sgt);
-         break;
       case OPCODE_SLT:
          unalias2(c, dst, args[0], args[1], emit_slt);
 	 break;
-      case OPCODE_SLE:
-         unalias2(c, dst, args[0], args[1], emit_sle);
-         break;
-      case OPCODE_SSG:
-         unalias1(c, dst, args[0], emit_sign);
-         break;
       case OPCODE_SUB:
 	 brw_ADD(p, dst, args[0], negate(args[1]));
 	 break;
@@ -1879,10 +1797,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 	  * correctly encoded the full swizzle:
 	  */
 	 emit_swz(c, dst, inst);
-	 break;
-      case OPCODE_TRUNC:
-         /* round toward zero */
-	 brw_RNDZ(p, dst, args[0]);
 	 break;
       case OPCODE_XPD:
 	 emit_xpd(p, dst, args[0], args[1]);
