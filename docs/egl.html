@@ -60,28 +60,32 @@ or more EGL drivers.</p>
 <p>There are several options that control the build of EGL at configuration
 time</p>
 
-<ul>
-<li><code>--enable-egl</code>
+<dl>
+<dt><code>--enable-egl</code></dt>
+<dd>
 
 <p>By default, EGL is enabled.  When disabled, the main library and the drivers
 will not be built.</p>
 
-</li>
+</dd>
 
-<li><code>--with-egl-driver-dir</code>
+<dt><code>--with-egl-driver-dir</code></dt>
+<dd>
 
 <p>The directory EGL drivers should be installed to.  If not specified, EGL
 drivers will be installed to <code>${libdir}/egl</code>.</p>
 
-</li>
+</dd>
 
-<li><code>--enable-gallium-egl</code>
+<dt><code>--enable-gallium-egl</code></dt>
+<dd>
 
 <p>Enable the optional <code>egl_gallium</code> driver.</p>
 
-</li>
+</dd>
 
-<li><code>--with-egl-platforms</code>
+<dt><code>--with-egl-platforms</code></dt>
+<dd>
 
 <p>List the platforms (window systems) to support.  Its argument is a comma
 seprated string such as <code>--with-egl-platforms=x11,drm</code>.  It decides
@@ -95,30 +99,34 @@ types such as <code>EGLNativeDisplayType</code> or
 only be built with SCons.  Unless for special needs, the build system should
 select the right platforms automatically.</p>
 
-</li>
+</dd>
 
-<li><code>--enable-gles1</code> and <code>--enable-gles2</code>
+<dt><code>--enable-gles1</code></dt>
+<dt><code>--enable-gles2</code></dt>
+<dd>
 
 <p>These options enable OpenGL ES support in OpenGL.  The result is one big
 internal library that supports multiple APIs.</p>
 
-</li>
+</dd>
 
-<li><code>--enable-shared-glapi</code>
+<dt><code>--enable-shared-glapi</code></dt>
+<dd>
 
 <p>By default, <code>libGL</code> has its own copy of <code>libglapi</code>.
 This options makes <code>libGL</code> use the shared <code>libglapi</code>.  This
 is required if applications mix OpenGL and OpenGL ES.</p>
 
-</li>
+</dd>
 
-<li><code>--enable-openvg</code>
+<dt><code>--enable-openvg</code></dt>
+<dd>
 
 <p>OpenVG must be explicitly enabled by this option.</p>
 
-</li>
+</dd>
 
-</ul>
+</dl>
 
 <h2>Use EGL</h2>
 
@@ -132,8 +140,9 @@ mesa/demos repository.</p>
 <p>There are several environment variables that control the behavior of EGL at
 runtime</p>
 
-<ul>
-<li><code>EGL_DRIVERS_PATH</code>
+<dl>
+<dt><code>EGL_DRIVERS_PATH</code></dt>
+<dd>
 
 <p>By default, the main library will look for drivers in the directory where
 the drivers are installed to.  This variable specifies a list of
@@ -151,18 +160,20 @@ may set</p>
 
 <p>to test a build without installation</p>
 
-</li>
+</dd>
 
-<li><code>EGL_DRIVER</code>
+<dt><code>EGL_DRIVER</code></dt>
+<dd>
 
 <p>This variable specifies a full path to or the name of an EGL driver.  It
 forces the specified EGL driver to be loaded.  It comes in handy when one wants
 to test a specific driver.  This variable is ignored for setuid/setgid
 binaries.</p>
 
-</li>
+</dd>
 
-<li><code>EGL_PLATFORM</code>
+<dt><code>EGL_PLATFORM</code></dt>
+<dd>
 
 <p>This variable specifies the native platform.  The valid values are the same
 as those for <code>--with-egl-platforms</code>.  When the variable is not set,
@@ -174,28 +185,31 @@ create displays for non-native platforms.  These extensions are usually used by
 applications that support non-native platforms.  Setting this variable is
 probably required only for some of the demos found in mesa/demo repository.</p>
 
-</li>
+</dd>
 
-<li><code>EGL_LOG_LEVEL</code>
+<dt><code>EGL_LOG_LEVEL</code></dt>
+<dd>
 
 <p>This changes the log level of the main library and the drivers.  The valid
 values are: <code>debug</code>, <code>info</code>, <code>warning</code>, and
 <code>fatal</code>.</p>
 
-</li>
+</dd>
 
-<li><code>EGL_SOFTWARE</code>
+<dt><code>EGL_SOFTWARE</code></dt>
+<dd>
 
 <p>For drivers that support both hardware and software rendering, setting this
 variable to true forces the use of software rendering.</p>
 
-</li>
-</ul>
+</dd>
+</dl>
 
 <h2>EGL Drivers</h2>
 
-<ul>
-<li><code>egl_dri2</code>
+<dl>
+<dt><code>egl_dri2</code></dt>
+<dd>
 
 <p>This driver supports both <code>x11</code> and <code>drm</code> platforms.
 It functions as a DRI driver loader.  For <code>x11</code> support, it talks to
@@ -203,9 +217,10 @@ the X server directly using (XCB-)DRI2 protocol.</p>
 
 <p>This driver can share DRI drivers with <code>libGL</code>.</p>
 
-</li>
+</dd>
 
-<li><code>egl_gallium</code>
+<dt><code>egl_gallium</code></dt>
+<dd>
 
 <p>This driver is based on Gallium3D.  It supports all rendering APIs and
 hardwares supported by Gallium3D.  It is the only driver that supports OpenVG.
@@ -215,16 +230,17 @@ The supported platforms are X11, DRM, FBDEV, and GDI.</p>
 (<code>pipe_&lt;hw&gt;</code>) and client API modules
 (<code>st_&lt;api&gt;</code>).</p>
 
-</li>
+</dd>
 
-<li><code>egl_glx</code>
+<dt><code>egl_glx</code></dt>
+<dd>
 
 <p>This driver provides a wrapper to GLX.  It uses exclusively GLX to implement
 the EGL API.  It supports both direct and indirect rendering when the GLX does.
 It is accelerated when the GLX is.  As such, it cannot provide functions that
 is not available in GLX or GLX extensions.</p>
-</li>
-</ul>
+</dd>
+</dl>
 
 <h2>Packaging</h2>
 
