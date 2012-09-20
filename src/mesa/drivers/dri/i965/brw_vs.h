@@ -104,7 +104,6 @@ struct brw_vs_compile {
    struct brw_reg tmp;
 
    struct {	
-       bool used_in_src;
        struct brw_reg reg;
    } output_regs[128];
 

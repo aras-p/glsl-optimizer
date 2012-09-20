@@ -371,13 +371,6 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       clear_current_const(c);
    }
 
-   for (i = 0; i < 128; i++) {
-      if (c->output_regs[i].used_in_src) {
-         c->output_regs[i].reg = brw_vec8_grf(reg, 0);
-         reg++;
-      }
-   }
-
    /* Some opcodes need an internal temporary:
     */
    c->first_tmp = reg;
@@ -1299,7 +1292,6 @@ get_src_reg( struct brw_vs_compile *c,
    switch (file) {
    case PROGRAM_TEMPORARY:
    case PROGRAM_INPUT:
-   case PROGRAM_OUTPUT:
       if (relAddr) {
          return deref(c, c->regs[file][0], index, 32);
       }
@@ -1793,8 +1785,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
    struct brw_compile *p = &c->func;
    const GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn;
-   GLuint index;
-   GLuint file;
 
    if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
       printf("vs-mesa:\n");
@@ -1807,22 +1797,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
    brw_set_access_mode(p, BRW_ALIGN_16);
 
    brw_set_acc_write_control(p, 1);
-
-   for (insn = 0; insn < nr_insns; insn++) {
-       GLuint i;
-       struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
-
-       /* Message registers can't be read, so copy the output into GRF
-	* register if they are used in source registers
-	*/
-       for (i = 0; i < 3; i++) {
-	   struct prog_src_register *src = &inst->SrcReg[i];
-	   GLuint index = src->Index;
-	   GLuint file = src->File;	
-	   if (file == PROGRAM_OUTPUT && index != VERT_RESULT_HPOS)
-	       c->output_regs[index].used_in_src = true;
-       }
-   }
 
    /* Static register allocation
     */
@@ -1843,44 +1817,17 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 
       /* Get argument regs.  SWZ is special and does this itself.
        */
-      if (inst->Opcode != OPCODE_SWZ)
+      if (inst->Opcode != OPCODE_SWZ) {
 	  for (i = 0; i < 3; i++) {
-	      const struct prog_src_register *src = &inst->SrcReg[i];
-	      index = src->Index;
-	      file = src->File;	
-	      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src) {
-		 /* Can't just make get_arg "do the right thing" here because
-		  * other callers of get_arg and get_src_reg don't expect any
-		  * special behavior for the c->output_regs[index].used_in_src
-		  * case.
-		  */
-		 args[i] = c->output_regs[index].reg;
-		 args[i].dw1.bits.swizzle =
-		    BRW_SWIZZLE4(GET_SWZ(src->Swizzle, 0),
-				 GET_SWZ(src->Swizzle, 1),
-				 GET_SWZ(src->Swizzle, 2),
-				 GET_SWZ(src->Swizzle, 3));
-
-		 /* Note this is ok for non-swizzle ARB_vp instructions */
-		 args[i].negate = src->Negate ? 1 : 0;
-	      } else
-                  args[i] = get_arg(c, inst, i);
+              args[i] = get_arg(c, inst, i);
 	  }
+      }
 
       /* Get dest regs.  Note that it is possible for a reg to be both
        * dst and arg, given the static allocation of registers.  So
        * care needs to be taken emitting multi-operation instructions.
        */ 
-      index = inst->DstReg.Index;
-      file = inst->DstReg.File;
-      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)
-	 /* Can't just make get_dst "do the right thing" here because other
-	  * callers of get_dst don't expect any special behavior for the
-	  * c->output_regs[index].used_in_src case.
-	  */
-	 dst = brw_writemask(c->output_regs[index].reg, inst->DstReg.WriteMask);
-      else
-	  dst = get_dst(c, inst->DstReg);
+      dst = get_dst(c, inst->DstReg);
 
       if (inst->SaturateMode != SATURATE_OFF) {
 	 _mesa_problem(NULL, "Unsupported saturate %d in vertex shader",
@@ -2035,12 +1982,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 
 	 assert(hw_insn->header.destreg__conditionalmod == 0);
 	 hw_insn->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
-      }
-
-      if ((inst->DstReg.File == PROGRAM_OUTPUT)
-          && (inst->DstReg.Index != VERT_RESULT_HPOS)
-          && c->output_regs[inst->DstReg.Index].used_in_src) {
-         brw_MOV(p, get_dst(c, inst->DstReg), dst);
       }
 
       /* Result color clamping.
