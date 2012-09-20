@@ -24,7 +24,6 @@
   <li><a href="#dri">DRI Driver Options</a></li>
   <li><a href="#osmesa">OSMesa Driver Options</a></li>
   </ul>
-<li><p><a href="#demos">Demo Program Options</a>
 </ol>
 
 
@@ -221,26 +220,6 @@ The configure script provides more fine grained control over the GL
 libraries that will be built. More details on the specific GL libraries
 can be found in the <a href="install.html">basic installation
 instructions</a>.
-
-
-<h2 id="demos">4. Demo Program Options</h2>
-
-<p>
-There are many demonstration programs in the MesaDemos tarball. If the
-programs are available when <code>./configure</code> is run, a subset of
-the programs will be built depending on the driver and library options
-chosen. See the directory <code>progs</code> for the full set of demos.
-
-<dl>
-<dt><code>--with-demos=DEMOS,DEMOS,...</code>
-<dd><p> This option allows a
-specific set of demo programs to be built. For example,
-<code>--with-demos="xdemos,slang"</code>. Beware that if this option is
-used, it will not be ensured that the necessary GL libraries will be
-available.
-<dt><code>--without-demos</code> <dd><p> This completely disables building the
-demo programs. It is equivalent to <code>--with-demos=no</code>.
-</dl>
 
 </div>
 </body>
