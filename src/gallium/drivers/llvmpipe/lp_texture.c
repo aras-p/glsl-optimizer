@@ -113,7 +113,7 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
    unsigned width = pt->width0;
    unsigned height = pt->height0;
    unsigned depth = pt->depth0;
-   size_t total_size = 0;
+   uint64_t total_size = 0;
 
    assert(LP_MAX_TEXTURE_2D_LEVELS <= LP_MAX_TEXTURE_LEVELS);
    assert(LP_MAX_TEXTURE_3D_LEVELS <= LP_MAX_TEXTURE_LEVELS);
@@ -139,6 +139,12 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
          block_size = util_format_get_blocksize(pt->format);
 
          lpr->row_stride[level] = align(nblocksx * block_size, 16);
+
+         /* if row_stride * height > LP_MAX_TEXTURE_SIZE */
+         if (lpr->row_stride[level] > LP_MAX_TEXTURE_SIZE / nblocksy) {
+            /* image too large */
+            goto fail;
+         }
 
          lpr->img_stride[level] = lpr->row_stride[level] * nblocksy;
       }
@@ -172,7 +178,15 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
          }
       }
 
-      total_size += lpr->num_slices_faces[level] * lpr->img_stride[level];
+      /* if img_stride * num_slices_faces > LP_MAX_TEXTURE_SIZE */
+      if (lpr->img_stride[level] >
+          LP_MAX_TEXTURE_SIZE / lpr->num_slices_faces[level]) {
+         /* volume too large */
+         goto fail;
+      }
+
+      total_size += (uint64_t) lpr->num_slices_faces[level]
+                  * (uint64_t) lpr->img_stride[level];
       if (total_size > LP_MAX_TEXTURE_SIZE) {
          goto fail;
       }
