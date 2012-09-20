@@ -210,7 +210,7 @@ typedef enum prog_opcode {
    OPCODE_RCC,       /*                    1.1                   */
    OPCODE_RCP,       /*   X        X       X       X         X   */
    OPCODE_RET,       /*                    2       2        opt  */
-   OPCODE_RFL,       /*            X               X             */
+   OPCODE_RFL,       /*                            X             */
    OPCODE_RSQ,       /*   X        X       X       X         X   */
    OPCODE_SCS,       /*            X                         X   */
    OPCODE_SEQ,       /*                    2       X         X   */
