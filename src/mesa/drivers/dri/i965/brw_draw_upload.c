@@ -411,6 +411,10 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    intel_buffer_object(glarray->BufferObj);
 	 int k;
 
+	 /* If we have a VB set to be uploaded for this buffer object
+	  * already, reuse that VB state so that we emit fewer
+	  * relocations.
+	  */
 	 for (k = 0; k < i; k++) {
 	    const struct gl_client_array *other = brw->vb.enabled[k]->glarray;
 	    if (glarray->BufferObj == other->BufferObj &&
