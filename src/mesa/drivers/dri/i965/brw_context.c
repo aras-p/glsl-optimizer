@@ -254,10 +254,10 @@ brwCreateContext(int api,
       MIN2(ctx->Const.VertexProgram.MaxNativeParameters,
 	   ctx->Const.VertexProgram.MaxEnvParams);
 
-   ctx->Const.FragmentProgram.MaxNativeInstructions = (16 * 1024);
-   ctx->Const.FragmentProgram.MaxNativeAluInstructions = (16 * 1024);
-   ctx->Const.FragmentProgram.MaxNativeTexInstructions = (16 * 1024);
-   ctx->Const.FragmentProgram.MaxNativeTexIndirections = (16 * 1024);
+   ctx->Const.FragmentProgram.MaxNativeInstructions = (1 * 1024);
+   ctx->Const.FragmentProgram.MaxNativeAluInstructions = (1 * 1024);
+   ctx->Const.FragmentProgram.MaxNativeTexInstructions = (1 * 1024);
+   ctx->Const.FragmentProgram.MaxNativeTexIndirections = (1 * 1024);
    ctx->Const.FragmentProgram.MaxNativeAttribs = 12;
    ctx->Const.FragmentProgram.MaxNativeTemps = 256;
    ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
