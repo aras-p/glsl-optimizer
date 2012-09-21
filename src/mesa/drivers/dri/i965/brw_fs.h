@@ -240,12 +240,12 @@ public:
    void split_virtual_grfs();
    void setup_pull_constants();
    void calculate_live_intervals();
-   bool propagate_constants();
    bool opt_algebraic();
    bool opt_cse();
    bool opt_cse_local(fs_bblock *block, exec_list *aeb);
    bool opt_copy_propagate();
    bool try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry);
+   bool try_constant_propagate(fs_inst *inst, acp_entry *entry);
    bool opt_copy_propagate_local(void *mem_ctx, fs_bblock *block,
 				 exec_list *acp);
    bool register_coalesce();
