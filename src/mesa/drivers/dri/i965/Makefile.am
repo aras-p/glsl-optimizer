@@ -38,6 +38,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mesa/drivers/dri/intel/server \
 	$(DEFINES) \
 	$(API_DEFINES) \
+	$(VISIBILITY_CFLAGS) \
 	$(INTEL_CFLAGS)
 
 AM_CXXFLAGS = $(AM_CFLAGS)
