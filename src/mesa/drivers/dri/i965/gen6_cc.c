@@ -174,8 +174,17 @@ gen6_upload_blend_state(struct brw_context *brw)
          /* _NEW_MULTISAMPLE */
          blend[b].blend1.alpha_to_coverage =
             ctx->Multisample._Enabled && ctx->Multisample.SampleAlphaToCoverage;
-         blend[b].blend1.alpha_to_one =
-            ctx->Multisample._Enabled && ctx->Multisample.SampleAlphaToOne;
+
+	/* From SandyBridge PRM, volume 2 Part 1, section 8.2.3, BLEND_STATE:
+	 * DWord 1, Bit 30 (AlphaToOne Enable):
+	 * "If Dual Source Blending is enabled, this bit must be disabled"
+	 */
+	 if (ctx->Color.Blend[b]._UsesDualSrc)
+            blend[b].blend1.alpha_to_one = false;
+	 else
+	    blend[b].blend1.alpha_to_one =
+	       ctx->Multisample._Enabled && ctx->Multisample.SampleAlphaToOne;
+
          blend[b].blend1.alpha_to_coverage_dither = (brw->intel.gen >= 7);
       }
       else {
