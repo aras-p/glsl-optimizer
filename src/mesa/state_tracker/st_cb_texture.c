@@ -1379,6 +1379,11 @@ st_TestProxyTexImage(struct gl_context *ctx, GLenum target,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
 
+   if (width == 0 || height == 0 || depth == 0) {
+      /* zero-sized images are legal, and always fit! */
+      return GL_TRUE;
+   }
+
    if (pipe->screen->can_create_resource) {
       /* Ask the gallium driver if the texture is too large */
       struct gl_texture_object *texObj =
