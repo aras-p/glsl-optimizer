@@ -32,6 +32,9 @@
 #include "intel_bufmgr.h"
 #include "intel_buffers.h"
 
+static void
+intel_batchbuffer_reset(struct intel_context *intel);
+
 struct cached_batch_item {
    struct cached_batch_item *next;
    uint16_t header;
@@ -67,7 +70,7 @@ intel_batchbuffer_init(struct intel_context *intel)
    }
 }
 
-void
+static void
 intel_batchbuffer_reset(struct intel_context *intel)
 {
    if (intel->batch.last_bo != NULL) {

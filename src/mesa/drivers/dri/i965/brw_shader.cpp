@@ -62,7 +62,7 @@ brw_new_shader_program(struct gl_context *ctx, GLuint name)
  * what non-orthogonal state will be set, in the hope that it reflects
  * the eventual NOS used, and thus allows us to produce link failures.
  */
-bool
+static bool
 brw_shader_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);

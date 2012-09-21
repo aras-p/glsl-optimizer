@@ -220,7 +220,7 @@ intel_quantize_num_samples(struct intel_screen *intel, unsigned num_samples)
  * Called via glRenderbufferStorageEXT() to set the format and allocate
  * storage for a user-created renderbuffer.
  */
-GLboolean
+static GLboolean
 intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                                  GLenum internalFormat,
                                  GLuint width, GLuint height)

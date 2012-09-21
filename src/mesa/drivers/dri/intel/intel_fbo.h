@@ -140,12 +140,6 @@ intel_create_wrapped_renderbuffer(struct gl_context * ctx,
 				  int width, int height,
 				  gl_format format);
 
-GLboolean
-intel_alloc_renderbuffer_storage(struct gl_context * ctx,
-				 struct gl_renderbuffer *rb,
-                                 GLenum internalFormat,
-                                 GLuint width, GLuint height);
-
 extern void
 intel_fbo_init(struct intel_context *intel);
 

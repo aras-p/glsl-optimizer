@@ -190,7 +190,7 @@ static const struct __DRI2flushExtensionRec intelFlushExtension = {
     dri2InvalidateDrawable,
 };
 
-struct intel_image_format intel_image_formats[] = {
+static struct intel_image_format intel_image_formats[] = {
    { __DRI_IMAGE_FOURCC_ARGB8888, __DRI_IMAGE_COMPONENTS_RGBA, 1,
      { { 0, 0, 0, __DRI_IMAGE_FORMAT_ARGB8888, 4 } } },
 

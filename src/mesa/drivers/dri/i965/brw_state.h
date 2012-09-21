@@ -217,11 +217,6 @@ void gen7_set_surface_mcs_info(struct brw_context *brw,
 void gen7_check_surface_setup(struct gen7_surface_state *surf,
                               bool is_render_target);
 void gen7_init_vtable_surface_functions(struct brw_context *brw);
-void gen7_create_constant_surface(struct brw_context *brw,
-				  drm_intel_bo *bo,
-				  uint32_t offset,
-				  int width,
-				  uint32_t *out_offset);
 
 /* brw_wm_sampler_state.c */
 uint32_t translate_wrap_mode(GLenum wrap, bool using_nearest);
