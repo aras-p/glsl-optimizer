@@ -357,11 +357,10 @@ static void brw_prepare_vertices(struct brw_context *brw)
    /* CACHE_NEW_VS_PROG */
    GLbitfield64 vs_inputs = brw->vs.prog_data->inputs_read;
    const unsigned char *ptr = NULL;
-   GLuint interleaved = 0, total_size = 0;
+   GLuint interleaved = 0;
    unsigned int min_index = brw->vb.min_index;
    unsigned int max_index = brw->vb.max_index;
    int delta, i, j;
-   GLboolean can_merge_uploads = GL_TRUE;
 
    struct brw_vertex_element *upload[VERT_ATTRIB_MAX];
    GLuint nr_uploads = 0;
@@ -473,13 +472,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 }
 
 	 upload[nr_uploads++] = input;
-
-	 total_size = ALIGN(total_size, type_size);
-	 total_size += input->element_size;
-
-         if (glarray->InstanceDivisor != 0) {
-            can_merge_uploads = GL_FALSE;
-         }
       }
    }
 
@@ -498,7 +490,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
    /* Handle any arrays to be uploaded. */
    if (nr_uploads > 1) {
-      if (interleaved && interleaved <= 2*total_size) {
+      if (interleaved) {
 	 struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
 	 /* All uploads are interleaved, so upload the arrays together as
 	  * interleaved.  First, upload the contents and set up upload[0].
@@ -514,46 +506,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    upload[i]->buffer = j;
 	 }
 	 j++;
-
-	 nr_uploads = 0;
-      }
-      else if ((total_size < 2048) && can_merge_uploads) {
-	 /* Upload non-interleaved arrays into a single interleaved array */
-	 struct brw_vertex_buffer *buffer;
-	 int count = MAX2(max_index - min_index + 1, 1);
-	 int offset;
-	 char *map;
-
-	 map = intel_upload_map(&brw->intel, total_size * count, total_size);
-	 for (i = offset = 0; i < nr_uploads; i++) {
-	    const unsigned char *src = upload[i]->glarray->Ptr;
-	    int size = upload[i]->element_size;
-	    int stride = upload[i]->glarray->StrideB;
-	    char *dst;
-	    int n;
-
-	    offset = ALIGN(offset, get_size(upload[i]->glarray->Type));
-	    dst = map + offset;
-	    src += min_index * stride;
-
-	    for (n = 0; n < count; n++) {
-	       memcpy(dst, src, size);
-	       src += stride;
-	       dst += total_size;
-	    }
-
-	    upload[i]->offset = offset;
-	    upload[i]->buffer = j;
-
-	    offset += size;
-	 }
-	 assert(offset == total_size);
-	 buffer = &brw->vb.buffers[j++];
-	 intel_upload_unmap(&brw->intel, map, offset * count, offset,
-			    &buffer->bo, &buffer->offset);
-	 buffer->stride = offset;
-	 buffer->step_rate = 0;
-	 buffer->offset -= delta * offset;
 
 	 nr_uploads = 0;
       }
