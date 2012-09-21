@@ -239,6 +239,8 @@ pipe_screen::get_compute_param.
   resource.  Value type: ``uint64_t``.
 * ``PIPE_COMPUTE_CAP_MAX_INPUT_SIZE``: Maximum size of the INPUT
   resource.  Value type: ``uint64_t``.
+* ``PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE``: Maximum size of a memory object
+  allocation in bytes.  Value type: ``uint64_t``.
 
 .. _pipe_bind:
 

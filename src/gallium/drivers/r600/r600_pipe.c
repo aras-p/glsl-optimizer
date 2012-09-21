@@ -667,6 +667,22 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 		}
 		return sizeof(uint64_t);
 
+	case PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE:
+		if (ret) {
+			uint64_t max_global_size;
+			uint64_t * max_mem_alloc_size = ret;
+			r600_get_compute_param(screen,
+					PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE,
+					&max_global_size);
+			/* OpenCL requres this value be at least
+			 * max(MAX_GLOBAL_SIZE / 4, 128 * 1024 *1024)
+			 * I'm really not sure what value to report here, but
+			 * MAX_GLOBAL_SIZE / 4 seems resonable.
+			 */
+			*max_mem_alloc_size = max_global_size / 4;
+		}
+		return sizeof(uint64_t);
+
 	default:
 		fprintf(stderr, "unknown PIPE_COMPUTE_CAP %d\n", param);
 		return 0;
