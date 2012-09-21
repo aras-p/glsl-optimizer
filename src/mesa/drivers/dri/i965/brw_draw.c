@@ -451,13 +451,6 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
    brw->vb.max_index = max_index;
    brw->state.dirty.brw |= BRW_NEW_VERTICES;
 
-   /* Have to validate state quite late.  Will rebuild tnl_program,
-    * which depends on varying information.  
-    * 
-    * Note this is where brw->vs->prog_data.inputs_read is calculated,
-    * so can't access it earlier.
-    */
-
    for (i = 0; i < nr_prims; i++) {
       int estimated_max_prim_size;
 
