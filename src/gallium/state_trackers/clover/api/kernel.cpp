@@ -259,13 +259,12 @@ namespace {
       };
    }
 
-   template<typename T, typename S>
-   std::vector<T>
-   opt_vector(const T *p, S n) {
+   std::vector<size_t>
+   opt_vector(const size_t *p, unsigned n, size_t x) {
       if (p)
          return { p, p + n };
       else
-         return { n };
+         return { n, x };
    }
 }
 
@@ -275,9 +274,9 @@ clEnqueueNDRangeKernel(cl_command_queue q, cl_kernel kern,
                        const size_t *pgrid_size, const size_t *pblock_size,
                        cl_uint num_deps, const cl_event *deps,
                        cl_event *ev) try {
-   const std::vector<size_t> grid_offset = opt_vector(pgrid_offset, dims);
-   const std::vector<size_t> grid_size = opt_vector(pgrid_size, dims);
-   const std::vector<size_t> block_size = opt_vector(pblock_size, dims);
+   auto grid_offset = opt_vector(pgrid_offset, dims, 0);
+   auto grid_size = opt_vector(pgrid_size, dims, 1);
+   auto block_size = opt_vector(pblock_size, dims, 1);
 
    kernel_validate(q, kern, dims, pgrid_offset, pgrid_size, pblock_size,
                    num_deps, deps, ev);
