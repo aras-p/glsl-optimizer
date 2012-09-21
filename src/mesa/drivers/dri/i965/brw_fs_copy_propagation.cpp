@@ -195,37 +195,51 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
  * list.
  */
 bool
-fs_visitor::opt_copy_propagate_local(void *mem_ctx,
-				     fs_bblock *block, exec_list *acp)
+fs_visitor::opt_copy_propagate_local(void *mem_ctx, fs_bblock *block)
 {
    bool progress = false;
+   int acp_count = 16;
+   exec_list acp[acp_count];
 
    for (fs_inst *inst = block->start;
 	inst != block->end->next;
 	inst = (fs_inst *)inst->next) {
 
       /* Try propagating into this instruction. */
-      foreach_list(entry_node, acp) {
-	 acp_entry *entry = (acp_entry *)entry_node;
+      for (int i = 0; i < 3; i++) {
+         if (inst->src[i].file != GRF)
+            continue;
 
-         if (try_constant_propagate(inst, entry))
-            progress = true;
+         foreach_list(entry_node, &acp[inst->src[i].reg % acp_count]) {
+            acp_entry *entry = (acp_entry *)entry_node;
 
-	 for (int i = 0; i < 3; i++) {
-	    if (try_copy_propagate(inst, i, entry))
-	       progress = true;
-	 }
+            if (try_constant_propagate(inst, entry))
+               progress = true;
+
+            if (try_copy_propagate(inst, i, entry))
+               progress = true;
+         }
       }
 
       /* kill the destination from the ACP */
       if (inst->dst.file == GRF) {
-	 foreach_list_safe(entry_node, acp) {
+	 foreach_list_safe(entry_node, &acp[inst->dst.reg % acp_count]) {
 	    acp_entry *entry = (acp_entry *)entry_node;
 
-	    if (inst->overwrites_reg(entry->dst) ||
-                inst->overwrites_reg(entry->src)) {
+	    if (inst->overwrites_reg(entry->dst)) {
 	       entry->remove();
 	    }
+	 }
+
+         /* Oops, we only have the chaining hash based on the destination, not
+          * the source, so walk across the entire table.
+          */
+         for (int i = 0; i < acp_count; i++) {
+            foreach_list_safe(entry_node, &acp[i]) {
+               acp_entry *entry = (acp_entry *)entry_node;
+               if (inst->overwrites_reg(entry->src))
+                  entry->remove();
+            }
 	 }
       }
 
@@ -246,7 +260,7 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx,
 	 acp_entry *entry = ralloc(mem_ctx, acp_entry);
 	 entry->dst = inst->dst;
 	 entry->src = inst->src[0];
-	 acp->push_tail(entry);
+	 acp[entry->dst.reg % acp_count].push_tail(entry);
       }
    }
 
@@ -263,9 +277,8 @@ fs_visitor::opt_copy_propagate()
 
    for (int b = 0; b < cfg.num_blocks; b++) {
       fs_bblock *block = cfg.blocks[b];
-      exec_list acp;
 
-      progress = opt_copy_propagate_local(mem_ctx, block, &acp) || progress;
+      progress = opt_copy_propagate_local(mem_ctx, block) || progress;
    }
 
    ralloc_free(mem_ctx);
