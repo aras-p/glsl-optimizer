@@ -35,6 +35,32 @@
 #include "brw_defines.h"
 #include "brw_wm.h"
 
+/**
+ * Convert an swizzle enumeration (i.e. SWIZZLE_X) to one of the Gen7.5+
+ * "Shader Channel Select" enumerations (i.e. HSW_SCS_RED)
+ */
+static unsigned
+swizzle_to_scs(GLenum swizzle)
+{
+   switch (swizzle) {
+   case SWIZZLE_X:
+      return HSW_SCS_RED;
+   case SWIZZLE_Y:
+      return HSW_SCS_GREEN;
+   case SWIZZLE_Z:
+      return HSW_SCS_BLUE;
+   case SWIZZLE_W:
+      return HSW_SCS_ALPHA;
+   case SWIZZLE_ZERO:
+      return HSW_SCS_ZERO;
+   case SWIZZLE_ONE:
+      return HSW_SCS_ONE;
+   }
+
+   assert(!"Should not get here: invalid swizzle mode");
+   return HSW_SCS_ZERO;
+}
+
 void
 gen7_set_surface_tiling(struct gen7_surface_state *surf, uint32_t tiling)
 {
@@ -343,10 +369,21 @@ gen7_update_texture_surface(struct gl_context *ctx,
     */
 
    if (brw->intel.is_haswell) {
-      surf->ss7.shader_channel_select_r = HSW_SCS_RED;
-      surf->ss7.shader_channel_select_g = HSW_SCS_GREEN;
-      surf->ss7.shader_channel_select_b = HSW_SCS_BLUE;
-      surf->ss7.shader_channel_select_a = HSW_SCS_ALPHA;
+      /* Handling GL_ALPHA as a surface format override breaks 1.30+ style
+       * texturing functions that return a float, as our code generation always
+       * selects the .x channel (which would always be 0).
+       */
+      const bool alpha_depth = tObj->DepthMode == GL_ALPHA &&
+         (firstImage->_BaseFormat == GL_DEPTH_COMPONENT ||
+          firstImage->_BaseFormat == GL_DEPTH_STENCIL);
+
+      const int swizzle =
+         unlikely(alpha_depth) ? SWIZZLE_XYZW : brw_get_texture_swizzle(tObj);
+
+      surf->ss7.shader_channel_select_r = swizzle_to_scs(GET_SWZ(swizzle, 0));
+      surf->ss7.shader_channel_select_g = swizzle_to_scs(GET_SWZ(swizzle, 1));
+      surf->ss7.shader_channel_select_b = swizzle_to_scs(GET_SWZ(swizzle, 2));
+      surf->ss7.shader_channel_select_a = swizzle_to_scs(GET_SWZ(swizzle, 3));
    }
 
    /* Emit relocation to surface contents */
