@@ -150,19 +150,42 @@ const float log2_values[] = {
 };
 
 
+static float rcpf(float x)
+{
+   return 1.0/x;
+}
+
+
+const float rcp_values[] = {
+   -0.0, 0.0,
+   -1.0, 1.0,
+   -1e-007, 1e-007,
+   -4.0, 4.0,
+   -1e+035, -100000,
+   100000, 1e+035,
+   5.88e-39f, // denormal
+#if (__STDC_VERSION__ >= 199901L)
+   INFINITY, -INFINITY,
+#endif
+};
+
+
 static float rsqrtf(float x)
 {
-   return 1.0/sqrt(x);
+   return 1.0/(float)sqrt(x);
 }
 
 
 const float rsqrt_values[] = {
-   -1, -1e-007,
-   1e-007, 1,
-   -4, -1,
-   1, 4,
-   -1e+035, -100000,
+   // http://msdn.microsoft.com/en-us/library/windows/desktop/bb147346.aspx
+   0.0, // must yield infinity
+   1.0, // must yield 1.0
+   1e-007, 4.0,
    100000, 1e+035,
+   5.88e-39f, // denormal
+#if (__STDC_VERSION__ >= 199901L)
+   INFINITY,
+#endif
 };
 
 
@@ -231,6 +254,7 @@ unary_tests[] = {
    {"log2", &lp_build_log2, &log2f, log2_values, Elements(log2_values), 20.0 },
    {"exp", &lp_build_exp, &expf, exp2_values, Elements(exp2_values), 18.0 },
    {"log", &lp_build_log, &logf, log2_values, Elements(log2_values), 20.0 },
+   {"rcp", &lp_build_rcp, &rcpf, rcp_values, Elements(rcp_values), 20.0 },
    {"rsqrt", &lp_build_rsqrt, &rsqrtf, rsqrt_values, Elements(rsqrt_values), 20.0 },
    {"sin", &lp_build_sin, &sinf, sincos_values, Elements(sincos_values), 20.0 },
    {"cos", &lp_build_cos, &cosf, sincos_values, Elements(sincos_values), 20.0 },
@@ -330,7 +354,11 @@ test_unary(unsigned verbose, FILE *fp, const struct unary_test_t *test)
          double error, precision;
          bool pass;
 
-         error = fabs(out[i] - ref);
+         if (util_inf_sign(ref) && util_inf_sign(out[i]) == util_inf_sign(ref)) {
+            error = 0;
+         } else {
+            error = fabs(out[i] - ref);
+         }
          precision = error ? -log2(error/fabs(ref)) : FLT_MANT_DIG;
 
          pass = precision >= test->precision;

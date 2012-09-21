@@ -60,6 +60,7 @@
 #include "lp_bld_debug.h"
 #include "lp_bld_arit.h"
 
+#include "float.h"
 
 #define EXP_POLY_DEGREE 5
 
@@ -1953,8 +1954,7 @@ lp_build_rcp(struct lp_build_context *bld,
  *
  *   x_{i+1} = 0.5 * x_i * (3.0 - a * x_i * x_i)
  *
- * See also:
- * - http://softwarecommunity.intel.com/articles/eng/1818.htm
+ * See also Intel 64 and IA-32 Architectures Optimization Manual.
  */
 static INLINE LLVMValueRef
 lp_build_rsqrt_refine(struct lp_build_context *bld,
@@ -1977,7 +1977,8 @@ lp_build_rsqrt_refine(struct lp_build_context *bld,
 
 
 /**
- * Generate 1/sqrt(a)
+ * Generate 1/sqrt(a).
+ * Result is undefined for values < 0, infinity for +0.
  */
 LLVMValueRef
 lp_build_rsqrt(struct lp_build_context *bld,
@@ -1990,8 +1991,11 @@ lp_build_rsqrt(struct lp_build_context *bld,
 
    assert(type.floating);
 
-   if ((util_cpu_caps.has_sse && type.width == 32 && type.length == 4) ||
-        (util_cpu_caps.has_avx && type.width == 32 && type.length == 8)) {
+   /*
+    * This should be faster but all denormals will end up as infinity.
+    */
+   if (0 && ((util_cpu_caps.has_sse && type.width == 32 && type.length == 4) ||
+        (util_cpu_caps.has_avx && type.width == 32 && type.length == 8))) {
       const unsigned num_iterations = 1;
       LLVMValueRef res;
       unsigned i;
@@ -2003,12 +2007,41 @@ lp_build_rsqrt(struct lp_build_context *bld,
       else {
          intrinsic = "llvm.x86.avx.rsqrt.ps.256";
       }
+      if (num_iterations) {
+         /*
+          * Newton-Raphson will result in NaN instead of infinity for zero,
+          * and NaN instead of zero for infinity.
+          * Also, need to ensure rsqrt(1.0) == 1.0.
+          * All numbers smaller than FLT_MIN will result in +infinity
+          * (rsqrtps treats all denormals as zero).
+          */
+         /*
+          * Certain non-c99 compilers don't know INFINITY and might not support
+          * hacks to evaluate it at compile time neither.
+          */
+         const unsigned posinf_int = 0x7F800000;
+         LLVMValueRef cmp;
+         LLVMValueRef flt_min = lp_build_const_vec(bld->gallivm, type, FLT_MIN);
+         LLVMValueRef inf = lp_build_const_int_vec(bld->gallivm, type, posinf_int);
 
-      res = lp_build_intrinsic_unary(builder, intrinsic, bld->vec_type, a);
+         inf = LLVMBuildBitCast(builder, inf, lp_build_vec_type(bld->gallivm, type), "");
 
+         res = lp_build_intrinsic_unary(builder, intrinsic, bld->vec_type, a);
 
-      for (i = 0; i < num_iterations; ++i) {
-         res = lp_build_rsqrt_refine(bld, a, res);
+         for (i = 0; i < num_iterations; ++i) {
+            res = lp_build_rsqrt_refine(bld, a, res);
+         }
+         cmp = lp_build_compare(bld->gallivm, type, PIPE_FUNC_LESS, a, flt_min);
+         res = lp_build_select(bld, cmp, inf, res);
+         cmp = lp_build_compare(bld->gallivm, type, PIPE_FUNC_EQUAL, a, inf);
+         res = lp_build_select(bld, cmp, bld->zero, res);
+         cmp = lp_build_compare(bld->gallivm, type, PIPE_FUNC_EQUAL, a, bld->one);
+         res = lp_build_select(bld, cmp, bld->one, res);
+      }
+      else {
+         /* rsqrt(1.0) != 1.0 here */
+         res = lp_build_intrinsic_unary(builder, intrinsic, bld->vec_type, a);
+
       }
 
       return res;
