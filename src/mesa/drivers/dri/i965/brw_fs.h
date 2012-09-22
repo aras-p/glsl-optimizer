@@ -316,6 +316,8 @@ public:
 			      fs_reg shadow_comp, fs_reg lod, fs_reg lod2);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0, fs_reg src1);
+   void emit_minmax(uint32_t conditionalmod, fs_reg dst,
+                    fs_reg src0, fs_reg src1);
    bool try_emit_saturate(ir_expression *ir);
    bool try_emit_mad(ir_expression *ir, int mul_arg);
    void emit_bool_to_cond_code(ir_rvalue *condition);

@@ -178,6 +178,24 @@ fs_visitor::visit(ir_dereference_array *ir)
    }
 }
 
+void
+fs_visitor::emit_minmax(uint32_t conditionalmod, fs_reg dst,
+                        fs_reg src0, fs_reg src1)
+{
+   fs_inst *inst;
+
+   if (intel->gen >= 6) {
+      inst = emit(BRW_OPCODE_SEL, dst, src0, src1);
+      inst->conditional_mod = conditionalmod;
+   } else {
+      inst = emit(BRW_OPCODE_CMP, reg_null_cmp, src0, src1);
+      inst->conditional_mod = conditionalmod;
+
+      inst = emit(BRW_OPCODE_SEL, dst, src0, src1);
+      inst->predicated = true;
+   }
+}
+
 /* Instruction selection: Produce a MOV.sat instead of
  * MIN(MAX(val, 0), 1) when possible.
  */
@@ -515,40 +533,12 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_min:
-      resolve_ud_negate(&op[0]);
-      resolve_ud_negate(&op[1]);
-
-      if (intel->gen >= 6) {
-	 inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_L;
-      } else {
-	 /* Unalias the destination */
-	 this->result = fs_reg(this, ir->type);
-
-	 inst = emit(BRW_OPCODE_CMP, this->result, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_L;
-
-	 inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
-	 inst->predicated = true;
-      }
-      break;
    case ir_binop_max:
       resolve_ud_negate(&op[0]);
       resolve_ud_negate(&op[1]);
-
-      if (intel->gen >= 6) {
-	 inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_GE;
-      } else {
-	 /* Unalias the destination */
-	 this->result = fs_reg(this, ir->type);
-
-	 inst = emit(BRW_OPCODE_CMP, this->result, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_G;
-
-	 inst = emit(BRW_OPCODE_SEL, this->result, op[0], op[1]);
-	 inst->predicated = true;
-      }
+      emit_minmax(ir->operation == ir_binop_min ?
+                  BRW_CONDITIONAL_L : BRW_CONDITIONAL_GE,
+                  this->result, op[0], op[1]);
       break;
 
    case ir_binop_pow:
