@@ -2124,13 +2124,22 @@ error:
  * to the OpenGL specification.
  */
 static GLboolean
-subtexture_error_check( struct gl_context *ctx, GLuint dimensions,
+texsubimage_error_check(struct gl_context *ctx, GLuint dimensions,
                         GLenum target, GLint level,
                         GLint xoffset, GLint yoffset, GLint zoffset,
                         GLint width, GLint height, GLint depth,
-                        GLenum format, GLenum type )
+                        GLenum format, GLenum type)
 {
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
    GLenum err;
+
+   /* check target (proxies not allowed) */
+   if (!legal_texsubimage_target(ctx, dimensions, target)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glTexSubImage%uD(target=%s)",
+                  dimensions, _mesa_lookup_enum_by_nr(target));
+      return GL_TRUE;
+   }
 
    /* level check */
    if (level < 0 || level >= _mesa_max_texture_levels(ctx, target)) {
@@ -2180,82 +2189,76 @@ subtexture_error_check( struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   return GL_FALSE;
-}
-
-
-/**
- * Do second part of glTexSubImage which depends on the destination texture.
- * \return GL_TRUE if error recorded, GL_FALSE otherwise
- */
-static GLboolean
-subtexture_error_check2( struct gl_context *ctx, GLuint dimensions,
-			 GLenum target, GLint level,
-			 GLint xoffset, GLint yoffset, GLint zoffset,
-			 GLint width, GLint height, GLint depth,
-			 GLenum format, GLenum type,
-			 const struct gl_texture_image *destTex )
-{
-   if (!destTex) {
-      /* undefined image level */
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexSubImage%dD", dimensions);
+   /* Get dest texture object / image pointers */
+   texObj = _mesa_get_current_tex_object(ctx, target);
+   if (!texObj) {
+      /* must be out of memory */
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage%dD()", dimensions);
       return GL_TRUE;
    }
 
-   if (xoffset < -((GLint)destTex->Border)) {
+   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+   if (!texImage) {
+      /* non-existant texture level */
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glTexSubImage%dD(invalid texture image)", dimensions);
+      return GL_TRUE;
+   }
+
+   if (xoffset < -((GLint)texImage->Border)) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage%dD(xoffset)",
                   dimensions);
       return GL_TRUE;
    }
-   if (xoffset + width > (GLint) (destTex->Width + destTex->Border)) {
+   if (xoffset + width > (GLint) (texImage->Width + texImage->Border)) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage%dD(xoffset+width)",
                   dimensions);
       return GL_TRUE;
    }
    if (dimensions > 1) {
-      GLint yBorder = (target == GL_TEXTURE_1D_ARRAY) ? 0 : destTex->Border;
+      GLint yBorder = (target == GL_TEXTURE_1D_ARRAY) ? 0 : texImage->Border;
       if (yoffset < -yBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage%dD(yoffset)",
                      dimensions);
          return GL_TRUE;
       }
-      if (yoffset + height > (GLint) destTex->Height + yBorder) {
+      if (yoffset + height > (GLint) texImage->Height + yBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage%dD(yoffset+height)",
                      dimensions);
          return GL_TRUE;
       }
    }
    if (dimensions > 2) {
-      GLint zBorder = (target == GL_TEXTURE_2D_ARRAY) ? 0 : destTex->Border;
+      GLint zBorder = (target == GL_TEXTURE_2D_ARRAY) ? 0 : texImage->Border;
       if (zoffset < -zBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage3D(zoffset)");
          return GL_TRUE;
       }
-      if (zoffset + depth  > (GLint) destTex->Depth + zBorder) {
+      if (zoffset + depth  > (GLint) texImage->Depth + zBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage3D(zoffset+depth)");
          return GL_TRUE;
       }
    }
 
-   if (_mesa_is_format_compressed(destTex->TexFormat)) {
-      if (compressedteximage_only_format(ctx, destTex->InternalFormat)) {
+   if (_mesa_is_format_compressed(texImage->TexFormat)) {
+      if (compressedteximage_only_format(ctx, texImage->InternalFormat)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                "glTexSubImage%dD(no compression for format)", dimensions);
          return GL_TRUE;
       }
 
       if (error_check_subtexture_dimensions(ctx, "glTexSubImage", dimensions,
-                                            destTex->TexFormat,
+                                            texImage->TexFormat,
                                             xoffset, yoffset,
                                             width, height,
-                                            destTex->Width, destTex->Height)) {
+                                            texImage->Width, texImage->Height)) {
          return GL_TRUE;
       }
    }
 
    if (ctx->Version >= 30 || ctx->Extensions.EXT_texture_integer) {
       /* both source and dest must be integer-valued, or neither */
-      if (_mesa_is_format_integer_color(destTex->TexFormat) !=
+      if (_mesa_is_format_integer_color(texImage->TexFormat) !=
           _mesa_is_enum_format_integer(format)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexSubImage%dD(integer/non-integer format mismatch)",
@@ -3160,8 +3163,9 @@ texsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
    if (ctx->NewState & _NEW_PIXEL)
       _mesa_update_state(ctx);
 
-   if (subtexture_error_check(ctx, dims, target, level, xoffset, yoffset, zoffset,
-                              width, height, depth, format, type)) {
+   if (texsubimage_error_check(ctx, dims, target, level,
+                               xoffset, yoffset, zoffset,
+                               width, height, depth, format, type)) {
       return;   /* error was detected */
    }
 
@@ -3171,13 +3175,7 @@ texsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
    {
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
-      if (subtexture_error_check2(ctx, dims, target, level,
-                                  xoffset, yoffset, zoffset,
-				  width, height, depth,
-                                  format, type, texImage)) {
-         /* error was recorded */
-      }
-      else if (width > 0 && height > 0 && depth > 0) {
+      if (width > 0 && height > 0 && depth > 0) {
          /* If we have a border, offset=-1 is legal.  Bias by border width. */
          switch (dims) {
          case 3:
