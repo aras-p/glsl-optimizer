@@ -1159,32 +1159,19 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    return inst;
 }
 
-/**
- * Emit code to produce the coordinates for a texture lookup.
- *
- * Returns the fs_reg containing the texture coordinate (as opposed to
- * setting this->result).
- */
 fs_reg
-fs_visitor::emit_texcoord(ir_texture *ir, int sampler, int texunit)
+fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
+                             bool is_rect, int sampler, int texunit)
 {
    fs_inst *inst = NULL;
-
-   if (!ir->coordinate)
-      return fs_reg(); /* Return the default BAD_FILE register. */
-
-   ir->coordinate->accept(this);
-   fs_reg coordinate = this->result;
-
    bool needs_gl_clamp = true;
-
    fs_reg scale_x, scale_y;
 
    /* The 965 requires the EU to do the normalization of GL rectangle
     * texture coordinates.  We use the program parameter state
     * tracking to get the scaling factor.
     */
-   if (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_RECT &&
+   if (is_rect &&
        (intel->gen < 6 ||
 	(intel->gen >= 6 && (c->key.tex.gl_clamp_mask[0] & (1 << sampler) ||
 			     c->key.tex.gl_clamp_mask[1] & (1 << sampler))))) {
@@ -1220,8 +1207,7 @@ fs_visitor::emit_texcoord(ir_texture *ir, int sampler, int texunit)
     * texture coordinates.  We use the program parameter state
     * tracking to get the scaling factor.
     */
-   if (intel->gen < 6 &&
-       ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_RECT) {
+   if (intel->gen < 6 && is_rect) {
       fs_reg dst = fs_reg(this, ir->coordinate->type);
       fs_reg src = coordinate;
       coordinate = dst;
@@ -1230,7 +1216,7 @@ fs_visitor::emit_texcoord(ir_texture *ir, int sampler, int texunit)
       dst.reg_offset++;
       src.reg_offset++;
       emit(BRW_OPCODE_MUL, dst, src, scale_y);
-   } else if (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_RECT) {
+   } else if (is_rect) {
       /* On gen6+, the sampler handles the rectangle coordinates
        * natively, without needing rescaling.  But that means we have
        * to do GL_CLAMP clamping at the [0, width], [0, height] scale,
@@ -1292,7 +1278,15 @@ fs_visitor::visit(ir_texture *ir)
     * done before loading any values into MRFs for the sampler message since
     * generating these values may involve SEND messages that need the MRFs.
     */
-   fs_reg coordinate = emit_texcoord(ir, sampler, texunit);
+   fs_reg coordinate;
+   if (ir->coordinate) {
+      ir->coordinate->accept(this);
+
+      coordinate = rescale_texcoord(ir, this->result,
+                                    ir->sampler->type->sampler_dimensionality ==
+                                    GLSL_SAMPLER_DIM_RECT,
+                                    sampler, texunit);
+   }
 
    fs_reg shadow_comparitor;
    if (ir->shadow_comparitor) {
