@@ -50,12 +50,6 @@
 #include "glformats.h"
 
 
-/* Inexplicably, GL_HALF_FLOAT_OES has a different value than GL_HALF_FLOAT.
- */
-#ifndef GL_HALF_FLOAT_OES
-#define GL_HALF_FLOAT_OES 0x8D61
-#endif
-
 /**
  * State changes which we care about for glCopyTex[Sub]Image() calls.
  * In particular, we care about pixel transfer state and buffer state

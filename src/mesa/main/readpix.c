@@ -40,11 +40,6 @@
 #include "fbobject.h"
 #include "teximage.h"
 
-/* Inexplicably, GL_HALF_FLOAT_OES has a different value than GL_HALF_FLOAT.
- */
-#ifndef GL_HALF_FLOAT_OES
-#define GL_HALF_FLOAT_OES 0x8D61
-#endif
 
 /**
  * Tries to implement glReadPixels() of GL_DEPTH_COMPONENT using memcpy of the

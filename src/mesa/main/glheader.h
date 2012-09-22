@@ -144,6 +144,13 @@ typedef void *GLeglImageOES;
 #endif
 
 
+/* Inexplicably, GL_HALF_FLOAT_OES has a different value than GL_HALF_FLOAT.
+ */
+#ifndef GL_HALF_FLOAT_OES
+#define GL_HALF_FLOAT_OES 0x8D61
+#endif
+
+
 /**
  * Internal token to represent a GLSL shader program (a collection of
  * one or more shaders that get linked together).  Note that GLSL
