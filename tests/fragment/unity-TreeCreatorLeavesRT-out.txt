@@ -14,39 +14,33 @@ void main ()
   tmpvar_2 = gl_TexCoord[3].xyz;
   tmpvar_3 = gl_TexCoord[4].xyz;
   vec4 c_4;
-  int j_5;
-  vec3 backContribs_6;
-  vec3 light_7;
-  float gloss_8;
-  float specular_9;
-  vec3 albedo_10;
-  j_5 = 0;
-  vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_MainTex, tmpvar_1);
-  float x_12;
-  x_12 = (tmpvar_11.w - _Cutoff);
-  if ((x_12 < 0.00000)) {
+  vec3 backContribs_5;
+  vec3 light_6;
+  float specular_7;
+  vec4 tmpvar_8;
+  tmpvar_8 = texture2D (_MainTex, tmpvar_1);
+  float x_9;
+  x_9 = (tmpvar_8.w - _Cutoff);
+  if ((x_9 < 0.00000)) {
     discard;
   };
-  vec3 tmpvar_13;
-  tmpvar_13 = (tmpvar_11.xyz * gl_TexCoord[1].xyz);
-  albedo_10 = tmpvar_13;
-  specular_9 = (texture2D (_BumpSpecMap, tmpvar_1).x * 128.000);
-  vec4 tmpvar_14;
-  tmpvar_14 = texture2D (_TranslucencyMap, tmpvar_1);
-  gloss_8 = tmpvar_14.w;
-  light_7 = (gl_LightModel.ambient.xyz * tmpvar_13);
-  backContribs_6 = (gl_TexCoord[2].xyz * tmpvar_14.z);
-  while (true) {
-    if ((j_5 >= 3)) {
-      break;
-    };
-    float tmpvar_15;
-    tmpvar_15 = (pow (tmpvar_3[j_5], specular_9) * gloss_8);
-    light_7 = (light_7 + (((albedo_10 * ((backContribs_6[j_5] * _TranslucencyColor) + tmpvar_2[j_5])) + (_SpecColor.xyz * tmpvar_15)) * _TerrainTreeLightColors[j_5].xyz));
-    j_5 = (j_5 + 1);
-  };
-  c_4.xyz = (light_7 * 2.00000);
+  vec3 tmpvar_10;
+  tmpvar_10 = (tmpvar_8.xyz * gl_TexCoord[1].xyz);
+  specular_7 = (texture2D (_BumpSpecMap, tmpvar_1).x * 128.000);
+  vec4 tmpvar_11;
+  tmpvar_11 = texture2D (_TranslucencyMap, tmpvar_1);
+  light_6 = (gl_LightModel.ambient.xyz * tmpvar_10);
+  backContribs_5 = (gl_TexCoord[2].xyz * tmpvar_11.z);
+  float tmpvar_12;
+  tmpvar_12 = (pow (tmpvar_3.x, specular_7) * tmpvar_11.w);
+  light_6 = (light_6 + (((tmpvar_10 * ((backContribs_5.x * _TranslucencyColor) + tmpvar_2.x)) + (_SpecColor.xyz * tmpvar_12)) * _TerrainTreeLightColors[0].xyz));
+  float tmpvar_13;
+  tmpvar_13 = (pow (tmpvar_3.y, specular_7) * tmpvar_11.w);
+  light_6 = (light_6 + (((tmpvar_10 * ((backContribs_5.y * _TranslucencyColor) + tmpvar_2.y)) + (_SpecColor.xyz * tmpvar_13)) * _TerrainTreeLightColors[1].xyz));
+  float tmpvar_14;
+  tmpvar_14 = (pow (tmpvar_3.z, specular_7) * tmpvar_11.w);
+  light_6 = (light_6 + (((tmpvar_10 * ((backContribs_5.z * _TranslucencyColor) + tmpvar_2.z)) + (_SpecColor.xyz * tmpvar_14)) * _TerrainTreeLightColors[2].xyz));
+  c_4.xyz = (light_6 * 2.00000);
   c_4.w = 1.00000;
   gl_FragData[0] = c_4;
 }
