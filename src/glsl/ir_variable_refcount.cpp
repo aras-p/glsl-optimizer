@@ -62,6 +62,19 @@ ir_variable_refcount_visitor::get_variable_entry(ir_variable *var)
    return entry;
 }
 
+ir_variable_refcount_entry *
+ir_variable_refcount_visitor::find_variable_entry(ir_variable *var)
+{
+	assert(var);
+	foreach_iter(exec_list_iterator, iter, this->variable_list) {
+		ir_variable_refcount_entry *entry = (ir_variable_refcount_entry *)iter.get();
+		if (entry->var == var)
+			return entry;
+	}
+	return NULL;
+}
+
+
 
 ir_visitor_status
 ir_variable_refcount_visitor::visit(ir_variable *ir)
