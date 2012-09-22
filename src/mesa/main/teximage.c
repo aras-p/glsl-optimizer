@@ -1343,22 +1343,81 @@ _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
 
 
 /**
- * Do error checking of xoffset, yoffset, width, height for glTexSubImage,
- * glCopyTexSubImage and glCompressedTexSubImage.
- * Basically, check that the subregion is aligned to the compressed format's
- * block size.  See comments in function for more info.
+ * Do error checking of xoffset, yoffset, zoffset, width, height and depth
+ * for glTexSubImage, glCopyTexSubImage and glCompressedTexSubImage.
+ * \param destImage  the destination texture image.
  * \return GL_TRUE if error found, GL_FALSE otherwise.
  */
 static GLboolean
 error_check_subtexture_dimensions(struct gl_context *ctx,
-                                  const char *function,
-                                  GLuint dims,
-                                  gl_format texFormat,
-                                  GLint xoffset, GLint yoffset,
+                                  const char *function, GLuint dims,
+                                  const struct gl_texture_image *destImage,
+                                  GLint xoffset, GLint yoffset, GLint zoffset,
                                   GLsizei subWidth, GLsizei subHeight,
-                                  GLsizei texWidth, GLsizei texHeight)
+                                  GLsizei subDepth)
 {
+   const GLenum target = destImage->TexObject->Target;
    GLuint bw, bh;
+
+   /* Check size */
+   if (subWidth < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "%s%dD(width=%d)", function, dims, subWidth);
+      return GL_TRUE;
+   }
+
+   if (dims > 1 && subHeight < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "%s%dD(height=%d)", function, dims, subHeight);
+      return GL_TRUE;
+   }
+
+   if (dims > 2 && subDepth < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "%s%dD(depth=%d)", function, dims, subDepth);
+      return GL_TRUE;
+   }
+
+   /* check xoffset and width */
+   if (xoffset < -destImage->Border) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s%dD(xoffset)",
+                  function, dims);
+      return GL_TRUE;
+   }
+
+   if (xoffset + subWidth > destImage->Width) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s%dD(xoffset+width)",
+                  function, dims);
+      return GL_TRUE;
+   }
+
+   /* check yoffset and height */
+   if (dims > 1) {
+      GLint yBorder = (target == GL_TEXTURE_1D_ARRAY) ? 0 : destImage->Border;
+      if (yoffset < -yBorder) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "%s%dD(yoffset)",
+                     function, dims);
+         return GL_TRUE;
+      }
+      if (yoffset + subHeight > destImage->Height) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "%s%dD(yoffset+height)",
+                     function, dims);
+         return GL_TRUE;
+      }
+   }
+
+   /* check zoffset and depth */
+   if (dims > 2) {
+      GLint zBorder = (target == GL_TEXTURE_2D_ARRAY) ? 0 : destImage->Border;
+      if (zoffset < -zBorder) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "%s3D(zoffset)", function);
+         return GL_TRUE;
+      }
+      if (zoffset + subDepth  > (GLint) destImage->Depth) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "%s3D(zoffset+depth)", function);
+         return GL_TRUE;
+      }
+   }
 
    /*
     * The OpenGL spec (and GL_ARB_texture_compression) says only whole
@@ -1367,28 +1426,30 @@ error_check_subtexture_dimensions(struct gl_context *ctx,
     * compressed formats supported by Mesa allow sub-textures to be updated
     * along compressed block boundaries.
     */
-   _mesa_get_format_block_size(texFormat, &bw, &bh);
+   _mesa_get_format_block_size(destImage->TexFormat, &bw, &bh);
 
-   /* offset must be multiple of block size */
-   if ((xoffset % bw != 0) || (yoffset % bh != 0)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "%s%dD(xoffset = %d, yoffset = %d)",
-                  function, dims, xoffset, yoffset);
-      return GL_TRUE;
+   if (bw != 1 || bh != 1) {
+      /* offset must be multiple of block size */
+      if ((xoffset % bw != 0) || (yoffset % bh != 0)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s%dD(xoffset = %d, yoffset = %d)",
+                     function, dims, xoffset, yoffset);
+         return GL_TRUE;
+      }
+
+      /* size must be multiple of bw by bh or equal to whole texture size */
+      if ((subWidth % bw != 0) && subWidth != destImage->Width) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s%dD(width = %d)", function, dims, subWidth);
+         return GL_TRUE;
+      }
+
+      if ((subHeight % bh != 0) && subHeight != destImage->Height) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s%dD(height = %d)", function, dims, subHeight);
+         return GL_TRUE;
+      }         
    }
-
-   /* size must be multiple of bw by bh or equal to whole texture size */
-   if ((subWidth % bw != 0) && subWidth != texWidth) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "%s%dD(width = %d)", function, dims, subWidth);
-      return GL_TRUE;
-   }
-
-   if ((subHeight % bh != 0) && subHeight != texHeight) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "%s%dD(height = %d)", function, dims, subHeight);
-      return GL_TRUE;
-   }         
 
    return GL_FALSE;
 }
@@ -2147,23 +2208,6 @@ texsubimage_error_check(struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   /* Check for negative sizes */
-   if (width < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glTexSubImage%dD(width=%d)", dimensions, width);
-      return GL_TRUE;
-   }
-   if (height < 0 && dimensions > 1) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glTexSubImage%dD(height=%d)", dimensions, height);
-      return GL_TRUE;
-   }
-   if (depth < 0 && dimensions > 2) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glTexSubImage%dD(depth=%d)", dimensions, depth);
-      return GL_TRUE;
-   }
-
    /* OpenGL ES 1.x and OpenGL ES 2.0 impose additional restrictions on the
     * combinations of format and type that can be used.  Formats and types
     * that require additional extensions (e.g., GL_FLOAT requires
@@ -2205,53 +2249,16 @@ texsubimage_error_check(struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   if (xoffset < -((GLint)texImage->Border)) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage%dD(xoffset)",
-                  dimensions);
+   if (error_check_subtexture_dimensions(ctx, "glTexSubImage", dimensions,
+                                         texImage, xoffset, yoffset, 0,
+                                         width, height, 1)) {
       return GL_TRUE;
-   }
-   if (xoffset + width > (GLint) (texImage->Width + texImage->Border)) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage%dD(xoffset+width)",
-                  dimensions);
-      return GL_TRUE;
-   }
-   if (dimensions > 1) {
-      GLint yBorder = (target == GL_TEXTURE_1D_ARRAY) ? 0 : texImage->Border;
-      if (yoffset < -yBorder) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage%dD(yoffset)",
-                     dimensions);
-         return GL_TRUE;
-      }
-      if (yoffset + height > (GLint) texImage->Height + yBorder) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage%dD(yoffset+height)",
-                     dimensions);
-         return GL_TRUE;
-      }
-   }
-   if (dimensions > 2) {
-      GLint zBorder = (target == GL_TEXTURE_2D_ARRAY) ? 0 : texImage->Border;
-      if (zoffset < -zBorder) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage3D(zoffset)");
-         return GL_TRUE;
-      }
-      if (zoffset + depth  > (GLint) texImage->Depth + zBorder) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage3D(zoffset+depth)");
-         return GL_TRUE;
-      }
    }
 
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
       if (compressedteximage_only_format(ctx, texImage->InternalFormat)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                "glTexSubImage%dD(no compression for format)", dimensions);
-         return GL_TRUE;
-      }
-
-      if (error_check_subtexture_dimensions(ctx, "glTexSubImage", dimensions,
-                                            texImage->TexFormat,
-                                            xoffset, yoffset,
-                                            width, height,
-                                            texImage->Width, texImage->Height)) {
          return GL_TRUE;
       }
    }
@@ -2491,65 +2498,11 @@ copytexsubimage_error_check(struct gl_context *ctx, GLuint dimensions,
                                          width, height, 1)) {
       return GL_TRUE;
    }
-   if (dimensions > 1 && height < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyTexSubImage%dD(height=%d)", dimensions, height);
-      return GL_TRUE;
-   }
-
-   /* check x/y offsets */
-   if (xoffset < -((GLint) texImage->Border)) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyTexSubImage%dD(xoffset=%d)", dimensions, xoffset);
-      return GL_TRUE;
-   }
-   if (xoffset + width > (GLint) (texImage->Width + texImage->Border)) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCopyTexSubImage%dD(xoffset+width)", dimensions);
-      return GL_TRUE;
-   }
-   if (dimensions > 1) {
-      GLint yBorder = (target == GL_TEXTURE_1D_ARRAY) ? 0 : texImage->Border;
-      if (yoffset < -yBorder) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glCopyTexSubImage%dD(yoffset=%d)", dimensions, yoffset);
-         return GL_TRUE;
-      }
-      /* NOTE: we're adding the border here, not subtracting! */
-      if (yoffset + height > (GLint) texImage->Height + yBorder) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glCopyTexSubImage%dD(yoffset+height)", dimensions);
-         return GL_TRUE;
-      }
-   }
-
-   /* check z offset */
-   if (dimensions > 2) {
-      GLint zBorder = (target == GL_TEXTURE_2D_ARRAY) ? 0 : texImage->Border;
-      if (zoffset < -zBorder) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glCopyTexSubImage%dD(zoffset)", dimensions);
-         return GL_TRUE;
-      }
-      if (zoffset > (GLint) texImage->Depth + zBorder) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glCopyTexSubImage%dD(zoffset+depth)", dimensions);
-         return GL_TRUE;
-      }
-   }
 
    if (_mesa_is_format_compressed(texImage->TexFormat)) {
       if (compressedteximage_only_format(ctx, texImage->InternalFormat)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                "glCopyTexSubImage%dD(no compression for format)", dimensions);
-         return GL_TRUE;
-      }
-
-      if (error_check_subtexture_dimensions(ctx, "glCopyTexSubImage",
-                                            dimensions, texImage->TexFormat,
-                                            xoffset, yoffset, width, height,
-                                            texImage->Width,
-                                            texImage->Height)) {
          return GL_TRUE;
       }
    }
@@ -3584,32 +3537,6 @@ compressed_subtexture_error_check(struct gl_context *ctx, GLint dims,
       return GL_TRUE;
    }
 
-   /* check for negative offsets */
-   if (xoffset < 0 || yoffset < 0 || zoffset < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCompressedTexSubImage%uD(xoffset=%d yoffset=%d "
-                  "zoffset=%d)", dims, xoffset, yoffset, zoffset);
-      return GL_TRUE;
-   }
-
-   /* check for bad width, height, depth */
-   if (width < 0 || height < 0 || depth < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCompressedTexSubImage%uD(width=%d height=%d depth=%d)",
-                  dims, width, height, depth);
-      return GL_TRUE;
-   }
-
-   /* check offset + size */
-   if (xoffset + width > texImage->Width ||
-       yoffset + height > texImage->Height ||
-       zoffset + depth > texImage->Depth) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glCompressedTexSubImage%uD(x+width, y+height, z+depth)",
-                  dims);
-      return GL_TRUE;
-   }
-
    if (compressedteximage_only_format(ctx, format)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCompressedTexSubImage%uD(format=0x%x cannot be updated)"
@@ -3618,9 +3545,8 @@ compressed_subtexture_error_check(struct gl_context *ctx, GLint dims,
    }
 
    if (error_check_subtexture_dimensions(ctx, "glCompressedTexSubImage", dims,
-                                         texImage->TexFormat,
-                                         xoffset, yoffset, width, height,
-                                         texImage->Width, texImage->Height)) {
+                                         texImage, xoffset, yoffset, zoffset,
+                                         width, height, depth)) {
       return GL_TRUE;
    }
 
