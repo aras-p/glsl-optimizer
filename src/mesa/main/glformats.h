@@ -98,6 +98,10 @@ extern GLenum
 _mesa_error_check_format_and_type(const struct gl_context *ctx,
                                   GLenum format, GLenum type);
 
+extern GLenum
+_mesa_es_error_check_format_and_type(GLenum format, GLenum type,
+                                     unsigned dimensions);
+
 
 #ifdef __cplusplus
 }

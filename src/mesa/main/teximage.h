@@ -138,9 +138,6 @@ _mesa_tex_target_to_face(GLenum target);
 extern GLint
 _mesa_get_texture_dimensions(GLenum target);
 
-extern GLenum
-_mesa_es_error_check_format_and_type(GLenum format, GLenum type,
-                                     unsigned dimensions);
 
 extern GLboolean
 _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,

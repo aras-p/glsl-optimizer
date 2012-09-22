@@ -38,7 +38,6 @@
 #include "state.h"
 #include "glformats.h"
 #include "fbobject.h"
-#include "teximage.h"
 
 
 /**
