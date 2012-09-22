@@ -43,7 +43,7 @@ public:
 
    bool assign(int32_t& reg, DataFile f, unsigned int size);
    void release(DataFile f, int32_t reg, unsigned int size);
-   bool occupy(DataFile f, int32_t reg, unsigned int size);
+   bool occupy(DataFile f, int32_t reg, unsigned int size, bool noTest = false);
    bool occupy(const Value *);
    void occupyMask(DataFile f, int32_t reg, uint8_t mask);
 
@@ -167,9 +167,9 @@ RegisterSet::occupyMask(DataFile f, int32_t reg, uint8_t mask)
 }
 
 bool
-RegisterSet::occupy(DataFile f, int32_t reg, unsigned int size)
+RegisterSet::occupy(DataFile f, int32_t reg, unsigned int size, bool noTest)
 {
-   if (bits[f].testRange(reg, size))
+   if (!noTest && bits[f].testRange(reg, size))
       return false;
 
    bits[f].setRange(reg, size);
@@ -1235,7 +1235,7 @@ GCRA::checkInterference(const RIG_Node *node, Graph::EdgeIterator& ei)
       INFO_DBG(prog->dbgFlags, REG_ALLOC,
                "(%%%i) X (%%%i): $r%i + %u\n",
                vA->id, vB->id, intf->reg, intf->colors);
-      regs.occupy(node->f, intf->reg, intf->colors);
+      regs.occupy(node->f, intf->reg, intf->colors, true);
    }
 }
 
