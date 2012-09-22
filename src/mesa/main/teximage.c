@@ -3574,13 +3574,13 @@ compressed_subtexture_error_check(struct gl_context *ctx, GLint dimensions,
    get_compressed_block_size(format, &bw, &bh);
 
    if ((xoffset % bw != 0) || (yoffset % bh != 0))
-      return GL_INVALID_VALUE;
+      return GL_INVALID_OPERATION;
 
    if ((width % bw != 0) && width != 2 && width != 1)
-      return GL_INVALID_VALUE;
+      return GL_INVALID_OPERATION;
 
    if ((height % bh != 0) && height != 2 && height != 1)
-      return GL_INVALID_VALUE;
+      return GL_INVALID_OPERATION;
 
    expectedSize = compressed_tex_size(width, height, depth, format);
    if (expectedSize != imageSize)
