@@ -1132,36 +1132,14 @@ static int process_twoside_color_inputs(struct r600_shader_ctx *ctx)
 {
 	int i, r, count = ctx->shader->ninput;
 
-	/* additional inputs will be allocated right after the existing inputs,
-	 * we won't need them after the color selection, so we don't need to
-	 * reserve these gprs for the rest of the shader code and to adjust
-	 * output offsets etc. */
-	int gpr = ctx->file_offset[TGSI_FILE_INPUT] +
-			ctx->info.file_max[TGSI_FILE_INPUT] + 1;
-
-	if (ctx->face_gpr == -1) {
-		i = ctx->shader->ninput++;
-		ctx->shader->input[i].name = TGSI_SEMANTIC_FACE;
-		ctx->shader->input[i].spi_sid = 0;
-		ctx->shader->input[i].gpr = gpr++;
-		ctx->face_gpr = ctx->shader->input[i].gpr;
-	}
-
 	for (i = 0; i < count; i++) {
 		if (ctx->shader->input[i].name == TGSI_SEMANTIC_COLOR) {
-			int ni = ctx->shader->ninput++;
-			memcpy(&ctx->shader->input[ni],&ctx->shader->input[i], sizeof(struct r600_shader_io));
-			ctx->shader->input[ni].name = TGSI_SEMANTIC_BCOLOR;
-			ctx->shader->input[ni].spi_sid = r600_spi_sid(&ctx->shader->input[ni]);
-			ctx->shader->input[ni].gpr = gpr++;
-
+			unsigned back_facing_reg = ctx->shader->input[i].potential_back_facing_reg;
 			if (ctx->bc->chip_class >= EVERGREEN) {
-				r = evergreen_interp_input(ctx, ni);
-				if (r)
+				if ((r = evergreen_interp_input(ctx, back_facing_reg)))
 					return r;
 			}
-
-			r = select_twoside_color(ctx, i, ni);
+			r = select_twoside_color(ctx, i, back_facing_reg);
 			if (r)
 				return r;
 		}
@@ -1321,6 +1299,37 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 			R600_ERR("unsupported token type %d\n", ctx.parse.FullToken.Token.Type);
 			r = -EINVAL;
 			goto out_err;
+		}
+	}
+	
+	/* Process two side if needed */
+	if (shader->two_side && ctx.colors_used) {
+		int i, count = ctx.shader->ninput;
+
+		/* additional inputs will be allocated right after the existing inputs,
+		 * we won't need them after the color selection, so we don't need to
+		 * reserve these gprs for the rest of the shader code and to adjust
+		 * output offsets etc. */
+		int gpr = ctx.file_offset[TGSI_FILE_INPUT] +
+				ctx.info.file_max[TGSI_FILE_INPUT] + 1;
+
+		if (ctx.face_gpr == -1) {
+			i = ctx.shader->ninput++;
+			ctx.shader->input[i].name = TGSI_SEMANTIC_FACE;
+			ctx.shader->input[i].spi_sid = 0;
+			ctx.shader->input[i].gpr = gpr++;
+			ctx.face_gpr = ctx.shader->input[i].gpr;
+		}
+
+		for (i = 0; i < count; i++) {
+			if (ctx.shader->input[i].name == TGSI_SEMANTIC_COLOR) {
+				int ni = ctx.shader->ninput++;
+				memcpy(&ctx.shader->input[ni],&ctx.shader->input[i], sizeof(struct r600_shader_io));
+				ctx.shader->input[ni].name = TGSI_SEMANTIC_BCOLOR;
+				ctx.shader->input[ni].spi_sid = r600_spi_sid(&ctx.shader->input[ni]);
+				ctx.shader->input[ni].gpr = gpr++;
+				ctx.shader->input[i].potential_back_facing_reg = ni;
+			}
 		}
 	}
 

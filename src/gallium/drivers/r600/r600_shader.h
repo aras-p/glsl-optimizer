@@ -34,6 +34,7 @@ struct r600_shader_io {
 	unsigned		interpolate;
 	boolean                 centroid;
 	unsigned		lds_pos; /* for evergreen */
+	unsigned		potential_back_facing_reg;
 	unsigned		write_mask;
 };
 
