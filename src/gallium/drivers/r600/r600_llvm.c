@@ -86,6 +86,42 @@ static void llvm_load_input(
 				"llvm.R600.load.input",
 				ctx->soa.bld_base.base.elem_type, &reg, 1,
 				LLVMReadNoneAttribute);
+				
+		if (decl->Semantic.Name == TGSI_SEMANTIC_COLOR && ctx->two_side) {
+			unsigned back_reg = ctx->r600_inputs[input_index]
+				.potential_back_facing_reg;
+			unsigned back_soa_index = radeon_llvm_reg_index_soa(
+				ctx->r600_inputs[back_reg].gpr
+				, chan);
+			LLVMValueRef backcolor_reg = lp_build_const_int32(
+				ctx->soa.bld_base.base.gallivm,
+				back_soa_index);
+			LLVMValueRef backcolor = build_intrinsic(
+				ctx->soa.bld_base.base.gallivm->builder,
+				"llvm.R600.load.input",
+				ctx->soa.bld_base.base.elem_type, &backcolor_reg, 1,
+				LLVMReadNoneAttribute);
+			LLVMValueRef face_reg = lp_build_const_int32(
+				ctx->soa.bld_base.base.gallivm,
+				ctx->face_input * 4);
+			LLVMValueRef face = build_intrinsic(
+				ctx->soa.bld_base.base.gallivm->builder,
+				"llvm.R600.load.input",
+				ctx->soa.bld_base.base.elem_type,
+				&face_reg, 1,
+				LLVMReadNoneAttribute);
+			LLVMValueRef is_face_positive = LLVMBuildFCmp(
+				ctx->soa.bld_base.base.gallivm->builder,
+				LLVMRealUGT, face, 
+				lp_build_const_float(ctx->soa.bld_base.base.gallivm, 0.0f),
+				"");
+			ctx->inputs[soa_index] = LLVMBuildSelect(
+				ctx->soa.bld_base.base.gallivm->builder,
+				is_face_positive,
+				ctx->inputs[soa_index],
+				backcolor,
+				"");
+		}
 	}
 }
 

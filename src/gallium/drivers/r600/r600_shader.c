@@ -1128,7 +1128,7 @@ static int tgsi_split_literal_constant(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
-static int process_twoside_color_inputs(struct r600_shader_ctx *ctx)
+static int process_twoside_color_inputs(struct r600_shader_ctx *ctx, unsigned use_llvm)
 {
 	int i, r, count = ctx->shader->ninput;
 
@@ -1139,9 +1139,12 @@ static int process_twoside_color_inputs(struct r600_shader_ctx *ctx)
 				if ((r = evergreen_interp_input(ctx, back_facing_reg)))
 					return r;
 			}
-			r = select_twoside_color(ctx, i, back_facing_reg);
-			if (r)
-				return r;
+			
+			if (!use_llvm) {
+				r = select_twoside_color(ctx, i, back_facing_reg);
+				if (r)
+					return r;
+			}
 		}
 	}
 	return 0;
@@ -1402,7 +1405,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	}
 
 	if (shader->two_side && ctx.colors_used) {
-		if ((r = process_twoside_color_inputs(&ctx)))
+		if ((r = process_twoside_color_inputs(&ctx, use_llvm)))
 			return r;
 	}
 
