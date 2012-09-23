@@ -56,10 +56,11 @@ lp_build_load_volatile(LLVMBuilderRef B, LLVMValueRef PointerVal,
                        const char *Name);
 
 extern int
-lp_build_create_mcjit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
-                                          LLVMModuleRef M,
-                                          unsigned OptLevel,
-                                          char **OutError);
+lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
+                                        LLVMModuleRef M,
+                                        unsigned OptLevel,
+                                        int useMCJIT,
+                                        char **OutError);
 
 
 #ifdef __cplusplus

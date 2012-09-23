@@ -258,11 +258,12 @@ init_gallivm_engine(struct gallivm_state *gallivm)
          optlevel = Default;
       }
 
-#if USE_MCJIT
-      ret = lp_build_create_mcjit_compiler_for_module(&gallivm->engine,
-                                                      gallivm->module,
-                                                      (unsigned) optlevel,
-                                                      &error);
+#if HAVE_LLVM >= 0x0301
+      ret = lp_build_create_jit_compiler_for_module(&gallivm->engine,
+                                                    gallivm->module,
+                                                    (unsigned) optlevel,
+                                                    USE_MCJIT,
+                                                    &error);
 #else
       ret = LLVMCreateJITCompiler(&gallivm->engine, gallivm->provider,
                                   (unsigned) optlevel, &error);

@@ -109,7 +109,7 @@ lp_set_target_options(void)
     * to only assume a 4 bytes alignment for backwards compatibility.
     */
 #if defined(PIPE_ARCH_X86)
-#if HAVE_LLVM >= 0x0300
+#if HAVE_LLVM == 0x0300
    llvm::StackAlignmentOverride = 4;
 #else
    llvm::StackAlignment = 4;
@@ -232,8 +232,9 @@ lp_set_store_alignment(LLVMValueRef Inst,
 #if HAVE_LLVM >= 0x301
 
 /**
- * Same as LLVMCreateJITCompilerForModule, but using MCJIT and enabling AVX
- * feature where available.
+ * Same as LLVMCreateJITCompilerForModule, but:
+ * - allows using MCJIT and enabling AVX feature where available.
+ * - set target options
  *
  * See also:
  * - llvm/lib/ExecutionEngine/ExecutionEngineBindings.cpp
@@ -242,20 +243,44 @@ lp_set_store_alignment(LLVMValueRef Inst,
  */
 extern "C"
 LLVMBool
-lp_build_create_mcjit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
-                                          LLVMModuleRef M,
-                                          unsigned OptLevel,
-                                          char **OutError)
+lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
+                                        LLVMModuleRef M,
+                                        unsigned OptLevel,
+                                        int useMCJIT,
+                                        char **OutError)
 {
    using namespace llvm;
 
    std::string Error;
    EngineBuilder builder(unwrap(M));
+
+   /**
+    * LLVM 3.1+ haven't more "extern unsigned llvm::StackAlignmentOverride" and
+    * friends for configuring code generation options, like stack alignment.
+    */
+   TargetOptions options;
+#if defined(PIPE_ARCH_X86)
+   options.StackAlignmentOverride = 4;
+   options.RealignStack = true;
+#endif
+
+#if defined(DEBUG)
+   options.JITEmitDebugInfo = true;
+#endif
+
+#if defined(DEBUG) || defined(PROFILE)
+   options.NoFramePointerElimNonLeaf = true;
+   options.NoFramePointerElim = true;
+#endif
+
    builder.setEngineKind(EngineKind::JIT)
           .setErrorStr(&Error)
+          .setTargetOptions(options)
           .setOptLevel((CodeGenOpt::Level)OptLevel);
 
-   builder.setUseMCJIT(true);
+   if (useMCJIT) {
+       builder.setUseMCJIT(true);
+   }
 
    llvm::SmallVector<std::string, 1> MAttrs;
    if (util_cpu_caps.has_avx) {
