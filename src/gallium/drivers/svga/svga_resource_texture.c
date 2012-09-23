@@ -540,14 +540,6 @@ svga_texture_from_handle(struct pipe_screen *screen,
    pipe_reference_init(&tex->b.b.reference, 1);
    tex->b.b.screen = screen;
 
-   if (format == SVGA3D_X8R8G8B8)
-      tex->b.b.format = PIPE_FORMAT_B8G8R8X8_UNORM;
-   else if (format == SVGA3D_A8R8G8B8)
-      tex->b.b.format = PIPE_FORMAT_B8G8R8A8_UNORM;
-   else {
-      /* ?? */
-   }
-
    SVGA_DBG(DEBUG_DMA, "wrap surface sid %p\n", srf);
 
    tex->key.cachable = 0;
