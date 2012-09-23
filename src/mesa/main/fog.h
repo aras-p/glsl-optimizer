@@ -43,8 +43,6 @@
 struct gl_context;
 
 
-#if _HAVE_FULL_GL
-
 extern void GLAPIENTRY
 _mesa_Fogf(GLenum pname, GLfloat param);
 
@@ -58,12 +56,5 @@ extern void GLAPIENTRY
 _mesa_Fogiv(GLenum pname, const GLint *params );
 
 extern void _mesa_init_fog( struct gl_context * ctx );
-
-#else
-
-/** No-op */
-#define _mesa_init_fog( c ) ((void)0)
-
-#endif
 
 #endif

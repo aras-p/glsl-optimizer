@@ -129,9 +129,7 @@
 #include "vtxfmt.h"
 #include "program/program.h"
 #include "program/prog_print.h"
-#if _HAVE_FULL_GL
 #include "math/m_matrix.h"
-#endif
 #include "main/dispatch.h" /* for _gloffset_COUNT */
 
 #ifdef USE_SPARC_ASM
@@ -1160,7 +1158,6 @@ _mesa_destroy_context( struct gl_context *ctx )
 }
 
 
-#if _HAVE_FULL_GL
 /**
  * Copy attribute groups from one context to another.
  * 
@@ -1281,7 +1278,6 @@ _mesa_copy_context( const struct gl_context *src, struct gl_context *dst,
    dst->NewState = _NEW_ALL;
    dst->NewDriverState = ~0;
 }
-#endif
 
 
 /**
@@ -1458,8 +1454,6 @@ _mesa_make_current( struct gl_context *newCtx,
 
 #if 1
          /* We want to get rid of these lines: */
-
-#if _HAVE_FULL_GL
          if (!drawBuffer->Initialized) {
             initialize_framebuffer_size(newCtx, drawBuffer);
          }
@@ -1468,8 +1462,6 @@ _mesa_make_current( struct gl_context *newCtx,
          }
 
 	 _mesa_resizebuffers(newCtx);
-#endif
-
 #else
          /* We want the drawBuffer and readBuffer to be initialized by
           * the driver.

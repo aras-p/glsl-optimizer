@@ -184,8 +184,6 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
       ctx->Driver.PolygonMode(ctx, face, mode);
 }
 
-#if _HAVE_FULL_GL
-
 
 /**
  * This routine updates the ctx->Polygon.Stipple state.
@@ -298,7 +296,6 @@ _mesa_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
    _mesa_PolygonOffset(factor, bias * ctx->DrawBuffer->_DepthMaxF );
 }
 
-#endif
 
 
 /**********************************************************************/

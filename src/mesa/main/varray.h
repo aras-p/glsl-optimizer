@@ -65,8 +65,6 @@ _mesa_update_array_max_element(struct gl_client_array *array)
 }
 
 
-#if _HAVE_FULL_GL
-
 extern void GLAPIENTRY
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride,
                     const GLvoid *ptr);
@@ -265,13 +263,5 @@ _mesa_init_varray( struct gl_context * ctx );
 
 extern void 
 _mesa_free_varray_data(struct gl_context *ctx);
-
-#else
-
-/** No-op */
-#define _mesa_init_varray( c )  ((void)0)
-#define _mesa_free_varray_data( c )  ((void)0)
-
-#endif
 
 #endif

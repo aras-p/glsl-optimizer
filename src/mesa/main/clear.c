@@ -41,7 +41,6 @@
 
 
 
-#if _HAVE_FULL_GL
 void GLAPIENTRY
 _mesa_ClearIndex( GLfloat c )
 {
@@ -54,7 +53,6 @@ _mesa_ClearIndex( GLfloat c )
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    ctx->Color.ClearIndex = (GLuint) c;
 }
-#endif
 
 
 /**

@@ -382,7 +382,6 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 
 
 
-#if _HAVE_FULL_GL
 /* GL_EXT_stencil_two_side */
 void GLAPIENTRY
 _mesa_ActiveStencilFaceEXT(GLenum face)
@@ -406,7 +405,6 @@ _mesa_ActiveStencilFaceEXT(GLenum face)
       _mesa_error(ctx, GL_INVALID_ENUM, "glActiveStencilFaceEXT(face)");
    }
 }
-#endif
 
 
 

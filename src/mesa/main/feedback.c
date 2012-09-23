@@ -449,7 +449,6 @@ _mesa_RenderMode( GLenum mode )
 	 ctx->Select.Hits = 0;
 	 ctx->Select.NameStackDepth = 0;
 	 break;
-#if _HAVE_FULL_GL
       case GL_FEEDBACK:
 	 if (ctx->Feedback.Count > ctx->Feedback.BufferSize) {
 	    /* overflow */
@@ -460,7 +459,6 @@ _mesa_RenderMode( GLenum mode )
 	 }
 	 ctx->Feedback.Count = 0;
 	 break;
-#endif
       default:
 	 _mesa_error( ctx, GL_INVALID_ENUM, "glRenderMode" );
 	 return 0;
@@ -475,14 +473,12 @@ _mesa_RenderMode( GLenum mode )
 	    _mesa_error( ctx, GL_INVALID_OPERATION, "glRenderMode" );
 	 }
 	 break;
-#if _HAVE_FULL_GL
       case GL_FEEDBACK:
 	 if (ctx->Feedback.BufferSize==0) {
 	    /* haven't called glFeedbackBuffer yet */
 	    _mesa_error( ctx, GL_INVALID_OPERATION, "glRenderMode" );
 	 }
 	 break;
-#endif
       default:
 	 _mesa_error( ctx, GL_INVALID_ENUM, "glRenderMode" );
 	 return 0;

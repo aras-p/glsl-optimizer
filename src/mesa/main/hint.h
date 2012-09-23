@@ -41,19 +41,10 @@
 
 struct gl_context;
 
-#if _HAVE_FULL_GL
-
 extern void GLAPIENTRY
 _mesa_Hint( GLenum target, GLenum mode );
 
 extern void 
 _mesa_init_hint( struct gl_context * ctx );
-
-#else
-
-/** No-op */
-#define _mesa_init_hint( c ) ((void) 0)
-
-#endif
 
 #endif

@@ -1966,7 +1966,6 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    }
 
    switch (internalFormat) {
-#if FEATURE_ES
    case GL_PALETTE4_RGB8_OES:
    case GL_PALETTE4_RGBA8_OES:
    case GL_PALETTE4_R5_G6_B5_OES:
@@ -2005,7 +2004,6 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
        */
       level = -level;
       break;
-#endif
 
    default:
       /* check level */

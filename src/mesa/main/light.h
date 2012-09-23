@@ -42,7 +42,6 @@ extern void GLAPIENTRY
 _mesa_ProvokingVertexEXT(GLenum mode);
 
 
-#if _HAVE_FULL_GL
 extern void GLAPIENTRY
 _mesa_ColorMaterial( GLenum face, GLenum mode );
 
@@ -107,15 +106,5 @@ extern void _mesa_init_lighting( struct gl_context *ctx );
 extern void _mesa_free_lighting_data( struct gl_context *ctx );
 
 extern void _mesa_allow_light_in_model( struct gl_context *ctx, GLboolean flag );
-
-#else
-#define _mesa_update_color_material( c, r ) ((void)0)
-#define _mesa_material_bitmask( c, f, p, l, s ) 0
-#define _mesa_init_lighting( c ) ((void)0)
-#define _mesa_free_lighting_data( c ) ((void)0)
-#define _mesa_update_lighting( c ) ((void)0)
-#define _mesa_update_tnl_spaces( c, n ) ((void)0)
-#define GET_SHINE_TAB_ENTRY( table, dp, result )  ((result)=0)
-#endif
 
 #endif

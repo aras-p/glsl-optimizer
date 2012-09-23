@@ -256,9 +256,6 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
 }
 
 
-#if _HAVE_FULL_GL
-
-
 /**
  * Set blend source/dest factors for one color buffer/target.
  */
@@ -520,10 +517,6 @@ _mesa_BlendEquationSeparatei(GLuint buf, GLenum modeRGB, GLenum modeA)
 }
 
 
-
-#endif /* _HAVE_FULL_GL */
-
-
 /**
  * Set the blending color.
  *
@@ -666,7 +659,7 @@ _mesa_LogicOp( GLenum opcode )
       ctx->Driver.LogicOpcode( ctx, opcode );
 }
 
-#if _HAVE_FULL_GL
+
 void GLAPIENTRY
 _mesa_IndexMask( GLuint mask )
 {
@@ -679,7 +672,6 @@ _mesa_IndexMask( GLuint mask )
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    ctx->Color.IndexMask = mask;
 }
-#endif
 
 
 /**

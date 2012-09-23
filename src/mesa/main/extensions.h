@@ -41,8 +41,6 @@
 
 struct gl_context;
 
-#if _HAVE_FULL_GL
-
 extern void _mesa_enable_sw_extensions(struct gl_context *ctx);
 
 extern void _mesa_enable_1_3_extensions(struct gl_context *ctx);
@@ -70,22 +68,5 @@ _mesa_get_extension_count(struct gl_context *ctx);
 
 extern const GLubyte *
 _mesa_get_enabled_extension(struct gl_context *ctx, GLuint index);
-
-
-#else
-
-/** No-op */
-#define _mesa_extensions_dtr( ctx ) ((void)0)
-
-/** No-op */
-#define _mesa_extensions_ctr( ctx ) ((void)0)
-
-/** No-op */
-#define _mesa_extensions_get_string( ctx ) "GL_EXT_texture_object"
-
-/** No-op */
-#define _mesa_enable_extension( c, n ) ((void)0)
-
-#endif
 
 #endif

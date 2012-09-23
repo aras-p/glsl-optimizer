@@ -444,7 +444,6 @@ _mesa_Translatef( GLfloat x, GLfloat y, GLfloat z )
 }
 
  
-#if _HAVE_FULL_GL
 void GLAPIENTRY
 _mesa_LoadMatrixd( const GLdouble *m )
 {
@@ -487,10 +486,8 @@ _mesa_Translated( GLdouble x, GLdouble y, GLdouble z )
 {
    _mesa_Translatef((GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
-#endif
 
 
-#if _HAVE_FULL_GL
 void GLAPIENTRY
 _mesa_LoadTransposeMatrixfARB( const GLfloat *m )
 {
@@ -529,7 +526,6 @@ _mesa_MultTransposeMatrixdARB( const GLdouble *m )
    _math_transposefd(tm, m);
    _mesa_MultMatrixf(tm);
 }
-#endif
 
 
 

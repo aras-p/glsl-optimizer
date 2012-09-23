@@ -38,8 +38,6 @@
 struct gl_context;
 
 
-#if _HAVE_FULL_GL
-
 extern void GLAPIENTRY
 _mesa_ClearDepth( GLclampd depth );
 
@@ -57,12 +55,5 @@ _mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax );
 
 extern void 
 _mesa_init_depth( struct gl_context * ctx );
-
-#else
-
-/** No-op */
-#define _mesa_init_depth( c ) ((void)0)
-
-#endif
 
 #endif

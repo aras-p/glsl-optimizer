@@ -62,9 +62,6 @@ _mesa_PointSize( GLfloat size )
 }
 
 
-#if _HAVE_FULL_GL
-
-
 void GLAPIENTRY
 _mesa_PointParameteri( GLenum pname, GLint param )
 {
@@ -221,7 +218,6 @@ _mesa_PointParameterfv( GLenum pname, const GLfloat *params)
    if (ctx->Driver.PointParameterfv)
       (*ctx->Driver.PointParameterfv)(ctx, pname, params);
 }
-#endif
 
 
 

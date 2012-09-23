@@ -344,7 +344,6 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
          ctx->Driver.Bitmap( ctx, x, y, width, height, &ctx->Unpack, bitmap );
       }
    }
-#if _HAVE_FULL_GL
    else if (ctx->RenderMode == GL_FEEDBACK) {
       FLUSH_CURRENT(ctx, 0);
       _mesa_feedback_token( ctx, (GLfloat) (GLint) GL_BITMAP_TOKEN );
@@ -357,7 +356,6 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
       ASSERT(ctx->RenderMode == GL_SELECT);
       /* Do nothing.  See OpenGL Spec, Appendix B, Corollary 6. */
    }
-#endif
 
    /* update raster position */
    ctx->Current.RasterPos[0] += xmove;
