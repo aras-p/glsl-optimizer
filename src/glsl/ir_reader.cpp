@@ -917,6 +917,8 @@ ir_reader::read_texture(s_expression *expr)
 
    s_pattern tex_pattern[] =
       { "tex", s_type, s_sampler, s_coord, s_offset, s_proj, s_shadow };
+   s_pattern lod_pattern[] =
+      { "lod", s_type, s_sampler, s_coord };
    s_pattern txf_pattern[] =
       { "txf", s_type, s_sampler, s_coord, s_offset, s_lod };
    s_pattern txf_ms_pattern[] =
@@ -926,7 +928,9 @@ ir_reader::read_texture(s_expression *expr)
    s_pattern other_pattern[] =
       { tag, s_type, s_sampler, s_coord, s_offset, s_proj, s_shadow, s_lod };
 
-   if (MATCH(expr, tex_pattern)) {
+   if (MATCH(expr, lod_pattern)) {
+      op = ir_lod;
+   } else if (MATCH(expr, tex_pattern)) {
       op = ir_tex;
    } else if (MATCH(expr, txf_pattern)) {
       op = ir_txf;
@@ -939,7 +943,7 @@ ir_reader::read_texture(s_expression *expr)
       if (op == -1)
 	 return NULL;
    } else {
-      ir_read_error(NULL, "unexpected texture pattern");
+      ir_read_error(NULL, "unexpected texture pattern %s", tag->value());
       return NULL;
    }
 
@@ -971,7 +975,7 @@ ir_reader::read_texture(s_expression *expr)
 	 return NULL;
       }
 
-      if (op != ir_txf_ms) {
+      if (op != ir_txf_ms && op != ir_lod) {
          // Read texel offset - either 0 or an rvalue.
          s_int *si_offset = SX_AS_INT(s_offset);
          if (si_offset == NULL || si_offset->value() != 0) {
@@ -984,7 +988,7 @@ ir_reader::read_texture(s_expression *expr)
       }
    }
 
-   if (op != ir_txf && op != ir_txf_ms && op != ir_txs) {
+   if (op != ir_txf && op != ir_txf_ms && op != ir_txs && op != ir_lod) {
       s_int *proj_as_int = SX_AS_INT(s_proj);
       if (proj_as_int && proj_as_int->value() == 1) {
 	 tex->projector = NULL;
@@ -1054,7 +1058,7 @@ ir_reader::read_texture(s_expression *expr)
       break;
    }
    default:
-      // tex doesn't have any extra parameters.
+      // tex and lod don't have any extra parameters.
       break;
    };
    return tex;

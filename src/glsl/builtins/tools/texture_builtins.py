@@ -33,29 +33,29 @@ def get_sampler_dim(sampler_type):
 
 # Get the coordinate dimension for a given sampler type.
 # Array samplers also get +1 here since the layer is really an extra coordinate
-def get_coord_dim(sampler_type):
+def get_coord_dim(sampler_type, tex_inst):
     coord_dim = get_sampler_dim(sampler_type)
-    if sampler_type.find("Array") != -1:
+    if sampler_type.find("Array") != -1 and tex_inst != "lod":
         coord_dim += 1
     return coord_dim
 
 # Get the number of extra vector components (i.e. shadow comparitor)
-def get_extra_dim(sampler_type, use_proj, unused_fields):
+def get_extra_dim(sampler_type, use_proj, unused_fields, tex_inst):
     extra_dim = unused_fields
     if sampler_type == "CubeArrayShadow":
         return 0
-    if sampler_type.find("Shadow") != -1:
+    if sampler_type.find("Shadow") != -1 and tex_inst != "lod":
         extra_dim += 1
     if use_proj:
         extra_dim += 1
     return extra_dim
 
-def get_txs_dim(sampler_type):
+def get_txs_dim(sampler_type, tex_inst):
     if sampler_type.startswith("CubeArray"):
         return 3
     if sampler_type.startswith("Cube"):
         return 2
-    return get_coord_dim(sampler_type)
+    return get_coord_dim(sampler_type, tex_inst)
 
 def has_lod(sampler_type):
     if 'Buffer' in sampler_type: return False
@@ -64,14 +64,16 @@ def has_lod(sampler_type):
     return True
 
 def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
-    coord_dim = get_coord_dim(sampler_type)
-    extra_dim = get_extra_dim(sampler_type, variant & Proj, unused_fields)
+    coord_dim = get_coord_dim(sampler_type, tex_inst)
+    extra_dim = get_extra_dim(sampler_type, variant & Proj, unused_fields, tex_inst)
     sampler_dim = get_sampler_dim(sampler_type)
 
     if variant & Single:
         return_type = "float"
     elif tex_inst == "txs":
-        return_type = vec_type("i", get_txs_dim(sampler_type))
+        return_type = vec_type("i", get_txs_dim(sampler_type, tex_inst))
+    elif tex_inst == "lod":
+        return_type = "vec2"
     else:
         return_type = g + "vec4"
 
@@ -108,14 +110,14 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
         else:
             print "(var_ref P)",
 
-    if tex_inst not in ['txf_ms', 'txs']:
+    if tex_inst not in ['txf_ms', 'txs', 'lod']:
         # Coordinate offset
         if variant & Offset:
             print "(var_ref offset)",
         else:
             print "0",
 
-    if tex_inst not in ['txf', 'txf_ms', 'txs']:
+    if tex_inst not in ['txf', 'txf_ms', 'txs', 'lod']:
         # Projective divisor
         if variant & Proj:
             print "(swiz " + "xyzw"[coord_dim + extra_dim-1] + " (var_ref P))",
@@ -634,6 +636,22 @@ def generate_texture_functions(fs):
     start_function("shadow2DProjLod")
     generate_sigs("", "txl", "2DShadow", Proj)
     end_function(fs, "shadow2DProjLod")
+
+    start_function("textureQueryLOD")
+    generate_fiu_sigs("lod", "1D")
+    generate_fiu_sigs("lod", "2D")
+    generate_fiu_sigs("lod", "3D")
+    generate_fiu_sigs("lod", "Cube")
+    generate_fiu_sigs("lod", "1DArray")
+    generate_fiu_sigs("lod", "2DArray")
+    generate_fiu_sigs("lod", "CubeArray")
+    generate_sigs("", "lod", "1DShadow")
+    generate_sigs("", "lod", "2DShadow")
+    generate_sigs("", "lod", "CubeShadow")
+    generate_sigs("", "lod", "1DArrayShadow")
+    generate_sigs("", "lod", "2DArrayShadow")
+    generate_sigs("", "lod", "CubeArrayShadow")
+    end_function(fs, "textureQueryLOD")
 
     sys.stdout = sys.__stdout__
     return fs

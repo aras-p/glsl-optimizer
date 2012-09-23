@@ -3002,6 +3002,7 @@ struct gl_extensions
    GLboolean ARB_texture_float;
    GLboolean ARB_texture_multisample;
    GLboolean ARB_texture_non_power_of_two;
+   GLboolean ARB_texture_query_lod;
    GLboolean ARB_texture_rg;
    GLboolean ARB_texture_rgb10_a2ui;
    GLboolean ARB_texture_storage;

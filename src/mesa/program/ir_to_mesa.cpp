@@ -2048,6 +2048,9 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
    case ir_txf_ms:
       assert(!"Unexpected ir_txf_ms opcode");
       break;
+   case ir_lod:
+      assert(!"Unexpected ir_lod opcode");
+      break;
    }
 
    const glsl_type *sampler_type = ir->sampler->type;

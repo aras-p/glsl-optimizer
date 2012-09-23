@@ -1426,7 +1426,8 @@ enum ir_texture_opcode {
    ir_txd,		/**< Texture look-up with partial derivatvies */
    ir_txf,		/**< Texel fetch with explicit LOD */
    ir_txf_ms,           /**< Multisample texture fetch */
-   ir_txs		/**< Texture size */
+   ir_txs,		/**< Texture size */
+   ir_lod		/**< Texture lod query */
 };
 
 
@@ -1450,6 +1451,7 @@ enum ir_texture_opcode {
  * (txf_ms
  *      <type> <sampler> <coordinate>         <sample_index>)
  * (txs <type> <sampler> <lod>)
+ * (lod <type> <sampler> <coordinate>)
  */
 class ir_texture : public ir_rvalue {
 public:
