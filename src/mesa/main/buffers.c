@@ -353,7 +353,6 @@ updated_drawbuffers(struct gl_context *ctx)
 {
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
-#if FEATURE_GL
    if (ctx->API == API_OPENGL && !ctx->Extensions.ARB_ES2_compatibility) {
       struct gl_framebuffer *fb = ctx->DrawBuffer;
 
@@ -362,7 +361,6 @@ updated_drawbuffers(struct gl_context *ctx)
 	 fb->_Status = 0;
       }
    }
-#endif
 }
 
 
