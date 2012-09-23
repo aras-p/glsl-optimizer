@@ -1250,7 +1250,6 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		ctx.file_offset[TGSI_FILE_INPUT] = evergreen_gpr_count(&ctx);
 	}
 
-	/* LLVM backend setup */
 #ifdef R600_USE_LLVM
 	if (use_llvm && ctx.info.indirect_files) {
 		fprintf(stderr, "Warning: R600 LLVM backend does not support "
@@ -1258,34 +1257,13 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				"backend.\n");
 		use_llvm = 0;
 	}
-	if (use_llvm) {
-		struct radeon_llvm_context radeon_llvm_ctx;
-		LLVMModuleRef mod;
-		unsigned dump = 0;
-		memset(&radeon_llvm_ctx, 0, sizeof(radeon_llvm_ctx));
-		radeon_llvm_ctx.reserved_reg_count = ctx.file_offset[TGSI_FILE_INPUT];
-		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
-		if (debug_get_bool_option("R600_DUMP_SHADERS", FALSE)) {
-			dump = 1;
-		}
-		if (r600_llvm_compile(mod, &inst_bytes, &inst_byte_count,
-							rscreen->family, dump)) {
-			FREE(inst_bytes);
-			radeon_llvm_dispose(&radeon_llvm_ctx);
-			use_llvm = 0;
-			fprintf(stderr, "R600 LLVM backend failed to compile "
-				"shader.  Falling back to TGSI\n");
-		} else {
-			ctx.file_offset[TGSI_FILE_OUTPUT] =
-					ctx.file_offset[TGSI_FILE_INPUT];
-		}
-		radeon_llvm_dispose(&radeon_llvm_ctx);
-	}
 #endif
-	/* End of LLVM backend setup */
 
-	if (!use_llvm) {
+	if (use_llvm) {
 		ctx.file_offset[TGSI_FILE_OUTPUT] =
+			ctx.file_offset[TGSI_FILE_INPUT];
+	} else {
+	   ctx.file_offset[TGSI_FILE_OUTPUT] =
 			ctx.file_offset[TGSI_FILE_INPUT] +
 			ctx.info.file_max[TGSI_FILE_INPUT] + 1;
 	}
@@ -1345,6 +1323,34 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 			goto out_err;
 		}
 	}
+
+/* LLVM backend setup */
+#ifdef R600_USE_LLVM
+	if (use_llvm) {
+		struct radeon_llvm_context radeon_llvm_ctx;
+		LLVMModuleRef mod;
+		unsigned dump = 0;
+		memset(&radeon_llvm_ctx, 0, sizeof(radeon_llvm_ctx));
+		radeon_llvm_ctx.reserved_reg_count = ctx.file_offset[TGSI_FILE_INPUT];
+		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
+		if (debug_get_bool_option("R600_DUMP_SHADERS", FALSE)) {
+			dump = 1;
+		}
+		if (r600_llvm_compile(mod, &inst_bytes, &inst_byte_count,
+							rscreen->family, dump)) {
+			FREE(inst_bytes);
+			radeon_llvm_dispose(&radeon_llvm_ctx);
+			use_llvm = 0;
+			fprintf(stderr, "R600 LLVM backend failed to compile "
+				"shader.  Falling back to TGSI\n");
+		} else {
+			ctx.file_offset[TGSI_FILE_OUTPUT] =
+					ctx.file_offset[TGSI_FILE_INPUT];
+		}
+		radeon_llvm_dispose(&radeon_llvm_ctx);
+	}
+#endif
+/* End of LLVM backend setup */
 
 	if (shader->fs_write_all && rscreen->chip_class >= EVERGREEN)
 		shader->nr_ps_max_color_exports = 8;
