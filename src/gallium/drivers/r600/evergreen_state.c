@@ -979,9 +979,11 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 	return ss;
 }
 
-static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_context *ctx,
-							struct pipe_resource *texture,
-							const struct pipe_sampler_view *state)
+struct pipe_sampler_view *
+evergreen_create_sampler_view_custom(struct pipe_context *ctx,
+				     struct pipe_resource *texture,
+				     const struct pipe_sampler_view *state,
+				     unsigned width0, unsigned height0)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
 	struct r600_pipe_sampler_view *view = CALLOC_STRUCT(r600_pipe_sampler_view);
@@ -1027,8 +1029,8 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 
 	endian = r600_colorformat_endian_swap(format);
 
-	width = tmp->surface.level[0].npix_x;
-	height = tmp->surface.level[0].npix_y;
+	width = width0;
+	height = height0;
 	depth = tmp->surface.level[0].npix_z;
 	pitch = tmp->surface.level[0].nblk_x * util_format_get_blockwidth(state->format);
 	tile_type = tmp->tile_type;
@@ -1114,6 +1116,15 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 				      S_03001C_MACRO_TILE_ASPECT(macro_aspect) |
 				      S_03001C_NUM_BANKS(nbanks);
 	return &view->base;
+}
+
+static struct pipe_sampler_view *
+evergreen_create_sampler_view(struct pipe_context *ctx,
+			      struct pipe_resource *tex,
+			      const struct pipe_sampler_view *state)
+{
+	return evergreen_create_sampler_view_custom(ctx, tex, state,
+						    tex->width0, tex->height0);
 }
 
 static void evergreen_emit_clip_state(struct r600_context *rctx, struct r600_atom *atom)

@@ -516,6 +516,11 @@ static INLINE void r600_atom_dirty(struct r600_context *rctx, struct r600_atom *
 }
 
 /* evergreen_state.c */
+struct pipe_sampler_view *
+evergreen_create_sampler_view_custom(struct pipe_context *ctx,
+				     struct pipe_resource *texture,
+				     const struct pipe_sampler_view *state,
+				     unsigned width0, unsigned height0);
 void evergreen_init_common_regs(struct r600_command_buffer *cb,
 				enum chip_class ctx_chip_class,
 				enum radeon_family ctx_family,
@@ -591,6 +596,11 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 
 /* r600_state.c */
+struct pipe_sampler_view *
+r600_create_sampler_view_custom(struct pipe_context *ctx,
+				struct pipe_resource *texture,
+				const struct pipe_sampler_view *state,
+				unsigned width_first_level, unsigned height_first_level);
 void r600_set_scissor_state(struct r600_context *rctx,
 			    const struct pipe_scissor_state *state);
 void r600_init_state_functions(struct r600_context *rctx);
@@ -619,6 +629,10 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen, enum pipe_format f
 				  uint32_t *word4_p, uint32_t *yuv_format_p);
 unsigned r600_texture_get_offset(struct r600_texture *rtex,
 					unsigned level, unsigned layer);
+struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
+						struct pipe_resource *texture,
+						const struct pipe_surface *templ,
+						unsigned width, unsigned height);
 
 /* r600_translate.c */
 void r600_translate_index_buffer(struct r600_context *r600,

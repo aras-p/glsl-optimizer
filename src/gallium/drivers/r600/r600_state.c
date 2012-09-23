@@ -1007,9 +1007,11 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 	return ss;
 }
 
-static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *ctx,
-							struct pipe_resource *texture,
-							const struct pipe_sampler_view *state)
+struct pipe_sampler_view *
+r600_create_sampler_view_custom(struct pipe_context *ctx,
+				struct pipe_resource *texture,
+				const struct pipe_sampler_view *state,
+				unsigned width_first_level, unsigned height_first_level)
 {
 	struct r600_pipe_sampler_view *view = CALLOC_STRUCT(r600_pipe_sampler_view);
 	struct r600_texture *tmp = (struct r600_texture*)texture;
@@ -1055,8 +1057,8 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 
 	offset_level = state->u.tex.first_level;
 	last_level = state->u.tex.last_level - offset_level;
-	width = tmp->surface.level[offset_level].npix_x;
-	height = tmp->surface.level[offset_level].npix_y;
+	width = width_first_level;
+	height = height_first_level;
 	depth = tmp->surface.level[offset_level].npix_z;
 	pitch = tmp->surface.level[offset_level].nblk_x * util_format_get_blockwidth(state->format);
 	tile_type = tmp->tile_type;
@@ -1114,6 +1116,18 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	view->tex_resource_words[6] = (S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE) |
 				       S_038018_MAX_ANISO(4 /* max 16 samples */));
 	return &view->base;
+}
+
+static struct pipe_sampler_view *
+r600_create_sampler_view(struct pipe_context *ctx,
+			 struct pipe_resource *tex,
+			 const struct pipe_sampler_view *state)
+{
+	struct r600_texture *rtex = (struct r600_texture*)tex;
+
+	return r600_create_sampler_view_custom(ctx, tex, state,
+					       rtex->surface.level[state->u.tex.first_level].npix_x,
+					       rtex->surface.level[state->u.tex.first_level].npix_y);
 }
 
 static void r600_emit_clip_state(struct r600_context *rctx, struct r600_atom *atom)

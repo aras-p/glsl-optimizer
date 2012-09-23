@@ -481,13 +481,12 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 								  0, NULL, TRUE, &surface);
 }
 
-static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
+struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
 						struct pipe_resource *texture,
-						const struct pipe_surface *templ)
+						const struct pipe_surface *templ,
+						unsigned width, unsigned height)
 {
-	struct r600_texture *rtex = (struct r600_texture*)texture;
 	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
-	unsigned level = templ->u.tex.level;
 
 	assert(templ->u.tex.first_layer == templ->u.tex.last_layer);
 	if (surface == NULL)
@@ -496,11 +495,23 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 	pipe_resource_reference(&surface->base.texture, texture);
 	surface->base.context = pipe;
 	surface->base.format = templ->format;
-	surface->base.width = rtex->surface.level[level].npix_x;
-	surface->base.height = rtex->surface.level[level].npix_y;
+	surface->base.width = width;
+	surface->base.height = height;
 	surface->base.usage = templ->usage;
 	surface->base.u = templ->u;
 	return &surface->base;
+}
+
+static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
+						struct pipe_resource *texture,
+						const struct pipe_surface *templ)
+{
+	struct r600_texture *rtex = (struct r600_texture*)texture;
+	unsigned level = templ->u.tex.level;
+
+	return r600_create_surface_custom(pipe, texture, templ,
+					  rtex->surface.level[level].npix_x,
+					  rtex->surface.level[level].npix_y);
 }
 
 static void r600_surface_destroy(struct pipe_context *pipe,
