@@ -54,6 +54,12 @@ struct radeon_llvm_context {
 
 	struct lp_build_tgsi_soa_context soa;
 
+	unsigned chip_class;
+	unsigned type;
+	unsigned face_input;
+	unsigned two_side;
+	struct r600_shader_io * r600_inputs;
+
 	/*=== Front end configuration ===*/
 
 	/* Special Intrinsics */

@@ -1332,6 +1332,11 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		unsigned dump = 0;
 		memset(&radeon_llvm_ctx, 0, sizeof(radeon_llvm_ctx));
 		radeon_llvm_ctx.reserved_reg_count = ctx.file_offset[TGSI_FILE_INPUT];
+		radeon_llvm_ctx.type = ctx.type;
+		radeon_llvm_ctx.two_side = shader->two_side;
+		radeon_llvm_ctx.face_input = ctx.face_gpr;
+		radeon_llvm_ctx.r600_inputs = ctx.shader->input;
+		radeon_llvm_ctx.chip_class = ctx.bc->chip_class;
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 		if (debug_get_bool_option("R600_DUMP_SHADERS", FALSE)) {
 			dump = 1;
