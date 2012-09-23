@@ -35,9 +35,6 @@
 #define _HAVE_FULL_GL 1
 #endif
 
-/* assert that a feature is disabled and should never be used */
-#define ASSERT_NO_FEATURE() ASSERT(0)
-
 #ifndef FEATURE_ES1
 #define FEATURE_ES1 0
 #endif
