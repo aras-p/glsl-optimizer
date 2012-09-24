@@ -187,6 +187,9 @@ struct save_state
    /** MESA_META_MULTISAMPLE */
    GLboolean MultisampleEnabled;
 
+   /** MESA_META_FRAMEBUFFER_SRGB */
+   GLboolean sRGBEnabled;
+
    /** Miscellaneous (always disabled) */
    GLboolean Lighting;
    GLboolean RasterDiscard;
@@ -773,6 +776,12 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
          _mesa_set_multisample(ctx, GL_FALSE);
    }
 
+   if (state & MESA_META_FRAMEBUFFER_SRGB) {
+      save->sRGBEnabled = ctx->Color.sRGBEnabled;
+      if (ctx->Color.sRGBEnabled)
+         _mesa_set_framebuffer_srgb(ctx, GL_FALSE);
+   }
+
    /* misc */
    {
       save->Lighting = ctx->Light.Enabled;
@@ -1073,6 +1082,11 @@ _mesa_meta_end(struct gl_context *ctx)
    if (state & MESA_META_MULTISAMPLE) {
       if (ctx->Multisample.Enabled != save->MultisampleEnabled)
          _mesa_set_multisample(ctx, save->MultisampleEnabled);
+   }
+
+   if (state & MESA_META_FRAMEBUFFER_SRGB) {
+      if (ctx->Color.sRGBEnabled != save->sRGBEnabled)
+         _mesa_set_framebuffer_srgb(ctx, save->sRGBEnabled);
    }
 
    /* misc */
@@ -1394,7 +1408,6 @@ blitframebuffer_texture(struct gl_context *ctx,
          const GLuint srcLevel = readAtt->TextureLevel;
          const GLint baseLevelSave = texObj->BaseLevel;
          const GLint maxLevelSave = texObj->MaxLevel;
-         const GLenum fbo_srgb_save = ctx->Color.sRGBEnabled;
          const GLenum target = texObj->Target;
          GLuint sampler, samplerSave =
             ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
@@ -1433,15 +1446,14 @@ blitframebuffer_texture(struct gl_context *ctx,
          _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
          _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	 /* Always do our blits with no sRGB decode or encode.*/
+	 /* Always do our blits with no sRGB decode or encode.  Note that
+          * GL_FRAMEBUFFER_SRGB has already been disabled by
+          * _mesa_meta_begin().
+          */
 	 if (ctx->Extensions.EXT_texture_sRGB_decode) {
 	    _mesa_SamplerParameteri(sampler, GL_TEXTURE_SRGB_DECODE_EXT,
 				GL_SKIP_DECODE_EXT);
 	 }
-         if ((_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_framebuffer_sRGB)
-             || _mesa_is_gles3(ctx)) {
-            _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
-         }
 
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
          _mesa_set_enable(ctx, target, GL_TRUE);
@@ -1500,9 +1512,6 @@ blitframebuffer_texture(struct gl_context *ctx,
             _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
             _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
          }
-	 if (ctx->Extensions.EXT_framebuffer_sRGB && fbo_srgb_save) {
-	    _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_TRUE);
-	 }
 
          _mesa_BindSampler(ctx->Texture.CurrentUnit, samplerSave);
          _mesa_DeleteSamplers(1, &sampler);
@@ -1713,7 +1722,8 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
    GLbitfield metaSave = (MESA_META_ALL -
 			  MESA_META_SCISSOR -
 			  MESA_META_PIXEL_STORE -
-			  MESA_META_CONDITIONAL_RENDER);
+			  MESA_META_CONDITIONAL_RENDER -
+                          MESA_META_FRAMEBUFFER_SRGB);
    const GLuint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
 
    if (buffers & BUFFER_BITS_COLOR) {
@@ -3236,7 +3246,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    const GLuint maxLevel = texObj->MaxLevel;
    const GLint maxLevelSave = texObj->MaxLevel;
    const GLboolean genMipmapSave = texObj->GenerateMipmap;
-   const GLenum srgbBufferSave = ctx->Color.sRGBEnabled;
    const GLuint fboSave = ctx->DrawBuffer->Name;
    const GLuint currentTexUnitSave = ctx->Texture.CurrentUnit;
    const GLboolean use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
@@ -3329,12 +3338,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
    else
       assert(!genMipmapSave);
-
-   if ((ctx->Extensions.EXT_framebuffer_sRGB &&
-        _mesa_is_desktop_gl(ctx)) ||
-       _mesa_is_gles3(ctx)) {
-      _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
-   }
 
   /* Setup texture coordinates */
    setup_texture_coords(faceTarget,
@@ -3450,10 +3453,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       _mesa_set_viewport(ctx, 0, 0, dstWidth, dstHeight);
 
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
-   }
-
-   if (ctx->Extensions.EXT_framebuffer_sRGB && srgbBufferSave) {
-      _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_TRUE);
    }
 
    _mesa_lock_texture(ctx, texObj); /* relock */
@@ -3732,12 +3731,6 @@ decompress_texture_image(struct gl_context *ctx,
       if (target != GL_TEXTURE_RECTANGLE_ARB) {
          _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, texImage->Level);
          _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, texImage->Level);
-      }
-
-      /* No sRGB decode or encode.*/
-      if ((_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_framebuffer_sRGB)
-          || _mesa_is_gles3(ctx)) {
-         _mesa_set_enable(ctx, GL_FRAMEBUFFER_SRGB_EXT, GL_FALSE);
       }
 
       /* render quad w/ texture into renderbuffer */
