@@ -1,7 +1,7 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = modesetting_drv.so
+LIBNAME = i915_drv.so
 
 C_SOURCES = \
 	intel_target.c \

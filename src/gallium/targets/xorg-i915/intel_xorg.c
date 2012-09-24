@@ -52,7 +52,7 @@ static PciChipsets intel_xorg_pci_devices[] = {
 };
 
 static XF86ModuleVersionInfo intel_xorg_version = {
-    "modesetting",
+    "i915",
     MODULEVENDORSTRING,
     MODINFOSTRING1,
     MODINFOSTRING2,
