@@ -95,15 +95,13 @@ brw_blorp_surface_info::set(struct brw_context *brw,
       this->brw_surfaceformat = BRW_SURFACEFORMAT_R8G8_UNORM;
       break;
    default:
-      /* Blorp blits don't support any sort of format conversion, so we can
-       * safely assume that the same format is being used for the source and
-       * destination.  Therefore the format must be supported as a render
-       * target, even if this is the source image.  So we can convert to a
-       * surface format using brw->render_target_format.
+      /* Blorp blits don't support any sort of format conversion (except
+       * between sRGB and linear), so we can safely assume that the format is
+       * supported as a render target, even if this is the source image.  So
+       * we can convert to a surface format using brw->render_target_format.
        */
-      gl_format linear_format = _mesa_get_srgb_format_linear(mt->format);
-      assert(brw->format_supported_as_render_target[linear_format]);
-      this->brw_surfaceformat = brw->render_target_format[linear_format];
+      assert(brw->format_supported_as_render_target[mt->format]);
+      this->brw_surfaceformat = brw->render_target_format[mt->format];
       break;
    }
 }
