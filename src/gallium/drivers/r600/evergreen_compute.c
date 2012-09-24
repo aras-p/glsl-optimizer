@@ -320,6 +320,7 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 		const uint *grid_layout)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
+	unsigned flush_flags = 0;
 	int i;
 
 	struct r600_resource *onebo = NULL;
@@ -423,7 +424,12 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	}
 #endif
 
-	ctx->ws->cs_flush(ctx->cs, RADEON_FLUSH_ASYNC | RADEON_FLUSH_COMPUTE);
+	flush_flags = RADEON_FLUSH_ASYNC | RADEON_FLUSH_COMPUTE;
+	if (ctx->keep_tiling_flags) {
+		flush_flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;
+	}
+
+	ctx->ws->cs_flush(ctx->cs, flush_flags);
 
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
