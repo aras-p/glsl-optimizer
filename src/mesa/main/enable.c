@@ -1061,7 +1061,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL3.0 - GL_framebuffer_sRGB */
       case GL_FRAMEBUFFER_SRGB_EXT:
-         if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx))
+         if (!_mesa_is_desktop_gl(ctx))
             goto invalid_enum_error;
          CHECK_EXTENSION(EXT_framebuffer_sRGB, cap);
          _mesa_set_framebuffer_srgb(ctx, state);
@@ -1715,7 +1715,7 @@ _mesa_IsEnabled( GLenum cap )
 
       /* GL3.0 - GL_framebuffer_sRGB */
       case GL_FRAMEBUFFER_SRGB_EXT:
-         if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx))
+         if (!_mesa_is_desktop_gl(ctx))
             goto invalid_enum_error;
 	 CHECK_EXTENSION(EXT_framebuffer_sRGB);
 	 return ctx->Color.sRGBEnabled;
