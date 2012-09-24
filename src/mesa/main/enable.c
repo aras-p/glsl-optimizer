@@ -264,6 +264,23 @@ _mesa_set_multisample(struct gl_context *ctx, GLboolean state)
 }
 
 /**
+ * Helper function to enable or disable GL_FRAMEBUFFER_SRGB, skipping the
+ * check for whether the API supports it (GLES doesn't).
+ */
+void
+_mesa_set_framebuffer_srgb(struct gl_context *ctx, GLboolean state)
+{
+   if (ctx->Color.sRGBEnabled == state)
+      return;
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+   ctx->Color.sRGBEnabled = state;
+
+   if (ctx->Driver.Enable) {
+      ctx->Driver.Enable(ctx, GL_FRAMEBUFFER_SRGB, state);
+   }
+}
+
+/**
  * Helper function to enable or disable state.
  *
  * \param ctx GL context.
@@ -1047,9 +1064,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx))
             goto invalid_enum_error;
          CHECK_EXTENSION(EXT_framebuffer_sRGB, cap);
-         FLUSH_VERTICES(ctx, _NEW_BUFFERS);
-         ctx->Color.sRGBEnabled = state;
-         break;
+         _mesa_set_framebuffer_srgb(ctx, state);
+         return;
 
       /* GL_OES_EGL_image_external */
       case GL_TEXTURE_EXTERNAL_OES:
