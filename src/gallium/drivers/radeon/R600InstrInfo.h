@@ -129,17 +129,4 @@ namespace llvm {
 
 } // End llvm namespace
 
-namespace R600_InstFlag {
-	enum TIF {
-		TRANS_ONLY = (1 << 0),
-		TEX = (1 << 1),
-		REDUCTION = (1 << 2),
-		FC = (1 << 3),
-		TRIG = (1 << 4),
-		OP3 = (1 << 5),
-		VECTOR = (1 << 6)
-    //FlagOperand bits 7, 8
-	};
-}
-
 #endif // R600INSTRINFO_H_

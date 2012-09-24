@@ -218,8 +218,8 @@ void R600MCCodeEmitter::EmitALUInstr(const MCInst &MI,
 
   //older alu have different encoding for instructions with one or two src
   //parameters.
-  if (STI.getFeatureBits() & AMDGPU::FeatureR600ALUInst &&
-      MI.getNumOperands() < 4) {
+  if ((STI.getFeatureBits() & AMDGPU::FeatureR600ALUInst) &&
+      !(MCDesc.TSFlags & R600_InstFlag::OP3)) {
     uint64_t ISAOpCode = InstWord01 & (0x3FFULL << 39);
     InstWord01 &= ~(0x3FFULL << 39);
     InstWord01 |= ISAOpCode << 1;
