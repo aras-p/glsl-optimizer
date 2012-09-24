@@ -1963,6 +1963,7 @@ CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
 dnl Substitute the config
 AC_CONFIG_FILES([configs/current
 		Makefile
+		src/Makefile
 		src/egl/Makefile
 		src/egl/drivers/Makefile
 		src/egl/drivers/dri2/Makefile
@@ -1988,7 +1989,6 @@ AC_CONFIG_FILES([configs/current
 		src/glx/Makefile
 		src/glx/tests/Makefile
 		src/gtest/Makefile
-		src/Makefile
 		src/mapi/es1api/Makefile
 		src/mapi/es1api/glesv1_cm.pc
 		src/mapi/es2api/Makefile
