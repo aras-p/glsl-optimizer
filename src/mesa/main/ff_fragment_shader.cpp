@@ -539,7 +539,7 @@ public:
 };
 
 static ir_rvalue *
-get_current_attrib(struct texenv_fragment_program *p, GLuint attrib)
+get_current_attrib(texenv_fragment_program *p, GLuint attrib)
 {
    ir_variable *current;
    ir_rvalue *val;
@@ -552,7 +552,7 @@ get_current_attrib(struct texenv_fragment_program *p, GLuint attrib)
 }
 
 static ir_rvalue *
-get_gl_Color(struct texenv_fragment_program *p)
+get_gl_Color(texenv_fragment_program *p)
 {
    if (p->state->inputs_available & FRAG_BIT_COL0) {
       ir_variable *var = p->shader->symbols->get_variable("gl_Color");
@@ -564,7 +564,7 @@ get_gl_Color(struct texenv_fragment_program *p)
 }
 
 static ir_rvalue *
-get_source(struct texenv_fragment_program *p,
+get_source(texenv_fragment_program *p,
 	   GLuint src, GLuint unit)
 {
    ir_variable *var;
@@ -615,7 +615,7 @@ get_source(struct texenv_fragment_program *p,
 }
 
 static ir_rvalue *
-emit_combine_source(struct texenv_fragment_program *p,
+emit_combine_source(texenv_fragment_program *p,
 		    GLuint unit,
 		    GLuint source,
 		    GLuint operand)
@@ -690,7 +690,7 @@ static GLboolean args_match( const struct state_key *key, GLuint unit )
 }
 
 static ir_rvalue *
-smear(struct texenv_fragment_program *p, ir_rvalue *val)
+smear(texenv_fragment_program *p, ir_rvalue *val)
 {
    if (!val->type->is_scalar())
       return val;
@@ -699,7 +699,7 @@ smear(struct texenv_fragment_program *p, ir_rvalue *val)
 }
 
 static ir_rvalue *
-emit_combine(struct texenv_fragment_program *p,
+emit_combine(texenv_fragment_program *p,
 	     GLuint unit,
 	     GLuint nr,
 	     GLuint mode,
@@ -780,7 +780,7 @@ emit_combine(struct texenv_fragment_program *p,
  * Generate instructions for one texture unit's env/combiner mode.
  */
 static ir_rvalue *
-emit_texenv(struct texenv_fragment_program *p, GLuint unit)
+emit_texenv(texenv_fragment_program *p, GLuint unit)
 {
    const struct state_key *key = p->state;
    GLboolean rgb_saturate, alpha_saturate;
@@ -909,7 +909,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 /**
  * Generate instruction for getting a texture source term.
  */
-static void load_texture( struct texenv_fragment_program *p, GLuint unit )
+static void load_texture( texenv_fragment_program *p, GLuint unit )
 {
    ir_dereference *deref;
 
@@ -1039,7 +1039,7 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 }
 
 static void
-load_texenv_source(struct texenv_fragment_program *p,
+load_texenv_source(texenv_fragment_program *p,
 		   GLuint src, GLuint unit)
 {
    switch (src) {
@@ -1069,7 +1069,7 @@ load_texenv_source(struct texenv_fragment_program *p,
  * Generate instructions for loading all texture source terms.
  */
 static GLboolean
-load_texunit_sources( struct texenv_fragment_program *p, GLuint unit )
+load_texunit_sources( texenv_fragment_program *p, GLuint unit )
 {
    const struct state_key *key = p->state;
    GLuint i;
@@ -1089,7 +1089,7 @@ load_texunit_sources( struct texenv_fragment_program *p, GLuint unit )
  * Generate instructions for loading bump map textures.
  */
 static void
-load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
+load_texunit_bumpmap( texenv_fragment_program *p, GLuint unit )
 {
    const struct state_key *key = p->state;
    GLuint bumpedUnitNr = key->unit[unit].OptRGB[1].Source - SRC_TEXTURE0;
@@ -1141,7 +1141,7 @@ load_texunit_bumpmap( struct texenv_fragment_program *p, GLuint unit )
  * GL_FOG_COORDINATE_EXT is set to GL_FRAGMENT_DEPTH_EXT.
  */
 static ir_rvalue *
-emit_fog_instructions(struct texenv_fragment_program *p,
+emit_fog_instructions(texenv_fragment_program *p,
 		      ir_rvalue *fragcolor)
 {
    struct state_key *key = p->state;
@@ -1214,7 +1214,7 @@ emit_fog_instructions(struct texenv_fragment_program *p,
 }
 
 static void
-emit_instructions(struct texenv_fragment_program *p)
+emit_instructions(texenv_fragment_program *p)
 {
    struct state_key *key = p->state;
    GLuint unit;
