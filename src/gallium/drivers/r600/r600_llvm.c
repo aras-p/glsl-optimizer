@@ -165,6 +165,20 @@ static void llvm_emit_tex(
 					emit_data->dst_type, args, c, LLVMReadNoneAttribute);
 }
 
+static void emit_cndlt(
+		const struct lp_build_tgsi_action * action,
+		struct lp_build_tgsi_context * bld_base,
+		struct lp_build_emit_data * emit_data)
+{
+	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+	LLVMValueRef float_zero = lp_build_const_float(
+		bld_base->base.gallivm, 0.0f);
+	LLVMValueRef cmp = LLVMBuildFCmp(
+		builder, LLVMRealULT, emit_data->args[0], float_zero, "");
+	emit_data->output[emit_data->chan] = LLVMBuildSelect(builder,
+		cmp, emit_data->args[1], emit_data->args[2], "");
+}
+
 static void dp_fetch_args(
 	struct lp_build_tgsi_context * bld_base,
 	struct lp_build_emit_data * emit_data)
@@ -241,6 +255,7 @@ LLVMModuleRef r600_tgsi_llvm(
 	bld_base->op_actions[TGSI_OPCODE_TXF].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_TXQ].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_TXP].emit = llvm_emit_tex;
+	bld_base->op_actions[TGSI_OPCODE_CMP].emit = emit_cndlt;
 
 	lp_build_tgsi_llvm(bld_base, tokens);
 

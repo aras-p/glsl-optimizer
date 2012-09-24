@@ -545,7 +545,25 @@ def SETGE_UINT : R600_2OP <
 def CNDE_INT : R600_3OP <
 	0x1C, "CNDE_INT",
   [(set (i32 R600_Reg32:$dst),
-   (select R600_Reg32:$src0, R600_Reg32:$src2, R600_Reg32:$src1))]
+   (selectcc (i32 R600_Reg32:$src0), 0,
+       (i32 R600_Reg32:$src1), (i32 R600_Reg32:$src2),
+       COND_EQ))]
+>;
+
+def CNDGE_INT : R600_3OP <
+	0x1E, "CNDGE_INT",
+  [(set (i32 R600_Reg32:$dst),
+   (selectcc (i32 R600_Reg32:$src0), 0,
+       (i32 R600_Reg32:$src1), (i32 R600_Reg32:$src2),
+       COND_GE))]
+>;
+
+def CNDGT_INT : R600_3OP <
+	0x1D, "CNDGT_INT",
+  [(set (i32 R600_Reg32:$dst),
+   (selectcc (i32 R600_Reg32:$src0), 0,
+       (i32 R600_Reg32:$src1), (i32 R600_Reg32:$src2),
+       COND_GT))]
 >;
 
 //===----------------------------------------------------------------------===//
@@ -642,18 +660,26 @@ class MULADD_Common <bits<11> inst> : R600_3OP <
 
 class CNDE_Common <bits<11> inst> : R600_3OP <
   inst, "CNDE",
-  [(set (f32 R600_Reg32:$dst),
-   (select (i32 (fp_to_sint (fneg R600_Reg32:$src0))), (f32 R600_Reg32:$src2), (f32 R600_Reg32:$src1)))]
+  [(set R600_Reg32:$dst,
+   (selectcc (f32 R600_Reg32:$src0), FP_ZERO,
+       (f32 R600_Reg32:$src1), (f32 R600_Reg32:$src2),
+       COND_EQ))]
 >;
 
 class CNDGT_Common <bits<11> inst> : R600_3OP <
   inst, "CNDGT",
-  []
+  [(set R600_Reg32:$dst,
+   (selectcc (f32 R600_Reg32:$src0), FP_ZERO,
+       (f32 R600_Reg32:$src1), (f32 R600_Reg32:$src2),
+       COND_GT))]
 >;
-  
+
 class CNDGE_Common <bits<11> inst> : R600_3OP <
   inst, "CNDGE",
-  [(set R600_Reg32:$dst, (int_AMDGPU_cndlt R600_Reg32:$src0, R600_Reg32:$src2, R600_Reg32:$src1))]
+  [(set R600_Reg32:$dst,
+   (selectcc (f32 R600_Reg32:$src0), FP_ZERO,
+       (f32 R600_Reg32:$src1), (f32 R600_Reg32:$src2),
+       COND_GE))]
 >;
 
 class DOT4_Common <bits<11> inst> : R600_REDUCTION <

@@ -516,6 +516,17 @@ SDValue R600TargetLowering::LowerROTL(SDValue Op, SelectionDAG &DAG) const
                                  Op.getOperand(1)));
 }
 
+bool R600TargetLowering::isZero(SDValue Op) const
+{
+  if(ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(Op)) {
+    return Cst->isNullValue();
+  } else if(ConstantFPSDNode *CstFP = dyn_cast<ConstantFPSDNode>(Op)){
+    return CstFP->isZero();
+  } else {
+    return false;
+  }
+}
+
 SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
 {
   DebugLoc DL = Op.getDebugLoc();
@@ -568,47 +579,58 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
   if (isHWTrueValue(False) && isHWFalseValue(True)) {
   }
 
-  // XXX Check if we can lower this to a SELECT or if it is supported by a native
-  // operation. (The code below does this but we don't have the Instruction
-  // selection patterns to do this yet.
-#if 0
+  // Check if we can lower this to a native operation.
+  // CND* instructions requires all operands to have the same type,
+  // and RHS to be zero.
+
   if (isZero(LHS) || isZero(RHS)) {
     SDValue Cond = (isZero(LHS) ? RHS : LHS);
-    bool SwapTF = false;
+    SDValue Zero = (isZero(LHS) ? LHS : RHS);
+    ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
+    if (CompareVT != VT) {
+      True = DAG.getNode(ISD::BITCAST, DL, CompareVT, True);
+      False = DAG.getNode(ISD::BITCAST, DL, CompareVT, False);
+    }
+    if (isZero(LHS)) {
+      CCOpcode = ISD::getSetCCSwappedOperands(CCOpcode);
+    }
+
     switch (CCOpcode) {
-    case ISD::SETOEQ:
-    case ISD::SETUEQ:
-    case ISD::SETEQ:
-      SwapTF = true;
-      // Fall through
     case ISD::SETONE:
     case ISD::SETUNE:
     case ISD::SETNE:
-      // We can lower to select
-      if (SwapTF) {
-        Temp = True;
-        True = False;
-        False = Temp;
-      }
-      // CNDE
-      return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
+    case ISD::SETULE:
+    case ISD::SETULT:
+    case ISD::SETOLE:
+    case ISD::SETOLT:
+    case ISD::SETLE:
+    case ISD::SETLT:
+      CCOpcode = ISD::getSetCCInverse(CCOpcode, CompareVT == MVT::i32);
+      Temp = True;
+      True = False;
+      False = Temp;
+      break;
     default:
-      // Supported by a native operation (CNDGE, CNDGT)
-      return DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, True, False, CC);
+      break;
     }
+    SDValue SelectNode = DAG.getNode(ISD::SELECT_CC, DL, CompareVT,
+        Cond, Zero,
+        True, False,
+        DAG.getCondCode(CCOpcode));
+    return DAG.getNode(ISD::BITCAST, DL, VT, SelectNode);
   }
-#endif
+
 
   // If we make it this for it means we have no native instructions to handle
   // this SELECT_CC, so we must lower it.
   SDValue HWTrue, HWFalse;
 
-  if (VT == MVT::f32) {
-    HWTrue = DAG.getConstantFP(1.0f, VT);
-    HWFalse = DAG.getConstantFP(0.0f, VT);
-  } else if (VT == MVT::i32) {
-    HWTrue = DAG.getConstant(-1, VT);
-    HWFalse = DAG.getConstant(0, VT);
+  if (CompareVT == MVT::f32) {
+    HWTrue = DAG.getConstantFP(1.0f, CompareVT);
+    HWFalse = DAG.getConstantFP(0.0f, CompareVT);
+  } else if (CompareVT == MVT::i32) {
+    HWTrue = DAG.getConstant(-1, CompareVT);
+    HWFalse = DAG.getConstant(0, CompareVT);
   }
   else {
     assert(!"Unhandled value type in LowerSELECT_CC");
@@ -616,15 +638,12 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
 
   // Lower this unsupported SELECT_CC into a combination of two supported
   // SELECT_CC operations.
-  SDValue Cond = DAG.getNode(ISD::SELECT_CC, DL, VT, LHS, RHS, HWTrue, HWFalse, CC);
+  SDValue Cond = DAG.getNode(ISD::SELECT_CC, DL, CompareVT, LHS, RHS, HWTrue, HWFalse, CC);
 
-  // Convert floating point condition to i1
-  if (VT == MVT::f32) {
-    Cond = DAG.getNode(ISD::FP_TO_SINT, DL, MVT::i32,
-                       DAG.getNode(ISD::FNEG, DL, VT, Cond));
-  }
-
-  return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
+  return DAG.getNode(ISD::SELECT_CC, DL, VT,
+      Cond, HWFalse,
+      True, False,
+      DAG.getCondCode(ISD::SETNE));
 }
 
 SDValue R600TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const
