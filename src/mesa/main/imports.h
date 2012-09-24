@@ -145,6 +145,13 @@ static inline int isblank(int ch) { return ch == ' ' || ch == '\t'; }
 /*@}*/
 
 
+/*
+ * signbit() is a macro on Linux.  Not available on Windows.
+ */
+#ifndef signbit
+#define signbit(x) ((x) < 0.0f)
+#endif
+
 
 /** single-precision inverse square root */
 static inline float
