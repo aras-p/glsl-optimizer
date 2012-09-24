@@ -31,9 +31,9 @@ namespace {
    class box {
    public:
       box(const resource::point &origin, const resource::point &size) :
-         pipe({ (unsigned)origin[0], (unsigned)origin[1],
-                (unsigned)origin[2], (unsigned)size[0],
-                (unsigned)size[1], (unsigned)size[2] }) {
+         pipe({ (int)origin[0], (int)origin[1],
+                (int)origin[2], (int)size[0],
+                (int)size[1], (int)size[2] }) {
       }
 
       operator const pipe_box *() {
