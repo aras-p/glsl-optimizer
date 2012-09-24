@@ -120,7 +120,12 @@ namespace {
 
       c.getLangOpts().NoBuiltin = true;
       c.getTargetOpts().Triple = triple;
+#if HAVE_LLVM <= 0x0301
       c.getInvocation().setLangDefaults(clang::IK_OpenCL);
+#else
+      c.getInvocation().setLangDefaults(c.getLangOpts(), clang::IK_OpenCL,
+                                        clang::LangStandard::lang_opencl11);
+#endif
       c.createDiagnostics(0, NULL, new clang::TextDiagnosticPrinter(
                           s_log, c.getDiagnosticOpts()));
 
