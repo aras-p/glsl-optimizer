@@ -890,10 +890,10 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
       }
       else {
 	 float const_data[4] = {
-	    1 << rgb_shift,
-	    1 << rgb_shift,
-	    1 << rgb_shift,
-	    1 << alpha_shift
+	    float(1 << rgb_shift),
+	    float(1 << rgb_shift),
+	    float(1 << rgb_shift),
+	    float(1 << alpha_shift)
 	 };
 	 shift = new(p->mem_ctx) ir_constant(glsl_type::vec4_type,
 					     (ir_constant_data *)const_data);
