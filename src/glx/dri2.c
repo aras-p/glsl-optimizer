@@ -585,39 +585,6 @@ void DRI2SwapBuffers(Display *dpy, XID drawable, CARD64 target_msc,
 }
 #endif
 
-#ifdef X_DRI2GetMSC
-Bool DRI2GetMSC(Display *dpy, XID drawable, CARD64 *ust, CARD64 *msc,
-		CARD64 *sbc)
-{
-    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
-    xDRI2GetMSCReq *req;
-    xDRI2MSCReply rep;
-
-    XextCheckExtension (dpy, info, dri2ExtensionName, False);
-
-    LockDisplay(dpy);
-    GetReq(DRI2GetMSC, req);
-    req->reqType = info->codes->major_opcode;
-    req->dri2ReqType = X_DRI2GetMSC;
-    req->drawable = drawable;
-
-    if (!_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
-	UnlockDisplay(dpy);
-	SyncHandle();
-	return False;
-    }
-
-    *ust = vals_to_card64(rep.ust_lo, rep.ust_hi);
-    *msc = vals_to_card64(rep.msc_lo, rep.msc_hi);
-    *sbc = vals_to_card64(rep.sbc_lo, rep.sbc_hi);
-
-    UnlockDisplay(dpy);
-    SyncHandle();
-
-    return True;
-}
-#endif
-
 #ifdef X_DRI2SwapInterval
 void DRI2SwapInterval(Display *dpy, XID drawable, int interval)
 {
