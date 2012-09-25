@@ -737,7 +737,13 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
        __dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height,
 			   __DRI2_THROTTLE_SWAPBUFFER);
     } else {
-#ifdef X_DRI2SwapBuffers
+       xcb_connection_t *c = XGetXCBConnection(pdraw->psc->dpy);
+       xcb_dri2_swap_buffers_cookie_t swap_buffers_cookie;
+       xcb_dri2_swap_buffers_reply_t *swap_buffers_reply;
+       uint32_t target_msc_hi, target_msc_lo;
+       uint32_t divisor_hi, divisor_lo;
+       uint32_t remainder_hi, remainder_lo;
+
        if (psc->f) {
           struct glx_context *gc = __glXGetCurrentContext();
 
@@ -748,9 +754,30 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 
        dri2Throttle(psc, priv, __DRI2_THROTTLE_SWAPBUFFER);
 
-       DRI2SwapBuffers(psc->base.dpy, pdraw->xDrawable,
-		       target_msc, divisor, remainder, &ret);
-#endif
+       split_counter(target_msc, &target_msc_hi, &target_msc_lo);
+       split_counter(divisor, &divisor_hi, &divisor_lo);
+       split_counter(remainder, &remainder_hi, &remainder_lo);
+
+       swap_buffers_cookie =
+          xcb_dri2_swap_buffers_unchecked(c, pdraw->xDrawable,
+                                          target_msc_hi, target_msc_lo,
+                                          divisor_hi, divisor_lo,
+                                          remainder_hi, remainder_lo);
+       /* Immediately wait on the swapbuffers reply.  If we didn't, we'd have
+        * to do so some time before reusing a (non-pageflipped) backbuffer.
+        * Otherwise, the new rendering could get ahead of the X Server's
+        * dispatch of the swapbuffer and you'd display garbage.
+        *
+        * We use XSync() first to reap the invalidate events through the event
+        * filter, to ensure that the next drawing doesn't use an invalidated
+        * buffer.
+        */
+       XSync(pdraw->psc->dpy, False);
+       swap_buffers_reply =
+          xcb_dri2_swap_buffers_reply(c, swap_buffers_cookie, NULL);
+       ret = merge_counter(swap_buffers_reply->swap_hi,
+                           swap_buffers_reply->swap_lo);
+       free(swap_buffers_reply);
     }
 
     if (psc->show_fps) {

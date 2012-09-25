@@ -541,48 +541,4 @@ DRI2CopyRegion(Display * dpy, XID drawable, XserverRegion region,
    SyncHandle();
 }
 
-#ifdef X_DRI2SwapBuffers
-static void
-load_swap_req(xDRI2SwapBuffersReq *req, CARD64 target, CARD64 divisor,
-	     CARD64 remainder)
-{
-    req->target_msc_hi = target >> 32;
-    req->target_msc_lo = target & 0xffffffff;
-    req->divisor_hi = divisor >> 32;
-    req->divisor_lo = divisor & 0xffffffff;
-    req->remainder_hi = remainder >> 32;
-    req->remainder_lo = remainder & 0xffffffff;
-}
-
-static CARD64
-vals_to_card64(CARD32 lo, CARD32 hi)
-{
-    return (CARD64)hi << 32 | lo;
-}
-
-void DRI2SwapBuffers(Display *dpy, XID drawable, CARD64 target_msc,
-		     CARD64 divisor, CARD64 remainder, CARD64 *count)
-{
-    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
-    xDRI2SwapBuffersReq *req;
-    xDRI2SwapBuffersReply rep;
-
-    XextSimpleCheckExtension (dpy, info, dri2ExtensionName);
-
-    LockDisplay(dpy);
-    GetReq(DRI2SwapBuffers, req);
-    req->reqType = info->codes->major_opcode;
-    req->dri2ReqType = X_DRI2SwapBuffers;
-    req->drawable = drawable;
-    load_swap_req(req, target_msc, divisor, remainder);
-
-    _XReply(dpy, (xReply *)&rep, 0, xFalse);
-
-    *count = vals_to_card64(rep.swap_lo, rep.swap_hi);
-
-    UnlockDisplay(dpy);
-    SyncHandle();
-}
-#endif
-
 #endif /* GLX_DIRECT_RENDERING */

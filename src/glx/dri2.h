@@ -85,8 +85,4 @@ DRI2CopyRegion(Display * dpy, XID drawable,
                XserverRegion region,
                CARD32 dest, CARD32 src);
 
-extern void
-DRI2SwapBuffers(Display *dpy, XID drawable, CARD64 target_msc, CARD64 divisor,
-		CARD64 remainder, CARD64 *count);
-
 #endif
