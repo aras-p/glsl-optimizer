@@ -718,61 +718,6 @@ driDestroyScreen(struct glx_screen *base)
       dlclose(psc->driver);
 }
 
-#ifdef __DRI_SWAP_BUFFER_COUNTER
-
-static int
-driDrawableGetMSC(struct glx_screen *base, __GLXDRIdrawable *pdraw,
-		   int64_t *ust, int64_t *msc, int64_t *sbc)
-{
-   struct dri_screen *psc = (struct dri_screen *) base;
-   struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
-
-   if (pdp && psc->sbc && psc->msc)
-      return ( (*psc->msc->getMSC)(psc->driScreen, msc) == 0 &&
-	       (*psc->sbc->getSBC)(pdp->driDrawable, sbc) == 0 && 
-	       __glXGetUST(ust) == 0 );
-}
-
-static int
-driWaitForMSC(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
-	       int64_t remainder, int64_t *ust, int64_t *msc, int64_t *sbc)
-{
-   struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
-   struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
-
-   if (pdp != NULL && psc->msc != NULL) {
-      ret = (*psc->msc->waitForMSC) (pdp->driDrawable, target_msc,
-				     divisor, remainder, msc, sbc);
-
-      /* __glXGetUST returns zero on success and non-zero on failure.
-       * This function returns True on success and False on failure.
-       */
-      return ret == 0 && __glXGetUST(ust) == 0;
-   }
-}
-
-static int
-driWaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
-	       int64_t *msc, int64_t *sbc)
-{
-   struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
-
-   if (pdp != NULL && psc->sbc != NULL) {
-      ret =
-         (*psc->sbc->waitForSBC) (pdp->driDrawable, target_sbc, msc, sbc);
-
-      /* __glXGetUST returns zero on success and non-zero on failure.
-       * This function returns True on success and False on failure.
-       */
-      return ((ret == 0) && (__glXGetUST(ust) == 0));
-   }
-
-   return DRI2WaitSBC(pdp->base.psc->dpy,
-		      pdp->base.xDrawable, target_sbc, ust, msc, sbc);
-}
-
-#endif
-
 static int
 driSetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
@@ -898,12 +843,6 @@ driCreateScreen(int screen, struct glx_display *priv)
    psp->destroyScreen = driDestroyScreen;
    psp->createDrawable = driCreateDrawable;
    psp->swapBuffers = driSwapBuffers;
-
-#ifdef __DRI_SWAP_BUFFER_COUNTER
-   psp->getDrawableMSC = driDrawableGetMSC;
-   psp->waitForMSC = driWaitForMSC;
-   psp->waitForSBC = driWaitForSBC;
-#endif
 
    psp->setSwapInterval = driSetSwapInterval;
    psp->getSwapInterval = driGetSwapInterval;
