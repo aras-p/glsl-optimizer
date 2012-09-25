@@ -1173,6 +1173,63 @@ static void evergreen_set_scissor_state(struct pipe_context *ctx,
 	r600_context_pipe_state_set(rctx, rstate);
 }
 
+/**
+ * This function intializes the CB* register values for RATs.  It is meant
+ * to be used for 1D aligned buffers that do not have an associated
+ * radeon_surface.
+ */
+void evergreen_init_color_surface_rat(struct r600_context *rctx,
+					struct r600_surface *surf)
+{
+	struct pipe_resource *pipe_buffer = surf->base.texture;
+	unsigned format = r600_translate_colorformat(surf->base.format);
+	unsigned endian = r600_colorformat_endian_swap(format);
+	unsigned swap = r600_translate_colorswap(surf->base.format);
+	unsigned block_size =
+		align(util_format_get_blocksize(pipe_buffer->format), 4);
+	unsigned pitch_alignment =
+		MAX2(64, rctx->screen->tiling_info.group_bytes / block_size);
+	unsigned pitch = align(pipe_buffer->width0, pitch_alignment);
+
+	/* XXX: This is copied from evergreen_init_color_surface().  I don't
+	 * know why this is necessary.
+	 */
+	if (pipe_buffer->usage == PIPE_USAGE_STAGING) {
+		endian = ENDIAN_NONE;
+	}
+
+	surf->cb_color_base =
+		r600_resource_va(rctx->context.screen, pipe_buffer) >> 8;
+
+	surf->cb_color_pitch = (pitch / 8) - 1;
+
+	surf->cb_color_slice = 0;
+
+	surf->cb_color_view = 0;
+
+	surf->cb_color_info =
+		  S_028C70_ENDIAN(endian)
+		| S_028C70_FORMAT(format)
+		| S_028C70_ARRAY_MODE(V_028C70_ARRAY_LINEAR_ALIGNED)
+		| S_028C70_NUMBER_TYPE(V_028C70_NUMBER_UINT)
+		| S_028C70_COMP_SWAP(swap)
+		| S_028C70_BLEND_BYPASS(1) /* We must set this bit because we
+					    * are using NUMBER_UINT */
+		| S_028C70_RAT(1)
+		;
+
+	surf->cb_color_attrib = S_028C74_NON_DISP_TILING_ORDER(1);
+
+	/* For buffers, CB_COLOR0_DIM needs to be set to the number of
+	 * elements. */
+	surf->cb_color_dim = pipe_buffer->width0;
+
+	surf->cb_color_cmask = surf->cb_color_base;
+	surf->cb_color_cmask_slice = 0;
+	surf->cb_color_fmask = surf->cb_color_base;
+	surf->cb_color_fmask_slice = 0;
+}
+
 void evergreen_init_color_surface(struct r600_context *rctx,
 				  struct r600_surface *surf)
 {
