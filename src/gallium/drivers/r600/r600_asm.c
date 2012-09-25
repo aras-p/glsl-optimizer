@@ -2758,31 +2758,47 @@ int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r6
 	unsigned fetch_resource_start = rctx->chip_class >= EVERGREEN ? 0 : 160;
 	unsigned format, num_format, format_comp, endian;
 	uint32_t *bytecode;
-	int i, r;
+	int i, j, r;
 
 	memset(&bc, 0, sizeof(bc));
 	r600_bytecode_init(&bc, rctx->chip_class, rctx->family);
 
 	for (i = 0; i < ve->count; i++) {
 		if (elements[i].instance_divisor > 1) {
-			struct r600_bytecode_alu alu;
-
-			memset(&alu, 0, sizeof(alu));
-			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT);
-			alu.src[0].sel = 0;
-			alu.src[0].chan = 3;
-
-			alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
-			alu.src[1].value = (1ll << 32) / elements[i].instance_divisor + 1;
-
-			alu.dst.sel = i + 1;
-			alu.dst.chan = 3;
-			alu.dst.write = 1;
-			alu.last = 1;
-
-			if ((r = r600_bytecode_add_alu(&bc, &alu))) {
-				r600_bytecode_clear(&bc);
-				return r;
+			if (rctx->chip_class == CAYMAN) {
+				for (j = 0; j < 4; j++) {
+					struct r600_bytecode_alu alu;
+					memset(&alu, 0, sizeof(alu));
+					alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT);
+					alu.src[0].sel = 0;
+					alu.src[0].chan = 3;
+					alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
+					alu.src[1].value = (1ll << 32) / elements[i].instance_divisor + 1;
+					alu.dst.sel = i + 1;
+					alu.dst.chan = j;
+					alu.dst.write = j == 3;
+					alu.last = j == 3;
+					if ((r = r600_bytecode_add_alu(&bc, &alu))) {
+						r600_bytecode_clear(&bc);
+						return r;
+					}
+				}
+			} else {
+				struct r600_bytecode_alu alu;
+				memset(&alu, 0, sizeof(alu));
+				alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT);
+				alu.src[0].sel = 0;
+				alu.src[0].chan = 3;
+				alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
+				alu.src[1].value = (1ll << 32) / elements[i].instance_divisor + 1;
+				alu.dst.sel = i + 1;
+				alu.dst.chan = 3;
+				alu.dst.write = 1;
+				alu.last = 1;
+				if ((r = r600_bytecode_add_alu(&bc, &alu))) {
+					r600_bytecode_clear(&bc);
+					return r;
+				}
 			}
 		}
 	}
