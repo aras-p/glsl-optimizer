@@ -365,9 +365,16 @@
 #define   S_028C70_RAT(x)                              (((x) & 0x1) << 26)
 #define   G_028C70_RAT(x)                              (((x) >> 26) & 0x1)
 #define   C_028C70_RAT                                 0xFBFFFFFF
+/* RESOURCE_TYPE is only used for compute shaders */
 #define   S_028C70_RESOURCE_TYPE(x)                    (((x) & 0x7) << 27)
 #define   G_028C70_RESOURCE_TYPE(x)                    (((x) >> 27) & 0x7)
 #define   C_028C70_RESOURCE_TYPE                       0xC7FFFFFF
+#define     V_028C70_BUFFER                            0x0
+#define     V_028C70_TEXTURE1D                         0x1
+#define     V_028C70_TEXTURE1DARRAY                    0x2
+#define     V_028C70_TEXTURE2D                         0x3
+#define     V_028C70_TEXTURE2DARRAY                    0x4
+#define     V_028C70_TEXTURE3D                         0x5
 
 #define R_028C74_CB_COLOR0_ATTRIB                      0x028C74
 #define   S_028C74_NON_DISP_TILING_ORDER(x)            (((x) & 0x1) << 4)
