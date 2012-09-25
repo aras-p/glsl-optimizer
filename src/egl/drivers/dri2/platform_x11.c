@@ -742,11 +742,6 @@ dri2_swap_buffers_msc(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
       free(reply);
    }
 
-   /* If the server doesn't send invalidate events */
-   if (dri2_dpy->invalidate_available && dri2_dpy->flush &&
-       dri2_dpy->flush->base.version >= 3 && dri2_dpy->flush->invalidate)
-      (*dri2_dpy->flush->invalidate)(dri2_surf->dri_drawable);
-
    return swap_count;
 }
 
