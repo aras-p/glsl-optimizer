@@ -1456,6 +1456,11 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	if (rctx->framebuffer.state.nr_cbufs) {
 		rctx->flags |= R600_CONTEXT_CB_FLUSH;
+
+		if (rctx->chip_class >= R700 &&
+		    rctx->framebuffer.state.cbufs[0]->texture->nr_samples > 1) {
+			rctx->flags |= R600_CONTEXT_FLUSH_AND_INV_CB_META;
+		}
 	}
 	if (rctx->framebuffer.state.zsbuf) {
 		rctx->flags |= R600_CONTEXT_DB_FLUSH;

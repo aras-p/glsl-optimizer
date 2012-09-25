@@ -190,6 +190,7 @@ struct r600_so_target {
 #define R600_CONTEXT_WAIT_IDLE			(1 << 7)
 #define R600_CONTEXT_FLUSH_AND_INV		(1 << 8)
 #define R600_CONTEXT_HTILE_ERRATA		(1 << 9)
+#define R600_CONTEXT_FLUSH_AND_INV_CB_META	(1 << 10)
 
 struct r600_context;
 struct r600_screen;
