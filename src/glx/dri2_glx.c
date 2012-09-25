@@ -812,11 +812,10 @@ dri2GetBuffersWithFormat(__DRIdrawable * driDrawable,
    return pdraw->buffers;
 }
 
-#ifdef X_DRI2SwapInterval
-
 static int
 dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
+   xcb_connection_t *c = XGetXCBConnection(pdraw->psc->dpy);
    struct dri2_drawable *priv =  (struct dri2_drawable *) pdraw;
    GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
    struct dri2_screen *psc = (struct dri2_screen *) priv->base.psc;
@@ -838,7 +837,7 @@ dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
       break;
    }
 
-   DRI2SwapInterval(priv->base.psc->dpy, priv->base.xDrawable, interval);
+   xcb_dri2_swap_interval(c, priv->base.xDrawable, interval);
    priv->swap_interval = interval;
 
    return 0;
@@ -851,8 +850,6 @@ dri2GetSwapInterval(__GLXDRIdrawable *pdraw)
 
   return priv->swap_interval;
 }
-
-#endif /* X_DRI2SwapInterval */
 
 static const __DRIdri2LoaderExtension dri2LoaderExtension = {
    {__DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION},
@@ -1147,10 +1144,8 @@ dri2CreateScreen(int screen, struct glx_display * priv)
       psp->getDrawableMSC = dri2DrawableGetMSC;
       psp->waitForMSC = dri2WaitForMSC;
       psp->waitForSBC = dri2WaitForSBC;
-#ifdef X_DRI2SwapInterval
       psp->setSwapInterval = dri2SetSwapInterval;
       psp->getSwapInterval = dri2GetSwapInterval;
-#endif
       __glXEnableDirectExtension(&psc->base, "GLX_OML_sync_control");
    }
 
