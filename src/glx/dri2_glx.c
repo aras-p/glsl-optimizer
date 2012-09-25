@@ -738,13 +738,13 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 			   __DRI2_THROTTLE_SWAPBUFFER);
     } else {
 #ifdef X_DRI2SwapBuffers
-    if (psc->f) {
-       struct glx_context *gc = __glXGetCurrentContext();
+       if (psc->f) {
+          struct glx_context *gc = __glXGetCurrentContext();
 
-       if (gc) {
-	  (*psc->f->flush)(priv->driDrawable);
+          if (gc) {
+             (*psc->f->flush)(priv->driDrawable);
+          }
        }
-    }
 
        dri2Throttle(psc, priv, __DRI2_THROTTLE_SWAPBUFFER);
 
