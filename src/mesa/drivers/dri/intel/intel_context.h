@@ -457,19 +457,30 @@ extern int INTEL_DEBUG;
 #define DEBUG_CLIP      0x2000000
 #define DEBUG_AUB       0x4000000
 
+#ifdef HAVE_ANDROID_PLATFORM
+#define LOG_TAG "INTEL-MESA"
+#include <cutils/log.h>
+#ifndef ALOGW
+#define ALOGW LOGW
+#endif
+#define dbg_printf(...)	ALOGW(__VA_ARGS__)
+#else
+#define dbg_printf(...)	printf(__VA_ARGS__)
+#endif /* HAVE_ANDROID_PLATFORM */
+
 #define DBG(...) do {						\
 	if (unlikely(INTEL_DEBUG & FILE_DEBUG_FLAG))		\
-		printf(__VA_ARGS__);			\
+		dbg_printf(__VA_ARGS__);			\
 } while(0)
 
 #define fallback_debug(...) do {				\
 	if (unlikely(INTEL_DEBUG & DEBUG_PERF))			\
-		printf(__VA_ARGS__);				\
+		dbg_printf(__VA_ARGS__);			\
 } while(0)
 
 #define perf_debug(...) do {					\
 	if (unlikely(INTEL_DEBUG & DEBUG_PERF))			\
-		printf(__VA_ARGS__);				\
+		dbg_printf(__VA_ARGS__);			\
 } while(0)
 
 #define PCI_CHIP_845_G			0x2562
