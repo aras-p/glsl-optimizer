@@ -175,7 +175,7 @@ swrastGetImage(__DRIdrawable * read,
  */
 static _EGLSurface *
 dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
-		    _EGLConfig *conf, EGLNativeWindowType window,
+		    _EGLConfig *conf, EGLNativeWindowType native_window,
 		    const EGLint *attrib_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
@@ -185,6 +185,7 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    xcb_get_geometry_reply_t *reply;
    xcb_screen_iterator_t s;
    xcb_generic_error_t *error;
+   xcb_drawable_t window = (uintptr_t )native_window;
 
    (void) drv;
 
@@ -831,11 +832,12 @@ dri2_swap_interval(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf, EGLint
 
 static EGLBoolean
 dri2_copy_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
-		  EGLNativePixmapType target)
+		  EGLNativePixmapType native_target)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
    xcb_gcontext_t gc;
+   xcb_pixmap_t target = (uintptr_t )native_target;
 
    (void) drv;
 
