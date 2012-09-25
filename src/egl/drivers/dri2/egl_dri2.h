@@ -100,11 +100,15 @@ struct dri2_egl_display
    __DRItexBufferExtension  *tex_buffer;
    __DRIimageExtension      *image;
    __DRIrobustnessExtension *robustness;
+   __DRI2configQueryExtension *config;
    int                       fd;
 
    int                       own_device;
    int                       swap_available;
    int                       invalidate_available;
+   int                       min_swap_interval;
+   int                       max_swap_interval;
+   int                       default_swap_interval;
 #ifdef HAVE_DRM_PLATFORM
    struct gbm_dri_device    *gbm_dri;
 #endif

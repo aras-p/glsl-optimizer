@@ -262,10 +262,8 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
    if (double_buffer) {
       surface_type &= ~EGL_PIXMAP_BIT;
 
-      if (dri2_dpy->swap_available) {
-         conf->base.MinSwapInterval = 0;
-         conf->base.MaxSwapInterval = 1000; /* XXX arbitrary value */
-      }
+      conf->base.MinSwapInterval = dri2_dpy->min_swap_interval;
+      conf->base.MaxSwapInterval = dri2_dpy->max_swap_interval;
    }
 
    conf->base.SurfaceType |= surface_type;
@@ -532,6 +530,9 @@ dri2_create_screen(_EGLDisplay *disp)
       for (i = 0; extensions[i]; i++) {
 	 if (strcmp(extensions[i]->name, __DRI2_ROBUSTNESS) == 0) {
             dri2_dpy->robustness = (__DRIrobustnessExtension *) extensions[i];
+	 }
+	 if (strcmp(extensions[i]->name, __DRI2_CONFIG_QUERY) == 0) {
+	    dri2_dpy->config = (__DRI2configQueryExtension *) extensions[i];
 	 }
       }
    } else {

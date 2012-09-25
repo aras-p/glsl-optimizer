@@ -39,6 +39,12 @@
 
 #include "egl_dri2.h"
 
+/* From xmlpool/options.h, user exposed so should be stable */
+#define DRI_CONF_VBLANK_NEVER 0
+#define DRI_CONF_VBLANK_DEF_INTERVAL_0 1
+#define DRI_CONF_VBLANK_DEF_INTERVAL_1 2
+#define DRI_CONF_VBLANK_ALWAYS_SYNC 3
+
 static void
 swrastCreateDrawable(struct dri2_egl_display * dri2_dpy,
                      struct dri2_egl_surface * dri2_surf,
@@ -273,8 +279,21 @@ dri2_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 			   _EGLConfig *conf, EGLNativeWindowType window,
 			   const EGLint *attrib_list)
 {
-   return dri2_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
-			      window, attrib_list);
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   _EGLSurface *surf;
+
+   surf = dri2_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
+                              window, attrib_list);
+
+   /* When we first create the DRI2 drawable, its swap interval on the server
+    * side is 1.
+    */
+   surf->SwapInterval = 1;
+
+   /* Override that with a driconf-set value. */
+   drv->API.SwapInterval(drv, disp, surf, dri2_dpy->default_swap_interval);
+
+   return surf;
 }
 
 static _EGLSurface *
@@ -794,8 +813,6 @@ dri2_swap_interval(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf, EGLint
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
 
-   /* XXX Check vblank_mode here? */
-
    if (interval > surf->Config->MaxSwapInterval)
       interval = surf->Config->MaxSwapInterval;
    else if (interval < surf->Config->MinSwapInterval)
@@ -1017,6 +1034,51 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
    return EGL_FALSE;
 }
 
+static void
+dri2_setup_swap_interval(struct dri2_egl_display *dri2_dpy)
+{
+   GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
+   int arbitrary_max_interval = 1000;
+
+   /* default behavior for no SwapBuffers support: no vblank syncing
+    * either.
+    */
+   dri2_dpy->min_swap_interval = 0;
+   dri2_dpy->max_swap_interval = 0;
+
+   if (!dri2_dpy->swap_available)
+      return;
+
+   /* If we do have swapbuffers, then we can support pretty much any swap
+    * interval, but we allow driconf to override applications.
+    */
+   if (dri2_dpy->config)
+      dri2_dpy->config->configQueryi(dri2_dpy->dri_screen,
+                                     "vblank_mode", &vblank_mode);
+   switch (vblank_mode) {
+   case DRI_CONF_VBLANK_NEVER:
+      dri2_dpy->min_swap_interval = 0;
+      dri2_dpy->max_swap_interval = 0;
+      dri2_dpy->default_swap_interval = 0;
+      break;
+   case DRI_CONF_VBLANK_ALWAYS_SYNC:
+      dri2_dpy->min_swap_interval = 1;
+      dri2_dpy->max_swap_interval = arbitrary_max_interval;
+      dri2_dpy->default_swap_interval = 1;
+      break;
+   case DRI_CONF_VBLANK_DEF_INTERVAL_0:
+      dri2_dpy->min_swap_interval = 0;
+      dri2_dpy->max_swap_interval = arbitrary_max_interval;
+      dri2_dpy->default_swap_interval = 0;
+      break;
+   default:
+   case DRI_CONF_VBLANK_DEF_INTERVAL_1:
+      dri2_dpy->min_swap_interval = 0;
+      dri2_dpy->max_swap_interval = arbitrary_max_interval;
+      dri2_dpy->default_swap_interval = 1;
+      break;
+   }
+}
 
 static EGLBoolean
 dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
@@ -1123,6 +1185,8 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    /* we're supporting EGL 1.4 */
    disp->VersionMajor = 1;
    disp->VersionMinor = 4;
+
+   dri2_setup_swap_interval(dri2_dpy);
 
    return EGL_TRUE;
 
