@@ -35,5 +35,6 @@ let TargetPrefix = "SI", isTarget = 1 in {
   def int_SI_fs_interp_persp_centroid : Interp;
   def int_SI_fs_interp_constant : Interp;
 
+  def int_SI_fs_read_face : Intrinsic <[llvm_float_ty], [], [IntrNoMem]>;
   def int_SI_fs_read_pos : Intrinsic <[llvm_float_ty], [llvm_i32_ty], [IntrNoMem]>;
 }
