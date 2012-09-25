@@ -4388,10 +4388,8 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 
 				alu.dst.sel = ctx->temp_reg;
 				alu.dst.chan = i;
-				if (i == 0)
-					alu.dst.write = 1;
-				if (i == 2)
-					alu.last = 1;
+				alu.dst.write = i == 0;
+				alu.last = i == 2;
 				r = r600_bytecode_add_alu(ctx->bc, &alu);
 				if (r)
 					return r;
