@@ -695,7 +695,6 @@ static int64_t
 dri2_swap_buffers_msc(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
                       int64_t msc, int64_t divisor, int64_t remainder)
 {
-#if XCB_DRI2_MINOR_VERSION >= 3
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
    uint32_t msc_hi = msc >> 32;
@@ -734,12 +733,6 @@ dri2_swap_buffers_msc(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
       (*dri2_dpy->flush->invalidate)(dri2_surf->dri_drawable);
 
    return swap_count;
-#else
-   struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
-
-   return dri2_copy_region(drv, disp, draw, dri2_surf->region) ? 0 : -1;
-#endif /* XCB_DRI2_MINOR_VERSION >= 3 */
-
 }
 
 static EGLBoolean
@@ -802,10 +795,8 @@ dri2_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
 static EGLBoolean
 dri2_swap_interval(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf, EGLint interval)
 {
-#if XCB_DRI2_MINOR_VERSION >= 3
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
-#endif
 
    /* XXX Check vblank_mode here? */
 
@@ -814,10 +805,8 @@ dri2_swap_interval(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf, EGLint
    else if (interval < surf->Config->MinSwapInterval)
       interval = surf->Config->MinSwapInterval;
 
-#if XCB_DRI2_MINOR_VERSION >= 3
    if (interval != surf->SwapInterval && dri2_dpy->swap_available)
       xcb_dri2_swap_interval(dri2_dpy->conn, dri2_surf->drawable, interval);
-#endif
 
    surf->SwapInterval = interval;
 
@@ -1114,10 +1103,8 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    dri2_dpy->extensions[1] = &image_lookup_extension.base;
    dri2_dpy->extensions[2] = NULL;
 
-#if XCB_DRI2_MINOR_VERSION >= 3
    dri2_dpy->swap_available = (dri2_dpy->dri2_minor >= 2);
    dri2_dpy->invalidate_available = (dri2_dpy->dri2_minor >= 3);
-#endif
 
    if (!dri2_create_screen(disp))
       goto cleanup_fd;
