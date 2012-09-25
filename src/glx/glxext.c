@@ -47,11 +47,9 @@
 #endif
 #include "glxextensions.h"
 
-#ifdef USE_XCB
 #include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
 #include <xcb/glx.h>
-#endif
 
 
 #ifdef DEBUG
@@ -282,7 +280,6 @@ __glXCloseDisplay(Display * dpy, XExtCodes * codes)
 static Bool
 QueryVersion(Display * dpy, int opcode, int *major, int *minor)
 {
-#ifdef USE_XCB
    xcb_connection_t *c = XGetXCBConnection(dpy);
    xcb_glx_query_version_reply_t *reply = xcb_glx_query_version_reply(c,
                                                                       xcb_glx_query_version
@@ -302,32 +299,6 @@ QueryVersion(Display * dpy, int opcode, int *major, int *minor)
    *minor = min(reply->minor_version, GLX_MINOR_VERSION);
    free(reply);
    return GL_TRUE;
-#else
-   xGLXQueryVersionReq *req;
-   xGLXQueryVersionReply reply;
-
-   /* Send the glXQueryVersion request */
-   LockDisplay(dpy);
-   GetReq(GLXQueryVersion, req);
-   req->reqType = opcode;
-   req->glxCode = X_GLXQueryVersion;
-   req->majorVersion = GLX_MAJOR_VERSION;
-   req->minorVersion = GLX_MINOR_VERSION;
-   _XReply(dpy, (xReply *) & reply, 0, False);
-   UnlockDisplay(dpy);
-   SyncHandle();
-
-   if (reply.majorVersion != GLX_MAJOR_VERSION) {
-      /*
-       ** The server does not support the same major release as this
-       ** client.
-       */
-      return GL_FALSE;
-   }
-   *major = reply.majorVersion;
-   *minor = min(reply.minorVersion, GLX_MINOR_VERSION);
-   return GL_TRUE;
-#endif /* USE_XCB */
 }
 
 /* 
@@ -887,11 +858,7 @@ __glXInitialize(Display * dpy)
       return NULL;
    }
 
-#ifdef USE_XCB
    __glX_send_client_info(dpyPriv);
-#else
-   __glXClientInfo(dpy, dpyPriv->majorOpcode);
-#endif
 
    /* Grab the lock again and add the dispay private, unless somebody
     * beat us to initializing on this display in the meantime. */
@@ -963,29 +930,12 @@ _X_HIDDEN GLubyte *
 __glXFlushRenderBuffer(struct glx_context * ctx, GLubyte * pc)
 {
    Display *const dpy = ctx->currentDpy;
-#ifdef USE_XCB
    xcb_connection_t *c = XGetXCBConnection(dpy);
-#else
-   xGLXRenderReq *req;
-#endif /* USE_XCB */
    const GLint size = pc - ctx->buf;
 
    if ((dpy != NULL) && (size > 0)) {
-#ifdef USE_XCB
       xcb_glx_render(c, ctx->currentContextTag, size,
                      (const uint8_t *) ctx->buf);
-#else
-      /* Send the entire buffer as an X request */
-      LockDisplay(dpy);
-      GetReq(GLXRender, req);
-      req->reqType = ctx->majorOpcode;
-      req->glxCode = X_GLXRender;
-      req->contextTag = ctx->currentContextTag;
-      req->length += (size + 3) >> 2;
-      _XSend(dpy, (char *) ctx->buf, size);
-      UnlockDisplay(dpy);
-      SyncHandle();
-#endif
    }
 
    /* Reset pointer and return it */
@@ -1015,32 +965,9 @@ __glXSendLargeChunk(struct glx_context * gc, GLint requestNumber,
                     GLint totalRequests, const GLvoid * data, GLint dataLen)
 {
    Display *dpy = gc->currentDpy;
-#ifdef USE_XCB
    xcb_connection_t *c = XGetXCBConnection(dpy);
    xcb_glx_render_large(c, gc->currentContextTag, requestNumber,
                         totalRequests, dataLen, data);
-#else
-   xGLXRenderLargeReq *req;
-
-   if (requestNumber == 1) {
-      LockDisplay(dpy);
-   }
-
-   GetReq(GLXRenderLarge, req);
-   req->reqType = gc->majorOpcode;
-   req->glxCode = X_GLXRenderLarge;
-   req->contextTag = gc->currentContextTag;
-   req->length += (dataLen + 3) >> 2;
-   req->requestNumber = requestNumber;
-   req->requestTotal = totalRequests;
-   req->dataBytes = dataLen;
-   Data(dpy, data, dataLen);
-
-   if (requestNumber == totalRequests) {
-      UnlockDisplay(dpy);
-      SyncHandle();
-   }
-#endif /* USE_XCB */
 }
 
 

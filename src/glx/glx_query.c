@@ -31,13 +31,10 @@
 
 #include "glxclient.h"
 
-#if defined(USE_XCB)
 # include <X11/Xlib-xcb.h>
 # include <xcb/xcb.h>
 # include <xcb/glx.h>
-#endif
 
-#ifdef USE_XCB
 
 /**
  * Exchange a protocol request for glXQueryServerString.
@@ -87,91 +84,3 @@ __glXGetString(Display * dpy, int opcode, CARD32 contextTag, CARD32 name)
    return buf;
 }
 
-#else
-
-/**
- * GLX protocol structure for the ficticious "GXLGenericGetString" request.
- *
- * This is a non-existant protocol packet.  It just so happens that all of
- * the real protocol packets used to request a string from the server have
- * an identical binary layout.  The only difference between them is the
- * meaning of the \c for_whom field and the value of the \c glxCode.
- */
-typedef struct GLXGenericGetString
-{
-   CARD8 reqType;
-   CARD8 glxCode;
-   CARD16 length B16;
-   CARD32 for_whom B32;
-   CARD32 name B32;
-} xGLXGenericGetStringReq;
-
-/* These defines are only needed to make the GetReq macro happy.
- */
-#define sz_xGLXGenericGetStringReq 12
-#define X_GLXGenericGetString 0
-
-/**
- * Query the Server GLX string.
- * This routine will allocate the necessay space for the string.
- */
-static char *
-__glXGetStringFromServer(Display * dpy, int opcode, CARD32 glxCode,
-                         CARD32 for_whom, CARD32 name)
-{
-   xGLXGenericGetStringReq *req;
-   xGLXSingleReply reply;
-   int length;
-   int numbytes;
-   char *buf;
-
-
-   LockDisplay(dpy);
-
-
-   /* All of the GLX protocol requests for getting a string from the server
-    * look the same.  The exact meaning of the for_whom field is usually
-    * either the screen number (for glXQueryServerString) or the context tag
-    * (for GLXSingle).
-    */
-
-   GetReq(GLXGenericGetString, req);
-   req->reqType = opcode;
-   req->glxCode = glxCode;
-   req->for_whom = for_whom;
-   req->name = name;
-
-   _XReply(dpy, (xReply *) & reply, 0, False);
-
-   length = reply.length * 4;
-   numbytes = reply.size;
-
-   buf = malloc(numbytes);
-   if (buf != NULL) {
-      _XRead(dpy, buf, numbytes);
-      length -= numbytes;
-   }
-
-   _XEatData(dpy, length);
-
-   UnlockDisplay(dpy);
-   SyncHandle();
-
-   return buf;
-}
-
-char *
-__glXQueryServerString(Display * dpy, int opcode, CARD32 screen, CARD32 name)
-{
-   return __glXGetStringFromServer(dpy, opcode,
-                                   X_GLXQueryServerString, screen, name);
-}
-
-char *
-__glXGetString(Display * dpy, int opcode, CARD32 contextTag, CARD32 name)
-{
-   return __glXGetStringFromServer(dpy, opcode, X_GLsop_GetString,
-                                   contextTag, name);
-}
-
-#endif /* USE_XCB */

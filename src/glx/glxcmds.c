@@ -53,11 +53,9 @@
 #else
 #endif
 
-#if defined(USE_XCB)
 #include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
 #include <xcb/glx.h>
-#endif
 
 static const char __glXGLXClientVendorName[] = "Mesa Project and SGI";
 static const char __glXGLXClientVersion[] = "1.4";
@@ -576,10 +574,6 @@ glXCopyContext(Display * dpy, GLXContext source_user,
 static Bool
 __glXIsDirect(Display * dpy, GLXContextID contextID)
 {
-#if !defined(USE_XCB)
-   xGLXIsDirectReq *req;
-   xGLXIsDirectReply reply;
-#endif
    CARD8 opcode;
 
    opcode = __glXSetupForCommand(dpy);
@@ -587,7 +581,6 @@ __glXIsDirect(Display * dpy, GLXContextID contextID)
       return GL_FALSE;
    }
 
-#ifdef USE_XCB
    xcb_connection_t *c = XGetXCBConnection(dpy);
    xcb_generic_error_t *err;
    xcb_glx_is_direct_reply_t *reply = xcb_glx_is_direct_reply(c,
@@ -605,19 +598,6 @@ __glXIsDirect(Display * dpy, GLXContextID contextID)
    free(reply);
 
    return is_direct;
-#else
-   /* Send the glXIsDirect request */
-   LockDisplay(dpy);
-   GetReq(GLXIsDirect, req);
-   req->reqType = opcode;
-   req->glxCode = X_GLXIsDirect;
-   req->context = contextID;
-   _XReply(dpy, (xReply *) & reply, 0, False);
-   UnlockDisplay(dpy);
-   SyncHandle();
-
-   return reply.isDirect;
-#endif /* USE_XCB */
 }
 
 /**
@@ -792,11 +772,7 @@ glXSwapBuffers(Display * dpy, GLXDrawable drawable)
    struct glx_context *gc;
    GLXContextTag tag;
    CARD8 opcode;
-#ifdef USE_XCB
    xcb_connection_t *c;
-#else
-   xGLXSwapBuffersReq *req;
-#endif
 
    gc = __glXGetCurrentContext();
 
@@ -833,22 +809,9 @@ glXSwapBuffers(Display * dpy, GLXDrawable drawable)
       tag = 0;
    }
 
-#ifdef USE_XCB
    c = XGetXCBConnection(dpy);
    xcb_glx_swap_buffers(c, tag, drawable);
    xcb_flush(c);
-#else
-   /* Send the glXSwapBuffers request */
-   LockDisplay(dpy);
-   GetReq(GLXSwapBuffers, req);
-   req->reqType = opcode;
-   req->glxCode = X_GLXSwapBuffers;
-   req->drawable = drawable;
-   req->contextTag = tag;
-   UnlockDisplay(dpy);
-   SyncHandle();
-   XFlush(dpy);
-#endif /* USE_XCB */
 #endif /* GLX_USE_APPLEGL */
 }
 
@@ -1369,28 +1332,9 @@ __glXClientInfo(Display * dpy, int opcode)
    char *ext_str = __glXGetClientGLExtensionString();
    int size = strlen(ext_str) + 1;
 
-#ifdef USE_XCB
    xcb_connection_t *c = XGetXCBConnection(dpy);
    xcb_glx_client_info(c,
                        GLX_MAJOR_VERSION, GLX_MINOR_VERSION, size, ext_str);
-#else
-   xGLXClientInfoReq *req;
-
-   /* Send the glXClientInfo request */
-   LockDisplay(dpy);
-   GetReq(GLXClientInfo, req);
-   req->reqType = opcode;
-   req->glxCode = X_GLXClientInfo;
-   req->major = GLX_MAJOR_VERSION;
-   req->minor = GLX_MINOR_VERSION;
-
-   req->length += (size + 3) >> 2;
-   req->numbytes = size;
-   Data(dpy, ext_str, size);
-
-   UnlockDisplay(dpy);
-   SyncHandle();
-#endif /* USE_XCB */
 
    free(ext_str);
 }
