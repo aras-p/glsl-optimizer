@@ -543,11 +543,7 @@ dri2_connect(struct dri2_egl_display *dri2_dpy)
       dri2_strndup(driver_name,
 		   xcb_dri2_connect_driver_name_length (connect));
 
-#if XCB_DRI2_CONNECT_DEVICE_NAME_BROKEN
-   device_name = driver_name + ((connect->driver_name_length + 3) & ~3);
-#else
    device_name = xcb_dri2_connect_device_name (connect);
-#endif
 
    dri2_dpy->device_name =
       dri2_strndup(device_name,
