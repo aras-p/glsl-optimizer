@@ -664,47 +664,6 @@ Bool DRI2WaitMSC(Display *dpy, XID drawable, CARD64 target_msc, CARD64 divisor,
 }
 #endif
 
-#ifdef X_DRI2WaitSBC
-static void
-load_sbc_req(xDRI2WaitSBCReq *req, CARD64 target)
-{
-    req->target_sbc_hi = target >> 32;
-    req->target_sbc_lo = target & 0xffffffff;
-}
-
-Bool DRI2WaitSBC(Display *dpy, XID drawable, CARD64 target_sbc, CARD64 *ust,
-		 CARD64 *msc, CARD64 *sbc)
-{
-    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
-    xDRI2WaitSBCReq *req;
-    xDRI2MSCReply rep;
-
-    XextCheckExtension (dpy, info, dri2ExtensionName, False);
-
-    LockDisplay(dpy);
-    GetReq(DRI2WaitSBC, req);
-    req->reqType = info->codes->major_opcode;
-    req->dri2ReqType = X_DRI2WaitSBC;
-    req->drawable = drawable;
-    load_sbc_req(req, target_sbc);
-
-    if (!_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
-	UnlockDisplay(dpy);
-	SyncHandle();
-	return False;
-    }
-
-    *ust = ((CARD64)rep.ust_hi << 32) | rep.ust_lo;
-    *msc = ((CARD64)rep.msc_hi << 32) | rep.msc_lo;
-    *sbc = ((CARD64)rep.sbc_hi << 32) | rep.sbc_lo;
-
-    UnlockDisplay(dpy);
-    SyncHandle();
-
-    return True;
-}
-#endif
-
 #ifdef X_DRI2SwapInterval
 void DRI2SwapInterval(Display *dpy, XID drawable, int interval)
 {

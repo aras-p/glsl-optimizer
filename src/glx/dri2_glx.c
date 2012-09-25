@@ -34,6 +34,9 @@
 
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
+#include <X11/Xlib-xcb.h>
+#include <xcb/xcb.h>
+#include <xcb/dri2.h>
 #include "glapi.h"
 #include "glxclient.h"
 #include <X11/extensions/dri2proto.h>
@@ -117,6 +120,22 @@ struct dri2_drawable
 };
 
 static const struct glx_context_vtable dri2_context_vtable;
+
+/* For XCB's handling of ust/msc/sbc counters, we have to hand it the high and
+ * low halves separately.  This helps you split them.
+ */
+static void
+split_counter(uint64_t counter, uint32_t *hi, uint32_t *lo)
+{
+   *hi = (counter >> 32);
+   *lo = counter & 0xffffffff;
+}
+
+static uint64_t
+merge_counter(uint32_t hi, uint32_t lo)
+{
+   return ((uint64_t)hi << 32) | lo;
+}
 
 static void
 dri2_destroy_context(struct glx_context *context)
@@ -456,16 +475,22 @@ static int
 dri2WaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
 	       int64_t *msc, int64_t *sbc)
 {
-   CARD64 dri2_ust, dri2_msc, dri2_sbc;
-   int ret;
+   xcb_connection_t *c = XGetXCBConnection(pdraw->psc->dpy);
+   xcb_dri2_wait_sbc_cookie_t wait_sbc_cookie;
+   xcb_dri2_wait_sbc_reply_t *wait_sbc_reply;
+   uint32_t target_sbc_hi, target_sbc_lo;
 
-   ret = DRI2WaitSBC(pdraw->psc->dpy, pdraw->xDrawable,
-		     target_sbc, &dri2_ust, &dri2_msc, &dri2_sbc);
-   *ust = dri2_ust;
-   *msc = dri2_msc;
-   *sbc = dri2_sbc;
+   split_counter(target_sbc, &target_sbc_hi, &target_sbc_lo);
 
-   return ret;
+   wait_sbc_cookie = xcb_dri2_wait_sbc_unchecked(c, pdraw->xDrawable,
+                                                 target_sbc_hi, target_sbc_lo);
+   wait_sbc_reply = xcb_dri2_wait_sbc_reply(c, wait_sbc_cookie, NULL);
+   *ust = merge_counter(wait_sbc_reply->ust_hi, wait_sbc_reply->ust_lo);
+   *msc = merge_counter(wait_sbc_reply->msc_hi, wait_sbc_reply->msc_lo);
+   *sbc = merge_counter(wait_sbc_reply->sbc_hi, wait_sbc_reply->sbc_lo);
+   free(wait_sbc_reply);
+
+   return 0;
 }
 
 #endif /* X_DRI2WaitMSC */
@@ -1120,8 +1145,8 @@ dri2CreateScreen(int screen, struct glx_display * priv)
 #endif
 #ifdef X_DRI2WaitMSC
       psp->waitForMSC = dri2WaitForMSC;
-      psp->waitForSBC = dri2WaitForSBC;
 #endif
+      psp->waitForSBC = dri2WaitForSBC;
 #ifdef X_DRI2SwapInterval
       psp->setSwapInterval = dri2SetSwapInterval;
       psp->getSwapInterval = dri2GetSwapInterval;
