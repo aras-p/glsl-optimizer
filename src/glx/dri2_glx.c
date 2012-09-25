@@ -511,10 +511,8 @@ __dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y,
    xrect.width = width;
    xrect.height = height;
 
-#ifdef __DRI2_FLUSH
    if (psc->f)
       (*psc->f->flush) (priv->driDrawable);
-#endif
 
    dri2Throttle(psc, priv, reason);
 
@@ -553,10 +551,8 @@ dri2_copy_drawable(struct dri2_drawable *priv, int dest, int src)
    xrect.width = priv->width;
    xrect.height = priv->height;
 
-#ifdef __DRI2_FLUSH
    if (psc->f)
       (*psc->f->flush) (priv->driDrawable);
-#endif
 
    region = XFixesCreateRegion(psc->base.dpy, &xrect, 1);
    DRI2CopyRegion(psc->base.dpy, priv->base.xDrawable, region, dest, src);
@@ -715,7 +711,6 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 			   __DRI2_THROTTLE_SWAPBUFFER);
     } else {
 #ifdef X_DRI2SwapBuffers
-#ifdef __DRI2_FLUSH
     if (psc->f) {
        struct glx_context *gc = __glXGetCurrentContext();
 
@@ -723,7 +718,6 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 	  (*psc->f->flush)(priv->driDrawable);
        }
     }
-#endif
 
        dri2Throttle(psc, priv, __DRI2_THROTTLE_SWAPBUFFER);
 
@@ -845,11 +839,9 @@ static const __DRIdri2LoaderExtension dri2LoaderExtension_old = {
    NULL,
 };
 
-#ifdef __DRI_USE_INVALIDATE
 static const __DRIuseInvalidateExtension dri2UseInvalidate = {
    { __DRI_USE_INVALIDATE, __DRI_USE_INVALIDATE_VERSION }
 };
-#endif
 
 _X_HIDDEN void
 dri2InvalidateBuffers(Display *dpy, XID drawable)
@@ -864,10 +856,8 @@ dri2InvalidateBuffers(Display *dpy, XID drawable)
 
    psc = (struct dri2_screen *) pdraw->psc;
 
-#if __DRI2_FLUSH_VERSION >= 3
    if (pdraw && psc->f && psc->f->base.version >= 3 && psc->f->invalidate)
        psc->f->invalidate(pdp->driDrawable);
-#endif
 }
 
 static void
@@ -887,11 +877,9 @@ dri2_bind_tex_image(Display * dpy,
    if (pdraw != NULL) {
       psc = (struct dri2_screen *) base->psc;
 
-#if __DRI2_FLUSH_VERSION >= 3
       if (!pdp->invalidateAvailable && psc->f &&
            psc->f->base.version >= 3 && psc->f->invalidate)
 	 psc->f->invalidate(pdraw->driDrawable);
-#endif
 
       if (psc->texBuffer->base.version >= 2 &&
 	  psc->texBuffer->setTexBuffer2 != NULL) {
@@ -1241,9 +1229,8 @@ dri2CreateDisplay(Display * dpy)
    
    pdp->loader_extensions[i++] = &systemTimeExtension.base;
 
-#ifdef __DRI_USE_INVALIDATE
    pdp->loader_extensions[i++] = &dri2UseInvalidate.base;
-#endif
+
    pdp->loader_extensions[i++] = NULL;
 
    pdp->dri2Hash = __glxHashCreate();
