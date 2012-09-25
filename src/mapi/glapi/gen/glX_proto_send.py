@@ -169,11 +169,9 @@ class PrintGlxProtoStubs(glX_proto_common.glx_print_proto):
 		print '#include "glapi.h"'
 		print '#include "glthread.h"'
 		print '#include <GL/glxproto.h>'
-		print '#ifdef USE_XCB'
 		print '#include <X11/Xlib-xcb.h>'
 		print '#include <xcb/xcb.h>'
 		print '#include <xcb/glx.h>'
-		print '#endif /* USE_XCB */'
 
 		print ''
 		print '#define __GLX_PAD(n) (((n) + 3) & ~3)'

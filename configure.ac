@@ -823,10 +823,6 @@ if test "x$enable_glx" = xyes -a "x$no_x" = xyes; then
     AC_MSG_ERROR([X11 development libraries needed for GLX])
 fi
 
-if test "x$enable_glx" = xyes; then
-    DEFINES="$DEFINES -DUSE_XCB"
-fi
-
 dnl Direct rendering or just indirect rendering
 case "$host_os" in
 gnu*)
