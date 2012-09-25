@@ -110,7 +110,8 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	for (i = 0; i < shader->shader.ninput; i++) {
-		if (shader->shader.input[i].name == TGSI_SEMANTIC_POSITION) {
+		switch (shader->shader.input[i].name) {
+		case TGSI_SEMANTIC_POSITION:
 			if (shader->shader.input[i].centroid) {
 				/* fragcoord_interp_mode will be written to
 				 * SPI_BARYC_CNTL.POS_FLOAT_LOCATION
@@ -122,6 +123,8 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 			 	 */
 				fragcoord_interp_mode = 1;
 			}
+			/* Fall through */
+		case TGSI_SEMANTIC_FACE:
 			continue;
 		}
 

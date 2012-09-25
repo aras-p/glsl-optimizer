@@ -266,6 +266,33 @@ static void declare_input_fs(
 		return;
 	}
 
+	if (decl->Semantic.Name == TGSI_SEMANTIC_FACE) {
+		LLVMValueRef face, is_face_positive;
+
+		face = build_intrinsic(gallivm->builder,
+				       "llvm.SI.fs.read.face",
+				       input_type,
+				       NULL, 0, LLVMReadNoneAttribute);
+		is_face_positive = LLVMBuildFCmp(gallivm->builder,
+						 LLVMRealUGT, face,
+						 lp_build_const_float(gallivm, 0.0f),
+						 "");
+
+		si_shader_ctx->radeon_bld.inputs[radeon_llvm_reg_index_soa(input_index, 0)] =
+			LLVMBuildSelect(gallivm->builder,
+					is_face_positive,
+					lp_build_const_float(gallivm, 1.0f),
+					lp_build_const_float(gallivm, 0.0f),
+					"");
+		si_shader_ctx->radeon_bld.inputs[radeon_llvm_reg_index_soa(input_index, 1)] =
+		si_shader_ctx->radeon_bld.inputs[radeon_llvm_reg_index_soa(input_index, 2)] =
+			lp_build_const_float(gallivm, 0.0f);
+		si_shader_ctx->radeon_bld.inputs[radeon_llvm_reg_index_soa(input_index, 3)] =
+			lp_build_const_float(gallivm, 1.0f);
+
+		return;
+	}
+
 	shader->input[input_index].param_offset = shader->ninterp++;
 	attr_number = lp_build_const_int32(gallivm,
 					   shader->input[input_index].param_offset);
