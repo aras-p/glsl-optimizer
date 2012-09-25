@@ -419,15 +419,12 @@ dri2CreateDrawable(struct glx_screen *base, XID xDrawable,
       return None;
    }
 
-
-#ifdef X_DRI2SwapInterval
    /*
     * Make sure server has the same swap interval we do for the new
     * drawable.
     */
-   if (pdp->swapAvailable)
-      DRI2SwapInterval(psc->base.dpy, xDrawable, pdraw->swap_interval);
-#endif
+   if (psc->vtable.setSwapInterval)
+      psc->vtable.setSwapInterval(&pdraw->base, pdraw->swap_interval);
 
    return &pdraw->base;
 }
