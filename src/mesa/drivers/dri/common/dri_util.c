@@ -272,7 +272,7 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
 	return NULL;
     }
 
-    context = malloc(sizeof *context);
+    context = calloc(1, sizeof *context);
     if (!context) {
 	*error = __DRI_CTX_ERROR_NO_MEMORY;
 	return NULL;
