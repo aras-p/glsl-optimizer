@@ -129,6 +129,9 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
       return NULL;
    pipe = &nvc0->base.pipe;
 
+   if (!nvc0_blitctx_create(nvc0))
+      goto out_err;
+
    nvc0->base.pushbuf = screen->base.pushbuf;
 
    ret = nouveau_bufctx_new(screen->base.client, NVC0_BIND_COUNT,
@@ -199,6 +202,8 @@ out_err:
          nouveau_bufctx_del(&nvc0->bufctx_3d);
       if (nvc0->bufctx)
          nouveau_bufctx_del(&nvc0->bufctx);
+      if (nvc0->blit)
+         FREE(nvc0->blit);
       FREE(nvc0);
    }
    return NULL;

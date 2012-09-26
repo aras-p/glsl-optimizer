@@ -71,8 +71,23 @@ nv50_init_tic_entry_linear(uint32_t *tic, struct pipe_resource *res)
 
 struct pipe_sampler_view *
 nv50_create_sampler_view(struct pipe_context *pipe,
-                         struct pipe_resource *texture,
+                         struct pipe_resource *res,
                          const struct pipe_sampler_view *templ)
+{
+   uint32_t flags = 0;
+
+   if (res->target == PIPE_TEXTURE_RECT)
+      flags |= NV50_TEXVIEW_SCALED_COORDS;
+
+   return nv50_create_texture_view(pipe, res, templ, flags, res->target);
+}
+
+struct pipe_sampler_view *
+nv50_create_texture_view(struct pipe_context *pipe,
+                         struct pipe_resource *texture,
+                         const struct pipe_sampler_view *templ,
+                         uint32_t flags,
+                         enum pipe_texture_target target)
 {
    const struct util_format_description *desc;
    uint64_t addr;
@@ -139,14 +154,14 @@ nv50_create_sampler_view(struct pipe_context *pipe,
       return &view->pipe;
    }
 
-   if (mt->base.base.target != PIPE_TEXTURE_RECT)
+   if (!(flags & NV50_TEXVIEW_SCALED_COORDS))
       tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
 
    tic[2] |=
       ((mt->level[0].tile_mode & 0x0f0) << (22 - 4)) |
       ((mt->level[0].tile_mode & 0xf00) << (25 - 8));
 
-   switch (mt->base.base.target) {
+   switch (target) {
    case PIPE_TEXTURE_1D:
       tic[2] |= NV50_TIC_2_TARGET_1D;
       break;
@@ -181,17 +196,21 @@ nv50_create_sampler_view(struct pipe_context *pipe,
       return FALSE;
    }
 
-   tic[3] = 0x00300000;
+   tic[3] = (flags & NV50_TEXVIEW_FILTER_MSAA8) ? 0x20000000 : 0x00300000;
 
    tic[4] = (1 << 31) | (mt->base.base.width0 << mt->ms_x);
 
    tic[5] = (mt->base.base.height0 << mt->ms_y) & 0xffff;
    tic[5] |= depth << 16;
-   tic[5] |= mt->base.base.last_level << 28;
+   tic[5] |= mt->base.base.last_level << NV50_TIC_5_LAST_LEVEL__SHIFT;
 
    tic[6] = (mt->ms_x > 1) ? 0x88000000 : 0x03000000; /* sampling points */
 
    tic[7] = (view->pipe.u.tex.last_level << 4) | view->pipe.u.tex.first_level;
+
+   if (unlikely(!(tic[2] & NV50_TIC_2_NORMALIZED_COORDS)))
+      if (mt->base.base.last_level)
+         tic[5] &= ~NV50_TIC_5_LAST_LEVEL__MASK;
 
    return &view->pipe;
 }

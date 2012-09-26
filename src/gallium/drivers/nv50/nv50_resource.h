@@ -60,6 +60,11 @@ nv50_miptree(struct pipe_resource *pt)
    return (struct nv50_miptree *)pt;
 }
 
+
+#define NV50_TEXVIEW_SCALED_COORDS     (1 << 0)
+#define NV50_TEXVIEW_FILTER_MSAA8      (1 << 1)
+
+
 /* Internal functions:
  */
 boolean

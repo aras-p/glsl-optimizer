@@ -71,6 +71,11 @@
 #define NVC0_BIND_M2MF          0
 #define NVC0_BIND_FENCE         1
 
+
+struct nvc0_blitctx;
+
+boolean nvc0_blitctx_create(struct nvc0_context *);
+
 struct nvc0_context {
    struct nouveau_context base;
 
@@ -159,6 +164,11 @@ struct nvc0_context {
    struct pipe_stream_output_target *tfbbuf[4];
    unsigned num_tfbbufs;
 
+   struct pipe_query *cond_query;
+   uint cond_mode;
+
+   struct nvc0_blitctx *blit;
+
 #ifdef NVC0_WITH_DRAW_MODULE
    struct draw_context *draw;
 #endif
@@ -240,6 +250,12 @@ void nvc0_validate_textures(struct nvc0_context *);
 void nvc0_validate_samplers(struct nvc0_context *);
 void nve4_set_tex_handles(struct nvc0_context *);
 
+struct pipe_sampler_view *
+nvc0_create_texture_view(struct pipe_context *,
+                         struct pipe_resource *,
+                         const struct pipe_sampler_view *,
+                         uint32_t flags,
+                         enum pipe_texture_target);
 struct pipe_sampler_view *
 nvc0_create_sampler_view(struct pipe_context *,
                          struct pipe_resource *,

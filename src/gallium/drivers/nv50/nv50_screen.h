@@ -21,7 +21,7 @@ struct nv50_context;
 
 #define NV50_SCREEN_RESIDENT_BO_COUNT 5
 
-struct nv50_blitctx;
+struct nv50_blitter;
 
 struct nv50_screen {
    struct nouveau_screen base;
@@ -43,7 +43,7 @@ struct nv50_screen {
    struct nouveau_heap *gp_code_heap;
    struct nouveau_heap *fp_code_heap;
 
-   struct nv50_blitctx *blitctx;
+   struct nv50_blitter *blitter;
 
    struct {
       void **entries;
@@ -75,7 +75,8 @@ nv50_screen(struct pipe_screen *screen)
    return (struct nv50_screen *)screen;
 }
 
-boolean nv50_blitctx_create(struct nv50_screen *);
+boolean nv50_blitter_create(struct nv50_screen *);
+void nv50_blitter_destroy(struct nv50_screen *);
 
 int nv50_screen_tic_alloc(struct nv50_screen *, void *);
 int nv50_screen_tsc_alloc(struct nv50_screen *, void *);

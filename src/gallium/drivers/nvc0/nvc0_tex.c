@@ -55,8 +55,23 @@ nv50_tic_swizzle(uint32_t tc, unsigned swz, boolean tex_int)
 
 struct pipe_sampler_view *
 nvc0_create_sampler_view(struct pipe_context *pipe,
-                         struct pipe_resource *texture,
+                         struct pipe_resource *res,
                          const struct pipe_sampler_view *templ)
+{
+   uint32_t flags = 0;
+
+   if (res->target == PIPE_TEXTURE_RECT)
+      flags |= NV50_TEXVIEW_SCALED_COORDS;
+
+   return nvc0_create_texture_view(pipe, res, templ, flags, res->target);
+}
+
+struct pipe_sampler_view *
+nvc0_create_texture_view(struct pipe_context *pipe,
+                         struct pipe_resource *texture,
+                         const struct pipe_sampler_view *templ,
+                         uint32_t flags,
+                         enum pipe_texture_target target)
 {
    const struct util_format_description *desc;
    uint64_t address;
@@ -132,7 +147,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
       return &view->pipe;
    }
 
-   if (mt->base.base.target != PIPE_TEXTURE_RECT)
+   if (!(flags & NV50_TEXVIEW_SCALED_COORDS))
       tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
 
    tic[2] |=
@@ -149,7 +164,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    tic[1] = address;
    tic[2] |= address >> 32;
 
-   switch (mt->base.base.target) {
+   switch (target) {
    case PIPE_TEXTURE_1D:
       tic[2] |= NV50_TIC_2_TARGET_1D;
       break;
@@ -185,7 +200,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    if (mt->base.base.target == PIPE_BUFFER)
       tic[3] = mt->base.base.width0;
    else
-      tic[3] = 0x00300000;
+      tic[3] = (flags & NV50_TEXVIEW_FILTER_MSAA8) ? 0x20000000 : 0x00300000;
 
    tic[4] = (1 << 31) | (mt->base.base.width0 << mt->ms_x);
 

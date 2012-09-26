@@ -128,6 +128,9 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
       return NULL;
    pipe = &nv50->base.pipe;
 
+   if (!nv50_blitctx_create(nv50))
+      goto out_err;
+
    nv50->base.pushbuf = screen->base.pushbuf;
 
    ret = nouveau_bufctx_new(screen->base.client, NV50_BIND_COUNT,
@@ -195,6 +198,8 @@ out_err:
          nouveau_bufctx_del(&nv50->bufctx_3d);
       if (nv50->bufctx)
          nouveau_bufctx_del(&nv50->bufctx);
+      if (nv50->blit)
+         FREE(nv50->blit);
       FREE(nv50);
    }
    return NULL;

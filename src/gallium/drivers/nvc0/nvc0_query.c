@@ -436,6 +436,9 @@ nvc0_render_condition(struct pipe_context *pipe,
       mode != PIPE_RENDER_COND_NO_WAIT &&
       mode != PIPE_RENDER_COND_BY_REGION_NO_WAIT;
 
+   nvc0->cond_query = pq;
+   nvc0->cond_mode = mode;
+
    if (!pq) {
       PUSH_SPACE(push, 1);
       IMMED_NVC0(push, NVC0_3D(COND_MODE), NVC0_3D_COND_MODE_ALWAYS);

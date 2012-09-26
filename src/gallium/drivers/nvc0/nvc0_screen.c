@@ -257,7 +257,8 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
    if (screen->base.pushbuf)
       screen->base.pushbuf->user_priv = NULL;
 
-   FREE(screen->blitctx);
+   if (screen->blitter)
+      nvc0_blitter_destroy(screen);
 
    nouveau_bo_ref(NULL, &screen->text);
    nouveau_bo_ref(NULL, &screen->uniform_bo);
@@ -746,7 +747,7 @@ nvc0_screen_create(struct nouveau_device *dev)
    mm_config.nvc0.memtype = 0xfe0;
    screen->mm_VRAM_fe0 = nouveau_mm_create(dev, NOUVEAU_BO_VRAM, &mm_config);
 
-   if (!nvc0_blitctx_create(screen))
+   if (!nvc0_blitter_create(screen))
       goto fail;
 
    nouveau_fence_new(&screen->base, &screen->base.fence.current, FALSE);

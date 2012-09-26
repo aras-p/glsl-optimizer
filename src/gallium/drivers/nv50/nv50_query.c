@@ -327,6 +327,9 @@ nv50_render_condition(struct pipe_context *pipe,
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_query *q;
 
+   nv50->cond_query = pq;
+   nv50->cond_mode = mode;
+
    PUSH_SPACE(push, 6);
 
    if (!pq) {

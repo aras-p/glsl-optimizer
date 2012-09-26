@@ -268,7 +268,8 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
    if (screen->base.pushbuf)
       screen->base.pushbuf->user_priv = NULL;
 
-   FREE(screen->blitctx);
+   if (screen->blitter)
+      nv50_blitter_destroy(screen);
 
    nouveau_bo_ref(NULL, &screen->code);
    nouveau_bo_ref(NULL, &screen->tls_bo);
@@ -750,7 +751,7 @@ nv50_screen_create(struct nouveau_device *dev)
    screen->tic.entries = CALLOC(4096, sizeof(void *));
    screen->tsc.entries = screen->tic.entries + 2048;
 
-   if (!nv50_blitctx_create(screen))
+   if (!nv50_blitter_create(screen))
       goto fail;
 
    nv50_screen_init_hwctx(screen);

@@ -73,6 +73,10 @@
 #define NV50_CB_AUX 127
 
 
+struct nv50_blitctx;
+
+boolean nv50_blitctx_create(struct nv50_context *);
+
 struct nv50_context {
    struct nouveau_context base;
 
@@ -150,6 +154,11 @@ struct nv50_context {
    unsigned sample_mask;
 
    boolean vbo_push_hint;
+
+   struct pipe_query *cond_query;
+   uint cond_mode;
+
+   struct nv50_blitctx *blit;
 
 #ifdef NV50_WITH_DRAW_MODULE
    struct draw_context *draw;
@@ -232,6 +241,12 @@ extern void nv50_init_surface_functions(struct nv50_context *);
 void nv50_validate_textures(struct nv50_context *);
 void nv50_validate_samplers(struct nv50_context *);
 
+struct pipe_sampler_view *
+nv50_create_texture_view(struct pipe_context *,
+                         struct pipe_resource *,
+                         const struct pipe_sampler_view *,
+                         uint32_t flags,
+                         enum pipe_texture_target);
 struct pipe_sampler_view *
 nv50_create_sampler_view(struct pipe_context *,
                          struct pipe_resource *,
