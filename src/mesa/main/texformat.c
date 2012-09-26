@@ -302,7 +302,9 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       }
    }
 
-   if (ctx->Extensions.EXT_texture_compression_s3tc) {
+   if (ctx->Extensions.EXT_texture_compression_s3tc ||
+       (ctx->API == API_OPENGLES2 &&
+	ctx->Extensions.ANGLE_texture_compression_dxt)) {
       switch (internalFormat) {
          case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_DXT1);
@@ -604,12 +606,16 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
             break;
          case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-            if (ctx->Extensions.EXT_texture_compression_s3tc)
+            if (ctx->Extensions.EXT_texture_compression_s3tc ||
+		(ctx->API == API_OPENGLES2 &&
+		 ctx->Extensions.ANGLE_texture_compression_dxt))
 	       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA_DXT3);
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
             break;
          case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-            if (ctx->Extensions.EXT_texture_compression_s3tc)
+            if (ctx->Extensions.EXT_texture_compression_s3tc ||
+		(ctx->API == API_OPENGLES2 &&
+		 ctx->Extensions.ANGLE_texture_compression_dxt))
 	       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA_DXT5);
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
             break;

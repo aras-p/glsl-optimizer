@@ -2172,6 +2172,9 @@
 	<category name="NV_draw_buffers"/>
 	<category name="NV_read_buffer"/>
 
+	<!-- GL_ANGLE_texture_compression_dxt -->
+	<category name="ANGLE_texture_compression_dxt"/>
+
 	<function name="DrawBuffersNV" template="DrawBuffers"/>
 	<function name="ReadBufferNV" template="ReadBuffer"/> 
 

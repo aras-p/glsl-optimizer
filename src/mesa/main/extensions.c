@@ -195,6 +195,8 @@ static const struct extension extension_table[] = {
    { "GL_EXT_texture3D",                           o(EXT_texture3D),                           GLL,            1996 },
    { "GL_EXT_texture_array",                       o(EXT_texture_array),                       GL,             2006 },
    { "GL_EXT_texture_compression_dxt1",            o(EXT_texture_compression_s3tc),            GL | ES1 | ES2, 2004 },
+   { "GL_ANGLE_texture_compression_dxt3",          o(ANGLE_texture_compression_dxt),           ES2,            2011 },
+   { "GL_ANGLE_texture_compression_dxt5",          o(ANGLE_texture_compression_dxt),           ES2,            2011 },
    { "GL_EXT_texture_compression_latc",            o(EXT_texture_compression_latc),            GL,             2006 },
    { "GL_EXT_texture_compression_rgtc",            o(ARB_texture_compression_rgtc),            GL,             2004 },
    { "GL_EXT_texture_compression_s3tc",            o(EXT_texture_compression_s3tc),            GL,             2000 },
@@ -480,6 +482,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
    _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
    if (ctx->Mesa_DXTn) {
+      ctx->Extensions.ANGLE_texture_compression_dxt = GL_TRUE;
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
       _mesa_enable_extension(ctx, "GL_S3_s3tc");
    }

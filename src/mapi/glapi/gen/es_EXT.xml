@@ -731,4 +731,10 @@
     <enum name="RG8_EXT"                                  value="0x822B"/>
 </category>
 
+<!-- 111. GL_ANGLE_texture_compression_dxt -->
+<category name="ANGLE_texture_compression_dxt" number="111">
+    <enum name="COMPRESSED_RGBA_S3TC_DXT3_ANGLE"        value="0x83F2"/>
+    <enum name="COMPRESSED_RGBA_S3TC_DXT5_ANGLE"        value="0x83F3"/>
+</category>
+
 </OpenGLAPI>

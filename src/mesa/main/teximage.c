@@ -203,6 +203,18 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
+   /* GL_COMPRESSED_RGBA_S3TC_DXT3_ANGLE && GL_COMPRESSED_RGBA_S3TC_DXT5_ANGLE */
+   if (ctx->API == API_OPENGLES2 &&
+       ctx->Extensions.ANGLE_texture_compression_dxt) {
+      switch (internalFormat) {
+         case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+         case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+            return GL_RGBA;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
    if (ctx->Extensions.S3_s3tc) {
       switch (internalFormat) {
          case GL_RGB_S3TC:
