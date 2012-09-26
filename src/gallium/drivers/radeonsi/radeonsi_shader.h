@@ -29,6 +29,14 @@
 #ifndef RADEONSI_SHADER_H
 #define RADEONSI_SHADER_H
 
+#define SI_SGPR_CONST		0
+#define SI_SGPR_SAMPLER		2
+#define SI_SGPR_RESOURCE	4
+#define SI_SGPR_VERTEX_BUFFER	6
+
+#define SI_VS_NUM_USER_SGPR	8
+#define SI_PS_NUM_USER_SGPR	6
+
 struct si_shader_io {
 	unsigned		name;
 	int			sid;

@@ -2278,7 +2278,7 @@ static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
 	}
 
-	si_pm4_sh_data_end(pm4, R_00B040_SPI_SHADER_USER_DATA_PS_4);
+	si_pm4_sh_data_end(pm4, R_00B030_SPI_SHADER_USER_DATA_PS_0, SI_SGPR_RESOURCE);
 
 out:
 	si_pm4_set_state(rctx, ps_sampler_views, pm4);
@@ -2345,7 +2345,7 @@ static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **
 			si_pm4_sh_data_add(pm4, rstates[i] ? rstates[i]->val[j] : 0);
 		}
 	}
-	si_pm4_sh_data_end(pm4, R_00B038_SPI_SHADER_USER_DATA_PS_2);
+	si_pm4_sh_data_end(pm4, R_00B030_SPI_SHADER_USER_DATA_PS_0, SI_SGPR_SAMPLER);
 
 	if (border_color_table) {
 		uint64_t va_offset =
@@ -2382,7 +2382,7 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint i
 	struct si_resource *rbuffer = cb ? si_resource(cb->buffer) : NULL;
 	struct si_pm4_state *pm4;
 	uint64_t va_offset;
-	uint32_t offset;
+	uint32_t reg, offset;
 
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
@@ -2404,14 +2404,16 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint i
 
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:
-		si_pm4_set_reg(pm4, R_00B130_SPI_SHADER_USER_DATA_VS_0, va_offset);
-		si_pm4_set_reg(pm4, R_00B134_SPI_SHADER_USER_DATA_VS_1, va_offset >> 32);
+		reg = R_00B130_SPI_SHADER_USER_DATA_VS_0 + SI_SGPR_CONST * 4;
+		si_pm4_set_reg(pm4, reg, va_offset);
+		si_pm4_set_reg(pm4, reg + 4, va_offset >> 32);
 		si_pm4_set_state(rctx, vs_const, pm4);
 		break;
 
 	case PIPE_SHADER_FRAGMENT:
-		si_pm4_set_reg(pm4, R_00B030_SPI_SHADER_USER_DATA_PS_0, va_offset);
-		si_pm4_set_reg(pm4, R_00B034_SPI_SHADER_USER_DATA_PS_1, va_offset >> 32);
+		reg = R_00B030_SPI_SHADER_USER_DATA_PS_0 + SI_SGPR_CONST * 4;
+		si_pm4_set_reg(pm4, reg, va_offset);
+		si_pm4_set_reg(pm4, reg + 4, va_offset >> 32);
 		si_pm4_set_state(rctx, ps_const, pm4);
 		break;
 

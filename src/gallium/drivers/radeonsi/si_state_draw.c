@@ -78,7 +78,7 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_00B120_SPI_SHADER_PGM_LO_VS, va >> 8);
 	si_pm4_set_reg(pm4, R_00B124_SPI_SHADER_PGM_HI_VS, va >> 40);
 
-	num_user_sgprs = 8;
+	num_user_sgprs = SI_VS_NUM_USER_SGPR;
 	num_sgprs = shader->num_sgprs;
 	if (num_user_sgprs > num_sgprs)
 		num_sgprs = num_user_sgprs;
@@ -207,7 +207,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_00B020_SPI_SHADER_PGM_LO_PS, va >> 8);
 	si_pm4_set_reg(pm4, R_00B024_SPI_SHADER_PGM_HI_PS, va >> 40);
 
-	num_user_sgprs = 6;
+	num_user_sgprs = SI_PS_NUM_USER_SGPR;
 	num_sgprs = shader->num_sgprs;
 	if (num_user_sgprs > num_sgprs)
 		num_sgprs = num_user_sgprs;
@@ -462,7 +462,7 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 			bound[ve->vertex_buffer_index] = true;
 		}
 	}
-	si_pm4_sh_data_end(pm4, R_00B148_SPI_SHADER_USER_DATA_VS_6);
+	si_pm4_sh_data_end(pm4, R_00B130_SPI_SHADER_USER_DATA_VS_0, SI_SGPR_VERTEX_BUFFER);
 	si_pm4_set_state(rctx, vertex_buffers, pm4);
 }
 

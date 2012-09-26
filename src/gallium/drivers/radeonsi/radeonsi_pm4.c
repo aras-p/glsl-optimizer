@@ -106,9 +106,10 @@ void si_pm4_sh_data_add(struct si_pm4_state *state, uint32_t dw)
 	si_pm4_cmd_add(state, dw);
 }
 
-void si_pm4_sh_data_end(struct si_pm4_state *state, unsigned reg)
+void si_pm4_sh_data_end(struct si_pm4_state *state, unsigned base, unsigned idx)
 {
 	unsigned offs = state->last_pm4 + 1;
+	unsigned reg = base + idx * 4;
 
 	/* Bail if no data was added */
 	if (state->ndw == offs) {

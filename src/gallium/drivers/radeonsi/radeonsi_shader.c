@@ -196,10 +196,7 @@ static void declare_input_vs(
 	unsigned chan;
 
 	/* Load the T list */
-	/* XXX: Communicate with the rest of the driver about which SGPR the T#
-	 * list pointer is going to be stored in.  Hard code to SGPR[6:7] for
- 	 * now */
-	t_list_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_V4I32, 6);
+	t_list_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_V4I32, SI_SGPR_VERTEX_BUFFER);
 
 	t_offset = lp_build_const_int32(base->gallivm, input_index);
 
@@ -251,10 +248,7 @@ static void declare_input_fs(
 	 * [32:16] ParamOffset
 	 *
 	 */
-	/* XXX: This register number must be identical to the S_00B02C_USER_SGPR
-	 * register field value
-	 */
-	LLVMValueRef params = use_sgpr(base->gallivm, SGPR_I32, 6);
+	LLVMValueRef params = use_sgpr(base->gallivm, SGPR_I32, SI_PS_NUM_USER_SGPR);
 
 
 	/* XXX: Is this the input_index? */
@@ -373,9 +367,7 @@ static LLVMValueRef fetch_constant(
 		return bitcast(bld_base, type, load);
 	}
 
-	/* XXX: Assume the pointer to the constant buffer is being stored in
-	 * SGPR[0:1] */
-	const_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_F32, 0);
+	const_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_F32, SI_SGPR_CONST);
 
 	/* XXX: This assumes that the constant buffer is not packed, so
 	 * CONST[0].x will have an offset of 0 and CONST[1].x will have an
@@ -652,14 +644,14 @@ static void tex_fetch_args(
 							 0, LP_CHAN_ALL);
 
 	/* Resource */
-	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V8I32, 4);
+	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V8I32, SI_SGPR_RESOURCE);
 	offset = lp_build_const_int32(bld_base->base.gallivm,
 				  emit_data->inst->Src[1].Register.Index);
 	emit_data->args[2] = build_indexed_load(bld_base->base.gallivm,
 						ptr, offset);
 
 	/* Sampler */
-	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V4I32, 2);
+	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V4I32, SI_SGPR_SAMPLER);
 	offset = lp_build_const_int32(bld_base->base.gallivm,
 				  emit_data->inst->Src[1].Register.Index);
 	emit_data->args[3] = build_indexed_load(bld_base->base.gallivm,
