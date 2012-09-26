@@ -5775,9 +5775,9 @@
 #define   S_02880C_Z_EXPORT_ENABLE(x)                                 (((x) & 0x1) << 0)
 #define   G_02880C_Z_EXPORT_ENABLE(x)                                 (((x) >> 0) & 0x1)
 #define   C_02880C_Z_EXPORT_ENABLE                                    0xFFFFFFFE
-#define   S_02880C_STENCIL_TEST_VAL_EXPORT_ENAB(x)                    (((x) & 0x1) << 1)
-#define   G_02880C_STENCIL_TEST_VAL_EXPORT_ENAB(x)                    (((x) >> 1) & 0x1)
-#define   C_02880C_STENCIL_TEST_VAL_EXPORT_ENAB                       0xFFFFFFFD
+#define   S_02880C_STENCIL_TEST_VAL_EXPORT_ENABLE(x)                  (((x) & 0x1) << 1)
+#define   G_02880C_STENCIL_TEST_VAL_EXPORT_ENABLE(x)                  (((x) >> 1) & 0x1)
+#define   C_02880C_STENCIL_TEST_VAL_EXPORT_ENABLE                     0xFFFFFFFD
 #define   S_02880C_STENCIL_OP_VAL_EXPORT_ENABLE(x)                    (((x) & 0x1) << 2)
 #define   G_02880C_STENCIL_OP_VAL_EXPORT_ENABLE(x)                    (((x) >> 2) & 0x1)
 #define   C_02880C_STENCIL_OP_VAL_EXPORT_ENABLE                       0xFFFFFFFB
