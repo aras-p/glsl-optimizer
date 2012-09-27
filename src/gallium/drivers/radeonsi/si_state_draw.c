@@ -45,9 +45,6 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	unsigned nparams, i;
 	uint64_t va;
 
-	if (si_pipe_shader_create(ctx, shader))
-		return;
-
 	si_pm4_delete_state(rctx, vs, shader->pm4);
 	pm4 = shader->pm4 = CALLOC_STRUCT(si_pm4_state);
 
@@ -105,9 +102,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	unsigned fragcoord_interp_mode = 0;
 	unsigned spi_baryc_cntl, spi_ps_input_ena;
 	uint64_t va;
-
-	if (si_pipe_shader_create(ctx, shader))
-		return;
 
 	si_pm4_delete_state(rctx, ps, shader->pm4);
 	pm4 = shader->pm4 = CALLOC_STRUCT(si_pm4_state);

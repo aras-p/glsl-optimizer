@@ -698,6 +698,10 @@ int si_pipe_shader_create(
 
 	dump = debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE);
 
+	assert(shader->shader.noutput == 0);
+	assert(shader->shader.ninterp == 0);
+	assert(shader->shader.ninput == 0);
+
 	memset(&si_shader_ctx, 0, sizeof(si_shader_ctx));
 	radeon_llvm_context_init(&si_shader_ctx.radeon_bld);
 	bld_base = &si_shader_ctx.radeon_bld.soa.bld_base;
