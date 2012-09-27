@@ -167,7 +167,6 @@ i915CreateContext(int api,
 
    if (!intelInitContext(intel, api, mesaVis, driContextPriv,
                          sharedContextPrivate, &functions)) {
-      free(i915);
       *error = __DRI_CTX_ERROR_NO_MEMORY;
       return false;
    }
@@ -184,7 +183,6 @@ i915CreateContext(int api,
 
       if (req_version > max_version) {
          *error = __DRI_CTX_ERROR_BAD_VERSION;
-         free(i915);
          return false;
       }
       break;
@@ -194,7 +192,6 @@ i915CreateContext(int api,
       break;
    default:
       *error = __DRI_CTX_ERROR_BAD_API;
-      free(i915);
       return false;
    }
 
