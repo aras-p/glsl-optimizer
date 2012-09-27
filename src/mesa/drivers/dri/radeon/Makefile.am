@@ -36,6 +36,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mesa/drivers/dri/radeon/server \
 	$(DEFINES) \
 	$(API_DEFINES) \
+	$(VISIBILITY_CFLAGS) \
 	$(RADEON_CFLAGS)
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
