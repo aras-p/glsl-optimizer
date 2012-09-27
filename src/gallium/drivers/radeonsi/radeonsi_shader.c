@@ -236,6 +236,7 @@ static void declare_input_fs(
 {
 	const char * intr_name;
 	unsigned chan;
+	struct si_shader *shader = &si_shader_ctx->shader->shader;
 	struct lp_build_context * base =
 				&si_shader_ctx->radeon_bld.soa.bld_base.base;
 	struct gallivm_state * gallivm = base->gallivm;
@@ -249,10 +250,7 @@ static void declare_input_fs(
 	 *
 	 */
 	LLVMValueRef params = use_sgpr(base->gallivm, SGPR_I32, SI_PS_NUM_USER_SGPR);
-
-
-	/* XXX: Is this the input_index? */
-	LLVMValueRef attr_number = lp_build_const_int32(gallivm, input_index);
+	LLVMValueRef attr_number;
 
 	if (decl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
@@ -267,6 +265,10 @@ static void declare_input_fs(
 		}
 		return;
 	}
+
+	shader->input[input_index].param_offset = shader->ninterp++;
+	attr_number = lp_build_const_int32(gallivm,
+					   shader->input[input_index].param_offset);
 
 	/* XXX: Handle all possible interpolation modes */
 	switch (decl->Interp.Interpolate) {

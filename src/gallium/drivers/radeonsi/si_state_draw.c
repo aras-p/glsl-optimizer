@@ -101,7 +101,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	struct si_pm4_state *pm4;
 	unsigned i, exports_ps, num_cout, spi_ps_in_control, db_shader_control;
 	unsigned num_sgprs, num_user_sgprs;
-	int ninterp = 0;
 	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
 	unsigned fragcoord_interp_mode = 0;
 	unsigned spi_baryc_cntl, spi_ps_input_ena;
@@ -131,7 +130,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 			}
 			continue;
 		}
-		ninterp++;
+
 		/* XXX: Flat shading hangs the GPU */
 		if (shader->shader.input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
 		    (shader->shader.input[i].interpolate == TGSI_INTERPOLATE_COLOR &&
@@ -172,7 +171,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		exports_ps = 2;
 	}
 
-	spi_ps_in_control = S_0286D8_NUM_INTERP(ninterp);
+	spi_ps_in_control = S_0286D8_NUM_INTERP(shader->shader.ninterp);
 
 	spi_baryc_cntl = 0;
 	if (have_perspective)
@@ -365,7 +364,9 @@ static void si_update_spi_map(struct r600_context *rctx)
 			tmp |= S_028644_OFFSET(0x20);
 		}
 
-		si_pm4_set_reg(pm4, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp);
+		si_pm4_set_reg(pm4,
+			       R_028644_SPI_PS_INPUT_CNTL_0 + ps->input[i].param_offset * 4,
+			       tmp);
 	}
 
 	si_pm4_set_state(rctx, spi, pm4);

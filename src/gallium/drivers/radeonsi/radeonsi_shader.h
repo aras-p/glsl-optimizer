@@ -71,6 +71,7 @@ struct si_shader {
 	unsigned		noutput;
 	struct si_shader_io	output[32];
 
+	unsigned		ninterp;
 	bool			uses_kill;
 	bool			fs_write_all;
 	unsigned		nr_cbufs;
