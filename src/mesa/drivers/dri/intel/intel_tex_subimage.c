@@ -199,6 +199,8 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
     * varying the arithmetic loop below.
     */
    if (!intel->has_llc ||
+       format != GL_BGRA ||
+       type != GL_UNSIGNED_BYTE ||
        texImage->TexFormat != MESA_FORMAT_ARGB8888 ||
        texImage->TexObject->Target != GL_TEXTURE_2D ||
        texImage->Level != 0 ||
