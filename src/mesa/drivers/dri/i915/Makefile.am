@@ -37,6 +37,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mesa/drivers/dri/intel/server \
 	$(DEFINES) \
 	$(API_DEFINES) \
+	$(VISIBILITY_CFLAGS) \
 	$(INTEL_CFLAGS)
 
 dridir = $(DRI_DRIVER_INSTALL_DIR)
