@@ -21,24 +21,31 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-# Hack to make some of the non-automake variables work.
-TOP=$(top_builddir)
-
-AM_CFLAGS = \
+AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
 	$(DEFINES) \
 	$(API_DEFINES)
+AM_CFLAGS = $(PTHREAD_CFLAGS)
+AM_CXXFLAGS = $(PTHREAD_CFLAGS)
 
 lib_LTLIBRARIES = lib@OSMESA_LIB@.la
 
+nodist_EXTRA_lib@OSMESA_LIB@_la_SOURCES = dummy.cpp
 lib@OSMESA_LIB@_la_SOURCES = osmesa.c
 
 lib@OSMESA_LIB@_la_LDFLAGS = -module -version-number @OSMESA_VERSION@ -no-undefined
+
+if HAVE_SHARED_GLAPI
+GLAPI_LIB = $(top_builddir)/src/mapi/shared-glapi/libglapi.la
+else
+GLAPI_LIB = $(top_builddir)/src/mapi/glapi/libglapi.la
+endif
 lib@OSMESA_LIB@_la_LIBADD = \
 	$(top_builddir)/src/mesa/libmesa.la \
-	$(top_builddir)/src/mapi/glapi/libglapi.la
+	$(GLAPI_LIB) \
+	$(OSMESA_LIB_DEPS)
 
 if BUILD_SHARED
 # Provide compatibility with scripts for the old Mesa build system for
