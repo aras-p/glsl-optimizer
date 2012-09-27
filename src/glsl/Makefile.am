@@ -23,7 +23,7 @@
 # builtin_compiler is built before libglsl to generate builtin_function.cpp for libglsl.
 # For this to work, a dummy version of builtin_function.cpp, builtin_stubs.cpp, is used.
 
-AM_CFLAGS = \
+AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
@@ -31,8 +31,8 @@ AM_CFLAGS = \
 	$(DEFINES) \
 	$(LIBRARY_DEFINES) \
 	$(API_DEFINES)
-
-AM_CXXFLAGS = $(AM_CFLAGS)
+AM_CFLAGS = $(VISIBILITY_CFLAGS)
+AM_CXXFLAGS = $(VISIBILITY_CXXFLAGS)
 
 AM_LFLAGS = --nounistd -o$(LEX_OUTPUT_ROOT).c
 
