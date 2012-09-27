@@ -26,7 +26,8 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mesa/ \
 	$(DEFINES) \
 	$(API_DEFINES) \
-	$(LIBDRM_CFLAGS)
+	$(LIBDRM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
 
 noinst_LTLIBRARIES = \
 	libdricommon.la \
