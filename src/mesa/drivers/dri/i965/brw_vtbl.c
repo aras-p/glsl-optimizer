@@ -249,6 +249,7 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.render_target_supported = brw_render_target_supported;
    brw->intel.vtbl.is_hiz_depth_format = brw_is_hiz_depth_format;
 
+   assert(brw->intel.gen >= 4);
    if (brw->intel.gen >= 7) {
       gen7_init_vtable_surface_functions(brw);
    } else if (brw->intel.gen >= 4) {

@@ -140,6 +140,11 @@ brwCreateContext(int api,
       return false;
    }
 
+   /* brwInitVtbl needs to know the chipset generation so that it can set the
+    * right pointers.
+    */
+   brw->intel.gen = screen->gen;
+
    brwInitVtbl( brw );
 
    brwInitDriverFunctions(screen, &functions);
