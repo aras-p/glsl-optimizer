@@ -2622,5 +2622,7 @@ void si_init_config(struct r600_context *rctx)
 
 	si_pm4_set_reg(pm4, R_028804_DB_EQAA, 0x110000);
 
+	si_pm4_set_reg(pm4, R_02882C_PA_SU_PRIM_FILTER_CNTL, 0);
+
 	si_pm4_set_state(rctx, init, pm4);
 }
