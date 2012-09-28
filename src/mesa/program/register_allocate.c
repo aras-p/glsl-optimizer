@@ -555,6 +555,13 @@ ra_get_best_spill_node(struct ra_graph *g)
       if (cost <= 0.0)
 	 continue;
 
+      /* Only consider registers for spilling if they are still in the
+       * interference graph (those on the stack have already been proven to be
+       * allocatable without spilling).
+       */
+      if (g->nodes[n].in_stack)
+         continue;
+
       benefit = ra_get_spill_benefit(g, n);
 
       if (benefit / cost > best_benefit) {
