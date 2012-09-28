@@ -189,7 +189,7 @@ def _MaxVecSize(func, param):
         need_conv = __aliases[func.name][1]
         if need_conv:
             print >>sys.stderr, \
-                    "Error: unable to dicide the max size of %s in %s" % \
+                    "Error: unable to decide the max size of %s in %s" % \
                     (param.name, func.name)
     return size
 
