@@ -103,6 +103,13 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_00B12C_SPI_SHADER_PGM_RSRC2_VS,
 		       S_00B12C_USER_SGPR(num_user_sgprs));
 
+	if (rctx->chip_class >= CIK) {
+		si_pm4_set_reg(pm4, R_00B118_SPI_SHADER_PGM_RSRC3_VS,
+			       S_00B118_CU_EN(0xffff));
+		si_pm4_set_reg(pm4, R_00B11C_SPI_SHADER_LATE_ALLOC_VS,
+			       S_00B11C_LIMIT(0));
+	}
+
 	si_pm4_bind_state(rctx, vs, shader->pm4);
 }
 
@@ -233,6 +240,10 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		       S_00B028_SGPRS((num_sgprs - 1) / 8));
 	si_pm4_set_reg(pm4, R_00B02C_SPI_SHADER_PGM_RSRC2_PS,
 		       S_00B02C_USER_SGPR(num_user_sgprs));
+	if (rctx->chip_class >= CIK) {
+		si_pm4_set_reg(pm4, R_00B01C_SPI_SHADER_PGM_RSRC3_PS,
+			       S_00B01C_CU_EN(0xffff));
+	}
 
 	si_pm4_set_reg(pm4, R_02880C_DB_SHADER_CONTROL, db_shader_control);
 
