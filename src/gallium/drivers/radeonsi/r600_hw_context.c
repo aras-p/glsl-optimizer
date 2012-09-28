@@ -664,32 +664,4 @@ void r600_context_draw_opaque_count(struct r600_context *ctx, struct r600_so_tar
 	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
 	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, t->filled_size, RADEON_USAGE_READ);
 
-#if 0 /* I have not found this useful yet. */
-	cs->buf[cs->cdw++] = PKT3(PKT3_COPY_DW, 4, 0);
-	cs->buf[cs->cdw++] = COPY_DW_SRC_IS_REG | COPY_DW_DST_IS_REG;
-	cs->buf[cs->cdw++] = R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE >> 2; /* src register */
-	cs->buf[cs->cdw++] = 0; /* unused */
-	cs->buf[cs->cdw++] = R_0085F4_CP_COHER_SIZE >> 2; /* dst register */
-	cs->buf[cs->cdw++] = 0; /* unused */
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONFIG_REG, 1, 0);
-	cs->buf[cs->cdw++] = (R_0085F0_CP_COHER_CNTL - SI_CONFIG_REG_OFFSET) >> 2;
-	cs->buf[cs->cdw++] = S_0085F0_SO0_DEST_BASE_ENA(1) << t->so_index;
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_SET_CONFIG_REG, 1, 0);
-	cs->buf[cs->cdw++] = (R_0085F8_CP_COHER_BASE - SI_CONFIG_REG_OFFSET) >> 2;
-	cs->buf[cs->cdw++] = t->b.buffer_offset >> 2;
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, (struct si_resource*)t->b.buffer,
-							     RADEON_USAGE_WRITE);
-
-	cs->buf[cs->cdw++] = PKT3(PKT3_WAIT_REG_MEM, 5, 0);
-	cs->buf[cs->cdw++] = WAIT_REG_MEM_EQUAL; /* wait until the register is equal to the reference value */
-	cs->buf[cs->cdw++] = R_0085FC_CP_COHER_STATUS >> 2;  /* register */
-	cs->buf[cs->cdw++] = 0;
-	cs->buf[cs->cdw++] = 0; /* reference value */
-	cs->buf[cs->cdw++] = 0xffffffff; /* mask */
-	cs->buf[cs->cdw++] = 4; /* poll interval */
-#endif
 }
