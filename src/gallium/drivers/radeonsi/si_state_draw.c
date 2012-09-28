@@ -285,7 +285,10 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
 		return false;
 	}
 
-	si_pm4_set_reg(pm4, R_008958_VGT_PRIMITIVE_TYPE, prim);
+	if (rctx->chip_class >= CIK)
+		si_pm4_set_reg(pm4, R_030908_VGT_PRIMITIVE_TYPE, prim);
+	else
+		si_pm4_set_reg(pm4, R_008958_VGT_PRIMITIVE_TYPE, prim);
 	si_pm4_set_reg(pm4, R_028400_VGT_MAX_VTX_INDX, ~0);
 	si_pm4_set_reg(pm4, R_028404_VGT_MIN_VTX_INDX, 0);
 	si_pm4_set_reg(pm4, R_028408_VGT_INDX_OFFSET,
