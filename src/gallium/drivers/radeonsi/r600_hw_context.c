@@ -45,12 +45,7 @@ void si_get_backend_mask(struct r600_context *ctx)
 	if (ctx->screen->info.r600_backend_map_valid) {
 		unsigned num_tile_pipes = ctx->screen->info.r600_num_tile_pipes;
 		unsigned backend_map = ctx->screen->info.r600_backend_map;
-		unsigned item_width, item_mask;
-
-		if (ctx->chip_class >= CAYMAN) {
-			item_width = 4;
-			item_mask = 0x7;
-		}
+		unsigned item_width = 4, item_mask = 0x7;
 
 		while(num_tile_pipes--) {
 			i = backend_map & item_mask;

@@ -39,7 +39,6 @@ struct winsys_handle;
 
 enum radeon_family {
 	CHIP_UNKNOWN,
-	CHIP_CAYMAN,
 	CHIP_TAHITI,
 	CHIP_PITCAIRN,
 	CHIP_VERDE,
@@ -47,7 +46,6 @@ enum radeon_family {
 };
 
 enum chip_class {
-	CAYMAN,
 	TAHITI,
 };
 

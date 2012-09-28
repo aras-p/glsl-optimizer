@@ -56,10 +56,8 @@ void si_context_streamout_begin(struct r600_context *ctx)
 			   util_bitcount(buffer_en & ~ctx->streamout_append_bitmask) * 6 +
 			   ctx->num_cs_dw_streamout_end, TRUE);
 
-	if (ctx->chip_class >= CAYMAN) {
-		evergreen_flush_vgt_streamout(ctx);
-		evergreen_set_streamout_enable(ctx, buffer_en);
-	}
+	evergreen_flush_vgt_streamout(ctx);
+	evergreen_set_streamout_enable(ctx, buffer_en);
 
 	for (i = 0; i < ctx->num_so_targets; i++) {
 #if 0

@@ -1801,18 +1801,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	tl_y = 0;
 	br_x = state->width;
 	br_y = state->height;
-#if 0 /* These shouldn't be necessary on SI, see PA_SC_ENHANCE register */
-	/* EG hw workaround */
-	if (br_x == 0)
-		tl_x = 1;
-	if (br_y == 0)
-		tl_y = 1;
-	/* cayman hw workaround */
-	if (rctx->chip_class == CAYMAN) {
-		if (br_x == 1 && br_y == 1)
-			br_x = 2;
-	}
-#endif
+
 	tl = S_028240_TL_X(tl_x) | S_028240_TL_Y(tl_y);
 	br = S_028244_BR_X(br_x) | S_028244_BR_Y(br_y);
 
