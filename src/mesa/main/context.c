@@ -1007,6 +1007,7 @@ _mesa_initialize_context(struct gl_context *ctx,
       }
 
       _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
+      /* fall-through */
    case API_OPENGL_CORE:
       break;
    case API_OPENGLES:
