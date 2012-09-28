@@ -75,10 +75,10 @@ define local-l-to-c
 	$(hide) $(LEX) -o$@ $<
 endef
 
-define local-y-to-c-and-h
+define mesa_local-y-to-c-and-h
 	@mkdir -p $(dir $@)
 	@echo "Mesa Yacc: $(PRIVATE_MODULE) <= $<"
-	$(hide) $(YACC) -o $@ $<
+	$(hide) $(YACC) -o $@ -p "_mesa_program_" $<
 endef
 
 define es-gen
@@ -104,7 +104,7 @@ $(intermediates)/main/api_exec_%_remap_helper.h: $(es_hdr_deps)
 	$(call es-gen, -c $*)
 
 $(intermediates)/program/program_parse.tab.c: $(LOCAL_PATH)/program/program_parse.y
-	$(local-y-to-c-and-h)
+	$(mesa_local-y-to-c-and-h)
 
 $(intermediates)/program/lex.yy.c: $(LOCAL_PATH)/program/program_lexer.l
 	$(local-l-to-c)
