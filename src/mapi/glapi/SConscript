@@ -48,7 +48,7 @@ for s in mapi_sources:
 #
 # Assembly sources
 #
-if env['gcc'] and env['platform'] not in ('darwin', 'windows'):
+if env['gcc'] and env['platform'] not in ('cygwin', 'darwin', 'windows'):
     GLAPI = '#src/mapi/glapi/'
 
     if env['machine'] == 'x86':
