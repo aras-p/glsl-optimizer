@@ -85,11 +85,31 @@ static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, uns
 	return buf;
 }
 
+static void r600_update_occlusion_query_state(struct r600_context *rctx,
+					      unsigned type, int diff)
+{
+	if (type == PIPE_QUERY_OCCLUSION_COUNTER ||
+	    type == PIPE_QUERY_OCCLUSION_PREDICATE) {
+		bool enable;
+
+		rctx->num_occlusion_queries += diff;
+		assert(rctx->num_occlusion_queries >= 0);
+
+		enable = rctx->num_occlusion_queries != 0;
+
+		if (rctx->db_misc_state.occlusion_query_enabled != enable) {
+			rctx->db_misc_state.occlusion_query_enabled = enable;
+			r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+		}
+	}
+}
+
 static void r600_emit_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 	uint64_t va;
 
+	r600_update_occlusion_query_state(ctx, query->type, 1);
 	r600_need_cs_space(ctx, query->num_cs_dw * 2, TRUE);
 
 	/* Get a new query buffer if needed. */
@@ -199,6 +219,8 @@ static void r600_emit_query_end(struct r600_context *ctx, struct r600_query *que
 			ctx->num_cs_dw_nontimer_queries_suspend -= query->num_cs_dw;
 		}
 	}
+
+	r600_update_occlusion_query_state(ctx, query->type, -1);
 }
 
 static void r600_emit_query_predication(struct r600_context *ctx, struct r600_query *query,
@@ -313,25 +335,6 @@ static void r600_destroy_query(struct pipe_context *ctx, struct pipe_query *quer
 	FREE(query);
 }
 
-static void r600_update_occlusion_query_state(struct r600_context *rctx,
-					      unsigned type, int diff)
-{
-	if (type == PIPE_QUERY_OCCLUSION_COUNTER ||
-	    type == PIPE_QUERY_OCCLUSION_PREDICATE) {
-		bool enable;
-
-		rctx->num_occlusion_queries += diff;
-		assert(rctx->num_occlusion_queries >= 0);
-
-		enable = rctx->num_occlusion_queries != 0;
-
-		if (rctx->db_misc_state.occlusion_query_enabled != enable) {
-			rctx->db_misc_state.occlusion_query_enabled = enable;
-			r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
-		}
-	}
-}
-
 static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -361,8 +364,6 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 	rquery->buffer.results_end = 0;
 	rquery->buffer.previous = NULL;
 
-	r600_update_occlusion_query_state(rctx, rquery->type, 1);
-
 	r600_emit_query_begin(rctx, rquery);
 
 	if (r600_is_timer_query(rquery->type)) {
@@ -382,8 +383,6 @@ static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 	if (r600_query_needs_begin(rquery->type)) {
 		LIST_DELINIT(&rquery->list);
 	}
-
-	r600_update_occlusion_query_state(rctx, rquery->type, -1);
 }
 
 static unsigned r600_query_read_result(char *map, unsigned start_index, unsigned end_index,
