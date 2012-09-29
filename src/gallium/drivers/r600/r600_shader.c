@@ -526,6 +526,21 @@ static int r600_vtx_from_byte_stream(struct r600_shader_ctx *ctx,
 	return bytes_read;
 }
 
+static int r600_export_from_byte_stream(struct r600_shader_ctx *ctx,
+	unsigned char * bytes, unsigned bytes_read)
+{
+	struct r600_bytecode_output output;
+	memset(&output, 0, sizeof(struct r600_bytecode_output));
+	uint32_t word0 = i32_from_byte_stream(bytes, &bytes_read);
+	uint32_t word1 = i32_from_byte_stream(bytes, &bytes_read);
+	if (ctx->bc->chip_class >= EVERGREEN)
+		eg_bytecode_export_read(&output, word0,word1);
+	else
+		r600_bytecode_export_read(&output, word0,word1);
+	r600_bytecode_add_output(ctx->bc, &output);
+	return bytes_read;
+}
+
 static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
 				unsigned char * bytes,	unsigned num_bytes)
 {
@@ -560,6 +575,10 @@ static void r600_bytecode_from_byte_stream(struct r600_shader_ctx *ctx,
 			bytes_read = r600_vtx_from_byte_stream(ctx, bytes,
 								bytes_read);
 			break;
+		case 5:
+            bytes_read = r600_export_from_byte_stream(ctx, bytes,
+                                bytes_read);
+            break;
 		default:
 			/* XXX: Error here */
 			break;
@@ -1360,7 +1379,10 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		radeon_llvm_ctx.two_side = shader->two_side;
 		radeon_llvm_ctx.face_input = ctx.face_gpr;
 		radeon_llvm_ctx.r600_inputs = ctx.shader->input;
+		radeon_llvm_ctx.r600_outputs = ctx.shader->output;
+		radeon_llvm_ctx.color_buffer_count = MAX2(key.nr_cbufs , 1);
 		radeon_llvm_ctx.chip_class = ctx.bc->chip_class;
+		radeon_llvm_ctx.fs_color_all = shader->fs_write_all && (rscreen->chip_class >= EVERGREEN);
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 		if (debug_get_bool_option("R600_DUMP_SHADERS", FALSE)) {
 			dump = 1;
@@ -1730,10 +1752,12 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		}
 	}
 	/* add output to bytecode */
-	for (i = 0; i < noutput; i++) {
-		r = r600_bytecode_add_output(ctx.bc, &output[i]);
-		if (r)
-			goto out_err;
+	if (!use_llvm || ctx.type != TGSI_PROCESSOR_FRAGMENT) {
+		for (i = 0; i < noutput; i++) {
+			r = r600_bytecode_add_output(ctx.bc, &output[i]);
+			if (r)
+				goto out_err;
+		}
 	}
 	/* add program end */
 	if (ctx.bc->chip_class == CAYMAN)

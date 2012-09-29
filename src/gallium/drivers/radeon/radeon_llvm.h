@@ -59,6 +59,9 @@ struct radeon_llvm_context {
 	unsigned face_input;
 	unsigned two_side;
 	struct r600_shader_io * r600_inputs;
+	struct r600_shader_io * r600_outputs;
+	unsigned color_buffer_count;
+	unsigned fs_color_all;
 
 	/*=== Front end configuration ===*/
 

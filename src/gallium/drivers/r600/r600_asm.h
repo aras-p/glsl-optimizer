@@ -247,5 +247,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 void r700_bytecode_cf_vtx_build(uint32_t *bytecode, const struct r600_bytecode_cf *cf);
 int r700_bytecode_alu_build(struct r600_bytecode *bc, struct r600_bytecode_alu *alu, unsigned id);
 void r700_bytecode_alu_read(struct r600_bytecode_alu *alu, uint32_t word0, uint32_t word1);
+void r600_bytecode_export_read(struct r600_bytecode_output *output, uint32_t word0, uint32_t word1);
+void eg_bytecode_export_read(struct r600_bytecode_output *output, uint32_t word0, uint32_t word1);
 
 #endif
