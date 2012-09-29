@@ -160,7 +160,7 @@ static void calculate_miptree_layout(radeonContextPtr rmesa, radeon_mipmap_tree 
 {
 	GLuint curOffset, i, face, level;
 
-	assert(mt->numLevels <= rmesa->glCtx->Const.MaxTextureLevels);
+	assert(mt->numLevels <= rmesa->glCtx.Const.MaxTextureLevels);
 
 	curOffset = 0;
 	for(face = 0; face < mt->faces; face++) {

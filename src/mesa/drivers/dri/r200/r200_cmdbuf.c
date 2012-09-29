@@ -56,7 +56,7 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
 {
    int i, mtu;
 
-   mtu = rmesa->radeon.glCtx->Const.MaxTextureUnits;
+   mtu = rmesa->radeon.glCtx.Const.MaxTextureUnits;
 
    make_empty_list(&rmesa->radeon.hw.atomlist);
    rmesa->radeon.hw.atomlist.name = "atom-list";
@@ -201,7 +201,7 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
    retval = rmesa->radeon.tcl.elt_dma_bo->ptr + rmesa->radeon.tcl.elt_dma_offset;
    
    assert(!rmesa->radeon.dma.flush);
-   rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+   rmesa->radeon.glCtx.Driver.NeedFlush |= FLUSH_STORED_VERTICES;
    rmesa->radeon.dma.flush = r200FlushElts;
 
    return retval;

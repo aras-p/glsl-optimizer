@@ -83,7 +83,7 @@ void radeonSetCliprects(radeonContextPtr radeon)
 
 	if ((draw_rfb->base.Width != drawable->w) ||
 	    (draw_rfb->base.Height != drawable->h)) {
-		_mesa_resize_framebuffer(radeon->glCtx, &draw_rfb->base,
+		_mesa_resize_framebuffer(&radeon->glCtx, &draw_rfb->base,
 					 drawable->w, drawable->h);
 		draw_rfb->base.Initialized = GL_TRUE;
 	}
@@ -91,14 +91,14 @@ void radeonSetCliprects(radeonContextPtr radeon)
 	if (drawable != readable) {
 		if ((read_rfb->base.Width != readable->w) ||
 		    (read_rfb->base.Height != readable->h)) {
-			_mesa_resize_framebuffer(radeon->glCtx, &read_rfb->base,
+			_mesa_resize_framebuffer(&radeon->glCtx, &read_rfb->base,
 						 readable->w, readable->h);
 			read_rfb->base.Initialized = GL_TRUE;
 		}
 	}
 
 	if (radeon->state.scissor.enabled)
-		radeonUpdateScissor(radeon->glCtx);
+		radeonUpdateScissor(&radeon->glCtx);
 
 }
 
@@ -428,7 +428,7 @@ void radeon_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GL
 	old_viewport = ctx->Driver.Viewport;
 	ctx->Driver.Viewport = NULL;
 	radeon_window_moved(radeon);
-	radeon_draw_buffer(ctx, radeon->glCtx->DrawBuffer);
+	radeon_draw_buffer(ctx, radeon->glCtx.DrawBuffer);
 	ctx->Driver.Viewport = old_viewport;
 }
 
@@ -440,7 +440,7 @@ static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state
 	if (!radeon_is_debug_enabled(RADEON_STATE, RADEON_VERBOSE) )
 		return;
 
-	dwords = (*state->check) (radeon->glCtx, state);
+	dwords = (*state->check) (&radeon->glCtx, state);
 
 	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
 
@@ -478,7 +478,7 @@ GLuint radeonCountStateEmitSize(radeonContextPtr radeon)
 			goto out;
 		foreach(atom, &radeon->hw.atomlist) {
 			if (atom->dirty) {
-				const GLuint atom_size = atom->check(radeon->glCtx, atom);
+				const GLuint atom_size = atom->check(&radeon->glCtx, atom);
 				dwords += atom_size;
 				if (RADEON_CMDBUF && atom_size) {
 					radeon_print_state_atom(radeon, atom);
@@ -487,7 +487,7 @@ GLuint radeonCountStateEmitSize(radeonContextPtr radeon)
 		}
 	} else {
 		foreach(atom, &radeon->hw.atomlist) {
-			const GLuint atom_size = atom->check(radeon->glCtx, atom);
+			const GLuint atom_size = atom->check(&radeon->glCtx, atom);
 			dwords += atom_size;
 			if (RADEON_CMDBUF && atom_size) {
 				radeon_print_state_atom(radeon, atom);
@@ -505,13 +505,13 @@ static INLINE void radeon_emit_atom(radeonContextPtr radeon, struct radeon_state
 	BATCH_LOCALS(radeon);
 	int dwords;
 
-	dwords = (*atom->check) (radeon->glCtx, atom);
+	dwords = (*atom->check) (&radeon->glCtx, atom);
 	if (dwords) {
 
 		radeon_print_state_atom(radeon, atom);
 
 		if (atom->emit) {
-			(*atom->emit)(radeon->glCtx, atom);
+			(*atom->emit)(&radeon->glCtx, atom);
 		} else {
 			BEGIN_BATCH_NO_AUTOSTATE(dwords);
 			OUT_BATCH_TABLE(atom->cmd, dwords);
@@ -666,7 +666,7 @@ int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller)
 		fprintf(stderr, "%s from %s\n", __FUNCTION__, caller);
 	}
 
-	radeonEmitQueryEnd(rmesa->glCtx);
+	radeonEmitQueryEnd(&rmesa->glCtx);
 
 	if (rmesa->cmdbuf.cs->cdw) {
 		ret = radeon_cs_emit(rmesa->cmdbuf.cs);
@@ -675,7 +675,7 @@ int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller)
 	radeon_cs_erase(rmesa->cmdbuf.cs);
 	rmesa->cmdbuf.flushing = 0;
 
-	if (radeon_revalidate_bos(rmesa->glCtx) == GL_FALSE) {
+	if (radeon_revalidate_bos(&rmesa->glCtx) == GL_FALSE) {
 		fprintf(stderr,"failed to revalidate buffers\n");
 	}
 
@@ -751,7 +751,7 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa)
 	rmesa->cmdbuf.size = size;
 
 	radeon_cs_space_set_flush(rmesa->cmdbuf.cs,
-				  (void (*)(void *))rmesa->glCtx->Driver.Flush, rmesa->glCtx);
+				  (void (*)(void *))rmesa->glCtx.Driver.Flush, &rmesa->glCtx);
 
 
 	if (!drmCommandWriteRead(rmesa->dri.fd, DRM_RADEON_GEM_INFO,

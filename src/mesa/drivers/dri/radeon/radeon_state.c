@@ -1850,7 +1850,7 @@ void radeonUploadTexMatrix( r100ContextPtr rmesa,
    int idx = TEXMAT_0 + unit;
    float *dest = ((float *)RADEON_DB_STATE( mat[idx] )) + MAT_ELT_0;
    int i;
-   struct gl_texture_unit tUnit = rmesa->radeon.glCtx->Texture.Unit[unit];
+   struct gl_texture_unit tUnit = rmesa->radeon.glCtx.Texture.Unit[unit];
    GLfloat *src = rmesa->tmpmat[unit].m;
 
    rmesa->TexMatColSwap &= ~(1 << unit);

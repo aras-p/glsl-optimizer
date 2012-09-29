@@ -147,7 +147,7 @@ static GLboolean discrete_prim[0x10] = {
 static GLushort *radeonAllocElts( r100ContextPtr rmesa, GLuint nr ) 
 {
       if (rmesa->radeon.dma.flush)
-	 rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
+	 rmesa->radeon.dma.flush( &rmesa->radeon.glCtx );
 
       radeonEmitAOS( rmesa,
 		     rmesa->radeon.tcl.aos_count, 0 );
@@ -314,7 +314,7 @@ static GLuint radeonEnsureEmitSize( struct gl_context * ctx , GLuint inputs )
     state_size = radeonCountStateEmitSize( &rmesa->radeon );
     /* tcl may be changed in radeonEmitArrays so account for it if not dirty */
     if (!rmesa->hw.tcl.dirty)
-      state_size += rmesa->hw.tcl.check( rmesa->radeon.glCtx, &rmesa->hw.tcl );
+      state_size += rmesa->hw.tcl.check( &rmesa->radeon.glCtx, &rmesa->hw.tcl );
     /* predict size for elements */
     for (i = 0; i < VB->PrimitiveCount; ++i)
     {
@@ -500,7 +500,7 @@ static void transition_to_hwtnl( struct gl_context *ctx )
    tnl->Driver.NotifyMaterialChange = radeonUpdateMaterial;
 
    if ( rmesa->radeon.dma.flush )			
-      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	
+      rmesa->radeon.dma.flush( &rmesa->radeon.glCtx );	
 
    rmesa->radeon.dma.flush = NULL;
    rmesa->swtcl.vertex_format = 0;

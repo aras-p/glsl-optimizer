@@ -64,7 +64,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 void radeonSetUpAtomList( r100ContextPtr rmesa )
 {
-   int i, mtu = rmesa->radeon.glCtx->Const.MaxTextureUnits;
+   int i, mtu = rmesa->radeon.glCtx.Const.MaxTextureUnits;
 
    make_empty_list(&rmesa->radeon.hw.atomlist);
    rmesa->radeon.hw.atomlist.name = "atom-list";
@@ -208,7 +208,7 @@ void radeonFlushElts( struct gl_context *ctx )
 
    if (RADEON_DEBUG & RADEON_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__);
-      radeonFinish( rmesa->radeon.glCtx );
+      radeonFinish( &rmesa->radeon.glCtx );
    }
 
 }
@@ -267,7 +267,7 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 	      __FUNCTION__, primitive);
 
    assert(!rmesa->radeon.dma.flush);
-   rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+   rmesa->radeon.glCtx.Driver.NeedFlush |= FLUSH_STORED_VERTICES;
    rmesa->radeon.dma.flush = radeonFlushElts;
 
    return retval;

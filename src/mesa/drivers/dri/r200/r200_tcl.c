@@ -153,7 +153,7 @@ static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr )
    }
    else {
       if (rmesa->radeon.dma.flush)
-	 rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
+	 rmesa->radeon.dma.flush( &rmesa->radeon.glCtx );
 
       r200EmitAOS( rmesa,
 		   rmesa->radeon.tcl.aos_count, 0 );
@@ -312,7 +312,7 @@ static GLuint r200EnsureEmitSize( struct gl_context * ctx , GLubyte* vimap_rev )
     state_size = radeonCountStateEmitSize( &rmesa->radeon );
     /* vtx may be changed in r200EmitArrays so account for it if not dirty */
     if (!rmesa->hw.vtx.dirty)
-      state_size += rmesa->hw.vtx.check(rmesa->radeon.glCtx, &rmesa->hw.vtx);
+      state_size += rmesa->hw.vtx.check(&rmesa->radeon.glCtx, &rmesa->hw.vtx);
     /* predict size for elements */
     for (i = 0; i < VB->PrimitiveCount; ++i)
     {
@@ -546,7 +546,7 @@ static void transition_to_hwtnl( struct gl_context *ctx )
    tnl->Driver.NotifyMaterialChange = r200UpdateMaterial;
 
    if ( rmesa->radeon.dma.flush )			
-      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	
+      rmesa->radeon.dma.flush( &rmesa->radeon.glCtx );	
 
    rmesa->radeon.dma.flush = NULL;
    
@@ -613,7 +613,7 @@ void r200TclFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 		if (oldfallback == 0) {
 			/* We have to flush before transition */
 			if ( rmesa->radeon.dma.flush )
-				rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
+				rmesa->radeon.dma.flush( &rmesa->radeon.glCtx );
 
 			if (R200_DEBUG & RADEON_FALLBACKS)
 				fprintf(stderr, "R200 begin tcl fallback %s\n",
@@ -626,7 +626,7 @@ void r200TclFallback( struct gl_context *ctx, GLuint bit, GLboolean mode )
 		if (oldfallback == bit) {
 			/* We have to flush before transition */
 			if ( rmesa->radeon.dma.flush )
-				rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
+				rmesa->radeon.dma.flush( &rmesa->radeon.glCtx );
 
 			if (R200_DEBUG & RADEON_FALLBACKS)
 				fprintf(stderr, "R200 end tcl fallback %s\n",

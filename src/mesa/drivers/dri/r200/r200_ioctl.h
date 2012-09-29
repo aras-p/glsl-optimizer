@@ -76,7 +76,7 @@ void r200SetUpAtomList( r200ContextPtr rmesa );
 #define R200_NEWPRIM( rmesa )			\
 do {						\
    if ( rmesa->radeon.dma.flush )			\
-      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	\
+      rmesa->radeon.dma.flush( &rmesa->radeon.glCtx );	\
 } while (0)
 
 /* Can accomodate several state changes and primitive changes without

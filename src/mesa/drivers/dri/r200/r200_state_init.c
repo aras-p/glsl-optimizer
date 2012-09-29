@@ -617,7 +617,7 @@ static void cube_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
  */
 void r200InitState( r200ContextPtr rmesa )
 {
-   struct gl_context *ctx = rmesa->radeon.glCtx;
+   struct gl_context *ctx = &rmesa->radeon.glCtx;
    GLuint i;
 
    rmesa->radeon.Fallback = 0;

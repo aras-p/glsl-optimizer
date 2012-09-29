@@ -111,7 +111,7 @@ static void radeonBeginQuery(struct gl_context *ctx, struct gl_query_object *q)
 	assert(radeon->query.current == NULL);
 
 	if (radeon->dma.flush)
-		radeon->dma.flush(radeon->glCtx);
+		radeon->dma.flush(&radeon->glCtx);
 
 	if (!query->bo) {
 		query->bo = radeon_bo_open(radeon->radeonScreen->bom, 0, RADEON_QUERY_PAGE_SIZE, RADEON_QUERY_PAGE_SIZE, RADEON_GEM_DOMAIN_GTT, 0);
@@ -151,7 +151,7 @@ static void radeonEndQuery(struct gl_context *ctx, struct gl_query_object *q)
 	radeon_print(RADEON_STATE, RADEON_NORMAL, "%s: query id %d\n", __FUNCTION__, q->Id);
 
 	if (radeon->dma.flush)
-		radeon->dma.flush(radeon->glCtx);
+		radeon->dma.flush(&radeon->glCtx);
 	radeonEmitQueryEnd(ctx);
 
 	radeon->query.current = NULL;

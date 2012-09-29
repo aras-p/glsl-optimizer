@@ -295,7 +295,7 @@ GLboolean r200CreateContext( gl_api api,
     * setting allow larger textures.
     */
 
-   ctx = rmesa->radeon.glCtx;
+   ctx = &rmesa->radeon.glCtx;
    ctx->Const.MaxTextureUnits = driQueryOptioni (&rmesa->radeon.optionCache,
 						 "texture_units");
    ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
@@ -406,7 +406,7 @@ GLboolean r200CreateContext( gl_api api,
 	others get the bit ordering right but don't actually do YUV-RGB conversion */
       ctx->Extensions.MESA_ycbcr_texture = true;
    }
-   if (rmesa->radeon.glCtx->Mesa_DXTn) {
+   if (rmesa->radeon.glCtx.Mesa_DXTn) {
       ctx->Extensions.EXT_texture_compression_s3tc = true;
       ctx->Extensions.S3_s3tc = true;
    }
@@ -458,7 +458,7 @@ GLboolean r200CreateContext( gl_api api,
 	 rmesa->radeon.radeonScreen->chip_flags &= ~RADEON_CHIPSET_TCL;
 	 fprintf(stderr, "Disabling HW TCL support\n");
       }
-      TCL_FALLBACK(rmesa->radeon.glCtx, R200_TCL_FALLBACK_TCL_DISABLE, 1);
+      TCL_FALLBACK(&rmesa->radeon.glCtx, R200_TCL_FALLBACK_TCL_DISABLE, 1);
    }
 
    _mesa_compute_version(ctx);

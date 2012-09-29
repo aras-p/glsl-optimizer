@@ -257,7 +257,7 @@ r100CreateContext( gl_api api,
     * setting allow larger textures.
     */
 
-   ctx = rmesa->radeon.glCtx;
+   ctx = &rmesa->radeon.glCtx;
    ctx->Const.MaxTextureUnits = driQueryOptioni (&rmesa->radeon.optionCache,
 						 "texture_units");
    ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
@@ -357,7 +357,7 @@ r100CreateContext( gl_api api,
    ctx->Extensions.EXT_framebuffer_object = true;
    ctx->Extensions.ARB_texture_cube_map = true;
 
-   if (rmesa->radeon.glCtx->Mesa_DXTn) {
+   if (rmesa->radeon.glCtx.Mesa_DXTn) {
       ctx->Extensions.EXT_texture_compression_s3tc = true;
       ctx->Extensions.S3_s3tc = true;
    }
@@ -403,7 +403,7 @@ r100CreateContext( gl_api api,
 	 rmesa->radeon.radeonScreen->chip_flags &= ~RADEON_CHIPSET_TCL;
 	 fprintf(stderr, "Disabling HW TCL support\n");
       }
-      TCL_FALLBACK(rmesa->radeon.glCtx, RADEON_TCL_FALLBACK_TCL_DISABLE, 1);
+      TCL_FALLBACK(&rmesa->radeon.glCtx, RADEON_TCL_FALLBACK_TCL_DISABLE, 1);
    }
 
    if (rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {

@@ -596,7 +596,7 @@ radeon_image_target_renderbuffer_storage(struct gl_context *ctx,
    rb->Width = image->width;
    rb->Height = image->height;
    rb->Format = image->format;
-   rb->_BaseFormat = _mesa_base_fbo_format(radeon->glCtx,
+   rb->_BaseFormat = _mesa_base_fbo_format(&radeon->glCtx,
                                            image->internal_format);
 }
 
@@ -944,18 +944,18 @@ radeon_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 
 void radeon_fbo_init(struct radeon_context *radeon)
 {
-  radeon->glCtx->Driver.NewFramebuffer = radeon_new_framebuffer;
-  radeon->glCtx->Driver.NewRenderbuffer = radeon_new_renderbuffer;
-  radeon->glCtx->Driver.MapRenderbuffer = radeon_map_renderbuffer;
-  radeon->glCtx->Driver.UnmapRenderbuffer = radeon_unmap_renderbuffer;
-  radeon->glCtx->Driver.BindFramebuffer = radeon_bind_framebuffer;
-  radeon->glCtx->Driver.FramebufferRenderbuffer = radeon_framebuffer_renderbuffer;
-  radeon->glCtx->Driver.RenderTexture = radeon_render_texture;
-  radeon->glCtx->Driver.FinishRenderTexture = radeon_finish_render_texture;
-  radeon->glCtx->Driver.ResizeBuffers = radeon_resize_buffers;
-  radeon->glCtx->Driver.ValidateFramebuffer = radeon_validate_framebuffer;
-  radeon->glCtx->Driver.BlitFramebuffer = _mesa_meta_BlitFramebuffer;
-  radeon->glCtx->Driver.EGLImageTargetRenderbufferStorage =
+  radeon->glCtx.Driver.NewFramebuffer = radeon_new_framebuffer;
+  radeon->glCtx.Driver.NewRenderbuffer = radeon_new_renderbuffer;
+  radeon->glCtx.Driver.MapRenderbuffer = radeon_map_renderbuffer;
+  radeon->glCtx.Driver.UnmapRenderbuffer = radeon_unmap_renderbuffer;
+  radeon->glCtx.Driver.BindFramebuffer = radeon_bind_framebuffer;
+  radeon->glCtx.Driver.FramebufferRenderbuffer = radeon_framebuffer_renderbuffer;
+  radeon->glCtx.Driver.RenderTexture = radeon_render_texture;
+  radeon->glCtx.Driver.FinishRenderTexture = radeon_finish_render_texture;
+  radeon->glCtx.Driver.ResizeBuffers = radeon_resize_buffers;
+  radeon->glCtx.Driver.ValidateFramebuffer = radeon_validate_framebuffer;
+  radeon->glCtx.Driver.BlitFramebuffer = _mesa_meta_BlitFramebuffer;
+  radeon->glCtx.Driver.EGLImageTargetRenderbufferStorage =
 	  radeon_image_target_renderbuffer_storage;
 }
 

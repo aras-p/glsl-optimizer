@@ -384,7 +384,7 @@ struct radeon_cmdbuf {
 };
 
 struct radeon_context {
-   struct gl_context *glCtx;
+   struct gl_context glCtx;             /**< base class, must be first */
    radeonScreenPtr radeonScreen;	/* Screen private DRI data */
 
    /* Texture object bookkeeping

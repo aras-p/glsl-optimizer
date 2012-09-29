@@ -742,9 +742,9 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format
 	radeon = pDRICtx->driverPrivate;
 
 	rfb = dPriv->driverPrivate;
-        texUnit = &radeon->glCtx->Texture.Unit[radeon->glCtx->Texture.CurrentUnit];
-	texObj = _mesa_select_tex_object(radeon->glCtx, texUnit, target);
-        texImage = _mesa_get_tex_image(radeon->glCtx, texObj, target, 0);
+        texUnit = &radeon->glCtx.Texture.Unit[radeon->glCtx.Texture.CurrentUnit];
+	texObj = _mesa_select_tex_object(&radeon->glCtx, texUnit, target);
+        texImage = _mesa_get_tex_image(&radeon->glCtx, texObj, target, 0);
 
 	rImage = get_radeon_texture_image(texImage);
 	t = radeon_tex_obj(texObj);
@@ -759,7 +759,7 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format
 		return;
 	}
 
-	_mesa_lock_texture(radeon->glCtx, texObj);
+	_mesa_lock_texture(&radeon->glCtx, texObj);
 	if (t->bo) {
 		radeon_bo_unref(t->bo);
 		t->bo = NULL;
@@ -806,7 +806,7 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format
 		break;
 	}
 
-	_mesa_init_teximage_fields(radeon->glCtx, texImage,
+	_mesa_init_teximage_fields(&radeon->glCtx, texImage,
 				   rb->base.Base.Width, rb->base.Base.Height,
 				   1, 0,
 				   rb->cpp, texFormat);
@@ -831,7 +831,7 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format
 	}
 
 	t->validated = GL_TRUE;
-	_mesa_unlock_texture(radeon->glCtx, texObj);
+	_mesa_unlock_texture(&radeon->glCtx, texObj);
 	return;
 }
 
@@ -1046,7 +1046,7 @@ static void disable_tex_obj_state( r200ContextPtr rmesa,
    R200_STATECHANGE( rmesa, ctx );
    rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~(R200_TEX_0_ENABLE << unit);
    if (rmesa->radeon.TclFallback & (R200_TCL_FALLBACK_TEXGEN_0<<unit)) {
-      TCL_FALLBACK( rmesa->radeon.glCtx, (R200_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
+      TCL_FALLBACK( &rmesa->radeon.glCtx, (R200_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
    }
 
    /* Actually want to keep all units less than max active texture

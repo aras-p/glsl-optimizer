@@ -503,7 +503,7 @@ static void tex_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
  */
 void radeonInitState( r100ContextPtr rmesa )
 {
-   struct gl_context *ctx = rmesa->radeon.glCtx;
+   struct gl_context *ctx = &rmesa->radeon.glCtx;
    GLuint i;
 
    rmesa->radeon.Fallback = 0;

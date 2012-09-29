@@ -192,7 +192,7 @@ radeonDRI2Flush(__DRIdrawable *drawable)
     radeonContextPtr rmesa;
 
     rmesa = (radeonContextPtr) drawable->driContextPriv->driverPrivate;
-    radeonFlush(rmesa->glCtx);
+    radeonFlush(&rmesa->glCtx);
 }
 
 static const struct __DRI2flushExtensionRec radeonFlushExtension = {
@@ -267,9 +267,9 @@ radeon_create_image_from_renderbuffer(__DRIcontext *context,
    struct gl_renderbuffer *rb;
    struct radeon_renderbuffer *rrb;
 
-   rb = _mesa_lookup_renderbuffer(radeon->glCtx, renderbuffer);
+   rb = _mesa_lookup_renderbuffer(&radeon->glCtx, renderbuffer);
    if (!rb) {
-      _mesa_error(radeon->glCtx,
+      _mesa_error(&radeon->glCtx,
                   GL_INVALID_OPERATION, "glRenderbufferExternalMESA");
       return NULL;
    }

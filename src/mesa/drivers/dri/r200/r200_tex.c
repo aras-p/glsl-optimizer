@@ -422,7 +422,7 @@ static void r200DeleteTexture(struct gl_context * ctx, struct gl_texture_object 
    if (rmesa) {
       int i;
       radeon_firevertices(&rmesa->radeon);
-      for ( i = 0 ; i < rmesa->radeon.glCtx->Const.MaxTextureUnits ; i++ ) {
+      for ( i = 0 ; i < rmesa->radeon.glCtx.Const.MaxTextureUnits ; i++ ) {
 	 if ( t == rmesa->state.texture.unit[i].texobj ) {
 	    rmesa->state.texture.unit[i].texobj = NULL;
 	    rmesa->hw.tex[i].dirty = GL_FALSE;

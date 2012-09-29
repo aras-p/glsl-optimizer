@@ -619,9 +619,9 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 	radeon = pDRICtx->driverPrivate;
 
 	rfb = dPriv->driverPrivate;
-        texUnit = _mesa_get_current_tex_unit(radeon->glCtx);
-	texObj = _mesa_select_tex_object(radeon->glCtx, texUnit, target);
-        texImage = _mesa_get_tex_image(radeon->glCtx, texObj, target, 0);
+        texUnit = _mesa_get_current_tex_unit(&radeon->glCtx);
+	texObj = _mesa_select_tex_object(&radeon->glCtx, texUnit, target);
+        texImage = _mesa_get_tex_image(&radeon->glCtx, texObj, target, 0);
 
 	rImage = get_radeon_texture_image(texImage);
 	t = radeon_tex_obj(texObj);
@@ -636,7 +636,7 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 		return;
 	}
 
-	_mesa_lock_texture(radeon->glCtx, texObj);
+	_mesa_lock_texture(&radeon->glCtx, texObj);
 	if (t->bo) {
 		radeon_bo_unref(t->bo);
 		t->bo = NULL;
@@ -681,7 +681,7 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 		break;
 	}
 
-	_mesa_init_teximage_fields(radeon->glCtx, texImage,
+	_mesa_init_teximage_fields(&radeon->glCtx, texImage,
 				   rb->base.Base.Width, rb->base.Base.Height,
 				   1, 0,
 				   rb->cpp, texFormat);
@@ -706,7 +706,7 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 			     (texImage->HeightLog2 << RADEON_TXFORMAT_HEIGHT_SHIFT));
 	}
 	t->validated = GL_TRUE;
-	_mesa_unlock_texture(radeon->glCtx, texObj);
+	_mesa_unlock_texture(&radeon->glCtx, texObj);
 	return;
 }
 
@@ -747,7 +747,7 @@ static void disable_tex_obj_state( r100ContextPtr rmesa,
 					     RADEON_Q_BIT(unit));
    
    if (rmesa->radeon.TclFallback & (RADEON_TCL_FALLBACK_TEXGEN_0<<unit)) {
-     TCL_FALLBACK( rmesa->radeon.glCtx, (RADEON_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
+     TCL_FALLBACK( &rmesa->radeon.glCtx, (RADEON_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
      rmesa->recheck_texgen[unit] = GL_TRUE;
    }
 
