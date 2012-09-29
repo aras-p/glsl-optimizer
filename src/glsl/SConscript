@@ -87,7 +87,7 @@ else:
         command = python_cmd + ' $SCRIPT $SOURCE > $TARGET'
     )
 
-    env.Depends(builtin_glsl_function, ['builtins/tools/generate_builtins.py', 'builtins/tools/texture_builtins.py'] + Glob('builtins/ir/*'))
+    env.Depends(builtin_glsl_function, ['builtins/tools/generate_builtins.py', '#src/glsl/builtins/tools/texture_builtins.py'] + Glob('builtins/ir/*'))
 
     Export('builtin_glsl_function')
 
