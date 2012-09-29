@@ -248,11 +248,6 @@ void radeonDestroyContext(__DRIcontext *driContextPriv )
 	/* free the Mesa context data */
 	_mesa_free_context_data(&radeon->glCtx);
 
-	/* _mesa_destroy_context() might result in calls to functions that
-	 * depend on the DriverCtx, so don't set it to NULL before.
-	 *
-	 * radeon->glCtx->DriverCtx = NULL;
-	 */
 	/* free the option cache */
 	driDestroyOptionCache(&radeon->optionCache);
 

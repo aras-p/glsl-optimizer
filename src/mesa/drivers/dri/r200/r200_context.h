@@ -623,7 +623,12 @@ struct r200_context {
   struct ati_fragment_shader *afs_loaded;
 };
 
-#define R200_CONTEXT(ctx)		((r200ContextPtr)(ctx->DriverCtx))
+
+static inline r200ContextPtr
+R200_CONTEXT(struct gl_context *ctx)
+{
+   return (r200ContextPtr) ctx;
+}
 
 
 extern void r200DestroyContext( __DRIcontext *driContextPriv );

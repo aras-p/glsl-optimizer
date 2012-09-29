@@ -442,7 +442,12 @@ struct r100_context {
 };
 
 
-#define R100_CONTEXT(ctx)		((r100ContextPtr)(ctx->DriverCtx))
+static inline r100ContextPtr
+R100_CONTEXT(struct gl_context *ctx)
+{
+   return (r100ContextPtr) ctx;
+}
+
 
 
 #define RADEON_OLD_PACKETS 1

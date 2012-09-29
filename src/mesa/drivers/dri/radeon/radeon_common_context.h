@@ -499,7 +499,10 @@ struct radeon_context {
    } vtbl;
 };
 
-#define RADEON_CONTEXT(glctx) ((radeonContextPtr)(ctx->DriverCtx))
+static inline radeonContextPtr RADEON_CONTEXT(struct gl_context *ctx)
+{
+	return (radeonContextPtr) ctx;
+}
 
 static inline __DRIdrawable* radeon_get_drawable(radeonContextPtr radeon)
 {
