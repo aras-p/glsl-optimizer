@@ -31,7 +31,7 @@
  * Scans 'string' to see if it ends with 'ending'.
  */
 static GLboolean
-check_for_ending(char *string, const char *ending)
+check_for_ending(const char *string, const char *ending)
 {
    int len1, len2;
 
