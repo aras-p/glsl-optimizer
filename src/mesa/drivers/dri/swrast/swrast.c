@@ -756,7 +756,7 @@ dri_create_context(gl_api api,
     mesaCtx = &ctx->Base;
 
     /* basic context setup */
-    if (!_mesa_initialize_context(mesaCtx, api, visual, sharedCtx, &functions, (void *) cPriv)) {
+    if (!_mesa_initialize_context(mesaCtx, api, visual, sharedCtx, &functions)) {
 	*error = __DRI_CTX_ERROR_NO_MEMORY;
 	goto context_fail;
     }

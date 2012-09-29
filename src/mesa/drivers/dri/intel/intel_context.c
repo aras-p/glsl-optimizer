@@ -608,7 +608,7 @@ intelInitContext(struct intel_context *intel,
    }
 
    if (!_mesa_initialize_context(&intel->ctx, api, mesaVis, shareCtx,
-                                 functions, (void *) intel)) {
+                                 functions)) {
       printf("%s: failed to init mesa context\n", __FUNCTION__);
       return false;
    }

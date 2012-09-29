@@ -109,15 +109,13 @@ _mesa_initialize_context( struct gl_context *ctx,
                           gl_api api,
                           const struct gl_config *visual,
                           struct gl_context *share_list,
-                          const struct dd_function_table *driverFunctions,
-                          void *driverContext );
+                          const struct dd_function_table *driverFunctions);
 
 extern struct gl_context *
 _mesa_create_context(gl_api api,
                      const struct gl_config *visual,
                      struct gl_context *share_list,
-                     const struct dd_function_table *driverFunctions,
-                     void *driverContext);
+                     const struct dd_function_table *driverFunctions);
 
 extern void
 _mesa_free_context_data( struct gl_context *ctx );

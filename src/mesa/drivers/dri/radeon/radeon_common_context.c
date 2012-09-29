@@ -149,7 +149,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 
 	if (!_mesa_initialize_context(&radeon->glCtx, API_OPENGL,
 				      glVisual, shareCtx,
-				      functions, (void *)radeon))
+				      functions))
 		return GL_FALSE;
 
 	ctx = &radeon->glCtx;

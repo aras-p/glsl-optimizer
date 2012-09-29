@@ -1085,7 +1085,7 @@ WMesaContext WMesaCreateContext(HDC hDC,
     /* initialize the Mesa context data */
     ctx = &c->gl_ctx;
     _mesa_initialize_context(ctx, API_OPENGL, visual,
-                             NULL, &functions, (void *)c);
+                             NULL, &functions);
 
     /* visual no longer needed - it was copied by _mesa_initialize_context() */
     _mesa_destroy_visual(visual);

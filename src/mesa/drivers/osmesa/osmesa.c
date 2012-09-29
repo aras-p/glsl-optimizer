@@ -713,7 +713,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
                                     osmesa->gl_visual,
                                     sharelist ? &sharelist->mesa
                                               : (struct gl_context *) NULL,
-                                    &functions, (void *) osmesa)) {
+                                    &functions)) {
          _mesa_destroy_visual( osmesa->gl_visual );
          free(osmesa);
          return NULL;

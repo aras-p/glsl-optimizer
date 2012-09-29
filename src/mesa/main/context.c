@@ -897,20 +897,17 @@ _mesa_alloc_dispatch_table(int size)
  *        etc with, or NULL
  * \param driverFunctions table of device driver functions for this context
  *        to use
- * \param driverContext pointer to driver-specific context data
  */
 GLboolean
 _mesa_initialize_context(struct gl_context *ctx,
                          gl_api api,
                          const struct gl_config *visual,
                          struct gl_context *share_list,
-                         const struct dd_function_table *driverFunctions,
-                         void *driverContext)
+                         const struct dd_function_table *driverFunctions)
 {
    struct gl_shared_state *shared;
    int i;
 
-   /*ASSERT(driverContext);*/
    assert(driverFunctions->NewTextureObject);
    assert(driverFunctions->FreeTextureImageBuffer);
 
@@ -1048,7 +1045,6 @@ _mesa_initialize_context(struct gl_context *ctx,
  * \param share_list another context to share display lists with or NULL
  * \param driverFunctions points to the dd_function_table into which the
  *        driver has plugged in all its special functions.
- * \param driverContext points to the device driver's private context state
  * 
  * \return pointer to a new __struct gl_contextRec or NULL if error.
  */
@@ -1056,20 +1052,18 @@ struct gl_context *
 _mesa_create_context(gl_api api,
                      const struct gl_config *visual,
                      struct gl_context *share_list,
-                     const struct dd_function_table *driverFunctions,
-                     void *driverContext)
+                     const struct dd_function_table *driverFunctions)
 {
    struct gl_context *ctx;
 
    ASSERT(visual);
-   /*ASSERT(driverContext);*/
 
    ctx = calloc(1, sizeof(struct gl_context));
    if (!ctx)
       return NULL;
 
    if (_mesa_initialize_context(ctx, api, visual, share_list,
-                                driverFunctions, driverContext)) {
+                                driverFunctions)) {
       return ctx;
    }
    else {

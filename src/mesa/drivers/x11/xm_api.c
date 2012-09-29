@@ -902,7 +902,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    xmesa_init_driver_functions(v, &functions);
    if (!_mesa_initialize_context(mesaCtx, API_OPENGL, &v->mesa_visual,
                       share_list ? &(share_list->mesa) : (struct gl_context *) NULL,
-                      &functions, (void *) c)) {
+                      &functions)) {
       free(c);
       return NULL;
    }
