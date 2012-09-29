@@ -934,7 +934,6 @@ _mesa_initialize_context(struct gl_context *ctx,
     * textures.
     */
    ctx->Driver = *driverFunctions;
-   ctx->DriverCtx = driverContext;
 
    if (share_list) {
       /* share state with another context */

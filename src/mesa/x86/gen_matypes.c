@@ -93,7 +93,6 @@ int main( int argc, char **argv )
     */
    OFFSET_HEADER( "struct gl_context" );
 
-   OFFSET( "CTX_DRIVER_CTX              ", struct gl_context, DriverCtx );
    printf( "\n" );
    OFFSET( "CTX_LIGHT_ENABLED           ", struct gl_context, Light.Enabled );
    OFFSET( "CTX_LIGHT_SHADE_MODEL       ", struct gl_context, Light.ShadeModel );

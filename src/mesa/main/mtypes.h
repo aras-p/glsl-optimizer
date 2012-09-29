@@ -3403,8 +3403,6 @@ struct gl_context
     */
    struct dd_function_table Driver;
 
-   void *DriverCtx;	/**< Points to device driver context/state */
-
    /** Core/Driver constants */
    struct gl_constants Const;
 
