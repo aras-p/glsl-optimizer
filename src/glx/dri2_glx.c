@@ -112,7 +112,7 @@ struct dri2_drawable
    int have_fake_front;
    int swap_interval;
 
-   double previous_time;
+   uint64_t previous_time;
    unsigned frames;
 };
 
@@ -676,17 +676,18 @@ unsigned dri2GetSwapEventType(Display* dpy, XID drawable)
 static void show_fps(struct dri2_drawable *draw)
 {
    struct timeval tv;
-   double current_time;
+   uint64_t current_time;
 
    gettimeofday(&tv, 0);
-   current_time = (double)tv.tv_sec + (double)tv.tv_usec * 0.000001;
+   current_time = (uint64_t)tv.tv_sec*1000000 + (uint64_t)tv.tv_usec;
 
    draw->frames++;
 
-   if (draw->previous_time + 1 < current_time) {
+   if (draw->previous_time + 1000000 <= current_time) {
       if (draw->previous_time) {
          fprintf(stderr, "libGL: FPS = %.1f\n",
-                 draw->frames / (current_time - draw->previous_time));
+                 ((uint64_t)draw->frames * 1000000) /
+                 (double)(current_time - draw->previous_time));
       }
       draw->frames = 0;
       draw->previous_time = current_time;
