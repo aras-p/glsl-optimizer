@@ -618,7 +618,7 @@ nvc0_blit_set_src(struct nvc0_blitctx *ctx,
          (res->target == PIPE_TEXTURE_3D ? res->depth0 : res->array_size) - 1;
    }
 
-   flags = NV50_TEXVIEW_SCALED_COORDS;
+   flags = res->last_level ? 0 : NV50_TEXVIEW_SCALED_COORDS;
    if (filter && res->nr_samples == 8)
       flags |= NV50_TEXVIEW_FILTER_MSAA8;
 
@@ -826,8 +826,8 @@ nvc0_blit_3d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
    x0 = (float)info->src.box.x - x_range * (float)info->dst.box.x;
    y0 = (float)info->src.box.y - y_range * (float)info->dst.box.y;
 
-   x1 = info->src.box.x + 16384.0f * x_range;
-   y1 = info->src.box.y + 16384.0f * y_range;
+   x1 = x0 + 16384.0f * x_range;
+   y1 = y0 + 16384.0f * y_range;
 
    x0 *= (float)(1 << nv50_miptree(src)->ms_x);
    x1 *= (float)(1 << nv50_miptree(src)->ms_x);
@@ -851,6 +851,9 @@ nvc0_blit_3d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
       z += 0.5f * dz;
 
    IMMED_NVC0(push, NVC0_3D(VIEWPORT_TRANSFORM_EN), 0);
+   BEGIN_NVC0(push, NVC0_3D(VIEWPORT_HORIZ(0)), 2);
+   PUSH_DATA (push, nvc0->framebuffer.width << 16);
+   PUSH_DATA (push, nvc0->framebuffer.height << 16);
 
    /* Draw a large triangle in screen coordinates covering the whole
     * render target, with scissors defining the destination region.
