@@ -72,13 +72,29 @@ fs_visitor::assign_regs_trivial()
 }
 
 static void
-brw_alloc_reg_set_for_classes(struct brw_context *brw,
-			      int *class_sizes,
-			      int class_count,
-			      int reg_width,
-			      int base_reg_count)
+brw_alloc_reg_set(struct brw_context *brw, int reg_width, int base_reg_count)
 {
    struct intel_context *intel = &brw->intel;
+   /* The registers used to make up almost all values handled in the compiler
+    * are a scalar value occupying a single register (or 2 registers in the
+    * case of 16-wide, which is handled by dividing base_reg_count by 2 and
+    * multiplying allocated register numbers by 2).  Things that were
+    * aggregates of scalar values at the GLSL level were split to scalar
+    * values by split_virtual_grfs().
+    *
+    * However, texture SEND messages return a series of contiguous registers.
+    * We currently always ask for 4 registers, but we may convert that to use
+    * less some day.
+    *
+    * Additionally, on gen5 we need aligned pairs of registers for the PLN
+    * instruction.
+    *
+    * So we have a need for classes for 1, 2, and 4 registers currently, and
+    * we add in '3' to make indexing the array easier (since we'll probably
+    * want it for texturing later).
+    */
+   const int class_sizes[4] = {1, 2, 3, 4};
+   const int class_count = 4;
 
    /* Compute the total number of registers across all classes. */
    int ra_reg_count = 0;
@@ -139,7 +155,6 @@ brw_alloc_reg_set_for_classes(struct brw_context *brw,
 			     pairs_base_reg + i);
 	 }
       }
-      class_count++;
    }
 
    ra_set_finalize(brw->wm.regs, NULL);
@@ -158,69 +173,35 @@ fs_visitor::assign_regs()
    int hw_reg_mapping[this->virtual_grf_count];
    int first_assigned_grf = ALIGN(this->first_non_payload_grf, reg_width);
    int base_reg_count = (max_grf - first_assigned_grf) / reg_width;
-   int class_sizes[base_reg_count];
-   int class_count = 0;
 
    calculate_live_intervals();
 
-   /* Set up the register classes.
-    *
-    * The base registers store a scalar value.  For texture samples,
-    * we get virtual GRFs composed of 4 contiguous hw register.  For
-    * structures and arrays, we store them as contiguous larger things
-    * than that, though we should be able to do better most of the
-    * time.
-    */
-   class_sizes[class_count++] = 1;
-   if (brw->has_pln && intel->gen < 6) {
-      /* Always set up the (unaligned) pairs for gen5, so we can find
-       * them for making the aligned pair class.
-       */
-      class_sizes[class_count++] = 2;
-   }
-   for (int r = 0; r < this->virtual_grf_count; r++) {
-      int i;
-
-      for (i = 0; i < class_count; i++) {
-	 if (class_sizes[i] == this->virtual_grf_sizes[r])
-	    break;
-      }
-      if (i == class_count) {
-	 if (this->virtual_grf_sizes[r] >= base_reg_count) {
-	    fail("Object too large to register allocate.\n");
-	 }
-
-	 class_sizes[class_count++] = this->virtual_grf_sizes[r];
-      }
-   }
-
-   brw_alloc_reg_set_for_classes(brw, class_sizes, class_count,
-				 reg_width, base_reg_count);
+   brw_alloc_reg_set(brw, reg_width, base_reg_count);
 
    struct ra_graph *g = ra_alloc_interference_graph(brw->wm.regs,
 						    this->virtual_grf_count);
 
    for (int i = 0; i < this->virtual_grf_count; i++) {
-      for (int c = 0; c < class_count; c++) {
-	 if (class_sizes[c] == this->virtual_grf_sizes[i]) {
-            /* Special case: on pre-GEN6 hardware that supports PLN, the
-             * second operand of a PLN instruction needs to be an
-             * even-numbered register, so we have a special register class
-             * wm_aligned_pairs_class to handle this case.  pre-GEN6 always
-             * uses this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC] as the
-             * second operand of a PLN instruction (since it doesn't support
-             * any other interpolation modes).  So all we need to do is find
-             * that register and set it to the appropriate class.
-             */
-	    if (brw->wm.aligned_pairs_class >= 0 &&
-		this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC].reg == i) {
-	       ra_set_node_class(g, i, brw->wm.aligned_pairs_class);
-	    } else {
-	       ra_set_node_class(g, i, brw->wm.classes[c]);
-	    }
-	    break;
-	 }
+      assert(this->virtual_grf_sizes[i] >= 1 &&
+             this->virtual_grf_sizes[i] <= 4 &&
+             "Register allocation relies on split_virtual_grfs()");
+      int c = brw->wm.classes[this->virtual_grf_sizes[i] - 1];
+
+      /* Special case: on pre-GEN6 hardware that supports PLN, the
+       * second operand of a PLN instruction needs to be an
+       * even-numbered register, so we have a special register class
+       * wm_aligned_pairs_class to handle this case.  pre-GEN6 always
+       * uses this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC] as the
+       * second operand of a PLN instruction (since it doesn't support
+       * any other interpolation modes).  So all we need to do is find
+       * that register and set it to the appropriate class.
+       */
+      if (brw->wm.aligned_pairs_class >= 0 &&
+          this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC].reg == i) {
+         c = brw->wm.aligned_pairs_class;
       }
+
+      ra_set_node_class(g, i, c);
 
       for (int j = 0; j < i; j++) {
 	 if (virtual_grf_interferes(i, j)) {
