@@ -96,7 +96,11 @@ static void update_sampler(struct i915_context *i915,
        pt->format == PIPE_FORMAT_YUYV)
       state[0] |= SS2_COLORSPACE_CONVERSION;
 
-   /* 3D textures don't seem to respect the border color.
+   if (pt->format == PIPE_FORMAT_B8G8R8A8_SRGB ||
+       pt->format == PIPE_FORMAT_L8_SRGB )
+      state[0] |= SS2_REVERSE_GAMMA_ENABLE;
+
+    /* 3D textures don't seem to respect the border color.
     * Fallback if there's ever a danger that they might refer to
     * it.  
     * 
@@ -310,8 +314,6 @@ static void update_map(struct i915_context *i915,
    assert(depth);
 
    format = translate_texture_format(pt->format, view);
-   i915->current.sampler_srgb[unit] = ( pt->format == PIPE_FORMAT_B8G8R8A8_SRGB ||
-                                        pt->format == PIPE_FORMAT_L8_SRGB );
    pitch = tex->stride;
 
    assert(format);
