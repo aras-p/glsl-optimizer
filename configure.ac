@@ -1793,10 +1793,8 @@ radeon_llvm_check() {
                       git://people.freedesktop.org/~tstellar/llvm master
                       and build with --enable-experimental-targets==AMDGPU])
     fi
-    if test "$LLVM_VERSION" = "3.2"; then
-        dnl LLVM 3.2 does not add experimental libraries to llvm-config's
-        dnl library list.
-        LLVM_LIBS="$LLVM_LIBS -lLLVMAMDGPUCodeGen -lLLVMAMDGPUDesc -lLLVMAMDGPUAsmPrinter -lLLVMAMDGPUInfo `$LLVM_CONFIG --libs mc`"
+    if test "x$LLVM_VERSION" = "x3.2"; then
+        LLVM_LIBS="$LLVM_LIBS `$LLVM_CONFIG --libs amdgpu`"
     fi
 }
 
