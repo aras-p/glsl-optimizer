@@ -60,10 +60,21 @@ void si_cmd_draw_index_auto(struct si_pm4_state *pm4, uint32_t count,
 
 void si_cmd_surface_sync(struct si_pm4_state *pm4, uint32_t cp_coher_cntl)
 {
-	si_pm4_cmd_begin(pm4, PKT3_SURFACE_SYNC);
-	si_pm4_cmd_add(pm4, cp_coher_cntl);	/* CP_COHER_CNTL */
-	si_pm4_cmd_add(pm4, 0xffffffff);	/* CP_COHER_SIZE */
-	si_pm4_cmd_add(pm4, 0);			/* CP_COHER_BASE */
-	si_pm4_cmd_add(pm4, 0x0000000A);	/* POLL_INTERVAL */
-	si_pm4_cmd_end(pm4, false);
+	if (pm4->chip_class >= CIK) {
+		si_pm4_cmd_begin(pm4, PKT3_ACQUIRE_MEM);
+		si_pm4_cmd_add(pm4, cp_coher_cntl);	/* CP_COHER_CNTL */
+		si_pm4_cmd_add(pm4, 0xffffffff);	/* CP_COHER_SIZE */
+		si_pm4_cmd_add(pm4, 0xff);		/* CP_COHER_SIZE_HI */
+		si_pm4_cmd_add(pm4, 0);			/* CP_COHER_BASE */
+		si_pm4_cmd_add(pm4, 0);			/* CP_COHER_BASE_HI */
+		si_pm4_cmd_add(pm4, 0x0000000A);	/* POLL_INTERVAL */
+		si_pm4_cmd_end(pm4, false);
+	} else {
+		si_pm4_cmd_begin(pm4, PKT3_SURFACE_SYNC);
+		si_pm4_cmd_add(pm4, cp_coher_cntl);	/* CP_COHER_CNTL */
+		si_pm4_cmd_add(pm4, 0xffffffff);	/* CP_COHER_SIZE */
+		si_pm4_cmd_add(pm4, 0);			/* CP_COHER_BASE */
+		si_pm4_cmd_add(pm4, 0x0000000A);	/* POLL_INTERVAL */
+		si_pm4_cmd_end(pm4, false);
+	}
 }
