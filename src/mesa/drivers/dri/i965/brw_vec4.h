@@ -314,6 +314,9 @@ public:
    void setup_payload();
    void reg_allocate_trivial();
    void reg_allocate();
+   void evaluate_spill_costs(float *spill_costs, bool *no_spill);
+   int choose_spill_reg(struct ra_graph *g);
+   void spill_reg(int spill_reg);
    void move_grf_array_access_to_scratch();
    void move_uniform_array_access_to_pull_constants();
    void move_push_constants_to_pull_constants();

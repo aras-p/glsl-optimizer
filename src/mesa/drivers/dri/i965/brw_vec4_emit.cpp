@@ -809,6 +809,20 @@ vec4_visitor::run()
       return false;
 
    setup_payload();
+
+   if (false) {
+      /* Debug of register spilling: Go spill everything. */
+      const int grf_count = virtual_grf_count;
+      float spill_costs[virtual_grf_count];
+      bool no_spill[virtual_grf_count];
+      evaluate_spill_costs(spill_costs, no_spill);
+      for (int i = 0; i < grf_count; i++) {
+         if (no_spill[i])
+            continue;
+         spill_reg(i);
+      }
+   }
+
    reg_allocate();
 
    if (failed)
