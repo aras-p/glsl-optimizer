@@ -133,8 +133,7 @@ nv50_miptree_get_handle(struct pipe_screen *pscreen,
    if (!mt || !mt->base.bo)
       return FALSE;
 
-   stride = util_format_get_stride(mt->base.base.format,
-                                   mt->base.base.width0);
+   stride = mt->level[0].pitch;
 
    return nouveau_screen_bo_get_handle(pscreen,
                                        mt->base.bo,
