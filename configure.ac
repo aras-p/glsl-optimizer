@@ -1661,7 +1661,7 @@ if test "x$enable_gallium_llvm" = xyes; then
             if $LLVM_CONFIG --components | grep -q '\<mcjit\>'; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} mcjit"
             fi
-            LLVM_COMPONENTS="${LLVM_COMPONENTS} all-targets"
+
             if test "x$enable_opencl" = xyes; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} ipo linker instrumentation"
             fi
