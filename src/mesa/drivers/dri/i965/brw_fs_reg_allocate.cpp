@@ -107,7 +107,7 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width, int base_reg_count)
    ralloc_free(brw->wm.regs);
    brw->wm.regs = ra_alloc_reg_set(brw, ra_reg_count);
    ralloc_free(brw->wm.classes);
-   brw->wm.classes = ralloc_array(brw, int, class_count + 1);
+   brw->wm.classes = ralloc_array(brw, int, class_count);
 
    brw->wm.aligned_pairs_class = -1;
 
