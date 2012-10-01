@@ -306,7 +306,7 @@ do_vs_prog(struct brw_context *brw,
                  "Try reducing the number of live vec4 values to "
                  "improve performance.\n");
 
-      c.prog_data.total_scratch = brw_get_scratch_size(c.last_scratch);
+      c.prog_data.total_scratch = brw_get_scratch_size(c.last_scratch*REG_SIZE);
 
       brw_get_scratch_bo(intel, &brw->vs.scratch_bo,
 			 c.prog_data.total_scratch * brw->max_vs_threads);

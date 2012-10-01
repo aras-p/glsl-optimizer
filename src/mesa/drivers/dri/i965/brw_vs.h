@@ -93,7 +93,7 @@ struct brw_vs_compile {
    GLuint nr_inputs;
 
    GLuint first_output;
-   GLuint last_scratch;
+   GLuint last_scratch; /**< measured in 32-byte (register size) units */
 
    GLuint first_tmp;
    GLuint last_tmp;
