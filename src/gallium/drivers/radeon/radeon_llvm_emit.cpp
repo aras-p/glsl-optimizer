@@ -86,17 +86,11 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
 
    Triple AMDGPUTriple(sys::getDefaultTargetTriple());
 
-#ifdef EXTERNAL_LLVM
-   /* XXX: Can we just initialize the AMDGPU target here? */
-   InitializeAllTargets();
-   InitializeAllTargetMCs();
-   InitializeAllAsmPrinters();
-#else
    LLVMInitializeAMDGPUTargetInfo();
    LLVMInitializeAMDGPUTarget();
    LLVMInitializeAMDGPUTargetMC();
    LLVMInitializeAMDGPUAsmPrinter();
-#endif
+
    std::string err;
    const Target * AMDGPUTarget = TargetRegistry::lookupTarget("r600", err);
    if(!AMDGPUTarget) {
