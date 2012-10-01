@@ -55,9 +55,9 @@ libi965_dri_la_SOURCES = \
 # list of libs to be linked against by i965_dri.so and i965 test programs.
 COMMON_LIBS = \
 	libi965_dri.la \
+	../common/libdricommon.la \
 	$(DRI_LIB_DEPS) \
-	$(INTEL_LIBS) \
-	../common/libdricommon.la
+	$(INTEL_LIBS)
 
 TEST_LIBS = \
 	$(COMMON_LIBS) \
