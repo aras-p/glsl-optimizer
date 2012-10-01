@@ -375,6 +375,9 @@ gbm_dri_bo_import(struct gbm_device *gbm,
    {
       struct wl_drm_buffer *wb = (struct wl_drm_buffer *) buffer;
 
+      if (!wayland_buffer_is_drm(buffer))
+         return NULL;
+
       image = wb->driver_buffer;
 
       switch (wb->format) {
