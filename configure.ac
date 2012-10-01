@@ -56,13 +56,9 @@ AC_PROG_MKDIR_P
 LT_PREREQ([2.2])
 LT_INIT([disable-static])
 
-AC_PROG_YACC
-AC_PATH_PROG([YACC_INST], $YACC)
-if test ! -f "$srcdir/src/glsl/glcpp/glcpp-parse.c"; then
-    if test -z "$YACC_INST"; then
-        AC_MSG_ERROR([yacc not found - unable to compile glcpp-parse.y])
-    fi
-fi
+AX_PROG_BISON([],
+              AS_IF([test ! -f "$srcdir/src/glsl/glcpp/glcpp-parse.c"]
+                    [AC_MSG_ERROR([bison not found - unable to compile glcpp-parse.y])]))
 AC_PROG_LEX
 
 AC_PATH_PROG([PERL], [perl])
