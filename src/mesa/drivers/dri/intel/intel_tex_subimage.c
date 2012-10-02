@@ -205,7 +205,10 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
        texImage->TexObject->Target != GL_TEXTURE_2D ||
        texImage->Level != 0 ||
        pixels == NULL ||
-       packing->Alignment > 4)
+       packing->Alignment > 4 ||
+       packing->SkipPixels > 0 ||
+       packing->SkipRows > 0 ||
+       packing->RowLength != width)
       return false;
 
    if (for_glTexImage)
