@@ -27,7 +27,7 @@ Contents
 </p>
 <ul>
 <li><a href="#envvars">Environment variables</a>
-<li><a href="#glsl120">GLSL 1.20 support</a>
+<li><a href="#support">GLSL 1.40 support</a>
 <li><a href="#unsup">Unsupported Features</a>
 <li><a href="#notes">Implementation Notes</a>
 <li><a href="#hints">Programming Hints</a>
@@ -64,10 +64,10 @@ Example:  export MESA_GLSL=dump,nopt
 </p>
 
 
-<h2 id="glsl120">GLSL Version</h2>
+<h2 id="support">GLSL Version</h2>
 
 <p>
-The GLSL compiler currently supports version 1.20 of the shading language.
+The GLSL compiler currently supports version 1.40 of the shading language.
 </p>
 
 <p>
@@ -75,9 +75,8 @@ Several GLSL extensions are also supported:
 </p>
 <ul>
 <li>GL_ARB_draw_buffers
-<li>GL_ARB_texture_rectangle
 <li>GL_ARB_fragment_coord_conventions
-<li>GL_EXT_texture_array
+<li>GL_ARB_shader_bit_encoding
 </ul>
 
 
@@ -94,7 +93,6 @@ in Mesa:
 <li>Linking of multiple shaders does not always work.  Currently, linking
     is implemented through shader concatenation and re-compiling.  This
     doesn't always work because of some #pragma and preprocessor issues.
-<li>gl_ClipVertex
 <li>The gl_Color and gl_SecondaryColor varying vars are interpolated
     without perspective correction
 </ul>
@@ -251,8 +249,7 @@ regressions.
 
 <p>
 The <a href="http://piglit.freedesktop.org/">Piglit</a> project
-has many GLSL tests and the
-<a href="http://glean.sf.net">Glean</a> glsl1 test tests GLSL features.
+has many GLSL tests.
 </p>
 
 <p>
