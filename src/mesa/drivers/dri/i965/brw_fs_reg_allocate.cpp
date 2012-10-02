@@ -319,6 +319,61 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
    }
 }
 
+/**
+ * Sets interference between virtual GRFs and usage of the high GRFs for SEND
+ * messages (treated as MRFs in code generation).
+ */
+void
+fs_visitor::setup_mrf_hack_interference(struct ra_graph *g, int first_mrf_node)
+{
+   int mrf_count = BRW_MAX_GRF - GEN7_MRF_HACK_START;
+   int reg_width = c->dispatch_width / 8;
+
+   /* Identify all the MRFs used in the program. */
+   bool mrf_used[mrf_count];
+   memset(mrf_used, 0, sizeof(mrf_used));
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
+
+      if (inst->dst.file == MRF) {
+         int reg = inst->dst.reg & ~BRW_MRF_COMPR4;
+         mrf_used[reg] = true;
+         if (reg_width == 2) {
+            if (inst->dst.reg & BRW_MRF_COMPR4) {
+               mrf_used[reg + 4] = true;
+            } else {
+               mrf_used[reg + 1] = true;
+            }
+         }
+      }
+
+      if (inst->mlen > 0) {
+	 for (int i = 0; i < implied_mrf_writes(inst); i++) {
+            mrf_used[inst->base_mrf + i] = true;
+         }
+      }
+   }
+
+   for (int i = 0; i < mrf_count; i++) {
+      /* Mark each payload reg node as being allocated to its physical register.
+       *
+       * The alternative would be to have per-physical-register classes, which
+       * would just be silly.
+       */
+      ra_set_node_reg(g, first_mrf_node + i,
+                      (GEN7_MRF_HACK_START + i) / reg_width);
+
+      /* Since we don't have any live/dead analysis on the MRFs, just mark all
+       * that are used as conflicting with all virtual GRFs.
+       */
+      if (mrf_used[i]) {
+         for (int j = 0; j < this->virtual_grf_count; j++) {
+            ra_add_node_interference(g, first_mrf_node + i, j);
+         }
+      }
+   }
+}
+
 bool
 fs_visitor::assign_regs()
 {
@@ -332,7 +387,7 @@ fs_visitor::assign_regs()
    int hw_reg_mapping[this->virtual_grf_count];
    int payload_node_count = (ALIGN(this->first_non_payload_grf, reg_width) /
                             reg_width);
-   int base_reg_count = max_grf / reg_width;
+   int base_reg_count = BRW_MAX_GRF / reg_width;
 
    calculate_live_intervals();
 
@@ -341,6 +396,9 @@ fs_visitor::assign_regs()
    int node_count = this->virtual_grf_count;
    int first_payload_node = node_count;
    node_count += payload_node_count;
+   int first_mrf_hack_node = node_count;
+   if (intel->gen >= 7)
+      node_count += BRW_MAX_GRF - GEN7_MRF_HACK_START;
    struct ra_graph *g = ra_alloc_interference_graph(brw->wm.regs, node_count);
 
    for (int i = 0; i < this->virtual_grf_count; i++) {
@@ -373,6 +431,8 @@ fs_visitor::assign_regs()
    }
 
    setup_payload_interference(g, payload_node_count, first_payload_node);
+   if (intel->gen >= 7)
+      setup_mrf_hack_interference(g, first_mrf_hack_node);
 
    if (!ra_allocate_no_spills(g)) {
       /* Failed to allocate registers.  Spill a reg, and the caller will
