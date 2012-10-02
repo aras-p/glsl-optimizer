@@ -979,9 +979,11 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 	struct r600_texture *tmp = (struct r600_texture*)texture;
 	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
-	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
+	unsigned char swizzle[4], array_mode = 0, non_disp_tiling = 0;
 	unsigned height, depth, width;
 	unsigned macro_aspect, tile_split, bankh, bankw, nbanks;
+	enum pipe_format pipe_format = state->format;
+	struct radeon_surface_level *surflevel;
 
 	if (view == NULL)
 		return NULL;
@@ -999,7 +1001,27 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 	swizzle[2] = state->swizzle_b;
 	swizzle[3] = state->swizzle_a;
 
-	format = r600_translate_texformat(ctx->screen, state->format,
+	tile_split = tmp->surface.tile_split;
+	surflevel = tmp->surface.level;
+
+	/* Texturing with separate depth and stencil. */
+	if (tmp->is_depth && !tmp->is_flushing_texture) {
+		switch (pipe_format) {
+		case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+			pipe_format = PIPE_FORMAT_Z32_FLOAT;
+			break;
+		case PIPE_FORMAT_X24S8_UINT:
+		case PIPE_FORMAT_S8X24_UINT:
+		case PIPE_FORMAT_X32_S8X24_UINT:
+			pipe_format = PIPE_FORMAT_S8_UINT;
+			tile_split = tmp->surface.stencil_tile_split;
+			surflevel = tmp->surface.stencil_level;
+			break;
+		default:;
+		}
+	}
+
+	format = r600_translate_texformat(ctx->screen, pipe_format,
 					  swizzle,
 					  &word4, &yuv_format);
 	assert(format != ~0);
@@ -1008,23 +1030,15 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 		return NULL;
 	}
 
-	if (tmp->is_depth && !tmp->is_flushing_texture) {
-		if (!r600_init_flushed_depth_texture(ctx, texture, NULL)) {
-			FREE(view);
-			return NULL;
-		}
-		tmp = tmp->flushed_depth_texture;
-	}
-
 	endian = r600_colorformat_endian_swap(format);
 
 	width = width0;
 	height = height0;
-	depth = tmp->surface.level[0].npix_z;
-	pitch = tmp->surface.level[0].nblk_x * util_format_get_blockwidth(state->format);
-	tile_type = tmp->tile_type;
+	depth = surflevel[0].npix_z;
+	pitch = surflevel[0].nblk_x * util_format_get_blockwidth(pipe_format);
+	non_disp_tiling = tmp->non_disp_tiling;
 
-	switch (tmp->surface.level[0].mode) {
+	switch (surflevel[0].mode) {
 	case RADEON_SURF_MODE_LINEAR_ALIGNED:
 		array_mode = V_028C70_ARRAY_LINEAR_ALIGNED;
 		break;
@@ -1039,7 +1053,6 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 		array_mode = V_028C70_ARRAY_LINEAR_GENERAL;
 		break;
 	}
-	tile_split = tmp->surface.tile_split;
 	macro_aspect = tmp->surface.mtilea;
 	bankw = tmp->surface.bankw;
 	bankh = tmp->surface.bankh;
@@ -1050,8 +1063,8 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 
 	/* 128 bit formats require tile type = 1 */
 	if (rscreen->chip_class == CAYMAN) {
-		if (util_format_get_blocksize(state->format) >= 16)
-			tile_type = 1;
+		if (util_format_get_blocksize(pipe_format) >= 16)
+			non_disp_tiling = 1;
 	}
 	nbanks = eg_num_banks(rscreen->tiling_info.num_banks);
 
@@ -1067,13 +1080,13 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 				       S_030000_PITCH((pitch / 8) - 1) |
 				       S_030000_TEX_WIDTH(width - 1));
 	if (rscreen->chip_class == CAYMAN)
-		view->tex_resource_words[0] |= CM_S_030000_NON_DISP_TILING_ORDER(tile_type);
+		view->tex_resource_words[0] |= CM_S_030000_NON_DISP_TILING_ORDER(non_disp_tiling);
 	else
-		view->tex_resource_words[0] |= S_030000_NON_DISP_TILING_ORDER(tile_type);
+		view->tex_resource_words[0] |= S_030000_NON_DISP_TILING_ORDER(non_disp_tiling);
 	view->tex_resource_words[1] = (S_030004_TEX_HEIGHT(height - 1) |
 				       S_030004_TEX_DEPTH(depth - 1) |
 				       S_030004_ARRAY_MODE(array_mode));
-	view->tex_resource_words[2] = (tmp->surface.level[0].offset + r600_resource_va(ctx->screen, texture)) >> 8;
+	view->tex_resource_words[2] = (surflevel[0].offset + r600_resource_va(ctx->screen, texture)) >> 8;
 
 	/* TEX_RESOURCE_WORD3.MIP_ADDRESS */
 	if (texture->nr_samples > 1 && rscreen->msaa_texture_support == MSAA_TEXTURE_COMPRESSED) {
@@ -1087,9 +1100,9 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 			view->tex_resource_words[3] = (tmp->fmask_offset + r600_resource_va(ctx->screen, texture)) >> 8;
 		}
 	} else if (state->u.tex.last_level && texture->nr_samples <= 1) {
-		view->tex_resource_words[3] = (tmp->surface.level[1].offset + r600_resource_va(ctx->screen, texture)) >> 8;
+		view->tex_resource_words[3] = (surflevel[1].offset + r600_resource_va(ctx->screen, texture)) >> 8;
 	} else {
-		view->tex_resource_words[3] = (tmp->surface.level[0].offset + r600_resource_va(ctx->screen, texture)) >> 8;
+		view->tex_resource_words[3] = (surflevel[0].offset + r600_resource_va(ctx->screen, texture)) >> 8;
 	}
 
 	view->tex_resource_words[4] = (word4 |
@@ -1116,7 +1129,8 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 				      S_03001C_BANK_WIDTH(bankw) |
 				      S_03001C_BANK_HEIGHT(bankh) |
 				      S_03001C_MACRO_TILE_ASPECT(macro_aspect) |
-				      S_03001C_NUM_BANKS(nbanks);
+				      S_03001C_NUM_BANKS(nbanks) |
+				      S_03001C_DEPTH_SAMPLE_ORDER(tmp->is_depth && !tmp->is_flushing_texture);
 	return &view->base;
 }
 
@@ -1253,16 +1267,10 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 	unsigned color_info, color_attrib, color_dim = 0;
 	unsigned format, swap, ntype, endian;
 	uint64_t offset, base_offset;
-	unsigned tile_type, macro_aspect, tile_split, bankh, bankw, fmask_bankh, nbanks;
+	unsigned non_disp_tiling, macro_aspect, tile_split, bankh, bankw, fmask_bankh, nbanks;
 	const struct util_format_description *desc;
 	int i;
 	bool blend_clamp = 0, blend_bypass = 0;
-
-	if (rtex->is_depth && !rtex->is_flushing_texture) {
-		r600_init_flushed_depth_texture(&rctx->context, pipe_tex, NULL);
-		rtex = rtex->flushed_depth_texture;
-		assert(rtex);
-	}
 
 	offset = rtex->surface.level[level].offset;
 	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
@@ -1278,20 +1286,20 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 	switch (rtex->surface.level[level].mode) {
 	case RADEON_SURF_MODE_LINEAR_ALIGNED:
 		color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_LINEAR_ALIGNED);
-		tile_type = 1;
+		non_disp_tiling = 1;
 		break;
 	case RADEON_SURF_MODE_1D:
 		color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_1D_TILED_THIN1);
-		tile_type = rtex->tile_type;
+		non_disp_tiling = rtex->non_disp_tiling;
 		break;
 	case RADEON_SURF_MODE_2D:
 		color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_2D_TILED_THIN1);
-		tile_type = rtex->tile_type;
+		non_disp_tiling = rtex->non_disp_tiling;
 		break;
 	case RADEON_SURF_MODE_LINEAR:
 	default:
 		color_info = S_028C70_ARRAY_MODE(V_028C70_ARRAY_LINEAR_GENERAL);
-		tile_type = 1;
+		non_disp_tiling = 1;
 		break;
 	}
 	tile_split = rtex->surface.tile_split;
@@ -1308,7 +1316,7 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 	/* 128 bit formats require tile type = 1 */
 	if (rscreen->chip_class == CAYMAN) {
 		if (util_format_get_blocksize(surf->base.format) >= 16)
-			tile_type = 1;
+			non_disp_tiling = 1;
 	}
 	nbanks = eg_num_banks(rscreen->tiling_info.num_banks);
 	desc = util_format_description(surf->base.format);
@@ -1323,7 +1331,7 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 			S_028C74_BANK_WIDTH(bankw) |
 			S_028C74_BANK_HEIGHT(bankh) |
 			S_028C74_MACRO_TILE_ASPECT(macro_aspect) |
-			S_028C74_NON_DISP_TILING_ORDER(tile_type) |
+			S_028C74_NON_DISP_TILING_ORDER(non_disp_tiling) |
 		        S_028C74_FMASK_BANK_HEIGHT(fmask_bankh);
 
 	if (rctx->chip_class == CAYMAN && rtex->resource.b.b.nr_samples > 1) {
@@ -1515,26 +1523,15 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 	}
 
 	if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
-		uint64_t stencil_offset = rtex->surface.stencil_offset;
-		unsigned i, stile_split = rtex->surface.stencil_tile_split;
+		uint64_t stencil_offset;
+		unsigned stile_split = rtex->surface.stencil_tile_split;
 
 		stile_split = eg_tile_split(stile_split);
+
+		stencil_offset = rtex->surface.stencil_level[level].offset;
 		stencil_offset += r600_resource_va(screen, surf->base.texture);
-		stencil_offset += rtex->surface.level[level].offset / 4;
-		stencil_offset >>= 8;
 
-		/* We're guessing the stencil offset from the depth offset.
-		 * Make sure each mipmap level has a unique offset. */
-		for (i = 1; i <= level; i++) {
-			/* If two levels have the same address, add 256
-			 * to the offset of the smaller level. */
-			if ((rtex->surface.level[i-1].offset / 4) >> 8 ==
-			    (rtex->surface.level[i].offset / 4) >> 8) {
-				stencil_offset++;
-			}
-		}
-
-		surf->db_stencil_base = stencil_offset;
+		surf->db_stencil_base = stencil_offset >> 8;
 		surf->db_stencil_info = S_028044_FORMAT(V_028044_STENCIL_8) |
 					S_028044_TILE_SPLIT(stile_split);
 	} else {
@@ -2108,6 +2105,10 @@ static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_
 				     S_028000_STENCIL_COPY_ENABLE(a->copy_stencil) |
 				     S_028000_COPY_CENTROID(1) |
 				     S_028000_COPY_SAMPLE(a->copy_sample);
+	} else if (a->flush_depthstencil_in_place) {
+		db_render_control |= S_028000_DEPTH_COMPRESS_DISABLE(1) |
+				     S_028000_STENCIL_COMPRESS_DISABLE(1);
+		db_render_override |= S_02800C_DISABLE_PIXEL_RATE_TILES(1);
 	}
 
 	r600_write_context_reg_seq(cs, R_028000_DB_RENDER_CONTROL, 2);

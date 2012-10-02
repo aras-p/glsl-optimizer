@@ -1109,9 +1109,13 @@
 #define   C_030018_INTERLACED                          0xFFFFFFBF
 #define   S_030018_TILE_SPLIT(x)                       (((x) & 0x7) << 29)
 #define R_03001C_SQ_TEX_RESOURCE_WORD7_0             0x03001C
+#define   S_03001C_DATA_FORMAT(x)                      (((x) & 0x3F) << 0)
+#define   G_03001C_DATA_FORMAT(x)                      (((x) >> 0) & 0x3F)
+#define   C_03001C_DATA_FORMAT                         0xFFFFFFC0
 #define   S_03001C_MACRO_TILE_ASPECT(x)                (((x) & 0x3) << 6)
 #define   S_03001C_BANK_WIDTH(x)                       (((x) & 0x3) << 8)
 #define   S_03001C_BANK_HEIGHT(x)                      (((x) & 0x3) << 10)
+#define   S_03001C_DEPTH_SAMPLE_ORDER(x)               (((x) & 0x1) << 15)
 #define   S_03001C_NUM_BANKS(x)                        (((x) & 0x3) << 16)
 #define   S_03001C_TYPE(x)                             (((x) & 0x3) << 30)
 #define   G_03001C_TYPE(x)                             (((x) >> 30) & 0x3)
@@ -1120,9 +1124,6 @@
 #define     V_03001C_SQ_TEX_VTX_INVALID_BUFFER         0x00000001
 #define     V_03001C_SQ_TEX_VTX_VALID_TEXTURE          0x00000002
 #define     V_03001C_SQ_TEX_VTX_VALID_BUFFER           0x00000003
-#define   S_03001C_DATA_FORMAT(x)                      (((x) & 0x3F) << 0)
-#define   G_03001C_DATA_FORMAT(x)                      (((x) >> 0) & 0x3F)
-#define   C_03001C_DATA_FORMAT                         0xFFFFFFC0
 
 #define R_030008_SQ_VTX_CONSTANT_WORD2_0             0x030008
 #define   S_030008_BASE_ADDRESS_HI(x)                  (((x) & 0xFF) << 0)
@@ -1644,6 +1645,9 @@
 #define   S_02800C_IGNORE_SC_ZRANGE(x)                 (((x) & 0x1) << 17)
 #define   G_02800C_IGNORE_SC_ZRANGE(x)                 (((x) >> 17) & 0x1)
 #define   C_02800C_IGNORE_SC_ZRANGE                    0xFFFDFFFF
+#define   S_02800C_DISABLE_PIXEL_RATE_TILES(x)         (((x) & 0x1) << 26)
+#define   G_02800C_DISABLE_PIXEL_RATE_TILES(x)         (((x) >> 26) & 0x1)
+#define   C_02800C_DISABLE_PIXEL_RATE_TILES            0xFFFDFFFF
 #define R_028010_DB_RENDER_OVERRIDE2                 0x00028010
 #define R_028014_DB_HTILE_DATA_BASE                  0x00028014
 #define R_028028_DB_STENCIL_CLEAR                    0x00028028

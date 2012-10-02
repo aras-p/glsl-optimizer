@@ -48,7 +48,7 @@ struct r600_texture {
 	unsigned			array_mode[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			pitch_override;
 	unsigned			size;
-	unsigned			tile_type;
+	bool				non_disp_tiling;
 	bool				is_depth;
 	bool				is_rat;
 	unsigned			dirty_level_mask; /* each bit says if that mipmap is compressed */
@@ -114,6 +114,14 @@ struct r600_surface {
 	unsigned db_prefetch_limit;	/* R600 only */
 	unsigned pa_su_poly_offset_db_fmt_cntl;
 };
+
+/* Return if the depth format can be read without the DB->CB copy on r6xx-r7xx. */
+static INLINE bool r600_can_read_depth(struct r600_texture *rtex)
+{
+	return rtex->resource.b.b.nr_samples <= 1 &&
+	       (rtex->resource.b.b.format == PIPE_FORMAT_Z16_UNORM ||
+		rtex->resource.b.b.format == PIPE_FORMAT_Z32_FLOAT);
+}
 
 void r600_resource_destroy(struct pipe_screen *screen, struct pipe_resource *res);
 void r600_init_screen_resource_functions(struct pipe_screen *screen);

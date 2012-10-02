@@ -985,7 +985,7 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 	struct r600_texture *tmp = (struct r600_texture*)texture;
 	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
-	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
+	unsigned char swizzle[4], array_mode = 0;
 	unsigned width, height, depth, offset_level, last_level;
 
 	if (view == NULL)
@@ -1013,7 +1013,7 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 		return NULL;
 	}
 
-	if (tmp->is_depth && !tmp->is_flushing_texture) {
+	if (tmp->is_depth && !tmp->is_flushing_texture && !r600_can_read_depth(tmp)) {
 		if (!r600_init_flushed_depth_texture(ctx, texture, NULL)) {
 			FREE(view);
 			return NULL;
@@ -1029,7 +1029,6 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 	height = height_first_level;
 	depth = tmp->surface.level[offset_level].npix_z;
 	pitch = tmp->surface.level[offset_level].nblk_x * util_format_get_blockwidth(state->format);
-	tile_type = tmp->tile_type;
 
 	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
 		height = 1;
@@ -1056,7 +1055,7 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 	view->tex_resource = &tmp->resource;
 	view->tex_resource_words[0] = (S_038000_DIM(r600_tex_dim(texture->target, texture->nr_samples)) |
 				       S_038000_TILE_MODE(array_mode) |
-				       S_038000_TILE_TYPE(tile_type) |
+				       S_038000_TILE_TYPE(tmp->non_disp_tiling) |
 				       S_038000_PITCH((pitch / 8) - 1) |
 				       S_038000_TEX_WIDTH(width - 1));
 	view->tex_resource_words[1] = (S_038004_TEX_HEIGHT(height - 1) |
@@ -1178,7 +1177,7 @@ static void r600_init_color_surface(struct r600_context *rctx,
 	int i;
 	bool blend_bypass = 0, blend_clamp = 1;
 
-	if (rtex->is_depth && !rtex->is_flushing_texture) {
+	if (rtex->is_depth && !rtex->is_flushing_texture && !r600_can_read_depth(rtex)) {
 		r600_init_flushed_depth_texture(&rctx->context, surf->base.texture, NULL);
 		rtex = rtex->flushed_depth_texture;
 		assert(rtex);
@@ -1849,6 +1848,10 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 				     S_028D0C_STENCIL_COPY_ENABLE(a->copy_stencil) |
 				     S_028D0C_COPY_CENTROID(1) |
 				     S_028D0C_COPY_SAMPLE(a->copy_sample);
+	} else if (a->flush_depthstencil_in_place) {
+		db_render_control |= S_028D0C_DEPTH_COMPRESS_DISABLE(1) |
+				     S_028D0C_STENCIL_COMPRESS_DISABLE(1);
+		db_render_override |= S_028D10_NOOP_CULL_DISABLE(1);
 	}
 
 	r600_write_context_reg_seq(cs, R_028D0C_DB_RENDER_CONTROL, 2);

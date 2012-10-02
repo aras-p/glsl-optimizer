@@ -478,7 +478,7 @@ void evergreen_set_tex_resource(
 
 	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
-	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
+	unsigned char swizzle[4], array_mode = 0, non_disp_tiling = 0;
 	unsigned height, depth;
 
 	swizzle[0] = 0;
@@ -501,7 +501,7 @@ void evergreen_set_tex_resource(
 	pitch = align(tmp->surface.level[0].nblk_x *
 		util_format_get_blockwidth(tmp->resource.b.b.format), 8);
 	array_mode = tmp->array_mode[0];
-	tile_type = tmp->tile_type;
+	non_disp_tiling = tmp->non_disp_tiling;
 
 	assert(view->base.texture->target != PIPE_TEXTURE_1D_ARRAY);
 	assert(view->base.texture->target != PIPE_TEXTURE_2D_ARRAY);
@@ -511,7 +511,7 @@ void evergreen_set_tex_resource(
 	evergreen_emit_raw_value(res,
 				(S_030000_DIM(r600_tex_dim(view->base.texture->target)) |
 				S_030000_PITCH((pitch / 8) - 1) |
-				S_030000_NON_DISP_TILING_ORDER(tile_type) |
+				S_030000_NON_DISP_TILING_ORDER(non_disp_tiling) |
 				S_030000_TEX_WIDTH(view->base.texture->width0 - 1)));
 	evergreen_emit_raw_value(res, (S_030004_TEX_HEIGHT(height - 1) |
 				S_030004_TEX_DEPTH(depth - 1) |

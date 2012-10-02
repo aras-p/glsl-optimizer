@@ -71,6 +71,7 @@ struct r600_db_misc_state {
 	struct r600_atom atom;
 	bool occlusion_query_enabled;
 	bool flush_depthstencil_through_cb;
+	bool flush_depthstencil_in_place;
 	bool copy_depth, copy_stencil;
 	unsigned copy_sample;
 	unsigned log_samples;

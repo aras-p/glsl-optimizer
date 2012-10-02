@@ -1609,7 +1609,8 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
    blitter_disable_render_cond(ctx);
 
    /* bind states */
-   pipe->bind_blend_state(pipe, ctx->blend[PIPE_MASK_RGBA]);
+   pipe->bind_blend_state(pipe, cbsurf ? ctx->blend[PIPE_MASK_RGBA] :
+                                         ctx->blend[0]);
    pipe->bind_depth_stencil_alpha_state(pipe, dsa_stage);
    ctx->bind_fs_state(pipe, blitter_get_fs_col(ctx, 0, FALSE));
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
