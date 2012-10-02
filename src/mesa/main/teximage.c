@@ -2055,28 +2055,6 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
       goto error;
    }
 
-   /* check image size against compression block size */
-   /* XXX possibly move this into the _mesa_legal_texture_dimensions() func */
-   {
-      gl_format texFormat =
-         ctx->Driver.ChooseTextureFormat(ctx, target, proxy_format,
-					 choose_format, choose_type);
-      GLuint bw, bh;
-
-      _mesa_get_format_block_size(texFormat, &bw, &bh);
-      if ((width > bw && width % bw > 0) ||
-          (height > bh && height % bh > 0)) {
-         /*
-          * Per GL_ARB_texture_compression:  GL_INVALID_OPERATION is
-          * generated [...] if any parameter combinations are not
-          * supported by the specific compressed internal format. 
-          */
-         reason = "invalid width or height for compression format";
-         error = GL_INVALID_OPERATION;
-         goto error;
-      }
-   }
-
    /* check image size in bytes */
    if (expectedSize != imageSize) {
       /* Per GL_ARB_texture_compression:  GL_INVALID_VALUE is generated [...]

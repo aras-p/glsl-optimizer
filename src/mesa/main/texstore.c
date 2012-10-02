@@ -4476,12 +4476,6 @@ _mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
 
    _mesa_get_format_block_size(texFormat, &bw, &bh);
 
-   /* these should have been caught sooner */
-   ASSERT((width % bw) == 0 || width < bw);
-   ASSERT((height % bh) == 0 || height < bh);
-   ASSERT((xoffset % bw) == 0);
-   ASSERT((yoffset % bh) == 0);
-
    /* get pointer to src pixels (may be in a pbo which we'll map here) */
    data = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, data,
                                                  &ctx->Unpack,
