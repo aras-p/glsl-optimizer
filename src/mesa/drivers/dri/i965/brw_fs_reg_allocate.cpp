@@ -160,6 +160,33 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width, int base_reg_count)
    ra_set_finalize(brw->wm.regs, NULL);
 }
 
+/**
+ * Sets up interference between thread payload registers and the virtual GRFs
+ * to be allocated for program temporaries.
+ */
+static void
+brw_setup_payload_interference(struct ra_graph *g,
+                               int payload_reg_count,
+                               int first_payload_node,
+                               int reg_node_count)
+{
+   for (int i = 0; i < payload_reg_count; i++) {
+      /* Mark each payload reg node as being allocated to its physical register.
+       *
+       * The alternative would be to have per-physical-register classes, which
+       * would just be silly.
+       */
+      ra_set_node_reg(g, first_payload_node + i, i);
+
+      /* For now, just mark each payload node as interfering with every other
+       * node to be allocated.
+       */
+      for (int j = 0; j < reg_node_count; j++) {
+         ra_add_node_interference(g, first_payload_node + i, j);
+      }
+   }
+}
+
 bool
 fs_visitor::assign_regs()
 {
@@ -171,15 +198,18 @@ fs_visitor::assign_regs()
     */
    int reg_width = c->dispatch_width / 8;
    int hw_reg_mapping[this->virtual_grf_count];
-   int first_assigned_grf = ALIGN(this->first_non_payload_grf, reg_width);
-   int base_reg_count = (max_grf - first_assigned_grf) / reg_width;
+   int payload_reg_count = (ALIGN(this->first_non_payload_grf, reg_width) /
+                            reg_width);
+   int base_reg_count = max_grf / reg_width;
 
    calculate_live_intervals();
 
    brw_alloc_reg_set(brw, reg_width, base_reg_count);
 
-   struct ra_graph *g = ra_alloc_interference_graph(brw->wm.regs,
-						    this->virtual_grf_count);
+   int node_count = this->virtual_grf_count;
+   int first_payload_node = node_count;
+   node_count += payload_reg_count;
+   struct ra_graph *g = ra_alloc_interference_graph(brw->wm.regs, node_count);
 
    for (int i = 0; i < this->virtual_grf_count; i++) {
       assert(this->virtual_grf_sizes[i] >= 1 &&
@@ -210,6 +240,9 @@ fs_visitor::assign_regs()
       }
    }
 
+   brw_setup_payload_interference(g, payload_reg_count, first_payload_node,
+                                  this->virtual_grf_count);
+
    if (!ra_allocate_no_spills(g)) {
       /* Failed to allocate registers.  Spill a reg, and the caller will
        * loop back into here to try again.
@@ -235,12 +268,11 @@ fs_visitor::assign_regs()
     * regs in the register classes back down to real hardware reg
     * numbers.
     */
-   this->grf_used = first_assigned_grf;
+   this->grf_used = payload_reg_count * reg_width;
    for (int i = 0; i < this->virtual_grf_count; i++) {
       int reg = ra_get_node_reg(g, i);
 
-      hw_reg_mapping[i] = (first_assigned_grf +
-			   brw->wm.ra_reg_to_grf[reg] * reg_width);
+      hw_reg_mapping[i] = brw->wm.ra_reg_to_grf[reg] * reg_width;
       this->grf_used = MAX2(this->grf_used,
 			    hw_reg_mapping[i] + this->virtual_grf_sizes[i] *
 			    reg_width);
