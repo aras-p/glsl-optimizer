@@ -233,6 +233,8 @@ public:
    void assign_urb_setup();
    bool assign_regs();
    void assign_regs_trivial();
+   void setup_payload_interference(struct ra_graph *g, int payload_reg_count,
+                                   int first_payload_node);
    int choose_spill_reg(struct ra_graph *g);
    void spill_reg(int spill_reg);
    void split_virtual_grfs();

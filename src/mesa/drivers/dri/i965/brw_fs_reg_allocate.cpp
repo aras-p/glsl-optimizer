@@ -160,30 +160,162 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width, int base_reg_count)
    ra_set_finalize(brw->wm.regs, NULL);
 }
 
+int
+count_to_loop_end(fs_inst *do_inst)
+{
+   int depth = 1;
+   int ip = ip;
+   for (fs_inst *inst = (fs_inst *)do_inst->next;
+        depth > 0;
+        inst = (fs_inst *)inst->next) {
+      switch (inst->opcode) {
+      case BRW_OPCODE_DO:
+         depth++;
+         break;
+      case BRW_OPCODE_WHILE:
+         depth--;
+         break;
+      default:
+         break;
+      }
+      ip++;
+   }
+   return ip;
+}
+
 /**
  * Sets up interference between thread payload registers and the virtual GRFs
  * to be allocated for program temporaries.
+ *
+ * We want to be able to reallocate the payload for our virtual GRFs, notably
+ * because the setup coefficients for a full set of 16 FS inputs takes up 8 of
+ * our 128 registers.
+ *
+ * The layout of the payload registers is:
+ *
+ * 0..nr_payload_regs-1: fixed function setup (including bary coordinates).
+ * nr_payload_regs..nr_payload_regs+curb_read_lengh-1: uniform data
+ * nr_payload_regs+curb_read_lengh..first_non_payload_grf-1: setup coefficients.
+ *
+ * And we have payload_node_count nodes covering these registers in order
+ * (note that in 16-wide, a node is two registers).
  */
-static void
-brw_setup_payload_interference(struct ra_graph *g,
-                               int payload_reg_count,
-                               int first_payload_node,
-                               int reg_node_count)
+void
+fs_visitor::setup_payload_interference(struct ra_graph *g,
+                                       int payload_node_count,
+                                       int first_payload_node)
 {
-   for (int i = 0; i < payload_reg_count; i++) {
-      /* Mark each payload reg node as being allocated to its physical register.
+   int reg_width = c->dispatch_width / 8;
+   int loop_depth = 0;
+   int loop_end_ip = 0;
+
+   int payload_last_use_ip[payload_node_count];
+   memset(payload_last_use_ip, 0, sizeof(payload_last_use_ip));
+   int ip = 0;
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
+
+      switch (inst->opcode) {
+      case BRW_OPCODE_DO:
+         loop_depth++;
+
+         /* Since payload regs are deffed only at the start of the shader
+          * execution, any uses of the payload within a loop mean the live
+          * interval extends to the end of the outermost loop.  Find the ip of
+          * the end now.
+          */
+         if (loop_depth == 1)
+            loop_end_ip = ip + count_to_loop_end(inst);
+         break;
+      case BRW_OPCODE_WHILE:
+         loop_depth--;
+         break;
+      default:
+         break;
+      }
+
+      int use_ip;
+      if (loop_depth > 0)
+         use_ip = loop_end_ip;
+      else
+         use_ip = ip;
+
+      /* Note that UNIFORM args have been turned into FIXED_HW_REG by
+       * assign_curbe_setup(), and interpolation uses fixed hardware regs from
+       * the start (see interp_reg()).
+       */
+      for (int i = 0; i < 3; i++) {
+         if (inst->src[i].file == FIXED_HW_REG &&
+             inst->src[i].fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
+            int node_nr = inst->src[i].fixed_hw_reg.nr / reg_width;
+            if (node_nr >= payload_node_count)
+               continue;
+
+            payload_last_use_ip[node_nr] = use_ip;
+         }
+      }
+
+      /* Special case instructions which have extra implied registers used. */
+      switch (inst->opcode) {
+      case FS_OPCODE_FB_WRITE:
+         /* We could omit this for the !inst->header_present case, except that
+          * the simulator apparently incorrectly reads from g0/g1 instead of
+          * sideband.  It also really freaks out driver developers to see g0
+          * used in unusual places, so just always reserve it.
+          */
+         payload_last_use_ip[0 / reg_width] = use_ip;
+         payload_last_use_ip[1 / reg_width] = use_ip;
+         break;
+      case FS_OPCODE_DISCARD:
+         payload_last_use_ip[1 / reg_width] = use_ip;
+         break;
+
+      case FS_OPCODE_LINTERP:
+         /* On gen6+ in 16-wide, there are 4 adjacent registers (so 2 nodes)
+          * used by PLN's sourcing of the deltas, while we list only the first
+          * two in the arguments (1 node).  Pre-gen6, the deltas are computed
+          * in normal VGRFs.
+          */
+         if (intel->gen >= 6) {
+            int delta_x_arg = 0;
+            if (inst->src[delta_x_arg].file == FIXED_HW_REG &&
+                inst->src[delta_x_arg].fixed_hw_reg.file ==
+                BRW_GENERAL_REGISTER_FILE) {
+               int sechalf_node = (inst->src[delta_x_arg].fixed_hw_reg.nr /
+                                   reg_width) + 1;
+               assert(sechalf_node < payload_node_count);
+               payload_last_use_ip[sechalf_node] = use_ip;
+            }
+         }
+         break;
+
+      default:
+         break;
+      }
+
+      ip++;
+   }
+
+   for (int i = 0; i < payload_node_count; i++) {
+      /* Mark the payload node as interfering with any virtual grf that is
+       * live between the start of the program and our last use of the payload
+       * node.
+       */
+      for (int j = 0; j < this->virtual_grf_count; j++) {
+         if (this->virtual_grf_def[j] <= payload_last_use_ip[i] ||
+             this->virtual_grf_use[j] <= payload_last_use_ip[i]) {
+            ra_add_node_interference(g, first_payload_node + i, j);
+         }
+      }
+   }
+
+   for (int i = 0; i < payload_node_count; i++) {
+      /* Mark each payload node as being allocated to its physical register.
        *
        * The alternative would be to have per-physical-register classes, which
        * would just be silly.
        */
       ra_set_node_reg(g, first_payload_node + i, i);
-
-      /* For now, just mark each payload node as interfering with every other
-       * node to be allocated.
-       */
-      for (int j = 0; j < reg_node_count; j++) {
-         ra_add_node_interference(g, first_payload_node + i, j);
-      }
    }
 }
 
@@ -198,7 +330,7 @@ fs_visitor::assign_regs()
     */
    int reg_width = c->dispatch_width / 8;
    int hw_reg_mapping[this->virtual_grf_count];
-   int payload_reg_count = (ALIGN(this->first_non_payload_grf, reg_width) /
+   int payload_node_count = (ALIGN(this->first_non_payload_grf, reg_width) /
                             reg_width);
    int base_reg_count = max_grf / reg_width;
 
@@ -208,7 +340,7 @@ fs_visitor::assign_regs()
 
    int node_count = this->virtual_grf_count;
    int first_payload_node = node_count;
-   node_count += payload_reg_count;
+   node_count += payload_node_count;
    struct ra_graph *g = ra_alloc_interference_graph(brw->wm.regs, node_count);
 
    for (int i = 0; i < this->virtual_grf_count; i++) {
@@ -240,8 +372,7 @@ fs_visitor::assign_regs()
       }
    }
 
-   brw_setup_payload_interference(g, payload_reg_count, first_payload_node,
-                                  this->virtual_grf_count);
+   setup_payload_interference(g, payload_node_count, first_payload_node);
 
    if (!ra_allocate_no_spills(g)) {
       /* Failed to allocate registers.  Spill a reg, and the caller will
@@ -268,7 +399,7 @@ fs_visitor::assign_regs()
     * regs in the register classes back down to real hardware reg
     * numbers.
     */
-   this->grf_used = payload_reg_count * reg_width;
+   this->grf_used = payload_node_count * reg_width;
    for (int i = 0; i < this->virtual_grf_count; i++) {
       int reg = ra_get_node_reg(g, i);
 
