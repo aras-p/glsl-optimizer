@@ -137,7 +137,7 @@ $(intermediates)/main/dispatch.h: $(es_hdr_deps)
 	$(call es-gen, $* -m remap_table)
 
 $(intermediates)/main/remap_helper.h: PRIVATE_SCRIPT := $(MESA_PYTHON2) $(glapi)/remap_helper.py
-$(intermediates)/main/remap_helper.h: PRIVATE_XML := -f $(glapi)/gl_API.xml
+$(intermediates)/main/remap_helper.h: PRIVATE_XML := -f $(glapi)/gl_and_es_API.xml
 
 $(intermediates)/main/remap_helper.h: $(es_hdr_deps)
 	$(call es-gen, $*)
