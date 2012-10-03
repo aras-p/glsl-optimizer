@@ -865,4 +865,64 @@ vec4_visitor::opt_compute_to_mrf()
    return progress;
 }
 
+/**
+ * Splits virtual GRFs requesting more than one contiguous physical register.
+ *
+ * We initially create large virtual GRFs for temporary structures, arrays,
+ * and matrices, so that the dereference visitor functions can add reg_offsets
+ * to work their way down to the actual member being accessed.
+ *
+ * Unlike in the FS visitor, though, we have no SEND messages that return more
+ * than 1 register.  We also don't do any array access in register space,
+ * which would have required contiguous physical registers.  Thus, all those
+ * large virtual GRFs can be split up into independent single-register virtual
+ * GRFs, making allocation and optimization easier.
+ */
+void
+vec4_visitor::split_virtual_grfs()
+{
+   int num_vars = this->virtual_grf_count;
+   int new_virtual_grf[num_vars];
+
+   memset(new_virtual_grf, 0, sizeof(new_virtual_grf));
+
+   /* Allocate new space for split regs.  Note that the virtual
+    * numbers will be contiguous.
+    */
+   for (int i = 0; i < num_vars; i++) {
+      if (this->virtual_grf_sizes[i] == 1)
+         continue;
+
+      new_virtual_grf[i] = virtual_grf_alloc(1);
+      for (int j = 2; j < this->virtual_grf_sizes[i]; j++) {
+         int reg = virtual_grf_alloc(1);
+         assert(reg == new_virtual_grf[i] + j - 1);
+         (void) reg;
+      }
+      this->virtual_grf_sizes[i] = 1;
+   }
+
+   foreach_list(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      if (inst->dst.file == GRF &&
+	  new_virtual_grf[inst->dst.reg] &&
+	  inst->dst.reg_offset != 0) {
+	 inst->dst.reg = (new_virtual_grf[inst->dst.reg] +
+			  inst->dst.reg_offset - 1);
+	 inst->dst.reg_offset = 0;
+      }
+      for (int i = 0; i < 3; i++) {
+	 if (inst->src[i].file == GRF &&
+	     new_virtual_grf[inst->src[i].reg] &&
+	     inst->src[i].reg_offset != 0) {
+	    inst->src[i].reg = (new_virtual_grf[inst->src[i].reg] +
+				inst->src[i].reg_offset - 1);
+	    inst->src[i].reg_offset = 0;
+	 }
+      }
+   }
+   this->live_intervals_valid = false;
+}
+
 } /* namespace brw */

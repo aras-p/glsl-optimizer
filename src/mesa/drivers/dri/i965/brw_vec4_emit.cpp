@@ -794,6 +794,7 @@ vec4_visitor::run()
    move_uniform_array_access_to_pull_constants();
    pack_uniform_registers();
    move_push_constants_to_pull_constants();
+   split_virtual_grfs();
 
    bool progress;
    do {
