@@ -44,7 +44,6 @@ extern "C" {
 #include "brw_eu.h"
 #include "brw_wm.h"
 }
-#include "brw_shader.h"
 #include "brw_fs.h"
 #include "glsl/glsl_types.h"
 #include "glsl/ir_optimization.h"

@@ -45,6 +45,7 @@ extern "C" {
 #include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_wm.h"
+#include "brw_shader.h"
 }
 #include "glsl/glsl_types.h"
 #include "glsl/ir.h"
@@ -124,7 +125,7 @@ static const fs_reg reg_undef;
 static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
 static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
 
-class fs_inst : public exec_node {
+class fs_inst : public backend_instruction {
 public:
    /* Callers of this ralloc-based new need not call delete. It's
     * easier to just ralloc_free 'ctx' (or any of its ancestors). */
@@ -154,7 +155,6 @@ public:
    bool is_tex();
    bool is_math();
 
-   enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
    fs_reg dst;
    fs_reg src[3];
    bool saturate;
@@ -182,7 +182,7 @@ public:
    /** @} */
 };
 
-class fs_visitor : public ir_visitor
+class fs_visitor : public backend_visitor
 {
 public:
 
@@ -363,16 +363,8 @@ public:
    void setup_builtin_uniform_values(ir_variable *ir);
    int implied_mrf_writes(fs_inst *inst);
 
-   struct brw_context *brw;
    const struct gl_fragment_program *fp;
-   struct intel_context *intel;
-   struct gl_context *ctx;
    struct brw_wm_compile *c;
-   struct brw_compile *p;
-   struct brw_shader *shader;
-   struct gl_shader_program *prog;
-   void *mem_ctx;
-   exec_list instructions;
 
    /* Delayed setup of c->prog_data.params[] due to realloc of
     * ParamValues[] during compile.

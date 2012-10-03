@@ -27,6 +27,31 @@
 
 #pragma once
 
+class backend_instruction : public exec_node {
+public:
+   enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
+};
+
+class backend_visitor : public ir_visitor {
+public:
+
+   struct brw_context *brw;
+   struct intel_context *intel;
+   struct gl_context *ctx;
+   struct brw_compile *p;
+   struct brw_shader *shader;
+   struct gl_shader_program *prog;
+
+   /** ralloc context for temporary data used during compile */
+   void *mem_ctx;
+
+   /**
+    * List of either fs_inst or vec4_instruction (inheriting from
+    * backend_instruction)
+    */
+   exec_list instructions;
+};
+
 int brw_type_for_base_type(const struct glsl_type *type);
 uint32_t brw_conditional_for_comparison(unsigned int op);
 uint32_t brw_math_function(enum opcode op);
