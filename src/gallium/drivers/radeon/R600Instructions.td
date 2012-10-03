@@ -905,8 +905,13 @@ let Predicates = [isR600] in {
 
 // Helper pattern for normalizing inputs to triginomic instructions for R700+
 // cards.
-class TRIG_eg <InstR600 trig, Intrinsic intr> : Pat<
-  (intr R600_Reg32:$src),
+class COS_PAT <InstR600 trig> : Pat<
+  (fcos R600_Reg32:$src),
+  (trig (MUL (MOV_IMM_I32 (i32 ALU_LITERAL_X), CONST.TWO_PI_INV), R600_Reg32:$src))
+>;
+
+class SIN_PAT <InstR600 trig> : Pat<
+  (fsin R600_Reg32:$src),
   (trig (MUL (MOV_IMM_I32 (i32 ALU_LITERAL_X), CONST.TWO_PI_INV), R600_Reg32:$src))
 >;
 
@@ -919,8 +924,8 @@ let Predicates = [isR700] in {
   def COS_r700 : COS_Common<0x6F>;
 
   // R700 normalizes inputs to SIN/COS the same as EG
-  def : TRIG_eg <SIN_r700, int_AMDGPU_sin>;
-  def : TRIG_eg <COS_r700, int_AMDGPU_cos>;
+  def : SIN_PAT <SIN_r700>;
+  def : COS_PAT <COS_r700>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -997,8 +1002,8 @@ let Predicates = [isEGorCayman] in {
   def SSG_eg : SSG_Common<CNDGT_eg, CNDGE_eg>;
   def TGSI_LIT_Z_eg : TGSI_LIT_Z_Common<MUL_LIT_eg, LOG_CLAMPED_eg, EXP_IEEE_eg>;
 
-  def : TRIG_eg <SIN_eg, int_AMDGPU_sin>;
-  def : TRIG_eg <COS_eg, int_AMDGPU_cos>;
+  def : SIN_PAT <SIN_eg>;
+  def : COS_PAT <COS_eg>;
 
   def FLT_TO_INT_eg : FLT_TO_INT_Common<0x50> {
     let Pattern = [];
