@@ -25,7 +25,7 @@
  *
  */
 
-#include "brw_fs_cfg.h"
+#include "brw_cfg.h"
 #include "brw_fs_live_variables.h"
 
 using namespace brw;

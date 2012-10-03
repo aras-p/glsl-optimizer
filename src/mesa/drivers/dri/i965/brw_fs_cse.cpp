@@ -22,7 +22,7 @@
  */
 
 #include "brw_fs.h"
-#include "brw_fs_cfg.h"
+#include "brw_cfg.h"
 
 /** @file brw_fs_cse.cpp
  *

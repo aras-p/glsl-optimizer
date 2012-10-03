@@ -107,9 +107,9 @@ i965_C_FILES = \
 i965_CXX_FILES = \
 	brw_blorp.cpp \
 	brw_blorp_blit.cpp \
+	brw_cfg.cpp \
 	brw_cubemap_normalize.cpp \
 	brw_fs.cpp \
-	brw_fs_cfg.cpp \
 	brw_fs_cse.cpp \
 	brw_fs_copy_propagation.cpp \
 	brw_fs_emit.cpp \
