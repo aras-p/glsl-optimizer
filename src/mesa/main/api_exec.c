@@ -335,8 +335,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_NormalPointer(exec, _mesa_NormalPointer);
       SET_PrioritizeTextures(exec, _mesa_PrioritizeTextures);
       SET_TexCoordPointer(exec, _mesa_TexCoordPointer);
-   }
-   if (ctx->API != API_OPENGL_CORE) {
       SET_VertexPointer(exec, _mesa_VertexPointer);
    }
 #endif
