@@ -87,7 +87,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 
    void *mem_ctx = ralloc_context(this->mem_ctx);
 
-   for (fs_inst *inst = block->start;
+   for (fs_inst *inst = (fs_inst *)block->start;
 	inst != block->end->next;
 	inst = (fs_inst *) inst->next) {
 

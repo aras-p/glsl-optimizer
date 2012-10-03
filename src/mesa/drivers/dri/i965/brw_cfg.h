@@ -55,8 +55,8 @@ public:
 
    void add_successor(void *mem_ctx, bblock_t *successor);
 
-   fs_inst *start;
-   fs_inst *end;
+   backend_instruction *start;
+   backend_instruction *end;
 
    int start_ip;
    int end_ip;
@@ -78,7 +78,7 @@ public:
       return node;
    }
 
-   cfg_t(fs_visitor *v);
+   cfg_t(backend_visitor *v);
    ~cfg_t();
    bblock_t *new_block();
    void set_next_block(bblock_t *block);

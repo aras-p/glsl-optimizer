@@ -201,7 +201,7 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block)
    int acp_count = 16;
    exec_list acp[acp_count];
 
-   for (fs_inst *inst = block->start;
+   for (fs_inst *inst = (fs_inst *)block->start;
 	inst != block->end->next;
 	inst = (fs_inst *)inst->next) {
 

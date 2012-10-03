@@ -66,7 +66,7 @@ bblock_t::make_list(void *mem_ctx)
    return new(mem_ctx) bblock_link(this);
 }
 
-cfg_t::cfg_t(fs_visitor *v)
+cfg_t::cfg_t(backend_visitor *v)
 {
    mem_ctx = ralloc_context(v->mem_ctx);
    block_list.make_empty();
@@ -82,10 +82,10 @@ cfg_t::cfg_t(fs_visitor *v)
 
    set_next_block(entry);
 
-   entry->start = (fs_inst *)v->instructions.get_head();
+   entry->start = (backend_instruction *)v->instructions.get_head();
 
    foreach_list(node, &v->instructions) {
-      fs_inst *inst = (fs_inst *)node;
+      backend_instruction *inst = (backend_instruction *)node;
 
       cur->end = inst;
 
@@ -112,7 +112,7 @@ cfg_t::cfg_t(fs_visitor *v)
 	  * instructions.
 	  */
 	 next = new_block();
-	 next->start = (fs_inst *)inst->next;
+	 next->start = (backend_instruction *)inst->next;
 	 cur_if->add_successor(mem_ctx, next);
 
 	 set_next_block(next);
@@ -122,7 +122,7 @@ cfg_t::cfg_t(fs_visitor *v)
 	 cur->add_successor(mem_ctx, cur_endif);
 
 	 next = new_block();
-	 next->start = (fs_inst *)inst->next;
+	 next->start = (backend_instruction *)inst->next;
 	 cur_if->add_successor(mem_ctx, next);
 	 cur_else = next;
 
@@ -130,7 +130,7 @@ cfg_t::cfg_t(fs_visitor *v)
 	 break;
 
       case BRW_OPCODE_ENDIF:
-	 cur_endif->start = (fs_inst *)inst->next;
+	 cur_endif->start = (backend_instruction *)inst->next;
 	 cur->add_successor(mem_ctx, cur_endif);
 	 set_next_block(cur_endif);
 
@@ -159,7 +159,7 @@ cfg_t::cfg_t(fs_visitor *v)
 	  * instructions.
 	  */
 	 next = new_block();
-	 next->start = (fs_inst *)inst->next;
+	 next->start = (backend_instruction *)inst->next;
 	 cur->add_successor(mem_ctx, next);
 	 cur_do = next;
 
@@ -170,7 +170,7 @@ cfg_t::cfg_t(fs_visitor *v)
 	 cur->add_successor(mem_ctx, cur_do);
 
 	 next = new_block();
-	 next->start = (fs_inst *)inst->next;
+	 next->start = (backend_instruction *)inst->next;
 	 if (inst->predicate)
 	    cur->add_successor(mem_ctx, next);
 
@@ -181,7 +181,7 @@ cfg_t::cfg_t(fs_visitor *v)
 	 cur->add_successor(mem_ctx, cur_while);
 
 	 next = new_block();
-	 next->start = (fs_inst *)inst->next;
+	 next->start = (backend_instruction *)inst->next;
 	 if (inst->predicate)
 	    cur->add_successor(mem_ctx, next);
 
@@ -189,7 +189,7 @@ cfg_t::cfg_t(fs_visitor *v)
 	 break;
 
       case BRW_OPCODE_WHILE:
-	 cur_while->start = (fs_inst *)inst->next;
+	 cur_while->start = (backend_instruction *)inst->next;
 
 	 cur->add_successor(mem_ctx, cur_do);
 	 set_next_block(cur_while);

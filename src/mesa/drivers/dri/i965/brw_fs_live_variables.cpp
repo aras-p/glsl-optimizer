@@ -58,7 +58,7 @@ fs_live_variables::setup_def_use()
       if (b > 0)
 	 assert(cfg->blocks[b - 1]->end_ip == ip - 1);
 
-      for (fs_inst *inst = block->start;
+      for (fs_inst *inst = (fs_inst *)block->start;
 	   inst != block->end->next;
 	   inst = (fs_inst *)inst->next) {
 
