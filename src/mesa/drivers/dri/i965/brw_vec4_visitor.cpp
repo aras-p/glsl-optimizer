@@ -187,7 +187,7 @@ vec4_visitor::SCRATCH_READ(dst_reg dst, src_reg index)
    inst = new(mem_ctx) vec4_instruction(this, VS_OPCODE_SCRATCH_READ,
 					dst, index);
    inst->base_mrf = 14;
-   inst->mlen = 1;
+   inst->mlen = 2;
 
    return inst;
 }
@@ -200,7 +200,7 @@ vec4_visitor::SCRATCH_WRITE(dst_reg dst, src_reg src, src_reg index)
    inst = new(mem_ctx) vec4_instruction(this, VS_OPCODE_SCRATCH_WRITE,
 					dst, src, index);
    inst->base_mrf = 13;
-   inst->mlen = 2;
+   inst->mlen = 3;
 
    return inst;
 }
