@@ -1018,6 +1018,9 @@ let Predicates = [isEGorCayman] in {
   def : Pat<(fp_to_uint R600_Reg32:$src),
     (FLT_TO_UINT_eg (TRUNC R600_Reg32:$src))>;
 
+  def : Pat<(fsqrt R600_Reg32:$src),
+    (MUL R600_Reg32:$src, (RECIPSQRT_CLAMPED_eg R600_Reg32:$src))>;
+
 //===----------------------------------------------------------------------===//
 // Memory read/write instructions
 //===----------------------------------------------------------------------===//
