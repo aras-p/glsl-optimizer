@@ -500,13 +500,6 @@ AC_SUBST([DLOPEN_LIBS])
 dnl See if posix_memalign is available
 AC_CHECK_FUNC([posix_memalign], [DEFINES="$DEFINES -DHAVE_POSIX_MEMALIGN"])
 
-dnl signbit() is a macro in glibc's math.h, so AC_CHECK_FUNC fails. To handle
-dnl this, use AC_CHECK_DECLS and fallback to AC_CHECK_FUNC in case it fails.
-AC_CHECK_DECLS([signbit],[],
-               AC_CHECK_FUNC([signbit],[],
-                             AC_MSG_ERROR([could not find signbit()])),
-               [#include <math.h>])
-
 dnl Check for pthreads
 AX_PTHREAD
 dnl AX_PTHREADS leaves PTHREAD_LIBS empty for gcc and sets PTHREAD_CFLAGS
