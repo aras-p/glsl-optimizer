@@ -62,14 +62,14 @@ public:
       return node;
    }
 
-   fs_live_variables(fs_visitor *v, fs_cfg *cfg);
+   fs_live_variables(fs_visitor *v, cfg_t *cfg);
    ~fs_live_variables();
 
    void setup_def_use();
    void compute_live_variables();
 
    fs_visitor *v;
-   fs_cfg *cfg;
+   cfg_t *cfg;
    void *mem_ctx;
 
    int num_vars;

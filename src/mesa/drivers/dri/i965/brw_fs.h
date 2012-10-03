@@ -50,7 +50,7 @@ extern "C" {
 #include "glsl/glsl_types.h"
 #include "glsl/ir.h"
 
-class fs_bblock;
+class bblock_t;
 namespace {
    class acp_entry;
 }
@@ -242,11 +242,11 @@ public:
    void calculate_live_intervals();
    bool opt_algebraic();
    bool opt_cse();
-   bool opt_cse_local(fs_bblock *block, exec_list *aeb);
+   bool opt_cse_local(bblock_t *block, exec_list *aeb);
    bool opt_copy_propagate();
    bool try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry);
    bool try_constant_propagate(fs_inst *inst, acp_entry *entry);
-   bool opt_copy_propagate_local(void *mem_ctx, fs_bblock *block);
+   bool opt_copy_propagate_local(void *mem_ctx, bblock_t *block);
    bool register_coalesce();
    bool register_coalesce_2();
    bool compute_to_mrf();
@@ -422,7 +422,7 @@ public:
    int force_uncompressed_stack;
    int force_sechalf_stack;
 
-   class fs_bblock *bblock;
+   class bblock_t *bblock;
 };
 
 bool brw_do_channel_expressions(struct exec_list *instructions);

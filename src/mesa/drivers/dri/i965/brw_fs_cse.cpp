@@ -81,7 +81,7 @@ operands_match(fs_reg *xs, fs_reg *ys)
 }
 
 bool
-fs_visitor::opt_cse_local(fs_bblock *block, exec_list *aeb)
+fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 {
    bool progress = false;
 
@@ -176,10 +176,10 @@ fs_visitor::opt_cse()
 {
    bool progress = false;
 
-   fs_cfg cfg(this);
+   cfg_t cfg(this);
 
    for (int b = 0; b < cfg.num_blocks; b++) {
-      fs_bblock *block = cfg.blocks[b];
+      bblock_t *block = cfg.blocks[b];
       exec_list aeb;
 
       progress = opt_cse_local(block, &aeb) || progress;

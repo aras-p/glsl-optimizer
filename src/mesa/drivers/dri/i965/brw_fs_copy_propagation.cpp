@@ -195,7 +195,7 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
  * list.
  */
 bool
-fs_visitor::opt_copy_propagate_local(void *mem_ctx, fs_bblock *block)
+fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block)
 {
    bool progress = false;
    int acp_count = 16;
@@ -273,10 +273,10 @@ fs_visitor::opt_copy_propagate()
    bool progress = false;
    void *mem_ctx = ralloc_context(this->mem_ctx);
 
-   fs_cfg cfg(this);
+   cfg_t cfg(this);
 
    for (int b = 0; b < cfg.num_blocks; b++) {
-      fs_bblock *block = cfg.blocks[b];
+      bblock_t *block = cfg.blocks[b];
 
       progress = opt_copy_propagate_local(mem_ctx, block) || progress;
    }

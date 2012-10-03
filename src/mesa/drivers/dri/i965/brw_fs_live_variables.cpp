@@ -52,7 +52,7 @@ fs_live_variables::setup_def_use()
    int ip = 0;
 
    for (int b = 0; b < cfg->num_blocks; b++) {
-      fs_bblock *block = cfg->blocks[b];
+      bblock_t *block = cfg->blocks[b];
 
       assert(ip == block->start_ip);
       if (b > 0)
@@ -118,8 +118,8 @@ fs_live_variables::compute_live_variables()
 
 	 /* Update liveout */
 	 foreach_list(block_node, &cfg->blocks[b]->children) {
-	    fs_bblock_link *link = (fs_bblock_link *)block_node;
-	    fs_bblock *block = link->block;
+	    bblock_link *link = (bblock_link *)block_node;
+	    bblock_t *block = link->block;
 
 	    for (int i = 0; i < num_vars; i++) {
 	       if (bd[block->block_num].livein[i] && !bd[b].liveout[i]) {
@@ -132,7 +132,7 @@ fs_live_variables::compute_live_variables()
    }
 }
 
-fs_live_variables::fs_live_variables(fs_visitor *v, fs_cfg *cfg)
+fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
    : v(v), cfg(cfg)
 {
    mem_ctx = ralloc_context(cfg->mem_ctx);
@@ -203,7 +203,7 @@ fs_visitor::calculate_live_intervals()
    }
 
    /* Now, extend those intervals using our analysis of control flow. */
-   fs_cfg cfg(this);
+   cfg_t cfg(this);
    fs_live_variables livevars(this, &cfg);
 
    for (int b = 0; b < cfg.num_blocks; b++) {

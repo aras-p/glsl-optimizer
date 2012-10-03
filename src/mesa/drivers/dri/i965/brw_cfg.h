@@ -27,17 +27,17 @@
 
 #include "brw_fs.h"
 
-class fs_bblock_link : public exec_node {
+class bblock_link : public exec_node {
 public:
-   fs_bblock_link(fs_bblock *block)
+   bblock_link(bblock_t *block)
       : block(block)
    {
    }
 
-   fs_bblock *block;
+   bblock_t *block;
 };
 
-class fs_bblock {
+class bblock_t {
 public:
    static void* operator new(size_t size, void *ctx)
    {
@@ -49,11 +49,11 @@ public:
       return node;
    }
 
-   fs_bblock_link *make_list(void *mem_ctx);
+   bblock_link *make_list(void *mem_ctx);
 
-   fs_bblock();
+   bblock_t();
 
-   void add_successor(void *mem_ctx, fs_bblock *successor);
+   void add_successor(void *mem_ctx, bblock_t *successor);
 
    fs_inst *start;
    fs_inst *end;
@@ -66,7 +66,7 @@ public:
    int block_num;
 };
 
-class fs_cfg {
+class cfg_t {
 public:
    static void* operator new(size_t size, void *ctx)
    {
@@ -78,17 +78,17 @@ public:
       return node;
    }
 
-   fs_cfg(fs_visitor *v);
-   ~fs_cfg();
-   fs_bblock *new_block();
-   void set_next_block(fs_bblock *block);
+   cfg_t(fs_visitor *v);
+   ~cfg_t();
+   bblock_t *new_block();
+   void set_next_block(bblock_t *block);
    void make_block_array();
 
    /** @{
     *
     * Used while generating the block list.
     */
-   fs_bblock *cur;
+   bblock_t *cur;
    int ip;
    /** @} */
 
@@ -96,6 +96,6 @@ public:
 
    /** Ordered list (by ip) of basic blocks */
    exec_list block_list;
-   fs_bblock **blocks;
+   bblock_t **blocks;
    int num_blocks;
 };

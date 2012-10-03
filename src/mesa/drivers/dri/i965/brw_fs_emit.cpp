@@ -738,9 +738,9 @@ fs_visitor::generate_code()
       }
    }
 
-   fs_cfg *cfg = NULL;
+   cfg_t *cfg = NULL;
    if (unlikely(INTEL_DEBUG & DEBUG_WM))
-      cfg = new(mem_ctx) fs_cfg(this);
+      cfg = new(mem_ctx) cfg_t(this);
 
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
@@ -748,15 +748,15 @@ fs_visitor::generate_code()
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
 	 foreach_list(node, &cfg->block_list) {
-	    fs_bblock_link *link = (fs_bblock_link *)node;
-	    fs_bblock *block = link->block;
+	    bblock_link *link = (bblock_link *)node;
+	    bblock_t *block = link->block;
 
 	    if (block->start == inst) {
 	       printf("   START B%d", block->block_num);
 	       foreach_list(predecessor_node, &block->parents) {
-		  fs_bblock_link *predecessor_link =
-		     (fs_bblock_link *)predecessor_node;
-		  fs_bblock *predecessor_block = predecessor_link->block;
+		  bblock_link *predecessor_link =
+		     (bblock_link *)predecessor_node;
+		  bblock_t *predecessor_block = predecessor_link->block;
 		  printf(" <-B%d", predecessor_block->block_num);
 	       }
 	       printf("\n");
@@ -1020,15 +1020,15 @@ fs_visitor::generate_code()
 			  last_native_insn_offset, p->next_insn_offset);
 
 	 foreach_list(node, &cfg->block_list) {
-	    fs_bblock_link *link = (fs_bblock_link *)node;
-	    fs_bblock *block = link->block;
+	    bblock_link *link = (bblock_link *)node;
+	    bblock_t *block = link->block;
 
 	    if (block->end == inst) {
 	       printf("   END B%d", block->block_num);
 	       foreach_list(successor_node, &block->children) {
-		  fs_bblock_link *successor_link =
-		     (fs_bblock_link *)successor_node;
-		  fs_bblock *successor_block = successor_link->block;
+		  bblock_link *successor_link =
+		     (bblock_link *)successor_node;
+		  bblock_t *successor_block = successor_link->block;
 		  printf(" ->B%d", successor_block->block_num);
 	       }
 	       printf("\n");
