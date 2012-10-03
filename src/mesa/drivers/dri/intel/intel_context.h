@@ -236,6 +236,7 @@ struct intel_context
    int gt;
    bool needs_ff_sync;
    bool is_haswell;
+   bool is_baytrail;
    bool is_g4x;
    bool is_945;
    bool has_separate_stencil;

@@ -186,6 +186,13 @@ intelGetString(struct gl_context * ctx, GLenum name)
       case PCI_CHIP_IVYBRIDGE_S_GT2:
 	 chipset = "Intel(R) Ivybridge Server";
 	 break;
+      case PCI_CHIP_BAYTRAIL_M_1:
+      case PCI_CHIP_BAYTRAIL_M_2:
+      case PCI_CHIP_BAYTRAIL_M_3:
+      case PCI_CHIP_BAYTRAIL_M_4:
+      case PCI_CHIP_BAYTRAIL_D:
+         chipset = "Intel(R) Bay Trail";
+         break;
       case PCI_CHIP_HASWELL_GT1:
       case PCI_CHIP_HASWELL_GT2:
       case PCI_CHIP_HASWELL_GT2_PLUS:
@@ -682,6 +689,9 @@ intelInitContext(struct intel_context *intel,
 
    if (IS_HASWELL(devID)) {
       intel->is_haswell = true;
+   } else if (IS_BAYTRAIL(devID)) {
+      intel->is_baytrail = true;
+      intel->gt = 1;
    } else if (IS_G4X(devID)) {
       intel->is_g4x = true;
    } else if (IS_945(devID)) {

@@ -87,6 +87,12 @@
 #define PCI_CHIP_IVYBRIDGE_S_GT1        0x015a  /* Server */
 #define PCI_CHIP_IVYBRIDGE_S_GT2        0x016a
 
+#define PCI_CHIP_BAYTRAIL_M_1           0x0F31
+#define PCI_CHIP_BAYTRAIL_M_2           0x0F32
+#define PCI_CHIP_BAYTRAIL_M_3           0x0F33
+#define PCI_CHIP_BAYTRAIL_M_4           0x0157
+#define PCI_CHIP_BAYTRAIL_D             0x0155
+
 #define PCI_CHIP_HASWELL_GT1            0x0402 /* Desktop */
 #define PCI_CHIP_HASWELL_GT2            0x0412
 #define PCI_CHIP_HASWELL_GT2_PLUS       0x0422
@@ -190,7 +196,14 @@
 
 #define IS_IVYBRIDGE(devid)     (IS_IVB_GT1(devid) || IS_IVB_GT2(devid))
 
+#define IS_BAYTRAIL(devid)      (devid == PCI_CHIP_BAYTRAIL_M_1 || \
+                                 devid == PCI_CHIP_BAYTRAIL_M_2 || \
+                                 devid == PCI_CHIP_BAYTRAIL_M_3 || \
+                                 devid == PCI_CHIP_BAYTRAIL_M_4 || \
+                                 devid == PCI_CHIP_BAYTRAIL_D)
+
 #define IS_GEN7(devid)	        (IS_IVYBRIDGE(devid) || \
+				 IS_BAYTRAIL(devid) || \
 				 IS_HASWELL(devid))
 
 #define IS_HSW_GT1(devid)	(devid == PCI_CHIP_HASWELL_GT1 || \
