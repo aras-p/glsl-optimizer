@@ -312,8 +312,8 @@ public:
    int setup_attributes(int payload_reg);
    int setup_uniforms(int payload_reg);
    void setup_payload();
-   void reg_allocate_trivial();
-   void reg_allocate();
+   bool reg_allocate_trivial();
+   bool reg_allocate();
    void evaluate_spill_costs(float *spill_costs, bool *no_spill);
    int choose_spill_reg(struct ra_graph *g);
    void spill_reg(int spill_reg);

@@ -41,7 +41,7 @@ assign(unsigned int *reg_hw_locations, reg *reg)
    }
 }
 
-void
+bool
 vec4_visitor::reg_allocate_trivial()
 {
    unsigned int hw_reg_mapping[this->virtual_grf_count];
@@ -90,7 +90,10 @@ vec4_visitor::reg_allocate_trivial()
    if (prog_data->total_grf > max_grf) {
       fail("Ran out of regs on trivial allocator (%d/%d)\n",
 	   prog_data->total_grf, max_grf);
+      return false;
    }
+
+   return true;
 }
 
 static void
@@ -139,7 +142,7 @@ brw_alloc_reg_set_for_classes(struct brw_context *brw,
    ra_set_finalize(brw->vs.regs, NULL);
 }
 
-void
+bool
 vec4_visitor::reg_allocate()
 {
    unsigned int hw_reg_mapping[virtual_grf_count];
@@ -151,10 +154,8 @@ vec4_visitor::reg_allocate()
    /* Using the trivial allocator can be useful in debugging undefined
     * register access as a result of broken optimization passes.
     */
-   if (0) {
-      reg_allocate_trivial();
-      return;
-   }
+   if (0)
+      return reg_allocate_trivial();
 
    calculate_live_intervals();
 
@@ -213,7 +214,7 @@ vec4_visitor::reg_allocate()
          spill_reg(reg);
       }
       ralloc_free(g);
-      return;
+      return false;
    }
 
    /* Get the chosen virtual registers for each node, and map virtual
@@ -239,6 +240,8 @@ vec4_visitor::reg_allocate()
    }
 
    ralloc_free(g);
+
+   return true;
 }
 
 void

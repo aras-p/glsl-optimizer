@@ -823,7 +823,10 @@ vec4_visitor::run()
       }
    }
 
-   reg_allocate();
+   while (!reg_allocate()) {
+      if (failed)
+         break;
+   }
 
    if (failed)
       return false;
