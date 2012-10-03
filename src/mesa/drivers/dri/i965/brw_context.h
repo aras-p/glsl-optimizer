@@ -1298,6 +1298,14 @@ brw_program_reloc(struct brw_context *brw, uint32_t state_offset,
 bool brw_do_cubemap_normalize(struct exec_list *instructions);
 bool brw_lower_texture_gradients(struct exec_list *instructions);
 
+struct opcode_desc {
+    char    *name;
+    int	    nsrc;
+    int	    ndst;
+};
+
+extern const struct opcode_desc opcode_descs[128];
+
 #ifdef __cplusplus
 }
 #endif

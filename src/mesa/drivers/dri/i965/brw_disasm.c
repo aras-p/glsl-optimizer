@@ -32,11 +32,7 @@
 #include "brw_context.h"
 #include "brw_defines.h"
 
-static const struct {
-    char    *name;
-    int	    nsrc;
-    int	    ndst;
-} opcode[128] = {
+const struct opcode_desc opcode_descs[128] = {
     [BRW_OPCODE_MOV] = { .name = "mov", .nsrc = 1, .ndst = 1 },
     [BRW_OPCODE_FRC] = { .name = "frc", .nsrc = 1, .ndst = 1 },
     [BRW_OPCODE_RNDU] = { .name = "rndu", .nsrc = 1, .ndst = 1 },
@@ -91,6 +87,7 @@ static const struct {
     [BRW_OPCODE_DO] = { .name = "do", .nsrc = 0, .ndst = 0 },
     [BRW_OPCODE_ENDIF] = { .name = "endif", .nsrc = 2, .ndst = 0 },
 };
+static const struct opcode_desc *opcode = opcode_descs;
 
 static const char * const conditional_modifier[16] = {
     [BRW_CONDITIONAL_NONE] = "",

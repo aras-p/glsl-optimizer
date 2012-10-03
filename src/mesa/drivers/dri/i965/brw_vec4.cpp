@@ -925,4 +925,87 @@ vec4_visitor::split_virtual_grfs()
    this->live_intervals_valid = false;
 }
 
+void
+vec4_visitor::dump_instruction(vec4_instruction *inst)
+{
+   if (inst->opcode < ARRAY_SIZE(opcode_descs) &&
+       opcode_descs[inst->opcode].name) {
+      printf("%s ", opcode_descs[inst->opcode].name);
+   } else {
+      printf("op%d ", inst->opcode);
+   }
+
+   switch (inst->dst.file) {
+   case GRF:
+      printf("vgrf%d.%d", inst->dst.reg, inst->dst.reg_offset);
+      break;
+   case MRF:
+      printf("m%d", inst->dst.reg);
+      break;
+   case BAD_FILE:
+      printf("(null)");
+      break;
+   default:
+      printf("???");
+      break;
+   }
+   if (inst->dst.writemask != WRITEMASK_XYZW) {
+      printf(".");
+      if (inst->dst.writemask & 1)
+         printf("x");
+      if (inst->dst.writemask & 2)
+         printf("y");
+      if (inst->dst.writemask & 4)
+         printf("z");
+      if (inst->dst.writemask & 8)
+         printf("w");
+   }
+   printf(", ");
+
+   for (int i = 0; i < 3; i++) {
+      switch (inst->src[i].file) {
+      case GRF:
+         printf("vgrf%d", inst->src[i].reg);
+         break;
+      case ATTR:
+         printf("attr%d", inst->src[i].reg);
+         break;
+      case UNIFORM:
+         printf("u%d", inst->src[i].reg);
+         break;
+      case BAD_FILE:
+         printf("(null)");
+         break;
+      default:
+         printf("???");
+         break;
+      }
+
+      if (inst->src[i].reg_offset)
+         printf(".%d", inst->src[i].reg_offset);
+
+      static const char *chans[4] = {"x", "y", "z", "w"};
+      printf(".");
+      for (int c = 0; c < 4; c++) {
+         printf(chans[BRW_GET_SWZ(inst->src[i].swizzle, c)]);
+      }
+
+      if (i < 3)
+         printf(", ");
+   }
+
+   printf("\n");
+}
+
+void
+vec4_visitor::dump_instructions()
+{
+   int ip = 0;
+   foreach_list_safe(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+      printf("%d: ", ip++);
+      dump_instruction(inst);
+   }
+}
+
 } /* namespace brw */

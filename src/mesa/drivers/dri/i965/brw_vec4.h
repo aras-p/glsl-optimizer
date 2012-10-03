@@ -482,6 +482,9 @@ public:
 				    struct brw_reg dst,
 				    struct brw_reg index,
 				    struct brw_reg offset);
+
+   void dump_instruction(vec4_instruction *inst);
+   void dump_instructions();
 };
 
 } /* namespace brw */
