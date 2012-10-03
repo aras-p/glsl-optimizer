@@ -1023,28 +1023,26 @@ struct brw_context
       uint32_t bind_bo_offset;
       uint32_t surf_offset[BRW_MAX_WM_SURFACES];
 
-      /** @{ register allocator */
+      struct {
+         struct ra_regs *regs;
 
-      struct ra_regs *regs;
+         /** Array of the ra classes for the unaligned contiguous
+          * register block sizes used.
+          */
+         int *classes;
 
-      /** Array of the ra classes for the unaligned contiguous
-       * register block sizes used.
-       */
-      int *classes;
+         /**
+          * Mapping for register-allocated objects in *regs to the first
+          * GRF for that object.
+          */
+         uint8_t *ra_reg_to_grf;
 
-      /**
-       * Mapping for register-allocated objects in *regs to the first
-       * GRF for that object.
-      */
-      uint8_t *ra_reg_to_grf;
-
-      /**
-       * ra class for the aligned pairs we use for PLN, which doesn't
-       * appear in *classes.
-       */
-      int aligned_pairs_class;
-
-      /** @} */
+         /**
+          * ra class for the aligned pairs we use for PLN, which doesn't
+          * appear in *classes.
+          */
+         int aligned_pairs_class;
+      } reg_sets[2];
    } wm;
 
 
@@ -1173,6 +1171,10 @@ void brw_upload_urb_fence(struct brw_context *brw);
 /* brw_curbe.c
  */
 void brw_upload_cs_urb_state(struct brw_context *brw);
+
+/* brw_fs_reg_allocate.cpp
+ */
+void brw_fs_alloc_reg_sets(struct brw_context *brw);
 
 /* brw_disasm.c */
 int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);

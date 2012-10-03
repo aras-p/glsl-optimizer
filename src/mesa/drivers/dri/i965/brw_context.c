@@ -389,6 +389,8 @@ brwCreateContext(int api,
    if ((flags & __DRI_CTX_FLAG_DEBUG) != 0)
       ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_DEBUG_BIT;
 
+   brw_fs_alloc_reg_sets(brw);
+
    return true;
 }
 
