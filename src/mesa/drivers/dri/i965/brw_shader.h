@@ -30,6 +30,9 @@
 class backend_instruction : public exec_node {
 public:
    enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
+
+   uint32_t predicate;
+   bool predicate_inverse;
 };
 
 class backend_visitor : public ir_visitor {

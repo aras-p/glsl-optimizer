@@ -803,7 +803,7 @@ fs_visitor::generate_code()
       dst = brw_reg_from_fs_reg(&inst->dst);
 
       brw_set_conditionalmod(p, inst->conditional_mod);
-      brw_set_predicate_control(p, inst->predicated);
+      brw_set_predicate_control(p, inst->predicate);
       brw_set_predicate_inverse(p, inst->predicate_inverse);
       brw_set_saturate(p, inst->saturate);
 

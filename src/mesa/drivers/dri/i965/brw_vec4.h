@@ -171,8 +171,6 @@ public:
    src_reg src[3];
 
    bool saturate;
-   bool predicate_inverse;
-   uint32_t predicate;
 
    int conditional_mod; /**< BRW_CONDITIONAL_* */
 

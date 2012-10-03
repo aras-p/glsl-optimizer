@@ -93,7 +93,7 @@ fs_visitor::emit_fp_sop(uint32_t conditional_mod,
          inst->conditional_mod = conditional_mod;
 
          inst = emit(BRW_OPCODE_SEL, regoffset(dst, i), one, fs_reg(0.0f));
-         inst->predicated = true;
+         inst->predicate = BRW_PREDICATE_NORMAL;
       }
    }
 }
@@ -177,7 +177,7 @@ fs_visitor::emit_fragment_program_code()
 
                inst = emit(BRW_OPCODE_SEL, regoffset(dst, i),
                            regoffset(src[1], i), regoffset(src[2], i));
-               inst->predicated = true;
+               inst->predicate = BRW_PREDICATE_NORMAL;
             }
          }
          break;
@@ -261,7 +261,7 @@ fs_visitor::emit_fragment_program_code()
             inst->conditional_mod = BRW_CONDITIONAL_L;
 
             inst = emit(BRW_OPCODE_IF);
-            inst->predicated = true;
+            inst->predicate = BRW_PREDICATE_NORMAL;
             emit(FS_OPCODE_DISCARD);
             emit(BRW_OPCODE_ENDIF);
          }
@@ -300,7 +300,7 @@ fs_visitor::emit_fragment_program_code()
             if (fpi->DstReg.WriteMask & WRITEMASK_Y) {
                emit(BRW_OPCODE_MOV, regoffset(dst, 1), regoffset(src[0], 0));
                inst = emit(BRW_OPCODE_MOV, regoffset(dst, 1), fs_reg(0.0f));
-               inst->predicated = true;
+               inst->predicate = BRW_PREDICATE_NORMAL;
             }
 
             if (fpi->DstReg.WriteMask & WRITEMASK_Z) {
@@ -308,7 +308,7 @@ fs_visitor::emit_fragment_program_code()
                          regoffset(src[0], 1), regoffset(src[0], 3));
 
                inst = emit(BRW_OPCODE_MOV, regoffset(dst, 2), fs_reg(0.0f));
-               inst->predicated = true;
+               inst->predicate = BRW_PREDICATE_NORMAL;
             }
          }
 

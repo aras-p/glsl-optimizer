@@ -408,7 +408,7 @@ fs_visitor::spill_reg(int spill_reg)
           * inst->regs_written(), then we need to unspill the destination
           * since we write back out all of the regs_written().
 	  */
-	 if (inst->predicated || inst->force_uncompressed || inst->force_sechalf) {
+	 if (inst->predicate || inst->force_uncompressed || inst->force_sechalf) {
             fs_reg unspill_reg = inst->dst;
             for (int chan = 0; chan < inst->regs_written(); chan++) {
                emit_unspill(inst, unspill_reg,

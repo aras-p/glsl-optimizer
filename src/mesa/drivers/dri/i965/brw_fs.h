@@ -158,8 +158,6 @@ public:
    fs_reg dst;
    fs_reg src[3];
    bool saturate;
-   bool predicated;
-   bool predicate_inverse;
    int conditional_mod; /**< BRW_CONDITIONAL_* */
 
    int mlen; /**< SEND message length */

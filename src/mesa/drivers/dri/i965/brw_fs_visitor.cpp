@@ -191,7 +191,7 @@ fs_visitor::emit_minmax(uint32_t conditionalmod, fs_reg dst,
       inst->conditional_mod = conditionalmod;
 
       inst = emit(BRW_OPCODE_SEL, dst, src0, src1);
-      inst->predicated = true;
+      inst->predicate = BRW_PREDICATE_NORMAL;
    }
 }
 
@@ -329,12 +329,12 @@ fs_visitor::visit(ir_expression *ir)
       inst = emit(BRW_OPCODE_CMP, reg_null_f, op[0], fs_reg(0.0f));
       inst->conditional_mod = BRW_CONDITIONAL_G;
       inst = emit(BRW_OPCODE_MOV, this->result, fs_reg(1.0f));
-      inst->predicated = true;
+      inst->predicate = BRW_PREDICATE_NORMAL;
 
       inst = emit(BRW_OPCODE_CMP, reg_null_f, op[0], fs_reg(0.0f));
       inst->conditional_mod = BRW_CONDITIONAL_L;
       inst = emit(BRW_OPCODE_MOV, this->result, fs_reg(-1.0f));
-      inst->predicated = true;
+      inst->predicate = BRW_PREDICATE_NORMAL;
 
       break;
    case ir_unop_rcp:
@@ -623,7 +623,7 @@ fs_visitor::emit_assignment_writes(fs_reg &l, fs_reg &r,
 
 	 if (predicated || !l.equals(r)) {
 	    fs_inst *inst = emit(BRW_OPCODE_MOV, l, r);
-	    inst->predicated = predicated;
+	    inst->predicate = predicated ? BRW_PREDICATE_NORMAL : BRW_PREDICATE_NONE;
 	 }
 
 	 l.reg_offset++;
@@ -724,7 +724,7 @@ fs_visitor::visit(ir_assignment *ir)
 	 if (ir->write_mask & (1 << i)) {
 	    inst = emit(BRW_OPCODE_MOV, l, r);
 	    if (ir->condition)
-	       inst->predicated = true;
+	       inst->predicate = BRW_PREDICATE_NORMAL;
 	    r.reg_offset++;
 	 }
 	 l.reg_offset++;
@@ -1673,7 +1673,7 @@ fs_visitor::visit(ir_if *ir)
       emit_bool_to_cond_code(ir->condition);
 
       inst = emit(BRW_OPCODE_IF);
-      inst->predicated = true;
+      inst->predicate = BRW_PREDICATE_NORMAL;
    }
 
    foreach_list(node, &ir->then_instructions) {
@@ -1730,7 +1730,7 @@ fs_visitor::visit(ir_loop *ir)
       inst->conditional_mod = brw_conditional_for_comparison(ir->cmp);
 
       inst = emit(BRW_OPCODE_BREAK);
-      inst->predicated = true;
+      inst->predicate = BRW_PREDICATE_NORMAL;
    }
 
    foreach_list(node, &ir->body_instructions) {

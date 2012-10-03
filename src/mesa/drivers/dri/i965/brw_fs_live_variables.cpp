@@ -78,7 +78,7 @@ fs_live_variables::setup_def_use()
 	  */
 	 if (inst->dst.file == GRF &&
 	     inst->regs_written() == v->virtual_grf_sizes[inst->dst.reg] &&
-	     !inst->predicated &&
+	     !inst->predicate &&
 	     !inst->force_uncompressed &&
 	     !inst->force_sechalf) {
 	    int reg = inst->dst.reg;

@@ -298,7 +298,7 @@ instruction_scheduler::calculate_deps()
 	 add_dep(last_mrf_write[inst->base_mrf + i], n);
       }
 
-      if (inst->predicated) {
+      if (inst->predicate) {
 	 assert(last_conditional_mod);
 	 add_dep(last_conditional_mod, n);
       }
@@ -382,7 +382,7 @@ instruction_scheduler::calculate_deps()
 	 add_dep(n, last_mrf_write[inst->base_mrf + i], 2);
       }
 
-      if (inst->predicated) {
+      if (inst->predicate) {
 	 add_dep(n, last_conditional_mod);
       }
 

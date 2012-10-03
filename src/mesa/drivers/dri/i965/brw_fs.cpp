@@ -141,7 +141,7 @@ fs_inst::equals(fs_inst *inst)
            src[1].equals(inst->src[1]) &&
            src[2].equals(inst->src[2]) &&
            saturate == inst->saturate &&
-           predicated == inst->predicated &&
+           predicate == inst->predicate &&
            conditional_mod == inst->conditional_mod &&
            mlen == inst->mlen &&
            base_mrf == inst->base_mrf &&
@@ -736,7 +736,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
                      emit(FS_OPCODE_MOV_DISPATCH_TO_FLAGS, attr);
                      fs_inst *inst = emit_linterp(attr, fs_reg(interp),
                                                   interpolation_mode, false);
-                     inst->predicated = true;
+                     inst->predicate = BRW_PREDICATE_NORMAL;
                      inst->predicate_inverse = true;
                   }
 		  if (intel->gen < 6) {
@@ -1351,7 +1351,7 @@ fs_visitor::register_coalesce_2()
       fs_inst *inst = (fs_inst *)node;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
-	  inst->predicated ||
+	  inst->predicate ||
 	  inst->saturate ||
 	  inst->src[0].file != GRF ||
 	  inst->src[0].negate ||
@@ -1431,7 +1431,7 @@ fs_visitor::register_coalesce()
 	 continue;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
-	  inst->predicated ||
+	  inst->predicate ||
 	  inst->saturate ||
 	  inst->dst.file != GRF || (inst->src[0].file != GRF &&
 				    inst->src[0].file != UNIFORM)||
@@ -1532,7 +1532,7 @@ fs_visitor::compute_to_mrf()
       next_ip++;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
-	  inst->predicated ||
+	  inst->predicate ||
 	  inst->dst.file != MRF || inst->src[0].file != GRF ||
 	  inst->dst.type != inst->src[0].type ||
 	  inst->src[0].abs || inst->src[0].negate || inst->src[0].smear != -1)
@@ -1581,7 +1581,7 @@ fs_visitor::compute_to_mrf()
 	     * that writes that reg, but it would require smarter
 	     * tracking to delay the rewriting until complete success.
 	     */
-	    if (scan_inst->predicated)
+	    if (scan_inst->predicate)
 	       break;
 
 	    /* If it's half of register setup and not the same half as
@@ -1758,7 +1758,7 @@ fs_visitor::remove_duplicate_mrf_writes()
       if (inst->opcode == BRW_OPCODE_MOV &&
 	  inst->dst.file == MRF &&
 	  inst->src[0].file == GRF &&
-	  !inst->predicated) {
+	  !inst->predicate) {
 	 last_mrf_move[inst->dst.reg] = inst;
       }
    }
@@ -1788,7 +1788,7 @@ fs_visitor::get_instruction_generating_reg(fs_inst *start,
 					   fs_reg reg)
 {
    if (end == start ||
-       end->predicated ||
+       end->predicate ||
        end->force_uncompressed ||
        end->force_sechalf ||
        !reg.equals(end->dst)) {

@@ -171,7 +171,7 @@ cfg_t::cfg_t(fs_visitor *v)
 
 	 next = new_block();
 	 next->start = (fs_inst *)inst->next;
-	 if (inst->predicated)
+	 if (inst->predicate)
 	    cur->add_successor(mem_ctx, next);
 
 	 set_next_block(next);
@@ -182,7 +182,7 @@ cfg_t::cfg_t(fs_visitor *v)
 
 	 next = new_block();
 	 next->start = (fs_inst *)inst->next;
-	 if (inst->predicated)
+	 if (inst->predicate)
 	    cur->add_successor(mem_ctx, next);
 
 	 set_next_block(next);
