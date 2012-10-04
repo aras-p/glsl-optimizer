@@ -830,7 +830,9 @@ dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 
    switch (vblank_mode) {
    case DRI_CONF_VBLANK_NEVER:
-      return GLX_BAD_VALUE;
+      if (interval != 0)
+         return GLX_BAD_VALUE;
+      break;
    case DRI_CONF_VBLANK_ALWAYS_SYNC:
       if (interval <= 0)
 	 return GLX_BAD_VALUE;
