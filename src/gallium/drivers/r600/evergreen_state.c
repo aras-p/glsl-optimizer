@@ -2373,7 +2373,7 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 {
 	struct r600_command_buffer *cb = &rctx->start_cs_cmd;
 
-	r600_init_command_buffer(rctx, cb, 0, 256);
+	r600_init_command_buffer(cb, 256);
 
 	/* This must be first. */
 	r600_store_value(cb, PKT3(PKT3_CONTEXT_CONTROL, 1, 0));
@@ -2774,7 +2774,7 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 		return;
 	}
 
-	r600_init_command_buffer(rctx, cb, 0, 256);
+	r600_init_command_buffer(cb, 256);
 
 	/* This must be first. */
 	r600_store_value(cb, PKT3(PKT3_CONTEXT_CONTROL, 1, 0));

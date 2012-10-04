@@ -329,7 +329,7 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	 * See evergreen_init_atom_start_compute_cs() in this file for the list
 	 * of registers initialized by the start_compute_cs_cmd atom.
 	 */
-	r600_emit_atom(ctx, &ctx->start_compute_cs_cmd.atom);
+	r600_emit_command_buffer(ctx->cs, &ctx->start_compute_cs_cmd);
 
 	ctx->flags |= R600_CONTEXT_CB_FLUSH;
 	r600_flush_emit(ctx);
@@ -625,7 +625,7 @@ void evergreen_init_atom_start_compute_cs(struct r600_context *ctx)
 	/* since all required registers are initialised in the
 	 * start_compute_cs_cmd atom, we can EMIT_EARLY here.
 	 */
-	r600_init_command_buffer(ctx, cb, 1, 256);
+	r600_init_command_buffer(cb, 256);
 	cb->pkt_flags = RADEON_CP_PACKET3_COMPUTE_MODE;
 
 	switch (ctx->family) {

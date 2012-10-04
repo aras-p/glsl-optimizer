@@ -34,19 +34,8 @@
 
 #define R600_PRIM_RECTANGLE_LIST PIPE_PRIM_MAX
 
-static void r600_emit_command_buffer(struct r600_context *rctx, struct r600_atom *atom)
+void r600_init_command_buffer(struct r600_command_buffer *cb, unsigned num_dw)
 {
-	struct radeon_winsys_cs *cs = rctx->cs;
-	struct r600_command_buffer *cb = (struct r600_command_buffer*)atom;
-
-	assert(cs->cdw + cb->atom.num_dw <= RADEON_MAX_CMDBUF_DWORDS);
-	memcpy(cs->buf + cs->cdw, cb->buf, 4 * cb->atom.num_dw);
-	cs->cdw += cb->atom.num_dw;
-}
-
-void r600_init_command_buffer(struct r600_context *rctx, struct r600_command_buffer *cb, unsigned id, unsigned num_dw)
-{
-	r600_init_atom(rctx, &cb->atom, id, r600_emit_command_buffer, 0);
 	cb->buf = CALLOC(1, 4 * num_dw);
 	cb->max_num_dw = num_dw;
 }

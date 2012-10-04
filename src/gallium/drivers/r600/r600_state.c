@@ -2223,7 +2223,7 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	struct r600_command_buffer *cb = &rctx->start_cs_cmd;
 	uint32_t tmp;
 
-	r600_init_command_buffer(rctx, cb, 0, 256);
+	r600_init_command_buffer(cb, 256);
 
 	/* R6xx requires this packet at the start of each command buffer */
 	if (rctx->chip_class == R600) {

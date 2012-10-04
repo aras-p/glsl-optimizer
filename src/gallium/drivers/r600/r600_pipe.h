@@ -59,8 +59,8 @@ struct r600_atom {
 /* This is an atom containing GPU commands that never change.
  * This is supposed to be copied directly into the CS. */
 struct r600_command_buffer {
-	struct r600_atom atom;
 	uint32_t *buf;
+	unsigned num_dw;
 	unsigned max_num_dw;
 	unsigned pkt_flags;
 };
@@ -504,6 +504,14 @@ struct r600_context {
 	int			last_start_instance;
 };
 
+static INLINE void r600_emit_command_buffer(struct radeon_winsys_cs *cs,
+					    struct r600_command_buffer *cb)
+{
+	assert(cs->cdw + cb->num_dw <= RADEON_MAX_CMDBUF_DWORDS);
+	memcpy(cs->buf + cs->cdw, cb->buf, 4 * cb->num_dw);
+	cs->cdw += cb->num_dw;
+}
+
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
 {
 	atom->emit(rctx, atom);
@@ -696,15 +704,15 @@ unsigned r600_tex_compare(unsigned compare);
 
 static INLINE void r600_store_value(struct r600_command_buffer *cb, unsigned value)
 {
-	cb->buf[cb->atom.num_dw++] = value;
+	cb->buf[cb->num_dw++] = value;
 }
 
 static INLINE void r600_store_config_reg_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
 {
 	assert(reg < R600_CONTEXT_REG_OFFSET);
-	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
-	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_CONFIG_REG, num, 0);
-	cb->buf[cb->atom.num_dw++] = (reg - R600_CONFIG_REG_OFFSET) >> 2;
+	assert(cb->num_dw+2+num <= cb->max_num_dw);
+	cb->buf[cb->num_dw++] = PKT3(PKT3_SET_CONFIG_REG, num, 0);
+	cb->buf[cb->num_dw++] = (reg - R600_CONFIG_REG_OFFSET) >> 2;
 }
 
 /**
@@ -714,9 +722,9 @@ static INLINE void r600_store_config_reg_seq(struct r600_command_buffer *cb, uns
 static INLINE void r600_store_context_reg_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
 {
 	assert(reg >= R600_CONTEXT_REG_OFFSET && reg < R600_CTL_CONST_OFFSET);
-	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
-	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_CONTEXT_REG, num, 0) | cb->pkt_flags;
-	cb->buf[cb->atom.num_dw++] = (reg - R600_CONTEXT_REG_OFFSET) >> 2;
+	assert(cb->num_dw+2+num <= cb->max_num_dw);
+	cb->buf[cb->num_dw++] = PKT3(PKT3_SET_CONTEXT_REG, num, 0) | cb->pkt_flags;
+	cb->buf[cb->num_dw++] = (reg - R600_CONTEXT_REG_OFFSET) >> 2;
 }
 
 /**
@@ -726,17 +734,17 @@ static INLINE void r600_store_context_reg_seq(struct r600_command_buffer *cb, un
 static INLINE void r600_store_ctl_const_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
 {
 	assert(reg >= R600_CTL_CONST_OFFSET);
-	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
-	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_CTL_CONST, num, 0) | cb->pkt_flags;
-	cb->buf[cb->atom.num_dw++] = (reg - R600_CTL_CONST_OFFSET) >> 2;
+	assert(cb->num_dw+2+num <= cb->max_num_dw);
+	cb->buf[cb->num_dw++] = PKT3(PKT3_SET_CTL_CONST, num, 0) | cb->pkt_flags;
+	cb->buf[cb->num_dw++] = (reg - R600_CTL_CONST_OFFSET) >> 2;
 }
 
 static INLINE void r600_store_loop_const_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
 {
 	assert(reg >= R600_LOOP_CONST_OFFSET);
-	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
-	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_LOOP_CONST, num, 0);
-	cb->buf[cb->atom.num_dw++] = (reg - R600_LOOP_CONST_OFFSET) >> 2;
+	assert(cb->num_dw+2+num <= cb->max_num_dw);
+	cb->buf[cb->num_dw++] = PKT3(PKT3_SET_LOOP_CONST, num, 0);
+	cb->buf[cb->num_dw++] = (reg - R600_LOOP_CONST_OFFSET) >> 2;
 }
 
 /**
@@ -746,9 +754,9 @@ static INLINE void r600_store_loop_const_seq(struct r600_command_buffer *cb, uns
 static INLINE void eg_store_loop_const_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)
 {
 	assert(reg >= EG_LOOP_CONST_OFFSET);
-	assert(cb->atom.num_dw+2+num <= cb->max_num_dw);
-	cb->buf[cb->atom.num_dw++] = PKT3(PKT3_SET_LOOP_CONST, num, 0) | cb->pkt_flags;
-	cb->buf[cb->atom.num_dw++] = (reg - EG_LOOP_CONST_OFFSET) >> 2;
+	assert(cb->num_dw+2+num <= cb->max_num_dw);
+	cb->buf[cb->num_dw++] = PKT3(PKT3_SET_LOOP_CONST, num, 0) | cb->pkt_flags;
+	cb->buf[cb->num_dw++] = (reg - EG_LOOP_CONST_OFFSET) >> 2;
 }
 
 static INLINE void r600_store_config_reg(struct r600_command_buffer *cb, unsigned reg, unsigned value)
@@ -781,7 +789,7 @@ static INLINE void eg_store_loop_const(struct r600_command_buffer *cb, unsigned 
 	r600_store_value(cb, value);
 }
 
-void r600_init_command_buffer(struct r600_context *rctx, struct r600_command_buffer *cb, unsigned id, unsigned num_dw);
+void r600_init_command_buffer(struct r600_command_buffer *cb, unsigned num_dw);
 void r600_release_command_buffer(struct r600_command_buffer *cb);
 
 /*

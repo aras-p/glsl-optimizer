@@ -815,7 +815,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 {
 	struct radeon_winsys_cs *cs = ctx->cs;
 
-	if (cs->cdw == ctx->start_cs_cmd.atom.num_dw)
+	if (cs->cdw == ctx->start_cs_cmd.num_dw)
 		return;
 
 	ctx->timer_queries_suspended = false;
@@ -875,7 +875,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->flags = 0;
 
 	/* Begin a new CS. */
-	r600_emit_atom(ctx, &ctx->start_cs_cmd.atom);
+	r600_emit_command_buffer(ctx->cs, &ctx->start_cs_cmd);
 
 	/* Re-emit states. */
 	r600_atom_dirty(ctx, &ctx->alphatest_state.atom);
