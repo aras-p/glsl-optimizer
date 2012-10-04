@@ -10,8 +10,6 @@
  * one or more debug driver: rbug, trace.
  */
 
-#ifdef DEBUG
-
 #ifdef GALLIUM_TRACE
 #include "trace/tr_public.h"
 #endif
@@ -28,13 +26,9 @@
 #include "noop/noop_public.h"
 #endif
 
-#endif /* DEBUG */
-
 static INLINE struct pipe_screen *
 debug_screen_wrap(struct pipe_screen *screen)
 {
-#ifdef DEBUG
-
 #if defined(GALLIUM_RBUG)
    screen = rbug_screen_create(screen);
 #endif
@@ -50,8 +44,6 @@ debug_screen_wrap(struct pipe_screen *screen)
 #if defined(GALLIUM_NOOP)
    screen = noop_screen_create(screen);
 #endif
-
-#endif /* DEBUG */
 
    return screen;
 }
