@@ -180,8 +180,6 @@ let TargetPrefix = "AMDIL", isTarget = 1 in {
           UnaryIntFloat;
   def int_AMDIL_exn : GCCBuiltin<"__amdil_exn">,
           UnaryIntFloat;
-  def int_AMDIL_log : GCCBuiltin<"__amdil_log">,
-          UnaryIntFloat;
   def int_AMDIL_log_vec : GCCBuiltin<"__amdil_log_vec">,
           UnaryIntFloat;
   def int_AMDIL_ln : GCCBuiltin<"__amdil_ln">,

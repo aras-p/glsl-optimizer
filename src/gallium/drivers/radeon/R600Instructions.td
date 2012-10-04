@@ -761,7 +761,7 @@ class LOG_CLAMPED_Common <bits<11> inst> : R600_1OP <
 
 class LOG_IEEE_Common <bits<11> inst> : R600_1OP <
   inst, "LOG_IEEE",
-  [(set R600_Reg32:$dst, (int_AMDIL_log R600_Reg32:$src))]
+  [(set R600_Reg32:$dst, (flog2 R600_Reg32:$src))]
 >;
 
 class LSHL_Common <bits<11> inst> : R600_2OP <
