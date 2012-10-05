@@ -16,7 +16,7 @@
 
 <center>
 <h1>Mesa Frequently Asked Questions</h1>
-Last updated: 20 September 2012
+Last updated: 9 October 2012
 </center>
 
 <br>
@@ -236,15 +236,22 @@ Basically you'll want the following:
 Mesa version number.
 </li></ul>
 <p>
-After installing X.org and the DRI drivers, some of these files
-may be symlinks into the /usr/X11R6/ tree.
+When configuring Mesa, there are three autoconf options that affect the install
+location that you should take care with: <code>--prefix</code>,
+<code>--libdir</code>, and <code>--with-dri-driverdir</code>. To install Mesa
+into the system location where it will be available for all programs to use, set
+<code>--prefix=/usr</code>. Set <code>--libdir</code> to where your Linux
+distribution installs system libraries, usually either <code>/usr/lib</code> or
+<code>/usr/lib64</code>. Set <code>--with-dri-driverdir</code> to the directory
+where your Linux distribution installs DRI drivers. To find your system's DRI
+driver directory, try executing <code>find /usr -type d -name dri</code>. For
+example, if the <code>find</code> command listed <code>/usr/lib64/dri</code>,
+then set <code>--with-dri-driverdir=/usr/lib64/dri</code>.
 </p>
 <p>
-The old-style Makefile system doesn't install the Mesa libraries; it's
-up to you to copy them (and the headers) to the right place.
-</p>
-<p>
-The GLUT header and library should go in the same directories.
+After determining the correct values for the install location, configure Mesa
+with <code>./configure --prefix=/usr --libdir=xxx --with-dri-driverdir=xxx</code>
+and then install with <code>sudo make install</code>.
 </p>
 <br>
 <br>
@@ -254,20 +261,18 @@ The GLUT header and library should go in the same directories.
 
 <h2>3.1 Rendering is slow / why isn't my graphics hardware being used?</h2>
 <p>
-Stand-alone Mesa (downloaded as MesaLib-x.y.z.tar.gz) doesn't have any
-support for hardware acceleration (with the exception of the 3DFX Voodoo
-driver).
-</p>
-<p>
-What you really want is a DRI or NVIDIA (or another vendor's OpenGL) driver
-for your particular hardware.
+If Mesa can't use its hardware accelerated drivers it falls back on one of its software renderers.
+(eg. classic swrast, softpipe or llvmpipe)
 </p>
 <p>
 You can run the <code>glxinfo</code> program to learn about your OpenGL
 library.
-Look for the GL_VENDOR and GL_RENDERER values.
-That will identify who's OpenGL library you're using and what sort of
+Look for the <code>OpenGL vendor</code> and <code>OpenGL renderer</code> values.
+That will identify who's OpenGL library with which driver you're using and what sort of
 hardware it has detected.
+</p>
+<p>
+If you're using a hardware accelerated driver you want <code>direct rendering: Yes</code>.
 </p>
 <p>
 If your DRI-based driver isn't working, go to the
@@ -365,8 +370,8 @@ target hardware/operating system.
 <p>
 The best way to get started is to use an existing driver as your starting
 point.
-For a software driver, the X11 and OSMesa drivers are good examples.
-For a hardware driver, the Radeon and R200 DRI drivers are good examples.
+For a classic hardware driver, the i965 driver is a good example.
+For a Gallium3D hardware driver, the r300g, r600g and the i915g are good examples.
 </p>
 <p>The DRI website has more information about writing hardware drivers.
 The process isn't well document because the Mesa driver interface changes
