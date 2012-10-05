@@ -39,7 +39,6 @@
 #include "main/mfeatures.h"
 #include "glapi/glapi.h"
 #include "main/simple_list.h"	/* struct simple_node */
-#include "main/formats.h"       /* MESA_FORMAT_COUNT */
 
 
 #ifdef __cplusplus
@@ -2284,62 +2283,6 @@ struct gl_shared_state
 
 
 
-/**
- * Renderbuffers represent drawing surfaces such as color, depth and/or
- * stencil.  A framebuffer object has a set of renderbuffers.
- * Drivers will typically derive subclasses of this type.
- */
-struct gl_renderbuffer
-{
-   _glthread_Mutex Mutex; /**< for thread safety */
-   GLuint ClassID;        /**< Useful for drivers */
-   GLuint Name;
-   GLint RefCount;
-   GLuint Width, Height;
-   GLboolean Purgeable;  /**< Is the buffer purgeable under memory pressure? */
-   GLboolean AttachedAnytime; /**< TRUE if it was attached to a framebuffer */
-   GLubyte NumSamples;
-   GLenum InternalFormat; /**< The user-specified format */
-   GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
-                               GL_STENCIL_INDEX. */
-   gl_format Format;      /**< The actual renderbuffer memory format */
-
-   /** Delete this renderbuffer */
-   void (*Delete)(struct gl_renderbuffer *rb);
-
-   /** Allocate new storage for this renderbuffer */
-   GLboolean (*AllocStorage)(struct gl_context *ctx,
-                             struct gl_renderbuffer *rb,
-                             GLenum internalFormat,
-                             GLuint width, GLuint height);
-};
-
-
-/**
- * A renderbuffer attachment points to either a texture object (and specifies
- * a mipmap level, cube face or 3D texture slice) or points to a renderbuffer.
- */
-struct gl_renderbuffer_attachment
-{
-   GLenum Type;  /**< \c GL_NONE or \c GL_TEXTURE or \c GL_RENDERBUFFER_EXT */
-   GLboolean Complete;
-
-   /**
-    * If \c Type is \c GL_RENDERBUFFER_EXT, this stores a pointer to the
-    * application supplied renderbuffer object.
-    */
-   struct gl_renderbuffer *Renderbuffer;
-
-   /**
-    * If \c Type is \c GL_TEXTURE, this stores a pointer to the application
-    * supplied texture object.
-    */
-   struct gl_texture_object *Texture;
-   GLuint TextureLevel; /**< Attached mipmap level. */
-   GLuint CubeMapFace;  /**< 0 .. 5, for cube map textures. */
-   GLuint Zoffset;      /**< Slice for 3D textures,  or layer for both 1D
-                         * and 2D array textures */
-};
 
 
 /**
@@ -2391,9 +2334,6 @@ struct gl_framebuffer
    /** Integer color values */
    GLboolean _IntegerColor;
 
-   /** Array of all renderbuffer attachments, indexed by BUFFER_* tokens. */
-   struct gl_renderbuffer_attachment Attachment[BUFFER_COUNT];
-
    /* In unextended OpenGL these vars are part of the GL_COLOR_BUFFER
     * attribute group and GL_PIXEL attribute group, respectively.
     */
@@ -2404,8 +2344,6 @@ struct gl_framebuffer
    GLuint _NumColorDrawBuffers;
    GLint _ColorDrawBufferIndexes[MAX_DRAW_BUFFERS]; /**< BUFFER_x or -1 */
    GLint _ColorReadBufferIndex; /* -1 = None */
-   struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS];
-   struct gl_renderbuffer *_ColorReadBuffer;
 
    /** Delete this framebuffer */
    void (*Delete)(struct gl_framebuffer *fb);
@@ -3102,9 +3040,6 @@ struct gl_context
 
    struct gl_meta_state *Meta;  /**< for "meta" operations */
 
-   /* GL_EXT_framebuffer_object */
-   struct gl_renderbuffer *CurrentRenderbuffer;
-
    GLenum ErrorValue;        /**< Last error code */
 
    /* GL_ARB_robustness */
@@ -3150,8 +3085,6 @@ struct gl_context
 
    /** software compression/decompression supported or not */
    GLboolean Mesa_DXTn;
-
-   GLboolean TextureFormatSupported[MESA_FORMAT_COUNT];
 
    /** 
     * Use dp4 (rather than mul/mad) instructions for position

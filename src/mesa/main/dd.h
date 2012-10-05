@@ -41,8 +41,6 @@ struct gl_display_list;
 struct gl_framebuffer;
 struct gl_pixelstore_attrib;
 struct gl_program;
-struct gl_renderbuffer;
-struct gl_renderbuffer_attachment;
 struct gl_shader;
 struct gl_shader_program;
 
@@ -329,31 +327,6 @@ struct dd_function_table {
    /*@}*/
 
 
-   /**
-    * \name Functions for GL_EXT_framebuffer_{object,blit}.
-    */
-   /*@{*/
-   struct gl_framebuffer * (*NewFramebuffer)(struct gl_context *ctx, GLuint name);
-   struct gl_renderbuffer * (*NewRenderbuffer)(struct gl_context *ctx, GLuint name);
-   void (*BindFramebuffer)(struct gl_context *ctx, GLenum target,
-                           struct gl_framebuffer *drawFb,
-                           struct gl_framebuffer *readFb);
-   void (*FramebufferRenderbuffer)(struct gl_context *ctx, 
-                                   struct gl_framebuffer *fb,
-                                   GLenum attachment,
-                                   struct gl_renderbuffer *rb);
-   void (*RenderTexture)(struct gl_context *ctx,
-                         struct gl_framebuffer *fb,
-                         struct gl_renderbuffer_attachment *att);
-   void (*FinishRenderTexture)(struct gl_context *ctx,
-                               struct gl_renderbuffer_attachment *att);
-   void (*ValidateFramebuffer)(struct gl_context *ctx,
-                               struct gl_framebuffer *fb);
-   /*@}*/
-   void (*BlitFramebuffer)(struct gl_context *ctx,
-                           GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
-                           GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
-                           GLbitfield mask, GLenum filter);
 
    /**
     * \name Query objects
