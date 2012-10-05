@@ -50,22 +50,22 @@ i915_util_blitter_save_states(struct i915_context *i915)
    util_blitter_save_depth_stencil_alpha(i915->blitter, (void *)i915->depth_stencil);
    util_blitter_save_stencil_ref(i915->blitter, &i915->stencil_ref);
    util_blitter_save_rasterizer(i915->blitter, (void *)i915->rasterizer);
-   util_blitter_save_fragment_shader(i915->blitter, i915->saved_fs);
-   util_blitter_save_vertex_shader(i915->blitter, i915->saved_vs);
+   util_blitter_save_fragment_shader(i915->blitter, i915->fs);
+   util_blitter_save_vertex_shader(i915->blitter, i915->vs);
    util_blitter_save_viewport(i915->blitter, &i915->viewport);
    util_blitter_save_scissor(i915->blitter, &i915->scissor);
-   util_blitter_save_vertex_elements(i915->blitter, i915->saved_velems);
-   util_blitter_save_vertex_buffers(i915->blitter, i915->saved_nr_vertex_buffers,
-                                    i915->saved_vertex_buffers);
+   util_blitter_save_vertex_elements(i915->blitter, i915->velems);
+   util_blitter_save_vertex_buffers(i915->blitter, i915->nr_vertex_buffers,
+                                    i915->vertex_buffers);
 
    util_blitter_save_framebuffer(i915->blitter, &i915->framebuffer);
 
    util_blitter_save_fragment_sampler_states(i915->blitter,
-                                             i915->saved_nr_samplers,
-                                             i915->saved_samplers);
+                                             i915->num_samplers,
+                                             i915->sampler);
    util_blitter_save_fragment_sampler_views(i915->blitter,
-                                            i915->saved_nr_sampler_views,
-                                            i915->saved_sampler_views);
+                                            i915->num_fragment_sampler_views,
+                                            i915->fragment_sampler_views);
 }
 
 static void
