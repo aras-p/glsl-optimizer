@@ -2747,23 +2747,27 @@ out_unknown:
 	R600_ERR("unsupported vertex format %s\n", util_format_name(pformat));
 }
 
-int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r600_vertex_element *ve)
+void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
+				      unsigned count,
+				      const struct pipe_vertex_element *elements)
 {
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	static int dump_shaders = -1;
-
 	struct r600_bytecode bc;
 	struct r600_bytecode_vtx vtx;
-	struct pipe_vertex_element *elements = ve->elements;
 	const struct util_format_description *desc;
 	unsigned fetch_resource_start = rctx->chip_class >= EVERGREEN ? 0 : 160;
 	unsigned format, num_format, format_comp, endian;
 	uint32_t *bytecode;
-	int i, j, r;
+	int i, j, r, fs_size;
+	struct r600_resource *fetch_shader;
+
+	assert(count < 32);
 
 	memset(&bc, 0, sizeof(bc));
 	r600_bytecode_init(&bc, rctx->chip_class, rctx->family);
 
-	for (i = 0; i < ve->count; i++) {
+	for (i = 0; i < count; i++) {
 		if (elements[i].instance_divisor > 1) {
 			if (rctx->chip_class == CAYMAN) {
 				for (j = 0; j < 4; j++) {
@@ -2780,7 +2784,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r6
 					alu.last = j == 3;
 					if ((r = r600_bytecode_add_alu(&bc, &alu))) {
 						r600_bytecode_clear(&bc);
-						return r;
+						return NULL;
 					}
 				}
 			} else {
@@ -2797,27 +2801,27 @@ int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r6
 				alu.last = 1;
 				if ((r = r600_bytecode_add_alu(&bc, &alu))) {
 					r600_bytecode_clear(&bc);
-					return r;
+					return NULL;
 				}
 			}
 		}
 	}
 
-	for (i = 0; i < ve->count; i++) {
-		r600_vertex_data_type(ve->elements[i].src_format,
+	for (i = 0; i < count; i++) {
+		r600_vertex_data_type(elements[i].src_format,
 				      &format, &num_format, &format_comp, &endian);
 
-		desc = util_format_description(ve->elements[i].src_format);
+		desc = util_format_description(elements[i].src_format);
 		if (desc == NULL) {
 			r600_bytecode_clear(&bc);
-			R600_ERR("unknown format %d\n", ve->elements[i].src_format);
-			return -EINVAL;
+			R600_ERR("unknown format %d\n", elements[i].src_format);
+			return NULL;
 		}
 
 		if (elements[i].src_offset > 65535) {
 			r600_bytecode_clear(&bc);
 			R600_ERR("too big src_offset: %u\n", elements[i].src_offset);
-			return -EINVAL;
+			return NULL;
 		}
 
 		memset(&vtx, 0, sizeof(vtx));
@@ -2840,7 +2844,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r6
 
 		if ((r = r600_bytecode_add_vtx(&bc, &vtx))) {
 			r600_bytecode_clear(&bc);
-			return r;
+			return NULL;
 		}
 	}
 
@@ -2848,7 +2852,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r6
 
 	if ((r = r600_bytecode_build(&bc))) {
 		r600_bytecode_clear(&bc);
-		return r;
+		return NULL;
 	}
 
 	if (dump_shaders == -1)
@@ -2860,41 +2864,36 @@ int r600_vertex_elements_build_fetch_shader(struct r600_context *rctx, struct r6
 		fprintf(stderr, "______________________________________________________________\n");
 	}
 
-	ve->fs_size = bc.ndw*4;
+	fs_size = bc.ndw*4;
 
-	ve->fetch_shader = (struct r600_resource*)
+	fetch_shader = (struct r600_resource*)
 			pipe_buffer_create(rctx->context.screen,
 					   PIPE_BIND_CUSTOM,
-					   PIPE_USAGE_IMMUTABLE, ve->fs_size);
-	if (ve->fetch_shader == NULL) {
+					   PIPE_USAGE_IMMUTABLE, fs_size);
+	if (fetch_shader == NULL) {
 		r600_bytecode_clear(&bc);
-		return -ENOMEM;
+		return NULL;
 	}
 
-	bytecode = rctx->ws->buffer_map(ve->fetch_shader->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
+	bytecode = rctx->ws->buffer_map(fetch_shader->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 	if (bytecode == NULL) {
 		r600_bytecode_clear(&bc);
-		pipe_resource_reference((struct pipe_resource**)&ve->fetch_shader, NULL);
-		return -ENOMEM;
+		pipe_resource_reference((struct pipe_resource**)&fetch_shader, NULL);
+		return NULL;
 	}
 
 	if (R600_BIG_ENDIAN) {
-		for (i = 0; i < ve->fs_size / 4; ++i) {
+		for (i = 0; i < fs_size / 4; ++i) {
 			bytecode[i] = bswap_32(bc.bytecode[i]);
 		}
 	} else {
-		memcpy(bytecode, bc.bytecode, ve->fs_size);
+		memcpy(bytecode, bc.bytecode, fs_size);
 	}
 
-	rctx->ws->buffer_unmap(ve->fetch_shader->cs_buf);
+	rctx->ws->buffer_unmap(fetch_shader->cs_buf);
 	r600_bytecode_clear(&bc);
 
-	if (rctx->chip_class >= EVERGREEN)
-		evergreen_fetch_shader(&rctx->context, ve);
-	else
-		r600_fetch_shader(&rctx->context, ve);
-
-	return 0;
+	return fetch_shader;
 }
 
 void r600_bytecode_alu_read(struct r600_bytecode_alu *alu, uint32_t word0, uint32_t word1)

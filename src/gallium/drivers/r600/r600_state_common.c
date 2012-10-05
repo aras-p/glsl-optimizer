@@ -494,28 +494,13 @@ static void r600_delete_state(struct pipe_context *ctx, void *state)
 static void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
 
-	rctx->vertex_elements = v;
-	if (v) {
-		rctx->states[v->rstate.id] = &v->rstate;
-		r600_context_pipe_state_set(rctx, &v->rstate);
-	}
+	r600_set_cso_state(&rctx->vertex_fetch_shader, state);
 }
 
 static void r600_delete_vertex_elements(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
-
-	if (rctx->states[v->rstate.id] == &v->rstate) {
-		rctx->states[v->rstate.id] = NULL;
-	}
-	if (rctx->vertex_elements == state)
-		rctx->vertex_elements = NULL;
-
-	pipe_resource_reference((struct pipe_resource**)&v->fetch_shader, NULL);
-	FREE(state);
+	pipe_resource_reference((struct pipe_resource**)&state, NULL);
 }
 
 static void r600_set_index_buffer(struct pipe_context *ctx,
@@ -711,27 +696,6 @@ void r600_emit_viewport_state(struct r600_context *rctx, struct r600_atom *atom)
 	r600_write_value(cs, fui(state->translate[1])); /* R_028448_PA_CL_VPORT_YOFFSET_0 */
 	r600_write_value(cs, fui(state->scale[2]));     /* R_02844C_PA_CL_VPORT_ZSCALE_0  */
 	r600_write_value(cs, fui(state->translate[2])); /* R_028450_PA_CL_VPORT_ZOFFSET_0 */
-}
-
-static void *r600_create_vertex_elements(struct pipe_context *ctx, unsigned count,
-					 const struct pipe_vertex_element *elements)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_vertex_element *v = CALLOC_STRUCT(r600_vertex_element);
-
-	assert(count < 32);
-	if (!v)
-		return NULL;
-
-	v->count = count;
-	memcpy(v->elements, elements, sizeof(struct pipe_vertex_element) * count);
-
-	if (r600_vertex_elements_build_fetch_shader(rctx, v)) {
-		FREE(v);
-		return NULL;
-	}
-
-	return v;
 }
 
 /* Compute the key for the hw shader variant */
@@ -1566,7 +1530,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 {
 	rctx->context.create_fs_state = r600_create_ps_state;
 	rctx->context.create_vs_state = r600_create_vs_state;
-	rctx->context.create_vertex_elements_state = r600_create_vertex_elements;
+	rctx->context.create_vertex_elements_state = r600_create_vertex_fetch_shader;
 	rctx->context.bind_blend_state = r600_bind_blend_state;
 	rctx->context.bind_depth_stencil_alpha_state = r600_bind_dsa_state;
 	rctx->context.bind_fragment_sampler_states = r600_bind_ps_sampler_states;

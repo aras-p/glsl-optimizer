@@ -2123,6 +2123,17 @@ static void r600_emit_sample_mask(struct r600_context *rctx, struct r600_atom *a
 			       mask | (mask << 8) | (mask << 16) | (mask << 24));
 }
 
+static void r600_emit_vertex_fetch_shader(struct r600_context *rctx, struct r600_atom *a)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_cso_state *state = (struct r600_cso_state*)a;
+	struct r600_resource *shader = (struct r600_resource*)state->cso;
+
+	r600_write_context_reg(cs, R_028894_SQ_PGM_START_FS, 0);
+	r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+	r600_write_value(cs, r600_context_bo_reloc(rctx, shader, RADEON_USAGE_READ));
+}
+
 void r600_init_state_functions(struct r600_context *rctx)
 {
 	unsigned id = 4;
@@ -2172,6 +2183,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, r600_emit_db_misc_state, 4);
 	r600_init_atom(rctx, &rctx->stencil_ref.atom, id++, r600_emit_stencil_ref, 4);
 	r600_init_atom(rctx, &rctx->viewport.atom, id++, r600_emit_viewport_state, 8);
+	r600_init_atom(rctx, &rctx->vertex_fetch_shader.atom, id++, r600_emit_vertex_fetch_shader, 5);
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;
@@ -2727,20 +2739,6 @@ void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shad
 		S_02881C_VS_OUT_CCDIST1_VEC_ENA((rshader->clip_dist_write & 0xF0) != 0) |
 		S_02881C_VS_OUT_MISC_VEC_ENA(rshader->vs_out_misc_write) |
 		S_02881C_USE_VTX_POINT_SIZE(rshader->vs_out_point_size);
-}
-
-void r600_fetch_shader(struct pipe_context *ctx,
-		       struct r600_vertex_element *ve)
-{
-	struct r600_pipe_state *rstate;
-	struct r600_context *rctx = (struct r600_context *)ctx;
-
-	rstate = &ve->rstate;
-	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
-	rstate->nregs = 0;
-	r600_pipe_state_add_reg_bo(rstate, R_028894_SQ_PGM_START_FS,
-				0,
-				ve->fetch_shader, RADEON_USAGE_READ);
 }
 
 void *r600_create_resolve_blend(struct r600_context *rctx)

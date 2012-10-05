@@ -288,8 +288,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028868_SQ_PGM_RESOURCES_VS, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_028894_SQ_PGM_START_FS, REG_FLAG_NEED_BO, 0},
-	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_0288A4_SQ_PGM_RESOURCES_FS, 0, 0},
 	{R_0288DC_SQ_PGM_CF_OFFSET_FS, 0, 0},
 	{R_028644_SPI_PS_INPUT_CNTL_0, 0, 0},
@@ -873,6 +871,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->vgt2_state.atom.dirty = true;
 	ctx->sample_mask.atom.dirty = true;
 	ctx->stencil_ref.atom.dirty = true;
+	ctx->vertex_fetch_shader.atom.dirty = true;
 	ctx->viewport.atom.dirty = true;
 
 	if (ctx->blend_state.cso)

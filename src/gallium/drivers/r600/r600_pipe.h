@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 30
+#define R600_NUM_ATOMS 31
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -165,7 +165,6 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_RASTERIZER,
 	R600_PIPE_STATE_DSA,
 	R600_PIPE_STATE_POLYGON_OFFSET,
-	R600_PIPE_STATE_FETCH_SHADER,
 	R600_PIPE_NSTATES
 };
 
@@ -240,15 +239,6 @@ struct r600_pipe_dsa {
 	unsigned                        sx_alpha_test_control;
 };
 
-struct r600_vertex_element
-{
-	unsigned			count;
-	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
-	struct r600_resource		*fetch_shader;
-	unsigned			fs_size;
-	struct r600_pipe_state		rstate;
-};
-
 struct r600_pipe_shader;
 
 struct r600_pipe_shader_selector {
@@ -277,8 +267,6 @@ struct r600_pipe_shader {
 	struct r600_shader		shader;
 	struct r600_pipe_state		rstate;
 	struct r600_resource		*bo;
-	struct r600_resource		*bo_fetch;
-	struct r600_vertex_element	vertex_elements;
 	unsigned	sprite_coord_enable;
 	unsigned	flatshade;
 	unsigned	pa_cl_vs_out_cntl;
@@ -382,7 +370,6 @@ struct r600_context {
 	struct r600_screen		*screen;
 	struct radeon_winsys		*ws;
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
-	struct r600_vertex_element	*vertex_elements;
 	unsigned			compute_cb_target_mask;
 	unsigned			db_shader_control;
 	unsigned			pa_sc_line_stipple;
@@ -424,13 +411,14 @@ struct r600_context {
 	struct r600_clip_state		clip_state;
 	struct r600_db_misc_state	db_misc_state;
 	struct r600_framebuffer		framebuffer;
+	struct r600_sample_mask		sample_mask;
 	struct r600_seamless_cube_map	seamless_cube_map;
 	struct r600_stencil_ref_state	stencil_ref;
 	struct r600_vgt_state		vgt_state;
 	struct r600_vgt2_state		vgt2_state;
-	struct r600_sample_mask		sample_mask;
 	struct r600_viewport_state	viewport;
 	/* Shaders and shader resources. */
+	struct r600_cso_state		vertex_fetch_shader;
 	struct r600_cs_shader_state	cs_shader_state;
 	struct r600_constbuf_state	constbuf_state[PIPE_SHADER_TYPES];
 	struct r600_textures_info	samplers[PIPE_SHADER_TYPES];
@@ -550,7 +538,6 @@ void evergreen_init_state_functions(struct r600_context *rctx);
 void evergreen_init_atom_start_cs(struct r600_context *rctx);
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
-void evergreen_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx);
 void *evergreen_create_resolve_blend(struct r600_context *rctx);
 void *evergreen_create_decompress_blend(struct r600_context *rctx);
@@ -627,7 +614,6 @@ void r600_init_state_functions(struct r600_context *rctx);
 void r600_init_atom_start_cs(struct r600_context *rctx);
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
-void r600_fetch_shader(struct pipe_context *ctx, struct r600_vertex_element *ve);
 void *r600_create_db_flush_dsa(struct r600_context *rctx);
 void *r600_create_resolve_blend(struct r600_context *rctx);
 void *r700_create_resolve_blend(struct r600_context *rctx);
