@@ -151,8 +151,7 @@ static void update_framebuffer(struct i915_context *i915)
       i915->static_dirty |= I915_DST_RECT;
    }
 
-   /* we also send a new program to make sure the fixup for RGBA surfaces happens */
-   i915->hardware_dirty |= I915_HW_STATIC | I915_HW_PROGRAM;
+   i915->hardware_dirty |= I915_HW_STATIC;
 
    /* flush the cache in case we sample from the old renderbuffers */
    i915_set_flush_dirty(i915, I915_FLUSH_CACHE);
@@ -244,6 +243,7 @@ static void update_dst_buf_vars(struct i915_context *i915)
          i915->current.fixup_swizzle != fixup) {
       i915->current.target_fixup_format = need_fixup;
       i915->current.fixup_swizzle = fixup;
+      /* we also send a new program to make sure the fixup for RGBA surfaces happens */
       i915->hardware_dirty |= I915_HW_PROGRAM;
    }
 }
