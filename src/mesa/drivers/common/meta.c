@@ -3100,7 +3100,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
 
    mem_ctx = ralloc_context(NULL);
 
-   if (ctx->Const.GLSLVersion < 130) {
+   if (ctx->API == API_OPENGLES2 || ctx->Const.GLSLVersion < 130) {
       const char *fs_template;
       const char *extension_mode;
 
