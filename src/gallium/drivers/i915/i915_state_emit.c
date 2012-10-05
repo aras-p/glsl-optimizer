@@ -370,11 +370,6 @@ validate_program(struct i915_context *i915, unsigned *batch_space)
 {
    uint additional_size = 0;
 
-   if (!i915->fs->program_len) {
-      *batch_space = 0;
-      return;
-   }
-
    additional_size += i915->current.target_fixup_format ? 3 : 0;
 
    /* we need more batch space if we want to emulate rgba framebuffers */
@@ -387,13 +382,12 @@ emit_program(struct i915_context *i915)
    uint additional_size = 0;
    uint i;
 
-   if (!i915->fs->program_len)
-      return;
-
    /* count how much additional space we'll need */
    validate_program(i915, &additional_size);
    additional_size -= i915->fs->decl_len + i915->fs->program_len;
 
+   /* we should always have, at least, a pass-through program */
+   assert(i915->fs->program_len > 0);
 
    /* output the declarations */
    {
