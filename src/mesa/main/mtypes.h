@@ -56,8 +56,6 @@ struct gl_program_cache;
 struct gl_context;
 struct st_context;
 struct gl_uniform_storage;
-struct prog_instruction;
-struct gl_program_parameter_list;
 /*@}*/
 
 
@@ -822,36 +820,6 @@ typedef enum
 #define MAX_COMBINER_TERMS 4
 
 
-/**
- * Texture combine environment state.
- */
-struct gl_tex_env_combine_state
-{
-   GLenum ModeRGB;       /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
-   GLenum ModeA;         /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
-   /** Source terms: GL_PRIMARY_COLOR, GL_TEXTURE, etc */
-   GLenum SourceRGB[MAX_COMBINER_TERMS];
-   GLenum SourceA[MAX_COMBINER_TERMS];
-   /** Source operands: GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, etc */
-   GLenum OperandRGB[MAX_COMBINER_TERMS];
-   GLenum OperandA[MAX_COMBINER_TERMS];
-   GLuint ScaleShiftRGB; /**< 0, 1 or 2 */
-   GLuint ScaleShiftA;   /**< 0, 1 or 2 */
-   GLuint _NumArgsRGB;   /**< Number of inputs used for the RGB combiner */
-   GLuint _NumArgsA;     /**< Number of inputs used for the A combiner */
-};
-
-
-/**
- * TexGenEnabled flags.
- */
-/*@{*/
-#define S_BIT 1
-#define T_BIT 2
-#define R_BIT 4
-#define Q_BIT 8
-#define STR_BITS (S_BIT | T_BIT | R_BIT)
-/*@}*/
 
 
 /**
@@ -1119,10 +1087,6 @@ struct gl_program
    GLenum Format;    /**< String encoding format */
    GLboolean Resident;
 
-   struct prog_instruction *Instructions;
-
-   /** Named parameters, constants, etc. from program text */
-   struct gl_program_parameter_list *Parameters;
    /** Numbered local parameters */
    GLfloat LocalParams[MAX_PROGRAM_LOCAL_PARAMS][4];
 
