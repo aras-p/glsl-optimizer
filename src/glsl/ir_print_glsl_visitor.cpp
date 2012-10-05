@@ -795,10 +795,34 @@ static char* print_float (char* buffer, float f)
 	//   exponential notation.
 	char tmp[64];
 	snprintf(tmp, 64, "%.6g", f);
+
+	char* posE = NULL;
+	posE = strchr(tmp, 'e');
+	if (!posE)
+		posE = strchr(tmp, 'E');
+
+	#if _MSC_VER
+	// While gcc would print something like 1.0e+07, MSVC will print 1.0e+007 -
+	// only for exponential notation, it seems, will add one extra useless zero. Let's try to remove
+	// that so compiler output matches.
+	if (posE != NULL)
+	{
+		if((posE[1] == '+' || posE[1] == '-') && posE[2] == '0')
+		{
+			char* p = posE+2;
+			while (p[0])
+			{
+				p[0] = p[1];
+				++p;
+			}
+		}
+	}
+	#endif
+
 	ralloc_strcat (&buffer, tmp);
 
 	// need to append ".0"?
-	if (!strchr(tmp,'.') && !strchr(tmp,'e') && !strchr(tmp,'E'))
+	if (!strchr(tmp,'.') && (posE == NULL))
 		ralloc_strcat(&buffer, ".0");
 	return buffer;
 }
