@@ -717,6 +717,18 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\mesa\program\prog_instruction.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\program\prog_parameter.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\program\prog_statevars.h"
+						>
+					</File>
+					<File
 						RelativePath="..\..\mesa\program\symbol_table.c"
 						>
 					</File>
@@ -737,15 +749,23 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\mesa\main\context.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\core.h"
+						>
+					</File>
+					<File
 						RelativePath="..\..\mesa\main\dd.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\mesa\main\extensions.h"
+						RelativePath="..\..\mesa\main\glheader.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\mesa\main\glheader.h"
+						RelativePath="..\..\mesa\main\glminimal.h"
 						>
 					</File>
 					<File
@@ -754,10 +774,6 @@
 					</File>
 					<File
 						RelativePath="..\..\mesa\main\macros.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\mesa\main\mfeatures.h"
 						>
 					</File>
 					<File
