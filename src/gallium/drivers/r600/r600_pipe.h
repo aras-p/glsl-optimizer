@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 33
+#define R600_NUM_ATOMS 34
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -161,7 +161,6 @@ struct r600_viewport_state {
 };
 
 enum r600_pipe_state_id {
-	R600_PIPE_STATE_RASTERIZER,
 	R600_PIPE_STATE_DSA,
 	R600_PIPE_NSTATES
 };
@@ -205,8 +204,8 @@ struct r600_pipe_sampler_view {
 	uint32_t			tex_resource_words[8];
 };
 
-struct r600_pipe_rasterizer {
-	struct r600_pipe_state		rstate;
+struct r600_rasterizer_state {
+	struct r600_command_buffer	buffer;
 	boolean				flatshade;
 	boolean				two_side;
 	unsigned			sprite_coord_enable;
@@ -418,6 +417,7 @@ struct r600_context {
 	struct r600_db_misc_state	db_misc_state;
 	struct r600_framebuffer		framebuffer;
 	struct r600_poly_offset_state	poly_offset_state;
+	struct r600_cso_state		rasterizer_state;
 	struct r600_sample_mask		sample_mask;
 	struct r600_scissor_state	scissor;
 	struct r600_seamless_cube_map	seamless_cube_map;
@@ -441,7 +441,7 @@ struct r600_context {
 	unsigned			db_shader_control;
 	struct r600_pipe_shader_selector 	*ps_shader;
 	struct r600_pipe_shader_selector 	*vs_shader;
-	struct r600_pipe_rasterizer	*rasterizer;
+	struct r600_rasterizer_state	*rasterizer;
 	bool				alpha_to_one;
 	bool				force_blend_disable;
 	boolean				dual_src_blend;

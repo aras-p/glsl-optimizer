@@ -219,20 +219,10 @@ static const struct r600_reg r600_config_reg_list[] = {
 };
 
 static const struct r600_reg r600_context_reg_list[] = {
-	{R_028A4C_PA_SC_MODE_CNTL, 0, 0},
-	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028800_DB_DEPTH_CONTROL, 0, 0},
 	{R_02880C_DB_SHADER_CONTROL, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028D24_DB_HTILE_SURFACE, 0, 0},
-	{R_0286D4_SPI_INTERP_CONTROL_0, 0, 0},
-	{R_028814_PA_SU_SC_MODE_CNTL, 0, 0},
-	{R_028A00_PA_SU_POINT_SIZE, 0, 0},
-	{R_028A04_PA_SU_POINT_MINMAX, 0, 0},
-	{R_028A08_PA_SU_LINE_CNTL, 0, 0},
-	{R_028C08_PA_SU_VTX_CNTL, 0, 0},
-	{R_028DFC_PA_SU_POLY_OFFSET_CLAMP, 0, 0},
-	{R_028350_SX_MISC, 0, 0},
 	{R_028614_SPI_VS_OUT_ID_0, 0, 0},
 	{R_028618_SPI_VS_OUT_ID_1, 0, 0},
 	{R_02861C_SPI_VS_OUT_ID_2, 0, 0},
@@ -839,6 +829,8 @@ void r600_begin_new_cs(struct r600_context *ctx)
 
 	if (ctx->blend_state.cso)
 		ctx->blend_state.atom.dirty = true;
+	if (ctx->rasterizer_state.cso)
+		ctx->rasterizer_state.atom.dirty = true;
 
 	if (ctx->chip_class <= R700) {
 		ctx->seamless_cube_map.atom.dirty = true;

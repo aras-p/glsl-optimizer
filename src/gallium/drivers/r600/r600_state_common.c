@@ -300,7 +300,7 @@ static void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 
 static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 {
-	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
+	struct r600_rasterizer_state *rs = (struct r600_rasterizer_state *)state;
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
 	if (state == NULL)
@@ -308,8 +308,7 @@ static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 
 	rctx->rasterizer = rs;
 
-	rctx->states[rs->rstate.id] = &rs->rstate;
-	r600_context_pipe_state_set(rctx, &rs->rstate);
+	r600_set_cso_state_with_cb(&rctx->rasterizer_state, rs, &rs->buffer);
 
 	if (rs->offset_enable &&
 	    (rs->offset_units != rctx->poly_offset_state.offset_units ||
@@ -333,20 +332,17 @@ static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 		rctx->scissor.enable = rs->scissor_enable;
 		rctx->scissor.atom.dirty = true;
 	}
+
+	/* Re-emit PA_SC_LINE_STIPPLE. */
+	rctx->last_primitive_type = -1;
 }
 
 static void r600_delete_rs_state(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
+	struct r600_rasterizer_state *rs = (struct r600_rasterizer_state *)state;
 
-	if (rctx->rasterizer == rs) {
-		rctx->rasterizer = NULL;
-	}
-	if (rctx->states[rs->rstate.id] == &rs->rstate) {
-		rctx->states[rs->rstate.id] = NULL;
-	}
-	free(rs);
+	r600_release_command_buffer(&rs->buffer);
+	FREE(rs);
 }
 
 static void r600_sampler_view_destroy(struct pipe_context *ctx,
