@@ -3101,8 +3101,6 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
    mem_ctx = ralloc_context(NULL);
 
    if (ctx->API == API_OPENGLES2 || ctx->Const.GLSLVersion < 130) {
-      const char *fs_template;
-
       vs_source =
          "attribute vec2 position;\n"
          "attribute vec3 textureCoords;\n"
@@ -3112,22 +3110,19 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
          "   texCoords = textureCoords;\n"
          "   gl_Position = vec4(position, 0.0, 1.0);\n"
          "}\n";
-      fs_template =
-         "#extension GL_EXT_texture_array : enable\n"
-         "uniform %s texSampler;\n"
-         "varying vec3 texCoords;\n"
-         "void main()\n"
-         "{\n"
-         "   gl_FragColor = %s(texSampler, %s);\n"
-         "}\n";
 
-      fs_source = ralloc_asprintf(mem_ctx, fs_template,
+      fs_source = ralloc_asprintf(mem_ctx,
+                                  "#extension GL_EXT_texture_array : enable\n"
+                                  "uniform %s texSampler;\n"
+                                  "varying vec3 texCoords;\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "   gl_FragColor = %s(texSampler, %s);\n"
+                                  "}\n",
                                   sampler->type,
                                   sampler->func, sampler->texcoords);
    }
    else {
-      const char *fs_template;
-
       vs_source =
          "#version 130\n"
          "in vec2 position;\n"
@@ -3138,18 +3133,16 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
          "   texCoords = textureCoords;\n"
          "   gl_Position = vec4(position, 0.0, 1.0);\n"
          "}\n";
-      fs_template =
-         "#version 130\n"
-         "uniform %s texSampler;\n"
-         "in vec3 texCoords;\n"
-         "out vec4 out_color;\n"
-         "\n"
-         "void main()\n"
-         "{\n"
-         "   out_color = texture(texSampler, %s);\n"
-         "}\n";
-
-      fs_source = ralloc_asprintf(mem_ctx, fs_template,
+      fs_source = ralloc_asprintf(mem_ctx,
+                                  "#version 130\n"
+                                  "uniform %s texSampler;\n"
+                                  "in vec3 texCoords;\n"
+                                  "out vec4 out_color;\n"
+                                  "\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "   out_color = texture(texSampler, %s);\n"
+                                  "}\n",
                                   sampler->type,
                                   sampler->texcoords);
    }
