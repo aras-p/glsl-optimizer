@@ -3147,7 +3147,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
          "#version 130\n"
          "uniform %s texSampler;\n"
          "in vec3 texCoords;\n"
-         "out %s out_color;\n"
+         "out vec4 out_color;\n"
          "\n"
          "void main()\n"
          "{\n"
@@ -3155,7 +3155,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
          "}\n";
 
       fs_source = ralloc_asprintf(mem_ctx, fs_template,
-                                  sampler->type, "vec4",
+                                  sampler->type,
                                   sampler->texcoords);
    }
 
