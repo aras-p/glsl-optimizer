@@ -72,7 +72,6 @@ struct gl_attrib_node;
 struct gl_list_extensions;
 struct gl_meta_state;
 struct gl_program_cache;
-struct gl_texture_object;
 struct gl_context;
 struct st_context;
 struct gl_uniform_storage;
@@ -701,14 +700,6 @@ struct gl_lightmodel
 };
 
 
-/**
- * Accumulation buffer attribute group (GL_ACCUM_BUFFER_BIT)
- */
-struct gl_accum_attrib
-{
-   GLfloat ClearColor[4];	/**< Accumulation buffer clear color */
-};
-
 
 /**
  * Used for storing clear color, texture border color, etc.
@@ -839,125 +830,7 @@ struct gl_depthbuffer_attrib
 };
 
 
-/**
- * Evaluator attribute group (GL_EVAL_BIT).
- */
-struct gl_eval_attrib
-{
-   /**
-    * \name Enable bits 
-    */
-   /*@{*/
-   GLboolean Map1Color4;
-   GLboolean Map1Index;
-   GLboolean Map1Normal;
-   GLboolean Map1TextureCoord1;
-   GLboolean Map1TextureCoord2;
-   GLboolean Map1TextureCoord3;
-   GLboolean Map1TextureCoord4;
-   GLboolean Map1Vertex3;
-   GLboolean Map1Vertex4;
-   GLboolean Map1Attrib[16];  /* GL_NV_vertex_program */
-   GLboolean Map2Color4;
-   GLboolean Map2Index;
-   GLboolean Map2Normal;
-   GLboolean Map2TextureCoord1;
-   GLboolean Map2TextureCoord2;
-   GLboolean Map2TextureCoord3;
-   GLboolean Map2TextureCoord4;
-   GLboolean Map2Vertex3;
-   GLboolean Map2Vertex4;
-   GLboolean Map2Attrib[16];  /* GL_NV_vertex_program */
-   GLboolean AutoNormal;
-   /*@}*/
-   
-   /**
-    * \name Map Grid endpoints and divisions and calculated du values
-    */
-   /*@{*/
-   GLint MapGrid1un;
-   GLfloat MapGrid1u1, MapGrid1u2, MapGrid1du;
-   GLint MapGrid2un, MapGrid2vn;
-   GLfloat MapGrid2u1, MapGrid2u2, MapGrid2du;
-   GLfloat MapGrid2v1, MapGrid2v2, MapGrid2dv;
-   /*@}*/
-};
 
-
-/**
- * Fog attribute group (GL_FOG_BIT).
- */
-struct gl_fog_attrib
-{
-   GLboolean Enabled;		/**< Fog enabled flag */
-   GLfloat ColorUnclamped[4];            /**< Fog color */
-   GLfloat Color[4];		/**< Fog color */
-   GLfloat Density;		/**< Density >= 0.0 */
-   GLfloat Start;		/**< Start distance in eye coords */
-   GLfloat End;			/**< End distance in eye coords */
-   GLfloat Index;		/**< Fog index */
-   GLenum Mode;			/**< Fog mode */
-   GLboolean ColorSumEnabled;
-   GLenum FogCoordinateSource;  /**< GL_EXT_fog_coord */
-   GLfloat _Scale;		/**< (End == Start) ? 1.0 : 1.0 / (End - Start) */
-   GLenum FogDistanceMode;     /**< GL_NV_fog_distance */
-};
-
-
-/** 
- * Hint attribute group (GL_HINT_BIT).
- * 
- * Values are always one of GL_FASTEST, GL_NICEST, or GL_DONT_CARE.
- */
-struct gl_hint_attrib
-{
-   GLenum PerspectiveCorrection;
-   GLenum PointSmooth;
-   GLenum LineSmooth;
-   GLenum PolygonSmooth;
-   GLenum Fog;
-   GLenum ClipVolumeClipping;   /**< GL_EXT_clip_volume_hint */
-   GLenum TextureCompression;   /**< GL_ARB_texture_compression */
-   GLenum GenerateMipmap;       /**< GL_SGIS_generate_mipmap */
-   GLenum FragmentShaderDerivative; /**< GL_ARB_fragment_shader */
-};
-
-
-/**
- * Lighting attribute group (GL_LIGHT_BIT).
- */
-struct gl_light_attrib
-{
-   struct gl_light Light[MAX_LIGHTS];	/**< Array of light sources */
-   struct gl_lightmodel Model;		/**< Lighting model */
-
-   /**
-    * Front and back material values.
-    * Note: must call FLUSH_VERTICES() before using.
-    */
-   struct gl_material Material;
-
-   GLboolean Enabled;			/**< Lighting enabled flag */
-   GLenum ShadeModel;			/**< GL_FLAT or GL_SMOOTH */
-   GLenum ProvokingVertex;              /**< GL_EXT_provoking_vertex */
-   GLenum ColorMaterialFace;		/**< GL_FRONT, BACK or FRONT_AND_BACK */
-   GLenum ColorMaterialMode;		/**< GL_AMBIENT, GL_DIFFUSE, etc */
-   GLbitfield _ColorMaterialBitmask;	/**< bitmask formed from Face and Mode */
-   GLboolean ColorMaterialEnabled;
-   GLenum ClampVertexColor;             /**< GL_TRUE, GL_FALSE, GL_FIXED_ONLY */
-   GLboolean _ClampVertexColor;
-
-   struct gl_light EnabledList;         /**< List sentinel */
-
-   /** 
-    * Derived state for optimizations: 
-    */
-   /*@{*/
-   GLboolean _NeedEyeCoords;		
-   GLboolean _NeedVertices;		/**< Use fast shader? */
-   GLfloat _BaseColor[2][3];
-   /*@}*/
-};
 
 
 /**
@@ -1179,38 +1052,6 @@ typedef enum
 /*@}*/
 
 
-/**
- * Texture image state.  Drivers will typically create a subclass of this
- * with extra fields for memory buffers, etc.
- */
-struct gl_texture_image
-{
-   GLint InternalFormat;	/**< Internal format as given by the user */
-   GLenum _BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
-				 *   GL_LUMINANCE, GL_LUMINANCE_ALPHA,
-				 *   GL_INTENSITY, GL_DEPTH_COMPONENT or
-				 *   GL_DEPTH_STENCIL_EXT only. Used for
-				 *   choosing TexEnv arithmetic.
-				 */
-   gl_format TexFormat;         /**< The actual texture memory format */
-
-   GLuint Border;		/**< 0 or 1 */
-   GLuint Width;		/**< = 2^WidthLog2 + 2*Border */
-   GLuint Height;		/**< = 2^HeightLog2 + 2*Border */
-   GLuint Depth;		/**< = 2^DepthLog2 + 2*Border */
-   GLuint Width2;		/**< = Width - 2*Border */
-   GLuint Height2;		/**< = Height - 2*Border */
-   GLuint Depth2;		/**< = Depth - 2*Border */
-   GLuint WidthLog2;		/**< = log2(Width2) */
-   GLuint HeightLog2;		/**< = log2(Height2) */
-   GLuint DepthLog2;		/**< = log2(Depth2) */
-   GLuint MaxLog2;		/**< = MAX(WidthLog2, HeightLog2) */
-
-   struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
-   GLuint Level;                /**< Which mipmap level am I? */
-   /** Cube map face: index into gl_texture_object::Image[] array */
-   GLuint Face;
-};
 
 
 /**
@@ -1228,75 +1069,7 @@ typedef enum
 } gl_face_index;
 
 
-/**
- * Sampler object state.  These objects are new with GL_ARB_sampler_objects
- * and OpenGL 3.3.  Legacy texture objects also contain a sampler object.
- */
-struct gl_sampler_object
-{
-   GLuint Name;
-   GLint RefCount;
 
-   GLenum WrapS;		/**< S-axis texture image wrap mode */
-   GLenum WrapT;		/**< T-axis texture image wrap mode */
-   GLenum WrapR;		/**< R-axis texture image wrap mode */
-   GLenum MinFilter;		/**< minification filter */
-   GLenum MagFilter;		/**< magnification filter */
-   union gl_color_union BorderColor;  /**< Interpreted according to texture format */
-   GLfloat MinLod;		/**< min lambda, OpenGL 1.2 */
-   GLfloat MaxLod;		/**< max lambda, OpenGL 1.2 */
-   GLfloat LodBias;		/**< OpenGL 1.4 */
-   GLfloat MaxAnisotropy;	/**< GL_EXT_texture_filter_anisotropic */
-   GLenum CompareMode;		/**< GL_ARB_shadow */
-   GLenum CompareFunc;		/**< GL_ARB_shadow */
-   GLenum sRGBDecode;           /**< GL_DECODE_EXT or GL_SKIP_DECODE_EXT */
-   GLboolean CubeMapSeamless;   /**< GL_AMD_seamless_cubemap_per_texture */
-};
-
-
-/**
- * Texture object state.  Contains the array of mipmap images, border color,
- * wrap modes, filter modes, and shadow/texcompare state.
- */
-struct gl_texture_object
-{
-   _glthread_Mutex Mutex;	/**< for thread safety */
-   GLint RefCount;		/**< reference count */
-   GLuint Name;			/**< the user-visible texture object ID */
-   GLenum Target;               /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
-
-   struct gl_sampler_object Sampler;
-
-   GLenum DepthMode;		/**< GL_ARB_depth_texture */
-
-   GLfloat Priority;		/**< in [0,1] */
-   GLint BaseLevel;		/**< min mipmap level, OpenGL 1.2 */
-   GLint MaxLevel;		/**< max mipmap level, OpenGL 1.2 */
-   GLint _MaxLevel;		/**< actual max mipmap level (q in the spec) */
-   GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */
-   GLint CropRect[4];           /**< GL_OES_draw_texture */
-   GLenum Swizzle[4];           /**< GL_EXT_texture_swizzle */
-   GLuint _Swizzle;             /**< same as Swizzle, but SWIZZLE_* format */
-   GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
-   GLboolean _BaseComplete;     /**< Is the base texture level valid? */
-   GLboolean _MipmapComplete;   /**< Is the whole mipmap valid? */
-   GLboolean _IsIntegerFormat;  /**< Does the texture store integer values? */
-   GLboolean _RenderToTexture;  /**< Any rendering to this texture? */
-   GLboolean Purgeable;         /**< Is the buffer purgeable under memory pressure? */
-   GLboolean Immutable;         /**< GL_ARB_texture_storage */
-
-   /** Actual texture images, indexed by [cube face] and [mipmap level] */
-   struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
-
-   /** GL_ARB_texture_buffer_object */
-   struct gl_buffer_object *BufferObject;
-   GLenum BufferObjectFormat;
-   /** Equivalent Mesa format for BufferObjectFormat. */
-   gl_format _BufferObjectFormat;
-
-   /** GL_OES_EGL_image_external */
-   GLint RequiredTextureImageUnits;
-};
 
 
 /** Up to four combiner sources are possible with GL_NV_texture_env_combine4 */
@@ -1375,89 +1148,6 @@ struct gl_texgen
 };
 
 
-/**
- * Texture unit state.  Contains enable flags, texture environment/function/
- * combiners, texgen state, and pointers to current texture objects.
- */
-struct gl_texture_unit
-{
-   GLbitfield Enabled;          /**< bitmask of TEXTURE_*_BIT flags */
-   GLbitfield _ReallyEnabled;   /**< 0 or exactly one of TEXTURE_*_BIT flags */
-
-   GLenum EnvMode;              /**< GL_MODULATE, GL_DECAL, GL_BLEND, etc. */
-   GLclampf EnvColor[4];
-   GLfloat EnvColorUnclamped[4];
-
-   struct gl_texgen GenS;
-   struct gl_texgen GenT;
-   struct gl_texgen GenR;
-   struct gl_texgen GenQ;
-   GLbitfield TexGenEnabled;	/**< Bitwise-OR of [STRQ]_BIT values */
-   GLbitfield _GenFlags;	/**< Bitwise-OR of Gen[STRQ]._ModeBit */
-
-   GLfloat LodBias;		/**< for biasing mipmap levels */
-   GLenum BumpTarget;
-   GLfloat RotMatrix[4]; /* 2x2 matrix */
-
-   /** Current sampler object (GL_ARB_sampler_objects) */
-   struct gl_sampler_object *Sampler;
-
-   /** 
-    * \name GL_EXT_texture_env_combine 
-    */
-   struct gl_tex_env_combine_state Combine;
-
-   /**
-    * Derived state based on \c EnvMode and the \c BaseFormat of the
-    * currently enabled texture.
-    */
-   struct gl_tex_env_combine_state _EnvMode;
-
-   /**
-    * Currently enabled combiner state.  This will point to either
-    * \c Combine or \c _EnvMode.
-    */
-   struct gl_tex_env_combine_state *_CurrentCombine;
-
-   /** Current texture object pointers */
-   struct gl_texture_object *CurrentTex[NUM_TEXTURE_TARGETS];
-
-   /** Points to highest priority, complete and enabled texture object */
-   struct gl_texture_object *_Current;
-};
-
-
-/**
- * Texture attribute group (GL_TEXTURE_BIT).
- */
-struct gl_texture_attrib
-{
-   GLuint CurrentUnit;   /**< GL_ACTIVE_TEXTURE */
-   struct gl_texture_unit Unit[MAX_COMBINED_TEXTURE_IMAGE_UNITS];
-
-   struct gl_texture_object *ProxyTex[NUM_TEXTURE_TARGETS];
-
-   /** GL_ARB_texture_buffer_object */
-   struct gl_buffer_object *BufferObject;
-
-   /** GL_ARB_seamless_cubemap */
-   GLboolean CubeMapSeamless;
-
-   /** Texture units/samplers used by vertex or fragment texturing */
-   GLbitfield _EnabledUnits;
-
-   /** Texture coord units/sets used for fragment texturing */
-   GLbitfield _EnabledCoordUnits;
-
-   /** Texture coord units that have texgen enabled */
-   GLbitfield _TexGenEnabled;
-
-   /** Texture coord units that have non-identity matrices */
-   GLbitfield _TexMatEnabled;
-
-   /** Bitwise-OR of all Texture.Unit[i]._GenFlags */
-   GLbitfield _GenFlags;
-};
 
 
 /**
@@ -3094,15 +2784,6 @@ struct gl_extensions
 };
 
 
-/**
- * A stack of matrices (projection, modelview, color, texture, etc).
- */
-struct gl_matrix_stack
-{
-   GLuint Depth;       /**< 0 <= Depth < MaxDepth */
-   GLuint MaxDepth;    /**< size of Stack[] array */
-   GLuint DirtyFlag;   /**< _NEW_MODELVIEW or _NEW_PROJECTION, for example */
-};
 
 
 /**
@@ -3237,32 +2918,6 @@ struct gl_display_list
 };
 
 
-/**
- * State used during display list compilation and execution.
- */
-struct gl_dlist_state
-{
-   GLuint CallDepth;		/**< Current recursion calling depth */
-
-   struct gl_display_list *CurrentList; /**< List currently being compiled */
-   union gl_dlist_node *CurrentBlock; /**< Pointer to current block of nodes */
-   GLuint CurrentPos;		/**< Index into current block of nodes */
-
-   GLvertexformat ListVtxfmt;
-
-   GLubyte ActiveAttribSize[VERT_ATTRIB_MAX];
-   GLfloat CurrentAttrib[VERT_ATTRIB_MAX][4];
-   
-   GLubyte ActiveMaterialSize[MAT_ATTRIB_MAX];
-   GLfloat CurrentMaterial[MAT_ATTRIB_MAX][4];
-
-   struct {
-      /* State known to have been set by the currently-compiling display
-       * list.  Used to eliminate some redundant state changes.
-       */
-      GLenum ShadeModel;
-   } Current;
-};
 
 /**
  * An error, warning, or other piece of debug information for an application
@@ -3340,17 +2995,6 @@ typedef enum
    API_OPENGL_CORE,
 } gl_api;
 
-/**
- * Driver-specific state flags.
- *
- * These are or'd with gl_context::NewDriverState to notify a driver about
- * a state change. The driver sets the flags at context creation and
- * the meaning of the bits set is opaque to core Mesa.
- */
-struct gl_driver_flags
-{
-   GLbitfield NewArray;             /**< Vertex array state */
-};
 
 struct gl_uniform_buffer_binding
 {
@@ -3405,18 +3049,6 @@ struct gl_context
    /** Core/Driver constants */
    struct gl_constants Const;
 
-   /** \name The various 4x4 matrix stacks */
-   /*@{*/
-   struct gl_matrix_stack ModelviewMatrixStack;
-   struct gl_matrix_stack ProjectionMatrixStack;
-   struct gl_matrix_stack TextureMatrixStack[MAX_TEXTURE_UNITS];
-   struct gl_matrix_stack ProgramMatrixStack[MAX_PROGRAM_MATRICES];
-   struct gl_matrix_stack *CurrentStack; /**< Points to one of the above stacks */
-   /*@}*/
-
-   /** \name Display lists */
-   struct gl_dlist_state ListState;
-
    GLboolean ExecuteFlag;	/**< Execute GL commands? */
    GLboolean CompileFlag;	/**< Compile GL commands into display list? */
 
@@ -3427,53 +3059,6 @@ struct gl_context
    GLuint Version;
    char *VersionString;
 
-   /** \name State attribute stack (for glPush/PopAttrib) */
-   /*@{*/
-   GLuint AttribStackDepth;
-   struct gl_attrib_node *AttribStack[MAX_ATTRIB_STACK_DEPTH];
-   /*@}*/
-
-   /** \name Renderer attribute groups
-    * 
-    * We define a struct for each attribute group to make pushing and popping
-    * attributes easy.  Also it's a good organization.
-    */
-   /*@{*/
-   struct gl_accum_attrib	Accum;		/**< Accum buffer attributes */
-   struct gl_colorbuffer_attrib	Color;		/**< Color buffer attributes */
-   struct gl_current_attrib	Current;	/**< Current attributes */
-   struct gl_depthbuffer_attrib	Depth;		/**< Depth buffer attributes */
-   struct gl_eval_attrib	Eval;		/**< Eval attributes */
-   struct gl_fog_attrib		Fog;		/**< Fog attributes */
-   struct gl_hint_attrib	Hint;		/**< Hint attributes */
-   struct gl_light_attrib	Light;		/**< Light attributes */
-   struct gl_line_attrib	Line;		/**< Line attributes */
-   struct gl_list_attrib	List;		/**< List attributes */
-   struct gl_multisample_attrib Multisample;
-   struct gl_pixel_attrib	Pixel;		/**< Pixel attributes */
-   struct gl_point_attrib	Point;		/**< Point attributes */
-   struct gl_polygon_attrib	Polygon;	/**< Polygon attributes */
-   GLuint PolygonStipple[32];			/**< Polygon stipple */
-   struct gl_scissor_attrib	Scissor;	/**< Scissor attributes */
-   struct gl_stencil_attrib	Stencil;	/**< Stencil buffer attributes */
-   struct gl_texture_attrib	Texture;	/**< Texture attributes */
-   struct gl_transform_attrib	Transform;	/**< Transformation attributes */
-   struct gl_viewport_attrib	Viewport;	/**< Viewport attributes */
-   /*@}*/
-
-   /** \name Client attribute stack */
-   /*@{*/
-   GLuint ClientAttribStackDepth;
-   struct gl_attrib_node *ClientAttribStack[MAX_CLIENT_ATTRIB_STACK_DEPTH];
-   /*@}*/
-
-   /** \name Client attribute groups */
-   /*@{*/
-   struct gl_array_attrib	Array;	/**< Vertex arrays */
-   struct gl_pixelstore_attrib	Pack;	/**< Pixel packing */
-   struct gl_pixelstore_attrib	Unpack;	/**< Pixel unpacking */
-   struct gl_pixelstore_attrib	DefaultPacking;	/**< Default params */
-   /*@}*/
 
    /** \name Other assorted state (not pushed/popped on attribute stack) */
    /*@{*/
@@ -3537,8 +3122,6 @@ struct gl_context
    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */
    GLbitfield NewState;      /**< bitwise-or of _NEW_* flags */
    GLbitfield NewDriverState;/**< bitwise-or of flags from DriverFlags */
-
-   struct gl_driver_flags DriverFlags;
 
    GLboolean ViewportInitialized;  /**< has viewport size been initialized? */
 

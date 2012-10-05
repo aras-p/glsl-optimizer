@@ -45,8 +45,6 @@ struct gl_renderbuffer;
 struct gl_renderbuffer_attachment;
 struct gl_shader;
 struct gl_shader_program;
-struct gl_texture_image;
-struct gl_texture_object;
 
 /* GL_ARB_vertex_buffer_object */
 /* Modifies GL_MAP_UNSYNCHRONIZED_BIT to allow driver to fail (return
@@ -141,244 +139,6 @@ struct dd_function_table {
     * Execute glRasterPos, updating the ctx->Current.Raster fields
     */
    void (*RasterPos)( struct gl_context *ctx, const GLfloat v[4] );
-
-   /**
-    * \name Image-related functions
-    */
-   /*@{*/
-
-   /**
-    * Called by glDrawPixels().
-    * \p unpack describes how to unpack the source image data.
-    */
-   void (*DrawPixels)( struct gl_context *ctx,
-		       GLint x, GLint y, GLsizei width, GLsizei height,
-		       GLenum format, GLenum type,
-		       const struct gl_pixelstore_attrib *unpack,
-		       const GLvoid *pixels );
-
-   /**
-    * Called by glReadPixels().
-    */
-   void (*ReadPixels)( struct gl_context *ctx,
-		       GLint x, GLint y, GLsizei width, GLsizei height,
-		       GLenum format, GLenum type,
-		       const struct gl_pixelstore_attrib *unpack,
-		       GLvoid *dest );
-
-   /**
-    * Called by glCopyPixels().  
-    */
-   void (*CopyPixels)( struct gl_context *ctx, GLint srcx, GLint srcy,
-                       GLsizei width, GLsizei height,
-                       GLint dstx, GLint dsty, GLenum type );
-
-   /**
-    * Called by glBitmap().  
-    */
-   void (*Bitmap)( struct gl_context *ctx,
-		   GLint x, GLint y, GLsizei width, GLsizei height,
-		   const struct gl_pixelstore_attrib *unpack,
-		   const GLubyte *bitmap );
-   /*@}*/
-
-   
-   /**
-    * \name Texture image functions
-    */
-   /*@{*/
-
-   /**
-    * Choose actual hardware texture format given the texture target, the
-    * user-provided source image format and type and the desired internal
-    * format.  In some cases, srcFormat and srcType can be GL_NONE.
-    * Note:  target may be GL_TEXTURE_CUBE_MAP, but never
-    * GL_TEXTURE_CUBE_MAP_[POSITIVE/NEGATIVE]_[XYZ].
-    * Called by glTexImage(), etc.
-    */
-   gl_format (*ChooseTextureFormat)( struct gl_context *ctx,
-                                     GLenum target, GLint internalFormat,
-                                     GLenum srcFormat, GLenum srcType );
-
-   /**
-    * Called by glTexImage[123]D() and glCopyTexImage[12]D()
-    * Allocate texture memory and copy the user's image to the buffer.
-    * The gl_texture_image fields, etc. will be fully initialized.
-    * The parameters are the same as glTexImage3D(), plus:
-    * \param dims  1, 2, or 3 indicating glTexImage1/2/3D()
-    * \param packing describes how to unpack the source data.
-    * \param texImage is the destination texture image.
-    */
-   void (*TexImage)(struct gl_context *ctx, GLuint dims,
-                    struct gl_texture_image *texImage,
-                    GLenum format, GLenum type, const GLvoid *pixels,
-                    const struct gl_pixelstore_attrib *packing);
-
-   /**
-    * Called by glTexSubImage[123]D().
-    * Replace a subset of the target texture with new texel data.
-    */
-   void (*TexSubImage)(struct gl_context *ctx, GLuint dims,
-                       struct gl_texture_image *texImage,
-                       GLint xoffset, GLint yoffset, GLint zoffset,
-                       GLsizei width, GLsizei height, GLint depth,
-                       GLenum format, GLenum type,
-                       const GLvoid *pixels,
-                       const struct gl_pixelstore_attrib *packing);
-
-
-   /**
-    * Called by glGetTexImage().
-    */
-   void (*GetTexImage)( struct gl_context *ctx,
-                        GLenum format, GLenum type, GLvoid *pixels,
-                        struct gl_texture_image *texImage );
-
-   /**
-    * Called by glCopyTex[Sub]Image[123]D().
-    */
-   void (*CopyTexSubImage)(struct gl_context *ctx, GLuint dims,
-                           struct gl_texture_image *texImage,
-                           GLint xoffset, GLint yoffset, GLint zoffset,
-                           struct gl_renderbuffer *rb,
-                           GLint x, GLint y,
-                           GLsizei width, GLsizei height);
-
-   /**
-    * Called by glGenerateMipmap() or when GL_GENERATE_MIPMAP_SGIS is enabled.
-    */
-   void (*GenerateMipmap)(struct gl_context *ctx, GLenum target,
-                          struct gl_texture_object *texObj);
-
-   /**
-    * Called by glTexImage, glCompressedTexImage, glCopyTexImage
-    * and glTexStorage to check if the dimensions of the texture image
-    * are too large.
-    * \param target  any GL_PROXY_TEXTURE_x target
-    * \return GL_TRUE if the image is OK, GL_FALSE if too large
-    */
-   GLboolean (*TestProxyTexImage)(struct gl_context *ctx, GLenum target,
-                                  GLint level, gl_format format,
-                                  GLint width, GLint height,
-                                  GLint depth, GLint border);
-   /*@}*/
-
-   
-   /**
-    * \name Compressed texture functions
-    */
-   /*@{*/
-
-   /**
-    * Called by glCompressedTexImage[123]D().
-    */
-   void (*CompressedTexImage)(struct gl_context *ctx, GLuint dims,
-                              struct gl_texture_image *texImage,
-                              GLsizei imageSize, const GLvoid *data);
-
-   /**
-    * Called by glCompressedTexSubImage[123]D().
-    */
-   void (*CompressedTexSubImage)(struct gl_context *ctx, GLuint dims,
-                                 struct gl_texture_image *texImage,
-                                 GLint xoffset, GLint yoffset, GLint zoffset,
-                                 GLsizei width, GLint height, GLint depth,
-                                 GLenum format,
-                                 GLsizei imageSize, const GLvoid *data);
-
-   /**
-    * Called by glGetCompressedTexImage.
-    */
-   void (*GetCompressedTexImage)(struct gl_context *ctx,
-                                 struct gl_texture_image *texImage,
-                                 GLvoid *data);
-   /*@}*/
-
-   /**
-    * \name Texture object / image functions
-    */
-   /*@{*/
-
-   /**
-    * Called by glBindTexture().
-    */
-   void (*BindTexture)( struct gl_context *ctx, GLenum target,
-                        struct gl_texture_object *tObj );
-
-   /**
-    * Called to allocate a new texture object.  Drivers will usually
-    * allocate/return a subclass of gl_texture_object.
-    */
-   struct gl_texture_object * (*NewTextureObject)(struct gl_context *ctx,
-                                                  GLuint name, GLenum target);
-   /**
-    * Called to delete/free a texture object.  Drivers should free the
-    * object and any image data it contains.
-    */
-   void (*DeleteTexture)(struct gl_context *ctx,
-                         struct gl_texture_object *texObj);
-
-   /** Called to allocate a new texture image object. */
-   struct gl_texture_image * (*NewTextureImage)(struct gl_context *ctx);
-
-   /** Called to free a texture image object returned by NewTextureImage() */
-   void (*DeleteTextureImage)(struct gl_context *ctx,
-                              struct gl_texture_image *);
-
-   /** Called to allocate memory for a single texture image */
-   GLboolean (*AllocTextureImageBuffer)(struct gl_context *ctx,
-                                        struct gl_texture_image *texImage);
-
-   /** Free the memory for a single texture image */
-   void (*FreeTextureImageBuffer)(struct gl_context *ctx,
-                                  struct gl_texture_image *texImage);
-
-   /** Map a slice of a texture image into user space.
-    * Note: for GL_TEXTURE_1D_ARRAY, height must be 1, y must be 0 and slice
-    * indicates the 1D array index.
-    * \param texImage  the texture image
-    * \param slice  the 3D image slice or array texture slice
-    * \param x, y, w, h  region of interest
-    * \param mode  bitmask of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT and
-    *              GL_MAP_INVALIDATE_RANGE_BIT (if writing)
-    * \param mapOut  returns start of mapping of region of interest
-    * \param rowStrideOut  returns row stride (in bytes)
-    */
-   void (*MapTextureImage)(struct gl_context *ctx,
-			   struct gl_texture_image *texImage,
-			   GLuint slice,
-			   GLuint x, GLuint y, GLuint w, GLuint h,
-			   GLbitfield mode,
-			   GLubyte **mapOut, GLint *rowStrideOut);
-
-   void (*UnmapTextureImage)(struct gl_context *ctx,
-			     struct gl_texture_image *texImage,
-			     GLuint slice);
-
-   /** For GL_ARB_texture_storage.  Allocate memory for whole mipmap stack.
-    * All the gl_texture_images in the texture object will have their
-    * dimensions, format, etc. initialized already.
-    */
-   GLboolean (*AllocTextureStorage)(struct gl_context *ctx,
-                                    struct gl_texture_object *texObj,
-                                    GLsizei levels, GLsizei width,
-                                    GLsizei height, GLsizei depth);
-
-   /**
-    * Map a renderbuffer into user space.
-    * \param mode  bitmask of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT and
-    *              GL_MAP_INVALIDATE_RANGE_BIT (if writing)
-    */
-   void (*MapRenderbuffer)(struct gl_context *ctx,
-			   struct gl_renderbuffer *rb,
-			   GLuint x, GLuint y, GLuint w, GLuint h,
-			   GLbitfield mode,
-			   GLubyte **mapOut, GLint *rowStrideOut);
-
-   void (*UnmapRenderbuffer)(struct gl_context *ctx,
-			     struct gl_renderbuffer *rb);
-
-   /*@}*/
 
 
    /**
@@ -519,16 +279,6 @@ struct dd_function_table {
    /** OpenGL 2.0 two-sided StencilOp */
    void (*StencilOpSeparate)(struct gl_context *ctx, GLenum face, GLenum fail,
                              GLenum zfail, GLenum zpass);
-   /** Control the generation of texture coordinates */
-   void (*TexGen)(struct gl_context *ctx, GLenum coord, GLenum pname,
-		  const GLfloat *params);
-   /** Set texture environment parameters */
-   void (*TexEnv)(struct gl_context *ctx, GLenum target, GLenum pname,
-                  const GLfloat *param);
-   /** Set texture parameters */
-   void (*TexParameter)(struct gl_context *ctx, GLenum target,
-                        struct gl_texture_object *texObj,
-                        GLenum pname, const GLfloat *params);
    /** Set the viewport */
    void (*Viewport)(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
    /*@}*/
@@ -578,20 +328,6 @@ struct dd_function_table {
 			     struct gl_buffer_object *obj );
    /*@}*/
 
-   /**
-    * \name Functions for GL_APPLE_object_purgeable
-    */
-   /*@{*/
-   /* variations on ObjectPurgeable */
-   GLenum (*BufferObjectPurgeable)( struct gl_context *ctx, struct gl_buffer_object *obj, GLenum option );
-   GLenum (*RenderObjectPurgeable)( struct gl_context *ctx, struct gl_renderbuffer *obj, GLenum option );
-   GLenum (*TextureObjectPurgeable)( struct gl_context *ctx, struct gl_texture_object *obj, GLenum option );
-
-   /* variations on ObjectUnpurgeable */
-   GLenum (*BufferObjectUnpurgeable)( struct gl_context *ctx, struct gl_buffer_object *obj, GLenum option );
-   GLenum (*RenderObjectUnpurgeable)( struct gl_context *ctx, struct gl_renderbuffer *obj, GLenum option );
-   GLenum (*TextureObjectUnpurgeable)( struct gl_context *ctx, struct gl_texture_object *obj, GLenum option );
-   /*@}*/
 
    /**
     * \name Functions for GL_EXT_framebuffer_{object,blit}.
@@ -694,17 +430,6 @@ struct dd_function_table {
     */
    void (*BeginVertices)( struct gl_context *ctx );
 
-   /**
-    * If inside glBegin()/glEnd(), it should ASSERT(0).  Otherwise, if
-    * FLUSH_STORED_VERTICES bit in \p flags is set flushes any buffered
-    * vertices, if FLUSH_UPDATE_CURRENT bit is set updates
-    * __struct gl_contextRec::Current and gl_light_attrib::Material
-    *
-    * Note that the default T&L engine never clears the
-    * FLUSH_UPDATE_CURRENT bit, even after performing the update.
-    */
-   void (*FlushVertices)( struct gl_context *ctx, GLuint flags );
-   void (*SaveFlushVertices)( struct gl_context *ctx );
 
    /**
     * \brief Hook for drivers to prepare for a glBegin/glEnd block
@@ -784,16 +509,6 @@ struct dd_function_table {
                    GLfloat width, GLfloat height);
    /*@}*/
 
-   /**
-    * \name GL_OES_EGL_image interface
-    */
-   void (*EGLImageTargetTexture2D)(struct gl_context *ctx, GLenum target,
-				   struct gl_texture_object *texObj,
-				   struct gl_texture_image *texImage,
-				   GLeglImageOES image_handle);
-   void (*EGLImageTargetRenderbufferStorage)(struct gl_context *ctx,
-					     struct gl_renderbuffer *rb,
-					     void *image_handle);
 
    /**
     * \name GL_EXT_transform_feedback interface
@@ -816,13 +531,6 @@ struct dd_function_table {
     */
    void (*TextureBarrier)(struct gl_context *ctx);
 
-   /**
-    * \name GL_ARB_sampler_objects
-    */
-   struct gl_sampler_object * (*NewSamplerObject)(struct gl_context *ctx,
-                                                  GLuint name);
-   void (*DeleteSamplerObject)(struct gl_context *ctx,
-                               struct gl_sampler_object *samp);
 
    /**
     * \name Return a timestamp in nanoseconds as defined by GL_ARB_timer_query.
