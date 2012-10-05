@@ -41,20 +41,6 @@ struct gl_program;
 struct gl_shader;
 struct gl_shader_program;
 
-/* GL_ARB_vertex_buffer_object */
-/* Modifies GL_MAP_UNSYNCHRONIZED_BIT to allow driver to fail (return
- * NULL) if buffer is unavailable for immediate mapping.
- *
- * Does GL_MAP_INVALIDATE_RANGE_BIT do this?  It seems so, but it
- * would require more book-keeping in the driver than seems necessary
- * at this point.
- *
- * Does GL_MAP_INVALDIATE_BUFFER_BIT do this?  Not really -- we don't
- * want to provoke the driver to throw away the old storage, we will
- * respect the contents of already referenced data.
- */
-#define MESA_MAP_NOWAIT_BIT       0x0040
-
 
 /**
  * Device driver function table.
@@ -101,12 +87,6 @@ struct dd_function_table {
     */
    void (*Flush)( struct gl_context *ctx );
 
-   /**
-    * Clear the color/depth/stencil/accum buffer(s).
-    * \param buffers  a bitmask of BUFFER_BIT_* flags indicating which
-    *                 renderbuffers need to be cleared.
-    */
-   void (*Clear)( struct gl_context *ctx, GLbitfield buffers );
 
    /**
     * Execute glAccum command.

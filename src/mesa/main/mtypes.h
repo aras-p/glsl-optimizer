@@ -414,72 +414,6 @@ typedef enum
 } gl_frag_result;
 
 
-/**
- * Indexes for all renderbuffers
- */
-typedef enum
-{
-   /* the four standard color buffers */
-   BUFFER_FRONT_LEFT,
-   BUFFER_BACK_LEFT,
-   BUFFER_FRONT_RIGHT,
-   BUFFER_BACK_RIGHT,
-   BUFFER_DEPTH,
-   BUFFER_STENCIL,
-   BUFFER_ACCUM,
-   /* optional aux buffer */
-   BUFFER_AUX0,
-   /* generic renderbuffers */
-   BUFFER_COLOR0,
-   BUFFER_COLOR1,
-   BUFFER_COLOR2,
-   BUFFER_COLOR3,
-   BUFFER_COLOR4,
-   BUFFER_COLOR5,
-   BUFFER_COLOR6,
-   BUFFER_COLOR7,
-   BUFFER_COUNT
-} gl_buffer_index;
-
-/**
- * Bit flags for all renderbuffers
- */
-#define BUFFER_BIT_FRONT_LEFT   (1 << BUFFER_FRONT_LEFT)
-#define BUFFER_BIT_BACK_LEFT    (1 << BUFFER_BACK_LEFT)
-#define BUFFER_BIT_FRONT_RIGHT  (1 << BUFFER_FRONT_RIGHT)
-#define BUFFER_BIT_BACK_RIGHT   (1 << BUFFER_BACK_RIGHT)
-#define BUFFER_BIT_AUX0         (1 << BUFFER_AUX0)
-#define BUFFER_BIT_AUX1         (1 << BUFFER_AUX1)
-#define BUFFER_BIT_AUX2         (1 << BUFFER_AUX2)
-#define BUFFER_BIT_AUX3         (1 << BUFFER_AUX3)
-#define BUFFER_BIT_DEPTH        (1 << BUFFER_DEPTH)
-#define BUFFER_BIT_STENCIL      (1 << BUFFER_STENCIL)
-#define BUFFER_BIT_ACCUM        (1 << BUFFER_ACCUM)
-#define BUFFER_BIT_COLOR0       (1 << BUFFER_COLOR0)
-#define BUFFER_BIT_COLOR1       (1 << BUFFER_COLOR1)
-#define BUFFER_BIT_COLOR2       (1 << BUFFER_COLOR2)
-#define BUFFER_BIT_COLOR3       (1 << BUFFER_COLOR3)
-#define BUFFER_BIT_COLOR4       (1 << BUFFER_COLOR4)
-#define BUFFER_BIT_COLOR5       (1 << BUFFER_COLOR5)
-#define BUFFER_BIT_COLOR6       (1 << BUFFER_COLOR6)
-#define BUFFER_BIT_COLOR7       (1 << BUFFER_COLOR7)
-
-/**
- * Mask of all the color buffer bits (but not accum).
- */
-#define BUFFER_BITS_COLOR  (BUFFER_BIT_FRONT_LEFT | \
-                            BUFFER_BIT_BACK_LEFT | \
-                            BUFFER_BIT_FRONT_RIGHT | \
-                            BUFFER_BIT_BACK_RIGHT | \
-                            BUFFER_BIT_AUX0 | \
-                            BUFFER_BIT_COLOR0 | \
-                            BUFFER_BIT_COLOR1 | \
-                            BUFFER_BIT_COLOR2 | \
-                            BUFFER_BIT_COLOR3 | \
-                            BUFFER_BIT_COLOR4 | \
-                            BUFFER_BIT_COLOR5 | \
-                            BUFFER_BIT_COLOR6 | \
-                            BUFFER_BIT_COLOR7)
 
 
 /**
@@ -695,81 +629,6 @@ union gl_color_union
 
 
 /**
- * Color buffer attribute group (GL_COLOR_BUFFER_BIT).
- */
-struct gl_colorbuffer_attrib
-{
-   GLuint ClearIndex;                      /**< Index for glClear */
-   union gl_color_union ClearColor;        /**< Color for glClear, unclamped */
-   GLuint IndexMask;                       /**< Color index write mask */
-   GLubyte ColorMask[MAX_DRAW_BUFFERS][4]; /**< Each flag is 0xff or 0x0 */
-
-   GLenum DrawBuffer[MAX_DRAW_BUFFERS];	/**< Which buffer to draw into */
-
-   /** 
-    * \name alpha testing
-    */
-   /*@{*/
-   GLboolean AlphaEnabled;		/**< Alpha test enabled flag */
-   GLenum AlphaFunc;			/**< Alpha test function */
-   GLfloat AlphaRefUnclamped;
-   GLclampf AlphaRef;			/**< Alpha reference value */
-   /*@}*/
-
-   /** 
-    * \name Blending
-    */
-   /*@{*/
-   GLbitfield BlendEnabled;		/**< Per-buffer blend enable flags */
-
-   /* NOTE: this does _not_ depend on fragment clamping or any other clamping
-    * control, only on the fixed-pointness of the render target.
-    * The query does however depend on fragment color clamping.
-    */
-   GLfloat BlendColorUnclamped[4];               /**< Blending color */
-   GLfloat BlendColor[4];		/**< Blending color */
-
-   struct
-   {
-      GLenum SrcRGB;             /**< RGB blend source term */
-      GLenum DstRGB;             /**< RGB blend dest term */
-      GLenum SrcA;               /**< Alpha blend source term */
-      GLenum DstA;               /**< Alpha blend dest term */
-      GLenum EquationRGB;        /**< GL_ADD, GL_SUBTRACT, etc. */
-      GLenum EquationA;          /**< GL_ADD, GL_SUBTRACT, etc. */
-      /**
-       * Set if any blend factor uses SRC1.  Computed at the time blend factors
-       * get set.
-       */
-      GLboolean _UsesDualSrc;
-   } Blend[MAX_DRAW_BUFFERS];
-   /** Are the blend func terms currently different for each buffer/target? */
-   GLboolean _BlendFuncPerBuffer;
-   /** Are the blend equations currently different for each buffer/target? */
-   GLboolean _BlendEquationPerBuffer;
-   /*@}*/
-
-   /** 
-    * \name Logic op
-    */
-   /*@{*/
-   GLenum LogicOp;			/**< Logic operator */
-   GLboolean IndexLogicOpEnabled;	/**< Color index logic op enabled flag */
-   GLboolean ColorLogicOpEnabled;	/**< RGBA logic op enabled flag */
-   /*@}*/
-
-   GLboolean DitherFlag;		/**< Dither enable flag */
-
-   GLenum ClampFragmentColor; /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
-   GLboolean _ClampFragmentColor; /** < with GL_FIXED_ONLY_ARB resolved */
-   GLenum ClampReadColor;     /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
-   GLboolean _ClampReadColor;     /** < with GL_FIXED_ONLY_ARB resolved */
-
-   GLboolean sRGBEnabled;	/**< Framebuffer sRGB blending/updating requested */
-};
-
-
-/**
  * Current attribute group (GL_CURRENT_BIT).
  */
 struct gl_current_attrib
@@ -797,34 +656,8 @@ struct gl_current_attrib
 };
 
 
-/**
- * Depth buffer attribute group (GL_DEPTH_BUFFER_BIT).
- */
-struct gl_depthbuffer_attrib
-{
-   GLenum Func;			/**< Function for depth buffer compare */
-   GLclampd Clear;		/**< Value to clear depth buffer to */
-   GLboolean Test;		/**< Depth buffering enabled flag */
-   GLboolean Mask;		/**< Depth buffer writable? */
-   GLboolean BoundsTest;        /**< GL_EXT_depth_bounds_test */
-   GLfloat BoundsMin, BoundsMax;/**< GL_EXT_depth_bounds_test */
-};
 
 
-
-
-
-/**
- * Line attribute group (GL_LINE_BIT).
- */
-struct gl_line_attrib
-{
-   GLboolean SmoothFlag;	/**< GL_LINE_SMOOTH enabled? */
-   GLboolean StippleFlag;	/**< GL_LINE_STIPPLE enabled? */
-   GLushort StipplePattern;	/**< Stipple pattern */
-   GLint StippleFactor;		/**< Stipple repeat factor */
-   GLfloat Width;		/**< Line width */
-};
 
 
 /**
@@ -860,23 +693,6 @@ struct gl_pixelmap
    GLfloat Map[MAX_PIXEL_MAP_TABLE];
 };
 
-
-/**
- * Collection of all pixelmaps
- */
-struct gl_pixelmaps
-{
-   struct gl_pixelmap RtoR;  /**< i.e. GL_PIXEL_MAP_R_TO_R */
-   struct gl_pixelmap GtoG;
-   struct gl_pixelmap BtoB;
-   struct gl_pixelmap AtoA;
-   struct gl_pixelmap ItoR;
-   struct gl_pixelmap ItoG;
-   struct gl_pixelmap ItoB;
-   struct gl_pixelmap ItoA;
-   struct gl_pixelmap ItoI;
-   struct gl_pixelmap StoS;
-};
 
 
 /**
@@ -961,40 +777,6 @@ struct gl_scissor_attrib
 };
 
 
-/**
- * Stencil attribute group (GL_STENCIL_BUFFER_BIT).
- *
- * Three sets of stencil data are tracked so that OpenGL 2.0,
- * GL_EXT_stencil_two_side, and GL_ATI_separate_stencil can all be supported
- * simultaneously.  In each of the stencil state arrays, element 0 corresponds
- * to GL_FRONT.  Element 1 corresponds to the OpenGL 2.0 /
- * GL_ATI_separate_stencil GL_BACK state.  Element 2 corresponds to the
- * GL_EXT_stencil_two_side GL_BACK state.
- *
- * The derived value \c _BackFace is either 1 or 2 depending on whether or
- * not GL_STENCIL_TEST_TWO_SIDE_EXT is enabled.
- *
- * The derived value \c _TestTwoSide is set when the front-face and back-face
- * stencil state are different.
- */
-struct gl_stencil_attrib
-{
-   GLboolean Enabled;		/**< Enabled flag */
-   GLboolean TestTwoSide;	/**< GL_EXT_stencil_two_side */
-   GLubyte ActiveFace;		/**< GL_EXT_stencil_two_side (0 or 2) */
-   GLboolean _Enabled;          /**< Enabled and stencil buffer present */
-   GLboolean _TestTwoSide;
-   GLubyte _BackFace;           /**< Current back stencil state (1 or 2) */
-   GLenum Function[3];		/**< Stencil function */
-   GLenum FailFunc[3];		/**< Fail function */
-   GLenum ZPassFunc[3];		/**< Depth buffer pass function */
-   GLenum ZFailFunc[3];		/**< Depth buffer fail function */
-   GLint Ref[3];		/**< Reference value */
-   GLuint ValueMask[3];		/**< Value mask */
-   GLuint WriteMask[3];		/**< Write mask */
-   GLuint Clear;		/**< Clear value */
-};
-
 
 /**
  * An index for each type of texture object.  These correspond to the GL
@@ -1014,23 +796,6 @@ typedef enum
    TEXTURE_1D_INDEX,
    NUM_TEXTURE_TARGETS
 } gl_texture_index;
-
-
-/**
- * Bit flags for each type of texture object
- * Used for Texture.Unit[]._ReallyEnabled flags.
- */
-/*@{*/
-#define TEXTURE_BUFFER_BIT   (1 << TEXTURE_BUFFER_INDEX)
-#define TEXTURE_2D_ARRAY_BIT (1 << TEXTURE_2D_ARRAY_INDEX)
-#define TEXTURE_1D_ARRAY_BIT (1 << TEXTURE_1D_ARRAY_INDEX)
-#define TEXTURE_EXTERNAL_BIT (1 << TEXTURE_EXTERNAL_INDEX)
-#define TEXTURE_CUBE_BIT     (1 << TEXTURE_CUBE_INDEX)
-#define TEXTURE_3D_BIT       (1 << TEXTURE_3D_INDEX)
-#define TEXTURE_RECT_BIT     (1 << TEXTURE_RECT_INDEX)
-#define TEXTURE_2D_BIT       (1 << TEXTURE_2D_INDEX)
-#define TEXTURE_1D_BIT       (1 << TEXTURE_1D_INDEX)
-/*@}*/
 
 
 
@@ -1201,68 +966,6 @@ struct gl_selection
    GLfloat HitMaxZ;	/**< maximum hit depth */
 };
 
-
-/**
- * 1-D Evaluator control points
- */
-struct gl_1d_map
-{
-   GLuint Order;	/**< Number of control points */
-   GLfloat u1, u2, du;	/**< u1, u2, 1.0/(u2-u1) */
-   GLfloat *Points;	/**< Points to contiguous control points */
-};
-
-
-/**
- * 2-D Evaluator control points
- */
-struct gl_2d_map
-{
-   GLuint Uorder;		/**< Number of control points in U dimension */
-   GLuint Vorder;		/**< Number of control points in V dimension */
-   GLfloat u1, u2, du;
-   GLfloat v1, v2, dv;
-   GLfloat *Points;		/**< Points to contiguous control points */
-};
-
-
-/**
- * All evaluator control point state
- */
-struct gl_evaluators
-{
-   /** 
-    * \name 1-D maps
-    */
-   /*@{*/
-   struct gl_1d_map Map1Vertex3;
-   struct gl_1d_map Map1Vertex4;
-   struct gl_1d_map Map1Index;
-   struct gl_1d_map Map1Color4;
-   struct gl_1d_map Map1Normal;
-   struct gl_1d_map Map1Texture1;
-   struct gl_1d_map Map1Texture2;
-   struct gl_1d_map Map1Texture3;
-   struct gl_1d_map Map1Texture4;
-   struct gl_1d_map Map1Attrib[16];  /**< GL_NV_vertex_program */
-   /*@}*/
-
-   /** 
-    * \name 2-D maps 
-    */
-   /*@{*/
-   struct gl_2d_map Map2Vertex3;
-   struct gl_2d_map Map2Vertex4;
-   struct gl_2d_map Map2Index;
-   struct gl_2d_map Map2Color4;
-   struct gl_2d_map Map2Normal;
-   struct gl_2d_map Map2Texture1;
-   struct gl_2d_map Map2Texture2;
-   struct gl_2d_map Map2Texture3;
-   struct gl_2d_map Map2Texture4;
-   struct gl_2d_map Map2Attrib[16];  /**< GL_NV_vertex_program */
-   /*@}*/
-};
 
 
 struct gl_transform_feedback_varying_info
@@ -2566,9 +2269,6 @@ struct gl_context
 
    /** \name Other assorted state (not pushed/popped on attribute stack) */
    /*@{*/
-   struct gl_pixelmaps          PixelMaps;
-
-   struct gl_evaluators EvalMap;   /**< All evaluators */
    struct gl_feedback   Feedback;  /**< Feedback */
    struct gl_selection  Select;    /**< Selection */
 

@@ -77,7 +77,7 @@ enum glsl_precision {
 };
 
 #ifdef __cplusplus
-#include "GL/gl.h"
+#include "glminimal.h"
 #include "ralloc.h"
 
 struct glsl_type {

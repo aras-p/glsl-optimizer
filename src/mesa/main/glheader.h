@@ -50,7 +50,7 @@
 
 
 #define GL_GLEXT_PROTOTYPES
-#include "GL/gl.h"
+#include "glminimal.h"
 
 
 // just the set of constants needed from glext.h
@@ -126,7 +126,6 @@
 #define GL_TEXTURE_BUFFER_DATA_STORE_BINDING 0x8C2D
 #define GL_TEXTURE_RECTANGLE              0x84F5
 #define GL_TEXTURE_BINDING_RECTANGLE      0x84F6
-#define GL_PROXY_TEXTURE_RECTANGLE        0x84F7
 
 #define GL_INTERLEAVED_ATTRIBS            0x8C8C
 #define GL_SEPARATE_ATTRIBS               0x8C8D
@@ -170,11 +169,6 @@ typedef void *GLeglImageOES;
 
 #ifndef GL_PROGRAM_BINARY_LENGTH_OES
 #define GL_PROGRAM_BINARY_LENGTH_OES 0x8741
-#endif
-
-/* GLES 2.0 tokens */
-#ifndef GL_RGB565
-#define GL_RGB565 0x8D62
 #endif
 
 #ifndef GL_TEXTURE_GEN_STR_OES
