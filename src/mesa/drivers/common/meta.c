@@ -3047,7 +3047,6 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
    };
    struct glsl_sampler *sampler;
    const char *vs_source;
-   const char *fs_template;
 
    static const char *vs_int_source =
       "#version 130\n"
@@ -3070,50 +3069,8 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
       "   out_color = texture(tex2d, texCoords.xy);\n"
       "}\n";
    char *fs_source;
-   const char *extension_mode;
    GLuint vs, fs;
    void *mem_ctx;
-
-   if (ctx->Const.GLSLVersion < 130) {
-      vs_source =
-         "attribute vec2 position;\n"
-         "attribute vec3 textureCoords;\n"
-         "varying vec3 texCoords;\n"
-         "void main()\n"
-         "{\n"
-         "   texCoords = textureCoords;\n"
-         "   gl_Position = vec4(position, 0.0, 1.0);\n"
-         "}\n";
-      fs_template =
-         "#extension GL_EXT_texture_array : %s\n"
-         "uniform %s texSampler;\n"
-         "varying vec3 texCoords;\n"
-         "void main()\n"
-         "{\n"
-         "   gl_FragColor = %s(texSampler, %s);\n"
-         "}\n";
-   } else {
-      vs_source =
-         "#version 130\n"
-         "in vec2 position;\n"
-         "in vec3 textureCoords;\n"
-         "out vec3 texCoords;\n"
-         "void main()\n"
-         "{\n"
-         "   texCoords = textureCoords;\n"
-         "   gl_Position = vec4(position, 0.0, 1.0);\n"
-         "}\n";
-      fs_template =
-         "#version 130\n"
-         "uniform %s texSampler;\n"
-         "in vec3 texCoords;\n"
-         "out %s out_color;\n"
-         "\n"
-         "void main()\n"
-         "{\n"
-         "   out_color = texture(texSampler, %s);\n"
-         "}\n";
-    }
 
    /* Check if already initialized */
    if (mipmap->ArrayObj == 0) {
@@ -3144,6 +3101,27 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
    mem_ctx = ralloc_context(NULL);
 
    if (ctx->Const.GLSLVersion < 130) {
+      const char *fs_template;
+      const char *extension_mode;
+
+      vs_source =
+         "attribute vec2 position;\n"
+         "attribute vec3 textureCoords;\n"
+         "varying vec3 texCoords;\n"
+         "void main()\n"
+         "{\n"
+         "   texCoords = textureCoords;\n"
+         "   gl_Position = vec4(position, 0.0, 1.0);\n"
+         "}\n";
+      fs_template =
+         "#extension GL_EXT_texture_array : %s\n"
+         "uniform %s texSampler;\n"
+         "varying vec3 texCoords;\n"
+         "void main()\n"
+         "{\n"
+         "   gl_FragColor = %s(texSampler, %s);\n"
+         "}\n";
+
       extension_mode = ((target == GL_TEXTURE_1D_ARRAY) ||
                         (target == GL_TEXTURE_2D_ARRAY)) ?
                        "require" : "disable";
@@ -3153,6 +3131,29 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
                                   sampler->func, sampler->texcoords);
    }
    else {
+      const char *fs_template;
+
+      vs_source =
+         "#version 130\n"
+         "in vec2 position;\n"
+         "in vec3 textureCoords;\n"
+         "out vec3 texCoords;\n"
+         "void main()\n"
+         "{\n"
+         "   texCoords = textureCoords;\n"
+         "   gl_Position = vec4(position, 0.0, 1.0);\n"
+         "}\n";
+      fs_template =
+         "#version 130\n"
+         "uniform %s texSampler;\n"
+         "in vec3 texCoords;\n"
+         "out %s out_color;\n"
+         "\n"
+         "void main()\n"
+         "{\n"
+         "   out_color = texture(texSampler, %s);\n"
+         "}\n";
+
       fs_source = ralloc_asprintf(mem_ctx, fs_template,
                                   sampler->type, "vec4",
                                   sampler->texcoords);
