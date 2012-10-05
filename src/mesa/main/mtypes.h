@@ -48,12 +48,7 @@ extern "C" {
  * \name Some forward type declarations
  */
 /*@{*/
-struct _mesa_HashTable;
-struct gl_attrib_node;
-struct gl_list_extensions;
-struct gl_program_cache;
 struct gl_context;
-struct st_context;
 struct gl_uniform_storage;
 /*@}*/
 
@@ -139,49 +134,6 @@ typedef enum
 #define VERT_ATTRIB_GENERIC(i)      (VERT_ATTRIB_GENERIC0 + (i))
 #define VERT_ATTRIB_GENERIC_MAX     MAX_VERTEX_GENERIC_ATTRIBS
 
-/**
- * Bitflags for vertex attributes.
- * These are used in bitfields in many places.
- */
-/*@{*/
-#define VERT_BIT_POS             BITFIELD64_BIT(VERT_ATTRIB_POS)
-#define VERT_BIT_WEIGHT          BITFIELD64_BIT(VERT_ATTRIB_WEIGHT)
-#define VERT_BIT_NORMAL          BITFIELD64_BIT(VERT_ATTRIB_NORMAL)
-#define VERT_BIT_COLOR0          BITFIELD64_BIT(VERT_ATTRIB_COLOR0)
-#define VERT_BIT_COLOR1          BITFIELD64_BIT(VERT_ATTRIB_COLOR1)
-#define VERT_BIT_FOG             BITFIELD64_BIT(VERT_ATTRIB_FOG)
-#define VERT_BIT_COLOR_INDEX     BITFIELD64_BIT(VERT_ATTRIB_COLOR_INDEX)
-#define VERT_BIT_EDGEFLAG        BITFIELD64_BIT(VERT_ATTRIB_EDGEFLAG)
-#define VERT_BIT_TEX0            BITFIELD64_BIT(VERT_ATTRIB_TEX0)
-#define VERT_BIT_TEX1            BITFIELD64_BIT(VERT_ATTRIB_TEX1)
-#define VERT_BIT_TEX2            BITFIELD64_BIT(VERT_ATTRIB_TEX2)
-#define VERT_BIT_TEX3            BITFIELD64_BIT(VERT_ATTRIB_TEX3)
-#define VERT_BIT_TEX4            BITFIELD64_BIT(VERT_ATTRIB_TEX4)
-#define VERT_BIT_TEX5            BITFIELD64_BIT(VERT_ATTRIB_TEX5)
-#define VERT_BIT_TEX6            BITFIELD64_BIT(VERT_ATTRIB_TEX6)
-#define VERT_BIT_TEX7            BITFIELD64_BIT(VERT_ATTRIB_TEX7)
-#define VERT_BIT_POINT_SIZE      BITFIELD64_BIT(VERT_ATTRIB_POINT_SIZE)
-#define VERT_BIT_GENERIC0        BITFIELD64_BIT(VERT_ATTRIB_GENERIC0)
-
-#define VERT_BIT(i)              BITFIELD64_BIT(i)
-#define VERT_BIT_ALL             BITFIELD64_RANGE(0, VERT_ATTRIB_MAX)
-
-#define VERT_BIT_FF(i)           VERT_BIT(i)
-#define VERT_BIT_FF_ALL          BITFIELD64_RANGE(0, VERT_ATTRIB_FF_MAX)
-#define VERT_BIT_TEX(i)          VERT_BIT(VERT_ATTRIB_TEX(i))
-#define VERT_BIT_TEX_ALL         \
-   BITFIELD64_RANGE(VERT_ATTRIB_TEX(0), VERT_ATTRIB_TEX_MAX)
-#define VERT_BIT_FF_NVALIAS      \
-   BITFIELD64_RANGE(VERT_ATTRIB_POS, VERT_ATTRIB_TEX(VERT_ATTRIB_TEX_MAX))
-
-#define VERT_BIT_GENERIC_NV(i)   VERT_BIT(VERT_ATTRIB_GENERIC_NV(i))
-#define VERT_BIT_GENERIC_NV_ALL  \
-   BITFIELD64_RANGE(VERT_ATTRIB_GENERIC_NV(0), VERT_ATTRIB_GENERIC_NV_MAX)
-
-#define VERT_BIT_GENERIC(i)      VERT_BIT(VERT_ATTRIB_GENERIC(i))
-#define VERT_BIT_GENERIC_ALL     \
-   BITFIELD64_RANGE(VERT_ATTRIB_GENERIC(0), VERT_ATTRIB_GENERIC_MAX)
-/*@}*/
 
 
 /**
@@ -237,25 +189,6 @@ typedef enum
    GEOM_ATTRIB_MAX = (GEOM_ATTRIB_VAR0 + MAX_VARYING)
 } gl_geom_attrib;
 
-/**
- * Bitflags for geometry attributes.
- * These are used in bitfields in many places.
- */
-/*@{*/
-#define GEOM_BIT_COLOR0      (1 << GEOM_ATTRIB_COLOR0)
-#define GEOM_BIT_COLOR1      (1 << GEOM_ATTRIB_COLOR1)
-#define GEOM_BIT_SCOLOR0     (1 << GEOM_ATTRIB_SECONDARY_COLOR0)
-#define GEOM_BIT_SCOLOR1     (1 << GEOM_ATTRIB_SECONDARY_COLOR1)
-#define GEOM_BIT_TEX_COORD   (1 << GEOM_ATTRIB_TEX_COORD)
-#define GEOM_BIT_FOG_COORD   (1 << GEOM_ATTRIB_FOG_FRAG_COORD)
-#define GEOM_BIT_POSITION    (1 << GEOM_ATTRIB_POSITION)
-#define GEOM_BIT_POINT_SIDE  (1 << GEOM_ATTRIB_POINT_SIZE)
-#define GEOM_BIT_CLIP_VERTEX (1 << GEOM_ATTRIB_CLIP_VERTEX)
-#define GEOM_BIT_PRIM_ID     (1 << GEOM_ATTRIB_PRIMITIVE_ID)
-#define GEOM_BIT_VAR0        (1 << GEOM_ATTRIB_VAR0)
-
-#define GEOM_BIT_VAR(g)  (1 << (GEOM_BIT_VAR0 + (g)))
-/*@}*/
 
 
 /**
@@ -357,40 +290,6 @@ _mesa_frag_attrib_to_vert_result(gl_frag_attrib frag_attrib)
 
 
 /**
- * Bitflags for fragment program input attributes.
- */
-/*@{*/
-#define FRAG_BIT_WPOS  (1 << FRAG_ATTRIB_WPOS)
-#define FRAG_BIT_COL0  (1 << FRAG_ATTRIB_COL0)
-#define FRAG_BIT_COL1  (1 << FRAG_ATTRIB_COL1)
-#define FRAG_BIT_FOGC  (1 << FRAG_ATTRIB_FOGC)
-#define FRAG_BIT_FACE  (1 << FRAG_ATTRIB_FACE)
-#define FRAG_BIT_PNTC  (1 << FRAG_ATTRIB_PNTC)
-#define FRAG_BIT_TEX0  (1 << FRAG_ATTRIB_TEX0)
-#define FRAG_BIT_TEX1  (1 << FRAG_ATTRIB_TEX1)
-#define FRAG_BIT_TEX2  (1 << FRAG_ATTRIB_TEX2)
-#define FRAG_BIT_TEX3  (1 << FRAG_ATTRIB_TEX3)
-#define FRAG_BIT_TEX4  (1 << FRAG_ATTRIB_TEX4)
-#define FRAG_BIT_TEX5  (1 << FRAG_ATTRIB_TEX5)
-#define FRAG_BIT_TEX6  (1 << FRAG_ATTRIB_TEX6)
-#define FRAG_BIT_TEX7  (1 << FRAG_ATTRIB_TEX7)
-#define FRAG_BIT_VAR0  (1 << FRAG_ATTRIB_VAR0)
-
-#define FRAG_BIT_TEX(U)  (FRAG_BIT_TEX0 << (U))
-#define FRAG_BIT_VAR(V)  (FRAG_BIT_VAR0 << (V))
-
-#define FRAG_BITS_TEX_ANY (FRAG_BIT_TEX0|	\
-			   FRAG_BIT_TEX1|	\
-			   FRAG_BIT_TEX2|	\
-			   FRAG_BIT_TEX3|	\
-			   FRAG_BIT_TEX4|	\
-			   FRAG_BIT_TEX5|	\
-			   FRAG_BIT_TEX6|	\
-			   FRAG_BIT_TEX7)
-/*@}*/
-
-
-/**
  * Fragment program results
  */
 typedef enum
@@ -434,44 +333,6 @@ typedef enum
    TEXTURE_1D_INDEX,
    NUM_TEXTURE_TARGETS
 } gl_texture_index;
-
-
-
-
-
-
-/** Up to four combiner sources are possible with GL_NV_texture_env_combine4 */
-#define MAX_COMBINER_TERMS 4
-
-
-
-
-/**
- * Bit flag versions of the corresponding GL_ constants.
- */
-/*@{*/
-#define TEXGEN_SPHERE_MAP        0x1
-#define TEXGEN_OBJ_LINEAR        0x2
-#define TEXGEN_EYE_LINEAR        0x4
-#define TEXGEN_REFLECTION_MAP_NV 0x8
-#define TEXGEN_NORMAL_MAP_NV     0x10
-
-#define TEXGEN_NEED_NORMALS      (TEXGEN_SPHERE_MAP        | \
-				  TEXGEN_REFLECTION_MAP_NV | \
-				  TEXGEN_NORMAL_MAP_NV)
-#define TEXGEN_NEED_EYE_COORD    (TEXGEN_SPHERE_MAP        | \
-				  TEXGEN_REFLECTION_MAP_NV | \
-				  TEXGEN_NORMAL_MAP_NV     | \
-				  TEXGEN_EYE_LINEAR)
-/*@}*/
-
-
-
-/** Tex-gen enabled for texture unit? */
-#define ENABLE_TEXGEN(unit) (1 << (unit))
-
-/** Non-identity texture matrix for texture unit? */
-#define ENABLE_TEXMAT(unit) (1 << (unit))
 
 
 
@@ -977,18 +838,6 @@ struct gl_shader_compiler_options
 
 
 
-
-/**
- * Precision info for shader datatypes.  See glGetShaderPrecisionFormat().
- */
-struct gl_precision
-{
-   GLushort RangeMin;   /**< min value exponent */
-   GLushort RangeMax;   /**< max value exponent */
-   GLushort Precision;  /**< number of mantissa bits */
-};
-
-
 /**
  * Limits for vertex, geometry and fragment programs/shaders.
  */
@@ -1017,9 +866,6 @@ struct gl_program_constants
    GLuint MaxNativeParameters;
    /* For shaders */
    GLuint MaxUniformComponents;  /**< Usually == MaxParameters * 4 */
-   /* ES 2.0 and GL_ARB_ES2_compatibility */
-   struct gl_precision LowFloat, MediumFloat, HighFloat;
-   struct gl_precision LowInt, MediumInt, HighInt;
    /* GL_ARB_uniform_buffer_object */
    GLuint MaxUniformBlocks;
    GLuint MaxCombinedUniformComponents;
@@ -1344,67 +1190,6 @@ struct gl_extensions
    GLuint Count;
 };
 
-
-
-
-/**
- * \name Bits for image transfer operations 
- * \sa __struct gl_contextRec::ImageTransferState.
- */
-/*@{*/
-#define IMAGE_SCALE_BIAS_BIT                      0x1
-#define IMAGE_SHIFT_OFFSET_BIT                    0x2
-#define IMAGE_MAP_COLOR_BIT                       0x4
-#define IMAGE_CLAMP_BIT                           0x800
-
-
-/** Pixel Transfer ops */
-#define IMAGE_BITS (IMAGE_SCALE_BIAS_BIT |			\
-		    IMAGE_SHIFT_OFFSET_BIT |			\
-		    IMAGE_MAP_COLOR_BIT)
-
-/**
- * \name Bits to indicate what state has changed.  
- */
-/*@{*/
-#define _NEW_MODELVIEW         (1 << 0)   /**< gl_context::ModelView */
-#define _NEW_PROJECTION        (1 << 1)   /**< gl_context::Projection */
-#define _NEW_TEXTURE_MATRIX    (1 << 2)   /**< gl_context::TextureMatrix */
-#define _NEW_COLOR             (1 << 3)   /**< gl_context::Color */
-#define _NEW_DEPTH             (1 << 4)   /**< gl_context::Depth */
-#define _NEW_EVAL              (1 << 5)   /**< gl_context::Eval, EvalMap */
-#define _NEW_FOG               (1 << 6)   /**< gl_context::Fog */
-#define _NEW_HINT              (1 << 7)   /**< gl_context::Hint */
-#define _NEW_LIGHT             (1 << 8)   /**< gl_context::Light */
-#define _NEW_LINE              (1 << 9)   /**< gl_context::Line */
-#define _NEW_PIXEL             (1 << 10)  /**< gl_context::Pixel */
-#define _NEW_POINT             (1 << 11)  /**< gl_context::Point */
-#define _NEW_POLYGON           (1 << 12)  /**< gl_context::Polygon */
-#define _NEW_POLYGONSTIPPLE    (1 << 13)  /**< gl_context::PolygonStipple */
-#define _NEW_SCISSOR           (1 << 14)  /**< gl_context::Scissor */
-#define _NEW_STENCIL           (1 << 15)  /**< gl_context::Stencil */
-#define _NEW_TEXTURE           (1 << 16)  /**< gl_context::Texture */
-#define _NEW_TRANSFORM         (1 << 17)  /**< gl_context::Transform */
-#define _NEW_VIEWPORT          (1 << 18)  /**< gl_context::Viewport */
-#define _NEW_PACKUNPACK        (1 << 19)  /**< gl_context::Pack, Unpack */
-#define _NEW_ARRAY             (1 << 20)  /**< gl_context::Array */
-#define _NEW_RENDERMODE        (1 << 21)  /**< gl_context::RenderMode, etc */
-#define _NEW_CURRENT_ATTRIB    (1 << 23)  /**< gl_context::Current */
-#define _NEW_MULTISAMPLE       (1 << 24)  /**< gl_context::Multisample */
-#define _NEW_TRACK_MATRIX      (1 << 25)  /**< gl_context::VertexProgram */
-#define _NEW_PROGRAM           (1 << 26)  /**< New program/shader state */
-#define _NEW_PROGRAM_CONSTANTS (1 << 27)
-#define _NEW_BUFFER_OBJECT     (1 << 28)
-#define _NEW_FRAG_CLAMP        (1 << 29)
-#define _NEW_TRANSFORM_FEEDBACK (1 << 30) /**< gl_context::TransformFeedback */
-#define _NEW_ALL ~0
-
-/**
- * We use _NEW_TRANSFORM for GL_RASTERIZER_DISCARD.  This #define is for
- * clarity.
- */
-#define _NEW_RASTERIZER_DISCARD _NEW_TRANSFORM
-/*@}*/
 
 
 
