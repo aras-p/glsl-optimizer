@@ -291,14 +291,6 @@ i915_create_sampler_state(struct pipe_context *pipe,
    return cso;
 }
 
-static void i915_fixup_bind_sampler_states(struct pipe_context *pipe,
-                                           unsigned num, void **sampler)
-{
-   struct i915_context *i915 = i915_context(pipe);
-
-   i915->saved_bind_sampler_states(pipe, num, sampler);
-}
-
 static void
 i915_bind_vertex_sampler_states(struct pipe_context *pipe,
                                 unsigned num_samplers,
@@ -579,14 +571,6 @@ i915_create_fs_state(struct pipe_context *pipe,
 }
 
 static void
-i915_fixup_bind_fs_state(struct pipe_context *pipe, void *shader)
-{
-   struct i915_context *i915 = i915_context(pipe);
-
-   i915->saved_bind_fs_state(pipe, shader);
-}
-
-static void
 i915_bind_fs_state(struct pipe_context *pipe, void *shader)
 {
    struct i915_context *i915 = i915_context(pipe);
@@ -711,16 +695,6 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
    }
 }
 
-
-static void
-i915_fixup_set_fragment_sampler_views(struct pipe_context *pipe,
-                                      unsigned num,
-                                      struct pipe_sampler_view **views)
-{
-   struct i915_context *i915 = i915_context(pipe);
-
-   i915->saved_set_sampler_views(pipe, num, views);
-}
 
 static void i915_set_fragment_sampler_views(struct pipe_context *pipe,
                                             unsigned num,
@@ -1084,15 +1058,4 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.set_viewport_state = i915_set_viewport_state;
    i915->base.set_vertex_buffers = i915_set_vertex_buffers;
    i915->base.set_index_buffer = i915_set_index_buffer;
-}
-
-void
-i915_init_fixup_state_functions( struct i915_context *i915 )
-{
-   i915->saved_bind_fs_state = i915->base.bind_fs_state;
-   i915->base.bind_fs_state = i915_fixup_bind_fs_state;
-   i915->saved_bind_sampler_states = i915->base.bind_fragment_sampler_states;
-   i915->base.bind_fragment_sampler_states = i915_fixup_bind_sampler_states;
-   i915->saved_set_sampler_views = i915->base.set_fragment_sampler_views;
-   i915->base.set_fragment_sampler_views = i915_fixup_set_fragment_sampler_views;
 }

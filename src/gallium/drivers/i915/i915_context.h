@@ -289,13 +289,6 @@ struct i915_context {
 
    /** blitter/hw-clear */
    struct blitter_context* blitter;
-
-   /** State tracking needed by u_blitter for save/restore. */
-   void (*saved_bind_fs_state)(struct pipe_context *pipe, void *shader);
-   void (*saved_bind_sampler_states)(struct pipe_context *pipe,
-                                     unsigned num, void **sampler);
-   void (*saved_set_sampler_views)(struct pipe_context *pipe,
-                                   unsigned num, struct pipe_sampler_view **views);
 };
 
 /* A flag for each state_tracker state object:
@@ -400,7 +393,6 @@ void i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
  * 
  */
 void i915_init_state_functions( struct i915_context *i915 );
-void i915_init_fixup_state_functions( struct i915_context *i915 );
 void i915_init_flush_functions( struct i915_context *i915 );
 void i915_init_string_functions( struct i915_context *i915 );
 
