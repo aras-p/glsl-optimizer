@@ -36,9 +36,6 @@
 
 #include "main/glheader.h"
 #include "main/config.h"
-#include "main/mfeatures.h"
-#include "glapi/glapi.h"
-#include "main/simple_list.h"	/* struct simple_node */
 
 
 #ifdef __cplusplus
@@ -2020,21 +2017,6 @@ struct gl_query_state
 };
 
 
-/** Sync object state */
-struct gl_sync_object
-{
-   struct simple_node link;
-   GLenum Type;               /**< GL_SYNC_FENCE */
-   GLuint Name;               /**< Fence name */
-   GLint RefCount;            /**< Reference count */
-   GLboolean DeletePending;   /**< Object was deleted while there were still
-			       * live references (e.g., sync not yet finished)
-			       */
-   GLenum SyncCondition;
-   GLbitfield Flags;          /**< Flags passed to glFenceSync */
-   GLuint StatusFlag:1;       /**< Has the sync object been signaled? */
-};
-
 
 /**
  * State which can be shared by multiple contexts:
@@ -2073,9 +2055,6 @@ struct gl_shared_state
    /* GL_EXT_framebuffer_object */
    struct _mesa_HashTable *RenderBuffers;
    struct _mesa_HashTable *FrameBuffers;
-
-   /* GL_ARB_sync */
-   struct simple_node SyncObjects;
 
    /** GL_ARB_sampler_objects */
    struct _mesa_HashTable *SamplerObjects;
@@ -2628,35 +2607,6 @@ typedef enum {
    OTHER_ERROR_COUNT
 } gl_other_error;
 
-struct gl_client_namespace
-{
-   struct _mesa_HashTable *IDs;
-   unsigned ZeroID; /* a HashTable won't take zero, so store its state here */
-   struct simple_node Severity[3]; /* lists of IDs in the hash table */
-};
-
-struct gl_client_debug
-{
-   GLboolean Defaults[3][2][6]; /* severity, source, type */
-   struct gl_client_namespace Namespaces[2][6]; /* source, type */
-};
-
-struct gl_debug_state
-{
-   GLDEBUGPROCARB Callback;
-   GLvoid *CallbackData;
-   GLboolean SyncOutput;
-   GLboolean ApiErrors[API_ERROR_COUNT];
-   GLboolean WinsysErrors[WINSYS_ERROR_COUNT];
-   GLboolean ShaderErrors[SHADER_ERROR_COUNT];
-   GLboolean OtherErrors[OTHER_ERROR_COUNT];
-   struct gl_client_debug ClientIDs;
-   struct gl_debug_msg Log[MAX_DEBUG_LOGGED_MESSAGES];
-   GLint NumMessages;
-   GLint NextMsg;
-   GLint NextMsgLength; /* redundant, but copied here from Log[NextMsg].length
-                           for the sake of the offsetof() code in get.c */
-};
 
 /**
  * Enum for the OpenGL APIs we know about and may support.
@@ -2750,9 +2700,6 @@ struct gl_context
     */
    const char *ErrorDebugFmtString;
    GLuint ErrorDebugCount;
-
-   /* GL_ARB_debug_output */
-   struct gl_debug_state Debug;
 
    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */
    GLbitfield NewState;      /**< bitwise-or of _NEW_* flags */

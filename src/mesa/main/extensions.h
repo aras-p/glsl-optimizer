@@ -37,7 +37,6 @@
 #define _EXTENSIONS_H_
 
 #include "glheader.h"
-#include "mfeatures.h"
 
 struct gl_context;
 

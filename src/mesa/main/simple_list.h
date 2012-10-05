@@ -41,11 +41,6 @@
 extern "C" {
 #endif
 
-struct simple_node {
-   struct simple_node *next;
-   struct simple_node *prev;
-};
-
 /**
  * Remove an element from list.
  *

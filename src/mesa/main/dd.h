@@ -381,20 +381,6 @@ struct dd_function_table {
 
    /**@}*/
 
-   /**
-    * \name GL_ARB_sync interfaces
-    */
-   /*@{*/
-   struct gl_sync_object * (*NewSyncObject)(struct gl_context *, GLenum);
-   void (*FenceSync)(struct gl_context *, struct gl_sync_object *, GLenum, GLbitfield);
-   void (*DeleteSyncObject)(struct gl_context *, struct gl_sync_object *);
-   void (*CheckSync)(struct gl_context *, struct gl_sync_object *);
-   void (*ClientWaitSync)(struct gl_context *, struct gl_sync_object *,
-			  GLbitfield, GLuint64);
-   void (*ServerWaitSync)(struct gl_context *, struct gl_sync_object *,
-			  GLbitfield, GLuint64);
-   /*@}*/
-
    /** GL_NV_conditional_render */
    void (*BeginConditionalRender)(struct gl_context *ctx, struct gl_query_object *q,
                                   GLenum mode);
