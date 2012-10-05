@@ -370,44 +370,38 @@ struct r600_scissor_state
 
 struct r600_context {
 	struct pipe_context		context;
+	struct r600_screen		*screen;
+	struct radeon_winsys		*ws;
+	struct radeon_winsys_cs		*cs;
 	struct blitter_context		*blitter;
+	struct u_upload_mgr	        *uploader;
+	struct util_slab_mempool	pool_transfers;
+
+	/* Hardware info. */
 	enum radeon_family		family;
 	enum chip_class			chip_class;
 	boolean				has_vertex_cache;
 	boolean				keep_tiling_flags;
+	unsigned			default_ps_gprs, default_vs_gprs;
 	unsigned			r6xx_num_clause_temp_gprs;
+	unsigned			backend_mask;
+	unsigned			max_db; /* for OQ */
+
+	/* Miscellaneous state objects. */
 	void				*custom_dsa_flush;
 	void				*custom_blend_resolve;
 	void				*custom_blend_decompress;
+	/* With rasterizer discard, there doesn't have to be a pixel shader.
+	 * In that case, we bind this one: */
+	void				*dummy_pixel_shader;
+	/* These dummy CMASK and FMASK buffers are used to get around the R6xx hardware
+	 * bug where valid CMASK and FMASK are required to be present to avoid
+	 * a hardlock in certain operations but aren't actually used
+	 * for anything useful. */
+	struct r600_resource		*dummy_fmask;
+	struct r600_resource		*dummy_cmask;
 
-	struct r600_screen		*screen;
-	struct radeon_winsys		*ws;
-	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
-	unsigned			compute_cb_target_mask;
-	unsigned			db_shader_control;
-	unsigned			pa_sc_line_stipple;
-	/* for saving when using blitter */
-	struct r600_pipe_shader_selector 	*ps_shader;
-	struct r600_pipe_shader_selector 	*vs_shader;
-	struct r600_pipe_rasterizer	*rasterizer;
-	struct r600_pipe_state          spi;
-	struct pipe_query		*current_render_cond;
-	unsigned			current_render_cond_mode;
-	/* shader information */
-	boolean				two_side;
-	boolean				spi_dirty;
-	unsigned			sprite_coord_enable;
-	boolean				flatshade;
-	bool				alpha_to_one;
-	bool				multisample_enable;
-
-	struct u_upload_mgr	        *uploader;
-	struct util_slab_mempool	pool_transfers;
-
-	unsigned default_ps_gprs, default_vs_gprs;
-
-	/******************************/
-	/* States based on r600_atom. */
+	/* State binding slots are here. */
 	struct r600_atom		*atoms[R600_NUM_ATOMS];
 	/* States for CS initialization. */
 	struct r600_command_buffer	start_cs_cmd; /* invariant state mostly */
@@ -440,69 +434,63 @@ struct r600_context {
 	struct r600_vertexbuf_state	vertex_buffer_state;
 	/** Vertex buffers for compute shaders */
 	struct r600_vertexbuf_state	cs_vertex_buffer_state;
-	/******************************/
 
-	bool			force_blend_disable;
+	/* Additional context states. */
+	unsigned			flags;
+	unsigned			compute_cb_target_mask;
+	unsigned			db_shader_control;
+	struct r600_pipe_shader_selector 	*ps_shader;
+	struct r600_pipe_shader_selector 	*vs_shader;
+	struct r600_pipe_rasterizer	*rasterizer;
+	bool				alpha_to_one;
+	bool				force_blend_disable;
+	boolean				dual_src_blend;
 
-	struct radeon_winsys_cs	*cs;
+	/* Index buffer. */
+	struct pipe_index_buffer	index_buffer;
 
-	struct r600_range	*range;
-	unsigned		nblocks;
-	struct r600_block	**blocks;
-	struct list_head	dirty;
-	struct list_head	enable_list;
-	unsigned		pm4_dirty_cdwords;
-	unsigned		ctx_pm4_ndwords;
+	/* Last draw state (-1 = unset). */
+	int				last_primitive_type; /* Last primitive type used in draw_vbo. */
+	int				last_start_instance;
 
+	/* Queries. */
 	/* The list of active queries. Only one query of each type can be active. */
-	int			num_occlusion_queries;
-
+	int				num_occlusion_queries;
 	/* Manage queries in two separate groups:
 	 * The timer ones and the others (streamout, occlusion).
 	 *
 	 * We do this because we should only suspend non-timer queries for u_blitter,
 	 * and later if the non-timer queries are suspended, the context flush should
 	 * only suspend and resume the timer queries. */
-	struct list_head	active_timer_queries;
-	unsigned		num_cs_dw_timer_queries_suspend;
-	struct list_head	active_nontimer_queries;
-	unsigned		num_cs_dw_nontimer_queries_suspend;
+	struct list_head		active_timer_queries;
+	unsigned			num_cs_dw_timer_queries_suspend;
+	struct list_head		active_nontimer_queries;
+	unsigned			num_cs_dw_nontimer_queries_suspend;
+	/* Flags if queries have been suspended. */
+	bool				timer_queries_suspended;
+	bool				nontimer_queries_suspended;
 
-	bool			timer_queries_suspended;
-	bool			nontimer_queries_suspended;
-	bool			streamout_suspended;
+	/* Render condition. */
+	struct pipe_query		*current_render_cond;
+	unsigned			current_render_cond_mode;
+	boolean				predicate_drawing;
 
-	unsigned		num_cs_dw_streamout_end;
+	/* Streamout state. */
+	unsigned			num_cs_dw_streamout_end;
+	unsigned			num_so_targets;
+	struct r600_so_target		*so_targets[PIPE_MAX_SO_BUFFERS];
+	boolean				streamout_start;
+	unsigned			streamout_append_bitmask;
+	bool				streamout_suspended;
 
-	unsigned		backend_mask;
-	unsigned                max_db; /* for OQ */
-	unsigned		flags;
-	boolean                 predicate_drawing;
-
-	unsigned		num_so_targets;
-	struct r600_so_target	*so_targets[PIPE_MAX_SO_BUFFERS];
-	boolean			streamout_start;
-	unsigned		streamout_append_bitmask;
-
-	/* With rasterizer discard, there doesn't have to be a pixel shader.
-	 * In that case, we bind this one: */
-	void			*dummy_pixel_shader;
-
-	boolean			dual_src_blend;
-
-	/* Index buffer. */
-	struct pipe_index_buffer index_buffer;
-
-	/* Dummy CMASK and FMASK buffers used to get around the R6xx hardware
-	 * bug where valid CMASK and FMASK are required to be present to avoid
-	 * a hardlock in certain operations but aren't actually used
-	 * for anything useful. */
-	struct r600_resource *dummy_fmask;
-	struct r600_resource *dummy_cmask;
-
-	/* Last draw state (-1 = unset). */
-	int			last_primitive_type; /* Last primitive type used in draw_vbo. */
-	int			last_start_instance;
+	/* Deprecated state management. */
+	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
+	struct r600_range		*range;
+	unsigned			nblocks;
+	struct r600_block		**blocks;
+	struct list_head		dirty;
+	struct list_head		enable_list;
+	unsigned			pm4_dirty_cdwords;
 };
 
 static INLINE void r600_emit_command_buffer(struct radeon_winsys_cs *cs,

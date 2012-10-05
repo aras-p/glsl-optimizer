@@ -306,11 +306,6 @@ static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	if (state == NULL)
 		return;
 
-	rctx->sprite_coord_enable = rs->sprite_coord_enable;
-	rctx->two_side = rs->two_side;
-	rctx->pa_sc_line_stipple = rs->pa_sc_line_stipple;
-	rctx->multisample_enable = rs->multisample_enable;
-
 	rctx->rasterizer = rs;
 
 	rctx->states[rs->rstate.id] = &rs->rstate;
@@ -691,9 +686,9 @@ static INLINE struct r600_shader_key r600_shader_selector_key(struct pipe_contex
 	memset(&key, 0, sizeof(key));
 
 	if (sel->type == PIPE_SHADER_FRAGMENT) {
-		key.color_two_side = rctx->two_side;
+		key.color_two_side = rctx->rasterizer && rctx->rasterizer->two_side;
 		key.alpha_to_one = rctx->alpha_to_one &&
-				   rctx->multisample_enable &&
+				   rctx->rasterizer && rctx->rasterizer->multisample_enable &&
 				   !rctx->framebuffer.cb0_is_integer;
 		key.nr_cbufs = rctx->framebuffer.state.nr_cbufs;
 		/* Dual-source blending only makes sense with nr_cbufs == 1. */
@@ -1064,9 +1059,9 @@ static void r600_update_derived_state(struct r600_context *rctx)
 
 	r600_shader_select(ctx, rctx->ps_shader, &ps_dirty);
 
-	if (rctx->ps_shader && ((rctx->sprite_coord_enable &&
-		(rctx->ps_shader->current->sprite_coord_enable != rctx->sprite_coord_enable)) ||
-		(rctx->rasterizer && rctx->rasterizer->flatshade != rctx->ps_shader->current->flatshade))) {
+	if (rctx->ps_shader && rctx->rasterizer &&
+	    ((rctx->rasterizer->sprite_coord_enable != rctx->ps_shader->current->sprite_coord_enable) ||
+	     (rctx->rasterizer->flatshade != rctx->ps_shader->current->flatshade))) {
 
 		if (rctx->chip_class >= EVERGREEN)
 			evergreen_pipe_shader_ps(ctx, rctx->ps_shader->current);
@@ -1225,7 +1220,8 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 			ls_mask = 2;
 
 		r600_write_context_reg(cs, R_028A0C_PA_SC_LINE_STIPPLE,
-				       S_028A0C_AUTO_RESET_CNTL(ls_mask) | rctx->pa_sc_line_stipple);
+				       S_028A0C_AUTO_RESET_CNTL(ls_mask) |
+				       (rctx->rasterizer ? rctx->rasterizer->pa_sc_line_stipple : 0));
 		r600_write_context_reg(cs, R_028A6C_VGT_GS_OUT_PRIM_TYPE,
 				       r600_conv_prim_to_gs_out(info.mode));
 		r600_write_config_reg(cs, R_008958_VGT_PRIMITIVE_TYPE,
