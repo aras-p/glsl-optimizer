@@ -2498,10 +2498,6 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 
 	r600_store_context_reg(cb, R_028B20_VGT_STRMOUT_BUFFER_EN, 0);
 
-	r600_store_context_reg_seq(cb, R_028400_VGT_MAX_VTX_INDX, 2);
-	r600_store_value(cb, ~0); /* R_028400_VGT_MAX_VTX_INDX */
-	r600_store_value(cb, 0); /* R_028404_VGT_MIN_VTX_INDX */
-
 	r600_store_ctl_const(cb, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0);
 
 	r600_store_context_reg_seq(cb, R_028028_DB_STENCIL_CLEAR, 2);
@@ -2556,6 +2552,42 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_context_reg_seq(cb, R_0288CC_SQ_PGM_CF_OFFSET_PS, 2);
 	r600_store_value(cb, 0); /* R_0288CC_SQ_PGM_CF_OFFSET_PS */
 	r600_store_value(cb, 0); /* R_0288D0_SQ_PGM_CF_OFFSET_VS */
+
+	r600_store_context_reg_seq(cb, R_028380_SQ_VTX_SEMANTIC_0, 34);
+	r600_store_value(cb, 0); /* R_028380_SQ_VTX_SEMANTIC_0 */
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0); /* R_0283FC_SQ_VTX_SEMANTIC_31 */
+	r600_store_value(cb, ~0); /* R_028400_VGT_MAX_VTX_INDX */
+	r600_store_value(cb, 0); /* R_028404_VGT_MIN_VTX_INDX */
 
 	r600_store_context_reg(cb, R_0288A4_SQ_PGM_RESOURCES_FS, 0);
 	r600_store_context_reg(cb, R_0288DC_SQ_PGM_CF_OFFSET_FS, 0);
