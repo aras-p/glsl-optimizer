@@ -14733,7 +14733,7 @@ static const char *functions_for_OES_texture_3D_vert [] = {
 };
 static gl_shader *builtin_profiles[27];
 
-void *builtin_mem_ctx = NULL;
+static void *builtin_mem_ctx = NULL;
 
 void
 _mesa_glsl_release_functions(void)

@@ -38,7 +38,6 @@
 #include "main/config.h"
 #include "main/mfeatures.h"
 #include "glapi/glapi.h"
-#include "math/m_matrix.h"	/* GLmatrix */
 #include "main/simple_list.h"	/* struct simple_node */
 #include "main/formats.h"       /* MESA_FORMAT_COUNT */
 
@@ -1495,7 +1494,6 @@ struct gl_viewport_attrib
    GLint X, Y;			/**< position */
    GLsizei Width, Height;	/**< size */
    GLfloat Near, Far;		/**< Depth buffer range */
-   GLmatrix _WindowMap;		/**< Mapping transformation as a matrix. */
 };
 
 
@@ -3101,8 +3099,6 @@ struct gl_extensions
  */
 struct gl_matrix_stack
 {
-   GLmatrix *Top;      /**< points into Stack */
-   GLmatrix *Stack;    /**< array [MaxDepth] of GLmatrix */
    GLuint Depth;       /**< 0 <= Depth < MaxDepth */
    GLuint MaxDepth;    /**< size of Stack[] array */
    GLuint DirtyFlag;   /**< _NEW_MODELVIEW or _NEW_PROJECTION, for example */
@@ -3417,9 +3413,6 @@ struct gl_context
    struct gl_matrix_stack ProgramMatrixStack[MAX_PROGRAM_MATRICES];
    struct gl_matrix_stack *CurrentStack; /**< Points to one of the above stacks */
    /*@}*/
-
-   /** Combined modelview and projection matrix */
-   GLmatrix _ModelProjectMatrix;
 
    /** \name Display lists */
    struct gl_dlist_state ListState;
