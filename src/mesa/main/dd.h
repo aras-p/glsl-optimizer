@@ -35,11 +35,8 @@
 
 #include "glheader.h"
 
-struct gl_buffer_object;
 struct gl_context;
 struct gl_display_list;
-struct gl_framebuffer;
-struct gl_pixelstore_attrib;
 struct gl_program;
 struct gl_shader;
 struct gl_shader_program;
@@ -87,22 +84,6 @@ struct dd_function_table {
     * made.
     */
    void (*UpdateState)( struct gl_context *ctx, GLbitfield new_state );
-
-   /**
-    * Get the width and height of the named buffer/window.
-    *
-    * Mesa uses this to determine when the driver's window size has changed.
-    * XXX OBSOLETE: this function will be removed in the future.
-    */
-   void (*GetBufferSize)( struct gl_framebuffer *buffer,
-                          GLuint *width, GLuint *height );
-
-   /**
-    * Resize the given framebuffer to the given size.
-    * XXX OBSOLETE: this function will be removed in the future.
-    */
-   void (*ResizeBuffers)( struct gl_context *ctx, struct gl_framebuffer *fb,
-                          GLuint width, GLuint height);
 
    /**
     * Called whenever an error is generated.  
@@ -283,52 +264,6 @@ struct dd_function_table {
 
 
    /**
-    * \name Vertex/pixel buffer object functions
-    */
-   /*@{*/
-   void (*BindBuffer)( struct gl_context *ctx, GLenum target,
-		       struct gl_buffer_object *obj );
-
-   struct gl_buffer_object * (*NewBufferObject)( struct gl_context *ctx, GLuint buffer,
-						 GLenum target );
-   
-   void (*DeleteBuffer)( struct gl_context *ctx, struct gl_buffer_object *obj );
-
-   GLboolean (*BufferData)( struct gl_context *ctx, GLenum target, GLsizeiptrARB size,
-                            const GLvoid *data, GLenum usage,
-                            struct gl_buffer_object *obj );
-
-   void (*BufferSubData)( struct gl_context *ctx, GLintptrARB offset,
-			  GLsizeiptrARB size, const GLvoid *data,
-			  struct gl_buffer_object *obj );
-
-   void (*GetBufferSubData)( struct gl_context *ctx,
-			     GLintptrARB offset, GLsizeiptrARB size,
-			     GLvoid *data, struct gl_buffer_object *obj );
-
-   void (*CopyBufferSubData)( struct gl_context *ctx,
-                              struct gl_buffer_object *src,
-                              struct gl_buffer_object *dst,
-                              GLintptr readOffset, GLintptr writeOffset,
-                              GLsizeiptr size );
-
-   /* May return NULL if MESA_MAP_NOWAIT_BIT is set in access:
-    */
-   void * (*MapBufferRange)( struct gl_context *ctx, GLintptr offset,
-                             GLsizeiptr length, GLbitfield access,
-                             struct gl_buffer_object *obj);
-
-   void (*FlushMappedBufferRange)(struct gl_context *ctx,
-                                  GLintptr offset, GLsizeiptr length,
-                                  struct gl_buffer_object *obj);
-
-   GLboolean (*UnmapBuffer)( struct gl_context *ctx,
-			     struct gl_buffer_object *obj );
-   /*@}*/
-
-
-
-   /**
     * \name Query objects
     */
    /*@{*/
@@ -340,15 +275,6 @@ struct dd_function_table {
    void (*WaitQuery)(struct gl_context *ctx, struct gl_query_object *q);
    /*@}*/
 
-
-   /**
-    * \name Vertex Array objects
-    */
-   /*@{*/
-   struct gl_array_object * (*NewArrayObject)(struct gl_context *ctx, GLuint id);
-   void (*DeleteArrayObject)(struct gl_context *ctx, struct gl_array_object *obj);
-   void (*BindArrayObject)(struct gl_context *ctx, struct gl_array_object *obj);
-   /*@}*/
 
    /**
     * \name GLSL-related functions (ARB extensions and OpenGL 2.x)
@@ -483,21 +409,6 @@ struct dd_function_table {
    /*@}*/
 
 
-   /**
-    * \name GL_EXT_transform_feedback interface
-    */
-   struct gl_transform_feedback_object *
-        (*NewTransformFeedback)(struct gl_context *ctx, GLuint name);
-   void (*DeleteTransformFeedback)(struct gl_context *ctx,
-                                   struct gl_transform_feedback_object *obj);
-   void (*BeginTransformFeedback)(struct gl_context *ctx, GLenum mode,
-                                  struct gl_transform_feedback_object *obj);
-   void (*EndTransformFeedback)(struct gl_context *ctx,
-                                struct gl_transform_feedback_object *obj);
-   void (*PauseTransformFeedback)(struct gl_context *ctx,
-                                  struct gl_transform_feedback_object *obj);
-   void (*ResumeTransformFeedback)(struct gl_context *ctx,
-                                   struct gl_transform_feedback_object *obj);
 
    /**
     * \name GL_NV_texture_barrier interface

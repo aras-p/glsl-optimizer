@@ -1186,152 +1186,8 @@ struct gl_viewport_attrib
 };
 
 
-/**
- * GL_ARB_vertex/pixel_buffer_object buffer object
- */
-struct gl_buffer_object
-{
-   _glthread_Mutex Mutex;
-   GLint RefCount;
-   GLuint Name;
-   GLenum Usage;        /**< GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, etc. */
-   GLsizeiptrARB Size;  /**< Size of buffer storage in bytes */
-   GLubyte *Data;       /**< Location of storage either in RAM or VRAM. */
-   /** Fields describing a mapped buffer */
-   /*@{*/
-   GLbitfield AccessFlags; /**< Mask of GL_MAP_x_BIT flags */
-   GLvoid *Pointer;     /**< User-space address of mapping */
-   GLintptr Offset;     /**< Mapped offset */
-   GLsizeiptr Length;   /**< Mapped length */
-   /*@}*/
-   GLboolean DeletePending;   /**< true if buffer object is removed from the hash */
-   GLboolean Written;   /**< Ever written to? (for debugging) */
-   GLboolean Purgeable; /**< Is the buffer purgeable under memory pressure? */
-};
 
 
-/**
- * Client pixel packing/unpacking attributes
- */
-struct gl_pixelstore_attrib
-{
-   GLint Alignment;
-   GLint RowLength;
-   GLint SkipPixels;
-   GLint SkipRows;
-   GLint ImageHeight;
-   GLint SkipImages;
-   GLboolean SwapBytes;
-   GLboolean LsbFirst;
-   GLboolean Invert;        /**< GL_MESA_pack_invert */
-   struct gl_buffer_object *BufferObj; /**< GL_ARB_pixel_buffer_object */
-};
-
-
-/**
- * Client vertex array attributes
- */
-struct gl_client_array
-{
-   GLint Size;                  /**< components per element (1,2,3,4) */
-   GLenum Type;                 /**< datatype: GL_FLOAT, GL_INT, etc */
-   GLenum Format;               /**< default: GL_RGBA, but may be GL_BGRA */
-   GLsizei Stride;		/**< user-specified stride */
-   GLsizei StrideB;		/**< actual stride in bytes */
-   const GLubyte *Ptr;          /**< Points to array data */
-   GLboolean Enabled;		/**< Enabled flag is a boolean */
-   GLboolean Normalized;        /**< GL_ARB_vertex_program */
-   GLboolean Integer;           /**< Integer-valued? */
-   GLuint InstanceDivisor;      /**< GL_ARB_instanced_arrays */
-   GLuint _ElementSize;         /**< size of each element in bytes */
-
-   struct gl_buffer_object *BufferObj;/**< GL_ARB_vertex_buffer_object */
-   GLuint _MaxElement;          /**< max element index into array buffer + 1 */
-};
-
-
-/**
- * Collection of vertex arrays.  Defined by the GL_APPLE_vertex_array_object
- * extension, but a nice encapsulation in any case.
- */
-struct gl_array_object
-{
-   /** Name of the array object as received from glGenVertexArrayAPPLE. */
-   GLuint Name;
-
-   GLint RefCount;
-   _glthread_Mutex Mutex;
-
-   /**
-    * Does the VAO use ARB semantics or Apple semantics?
-    *
-    * There are several ways in which ARB_vertex_array_object and
-    * APPLE_vertex_array_object VAOs have differing semantics.  At the very
-    * least,
-    *
-    *     - ARB VAOs require that all array data be sourced from vertex buffer
-    *       objects, but Apple VAOs do not.
-    *
-    *     - ARB VAOs require that names come from GenVertexArrays.
-    *
-    * This flag notes which behavior governs this VAO.
-    */
-   GLboolean ARBsemantics;
-
-   /**
-    * Has this array object been bound?
-    */
-   GLboolean _Used;
-
-   /** Vertex attribute arrays */
-   struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];
-
-   /** Mask of VERT_BIT_* values indicating which arrays are enabled */
-   GLbitfield64 _Enabled;
-
-   /** Mask of VERT_BIT_* values indicating changed/dirty arrays */
-   GLbitfield64 NewArrays;
-
-   /**
-    * Min of all enabled arrays' _MaxElement.  When arrays reside inside VBOs
-    * we can determine the max legal (in bounds) glDrawElements array index.
-    */
-   GLuint _MaxElement;
-
-   struct gl_buffer_object *ElementArrayBufferObj;
-};
-
-
-/**
- * Vertex array state
- */
-struct gl_array_attrib
-{
-   /** Currently bound array object. See _mesa_BindVertexArrayAPPLE() */
-   struct gl_array_object *ArrayObj;
-
-   /** The default vertex array object */
-   struct gl_array_object *DefaultArrayObj;
-
-   /** Array objects (GL_ARB/APPLE_vertex_array_object) */
-   struct _mesa_HashTable *Objects;
-
-   GLint ActiveTexture;		/**< Client Active Texture */
-   GLuint LockFirst;            /**< GL_EXT_compiled_vertex_array */
-   GLuint LockCount;            /**< GL_EXT_compiled_vertex_array */
-
-   /** GL 3.1 (slightly different from GL_NV_primitive_restart) */
-   GLboolean PrimitiveRestart;
-   GLuint RestartIndex;
-
-   /* GL_ARB_vertex_buffer_object */
-   struct gl_buffer_object *ArrayBufferObj;
-
-   /**
-    * Vertex arrays as consumed by a driver.
-    * The array pointer is set up only by the VBO module. */
-   const struct gl_client_array **_DrawArrays; /**< 0..VERT_ATTRIB_MAX-1 */
-};
 
 
 /**
@@ -1484,48 +1340,7 @@ struct gl_transform_feedback_info
 };
 
 
-/**
- * Transform feedback object state
- */
-struct gl_transform_feedback_object
-{
-   GLuint Name;  /**< AKA the object ID */
-   GLint RefCount;
-   GLboolean Active;  /**< Is transform feedback enabled? */
-   GLboolean Paused;  /**< Is transform feedback paused? */
-   GLboolean EndedAnytime; /**< Has EndTransformFeedback been called
-                                at least once? */
 
-   /** The feedback buffers */
-   GLuint BufferNames[MAX_FEEDBACK_BUFFERS];
-   struct gl_buffer_object *Buffers[MAX_FEEDBACK_BUFFERS];
-
-   /** Start of feedback data in dest buffer */
-   GLintptr Offset[MAX_FEEDBACK_BUFFERS];
-   /** Max data to put into dest buffer (in bytes) */
-   GLsizeiptr Size[MAX_FEEDBACK_BUFFERS];
-};
-
-
-/**
- * Context state for transform feedback.
- */
-struct gl_transform_feedback_state
-{
-   GLenum Mode;       /**< GL_POINTS, GL_LINES or GL_TRIANGLES */
-
-   /** The general binding point (GL_TRANSFORM_FEEDBACK_BUFFER) */
-   struct gl_buffer_object *CurrentBuffer;
-
-   /** The table of all transform feedback objects */
-   struct _mesa_HashTable *Objects;
-
-   /** The current xform-fb object (GL_TRANSFORM_FEEDBACK_BINDING) */
-   struct gl_transform_feedback_object *CurrentObject;
-
-   /** The default xform-fb object (Name==0) */
-   struct gl_transform_feedback_object *DefaultObject;
-};
 
 
 /**
@@ -2226,7 +2041,6 @@ struct gl_sync_object
  */
 struct gl_shared_state
 {
-   _glthread_Mutex Mutex;		   /**< for thread safety */
    GLint RefCount;			   /**< Reference count */
    struct _mesa_HashTable *DisplayList;	   /**< Display lists hash table */
    struct _mesa_HashTable *TexObjects;	   /**< Texture objects hash table */
@@ -2236,20 +2050,6 @@ struct gl_shared_state
 
    /** Fallback texture used when a bound texture is incomplete */
    struct gl_texture_object *FallbackTex[NUM_TEXTURE_TARGETS];
-
-   /**
-    * \name Thread safety and statechange notification for texture
-    * objects. 
-    *
-    * \todo Improve the granularity of locking.
-    */
-   /*@{*/
-   _glthread_Mutex TexMutex;		/**< texobj thread safety */
-   GLuint TextureStateStamp;	        /**< state notification for shared tex */
-   /*@}*/
-
-   /** Default buffer object for vertex arrays that aren't in VBOs */
-   struct gl_buffer_object *NullBufferObj;
 
    /**
     * \name Vertex/geometry/fragment programs
@@ -2284,70 +2084,6 @@ struct gl_shared_state
 
 
 
-
-/**
- * A framebuffer is a collection of renderbuffers (color, depth, stencil, etc).
- * In C++ terms, think of this as a base class from which device drivers
- * will make derived classes.
- */
-struct gl_framebuffer
-{
-   _glthread_Mutex Mutex;  /**< for thread safety */
-   /**
-    * If zero, this is a window system framebuffer.  If non-zero, this
-    * is a FBO framebuffer; note that for some devices (i.e. those with
-    * a natural pixel coordinate system for FBOs that differs from the
-    * OpenGL/Mesa coordinate system), this means that the viewport,
-    * polygon face orientation, and polygon stipple will have to be inverted.
-    */
-   GLuint Name;
-
-   GLint RefCount;
-   GLboolean DeletePending;
-
-   /**
-    * The framebuffer's visual. Immutable if this is a window system buffer.
-    * Computed from attachments if user-made FBO.
-    */
-   struct gl_config Visual;
-
-   GLboolean Initialized;
-
-   GLuint Width, Height;	/**< size of frame buffer in pixels */
-
-   /** \name  Drawing bounds (Intersection of buffer size and scissor box) */
-   /*@{*/
-   GLint _Xmin, _Xmax;  /**< inclusive */
-   GLint _Ymin, _Ymax;  /**< exclusive */
-   /*@}*/
-
-   /** \name  Derived Z buffer stuff */
-   /*@{*/
-   GLuint _DepthMax;	/**< Max depth buffer value */
-   GLfloat _DepthMaxF;	/**< Float max depth buffer value */
-   GLfloat _MRD;	/**< minimum resolvable difference in Z values */
-   /*@}*/
-
-   /** One of the GL_FRAMEBUFFER_(IN)COMPLETE_* tokens */
-   GLenum _Status;
-
-   /** Integer color values */
-   GLboolean _IntegerColor;
-
-   /* In unextended OpenGL these vars are part of the GL_COLOR_BUFFER
-    * attribute group and GL_PIXEL attribute group, respectively.
-    */
-   GLenum ColorDrawBuffer[MAX_DRAW_BUFFERS];
-   GLenum ColorReadBuffer;
-
-   /** Computed from ColorDraw/ReadBuffer above */
-   GLuint _NumColorDrawBuffers;
-   GLint _ColorDrawBufferIndexes[MAX_DRAW_BUFFERS]; /**< BUFFER_x or -1 */
-   GLint _ColorReadBufferIndex; /* -1 = None */
-
-   /** Delete this framebuffer */
-   void (*Delete)(struct gl_framebuffer *fb);
-};
 
 
 /**
@@ -2934,19 +2670,6 @@ typedef enum
 } gl_api;
 
 
-struct gl_uniform_buffer_binding
-{
-   struct gl_buffer_object *BufferObject;
-   /** Start of uniform block data in the buffer */
-   GLintptr Offset;
-   /** Size of data allowed to be referenced from the buffer (in bytes) */
-   GLsizeiptr Size;
-   /**
-    * glBindBufferBase() indicates that the Size should be ignored and only
-    * limited by the current size of the BufferObject.
-    */
-   GLboolean AutomaticSize;
-};
 
 /**
  * Mesa rendering context.
@@ -2972,10 +2695,6 @@ struct gl_context
    /*@}*/
 
    struct gl_config Visual;
-   struct gl_framebuffer *DrawBuffer;	/**< buffer for writing */
-   struct gl_framebuffer *ReadBuffer;	/**< buffer for reading */
-   struct gl_framebuffer *WinSysDrawBuffer;  /**< set with MakeCurrent */
-   struct gl_framebuffer *WinSysReadBuffer;  /**< set with MakeCurrent */
 
    /**
     * Device driver function pointer table
@@ -3016,25 +2735,6 @@ struct gl_context
    struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_TYPES];
 
    struct gl_query_state Query;  /**< occlusion, timer queries */
-
-   struct gl_transform_feedback_state TransformFeedback;
-
-   struct gl_buffer_object *CopyReadBuffer; /**< GL_ARB_copy_buffer */
-   struct gl_buffer_object *CopyWriteBuffer; /**< GL_ARB_copy_buffer */
-
-   /**
-    * Current GL_ARB_uniform_buffer_object binding referenced by
-    * GL_UNIFORM_BUFFER target for glBufferData, glMapBuffer, etc.
-    */
-   struct gl_buffer_object *UniformBuffer;
-
-   /**
-    * Array of uniform buffers for GL_ARB_uniform_buffer_object and GL 3.1.
-    * This is set up using glBindBufferRange() or glBindBufferBase().  They are
-    * associated with uniform blocks by glUniformBlockBinding()'s state in the
-    * shader program.
-    */
-   struct gl_uniform_buffer_binding *UniformBufferBindings;
 
    /*@}*/
 
