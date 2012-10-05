@@ -26,7 +26,7 @@
 #include <errno.h>
 #include "glcpp.h"
 #include "main/mtypes.h"
-#include "main/shaderobj.h"
+#include "../standalone_scaffolding.h"
 
 extern int yydebug;
 

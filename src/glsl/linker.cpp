@@ -73,7 +73,7 @@
 #include "ir_optimization.h"
 
 extern "C" {
-#include "main/shaderobj.h"
+#include "standalone_scaffolding.h"
 }
 
 /**
