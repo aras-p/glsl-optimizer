@@ -1612,7 +1612,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		case TGSI_PROCESSOR_FRAGMENT:
 			if (shader->output[i].name == TGSI_SEMANTIC_COLOR) {
 				/* never export more colors than the number of CBs */
-				if (next_pixel_base && next_pixel_base >= key.nr_cbufs + key.dual_src_blend) {
+				if (next_pixel_base && next_pixel_base >= key.nr_cbufs) {
 					/* skip export */
 					j--;
 					continue;

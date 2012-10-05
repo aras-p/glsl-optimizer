@@ -268,7 +268,6 @@ struct r600_pipe_shader_selector {
 struct r600_shader_key {
 	unsigned color_two_side:1;
 	unsigned alpha_to_one:1;
-	unsigned dual_src_blend:1;
 	unsigned nr_cbufs:4;
 };
 

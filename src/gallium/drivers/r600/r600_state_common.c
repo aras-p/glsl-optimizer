@@ -747,8 +747,10 @@ static INLINE struct r600_shader_key r600_shader_selector_key(struct pipe_contex
 		key.alpha_to_one = rctx->alpha_to_one &&
 				   rctx->multisample_enable &&
 				   !rctx->framebuffer.cb0_is_integer;
-		key.dual_src_blend = rctx->dual_src_blend;
 		key.nr_cbufs = rctx->framebuffer.state.nr_cbufs;
+		/* Dual-source blending only makes sense with nr_cbufs == 1. */
+		if (key.nr_cbufs == 1 && rctx->dual_src_blend)
+			key.nr_cbufs = 2;
 	}
 	return key;
 }
