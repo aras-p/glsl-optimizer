@@ -46,14 +46,14 @@
 #include <stdlib.h>
 #include "u_compiler.h"
 
-#if defined(PTHREADS)
+#if defined(HAVE_PTHREAD)
 #include <pthread.h> /* POSIX threads headers */
 #endif
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-#if defined(PTHREADS) || defined(_WIN32)
+#if defined(HAVE_PTHREAD) || defined(_WIN32)
 #ifndef THREADS
 #define THREADS
 #endif
@@ -88,7 +88,7 @@ extern "C" {
  * compiler flag.  On Solaris with gcc, use -D_REENTRANT to enable
  * proper compiling for MT-safe libc etc.
  */
-#if defined(PTHREADS)
+#if defined(HAVE_PTHREAD)
 
 struct u_tsd {
    pthread_key_t key;
@@ -145,7 +145,7 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
    }
 }
 
-#endif /* PTHREADS */
+#endif /* HAVE_PTHREAD */
 
 
 /*
