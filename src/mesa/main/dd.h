@@ -263,18 +263,6 @@ struct dd_function_table {
    /*@}*/
 
 
-   /**
-    * \name Query objects
-    */
-   /*@{*/
-   struct gl_query_object * (*NewQueryObject)(struct gl_context *ctx, GLuint id);
-   void (*DeleteQuery)(struct gl_context *ctx, struct gl_query_object *q);
-   void (*BeginQuery)(struct gl_context *ctx, struct gl_query_object *q);
-   void (*EndQuery)(struct gl_context *ctx, struct gl_query_object *q);
-   void (*CheckQuery)(struct gl_context *ctx, struct gl_query_object *q);
-   void (*WaitQuery)(struct gl_context *ctx, struct gl_query_object *q);
-   /*@}*/
-
 
    /**
     * \name GLSL-related functions (ARB extensions and OpenGL 2.x)
@@ -381,10 +369,6 @@ struct dd_function_table {
 
    /**@}*/
 
-   /** GL_NV_conditional_render */
-   void (*BeginConditionalRender)(struct gl_context *ctx, struct gl_query_object *q,
-                                  GLenum mode);
-   void (*EndConditionalRender)(struct gl_context *ctx, struct gl_query_object *q);
 
    /**
     * \name GL_OES_draw_texture interface
@@ -400,13 +384,6 @@ struct dd_function_table {
     * \name GL_NV_texture_barrier interface
     */
    void (*TextureBarrier)(struct gl_context *ctx);
-
-
-   /**
-    * \name Return a timestamp in nanoseconds as defined by GL_ARB_timer_query.
-    * This should be equivalent to glGetInteger64v(GL_TIMESTAMP);
-    */
-   uint64_t (*GetTimestamp)(struct gl_context *ctx);
 };
 
 

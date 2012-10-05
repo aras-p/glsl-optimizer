@@ -260,14 +260,6 @@ static inline int IROUND(float f)
 }
 
 
-/**
- * Convert float to int64 by rounding to nearest integer.
- */
-static inline GLint64 IROUND64(float f)
-{
-   return (GLint64) ((f >= 0.0F) ? (f + 0.5F) : (f - 0.5F));
-}
-
 
 /**
  * Convert positive float to int by rounding to nearest integer.
@@ -548,12 +540,6 @@ _mesa_fls(unsigned int n)
    return v;
 #endif
 }
-
-extern GLhalfARB
-_mesa_float_to_half(float f);
-
-extern float
-_mesa_half_to_float(GLhalfARB h);
 
 
 extern void *

@@ -43,21 +43,6 @@ extern "C" {
 #endif
 
 
-/**
- * \name 64-bit extension of GLbitfield.
- */
-/*@{*/
-typedef GLuint64 GLbitfield64;
-
-/** Set a single bit */
-#define BITFIELD64_BIT(b)      ((GLbitfield64)1 << (b))
-/** Set all bits up to excluding bit b */
-#define BITFIELD64_MASK(b)      \
-   ((b) == 64 ? (~(GLbitfield64)0) : BITFIELD64_BIT(b) - 1)
-/** Set count bits starting from bit b  */
-#define BITFIELD64_RANGE(b, count) \
-   (BITFIELD64_MASK((b) + (count)) & ~BITFIELD64_MASK(b))
-
 
 /**
  * \name Some forward type declarations
@@ -1433,16 +1418,6 @@ struct gl_program
 
    struct prog_instruction *Instructions;
 
-   GLbitfield64 InputsRead;     /**< Bitmask of which input regs are read */
-   GLbitfield64 OutputsWritten; /**< Bitmask of which output regs are written */
-   GLbitfield SystemValuesRead;   /**< Bitmask of SYSTEM_VALUE_x inputs used */
-   GLbitfield InputFlags[MAX_PROGRAM_INPUTS];   /**< PROG_PARAM_BIT_x flags */
-   GLbitfield OutputFlags[MAX_PROGRAM_OUTPUTS]; /**< PROG_PARAM_BIT_x flags */
-   GLbitfield TexturesUsed[MAX_COMBINED_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_BIT bitmask */
-   GLbitfield SamplersUsed;   /**< Bitfield of which samplers are used */
-   GLbitfield ShadowSamplers; /**< Texture units used for shadow sampling. */
-
-
    /** Named parameters, constants, etc. from program text */
    struct gl_program_parameter_list *Parameters;
    /** Numbered local parameters */
@@ -1519,12 +1494,6 @@ struct gl_fragment_program
     * GLSL, the value is INTERP_QUALIFIER_NONE.
     */
    enum glsl_interp_qualifier InterpQualifier[FRAG_ATTRIB_MAX];
-
-   /**
-    * Bitfield indicating, for each fragment shader input, 1 if that input
-    * uses centroid interpolation, 0 otherwise.  Unused inputs are 0.
-    */
-   GLbitfield64 IsCentroid;
 };
 
 
@@ -1687,10 +1656,10 @@ struct gl_shader
    GLint RefCount;  /**< Reference count */
    GLboolean DeletePending;
    GLboolean CompileStatus;
-   const GLchar *Source;  /**< Source code string */
+   const char *Source;  /**< Source code string */
    GLuint SourceChecksum;       /**< for debug/logging purposes */
    struct gl_program *Program;  /**< Post-compile assembly code */
-   GLchar *InfoLog;
+   char *InfoLog;
    struct gl_sl_pragmas Pragmas;
 
    unsigned Version;       /**< GLSL version used for linking */
@@ -1829,7 +1798,7 @@ struct gl_shader_program
    struct {
       GLenum BufferMode;
       GLuint NumVarying;
-      GLchar **VaryingNames;  /**< Array [NumVarying] of char * */
+      char **VaryingNames;  /**< Array [NumVarying] of char * */
    } TransformFeedback;
 
    /** Post-link transform feedback info. */
@@ -1893,7 +1862,7 @@ struct gl_shader_program
    GLboolean LinkStatus;   /**< GL_LINK_STATUS */
    GLboolean Validated;
    GLboolean _Used;        /**< Ever used for drawing? */
-   GLchar *InfoLog;
+   char *InfoLog;
 
    unsigned Version;       /**< GLSL version used for linking */
 
@@ -1980,41 +1949,6 @@ struct gl_shader_compiler_options
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
 };
 
-
-/**
- * Occlusion/timer query object.
- */
-struct gl_query_object
-{
-   GLenum Target;      /**< The query target, when active */
-   GLuint Id;          /**< hash table ID/name */
-   GLuint64EXT Result; /**< the counter */
-   GLboolean Active;   /**< inside Begin/EndQuery */
-   GLboolean Ready;    /**< result is ready? */
-};
-
-
-/**
- * Context state for query objects.
- */
-struct gl_query_state
-{
-   struct _mesa_HashTable *QueryObjects;
-   struct gl_query_object *CurrentOcclusionObject; /* GL_ARB_occlusion_query */
-   struct gl_query_object *CurrentTimerObject;     /* GL_EXT_timer_query */
-
-   /** GL_NV_conditional_render */
-   struct gl_query_object *CondRenderQuery;
-
-   /** GL_EXT_transform_feedback */
-   struct gl_query_object *PrimitivesGenerated;
-   struct gl_query_object *PrimitivesWritten;
-
-   /** GL_ARB_timer_query */
-   struct gl_query_object *TimeElapsed;
-
-   GLenum CondRenderMode;
-};
 
 
 
@@ -2218,11 +2152,6 @@ struct gl_constants
 
    /** Which texture units support GL_ATI_envmap_bumpmap as targets */
    GLbitfield SupportedBumpUnits;
-
-   /**
-    * Maximum amount of time, measured in nanseconds, that the server can wait.
-    */
-   GLuint64 MaxServerWaitTimeout;
 
    /** GL_EXT_provoking_vertex */
    GLboolean QuadsFollowProvokingVertexConvention;
@@ -2490,7 +2419,6 @@ struct gl_extensions
 #define _NEW_BUFFER_OBJECT     (1 << 28)
 #define _NEW_FRAG_CLAMP        (1 << 29)
 #define _NEW_TRANSFORM_FEEDBACK (1 << 30) /**< gl_context::TransformFeedback */
-#define _NEW_VARYING_VP_INPUTS (1 << 31) /**< gl_context::varying_vp_inputs */
 #define _NEW_ALL ~0
 
 /**
@@ -2572,42 +2500,11 @@ struct gl_display_list
 
 
 
-/**
- * An error, warning, or other piece of debug information for an application
- * to consume via GL_ARB_debug_output.
- */
-struct gl_debug_msg
-{
-   GLenum source;
-   GLenum type;
-   GLuint id;
-   GLenum severity;
-   GLsizei length;
-   GLcharARB *message;
-};
-
-typedef enum {
-   API_ERROR_UNKNOWN,
-   API_ERROR_COUNT
-} gl_api_error;
-
-typedef enum {
-   WINSYS_ERROR_UNKNOWN,
-   WINSYS_ERROR_COUNT
-} gl_winsys_error;
-
 typedef enum {
    SHADER_ERROR_UNKNOWN,
    SHADER_ERROR_COUNT
 } gl_shader_error;
-
-typedef enum {
-   OTHER_ERROR_UNKNOWN,
-   OTHER_ERROR_OUT_OF_MEMORY,
-   OTHER_ERROR_COUNT
-} gl_other_error;
-
-
+	
 /**
  * Enum for the OpenGL APIs we know about and may support.
  */
@@ -2684,8 +2581,6 @@ struct gl_context
    struct gl_shader_state Shader; /**< GLSL shader object state */
    struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_TYPES];
 
-   struct gl_query_state Query;  /**< occlusion, timer queries */
-
    /*@}*/
 
    struct gl_meta_state *Meta;  /**< for "meta" operations */
@@ -2706,8 +2601,6 @@ struct gl_context
    GLbitfield NewDriverState;/**< bitwise-or of flags from DriverFlags */
 
    GLboolean ViewportInitialized;  /**< has viewport size been initialized? */
-
-   GLbitfield64 varying_vp_inputs;  /**< mask of VERT_BIT_* flags */
 
    /** \name Derived state */
    /*@{*/

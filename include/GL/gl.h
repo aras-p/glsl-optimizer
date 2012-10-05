@@ -2072,21 +2072,6 @@ typedef void (APIENTRYP PFNGLMULTITEXCOORD4SVARBPROC) (GLenum target, const GLsh
 
 
 
-/*
- * Define this token if you want "old-style" header file behaviour (extensions
- * defined in gl.h).  Otherwise, extensions will be included from glext.h.
- */
-#if defined(GL_GLEXT_LEGACY)
-
-/* All extensions that used to be here are now found in glext.h */
-
-#else  /* GL_GLEXT_LEGACY */
-
-#include <GL/glext.h>
-
-#endif  /* GL_GLEXT_LEGACY */
-
-
 
 #if GL_ARB_shader_objects
 
@@ -2097,11 +2082,6 @@ typedef void (APIENTRYP PFNGLMULTITEXCOORD4SVARBPROC) (GLenum target, const GLsh
 #define GL_DEBUG_PRINT_MESA               0x875A
 #define GL_DEBUG_ASSERT_MESA              0x875B
 
-GLAPI GLhandleARB GLAPIENTRY glCreateDebugObjectMESA (void);
-GLAPI void GLAPIENTRY glClearDebugLogMESA (GLhandleARB obj, GLenum logType, GLenum shaderType);
-GLAPI void GLAPIENTRY glGetDebugLogMESA (GLhandleARB obj, GLenum logType, GLenum shaderType, GLsizei maxLength,
-                                         GLsizei *length, GLcharARB *debugLog);
-GLAPI GLsizei GLAPIENTRY glGetDebugLogLengthMESA (GLhandleARB obj, GLenum logType, GLenum shaderType);
 
 #endif /* GL_MESA_shader_debug */
 
