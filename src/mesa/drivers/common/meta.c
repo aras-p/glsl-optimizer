@@ -3102,7 +3102,6 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
 
    if (ctx->API == API_OPENGLES2 || ctx->Const.GLSLVersion < 130) {
       const char *fs_template;
-      const char *extension_mode;
 
       vs_source =
          "attribute vec2 position;\n"
@@ -3114,7 +3113,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
          "   gl_Position = vec4(position, 0.0, 1.0);\n"
          "}\n";
       fs_template =
-         "#extension GL_EXT_texture_array : %s\n"
+         "#extension GL_EXT_texture_array : enable\n"
          "uniform %s texSampler;\n"
          "varying vec3 texCoords;\n"
          "void main()\n"
@@ -3122,12 +3121,8 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
          "   gl_FragColor = %s(texSampler, %s);\n"
          "}\n";
 
-      extension_mode = ((target == GL_TEXTURE_1D_ARRAY) ||
-                        (target == GL_TEXTURE_2D_ARRAY)) ?
-                       "require" : "disable";
-
       fs_source = ralloc_asprintf(mem_ctx, fs_template,
-                                  extension_mode, sampler->type,
+                                  sampler->type,
                                   sampler->func, sampler->texcoords);
    }
    else {
