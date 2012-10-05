@@ -1551,37 +1551,8 @@ struct gl_shader_program
 #define GLSL_UNIFORMS 0x10  /**< Print glUniform calls */
 #define GLSL_NOP_VERT 0x20  /**< Force no-op vertex shaders */
 #define GLSL_NOP_FRAG 0x40  /**< Force no-op fragment shaders */
-#define GLSL_USE_PROG 0x80  /**< Log glUseProgram calls */
 #define GLSL_REPORT_ERRORS 0x100  /**< Print compilation errors */
 
-
-/**
- * Context state for GLSL vertex/fragment shaders.
- */
-struct gl_shader_state
-{
-   /**
-    * Programs used for rendering
-    *
-    * There is a separate program set for each shader stage.  If
-    * GL_EXT_separate_shader_objects is not supported, each of these must point
-    * to \c NULL or to the same program.
-    */
-   struct gl_shader_program *CurrentVertexProgram;
-   struct gl_shader_program *CurrentGeometryProgram;
-   struct gl_shader_program *CurrentFragmentProgram;
-
-   struct gl_shader_program *_CurrentFragmentProgram;
-
-   /**
-    * Program used by glUniform calls.
-    *
-    * Explicitly set by \c glUseProgram and \c glActiveProgramEXT.
-    */
-   struct gl_shader_program *ActiveProgram;
-
-   GLbitfield Flags;                    /**< Mask of GLSL_x flags */
-};
 
 
 /**
@@ -2139,31 +2110,6 @@ struct gl_extensions
 #include "dd.h"
 
 
-/**
- * Display list flags.
- * Strictly this is a tnl-private concept, but it doesn't seem
- * worthwhile adding a tnl private structure just to hold this one bit
- * of information:
- */
-#define DLIST_DANGLING_REFS     0x1 
-
-
-/** Opaque declaration of display list payload data type */
-union gl_dlist_node;
-
-
-/**
- * Provide a location where information about a display list can be
- * collected.  Could be extended with driverPrivate structures,
- * etc. in the future.
- */
-struct gl_display_list
-{
-   GLuint Name;
-   GLbitfield Flags;  /**< DLIST_x flags */
-   /** The dlist commands are in a linked list of nodes */
-   union gl_dlist_node *Head;
-};
 
 
 
@@ -2242,7 +2188,6 @@ struct gl_context
    struct gl_geometry_program_state GeometryProgram;
    struct gl_ati_fragment_shader_state ATIFragmentShader;
 
-   struct gl_shader_state Shader; /**< GLSL shader object state */
    struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_TYPES];
 
    /*@}*/
