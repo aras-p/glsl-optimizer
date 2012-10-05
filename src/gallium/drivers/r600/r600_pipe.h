@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 32
+#define R600_NUM_ATOMS 33
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -161,7 +161,6 @@ struct r600_viewport_state {
 };
 
 enum r600_pipe_state_id {
-	R600_PIPE_STATE_SCISSOR,
 	R600_PIPE_STATE_RASTERIZER,
 	R600_PIPE_STATE_DSA,
 	R600_PIPE_NSTATES
@@ -362,6 +361,13 @@ struct r600_cso_state
 	struct r600_command_buffer *cb;
 };
 
+struct r600_scissor_state
+{
+	struct r600_atom		atom;
+	struct pipe_scissor_state	scissor;
+	bool				enable; /* r6xx only */
+};
+
 struct r600_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
@@ -381,7 +387,6 @@ struct r600_context {
 	unsigned			db_shader_control;
 	unsigned			pa_sc_line_stipple;
 	/* for saving when using blitter */
-	struct pipe_scissor_state	scissor;
 	struct r600_pipe_shader_selector 	*ps_shader;
 	struct r600_pipe_shader_selector 	*vs_shader;
 	struct r600_pipe_rasterizer	*rasterizer;
@@ -420,6 +425,7 @@ struct r600_context {
 	struct r600_framebuffer		framebuffer;
 	struct r600_poly_offset_state	poly_offset_state;
 	struct r600_sample_mask		sample_mask;
+	struct r600_scissor_state	scissor;
 	struct r600_seamless_cube_map	seamless_cube_map;
 	struct r600_stencil_ref_state	stencil_ref;
 	struct r600_vgt_state		vgt_state;
@@ -477,10 +483,6 @@ struct r600_context {
 	struct r600_so_target	*so_targets[PIPE_MAX_SO_BUFFERS];
 	boolean			streamout_start;
 	unsigned		streamout_append_bitmask;
-
-	/* There is no scissor enable bit on r6xx, so we must use a workaround.
-	 * This tracks if the scissor is enabled. */
-	bool			scissor_enable;
 
 	/* With rasterizer discard, there doesn't have to be a pixel shader.
 	 * In that case, we bind this one: */
@@ -615,8 +617,6 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 				struct pipe_resource *texture,
 				const struct pipe_sampler_view *state,
 				unsigned width_first_level, unsigned height_first_level);
-void r600_set_scissor_state(struct r600_context *rctx,
-			    const struct pipe_scissor_state *state);
 void r600_init_state_functions(struct r600_context *rctx);
 void r600_init_atom_start_cs(struct r600_context *rctx);
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
@@ -669,7 +669,6 @@ void r600_sampler_views_dirty(struct r600_context *rctx,
 			      struct r600_samplerview_state *state);
 void r600_sampler_states_dirty(struct r600_context *rctx,
 			       struct r600_sampler_states *state);
-void r600_set_max_scissor(struct r600_context *rctx);
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state);
 void r600_draw_rectangle(struct blitter_context *blitter,
 			 int x1, int y1, int x2, int y2, float depth,

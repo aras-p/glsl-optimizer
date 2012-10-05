@@ -225,8 +225,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_02880C_DB_SHADER_CONTROL, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028D24_DB_HTILE_SURFACE, 0, 0},
-	{R_028250_PA_SC_VPORT_SCISSOR_0_TL, 0, 0},
-	{R_028254_PA_SC_VPORT_SCISSOR_0_BR, 0, 0},
 	{R_0286D4_SPI_INTERP_CONTROL_0, 0, 0},
 	{R_028814_PA_SU_SC_MODE_CNTL, 0, 0},
 	{R_028A00_PA_SU_POINT_SIZE, 0, 0},
@@ -866,6 +864,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->vgt_state.atom.dirty = true;
 	ctx->vgt2_state.atom.dirty = true;
 	ctx->sample_mask.atom.dirty = true;
+	ctx->scissor.atom.dirty = true;
 	ctx->stencil_ref.atom.dirty = true;
 	ctx->vertex_fetch_shader.atom.dirty = true;
 	ctx->viewport.atom.dirty = true;

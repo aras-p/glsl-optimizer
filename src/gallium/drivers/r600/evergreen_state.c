@@ -1168,23 +1168,22 @@ static void evergreen_set_scissor_state(struct pipe_context *ctx,
 					const struct pipe_scissor_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
+
+	rctx->scissor.scissor = *state;
+	rctx->scissor.atom.dirty = true;
+}
+
+static void evergreen_emit_scissor_state(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct pipe_scissor_state *state = &rctx->scissor.scissor;
 	uint32_t tl, br;
-
-	rctx->scissor = *state;
-
-	if (rstate == NULL)
-		return;
 
 	evergreen_get_scissor_rect(rctx, state->minx, state->miny, state->maxx, state->maxy, &tl, &br);
 
-	rstate->id = R600_PIPE_STATE_SCISSOR;
-	r600_pipe_state_add_reg(rstate, R_028250_PA_SC_VPORT_SCISSOR_0_TL, tl);
-	r600_pipe_state_add_reg(rstate, R_028254_PA_SC_VPORT_SCISSOR_0_BR, br);
-
-	free(rctx->states[R600_PIPE_STATE_SCISSOR]);
-	rctx->states[R600_PIPE_STATE_SCISSOR] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
+	r600_write_context_reg_seq(cs, R_028250_PA_SC_VPORT_SCISSOR_0_TL, 2);
+	r600_write_value(cs, tl);
+	r600_write_value(cs, br);
 }
 
 /**
@@ -2421,6 +2420,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->clip_state.atom, id++, evergreen_emit_clip_state, 26);
 	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, evergreen_emit_db_misc_state, 7);
 	r600_init_atom(rctx, &rctx->poly_offset_state.atom, id++, evergreen_emit_polygon_offset, 6);
+	r600_init_atom(rctx, &rctx->scissor.atom, id++, evergreen_emit_scissor_state, 4);
 	r600_init_atom(rctx, &rctx->stencil_ref.atom, id++, r600_emit_stencil_ref, 4);
 	r600_init_atom(rctx, &rctx->viewport.atom, id++, r600_emit_viewport_state, 8);
 	r600_init_atom(rctx, &rctx->vertex_fetch_shader.atom, id++, evergreen_emit_vertex_fetch_shader, 5);

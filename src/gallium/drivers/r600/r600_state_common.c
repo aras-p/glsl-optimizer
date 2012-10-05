@@ -298,18 +298,6 @@ static void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 	}
 }
 
-void r600_set_max_scissor(struct r600_context *rctx)
-{
-	/* Set a scissor state such that it doesn't do anything. */
-	struct pipe_scissor_state scissor;
-	scissor.minx = 0;
-	scissor.miny = 0;
-	scissor.maxx = 8192;
-	scissor.maxy = 8192;
-
-	r600_set_scissor_state(rctx, &scissor);
-}
-
 static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_pipe_rasterizer *rs = (struct r600_pipe_rasterizer *)state;
@@ -345,16 +333,10 @@ static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	}
 
 	/* Workaround for a missing scissor enable on r600. */
-	if (rctx->chip_class == R600) {
-		if (rs->scissor_enable != rctx->scissor_enable) {
-			rctx->scissor_enable = rs->scissor_enable;
-
-			if (rs->scissor_enable) {
-				r600_set_scissor_state(rctx, &rctx->scissor);
-			} else {
-				r600_set_max_scissor(rctx);
-			}
-		}
+	if (rctx->chip_class == R600 &&
+	    rs->scissor_enable != rctx->scissor.enable) {
+		rctx->scissor.enable = rs->scissor_enable;
+		rctx->scissor.atom.dirty = true;
 	}
 }
 

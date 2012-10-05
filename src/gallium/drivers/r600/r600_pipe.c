@@ -298,9 +298,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	r600_begin_new_cs(rctx);
 	r600_get_backend_mask(rctx); /* this emits commands and must be last */
 
-	if (rctx->chip_class == R600)
-		r600_set_max_scissor(rctx);
-
 	rctx->dummy_pixel_shader =
 		util_make_fragment_cloneinput_shader(&rctx->context, 0,
 						     TGSI_SEMANTIC_GENERIC,

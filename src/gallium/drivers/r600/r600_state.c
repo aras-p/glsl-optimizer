@@ -1134,39 +1134,35 @@ static void r600_set_polygon_stipple(struct pipe_context *ctx,
 {
 }
 
-void r600_set_scissor_state(struct r600_context *rctx,
-			    const struct pipe_scissor_state *state)
+static void r600_emit_scissor_state(struct r600_context *rctx, struct r600_atom *atom)
 {
-	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
-	uint32_t tl, br;
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct pipe_scissor_state *state = &rctx->scissor.scissor;
 
-	if (rstate == NULL)
-		return;
-
-	rstate->id = R600_PIPE_STATE_SCISSOR;
-	tl = S_028240_TL_X(state->minx) | S_028240_TL_Y(state->miny) | S_028240_WINDOW_OFFSET_DISABLE(1);
-	br = S_028244_BR_X(state->maxx) | S_028244_BR_Y(state->maxy);
-	r600_pipe_state_add_reg(rstate,
-				R_028250_PA_SC_VPORT_SCISSOR_0_TL, tl);
-	r600_pipe_state_add_reg(rstate,
-				R_028254_PA_SC_VPORT_SCISSOR_0_BR, br);
-
-	free(rctx->states[R600_PIPE_STATE_SCISSOR]);
-	rctx->states[R600_PIPE_STATE_SCISSOR] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
+	if (rctx->chip_class != R600 || rctx->scissor.enable) {
+		r600_write_context_reg_seq(cs, R_028250_PA_SC_VPORT_SCISSOR_0_TL, 2);
+		r600_write_value(cs, S_028240_TL_X(state->minx) | S_028240_TL_Y(state->miny) |
+				     S_028240_WINDOW_OFFSET_DISABLE(1));
+		r600_write_value(cs, S_028244_BR_X(state->maxx) | S_028244_BR_Y(state->maxy));
+	} else {
+		r600_write_context_reg_seq(cs, R_028250_PA_SC_VPORT_SCISSOR_0_TL, 2);
+		r600_write_value(cs, S_028240_TL_X(0) | S_028240_TL_Y(0) |
+				     S_028240_WINDOW_OFFSET_DISABLE(1));
+		r600_write_value(cs, S_028244_BR_X(8192) | S_028244_BR_Y(8192));
+	}
 }
 
-static void r600_pipe_set_scissor_state(struct pipe_context *ctx,
-					const struct pipe_scissor_state *state)
+static void r600_set_scissor_state(struct pipe_context *ctx,
+				   const struct pipe_scissor_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	rctx->scissor = *state;
+	rctx->scissor.scissor = *state;
 
-	if (rctx->chip_class == R600 && !rctx->scissor_enable)
+	if (rctx->chip_class == R600 && !rctx->scissor.enable)
 		return;
 
-	r600_set_scissor_state(rctx, state);
+	rctx->scissor.atom.dirty = true;
 }
 
 static struct r600_resource *r600_buffer_create_helper(struct r600_screen *rscreen,
@@ -2183,6 +2179,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->clip_state.atom, id++, r600_emit_clip_state, 26);
 	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, r600_emit_db_misc_state, 4);
 	r600_init_atom(rctx, &rctx->poly_offset_state.atom, id++, r600_emit_polygon_offset, 6);
+	r600_init_atom(rctx, &rctx->scissor.atom, id++, r600_emit_scissor_state, 4);
 	r600_init_atom(rctx, &rctx->stencil_ref.atom, id++, r600_emit_stencil_ref, 4);
 	r600_init_atom(rctx, &rctx->viewport.atom, id++, r600_emit_viewport_state, 8);
 	r600_init_atom(rctx, &rctx->vertex_fetch_shader.atom, id++, r600_emit_vertex_fetch_shader, 5);
@@ -2194,7 +2191,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_sampler_view = r600_create_sampler_view;
 	rctx->context.set_framebuffer_state = r600_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = r600_set_polygon_stipple;
-	rctx->context.set_scissor_state = r600_pipe_set_scissor_state;
+	rctx->context.set_scissor_state = r600_set_scissor_state;
 }
 
 /* Adjust GPR allocation on R6xx/R7xx */
