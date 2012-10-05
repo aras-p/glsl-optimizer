@@ -21,12 +21,12 @@ void main ()
   tmpvar_8 = texture2D (_MainTex, tmpvar_1);
   float x_9;
   x_9 = (tmpvar_8.w - _Cutoff);
-  if ((x_9 < 0.00000)) {
+  if ((x_9 < 0.0)) {
     discard;
   };
   vec3 tmpvar_10;
   tmpvar_10 = (tmpvar_8.xyz * gl_TexCoord[1].xyz);
-  specular_7 = (texture2D (_BumpSpecMap, tmpvar_1).x * 128.000);
+  specular_7 = (texture2D (_BumpSpecMap, tmpvar_1).x * 128.0);
   vec4 tmpvar_11;
   tmpvar_11 = texture2D (_TranslucencyMap, tmpvar_1);
   light_6 = (gl_LightModel.ambient.xyz * tmpvar_10);
@@ -40,8 +40,8 @@ void main ()
   float tmpvar_14;
   tmpvar_14 = (pow (tmpvar_3.z, specular_7) * tmpvar_11.w);
   light_6 = (light_6 + (((tmpvar_10 * ((backContribs_5.z * _TranslucencyColor) + tmpvar_2.z)) + (_SpecColor.xyz * tmpvar_14)) * _TerrainTreeLightColors[2].xyz));
-  c_4.xyz = (light_6 * 2.00000);
-  c_4.w = 1.00000;
+  c_4.xyz = (light_6 * 2.0);
+  c_4.w = 1.0;
   gl_FragData[0] = c_4;
 }
 

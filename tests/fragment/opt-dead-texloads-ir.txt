@@ -4,7 +4,7 @@ void surf (
   inout vec3 oo_2
 )
 {
-  if ((uv_1.x < 0.00000)) {
+  if ((uv_1.x < 0.0)) {
     discard;
   };
   vec4 tmpvar_3;
@@ -19,7 +19,7 @@ void main ()
   vec3 oo_5;
   surf (gl_TexCoord[0].xy, oo_5);
   vec4 tmpvar_6;
-  tmpvar_6 = vec4(0.500000, 0.500000, 0.500000, 0.500000);
+  tmpvar_6 = vec4(0.5, 0.5, 0.5, 0.5);
   gl_FragData[0] = tmpvar_6;
 }
 

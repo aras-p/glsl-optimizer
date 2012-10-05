@@ -90,7 +90,7 @@ vec4 TileMax (
     j_13 = tmpvar_32;
   };
   vec4 tmpvar_33;
-  tmpvar_33.zw = vec2(0.00000, 0.00000);
+  tmpvar_33.zw = vec2(0.0, 0.0);
   tmpvar_33.xy = mx_15.xy;
   return tmpvar_33;
 }
@@ -100,7 +100,7 @@ void main ()
   v2f ii_34;
   vec4 c_35;
   vec4 tmpvar_36;
-  tmpvar_36 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
+  tmpvar_36 = vec4(0.0, 0.0, 0.0, 0.0);
   ii_34.pos = tmpvar_36;
   vec2 tmpvar_37;
   tmpvar_37 = xlv_TEXCOORD0;

@@ -26,14 +26,14 @@ void main ()
   tmpvar_10 = texture2D (_MainTex, xlv_TEXCOORD0);
   lowp float x_11;
   x_11 = (tmpvar_10.w - _Cutoff);
-  if ((x_11 < 0.00000)) {
+  if ((x_11 < 0.0)) {
     discard;
   };
   highp vec3 tmpvar_12;
   tmpvar_12 = (tmpvar_10.xyz * xlv_TEXCOORD1);
   albedo_9 = tmpvar_12;
   lowp float tmpvar_13;
-  tmpvar_13 = (texture2D (_BumpSpecMap, xlv_TEXCOORD0).x * 128.000);
+  tmpvar_13 = (texture2D (_BumpSpecMap, xlv_TEXCOORD0).x * 128.0);
   specular_8 = tmpvar_13;
   lowp vec4 tmpvar_14;
   tmpvar_14 = texture2D (_TranslucencyMap, xlv_TEXCOORD0);
@@ -77,9 +77,9 @@ void main ()
   nh_2 = tmpvar_26;
   light_6 = (light_6 + (((albedo_9 * ((backContribs_5.z * _TranslucencyColor) + nl_3)) + (_SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))) * lightColor_4));
   mediump vec3 tmpvar_27;
-  tmpvar_27 = (light_6 * 2.00000);
+  tmpvar_27 = (light_6 * 2.0);
   c_1.xyz = tmpvar_27;
-  c_1.w = 1.00000;
+  c_1.w = 1.0;
   gl_FragData[0] = c_1;
 }
 

@@ -18,7 +18,7 @@ void main ()
   tmpvar_6 = (light_2 + ((col_3.xyz * xlv_nl.z) * _TerrainTreeLightColors[2].xyz));
   light_2 = tmpvar_6;
   mediump vec4 tmpvar_7;
-  tmpvar_7.w = 1.00000;
+  tmpvar_7.w = 1.0;
   tmpvar_7.xyz = light_2;
   tmpvar_1 = tmpvar_7;
   gl_FragData[0] = tmpvar_1;

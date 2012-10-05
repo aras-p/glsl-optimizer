@@ -11,7 +11,7 @@ void main ()
   lowp vec4 tmpvar_4;
   tmpvar_4 = vec4(t_2);
   lowp vec4 tmpvar_5;
-  tmpvar_5 = clamp (tmpvar_4, 0.00000, 1.00000);
+  tmpvar_5 = clamp (tmpvar_4, 0.0, 1.0);
   lowp vec4 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   c_1 = tmpvar_6;

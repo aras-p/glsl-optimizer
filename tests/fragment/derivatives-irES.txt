@@ -231,7 +231,7 @@ mediump vec4 xlat_main (
   tmpvar_72 = tmpvar_71;
   res_66.z = vec3(tmpvar_72).z;
   float tmpvar_73;
-  tmpvar_73 = 1.00000;
+  tmpvar_73 = 1.0;
   res_66.w = vec4(tmpvar_73).w;
   return res_66;
 }

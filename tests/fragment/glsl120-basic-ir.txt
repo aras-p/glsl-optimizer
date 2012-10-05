@@ -1,16 +1,16 @@
 #version 120
 uniform mat4x3 nonSqMat;
-uniform float inInit = 13.0000;
+uniform float inInit = 13.0;
 void main ()
 {
   float arr_1[4];
   vec4 v_2;
-  float cosPI_3 = -1.00000;
+  float cosPI_3 = -1.0;
   float tmpvar_4;
-  tmpvar_4 = -1.00000;
+  tmpvar_4 = -1.0;
   cosPI_3 = tmpvar_4;
   float tmpvar_5;
-  tmpvar_5 = 1.20000;
+  tmpvar_5 = 1.2;
   v_2.x = tmpvar_5;
   float tmpvar_6;
   tmpvar_6 = float(5);
@@ -25,7 +25,7 @@ void main ()
   tmpvar_9 = (v_2.x + nonSqMat[0][0]);
   v_2.x = tmpvar_9;
   float tmpvar_10[4];
-  tmpvar_10 = float[4](1.00000, 2.00000, 3.00000, 4.00000);
+  tmpvar_10 = float[4](1.0, 2.0, 3.0, 4.0);
   arr_1 = tmpvar_10;
   float tmpvar_11;
   tmpvar_11 = (v_2.y + arr_1[0]);

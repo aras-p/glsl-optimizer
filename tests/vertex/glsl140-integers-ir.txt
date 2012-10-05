@@ -7,7 +7,7 @@ uniform vec2 p;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1.zw = vec2(0.00000, 0.00000);
+  tmpvar_1.zw = vec2(0.0, 0.0);
   tmpvar_1.xy = p.xy;
   vec4 tmpvar_2;
   tmpvar_2 = (tmpvar_1 + position);

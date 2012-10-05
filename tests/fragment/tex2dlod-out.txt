@@ -3,6 +3,6 @@ varying vec4 xlv_TEXCOORD0;
 uniform sampler2D tex;
 void main ()
 {
-  gl_FragData[0] = texture2DLod (tex, xlv_TEXCOORD0.xy, 0.00000);
+  gl_FragData[0] = texture2DLod (tex, xlv_TEXCOORD0.xy, 0.0);
 }
 

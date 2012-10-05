@@ -9,7 +9,7 @@ void main ()
   tmpvar_2 = (texture2D (_MainTex, gl_TexCoord[0].xy) * gl_Color);
   float x_3;
   x_3 = (tmpvar_2.w - _Cutoff);
-  if ((x_3 < 0.00000)) {
+  if ((x_3 < 0.0)) {
     discard;
   };
   vec4 tmpvar_4;

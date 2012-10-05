@@ -5,7 +5,7 @@ void main ()
   int i_2;
   int x_3;
   int tmpvar_4;
-  if ((xx > 0.500000)) {
+  if ((xx > 0.5)) {
     tmpvar_4 = 2;
   } else {
     tmpvar_4 = 4;
@@ -20,7 +20,7 @@ void main ()
     discard;
   };
   float tmpvar_7;
-  tmpvar_7 = 0.00000;
+  tmpvar_7 = 0.0;
   c_1 = tmpvar_7;
   while (true) {
     if (!((i_2 < 4))) {

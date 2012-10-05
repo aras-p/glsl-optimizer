@@ -8,7 +8,7 @@ void main ()
   mediump vec3 light_2;
   lowp vec4 tmpvar_3;
   tmpvar_3 = texture2D (_MainTex, xlv_uv);
-  if ((tmpvar_3.w < 0.500000)) {
+  if ((tmpvar_3.w < 0.5)) {
     discard;
   };
   highp vec3 tmpvar_4;
@@ -21,7 +21,7 @@ void main ()
   tmpvar_6 = (light_2 + ((tmpvar_3.xyz * xlv_nl.z) * _TerrainTreeLightColors[2].xyz));
   light_2 = tmpvar_6;
   mediump vec4 tmpvar_7;
-  tmpvar_7.w = 1.00000;
+  tmpvar_7.w = 1.0;
   tmpvar_7.xyz = light_2;
   tmpvar_1 = tmpvar_7;
   gl_FragData[0] = tmpvar_1;

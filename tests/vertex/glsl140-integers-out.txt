@@ -6,7 +6,7 @@ uniform vec2 p;
 void main ()
 {
   vec4 tmpvar_1;
-  tmpvar_1.zw = vec2(0.00000, 0.00000);
+  tmpvar_1.zw = vec2(0.0, 0.0);
   tmpvar_1.xy = p;
   gl_Position = (tmpvar_1 + position);
   colint.x = gl_VertexID;
@@ -16,6 +16,6 @@ void main ()
   col.x = trunc(position.x);
   col.y = roundEven(position.y);
   col.z = roundEven(position.y);
-  col.w = (0.500000 * (exp(position.w) + exp(-(position.w))));
+  col.w = (0.5 * (exp(position.w) + exp(-(position.w))));
 }
 

@@ -51,7 +51,7 @@ v2f xlat_main (
   tmpvar_18 = (UNITY_MATRIX_MVP * v_1.vertex);
   o_11.pos = tmpvar_18;
   vec4 tmpvar_19;
-  tmpvar_19 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
+  tmpvar_19 = vec4(0.0, 0.0, 0.0, 0.0);
   o_11.color = tmpvar_19;
   while (true) {
     if (!((i_10 < 2))) {

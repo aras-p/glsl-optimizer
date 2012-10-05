@@ -3,8 +3,8 @@ void main ()
 {
   lowp float c_1;
   lowp float tmpvar_2;
-  tmpvar_2 = (xx * 2.00000);
-  if ((tmpvar_2 < 0.00000)) {
+  tmpvar_2 = (xx * 2.0);
+  if ((tmpvar_2 < 0.0)) {
     discard;
   };
   c_1 = (xx + xx);

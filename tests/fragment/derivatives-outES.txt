@@ -13,7 +13,7 @@ void main ()
   highp float tmpvar_5;
   tmpvar_5 = (abs(dFdx(xlv_TEXCOORD0.z)) + abs(dFdy(xlv_TEXCOORD0.z)));
   res_2.z = tmpvar_5;
-  res_2.w = 1.00000;
+  res_2.w = 1.0;
   tmpvar_1 = res_2;
   gl_FragData[0] = tmpvar_1;
 }

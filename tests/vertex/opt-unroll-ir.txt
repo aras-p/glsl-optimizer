@@ -51,7 +51,7 @@ v2f vert (
     tmpvar_17 = tmpvar_16;
     o_4.backContrib[j_2] = tmpvar_17;
     float tmpvar_18;
-    tmpvar_18 = max (0.00000, ((nl_9 * 0.600000) + 0.400000));
+    tmpvar_18 = max (0.0, ((nl_9 * 0.6) + 0.4));
     float tmpvar_19;
     tmpvar_19 = tmpvar_18;
     o_4.nl[j_2] = tmpvar_19;
@@ -83,13 +83,13 @@ void main ()
   tmpvar_28 = xl_retval_23.pos;
   gl_Position = tmpvar_28;
   vec4 tmpvar_29;
-  tmpvar_29.w = 0.00000;
+  tmpvar_29.w = 0.0;
   tmpvar_29.xyz = xl_retval_23.backContrib.xyz;
   vec4 tmpvar_30;
   tmpvar_30 = tmpvar_29;
   gl_TexCoord[2] = tmpvar_30;
   vec4 tmpvar_31;
-  tmpvar_31.w = 0.00000;
+  tmpvar_31.w = 0.0;
   tmpvar_31.xyz = xl_retval_23.nl.xyz;
   vec4 tmpvar_32;
   tmpvar_32 = tmpvar_31;

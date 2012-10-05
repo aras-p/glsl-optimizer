@@ -24,7 +24,7 @@ void xll_clip (
   in float x_1
 )
 {
-  if ((x_1 < 0.00000)) {
+  if ((x_1 < 0.0)) {
     discard;
   };
 }
@@ -62,7 +62,7 @@ lowp vec4 xlat_main (
   lowp vec4 tmpvar_21;
   tmpvar_21 = texture2D (_BumpSpecMap, i_2.uv);
   lowp float tmpvar_22;
-  tmpvar_22 = (tmpvar_21.x * 128.000);
+  tmpvar_22 = (tmpvar_21.x * 128.0);
   specular_14 = tmpvar_22;
   lowp vec4 tmpvar_23;
   tmpvar_23 = texture2D (_TranslucencyMap, i_2.uv);
@@ -111,10 +111,10 @@ lowp vec4 xlat_main (
     j_9 = tmpvar_37;
   };
   mediump vec3 tmpvar_38;
-  tmpvar_38 = (light_11 * 2.00000);
+  tmpvar_38 = (light_11 * 2.0);
   c_3.xyz = tmpvar_38.xyz.xyz;
   float tmpvar_39;
-  tmpvar_39 = 1.00000;
+  tmpvar_39 = 1.0;
   c_3.w = vec4(tmpvar_39).w;
   return c_3;
 }

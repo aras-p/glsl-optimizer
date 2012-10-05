@@ -14,8 +14,8 @@ void main ()
   lowp vec4 tmpvar_7;
   tmpvar_7 = texture2D (_MainTex, xlv_uv);
   col_6 = tmpvar_7;
-  light_5 = vec3(0.00000, 0.00000, 0.00000);
-  loopCount_4 = int((tmpvar_7.w * 10.0000));
+  light_5 = vec3(0.0, 0.0, 0.0);
+  loopCount_4 = int((tmpvar_7.w * 10.0));
   j_3 = 0;
   while (true) {
     if ((j_3 >= loopCount_4)) {
@@ -27,7 +27,7 @@ void main ()
     j_3 = (j_3 + 1);
   };
   mediump vec4 tmpvar_9;
-  tmpvar_9.w = 1.00000;
+  tmpvar_9.w = 1.0;
   tmpvar_9.xyz = light_5;
   tmpvar_1 = tmpvar_9;
   gl_FragData[0] = tmpvar_1;

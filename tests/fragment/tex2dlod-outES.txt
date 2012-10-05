@@ -5,7 +5,7 @@ void main ()
 {
   mediump vec4 tmpvar_1;
   lowp vec4 tmpvar_2;
-  tmpvar_2 = texture2DLod (tex, xlv_TEXCOORD0.xy, 0.00000);
+  tmpvar_2 = texture2DLod (tex, xlv_TEXCOORD0.xy, 0.0);
   tmpvar_1 = tmpvar_2;
   gl_FragData[0] = tmpvar_1;
 }

@@ -1,5 +1,5 @@
 void main ()
 {
-  gl_FragColor = vec4((((gl_FragCoord.x * 2.00000) + gl_FragCoord.x) + (gl_FragCoord.x * 4.00000)));
+  gl_FragColor = vec4((((gl_FragCoord.x * 2.0) + gl_FragCoord.x) + (gl_FragCoord.x * 4.0)));
 }
 

@@ -18,11 +18,11 @@ lowp vec4 xlat_main (
   lowp vec4 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   col_4 = tmpvar_6;
-  if ((col_4.w < 0.500000)) {
+  if ((col_4.w < 0.5)) {
     discard;
   };
   vec3 tmpvar_7;
-  tmpvar_7 = vec3(0.00000, 0.00000, 0.00000);
+  tmpvar_7 = vec3(0.0, 0.0, 0.0);
   light_3 = tmpvar_7;
   int tmpvar_8;
   tmpvar_8 = 0;
@@ -39,7 +39,7 @@ lowp vec4 xlat_main (
     j_2 = tmpvar_10;
   };
   mediump vec4 tmpvar_11;
-  tmpvar_11.w = 1.00000;
+  tmpvar_11.w = 1.0;
   tmpvar_11.xyz = light_3.xyz;
   return tmpvar_11;
 }

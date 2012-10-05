@@ -2,7 +2,7 @@ varying lowp float xx;
 void main ()
 {
   lowp float c_1;
-  if ((xx < 0.00000)) {
+  if ((xx < 0.0)) {
     discard;
   };
   c_1 = (xx + xx);

@@ -4,7 +4,7 @@ int func (
 )
 {
   float tmpvar_2;
-  tmpvar_2 = (x_1 * 2.00000);
+  tmpvar_2 = (x_1 * 2.0);
   x_1 = tmpvar_2;
   return 0;
 }
@@ -22,11 +22,11 @@ void main ()
   int tmpvar_8;
   tmpvar_8 = tmpvar_7;
   i_4 = tmpvar_8;
-  if ((x_5 < 0.00000)) {
+  if ((x_5 < 0.0)) {
     discard;
   };
   float tmpvar_9;
-  tmpvar_9 = 0.00000;
+  tmpvar_9 = 0.0;
   c_3 = tmpvar_9;
   while (true) {
     if (!((i_4 < 4))) {

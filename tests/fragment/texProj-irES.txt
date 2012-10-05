@@ -17,12 +17,12 @@ void main ()
   tmpvar_5 = (c_1 + tmpvar_4);
   c_1 = tmpvar_5;
   lowp vec4 tmpvar_6;
-  tmpvar_6 = texture2DProjLodEXT (tex, uv, 1.00000);
+  tmpvar_6 = texture2DProjLodEXT (tex, uv, 1.0);
   lowp vec4 tmpvar_7;
   tmpvar_7 = (c_1 + tmpvar_6);
   c_1 = tmpvar_7;
   lowp vec4 tmpvar_8;
-  tmpvar_8 = texture2DProjLodEXT (tex, uv.xyz, 1.00000);
+  tmpvar_8 = texture2DProjLodEXT (tex, uv.xyz, 1.0);
   lowp vec4 tmpvar_9;
   tmpvar_9 = (c_1 + tmpvar_8);
   c_1 = tmpvar_9;

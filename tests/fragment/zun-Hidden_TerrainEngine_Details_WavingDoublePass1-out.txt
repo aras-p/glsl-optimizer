@@ -14,11 +14,11 @@ void main ()
   tmpvar_4 = tmpvar_3.w;
   float x_5;
   x_5 = (tmpvar_3.w - _Cutoff);
-  if ((x_5 < 0.00000)) {
+  if ((x_5 < 0.0)) {
     discard;
   };
   vec4 c_6;
-  c_6.xyz = ((tmpvar_3.xyz * _LightColor0.xyz) * ((max (0.00000, dot (gl_TexCoord[1].xyz, normalize(gl_TexCoord[2].xyz))) * ((float((tmpvar_1.z > 0.00000)) * texture2D (_LightTexture0, ((tmpvar_1.xy / tmpvar_1.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (tmpvar_1.xyz, tmpvar_1.xyz))).w)) * 2.00000));
+  c_6.xyz = ((tmpvar_3.xyz * _LightColor0.xyz) * ((max (0.0, dot (gl_TexCoord[1].xyz, normalize(gl_TexCoord[2].xyz))) * ((float((tmpvar_1.z > 0.0)) * texture2D (_LightTexture0, ((tmpvar_1.xy / tmpvar_1.w) + 0.5)).w) * texture2D (_LightTextureB0, vec2(dot (tmpvar_1.xyz, tmpvar_1.xyz))).w)) * 2.0));
   c_6.w = tmpvar_4;
   c_2.xyz = c_6.xyz;
   c_2.w = tmpvar_4;

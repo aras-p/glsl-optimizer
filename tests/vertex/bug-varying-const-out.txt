@@ -3,8 +3,8 @@ varying float var1;
 varying vec4 var4;
 void main ()
 {
-  var4 = vec4(0.00000, 0.00000, 0.00000, 0.00000);
-  var1 = 0.500000;
+  var4 = vec4(0.0, 0.0, 0.0, 0.0);
+  var1 = 0.5;
   var4ok = gl_Vertex;
 }
 
