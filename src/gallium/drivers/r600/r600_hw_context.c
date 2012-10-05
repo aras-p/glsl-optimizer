@@ -233,12 +233,7 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{R_028A04_PA_SU_POINT_MINMAX, 0, 0},
 	{R_028A08_PA_SU_LINE_CNTL, 0, 0},
 	{R_028C08_PA_SU_VTX_CNTL, 0, 0},
-	{R_028DF8_PA_SU_POLY_OFFSET_DB_FMT_CNTL, 0, 0},
 	{R_028DFC_PA_SU_POLY_OFFSET_CLAMP, 0, 0},
-	{R_028E00_PA_SU_POLY_OFFSET_FRONT_SCALE, 0, 0},
-	{R_028E04_PA_SU_POLY_OFFSET_FRONT_OFFSET, 0, 0},
-	{R_028E08_PA_SU_POLY_OFFSET_BACK_SCALE, 0, 0},
-	{R_028E0C_PA_SU_POLY_OFFSET_BACK_OFFSET, 0, 0},
 	{R_028350_SX_MISC, 0, 0},
 	{R_028380_SQ_VTX_SEMANTIC_0, 0, 0},
 	{R_028384_SQ_VTX_SEMANTIC_1, 0, 0},
@@ -867,6 +862,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->clip_state.atom.dirty = true;
 	ctx->db_misc_state.atom.dirty = true;
 	ctx->framebuffer.atom.dirty = true;
+	ctx->poly_offset_state.atom.dirty = true;
 	ctx->vgt_state.atom.dirty = true;
 	ctx->vgt2_state.atom.dirty = true;
 	ctx->sample_mask.atom.dirty = true;

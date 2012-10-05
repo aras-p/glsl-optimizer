@@ -871,6 +871,7 @@ static void *evergreen_create_rs_state(struct pipe_context *ctx,
 	/* offset */
 	rs->offset_units = state->offset_units;
 	rs->offset_scale = state->offset_scale * 12.0f;
+	rs->offset_enable = state->offset_point || state->offset_line || state->offset_tri;
 
 	rstate->id = R600_PIPE_STATE_RASTERIZER;
 	tmp = S_0286D4_FLAT_SHADE_ENA(1);
@@ -1496,6 +1497,25 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 	surf->db_depth_size = S_028058_PITCH_TILE_MAX(pitch);
 	surf->db_depth_slice = S_02805C_SLICE_TILE_MAX(slice);
 
+	switch (surf->base.format) {
+	case PIPE_FORMAT_Z24X8_UNORM:
+	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+		surf->pa_su_poly_offset_db_fmt_cntl =
+			S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS((char)-24);
+		break;
+	case PIPE_FORMAT_Z32_FLOAT:
+	case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+		surf->pa_su_poly_offset_db_fmt_cntl =
+			S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS((char)-23) |
+			S_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
+		break;
+	case PIPE_FORMAT_Z16_UNORM:
+		surf->pa_su_poly_offset_db_fmt_cntl =
+			S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS((char)-16);
+		break;
+	default:;
+	}
+
 	if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
 		uint64_t stencil_offset = rtex->surface.stencil_offset;
 		unsigned i, stile_split = rtex->surface.stencil_tile_split;
@@ -1606,7 +1626,10 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 			evergreen_init_depth_surface(rctx, surf);
 		}
 
-		evergreen_polygon_offset_update(rctx);
+		if (state->zsbuf->format != rctx->poly_offset_state.zs_format) {
+			rctx->poly_offset_state.zs_format = state->zsbuf->format;
+			rctx->poly_offset_state.atom.dirty = true;
+		}
 	}
 
 	if (rctx->cb_misc_state.nr_cbufs != state->nr_cbufs) {
@@ -1664,7 +1687,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 	/* ZS buffer. */
 	if (state->zsbuf) {
-		rctx->framebuffer.atom.num_dw += 21;
+		rctx->framebuffer.atom.num_dw += 24;
 		if (rctx->keep_tiling_flags)
 			rctx->framebuffer.atom.num_dw += 2;
 	} else if (rctx->screen->info.drm_minor >= 18) {
@@ -1969,6 +1992,8 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 		unsigned reloc = r600_context_bo_reloc(rctx, (struct r600_resource*)state->zsbuf->texture,
 						       RADEON_USAGE_READWRITE);
 
+		r600_write_context_reg(cs, R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL,
+				       zb->pa_su_poly_offset_db_fmt_cntl);
 		r600_write_context_reg(cs, R_028008_DB_DEPTH_VIEW, zb->db_depth_view);
 
 		r600_write_context_reg_seq(cs, R_028040_DB_Z_INFO, 8);
@@ -2017,6 +2042,31 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 	} else {
 		cayman_emit_msaa_state(rctx, rctx->framebuffer.nr_samples);
 	}
+}
+
+static void evergreen_emit_polygon_offset(struct r600_context *rctx, struct r600_atom *a)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_poly_offset_state *state = (struct r600_poly_offset_state*)a;
+	float offset_units = state->offset_units;
+	float offset_scale = state->offset_scale;
+
+	switch (state->zs_format) {
+	case PIPE_FORMAT_Z24X8_UNORM:
+	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+		offset_units *= 2.0f;
+		break;
+	case PIPE_FORMAT_Z16_UNORM:
+		offset_units *= 4.0f;
+		break;
+	default:;
+	}
+
+	r600_write_context_reg_seq(cs, R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE, 4);
+	r600_write_value(cs, fui(offset_scale));
+	r600_write_value(cs, fui(offset_units));
+	r600_write_value(cs, fui(offset_scale));
+	r600_write_value(cs, fui(offset_units));
 }
 
 static void evergreen_emit_cb_misc_state(struct r600_context *rctx, struct r600_atom *atom)
@@ -2370,6 +2420,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->clip_misc_state.atom, id++, r600_emit_clip_misc_state, 6);
 	r600_init_atom(rctx, &rctx->clip_state.atom, id++, evergreen_emit_clip_state, 26);
 	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, evergreen_emit_db_misc_state, 7);
+	r600_init_atom(rctx, &rctx->poly_offset_state.atom, id++, evergreen_emit_polygon_offset, 6);
 	r600_init_atom(rctx, &rctx->stencil_ref.atom, id++, r600_emit_stencil_ref, 4);
 	r600_init_atom(rctx, &rctx->viewport.atom, id++, r600_emit_viewport_state, 8);
 	r600_init_atom(rctx, &rctx->vertex_fetch_shader.atom, id++, evergreen_emit_vertex_fetch_shader, 5);
@@ -3084,56 +3135,6 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0, 0x01000FFF);
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF);
-}
-
-void evergreen_polygon_offset_update(struct r600_context *rctx)
-{
-	struct r600_pipe_state state;
-
-	state.id = R600_PIPE_STATE_POLYGON_OFFSET;
-	state.nregs = 0;
-	if (rctx->rasterizer && rctx->framebuffer.state.zsbuf) {
-		float offset_units = rctx->rasterizer->offset_units;
-		unsigned offset_db_fmt_cntl = 0, depth;
-
-		switch (rctx->framebuffer.state.zsbuf->format) {
-		case PIPE_FORMAT_Z24X8_UNORM:
-		case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-			depth = -24;
-			offset_units *= 2.0f;
-			break;
-		case PIPE_FORMAT_Z32_FLOAT:
-		case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-			depth = -23;
-			offset_units *= 1.0f;
-			offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
-			break;
-		case PIPE_FORMAT_Z16_UNORM:
-			depth = -16;
-			offset_units *= 4.0f;
-			break;
-		default:
-			return;
-		}
-		/* XXX some of those reg can be computed with cso */
-		offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
-		r600_pipe_state_add_reg(&state,
-				R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE,
-				fui(rctx->rasterizer->offset_scale));
-		r600_pipe_state_add_reg(&state,
-				R_028B84_PA_SU_POLY_OFFSET_FRONT_OFFSET,
-				fui(offset_units));
-		r600_pipe_state_add_reg(&state,
-				R_028B88_PA_SU_POLY_OFFSET_BACK_SCALE,
-				fui(rctx->rasterizer->offset_scale));
-		r600_pipe_state_add_reg(&state,
-				R_028B8C_PA_SU_POLY_OFFSET_BACK_OFFSET,
-				fui(offset_units));
-		r600_pipe_state_add_reg(&state,
-				R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL,
-				offset_db_fmt_cntl);
-		r600_context_pipe_state_set(rctx, &state);
-	}
 }
 
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)

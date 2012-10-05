@@ -112,6 +112,7 @@ struct r600_surface {
 	unsigned db_stencil_base;	/* EG only */
 	unsigned db_stencil_info;	/* EG only */
 	unsigned db_prefetch_limit;	/* R600 only */
+	unsigned pa_su_poly_offset_db_fmt_cntl;
 };
 
 void r600_resource_destroy(struct pipe_screen *screen, struct pipe_resource *res);

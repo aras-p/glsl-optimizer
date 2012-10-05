@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 31
+#define R600_NUM_ATOMS 32
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -164,7 +164,6 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_SCISSOR,
 	R600_PIPE_STATE_RASTERIZER,
 	R600_PIPE_STATE_DSA,
-	R600_PIPE_STATE_POLYGON_OFFSET,
 	R600_PIPE_NSTATES
 };
 
@@ -217,8 +216,16 @@ struct r600_pipe_rasterizer {
 	unsigned			pa_cl_clip_cntl;
 	float				offset_units;
 	float				offset_scale;
+	bool				offset_enable;
 	bool				scissor_enable;
 	bool				multisample_enable;
+};
+
+struct r600_poly_offset_state {
+	struct r600_atom		atom;
+	enum pipe_format		zs_format;
+	float				offset_units;
+	float				offset_scale;
 };
 
 struct r600_blend_state {
@@ -411,6 +418,7 @@ struct r600_context {
 	struct r600_clip_state		clip_state;
 	struct r600_db_misc_state	db_misc_state;
 	struct r600_framebuffer		framebuffer;
+	struct r600_poly_offset_state	poly_offset_state;
 	struct r600_sample_mask		sample_mask;
 	struct r600_seamless_cube_map	seamless_cube_map;
 	struct r600_stencil_ref_state	stencil_ref;
@@ -541,7 +549,6 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx);
 void *evergreen_create_resolve_blend(struct r600_context *rctx);
 void *evergreen_create_decompress_blend(struct r600_context *rctx);
-void evergreen_polygon_offset_update(struct r600_context *rctx);
 boolean evergreen_is_format_supported(struct pipe_screen *screen,
 				      enum pipe_format format,
 				      enum pipe_texture_target target,
@@ -618,7 +625,6 @@ void *r600_create_db_flush_dsa(struct r600_context *rctx);
 void *r600_create_resolve_blend(struct r600_context *rctx);
 void *r700_create_resolve_blend(struct r600_context *rctx);
 void *r600_create_decompress_blend(struct r600_context *rctx);
-void r600_polygon_offset_update(struct r600_context *rctx);
 void r600_adjust_gprs(struct r600_context *rctx);
 boolean r600_is_format_supported(struct pipe_screen *screen,
 				 enum pipe_format format,

@@ -328,10 +328,12 @@ static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 	rctx->states[rs->rstate.id] = &rs->rstate;
 	r600_context_pipe_state_set(rctx, &rs->rstate);
 
-	if (rctx->chip_class >= EVERGREEN) {
-		evergreen_polygon_offset_update(rctx);
-	} else {
-		r600_polygon_offset_update(rctx);
+	if (rs->offset_enable &&
+	    (rs->offset_units != rctx->poly_offset_state.offset_units ||
+	     rs->offset_scale != rctx->poly_offset_state.offset_scale)) {
+		rctx->poly_offset_state.offset_units = rs->offset_units;
+		rctx->poly_offset_state.offset_scale = rs->offset_scale;
+		rctx->poly_offset_state.atom.dirty = true;
 	}
 
 	/* Update clip_misc_state. */
