@@ -78,7 +78,6 @@
 #include "main/glformats.h"
 #include "../glsl/ralloc.h"
 
-static void *mem_ctx;
 /** Return offset in bytes of the field within a vertex struct */
 #define OFFSET(FIELD) ((void *) offsetof(struct vertex, FIELD))
 
@@ -3073,6 +3072,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
    char *fs_source;
    const char *extension_mode;
    GLuint vs, fs;
+   void *mem_ctx;
 
    if (ctx->Const.GLSLVersion < 130) {
       vs_source =
