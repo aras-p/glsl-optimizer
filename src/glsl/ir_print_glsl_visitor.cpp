@@ -788,8 +788,18 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 
 static char* print_float (char* buffer, float f)
 {
-	const char* fmt = "%#.6g";
-	ralloc_asprintf_append (&buffer, fmt, f);
+	// Kind of roundabout way, but this is to satisfy two things:
+	// * MSVC and gcc-based compilers differ a bit in how they treat float
+	//   widht/precision specifiers. Want to match for tests.
+	// * GLSL (early version at least) require floats to have ".0" or
+	//   exponential notation.
+	char tmp[64];
+	snprintf(tmp, 64, "%.6g", f);
+	ralloc_strcat (&buffer, tmp);
+
+	// need to append ".0"?
+	if (!strchr(tmp,'.') && !strchr(tmp,'e') && !strchr(tmp,'E'))
+		ralloc_strcat(&buffer, ".0");
 	return buffer;
 }
 
