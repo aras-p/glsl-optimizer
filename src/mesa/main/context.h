@@ -30,8 +30,6 @@
  * There are three large Mesa data types/classes which are meant to be
  * used by device drivers:
  * - struct gl_context: this contains the Mesa rendering state
- * - struct gl_config:  this describes the color buffer (RGB vs. ci), whether
- *   or not there's a depth buffer, stencil buffer, etc.
  *
  * These types should be encapsulated by corresponding device driver
  * data types.  See xmesa.h and xmesaP.h for an example.
@@ -55,48 +53,6 @@
 extern "C" {
 #endif
 
-
-struct _glapi_table;
-
-
-/** \name Visual-related functions */
-/*@{*/
- 
-extern struct gl_config *
-_mesa_create_visual( GLboolean dbFlag,
-                     GLboolean stereoFlag,
-                     GLint redBits,
-                     GLint greenBits,
-                     GLint blueBits,
-                     GLint alphaBits,
-                     GLint depthBits,
-                     GLint stencilBits,
-                     GLint accumRedBits,
-                     GLint accumGreenBits,
-                     GLint accumBlueBits,
-                     GLint accumAlphaBits,
-                     GLint numSamples );
-
-extern GLboolean
-_mesa_initialize_visual( struct gl_config *v,
-                         GLboolean dbFlag,
-                         GLboolean stereoFlag,
-                         GLint redBits,
-                         GLint greenBits,
-                         GLint blueBits,
-                         GLint alphaBits,
-                         GLint depthBits,
-                         GLint stencilBits,
-                         GLint accumRedBits,
-                         GLint accumGreenBits,
-                         GLint accumBlueBits,
-                         GLint accumAlphaBits,
-                         GLint numSamples );
-
-extern void
-_mesa_destroy_visual( struct gl_config *vis );
-
-/*@}*/
 
 
 /** \name Context-related functions */
@@ -145,9 +101,6 @@ _mesa_init_get_hash(struct gl_context *ctx);
 extern void
 _mesa_notifySwapBuffers(struct gl_context *gc);
 
-
-extern struct _glapi_table *
-_mesa_get_dispatch(struct gl_context *ctx);
 
 
 void
