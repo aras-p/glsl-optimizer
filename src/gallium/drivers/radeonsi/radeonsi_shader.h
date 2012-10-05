@@ -77,6 +77,11 @@ struct si_shader {
 	unsigned		nr_cbufs;
 };
 
+struct si_shader_key {
+	unsigned		export_16bpc:8;
+	unsigned		nr_cbufs:4;
+};
+
 struct si_pipe_shader {
 	struct si_pipe_shader_selector	*selector;
 	struct si_pipe_shader		*next_variant;
@@ -88,11 +93,12 @@ struct si_pipe_shader {
 	unsigned			spi_ps_input_ena;
 	unsigned			sprite_coord_enable;
 	unsigned			so_strides[4];
-	unsigned			key;
+	struct si_shader_key		key;
 };
 
 /* radeonsi_shader.c */
-int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader);
+int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader,
+			  struct si_shader_key key);
 void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_pipe_shader *shader);
 
 #endif

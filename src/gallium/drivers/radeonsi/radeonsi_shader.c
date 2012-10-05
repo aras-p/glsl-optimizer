@@ -55,6 +55,7 @@ struct si_shader_context
 	struct tgsi_parse_context parse;
 	struct tgsi_token * tokens;
 	struct si_pipe_shader *shader;
+	struct si_shader_key key;
 	unsigned type; /* TGSI_PROCESSOR_* specifies the type of shader. */
 	unsigned ninput_emitted;
 /*	struct list_head inputs; */
@@ -405,7 +406,7 @@ static void si_llvm_init_export_args(struct lp_build_tgsi_context *bld_base,
 
 		if (cbuf >= 0 && cbuf < 8) {
 			struct r600_context *rctx = si_shader_ctx->rctx;
-			compressed = (rctx->export_16bpc >> cbuf) & 0x1;
+			compressed = (si_shader_ctx->key.export_16bpc >> cbuf) & 0x1;
 		}
 	}
 
@@ -681,7 +682,8 @@ static const struct lp_build_tgsi_action tex_action = {
 
 int si_pipe_shader_create(
 	struct pipe_context *ctx,
-	struct si_pipe_shader *shader)
+	struct si_pipe_shader *shader,
+	struct si_shader_key key)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct si_pipe_shader_selector *sel = shader->selector;
@@ -718,6 +720,7 @@ int si_pipe_shader_create(
 	si_shader_ctx.tokens = sel->tokens;
 	tgsi_parse_init(&si_shader_ctx.parse, si_shader_ctx.tokens);
 	si_shader_ctx.shader = shader;
+	si_shader_ctx.key = key;
 	si_shader_ctx.type = si_shader_ctx.parse.FullHeader.Processor.Processor;
 	si_shader_ctx.rctx = rctx;
 

@@ -1830,19 +1830,20 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
  */
 
 /* Compute the key for the hw shader variant */
-static INLINE unsigned si_shader_selector_key(struct pipe_context *ctx,
-					      struct si_pipe_shader_selector *sel)
+static INLINE struct si_shader_key si_shader_selector_key(struct pipe_context *ctx,
+							  struct si_pipe_shader_selector *sel)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	unsigned key = 0;
+	struct si_shader_key key;
+	memset(&key, 0, sizeof(key));
 
 	if (sel->type == PIPE_SHADER_FRAGMENT) {
 		if (sel->fs_write_all)
-			key |= rctx->framebuffer.nr_cbufs;
-		key |= rctx->export_16bpc << 4;
+			key.nr_cbufs = rctx->framebuffer.nr_cbufs;
+		key.export_16bpc = rctx->export_16bpc;
 		/*if (rctx->queued.named.rasterizer)
-			  key |= rctx->queued.named.rasterizer->flatshade << 12;*/
-		/*key |== rctx->two_side << 13;*/
+			  key.flatshade = rctx->queued.named.rasterizer->flatshade;*/
+		/*key.color_two_side |== rctx->two_side;*/
 	}
 
 	return key;
@@ -1854,7 +1855,7 @@ int si_shader_select(struct pipe_context *ctx,
 		     struct si_pipe_shader_selector *sel,
 		     unsigned *dirty)
 {
-	unsigned key;
+	struct si_shader_key key;
 	struct si_pipe_shader * shader = NULL;
 	int r;
 
@@ -1864,7 +1865,7 @@ int si_shader_select(struct pipe_context *ctx,
 	 * This path is also used for most shaders that don't need multiple
 	 * variants, it will cost just a computation of the key and this
 	 * test. */
-	if (likely(sel->current && sel->current->key == key)) {
+	if (likely(sel->current && memcmp(&sel->current->key, &key, sizeof(key)) == 0)) {
 		return 0;
 	}
 
@@ -1872,7 +1873,7 @@ int si_shader_select(struct pipe_context *ctx,
 	if (sel->num_shaders > 1) {
 		struct si_pipe_shader *p = sel->current, *c = p->next_variant;
 
-		while (c && c->key != key) {
+		while (c && memcmp(&c->key, &key, sizeof(key)) != 0) {
 			p = c;
 			c = c->next_variant;
 		}
@@ -1887,10 +1888,10 @@ int si_shader_select(struct pipe_context *ctx,
 		shader = CALLOC(1, sizeof(struct si_pipe_shader));
 		shader->selector = sel;
 
-		r = si_pipe_shader_create(ctx, shader);
+		r = si_pipe_shader_create(ctx, shader, key);
 		if (unlikely(r)) {
-			R600_ERR("Failed to build shader variant (type=%u, key=%u) %d\n",
-				 sel->type, key, r);
+			R600_ERR("Failed to build shader variant (type=%u) %d\n",
+				 sel->type, r);
 			sel->current = NULL;
 			return r;
 		}
