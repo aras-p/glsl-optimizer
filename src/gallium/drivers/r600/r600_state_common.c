@@ -60,6 +60,11 @@ void r600_init_atom(struct r600_context *rctx,
 	atom->dirty = false;
 }
 
+void r600_emit_cso_state(struct r600_context *rctx, struct r600_atom *atom)
+{
+	r600_emit_command_buffer(rctx->cs, ((struct r600_cso_state*)atom)->cb);
+}
+
 void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
@@ -113,22 +118,31 @@ static unsigned r600_conv_pipe_prim(unsigned prim)
 /* common state between evergreen and r600 */
 
 static void r600_bind_blend_state_internal(struct r600_context *rctx,
-		struct r600_pipe_blend *blend)
+		struct r600_blend_state *blend, bool blend_disable)
 {
-	struct r600_pipe_state *rstate;
+	unsigned color_control;
 	bool update_cb = false;
 
-	rstate = &blend->rstate;
-	rctx->states[rstate->id] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
+	rctx->alpha_to_one = blend->alpha_to_one;
+	rctx->dual_src_blend = blend->dual_src_blend;
 
+	if (!blend_disable) {
+		r600_set_cso_state_with_cb(&rctx->blend_state, blend, &blend->buffer);
+		color_control = blend->cb_color_control;
+	} else {
+		/* Blending is disabled. */
+		r600_set_cso_state_with_cb(&rctx->blend_state, blend, &blend->buffer_no_blend);
+		color_control = blend->cb_color_control_no_blend;
+	}
+
+	/* Update derived states. */
 	if (rctx->cb_misc_state.blend_colormask != blend->cb_target_mask) {
 		rctx->cb_misc_state.blend_colormask = blend->cb_target_mask;
 		update_cb = true;
 	}
 	if (rctx->chip_class <= R700 &&
-	    rctx->cb_misc_state.cb_color_control != blend->cb_color_control) {
-		rctx->cb_misc_state.cb_color_control = blend->cb_color_control;
+	    rctx->cb_misc_state.cb_color_control != color_control) {
+		rctx->cb_misc_state.cb_color_control = color_control;
 		update_cb = true;
 	}
 	if (rctx->cb_misc_state.dual_src_blend != blend->dual_src_blend) {
@@ -143,17 +157,12 @@ static void r600_bind_blend_state_internal(struct r600_context *rctx,
 static void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_blend *blend = (struct r600_pipe_blend *)state;
+	struct r600_blend_state *blend = (struct r600_blend_state *)state;
 
 	if (blend == NULL)
 		return;
 
-	rctx->blend = blend;
-	rctx->alpha_to_one = blend->alpha_to_one;
-	rctx->dual_src_blend = blend->dual_src_blend;
-
-	if (!rctx->blend_override)
-		r600_bind_blend_state_internal(rctx, blend);
+	r600_bind_blend_state_internal(rctx, blend, rctx->force_blend_disable);
 }
 
 static void r600_set_blend_color(struct pipe_context *ctx,
@@ -457,6 +466,15 @@ static void r600_bind_ps_sampler_states(struct pipe_context *ctx, unsigned count
 static void r600_delete_sampler_state(struct pipe_context *ctx, void *state)
 {
 	free(state);
+}
+
+static void r600_delete_blend_state(struct pipe_context *ctx, void *state)
+{
+	struct r600_blend_state *blend = (struct r600_blend_state*)state;
+
+	r600_release_command_buffer(&blend->buffer);
+	r600_release_command_buffer(&blend->buffer_no_blend);
+	FREE(blend);
 }
 
 static void r600_delete_state(struct pipe_context *ctx, void *state)
@@ -1076,7 +1094,8 @@ static void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask
 static void r600_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
-	unsigned ps_dirty = 0, blend_override;
+	unsigned ps_dirty = 0;
+	bool blend_disable;
 
 	if (!rctx->blitter->running) {
 		unsigned i;
@@ -1110,13 +1129,14 @@ static void r600_update_derived_state(struct r600_context *rctx)
 	if (ps_dirty)
 		r600_context_pipe_state_set(rctx, &rctx->ps_shader->current->rstate);
 
-	blend_override = (rctx->dual_src_blend &&
+	blend_disable = (rctx->dual_src_blend &&
 			rctx->ps_shader->current->nr_ps_color_outputs < 2);
 
-	if (blend_override != rctx->blend_override) {
-		rctx->blend_override = blend_override;
+	if (blend_disable != rctx->force_blend_disable) {
+		rctx->force_blend_disable = blend_disable;
 		r600_bind_blend_state_internal(rctx,
-				blend_override ? rctx->no_blend : rctx->blend);
+					       rctx->blend_state.cso,
+					       blend_disable);
 	}
 
 	if (rctx->chip_class >= EVERGREEN) {
@@ -1553,7 +1573,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements;
 	rctx->context.bind_vertex_sampler_states = r600_bind_vs_sampler_states;
 	rctx->context.bind_vs_state = r600_bind_vs_state;
-	rctx->context.delete_blend_state = r600_delete_state;
+	rctx->context.delete_blend_state = r600_delete_blend_state;
 	rctx->context.delete_depth_stencil_alpha_state = r600_delete_state;
 	rctx->context.delete_fs_state = r600_delete_ps_state;
 	rctx->context.delete_rasterizer_state = r600_delete_rs_state;

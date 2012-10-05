@@ -692,21 +692,49 @@ void r600_polygon_offset_update(struct r600_context *rctx)
 	}
 }
 
+static uint32_t r600_get_blend_control(const struct pipe_blend_state *state, unsigned i)
+{
+	int j = state->independent_blend_enable ? i : 0;
+
+	unsigned eqRGB = state->rt[j].rgb_func;
+	unsigned srcRGB = state->rt[j].rgb_src_factor;
+	unsigned dstRGB = state->rt[j].rgb_dst_factor;
+
+	unsigned eqA = state->rt[j].alpha_func;
+	unsigned srcA = state->rt[j].alpha_src_factor;
+	unsigned dstA = state->rt[j].alpha_dst_factor;
+	uint32_t bc = 0;
+
+	if (!state->rt[j].blend_enable)
+		return 0;
+
+	bc |= S_028804_COLOR_COMB_FCN(r600_translate_blend_function(eqRGB));
+	bc |= S_028804_COLOR_SRCBLEND(r600_translate_blend_factor(srcRGB));
+	bc |= S_028804_COLOR_DESTBLEND(r600_translate_blend_factor(dstRGB));
+
+	if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
+		bc |= S_028804_SEPARATE_ALPHA_BLEND(1);
+		bc |= S_028804_ALPHA_COMB_FCN(r600_translate_blend_function(eqA));
+		bc |= S_028804_ALPHA_SRCBLEND(r600_translate_blend_factor(srcA));
+		bc |= S_028804_ALPHA_DESTBLEND(r600_translate_blend_factor(dstA));
+	}
+	return bc;
+}
+
 static void *r600_create_blend_state_mode(struct pipe_context *ctx,
 					  const struct pipe_blend_state *state,
 					  int mode)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
-	struct r600_pipe_state *rstate;
 	uint32_t color_control = 0, target_mask = 0;
+	struct r600_blend_state *blend = CALLOC_STRUCT(r600_blend_state);
 
-	if (blend == NULL) {
+	if (!blend) {
 		return NULL;
 	}
-	rstate = &blend->rstate;
 
-	rstate->id = R600_PIPE_STATE_BLEND;
+	r600_init_command_buffer(&blend->buffer, 20);
+	r600_init_command_buffer(&blend->buffer_no_blend, 20);
 
 	/* R600 does not support per-MRT blends */
 	if (rctx->family > CHIP_R600)
@@ -739,55 +767,41 @@ static void *r600_create_blend_state_mode(struct pipe_context *ctx,
 	else
 		color_control |= S_028808_SPECIAL_OP(V_028808_DISABLE);
 
-	blend->cb_target_mask = target_mask;
-	blend->cb_color_control = color_control;
 	/* only MRT0 has dual src blend */
 	blend->dual_src_blend = util_blend_state_is_dual(state, 0);
-	for (int i = 0; i < 8; i++) {
-		/* state->rt entries > 0 only written if independent blending */
-		const int j = state->independent_blend_enable ? i : 0;
+	blend->cb_target_mask = target_mask;
+	blend->cb_color_control = color_control;
+	blend->cb_color_control_no_blend = color_control & C_028808_TARGET_BLEND_ENABLE;
+	blend->alpha_to_one = state->alpha_to_one;
 
-		unsigned eqRGB = state->rt[j].rgb_func;
-		unsigned srcRGB = state->rt[j].rgb_src_factor;
-		unsigned dstRGB = state->rt[j].rgb_dst_factor;
+	r600_store_context_reg(&blend->buffer, R_028D44_DB_ALPHA_TO_MASK,
+			       S_028D44_ALPHA_TO_MASK_ENABLE(state->alpha_to_coverage) |
+			       S_028D44_ALPHA_TO_MASK_OFFSET0(2) |
+			       S_028D44_ALPHA_TO_MASK_OFFSET1(2) |
+			       S_028D44_ALPHA_TO_MASK_OFFSET2(2) |
+			       S_028D44_ALPHA_TO_MASK_OFFSET3(2));
 
-		unsigned eqA = state->rt[j].alpha_func;
-		unsigned srcA = state->rt[j].alpha_src_factor;
-		unsigned dstA = state->rt[j].alpha_dst_factor;
-		uint32_t bc = 0;
+	/* Copy over the registers set so far into buffer_no_blend. */
+	memcpy(blend->buffer_no_blend.buf, blend->buffer.buf, blend->buffer.num_dw * 4);
+	blend->buffer_no_blend.num_dw = blend->buffer.num_dw;
 
-		if (!state->rt[j].blend_enable)
-			continue;
-
-		bc |= S_028804_COLOR_COMB_FCN(r600_translate_blend_function(eqRGB));
-		bc |= S_028804_COLOR_SRCBLEND(r600_translate_blend_factor(srcRGB));
-		bc |= S_028804_COLOR_DESTBLEND(r600_translate_blend_factor(dstRGB));
-
-		if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
-			bc |= S_028804_SEPARATE_ALPHA_BLEND(1);
-			bc |= S_028804_ALPHA_COMB_FCN(r600_translate_blend_function(eqA));
-			bc |= S_028804_ALPHA_SRCBLEND(r600_translate_blend_factor(srcA));
-			bc |= S_028804_ALPHA_DESTBLEND(r600_translate_blend_factor(dstA));
-		}
-
-		/* R600 does not support per-MRT blends */
-		if (rctx->family > CHIP_R600)
-			r600_pipe_state_add_reg(rstate, R_028780_CB_BLEND0_CONTROL + i * 4, bc);
-		if (i == 0)
-			r600_pipe_state_add_reg(rstate, R_028804_CB_BLEND_CONTROL, bc);
+	/* Only add blend registers if blending is enabled. */
+	if (!G_028808_TARGET_BLEND_ENABLE(color_control)) {
+		return blend;
 	}
 
-	r600_pipe_state_add_reg(rstate, R_028D44_DB_ALPHA_TO_MASK,
-				S_028D44_ALPHA_TO_MASK_ENABLE(state->alpha_to_coverage) |
-				S_028D44_ALPHA_TO_MASK_OFFSET0(2) |
-				S_028D44_ALPHA_TO_MASK_OFFSET1(2) |
-				S_028D44_ALPHA_TO_MASK_OFFSET2(2) |
-				S_028D44_ALPHA_TO_MASK_OFFSET3(2));
+	/* The first R600 does not support per-MRT blends */
+	r600_store_context_reg(&blend->buffer, R_028804_CB_BLEND_CONTROL,
+			       r600_get_blend_control(state, 0));
 
-	blend->alpha_to_one = state->alpha_to_one;
-	return rstate;
+	if (rctx->family > CHIP_R600) {
+		r600_store_context_reg_seq(&blend->buffer, R_028780_CB_BLEND0_CONTROL, 8);
+		for (int i = 0; i < 8; i++) {
+			r600_store_value(&blend->buffer, r600_get_blend_control(state, i));
+		}
+	}
+	return blend;
 }
-
 
 static void *r600_create_blend_state(struct pipe_context *ctx,
 				     const struct pipe_blend_state *state)
@@ -2151,6 +2165,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 
 	r600_init_atom(rctx, &rctx->alphatest_state.atom, id++, r600_emit_alphatest_state, 6);
 	r600_init_atom(rctx, &rctx->blend_color.atom, id++, r600_emit_blend_color, 6);
+	r600_init_atom(rctx, &rctx->blend_state.atom, id++, r600_emit_cso_state, 0);
 	r600_init_atom(rctx, &rctx->cb_misc_state.atom, id++, r600_emit_cb_misc_state, 7);
 	r600_init_atom(rctx, &rctx->clip_misc_state.atom, id++, r600_emit_clip_misc_state, 6);
 	r600_init_atom(rctx, &rctx->clip_state.atom, id++, r600_emit_clip_state, 26);
@@ -2731,7 +2746,6 @@ void r600_fetch_shader(struct pipe_context *ctx,
 void *r600_create_resolve_blend(struct r600_context *rctx)
 {
 	struct pipe_blend_state blend;
-	struct r600_pipe_state *rstate;
 	unsigned i;
 
 	memset(&blend, 0, sizeof(blend));
@@ -2746,32 +2760,27 @@ void *r600_create_resolve_blend(struct r600_context *rctx)
 		blend.rt[i].alpha_src_factor = PIPE_BLENDFACTOR_ZERO;
 		blend.rt[i].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
 	}
-	rstate = r600_create_blend_state_mode(&rctx->context, &blend, V_028808_SPECIAL_RESOLVE_BOX);
-	return rstate;
+	return r600_create_blend_state_mode(&rctx->context, &blend, V_028808_SPECIAL_RESOLVE_BOX);
 }
 
 void *r700_create_resolve_blend(struct r600_context *rctx)
 {
 	struct pipe_blend_state blend;
-	struct r600_pipe_state *rstate;
 
 	memset(&blend, 0, sizeof(blend));
 	blend.independent_blend_enable = true;
 	blend.rt[0].colormask = 0xf;
-	rstate = r600_create_blend_state_mode(&rctx->context, &blend, V_028808_SPECIAL_RESOLVE_BOX);
-	return rstate;
+	return r600_create_blend_state_mode(&rctx->context, &blend, V_028808_SPECIAL_RESOLVE_BOX);
 }
 
 void *r600_create_decompress_blend(struct r600_context *rctx)
 {
 	struct pipe_blend_state blend;
-	struct r600_pipe_state *rstate;
 
 	memset(&blend, 0, sizeof(blend));
 	blend.independent_blend_enable = true;
 	blend.rt[0].colormask = 0xf;
-	rstate = r600_create_blend_state_mode(&rctx->context, &blend, V_028808_SPECIAL_EXPAND_SAMPLES);
-	return rstate;
+	return r600_create_blend_state_mode(&rctx->context, &blend, V_028808_SPECIAL_EXPAND_SAMPLES);
 }
 
 void *r600_create_db_flush_dsa(struct r600_context *rctx)

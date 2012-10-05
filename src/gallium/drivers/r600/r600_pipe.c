@@ -159,9 +159,6 @@ static void r600_destroy_context(struct pipe_context *context)
 	pipe_resource_reference((struct pipe_resource**)&rctx->dummy_cmask, NULL);
 	pipe_resource_reference((struct pipe_resource**)&rctx->dummy_fmask, NULL);
 
-	if (rctx->no_blend) {
-		rctx->context.delete_blend_state(&rctx->context, rctx->no_blend);
-	}
 	if (rctx->dummy_pixel_shader) {
 		rctx->context.delete_fs_state(&rctx->context, rctx->dummy_pixel_shader);
 	}
@@ -204,7 +201,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 {
 	struct r600_context *rctx = CALLOC_STRUCT(r600_context);
 	struct r600_screen* rscreen = (struct r600_screen *)screen;
-	struct pipe_blend_state no_blend = {};
 
 	if (rctx == NULL)
 		return NULL;
@@ -310,9 +306,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 						     TGSI_SEMANTIC_GENERIC,
 						     TGSI_INTERPOLATE_CONSTANT);
 	rctx->context.bind_fs_state(&rctx->context, rctx->dummy_pixel_shader);
-
-	no_blend.rt[0].colormask = 0xF;
-	rctx->no_blend = rctx->context.create_blend_state(&rctx->context, &no_blend);
 
 	return &rctx->context;
 

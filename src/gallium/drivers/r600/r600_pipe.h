@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 29
+#define R600_NUM_ATOMS 30
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -161,7 +161,6 @@ struct r600_viewport_state {
 };
 
 enum r600_pipe_state_id {
-	R600_PIPE_STATE_BLEND = 0,
 	R600_PIPE_STATE_SCISSOR,
 	R600_PIPE_STATE_RASTERIZER,
 	R600_PIPE_STATE_DSA,
@@ -223,10 +222,12 @@ struct r600_pipe_rasterizer {
 	bool				multisample_enable;
 };
 
-struct r600_pipe_blend {
-	struct r600_pipe_state		rstate;
+struct r600_blend_state {
+	struct r600_command_buffer	buffer;
+	struct r600_command_buffer	buffer_no_blend;
 	unsigned			cb_target_mask;
 	unsigned			cb_color_control;
+	unsigned			cb_color_control_no_blend;
 	bool				dual_src_blend;
 	bool				alpha_to_one;
 };
@@ -359,6 +360,14 @@ struct r600_vertexbuf_state
 	uint32_t			dirty_mask;
 };
 
+/* CSO (constant state object, in other words, immutable state). */
+struct r600_cso_state
+{
+	struct r600_atom atom;
+	void *cso; /* e.g. r600_blend_state */
+	struct r600_command_buffer *cb;
+};
+
 struct r600_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
@@ -409,6 +418,7 @@ struct r600_context {
 	struct r600_command_buffer      start_compute_cs_cmd;
 	/* Register states. */
 	struct r600_alphatest_state	alphatest_state;
+	struct r600_cso_state		blend_state;
 	struct r600_blend_color		blend_color;
 	struct r600_cb_misc_state	cb_misc_state;
 	struct r600_clip_misc_state	clip_misc_state;
@@ -431,13 +441,7 @@ struct r600_context {
 	struct r600_vertexbuf_state	cs_vertex_buffer_state;
 	/******************************/
 
-	/* current external blend state (from state tracker) */
-	struct r600_pipe_blend		*blend;
-	/* state with disabled blending - used internally with blend_override */
-	struct r600_pipe_blend		*no_blend;
-
-	/* 1 - override current blend state with no_blend, 0 - use external state */
-	unsigned	blend_override;
+	bool			force_blend_disable;
 
 	struct radeon_winsys_cs	*cs;
 
@@ -516,6 +520,20 @@ static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *a
 {
 	atom->emit(rctx, atom);
 	atom->dirty = false;
+}
+
+static INLINE void r600_set_cso_state(struct r600_cso_state *state, void *cso)
+{
+	state->cso = cso;
+	state->atom.dirty = cso != NULL;
+}
+
+static INLINE void r600_set_cso_state_with_cb(struct r600_cso_state *state, void *cso,
+					      struct r600_command_buffer *cb)
+{
+	state->cb = cb;
+	state->atom.num_dw = cb->num_dw;
+	r600_set_cso_state(state, cso);
 }
 
 /* evergreen_state.c */
@@ -644,6 +662,7 @@ void r600_translate_index_buffer(struct r600_context *r600,
 
 /* r600_state_common.c */
 void r600_init_common_state_functions(struct r600_context *rctx);
+void r600_emit_cso_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_blend_color(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_vgt_state(struct r600_context *rctx, struct r600_atom *atom);

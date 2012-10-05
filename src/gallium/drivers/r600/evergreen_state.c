@@ -683,22 +683,16 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 static void *evergreen_create_blend_state_mode(struct pipe_context *ctx,
 					       const struct pipe_blend_state *state, int mode)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
-	struct r600_pipe_state *rstate;
-	uint32_t color_control = 0, target_mask;
-	/* XXX there is more then 8 framebuffer */
-	unsigned blend_cntl[8];
+	uint32_t color_control = 0, target_mask = 0;
+	struct r600_blend_state *blend = CALLOC_STRUCT(r600_blend_state);
 
-	if (blend == NULL) {
+	if (!blend) {
 		return NULL;
 	}
 
-	rstate = &blend->rstate;
+	r600_init_command_buffer(&blend->buffer, 20);
+	r600_init_command_buffer(&blend->buffer_no_blend, 20);
 
-	rstate->id = R600_PIPE_STATE_BLEND;
-
-	target_mask = 0;
 	if (state->logicop_enable) {
 		color_control |= (state->logicop_func << 16) | (state->logicop_func << 20);
 	} else {
@@ -714,17 +708,32 @@ static void *evergreen_create_blend_state_mode(struct pipe_context *ctx,
 			target_mask |= (state->rt[0].colormask << (4 * i));
 		}
 	}
+
+	/* only have dual source on MRT0 */
+	blend->dual_src_blend = util_blend_state_is_dual(state, 0);
 	blend->cb_target_mask = target_mask;
+	blend->alpha_to_one = state->alpha_to_one;
 
 	if (target_mask)
 		color_control |= S_028808_MODE(mode);
 	else
 		color_control |= S_028808_MODE(V_028808_CB_DISABLE);
 
-	r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
-				color_control);
-	/* only have dual source on MRT0 */
-	blend->dual_src_blend = util_blend_state_is_dual(state, 0);
+
+	r600_store_context_reg(&blend->buffer, R_028808_CB_COLOR_CONTROL, color_control);
+	r600_store_context_reg(&blend->buffer, R_028B70_DB_ALPHA_TO_MASK,
+			       S_028B70_ALPHA_TO_MASK_ENABLE(state->alpha_to_coverage) |
+			       S_028B70_ALPHA_TO_MASK_OFFSET0(2) |
+			       S_028B70_ALPHA_TO_MASK_OFFSET1(2) |
+			       S_028B70_ALPHA_TO_MASK_OFFSET2(2) |
+			       S_028B70_ALPHA_TO_MASK_OFFSET3(2));
+	r600_store_context_reg_seq(&blend->buffer, R_028780_CB_BLEND0_CONTROL, 8);
+
+	/* Copy over the dwords set so far into buffer_no_blend.
+	 * Only the CB_BLENDi_CONTROL registers must be set after this. */
+	memcpy(blend->buffer_no_blend.buf, blend->buffer.buf, blend->buffer.num_dw * 4);
+	blend->buffer_no_blend.num_dw = blend->buffer.num_dw;
+
 	for (int i = 0; i < 8; i++) {
 		/* state->rt entries > 0 only written if independent blending */
 		const int j = state->independent_blend_enable ? i : 0;
@@ -735,36 +744,29 @@ static void *evergreen_create_blend_state_mode(struct pipe_context *ctx,
 		unsigned eqA = state->rt[j].alpha_func;
 		unsigned srcA = state->rt[j].alpha_src_factor;
 		unsigned dstA = state->rt[j].alpha_dst_factor;
+		uint32_t bc = 0;
 
-		blend_cntl[i] = 0;
-		if (!state->rt[j].blend_enable)
+		r600_store_value(&blend->buffer_no_blend, 0);
+
+		if (!state->rt[j].blend_enable) {
+			r600_store_value(&blend->buffer, 0);
 			continue;
+		}
 
-		blend_cntl[i] |= S_028780_BLEND_CONTROL_ENABLE(1);
-		blend_cntl[i] |= S_028780_COLOR_COMB_FCN(r600_translate_blend_function(eqRGB));
-		blend_cntl[i] |= S_028780_COLOR_SRCBLEND(r600_translate_blend_factor(srcRGB));
-		blend_cntl[i] |= S_028780_COLOR_DESTBLEND(r600_translate_blend_factor(dstRGB));
+		bc |= S_028780_BLEND_CONTROL_ENABLE(1);
+		bc |= S_028780_COLOR_COMB_FCN(r600_translate_blend_function(eqRGB));
+		bc |= S_028780_COLOR_SRCBLEND(r600_translate_blend_factor(srcRGB));
+		bc |= S_028780_COLOR_DESTBLEND(r600_translate_blend_factor(dstRGB));
 
 		if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
-			blend_cntl[i] |= S_028780_SEPARATE_ALPHA_BLEND(1);
-			blend_cntl[i] |= S_028780_ALPHA_COMB_FCN(r600_translate_blend_function(eqA));
-			blend_cntl[i] |= S_028780_ALPHA_SRCBLEND(r600_translate_blend_factor(srcA));
-			blend_cntl[i] |= S_028780_ALPHA_DESTBLEND(r600_translate_blend_factor(dstA));
+			bc |= S_028780_SEPARATE_ALPHA_BLEND(1);
+			bc |= S_028780_ALPHA_COMB_FCN(r600_translate_blend_function(eqA));
+			bc |= S_028780_ALPHA_SRCBLEND(r600_translate_blend_factor(srcA));
+			bc |= S_028780_ALPHA_DESTBLEND(r600_translate_blend_factor(dstA));
 		}
+		r600_store_value(&blend->buffer, bc);
 	}
-	for (int i = 0; i < 8; i++) {
-		r600_pipe_state_add_reg(rstate, R_028780_CB_BLEND0_CONTROL + i * 4, blend_cntl[i]);
-	}
-
-	r600_pipe_state_add_reg(rstate, R_028B70_DB_ALPHA_TO_MASK,
-				S_028B70_ALPHA_TO_MASK_ENABLE(state->alpha_to_coverage) |
-				S_028B70_ALPHA_TO_MASK_OFFSET0(2) |
-				S_028B70_ALPHA_TO_MASK_OFFSET1(2) |
-				S_028B70_ALPHA_TO_MASK_OFFSET2(2) |
-				S_028B70_ALPHA_TO_MASK_OFFSET3(2));
-
-	blend->alpha_to_one = state->alpha_to_one;
-	return rstate;
+	return blend;
 }
 
 static void *evergreen_create_blend_state(struct pipe_context *ctx,
@@ -2351,6 +2353,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
 
 	r600_init_atom(rctx, &rctx->alphatest_state.atom, id++, r600_emit_alphatest_state, 6);
 	r600_init_atom(rctx, &rctx->blend_color.atom, id++, r600_emit_blend_color, 6);
+	r600_init_atom(rctx, &rctx->blend_state.atom, id++, r600_emit_cso_state, 0);
 	r600_init_atom(rctx, &rctx->cb_misc_state.atom, id++, evergreen_emit_cb_misc_state, 4);
 	r600_init_atom(rctx, &rctx->clip_misc_state.atom, id++, r600_emit_clip_misc_state, 6);
 	r600_init_atom(rctx, &rctx->clip_state.atom, id++, evergreen_emit_clip_state, 26);
@@ -3335,25 +3338,21 @@ void evergreen_fetch_shader(struct pipe_context *ctx,
 void *evergreen_create_resolve_blend(struct r600_context *rctx)
 {
 	struct pipe_blend_state blend;
-	struct r600_pipe_state *rstate;
 
 	memset(&blend, 0, sizeof(blend));
 	blend.independent_blend_enable = true;
 	blend.rt[0].colormask = 0xf;
-	rstate = evergreen_create_blend_state_mode(&rctx->context, &blend, V_028808_CB_RESOLVE);
-	return rstate;
+	return evergreen_create_blend_state_mode(&rctx->context, &blend, V_028808_CB_RESOLVE);
 }
 
 void *evergreen_create_decompress_blend(struct r600_context *rctx)
 {
 	struct pipe_blend_state blend;
-	struct r600_pipe_state *rstate;
 
 	memset(&blend, 0, sizeof(blend));
 	blend.independent_blend_enable = true;
 	blend.rt[0].colormask = 0xf;
-	rstate = evergreen_create_blend_state_mode(&rctx->context, &blend, V_028808_CB_DECOMPRESS);
-	return rstate;
+	return evergreen_create_blend_state_mode(&rctx->context, &blend, V_028808_CB_DECOMPRESS);
 }
 
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx)

@@ -177,12 +177,6 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 			continue;
 		}
 
-		/* ignore regs not on R600 on R600 */
-		if ((reg[i].flags & REG_FLAG_NOT_R600) && ctx->family == CHIP_R600) {
-			n = 1;
-			continue;
-		}
-
 		/* register that need relocation are in their own group */
 		/* find number of consecutive registers */
 		n = 0;
@@ -227,20 +221,10 @@ static const struct r600_reg r600_config_reg_list[] = {
 static const struct r600_reg r600_context_reg_list[] = {
 	{R_028A4C_PA_SC_MODE_CNTL, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_028780_CB_BLEND0_CONTROL, REG_FLAG_NOT_R600, 0},
-	{R_028784_CB_BLEND1_CONTROL, REG_FLAG_NOT_R600, 0},
-	{R_028788_CB_BLEND2_CONTROL, REG_FLAG_NOT_R600, 0},
-	{R_02878C_CB_BLEND3_CONTROL, REG_FLAG_NOT_R600, 0},
-	{R_028790_CB_BLEND4_CONTROL, REG_FLAG_NOT_R600, 0},
-	{R_028794_CB_BLEND5_CONTROL, REG_FLAG_NOT_R600, 0},
-	{R_028798_CB_BLEND6_CONTROL, REG_FLAG_NOT_R600, 0},
-	{R_02879C_CB_BLEND7_CONTROL, REG_FLAG_NOT_R600, 0},
 	{R_028800_DB_DEPTH_CONTROL, 0, 0},
-	{R_028804_CB_BLEND_CONTROL, 0, 0},
 	{R_02880C_DB_SHADER_CONTROL, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028D24_DB_HTILE_SURFACE, 0, 0},
-	{R_028D44_DB_ALPHA_TO_MASK, 0, 0},
 	{R_028250_PA_SC_VPORT_SCISSOR_0_TL, 0, 0},
 	{R_028254_PA_SC_VPORT_SCISSOR_0_BR, 0, 0},
 	{R_0286D4_SPI_INTERP_CONTROL_0, 0, 0},
@@ -890,6 +874,9 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->sample_mask.atom.dirty = true;
 	ctx->stencil_ref.atom.dirty = true;
 	ctx->viewport.atom.dirty = true;
+
+	if (ctx->blend_state.cso)
+		ctx->blend_state.atom.dirty = true;
 
 	if (ctx->chip_class <= R700) {
 		ctx->seamless_cube_map.atom.dirty = true;
