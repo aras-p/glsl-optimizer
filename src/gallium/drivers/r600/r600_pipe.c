@@ -178,10 +178,6 @@ static void r600_destroy_context(struct pipe_context *context)
 	if (rctx->blitter) {
 		util_blitter_destroy(rctx->blitter);
 	}
-	for (int i = 0; i < R600_PIPE_NSTATES; i++) {
-		free(rctx->states[i]);
-	}
-
 	if (rctx->uploader) {
 		u_upload_destroy(rctx->uploader);
 	}

@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 34
+#define R600_NUM_ATOMS 35
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -160,11 +160,6 @@ struct r600_viewport_state {
 	struct pipe_viewport_state state;
 };
 
-enum r600_pipe_state_id {
-	R600_PIPE_STATE_DSA,
-	R600_PIPE_NSTATES
-};
-
 struct compute_memory_pool;
 void compute_memory_pool_delete(struct compute_memory_pool* pool);
 struct compute_memory_pool* compute_memory_pool_new(
@@ -236,8 +231,8 @@ struct r600_blend_state {
 	bool				alpha_to_one;
 };
 
-struct r600_pipe_dsa {
-	struct r600_pipe_state		rstate;
+struct r600_dsa_state {
+	struct r600_command_buffer	buffer;
 	unsigned			alpha_ref;
 	ubyte				valuemask[2];
 	ubyte				writemask[2];
@@ -415,6 +410,7 @@ struct r600_context {
 	struct r600_clip_misc_state	clip_misc_state;
 	struct r600_clip_state		clip_state;
 	struct r600_db_misc_state	db_misc_state;
+	struct r600_cso_state		dsa_state;
 	struct r600_framebuffer		framebuffer;
 	struct r600_poly_offset_state	poly_offset_state;
 	struct r600_cso_state		rasterizer_state;
@@ -484,7 +480,6 @@ struct r600_context {
 	bool				streamout_suspended;
 
 	/* Deprecated state management. */
-	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_range		*range;
 	unsigned			nblocks;
 	struct r600_block		**blocks;

@@ -219,7 +219,6 @@ static const struct r600_reg r600_config_reg_list[] = {
 };
 
 static const struct r600_reg r600_context_reg_list[] = {
-	{R_028800_DB_DEPTH_CONTROL, 0, 0},
 	{R_02880C_DB_SHADER_CONTROL, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028D24_DB_HTILE_SURFACE, 0, 0},
@@ -829,6 +828,8 @@ void r600_begin_new_cs(struct r600_context *ctx)
 
 	if (ctx->blend_state.cso)
 		ctx->blend_state.atom.dirty = true;
+	if (ctx->dsa_state.cso)
+		ctx->dsa_state.atom.dirty = true;
 	if (ctx->rasterizer_state.cso)
 		ctx->rasterizer_state.atom.dirty = true;
 

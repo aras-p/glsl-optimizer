@@ -249,7 +249,7 @@ static void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
 				      const struct pipe_stencil_ref *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_dsa *dsa = (struct r600_pipe_dsa*)rctx->states[R600_PIPE_STATE_DSA];
+	struct r600_dsa_state *dsa = (struct r600_dsa_state*)rctx->dsa_state.cso;
 	struct r600_stencil_ref ref;
 
 	rctx->stencil_ref.pipe_state = *state;
@@ -270,15 +270,13 @@ static void r600_set_pipe_stencil_ref(struct pipe_context *ctx,
 static void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_dsa *dsa = state;
-	struct r600_pipe_state *rstate;
+	struct r600_dsa_state *dsa = state;
 	struct r600_stencil_ref ref;
 
 	if (state == NULL)
 		return;
-	rstate = &dsa->rstate;
-	rctx->states[rstate->id] = rstate;
-	r600_context_pipe_state_set(rctx, rstate);
+
+	r600_set_cso_state_with_cb(&rctx->dsa_state, dsa, &dsa->buffer);
 
 	ref.ref_value[0] = rctx->stencil_ref.pipe_state.ref_value[0];
 	ref.ref_value[1] = rctx->stencil_ref.pipe_state.ref_value[1];
@@ -452,18 +450,12 @@ static void r600_delete_blend_state(struct pipe_context *ctx, void *state)
 	FREE(blend);
 }
 
-static void r600_delete_state(struct pipe_context *ctx, void *state)
+static void r600_delete_dsa_state(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = (struct r600_pipe_state *)state;
+	struct r600_dsa_state *dsa = (struct r600_dsa_state *)state;
 
-	if (rctx->states[rstate->id] == rstate) {
-		rctx->states[rstate->id] = NULL;
-	}
-	for (int i = 0; i < rstate->nregs; i++) {
-		pipe_resource_reference((struct pipe_resource**)&rstate->regs[i].bo, NULL);
-	}
-	free(rstate);
+	r600_release_command_buffer(&dsa->buffer);
+	free(dsa);
 }
 
 static void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
@@ -1516,7 +1508,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->context.bind_vertex_sampler_states = r600_bind_vs_sampler_states;
 	rctx->context.bind_vs_state = r600_bind_vs_state;
 	rctx->context.delete_blend_state = r600_delete_blend_state;
-	rctx->context.delete_depth_stencil_alpha_state = r600_delete_state;
+	rctx->context.delete_depth_stencil_alpha_state = r600_delete_dsa_state;
 	rctx->context.delete_fs_state = r600_delete_ps_state;
 	rctx->context.delete_rasterizer_state = r600_delete_rs_state;
 	rctx->context.delete_sampler_state = r600_delete_sampler_state;
