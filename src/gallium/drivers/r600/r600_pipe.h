@@ -72,6 +72,7 @@ struct r600_db_misc_state {
 	bool copy_depth, copy_stencil;
 	unsigned copy_sample;
 	unsigned log_samples;
+	unsigned db_shader_control;
 };
 
 struct r600_cb_misc_state {
@@ -434,7 +435,6 @@ struct r600_context {
 	/* Additional context states. */
 	unsigned			flags;
 	unsigned			compute_cb_target_mask;
-	unsigned			db_shader_control;
 	struct r600_pipe_shader_selector 	*ps_shader;
 	struct r600_pipe_shader_selector 	*vs_shader;
 	struct r600_rasterizer_state	*rasterizer;
@@ -543,7 +543,7 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 				  struct r600_surface *surf);
 void evergreen_init_color_surface_rat(struct r600_context *rctx,
 					struct r600_surface *surf);
-void evergreen_update_dual_export_state(struct r600_context * rctx);
+void evergreen_update_db_shader_control(struct r600_context * rctx);
 
 /* r600_blit.c */
 void r600_copy_buffer(struct pipe_context *ctx, struct
@@ -614,7 +614,7 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 				 enum pipe_texture_target target,
 				 unsigned sample_count,
 				 unsigned usage);
-void r600_update_dual_export_state(struct r600_context * rctx);
+void r600_update_db_shader_control(struct r600_context * rctx);
 
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);

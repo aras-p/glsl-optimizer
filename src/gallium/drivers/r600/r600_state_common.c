@@ -821,6 +821,12 @@ static void r600_bind_ps_state(struct pipe_context *ctx, void *state)
 		rctx->cb_misc_state.nr_ps_color_outputs = rctx->ps_shader->current->nr_ps_color_outputs;
 		rctx->cb_misc_state.atom.dirty = true;
 	}
+
+	if (rctx->chip_class >= EVERGREEN) {
+		evergreen_update_db_shader_control(rctx);
+	} else {
+		r600_update_db_shader_control(rctx);
+	}
 }
 
 static void r600_bind_vs_state(struct pipe_context *ctx, void *state)
@@ -1070,12 +1076,6 @@ static void r600_update_derived_state(struct r600_context *rctx)
 		r600_bind_blend_state_internal(rctx,
 					       rctx->blend_state.cso,
 					       blend_disable);
-	}
-
-	if (rctx->chip_class >= EVERGREEN) {
-		evergreen_update_dual_export_state(rctx);
-	} else {
-		r600_update_dual_export_state(rctx);
 	}
 }
 

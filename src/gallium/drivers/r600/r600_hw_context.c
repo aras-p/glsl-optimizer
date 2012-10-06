@@ -219,8 +219,6 @@ static const struct r600_reg r600_config_reg_list[] = {
 };
 
 static const struct r600_reg r600_context_reg_list[] = {
-	{R_02880C_DB_SHADER_CONTROL, 0, 0},
-	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028D24_DB_HTILE_SURFACE, 0, 0},
 	{R_028614_SPI_VS_OUT_ID_0, 0, 0},
 	{R_028618_SPI_VS_OUT_ID_1, 0, 0},
