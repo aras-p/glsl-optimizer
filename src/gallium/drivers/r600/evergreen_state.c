@@ -1496,12 +1496,23 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 
 	if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
 		uint64_t stencil_offset = rtex->surface.stencil_offset;
-		unsigned stile_split = rtex->surface.stencil_tile_split;
+		unsigned i, stile_split = rtex->surface.stencil_tile_split;
 
 		stile_split = eg_tile_split(stile_split);
 		stencil_offset += r600_resource_va(screen, surf->base.texture);
 		stencil_offset += rtex->surface.level[level].offset / 4;
 		stencil_offset >>= 8;
+
+		/* We're guessing the stencil offset from the depth offset.
+		 * Make sure each mipmap level has a unique offset. */
+		for (i = 1; i <= level; i++) {
+			/* If two levels have the same address, add 256
+			 * to the offset of the smaller level. */
+			if ((rtex->surface.level[i-1].offset / 4) >> 8 ==
+			    (rtex->surface.level[i].offset / 4) >> 8) {
+				stencil_offset++;
+			}
+		}
 
 		surf->db_stencil_base = stencil_offset;
 		surf->db_stencil_info = S_028044_FORMAT(V_028044_STENCIL_8) |
