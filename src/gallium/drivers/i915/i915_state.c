@@ -936,24 +936,10 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
    util_copy_vertex_buffers(i915->vertex_buffers,
                             &i915->nr_vertex_buffers,
                             buffers, count);
-#if 0
-   /* XXX doesn't look like this is needed */
-   /* unmap old */
-   for (i = 0; i < i915->num_vertex_buffers; i++) {
-      draw_set_mapped_vertex_buffer(draw, i, NULL);
-   }
-#endif
 
    /* pass-through to draw module */
    draw_set_vertex_buffers(draw, count, buffers);
 
-   /* map new */
-   for (i = 0; i < count; i++) {
-      const void *buf = buffers[i].user_buffer;
-      if (!buf)
-            buf = i915_buffer(buffers[i].buffer)->data;
-      draw_set_mapped_vertex_buffer(draw, i, buf);
-   }
 }
 
 static void *
