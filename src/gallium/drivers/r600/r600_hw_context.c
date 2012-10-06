@@ -213,11 +213,6 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 	return 0;
 }
 
-/* R600/R700 configuration */
-static const struct r600_reg r600_config_reg_list[] = {
-	{R_008C04_SQ_GPR_RESOURCE_MGMT_1, REG_FLAG_ENABLE_ALWAYS | REG_FLAG_FLUSH_CHANGE, 0},
-};
-
 static const struct r600_reg r600_context_reg_list[] = {
 	{R_028D24_DB_HTILE_SURFACE, 0, 0},
 	{R_028614_SPI_VS_OUT_ID_0, 0, 0},
@@ -345,10 +340,6 @@ int r600_context_init(struct r600_context *ctx)
 	int r;
 
 	/* add blocks */
-	r = r600_context_add_block(ctx, r600_config_reg_list,
-				   Elements(r600_config_reg_list), PKT3_SET_CONFIG_REG, R600_CONFIG_REG_OFFSET);
-	if (r)
-		goto out_err;
 	r = r600_context_add_block(ctx, r600_context_reg_list,
 				   Elements(r600_context_reg_list), PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET);
 	if (r)
@@ -820,6 +811,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->vgt2_state.atom.dirty = true;
 	ctx->sample_mask.atom.dirty = true;
 	ctx->scissor.atom.dirty = true;
+	ctx->config_state.atom.dirty = true;
 	ctx->stencil_ref.atom.dirty = true;
 	ctx->vertex_fetch_shader.atom.dirty = true;
 	ctx->viewport.atom.dirty = true;

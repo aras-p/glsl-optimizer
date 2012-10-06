@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 35
+#define R600_NUM_ATOMS 36
 
 #define R600_MAX_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFER_SIZE 4096
@@ -141,6 +141,11 @@ struct r600_framebuffer {
 struct r600_sample_mask {
 	struct r600_atom atom;
 	uint16_t sample_mask; /* there are only 8 bits on EG, 16 bits on Cayman */
+};
+
+struct r600_config_state {
+	struct r600_atom atom;
+	unsigned sq_gpr_resource_mgmt_1;
 };
 
 struct r600_stencil_ref
@@ -418,6 +423,7 @@ struct r600_context {
 	struct r600_sample_mask		sample_mask;
 	struct r600_scissor_state	scissor;
 	struct r600_seamless_cube_map	seamless_cube_map;
+	struct r600_config_state	config_state;
 	struct r600_stencil_ref_state	stencil_ref;
 	struct r600_vgt_state		vgt_state;
 	struct r600_vgt2_state		vgt2_state;

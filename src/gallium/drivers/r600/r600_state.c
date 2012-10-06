@@ -1862,6 +1862,14 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 	r600_write_context_reg(cs, R_02880C_DB_SHADER_CONTROL, a->db_shader_control);
 }
 
+static void r600_emit_config_state(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_config_state *a = (struct r600_config_state*)atom;
+
+	r600_write_config_reg(cs, R_008C04_SQ_GPR_RESOURCE_MGMT_1, a->sq_gpr_resource_mgmt_1);
+}
+
 static void r600_emit_vertex_buffers(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
@@ -2168,6 +2176,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->poly_offset_state.atom, id++, r600_emit_polygon_offset, 6);
 	r600_init_atom(rctx, &rctx->rasterizer_state.atom, id++, r600_emit_cso_state, 0);
 	r600_init_atom(rctx, &rctx->scissor.atom, id++, r600_emit_scissor_state, 4);
+	r600_init_atom(rctx, &rctx->config_state.atom, id++, r600_emit_config_state, 3);
 	r600_init_atom(rctx, &rctx->stencil_ref.atom, id++, r600_emit_stencil_ref, 4);
 	r600_init_atom(rctx, &rctx->viewport.atom, id++, r600_emit_viewport_state, 8);
 	r600_init_atom(rctx, &rctx->vertex_fetch_shader.atom, id++, r600_emit_vertex_fetch_shader, 5);
@@ -2185,7 +2194,6 @@ void r600_init_state_functions(struct r600_context *rctx)
 /* Adjust GPR allocation on R6xx/R7xx */
 void r600_adjust_gprs(struct r600_context *rctx)
 {
-	struct r600_pipe_state rstate;
 	unsigned num_ps_gprs = rctx->default_ps_gprs;
 	unsigned num_vs_gprs = rctx->default_vs_gprs;
 	unsigned tmp;
@@ -2208,10 +2216,12 @@ void r600_adjust_gprs(struct r600_context *rctx)
 	tmp |= S_008C04_NUM_PS_GPRS(num_ps_gprs);
 	tmp |= S_008C04_NUM_VS_GPRS(num_vs_gprs);
 	tmp |= S_008C04_NUM_CLAUSE_TEMP_GPRS(rctx->r6xx_num_clause_temp_gprs);
-	rstate.nregs = 0;
-	r600_pipe_state_add_reg(&rstate, R_008C04_SQ_GPR_RESOURCE_MGMT_1, tmp);
 
-	r600_context_pipe_state_set(rctx, &rstate);
+	if (tmp != rctx->config_state.sq_gpr_resource_mgmt_1) {
+		rctx->config_state.sq_gpr_resource_mgmt_1 = tmp;
+		rctx->config_state.atom.dirty = true;
+		rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
+	}
 }
 
 void r600_init_atom_start_cs(struct r600_context *rctx)
