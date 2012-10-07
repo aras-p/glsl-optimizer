@@ -2441,6 +2441,10 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0x80000000);
 	r600_store_value(cb, 0x80000000);
 
+	/* We're setting config registers here. */
+	r600_store_value(cb, PKT3(PKT3_EVENT_WRITE, 0, 0));
+	r600_store_value(cb, EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4));
+
 	r600_store_config_reg_seq(cb, R_008C00_SQ_CONFIG, 2);
 	r600_store_value(cb, S_008C00_EXPORT_SRC_C(1)); /* R_008C00_SQ_CONFIG */
 	/* always set the temp clauses */
@@ -2841,6 +2845,10 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, PKT3(PKT3_CONTEXT_CONTROL, 1, 0));
 	r600_store_value(cb, 0x80000000);
 	r600_store_value(cb, 0x80000000);
+
+	/* We're setting config registers here. */
+	r600_store_value(cb, PKT3(PKT3_EVENT_WRITE, 0, 0));
+	r600_store_value(cb, EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4));
 
 	evergreen_init_common_regs(cb, rctx->chip_class
 			, rctx->family, rctx->screen->info.drm_minor);
