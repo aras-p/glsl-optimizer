@@ -1125,7 +1125,6 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	unsigned i;
 	struct r600_block *dirty_block = NULL, *next_block = NULL;
 	struct radeon_winsys_cs *cs = rctx->cs;
-	uint64_t va;
 
 	if (!info.count && (info.indexed || !info.count_from_stream_output)) {
 		assert(0);
@@ -1165,10 +1164,15 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 			ib.index_size = 2;
 		}
 
-		/* Upload the index buffer. */
-		if (ib.user_buffer) {
+		/* Upload the index buffer.
+		 * The upload is skipped for small index counts on little-endian machines
+		 * and the indices are emitted via PKT3_DRAW_INDEX_IMMD.
+		 * Note: Instanced rendering in combination with immediate indices hangs. */
+		if (ib.user_buffer && (R600_BIG_ENDIAN || info.instance_count > 1 ||
+				       info.count*ib.index_size > 20)) {
 			u_upload_data(rctx->uploader, 0, info.count * ib.index_size,
 				      ib.user_buffer, &ib.offset, &ib.buffer);
+			ib.user_buffer = NULL;
 		}
 	} else {
 		info.index_bias = info.start;
@@ -1192,8 +1196,8 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		rctx->vgt_state.atom.dirty = true;
 	}
 
-	/* Emit states (the function expects that we emit at most 17 dwords here). */
-	r600_need_cs_space(rctx, 0, TRUE);
+	/* Emit states. */
+	r600_need_cs_space(rctx, ib.user_buffer ? 5 : 0, TRUE);
 	r600_flush_emit(rctx);
 
 	for (i = 0; i < R600_NUM_ATOMS; i++) {
@@ -1243,15 +1247,24 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 					(VGT_INDEX_32 | (R600_BIG_ENDIAN ? VGT_DMA_SWAP_32_BIT : 0)) :
 					(VGT_INDEX_16 | (R600_BIG_ENDIAN ? VGT_DMA_SWAP_16_BIT : 0));
 
-		va = r600_resource_va(ctx->screen, ib.buffer);
-		va += ib.offset;
-		cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX, 3, rctx->predicate_drawing);
-		cs->buf[cs->cdw++] = va;
-		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
-		cs->buf[cs->cdw++] = info.count;
-		cs->buf[cs->cdw++] = V_0287F0_DI_SRC_SEL_DMA;
-		cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, rctx->predicate_drawing);
-		cs->buf[cs->cdw++] = r600_context_bo_reloc(rctx, (struct r600_resource*)ib.buffer, RADEON_USAGE_READ);
+		if (ib.user_buffer) {
+			unsigned size_bytes = info.count*ib.index_size;
+			unsigned size_dw = align(size_bytes, 4) / 4;
+			cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX_IMMD, 1 + size_dw, rctx->predicate_drawing);
+			cs->buf[cs->cdw++] = info.count;
+			cs->buf[cs->cdw++] = V_0287F0_DI_SRC_SEL_IMMEDIATE;
+			memcpy(cs->buf+cs->cdw, ib.user_buffer, size_bytes);
+			cs->cdw += size_dw;
+		} else {
+			uint64_t va = r600_resource_va(ctx->screen, ib.buffer) + ib.offset;
+			cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX, 3, rctx->predicate_drawing);
+			cs->buf[cs->cdw++] = va;
+			cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+			cs->buf[cs->cdw++] = info.count;
+			cs->buf[cs->cdw++] = V_0287F0_DI_SRC_SEL_DMA;
+			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, rctx->predicate_drawing);
+			cs->buf[cs->cdw++] = r600_context_bo_reloc(rctx, (struct r600_resource*)ib.buffer, RADEON_USAGE_READ);
+		}
 	} else {
 		if (info.count_from_stream_output) {
 			struct r600_so_target *t = (struct r600_so_target*)info.count_from_stream_output;
