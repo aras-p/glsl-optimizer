@@ -1149,8 +1149,11 @@ _mesa_PopAttrib(void)
                   if (ctx->Extensions.NV_point_sprite)
                      _mesa_PointParameteri(GL_POINT_SPRITE_R_MODE_NV,
                                            ctx->Point.SpriteRMode);
-                  _mesa_PointParameterf(GL_POINT_SPRITE_COORD_ORIGIN,
-                                        (GLfloat)ctx->Point.SpriteOrigin);
+
+                  if ((ctx->API == API_OPENGL && ctx->Version >= 20)
+                      || ctx->API == API_OPENGL_CORE)
+                     _mesa_PointParameterf(GL_POINT_SPRITE_COORD_ORIGIN,
+                                           (GLfloat)ctx->Point.SpriteOrigin);
                }
             }
             break;
