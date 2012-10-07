@@ -518,11 +518,6 @@ static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *a
 	atom->dirty = false;
 }
 
-static INLINE void r600_atom_dirty(struct r600_context *rctx, struct r600_atom *state)
-{
-	state->dirty = true;
-}
-
 /* evergreen_state.c */
 struct pipe_sampler_view *
 evergreen_create_sampler_view_custom(struct pipe_context *ctx,

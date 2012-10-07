@@ -101,7 +101,7 @@ static void evergreen_cs_set_vertex_buffer(
 	rctx->flags |= R600_CONTEXT_TEX_FLUSH;
 	state->enabled_mask |= 1 << vb_index;
 	state->dirty_mask |= 1 << vb_index;
-	r600_atom_dirty(rctx, &state->atom);
+	state->atom.dirty = true;
 }
 
 const struct u_resource_vtbl r600_global_buffer_vtbl =

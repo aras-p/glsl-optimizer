@@ -1534,7 +1534,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		surf = (struct r600_surface*)state->cbufs[0];
 		if (rctx->alphatest_state.bypass != surf->alphatest_bypass) {
 			rctx->alphatest_state.bypass = surf->alphatest_bypass;
-			r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+			rctx->alphatest_state.atom.dirty = true;
 		}
 	}
 
@@ -1551,12 +1551,12 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	if (rctx->cb_misc_state.nr_cbufs != state->nr_cbufs) {
 		rctx->cb_misc_state.nr_cbufs = state->nr_cbufs;
-		r600_atom_dirty(rctx, &rctx->cb_misc_state.atom);
+		rctx->cb_misc_state.atom.dirty = true;
 	}
 
 	if (state->nr_cbufs == 0 && rctx->alphatest_state.bypass) {
 		rctx->alphatest_state.bypass = false;
-		r600_atom_dirty(rctx, &rctx->alphatest_state.atom);
+		rctx->alphatest_state.atom.dirty = true;
 	}
 
 	/* Calculate the CS size. */
@@ -1577,7 +1577,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		rctx->framebuffer.atom.num_dw += 2;
 	}
 
-	r600_atom_dirty(rctx, &rctx->framebuffer.atom);
+	rctx->framebuffer.atom.dirty = true;
 }
 
 #define FILL_SREG(s0x, s0y, s1x, s1y, s2x, s2y, s3x, s3y)  \

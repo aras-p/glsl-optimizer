@@ -159,7 +159,7 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 	rctx->db_misc_state.copy_depth = util_format_has_depth(desc);
 	rctx->db_misc_state.copy_stencil = util_format_has_stencil(desc);
 	rctx->db_misc_state.copy_sample = first_sample;
-	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+	rctx->db_misc_state.atom.dirty = true;
 
 
 	for (level = first_level; level <= last_level; level++) {
@@ -177,7 +177,7 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 
 				if (sample != rctx->db_misc_state.copy_sample) {
 					rctx->db_misc_state.copy_sample = sample;
-					r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+					rctx->db_misc_state.atom.dirty = true;
 				}
 
 				surf_tmpl.format = texture->resource.b.b.format;
@@ -217,7 +217,7 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 
 	/* reenable compression in DB_RENDER_CONTROL */
 	rctx->db_misc_state.flush_depthstencil_through_cb = false;
-	r600_atom_dirty(rctx, &rctx->db_misc_state.atom);
+	rctx->db_misc_state.atom.dirty = true;
 }
 
 void r600_decompress_depth_textures(struct r600_context *rctx,

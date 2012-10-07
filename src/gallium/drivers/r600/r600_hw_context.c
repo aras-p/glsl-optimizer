@@ -878,21 +878,21 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	r600_emit_command_buffer(ctx->cs, &ctx->start_cs_cmd);
 
 	/* Re-emit states. */
-	r600_atom_dirty(ctx, &ctx->alphatest_state.atom);
-	r600_atom_dirty(ctx, &ctx->blend_color.atom);
-	r600_atom_dirty(ctx, &ctx->cb_misc_state.atom);
-	r600_atom_dirty(ctx, &ctx->clip_misc_state.atom);
-	r600_atom_dirty(ctx, &ctx->clip_state.atom);
-	r600_atom_dirty(ctx, &ctx->db_misc_state.atom);
-	r600_atom_dirty(ctx, &ctx->framebuffer.atom);
-	r600_atom_dirty(ctx, &ctx->vgt_state.atom);
-	r600_atom_dirty(ctx, &ctx->vgt2_state.atom);
-	r600_atom_dirty(ctx, &ctx->sample_mask.atom);
-	r600_atom_dirty(ctx, &ctx->stencil_ref.atom);
-	r600_atom_dirty(ctx, &ctx->viewport.atom);
+	ctx->alphatest_state.atom.dirty = true;
+	ctx->blend_color.atom.dirty = true;
+	ctx->cb_misc_state.atom.dirty = true;
+	ctx->clip_misc_state.atom.dirty = true;
+	ctx->clip_state.atom.dirty = true;
+	ctx->db_misc_state.atom.dirty = true;
+	ctx->framebuffer.atom.dirty = true;
+	ctx->vgt_state.atom.dirty = true;
+	ctx->vgt2_state.atom.dirty = true;
+	ctx->sample_mask.atom.dirty = true;
+	ctx->stencil_ref.atom.dirty = true;
+	ctx->viewport.atom.dirty = true;
 
 	if (ctx->chip_class <= R700) {
-		r600_atom_dirty(ctx, &ctx->seamless_cube_map.atom);
+		ctx->seamless_cube_map.atom.dirty = true;
 	}
 
 	ctx->vertex_buffer_state.dirty_mask = ctx->vertex_buffer_state.enabled_mask;
