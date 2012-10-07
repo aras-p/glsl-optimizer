@@ -28,6 +28,7 @@
 #include "r600d.h"
 
 #include "util/u_draw_quad.h"
+#include "util/u_index_modify.h"
 #include "util/u_upload_mgr.h"
 #include "tgsi/tgsi_parse.h"
 #include <byteswap.h>
@@ -1125,7 +1126,6 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	struct r600_block *dirty_block = NULL, *next_block = NULL;
 	struct radeon_winsys_cs *cs = rctx->cs;
 	uint64_t va;
-	uint8_t *ptr;
 
 	if (!info.count && (info.indexed || !info.count_from_stream_output)) {
 		assert(0);
@@ -1146,13 +1146,29 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		ib.index_size = rctx->index_buffer.index_size;
 		ib.offset = rctx->index_buffer.offset + info.start * ib.index_size;
 
-		/* Translate or upload, if needed. */
-		r600_translate_index_buffer(rctx, &ib, info.count);
+		/* Translate 8-bit indices to 16-bit. */
+		if (ib.index_size == 1) {
+			struct pipe_resource *out_buffer = NULL;
+			unsigned out_offset;
+			void *ptr;
 
-		ptr = (uint8_t*)ib.user_buffer;
-		if (!ib.buffer && ptr) {
+			u_upload_alloc(rctx->uploader, 0, info.count * 2,
+				       &out_offset, &out_buffer, &ptr);
+
+			util_shorten_ubyte_elts_to_userptr(
+						&rctx->context, &ib, 0, ib.offset, info.count, ptr);
+
+			pipe_resource_reference(&ib.buffer, NULL);
+			ib.user_buffer = NULL;
+			ib.buffer = out_buffer;
+			ib.offset = out_offset;
+			ib.index_size = 2;
+		}
+
+		/* Upload the index buffer. */
+		if (ib.user_buffer) {
 			u_upload_data(rctx->uploader, 0, info.count * ib.index_size,
-				      ptr, &ib.offset, &ib.buffer);
+				      ib.user_buffer, &ib.offset, &ib.buffer);
 		}
 	} else {
 		info.index_bias = info.start;

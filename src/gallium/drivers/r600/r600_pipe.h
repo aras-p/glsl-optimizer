@@ -635,11 +635,6 @@ struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
 						const struct pipe_surface *templ,
 						unsigned width, unsigned height);
 
-/* r600_translate.c */
-void r600_translate_index_buffer(struct r600_context *r600,
-				 struct pipe_index_buffer *ib,
-				 unsigned count);
-
 /* r600_state_common.c */
 void r600_init_common_state_functions(struct r600_context *rctx);
 void r600_emit_cso_state(struct r600_context *rctx, struct r600_atom *atom);
