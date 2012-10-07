@@ -186,6 +186,7 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    BCTX_REFN_bo(nvc0->bufctx_3d, SCREEN, flags, screen->text);
    BCTX_REFN_bo(nvc0->bufctx_3d, SCREEN, flags, screen->uniform_bo);
    BCTX_REFN_bo(nvc0->bufctx_3d, SCREEN, flags, screen->txc);
+   BCTX_REFN_bo(nvc0->bufctx_3d, SCREEN, flags, screen->poly_cache);
 
    flags = NOUVEAU_BO_GART | NOUVEAU_BO_WR;
 
