@@ -269,37 +269,6 @@ st_texture_image_unmap(struct st_context *st,
 }
 
 
-
-/**
- * Upload data to a rectangular sub-region.  Lots of choices how to do this:
- *
- * - memcpy by span to current destination
- * - upload data as new buffer and blit
- *
- * Currently always memcpy.
- */
-static void
-st_surface_data(struct pipe_context *pipe,
-		struct pipe_transfer *dst,
-		unsigned dstx, unsigned dsty,
-		const void *src, unsigned src_stride,
-		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
-{
-   void *map = pipe_transfer_map(pipe, dst);
-
-   assert(dst->resource);
-   util_copy_rect(map,
-                  dst->resource->format,
-                  dst->stride,
-                  dstx, dsty, 
-                  width, height, 
-                  src, src_stride, 
-                  srcx, srcy);
-
-   pipe_transfer_unmap(pipe, dst);
-}
-
-
 /* Upload data for a particular image.
  */
 void
@@ -313,7 +282,6 @@ st_texture_image_data(struct st_context *st,
    struct pipe_context *pipe = st->pipe;
    GLuint i;
    const GLubyte *srcUB = src;
-   struct pipe_transfer *dst_transfer;
    GLuint layers;
 
    if (dst->target == PIPE_TEXTURE_1D_ARRAY ||
@@ -325,20 +293,14 @@ st_texture_image_data(struct st_context *st,
    DBG("%s\n", __FUNCTION__);
 
    for (i = 0; i < layers; i++) {
-      dst_transfer = pipe_get_transfer(st->pipe, dst, level, face + i,
-                                       PIPE_TRANSFER_WRITE, 0, 0,
-                                       u_minify(dst->width0, level),
-                                       u_minify(dst->height0, level));
+      struct pipe_box box;
+      u_box_2d_zslice(0, 0, face + i,
+                      u_minify(dst->width0, level),
+                      u_minify(dst->height0, level),
+                      &box);
 
-      st_surface_data(pipe, dst_transfer,
-		      0, 0,                             /* dstx, dsty */
-		      srcUB,
-		      src_row_stride,
-		      0, 0,                             /* source x, y */
-		      u_minify(dst->width0, level),
-                      u_minify(dst->height0, level));    /* width, height */
-
-      pipe->transfer_destroy(pipe, dst_transfer);
+      pipe->transfer_inline_write(pipe, dst, level, PIPE_TRANSFER_WRITE,
+                                  &box, srcUB, src_row_stride, 0);
 
       srcUB += src_image_stride;
    }
