@@ -1949,9 +1949,6 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
 {
    const GLint maxLevels = _mesa_max_texture_levels(ctx, target);
    GLint expectedSize;
-   GLenum choose_format;
-   GLenum choose_type;
-   GLenum proxy_format;
    GLenum error = GL_NO_ERROR;
    char *reason = ""; /* no error */
 
@@ -2015,10 +2012,6 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
 #endif
 
    default:
-      choose_format = GL_NONE;
-      choose_type = GL_NONE;
-      proxy_format = internalFormat;
-
       /* check level */
       if (level < 0 || level >= maxLevels) {
 	 reason = "level";
