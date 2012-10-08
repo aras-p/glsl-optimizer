@@ -146,8 +146,6 @@ let TargetPrefix = "AMDIL", isTarget = 1 in {
           UnaryIntFloat;
   def int_AMDIL_round_neginf : GCCBuiltin<"__amdil_round_neginf">,
           UnaryIntFloat;
-  def int_AMDIL_round_posinf : GCCBuiltin<"__amdil_round_posinf">,
-          UnaryIntFloat;
   def int_AMDIL_round_zero : GCCBuiltin<"__amdil_round_zero">,
           UnaryIntFloat;
   def int_AMDIL_acos : GCCBuiltin<"__amdil_acos">,

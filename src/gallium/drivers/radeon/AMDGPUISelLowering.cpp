@@ -139,8 +139,6 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                                   Op.getOperand(2));
     case AMDGPUIntrinsic::AMDIL_round_nearest:
       return DAG.getNode(ISD::FRINT, DL, VT, Op.getOperand(1));
-    case AMDGPUIntrinsic::AMDIL_round_posinf:
-      return DAG.getNode(ISD::FCEIL, DL, VT, Op.getOperand(1));
   }
 }
 
