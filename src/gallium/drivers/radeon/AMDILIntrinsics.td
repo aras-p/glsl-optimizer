@@ -66,7 +66,6 @@ let TargetPrefix = "AMDIL", isTarget = 1 in {
 }
 
 let TargetPrefix = "AMDIL", isTarget = 1 in {
-  def int_AMDIL_fabs : GCCBuiltin<"__amdil_fabs">, UnaryIntFloat;
   def int_AMDIL_abs : GCCBuiltin<"__amdil_abs">, UnaryIntInt;
 
   def int_AMDIL_bit_extract_i32 : GCCBuiltin<"__amdil_ibit_extract">,

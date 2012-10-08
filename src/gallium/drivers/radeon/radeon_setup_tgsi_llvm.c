@@ -538,7 +538,7 @@ static void emit_prepare_cube_coords(
 		coords[i] = LLVMBuildExtractElement(builder, v, idx, "");
 	}
 
-	coords[2] = build_intrinsic(builder, "llvm.AMDIL.fabs.",
+	coords[2] = build_intrinsic(builder, "fabs",
 			type, &coords[2], 1, LLVMReadNoneAttribute);
 	coords[2] = build_intrinsic(builder, "llvm.AMDGPU.rcp",
 			type, &coords[2], 1, LLVMReadNoneAttribute);
@@ -1122,8 +1122,8 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 
 
 
-	bld_base->op_actions[TGSI_OPCODE_ABS].emit = build_tgsi_intrinsic_nomem;
-	bld_base->op_actions[TGSI_OPCODE_ABS].intr_name = "llvm.AMDIL.fabs.";
+	bld_base->op_actions[TGSI_OPCODE_ABS].emit = build_tgsi_intrinsic_readonly;
+	bld_base->op_actions[TGSI_OPCODE_ABS].intr_name = "fabs";
 	bld_base->op_actions[TGSI_OPCODE_ARL].emit = build_tgsi_intrinsic_nomem;
 	bld_base->op_actions[TGSI_OPCODE_ARL].intr_name = "llvm.AMDGPU.arl";
 	bld_base->op_actions[TGSI_OPCODE_BGNLOOP].emit = bgnloop_emit;
