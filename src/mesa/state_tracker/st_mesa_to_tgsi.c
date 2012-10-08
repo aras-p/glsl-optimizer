@@ -1169,7 +1169,6 @@ st_translate_mesa_program(
                 * inconsistency, we insert a U2F.
                 */
                struct st_context *st = st_context(ctx);
-               struct pipe_screen *pscreen = st->pipe->screen;
                assert(procType == TGSI_PROCESSOR_VERTEX);
                assert(pscreen->get_shader_param(pscreen, PIPE_SHADER_VERTEX, PIPE_SHADER_CAP_INTEGERS));
                if (!ctx->Const.NativeIntegers) {
