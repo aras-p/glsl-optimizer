@@ -555,7 +555,6 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
 static void
 reset_cache(struct st_context *st)
 {
-   struct pipe_context *pipe = st->pipe;
    struct bitmap_cache *cache = st->bitmap.cache;
 
    /*memset(cache->buffer, 0xff, sizeof(cache->buffer));*/
@@ -565,11 +564,6 @@ reset_cache(struct st_context *st)
    cache->xmax = -1000000;
    cache->ymin = 1000000;
    cache->ymax = -1000000;
-
-   if (cache->trans) {
-      pipe->transfer_destroy(pipe, cache->trans);
-      cache->trans = NULL;
-   }
 
    assert(!cache->texture);
 
