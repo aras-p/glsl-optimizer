@@ -797,7 +797,7 @@ static void i915_set_framebuffer_state(struct pipe_context *pipe,
    }
    pipe_surface_reference(&i915->framebuffer.zsbuf, fb->zsbuf);
 
-   i915->dirty |= I915_NEW_FRAMEBUFFER | I915_NEW_FS;
+   i915->dirty |= I915_NEW_FRAMEBUFFER;
 }
 
 
