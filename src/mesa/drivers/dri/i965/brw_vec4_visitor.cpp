@@ -999,6 +999,23 @@ vec4_visitor::emit_bool_comparison(unsigned int op,
 }
 
 void
+vec4_visitor::emit_minmax(uint32_t conditionalmod, dst_reg dst,
+                          src_reg src0, src_reg src1)
+{
+   vec4_instruction *inst;
+
+   if (intel->gen >= 6) {
+      inst = emit(BRW_OPCODE_SEL, dst, src0, src1);
+      inst->conditional_mod = conditionalmod;
+   } else {
+      emit(CMP(dst, src0, src1, conditionalmod));
+
+      inst = emit(BRW_OPCODE_SEL, dst, src0, src1);
+      inst->predicate = BRW_PREDICATE_NORMAL;
+   }
+}
+
+void
 vec4_visitor::visit(ir_expression *ir)
 {
    unsigned int operand;
@@ -1272,26 +1289,10 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_min:
-      if (intel->gen >= 6) {
-	 inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_L;
-      } else {
-	 emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_L));
-
-	 inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
-	 inst->predicate = BRW_PREDICATE_NORMAL;
-      }
+      emit_minmax(BRW_CONDITIONAL_L, result_dst, op[0], op[1]);
       break;
    case ir_binop_max:
-      if (intel->gen >= 6) {
-	 inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_G;
-      } else {
-	 emit(CMP(result_dst, op[0], op[1], BRW_CONDITIONAL_G));
-
-	 inst = emit(BRW_OPCODE_SEL, result_dst, op[0], op[1]);
-	 inst->predicate = BRW_PREDICATE_NORMAL;
-      }
+      emit_minmax(BRW_CONDITIONAL_G, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_pow:
