@@ -454,6 +454,18 @@ nv50_screen_init_hwctx(struct nv50_screen *screen)
    PUSH_DATA (push, (NV50_CB_AUX << 12) | 0xf21);
    PUSH_DATA (push, (NV50_CB_AUX << 12) | 0xf31);
 
+   /* return { 0.0, 0.0, 0.0, 0.0 } on out-of-bounds vtxbuf access */
+   BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
+   PUSH_DATA (push, ((1 << 9) << 6) | NV50_CB_AUX);
+   BEGIN_NI04(push, NV50_3D(CB_DATA(0)), 4);
+   PUSH_DATAf(push, 0.0f);
+   PUSH_DATAf(push, 0.0f);
+   PUSH_DATAf(push, 0.0f);
+   PUSH_DATAf(push, 0.0f);
+   BEGIN_NV04(push, NV50_3D(VERTEX_RUNOUT_ADDRESS_HIGH), 2);
+   PUSH_DATAh(push, screen->uniforms->offset + (3 << 16) + (1 << 9));
+   PUSH_DATA (push, screen->uniforms->offset + (3 << 16) + (1 << 9));
+
    /* max TIC (bits 4:8) & TSC bindings, per program type */
    for (i = 0; i < 3; ++i) {
       BEGIN_NV04(push, NV50_3D(TEX_LIMITS(i)), 1);
