@@ -128,6 +128,7 @@ i965_CXX_FILES = \
 	brw_vec4_live_variables.cpp \
 	brw_vec4_reg_allocate.cpp \
 	brw_vec4_visitor.cpp \
+	brw_vec4_vp.cpp \
 	gen6_blorp.cpp \
 	gen7_blorp.cpp
 

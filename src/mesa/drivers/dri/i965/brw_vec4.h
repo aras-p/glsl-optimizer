@@ -188,7 +188,7 @@ public:
    /** @{
     * Annotation for the generated IR.  One of the two can be set.
     */
-   ir_instruction *ir;
+   const void *ir;
    const char *annotation;
 
    bool is_tex();
@@ -223,7 +223,7 @@ public:
     * GLSL IR currently being processed, which is associated with our
     * driver IR instructions for debugging purposes.
     */
-   ir_instruction *base_ir;
+   const void *base_ir;
    const char *current_annotation;
 
    int *virtual_grf_sizes;
@@ -234,6 +234,9 @@ public:
    int *virtual_grf_def;
    int *virtual_grf_use;
    dst_reg userplane[MAX_CLIP_PLANES];
+
+   src_reg *vp_temp_regs;
+   src_reg vp_addr_reg;
 
    /**
     * This is the size to be used for an array with an element per
@@ -248,6 +251,8 @@ public:
    dst_reg *variable_storage(ir_variable *var);
 
    void reladdr_to_temp(ir_instruction *ir, src_reg *reg, int *num_reladdr);
+
+   bool need_all_constants_in_pull_buffer;
 
    src_reg src_reg_for_float(float val);
 
@@ -368,6 +373,13 @@ public:
 
    /** Walks an exec_list of ir_instruction and sends it through this visitor. */
    void visit_instructions(const exec_list *list);
+
+   void setup_vp_regs();
+   void emit_vertex_program_code();
+   void emit_vp_sop(uint32_t condmod, dst_reg dst,
+                    src_reg src0, src_reg src1, src_reg one);
+   dst_reg get_vp_dst_reg(const prog_dst_register &dst);
+   src_reg get_vp_src_reg(const prog_src_register &src);
 
    void emit_bool_to_cond_code(ir_rvalue *ir, uint32_t *predicate);
    void emit_bool_comparison(unsigned int op, dst_reg dst, src_reg src0, src_reg src1);

@@ -26,6 +26,8 @@
 extern "C" {
 #include "brw_eu.h"
 #include "main/macros.h"
+#include "program/prog_print.h"
+#include "program/prog_parameter.h"
 };
 
 using namespace brw;
@@ -774,13 +776,17 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
 bool
 vec4_visitor::run()
 {
-   if (c->key.userclip_active && !c->key.uses_clip_distance)
-      setup_uniform_clipplane_values();
-
    /* Generate VS IR for main().  (the visitor only descends into
     * functions called "main").
     */
-   visit_instructions(shader->ir);
+   if (shader) {
+      visit_instructions(shader->ir);
+   } else {
+      emit_vertex_program_code();
+   }
+
+   if (c->key.userclip_active && !c->key.uses_clip_distance)
+      setup_uniform_clipplane_values();
 
    emit_urb_writes();
 
@@ -790,8 +796,18 @@ vec4_visitor::run()
     * that we have reladdr computations available for CSE, since we'll
     * often do repeated subexpressions for those.
     */
-   move_grf_array_access_to_scratch();
-   move_uniform_array_access_to_pull_constants();
+   if (shader) {
+      move_grf_array_access_to_scratch();
+      move_uniform_array_access_to_pull_constants();
+   } else {
+      /* The ARB_vertex_program frontend emits pull constant loads directly
+       * rather than using reladdr, so we don't need to walk through all the
+       * instructions looking for things to move.  There isn't anything.
+       *
+       * We do still need to split things to vec4 size.
+       */
+      split_uniform_registers();
+   }
    pack_uniform_registers();
    move_push_constants_to_pull_constants();
    split_virtual_grfs();
@@ -844,10 +860,14 @@ vec4_visitor::generate_code()
 {
    int last_native_insn_offset = 0;
    const char *last_annotation_string = NULL;
-   ir_instruction *last_annotation_ir = NULL;
+   const void *last_annotation_ir = NULL;
 
    if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
-      printf("Native code for vertex shader %d:\n", prog->Name);
+      if (shader) {
+         printf("Native code for vertex shader %d:\n", prog->Name);
+      } else {
+         printf("Native code for vertex program %d:\n", c->vp->program.Base.Id);
+      }
    }
 
    foreach_list(node, &this->instructions) {
@@ -859,7 +879,15 @@ vec4_visitor::generate_code()
 	    last_annotation_ir = inst->ir;
 	    if (last_annotation_ir) {
 	       printf("   ");
-	       last_annotation_ir->print();
+               if (shader) {
+                  ((ir_instruction *) last_annotation_ir)->print();
+               } else {
+                  const prog_instruction *vpi;
+                  vpi = (const prog_instruction *) inst->ir;
+                  printf("%d: ", (int)(vpi - vp->Base.Instructions));
+                  _mesa_fprint_instruction_opt(stdout, vpi, 0,
+                                               PROG_PRINT_DEBUG, NULL);
+               }
 	       printf("\n");
 	    }
 	 }
@@ -1032,24 +1060,26 @@ brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
    bool start_busy = false;
    float start_time = 0;
 
-   if (!prog)
-      return false;
-
    if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
       start_busy = (intel->batch.last_bo &&
                     drm_intel_bo_busy(intel->batch.last_bo));
       start_time = get_time();
    }
 
-   struct brw_shader *shader =
-     (brw_shader *) prog->_LinkedShaders[MESA_SHADER_VERTEX];
-   if (!shader)
-      return false;
+   struct brw_shader *shader = NULL;
+   if (prog)
+      shader = (brw_shader *) prog->_LinkedShaders[MESA_SHADER_VERTEX];
 
    if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
-      printf("GLSL IR for native vertex shader %d:\n", prog->Name);
-      _mesa_print_ir(shader->ir, NULL);
-      printf("\n\n");
+      if (shader) {
+         printf("GLSL IR for native vertex shader %d:\n", prog->Name);
+         _mesa_print_ir(shader->ir, NULL);
+         printf("\n\n");
+      } else {
+         printf("ARB_vertex_program %d for native vertex shader\n",
+                c->vp->program.Base.Id);
+         _mesa_print_program(&c->vp->program.Base);
+      }
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_PERF) && shader) {

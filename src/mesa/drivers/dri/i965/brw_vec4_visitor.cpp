@@ -2701,8 +2701,7 @@ vec4_visitor::vec4_visitor(struct brw_vs_compile *c,
    this->current_annotation = NULL;
 
    this->c = c;
-   this->vp = (struct gl_vertex_program *)
-     prog->_LinkedShaders[MESA_SHADER_VERTEX]->Program;
+   this->vp = &c->vp->program;
    this->prog_data = &c->prog_data;
 
    this->variable_ht = hash_table_ctor(0,

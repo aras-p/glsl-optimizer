@@ -245,11 +245,12 @@ do_vs_prog(struct brw_context *brw,
        */
       param_count = vs->num_uniform_components * 4;
 
-      /* We also upload clip plane data as uniforms */
-      param_count += MAX_CLIP_PLANES * 4;
    } else {
       param_count = vp->program.Base.Parameters->NumParameters * 4;
    }
+   /* We also upload clip plane data as uniforms */
+   param_count += MAX_CLIP_PLANES * 4;
+
    c.prog_data.param = rzalloc_array(NULL, const float *, param_count);
    c.prog_data.pull_param = rzalloc_array(NULL, const float *, param_count);
 
@@ -281,13 +282,9 @@ do_vs_prog(struct brw_context *brw,
 
    /* Emit GEN4 code.
     */
-   if (prog) {
-      if (!brw_vs_emit(prog, &c)) {
-	 ralloc_free(mem_ctx);
-	 return false;
-      }
-   } else {
-      brw_old_vs_emit(&c);
+   if (!brw_vs_emit(prog, &c)) {
+      ralloc_free(mem_ctx);
+      return false;
    }
 
    if (c.prog_data.nr_pull_params)
