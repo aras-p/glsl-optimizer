@@ -362,8 +362,6 @@ emit_tex(struct lp_build_tgsi_aos_context *bld,
    unsigned target;
    unsigned unit;
    LLVMValueRef coords;
-   LLVMValueRef ddx;
-   LLVMValueRef ddy;
    struct lp_derivatives derivs;
 
    if (!bld->sampler) {
@@ -376,8 +374,8 @@ emit_tex(struct lp_build_tgsi_aos_context *bld,
    coords = lp_build_emit_fetch( &bld->bld_base, inst, 0 , LP_CHAN_ALL);
 
    if (0 && modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
-      ddx = lp_build_emit_fetch( &bld->bld_base, inst, 1 , LP_CHAN_ALL);
-      ddy = lp_build_emit_fetch( &bld->bld_base, inst, 2 , LP_CHAN_ALL);
+      lp_build_emit_fetch( &bld->bld_base, inst, 1 , LP_CHAN_ALL);
+      lp_build_emit_fetch( &bld->bld_base, inst, 2 , LP_CHAN_ALL);
       unit = inst->Src[3].Register.Index;
    }  else {
 #if 0

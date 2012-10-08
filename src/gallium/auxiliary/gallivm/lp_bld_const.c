@@ -365,14 +365,13 @@ lp_build_const_aos(struct gallivm_state *gallivm,
                    const unsigned char *swizzle)
 {
    const unsigned char default_swizzle[4] = {0, 1, 2, 3};
-   LLVMTypeRef elem_type;
    LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
    unsigned i;
 
    assert(type.length % 4 == 0);
    assert(type.length <= LP_MAX_VECTOR_LENGTH);
 
-   elem_type = lp_build_elem_type(gallivm, type);
+   lp_build_elem_type(gallivm, type);
 
    if(swizzle == NULL)
       swizzle = default_swizzle;
