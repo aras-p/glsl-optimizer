@@ -541,7 +541,7 @@ defm V_RNDNE_F32 : VOP1_32 <0x00000023, "V_RNDNE_F32",
   [(set VReg_32:$dst, (frint AllReg_32:$src0))]
 >;
 defm V_FLOOR_F32 : VOP1_32 <0x00000024, "V_FLOOR_F32",
-  [(set VReg_32:$dst, (int_AMDGPU_floor AllReg_32:$src0))]
+  [(set VReg_32:$dst, (ffloor AllReg_32:$src0))]
 >;
 defm V_EXP_F32 : VOP1_32 <0x00000025, "V_EXP_F32",
   [(set VReg_32:$dst, (fexp2 AllReg_32:$src0))]

@@ -37,6 +37,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FPOW,   MVT::f32, Legal);
   setOperationAction(ISD::FLOG2,  MVT::f32, Legal);
   setOperationAction(ISD::FABS,   MVT::f32, Legal);
+  setOperationAction(ISD::FFLOOR, MVT::f32, Legal);
   setOperationAction(ISD::FRINT,  MVT::f32, Legal);
 
   setOperationAction(ISD::UDIV, MVT::i32, Expand);
