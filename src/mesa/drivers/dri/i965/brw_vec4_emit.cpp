@@ -938,6 +938,10 @@ vec4_visitor::generate_code()
 	 brw_SEL(p, dst, src[0], src[1]);
 	 break;
 
+      case BRW_OPCODE_DPH:
+	 brw_DPH(p, dst, src[0], src[1]);
+	 break;
+
       case BRW_OPCODE_DP4:
 	 brw_DP4(p, dst, src[0], src[1]);
 	 break;

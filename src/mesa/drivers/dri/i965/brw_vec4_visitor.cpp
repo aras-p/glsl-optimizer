@@ -119,6 +119,7 @@ ALU2(OR)
 ALU2(XOR)
 ALU2(DP3)
 ALU2(DP4)
+ALU2(DPH)
 
 /** Gen4 predicated IF. */
 vec4_instruction *
