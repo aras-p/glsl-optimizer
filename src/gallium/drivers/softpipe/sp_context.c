@@ -53,38 +53,6 @@
 #include "sp_screen.h"
 
 
-/**
- * Map any drawing surfaces which aren't already mapped
- */
-void
-softpipe_map_transfers(struct softpipe_context *sp)
-{
-   unsigned i;
-
-   for (i = 0; i < sp->framebuffer.nr_cbufs; i++) {
-      sp_tile_cache_map_transfers(sp->cbuf_cache[i]);
-   }
-
-   sp_tile_cache_map_transfers(sp->zsbuf_cache);
-}
-
-
-/**
- * Unmap any mapped drawing surfaces
- */
-void
-softpipe_unmap_transfers(struct softpipe_context *sp)
-{
-   uint i;
-
-   for (i = 0; i < sp->framebuffer.nr_cbufs; i++) {
-      sp_tile_cache_unmap_transfers(sp->cbuf_cache[i]);
-   }
-
-   sp_tile_cache_unmap_transfers(sp->zsbuf_cache);
-}
-
-
 static void
 softpipe_destroy( struct pipe_context *pipe )
 {

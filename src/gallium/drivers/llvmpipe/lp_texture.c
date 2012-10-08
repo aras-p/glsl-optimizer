@@ -622,16 +622,23 @@ llvmpipe_surface_destroy(struct pipe_context *pipe,
 }
 
 
-static struct pipe_transfer *
-llvmpipe_get_transfer(struct pipe_context *pipe,
-                      struct pipe_resource *resource,
-                      unsigned level,
-                      unsigned usage,
-                      const struct pipe_box *box)
+static void *
+llvmpipe_transfer_map( struct pipe_context *pipe,
+                       struct pipe_resource *resource,
+                       unsigned level,
+                       unsigned usage,
+                       const struct pipe_box *box,
+                       struct pipe_transfer **transfer )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   struct llvmpipe_resource *lprex = llvmpipe_resource(resource);
-   struct llvmpipe_transfer *lpr;
+   struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
+   struct llvmpipe_resource *lpr = llvmpipe_resource(resource);
+   struct llvmpipe_transfer *lpt;
+   struct pipe_transfer *pt;
+   ubyte *map;
+   enum pipe_format format;
+   enum lp_texture_usage tex_usage;
+   const char *mode;
 
    assert(resource);
    assert(level <= resource->last_level);
@@ -661,48 +668,19 @@ llvmpipe_get_transfer(struct pipe_context *pipe,
    if (resource == llvmpipe->constants[PIPE_SHADER_FRAGMENT][0])
       llvmpipe->dirty |= LP_NEW_CONSTANTS;
 
-   lpr = CALLOC_STRUCT(llvmpipe_transfer);
-   if (lpr) {
-      struct pipe_transfer *pt = &lpr->base;
-      pipe_resource_reference(&pt->resource, resource);
-      pt->box = *box;
-      pt->level = level;
-      pt->stride = lprex->row_stride[level];
-      pt->layer_stride = lprex->img_stride[level];
-      pt->usage = usage;
+   lpt = CALLOC_STRUCT(llvmpipe_transfer);
+   if (!lpt)
+      return NULL;
+   pt = &lpt->base;
+   pipe_resource_reference(&pt->resource, resource);
+   pt->box = *box;
+   pt->level = level;
+   pt->stride = lpr->row_stride[level];
+   pt->layer_stride = lpr->img_stride[level];
+   pt->usage = usage;
+   *transfer = pt;
 
-      return pt;
-   }
-   return NULL;
-}
-
-
-static void 
-llvmpipe_transfer_destroy(struct pipe_context *pipe,
-                              struct pipe_transfer *transfer)
-{
-   /* Effectively do the texture_update work here - if texture images
-    * needed post-processing to put them into hardware layout, this is
-    * where it would happen.  For llvmpipe, nothing to do.
-    */
-   assert (transfer->resource);
-   pipe_resource_reference(&transfer->resource, NULL);
-   FREE(transfer);
-}
-
-
-static void *
-llvmpipe_transfer_map( struct pipe_context *pipe,
-                       struct pipe_transfer *transfer )
-{
-   struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
-   ubyte *map;
-   struct llvmpipe_resource *lpr;
-   enum pipe_format format;
-   enum lp_texture_usage tex_usage;
-   const char *mode;
-
-   assert(transfer->level < LP_MAX_TEXTURE_LEVELS);
+   assert(level < LP_MAX_TEXTURE_LEVELS);
 
    /*
    printf("tex_transfer_map(%d, %d  %d x %d of %d x %d,  usage %d )\n",
@@ -712,7 +690,7 @@ llvmpipe_transfer_map( struct pipe_context *pipe,
           transfer->usage);
    */
 
-   if (transfer->usage == PIPE_TRANSFER_READ) {
+   if (usage == PIPE_TRANSFER_READ) {
       tex_usage = LP_TEX_USAGE_READ;
       mode = "read";
    }
@@ -722,33 +700,29 @@ llvmpipe_transfer_map( struct pipe_context *pipe,
    }
 
    if (0) {
-      struct llvmpipe_resource *lpr = llvmpipe_resource(transfer->resource);
       printf("transfer map tex %u  mode %s\n", lpr->id, mode);
    }
 
-
-   assert(transfer->resource);
-   lpr = llvmpipe_resource(transfer->resource);
    format = lpr->base.format;
 
-   map = llvmpipe_resource_map(transfer->resource,
-                               transfer->level,
-                               transfer->box.z,
+   map = llvmpipe_resource_map(resource,
+                               level,
+                               box->z,
                                tex_usage, LP_TEX_LAYOUT_LINEAR);
 
 
    /* May want to do different things here depending on read/write nature
     * of the map:
     */
-   if (transfer->usage & PIPE_TRANSFER_WRITE) {
+   if (usage & PIPE_TRANSFER_WRITE) {
       /* Do something to notify sharing contexts of a texture change.
        */
       screen->timestamp++;
    }
 
    map +=
-      transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
-      transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
+      box->y / util_format_get_blockheight(format) * pt->stride +
+      box->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 
    return map;
 }
@@ -763,6 +737,14 @@ llvmpipe_transfer_unmap(struct pipe_context *pipe,
    llvmpipe_resource_unmap(transfer->resource,
                            transfer->level,
                            transfer->box.z);
+
+   /* Effectively do the texture_update work here - if texture images
+    * needed post-processing to put them into hardware layout, this is
+    * where it would happen.  For llvmpipe, nothing to do.
+    */
+   assert (transfer->resource);
+   pipe_resource_reference(&transfer->resource, NULL);
+   FREE(transfer);
 }
 
 unsigned int
@@ -1474,8 +1456,6 @@ llvmpipe_init_screen_resource_funcs(struct pipe_screen *screen)
 void
 llvmpipe_init_context_resource_funcs(struct pipe_context *pipe)
 {
-   pipe->get_transfer = llvmpipe_get_transfer;
-   pipe->transfer_destroy = llvmpipe_transfer_destroy;
    pipe->transfer_map = llvmpipe_transfer_map;
    pipe->transfer_unmap = llvmpipe_transfer_unmap;
  

@@ -1377,18 +1377,20 @@ trace_context_destroy(struct pipe_context *_pipe)
  */
 
 
-static struct pipe_transfer *
-trace_context_get_transfer(struct pipe_context *_context,
+static void *
+trace_context_transfer_map(struct pipe_context *_context,
                            struct pipe_resource *_resource,
                            unsigned level,
                            unsigned usage,
-                           const struct pipe_box *box)
+                           const struct pipe_box *box,
+                           struct pipe_transfer **transfer)
 {
    struct trace_context *tr_context = trace_context(_context);
    struct trace_resource *tr_res = trace_resource(_resource);
    struct pipe_context *context = tr_context->pipe;
    struct pipe_resource *texture = tr_res->resource;
    struct pipe_transfer *result = NULL;
+   void *map;
 
    assert(texture->screen == context->screen);
 
@@ -1397,47 +1399,20 @@ trace_context_get_transfer(struct pipe_context *_context,
     * to transfer_inline_write and ignore read transfers.
     */
 
-   result = context->get_transfer(context, texture, level, usage, box);
+   map = context->transfer_map(context, texture, level, usage, box, &result);
+   if (!map)
+      return NULL;
 
-   if (result)
-      result = trace_transfer_create(tr_context, tr_res, result);
+   *transfer = trace_transfer_create(tr_context, tr_res, result);
 
-   return result;
-}
-
-
-static void
-trace_context_transfer_destroy(struct pipe_context *_context,
-                               struct pipe_transfer *_transfer)
-{
-   struct trace_context *tr_context = trace_context(_context);
-   struct trace_transfer *tr_trans = trace_transfer(_transfer);
-
-   trace_transfer_destroy(tr_context, tr_trans);
-}
-
-
-static void *
-trace_context_transfer_map(struct pipe_context *_context,
-                          struct pipe_transfer *_transfer)
-{
-   struct trace_context *tr_context = trace_context(_context);
-   struct trace_transfer *tr_trans = trace_transfer(_transfer);
-   struct pipe_context *context = tr_context->pipe;
-   struct pipe_transfer *transfer = tr_trans->transfer;
-   void *map;
-
-   map = context->transfer_map(context, transfer);
-   if(map) {
-      if(transfer->usage & PIPE_TRANSFER_WRITE) {
-         assert(!tr_trans->map);
-         tr_trans->map = map;
+   if (map) {
+      if(usage & PIPE_TRANSFER_WRITE) {
+         trace_transfer(*transfer)->map = map;
       }
    }
 
-   return map;
+   return *transfer ? map : NULL;
 }
-
 
 static void
 trace_context_transfer_flush_region( struct pipe_context *_context,
@@ -1500,6 +1475,7 @@ trace_context_transfer_unmap(struct pipe_context *_context,
    }
 
    context->transfer_unmap(context, transfer);
+   trace_transfer_destroy(tr_ctx, tr_trans);
 }
 
 
@@ -1667,8 +1643,6 @@ trace_context_create(struct trace_screen *tr_scr,
    TR_CTX_INIT(render_condition);
    TR_CTX_INIT(texture_barrier);
 
-   TR_CTX_INIT(get_transfer);
-   TR_CTX_INIT(transfer_destroy);
    TR_CTX_INIT(transfer_map);
    TR_CTX_INIT(transfer_unmap);
    TR_CTX_INIT(transfer_flush_region);

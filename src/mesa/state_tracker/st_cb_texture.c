@@ -578,9 +578,10 @@ decompress_with_blit(struct gl_context * ctx,
    const GLuint width = texImage->Width;
    const GLuint height = texImage->Height;
    struct pipe_resource *dst_texture;
-   struct pipe_transfer *tex_xfer;
    struct pipe_blit_info blit;
    unsigned bind = (PIPE_BIND_RENDER_TARGET | PIPE_BIND_TRANSFER_READ);
+   struct pipe_transfer *tex_xfer;
+   ubyte *map;
 
    /* create temp / dest surface */
    if (!util_create_rgba_texture(pipe, width, height, bind,
@@ -610,13 +611,14 @@ decompress_with_blit(struct gl_context * ctx,
    /* blit/render/decompress */
    st->pipe->blit(st->pipe, &blit);
 
-   /* map the dst_surface so we can read from it */
-   tex_xfer = pipe_get_transfer(pipe,
-                                dst_texture, 0, 0,
-                                PIPE_TRANSFER_READ,
-                                0, 0, width, height);
-
    pixels = _mesa_map_pbo_dest(ctx, &ctx->Pack, pixels);
+
+   map = pipe_transfer_map(pipe, dst_texture, 0, 0,
+                           PIPE_TRANSFER_READ,
+                           0, 0, width, height, &tex_xfer);
+   if (!map) {
+      goto end;
+   }
 
    /* copy/pack data into user buffer */
    if (_mesa_format_matches_format_and_type(stImage->base.TexFormat,
@@ -624,7 +626,7 @@ decompress_with_blit(struct gl_context * ctx,
                                             ctx->Pack.SwapBytes)) {
       /* memcpy */
       const uint bytesPerRow = width * util_format_get_blocksize(stImage->pt->format);
-      ubyte *map = pipe_transfer_map(pipe, tex_xfer);
+      /* map the dst_surface so we can read from it */
       GLuint row;
       for (row = 0; row < height; row++) {
          GLvoid *dest = _mesa_image_address2d(&ctx->Pack, pixels, width,
@@ -655,7 +657,7 @@ decompress_with_blit(struct gl_context * ctx,
             debug_printf("%s: fallback format translation\n", __FUNCTION__);
 
          /* get float[4] rgba row from surface */
-         pipe_get_tile_rgba_format(pipe, tex_xfer, 0, row, width, 1,
+         pipe_get_tile_rgba_format(tex_xfer, map, 0, row, width, 1,
                                    pformat, rgba);
 
          _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
@@ -666,10 +668,10 @@ decompress_with_blit(struct gl_context * ctx,
    }
 
 end:
+   if (map)
+      pipe_transfer_unmap(pipe, tex_xfer);
+
    _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
-
-   pipe->transfer_destroy(pipe, tex_xfer);
-
    pipe_resource_reference(&dst_texture, NULL);
 }
 
@@ -720,6 +722,7 @@ fallback_copy_texsubimage(struct gl_context *ctx,
    struct pipe_transfer *src_trans;
    GLvoid *texDest;
    enum pipe_transfer_usage transfer_usage;
+   void *map;
 
    if (ST_DEBUG & DEBUG_FALLBACK)
       debug_printf("%s: fallback processing\n", __FUNCTION__);
@@ -728,13 +731,13 @@ fallback_copy_texsubimage(struct gl_context *ctx,
       srcY = strb->Base.Height - srcY - height;
    }
 
-   src_trans = pipe_get_transfer(pipe,
-                                 strb->texture,
-                                 strb->rtt_level,
-                                 strb->rtt_face + strb->rtt_slice,
-                                 PIPE_TRANSFER_READ,
-                                 srcX, srcY,
-                                 width, height);
+   map = pipe_transfer_map(pipe,
+                           strb->texture,
+                           strb->rtt_level,
+                           strb->rtt_face + strb->rtt_slice,
+                           PIPE_TRANSFER_READ,
+                           srcX, srcY,
+                           width, height, &src_trans);
 
    if ((baseFormat == GL_DEPTH_COMPONENT ||
         baseFormat == GL_DEPTH_STENCIL) &&
@@ -769,11 +772,12 @@ fallback_copy_texsubimage(struct gl_context *ctx,
       if (data) {
          /* To avoid a large temp memory allocation, do copy row by row */
          for (row = 0; row < height; row++, srcY += yStep) {
-            pipe_get_tile_z(pipe, src_trans, 0, srcY, width, 1, data);
+            pipe_get_tile_z(src_trans, map, 0, srcY, width, 1, data);
             if (scaleOrBias) {
                _mesa_scale_and_bias_depth_uint(ctx, width, data);
             }
-            pipe_put_tile_z(pipe, stImage->transfer, 0, row, width, 1, data);
+            pipe_put_tile_z(stImage->transfer, texDest, 0, row, width, 1,
+                            data);
          }
       }
       else {
@@ -801,7 +805,7 @@ fallback_copy_texsubimage(struct gl_context *ctx,
          /* XXX this usually involves a lot of int/float conversion.
           * try to avoid that someday.
           */
-         pipe_get_tile_rgba_format(pipe, src_trans, 0, 0, width, height,
+         pipe_get_tile_rgba_format(src_trans, map, 0, 0, width, height,
                                    util_format_linear(strb->texture->format),
                                    tempSrc);
 
@@ -828,7 +832,7 @@ fallback_copy_texsubimage(struct gl_context *ctx,
    }
 
    st_texture_image_unmap(st, stImage);
-   pipe->transfer_destroy(pipe, src_trans);
+   pipe->transfer_unmap(pipe, src_trans);
 }
 
 

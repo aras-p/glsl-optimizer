@@ -251,19 +251,8 @@ pipe_buffer_map_range(struct pipe_context *pipe,
 
    u_box_1d(offset, length, &box);
 
-   *transfer = pipe->get_transfer( pipe,
-                                   buffer,
-                                   0,
-                                   usage,
-                                   &box);
-
-   if (*transfer == NULL)
-      return NULL;
-
-   map = pipe->transfer_map( pipe, *transfer );
+   map = pipe->transfer_map(pipe, buffer, 0, usage, &box, transfer);
    if (map == NULL) {
-      pipe->transfer_destroy( pipe, *transfer );
-      *transfer = NULL;
       return NULL;
    }
 
@@ -285,10 +274,7 @@ static INLINE void
 pipe_buffer_unmap(struct pipe_context *pipe,
                   struct pipe_transfer *transfer)
 {
-   if (transfer) {
-      pipe->transfer_unmap(pipe, transfer);
-      pipe->transfer_destroy(pipe, transfer);
-   }
+   pipe->transfer_unmap(pipe, transfer);
 }
 
 static INLINE void
@@ -397,35 +383,29 @@ pipe_buffer_read(struct pipe_context *pipe,
 					 offset, size,
 					 PIPE_TRANSFER_READ,
 					 &src_transfer);
+   if (!map)
+      return;
 
-   if (map)
-      memcpy(data, map, size);
-
+   memcpy(data, map, size);
    pipe_buffer_unmap(pipe, src_transfer);
 }
 
-static INLINE struct pipe_transfer *
-pipe_get_transfer( struct pipe_context *context,
-                   struct pipe_resource *resource,
-                   unsigned level, unsigned layer,
-                   enum pipe_transfer_usage usage,
-                   unsigned x, unsigned y,
-                   unsigned w, unsigned h)
+static INLINE void *
+pipe_transfer_map(struct pipe_context *context,
+                  struct pipe_resource *resource,
+                  unsigned level, unsigned layer,
+                  enum pipe_transfer_usage usage,
+                  unsigned x, unsigned y,
+                  unsigned w, unsigned h,
+                  struct pipe_transfer **transfer)
 {
    struct pipe_box box;
-   u_box_2d_zslice( x, y, layer, w, h, &box );
-   return context->get_transfer( context,
-                                 resource,
-                                 level,
-                                 usage,
-                                 &box );
-}
-
-static INLINE void *
-pipe_transfer_map( struct pipe_context *context,
-                   struct pipe_transfer *transfer )
-{
-   return context->transfer_map( context, transfer );
+   u_box_2d_zslice(x, y, layer, w, h, &box);
+   return context->transfer_map(context,
+                                resource,
+                                level,
+                                usage,
+                                &box, transfer);
 }
 
 static INLINE void
@@ -433,14 +413,6 @@ pipe_transfer_unmap( struct pipe_context *context,
                      struct pipe_transfer *transfer )
 {
    context->transfer_unmap( context, transfer );
-}
-
-
-static INLINE void
-pipe_transfer_destroy( struct pipe_context *context, 
-                       struct pipe_transfer *transfer )
-{
-   context->transfer_destroy(context, transfer);
 }
 
 static INLINE void

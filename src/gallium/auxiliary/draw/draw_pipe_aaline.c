@@ -451,13 +451,12 @@ aaline_create_texture(struct aaline_stage *aaline)
 
       /* This texture is new, no need to flush. 
        */
-      transfer = pipe->get_transfer(pipe,
-                                    aaline->texture,
-                                    level,
-                                    PIPE_TRANSFER_WRITE,
-                                    &box);
+      data = pipe->transfer_map(pipe,
+                                aaline->texture,
+                                level,
+                                PIPE_TRANSFER_WRITE,
+                                &box, &transfer);
 
-      data = pipe->transfer_map(pipe, transfer);
       if (data == NULL)
          return FALSE;
 
@@ -482,7 +481,6 @@ aaline_create_texture(struct aaline_stage *aaline)
 
       /* unmap */
       pipe->transfer_unmap(pipe, transfer);
-      pipe->transfer_destroy(pipe, transfer);
    }
    return TRUE;
 }

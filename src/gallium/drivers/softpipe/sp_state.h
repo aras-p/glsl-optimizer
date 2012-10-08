@@ -159,12 +159,6 @@ softpipe_draw_vbo(struct pipe_context *pipe,
                   const struct pipe_draw_info *info);
 
 void
-softpipe_map_transfers(struct softpipe_context *sp);
-
-void
-softpipe_unmap_transfers(struct softpipe_context *sp);
-
-void
 softpipe_map_texture_surfaces(struct softpipe_context *sp);
 
 void

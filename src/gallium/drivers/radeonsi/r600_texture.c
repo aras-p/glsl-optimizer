@@ -254,17 +254,23 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	FREE(rtex);
 }
 
-static struct pipe_transfer* si_texture_get_transfer(struct pipe_context *ctx,
-						     struct pipe_resource *texture,
-						     unsigned level,
-						     unsigned usage,
-						     const struct pipe_box *box)
+static void *si_texture_transfer_map(struct pipe_context *ctx,
+				     struct pipe_resource *texture,
+				     unsigned level,
+				     unsigned usage,
+				     const struct pipe_box *box,
+				     struct pipe_transfer **ptransfer)
 {
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct pipe_resource resource;
 	struct r600_transfer *trans;
 	int r;
 	boolean use_staging_texture = FALSE;
+	struct radeon_winsys_cs_handle *buf;
+	enum pipe_format format = texture->format;
+	unsigned offset = 0;
+	char *map;
 
 	/* We cannot map a tiled texture directly because the data is
 	 * in a different order, therefore we do detiling using a blit.
@@ -316,7 +322,6 @@ static struct pipe_transfer* si_texture_get_transfer(struct pipe_context *ctx,
 		}
 		trans->transfer.stride = rtex->flushed_depth_texture->surface.level[level].pitch_bytes;
 		trans->offset = r600_texture_get_offset(rtex->flushed_depth_texture, level, box->z);
-		return &trans->transfer;
 	} else if (use_staging_texture) {
 		resource.target = PIPE_TEXTURE_2D;
 		resource.format = texture->format;
@@ -355,20 +360,59 @@ static struct pipe_transfer* si_texture_get_transfer(struct pipe_context *ctx,
 			/* Always referenced in the blit. */
 			radeonsi_flush(ctx, NULL, 0);
 		}
-		return &trans->transfer;
+	} else {
+		trans->transfer.stride = rtex->surface.level[level].pitch_bytes;
+		trans->transfer.layer_stride = rtex->surface.level[level].slice_size;
+		trans->offset = r600_texture_get_offset(rtex, level, box->z);
 	}
-	trans->transfer.stride = rtex->surface.level[level].pitch_bytes;
-	trans->transfer.layer_stride = rtex->surface.level[level].slice_size;
-	trans->offset = r600_texture_get_offset(rtex, level, box->z);
-	return &trans->transfer;
+
+	if (trans->staging_texture) {
+		buf = si_resource(trans->staging_texture)->cs_buf;
+	} else {
+		struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
+
+		if (rtex->flushed_depth_texture)
+			buf = rtex->flushed_depth_texture->resource.cs_buf;
+		else
+			buf = si_resource(texture)->cs_buf;
+
+		offset = trans->offset +
+			box->y / util_format_get_blockheight(format) * trans->transfer.stride +
+			box->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
+	}
+
+	if (!(map = rctx->ws->buffer_map(buf, rctx->cs, usage))) {
+		pipe_resource_reference(&trans->staging_texture, NULL);
+		pipe_resource_reference(&trans->transfer.resource, NULL);
+		FREE(trans);
+		return NULL;
+	}
+
+	*ptransfer = &trans->transfer;
+	return map + offset;
 }
 
-static void si_texture_transfer_destroy(struct pipe_context *ctx,
-					struct pipe_transfer *transfer)
+static void si_texture_transfer_unmap(struct pipe_context *ctx,
+				      struct pipe_transfer* transfer)
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
+	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct radeon_winsys_cs_handle *buf;
 	struct pipe_resource *texture = transfer->resource;
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
+
+	if (rtransfer->staging_texture) {
+		buf = si_resource(rtransfer->staging_texture)->cs_buf;
+	} else {
+		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
+
+		if (rtex->flushed_depth_texture) {
+			buf = rtex->flushed_depth_texture->resource.cs_buf;
+		} else {
+			buf = si_resource(transfer->resource)->cs_buf;
+		}
+	}
+	rctx->ws->buffer_unmap(buf);
 
 	if (rtransfer->staging_texture) {
 		if (transfer->usage & PIPE_TRANSFER_WRITE) {
@@ -386,65 +430,10 @@ static void si_texture_transfer_destroy(struct pipe_context *ctx,
 	FREE(transfer);
 }
 
-static void* si_texture_transfer_map(struct pipe_context *ctx,
-				     struct pipe_transfer* transfer)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct radeon_winsys_cs_handle *buf;
-	enum pipe_format format = transfer->resource->format;
-	unsigned offset = 0;
-	char *map;
-
-	if (rtransfer->staging_texture) {
-		buf = si_resource(rtransfer->staging_texture)->cs_buf;
-	} else {
-		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
-
-		if (rtex->flushed_depth_texture)
-			buf = rtex->flushed_depth_texture->resource.cs_buf;
-		else
-			buf = si_resource(transfer->resource)->cs_buf;
-
-		offset = rtransfer->offset +
-			transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
-			transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
-	}
-
-	if (!(map = rctx->ws->buffer_map(buf, rctx->cs, transfer->usage))) {
-		return NULL;
-	}
-
-	return map + offset;
-}
-
-static void si_texture_transfer_unmap(struct pipe_context *ctx,
-				      struct pipe_transfer* transfer)
-{
-	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct r600_context *rctx = (struct r600_context*)ctx;
-	struct radeon_winsys_cs_handle *buf;
-
-	if (rtransfer->staging_texture) {
-		buf = si_resource(rtransfer->staging_texture)->cs_buf;
-	} else {
-		struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
-
-		if (rtex->flushed_depth_texture) {
-			buf = rtex->flushed_depth_texture->resource.cs_buf;
-		} else {
-			buf = si_resource(transfer->resource)->cs_buf;
-		}
-	}
-	rctx->ws->buffer_unmap(buf);
-}
-
 static const struct u_resource_vtbl r600_texture_vtbl =
 {
 	r600_texture_get_handle,	/* get_handle */
 	r600_texture_destroy,		/* resource_destroy */
-	si_texture_get_transfer,	/* get_transfer */
-	si_texture_transfer_destroy,	/* transfer_destroy */
 	si_texture_transfer_map,	/* transfer_map */
 	u_default_transfer_flush_region,/* transfer_flush_region */
 	si_texture_transfer_unmap,	/* transfer_unmap */

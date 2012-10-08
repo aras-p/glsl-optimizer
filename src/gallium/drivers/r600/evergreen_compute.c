@@ -104,12 +104,10 @@ static void evergreen_cs_set_vertex_buffer(
 	state->atom.dirty = true;
 }
 
-const struct u_resource_vtbl r600_global_buffer_vtbl =
+static const struct u_resource_vtbl r600_global_buffer_vtbl =
 {
 	u_default_resource_get_handle, /* get_handle */
 	r600_compute_global_buffer_destroy, /* resource_destroy */
-	r600_compute_global_get_transfer, /* get_transfer */
-	r600_compute_global_transfer_destroy, /* transfer_destroy */
 	r600_compute_global_transfer_map, /* transfer_map */
 	r600_compute_global_transfer_flush_region,/* transfer_flush_region */
 	r600_compute_global_transfer_unmap, /* transfer_unmap */
@@ -841,29 +839,56 @@ void r600_compute_global_buffer_destroy(
 	free(res);
 }
 
-void* r600_compute_global_transfer_map(
+void *r600_compute_global_transfer_map(
 	struct pipe_context *ctx_,
-	struct pipe_transfer* transfer)
+	struct pipe_resource *resource,
+	unsigned level,
+	unsigned usage,
+	const struct pipe_box *box,
+	struct pipe_transfer **ptransfer)
 {
+	struct r600_context *rctx = (struct r600_context*)ctx_;
+	struct compute_memory_pool *pool = rctx->screen->global_pool;
+	struct pipe_transfer *transfer = util_slab_alloc(&rctx->pool_transfers);
+	struct r600_resource_global* buffer =
+		(struct r600_resource_global*)transfer->resource;
+	uint32_t* map;
+
+	compute_memory_finalize_pending(pool, ctx_);
+
+	assert(resource->target == PIPE_BUFFER);
+
+	COMPUTE_DBG("* r600_compute_global_get_transfer()\n"
+			"level = %u, usage = %u, box(x = %u, y = %u, z = %u "
+			"width = %u, height = %u, depth = %u)\n", level, usage,
+			box->x, box->y, box->z, box->width, box->height,
+			box->depth);
+
+	transfer->resource = resource;
+	transfer->level = level;
+	transfer->usage = usage;
+	transfer->box = *box;
+	transfer->stride = 0;
+	transfer->layer_stride = 0;
+	transfer->data = NULL;
+
 	assert(transfer->resource->target == PIPE_BUFFER);
 	assert(transfer->resource->bind & PIPE_BIND_GLOBAL);
 	assert(transfer->box.x >= 0);
 	assert(transfer->box.y == 0);
 	assert(transfer->box.z == 0);
 
-	struct r600_context *ctx = (struct r600_context *)ctx_;
-	struct r600_resource_global* buffer =
-		(struct r600_resource_global*)transfer->resource;
-
-	uint32_t* map;
 	///TODO: do it better, mapping is not possible if the pool is too big
 
 	COMPUTE_DBG("* r600_compute_global_transfer_map()\n");
 
-	if (!(map = ctx->ws->buffer_map(buffer->chunk->pool->bo->cs_buf,
-						ctx->cs, transfer->usage))) {
+	if (!(map = rctx->ws->buffer_map(buffer->chunk->pool->bo->cs_buf,
+						rctx->cs, transfer->usage))) {
+		util_slab_free(&rctx->pool_transfers, transfer);
 		return NULL;
 	}
+
+	*ptransfer = transfer;
 
 	COMPUTE_DBG("Buffer: %p + %u (buffer offset in global memory) "
 		"+ %u (box.x)\n", map, buffer->chunk->start_in_dw, transfer->box.x);
@@ -884,50 +909,7 @@ void r600_compute_global_transfer_unmap(
 	COMPUTE_DBG("* r600_compute_global_transfer_unmap()\n");
 
 	ctx->ws->buffer_unmap(buffer->chunk->pool->bo->cs_buf);
-}
-
-struct pipe_transfer * r600_compute_global_get_transfer(
-	struct pipe_context *ctx_,
-	struct pipe_resource *resource,
-	unsigned level,
-	unsigned usage,
-	const struct pipe_box *box)
-{
-	struct r600_context *ctx = (struct r600_context *)ctx_;
-	struct compute_memory_pool *pool = ctx->screen->global_pool;
-
-	compute_memory_finalize_pending(pool, ctx_);
-
-	assert(resource->target == PIPE_BUFFER);
-	struct r600_context *rctx = (struct r600_context*)ctx_;
-	struct pipe_transfer *transfer = util_slab_alloc(&rctx->pool_transfers);
-
-	COMPUTE_DBG("* r600_compute_global_get_transfer()\n"
-			"level = %u, usage = %u, box(x = %u, y = %u, z = %u "
-			"width = %u, height = %u, depth = %u)\n", level, usage,
-			box->x, box->y, box->z, box->width, box->height,
-			box->depth);
-
-	transfer->resource = resource;
-	transfer->level = level;
-	transfer->usage = usage;
-	transfer->box = *box;
-	transfer->stride = 0;
-	transfer->layer_stride = 0;
-	transfer->data = NULL;
-
-	/* Note strides are zero, this is ok for buffers, but not for
-	* textures 2d & higher at least.
-	*/
-	return transfer;
-}
-
-void r600_compute_global_transfer_destroy(
-	struct pipe_context *ctx_,
-	struct pipe_transfer *transfer)
-{
-	struct r600_context *rctx = (struct r600_context*)ctx_;
-	util_slab_free(&rctx->pool_transfers, transfer);
+	util_slab_free(&ctx->pool_transfers, transfer);
 }
 
 void r600_compute_global_transfer_flush_region(

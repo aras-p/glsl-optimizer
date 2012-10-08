@@ -937,8 +937,6 @@ static const struct u_resource_vtbl r300_texture_vtbl =
 {
     NULL,                           /* get_handle */
     r300_texture_destroy,           /* resource_destroy */
-    r300_texture_get_transfer,      /* get_transfer */
-    r300_texture_transfer_destroy,  /* transfer_destroy */
     r300_texture_transfer_map,      /* transfer_map */
     NULL,                           /* transfer_flush_region */
     r300_texture_transfer_unmap,    /* transfer_unmap */

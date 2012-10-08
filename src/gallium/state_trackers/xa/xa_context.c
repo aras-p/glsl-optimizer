@@ -103,15 +103,11 @@ xa_surface_dma(struct xa_context *ctx,
 	w = boxes->x2 - boxes->x1;
 	h = boxes->y2 - boxes->y1;
 
-	transfer = pipe_get_transfer(pipe, srf->tex, 0, 0,
-				     transfer_direction, boxes->x1, boxes->y1,
-				     w, h);
-	if (!transfer)
-	    return -XA_ERR_NORES;
-
-	map = pipe_transfer_map(ctx->pipe, transfer);
+	map = pipe_transfer_map(pipe, srf->tex, 0, 0,
+                                transfer_direction, boxes->x1, boxes->y1,
+                                w, h, &transfer);
 	if (!map)
-	    goto out_no_map;
+	    return -XA_ERR_NORES;
 
 	if (to_surface) {
 	    util_copy_rect(map, srf->tex->format, transfer->stride,
@@ -122,14 +118,10 @@ xa_surface_dma(struct xa_context *ctx,
 			   0);
 	}
 	pipe->transfer_unmap(pipe, transfer);
-	pipe->transfer_destroy(pipe, transfer);
 	if (to_surface)
 	    pipe->flush(pipe, &ctx->last_fence);
     }
     return XA_ERR_NONE;
- out_no_map:
-    pipe->transfer_destroy(pipe, transfer);
-    return -XA_ERR_NORES;
 }
 
 XA_EXPORT void *
@@ -154,15 +146,12 @@ xa_surface_map(struct xa_context *ctx,
     if (!transfer_direction)
 	return NULL;
 
-    srf->transfer = pipe_get_transfer(pipe, srf->tex, 0, 0,
-				      transfer_direction, 0, 0,
-				      srf->tex->width0, srf->tex->height0);
-    if (!srf->transfer)
-	return NULL;
-
-    map = pipe_transfer_map(pipe, srf->transfer);
+    map = pipe_transfer_map(pipe, srf->tex, 0, 0,
+                            transfer_direction, 0, 0,
+                            srf->tex->width0, srf->tex->height0,
+                            &srf->transfer);
     if (!map)
-	pipe->transfer_destroy(pipe, srf->transfer);
+	return NULL;
 
     srf->mapping_pipe = pipe;
     return map;
@@ -175,7 +164,6 @@ xa_surface_unmap(struct xa_surface *srf)
 	struct pipe_context *pipe = srf->mapping_pipe;
 
 	pipe->transfer_unmap(pipe, srf->transfer);
-	pipe->transfer_destroy(pipe, srf->transfer);
 	srf->transfer = NULL;
     }
 }

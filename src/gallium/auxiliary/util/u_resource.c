@@ -24,28 +24,16 @@ void u_resource_destroy_vtbl(struct pipe_screen *screen,
    ur->vtbl->resource_destroy(screen, resource);
 }
 
-struct pipe_transfer *u_get_transfer_vtbl(struct pipe_context *context,
-                                          struct pipe_resource *resource,
-                                          unsigned level,
-                                          unsigned usage,
-                                          const struct pipe_box *box)
+void *u_transfer_map_vtbl(struct pipe_context *context,
+                          struct pipe_resource *resource,
+                          unsigned level,
+                          unsigned usage,
+                          const struct pipe_box *box,
+                          struct pipe_transfer **transfer)
 {
    struct u_resource *ur = u_resource(resource);
-   return ur->vtbl->get_transfer(context, resource, level, usage, box);
-}
-
-void u_transfer_destroy_vtbl(struct pipe_context *pipe,
-                             struct pipe_transfer *transfer)
-{
-   struct u_resource *ur = u_resource(transfer->resource);
-   ur->vtbl->transfer_destroy(pipe, transfer);
-}
-
-void *u_transfer_map_vtbl( struct pipe_context *pipe,
-                           struct pipe_transfer *transfer )
-{
-   struct u_resource *ur = u_resource(transfer->resource);
-   return ur->vtbl->transfer_map(pipe, transfer);
+   return ur->vtbl->transfer_map(context, resource, level, usage, box,
+                                 transfer);
 }
 
 void u_transfer_flush_region_vtbl( struct pipe_context *pipe,

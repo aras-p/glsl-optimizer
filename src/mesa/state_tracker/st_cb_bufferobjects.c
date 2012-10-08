@@ -298,6 +298,9 @@ st_bufferobj_map_range(struct gl_context *ctx,
       obj->Length = length;
       obj->AccessFlags = access;
    }
+   else {
+      st_obj->transfer = NULL;
+   }
 
    return obj->Pointer;
 }

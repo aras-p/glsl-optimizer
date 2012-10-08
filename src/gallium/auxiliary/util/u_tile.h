@@ -61,66 +61,66 @@ extern "C" {
 #endif
 
 void
-pipe_get_tile_raw(struct pipe_context *pipe,
-                  struct pipe_transfer *pt,
+pipe_get_tile_raw(struct pipe_transfer *pt,
+                  const void *src,
                   uint x, uint y, uint w, uint h,
                   void *p, int dst_stride);
 
 void
-pipe_put_tile_raw(struct pipe_context *pipe,
-                  struct pipe_transfer *pt,
+pipe_put_tile_raw(struct pipe_transfer *pt,
+                  void *dst,
                   uint x, uint y, uint w, uint h,
                   const void *p, int src_stride);
 
 
 void
-pipe_get_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_transfer *pt,
+pipe_get_tile_rgba(struct pipe_transfer *pt,
+                   const void *src,
                    uint x, uint y, uint w, uint h,
                    float *p);
 
 void
-pipe_get_tile_rgba_format(struct pipe_context *pipe,
-                          struct pipe_transfer *pt,
+pipe_get_tile_rgba_format(struct pipe_transfer *pt,
+                          const void *src,
                           uint x, uint y, uint w, uint h,
                           enum pipe_format format,
                           float *p);
 
 void
-pipe_put_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_transfer *pt,
+pipe_put_tile_rgba(struct pipe_transfer *pt,
+                   void *dst,
                    uint x, uint y, uint w, uint h,
                    const float *p);
 
 void
-pipe_put_tile_rgba_format(struct pipe_context *pipe,
-                          struct pipe_transfer *pt,
+pipe_put_tile_rgba_format(struct pipe_transfer *pt,
+                          void *dst,
                           uint x, uint y, uint w, uint h,
                           enum pipe_format format,
                           const float *p);
 
 
 void
-pipe_get_tile_z(struct pipe_context *pipe,
-                struct pipe_transfer *pt,
+pipe_get_tile_z(struct pipe_transfer *pt,
+                const void *src,
                 uint x, uint y, uint w, uint h,
                 uint *z);
 
 void
-pipe_put_tile_z(struct pipe_context *pipe,
-                struct pipe_transfer *pt,
+pipe_put_tile_z(struct pipe_transfer *pt,
+                void *dst,
                 uint x, uint y, uint w, uint h,
                 const uint *z);
 
 void
 pipe_tile_raw_to_rgba(enum pipe_format format,
-                      void *src,
+                      const void *src,
                       uint w, uint h,
                       float *dst, unsigned dst_stride);
 
 void
 pipe_tile_raw_to_unsigned(enum pipe_format format,
-                          void *src,
+                          const void *src,
                           uint w, uint h,
                           unsigned *dst, unsigned dst_stride);
 
@@ -131,29 +131,29 @@ pipe_tile_raw_to_signed(enum pipe_format format,
                         int *dst, unsigned dst_stride);
 
 void
-pipe_get_tile_ui_format(struct pipe_context *pipe,
-                        struct pipe_transfer *pt,
+pipe_get_tile_ui_format(struct pipe_transfer *pt,
+                        const void *src,
                         uint x, uint y, uint w, uint h,
                         enum pipe_format format,
                         unsigned int *p);
 
 void
-pipe_get_tile_i_format(struct pipe_context *pipe,
-                       struct pipe_transfer *pt,
+pipe_get_tile_i_format(struct pipe_transfer *pt,
+                       const void *src,
                        uint x, uint y, uint w, uint h,
                        enum pipe_format format,
                        int *p);
 
 void
-pipe_put_tile_ui_format(struct pipe_context *pipe,
-                        struct pipe_transfer *pt,
+pipe_put_tile_ui_format(struct pipe_transfer *pt,
+                        void *dst,
                         uint x, uint y, uint w, uint h,
                         enum pipe_format format,
                         const unsigned *p);
 
 void
-pipe_put_tile_i_format(struct pipe_context *pipe,
-                       struct pipe_transfer *pt,
+pipe_put_tile_i_format(struct pipe_transfer *pt,
+                       void *dst,
                        uint x, uint y, uint w, uint h,
                        enum pipe_format format,
                        const int *p);

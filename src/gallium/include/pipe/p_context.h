@@ -60,6 +60,7 @@ struct pipe_shader_state;
 struct pipe_stencil_ref;
 struct pipe_stream_output_target;
 struct pipe_surface;
+struct pipe_transfer;
 struct pipe_vertex_buffer;
 struct pipe_vertex_element;
 struct pipe_video_buffer;
@@ -374,22 +375,21 @@ struct pipe_context {
                            struct pipe_surface *);
 
    /**
-    * Get a transfer object for transferring data to/from a texture.
+    * Map a resource.
     *
     * Transfers are (by default) context-private and allow uploads to be
-    * interleaved with
+    * interleaved with rendering.
+    *
+    * out_transfer will contain the transfer object that must be passed
+    * to all the other transfer functions. It also contains useful
+    * information (like texture strides).
     */
-   struct pipe_transfer *(*get_transfer)(struct pipe_context *,
-                                         struct pipe_resource *resource,
-                                         unsigned level,
-                                         unsigned usage,  /* a combination of PIPE_TRANSFER_x */
-                                         const struct pipe_box *);
-
-   void (*transfer_destroy)(struct pipe_context *,
-                            struct pipe_transfer *);
-
-   void *(*transfer_map)( struct pipe_context *,
-                          struct pipe_transfer *transfer );
+   void *(*transfer_map)(struct pipe_context *,
+                         struct pipe_resource *resource,
+                         unsigned level,
+                         unsigned usage,  /* a combination of PIPE_TRANSFER_x */
+                         const struct pipe_box *,
+                         struct pipe_transfer **out_transfer);
 
    /* If transfer was created with WRITE|FLUSH_EXPLICIT, only the
     * regions specified with this call are guaranteed to be written to
@@ -399,9 +399,8 @@ struct pipe_context {
 				  struct pipe_transfer *transfer,
 				  const struct pipe_box *);
 
-   void (*transfer_unmap)( struct pipe_context *,
-                           struct pipe_transfer *transfer );
-
+   void (*transfer_unmap)(struct pipe_context *,
+                          struct pipe_transfer *transfer);
 
    /* One-shot transfer operation with data supplied in a user
     * pointer.  XXX: strides??

@@ -149,9 +149,9 @@ identity_sampler_view_destroy(struct identity_context *id_context,
 
 
 struct pipe_transfer *
-identity_transfer_create(struct identity_context *id_context,
-                         struct identity_resource *id_resource,
-                         struct pipe_transfer *transfer)
+identity_transfer_map(struct identity_context *id_context,
+                      struct identity_resource *id_resource,
+                      struct pipe_transfer *transfer)
 {
    struct identity_transfer *id_transfer;
 
@@ -175,7 +175,7 @@ identity_transfer_create(struct identity_context *id_context,
    return &id_transfer->base;
 
 error:
-   id_context->pipe->transfer_destroy(id_context->pipe, transfer);
+   id_context->pipe->transfer_unmap(id_context->pipe, transfer);
    return NULL;
 }
 
@@ -184,8 +184,6 @@ identity_transfer_destroy(struct identity_context *id_context,
                           struct identity_transfer *id_transfer)
 {
    pipe_resource_reference(&id_transfer->base.resource, NULL);
-   id_context->pipe->transfer_destroy(id_context->pipe,
-                                      id_transfer->transfer);
    FREE(id_transfer);
 }
 

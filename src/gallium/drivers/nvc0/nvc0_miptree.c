@@ -259,8 +259,6 @@ const struct u_resource_vtbl nvc0_miptree_vtbl =
 {
    nv50_miptree_get_handle,         /* get_handle */
    nv50_miptree_destroy,            /* resource_destroy */
-   nvc0_miptree_transfer_new,       /* get_transfer */
-   nvc0_miptree_transfer_del,       /* transfer_destroy */
    nvc0_miptree_transfer_map,       /* transfer_map */
    u_default_transfer_flush_region, /* transfer_flush_region */
    nvc0_miptree_transfer_unmap,     /* transfer_unmap */

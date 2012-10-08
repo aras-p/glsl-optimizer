@@ -46,15 +46,24 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 	FREE(rbuffer);
 }
 
-static struct pipe_transfer *r600_get_transfer(struct pipe_context *ctx,
-					       struct pipe_resource *resource,
-					       unsigned level,
-					       unsigned usage,
-					       const struct pipe_box *box)
+static void *r600_buffer_transfer_map(struct pipe_context *ctx,
+                                      struct pipe_resource *resource,
+                                      unsigned level,
+                                      unsigned usage,
+                                      const struct pipe_box *box,
+                                      struct pipe_transfer **ptransfer)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
-	struct pipe_transfer *transfer = util_slab_alloc(&rctx->pool_transfers);
+	struct pipe_transfer *transfer;
+        struct si_resource *rbuffer = si_resource(resource);
+        uint8_t *data;
 
+	data = rctx->ws->buffer_map(rbuffer->cs_buf, rctx->cs, usage);
+        if (!data) {
+		return NULL;
+        }
+
+	transfer = util_slab_alloc(&rctx->pool_transfers);
 	transfer->resource = resource;
 	transfer->level = level;
 	transfer->usage = usage;
@@ -62,31 +71,16 @@ static struct pipe_transfer *r600_get_transfer(struct pipe_context *ctx,
 	transfer->stride = 0;
 	transfer->layer_stride = 0;
 	transfer->data = NULL;
-
-	/* Note strides are zero, this is ok for buffers, but not for
-	 * textures 2d & higher at least.
-	 */
-	return transfer;
-}
-
-static void *r600_buffer_transfer_map(struct pipe_context *pipe,
-				      struct pipe_transfer *transfer)
-{
-	struct si_resource *rbuffer = si_resource(transfer->resource);
-	struct r600_context *rctx = (struct r600_context*)pipe;
-	uint8_t *data;
-
-	data = rctx->ws->buffer_map(rbuffer->cs_buf, rctx->cs, transfer->usage);
-	if (!data)
-		return NULL;
+        *ptransfer = transfer;
 
 	return (uint8_t*)data + transfer->box.x;
 }
 
-static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
+static void r600_buffer_transfer_unmap(struct pipe_context *ctx,
 					struct pipe_transfer *transfer)
 {
-	/* no-op */
+	struct r600_context *rctx = (struct r600_context*)ctx;
+	util_slab_free(&rctx->pool_transfers, transfer);
 }
 
 static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
@@ -95,19 +89,10 @@ static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
 {
 }
 
-static void r600_transfer_destroy(struct pipe_context *ctx,
-				  struct pipe_transfer *transfer)
-{
-	struct r600_context *rctx = (struct r600_context*)ctx;
-	util_slab_free(&rctx->pool_transfers, transfer);
-}
-
 static const struct u_resource_vtbl r600_buffer_vtbl =
 {
 	u_default_resource_get_handle,		/* get_handle */
 	r600_buffer_destroy,			/* resource_destroy */
-	r600_get_transfer,			/* get_transfer */
-	r600_transfer_destroy,			/* transfer_destroy */
 	r600_buffer_transfer_map,		/* transfer_map */
 	r600_buffer_transfer_flush_region,	/* transfer_flush_region */
 	r600_buffer_transfer_unmap,		/* transfer_unmap */

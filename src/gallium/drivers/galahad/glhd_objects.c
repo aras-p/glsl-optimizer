@@ -173,7 +173,7 @@ galahad_transfer_create(struct galahad_context *glhd_context,
    return &glhd_transfer->base;
 
 error:
-   glhd_context->pipe->transfer_destroy(glhd_context->pipe, transfer);
+   glhd_context->pipe->transfer_unmap(glhd_context->pipe, transfer);
    return NULL;
 }
 
@@ -182,7 +182,5 @@ galahad_transfer_destroy(struct galahad_context *glhd_context,
                           struct galahad_transfer *glhd_transfer)
 {
    pipe_resource_reference(&glhd_transfer->base.resource, NULL);
-   glhd_context->pipe->transfer_destroy(glhd_context->pipe,
-                                        glhd_transfer->transfer);
    FREE(glhd_transfer);
 }

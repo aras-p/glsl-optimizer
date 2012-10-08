@@ -259,7 +259,7 @@ graw_util_create_tex2d(const struct graw_info *info,
    {
       struct pipe_transfer *t;
       uint32_t *ptr;
-      t = pipe_get_transfer(info->ctx, samptex,
+      t = pipe_transfer_map(info->ctx, samptex,
                             0, 0, /* level, layer */
                             PIPE_TRANSFER_READ,
                             0, 0, SIZE, SIZE); /* x, y, width, height */

@@ -141,17 +141,4 @@ bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
 				     struct r600_texture **staging);
 
-/* r600_texture.c texture transfer functions. */
-struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
-						struct pipe_resource *texture,
-						unsigned level,
-						unsigned usage,
-						const struct pipe_box *box);
-void r600_texture_transfer_destroy(struct pipe_context *ctx,
-				   struct pipe_transfer *trans);
-void* r600_texture_transfer_map(struct pipe_context *ctx,
-				struct pipe_transfer* transfer);
-void r600_texture_transfer_unmap(struct pipe_context *ctx,
-				 struct pipe_transfer* transfer);
-
 #endif

@@ -218,14 +218,16 @@ nv30_blit(struct pipe_context *pipe,
    util_blitter_blit(nv30->blitter, &info);
 }
 
-static struct pipe_transfer *
-nv30_miptree_transfer_new(struct pipe_context *pipe, struct pipe_resource *pt,
+static void *
+nv30_miptree_transfer_map(struct pipe_context *pipe, struct pipe_resource *pt,
                           unsigned level, unsigned usage,
-                          const struct pipe_box *box)
+                          const struct pipe_box *box,
+                          struct pipe_transfer **ptransfer)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct nouveau_device *dev = nv30->screen->base.device;
    struct nv30_transfer *tx;
+   unsigned access = 0;
    int ret;
 
    tx = CALLOC_STRUCT(nv30_transfer);
@@ -270,11 +272,30 @@ nv30_miptree_transfer_new(struct pipe_context *pipe, struct pipe_resource *pt,
    if (usage & PIPE_TRANSFER_READ)
       nv30_transfer_rect(nv30, NEAREST, &tx->img, &tx->tmp);
 
-   return &tx->base;
+   if (tx->tmp.bo->map) {
+      *ptransfer = &tx->base;
+      return tx->tmp.bo->map;
+   }
+
+   if (usage & PIPE_TRANSFER_READ)
+      access |= NOUVEAU_BO_RD;
+   if (usage & PIPE_TRANSFER_WRITE)
+      access |= NOUVEAU_BO_WR;
+
+   ret = nouveau_bo_map(tx->tmp.bo, access, nv30->base.client);
+   if (ret) {
+      pipe_resource_reference(&tx->base.resource, NULL);
+      FREE(tx);
+      return NULL;
+   }
+
+   *ptransfer = &tx->base;
+   return tx->tmp.bo->map;
 }
 
 static void
-nv30_miptree_transfer_del(struct pipe_context *pipe, struct pipe_transfer *ptx)
+nv30_miptree_transfer_unmap(struct pipe_context *pipe,
+                            struct pipe_transfer *ptx)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct nv30_transfer *tx = nv30_transfer(ptx);
@@ -287,39 +308,9 @@ nv30_miptree_transfer_del(struct pipe_context *pipe, struct pipe_transfer *ptx)
    FREE(tx);
 }
 
-static void *
-nv30_miptree_transfer_map(struct pipe_context *pipe, struct pipe_transfer *ptx)
-{
-   struct nv30_context *nv30 = nv30_context(pipe);
-   struct nv30_transfer *tx = nv30_transfer(ptx);
-   unsigned access = 0;
-   int ret;
-
-   if (tx->tmp.bo->map)
-      return tx->tmp.bo->map;
-
-   if (ptx->usage & PIPE_TRANSFER_READ)
-      access |= NOUVEAU_BO_RD;
-   if (ptx->usage & PIPE_TRANSFER_WRITE)
-      access |= NOUVEAU_BO_WR;
-
-   ret = nouveau_bo_map(tx->tmp.bo, access, nv30->base.client);
-   if (ret)
-      return NULL;
-   return tx->tmp.bo->map;
-}
-
-static void
-nv30_miptree_transfer_unmap(struct pipe_context *pipe,
-                            struct pipe_transfer *ptx)
-{
-}
-
 const struct u_resource_vtbl nv30_miptree_vtbl = {
    nv30_miptree_get_handle,
    nv30_miptree_destroy,
-   nv30_miptree_transfer_new,
-   nv30_miptree_transfer_del,
    nv30_miptree_transfer_map,
    u_default_transfer_flush_region,
    nv30_miptree_transfer_unmap,

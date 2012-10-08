@@ -201,24 +201,23 @@ ExaDownloadFromScreen(PixmapPtr pPix, int x,  int y, int w,  int h, char *dst,
     struct exa_context *exa = ms->exa;
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPix);
     struct pipe_transfer *transfer;
+    void *map;
 
     if (!priv || !priv->tex)
 	return FALSE;
 
-    transfer = pipe_get_transfer(exa->pipe, priv->tex, 0, 0,
-                                 PIPE_TRANSFER_READ, x, y, w, h);
-    if (!transfer)
+    map = pipe_transfer_map(exa->pipe, priv->tex, 0, 0,
+                            PIPE_TRANSFER_READ, x, y, w, h, &transfer);
+    if (!map)
 	return FALSE;
 
     exa_debug_printf("------ ExaDownloadFromScreen(%d, %d, %d, %d, %d)\n",
                  x, y, w, h, dst_pitch);
 
     util_copy_rect((unsigned char*)dst, priv->tex->format, dst_pitch, 0, 0,
-		   w, h, exa->pipe->transfer_map(exa->pipe, transfer),
-		   transfer->stride, 0, 0);
+		   w, h, map, transfer->stride, 0, 0);
 
     exa->pipe->transfer_unmap(exa->pipe, transfer);
-    exa->pipe->transfer_destroy(exa->pipe, transfer);
 
     return TRUE;
 }
@@ -233,24 +232,24 @@ ExaUploadToScreen(PixmapPtr pPix, int x, int y, int w, int h, char *src,
     struct exa_context *exa = ms->exa;
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPix);
     struct pipe_transfer *transfer;
+    void *map;
 
     if (!priv || !priv->tex)
 	return FALSE;
 
-    transfer = pipe_get_transfer(exa->pipe, priv->tex, 0, 0,
-                                 PIPE_TRANSFER_WRITE, x, y, w, h);
-    if (!transfer)
+    map = pipe_transfer_map(exa->pipe, priv->tex, 0, 0,
+                            PIPE_TRANSFER_WRITE, x, y, w, h, &transfer);
+    if (!map)
 	return FALSE;
 
     exa_debug_printf("++++++ ExaUploadToScreen(%d, %d, %d, %d, %d)\n",
                  x, y, w, h, src_pitch);
 
-    util_copy_rect(exa->pipe->transfer_map(exa->pipe, transfer),
+    util_copy_rect(map,
 		   priv->tex->format, transfer->stride, 0, 0, w, h,
 		   (unsigned char*)src, src_pitch, 0, 0);
 
     exa->pipe->transfer_unmap(exa->pipe, transfer);
-    exa->pipe->transfer_destroy(exa->pipe, transfer);
 
     return TRUE;
 }
@@ -279,24 +278,23 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
         assert(pPix->drawable.width <= priv->tex->width0);
         assert(pPix->drawable.height <= priv->tex->height0);
 
-	priv->map_transfer =
-	   pipe_get_transfer(exa->pipe, priv->tex, 0, 0,
+	pPix->devPrivate.ptr =
+	   pipe_transfer_map(exa->pipe, priv->tex, 0, 0,
 #ifdef EXA_MIXED_PIXMAPS
-					PIPE_TRANSFER_MAP_DIRECTLY |
+                             PIPE_TRANSFER_MAP_DIRECTLY |
 #endif
-					PIPE_TRANSFER_READ_WRITE,
-					0, 0, 
-                                        pPix->drawable.width,
-                                        pPix->drawable.height );
-	if (!priv->map_transfer)
+                             PIPE_TRANSFER_READ_WRITE,
+                             0, 0,
+                             pPix->drawable.width,
+                             pPix->drawable.height,
+                             &priv->map_transfer);
+        if (!pPix->devPrivate.ptr)
 #ifdef EXA_MIXED_PIXMAPS
 	    return FALSE;
 #else
 	    FatalError("failed to create transfer\n");
 #endif
 
-	pPix->devPrivate.ptr =
-	    exa->pipe->transfer_map(exa->pipe, priv->map_transfer);
 	pPix->devKind = priv->map_transfer->stride;
     }
 
@@ -320,7 +318,7 @@ ExaFinishAccess(PixmapPtr pPix, int index)
     if (!priv)
 	return;
 
-    if (!priv->map_transfer)
+    if (!priv->map_transfer || pPix->devPrivate.ptr == NULL)
 	return;
 
     exa_debug_printf("ExaFinishAccess %d\n", index);
@@ -328,7 +326,6 @@ ExaFinishAccess(PixmapPtr pPix, int index)
     if (--priv->map_count == 0) {
 	assert(priv->map_transfer);
 	exa->pipe->transfer_unmap(exa->pipe, priv->map_transfer);
-	exa->pipe->transfer_destroy(exa->pipe, priv->map_transfer);
 	priv->map_transfer = NULL;
 	pPix->devPrivate.ptr = NULL;
     }

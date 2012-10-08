@@ -257,11 +257,10 @@ drisw_update_tex_buffer(struct dri_drawable *drawable,
 
    get_drawable_info(dPriv, &x, &y, &w, &h);
 
-   transfer = pipe_get_transfer(pipe, res,
-                                0, 0, // level, layer,
-                                PIPE_TRANSFER_WRITE,
-                                x, y, w, h);
-   map = pipe_transfer_map(pipe, transfer);
+   map = pipe_transfer_map(pipe, res,
+                           0, 0, // level, layer,
+                           PIPE_TRANSFER_WRITE,
+                           x, y, w, h, &transfer);
 
    /* Copy the Drawable content to the mapped texture buffer */
    get_image(dPriv, x, y, w, h, map);
@@ -275,7 +274,6 @@ drisw_update_tex_buffer(struct dri_drawable *drawable,
    }
 
    pipe_transfer_unmap(pipe, transfer);
-   pipe_transfer_destroy(pipe, transfer);
 }
 
 /*

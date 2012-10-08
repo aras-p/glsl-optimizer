@@ -312,22 +312,18 @@ copy_packed_data(ScrnInfoPtr pScrn,
    int yidx, uidx, vidx;
    int y_array_size = w * h;
 
-   ytrans = pipe_get_transfer(pipe, dst[0],
-                              0, 0,
-                              PIPE_TRANSFER_WRITE,
-                              left, top, w, h);
-   utrans = pipe_get_transfer(pipe, dst[1],
-                              0, 0,
-                              PIPE_TRANSFER_WRITE,
-                              left, top, w, h);
-   vtrans = pipe_get_transfer(pipe, dst[2],
-                              0, 0,
-                              PIPE_TRANSFER_WRITE,
-                              left, top, w, h);
-
-   ymap = (char*)pipe->transfer_map(pipe, ytrans);
-   umap = (char*)pipe->transfer_map(pipe, utrans);
-   vmap = (char*)pipe->transfer_map(pipe, vtrans);
+   ymap = pipe_transfer_map(pipe, dst[0],
+                            0, 0,
+                            PIPE_TRANSFER_WRITE,
+                            left, top, w, h, &ytrans);
+   umap = pipe_transfer_map(pipe, dst[1],
+                            0, 0,
+                            PIPE_TRANSFER_WRITE,
+                            left, top, w, h, &utrans);
+   vmap = pipe_transfer_map(pipe, dst[2],
+                            0, 0,
+                            PIPE_TRANSFER_WRITE,
+                            left, top, w, h, &vtrans);
 
    yidx = uidx = vidx = 0;
 
@@ -396,9 +392,6 @@ copy_packed_data(ScrnInfoPtr pScrn,
    pipe->transfer_unmap(pipe, ytrans);
    pipe->transfer_unmap(pipe, utrans);
    pipe->transfer_unmap(pipe, vtrans);
-   pipe->transfer_destroy(pipe, ytrans);
-   pipe->transfer_destroy(pipe, utrans);
-   pipe->transfer_destroy(pipe, vtrans);
 }
 
 

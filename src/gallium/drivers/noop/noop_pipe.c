@@ -146,32 +146,28 @@ static void noop_resource_destroy(struct pipe_screen *screen,
 /*
  * transfer
  */
-static struct pipe_transfer *noop_get_transfer(struct pipe_context *context,
-						struct pipe_resource *resource,
-						unsigned level,
-						enum pipe_transfer_usage usage,
-						const struct pipe_box *box)
-{
-	struct pipe_transfer *transfer;
-
-	transfer = CALLOC_STRUCT(pipe_transfer);
-	if (transfer == NULL)
-		return NULL;
-	pipe_resource_reference(&transfer->resource, resource);
-	transfer->level = level;
-	transfer->usage = usage;
-	transfer->box = *box;
-	transfer->stride = 1;
-	transfer->layer_stride = 1;
-	return transfer;
-}
-
 static void *noop_transfer_map(struct pipe_context *pipe,
-				struct pipe_transfer *transfer)
+                               struct pipe_resource *resource,
+                               unsigned level,
+                               enum pipe_transfer_usage usage,
+                               const struct pipe_box *box,
+                               struct pipe_transfer **ptransfer)
 {
-	struct noop_resource *nresource = (struct noop_resource *)transfer->resource;
+   struct pipe_transfer *transfer;
+   struct noop_resource *nresource = (struct noop_resource *)resource;
 
-	return nresource->data;
+   transfer = CALLOC_STRUCT(pipe_transfer);
+   if (transfer == NULL)
+           return NULL;
+   pipe_resource_reference(&transfer->resource, resource);
+   transfer->level = level;
+   transfer->usage = usage;
+   transfer->box = *box;
+   transfer->stride = 1;
+   transfer->layer_stride = 1;
+   *ptransfer = transfer;
+
+   return nresource->data;
 }
 
 static void noop_transfer_flush_region(struct pipe_context *pipe,
@@ -183,13 +179,8 @@ static void noop_transfer_flush_region(struct pipe_context *pipe,
 static void noop_transfer_unmap(struct pipe_context *pipe,
 				struct pipe_transfer *transfer)
 {
-}
-
-static void noop_transfer_destroy(struct pipe_context *pipe,
-					struct pipe_transfer *transfer)
-{
-	pipe_resource_reference(&transfer->resource, NULL);
-	FREE(transfer);
+   pipe_resource_reference(&transfer->resource, NULL);
+   FREE(transfer);
 }
 
 static void noop_transfer_inline_write(struct pipe_context *pipe,
@@ -280,11 +271,9 @@ static struct pipe_context *noop_create_context(struct pipe_screen *screen, void
 	ctx->begin_query = noop_begin_query;
 	ctx->end_query = noop_end_query;
 	ctx->get_query_result = noop_get_query_result;
-	ctx->get_transfer = noop_get_transfer;
 	ctx->transfer_map = noop_transfer_map;
 	ctx->transfer_flush_region = noop_transfer_flush_region;
 	ctx->transfer_unmap = noop_transfer_unmap;
-	ctx->transfer_destroy = noop_transfer_destroy;
 	ctx->transfer_inline_write = noop_transfer_inline_write;
 	noop_init_state_functions(ctx);
 

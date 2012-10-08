@@ -246,19 +246,22 @@ nv50_m2mf_copy_linear(struct nouveau_context *nv,
    nouveau_bufctx_reset(bctx, 0);
 }
 
-struct pipe_transfer *
-nv50_miptree_transfer_new(struct pipe_context *pctx,
+void *
+nv50_miptree_transfer_map(struct pipe_context *pctx,
                           struct pipe_resource *res,
                           unsigned level,
                           unsigned usage,
-                          const struct pipe_box *box)
+                          const struct pipe_box *box,
+                          struct pipe_transfer **ptransfer)
 {
+   struct nv50_screen *screen = nv50_screen(pctx->screen);
    struct nv50_context *nv50 = nv50_context(pctx);
    struct nouveau_device *dev = nv50->screen->base.device;
    const struct nv50_miptree *mt = nv50_miptree(res);
    struct nv50_transfer *tx;
    uint32_t size;
    int ret;
+   unsigned flags = 0;
 
    if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
       return NULL;
@@ -320,12 +323,30 @@ nv50_miptree_transfer_new(struct pipe_context *pctx,
       tx->rect[1].base = 0;
    }
 
-   return &tx->base;
+   if (tx->rect[1].bo->map) {
+      *ptransfer = &tx->base;
+      return tx->rect[1].bo->map;
+   }
+
+   if (usage & PIPE_TRANSFER_READ)
+      flags = NOUVEAU_BO_RD;
+   if (usage & PIPE_TRANSFER_WRITE)
+      flags |= NOUVEAU_BO_WR;
+
+   ret = nouveau_bo_map(tx->rect[1].bo, flags, screen->base.client);
+   if (ret) {
+      nouveau_bo_ref(NULL, &tx->rect[1].bo);
+      FREE(tx);
+      return NULL;
+   }
+
+   *ptransfer = &tx->base;
+   return tx->rect[1].bo->map;
 }
 
 void
-nv50_miptree_transfer_del(struct pipe_context *pctx,
-                          struct pipe_transfer *transfer)
+nv50_miptree_transfer_unmap(struct pipe_context *pctx,
+                            struct pipe_transfer *transfer)
 {
    struct nv50_context *nv50 = nv50_context(pctx);
    struct nv50_transfer *tx = (struct nv50_transfer *)transfer;
@@ -348,36 +369,6 @@ nv50_miptree_transfer_del(struct pipe_context *pctx,
    pipe_resource_reference(&transfer->resource, NULL);
 
    FREE(tx);
-}
-
-void *
-nv50_miptree_transfer_map(struct pipe_context *pctx,
-                          struct pipe_transfer *transfer)
-{
-   struct nv50_screen *screen = nv50_screen(pctx->screen);
-   struct nv50_transfer *tx = (struct nv50_transfer *)transfer;
-   int ret;
-   unsigned flags = 0;
-
-   if (tx->rect[1].bo->map)
-      return tx->rect[1].bo->map;
-
-   if (transfer->usage & PIPE_TRANSFER_READ)
-      flags = NOUVEAU_BO_RD;
-   if (transfer->usage & PIPE_TRANSFER_WRITE)
-      flags |= NOUVEAU_BO_WR;
-
-   ret = nouveau_bo_map(tx->rect[1].bo, flags, screen->base.client);
-   if (ret)
-      return NULL;
-   return tx->rect[1].bo->map;
-}
-
-void
-nv50_miptree_transfer_unmap(struct pipe_context *pctx,
-                            struct pipe_transfer *transfer)
-{
-   /* nothing to do */
 }
 
 void

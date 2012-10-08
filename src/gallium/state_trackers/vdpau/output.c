@@ -207,15 +207,8 @@ vlVdpOutputSurfaceGetBitsNative(VdpOutputSurface surface,
 
    res = vlsurface->sampler_view->texture;
    box = RectToPipeBox(source_rect, res);
-   transfer = pipe->get_transfer(pipe, res, 0, PIPE_TRANSFER_READ, &box);
-   if (transfer == NULL) {
-      pipe_mutex_unlock(vlsurface->device->mutex);
-      return VDP_STATUS_RESOURCES;
-   }
-
-   map = pipe_transfer_map(pipe, transfer);
-   if (map == NULL) {
-      pipe_transfer_destroy(pipe, transfer);
+   map = pipe->transfer_map(pipe, res, 0, PIPE_TRANSFER_READ, &box, &transfer);
+   if (!map) {
       pipe_mutex_unlock(vlsurface->device->mutex);
       return VDP_STATUS_RESOURCES;
    }
@@ -224,7 +217,6 @@ vlVdpOutputSurfaceGetBitsNative(VdpOutputSurface surface,
                   box.width, box.height, map, transfer->stride, 0, 0);
 
    pipe_transfer_unmap(pipe, transfer);
-   pipe_transfer_destroy(pipe, transfer);
    pipe_mutex_unlock(vlsurface->device->mutex);
 
    return VDP_STATUS_OK;

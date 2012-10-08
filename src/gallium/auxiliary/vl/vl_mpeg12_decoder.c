@@ -545,15 +545,13 @@ vl_mpeg12_begin_frame(struct pipe_video_decoder *decoder,
    rect.width = tex->width0;
    rect.height = tex->height0;
 
-   buf->tex_transfer = dec->base.context->get_transfer
-   (
-      dec->base.context, tex,
-      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
-      &rect
-   );
+   buf->texels =
+      dec->base.context->transfer_map(dec->base.context, tex, 0,
+                                      PIPE_TRANSFER_WRITE |
+                                      PIPE_TRANSFER_DISCARD_RANGE,
+                                      &rect, &buf->tex_transfer);
 
    buf->block_num = 0;
-   buf->texels = dec->base.context->transfer_map(dec->base.context, buf->tex_transfer);
 
    for (i = 0; i < VL_NUM_COMPONENTS; ++i) {
       buf->ycbcr_stream[i] = vl_vb_get_ycbcr_stream(&buf->vertex_stream, i);
@@ -690,7 +688,6 @@ vl_mpeg12_end_frame(struct pipe_video_decoder *decoder,
    vl_vb_unmap(&buf->vertex_stream, dec->base.context);
 
    dec->base.context->transfer_unmap(dec->base.context, buf->tex_transfer);
-   dec->base.context->transfer_destroy(dec->base.context, buf->tex_transfer);
 
    vb[0] = dec->quads;
    vb[1] = dec->pos;

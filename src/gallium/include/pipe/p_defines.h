@@ -205,7 +205,7 @@ enum pipe_transfer_usage {
    PIPE_TRANSFER_READ = (1 << 0),
    
    /**
-    * Resource contents will be written back at transfer_destroy
+    * Resource contents will be written back at transfer_unmap
     * time (or modified as a result of being accessed directly).
     */
    PIPE_TRANSFER_WRITE = (1 << 1),
@@ -300,8 +300,8 @@ enum pipe_transfer_usage {
 #define PIPE_BIND_INDEX_BUFFER         (1 << 5) /* draw_elements */
 #define PIPE_BIND_CONSTANT_BUFFER      (1 << 6) /* set_constant_buffer */
 #define PIPE_BIND_DISPLAY_TARGET       (1 << 8) /* flush_front_buffer */
-#define PIPE_BIND_TRANSFER_WRITE       (1 << 9) /* get_transfer */
-#define PIPE_BIND_TRANSFER_READ        (1 << 10) /* get_transfer */
+#define PIPE_BIND_TRANSFER_WRITE       (1 << 9) /* transfer_map */
+#define PIPE_BIND_TRANSFER_READ        (1 << 10) /* transfer_map */
 #define PIPE_BIND_STREAM_OUTPUT        (1 << 11) /* set_stream_output_buffers */
 #define PIPE_BIND_CURSOR               (1 << 16) /* mouse cursor */
 #define PIPE_BIND_CUSTOM               (1 << 17) /* state-tracker/winsys usages */

@@ -78,15 +78,15 @@ static INLINE struct pipe_resource *create_texture_1d(struct vg_context *ctx,
    tex = screen->resource_create(screen, &templ);
 
    { /* upload color_data */
-      struct pipe_transfer *transfer =
-         pipe_get_transfer(pipe, tex,
+      struct pipe_transfer *transfer;
+      void *map =
+         pipe_transfer_map(pipe, tex,
                            0, 0,
                            PIPE_TRANSFER_READ_WRITE ,
-                           0, 0, tex->width0, tex->height0);
-      void *map = pipe->transfer_map(pipe, transfer);
+                           0, 0, tex->width0, tex->height0,
+                           &transfer);
       memcpy(map, color_data, sizeof(VGint)*color_data_len);
       pipe->transfer_unmap(pipe, transfer);
-      pipe->transfer_destroy(pipe, transfer);
    }
 
    return tex;

@@ -131,8 +131,10 @@ svga_vbuf_render_map_vertices( struct vbuf_render *render )
                                          &svga_render->vbuf_transfer);
       if (ptr)
          return ptr + svga_render->vbuf_offset;
-      else
+      else {
+         svga_render->vbuf_transfer = NULL;
          return NULL;
+      }
    }
    else {
       /* we probably ran out of memory when allocating the vertex buffer */

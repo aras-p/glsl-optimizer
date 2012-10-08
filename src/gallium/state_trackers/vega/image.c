@@ -418,17 +418,19 @@ void image_sub_data(struct vg_image *image,
    }
 
    { /* upload color_data */
-      struct pipe_transfer *transfer = pipe_get_transfer(
-         pipe, texture, 0, 0,
-         PIPE_TRANSFER_WRITE, 0, 0, texture->width0, texture->height0);
+      struct pipe_transfer *transfer;
+      void *map = pipe_transfer_map(pipe, texture, 0, 0,
+                                    PIPE_TRANSFER_WRITE, 0, 0,
+                                    texture->width0, texture->height0,
+                                    &transfer);
       src += (dataStride * yoffset);
       for (i = 0; i < height; i++) {
          _vega_unpack_float_span_rgba(ctx, width, xoffset, src, dataFormat, temp);
-         pipe_put_tile_rgba(pipe, transfer, x+image->x, y+image->y, width, 1, df);
+         pipe_put_tile_rgba(transfer, map, x+image->x, y+image->y, width, 1, df);
          y += yStep;
          src += dataStride;
       }
-      pipe->transfer_destroy(pipe, transfer);
+      pipe->transfer_unmap(pipe, transfer);
    }
 }
 
@@ -448,25 +450,26 @@ void image_get_sub_data(struct vg_image * image,
    VGubyte *dst = (VGubyte *)data;
 
    {
-      struct pipe_transfer *transfer =
-         pipe_get_transfer(pipe,
+      struct pipe_transfer *transfer;
+      void *map =
+         pipe_transfer_map(pipe,
                            image->sampler_view->texture,  0, 0,
                            PIPE_TRANSFER_READ,
                            0, 0,
                            image->x + image->width,
-                           image->y + image->height);
+                           image->y + image->height, &transfer);
       /* Do a row at a time to flip image data vertically */
       for (i = 0; i < height; i++) {
 #if 0
          debug_printf("%d-%d  == %d\n", sy, height, y);
 #endif
-         pipe_get_tile_rgba(pipe, transfer, sx+image->x, y, width, 1, df);
+         pipe_get_tile_rgba(transfer, map, sx+image->x, y, width, 1, df);
          y += yStep;
          _vega_pack_rgba_span_float(ctx, width, temp, dataFormat, dst);
          dst += dataStride;
       }
 
-      pipe->transfer_destroy(pipe, transfer);
+      pipe->transfer_unmap(pipe, transfer);
    }
 }
 

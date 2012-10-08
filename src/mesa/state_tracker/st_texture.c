@@ -230,7 +230,6 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 {
    struct st_texture_object *stObj =
       st_texture_object(stImage->base.TexObject);
-   struct pipe_context *pipe = st->pipe;
    GLuint level;
 
    DBG("%s \n", __FUNCTION__);
@@ -243,14 +242,9 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
    else
       level = stImage->base.Level;
 
-   stImage->transfer = pipe_get_transfer(st->pipe, stImage->pt, level,
-                                         stImage->base.Face + zoffset,
-                                         usage, x, y, w, h);
-
-   if (stImage->transfer)
-      return pipe_transfer_map(pipe, stImage->transfer);
-   else
-      return NULL;
+   return pipe_transfer_map(st->pipe, stImage->pt, level,
+                            stImage->base.Face + zoffset,
+                            usage, x, y, w, h, &stImage->transfer);
 }
 
 
@@ -263,8 +257,6 @@ st_texture_image_unmap(struct st_context *st,
    DBG("%s\n", __FUNCTION__);
 
    pipe_transfer_unmap(pipe, stImage->transfer);
-
-   pipe->transfer_destroy(pipe, stImage->transfer);
    stImage->transfer = NULL;
 }
 
@@ -324,13 +316,11 @@ print_center_pixel(struct pipe_context *pipe, struct pipe_resource *src)
    region.height = 1;
    region.depth = 1;
 
-   xfer = pipe->get_transfer(pipe, src, 0, PIPE_TRANSFER_READ, &region);
-   map = pipe->transfer_map(pipe, xfer);
+   map = pipe->transfer_map(pipe, src, 0, PIPE_TRANSFER_READ, &region, &xfer);
 
    printf("center pixel: %d %d %d %d\n", map[0], map[1], map[2], map[3]);
 
    pipe->transfer_unmap(pipe, xfer);
-   pipe->transfer_destroy(pipe, xfer);
 }
 
 

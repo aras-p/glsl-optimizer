@@ -433,7 +433,7 @@ void debug_dump_surface_bmp(struct pipe_context *pipe,
                             struct pipe_surface *surface);
 void debug_dump_transfer_bmp(struct pipe_context *pipe,
                              const char *filename,
-                             struct pipe_transfer *transfer);
+                             struct pipe_transfer *transfer, void *ptr);
 void debug_dump_float_rgba_bmp(const char *filename,
                                unsigned width, unsigned height,
                                float *rgba, unsigned stride);
@@ -441,7 +441,7 @@ void debug_dump_float_rgba_bmp(const char *filename,
 #define debug_dump_image(prefix, format, cpp, width, height, stride, data) ((void)0)
 #define debug_dump_surface(pipe, prefix, surface) ((void)0)
 #define debug_dump_surface_bmp(pipe, filename, surface) ((void)0)
-#define debug_dump_transfer_bmp(filename, transfer) ((void)0)
+#define debug_dump_transfer_bmp(filename, transfer, ptr) ((void)0)
 #define debug_dump_float_rgba_bmp(filename, width, height, rgba, stride) ((void)0)
 #endif
 

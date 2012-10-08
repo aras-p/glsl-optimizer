@@ -450,21 +450,19 @@ Transfers
 
 These methods are used to get data to/from a resource.
 
-``get_transfer`` creates a transfer object.
+``transfer_map`` creates a memory mapping and the transfer object
+associated with it.
+The returned pointer points to the start of the mapped range according to
+the box region, not the beginning of the resource. If transfer_map fails,
+the returned pointer to the buffer memory is NULL, and the pointer
+to the transfer object remains unchanged (i.e. it can be non-NULL).
 
-``transfer_destroy`` destroys the transfer object. May cause
-data to be written to the resource at this point.
-
-``transfer_map`` creates a memory mapping for the transfer object.
-The returned map points to the start of the mapped range according to
-the box region, not the beginning of the resource.
-
-``transfer_unmap`` remove the memory mapping for the transfer object.
-Any pointers into the map should be considered invalid and discarded.
+``transfer_unmap`` remove the memory mapping for and destroy
+the transfer object. The pointer into the resource should be considered
+invalid and discarded.
 
 ``transfer_inline_write`` performs a simplified transfer for simple writes.
-Basically get_transfer, transfer_map, data write, transfer_unmap, and
-transfer_destroy all in one.
+Basically transfer_map, data write, and transfer_unmap all in one.
 
 
 The box parameter to some of these functions defines a 1D, 2D or 3D
@@ -515,7 +513,7 @@ These flags control the behavior of a transfer object.
   Resource contents read back (or accessed directly) at transfer create time.
 
 ``PIPE_TRANSFER_WRITE``
-  Resource contents will be written back at transfer_destroy time (or modified
+  Resource contents will be written back at transfer_unmap time (or modified
   as a result of being accessed directly).
 
 ``PIPE_TRANSFER_MAP_DIRECTLY``

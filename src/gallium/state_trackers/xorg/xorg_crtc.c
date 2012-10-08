@@ -240,16 +240,14 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 	crtcp->cursor_handle = whandle.handle;
     }
 
-    transfer = pipe_get_transfer(ctx, crtcp->cursor_tex,
-                                 0, 0,
-                                 PIPE_TRANSFER_WRITE,
-                                 0, 0, 64, 64);
-    ptr = ctx->transfer_map(ctx, transfer);
+    ptr = pipe_transfer_map(ctx, crtcp->cursor_tex,
+                            0, 0,
+                            PIPE_TRANSFER_WRITE,
+                            0, 0, 64, 64, &transfer);
     util_copy_rect(ptr, crtcp->cursor_tex->format,
 		   transfer->stride, 0, 0,
 		   64, 64, (void*)image, 64 * 4, 0, 0);
     ctx->transfer_unmap(ctx, transfer);
-    ctx->transfer_destroy(ctx, transfer);
     ctx->flush(ctx, &fence);
 
     if (fence) {

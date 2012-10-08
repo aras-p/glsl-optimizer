@@ -45,27 +45,18 @@
  * Move raw block of pixels from transfer object to user memory.
  */
 void
-pipe_get_tile_raw(struct pipe_context *pipe,
-                  struct pipe_transfer *pt,
+pipe_get_tile_raw(struct pipe_transfer *pt,
+                  const void *src,
                   uint x, uint y, uint w, uint h,
                   void *dst, int dst_stride)
 {
-   const void *src;
-
    if (dst_stride == 0)
       dst_stride = util_format_get_stride(pt->resource->format, w);
 
    if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
-   src = pipe->transfer_map(pipe, pt);
-   assert(src);
-   if(!src)
-      return;
-
    util_copy_rect(dst, pt->resource->format, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
-
-   pipe->transfer_unmap(pipe, pt);
 }
 
 
@@ -73,12 +64,11 @@ pipe_get_tile_raw(struct pipe_context *pipe,
  * Move raw block of pixels from user memory to transfer object.
  */
 void
-pipe_put_tile_raw(struct pipe_context *pipe,
-                  struct pipe_transfer *pt,
+pipe_put_tile_raw(struct pipe_transfer *pt,
+                  void *dst,
                   uint x, uint y, uint w, uint h,
                   const void *src, int src_stride)
 {
-   void *dst;
    enum pipe_format format = pt->resource->format;
 
    if (src_stride == 0)
@@ -87,14 +77,7 @@ pipe_put_tile_raw(struct pipe_context *pipe,
    if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
-   dst = pipe->transfer_map(pipe, pt);
-   assert(dst);
-   if(!dst)
-      return;
-
    util_copy_rect(dst, format, pt->stride, x, y, w, h, src, src_stride, 0, 0);
-
-   pipe->transfer_unmap(pipe, pt);
 }
 
 
@@ -372,7 +355,7 @@ x32_s8_get_tile_rgba(const unsigned *src,
 
 void
 pipe_tile_raw_to_rgba(enum pipe_format format,
-                      void *src,
+                      const void *src,
                       uint w, uint h,
                       float *dst, unsigned dst_stride)
 {
@@ -419,7 +402,7 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
 
 void
 pipe_tile_raw_to_unsigned(enum pipe_format format,
-                          void *src,
+                          const void *src,
                           uint w, uint h,
                           unsigned *dst, unsigned dst_stride)
 {
@@ -442,18 +425,18 @@ pipe_tile_raw_to_signed(enum pipe_format format,
 }
 
 void
-pipe_get_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_transfer *pt,
+pipe_get_tile_rgba(struct pipe_transfer *pt,
+                   const void *src,
                    uint x, uint y, uint w, uint h,
                    float *p)
 {
-   pipe_get_tile_rgba_format(pipe, pt, x, y, w, h, pt->resource->format, p);
+   pipe_get_tile_rgba_format(pt, src, x, y, w, h, pt->resource->format, p);
 }
 
 
 void
-pipe_get_tile_rgba_format(struct pipe_context *pipe,
-                          struct pipe_transfer *pt,
+pipe_get_tile_rgba_format(struct pipe_transfer *pt,
+                          const void *src,
                           uint x, uint y, uint w, uint h,
                           enum pipe_format format,
                           float *p)
@@ -474,7 +457,7 @@ pipe_get_tile_rgba_format(struct pipe_context *pipe,
       assert((x & 1) == 0);
    }
 
-   pipe_get_tile_raw(pipe, pt, x, y, w, h, packed, 0);
+   pipe_get_tile_raw(pt, src, x, y, w, h, packed, 0);
 
    pipe_tile_raw_to_rgba(format, packed, w, h, p, dst_stride);
 
@@ -483,18 +466,18 @@ pipe_get_tile_rgba_format(struct pipe_context *pipe,
 
 
 void
-pipe_put_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_transfer *pt,
+pipe_put_tile_rgba(struct pipe_transfer *pt,
+                   void *dst,
                    uint x, uint y, uint w, uint h,
                    const float *p)
 {
-   pipe_put_tile_rgba_format(pipe, pt, x, y, w, h, pt->resource->format, p);
+   pipe_put_tile_rgba_format(pt, dst, x, y, w, h, pt->resource->format, p);
 }
 
 
 void
-pipe_put_tile_rgba_format(struct pipe_context *pipe,
-                          struct pipe_transfer *pt,
+pipe_put_tile_rgba_format(struct pipe_transfer *pt,
+                          void *dst,
                           uint x, uint y, uint w, uint h,
                           enum pipe_format format,
                           const float *p)
@@ -538,14 +521,14 @@ pipe_put_tile_rgba_format(struct pipe_context *pipe,
                            0, 0, w, h);
    }
 
-   pipe_put_tile_raw(pipe, pt, x, y, w, h, packed, 0);
+   pipe_put_tile_raw(pt, dst, x, y, w, h, packed, 0);
 
    FREE(packed);
 }
 
 void
-pipe_put_tile_i_format(struct pipe_context *pipe,
-                       struct pipe_transfer *pt,
+pipe_put_tile_i_format(struct pipe_transfer *pt,
+                       void *dst,
                        uint x, uint y, uint w, uint h,
                        enum pipe_format format,
                        const int *p)
@@ -566,14 +549,14 @@ pipe_put_tile_i_format(struct pipe_context *pipe,
                         packed, util_format_get_stride(format, w),
                         0, 0, w, h);
 
-   pipe_put_tile_raw(pipe, pt, x, y, w, h, packed, 0);
+   pipe_put_tile_raw(pt, dst, x, y, w, h, packed, 0);
 
    FREE(packed);
 }
 
 void
-pipe_put_tile_ui_format(struct pipe_context *pipe,
-                        struct pipe_transfer *pt,
+pipe_put_tile_ui_format(struct pipe_transfer *pt,
+                        void *dst,
                         uint x, uint y, uint w, uint h,
                         enum pipe_format format,
                         const unsigned int *p)
@@ -594,7 +577,7 @@ pipe_put_tile_ui_format(struct pipe_context *pipe,
                          packed, util_format_get_stride(format, w),
                          0, 0, w, h);
 
-   pipe_put_tile_raw(pipe, pt, x, y, w, h, packed, 0);
+   pipe_put_tile_raw(pt, dst, x, y, w, h, packed, 0);
 
    FREE(packed);
 }
@@ -603,25 +586,19 @@ pipe_put_tile_ui_format(struct pipe_context *pipe,
  * Get a block of Z values, converted to 32-bit range.
  */
 void
-pipe_get_tile_z(struct pipe_context *pipe,
-                struct pipe_transfer *pt,
+pipe_get_tile_z(struct pipe_transfer *pt,
+                const void *src,
                 uint x, uint y, uint w, uint h,
                 uint *z)
 {
    const uint dstStride = w;
-   ubyte *map;
+   const ubyte *map = src;
    uint *pDest = z;
    uint i, j;
    enum pipe_format format = pt->resource->format;
 
    if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
-
-   map = (ubyte *)pipe->transfer_map(pipe, pt);
-   if (!map) {
-      assert(0);
-      return;
-   }
 
    switch (format) {
    case PIPE_FORMAT_Z32_UNORM:
@@ -704,31 +681,23 @@ pipe_get_tile_z(struct pipe_context *pipe,
    default:
       assert(0);
    }
-
-   pipe->transfer_unmap(pipe, pt);
 }
 
 
 void
-pipe_put_tile_z(struct pipe_context *pipe,
-                struct pipe_transfer *pt,
+pipe_put_tile_z(struct pipe_transfer *pt,
+                void *dst,
                 uint x, uint y, uint w, uint h,
                 const uint *zSrc)
 {
    const uint srcStride = w;
    const uint *ptrc = zSrc;
-   ubyte *map;
+   ubyte *map = dst;
    uint i, j;
    enum pipe_format format = pt->resource->format;
 
    if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
-
-   map = (ubyte *)pipe->transfer_map(pipe, pt);
-   if (!map) {
-      assert(0);
-      return;
-   }
 
    switch (format) {
    case PIPE_FORMAT_Z32_UNORM:
@@ -825,14 +794,12 @@ pipe_put_tile_z(struct pipe_context *pipe,
    default:
       assert(0);
    }
-
-   pipe->transfer_unmap(pipe, pt);
 }
 
 
 void
-pipe_get_tile_ui_format(struct pipe_context *pipe,
-                        struct pipe_transfer *pt,
+pipe_get_tile_ui_format(struct pipe_transfer *pt,
+                        const void *src,
                         uint x, uint y, uint w, uint h,
                         enum pipe_format format,
                         unsigned int *p)
@@ -853,7 +820,7 @@ pipe_get_tile_ui_format(struct pipe_context *pipe,
       assert((x & 1) == 0);
    }
 
-   pipe_get_tile_raw(pipe, pt, x, y, w, h, packed, 0);
+   pipe_get_tile_raw(pt, src, x, y, w, h, packed, 0);
 
    pipe_tile_raw_to_unsigned(format, packed, w, h, p, dst_stride);
 
@@ -862,8 +829,8 @@ pipe_get_tile_ui_format(struct pipe_context *pipe,
 
 
 void
-pipe_get_tile_i_format(struct pipe_context *pipe,
-                       struct pipe_transfer *pt,
+pipe_get_tile_i_format(struct pipe_transfer *pt,
+                       const void *src,
                        uint x, uint y, uint w, uint h,
                        enum pipe_format format,
                        int *p)
@@ -884,7 +851,7 @@ pipe_get_tile_i_format(struct pipe_context *pipe,
       assert((x & 1) == 0);
    }
 
-   pipe_get_tile_raw(pipe, pt, x, y, w, h, packed, 0);
+   pipe_get_tile_raw(pt, src, x, y, w, h, packed, 0);
 
    pipe_tile_raw_to_signed(format, packed, w, h, p, dst_stride);
 

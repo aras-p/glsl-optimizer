@@ -145,27 +145,23 @@ util_resource_copy_region(struct pipe_context *pipe,
    src_format = src->format;
    dst_format = dst->format;
 
-   src_trans = pipe_get_transfer(pipe,
-                                 src,
-                                 src_level,
-                                 src_box->z,
-                                 PIPE_TRANSFER_READ,
-                                 src_box->x, src_box->y, w, h);
+   src_map = pipe_transfer_map(pipe,
+                               src,
+                               src_level,
+                               src_box->z,
+                               PIPE_TRANSFER_READ,
+                               src_box->x, src_box->y, w, h, &src_trans);
 
-   dst_trans = pipe_get_transfer(pipe,
-                                 dst,
-                                 dst_level,
-                                 dst_z,
-                                 PIPE_TRANSFER_WRITE,
-                                 dst_x, dst_y, w, h);
+   dst_map = pipe_transfer_map(pipe,
+                               dst,
+                               dst_level,
+                               dst_z,
+                               PIPE_TRANSFER_WRITE,
+                               dst_x, dst_y, w, h, &dst_trans);
 
    assert(util_format_get_blocksize(dst_format) == util_format_get_blocksize(src_format));
    assert(util_format_get_blockwidth(dst_format) == util_format_get_blockwidth(src_format));
    assert(util_format_get_blockheight(dst_format) == util_format_get_blockheight(src_format));
-
-   src_map = pipe->transfer_map(pipe, src_trans);
-   dst_map = pipe->transfer_map(pipe, dst_trans);
-
    assert(src_map);
    assert(dst_map);
 
@@ -187,9 +183,6 @@ util_resource_copy_region(struct pipe_context *pipe,
 
    pipe->transfer_unmap(pipe, src_trans);
    pipe->transfer_unmap(pipe, dst_trans);
-
-   pipe->transfer_destroy(pipe, src_trans);
-   pipe->transfer_destroy(pipe, dst_trans);
 }
 
 
@@ -219,14 +212,12 @@ util_clear_render_target(struct pipe_context *pipe,
    if (!dst->texture)
       return;
    /* XXX: should handle multiple layers */
-   dst_trans = pipe_get_transfer(pipe,
-                                 dst->texture,
-                                 dst->u.tex.level,
-                                 dst->u.tex.first_layer,
-                                 PIPE_TRANSFER_WRITE,
-                                 dstx, dsty, width, height);
-
-   dst_map = pipe->transfer_map(pipe, dst_trans);
+   dst_map = pipe_transfer_map(pipe,
+                               dst->texture,
+                               dst->u.tex.level,
+                               dst->u.tex.first_layer,
+                               PIPE_TRANSFER_WRITE,
+                               dstx, dsty, width, height, &dst_trans);
 
    assert(dst_map);
 
@@ -237,10 +228,9 @@ util_clear_render_target(struct pipe_context *pipe,
       util_fill_rect(dst_map, dst->texture->format,
                      dst_trans->stride,
                      0, 0, width, height, &uc);
-   }
 
-   pipe->transfer_unmap(pipe, dst_trans);
-   pipe->transfer_destroy(pipe, dst_trans);
+      pipe->transfer_unmap(pipe, dst_trans);
+   }
 }
 
 /**
@@ -270,16 +260,13 @@ util_clear_depth_stencil(struct pipe_context *pipe,
    assert(dst->texture);
    if (!dst->texture)
       return;
-   dst_trans = pipe_get_transfer(pipe,
-                                 dst->texture,
-                                 dst->u.tex.level,
-                                 dst->u.tex.first_layer,
-                                 (need_rmw ? PIPE_TRANSFER_READ_WRITE :
-                                     PIPE_TRANSFER_WRITE),
-                                 dstx, dsty, width, height);
-
-   dst_map = pipe->transfer_map(pipe, dst_trans);
-
+   dst_map = pipe_transfer_map(pipe,
+                               dst->texture,
+                               dst->u.tex.level,
+                               dst->u.tex.first_layer,
+                               (need_rmw ? PIPE_TRANSFER_READ_WRITE :
+                                           PIPE_TRANSFER_WRITE),
+                               dstx, dsty, width, height, &dst_trans);
    assert(dst_map);
 
    if (dst_map) {
@@ -376,8 +363,7 @@ util_clear_depth_stencil(struct pipe_context *pipe,
          assert(0);
          break;
       }
-   }
 
-   pipe->transfer_unmap(pipe, dst_trans);
-   pipe->transfer_destroy(pipe, dst_trans);
+      pipe->transfer_unmap(pipe, dst_trans);
+   }
 }

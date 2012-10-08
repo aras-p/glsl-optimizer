@@ -381,20 +381,13 @@ vl_zscan_layout(struct pipe_context *pipe, const int layout[64], unsigned blocks
    if (!res)
       goto error_resource;
 
-   buf_transfer = pipe->get_transfer
-   (
-      pipe, res,
-      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
-      &rect
-   );
-   if (!buf_transfer)
-      goto error_transfer;
-
-   pitch = buf_transfer->stride / sizeof(float);
-
-   f = pipe->transfer_map(pipe, buf_transfer);
+   f = pipe->transfer_map(pipe, res,
+                          0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
+                          &rect, &buf_transfer);
    if (!f)
       goto error_map;
+
+   pitch = buf_transfer->stride / sizeof(float);
 
    for (i = 0; i < blocks_per_line; ++i)
       for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
@@ -408,7 +401,6 @@ vl_zscan_layout(struct pipe_context *pipe, const int layout[64], unsigned blocks
          }
 
    pipe->transfer_unmap(pipe, buf_transfer);
-   pipe->transfer_destroy(pipe, buf_transfer);
 
    memset(&sv_tmpl, 0, sizeof(sv_tmpl));
    u_sampler_view_default_template(&sv_tmpl, res, res->format);
@@ -420,9 +412,6 @@ vl_zscan_layout(struct pipe_context *pipe, const int layout[64], unsigned blocks
    return sv;
 
 error_map:
-   pipe->transfer_destroy(pipe, buf_transfer);
-
-error_transfer:
    pipe_resource_reference(&res, NULL);
 
 error_resource:
@@ -560,20 +549,14 @@ vl_zscan_upload_quant(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
 
    rect.width *= zscan->blocks_per_line;
 
-   buf_transfer = pipe->get_transfer
-   (
-      pipe, buffer->quant->texture,
-      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
-      &rect
-   );
-   if (!buf_transfer)
-      goto error_transfer;
+   data = pipe->transfer_map(pipe, buffer->quant->texture,
+                             0, PIPE_TRANSFER_WRITE |
+                             PIPE_TRANSFER_DISCARD_RANGE,
+                             &rect, &buf_transfer);
+   if (!data)
+      return;
 
    pitch = buf_transfer->stride;
-
-   data = pipe->transfer_map(pipe, buf_transfer);
-   if (!data)
-      goto error_map;
 
    for (i = 0; i < zscan->blocks_per_line; ++i)
       for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
@@ -581,12 +564,6 @@ vl_zscan_upload_quant(struct vl_zscan *zscan, struct vl_zscan_buffer *buffer,
             data[i * VL_BLOCK_WIDTH + y * pitch + x] = matrix[x + y * VL_BLOCK_WIDTH];
 
    pipe->transfer_unmap(pipe, buf_transfer);
-
-error_map:
-   pipe->transfer_destroy(pipe, buf_transfer);
-
-error_transfer:
-   return;
 }
 
 void

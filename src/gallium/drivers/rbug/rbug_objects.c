@@ -184,7 +184,7 @@ rbug_transfer_create(struct rbug_context *rb_context,
    return &rb_transfer->base;
 
 error:
-   rb_context->pipe->transfer_destroy(rb_context->pipe, transfer);
+   rb_context->pipe->transfer_unmap(rb_context->pipe, transfer);
    return NULL;
 }
 
@@ -193,8 +193,6 @@ rbug_transfer_destroy(struct rbug_context *rb_context,
                       struct rbug_transfer *rb_transfer)
 {
    pipe_resource_reference(&rb_transfer->base.resource, NULL);
-   rb_transfer->pipe->transfer_destroy(rb_context->pipe,
-                                       rb_transfer->transfer);
    FREE(rb_transfer);
 }
 

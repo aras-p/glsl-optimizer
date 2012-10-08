@@ -139,7 +139,7 @@ trace_transfer_create(struct trace_context *tr_ctx,
    return &tr_trans->base;
 
 error:
-   tr_ctx->pipe->transfer_destroy(tr_ctx->pipe, transfer);
+   tr_ctx->pipe->transfer_unmap(tr_ctx->pipe, transfer);
    return NULL;
 }
 
@@ -148,11 +148,7 @@ void
 trace_transfer_destroy(struct trace_context *tr_context,
                        struct trace_transfer *tr_trans)
 {
-   struct pipe_context *context = tr_context->pipe;
-   struct pipe_transfer *transfer = tr_trans->transfer;
-
    pipe_resource_reference(&tr_trans->base.resource, NULL);
-   context->transfer_destroy(context, transfer);
    FREE(tr_trans);
 }
 

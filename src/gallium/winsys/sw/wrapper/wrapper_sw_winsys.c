@@ -90,17 +90,18 @@ wsw_dt_get_stride(struct wrapper_sw_displaytarget *wdt, unsigned *stride)
    struct pipe_context *pipe = wdt->winsys->pipe;
    struct pipe_resource *tex = wdt->tex;
    struct pipe_transfer *tr;
+   void *map;
 
-   tr = pipe_get_transfer(pipe, tex, 0, 0,
-                          PIPE_TRANSFER_READ_WRITE,
-                          0, 0, wdt->tex->width0, wdt->tex->height0);
-   if (!tr)
+   map = pipe_transfer_map(pipe, tex, 0, 0,
+                           PIPE_TRANSFER_READ_WRITE,
+                           0, 0, wdt->tex->width0, wdt->tex->height0, &tr);
+   if (!map)
       return FALSE;
 
    *stride = tr->stride;
    wdt->stride = tr->stride;
 
-   pipe->transfer_destroy(pipe, tr);
+   pipe->transfer_unmap(pipe, tr);
 
    return TRUE;
 }
@@ -204,13 +205,9 @@ wsw_dt_map(struct sw_winsys *ws,
 
       assert(!wdt->transfer);
 
-      tr = pipe_get_transfer(pipe, tex, 0, 0,
-                             PIPE_TRANSFER_READ_WRITE,
-                             0, 0, wdt->tex->width0, wdt->tex->height0);
-      if (!tr)
-         return NULL;
-
-      ptr = pipe->transfer_map(pipe, tr);
+      ptr = pipe_transfer_map(pipe, tex, 0, 0,
+                              PIPE_TRANSFER_READ_WRITE,
+                              0, 0, wdt->tex->width0, wdt->tex->height0, &tr);
       if (!ptr)
         goto err;
 
@@ -226,7 +223,7 @@ wsw_dt_map(struct sw_winsys *ws,
    return wdt->ptr;
 
 err:
-   pipe->transfer_destroy(pipe, tr);
+   pipe->transfer_unmap(pipe, tr);
    return NULL;
 }
 
@@ -245,7 +242,6 @@ wsw_dt_unmap(struct sw_winsys *ws,
       return;
 
    pipe->transfer_unmap(pipe, wdt->transfer);
-   pipe->transfer_destroy(pipe, wdt->transfer);
    pipe->flush(pipe, NULL);
    wdt->transfer = NULL;
 }

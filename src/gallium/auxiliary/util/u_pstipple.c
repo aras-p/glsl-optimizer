@@ -69,9 +69,8 @@ util_pstipple_update_stipple_texture(struct pipe_context *pipe,
    int i, j;
 
    /* map texture memory */
-   transfer = pipe_get_transfer(pipe, tex, 0, 0,
-                                PIPE_TRANSFER_WRITE, 0, 0, 32, 32);
-   data = pipe->transfer_map(pipe, transfer);
+   data = pipe_transfer_map(pipe, tex, 0, 0,
+                            PIPE_TRANSFER_WRITE, 0, 0, 32, 32, &transfer);
 
    /*
     * Load alpha texture.
@@ -94,7 +93,6 @@ util_pstipple_update_stipple_texture(struct pipe_context *pipe,
 
    /* unmap */
    pipe->transfer_unmap(pipe, transfer);
-   pipe->transfer_destroy(pipe, transfer);
 }
 
 

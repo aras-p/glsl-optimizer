@@ -60,14 +60,16 @@ i915_buffer_destroy(struct pipe_screen *screen,
 }
 
 
-static struct pipe_transfer *
-i915_get_transfer(struct pipe_context *pipe,
-                  struct pipe_resource *resource,
-                  unsigned level,
-                  unsigned usage,
-                  const struct pipe_box *box)
+static void *
+i915_buffer_transfer_map(struct pipe_context *pipe,
+                         struct pipe_resource *resource,
+                         unsigned level,
+                         unsigned usage,
+                         const struct pipe_box *box,
+                         struct pipe_transfer **ptransfer)
 {
    struct i915_context *i915 = i915_context(pipe);
+   struct i915_buffer *buffer = i915_buffer(resource);
    struct pipe_transfer *transfer = util_slab_alloc(&i915->transfer_pool);
 
    if (transfer == NULL)
@@ -77,29 +79,18 @@ i915_get_transfer(struct pipe_context *pipe,
    transfer->level = level;
    transfer->usage = usage;
    transfer->box = *box;
+   *ptransfer = transfer;
 
-   /* Note strides are zero, this is ok for buffers, but not for
-    * textures 2d & higher at least. 
-    */
-   return transfer;
+   return buffer->data + transfer->box.x;
 }
 
 static void
-i915_transfer_destroy(struct pipe_context *pipe,
-                      struct pipe_transfer *transfer)
+i915_buffer_transfer_unmap(struct pipe_context *pipe,
+                           struct pipe_transfer *transfer)
 {
    struct i915_context *i915 = i915_context(pipe);
    util_slab_free(&i915->transfer_pool, transfer);
 }
-
-static void *
-i915_buffer_transfer_map( struct pipe_context *pipe,
-                          struct pipe_transfer *transfer )
-{
-   struct i915_buffer *buffer = i915_buffer(transfer->resource);
-   return buffer->data + transfer->box.x;
-}
-
 
 static void
 i915_buffer_transfer_inline_write( struct pipe_context *rm_ctx,
@@ -123,11 +114,9 @@ struct u_resource_vtbl i915_buffer_vtbl =
 {
    i915_buffer_get_handle,	     /* get_handle */
    i915_buffer_destroy,		     /* resource_destroy */
-   i915_get_transfer,		     /* get_transfer */
-   i915_transfer_destroy,	     /* transfer_destroy */
    i915_buffer_transfer_map,	     /* transfer_map */
    u_default_transfer_flush_region,  /* transfer_flush_region */
-   u_default_transfer_unmap,	     /* transfer_unmap */
+   i915_buffer_transfer_unmap,	     /* transfer_unmap */
    i915_buffer_transfer_inline_write /* transfer_inline_write */
 };
 

@@ -453,27 +453,22 @@ void compute_memory_transfer(
 		"offset_in_chunk = %d, size = %d\n", device_to_host,
 		offset_in_chunk, size);
 
-	if (device_to_host)
-	{
-		xfer = pipe->get_transfer(pipe, gart, 0, PIPE_TRANSFER_READ,
+	if (device_to_host) {
+		map = pipe->transfer_map(pipe, gart, 0, PIPE_TRANSFER_READ,
 			&(struct pipe_box) { .width = aligned_size,
-			.height = 1, .depth = 1 });
-		assert(xfer);
-		map = pipe->transfer_map(pipe, xfer);
+			.height = 1, .depth = 1 }, &xfer);
+                assert(xfer);
 		assert(map);
 		memcpy(data, map + internal_offset, size);
 		pipe->transfer_unmap(pipe, xfer);
-		pipe->transfer_destroy(pipe, xfer);
 	} else {
-		xfer = pipe->get_transfer(pipe, gart, 0, PIPE_TRANSFER_WRITE,
+		map = pipe->transfer_map(pipe, gart, 0, PIPE_TRANSFER_WRITE,
 			&(struct pipe_box) { .width = aligned_size,
-			.height = 1, .depth = 1 });
+			.height = 1, .depth = 1 }, &xfer);
 		assert(xfer);
-		map = pipe->transfer_map(pipe, xfer);
 		assert(map);
 		memcpy(map + internal_offset, data, size);
 		pipe->transfer_unmap(pipe, xfer);
-		pipe->transfer_destroy(pipe, xfer);
 	}
 }
 

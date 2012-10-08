@@ -442,24 +442,26 @@ void vegaReadPixels(void * data, VGint dataStride,
    {
       VGint y = (stfb->height - sy) - 1, yStep = -1;
       struct pipe_transfer *transfer;
+      void *map;
 
-      transfer = pipe_get_transfer(pipe, strb->texture,  0, 0,
-                                   PIPE_TRANSFER_READ,
-                                   0, 0, sx + width, stfb->height - sy);
+      map = pipe_transfer_map(pipe, strb->texture,  0, 0,
+                              PIPE_TRANSFER_READ,
+                              0, 0, sx + width, stfb->height - sy,
+                              &transfer);
 
       /* Do a row at a time to flip image data vertically */
       for (i = 0; i < height; i++) {
 #if 0
          debug_printf("%d-%d  == %d\n", sy, height, y);
 #endif
-         pipe_get_tile_rgba(pipe, transfer, sx, y, width, 1, df);
+         pipe_get_tile_rgba(transfer, map, sx, y, width, 1, df);
          y += yStep;
          _vega_pack_rgba_span_float(ctx, width, temp, dataFormat,
                                     dst + yoffset + xoffset);
          dst += dataStride;
       }
 
-      pipe->transfer_destroy(pipe, transfer);
+      pipe->transfer_unmap(pipe, transfer);
    }
 }
 

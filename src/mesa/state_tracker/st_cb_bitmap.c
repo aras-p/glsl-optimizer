@@ -306,11 +306,9 @@ make_bitmap_texture(struct gl_context *ctx, GLsizei width, GLsizei height,
       return NULL;
    }
 
-   transfer = pipe_get_transfer(st->pipe, pt, 0, 0,
-                                PIPE_TRANSFER_WRITE,
-                                0, 0, width, height);
-
-   dest = pipe_transfer_map(pipe, transfer);
+   dest = pipe_transfer_map(st->pipe, pt, 0, 0,
+                            PIPE_TRANSFER_WRITE,
+                            0, 0, width, height, &transfer);
 
    /* Put image into texture transfer */
    memset(dest, 0xff, height * transfer->stride);
@@ -321,8 +319,6 @@ make_bitmap_texture(struct gl_context *ctx, GLsizei width, GLsizei height,
 
    /* Release transfer */
    pipe_transfer_unmap(pipe, transfer);
-   pipe->transfer_destroy(pipe, transfer);
-
    return pt;
 }
 
@@ -611,11 +607,10 @@ create_cache_trans(struct st_context *st)
    /* Map the texture transfer.
     * Subsequent glBitmap calls will write into the texture image.
     */
-   cache->trans = pipe_get_transfer(st->pipe, cache->texture, 0, 0,
-                                    PIPE_TRANSFER_WRITE, 0, 0,
-                                    BITMAP_CACHE_WIDTH,
-                                    BITMAP_CACHE_HEIGHT);
-   cache->buffer = pipe_transfer_map(pipe, cache->trans);
+   cache->buffer = pipe_transfer_map(pipe, cache->texture, 0, 0,
+                                     PIPE_TRANSFER_WRITE, 0, 0,
+                                     BITMAP_CACHE_WIDTH,
+                                     BITMAP_CACHE_HEIGHT, &cache->trans);
 
    /* init image to all 0xff */
    memset(cache->buffer, 0xff, cache->trans->stride * BITMAP_CACHE_HEIGHT);
@@ -645,13 +640,11 @@ st_flush_bitmap_cache(struct st_context *st)
       /* The texture transfer has been mapped until now.
           * So unmap and release the texture transfer before drawing.
           */
-      if (cache->trans) {
+      if (cache->trans && cache->buffer) {
          if (0)
             print_cache(cache);
          pipe_transfer_unmap(pipe, cache->trans);
          cache->buffer = NULL;
-
-         pipe->transfer_destroy(pipe, cache->trans);
          cache->trans = NULL;
       }
 
@@ -867,9 +860,8 @@ st_destroy_bitmap(struct st_context *st)
    }
 
    if (cache) {
-      if (cache->trans) {
+      if (cache->trans && cache->buffer) {
          pipe_transfer_unmap(pipe, cache->trans);
-         pipe->transfer_destroy(pipe, cache->trans);
       }
       pipe_resource_reference(&st->bitmap.cache->texture, NULL);
       free(st->bitmap.cache);

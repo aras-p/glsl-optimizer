@@ -708,6 +708,7 @@ st_MapRenderbuffer(struct gl_context *ctx,
    const GLboolean invert = rb->Name == 0;
    unsigned usage;
    GLuint y2;
+   GLubyte *map;
 
    if (strb->software) {
       /* software-allocated renderbuffer (probably an accum buffer) */
@@ -742,13 +743,12 @@ st_MapRenderbuffer(struct gl_context *ctx,
    else
       y2 = y;
 
-   strb->transfer = pipe_get_transfer(pipe,
-                                      strb->texture,
-                                      strb->rtt_level,
-                                      strb->rtt_face + strb->rtt_slice,
-                                      usage, x, y2, w, h);
-   if (strb->transfer) {
-      GLubyte *map = pipe_transfer_map(pipe, strb->transfer);
+    map = pipe_transfer_map(pipe,
+                            strb->texture,
+                            strb->rtt_level,
+                            strb->rtt_face + strb->rtt_slice,
+                            usage, x, y2, w, h, &strb->transfer);
+   if (map) {
       if (invert) {
          *rowStrideOut = -strb->transfer->stride;
          map += (h - 1) * strb->transfer->stride;
@@ -782,7 +782,6 @@ st_UnmapRenderbuffer(struct gl_context *ctx,
    }
 
    pipe_transfer_unmap(pipe, strb->transfer);
-   pipe->transfer_destroy(pipe, strb->transfer);
    strb->transfer = NULL;
 }
 

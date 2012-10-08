@@ -516,14 +516,12 @@ void debug_dump_surface(struct pipe_context *pipe,
     */
    texture = surface->texture;
 
-   transfer = pipe_get_transfer(pipe, texture, surface->u.tex.level,
-                                surface->u.tex.first_layer,
-                                PIPE_TRANSFER_READ,
-                                0, 0, surface->width, surface->height);
-
-   data = pipe->transfer_map(pipe, transfer);
+   data = pipe_transfer_map(pipe, texture, surface->u.tex.level,
+                            surface->u.tex.first_layer,
+                            PIPE_TRANSFER_READ,
+                            0, 0, surface->width, surface->height, &transfer);
    if(!data)
-      goto error;
+      return;
 
    debug_dump_image(prefix,
                     texture->format,
@@ -534,8 +532,6 @@ void debug_dump_surface(struct pipe_context *pipe,
                     data);
 
    pipe->transfer_unmap(pipe, transfer);
-error:
-   pipe->transfer_destroy(pipe, transfer);
 }
 
 
@@ -597,20 +593,21 @@ debug_dump_surface_bmp(struct pipe_context *pipe,
 {
    struct pipe_transfer *transfer;
    struct pipe_resource *texture = surface->texture;
+   void *ptr;
 
-   transfer = pipe_get_transfer(pipe, texture, surface->u.tex.level,
-                                surface->u.tex.first_layer, PIPE_TRANSFER_READ,
-                                0, 0, surface->width, surface->height);
+   ptr = pipe_transfer_map(pipe, texture, surface->u.tex.level,
+                           surface->u.tex.first_layer, PIPE_TRANSFER_READ,
+                           0, 0, surface->width, surface->height, &transfer);
 
-   debug_dump_transfer_bmp(pipe, filename, transfer);
+   debug_dump_transfer_bmp(pipe, filename, transfer, ptr);
 
-   pipe->transfer_destroy(pipe, transfer);
+   pipe->transfer_unmap(pipe, transfer);
 }
 
 void
 debug_dump_transfer_bmp(struct pipe_context *pipe,
                         const char *filename,
-                        struct pipe_transfer *transfer)
+                        struct pipe_transfer *transfer, void *ptr)
 {
    float *rgba;
 
@@ -624,7 +621,7 @@ debug_dump_transfer_bmp(struct pipe_context *pipe,
    if(!rgba)
       goto error1;
 
-   pipe_get_tile_rgba(pipe, transfer, 0, 0,
+   pipe_get_tile_rgba(pipe, transfer, ptr, 0, 0,
                       transfer->box.width, transfer->box.height,
                       rgba);
 

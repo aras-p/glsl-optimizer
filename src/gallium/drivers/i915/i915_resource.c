@@ -31,11 +31,9 @@ i915_resource_from_handle(struct pipe_screen * screen,
 void
 i915_init_resource_functions(struct i915_context *i915 )
 {
-   i915->base.get_transfer = u_get_transfer_vtbl;
    i915->base.transfer_map = u_transfer_map_vtbl;
    i915->base.transfer_flush_region = u_transfer_flush_region_vtbl;
    i915->base.transfer_unmap = u_transfer_unmap_vtbl;
-   i915->base.transfer_destroy = u_transfer_destroy_vtbl;
    i915->base.transfer_inline_write = u_transfer_inline_write_vtbl;
 }
 

@@ -242,12 +242,10 @@ static void init_tex( void )
    {
       struct pipe_transfer *t;
       uint32_t *ptr;
-      t = pipe_get_transfer(ctx, samptex,
-                            0, 0, /* level, layer */
-                            PIPE_TRANSFER_READ,
-                            0, 0, SIZE, SIZE); /* x, y, width, height */
-
-      ptr = ctx->transfer_map(ctx, t);
+      ptr = pipe_transfer_map(ctx, samptex,
+                              0, 0, /* level, layer */
+                              PIPE_TRANSFER_READ,
+                              0, 0, SIZE, SIZE, &t); /* x, y, width, height */
 
       if (memcmp(ptr, tex2d, sizeof tex2d) != 0) {
          assert(0);
@@ -255,8 +253,6 @@ static void init_tex( void )
       }
 
       ctx->transfer_unmap(ctx, t);
-
-      ctx->transfer_destroy(ctx, t);
    }
 
    memset(&sv_template, 0, sizeof sv_template);

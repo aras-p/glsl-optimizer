@@ -173,20 +173,16 @@ upload_sampler(struct pipe_context *pipe, struct pipe_sampler_view *dst,
    struct pipe_transfer *transfer;
    void *map;
 
-   transfer = pipe->get_transfer(pipe, dst->texture, 0, PIPE_TRANSFER_WRITE, dst_box);
-   if (!transfer)
+   map = pipe->transfer_map(pipe, dst->texture, 0, PIPE_TRANSFER_WRITE,
+                            dst_box, &transfer);
+   if (!map)
       return;
 
-   map = pipe->transfer_map(pipe, transfer);
-   if (map) {
-      util_copy_rect(map, dst->texture->format, transfer->stride, 0, 0,
-                     dst_box->width, dst_box->height,
-                     src, src_stride, src_x, src_y);
+   util_copy_rect(map, dst->texture->format, transfer->stride, 0, 0,
+                  dst_box->width, dst_box->height,
+                  src, src_stride, src_x, src_y);
 
-      pipe->transfer_unmap(pipe, transfer);
-   }
-
-   pipe->transfer_destroy(pipe, transfer);
+   pipe->transfer_unmap(pipe, transfer);
 }
 
 PUBLIC
@@ -323,20 +319,15 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
    dst = subpicture_priv->sampler;
 
    /* TODO: Assert clear rect is within bounds? Or clip? */
-   transfer = pipe->get_transfer(pipe, dst->texture, 0, PIPE_TRANSFER_WRITE, &dst_box);
-   if (!transfer)
+   map = pipe->transfer_map(pipe, dst->texture, 0, PIPE_TRANSFER_WRITE,
+                            &dst_box, &transfer);
+   if (!map)
       return XvMCBadSubpicture;
 
-   map = pipe->transfer_map(pipe, transfer);
-   if (map) {
-      util_fill_rect(map, dst->texture->format, transfer->stride, 0, 0,
-                     dst_box.width, dst_box.height, &uc);
+   util_fill_rect(map, dst->texture->format, transfer->stride, 0, 0,
+                  dst_box.width, dst_box.height, &uc);
 
-      pipe->transfer_unmap(pipe, transfer);
-   }
-
-   pipe->transfer_destroy(pipe, transfer);
-
+   pipe->transfer_unmap(pipe, transfer);
    return Success;
 }
 

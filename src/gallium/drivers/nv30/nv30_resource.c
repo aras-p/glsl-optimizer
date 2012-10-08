@@ -66,11 +66,9 @@ nv30_resource_screen_init(struct pipe_screen *pscreen)
 void
 nv30_resource_init(struct pipe_context *pipe)
 {
-   pipe->get_transfer = u_get_transfer_vtbl;
    pipe->transfer_map = u_transfer_map_vtbl;
    pipe->transfer_flush_region = u_transfer_flush_region_vtbl;
    pipe->transfer_unmap = u_transfer_unmap_vtbl;
-   pipe->transfer_destroy = u_transfer_destroy_vtbl;
    pipe->transfer_inline_write = u_transfer_inline_write_vtbl;
    pipe->create_surface = nv30_miptree_surface_new;
    pipe->surface_destroy = nv30_miptree_surface_del;

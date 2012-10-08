@@ -177,14 +177,10 @@ mapping::mapping(command_queue &q, resource &r,
                      (flags & CL_MAP_READ ? PIPE_TRANSFER_READ : 0 ) |
                      (blocking ? PIPE_TRANSFER_UNSYNCHRONIZED : 0));
 
-   pxfer = pctx->get_transfer(pctx, r.pipe, 0, usage,
-                              box(origin + r.offset, region));
-   if (!pxfer)
-      throw error(CL_OUT_OF_RESOURCES);
-
-   p = pctx->transfer_map(pctx, pxfer);
+   p = pctx->transfer_map(pctx, r.pipe, 0, usage,
+                          box(origin + r.offset, region), &pxfer);
    if (!p) {
-      pctx->transfer_destroy(pctx, pxfer);
+      pxfer = NULL;
       throw error(CL_OUT_OF_RESOURCES);
    }
 }
@@ -198,6 +194,5 @@ mapping::mapping(mapping &&m) :
 mapping::~mapping() {
    if (pxfer) {
       pctx->transfer_unmap(pctx, pxfer);
-      pctx->transfer_destroy(pctx, pxfer);
    }
 }

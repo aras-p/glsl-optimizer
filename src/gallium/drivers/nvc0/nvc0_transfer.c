@@ -326,12 +326,13 @@ nve4_m2mf_copy_linear(struct nouveau_context *nv,
    nouveau_bufctx_reset(bctx, 0);
 }
 
-struct pipe_transfer *
-nvc0_miptree_transfer_new(struct pipe_context *pctx,
+void *
+nvc0_miptree_transfer_map(struct pipe_context *pctx,
                           struct pipe_resource *res,
                           unsigned level,
                           unsigned usage,
-                          const struct pipe_box *box)
+                          const struct pipe_box *box,
+                          struct pipe_transfer **ptransfer)
 {
    struct nvc0_context *nvc0 = nvc0_context(pctx);
    struct nouveau_device *dev = nvc0->screen->base.device;
@@ -339,6 +340,7 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    struct nvc0_transfer *tx;
    uint32_t size;
    int ret;
+   unsigned flags = 0;
 
    if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
       return NULL;
@@ -372,6 +374,7 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
                         size * tx->nlayers, NULL, &tx->rect[1].bo);
    if (ret) {
+      pipe_resource_reference(&tx->base.resource, NULL);
       FREE(tx);
       return NULL;
    }
@@ -401,12 +404,31 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
       tx->rect[1].base = 0;
    }
 
-   return &tx->base;
+   if (tx->rect[1].bo->map) {
+      *ptransfer = &tx->base;
+      return tx->rect[1].bo->map;
+   }
+
+   if (usage & PIPE_TRANSFER_READ)
+      flags = NOUVEAU_BO_RD;
+   if (usage & PIPE_TRANSFER_WRITE)
+      flags |= NOUVEAU_BO_WR;
+
+   ret = nouveau_bo_map(tx->rect[1].bo, flags, nvc0->screen->base.client);
+   if (ret) {
+      pipe_resource_reference(&tx->base.resource, NULL);
+      nouveau_bo_ref(NULL, &tx->rect[1].bo);
+      FREE(tx);
+      return NULL;
+   }
+
+   *ptransfer = &tx->base;
+   return tx->rect[1].bo->map;
 }
 
 void
-nvc0_miptree_transfer_del(struct pipe_context *pctx,
-                          struct pipe_transfer *transfer)
+nvc0_miptree_transfer_unmap(struct pipe_context *pctx,
+                            struct pipe_transfer *transfer)
 {
    struct nvc0_context *nvc0 = nvc0_context(pctx);
    struct nvc0_transfer *tx = (struct nvc0_transfer *)transfer;
@@ -429,35 +451,6 @@ nvc0_miptree_transfer_del(struct pipe_context *pctx,
    pipe_resource_reference(&transfer->resource, NULL);
 
    FREE(tx);
-}
-
-void *
-nvc0_miptree_transfer_map(struct pipe_context *pctx,
-                          struct pipe_transfer *transfer)
-{
-   struct nvc0_context *nvc0 = nvc0_context(pctx);
-   struct nvc0_transfer *tx = (struct nvc0_transfer *)transfer;
-   int ret;
-   unsigned flags = 0;
-
-   if (tx->rect[1].bo->map)
-      return tx->rect[1].bo->map;
-
-   if (transfer->usage & PIPE_TRANSFER_READ)
-      flags = NOUVEAU_BO_RD;
-   if (transfer->usage & PIPE_TRANSFER_WRITE)
-      flags |= NOUVEAU_BO_WR;
-
-   ret = nouveau_bo_map(tx->rect[1].bo, flags, nvc0->screen->base.client);
-   if (ret)
-      return NULL;
-   return tx->rect[1].bo->map;
-}
-
-void
-nvc0_miptree_transfer_unmap(struct pipe_context *pctx,
-                            struct pipe_transfer *transfer)
-{
 }
 
 void

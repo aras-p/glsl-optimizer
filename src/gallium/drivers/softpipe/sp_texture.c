@@ -331,15 +331,22 @@ softpipe_surface_destroy(struct pipe_context *pipe,
  * \param usage  bitmask of PIPE_TRANSFER_x flags
  * \param box  the 1D/2D/3D region of interest
  */
-static struct pipe_transfer *
-softpipe_get_transfer(struct pipe_context *pipe,
+static void *
+softpipe_transfer_map(struct pipe_context *pipe,
                       struct pipe_resource *resource,
                       unsigned level,
                       unsigned usage,
-                      const struct pipe_box *box)
+                      const struct pipe_box *box,
+                      struct pipe_transfer **transfer)
 {
+   struct sw_winsys *winsys = softpipe_screen(pipe->screen)->winsys;
    struct softpipe_resource *spr = softpipe_resource(resource);
    struct softpipe_transfer *spt;
+   struct pipe_transfer *pt;
+   enum pipe_format format = resource->format;
+   const unsigned hgt = u_minify(spr->base.height0, level);
+   const unsigned nblocksy = util_format_get_nblocksy(format, hgt);
+   uint8_t *map;
 
    assert(resource);
    assert(level <= resource->last_level);
@@ -384,69 +391,41 @@ softpipe_get_transfer(struct pipe_context *pipe,
    }
 
    spt = CALLOC_STRUCT(softpipe_transfer);
-   if (spt) {
-      struct pipe_transfer *pt = &spt->base;
-      enum pipe_format format = resource->format;
-      const unsigned hgt = u_minify(spr->base.height0, level);
-      const unsigned nblocksy = util_format_get_nblocksy(format, hgt);
+   if (!spt)
+      return NULL;
 
-      pipe_resource_reference(&pt->resource, resource);
-      pt->level = level;
-      pt->usage = usage;
-      pt->box = *box;
-      pt->stride = spr->stride[level];
-      pt->layer_stride = pt->stride * nblocksy;
+   pt = &spt->base;
 
-      spt->offset = sp_get_tex_image_offset(spr, level, box->z);
- 
-      spt->offset += 
+   pipe_resource_reference(&pt->resource, resource);
+   pt->level = level;
+   pt->usage = usage;
+   pt->box = *box;
+   pt->stride = spr->stride[level];
+   pt->layer_stride = pt->stride * nblocksy;
+
+   spt->offset = sp_get_tex_image_offset(spr, level, box->z);
+
+   spt->offset +=
          box->y / util_format_get_blockheight(format) * spt->base.stride +
          box->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 
-      return pt;
-   }
-   return NULL;
-}
-
-
-/**
- * Free a pipe_transfer object which was created with
- * softpipe_get_transfer().
- */
-static void 
-softpipe_transfer_destroy(struct pipe_context *pipe,
-                          struct pipe_transfer *transfer)
-{
-   pipe_resource_reference(&transfer->resource, NULL);
-   FREE(transfer);
-}
-
-
-/**
- * Create memory mapping for given pipe_transfer object.
- */
-static void *
-softpipe_transfer_map(struct pipe_context *pipe,
-                      struct pipe_transfer *transfer)
-{
-   struct softpipe_transfer *spt = softpipe_transfer(transfer);
-   struct softpipe_resource *spr = softpipe_resource(transfer->resource);
-   struct sw_winsys *winsys = softpipe_screen(pipe->screen)->winsys;
-   uint8_t *map;
-   
    /* resources backed by display target treated specially:
     */
    if (spr->dt) {
-      map = winsys->displaytarget_map(winsys, spr->dt, transfer->usage);
+      map = winsys->displaytarget_map(winsys, spr->dt, usage);
    }
    else {
       map = spr->data;
    }
 
-   if (map == NULL)
+   if (map == NULL) {
+      pipe_resource_reference(&pt->resource, NULL);
+      FREE(spt);
       return NULL;
-   else
-      return map + spt->offset;
+   }
+
+   *transfer = pt;
+   return map + spt->offset;
 }
 
 
@@ -472,6 +451,9 @@ softpipe_transfer_unmap(struct pipe_context *pipe,
       /* Mark the texture as dirty to expire the tile caches. */
       spr->timestamp++;
    }
+
+   pipe_resource_reference(&transfer->resource, NULL);
+   FREE(transfer);
 }
 
 /**
@@ -509,8 +491,6 @@ softpipe_user_buffer_create(struct pipe_screen *screen,
 void
 softpipe_init_texture_funcs(struct pipe_context *pipe)
 {
-   pipe->get_transfer = softpipe_get_transfer;
-   pipe->transfer_destroy = softpipe_transfer_destroy;
    pipe->transfer_map = softpipe_transfer_map;
    pipe->transfer_unmap = softpipe_transfer_unmap;
 

@@ -165,7 +165,7 @@ identity_sampler_view_destroy(struct identity_context *id_context,
                               struct identity_sampler_view *id_sampler_view);
 
 struct pipe_transfer *
-identity_transfer_create(struct identity_context *id_context,
+identity_transfer_map(struct identity_context *id_context,
                          struct identity_resource *id_resource,
                          struct pipe_transfer *transfer);
 

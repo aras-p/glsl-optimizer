@@ -1111,17 +1111,14 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
       struct pipe_transfer *srcTrans, *dstTrans;
       void *srcMap, *dstMap;
 
-      srcTrans = pipe_get_transfer(pipe, pt, srcLevel, layer,
-                                   PIPE_TRANSFER_READ, 0, 0,
-                                   u_minify(pt->width0, srcLevel),
-                                   u_minify(pt->height0, srcLevel));
-      dstTrans = pipe_get_transfer(pipe, pt, dstLevel, layer,
-                                   PIPE_TRANSFER_WRITE, 0, 0,
-                                   u_minify(pt->width0, dstLevel),
-                                   u_minify(pt->height0, dstLevel));
-
-      srcMap = (ubyte *) pipe->transfer_map(pipe, srcTrans);
-      dstMap = (ubyte *) pipe->transfer_map(pipe, dstTrans);
+      srcMap = pipe_transfer_map(pipe, pt, srcLevel, layer,
+                                 PIPE_TRANSFER_READ, 0, 0,
+                                 u_minify(pt->width0, srcLevel),
+                                 u_minify(pt->height0, srcLevel), &srcTrans);
+      dstMap = pipe_transfer_map(pipe, pt, dstLevel, layer,
+                                 PIPE_TRANSFER_WRITE, 0, 0,
+                                 u_minify(pt->width0, dstLevel),
+                                 u_minify(pt->height0, dstLevel), &dstTrans);
 
       reduce_1d(pt->format,
                 srcTrans->box.width, srcMap,
@@ -1129,9 +1126,6 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
 
       pipe->transfer_unmap(pipe, srcTrans);
       pipe->transfer_unmap(pipe, dstTrans);
-
-      pipe->transfer_destroy(pipe, srcTrans);
-      pipe->transfer_destroy(pipe, dstTrans);
    }
 }
 
@@ -1152,17 +1146,14 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
       struct pipe_transfer *srcTrans, *dstTrans;
       ubyte *srcMap, *dstMap;
 
-      srcTrans = pipe_get_transfer(pipe, pt, srcLevel, layer,
-                                   PIPE_TRANSFER_READ, 0, 0,
-                                   u_minify(pt->width0, srcLevel),
-                                   u_minify(pt->height0, srcLevel));
-      dstTrans = pipe_get_transfer(pipe, pt, dstLevel, layer,
-                                   PIPE_TRANSFER_WRITE, 0, 0,
-                                   u_minify(pt->width0, dstLevel),
-                                   u_minify(pt->height0, dstLevel));
-
-      srcMap = (ubyte *) pipe->transfer_map(pipe, srcTrans);
-      dstMap = (ubyte *) pipe->transfer_map(pipe, dstTrans);
+      srcMap = pipe_transfer_map(pipe, pt, srcLevel, layer,
+                                 PIPE_TRANSFER_READ, 0, 0,
+                                 u_minify(pt->width0, srcLevel),
+                                 u_minify(pt->height0, srcLevel), &srcTrans);
+      dstMap = pipe_transfer_map(pipe, pt, dstLevel, layer,
+                                 PIPE_TRANSFER_WRITE, 0, 0,
+                                 u_minify(pt->width0, dstLevel),
+                                 u_minify(pt->height0, dstLevel), &dstTrans);
 
       reduce_2d(pt->format,
                 srcTrans->box.width, srcTrans->box.height,
@@ -1172,9 +1163,6 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
 
       pipe->transfer_unmap(pipe, srcTrans);
       pipe->transfer_unmap(pipe, dstTrans);
-
-      pipe->transfer_destroy(pipe, srcTrans);
-      pipe->transfer_destroy(pipe, dstTrans);
    }
 }
 
@@ -1207,15 +1195,12 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
       dst_box.height = u_minify(pt->height0, dstLevel);
       dst_box.depth = u_minify(pt->depth0, dstLevel);
 
-      srcTrans = pipe->get_transfer(pipe, pt, srcLevel,
-                                    PIPE_TRANSFER_READ,
-                                    &src_box);
-      dstTrans = pipe->get_transfer(pipe, pt, dstLevel,
-                                    PIPE_TRANSFER_WRITE,
-                                    &dst_box);
-
-      srcMap = (ubyte *) pipe->transfer_map(pipe, srcTrans);
-      dstMap = (ubyte *) pipe->transfer_map(pipe, dstTrans);
+      srcMap = pipe->transfer_map(pipe, pt, srcLevel,
+                                  PIPE_TRANSFER_READ,
+                                  &src_box, &srcTrans);
+      dstMap = pipe->transfer_map(pipe, pt, dstLevel,
+                                  PIPE_TRANSFER_WRITE,
+                                  &dst_box, &dstTrans);
 
       reduce_3d(pt->format,
                 srcTrans->box.width, srcTrans->box.height, srcTrans->box.depth,
@@ -1225,9 +1210,6 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
 
       pipe->transfer_unmap(pipe, srcTrans);
       pipe->transfer_unmap(pipe, dstTrans);
-
-      pipe->transfer_destroy(pipe, srcTrans);
-      pipe->transfer_destroy(pipe, dstTrans);
    }
 }
 

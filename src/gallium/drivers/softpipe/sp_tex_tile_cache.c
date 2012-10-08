@@ -74,10 +74,10 @@ sp_destroy_tex_tile_cache(struct softpipe_tex_tile_cache *tc)
          /*assert(tc->entries[pos].x < 0);*/
       }
       if (tc->transfer) {
-         tc->pipe->transfer_destroy(tc->pipe, tc->transfer);
+         tc->pipe->transfer_unmap(tc->pipe, tc->transfer);
       }
       if (tc->tex_trans) {
-         tc->pipe->transfer_destroy(tc->pipe, tc->tex_trans);
+         tc->pipe->transfer_unmap(tc->pipe, tc->tex_trans);
       }
 
       FREE( tc );
@@ -131,14 +131,10 @@ sp_tex_tile_cache_set_sampler_view(struct softpipe_tex_tile_cache *tc,
    if (!sp_tex_tile_is_compat_view(tc, view)) {
       pipe_resource_reference(&tc->texture, texture);
 
-      if (tc->tex_trans) {
-         if (tc->tex_trans_map) {
-            tc->pipe->transfer_unmap(tc->pipe, tc->tex_trans);
-            tc->tex_trans_map = NULL;
-         }
-
-         tc->pipe->transfer_destroy(tc->pipe, tc->tex_trans);
+      if (tc->tex_trans_map) {
+         tc->pipe->transfer_unmap(tc->pipe, tc->tex_trans);
          tc->tex_trans = NULL;
+         tc->tex_trans_map = NULL;
       }
 
       if (view) {
@@ -236,14 +232,10 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
          /* get new transfer (view into texture) */
          unsigned width, height, layer;
 
-         if (tc->tex_trans) {
-            if (tc->tex_trans_map) {
-               tc->pipe->transfer_unmap(tc->pipe, tc->tex_trans);
-               tc->tex_trans_map = NULL;
-            }
-
-            tc->pipe->transfer_destroy(tc->pipe, tc->tex_trans);
+         if (tc->tex_trans_map) {
+            tc->pipe->transfer_unmap(tc->pipe, tc->tex_trans);
             tc->tex_trans = NULL;
+            tc->tex_trans_map = NULL;
          }
 
          width = u_minify(tc->texture->width0, addr.bits.level);
@@ -256,14 +248,12 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
             layer = addr.bits.face + addr.bits.z;
          }
 
-         tc->tex_trans = 
-            pipe_get_transfer(tc->pipe, tc->texture,
+         tc->tex_trans_map =
+            pipe_transfer_map(tc->pipe, tc->texture,
                               addr.bits.level,
                               layer,
                               PIPE_TRANSFER_READ | PIPE_TRANSFER_UNSYNCHRONIZED,
-                              0, 0, width, height);
-
-         tc->tex_trans_map = tc->pipe->transfer_map(tc->pipe, tc->tex_trans);
+                              0, 0, width, height, &tc->tex_trans);
 
          tc->tex_face = addr.bits.face;
          tc->tex_level = addr.bits.level;
@@ -274,8 +264,7 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
        * the image format.
        */
       if (!zs && util_format_is_pure_uint(tc->format)) {
-         pipe_get_tile_ui_format(tc->pipe,
-                                 tc->tex_trans,
+         pipe_get_tile_ui_format(tc->tex_trans, tc->tex_trans_map,
                                  addr.bits.x * TILE_SIZE,
                                  addr.bits.y * TILE_SIZE,
                                  TILE_SIZE,
@@ -283,8 +272,7 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
                                  tc->format,
                                  (unsigned *) tile->data.colorui);
       } else if (!zs && util_format_is_pure_sint(tc->format)) {
-         pipe_get_tile_i_format(tc->pipe,
-                                tc->tex_trans,
+         pipe_get_tile_i_format(tc->tex_trans, tc->tex_trans_map,
                                 addr.bits.x * TILE_SIZE,
                                 addr.bits.y * TILE_SIZE,
                                 TILE_SIZE,
@@ -292,8 +280,7 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
                                 tc->format,
                                 (int *) tile->data.colori);
       } else {
-         pipe_get_tile_rgba_format(tc->pipe,
-                                   tc->tex_trans,
+         pipe_get_tile_rgba_format(tc->tex_trans, tc->tex_trans_map,
                                    addr.bits.x * TILE_SIZE,
                                    addr.bits.y * TILE_SIZE,
                                    TILE_SIZE,

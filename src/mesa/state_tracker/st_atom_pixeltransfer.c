@@ -101,10 +101,9 @@ load_color_map_texture(struct gl_context *ctx, struct pipe_resource *pt)
    uint *dest;
    uint i, j;
 
-   transfer = pipe_get_transfer(pipe,
-                                pt, 0, 0, PIPE_TRANSFER_WRITE,
-                                0, 0, texSize, texSize);
-   dest = (uint *) pipe_transfer_map(pipe, transfer);
+   dest = (uint *) pipe_transfer_map(pipe,
+                                     pt, 0, 0, PIPE_TRANSFER_WRITE,
+                                     0, 0, texSize, texSize, &transfer);
 
    /* Pack four 1D maps into a 2D texture:
     * R map is placed horizontally, indexed by S, in channel 0
@@ -127,7 +126,6 @@ load_color_map_texture(struct gl_context *ctx, struct pipe_resource *pt)
    }
 
    pipe_transfer_unmap(pipe, transfer);
-   pipe->transfer_destroy(pipe, transfer);
 }
 
 
