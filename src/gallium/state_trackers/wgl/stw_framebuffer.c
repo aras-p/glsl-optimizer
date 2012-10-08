@@ -92,8 +92,6 @@ stw_framebuffer_destroy_locked(
 
    stw_st_destroy_framebuffer_locked(fb->stfb);
    
-   ReleaseDC(fb->hWnd, fb->hDC);
-
    pipe_mutex_unlock( fb->mutex );
 
    pipe_mutex_destroy( fb->mutex );
@@ -253,11 +251,6 @@ stw_framebuffer_create(
    fb = CALLOC_STRUCT( stw_framebuffer );
    if (fb == NULL)
       return NULL;
-
-   /* Applications use, create, destroy device contexts, so the hdc passed is.  We create our own DC
-    * because we need one for single buffered visuals.
-    */
-   fb->hDC = GetDC(hWnd);
 
    fb->hWnd = hWnd;
    fb->iPixelFormat = iPixelFormat;

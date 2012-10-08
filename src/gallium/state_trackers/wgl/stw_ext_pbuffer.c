@@ -248,8 +248,6 @@ wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
 
    hDC = GetDC(fb->hWnd);
 
-   assert(hDC == fb->hDC);
-
    return hDC;
 }
 

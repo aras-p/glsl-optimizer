@@ -58,7 +58,6 @@ struct stw_framebuffer
     * above, to prevent the framebuffer from being destroyed.
     */
    
-   HDC hDC;
    HWND hWnd;
 
    int iPixelFormat;
