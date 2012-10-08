@@ -3398,8 +3398,8 @@ compressed_subtexture_error_check(struct gl_context *ctx, GLint dims,
          break;
       default:
          targetOK = GL_FALSE;
-       }
-    }
+      }
+   }
    else {
       assert(dims == 1 || dims == 3);
       /* no 1D or 3D compressed textures at this time */
