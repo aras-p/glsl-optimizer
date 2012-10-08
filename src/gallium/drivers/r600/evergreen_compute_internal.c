@@ -294,8 +294,6 @@ void evergreen_set_rat(
 	pipe->ctx->compute_cb_target_mask |= (0xf << (id * 4));
 
 	surf = (struct r600_surface*)pipe->ctx->framebuffer.state.cbufs[id];
-
-	struct radeon_surface *rsurf = &((struct r600_texture*)surf->base.texture)->surface;
 	evergreen_init_color_surface_rat(rctx, surf);
 }
 

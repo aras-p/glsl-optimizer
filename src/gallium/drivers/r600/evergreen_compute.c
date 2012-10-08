@@ -479,8 +479,6 @@ static void evergreen_launch_grid(
 		uint32_t pc, const void *input)
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
-	struct r600_pipe_compute *shader = ctx->cs_shader_state.shader;
-	void *p;
 
 	COMPUTE_DBG("*** evergreen_launch_grid: pc = %u\n", pc);
 
