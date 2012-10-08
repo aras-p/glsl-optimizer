@@ -66,6 +66,9 @@ svga_translate_format(struct svga_screen *ss,
    case PIPE_FORMAT_B4G4R4A4_UNORM:
       return SVGA3D_A4R4G4B4;
 
+   case PIPE_FORMAT_R16G16B16A16_UNORM:
+      return SVGA3D_A16B16G16R16;
+
    case PIPE_FORMAT_Z16_UNORM:
       return bind & PIPE_BIND_SAMPLER_VIEW ? ss->depth.z16 : SVGA3D_Z_D16;
    case PIPE_FORMAT_S8_UINT_Z24_UNORM:
