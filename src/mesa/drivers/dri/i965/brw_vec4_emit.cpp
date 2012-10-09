@@ -1048,7 +1048,7 @@ brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
       printf("\n\n");
    }
 
-   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+   if (unlikely(INTEL_DEBUG & DEBUG_PERF) && shader) {
       if (shader->compiled_once) {
          brw_vs_debug_recompile(brw, prog, &c->key);
       }
@@ -1056,6 +1056,7 @@ brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
          perf_debug("VS compile took %.03f ms and stalled the GPU\n",
                     (get_time() - start_time) * 1000);
       }
+      shader->compiled_once = true;
    }
 
    vec4_visitor v(c, prog, shader);
@@ -1064,8 +1065,6 @@ brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
       ralloc_strcat(&prog->InfoLog, v.fail_msg);
       return false;
    }
-
-   shader->compiled_once = true;
 
    return true;
 }
