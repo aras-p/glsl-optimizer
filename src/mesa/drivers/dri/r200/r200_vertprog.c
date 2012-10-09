@@ -443,11 +443,6 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
       return GL_FALSE;
    }
 
-   if (mesa_vp->IsNVProgram) {
-   /* subtle differences in spec like guaranteed initialized regs could cause
-      headaches. Might want to remove the driconf option to enable it completely */
-      return GL_FALSE;
-   }
    /* Initial value should be last tmp reg that hw supports.
       Strangely enough r300 doesnt mind even though these would be out of range.
       Smart enough to realize that it doesnt need it? */
@@ -1264,7 +1259,6 @@ r200IsProgramNative(struct gl_context *ctx, GLenum target, struct gl_program *pr
    struct r200_vertex_program *vp = (void *)prog;
 
    switch(target){
-   case GL_VERTEX_STATE_PROGRAM_NV:
    case GL_VERTEX_PROGRAM_ARB:
       if (!vp->translated) {
 	 r200_translate_vertex_program(ctx, vp);

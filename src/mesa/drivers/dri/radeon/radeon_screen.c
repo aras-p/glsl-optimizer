@@ -125,11 +125,8 @@ DRI_CONF_BEGIN
     DRI_CONF_SECTION_DEBUG
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
-    DRI_CONF_SECTION_SOFTWARE
-        DRI_CONF_NV_VERTEX_PROGRAM(false)
-    DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 17;
+static const GLuint __driNConfigOptions = 16;
 
 #endif
 

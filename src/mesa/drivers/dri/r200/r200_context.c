@@ -422,9 +422,6 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.ARB_vertex_program = true;
    ctx->Extensions.EXT_gpu_program_parameters = true;
 
-   ctx->Extensions.NV_vertex_program =
-      driQueryOptionb(&rmesa->radeon.optionCache, "nv_vertex_program");
-
    ctx->Extensions.ATI_fragment_shader = (ctx->Const.MaxTextureUnits == 6);
 
    ctx->Extensions.ARB_point_sprite = true;

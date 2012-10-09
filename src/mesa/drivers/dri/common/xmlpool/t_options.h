@@ -263,11 +263,6 @@ DRI_CONF_OPT_BEGIN(arb_vertex_program,bool,def) \
         DRI_CONF_DESC(en,gettext("Enable extension GL_ARB_vertex_program")) \
 DRI_CONF_OPT_END
 
-#define DRI_CONF_NV_VERTEX_PROGRAM(def) \
-DRI_CONF_OPT_BEGIN(nv_vertex_program,bool,def) \
-        DRI_CONF_DESC(en,gettext("Enable extension GL_NV_vertex_program")) \
-DRI_CONF_OPT_END
-
 #define DRI_CONF_ALWAYS_FLUSH_BATCH(def) \
 DRI_CONF_OPT_BEGIN(always_flush_batch,bool,def) \
         DRI_CONF_DESC(en,gettext("Enable flushing batchbuffer after each draw call")) \
