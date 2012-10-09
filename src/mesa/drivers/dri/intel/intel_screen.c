@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include <errno.h>
+#include <time.h>
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
