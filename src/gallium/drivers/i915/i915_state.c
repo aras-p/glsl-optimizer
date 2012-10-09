@@ -931,7 +931,6 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
    struct draw_context *draw = i915->draw;
-   int i;
 
    util_copy_vertex_buffers(i915->vertex_buffers,
                             &i915->nr_vertex_buffers,

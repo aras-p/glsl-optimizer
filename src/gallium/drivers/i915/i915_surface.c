@@ -62,7 +62,7 @@ i915_util_blitter_save_states(struct i915_context *i915)
 
    util_blitter_save_fragment_sampler_states(i915->blitter,
                                              i915->num_samplers,
-                                             i915->sampler);
+                                             (void**)i915->sampler);
    util_blitter_save_fragment_sampler_views(i915->blitter,
                                             i915->num_fragment_sampler_views,
                                             i915->fragment_sampler_views);
