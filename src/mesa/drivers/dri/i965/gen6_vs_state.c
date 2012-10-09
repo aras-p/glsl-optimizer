@@ -44,9 +44,6 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
    unsigned int nr_params = brw->vs.prog_data->nr_params / 4;
    bool uses_clip_distance = vp->program.UsesClipDistance;
 
-   if (brw->vertex_program->IsNVProgram)
-      _mesa_load_tracked_matrices(ctx);
-
    /* Updates the ParamaterValues[i] pointers for all parameters of the
     * basic type of PROGRAM_STATE_VAR.
     */

@@ -44,16 +44,12 @@
 static void
 brw_upload_vs_pull_constants(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    /* BRW_NEW_VERTEX_PROGRAM */
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
    const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
    int i;
-
-   if (vp->program.IsNVProgram)
-      _mesa_load_tracked_matrices(ctx);
 
    /* Updates the ParamaterValues[i] pointers for all parameters of the
     * basic type of PROGRAM_STATE_VAR.

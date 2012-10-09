@@ -83,8 +83,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.MESA_ycbcr_texture = true;
    ctx->Extensions.NV_blend_square = true;
    ctx->Extensions.NV_texture_rectangle = true;
-   ctx->Extensions.NV_vertex_program = true;
-   ctx->Extensions.NV_vertex_program1_1 = true;
    ctx->Extensions.TDFX_texture_compression_FXT1 = true;
    ctx->Extensions.OES_EGL_image = true;
    ctx->Extensions.OES_draw_texture = true;
