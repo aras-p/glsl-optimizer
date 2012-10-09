@@ -304,49 +304,6 @@ _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
    }
 }
 
-
-/**
- * Get matrix tracking information.
- * \note Not compiled into display lists.
- * \note Called from the GL API dispatcher.
- */
-void GLAPIENTRY
-_mesa_GetTrackMatrixivNV(GLenum target, GLuint address,
-                         GLenum pname, GLint *params)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
-   if (target == GL_VERTEX_PROGRAM_NV
-       && ctx->Extensions.NV_vertex_program) {
-      GLuint i;
-
-      if ((address & 0x3) || address >= MAX_NV_VERTEX_PROGRAM_PARAMS) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glGetTrackMatrixivNV(address)");
-         return;
-      }
-
-      i = address / 4;
-
-      switch (pname) {
-         case GL_TRACK_MATRIX_NV:
-            params[0] = (GLint) ctx->VertexProgram.TrackMatrix[i];
-            return;
-         case GL_TRACK_MATRIX_TRANSFORM_NV:
-            params[0] = (GLint) ctx->VertexProgram.TrackMatrixTransform[i];
-            return;
-         default:
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetTrackMatrixivNV");
-            return;
-      }
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTrackMatrixivNV");
-      return;
-   }
-}
-
-
 /**
  * Get a vertex (or vertex array) attribute.
  * \note Not compiled into display lists.
@@ -712,71 +669,6 @@ _mesa_ProgramParameters4fvNV(GLenum target, GLuint index,
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameters4fvNV");
-      return;
-   }
-}
-
-
-
-/**
- * Setup tracking of matrices into program parameter registers.
- * \note Called from the GL API dispatcher.
- */
-void GLAPIENTRY
-_mesa_TrackMatrixNV(GLenum target, GLuint address,
-                    GLenum matrix, GLenum transform)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   if (target == GL_VERTEX_PROGRAM_NV && ctx->Extensions.NV_vertex_program) {
-      if (address & 0x3) {
-         /* addr must be multiple of four */
-         _mesa_error(ctx, GL_INVALID_VALUE, "glTrackMatrixNV(address)");
-         return;
-      }
-
-      switch (matrix) {
-         case GL_NONE:
-         case GL_MODELVIEW:
-         case GL_PROJECTION:
-         case GL_TEXTURE:
-         case GL_COLOR:
-         case GL_MODELVIEW_PROJECTION_NV:
-         case GL_MATRIX0_NV:
-         case GL_MATRIX1_NV:
-         case GL_MATRIX2_NV:
-         case GL_MATRIX3_NV:
-         case GL_MATRIX4_NV:
-         case GL_MATRIX5_NV:
-         case GL_MATRIX6_NV:
-         case GL_MATRIX7_NV:
-            /* OK, fallthrough */
-            break;
-         default:
-            _mesa_error(ctx, GL_INVALID_ENUM, "glTrackMatrixNV(matrix)");
-            return;
-      }
-
-      switch (transform) {
-         case GL_IDENTITY_NV:
-         case GL_INVERSE_NV:
-         case GL_TRANSPOSE_NV:
-         case GL_INVERSE_TRANSPOSE_NV:
-            /* OK, fallthrough */
-            break;
-         default:
-            _mesa_error(ctx, GL_INVALID_ENUM, "glTrackMatrixNV(transform)");
-            return;
-      }
-
-      ctx->VertexProgram.TrackMatrix[address / 4] = matrix;
-      ctx->VertexProgram.TrackMatrixTransform[address / 4] = transform;
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glTrackMatrixNV(target)");
       return;
    }
 }

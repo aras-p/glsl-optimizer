@@ -95,9 +95,6 @@ _tnl_vbo_draw_prims( struct gl_context *ctx,
 		     struct gl_transform_feedback_object *tfb_vertcount );
 
 extern void
-_mesa_load_tracked_matrices(struct gl_context *ctx);
-
-extern void
 _tnl_RasterPos(struct gl_context *ctx, const GLfloat vObj[4]);
 
 extern void

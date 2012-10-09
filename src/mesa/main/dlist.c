@@ -324,7 +324,6 @@ typedef enum
    OPCODE_EXECUTE_PROGRAM_NV,
    OPCODE_REQUEST_RESIDENT_PROGRAMS_NV,
    OPCODE_LOAD_PROGRAM_NV,
-   OPCODE_TRACK_MATRIX_NV,
    /* GL_NV_fragment_program */
    OPCODE_PROGRAM_LOCAL_PARAMETER_ARB,
    OPCODE_PROGRAM_NAMED_PARAMETER_NV,
@@ -5037,27 +5036,6 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint * ids)
    }
 }
 
-
-static void GLAPIENTRY
-save_TrackMatrixNV(GLenum target, GLuint address,
-                   GLenum matrix, GLenum transform)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = alloc_instruction(ctx, OPCODE_TRACK_MATRIX_NV, 4);
-   if (n) {
-      n[1].e = target;
-      n[2].ui = address;
-      n[3].e = matrix;
-      n[4].e = transform;
-   }
-   if (ctx->ExecuteFlag) {
-      CALL_TrackMatrixNV(ctx->Exec, (target, address, matrix, transform));
-   }
-}
-
-
 /*
  * GL_NV_fragment_program
  */
@@ -8394,9 +8372,6 @@ execute_list(struct gl_context *ctx, GLuint list)
             CALL_LoadProgramNV(ctx->Exec, (n[1].e, n[2].ui, n[3].i,
                                            (const GLubyte *) n[4].data));
             break;
-         case OPCODE_TRACK_MATRIX_NV:
-            CALL_TrackMatrixNV(ctx->Exec, (n[1].e, n[2].ui, n[3].e, n[4].e));
-            break;
          case OPCODE_PROGRAM_LOCAL_PARAMETER_ARB:
             CALL_ProgramLocalParameter4fARB(ctx->Exec,
                                             (n[1].e, n[2].ui, n[3].f, n[4].f,
@@ -10246,7 +10221,6 @@ _mesa_create_save_table(const struct gl_context *ctx)
    SET_GetProgramParameterdvNV(table, _mesa_GetProgramParameterdvNV);
    SET_GetProgramivNV(table, _mesa_GetProgramivNV);
    SET_GetProgramStringNV(table, _mesa_GetProgramStringNV);
-   SET_GetTrackMatrixivNV(table, _mesa_GetTrackMatrixivNV);
    SET_GetVertexAttribdvNV(table, _mesa_GetVertexAttribdvNV);
    SET_GetVertexAttribfvNV(table, _mesa_GetVertexAttribfvNV);
    SET_GetVertexAttribivNV(table, _mesa_GetVertexAttribivNV);
@@ -10259,7 +10233,6 @@ _mesa_create_save_table(const struct gl_context *ctx)
    SET_ProgramEnvParameter4fvARB(table, save_ProgramEnvParameter4fvARB);
    SET_ProgramParameters4dvNV(table, save_ProgramParameters4dvNV);
    SET_ProgramParameters4fvNV(table, save_ProgramParameters4fvNV);
-   SET_TrackMatrixNV(table, save_TrackMatrixNV);
    SET_VertexAttribPointerNV(table, _mesa_VertexAttribPointerNV);
 
    /* 244. GL_ATI_envmap_bumpmap */

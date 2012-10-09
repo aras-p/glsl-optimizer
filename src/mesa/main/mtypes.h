@@ -2060,10 +2060,6 @@ struct gl_vertex_program_state
 
    GLfloat Parameters[MAX_PROGRAM_ENV_PARAMS][4]; /**< Env params */
 
-   /* For GL_NV_vertex_program only: */
-   GLenum TrackMatrix[MAX_PROGRAM_ENV_PARAMS / 4];
-   GLenum TrackMatrixTransform[MAX_PROGRAM_ENV_PARAMS / 4];
-
    /** Should fixed-function T&L be implemented with a vertex prog? */
    GLboolean _MaintainTnlProgram;
 

@@ -321,13 +321,8 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
    if (!program)
       return GL_TRUE;
 
-   if (program->IsNVProgram) {
-      _mesa_load_tracked_matrices(ctx);
-   }
-   else {
-      /* ARB program or vertex shader */
-      _mesa_load_state_parameters(ctx, program->Base.Parameters);
-   }
+   /* ARB program or vertex shader */
+   _mesa_load_state_parameters(ctx, program->Base.Parameters);
 
    /* make list of outputs to save some time below */
    numOutputs = 0;

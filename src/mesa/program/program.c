@@ -52,8 +52,6 @@ struct gl_program _mesa_DummyProgram;
 void
 _mesa_init_program(struct gl_context *ctx)
 {
-   GLuint i;
-
    /*
     * If this assertion fails, we need to increase the field
     * size for register indexes (see INST_INDEX_BITS).
@@ -90,10 +88,6 @@ _mesa_init_program(struct gl_context *ctx)
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
                             ctx->Shared->DefaultVertexProgram);
    assert(ctx->VertexProgram.Current);
-   for (i = 0; i < MAX_NV_VERTEX_PROGRAM_PARAMS / 4; i++) {
-      ctx->VertexProgram.TrackMatrix[i] = GL_NONE;
-      ctx->VertexProgram.TrackMatrixTransform[i] = GL_IDENTITY_NV;
-   }
    ctx->VertexProgram.Cache = _mesa_new_program_cache();
 
    ctx->FragmentProgram.Enabled = GL_FALSE;

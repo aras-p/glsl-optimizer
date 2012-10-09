@@ -146,9 +146,6 @@ extern char *
 _mesa_program_state_string(const gl_state_index state[STATE_LENGTH]);
 
 
-extern void
-_mesa_load_tracked_matrices(struct gl_context *ctx);
-
 
 #ifdef __cplusplus
 }

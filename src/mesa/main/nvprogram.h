@@ -56,9 +56,6 @@ extern void GLAPIENTRY
 _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program);
 
 extern void GLAPIENTRY
-_mesa_GetTrackMatrixivNV(GLenum target, GLuint address, GLenum pname, GLint *params);
-
-extern void GLAPIENTRY
 _mesa_GetVertexAttribdvNV(GLuint index, GLenum pname, GLdouble *params);
 
 extern void GLAPIENTRY
@@ -80,10 +77,6 @@ _mesa_ProgramParameters4dvNV(GLenum target, GLuint index, GLsizei num,
 extern void GLAPIENTRY
 _mesa_ProgramParameters4fvNV(GLenum target, GLuint index, GLsizei num,
                              const GLfloat *params);
-
-extern void GLAPIENTRY
-_mesa_TrackMatrixNV(GLenum target, GLuint address, GLenum matrix, GLenum transform);
-
 
 extern void GLAPIENTRY
 _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,

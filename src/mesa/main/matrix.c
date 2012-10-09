@@ -179,22 +179,6 @@ _mesa_MatrixMode( GLenum mode )
       ASSERT(ctx->Texture.CurrentUnit < Elements(ctx->TextureMatrixStack));
       ctx->CurrentStack = &ctx->TextureMatrixStack[ctx->Texture.CurrentUnit];
       break;
-   case GL_MATRIX0_NV:
-   case GL_MATRIX1_NV:
-   case GL_MATRIX2_NV:
-   case GL_MATRIX3_NV:
-   case GL_MATRIX4_NV:
-   case GL_MATRIX5_NV:
-   case GL_MATRIX6_NV:
-   case GL_MATRIX7_NV:
-      if (ctx->API == API_OPENGL && ctx->Extensions.NV_vertex_program) {
-         ctx->CurrentStack = &ctx->ProgramMatrixStack[mode - GL_MATRIX0_NV];
-      }
-      else {
-         _mesa_error( ctx,  GL_INVALID_ENUM, "glMatrixMode(mode)" );
-         return;
-      }
-      break;
    case GL_MATRIX0_ARB:
    case GL_MATRIX1_ARB:
    case GL_MATRIX2_ARB:
