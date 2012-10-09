@@ -130,8 +130,7 @@ TEST_F(DispatchSanity_test, GLES2)
                             API_OPENGLES2, //api,
                             &visual,
                             NULL, //&share_list,
-                            &driver_functions,
-                            (void *) NULL);
+                            &driver_functions);
 
    _swrast_CreateContext(&ctx);
    _vbo_CreateContext(&ctx);
