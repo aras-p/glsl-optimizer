@@ -468,7 +468,6 @@ KIL_instruction: KIL swizzleSrcReg
 	   $$ = asm_instruction_ctor(OPCODE_KIL_NV, NULL, NULL, NULL, NULL);
 	   $$->Base.DstReg.CondMask = $2.CondMask;
 	   $$->Base.DstReg.CondSwizzle = $2.CondSwizzle;
-	   $$->Base.DstReg.CondSrc = $2.CondSrc;
 	   state->fragment.UsesKill = 1;
 	}
 	;
@@ -637,7 +636,6 @@ maskedDstReg: dstReg optionalMask optionalCcMask
 	   $$.WriteMask = $2.mask;
 	   $$.CondMask = $3.CondMask;
 	   $$.CondSwizzle = $3.CondSwizzle;
-	   $$.CondSrc = $3.CondSrc;
 
 	   if ($$.File == PROGRAM_OUTPUT) {
 	      /* Technically speaking, this should check that it is in
@@ -1030,7 +1028,6 @@ optionalCcMask: '(' ccTest ')'
 	{
 	   $$.CondMask = COND_TR;
 	   $$.CondSwizzle = SWIZZLE_NOOP;
-	   $$.CondSrc = 0;
 	}
 	;
 
@@ -1067,7 +1064,6 @@ ccMaskRule: IDENTIFIER
 
 	   $$.CondMask = cond;
 	   $$.CondSwizzle = SWIZZLE_NOOP;
-	   $$.CondSrc = 0;
 	}
 	;
 
@@ -1090,7 +1086,6 @@ ccMaskRule2: USED_IDENTIFIER
 
 	   $$.CondMask = cond;
 	   $$.CondSwizzle = SWIZZLE_NOOP;
-	   $$.CondSrc = 0;
 	}
 	;
 

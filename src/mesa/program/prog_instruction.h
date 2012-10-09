@@ -313,15 +313,6 @@ struct prog_dst_register
     * Condition code swizzle value.
     */
    GLuint CondSwizzle:12;
-
-   /**
-    * Selects the condition code register to use for conditional destination
-    * update masking.  In NV_fragmnet_program or NV_vertex_program2 mode, only
-    * condition code register 0 is available.  In NV_vertex_program3 mode,
-    * condition code registers 0 and 1 are available.
-    */
-   GLuint CondSrc:1;
-   /*@}*/
 };
 
 

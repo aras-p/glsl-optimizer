@@ -789,7 +789,6 @@ _mesa_remove_extra_moves(struct gl_program *prog)
             if (prevInst->DstReg.File == PROGRAM_TEMPORARY &&
                 prevInst->DstReg.Index == id &&
                 prevInst->DstReg.RelAddr == 0 &&
-                prevInst->DstReg.CondSrc == 0 && 
                 prevInst->DstReg.CondMask == COND_TR) {
 
                const GLuint dst_mask = prevInst->DstReg.WriteMask;
