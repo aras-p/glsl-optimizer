@@ -85,25 +85,6 @@ sp_destroy_tex_tile_cache(struct softpipe_tex_tile_cache *tc)
 }
 
 
-
-
-void
-sp_tex_tile_cache_map_transfers(struct softpipe_tex_tile_cache *tc)
-{
-   if (tc->tex_trans && !tc->tex_trans_map)
-      tc->tex_trans_map = tc->pipe->transfer_map(tc->pipe, tc->tex_trans);
-}
-
-
-void
-sp_tex_tile_cache_unmap_transfers(struct softpipe_tex_tile_cache *tc)
-{
-   if (tc->tex_trans_map) {
-      tc->pipe->transfer_unmap(tc->pipe, tc->tex_trans);
-      tc->tex_trans_map = NULL;
-   }
-}
-
 /**
  * Invalidate all cached tiles for the cached texture.
  * Should be called when the texture is modified.

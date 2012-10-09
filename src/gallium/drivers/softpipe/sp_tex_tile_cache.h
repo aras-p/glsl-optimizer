@@ -106,13 +106,6 @@ sp_create_tex_tile_cache( struct pipe_context *pipe );
 extern void
 sp_destroy_tex_tile_cache(struct softpipe_tex_tile_cache *tc);
 
-
-extern void
-sp_tex_tile_cache_map_transfers(struct softpipe_tex_tile_cache *tc);
-
-extern void
-sp_tex_tile_cache_unmap_transfers(struct softpipe_tex_tile_cache *tc);
-
 extern void
 sp_tex_tile_cache_set_sampler_view(struct softpipe_tex_tile_cache *tc,
                                    struct pipe_sampler_view *view);
