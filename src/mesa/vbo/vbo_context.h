@@ -106,8 +106,6 @@ get_program_mode( struct gl_context *ctx )
       return VP_NONE;
    else if (ctx->VertexProgram._Current == ctx->VertexProgram._TnlProgram)
       return VP_NONE;
-   else if (ctx->VertexProgram._Current->IsNVProgram)
-      return VP_NV;
    else
       return VP_ARB;
 }

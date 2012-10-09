@@ -55,7 +55,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /** Current vertex program mode */
 enum vp_mode {
    VP_NONE,   /**< fixed function */
-   VP_NV,     /**< NV vertex program */
    VP_ARB     /**< ARB vertex program or GLSL vertex shader */
 };
 

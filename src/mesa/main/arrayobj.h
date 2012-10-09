@@ -87,18 +87,6 @@ _mesa_array_object_get_enabled_ff(const struct gl_array_object *arrayObj)
    return arrayObj->_Enabled & VERT_BIT_FF_ALL;
 }
 
-/** Returns the bitmask of all enabled arrays in nv shader mode.
- *
- *  In nv shader mode, the nv generic arrays take precedence over
- *  the legacy arrays.
- */
-static inline GLbitfield64
-_mesa_array_object_get_enabled_nv(const struct gl_array_object *arrayObj)
-{
-   GLbitfield64 enabled = arrayObj->_Enabled;
-   return enabled & ~(VERT_BIT_FF_NVALIAS & (enabled >> VERT_ATTRIB_GENERIC0));
-}
-
 /** Returns the bitmask of all enabled arrays in arb/glsl shader mode.
  *
  *  In arb/glsl shader mode all the fixed function and the arb/glsl generic

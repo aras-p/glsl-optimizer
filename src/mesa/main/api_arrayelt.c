@@ -1528,31 +1528,24 @@ static void _ae_update_state( struct gl_context *ctx )
    for (i = 1; i < VERT_ATTRIB_GENERIC_MAX; i++) {  /* skip zero! */
       struct gl_client_array *attribArray = &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(i)];
       if (attribArray->Enabled) {
+         GLint intOrNorm;
          at->array = attribArray;
          /* Note: we can't grab the _glapi_Dispatch->VertexAttrib1fvNV
           * function pointer here (for float arrays) since the pointer may
           * change from one execution of _ae_ArrayElement() to
           * the next.  Doing so caused UT to break.
           */
-         if (ctx->VertexProgram._Enabled
-             && ctx->VertexProgram.Current->IsNVProgram) {
-            at->func = AttribFuncsNV[at->array->Normalized]
-                                    [at->array->Size-1]
-                                    [TYPE_IDX(at->array->Type)];
-         }
-         else {
-            GLint intOrNorm;
-            if (at->array->Integer)
-               intOrNorm = 2;
-            else if (at->array->Normalized)
-               intOrNorm = 1;
-            else
-               intOrNorm = 0;
+         if (at->array->Integer)
+            intOrNorm = 2;
+         else if (at->array->Normalized)
+            intOrNorm = 1;
+         else
+            intOrNorm = 0;
 
-            at->func = AttribFuncsARB[intOrNorm]
-                                     [at->array->Size-1]
-                                     [TYPE_IDX(at->array->Type)];
-         }
+         at->func = AttribFuncsARB[intOrNorm]
+            [at->array->Size-1]
+            [TYPE_IDX(at->array->Type)];
+
          at->index = i;
 	 check_vbo(actx, at->array->BufferObj);
          at++;

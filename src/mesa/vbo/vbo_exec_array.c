@@ -440,32 +440,6 @@ recalculate_input_bindings(struct gl_context *ctx)
       }
       break;
 
-   case VP_NV:
-      /* NV_vertex_program - attribute arrays alias and override
-       * conventional, legacy arrays.  No materials, and the generic
-       * slots are vacant.
-       */
-      for (i = 0; i < VERT_ATTRIB_FF_MAX; i++) {
-	 if (i < VERT_ATTRIB_GENERIC_MAX
-             && vertexAttrib[VERT_ATTRIB_GENERIC(i)].Enabled)
-	    inputs[i] = &vertexAttrib[VERT_ATTRIB_GENERIC(i)];
-	 else if (vertexAttrib[VERT_ATTRIB_FF(i)].Enabled)
-	    inputs[i] = &vertexAttrib[VERT_ATTRIB_FF(i)];
-	 else {
-	    inputs[i] = &vbo->currval[VBO_ATTRIB_POS+i];
-            const_inputs |= VERT_BIT_FF(i);
-         }
-      }
-
-      /* Could use just about anything, just to fill in the empty
-       * slots:
-       */
-      for (i = 0; i < VERT_ATTRIB_GENERIC_MAX; i++) {
-	 inputs[VERT_ATTRIB_GENERIC(i)] = &vbo->currval[VBO_ATTRIB_GENERIC0+i];
-         const_inputs |= VERT_BIT_GENERIC(i);
-      }
-      break;
-
    case VP_ARB:
       /* GL_ARB_vertex_program or GLSL vertex shader - Only the generic[0]
        * attribute array aliases and overrides the legacy position array.  

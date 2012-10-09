@@ -314,8 +314,6 @@ _mesa_update_array_object_max_element(struct gl_context *ctx,
    if (!ctx->VertexProgram._Current ||
        ctx->VertexProgram._Current == ctx->VertexProgram._TnlProgram) {
       enabled = _mesa_array_object_get_enabled_ff(arrayObj);
-   } else if (ctx->VertexProgram._Current->IsNVProgram) {
-      enabled = _mesa_array_object_get_enabled_nv(arrayObj);
    } else {
       enabled = _mesa_array_object_get_enabled_arb(arrayObj);
    }

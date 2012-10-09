@@ -152,12 +152,7 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
       }
       map = vbo->map_vp_none;
       break;
-   case VP_NV:
    case VP_ARB:
-      /* The aliasing of attributes for NV vertex programs has already
-       * occurred.  NV vertex programs cannot access material values,
-       * nor attributes greater than VERT_ATTRIB_TEX7.  
-       */
       for (attr = 0; attr < VERT_ATTRIB_FF_MAX; attr++) {
          save->inputs[attr] = &vbo->currval[VBO_ATTRIB_POS+attr];
       }
