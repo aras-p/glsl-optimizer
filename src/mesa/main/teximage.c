@@ -1977,10 +1977,6 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    case GL_PALETTE8_R5_G6_B5_OES:
    case GL_PALETTE8_RGBA4_OES:
    case GL_PALETTE8_RGB5_A1_OES:
-      _mesa_cpal_compressed_format_type(internalFormat, &choose_format,
-					&choose_type);
-      proxy_format = choose_format;
-
       /* check level (note that level should be zero or less!) */
       if (level > 0 || level < -maxLevels) {
 	 reason = "level";
