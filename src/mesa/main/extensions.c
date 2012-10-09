@@ -312,8 +312,6 @@ static const struct extension extension_table[] = {
    { "GL_NV_texture_barrier",                      o(NV_texture_barrier),                      GL,             2009 },
    { "GL_NV_texture_env_combine4",                 o(NV_texture_env_combine4),                 GLL,            1999 },
    { "GL_NV_texture_rectangle",                    o(NV_texture_rectangle),                    GLL,            2000 },
-   { "GL_NV_vertex_program1_1",                    o(NV_vertex_program1_1),                    GLL,            2001 },
-   { "GL_NV_vertex_program",                       o(NV_vertex_program),                       GLL,            2000 },
    { "GL_S3_s3tc",                                 o(S3_s3tc),                                 GL,             1999 },
    { "GL_SGIS_generate_mipmap",                    o(dummy_true),                              GLL,            1997 },
    { "GL_SGIS_texture_border_clamp",               o(ARB_texture_border_clamp),                GLL,            1997 },

@@ -315,8 +315,7 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (!ctx->Extensions.NV_vertex_program
-       && !ctx->Extensions.NV_fragment_program) {
+   if (!ctx->Extensions.NV_fragment_program) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV()");
       return;
    }

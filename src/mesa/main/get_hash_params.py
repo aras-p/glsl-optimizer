@@ -513,9 +513,6 @@ descriptor=[
   [ "POINT_SPRITE_R_MODE_NV", "CONTEXT_ENUM(Point.SpriteRMode), extra_NV_point_sprite" ],
   [ "POINT_SPRITE_COORD_ORIGIN", "CONTEXT_ENUM(Point.SpriteOrigin), extra_NV_point_sprite_ARB_point_sprite" ],
 
-# GL_NV_vertex_program
-  [ "VERTEX_PROGRAM_BINDING_NV", "LOC_CUSTOM, TYPE_INT, 0, extra_NV_vertex_program" ],
-
 # GL_NV_fragment_program
   [ "FRAGMENT_PROGRAM_NV", "CONTEXT_BOOL(FragmentProgram.Enabled), extra_NV_fragment_program" ],
   [ "FRAGMENT_PROGRAM_BINDING_NV", "LOC_CUSTOM, TYPE_INT, 0, extra_NV_fragment_program" ],
@@ -550,23 +547,23 @@ descriptor=[
 
 # GL_ARB_vertex_program
 # == GL_VERTEX_PROGRAM_NV
-  [ "VERTEX_PROGRAM_ARB", "CONTEXT_BOOL(VertexProgram.Enabled), extra_ARB_vertex_program_NV_vertex_program" ],
+  [ "VERTEX_PROGRAM_ARB", "CONTEXT_BOOL(VertexProgram.Enabled), extra_ARB_vertex_program" ],
 # == GL_VERTEX_PROGRAM_POINT_SIZE_NV
-  [ "VERTEX_PROGRAM_POINT_SIZE_ARB", "CONTEXT_BOOL(VertexProgram.PointSizeEnabled), extra_ARB_vertex_program_NV_vertex_program" ],
+  [ "VERTEX_PROGRAM_POINT_SIZE_ARB", "CONTEXT_BOOL(VertexProgram.PointSizeEnabled), extra_ARB_vertex_program" ],
 # == GL_VERTEX_PROGRAM_TWO_SIDE_NV
-  [ "VERTEX_PROGRAM_TWO_SIDE_ARB", "CONTEXT_BOOL(VertexProgram.TwoSideEnabled), extra_ARB_vertex_program_NV_vertex_program" ],
+  [ "VERTEX_PROGRAM_TWO_SIDE_ARB", "CONTEXT_BOOL(VertexProgram.TwoSideEnabled), extra_ARB_vertex_program" ],
 # == GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV
-  [ "MAX_PROGRAM_MATRIX_STACK_DEPTH_ARB", "CONTEXT_INT(Const.MaxProgramMatrixStackDepth), extra_ARB_vertex_program_ARB_fragment_program_NV_vertex_program" ],
+  [ "MAX_PROGRAM_MATRIX_STACK_DEPTH_ARB", "CONTEXT_INT(Const.MaxProgramMatrixStackDepth), extra_ARB_vertex_program_ARB_fragment_program" ],
 # == GL_MAX_TRACK_MATRICES_NV
-  [ "MAX_PROGRAM_MATRICES_ARB", "CONTEXT_INT(Const.MaxProgramMatrices), extra_ARB_vertex_program_ARB_fragment_program_NV_vertex_program" ],
+  [ "MAX_PROGRAM_MATRICES_ARB", "CONTEXT_INT(Const.MaxProgramMatrices), extra_ARB_vertex_program_ARB_fragment_program" ],
 # == GL_CURRENT_MATRIX_STACK_DEPTH_NV
-  [ "CURRENT_MATRIX_STACK_DEPTH_ARB", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_vertex_program_ARB_fragment_program_NV_vertex_program" ],
+  [ "CURRENT_MATRIX_STACK_DEPTH_ARB", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_vertex_program_ARB_fragment_program" ],
 # == GL_CURRENT_MATRIX_NV
-  [ "CURRENT_MATRIX_ARB", "LOC_CUSTOM, TYPE_MATRIX, 0, extra_ARB_vertex_program_ARB_fragment_program_NV_vertex_program" ],
+  [ "CURRENT_MATRIX_ARB", "LOC_CUSTOM, TYPE_MATRIX, 0, extra_ARB_vertex_program_ARB_fragment_program" ],
 # == GL_CURRENT_MATRIX_NV
   [ "TRANSPOSE_CURRENT_MATRIX_ARB", "LOC_CUSTOM, TYPE_MATRIX, 0, extra_ARB_vertex_program_ARB_fragment_program" ],
 # == GL_PROGRAM_ERROR_POSITION_NV
-  [ "PROGRAM_ERROR_POSITION_ARB", "CONTEXT_INT(Program.ErrorPos), extra_NV_vertex_program_ARB_vertex_program_ARB_fragment_program_NV_vertex_program" ],
+  [ "PROGRAM_ERROR_POSITION_ARB", "CONTEXT_INT(Program.ErrorPos), extra_ARB_vertex_program_ARB_fragment_program" ],
 
 # GL_ARB_fragment_program
   [ "FRAGMENT_PROGRAM_ARB", "CONTEXT_BOOL(FragmentProgram.Enabled), extra_ARB_fragment_program" ],

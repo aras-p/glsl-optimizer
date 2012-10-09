@@ -1980,7 +1980,6 @@ struct gl_program
 struct gl_vertex_program
 {
    struct gl_program Base;   /**< base class */
-   GLboolean IsNVProgram;    /**< is this a GL_NV_vertex_program program? */
    GLboolean IsPositionInvariant;
    GLboolean UsesClipDistance;
 };
@@ -3068,8 +3067,6 @@ struct gl_extensions
    GLboolean NV_texgen_reflection;
    GLboolean NV_texture_env_combine4;
    GLboolean NV_texture_rectangle;
-   GLboolean NV_vertex_program;
-   GLboolean NV_vertex_program1_1;
    GLboolean SGIS_texture_lod;
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean S3_s3tc;

@@ -305,7 +305,6 @@ EXTRA_EXT(NV_fog_distance);
 EXTRA_EXT(EXT_texture_filter_anisotropic);
 EXTRA_EXT(IBM_rasterpos_clip);
 EXTRA_EXT(NV_point_sprite);
-EXTRA_EXT(NV_vertex_program);
 EXTRA_EXT(NV_fragment_program);
 EXTRA_EXT(NV_texture_rectangle);
 EXTRA_EXT(EXT_stencil_two_side);
@@ -331,7 +330,6 @@ EXTRA_EXT(EXT_pixel_buffer_object);
 EXTRA_EXT(ARB_vertex_program);
 EXTRA_EXT2(NV_point_sprite, ARB_point_sprite);
 EXTRA_EXT2(ARB_fragment_program, NV_fragment_program);
-EXTRA_EXT2(ARB_vertex_program, NV_vertex_program);
 EXTRA_EXT2(ARB_vertex_program, ARB_fragment_program);
 EXTRA_EXT(ARB_geometry_shader4);
 EXTRA_EXT(ARB_color_buffer_float);
@@ -342,23 +340,6 @@ EXTRA_EXT(OES_EGL_image_external);
 EXTRA_EXT(ARB_blend_func_extended);
 EXTRA_EXT(ARB_uniform_buffer_object);
 EXTRA_EXT(ARB_timer_query);
-
-static const int
-extra_ARB_vertex_program_ARB_fragment_program_NV_vertex_program[] = {
-   EXT(ARB_vertex_program),
-   EXT(ARB_fragment_program),
-   EXT(NV_vertex_program),
-   EXTRA_END
-};
-
-static const int
-extra_NV_vertex_program_ARB_vertex_program_ARB_fragment_program_NV_vertex_program[] = {
-   EXT(NV_vertex_program),
-   EXT(ARB_vertex_program),
-   EXT(ARB_fragment_program),
-   EXT(NV_vertex_program),
-   EXTRA_END
-};
 
 static const int
 extra_NV_primitive_restart[] = {

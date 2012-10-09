@@ -504,7 +504,6 @@ _mesa_clone_program(struct gl_context *ctx, const struct gl_program *prog)
          const struct gl_vertex_program *vp = gl_vertex_program_const(prog);
          struct gl_vertex_program *vpc = gl_vertex_program(clone);
          vpc->IsPositionInvariant = vp->IsPositionInvariant;
-         vpc->IsNVProgram = vp->IsNVProgram;
       }
       break;
    case GL_FRAGMENT_PROGRAM_ARB:

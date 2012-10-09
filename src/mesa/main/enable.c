@@ -826,7 +826,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
       case GL_VERTEX_PROGRAM_ARB:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
-         CHECK_EXTENSION2(ARB_vertex_program, NV_vertex_program, cap);
+         CHECK_EXTENSION(ARB_vertex_program, cap);
          if (ctx->VertexProgram.Enabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PROGRAM); 
@@ -838,7 +838,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
           */
          if (!_mesa_is_desktop_gl(ctx))
             goto invalid_enum_error;
-         CHECK_EXTENSION2(ARB_vertex_program, NV_vertex_program, cap);
+         CHECK_EXTENSION(ARB_vertex_program, cap);
          if (ctx->VertexProgram.PointSizeEnabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PROGRAM);
@@ -847,7 +847,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
       case GL_VERTEX_PROGRAM_TWO_SIDE_ARB:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
-         CHECK_EXTENSION2(ARB_vertex_program, NV_vertex_program, cap);
+         CHECK_EXTENSION(ARB_vertex_program, cap);
          if (ctx->VertexProgram.TwoSideEnabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PROGRAM); 
@@ -1479,7 +1479,7 @@ _mesa_IsEnabled( GLenum cap )
       case GL_VERTEX_PROGRAM_ARB:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
-         CHECK_EXTENSION2(ARB_vertex_program, NV_vertex_program);
+         CHECK_EXTENSION(ARB_vertex_program);
          return ctx->VertexProgram.Enabled;
       case GL_VERTEX_PROGRAM_POINT_SIZE_ARB:
          /* This was added with ARB_vertex_program, but it is also used with
@@ -1487,12 +1487,12 @@ _mesa_IsEnabled( GLenum cap )
           */
          if (!_mesa_is_desktop_gl(ctx))
             goto invalid_enum_error;
-         CHECK_EXTENSION2(ARB_vertex_program, NV_vertex_program);
+         CHECK_EXTENSION(ARB_vertex_program);
          return ctx->VertexProgram.PointSizeEnabled;
       case GL_VERTEX_PROGRAM_TWO_SIDE_ARB:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
-         CHECK_EXTENSION2(ARB_vertex_program, NV_vertex_program);
+         CHECK_EXTENSION(ARB_vertex_program);
          return ctx->VertexProgram.TwoSideEnabled;
 
       case GL_FRAGMENT_PROGRAM_NV:
