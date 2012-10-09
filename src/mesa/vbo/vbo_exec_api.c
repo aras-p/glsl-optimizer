@@ -958,6 +958,10 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
       vfmt->VertexAttrib4fvARB = vbo_VertexAttrib4fvARB;
    }
 
+   /* Note that VertexAttrib4fNV is used from dlist.c and api_arrayelt.c so
+    * they can have a single entrypoint for updating any of the legacy
+    * attribs.
+    */
    vfmt->VertexAttrib1fNV = vbo_VertexAttrib1fNV;
    vfmt->VertexAttrib1fvNV = vbo_VertexAttrib1fvNV;
    vfmt->VertexAttrib2fNV = vbo_VertexAttrib2fNV;

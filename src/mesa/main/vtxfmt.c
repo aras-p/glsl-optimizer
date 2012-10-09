@@ -135,7 +135,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
                                                vfmt->DrawTransformFeedbackStreamInstanced);
    }
 
-   /* GL_NV_vertex_program */
+   /* Originally for GL_NV_vertex_program, this is also used by dlist.c */
    if (ctx->API == API_OPENGL) {
       SET_VertexAttrib1fNV(tab, vfmt->VertexAttrib1fNV);
       SET_VertexAttrib1fvNV(tab, vfmt->VertexAttrib1fvNV);

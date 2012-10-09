@@ -205,6 +205,10 @@ _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
 
 /**
  * Get a vertex array attribute pointer.
+ *
+ * While the function first appeared in GL_NV_vertex_program, it's
+ * aliased for use by GL_ARB_vertex_program.
+ *
  * \note Not compiled into display lists.
  * \note Called from the GL API dispatcher.
  */
