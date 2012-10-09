@@ -229,17 +229,14 @@ _eglParseContextAttribList(_EGLContext *ctx, _EGLDisplay *dpy,
              *
              *     "* If an OpenGL context is requested, the requested version
              *        is greater than 3.2, and the value for attribute
-             *        EGL_CONTEXT_PROFILE_MASK_KHR has no bits set; has any
-             *        bits set other than EGL_CONTEXT_CORE_PROFILE_BIT_KHR and
-             *        EGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_KHR; has more than
-             *        one of these bits set; or if the implementation does not
-             *        support the requested profile, then an
-             *        EGL_BAD_PROFILE_KHR error is generated."
-             *
-             * However, it does not define EGL_BAD_PROFILE_KHR.  For now use
-             * EGL_BAD_ATTRIBUTE.
+             *        EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR has no bits set; has
+             *        any bits set other than EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR
+             *        and EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT_KHR; has
+             *        more than one of these bits set; or if the implementation does
+             *        not support the requested profile, then an EGL_BAD_MATCH error
+             *        is generated."
              */
-            err = EGL_BAD_ATTRIBUTE;
+            err = EGL_BAD_MATCH;
             break;
          }
       }
