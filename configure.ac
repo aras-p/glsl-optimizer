@@ -810,7 +810,7 @@ if test "x$enable_dri" = xyes; then
 fi
 
 dnl Find out if X is available.
-PKG_CHECK_MODULES([X11], [x11])
+PKG_CHECK_MODULES([X11], [x11], [no_x=no], [no_x=yes])
 
 dnl Try to tell the user that the --x-* options are only used when
 dnl pkg-config is not available. This must be right after AC_PATH_XTRA.
