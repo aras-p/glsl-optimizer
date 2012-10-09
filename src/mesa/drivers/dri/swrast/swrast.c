@@ -663,7 +663,6 @@ static const char *es2_extensions[] = {
    "GL_EXT_framebuffer_blit",
    "GL_IBM_multimode_draw_arrays",
    "GL_MESA_window_pos",
-   "GL_NV_vertex_program",
 
    /* Required by GLES2 */
    "GL_ARB_fragment_program",
