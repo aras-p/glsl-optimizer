@@ -480,10 +480,12 @@ static void evergreen_launch_grid(
 {
 	struct r600_context *ctx = (struct r600_context *)ctx_;
 
+#ifdef HAVE_OPENCL 
 	COMPUTE_DBG("*** evergreen_launch_grid: pc = %u\n", pc);
 
-#ifdef HAVE_OPENCL 
+	struct r600_pipe_compute *shader = ctx->cs_shader_state.shader;
 	if (!shader->kernels[pc].code_bo) {
+		void *p;
 		struct r600_kernel *kernel = &shader->kernels[pc];
 		r600_compute_shader_create(ctx_, kernel->llvm_module, &kernel->bc);
 		kernel->code_bo = r600_compute_buffer_alloc_vram(ctx->screen,
