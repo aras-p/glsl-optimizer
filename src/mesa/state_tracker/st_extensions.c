@@ -524,11 +524,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
-#if 0
-   /* possibly could support the following two */
-   ctx->Extensions.NV_vertex_program = GL_TRUE;
-   ctx->Extensions.NV_vertex_program1_1 = GL_TRUE;
-#endif
 
    ctx->Extensions.OES_EGL_image = GL_TRUE;
    if (ctx->API != API_OPENGL)
