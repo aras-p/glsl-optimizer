@@ -324,7 +324,7 @@ nv30_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
    unsigned size;
 
    if (cb && cb->user_buffer) {
-      buf = nouveau_user_buffer_create(pipe->screen, cb->user_buffer,
+      buf = nouveau_user_buffer_create(pipe->screen, (void*)cb->user_buffer,
                                        cb->buffer_size,
                                        PIPE_BIND_CONSTANT_BUFFER);
    }
