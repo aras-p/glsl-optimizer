@@ -179,7 +179,6 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
             /* Unbind program if necessary */
             switch (prog->Target) {
             case GL_VERTEX_PROGRAM_ARB: /* == GL_VERTEX_PROGRAM_NV */
-            case GL_VERTEX_STATE_PROGRAM_NV:
                if (ctx->VertexProgram.Current &&
                    ctx->VertexProgram.Current->Base.Id == ids[i]) {
                   /* unbind this currently bound program */

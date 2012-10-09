@@ -321,7 +321,6 @@ typedef enum
    OPCODE_WINDOW_POS_ARB,
    /* GL_NV_vertex_program */
    OPCODE_BIND_PROGRAM_NV,
-   OPCODE_EXECUTE_PROGRAM_NV,
    OPCODE_REQUEST_RESIDENT_PROGRAMS_NV,
    OPCODE_LOAD_PROGRAM_NV,
    /* GL_NV_fragment_program */
@@ -4942,27 +4941,6 @@ save_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
 
 
 static void GLAPIENTRY
-save_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = alloc_instruction(ctx, OPCODE_EXECUTE_PROGRAM_NV, 6);
-   if (n) {
-      n[1].e = target;
-      n[2].ui = id;
-      n[3].f = params[0];
-      n[4].f = params[1];
-      n[5].f = params[2];
-      n[6].f = params[3];
-   }
-   if (ctx->ExecuteFlag) {
-      CALL_ExecuteProgramNV(ctx->Exec, (target, id, params));
-   }
-}
-
-
-static void GLAPIENTRY
 save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
                    const GLubyte * program)
 {
@@ -8332,16 +8310,6 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_BIND_PROGRAM_NV:  /* GL_NV_vertex_program */
             CALL_BindProgramNV(ctx->Exec, (n[1].e, n[2].ui));
             break;
-         case OPCODE_EXECUTE_PROGRAM_NV:
-            {
-               GLfloat v[4];
-               v[0] = n[3].f;
-               v[1] = n[4].f;
-               v[2] = n[5].f;
-               v[3] = n[6].f;
-               CALL_ExecuteProgramNV(ctx->Exec, (n[1].e, n[2].ui, v));
-            }
-            break;
          case OPCODE_REQUEST_RESIDENT_PROGRAMS_NV:
             CALL_RequestResidentProgramsNV(ctx->Exec, (n[1].ui,
                                                        (GLuint *) n[2].data));
@@ -10191,7 +10159,6 @@ _mesa_create_save_table(const struct gl_context *ctx)
     */
    SET_BindProgramNV(table, save_BindProgramNV);
    SET_DeleteProgramsNV(table, _mesa_DeletePrograms);
-   SET_ExecuteProgramNV(table, save_ExecuteProgramNV);
    SET_GenProgramsNV(table, _mesa_GenPrograms);
    SET_AreProgramsResidentNV(table, _mesa_AreProgramsResidentNV);
    SET_RequestResidentProgramsNV(table, save_RequestResidentProgramsNV);

@@ -476,7 +476,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
    if (ctx->API == API_OPENGL) {
       SET_BindProgramNV(exec, _mesa_BindProgram);
       SET_DeleteProgramsNV(exec, _mesa_DeletePrograms);
-      SET_ExecuteProgramNV(exec, _mesa_ExecuteProgramNV);
       SET_GenProgramsNV(exec, _mesa_GenPrograms);
       SET_AreProgramsResidentNV(exec, _mesa_AreProgramsResidentNV);
       SET_RequestResidentProgramsNV(exec, _mesa_RequestResidentProgramsNV);

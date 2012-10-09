@@ -51,36 +51,6 @@
 #include "program/prog_parameter.h"
 
 
-
-/**
- * Execute a vertex state program.
- * \note Called from the GL API dispatcher.
- */
-void GLAPIENTRY
-_mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
-{
-   struct gl_vertex_program *vprog;
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
-   if (target != GL_VERTEX_STATE_PROGRAM_NV) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glExecuteProgramNV");
-      return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   vprog = gl_vertex_program(_mesa_lookup_program(ctx, id));
-
-   if (!vprog || vprog->Base.Target != GL_VERTEX_STATE_PROGRAM_NV) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glExecuteProgramNV");
-      return;
-   }
-   
-   _mesa_problem(ctx, "glExecuteProgramNV() not supported");
-}
-
-
 /**
  * Determine if a set of programs is resident in hardware.
  * \note Not compiled into display lists.
