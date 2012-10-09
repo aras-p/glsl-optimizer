@@ -4963,28 +4963,6 @@ save_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
 
 
 static void GLAPIENTRY
-save_ProgramParameters4dvNV(GLenum target, GLuint index,
-                            GLsizei num, const GLdouble *params)
-{
-   GLint i;
-   for (i = 0; i < num; i++) {
-      save_ProgramEnvParameter4dvARB(target, index + i, params + 4 * i);
-   }
-}
-
-
-static void GLAPIENTRY
-save_ProgramParameters4fvNV(GLenum target, GLuint index,
-                            GLsizei num, const GLfloat *params)
-{
-   GLint i;
-   for (i = 0; i < num; i++) {
-      save_ProgramEnvParameter4fvARB(target, index + i, params + 4 * i);
-   }
-}
-
-
-static void GLAPIENTRY
 save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
                    const GLubyte * program)
 {
@@ -10217,8 +10195,6 @@ _mesa_create_save_table(const struct gl_context *ctx)
    SET_GenProgramsNV(table, _mesa_GenPrograms);
    SET_AreProgramsResidentNV(table, _mesa_AreProgramsResidentNV);
    SET_RequestResidentProgramsNV(table, save_RequestResidentProgramsNV);
-   SET_GetProgramParameterfvNV(table, _mesa_GetProgramParameterfvNV);
-   SET_GetProgramParameterdvNV(table, _mesa_GetProgramParameterdvNV);
    SET_GetProgramivNV(table, _mesa_GetProgramivNV);
    SET_GetProgramStringNV(table, _mesa_GetProgramStringNV);
    SET_GetVertexAttribdvNV(table, _mesa_GetVertexAttribdvNV);
@@ -10231,8 +10207,6 @@ _mesa_create_save_table(const struct gl_context *ctx)
    SET_ProgramEnvParameter4dvARB(table, save_ProgramEnvParameter4dvARB);
    SET_ProgramEnvParameter4fARB(table, save_ProgramEnvParameter4fARB);
    SET_ProgramEnvParameter4fvARB(table, save_ProgramEnvParameter4fvARB);
-   SET_ProgramParameters4dvNV(table, save_ProgramParameters4dvNV);
-   SET_ProgramParameters4fvNV(table, save_ProgramParameters4fvNV);
    SET_VertexAttribPointerNV(table, _mesa_VertexAttribPointerNV);
 
    /* 244. GL_ATI_envmap_bumpmap */

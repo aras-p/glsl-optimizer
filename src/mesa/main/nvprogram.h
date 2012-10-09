@@ -44,12 +44,6 @@ extern void GLAPIENTRY
 _mesa_RequestResidentProgramsNV(GLsizei n, const GLuint *ids);
 
 extern void GLAPIENTRY
-_mesa_GetProgramParameterfvNV(GLenum target, GLuint index, GLenum pname, GLfloat *params);
-
-extern void GLAPIENTRY
-_mesa_GetProgramParameterdvNV(GLenum target, GLuint index, GLenum pname, GLdouble *params);
-
-extern void GLAPIENTRY
 _mesa_GetProgramivNV(GLuint id, GLenum pname, GLint *params);
 
 extern void GLAPIENTRY
@@ -69,14 +63,6 @@ _mesa_GetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid **pointer);
 
 extern void GLAPIENTRY
 _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len, const GLubyte *program);
-
-extern void GLAPIENTRY
-_mesa_ProgramParameters4dvNV(GLenum target, GLuint index, GLsizei num,
-                             const GLdouble *params);
-
-extern void GLAPIENTRY
-_mesa_ProgramParameters4fvNV(GLenum target, GLuint index, GLsizei num,
-                             const GLfloat *params);
 
 extern void GLAPIENTRY
 _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
