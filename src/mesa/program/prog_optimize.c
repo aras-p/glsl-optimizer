@@ -392,7 +392,6 @@ find_next_use(const struct gl_program *prog,
       switch (inst->Opcode) {
       case OPCODE_BGNLOOP:
       case OPCODE_BGNSUB:
-      case OPCODE_BRA:
       case OPCODE_CAL:
       case OPCODE_CONT:
       case OPCODE_IF:
@@ -439,7 +438,6 @@ _mesa_is_flow_control_opcode(enum prog_opcode opcode)
    switch (opcode) {
    case OPCODE_BGNLOOP:
    case OPCODE_BGNSUB:
-   case OPCODE_BRA:
    case OPCODE_CAL:
    case OPCODE_CONT:
    case OPCODE_IF:

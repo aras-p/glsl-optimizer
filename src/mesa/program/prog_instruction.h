@@ -148,13 +148,9 @@ typedef enum prog_opcode {
    OPCODE_ABS,       /*   X        X       1.1               X   */
    OPCODE_ADD,       /*   X        X       X       X         X   */
    OPCODE_AND,       /*                                          */
-   OPCODE_ARA,       /*                    2                     */
    OPCODE_ARL,       /*   X                X                 X   */
-   OPCODE_ARL_NV,    /*                    2                     */
-   OPCODE_ARR,       /*                    2                     */
    OPCODE_BGNLOOP,   /*                                     opt  */
    OPCODE_BGNSUB,    /*                                     opt  */
-   OPCODE_BRA,       /*                    2                     */
    OPCODE_BRK,       /*                    2                opt  */
    OPCODE_CAL,       /*                    2       2        opt  */
    OPCODE_CMP,       /*            X                         X   */
@@ -204,10 +200,7 @@ typedef enum prog_opcode {
    OPCODE_PK4B,      /*                            X             */
    OPCODE_PK4UB,     /*                            X             */
    OPCODE_POW,       /*   X        X               X         X   */
-   OPCODE_POPA,      /*                    3                     */
    OPCODE_PRINT,     /*                    X       X             */
-   OPCODE_PUSHA,     /*                    3                     */
-   OPCODE_RCC,       /*                    1.1                   */
    OPCODE_RCP,       /*   X        X       X       X         X   */
    OPCODE_RET,       /*                    2       2        opt  */
    OPCODE_RFL,       /*                            X             */

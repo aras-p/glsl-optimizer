@@ -1088,7 +1088,6 @@ upload_program(struct i915_fragment_program *p)
 
       case OPCODE_BGNLOOP:
       case OPCODE_BGNSUB:
-      case OPCODE_BRA:
       case OPCODE_BRK:
       case OPCODE_CAL:
       case OPCODE_CONT:

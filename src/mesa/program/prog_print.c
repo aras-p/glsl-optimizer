@@ -748,13 +748,6 @@ _mesa_fprint_instruction_opt(FILE *f,
       fprint_src_reg(f, &inst->SrcReg[0], mode, prog);
       fprint_comment(f, inst);
       break;
-   case OPCODE_BRA:
-      fprintf(f, "BRA %d (%s%s)",
-	      inst->BranchTarget,
-	      _mesa_condcode_string(inst->DstReg.CondMask),
-	      _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
-      fprint_comment(f, inst);
-      break;
    case OPCODE_IF:
       if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
          /* Use ordinary register */
