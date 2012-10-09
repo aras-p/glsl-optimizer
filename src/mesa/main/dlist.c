@@ -5020,7 +5020,7 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint * ids)
 
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
-   n = alloc_instruction(ctx, OPCODE_TRACK_MATRIX_NV, 2);
+   n = alloc_instruction(ctx, OPCODE_REQUEST_RESIDENT_PROGRAMS_NV, 2);
    if (n) {
       GLuint *idCopy = malloc(num * sizeof(GLuint));
       if (!idCopy) {
