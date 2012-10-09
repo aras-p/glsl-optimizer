@@ -879,57 +879,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->VertexProgram.TwoSideEnabled = state;
          break;
 
-      case GL_MAP1_VERTEX_ATTRIB0_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB1_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB2_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB3_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB4_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB5_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB6_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB7_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB8_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB9_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB10_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB11_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB12_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB13_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB14_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB15_4_NV:
-         if (ctx->API != API_OPENGL)
-            goto invalid_enum_error;
-         CHECK_EXTENSION(NV_vertex_program, cap);
-         {
-            const GLuint map = (GLuint) (cap - GL_MAP1_VERTEX_ATTRIB0_4_NV);
-            FLUSH_VERTICES(ctx, _NEW_EVAL);
-            ctx->Eval.Map1Attrib[map] = state;
-         }
-         break;
-      case GL_MAP2_VERTEX_ATTRIB0_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB1_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB2_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB3_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB4_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB5_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB6_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB7_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB8_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB9_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB10_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB11_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB12_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB13_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB14_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB15_4_NV:
-         if (ctx->API != API_OPENGL)
-            goto invalid_enum_error;
-         CHECK_EXTENSION(NV_vertex_program, cap);
-         {
-            const GLuint map = (GLuint) (cap - GL_MAP2_VERTEX_ATTRIB0_4_NV);
-            FLUSH_VERTICES(ctx, _NEW_EVAL);
-            ctx->Eval.Map2Attrib[map] = state;
-         }
-         break;
-
       case GL_FRAGMENT_PROGRAM_NV:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
@@ -1594,52 +1543,6 @@ _mesa_IsEnabled( GLenum cap )
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
             ASSERT(VERT_ATTRIB_GENERIC(n) < Elements(ctx->Array.ArrayObj->VertexAttrib));
             return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(n)].Enabled != 0);
-         }
-      case GL_MAP1_VERTEX_ATTRIB0_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB1_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB2_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB3_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB4_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB5_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB6_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB7_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB8_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB9_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB10_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB11_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB12_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB13_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB14_4_NV:
-      case GL_MAP1_VERTEX_ATTRIB15_4_NV:
-         if (ctx->API != API_OPENGL)
-            goto invalid_enum_error;
-         CHECK_EXTENSION(NV_vertex_program);
-         {
-            const GLuint map = (GLuint) (cap - GL_MAP1_VERTEX_ATTRIB0_4_NV);
-            return ctx->Eval.Map1Attrib[map];
-         }
-      case GL_MAP2_VERTEX_ATTRIB0_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB1_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB2_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB3_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB4_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB5_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB6_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB7_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB8_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB9_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB10_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB11_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB12_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB13_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB14_4_NV:
-      case GL_MAP2_VERTEX_ATTRIB15_4_NV:
-         if (ctx->API != API_OPENGL)
-            goto invalid_enum_error;
-         CHECK_EXTENSION(NV_vertex_program);
-         {
-            const GLuint map = (GLuint) (cap - GL_MAP2_VERTEX_ATTRIB0_4_NV);
-            return ctx->Eval.Map2Attrib[map];
          }
 
       case GL_FRAGMENT_PROGRAM_NV:

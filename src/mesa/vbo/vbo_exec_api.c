@@ -667,8 +667,7 @@ vbo_exec_EvalMesh1(GLenum mode, GLint i1, GLint i2)
    /* No effect if vertex maps disabled.
     */
    if (!ctx->Eval.Map1Vertex4 && 
-       !ctx->Eval.Map1Vertex3 &&
-       !(ctx->VertexProgram._Enabled && ctx->Eval.Map1Attrib[VERT_ATTRIB_POS]))
+       !ctx->Eval.Map1Vertex3)
       return;
 
    du = ctx->Eval.MapGrid1du;
@@ -704,8 +703,7 @@ vbo_exec_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
    /* No effect if vertex maps disabled.
     */
    if (!ctx->Eval.Map2Vertex4 && 
-       !ctx->Eval.Map2Vertex3 &&
-       !(ctx->VertexProgram._Enabled && ctx->Eval.Map2Attrib[VERT_ATTRIB_POS]))
+       !ctx->Eval.Map2Vertex3)
       return;
 
    du = ctx->Eval.MapGrid2du;
