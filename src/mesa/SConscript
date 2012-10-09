@@ -295,7 +295,6 @@ program_sources = [
     'program/hash_table.c',
     'program/ir_to_mesa.cpp',
     'program/nvfragparse.c',
-    'program/nvvertparse.c',
     'program/program.c',
     'program/program_parse_extra.c',
     'program/prog_cache.c',

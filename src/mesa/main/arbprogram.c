@@ -38,7 +38,6 @@
 #include "main/arbprogram.h"
 #include "program/arbprogparse.h"
 #include "program/nvfragparse.h"
-#include "program/nvvertparse.h"
 #include "program/program.h"
 
 
@@ -77,9 +76,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    /* Error-check target and get curProg */
-   if ((target == GL_VERTEX_PROGRAM_ARB) && /* == GL_VERTEX_PROGRAM_NV */
-        (ctx->Extensions.NV_vertex_program ||
-         ctx->Extensions.ARB_vertex_program)) {
+   if (target == GL_VERTEX_PROGRAM_ARB && ctx->Extensions.ARB_vertex_program) {
       curProg = &ctx->VertexProgram.Current->Base;
    }
    else if ((target == GL_FRAGMENT_PROGRAM_NV
@@ -321,8 +318,7 @@ get_env_param_pointer(struct gl_context *ctx, const char *func,
       return GL_TRUE;
    }
    else if (target == GL_VERTEX_PROGRAM_ARB &&
-	    (ctx->Extensions.ARB_vertex_program ||
-	     ctx->Extensions.NV_vertex_program)) {
+            ctx->Extensions.ARB_vertex_program) {
       if (index >= ctx->Const.VertexProgram.MaxEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "%s(index)", func);
          return GL_FALSE;
@@ -356,25 +352,9 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
       return;
    }
 
-   /* The first couple cases are complicated.  The same enum value is used for
-    * ARB and NV vertex programs.  If the target is a vertex program, parse it
-    * using the ARB grammar if the string starts with "!!ARB" or if
-    * NV_vertex_program is not supported.
-    */
-   if (target == GL_VERTEX_PROGRAM_ARB
-       && ctx->Extensions.ARB_vertex_program
-       && ((strncmp(string, "!!ARB", 5) == 0)
-	   || !ctx->Extensions.NV_vertex_program)) {
+   if (target == GL_VERTEX_PROGRAM_ARB && ctx->Extensions.ARB_vertex_program) {
       struct gl_vertex_program *prog = ctx->VertexProgram.Current;
       _mesa_parse_arb_vertex_program(ctx, target, string, len, prog);
-
-      base = & prog->Base;
-   }
-   else if ((target == GL_VERTEX_PROGRAM_ARB
-	     || target == GL_VERTEX_STATE_PROGRAM_NV)
-	    && ctx->Extensions.NV_vertex_program) {
-      struct gl_vertex_program *prog = ctx->VertexProgram.Current;
-      _mesa_parse_nv_vertex_program(ctx, target, string, len, prog);
 
       base = & prog->Base;
    }
@@ -410,8 +390,6 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 /**
  * Set a program env parameter register.
  * \note Called from the GL API dispatcher.
- * Note, this function is also used by the GL_NV_vertex_program extension
- * (alias to ProgramParameterdNV)
  */
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
@@ -425,8 +403,6 @@ _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
 /**
  * Set a program env parameter register.
  * \note Called from the GL API dispatcher.
- * Note, this function is also used by the GL_NV_vertex_program extension
- * (alias to ProgramParameterdvNV)
  */
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
@@ -441,8 +417,6 @@ _mesa_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
 /**
  * Set a program env parameter register.
  * \note Called from the GL API dispatcher.
- * Note, this function is also used by the GL_NV_vertex_program extension
- * (alias to ProgramParameterfNV)
  */
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
@@ -466,8 +440,6 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
 /**
  * Set a program env parameter register.
  * \note Called from the GL API dispatcher.
- * Note, this function is also used by the GL_NV_vertex_program extension
- * (alias to ProgramParameterfvNV)
  */
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4fvARB(GLenum target, GLuint index,

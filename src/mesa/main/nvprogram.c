@@ -29,7 +29,7 @@
  */
 
 /*
- * Regarding GL_NV_fragment/vertex_program, GL_NV_vertex_program1_1, etc:
+ * Regarding GL_NV_fragment_program:
  *
  * Portions of this software may use or implement intellectual
  * property owned and licensed by NVIDIA Corporation. NVIDIA disclaims
@@ -46,7 +46,6 @@
 #include "main/nvprogram.h"
 #include "program/arbprogparse.h"
 #include "program/nvfragparse.h"
-#include "program/nvvertparse.h"
 #include "program/program.h"
 #include "program/prog_instruction.h"
 #include "program/prog_parameter.h"
@@ -624,27 +623,7 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
       return;
    }
 
-   if ((target == GL_VERTEX_PROGRAM_NV ||
-        target == GL_VERTEX_STATE_PROGRAM_NV)
-       && ctx->Extensions.NV_vertex_program) {
-      struct gl_vertex_program *vprog = gl_vertex_program(prog);
-      if (!vprog || prog == &_mesa_DummyProgram) {
-         vprog = gl_vertex_program(ctx->Driver.NewProgram(ctx, target, id));
-         if (!vprog) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
-            return;
-         }
-         _mesa_HashInsert(ctx->Shared->Programs, id, vprog);
-      }
-
-      if (ctx->Extensions.ARB_vertex_program
-	  && (strncmp((char *) program, "!!ARB", 5) == 0)) {
-	 _mesa_parse_arb_vertex_program(ctx, target, program, len, vprog);
-      } else {
-	 _mesa_parse_nv_vertex_program(ctx, target, program, len, vprog);
-      }
-   }
-   else if (target == GL_FRAGMENT_PROGRAM_NV
+   if (target == GL_FRAGMENT_PROGRAM_NV
             && ctx->Extensions.NV_fragment_program) {
       struct gl_fragment_program *fprog = gl_fragment_program(prog);
       if (!fprog || prog == &_mesa_DummyProgram) {

@@ -139,7 +139,6 @@ _mesa_GetString( GLenum name )
          if (ctx->API == API_OPENGL &&
              (ctx->Extensions.NV_fragment_program ||
               ctx->Extensions.ARB_fragment_program ||
-              ctx->Extensions.NV_vertex_program ||
               ctx->Extensions.ARB_vertex_program)) {
             return (const GLubyte *) ctx->Program.ErrorString;
          }
