@@ -61,7 +61,7 @@ brw_vs_arg_can_be_immediate(enum prog_opcode opcode, int arg)
    /* These opcodes get broken down in a way that allow two
     * args to be immediates.
     */
-   if (opcode == OPCODE_MAD || opcode == OPCODE_LRP) {
+   if (opcode == OPCODE_MAD) {
       if (arg == 1 || arg == 2)
 	 return true;
    }
@@ -428,35 +428,6 @@ static void unalias2( struct brw_vs_compile *c,
    }
    else {
       func(c, dst, arg0, arg1);
-   }
-}
-
-/**
- * \sa unalias2
- * Checkes if 3-operand instruction needs an intermediate temporary.
- */
-static void unalias3( struct brw_vs_compile *c,
-		      struct brw_reg dst,
-		      struct brw_reg arg0,
-		      struct brw_reg arg1,
-		      struct brw_reg arg2,
-		      void (*func)( struct brw_vs_compile *,
-				    struct brw_reg,
-				    struct brw_reg,
-				    struct brw_reg,
-				    struct brw_reg ))
-{
-   if ((dst.file == arg0.file && dst.nr == arg0.nr) ||
-       (dst.file == arg1.file && dst.nr == arg1.nr) ||
-       (dst.file == arg2.file && dst.nr == arg2.nr)) {
-      struct brw_compile *p = &c->func;
-      struct brw_reg tmp = brw_writemask(get_tmp(c), dst.dw1.bits.writemask);
-      func(c, tmp, arg0, arg1, arg2);
-      brw_MOV(p, dst, tmp);
-      release_tmp(c, tmp);
-   }
-   else {
-      func(c, dst, arg0, arg1, arg2);
    }
 }
 
@@ -933,19 +904,6 @@ static void emit_lit_noalias( struct brw_vs_compile *c,
    brw_ENDIF(p);
 
    release_tmp(c, tmp);
-}
-
-static void emit_lrp_noalias(struct brw_vs_compile *c,
-			     struct brw_reg dst,
-			     struct brw_reg arg0,
-			     struct brw_reg arg1,
-			     struct brw_reg arg2)
-{
-   struct brw_compile *p = &c->func;
-
-   brw_ADD(p, dst, negate(arg0), brw_imm_f(1.0));
-   brw_MUL(p, brw_null_reg(), dst, arg2);
-   brw_MAC(p, dst, arg0, arg1);
 }
 
 static struct brw_reg
@@ -1708,12 +1666,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
       case OPCODE_ADD:
 	 brw_ADD(p, dst, args[0], args[1]);
 	 break;
-      case OPCODE_COS:
-	 emit_math1(c, BRW_MATH_FUNCTION_COS, dst, args[0], BRW_MATH_PRECISION_FULL);
-	 break;
-      case OPCODE_DP2:
-	 brw_DP2(p, dst, args[0], args[1]);
-	 break;
       case OPCODE_DP3:
 	 brw_DP3(p, dst, args[0], args[1]);
 	 break;
@@ -1750,9 +1702,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
       case OPCODE_LIT:
 	 unalias1(c, dst, args[0], emit_lit_noalias);
 	 break;
-      case OPCODE_LRP:
-	 unalias3(c, dst, args[0], args[1], args[2], emit_lrp_noalias);
-	 break;
       case OPCODE_MAD:
 	 if (!accumulator_contains(c, args[2]))
 	    brw_MOV(p, brw_acc_reg(), args[2]);
@@ -1780,9 +1729,6 @@ void brw_old_vs_emit(struct brw_vs_compile *c )
 	 emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, brw_abs(args[0]), BRW_MATH_PRECISION_FULL);
 	 break;
 
-      case OPCODE_SIN:
-	 emit_math1(c, BRW_MATH_FUNCTION_SIN, dst, args[0], BRW_MATH_PRECISION_FULL);
-	 break;
       case OPCODE_SGE:
          unalias2(c, dst, args[0], args[1], emit_sge);
 	 break;
