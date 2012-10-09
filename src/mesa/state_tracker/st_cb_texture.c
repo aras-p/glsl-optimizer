@@ -915,8 +915,7 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
 {
    struct st_texture_image *stImage = st_texture_image(texImage);
    const GLenum texBaseFormat = texImage->_BaseFormat;
-   struct gl_framebuffer *fb = ctx->ReadBuffer;
-   struct st_renderbuffer *strb;
+   struct st_renderbuffer *strb = st_renderbuffer(rb);
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
@@ -932,16 +931,6 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    /* make sure finalize_textures has been called? 
     */
    if (0) st_validate_state(st);
-
-   /* determine if copying depth or color data */
-   if (texBaseFormat == GL_DEPTH_COMPONENT ||
-       texBaseFormat == GL_DEPTH_STENCIL) {
-      strb = st_renderbuffer(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
-   }
-   else {
-      /* texBaseFormat == GL_RGB, GL_RGBA, GL_ALPHA, etc */
-      strb = st_renderbuffer(fb->_ColorReadBuffer);
-   }
 
    if (!strb || !strb->surface || !stImage->pt) {
       debug_printf("%s: null strb or stImage\n", __FUNCTION__);
