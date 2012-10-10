@@ -36,7 +36,6 @@ import re
 from optparse import OptionParser
 import gl_XML
 import glX_XML
-from gles_api import es1_api, es2_api
 
 
 # number of dynamic entries
@@ -48,13 +47,14 @@ class ABIEntry(object):
     _match_c_param = re.compile(
             '^(?P<type>[\w\s*]+?)(?P<name>\w+)(\[(?P<array>\d+)\])?$')
 
-    def __init__(self, cols, attrs):
+    def __init__(self, cols, attrs, xml_data = None):
         self._parse(cols)
 
         self.slot = attrs['slot']
         self.hidden = attrs['hidden']
         self.alias = attrs['alias']
         self.handcode = attrs['handcode']
+        self.xml_data = xml_data
 
     def c_prototype(self):
         return '%s %s(%s)' % (self.c_return(), self.name, self.c_params())
@@ -177,7 +177,7 @@ def abi_parse_xml(xml):
             params = func.get_parameter_string(name)
             cols.extend([p.strip() for p in params.split(',')])
 
-            ent = ABIEntry(cols, attrs)
+            ent = ABIEntry(cols, attrs, func)
             entry_dict[ent.name] = ent
 
     entries = entry_dict.values()
@@ -744,7 +744,10 @@ class ES1APIPrinter(GLAPIPrinter):
         self.prefix_warn = 'gl'
 
     def _override_for_api(self, ent):
-        ent.hidden = ent.name not in es1_api
+        if ent.xml_data is None:
+            raise Exception('ES2 API printer requires XML input')
+        ent.hidden = ent.name not in \
+            ent.xml_data.entry_points_for_api_version('es1')
         ent.handcode = False
 
     def _get_c_header(self):
@@ -765,7 +768,10 @@ class ES2APIPrinter(GLAPIPrinter):
         self.prefix_warn = 'gl'
 
     def _override_for_api(self, ent):
-        ent.hidden = ent.name not in es2_api
+        if ent.xml_data is None:
+            raise Exception('ES2 API printer requires XML input')
+        ent.hidden = ent.name not in \
+            ent.xml_data.entry_points_for_api_version('es2')
         ent.handcode = False
 
     def _get_c_header(self):
