@@ -688,8 +688,9 @@ class ABIPrinter(object):
 class GLAPIPrinter(ABIPrinter):
     """OpenGL API Printer"""
 
-    def __init__(self, entries, api=None):
-        self._override_for_api(entries, api)
+    def __init__(self, entries):
+        for ent in entries:
+            self._override_for_api(ent)
         super(GLAPIPrinter, self).__init__(entries)
 
         self.api_defines = ['GL_GLEXT_PROTOTYPES']
@@ -711,16 +712,11 @@ class GLAPIPrinter(ABIPrinter):
 
         self.c_header = self._get_c_header()
 
-    def _override_for_api(self, entries, api):
-        """Override the entry attributes according to API."""
-        # no override
-        if api is None:
-            return entries
-
-        for ent in entries:
-            # override 'hidden' and 'handcode'
-            ent.hidden = ent.name not in api
-            ent.handcode = False
+    def _override_for_api(self, ent):
+        """Override attributes of an entry if necessary for this
+        printer."""
+        # By default, no override is necessary.
+        pass
 
     def _get_c_header(self):
         header = """#ifndef _GLAPI_TMP_H_
@@ -743,9 +739,13 @@ class ES1APIPrinter(GLAPIPrinter):
     """OpenGL ES 1.x API Printer"""
 
     def __init__(self, entries):
-        super(ES1APIPrinter, self).__init__(entries, es1_api)
+        super(ES1APIPrinter, self).__init__(entries)
         self.prefix_lib = 'gl'
         self.prefix_warn = 'gl'
+
+    def _override_for_api(self, ent):
+        ent.hidden = ent.name not in es1_api
+        ent.handcode = False
 
     def _get_c_header(self):
         header = """#ifndef _GLAPI_TMP_H_
@@ -760,9 +760,13 @@ class ES2APIPrinter(GLAPIPrinter):
     """OpenGL ES 2.x API Printer"""
 
     def __init__(self, entries):
-        super(ES2APIPrinter, self).__init__(entries, es2_api)
+        super(ES2APIPrinter, self).__init__(entries)
         self.prefix_lib = 'gl'
         self.prefix_warn = 'gl'
+
+    def _override_for_api(self, ent):
+        ent.hidden = ent.name not in es2_api
+        ent.handcode = False
 
     def _get_c_header(self):
         header = """#ifndef _GLAPI_TMP_H_
@@ -777,7 +781,7 @@ class SharedGLAPIPrinter(GLAPIPrinter):
     """Shared GLAPI API Printer"""
 
     def __init__(self, entries):
-        super(SharedGLAPIPrinter, self).__init__(entries, [])
+        super(SharedGLAPIPrinter, self).__init__(entries)
 
         self.lib_need_table_size = True
         self.lib_need_noop_array = True
@@ -787,6 +791,10 @@ class SharedGLAPIPrinter(GLAPIPrinter):
 
         self.prefix_lib = 'shared'
         self.prefix_warn = 'gl'
+
+    def _override_for_api(self, ent):
+        ent.hidden = True
+        ent.handcode = False
 
     def _get_c_header(self):
         header = """#ifndef _GLAPI_TMP_H_
