@@ -92,7 +92,7 @@ lp_build_min_simple(struct lp_build_context *bld,
             intrinsic = "llvm.x86.sse.min.ss";
             intr_size = 128;
          }
-         else if (type.length <= 4 || !util_cpu_caps.has_avx) {
+         else if (type.length <= 4 || !util_cpu_caps.has_avx || lp_native_vector_width < 256) {
             intrinsic = "llvm.x86.sse.min.ps";
             intr_size = 128;
          }
@@ -106,7 +106,7 @@ lp_build_min_simple(struct lp_build_context *bld,
             intrinsic = "llvm.x86.sse2.min.sd";
             intr_size = 128;
          }
-         else if (type.length == 2 || !util_cpu_caps.has_avx) {
+         else if (type.length == 2 || !util_cpu_caps.has_avx || lp_native_vector_width < 256) {
             intrinsic = "llvm.x86.sse2.min.pd";
             intr_size = 128;
          }
@@ -182,7 +182,7 @@ lp_build_max_simple(struct lp_build_context *bld,
             intrinsic = "llvm.x86.sse.max.ss";
             intr_size = 128;
          }
-         else if (type.length <= 4 || !util_cpu_caps.has_avx) {
+         else if (type.length <= 4 || !util_cpu_caps.has_avx || lp_native_vector_width < 256) {
             intrinsic = "llvm.x86.sse.max.ps";
             intr_size = 128;
          }
@@ -196,7 +196,7 @@ lp_build_max_simple(struct lp_build_context *bld,
             intrinsic = "llvm.x86.sse2.max.sd";
             intr_size = 128;
          }
-         else if (type.length == 2 || !util_cpu_caps.has_avx) {
+         else if (type.length == 2 || !util_cpu_caps.has_avx || lp_native_vector_width < 256) {
             intrinsic = "llvm.x86.sse2.max.pd";
             intr_size = 128;
          }
