@@ -36,12 +36,15 @@
 #include <llvm/Support/TargetRegistry.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/Threading.h>
-#include <llvm/Target/TargetData.h>
 #include <llvm/Target/TargetMachine.h>
-
 #include <llvm/Transforms/Scalar.h>
-
 #include <llvm-c/Target.h>
+
+#if HAVE_LLVM < 0x0302
+#include <llvm/Target/TargetData.h>
+#else
+#include <llvm/DataLayout.h>
+#endif
 
 #include <iostream>
 #include <stdlib.h>
@@ -120,7 +123,11 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
                      ));
    TargetMachine &AMDGPUTargetMachine = *tm.get();
    PassManager PM;
+#if HAVE_LLVM < 0x0302
    PM.add(new TargetData(*AMDGPUTargetMachine.getTargetData()));
+#else
+   PM.add(new DataLayout(*AMDGPUTargetMachine.getDataLayout()));
+#endif
    PM.add(createPromoteMemoryToRegisterPass());
    AMDGPUTargetMachine.setAsmVerbosityDefault(true);
 
