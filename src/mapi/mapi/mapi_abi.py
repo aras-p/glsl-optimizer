@@ -36,7 +36,6 @@ import re
 from optparse import OptionParser
 import gl_XML
 import glX_XML
-import copy
 from gles_api import es1_api, es2_api
 
 
@@ -690,8 +689,8 @@ class GLAPIPrinter(ABIPrinter):
     """OpenGL API Printer"""
 
     def __init__(self, entries, api=None):
-        api_entries = self._get_api_entries(entries, api)
-        super(GLAPIPrinter, self).__init__(api_entries)
+        self._override_for_api(entries, api)
+        super(GLAPIPrinter, self).__init__(entries)
 
         self.api_defines = ['GL_GLEXT_PROTOTYPES']
         self.api_headers = ['"GL/gl.h"', '"GL/glext.h"']
@@ -712,28 +711,16 @@ class GLAPIPrinter(ABIPrinter):
 
         self.c_header = self._get_c_header()
 
-    def _get_api_entries(self, entries, api):
+    def _override_for_api(self, entries, api):
         """Override the entry attributes according to API."""
         # no override
         if api is None:
             return entries
 
-        api_entries = {}
         for ent in entries:
-            ent = copy.copy(ent)
-
             # override 'hidden' and 'handcode'
             ent.hidden = ent.name not in api
             ent.handcode = False
-            if ent.alias:
-                ent.alias = api_entries[ent.alias.name]
-
-            api_entries[ent.name] = ent
-
-        entries = api_entries.values()
-        entries.sort()
-
-        return entries
 
     def _get_c_header(self):
         header = """#ifndef _GLAPI_TMP_H_
