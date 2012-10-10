@@ -977,14 +977,6 @@ _mesa_fprint_parameter_list(FILE *f,
 	      i, param->Size,
 	      _mesa_register_file_name(list->Parameters[i].Type),
 	      param->Name, v[0], v[1], v[2], v[3]);
-      if (param->Flags & PROG_PARAM_BIT_CENTROID)
-         fprintf(f, " Centroid");
-      if (param->Flags & PROG_PARAM_BIT_INVARIANT)
-         fprintf(f, " Invariant");
-      if (param->Flags & PROG_PARAM_BIT_FLAT)
-         fprintf(f, " Flat");
-      if (param->Flags & PROG_PARAM_BIT_LINEAR)
-         fprintf(f, " Linear");
       fprintf(f, "\n");
    }
 }
