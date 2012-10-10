@@ -27,7 +27,7 @@
 
 import string, copy
 
-class type_node:
+class type_node(object):
     def __init__(self):
         self.pointer = 0  # bool
         self.const = 0    # bool
@@ -65,7 +65,7 @@ class type_node:
         return s
 
 
-class type_table:
+class type_table(object):
     def __init__(self):
         self.types_by_name = {}
         return
@@ -109,7 +109,7 @@ def create_initial_types():
     return
 
 
-class type_expression:
+class type_expression(object):
     built_in_types = None
 
     def __init__(self, type_string, extra_types = None):

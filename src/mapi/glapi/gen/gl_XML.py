@@ -72,7 +72,7 @@ def is_attr_true( element, name ):
         raise RuntimeError('Invalid value "%s" for boolean "%s".' % (value, name))
 
 
-class gl_print_base:
+class gl_print_base(object):
     """Base class of all API pretty-printers.
 
     In the model-view-controller pattern, this is the view.  Any derived
@@ -322,7 +322,7 @@ def create_parameter_string(parameters, include_names):
     return string.join(list, ", ")
 
 
-class gl_item:
+class gl_item(object):
     def __init__(self, element, context):
         self.context = context
         self.name = element.nsProp( "name", None )
@@ -401,7 +401,7 @@ class gl_enum( gl_item ):
 
 
 
-class gl_parameter:
+class gl_parameter(object):
     def __init__(self, element, context):
         self.name = element.nsProp( "name", None )
 
@@ -780,7 +780,7 @@ class gl_function( gl_item ):
             return "_dispatch_stub_%u" % (self.offset)
 
 
-class gl_item_factory:
+class gl_item_factory(object):
     """Factory to create objects derived from gl_item."""
 
     def create_item(self, item_name, element, context):
@@ -798,7 +798,7 @@ class gl_item_factory:
             return None
 
 
-class gl_api:
+class gl_api(object):
     def __init__(self, factory):
         self.functions_by_name = {}
         self.enums_by_name = {}

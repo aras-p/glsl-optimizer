@@ -30,7 +30,7 @@ import license
 import sys, getopt, copy, string
 
 
-class glx_enum_function:
+class glx_enum_function(object):
     def __init__(self, func_name, enum_dict):
         self.name = func_name
         self.mode = 1

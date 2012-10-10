@@ -543,7 +543,7 @@ class glx_function(gl_XML.gl_function):
         return not self.ignore and (self.offset != -1) and (self.glx_rop or self.glx_sop or self.glx_vendorpriv or self.vectorequiv or self.client_handcode)
 
 
-class glx_function_iterator:
+class glx_function_iterator(object):
     """Class to iterate over a list of glXFunctions"""
 
     def __init__(self, context):
