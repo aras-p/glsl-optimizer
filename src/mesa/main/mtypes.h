@@ -3334,6 +3334,9 @@ struct gl_debug_state
 
 /**
  * Enum for the OpenGL APIs we know about and may support.
+ *
+ * NOTE: This must match the api_enum table in
+ * src/mesa/main/get_hash_generator.py
  */
 typedef enum
 {

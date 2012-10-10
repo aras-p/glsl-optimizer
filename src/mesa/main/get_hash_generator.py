@@ -61,16 +61,32 @@ def print_params(params):
 def api_name(api):
    return "API_OPEN%s" % api
 
+# This must match gl_api enum in src/mesa/main/mtypes.h
+api_enum = [
+   'GL',
+   'GLES',
+   'GLES2',
+   'GL_CORE',
+]
+
+def api_index(api):
+    return api_enum.index(api)
+
 def table_name(api):
    return "table_" + api_name(api)
 
 def print_table(api, table):
    print "static table_t %s = {" % (table_name(api))
 
+   # convert sparse (index, value) table into a dense table
+   dense_table = [0] * hash_table_size
+   for i, v in table:
+      dense_table[i] = v
+
    row_size = 4
-   for i in range(0, len(table), row_size):
-      row = table[i : i + row_size]
-      idx_val = ["[%4d] = %4d" % iv for iv in row]
+   for i in range(0, hash_table_size, row_size):
+      row = dense_table[i : i + row_size]
+      idx_val = ["%4d" % v for v in row]
       print " " * 4 + ", ".join(idx_val) + ","
 
    print "};\n"
@@ -79,11 +95,16 @@ def print_tables(tables):
    for table in tables:
       print_table(table["apis"][0], table["indices"])
 
-   print "static table_t *table_set[] = {"
+   dense_tables = ['NULL'] * len(api_enum)
    for table in tables:
       tname = table_name(table["apis"][0])
       for api in table["apis"]:
-         print "   [%s] = &%s," % (api_name(api), tname)
+         i = api_index(api)
+         dense_tables[i] = "&%s" % (tname)
+
+   print "static table_t *table_set[] = {"
+   for expr in dense_tables:
+      print "   %s," % expr
    print "};\n"
 
    print "#define table(api) (*table_set[api])"
