@@ -35,9 +35,14 @@
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/PathV1.h>
-#include <llvm/Target/TargetData.h>
 #include <llvm/Transforms/IPO.h>
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
+
+#if HAVE_LLVM < 0x0302
+#include <llvm/Target/TargetData.h>
+#else
+#include <llvm/DataLayout.h>
+#endif
 
 #include "pipe/p_state.h"
 #include "util/u_memory.h"
@@ -216,7 +221,11 @@ namespace {
                                       E = kernel_func->arg_end(); I != E; ++I) {
             llvm::Argument &arg = *I;
             llvm::Type *arg_type = arg.getType();
+#if HAVE_LLVM < 0x0302
             llvm::TargetData TD(kernel_func->getParent());
+#else
+            llvm::DataLayout TD(kernel_func->getParent()->getDataLayout());
+#endif
             unsigned arg_size = TD.getTypeStoreSize(arg_type);
 
             if (llvm::isa<llvm::PointerType>(arg_type) && arg.hasByValAttr()) {
