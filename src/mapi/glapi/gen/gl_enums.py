@@ -32,31 +32,31 @@ import sys, getopt
 
 class PrintGlEnums(gl_XML.gl_print_base):
 
-	def __init__(self):
-		gl_XML.gl_print_base.__init__(self)
+    def __init__(self):
+        gl_XML.gl_print_base.__init__(self)
 
-		self.name = "gl_enums.py (from Mesa)"
-		self.license = license.bsd_license_template % ( \
+        self.name = "gl_enums.py (from Mesa)"
+        self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2005 Brian Paul All Rights Reserved.""", "BRIAN PAUL")
-		self.enum_table = {}
+        self.enum_table = {}
 
 
-	def printRealHeader(self):
-		print '#include "main/glheader.h"'
-		print '#include "main/mfeatures.h"'
-		print '#include "main/enums.h"'
-		print '#include "main/imports.h"'
-		print '#include "main/mtypes.h"'
-		print ''
-		print 'typedef struct {'
-		print '   size_t offset;'
-		print '   int n;'
-		print '} enum_elt;'
-		print ''
-		return
+    def printRealHeader(self):
+        print '#include "main/glheader.h"'
+        print '#include "main/mfeatures.h"'
+        print '#include "main/enums.h"'
+        print '#include "main/imports.h"'
+        print '#include "main/mtypes.h"'
+        print ''
+        print 'typedef struct {'
+        print '   size_t offset;'
+        print '   int n;'
+        print '} enum_elt;'
+        print ''
+        return
 
-	def print_code(self):
-		print """
+    def print_code(self):
+        print """
 typedef int (*cfunc)(const void *, const void *);
 
 /**
@@ -160,100 +160,100 @@ int _mesa_lookup_enum_by_name( const char *symbol )
 }
 
 """
-		return
+        return
 
 
-	def printBody(self, api_list):
-		self.enum_table = {}
-		for api in api_list:
-			self.process_enums( api )
+    def printBody(self, api_list):
+        self.enum_table = {}
+        for api in api_list:
+            self.process_enums( api )
 
-		keys = self.enum_table.keys()
-		keys.sort()
+        keys = self.enum_table.keys()
+        keys.sort()
 
-		name_table = []
-		enum_table = {}
+        name_table = []
+        enum_table = {}
 
-		for enum in keys:
-			low_pri = 9
-			for [name, pri] in self.enum_table[ enum ]:
-				name_table.append( [name, enum] )
+        for enum in keys:
+            low_pri = 9
+            for [name, pri] in self.enum_table[ enum ]:
+                name_table.append( [name, enum] )
 
-				if pri < low_pri:
-					low_pri = pri
-					enum_table[enum] = name
-						
-
-		name_table.sort()
-
-		string_offsets = {}
-		i = 0;
-		print 'LONGSTRING static const char enum_string_table[] = '
-		for [name, enum] in name_table:
-			print '   "%s\\0"' % (name)
-			string_offsets[ name ] = i
-			i += len(name) + 1
-
-		print '   ;'
-		print ''
+                if pri < low_pri:
+                    low_pri = pri
+                    enum_table[enum] = name
 
 
-		print 'static const enum_elt all_enums[%u] =' % (len(name_table))
-		print '{'
-		for [name, enum] in name_table:
-			print '   { %5u, 0x%08X }, /* %s */' % (string_offsets[name], enum, name)
-		print '};'
-		print ''
+        name_table.sort()
 
-		print 'static const unsigned reduced_enums[%u] =' % (len(keys))
-		print '{'
-		for enum in keys:
-			name = enum_table[ enum ]
-			if [name, enum] not in name_table:
-				print '      /* Error! %s, 0x%04x */ 0,' % (name, enum)
-			else:
-				i = name_table.index( [name, enum] )
+        string_offsets = {}
+        i = 0;
+        print 'LONGSTRING static const char enum_string_table[] = '
+        for [name, enum] in name_table:
+            print '   "%s\\0"' % (name)
+            string_offsets[ name ] = i
+            i += len(name) + 1
 
-				print '      %4u, /* %s */' % (i, name)
-		print '};'
+        print '   ;'
+        print ''
 
 
-		self.print_code()
-		return
+        print 'static const enum_elt all_enums[%u] =' % (len(name_table))
+        print '{'
+        for [name, enum] in name_table:
+            print '   { %5u, 0x%08X }, /* %s */' % (string_offsets[name], enum, name)
+        print '};'
+        print ''
+
+        print 'static const unsigned reduced_enums[%u] =' % (len(keys))
+        print '{'
+        for enum in keys:
+            name = enum_table[ enum ]
+            if [name, enum] not in name_table:
+                print '      /* Error! %s, 0x%04x */ 0,' % (name, enum)
+            else:
+                i = name_table.index( [name, enum] )
+
+                print '      %4u, /* %s */' % (i, name)
+        print '};'
 
 
-	def process_enums(self, api):
-		for obj in api.enumIterateByName():
-			if obj.value not in self.enum_table:
-				self.enum_table[ obj.value ] = []
+        self.print_code()
+        return
 
 
-			enum = self.enum_table[ obj.value ]
-			name = "GL_" + obj.name
-			priority = obj.priority()
-			already_in = False;
-			for n, p in enum:
-				if n == name:
-					already_in = True
-			if not already_in:
-				enum.append( [name, priority] )
+    def process_enums(self, api):
+        for obj in api.enumIterateByName():
+            if obj.value not in self.enum_table:
+                self.enum_table[ obj.value ] = []
+
+
+            enum = self.enum_table[ obj.value ]
+            name = "GL_" + obj.name
+            priority = obj.priority()
+            already_in = False;
+            for n, p in enum:
+                if n == name:
+                    already_in = True
+            if not already_in:
+                enum.append( [name, priority] )
 
 
 def show_usage():
-	print "Usage: %s [-f input_file_name]" % sys.argv[0]
-	sys.exit(1)
+    print "Usage: %s [-f input_file_name]" % sys.argv[0]
+    sys.exit(1)
 
 if __name__ == '__main__':
-	try:
-		(args, trail) = getopt.getopt(sys.argv[1:], "f:")
-	except Exception,e:
-		show_usage()
+    try:
+        (args, trail) = getopt.getopt(sys.argv[1:], "f:")
+    except Exception,e:
+        show_usage()
 
-	api_list = []
-	for (arg,val) in args:
-		if arg == "-f":
-			api = gl_XML.parse_GL_API( val )
-			api_list.append(api);
+    api_list = []
+    for (arg,val) in args:
+        if arg == "-f":
+            api = gl_XML.parse_GL_API( val )
+            api_list.append(api);
 
-	printer = PrintGlEnums()
-	printer.Print( api_list )
+    printer = PrintGlEnums()
+    printer.Print( api_list )

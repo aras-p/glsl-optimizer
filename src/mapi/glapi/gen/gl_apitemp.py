@@ -30,94 +30,94 @@ import license
 import sys, getopt
 
 class PrintGlOffsets(gl_XML.gl_print_base):
-	def __init__(self, es=False):
-		gl_XML.gl_print_base.__init__(self)
+    def __init__(self, es=False):
+        gl_XML.gl_print_base.__init__(self)
 
-		self.name = "gl_apitemp.py (from Mesa)"
-		self.license = license.bsd_license_template % ( \
+        self.name = "gl_apitemp.py (from Mesa)"
+        self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
 
-		self.es = es
+        self.es = es
 
-		self.undef_list.append( "KEYWORD1" )
-		self.undef_list.append( "KEYWORD1_ALT" )
-		self.undef_list.append( "KEYWORD2" )
-		self.undef_list.append( "NAME" )
-		self.undef_list.append( "DISPATCH" )
-		self.undef_list.append( "RETURN_DISPATCH" )
-		self.undef_list.append( "DISPATCH_TABLE_NAME" )
-		self.undef_list.append( "UNUSED_TABLE_NAME" )
-		self.undef_list.append( "TABLE_ENTRY" )
-
-
-	def printFunction(self, f, name):
-		p_string = ""
-		o_string = ""
-		t_string = ""
-		comma = ""
-
-		if f.is_static_entry_point(name):
-			keyword = "KEYWORD1"
-		else:
-			keyword = "KEYWORD1_ALT"
-
-		n = f.static_name(name)
-
-		silence = ''
-		space = ''
-		for p in f.parameterIterator():
-			if p.is_padding:
-				continue
-
-			if p.is_pointer():
-				cast = "(const void *) "
-			else:
-				cast = ""
-
-			t_string = t_string + comma + p.format_string()
-			p_string = p_string + comma + p.name
-			o_string = o_string + comma + cast + p.name
-			comma = ", "
-
-			silence += "%s(void) %s;" % (space, p.name);
-			space = ' '
+        self.undef_list.append( "KEYWORD1" )
+        self.undef_list.append( "KEYWORD1_ALT" )
+        self.undef_list.append( "KEYWORD2" )
+        self.undef_list.append( "NAME" )
+        self.undef_list.append( "DISPATCH" )
+        self.undef_list.append( "RETURN_DISPATCH" )
+        self.undef_list.append( "DISPATCH_TABLE_NAME" )
+        self.undef_list.append( "UNUSED_TABLE_NAME" )
+        self.undef_list.append( "TABLE_ENTRY" )
 
 
-		if f.return_type != 'void':
-			dispatch = "RETURN_DISPATCH"
-		else:
-			dispatch = "DISPATCH"
+    def printFunction(self, f, name):
+        p_string = ""
+        o_string = ""
+        t_string = ""
+        comma = ""
 
-		need_proto = False
-		if not f.is_static_entry_point(name):
-			need_proto = True
-		elif self.es:
-			cat, num = api.get_category_for_name(name)
-			if (cat.startswith("es") or cat.startswith("GL_OES")):
-				need_proto = True
-		if need_proto:
-			print '%s %s KEYWORD2 NAME(%s)(%s);' % (keyword, f.return_type, n, f.get_parameter_string(name))
-			print ''
+        if f.is_static_entry_point(name):
+            keyword = "KEYWORD1"
+        else:
+            keyword = "KEYWORD1_ALT"
 
-		print '%s %s KEYWORD2 NAME(%s)(%s)' % (keyword, f.return_type, n, f.get_parameter_string(name))
-		print '{'
-		if silence:
-			print '    %s' % (silence)
-		if p_string == "":
-			print '   %s(%s, (), (F, "gl%s();\\n"));' \
-				% (dispatch, f.name, name)
-		else:
-			print '   %s(%s, (%s), (F, "gl%s(%s);\\n", %s));' \
-				% (dispatch, f.name, p_string, name, t_string, o_string)
-		print '}'
-		print ''
-		return
+        n = f.static_name(name)
 
-	def printRealHeader(self):
-		print ''
-		self.printVisibility( "HIDDEN", "hidden" )
-		print """
+        silence = ''
+        space = ''
+        for p in f.parameterIterator():
+            if p.is_padding:
+                continue
+
+            if p.is_pointer():
+                cast = "(const void *) "
+            else:
+                cast = ""
+
+            t_string = t_string + comma + p.format_string()
+            p_string = p_string + comma + p.name
+            o_string = o_string + comma + cast + p.name
+            comma = ", "
+
+            silence += "%s(void) %s;" % (space, p.name);
+            space = ' '
+
+
+        if f.return_type != 'void':
+            dispatch = "RETURN_DISPATCH"
+        else:
+            dispatch = "DISPATCH"
+
+        need_proto = False
+        if not f.is_static_entry_point(name):
+            need_proto = True
+        elif self.es:
+            cat, num = api.get_category_for_name(name)
+            if (cat.startswith("es") or cat.startswith("GL_OES")):
+                need_proto = True
+        if need_proto:
+            print '%s %s KEYWORD2 NAME(%s)(%s);' % (keyword, f.return_type, n, f.get_parameter_string(name))
+            print ''
+
+        print '%s %s KEYWORD2 NAME(%s)(%s)' % (keyword, f.return_type, n, f.get_parameter_string(name))
+        print '{'
+        if silence:
+            print '    %s' % (silence)
+        if p_string == "":
+            print '   %s(%s, (), (F, "gl%s();\\n"));' \
+                    % (dispatch, f.name, name)
+        else:
+            print '   %s(%s, (%s), (F, "gl%s(%s);\\n", %s));' \
+                    % (dispatch, f.name, p_string, name, t_string, o_string)
+        print '}'
+        print ''
+        return
+
+    def printRealHeader(self):
+        print ''
+        self.printVisibility( "HIDDEN", "hidden" )
+        print """
 /*
  * This file is a template which generates the OpenGL API entry point
  * functions.  It should be included by a .c file which first defines
@@ -165,12 +165,12 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 #endif
 
 """
-		return
+        return
 
-    
 
-	def printInitDispatch(self, api):
-		print """
+
+    def printInitDispatch(self, api):
+        print """
 #endif /* defined( NAME ) */
 
 /*
@@ -188,24 +188,24 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 #endif
 
 _glapi_proc DISPATCH_TABLE_NAME[] = {"""
-		for f in api.functionIterateByOffset():
-			print '   TABLE_ENTRY(%s),' % (f.dispatch_name())
+        for f in api.functionIterateByOffset():
+            print '   TABLE_ENTRY(%s),' % (f.dispatch_name())
 
-		print '   /* A whole bunch of no-op functions.  These might be called'
-		print '    * when someone tries to call a dynamically-registered'
-		print '    * extension function without a current rendering context.'
-		print '    */'
-		for i in range(1, 100):
-			print '   TABLE_ENTRY(Unused),'
+        print '   /* A whole bunch of no-op functions.  These might be called'
+        print '    * when someone tries to call a dynamically-registered'
+        print '    * extension function without a current rendering context.'
+        print '    */'
+        for i in range(1, 100):
+            print '   TABLE_ENTRY(Unused),'
 
-		print '};'
-		print '#endif /* DISPATCH_TABLE_NAME */'
-		print ''
-		return
+        print '};'
+        print '#endif /* DISPATCH_TABLE_NAME */'
+        print ''
+        return
 
 
-	def printAliasedTable(self, api):
-		print """
+    def printAliasedTable(self, api):
+        print """
 /*
  * This is just used to silence compiler warnings.
  * We list the functions which are not otherwise used.
@@ -213,115 +213,115 @@ _glapi_proc DISPATCH_TABLE_NAME[] = {"""
 #ifdef UNUSED_TABLE_NAME
 _glapi_proc UNUSED_TABLE_NAME[] = {"""
 
-		normal_entries = []
-		proto_entries = []
-		for f in api.functionIterateByOffset():
-			normal_ents, proto_ents = self.classifyEntryPoints(f)
+        normal_entries = []
+        proto_entries = []
+        for f in api.functionIterateByOffset():
+            normal_ents, proto_ents = self.classifyEntryPoints(f)
 
-			# exclude f.name
-			if f.name in normal_ents:
-				normal_ents.remove(f.name)
-			elif f.name in proto_ents:
-				proto_ents.remove(f.name)
+            # exclude f.name
+            if f.name in normal_ents:
+                normal_ents.remove(f.name)
+            elif f.name in proto_ents:
+                proto_ents.remove(f.name)
 
-			normal_ents = [f.static_name(ent) for ent in normal_ents]
-			proto_ents = [f.static_name(ent) for ent in proto_ents]
+            normal_ents = [f.static_name(ent) for ent in normal_ents]
+            proto_ents = [f.static_name(ent) for ent in proto_ents]
 
-			normal_entries.extend(normal_ents)
-			proto_entries.extend(proto_ents)
+            normal_entries.extend(normal_ents)
+            proto_entries.extend(proto_ents)
 
-		print '#ifndef _GLAPI_SKIP_NORMAL_ENTRY_POINTS'
-		for ent in normal_entries:
-			print '   TABLE_ENTRY(%s),' % (ent)
-		print '#endif /* _GLAPI_SKIP_NORMAL_ENTRY_POINTS */'
-		print '#ifndef _GLAPI_SKIP_PROTO_ENTRY_POINTS'
-		for ent in proto_entries:
-			print '   TABLE_ENTRY(%s),' % (ent)
-		print '#endif /* _GLAPI_SKIP_PROTO_ENTRY_POINTS */'
+        print '#ifndef _GLAPI_SKIP_NORMAL_ENTRY_POINTS'
+        for ent in normal_entries:
+            print '   TABLE_ENTRY(%s),' % (ent)
+        print '#endif /* _GLAPI_SKIP_NORMAL_ENTRY_POINTS */'
+        print '#ifndef _GLAPI_SKIP_PROTO_ENTRY_POINTS'
+        for ent in proto_entries:
+            print '   TABLE_ENTRY(%s),' % (ent)
+        print '#endif /* _GLAPI_SKIP_PROTO_ENTRY_POINTS */'
 
-		print '};'
-		print '#endif /*UNUSED_TABLE_NAME*/'
-		print ''
-		return
+        print '};'
+        print '#endif /*UNUSED_TABLE_NAME*/'
+        print ''
+        return
 
 
-	def classifyEntryPoints(self, func):
-		normal_names = []
-		normal_stubs = []
-		proto_names = []
-		proto_stubs = []
-		# classify the entry points
-		for name in func.entry_points:
-			if func.has_different_protocol(name):
-				if func.is_static_entry_point(name):
-					proto_names.append(name)
-				else:
-					proto_stubs.append(name)
-			else:
-				if func.is_static_entry_point(name):
-					normal_names.append(name)
-				else:
-					normal_stubs.append(name)
-		# there can be at most one stub for a function
-		if normal_stubs:
-			normal_names.append(normal_stubs[0])
-		elif proto_stubs:
-			proto_names.append(proto_stubs[0])
+    def classifyEntryPoints(self, func):
+        normal_names = []
+        normal_stubs = []
+        proto_names = []
+        proto_stubs = []
+        # classify the entry points
+        for name in func.entry_points:
+            if func.has_different_protocol(name):
+                if func.is_static_entry_point(name):
+                    proto_names.append(name)
+                else:
+                    proto_stubs.append(name)
+            else:
+                if func.is_static_entry_point(name):
+                    normal_names.append(name)
+                else:
+                    normal_stubs.append(name)
+        # there can be at most one stub for a function
+        if normal_stubs:
+            normal_names.append(normal_stubs[0])
+        elif proto_stubs:
+            proto_names.append(proto_stubs[0])
 
-		return (normal_names, proto_names)
+        return (normal_names, proto_names)
 
-	def printBody(self, api):
-		normal_entry_points = []
-		proto_entry_points = []
-		for func in api.functionIterateByOffset():
-			normal_ents, proto_ents = self.classifyEntryPoints(func)
-			normal_entry_points.append((func, normal_ents))
-			proto_entry_points.append((func, proto_ents))
+    def printBody(self, api):
+        normal_entry_points = []
+        proto_entry_points = []
+        for func in api.functionIterateByOffset():
+            normal_ents, proto_ents = self.classifyEntryPoints(func)
+            normal_entry_points.append((func, normal_ents))
+            proto_entry_points.append((func, proto_ents))
 
-		print '#ifndef _GLAPI_SKIP_NORMAL_ENTRY_POINTS'
-		print ''
-		for func, ents in normal_entry_points:
-			for ent in ents:
-				self.printFunction(func, ent)
-		print ''
-		print '#endif /* _GLAPI_SKIP_NORMAL_ENTRY_POINTS */'
-		print ''
-		print '/* these entry points might require different protocols */'
-		print '#ifndef _GLAPI_SKIP_PROTO_ENTRY_POINTS'
-		print ''
-		for func, ents in proto_entry_points:
-			for ent in ents:
-				self.printFunction(func, ent)
-		print ''
-		print '#endif /* _GLAPI_SKIP_PROTO_ENTRY_POINTS */'
-		print ''
+        print '#ifndef _GLAPI_SKIP_NORMAL_ENTRY_POINTS'
+        print ''
+        for func, ents in normal_entry_points:
+            for ent in ents:
+                self.printFunction(func, ent)
+        print ''
+        print '#endif /* _GLAPI_SKIP_NORMAL_ENTRY_POINTS */'
+        print ''
+        print '/* these entry points might require different protocols */'
+        print '#ifndef _GLAPI_SKIP_PROTO_ENTRY_POINTS'
+        print ''
+        for func, ents in proto_entry_points:
+            for ent in ents:
+                self.printFunction(func, ent)
+        print ''
+        print '#endif /* _GLAPI_SKIP_PROTO_ENTRY_POINTS */'
+        print ''
 
-		self.printInitDispatch(api)
-		self.printAliasedTable(api)
-		return
+        self.printInitDispatch(api)
+        self.printAliasedTable(api)
+        return
 
 
 def show_usage():
-	print "Usage: %s [-f input_file_name] [-c]" % sys.argv[0]
-	print "-c          Enable compatibility with OpenGL ES."
-	sys.exit(1)
+    print "Usage: %s [-f input_file_name] [-c]" % sys.argv[0]
+    print "-c          Enable compatibility with OpenGL ES."
+    sys.exit(1)
 
 if __name__ == '__main__':
-	file_name = "gl_API.xml"
-    
-	try:
-		(args, trail) = getopt.getopt(sys.argv[1:], "f:c")
-	except Exception,e:
-		show_usage()
+    file_name = "gl_API.xml"
 
-	es = False
-	for (arg,val) in args:
-		if arg == "-f":
-			file_name = val
-		elif arg == "-c":
-			es = True
+    try:
+        (args, trail) = getopt.getopt(sys.argv[1:], "f:c")
+    except Exception,e:
+        show_usage()
 
-	api = gl_XML.parse_GL_API(file_name, glX_XML.glx_item_factory())
+    es = False
+    for (arg,val) in args:
+        if arg == "-f":
+            file_name = val
+        elif arg == "-c":
+            es = True
 
-	printer = PrintGlOffsets(es)
-	printer.Print(api)
+    api = gl_XML.parse_GL_API(file_name, glX_XML.glx_item_factory())
+
+    printer = PrintGlOffsets(es)
+    printer.Print(api)
