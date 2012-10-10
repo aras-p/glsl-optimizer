@@ -319,11 +319,10 @@ typedef enum
    OPCODE_SAMPLE_COVERAGE,
    /* GL_ARB_window_pos */
    OPCODE_WINDOW_POS_ARB,
-   /* GL_NV_vertex_program */
+   /* GL_NV_fragment_program */
    OPCODE_BIND_PROGRAM_NV,
    OPCODE_REQUEST_RESIDENT_PROGRAMS_NV,
    OPCODE_LOAD_PROGRAM_NV,
-   /* GL_NV_fragment_program */
    OPCODE_PROGRAM_LOCAL_PARAMETER_ARB,
    OPCODE_PROGRAM_NAMED_PARAMETER_NV,
    /* GL_EXT_stencil_two_side */
@@ -4838,7 +4837,7 @@ save_SampleCoverageARB(GLclampf value, GLboolean invert)
 
 
 /*
- * GL_NV_vertex_program
+ * GL_NV_fragment_program
  */
 static void GLAPIENTRY
 save_BindProgramNV(GLenum target, GLuint id)
@@ -4992,9 +4991,6 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint * ids)
    }
 }
 
-/*
- * GL_NV_fragment_program
- */
 static void GLAPIENTRY
 save_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w)
@@ -8228,7 +8224,7 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_WINDOW_POS_ARB:   /* GL_ARB_window_pos */
             CALL_WindowPos3fMESA(ctx->Exec, (n[1].f, n[2].f, n[3].f));
             break;
-         case OPCODE_BIND_PROGRAM_NV:  /* GL_NV_vertex_program */
+         case OPCODE_BIND_PROGRAM_NV:  /* GL_ARB_vertex_program */
             CALL_BindProgramNV(ctx->Exec, (n[1].e, n[2].ui));
             break;
          case OPCODE_REQUEST_RESIDENT_PROGRAMS_NV:

@@ -903,7 +903,7 @@ typedef struct {
    void (GLAPIENTRYP Begin)( GLenum );
    void (GLAPIENTRYP End)( void );
    void (GLAPIENTRYP PrimitiveRestartNV)( void );
-   /* GL_NV_vertex_program */
+   /* Originally for GL_NV_vertex_program, now used only dlist.c and friends */
    void (GLAPIENTRYP VertexAttrib1fNV)( GLuint index, GLfloat x );
    void (GLAPIENTRYP VertexAttrib1fvNV)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib2fNV)( GLuint index, GLfloat x, GLfloat y );

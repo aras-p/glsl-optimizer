@@ -221,7 +221,7 @@ struct vertex_buffer
    GLuint      PrimitiveCount;	      
 
    /* Inputs to the vertex program stage */
-   GLvector4f *AttribPtr[_TNL_ATTRIB_MAX];      /* GL_NV_vertex_program */
+   GLvector4f *AttribPtr[_TNL_ATTRIB_MAX];
 };
 
 

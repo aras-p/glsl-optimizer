@@ -125,7 +125,7 @@ struct gl_enable_attrib
    GLbitfield Texture[MAX_TEXTURE_UNITS];
    GLbitfield TexGen[MAX_TEXTURE_UNITS];
 
-   /* GL_ARB_vertex_program / GL_NV_vertex_program */
+   /* GL_ARB_vertex_program */
    GLboolean VertexProgram;
    GLboolean VertexProgramPointSize;
    GLboolean VertexProgramTwoSide;
@@ -313,7 +313,7 @@ _mesa_PushAttrib(GLbitfield mask)
          attr->Texture[i] = ctx->Texture.Unit[i].Enabled;
          attr->TexGen[i] = ctx->Texture.Unit[i].TexGenEnabled;
       }
-      /* GL_NV_vertex_program */
+      /* GL_ARB_vertex_program */
       attr->VertexProgram = ctx->VertexProgram.Enabled;
       attr->VertexProgramPointSize = ctx->VertexProgram.PointSizeEnabled;
       attr->VertexProgramTwoSide = ctx->VertexProgram.TwoSideEnabled;
@@ -597,7 +597,7 @@ pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
    TEST_AND_UPDATE(ctx->Multisample.SampleCoverage,
                    enable->SampleCoverage,
                    GL_SAMPLE_COVERAGE_ARB);
-   /* GL_ARB_vertex_program, GL_NV_vertex_program */
+   /* GL_ARB_vertex_program */
    TEST_AND_UPDATE(ctx->VertexProgram.Enabled,
                    enable->VertexProgram,
                    GL_VERTEX_PROGRAM_ARB);
