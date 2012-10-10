@@ -185,6 +185,9 @@ es1_api = es1_core + (
         'GetBufferPointervOES',
         'MapBufferOES',
         'UnmapBufferOES',
+        # GL_EXT_map_buffer_range
+        'MapBufferRangeEXT',
+        'FlushMappedBufferRangeEXT',
         # GL_EXT_multi_draw_arrays
         'MultiDrawArraysEXT',
         'MultiDrawElementsEXT',
@@ -436,6 +439,9 @@ es2_api = es2_core + (
         'GetBufferPointervOES',
         'MapBufferOES',
         'UnmapBufferOES',
+        # GL_EXT_map_buffer_range
+        'MapBufferRangeEXT',
+        'FlushMappedBufferRangeEXT',
         # GL_EXT_multi_draw_arrays
         'MultiDrawArraysEXT',
         'MultiDrawElementsEXT',

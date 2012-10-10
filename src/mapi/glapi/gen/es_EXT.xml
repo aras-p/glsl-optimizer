@@ -737,4 +737,28 @@
     <enum name="COMPRESSED_RGBA_S3TC_DXT5_ANGLE"        value="0x83F3"/>
 </category>
 
+<!-- 121. GL_EXT_map_buffer_range -->
+<category name="GL_EXT_map_buffer_range" number="121">
+    <enum name="MAP_READ_BIT_EXT"                         value="0x0001"/>
+    <enum name="MAP_WRITE_BIT_EXT"                        value="0x0002"/>
+    <enum name="MAP_INVALIDATE_RANGE_BIT_EXT"             value="0x0004"/>
+    <enum name="MAP_INVALIDATE_BUFFER_BIT_EXT"            value="0x0008"/>
+    <enum name="MAP_FLUSH_EXPLICIT_BIT_EXT"               value="0x0010"/>
+    <enum name="MAP_UNSYNCHRONIZED_BIT_EXT"               value="0x0020"/>
+
+    <function name="MapBufferRangeEXT" alias="MapBufferRange">
+        <param name="target" type="GLenum"/>
+        <param name="offset" type="GLintptr"/>
+        <param name="size" type="GLsizeiptr"/>
+        <param name="length" type="GLbitfield"/>
+        <return type="GLvoid *"/>
+    </function>
+
+    <function name="FlushMappedBufferRangeEXT" alias="FlushMappedBufferRange">
+        <param name="target" type="GLenum"/>
+        <param name="offset" type="GLintptr"/>
+        <param name="length" type="GLsizeiptr"/>
+    </function>
+</category>
+
 </OpenGLAPI>

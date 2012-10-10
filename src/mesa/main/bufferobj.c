@@ -1312,20 +1312,17 @@ _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params)
       *params = _mesa_bufferobj_mapped(bufObj);
       return;
    case GL_BUFFER_ACCESS_FLAGS:
-      if ((!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_map_buffer_range)
-          && !_mesa_is_gles3(ctx))
+      if (!ctx->Extensions.ARB_map_buffer_range)
          goto invalid_pname;
       *params = bufObj->AccessFlags;
       return;
    case GL_BUFFER_MAP_OFFSET:
-      if ((!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_map_buffer_range)
-          && !_mesa_is_gles3(ctx))
+      if (!ctx->Extensions.ARB_map_buffer_range)
          goto invalid_pname;
       *params = (GLint) bufObj->Offset;
       return;
    case GL_BUFFER_MAP_LENGTH:
-      if ((!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_map_buffer_range)
-          && !_mesa_is_gles3(ctx))
+      if (!ctx->Extensions.ARB_map_buffer_range)
          goto invalid_pname;
       *params = (GLint) bufObj->Length;
       return;
@@ -1521,6 +1518,19 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
    if (length < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glMapBufferRange(length = %ld)", (long)length);
+      return NULL;
+   }
+
+   /* Page 38 of the PDF of the OpenGL ES 3.0 spec says:
+    *
+    *     "An INVALID_OPERATION error is generated for any of the following
+    *     conditions:
+    *
+    *     * <length> is zero."
+    */
+   if (_mesa_is_gles(ctx) && length == 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glMapBufferRange(length = 0)");
       return NULL;
    }
 
