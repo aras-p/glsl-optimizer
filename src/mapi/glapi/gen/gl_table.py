@@ -254,13 +254,6 @@ if __name__ == '__main__':
     api = gl_XML.parse_GL_API( file_name )
 
     if es is not None:
-        import gles_api
-
-        api_map = {
-                'es1': gles_api.es1_api,
-                'es2': gles_api.es2_api,
-        }
-
-        api.filter_functions(api_map[es])
+        api.filter_functions_by_api(es)
 
     printer.Print( api )
