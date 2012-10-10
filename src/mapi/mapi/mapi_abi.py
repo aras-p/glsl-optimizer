@@ -34,6 +34,11 @@ sys.path.append(GLAPI)
 
 import re
 from optparse import OptionParser
+import gl_XML
+import glX_XML
+import copy
+from gles_api import es1_api, es2_api
+
 
 # number of dynamic entries
 ABI_NUM_DYNAMIC_ENTRIES = 256
@@ -133,8 +138,6 @@ class ABIEntry(object):
 
 def abi_parse_xml(xml):
     """Parse a GLAPI XML file for ABI entries."""
-    import gl_XML, glX_XML
-
     api = gl_XML.parse_GL_API(xml, glX_XML.glx_item_factory())
 
     entry_dict = {}
@@ -711,8 +714,6 @@ class GLAPIPrinter(ABIPrinter):
 
     def _get_api_entries(self, entries, api):
         """Override the entry attributes according to API."""
-        import copy
-
         # no override
         if api is None:
             return entries
@@ -760,8 +761,6 @@ class ES1APIPrinter(GLAPIPrinter):
     """OpenGL ES 1.x API Printer"""
 
     def __init__(self, entries):
-        from gles_api import es1_api
-
         super(ES1APIPrinter, self).__init__(entries, es1_api)
         self.prefix_lib = 'gl'
         self.prefix_warn = 'gl'
@@ -779,8 +778,6 @@ class ES2APIPrinter(GLAPIPrinter):
     """OpenGL ES 2.x API Printer"""
 
     def __init__(self, entries):
-        from gles_api import es2_api
-
         super(ES2APIPrinter, self).__init__(entries, es2_api)
         self.prefix_lib = 'gl'
         self.prefix_warn = 'gl'
