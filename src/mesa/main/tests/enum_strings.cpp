@@ -552,7 +552,7 @@ const struct enum_info everything[] = {
    { 0x8036, "GL_UNSIGNED_INT_10_10_10_2" },
    { 0x8037, "GL_POLYGON_OFFSET_FILL" },
    { 0x8038, "GL_POLYGON_OFFSET_FACTOR" },
-   { 0x8039, "GL_POLYGON_OFFSET_BIAS" },
+   { 0x8039, "GL_POLYGON_OFFSET_BIAS_EXT" },
    { 0x803A, "GL_RESCALE_NORMAL" },
    { 0x803B, "GL_ALPHA4" },
    { 0x803C, "GL_ALPHA8" },
