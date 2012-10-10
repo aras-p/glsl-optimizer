@@ -172,6 +172,7 @@ union value {
    LOC_CONTEXT, type, offsetof(struct gl_context, field)
 #define ARRAY_FIELD(field, type) \
    LOC_ARRAY, type, offsetof(struct gl_array_object, field)
+#undef CONST /* already defined through windows.h */
 #define CONST(value) \
    LOC_CONTEXT, TYPE_CONST, value
 
