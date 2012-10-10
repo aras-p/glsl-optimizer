@@ -730,11 +730,6 @@ class GLAPIPrinter(ABIPrinter):
 
             api_entries[ent.name] = ent
 
-        # sanity check
-        missed = [name for name in api if name not in api_entries]
-        if missed:
-            raise Exception('%s is missing' % str(missed))
-
         entries = api_entries.values()
         entries.sort()
 
