@@ -97,31 +97,6 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
          flag = VERT_BIT_POINT_SIZE;
          break;
 
-      case GL_VERTEX_ATTRIB_ARRAY0_NV:
-      case GL_VERTEX_ATTRIB_ARRAY1_NV:
-      case GL_VERTEX_ATTRIB_ARRAY2_NV:
-      case GL_VERTEX_ATTRIB_ARRAY3_NV:
-      case GL_VERTEX_ATTRIB_ARRAY4_NV:
-      case GL_VERTEX_ATTRIB_ARRAY5_NV:
-      case GL_VERTEX_ATTRIB_ARRAY6_NV:
-      case GL_VERTEX_ATTRIB_ARRAY7_NV:
-      case GL_VERTEX_ATTRIB_ARRAY8_NV:
-      case GL_VERTEX_ATTRIB_ARRAY9_NV:
-      case GL_VERTEX_ATTRIB_ARRAY10_NV:
-      case GL_VERTEX_ATTRIB_ARRAY11_NV:
-      case GL_VERTEX_ATTRIB_ARRAY12_NV:
-      case GL_VERTEX_ATTRIB_ARRAY13_NV:
-      case GL_VERTEX_ATTRIB_ARRAY14_NV:
-      case GL_VERTEX_ATTRIB_ARRAY15_NV:
-         CHECK_EXTENSION(NV_vertex_program, cap);
-         {
-            GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
-            ASSERT(VERT_ATTRIB_GENERIC(n) < Elements(arrayObj->VertexAttrib));
-            var = &arrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(n)].Enabled;
-            flag = VERT_BIT_GENERIC(n);
-         }
-         break;
-
       /* GL_NV_primitive_restart */
       case GL_PRIMITIVE_RESTART_NV:
 	 if (!ctx->Extensions.NV_primitive_restart) {
@@ -1519,31 +1494,6 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
          CHECK_EXTENSION2(ARB_vertex_program, NV_vertex_program);
          return ctx->VertexProgram.TwoSideEnabled;
-
-      case GL_VERTEX_ATTRIB_ARRAY0_NV:
-      case GL_VERTEX_ATTRIB_ARRAY1_NV:
-      case GL_VERTEX_ATTRIB_ARRAY2_NV:
-      case GL_VERTEX_ATTRIB_ARRAY3_NV:
-      case GL_VERTEX_ATTRIB_ARRAY4_NV:
-      case GL_VERTEX_ATTRIB_ARRAY5_NV:
-      case GL_VERTEX_ATTRIB_ARRAY6_NV:
-      case GL_VERTEX_ATTRIB_ARRAY7_NV:
-      case GL_VERTEX_ATTRIB_ARRAY8_NV:
-      case GL_VERTEX_ATTRIB_ARRAY9_NV:
-      case GL_VERTEX_ATTRIB_ARRAY10_NV:
-      case GL_VERTEX_ATTRIB_ARRAY11_NV:
-      case GL_VERTEX_ATTRIB_ARRAY12_NV:
-      case GL_VERTEX_ATTRIB_ARRAY13_NV:
-      case GL_VERTEX_ATTRIB_ARRAY14_NV:
-      case GL_VERTEX_ATTRIB_ARRAY15_NV:
-         if (ctx->API != API_OPENGL)
-            goto invalid_enum_error;
-         CHECK_EXTENSION(NV_vertex_program);
-         {
-            GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
-            ASSERT(VERT_ATTRIB_GENERIC(n) < Elements(ctx->Array.ArrayObj->VertexAttrib));
-            return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_GENERIC(n)].Enabled != 0);
-         }
 
       case GL_FRAGMENT_PROGRAM_NV:
          if (ctx->API != API_OPENGL)

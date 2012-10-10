@@ -6069,85 +6069,6 @@ index_error(void)
 }
 
 
-/* First level for NV_vertex_program:
- *
- * Check for errors at compile time?.
- */
-static void GLAPIENTRY
-save_VertexAttrib1fNV(GLuint index, GLfloat x)
-{
-   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
-      save_Attr1fNV(index, x);
-   else
-      index_error();
-}
-
-static void GLAPIENTRY
-save_VertexAttrib1fvNV(GLuint index, const GLfloat * v)
-{
-   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
-      save_Attr1fNV(index, v[0]);
-   else
-      index_error();
-}
-
-static void GLAPIENTRY
-save_VertexAttrib2fNV(GLuint index, GLfloat x, GLfloat y)
-{
-   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
-      save_Attr2fNV(index, x, y);
-   else
-      index_error();
-}
-
-static void GLAPIENTRY
-save_VertexAttrib2fvNV(GLuint index, const GLfloat * v)
-{
-   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
-      save_Attr2fNV(index, v[0], v[1]);
-   else
-      index_error();
-}
-
-static void GLAPIENTRY
-save_VertexAttrib3fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z)
-{
-   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
-      save_Attr3fNV(index, x, y, z);
-   else
-      index_error();
-}
-
-static void GLAPIENTRY
-save_VertexAttrib3fvNV(GLuint index, const GLfloat * v)
-{
-   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
-      save_Attr3fNV(index, v[0], v[1], v[2]);
-   else
-      index_error();
-}
-
-static void GLAPIENTRY
-save_VertexAttrib4fNV(GLuint index, GLfloat x, GLfloat y,
-                      GLfloat z, GLfloat w)
-{
-   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
-      save_Attr4fNV(index, x, y, z, w);
-   else
-      index_error();
-}
-
-static void GLAPIENTRY
-save_VertexAttrib4fvNV(GLuint index, const GLfloat * v)
-{
-   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
-      save_Attr4fNV(index, v[0], v[1], v[2], v[3]);
-   else
-      index_error();
-}
-
-
-
 
 static void GLAPIENTRY
 save_VertexAttrib1fARB(GLuint index, GLfloat x)
@@ -10164,9 +10085,6 @@ _mesa_create_save_table(const struct gl_context *ctx)
    SET_RequestResidentProgramsNV(table, save_RequestResidentProgramsNV);
    SET_GetProgramivNV(table, _mesa_GetProgramivNV);
    SET_GetProgramStringNV(table, _mesa_GetProgramStringNV);
-   SET_GetVertexAttribdvNV(table, _mesa_GetVertexAttribdvNV);
-   SET_GetVertexAttribfvNV(table, _mesa_GetVertexAttribfvNV);
-   SET_GetVertexAttribivNV(table, _mesa_GetVertexAttribivNV);
    SET_GetVertexAttribPointervNV(table, _mesa_GetVertexAttribPointervNV);
    SET_IsProgramNV(table, _mesa_IsProgramARB);
    SET_LoadProgramNV(table, save_LoadProgramNV);
@@ -10174,7 +10092,6 @@ _mesa_create_save_table(const struct gl_context *ctx)
    SET_ProgramEnvParameter4dvARB(table, save_ProgramEnvParameter4dvARB);
    SET_ProgramEnvParameter4fARB(table, save_ProgramEnvParameter4fARB);
    SET_ProgramEnvParameter4fvARB(table, save_ProgramEnvParameter4fvARB);
-   SET_VertexAttribPointerNV(table, _mesa_VertexAttribPointerNV);
 
    /* 244. GL_ATI_envmap_bumpmap */
    SET_TexBumpParameterivATI(table, save_TexBumpParameterivATI);
@@ -10838,14 +10755,6 @@ _mesa_save_vtxfmt_init(GLvertexformat * vfmt)
    vfmt->Vertex3fv = save_Vertex3fv;
    vfmt->Vertex4f = save_Vertex4f;
    vfmt->Vertex4fv = save_Vertex4fv;
-   vfmt->VertexAttrib1fNV = save_VertexAttrib1fNV;
-   vfmt->VertexAttrib1fvNV = save_VertexAttrib1fvNV;
-   vfmt->VertexAttrib2fNV = save_VertexAttrib2fNV;
-   vfmt->VertexAttrib2fvNV = save_VertexAttrib2fvNV;
-   vfmt->VertexAttrib3fNV = save_VertexAttrib3fNV;
-   vfmt->VertexAttrib3fvNV = save_VertexAttrib3fvNV;
-   vfmt->VertexAttrib4fNV = save_VertexAttrib4fNV;
-   vfmt->VertexAttrib4fvNV = save_VertexAttrib4fvNV;
    vfmt->VertexAttrib1fARB = save_VertexAttrib1fARB;
    vfmt->VertexAttrib1fvARB = save_VertexAttrib1fvARB;
    vfmt->VertexAttrib2fARB = save_VertexAttrib2fARB;

@@ -481,16 +481,12 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_RequestResidentProgramsNV(exec, _mesa_RequestResidentProgramsNV);
       SET_GetProgramivNV(exec, _mesa_GetProgramivNV);
       SET_GetProgramStringNV(exec, _mesa_GetProgramStringNV);
-      SET_GetVertexAttribdvNV(exec, _mesa_GetVertexAttribdvNV);
-      SET_GetVertexAttribfvNV(exec, _mesa_GetVertexAttribfvNV);
-      SET_GetVertexAttribivNV(exec, _mesa_GetVertexAttribivNV);
       SET_IsProgramNV(exec, _mesa_IsProgramARB);
       SET_LoadProgramNV(exec, _mesa_LoadProgramNV);
       SET_ProgramEnvParameter4dARB(exec, _mesa_ProgramEnvParameter4dARB); /* alias to ProgramParameter4dNV */
       SET_ProgramEnvParameter4dvARB(exec, _mesa_ProgramEnvParameter4dvARB);  /* alias to ProgramParameter4dvNV */
       SET_ProgramEnvParameter4fARB(exec, _mesa_ProgramEnvParameter4fARB);  /* alias to ProgramParameter4fNV */
       SET_ProgramEnvParameter4fvARB(exec, _mesa_ProgramEnvParameter4fvARB);  /* alias to ProgramParameter4fvNV */
-      SET_VertexAttribPointerNV(exec, _mesa_VertexAttribPointerNV);
       /* glVertexAttrib*NV functions handled in api_loopback.c */
    }
    SET_GetVertexAttribPointervNV(exec, _mesa_GetVertexAttribPointervNV);

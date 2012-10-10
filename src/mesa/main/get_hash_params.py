@@ -515,22 +515,6 @@ descriptor=[
 
 # GL_NV_vertex_program
   [ "VERTEX_PROGRAM_BINDING_NV", "LOC_CUSTOM, TYPE_INT, 0, extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY0_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(0)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY1_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(1)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY2_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(2)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY3_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(3)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY4_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(4)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY5_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(5)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY6_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(6)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY7_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(7)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY8_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(8)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY9_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(9)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY10_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(10)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY11_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(11)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY12_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(12)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY13_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(13)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY14_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(14)].Enabled), extra_NV_vertex_program" ],
-  [ "VERTEX_ATTRIB_ARRAY15_NV", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_GENERIC(15)].Enabled), extra_NV_vertex_program" ],
 
 # GL_NV_fragment_program
   [ "FRAGMENT_PROGRAM_NV", "CONTEXT_BOOL(FragmentProgram.Enabled), extra_NV_fragment_program" ],

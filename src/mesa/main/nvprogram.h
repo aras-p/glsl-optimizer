@@ -47,15 +47,6 @@ extern void GLAPIENTRY
 _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program);
 
 extern void GLAPIENTRY
-_mesa_GetVertexAttribdvNV(GLuint index, GLenum pname, GLdouble *params);
-
-extern void GLAPIENTRY
-_mesa_GetVertexAttribfvNV(GLuint index, GLenum pname, GLfloat *params);
-
-extern void GLAPIENTRY
-_mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params);
-
-extern void GLAPIENTRY
 _mesa_GetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid **pointer);
 
 extern void GLAPIENTRY

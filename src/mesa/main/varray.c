@@ -432,38 +432,6 @@ _mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 
 
 /**
- * Set a vertex attribute array.
- * Note that these arrays DO alias the conventional GL vertex arrays
- * (position, normal, color, fog, texcoord, etc).
- * The generic attribute slots at #16 and above are not touched.
- */
-void GLAPIENTRY
-_mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
-                            GLsizei stride, const GLvoid *ptr)
-{
-   const GLbitfield legalTypes = (UNSIGNED_BYTE_BIT | SHORT_BIT |
-                                  FLOAT_BIT | DOUBLE_BIT);
-   GLboolean normalized = GL_FALSE;
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
-   if (index >= MAX_NV_VERTEX_PROGRAM_INPUTS) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerNV(index)");
-      return;
-   }
-
-   if (type == GL_UNSIGNED_BYTE && size != 4) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerNV(size!=4)");
-      return;
-   }
-
-   update_array(ctx, "glVertexAttribPointerNV", VERT_ATTRIB_GENERIC(index),
-                legalTypes, 1, BGRA_OR_4,
-                size, type, stride, normalized, GL_FALSE, ptr);
-}
-
-
-/**
  * Set a generic vertex attribute array.
  * Note that these arrays DO NOT alias the conventional GL vertex arrays
  * (position, normal, color, fog, texcoord, etc).
