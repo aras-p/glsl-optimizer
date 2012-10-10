@@ -20,7 +20,6 @@ libOpenCL_la_LIBADD = \
 	-lclangParse \
 	-lclangSema \
 	-lclangAnalysis \
-	-lclangRewrite \
 	-lclangAST \
 	-lclangLex \
 	-lclangBasic \
