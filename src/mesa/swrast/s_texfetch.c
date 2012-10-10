@@ -1067,7 +1067,7 @@ texfetch_funcs[] =
    {
       MESA_FORMAT_ETC2_SIGNED_R11_EAC,
       NULL,
-      NULL /* _mesa_fetch_texel_2d_f_etc2_signed_r11_eac -- not implemented yet */,
+      _mesa_fetch_texel_2d_f_etc2_signed_r11_eac,
       NULL
    },
    {

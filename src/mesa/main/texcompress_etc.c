@@ -31,6 +31,7 @@
  * GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC
  * GL_COMPRESSED_R11_EAC
  * GL_COMPRESSED_RG11_EAC
+ * GL_COMPRESSED_SIGNED_R11_EAC
  */
 
 #include <stdbool.h>
@@ -328,6 +329,13 @@ etc2_clamp2(int color)
    return (GLushort) CLAMP(color, 0, 2047);
 }
 
+static GLshort
+etc2_clamp3(int color)
+{
+   /* CLAMP(color, -1023, 1023) */
+   return (GLshort) CLAMP(color, -1023, 1023);
+}
+
 static void
 etc2_rgb8_parse_block(struct etc2_block *block, const uint8_t *src)
 {
@@ -535,6 +543,44 @@ etc2_r11_fetch_texel(const struct etc2_block *block,
     */
    color = (color << 5) | (color >> 6);
    ((GLushort *)dst)[0] = color;
+}
+
+static void
+etc2_signed_r11_fetch_texel(const struct etc2_block *block,
+                            int x, int y, uint8_t *dst)
+{
+   GLint modifier, idx;
+   GLshort color;
+   GLbyte base_codeword = (GLbyte) block->base_codeword;
+
+   if (base_codeword == -128)
+      base_codeword = -127;
+
+   /* Get pixel index */
+   idx = etc2_get_pixel_index(block, x, y);
+   modifier = etc2_modifier_tables[block->table_index][idx];
+
+   if (block->multiplier != 0)
+      /* clamp3(base codeword × 8 + modifier × multiplier × 8) */
+      color = etc2_clamp3((base_codeword << 3)  +
+                         ((modifier * block->multiplier) << 3));
+   else
+      color = etc2_clamp3((base_codeword << 3)  + modifier);
+
+   /* Extend 11 bits color value to 16 bits. OpenGL ES 3.0 specification
+    * allows extending the color value to any number of bits. But, an
+    * implementation is not allowed to truncate the 11-bit value to less than
+    * 11 bits. A negative 11-bit value must first be made positive before bit
+    * replication, and then made negative again
+    */
+   if (color >= 0)
+      color = (color << 5) | (color >> 5);
+   else {
+      color = -color;
+      color = (color << 5) | (color >> 5);
+      color = -color;
+   }
+   ((GLshort *)dst)[0] = color;
 }
 
 static void
@@ -812,6 +858,42 @@ etc2_unpack_rg11(uint8_t *dst_row,
     }
 }
 
+static void
+etc2_unpack_signed_r11(uint8_t *dst_row,
+                       unsigned dst_stride,
+                       const uint8_t *src_row,
+                       unsigned src_stride,
+                       unsigned width,
+                       unsigned height)
+{
+   /* If internalformat is COMPRESSED_SIGNED_R11_EAC, each 4 × 4 block of
+      red color information is compressed to 64 bits.
+   */
+   const unsigned bw = 4, bh = 4, bs = 8, comps = 1, comp_size = 2;
+   struct etc2_block block;
+   unsigned x, y, i, j;
+
+   for (y = 0; y < height; y += bh) {
+      const uint8_t *src = src_row;
+
+      for (x = 0; x < width; x+= bw) {
+         etc2_r11_parse_block(&block, src);
+
+         for (j = 0; j < bh; j++) {
+            uint8_t *dst = dst_row + (y + j) * dst_stride +
+                           x * comps * comp_size;
+            for (i = 0; i < bw; i++) {
+               etc2_signed_r11_fetch_texel(&block, i, j, dst);
+               dst += comps * comp_size;
+            }
+         }
+         src += bs;
+       }
+
+      src_row += src_stride;
+    }
+}
+
 /* ETC2 texture formats are valid in glCompressedTexImage2D and
  * glCompressedTexSubImage2D functions */
 GLboolean
@@ -848,6 +930,14 @@ _mesa_texstore_etc2_srgb8_alpha8_eac(TEXSTORE_PARAMS)
 
 GLboolean
 _mesa_texstore_etc2_r11_eac(TEXSTORE_PARAMS)
+{
+   ASSERT(0);
+
+   return GL_FALSE;
+}
+
+GLboolean
+_mesa_texstore_etc2_signed_r11_eac(TEXSTORE_PARAMS)
 {
    ASSERT(0);
 
@@ -991,6 +1081,26 @@ _mesa_fetch_texel_2d_f_etc2_rg11_eac(const struct
    texel[ACOMP] = 1.0f;
 }
 
+void
+_mesa_fetch_texel_2d_f_etc2_signed_r11_eac(const struct swrast_texture_image *texImage,
+                                           GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   struct etc2_block block;
+   GLushort dst;
+   const uint8_t *src;
+
+   src = texImage->Map +
+      (((texImage->RowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
+
+   etc2_r11_parse_block(&block, src);
+   etc2_signed_r11_fetch_texel(&block, i % 4, j % 4, (uint8_t *)&dst);
+
+   texel[RCOMP] = SHORT_TO_FLOAT(dst);
+   texel[GCOMP] = 0.0f;
+   texel[BCOMP] = 0.0f;
+   texel[ACOMP] = 1.0f;
+}
+
 /**
  * Decode texture data in any one of following formats:
  * `MESA_FORMAT_ETC2_RGB8`
@@ -999,6 +1109,7 @@ _mesa_fetch_texel_2d_f_etc2_rg11_eac(const struct
  * `MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC`
  * `MESA_FORMAT_ETC2_R11_EAC`
  * `MESA_FORMAT_ETC2_RG11_EAC`
+ * `MESA_FORMAT_ETC2_SIGNED_R11_EAC`
  *
  * The size of the source data must be a multiple of the ETC2 block size
  * even if the texture image's dimensions are not aligned to 4.
@@ -1041,4 +1152,8 @@ _mesa_unpack_etc2_format(uint8_t *dst_row,
       etc2_unpack_rg11(dst_row, dst_stride,
                        src_row, src_stride,
                        src_width, src_height);
+   else if (format == MESA_FORMAT_ETC2_SIGNED_R11_EAC)
+      etc2_unpack_signed_r11(dst_row, dst_stride,
+                             src_row, src_stride,
+                             src_width, src_height);
 }
