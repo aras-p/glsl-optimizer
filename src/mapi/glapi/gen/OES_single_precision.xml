@@ -6,26 +6,31 @@
 <OpenGLAPI>
 
 <category name="GL_OES_single_precision" number="293">
-    <function name="ClearDepthfOES" alias="ClearDepthf" static_dispatch="false">
+    <function name="ClearDepthfOES" alias="ClearDepthf" static_dispatch="false"
+              es1="1.0">
         <param name="depth" type="GLclampf"/>
     </function>
 
-    <function name="ClipPlanefOES" offset="assign" static_dispatch="false">
+    <function name="ClipPlanefOES" offset="assign" static_dispatch="false"
+              es1="1.0">
         <param name="plane" type="GLenum"/>
         <param name="equation" type="const GLfloat *" count="4"/>
     </function>
 
-    <function name="DepthRangefOES" alias="DepthRangef" static_dispatch="false">
+    <function name="DepthRangefOES" alias="DepthRangef" static_dispatch="false"
+              es1="1.0">
         <param name="zNear" type="GLclampf"/>
         <param name="zFar" type="GLclampf"/>
     </function>
 
-    <function name="GetClipPlanefOES" offset="assign" static_dispatch="false">
+    <function name="GetClipPlanefOES" offset="assign" static_dispatch="false"
+              es1="1.0">
         <param name="plane" type="GLenum"/>
         <param name="equation" type="GLfloat *" output="true" count="4"/>
     </function>
 
-    <function name="FrustumfOES" offset="assign" static_dispatch="false">
+    <function name="FrustumfOES" offset="assign" static_dispatch="false"
+              es1="1.0">
         <param name="left" type="GLfloat"/>
         <param name="right" type="GLfloat"/>
         <param name="bottom" type="GLfloat"/>
@@ -34,7 +39,8 @@
         <param name="zFar" type="GLfloat"/>
     </function>
 
-    <function name="OrthofOES" offset="assign" static_dispatch="false">
+    <function name="OrthofOES" offset="assign" static_dispatch="false"
+              es1="1.0">
         <param name="left" type="GLfloat"/>
         <param name="right" type="GLfloat"/>
         <param name="bottom" type="GLfloat"/>

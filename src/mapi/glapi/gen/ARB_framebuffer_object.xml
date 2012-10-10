@@ -140,27 +140,29 @@
 
 
 
-    <function name="IsRenderbuffer" alias="IsRenderbufferEXT">
+    <function name="IsRenderbuffer" alias="IsRenderbufferEXT" es2="2.0">
         <param name="renderbuffer" type="GLuint"/>
 	<return type="GLboolean"/>
     </function>
 
-    <function name="BindRenderbuffer" alias="BindRenderbufferEXT">
+    <function name="BindRenderbuffer" alias="BindRenderbufferEXT" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="renderbuffer" type="GLuint"/>
     </function>
 
-    <function name="DeleteRenderbuffers" alias="DeleteRenderbuffersEXT">
+    <function name="DeleteRenderbuffers" alias="DeleteRenderbuffersEXT"
+              es2="2.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="renderbuffers" type="const GLuint *" count="n"/>
     </function>
 
-    <function name="GenRenderbuffers" alias="GenRenderbuffersEXT">
+    <function name="GenRenderbuffers" alias="GenRenderbuffersEXT" es2="2.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="renderbuffers" type="GLuint *" count="n" output="true"/>
     </function>
 
-    <function name="RenderbufferStorage" alias="RenderbufferStorageEXT">
+    <function name="RenderbufferStorage" alias="RenderbufferStorageEXT"
+              es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
         <param name="width" type="GLsizei"/>
@@ -176,33 +178,36 @@
         <glx rop="4331"/>
     </function>
 
-    <function name="GetRenderbufferParameteriv" alias="GetRenderbufferParameterivEXT">
+    <function name="GetRenderbufferParameteriv"
+              alias="GetRenderbufferParameterivEXT" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
     </function>
 
-    <function name="IsFramebuffer" alias="IsFramebufferEXT">
+    <function name="IsFramebuffer" alias="IsFramebufferEXT" es2="2.0">
         <param name="framebuffer" type="GLuint"/>
 	<return type="GLboolean"/>
     </function>
 
-    <function name="BindFramebuffer" alias="BindFramebufferEXT">
+    <function name="BindFramebuffer" alias="BindFramebufferEXT" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="framebuffer" type="GLuint"/>
     </function>
 
-    <function name="DeleteFramebuffers" alias="DeleteFramebuffersEXT">
+    <function name="DeleteFramebuffers" alias="DeleteFramebuffersEXT"
+              es2="2.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="framebuffers" type="const GLuint *" count="n"/>
     </function>
 
-    <function name="GenFramebuffers" alias="GenFramebuffersEXT">
+    <function name="GenFramebuffers" alias="GenFramebuffersEXT" es2="2.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="framebuffers" type="GLuint *" count="n" output="true"/>
     </function>
 
-    <function name="CheckFramebufferStatus" alias="CheckFramebufferStatusEXT">
+    <function name="CheckFramebufferStatus" alias="CheckFramebufferStatusEXT"
+              es2="2.0">
         <param name="target" type="GLenum"/>
 	<return type="GLenum"/>
     </function>
@@ -215,7 +220,8 @@
         <param name="level" type="GLint"/>
     </function>
 
-    <function name="FramebufferTexture2D" alias="FramebufferTexture2DEXT">
+    <function name="FramebufferTexture2D" alias="FramebufferTexture2DEXT"
+              es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="textarget" type="GLenum"/>
@@ -240,14 +246,16 @@
         <param name="layer" type="GLint"/>
     </function>
 
-    <function name="FramebufferRenderbuffer" alias="FramebufferRenderbufferEXT">
+    <function name="FramebufferRenderbuffer" alias="FramebufferRenderbufferEXT"
+              es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="renderbuffertarget" type="GLenum"/>
         <param name="renderbuffer" type="GLuint"/>
     </function>
 
-    <function name="GetFramebufferAttachmentParameteriv" alias="GetFramebufferAttachmentParameterivEXT">
+    <function name="GetFramebufferAttachmentParameteriv"
+              alias="GetFramebufferAttachmentParameterivEXT" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="pname" type="GLenum"/>
@@ -267,7 +275,7 @@
         <param name="filter" type="GLenum"/>
     </function>
 
-    <function name="GenerateMipmap" alias="GenerateMipmapEXT">
+    <function name="GenerateMipmap" alias="GenerateMipmapEXT" es2="2.0">
         <param name="target" type="GLenum"/>
     </function>
 </category>

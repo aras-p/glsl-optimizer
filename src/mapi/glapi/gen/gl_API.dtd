@@ -35,7 +35,9 @@
                    alias               NMTOKEN #IMPLIED
                    offset              CDATA   #IMPLIED
                    static_dispatch     (true | false) "true"
-                   vectorequiv         NMTOKEN #IMPLIED>
+                   vectorequiv         NMTOKEN #IMPLIED
+                   es1                 CDATA   "none"
+                   es2                 CDATA   "none">
 <!ATTLIST size     name                NMTOKEN #REQUIRED
                    count               NMTOKEN #IMPLIED
                    mode                (get | set) "set">

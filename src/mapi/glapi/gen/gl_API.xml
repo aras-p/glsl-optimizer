@@ -1275,7 +1275,7 @@
         <glx rop="15"/>
     </function>
 
-    <function name="Color4f" offset="29" vectorequiv="Color4fv">
+    <function name="Color4f" offset="29" vectorequiv="Color4fv" es1="1.0">
         <param name="red" type="GLfloat"/>
         <param name="green" type="GLfloat"/>
         <param name="blue" type="GLfloat"/>
@@ -1311,7 +1311,7 @@
         <glx rop="18"/>
     </function>
 
-    <function name="Color4ub" offset="35" vectorequiv="Color4ubv">
+    <function name="Color4ub" offset="35" vectorequiv="Color4ubv" es1="1.1">
         <param name="red" type="GLubyte"/>
         <param name="green" type="GLubyte"/>
         <param name="blue" type="GLubyte"/>
@@ -1418,7 +1418,7 @@
         <glx rop="29"/>
     </function>
 
-    <function name="Normal3f" offset="56" vectorequiv="Normal3fv">
+    <function name="Normal3f" offset="56" vectorequiv="Normal3fv" es1="1.0">
         <param name="nx" type="GLfloat"/>
         <param name="ny" type="GLfloat"/>
         <param name="nz" type="GLfloat"/>
@@ -1947,18 +1947,18 @@
         <glx rop="78"/>
     </function>
 
-    <function name="CullFace" offset="152">
+    <function name="CullFace" offset="152" es1="1.0" es2="2.0">
         <param name="mode" type="GLenum"/>
         <glx rop="79"/>
     </function>
 
-    <function name="Fogf" offset="153">
+    <function name="Fogf" offset="153" es1="1.0">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx rop="80"/>
     </function>
 
-    <function name="Fogfv" offset="154">
+    <function name="Fogfv" offset="154" es1="1.0">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *" variable_param="pname"/>
         <glx rop="81"/>
@@ -1976,25 +1976,25 @@
         <glx rop="83"/>
     </function>
 
-    <function name="FrontFace" offset="157">
+    <function name="FrontFace" offset="157" es1="1.0" es2="2.0">
         <param name="mode" type="GLenum"/>
         <glx rop="84"/>
     </function>
 
-    <function name="Hint" offset="158">
+    <function name="Hint" offset="158" es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="mode" type="GLenum"/>
         <glx rop="85"/>
     </function>
 
-    <function name="Lightf" offset="159">
+    <function name="Lightf" offset="159" es1="1.0">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx rop="86"/>
     </function>
 
-    <function name="Lightfv" offset="160">
+    <function name="Lightfv" offset="160" es1="1.0">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *" variable_param="pname"/>
@@ -2015,13 +2015,13 @@
         <glx rop="89"/>
     </function>
 
-    <function name="LightModelf" offset="163">
+    <function name="LightModelf" offset="163" es1="1.0">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx rop="90"/>
     </function>
 
-    <function name="LightModelfv" offset="164">
+    <function name="LightModelfv" offset="164" es1="1.0">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *" variable_param="pname"/>
         <glx rop="91"/>
@@ -2045,19 +2045,19 @@
         <glx rop="94"/>
     </function>
 
-    <function name="LineWidth" offset="168">
+    <function name="LineWidth" offset="168" es1="1.0" es2="2.0">
         <param name="width" type="GLfloat"/>
         <glx rop="95"/>
     </function>
 
-    <function name="Materialf" offset="169">
+    <function name="Materialf" offset="169" es1="1.0">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx rop="96"/>
     </function>
 
-    <function name="Materialfv" offset="170">
+    <function name="Materialfv" offset="170" es1="1.0">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *" variable_param="pname"/>
@@ -2078,7 +2078,7 @@
         <glx rop="99"/>
     </function>
 
-    <function name="PointSize" offset="173">
+    <function name="PointSize" offset="173" es1="1.0">
         <param name="size" type="GLfloat"/>
         <glx rop="100"/>
     </function>
@@ -2094,7 +2094,7 @@
         <glx rop="102"/>
     </function>
 
-    <function name="Scissor" offset="176">
+    <function name="Scissor" offset="176" es1="1.0" es2="2.0">
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
         <param name="width" type="GLsizei"/>
@@ -2102,33 +2102,33 @@
         <glx rop="103"/>
     </function>
 
-    <function name="ShadeModel" offset="177">
+    <function name="ShadeModel" offset="177" es1="1.0">
         <param name="mode" type="GLenum"/>
         <glx rop="104"/>
     </function>
 
-    <function name="TexParameterf" offset="178">
+    <function name="TexParameterf" offset="178" es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx rop="105"/>
     </function>
 
-    <function name="TexParameterfv" offset="179">
+    <function name="TexParameterfv" offset="179" es1="1.1" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *" variable_param="pname"/>
         <glx rop="106"/>
     </function>
 
-    <function name="TexParameteri" offset="180">
+    <function name="TexParameteri" offset="180" es1="1.1" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx rop="107"/>
     </function>
 
-    <function name="TexParameteriv" offset="181">
+    <function name="TexParameteriv" offset="181" es1="1.1" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *" variable_param="pname"/>
@@ -2147,7 +2147,7 @@
         <glx rop="109" large="true"/>
     </function>
 
-    <function name="TexImage2D" offset="183">
+    <function name="TexImage2D" offset="183" es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="internalformat" type="GLint"/>
@@ -2160,28 +2160,28 @@
         <glx rop="110" large="true"/>
     </function>
 
-    <function name="TexEnvf" offset="184">
+    <function name="TexEnvf" offset="184" es1="1.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx rop="111"/>
     </function>
 
-    <function name="TexEnvfv" offset="185">
+    <function name="TexEnvfv" offset="185" es1="1.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *" variable_param="pname"/>
         <glx rop="112"/>
     </function>
 
-    <function name="TexEnvi" offset="186">
+    <function name="TexEnvi" offset="186" es1="1.1">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx rop="113"/>
     </function>
 
-    <function name="TexEnviv" offset="187">
+    <function name="TexEnviv" offset="187" es1="1.1">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *" variable_param="pname"/>
@@ -2277,7 +2277,7 @@
         <glx rop="126"/>
     </function>
 
-    <function name="Clear" offset="203">
+    <function name="Clear" offset="203" es1="1.0" es2="2.0">
         <param name="mask" type="GLbitfield"/>
         <glx rop="127"/>
     </function>
@@ -2295,7 +2295,7 @@
         <glx rop="129"/>
     </function>
 
-    <function name="ClearColor" offset="206">
+    <function name="ClearColor" offset="206" es1="1.0" es2="2.0">
         <param name="red" type="GLclampf"/>
         <param name="green" type="GLclampf"/>
         <param name="blue" type="GLclampf"/>
@@ -2303,7 +2303,7 @@
         <glx rop="130"/>
     </function>
 
-    <function name="ClearStencil" offset="207">
+    <function name="ClearStencil" offset="207" es1="1.0" es2="2.0">
         <param name="s" type="GLint"/>
         <glx rop="131"/>
     </function>
@@ -2313,12 +2313,12 @@
         <glx rop="132"/>
     </function>
 
-    <function name="StencilMask" offset="209">
+    <function name="StencilMask" offset="209" es1="1.0" es2="2.0">
         <param name="mask" type="GLuint"/>
         <glx rop="133"/>
     </function>
 
-    <function name="ColorMask" offset="210">
+    <function name="ColorMask" offset="210" es1="1.0" es2="2.0">
         <param name="red" type="GLboolean"/>
         <param name="green" type="GLboolean"/>
         <param name="blue" type="GLboolean"/>
@@ -2326,7 +2326,7 @@
         <glx rop="134"/>
     </function>
 
-    <function name="DepthMask" offset="211">
+    <function name="DepthMask" offset="211" es1="1.0" es2="2.0">
         <param name="flag" type="GLboolean"/>
         <glx rop="135"/>
     </function>
@@ -2342,21 +2342,21 @@
         <glx rop="137"/>
     </function>
 
-    <function name="Disable" offset="214">
+    <function name="Disable" offset="214" es1="1.0" es2="2.0">
         <param name="cap" type="GLenum"/>
         <glx rop="138" handcode="client"/>
     </function>
 
-    <function name="Enable" offset="215">
+    <function name="Enable" offset="215" es1="1.0" es2="2.0">
         <param name="cap" type="GLenum"/>
         <glx rop="139" handcode="client"/>
     </function>
 
-    <function name="Finish" offset="216">
+    <function name="Finish" offset="216" es1="1.0" es2="2.0">
         <glx sop="108" handcode="true"/>
     </function>
 
-    <function name="Flush" offset="217">
+    <function name="Flush" offset="217" es1="1.0" es2="2.0">
         <glx sop="142" handcode="true"/>
     </function>
 
@@ -2516,38 +2516,38 @@
         <glx rop="158"/>
     </function>
 
-    <function name="AlphaFunc" offset="240">
+    <function name="AlphaFunc" offset="240" es1="1.0">
         <param name="func" type="GLenum"/>
         <param name="ref" type="GLclampf"/>
         <glx rop="159"/>
     </function>
 
-    <function name="BlendFunc" offset="241">
+    <function name="BlendFunc" offset="241" es1="1.0" es2="2.0">
         <param name="sfactor" type="GLenum"/>
         <param name="dfactor" type="GLenum"/>
         <glx rop="160"/>
     </function>
 
-    <function name="LogicOp" offset="242">
+    <function name="LogicOp" offset="242" es1="1.0">
         <param name="opcode" type="GLenum"/>
         <glx rop="161"/>
     </function>
 
-    <function name="StencilFunc" offset="243">
+    <function name="StencilFunc" offset="243" es1="1.0" es2="2.0">
         <param name="func" type="GLenum"/>
         <param name="ref" type="GLint"/>
         <param name="mask" type="GLuint"/>
         <glx rop="162"/>
     </function>
 
-    <function name="StencilOp" offset="244">
+    <function name="StencilOp" offset="244" es1="1.0" es2="2.0">
         <param name="fail" type="GLenum"/>
         <param name="zfail" type="GLenum"/>
         <param name="zpass" type="GLenum"/>
         <glx rop="163"/>
     </function>
 
-    <function name="DepthFunc" offset="245">
+    <function name="DepthFunc" offset="245" es1="1.0" es2="2.0">
         <param name="func" type="GLenum"/>
         <glx rop="164"/>
     </function>
@@ -2576,7 +2576,7 @@
         <glx sop="109" handcode="client"/>
     </function>
 
-    <function name="PixelStorei" offset="250">
+    <function name="PixelStorei" offset="250" es1="1.0" es2="2.0">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx sop="110" handcode="client"/>
@@ -2617,7 +2617,7 @@
         <glx rop="172"/>
     </function>
 
-    <function name="ReadPixels" offset="256">
+    <function name="ReadPixels" offset="256" es1="1.0" es2="2.0">
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
         <param name="width" type="GLsizei"/>
@@ -2637,7 +2637,7 @@
         <glx rop="173" large="true"/>
     </function>
 
-    <function name="GetBooleanv" offset="258">
+    <function name="GetBooleanv" offset="258" es1="1.1" es2="2.0">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLboolean *" output="true" variable_param="pname"/>
         <glx sop="112" handcode="client"/>
@@ -2655,24 +2655,24 @@
         <glx sop="114" handcode="client"/>
     </function>
 
-    <function name="GetError" offset="261">
+    <function name="GetError" offset="261" es1="1.0" es2="2.0">
         <return type="GLenum"/>
         <glx sop="115" handcode="client"/>
     </function>
 
-    <function name="GetFloatv" offset="262">
+    <function name="GetFloatv" offset="262" es1="1.1" es2="2.0">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="116" handcode="client"/>
     </function>
 
-    <function name="GetIntegerv" offset="263">
+    <function name="GetIntegerv" offset="263" es1="1.0" es2="2.0">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx sop="117" handcode="client"/>
     </function>
 
-    <function name="GetLightfv" offset="264">
+    <function name="GetLightfv" offset="264" es1="1.1">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
@@ -2707,7 +2707,7 @@
         <glx sop="122"/>
     </function>
 
-    <function name="GetMaterialfv" offset="269">
+    <function name="GetMaterialfv" offset="269" es1="1.1">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
@@ -2744,20 +2744,20 @@
         <glx sop="128"/>
     </function>
 
-    <function name="GetString" offset="275">
+    <function name="GetString" offset="275" es1="1.0" es2="2.0">
         <param name="name" type="GLenum"/>
         <return type="const GLubyte *"/>
         <glx sop="129" handcode="true"/>
     </function>
 
-    <function name="GetTexEnvfv" offset="276">
+    <function name="GetTexEnvfv" offset="276" es1="1.1">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="130"/>
     </function>
 
-    <function name="GetTexEnviv" offset="277">
+    <function name="GetTexEnviv" offset="277" es1="1.1">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
@@ -2794,14 +2794,14 @@
         <glx sop="135" dimensions_in_reply="true"/>
     </function>
 
-    <function name="GetTexParameterfv" offset="282">
+    <function name="GetTexParameterfv" offset="282" es1="1.1" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx sop="136"/>
     </function>
 
-    <function name="GetTexParameteriv" offset="283">
+    <function name="GetTexParameteriv" offset="283" es1="1.1" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
@@ -2824,7 +2824,7 @@
         <glx sop="139"/>
     </function>
 
-    <function name="IsEnabled" offset="286">
+    <function name="IsEnabled" offset="286" es1="1.1" es2="2.0">
         <param name="cap" type="GLenum"/>
         <return type="GLboolean"/>
         <glx sop="140" handcode="client"/>
@@ -2852,11 +2852,11 @@
         <glx rop="175"/>
     </function>
 
-    <function name="LoadIdentity" offset="290">
+    <function name="LoadIdentity" offset="290" es1="1.0">
         <glx rop="176"/>
     </function>
 
-    <function name="LoadMatrixf" offset="291">
+    <function name="LoadMatrixf" offset="291" es1="1.0">
         <param name="m" type="const GLfloat *" count="16"/>
         <glx rop="177"/>
     </function>
@@ -2866,12 +2866,12 @@
         <glx rop="178"/>
     </function>
 
-    <function name="MatrixMode" offset="293">
+    <function name="MatrixMode" offset="293" es1="1.0">
         <param name="mode" type="GLenum"/>
         <glx rop="179"/>
     </function>
 
-    <function name="MultMatrixf" offset="294">
+    <function name="MultMatrixf" offset="294" es1="1.0">
         <param name="m" type="const GLfloat *" count="16"/>
         <glx rop="180"/>
     </function>
@@ -2891,11 +2891,11 @@
         <glx rop="182"/>
     </function>
 
-    <function name="PopMatrix" offset="297">
+    <function name="PopMatrix" offset="297" es1="1.0">
         <glx rop="183"/>
     </function>
 
-    <function name="PushMatrix" offset="298">
+    <function name="PushMatrix" offset="298" es1="1.0">
         <glx rop="184"/>
     </function>
 
@@ -2907,7 +2907,7 @@
         <glx rop="185"/>
     </function>
 
-    <function name="Rotatef" offset="300">
+    <function name="Rotatef" offset="300" es1="1.0">
         <param name="angle" type="GLfloat"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
@@ -2922,7 +2922,7 @@
         <glx rop="187"/>
     </function>
 
-    <function name="Scalef" offset="302">
+    <function name="Scalef" offset="302" es1="1.0">
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
@@ -2936,14 +2936,14 @@
         <glx rop="189"/>
     </function>
 
-    <function name="Translatef" offset="304">
+    <function name="Translatef" offset="304" es1="1.0">
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
         <glx rop="190"/>
     </function>
 
-    <function name="Viewport" offset="305">
+    <function name="Viewport" offset="305" es1="1.0" es2="2.0">
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
         <param name="width" type="GLsizei"/>
@@ -3131,7 +3131,7 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="ColorPointer" offset="308">
+    <function name="ColorPointer" offset="308" es1="1.0">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
@@ -3139,19 +3139,19 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="DisableClientState" offset="309">
+    <function name="DisableClientState" offset="309" es1="1.0">
         <param name="array" type="GLenum"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="DrawArrays" offset="310">
+    <function name="DrawArrays" offset="310" es1="1.0" es2="2.0">
         <param name="mode" type="GLenum"/>
         <param name="first" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <glx rop="193" handcode="true"/>
     </function>
 
-    <function name="DrawElements" offset="311">
+    <function name="DrawElements" offset="311" es1="1.0" es2="2.0">
         <param name="mode" type="GLenum"/>
         <param name="count" type="GLsizei"/>
         <param name="type" type="GLenum"/>
@@ -3165,12 +3165,12 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="EnableClientState" offset="313">
+    <function name="EnableClientState" offset="313" es1="1.0">
         <param name="array" type="GLenum"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="GetPointerv" offset="329">
+    <function name="GetPointerv" offset="329" es1="1.1">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLvoid **" output="true"/>
         <glx handcode="true"/>
@@ -3190,14 +3190,14 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="NormalPointer" offset="318">
+    <function name="NormalPointer" offset="318" es1="1.0">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="TexCoordPointer" offset="320">
+    <function name="TexCoordPointer" offset="320" es1="1.0">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
@@ -3205,7 +3205,7 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="VertexPointer" offset="321">
+    <function name="VertexPointer" offset="321" es1="1.0">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
@@ -3213,7 +3213,7 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="PolygonOffset" offset="319">
+    <function name="PolygonOffset" offset="319" es1="1.0" es2="2.0">
         <param name="factor" type="GLfloat"/>
         <param name="units" type="GLfloat"/>
         <glx rop="192"/>
@@ -3230,7 +3230,7 @@
         <glx rop="4119"/>
     </function>
 
-    <function name="CopyTexImage2D" offset="324">
+    <function name="CopyTexImage2D" offset="324" es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="internalformat" type="GLenum"/>
@@ -3252,7 +3252,7 @@
         <glx rop="4121"/>
     </function>
 
-    <function name="CopyTexSubImage2D" offset="326">
+    <function name="CopyTexSubImage2D" offset="326" es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="xoffset" type="GLint"/>
@@ -3276,7 +3276,7 @@
         <glx rop="4099" large="true"/>
     </function>
 
-    <function name="TexSubImage2D" offset="333">
+    <function name="TexSubImage2D" offset="333" es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="xoffset" type="GLint"/>
@@ -3298,25 +3298,25 @@
         <glx sop="143" handcode="client" always_array="true"/>
     </function>
 
-    <function name="BindTexture" offset="307">
+    <function name="BindTexture" offset="307" es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="texture" type="GLuint"/>
         <glx rop="4117"/>
     </function>
 
-    <function name="DeleteTextures" offset="327">
+    <function name="DeleteTextures" offset="327" es1="1.0" es2="2.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="textures" type="const GLuint *" count="n"/>
         <glx sop="144"/>
     </function>
 
-    <function name="GenTextures" offset="328">
+    <function name="GenTextures" offset="328" es1="1.0" es2="2.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="textures" type="GLuint *" output="true" count="n"/>
         <glx sop="145" always_array="true"/>
     </function>
 
-    <function name="IsTexture" offset="330">
+    <function name="IsTexture" offset="330" es1="1.1" es2="2.0">
         <param name="texture" type="GLuint"/>
         <return type="GLboolean"/>
         <glx sop="146"/>
@@ -3695,7 +3695,7 @@
     </enum>
 
 
-    <function name="BlendColor" offset="336">
+    <function name="BlendColor" offset="336" es2="2.0">
         <param name="red" type="GLclampf"/>
         <param name="green" type="GLclampf"/>
         <param name="blue" type="GLclampf"/>
@@ -3703,7 +3703,7 @@
         <glx rop="4096"/>
     </function>
 
-    <function name="BlendEquation" offset="337">
+    <function name="BlendEquation" offset="337" es2="2.0">
         <param name="mode" type="GLenum"/>
         <glx rop="4097"/>
     </function>
@@ -4232,11 +4232,13 @@
     <enum name="DOT3_RGB"                                 value="0x86AE"/>
     <enum name="DOT3_RGBA"                                value="0x86AF"/>
 
-    <function name="ActiveTexture" alias="ActiveTextureARB">
+    <function name="ActiveTexture" alias="ActiveTextureARB" es1="1.0"
+              es2="2.0">
         <param name="texture" type="GLenum"/>
     </function>
 
-    <function name="ClientActiveTexture" alias="ClientActiveTextureARB">
+    <function name="ClientActiveTexture" alias="ClientActiveTextureARB"
+              es1="1.0">
         <param name="texture" type="GLenum"/>
     </function>
 
@@ -4385,7 +4387,7 @@
         <param name="v" type="const GLdouble *"/>
     </function>
 
-    <function name="MultiTexCoord4f" alias="MultiTexCoord4fARB">
+    <function name="MultiTexCoord4f" alias="MultiTexCoord4fARB" es1="1.0">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
@@ -4440,7 +4442,8 @@
         <param name="m" type="const GLdouble *"/>
     </function>
 
-    <function name="SampleCoverage" alias="SampleCoverageARB">
+    <function name="SampleCoverage" alias="SampleCoverageARB" es1="1.0"
+              es2="2.0">
         <param name="value" type="GLclampf"/>
         <param name="invert" type="GLboolean"/>
     </function>
@@ -4457,7 +4460,8 @@
         <param name="data" type="const GLvoid *"/>
     </function>
 
-    <function name="CompressedTexImage2D" alias="CompressedTexImage2DARB">
+    <function name="CompressedTexImage2D" alias="CompressedTexImage2DARB"
+              es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="internalformat" type="GLenum"/>
@@ -4492,7 +4496,8 @@
         <param name="data" type="const GLvoid *"/>
     </function>
 
-    <function name="CompressedTexSubImage2D" alias="CompressedTexSubImage2DARB">
+    <function name="CompressedTexSubImage2D" alias="CompressedTexSubImage2DARB"
+              es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="xoffset" type="GLint"/>
@@ -4636,7 +4641,7 @@
     </enum>
     <enum name="COMPARE_R_TO_TEXTURE"                     value="0x884E"/>
 
-    <function name="BlendFuncSeparate" alias="BlendFuncSeparateEXT">
+    <function name="BlendFuncSeparate" alias="BlendFuncSeparateEXT" es2="2.0">
         <param name="sfactorRGB" type="GLenum"/>
         <param name="dfactorRGB" type="GLenum"/>
         <param name="sfactorAlpha" type="GLenum"/>
@@ -4680,12 +4685,12 @@
         <param name="primcount" type="GLsizei"/>
     </function>
 
-    <function name="PointParameterf" alias="PointParameterfEXT">
+    <function name="PointParameterf" alias="PointParameterfEXT" es1="1.1">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
     </function>
 
-    <function name="PointParameterfv" alias="PointParameterfvEXT">
+    <function name="PointParameterfv" alias="PointParameterfvEXT" es1="1.1">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *"/>
     </function>
@@ -4929,36 +4934,39 @@
     <type name="intptr"   size="4"                  glx_name="CARD32"/>
     <type name="sizeiptr" size="4"  unsigned="true" glx_name="CARD32"/>
 
-    <function name="BindBuffer" alias="BindBufferARB">
+    <function name="BindBuffer" alias="BindBufferARB" es1="1.1" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="buffer" type="GLuint"/>
     </function>
 
-    <function name="BufferData" alias="BufferDataARB">
+    <function name="BufferData" alias="BufferDataARB" es1="1.1" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="size" type="GLsizeiptr"/>
         <param name="data" type="const GLvoid *"/>
         <param name="usage" type="GLenum"/>
     </function>
 
-    <function name="BufferSubData" alias="BufferSubDataARB">
+    <function name="BufferSubData" alias="BufferSubDataARB" es1="1.1"
+              es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="offset" type="GLintptr"/>
         <param name="size" type="GLsizeiptr"/>
         <param name="data" type="const GLvoid *"/>
     </function>
 
-    <function name="DeleteBuffers" alias="DeleteBuffersARB">
+    <function name="DeleteBuffers" alias="DeleteBuffersARB" es1="1.1"
+              es2="2.0">
         <param name="n" type="GLsizei"/>
         <param name="buffer" type="const GLuint *"/>
     </function>
 
-    <function name="GenBuffers" alias="GenBuffersARB">
+    <function name="GenBuffers" alias="GenBuffersARB" es1="1.1" es2="2.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="buffer" type="GLuint *" output="true" count="n"/>
     </function>
 
-    <function name="GetBufferParameteriv" alias="GetBufferParameterivARB">
+    <function name="GetBufferParameteriv" alias="GetBufferParameterivARB"
+              es1="1.1" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
@@ -4977,7 +4985,7 @@
         <param name="data" type="GLvoid *" output="true"/>
     </function>
 
-    <function name="IsBuffer" alias="IsBufferARB">
+    <function name="IsBuffer" alias="IsBufferARB" es1="1.1" es2="2.0">
         <param name="buffer" type="GLuint"/>
         <return type="GLboolean"/>
     </function>
@@ -5131,7 +5139,8 @@
     <enum name="STENCIL_BACK_VALUE_MASK"          value="0x8CA4"/>
     <enum name="STENCIL_BACK_WRITEMASK"           value="0x8CA5"/>
 
-    <function name="BlendEquationSeparate" alias="BlendEquationSeparateEXT">
+    <function name="BlendEquationSeparate" alias="BlendEquationSeparateEXT"
+              es2="2.0">
         <param name="modeRGB" type="GLenum"/>
         <param name="modeA" type="GLenum"/>
     </function>
@@ -5141,7 +5150,7 @@
         <param name="bufs" type="const GLenum *" count="n"/>
     </function>
 
-    <function name="StencilFuncSeparate" offset="assign">
+    <function name="StencilFuncSeparate" offset="assign" es2="2.0">
         <param name="face" type="GLenum"/>
         <param name="func" type="GLenum"/>
         <param name="ref" type="GLint"/>
@@ -5149,7 +5158,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="StencilOpSeparate" offset="assign">
+    <function name="StencilOpSeparate" offset="assign" es2="2.0">
         <param name="face" type="GLenum"/>
         <param name="sfail" type="GLenum"/>
         <param name="zfail" type="GLenum"/>
@@ -5157,68 +5166,71 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="StencilMaskSeparate" offset="assign">
+    <function name="StencilMaskSeparate" offset="assign" es2="2.0">
         <param name="face" type="GLenum"/>
         <param name="mask" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="AttachShader" offset="assign">
+    <function name="AttachShader" offset="assign" es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="shader" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="BindAttribLocation" alias="BindAttribLocationARB">
+    <function name="BindAttribLocation" alias="BindAttribLocationARB"
+              es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="index" type="GLuint"/>
         <param name="name" type="const GLchar *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="CompileShader" alias="CompileShaderARB">
+    <function name="CompileShader" alias="CompileShaderARB" es2="2.0">
         <param name="shader" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="CreateProgram" offset="assign">
+    <function name="CreateProgram" offset="assign" es2="2.0">
         <return type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="CreateShader" offset="assign">
+    <function name="CreateShader" offset="assign" es2="2.0">
         <param name="type" type="GLenum"/>
         <return type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="DeleteProgram" offset="assign">
+    <function name="DeleteProgram" offset="assign" es2="2.0">
         <param name="program" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="DeleteShader" offset="assign">
+    <function name="DeleteShader" offset="assign" es2="2.0">
         <param name="program" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="DetachShader" offset="assign">
+    <function name="DetachShader" offset="assign" es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="shader" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="DisableVertexAttribArray" alias="DisableVertexAttribArrayARB">
+    <function name="DisableVertexAttribArray"
+              alias="DisableVertexAttribArrayARB" es2="2.0">
         <param name="index" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="EnableVertexAttribArray" alias="EnableVertexAttribArrayARB">
+    <function name="EnableVertexAttribArray" alias="EnableVertexAttribArrayARB"
+              es2="2.0">
         <param name="index" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetActiveAttrib" alias="GetActiveAttribARB">
+    <function name="GetActiveAttrib" alias="GetActiveAttribARB" es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="index" type="GLuint"/>
         <param name="bufSize" type="GLsizei "/>
@@ -5229,7 +5241,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetActiveUniform" alias="GetActiveUniformARB">
+    <function name="GetActiveUniform" alias="GetActiveUniformARB" es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="index" type="GLuint"/>
         <param name="bufSize" type="GLsizei"/>
@@ -5240,7 +5252,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetAttachedShaders" offset="assign">
+    <function name="GetAttachedShaders" offset="assign" es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="maxCount" type="GLsizei"/>
         <param name="count" type="GLsizei *" output="true"/>
@@ -5248,21 +5260,21 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetAttribLocation" alias="GetAttribLocationARB">
+    <function name="GetAttribLocation" alias="GetAttribLocationARB" es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="name" type="const GLchar *"/>
         <return type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetProgramiv" offset="assign">
+    <function name="GetProgramiv" offset="assign" es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetProgramInfoLog" offset="assign">
+    <function name="GetProgramInfoLog" offset="assign" es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="length" type="GLsizei *"/>
@@ -5270,14 +5282,14 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetShaderiv" offset="assign">
+    <function name="GetShaderiv" offset="assign" es2="2.0">
         <param name="shader" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetShaderInfoLog" offset="assign">
+    <function name="GetShaderInfoLog" offset="assign" es2="2.0">
         <param name="shader" type="GLuint"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="length" type="GLsizei *"/>
@@ -5285,7 +5297,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetShaderSource" alias="GetShaderSourceARB">
+    <function name="GetShaderSource" alias="GetShaderSourceARB" es2="2.0">
         <param name="shader" type="GLuint"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="length" type="GLsizei *" output="true"/>
@@ -5293,21 +5305,22 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetUniformLocation" alias="GetUniformLocationARB">
+    <function name="GetUniformLocation" alias="GetUniformLocationARB"
+              es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="name" type="const GLchar *"/>
         <return type="GLint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetUniformfv" alias="GetUniformfvARB">
+    <function name="GetUniformfv" alias="GetUniformfvARB" es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="location" type="GLint"/>
         <param name="params" type="GLfloat *" output="true"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetUniformiv" alias="GetUniformivARB">
+    <function name="GetUniformiv" alias="GetUniformivARB" es2="2.0">
         <param name="program" type="GLuint"/>
         <param name="location" type="GLint"/>
         <param name="params" type="GLint *"/>
@@ -5321,45 +5334,46 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="GetVertexAttribfv" alias="GetVertexAttribfvARB">
+    <function name="GetVertexAttribfv" alias="GetVertexAttribfvARB" es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetVertexAttribiv" alias="GetVertexAttribivARB">
+    <function name="GetVertexAttribiv" alias="GetVertexAttribivARB" es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="GetVertexAttribPointerv" alias="GetVertexAttribPointervNV">
+    <function name="GetVertexAttribPointerv" alias="GetVertexAttribPointervNV"
+              es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="pointer" type="GLvoid **" output="true"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="IsProgram" offset="assign">
+    <function name="IsProgram" offset="assign" es2="2.0">
         <param name="program" type="GLuint"/>
         <return type="GLboolean"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="IsShader" offset="assign">
+    <function name="IsShader" offset="assign" es2="2.0">
         <param name="shader" type="GLuint"/>
         <return type="GLboolean"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="LinkProgram" alias="LinkProgramARB">
+    <function name="LinkProgram" alias="LinkProgramARB" es2="2.0">
         <param name="program" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="ShaderSource" alias="ShaderSourceARB">
+    <function name="ShaderSource" alias="ShaderSourceARB" es2="2.0">
         <param name="shader" type="GLuint"/>
         <param name="count" type="GLsizei"/>
         <param name="string" type="const GLchar * const *"/>
@@ -5367,30 +5381,30 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="UseProgram" alias="UseProgramObjectARB">
+    <function name="UseProgram" alias="UseProgramObjectARB" es2="2.0">
         <param name="program" type="GLuint"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform1f" alias="Uniform1fARB">
+    <function name="Uniform1f" alias="Uniform1fARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform2f" alias="Uniform2fARB">
+    <function name="Uniform2f" alias="Uniform2fARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLfloat"/>
         <param name="v1" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform3f" alias="Uniform3fARB">
+    <function name="Uniform3f" alias="Uniform3fARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLfloat"/>
         <param name="v1" type="GLfloat"/>
         <param name="v2" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform4f" alias="Uniform4fARB">
+    <function name="Uniform4f" alias="Uniform4fARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLfloat"/>
         <param name="v1" type="GLfloat"/>
@@ -5399,25 +5413,25 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform1i" alias="Uniform1iARB">
+    <function name="Uniform1i" alias="Uniform1iARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLint"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform2i" alias="Uniform2iARB">
+    <function name="Uniform2i" alias="Uniform2iARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLint"/>
         <param name="v1" type="GLint"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform3i" alias="Uniform3iARB">
+    <function name="Uniform3i" alias="Uniform3iARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLint"/>
         <param name="v1" type="GLint"/>
         <param name="v2" type="GLint"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform4i" alias="Uniform4iARB">
+    <function name="Uniform4i" alias="Uniform4iARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="v0" type="GLint"/>
         <param name="v1" type="GLint"/>
@@ -5426,71 +5440,71 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform1fv" alias="Uniform1fvARB">
+    <function name="Uniform1fv" alias="Uniform1fvARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform2fv" alias="Uniform2fvARB">
+    <function name="Uniform2fv" alias="Uniform2fvARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform3fv" alias="Uniform3fvARB">
+    <function name="Uniform3fv" alias="Uniform3fvARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform4fv" alias="Uniform4fvARB">
+    <function name="Uniform4fv" alias="Uniform4fvARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="Uniform1iv" alias="Uniform1ivARB">
+    <function name="Uniform1iv" alias="Uniform1ivARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform2iv" alias="Uniform2ivARB">
+    <function name="Uniform2iv" alias="Uniform2ivARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform3iv" alias="Uniform3ivARB">
+    <function name="Uniform3iv" alias="Uniform3ivARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
-    <function name="Uniform4iv" alias="Uniform4ivARB">
+    <function name="Uniform4iv" alias="Uniform4ivARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="value" type="const GLint *"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="UniformMatrix2fv" alias="UniformMatrix2fvARB">
+    <function name="UniformMatrix2fv" alias="UniformMatrix2fvARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
-    <function name="UniformMatrix3fv" alias="UniformMatrix3fvARB">
+    <function name="UniformMatrix3fv" alias="UniformMatrix3fvARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
-    <function name="UniformMatrix4fv" alias="UniformMatrix4fvARB">
+    <function name="UniformMatrix4fv" alias="UniformMatrix4fvARB" es2="2.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>
@@ -5498,7 +5512,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="ValidateProgram" alias="ValidateProgramARB">
+    <function name="ValidateProgram" alias="ValidateProgramARB" es2="2.0">
         <param name="program" type="GLuint"/>
         <glx ignore="true"/>
     </function>
@@ -5511,11 +5525,11 @@
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *"/>
     </function>
-    <function name="VertexAttrib1f" alias="VertexAttrib1fARB">
+    <function name="VertexAttrib1f" alias="VertexAttrib1fARB" es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
     </function>
-    <function name="VertexAttrib1fv" alias="VertexAttrib1fvARB">
+    <function name="VertexAttrib1fv" alias="VertexAttrib1fvARB" es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *"/>
     </function>
@@ -5537,12 +5551,12 @@
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *"/>
     </function>
-    <function name="VertexAttrib2f" alias="VertexAttrib2fARB">
+    <function name="VertexAttrib2f" alias="VertexAttrib2fARB" es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
     </function>
-    <function name="VertexAttrib2fv" alias="VertexAttrib2fvARB">
+    <function name="VertexAttrib2fv" alias="VertexAttrib2fvARB" es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *"/>
     </function>
@@ -5566,13 +5580,13 @@
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *"/>
     </function>
-    <function name="VertexAttrib3f" alias="VertexAttrib3fARB">
+    <function name="VertexAttrib3f" alias="VertexAttrib3fARB" es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
     </function>
-    <function name="VertexAttrib3fv" alias="VertexAttrib3fvARB">
+    <function name="VertexAttrib3fv" alias="VertexAttrib3fvARB" es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *"/>
     </function>
@@ -5633,14 +5647,14 @@
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *"/>
     </function>
-    <function name="VertexAttrib4f" alias="VertexAttrib4fARB">
+    <function name="VertexAttrib4f" alias="VertexAttrib4fARB" es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
         <param name="w" type="GLfloat"/>
     </function>
-    <function name="VertexAttrib4fv" alias="VertexAttrib4fvARB">
+    <function name="VertexAttrib4fv" alias="VertexAttrib4fvARB" es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *"/>
     </function>
@@ -5672,7 +5686,8 @@
         <param name="v" type="const GLushort *" count="4"/>
     </function>
 
-    <function name="VertexAttribPointer" alias="VertexAttribPointerARB">
+    <function name="VertexAttribPointer" alias="VertexAttribPointerARB"
+              es2="2.0">
         <param name="index" type="GLuint"/>
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
@@ -9900,7 +9915,7 @@
 </category>
 
 <category name="GL_EXT_multi_draw_arrays" number="148">
-    <function name="MultiDrawArraysEXT" offset="assign">
+    <function name="MultiDrawArraysEXT" offset="assign" es1="1.0" es2="2.0">
         <param name="mode" type="GLenum"/>
         <param name="first" type="const GLint *"/>
         <param name="count" type="const GLsizei *"/>
@@ -9908,7 +9923,7 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="MultiDrawElementsEXT" offset="assign">
+    <function name="MultiDrawElementsEXT" offset="assign" es1="1.0" es2="2.0">
         <param name="mode" type="GLenum"/>
         <param name="count" type="const GLsizei *"/>
         <param name="type" type="GLenum"/>

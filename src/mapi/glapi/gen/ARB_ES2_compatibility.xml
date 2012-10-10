@@ -18,17 +18,17 @@
     <enum name="MAX_VARYING_VECTORS"                          value="0x8DFC"/>
     <enum name="MAX_FRAGMENT_UNIFORM_VECTORS"                 value="0x8DFD"/>
 
-    <function name="GetShaderPrecisionFormat" offset="assign">
+    <function name="GetShaderPrecisionFormat" offset="assign" es2="2.0">
         <param name="shadertype" type="GLenum"/>
         <param name="precisiontype" type="GLenum"/>
         <param name="range" type="GLint *"/>
         <param name="precision" type="GLint *"/>
     </function>
 
-    <function name="ReleaseShaderCompiler" offset="assign">
+    <function name="ReleaseShaderCompiler" offset="assign" es2="2.0">
     </function>
 
-    <function name="ShaderBinary" offset="assign">
+    <function name="ShaderBinary" offset="assign" es2="2.0">
         <param name="n" type="GLsizei"/>
         <param name="shaders" type="const GLuint *"/>
         <param name="binaryformat" type="GLenum"/>
@@ -45,11 +45,11 @@
     <enum name="IMPLEMENTATION_COLOR_READ_FORMAT"         value="0x8B9B"/>
 
     <!-- from GL_OES_single_precision -->
-    <function name="ClearDepthf" offset="assign">
+    <function name="ClearDepthf" offset="assign" es1="1.0" es2="2.0">
         <param name="depth" type="GLclampf"/>
     </function>
 
-    <function name="DepthRangef" offset="assign">
+    <function name="DepthRangef" offset="assign" es1="1.0" es2="2.0">
         <param name="zNear" type="GLclampf"/>
         <param name="zFar" type="GLclampf"/>
     </function>

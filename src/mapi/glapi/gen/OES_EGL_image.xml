@@ -5,12 +5,14 @@
 
 <category name="GL_OES_EGL_image">
 
-    <function name="EGLImageTargetTexture2DOES" offset="assign">
+    <function name="EGLImageTargetTexture2DOES" offset="assign" es1="1.0"
+              es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="writeOffset" type="GLvoid *"/>
     </function>
 
-    <function name="EGLImageTargetRenderbufferStorageOES" offset="assign">
+    <function name="EGLImageTargetRenderbufferStorageOES" offset="assign"
+              es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="writeOffset" type="GLvoid *"/>
     </function>
