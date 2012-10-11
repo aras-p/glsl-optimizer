@@ -126,8 +126,10 @@ struct dri2_egl_display
 
 #ifdef HAVE_WAYLAND_PLATFORM
    struct wl_display        *wl_dpy;
+   struct wl_registry       *wl_registry;
    struct wl_drm            *wl_server_drm;
    struct wl_drm            *wl_drm;
+   struct wl_event_queue    *wl_queue;
    int			     authenticated;
    int			     formats;
 #endif
@@ -178,7 +180,7 @@ struct dri2_egl_surface
    __DRIbuffer           *dri_buffers[__DRI_BUFFER_COUNT];
    __DRIbuffer           *third_buffer;
    __DRIbuffer           *pending_buffer;
-   EGLBoolean             block_swap_buffers;
+   struct wl_callback    *frame_callback;
    int			  format;
 #endif
 

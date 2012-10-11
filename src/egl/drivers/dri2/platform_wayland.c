@@ -46,6 +46,34 @@ enum wl_drm_format_flags {
 };
 
 static void
+sync_callback(void *data, struct wl_callback *callback, uint32_t serial)
+{
+   int *done = data;
+
+   *done = 1;
+   wl_callback_destroy(callback);
+}
+
+static const struct wl_callback_listener sync_listener = {
+   sync_callback
+};
+
+static int
+roundtrip(struct dri2_egl_display *dri2_dpy)
+{
+   struct wl_callback *callback;
+   int done = 0, ret = 0;
+
+   callback = wl_display_sync(dri2_dpy->wl_dpy);
+   wl_callback_add_listener(callback, &sync_listener, &done);
+   wl_proxy_set_queue((struct wl_proxy *) callback, dri2_dpy->wl_queue);
+   while (ret != -1 && !done)
+      ret = wl_display_dispatch_queue(dri2_dpy->wl_dpy, dri2_dpy->wl_queue);
+
+   return ret;
+}
+
+static void
 wl_buffer_release(void *data, struct wl_buffer *buffer)
 {
    struct dri2_egl_surface *dri2_surf = data;
@@ -104,7 +132,7 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 
    dri2_surf->pending_buffer = NULL;
    dri2_surf->third_buffer = NULL;
-   dri2_surf->block_swap_buffers = EGL_FALSE;
+   dri2_surf->frame_callback = NULL;
 
    if (conf->AlphaSize == 0)
       dri2_surf->format = WL_DRM_FORMAT_XRGB8888;
@@ -333,11 +361,13 @@ dri2_release_buffers(struct dri2_egl_surface *dri2_surf)
          switch (i) {
          case __DRI_BUFFER_FRONT_LEFT:
             if (dri2_surf->pending_buffer)
-	      wl_display_roundtrip(dri2_dpy->wl_dpy);
+               roundtrip(dri2_dpy);
             dri2_surf->pending_buffer = dri2_surf->dri_buffers[i];
             callback = wl_display_sync(dri2_dpy->wl_dpy);
 	    wl_callback_add_listener(callback,
 				     &release_buffer_listener, dri2_surf);
+            wl_proxy_set_queue((struct wl_proxy *) callback,
+                               dri2_dpy->wl_queue);
             break;
          default:
             dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
@@ -552,7 +582,7 @@ wayland_frame_callback(void *data, struct wl_callback *callback, uint32_t time)
 {
    struct dri2_egl_surface *dri2_surf = data;
 
-   dri2_surf->block_swap_buffers = EGL_FALSE;
+   dri2_surf->frame_callback = NULL;
    wl_callback_destroy(callback);
 }
 
@@ -569,17 +599,18 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
    struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
-   struct wl_callback *callback;
+   int ret = 0;
 
-   if (dri2_surf->block_swap_buffers) {
-      wl_display_flush(dri2_dpy->wl_dpy);
-      while (dri2_surf->block_swap_buffers)
-         wl_display_iterate(dri2_dpy->wl_dpy, WL_DISPLAY_READABLE);
-   }
+   while (dri2_surf->frame_callback && ret != -1)
+      ret = wl_display_dispatch_queue(dri2_dpy->wl_dpy, dri2_dpy->wl_queue);
+   if (ret < 0)
+      return EGL_FALSE;
 
-   dri2_surf->block_swap_buffers = EGL_TRUE;
-   callback = wl_surface_frame(dri2_surf->wl_win->surface);
-   wl_callback_add_listener(callback, &frame_listener, dri2_surf);
+   dri2_surf->frame_callback = wl_surface_frame(dri2_surf->wl_win->surface);
+   wl_callback_add_listener(dri2_surf->frame_callback,
+                            &frame_listener, dri2_surf);
+   wl_proxy_set_queue((struct wl_proxy *) dri2_surf->frame_callback,
+                      dri2_dpy->wl_queue);
 
    if (dri2_surf->base.Type == EGL_WINDOW_BIT) {
       pointer_swap(
@@ -611,6 +642,8 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 
       wl_surface_damage(dri2_surf->wl_win->surface, 0, 0,
 	    dri2_surf->base.Width, dri2_surf->base.Height);
+
+      wl_surface_commit(dri2_surf->wl_win->surface);
    }
 
    _EGLContext *ctx;
@@ -700,7 +733,8 @@ dri2_wayland_authenticate(_EGLDisplay *disp, uint32_t id)
    dri2_dpy->authenticated = 0;
 
    wl_drm_authenticate(dri2_dpy->wl_drm, id);
-   wl_display_roundtrip(dri2_dpy->wl_dpy);
+   if (roundtrip(dri2_dpy) < 0)
+      ret = -1;
 
    if (!dri2_dpy->authenticated)
       ret = -1;
@@ -795,12 +829,29 @@ static const struct wl_drm_listener drm_listener = {
 	drm_handle_authenticated
 };
 
+static void
+registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
+		       const char *interface, uint32_t version)
+{
+   struct dri2_egl_display *dri2_dpy = data;
+
+   if (strcmp(interface, "wl_drm") == 0) {
+      dri2_dpy->wl_drm =
+         wl_registry_bind(registry, name, &wl_drm_interface, 1);
+      wl_drm_add_listener(dri2_dpy->wl_drm, &drm_listener, dri2_dpy);
+   }
+}
+
+static const struct wl_registry_listener registry_listener = {
+	registry_handle_global
+};
+
 EGLBoolean
 dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy;
    const __DRIconfig *config;
-   uint32_t id, types;
+   uint32_t types;
    int i;
    static const unsigned int argb_masks[4] =
       { 0xff0000, 0xff00, 0xff, 0xff000000 };
@@ -827,22 +878,19 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
       dri2_dpy->wl_dpy = disp->PlatformDisplay;
    }
 
-   id = wl_display_get_global(dri2_dpy->wl_dpy, "wl_drm", 1);
-   if (id == 0)
-      wl_display_roundtrip(dri2_dpy->wl_dpy);
-   id = wl_display_get_global(dri2_dpy->wl_dpy, "wl_drm", 1);
-   if (id == 0)
+   dri2_dpy->wl_queue = wl_display_create_queue(dri2_dpy->wl_dpy);
+   dri2_dpy->wl_registry = wl_display_get_registry(dri2_dpy->wl_dpy);
+   wl_proxy_set_queue((struct wl_proxy *) dri2_dpy->wl_registry,
+                      dri2_dpy->wl_queue);
+   wl_registry_add_listener(dri2_dpy->wl_registry,
+                            &registry_listener, dri2_dpy);
+   if (roundtrip(dri2_dpy) < 0 || dri2_dpy->wl_drm == NULL)
       goto cleanup_dpy;
-   dri2_dpy->wl_drm = wl_display_bind(dri2_dpy->wl_dpy, id, &wl_drm_interface);
-   if (!dri2_dpy->wl_drm)
-      goto cleanup_dpy;
-   wl_drm_add_listener(dri2_dpy->wl_drm, &drm_listener, dri2_dpy);
-   wl_display_roundtrip(dri2_dpy->wl_dpy);
-   if (dri2_dpy->fd == -1)
+
+   if (roundtrip(dri2_dpy) < 0 || dri2_dpy->fd == -1)
       goto cleanup_drm;
 
-   wl_display_roundtrip(dri2_dpy->wl_dpy);
-   if (!dri2_dpy->authenticated)
+   if (roundtrip(dri2_dpy) < 0 || !dri2_dpy->authenticated)
       goto cleanup_fd;
 
    dri2_dpy->driver_name = dri2_get_driver_for_fd(dri2_dpy->fd);

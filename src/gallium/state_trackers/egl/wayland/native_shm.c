@@ -132,25 +132,35 @@ static const struct wl_shm_listener shm_listener = {
    shm_handle_format
 };
 
+static void
+registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
+                       const char *interface, uint32_t version)
+{
+   struct wayland_shm_display *shmdpy = data;
+
+   if (strcmp(interface, "wl_shm") == 0) {
+      shmdpy->wl_shm = wl_registry_bind(registry, name, &wl_shm_interface, 1);
+      wl_shm_add_listener(shmdpy->wl_shm, &shm_listener, shmdpy);
+   }
+}
+
+static const struct wl_registry_listener registry_listener = {
+       registry_handle_global
+};
+
 static boolean
 wayland_shm_display_init_screen(struct native_display *ndpy)
 {
    struct wayland_shm_display *shmdpy = wayland_shm_display(ndpy);
    struct sw_winsys *winsys = NULL;
-   uint32_t id;
 
-   id = wl_display_get_global(shmdpy->base.dpy, "wl_shm", 1);
-   if (id == 0)
-      wl_display_iterate(shmdpy->base.dpy, WL_DISPLAY_READABLE);
-   id = wl_display_get_global(shmdpy->base.dpy, "wl_shm", 1);
-   if (id == 0)
+   shmdpy->base.queue = wl_display_create_queue(shmdpy->base.dpy);
+   shmdpy->base.registry = wl_display_get_registry(shmdpy->base.dpy);
+   wl_proxy_set_queue((struct wl_proxy *) shmdpy->base.registry,
+                      shmdpy->base.queue);
+   wl_registry_add_listener(shmdpy->base.registry, &registry_listener, shmdpy);
+   if (wayland_roundtrip(&shmdpy->base) < 0 || shmdpy->wl_shm == NULL)
       return FALSE;
-
-   shmdpy->wl_shm = wl_display_bind(shmdpy->base.dpy, id, &wl_shm_interface);
-   if (!shmdpy->wl_shm)
-      return FALSE;
-
-   wl_shm_add_listener(shmdpy->wl_shm, &shm_listener, shmdpy);
 
    if (shmdpy->base.formats == 0)
       wl_display_roundtrip(shmdpy->base.dpy);

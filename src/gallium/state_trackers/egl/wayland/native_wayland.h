@@ -45,6 +45,8 @@ struct wayland_display {
    struct native_display base;
 
    struct wl_display *dpy;
+   struct wl_event_queue *queue;
+   struct wl_registry *registry;
    boolean own_dpy;
    /* supported formats */
    uint32_t formats;
@@ -85,7 +87,7 @@ struct wayland_surface {
    struct wl_buffer *buffer[WL_BUFFER_COUNT];
    unsigned int attachment_mask;
 
-   boolean block_swap_buffers;
+   struct wl_callback *frame_callback;
    boolean premultiplied_alpha;
 };
 
@@ -118,5 +120,8 @@ wayland_create_shm_display(struct wl_display *display,
 struct wayland_display *
 wayland_create_drm_display(struct wl_display *display,
                            const struct native_event_handler *event_handler);
+
+int
+wayland_roundtrip(struct wayland_display *drmdpy);
 
 #endif /* _NATIVE_WAYLAND_H_ */
