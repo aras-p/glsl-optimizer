@@ -151,11 +151,6 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
                                 const gl_constant_value v[], GLuint vSize,
                                 GLint *posOut, GLuint *swizzleOut);
 
-extern GLuint
-_mesa_num_parameters_of_type(const struct gl_program_parameter_list *list,
-                             gl_register_file type);
-
-
 #ifdef __cplusplus
 }
 #endif
