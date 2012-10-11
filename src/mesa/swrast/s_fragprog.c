@@ -164,11 +164,6 @@ init_machine(struct gl_context *ctx, struct gl_program_machine *machine,
 {
    GLfloat *wpos = span->array->attribs[FRAG_ATTRIB_WPOS][col];
 
-   if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
-      /* Clear temporary registers (undefined for ARB_f_p) */
-      memset(machine->Temporaries, 0, MAX_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
-   }
-
    /* ARB_fragment_coord_conventions */
    if (program->OriginUpperLeft)
       wpos[1] = ctx->DrawBuffer->Height - 1 - wpos[1];
