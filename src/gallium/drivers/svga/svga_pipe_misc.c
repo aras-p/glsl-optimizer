@@ -107,8 +107,10 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
       }
    }
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
-      pipe_surface_reference(&dst->cbufs[i], fb->cbufs[i]);
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      pipe_surface_reference(&dst->cbufs[i],
+                             (i < fb->nr_cbufs) ? fb->cbufs[i] : NULL);
+   }
    pipe_surface_reference(&dst->zsbuf, fb->zsbuf);
 
 
