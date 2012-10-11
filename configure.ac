@@ -160,13 +160,13 @@ DEFINES=""
 AC_SUBST([DEFINES])
 case "$host_os" in
 linux*|*-gnu*|gnu*)
-    DEFINES="$DEFINES -D_GNU_SOURCE"
+    DEFINES="$DEFINES -D_GNU_SOURCE -DHAVE_PTHREAD"
     ;;
 solaris*)
-    DEFINES="$DEFINES -DSVR4"
+    DEFINES="$DEFINES -DHAVE_PTHREAD -DSVR4"
     ;;
 cygwin*)
-    DEFINES="$DEFINES"
+    DEFINES="$DEFINES -DHAVE_PTHREAD"
     ;;
 esac
 
@@ -946,7 +946,7 @@ AC_ARG_ENABLE([glx-tls],
 AC_SUBST(GLX_TLS, ${GLX_USE_TLS})
 
 AS_IF([test "x$GLX_USE_TLS" = xyes -a "x$ax_pthread_ok" = xyes],
-      [DEFINES="${DEFINES} -DGLX_USE_TLS"])
+      [DEFINES="${DEFINES} -DGLX_USE_TLS -DHAVE_PTHREAD"])
 
 dnl
 dnl More DRI setup
@@ -1030,7 +1030,7 @@ if test "x$enable_dri" = xyes; then
         esac
         ;;
     freebsd* | dragonfly* | *netbsd*)
-        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
+        DEFINES="$DEFINES -DHAVE_PTHREAD -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DIN_DRI_DRIVER -DHAVE_ALIAS"
 
         if test "x$DRI_DIRS" = "xyes"; then
