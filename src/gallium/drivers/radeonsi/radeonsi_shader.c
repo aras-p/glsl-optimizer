@@ -191,7 +191,6 @@ static void declare_input_vs(
 	LLVMValueRef input;
 	struct lp_build_context * uint = &si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
 	struct lp_build_context * base = &si_shader_ctx->radeon_bld.soa.bld_base.base;
-	struct r600_context *rctx = si_shader_ctx->rctx;
 	//struct pipe_vertex_element *velem = &rctx->vertex_elements->elements[input_index];
 	unsigned chan;
 

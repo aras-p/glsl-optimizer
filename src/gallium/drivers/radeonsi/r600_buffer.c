@@ -39,7 +39,6 @@
 static void r600_buffer_destroy(struct pipe_screen *screen,
 				struct pipe_resource *buf)
 {
-	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct si_resource *rbuffer = si_resource(buf);
 
 	pb_reference(&rbuffer->buf, NULL);
