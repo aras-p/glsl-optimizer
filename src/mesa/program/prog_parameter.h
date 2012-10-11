@@ -135,11 +135,6 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
                            GLuint *swizzleOut);
 
 extern GLint
-_mesa_add_varying(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size, GLenum datatype,
-                  GLbitfield flags);
-
-extern GLint
 _mesa_add_attribute(struct gl_program_parameter_list *paramList,
                     const char *name, GLint size, GLenum datatype, GLint attrib);
 

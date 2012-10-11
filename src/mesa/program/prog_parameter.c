@@ -292,27 +292,6 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 }
 
 /**
- * Add parameter representing a varying variable.
- */
-GLint
-_mesa_add_varying(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size, GLenum datatype)
-{
-   GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
-   if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_VARYING) {
-      /* already in list */
-      return i;
-   }
-   else {
-      /*assert(size == 4);*/
-      i = _mesa_add_parameter(paramList, PROGRAM_VARYING, name,
-                              size, datatype, NULL, NULL);
-      return i;
-   }
-}
-
-
-/**
  * Add parameter representing a vertex program attribute.
  * \param size  size of attribute (in floats), may be -1 if unknown
  * \param attrib  the attribute index, or -1 if unknown
