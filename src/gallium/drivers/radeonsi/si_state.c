@@ -1442,11 +1442,11 @@ static bool si_is_zs_format_supported(enum pipe_format format)
 	return si_translate_dbformat(format) != ~0U;
 }
 
-bool si_is_format_supported(struct pipe_screen *screen,
-			    enum pipe_format format,
-			    enum pipe_texture_target target,
-			    unsigned sample_count,
-			    unsigned usage)
+boolean si_is_format_supported(struct pipe_screen *screen,
+                               enum pipe_format format,
+                               enum pipe_texture_target target,
+                               unsigned sample_count,
+                               unsigned usage)
 {
 	unsigned retval = 0;
 
