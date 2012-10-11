@@ -2610,100 +2610,13 @@ void evergreen_init_common_regs(struct r600_command_buffer *cb,
 	ls_prio = 0;
 	cs_prio = 0;
 
-	switch (ctx_family) {
-	case CHIP_CEDAR:
-	default:
-		num_ps_gprs = 93;
-		num_vs_gprs = 46;
-		num_temp_gprs = 4;
-		num_gs_gprs = 31;
-		num_es_gprs = 31;
-		num_hs_gprs = 23;
-		num_ls_gprs = 23;
-		break;
-	case CHIP_REDWOOD:
-		num_ps_gprs = 93;
-		num_vs_gprs = 46;
-		num_temp_gprs = 4;
-		num_gs_gprs = 31;
-		num_es_gprs = 31;
-		num_hs_gprs = 23;
-		num_ls_gprs = 23;
-		break;
-	case CHIP_JUNIPER:
-		num_ps_gprs = 93;
-		num_vs_gprs = 46;
-		num_temp_gprs = 4;
-		num_gs_gprs = 31;
-		num_es_gprs = 31;
-		num_hs_gprs = 23;
-		num_ls_gprs = 23;
-		break;
-	case CHIP_CYPRESS:
-	case CHIP_HEMLOCK:
-		num_ps_gprs = 93;
-		num_vs_gprs = 46;
-		num_temp_gprs = 4;
-		num_gs_gprs = 31;
-		num_es_gprs = 31;
-		num_hs_gprs = 23;
-		num_ls_gprs = 23;
-		break;
-	case CHIP_PALM:
-		num_ps_gprs = 93;
-		num_vs_gprs = 46;
-		num_temp_gprs = 4;
-		num_gs_gprs = 31;
-		num_es_gprs = 31;
-		num_hs_gprs = 23;
-		num_ls_gprs = 23;
-		break;
-	case CHIP_SUMO:
-		num_ps_gprs = 93;
-		num_vs_gprs = 46;
-		num_temp_gprs = 4;
-		num_gs_gprs = 31;
-		num_es_gprs = 31;
-		num_hs_gprs = 23;
-		num_ls_gprs = 23;
-		break;
-	case CHIP_SUMO2:
-		num_ps_gprs = 93;
-		num_vs_gprs = 46;
-		num_temp_gprs = 4;
-		num_gs_gprs = 31;
-		num_es_gprs = 31;
-		num_hs_gprs = 23;
-		num_ls_gprs = 23;
-		break;
-	case CHIP_BARTS:
-		num_ps_gprs = 93;
-		num_vs_gprs = 46;
-		num_temp_gprs = 4;
-		num_gs_gprs = 31;
-		num_es_gprs = 31;
-		num_hs_gprs = 23;
-		num_ls_gprs = 23;
-		break;
-	case CHIP_TURKS:
-		num_ps_gprs = 93;
-		num_vs_gprs = 46;
-		num_temp_gprs = 4;
-		num_gs_gprs = 31;
-		num_es_gprs = 31;
-		num_hs_gprs = 23;
-		num_ls_gprs = 23;
-		break;
-	case CHIP_CAICOS:
-		num_ps_gprs = 93;
-		num_vs_gprs = 46;
-		num_temp_gprs = 4;
-		num_gs_gprs = 31;
-		num_es_gprs = 31;
-		num_hs_gprs = 23;
-		num_ls_gprs = 23;
-		break;
-	}
+	num_ps_gprs = 93;
+	num_vs_gprs = 46;
+	num_temp_gprs = 4;
+	num_gs_gprs = 31;
+	num_es_gprs = 31;
+	num_hs_gprs = 23;
+	num_ls_gprs = 23;
 
 	tmp = 0;
 	switch (ctx_family) {
