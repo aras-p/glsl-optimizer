@@ -621,7 +621,7 @@ debug_dump_transfer_bmp(struct pipe_context *pipe,
    if(!rgba)
       goto error1;
 
-   pipe_get_tile_rgba(pipe, transfer, ptr, 0, 0,
+   pipe_get_tile_rgba(transfer, ptr, 0, 0,
                       transfer->box.width, transfer->box.height,
                       rgba);
 
