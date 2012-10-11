@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 36
+#define R600_NUM_ATOMS 37
 
 #define R600_MAX_USER_CONST_BUFFERS 1
 #define R600_MAX_DRIVER_CONST_BUFFERS 2
@@ -77,15 +77,21 @@ struct r600_command_buffer {
 	unsigned pkt_flags;
 };
 
+struct r600_db_state {
+	struct r600_atom		atom;
+	struct r600_surface		*rsurf;
+};
+
 struct r600_db_misc_state {
-	struct r600_atom atom;
-	bool occlusion_query_enabled;
-	bool flush_depthstencil_through_cb;
-	bool flush_depthstencil_in_place;
-	bool copy_depth, copy_stencil;
-	unsigned copy_sample;
-	unsigned log_samples;
-	unsigned db_shader_control;
+	struct r600_atom		atom;
+	bool				occlusion_query_enabled;
+	bool				flush_depthstencil_through_cb;
+	bool				flush_depthstencil_in_place;
+	bool				copy_depth, copy_stencil;
+	unsigned			copy_sample;
+	unsigned			log_samples;
+	unsigned			db_shader_control;
+	bool				htile_clear;
 };
 
 struct r600_cb_misc_state {
@@ -220,6 +226,7 @@ struct r600_screen {
 	bool				has_streamout;
 	bool				has_msaa;
 	enum r600_msaa_texture_mode	msaa_texture_support;
+	bool				use_hyperz;
 	struct r600_tiling_info		tiling_info;
 	struct r600_pipe_fences		fences;
 
@@ -439,6 +446,7 @@ struct r600_context {
 	struct r600_clip_misc_state	clip_misc_state;
 	struct r600_clip_state		clip_state;
 	struct r600_db_misc_state	db_misc_state;
+	struct r600_db_state		db_state;
 	struct r600_cso_state		dsa_state;
 	struct r600_framebuffer		framebuffer;
 	struct r600_poly_offset_state	poly_offset_state;

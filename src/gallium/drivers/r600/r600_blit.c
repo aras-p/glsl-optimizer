@@ -433,11 +433,39 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer.state;
 
+	/* if hyperz enabled just clear hyperz */
+	if (fb->zsbuf && (buffers & PIPE_CLEAR_DEPTH)) {
+		struct r600_texture *rtex;
+		unsigned level = fb->zsbuf->u.tex.level;
+
+		rtex = (struct r600_texture*)fb->zsbuf->texture;
+
+		/* We can't use hyperz fast clear if each slice of a texture
+		 * array are clear to different value. To simplify code just
+		 * disable fast clear for texture array.
+		 */
+		/* Only use htile for first level */
+		if (rtex->htile && !level && rtex->surface.array_size == 1) {
+			if (rtex->depth_clear != depth) {
+				rtex->depth_clear = depth;
+				rctx->db_state.atom.dirty = true;
+			}
+			rctx->db_misc_state.htile_clear = true;
+			rctx->db_misc_state.atom.dirty = true;
+		}
+	}
+
 	r600_blitter_begin(ctx, R600_CLEAR);
 	util_blitter_clear(rctx->blitter, fb->width, fb->height,
 			   fb->nr_cbufs, buffers, fb->nr_cbufs ? fb->cbufs[0]->format : PIPE_FORMAT_NONE,
 			   color, depth, stencil);
 	r600_blitter_end(ctx);
+
+	/* disable fast clear */
+	if (rctx->db_misc_state.htile_clear) {
+		rctx->db_misc_state.htile_clear = false;
+		rctx->db_misc_state.atom.dirty = true;
+	}
 }
 
 static void r600_clear_render_target(struct pipe_context *ctx,

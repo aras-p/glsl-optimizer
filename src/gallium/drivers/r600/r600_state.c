@@ -1440,6 +1440,18 @@ static void r600_init_depth_surface(struct r600_context *rctx,
 	default:;
 	}
 
+	surf->htile_enabled = 0;
+	/* use htile only for first level */
+	if (rtex->htile && !level) {
+		surf->htile_enabled = 1;
+		surf->db_htile_data_base = 0;
+		surf->db_htile_surface = S_028D24_HTILE_WIDTH(1) |
+					S_028D24_HTILE_HEIGHT(1) |
+					S_028D24_LINEAR(1);
+		/* preload is not working properly on r6xx/r7xx */
+		surf->db_depth_info |= S_028010_TILE_SURFACE_ENABLE(1);
+	}
+
 	surf->depth_initialized = true;
 }
 
@@ -1530,6 +1542,16 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 			rctx->poly_offset_state.zs_format = state->zsbuf->format;
 			rctx->poly_offset_state.atom.dirty = true;
 		}
+
+		if (rctx->db_state.rsurf != surf) {
+			rctx->db_state.rsurf = surf;
+			rctx->db_state.atom.dirty = true;
+			rctx->db_misc_state.atom.dirty = true;
+		}
+	} else if (rctx->db_state.rsurf) {
+		rctx->db_state.rsurf = NULL;
+		rctx->db_state.atom.dirty = true;
+		rctx->db_misc_state.atom.dirty = true;
 	}
 
 	if (rctx->cb_misc_state.nr_cbufs != state->nr_cbufs) {
@@ -1831,13 +1853,32 @@ static void r600_emit_cb_misc_state(struct r600_context *rctx, struct r600_atom 
 	}
 }
 
+static void r600_emit_db_state(struct r600_context *rctx, struct r600_atom *atom)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+	struct r600_db_state *a = (struct r600_db_state*)atom;
+
+	if (a->rsurf && a->rsurf->htile_enabled) {
+		struct r600_texture *rtex = (struct r600_texture *)a->rsurf->base.texture;
+		unsigned reloc_idx;
+
+		r600_write_context_reg(cs, R_02802C_DB_DEPTH_CLEAR, fui(rtex->depth_clear));
+		r600_write_context_reg(cs, R_028D24_DB_HTILE_SURFACE, a->rsurf->db_htile_surface);
+		r600_write_context_reg(cs, R_028014_DB_HTILE_DATA_BASE, a->rsurf->db_htile_data_base);
+		reloc_idx = r600_context_bo_reloc(rctx, rtex->htile, RADEON_USAGE_READWRITE);
+		cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+		cs->buf[cs->cdw++] = reloc_idx;
+	} else {
+		r600_write_context_reg(cs, R_028D24_DB_HTILE_SURFACE, 0);
+	}
+}
+
 static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
 	struct r600_db_misc_state *a = (struct r600_db_misc_state*)atom;
 	unsigned db_render_control = 0;
 	unsigned db_render_override =
-		S_028D10_FORCE_HIZ_ENABLE(V_028D10_FORCE_DISABLE) |
 		S_028D10_FORCE_HIS_ENABLE0(V_028D10_FORCE_DISABLE) |
 		S_028D10_FORCE_HIS_ENABLE1(V_028D10_FORCE_DISABLE);
 
@@ -1846,6 +1887,12 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 			db_render_control |= S_028D0C_R700_PERFECT_ZPASS_COUNTS(1);
 		}
 		db_render_override |= S_028D10_NOOP_CULL_DISABLE(1);
+	}
+	if (rctx->db_state.rsurf && rctx->db_state.rsurf->htile_enabled) {
+		/* FORCE_OFF means HiZ/HiS are determined by DB_SHADER_CONTROL */
+		db_render_override |= S_028D10_FORCE_HIZ_ENABLE(V_028D10_FORCE_OFF);
+	} else {
+		db_render_override |= S_028D10_FORCE_HIZ_ENABLE(V_028D10_FORCE_DISABLE);
 	}
 	if (a->flush_depthstencil_through_cb) {
 		assert(a->copy_depth || a->copy_stencil);
@@ -1858,6 +1905,9 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 		db_render_control |= S_028D0C_DEPTH_COMPRESS_DISABLE(1) |
 				     S_028D0C_STENCIL_COMPRESS_DISABLE(1);
 		db_render_override |= S_028D10_NOOP_CULL_DISABLE(1);
+	}
+	if (a->htile_clear) {
+		db_render_control |= S_028D0C_DEPTH_CLEAR_ENABLE(1);
 	}
 
 	r600_write_context_reg_seq(cs, R_028D0C_DB_RENDER_CONTROL, 2);
@@ -2175,6 +2225,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->clip_misc_state.atom, id++, r600_emit_clip_misc_state, 6);
 	r600_init_atom(rctx, &rctx->clip_state.atom, id++, r600_emit_clip_state, 26);
 	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, r600_emit_db_misc_state, 7);
+	r600_init_atom(rctx, &rctx->db_state.atom, id++, r600_emit_db_state, 11);
 	r600_init_atom(rctx, &rctx->dsa_state.atom, id++, r600_emit_cso_state, 0);
 	r600_init_atom(rctx, &rctx->poly_offset_state.atom, id++, r600_emit_polygon_offset, 6);
 	r600_init_atom(rctx, &rctx->rasterizer_state.atom, id++, r600_emit_cso_state, 0);
@@ -2530,9 +2581,7 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 
 	r600_store_ctl_const(cb, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0);
 
-	r600_store_context_reg_seq(cb, R_028028_DB_STENCIL_CLEAR, 2);
-	r600_store_value(cb, 0); /* R_028028_DB_STENCIL_CLEAR */
-	r600_store_value(cb, 0x3F800000); /* R_02802C_DB_DEPTH_CLEAR */
+	r600_store_context_reg(cb, R_028028_DB_STENCIL_CLEAR, 0);
 
 	r600_store_context_reg_seq(cb, R_0286DC_SPI_FOG_CNTL, 3);
 	r600_store_value(cb, 0); /* R_0286DC_SPI_FOG_CNTL */

@@ -530,6 +530,7 @@
 #define   S_028010_ZRANGE_PRECISION(x)                 (((x) & 0x1) << 31)
 #define   G_028010_ZRANGE_PRECISION(x)                 (((x) >> 31) & 0x1)
 #define   C_028010_ZRANGE_PRECISION                    0x7FFFFFFF
+#define R_028014_DB_HTILE_DATA_BASE                  0x00028014
 #define R_028414_CB_BLEND_RED                        0x028414
 #define   S_028414_BLEND_RED(x)                        (((x) & 0xFFFFFFFF) << 0)
 #define   G_028414_BLEND_RED(x)                        (((x) >> 0) & 0xFFFFFFFF)
@@ -3360,6 +3361,10 @@
 #define   S_0085F0_CB11_DEST_BASE_ENA(x)               (((x) & 0x1) << 18)
 #define   G_0085F0_CB11_DEST_BASE_ENA(x)               (((x) >> 18) & 0x1)
 /* evergreen only end */
+/* evergreen and r7xx only */
+#define   S_0085F0_FULL_CACHE_ENA(x)                   (((x) & 0x1) << 20)
+#define   G_0085F0_FULL_CACHE_ENA(x)                   (((x) >> 20) & 0x1)
+/* evergreen and r7xx only end */
 #define   S_0085F0_TC_ACTION_ENA(x)                    (((x) & 0x1) << 23)
 #define   G_0085F0_TC_ACTION_ENA(x)                    (((x) >> 23) & 0x1)
 #define   C_0085F0_TC_ACTION_ENA                       0xFF7FFFFF

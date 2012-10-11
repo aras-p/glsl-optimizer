@@ -438,6 +438,44 @@ r600_texture_create_object(struct pipe_screen *screen,
 	/* Tiled depth textures utilize the non-displayable tile order. */
 	rtex->non_disp_tiling = rtex->is_depth && rtex->surface.level[0].mode >= RADEON_SURF_MODE_1D;
 
+	/* only enable hyperz for PIPE_TEXTURE_2D not for PIPE_TEXTURE_2D_ARRAY
+	 * Thought it might still be interessting to use hyperz for texture
+	 * array without using fast clear features
+	 */
+	rtex->htile = NULL;
+	if (!(base->flags & (R600_RESOURCE_FLAG_TRANSFER | R600_RESOURCE_FLAG_FLUSHED_DEPTH)) &&
+	    util_format_is_depth_or_stencil(base->format) &&
+	    rscreen->use_hyperz &&
+	    base->target == PIPE_TEXTURE_2D &&
+	    rtex->surface.level[0].nblk_x >= 32 &&
+	    rtex->surface.level[0].nblk_y >= 32) {
+		unsigned sw = rtex->surface.level[0].nblk_x * rtex->surface.blk_w;
+		unsigned sh = rtex->surface.level[0].nblk_y * rtex->surface.blk_h;
+		unsigned htile_size;
+		unsigned npipes = rscreen->info.r600_num_tile_pipes;
+
+		/* this alignment and htile size only apply to linear htile buffer */
+		sw = align(sw, 16 << 3);
+		sh = align(sh, npipes << 3);
+		htile_size = (sw >> 3) * (sh >> 3) * 4;
+		/* must be aligned with 2K * npipes */
+		htile_size = align(htile_size, (2 << 10) * npipes);
+
+		rtex->htile = (struct r600_resource*)pipe_buffer_create(&rscreen->screen, PIPE_BIND_CUSTOM,
+									PIPE_USAGE_STATIC, htile_size);
+		if (rtex->htile == NULL) {
+			/* this is not a fatal error as we can still keep rendering
+			 * without htile buffer
+			 */
+			R600_ERR("r600: failed to create bo for htile buffers\n");
+		} else {
+			void *ptr;
+			ptr = rscreen->ws->buffer_map(rtex->htile->cs_buf, NULL, PIPE_TRANSFER_WRITE);
+			memset(ptr, 0x0, htile_size);
+			rscreen->ws->buffer_unmap(rtex->htile->cs_buf);
+		}
+	}
+
 	/* Now create the backing buffer. */
 	if (!buf && alloc_bo) {
 		unsigned base_align = rtex->surface.bo_alignment;

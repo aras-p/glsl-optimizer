@@ -60,6 +60,10 @@ struct r600_texture {
 	 * MSAA textures cannot have mipmaps. */
 	unsigned			fmask_offset, fmask_size, fmask_bank_height;
 	unsigned			cmask_offset, cmask_size, cmask_slice_tile_max;
+
+	struct r600_resource		*htile;
+	/* use htile only for first level */
+	float				depth_clear;
 };
 
 #define R600_TEX_IS_TILED(tex, level) ((tex)->array_mode[level] != V_038000_ARRAY_LINEAR_GENERAL && (tex)->array_mode[level] != V_038000_ARRAY_LINEAR_ALIGNED)
@@ -113,6 +117,11 @@ struct r600_surface {
 	unsigned db_stencil_info;	/* EG only */
 	unsigned db_prefetch_limit;	/* R600 only */
 	unsigned pa_su_poly_offset_db_fmt_cntl;
+
+	unsigned			htile_enabled;
+	unsigned			db_htile_surface;
+	unsigned			db_htile_data_base;
+	unsigned			db_preload_control;
 };
 
 /* Return if the depth format can be read without the DB->CB copy on r6xx-r7xx. */

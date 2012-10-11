@@ -1032,6 +1032,14 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	LIST_INITHEAD(&rscreen->fences.blocks);
 	pipe_mutex_init(rscreen->fences.mutex);
 
+	/* Hyperz is very lockup prone any code that touch related part should be
+	 * carefully tested especialy on r6xx/r7xx Development show that some piglit
+	 * case were triggering lockup quickly such as :
+	 * piglit/bin/depthstencil-render-miplevels 1024 d=s=z24_s8
+	 */
+	rscreen->use_hyperz = debug_get_bool_option("R600_HYPERZ", TRUE);
+	rscreen->use_hyperz = rscreen->info.drm_minor >= 26 ? rscreen->use_hyperz : FALSE;
+
 	rscreen->global_pool = compute_memory_pool_new(rscreen);
 
 	return &rscreen->screen;

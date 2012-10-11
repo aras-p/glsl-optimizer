@@ -1888,6 +1888,8 @@
 #define R_028AC0_DB_SRESULTS_COMPARE_STATE0          0x00028AC0
 #define R_028AC4_DB_SRESULTS_COMPARE_STATE1          0x00028AC4
 #define R_028AC8_DB_PRELOAD_CONTROL                  0x00028AC8
+#define   S_028AC8_MAX_X(x)                            (((x) & 0xff) << 16)
+#define   S_028AC8_MAX_Y(x)                            (((x) & 0xff) << 24)
 #define R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0	     0x028AD0
 #define R_028AD4_VGT_STRMOUT_VTX_STRIDE_0	     0x028AD4
 #define R_028AD8_VGT_STRMOUT_BUFFER_BASE_0	     0x028AD8

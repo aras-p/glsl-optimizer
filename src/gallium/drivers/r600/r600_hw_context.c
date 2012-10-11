@@ -630,20 +630,20 @@ void r600_flush_emit(struct r600_context *rctx)
 					S_0085F0_DB_ACTION_ENA(1) |
 					S_0085F0_SH_ACTION_ENA(1) |
 					S_0085F0_SMX_ACTION_ENA(1) |
-					(1 << 20); /* unknown bit */
+					S_0085F0_FULL_CACHE_ENA(1);
 		} else {
 			cp_coher_cntl = S_0085F0_SMX_ACTION_ENA(1) |
 					S_0085F0_SH_ACTION_ENA(1) |
 					S_0085F0_VC_ACTION_ENA(1) |
 					S_0085F0_TC_ACTION_ENA(1) |
-					(1 << 20); /* unknown bit */
+					S_0085F0_FULL_CACHE_ENA(1);
 		}
 	}
 
 	if (rctx->flags & R600_CONTEXT_GPU_FLUSH) {
 		cp_coher_cntl |= S_0085F0_VC_ACTION_ENA(1) |
 				S_0085F0_TC_ACTION_ENA(1) |
-				(1 << 20); /* unknown bit */
+				S_0085F0_FULL_CACHE_ENA(1);
 		emit_flush = 1;
 	}
 
@@ -740,6 +740,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->clip_misc_state.atom.dirty = true;
 	ctx->clip_state.atom.dirty = true;
 	ctx->db_misc_state.atom.dirty = true;
+	ctx->db_state.atom.dirty = true;
 	ctx->framebuffer.atom.dirty = true;
 	ctx->poly_offset_state.atom.dirty = true;
 	ctx->vgt_state.atom.dirty = true;
