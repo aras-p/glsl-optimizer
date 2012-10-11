@@ -852,7 +852,6 @@ drv_screen_init(SCREEN_INIT_ARGS_DECL)
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "##################################\n");
 
-    miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
     miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
