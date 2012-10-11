@@ -44,6 +44,7 @@ struct dump_ctx
    struct tgsi_iterate_context iter;
 
    uint instno;
+   uint immno;
    int indent;
    
    uint indentation;
@@ -455,7 +456,9 @@ iter_immediate(
 {
    struct dump_ctx *ctx = (struct dump_ctx *) iter;
 
-   TXT( "IMM " );
+   TXT( "IMM[" );
+   SID( ctx->immno++ );
+   TXT( "] " );
    ENM( imm->Immediate.DataType, tgsi_immediate_type_names );
 
    dump_imm_data(iter, imm->u, imm->Immediate.NrTokens - 1,
@@ -626,6 +629,7 @@ tgsi_dump_instruction(
    struct dump_ctx ctx;
 
    ctx.instno = instno;
+   ctx.immno = instno;
    ctx.indent = 0;
    ctx.dump_printf = dump_ctx_printf;
    ctx.indentation = 0;
@@ -658,6 +662,7 @@ tgsi_dump(
    ctx.iter.epilog = NULL;
 
    ctx.instno = 0;
+   ctx.immno = 0;
    ctx.indent = 0;
    ctx.dump_printf = dump_ctx_printf;
    ctx.indentation = 0;
@@ -713,6 +718,7 @@ tgsi_dump_str(
    ctx.base.iter.epilog = NULL;
 
    ctx.base.instno = 0;
+   ctx.base.immno = 0;
    ctx.base.indent = 0;
    ctx.base.dump_printf = &str_dump_ctx_printf;
    ctx.base.indentation = 0;
