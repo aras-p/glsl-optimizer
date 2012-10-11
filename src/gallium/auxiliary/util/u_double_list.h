@@ -82,6 +82,7 @@ static INLINE void list_del(struct list_head *item)
 {
     item->prev->next = item->next;
     item->next->prev = item->prev;
+    item->prev = item->next = NULL;
 }
 
 static INLINE void list_delinit(struct list_head *item)
