@@ -2407,7 +2407,7 @@ add_uniform_to_shader::visit_field(const glsl_type *type, const char *name)
    int index = _mesa_lookup_parameter_index(params, -1, name);
    if (index < 0) {
       index = _mesa_add_parameter(params, file, name, size, type->gl_type,
-				  NULL, NULL, 0x0);
+				  NULL, NULL);
 
       /* Sampler uniform values are stored in prog->SamplerUnits,
        * and the entry in that array is selected by this index we

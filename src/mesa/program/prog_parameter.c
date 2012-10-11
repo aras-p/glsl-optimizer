@@ -109,8 +109,7 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
                     gl_register_file type, const char *name,
                     GLuint size, GLenum datatype,
                     const gl_constant_value *values,
-                    const gl_state_index state[STATE_LENGTH],
-                    GLbitfield flags)
+                    const gl_state_index state[STATE_LENGTH])
 {
    const GLuint oldNum = paramList->NumParameters;
    const GLuint sz4 = (size + 3) / 4; /* no. of new param slots needed */
@@ -155,7 +154,6 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
          p->Type = type;
          p->Size = size;
          p->DataType = datatype;
-         p->Flags = flags;
          if (values) {
             COPY_4V(paramList->ParameterValues[oldNum + i], values);
             values += 4;
@@ -209,7 +207,7 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
    }
    /* not found, add new parameter */
    return _mesa_add_parameter(paramList, PROGRAM_CONSTANT, name,
-                              size, GL_NONE, values, NULL, 0x0);
+                              size, GL_NONE, values, NULL);
 }
 
 
@@ -261,7 +259,7 @@ _mesa_add_typed_unnamed_constant(struct gl_program_parameter_list *paramList,
 
    /* add a new parameter to store this constant */
    pos = _mesa_add_parameter(paramList, PROGRAM_CONSTANT, NULL,
-                             size, datatype, values, NULL, 0x0);
+                             size, datatype, values, NULL);
    if (pos >= 0 && swizzleOut) {
       if (size == 1)
          *swizzleOut = SWIZZLE_XXXX;
@@ -298,8 +296,7 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
  */
 GLint
 _mesa_add_varying(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size, GLenum datatype,
-                  GLbitfield flags)
+                  const char *name, GLuint size, GLenum datatype)
 {
    GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
    if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_VARYING) {
@@ -309,7 +306,7 @@ _mesa_add_varying(struct gl_program_parameter_list *paramList,
    else {
       /*assert(size == 4);*/
       i = _mesa_add_parameter(paramList, PROGRAM_VARYING, name,
-                              size, datatype, NULL, NULL, flags);
+                              size, datatype, NULL, NULL);
       return i;
    }
 }
@@ -338,7 +335,7 @@ _mesa_add_attribute(struct gl_program_parameter_list *paramList,
       if (size < 0)
          size = 4;
       i = _mesa_add_parameter(paramList, PROGRAM_INPUT, name,
-                              size, datatype, NULL, state, 0x0);
+                              size, datatype, NULL, state);
    }
    return i;
 }
@@ -396,7 +393,7 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
    name = _mesa_program_state_string(stateTokens);
    index = _mesa_add_parameter(paramList, PROGRAM_STATE_VAR, name,
                                size, GL_NONE,
-                               NULL, (gl_state_index *) stateTokens, 0x0);
+                               NULL, (gl_state_index *) stateTokens);
    paramList->StateFlags |= _mesa_program_state_flags(stateTokens);
 
    /* free name string here since we duplicated it in add_parameter() */
@@ -569,10 +566,9 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
       struct gl_program_parameter *pCopy;
       GLuint size = MIN2(p->Size, 4);
       GLint j = _mesa_add_parameter(clone, p->Type, p->Name, size, p->DataType,
-                                    list->ParameterValues[i], NULL, 0x0);
+                                    list->ParameterValues[i], NULL);
       ASSERT(j >= 0);
       pCopy = clone->Parameters + j;
-      pCopy->Flags = p->Flags;
       /* copy state indexes */
       if (p->Type == PROGRAM_STATE_VAR) {
          GLint k;
@@ -610,8 +606,7 @@ _mesa_combine_parameter_lists(const struct gl_program_parameter_list *listA,
             _mesa_add_parameter(list, param->Type, param->Name, param->Size,
                                 param->DataType,
                                 listB->ParameterValues[i],
-                                param->StateIndexes,
-                                param->Flags);
+                                param->StateIndexes);
          }
       }
    }

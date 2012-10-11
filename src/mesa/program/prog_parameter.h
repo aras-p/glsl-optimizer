@@ -69,7 +69,6 @@ struct gl_program_parameter
     */
    GLuint Size;
    GLboolean Initialized;   /**< debug: Has the ParameterValue[] been set? */
-   GLbitfield Flags;        /**< Bitmask of PROG_PARAM_*_BIT */
    /**
     * A sequence of STATE_* tokens and integers to identify GL state.
     */
@@ -118,8 +117,7 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
                     gl_register_file type, const char *name,
                     GLuint size, GLenum datatype,
                     const gl_constant_value *values,
-                    const gl_state_index state[STATE_LENGTH],
-                    GLbitfield flags);
+                    const gl_state_index state[STATE_LENGTH]);
 
 extern GLint
 _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
