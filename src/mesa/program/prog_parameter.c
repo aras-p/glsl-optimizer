@@ -291,36 +291,6 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
                                            swizzleOut);
 }
 
-/**
- * Add parameter representing a vertex program attribute.
- * \param size  size of attribute (in floats), may be -1 if unknown
- * \param attrib  the attribute index, or -1 if unknown
- */
-GLint
-_mesa_add_attribute(struct gl_program_parameter_list *paramList,
-                    const char *name, GLint size, GLenum datatype, GLint attrib)
-{
-   GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
-   if (i >= 0) {
-      /* replace */
-      if (attrib < 0)
-         attrib = i;
-      paramList->Parameters[i].StateIndexes[0] = attrib;
-   }
-   else {
-      /* add */
-      gl_state_index state[STATE_LENGTH];
-      state[0] = (gl_state_index) attrib;
-      if (size < 0)
-         size = 4;
-      i = _mesa_add_parameter(paramList, PROGRAM_INPUT, name,
-                              size, datatype, NULL, state);
-   }
-   return i;
-}
-
-
-
 #if 0 /* not used yet */
 /**
  * Returns the number of 4-component registers needed to store a piece
