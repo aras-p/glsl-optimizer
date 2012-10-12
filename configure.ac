@@ -172,7 +172,14 @@ esac
 
 dnl Add flags for gcc and g++
 if test "x$GCC" = xyes; then
-    CFLAGS="$CFLAGS -Wall -std=c99"
+    case "$host_os" in
+    cygwin*)
+        CFLAGS="$CFLAGS -Wall -std=gnu99"
+        ;;
+    *)
+        CFLAGS="$CFLAGS -Wall -std=c99"
+        ;;
+    esac
 
     # Enable -Werror=implicit-function-declaration and
     # -Werror=missing-prototypes, if available, or otherwise, just
