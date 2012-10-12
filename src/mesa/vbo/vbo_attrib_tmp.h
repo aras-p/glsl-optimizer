@@ -124,7 +124,7 @@ static inline float conv_i2_to_norm_float(int i2)
 {
    struct attr_bits_2 val;
    val.x = i2;
-   return (float)val.x;
+   return (2.0F * (float)val.x + 1.0F) * (1.0F / 3.0F);
 }
 
 #define ATTRI10_1( A, I10 ) ATTR( A, 1, GL_FLOAT, conv_i10_to_i((I10) & 0x3ff), 0, 0, 1 )
