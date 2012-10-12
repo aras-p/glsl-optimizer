@@ -1241,8 +1241,8 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       dsty = rbDraw->Base.Height - dsty - height;
    }
 
-   assert(util_format_get_blockwidth(ptDraw->resource->format) == 1);
-   assert(util_format_get_blockheight(ptDraw->resource->format) == 1);
+   assert(util_format_get_blockwidth(rbDraw->texture->format) == 1);
+   assert(util_format_get_blockheight(rbDraw->texture->format) == 1);
 
    /* map the stencil buffer */
    drawMap = pipe_transfer_map(pipe,
