@@ -255,7 +255,10 @@ static struct r600_bytecode_tex *r600_bytecode_tex(void)
 	return tex;
 }
 
-void r600_bytecode_init(struct r600_bytecode *bc, enum chip_class chip_class, enum radeon_family family)
+void r600_bytecode_init(struct r600_bytecode *bc,
+			enum chip_class chip_class,
+			enum radeon_family family,
+			enum r600_msaa_texture_mode msaa_texture_mode)
 {
 	if ((chip_class == R600) &&
 	    (family != CHIP_RV670 && family != CHIP_RS780 && family != CHIP_RS880)) {
@@ -268,6 +271,7 @@ void r600_bytecode_init(struct r600_bytecode *bc, enum chip_class chip_class, en
 
 	LIST_INITHEAD(&bc->cf);
 	bc->chip_class = chip_class;
+	bc->msaa_texture_mode = msaa_texture_mode;
 }
 
 static int r600_bytecode_add_cf(struct r600_bytecode *bc)
@@ -1736,6 +1740,7 @@ static int r600_bytecode_vtx_build(struct r600_bytecode *bc, struct r600_bytecod
 static int r600_bytecode_tex_build(struct r600_bytecode *bc, struct r600_bytecode_tex *tex, unsigned id)
 {
 	bc->bytecode[id++] = S_SQ_TEX_WORD0_TEX_INST(tex->inst) |
+			     EG_S_SQ_TEX_WORD0_INST_MOD(tex->inst_mod) |
 				S_SQ_TEX_WORD0_RESOURCE_ID(tex->resource_id) |
 				S_SQ_TEX_WORD0_SRC_GPR(tex->src_gpr) |
 				S_SQ_TEX_WORD0_SRC_REL(tex->src_rel);
@@ -2766,7 +2771,8 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	assert(count < 32);
 
 	memset(&bc, 0, sizeof(bc));
-	r600_bytecode_init(&bc, rctx->chip_class, rctx->family);
+	r600_bytecode_init(&bc, rctx->chip_class, rctx->family,
+			   rctx->screen->msaa_texture_support);
 
 	for (i = 0; i < count; i++) {
 		if (elements[i].instance_divisor > 1) {

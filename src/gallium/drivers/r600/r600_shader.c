@@ -1180,7 +1180,8 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	ctx.shader = shader;
 	ctx.native_integers = true;
 
-	r600_bytecode_init(ctx.bc, rscreen->chip_class, rscreen->family);
+	r600_bytecode_init(ctx.bc, rscreen->chip_class, rscreen->family,
+			   rscreen->msaa_texture_support);
 	ctx.tokens = tokens;
 	tgsi_scan_shader(tokens, &ctx.info);
 	tgsi_parse_init(&ctx.parse, tokens);
@@ -3796,10 +3797,15 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	unsigned src_gpr;
 	int r, i, j;
 	int opcode;
+	bool read_compressed_msaa = ctx->bc->msaa_texture_mode == MSAA_TEXTURE_COMPRESSED &&
+				    inst->Instruction.Opcode == TGSI_OPCODE_TXF &&
+				    (inst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ||
+				     inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA);
 	/* Texture fetch instructions can only use gprs as source.
 	 * Also they cannot negate the source or take the absolute value */
-	const boolean src_requires_loading = inst->Instruction.Opcode != TGSI_OPCODE_TXQ_LZ &&
-                                             tgsi_tex_src_requires_loading(ctx, 0);
+	const boolean src_requires_loading = (inst->Instruction.Opcode != TGSI_OPCODE_TXQ_LZ &&
+                                              tgsi_tex_src_requires_loading(ctx, 0)) ||
+					     read_compressed_msaa;
 	boolean src_loaded = FALSE;
 	unsigned sampler_src_reg = inst->Instruction.Opcode == TGSI_OPCODE_TXQ_LZ ? 0 : 1;
 	uint8_t offset_x = 0, offset_y = 0, offset_z = 0;
@@ -4068,6 +4074,127 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		}
 		src_loaded = TRUE;
 		src_gpr = ctx->temp_reg;
+	}
+
+	/* Obtain the sample index for reading a compressed MSAA color texture.
+	 * To read the FMASK, we use the ldfptr instruction, which tells us
+	 * where the samples are stored.
+	 * For uncompressed 8x MSAA surfaces, ldfptr should return 0x76543210,
+	 * which is the identity mapping. Each nibble says which physical sample
+	 * should be fetched to get that sample.
+	 *
+	 * Assume src.z contains the sample index. It should be modified like this:
+	 *   src.z = (ldfptr() >> (src.z * 4)) & 0xF;
+	 * Then fetch the texel with src.
+	 */
+	if (read_compressed_msaa) {
+		unsigned sample_chan = inst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ? 3 : 4;
+		unsigned temp = r600_get_temp(ctx);
+		assert(src_loaded);
+
+		/* temp.w = ldfptr() */
+		memset(&tex, 0, sizeof(struct r600_bytecode_tex));
+		tex.inst = SQ_TEX_INST_LD;
+		tex.inst_mod = 1; /* to indicate this is ldfptr */
+		tex.sampler_id = tgsi_tex_get_src_gpr(ctx, sampler_src_reg);
+		tex.resource_id = tex.sampler_id + R600_MAX_CONST_BUFFERS;
+		tex.src_gpr = src_gpr;
+		tex.dst_gpr = temp;
+		tex.dst_sel_x = 7; /* mask out these components */
+		tex.dst_sel_y = 7;
+		tex.dst_sel_z = 7;
+		tex.dst_sel_w = 0; /* store X */
+		tex.src_sel_x = 0;
+		tex.src_sel_y = 1;
+		tex.src_sel_z = 2;
+		tex.src_sel_w = 3;
+		tex.offset_x = offset_x;
+		tex.offset_y = offset_y;
+		tex.offset_z = offset_z;
+		r = r600_bytecode_add_tex(ctx->bc, &tex);
+		if (r)
+			return r;
+
+		/* temp.x = sample_index*4 */
+		if (ctx->bc->chip_class == CAYMAN) {
+			for (i = 0 ; i < 4; i++) {
+				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+				alu.inst = ctx->inst_info->r600_opcode;
+				alu.src[0].sel = src_gpr;
+				alu.src[0].chan = sample_chan;
+				alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
+				alu.src[1].value = 4;
+				alu.dst.sel = temp;
+				alu.dst.chan = i;
+				alu.dst.write = i == 0;
+				if (i == 3)
+					alu.last = 1;
+				r = r600_bytecode_add_alu(ctx->bc, &alu);
+				if (r)
+					return r;
+			}
+		} else {
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT);
+			alu.src[0].sel = src_gpr;
+			alu.src[0].chan = sample_chan;
+			alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
+			alu.src[1].value = 4;
+			alu.dst.sel = temp;
+			alu.dst.chan = 0;
+			alu.dst.write = 1;
+			alu.last = 1;
+			r = r600_bytecode_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
+
+		/* sample_index = temp.w >> temp.x */
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT);
+		alu.src[0].sel = temp;
+		alu.src[0].chan = 3;
+		alu.src[1].sel = temp;
+		alu.src[1].chan = 0;
+		alu.dst.sel = src_gpr;
+		alu.dst.chan = sample_chan;
+		alu.dst.write = 1;
+		alu.last = 1;
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		/* sample_index & 0xF */
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_AND_INT);
+		alu.src[0].sel = src_gpr;
+		alu.src[0].chan = sample_chan;
+		alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
+		alu.src[1].value = 0xF;
+		alu.dst.sel = src_gpr;
+		alu.dst.chan = sample_chan;
+		alu.dst.write = 1;
+		alu.last = 1;
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+#if 0
+		/* visualize the FMASK */
+		for (i = 0; i < 4; i++) {
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT);
+			alu.src[0].sel = src_gpr;
+			alu.src[0].chan = sample_chan;
+			alu.dst.sel = ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index;
+			alu.dst.chan = i;
+			alu.dst.write = 1;
+			alu.last = 1;
+			r = r600_bytecode_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
+		return 0;
+#endif
 	}
 
 	opcode = ctx->inst_info->r600_opcode;

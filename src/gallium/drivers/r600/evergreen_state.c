@@ -633,7 +633,7 @@ boolean evergreen_is_format_supported(struct pipe_screen *screen,
 		return FALSE;
 
 	if (sample_count > 1) {
-		if (rscreen->info.drm_minor < 19)
+		if (!rscreen->has_msaa)
 			return FALSE;
 
 		switch (sample_count) {
@@ -1074,11 +1074,24 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 				       S_030004_TEX_DEPTH(depth - 1) |
 				       S_030004_ARRAY_MODE(array_mode));
 	view->tex_resource_words[2] = (tmp->surface.level[0].offset + r600_resource_va(ctx->screen, texture)) >> 8;
-	if (state->u.tex.last_level && texture->nr_samples <= 1) {
+
+	/* TEX_RESOURCE_WORD3.MIP_ADDRESS */
+	if (texture->nr_samples > 1 && rscreen->msaa_texture_support == MSAA_TEXTURE_COMPRESSED) {
+		/* XXX the 2x and 4x cases are broken. */
+		if (tmp->is_depth || tmp->resource.b.b.nr_samples != 8) {
+			/* disable FMASK (0 = disabled) */
+			view->tex_resource_words[3] = 0;
+			view->skip_mip_address_reloc = true;
+		} else {
+			/* FMASK should be in MIP_ADDRESS for multisample textures */
+			view->tex_resource_words[3] = (tmp->fmask_offset + r600_resource_va(ctx->screen, texture)) >> 8;
+		}
+	} else if (state->u.tex.last_level && texture->nr_samples <= 1) {
 		view->tex_resource_words[3] = (tmp->surface.level[1].offset + r600_resource_va(ctx->screen, texture)) >> 8;
 	} else {
 		view->tex_resource_words[3] = (tmp->surface.level[0].offset + r600_resource_va(ctx->screen, texture)) >> 8;
 	}
+
 	view->tex_resource_words[4] = (word4 |
 				       S_030010_SRF_MODE_ALL(V_030010_SRF_MODE_ZERO_CLAMP_MINUS_ONE) |
 				       S_030010_ENDIAN_SWAP(endian));
@@ -1582,9 +1595,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 			rctx->framebuffer.export_16bpc = false;
 		}
 
-		/* Cayman can fetch from a compressed MSAA colorbuffer,
-		 * so it's pointless to track them. */
-		if (rctx->chip_class != CAYMAN && rtex->fmask_size && rtex->cmask_size) {
+		if (rtex->fmask_size && rtex->cmask_size) {
 			rctx->framebuffer.compressed_cb_mask |= 1 << i;
 		}
 	}
@@ -2258,13 +2269,15 @@ static void evergreen_emit_sampler_views(struct r600_context *rctx,
 		r600_write_value(cs, (resource_id_base + resource_index) * 8);
 		r600_write_array(cs, 8, rview->tex_resource_words);
 
-		/* XXX The kernel needs two relocations. This is stupid. */
 		reloc = r600_context_bo_reloc(rctx, rview->tex_resource,
 					      RADEON_USAGE_READ);
 		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
 		r600_write_value(cs, reloc);
-		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
-		r600_write_value(cs, reloc);
+
+		if (!rview->skip_mip_address_reloc) {
+			r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+			r600_write_value(cs, reloc);
+		}
 	}
 	state->dirty_mask = 0;
 }
@@ -3343,6 +3356,16 @@ void *evergreen_create_decompress_blend(struct r600_context *rctx)
 	blend.independent_blend_enable = true;
 	blend.rt[0].colormask = 0xf;
 	return evergreen_create_blend_state_mode(&rctx->context, &blend, V_028808_CB_DECOMPRESS);
+}
+
+void *evergreen_create_fmask_decompress_blend(struct r600_context *rctx)
+{
+	struct pipe_blend_state blend;
+
+	memset(&blend, 0, sizeof(blend));
+	blend.independent_blend_enable = true;
+	blend.rt[0].colormask = 0xf;
+	return evergreen_create_blend_state_mode(&rctx->context, &blend, V_028808_CB_FMASK_DECOMPRESS);
 }
 
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx)

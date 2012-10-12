@@ -486,7 +486,7 @@
 #define      V_028808_CB_ELIMINATE_FAST_CLEAR          0x00000002
 #define      V_028808_CB_RESOLVE                       0x00000003
 #define      V_028808_CB_DECOMPRESS                    0x00000004
-#define      V_028808_CB_FASK_DECOMPRESS               0x00000005
+#define      V_028808_CB_FMASK_DECOMPRESS              0x00000005
 #define   S_028808_ROP3(x)                             (((x) & 0xFF) << 16)
 #define   G_028808_ROP3(x)                             (((x) >> 16) & 0xFF)
 #define   C_028808_ROP3                                0xFF00FFFF

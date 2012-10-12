@@ -375,6 +375,9 @@
 #define   S_SQ_TEX_WORD0_BC_FRAC_MODE(x)                             (((x) & 0x1) << 5)
 #define   G_SQ_TEX_WORD0_BC_FRAC_MODE(x)                             (((x) >> 5) & 0x1)
 #define   C_SQ_TEX_WORD0_BC_FRAC_MODE                                0xFFFFFFDF
+#define   EG_S_SQ_TEX_WORD0_INST_MOD(x)                                 (((x) & 0x3) << 5)
+#define   EG_G_SQ_TEX_WORD0_INST_MOD(x)                                 (((x) >> 5) & 0x3)
+#define   EG_C_SQ_TEX_WORD0_INST_MOD                                    0xFFFFFF9F
 #define   S_SQ_TEX_WORD0_FETCH_WHOLE_QUAD(x)                         (((x) & 0x1) << 7)
 #define   G_SQ_TEX_WORD0_FETCH_WHOLE_QUAD(x)                         (((x) >> 7) & 0x1)
 #define   C_SQ_TEX_WORD0_FETCH_WHOLE_QUAD                            0xFFFFFF7F

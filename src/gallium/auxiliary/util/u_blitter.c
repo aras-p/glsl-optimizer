@@ -359,6 +359,14 @@ void util_blitter_destroy(struct blitter_context *blitter)
    FREE(ctx);
 }
 
+void util_blitter_set_texture_multisample(struct blitter_context *blitter,
+                                          boolean supported)
+{
+   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
+
+   ctx->has_texture_multisample = supported;
+}
+
 static void blitter_set_running_flag(struct blitter_context_priv *ctx)
 {
    if (ctx->base.running) {

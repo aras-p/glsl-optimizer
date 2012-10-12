@@ -585,7 +585,7 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 		return FALSE;
 
 	if (sample_count > 1) {
-		if (rscreen->info.drm_minor < 22)
+		if (!rscreen->has_msaa)
 			return FALSE;
 
 		/* R11G11B10 is broken on R6xx. */
@@ -1988,7 +1988,6 @@ static void r600_emit_sampler_views(struct r600_context *rctx,
 		r600_write_value(cs, (resource_id_base + resource_index) * 7);
 		r600_write_array(cs, 7, rview->tex_resource_words);
 
-		/* XXX The kernel needs two relocations. This is stupid. */
 		reloc = r600_context_bo_reloc(rctx, rview->tex_resource,
 					      RADEON_USAGE_READ);
 		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));

@@ -593,8 +593,8 @@ static void r600_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 				dst->views.compressed_depthtex_mask &= ~(1 << i);
 			}
 
-			/* Track compressed colorbuffers for Evergreen (Cayman doesn't need this). */
-			if (rctx->chip_class != CAYMAN && rtex->cmask_size && rtex->fmask_size) {
+			/* Track compressed colorbuffers. */
+			if (rtex->cmask_size && rtex->fmask_size) {
 				dst->views.compressed_colortex_mask |= 1 << i;
 			} else {
 				dst->views.compressed_colortex_mask &= ~(1 << i);

@@ -171,6 +171,9 @@ static void r600_destroy_context(struct pipe_context *context)
 	if (rctx->custom_blend_decompress) {
 		rctx->context.delete_blend_state(&rctx->context, rctx->custom_blend_decompress);
 	}
+	if (rctx->custom_blend_fmask_decompress) {
+		rctx->context.delete_blend_state(&rctx->context, rctx->custom_blend_fmask_decompress);
+	}
 	util_unreference_framebuffer_state(&rctx->framebuffer.state);
 
 	r600_context_fini(rctx);
@@ -264,6 +267,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 		rctx->custom_blend_resolve = evergreen_create_resolve_blend(rctx);
 		rctx->custom_blend_decompress = evergreen_create_decompress_blend(rctx);
+		rctx->custom_blend_fmask_decompress = evergreen_create_fmask_decompress_blend(rctx);
 		rctx->has_vertex_cache = !(rctx->family == CHIP_CEDAR ||
 					   rctx->family == CHIP_PALM ||
 					   rctx->family == CHIP_SUMO ||
@@ -289,6 +293,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL)
 		goto fail;
+	util_blitter_set_texture_multisample(rctx->blitter, rscreen->has_msaa);
 	rctx->blitter->draw_rectangle = r600_draw_rectangle;
 
 	r600_begin_new_cs(rctx);
@@ -393,7 +398,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_COMPUTE:
 	case PIPE_CAP_START_INSTANCE:
 	case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
-        case PIPE_CAP_TEXTURE_MULTISAMPLE:
 		return 1;
 
 	case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
@@ -401,6 +405,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
 		return 130;
+
+	case PIPE_CAP_TEXTURE_MULTISAMPLE:
+		return rscreen->msaa_texture_support != MSAA_TEXTURE_SAMPLE_ZERO;
 
 	/* Supported except the original R600. */
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -944,6 +951,26 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	case EVERGREEN:
 	case CAYMAN:
 		rscreen->has_streamout = rscreen->info.drm_minor >= 14;
+		break;
+	}
+
+	/* MSAA support. */
+	switch (rscreen->chip_class) {
+	case R600:
+	case R700:
+		rscreen->has_msaa = rscreen->info.drm_minor >= 22;
+		rscreen->msaa_texture_support = MSAA_TEXTURE_DECOMPRESSED;
+		break;
+	case EVERGREEN:
+		rscreen->has_msaa = rscreen->info.drm_minor >= 19;
+		rscreen->msaa_texture_support =
+			rscreen->info.drm_minor >= 24 ? MSAA_TEXTURE_COMPRESSED :
+							MSAA_TEXTURE_DECOMPRESSED;
+		break;
+	case CAYMAN:
+		rscreen->has_msaa = rscreen->info.drm_minor >= 19;
+		/* We should be able to read compressed MSAA textures, but it doesn't work. */
+		rscreen->msaa_texture_support = MSAA_TEXTURE_SAMPLE_ZERO;
 		break;
 	}
 
