@@ -31,6 +31,7 @@
 #include "brw_util.h"
 #include "intel_batchbuffer.h"
 #include "main/macros.h"
+#include "main/enums.h"
 
 static void
 gen6_upload_blend_state(struct brw_context *brw)
@@ -82,13 +83,20 @@ gen6_upload_blend_state(struct brw_context *brw)
       /* _NEW_COLOR */
       if (ctx->Color.ColorLogicOpEnabled) {
 	 /* Floating point RTs should have no effect from LogicOp,
-	  * except for disabling of blending.
+	  * except for disabling of blending, but other types should.
 	  *
-	  * From the Sandy Bridge PRM, Vol 2 Par 1, Section 8.1.11, "Logic Ops",
+	  * However, from the Sandy Bridge PRM, Vol 2 Par 1, Section 8.1.11,
+	  * "Logic Ops",
 	  *
 	  *     "Logic Ops are only supported on *_UNORM surfaces (excluding
 	  *      _SRGB variants), otherwise Logic Ops must be DISABLED."
 	  */
+         WARN_ONCE(ctx->Color.LogicOp != GL_COPY &&
+                   rb_type != GL_UNSIGNED_NORMALIZED &&
+                   rb_type != GL_FLOAT, "Ignoring %s logic op on %s "
+                   "renderbuffer\n",
+                   _mesa_lookup_enum_by_nr(ctx->Color.LogicOp),
+                   _mesa_lookup_enum_by_nr(rb_type));
 	 if (rb_type == GL_UNSIGNED_NORMALIZED) {
 	    blend[b].blend1.logic_op_enable = 1;
 	    blend[b].blend1.logic_op_func =
@@ -179,6 +187,11 @@ gen6_upload_blend_state(struct brw_context *brw)
 	 * DWord 1, Bit 30 (AlphaToOne Enable):
 	 * "If Dual Source Blending is enabled, this bit must be disabled"
 	 */
+         WARN_ONCE(ctx->Color.Blend[b]._UsesDualSrc &&
+                   ctx->Multisample._Enabled &&
+                   ctx->Multisample.SampleAlphaToOne,
+                   "HW workaround: disabling alpha to one with dual src "
+                   "blending\n");
 	 if (ctx->Color.Blend[b]._UsesDualSrc)
             blend[b].blend1.alpha_to_one = false;
 	 else
