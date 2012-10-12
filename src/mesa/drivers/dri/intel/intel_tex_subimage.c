@@ -26,6 +26,7 @@
  * 
  **************************************************************************/
 
+#include "main/bufferobj.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/pbo.h"
@@ -205,10 +206,14 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
        texImage->TexObject->Target != GL_TEXTURE_2D ||
        texImage->Level != 0 ||
        pixels == NULL ||
+       _mesa_is_bufferobj(packing->BufferObj) ||
        packing->Alignment > 4 ||
        packing->SkipPixels > 0 ||
        packing->SkipRows > 0 ||
-       packing->RowLength != width)
+       (packing->RowLength != 0 && packing->RowLength != width) ||
+       packing->SwapBytes ||
+       packing->LsbFirst ||
+       packing->Invert)
       return false;
 
    if (for_glTexImage)
