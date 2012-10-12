@@ -723,27 +723,31 @@ galahad_context_resource_copy_region(struct pipe_context *_pipe,
 
 static void
 galahad_context_blit(struct pipe_context *_pipe,
-                     const struct pipe_blit_info *info)
+                     const struct pipe_blit_info *_info)
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
+   struct pipe_blit_info info = *_info;
 
-   if (info->dst.box.width < 0 ||
-       info->dst.box.height < 0)
+   info.dst.resource = galahad_resource_unwrap(info.dst.resource);
+   info.src.resource = galahad_resource_unwrap(info.src.resource);
+
+   if (info.dst.box.width < 0 ||
+       info.dst.box.height < 0)
       glhd_error("Destination dimensions are negative");
 
-   if (info->filter != PIPE_TEX_FILTER_NEAREST &&
-       info->src.resource->target != PIPE_TEXTURE_3D &&
-       info->dst.box.depth != info->src.box.depth)
+   if (info.filter != PIPE_TEX_FILTER_NEAREST &&
+       info.src.resource->target != PIPE_TEXTURE_3D &&
+       info.dst.box.depth != info.src.box.depth)
       glhd_error("Filtering in z-direction on non-3D texture");
 
-   if (util_format_is_depth_or_stencil(info->dst.format) !=
-       util_format_is_depth_or_stencil(info->src.format))
+   if (util_format_is_depth_or_stencil(info.dst.format) !=
+       util_format_is_depth_or_stencil(info.src.format))
       glhd_error("Invalid format conversion: %s <- %s\n",
-                 util_format_name(info->dst.format),
-                 util_format_name(info->src.format));
+                 util_format_name(info.dst.format),
+                 util_format_name(info.src.format));
 
-   pipe->blit(pipe, info);
+   pipe->blit(pipe, &info);
 }
 
 static void
