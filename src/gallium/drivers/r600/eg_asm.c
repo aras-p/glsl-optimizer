@@ -22,6 +22,7 @@
  */
 #include "r600_pipe.h"
 #include "r600_opcodes.h"
+#include "r600_shader.h"
 
 #include "util/u_memory.h"
 #include "eg_sq.h"

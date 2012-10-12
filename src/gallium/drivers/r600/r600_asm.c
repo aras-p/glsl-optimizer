@@ -23,6 +23,7 @@
 #include "r600_sq.h"
 #include "r600_opcodes.h"
 #include "r600_formats.h"
+#include "r600_shader.h"
 #include "r600d.h"
 
 #include <errno.h>

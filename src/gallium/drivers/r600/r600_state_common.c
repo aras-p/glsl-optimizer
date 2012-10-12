@@ -25,6 +25,7 @@
  *          Jerome Glisse <jglisse@redhat.com>
  */
 #include "r600_formats.h"
+#include "r600_shader.h"
 #include "r600d.h"
 
 #include "util/u_draw_quad.h"

@@ -31,7 +31,6 @@
 #include "r600.h"
 #include "r600_llvm.h"
 #include "r600_public.h"
-#include "r600_shader.h"
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
@@ -45,6 +44,8 @@
 #else
 #define R600_BIG_ENDIAN 0
 #endif
+
+struct r600_shader_key;
 
 /* This encapsulates a state or an operation which can emitted into the GPU
  * command stream. It's not limited to states only, it can be used for anything
@@ -259,27 +260,6 @@ struct r600_pipe_shader_selector {
 	unsigned	type;
 
 	unsigned	nr_ps_max_color_exports;
-};
-
-struct r600_shader_key {
-	unsigned color_two_side:1;
-	unsigned alpha_to_one:1;
-	unsigned nr_cbufs:4;
-};
-
-struct r600_pipe_shader {
-	struct r600_pipe_shader_selector *selector;
-	struct r600_pipe_shader	*next_variant;
-	struct r600_shader		shader;
-	struct r600_pipe_state		rstate;
-	struct r600_resource		*bo;
-	unsigned	sprite_coord_enable;
-	unsigned	flatshade;
-	unsigned	pa_cl_vs_out_cntl;
-	unsigned	nr_ps_color_outputs;
-	struct r600_shader_key	key;
-	unsigned		db_shader_control;
-	unsigned		ps_depth_export;
 };
 
 struct r600_pipe_sampler_state {

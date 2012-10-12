@@ -23,9 +23,7 @@
 #ifndef R600_ASM_H
 #define R600_ASM_H
 
-#include "r600.h"
-
-struct r600_context;
+#include "r600_pipe.h"
 
 struct r600_bytecode_alu_src {
 	unsigned			sel;
