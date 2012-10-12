@@ -117,7 +117,7 @@ static inline float conv_i10_to_norm_float(int i10)
 {
    struct attr_bits_10 val;
    val.x = i10;
-   return (2.0F * (float)val.x + 1.0F) * (1.0F  / 511.0F);
+   return (2.0F * (float)val.x + 1.0F) * (1.0F  / 1023.0F);
 }
 
 static inline float conv_i2_to_norm_float(int i2)
