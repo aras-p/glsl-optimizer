@@ -691,4 +691,45 @@ error1:
    ;
 }
 
+
+/**
+ * Print PIPE_TRANSFER_x flags with a message.
+ */
+void
+debug_print_transfer_flags(const char *msg, unsigned usage)
+{
+#define FLAG(x)  { x, #x }
+   static const struct {
+      unsigned bit;
+      const char *name;
+   } flags[] = {
+      FLAG(PIPE_TRANSFER_READ),
+      FLAG(PIPE_TRANSFER_WRITE),
+      FLAG(PIPE_TRANSFER_MAP_DIRECTLY),
+      FLAG(PIPE_TRANSFER_DISCARD_RANGE),
+      FLAG(PIPE_TRANSFER_DONTBLOCK),
+      FLAG(PIPE_TRANSFER_UNSYNCHRONIZED),
+      FLAG(PIPE_TRANSFER_FLUSH_EXPLICIT),
+      FLAG(PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE)
+   };
+   unsigned i;
+
+   debug_printf("%s ", msg);
+
+   for (i = 0; i < Elements(flags); i++) {
+      if (usage & flags[i].bit) {
+         debug_printf("%s", flags[i].name);
+         usage &= ~flags[i].bit;
+         if (usage) {
+            debug_printf(" | ");
+         }
+      }
+   }
+
+   debug_printf("\n");
+#undef FLAG
+}
+
+
+
 #endif

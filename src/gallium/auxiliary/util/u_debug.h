@@ -446,6 +446,10 @@ void debug_dump_float_rgba_bmp(const char *filename,
 #endif
 
 
+void
+debug_print_transfer_flags(const char *msg, unsigned usage);
+
+
 #ifdef	__cplusplus
 }
 #endif
