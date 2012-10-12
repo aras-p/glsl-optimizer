@@ -1704,7 +1704,8 @@ void util_blitter_custom_resolve_color(struct blitter_context *blitter,
 				       struct pipe_resource *src,
 				       unsigned src_layer,
 				       unsigned sample_mask,
-				       void *custom_blend)
+				       void *custom_blend,
+                                       enum pipe_format format)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
@@ -1724,7 +1725,7 @@ void util_blitter_custom_resolve_color(struct blitter_context *blitter,
    pipe->set_sample_mask(pipe, sample_mask);
 
    memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   surf_tmpl.format = dst->format;
+   surf_tmpl.format = format;
    surf_tmpl.u.tex.level = dst_level;
    surf_tmpl.u.tex.first_layer = dst_layer;
    surf_tmpl.u.tex.last_layer = dst_layer;

@@ -574,6 +574,42 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	pipe_sampler_view_reference(&src_view, NULL);
 }
 
+/* For MSAA integer resolving to work, we change the format to NORM using this function. */
+static enum pipe_format int_to_norm_format(enum pipe_format format)
+{
+	switch (format) {
+#define REPLACE_FORMAT_SIGN(format,sign) \
+	case PIPE_FORMAT_##format##_##sign##INT: \
+		return PIPE_FORMAT_##format##_##sign##NORM
+#define REPLACE_FORMAT(format) \
+		REPLACE_FORMAT_SIGN(format, U); \
+		REPLACE_FORMAT_SIGN(format, S)
+
+	REPLACE_FORMAT_SIGN(B10G10R10A2, U);
+	REPLACE_FORMAT(R8);
+	REPLACE_FORMAT(R8G8);
+	REPLACE_FORMAT(R8G8B8);
+	REPLACE_FORMAT(R8G8B8A8);
+	REPLACE_FORMAT(A8);
+	REPLACE_FORMAT(I8);
+	REPLACE_FORMAT(L8);
+	REPLACE_FORMAT(L8A8);
+	REPLACE_FORMAT(R16);
+	REPLACE_FORMAT(R16G16);
+	REPLACE_FORMAT(R16G16B16);
+	REPLACE_FORMAT(R16G16B16A16);
+	REPLACE_FORMAT(A16);
+	REPLACE_FORMAT(I16);
+	REPLACE_FORMAT(L16);
+	REPLACE_FORMAT(L16A16);
+
+#undef REPLACE_FORMAT
+#undef REPLACE_FORMAT_SIGN
+	default:
+		return format;
+	}
+}
+
 static void r600_msaa_color_resolve(struct pipe_context *ctx,
 			      const struct pipe_blit_info *info)
 {
@@ -595,7 +631,8 @@ static void r600_msaa_color_resolve(struct pipe_context *ctx,
 						  info->dst.resource, info->dst.level,
 						  info->dst.box.z,
 						  info->src.resource, info->src.box.z,
-						  sample_mask, rctx->custom_blend_resolve);
+						  sample_mask, rctx->custom_blend_resolve,
+                                                  int_to_norm_format(info->dst.format));
 		r600_blitter_end(ctx);
 		return;
 	}
@@ -620,7 +657,8 @@ static void r600_msaa_color_resolve(struct pipe_context *ctx,
 	util_blitter_custom_resolve_color(rctx->blitter,
 					  tmp, 0, 0,
 					  info->src.resource, info->src.box.z,
-					  sample_mask, rctx->custom_blend_resolve);
+					  sample_mask, rctx->custom_blend_resolve,
+                                          int_to_norm_format(tmp->format));
 	r600_blitter_end(ctx);
 
 	/* blit */
@@ -645,7 +683,7 @@ static void r600_blit(struct pipe_context *ctx,
 	if (info->src.resource->nr_samples > 1 &&
 	    info->dst.resource->nr_samples <= 1 &&
 	    !util_format_is_depth_or_stencil(info->src.resource->format) &&
-	    !util_format_is_pure_integer(info->src.resource->format)) {
+	    !util_format_is_pure_integer(int_to_norm_format(info->src.resource->format))) {
 		r600_msaa_color_resolve(ctx, info);
 		return;
 	}

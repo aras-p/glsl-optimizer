@@ -344,7 +344,8 @@ void util_blitter_custom_resolve_color(struct blitter_context *blitter,
                                        struct pipe_resource *src,
                                        unsigned src_layer,
 				       unsigned sampled_mask,
-                                       void *custom_blend);
+                                       void *custom_blend,
+                                       enum pipe_format format);
 
 /* The functions below should be used to save currently bound constant state
  * objects inside a driver. The objects are automatically restored at the end
