@@ -600,6 +600,13 @@ update_texture_state( struct gl_context *ctx )
 
             texTarget = (gl_texture_index) (ffs(enabledTargets) - 1);
             texObj = _mesa_get_fallback_texture(ctx, texTarget);
+            
+            assert(texObj);
+            if (!texObj) {
+               /* invalid fallback texture: don't enable the texture unit */
+               continue;
+            }
+
             _mesa_reference_texobj(&texUnit->_Current, texObj);
             texUnit->_ReallyEnabled = 1 << texTarget;
          }

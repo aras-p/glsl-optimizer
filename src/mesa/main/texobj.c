@@ -769,6 +769,9 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
          target = GL_TEXTURE_BUFFER;
          break;
       case TEXTURE_EXTERNAL_INDEX:
+         dims = 2;
+         target = GL_TEXTURE_EXTERNAL_OES;
+         break;
       default:
          /* no-op */
          return NULL;
