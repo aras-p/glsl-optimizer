@@ -226,7 +226,6 @@ brwCreateContext(int api,
    for (i = 0; i <= MESA_SHADER_FRAGMENT; i++) {
       ctx->ShaderCompilerOptions[i].MaxIfDepth = intel->gen < 6 ? 16 : UINT_MAX;
       ctx->ShaderCompilerOptions[i].EmitCondCodes = true;
-      ctx->ShaderCompilerOptions[i].EmitNVTempInitialization = true;
       ctx->ShaderCompilerOptions[i].EmitNoNoise = true;
       ctx->ShaderCompilerOptions[i].EmitNoMainReturn = true;
       ctx->ShaderCompilerOptions[i].EmitNoIndirectInput = true;
