@@ -1523,6 +1523,27 @@ unsigned r600_tex_compare(unsigned compare)
 	}
 }
 
+static bool wrap_mode_uses_border_color(unsigned wrap, bool linear_filter)
+{
+	return wrap == PIPE_TEX_WRAP_CLAMP_TO_BORDER ||
+	       wrap == PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER ||
+	       (linear_filter &&
+	        (wrap == PIPE_TEX_WRAP_CLAMP ||
+		 wrap == PIPE_TEX_WRAP_MIRROR_CLAMP));
+}
+
+bool sampler_state_needs_border_color(const struct pipe_sampler_state *state)
+{
+	bool linear_filter = state->min_img_filter != PIPE_TEX_FILTER_NEAREST ||
+			     state->mag_img_filter != PIPE_TEX_FILTER_NEAREST;
+
+	return (state->border_color.ui[0] || state->border_color.ui[1] ||
+		state->border_color.ui[2] || state->border_color.ui[3]) &&
+	       (wrap_mode_uses_border_color(state->wrap_s, linear_filter) ||
+		wrap_mode_uses_border_color(state->wrap_t, linear_filter) ||
+		wrap_mode_uses_border_color(state->wrap_r, linear_filter));
+}
+
 /* keep this at the end of this file, please */
 void r600_init_common_state_functions(struct r600_context *rctx)
 {

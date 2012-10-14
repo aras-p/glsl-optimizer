@@ -948,8 +948,7 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 	}
 
 	ss->seamless_cube_map = state->seamless_cube_map;
-	ss->border_color_use = state->border_color.ui[0] || state->border_color.ui[1] ||
-			       state->border_color.ui[2] || state->border_color.ui[3];
+	ss->border_color_use = sampler_state_needs_border_color(state);
 
 	/* R_03C000_SQ_TEX_SAMPLER_WORD0_0 */
 	ss->tex_sampler_words[0] =

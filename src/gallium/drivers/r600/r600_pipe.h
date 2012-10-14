@@ -643,6 +643,7 @@ unsigned r600_tex_wrap(unsigned wrap);
 unsigned r600_tex_filter(unsigned filter);
 unsigned r600_tex_mipfilter(unsigned filter);
 unsigned r600_tex_compare(unsigned compare);
+bool sampler_state_needs_border_color(const struct pipe_sampler_state *state);
 
 /*
  * Helpers for building command buffers
