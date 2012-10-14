@@ -99,8 +99,7 @@ st_new_program(struct gl_context *ctx, GLenum target, GLuint id)
       return _mesa_init_vertex_program(ctx, &prog->Base, target, id);
    }
 
-   case GL_FRAGMENT_PROGRAM_ARB:
-   case GL_FRAGMENT_PROGRAM_NV: {
+   case GL_FRAGMENT_PROGRAM_ARB: {
       struct st_fragment_program *prog = ST_CALLOC_STRUCT(st_fragment_program);
       return _mesa_init_fragment_program(ctx, &prog->Base, target, id);
    }

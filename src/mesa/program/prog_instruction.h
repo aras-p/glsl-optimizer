@@ -297,8 +297,7 @@ struct prog_dst_register
     * \name Conditional destination update control.
     *
     * \since
-    * NV_fragment_program, NV_fragment_program_option, NV_vertex_program2,
-    * NV_vertex_program2_option.
+    * NV_fragment_program_option, NV_vertex_program2, NV_vertex_program2_option.
     */
    /*@{*/
    /**
@@ -330,8 +329,7 @@ struct prog_instruction
     * register.
     *
     * \since
-    * NV_fragment_program, NV_fragment_program_option, NV_vertex_program2,
-    * NV_vertex_program2_option.
+    * NV_fragment_program_option, NV_vertex_program2, NV_vertex_program2_option.
     */
    GLuint CondUpdate:1;
 
@@ -344,8 +342,7 @@ struct prog_instruction
     * code registers 0 and 1 are available.
     *
     * \since
-    * NV_fragment_program, NV_fragment_program_option, NV_vertex_program2,
-    * NV_vertex_program2_option.
+    * NV_fragment_program_option, NV_vertex_program2, NV_vertex_program2_option.
     */
    GLuint CondDst:1;
 
@@ -356,7 +353,7 @@ struct prog_instruction
     * Value is one of the SATURATE_* tokens.
     *
     * \since
-    * NV_fragment_program, NV_fragment_program_option, NV_vertex_program3.
+    * NV_fragment_program_option, NV_vertex_program3.
     */
    GLuint SaturateMode:2;
 
@@ -364,7 +361,7 @@ struct prog_instruction
     * Per-instruction selectable precision: FLOAT32, FLOAT16, FIXED12.
     *
     * \since
-    * NV_fragment_program, NV_fragment_program_option.
+    * NV_fragment_program_option.
     */
    GLuint Precision:3;
 

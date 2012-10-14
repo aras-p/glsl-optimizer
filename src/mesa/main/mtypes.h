@@ -1922,7 +1922,7 @@ struct gl_program
    GLuint Id;
    GLubyte *String;  /**< Null-terminated program text */
    GLint RefCount;
-   GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB, GL_FRAGMENT_PROGRAM_NV */
+   GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB */
    GLenum Format;    /**< String encoding format */
 
    struct prog_instruction *Instructions;
@@ -3055,7 +3055,6 @@ struct gl_extensions
    GLboolean NV_blend_square;
    GLboolean NV_conditional_render;
    GLboolean NV_fog_distance;
-   GLboolean NV_fragment_program;
    GLboolean NV_fragment_program_option;
    GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
