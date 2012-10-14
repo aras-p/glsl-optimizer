@@ -10029,7 +10029,7 @@ _mesa_create_save_table(const struct gl_context *ctx)
    SET_GetVertexAttribdvARB(table, _mesa_GetVertexAttribdvARB);
    SET_GetVertexAttribfvARB(table, _mesa_GetVertexAttribfvARB);
    SET_GetVertexAttribivARB(table, _mesa_GetVertexAttribivARB);
-   SET_GetVertexAttribPointervNV(table, _mesa_GetVertexAttribPointervNV);
+   SET_GetVertexAttribPointervNV(table, _mesa_GetVertexAttribPointervARB);
    SET_ProgramEnvParameter4dARB(table, save_ProgramEnvParameter4dARB);
    SET_ProgramEnvParameter4dvARB(table, save_ProgramEnvParameter4dvARB);
    SET_ProgramEnvParameter4fARB(table, save_ProgramEnvParameter4fARB);
