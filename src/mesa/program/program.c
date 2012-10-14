@@ -238,7 +238,6 @@ _mesa_init_program_struct( struct gl_context *ctx, struct gl_program *prog,
       memset(prog, 0, sizeof(*prog));
       prog->Id = id;
       prog->Target = target;
-      prog->Resident = GL_TRUE;
       prog->RefCount = 1;
       prog->Format = GL_PROGRAM_FORMAT_ASCII_ARB;
 

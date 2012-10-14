@@ -1924,7 +1924,6 @@ struct gl_program
    GLint RefCount;
    GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB, GL_FRAGMENT_PROGRAM_NV */
    GLenum Format;    /**< String encoding format */
-   GLboolean Resident;
 
    struct prog_instruction *Instructions;
 
