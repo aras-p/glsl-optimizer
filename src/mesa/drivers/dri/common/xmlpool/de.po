@@ -268,10 +268,6 @@ msgstr "Funktionalität, die nicht hardwarebeschleunigt ist"
 msgid "Enable extension GL_ARB_vertex_program"
 msgstr "Erweiterung GL_ARB_vertex_program aktivieren"
 
-#: t_options.h:268
-msgid "Enable extension GL_NV_vertex_program"
-msgstr "Erweiterung GL_NV_vertex_program aktivieren"
-
 #: t_options.h:273
 msgid "Enable flushing batchbuffer after each draw call"
 msgstr "Aktiviere sofortige Leerung des Stapelpuffers nach jedem Zeichenaufruf"

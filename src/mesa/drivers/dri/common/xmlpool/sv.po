@@ -219,8 +219,3 @@ msgstr "Funktioner som inte är hårdvaruaccelererade"
 #: t_options.h:228
 msgid "Enable extension GL_ARB_vertex_program"
 msgstr "Aktivera tillägget GL_ARB_vertex_program"
-
-#: t_options.h:233
-msgid "Enable extension GL_NV_vertex_program"
-msgstr "Aktivera tillägget GL_NV_vertex_program"
-

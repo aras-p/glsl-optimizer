@@ -224,7 +224,3 @@ msgstr "Eigenschappen die niet hardwareversneld zijn"
 #: t_options.h:224
 msgid "Enable extension GL_ARB_vertex_program"
 msgstr "Zet uitbreiding GL_ARB_vertex_program aan"
-
-#: t_options.h:229
-msgid "Enable extension GL_NV_vertex_program"
-msgstr "Zet uitbreiding GL_NV_vertex_program aan"

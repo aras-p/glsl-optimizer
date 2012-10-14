@@ -212,8 +212,3 @@ msgstr "Características no aceleradas por hardware"
 #: t_options.h:224
 msgid "Enable extension GL_ARB_vertex_program"
 msgstr "Activar la extensión GL_ARB_vertex_program"
-
-#: t_options.h:229
-msgid "Enable extension GL_NV_vertex_program"
-msgstr "Activar extensión GL_NV_vertex_program"
-
