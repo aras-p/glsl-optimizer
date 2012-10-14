@@ -210,7 +210,7 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
    struct nouveau_bo *bo = buf->bo;
    uint8_t *map;
    int ret;
-   uint32_t offset = xfr->base.box.x;
+   uint32_t offset = box->x;
    uint32_t flags = 0;
 
    if (!xfr)
