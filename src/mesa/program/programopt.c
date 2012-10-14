@@ -499,9 +499,7 @@ _mesa_count_texture_instructions(struct gl_program *prog)
 
 /**
  * Scan/rewrite program to remove reads of custom (output) registers.
- * The passed type has to be either PROGRAM_OUTPUT or PROGRAM_VARYING
- * (for vertex shaders).
- * In GLSL shaders, varying vars can be read and written.
+ * The passed type has to be PROGRAM_OUTPUT.
  * On some hardware, trying to read an output register causes trouble.
  * So, rewrite the program to use a temporary register in this case.
  */
@@ -517,8 +515,7 @@ _mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
    _mesa_find_used_registers(prog, PROGRAM_TEMPORARY,
                              usedTemps, MAX_PROGRAM_TEMPS);
 
-   assert(type == PROGRAM_VARYING || type == PROGRAM_OUTPUT);
-   assert(prog->Target == GL_VERTEX_PROGRAM_ARB || type != PROGRAM_VARYING);
+   assert(type == PROGRAM_OUTPUT);
 
    for (i = 0; i < VERT_RESULT_MAX; i++)
       outputMap[i] = -1;

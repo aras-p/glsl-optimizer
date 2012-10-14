@@ -173,7 +173,7 @@ _mesa_layout_parameters(struct asm_parser_state *state)
 	    continue;
 	 }
 
-	 if ((inst->SrcReg[i].Base.File <= PROGRAM_VARYING )
+	 if ((inst->SrcReg[i].Base.File <= PROGRAM_OUTPUT)
 	     || (inst->SrcReg[i].Base.File >= PROGRAM_WRITE_ONLY)) {
 	    continue;
 	 }

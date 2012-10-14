@@ -64,8 +64,6 @@ _mesa_register_file_name(gl_register_file f)
       return "CONST";
    case PROGRAM_UNIFORM:
       return "UNIFORM";
-   case PROGRAM_VARYING:
-      return "VARYING";
    case PROGRAM_WRITE_ONLY:
       return "WRITE_ONLY";
    case PROGRAM_ADDRESS:
@@ -347,9 +345,6 @@ reg_string(gl_register_file f, GLint index, gl_prog_print_mode mode,
          break;
       case PROGRAM_LOCAL_PARAM:
          sprintf(str, "program.local[%s%d]", addr, index);
-         break;
-      case PROGRAM_VARYING: /* extension */
-         sprintf(str, "varying[%s%d]", addr, index);
          break;
       case PROGRAM_CONSTANT: /* extension */
          sprintf(str, "constant[%s%d]", addr, index);

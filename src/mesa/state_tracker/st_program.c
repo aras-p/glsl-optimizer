@@ -309,7 +309,6 @@ st_translate_vertex_program(struct st_context *st,
    if (!stvp->glsl_to_tgsi)
    {
       _mesa_remove_output_reads(&stvp->Base.Base, PROGRAM_OUTPUT);
-      _mesa_remove_output_reads(&stvp->Base.Base, PROGRAM_VARYING);
    }
 
    ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
@@ -828,7 +827,6 @@ st_translate_geometry_program(struct st_context *st,
       return NULL;
 
    _mesa_remove_output_reads(&stgp->Base.Base, PROGRAM_OUTPUT);
-   _mesa_remove_output_reads(&stgp->Base.Base, PROGRAM_VARYING);
 
    ureg = ureg_create( TGSI_PROCESSOR_GEOMETRY );
    if (ureg == NULL) {
