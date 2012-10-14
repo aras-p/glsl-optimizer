@@ -264,7 +264,7 @@ struct r600_pipe_shader_selector {
 
 struct r600_pipe_sampler_state {
 	uint32_t			tex_sampler_words[3];
-	uint32_t			border_color[4];
+	union pipe_color_union		border_color;
 	bool				border_color_use;
 	bool				seamless_cube_map;
 };
