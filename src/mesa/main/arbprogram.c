@@ -40,28 +40,6 @@
 #include "program/program.h"
 
 
-
-/**
- * Mixing ARB and NV vertex/fragment programs can be tricky.
- * Note: GL_VERTEX_PROGRAM_ARB == GL_VERTEX_PROGRAM_NV
- *  but, GL_FRAGMENT_PROGRAM_ARB != GL_FRAGMENT_PROGRAM_NV
- * The two different fragment program targets are supposed to be compatible
- * to some extent (see GL_ARB_fragment_program spec).
- * This function does the compatibility check.
- */
-static GLboolean
-compatible_program_targets(GLenum t1, GLenum t2)
-{
-   if (t1 == t2)
-      return GL_TRUE;
-   if (t1 == GL_FRAGMENT_PROGRAM_ARB && t2 == GL_FRAGMENT_PROGRAM_NV)
-      return GL_TRUE;
-   if (t1 == GL_FRAGMENT_PROGRAM_NV && t2 == GL_FRAGMENT_PROGRAM_ARB)
-      return GL_TRUE;
-   return GL_FALSE;
-}
-
-
 /**
  * Bind a program (make it current)
  * \note Called from the GL API dispatcher by both glBindProgramNV
@@ -78,14 +56,12 @@ _mesa_BindProgram(GLenum target, GLuint id)
    if (target == GL_VERTEX_PROGRAM_ARB && ctx->Extensions.ARB_vertex_program) {
       curProg = &ctx->VertexProgram.Current->Base;
    }
-   else if ((target == GL_FRAGMENT_PROGRAM_NV
-             && ctx->Extensions.NV_fragment_program) ||
-            (target == GL_FRAGMENT_PROGRAM_ARB
-             && ctx->Extensions.ARB_fragment_program)) {
+   else if (target == GL_FRAGMENT_PROGRAM_ARB
+            && ctx->Extensions.ARB_fragment_program) {
       curProg = &ctx->FragmentProgram.Current->Base;
    }
    else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBindProgramNV/ARB(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindProgramARB(target)");
       return;
    }
 
@@ -97,7 +73,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
    if (id == 0) {
       /* Bind a default program */
       newProg = NULL;
-      if (target == GL_VERTEX_PROGRAM_ARB) /* == GL_VERTEX_PROGRAM_NV */
+      if (target == GL_VERTEX_PROGRAM_ARB)
          newProg = &ctx->Shared->DefaultVertexProgram->Base;
       else
          newProg = &ctx->Shared->DefaultFragmentProgram->Base;
@@ -109,14 +85,14 @@ _mesa_BindProgram(GLenum target, GLuint id)
          /* allocate a new program now */
          newProg = ctx->Driver.NewProgram(ctx, target, id);
          if (!newProg) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV/ARB");
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramARB");
             return;
          }
          _mesa_HashInsert(ctx->Shared->Programs, id, newProg);
       }
-      else if (!compatible_program_targets(newProg->Target, target)) {
+      else if (newProg->Target != target) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBindProgramNV/ARB(target mismatch)");
+                     "glBindProgramARB(target mismatch)");
          return;
       }
    }
@@ -132,12 +108,11 @@ _mesa_BindProgram(GLenum target, GLuint id)
    FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 
    /* bind newProg */
-   if (target == GL_VERTEX_PROGRAM_ARB) { /* == GL_VERTEX_PROGRAM_NV */
+   if (target == GL_VERTEX_PROGRAM_ARB) {
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
                                gl_vertex_program(newProg));
    }
-   else if (target == GL_FRAGMENT_PROGRAM_NV ||
-            target == GL_FRAGMENT_PROGRAM_ARB) {
+   else if (target == GL_FRAGMENT_PROGRAM_ARB) {
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
                                gl_fragment_program(newProg));
    }
