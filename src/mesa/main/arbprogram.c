@@ -37,7 +37,6 @@
 #include "main/mtypes.h"
 #include "main/arbprogram.h"
 #include "program/arbprogparse.h"
-#include "program/nvfragparse.h"
 #include "program/program.h"
 
 
@@ -361,13 +360,6 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
             && ctx->Extensions.ARB_fragment_program) {
       struct gl_fragment_program *prog = ctx->FragmentProgram.Current;
       _mesa_parse_arb_fragment_program(ctx, target, string, len, prog);
-
-      base = & prog->Base;
-   }
-   else if (target == GL_FRAGMENT_PROGRAM_NV
-            && ctx->Extensions.NV_fragment_program) {
-      struct gl_fragment_program *prog = ctx->FragmentProgram.Current;
-      _mesa_parse_nv_fragment_program(ctx, target, string, len, prog);
 
       base = & prog->Base;
    }

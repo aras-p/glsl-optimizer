@@ -293,7 +293,6 @@ program_sources = [
     'program/arbprogparse.c',
     'program/hash_table.c',
     'program/ir_to_mesa.cpp',
-    'program/nvfragparse.c',
     'program/program.c',
     'program/program_parse_extra.c',
     'program/prog_cache.c',
