@@ -916,9 +916,6 @@ _mesa_valid_register_index(const struct gl_context *ctx,
    case PROGRAM_LOCAL_PARAM:
       return index >= 0 && index < c->MaxLocalParams;
 
-   case PROGRAM_NAMED_PARAM:
-      return index >= 0 && index < c->MaxParameters;
-
    case PROGRAM_UNIFORM:
    case PROGRAM_STATE_VAR:
       /* aka constant buffer */

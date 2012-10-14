@@ -60,8 +60,6 @@ _mesa_register_file_name(gl_register_file f)
       return "INPUT";
    case PROGRAM_OUTPUT:
       return "OUTPUT";
-   case PROGRAM_NAMED_PARAM:
-      return "NAMED";
    case PROGRAM_CONSTANT:
       return "CONST";
    case PROGRAM_UNIFORM:

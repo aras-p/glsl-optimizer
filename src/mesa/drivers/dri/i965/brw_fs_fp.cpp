@@ -599,7 +599,7 @@ fs_visitor::setup_fp_regs()
    for (int i = 0; i < num_temp; i++)
       fp_temp_regs[i] = fs_reg(this, glsl_type::vec4_type);
 
-   /* PROGRAM_STATE_VAR, PROGRAM_NAMED_PARAM, etc. */
+   /* PROGRAM_STATE_VAR etc. */
    if (c->dispatch_width == 8) {
       for (unsigned p = 0;
            p < c->fp->program.Base.Parameters->NumParameters; p++) {
@@ -722,13 +722,11 @@ fs_visitor::get_fp_src_reg(const prog_src_register *src)
    case PROGRAM_STATE_VAR:
    case PROGRAM_UNIFORM:
    case PROGRAM_CONSTANT:
-   case PROGRAM_NAMED_PARAM:
       /* We actually want to look at the type in the Parameters list for this,
        * because this lets us upload constant builtin uniforms, as actual
        * constants.
        */
       switch (plist->Parameters[src->Index].Type) {
-      case PROGRAM_NAMED_PARAM:
       case PROGRAM_CONSTANT: {
          result = fs_reg(this, glsl_type::vec4_type);
 

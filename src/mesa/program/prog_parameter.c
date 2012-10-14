@@ -180,20 +180,6 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
 
 
 /**
- * Add a new named program parameter (Ex: NV_fragment_program DEFINE statement)
- * \return index of the new entry in the parameter list
- */
-GLint
-_mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
-                          const char *name, const gl_constant_value values[4])
-{
-   return _mesa_add_parameter(paramList, PROGRAM_NAMED_PARAM, name,
-                              4, GL_NONE, values, NULL, 0x0);
-                              
-}
-
-
-/**
  * Add a new named constant to the parameter list.
  * This will be used when the program contains something like this:
  *    PARAM myVals = { 0, 1, 2, 3 };

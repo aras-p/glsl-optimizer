@@ -123,7 +123,6 @@ static GLboolean r200VertexProgUpdateParams(struct gl_context *ctx, struct r200_
    for(pi = 0; pi < paramList->NumParameters; pi++) {
       switch(paramList->Parameters[pi].Type) {
       case PROGRAM_STATE_VAR:
-      case PROGRAM_NAMED_PARAM:
       //fprintf(stderr, "%s", vp->Parameters->Parameters[pi].Name);
       case PROGRAM_CONSTANT:
 	 *fcmd++ = paramList->ParameterValues[pi][0].f;
@@ -214,7 +213,6 @@ static unsigned long t_src_class(gl_register_file file)
 
    case PROGRAM_LOCAL_PARAM:
    case PROGRAM_ENV_PARAM:
-   case PROGRAM_NAMED_PARAM:
    case PROGRAM_CONSTANT:
    case PROGRAM_STATE_VAR:
       return VSF_IN_CLASS_PARAM;

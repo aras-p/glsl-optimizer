@@ -71,7 +71,7 @@ typedef union gl_constant_value
 struct gl_program_parameter
 {
    const char *Name;        /**< Null-terminated string */
-   gl_register_file Type;   /**< PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
+   gl_register_file Type;   /**< PROGRAM_CONSTANT or STATE_VAR */
    GLenum DataType;         /**< GL_FLOAT, GL_FLOAT_VEC2, etc */
    /**
     * Number of components (1..4), or more.
@@ -132,10 +132,6 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
                     const gl_constant_value *values,
                     const gl_state_index state[STATE_LENGTH],
                     GLbitfield flags);
-
-extern GLint
-_mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
-                          const char *name, const gl_constant_value values[4]);
 
 extern GLint
 _mesa_add_named_constant(struct gl_program_parameter_list *paramList,

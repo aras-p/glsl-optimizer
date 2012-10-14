@@ -136,8 +136,6 @@ get_src_register_pointer(const struct prog_src_register *source,
    case PROGRAM_CONSTANT:
       /* Fallthrough */
    case PROGRAM_UNIFORM:
-      /* Fallthrough */
-   case PROGRAM_NAMED_PARAM:
       if (reg >= (GLint) prog->Parameters->NumParameters)
          return ZeroVec;
       return (GLfloat *) prog->Parameters->ParameterValues[reg];

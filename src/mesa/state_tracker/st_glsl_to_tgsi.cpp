@@ -74,7 +74,6 @@ extern "C" {
 #define PROGRAM_ANY_CONST ((1 << PROGRAM_LOCAL_PARAM) |  \
                            (1 << PROGRAM_ENV_PARAM) |    \
                            (1 << PROGRAM_STATE_VAR) |    \
-                           (1 << PROGRAM_NAMED_PARAM) |  \
                            (1 << PROGRAM_CONSTANT) |     \
                            (1 << PROGRAM_UNIFORM))
 
@@ -536,7 +535,6 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
       case PROGRAM_LOCAL_PARAM:
       case PROGRAM_ENV_PARAM:
       case PROGRAM_STATE_VAR:
-      case PROGRAM_NAMED_PARAM:
       case PROGRAM_CONSTANT:
       case PROGRAM_UNIFORM:
          this->indirect_addr_consts = true;
@@ -558,7 +556,6 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
             case PROGRAM_LOCAL_PARAM:
             case PROGRAM_ENV_PARAM:
             case PROGRAM_STATE_VAR:
-            case PROGRAM_NAMED_PARAM:
             case PROGRAM_CONSTANT:
             case PROGRAM_UNIFORM:
                this->indirect_addr_consts = true;
@@ -4041,7 +4038,6 @@ src_register(struct st_translate *t,
          t->temps[index] = ureg_DECL_local_temporary(t->ureg);
       return ureg_src(t->temps[index]);
 
-   case PROGRAM_NAMED_PARAM:
    case PROGRAM_ENV_PARAM:
    case PROGRAM_LOCAL_PARAM:
    case PROGRAM_UNIFORM:
@@ -4692,7 +4688,6 @@ st_translate_program(
          case PROGRAM_ENV_PARAM:
          case PROGRAM_LOCAL_PARAM:
          case PROGRAM_STATE_VAR:
-         case PROGRAM_NAMED_PARAM:
          case PROGRAM_UNIFORM:
             t->constants[i] = ureg_DECL_constant(ureg, i);
             break;
