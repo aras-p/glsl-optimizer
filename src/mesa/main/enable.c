@@ -854,16 +854,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->VertexProgram.TwoSideEnabled = state;
          break;
 
-      case GL_FRAGMENT_PROGRAM_NV:
-         if (ctx->API != API_OPENGL)
-            goto invalid_enum_error;
-         CHECK_EXTENSION(NV_fragment_program, cap);
-         if (ctx->FragmentProgram.Enabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-         ctx->FragmentProgram.Enabled = state;
-         break;
-
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:
          if (ctx->API != API_OPENGL)
@@ -1494,12 +1484,6 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
          CHECK_EXTENSION(ARB_vertex_program);
          return ctx->VertexProgram.TwoSideEnabled;
-
-      case GL_FRAGMENT_PROGRAM_NV:
-         if (ctx->API != API_OPENGL)
-            goto invalid_enum_error;
-         CHECK_EXTENSION(NV_fragment_program);
-         return ctx->FragmentProgram.Enabled;
 
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:

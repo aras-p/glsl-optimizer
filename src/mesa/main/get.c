@@ -305,7 +305,6 @@ EXTRA_EXT(NV_fog_distance);
 EXTRA_EXT(EXT_texture_filter_anisotropic);
 EXTRA_EXT(IBM_rasterpos_clip);
 EXTRA_EXT(NV_point_sprite);
-EXTRA_EXT(NV_fragment_program);
 EXTRA_EXT(NV_texture_rectangle);
 EXTRA_EXT(EXT_stencil_two_side);
 EXTRA_EXT(NV_light_max_exponent);
@@ -329,7 +328,6 @@ EXTRA_EXT(ARB_transform_feedback3);
 EXTRA_EXT(EXT_pixel_buffer_object);
 EXTRA_EXT(ARB_vertex_program);
 EXTRA_EXT2(NV_point_sprite, ARB_point_sprite);
-EXTRA_EXT2(ARB_fragment_program, NV_fragment_program);
 EXTRA_EXT2(ARB_vertex_program, ARB_fragment_program);
 EXTRA_EXT(ARB_geometry_shader4);
 EXTRA_EXT(ARB_color_buffer_float);
@@ -708,14 +706,6 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       v->value_int = ctx->CopyWriteBuffer->Name;
       break;
 
-   case GL_FRAGMENT_PROGRAM_BINDING_NV:
-      v->value_int = 
-	 ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0;
-      break;
-   case GL_VERTEX_PROGRAM_BINDING_NV:
-      v->value_int =
-	 ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0;
-      break;
    case GL_PIXEL_PACK_BUFFER_BINDING_EXT:
       v->value_int = ctx->Pack.BufferObj->Name;
       break;

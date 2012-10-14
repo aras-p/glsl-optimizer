@@ -259,7 +259,7 @@ descriptor=[
 
 { "apis": ["GL", "GL_CORE", "GLES2"], "params": [
 # == GL_MAX_TEXTURE_COORDS_NV
-  [ "MAX_TEXTURE_COORDS_ARB", "CONTEXT_INT(Const.MaxTextureCoordUnits), extra_ARB_fragment_program_NV_fragment_program" ],
+  [ "MAX_TEXTURE_COORDS_ARB", "CONTEXT_INT(Const.MaxTextureCoordUnits), extra_ARB_fragment_program" ],
   [ "PACK_IMAGE_HEIGHT", "CONTEXT_INT(Pack.ImageHeight), NO_EXTRA" ],
   [ "PACK_ROW_LENGTH", "CONTEXT_INT(Pack.RowLength), NO_EXTRA" ],
   [ "PACK_SKIP_PIXELS", "CONTEXT_INT(Pack.SkipPixels), NO_EXTRA" ],
@@ -289,7 +289,7 @@ descriptor=[
 
 # GL_ARB_fragment_program
 # == GL_MAX_TEXTURE_IMAGE_UNITS_NV
-  [ "MAX_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.MaxTextureImageUnits), extra_ARB_fragment_program_NV_fragment_program" ],
+  [ "MAX_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.MaxTextureImageUnits), extra_ARB_fragment_program" ],
   [ "MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.MaxVertexTextureImageUnits), extra_ARB_vertex_shader" ],
   [ "MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.MaxCombinedTextureImageUnits), extra_ARB_vertex_shader" ],
 
@@ -512,11 +512,6 @@ descriptor=[
 # GL_NV_point_sprite
   [ "POINT_SPRITE_R_MODE_NV", "CONTEXT_ENUM(Point.SpriteRMode), extra_NV_point_sprite" ],
   [ "POINT_SPRITE_COORD_ORIGIN", "CONTEXT_ENUM(Point.SpriteOrigin), extra_NV_point_sprite_ARB_point_sprite" ],
-
-# GL_NV_fragment_program
-  [ "FRAGMENT_PROGRAM_NV", "CONTEXT_BOOL(FragmentProgram.Enabled), extra_NV_fragment_program" ],
-  [ "FRAGMENT_PROGRAM_BINDING_NV", "LOC_CUSTOM, TYPE_INT, 0, extra_NV_fragment_program" ],
-  [ "MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV", "CONST(MAX_NV_FRAGMENT_PROGRAM_PARAMS), extra_NV_fragment_program" ],
 
 # GL_NV_texture_rectangle
   [ "TEXTURE_RECTANGLE_NV", "LOC_CUSTOM, TYPE_BOOLEAN, 0, extra_NV_texture_rectangle" ],
