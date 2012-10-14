@@ -42,7 +42,6 @@ struct prog_instruction;
  */
 typedef enum {
    PROG_PRINT_ARB,
-   PROG_PRINT_NV,
    PROG_PRINT_DEBUG
 } gl_prog_print_mode;
 
