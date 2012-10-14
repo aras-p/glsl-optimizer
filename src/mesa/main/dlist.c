@@ -321,8 +321,6 @@ typedef enum
    OPCODE_WINDOW_POS_ARB,
    /* GL_NV_fragment_program */
    OPCODE_BIND_PROGRAM_NV,
-   OPCODE_REQUEST_RESIDENT_PROGRAMS_NV,
-   OPCODE_LOAD_PROGRAM_NV,
    OPCODE_PROGRAM_LOCAL_PARAMETER_ARB,
    /* GL_EXT_stencil_two_side */
    OPCODE_ACTIVE_STENCIL_FACE_EXT,
@@ -722,14 +720,6 @@ _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
             break;
          case OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D:
             free(n[11].data);
-            n += InstSize[n[0].opcode];
-            break;
-         case OPCODE_LOAD_PROGRAM_NV:
-            free(n[4].data);      /* program string */
-            n += InstSize[n[0].opcode];
-            break;
-         case OPCODE_REQUEST_RESIDENT_PROGRAMS_NV:
-            free(n[2].data);      /* array of program ids */
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_PROGRAM_STRING_ARB:
@@ -4935,58 +4925,6 @@ save_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
 
 
 static void GLAPIENTRY
-save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
-                   const GLubyte * program)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-
-   n = alloc_instruction(ctx, OPCODE_LOAD_PROGRAM_NV, 4);
-   if (n) {
-      GLubyte *programCopy = malloc(len);
-      if (!programCopy) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
-         return;
-      }
-      memcpy(programCopy, program, len);
-      n[1].e = target;
-      n[2].ui = id;
-      n[3].i = len;
-      n[4].data = programCopy;
-   }
-   if (ctx->ExecuteFlag) {
-      CALL_LoadProgramNV(ctx->Exec, (target, id, len, program));
-   }
-}
-
-
-static void GLAPIENTRY
-save_RequestResidentProgramsNV(GLsizei num, const GLuint * ids)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-
-   n = alloc_instruction(ctx, OPCODE_REQUEST_RESIDENT_PROGRAMS_NV, 2);
-   if (n) {
-      GLuint *idCopy = malloc(num * sizeof(GLuint));
-      if (!idCopy) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glRequestResidentProgramsNV");
-         return;
-      }
-      memcpy(idCopy, ids, num * sizeof(GLuint));
-      n[1].i = num;
-      n[2].data = idCopy;
-   }
-   if (ctx->ExecuteFlag) {
-      CALL_RequestResidentProgramsNV(ctx->Exec, (num, ids));
-   }
-}
-
-static void GLAPIENTRY
 save_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
@@ -8165,14 +8103,6 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_BIND_PROGRAM_NV:  /* GL_ARB_vertex_program */
             CALL_BindProgramNV(ctx->Exec, (n[1].e, n[2].ui));
             break;
-         case OPCODE_REQUEST_RESIDENT_PROGRAMS_NV:
-            CALL_RequestResidentProgramsNV(ctx->Exec, (n[1].ui,
-                                                       (GLuint *) n[2].data));
-            break;
-         case OPCODE_LOAD_PROGRAM_NV:
-            CALL_LoadProgramNV(ctx->Exec, (n[1].e, n[2].ui, n[3].i,
-                                           (const GLubyte *) n[4].data));
-            break;
          case OPCODE_PROGRAM_LOCAL_PARAMETER_ARB:
             CALL_ProgramLocalParameter4fARB(ctx->Exec,
                                             (n[1].e, n[2].ui, n[3].f, n[4].f,
@@ -10009,17 +9939,7 @@ _mesa_create_save_table(const struct gl_context *ctx)
    SET_BindProgramNV(table, save_BindProgramNV);
    SET_DeleteProgramsNV(table, _mesa_DeletePrograms);
    SET_GenProgramsNV(table, _mesa_GenPrograms);
-   SET_AreProgramsResidentNV(table, _mesa_AreProgramsResidentNV);
-   SET_RequestResidentProgramsNV(table, save_RequestResidentProgramsNV);
-   SET_GetProgramivNV(table, _mesa_GetProgramivNV);
-   SET_GetProgramStringNV(table, _mesa_GetProgramStringNV);
-   SET_GetVertexAttribPointervNV(table, _mesa_GetVertexAttribPointervNV);
    SET_IsProgramNV(table, _mesa_IsProgramARB);
-   SET_LoadProgramNV(table, save_LoadProgramNV);
-   SET_ProgramEnvParameter4dARB(table, save_ProgramEnvParameter4dARB);
-   SET_ProgramEnvParameter4dvARB(table, save_ProgramEnvParameter4dvARB);
-   SET_ProgramEnvParameter4fARB(table, save_ProgramEnvParameter4fARB);
-   SET_ProgramEnvParameter4fvARB(table, save_ProgramEnvParameter4fvARB);
 
    /* 244. GL_ATI_envmap_bumpmap */
    SET_TexBumpParameterivATI(table, save_TexBumpParameterivATI);
