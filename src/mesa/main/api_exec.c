@@ -500,22 +500,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_DeleteVertexArraysAPPLE(exec, _mesa_DeleteVertexArraysAPPLE);
    SET_IsVertexArrayAPPLE(exec, _mesa_IsVertexArrayAPPLE);
 
-   /* 282. GL_NV_fragment_program */
-   if (ctx->API == API_OPENGL) {
-      SET_ProgramNamedParameter4fNV(exec, _mesa_ProgramNamedParameter4fNV);
-      SET_ProgramNamedParameter4dNV(exec, _mesa_ProgramNamedParameter4dNV);
-      SET_ProgramNamedParameter4fvNV(exec, _mesa_ProgramNamedParameter4fvNV);
-      SET_ProgramNamedParameter4dvNV(exec, _mesa_ProgramNamedParameter4dvNV);
-      SET_GetProgramNamedParameterfvNV(exec, _mesa_GetProgramNamedParameterfvNV);
-      SET_GetProgramNamedParameterdvNV(exec, _mesa_GetProgramNamedParameterdvNV);
-      SET_ProgramLocalParameter4dARB(exec, _mesa_ProgramLocalParameter4dARB);
-      SET_ProgramLocalParameter4dvARB(exec, _mesa_ProgramLocalParameter4dvARB);
-      SET_ProgramLocalParameter4fARB(exec, _mesa_ProgramLocalParameter4fARB);
-      SET_ProgramLocalParameter4fvARB(exec, _mesa_ProgramLocalParameter4fvARB);
-      SET_GetProgramLocalParameterdvARB(exec, _mesa_GetProgramLocalParameterdvARB);
-      SET_GetProgramLocalParameterfvARB(exec, _mesa_GetProgramLocalParameterfvARB);
-   }
-
    /* 262. GL_NV_point_sprite */
 #if _HAVE_FULL_GL
    if (_mesa_is_desktop_gl(ctx)) {

@@ -324,7 +324,6 @@ typedef enum
    OPCODE_REQUEST_RESIDENT_PROGRAMS_NV,
    OPCODE_LOAD_PROGRAM_NV,
    OPCODE_PROGRAM_LOCAL_PARAMETER_ARB,
-   OPCODE_PROGRAM_NAMED_PARAMETER_NV,
    /* GL_EXT_stencil_two_side */
    OPCODE_ACTIVE_STENCIL_FACE_EXT,
    /* GL_EXT_depth_bounds_test */
@@ -731,10 +730,6 @@ _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
             break;
          case OPCODE_REQUEST_RESIDENT_PROGRAMS_NV:
             free(n[2].data);      /* array of program ids */
-            n += InstSize[n[0].opcode];
-            break;
-         case OPCODE_PROGRAM_NAMED_PARAMETER_NV:
-            free(n[3].data);      /* parameter name */
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_PROGRAM_STRING_ARB:
@@ -5111,63 +5106,6 @@ save_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
    }
 }
 
-static void GLAPIENTRY
-save_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte * name,
-                               GLfloat x, GLfloat y, GLfloat z, GLfloat w)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-
-   n = alloc_instruction(ctx, OPCODE_PROGRAM_NAMED_PARAMETER_NV, 6);
-   if (n) {
-      GLubyte *nameCopy = malloc(len);
-      if (!nameCopy) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramNamedParameter4fNV");
-         return;
-      }
-      memcpy(nameCopy, name, len);
-      n[1].ui = id;
-      n[2].i = len;
-      n[3].data = nameCopy;
-      n[4].f = x;
-      n[5].f = y;
-      n[6].f = z;
-      n[7].f = w;
-   }
-   if (ctx->ExecuteFlag) {
-      CALL_ProgramNamedParameter4fNV(ctx->Exec, (id, len, name, x, y, z, w));
-   }
-}
-
-
-static void GLAPIENTRY
-save_ProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte * name,
-                                const float v[])
-{
-   save_ProgramNamedParameter4fNV(id, len, name, v[0], v[1], v[2], v[3]);
-}
-
-
-static void GLAPIENTRY
-save_ProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte * name,
-                               GLdouble x, GLdouble y, GLdouble z, GLdouble w)
-{
-   save_ProgramNamedParameter4fNV(id, len, name, (GLfloat) x, (GLfloat) y,
-                                  (GLfloat) z, (GLfloat) w);
-}
-
-
-static void GLAPIENTRY
-save_ProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte * name,
-                                const double v[])
-{
-   save_ProgramNamedParameter4fNV(id, len, name, (GLfloat) v[0],
-                                  (GLfloat) v[1], (GLfloat) v[2],
-                                  (GLfloat) v[3]);
-}
-
 
 /* GL_EXT_stencil_two_side */
 static void GLAPIENTRY
@@ -8240,12 +8178,6 @@ execute_list(struct gl_context *ctx, GLuint list)
                                             (n[1].e, n[2].ui, n[3].f, n[4].f,
                                              n[5].f, n[6].f));
             break;
-         case OPCODE_PROGRAM_NAMED_PARAMETER_NV:
-            CALL_ProgramNamedParameter4fNV(ctx->Exec, (n[1].ui, n[2].i,
-                                                       (const GLubyte *) n[3].
-                                                       data, n[4].f, n[5].f,
-                                                       n[6].f, n[7].f));
-            break;
          case OPCODE_ACTIVE_STENCIL_FACE_EXT:
             CALL_ActiveStencilFaceEXT(ctx->Exec, (n[1].e));
             break;
@@ -10096,24 +10028,6 @@ _mesa_create_save_table(const struct gl_context *ctx)
    /* 245. GL_ATI_fragment_shader */
    SET_BindFragmentShaderATI(table, save_BindFragmentShaderATI);
    SET_SetFragmentShaderConstantATI(table, save_SetFragmentShaderConstantATI);
-
-   /* 282. GL_NV_fragment_program */
-   SET_ProgramNamedParameter4fNV(table, save_ProgramNamedParameter4fNV);
-   SET_ProgramNamedParameter4dNV(table, save_ProgramNamedParameter4dNV);
-   SET_ProgramNamedParameter4fvNV(table, save_ProgramNamedParameter4fvNV);
-   SET_ProgramNamedParameter4dvNV(table, save_ProgramNamedParameter4dvNV);
-   SET_GetProgramNamedParameterfvNV(table,
-                                    _mesa_GetProgramNamedParameterfvNV);
-   SET_GetProgramNamedParameterdvNV(table,
-                                    _mesa_GetProgramNamedParameterdvNV);
-   SET_ProgramLocalParameter4dARB(table, save_ProgramLocalParameter4dARB);
-   SET_ProgramLocalParameter4dvARB(table, save_ProgramLocalParameter4dvARB);
-   SET_ProgramLocalParameter4fARB(table, save_ProgramLocalParameter4fARB);
-   SET_ProgramLocalParameter4fvARB(table, save_ProgramLocalParameter4fvARB);
-   SET_GetProgramLocalParameterdvARB(table,
-                                     _mesa_GetProgramLocalParameterdvARB);
-   SET_GetProgramLocalParameterfvARB(table,
-                                     _mesa_GetProgramLocalParameterfvARB);
 
    /* 262. GL_NV_point_sprite */
    SET_PointParameteriNV(table, save_PointParameteriNV);
