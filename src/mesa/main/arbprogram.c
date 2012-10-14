@@ -152,14 +152,13 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
          else if (prog) {
             /* Unbind program if necessary */
             switch (prog->Target) {
-            case GL_VERTEX_PROGRAM_ARB: /* == GL_VERTEX_PROGRAM_NV */
+            case GL_VERTEX_PROGRAM_ARB:
                if (ctx->VertexProgram.Current &&
                    ctx->VertexProgram.Current->Base.Id == ids[i]) {
                   /* unbind this currently bound program */
                   _mesa_BindProgram(prog->Target, 0);
                }
                break;
-            case GL_FRAGMENT_PROGRAM_NV:
             case GL_FRAGMENT_PROGRAM_ARB:
                if (ctx->FragmentProgram.Current &&
                    ctx->FragmentProgram.Current->Base.Id == ids[i]) {
@@ -255,11 +254,6 @@ get_local_param_pointer(struct gl_context *ctx, const char *func,
             && ctx->Extensions.ARB_fragment_program) {
       prog = &(ctx->FragmentProgram.Current->Base);
       maxParams = ctx->Const.FragmentProgram.MaxLocalParams;
-   }
-   else if (target == GL_FRAGMENT_PROGRAM_NV
-            && ctx->Extensions.NV_fragment_program) {
-      prog = &(ctx->FragmentProgram.Current->Base);
-      maxParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM,
@@ -495,9 +489,6 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
 }
 
 
-/**
- * Note, this function is also used by the GL_NV_fragment_program extension.
- */
 void GLAPIENTRY
 _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                  GLfloat x, GLfloat y, GLfloat z, GLfloat w)
@@ -516,9 +507,6 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
 }
 
 
-/**
- * Note, this function is also used by the GL_NV_fragment_program extension.
- */
 void GLAPIENTRY
 _mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
                                   const GLfloat *params)
@@ -567,9 +555,6 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 }
 
 
-/**
- * Note, this function is also used by the GL_NV_fragment_program extension.
- */
 void GLAPIENTRY
 _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
                                  GLdouble x, GLdouble y,
@@ -580,9 +565,6 @@ _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
 }
 
 
-/**
- * Note, this function is also used by the GL_NV_fragment_program extension.
- */
 void GLAPIENTRY
 _mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
                                   const GLdouble *params)
@@ -593,9 +575,6 @@ _mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
 }
 
 
-/**
- * Note, this function is also used by the GL_NV_fragment_program extension.
- */
 void GLAPIENTRY
 _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
                                     GLfloat *params)
@@ -611,9 +590,6 @@ _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
 }
 
 
-/**
- * Note, this function is also used by the GL_NV_fragment_program extension.
- */
 void GLAPIENTRY
 _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
                                     GLdouble *params)
