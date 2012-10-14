@@ -63,7 +63,6 @@
 #include "mtypes.h"
 #include "varray.h"
 #include "arbprogram.h"
-#include "nvprogram.h"
 #include "transformfeedback.h"
 
 #include "math/m_matrix.h"

@@ -60,7 +60,6 @@ MAIN_FILES = \
 	$(SRCDIR)main/mipmap.c \
 	$(SRCDIR)main/mm.c \
 	$(SRCDIR)main/multisample.c \
-	$(SRCDIR)main/nvprogram.c \
 	$(SRCDIR)main/pack.c \
 	$(SRCDIR)main/pbo.c \
 	$(SRCDIR)main/pixel.c \

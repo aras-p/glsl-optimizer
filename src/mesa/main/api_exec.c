@@ -87,7 +87,6 @@
 #include "mtypes.h"
 #include "varray.h"
 #include "viewport.h"
-#include "nvprogram.h"
 #include "shaderapi.h"
 #include "uniforms.h"
 #include "syncobj.h"
