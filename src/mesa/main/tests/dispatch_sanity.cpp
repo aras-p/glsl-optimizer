@@ -43,8 +43,6 @@ extern "C" {
 #include "main/mfeatures.h"
 }
 
-#if FEATURE_ES2
-
 #include <gtest/gtest.h>
 
 extern "C" {
@@ -306,5 +304,3 @@ const struct function gles2_functions_possible[] = {
    { "glViewport", _gloffset_Viewport },
    { NULL, -1 }
 };
-
-#endif /* FEATURE_ES2 */
