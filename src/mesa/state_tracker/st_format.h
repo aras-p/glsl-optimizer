@@ -75,7 +75,8 @@ st_sampler_compat_formats(enum pipe_format format1, enum pipe_format format2);
 
 
 extern void
-st_translate_color(const GLfloat colorIn[4], GLenum baseFormat,
-                   GLfloat colorOut[4]);
+st_translate_color(union gl_color_union *colorIn,
+                   union pipe_color_union *colorOut,
+                   GLenum baseFormat, GLboolean is_integer);
 
 #endif /* ST_FORMAT_H */

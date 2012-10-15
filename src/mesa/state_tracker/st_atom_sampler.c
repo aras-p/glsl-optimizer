@@ -34,6 +34,7 @@
 
 #include "main/macros.h"
 #include "main/mtypes.h"
+#include "main/glformats.h"
 #include "main/samplerobj.h"
 #include "main/texobj.h"
 
@@ -172,12 +173,17 @@ convert_sampler(struct st_context *st,
        msamp->BorderColor.ui[2] ||
        msamp->BorderColor.ui[3]) {
       struct gl_texture_image *teximg;
+      GLboolean is_integer = GL_FALSE;
 
       teximg = texobj->Image[0][texobj->BaseLevel];
 
-      st_translate_color(msamp->BorderColor.f,
-                         teximg ? teximg->_BaseFormat : GL_RGBA,
-                         sampler->border_color.f);
+      if (teximg) {
+         is_integer = _mesa_is_enum_format_integer(teximg->InternalFormat);
+      }
+
+      st_translate_color(&msamp->BorderColor,
+                         &sampler->border_color,
+                         teximg ? teximg->_BaseFormat : GL_RGBA, is_integer);
    }
 
    sampler->max_anisotropy = (msamp->MaxAnisotropy == 1.0 ?

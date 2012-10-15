@@ -1686,44 +1686,92 @@ st_sampler_compat_formats(enum pipe_format format1, enum pipe_format format2)
  * Similarly for texture border colors.
  */
 void
-st_translate_color(const GLfloat colorIn[4], GLenum baseFormat,
-                   GLfloat colorOut[4])
+st_translate_color(union gl_color_union *colorIn,
+                   union pipe_color_union *colorOut,
+                   GLenum baseFormat, GLboolean is_integer)
 {
-   switch (baseFormat) {
-   case GL_RED:
-      colorOut[0] = colorIn[0];
-      colorOut[1] = 0.0F;
-      colorOut[2] = 0.0F;
-      colorOut[3] = 1.0F;
-      break;
-   case GL_RG:
-      colorOut[0] = colorIn[0];
-      colorOut[1] = colorIn[1];
-      colorOut[2] = 0.0F;
-      colorOut[3] = 1.0F;
-      break;
-   case GL_RGB:
-      colorOut[0] = colorIn[0];
-      colorOut[1] = colorIn[1];
-      colorOut[2] = colorIn[2];
-      colorOut[3] = 1.0F;
-      break;
-   case GL_ALPHA:
-      colorOut[0] = colorOut[1] = colorOut[2] = 0.0;
-      colorOut[3] = colorIn[3];
-      break;
-   case GL_LUMINANCE:
-      colorOut[0] = colorOut[1] = colorOut[2] = colorIn[0];
-      colorOut[3] = 1.0;
-      break;
-   case GL_LUMINANCE_ALPHA:
-      colorOut[0] = colorOut[1] = colorOut[2] = colorIn[0];
-      colorOut[3] = colorIn[3];
-      break;
-   case GL_INTENSITY:
-      colorOut[0] = colorOut[1] = colorOut[2] = colorOut[3] = colorIn[0];
-      break;
-   default:
-      COPY_4V(colorOut, colorIn);
+   if (is_integer) {
+      int *in = colorIn->i;
+      int *out = colorOut->i;
+
+      switch (baseFormat) {
+      case GL_RED:
+         out[0] = in[0];
+         out[1] = 0;
+         out[2] = 0;
+         out[3] = 1;
+         break;
+      case GL_RG:
+         out[0] = in[0];
+         out[1] = in[1];
+         out[2] = 0;
+         out[3] = 1;
+         break;
+      case GL_RGB:
+         out[0] = in[0];
+         out[1] = in[1];
+         out[2] = in[2];
+         out[3] = 1;
+         break;
+      case GL_ALPHA:
+         out[0] = out[1] = out[2] = 0;
+         out[3] = in[3];
+         break;
+      case GL_LUMINANCE:
+         out[0] = out[1] = out[2] = in[0];
+         out[3] = 1;
+         break;
+      case GL_LUMINANCE_ALPHA:
+         out[0] = out[1] = out[2] = in[0];
+         out[3] = in[3];
+         break;
+      case GL_INTENSITY:
+         out[0] = out[1] = out[2] = out[3] = in[0];
+         break;
+      default:
+         COPY_4V(out, in);
+      }
+   }
+   else {
+      float *in = colorIn->f;
+      float *out = colorOut->f;
+
+      switch (baseFormat) {
+      case GL_RED:
+         out[0] = in[0];
+         out[1] = 0.0F;
+         out[2] = 0.0F;
+         out[3] = 1.0F;
+         break;
+      case GL_RG:
+         out[0] = in[0];
+         out[1] = in[1];
+         out[2] = 0.0F;
+         out[3] = 1.0F;
+         break;
+      case GL_RGB:
+         out[0] = in[0];
+         out[1] = in[1];
+         out[2] = in[2];
+         out[3] = 1.0F;
+         break;
+      case GL_ALPHA:
+         out[0] = out[1] = out[2] = 0.0F;
+         out[3] = in[3];
+         break;
+      case GL_LUMINANCE:
+         out[0] = out[1] = out[2] = in[0];
+         out[3] = 1.0F;
+         break;
+      case GL_LUMINANCE_ALPHA:
+         out[0] = out[1] = out[2] = in[0];
+         out[3] = in[3];
+         break;
+      case GL_INTENSITY:
+         out[0] = out[1] = out[2] = out[3] = in[0];
+         break;
+      default:
+         COPY_4V(out, in);
+      }
    }
 }

@@ -37,6 +37,7 @@
 #include "main/accum.h"
 #include "main/formats.h"
 #include "main/macros.h"
+#include "main/glformats.h"
 #include "program/prog_instruction.h"
 #include "st_context.h"
 #include "st_atom.h"
@@ -301,9 +302,13 @@ clear_with_quad(struct gl_context *ctx,
    cso_set_geometry_shader_handle(st->cso_context, NULL);
 
    if (ctx->DrawBuffer->_ColorDrawBuffers[0]) {
-      st_translate_color(ctx->Color.ClearColor.f,
-                               ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
-                               clearColor.f);
+      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
+      GLboolean is_integer = _mesa_is_enum_format_integer(rb->InternalFormat);
+
+      st_translate_color(&ctx->Color.ClearColor,
+                         &clearColor,
+                         ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
+                         is_integer);
    }
 
    /* draw quad matching scissor rect */
@@ -540,9 +545,13 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
          clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
 
       if (ctx->DrawBuffer->_ColorDrawBuffers[0]) {
-         st_translate_color(ctx->Color.ClearColor.f,
+         struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
+         GLboolean is_integer = _mesa_is_enum_format_integer(rb->InternalFormat);
+
+         st_translate_color(&ctx->Color.ClearColor,
+                            &clearColor,
 			    ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
-			    clearColor.f);
+			    is_integer);
       }
 
       st->pipe->clear(st->pipe, clear_buffers, &clearColor,
