@@ -11,7 +11,7 @@
     <enum name="COPY_READ_BUFFER"   value="0x8F36"/>
     <enum name="COPY_WRITE_BUFFER"  value="0x8F37"/>
 
-    <function name="CopyBufferSubData" offset="assign">
+    <function name="CopyBufferSubData" offset="assign" es2="3.0">
         <param name="readTarget" type="GLenum"/>
         <param name="writeTarget" type="GLenum"/>
         <param name="readOffset" type="GLintptr"/>

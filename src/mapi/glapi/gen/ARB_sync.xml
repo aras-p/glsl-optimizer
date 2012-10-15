@@ -39,40 +39,40 @@
     -->
 
 
-    <function name="FenceSync" offset="assign">
+    <function name="FenceSync" offset="assign" es2="3.0">
         <param name="condition" type="GLenum"/>
         <param name="flags" type="GLbitfield"/>
         <return type="GLsync"/>
     </function>
 
-    <function name="IsSync" offset="assign">
+    <function name="IsSync" offset="assign" es2="3.0">
         <param name="sync" type="GLsync"/>
 	<return type="GLboolean"/>
     </function>
 
-    <function name="DeleteSync" offset="assign">
+    <function name="DeleteSync" offset="assign" es2="3.0">
         <param name="sync" type="GLsync"/>
     </function>
 
-    <function name="ClientWaitSync" offset="assign">
+    <function name="ClientWaitSync" offset="assign" es2="3.0">
         <param name="sync" type="GLsync"/>
         <param name="flags" type="GLbitfield"/>
 	<param name="timeout" type="GLuint64"/>
         <return type="GLenum"/>
     </function>
 
-    <function name="WaitSync" offset="assign">
+    <function name="WaitSync" offset="assign" es2="3.0">
         <param name="sync" type="GLsync"/>
         <param name="flags" type="GLbitfield"/>
 	<param name="timeout" type="GLuint64"/>
     </function>
 
-    <function name="GetInteger64v" offset="assign">
+    <function name="GetInteger64v" offset="assign" es2="3.0">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint64 *" output="true" variable_param="pname"/>
     </function>
 
-    <function name="GetSynciv" offset="assign">
+    <function name="GetSynciv" offset="assign" es2="3.0">
         <param name="sync" type="GLsync"/>
         <param name="pname" type="GLenum"/>
         <param name="bufSize" type="GLsizei"/>

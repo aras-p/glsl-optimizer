@@ -10,21 +10,21 @@
 
     <enum name="VERTEX_ARRAY_BINDING" value="0x85B5"/>
 
-    <function name="BindVertexArray" offset="assign">
+    <function name="BindVertexArray" offset="assign" es2="3.0">
         <param name="array" type="GLuint"/>
     </function>
 
-    <function name="DeleteVertexArrays" alias="DeleteVertexArraysAPPLE">
+    <function name="DeleteVertexArrays" alias="DeleteVertexArraysAPPLE" es2="3.0">
         <param name="n" type="GLsizei"/>
         <param name="arrays" type="const GLuint *"/>
     </function>
 
-    <function name="GenVertexArrays" offset="assign">
+    <function name="GenVertexArrays" offset="assign" es2="3.0">
         <param name="n" type="GLsizei"/>
         <param name="arrays" type="GLuint *"/>
     </function>
 
-    <function name="IsVertexArray" alias="IsVertexArrayAPPLE">
+    <function name="IsVertexArray" alias="IsVertexArrayAPPLE" es2="3.0">
         <param name="array" type="GLuint"/>
         <return type="GLboolean"/>
     </function>

@@ -15,7 +15,7 @@
     <enum name="MAP_FLUSH_EXPLICIT_BIT"      value="0x0010"/>
     <enum name="MAP_UNSYNCHRONIZED_BIT"      value="0x0020"/>
 
-    <function name="MapBufferRange" offset="assign">
+    <function name="MapBufferRange" offset="assign" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="offset" type="GLintptr"/>
         <param name="length" type="GLsizeiptr"/>
@@ -23,7 +23,7 @@
         <return type="GLvoid *"/>
     </function>
 
-    <function name="FlushMappedBufferRange" offset="assign">
+    <function name="FlushMappedBufferRange" offset="assign" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="offset" type="GLintptr"/>
         <param name="length" type="GLsizeiptr"/>

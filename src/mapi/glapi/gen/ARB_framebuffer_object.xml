@@ -169,7 +169,7 @@
         <param name="height" type="GLsizei"/>
     </function>
 
-    <function name="RenderbufferStorageMultisample" offset="assign">
+    <function name="RenderbufferStorageMultisample" offset="assign" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="samples" type="GLsizei"/>
         <param name="internalformat" type="GLenum"/>
@@ -238,7 +238,7 @@
         <param name="zoffset" type="GLint"/>
     </function>
 
-    <function name="FramebufferTextureLayer" alias="FramebufferTextureLayerEXT">
+    <function name="FramebufferTextureLayer" alias="FramebufferTextureLayerEXT" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="texture" type="GLuint"/>
@@ -262,7 +262,7 @@
         <param name="params" type="GLint *" output="true"/>
     </function>
 
-    <function name="BlitFramebuffer" alias="BlitFramebufferEXT">
+    <function name="BlitFramebuffer" alias="BlitFramebufferEXT" es2="3.0">
         <param name="srcX0" type="GLint"/>
         <param name="srcY0" type="GLint"/>
         <param name="srcX1" type="GLint"/>

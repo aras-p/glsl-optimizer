@@ -17,7 +17,7 @@
     <param name="width" type="GLsizei"/>
   </function>
 
-  <function name="TexStorage2D" offset="assign">
+  <function name="TexStorage2D" offset="assign" es2="3.0">
     <param name="target" type="GLenum"/>
     <param name="levels" type="GLsizei"/>
     <param name="internalFormat" type="GLenum"/>
@@ -25,7 +25,7 @@
     <param name="height" type="GLsizei"/>
   </function>
 
-  <function name="TexStorage3D" offset="assign">
+  <function name="TexStorage3D" offset="assign" es2="3.0">
     <param name="target" type="GLenum"/>
     <param name="levels" type="GLsizei"/>
     <param name="internalFormat" type="GLenum"/>

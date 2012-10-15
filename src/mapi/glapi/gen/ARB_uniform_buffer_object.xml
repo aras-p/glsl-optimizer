@@ -39,14 +39,14 @@
 <enum name="UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER" value="0x8A46" />
 <enum name="INVALID_INDEX" value="0xFFFFFFFF" />
 
-<function name="GetUniformIndices" offset="assign">
+<function name="GetUniformIndices" offset="assign" es2="3.0">
     <param name="program" type="GLuint" />
     <param name="uniformCount" type="GLsizei" />
     <param name="uniformNames" type="const GLchar * const *" />
     <param name="uniformIndices" type="GLuint *" />
 </function>
 
-<function name="GetActiveUniformsiv" offset="assign">
+<function name="GetActiveUniformsiv" offset="assign" es2="3.0">
     <param name="program" type="GLuint" />
     <param name="uniformCount" type="GLsizei" />
     <param name="uniformIndices" type="const GLuint *" />
@@ -62,20 +62,20 @@
     <param name="uniformName" type="GLchar *" />
 </function>
 
-<function name="GetUniformBlockIndex" offset="assign">
+<function name="GetUniformBlockIndex" offset="assign" es2="3.0">
     <return type="GLuint"/>
     <param name="program" type="GLuint" />
     <param name="uniformBlockName" type="const GLchar *" />
 </function>
 
-<function name="GetActiveUniformBlockiv" offset="assign">
+<function name="GetActiveUniformBlockiv" offset="assign" es2="3.0">
     <param name="program" type="GLuint" />
     <param name="uniformBlockIndex" type="GLuint" />
     <param name="pname" type="GLenum" />
     <param name="params" type="GLint *" />
 </function>
 
-<function name="GetActiveUniformBlockName" offset="assign">
+<function name="GetActiveUniformBlockName" offset="assign" es2="3.0">
     <param name="program" type="GLuint" />
     <param name="uniformBlockIndex" type="GLuint" />
     <param name="bufSize" type="GLsizei" />
@@ -86,7 +86,7 @@
 <!-- Duplicated with GL3x.xml: BindBufferRange, BindBufferBase,
      GetIntegeri_v -->
 
-<function name="UniformBlockBinding" offset="assign" >
+<function name="UniformBlockBinding" offset="assign" es2="3.0">
     <param name="program" type="GLuint" />
     <param name="uniformBlockIndex" type="GLuint" />
     <param name="uniformBlockBinding" type="GLuint" />

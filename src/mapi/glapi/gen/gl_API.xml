@@ -2603,7 +2603,7 @@
         <glx rop="170" large="true"/>
     </function>
 
-    <function name="ReadBuffer" offset="254">
+    <function name="ReadBuffer" offset="254" es2="3.0">
         <param name="mode" type="GLenum"/>
         <glx rop="171"/>
     </function>
@@ -3708,7 +3708,7 @@
         <glx rop="4097"/>
     </function>
 
-    <function name="DrawRangeElements" offset="338">
+    <function name="DrawRangeElements" offset="338" es2="3.0">
         <param name="mode" type="GLenum"/>
         <param name="start" type="GLuint"/>
         <param name="end" type="GLuint"/>
@@ -3975,7 +3975,7 @@
         <glx rop="4113"/>
     </function>
 
-    <function name="TexImage3D" offset="371">
+    <function name="TexImage3D" offset="371" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="internalformat" type="GLint"/>
@@ -3989,7 +3989,7 @@
         <glx rop="4114" large="true"/>
     </function>
 
-    <function name="TexSubImage3D" offset="372">
+    <function name="TexSubImage3D" offset="372" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="xoffset" type="GLint"/>
@@ -4005,7 +4005,7 @@
         <glx rop="4115" large="true"/>
     </function>
 
-    <function name="CopyTexSubImage3D" offset="373">
+    <function name="CopyTexSubImage3D" offset="373" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="xoffset" type="GLint"/>
@@ -4448,7 +4448,7 @@
         <param name="invert" type="GLboolean"/>
     </function>
 
-    <function name="CompressedTexImage3D" alias="CompressedTexImage3DARB">
+    <function name="CompressedTexImage3D" alias="CompressedTexImage3DARB" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="internalformat" type="GLenum"/>
@@ -4482,7 +4482,7 @@
         <param name="data" type="const GLvoid *"/>
     </function>
 
-    <function name="CompressedTexSubImage3D" alias="CompressedTexSubImage3DARB">
+    <function name="CompressedTexSubImage3D" alias="CompressedTexSubImage3DARB" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="xoffset" type="GLint"/>
@@ -4972,7 +4972,7 @@
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
     </function>
 
-    <function name="GetBufferPointerv" alias="GetBufferPointervARB">
+    <function name="GetBufferPointerv" alias="GetBufferPointervARB" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLvoid **" output="true"/>
@@ -4996,36 +4996,36 @@
         <return type="GLvoid *"/>
     </function>
 
-    <function name="UnmapBuffer" alias="UnmapBufferARB">
+    <function name="UnmapBuffer" alias="UnmapBufferARB" es2="3.0">
         <param name="target" type="GLenum"/>
         <return type="GLboolean"/>
     </function>
 
-    <function name="GenQueries" alias="GenQueriesARB">
+    <function name="GenQueries" alias="GenQueriesARB" es2="3.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="ids" type="GLuint *" output="true" count="n"/>
     </function>
 
-    <function name="DeleteQueries" alias="DeleteQueriesARB">
+    <function name="DeleteQueries" alias="DeleteQueriesARB" es2="3.0">
         <param name="n" type="GLsizei"/>
         <param name="ids" type="const GLuint *"/>
     </function>
 
-    <function name="IsQuery" alias="IsQueryARB">
+    <function name="IsQuery" alias="IsQueryARB" es2="3.0">
         <param name="id" type="GLuint"/>
         <return type="GLboolean"/>
     </function>
 
-    <function name="BeginQuery" alias="BeginQueryARB">
+    <function name="BeginQuery" alias="BeginQueryARB" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="id" type="GLuint"/>
     </function>
 
-    <function name="EndQuery" alias="EndQueryARB">
+    <function name="EndQuery" alias="EndQueryARB" es2="3.0">
         <param name="target" type="GLenum"/>
     </function>
 
-    <function name="GetQueryiv" alias="GetQueryivARB">
+    <function name="GetQueryiv" alias="GetQueryivARB" es2="3.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
@@ -5037,7 +5037,7 @@
         <param name="params" type="GLint *" output="true" variable_param="pname"/>
     </function>
 
-    <function name="GetQueryObjectuiv" alias="GetQueryObjectuivARB">
+    <function name="GetQueryObjectuiv" alias="GetQueryObjectuivARB" es2="3.0">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLuint *" output="true" variable_param="pname"/>
@@ -5145,7 +5145,7 @@
         <param name="modeA" type="GLenum"/>
     </function>
 
-    <function name="DrawBuffers" alias="DrawBuffersARB">
+    <function name="DrawBuffers" alias="DrawBuffersARB" es2="3.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="bufs" type="const GLenum *" count="n"/>
     </function>
@@ -5727,42 +5727,42 @@
     <enum name="COMPRESSED_SLUMINANCE"          value="0x8C4A"/>
     <enum name="COMPRESSED_SLUMINANCE_ALPHA"    value="0x8C4B"/>
 
-    <function name="UniformMatrix2x3fv" offset="assign">
+    <function name="UniformMatrix2x3fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
-    <function name="UniformMatrix3x2fv" offset="assign">
+    <function name="UniformMatrix3x2fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
-    <function name="UniformMatrix2x4fv" offset="assign">
+    <function name="UniformMatrix2x4fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
-    <function name="UniformMatrix4x2fv" offset="assign">
+    <function name="UniformMatrix4x2fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
-    <function name="UniformMatrix3x4fv" offset="assign">
+    <function name="UniformMatrix3x4fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>
         <param name="value" type="const GLfloat *"/>
         <glx ignore="true"/>
     </function>
-    <function name="UniformMatrix4x3fv" offset="assign">
+    <function name="UniformMatrix4x3fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <param name="transpose" type="GLboolean"/>

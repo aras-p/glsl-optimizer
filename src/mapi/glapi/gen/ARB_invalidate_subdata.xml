@@ -29,7 +29,7 @@
     <param name="buffer" type="GLuint"/>
   </function>
 
-  <function name="InvalidateSubFramebuffer" offset="assign">
+  <function name="InvalidateSubFramebuffer" offset="assign" es2="3.0">
     <param name="target" type="GLenum"/>
     <param name="numAttachments" type="GLsizei" counter="true"/>
     <param name="attachments" type="const GLenum *" count="numAttachments"/>
@@ -39,7 +39,7 @@
     <param name="height" type="GLsizei"/>
   </function>
 
-  <function name="InvalidateFramebuffer" offset="assign">
+  <function name="InvalidateFramebuffer" offset="assign" es2="3.0">
     <param name="target" type="GLenum"/>
     <param name="numAttachments" type="GLsizei" counter="true"/>
     <param name="attachments" type="const GLenum *" count="numAttachments"/>
