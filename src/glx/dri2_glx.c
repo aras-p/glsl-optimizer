@@ -439,12 +439,16 @@ dri2DrawableGetMSC(struct glx_screen *psc, __GLXDRIdrawable *pdraw,
 
    get_msc_cookie = xcb_dri2_get_msc_unchecked(c, pdraw->xDrawable);
    get_msc_reply = xcb_dri2_get_msc_reply(c, get_msc_cookie, NULL);
+
+   if (!get_msc_reply)
+      return 0;
+
    *ust = merge_counter(get_msc_reply->ust_hi, get_msc_reply->ust_lo);
    *msc = merge_counter(get_msc_reply->msc_hi, get_msc_reply->msc_lo);
    *sbc = merge_counter(get_msc_reply->sbc_hi, get_msc_reply->sbc_lo);
    free(get_msc_reply);
 
-   return 0;
+   return 1;
 }
 
 static int
@@ -467,12 +471,16 @@ dri2WaitForMSC(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
                                                  divisor_hi, divisor_lo,
                                                  remainder_hi, remainder_lo);
    wait_msc_reply = xcb_dri2_wait_msc_reply(c, wait_msc_cookie, NULL);
+
+   if (!wait_msc_reply)
+      return 0;
+
    *ust = merge_counter(wait_msc_reply->ust_hi, wait_msc_reply->ust_lo);
    *msc = merge_counter(wait_msc_reply->msc_hi, wait_msc_reply->msc_lo);
    *sbc = merge_counter(wait_msc_reply->sbc_hi, wait_msc_reply->sbc_lo);
    free(wait_msc_reply);
 
-   return 0;
+   return 1;
 }
 
 static int
@@ -489,12 +497,16 @@ dri2WaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
    wait_sbc_cookie = xcb_dri2_wait_sbc_unchecked(c, pdraw->xDrawable,
                                                  target_sbc_hi, target_sbc_lo);
    wait_sbc_reply = xcb_dri2_wait_sbc_reply(c, wait_sbc_cookie, NULL);
+
+   if (!wait_sbc_reply)
+      return 0;
+
    *ust = merge_counter(wait_sbc_reply->ust_hi, wait_sbc_reply->ust_lo);
    *msc = merge_counter(wait_sbc_reply->msc_hi, wait_sbc_reply->msc_lo);
    *sbc = merge_counter(wait_sbc_reply->sbc_hi, wait_sbc_reply->sbc_lo);
    free(wait_sbc_reply);
 
-   return 0;
+   return 1;
 }
 
 /**
