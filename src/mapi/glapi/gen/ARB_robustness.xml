@@ -25,21 +25,21 @@
     </function>
 
 <!-- OpenGL 1.0 sized buffer queries -->
-    <function name="GetnMapdvARB" offset="assign">
+    <function name="GetnMapdvARB" offset="assign" deprecated="3.1">
         <param name="target" type="GLenum"/>
         <param name="query" type="GLenum"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="v" type="GLdouble *" output="true"/>
     </function>
 
-    <function name="GetnMapfvARB" offset="assign">
+    <function name="GetnMapfvARB" offset="assign" deprecated="3.1">
         <param name="target" type="GLenum"/>
         <param name="query" type="GLenum"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="v" type="GLfloat *" output="true"/>
     </function>
 
-    <function name="GetnMapivARB" offset="assign">
+    <function name="GetnMapivARB" offset="assign" deprecated="3.1">
         <param name="target" type="GLenum"/>
         <param name="query" type="GLenum"/>
         <param name="bufSize" type="GLsizei"/>
@@ -48,19 +48,19 @@
 
 
 
-    <function name="GetnPixelMapfvARB" offset="assign">
+    <function name="GetnPixelMapfvARB" offset="assign" deprecated="3.1">
         <param name="map" type="GLenum"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="values" type="GLfloat *" output="true"/>
     </function>
 
-    <function name="GetnPixelMapuivARB" offset="assign">
+    <function name="GetnPixelMapuivARB" offset="assign" deprecated="3.1">
         <param name="map" type="GLenum"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="values" type="GLuint *" output="true"/>
     </function>
 
-    <function name="GetnPixelMapusvARB" offset="assign">
+    <function name="GetnPixelMapusvARB" offset="assign" deprecated="3.1">
         <param name="map" type="GLenum"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="values" type="GLushort *" output="true"/>
@@ -95,7 +95,7 @@
 
 
 <!-- ARB_imaging sized buffer queries -->
-    <function name="GetnColorTableARB" offset="assign">
+    <function name="GetnColorTableARB" offset="assign" deprecated="3.1">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
@@ -103,7 +103,7 @@
         <param name="table" type="GLvoid *" output="true"/>
     </function>
 
-    <function name="GetnConvolutionFilterARB" offset="assign">
+    <function name="GetnConvolutionFilterARB" offset="assign" deprecated="3.1">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
@@ -111,7 +111,7 @@
         <param name="image" type="GLvoid *" output="true"/>
     </function>
 
-    <function name="GetnSeparableFilterARB" offset="assign">
+    <function name="GetnSeparableFilterARB" offset="assign" deprecated="3.1">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
@@ -122,7 +122,7 @@
         <param name="span" type="GLvoid *" output="true"/>
     </function>
 
-    <function name="GetnHistogramARB" offset="assign">
+    <function name="GetnHistogramARB" offset="assign" deprecated="3.1">
         <param name="target" type="GLenum"/>
         <param name="reset" type="GLboolean"/>
         <param name="format" type="GLenum"/>
@@ -131,7 +131,7 @@
         <param name="values" type="GLvoid *" output="true"/>
     </function>
 
-    <function name="GetnMinmaxARB" offset="assign">
+    <function name="GetnMinmaxARB" offset="assign" deprecated="3.1">
         <param name="target" type="GLenum"/>
         <param name="reset" type="GLboolean"/>
         <param name="format" type="GLenum"/>

@@ -5,7 +5,8 @@
 <category name="GL_APPLE_vertex_array_object" number="273">
     <enum name="VERTEX_ARRAY_BINDING_APPLE"               value="0x85B5"/>
 
-    <function name="BindVertexArrayAPPLE" offset="assign" static_dispatch="false">
+    <function name="BindVertexArrayAPPLE" offset="assign"
+              static_dispatch="false" deprecated="3.1">
         <param name="array" type="GLuint"/>
     </function>
 
@@ -14,7 +15,8 @@
 	<param name="arrays" type="const GLuint *" count="n"/>
     </function>
 
-    <function name="GenVertexArraysAPPLE" offset="assign" static_dispatch="false">
+    <function name="GenVertexArraysAPPLE" offset="assign"
+              static_dispatch="false" deprecated="3.1">
         <param name="n" type="GLsizei"/>
 	<param name="arrays" type="GLuint *" count="n" output="true"/>
     </function>
