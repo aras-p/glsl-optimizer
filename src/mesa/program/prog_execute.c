@@ -183,9 +183,6 @@ get_dst_register_pointer(const struct prog_dst_register *dest,
          return dummyReg;
       return machine->Outputs[reg];
 
-   case PROGRAM_WRITE_ONLY:
-      return dummyReg;
-
    default:
       _mesa_problem(NULL,
          "Invalid dest register file %d in get_dst_register_pointer()",

@@ -1010,7 +1010,6 @@ static struct brw_reg get_reg( struct brw_vs_compile *c,
 
    case PROGRAM_LOCAL_PARAM: 
    case PROGRAM_ENV_PARAM: 
-   case PROGRAM_WRITE_ONLY:
    default:
       assert(0);
       return brw_null_reg();

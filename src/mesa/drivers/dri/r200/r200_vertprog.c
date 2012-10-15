@@ -218,7 +218,6 @@ static unsigned long t_src_class(gl_register_file file)
       return VSF_IN_CLASS_PARAM;
    /*
    case PROGRAM_OUTPUT:
-   case PROGRAM_WRITE_ONLY:
    case PROGRAM_ADDRESS:
    */
    default:

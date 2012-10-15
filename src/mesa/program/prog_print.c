@@ -64,8 +64,6 @@ _mesa_register_file_name(gl_register_file f)
       return "CONST";
    case PROGRAM_UNIFORM:
       return "UNIFORM";
-   case PROGRAM_WRITE_ONLY:
-      return "WRITE_ONLY";
    case PROGRAM_ADDRESS:
       return "ADDR";
    case PROGRAM_SAMPLER:
