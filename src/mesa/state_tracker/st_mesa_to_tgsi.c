@@ -1052,19 +1052,10 @@ st_translate_mesa_program(
     */
    if (procType == TGSI_PROCESSOR_FRAGMENT) {
       for (i = 0; i < numInputs; i++) {
-         if (program->InputFlags[0] & PROG_PARAM_BIT_CYL_WRAP) {
-            t->inputs[i] = ureg_DECL_fs_input_cyl(ureg,
-                                                  inputSemanticName[i],
-                                                  inputSemanticIndex[i],
-                                                  interpMode[i],
-                                                  TGSI_CYLINDRICAL_WRAP_X);
-         }
-         else {
-            t->inputs[i] = ureg_DECL_fs_input(ureg,
-                                              inputSemanticName[i],
-                                              inputSemanticIndex[i],
-                                              interpMode[i]);
-         }
+         t->inputs[i] = ureg_DECL_fs_input(ureg,
+                                           inputSemanticName[i],
+                                           inputSemanticIndex[i],
+                                           interpMode[i]);
       }
 
       if (program->InputsRead & FRAG_BIT_WPOS) {

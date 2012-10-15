@@ -41,14 +41,6 @@ extern "C" {
 
 
 /**
- * Program parameter flags
- */
-/*@{*/
-#define PROG_PARAM_BIT_CYL_WRAP  0x10  /**< XXX gallium debug */
-/*@}*/
-
-
-/**
  * Actual data for constant values of parameters.
  */
 typedef union gl_constant_value
