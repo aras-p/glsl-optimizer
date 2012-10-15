@@ -543,8 +543,6 @@ translate_opcode( unsigned op )
       return TGSI_OPCODE_BGNLOOP;
    case OPCODE_BGNSUB:
       return TGSI_OPCODE_BGNSUB;
-   case OPCODE_BRA:
-      return TGSI_OPCODE_BRA;
    case OPCODE_BRK:
       return TGSI_OPCODE_BRK;
    case OPCODE_CAL:
