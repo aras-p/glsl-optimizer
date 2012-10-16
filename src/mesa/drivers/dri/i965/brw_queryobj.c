@@ -142,6 +142,9 @@ brw_queryobj_get_results(struct gl_context *ctx,
    if (query->bo == NULL)
       return;
 
+   if (drm_intel_bo_references(intel->batch.bo, query->bo))
+      intel_batchbuffer_flush(intel);
+
    if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
       if (drm_intel_bo_busy(query->bo)) {
          perf_debug("Stalling on the GPU waiting for a query object.\n");
@@ -303,13 +306,8 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
       break;
 
    case GL_SAMPLES_PASSED_ARB:
-      /* Flush the batchbuffer in case it has writes to our query BO.
-       * Have later queries write to a new query BO so that further rendering
-       * doesn't delay the collection of our results.
-       */
       if (query->bo) {
 	 brw_emit_query_end(brw);
-	 intel_batchbuffer_flush(intel);
 
 	 drm_intel_bo_unreference(brw->query.bo);
 	 brw->query.bo = NULL;
@@ -364,7 +362,18 @@ static void brw_wait_query(struct gl_context *ctx, struct gl_query_object *q)
 
 static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
+
+   /* From the GL_ARB_occlusion_query spec:
+    *
+    *     "Instead of allowing for an infinite loop, performing a
+    *      QUERY_RESULT_AVAILABLE_ARB will perform a flush if the result is
+    *      not ready yet on the first time it is queried.  This ensures that
+    *      the async query will return true in finite time.
+    */
+   if (query->bo && drm_intel_bo_references(intel->batch.bo, query->bo))
+      intel_batchbuffer_flush(intel);
 
    if (query->bo == NULL || !drm_intel_bo_busy(query->bo)) {
       brw_queryobj_get_results(ctx, query);
