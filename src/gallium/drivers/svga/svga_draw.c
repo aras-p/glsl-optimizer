@@ -63,7 +63,7 @@ fail:
 
 void svga_hwtnl_destroy( struct svga_hwtnl *hwtnl )
 {
-   int i, j;
+   unsigned i, j;
 
    for (i = 0; i < PIPE_PRIM_MAX; i++) {
       for (j = 0; j < IDX_CACHE_MAX; j++) {

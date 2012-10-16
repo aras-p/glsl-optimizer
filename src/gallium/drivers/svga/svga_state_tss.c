@@ -37,7 +37,7 @@
 
 void svga_cleanup_tss_binding(struct svga_context *svga)
 {
-   int i;
+   unsigned i;
    unsigned count = MAX2( svga->curr.num_sampler_views,
                           svga->state.hw_draw.num_views );
 

@@ -177,7 +177,7 @@ svga_vbuf_submit_state( struct svga_vbuf_render *svga_render )
    struct svga_context *svga = svga_render->svga;
    SVGA3dVertexDecl vdecl[PIPE_MAX_ATTRIBS];
    enum pipe_error ret;
-   int i;
+   unsigned i;
 
    /* if the vdecl or vbuf hasn't changed do nothing */
    if (!svga->swtnl.new_vdecl)

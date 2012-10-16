@@ -133,7 +133,7 @@ svga_transfer_dma(struct svga_context *svga,
       }
    }
    else {
-      unsigned y, h, srcy;
+      int y, h, srcy;
       unsigned blockheight = util_format_get_blockheight(st->base.resource->format);
       h = st->hw_nblocksy * blockheight;
       srcy = 0;

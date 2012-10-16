@@ -156,7 +156,8 @@ svga_swtnl_update_vdecl( struct svga_context *svga )
    struct svga_fragment_shader *fs = svga->curr.fs;
    int offset = 0;
    int nr_decls = 0;
-   int src, i;
+   int src;
+   unsigned i;
 
    memset(vinfo, 0, sizeof(*vinfo));
    memset(vdecl, 0, sizeof(vdecl));

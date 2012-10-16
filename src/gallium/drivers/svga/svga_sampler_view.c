@@ -172,7 +172,8 @@ svga_validate_sampler_view(struct svga_context *svga, struct svga_sampler_view *
    struct svga_texture *tex = svga_texture(v->texture);
    unsigned numFaces;
    unsigned age = 0;
-   int i, k;
+   int i;
+   unsigned k;
 
    assert(svga);
 

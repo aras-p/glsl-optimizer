@@ -75,7 +75,7 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
    struct svga_context *svga = svga_context(pipe);
    struct pipe_framebuffer_state *dst = &svga->curr.framebuffer;
    boolean propagate = FALSE;
-   int i;
+   unsigned i;
 
    dst->width = fb->width;
    dst->height = fb->height;

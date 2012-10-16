@@ -59,7 +59,7 @@ svga_user_buffer_range(struct svga_context *svga,
                        unsigned instance_count)
 {
    const struct pipe_vertex_element *ve = svga->curr.velems->velem;
-   int i;
+   unsigned i;
 
    /*
     * Release old uploaded range (if not done already) and

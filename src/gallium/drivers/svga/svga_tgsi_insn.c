@@ -3098,7 +3098,7 @@ static boolean emit_inverted_texcoords( struct svga_shader_emitter *emit )
 static INLINE boolean
 needs_to_create_zero( struct svga_shader_emitter *emit )
 {
-   int i;
+   unsigned i;
 
    if (emit->unit == PIPE_SHADER_FRAGMENT) {
       if (emit->key.fkey.light_twoside)

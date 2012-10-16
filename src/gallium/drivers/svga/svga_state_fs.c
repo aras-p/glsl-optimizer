@@ -165,7 +165,7 @@ make_fs_key(const struct svga_context *svga,
             struct svga_fragment_shader *fs,
             struct svga_fs_compile_key *key)
 {
-   int i;
+   unsigned i;
    int idx = 0;
 
    memset(key, 0, sizeof *key);
