@@ -34,12 +34,8 @@
 #include "svga_tgsi.h"
 #include "svga_screen.h"
 #include "svga_resource_buffer.h"
-
 #include "svga_hw_reg.h"
 
-
-/***********************************************************************
- */
 
 
 static enum pipe_error
@@ -53,7 +49,7 @@ emit_hw_vs_vdecl(struct svga_context *svga, unsigned dirty)
    assert(svga->curr.velems->count >=
           svga->curr.vs->base.info.file_count[TGSI_FILE_INPUT]);
 
-   svga_hwtnl_reset_vdecl( svga->hwtnl, 
+   svga_hwtnl_reset_vdecl( svga->hwtnl,
                            svga->curr.velems->count );
 
    /**
@@ -144,7 +140,7 @@ emit_hw_vdecl(struct svga_context *svga, unsigned dirty)
 }
 
 
-struct svga_tracked_state svga_hw_vdecl = 
+struct svga_tracked_state svga_hw_vdecl =
 {
    "hw vertex decl state (hwtnl version)",
    ( SVGA_NEW_NEED_SWTNL |
@@ -155,9 +151,3 @@ struct svga_tracked_state svga_hw_vdecl =
      SVGA_NEW_VS ),
    emit_hw_vdecl
 };
-
-
-
-
-
-
