@@ -26,17 +26,6 @@ struct wl_egl_window {
 	int attached_height;
 };
 
-struct wl_egl_pixmap {
-	struct wl_buffer *buffer;
-
-	int width;
-	int height;
-
-	void (*destroy) (struct wl_egl_pixmap *egl_pixmap);
-
-	void *driver_private;
-};
-
 #ifdef  __cplusplus
 }
 #endif

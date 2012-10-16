@@ -67,7 +67,6 @@ enum wayland_buffer_type {
 
 enum wayland_surface_type {
    WL_WINDOW_SURFACE,
-   WL_PIXMAP_SURFACE,
    WL_PBUFFER_SURFACE
 };
 
@@ -76,7 +75,6 @@ struct wayland_surface {
    struct wayland_display *display;
 
    struct wl_egl_window *win;
-   struct wl_egl_pixmap *pix;
    enum wayland_surface_type type;
    int dx, dy;
    struct resource_surface *rsurf;
