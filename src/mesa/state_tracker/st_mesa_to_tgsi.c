@@ -563,10 +563,6 @@ translate_opcode( unsigned op )
       return TGSI_OPCODE_DST;
    case OPCODE_ELSE:
       return TGSI_OPCODE_ELSE;
-   case OPCODE_EMIT_VERTEX:
-      return TGSI_OPCODE_EMIT;
-   case OPCODE_END_PRIMITIVE:
-      return TGSI_OPCODE_ENDPRIM;
    case OPCODE_ENDIF:
       return TGSI_OPCODE_ENDIF;
    case OPCODE_ENDLOOP:

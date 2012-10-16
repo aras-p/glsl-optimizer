@@ -810,12 +810,6 @@ _mesa_fprint_instruction_opt(FILE *f,
          fprintf(f, "# %s\n", inst->Comment);
       }
       break;
-   case OPCODE_EMIT_VERTEX:
-      fprintf(f, "EMIT_VERTEX\n");
-      break;
-   case OPCODE_END_PRIMITIVE:
-      fprintf(f, "END_PRIMITIVE\n");
-      break;
    /* XXX may need other special-case instructions */
    default:
       if (inst->Opcode < MAX_OPCODE) {
