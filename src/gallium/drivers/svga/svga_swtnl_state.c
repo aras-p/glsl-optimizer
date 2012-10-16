@@ -35,21 +35,21 @@
 #include "svga_swtnl_private.h"
 
 
-#define SVGA_POINT_ADJ_X -0.375
-#define SVGA_POINT_ADJ_Y -0.5
+#define SVGA_POINT_ADJ_X -0.375f
+#define SVGA_POINT_ADJ_Y -0.5f
 
-#define SVGA_LINE_ADJ_X -0.5
-#define SVGA_LINE_ADJ_Y -0.5
+#define SVGA_LINE_ADJ_X -0.5f
+#define SVGA_LINE_ADJ_Y -0.5f
 
-#define SVGA_TRIANGLE_ADJ_X -0.375
-#define SVGA_TRIANGLE_ADJ_Y -0.5
+#define SVGA_TRIANGLE_ADJ_X -0.375f
+#define SVGA_TRIANGLE_ADJ_Y -0.5f
 
 
 static void set_draw_viewport( struct svga_context *svga )
 {
    struct pipe_viewport_state vp = svga->curr.viewport;
-   float adjx = 0;
-   float adjy = 0;
+   float adjx = 0.0f;
+   float adjy = 0.0f;
 
    switch (svga->curr.reduced_prim) {
    case PIPE_PRIM_POINTS:
@@ -63,8 +63,8 @@ static void set_draw_viewport( struct svga_context *svga )
        */
       if (svga->curr.rast->need_pipeline & SVGA_PIPELINE_FLAG_LINES)
       {
-         adjx = SVGA_LINE_ADJ_X + 0.175;
-         adjy = SVGA_LINE_ADJ_Y - 0.175;
+         adjx = SVGA_LINE_ADJ_X + 0.175f;
+         adjy = SVGA_LINE_ADJ_Y - 0.175f;
       }
       else {
          adjx = SVGA_LINE_ADJ_X;
