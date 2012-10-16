@@ -45,6 +45,7 @@
 #define R600_BIG_ENDIAN 0
 #endif
 
+struct r600_bytecode;
 struct r600_shader_key;
 
 /* This encapsulates a state or an operation which can emitted into the GPU
