@@ -2469,9 +2469,24 @@ vec4_visitor::emit_scratch_write(vec4_instruction *inst, int base_offset)
    int reg_offset = base_offset + inst->dst.reg_offset;
    src_reg index = get_scratch_offset(inst, inst->dst.reladdr, reg_offset);
 
-   /* Create a temporary register to store *inst's result in. */
+   /* Create a temporary register to store *inst's result in.
+    *
+    * We have to be careful in MOVing from our temporary result register in
+    * the scratch write.  If we swizzle from channels of the temporary that
+    * weren't initialized, it will confuse live interval analysis, which will
+    * make spilling fail to make progress.
+    */
    src_reg temp = src_reg(this, glsl_type::vec4_type);
    temp.type = inst->dst.type;
+   int first_writemask_chan = ffs(inst->dst.writemask) - 1;
+   int swizzles[4];
+   for (int i = 0; i < 4; i++)
+      if (inst->dst.writemask & (1 << i))
+         swizzles[i] = i;
+      else
+         swizzles[i] = first_writemask_chan;
+   temp.swizzle = BRW_SWIZZLE4(swizzles[0], swizzles[1],
+                               swizzles[2], swizzles[3]);
 
    dst_reg dst = dst_reg(brw_writemask(brw_vec8_grf(0, 0),
 				       inst->dst.writemask));
