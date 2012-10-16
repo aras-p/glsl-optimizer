@@ -178,13 +178,13 @@ emit_viewport( struct svga_context *svga,
    boolean invertY = FALSE;
    enum pipe_error ret;
 
-   float fb_width = svga->curr.framebuffer.width;
-   float fb_height = svga->curr.framebuffer.height;
+   float fb_width = (float) svga->curr.framebuffer.width;
+   float fb_height = (float) svga->curr.framebuffer.height;
 
-   float fx =        viewport->scale[0] * -1.0 + viewport->translate[0];
-   float fy = flip * viewport->scale[1] * -1.0 + viewport->translate[1];
-   float fw =        viewport->scale[0] * 2; 
-   float fh = flip * viewport->scale[1] * 2; 
+   float fx =        viewport->scale[0] * -1.0f + viewport->translate[0];
+   float fy = flip * viewport->scale[1] * -1.0f + viewport->translate[1];
+   float fw =        viewport->scale[0] * 2.0f; 
+   float fh = flip * viewport->scale[1] * 2.0f; 
 
    memset( &prescale, 0, sizeof(prescale) );
 
@@ -213,17 +213,17 @@ emit_viewport( struct svga_context *svga,
 
 
    if (fw < 0) {
-      prescale.scale[0] *= -1.0;
+      prescale.scale[0] *= -1.0f;
       prescale.translate[0] += -fw;
       fw = -fw;
-      fx =        viewport->scale[0] * 1.0 + viewport->translate[0];
+      fx =        viewport->scale[0] * 1.0f + viewport->translate[0];
    }
 
    if (fh < 0.0) {
-      prescale.translate[1] = fh - 1 + fy * 2;
+      prescale.translate[1] = fh - 1.0f + fy * 2.0f;
       fh = -fh;
       fy -= fh;
-      prescale.scale[1] = -1.0;
+      prescale.scale[1] = -1.0f;
       invertY = TRUE;
    }
 
@@ -231,7 +231,7 @@ emit_viewport( struct svga_context *svga,
       prescale.translate[0] += fx;
       prescale.scale[0] *= fw / (fw + fx); 
       fw += fx;
-      fx = 0;
+      fx = 0.0f;
    }
 
    if (fy < 0) {
@@ -243,7 +243,7 @@ emit_viewport( struct svga_context *svga,
       }
       prescale.scale[1] *= fh / (fh + fy); 
       fh += fy;
-      fy = 0;
+      fy = 0.0f;
    }
 
    if (fx + fw > fb_width) {
@@ -281,10 +281,10 @@ emit_viewport( struct svga_context *svga,
     * TODO: adjust pretranslate correct for any subpixel error
     * introduced converting to integers.
     */
-   rect.x = fx;
-   rect.y = fy;
-   rect.w = fw;
-   rect.h = fh;
+   rect.x = (uint32) fx;
+   rect.y = (uint32) fy;
+   rect.w = (uint32) fw;
+   rect.h = (uint32) fh;
 
    SVGA_DBG(DEBUG_VIEWPORT,
             "viewport error %f,%f %fx%f\n",
@@ -331,8 +331,8 @@ emit_viewport( struct svga_context *svga,
    }
 
 
-   range_min = viewport->scale[2] * -1.0 + viewport->translate[2];
-   range_max = viewport->scale[2] *  1.0 + viewport->translate[2];
+   range_min = viewport->scale[2] * -1.0f + viewport->translate[2];
+   range_max = viewport->scale[2] *  1.0f + viewport->translate[2];
 
    /* D3D (and by implication SVGA) doesn't like dealing with zmax
     * less than zmin.  Detect that case, flip the depth range and
@@ -358,10 +358,10 @@ emit_viewport( struct svga_context *svga,
                prescale.scale[0],
                prescale.scale[1]);
 
-      H[0] = (float)rect.w / 2.0;
-      H[1] = -(float)rect.h / 2.0;
-      J[0] = (float)rect.x + (float)rect.w / 2.0;
-      J[1] = (float)rect.y + (float)rect.h / 2.0;
+      H[0] = (float)rect.w / 2.0f;
+      H[1] = -(float)rect.h / 2.0f;
+      J[0] = (float)rect.x + (float)rect.w / 2.0f;
+      J[1] = (float)rect.y + (float)rect.h / 2.0f;
 
       SVGA_DBG(DEBUG_VIEWPORT,
                "H %f,%f\n"
@@ -394,7 +394,7 @@ emit_viewport( struct svga_context *svga,
        */
       for (i = 0; i < 2; i++) {
          prescale.translate[i] = ((prescale.translate[i] +
-                                   (prescale.scale[i] - 1.0) * J[i]) / H[i]);
+                                   (prescale.scale[i] - 1.0f) * J[i]) / H[i]);
       }
 
       SVGA_DBG(DEBUG_VIEWPORT,
