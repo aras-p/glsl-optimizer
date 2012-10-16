@@ -2465,14 +2465,13 @@ vec4_visitor::emit_scratch_read(vec4_instruction *inst,
  */
 void
 vec4_visitor::emit_scratch_write(vec4_instruction *inst,
-				 src_reg temp, dst_reg orig_dst,
-				 int base_offset)
+				 src_reg temp, int base_offset)
 {
-   int reg_offset = base_offset + orig_dst.reg_offset;
-   src_reg index = get_scratch_offset(inst, orig_dst.reladdr, reg_offset);
+   int reg_offset = base_offset + inst->dst.reg_offset;
+   src_reg index = get_scratch_offset(inst, inst->dst.reladdr, reg_offset);
 
    dst_reg dst = dst_reg(brw_writemask(brw_vec8_grf(0, 0),
-				       orig_dst.writemask));
+				       inst->dst.writemask));
    vec4_instruction *write = SCRATCH_WRITE(dst, temp, index);
    write->predicate = inst->predicate;
    write->ir = inst->ir;
@@ -2534,7 +2533,7 @@ vec4_visitor::move_grf_array_access_to_scratch()
       if (inst->dst.file == GRF && scratch_loc[inst->dst.reg] != -1) {
 	 src_reg temp = src_reg(this, glsl_type::vec4_type);
 
-	 emit_scratch_write(inst, temp, inst->dst, scratch_loc[inst->dst.reg]);
+	 emit_scratch_write(inst, temp, scratch_loc[inst->dst.reg]);
 
 	 inst->dst.file = temp.file;
 	 inst->dst.reg = temp.reg;

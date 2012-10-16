@@ -428,7 +428,6 @@ public:
 			  int base_offset);
    void emit_scratch_write(vec4_instruction *inst,
 			   src_reg temp,
-			   dst_reg orig_dst,
 			   int base_offset);
    void emit_pull_constant_load(vec4_instruction *inst,
 				dst_reg dst,

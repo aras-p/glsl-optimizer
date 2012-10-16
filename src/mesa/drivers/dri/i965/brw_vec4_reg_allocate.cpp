@@ -355,7 +355,7 @@ vec4_visitor::spill_reg(int spill_reg_nr)
           */
          src_reg temp = src_reg(inst->dst);
          temp.swizzle = BRW_SWIZZLE_XYZW;
-         emit_scratch_write(inst, temp, spill_reg, spill_offset);
+         emit_scratch_write(inst, temp, spill_offset);
       }
    }
 
