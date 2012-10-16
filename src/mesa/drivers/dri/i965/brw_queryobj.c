@@ -302,7 +302,6 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 
    case GL_TIME_ELAPSED_EXT:
       write_timestamp(intel, query->bo, 1);
-      intel_batchbuffer_flush(intel);
       break;
 
    case GL_SAMPLES_PASSED_ARB:
