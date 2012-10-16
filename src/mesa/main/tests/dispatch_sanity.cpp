@@ -107,6 +107,9 @@ offset_to_proc_name_safe(unsigned offset)
    return name ? name : "???";
 }
 
+/* Scan through the dispatch table and check that all the functions in
+ * _glapi_proc *table exist. When found, set their pointers in the table
+ * to _mesa_generic_nop.  */
 static void
 validate_functions(_glapi_proc *table, const struct function *function_table)
 {
@@ -126,7 +129,13 @@ validate_functions(_glapi_proc *table, const struct function *function_table)
 
       table[offset] = (_glapi_proc) _mesa_generic_nop;
    }
+}
 
+/* Scan through the table and ensure that there is nothing except
+ * _mesa_generic_nop (as set by validate_functions().  */
+static void
+validate_nops(const _glapi_proc *table)
+{
    const unsigned size = _glapi_get_dispatch_table_size();
    for (unsigned i = 0; i < size; i++) {
       EXPECT_EQ((_glapi_proc) _mesa_generic_nop, table[i])
@@ -139,6 +148,7 @@ TEST_F(DispatchSanity_test, GLES11)
 {
    _glapi_proc *exec = (_glapi_proc *) _mesa_create_exec_table_es1();
    validate_functions(exec, gles11_functions_possible);
+   validate_nops(exec);
 }
 #endif /* FEATURE_ES1 */
 
@@ -157,6 +167,7 @@ TEST_F(DispatchSanity_test, GLES2)
    _swsetup_CreateContext(&ctx);
 
    validate_functions((_glapi_proc *) ctx.Exec, gles2_functions_possible);
+   validate_nops((_glapi_proc *) ctx.Exec);
 }
 
 #if FEATURE_ES1
