@@ -851,7 +851,7 @@ void *r600_compute_global_transfer_map(
 	struct compute_memory_pool *pool = rctx->screen->global_pool;
 	struct pipe_transfer *transfer = util_slab_alloc(&rctx->pool_transfers);
 	struct r600_resource_global* buffer =
-		(struct r600_resource_global*)transfer->resource;
+		(struct r600_resource_global*)resource;
 	uint32_t* map;
 
 	compute_memory_finalize_pending(pool, ctx_);
