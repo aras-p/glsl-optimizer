@@ -36,17 +36,6 @@
 #include "wayland-drm.h"
 #include "wayland-drm-server-protocol.h"
 
-/* Git master of Wayland is moving towards a stable version of the
- * protocol, but breaking from 0.85 in the process.  For the time
- * being, it's convenient to be able to build Mesa against both master
- * and 0.85.x of Wayland.  To make this work we'll do a compile-time
- * version check and work around the difference in API and protocol */
-#if defined (WAYLAND_VERSION_MAJOR) &&		\
-	WAYLAND_VERSION_MAJOR == 0 &&		\
-	WAYLAND_VERSION_MINOR == 85
-#define HAS_WAYLAND_0_85
-#endif
-
 struct wl_drm {
 	struct wl_display *display;
 
@@ -69,25 +58,10 @@ destroy_buffer(struct wl_resource *resource)
 static void
 buffer_destroy(struct wl_client *client, struct wl_resource *resource)
 {
-#ifdef HAS_WAYLAND_0_85
-	wl_resource_destroy(resource, 0);
-#else
 	wl_resource_destroy(resource);
-#endif
 }
-
-#ifdef HAS_WAYLAND_0_85
-static void
-buffer_damage(struct wl_client *client, struct wl_resource *buffer,
-              int32_t x, int32_t y, int32_t width, int32_t height)
-{
-}
-#endif
 
 const static struct wl_buffer_interface drm_buffer_interface = {
-#ifdef HAS_WAYLAND_0_85
-	buffer_damage,
-#endif
 	buffer_destroy
 };
 
