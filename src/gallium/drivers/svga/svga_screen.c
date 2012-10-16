@@ -113,8 +113,8 @@ svga_get_paramf(struct pipe_screen *screen, enum pipe_capf param)
 
    case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
       if(!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_TEXTURE_ANISOTROPY, &result))
-         return 4.0;
-      return result.u;
+         return 4.0f;
+      return (float) result.u;
 
    case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
       return 15.0;

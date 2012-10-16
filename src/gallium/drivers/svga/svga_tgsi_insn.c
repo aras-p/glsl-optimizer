@@ -666,7 +666,7 @@ create_arl_consts( struct svga_shader_emitter *emit )
       unsigned idx = emit->nr_hw_float_const++;
       float vals[4];
       for (j = 0; j < 4 && (j + i) < emit->num_arl_consts; ++j) {
-         vals[j] = emit->arl_consts[i + j].number;
+         vals[j] = (float) emit->arl_consts[i + j].number;
          emit->arl_consts[i + j].idx = idx;
          switch (j) {
          case 0:
