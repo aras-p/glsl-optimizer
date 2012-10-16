@@ -2464,11 +2464,14 @@ vec4_visitor::emit_scratch_read(vec4_instruction *inst,
  * @base_offset is measured in 32-byte units (the size of a register).
  */
 void
-vec4_visitor::emit_scratch_write(vec4_instruction *inst,
-				 src_reg temp, int base_offset)
+vec4_visitor::emit_scratch_write(vec4_instruction *inst, int base_offset)
 {
    int reg_offset = base_offset + inst->dst.reg_offset;
    src_reg index = get_scratch_offset(inst, inst->dst.reladdr, reg_offset);
+
+   /* Create a temporary register to store *inst's result in. */
+   src_reg temp = src_reg(this, glsl_type::vec4_type);
+   temp.type = inst->dst.type;
 
    dst_reg dst = dst_reg(brw_writemask(brw_vec8_grf(0, 0),
 				       inst->dst.writemask));
@@ -2477,6 +2480,11 @@ vec4_visitor::emit_scratch_write(vec4_instruction *inst,
    write->ir = inst->ir;
    write->annotation = inst->annotation;
    inst->insert_after(write);
+
+   inst->dst.file = temp.file;
+   inst->dst.reg = temp.reg;
+   inst->dst.reg_offset = temp.reg_offset;
+   inst->dst.reladdr = NULL;
 }
 
 /**
@@ -2531,14 +2539,7 @@ vec4_visitor::move_grf_array_access_to_scratch()
       current_annotation = inst->annotation;
 
       if (inst->dst.file == GRF && scratch_loc[inst->dst.reg] != -1) {
-	 src_reg temp = src_reg(this, glsl_type::vec4_type);
-
-	 emit_scratch_write(inst, temp, scratch_loc[inst->dst.reg]);
-
-	 inst->dst.file = temp.file;
-	 inst->dst.reg = temp.reg;
-	 inst->dst.reg_offset = temp.reg_offset;
-	 inst->dst.reladdr = NULL;
+	 emit_scratch_write(inst, scratch_loc[inst->dst.reg]);
       }
 
       for (int i = 0 ; i < 3; i++) {

@@ -346,16 +346,7 @@ vec4_visitor::spill_reg(int spill_reg_nr)
       }
 
       if (inst->dst.file == GRF && inst->dst.reg == spill_reg_nr) {
-         dst_reg spill_reg = inst->dst;
-         inst->dst.reg = virtual_grf_alloc(1);
-
-         /* We don't want a swizzle when reading from the source; read the
-          * whole register and use spill_reg's writemask to select which
-          * channels to write.
-          */
-         src_reg temp = src_reg(inst->dst);
-         temp.swizzle = BRW_SWIZZLE_XYZW;
-         emit_scratch_write(inst, temp, spill_offset);
+         emit_scratch_write(inst, spill_offset);
       }
    }
 
