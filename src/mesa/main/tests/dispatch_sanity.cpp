@@ -73,6 +73,7 @@ struct function {
 };
 
 extern const struct function gles2_functions_possible[];
+extern const struct function gles3_functions_possible[];
 
 #if FEATURE_ES1
 extern "C" _glapi_table *_mesa_create_exec_table_es1(void);
@@ -167,6 +168,25 @@ TEST_F(DispatchSanity_test, GLES2)
    _swsetup_CreateContext(&ctx);
 
    validate_functions((_glapi_proc *) ctx.Exec, gles2_functions_possible);
+   validate_nops((_glapi_proc *) ctx.Exec);
+}
+
+TEST_F(DispatchSanity_test, GLES3)
+{
+   ctx.Version = 30;
+   _mesa_initialize_context(&ctx,
+                            API_OPENGLES2, //api,
+                            &visual,
+                            NULL, //&share_list,
+                            &driver_functions);
+
+   _swrast_CreateContext(&ctx);
+   _vbo_CreateContext(&ctx);
+   _tnl_CreateContext(&ctx);
+   _swsetup_CreateContext(&ctx);
+
+   validate_functions((_glapi_proc *) ctx.Exec, gles2_functions_possible);
+   validate_functions((_glapi_proc *) ctx.Exec, gles3_functions_possible);
    validate_nops((_glapi_proc *) ctx.Exec);
 }
 
@@ -528,5 +548,134 @@ const struct function gles2_functions_possible[] = {
    { "glVertexAttrib4fv", -1 },
    { "glVertexAttribPointer", -1 },
    { "glViewport", _gloffset_Viewport },
+   { NULL, -1 }
+};
+
+const struct function gles3_functions_possible[] = {
+   { "glBeginQuery", -1 },
+   { "glBeginTransformFeedback", -1 },
+   { "glBindBufferBase", -1 },
+   { "glBindBufferRange", -1 },
+   { "glBindSampler", -1 },
+   { "glBindTransformFeedback", -1 },
+   // We check for the aliased -OES version in GLES 2
+   // { "glBindVertexArray", -1 },
+   { "glBlitFramebuffer", -1 },
+   { "glClearBufferfi", -1 },
+   { "glClearBufferfv", -1 },
+   { "glClearBufferiv", -1 },
+   { "glClearBufferuiv", -1 },
+   { "glClientWaitSync", -1 },
+   // We check for the aliased -OES version in GLES 2
+   // { "glCompressedTexImage3D", -1 },
+   // We check for the aliased -OES version in GLES 2
+   // { "glCompressedTexSubImage3D", -1 },
+   { "glCopyBufferSubData", -1 },
+   // We check for the aliased -OES version in GLES 2
+   // { "glCopyTexSubImage3D", -1 },
+   { "glDeleteQueries", -1 },
+   { "glDeleteSamplers", -1 },
+   { "glDeleteSync", -1 },
+   { "glDeleteTransformFeedbacks", -1 },
+   // We check for the aliased -OES version in GLES 2
+   // { "glDeleteVertexArrays", -1 },
+   { "glDrawArraysInstanced", -1 },
+   // We check for the aliased -NV version in GLES 2
+   // { "glDrawBuffers", -1 },
+   { "glDrawElementsInstanced", -1 },
+   { "glDrawRangeElements", -1 },
+   { "glEndQuery", -1 },
+   { "glEndTransformFeedback", -1 },
+   { "glFenceSync", -1 },
+   // We check for the aliased -EXT version in GLES 2
+   // { "glFlushMappedBufferRange", -1 },
+   { "glFramebufferTextureLayer", -1 },
+   { "glGenQueries", -1 },
+   { "glGenSamplers", -1 },
+   { "glGenTransformFeedbacks", -1 },
+   // We check for the aliased -OES version in GLES 2
+   // { "glGenVertexArrays", -1 },
+   { "glGetActiveUniformBlockiv", -1 },
+   { "glGetActiveUniformBlockName", -1 },
+   { "glGetActiveUniformsiv", -1 },
+   // We have an implementation (added Jan 1 2010, 1fbc7193) but never tested...
+   // { "glGetBufferParameteri64v", -1 },
+   // We check for the aliased -OES version in GLES 2
+   // { "glGetBufferPointerv", -1 },
+   { "glGetFragDataLocation", -1 },
+   /// XXX: Missing implementation of glGetInteger64i_v
+   // { "glGetInteger64i_v", -1 },
+   { "glGetInteger64v", -1 },
+   { "glGetIntegeri_v", -1 },
+   // XXX: Missing implementation of ARB_internalformat_query
+   // { "glGetInternalformativ", -1 },
+   // XXX: Missing implementation of ARB_get_program_binary
+   /// { "glGetProgramBinary", -1 },
+   { "glGetQueryiv", -1 },
+   { "glGetQueryObjectuiv", -1 },
+   { "glGetSamplerParameterfv", -1 },
+   { "glGetSamplerParameteriv", -1 },
+   { "glGetStringi", -1 },
+   { "glGetSynciv", -1 },
+   { "glGetTransformFeedbackVarying", -1 },
+   { "glGetUniformBlockIndex", -1 },
+   { "glGetUniformIndices", -1 },
+   { "glGetUniformuiv", -1 },
+   { "glGetVertexAttribIiv", -1 },
+   { "glGetVertexAttribIuiv", -1 },
+   { "glInvalidateFramebuffer", -1 },
+   { "glInvalidateSubFramebuffer", -1 },
+   { "glIsQuery", -1 },
+   { "glIsSampler", -1 },
+   { "glIsSync", -1 },
+   { "glIsTransformFeedback", -1 },
+   // We check for the aliased -OES version in GLES 2
+   // { "glIsVertexArray", -1 },
+   // We check for the aliased -EXT version in GLES 2
+   // { "glMapBufferRange", -1 },
+   { "glPauseTransformFeedback", -1 },
+   // XXX: Missing implementation of ARB_get_program_binary
+   // { "glProgramBinary", -1 },
+   // XXX: Missing implementation of ARB_get_program_binary
+   // { "glProgramParameteri", -1 },
+   // We check for the aliased -NV version in GLES 2
+   // { "glReadBuffer", -1 },
+   { "glRenderbufferStorageMultisample", -1 },
+   { "glResumeTransformFeedback", -1 },
+   { "glSamplerParameterf", -1 },
+   { "glSamplerParameterfv", -1 },
+   { "glSamplerParameteri", -1 },
+   { "glSamplerParameteriv", -1 },
+   // We check for the aliased -OES version in GLES 2
+   // { "glTexImage3D", -1 },
+   { "glTexStorage2D", -1 },
+   { "glTexStorage3D", -1 },
+   // We check for the aliased -OES version in GLES 2
+   // { "glTexSubImage3D", -1 },
+   { "glTransformFeedbackVaryings", -1 },
+   { "glUniform1ui", -1 },
+   { "glUniform1uiv", -1 },
+   { "glUniform2ui", -1 },
+   { "glUniform2uiv", -1 },
+   { "glUniform3ui", -1 },
+   { "glUniform3uiv", -1 },
+   { "glUniform4ui", -1 },
+   { "glUniform4uiv", -1 },
+   { "glUniformBlockBinding", -1 },
+   { "glUniformMatrix2x3fv", -1 },
+   { "glUniformMatrix2x4fv", -1 },
+   { "glUniformMatrix3x2fv", -1 },
+   { "glUniformMatrix3x4fv", -1 },
+   { "glUniformMatrix4x2fv", -1 },
+   { "glUniformMatrix4x3fv", -1 },
+   // We check for the aliased -OES version in GLES 2
+   // { "glUnmapBuffer", -1 },
+   { "glVertexAttribDivisor", -1 },
+   { "glVertexAttribI4i", -1 },
+   { "glVertexAttribI4iv", -1 },
+   { "glVertexAttribI4ui", -1 },
+   { "glVertexAttribI4uiv", -1 },
+   { "glVertexAttribIPointer", -1 },
+   { "glWaitSync", -1 },
    { NULL, -1 }
 };
