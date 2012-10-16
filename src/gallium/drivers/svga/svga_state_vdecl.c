@@ -127,7 +127,7 @@ emit_hw_vs_vdecl(struct svga_context *svga, unsigned dirty)
                         vb->buffer );
    }
 
-   svga_hwtnl_set_index_bias( svga->hwtnl, -neg_bias );
+   svga_hwtnl_set_index_bias( svga->hwtnl, -(int) neg_bias );
    return PIPE_OK;
 }
 
