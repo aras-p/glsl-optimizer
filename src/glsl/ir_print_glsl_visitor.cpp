@@ -591,10 +591,13 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	if (ir->op == ir_txl)
 		ralloc_asprintf_append (&buffer, "Lod");
 	
-	if (is_shadow)
+	if (state->es_shader)
 	{
-		if (state->EXT_shadow_samplers_enable && state->es_shader)
+		if (is_shadow && state->EXT_shadow_samplers_enable ||
+			ir->op == ir_txl && state->EXT_shader_texture_lod_enable)
+		{
 			ralloc_asprintf_append (&buffer, "EXT");
+		}
 	}
 	
 	ralloc_asprintf_append (&buffer, " (");
