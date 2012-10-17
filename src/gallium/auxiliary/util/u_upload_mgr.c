@@ -76,7 +76,7 @@ void u_upload_unmap( struct u_upload_mgr *upload )
 {
    if (upload->transfer) {
       struct pipe_box *box = &upload->transfer->box;
-      if (upload->offset > box->x) {
+      if ((int) upload->offset > box->x) {
 
          pipe_buffer_flush_mapped_range(upload->pipe, upload->transfer,
                                         box->x, upload->offset - box->x);
