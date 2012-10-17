@@ -301,6 +301,19 @@ _mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
       return;
    }
 
+   /* From the GL_ARB_occlusion_query spec:
+    *
+    *     "If BeginQueryARB is called while another query is already in
+    *      progress with the same target, an INVALID_OPERATION error is
+    *      generated."
+    */
+   if (*bindpt) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glBeginQuery{Indexed}(target=%s is active)",
+                  _mesa_lookup_enum_by_nr(target));
+      return;
+   }
+
    if (id == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginQuery{Indexed}(id==0)");
       return;
