@@ -374,6 +374,16 @@ _mesa_EndQueryIndexed(GLenum target, GLuint index)
 
    /* XXX should probably refcount query objects */
    q = *bindpt;
+
+   /* Check for GL_ANY_SAMPLES_PASSED vs GL_SAMPLES_PASSED. */
+   if (q && q->Target != target) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glEndQuery(target=%s with active query of target %s)",
+                  _mesa_lookup_enum_by_nr(target),
+                  _mesa_lookup_enum_by_nr(q->Target));
+      return;
+   }
+
    *bindpt = NULL;
 
    if (!q || !q->Active) {
