@@ -98,7 +98,7 @@ struct u_vbuf {
    /* Vertex buffers for the driver.
     * There are no user buffers. */
    struct pipe_vertex_buffer real_vertex_buffer[PIPE_MAX_ATTRIBS];
-   int nr_real_vertex_buffers;
+   unsigned nr_real_vertex_buffers;
    boolean vertex_buffers_dirty;
 
    /* The index buffer. */
