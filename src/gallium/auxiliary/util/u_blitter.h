@@ -98,16 +98,16 @@ struct blitter_context
    boolean is_sample_mask_saved;
    unsigned saved_sample_mask;
 
-   int saved_num_sampler_states;
+   unsigned saved_num_sampler_states;
    void *saved_sampler_states[PIPE_MAX_SAMPLERS];
 
-   int saved_num_sampler_views;
+   unsigned saved_num_sampler_views;
    struct pipe_sampler_view *saved_sampler_views[PIPE_MAX_SAMPLERS];
 
-   int saved_num_vertex_buffers;
+   unsigned saved_num_vertex_buffers;
    struct pipe_vertex_buffer saved_vertex_buffers[PIPE_MAX_ATTRIBS];
 
-   int saved_num_so_targets;
+   unsigned saved_num_so_targets;
    struct pipe_stream_output_target *saved_so_targets[PIPE_MAX_SO_BUFFERS];
 
    struct pipe_query *saved_render_cond_query;
@@ -435,7 +435,7 @@ void util_blitter_save_scissor(struct blitter_context *blitter,
 static INLINE
 void util_blitter_save_fragment_sampler_states(
                   struct blitter_context *blitter,
-                  int num_sampler_states,
+                  unsigned num_sampler_states,
                   void **sampler_states)
 {
    assert(num_sampler_states <= Elements(blitter->saved_sampler_states));
@@ -447,7 +447,7 @@ void util_blitter_save_fragment_sampler_states(
 
 static INLINE void
 util_blitter_save_fragment_sampler_views(struct blitter_context *blitter,
-                                         int num_views,
+                                         unsigned num_views,
                                          struct pipe_sampler_view **views)
 {
    unsigned i;
@@ -461,7 +461,7 @@ util_blitter_save_fragment_sampler_views(struct blitter_context *blitter,
 
 static INLINE void
 util_blitter_save_vertex_buffers(struct blitter_context *blitter,
-                                 int num_vertex_buffers,
+                                 unsigned num_vertex_buffers,
                                  struct pipe_vertex_buffer *vertex_buffers)
 {
    assert(num_vertex_buffers <= Elements(blitter->saved_vertex_buffers));
@@ -475,7 +475,7 @@ util_blitter_save_vertex_buffers(struct blitter_context *blitter,
 
 static INLINE void
 util_blitter_save_so_targets(struct blitter_context *blitter,
-                             int num_targets,
+                             unsigned num_targets,
                              struct pipe_stream_output_target **targets)
 {
    unsigned i;

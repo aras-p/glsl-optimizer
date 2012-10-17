@@ -606,10 +606,10 @@ static void get_texcoords(struct pipe_sampler_view *src,
       out[2] = x2 / (float)u_minify(src_width0,  level);
       out[3] = y2 / (float)u_minify(src_height0, level);
    } else {
-      out[0] = x1;
-      out[1] = y1;
-      out[2] = x2;
-      out[3] = y2;
+      out[0] = (float) x1;
+      out[1] = (float) y1;
+      out[2] = (float) x2;
+      out[3] = (float) y2;
    }
 }
 
@@ -664,19 +664,19 @@ static void blitter_set_texcoords(struct blitter_context_priv *ctx,
 
    case PIPE_TEXTURE_1D_ARRAY:
       for (i = 0; i < 4; i++)
-         ctx->vertices[i][1][1] = layer; /*t*/
+         ctx->vertices[i][1][1] = (float) layer; /*t*/
       break;
 
    case PIPE_TEXTURE_2D_ARRAY:
       for (i = 0; i < 4; i++) {
-         ctx->vertices[i][1][2] = layer;  /*r*/
-         ctx->vertices[i][1][3] = sample; /*q*/
+         ctx->vertices[i][1][2] = (float) layer;  /*r*/
+         ctx->vertices[i][1][3] = (float) sample; /*q*/
       }
       break;
 
    case PIPE_TEXTURE_2D:
       for (i = 0; i < 4; i++) {
-         ctx->vertices[i][1][2] = sample; /*r*/
+         ctx->vertices[i][1][2] = (float) sample; /*r*/
       }
       break;
 
@@ -1010,7 +1010,7 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
 
    blitter_set_common_draw_rect_state(ctx, FALSE);
    blitter_set_dst_dimensions(ctx, width, height);
-   blitter->draw_rectangle(blitter, 0, 0, width, height, depth,
+   blitter->draw_rectangle(blitter, 0, 0, width, height, (float) depth,
                            UTIL_BLITTER_ATTRIB_COLOR, color);
 
    blitter_restore_vertex_states(ctx);
@@ -1569,7 +1569,8 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
 
    blitter_set_common_draw_rect_state(ctx, FALSE);
    blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
-   blitter->draw_rectangle(blitter, dstx, dsty, dstx+width, dsty+height, depth,
+   blitter->draw_rectangle(blitter, dstx, dsty, dstx+width, dsty+height,
+                           (float) depth,
                            UTIL_BLITTER_ATTRIB_NONE, NULL);
 
    blitter_restore_vertex_states(ctx);
@@ -1881,11 +1882,11 @@ static boolean is_box_inside_resource(const struct pipe_resource *res,
    }
 
    return box->x >= 0 &&
-          box->x + box->width <= width &&
+          box->x + box->width <= (int) width &&
           box->y >= 0 &&
-          box->y + box->height <= height &&
+          box->y + box->height <= (int) height &&
           box->z >= 0 &&
-          box->z + box->depth <= depth;
+          box->z + box->depth <= (int) depth;
 }
 
 static unsigned get_sample_count(const struct pipe_resource *res)
