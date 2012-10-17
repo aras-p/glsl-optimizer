@@ -733,7 +733,6 @@ i915_texture_transfer_map(struct pipe_context *pipe,
    transfer->staging_texture = NULL;
    /* XXX: handle depth textures everyhwere*/
    transfer->b.layer_stride = 0;
-   transfer->b.data = NULL;
 
    /* if we use staging transfers, only support textures we can render to,
     * because we need that for u_blitter */

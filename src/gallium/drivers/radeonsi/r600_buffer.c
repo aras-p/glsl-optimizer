@@ -69,7 +69,6 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 	transfer->box = *box;
 	transfer->stride = 0;
 	transfer->layer_stride = 0;
-	transfer->data = NULL;
         *ptransfer = transfer;
 
 	return (uint8_t*)data + transfer->box.x;

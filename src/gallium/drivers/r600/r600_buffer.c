@@ -77,7 +77,6 @@ static void *r600_buffer_get_transfer(struct pipe_context *ctx,
 	transfer->transfer.box = *box;
 	transfer->transfer.stride = 0;
 	transfer->transfer.layer_stride = 0;
-	transfer->transfer.data = NULL;
 	transfer->staging = NULL;
 	transfer->offset = 0;
 	transfer->staging = staging;

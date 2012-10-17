@@ -870,7 +870,6 @@ void *r600_compute_global_transfer_map(
 	transfer->box = *box;
 	transfer->stride = 0;
 	transfer->layer_stride = 0;
-	transfer->data = NULL;
 
 	assert(transfer->resource->target == PIPE_BUFFER);
 	assert(transfer->resource->bind & PIPE_BIND_GLOBAL);

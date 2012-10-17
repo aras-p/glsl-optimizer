@@ -84,7 +84,6 @@ r300_buffer_transfer_map( struct pipe_context *context,
     transfer->box = *box;
     transfer->stride = 0;
     transfer->layer_stride = 0;
-    transfer->data = NULL;
 
     if (rbuf->malloced_buffer) {
         *ptransfer = transfer;
