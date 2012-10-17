@@ -194,6 +194,16 @@ brw_queryobj_get_results(struct gl_context *ctx,
       }
       break;
 
+   case GL_ANY_SAMPLES_PASSED:
+      /* Set true if any of the sub-queries passed. */
+      for (i = query->first_index; i <= query->last_index; i++) {
+	 if (results[i * 2 + 1] != results[i * 2]) {
+            query->Base.Result = GL_TRUE;
+            break;
+         }
+      }
+      break;
+
    case GL_PRIMITIVES_GENERATED:
    case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
       /* We don't actually query the hardware for this value, so query->bo
@@ -250,6 +260,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
       write_timestamp(intel, query->bo, 0);
       break;
 
+   case GL_ANY_SAMPLES_PASSED:
    case GL_SAMPLES_PASSED_ARB:
       /* Reset our driver's tracking of query state. */
       drm_intel_bo_unreference(query->bo);
@@ -304,6 +315,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
       write_timestamp(intel, query->bo, 1);
       break;
 
+   case GL_ANY_SAMPLES_PASSED:
    case GL_SAMPLES_PASSED_ARB:
       if (query->bo) {
 	 brw_emit_query_end(brw);
