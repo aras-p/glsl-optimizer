@@ -1010,7 +1010,7 @@ dri2BindExtensions(struct dri2_screen *psc, const __DRIextension **extensions)
    __glXEnableDirectExtension(&psc->base, "GLX_SGI_make_current_read");
 
    /* FIXME: if DRI2 version supports it... */
-   __glXEnableDirectExtension(&psc->base, "INTEL_swap_event");
+   __glXEnableDirectExtension(&psc->base, "GLX_INTEL_swap_event");
 
    if (psc->dri2->base.version >= 3) {
       const unsigned mask = psc->dri2->getAPIMask(psc->driScreen);
