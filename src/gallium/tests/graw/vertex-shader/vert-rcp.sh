@@ -7,8 +7,8 @@ DCL OUT[1], COLOR
 
 DCL TEMP[0]
 
-IMM FLT32 { 1.0, 0.0, 0.0, 0.0 }
-IMM FLT32 { 1.5, 0.0, 0.0, 0.0 }
+IMM[0] FLT32 { 1.0, 0.0, 0.0, 0.0 }
+IMM[1] FLT32 { 1.5, 0.0, 0.0, 0.0 }
 
 ADD TEMP[0], IN[0], IMM[0]
 RCP TEMP[0].x, TEMP[0].xxxx

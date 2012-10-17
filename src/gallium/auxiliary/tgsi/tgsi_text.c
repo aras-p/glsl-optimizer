@@ -242,6 +242,7 @@ struct translate_ctx
    struct tgsi_header *header;
    unsigned processor : 4;
    int implied_array_size : 5;
+   unsigned num_immediates;
 };
 
 static void report_error( struct translate_ctx *ctx, const char *msg )
@@ -1336,6 +1337,31 @@ static boolean parse_immediate( struct translate_ctx *ctx )
    uint advance;
    int type;
 
+   if (*ctx->cur == '[') {
+      uint uindex;
+
+      ++ctx->cur;
+
+      eat_opt_white( &ctx->cur );
+      if (!parse_uint( &ctx->cur, &uindex )) {
+         report_error( ctx, "Expected literal unsigned integer" );
+         return FALSE;
+      }
+
+      if (uindex != ctx->num_immediates) {
+         report_error( ctx, "Immediates must be sorted" );
+         return FALSE;
+      }
+
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur != ']') {
+         report_error( ctx, "Expected `]'" );
+         return FALSE;
+      }
+
+      ctx->cur++;
+   }
+
    if (!eat_white( &ctx->cur )) {
       report_error( ctx, "Syntax error" );
       return FALSE;
@@ -1362,6 +1388,8 @@ static boolean parse_immediate( struct translate_ctx *ctx )
    if (advance == 0)
       return FALSE;
    ctx->tokens_cur += advance;
+
+   ctx->num_immediates++;
 
    return TRUE;
 }
