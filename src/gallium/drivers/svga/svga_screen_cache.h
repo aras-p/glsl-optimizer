@@ -144,5 +144,8 @@ svga_screen_surface_destroy(struct svga_screen *svgascreen,
                             const struct svga_host_surface_cache_key *key,
                             struct svga_winsys_surface **handle);
 
+void
+svga_screen_cache_dump(const struct svga_screen *svgascreen);
+
 
 #endif /* SVGA_SCREEN_CACHE_H_ */

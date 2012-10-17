@@ -490,3 +490,37 @@ svga_screen_surface_destroy(struct svga_screen *svgascreen,
       sws->surface_reference(sws, p_handle, NULL);
    }
 }
+
+
+/**
+ * Print/dump the contents of the screen cache.  For debugging.
+ */
+void
+svga_screen_cache_dump(const struct svga_screen *svgascreen)
+{
+   const struct svga_host_surface_cache *cache = &svgascreen->cache;
+   unsigned bucket;
+   unsigned count = 0;
+
+   debug_printf("svga3d surface cache:\n");
+   for (bucket = 0; bucket < SVGA_HOST_SURFACE_CACHE_BUCKETS; bucket++) {
+      struct list_head *curr;
+      curr = cache->bucket[bucket].next;
+      while (curr && curr != &cache->bucket[bucket]) {
+         struct svga_host_surface_cache_entry *entry =
+            LIST_ENTRY(struct svga_host_surface_cache_entry,
+                       curr, bucket_head);
+         if (entry->key.format != 37) {
+            debug_printf("  %u x %u x %u format %u\n",
+                         entry->key.size.width,
+                         entry->key.size.height,
+                         entry->key.size.depth,
+                         entry->key.format);
+         }
+         curr = curr->next;
+         count++;
+      }
+   }
+
+   debug_printf("%u surfaces, %u bytes\n", count, cache->total_size);
+}
