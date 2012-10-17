@@ -330,6 +330,7 @@ static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
 			alu.src[src_idx].sel += 512;
 	}
 
+#if HAVE_LLVM < 0x0302
 	if (alu.inst == CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE) ||
 	    alu.inst == CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE) ||
 	    alu.inst == CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_INT) ||
@@ -340,6 +341,7 @@ static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
 		alu.src[1].chan = 0;
 		alu.last = 1;
 	}
+#endif
 
 	if (alu.execute_mask) {
 		alu.pred_sel = 0;
