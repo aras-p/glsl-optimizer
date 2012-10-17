@@ -73,7 +73,7 @@ screen_interp( struct draw_context *draw,
                const struct vertex_header *v1 )
 {
    uint attr;
-   int num_outputs = draw_current_shader_outputs(draw);
+   uint num_outputs = draw_current_shader_outputs(draw);
    for (attr = 0; attr < num_outputs; attr++) {
       const float *val0 = v0->data[attr];
       const float *val1 = v1->data[attr];

@@ -159,7 +159,7 @@ boolean draw_init(struct draw_context *draw)
 void draw_destroy( struct draw_context *draw )
 {
    struct pipe_context *pipe;
-   int i, j;
+   unsigned i, j;
 
    if (!draw)
       return;

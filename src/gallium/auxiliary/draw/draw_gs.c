@@ -87,7 +87,7 @@ draw_create_geometry_shader(struct draw_context *draw,
                             const struct pipe_shader_state *state)
 {
    struct draw_geometry_shader *gs;
-   int i;
+   unsigned i;
 
    gs = CALLOC_STRUCT(draw_geometry_shader);
 
@@ -162,7 +162,7 @@ void draw_delete_geometry_shader(struct draw_context *draw,
 /*#define DEBUG_OUTPUTS 1*/
 static INLINE void
 draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
-                            int num_primitives,
+                            unsigned num_primitives,
                             float (**p_output)[4])
 {
    struct tgsi_exec_machine *machine = shader->machine;

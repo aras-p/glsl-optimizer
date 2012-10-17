@@ -71,7 +71,7 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    if (max_index - min_index > icount - 1)
       return FALSE;
 
-   if (elt_bias < 0 && min_index < -elt_bias)
+   if (elt_bias < 0 && (int) min_index < -elt_bias)
       return FALSE;
 
    /* why this check? */
@@ -158,19 +158,19 @@ CONCAT(vsplit_segment_cache_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    }
    else {
       if (spoken) {
-         if (ib[ispoken] < -ibias)
+         if ((int) ib[ispoken] < -ibias)
             return;
          ADD_CACHE(vsplit, ib[ispoken] + ibias);
       }
 
       for (i = spoken; i < icount; i++) {
-         if (ib[istart + i] < -ibias)
+         if ((int) ib[istart + i] < -ibias)
             return;
          ADD_CACHE(vsplit, ib[istart + i] + ibias);
       }
 
       if (close) {
-         if (ib[iclose] < -ibias)
+         if ((int) ib[iclose] < -ibias)
             return;
          ADD_CACHE(vsplit, ib[iclose] + ibias);
       }
