@@ -768,7 +768,7 @@
 </category>
 
 <!-- 93. GL_NV_read_buffer -->
-<category name="NV_read_buffer">
+<category name="GL_NV_read_buffer">
     <function name="ReadBufferNV" alias="ReadBuffer" es2="2.0">
         <param name="mode" type="GLenum"/>
     </function>
@@ -783,7 +783,7 @@
 </category>
 
 <!-- 111. GL_ANGLE_texture_compression_dxt -->
-<category name="ANGLE_texture_compression_dxt" number="111">
+<category name="GL_ANGLE_texture_compression_dxt" number="111">
     <enum name="COMPRESSED_RGBA_S3TC_DXT3_ANGLE"        value="0x83F2"/>
     <enum name="COMPRESSED_RGBA_S3TC_DXT5_ANGLE"        value="0x83F3"/>
 </category>
