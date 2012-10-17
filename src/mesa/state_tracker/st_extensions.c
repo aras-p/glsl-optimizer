@@ -298,7 +298,8 @@ static void init_format_extensions(struct st_context *st,
 {
    struct pipe_screen *screen = st->pipe->screen;
    GLboolean *extensions = (GLboolean *) &st->ctx->Extensions;
-   int i, j;
+   unsigned i;
+   int j;
    int num_formats = Elements(mapping->format);
    int num_ext = Elements(mapping->extension_offset);
 
