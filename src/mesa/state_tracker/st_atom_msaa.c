@@ -51,7 +51,8 @@ static void update_sample_mask( struct st_context *st )
    /* unlike in gallium/d3d10 the mask is only active if msaa is enabled */
       if (st->ctx->Multisample.SampleCoverage) {
          unsigned nr_bits;
-         nr_bits = st->ctx->Multisample.SampleCoverageValue * (float)sample_count;
+         nr_bits = (unsigned)
+            (st->ctx->Multisample.SampleCoverageValue * (float)sample_count);
          /* there's lot of ways how to do this. We just use first few bits,
             since we have no knowledge of sample positions here. When
             app-supplied mask though is used too might need to be smarter.
