@@ -532,7 +532,7 @@ _mesa_GetQueryIndexediv(GLenum target, GLuint index, GLenum pname,
          }
          break;
       case GL_CURRENT_QUERY_ARB:
-         *params = q ? q->Id : 0;
+         *params = (q && q->Target == target) ? q->Id : 0;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetQuery{Indexed}iv(pname)");
