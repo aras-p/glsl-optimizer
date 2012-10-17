@@ -31,6 +31,7 @@
 #include "ir_visitor.h"
 #include "ir_variable_refcount.h"
 #include "glsl_types.h"
+#include "main/hash_table.h"
 
 static bool debug = false;
 
@@ -49,8 +50,9 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 
    v.run(instructions);
 
-   foreach_iter(exec_list_iterator, iter, v.variable_list) {
-      ir_variable_refcount_entry *entry = (ir_variable_refcount_entry *)iter.get();
+   struct hash_entry *e;
+   hash_table_foreach(v.ht, e) {
+      ir_variable_refcount_entry *entry = (ir_variable_refcount_entry *)e->data;
 
       /* Since each assignment is a reference, the refereneced count must be
        * greater than or equal to the assignment count.  If they are equal,

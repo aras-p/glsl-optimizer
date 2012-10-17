@@ -55,6 +55,7 @@ builtin_compiler_SOURCES = \
 	$(GLSL_BUILDDIR)/glsl_parser.cc \
 	$(LIBGLSL_FILES) \
 	$(LIBGLSL_CXX_FILES) \
+	$(top_srcdir)/src/mesa/main/hash_table.c \
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c \
 	$(top_srcdir)/src/mesa/program/symbol_table.c \
 	$(GLSL_COMPILER_CXX_FILES) \

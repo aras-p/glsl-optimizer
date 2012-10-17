@@ -49,6 +49,7 @@ libglsl_la_LIBADD = glcpp/libglcpp.la
 libglsl_la_LDFLAGS =
 
 glsl_compiler_SOURCES = \
+	$(top_srcdir)/src/mesa/main/hash_table.c \
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c \
 	$(top_srcdir)/src/mesa/program/symbol_table.c \
 	$(GLSL_COMPILER_CXX_FILES)
@@ -56,6 +57,7 @@ glsl_compiler_SOURCES = \
 glsl_compiler_LDADD = libglsl.la
 
 glsl_test_SOURCES = \
+	$(top_srcdir)/src/mesa/main/hash_table.c \
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c \
 	$(top_srcdir)/src/mesa/program/symbol_table.c \
 	$(GLSL_SRCDIR)/standalone_scaffolding.cpp \
