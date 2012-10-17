@@ -81,6 +81,7 @@ static /* const */ char *error_list[] = {
    "GLXBadPbuffer",
    "GLXBadCurrentDrawable",
    "GLXBadWindow",
+   "GLXBadProfileARB",
 };
 
 #ifdef GLX_USE_APPLEGL
