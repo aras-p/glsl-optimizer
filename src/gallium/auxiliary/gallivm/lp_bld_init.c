@@ -458,6 +458,15 @@ lp_build_init(void)
    lp_native_vector_width = debug_get_num_option("LP_NATIVE_VECTOR_WIDTH",
                                                  lp_native_vector_width);
 
+   if (lp_native_vector_width <= 128) {
+      /* Hide AVX support, as often LLVM AVX instrinsics are only guarded by
+       * "util_cpu_caps.has_avx" predicate, and lack the
+       * "lp_native_vector_width > 128" predicate. And also to ensure a more
+       * consistent behavior, allowing one to test SSE2 on AVX machines.
+       */
+      util_cpu_caps.has_avx = 0;
+   }
+
    gallivm_initialized = TRUE;
 
 #if 0
@@ -465,6 +474,7 @@ lp_build_init(void)
    util_cpu_caps.has_sse3 = 0;
    util_cpu_caps.has_ssse3 = 0;
    util_cpu_caps.has_sse4_1 = 0;
+   util_cpu_caps.has_avx = 0;
 #endif
 }
 
