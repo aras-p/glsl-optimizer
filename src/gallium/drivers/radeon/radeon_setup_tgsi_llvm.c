@@ -875,7 +875,7 @@ static void emit_ssg(
 		cmp = LLVMBuildICmp(builder, LLVMIntSGE, val, bld_base->int_bld.zero, "");
 		val = LLVMBuildSelect(builder, cmp, val, LLVMConstInt(bld_base->int_bld.elem_type, -1, true), "");
 	} else { // float SSG
-		cmp = LLVMBuildFCmp(builder, LLVMRealUGT, emit_data->args[0], bld_base->int_bld.zero, "");
+		cmp = LLVMBuildFCmp(builder, LLVMRealUGT, emit_data->args[0], bld_base->base.zero, "");
 		val = LLVMBuildSelect(builder, cmp, bld_base->base.one, emit_data->args[0], "");
 		cmp = LLVMBuildFCmp(builder, LLVMRealUGE, val, bld_base->base.zero, "");
 		val = LLVMBuildSelect(builder, cmp, val, LLVMConstReal(bld_base->base.elem_type, -1), "");
