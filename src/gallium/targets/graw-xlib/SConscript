@@ -10,7 +10,7 @@ env.Prepend(LIBS = [
     gallium,
 ])
 
-env.Prepend(LIBS = env['X11_LIBS'])
+env.Append(LIBS = env['X11_LIBS'])
 
 env.Append(CPPPATH = [
     '#src/gallium/drivers',
