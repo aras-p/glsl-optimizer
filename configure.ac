@@ -1757,7 +1757,7 @@ radeon_llvm_check() {
     if test "$LLVM_VERSION_MAJOR" -ge "3" -a "x$LLVM_VERSION" != "x3.1" && $LLVM_CONFIG --targets-built | grep -qv '\<AMDGPU\>' ; then
         AC_MSG_ERROR([To use the r600/radeonsi LLVM backend with LLVM 3.2 and newer, you need to fetch the LLVM source from:
                       git://people.freedesktop.org/~tstellar/llvm master
-                      and build with --enable-experimental-targets==AMDGPU])
+                      and build with --enable-experimental-targets=AMDGPU])
     fi
     if test "x$LLVM_VERSION" = "x3.2"; then
         LLVM_LIBS="$LLVM_LIBS `$LLVM_CONFIG --libs amdgpu`"
