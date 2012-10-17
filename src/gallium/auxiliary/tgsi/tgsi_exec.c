@@ -1057,7 +1057,7 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
             const uint *buf = (const uint *)mach->Consts[constbuf];
             const int pos = index->i[i] * 4 + swizzle;
             /* const buffer bounds check */
-            if (pos < 0 || pos >= mach->ConstsSize[constbuf]) {
+            if (pos < 0 || pos >= (int) mach->ConstsSize[constbuf]) {
                if (0) {
                   /* Debug: print warning */
                   static int count = 0;

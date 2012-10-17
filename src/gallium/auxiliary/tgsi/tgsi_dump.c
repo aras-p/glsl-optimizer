@@ -406,7 +406,7 @@ iter_property(
    struct tgsi_iterate_context *iter,
    struct tgsi_full_property *prop )
 {
-   int i;
+   unsigned i;
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
 
    TXT( "PROPERTY " );
