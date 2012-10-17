@@ -205,7 +205,7 @@ static INLINE float uf10_to_f32(uint16_t val)
       float scale, decimal;
       exponent -= 15;
       if (exponent < 0) {
-         scale = 1.0 / (1 << -exponent);
+         scale = 1.0f / (1 << -exponent);
       }
       else {
          scale = (float) (1 << exponent);
