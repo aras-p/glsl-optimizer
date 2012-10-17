@@ -31,10 +31,6 @@
 #ifndef FEATURES_H
 #define FEATURES_H
 
-#ifndef _HAVE_FULL_GL
-#define _HAVE_FULL_GL 1
-#endif
-
 #ifndef FEATURE_ES1
 #define FEATURE_ES1 0
 #endif

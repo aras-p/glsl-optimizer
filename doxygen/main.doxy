@@ -33,7 +33,7 @@ EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = ../include/
 INCLUDE_FILE_PATTERNS  = 
-PREDEFINED             = _HAVE_FULL_GL=1
+PREDEFINED             = 
 EXPAND_AS_DEFINED      = _glthread_DECLARE_STATIC_MUTEX
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------

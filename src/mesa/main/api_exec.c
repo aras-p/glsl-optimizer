@@ -112,9 +112,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
    if (exec == NULL)
       return NULL;
 
-#if _HAVE_FULL_GL
    _mesa_loopback_init_api_table(ctx, exec);
-#endif
 
    /* load the dispatch slots we understand */
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
@@ -306,7 +304,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_BindTexture(exec, _mesa_BindTexture);
    SET_DeleteTextures(exec, _mesa_DeleteTextures);
    SET_GenTextures(exec, _mesa_GenTextures);
-#if _HAVE_FULL_GL
    if (ctx->API == API_OPENGL) {
       SET_AreTexturesResident(exec, _mesa_AreTexturesResident);
       SET_ColorPointer(exec, _mesa_ColorPointer);
@@ -336,14 +333,11 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_TexCoordPointer(exec, _mesa_TexCoordPointer);
       SET_VertexPointer(exec, _mesa_VertexPointer);
    }
-#endif
 
    /* 1.2 */
-#if _HAVE_FULL_GL
    SET_CopyTexSubImage3D(exec, _mesa_CopyTexSubImage3D);
    SET_TexImage3D(exec, _mesa_TexImage3D);
    SET_TexSubImage3D(exec, _mesa_TexSubImage3D);
-#endif
 
    /* OpenGL 1.2  GL_ARB_imaging */
    SET_BlendColor(exec, _mesa_BlendColor);
@@ -370,11 +364,9 @@ _mesa_create_exec_table(struct gl_context *ctx)
 #endif
 
    /* 3. GL_EXT_polygon_offset */
-#if _HAVE_FULL_GL
    if (ctx->API == API_OPENGL) {
       SET_PolygonOffsetEXT(exec, _mesa_PolygonOffsetEXT);
    }
-#endif
 
    /* 6. GL_EXT_texture3d */
 #if 0
@@ -407,7 +399,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
 #endif
 
    /* 30. GL_EXT_vertex_array */
-#if _HAVE_FULL_GL
    if (ctx->API == API_OPENGL) {
       SET_ColorPointerEXT(exec, _mesa_ColorPointerEXT);
       SET_EdgeFlagPointerEXT(exec, _mesa_EdgeFlagPointerEXT);
@@ -416,7 +407,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_TexCoordPointerEXT(exec, _mesa_TexCoordPointerEXT);
       SET_VertexPointerEXT(exec, _mesa_VertexPointerEXT);
    }
-#endif
 
    /* 37. GL_EXT_blend_minmax */
 #if 0
@@ -424,52 +414,40 @@ _mesa_create_exec_table(struct gl_context *ctx)
 #endif
 
    /* 54. GL_EXT_point_parameters */
-#if _HAVE_FULL_GL
    if (ctx->API != API_OPENGLES2) {
       SET_PointParameterfEXT(exec, _mesa_PointParameterf);
       SET_PointParameterfvEXT(exec, _mesa_PointParameterfv);
    }
-#endif
 
    /* 95. GL_ARB_ES2_compatibility */
    SET_ClearDepthf(exec, _mesa_ClearDepthf);
    SET_DepthRangef(exec, _mesa_DepthRangef);
 
    /* 97. GL_EXT_compiled_vertex_array */
-#if _HAVE_FULL_GL
    if (ctx->API == API_OPENGL) {
       SET_LockArraysEXT(exec, _mesa_LockArraysEXT);
       SET_UnlockArraysEXT(exec, _mesa_UnlockArraysEXT);
    }
-#endif
 
    /* 148. GL_EXT_multi_draw_arrays */
-#if _HAVE_FULL_GL
    SET_MultiDrawArraysEXT(exec, _mesa_MultiDrawArraysEXT);
-#endif
 
    /* 173. GL_INGR_blend_func_separate */
-#if _HAVE_FULL_GL
    SET_BlendFuncSeparateEXT(exec, _mesa_BlendFuncSeparateEXT);
-#endif
 
    /* 196. GL_MESA_resize_buffers */
-#if _HAVE_FULL_GL
    if (_mesa_is_desktop_gl(ctx)) {
       SET_ResizeBuffersMESA(exec, _mesa_ResizeBuffersMESA);
    }
-#endif
 
    /* 197. GL_MESA_window_pos */
    /* part of _mesa_init_rastpos_dispatch(exec); */
 
    /* 200. GL_IBM_multimode_draw_arrays */
-#if _HAVE_FULL_GL
    if (ctx->API != API_OPENGLES2) {
       SET_MultiModeDrawArraysIBM(exec, _mesa_MultiModeDrawArraysIBM);
       SET_MultiModeDrawElementsIBM(exec, _mesa_MultiModeDrawElementsIBM);
    }
-#endif
 
    /* 233. GL_NV_vertex_program */
    if (ctx->API == API_OPENGL) {
@@ -490,19 +468,15 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_IsVertexArrayAPPLE(exec, _mesa_IsVertexArrayAPPLE);
 
    /* 262. GL_NV_point_sprite */
-#if _HAVE_FULL_GL
    if (_mesa_is_desktop_gl(ctx)) {
       SET_PointParameteriNV(exec, _mesa_PointParameteri);
       SET_PointParameterivNV(exec, _mesa_PointParameteriv);
    }
-#endif
 
    /* 268. GL_EXT_stencil_two_side */
-#if _HAVE_FULL_GL
    if (ctx->API == API_OPENGL) {
       SET_ActiveStencilFaceEXT(exec, _mesa_ActiveStencilFaceEXT);
    }
-#endif
 
    /* 285. GL_NV_primitive_restart */
    if (ctx->API != API_OPENGLES2) {
@@ -526,30 +500,23 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    /* ARB 1. GL_ARB_multitexture */
-#if _HAVE_FULL_GL
    SET_ActiveTextureARB(exec, _mesa_ActiveTextureARB);
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       SET_ClientActiveTextureARB(exec, _mesa_ClientActiveTextureARB);
    }
-#endif
 
    /* ARB 3. GL_ARB_transpose_matrix */
-#if _HAVE_FULL_GL
    if (ctx->API == API_OPENGL) {
       SET_LoadTransposeMatrixdARB(exec, _mesa_LoadTransposeMatrixdARB);
       SET_LoadTransposeMatrixfARB(exec, _mesa_LoadTransposeMatrixfARB);
       SET_MultTransposeMatrixdARB(exec, _mesa_MultTransposeMatrixdARB);
       SET_MultTransposeMatrixfARB(exec, _mesa_MultTransposeMatrixfARB);
    }
-#endif
 
    /* ARB 5. GL_ARB_multisample */
-#if _HAVE_FULL_GL
    SET_SampleCoverageARB(exec, _mesa_SampleCoverageARB);
-#endif
 
    /* ARB 12. GL_ARB_texture_compression */
-#if _HAVE_FULL_GL
    if (ctx->API != API_OPENGLES2) {
       SET_CompressedTexImage1DARB(exec, _mesa_CompressedTexImage1DARB);
       SET_CompressedTexSubImage1DARB(exec, _mesa_CompressedTexSubImage1DARB);
@@ -565,7 +532,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
    if (ctx->API != API_OPENGLES2) {
       SET_GetnCompressedTexImageARB(exec, _mesa_GetnCompressedTexImageARB);
    }
-#endif
 
    /* ARB 14. GL_ARB_point_parameters */
    /* reuse EXT_point_parameters functions */

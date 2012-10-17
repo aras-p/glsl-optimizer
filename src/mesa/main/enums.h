@@ -38,8 +38,6 @@
 
 #include "mfeatures.h"
 
-#if defined(_HAVE_FULL_GL) && _HAVE_FULL_GL
-
 extern const char *_mesa_lookup_enum_by_nr( int nr );
 
 /* Get the name of an enum given that it is a primitive type.  Avoids
@@ -48,15 +46,5 @@ extern const char *_mesa_lookup_enum_by_nr( int nr );
 const char *_mesa_lookup_prim_by_nr( unsigned nr );
 
 extern int _mesa_lookup_enum_by_name( const char *symbol );
-
-#else
-
-/** No-op */
-#define _mesa_lookup_enum_by_name( s ) 0
-
-/** No-op */
-#define _mesa_lookup_enum_by_nr( n ) "unknown"
-
-#endif
 
 #endif
