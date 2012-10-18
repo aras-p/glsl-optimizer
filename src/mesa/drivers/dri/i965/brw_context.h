@@ -1057,7 +1057,7 @@ struct brw_context
       struct brw_query_object *obj;
       drm_intel_bo *bo;
       int index;
-      bool active;
+      bool begin_emitted;
    } query;
    /* Used to give every program string a unique id
     */

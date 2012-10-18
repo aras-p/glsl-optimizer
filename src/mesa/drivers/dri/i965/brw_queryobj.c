@@ -428,7 +428,7 @@ brw_emit_query_begin(struct brw_context *brw)
    struct brw_query_object *query = brw->query.obj;
 
    /* Skip if we're not doing any queries, or we've emitted the start. */
-   if (!query || brw->query.active)
+   if (!query || brw->query.begin_emitted)
       return;
 
    write_depth_count(intel, brw->query.bo, brw->query.index * 2);
@@ -441,7 +441,7 @@ brw_emit_query_begin(struct brw_context *brw)
       query->first_index = brw->query.index;
    }
    query->last_index = brw->query.index;
-   brw->query.active = true;
+   brw->query.begin_emitted = true;
 }
 
 /** Called at batchbuffer flush to get an ending PS_DEPTH_COUNT */
@@ -450,12 +450,12 @@ brw_emit_query_end(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
 
-   if (!brw->query.active)
+   if (!brw->query.begin_emitted)
       return;
 
    write_depth_count(intel, brw->query.bo, brw->query.index * 2 + 1);
 
-   brw->query.active = false;
+   brw->query.begin_emitted = false;
    brw->query.index++;
 }
 
