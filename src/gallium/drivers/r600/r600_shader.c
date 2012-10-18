@@ -1375,7 +1375,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	if (shader->fs_write_all && rscreen->chip_class >= EVERGREEN)
 		shader->nr_ps_max_color_exports = 8;
 
-	if (ctx.fragcoord_input >= 0) {
+	if (ctx.fragcoord_input >= 0 && !use_llvm) {
 		if (ctx.bc->chip_class == CAYMAN) {
 			for (j = 0 ; j < 4; j++) {
 				struct r600_bytecode_alu alu;
