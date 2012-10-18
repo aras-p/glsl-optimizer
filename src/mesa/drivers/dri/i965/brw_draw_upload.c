@@ -397,7 +397,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
       return;
 
    if (brw->vb.nr_buffers)
-      goto prepare;
+      return;
 
    for (i = j = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
@@ -565,9 +565,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
    }
 
    brw->vb.nr_buffers = j;
-
-prepare:
-   brw_prepare_query_begin(brw);
 }
 
 static void brw_emit_vertices(struct brw_context *brw)

@@ -392,14 +392,16 @@ static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
    }
 }
 
-/** Called to set up the query BO and account for its aperture space */
+/** Called just before primitive drawing to get a beginning PS_DEPTH_COUNT. */
 void
-brw_prepare_query_begin(struct brw_context *brw)
+brw_emit_query_begin(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
+   struct brw_query_object *query = brw->query.obj;
 
-   /* Skip if we're not doing any queries. */
-   if (!brw->query.obj)
+   /* Skip if we're not doing any queries, or we've emitted the start. */
+   if (!query || brw->query.begin_emitted)
       return;
 
    /* Get a new query BO if we're going to need it. */
@@ -417,19 +419,6 @@ brw_prepare_query_begin(struct brw_context *brw)
 
       brw->query.index = 0;
    }
-}
-
-/** Called just before primitive drawing to get a beginning PS_DEPTH_COUNT. */
-void
-brw_emit_query_begin(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
-   struct brw_query_object *query = brw->query.obj;
-
-   /* Skip if we're not doing any queries, or we've emitted the start. */
-   if (!query || brw->query.begin_emitted)
-      return;
 
    write_depth_count(intel, brw->query.bo, brw->query.index * 2);
 

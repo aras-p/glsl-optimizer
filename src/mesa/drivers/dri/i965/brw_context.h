@@ -1138,7 +1138,6 @@ void brw_workaround_depthstencil_alignment(struct brw_context *brw);
  * brw_queryobj.c
  */
 void brw_init_queryobj_functions(struct dd_function_table *functions);
-void brw_prepare_query_begin(struct brw_context *brw);
 void brw_emit_query_begin(struct brw_context *brw);
 void brw_emit_query_end(struct brw_context *brw);
 
