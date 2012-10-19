@@ -1692,7 +1692,7 @@ _mesa_init_shader_dispatch(const struct gl_context *ctx,
 {
 #if FEATURE_GL
    /* GL_ARB_vertex/fragment_shader */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_DeleteObjectARB(exec, _mesa_DeleteObjectARB);
       SET_GetHandleARB(exec, _mesa_GetHandleARB);
       SET_DetachObjectARB(exec, _mesa_DetachObjectARB);
@@ -1705,34 +1705,36 @@ _mesa_init_shader_dispatch(const struct gl_context *ctx,
       SET_GetAttachedObjectsARB(exec, _mesa_GetAttachedObjectsARB);
    }
 
-   SET_ShaderSourceARB(exec, _mesa_ShaderSourceARB);
-   SET_CompileShaderARB(exec, _mesa_CompileShaderARB);
-   SET_LinkProgramARB(exec, _mesa_LinkProgramARB);
-   SET_UseProgramObjectARB(exec, _mesa_UseProgramObjectARB);
-   SET_ValidateProgramARB(exec, _mesa_ValidateProgramARB);
-   SET_GetShaderSourceARB(exec, _mesa_GetShaderSourceARB);
+   if (ctx->API != API_OPENGLES) {
+      SET_ShaderSourceARB(exec, _mesa_ShaderSourceARB);
+      SET_CompileShaderARB(exec, _mesa_CompileShaderARB);
+      SET_LinkProgramARB(exec, _mesa_LinkProgramARB);
+      SET_UseProgramObjectARB(exec, _mesa_UseProgramObjectARB);
+      SET_ValidateProgramARB(exec, _mesa_ValidateProgramARB);
+      SET_GetShaderSourceARB(exec, _mesa_GetShaderSourceARB);
 
-   /* OpenGL 2.0 */
-   SET_AttachShader(exec, _mesa_AttachShader);
-   SET_CreateProgram(exec, _mesa_CreateProgram);
-   SET_CreateShader(exec, _mesa_CreateShader);
-   SET_DeleteProgram(exec, _mesa_DeleteProgram);
-   SET_DeleteShader(exec, _mesa_DeleteShader);
-   SET_DetachShader(exec, _mesa_DetachShader);
-   SET_GetAttachedShaders(exec, _mesa_GetAttachedShaders);
-   SET_GetProgramiv(exec, _mesa_GetProgramiv);
-   SET_GetProgramInfoLog(exec, _mesa_GetProgramInfoLog);
-   SET_GetShaderiv(exec, _mesa_GetShaderiv);
-   SET_GetShaderInfoLog(exec, _mesa_GetShaderInfoLog);
-   SET_IsProgram(exec, _mesa_IsProgram);
-   SET_IsShader(exec, _mesa_IsShader);
+      /* OpenGL 2.0 */
+      SET_AttachShader(exec, _mesa_AttachShader);
+      SET_CreateProgram(exec, _mesa_CreateProgram);
+      SET_CreateShader(exec, _mesa_CreateShader);
+      SET_DeleteProgram(exec, _mesa_DeleteProgram);
+      SET_DeleteShader(exec, _mesa_DeleteShader);
+      SET_DetachShader(exec, _mesa_DetachShader);
+      SET_GetAttachedShaders(exec, _mesa_GetAttachedShaders);
+      SET_GetProgramiv(exec, _mesa_GetProgramiv);
+      SET_GetProgramInfoLog(exec, _mesa_GetProgramInfoLog);
+      SET_GetShaderiv(exec, _mesa_GetShaderiv);
+      SET_GetShaderInfoLog(exec, _mesa_GetShaderInfoLog);
+      SET_IsProgram(exec, _mesa_IsProgram);
+      SET_IsShader(exec, _mesa_IsShader);
 
-   /* GL_ARB_vertex_shader */
-   SET_BindAttribLocationARB(exec, _mesa_BindAttribLocationARB);
-   SET_GetActiveAttribARB(exec, _mesa_GetActiveAttribARB);
-   SET_GetAttribLocationARB(exec, _mesa_GetAttribLocationARB);
+      /* GL_ARB_vertex_shader */
+      SET_BindAttribLocationARB(exec, _mesa_BindAttribLocationARB);
+      SET_GetActiveAttribARB(exec, _mesa_GetActiveAttribARB);
+      SET_GetAttribLocationARB(exec, _mesa_GetAttribLocationARB);
+   }
 
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_ProgramParameteriARB(exec, _mesa_ProgramParameteriARB);
 
       SET_UseShaderProgramEXT(exec, _mesa_UseShaderProgramEXT);
@@ -1741,20 +1743,22 @@ _mesa_init_shader_dispatch(const struct gl_context *ctx,
    }
 
    /* GL_EXT_gpu_shader4 / GL 3.0 */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_BindFragDataLocationEXT(exec, _mesa_BindFragDataLocation);
    }
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       SET_GetFragDataLocationEXT(exec, _mesa_GetFragDataLocation);
    }
 
    /* GL_ARB_ES2_compatibility */
-   SET_ReleaseShaderCompiler(exec, _mesa_ReleaseShaderCompiler);
-   SET_GetShaderPrecisionFormat(exec, _mesa_GetShaderPrecisionFormat);
-   SET_ShaderBinary(exec, _mesa_ShaderBinary);
+   if (ctx->API != API_OPENGLES) {
+      SET_ReleaseShaderCompiler(exec, _mesa_ReleaseShaderCompiler);
+      SET_GetShaderPrecisionFormat(exec, _mesa_GetShaderPrecisionFormat);
+      SET_ShaderBinary(exec, _mesa_ShaderBinary);
+   }
 
    /* GL_ARB_blend_func_extended */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_BindFragDataLocationIndexed(exec, _mesa_BindFragDataLocationIndexed);
       SET_GetFragDataIndex(exec, _mesa_GetFragDataIndex);
    }

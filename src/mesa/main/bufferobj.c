@@ -2345,7 +2345,7 @@ _mesa_init_bufferobj_dispatch(struct gl_context *ctx, struct _glapi_table *disp)
     * exist for it.
     */
    SET_GetBufferPointervARB(disp, _mesa_GetBufferPointervARB);
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_GetBufferSubDataARB(disp, _mesa_GetBufferSubDataARB);
    }
    SET_IsBufferARB(disp, _mesa_IsBufferARB);

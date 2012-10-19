@@ -808,33 +808,35 @@ _mesa_init_shader_uniform_dispatch(const struct gl_context *ctx,
                                    struct _glapi_table *exec)
 {
 #if FEATURE_GL
-   SET_Uniform1fARB(exec, _mesa_Uniform1fARB);
-   SET_Uniform2fARB(exec, _mesa_Uniform2fARB);
-   SET_Uniform3fARB(exec, _mesa_Uniform3fARB);
-   SET_Uniform4fARB(exec, _mesa_Uniform4fARB);
-   SET_Uniform1iARB(exec, _mesa_Uniform1iARB);
-   SET_Uniform2iARB(exec, _mesa_Uniform2iARB);
-   SET_Uniform3iARB(exec, _mesa_Uniform3iARB);
-   SET_Uniform4iARB(exec, _mesa_Uniform4iARB);
-   SET_Uniform1fvARB(exec, _mesa_Uniform1fvARB);
-   SET_Uniform2fvARB(exec, _mesa_Uniform2fvARB);
-   SET_Uniform3fvARB(exec, _mesa_Uniform3fvARB);
-   SET_Uniform4fvARB(exec, _mesa_Uniform4fvARB);
-   SET_Uniform1ivARB(exec, _mesa_Uniform1ivARB);
-   SET_Uniform2ivARB(exec, _mesa_Uniform2ivARB);
-   SET_Uniform3ivARB(exec, _mesa_Uniform3ivARB);
-   SET_Uniform4ivARB(exec, _mesa_Uniform4ivARB);
-   SET_UniformMatrix2fvARB(exec, _mesa_UniformMatrix2fvARB);
-   SET_UniformMatrix3fvARB(exec, _mesa_UniformMatrix3fvARB);
-   SET_UniformMatrix4fvARB(exec, _mesa_UniformMatrix4fvARB);
+   if (ctx->API != API_OPENGLES) {
+      SET_Uniform1fARB(exec, _mesa_Uniform1fARB);
+      SET_Uniform2fARB(exec, _mesa_Uniform2fARB);
+      SET_Uniform3fARB(exec, _mesa_Uniform3fARB);
+      SET_Uniform4fARB(exec, _mesa_Uniform4fARB);
+      SET_Uniform1iARB(exec, _mesa_Uniform1iARB);
+      SET_Uniform2iARB(exec, _mesa_Uniform2iARB);
+      SET_Uniform3iARB(exec, _mesa_Uniform3iARB);
+      SET_Uniform4iARB(exec, _mesa_Uniform4iARB);
+      SET_Uniform1fvARB(exec, _mesa_Uniform1fvARB);
+      SET_Uniform2fvARB(exec, _mesa_Uniform2fvARB);
+      SET_Uniform3fvARB(exec, _mesa_Uniform3fvARB);
+      SET_Uniform4fvARB(exec, _mesa_Uniform4fvARB);
+      SET_Uniform1ivARB(exec, _mesa_Uniform1ivARB);
+      SET_Uniform2ivARB(exec, _mesa_Uniform2ivARB);
+      SET_Uniform3ivARB(exec, _mesa_Uniform3ivARB);
+      SET_Uniform4ivARB(exec, _mesa_Uniform4ivARB);
+      SET_UniformMatrix2fvARB(exec, _mesa_UniformMatrix2fvARB);
+      SET_UniformMatrix3fvARB(exec, _mesa_UniformMatrix3fvARB);
+      SET_UniformMatrix4fvARB(exec, _mesa_UniformMatrix4fvARB);
 
-   SET_GetActiveUniformARB(exec, _mesa_GetActiveUniformARB);
-   SET_GetUniformLocationARB(exec, _mesa_GetUniformLocationARB);
-   SET_GetUniformfvARB(exec, _mesa_GetUniformfvARB);
-   SET_GetUniformivARB(exec, _mesa_GetUniformivARB);
+      SET_GetActiveUniformARB(exec, _mesa_GetActiveUniformARB);
+      SET_GetUniformLocationARB(exec, _mesa_GetUniformLocationARB);
+      SET_GetUniformfvARB(exec, _mesa_GetUniformfvARB);
+      SET_GetUniformivARB(exec, _mesa_GetUniformivARB);
+   }
 
    /* OpenGL 2.1 */
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       SET_UniformMatrix2x3fv(exec, _mesa_UniformMatrix2x3fv);
       SET_UniformMatrix3x2fv(exec, _mesa_UniformMatrix3x2fv);
       SET_UniformMatrix2x4fv(exec, _mesa_UniformMatrix2x4fv);

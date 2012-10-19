@@ -37,6 +37,7 @@
 #include "glapi/glthread.h"
 #include "main/dispatch.h"
 #include "mfeatures.h"
+#include "main/context.h"
 
 /* KW: A set of functions to convert unusual Color/Normal/Vertex/etc
  * calls to a smaller set of driver-provided formats.  Currently just
@@ -1503,6 +1504,10 @@ _mesa_loopback_init_api_table(const struct gl_context *ctx,
                               struct _glapi_table *dest)
 {
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
+      SET_Color4ub(dest, loopback_Color4ub_f);
+      SET_Materialf(dest, loopback_Materialf);
+   }
+   if (ctx->API == API_OPENGL) {
       SET_Color3b(dest, loopback_Color3b_f);
       SET_Color3d(dest, loopback_Color3d_f);
       SET_Color3i(dest, loopback_Color3i_f);
@@ -1516,7 +1521,6 @@ _mesa_loopback_init_api_table(const struct gl_context *ctx,
       SET_Color4s(dest, loopback_Color4s_f);
       SET_Color4ui(dest, loopback_Color4ui_f);
       SET_Color4us(dest, loopback_Color4us_f);
-      SET_Color4ub(dest, loopback_Color4ub_f);
       SET_Color3bv(dest, loopback_Color3bv_f);
       SET_Color3dv(dest, loopback_Color3dv_f);
       SET_Color3iv(dest, loopback_Color3iv_f);
@@ -1637,7 +1641,6 @@ _mesa_loopback_init_api_table(const struct gl_context *ctx,
       SET_EvalCoord1dv(dest, loopback_EvalCoord1dv);
       SET_EvalCoord1fv(dest, loopback_EvalCoord1fv);
       SET_EvalCoord1d(dest, loopback_EvalCoord1d);
-      SET_Materialf(dest, loopback_Materialf);
       SET_Materiali(dest, loopback_Materiali);
       SET_Materialiv(dest, loopback_Materialiv);
       SET_Rectd(dest, loopback_Rectd);
@@ -1685,7 +1688,7 @@ _mesa_loopback_init_api_table(const struct gl_context *ctx,
       SET_VertexAttribs4ubvNV(dest, loopback_VertexAttribs4ubvNV);
    }
 
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_VertexAttrib1sARB(dest, loopback_VertexAttrib1sARB);
       SET_VertexAttrib1dARB(dest, loopback_VertexAttrib1dARB);
       SET_VertexAttrib2sARB(dest, loopback_VertexAttrib2sARB);

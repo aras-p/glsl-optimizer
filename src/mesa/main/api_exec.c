@@ -49,9 +49,11 @@
 #include "depth.h"
 #include "dlist.h"
 #include "drawpix.h"
+#include "drawtex.h"
 #include "rastpos.h"
 #include "enable.h"
 #include "errors.h"
+#include "es1_conversion.h"
 #include "eval.h"
 #include "get.h"
 #include "feedback.h"
@@ -69,6 +71,7 @@
 #include "pixelstore.h"
 #include "points.h"
 #include "polygon.h"
+#include "querymatrix.h"
 #include "queryobj.h"
 #include "readpix.h"
 #include "samplerobj.h"
@@ -128,12 +131,14 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_Disable(exec, _mesa_Disable);
    if (ctx->API == API_OPENGL || ctx->API == API_OPENGL_CORE)
       SET_DrawBuffer(exec, _mesa_DrawBuffer);
-   SET_ReadBuffer(exec, _mesa_ReadBuffer);
+   if (ctx->API != API_OPENGLES) {
+      SET_ReadBuffer(exec, _mesa_ReadBuffer);
+   }
    SET_Enable(exec, _mesa_Enable);
    SET_Finish(exec, _mesa_Finish);
    SET_Flush(exec, _mesa_Flush);
    SET_FrontFace(exec, _mesa_FrontFace);
-   if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
+   if (ctx->API == API_OPENGL) {
       SET_Frustum(exec, _mesa_Frustum);
    }
    SET_GetError(exec, _mesa_GetError);
@@ -153,6 +158,8 @@ _mesa_create_exec_table(struct gl_context *ctx)
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       SET_MatrixMode(exec, _mesa_MatrixMode);
       SET_MultMatrixf(exec, _mesa_MultMatrixf);
+   }
+   if (ctx->API == API_OPENGL) {
       SET_Ortho(exec, _mesa_Ortho);
    }
    SET_PixelStorei(exec, _mesa_PixelStorei);
@@ -185,7 +192,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
       _mesa_init_dlist_dispatch(exec);
    }
 
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_ClearDepth(exec, _mesa_ClearDepth);
    }
 
@@ -197,11 +204,11 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_DepthFunc(exec, _mesa_DepthFunc);
    SET_DepthMask(exec, _mesa_DepthMask);
 
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_DepthRange(exec, _mesa_DepthRange);
    }
 
-   if (ctx->API != API_OPENGLES2 && ctx->API != API_OPENGL_CORE) {
+   if (ctx->API == API_OPENGL) {
       _mesa_init_drawpix_dispatch(exec);
    }
    if (ctx->API == API_OPENGL) {
@@ -210,33 +217,37 @@ _mesa_create_exec_table(struct gl_context *ctx)
 
    if (ctx->API == API_OPENGL) {
       SET_FogCoordPointerEXT(exec, _mesa_FogCoordPointerEXT);
-      SET_Fogf(exec, _mesa_Fogf);
-      SET_Fogfv(exec, _mesa_Fogfv);
       SET_Fogi(exec, _mesa_Fogi);
       SET_Fogiv(exec, _mesa_Fogiv);
       SET_GetClipPlane(exec, _mesa_GetClipPlane);
    }
+   if (ctx->API == API_OPENGL || ctx->API == API_OPENGLES) {
+      SET_Fogf(exec, _mesa_Fogf);
+      SET_Fogfv(exec, _mesa_Fogfv);
+   }
    SET_GetBooleanv(exec, _mesa_GetBooleanv);
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_GetDoublev(exec, _mesa_GetDoublev);
    }
    SET_GetIntegerv(exec, _mesa_GetIntegerv);
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       SET_GetLightfv(exec, _mesa_GetLightfv);
-      SET_GetLightiv(exec, _mesa_GetLightiv);
       SET_GetMaterialfv(exec, _mesa_GetMaterialfv);
-      SET_GetMaterialiv(exec, _mesa_GetMaterialiv);
-      SET_GetPolygonStipple(exec, _mesa_GetPolygonStipple);
       SET_GetTexEnvfv(exec, _mesa_GetTexEnvfv);
       SET_GetTexEnviv(exec, _mesa_GetTexEnviv);
    }
-   if (ctx->API != API_OPENGLES2) {
+   if (ctx->API == API_OPENGL) {
+      SET_GetLightiv(exec, _mesa_GetLightiv);
+      SET_GetMaterialiv(exec, _mesa_GetMaterialiv);
+      SET_GetPolygonStipple(exec, _mesa_GetPolygonStipple);
+   }
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_GetTexLevelParameterfv(exec, _mesa_GetTexLevelParameterfv);
       SET_GetTexLevelParameteriv(exec, _mesa_GetTexLevelParameteriv);
    }
    SET_GetTexParameterfv(exec, _mesa_GetTexParameterfv);
    SET_GetTexParameteriv(exec, _mesa_GetTexParameteriv);
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_GetTexImage(exec, _mesa_GetTexImage);
    }
    SET_Hint(exec, _mesa_Hint);
@@ -247,10 +258,12 @@ _mesa_create_exec_table(struct gl_context *ctx)
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       SET_LightModelf(exec, _mesa_LightModelf);
       SET_LightModelfv(exec, _mesa_LightModelfv);
-      SET_LightModeli(exec, _mesa_LightModeli);
-      SET_LightModeliv(exec, _mesa_LightModeliv);
       SET_Lightf(exec, _mesa_Lightf);
       SET_Lightfv(exec, _mesa_Lightfv);
+   }
+   if (ctx->API == API_OPENGL) {
+      SET_LightModeli(exec, _mesa_LightModeli);
+      SET_LightModeliv(exec, _mesa_LightModeliv);
       SET_Lighti(exec, _mesa_Lighti);
       SET_Lightiv(exec, _mesa_Lightiv);
       SET_LoadMatrixd(exec, _mesa_LoadMatrixd);
@@ -263,10 +276,11 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    if (ctx->API != API_OPENGLES2) {
-      SET_PixelStoref(exec, _mesa_PixelStoref);
-
       SET_PointSize(exec, _mesa_PointSize);
+   }
 
+   if (_mesa_is_desktop_gl(ctx)) {
+      SET_PixelStoref(exec, _mesa_PixelStoref);
       SET_PolygonMode(exec, _mesa_PolygonMode);
    }
 
@@ -278,19 +292,21 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    SET_ReadPixels(exec, _mesa_ReadPixels);
-   if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
+   if (ctx->API == API_OPENGL) {
       SET_Rotated(exec, _mesa_Rotated);
       SET_Scaled(exec, _mesa_Scaled);
       SET_SecondaryColorPointerEXT(exec, _mesa_SecondaryColorPointerEXT);
+   }
+   if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       SET_TexEnvf(exec, _mesa_TexEnvf);
       SET_TexEnviv(exec, _mesa_TexEnviv);
    }
 
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
-      _mesa_init_texgen_dispatch(exec);
+      _mesa_init_texgen_dispatch(ctx, exec);
    }
 
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_TexImage1D(exec, _mesa_TexImage1D);
    }
    SET_TexParameterf(exec, _mesa_TexParameterf);
@@ -306,9 +322,11 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_GenTextures(exec, _mesa_GenTextures);
    if (ctx->API == API_OPENGL) {
       SET_AreTexturesResident(exec, _mesa_AreTexturesResident);
+   }
+   if (ctx->API == API_OPENGL || ctx->API == API_OPENGLES) {
       SET_ColorPointer(exec, _mesa_ColorPointer);
    }
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_CopyTexImage1D(exec, _mesa_CopyTexImage1D);
       SET_CopyTexSubImage1D(exec, _mesa_CopyTexSubImage1D);
       SET_TexSubImage1D(exec, _mesa_TexSubImage1D);
@@ -320,8 +338,10 @@ _mesa_create_exec_table(struct gl_context *ctx)
 
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       SET_DisableClientState(exec, _mesa_DisableClientState);
-      SET_EdgeFlagPointer(exec, _mesa_EdgeFlagPointer);
       SET_EnableClientState(exec, _mesa_EnableClientState);
+   }
+   if (ctx->API == API_OPENGL) {
+      SET_EdgeFlagPointer(exec, _mesa_EdgeFlagPointer);
       SET_IndexPointer(exec, _mesa_IndexPointer);
       SET_InterleavedArrays(exec, _mesa_InterleavedArrays);
    }
@@ -331,18 +351,24 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_IsTexture(exec, _mesa_IsTexture);
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       SET_NormalPointer(exec, _mesa_NormalPointer);
-      SET_PrioritizeTextures(exec, _mesa_PrioritizeTextures);
       SET_TexCoordPointer(exec, _mesa_TexCoordPointer);
       SET_VertexPointer(exec, _mesa_VertexPointer);
    }
+   if (ctx->API == API_OPENGL) {
+      SET_PrioritizeTextures(exec, _mesa_PrioritizeTextures);
+   }
 
    /* 1.2 */
-   SET_CopyTexSubImage3D(exec, _mesa_CopyTexSubImage3D);
-   SET_TexImage3D(exec, _mesa_TexImage3D);
-   SET_TexSubImage3D(exec, _mesa_TexSubImage3D);
+   if (ctx->API != API_OPENGLES) {
+      SET_CopyTexSubImage3D(exec, _mesa_CopyTexSubImage3D);
+      SET_TexImage3D(exec, _mesa_TexImage3D);
+      SET_TexSubImage3D(exec, _mesa_TexSubImage3D);
+   }
 
    /* OpenGL 1.2  GL_ARB_imaging */
-   SET_BlendColor(exec, _mesa_BlendColor);
+   if (ctx->API != API_OPENGLES) {
+      SET_BlendColor(exec, _mesa_BlendColor);
+   }
    SET_BlendEquation(exec, _mesa_BlendEquation);
    SET_BlendEquationSeparateEXT(exec, _mesa_BlendEquationSeparateEXT);
 
@@ -353,9 +379,11 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    /* OpenGL 2.0 */
-   SET_StencilFuncSeparate(exec, _mesa_StencilFuncSeparate);
-   SET_StencilMaskSeparate(exec, _mesa_StencilMaskSeparate);
-   SET_StencilOpSeparate(exec, _mesa_StencilOpSeparate);
+   if (ctx->API != API_OPENGLES) {
+      SET_StencilFuncSeparate(exec, _mesa_StencilFuncSeparate);
+      SET_StencilMaskSeparate(exec, _mesa_StencilMaskSeparate);
+      SET_StencilOpSeparate(exec, _mesa_StencilOpSeparate);
+   }
 
    _mesa_init_shader_dispatch(ctx, exec);
    _mesa_init_shader_uniform_dispatch(ctx, exec);
@@ -446,7 +474,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
    /* part of _mesa_init_rastpos_dispatch(exec); */
 
    /* 200. GL_IBM_multimode_draw_arrays */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_MultiModeDrawArraysIBM(exec, _mesa_MultiModeDrawArraysIBM);
       SET_MultiModeDrawElementsIBM(exec, _mesa_MultiModeDrawElementsIBM);
    }
@@ -466,8 +494,10 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_GenVertexArraysAPPLE(exec, _mesa_GenVertexArraysAPPLE);
    }
    /* Reused by ARB_vertex_array_object / OES_vertex_array_object */
-   SET_DeleteVertexArraysAPPLE(exec, _mesa_DeleteVertexArraysAPPLE);
-   SET_IsVertexArrayAPPLE(exec, _mesa_IsVertexArrayAPPLE);
+   if (ctx->API != API_OPENGLES) {
+      SET_DeleteVertexArraysAPPLE(exec, _mesa_DeleteVertexArraysAPPLE);
+      SET_IsVertexArrayAPPLE(exec, _mesa_IsVertexArrayAPPLE);
+   }
 
    /* 262. GL_NV_point_sprite */
    if (_mesa_is_desktop_gl(ctx)) {
@@ -481,23 +511,23 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    /* 285. GL_NV_primitive_restart */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_PrimitiveRestartIndexNV(exec, _mesa_PrimitiveRestartIndex);
    }
 
    /* ???. GL_EXT_depth_bounds_test */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_DepthBoundsEXT(exec, _mesa_DepthBoundsEXT);
    }
 
    /* 352. GL_EXT_transform_feedback */
    /* ARB 93. GL_ARB_transform_feedback2 */
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       _mesa_init_transform_feedback_dispatch(ctx, exec);
    }
 
    /* 364. GL_EXT_provoking_vertex */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_ProvokingVertexEXT(exec, _mesa_ProvokingVertexEXT);
    }
 
@@ -519,19 +549,23 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_SampleCoverageARB(exec, _mesa_SampleCoverageARB);
 
    /* ARB 12. GL_ARB_texture_compression */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_CompressedTexImage1DARB(exec, _mesa_CompressedTexImage1DARB);
       SET_CompressedTexSubImage1DARB(exec, _mesa_CompressedTexSubImage1DARB);
       SET_GetCompressedTexImageARB(exec, _mesa_GetCompressedTexImageARB);
    }
 
-   SET_CompressedTexImage3DARB(exec, _mesa_CompressedTexImage3DARB);
+   if (ctx->API != API_OPENGLES) {
+      SET_CompressedTexImage3DARB(exec, _mesa_CompressedTexImage3DARB);
+   }
    SET_CompressedTexImage2DARB(exec, _mesa_CompressedTexImage2DARB);
-   SET_CompressedTexSubImage3DARB(exec, _mesa_CompressedTexSubImage3DARB);
+   if (ctx->API != API_OPENGLES) {
+      SET_CompressedTexSubImage3DARB(exec, _mesa_CompressedTexSubImage3DARB);
+   }
    SET_CompressedTexSubImage2DARB(exec, _mesa_CompressedTexSubImage2DARB);
 
    /* ARB 104. GL_ARB_robustness */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_GetnCompressedTexImageARB(exec, _mesa_GetnCompressedTexImageARB);
    }
 
@@ -576,10 +610,12 @@ _mesa_create_exec_table(struct gl_context *ctx)
    /* glVertexAttrib4NivARB handled in api_loopback.c */
    /* glVertexAttrib4NusvARB handled in api_loopback.c */
    /* glVertexAttrib4NuivARB handled in api_loopback.c */
-   SET_VertexAttribPointerARB(exec, _mesa_VertexAttribPointerARB);
-   SET_EnableVertexAttribArrayARB(exec, _mesa_EnableVertexAttribArrayARB);
-   SET_DisableVertexAttribArrayARB(exec, _mesa_DisableVertexAttribArrayARB);
-   if (ctx->API != API_OPENGLES2) {
+   if (ctx->API != API_OPENGLES) {
+      SET_VertexAttribPointerARB(exec, _mesa_VertexAttribPointerARB);
+      SET_EnableVertexAttribArrayARB(exec, _mesa_EnableVertexAttribArrayARB);
+      SET_DisableVertexAttribArrayARB(exec, _mesa_DisableVertexAttribArrayARB);
+   }
+   if (_mesa_is_desktop_gl(ctx)) {
       /* glBindProgramARB aliases glBindProgramNV */
       /* glDeleteProgramsARB aliases glDeleteProgramsNV */
       /* glGenProgramsARB aliases glGenProgramsNV */
@@ -590,9 +626,11 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_ProgramStringARB(exec, _mesa_ProgramStringARB);
    }
 
-   SET_GetVertexAttribfvARB(exec, _mesa_GetVertexAttribfvARB);
-   SET_GetVertexAttribivARB(exec, _mesa_GetVertexAttribivARB);
-   SET_GetVertexAttribPointervNV(exec, _mesa_GetVertexAttribPointervARB);
+   if (ctx->API != API_OPENGLES) {
+      SET_GetVertexAttribfvARB(exec, _mesa_GetVertexAttribfvARB);
+      SET_GetVertexAttribivARB(exec, _mesa_GetVertexAttribivARB);
+      SET_GetVertexAttribPointervNV(exec, _mesa_GetVertexAttribPointervARB);
+   }
    if (ctx->API == API_OPENGL) {
       SET_ProgramEnvParameter4dARB(exec, _mesa_ProgramEnvParameter4dARB);
       SET_ProgramEnvParameter4dvARB(exec, _mesa_ProgramEnvParameter4dvARB);
@@ -614,25 +652,27 @@ _mesa_create_exec_table(struct gl_context *ctx)
    _mesa_init_bufferobj_dispatch(ctx, exec);
 
    /* ARB 29. GL_ARB_occlusion_query */
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       _mesa_init_queryobj_dispatch(ctx, exec);
    }
 
    /* ARB 37. GL_ARB_draw_buffers */
-   SET_DrawBuffersARB(exec, _mesa_DrawBuffersARB);
+   if (ctx->API != API_OPENGLES) {
+      SET_DrawBuffersARB(exec, _mesa_DrawBuffersARB);
+   }
 
    /* ARB 66. GL_ARB_sync */
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       _mesa_init_sync_dispatch(exec);
    }
 
    /* ARB 104. GL_ARB_debug_output */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       _mesa_init_errors_dispatch(exec);
    }
 
    /* ARB 105. GL_ARB_robustness */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_GetGraphicsResetStatusARB(exec, _mesa_GetGraphicsResetStatusARB);
       SET_GetnPolygonStippleARB(exec, _mesa_GetnPolygonStippleARB);
       SET_GetnTexImageARB(exec, _mesa_GetnTexImageARB);
@@ -663,16 +703,18 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_DeleteFramebuffersEXT(exec, _mesa_DeleteFramebuffersEXT);
    SET_GenFramebuffersEXT(exec, _mesa_GenFramebuffersEXT);
    SET_CheckFramebufferStatusEXT(exec, _mesa_CheckFramebufferStatusEXT);
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_FramebufferTexture1DEXT(exec, _mesa_FramebufferTexture1DEXT);
    }
    SET_FramebufferTexture2DEXT(exec, _mesa_FramebufferTexture2DEXT);
-   SET_FramebufferTexture3DEXT(exec, _mesa_FramebufferTexture3DEXT);
+   if (ctx->API != API_OPENGLES) {
+      SET_FramebufferTexture3DEXT(exec, _mesa_FramebufferTexture3DEXT);
+   }
    SET_FramebufferRenderbufferEXT(exec, _mesa_FramebufferRenderbufferEXT);
    SET_GetFramebufferAttachmentParameterivEXT(exec, _mesa_GetFramebufferAttachmentParameterivEXT);
    SET_GenerateMipmapEXT(exec, _mesa_GenerateMipmapEXT);
 
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       SET_BlitFramebufferEXT(exec, _mesa_BlitFramebufferEXT);
    }
 
@@ -683,19 +725,19 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    /* GL_MESA_texture_array / GL_EXT_texture_array */
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       SET_FramebufferTextureLayerEXT(exec, _mesa_FramebufferTextureLayerEXT);
    }
 
    /* GL_ATI_separate_stencil */
-   if (ctx->API == API_OPENGL) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_StencilFuncSeparateATI(exec, _mesa_StencilFuncSeparateATI);
    }
 
    /* The ARB_fbo functions are the union of
     * GL_EXT_fbo, GL_EXT_framebuffer_blit, GL_EXT_texture_array
     */
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       SET_RenderbufferStorageMultisample(exec, _mesa_RenderbufferStorageMultisample);
    }
 
@@ -704,13 +746,15 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_FlushMappedBufferRange(exec, _mesa_FlushMappedBufferRange);
 
    /* GL_ARB_copy_buffer */
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       SET_CopyBufferSubData(exec, _mesa_CopyBufferSubData);
    }
 
    /* GL_ARB_vertex_array_object / GL_OES_vertex_array_object */
-   SET_BindVertexArray(exec, _mesa_BindVertexArray);
-   SET_GenVertexArrays(exec, _mesa_GenVertexArrays);
+   if (ctx->API != API_OPENGLES) {
+      SET_BindVertexArray(exec, _mesa_BindVertexArray);
+      SET_GenVertexArrays(exec, _mesa_GenVertexArrays);
+   }
 
    /* GL_EXT_draw_buffers2 */
    if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
@@ -725,7 +769,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    /* GL_NV_conditional_render */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_BeginConditionalRenderNV(exec, _mesa_BeginConditionalRender);
       SET_EndConditionalRenderNV(exec, _mesa_EndConditionalRender);
    }
@@ -733,18 +777,18 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_EGLImageTargetTexture2DOES(exec, _mesa_EGLImageTargetTexture2DOES);
    SET_EGLImageTargetRenderbufferStorageOES(exec, _mesa_EGLImageTargetRenderbufferStorageOES);
 
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_ObjectPurgeableAPPLE(exec, _mesa_ObjectPurgeableAPPLE);
       SET_ObjectUnpurgeableAPPLE(exec, _mesa_ObjectUnpurgeableAPPLE);
       SET_GetObjectParameterivAPPLE(exec, _mesa_GetObjectParameterivAPPLE);
    }
 
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_FramebufferTextureARB(exec, _mesa_FramebufferTextureARB);
       SET_FramebufferTextureFaceARB(exec, _mesa_FramebufferTextureFaceARB);
    }
 
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_ClampColorARB(exec, _mesa_ClampColorARB);
    }
 
@@ -753,7 +797,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_ClearColorIiEXT(exec, _mesa_ClearColorIiEXT);
       SET_ClearColorIuiEXT(exec, _mesa_ClearColorIuiEXT);
    }
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_GetTexParameterIivEXT(exec, _mesa_GetTexParameterIiv);
       SET_GetTexParameterIuivEXT(exec, _mesa_GetTexParameterIuiv);
       SET_TexParameterIivEXT(exec, _mesa_TexParameterIiv);
@@ -761,14 +805,14 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    /* GL_EXT_gpu_shader4 / OpenGL 3.0 */
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       SET_GetVertexAttribIivEXT(exec, _mesa_GetVertexAttribIiv);
       SET_GetVertexAttribIuivEXT(exec, _mesa_GetVertexAttribIuiv);
       SET_VertexAttribIPointerEXT(exec, _mesa_VertexAttribIPointer);
    }
 
    /* GL 3.0 (functions not covered by other extensions) */
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       SET_ClearBufferiv(exec, _mesa_ClearBufferiv);
       SET_ClearBufferuiv(exec, _mesa_ClearBufferuiv);
       SET_ClearBufferfv(exec, _mesa_ClearBufferfv);
@@ -777,12 +821,12 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    /* GL_ARB_instanced_arrays */
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       SET_VertexAttribDivisorARB(exec, _mesa_VertexAttribDivisor);
    }
 
    /* GL_ARB_draw_buffer_blend */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_BlendFunciARB(exec, _mesa_BlendFunci);
       SET_BlendFuncSeparateiARB(exec, _mesa_BlendFuncSeparatei);
       SET_BlendEquationiARB(exec, _mesa_BlendEquationi);
@@ -790,17 +834,17 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    /* GL_NV_texture_barrier */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_TextureBarrierNV(exec, _mesa_TextureBarrierNV);
    }
  
    /* GL_ARB_texture_buffer_object */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_TexBufferARB(exec, _mesa_TexBuffer);
    }
 
    /* GL_ARB_texture_storage */
-   if (ctx->API != API_OPENGLES2) {
+   if (_mesa_is_desktop_gl(ctx)) {
       SET_TexStorage1D(exec, _mesa_TexStorage1D);
       SET_TextureStorage1DEXT(exec, _mesa_TextureStorage1DEXT);
    }
@@ -813,7 +857,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_TextureStorage3DEXT(exec, _mesa_TextureStorage3DEXT);
    }
 
-   if (ctx->API != API_OPENGLES2 || _mesa_is_gles3(ctx)) {
+   if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
       _mesa_init_sampler_object_dispatch(ctx, exec);
    }
 
@@ -826,6 +870,67 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_InvalidateSubFramebuffer(exec, _mesa_InvalidateSubFramebuffer);
       SET_InvalidateFramebuffer(exec, _mesa_InvalidateFramebuffer);
    }
+
+#if FEATURE_ES1
+   if (ctx->API == API_OPENGLES) {
+      SET_AlphaFuncxOES(exec, _es_AlphaFuncx);
+      SET_ClearColorxOES(exec, _es_ClearColorx);
+      SET_ClearDepthxOES(exec, _es_ClearDepthx);
+      SET_ClipPlanefOES(exec, _es_ClipPlanef);
+      SET_ClipPlanexOES(exec, _es_ClipPlanex);
+      SET_Color4xOES(exec, _es_Color4x);
+      SET_DepthRangexOES(exec, _es_DepthRangex);
+      SET_DrawTexfOES(exec, _mesa_DrawTexf);
+      SET_DrawTexfvOES(exec, _mesa_DrawTexfv);
+      SET_DrawTexiOES(exec, _mesa_DrawTexi);
+      SET_DrawTexivOES(exec, _mesa_DrawTexiv);
+      SET_DrawTexsOES(exec, _mesa_DrawTexs);
+      SET_DrawTexsvOES(exec, _mesa_DrawTexsv);
+      SET_DrawTexxOES(exec, _es_DrawTexxOES);
+      SET_DrawTexxvOES(exec, _es_DrawTexxvOES);
+      SET_FogxOES(exec, _es_Fogx);
+      SET_FogxvOES(exec, _es_Fogxv);
+      SET_FrustumfOES(exec, _es_Frustumf);
+      SET_FrustumxOES(exec, _es_Frustumx);
+      SET_GetClipPlanefOES(exec, _es_GetClipPlanef);
+      SET_GetClipPlanexOES(exec, _es_GetClipPlanex);
+      SET_GetFixedvOES(exec, _mesa_GetFixedv);
+      SET_GetLightxvOES(exec, _es_GetLightxv);
+      SET_GetMaterialxvOES(exec, _es_GetMaterialxv);
+      SET_GetTexEnvxvOES(exec, _es_GetTexEnvxv);
+      SET_GetTexGenxvOES(exec, _check_GetTexGenxvOES);
+      SET_GetTexParameterxvOES(exec, _es_GetTexParameterxv);
+      SET_LightModelxOES(exec, _es_LightModelx);
+      SET_LightModelxvOES(exec, _es_LightModelxv);
+      SET_LightxOES(exec, _es_Lightx);
+      SET_LightxvOES(exec, _es_Lightxv);
+      SET_LineWidthxOES(exec, _es_LineWidthx);
+      SET_LoadMatrixxOES(exec, _es_LoadMatrixx);
+      SET_MaterialxOES(exec, _es_Materialx);
+      SET_MaterialxvOES(exec, _es_Materialxv);
+      SET_MultMatrixxOES(exec, _es_MultMatrixx);
+      SET_MultiTexCoord4xOES(exec, _es_MultiTexCoord4x);
+      SET_Normal3xOES(exec, _es_Normal3x);
+      SET_OrthofOES(exec, _es_Orthof);
+      SET_OrthoxOES(exec, _es_Orthox);
+      SET_PointParameterxOES(exec, _es_PointParameterx);
+      SET_PointParameterxvOES(exec, _es_PointParameterxv);
+      SET_PointSizePointerOES(exec, _mesa_PointSizePointer);
+      SET_PointSizexOES(exec, _es_PointSizex);
+      SET_PolygonOffsetxOES(exec, _es_PolygonOffsetx);
+      SET_QueryMatrixxOES(exec, _es_QueryMatrixxOES);
+      SET_RotatexOES(exec, _es_Rotatex);
+      SET_SampleCoveragexOES(exec, _es_SampleCoveragex);
+      SET_ScalexOES(exec, _es_Scalex);
+      SET_TexEnvxOES(exec, _es_TexEnvx);
+      SET_TexEnvxvOES(exec, _es_TexEnvxv);
+      SET_TexGenxOES(exec, _check_TexGenxOES);
+      SET_TexGenxvOES(exec, _check_TexGenxvOES);
+      SET_TexParameterxOES(exec, _es_TexParameterx);
+      SET_TexParameterxvOES(exec, _es_TexParameterxv);
+      SET_TranslatexOES(exec, _es_Translatex);
+   }
+#endif
 
    return exec;
 }

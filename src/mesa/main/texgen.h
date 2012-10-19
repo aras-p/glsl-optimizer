@@ -50,7 +50,7 @@ extern void GLAPIENTRY
 _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params );
 
 extern void
-_mesa_init_texgen_dispatch(struct _glapi_table *disp);
+_mesa_init_texgen_dispatch(struct gl_context *ctx, struct _glapi_table *disp);
 
 
 extern void GLAPIENTRY
