@@ -192,6 +192,7 @@ struct r600_shader_ctx {
 	uint32_t				*literals;
 	uint32_t				nliterals;
 	uint32_t				max_driver_temp_used;
+	boolean use_llvm;
 	/* needed for evergreen interpolation */
 	boolean                                 input_centroid;
 	boolean                                 input_linear;
@@ -759,10 +760,12 @@ static int evergreen_interp_input(struct r600_shader_ctx *ctx, int index)
 
 	if (ctx->shader->input[index].spi_sid) {
 		ctx->shader->input[index].lds_pos = ctx->shader->nlds++;
-		if (ctx->shader->input[index].interpolate > 0) {
-			r = evergreen_interp_alu(ctx, index);
-		} else {
-			r = evergreen_interp_flat(ctx, index);
+		if (!ctx->use_llvm) {
+			if (ctx->shader->input[index].interpolate > 0) {
+				r = evergreen_interp_alu(ctx, index);
+			} else {
+				r = evergreen_interp_flat(ctx, index);
+			}
 		}
 	}
 	return r;
@@ -1131,7 +1134,7 @@ static int tgsi_split_literal_constant(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
-static int process_twoside_color_inputs(struct r600_shader_ctx *ctx, unsigned use_llvm)
+static int process_twoside_color_inputs(struct r600_shader_ctx *ctx)
 {
 	int i, r, count = ctx->shader->ninput;
 
@@ -1143,7 +1146,7 @@ static int process_twoside_color_inputs(struct r600_shader_ctx *ctx, unsigned us
 					return r;
 			}
 			
-			if (!use_llvm) {
+			if (!ctx->use_llvm) {
 				r = select_twoside_color(ctx, i, back_facing_reg);
 				if (r)
 					return r;
@@ -1243,6 +1246,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		use_llvm = 0;
 	}
 #endif
+	ctx.use_llvm = use_llvm;
 
 	if (use_llvm) {
 		ctx.file_offset[TGSI_FILE_OUTPUT] =
@@ -1312,6 +1316,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	/* Process two side if needed */
 	if (shader->two_side && ctx.colors_used) {
 		int i, count = ctx.shader->ninput;
+		unsigned next_lds_loc = ctx.shader->nlds;
 
 		/* additional inputs will be allocated right after the existing inputs,
 		 * we won't need them after the color selection, so we don't need to
@@ -1335,6 +1340,9 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				ctx.shader->input[ni].name = TGSI_SEMANTIC_BCOLOR;
 				ctx.shader->input[ni].spi_sid = r600_spi_sid(&ctx.shader->input[ni]);
 				ctx.shader->input[ni].gpr = gpr++;
+				// TGSI to LLVM needs to know the lds position of inputs.
+				// Non LLVM path computes it later (in process_twoside_color)
+				ctx.shader->input[ni].lds_pos = next_lds_loc++;
 				ctx.shader->input[i].potential_back_facing_reg = ni;
 			}
 		}
@@ -1409,7 +1417,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	}
 
 	if (shader->two_side && ctx.colors_used) {
-		if ((r = process_twoside_color_inputs(&ctx, use_llvm)))
+		if ((r = process_twoside_color_inputs(&ctx)))
 			return r;
 	}
 

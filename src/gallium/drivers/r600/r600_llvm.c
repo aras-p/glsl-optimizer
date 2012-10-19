@@ -90,11 +90,11 @@ llvm_face_select_helper(
 
 	LLVMValueRef backcolor = llvm_load_input_helper(
 		ctx,
-		"llvm.R600.load.input",
+		intrinsic,
 		backcolor_regiser);
 	LLVMValueRef front_color = llvm_load_input_helper(
 		ctx,
-		"llvm.R600.load.input",
+		intrinsic,
 		frontcolor_register);
 	LLVMValueRef face = llvm_load_input_helper(
 		ctx,
@@ -119,6 +119,29 @@ static void llvm_load_input(
 	const struct tgsi_full_declaration *decl)
 {
 	unsigned chan;
+
+	const char *intrinsics = "llvm.R600.load.input";
+	unsigned offset = 4 * ctx->reserved_reg_count;
+
+	if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->chip_class >= EVERGREEN) {
+		switch (decl->Interp.Interpolate) {
+		case TGSI_INTERPOLATE_COLOR:
+		case TGSI_INTERPOLATE_PERSPECTIVE:
+			offset = 0;
+			intrinsics = "llvm.R600.load.input.perspective";
+			break;
+		case TGSI_INTERPOLATE_LINEAR:
+			offset = 0;
+			intrinsics = "llvm.R600.load.input.linear";
+			break;
+		case TGSI_INTERPOLATE_CONSTANT:
+			offset = 0;
+			intrinsics = "llvm.R600.load.input.constant";
+			break;
+		default:
+			assert(0 && "Unknow Interpolate mode");
+		}
+	}
 
 	for (chan = 0; chan < 4; chan++) {
 		unsigned soa_index = radeon_llvm_reg_index_soa(input_index,
@@ -145,24 +168,37 @@ static void llvm_load_input(
 			break;
 		case TGSI_SEMANTIC_COLOR:
 			if (ctx->two_side) {
+				unsigned front_location, back_location;
 				unsigned back_reg = ctx->r600_inputs[input_index]
 					.potential_back_facing_reg;
-				unsigned back_soa_index = radeon_llvm_reg_index_soa(
-					ctx->r600_inputs[back_reg].gpr,
-					chan);
+				if (ctx->chip_class >= EVERGREEN) {
+					front_location = 4 * ctx->r600_inputs[input_index].lds_pos + chan;
+					back_location = 4 * ctx->r600_inputs[back_reg].lds_pos + chan;
+				} else {
+					front_location = soa_index + 4 * ctx->reserved_reg_count;
+					back_location = radeon_llvm_reg_index_soa(
+						ctx->r600_inputs[back_reg].gpr,
+						chan);
+				}
 				ctx->inputs[soa_index] = llvm_face_select_helper(ctx,
-				"llvm.R600.load.input",
-					4 * ctx->face_input,
-					soa_index + 4 * ctx->reserved_reg_count,
-					back_soa_index);
+					intrinsics,
+					4 * ctx->face_input, front_location, back_location);
 				break;
 			}
 		default:
-			/* The * 4 is assuming that we are in soa mode. */
-			ctx->inputs[soa_index] = llvm_load_input_helper(ctx,
-				"llvm.R600.load.input",
-				soa_index + (ctx->reserved_reg_count * 4));
+			{
+				unsigned location;
+				if (ctx->chip_class >= EVERGREEN) {
+					location = 4 * ctx->r600_inputs[input_index].lds_pos + chan;
+				} else {
+					location = soa_index + 4 * ctx->reserved_reg_count;
+				}
+				/* The * 4 is assuming that we are in soa mode. */
+				ctx->inputs[soa_index] = llvm_load_input_helper(ctx,
+					intrinsics, location);
+					
 			break;
+			}
 		}
 	}
 }
