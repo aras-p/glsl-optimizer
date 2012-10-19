@@ -8,7 +8,7 @@
 
 <category name="GL_ARB_draw_elements_base_vertex" number="62">
 
-    <function name="DrawElementsBaseVertex" offset="assign">
+    <function name="DrawElementsBaseVertex" offset="assign" exec="dynamic">
         <param name="mode" type="GLenum"/>
         <param name="count" type="GLsizei"/>
         <param name="type" type="GLenum"/>
@@ -16,7 +16,8 @@
         <param name="basevertex" type="GLint"/>
     </function>
 
-    <function name="DrawRangeElementsBaseVertex" offset="assign">
+    <function name="DrawRangeElementsBaseVertex" offset="assign"
+              exec="dynamic">
         <param name="mode" type="GLenum"/>
         <param name="start" type="GLuint"/>
         <param name="end" type="GLuint"/>
@@ -26,7 +27,8 @@
         <param name="basevertex" type="GLint"/>
     </function>
 
-    <function name="MultiDrawElementsBaseVertex" offset="assign">
+    <function name="MultiDrawElementsBaseVertex" offset="assign"
+              exec="dynamic">
         <param name="mode" type="GLenum"/>
         <param name="count" type="const GLsizei *"/>
         <param name="type" type="GLenum"/>
@@ -35,7 +37,8 @@
         <param name="basevertex" type="const GLint *"/>
     </function>
 
-    <function name="DrawElementsInstancedBaseVertex" offset="assign">
+    <function name="DrawElementsInstancedBaseVertex" offset="assign"
+              exec="dynamic">
         <param name="mode" type="GLenum"/>
         <param name="count" type="GLsizei"/>
         <param name="type" type="GLenum"/>

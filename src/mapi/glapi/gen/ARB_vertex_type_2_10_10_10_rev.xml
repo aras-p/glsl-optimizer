@@ -7,214 +7,244 @@
 
     <enum name="INT_2_10_10_10_REV"                value = "0x8D9F"/>
 
-    <function name="VertexP2ui" offset="assign" deprecated="3.1">
+    <function name="VertexP2ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="value" type="GLuint"/>
     </function>
 
-    <function name="VertexP3ui" offset="assign" deprecated="3.1">
+    <function name="VertexP3ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="value" type="GLuint"/>
     </function>
 
-    <function name="VertexP4ui" offset="assign" deprecated="3.1">
+    <function name="VertexP4ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="value" type="GLuint"/>
     </function>
 
-    <function name="VertexP2uiv" offset="assign" deprecated="3.1">
+    <function name="VertexP2uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="value" type="const GLuint *"/>
     </function>
 
-    <function name="VertexP3uiv" offset="assign" deprecated="3.1">
+    <function name="VertexP3uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="value" type="const GLuint *"/>
     </function>
 
-    <function name="VertexP4uiv" offset="assign" deprecated="3.1">
+    <function name="VertexP4uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="value" type="const GLuint *"/>
     </function>
 
-    <function name="TexCoordP1ui" offset="assign" deprecated="3.1">
+    <function name="TexCoordP1ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="coords" type="GLuint"/>
     </function>
 
-    <function name="TexCoordP2ui" offset="assign" deprecated="3.1">
+    <function name="TexCoordP2ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="coords" type="GLuint"/>
     </function>
 
-    <function name="TexCoordP3ui" offset="assign" deprecated="3.1">
+    <function name="TexCoordP3ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="coords" type="GLuint"/>
     </function>
 
-    <function name="TexCoordP4ui" offset="assign" deprecated="3.1">
+    <function name="TexCoordP4ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="coords" type="GLuint"/>
     </function>
 
-    <function name="TexCoordP1uiv" offset="assign" deprecated="3.1">
+    <function name="TexCoordP1uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="coords" type="const GLuint *"/>
     </function>
 
-    <function name="TexCoordP2uiv" offset="assign" deprecated="3.1">
+    <function name="TexCoordP2uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="coords" type="const GLuint *"/>
     </function>
 
-    <function name="TexCoordP3uiv" offset="assign" deprecated="3.1">
+    <function name="TexCoordP3uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="coords" type="const GLuint *"/>
     </function>
 
-    <function name="TexCoordP4uiv" offset="assign" deprecated="3.1">
+    <function name="TexCoordP4uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="coords" type="const GLuint *"/>
     </function>
 
-    <function name="MultiTexCoordP1ui" offset="assign" deprecated="3.1">
+    <function name="MultiTexCoordP1ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="texture" type="GLenum"/>
         <param name="type" type="GLenum"/>
         <param name="coords" type="GLuint"/>
     </function>
 
-    <function name="MultiTexCoordP2ui" offset="assign" deprecated="3.1">
+    <function name="MultiTexCoordP2ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="texture" type="GLenum"/>
         <param name="type" type="GLenum"/>
         <param name="coords" type="GLuint"/>
     </function>
 
-    <function name="MultiTexCoordP3ui" offset="assign" deprecated="3.1">
+    <function name="MultiTexCoordP3ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="texture" type="GLenum"/>
         <param name="type" type="GLenum"/>
         <param name="coords" type="GLuint"/>
     </function>
 
-    <function name="MultiTexCoordP4ui" offset="assign" deprecated="3.1">
+    <function name="MultiTexCoordP4ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="texture" type="GLenum"/>
         <param name="type" type="GLenum"/>
         <param name="coords" type="GLuint"/>
     </function>
 
-    <function name="MultiTexCoordP1uiv" offset="assign" deprecated="3.1">
+    <function name="MultiTexCoordP1uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="texture" type="GLenum"/>
         <param name="type" type="GLenum"/>
         <param name="coords" type="const GLuint *"/>
     </function>
 
-    <function name="MultiTexCoordP2uiv" offset="assign" deprecated="3.1">
+    <function name="MultiTexCoordP2uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="texture" type="GLenum"/>
         <param name="type" type="GLenum"/>
         <param name="coords" type="const GLuint *"/>
     </function>
 
-    <function name="MultiTexCoordP3uiv" offset="assign" deprecated="3.1">
+    <function name="MultiTexCoordP3uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="texture" type="GLenum"/>
         <param name="type" type="GLenum"/>
         <param name="coords" type="const GLuint *"/>
     </function>
 
-    <function name="MultiTexCoordP4uiv" offset="assign" deprecated="3.1">
+    <function name="MultiTexCoordP4uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="texture" type="GLenum"/>
         <param name="type" type="GLenum"/>
         <param name="coords" type="const GLuint *"/>
     </function>
 
-    <function name="NormalP3ui" offset="assign" deprecated="3.1">
+    <function name="NormalP3ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="coords" type="GLuint"/>
     </function>
 
-    <function name="NormalP3uiv" offset="assign" deprecated="3.1">
+    <function name="NormalP3uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="coords" type="const GLuint *"/>
     </function>
 
-    <function name="ColorP3ui" offset="assign" deprecated="3.1">
+    <function name="ColorP3ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="color" type="GLuint"/>
     </function>
 
-    <function name="ColorP4ui" offset="assign" deprecated="3.1">
+    <function name="ColorP4ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="color" type="GLuint"/>
     </function>
 
-    <function name="ColorP3uiv" offset="assign" deprecated="3.1">
+    <function name="ColorP3uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="color" type="const GLuint *"/>
     </function>
 
-    <function name="ColorP4uiv" offset="assign" deprecated="3.1">
+    <function name="ColorP4uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="color" type="const GLuint *"/>
     </function>
 
-    <function name="SecondaryColorP3ui" offset="assign" deprecated="3.1">
+    <function name="SecondaryColorP3ui" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="color" type="GLuint"/>
     </function>
 
-    <function name="SecondaryColorP3uiv" offset="assign" deprecated="3.1">
+    <function name="SecondaryColorP3uiv" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="type" type="GLenum"/>
         <param name="color" type="const GLuint *"/>
     </function>
 
-    <function name="VertexAttribP1ui" offset="assign">
+    <function name="VertexAttribP1ui" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="type" type="GLenum"/>
         <param name="normalized" type="GLboolean"/>
         <param name="value" type="GLuint"/>
     </function>
 
-    <function name="VertexAttribP2ui" offset="assign">
+    <function name="VertexAttribP2ui" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="type" type="GLenum"/>
         <param name="normalized" type="GLboolean"/>
         <param name="value" type="GLuint"/>
     </function>
 
-    <function name="VertexAttribP3ui" offset="assign">
+    <function name="VertexAttribP3ui" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="type" type="GLenum"/>
         <param name="normalized" type="GLboolean"/>
         <param name="value" type="GLuint"/>
     </function>
 
-    <function name="VertexAttribP4ui" offset="assign">
+    <function name="VertexAttribP4ui" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="type" type="GLenum"/>
         <param name="normalized" type="GLboolean"/>
         <param name="value" type="GLuint"/>
     </function>
 
-    <function name="VertexAttribP1uiv" offset="assign">
+    <function name="VertexAttribP1uiv" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="type" type="GLenum"/>
         <param name="normalized" type="GLboolean"/>
         <param name="value" type="const GLuint *"/>
     </function>
 
-    <function name="VertexAttribP2uiv" offset="assign">
+    <function name="VertexAttribP2uiv" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="type" type="GLenum"/>
         <param name="normalized" type="GLboolean"/>
         <param name="value" type="const GLuint *"/>
     </function>
 
-    <function name="VertexAttribP3uiv" offset="assign">
+    <function name="VertexAttribP3uiv" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="type" type="GLenum"/>
         <param name="normalized" type="GLboolean"/>
         <param name="value" type="const GLuint *"/>
     </function>
 
-    <function name="VertexAttribP4uiv" offset="assign">
+    <function name="VertexAttribP4uiv" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="type" type="GLenum"/>
         <param name="normalized" type="GLboolean"/>

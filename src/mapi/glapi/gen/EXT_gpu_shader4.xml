@@ -44,25 +44,25 @@
     </enum>
 
 
-    <function name="VertexAttribI1iEXT" offset="assign">
+    <function name="VertexAttribI1iEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLint"/>
     </function>
 
-    <function name="VertexAttribI2iEXT" offset="assign">
+    <function name="VertexAttribI2iEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
     </function>
 
-    <function name="VertexAttribI3iEXT" offset="assign">
+    <function name="VertexAttribI3iEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
         <param name="z" type="GLint"/>
     </function>
 
-    <function name="VertexAttribI4iEXT" offset="assign">
+    <function name="VertexAttribI4iEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
@@ -70,25 +70,25 @@
         <param name="w" type="GLint"/>
     </function>
 
-    <function name="VertexAttribI1uiEXT" offset="assign">
+    <function name="VertexAttribI1uiEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLuint"/>
     </function>
 
-    <function name="VertexAttribI2uiEXT" offset="assign">
+    <function name="VertexAttribI2uiEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLuint"/>
         <param name="y" type="GLuint"/>
     </function>
 
-    <function name="VertexAttribI3uiEXT" offset="assign">
+    <function name="VertexAttribI3uiEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLuint"/>
         <param name="y" type="GLuint"/>
         <param name="z" type="GLuint"/>
     </function>
 
-    <function name="VertexAttribI4uiEXT" offset="assign">
+    <function name="VertexAttribI4uiEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLuint"/>
         <param name="y" type="GLuint"/>
@@ -101,17 +101,17 @@
         <param name="v" type="const GLint *"/>
     </function>
 
-    <function name="VertexAttribI2ivEXT" offset="assign">
+    <function name="VertexAttribI2ivEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *"/>
     </function>
 
-    <function name="VertexAttribI3ivEXT" offset="assign">
+    <function name="VertexAttribI3ivEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *"/>
     </function>
 
-    <function name="VertexAttribI4ivEXT" offset="assign">
+    <function name="VertexAttribI4ivEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *"/>
     </function>
@@ -121,17 +121,17 @@
         <param name="v" type="const GLuint *"/>
     </function>
 
-    <function name="VertexAttribI2uivEXT" offset="assign">
+    <function name="VertexAttribI2uivEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLuint *"/>
     </function>
 
-    <function name="VertexAttribI3uivEXT" offset="assign">
+    <function name="VertexAttribI3uivEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLuint *"/>
     </function>
 
-    <function name="VertexAttribI4uivEXT" offset="assign">
+    <function name="VertexAttribI4uivEXT" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLuint *"/>
     </function>

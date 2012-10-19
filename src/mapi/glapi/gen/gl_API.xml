@@ -1147,7 +1147,7 @@
         <glx rop="3"/>
     </function>
 
-    <function name="Begin" offset="7" deprecated="3.1">
+    <function name="Begin" offset="7" deprecated="3.1" exec="dynamic">
         <param name="mode" type="GLenum"/>
         <glx rop="4"/>
     </function>
@@ -1188,13 +1188,13 @@
     </function>
 
     <function name="Color3f" offset="13" vectorequiv="Color3fv"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="red" type="GLfloat"/>
         <param name="green" type="GLfloat"/>
         <param name="blue" type="GLfloat"/>
     </function>
 
-    <function name="Color3fv" offset="14" deprecated="3.1">
+    <function name="Color3fv" offset="14" deprecated="3.1" exec="dynamic">
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="8"/>
     </function>
@@ -1286,14 +1286,14 @@
     </function>
 
     <function name="Color4f" offset="29" vectorequiv="Color4fv" es1="1.0"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="red" type="GLfloat"/>
         <param name="green" type="GLfloat"/>
         <param name="blue" type="GLfloat"/>
         <param name="alpha" type="GLfloat"/>
     </function>
 
-    <function name="Color4fv" offset="30" deprecated="3.1">
+    <function name="Color4fv" offset="30" deprecated="3.1" exec="dynamic">
         <param name="v" type="const GLfloat *" count="4"/>
         <glx rop="16"/>
     </function>
@@ -1364,7 +1364,7 @@
     </function>
 
     <function name="EdgeFlag" offset="41" vectorequiv="EdgeFlagv"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="flag" type="GLboolean"/>
     </function>
 
@@ -1373,7 +1373,7 @@
         <glx rop="22"/>
     </function>
 
-    <function name="End" offset="43" deprecated="3.1">
+    <function name="End" offset="43" deprecated="3.1" exec="dynamic">
         <glx rop="23"/>
     </function>
 
@@ -1386,11 +1386,12 @@
         <glx rop="24"/>
     </function>
 
-    <function name="Indexf" offset="46" vectorequiv="Indexfv" deprecated="3.1">
+    <function name="Indexf" offset="46" vectorequiv="Indexfv" deprecated="3.1"
+              exec="dynamic">
         <param name="c" type="GLfloat"/>
     </function>
 
-    <function name="Indexfv" offset="47" deprecated="3.1">
+    <function name="Indexfv" offset="47" deprecated="3.1" exec="dynamic">
         <param name="c" type="const GLfloat *" count="1"/>
         <glx rop="25"/>
     </function>
@@ -1438,13 +1439,13 @@
     </function>
 
     <function name="Normal3f" offset="56" vectorequiv="Normal3fv" es1="1.0"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="nx" type="GLfloat"/>
         <param name="ny" type="GLfloat"/>
         <param name="nz" type="GLfloat"/>
     </function>
 
-    <function name="Normal3fv" offset="57" deprecated="3.1">
+    <function name="Normal3fv" offset="57" deprecated="3.1" exec="dynamic">
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="30"/>
     </function>
@@ -1630,7 +1631,8 @@
         <glx rop="45"/>
     </function>
 
-    <function name="Rectf" offset="88" vectorequiv="Rectfv" deprecated="3.1">
+    <function name="Rectf" offset="88" vectorequiv="Rectfv" deprecated="3.1"
+              exec="dynamic">
         <param name="x1" type="GLfloat"/>
         <param name="y1" type="GLfloat"/>
         <param name="x2" type="GLfloat"/>
@@ -1680,11 +1682,12 @@
     </function>
 
     <function name="TexCoord1f" offset="96" vectorequiv="TexCoord1fv"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="s" type="GLfloat"/>
     </function>
 
-    <function name="TexCoord1fv" offset="97" deprecated="3.1">
+    <function name="TexCoord1fv" offset="97" deprecated="3.1"
+              exec="dynamic">
         <param name="v" type="const GLfloat *" count="1"/>
         <glx rop="50"/>
     </function>
@@ -1721,12 +1724,13 @@
     </function>
 
     <function name="TexCoord2f" offset="104" vectorequiv="TexCoord2fv"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
     </function>
 
-    <function name="TexCoord2fv" offset="105" deprecated="3.1">
+    <function name="TexCoord2fv" offset="105" deprecated="3.1"
+              exec="dynamic">
         <param name="v" type="const GLfloat *" count="2"/>
         <glx rop="54"/>
     </function>
@@ -1766,13 +1770,14 @@
     </function>
 
     <function name="TexCoord3f" offset="112" vectorequiv="TexCoord3fv"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
         <param name="r" type="GLfloat"/>
     </function>
 
-    <function name="TexCoord3fv" offset="113" deprecated="3.1">
+    <function name="TexCoord3fv" offset="113" deprecated="3.1"
+              exec="dynamic">
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="58"/>
     </function>
@@ -1815,14 +1820,15 @@
     </function>
 
     <function name="TexCoord4f" offset="120" vectorequiv="TexCoord4fv"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
         <param name="r" type="GLfloat"/>
         <param name="q" type="GLfloat"/>
     </function>
 
-    <function name="TexCoord4fv" offset="121" deprecated="3.1">
+    <function name="TexCoord4fv" offset="121" deprecated="3.1"
+              exec="dynamic">
         <param name="v" type="const GLfloat *" count="4"/>
         <glx rop="62"/>
     </function>
@@ -1865,12 +1871,13 @@
     </function>
 
     <function name="Vertex2f" offset="128" vectorequiv="Vertex2fv"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
     </function>
 
-    <function name="Vertex2fv" offset="129" deprecated="3.1">
+    <function name="Vertex2fv" offset="129" deprecated="3.1"
+              exec="dynamic">
         <param name="v" type="const GLfloat *" count="2"/>
         <glx rop="66"/>
     </function>
@@ -1910,13 +1917,14 @@
     </function>
 
     <function name="Vertex3f" offset="136" vectorequiv="Vertex3fv"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="Vertex3fv" offset="137" deprecated="3.1">
+    <function name="Vertex3fv" offset="137" deprecated="3.1"
+              exec="dynamic">
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="70"/>
     </function>
@@ -1959,14 +1967,15 @@
     </function>
 
     <function name="Vertex4f" offset="144" vectorequiv="Vertex4fv"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="Vertex4fv" offset="145" deprecated="3.1">
+    <function name="Vertex4fv" offset="145" deprecated="3.1"
+              exec="dynamic">
         <param name="v" type="const GLfloat *" count="4"/>
         <glx rop="74"/>
     </function>
@@ -2119,7 +2128,8 @@
         <glx rop="96"/>
     </function>
 
-    <function name="Materialfv" offset="170" es1="1.0" deprecated="3.1">
+    <function name="Materialfv" offset="170" es1="1.0" deprecated="3.1"
+              exec="dynamic">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *" variable_param="pname"/>
@@ -2524,7 +2534,7 @@
     </function>
 
     <function name="EvalCoord1f" offset="230" vectorequiv="EvalCoord1fv"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="u" type="GLfloat"/>
     </function>
 
@@ -2545,7 +2555,7 @@
     </function>
 
     <function name="EvalCoord2f" offset="234" vectorequiv="EvalCoord2fv"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="u" type="GLfloat"/>
         <param name="v" type="GLfloat"/>
     </function>
@@ -2555,19 +2565,22 @@
         <glx rop="154"/>
     </function>
 
-    <function name="EvalMesh1" offset="236" deprecated="3.1">
+    <function name="EvalMesh1" offset="236" deprecated="3.1"
+              exec="dynamic">
         <param name="mode" type="GLenum"/>
         <param name="i1" type="GLint"/>
         <param name="i2" type="GLint"/>
         <glx rop="155"/>
     </function>
 
-    <function name="EvalPoint1" offset="237" deprecated="3.1">
+    <function name="EvalPoint1" offset="237" deprecated="3.1"
+              exec="dynamic">
         <param name="i" type="GLint"/>
         <glx rop="156"/>
     </function>
 
-    <function name="EvalMesh2" offset="238" deprecated="3.1">
+    <function name="EvalMesh2" offset="238" deprecated="3.1"
+              exec="dynamic">
         <param name="mode" type="GLenum"/>
         <param name="i1" type="GLint"/>
         <param name="i2" type="GLint"/>
@@ -2576,7 +2589,8 @@
         <glx rop="157"/>
     </function>
 
-    <function name="EvalPoint2" offset="239" deprecated="3.1">
+    <function name="EvalPoint2" offset="239" deprecated="3.1"
+              exec="dynamic">
         <param name="i" type="GLint"/>
         <param name="j" type="GLint"/>
         <glx rop="158"/>
@@ -3192,7 +3206,8 @@
     <enum name="ALL_CLIENT_ATTRIB_BITS"                   value="0xFFFFFFFF"/>
     <enum name="CLIENT_ALL_ATTRIB_BITS"                   value="0xFFFFFFFF"/>
 
-    <function name="ArrayElement" offset="306" deprecated="3.1">
+    <function name="ArrayElement" offset="306" deprecated="3.1"
+              exec="dynamic">
         <param name="i" type="GLint"/>
         <glx handcode="true"/>
     </function>
@@ -3211,14 +3226,16 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="DrawArrays" offset="310" es1="1.0" es2="2.0">
+    <function name="DrawArrays" offset="310" es1="1.0" es2="2.0"
+              exec="dynamic">
         <param name="mode" type="GLenum"/>
         <param name="first" type="GLint"/>
         <param name="count" type="GLsizei"/>
         <glx rop="193" handcode="true"/>
     </function>
 
-    <function name="DrawElements" offset="311" es1="1.0" es2="2.0">
+    <function name="DrawElements" offset="311" es1="1.0" es2="2.0"
+              exec="dynamic">
         <param name="mode" type="GLenum"/>
         <param name="count" type="GLsizei"/>
         <param name="type" type="GLenum"/>
@@ -3776,7 +3793,8 @@
         <glx rop="4097"/>
     </function>
 
-    <function name="DrawRangeElements" offset="338" es2="3.0">
+    <function name="DrawRangeElements" offset="338" es2="3.0"
+              exec="dynamic">
         <param name="mode" type="GLenum"/>
         <param name="start" type="GLuint"/>
         <param name="end" type="GLuint"/>
@@ -4835,14 +4853,14 @@
     </function>
 
     <function name="SecondaryColor3f" alias="SecondaryColor3fEXT"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="red" type="GLfloat"/>
         <param name="green" type="GLfloat"/>
         <param name="blue" type="GLfloat"/>
     </function>
 
     <function name="SecondaryColor3fv" alias="SecondaryColor3fvEXT"
-              deprecated="3.1">
+              deprecated="3.1" exec="dynamic">
         <param name="v" type="const GLfloat *"/>
     </function>
 
@@ -5961,12 +5979,13 @@
         <glx rop="198"/>
     </function>
 
-    <function name="MultiTexCoord1fARB" offset="378" vectorequiv="MultiTexCoord1fvARB">
+    <function name="MultiTexCoord1fARB" offset="378"
+              vectorequiv="MultiTexCoord1fvARB" exec="dynamic">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLfloat"/>
     </function>
 
-    <function name="MultiTexCoord1fvARB" offset="379">
+    <function name="MultiTexCoord1fvARB" offset="379" exec="dynamic">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLfloat *" count="1"/>
         <glx rop="199"/>
@@ -6006,13 +6025,14 @@
         <glx rop="202"/>
     </function>
 
-    <function name="MultiTexCoord2fARB" offset="386" vectorequiv="MultiTexCoord2fvARB">
+    <function name="MultiTexCoord2fARB" offset="386"
+              vectorequiv="MultiTexCoord2fvARB" exec="dynamic">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
     </function>
 
-    <function name="MultiTexCoord2fvARB" offset="387">
+    <function name="MultiTexCoord2fvARB" offset="387" exec="dynamic">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLfloat *" count="2"/>
         <glx rop="203"/>
@@ -6055,14 +6075,15 @@
         <glx rop="206"/>
     </function>
 
-    <function name="MultiTexCoord3fARB" offset="394" vectorequiv="MultiTexCoord3fvARB">
+    <function name="MultiTexCoord3fARB" offset="394"
+              vectorequiv="MultiTexCoord3fvARB" exec="dynamic">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
         <param name="r" type="GLfloat"/>
     </function>
 
-    <function name="MultiTexCoord3fvARB" offset="395">
+    <function name="MultiTexCoord3fvARB" offset="395" exec="dynamic">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="207"/>
@@ -6108,7 +6129,8 @@
         <glx rop="210"/>
     </function>
 
-    <function name="MultiTexCoord4fARB" offset="402" vectorequiv="MultiTexCoord4fvARB">
+    <function name="MultiTexCoord4fARB" offset="402"
+              vectorequiv="MultiTexCoord4fvARB" exec="dynamic">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLfloat"/>
         <param name="t" type="GLfloat"/>
@@ -6116,7 +6138,7 @@
         <param name="q" type="GLfloat"/>
     </function>
 
-    <function name="MultiTexCoord4fvARB" offset="403">
+    <function name="MultiTexCoord4fvARB" offset="403" exec="dynamic">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLfloat *" count="4"/>
         <glx rop="211"/>
@@ -6999,12 +7021,13 @@
         <glx rop="4197" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttrib1fARB" offset="assign" vectorequiv="VertexAttrib1fvARB">
+    <function name="VertexAttrib1fARB" offset="assign"
+              vectorequiv="VertexAttrib1fvARB" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib1fvARB" offset="assign">
+    <function name="VertexAttrib1fvARB" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="1"/>
         <glx rop="4193"/>
@@ -7033,13 +7056,14 @@
         <glx rop="4198" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttrib2fARB" offset="assign" vectorequiv="VertexAttrib2fvARB">
+    <function name="VertexAttrib2fARB" offset="assign"
+              vectorequiv="VertexAttrib2fvARB" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib2fvARB" offset="assign">
+    <function name="VertexAttrib2fvARB" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="2"/>
         <glx rop="4194"/>
@@ -7070,14 +7094,15 @@
         <glx rop="4199" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttrib3fARB" offset="assign" vectorequiv="VertexAttrib3fvARB">
+    <function name="VertexAttrib3fARB" offset="assign"
+              vectorequiv="VertexAttrib3fvARB" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib3fvARB" offset="assign">
+    <function name="VertexAttrib3fvARB" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="4195"/>
@@ -7110,7 +7135,8 @@
         <glx rop="4200" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttrib4fARB" offset="assign" vectorequiv="VertexAttrib4fvARB">
+    <function name="VertexAttrib4fARB" offset="assign"
+              vectorequiv="VertexAttrib4fvARB" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
@@ -7118,7 +7144,7 @@
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib4fvARB" offset="assign">
+    <function name="VertexAttrib4fvARB" offset="assign" exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="4"/>
         <glx rop="4196"/>
@@ -8159,7 +8185,8 @@
   <enum name="MAX_TRANSFORM_FEEDBACK_BUFFERS" value="0x8E70"/>
   <enum name="MAX_VERTEX_STREAMS"             value="0x8E71"/>
 
-  <function name="DrawTransformFeedbackStream" offset="assign">
+  <function name="DrawTransformFeedbackStream" offset="assign"
+            exec="dynamic">
     <param name="mode" type="GLenum"/>
     <param name="id" type="GLuint"/>
     <param name="stream" type="GLuint"/>
@@ -8195,13 +8222,15 @@
 <!-- ARB extensions #106...#108 -->
 
 <category name="GL_ARB_transform_feedback_instanced" number="109">
-  <function name="DrawTransformFeedbackInstanced" offset="assign">
+  <function name="DrawTransformFeedbackInstanced" offset="assign"
+            exec="dynamic">
     <param name="mode" type="GLenum"/>
     <param name="id" type="GLuint"/>
     <param name="primcount" type="GLsizei"/>
   </function>
 
-  <function name="DrawTransformFeedbackStreamInstanced" offset="assign">
+  <function name="DrawTransformFeedbackStreamInstanced" offset="assign"
+            exec="dynamic">
     <param name="mode" type="GLenum"/>
     <param name="id" type="GLuint"/>
     <param name="stream" type="GLuint"/>
@@ -10065,7 +10094,8 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="MultiDrawElementsEXT" offset="assign" es1="1.0" es2="2.0">
+    <function name="MultiDrawElementsEXT" offset="assign" es1="1.0" es2="2.0"
+              exec="dynamic">
         <param name="mode" type="GLenum"/>
         <param name="count" type="const GLsizei *"/>
         <param name="type" type="GLenum"/>
@@ -10076,11 +10106,12 @@
 </category>
 
 <category name="GL_EXT_fog_coord" number="149">
-    <function name="FogCoordfEXT" offset="assign" vectorequiv="FogCoordfvEXT">
+    <function name="FogCoordfEXT" offset="assign" vectorequiv="FogCoordfvEXT"
+              exec="dynamic">
         <param name="coord" type="GLfloat"/>
     </function>
 
-    <function name="FogCoordfvEXT" offset="assign">
+    <function name="FogCoordfvEXT" offset="assign" exec="dynamic">
         <param name="coord" type="const GLfloat *" count="1"/>
         <glx rop="4124"/>
     </function>
@@ -11760,46 +11791,53 @@
     </function>
 
     <function name="VertexAttrib1fNV" offset="assign"
-              vectorequiv="VertexAttrib1fvNV" deprecated="3.1">
+              vectorequiv="VertexAttrib1fvNV" deprecated="3.1"
+              exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib1fvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib1fvNV" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="1"/>
         <glx rop="4269"/>
     </function>
 
     <function name="VertexAttrib2fNV" offset="assign"
-              vectorequiv="VertexAttrib2fvNV" deprecated="3.1">
+              vectorequiv="VertexAttrib2fvNV" deprecated="3.1"
+              exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib2fvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib2fvNV" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="2"/>
         <glx rop="4270"/>
     </function>
 
     <function name="VertexAttrib3fNV" offset="assign"
-              vectorequiv="VertexAttrib3fvNV" deprecated="3.1">
+              vectorequiv="VertexAttrib3fvNV" deprecated="3.1"
+              exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib3fvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib3fvNV" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="4271"/>
     </function>
 
     <function name="VertexAttrib4fNV" offset="assign"
-              vectorequiv="VertexAttrib4fvNV" deprecated="3.1">
+              vectorequiv="VertexAttrib4fvNV" deprecated="3.1"
+              exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
@@ -11807,7 +11845,8 @@
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib4fvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib4fvNV" offset="assign" deprecated="3.1"
+              exec="dynamic">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="4"/>
         <glx rop="4272"/>

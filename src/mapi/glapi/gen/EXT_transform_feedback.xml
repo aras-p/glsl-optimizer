@@ -108,7 +108,7 @@
   <function name="ResumeTransformFeedback" offset="assign" es2="3.0">
   </function>
 
-  <function name="DrawTransformFeedback" offset="assign">
+  <function name="DrawTransformFeedback" offset="assign" exec="dynamic">
     <param name="mode" type="GLenum"/>
     <param name="id" type="GLuint"/>
   </function>

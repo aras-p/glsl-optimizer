@@ -11,7 +11,8 @@
     <enum name="PRIMITIVE_RESTART_NV"        value="0x8558"/>
     <enum name="PRIMITIVE_RESTART_INDEX_NV"  value="0x8559"/>
 
-    <function name="PrimitiveRestartNV" offset="assign" deprecated="3.1">
+    <function name="PrimitiveRestartNV" offset="assign" deprecated="3.1"
+              exec="dynamic">
     </function>
 
     <function name="PrimitiveRestartIndexNV" offset="assign">
