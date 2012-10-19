@@ -174,7 +174,7 @@ int
 count_to_loop_end(fs_inst *do_inst)
 {
    int depth = 1;
-   int ip = ip;
+   int ip = 1;
    for (fs_inst *inst = (fs_inst *)do_inst->next;
         depth > 0;
         inst = (fs_inst *)inst->next) {
