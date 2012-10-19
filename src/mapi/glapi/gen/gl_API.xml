@@ -1164,25 +1164,25 @@
     </function>
 
     <function name="Color3b" offset="9" vectorequiv="Color3bv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLbyte"/>
         <param name="green" type="GLbyte"/>
         <param name="blue" type="GLbyte"/>
     </function>
 
-    <function name="Color3bv" offset="10" deprecated="3.1">
+    <function name="Color3bv" offset="10" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLbyte *" count="3"/>
         <glx rop="6"/>
     </function>
 
     <function name="Color3d" offset="11" vectorequiv="Color3dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLdouble"/>
         <param name="green" type="GLdouble"/>
         <param name="blue" type="GLdouble"/>
     </function>
 
-    <function name="Color3dv" offset="12" deprecated="3.1">
+    <function name="Color3dv" offset="12" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="7"/>
     </function>
@@ -1200,87 +1200,87 @@
     </function>
 
     <function name="Color3i" offset="15" vectorequiv="Color3iv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLint"/>
         <param name="green" type="GLint"/>
         <param name="blue" type="GLint"/>
     </function>
 
-    <function name="Color3iv" offset="16" deprecated="3.1">
+    <function name="Color3iv" offset="16" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLint *" count="3"/>
         <glx rop="9"/>
     </function>
 
     <function name="Color3s" offset="17" vectorequiv="Color3sv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLshort"/>
         <param name="green" type="GLshort"/>
         <param name="blue" type="GLshort"/>
     </function>
 
-    <function name="Color3sv" offset="18" deprecated="3.1">
+    <function name="Color3sv" offset="18" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="10"/>
     </function>
 
     <function name="Color3ub" offset="19" vectorequiv="Color3ubv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLubyte"/>
         <param name="green" type="GLubyte"/>
         <param name="blue" type="GLubyte"/>
     </function>
 
-    <function name="Color3ubv" offset="20" deprecated="3.1">
+    <function name="Color3ubv" offset="20" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLubyte *" count="3"/>
         <glx rop="11"/>
     </function>
 
     <function name="Color3ui" offset="21" vectorequiv="Color3uiv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLuint"/>
         <param name="green" type="GLuint"/>
         <param name="blue" type="GLuint"/>
     </function>
 
-    <function name="Color3uiv" offset="22" deprecated="3.1">
+    <function name="Color3uiv" offset="22" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLuint *" count="3"/>
         <glx rop="12"/>
     </function>
 
     <function name="Color3us" offset="23" vectorequiv="Color3usv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLushort"/>
         <param name="green" type="GLushort"/>
         <param name="blue" type="GLushort"/>
     </function>
 
-    <function name="Color3usv" offset="24" deprecated="3.1">
+    <function name="Color3usv" offset="24" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLushort *" count="3"/>
         <glx rop="13"/>
     </function>
 
     <function name="Color4b" offset="25" vectorequiv="Color4bv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLbyte"/>
         <param name="green" type="GLbyte"/>
         <param name="blue" type="GLbyte"/>
         <param name="alpha" type="GLbyte"/>
     </function>
 
-    <function name="Color4bv" offset="26" deprecated="3.1">
+    <function name="Color4bv" offset="26" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLbyte *" count="4"/>
         <glx rop="14"/>
     </function>
 
     <function name="Color4d" offset="27" vectorequiv="Color4dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLdouble"/>
         <param name="green" type="GLdouble"/>
         <param name="blue" type="GLdouble"/>
         <param name="alpha" type="GLdouble"/>
     </function>
 
-    <function name="Color4dv" offset="28" deprecated="3.1">
+    <function name="Color4dv" offset="28" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLdouble *" count="4"/>
         <glx rop="15"/>
     </function>
@@ -1299,66 +1299,66 @@
     </function>
 
     <function name="Color4i" offset="31" vectorequiv="Color4iv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLint"/>
         <param name="green" type="GLint"/>
         <param name="blue" type="GLint"/>
         <param name="alpha" type="GLint"/>
     </function>
 
-    <function name="Color4iv" offset="32" deprecated="3.1">
+    <function name="Color4iv" offset="32" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLint *" count="4"/>
         <glx rop="17"/>
     </function>
 
     <function name="Color4s" offset="33" vectorequiv="Color4sv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLshort"/>
         <param name="green" type="GLshort"/>
         <param name="blue" type="GLshort"/>
         <param name="alpha" type="GLshort"/>
     </function>
 
-    <function name="Color4sv" offset="34" deprecated="3.1">
+    <function name="Color4sv" offset="34" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="18"/>
     </function>
 
     <function name="Color4ub" offset="35" vectorequiv="Color4ubv" es1="1.1"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLubyte"/>
         <param name="green" type="GLubyte"/>
         <param name="blue" type="GLubyte"/>
         <param name="alpha" type="GLubyte"/>
     </function>
 
-    <function name="Color4ubv" offset="36" deprecated="3.1">
+    <function name="Color4ubv" offset="36" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLubyte *" count="4"/>
         <glx rop="19"/>
     </function>
 
     <function name="Color4ui" offset="37" vectorequiv="Color4uiv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLuint"/>
         <param name="green" type="GLuint"/>
         <param name="blue" type="GLuint"/>
         <param name="alpha" type="GLuint"/>
     </function>
 
-    <function name="Color4uiv" offset="38" deprecated="3.1">
+    <function name="Color4uiv" offset="38" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLuint *" count="4"/>
         <glx rop="20"/>
     </function>
 
     <function name="Color4us" offset="39" vectorequiv="Color4usv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="red" type="GLushort"/>
         <param name="green" type="GLushort"/>
         <param name="blue" type="GLushort"/>
         <param name="alpha" type="GLushort"/>
     </function>
 
-    <function name="Color4usv" offset="40" deprecated="3.1">
+    <function name="Color4usv" offset="40" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLushort *" count="4"/>
         <glx rop="21"/>
     </function>
@@ -1368,7 +1368,7 @@
         <param name="flag" type="GLboolean"/>
     </function>
 
-    <function name="EdgeFlagv" offset="42" deprecated="3.1">
+    <function name="EdgeFlagv" offset="42" deprecated="3.1" exec="loopback">
         <param name="flag" type="const GLboolean *" count="1"/>
         <glx rop="22"/>
     </function>
@@ -1377,11 +1377,12 @@
         <glx rop="23"/>
     </function>
 
-    <function name="Indexd" offset="44" vectorequiv="Indexdv" deprecated="3.1">
+    <function name="Indexd" offset="44" vectorequiv="Indexdv" deprecated="3.1"
+              exec="loopback">
         <param name="c" type="GLdouble"/>
     </function>
 
-    <function name="Indexdv" offset="45" deprecated="3.1">
+    <function name="Indexdv" offset="45" deprecated="3.1" exec="loopback">
         <param name="c" type="const GLdouble *" count="1"/>
         <glx rop="24"/>
     </function>
@@ -1396,44 +1397,46 @@
         <glx rop="25"/>
     </function>
 
-    <function name="Indexi" offset="48" vectorequiv="Indexiv" deprecated="3.1">
+    <function name="Indexi" offset="48" vectorequiv="Indexiv" deprecated="3.1"
+              exec="loopback">
         <param name="c" type="GLint"/>
     </function>
 
-    <function name="Indexiv" offset="49" deprecated="3.1">
+    <function name="Indexiv" offset="49" deprecated="3.1" exec="loopback">
         <param name="c" type="const GLint *" count="1"/>
         <glx rop="26"/>
     </function>
 
-    <function name="Indexs" offset="50" vectorequiv="Indexsv" deprecated="3.1">
+    <function name="Indexs" offset="50" vectorequiv="Indexsv" deprecated="3.1"
+              exec="loopback">
         <param name="c" type="GLshort"/>
     </function>
 
-    <function name="Indexsv" offset="51" deprecated="3.1">
+    <function name="Indexsv" offset="51" deprecated="3.1" exec="loopback">
         <param name="c" type="const GLshort *" count="1"/>
         <glx rop="27"/>
     </function>
 
     <function name="Normal3b" offset="52" vectorequiv="Normal3bv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="nx" type="GLbyte"/>
         <param name="ny" type="GLbyte"/>
         <param name="nz" type="GLbyte"/>
     </function>
 
-    <function name="Normal3bv" offset="53" deprecated="3.1">
+    <function name="Normal3bv" offset="53" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLbyte *" count="3"/>
         <glx rop="28"/>
     </function>
 
     <function name="Normal3d" offset="54" vectorequiv="Normal3dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="nx" type="GLdouble"/>
         <param name="ny" type="GLdouble"/>
         <param name="nz" type="GLdouble"/>
     </function>
 
-    <function name="Normal3dv" offset="55" deprecated="3.1">
+    <function name="Normal3dv" offset="55" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="29"/>
     </function>
@@ -1451,25 +1454,25 @@
     </function>
 
     <function name="Normal3i" offset="58" vectorequiv="Normal3iv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="nx" type="GLint"/>
         <param name="ny" type="GLint"/>
         <param name="nz" type="GLint"/>
     </function>
 
-    <function name="Normal3iv" offset="59" deprecated="3.1">
+    <function name="Normal3iv" offset="59" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLint *" count="3"/>
         <glx rop="31"/>
     </function>
 
     <function name="Normal3s" offset="60" vectorequiv="Normal3sv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="nx" type="GLshort"/>
         <param name="ny" type="GLshort"/>
         <param name="nz" type="GLshort"/>
     </function>
 
-    <function name="Normal3sv" offset="61" deprecated="3.1">
+    <function name="Normal3sv" offset="61" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="32"/>
     </function>
@@ -1618,14 +1621,15 @@
         <glx rop="44"/>
     </function>
 
-    <function name="Rectd" offset="86" vectorequiv="Rectdv" deprecated="3.1">
+    <function name="Rectd" offset="86" vectorequiv="Rectdv" deprecated="3.1"
+              exec="loopback">
         <param name="x1" type="GLdouble"/>
         <param name="y1" type="GLdouble"/>
         <param name="x2" type="GLdouble"/>
         <param name="y2" type="GLdouble"/>
     </function>
 
-    <function name="Rectdv" offset="87" deprecated="3.1">
+    <function name="Rectdv" offset="87" deprecated="3.1" exec="loopback">
         <param name="v1" type="const GLdouble *" count="2"/>
         <param name="v2" type="const GLdouble *" count="2"/>
         <glx rop="45"/>
@@ -1639,44 +1643,46 @@
         <param name="y2" type="GLfloat"/>
     </function>
 
-    <function name="Rectfv" offset="89" deprecated="3.1">
+    <function name="Rectfv" offset="89" deprecated="3.1" exec="loopback">
         <param name="v1" type="const GLfloat *" count="2"/>
         <param name="v2" type="const GLfloat *" count="2"/>
         <glx rop="46"/>
     </function>
 
-    <function name="Recti" offset="90" vectorequiv="Rectiv" deprecated="3.1">
+    <function name="Recti" offset="90" vectorequiv="Rectiv" deprecated="3.1"
+              exec="loopback">
         <param name="x1" type="GLint"/>
         <param name="y1" type="GLint"/>
         <param name="x2" type="GLint"/>
         <param name="y2" type="GLint"/>
     </function>
 
-    <function name="Rectiv" offset="91" deprecated="3.1">
+    <function name="Rectiv" offset="91" deprecated="3.1" exec="loopback">
         <param name="v1" type="const GLint *" count="2"/>
         <param name="v2" type="const GLint *" count="2"/>
         <glx rop="47"/>
     </function>
 
-    <function name="Rects" offset="92" vectorequiv="Rectsv" deprecated="3.1">
+    <function name="Rects" offset="92" vectorequiv="Rectsv" deprecated="3.1"
+              exec="loopback">
         <param name="x1" type="GLshort"/>
         <param name="y1" type="GLshort"/>
         <param name="x2" type="GLshort"/>
         <param name="y2" type="GLshort"/>
     </function>
 
-    <function name="Rectsv" offset="93" deprecated="3.1">
+    <function name="Rectsv" offset="93" deprecated="3.1" exec="loopback">
         <param name="v1" type="const GLshort *" count="2"/>
         <param name="v2" type="const GLshort *" count="2"/>
         <glx rop="48"/>
     </function>
 
     <function name="TexCoord1d" offset="94" vectorequiv="TexCoord1dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLdouble"/>
     </function>
 
-    <function name="TexCoord1dv" offset="95" deprecated="3.1">
+    <function name="TexCoord1dv" offset="95" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLdouble *" count="1"/>
         <glx rop="49"/>
     </function>
@@ -1693,32 +1699,32 @@
     </function>
 
     <function name="TexCoord1i" offset="98" vectorequiv="TexCoord1iv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLint"/>
     </function>
 
-    <function name="TexCoord1iv" offset="99" deprecated="3.1">
+    <function name="TexCoord1iv" offset="99" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLint *" count="1"/>
         <glx rop="51"/>
     </function>
 
     <function name="TexCoord1s" offset="100" vectorequiv="TexCoord1sv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLshort"/>
     </function>
 
-    <function name="TexCoord1sv" offset="101" deprecated="3.1">
+    <function name="TexCoord1sv" offset="101" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLshort *" count="1"/>
         <glx rop="52"/>
     </function>
 
     <function name="TexCoord2d" offset="102" vectorequiv="TexCoord2dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLdouble"/>
         <param name="t" type="GLdouble"/>
     </function>
 
-    <function name="TexCoord2dv" offset="103" deprecated="3.1">
+    <function name="TexCoord2dv" offset="103" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLdouble *" count="2"/>
         <glx rop="53"/>
     </function>
@@ -1736,35 +1742,35 @@
     </function>
 
     <function name="TexCoord2i" offset="106" vectorequiv="TexCoord2iv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLint"/>
         <param name="t" type="GLint"/>
     </function>
 
-    <function name="TexCoord2iv" offset="107" deprecated="3.1">
+    <function name="TexCoord2iv" offset="107" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLint *" count="2"/>
         <glx rop="55"/>
     </function>
 
     <function name="TexCoord2s" offset="108" vectorequiv="TexCoord2sv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLshort"/>
         <param name="t" type="GLshort"/>
     </function>
 
-    <function name="TexCoord2sv" offset="109" deprecated="3.1">
+    <function name="TexCoord2sv" offset="109" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLshort *" count="2"/>
         <glx rop="56"/>
     </function>
 
     <function name="TexCoord3d" offset="110" vectorequiv="TexCoord3dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLdouble"/>
         <param name="t" type="GLdouble"/>
         <param name="r" type="GLdouble"/>
     </function>
 
-    <function name="TexCoord3dv" offset="111" deprecated="3.1">
+    <function name="TexCoord3dv" offset="111" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="57"/>
     </function>
@@ -1783,38 +1789,38 @@
     </function>
 
     <function name="TexCoord3i" offset="114" vectorequiv="TexCoord3iv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLint"/>
         <param name="t" type="GLint"/>
         <param name="r" type="GLint"/>
     </function>
 
-    <function name="TexCoord3iv" offset="115" deprecated="3.1">
+    <function name="TexCoord3iv" offset="115" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLint *" count="3"/>
         <glx rop="59"/>
     </function>
 
     <function name="TexCoord3s" offset="116" vectorequiv="TexCoord3sv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLshort"/>
         <param name="t" type="GLshort"/>
         <param name="r" type="GLshort"/>
     </function>
 
-    <function name="TexCoord3sv" offset="117" deprecated="3.1">
+    <function name="TexCoord3sv" offset="117" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="60"/>
     </function>
 
     <function name="TexCoord4d" offset="118" vectorequiv="TexCoord4dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLdouble"/>
         <param name="t" type="GLdouble"/>
         <param name="r" type="GLdouble"/>
         <param name="q" type="GLdouble"/>
     </function>
 
-    <function name="TexCoord4dv" offset="119" deprecated="3.1">
+    <function name="TexCoord4dv" offset="119" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLdouble *" count="4"/>
         <glx rop="61"/>
     </function>
@@ -1834,38 +1840,38 @@
     </function>
 
     <function name="TexCoord4i" offset="122" vectorequiv="TexCoord4iv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLint"/>
         <param name="t" type="GLint"/>
         <param name="r" type="GLint"/>
         <param name="q" type="GLint"/>
     </function>
 
-    <function name="TexCoord4iv" offset="123" deprecated="3.1">
+    <function name="TexCoord4iv" offset="123" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLint *" count="4"/>
         <glx rop="63"/>
     </function>
 
     <function name="TexCoord4s" offset="124" vectorequiv="TexCoord4sv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="s" type="GLshort"/>
         <param name="t" type="GLshort"/>
         <param name="r" type="GLshort"/>
         <param name="q" type="GLshort"/>
     </function>
 
-    <function name="TexCoord4sv" offset="125" deprecated="3.1">
+    <function name="TexCoord4sv" offset="125" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="64"/>
     </function>
 
     <function name="Vertex2d" offset="126" vectorequiv="Vertex2dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
     </function>
 
-    <function name="Vertex2dv" offset="127" deprecated="3.1">
+    <function name="Vertex2dv" offset="127" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLdouble *" count="2"/>
         <glx rop="65"/>
     </function>
@@ -1883,35 +1889,35 @@
     </function>
 
     <function name="Vertex2i" offset="130" vectorequiv="Vertex2iv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
     </function>
 
-    <function name="Vertex2iv" offset="131" deprecated="3.1">
+    <function name="Vertex2iv" offset="131" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLint *" count="2"/>
         <glx rop="67"/>
     </function>
 
     <function name="Vertex2s" offset="132" vectorequiv="Vertex2sv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
     </function>
 
-    <function name="Vertex2sv" offset="133" deprecated="3.1">
+    <function name="Vertex2sv" offset="133" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLshort *" count="2"/>
         <glx rop="68"/>
     </function>
 
     <function name="Vertex3d" offset="134" vectorequiv="Vertex3dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
     </function>
 
-    <function name="Vertex3dv" offset="135" deprecated="3.1">
+    <function name="Vertex3dv" offset="135" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="69"/>
     </function>
@@ -1930,38 +1936,38 @@
     </function>
 
     <function name="Vertex3i" offset="138" vectorequiv="Vertex3iv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
         <param name="z" type="GLint"/>
     </function>
 
-    <function name="Vertex3iv" offset="139" deprecated="3.1">
+    <function name="Vertex3iv" offset="139" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLint *" count="3"/>
         <glx rop="71"/>
     </function>
 
     <function name="Vertex3s" offset="140" vectorequiv="Vertex3sv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
     </function>
 
-    <function name="Vertex3sv" offset="141" deprecated="3.1">
+    <function name="Vertex3sv" offset="141" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="72"/>
     </function>
 
     <function name="Vertex4d" offset="142" vectorequiv="Vertex4dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
         <param name="w" type="GLdouble"/>
     </function>
 
-    <function name="Vertex4dv" offset="143" deprecated="3.1">
+    <function name="Vertex4dv" offset="143" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLdouble *" count="4"/>
         <glx rop="73"/>
     </function>
@@ -1981,27 +1987,27 @@
     </function>
 
     <function name="Vertex4i" offset="146" vectorequiv="Vertex4iv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
         <param name="z" type="GLint"/>
         <param name="w" type="GLint"/>
     </function>
 
-    <function name="Vertex4iv" offset="147" deprecated="3.1">
+    <function name="Vertex4iv" offset="147" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLint *" count="4"/>
         <glx rop="75"/>
     </function>
 
     <function name="Vertex4s" offset="148" vectorequiv="Vertex4sv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
         <param name="w" type="GLshort"/>
     </function>
 
-    <function name="Vertex4sv" offset="149" deprecated="3.1">
+    <function name="Vertex4sv" offset="149" deprecated="3.1" exec="loopback">
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="76"/>
     </function>
@@ -2121,7 +2127,8 @@
         <glx rop="95"/>
     </function>
 
-    <function name="Materialf" offset="169" es1="1.0" deprecated="3.1">
+    <function name="Materialf" offset="169" es1="1.0" deprecated="3.1"
+              exec="loopback">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
@@ -2136,14 +2143,14 @@
         <glx rop="97"/>
     </function>
 
-    <function name="Materiali" offset="171" deprecated="3.1">
+    <function name="Materiali" offset="171" deprecated="3.1" exec="loopback">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx rop="98"/>
     </function>
 
-    <function name="Materialiv" offset="172" deprecated="3.1">
+    <function name="Materialiv" offset="172" deprecated="3.1" exec="loopback">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *" variable_param="pname"/>
@@ -2524,11 +2531,12 @@
     </function>
 
     <function name="EvalCoord1d" offset="228" vectorequiv="EvalCoord1dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="u" type="GLdouble"/>
     </function>
 
-    <function name="EvalCoord1dv" offset="229" deprecated="3.1">
+    <function name="EvalCoord1dv" offset="229" deprecated="3.1"
+              exec="loopback">
         <param name="u" type="const GLdouble *" count="1"/>
         <glx rop="151"/>
     </function>
@@ -2538,18 +2546,20 @@
         <param name="u" type="GLfloat"/>
     </function>
 
-    <function name="EvalCoord1fv" offset="231" deprecated="3.1">
+    <function name="EvalCoord1fv" offset="231" deprecated="3.1"
+              exec="loopback">
         <param name="u" type="const GLfloat *" count="1"/>
         <glx rop="152"/>
     </function>
 
     <function name="EvalCoord2d" offset="232" vectorequiv="EvalCoord2dv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="u" type="GLdouble"/>
         <param name="v" type="GLdouble"/>
     </function>
 
-    <function name="EvalCoord2dv" offset="233" deprecated="3.1">
+    <function name="EvalCoord2dv" offset="233" deprecated="3.1"
+              exec="loopback">
         <param name="u" type="const GLdouble *" count="2"/>
         <glx rop="153"/>
     </function>
@@ -2560,7 +2570,8 @@
         <param name="v" type="GLfloat"/>
     </function>
 
-    <function name="EvalCoord2fv" offset="235" deprecated="3.1">
+    <function name="EvalCoord2fv" offset="235" deprecated="3.1"
+              exec="loopback">
         <param name="u" type="const GLfloat *" count="2"/>
         <glx rop="154"/>
     </function>
@@ -3414,11 +3425,11 @@
     </function>
 
     <function name="Indexub" offset="315" vectorequiv="Indexubv"
-              deprecated="3.1">
+              deprecated="3.1" exec="loopback">
         <param name="c" type="GLubyte"/>
     </function>
 
-    <function name="Indexubv" offset="316" deprecated="3.1">
+    <function name="Indexubv" offset="316" deprecated="3.1" exec="loopback">
         <param name="c" type="const GLubyte *" count="1"/>
         <glx rop="194"/>
     </function>
@@ -5968,12 +5979,13 @@
         <glx handcode="true"/>
     </function>
 
-    <function name="MultiTexCoord1dARB" offset="376" vectorequiv="MultiTexCoord1dvARB">
+    <function name="MultiTexCoord1dARB" offset="376"
+              vectorequiv="MultiTexCoord1dvARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLdouble"/>
     </function>
 
-    <function name="MultiTexCoord1dvARB" offset="377">
+    <function name="MultiTexCoord1dvARB" offset="377" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLdouble *" count="1"/>
         <glx rop="198"/>
@@ -5991,35 +6003,38 @@
         <glx rop="199"/>
     </function>
 
-    <function name="MultiTexCoord1iARB" offset="380" vectorequiv="MultiTexCoord1ivARB">
+    <function name="MultiTexCoord1iARB" offset="380"
+              vectorequiv="MultiTexCoord1ivARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLint"/>
     </function>
 
-    <function name="MultiTexCoord1ivARB" offset="381">
+    <function name="MultiTexCoord1ivARB" offset="381" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLint *" count="1"/>
         <glx rop="200"/>
     </function>
 
-    <function name="MultiTexCoord1sARB" offset="382" vectorequiv="MultiTexCoord1svARB">
+    <function name="MultiTexCoord1sARB" offset="382"
+              vectorequiv="MultiTexCoord1svARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLshort"/>
     </function>
 
-    <function name="MultiTexCoord1svARB" offset="383">
+    <function name="MultiTexCoord1svARB" offset="383" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLshort *" count="1"/>
         <glx rop="201"/>
     </function>
 
-    <function name="MultiTexCoord2dARB" offset="384" vectorequiv="MultiTexCoord2dvARB">
+    <function name="MultiTexCoord2dARB" offset="384"
+              vectorequiv="MultiTexCoord2dvARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLdouble"/>
         <param name="t" type="GLdouble"/>
     </function>
 
-    <function name="MultiTexCoord2dvARB" offset="385">
+    <function name="MultiTexCoord2dvARB" offset="385" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLdouble *" count="2"/>
         <glx rop="202"/>
@@ -6038,38 +6053,41 @@
         <glx rop="203"/>
     </function>
 
-    <function name="MultiTexCoord2iARB" offset="388" vectorequiv="MultiTexCoord2ivARB">
+    <function name="MultiTexCoord2iARB" offset="388"
+              vectorequiv="MultiTexCoord2ivARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLint"/>
         <param name="t" type="GLint"/>
     </function>
 
-    <function name="MultiTexCoord2ivARB" offset="389">
+    <function name="MultiTexCoord2ivARB" offset="389" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLint *" count="2"/>
         <glx rop="204"/>
     </function>
 
-    <function name="MultiTexCoord2sARB" offset="390" vectorequiv="MultiTexCoord2svARB">
+    <function name="MultiTexCoord2sARB" offset="390"
+              vectorequiv="MultiTexCoord2svARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLshort"/>
         <param name="t" type="GLshort"/>
     </function>
 
-    <function name="MultiTexCoord2svARB" offset="391">
+    <function name="MultiTexCoord2svARB" offset="391" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLshort *" count="2"/>
         <glx rop="205"/>
     </function>
 
-    <function name="MultiTexCoord3dARB" offset="392" vectorequiv="MultiTexCoord3dvARB">
+    <function name="MultiTexCoord3dARB" offset="392"
+              vectorequiv="MultiTexCoord3dvARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLdouble"/>
         <param name="t" type="GLdouble"/>
         <param name="r" type="GLdouble"/>
     </function>
 
-    <function name="MultiTexCoord3dvARB" offset="393">
+    <function name="MultiTexCoord3dvARB" offset="393" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="206"/>
@@ -6089,33 +6107,36 @@
         <glx rop="207"/>
     </function>
 
-    <function name="MultiTexCoord3iARB" offset="396" vectorequiv="MultiTexCoord3ivARB">
+    <function name="MultiTexCoord3iARB" offset="396"
+              vectorequiv="MultiTexCoord3ivARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLint"/>
         <param name="t" type="GLint"/>
         <param name="r" type="GLint"/>
     </function>
 
-    <function name="MultiTexCoord3ivARB" offset="397">
+    <function name="MultiTexCoord3ivARB" offset="397" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLint *" count="3"/>
         <glx rop="208"/>
     </function>
 
-    <function name="MultiTexCoord3sARB" offset="398" vectorequiv="MultiTexCoord3svARB">
+    <function name="MultiTexCoord3sARB" offset="398"
+              vectorequiv="MultiTexCoord3svARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLshort"/>
         <param name="t" type="GLshort"/>
         <param name="r" type="GLshort"/>
     </function>
 
-    <function name="MultiTexCoord3svARB" offset="399">
+    <function name="MultiTexCoord3svARB" offset="399" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="209"/>
     </function>
 
-    <function name="MultiTexCoord4dARB" offset="400" vectorequiv="MultiTexCoord4dvARB">
+    <function name="MultiTexCoord4dARB" offset="400"
+              vectorequiv="MultiTexCoord4dvARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLdouble"/>
         <param name="t" type="GLdouble"/>
@@ -6123,7 +6144,7 @@
         <param name="q" type="GLdouble"/>
     </function>
 
-    <function name="MultiTexCoord4dvARB" offset="401">
+    <function name="MultiTexCoord4dvARB" offset="401" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLdouble *" count="4"/>
         <glx rop="210"/>
@@ -6144,7 +6165,8 @@
         <glx rop="211"/>
     </function>
 
-    <function name="MultiTexCoord4iARB" offset="404" vectorequiv="MultiTexCoord4ivARB">
+    <function name="MultiTexCoord4iARB" offset="404"
+              vectorequiv="MultiTexCoord4ivARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLint"/>
         <param name="t" type="GLint"/>
@@ -6152,13 +6174,14 @@
         <param name="q" type="GLint"/>
     </function>
 
-    <function name="MultiTexCoord4ivARB" offset="405">
+    <function name="MultiTexCoord4ivARB" offset="405" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLint *" count="4"/>
         <glx rop="212"/>
     </function>
 
-    <function name="MultiTexCoord4sARB" offset="406" vectorequiv="MultiTexCoord4svARB">
+    <function name="MultiTexCoord4sARB" offset="406"
+              vectorequiv="MultiTexCoord4svARB" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLshort"/>
         <param name="t" type="GLshort"/>
@@ -6166,7 +6189,7 @@
         <param name="q" type="GLshort"/>
     </function>
 
-    <function name="MultiTexCoord4svARB" offset="407">
+    <function name="MultiTexCoord4svARB" offset="407" exec="loopback">
         <param name="target" type="GLenum"/>
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="213"/>
@@ -7010,12 +7033,13 @@
         <glx handcode="client" vendorpriv="1303"/>
     </function>
 
-    <function name="VertexAttrib1dARB" offset="assign" vectorequiv="VertexAttrib1dvARB">
+    <function name="VertexAttrib1dARB" offset="assign"
+              vectorequiv="VertexAttrib1dvARB" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib1dvARB" offset="assign">
+    <function name="VertexAttrib1dvARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="1"/>
         <glx rop="4197" doubles_in_order="true"/>
@@ -7033,24 +7057,26 @@
         <glx rop="4193"/>
     </function>
 
-    <function name="VertexAttrib1sARB" offset="assign" vectorequiv="VertexAttrib1svARB">
+    <function name="VertexAttrib1sARB" offset="assign"
+              vectorequiv="VertexAttrib1svARB" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib1svARB" offset="assign">
+    <function name="VertexAttrib1svARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="1"/>
         <glx rop="4189"/>
     </function>
 
-    <function name="VertexAttrib2dARB" offset="assign" vectorequiv="VertexAttrib2dvARB">
+    <function name="VertexAttrib2dARB" offset="assign"
+              vectorequiv="VertexAttrib2dvARB" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib2dvARB" offset="assign">
+    <function name="VertexAttrib2dvARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="2"/>
         <glx rop="4198" doubles_in_order="true"/>
@@ -7069,26 +7095,28 @@
         <glx rop="4194"/>
     </function>
 
-    <function name="VertexAttrib2sARB" offset="assign" vectorequiv="VertexAttrib2svARB">
+    <function name="VertexAttrib2sARB" offset="assign"
+              vectorequiv="VertexAttrib2svARB" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib2svARB" offset="assign">
+    <function name="VertexAttrib2svARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="2"/>
         <glx rop="4190"/>
     </function>
 
-    <function name="VertexAttrib3dARB" offset="assign" vectorequiv="VertexAttrib3dvARB">
+    <function name="VertexAttrib3dARB" offset="assign"
+              vectorequiv="VertexAttrib3dvARB" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib3dvARB" offset="assign">
+    <function name="VertexAttrib3dvARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="4199" doubles_in_order="true"/>
@@ -7108,20 +7136,22 @@
         <glx rop="4195"/>
     </function>
 
-    <function name="VertexAttrib3sARB" offset="assign" vectorequiv="VertexAttrib3svARB">
+    <function name="VertexAttrib3sARB" offset="assign"
+              vectorequiv="VertexAttrib3svARB" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib3svARB" offset="assign">
+    <function name="VertexAttrib3svARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="4191"/>
     </function>
 
-    <function name="VertexAttrib4dARB" offset="assign" vectorequiv="VertexAttrib4dvARB">
+    <function name="VertexAttrib4dARB" offset="assign"
+              vectorequiv="VertexAttrib4dvARB" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
@@ -7129,7 +7159,7 @@
         <param name="w" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib4dvARB" offset="assign">
+    <function name="VertexAttrib4dvARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="4"/>
         <glx rop="4200" doubles_in_order="true"/>
@@ -7150,7 +7180,8 @@
         <glx rop="4196"/>
     </function>
 
-    <function name="VertexAttrib4sARB" offset="assign" vectorequiv="VertexAttrib4svARB">
+    <function name="VertexAttrib4sARB" offset="assign"
+              vectorequiv="VertexAttrib4svARB" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
@@ -7158,13 +7189,14 @@
         <param name="w" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib4svARB" offset="assign">
+    <function name="VertexAttrib4svARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="4192"/>
     </function>
 
-    <function name="VertexAttrib4NubARB" offset="assign" vectorequiv="VertexAttrib4NubvARB">
+    <function name="VertexAttrib4NubARB" offset="assign"
+              vectorequiv="VertexAttrib4NubvARB" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLubyte"/>
         <param name="y" type="GLubyte"/>
@@ -7172,67 +7204,67 @@
         <param name="w" type="GLubyte"/>
     </function>
 
-    <function name="VertexAttrib4NubvARB" offset="assign">
+    <function name="VertexAttrib4NubvARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
         <glx rop="4201"/>
     </function>
 
-    <function name="VertexAttrib4bvARB" offset="assign">
+    <function name="VertexAttrib4bvARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLbyte *" count="4"/>
         <glx rop="4230"/>
     </function>
 
-    <function name="VertexAttrib4ivARB" offset="assign">
+    <function name="VertexAttrib4ivARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *" count="4"/>
         <glx rop="4231"/>
     </function>
 
-    <function name="VertexAttrib4ubvARB" offset="assign">
+    <function name="VertexAttrib4ubvARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
         <glx rop="4232"/>
     </function>
 
-    <function name="VertexAttrib4usvARB" offset="assign">
+    <function name="VertexAttrib4usvARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLushort *" count="4"/>
         <glx rop="4233"/>
     </function>
 
-    <function name="VertexAttrib4uivARB" offset="assign">
+    <function name="VertexAttrib4uivARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLuint *" count="4"/>
         <glx rop="4234"/>
     </function>
 
-    <function name="VertexAttrib4NbvARB" offset="assign">
+    <function name="VertexAttrib4NbvARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLbyte *" count="4"/>
         <glx rop="4235"/>
     </function>
 
-    <function name="VertexAttrib4NsvARB" offset="assign">
+    <function name="VertexAttrib4NsvARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="4236"/>
     </function>
 
-    <function name="VertexAttrib4NivARB" offset="assign">
+    <function name="VertexAttrib4NivARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *" count="4"/>
         <glx rop="4237"/>
     </function>
 
-    <function name="VertexAttrib4NusvARB" offset="assign">
+    <function name="VertexAttrib4NusvARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLushort *" count="4"/>
         <glx rop="4238"/>
     </function>
 
-    <function name="VertexAttrib4NuivARB" offset="assign">
+    <function name="VertexAttrib4NuivARB" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLuint *" count="4"/>
         <glx rop="4239"/>
@@ -9982,24 +10014,26 @@
 </category>
 
 <category name="GL_EXT_secondary_color" number="145">
-    <function name="SecondaryColor3bEXT" offset="assign" vectorequiv="SecondaryColor3bvEXT">
+    <function name="SecondaryColor3bEXT" offset="assign"
+              vectorequiv="SecondaryColor3bvEXT" exec="loopback">
         <param name="red" type="GLbyte"/>
         <param name="green" type="GLbyte"/>
         <param name="blue" type="GLbyte"/>
     </function>
 
-    <function name="SecondaryColor3bvEXT" offset="assign">
+    <function name="SecondaryColor3bvEXT" offset="assign" exec="loopback">
         <param name="v" type="const GLbyte *" count="3"/>
         <glx rop="4126"/>
     </function>
 
-    <function name="SecondaryColor3dEXT" offset="assign" vectorequiv="SecondaryColor3dvEXT">
+    <function name="SecondaryColor3dEXT" offset="assign"
+              vectorequiv="SecondaryColor3dvEXT" exec="loopback">
         <param name="red" type="GLdouble"/>
         <param name="green" type="GLdouble"/>
         <param name="blue" type="GLdouble"/>
     </function>
 
-    <function name="SecondaryColor3dvEXT" offset="assign">
+    <function name="SecondaryColor3dvEXT" offset="assign" exec="loopback">
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="4130"/>
     </function>
@@ -10015,57 +10049,62 @@
         <glx rop="4129"/>
     </function>
 
-    <function name="SecondaryColor3iEXT" offset="assign" vectorequiv="SecondaryColor3ivEXT">
+    <function name="SecondaryColor3iEXT" offset="assign"
+              vectorequiv="SecondaryColor3ivEXT" exec="loopback">
         <param name="red" type="GLint"/>
         <param name="green" type="GLint"/>
         <param name="blue" type="GLint"/>
     </function>
 
-    <function name="SecondaryColor3ivEXT" offset="assign">
+    <function name="SecondaryColor3ivEXT" offset="assign" exec="loopback">
         <param name="v" type="const GLint *" count="3"/>
         <glx rop="4128"/>
     </function>
 
-    <function name="SecondaryColor3sEXT" offset="assign" vectorequiv="SecondaryColor3svEXT">
+    <function name="SecondaryColor3sEXT" offset="assign"
+              vectorequiv="SecondaryColor3svEXT" exec="loopback">
         <param name="red" type="GLshort"/>
         <param name="green" type="GLshort"/>
         <param name="blue" type="GLshort"/>
     </function>
 
-    <function name="SecondaryColor3svEXT" offset="assign">
+    <function name="SecondaryColor3svEXT" offset="assign" exec="loopback">
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="4127"/>
     </function>
 
-    <function name="SecondaryColor3ubEXT" offset="assign" vectorequiv="SecondaryColor3ubvEXT">
+    <function name="SecondaryColor3ubEXT" offset="assign"
+              vectorequiv="SecondaryColor3ubvEXT" exec="loopback">
         <param name="red" type="GLubyte"/>
         <param name="green" type="GLubyte"/>
         <param name="blue" type="GLubyte"/>
     </function>
 
-    <function name="SecondaryColor3ubvEXT" offset="assign">
+    <function name="SecondaryColor3ubvEXT" offset="assign" exec="loopback">
         <param name="v" type="const GLubyte *" count="3"/>
         <glx rop="4131"/>
     </function>
 
-    <function name="SecondaryColor3uiEXT" offset="assign" vectorequiv="SecondaryColor3uivEXT">
+    <function name="SecondaryColor3uiEXT" offset="assign"
+              vectorequiv="SecondaryColor3uivEXT" exec="loopback">
         <param name="red" type="GLuint"/>
         <param name="green" type="GLuint"/>
         <param name="blue" type="GLuint"/>
     </function>
 
-    <function name="SecondaryColor3uivEXT" offset="assign">
+    <function name="SecondaryColor3uivEXT" offset="assign" exec="loopback">
         <param name="v" type="const GLuint *" count="3"/>
         <glx rop="4133"/>
     </function>
 
-    <function name="SecondaryColor3usEXT" offset="assign" vectorequiv="SecondaryColor3usvEXT">
+    <function name="SecondaryColor3usEXT" offset="assign"
+              vectorequiv="SecondaryColor3usvEXT" exec="loopback">
         <param name="red" type="GLushort"/>
         <param name="green" type="GLushort"/>
         <param name="blue" type="GLushort"/>
     </function>
 
-    <function name="SecondaryColor3usvEXT" offset="assign">
+    <function name="SecondaryColor3usvEXT" offset="assign" exec="loopback">
         <param name="v" type="const GLushort *" count="3"/>
         <glx rop="4132"/>
     </function>
@@ -10116,11 +10155,12 @@
         <glx rop="4124"/>
     </function>
 
-    <function name="FogCoorddEXT" offset="assign" vectorequiv="FogCoorddvEXT">
+    <function name="FogCoorddEXT" offset="assign" vectorequiv="FogCoorddvEXT"
+              exec="loopback">
         <param name="coord" type="GLdouble"/>
     </function>
 
-    <function name="FogCoorddvEXT" offset="assign">
+    <function name="FogCoorddvEXT" offset="assign" exec="loopback">
         <param name="coord" type="const GLdouble *" count="1"/>
         <glx rop="4125"/>
     </function>
@@ -11737,46 +11777,49 @@
     </function>
 
     <function name="VertexAttrib1sNV" offset="assign"
-              vectorequiv="VertexAttrib1svNV" deprecated="3.1">
+              vectorequiv="VertexAttrib1svNV" deprecated="3.1" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib1svNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib1svNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="1"/>
         <glx rop="4265"/>
     </function>
 
     <function name="VertexAttrib2sNV" offset="assign"
-              vectorequiv="VertexAttrib2svNV" deprecated="3.1">
+              vectorequiv="VertexAttrib2svNV" deprecated="3.1" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib2svNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib2svNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="2"/>
         <glx rop="4266"/>
     </function>
 
     <function name="VertexAttrib3sNV" offset="assign"
-              vectorequiv="VertexAttrib3svNV" deprecated="3.1">
+              vectorequiv="VertexAttrib3svNV" deprecated="3.1" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib3svNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib3svNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="4267"/>
     </function>
 
     <function name="VertexAttrib4sNV" offset="assign"
-              vectorequiv="VertexAttrib4svNV" deprecated="3.1">
+              vectorequiv="VertexAttrib4svNV" deprecated="3.1" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
@@ -11784,7 +11827,8 @@
         <param name="w" type="GLshort"/>
     </function>
 
-    <function name="VertexAttrib4svNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib4svNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="4268"/>
@@ -11853,46 +11897,49 @@
     </function>
 
     <function name="VertexAttrib1dNV" offset="assign"
-              vectorequiv="VertexAttrib1dvNV" deprecated="3.1">
+              vectorequiv="VertexAttrib1dvNV" deprecated="3.1" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib1dvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib1dvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="1"/>
         <glx rop="4273" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib2dNV" offset="assign"
-              vectorequiv="VertexAttrib2dvNV" deprecated="3.1">
+              vectorequiv="VertexAttrib2dvNV" deprecated="3.1" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib2dvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib2dvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="2"/>
         <glx rop="4274" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib3dNV" offset="assign"
-              vectorequiv="VertexAttrib3dvNV" deprecated="3.1">
+              vectorequiv="VertexAttrib3dvNV" deprecated="3.1" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib3dvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib3dvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="4275" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib4dNV" offset="assign"
-              vectorequiv="VertexAttrib4dvNV" deprecated="3.1">
+              vectorequiv="VertexAttrib4dvNV" deprecated="3.1" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
@@ -11900,14 +11947,16 @@
         <param name="w" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib4dvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib4dvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="4"/>
         <glx rop="4276" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib4ubNV" offset="assign"
-              vectorequiv="VertexAttrib4ubvNV" deprecated="3.1">
+              vectorequiv="VertexAttrib4ubvNV" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLubyte"/>
         <param name="y" type="GLubyte"/>
@@ -11915,97 +11964,111 @@
         <param name="w" type="GLubyte"/>
     </function>
 
-    <function name="VertexAttrib4ubvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttrib4ubvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
         <glx rop="4277"/>
     </function>
 
-    <function name="VertexAttribs1svNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs1svNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n"/>
         <glx rop="4202"/>
     </function>
 
-    <function name="VertexAttribs2svNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs2svNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n" count_scale="2"/>
         <glx rop="4203"/>
     </function>
 
-    <function name="VertexAttribs3svNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs3svNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n" count_scale="3"/>
         <glx rop="4204"/>
     </function>
 
-    <function name="VertexAttribs4svNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs4svNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n" count_scale="4"/>
         <glx rop="4205"/>
     </function>
 
-    <function name="VertexAttribs1fvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs1fvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLfloat *" count="n"/>
         <glx rop="4206"/>
     </function>
 
-    <function name="VertexAttribs2fvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs2fvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLfloat *" count="n" count_scale="2"/>
         <glx rop="4207"/>
     </function>
 
-    <function name="VertexAttribs3fvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs3fvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLfloat *" count="n" count_scale="3"/>
         <glx rop="4208"/>
     </function>
 
-    <function name="VertexAttribs4fvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs4fvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLfloat *" count="n" count_scale="4"/>
         <glx rop="4209"/>
     </function>
 
-    <function name="VertexAttribs1dvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs1dvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLdouble *" count="n"/>
         <glx rop="4210" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttribs2dvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs2dvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLdouble *" count="n" count_scale="2"/>
         <glx rop="4211" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttribs3dvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs3dvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLdouble *" count="n" count_scale="3"/>
         <glx rop="4212" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttribs4dvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs4dvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLdouble *" count="n" count_scale="4"/>
         <glx rop="4213" doubles_in_order="true"/>
     </function>
 
-    <function name="VertexAttribs4ubvNV" offset="assign" deprecated="3.1">
+    <function name="VertexAttribs4ubvNV" offset="assign" deprecated="3.1"
+              exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLubyte *" count="n" count_scale="4"/>

@@ -96,7 +96,7 @@
         <param name="w" type="GLuint"/>
     </function>
 
-    <function name="VertexAttribI1ivEXT" offset="assign">
+    <function name="VertexAttribI1ivEXT" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *"/>
     </function>
@@ -116,7 +116,7 @@
         <param name="v" type="const GLint *"/>
     </function>
 
-    <function name="VertexAttribI1uivEXT" offset="assign">
+    <function name="VertexAttribI1uivEXT" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLuint *"/>
     </function>
@@ -136,22 +136,22 @@
         <param name="v" type="const GLuint *"/>
     </function>
 
-    <function name="VertexAttribI4bvEXT" offset="assign">
+    <function name="VertexAttribI4bvEXT" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLbyte *"/>
     </function>
 
-    <function name="VertexAttribI4svEXT" offset="assign">
+    <function name="VertexAttribI4svEXT" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *"/>
     </function>
 
-    <function name="VertexAttribI4ubvEXT" offset="assign">
+    <function name="VertexAttribI4ubvEXT" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *"/>
     </function>
 
-    <function name="VertexAttribI4usvEXT" offset="assign">
+    <function name="VertexAttribI4usvEXT" offset="assign" exec="loopback">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLushort *"/>
     </function>
