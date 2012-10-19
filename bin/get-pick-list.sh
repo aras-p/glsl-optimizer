@@ -1,6 +1,8 @@
 #!/bin/sh
 
-git log --reverse --pretty=oneline HEAD..origin/master | cut -d' ' -f1 |\
+# Script for generating a list of candidates for cherry-picking to a stable branch
+
+git log --reverse --pretty=%H HEAD..origin/master |\
 while read sha
 do
     # Check to see whether the patch was marked as a candidate for the stable tree.
