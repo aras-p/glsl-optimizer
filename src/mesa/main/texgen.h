@@ -34,19 +34,23 @@
 struct _glapi_table;
 
 
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params );
-
-extern void GLAPIENTRY
+void GLAPIENTRY
+_mesa_TexGeniv(GLenum coord, GLenum pname, const GLint *params );
+void GLAPIENTRY
+_mesa_TexGend(GLenum coord, GLenum pname, GLdouble param );
+void GLAPIENTRY
+_mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params );
+void GLAPIENTRY
 _mesa_TexGenf( GLenum coord, GLenum pname, GLfloat param );
-
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_TexGeni( GLenum coord, GLenum pname, GLint param );
-
-extern void GLAPIENTRY
+void GLAPIENTRY
+_mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params );
+void GLAPIENTRY
 _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params );
-
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params );
 
 extern void

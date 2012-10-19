@@ -100,69 +100,57 @@ _mesa_init_buffer_object_functions(struct dd_function_table *driver);
  * API functions
  */
 
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_BindBufferARB(GLenum target, GLuint buffer);
-
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_DeleteBuffersARB(GLsizei n, const GLuint * buffer);
-
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GenBuffersARB(GLsizei n, GLuint * buffer);
-
-extern GLboolean GLAPIENTRY
+GLboolean GLAPIENTRY
 _mesa_IsBufferARB(GLuint buffer);
-
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage);
-
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_BufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data);
-
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data);
-
-extern void * GLAPIENTRY
+void * GLAPIENTRY
 _mesa_MapBufferARB(GLenum target, GLenum access);
-
-extern GLboolean GLAPIENTRY
+GLboolean GLAPIENTRY
 _mesa_UnmapBufferARB(GLenum target);
-
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params);
-
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params);
-
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params);
-
-extern void GLAPIENTRY
+void GLAPIENTRY
 _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
                         GLintptr readOffset, GLintptr writeOffset,
                         GLsizeiptr size);
-
-extern void * GLAPIENTRY
+void * GLAPIENTRY
 _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
                      GLbitfield access);
-
-extern void GLAPIENTRY
-_mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
-
-extern GLenum GLAPIENTRY
-_mesa_ObjectPurgeableAPPLE(GLenum objectType, GLuint name, GLenum option);
-
-extern GLenum GLAPIENTRY
-_mesa_ObjectUnpurgeableAPPLE(GLenum objectType, GLuint name, GLenum option);
-
-extern void GLAPIENTRY
-_mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname, GLint* params);
-
 void GLAPIENTRY
-_mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer);
-
+_mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
+GLenum GLAPIENTRY
+_mesa_ObjectPurgeableAPPLE(GLenum objectType, GLuint name, GLenum option);
+GLenum GLAPIENTRY
+_mesa_ObjectUnpurgeableAPPLE(GLenum objectType, GLuint name, GLenum option);
+void GLAPIENTRY
+_mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname,
+                                GLint* params);
 void GLAPIENTRY
 _mesa_BindBufferRange(GLenum target, GLuint index,
                       GLuint buffer, GLintptr offset, GLsizeiptr size);
+void GLAPIENTRY
+_mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer);
+void GLAPIENTRY
+_mesa_InvalidateBufferSubData(GLuint buffer, GLintptr offset,
+                              GLsizeiptr length);
+void GLAPIENTRY
+_mesa_InvalidateBufferData(GLuint buffer);
+
 
 extern void
 _mesa_init_bufferobj_dispatch(struct gl_context *ctx,

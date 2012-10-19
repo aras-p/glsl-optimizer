@@ -8580,7 +8580,7 @@ execute_list(struct gl_context *ctx, GLuint list)
 /**
  * Test if a display list number is valid.
  */
-static GLboolean GLAPIENTRY
+GLboolean GLAPIENTRY
 _mesa_IsList(GLuint list)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -8593,7 +8593,7 @@ _mesa_IsList(GLuint list)
 /**
  * Delete a sequence of consecutive display lists.
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_DeleteLists(GLuint list, GLsizei range)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -8615,7 +8615,7 @@ _mesa_DeleteLists(GLuint list, GLsizei range)
  * Return a display list number, n, such that lists n through n+range-1
  * are free.
  */
-static GLuint GLAPIENTRY
+GLuint GLAPIENTRY
 _mesa_GenLists(GLsizei range)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -8655,7 +8655,7 @@ _mesa_GenLists(GLsizei range)
 /**
  * Begin a new display list.
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_NewList(GLuint name, GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -8705,7 +8705,7 @@ _mesa_NewList(GLuint name, GLenum mode)
 /**
  * End definition of current display list. 
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_EndList(void)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -8841,7 +8841,7 @@ _mesa_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
 /**
  * Set the offset added to list numbers in glCallLists.
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_ListBase(GLuint base)
 {
    GET_CURRENT_CONTEXT(ctx);

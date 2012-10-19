@@ -53,5 +53,34 @@ _mesa_init_queryobj(struct gl_context *ctx);
 extern void
 _mesa_free_queryobj_data(struct gl_context *ctx);
 
+void GLAPIENTRY
+_mesa_GenQueriesARB(GLsizei n, GLuint *ids);
+void GLAPIENTRY
+_mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids);
+GLboolean GLAPIENTRY
+_mesa_IsQueryARB(GLuint id);
+void GLAPIENTRY
+_mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id);
+void GLAPIENTRY
+_mesa_EndQueryIndexed(GLenum target, GLuint index);
+void GLAPIENTRY
+_mesa_BeginQueryARB(GLenum target, GLuint id);
+void GLAPIENTRY
+_mesa_EndQueryARB(GLenum target);
+void GLAPIENTRY
+_mesa_QueryCounter(GLuint id, GLenum target);
+void GLAPIENTRY
+_mesa_GetQueryIndexediv(GLenum target, GLuint index, GLenum pname,
+                        GLint *params);
+void GLAPIENTRY
+_mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params);
+void GLAPIENTRY
+_mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params);
+void GLAPIENTRY
+_mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params);
+void GLAPIENTRY
+_mesa_GetQueryObjecti64vEXT(GLuint id, GLenum pname, GLint64EXT *params);
+void GLAPIENTRY
+_mesa_GetQueryObjectui64vEXT(GLuint id, GLenum pname, GLuint64EXT *params);
 
 #endif /* QUERYOBJ_H */

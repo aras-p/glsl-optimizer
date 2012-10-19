@@ -224,7 +224,7 @@ _mesa_DeleteSamplers(GLsizei count, const GLuint *samplers)
 }
 
 
-static GLboolean GLAPIENTRY
+GLboolean GLAPIENTRY
 _mesa_IsSampler(GLuint sampler)
 {
    struct gl_sampler_object *sampObj;
@@ -684,7 +684,7 @@ _mesa_SamplerParameteri(GLuint sampler, GLenum pname, GLint param)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_SamplerParameterf(GLuint sampler, GLenum pname, GLfloat param)
 {
    struct gl_sampler_object *sampObj;
@@ -770,7 +770,7 @@ _mesa_SamplerParameterf(GLuint sampler, GLenum pname, GLfloat param)
    }
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_SamplerParameteriv(GLuint sampler, GLenum pname, const GLint *params)
 {
    struct gl_sampler_object *sampObj;
@@ -862,7 +862,7 @@ _mesa_SamplerParameteriv(GLuint sampler, GLenum pname, const GLint *params)
    }
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_SamplerParameterfv(GLuint sampler, GLenum pname, const GLfloat *params)
 {
    struct gl_sampler_object *sampObj;
@@ -949,7 +949,7 @@ _mesa_SamplerParameterfv(GLuint sampler, GLenum pname, const GLfloat *params)
    }
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_SamplerParameterIiv(GLuint sampler, GLenum pname, const GLint *params)
 {
    struct gl_sampler_object *sampObj;
@@ -1035,7 +1035,7 @@ _mesa_SamplerParameterIiv(GLuint sampler, GLenum pname, const GLint *params)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_SamplerParameterIuiv(GLuint sampler, GLenum pname, const GLuint *params)
 {
    struct gl_sampler_object *sampObj;
@@ -1121,7 +1121,7 @@ _mesa_SamplerParameterIuiv(GLuint sampler, GLenum pname, const GLuint *params)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetSamplerParameteriv(GLuint sampler, GLenum pname, GLint *params)
 {
    struct gl_sampler_object *sampObj;
@@ -1199,7 +1199,7 @@ invalid_pname:
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetSamplerParameterfv(GLuint sampler, GLenum pname, GLfloat *params)
 {
    struct gl_sampler_object *sampObj;
@@ -1277,7 +1277,7 @@ invalid_pname:
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetSamplerParameterIiv(GLuint sampler, GLenum pname, GLint *params)
 {
    struct gl_sampler_object *sampObj;
@@ -1356,7 +1356,7 @@ invalid_pname:
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetSamplerParameterIuiv(GLuint sampler, GLenum pname, GLuint *params)
 {
    struct gl_sampler_object *sampObj;

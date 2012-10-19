@@ -63,7 +63,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
 
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_CopyColorTable(GLenum target, GLenum internalformat,
                      GLint x, GLint y, GLsizei width)
 {
@@ -74,7 +74,7 @@ _mesa_CopyColorTable(GLenum target, GLenum internalformat,
 
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_CopyColorSubTable(GLenum target, GLsizei start,
                         GLint x, GLint y, GLsizei width)
 {
@@ -85,7 +85,7 @@ _mesa_CopyColorSubTable(GLenum target, GLsizei start,
 
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetnColorTableARB( GLenum target, GLenum format, GLenum type,
                          GLsizei bufSize, GLvoid *data )
 {
@@ -95,7 +95,7 @@ _mesa_GetnColorTableARB( GLenum target, GLenum format, GLenum type,
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetColorTable( GLenum target, GLenum format,
                      GLenum type, GLvoid *data )
 {
@@ -105,7 +105,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    /* no extensions use this function */
@@ -116,7 +116,7 @@ _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    /* no extensions use this function */
@@ -127,7 +127,7 @@ _mesa_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -137,7 +137,7 @@ _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
 
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);

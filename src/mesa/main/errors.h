@@ -71,6 +71,22 @@ _mesa_debug( const struct gl_context *ctx, const char *fmtString, ... ) PRINTFLI
 extern void
 _mesa_shader_debug( struct gl_context *ctx, GLenum type, GLuint id, const char *msg, int len );
 
+void GLAPIENTRY
+_mesa_DebugMessageInsertARB(GLenum source, GLenum type, GLuint id,
+                            GLenum severity, GLint length,
+                            const GLcharARB* buf);
+GLuint GLAPIENTRY
+_mesa_GetDebugMessageLogARB(GLuint count, GLsizei logSize, GLenum* sources,
+                            GLenum* types, GLenum* ids, GLenum* severities,
+                            GLsizei* lengths, GLcharARB* messageLog);
+void GLAPIENTRY
+_mesa_DebugMessageControlARB(GLenum source, GLenum type, GLenum severity,
+                             GLsizei count, const GLuint *ids,
+                             GLboolean enabled);
+void GLAPIENTRY
+_mesa_DebugMessageCallbackARB(GLDEBUGPROCARB callback,
+                              const GLvoid *userParam);
+
 #ifdef __cplusplus
 }
 #endif

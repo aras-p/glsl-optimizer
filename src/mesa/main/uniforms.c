@@ -535,7 +535,7 @@ _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
    return _mesa_uniform_merge_location_offset(index, offset);
 }
 
-static GLuint GLAPIENTRY
+GLuint GLAPIENTRY
 _mesa_GetUniformBlockIndex(GLuint program,
 			   const GLchar *uniformBlockName)
 {
@@ -561,7 +561,7 @@ _mesa_GetUniformBlockIndex(GLuint program,
    return GL_INVALID_INDEX;
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetUniformIndices(GLuint program,
 			GLsizei uniformCount,
 			const GLchar * const *uniformNames,
@@ -594,7 +594,7 @@ _mesa_GetUniformIndices(GLuint program,
    }
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_UniformBlockBinding(GLuint program,
 			  GLuint uniformBlockIndex,
 			  GLuint uniformBlockBinding)
@@ -644,7 +644,7 @@ _mesa_UniformBlockBinding(GLuint program,
    }
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetActiveUniformBlockiv(GLuint program,
 			      GLuint uniformBlockIndex,
 			      GLenum pname,
@@ -720,7 +720,7 @@ _mesa_GetActiveUniformBlockiv(GLuint program,
    }
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetActiveUniformBlockName(GLuint program,
 				GLuint uniformBlockIndex,
 				GLsizei bufSize,
@@ -762,7 +762,7 @@ _mesa_GetActiveUniformBlockName(GLuint program,
    }
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetActiveUniformName(GLuint program, GLuint uniformIndex,
 			   GLsizei bufSize, GLsizei *length,
 			   GLchar *uniformName)

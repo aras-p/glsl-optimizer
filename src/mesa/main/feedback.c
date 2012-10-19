@@ -47,7 +47,7 @@
 
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -96,7 +96,7 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_PassThrough( GLfloat token )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -159,7 +159,7 @@ _mesa_feedback_vertex(struct gl_context *ctx,
  * Verifies we're not in selection mode, flushes the vertices and initialize
  * the fields in __struct gl_contextRec::Select with the given buffer.
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_SelectBuffer( GLsizei size, GLuint *buffer )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -271,7 +271,7 @@ write_hit_record(struct gl_context *ctx)
  * the hit record data in gl_selection. Marks new render mode in
  * __struct gl_contextRec::NewState.
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_InitNames( void )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -302,7 +302,7 @@ _mesa_InitNames( void )
  *
  * sa __struct gl_contextRec::Select.
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_LoadName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -341,7 +341,7 @@ _mesa_LoadName( GLuint name )
  *
  * sa __struct gl_contextRec::Select.
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_PushName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -372,7 +372,7 @@ _mesa_PushName( GLuint name )
  *
  * sa __struct gl_contextRec::Select.
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_PopName( void )
 {
    GET_CURRENT_CONTEXT(ctx);

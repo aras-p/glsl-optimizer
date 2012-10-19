@@ -41,7 +41,7 @@
 #include "main/dispatch.h"
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, GLenum format, GLenum type, const GLvoid *image)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -49,7 +49,7 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
    _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter1D");
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -58,7 +58,7 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -67,7 +67,7 @@ _mesa_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -76,7 +76,7 @@ _mesa_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -85,7 +85,7 @@ _mesa_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -94,7 +94,7 @@ _mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLint y, GLsizei width)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -103,7 +103,7 @@ _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLi
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -112,7 +112,7 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetnConvolutionFilterARB(GLenum target, GLenum format, GLenum type,
                                GLsizei bufSize, GLvoid *image)
 {
@@ -122,7 +122,7 @@ _mesa_GetnConvolutionFilterARB(GLenum target, GLenum format, GLenum type,
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
                            GLvoid *image)
 {
@@ -130,7 +130,7 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -139,7 +139,7 @@ _mesa_GetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -148,7 +148,7 @@ _mesa_GetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetnSeparableFilterARB(GLenum target, GLenum format, GLenum type,
                              GLsizei rowBufSize, GLvoid *row,
                              GLsizei columnBufSize,  GLvoid *column,
@@ -160,7 +160,7 @@ _mesa_GetnSeparableFilterARB(GLenum target, GLenum format, GLenum type,
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
                          GLvoid *row, GLvoid *column, GLvoid *span)
 {
@@ -169,7 +169,7 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *row, const GLvoid *column)
 {
    GET_CURRENT_CONTEXT(ctx);

@@ -2246,7 +2246,7 @@ _mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
    }
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_InvalidateBufferSubData(GLuint buffer, GLintptr offset,
                               GLsizeiptr length)
 {
@@ -2305,7 +2305,7 @@ _mesa_InvalidateBufferSubData(GLuint buffer, GLintptr offset,
    return;
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_InvalidateBufferData(GLuint buffer)
 {
    GET_CURRENT_CONTEXT(ctx);

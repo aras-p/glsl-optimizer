@@ -477,7 +477,7 @@ error:
    return GL_FALSE;
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_DebugMessageInsertARB(GLenum source, GLenum type, GLuint id,
                             GLenum severity, GLint length,
                             const GLcharARB* buf)
@@ -501,7 +501,7 @@ _mesa_DebugMessageInsertARB(GLenum source, GLenum type, GLuint id,
    _mesa_log_msg(ctx, source, type, id, severity, length, buf);
 }
 
-static GLuint GLAPIENTRY
+GLuint GLAPIENTRY
 _mesa_GetDebugMessageLogARB(GLuint count, GLsizei logSize, GLenum* sources,
                             GLenum* types, GLenum* ids, GLenum* severities,
                             GLsizei* lengths, GLcharARB* messageLog)
@@ -672,7 +672,7 @@ control_app_messages(struct gl_context *ctx, GLenum esource, GLenum etype,
    control_app_messages_by_group(ctx, source, type, severity, enabled);
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_DebugMessageControlARB(GLenum source, GLenum type, GLenum severity,
                              GLsizei count, const GLuint *ids,
                              GLboolean enabled)
@@ -717,7 +717,7 @@ _mesa_DebugMessageControlARB(GLenum source, GLenum type, GLenum severity,
    }
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_DebugMessageCallbackARB(GLDEBUGPROCARB callback, const GLvoid *userParam)
 {
    GET_CURRENT_CONTEXT(ctx);

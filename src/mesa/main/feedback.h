@@ -31,7 +31,21 @@
 #include "main/mtypes.h"
 
 
-extern GLint GLAPIENTRY
+void GLAPIENTRY
+_mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer );
+void GLAPIENTRY
+_mesa_PassThrough( GLfloat token );
+void GLAPIENTRY
+_mesa_SelectBuffer( GLsizei size, GLuint *buffer );
+void GLAPIENTRY
+_mesa_InitNames( void );
+void GLAPIENTRY
+_mesa_LoadName( GLuint name );
+void GLAPIENTRY
+_mesa_PushName( GLuint name );
+void GLAPIENTRY
+_mesa_PopName( void );
+GLint GLAPIENTRY
 _mesa_RenderMode( GLenum mode );
 
 extern void

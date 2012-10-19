@@ -168,7 +168,7 @@ get_query_binding_point(struct gl_context *ctx, GLenum target)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GenQueriesARB(GLsizei n, GLuint *ids)
 {
    GLuint first;
@@ -207,7 +207,7 @@ _mesa_GenQueriesARB(GLsizei n, GLuint *ids)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids)
 {
    GLint i;
@@ -243,7 +243,7 @@ _mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids)
 }
 
 
-static GLboolean GLAPIENTRY
+GLboolean GLAPIENTRY
 _mesa_IsQueryARB(GLuint id)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -279,7 +279,7 @@ query_error_check_index(struct gl_context *ctx, GLenum target, GLuint index)
    return GL_TRUE;
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
 {
    struct gl_query_object *q, **bindpt;
@@ -356,7 +356,7 @@ _mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_EndQueryIndexed(GLenum target, GLuint index)
 {
    struct gl_query_object *q, **bindpt;
@@ -402,19 +402,19 @@ _mesa_EndQueryIndexed(GLenum target, GLuint index)
    ctx->Driver.EndQuery(ctx, q);
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_BeginQueryARB(GLenum target, GLuint id)
 {
    _mesa_BeginQueryIndexed(target, 0, id);
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_EndQueryARB(GLenum target)
 {
    _mesa_EndQueryIndexed(target, 0);
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_QueryCounter(GLuint id, GLenum target)
 {
    struct gl_query_object *q;
@@ -471,7 +471,7 @@ _mesa_QueryCounter(GLuint id, GLenum target)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetQueryIndexediv(GLenum target, GLuint index, GLenum pname,
                         GLint *params)
 {
@@ -546,13 +546,13 @@ _mesa_GetQueryIndexediv(GLenum target, GLuint index, GLenum pname,
    }
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
 {
    _mesa_GetQueryIndexediv(target, 0, pname, params);
 }
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
 {
    struct gl_query_object *q = NULL;
@@ -603,7 +603,7 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 {
    struct gl_query_object *q = NULL;
@@ -657,7 +657,7 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 /**
  * New with GL_EXT_timer_query
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetQueryObjecti64vEXT(GLuint id, GLenum pname, GLint64EXT *params)
 {
    struct gl_query_object *q = NULL;
@@ -698,7 +698,7 @@ _mesa_GetQueryObjecti64vEXT(GLuint id, GLenum pname, GLint64EXT *params)
 /**
  * New with GL_EXT_timer_query
  */
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetQueryObjectui64vEXT(GLuint id, GLenum pname, GLuint64EXT *params)
 {
    struct gl_query_object *q = NULL;
