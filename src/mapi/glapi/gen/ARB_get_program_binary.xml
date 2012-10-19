@@ -11,7 +11,8 @@
     <enum name="NUM_PROGRAM_BINARY_FORMATS"               value="0x87FE"/>
     <enum name="PROGRAM_BINARY_FORMATS"                   value="0x87FF"/>
 
-    <function name="GetProgramBinary" offset="assign" static_dispatch="false" es2="3.0">
+    <function name="GetProgramBinary" offset="assign" static_dispatch="false"
+              es2="3.0" exec="skip">
         <param name="program" type="GLuint"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="length" type="GLsizei *"/>
@@ -19,14 +20,16 @@
         <param name="binary" type="GLvoid *"/>
     </function>
 
-    <function name="ProgramBinary" offset="assign" static_dispatch="false" es2="3.0">
+    <function name="ProgramBinary" offset="assign" static_dispatch="false"
+              es2="3.0" exec="skip">
         <param name="program" type="GLuint"/>
         <param name="binaryFormat" type="GLenum"/>
         <param name="binary" type="const GLvoid *"/>
         <param name="length" type="GLsizei"/>
     </function>
 
-    <function name="ProgramParameteri" offset="assign" static_dispatch="false" es2="3.0">
+    <function name="ProgramParameteri" offset="assign" static_dispatch="false"
+              es2="3.0" exec="skip">
         <param name="program" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="value" type="GLint"/>

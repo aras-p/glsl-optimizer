@@ -45,7 +45,7 @@
         <param name="level" type="GLint"/>
         <param name="layer" type="GLint"/>
     </function>
-    <function name="FramebufferTextureFaceARB"  offset="assign">
+    <function name="FramebufferTextureFaceARB" exec="skip" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="texture" type="GLuint"/>

@@ -38,7 +38,8 @@
                    vectorequiv         NMTOKEN #IMPLIED
                    es1                 CDATA   "none"
                    es2                 CDATA   "none"
-                   deprecated          CDATA   "none">
+                   deprecated          CDATA   "none"
+                   exec                NMTOKEN #IMPLIED>
 <!ATTLIST size     name                NMTOKEN #REQUIRED
                    count               NMTOKEN #IMPLIED
                    mode                (get | set) "set">

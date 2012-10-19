@@ -307,22 +307,26 @@
     <enum name="WEIGHT_ARRAY_BUFFER_BINDING_OES"          value="0x889E"/>
     <enum name="MATRIX_INDEX_ARRAY_BUFFER_BINDING_OES"    value="0x8B9E"/>
 
-    <function name="CurrentPaletteMatrixOES" alias="CurrentPaletteMatrixARB" static_dispatch="false">
+    <function name="CurrentPaletteMatrixOES" alias="CurrentPaletteMatrixARB"
+              static_dispatch="false" exec="skip">
         <param name="matrixpaletteindex" type="GLuint"/>
     </function>
 
     <!-- no offset -->
-    <function name="LoadPaletteFromModelViewMatrixOES" static_dispatch="false">
+    <function name="LoadPaletteFromModelViewMatrixOES" static_dispatch="false"
+              exec="skip">
     </function>
 
-    <function name="MatrixIndexPointerOES" alias="MatrixIndexPointerARB" static_dispatch="false">
+    <function name="MatrixIndexPointerOES" alias="MatrixIndexPointerARB"
+              static_dispatch="false" exec="skip">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
     </function>
 
-    <function name="WeightPointerOES" alias="WeightPointerARB" static_dispatch="false">
+    <function name="WeightPointerOES" alias="WeightPointerARB"
+              static_dispatch="false" exec="skip">
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
