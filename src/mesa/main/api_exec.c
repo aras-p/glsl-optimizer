@@ -580,12 +580,14 @@ _mesa_create_exec_table(struct gl_context *ctx)
    SET_EnableVertexAttribArrayARB(exec, _mesa_EnableVertexAttribArrayARB);
    SET_DisableVertexAttribArrayARB(exec, _mesa_DisableVertexAttribArrayARB);
    if (ctx->API != API_OPENGLES2) {
-      SET_ProgramStringARB(exec, _mesa_ProgramStringARB);
       /* glBindProgramARB aliases glBindProgramNV */
       /* glDeleteProgramsARB aliases glDeleteProgramsNV */
       /* glGenProgramsARB aliases glGenProgramsNV */
       /* glIsProgramARB aliases glIsProgramNV */
       SET_GetVertexAttribdvARB(exec, _mesa_GetVertexAttribdvARB);
+   }
+   if (ctx->API == API_OPENGL) {
+      SET_ProgramStringARB(exec, _mesa_ProgramStringARB);
    }
 
    SET_GetVertexAttribfvARB(exec, _mesa_GetVertexAttribfvARB);
