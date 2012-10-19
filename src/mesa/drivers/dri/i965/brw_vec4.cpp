@@ -891,7 +891,7 @@ vec4_visitor::dump_instruction(vec4_instruction *inst)
       static const char *chans[4] = {"x", "y", "z", "w"};
       printf(".");
       for (int c = 0; c < 4; c++) {
-         printf(chans[BRW_GET_SWZ(inst->src[i].swizzle, c)]);
+         printf("%s", chans[BRW_GET_SWZ(inst->src[i].swizzle, c)]);
       }
 
       if (i < 3)
