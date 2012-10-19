@@ -206,7 +206,7 @@ namespace {
          throw error(CL_INVALID_CONTEXT);
 
       if (bool(num_deps) != bool(deps) ||
-          any_of(is_zero<cl_event>(), deps, deps + num_deps))
+          any_of(is_zero<cl_event>, deps, deps + num_deps))
          throw error(CL_INVALID_EVENT_WAIT_LIST);
 
       if (any_of([](std::unique_ptr<kernel::argument> &arg) {
@@ -220,7 +220,7 @@ namespace {
       if (dims < 1 || dims > q->dev.max_block_size().size())
          throw error(CL_INVALID_WORK_DIMENSION);
 
-      if (!grid_size || any_of(is_zero<size_t>(), grid_size, grid_size + dims))
+      if (!grid_size || any_of(is_zero<size_t>, grid_size, grid_size + dims))
          throw error(CL_INVALID_GLOBAL_WORK_SIZE);
 
       if (block_size) {

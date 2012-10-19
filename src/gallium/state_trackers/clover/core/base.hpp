@@ -273,11 +273,9 @@ namespace clover {
    }
 
    template<typename T>
-   std::function<bool (const T &)>
-   is_zero() {
-      return [](const T &x) {
-         return x == 0;
-      };
+   bool
+   is_zero(T x) {
+      return x == 0;
    }
 }
 

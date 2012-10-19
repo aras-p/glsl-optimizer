@@ -40,7 +40,7 @@ namespace {
          throw error(CL_INVALID_COMMAND_QUEUE);
 
       if (bool(num_deps) != bool(deps) ||
-          any_of(is_zero<cl_event>(), deps, deps + num_deps))
+          any_of(is_zero<cl_event>, deps, deps + num_deps))
          throw error(CL_INVALID_EVENT_WAIT_LIST);
 
       if (any_of([&](const cl_event ev) {

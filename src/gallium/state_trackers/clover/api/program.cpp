@@ -35,7 +35,7 @@ clCreateProgramWithSource(cl_context ctx, cl_uint count,
       throw error(CL_INVALID_CONTEXT);
 
    if (!count || !strings ||
-       any_of(is_zero<const char *>(), strings, strings + count))
+       any_of(is_zero<const char *>, strings, strings + count))
       throw error(CL_INVALID_VALUE);
 
    // Concatenate all the provided fragments together
