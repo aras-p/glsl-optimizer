@@ -1164,25 +1164,27 @@
     </function>
 
     <function name="Color3b" offset="9" vectorequiv="Color3bv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLbyte"/>
         <param name="green" type="GLbyte"/>
         <param name="blue" type="GLbyte"/>
     </function>
 
-    <function name="Color3bv" offset="10" deprecated="3.1" exec="loopback">
+    <function name="Color3bv" offset="10" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLbyte *" count="3"/>
         <glx rop="6"/>
     </function>
 
     <function name="Color3d" offset="11" vectorequiv="Color3dv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLdouble"/>
         <param name="green" type="GLdouble"/>
         <param name="blue" type="GLdouble"/>
     </function>
 
-    <function name="Color3dv" offset="12" deprecated="3.1" exec="loopback">
+    <function name="Color3dv" offset="12" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="7"/>
     </function>
@@ -1200,87 +1202,94 @@
     </function>
 
     <function name="Color3i" offset="15" vectorequiv="Color3iv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLint"/>
         <param name="green" type="GLint"/>
         <param name="blue" type="GLint"/>
     </function>
 
-    <function name="Color3iv" offset="16" deprecated="3.1" exec="loopback">
+    <function name="Color3iv" offset="16" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLint *" count="3"/>
         <glx rop="9"/>
     </function>
 
     <function name="Color3s" offset="17" vectorequiv="Color3sv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLshort"/>
         <param name="green" type="GLshort"/>
         <param name="blue" type="GLshort"/>
     </function>
 
-    <function name="Color3sv" offset="18" deprecated="3.1" exec="loopback">
+    <function name="Color3sv" offset="18" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="10"/>
     </function>
 
     <function name="Color3ub" offset="19" vectorequiv="Color3ubv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLubyte"/>
         <param name="green" type="GLubyte"/>
         <param name="blue" type="GLubyte"/>
     </function>
 
-    <function name="Color3ubv" offset="20" deprecated="3.1" exec="loopback">
+    <function name="Color3ubv" offset="20" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLubyte *" count="3"/>
         <glx rop="11"/>
     </function>
 
     <function name="Color3ui" offset="21" vectorequiv="Color3uiv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLuint"/>
         <param name="green" type="GLuint"/>
         <param name="blue" type="GLuint"/>
     </function>
 
-    <function name="Color3uiv" offset="22" deprecated="3.1" exec="loopback">
+    <function name="Color3uiv" offset="22" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLuint *" count="3"/>
         <glx rop="12"/>
     </function>
 
     <function name="Color3us" offset="23" vectorequiv="Color3usv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLushort"/>
         <param name="green" type="GLushort"/>
         <param name="blue" type="GLushort"/>
     </function>
 
-    <function name="Color3usv" offset="24" deprecated="3.1" exec="loopback">
+    <function name="Color3usv" offset="24" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLushort *" count="3"/>
         <glx rop="13"/>
     </function>
 
     <function name="Color4b" offset="25" vectorequiv="Color4bv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLbyte"/>
         <param name="green" type="GLbyte"/>
         <param name="blue" type="GLbyte"/>
         <param name="alpha" type="GLbyte"/>
     </function>
 
-    <function name="Color4bv" offset="26" deprecated="3.1" exec="loopback">
+    <function name="Color4bv" offset="26" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLbyte *" count="4"/>
         <glx rop="14"/>
     </function>
 
     <function name="Color4d" offset="27" vectorequiv="Color4dv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLdouble"/>
         <param name="green" type="GLdouble"/>
         <param name="blue" type="GLdouble"/>
         <param name="alpha" type="GLdouble"/>
     </function>
 
-    <function name="Color4dv" offset="28" deprecated="3.1" exec="loopback">
+    <function name="Color4dv" offset="28" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLdouble *" count="4"/>
         <glx rop="15"/>
     </function>
@@ -1299,66 +1308,71 @@
     </function>
 
     <function name="Color4i" offset="31" vectorequiv="Color4iv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLint"/>
         <param name="green" type="GLint"/>
         <param name="blue" type="GLint"/>
         <param name="alpha" type="GLint"/>
     </function>
 
-    <function name="Color4iv" offset="32" deprecated="3.1" exec="loopback">
+    <function name="Color4iv" offset="32" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLint *" count="4"/>
         <glx rop="17"/>
     </function>
 
     <function name="Color4s" offset="33" vectorequiv="Color4sv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLshort"/>
         <param name="green" type="GLshort"/>
         <param name="blue" type="GLshort"/>
         <param name="alpha" type="GLshort"/>
     </function>
 
-    <function name="Color4sv" offset="34" deprecated="3.1" exec="loopback">
+    <function name="Color4sv" offset="34" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="18"/>
     </function>
 
     <function name="Color4ub" offset="35" vectorequiv="Color4ubv" es1="1.1"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLubyte"/>
         <param name="green" type="GLubyte"/>
         <param name="blue" type="GLubyte"/>
         <param name="alpha" type="GLubyte"/>
     </function>
 
-    <function name="Color4ubv" offset="36" deprecated="3.1" exec="loopback">
+    <function name="Color4ubv" offset="36" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLubyte *" count="4"/>
         <glx rop="19"/>
     </function>
 
     <function name="Color4ui" offset="37" vectorequiv="Color4uiv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLuint"/>
         <param name="green" type="GLuint"/>
         <param name="blue" type="GLuint"/>
         <param name="alpha" type="GLuint"/>
     </function>
 
-    <function name="Color4uiv" offset="38" deprecated="3.1" exec="loopback">
+    <function name="Color4uiv" offset="38" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLuint *" count="4"/>
         <glx rop="20"/>
     </function>
 
     <function name="Color4us" offset="39" vectorequiv="Color4usv"
-              deprecated="3.1" exec="loopback">
+              deprecated="3.1" exec="loopback" mesa_name="+_f">
         <param name="red" type="GLushort"/>
         <param name="green" type="GLushort"/>
         <param name="blue" type="GLushort"/>
         <param name="alpha" type="GLushort"/>
     </function>
 
-    <function name="Color4usv" offset="40" deprecated="3.1" exec="loopback">
+    <function name="Color4usv" offset="40" deprecated="3.1" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLushort *" count="4"/>
         <glx rop="21"/>
     </function>
@@ -9300,13 +9314,13 @@
         <size name="PointParameterfvEXT"/>
     </enum>
 
-    <function name="PointParameterfEXT" offset="assign">
+    <function name="PointParameterfEXT" offset="assign" mesa_name="-EXT">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
         <glx rop="2065"/>
     </function>
 
-    <function name="PointParameterfvEXT" offset="assign">
+    <function name="PointParameterfvEXT" offset="assign" mesa_name="-EXT">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfloat *" variable_param="pname"/>
         <glx rop="2066"/>
@@ -10015,25 +10029,29 @@
 
 <category name="GL_EXT_secondary_color" number="145">
     <function name="SecondaryColor3bEXT" offset="assign"
-              vectorequiv="SecondaryColor3bvEXT" exec="loopback">
+              vectorequiv="SecondaryColor3bvEXT" exec="loopback"
+              mesa_name="+_f">
         <param name="red" type="GLbyte"/>
         <param name="green" type="GLbyte"/>
         <param name="blue" type="GLbyte"/>
     </function>
 
-    <function name="SecondaryColor3bvEXT" offset="assign" exec="loopback">
+    <function name="SecondaryColor3bvEXT" offset="assign" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLbyte *" count="3"/>
         <glx rop="4126"/>
     </function>
 
     <function name="SecondaryColor3dEXT" offset="assign"
-              vectorequiv="SecondaryColor3dvEXT" exec="loopback">
+              vectorequiv="SecondaryColor3dvEXT" exec="loopback"
+              mesa_name="+_f">
         <param name="red" type="GLdouble"/>
         <param name="green" type="GLdouble"/>
         <param name="blue" type="GLdouble"/>
     </function>
 
-    <function name="SecondaryColor3dvEXT" offset="assign" exec="loopback">
+    <function name="SecondaryColor3dvEXT" offset="assign" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="4130"/>
     </function>
@@ -10050,61 +10068,71 @@
     </function>
 
     <function name="SecondaryColor3iEXT" offset="assign"
-              vectorequiv="SecondaryColor3ivEXT" exec="loopback">
+              vectorequiv="SecondaryColor3ivEXT" exec="loopback"
+              mesa_name="+_f">
         <param name="red" type="GLint"/>
         <param name="green" type="GLint"/>
         <param name="blue" type="GLint"/>
     </function>
 
-    <function name="SecondaryColor3ivEXT" offset="assign" exec="loopback">
+    <function name="SecondaryColor3ivEXT" offset="assign" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLint *" count="3"/>
         <glx rop="4128"/>
     </function>
 
     <function name="SecondaryColor3sEXT" offset="assign"
-              vectorequiv="SecondaryColor3svEXT" exec="loopback">
+              vectorequiv="SecondaryColor3svEXT" exec="loopback"
+              mesa_name="+_f">
         <param name="red" type="GLshort"/>
         <param name="green" type="GLshort"/>
         <param name="blue" type="GLshort"/>
     </function>
 
-    <function name="SecondaryColor3svEXT" offset="assign" exec="loopback">
+    <function name="SecondaryColor3svEXT" offset="assign" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="4127"/>
     </function>
 
     <function name="SecondaryColor3ubEXT" offset="assign"
-              vectorequiv="SecondaryColor3ubvEXT" exec="loopback">
+              vectorequiv="SecondaryColor3ubvEXT" exec="loopback"
+              mesa_name="+_f">
         <param name="red" type="GLubyte"/>
         <param name="green" type="GLubyte"/>
         <param name="blue" type="GLubyte"/>
     </function>
 
-    <function name="SecondaryColor3ubvEXT" offset="assign" exec="loopback">
+    <function name="SecondaryColor3ubvEXT" offset="assign" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLubyte *" count="3"/>
         <glx rop="4131"/>
     </function>
 
     <function name="SecondaryColor3uiEXT" offset="assign"
-              vectorequiv="SecondaryColor3uivEXT" exec="loopback">
+              vectorequiv="SecondaryColor3uivEXT" exec="loopback"
+              mesa_name="+_f">
         <param name="red" type="GLuint"/>
         <param name="green" type="GLuint"/>
         <param name="blue" type="GLuint"/>
     </function>
 
-    <function name="SecondaryColor3uivEXT" offset="assign" exec="loopback">
+    <function name="SecondaryColor3uivEXT" offset="assign" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLuint *" count="3"/>
         <glx rop="4133"/>
     </function>
 
     <function name="SecondaryColor3usEXT" offset="assign"
-              vectorequiv="SecondaryColor3usvEXT" exec="loopback">
+              vectorequiv="SecondaryColor3usvEXT" exec="loopback"
+              mesa_name="+_f">
         <param name="red" type="GLushort"/>
         <param name="green" type="GLushort"/>
         <param name="blue" type="GLushort"/>
     </function>
 
-    <function name="SecondaryColor3usvEXT" offset="assign" exec="loopback">
+    <function name="SecondaryColor3usvEXT" offset="assign" exec="loopback"
+              mesa_name="+_f">
         <param name="v" type="const GLushort *" count="3"/>
         <glx rop="4132"/>
     </function>
@@ -11581,13 +11609,15 @@
         <glx vendorpriv="1293"/>
     </function>
 
-    <function name="BindProgramNV" offset="assign" deprecated="3.1">
+    <function name="BindProgramNV" offset="assign" deprecated="3.1"
+              mesa_name="-NV">
         <param name="target" type="GLenum"/>
         <param name="program" type="GLuint"/>
         <glx rop="4180"/>
     </function>
 
-    <function name="DeleteProgramsNV" offset="assign" deprecated="3.1">
+    <function name="DeleteProgramsNV" offset="assign" deprecated="3.1"
+              mesa_name="-NV">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="programs" type="const GLuint *" count="n"/>
         <glx vendorpriv="1294"/>
@@ -11601,7 +11631,8 @@
         <glx rop="4181"/>
     </function>
 
-    <function name="GenProgramsNV" offset="assign" deprecated="3.1">
+    <function name="GenProgramsNV" offset="assign" deprecated="3.1"
+              mesa_name="-NV">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="programs" type="GLuint *" output="true" count="n"/>
         <glx vendorpriv="1295" always_array="true"/>
@@ -11680,14 +11711,16 @@
         <glx vendorpriv="1303"/>
     </function>
 
-    <function name="GetVertexAttribPointervNV" offset="assign">
+    <function name="GetVertexAttribPointervNV" offset="assign"
+              mesa_name="-NV+ARB">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="pointer" type="GLvoid **" output="true"/>
         <glx handcode="true"/>
     </function>
 
-    <function name="IsProgramNV" offset="assign" deprecated="3.1">
+    <function name="IsProgramNV" offset="assign" deprecated="3.1"
+              mesa_name="-NV+ARB">
         <param name="program" type="GLuint"/>
         <return type="GLboolean"/>
         <glx vendorpriv="1304"/>
@@ -12465,13 +12498,13 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="PointParameteriNV" offset="assign">
+    <function name="PointParameteriNV" offset="assign" mesa_name="-NV">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
         <glx rop="4221"/>
     </function>
 
-    <function name="PointParameterivNV" offset="assign">
+    <function name="PointParameterivNV" offset="assign" mesa_name="-NV">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLint *" variable_param="pname"/>
         <glx rop="4222"/>

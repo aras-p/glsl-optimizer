@@ -10,7 +10,7 @@
 
   <enum name="VERTEX_ATTRIB_ARRAY_DIVISOR_ARB" value="0x88FE"/>
 
-  <function name="VertexAttribDivisorARB" offset="assign">
+  <function name="VertexAttribDivisorARB" offset="assign" mesa_name="-ARB">
     <param name="index" type="GLuint"/>
     <param name="divisor" type="GLuint"/>
   </function>

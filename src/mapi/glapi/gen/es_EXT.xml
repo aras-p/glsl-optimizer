@@ -73,7 +73,7 @@
     <enum name="TEXTURE_CROP_RECT_OES"                    value="0x8B9D"/>
 
     <function name="DrawTexiOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false">
+              es1="1.0" desktop="false" mesa_name="-OES">
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
         <param name="z" type="GLint"/>
@@ -82,12 +82,12 @@
     </function>
 
     <function name="DrawTexivOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false">
+              es1="1.0" desktop="false" mesa_name="-OES">
         <param name="coords" type="const GLint *" count="5"/>
     </function>
 
     <function name="DrawTexfOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false">
+              es1="1.0" desktop="false" mesa_name="-OES">
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
@@ -96,12 +96,12 @@
     </function>
 
     <function name="DrawTexfvOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false">
+              es1="1.0" desktop="false" mesa_name="-OES">
         <param name="coords" type="const GLfloat *" count="5"/>
     </function>
 
     <function name="DrawTexsOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false">
+              es1="1.0" desktop="false" mesa_name="-OES">
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
@@ -110,7 +110,7 @@
     </function>
 
     <function name="DrawTexsvOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false">
+              es1="1.0" desktop="false" mesa_name="-OES">
         <param name="coords" type="const GLshort *" count="5"/>
     </function>
 
@@ -343,7 +343,8 @@
     <enum name="POINT_SIZE_ARRAY_BUFFER_BINDING_OES"	  value="0x8B9F"/>
 
     <function name="PointSizePointerOES" offset="assign"
-              static_dispatch="false" es1="1.0" desktop="false">
+              static_dispatch="false" es1="1.0" desktop="false"
+              mesa_name="-OES">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>

@@ -8,24 +8,25 @@
 
 <category name="GL_ARB_draw_buffers_blend" number="69">
 
-    <function name="BlendEquationiARB" offset="assign">
+    <function name="BlendEquationiARB" offset="assign" mesa_name="-ARB">
         <param name="buf" type="GLuint"/>
         <param name="mode" type="GLenum"/>
     </function>
 
-    <function name="BlendEquationSeparateiARB" offset="assign">
+    <function name="BlendEquationSeparateiARB" offset="assign"
+              mesa_name="-ARB">
         <param name="buf" type="GLuint"/>
         <param name="modeRGB" type="GLenum"/>
         <param name="modeA" type="GLenum"/>
     </function>
 
-    <function name="BlendFunciARB" offset="assign">
+    <function name="BlendFunciARB" offset="assign" mesa_name="-ARB">
         <param name="buf" type="GLuint"/>
         <param name="src" type="GLenum"/>
         <param name="dst" type="GLenum"/>
     </function>
 
-    <function name="BlendFuncSeparateiARB" offset="assign">
+    <function name="BlendFuncSeparateiARB" offset="assign" mesa_name="-ARB">
         <param name="buf" type="GLuint"/>
         <param name="srcRGB" type="GLenum"/>
         <param name="dstRGB" type="GLenum"/>

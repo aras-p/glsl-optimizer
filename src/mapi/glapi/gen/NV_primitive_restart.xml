@@ -15,7 +15,7 @@
               exec="dynamic">
     </function>
 
-    <function name="PrimitiveRestartIndexNV" offset="assign">
+    <function name="PrimitiveRestartIndexNV" offset="assign" mesa_name="-NV">
 	<param name="index" type="GLuint"/>
     </function>
 
