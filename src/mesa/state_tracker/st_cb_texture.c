@@ -375,6 +375,8 @@ guess_and_alloc_texture(struct st_context *st,
     */
    if ((stObj->base.Sampler.MinFilter == GL_NEAREST ||
         stObj->base.Sampler.MinFilter == GL_LINEAR ||
+        (stObj->base.BaseLevel == 0 &&
+         stObj->base.MaxLevel == 0) ||
         stImage->base._BaseFormat == GL_DEPTH_COMPONENT ||
         stImage->base._BaseFormat == GL_DEPTH_STENCIL_EXT) &&
        !stObj->base.GenerateMipmap &&
