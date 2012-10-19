@@ -246,12 +246,15 @@ _mesa_init_transform_feedback_functions(struct dd_function_table *driver)
 
 
 void
-_mesa_init_transform_feedback_dispatch(struct _glapi_table *disp)
+_mesa_init_transform_feedback_dispatch(const struct gl_context *ctx,
+                                       struct _glapi_table *disp)
 {
    /* EXT_transform_feedback */
    SET_BeginTransformFeedbackEXT(disp, _mesa_BeginTransformFeedback);
    SET_EndTransformFeedbackEXT(disp, _mesa_EndTransformFeedback);
-   SET_BindBufferOffsetEXT(disp, _mesa_BindBufferOffsetEXT);
+   if (_mesa_is_desktop_gl(ctx)) {
+      SET_BindBufferOffsetEXT(disp, _mesa_BindBufferOffsetEXT);
+   }
    SET_TransformFeedbackVaryingsEXT(disp, _mesa_TransformFeedbackVaryings);
    SET_GetTransformFeedbackVaryingEXT(disp, _mesa_GetTransformFeedbackVarying);
    /* ARB_transform_feedback2 */

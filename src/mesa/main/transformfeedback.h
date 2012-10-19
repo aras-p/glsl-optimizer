@@ -47,7 +47,8 @@ extern void
 _mesa_init_transform_feedback_functions(struct dd_function_table *driver);
 
 extern void
-_mesa_init_transform_feedback_dispatch(struct _glapi_table *disp);
+_mesa_init_transform_feedback_dispatch(const struct gl_context *ctx,
+                                       struct _glapi_table *disp);
 
 
 /*** GL_EXT_transform_feedback ***/

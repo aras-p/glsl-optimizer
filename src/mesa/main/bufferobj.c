@@ -2341,6 +2341,9 @@ _mesa_init_bufferobj_dispatch(struct gl_context *ctx, struct _glapi_table *disp)
    SET_DeleteBuffersARB(disp, _mesa_DeleteBuffersARB);
    SET_GenBuffersARB(disp, _mesa_GenBuffersARB);
    SET_GetBufferParameterivARB(disp, _mesa_GetBufferParameterivARB);
+   /* TODO: add GetBufferParameteri64v for desktop GL and GLES3 once tests
+    * exist for it.
+    */
    SET_GetBufferPointervARB(disp, _mesa_GetBufferPointervARB);
    if (ctx->API != API_OPENGLES2) {
       SET_GetBufferSubDataARB(disp, _mesa_GetBufferSubDataARB);

@@ -853,20 +853,24 @@ _mesa_init_shader_uniform_dispatch(const struct gl_context *ctx,
       SET_Uniform4uivEXT(exec, _mesa_Uniform4uiv);
       SET_GetUniformuivEXT(exec, _mesa_GetUniformuiv);
 
-      /* GL_ARB_robustness */
-      SET_GetnUniformfvARB(exec, _mesa_GetnUniformfvARB);
-      SET_GetnUniformivARB(exec, _mesa_GetnUniformivARB);
-      SET_GetnUniformuivARB(exec, _mesa_GetnUniformuivARB);
-      SET_GetnUniformdvARB(exec, _mesa_GetnUniformdvARB); /* GL 4.0 */
-
       /* GL_ARB_uniform_buffer_object / GL 3.1 */
       SET_GetUniformBlockIndex(exec, _mesa_GetUniformBlockIndex);
       SET_GetUniformIndices(exec, _mesa_GetUniformIndices);
       SET_GetActiveUniformsiv(exec, _mesa_GetActiveUniformsiv);
       SET_GetActiveUniformBlockiv(exec, _mesa_GetActiveUniformBlockiv);
       SET_GetActiveUniformBlockName(exec, _mesa_GetActiveUniformBlockName);
-      SET_GetActiveUniformName(exec, _mesa_GetActiveUniformName);
       SET_UniformBlockBinding(exec, _mesa_UniformBlockBinding);
+   }
+
+   if (_mesa_is_desktop_gl(ctx)) {
+      /* GL_ARB_robustness */
+      SET_GetnUniformfvARB(exec, _mesa_GetnUniformfvARB);
+      SET_GetnUniformivARB(exec, _mesa_GetnUniformivARB);
+      SET_GetnUniformuivARB(exec, _mesa_GetnUniformuivARB);
+      SET_GetnUniformdvARB(exec, _mesa_GetnUniformdvARB);
+
+      /* GL_ARB_uniform_buffer_object / GL 3.1 */
+      SET_GetActiveUniformName(exec, _mesa_GetActiveUniformName);
    }
 #endif /* FEATURE_GL */
 }

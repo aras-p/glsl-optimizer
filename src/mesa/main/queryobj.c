@@ -731,7 +731,8 @@ _mesa_GetQueryObjectui64vEXT(GLuint id, GLenum pname, GLuint64EXT *params)
 
 
 void
-_mesa_init_queryobj_dispatch(struct _glapi_table *disp)
+_mesa_init_queryobj_dispatch(const struct gl_context *ctx,
+                             struct _glapi_table *disp)
 {
    SET_GenQueriesARB(disp, _mesa_GenQueriesARB);
    SET_DeleteQueriesARB(disp, _mesa_DeleteQueriesARB);
@@ -739,16 +740,19 @@ _mesa_init_queryobj_dispatch(struct _glapi_table *disp)
    SET_BeginQueryARB(disp, _mesa_BeginQueryARB);
    SET_EndQueryARB(disp, _mesa_EndQueryARB);
    SET_GetQueryivARB(disp, _mesa_GetQueryivARB);
-   SET_GetQueryObjectivARB(disp, _mesa_GetQueryObjectivARB);
    SET_GetQueryObjectuivARB(disp, _mesa_GetQueryObjectuivARB);
-   SET_QueryCounter(disp, _mesa_QueryCounter);
 
-   SET_GetQueryObjecti64vEXT(disp, _mesa_GetQueryObjecti64vEXT);
-   SET_GetQueryObjectui64vEXT(disp, _mesa_GetQueryObjectui64vEXT);
+   if (_mesa_is_desktop_gl(ctx)) {
+      SET_GetQueryObjectivARB(disp, _mesa_GetQueryObjectivARB);
+      SET_QueryCounter(disp, _mesa_QueryCounter);
 
-   SET_BeginQueryIndexed(disp, _mesa_BeginQueryIndexed);
-   SET_EndQueryIndexed(disp, _mesa_EndQueryIndexed);
-   SET_GetQueryIndexediv(disp, _mesa_GetQueryIndexediv);
+      SET_GetQueryObjecti64vEXT(disp, _mesa_GetQueryObjecti64vEXT);
+      SET_GetQueryObjectui64vEXT(disp, _mesa_GetQueryObjectui64vEXT);
+
+      SET_BeginQueryIndexed(disp, _mesa_BeginQueryIndexed);
+      SET_EndQueryIndexed(disp, _mesa_EndQueryIndexed);
+      SET_GetQueryIndexediv(disp, _mesa_GetQueryIndexediv);
+   }
 }
 
 

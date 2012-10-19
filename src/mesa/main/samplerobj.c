@@ -1444,7 +1444,8 @@ _mesa_init_sampler_object_functions(struct dd_function_table *driver)
 
 
 void
-_mesa_init_sampler_object_dispatch(struct _glapi_table *disp)
+_mesa_init_sampler_object_dispatch(const struct gl_context *ctx,
+                                   struct _glapi_table *disp)
 {
    SET_GenSamplers(disp, _mesa_GenSamplers);
    SET_DeleteSamplers(disp, _mesa_DeleteSamplers);
@@ -1454,10 +1455,13 @@ _mesa_init_sampler_object_dispatch(struct _glapi_table *disp)
    SET_SamplerParameterf(disp, _mesa_SamplerParameterf);
    SET_SamplerParameteriv(disp, _mesa_SamplerParameteriv);
    SET_SamplerParameterfv(disp, _mesa_SamplerParameterfv);
-   SET_SamplerParameterIiv(disp, _mesa_SamplerParameterIiv);
-   SET_SamplerParameterIuiv(disp, _mesa_SamplerParameterIuiv);
    SET_GetSamplerParameteriv(disp, _mesa_GetSamplerParameteriv);
    SET_GetSamplerParameterfv(disp, _mesa_GetSamplerParameterfv);
-   SET_GetSamplerParameterIiv(disp, _mesa_GetSamplerParameterIiv);
-   SET_GetSamplerParameterIuiv(disp, _mesa_GetSamplerParameterIuiv);
+
+   if (_mesa_is_desktop_gl(ctx)) {
+      SET_SamplerParameterIiv(disp, _mesa_SamplerParameterIiv);
+      SET_SamplerParameterIuiv(disp, _mesa_SamplerParameterIuiv);
+      SET_GetSamplerParameterIiv(disp, _mesa_GetSamplerParameterIiv);
+      SET_GetSamplerParameterIuiv(disp, _mesa_GetSamplerParameterIuiv);
+   }
 }
