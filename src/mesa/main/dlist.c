@@ -10143,7 +10143,6 @@ _mesa_create_save_table(const struct gl_context *ctx)
 
    /* GL_ARB_color_buffer_float */
    SET_ClampColorARB(table, save_ClampColorARB);
-   SET_ClampColor(table, save_ClampColorARB);
 
    /* GL 3.0 */
    SET_ClearBufferiv(table, save_ClearBufferiv);

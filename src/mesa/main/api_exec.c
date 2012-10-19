@@ -768,7 +768,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_ClearBufferfv(exec, _mesa_ClearBufferfv);
       SET_ClearBufferfi(exec, _mesa_ClearBufferfi);
       SET_GetStringi(exec, _mesa_GetStringi);
-      SET_ClampColor(exec, _mesa_ClampColorARB);
    }
 
    /* GL_ARB_instanced_arrays */

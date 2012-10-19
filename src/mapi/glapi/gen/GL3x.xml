@@ -150,7 +150,7 @@
       <return type="const GLubyte *"/>
   </function>
 
-  <function name="ClampColor" offset="assign">
+  <function name="ClampColor" alias="ClampColorARB">
     <param name="target" type="GLenum"/>
     <param name="clamp" type="GLenum"/>
   </function>
