@@ -1259,5 +1259,5 @@ out:
 void
 st_free_tokens(const struct tgsi_token *tokens)
 {
-   free((void *)tokens);
+   ureg_free_tokens(tokens);
 }
