@@ -24,7 +24,7 @@
     </function>
 
     <function name="GetClipPlanefOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="es">
+              es1="1.0" exec="es" desktop="false">
         <param name="plane" type="GLenum"/>
         <param name="equation" type="GLfloat *" output="true" count="4"/>
     </function>

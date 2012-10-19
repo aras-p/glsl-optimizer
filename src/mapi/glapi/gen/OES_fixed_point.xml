@@ -217,7 +217,7 @@
     </function>
 
     <function name="GetClipPlanexOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="es">
+              es1="1.0" exec="es" desktop="false">
         <param name="plane" type="GLenum"/>
         <param name="equation" type="GLfixed *" output="true" count="4"/>
     </function>
@@ -277,21 +277,21 @@
 
     <!-- texgen -->
     <function name="GetTexGenxvOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="check">
+              es1="1.0" exec="check" desktop="false">
         <param name="coord" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfixed *" output="true" variable_param="pname"/>
     </function>
 
     <function name="TexGenxOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="check">
+              es1="1.0" exec="check" desktop="false">
         <param name="coord" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
     </function>
 
     <function name="TexGenxvOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="check">
+              es1="1.0" exec="check" desktop="false">
         <param name="coord" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfixed *" variable_param="pname"/>
