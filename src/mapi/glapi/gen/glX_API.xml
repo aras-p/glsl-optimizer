@@ -201,13 +201,13 @@
     </function>
 </category>
 
-<category name="GLX_MESA_copy_sub_buffer" number="215">
+<category name="GLX_MESA_copy_sub_buffer" number="215" window_system="glX">
     <function name="CopySubBufferMESA">
         <glx vendorpriv="5154"/>
     </function>
 </category>
 
-<category name="GLX_EXT_texture_from_pixmap">
+<category name="GLX_EXT_texture_from_pixmap" window_system="glX">
     <function name="BindTexImageEXT">
         <glx vendorpriv="1330"/>
     </function>
@@ -217,7 +217,7 @@
     </function>
 </category>
 
-<category name="GLX_ARB_create_context" number="56">
+<category name="GLX_ARB_create_context" number="56" window_system="glX">
     <function name="SetClientInfoARB">
         <glx sop="33"/>
     </function>
