@@ -322,9 +322,11 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_DisableClientState(exec, _mesa_DisableClientState);
       SET_EdgeFlagPointer(exec, _mesa_EdgeFlagPointer);
       SET_EnableClientState(exec, _mesa_EnableClientState);
-      SET_GetPointerv(exec, _mesa_GetPointerv);
       SET_IndexPointer(exec, _mesa_IndexPointer);
       SET_InterleavedArrays(exec, _mesa_InterleavedArrays);
+   }
+   if (ctx->API != API_OPENGLES2) {
+      SET_GetPointerv(exec, _mesa_GetPointerv);
    }
    SET_IsTexture(exec, _mesa_IsTexture);
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
