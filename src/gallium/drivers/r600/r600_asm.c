@@ -2914,6 +2914,8 @@ void r600_bytecode_alu_read(struct r600_bytecode_alu *alu, uint32_t word0, uint3
 
 	/* WORD1 */
 	alu->bank_swizzle = G_SQ_ALU_WORD1_BANK_SWIZZLE(word1);
+	if (alu->bank_swizzle)
+		alu->bank_swizzle_force = alu->bank_swizzle;
 	alu->dst.sel = G_SQ_ALU_WORD1_DST_GPR(word1);
 	alu->dst.rel = G_SQ_ALU_WORD1_DST_REL(word1);
 	alu->dst.chan = G_SQ_ALU_WORD1_DST_CHAN(word1);
