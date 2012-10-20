@@ -368,7 +368,7 @@ def generate(env):
             ccflags += ['-m64']
             if platform == 'darwin':
                 ccflags += ['-fno-common']
-        if env['platform'] not in ('windows', 'haiku'):
+        if env['platform'] not in ('cygwin', 'haiku', 'windows'):
             ccflags += ['-fvisibility=hidden']
         # See also:
         # - http://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
