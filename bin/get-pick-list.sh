@@ -11,11 +11,11 @@ git log --reverse --grep="cherry picked from commit" origin/master..HEAD |\
 git log --reverse --pretty=%H -i --grep='^[[:space:]]*NOTE: This is a candidate' HEAD..origin/master |\
 while read sha
 do
-    # Check to see whether the patch is on the ignore list.
+	# Check to see whether the patch is on the ignore list.
 	if [ -f .git/cherry-ignore ] ; then
-	    if grep -q ^$sha .git/cherry-ignore ; then
-		continue
-	    fi
+		if grep -q ^$sha .git/cherry-ignore ; then
+			continue
+		fi
 	fi
 
 	# Check to see if it has already been picked over.
