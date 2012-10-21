@@ -33,8 +33,10 @@
 #include <limits.h>
 
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <xf86drm.h>
 
 #include <GL/gl.h> /* dri_interface needs GL types */
 #include <GL/internal/dri_interface.h>
@@ -300,19 +302,12 @@ static int
 gbm_dri_bo_write(struct gbm_bo *_bo, const void *buf, size_t count)
 {
    struct gbm_dri_bo *bo = gbm_dri_bo(_bo);
-   void *ptr;
-   int ret;
 
-   if (bo->bo == NULL)
+   if (bo->image != NULL)
       return -1;
 
-   ret = kms_bo_map(bo->bo, &ptr);
-   if (ret < 0)
-      return -1;
+   memcpy(bo->map, buf, count);
 
-   memcpy(ptr, buf, count);
-
-   kms_bo_unmap(bo->bo);
    return 0;
 }
 
@@ -321,11 +316,17 @@ gbm_dri_bo_destroy(struct gbm_bo *_bo)
 {
    struct gbm_dri_device *dri = gbm_dri_device(_bo->gbm);
    struct gbm_dri_bo *bo = gbm_dri_bo(_bo);
+   struct drm_mode_destroy_dumb arg;
 
-   if (bo->image != NULL)
+   if (bo->image != NULL) {
       dri->image->destroyImage(bo->image);
-   if (bo->bo != NULL)
-      kms_bo_destroy(&bo->bo);
+   } else {
+      munmap(bo->map, bo->size);
+      memset(&arg, 0, sizeof(arg));
+      arg.handle = bo->handle;
+      drmIoctl(dri->base.base.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &arg);
+   }
+
    free(bo);
 }
 
@@ -448,6 +449,67 @@ gbm_dri_bo_import(struct gbm_device *gbm,
 }
 
 static struct gbm_bo *
+create_dumb(struct gbm_device *gbm,
+                  uint32_t width, uint32_t height,
+                  uint32_t format, uint32_t usage)
+{
+   struct gbm_dri_device *dri = gbm_dri_device(gbm);
+   struct drm_mode_create_dumb create_arg;
+   struct drm_mode_map_dumb map_arg;
+   struct gbm_dri_bo *bo;
+   struct drm_mode_destroy_dumb destroy_arg;
+   int ret;
+
+   if (!(usage & GBM_BO_USE_CURSOR_64X64))
+      return NULL;
+   if (format != GBM_FORMAT_ARGB8888)
+      return NULL;
+
+   bo = calloc(1, sizeof *bo);
+   if (bo == NULL)
+      return NULL;
+
+   create_arg.bpp = 32;
+   create_arg.width = width;
+   create_arg.height = height;
+
+   ret = drmIoctl(dri->base.base.fd, DRM_IOCTL_MODE_CREATE_DUMB, &create_arg);
+   if (ret)
+      goto free_bo;
+
+   bo->base.base.gbm = gbm;
+   bo->base.base.width = width;
+   bo->base.base.height = height;
+   bo->base.base.stride = create_arg.pitch;
+   bo->base.base.handle.u32 = create_arg.handle;
+   bo->handle = create_arg.handle;
+   bo->size = create_arg.size;
+
+   memset(&map_arg, 0, sizeof(map_arg));
+   map_arg.handle = bo->handle;
+
+   ret = drmIoctl(dri->base.base.fd, DRM_IOCTL_MODE_MAP_DUMB, &map_arg);
+   if (ret)
+      goto destroy_dumb;
+
+   bo->map = mmap(0, bo->size, PROT_WRITE,
+                  MAP_SHARED, dri->base.base.fd, map_arg.offset);
+   if (bo->map == MAP_FAILED)
+      goto destroy_dumb;
+
+   return &bo->base.base;
+
+destroy_dumb:
+   memset(&destroy_arg, 0, sizeof destroy_arg);
+   destroy_arg.handle = create_arg.handle;
+   drmIoctl(dri->base.base.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &destroy_arg);
+free_bo:
+   free(bo);
+
+   return NULL;
+}
+
+static struct gbm_bo *
 gbm_dri_bo_create(struct gbm_device *gbm,
                   uint32_t width, uint32_t height,
                   uint32_t format, uint32_t usage)
@@ -457,6 +519,9 @@ gbm_dri_bo_create(struct gbm_device *gbm,
    int dri_format;
    unsigned dri_use = 0;
 
+   if (usage & GBM_BO_USE_WRITE)
+      return create_dumb(gbm, width, height, format, usage);
+
    bo = calloc(1, sizeof *bo);
    if (bo == NULL)
       return NULL;
@@ -464,33 +529,6 @@ gbm_dri_bo_create(struct gbm_device *gbm,
    bo->base.base.gbm = gbm;
    bo->base.base.width = width;
    bo->base.base.height = height;
-
-   if (usage & GBM_BO_USE_WRITE) {
-      int ret;
-      unsigned attrs[7] = {
-         KMS_WIDTH, 64,
-         KMS_HEIGHT, 64,
-         KMS_BO_TYPE, KMS_BO_TYPE_SCANOUT_X8R8G8B8,
-         KMS_TERMINATE_PROP_LIST,
-      };
-
-      if (!(usage & GBM_BO_USE_CURSOR_64X64))
-         return NULL;
-
-      if (dri->kms == NULL)
-         return NULL;
-
-      ret = kms_bo_create(dri->kms, attrs, &bo->bo);
-      if (ret < 0) {
-         free(bo);
-         return NULL;
-      }
-
-      kms_bo_get_prop(bo->bo, KMS_PITCH, &bo->base.base.stride);
-      kms_bo_get_prop(bo->bo, KMS_HANDLE, (unsigned*)&bo->base.base.handle);
-
-      return &bo->base.base;
-   }
 
    switch (format) {
    case GBM_FORMAT_RGB565:
@@ -597,10 +635,6 @@ dri_device_create(int fd)
    dri->base.type = GBM_DRM_DRIVER_TYPE_DRI;
    dri->base.base.name = "drm";
 
-   kms_create(fd, &dri->kms);
-   if (dri->kms == NULL)
-      goto err_kms;
-
    ret = dri_screen_create(dri);
    if (ret)
       goto err_dri;
@@ -608,9 +642,8 @@ dri_device_create(int fd)
    return &dri->base.base;
 
 err_dri:
-   kms_destroy(&dri->kms);
-err_kms:
    free(dri);
+
    return NULL;
 }
 
