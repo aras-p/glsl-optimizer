@@ -31,6 +31,7 @@
 #include "main/mfeatures.h"
 
 struct _glapi_table;
+struct gl_context;
 
 extern void
 _mesa_loopback_init_api_table(const struct gl_context *ctx,
