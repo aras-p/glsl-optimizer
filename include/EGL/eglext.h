@@ -34,7 +34,7 @@ extern "C" {
 
 /* Header file version number */
 /* Current version at http://www.khronos.org/registry/egl/ */
-/* $Revision: 18699 $ on $Date: 2012-07-31 03:04:59 -0700 (Tue, 31 Jul 2012) $ */
+/* $Revision: 19332 $ on $Date: 2012-09-28 17:56:20 -0700 (Fri, 28 Sep 2012) $ */
 #define EGL_EGLEXT_VERSION 14
 
 #ifndef EGL_KHR_config_attribs
@@ -435,6 +435,7 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYSTREAMTIMEKHRPROC)(EGLDisplay dpy, E
 #define EGL_CONTEXT_OPENGL_ROBUST_ACCESS_BIT_KHR	    0x00000004
 #define EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR		    0x00000001
 #define EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT_KHR    0x00000002
+#define EGL_OPENGL_ES3_BIT_KHR				    0x00000040
 #endif
 
 #ifndef EGL_KHR_surfaceless_context
@@ -454,6 +455,11 @@ EGLAPI EGLStreamKHR EGLAPIENTRY eglCreateStreamFromFileDescriptorKHR(EGLDisplay 
 typedef EGLNativeFileDescriptorKHR (EGLAPIENTRYP PFNEGLGETSTREAMFILEDESCRIPTORKHRPROC)(EGLDisplay dpy, EGLStreamKHR stream);
 typedef EGLStreamKHR (EGLAPIENTRYP PFNEGLCREATESTREAMFROMFILEDESCRIPTORKHRPROC)(EGLDisplay dpy, EGLNativeFileDescriptorKHR file_descriptor);
 #endif
+#endif
+
+#ifndef EGL_EXT_multiview_window
+#define EGL_EXT_multiview_window 1
+#define EGL_MULTIVIEW_VIEW_COUNT_EXT		0x3134
 #endif
 
 #include <EGL/eglmesaext.h>
