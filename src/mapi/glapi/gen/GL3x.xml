@@ -624,7 +624,8 @@
   <enum name="TEXTURE_SWIZZLE_A"                value="0x8E45"/>
   <enum name="TEXTURE_SWIZZLE_RGBA"             value="0x8E46"/>
 
-  <function name="VertexAttribDivisor" offset="assign" es2="3.0">
+  <function name="VertexAttribDivisor" offset="assign" es2="3.0"
+            alias="VertexAttribDivisorARB">
     <param name="index" type="GLuint"/>
     <param name="divisor" type="GLuint"/>
   </function>
