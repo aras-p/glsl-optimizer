@@ -12,8 +12,8 @@ git log --reverse --pretty=%H -i --grep='^[[:space:]]*NOTE: This is a candidate'
 while read sha
 do
 	# Check to see whether the patch is on the ignore list.
-	if [ -f .git/cherry-ignore ] ; then
-		if grep -q ^$sha .git/cherry-ignore ; then
+	if [ -f bin/.cherry-ignore ] ; then
+		if grep -q ^$sha bin/.cherry-ignore ; then
 			continue
 		fi
 	fi
