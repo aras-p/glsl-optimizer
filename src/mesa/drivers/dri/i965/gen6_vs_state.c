@@ -63,6 +63,8 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
 			      4 * sizeof(float),
 			      32, &brw->vs.push_const_offset);
 
+      float *save_param = param;
+
       if (brw->vs.prog_data->uses_new_param_layout) {
 	 for (i = 0; i < brw->vs.prog_data->nr_params; i++) {
 	    *param = *brw->vs.prog_data->param[i];
@@ -102,7 +104,7 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
       if (0) {
 	 printf("VS constant buffer:\n");
 	 for (i = 0; i < params_uploaded; i++) {
-	    float *buf = param + i * 4;
+	    float *buf = save_param + i * 4;
 	    printf("%d: %f %f %f %f\n",
 		   i, buf[0], buf[1], buf[2], buf[3]);
 	 }
