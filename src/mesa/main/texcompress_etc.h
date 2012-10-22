@@ -58,6 +58,9 @@ _mesa_texstore_etc2_signed_r11_eac(TEXSTORE_PARAMS);
 GLboolean
 _mesa_texstore_etc2_signed_rg11_eac(TEXSTORE_PARAMS);
 
+GLboolean
+_mesa_texstore_etc2_rgb8_punchthrough_alpha1(TEXSTORE_PARAMS);
+
 void
 _mesa_fetch_texel_2d_f_etc1_rgb8(const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel);
@@ -92,6 +95,11 @@ _mesa_fetch_texel_2d_f_etc2_signed_rg11_eac(const struct
                                             swrast_texture_image *texImage,
                                             GLint i, GLint j,
                                             GLint k, GLfloat *texel);
+void
+_mesa_fetch_texel_2d_f_etc2_rgb8_punchthrough_alpha1(
+                                 const struct swrast_texture_image *texImage,
+                                 GLint i, GLint j,
+                                 GLint k, GLfloat *texel);
 void
 _mesa_etc1_unpack_rgba8888(uint8_t *dst_row,
                            unsigned dst_stride,

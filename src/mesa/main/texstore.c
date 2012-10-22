@@ -4132,8 +4132,8 @@ _mesa_get_texstore_func(gl_format format)
       table[MESA_FORMAT_ETC2_RG11_EAC] = _mesa_texstore_etc2_rg11_eac;
       table[MESA_FORMAT_ETC2_SIGNED_R11_EAC] = _mesa_texstore_etc2_signed_r11_eac;
       table[MESA_FORMAT_ETC2_SIGNED_RG11_EAC] = _mesa_texstore_etc2_signed_rg11_eac;
-      /* table[MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1] =
-         _mesa_texstore_etc2_rgb8_punchthrough_alpha1; -- not implemented yet */
+      table[MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1] =
+         _mesa_texstore_etc2_rgb8_punchthrough_alpha1;
       /* table[MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1] =
          _mesa_texstore_etc2_srgb8_punchthrough_alpha1; -- not implemented yet */
       table[MESA_FORMAT_SIGNED_A8] = _mesa_texstore_snorm8;

@@ -1079,7 +1079,7 @@ texfetch_funcs[] =
    {
       MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1,
       NULL,
-      NULL /* _mesa_fetch_texel_2d_f_etc2_rgb8_punchthrough_alpha1 -- not implemented yet */,
+      _mesa_fetch_texel_2d_f_etc2_rgb8_punchthrough_alpha1,
       NULL
    },
    {

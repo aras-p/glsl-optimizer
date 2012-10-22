@@ -33,6 +33,7 @@
  * GL_COMPRESSED_RG11_EAC
  * GL_COMPRESSED_SIGNED_R11_EAC
  * GL_COMPRESSED_SIGNED_RG11_EAC
+ * MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1
  */
 
 #include <stdbool.h>
@@ -49,6 +50,7 @@ struct etc2_block {
    uint64_t pixel_indices[2];
    const int *modifier_tables[2];
    bool flipped;
+   bool opaque;
    bool is_ind_mode;
    bool is_diff_mode;
    bool is_t_mode;
@@ -81,6 +83,17 @@ static const int etc2_modifier_tables[16][8] = {
    {  -1,   -2,   -3,  -10,   0,   1,   2,    9},
    {  -4,   -6,   -8,   -9,   3,   5,   7,    8},
    {  -3,   -5,   -7,   -9,   2,   4,   6,    8},
+};
+
+static const int etc2_modifier_tables_non_opaque[8][4] = {
+   { 0,   8,   0,    -8},
+   { 0,   17,  0,   -17},
+   { 0,   29,  0,   -29},
+   { 0,   42,  0,   -42},
+   { 0,   60,  0,   -60},
+   { 0,   80,  0,   -80},
+   { 0,   106, 0,  -106},
+   { 0,   183, 0,  -183}
 };
 
 /* define etc1_parse_block and etc. */
@@ -338,10 +351,12 @@ etc2_clamp3(int color)
 }
 
 static void
-etc2_rgb8_parse_block(struct etc2_block *block, const uint8_t *src)
+etc2_rgb8_parse_block(struct etc2_block *block,
+                      const uint8_t *src,
+                      GLboolean punchthrough_alpha)
 {
    unsigned i;
-   GLboolean diffbit = src[3] & 0x2;
+   GLboolean diffbit = false;
    static const int lookup[8] = { 0, 1, 2, 3, -4, -3, -2, -1 };
 
    const int R_plus_dR = (src[0] >> 3) + lookup[src[0] & 0x7];
@@ -355,7 +370,12 @@ etc2_rgb8_parse_block(struct etc2_block *block, const uint8_t *src)
    block->is_h_mode = false;
    block->is_planar_mode = false;
 
-   if (!diffbit) {
+   if (punchthrough_alpha)
+      block->opaque = src[3] & 0x2;
+   else
+      diffbit = src[3] & 0x2;
+
+   if (!diffbit && !punchthrough_alpha) {
       /* individual mode */
       block->is_ind_mode = true;
 
@@ -422,9 +442,13 @@ etc2_rgb8_parse_block(struct etc2_block *block, const uint8_t *src)
                                                 block->distance);
       }
    }
-   else if (B_plus_dB < 0 || B_plus_dB > 31){
+   else if (B_plus_dB < 0 || B_plus_dB > 31) {
       /* Planar mode */
       block->is_planar_mode = true;
+
+      /* opaque bit must be set in planar mode */
+      if (!block->opaque)
+         block->opaque = true;
 
       for (i = 0; i < 3; i++) {
          block->base_colors[0][i] = etc2_base_color_o_planar(src, i);
@@ -432,7 +456,7 @@ etc2_rgb8_parse_block(struct etc2_block *block, const uint8_t *src)
          block->base_colors[2][i] = etc2_base_color_v_planar(src, i);
       }
    }
-   else if (diffbit) {
+   else if (diffbit || punchthrough_alpha) {
       /* differential mode */
       block->is_diff_mode = true;
 
@@ -446,9 +470,19 @@ etc2_rgb8_parse_block(struct etc2_block *block, const uint8_t *src)
    }
 
    if (block->is_ind_mode || block->is_diff_mode) {
-      /* pick modifier tables. same for etc1 & etc2 textures */
-      block->modifier_tables[0] = etc1_modifier_tables[(src[3] >> 5) & 0x7];
-      block->modifier_tables[1] = etc1_modifier_tables[(src[3] >> 2) & 0x7];
+      int table1_idx = (src[3] >> 5) & 0x7;
+      int table2_idx = (src[3] >> 2) & 0x7;
+
+      /* Use same modifier tables as for etc1 textures if opaque bit is set
+       * or if non punchthrough texture format
+       */
+      block->modifier_tables[0] = (block->opaque || !punchthrough_alpha) ?
+                                  etc1_modifier_tables[table1_idx] :
+                                  etc2_modifier_tables_non_opaque[table1_idx];
+      block->modifier_tables[1] = (block->opaque || !punchthrough_alpha) ?
+                                  etc1_modifier_tables[table2_idx] :
+                                  etc2_modifier_tables_non_opaque[table2_idx];
+
       block->flipped = (src[3] & 0x1);
    }
 
@@ -458,7 +492,8 @@ etc2_rgb8_parse_block(struct etc2_block *block, const uint8_t *src)
 
 static void
 etc2_rgb8_fetch_texel(const struct etc2_block *block,
-      int x, int y, uint8_t *dst)
+                      int x, int y, uint8_t *dst,
+                      GLboolean punchthrough_alpha)
 {
    const uint8_t *base_color;
    int modifier, bit, idx, blk;
@@ -469,6 +504,16 @@ etc2_rgb8_fetch_texel(const struct etc2_block *block,
          ((block->pixel_indices[0] >>      (bit)) & 0x1);
 
    if (block->is_ind_mode || block->is_diff_mode) {
+      /* check for punchthrough_alpha format */
+      if (punchthrough_alpha) {
+         if (!block->opaque && idx == 2) {
+            dst[0] = dst[1] = dst[2] = dst[3] = 0;
+            return;
+         }
+         else
+            dst[3] = 255;
+      }
+
       /* Use pixel index and subblock to get the modifier */
       blk = (block->flipped) ? (y >= 2) : (x >= 2);
       base_color = block->base_colors[blk];
@@ -479,6 +524,16 @@ etc2_rgb8_fetch_texel(const struct etc2_block *block,
       dst[2] = etc2_clamp(base_color[2] + modifier);
    }
    else if (block->is_t_mode || block->is_h_mode) {
+      /* check for punchthrough_alpha format */
+      if (punchthrough_alpha) {
+         if (!block->opaque && idx == 2) {
+            dst[0] = dst[1] = dst[2] = dst[3] = 0;
+            return;
+         }
+         else
+            dst[3] = 255;
+      }
+
       /* Use pixel index to pick one of the paint colors */
       dst[0] = block->paint_colors[idx][0];
       dst[1] = block->paint_colors[idx][1];
@@ -505,7 +560,11 @@ etc2_rgb8_fetch_texel(const struct etc2_block *block,
       dst[0] = etc2_clamp(red);
       dst[1] = etc2_clamp(green);
       dst[2] = etc2_clamp(blue);
-  }
+
+      /* check for punchthrough_alpha format */
+      if (punchthrough_alpha)
+         dst[3] = 255;
+   }
 }
 
 static void
@@ -609,8 +668,8 @@ static void
 etc2_rgba8_parse_block(struct etc2_block *block, const uint8_t *src)
 {
    /* RGB component is parsed the same way as for MESA_FORMAT_ETC2_RGB8 */
-   etc2_rgb8_parse_block(block, src + 8);
-
+   etc2_rgb8_parse_block(block, src + 8,
+                         false /* punchthrough_alpha */);
    /* Parse Alpha component */
    etc2_alpha8_parse_block(block, src);
 }
@@ -619,7 +678,8 @@ static void
 etc2_rgba8_fetch_texel(const struct etc2_block *block,
       int x, int y, uint8_t *dst)
 {
-   etc2_rgb8_fetch_texel(block, x, y, dst);
+   etc2_rgb8_fetch_texel(block, x, y, dst,
+                         false /* punchthrough_alpha */);
    etc2_alpha8_fetch_texel(block, x, y, dst);
 }
 
@@ -639,12 +699,14 @@ etc2_unpack_rgb8(uint8_t *dst_row,
       const uint8_t *src = src_row;
 
       for (x = 0; x < width; x+= bw) {
-         etc2_rgb8_parse_block(&block, src);
+         etc2_rgb8_parse_block(&block, src,
+                               false /* punchthrough_alpha */);
 
          for (j = 0; j < bh; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
             for (i = 0; i < bw; i++) {
-               etc2_rgb8_fetch_texel(&block, i, j, dst);
+               etc2_rgb8_fetch_texel(&block, i, j, dst,
+                                     false /* punchthrough_alpha */);
                dst[3] = 255;
                dst += comps;
             }
@@ -674,12 +736,14 @@ etc2_unpack_srgb8(uint8_t *dst_row,
       const uint8_t *src = src_row;
 
       for (x = 0; x < width; x+= bw) {
-         etc2_rgb8_parse_block(&block, src);
+         etc2_rgb8_parse_block(&block, src,
+                               false /* punchthrough_alpha */);
 
          for (j = 0; j < bh; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
             for (i = 0; i < bw; i++) {
-               etc2_rgb8_fetch_texel(&block, i, j, dst);
+               etc2_rgb8_fetch_texel(&block, i, j, dst,
+                                     false /* punchthrough_alpha */);
                /* Convert to MESA_FORMAT_SARGB8 */
                tmp = dst[0];
                dst[0] = dst[2];
@@ -943,6 +1007,40 @@ etc2_unpack_signed_rg11(uint8_t *dst_row,
     }
 }
 
+static void
+etc2_unpack_rgb8_punchthrough_alpha1(uint8_t *dst_row,
+                                     unsigned dst_stride,
+                                     const uint8_t *src_row,
+                                     unsigned src_stride,
+                                     unsigned width,
+                                     unsigned height)
+{
+   const unsigned bw = 4, bh = 4, bs = 8, comps = 4;
+   struct etc2_block block;
+   unsigned x, y, i, j;
+
+   for (y = 0; y < height; y += bh) {
+      const uint8_t *src = src_row;
+
+      for (x = 0; x < width; x+= bw) {
+         etc2_rgb8_parse_block(&block, src,
+                               true /* punchthrough_alpha */);
+         for (j = 0; j < bh; j++) {
+            uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
+            for (i = 0; i < bw; i++) {
+               etc2_rgb8_fetch_texel(&block, i, j, dst,
+                                     true /* punchthrough_alpha */);
+               dst += comps;
+            }
+         }
+
+         src += bs;
+      }
+
+      src_row += src_stride;
+   }
+}
+
 /* ETC2 texture formats are valid in glCompressedTexImage2D and
  * glCompressedTexSubImage2D functions */
 GLboolean
@@ -1009,6 +1107,14 @@ _mesa_texstore_etc2_signed_rg11_eac(TEXSTORE_PARAMS)
    return GL_FALSE;
 }
 
+GLboolean
+_mesa_texstore_etc2_rgb8_punchthrough_alpha1(TEXSTORE_PARAMS)
+{
+   ASSERT(0);
+
+   return GL_FALSE;
+}
+
 void
 _mesa_fetch_texel_2d_f_etc2_rgb8(const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel)
@@ -1020,8 +1126,10 @@ _mesa_fetch_texel_2d_f_etc2_rgb8(const struct swrast_texture_image *texImage,
    src = texImage->Map +
       (((texImage->RowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
 
-   etc2_rgb8_parse_block(&block, src);
-   etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst);
+   etc2_rgb8_parse_block(&block, src,
+                         false /* punchthrough_alpha */);
+   etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst,
+                         false /* punchthrough_alpha */);
 
    texel[RCOMP] = UBYTE_TO_FLOAT(dst[0]);
    texel[GCOMP] = UBYTE_TO_FLOAT(dst[1]);
@@ -1040,8 +1148,10 @@ _mesa_fetch_texel_2d_f_etc2_srgb8(const struct swrast_texture_image *texImage,
    src = texImage->Map +
       (((texImage->RowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
 
-   etc2_rgb8_parse_block(&block, src);
-   etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst);
+   etc2_rgb8_parse_block(&block, src,
+                         false /* punchthrough_alpha */);
+   etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst,
+                         false /* punchthrough_alpha */);
 
    texel[RCOMP] = _mesa_nonlinear_to_linear(dst[0]);
    texel[GCOMP] = _mesa_nonlinear_to_linear(dst[1]);
@@ -1183,6 +1293,29 @@ _mesa_fetch_texel_2d_f_etc2_signed_rg11_eac(const struct swrast_texture_image *t
    texel[ACOMP] = 1.0f;
 }
 
+void
+_mesa_fetch_texel_2d_f_etc2_rgb8_punchthrough_alpha1(
+   const struct swrast_texture_image *texImage,
+   GLint i, GLint j,
+   GLint k, GLfloat *texel)
+{
+   struct etc2_block block;
+   uint8_t dst[4];
+   const uint8_t *src;
+
+   src = texImage->Map +
+      (((texImage->RowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
+
+   etc2_rgb8_parse_block(&block, src,
+                         true /* punchthrough alpha */);
+   etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst,
+                         true /* punchthrough alpha */);
+   texel[RCOMP] = UBYTE_TO_FLOAT(dst[0]);
+   texel[GCOMP] = UBYTE_TO_FLOAT(dst[1]);
+   texel[BCOMP] = UBYTE_TO_FLOAT(dst[2]);
+   texel[ACOMP] = UBYTE_TO_FLOAT(dst[3]);
+}
+
 /**
  * Decode texture data in any one of following formats:
  * `MESA_FORMAT_ETC2_RGB8`
@@ -1193,6 +1326,7 @@ _mesa_fetch_texel_2d_f_etc2_signed_rg11_eac(const struct swrast_texture_image *t
  * `MESA_FORMAT_ETC2_RG11_EAC`
  * `MESA_FORMAT_ETC2_SIGNED_R11_EAC`
  * `MESA_FORMAT_ETC2_SIGNED_RG11_EAC`
+ * `MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1`
  *
  * The size of the source data must be a multiple of the ETC2 block size
  * even if the texture image's dimensions are not aligned to 4.
@@ -1243,4 +1377,8 @@ _mesa_unpack_etc2_format(uint8_t *dst_row,
       etc2_unpack_signed_rg11(dst_row, dst_stride,
                               src_row, src_stride,
                               src_width, src_height);
+   else if (format == MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1)
+      etc2_unpack_rgb8_punchthrough_alpha1(dst_row, dst_stride,
+                                           src_row, src_stride,
+                                           src_width, src_height);
 }
