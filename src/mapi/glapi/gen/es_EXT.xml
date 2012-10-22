@@ -115,7 +115,7 @@
     </function>
 
     <function name="DrawTexxOES" offset="assign" static_dispatch="false"
-              es1="1.0">
+              es1="1.0" exec="es">
         <param name="x" type="GLfixed"/>
         <param name="y" type="GLfixed"/>
         <param name="z" type="GLfixed"/>
@@ -124,7 +124,7 @@
     </function>
 
     <function name="DrawTexxvOES" offset="assign" static_dispatch="false"
-              es1="1.0">
+              es1="1.0" exec="es">
         <param name="coords" type="const GLfixed *" count="5"/>
     </function>
 
@@ -359,7 +359,7 @@
 <!-- optional for es1.0 -->
 <category name="GL_OES_query_matrix" number="16">
     <function name="QueryMatrixxOES" offset="assign" static_dispatch="false"
-              es1="1.0">
+              es1="1.0" exec="es">
         <param name="mantissa" type="GLfixed *" count="16" />
         <param name="exponent" type="GLint *" count="16" />
 	<return type="GLbitfield"/>

@@ -12,7 +12,7 @@
     </function>
 
     <function name="ClipPlanefOES" offset="assign" static_dispatch="false"
-              es1="1.0">
+              es1="1.0" exec="es">
         <param name="plane" type="GLenum"/>
         <param name="equation" type="const GLfloat *" count="4"/>
     </function>
@@ -24,13 +24,13 @@
     </function>
 
     <function name="GetClipPlanefOES" offset="assign" static_dispatch="false"
-              es1="1.0">
+              es1="1.0" exec="es">
         <param name="plane" type="GLenum"/>
         <param name="equation" type="GLfloat *" output="true" count="4"/>
     </function>
 
     <function name="FrustumfOES" offset="assign" static_dispatch="false"
-              es1="1.0">
+              es1="1.0" exec="es">
         <param name="left" type="GLfloat"/>
         <param name="right" type="GLfloat"/>
         <param name="bottom" type="GLfloat"/>
@@ -40,7 +40,7 @@
     </function>
 
     <function name="OrthofOES" offset="assign" static_dispatch="false"
-              es1="1.0">
+              es1="1.0" exec="es">
         <param name="left" type="GLfloat"/>
         <param name="right" type="GLfloat"/>
         <param name="bottom" type="GLfloat"/>
