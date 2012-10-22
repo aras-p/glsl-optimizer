@@ -67,7 +67,7 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 %option stack
 %option never-interactive
 
-%x DONE COMMENT UNREACHABLE SKIP
+%x DONE COMMENT UNREACHABLE SKIP DEFINE
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
@@ -184,14 +184,22 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	glcpp_error(yylloc, yyextra, "#error%s", p);
 }
 
-{HASH}define{HSPACE}+/{IDENTIFIER}"(" {
+{HASH}define{HSPACE}+ {
 	yyextra->space_tokens = 0;
-	return HASH_DEFINE_FUNC;
+	yy_push_state(DEFINE, yyscanner);
+	return HASH_DEFINE;
 }
 
-{HASH}define {
-	yyextra->space_tokens = 0;
-	return HASH_DEFINE_OBJ;
+<DEFINE>{IDENTIFIER}/"(" {
+	yy_pop_state(yyscanner);
+	yylval->str = ralloc_strdup (yyextra, yytext);
+	return FUNC_IDENTIFIER;
+}
+
+<DEFINE>{IDENTIFIER} {
+	yy_pop_state(yyscanner);
+	yylval->str = ralloc_strdup (yyextra, yytext);
+	return OBJ_IDENTIFIER;
 }
 
 {HASH}undef {

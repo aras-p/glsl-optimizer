@@ -160,10 +160,10 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
 %lex-param {glcpp_parser_t *parser}
 
 %expect 0
-%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_LINE HASH_UNDEF HASH_VERSION IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE
+%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE FUNC_IDENTIFIER OBJ_IDENTIFIER HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_LINE HASH_UNDEF HASH_VERSION IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING LINE_EXPANDED NEWLINE OTHER PLACEHOLDER SPACE
 %token PASTE
 %type <ival> expression INTEGER operator SPACE integer_constant
-%type <str> IDENTIFIER INTEGER_STRING OTHER
+%type <str> IDENTIFIER FUNC_IDENTIFIER OBJ_IDENTIFIER INTEGER_STRING OTHER
 %type <string_list> identifier_list
 %type <token> preprocessing_token conditional_token
 %type <token_list> pp_tokens replacement_list text_line conditional_tokens
@@ -227,13 +227,13 @@ expanded_line:
 ;
 
 control_line:
-	HASH_DEFINE_OBJ	IDENTIFIER replacement_list NEWLINE {
+	HASH_DEFINE OBJ_IDENTIFIER replacement_list NEWLINE {
 		_define_object_macro (parser, & @2, $2, $3);
 	}
-|	HASH_DEFINE_FUNC IDENTIFIER '(' ')' replacement_list NEWLINE {
+|	HASH_DEFINE FUNC_IDENTIFIER '(' ')' replacement_list NEWLINE {
 		_define_function_macro (parser, & @2, $2, NULL, $5);
 	}
-|	HASH_DEFINE_FUNC IDENTIFIER '(' identifier_list ')' replacement_list NEWLINE {
+|	HASH_DEFINE FUNC_IDENTIFIER '(' identifier_list ')' replacement_list NEWLINE {
 		_define_function_macro (parser, & @2, $2, $4, $6);
 	}
 |	HASH_UNDEF IDENTIFIER NEWLINE {
@@ -1843,7 +1843,7 @@ glcpp_parser_lex (YYSTYPE *yylval, YYLTYPE *yylloc, glcpp_parser_t *parser)
 			if (ret == NEWLINE)
 				parser->in_control_line = 0;
 		}
-		else if (ret == HASH_DEFINE_OBJ || ret == HASH_DEFINE_FUNC ||
+		else if (ret == HASH_DEFINE ||
 			   ret == HASH_UNDEF || ret == HASH_IF ||
 			   ret == HASH_IFDEF || ret == HASH_IFNDEF ||
 			   ret == HASH_ELIF || ret == HASH_ELSE ||
