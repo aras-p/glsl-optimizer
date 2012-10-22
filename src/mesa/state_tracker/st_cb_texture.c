@@ -1120,7 +1120,10 @@ copy_image_data_to_texture(struct st_context *st,
 
       assert(src_level <= stImage->pt->last_level);
       assert(u_minify(stImage->pt->width0, src_level) == stImage->base.Width);
-      assert(u_minify(stImage->pt->height0, src_level) == stImage->base.Height);
+      assert(stImage->pt->target == PIPE_TEXTURE_1D_ARRAY ||
+             u_minify(stImage->pt->height0, src_level) == stImage->base.Height);
+      assert(stImage->pt->target == PIPE_TEXTURE_2D_ARRAY ||
+             u_minify(stImage->pt->depth0, src_level) == stImage->base.Depth);
 
       st_texture_image_copy(st->pipe,
                             stObj->pt, dstLevel,  /* dest texture, level */
