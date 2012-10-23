@@ -635,7 +635,7 @@ _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
       fetch = _mesa_fetch_texel_2d_f_etc2_rgb8_punchthrough_alpha1;
       break;
    case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
-      /* fetch = _mesa_fetch_texel_2d_f_etc2_srgb8_punchthrough_alpha1; -- not implemented yet */
+      fetch = _mesa_fetch_texel_2d_f_etc2_srgb8_punchthrough_alpha1;
       break;
 
    default:

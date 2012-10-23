@@ -34,6 +34,7 @@
  * GL_COMPRESSED_SIGNED_R11_EAC
  * GL_COMPRESSED_SIGNED_RG11_EAC
  * MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1
+ * MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1
  */
 
 #include <stdbool.h>
@@ -1041,6 +1042,47 @@ etc2_unpack_rgb8_punchthrough_alpha1(uint8_t *dst_row,
    }
 }
 
+static void
+etc2_unpack_srgb8_punchthrough_alpha1(uint8_t *dst_row,
+                                     unsigned dst_stride,
+                                     const uint8_t *src_row,
+                                     unsigned src_stride,
+                                     unsigned width,
+                                     unsigned height)
+{
+   const unsigned bw = 4, bh = 4, bs = 8, comps = 4;
+   struct etc2_block block;
+   unsigned x, y, i, j;
+   uint8_t tmp;
+
+   for (y = 0; y < height; y += bh) {
+      const uint8_t *src = src_row;
+
+      for (x = 0; x < width; x+= bw) {
+         etc2_rgb8_parse_block(&block, src,
+                               true /* punchthrough_alpha */);
+         for (j = 0; j < bh; j++) {
+            uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
+            for (i = 0; i < bw; i++) {
+               etc2_rgb8_fetch_texel(&block, i, j, dst,
+                                     true /* punchthrough_alpha */);
+               /* Convert to MESA_FORMAT_SARGB8 */
+               tmp = dst[0];
+               dst[0] = dst[2];
+               dst[2] = tmp;
+               dst[3] = dst[3];
+
+               dst += comps;
+            }
+         }
+
+         src += bs;
+      }
+
+      src_row += src_stride;
+   }
+}
+
 /* ETC2 texture formats are valid in glCompressedTexImage2D and
  * glCompressedTexSubImage2D functions */
 GLboolean
@@ -1109,6 +1151,14 @@ _mesa_texstore_etc2_signed_rg11_eac(TEXSTORE_PARAMS)
 
 GLboolean
 _mesa_texstore_etc2_rgb8_punchthrough_alpha1(TEXSTORE_PARAMS)
+{
+   ASSERT(0);
+
+   return GL_FALSE;
+}
+
+GLboolean
+_mesa_texstore_etc2_srgb8_punchthrough_alpha1(TEXSTORE_PARAMS)
 {
    ASSERT(0);
 
@@ -1316,6 +1366,29 @@ _mesa_fetch_texel_2d_f_etc2_rgb8_punchthrough_alpha1(
    texel[ACOMP] = UBYTE_TO_FLOAT(dst[3]);
 }
 
+void
+_mesa_fetch_texel_2d_f_etc2_srgb8_punchthrough_alpha1(
+   const struct swrast_texture_image *texImage,
+   GLint i, GLint j,
+   GLint k, GLfloat *texel)
+{
+   struct etc2_block block;
+   uint8_t dst[4];
+   const uint8_t *src;
+
+   src = texImage->Map +
+      (((texImage->RowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
+
+   etc2_rgb8_parse_block(&block, src,
+                         true /* punchthrough alpha */);
+   etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst,
+                         true /* punchthrough alpha */);
+   texel[RCOMP] = _mesa_nonlinear_to_linear(dst[0]);
+   texel[GCOMP] = _mesa_nonlinear_to_linear(dst[1]);
+   texel[BCOMP] = _mesa_nonlinear_to_linear(dst[2]);
+   texel[ACOMP] = UBYTE_TO_FLOAT(dst[3]);
+}
+
 /**
  * Decode texture data in any one of following formats:
  * `MESA_FORMAT_ETC2_RGB8`
@@ -1327,6 +1400,7 @@ _mesa_fetch_texel_2d_f_etc2_rgb8_punchthrough_alpha1(
  * `MESA_FORMAT_ETC2_SIGNED_R11_EAC`
  * `MESA_FORMAT_ETC2_SIGNED_RG11_EAC`
  * `MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1`
+ * `MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1`
  *
  * The size of the source data must be a multiple of the ETC2 block size
  * even if the texture image's dimensions are not aligned to 4.
@@ -1381,4 +1455,8 @@ _mesa_unpack_etc2_format(uint8_t *dst_row,
       etc2_unpack_rgb8_punchthrough_alpha1(dst_row, dst_stride,
                                            src_row, src_stride,
                                            src_width, src_height);
+   else if (format == MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1)
+      etc2_unpack_srgb8_punchthrough_alpha1(dst_row, dst_stride,
+                                            src_row, src_stride,
+                                            src_width, src_height);
 }
