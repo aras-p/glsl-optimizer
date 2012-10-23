@@ -492,7 +492,7 @@ the beginning of the resource.
 
 
 
-.. _texture_barrier
+.. _texture_barrier:
 
 texture_barrier
 %%%%%%%%%%%%%%%
