@@ -44,7 +44,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <GL/gl.h>
+#include "main/glheader.h"
 extern "C" {
 #include "../indirect_init.h"
 #include "glapi/glapi.h"

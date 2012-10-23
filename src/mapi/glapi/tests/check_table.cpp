@@ -22,7 +22,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <GL/gl.h>
+#include "../mesa/main/glheader.h"
 
 extern "C" {
 #include "glapi/glapi.h"
