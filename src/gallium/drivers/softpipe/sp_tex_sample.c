@@ -793,8 +793,6 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
    union tex_tile_address addr;
    int c;
 
-
-
    float u = s * xpot - 0.5F;
    float v = t * ypot - 0.5F;
 
