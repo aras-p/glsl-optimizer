@@ -53,9 +53,6 @@ include $(GLAPI)/glapi_gen.mk
 
 BUILT_SOURCES = \
 	main/git_sha1.h \
-	main/api_exec_es1_dispatch.h \
-	main/api_exec_es1_remap_helper.h \
-	main/api_exec_es1.c \
 	main/get_hash.h \
 	program/program_parse.tab.c \
 	program/program_parse.tab.h \
@@ -63,18 +60,6 @@ BUILT_SOURCES = \
 CLEANFILES = \
 	$(BUILT_SOURCES) \
 	git_sha1.h.tmp
-
-main/api_exec_es1_dispatch.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_dispatch_deps)
-	$(call glapi_gen_dispatch,$<,es1)
-
-main/api_exec_es1_remap_helper.h: $(GLAPI)/gl_and_es_API.xml $(glapi_gen_remap_deps)
-	$(call glapi_gen_remap,$<,es1)
-
-main/api_exec_es1.o: main/api_exec_es1_dispatch.h main/api_exec_es1_remap_helper.h
-
-main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
-	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/main/es_generator.py \
-	  -S $(srcdir)/main/APIspec.xml -V GLES1.1 > $@
 
 program/program_parse.tab.c program/program_parse.tab.h: program/program_parse.y
 	$(MKDIR_P) program

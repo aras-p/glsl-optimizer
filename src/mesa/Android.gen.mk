@@ -32,9 +32,6 @@ intermediates := $(call local-intermediates-dir)
 # This is the list of auto-generated files: sources and headers
 sources := \
 	main/enums.c \
-	main/api_exec_es1.c \
-	main/api_exec_es1_dispatch.h \
-	main/api_exec_es1_remap_helper.h \
 	program/program_parse.tab.c \
 	program/lex.yy.c \
 	main/dispatch.h \
@@ -60,13 +57,7 @@ LOCAL_GENERATED_SOURCES += $(sources)
 
 glapi := $(MESA_TOP)/src/mapi/glapi/gen
 
-es_src_deps := \
-	$(LOCAL_PATH)/main/APIspec.xml \
-	$(LOCAL_PATH)/main/es_generator.py \
-	$(LOCAL_PATH)/main/APIspecutil.py \
-	$(LOCAL_PATH)/main/APIspec.py
-
-es_hdr_deps := \
+dispatch_deps := \
 	$(wildcard $(glapi)/*.py) \
 	$(wildcard $(glapi)/*.xml)
 
@@ -87,22 +78,6 @@ define es-gen
 	@echo "Gen ES: $(PRIVATE_MODULE) <= $(notdir $(@))"
 	$(hide) $(PRIVATE_SCRIPT) $(1) $(PRIVATE_XML) > $@
 endef
-
-$(intermediates)/main/api_exec_%.c: PRIVATE_SCRIPT := $(MESA_PYTHON2) $(LOCAL_PATH)/main/es_generator.py
-$(intermediates)/main/api_exec_%.c: PRIVATE_XML := -S $(LOCAL_PATH)/main/APIspec.xml
-$(intermediates)/main/api_exec_%_dispatch.h: PRIVATE_SCRIPT := $(MESA_PYTHON2) $(glapi)/gl_table.py
-$(intermediates)/main/api_exec_%_dispatch.h: PRIVATE_XML := -f $(glapi)/gl_and_es_API.xml
-$(intermediates)/main/api_exec_%_remap_helper.h: PRIVATE_SCRIPT := $(MESA_PYTHON2) $(glapi)/remap_helper.py
-$(intermediates)/main/api_exec_%_remap_helper.h: PRIVATE_XML := -f $(glapi)/gl_and_es_API.xml
-
-$(intermediates)/main/api_exec_es1.c: $(es_src_deps)
-	$(call es-gen, -V GLES1.1)
-
-$(intermediates)/main/api_exec_%_dispatch.h: $(es_hdr_deps)
-	$(call es-gen, -c $* -m remap_table)
-
-$(intermediates)/main/api_exec_%_remap_helper.h: $(es_hdr_deps)
-	$(call es-gen, -c $*)
 
 $(intermediates)/program/program_parse.tab.c: $(LOCAL_PATH)/program/program_parse.y
 	$(mesa_local-y-to-c-and-h)
@@ -133,19 +108,19 @@ $(intermediates)/x86/matypes.h: $(matypes_deps)
 $(intermediates)/main/dispatch.h: PRIVATE_SCRIPT := $(MESA_PYTHON2) $(glapi)/gl_table.py
 $(intermediates)/main/dispatch.h: PRIVATE_XML := -f $(glapi)/gl_and_es_API.xml
 
-$(intermediates)/main/dispatch.h: $(es_hdr_deps)
+$(intermediates)/main/dispatch.h: $(dispatch_deps)
 	$(call es-gen, $* -m remap_table)
 
 $(intermediates)/main/remap_helper.h: PRIVATE_SCRIPT := $(MESA_PYTHON2) $(glapi)/remap_helper.py
 $(intermediates)/main/remap_helper.h: PRIVATE_XML := -f $(glapi)/gl_and_es_API.xml
 
-$(intermediates)/main/remap_helper.h: $(es_hdr_deps)
+$(intermediates)/main/remap_helper.h: $(dispatch_deps)
 	$(call es-gen, $*)
 
 $(intermediates)/main/enums.c: PRIVATE_SCRIPT :=$(MESA_PYTHON2) $(glapi)/gl_enums.py
 $(intermediates)/main/enums.c: PRIVATE_XML := -f $(glapi)/gl_and_es_API.xml
 
-$(intermediates)/main/enums.c: $(es_src_deps)
+$(intermediates)/main/enums.c: $(dispatch_deps)
 	$(call es-gen)
 
 GET_HASH_GEN := $(LOCAL_PATH)/main/get_hash_generator.py

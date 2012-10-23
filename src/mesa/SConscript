@@ -339,27 +339,9 @@ if env['gles']:
 
     # generate GLES sources
     gles_sources = ['main/es1_conversion.c',]
-    gles_sources += env.CodeGenerate(
-        target = 'main/api_exec_es1.c',
-        script = 'main/es_generator.py',
-        source = 'main/APIspec.xml',
-        command = python_cmd + ' $SCRIPT -S $SOURCE -V GLES1.1 > $TARGET'
-    )
 
     # generate GLES headers
     gles_headers = []
-    gles_headers += env.CodeGenerate(
-        target = 'main/api_exec_es1_dispatch.h',
-        script = GLAPI + 'gen/gl_table.py',
-        source = GLAPI + 'gen/gl_and_es_API.xml',
-        command = python_cmd + ' $SCRIPT -c es1 -m remap_table -f $SOURCE > $TARGET',
-    )
-    gles_headers += env.CodeGenerate(
-        target = 'main/api_exec_es1_remap_helper.h',
-        script = GLAPI + 'gen/remap_helper.py',
-        source = GLAPI + 'gen/gl_and_es_API.xml',
-        command = python_cmd + ' $SCRIPT -c es1 -f $SOURCE > $TARGET',
-    )
 
     env.Depends(gles_sources, gles_headers)
 
