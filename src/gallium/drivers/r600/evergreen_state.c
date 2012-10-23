@@ -2679,46 +2679,8 @@ void evergreen_init_common_regs(struct r600_command_buffer *cb,
 
 	r600_store_context_reg(cb, R_028A4C_PA_SC_MODE_CNTL_1, 0);
 
-	r600_store_context_reg_seq(cb, R_028B94_VGT_STRMOUT_CONFIG, 2);
-	r600_store_value(cb, 0); /* R_028B94_VGT_STRMOUT_CONFIG */
-	r600_store_value(cb, 0); /* R_028B98_VGT_STRMOUT_BUFFER_CONFIG */
-
-	r600_store_context_reg(cb, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
-
-	r600_store_context_reg_seq(cb, R_0282D0_PA_SC_VPORT_ZMIN_0, 2);
-	r600_store_value(cb, 0); /* R_0282D0_PA_SC_VPORT_ZMIN_0 */
-	r600_store_value(cb, 0x3F800000); /* R_0282D4_PA_SC_VPORT_ZMAX_0 */
-
-	r600_store_context_reg_seq(cb, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 3);
-	r600_store_value(cb, 0); /* R_028AC0_DB_SRESULTS_COMPARE_STATE0 */
-	r600_store_value(cb, 0); /* R_028AC4_DB_SRESULTS_COMPARE_STATE1 */
-	r600_store_value(cb, 0); /* R_028AC8_DB_PRELOAD_CONTROL */
-
 	/* The cs checker requires this register to be set. */
 	r600_store_context_reg(cb, R_028800_DB_DEPTH_CONTROL, 0);
-
-	r600_store_context_reg(cb, R_028848_SQ_PGM_RESOURCES_2_PS, S_028848_SINGLE_ROUND(V_SQ_ROUND_NEAREST_EVEN));
-	r600_store_context_reg(cb, R_028864_SQ_PGM_RESOURCES_2_VS, S_028864_SINGLE_ROUND(V_SQ_ROUND_NEAREST_EVEN));
-
-	/* to avoid GPU doing any preloading of constant from random address */
-	r600_store_context_reg_seq(cb, R_028140_ALU_CONST_BUFFER_SIZE_PS_0, 8);
-	r600_store_value(cb, 0); /* R_028140_ALU_CONST_BUFFER_SIZE_PS_0 */
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
-	r600_store_context_reg_seq(cb, R_028180_ALU_CONST_BUFFER_SIZE_VS_0, 8);
-	r600_store_value(cb, 0); /* R_028180_ALU_CONST_BUFFER_SIZE_VS_0 */
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
-	r600_store_value(cb, 0);
 
 	r600_store_context_reg(cb, R_028354_SX_SURFACE_SYNC, S_028354_SURFACE_SYNC_MASK(0xf));
 
@@ -2760,8 +2722,8 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, PKT3(PKT3_EVENT_WRITE, 0, 0));
 	r600_store_value(cb, EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4));
 
-	evergreen_init_common_regs(cb, rctx->chip_class
-			, rctx->family, rctx->screen->info.drm_minor);
+	evergreen_init_common_regs(cb, rctx->chip_class,
+				   rctx->family, rctx->screen->info.drm_minor);
 
 	family = rctx->family;
 	switch (family) {
@@ -3015,6 +2977,11 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 
 	r600_store_context_reg(cb, R_028200_PA_SC_WINDOW_OFFSET, 0);
 	r600_store_context_reg(cb, R_02820C_PA_SC_CLIPRECT_RULE, 0xFFFF);
+	r600_store_context_reg(cb, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
+
+	r600_store_context_reg_seq(cb, R_0282D0_PA_SC_VPORT_ZMIN_0, 2);
+	r600_store_value(cb, 0); /* R_0282D0_PA_SC_VPORT_ZMIN_0 */
+	r600_store_value(cb, 0x3F800000); /* R_0282D4_PA_SC_VPORT_ZMAX_0 */
 
 	r600_store_context_reg(cb, R_0286DC_SPI_FOG_CNTL, 0);
 	r600_store_context_reg(cb, R_028818_PA_CL_VTE_CNTL, 0x0000043F);
@@ -3039,7 +3006,33 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028030_PA_SC_SCREEN_SCISSOR_TL */
 	r600_store_value(cb, S_028034_BR_X(16384) | S_028034_BR_Y(16384)); /* R_028034_PA_SC_SCREEN_SCISSOR_BR */
 
+	r600_store_context_reg(cb, R_028848_SQ_PGM_RESOURCES_2_PS, S_028848_SINGLE_ROUND(V_SQ_ROUND_NEAREST_EVEN));
+	r600_store_context_reg(cb, R_028864_SQ_PGM_RESOURCES_2_VS, S_028864_SINGLE_ROUND(V_SQ_ROUND_NEAREST_EVEN));
 	r600_store_context_reg(cb, R_0288A8_SQ_PGM_RESOURCES_FS, 0);
+
+	/* to avoid GPU doing any preloading of constant from random address */
+	r600_store_context_reg_seq(cb, R_028140_ALU_CONST_BUFFER_SIZE_PS_0, 8);
+	r600_store_value(cb, 0); /* R_028140_ALU_CONST_BUFFER_SIZE_PS_0 */
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_context_reg_seq(cb, R_028180_ALU_CONST_BUFFER_SIZE_VS_0, 8);
+	r600_store_value(cb, 0); /* R_028180_ALU_CONST_BUFFER_SIZE_VS_0 */
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+
+	r600_store_context_reg_seq(cb, R_028B94_VGT_STRMOUT_CONFIG, 2);
+	r600_store_value(cb, 0); /* R_028B94_VGT_STRMOUT_CONFIG */
+	r600_store_value(cb, 0); /* R_028B98_VGT_STRMOUT_BUFFER_CONFIG */
 
 	if (rctx->screen->has_streamout) {
 		r600_store_context_reg(cb, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);
