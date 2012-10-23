@@ -219,8 +219,8 @@ _glapi_get_proc_address(const char *funcName)
 const char *
 _glapi_get_proc_name(unsigned int offset)
 {
-   /* not implemented */
-   return NULL;
+   const struct mapi_stub *stub = stub_find_by_slot(offset);
+   return stub ? stub_get_name(stub) : NULL;
 }
 
 unsigned long
