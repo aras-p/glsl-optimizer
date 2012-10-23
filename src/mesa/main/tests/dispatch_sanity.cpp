@@ -100,6 +100,13 @@ DispatchSanity_test::SetUp()
    _mesa_init_driver_functions(&driver_functions);
 }
 
+static const char *
+offset_to_proc_name_safe(unsigned offset)
+{
+   const char *name = _glapi_get_proc_name(offset);
+   return name ? name : "???";
+}
+
 static void
 validate_functions(_glapi_proc *table, const struct function *function_table)
 {
@@ -122,7 +129,8 @@ validate_functions(_glapi_proc *table, const struct function *function_table)
 
    const unsigned size = _glapi_get_dispatch_table_size();
    for (unsigned i = 0; i < size; i++) {
-      EXPECT_EQ((_glapi_proc) _mesa_generic_nop, table[i]) << "i = " << i;
+      EXPECT_EQ((_glapi_proc) _mesa_generic_nop, table[i])
+         << "i = " << i << " (" << offset_to_proc_name_safe(i) << ")";
    }
 }
 
