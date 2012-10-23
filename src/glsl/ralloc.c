@@ -41,14 +41,6 @@ _CRTIMP int _vscprintf(const char *format, va_list argptr);
 
 #include "ralloc.h"
 
-#ifdef __GNUC__
-#define likely(x)       __builtin_expect(!!(x),1)
-#define unlikely(x)     __builtin_expect(!!(x),0)
-#else
-#define likely(x)       !!(x)
-#define unlikely(x)     !!(x)
-#endif
-
 #ifndef va_copy
 #ifdef __va_copy
 #define va_copy(dest, src) __va_copy((dest), (src))
