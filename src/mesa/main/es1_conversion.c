@@ -29,10 +29,6 @@
 #include "main/drawtex.h"
 #include "vbo/vbo.h"
 
-#ifndef GL_APIENTRY
-#define GL_APIENTRY GLAPIENTRY
-#endif
-
 #include "main/es1_conversion.h"
 
 void GL_APIENTRY
