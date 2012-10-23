@@ -135,10 +135,11 @@ API_XML = \
 	GL3x.xml
 
 
-COMMON = $(API_XML) gl_XML.py glX_XML.py license.py typeexpr.py
-
-COMMON_ES = \
-	$(COMMON) \
+COMMON = $(API_XML) \
+	gl_XML.py \
+	glX_XML.py \
+	license.py \
+	typeexpr.py \
 	gl_and_es_API.xml \
 	es_EXT.xml \
 	ARB_ES2_compatibility.xml \
@@ -182,43 +183,43 @@ $(XORG_GLAPI_DIR)/%.h: $(MESA_GLAPI_DIR)/%.h
 
 ######################################################################
 
-$(MESA_GLAPI_DIR)/glapi_mapi_tmp.h: $(MESA_MAPI_DIR)/mapi_abi.py $(COMMON_ES)
+$(MESA_GLAPI_DIR)/glapi_mapi_tmp.h: $(MESA_MAPI_DIR)/mapi_abi.py $(COMMON)
 	$(PYTHON_GEN) $< \
 		--printer glapi --mode lib $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glprocs.h: gl_procs.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml > $@
+	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapitemp.h: gl_apitemp.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml > $@
+	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapitable.h: gl_table.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml > $@
+	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapi_gentable.c: gl_gentable.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml > $@
+	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
 
 ######################################################################
 
 $(MESA_GLAPI_DIR)/glapi_x86.S: gl_x86_asm.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml > $@
+	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapi_x86-64.S: gl_x86-64_asm.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml > $@
+	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapi_sparc.S: gl_SPARC_asm.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml > $@
+	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
 
 ######################################################################
 
-$(MESA_DIR)/main/enums.c: gl_enums.py $(COMMON_ES)
+$(MESA_DIR)/main/enums.c: gl_enums.py $(COMMON)
 	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_DIR)/main/dispatch.h: gl_table.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml -m remap_table > $@
+	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml -m remap_table > $@
 
 $(MESA_DIR)/main/remap_helper.h: remap_helper.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_API.xml > $@
+	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
 
 ######################################################################
 
