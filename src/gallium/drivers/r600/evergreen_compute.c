@@ -626,6 +626,15 @@ void evergreen_init_atom_start_compute_cs(struct r600_context *ctx)
 	r600_init_command_buffer(cb, 256);
 	cb->pkt_flags = RADEON_CP_PACKET3_COMPUTE_MODE;
 
+	/* This must be first. */
+	r600_store_value(cb, PKT3(PKT3_CONTEXT_CONTROL, 1, 0));
+	r600_store_value(cb, 0x80000000);
+	r600_store_value(cb, 0x80000000);
+
+	/* We're setting config registers here. */
+	r600_store_value(cb, PKT3(PKT3_EVENT_WRITE, 0, 0));
+	r600_store_value(cb, EVENT_TYPE(EVENT_TYPE_CS_PARTIAL_FLUSH) | EVENT_INDEX(4));
+
 	switch (ctx->family) {
 	case CHIP_CEDAR:
 	default:

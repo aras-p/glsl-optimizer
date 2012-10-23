@@ -43,6 +43,7 @@
 #define EVERGREEN_CTL_CONST_OFFSET                  0x0003CFF0
 #define EVERGREEN_CTL_CONST_END                     0x0003FF0C
 
+#define EVENT_TYPE_CS_PARTIAL_FLUSH            0x07
 #define EVENT_TYPE_PS_PARTIAL_FLUSH            0x10
 #define EVENT_TYPE_ZPASS_DONE                  0x15
 #define EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT   0x16
