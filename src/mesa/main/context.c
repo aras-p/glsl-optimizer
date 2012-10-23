@@ -422,14 +422,7 @@ one_time_init( struct gl_context *ctx )
    if (!(api_init_mask & (1 << ctx->API))) {
       _mesa_init_get_hash(ctx);
 
-      /*
-       * This is fine as ES does not use the remap table, but it may not be
-       * future-proof.  We cannot always initialize the remap table because
-       * when an app is linked to libGLES*, there are not enough dynamic
-       * entries.
-       */
-      if (_mesa_is_desktop_gl(ctx) || ctx->API == API_OPENGLES2)
-         _mesa_init_remap_table();
+      _mesa_init_remap_table();
    }
 
    api_init_mask |= 1 << ctx->API;
@@ -943,23 +936,7 @@ _mesa_initialize_context(struct gl_context *ctx,
    }
 
    /* setup the API dispatch tables */
-   switch (ctx->API) {
-#if FEATURE_GL || FEATURE_ES2
-   case API_OPENGL:
-   case API_OPENGL_CORE:
-   case API_OPENGLES2:
-      ctx->Exec = _mesa_create_exec_table(ctx);
-      break;
-#endif
-#if FEATURE_ES1
-   case API_OPENGLES:
-      ctx->Exec = _mesa_create_exec_table_es1();
-      break;
-#endif
-   default:
-      _mesa_problem(ctx, "unknown or unsupported API");
-      break;
-   }
+   ctx->Exec = _mesa_create_exec_table(ctx);
 
    if (!ctx->Exec) {
       _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
