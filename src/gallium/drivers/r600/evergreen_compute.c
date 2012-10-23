@@ -681,8 +681,12 @@ void evergreen_init_atom_start_compute_cs(struct r600_context *ctx)
 	}
 
 	/* Config Registers */
-	evergreen_init_common_regs(cb, ctx->chip_class
-			, ctx->family, ctx->screen->info.drm_minor);
+	if (ctx->chip_class < CAYMAN)
+		evergreen_init_common_regs(cb, ctx->chip_class, ctx->family,
+					   ctx->screen->info.drm_minor);
+	else
+		cayman_init_common_regs(cb, ctx->chip_class, ctx->family,
+					ctx->screen->info.drm_minor);
 
 	/* The primitive type always needs to be POINTLIST for compute. */
 	r600_store_config_reg(cb, R_008958_VGT_PRIMITIVE_TYPE,
