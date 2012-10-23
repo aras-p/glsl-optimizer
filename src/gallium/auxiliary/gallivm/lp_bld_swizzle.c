@@ -32,7 +32,7 @@
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
-
+#include <inttypes.h>  /* for PRIx64 macro */
 #include "util/u_debug.h"
 
 #include "lp_bld_type.h"
@@ -386,7 +386,7 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
        * same shift as possible
        */
       for (shift = -3; shift <= 3; ++shift) {
-         unsigned long long mask = 0;
+         uint64_t mask = 0;
 
          assert(type4.width <= sizeof(mask)*8);
 
@@ -401,9 +401,8 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
          if (mask) {
             LLVMValueRef masked;
             LLVMValueRef shifted;
-
             if (0)
-               debug_printf("shift = %i, mask = 0x%08llx\n", shift, mask);
+               debug_printf("shift = %i, mask = %" PRIx64 "\n", shift, mask);
 
             masked = LLVMBuildAnd(builder, a,
                                   lp_build_const_int_vec(bld->gallivm, type4, mask), "");

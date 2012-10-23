@@ -1,3 +1,4 @@
+#include <inttypes.h>  /* for PRIu64 macro */
 #include "util/u_math.h"
 #include "lp_rast_priv.h"
 #include "lp_state_fs.h"
@@ -334,8 +335,8 @@ lp_debug_draw_bins_by_coverage( struct lp_scene *scene )
    unsigned x, y;
    unsigned total = 0;
    unsigned possible = 0;
-   static unsigned long long _total;
-   static unsigned long long _possible;
+   static uint64_t _total = 0;
+   static uint64_t _possible = 0;
 
    for (x = 0; x < scene->tiles_x; x++)
       debug_printf("-");
@@ -383,10 +384,12 @@ lp_debug_draw_bins_by_coverage( struct lp_scene *scene )
    _total += total;
    _possible += possible;
 
-   debug_printf("overall   total: %llu possible %llu: percentage: %f\n",
+
+   debug_printf("overall   total: %" PRIu64
+                " possible %" PRIu64 ": percentage: %f\n",
                 _total,
                 _possible,
-                _total * 100.0 / (double)_possible);
+                (double) _total * 100.0 / (double)_possible);
 }
 
 
