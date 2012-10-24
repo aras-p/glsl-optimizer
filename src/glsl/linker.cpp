@@ -882,6 +882,7 @@ move_non_declarations(exec_list *instructions, exec_node *last,
 
       assert(inst->as_assignment()
              || inst->as_call()
+             || inst->as_if() /* for initializers with the ?: operator */
 	     || ((var != NULL) && (var->mode == ir_var_temporary)));
 
       if (make_copies) {
