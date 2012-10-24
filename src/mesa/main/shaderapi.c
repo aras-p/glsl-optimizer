@@ -1736,7 +1736,9 @@ _mesa_init_shader_dispatch(const struct gl_context *ctx,
 
    if (_mesa_is_desktop_gl(ctx)) {
       SET_ProgramParameteriARB(exec, _mesa_ProgramParameteriARB);
+   }
 
+   if (ctx->API == API_OPENGL) {
       SET_UseShaderProgramEXT(exec, _mesa_UseShaderProgramEXT);
       SET_ActiveProgramEXT(exec, _mesa_ActiveProgramEXT);
       SET_CreateShaderProgramEXT(exec, _mesa_CreateShaderProgramEXT);
