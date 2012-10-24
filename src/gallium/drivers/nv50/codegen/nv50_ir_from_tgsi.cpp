@@ -257,7 +257,7 @@ unsigned int Instruction::srcMask(unsigned int s) const
          mask &= 0x9;
          break;
       case TGSI_TEXTURE_SHADOW1D:
-         mask &= 0x5;
+         mask &= 0xd;
          break;
       case TGSI_TEXTURE_1D_ARRAY:
       case TGSI_TEXTURE_2D:
