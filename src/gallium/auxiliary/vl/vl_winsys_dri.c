@@ -333,6 +333,8 @@ vl_screen_create(Display *display, int screen)
       goto free_screen;
 
    s = xcb_setup_roots_iterator(xcb_get_setup(scrn->conn));
+   while (screen--)
+	xcb_screen_next(&s);
    connect_cookie = xcb_dri2_connect_unchecked(scrn->conn, s.data->root, XCB_DRI2_DRIVER_TYPE_DRI);
    connect = xcb_dri2_connect_reply(scrn->conn, connect_cookie, NULL);
    if (connect == NULL || connect->driver_name_length + connect->device_name_length == 0)
