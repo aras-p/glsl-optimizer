@@ -117,6 +117,12 @@ validate_functions(struct gl_context *ctx, const struct function *function_table
    _glapi_proc *table = (_glapi_proc *) ctx->Exec;
 
    for (unsigned i = 0; function_table[i].name != NULL; i++) {
+      /* The context version is >= the GL version where the
+         function was introduced. Therefore, the function cannot
+         be set to the nop function.
+       */
+      bool cant_be_nop = ctx->Version >= function_table[i].Version;
+
       const int offset = (function_table[i].offset != -1)
          ? function_table[i].offset
          : _glapi_get_proc_offset(function_table[i].name);
@@ -126,9 +132,11 @@ validate_functions(struct gl_context *ctx, const struct function *function_table
       ASSERT_EQ(offset,
                 _glapi_get_proc_offset(function_table[i].name))
          << "Function: " << function_table[i].name;
-      EXPECT_NE((_glapi_proc) _mesa_generic_nop, table[offset])
-         << "Function: " << function_table[i].name
-         << " at offset " << offset;
+      if (cant_be_nop) {
+         EXPECT_NE((_glapi_proc) _mesa_generic_nop, table[offset])
+            << "Function: " << function_table[i].name
+            << " at offset " << offset;
+      }
 
       table[offset] = (_glapi_proc) _mesa_generic_nop;
    }
