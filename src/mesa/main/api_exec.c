@@ -346,6 +346,10 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_InterleavedArrays(exec, _mesa_InterleavedArrays);
    }
    if (ctx->API != API_OPENGLES2) {
+      /* Note glGetPointerv is deprecated in GL CORE 3.1 through 4.2, but
+       * was re-added in GL CORE 4.3. We will just keep the function
+       * around in all GL CORE contexts.
+       */
       SET_GetPointerv(exec, _mesa_GetPointerv);
    }
    SET_IsTexture(exec, _mesa_IsTexture);
