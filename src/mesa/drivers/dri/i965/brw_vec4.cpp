@@ -754,6 +754,7 @@ vec4_visitor::opt_compute_to_mrf()
 	       scan_inst->dst.file = MRF;
 	       scan_inst->dst.reg = mrf;
 	       scan_inst->dst.reg_offset = 0;
+	       scan_inst->dst.writemask &= inst->dst.writemask;
 	       scan_inst->saturate |= inst->saturate;
 	    }
 	    scan_inst = (vec4_instruction *)scan_inst->next;
