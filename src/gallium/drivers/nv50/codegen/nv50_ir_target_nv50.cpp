@@ -323,6 +323,12 @@ TargetNV50::insnCanLoad(const Instruction *i, int s,
       ldSize = typeSizeof(ld->dType);
    }
 
+   if (sf == FILE_IMMEDIATE)
+      return true;
+
+
+   // Check if memory access is encodable:
+
    if (ldSize < 4 && sf == FILE_SHADER_INPUT) // no < 4-byte aligned a[] access
       return false;
    if (ld->getSrc(0)->reg.data.offset > (int32_t)(127 * ldSize))

@@ -1284,6 +1284,9 @@ CodeEmitterNV50::emitLogicOp(const Instruction *i)
          assert(i->op == OP_AND);
          break;
       }
+      if (i->src(0).mod & Modifier(NV50_IR_MOD_NOT))
+         code[0] |= 1 << 22;
+
       emitForm_IMM(i);
    } else {
       switch (i->op) {
