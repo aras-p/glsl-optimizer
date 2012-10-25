@@ -763,15 +763,7 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, shader);
    trace_dump_arg(uint, index);
-   if (constant_buffer) {
-      trace_dump_struct_begin("pipe_constant_buffer");
-      trace_dump_member(ptr, constant_buffer, buffer);
-      trace_dump_member(uint, constant_buffer, buffer_offset);
-      trace_dump_member(uint, constant_buffer, buffer_size);
-      trace_dump_struct_end();
-   } else {
-      trace_dump_arg(ptr, constant_buffer);
-   }
+   trace_dump_arg(constant_buffer, constant_buffer);
 
    pipe->set_constant_buffer(pipe, shader, index,
                              constant_buffer ? &cb : NULL);

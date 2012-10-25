@@ -661,6 +661,24 @@ void trace_dump_vertex_element(const struct pipe_vertex_element *state)
 }
 
 
+void trace_dump_constant_buffer(const struct pipe_constant_buffer *state)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!state) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_constant_buffer");
+   trace_dump_member(ptr, state, buffer);
+   trace_dump_member(uint, state, buffer_offset);
+   trace_dump_member(uint, state, buffer_size);
+   trace_dump_struct_end();
+}
+
+
 void trace_dump_draw_info(const struct pipe_draw_info *state)
 {
    if (!trace_dumping_enabled_locked())
