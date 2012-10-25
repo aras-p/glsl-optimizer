@@ -964,6 +964,7 @@ nvc0_blit_eng2d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
    }
 
    if (mask != 0xffffffff) {
+      IMMED_NVC0(push, NVC0_2D(ROP), 0xca); /* DPSDxax */
       IMMED_NVC0(push, NVC0_2D(PATTERN_COLOR_FORMAT),
                        NVC0_2D_PATTERN_COLOR_FORMAT_32BPP);
       BEGIN_NVC0(push, NVC0_2D(PATTERN_COLOR(0)), 4);
@@ -971,7 +972,7 @@ nvc0_blit_eng2d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
       PUSH_DATA (push, mask);
       PUSH_DATA (push, 0xffffffff);
       PUSH_DATA (push, 0xffffffff);
-      IMMED_NVC0(push, NVC0_2D(OPERATION), NVC0_2D_OPERATION_SRCCOPY_PREMULT);
+      IMMED_NVC0(push, NVC0_2D(OPERATION), NVC0_2D_OPERATION_ROP);
    }
 
    if (src->ms_x > dst->ms_x || src->ms_y > dst->ms_y) {
