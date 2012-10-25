@@ -47,8 +47,9 @@ void si_pm4_cmd_end(struct si_pm4_state *state, bool predicate)
 {
 	unsigned count;
 	count = state->ndw - state->last_pm4 - 2;
-	state->pm4[state->last_pm4] = PKT3(state->last_opcode,
-					   count, predicate);
+	state->pm4[state->last_pm4] =
+		PKT3(state->last_opcode, count, predicate)
+		   | PKT3_SHADER_TYPE_S(state->compute_pkt);
 
 	assert(state->ndw <= SI_PM4_MAX_DW);
 }

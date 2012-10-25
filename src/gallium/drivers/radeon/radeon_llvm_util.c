@@ -30,7 +30,7 @@
 #include <llvm-c/BitReader.h>
 #include <llvm-c/Core.h>
 
-static LLVMModuleRef radeon_llvm_parse_bitcode(const unsigned char * bitcode,
+LLVMModuleRef radeon_llvm_parse_bitcode(const unsigned char * bitcode,
 							unsigned bitcode_len)
 {
 	LLVMMemoryBufferRef buf;

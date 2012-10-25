@@ -50,6 +50,8 @@
 #define R600_TRACE_CS 0
 #define R600_TRACE_CS_DWORDS		6
 
+struct si_pipe_compute;
+
 struct r600_pipe_fences {
 	struct si_resource		*bo;
 	unsigned			*data;
@@ -86,6 +88,10 @@ struct si_pipe_sampler_view {
 struct si_pipe_sampler_state {
 	uint32_t			val[4];
 	float				border_color[4];
+};
+
+struct si_cs_shader_state {
+	struct si_pipe_compute		*program;
 };
 
 /* needed for blitter save */
@@ -139,6 +145,7 @@ struct r600_context {
 	struct pipe_stencil_ref		stencil_ref;
 	struct si_pipe_shader_selector	*ps_shader;
 	struct si_pipe_shader_selector	*vs_shader;
+	struct si_cs_shader_state	cs_shader_state;
 	struct pipe_query		*current_render_cond;
 	unsigned			current_render_cond_mode;
 	struct pipe_query		*saved_render_cond;
@@ -238,6 +245,9 @@ void r600_translate_index_buffer(struct r600_context *r600,
 #if R600_TRACE_CS
 void r600_trace_emit(struct r600_context *rctx);
 #endif
+
+/* radeonsi_compute.c */
+void si_init_compute_functions(struct r600_context *rctx);
 
 /*
  * common helpers

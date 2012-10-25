@@ -1093,6 +1093,57 @@ static void preload_samplers(struct si_shader_context *si_shader_ctx)
 	}
 }
 
+int si_compile_llvm(struct r600_context *rctx, struct si_pipe_shader *shader,
+							LLVMModuleRef mod)
+{
+	unsigned char *inst_bytes;
+	unsigned inst_byte_count;
+	unsigned i;
+	uint32_t *ptr;
+	bool dump;
+
+	dump = debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE);
+
+	radeon_llvm_compile(mod, &inst_bytes, &inst_byte_count,
+			r600_get_llvm_processor_name(rctx->screen->family),
+			dump);
+
+	if (dump) {
+		fprintf(stderr, "SI CODE:\n");
+		for (i = 0; i < inst_byte_count; i+=4 ) {
+			fprintf(stderr, "%02x%02x%02x%02x\n", inst_bytes[i + 3],
+				inst_bytes[i + 2], inst_bytes[i + 1],
+				inst_bytes[i]);
+		}
+	}
+
+	shader->num_sgprs = util_le32_to_cpu(*(uint32_t*)inst_bytes);
+	shader->num_vgprs = util_le32_to_cpu(*(uint32_t*)(inst_bytes + 4));
+	shader->spi_ps_input_ena = util_le32_to_cpu(*(uint32_t*)(inst_bytes + 8));
+
+	/* copy new shader */
+	si_resource_reference(&shader->bo, NULL);
+	shader->bo = si_resource_create_custom(rctx->context.screen, PIPE_USAGE_IMMUTABLE,
+					       inst_byte_count - 12);
+	if (shader->bo == NULL) {
+		return -ENOMEM;
+	}
+
+	ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
+	if (0 /*R600_BIG_ENDIAN*/) {
+		for (i = 0; i < (inst_byte_count-12)/4; ++i) {
+			ptr[i] = util_bswap32(*(uint32_t*)(inst_bytes+12 + i*4));
+		}
+	} else {
+		memcpy(ptr, inst_bytes + 12, inst_byte_count - 12);
+	}
+	rctx->ws->buffer_unmap(shader->bo->cs_buf);
+
+	free(inst_bytes);
+
+	return 0;
+}
+
 int si_pipe_shader_create(
 	struct pipe_context *ctx,
 	struct si_pipe_shader *shader)
@@ -1103,11 +1154,8 @@ int si_pipe_shader_create(
 	struct tgsi_shader_info shader_info;
 	struct lp_build_tgsi_context * bld_base;
 	LLVMModuleRef mod;
-	unsigned char * inst_bytes;
-	unsigned inst_byte_count;
-	unsigned i;
-	uint32_t *ptr;
 	bool dump;
+	int r = 0;
 
 	dump = debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE);
 
@@ -1162,55 +1210,16 @@ int si_pipe_shader_create(
 	radeon_llvm_finalize_module(&si_shader_ctx.radeon_bld);
 
 	mod = bld_base->base.gallivm->module;
-	if (dump) {
-		LLVMDumpModule(mod);
-	}
-	radeon_llvm_compile(mod, &inst_bytes, &inst_byte_count,
-			r600_get_llvm_processor_name(rctx->screen->family)
-			, dump);
-	if (dump) {
-		fprintf(stderr, "SI CODE:\n");
-		for (i = 0; i < inst_byte_count; i+=4 ) {
-			fprintf(stderr, "%02x%02x%02x%02x\n", inst_bytes[i + 3],
-				inst_bytes[i + 2], inst_bytes[i + 1],
-				inst_bytes[i]);
-		}
-	}
-
-	shader->num_sgprs = util_le32_to_cpu(*(uint32_t*)inst_bytes);
-	shader->num_vgprs = util_le32_to_cpu(*(uint32_t*)(inst_bytes + 4));
-	shader->spi_ps_input_ena = util_le32_to_cpu(*(uint32_t*)(inst_bytes + 8));
+	r = si_compile_llvm(rctx, shader, mod);
 
 	radeon_llvm_dispose(&si_shader_ctx.radeon_bld);
 	tgsi_parse_free(&si_shader_ctx.parse);
 
-	/* copy new shader */
-	si_resource_reference(&shader->bo, NULL);
-	shader->bo = si_resource_create_custom(ctx->screen, PIPE_USAGE_IMMUTABLE,
-					       inst_byte_count - 12);
-	if (shader->bo == NULL) {
-		FREE(si_shader_ctx.constants);
-		FREE(si_shader_ctx.resources);
-		FREE(si_shader_ctx.samplers);
-		return -ENOMEM;
-	}
-
-	ptr = (uint32_t*)rctx->ws->buffer_map(shader->bo->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
-	if (0 /*R600_BIG_ENDIAN*/) {
-		for (i = 0; i < (inst_byte_count-12)/4; ++i) {
-			ptr[i] = util_bswap32(*(uint32_t*)(inst_bytes+12 + i*4));
-		}
-	} else {
-		memcpy(ptr, inst_bytes + 12, inst_byte_count - 12);
-	}
-	rctx->ws->buffer_unmap(shader->bo->cs_buf);
-
 	FREE(si_shader_ctx.constants);
 	FREE(si_shader_ctx.resources);
 	FREE(si_shader_ctx.samplers);
-	free(inst_bytes);
 
-	return 0;
+	return r;
 }
 
 void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_pipe_shader *shader)

@@ -58,6 +58,8 @@ struct si_pm4_state
 	/* relocs for shader data */
 	unsigned	nrelocs;
 	unsigned	relocs[SI_PM4_MAX_RELOCS];
+
+	bool compute_pkt;
 };
 
 void si_pm4_cmd_begin(struct si_pm4_state *state, unsigned opcode);

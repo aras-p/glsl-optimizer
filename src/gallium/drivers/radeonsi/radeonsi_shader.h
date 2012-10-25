@@ -29,6 +29,8 @@
 #ifndef RADEONSI_SHADER_H
 #define RADEONSI_SHADER_H
 
+#include <llvm-c/Core.h> /* LLVMModuleRef */
+
 #define SI_SGPR_CONST		0
 #define SI_SGPR_SAMPLER		2
 #define SI_SGPR_RESOURCE	4
@@ -142,6 +144,9 @@ struct si_pipe_shader {
 
 /* radeonsi_shader.c */
 int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader);
+int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader);
+int si_compile_llvm(struct r600_context *rctx, struct si_pipe_shader *shader,
+							LLVMModuleRef mod);
 void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_pipe_shader *shader);
 
 #endif

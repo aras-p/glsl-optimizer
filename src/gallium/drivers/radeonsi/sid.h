@@ -32,6 +32,7 @@
 #define SI_CONTEXT_REG_OFFSET                0x00028000
 #define SI_CONTEXT_REG_END                   0x00029000
 
+#define EVENT_TYPE_CACHE_FLUSH                  0x6
 #define EVENT_TYPE_PS_PARTIAL_FLUSH            0x10
 #define EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT 0x14
 #define EVENT_TYPE_ZPASS_DONE                  0x15
@@ -47,6 +48,8 @@
 		 * 4 - *S_PARTIAL_FLUSH
 		 * 5 - TS events
 		 */
+#define EVENT_WRITE_INV_L2                   0x100000
+
 
 #define PREDICATION_OP_CLEAR 0x0
 #define PREDICATION_OP_ZPASS 0x1
@@ -65,6 +68,8 @@
 #define R600_TEXEL_PITCH_ALIGNMENT_MASK        0x7
 
 #define PKT3_NOP                               0x10
+#define PKT3_DISPATCH_DIRECT                   0x15
+#define PKT3_DISPATCH_INDIRECT                 0x16
 #define PKT3_SET_PREDICATION                   0x20
 #define PKT3_COND_EXEC                         0x22
 #define PKT3_PRED_EXEC                         0x23
@@ -122,6 +127,7 @@
 #define PKT3_IT_OPCODE_G(x)             (((x) >> 8) & 0xFF)
 #define PKT3_IT_OPCODE_C                0xFFFF00FF
 #define PKT3_PREDICATE(x)               (((x) >> 0) & 0x1)
+#define PKT3_SHADER_TYPE_S(x)           (((x) & 0x1) << 1)
 #define PKT0(index, count) (PKT_TYPE_S(0) | PKT0_BASE_INDEX_S(index) | PKT_COUNT_S(count))
 #define PKT3(op, count, predicate) (PKT_TYPE_S(3) | PKT3_IT_OPCODE_S(op) | PKT_COUNT_S(count) | PKT3_PREDICATE(predicate))
 
