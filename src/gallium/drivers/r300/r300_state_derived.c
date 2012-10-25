@@ -655,6 +655,12 @@ static uint32_t r300_get_border_color(enum pipe_format format,
         case PIPE_FORMAT_LATC2_UNORM:
             util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
             return uc.ui;
+        case PIPE_FORMAT_DXT1_SRGB:
+        case PIPE_FORMAT_DXT1_SRGBA:
+        case PIPE_FORMAT_DXT3_SRGBA:
+        case PIPE_FORMAT_DXT5_SRGBA:
+            util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_SRGB, &uc);
+            return uc.ui;
         default:
             util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
             return uc.ui;
@@ -685,10 +691,18 @@ static uint32_t r300_get_border_color(enum pipe_format format,
 
         default:
         case 8:
-            if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED)
-               util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_SNORM, &uc);
-            else
-               util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
+            if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+                util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_SNORM, &uc);
+            } else if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
+                if (desc->nr_channels == 2) {
+                    border_swizzled[3] = border_swizzled[1];
+                    util_pack_color(border_swizzled, PIPE_FORMAT_L8A8_SRGB, &uc);
+                } else {
+                    util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_SRGB, &uc);
+                }
+            } else {
+                util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
+            }
             break;
 
         case 10:
