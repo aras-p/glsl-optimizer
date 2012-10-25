@@ -1,11 +1,8 @@
-INC = \
+AM_CPPFLAGS = \
 	-I$(top_builddir)/src/gtest/include \
 	-I$(top_builddir)/src/mesa \
 	-I$(top_builddir)/src/mapi \
 	-I$(top_builddir)/src/glsl
-
-AM_CFLAGS =  $(INC)
-AM_CXXFLAGS = $(INC)
 
 TESTS_ENVIRONMENT= \
 	export PYTHON2=$(PYTHON2); \
