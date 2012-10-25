@@ -57,7 +57,7 @@ test_all(void)
          }
 
 	 if (util_is_format_compatible(src_format_desc, dst_format_desc)) {
-	    debug_printf("%s -> %s\n", src_format_desc->short_name, dst_format_desc->short_name);
+	    printf("%s -> %s\n", src_format_desc->short_name, dst_format_desc->short_name);
 	 }
       }
    }
