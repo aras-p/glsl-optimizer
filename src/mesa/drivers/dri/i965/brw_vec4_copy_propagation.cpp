@@ -224,6 +224,7 @@ try_copy_propagation(struct intel_context *intel,
    if (value.equals(&inst->src[arg]))
       return false;
 
+   value.type = inst->src[arg].type;
    inst->src[arg] = value;
    return true;
 }
