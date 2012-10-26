@@ -1,0 +1,48 @@
+Import('*')
+
+env = env.Clone()
+
+env.Append(CPPPATH = [
+    '#/src/mapi',
+    '#/src/mesa',
+    '#/src/mesa/main',
+])
+
+env.Append(CPPDEFINES = ['USE_XSHM'])
+
+env.Prepend(LIBS = env['X11_LIBS'])
+
+env.Prepend(LIBS = [
+    glapi,
+    glsl,
+    mesa,
+])
+
+sources = [
+	'fakeglx.c',
+	'glxapi.c',
+	'xfonts.c',
+	'xm_api.c',
+	'xm_buffer.c',
+	'xm_dd.c',
+	'xm_line.c',
+	'xm_tri.c',
+]
+
+# The sources depend on the python-generated GL API files/headers.
+env.Depends(sources, glapi_headers)
+
+# libGL.so.1.6
+libgl_1_6 = env.SharedLibrary(
+    target ='GL',
+    source = sources,
+    SHLIBSUFFIX = env['SHLIBSUFFIX'] + '.1.6',
+)
+
+# libGL.so.1
+libgl = env.subst('${SHLIBPREFIX}GL${SHLIBSUFFIX}')
+libgl_1 = libgl + '.1'
+env.Command(libgl_1, libgl_1_6, "ln -sf ${SOURCE.file} ${TARGET}")
+env.Command(libgl, libgl_1, "ln -sf ${SOURCE.file} ${TARGET}")
+
+env.Alias('libgl-xlib-swrast', libgl)
