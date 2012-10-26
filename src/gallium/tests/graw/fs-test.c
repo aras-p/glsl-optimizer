@@ -42,8 +42,6 @@ static const int HEIGHT = 250;
 static struct pipe_screen *screen = NULL;
 static struct pipe_context *ctx = NULL;
 static struct pipe_resource *rttex = NULL;
-static struct pipe_resource *constbuf1 = NULL;
-static struct pipe_resource *constbuf2 = NULL;
 static struct pipe_surface *surf = NULL;
 static struct pipe_sampler_view *sv = NULL;
 static void *sampler = NULL;
@@ -111,64 +109,24 @@ static float constants2[] =
 
 static void init_fs_constbuf( void )
 {
-   struct pipe_resource templat;
-   struct pipe_box box;
+   struct pipe_constant_buffer cb1;
+   struct pipe_constant_buffer cb2;
 
-   templat.target = PIPE_BUFFER;
-   templat.format = PIPE_FORMAT_R8_UNORM;
-   templat.width0 = sizeof(constants1);
-   templat.height0 = 1;
-   templat.depth0 = 1;
-   templat.array_size = 1;
-   templat.last_level = 0;
-   templat.nr_samples = 1;
-   templat.bind = PIPE_BIND_CONSTANT_BUFFER;
+   memset(&cb1, 0, sizeof cb1);
+   cb1.buffer_size = sizeof constants1;
+   cb1.user_buffer = constants1;
 
-   constbuf1 = screen->resource_create(screen,
-                                       &templat);
-   if (constbuf1 == NULL)
-      exit(4);
+   ctx->set_constant_buffer(ctx,
+                            PIPE_SHADER_FRAGMENT, 0,
+                            &cb1);
 
-   constbuf2 = screen->resource_create(screen,
-                                       &templat);
-   if (constbuf2 == NULL)
-      exit(4);
+   memset(&cb2, 0, sizeof cb2);
+   cb2.buffer_size = sizeof constants2;
+   cb2.user_buffer = constants2;
 
-
-   {
-      u_box_2d(0,0,sizeof(constants1),1, &box);
-
-      ctx->transfer_inline_write(ctx,
-                                 constbuf1,
-                                 0,
-                                 PIPE_TRANSFER_WRITE,
-                                 &box,
-                                 constants1,
-                                 sizeof constants1,
-                                 sizeof constants1);
-
-
-      pipe_set_constant_buffer(ctx,
-                               PIPE_SHADER_FRAGMENT, 0,
-                               constbuf1);
-   }
-   {
-      u_box_2d(0,0,sizeof(constants2),1, &box);
-
-      ctx->transfer_inline_write(ctx,
-                                 constbuf2,
-                                 0,
-                                 PIPE_TRANSFER_WRITE,
-                                 &box,
-                                 constants2,
-                                 sizeof constants2,
-                                 sizeof constants2);
-
-
-      pipe_set_constant_buffer(ctx,
-                               PIPE_SHADER_FRAGMENT, 1,
-                               constbuf2);
-   }
+   ctx->set_constant_buffer(ctx,
+                            PIPE_SHADER_FRAGMENT, 1,
+                            &cb2);
 }
 
 
