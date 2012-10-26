@@ -1005,17 +1005,6 @@ void brw_oword_block_write_scratch(struct brw_compile *p,
 				   int num_regs,
 				   GLuint offset);
 
-void brw_dp_READ_4_vs( struct brw_compile *p,
-                       struct brw_reg dest,
-                       GLuint location,
-                       GLuint bind_table_index );
-
-void brw_dp_READ_4_vs_relative(struct brw_compile *p,
-			       struct brw_reg dest,
-			       struct brw_reg addrReg,
-			       GLuint offset,
-			       GLuint bind_table_index);
-
 /* If/else/endif.  Works by manipulating the execution flags on each
  * channel.
  */
