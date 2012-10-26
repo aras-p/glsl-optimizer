@@ -27,7 +27,7 @@
     <enum name="FRAMEBUFFER_ATTACHMENT_LAYERED_ARB"   value="0x8DA7"/>
     <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER" value="0x8CD4"/>
     <enum name="PROGRAM_POINT_SIZE_ARB" value="0x8642"/>
-    <function name="ProgramParameteriARB"  offset="assign">
+    <function name="ProgramParameteriARB"  alias="ProgramParameteri">
         <param name="program" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="value" type="GLint"/>

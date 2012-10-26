@@ -7177,7 +7177,7 @@ save_ProgramParameteri(GLuint program, GLenum pname, GLint value)
       n[3].i = value;
    }
    if (ctx->ExecuteFlag) {
-      CALL_ProgramParameteriARB(ctx->Exec, (program, pname, value));
+      CALL_ProgramParameteri(ctx->Exec, (program, pname, value));
    }
 }
 
@@ -8509,7 +8509,7 @@ execute_list(struct gl_context *ctx, GLuint list)
 
          /* GL_ARB_geometry_shader4 */
          case OPCODE_PROGRAM_PARAMETERI:
-            CALL_ProgramParameteriARB(ctx->Exec, (n[1].ui, n[2].e, n[3].i));
+            CALL_ProgramParameteri(ctx->Exec, (n[1].ui, n[2].e, n[3].i));
             break;
          case OPCODE_FRAMEBUFFER_TEXTURE:
             CALL_FramebufferTexture(ctx->Exec, (n[1].e, n[2].e,
@@ -10212,7 +10212,7 @@ _mesa_create_save_table(const struct gl_context *ctx)
    SET_BlendEquationSeparateiARB(table, save_BlendEquationSeparatei);
 
    /* GL_ARB_geometry_shader4 */
-   SET_ProgramParameteriARB(table, save_ProgramParameteri);
+   SET_ProgramParameteri(table, save_ProgramParameteri);
    SET_FramebufferTexture(table, save_FramebufferTexture);
    SET_FramebufferTextureFaceARB(table, save_FramebufferTextureFace);
 
