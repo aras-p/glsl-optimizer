@@ -158,7 +158,23 @@ arb_input_attrib_string(GLint index, GLenum progType)
       "fragment.varying[12]",
       "fragment.varying[13]",
       "fragment.varying[14]",
-      "fragment.varying[15]" /* MAX_VARYING = 16 */
+      "fragment.varying[15]",
+      "fragment.varying[16]",
+      "fragment.varying[17]",
+      "fragment.varying[18]",
+      "fragment.varying[19]",
+      "fragment.varying[20]",
+      "fragment.varying[21]",
+      "fragment.varying[22]",
+      "fragment.varying[23]",
+      "fragment.varying[24]",
+      "fragment.varying[25]",
+      "fragment.varying[26]",
+      "fragment.varying[27]",
+      "fragment.varying[28]",
+      "fragment.varying[29]",
+      "fragment.varying[30]",
+      "fragment.varying[31]", /* MAX_VARYING = 32 */
    };
 
    /* sanity checks */
@@ -262,7 +278,23 @@ arb_output_attrib_string(GLint index, GLenum progType)
       "result.varying[12]",
       "result.varying[13]",
       "result.varying[14]",
-      "result.varying[15]" /* MAX_VARYING = 16 */
+      "result.varying[15]",
+      "result.varying[16]",
+      "result.varying[17]",
+      "result.varying[18]",
+      "result.varying[19]",
+      "result.varying[20]",
+      "result.varying[21]",
+      "result.varying[22]",
+      "result.varying[23]",
+      "result.varying[24]",
+      "result.varying[25]",
+      "result.varying[26]",
+      "result.varying[27]",
+      "result.varying[28]",
+      "result.varying[29]",
+      "result.varying[30]",
+      "result.varying[31]", /* MAX_VARYING = 32 */
    };
    static const char *const fragResults[] = {
       "result.depth", /* FRAG_RESULT_DEPTH */

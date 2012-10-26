@@ -59,7 +59,7 @@ extern "C" {
 #define PIPE_MAX_CONSTANT_BUFFERS 32
 #define PIPE_MAX_SAMPLERS         16
 #define PIPE_MAX_SHADER_INPUTS    32
-#define PIPE_MAX_SHADER_OUTPUTS   32
+#define PIPE_MAX_SHADER_OUTPUTS   48 /* 32 GENERICs + POS, PSIZE, FOG, etc. */
 #define PIPE_MAX_SHADER_SAMPLER_VIEWS 32
 #define PIPE_MAX_SHADER_RESOURCES 32
 #define PIPE_MAX_TEXTURE_LEVELS   16
@@ -145,7 +145,7 @@ struct pipe_rasterizer_state
    unsigned line_stipple_factor:8;  /**< [1..256] actually */
    unsigned line_stipple_pattern:16;
 
-   unsigned sprite_coord_enable:PIPE_MAX_SHADER_OUTPUTS;
+   unsigned sprite_coord_enable; /* bitfield referring to 32 GENERIC inputs */
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */
