@@ -8,7 +8,6 @@
 <xi:include href="gl_API.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <!-- these can be moved to gl_API.xml -->
-<xi:include href="ARB_get_program_binary.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 <xi:include href="OES_fixed_point.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 <xi:include href="OES_single_precision.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
