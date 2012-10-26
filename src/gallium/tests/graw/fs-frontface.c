@@ -86,6 +86,7 @@ set_vertices(void)
    handle = info.ctx->create_vertex_elements_state(info.ctx, 2, ve);
    info.ctx->bind_vertex_elements_state(info.ctx, handle);
 
+   memset(&vbuf, 0, sizeof vbuf);
 
    vbuf.stride = sizeof(struct vertex);
    vbuf.buffer_offset = 0;

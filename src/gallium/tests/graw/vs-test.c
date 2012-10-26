@@ -170,6 +170,8 @@ static void set_vertices( void )
       }
    }
 
+   memset(&vbuf, 0, sizeof vbuf);
+
    vbuf.stride = sizeof( struct vertex );
    vbuf.buffer_offset = 0;
    vbuf.buffer = pipe_buffer_create_with_data(ctx,

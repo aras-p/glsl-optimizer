@@ -130,6 +130,7 @@ static void set_vertices( void )
    handle = ctx->create_vertex_elements_state(ctx, 3, ve);
    ctx->bind_vertex_elements_state(ctx, handle);
 
+   memset(&vbuf, 0, sizeof vbuf);
 
    /* vertex data */
    vbuf[0].stride = sizeof( struct vertex );

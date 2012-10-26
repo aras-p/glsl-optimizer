@@ -21,6 +21,7 @@ graw_parse_geometry_shader(struct pipe_context *pipe,
    if (!tgsi_text_translate(text, tokens, Elements(tokens)))
       return NULL;
 
+   memset(&state, 0, sizeof state);
    state.tokens = tokens;
    return pipe->create_gs_state(pipe, &state);
 }
@@ -35,6 +36,7 @@ graw_parse_vertex_shader(struct pipe_context *pipe,
    if (!tgsi_text_translate(text, tokens, Elements(tokens)))
       return NULL;
 
+   memset(&state, 0, sizeof state);
    state.tokens = tokens;
    return pipe->create_vs_state(pipe, &state);
 }
@@ -49,6 +51,7 @@ graw_parse_fragment_shader(struct pipe_context *pipe,
    if (!tgsi_text_translate(text, tokens, Elements(tokens)))
       return NULL;
 
+   memset(&state, 0, sizeof state);
    state.tokens = tokens;
    return pipe->create_fs_state(pipe, &state);
 }
