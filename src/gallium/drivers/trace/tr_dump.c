@@ -214,6 +214,14 @@ trace_dump_tag_end(const char *name)
    trace_dump_writes(">");
 }
 
+void
+trace_dump_trace_flush(void)
+{
+   if(stream) {
+      fflush(stream);
+   }
+}
+
 static void
 trace_dump_trace_close(void)
 {

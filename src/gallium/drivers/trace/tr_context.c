@@ -94,6 +94,8 @@ trace_context_draw_vbo(struct pipe_context *_pipe,
    trace_dump_arg(ptr,  pipe);
    trace_dump_arg(draw_info, info);
 
+   trace_dump_trace_flush();
+
    pipe->draw_vbo(pipe, info);
 
    trace_dump_call_end();
