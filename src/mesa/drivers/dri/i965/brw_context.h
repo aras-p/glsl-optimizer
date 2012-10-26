@@ -262,7 +262,6 @@ static inline uint32_t AUB_TRACE_SUBTYPE(enum state_struct_type ss_type)
 struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
-   bool use_const_buffer;
 };
 
 

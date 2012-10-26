@@ -90,34 +90,10 @@ struct brw_vs_compile {
 
    struct brw_vertex_program *vp;
 
-   GLuint nr_inputs;
-
-   GLuint first_output;
    GLuint last_scratch; /**< measured in 32-byte (register size) units */
-
-   GLuint first_tmp;
-   GLuint last_tmp;
-
-   struct brw_reg r0;
-   struct brw_reg r1;
-   struct brw_reg regs[PROGRAM_ADDRESS+1][128];
-   struct brw_reg tmp;
-
-   struct {	
-       struct brw_reg reg;
-   } output_regs[128];
-
-   struct brw_reg userplane[MAX_CLIP_PLANES];
-
-   /** we may need up to 3 constants per instruction (if use_const_buffer) */
-   struct {
-      GLint index;
-      struct brw_reg reg;
-   } current_const[3];
 };
 
 bool brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c);
-void brw_old_vs_emit(struct brw_vs_compile *c);
 bool brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog);
 void brw_vs_debug_recompile(struct brw_context *brw,
                             struct gl_shader_program *prog,
