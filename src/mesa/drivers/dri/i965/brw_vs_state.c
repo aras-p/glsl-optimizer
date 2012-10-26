@@ -40,7 +40,6 @@ static void
 brw_upload_vs_unit(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   struct gl_context *ctx = &intel->ctx;
    struct brw_vs_unit_state *vs;
 
    vs = brw_state_batch(brw, AUB_TRACE_VS_STATE,
@@ -89,16 +88,7 @@ brw_upload_vs_unit(struct brw_context *brw)
    vs->thread3.urb_entry_read_offset = 0;
 
    /* BRW_NEW_CURBE_OFFSETS, _NEW_TRANSFORM, BRW_NEW_VERTEX_PROGRAM */
-   if (ctx->Transform.ClipPlanesEnabled && !brw->vs.prog_data->uses_new_param_layout) {
-      /* Note that we read in the userclip planes as well, hence
-       * clip_start:
-       */
-      vs->thread3.const_urb_entry_read_offset = brw->curbe.clip_start * 2;
-   }
-   else {
-      vs->thread3.const_urb_entry_read_offset = brw->curbe.vs_start * 2;
-   }
-
+   vs->thread3.const_urb_entry_read_offset = brw->curbe.vs_start * 2;
 
    /* BRW_NEW_URB_FENCE */
    if (intel->gen == 5) {

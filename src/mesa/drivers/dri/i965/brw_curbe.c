@@ -184,8 +184,6 @@ brw_upload_constant_buffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
-   const struct brw_vertex_program *vp =
-      brw_vertex_program_const(brw->vertex_program);
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
    GLfloat *buf;
@@ -249,24 +247,9 @@ brw_upload_constant_buffer(struct brw_context *brw)
    /* vertex shader constants */
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
-      GLuint nr = brw->vs.prog_data->nr_params / 4;
 
-      if (brw->vs.prog_data->uses_new_param_layout) {
-	 for (i = 0; i < brw->vs.prog_data->nr_params; i++) {
-	    buf[offset + i] = *brw->vs.prog_data->param[i];
-	 }
-      } else {
-	 /* Load the subset of push constants that will get used when
-	  * we also have a pull constant buffer.
-	  */
-	 for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
-	    if (brw->vs.constant_map[i] != -1) {
-	       assert(brw->vs.constant_map[i] <= nr);
-	       memcpy(buf + offset + brw->vs.constant_map[i] * 4,
-		      vp->program.Base.Parameters->ParameterValues[i],
-		      4 * sizeof(float));
-	    }
-	 }
+      for (i = 0; i < brw->vs.prog_data->nr_params; i++) {
+         buf[offset + i] = *brw->vs.prog_data->param[i];
       }
    }
 

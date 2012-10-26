@@ -132,7 +132,6 @@ vec4_visitor::setup_uniforms(int reg)
    c->prog_data.nr_params = this->uniforms * 4;
 
    c->prog_data.curb_read_length = reg - 1;
-   c->prog_data.uses_new_param_layout = true;
 
    return reg;
 }

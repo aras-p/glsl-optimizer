@@ -451,7 +451,6 @@ struct brw_vs_prog_data {
     */
    GLuint urb_entry_size;
 
-   bool uses_new_param_layout;
    bool uses_vertexid;
    bool userclip;
 

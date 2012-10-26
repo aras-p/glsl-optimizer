@@ -42,7 +42,6 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
    unsigned int nr_params = brw->vs.prog_data->nr_params / 4;
-   bool uses_clip_distance = vp->program.UsesClipDistance;
 
    /* Updates the ParamaterValues[i] pointers for all parameters of the
     * basic type of PROGRAM_STATE_VAR.
@@ -63,48 +62,15 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
 			      4 * sizeof(float),
 			      32, &brw->vs.push_const_offset);
 
-      float *save_param = param;
-
-      if (brw->vs.prog_data->uses_new_param_layout) {
-	 for (i = 0; i < brw->vs.prog_data->nr_params; i++) {
-	    *param = *brw->vs.prog_data->param[i];
-	    param++;
-	 }
-	 params_uploaded += brw->vs.prog_data->nr_params / 4;
-      } else {
-         /* This should be loaded like any other param, but it's ad-hoc
-          * until we redo the VS backend.
-          */
-         if (ctx->Transform.ClipPlanesEnabled != 0 && !uses_clip_distance) {
-            gl_clip_plane *clip_planes = brw_select_clip_planes(ctx);
-            int num_userclip_plane_consts
-               = _mesa_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
-            int num_floats = 4 * num_userclip_plane_consts;
-            memcpy(param, clip_planes, num_floats * sizeof(float));
-            param += num_floats;
-            params_uploaded += num_userclip_plane_consts;
-         }
-
-         /* Align to a reg for convenience for brw_vs_emit.c */
-         if (params_uploaded & 1) {
-            param += 4;
-            params_uploaded++;
-         }
-
-	 for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
-	    if (brw->vs.constant_map[i] != -1) {
-	       memcpy(param + brw->vs.constant_map[i] * 4,
-		      vp->program.Base.Parameters->ParameterValues[i],
-		      4 * sizeof(float));
-	       params_uploaded++;
-	    }
-	 }
+      for (i = 0; i < brw->vs.prog_data->nr_params; i++) {
+         param[i] = *brw->vs.prog_data->param[i];
       }
+      params_uploaded += brw->vs.prog_data->nr_params / 4;
 
       if (0) {
 	 printf("VS constant buffer:\n");
 	 for (i = 0; i < params_uploaded; i++) {
-	    float *buf = save_param + i * 4;
+	    float *buf = param + i * 4;
 	    printf("%d: %f %f %f %f\n",
 		   i, buf[0], buf[1], buf[2], buf[3]);
 	 }
