@@ -756,10 +756,6 @@ static int r600_shader_select(struct pipe_context *ctx,
 	shader->next_variant = sel->current;
 	sel->current = shader;
 
-	if (rctx->chip_class < EVERGREEN && rctx->ps_shader && rctx->vs_shader) {
-		r600_adjust_gprs(rctx);
-	}
-
 	if (rctx->ps_shader &&
 	    rctx->cb_misc_state.nr_ps_color_outputs != rctx->ps_shader->current->nr_ps_color_outputs) {
 		rctx->cb_misc_state.nr_ps_color_outputs = rctx->ps_shader->current->nr_ps_color_outputs;
@@ -815,9 +811,6 @@ static void r600_bind_ps_state(struct pipe_context *ctx, void *state)
 			rctx->cb_misc_state.multiwrite = multiwrite;
 			rctx->cb_misc_state.atom.dirty = true;
 		}
-
-		if (rctx->vs_shader)
-			r600_adjust_gprs(rctx);
 	}
 
 	if (rctx->cb_misc_state.nr_ps_color_outputs != rctx->ps_shader->current->nr_ps_color_outputs) {
@@ -839,9 +832,6 @@ static void r600_bind_vs_state(struct pipe_context *ctx, void *state)
 	rctx->vs_shader = (struct r600_pipe_shader_selector *)state;
 	if (state) {
 		r600_context_pipe_state_set(rctx, &rctx->vs_shader->current->rstate);
-
-		if (rctx->chip_class < EVERGREEN && rctx->ps_shader)
-			r600_adjust_gprs(rctx);
 
 		/* Update clip misc state. */
 		if (rctx->vs_shader->current->pa_cl_vs_out_cntl != rctx->clip_misc_state.pa_cl_vs_out_cntl ||
@@ -1033,7 +1023,7 @@ static void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask
 	rctx->sample_mask.atom.dirty = true;
 }
 
-static void r600_update_derived_state(struct r600_context *rctx)
+static bool r600_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
 	unsigned ps_dirty = 0;
@@ -1071,6 +1061,13 @@ static void r600_update_derived_state(struct r600_context *rctx)
 	if (ps_dirty)
 		r600_context_pipe_state_set(rctx, &rctx->ps_shader->current->rstate);
 
+	if (rctx->chip_class < EVERGREEN && rctx->ps_shader && rctx->vs_shader) {
+		if (!r600_adjust_gprs(rctx)) {
+			/* discard rendering */
+			return false;
+		}
+	}
+
 	blend_disable = (rctx->dual_src_blend &&
 			rctx->ps_shader->current->nr_ps_color_outputs < 2);
 
@@ -1080,6 +1077,7 @@ static void r600_update_derived_state(struct r600_context *rctx)
 					       rctx->blend_state.cso,
 					       blend_disable);
 	}
+	return true;
 }
 
 static unsigned r600_conv_prim_to_gs_out(unsigned mode)
@@ -1138,7 +1136,12 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		return;
 	}
 
-	r600_update_derived_state(rctx);
+	if (!r600_update_derived_state(rctx)) {
+		/* useless to render because current rendering command
+		 * can't be achieved
+		 */
+		return;
+	}
 
 	if (info.indexed) {
 		/* Initialize the index buffer struct. */

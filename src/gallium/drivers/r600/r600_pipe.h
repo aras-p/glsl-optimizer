@@ -620,7 +620,7 @@ void *r600_create_db_flush_dsa(struct r600_context *rctx);
 void *r600_create_resolve_blend(struct r600_context *rctx);
 void *r700_create_resolve_blend(struct r600_context *rctx);
 void *r600_create_decompress_blend(struct r600_context *rctx);
-void r600_adjust_gprs(struct r600_context *rctx);
+bool r600_adjust_gprs(struct r600_context *rctx);
 boolean r600_is_format_supported(struct pipe_screen *screen,
 				 enum pipe_format format,
 				 enum pipe_texture_target target,

@@ -2186,36 +2186,61 @@ void r600_init_state_functions(struct r600_context *rctx)
 }
 
 /* Adjust GPR allocation on R6xx/R7xx */
-void r600_adjust_gprs(struct r600_context *rctx)
+bool r600_adjust_gprs(struct r600_context *rctx)
 {
-	unsigned num_ps_gprs = rctx->default_ps_gprs;
-	unsigned num_vs_gprs = rctx->default_vs_gprs;
+	unsigned num_ps_gprs = rctx->ps_shader->current->shader.bc.ngpr;
+	unsigned num_vs_gprs = rctx->vs_shader->current->shader.bc.ngpr;
+	unsigned new_num_ps_gprs = num_ps_gprs;
+	unsigned new_num_vs_gprs = num_vs_gprs;
+	unsigned cur_num_ps_gprs = G_008C04_NUM_PS_GPRS(rctx->config_state.sq_gpr_resource_mgmt_1);
+	unsigned cur_num_vs_gprs = G_008C04_NUM_VS_GPRS(rctx->config_state.sq_gpr_resource_mgmt_1);
+	unsigned def_num_ps_gprs = rctx->default_ps_gprs;
+	unsigned def_num_vs_gprs = rctx->default_vs_gprs;
+	unsigned def_num_clause_temp_gprs = rctx->r6xx_num_clause_temp_gprs;
+	/* hardware will reserve twice num_clause_temp_gprs */
+	unsigned max_gprs = def_num_ps_gprs + def_num_vs_gprs + def_num_clause_temp_gprs * 2;
 	unsigned tmp;
-	int diff;
 
-	if (rctx->ps_shader->current->shader.bc.ngpr > rctx->default_ps_gprs) {
-		diff = rctx->ps_shader->current->shader.bc.ngpr - rctx->default_ps_gprs;
-		num_vs_gprs -= diff;
-		num_ps_gprs += diff;
+	/* the sum of all SQ_GPR_RESOURCE_MGMT*.NUM_*_GPRS must <= to max_gprs */
+	if (new_num_ps_gprs > cur_num_ps_gprs || new_num_vs_gprs > cur_num_vs_gprs) {
+		/* try to use switch back to default */
+		if (new_num_ps_gprs > def_num_ps_gprs || new_num_vs_gprs > def_num_vs_gprs) {
+			/* always privilege vs stage so that at worst we have the
+			 * pixel stage producing wrong output (not the vertex
+			 * stage) */
+			new_num_ps_gprs = max_gprs - (new_num_vs_gprs + def_num_clause_temp_gprs * 2);
+			new_num_vs_gprs = num_vs_gprs;
+		} else {
+			new_num_ps_gprs = def_num_ps_gprs;
+			new_num_vs_gprs = def_num_vs_gprs;
+		}
+	} else {
+		return true;
 	}
 
-	if (rctx->vs_shader->current->shader.bc.ngpr > rctx->default_vs_gprs)
-	{
-		diff = rctx->vs_shader->current->shader.bc.ngpr - rctx->default_vs_gprs;
-		num_ps_gprs -= diff;
-		num_vs_gprs += diff;
+	/* SQ_PGM_RESOURCES_*.NUM_GPRS must always be program to a value <=
+	 * SQ_GPR_RESOURCE_MGMT*.NUM_*_GPRS otherwise the GPU will lockup
+	 * Also if a shader use more gpr than SQ_GPR_RESOURCE_MGMT*.NUM_*_GPRS
+	 * it will lockup. So in this case just discard the draw command
+	 * and don't change the current gprs repartitions.
+	 */
+	if (num_ps_gprs > new_num_ps_gprs || num_vs_gprs > new_num_vs_gprs) {
+		R600_ERR("ps & vs shader require too many register (%d + %d) "
+			 "for a combined maximum of %d\n",
+			 num_ps_gprs, num_vs_gprs, max_gprs);
+		return false;
 	}
 
-	tmp = 0;
-	tmp |= S_008C04_NUM_PS_GPRS(num_ps_gprs);
-	tmp |= S_008C04_NUM_VS_GPRS(num_vs_gprs);
-	tmp |= S_008C04_NUM_CLAUSE_TEMP_GPRS(rctx->r6xx_num_clause_temp_gprs);
-
-	if (tmp != rctx->config_state.sq_gpr_resource_mgmt_1) {
+	/* in some case we endup recomputing the current value */
+	tmp = S_008C04_NUM_PS_GPRS(new_num_ps_gprs) |
+		S_008C04_NUM_VS_GPRS(new_num_vs_gprs) |
+		S_008C04_NUM_CLAUSE_TEMP_GPRS(def_num_clause_temp_gprs);
+	if (rctx->config_state.sq_gpr_resource_mgmt_1 != tmp) {
 		rctx->config_state.sq_gpr_resource_mgmt_1 = tmp;
 		rctx->config_state.atom.dirty = true;
 		rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
 	}
+	return true;
 }
 
 void r600_init_atom_start_cs(struct r600_context *rctx)
