@@ -7196,7 +7196,7 @@ save_FramebufferTexture(GLenum target, GLenum attachment,
       n[4].i = level;
    }
    if (ctx->ExecuteFlag) {
-      CALL_FramebufferTextureARB(ctx->Exec, (target, attachment, texture, level));
+      CALL_FramebufferTexture(ctx->Exec, (target, attachment, texture, level));
    }
 }
 
@@ -8512,7 +8512,7 @@ execute_list(struct gl_context *ctx, GLuint list)
             CALL_ProgramParameteriARB(ctx->Exec, (n[1].ui, n[2].e, n[3].i));
             break;
          case OPCODE_FRAMEBUFFER_TEXTURE:
-            CALL_FramebufferTextureARB(ctx->Exec, (n[1].e, n[2].e,
+            CALL_FramebufferTexture(ctx->Exec, (n[1].e, n[2].e,
                                                    n[3].ui, n[4].i));
             break;
          case OPCODE_FRAMEBUFFER_TEXTURE_FACE:
@@ -10213,7 +10213,7 @@ _mesa_create_save_table(const struct gl_context *ctx)
 
    /* GL_ARB_geometry_shader4 */
    SET_ProgramParameteriARB(table, save_ProgramParameteri);
-   SET_FramebufferTextureARB(table, save_FramebufferTexture);
+   SET_FramebufferTexture(table, save_FramebufferTexture);
    SET_FramebufferTextureFaceARB(table, save_FramebufferTextureFace);
 
    /* GL_NV_conditional_render */

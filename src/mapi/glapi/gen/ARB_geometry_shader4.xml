@@ -32,7 +32,7 @@
         <param name="pname" type="GLenum"/>
         <param name="value" type="GLint"/>
     </function>
-    <function name="FramebufferTextureARB"  offset="assign">
+    <function name="FramebufferTextureARB"  alias="FramebufferTexture">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="texture" type="GLuint"/>
