@@ -430,7 +430,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return rscreen->has_streamout ? 1 : 0;
 	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
 	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
-		return 16*4;
+		return 32*4;
 
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
