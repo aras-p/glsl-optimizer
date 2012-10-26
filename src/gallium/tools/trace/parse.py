@@ -364,23 +364,23 @@ class Main:
         optparser = self.get_optparser()
         (options, args) = optparser.parse_args(sys.argv[1:])
     
-        if args:
-            for arg in args:
-                if arg.endswith('.gz'):
-                    from gzip import GzipFile
-                    stream = GzipFile(arg, 'rt')
-                elif arg.endswith('.bz2'):
-                    from bz2 import BZ2File
-                    stream = BZ2File(arg, 'rU')
-                else:
-                    stream = open(arg, 'rt')
-                self.process_arg(stream, options)
-        else:
+        if not args:
+            optparser.error('insufficient number of arguments')
+
+        for arg in args:
+            if arg.endswith('.gz'):
+                from gzip import GzipFile
+                stream = GzipFile(arg, 'rt')
+            elif arg.endswith('.bz2'):
+                from bz2 import BZ2File
+                stream = BZ2File(arg, 'rU')
+            else:
+                stream = open(arg, 'rt')
             self.process_arg(stream, options)
 
     def get_optparser(self):
         optparser = optparse.OptionParser(
-            usage="\n\t%prog [options] [traces] ...")
+            usage="\n\t%prog [options] TRACE  [...]")
         return optparser
 
     def process_arg(self, stream, options):
