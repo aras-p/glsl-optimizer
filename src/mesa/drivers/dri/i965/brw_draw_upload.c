@@ -311,13 +311,13 @@ copy_array_to_vbo_array(struct brw_context *brw,
 			struct brw_vertex_buffer *buffer,
 			GLuint dst_stride)
 {
-   if (min == -1) {
-      /* If we don't have computed min/max bounds, then this must be a use of
-       * the current attribute, which has a 0 stride.  Otherwise, we wouldn't
-       * know what data to upload.
-       */
-      assert(element->glarray->StrideB == 0);
+   const int src_stride = element->glarray->StrideB;
 
+   /* If the source stride is zero, we just want to upload the current
+    * attribute once and set the buffer's stride to 0.  There's no need
+    * to replicate it out.
+    */
+   if (src_stride == 0) {
       intel_upload_data(&brw->intel, element->glarray->Ptr,
                         element->element_size,
                         element->element_size,
@@ -327,7 +327,6 @@ copy_array_to_vbo_array(struct brw_context *brw,
       return;
    }
 
-   int src_stride = element->glarray->StrideB;
    const unsigned char *src = element->glarray->Ptr + min * src_stride;
    int count = max - min + 1;
    GLuint size = count * dst_stride;
