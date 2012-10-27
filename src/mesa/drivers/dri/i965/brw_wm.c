@@ -361,6 +361,7 @@ brw_wm_debug_recompile(struct brw_context *brw,
    found |= key_debug("depth statistics", old_key->stats_wm, key->stats_wm);
    found |= key_debug("flat shading", old_key->flat_shade, key->flat_shade);
    found |= key_debug("number of color buffers", old_key->nr_color_regions, key->nr_color_regions);
+   found |= key_debug("sample alpha to coverage", old_key->sample_alpha_to_coverage, key->sample_alpha_to_coverage);
    found |= key_debug("rendering to FBO", old_key->render_to_fbo, key->render_to_fbo);
    found |= key_debug("fragment color clamping", old_key->clamp_fragment_color, key->clamp_fragment_color);
    found |= key_debug("line smoothing", old_key->line_aa, key->line_aa);
