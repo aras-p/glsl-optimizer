@@ -205,7 +205,7 @@ accum_scale_or_bias(struct gl_context *ctx, GLfloat value,
 
    if (accRb->Format == MESA_FORMAT_SIGNED_RGBA_16) {
       const GLshort incr = (GLshort) (value * 32767.0f);
-      GLuint i, j;
+      GLint i, j;
       if (bias) {
          for (j = 0; j < height; j++) {
             GLshort *acc = (GLshort *) accMap;
@@ -283,7 +283,7 @@ accum_or_load(struct gl_context *ctx, GLfloat value,
 
    if (accRb->Format == MESA_FORMAT_SIGNED_RGBA_16) {
       const GLfloat scale = value * 32767.0f;
-      GLuint i, j;
+      GLint i, j;
       GLfloat (*rgba)[4];
 
       rgba = malloc(width * 4 * sizeof(GLfloat));
