@@ -633,7 +633,7 @@ unpack_Z24_S8(const void *src, GLfloat dst[][4], GLuint n)
    for (i = 0; i < n; i++) {
       dst[i][0] =
       dst[i][1] =
-      dst[i][2] = (s[i] >> 8) * scale;
+      dst[i][2] = (GLfloat) ((s[i] >> 8) * scale);
       dst[i][3] = 1.0F;
       ASSERT(dst[i][0] >= 0.0F);
       ASSERT(dst[i][0] <= 1.0F);
@@ -650,7 +650,7 @@ unpack_S8_Z24(const void *src, GLfloat dst[][4], GLuint n)
    for (i = 0; i < n; i++) {
       dst[i][0] =
       dst[i][1] =
-      dst[i][2] = (s[i] & 0x00ffffff) * scale;
+      dst[i][2] = (float) ((s[i] & 0x00ffffff) * scale);
       dst[i][3] = 1.0F;
       ASSERT(dst[i][0] >= 0.0F);
       ASSERT(dst[i][0] <= 1.0F);
@@ -2856,7 +2856,7 @@ unpack_float_z_Z24_X8(GLuint n, const void *src, GLfloat *dst)
    const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i] = (s[i] >> 8) * scale;
+      dst[i] = (GLfloat) ((s[i] >> 8) * scale);
       ASSERT(dst[i] >= 0.0F);
       ASSERT(dst[i] <= 1.0F);
    }
@@ -2870,7 +2870,7 @@ unpack_float_z_X8_Z24(GLuint n, const void *src, GLfloat *dst)
    const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i] = (s[i] & 0x00ffffff) * scale;
+      dst[i] = (GLfloat) ((s[i] & 0x00ffffff) * scale);
       ASSERT(dst[i] >= 0.0F);
       ASSERT(dst[i] <= 1.0F);
    }
