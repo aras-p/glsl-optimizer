@@ -284,7 +284,7 @@ tex_storage_error_check(struct gl_context *ctx, GLuint dims, GLenum target,
    }  
 
    /* check levels against maximum (note different error than above) */
-   if (levels > _mesa_max_texture_levels(ctx, target)) {
+   if (levels > (GLint) _mesa_max_texture_levels(ctx, target)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glTexStorage%uD(levels too large)", dims);
       return GL_TRUE;
