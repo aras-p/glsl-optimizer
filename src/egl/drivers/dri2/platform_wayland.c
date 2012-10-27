@@ -213,6 +213,9 @@ dri2_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
                                     dri2_surf->third_buffer);
    }
 
+   if (dri2_surf->frame_callback)
+      wl_callback_destroy(dri2_surf->frame_callback);
+
    free(surf);
 
    return EGL_TRUE;

@@ -355,6 +355,9 @@ wayland_surface_destroy(struct native_surface *nsurf)
          wl_buffer_destroy(surface->buffer[buffer]);
    }
 
+   if (surface->frame_callback)
+      wl_callback_destroy(surface->frame_callback);
+
    resource_surface_destroy(surface->rsurf);
    FREE(surface);
 }
