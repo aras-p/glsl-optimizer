@@ -193,7 +193,7 @@ hash_table_call_foreach(struct hash_table *ht,
 					 void *closure),
 			void *closure)
 {
-   int bucket;
+   unsigned bucket;
 
    for (bucket = 0; bucket < ht->num_buckets; bucket++) {
       struct node *node, *temp;
