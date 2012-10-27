@@ -183,6 +183,9 @@ def generate(env):
             if llvm_version >= distutils.version.LooseVersion('3.1'):
                 components.append('mcjit')
 
+            if llvm_version >= distutils.version.LooseVersion('3.2'):
+                env.Append(CXXFLAGS = ('-fno-rtti',))
+
             env.ParseConfig('llvm-config --libs ' + ' '.join(components))
             env.ParseConfig('llvm-config --ldflags')
         except OSError:
