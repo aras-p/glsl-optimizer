@@ -1149,7 +1149,7 @@ _mesa_GetFloatv(GLenum pname, GLfloat *params)
       break;
 
    case TYPE_DOUBLEN:
-      params[0] = ((GLdouble *) p)[0];
+      params[0] = (GLfloat) (((GLdouble *) p)[0]);
       break;
 
    case TYPE_INT_4:
@@ -1170,7 +1170,7 @@ _mesa_GetFloatv(GLenum pname, GLfloat *params)
       break;
 
    case TYPE_INT64:
-      params[0] = ((GLint64 *) p)[0];
+      params[0] = (GLfloat) (((GLint64 *) p)[0]);
       break;
 
    case TYPE_BOOLEAN:
@@ -1449,7 +1449,7 @@ _mesa_GetDoublev(GLenum pname, GLdouble *params)
       break;
 
    case TYPE_INT64:
-      params[0] = ((GLint64 *) p)[0];
+      params[0] = (GLdouble) (((GLint64 *) p)[0]);
       break;
 
    case TYPE_BOOLEAN:
