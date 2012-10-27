@@ -1587,10 +1587,10 @@ static void r600_emit_msaa_state(struct r600_context *rctx, int nr_samples)
 	};
 	static unsigned max_dist_4x = 6;
 	static uint32_t sample_locs_8x[] = {
-		FILL_SREG(-2, -5, 3, -4, -1, 5, -6, -2),
-		FILL_SREG( 6,  0, 0,  0, -5, 3,  4,  4),
+		FILL_SREG(-1,  1,  1,  5,  3, -5,  5,  3),
+		FILL_SREG(-7, -1, -3, -7,  7, -3, -5,  7),
 	};
-	static unsigned max_dist_8x = 8;
+	static unsigned max_dist_8x = 7;
 
 	struct radeon_winsys_cs *cs = rctx->cs;
 	unsigned max_dist = 0;
