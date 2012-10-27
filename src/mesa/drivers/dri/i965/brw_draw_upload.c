@@ -536,34 +536,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
       upload[i]->offset = 0;
    }
 
-   /* can we simply extend the current vb? */
-   if (j == brw->vb.nr_current_buffers) {
-      int delta = 0;
-      for (i = 0; i < j; i++) {
-	 int d;
-
-	 if (brw->vb.current_buffers[i].handle != brw->vb.buffers[i].bo->handle ||
-	     brw->vb.current_buffers[i].stride != brw->vb.buffers[i].stride ||
-	     brw->vb.current_buffers[i].step_rate != brw->vb.buffers[i].step_rate)
-	    break;
-
-	 d = brw->vb.buffers[i].offset - brw->vb.current_buffers[i].offset;
-	 if (d < 0)
-	    break;
-	 if (i == 0)
-	    delta = d / brw->vb.current_buffers[i].stride;
-	 if (delta * brw->vb.current_buffers[i].stride != d)
-	    break;
-      }
-
-      if (i == j) {
-	 brw->vb.start_vertex_bias += delta;
-	 while (--j >= 0)
-	    drm_intel_bo_unreference(brw->vb.buffers[j].bo);
-	 j = 0;
-      }
-   }
-
    brw->vb.nr_buffers = j;
 }
 
@@ -644,13 +616,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 	 } else
 	    OUT_BATCH(0);
 	 OUT_BATCH(buffer->step_rate);
-
-	 brw->vb.current_buffers[i].handle = buffer->bo->handle;
-	 brw->vb.current_buffers[i].offset = buffer->offset;
-	 brw->vb.current_buffers[i].stride = buffer->stride;
-	 brw->vb.current_buffers[i].step_rate = buffer->step_rate;
       }
-      brw->vb.nr_current_buffers = i;
       ADVANCE_BATCH();
    }
 

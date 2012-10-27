@@ -196,7 +196,6 @@ static void brw_new_batch( struct intel_context *intel )
     */
    brw->sol.offset_0_batch_start = brw->sol.svbi_0_starting_index;
 
-   brw->vb.nr_current_buffers = 0;
    brw->ib.type = -1;
 
    /* Mark that the current program cache BO has been used by the GPU.

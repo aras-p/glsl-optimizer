@@ -773,16 +773,10 @@ struct brw_context
    struct {
       struct brw_vertex_element inputs[VERT_ATTRIB_MAX];
       struct brw_vertex_buffer buffers[VERT_ATTRIB_MAX];
-      struct {
-	      uint32_t handle;
-	      uint32_t offset;
-	      uint32_t stride;
-	      uint32_t step_rate;
-      } current_buffers[VERT_ATTRIB_MAX];
 
       struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
       GLuint nr_enabled;
-      GLuint nr_buffers, nr_current_buffers;
+      GLuint nr_buffers;
 
       /* Summary of size and varying of active arrays, so we can check
        * for changes to this state:
