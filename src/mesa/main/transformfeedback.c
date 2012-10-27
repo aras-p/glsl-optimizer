@@ -277,7 +277,7 @@ _mesa_BeginTransformFeedback(GLenum mode)
 {
    struct gl_transform_feedback_object *obj;
    struct gl_transform_feedback_info *info;
-   int i;
+   GLuint i;
    GET_CURRENT_CONTEXT(ctx);
 
    obj = ctx->TransformFeedback.CurrentObject;
@@ -537,7 +537,7 @@ _mesa_TransformFeedbackVaryings(GLuint program, GLsizei count,
                                 const GLchar **varyings, GLenum bufferMode)
 {
    struct gl_shader_program *shProg;
-   GLuint i;
+   GLint i;
    GET_CURRENT_CONTEXT(ctx);
 
    switch (bufferMode) {
@@ -648,7 +648,7 @@ _mesa_GetTransformFeedbackVarying(GLuint program, GLuint index,
    }
 
    linked_xfb_info = &shProg->LinkedTransformFeedback;
-   if (index >= linked_xfb_info->NumVarying) {
+   if (index >= (GLuint) linked_xfb_info->NumVarying) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glGetTransformFeedbackVaryings(index=%u)", index);
       return;
