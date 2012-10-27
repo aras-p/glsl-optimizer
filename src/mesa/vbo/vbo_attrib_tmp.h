@@ -61,12 +61,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static inline float conv_ui10_to_norm_float(unsigned ui10)
 {
-   return (float)(ui10) / 1023.0;
+   return ui10 / 1023.0f;
 }
 
 static inline float conv_ui2_to_norm_float(unsigned ui2)
 {
-   return (float)(ui2) / 3.0;
+   return ui2 / 3.0f;
 }
 
 #define ATTRUI10_1( A, UI ) ATTR( A, 1, (UI) & 0x3ff, 0, 0, 1 )
