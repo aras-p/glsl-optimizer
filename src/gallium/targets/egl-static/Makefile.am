@@ -191,6 +191,15 @@ egl_gallium_la_LIBADD += \
 	$(top_builddir)/src/gallium/drivers/svga/libsvga.la
 endif
 
+if HAVE_GALLIUM_FREEDRENO
+AM_CPPFLAGS += -D_EGL_PIPE_FREEDRENO=1
+egl_gallium_la_LIBADD += \
+	$(top_builddir)/src/gallium/winsys/freedreno/drm/libfreedrenodrm.la \
+	$(top_builddir)/src/gallium/drivers/freedreno/libfreedreno.la \
+	$(FREEDRENO_LIBS)
+
+endif
+
 if HAVE_GALLIUM_SOFTPIPE
 AM_CPPFLAGS += -DGALLIUM_SOFTPIPE -DGALLIUM_RBUG -DGALLIUM_TRACE
 egl_gallium_la_LIBADD += \

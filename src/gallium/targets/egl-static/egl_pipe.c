@@ -45,6 +45,8 @@
 /* for vmwgfx */
 #include "svga/drm/svga_drm_public.h"
 #include "svga/svga_public.h"
+/* for freedreno */
+#include "freedreno/drm/freedreno_drm_public.h"
 
 static struct pipe_screen *
 pipe_i915_create_screen(int fd)
@@ -179,6 +181,24 @@ pipe_vmwgfx_create_screen(int fd)
 #endif
 }
 
+static struct pipe_screen *
+pipe_freedreno_create_screen(int fd)
+{
+#if _EGL_PIPE_FREEDRENO
+   struct pipe_screen *screen;
+
+   screen = fd_drm_screen_create(fd);
+   if (!screen)
+      return NULL;
+
+   screen = debug_screen_wrap(screen);
+
+   return screen;
+#else
+   return NULL;
+#endif
+}
+
 struct pipe_screen *
 egl_pipe_create_drm_screen(const char *name, int fd)
 {
@@ -194,6 +214,8 @@ egl_pipe_create_drm_screen(const char *name, int fd)
       return pipe_radeonsi_create_screen(fd);
    else if (strcmp(name, "vmwgfx") == 0)
       return pipe_vmwgfx_create_screen(fd);
+   else if (strcmp(name, "kgsl") == 0)
+      return pipe_freedreno_create_screen(fd);
    else
       return NULL;
 }

@@ -35,6 +35,7 @@ LIBDRM_RADEON_REQUIRED=2.4.42
 LIBDRM_INTEL_REQUIRED=2.4.38
 LIBDRM_NVVIEUX_REQUIRED=2.4.33
 LIBDRM_NOUVEAU_REQUIRED="2.4.33 libdrm >= 2.4.41"
+LIBDRM_FREEDRENO_REQUIRED=2.4.39
 DRI2PROTO_REQUIRED=2.6
 GLPROTO_REQUIRED=1.4.14
 LIBDRM_XORG_REQUIRED=2.4.24
@@ -653,7 +654,7 @@ GALLIUM_DRIVERS_DEFAULT="r300,r600,svga,swrast"
 AC_ARG_WITH([gallium-drivers],
     [AS_HELP_STRING([--with-gallium-drivers@<:@=DIRS...@:>@],
         [comma delimited Gallium drivers list, e.g.
-        "i915,nouveau,r300,r600,radeonsi,svga,swrast"
+        "i915,nouveau,r300,r600,radeonsi,freedreno,svga,swrast"
         @<:@default=r300,r600,svga,swrast@:>@])],
     [with_gallium_drivers="$withval"],
     [with_gallium_drivers="$GALLIUM_DRIVERS_DEFAULT"])
@@ -1840,6 +1841,13 @@ if test "x$with_gallium_drivers" != x; then
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nv30 nv50 nvc0"
             gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau" "" "xvmc-nouveau" "vdpau-nouveau"
             ;;
+        xfreedreno)
+            HAVE_GALLIUM_FREEDRENO=yes
+            PKG_CHECK_MODULES([FREEDRENO], [libdrm_freedreno >= $LIBDRM_FREEDRENO_REQUIRED])
+            gallium_require_drm_loader
+            GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS freedreno"
+            gallium_check_st "freedreno/drm" "dri-freedreno" "" "" "" ""
+            ;;
         xswrast)
             HAVE_GALLIUM_SOFTPIPE=yes
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS softpipe"
@@ -1920,6 +1928,7 @@ AM_CONDITIONAL(HAVE_GALLIUM_R300, test "x$HAVE_GALLIUM_R300" = xyes)
 AM_CONDITIONAL(HAVE_GALLIUM_R600, test "x$HAVE_GALLIUM_R600" = xyes)
 AM_CONDITIONAL(HAVE_GALLIUM_RADEONSI, test "x$HAVE_GALLIUM_RADEONSI" = xyes)
 AM_CONDITIONAL(HAVE_GALLIUM_NOUVEAU, test "x$HAVE_GALLIUM_NOUVEAU" = xyes)
+AM_CONDITIONAL(HAVE_GALLIUM_FREEDRENO, test "x$HAVE_GALLIUM_FREEDRENO" = xyes)
 AM_CONDITIONAL(HAVE_GALLIUM_SOFTPIPE, test "x$HAVE_GALLIUM_SOFTPIPE" = xyes)
 AM_CONDITIONAL(HAVE_GALLIUM_LLVMPIPE, test "x$HAVE_GALLIUM_LLVMPIPE" = xyes)
 
@@ -2051,6 +2060,7 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/drivers/rbug/Makefile
 		src/gallium/drivers/softpipe/Makefile
 		src/gallium/drivers/svga/Makefile
+		src/gallium/drivers/freedreno/Makefile
 		src/gallium/drivers/trace/Makefile
 		src/gallium/state_trackers/Makefile
 		src/gallium/state_trackers/clover/Makefile
@@ -2071,6 +2081,7 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/dri-r300/Makefile
 		src/gallium/targets/dri-r600/Makefile
 		src/gallium/targets/dri-radeonsi/Makefile
+		src/gallium/targets/dri-freedreno/Makefile
 		src/gallium/targets/dri-swrast/Makefile
 		src/gallium/targets/dri-vmwgfx/Makefile
 		src/gallium/targets/egl-static/Makefile
@@ -2101,6 +2112,7 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/winsys/nouveau/drm/Makefile
 		src/gallium/winsys/radeon/drm/Makefile
 		src/gallium/winsys/svga/drm/Makefile
+		src/gallium/winsys/freedreno/drm/Makefile
 		src/gallium/winsys/sw/Makefile
 		src/gallium/winsys/sw/dri/Makefile
 		src/gallium/winsys/sw/fbdev/Makefile
