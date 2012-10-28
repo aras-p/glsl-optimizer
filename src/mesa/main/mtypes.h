@@ -2919,6 +2919,9 @@ struct gl_constants
     * Force software support for primitive restart in the VBO module.
     */
    GLboolean PrimitiveRestartInSoftware;
+
+   /** GL_ARB_map_buffer_alignment */
+   GLuint MinMapBufferAlignment;
 };
 
 
@@ -2954,6 +2957,7 @@ struct gl_extensions
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_half_float_vertex;
    GLboolean ARB_instanced_arrays;
+   GLboolean ARB_map_buffer_alignment;
    GLboolean ARB_map_buffer_range;
    GLboolean ARB_occlusion_query;
    GLboolean ARB_occlusion_query2;
