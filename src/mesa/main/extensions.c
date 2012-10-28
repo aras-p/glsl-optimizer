@@ -169,7 +169,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_depth_bounds_test",                   o(EXT_depth_bounds_test),                   GL,             2002 },
    { "GL_EXT_draw_buffers2",                       o(EXT_draw_buffers2),                       GL,             2006 },
    { "GL_EXT_draw_instanced",                      o(ARB_draw_instanced),                      GL,             2006 },
-   { "GL_EXT_draw_range_elements",                 o(EXT_draw_range_elements),                 GLL,            1997 },
+   { "GL_EXT_draw_range_elements",                 o(dummy_true),                              GLL,            1997 },
    { "GL_EXT_fog_coord",                           o(EXT_fog_coord),                           GLL,            1999 },
    { "GL_EXT_framebuffer_blit",                    o(EXT_framebuffer_blit),                    GL,             2005 },
    { "GL_EXT_framebuffer_multisample",             o(EXT_framebuffer_multisample),             GL,             2005 },
@@ -357,7 +357,6 @@ name_to_offset(const char* name)
  * XXX: Should these defaults also apply to GLES?
  */
 static const size_t default_extensions[] = {
-   o(EXT_draw_range_elements),
    o(EXT_packed_pixels),
    o(EXT_rescale_normal),
    o(EXT_separate_specular_color),

@@ -2997,7 +2997,6 @@ struct gl_extensions
    GLboolean EXT_clip_volume_hint;
    GLboolean EXT_depth_bounds_test;
    GLboolean EXT_draw_buffers2;
-   GLboolean EXT_draw_range_elements;
    GLboolean EXT_fog_coord;
    GLboolean EXT_framebuffer_blit;
    GLboolean EXT_framebuffer_multisample;
