@@ -306,7 +306,6 @@ EXTRA_EXT(EXT_texture_filter_anisotropic);
 EXTRA_EXT(NV_point_sprite);
 EXTRA_EXT(NV_texture_rectangle);
 EXTRA_EXT(EXT_stencil_two_side);
-EXTRA_EXT(NV_light_max_exponent);
 EXTRA_EXT(EXT_depth_bounds_test);
 EXTRA_EXT(ARB_depth_clamp);
 EXTRA_EXT(ATI_fragment_shader);

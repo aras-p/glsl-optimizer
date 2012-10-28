@@ -304,7 +304,7 @@ static const struct extension extension_table[] = {
    { "GL_NV_fbo_color_attachments",                o(EXT_framebuffer_object),                             ES2, 2010 },
    { "GL_NV_fog_distance",                         o(NV_fog_distance),                         GLL,            2001 },
    { "GL_NV_fragment_program_option",              o(NV_fragment_program_option),              GLL,            2005 },
-   { "GL_NV_light_max_exponent",                   o(NV_light_max_exponent),                   GLL,            1999 },
+   { "GL_NV_light_max_exponent",                   o(dummy_true),                              GLL,            1999 },
    { "GL_NV_packed_depth_stencil",                 o(EXT_packed_depth_stencil),                GL,             2000 },
    { "GL_NV_point_sprite",                         o(NV_point_sprite),                         GL,             2001 },
    { "GL_NV_primitive_restart",                    o(NV_primitive_restart),                    GL,             2002 },
@@ -358,7 +358,6 @@ name_to_offset(const char* name)
  */
 static const size_t default_extensions[] = {
    /* Vendor Extensions */
-   o(NV_light_max_exponent),
    o(NV_texgen_reflection),
    o(SGIS_texture_lod),
 
@@ -451,7 +450,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
    ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_conditional_render = GL_TRUE;
-   /*ctx->Extensions.NV_light_max_exponent = GL_TRUE;*/
    ctx->Extensions.NV_point_sprite = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;

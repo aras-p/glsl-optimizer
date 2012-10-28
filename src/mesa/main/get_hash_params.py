@@ -523,8 +523,8 @@ descriptor=[
   [ "ACTIVE_STENCIL_FACE_EXT", "LOC_CUSTOM, TYPE_ENUM, NO_OFFSET, NO_EXTRA" ],
 
 # GL_NV_light_max_exponent
-  [ "MAX_SHININESS_NV", "CONTEXT_FLOAT(Const.MaxShininess), extra_NV_light_max_exponent" ],
-  [ "MAX_SPOT_EXPONENT_NV", "CONTEXT_FLOAT(Const.MaxSpotExponent), extra_NV_light_max_exponent" ],
+  [ "MAX_SHININESS_NV", "CONTEXT_FLOAT(Const.MaxShininess), NO_EXTRA" ],
+  [ "MAX_SPOT_EXPONENT_NV", "CONTEXT_FLOAT(Const.MaxSpotExponent), NO_EXTRA" ],
 
 # GL_NV_primitive_restart
   [ "PRIMITIVE_RESTART_NV", "CONTEXT_BOOL(Array.PrimitiveRestart), extra_NV_primitive_restart" ],
