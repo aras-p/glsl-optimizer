@@ -25,6 +25,66 @@
  *
  **************************************************************************/
 
+/**
+ * This module uploads user buffers and translates the vertex buffers which
+ * contain incompatible vertices (i.e. not supported by the driver/hardware)
+ * into compatible ones, based on the Gallium CAPs.
+ *
+ * It does not upload index buffers.
+ *
+ * The module heavily uses bitmasks to represent per-buffer and
+ * per-vertex-element flags to avoid looping over the list of buffers just
+ * to see if there's a non-zero stride, or user buffer, or unsupported format,
+ * etc.
+ *
+ * There are 3 categories of vertex elements, which are processed separately:
+ * - per-vertex attribs (stride != 0, instance_divisor == 0)
+ * - instanced attribs (stride != 0, instance_divisor > 0)
+ * - constant attribs (stride == 0)
+ *
+ * All needed uploads and translations are performed every draw command, but
+ * only the subset of vertices needed for that draw command is uploaded or
+ * translated. (the module never translates whole buffers)
+ *
+ *
+ * The module consists of two main parts:
+ *
+ *
+ * 1) Translate (u_vbuf_translate_begin/end)
+ *
+ * This is pretty much a vertex fetch fallback. It translates vertices from
+ * one vertex buffer to another in an unused vertex buffer slot. It does
+ * whatever is needed to make the vertices readable by the hardware (changes
+ * vertex formats and aligns offsets and strides). The translate module is
+ * used here.
+ *
+ * Each of the 3 categories is translated to a separate buffer.
+ * Only the [min_index, max_index] range is translated. For instanced attribs,
+ * the range is [start_instance, start_instance+instance_count]. For constant
+ * attribs, the range is [0, 1].
+ *
+ *
+ * 2) User buffer uploading (u_vbuf_upload_buffers)
+ *
+ * Only the [min_index, max_index] range is uploaded (just like Translate)
+ * with a single memcpy.
+ *
+ * This method works best for non-indexed draw operations or indexed draw
+ * operations where the [min_index, max_index] range is not being way bigger
+ * than the vertex count.
+ *
+ * If the range is too big (e.g. one triangle with indices {0, 1, 10000}),
+ * the per-vertex attribs are uploaded via the translate module, all packed
+ * into one vertex buffer, and the indexed draw call is turned into
+ * a non-indexed one in the process. This adds additional complexity
+ * to the translate part, but it prevents bad apps from bringing your frame
+ * rate down.
+ *
+ *
+ * If there is nothing to do, it forwards every command to the driver.
+ * The module also has its own CSO cache of vertex element states.
+ */
+
 #include "util/u_vbuf.h"
 
 #include "util/u_dump.h"

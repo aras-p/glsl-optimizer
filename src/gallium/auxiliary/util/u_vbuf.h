@@ -28,9 +28,9 @@
 #ifndef U_VBUF_H
 #define U_VBUF_H
 
-/* This module builds upon u_upload_mgr and translate_cache and takes care of
- * user buffer uploads and vertex format fallbacks. It's designed
- * for the drivers which don't always use the Draw module. (e.g. for HWTCL)
+/* This module takes care of user buffer uploads and vertex format fallbacks.
+ * It's designed for the drivers which don't want to use the Draw module.
+ * There is a more detailed description at the beginning of the .c file.
  */
 
 #include "pipe/p_context.h"
