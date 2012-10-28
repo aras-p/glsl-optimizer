@@ -507,7 +507,7 @@ descriptor=[
   [ "FOG_DISTANCE_MODE_NV", "CONTEXT_ENUM(Fog.FogDistanceMode), extra_NV_fog_distance" ],
 
 # GL_IBM_rasterpos_clip
-  [ "RASTER_POSITION_UNCLIPPED_IBM", "CONTEXT_BOOL(Transform.RasterPositionUnclipped), extra_IBM_rasterpos_clip" ],
+  [ "RASTER_POSITION_UNCLIPPED_IBM", "CONTEXT_BOOL(Transform.RasterPositionUnclipped), NO_EXTRA" ],
 
 # GL_NV_point_sprite
   [ "POINT_SPRITE_R_MODE_NV", "CONTEXT_ENUM(Point.SpriteRMode), extra_NV_point_sprite" ],

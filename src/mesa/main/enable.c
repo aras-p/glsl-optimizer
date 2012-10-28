@@ -803,7 +803,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
-         CHECK_EXTENSION(IBM_rasterpos_clip, cap);
          if (ctx->Transform.RasterPositionUnclipped == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
@@ -1450,7 +1449,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
          if (ctx->API != API_OPENGL)
             goto invalid_enum_error;
-         CHECK_EXTENSION(IBM_rasterpos_clip);
          return ctx->Transform.RasterPositionUnclipped;
 
       /* GL_NV_point_sprite */
