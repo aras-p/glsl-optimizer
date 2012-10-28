@@ -357,7 +357,7 @@ extra_ARB_vertex_program_api_es2[] = {
  * GLES2 if the NV_read_buffer extension is available. */
 static const int
 extra_NV_read_buffer_api_gl[] = {
-   EXT(NV_read_buffer),
+   EXTRA_API_ES2,
    EXTRA_API_GL,
    EXTRA_END
 };
