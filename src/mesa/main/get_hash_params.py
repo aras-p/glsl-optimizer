@@ -480,8 +480,8 @@ descriptor=[
   [ "TEXTURE_COMPRESSION_HINT_ARB", "CONTEXT_INT(Hint.TextureCompression), NO_EXTRA" ],
 
 # GL_EXT_compiled_vertex_array
-  [ "ARRAY_ELEMENT_LOCK_FIRST_EXT", "CONTEXT_INT(Array.LockFirst), extra_EXT_compiled_vertex_array" ],
-  [ "ARRAY_ELEMENT_LOCK_COUNT_EXT", "CONTEXT_INT(Array.LockCount), extra_EXT_compiled_vertex_array" ],
+  [ "ARRAY_ELEMENT_LOCK_FIRST_EXT", "CONTEXT_INT(Array.LockFirst), NO_EXTRA" ],
+  [ "ARRAY_ELEMENT_LOCK_COUNT_EXT", "CONTEXT_INT(Array.LockCount), NO_EXTRA" ],
 
 # GL_ARB_transpose_matrix
   [ "TRANSPOSE_MODELVIEW_MATRIX_ARB", "CONTEXT_MATRIX_T(ModelviewMatrixStack), NO_EXTRA" ],

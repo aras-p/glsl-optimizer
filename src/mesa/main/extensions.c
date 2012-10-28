@@ -164,7 +164,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_blend_minmax",                        o(EXT_blend_minmax),                        GLL | ES1 | ES2, 1995 },
    { "GL_EXT_blend_subtract",                      o(dummy_true),                              GLL,            1995 },
    { "GL_EXT_clip_volume_hint",                    o(EXT_clip_volume_hint),                    GL,             1996 },
-   { "GL_EXT_compiled_vertex_array",               o(EXT_compiled_vertex_array),               GLL,            1996 },
+   { "GL_EXT_compiled_vertex_array",               o(dummy_true),                              GLL,            1996 },
    { "GL_EXT_copy_texture",                        o(dummy_true),                              GLL,            1995 },
    { "GL_EXT_depth_bounds_test",                   o(EXT_depth_bounds_test),                   GL,             2002 },
    { "GL_EXT_draw_buffers2",                       o(EXT_draw_buffers2),                       GL,             2006 },
@@ -357,7 +357,6 @@ name_to_offset(const char* name)
  * XXX: Should these defaults also apply to GLES?
  */
 static const size_t default_extensions[] = {
-   o(EXT_compiled_vertex_array),
    o(EXT_draw_range_elements),
    o(EXT_packed_pixels),
    o(EXT_rescale_normal),

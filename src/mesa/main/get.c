@@ -319,7 +319,6 @@ EXTRA_EXT(ARB_fragment_program);
 EXTRA_EXT2(ARB_framebuffer_object, EXT_framebuffer_multisample);
 EXTRA_EXT(EXT_framebuffer_object);
 EXTRA_EXT(ARB_seamless_cube_map);
-EXTRA_EXT(EXT_compiled_vertex_array);
 EXTRA_EXT(ARB_sync);
 EXTRA_EXT(ARB_vertex_shader);
 EXTRA_EXT(EXT_transform_feedback);
