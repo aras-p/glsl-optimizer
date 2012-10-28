@@ -181,7 +181,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_multi_draw_arrays",                   o(dummy_true),                              GLL | ES1 | ES2, 1999 },
    { "GL_EXT_packed_depth_stencil",                o(EXT_packed_depth_stencil),                GL,             2005 },
    { "GL_EXT_packed_float",                        o(EXT_packed_float),                        GL,             2004 },
-   { "GL_EXT_packed_pixels",                       o(EXT_packed_pixels),                       GLL,            1997 },
+   { "GL_EXT_packed_pixels",                       o(dummy_true),                              GLL,            1997 },
    { "GL_EXT_pixel_buffer_object",                 o(EXT_pixel_buffer_object),                 GL,             2004 },
    { "GL_EXT_point_parameters",                    o(EXT_point_parameters),                    GLL,            1997 },
    { "GL_EXT_polygon_offset",                      o(dummy_true),                              GLL,            1995 },
@@ -357,7 +357,6 @@ name_to_offset(const char* name)
  * XXX: Should these defaults also apply to GLES?
  */
 static const size_t default_extensions[] = {
-   o(EXT_packed_pixels),
    o(EXT_rescale_normal),
    o(EXT_separate_specular_color),
    o(EXT_texture3D),
