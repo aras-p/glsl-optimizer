@@ -83,7 +83,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_base_instance",                       o(ARB_base_instance),                       GL,             2011 },
    { "GL_ARB_blend_func_extended",                 o(ARB_blend_func_extended),                 GL,             2009 },
    { "GL_ARB_color_buffer_float",                  o(ARB_color_buffer_float),                  GL,             2004 },
-   { "GL_ARB_copy_buffer",                         o(ARB_copy_buffer),                         GL,             2008 },
+   { "GL_ARB_copy_buffer",                         o(dummy_true),                              GL,             2008 },
    { "GL_ARB_conservative_depth",                  o(ARB_conservative_depth),                  GL,             2011 },
    { "GL_ARB_debug_output",                        o(dummy_true),                              GL,             2009 },
    { "GL_ARB_depth_buffer_float",                  o(ARB_depth_buffer_float),                  GL,             2008 },
@@ -357,7 +357,6 @@ name_to_offset(const char* name)
  * XXX: Should these defaults also apply to GLES?
  */
 static const size_t default_extensions[] = {
-   o(ARB_copy_buffer),
    o(ARB_transpose_matrix),
    o(ARB_window_pos),
 
@@ -389,7 +388,6 @@ static const size_t default_extensions[] = {
 void
 _mesa_enable_sw_extensions(struct gl_context *ctx)
 {
-   /*ctx->Extensions.ARB_copy_buffer = GL_TRUE;*/
    ctx->Extensions.ARB_depth_clamp = GL_TRUE;
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
    ctx->Extensions.ARB_draw_elements_base_vertex = GL_TRUE;

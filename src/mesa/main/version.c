@@ -213,7 +213,6 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.NV_conditional_render);
    const GLboolean ver_3_1 = (ver_3_0 &&
                               ctx->Const.GLSLVersion >= 140 &&
-                              ctx->Extensions.ARB_copy_buffer &&
                               ctx->Extensions.ARB_draw_instanced &&
                               ctx->Extensions.ARB_texture_buffer_object &&
                               ctx->Extensions.ARB_uniform_buffer_object &&

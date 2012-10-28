@@ -99,8 +99,8 @@ descriptor=[
   [ "CLAMP_READ_COLOR", "CONTEXT_ENUM(Color.ClampReadColor), extra_ARB_color_buffer_float" ],
 
 # GL_ARB_copy_buffer
-  [ "COPY_READ_BUFFER", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_copy_buffer" ],
-  [ "COPY_WRITE_BUFFER", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_copy_buffer" ],
+  [ "COPY_READ_BUFFER", "LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA" ],
+  [ "COPY_WRITE_BUFFER", "LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA" ],
 
 # GL_OES_read_format
   [ "IMPLEMENTATION_COLOR_READ_TYPE_OES", "LOC_CUSTOM, TYPE_INT, 0, extra_new_buffers" ],
