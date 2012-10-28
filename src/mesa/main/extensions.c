@@ -189,7 +189,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_rescale_normal",                      o(dummy_true),                              GLL,            1997 },
    { "GL_EXT_secondary_color",                     o(EXT_secondary_color),                     GLL,            1999 },
    { "GL_EXT_separate_shader_objects",             o(EXT_separate_shader_objects),             GLL,            2008 },
-   { "GL_EXT_separate_specular_color",             o(EXT_separate_specular_color),             GLL,            1997 },
+   { "GL_EXT_separate_specular_color",             o(dummy_true),                              GLL,            1997 },
    { "GL_EXT_shadow_funcs",                        o(EXT_shadow_funcs),                        GLL,            2002 },
    { "GL_EXT_stencil_two_side",                    o(EXT_stencil_two_side),                    GLL,            2001 },
    { "GL_EXT_stencil_wrap",                        o(dummy_true),                              GLL,            2002 },
@@ -357,7 +357,6 @@ name_to_offset(const char* name)
  * XXX: Should these defaults also apply to GLES?
  */
 static const size_t default_extensions[] = {
-   o(EXT_separate_specular_color),
    o(EXT_texture3D),
 
    o(OES_standard_derivatives),
