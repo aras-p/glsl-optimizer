@@ -650,7 +650,6 @@ static const char *es2_extensions[] = {
    /* Used by mesa internally (cf all_mesa_extensions in ../common/utils.c) */
    "GL_EXT_blend_func_separate",
    "GL_EXT_framebuffer_blit",
-   "GL_IBM_multimode_draw_arrays",
    "GL_MESA_window_pos",
 
    /* Required by GLES2 */

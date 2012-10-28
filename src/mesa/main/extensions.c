@@ -287,7 +287,7 @@ static const struct extension extension_table[] = {
    { "GL_ATI_texture_env_combine3",                o(ATI_texture_env_combine3),                GLL,            2002 },
    { "GL_ATI_texture_float",                       o(ARB_texture_float),                       GL,             2002 },
    { "GL_ATI_texture_mirror_once",                 o(ATI_texture_mirror_once),                 GL,             2006 },
-   { "GL_IBM_multimode_draw_arrays",               o(IBM_multimode_draw_arrays),               GL,             1998 },
+   { "GL_IBM_multimode_draw_arrays",               o(dummy_true),                              GL,             1998 },
    { "GL_IBM_rasterpos_clip",                      o(IBM_rasterpos_clip),                      GL,             1996 },
    { "GL_IBM_texture_mirrored_repeat",             o(dummy_true),                              GLL,            1998 },
    { "GL_INGR_blend_func_separate",                o(EXT_blend_func_separate),                 GLL,            1999 },
@@ -358,7 +358,6 @@ name_to_offset(const char* name)
  */
 static const size_t default_extensions[] = {
    /* Vendor Extensions */
-   o(IBM_multimode_draw_arrays),
    o(IBM_rasterpos_clip),
    o(NV_light_max_exponent),
    o(NV_texgen_reflection),
@@ -447,7 +446,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_texture_swizzle = GL_TRUE;
    /*ctx->Extensions.EXT_transform_feedback = GL_TRUE;*/
    ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;
-   /*ctx->Extensions.IBM_multimode_draw_arrays = GL_TRUE;*/
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
    ctx->Extensions.MESA_resize_buffers = GL_TRUE;
    ctx->Extensions.MESA_texture_array = GL_TRUE;
