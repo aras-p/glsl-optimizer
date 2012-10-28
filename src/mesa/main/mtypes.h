@@ -3032,7 +3032,6 @@ struct gl_extensions
    GLboolean OES_standard_derivatives;
    /* vendor extensions */
    GLboolean AMD_seamless_cubemap_per_texture;
-   GLboolean APPLE_packed_pixels;
    GLboolean APPLE_object_purgeable;
    GLboolean ATI_envmap_bumpmap;
    GLboolean ATI_texture_compression_3dc;
