@@ -49,6 +49,8 @@ struct u_vbuf_elements {
    enum pipe_format native_format[PIPE_MAX_ATTRIBS];
    unsigned native_format_size[PIPE_MAX_ATTRIBS];
 
+   /* Which buffers are used by the vertex element state. */
+   uint32_t used_vb_mask;
    /* This might mean two things:
     * - src_format != native_format, as discussed above.
     * - src_offset % 4 != 0 (if the caps don't allow such an offset). */
@@ -430,6 +432,8 @@ u_vbuf_translate_begin(struct u_vbuf *mgr,
    struct translate_key key[VB_NUM];
    unsigned elem_index[VB_NUM][PIPE_MAX_ATTRIBS]; /* ... into key.elements */
    unsigned i, type;
+   unsigned incompatible_vb_mask = mgr->incompatible_vb_mask &
+                                   mgr->ve->used_vb_mask;
 
    int start[VB_NUM] = {
       start_vertex,     /* VERTEX */
@@ -453,20 +457,20 @@ u_vbuf_translate_begin(struct u_vbuf *mgr,
 
       if (!mgr->vertex_buffer[vb_index].stride) {
          if (!(mgr->ve->incompatible_elem_mask & (1 << i)) &&
-             !(mgr->incompatible_vb_mask & (1 << vb_index))) {
+             !(incompatible_vb_mask & (1 << vb_index))) {
             continue;
          }
          mask[VB_CONST] |= 1 << vb_index;
       } else if (mgr->ve->ve[i].instance_divisor) {
          if (!(mgr->ve->incompatible_elem_mask & (1 << i)) &&
-             !(mgr->incompatible_vb_mask & (1 << vb_index))) {
+             !(incompatible_vb_mask & (1 << vb_index))) {
             continue;
          }
          mask[VB_INSTANCE] |= 1 << vb_index;
       } else {
          if (!unroll_indices &&
              !(mgr->ve->incompatible_elem_mask & (1 << i)) &&
-             !(mgr->incompatible_vb_mask & (1 << vb_index))) {
+             !(incompatible_vb_mask & (1 << vb_index))) {
             continue;
          }
          mask[VB_VERTEX] |= 1 << vb_index;
@@ -488,7 +492,7 @@ u_vbuf_translate_begin(struct u_vbuf *mgr,
       bit = 1 << vb_index;
 
       if (!(mgr->ve->incompatible_elem_mask & (1 << i)) &&
-          !(mgr->incompatible_vb_mask & (1 << vb_index)) &&
+          !(incompatible_vb_mask & (1 << vb_index)) &&
           (!unroll_indices || !(mask[VB_VERTEX] & bit))) {
          continue;
       }
@@ -690,6 +694,7 @@ u_vbuf_create_vertex_elements(struct u_vbuf *mgr, unsigned count,
       }
    }
 
+   ve->used_vb_mask = used_buffers;
    ve->compatible_vb_mask_all = ~ve->incompatible_vb_mask_any & used_buffers;
    ve->incompatible_vb_mask_all = ~ve->compatible_vb_mask_any & used_buffers;
 
@@ -907,9 +912,10 @@ static boolean u_vbuf_need_minmax_index(struct u_vbuf *mgr)
    /* See if there are any per-vertex attribs which will be uploaded or
     * translated. Use bitmasks to get the info instead of looping over vertex
     * elements. */
-   return ((mgr->user_vb_mask | mgr->incompatible_vb_mask |
-            mgr->ve->incompatible_vb_mask_any) &
-           mgr->ve->noninstance_vb_mask_any & mgr->nonzero_stride_vb_mask) != 0;
+   return (mgr->ve->used_vb_mask &
+           ((mgr->user_vb_mask | mgr->incompatible_vb_mask |
+             mgr->ve->incompatible_vb_mask_any) &
+            mgr->ve->noninstance_vb_mask_any & mgr->nonzero_stride_vb_mask)) != 0;
 }
 
 static boolean u_vbuf_mapping_vertex_buffer_blocks(struct u_vbuf *mgr)
@@ -918,9 +924,10 @@ static boolean u_vbuf_mapping_vertex_buffer_blocks(struct u_vbuf *mgr)
     *
     * We could query whether each buffer is busy, but that would
     * be way more costly than this. */
-   return (~mgr->user_vb_mask & ~mgr->incompatible_vb_mask &
-           mgr->ve->compatible_vb_mask_all & mgr->ve->noninstance_vb_mask_any &
-           mgr->nonzero_stride_vb_mask) != 0;
+   return (mgr->ve->used_vb_mask &
+           (~mgr->user_vb_mask & ~mgr->incompatible_vb_mask &
+            mgr->ve->compatible_vb_mask_all & mgr->ve->noninstance_vb_mask_any &
+            mgr->nonzero_stride_vb_mask)) != 0;
 }
 
 static void u_vbuf_get_minmax_index(struct pipe_context *pipe,
@@ -1041,15 +1048,17 @@ void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info)
    int start_vertex, min_index;
    unsigned num_vertices;
    boolean unroll_indices = FALSE;
-   uint32_t user_vb_mask = mgr->user_vb_mask;
+   uint32_t used_vb_mask = mgr->ve->used_vb_mask;
+   uint32_t user_vb_mask = mgr->user_vb_mask & used_vb_mask;
+   uint32_t incompatible_vb_mask = mgr->incompatible_vb_mask & used_vb_mask;
 
    /* Normal draw. No fallback and no user buffers. */
-   if (!mgr->incompatible_vb_mask &&
+   if (!incompatible_vb_mask &&
        !mgr->ve->incompatible_elem_mask &&
        !user_vb_mask) {
 
       /* Set vertex buffers if needed. */
-      if (mgr->dirty_real_vb_mask) {
+      if (mgr->dirty_real_vb_mask & used_vb_mask) {
          u_vbuf_set_driver_vertex_buffers(mgr);
       }
 
@@ -1102,7 +1111,7 @@ void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info)
 
    /* Translate vertices with non-native layouts or formats. */
    if (unroll_indices ||
-       mgr->incompatible_vb_mask ||
+       incompatible_vb_mask ||
        mgr->ve->incompatible_elem_mask) {
       /* XXX check the return value */
       u_vbuf_translate_begin(mgr, start_vertex, num_vertices,
@@ -1110,7 +1119,7 @@ void u_vbuf_draw_vbo(struct u_vbuf *mgr, const struct pipe_draw_info *info)
                              info->start, info->count, min_index,
                              unroll_indices);
 
-      user_vb_mask &= ~(mgr->incompatible_vb_mask |
+      user_vb_mask &= ~(incompatible_vb_mask |
                         mgr->ve->incompatible_vb_mask_all);
    }
 
