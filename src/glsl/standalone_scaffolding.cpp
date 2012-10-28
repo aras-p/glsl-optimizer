@@ -80,6 +80,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.EXT_texture3D = true;
    ctx->Extensions.OES_EGL_image_external = true;
    ctx->Extensions.ARB_shader_bit_encoding = true;
+   ctx->Extensions.OES_standard_derivatives = true;
 
    ctx->Const.GLSLVersion = 120;
 

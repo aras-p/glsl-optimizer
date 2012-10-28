@@ -357,8 +357,6 @@ name_to_offset(const char* name)
  * XXX: Should these defaults also apply to GLES?
  */
 static const size_t default_extensions[] = {
-   o(OES_standard_derivatives),
-
    /* Vendor Extensions */
    o(APPLE_packed_pixels),
    o(IBM_multimode_draw_arrays),
@@ -464,6 +462,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    /*ctx->Extensions.NV_texgen_reflection = GL_TRUE;*/
    ctx->Extensions.NV_fragment_program_option = GL_TRUE;
    ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
+   ctx->Extensions.OES_standard_derivatives = GL_TRUE;
    _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
    if (ctx->Mesa_DXTn) {
       ctx->Extensions.ANGLE_texture_compression_dxt = GL_TRUE;

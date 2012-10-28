@@ -158,6 +158,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ATI_envmap_bumpmap = true;
       ctx->Extensions.MESA_texture_array = true;
       ctx->Extensions.NV_conditional_render = true;
+      ctx->Extensions.OES_standard_derivatives = true;
    }
 
    if (intel->gen >= 3) {

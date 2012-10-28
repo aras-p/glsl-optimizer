@@ -377,6 +377,8 @@ void st_init_extensions(struct st_context *st)
       /* GL_NV_point_sprite is not supported by gallium because we don't
        * support the GL_POINT_SPRITE_R_MODE_NV option. */
       { o(MESA_texture_array),               PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS         },
+
+      { o(OES_standard_derivatives),         PIPE_CAP_SM3                              }
    };
 
    /* Required: render target and sampler support */
