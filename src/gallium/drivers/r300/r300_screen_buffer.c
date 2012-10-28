@@ -55,7 +55,7 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
 {
     struct r300_resource *rbuf = r300_resource(buf);
 
-    FREE(rbuf->malloced_buffer);
+    align_free(rbuf->malloced_buffer);
 
     if (rbuf->buf)
         pb_reference(&rbuf->buf, NULL);
@@ -146,7 +146,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     if (templ->bind & PIPE_BIND_CONSTANT_BUFFER ||
         (!r300screen->caps.has_tcl &&
          (templ->bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)))) {
-        rbuf->malloced_buffer = MALLOC(templ->width0);
+        rbuf->malloced_buffer = align_malloc(templ->width0, 64);
         return &rbuf->b.b;
     }
 

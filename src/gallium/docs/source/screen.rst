@@ -130,6 +130,12 @@ The integer capabilities:
   pipe_draw_info::start_instance.
 * ``PIPE_CAP_QUERY_TIMESTAMP``: Whether PIPE_QUERY_TIMESTAMP and
   the pipe_screen::get_timestamp hook are implemented.
+* ``PIPE_CAP_TEXTURE_MULTISAMPLE``: Whether all MSAA resources supported
+  for rendering are also supported for texturing.
+* ``PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT``: The minimum alignment that should be
+  expected for a pointer returned by transfer_map if the resource is
+  PIPE_BUFFER. In other words, the pointer returned by transfer_map is
+  always aligned to this value.
 
 
 .. _pipe_capf:

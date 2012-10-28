@@ -107,6 +107,9 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_USER_CONSTANT_BUFFERS:
             return 1;
 
+        case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
+            return 64;
+
         case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
             return 16;
 

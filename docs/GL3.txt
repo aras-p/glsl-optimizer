@@ -127,7 +127,7 @@ GL_ARB_shader_image_load_store                       not started
 GL_ARB_conservative_depth                            DONE (softpipe)
 GL_ARB_shading_language_420pack                      not started
 GL_ARB_internalformat_query                          not started
-GL_ARB_map_buffer_alignment                          not started
+GL_ARB_map_buffer_alignment                          DONE (r300, r600, radeonsi)
 
 
 GL 4.3:
