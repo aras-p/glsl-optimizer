@@ -309,7 +309,7 @@ static const struct extension extension_table[] = {
    { "GL_NV_point_sprite",                         o(NV_point_sprite),                         GL,             2001 },
    { "GL_NV_primitive_restart",                    o(NV_primitive_restart),                    GL,             2002 },
    { "GL_NV_read_buffer",                          o(dummy_true),                              ES2,            2011 },
-   { "GL_NV_texgen_reflection",                    o(NV_texgen_reflection),                    GLL,            1999 },
+   { "GL_NV_texgen_reflection",                    o(dummy_true),                              GLL,            1999 },
    { "GL_NV_texture_barrier",                      o(NV_texture_barrier),                      GL,             2009 },
    { "GL_NV_texture_env_combine4",                 o(NV_texture_env_combine4),                 GLL,            1999 },
    { "GL_NV_texture_rectangle",                    o(NV_texture_rectangle),                    GLL,            2000 },
@@ -358,7 +358,6 @@ name_to_offset(const char* name)
  */
 static const size_t default_extensions[] = {
    /* Vendor Extensions */
-   o(NV_texgen_reflection),
    o(SGIS_texture_lod),
 
    0,
@@ -453,7 +452,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.NV_point_sprite = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
-   /*ctx->Extensions.NV_texgen_reflection = GL_TRUE;*/
    ctx->Extensions.NV_fragment_program_option = GL_TRUE;
    ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
    ctx->Extensions.OES_standard_derivatives = GL_TRUE;
