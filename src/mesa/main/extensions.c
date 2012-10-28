@@ -146,7 +146,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_transform_feedback2",                 o(ARB_transform_feedback2),                 GL,             2010 },
    { "GL_ARB_transform_feedback3",                 o(ARB_transform_feedback3),                 GL,             2010 },
    { "GL_ARB_transform_feedback_instanced",        o(ARB_transform_feedback_instanced),        GL,             2011 },
-   { "GL_ARB_transpose_matrix",                    o(ARB_transpose_matrix),                    GLL,            1999 },
+   { "GL_ARB_transpose_matrix",                    o(dummy_true),                              GLL,            1999 },
    { "GL_ARB_uniform_buffer_object",               o(ARB_uniform_buffer_object),               GL,             2009 },
    { "GL_ARB_vertex_array_bgra",                   o(EXT_vertex_array_bgra),                   GL,             2008 },
    { "GL_ARB_vertex_array_object",                 o(dummy_true),                              GL,             2006 },
@@ -357,7 +357,6 @@ name_to_offset(const char* name)
  * XXX: Should these defaults also apply to GLES?
  */
 static const size_t default_extensions[] = {
-   o(ARB_transpose_matrix),
    o(ARB_window_pos),
 
    o(EXT_compiled_vertex_array),
@@ -494,7 +493,6 @@ _mesa_enable_1_3_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
    ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
-   /*ctx->Extensions.ARB_transpose_matrix = GL_TRUE;*/
 }
 
 
