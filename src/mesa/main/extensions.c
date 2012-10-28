@@ -317,7 +317,7 @@ static const struct extension extension_table[] = {
    { "GL_SGIS_generate_mipmap",                    o(dummy_true),                              GLL,            1997 },
    { "GL_SGIS_texture_border_clamp",               o(ARB_texture_border_clamp),                GLL,            1997 },
    { "GL_SGIS_texture_edge_clamp",                 o(dummy_true),                              GLL,            1997 },
-   { "GL_SGIS_texture_lod",                        o(SGIS_texture_lod),                        GLL,            1997 },
+   { "GL_SGIS_texture_lod",                        o(dummy_true),                              GLL,            1997 },
    { "GL_SUN_multi_draw_arrays",                   o(dummy_true),                              GLL,            1999 },
 
    { 0, 0, 0, 0 },
@@ -347,21 +347,6 @@ name_to_offset(const char* name)
 
    return 0;
 }
-
-
-/**
- * \brief Extensions enabled by default.
- *
- * These extensions are enabled by _mesa_init_extensions().
- *
- * XXX: Should these defaults also apply to GLES?
- */
-static const size_t default_extensions[] = {
-   /* Vendor Extensions */
-   o(SGIS_texture_lod),
-
-   0,
-};
 
 
 /**
@@ -695,7 +680,6 @@ _mesa_init_extensions( struct gl_context *ctx )
    GLboolean *base = (GLboolean *) &ctx->Extensions;
    GLboolean *sentinel = base + o(extension_sentinel);
    GLboolean *i;
-   const size_t *j;
 
    /* First, turn all extensions off. */
    for (i = base; i != sentinel; ++i)
@@ -704,8 +688,6 @@ _mesa_init_extensions( struct gl_context *ctx )
    /* Then, selectively turn default extensions on. */
    ctx->Extensions.dummy_true = GL_TRUE;
    ctx->Extensions.EXT_texture3D = GL_TRUE;
-   for (j = default_extensions; *j != 0; ++j)
-      base[*j] = GL_TRUE;
 }
 
 
