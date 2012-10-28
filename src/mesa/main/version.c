@@ -161,7 +161,6 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.ARB_depth_texture &&
                               ctx->Extensions.ARB_shadow &&
                               ctx->Extensions.ARB_texture_env_crossbar &&
-                              ctx->Extensions.ARB_window_pos &&
                               ctx->Extensions.EXT_blend_color &&
                               ctx->Extensions.EXT_blend_func_separate &&
                               ctx->Extensions.EXT_blend_minmax &&

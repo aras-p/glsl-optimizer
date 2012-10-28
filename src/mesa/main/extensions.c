@@ -154,7 +154,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_vertex_program",                      o(ARB_vertex_program),                      GLL,            2002 },
    { "GL_ARB_vertex_shader",                       o(ARB_vertex_shader),                       GL,             2002 },
    { "GL_ARB_vertex_type_2_10_10_10_rev",          o(ARB_vertex_type_2_10_10_10_rev),          GL,             2009 },
-   { "GL_ARB_window_pos",                          o(ARB_window_pos),                          GLL,            2001 },
+   { "GL_ARB_window_pos",                          o(dummy_true),                              GLL,            2001 },
    /* EXT extensions */
    { "GL_EXT_abgr",                                o(dummy_true),                              GL,             1995 },
    { "GL_EXT_bgra",                                o(dummy_true),                              GLL,            1995 },
@@ -295,7 +295,7 @@ static const struct extension extension_table[] = {
    { "GL_MESA_resize_buffers",                     o(MESA_resize_buffers),                     GL,             1999 },
    { "GL_MESA_texture_array",                      o(MESA_texture_array),                      GLL,            2007 },
    { "GL_MESA_texture_signed_rgba",                o(EXT_texture_snorm),                       GL,             2009 },
-   { "GL_MESA_window_pos",                         o(ARB_window_pos),                          GLL,            2000 },
+   { "GL_MESA_window_pos",                         o(dummy_true),                              GLL,            2000 },
    { "GL_MESA_ycbcr_texture",                      o(MESA_ycbcr_texture),                      GL,             2002 },
    { "GL_NV_blend_square",                         o(NV_blend_square),                         GLL,            1999 },
    { "GL_NV_conditional_render",                   o(NV_conditional_render),                   GL,             2008 },
@@ -357,8 +357,6 @@ name_to_offset(const char* name)
  * XXX: Should these defaults also apply to GLES?
  */
 static const size_t default_extensions[] = {
-   o(ARB_window_pos),
-
    o(EXT_compiled_vertex_array),
    o(EXT_draw_range_elements),
    o(EXT_packed_pixels),
@@ -507,7 +505,6 @@ _mesa_enable_1_4_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
    ctx->Extensions.ARB_shadow = GL_TRUE;
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
-   ctx->Extensions.ARB_window_pos = GL_TRUE;
    ctx->Extensions.EXT_blend_color = GL_TRUE;
    ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;

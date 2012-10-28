@@ -497,7 +497,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.ARB_texture_storage = GL_TRUE;
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
-   ctx->Extensions.ARB_window_pos = GL_TRUE;
 
    ctx->Extensions.EXT_blend_color = GL_TRUE;
    ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
