@@ -206,10 +206,6 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                          GLbitfield mask, GLenum filter);
 
 extern void GLAPIENTRY
-_mesa_FramebufferTextureARB(GLenum target, GLenum attachment,
-                            GLuint texture, GLint level);
-
-extern void GLAPIENTRY
 _mesa_FramebufferTextureFaceARB(GLenum target, GLenum attachment,
                                 GLuint texture, GLint level, GLenum face);
 
