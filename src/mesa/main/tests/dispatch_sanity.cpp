@@ -83,6 +83,7 @@ extern const struct function gles11_functions_possible[];
 class DispatchSanity_test : public ::testing::Test {
 public:
    virtual void SetUp();
+   void SetUpCtx(gl_api api, unsigned int version);
 
    struct gl_config visual;
    struct dd_function_table driver_functions;
@@ -99,6 +100,18 @@ DispatchSanity_test::SetUp()
    memset(&ctx, 0, sizeof(ctx));
 
    _mesa_init_driver_functions(&driver_functions);
+}
+
+void
+DispatchSanity_test::SetUpCtx(gl_api api, unsigned int version)
+{
+   ctx.Version = version;
+   _mesa_initialize_context(&ctx,
+                            api,
+                            &visual,
+                            NULL, // share_list
+                            &driver_functions);
+   _vbo_CreateContext(&ctx);
 }
 
 static const char *
@@ -159,18 +172,7 @@ validate_nops(struct gl_context *ctx)
 #if FEATURE_ES1
 TEST_F(DispatchSanity_test, GLES11)
 {
-   ctx.Version = 11;
-   _mesa_initialize_context(&ctx,
-                            API_OPENGLES,
-                            &visual,
-                            NULL /* share_list */,
-                            &driver_functions);
-
-   _swrast_CreateContext(&ctx);
-   _vbo_CreateContext(&ctx);
-   _tnl_CreateContext(&ctx);
-   _swsetup_CreateContext(&ctx);
-
+   SetUpCtx(API_OPENGLES, 11);
    validate_functions(&ctx, gles11_functions_possible);
    validate_nops(&ctx);
 }
@@ -178,36 +180,14 @@ TEST_F(DispatchSanity_test, GLES11)
 
 TEST_F(DispatchSanity_test, GLES2)
 {
-   ctx.Version = 20;
-   _mesa_initialize_context(&ctx,
-                            API_OPENGLES2, //api,
-                            &visual,
-                            NULL, //&share_list,
-                            &driver_functions);
-
-   _swrast_CreateContext(&ctx);
-   _vbo_CreateContext(&ctx);
-   _tnl_CreateContext(&ctx);
-   _swsetup_CreateContext(&ctx);
-
+   SetUpCtx(API_OPENGLES2, 20);
    validate_functions(&ctx, gles2_functions_possible);
    validate_nops(&ctx);
 }
 
 TEST_F(DispatchSanity_test, GLES3)
 {
-   ctx.Version = 30;
-   _mesa_initialize_context(&ctx,
-                            API_OPENGLES2, //api,
-                            &visual,
-                            NULL, //&share_list,
-                            &driver_functions);
-
-   _swrast_CreateContext(&ctx);
-   _vbo_CreateContext(&ctx);
-   _tnl_CreateContext(&ctx);
-   _swsetup_CreateContext(&ctx);
-
+   SetUpCtx(API_OPENGLES2, 30);
    validate_functions(&ctx, gles2_functions_possible);
    validate_functions(&ctx, gles3_functions_possible);
    validate_nops(&ctx);
