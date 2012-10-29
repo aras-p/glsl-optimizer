@@ -2823,6 +2823,7 @@
 #define R_0283F4_SQ_VTX_SEMANTIC_29                  0x0283F4
 #define R_0283F8_SQ_VTX_SEMANTIC_30                  0x0283F8
 #define R_0283FC_SQ_VTX_SEMANTIC_31                  0x0283FC
+#define R_0288E0_SQ_VTX_SEMANTIC_CLEAR               0x0288E0
 #define R_028400_VGT_MAX_VTX_INDX                    0x028400
 #define   S_028400_MAX_INDX(x)                         (((x) & 0xFFFFFFFF) << 0)
 #define   G_028400_MAX_INDX(x)                         (((x) >> 0) & 0xFFFFFFFF)

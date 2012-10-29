@@ -1709,6 +1709,7 @@
 #define R_0283F4_SQ_VTX_SEMANTIC_29                  0x000283F4
 #define R_0283F8_SQ_VTX_SEMANTIC_30                  0x000283F8
 #define R_0283FC_SQ_VTX_SEMANTIC_31                  0x000283FC
+#define R_0288F0_SQ_VTX_SEMANTIC_CLEAR               0x000288F0
 #define R_0282D0_PA_SC_VPORT_ZMIN_0                  0x000282D0
 #define R_0282D4_PA_SC_VPORT_ZMAX_0                  0x000282D4
 #define R_028400_VGT_MAX_VTX_INDX                    0x00028400
