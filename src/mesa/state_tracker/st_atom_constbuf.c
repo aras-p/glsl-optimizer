@@ -125,7 +125,7 @@ static void update_vs_constants(struct st_context *st )
 const struct st_tracked_state st_update_vs_constants = {
    "st_update_vs_constants",				/* name */
    {							/* dirty */
-      (_NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS),          /* mesa */
+      _NEW_PROGRAM_CONSTANTS,                           /* mesa */
       ST_NEW_VERTEX_PROGRAM,				/* st */
    },
    update_vs_constants					/* update */
@@ -148,7 +148,7 @@ static void update_fs_constants(struct st_context *st )
 const struct st_tracked_state st_update_fs_constants = {
    "st_update_fs_constants",				/* name */
    {							/* dirty */
-      (_NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS),          /* mesa */
+      _NEW_PROGRAM_CONSTANTS,                           /* mesa */
       ST_NEW_FRAGMENT_PROGRAM,				/* st */
    },
    update_fs_constants					/* update */
@@ -170,7 +170,7 @@ static void update_gs_constants(struct st_context *st )
 const struct st_tracked_state st_update_gs_constants = {
    "st_update_gs_constants",				/* name */
    {							/* dirty */
-      (_NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS),          /* mesa */
+      _NEW_PROGRAM_CONSTANTS,                           /* mesa */
       ST_NEW_GEOMETRY_PROGRAM,				/* st */
    },
    update_gs_constants					/* update */
