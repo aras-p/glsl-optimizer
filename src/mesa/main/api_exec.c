@@ -788,10 +788,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    if (_mesa_is_desktop_gl(ctx)) {
-      SET_FramebufferTextureFaceARB(exec, _mesa_FramebufferTextureFaceARB);
-   }
-
-   if (_mesa_is_desktop_gl(ctx)) {
       SET_ClampColorARB(exec, _mesa_ClampColorARB);
    }
 

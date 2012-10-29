@@ -3055,16 +3055,6 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
 }
 
 
-void GLAPIENTRY
-_mesa_FramebufferTextureFaceARB(GLenum target, GLenum attachment,
-                                GLuint texture, GLint level, GLenum face)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_OPERATION,
-               "glFramebufferTextureFaceARB "
-               "not implemented!");
-}
-
 static void
 invalidate_framebuffer_storage(GLenum target, GLsizei numAttachments,
                                const GLenum *attachments, GLint x, GLint y,
