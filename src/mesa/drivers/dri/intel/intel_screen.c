@@ -935,11 +935,11 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
    /* Generate singlesample configs without accumulation buffer. */
    for (int i = 0; i < ARRAY_SIZE(formats); i++) {
       __DRIconfig **new_configs;
-      const int num_depth_stencil_bits = 2;
+      int num_depth_stencil_bits = 2;
 
       /* Starting with DRI2 protocol version 1.1 we can request a depth/stencil
        * buffer that has a different number of bits per pixel than the color
-       * buffer.  This isn't yet supported here.
+       * buffer, gen >= 6 supports this.
        */
       depth_bits[0] = 0;
       stencil_bits[0] = 0;
@@ -947,6 +947,11 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
       if (formats[i] == MESA_FORMAT_RGB565) {
          depth_bits[1] = 16;
          stencil_bits[1] = 0;
+         if (screen->gen >= 6) {
+             depth_bits[2] = 24;
+             stencil_bits[2] = 8;
+             num_depth_stencil_bits = 3;
+         }
       } else {
          depth_bits[1] = 24;
          stencil_bits[1] = 8;
