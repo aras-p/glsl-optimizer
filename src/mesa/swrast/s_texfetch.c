@@ -115,7 +115,7 @@ static struct {
    FetchTexelFunc Fetch2D;
    FetchTexelFunc Fetch3D;
 }
-texfetch_funcs[MESA_FORMAT_COUNT] =
+texfetch_funcs[] =
 {
    {
       MESA_FORMAT_NONE,
