@@ -617,6 +617,14 @@ class gl_function( gl_item ):
         # Decimal('1.1') }.
         self.entry_point_api_map = {}
 
+        # self.api_map[api] is a decimal value indicating the earliest
+        # version of the given API in which ANY alias for the function
+        # exists.  The map only lists APIs which contain the function
+        # in at least one version.  For example, for the ClipPlanex
+        # function, self.entry_point_api_map == { 'es1':
+        # Decimal('1.1') }.
+        self.api_map = {}
+
         self.assign_offset = 0
 
         self.static_entry_points = []
@@ -651,7 +659,11 @@ class gl_function( gl_item ):
             version_str = element.nsProp(api, None)
             assert version_str is not None
             if version_str != 'none':
-                self.entry_point_api_map[name][api] = Decimal(version_str)
+                version_decimal = Decimal(version_str)
+                self.entry_point_api_map[name][api] = version_decimal
+                if api not in self.api_map or \
+                        version_decimal < self.api_map[api]:
+                    self.api_map[api] = version_decimal
 
         if alias:
             true_name = alias
