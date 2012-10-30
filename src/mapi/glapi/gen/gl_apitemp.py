@@ -66,7 +66,7 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 
         silence = ''
         space = ''
-        for p in f.parameterIterator():
+        for p in f.parameterIterator(name):
             if p.is_padding:
                 continue
 

@@ -757,8 +757,11 @@ class gl_function( gl_item ):
         return self.images
 
 
-    def parameterIterator(self):
-        return self.parameters.__iter__();
+    def parameterIterator(self, name = None):
+        if name is not None:
+            return self.entry_point_parameters[name].__iter__();
+        else:
+            return self.parameters.__iter__();
 
 
     def get_parameter_string(self, entrypoint = None):
