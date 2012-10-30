@@ -1925,10 +1925,10 @@ fs_visitor::run()
 	 progress = opt_algebraic() || progress;
 	 progress = opt_cse() || progress;
 	 progress = opt_copy_propagate() || progress;
+	 progress = dead_code_eliminate() || progress;
 	 progress = register_coalesce() || progress;
 	 progress = register_coalesce_2() || progress;
 	 progress = compute_to_mrf() || progress;
-	 progress = dead_code_eliminate() || progress;
       } while (progress);
 
       remove_dead_constants();
