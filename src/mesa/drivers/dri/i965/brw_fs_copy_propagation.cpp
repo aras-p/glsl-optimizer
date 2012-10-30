@@ -245,7 +245,9 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block)
 	 }
       }
 
-      /* If this instruction is a raw copy, add it to the ACP. */
+      /* If this instruction's source could potentially be folded into the
+       * operand of another instruction, add it to the ACP.
+       */
       if (inst->opcode == BRW_OPCODE_MOV &&
 	  inst->dst.file == GRF &&
 	  ((inst->src[0].file == GRF &&
