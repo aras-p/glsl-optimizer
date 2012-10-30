@@ -52,12 +52,14 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
    bool has_source_modifiers = entry->src.abs || entry->src.negate;
 
    if (intel->gen == 6 && inst->is_math() &&
-       (has_source_modifiers || entry->src.file == UNIFORM))
+       (has_source_modifiers || entry->src.file == UNIFORM ||
+        entry->src.smear != -1))
       return false;
 
    inst->src[arg].file = entry->src.file;
    inst->src[arg].reg = entry->src.reg;
    inst->src[arg].reg_offset = entry->src.reg_offset;
+   inst->src[arg].smear = entry->src.smear;
 
    if (!inst->src[arg].abs) {
       inst->src[arg].abs = entry->src.abs;
@@ -255,8 +257,7 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block)
 	  !inst->saturate &&
 	  !inst->predicate &&
 	  !inst->force_uncompressed &&
-	  !inst->force_sechalf &&
-	  inst->src[0].smear == -1) {
+	  !inst->force_sechalf) {
 	 acp_entry *entry = ralloc(mem_ctx, acp_entry);
 	 entry->dst = inst->dst;
 	 entry->src = inst->src[0];
