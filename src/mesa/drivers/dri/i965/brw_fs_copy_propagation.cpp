@@ -21,6 +21,19 @@
  * IN THE SOFTWARE.
  */
 
+/** @file brw_fs_copy_propagation.cpp
+ *
+ * Support for global copy propagation in two passes: A local pass that does
+ * intra-block copy (and constant) propagation, and a global pass that uses
+ * dataflow analysis on the copies available at the end of each block to re-do
+ * local copy propagation with more copies available.
+ *
+ * See Muchnik's Advanced Compiler Design and Implementation, section
+ * 12.5 (p356).
+ */
+
+#define ACP_HASH_SIZE 16
+
 #include "brw_fs.h"
 #include "brw_cfg.h"
 
@@ -29,6 +42,158 @@ struct acp_entry : public exec_node {
    fs_reg dst;
    fs_reg src;
 };
+
+struct block_data {
+   /**
+    * Which entries in the fs_copy_prop_dataflow acp table are live at the
+    * start of this block.  This is the useful output of the analysis, since
+    * it lets us plug those into the local copy propagation on the second
+    * pass.
+    */
+   bool *livein;
+
+   /**
+    * Which entries in the fs_copy_prop_dataflow acp table are live at the end
+    * of this block.  This is done in initial setup from the per-block acps
+    * returned by the first local copy prop pass.
+    */
+   bool *liveout;
+
+   /**
+    * Which entries in the fs_copy_prop_dataflow acp table are killed over the
+    * course of this block.
+    */
+   bool *kill;
+};
+
+class fs_copy_prop_dataflow
+{
+public:
+   fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
+                         exec_list out_acp[][ACP_HASH_SIZE]);
+
+   void setup_kills();
+   void run();
+
+   void *mem_ctx;
+   cfg_t *cfg;
+
+   acp_entry **acp;
+   int num_acp;
+
+  struct block_data *bd;
+};
+} /* anonymous namespace */
+
+fs_copy_prop_dataflow::fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
+                                             exec_list out_acp[][ACP_HASH_SIZE])
+   : mem_ctx(mem_ctx), cfg(cfg)
+{
+   bd = rzalloc_array(mem_ctx, struct block_data, cfg->num_blocks);
+
+   num_acp = 0;
+   for (int b = 0; b < cfg->num_blocks; b++) {
+      for (int i = 0; i < ACP_HASH_SIZE; i++) {
+         foreach_list(entry_node, &out_acp[b][i]) {
+            num_acp++;
+         }
+      }
+   }
+
+   acp = rzalloc_array(mem_ctx, struct acp_entry *, num_acp);
+
+   int next_acp = 0;
+   for (int b = 0; b < cfg->num_blocks; b++) {
+      bd[b].livein = rzalloc_array(bd, bool, num_acp);
+      bd[b].liveout = rzalloc_array(bd, bool, num_acp);
+      bd[b].kill = rzalloc_array(bd, bool, num_acp);
+
+      for (int i = 0; i < ACP_HASH_SIZE; i++) {
+         foreach_list(entry_node, &out_acp[b][i]) {
+            acp_entry *entry = (acp_entry *)entry_node;
+
+            acp[next_acp] = entry;
+            bd[b].liveout[next_acp] = true;
+            next_acp++;
+         }
+      }
+   }
+
+   assert(next_acp == num_acp);
+
+   setup_kills();
+   run();
+}
+
+/**
+ * Walk the set of instructions in the block, marking which entries in the acp
+ * are killed by the block.
+ */
+void
+fs_copy_prop_dataflow::setup_kills()
+{
+   for (int b = 0; b < cfg->num_blocks; b++) {
+      bblock_t *block = cfg->blocks[b];
+
+      for (fs_inst *inst = (fs_inst *)block->start;
+           inst != block->end->next;
+           inst = (fs_inst *)inst->next) {
+         if (inst->dst.file != GRF)
+            continue;
+
+         for (int i = 0; i < num_acp; i++) {
+            if (inst->overwrites_reg(acp[i]->dst) ||
+                inst->overwrites_reg(acp[i]->src)) {
+               bd[b].kill[i] = true;
+            }
+         }
+      }
+   }
+}
+
+/**
+ * Walk the set of instructions in the block, marking which entries in the acp
+ * are killed by the block.
+ */
+void
+fs_copy_prop_dataflow::run()
+{
+   bool cont = true;
+
+   while (cont) {
+      cont = false;
+
+      for (int b = 0; b < cfg->num_blocks; b++) {
+         for (int i = 0; i < num_acp; i++) {
+            if (!bd[b].liveout[i]) {
+               /* Update liveout */
+               if (bd[b].livein[i] && !bd[b].kill[i]) {
+                  bd[b].liveout[i] = true;
+                  cont = true;
+               }
+            }
+
+            if (!bd[b].livein[i]) {
+               /* Update livein: if it's live at the end of all parents, it's
+                * live at our start.
+                */
+               bool add = true;
+               foreach_list(block_node, &cfg->blocks[b]->parents) {
+                  bblock_link *link = (bblock_link *)block_node;
+                  bblock_t *block = link->block;
+                  if (!bd[block->block_num].liveout[i]) {
+                     add = false;
+                     break;
+                  }
+               }
+               if (add) {
+                  bd[b].livein[i] = true;
+                  cont = true;
+               }
+            }
+         }
+      }
+   }
 }
 
 bool
@@ -183,25 +348,14 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
 
    return progress;
 }
-
-/** @file brw_fs_copy_propagation.cpp
- *
- * Support for local copy propagation by walking the list of instructions
- * and maintaining the ACP table of available copies for propagation.
- *
- * See Muchnik's Advanced Compiler Design and Implementation, section
- * 12.5 (p356).
- */
-
 /* Walks a basic block and does copy propagation on it using the acp
  * list.
  */
 bool
-fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block)
+fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block,
+                                     exec_list *acp)
 {
    bool progress = false;
-   int acp_count = 16;
-   exec_list acp[acp_count];
 
    for (fs_inst *inst = (fs_inst *)block->start;
 	inst != block->end->next;
@@ -212,7 +366,7 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block)
          if (inst->src[i].file != GRF)
             continue;
 
-         foreach_list(entry_node, &acp[inst->src[i].reg % acp_count]) {
+         foreach_list(entry_node, &acp[inst->src[i].reg % ACP_HASH_SIZE]) {
             acp_entry *entry = (acp_entry *)entry_node;
 
             if (try_constant_propagate(inst, entry))
@@ -225,7 +379,7 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block)
 
       /* kill the destination from the ACP */
       if (inst->dst.file == GRF) {
-	 foreach_list_safe(entry_node, &acp[inst->dst.reg % acp_count]) {
+	 foreach_list_safe(entry_node, &acp[inst->dst.reg % ACP_HASH_SIZE]) {
 	    acp_entry *entry = (acp_entry *)entry_node;
 
 	    if (inst->overwrites_reg(entry->dst)) {
@@ -236,7 +390,7 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block)
          /* Oops, we only have the chaining hash based on the destination, not
           * the source, so walk across the entire table.
           */
-         for (int i = 0; i < acp_count; i++) {
+         for (int i = 0; i < ACP_HASH_SIZE; i++) {
             foreach_list_safe(entry_node, &acp[i]) {
                acp_entry *entry = (acp_entry *)entry_node;
                if (inst->overwrites_reg(entry->src))
@@ -263,7 +417,7 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block)
 	 acp_entry *entry = ralloc(mem_ctx, acp_entry);
 	 entry->dst = inst->dst;
 	 entry->src = inst->src[0];
-	 acp[entry->dst.reg % acp_count].push_tail(entry);
+	 acp[entry->dst.reg % ACP_HASH_SIZE].push_tail(entry);
       }
    }
 
@@ -275,13 +429,37 @@ fs_visitor::opt_copy_propagate()
 {
    bool progress = false;
    void *mem_ctx = ralloc_context(this->mem_ctx);
-
    cfg_t cfg(this);
+   exec_list out_acp[cfg.num_blocks][ACP_HASH_SIZE];
 
+   /* First, walk through each block doing local copy propagation and getting
+    * the set of copies available at the end of the block.
+    */
    for (int b = 0; b < cfg.num_blocks; b++) {
       bblock_t *block = cfg.blocks[b];
 
-      progress = opt_copy_propagate_local(mem_ctx, block) || progress;
+      progress = opt_copy_propagate_local(mem_ctx, block,
+                                          out_acp[b]) || progress;
+   }
+
+   /* Do dataflow analysis for those available copies. */
+   fs_copy_prop_dataflow dataflow(mem_ctx, &cfg, out_acp);
+
+   /* Next, re-run local copy propagation, this time with the set of copies
+    * provided by the dataflow analysis available at the start of a block.
+    */
+   for (int b = 0; b < cfg.num_blocks; b++) {
+      bblock_t *block = cfg.blocks[b];
+      exec_list in_acp[ACP_HASH_SIZE];
+
+      for (int i = 0; i < dataflow.num_acp; i++) {
+         if (dataflow.bd[b].livein[i]) {
+            struct acp_entry *entry = dataflow.acp[i];
+            in_acp[entry->dst.reg % ACP_HASH_SIZE].push_tail(entry);
+         }
+      }
+
+      progress = opt_copy_propagate_local(mem_ctx, block, in_acp) || progress;
    }
 
    ralloc_free(mem_ctx);

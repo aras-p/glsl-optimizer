@@ -249,7 +249,8 @@ public:
    bool opt_copy_propagate();
    bool try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry);
    bool try_constant_propagate(fs_inst *inst, acp_entry *entry);
-   bool opt_copy_propagate_local(void *mem_ctx, bblock_t *block);
+   bool opt_copy_propagate_local(void *mem_ctx, bblock_t *block,
+                                 exec_list *acp);
    bool register_coalesce();
    bool register_coalesce_2();
    bool compute_to_mrf();
