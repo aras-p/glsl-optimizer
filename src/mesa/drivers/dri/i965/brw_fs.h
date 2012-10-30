@@ -365,6 +365,9 @@ public:
    void setup_builtin_uniform_values(ir_variable *ir);
    int implied_mrf_writes(fs_inst *inst);
 
+   void dump_instructions();
+   void dump_instruction(fs_inst *inst);
+
    const struct gl_fragment_program *fp;
    struct brw_wm_compile *c;
 

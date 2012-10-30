@@ -1935,6 +1935,95 @@ fs_visitor::remove_duplicate_mrf_writes()
    return progress;
 }
 
+void
+fs_visitor::dump_instruction(fs_inst *inst)
+{
+   if (inst->opcode < ARRAY_SIZE(opcode_descs) &&
+       opcode_descs[inst->opcode].name) {
+      printf("%s", opcode_descs[inst->opcode].name);
+   } else {
+      printf("op%d", inst->opcode);
+   }
+   if (inst->saturate)
+      printf(".sat");
+   printf(" ");
+
+   switch (inst->dst.file) {
+   case GRF:
+      printf("vgrf%d", inst->dst.reg);
+      if (inst->dst.reg_offset)
+         printf("+%d", inst->dst.reg_offset);
+      break;
+   case MRF:
+      printf("m%d", inst->dst.reg);
+      break;
+   case BAD_FILE:
+      printf("(null)");
+      break;
+   case UNIFORM:
+      printf("***u%d***", inst->dst.reg);
+      break;
+   default:
+      printf("???");
+      break;
+   }
+   printf(", ");
+
+   for (int i = 0; i < 3; i++) {
+      if (inst->src[i].negate)
+         printf("-");
+      if (inst->src[i].abs)
+         printf("|");
+      switch (inst->src[i].file) {
+      case GRF:
+         printf("vgrf%d", inst->src[i].reg);
+         if (inst->src[i].reg_offset)
+            printf("+%d", inst->src[i].reg_offset);
+         break;
+      case MRF:
+         printf("***m%d***", inst->src[i].reg);
+         break;
+      case UNIFORM:
+         printf("u%d", inst->src[i].reg);
+         if (inst->src[i].reg_offset)
+            printf(".%d", inst->src[i].reg_offset);
+         break;
+      case BAD_FILE:
+         printf("(null)");
+         break;
+      default:
+         printf("???");
+         break;
+      }
+      if (inst->src[i].abs)
+         printf("|");
+
+      if (i < 3)
+         printf(", ");
+   }
+
+   printf(" ");
+
+   if (inst->force_uncompressed)
+      printf("1sthalf ");
+
+   if (inst->force_sechalf)
+      printf("2ndhalf ");
+
+   printf("\n");
+}
+
+void
+fs_visitor::dump_instructions()
+{
+   int ip = 0;
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
+      printf("%d: ", ip++);
+      dump_instruction(inst);
+   }
+}
+
 /**
  * Possibly returns an instruction that set up @param reg.
  *
