@@ -171,6 +171,20 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 	ub = ((GLubyte) F_TO_I((f) * 255.0F))
 #endif
 
+static inline GLfloat INT_AS_FLT(GLint i)
+{
+   fi_type tmp;
+   tmp.i = i;
+   return tmp.f;
+}
+
+static inline GLfloat UINT_AS_FLT(GLuint u)
+{
+   fi_type tmp;
+   tmp.u = u;
+   return tmp.f;
+}
+
 /*@}*/
 
 
@@ -573,6 +587,31 @@ do {				\
 
 /*@}*/
 
+/** Copy \p sz elements into a homegeneous (4-element) vector, giving
+ * default values to the remaining components.
+ * The default values are chosen based on \p type.
+ */
+static inline void
+COPY_CLEAN_4V_TYPE_AS_FLOAT(GLfloat dst[4], int sz, const GLfloat src[4],
+                            GLenum type)
+{
+   switch (type) {
+   case GL_FLOAT:
+      ASSIGN_4V(dst, 0, 0, 0, 1);
+      break;
+   case GL_INT:
+      ASSIGN_4V(dst, INT_AS_FLT(0), INT_AS_FLT(0),
+                     INT_AS_FLT(0), INT_AS_FLT(1));
+      break;
+   case GL_UNSIGNED_INT:
+      ASSIGN_4V(dst, UINT_AS_FLT(0), UINT_AS_FLT(0),
+                     UINT_AS_FLT(0), UINT_AS_FLT(1));
+      break;
+   default:
+      ASSERT(0);
+   }
+   COPY_SZ_4V(dst, sz, src);
+}
 
 /** \name Linear interpolation functions */
 /*@{*/

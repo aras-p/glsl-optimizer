@@ -324,6 +324,7 @@ _save_compile_vertex_list(struct gl_context *ctx)
    /* Duplicate our template, increment refcounts to the storage structs:
     */
    memcpy(node->attrsz, save->attrsz, sizeof(node->attrsz));
+   memcpy(node->attrtype, save->attrtype, sizeof(node->attrtype));
    node->vertex_size = save->vertex_size;
    node->buffer_offset =
       (save->buffer - save->vertex_store->buffer) * sizeof(GLfloat);
@@ -510,7 +511,8 @@ _save_copy_to_current(struct gl_context *ctx)
    for (i = VBO_ATTRIB_POS + 1; i < VBO_ATTRIB_MAX; i++) {
       if (save->attrsz[i]) {
          save->currentsz[i][0] = save->attrsz[i];
-         COPY_CLEAN_4V(save->current[i], save->attrsz[i], save->attrptr[i]);
+         COPY_CLEAN_4V_TYPE_AS_FLOAT(save->current[i], save->attrsz[i],
+                                     save->attrptr[i], save->attrtype[i]);
       }
    }
 }
@@ -612,7 +614,8 @@ _save_upgrade_vertex(struct gl_context *ctx, GLuint attr, GLuint newsz)
             if (save->attrsz[j]) {
                if (j == attr) {
                   if (oldsz) {
-                     COPY_CLEAN_4V(dest, oldsz, data);
+                     COPY_CLEAN_4V_TYPE_AS_FLOAT(dest, oldsz, data,
+                                                 save->attrtype[j]);
                      data += oldsz;
                      dest += newsz;
                   }
@@ -649,8 +652,8 @@ save_fixup_vertex(struct gl_context *ctx, GLuint attr, GLuint sz)
       _save_upgrade_vertex(ctx, attr, sz);
    }
    else if (sz < save->active_sz[attr]) {
-      static GLfloat id[4] = { 0, 0, 0, 1 };
       GLuint i;
+      const GLfloat *id = vbo_get_default_vals_as_float(save->attrtype[attr]);
 
       /* New size is equal or smaller - just need to fill in some
        * zeros.
@@ -688,7 +691,7 @@ _save_reset_vertex(struct gl_context *ctx)
  * 3f version won't otherwise set color[3] to 1.0 -- this is the job
  * of the chooser function when switching between Color4f and Color3f.
  */
-#define ATTR(A, N, V0, V1, V2, V3)				\
+#define ATTR(A, N, T, V0, V1, V2, V3)				\
 do {								\
    struct vbo_save_context *save = &vbo_context(ctx)->save;	\
 								\
@@ -701,6 +704,7 @@ do {								\
       if (N>1) dest[1] = V1;					\
       if (N>2) dest[2] = V2;					\
       if (N>3) dest[3] = V3;					\
+      save->attrtype[A] = T;                                    \
    }								\
 								\
    if ((A) == 0) {						\

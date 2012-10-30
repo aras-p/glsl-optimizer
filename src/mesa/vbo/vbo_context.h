@@ -147,4 +147,47 @@ vbo_draw_method(struct vbo_context *vbo, enum draw_method method)
    }
 }
 
+/**
+ * Return if format is integer. The immediate mode commands only emit floats
+ * for non-integer types, thus everything else is integer.
+ */
+static inline GLboolean
+vbo_attrtype_to_integer_flag(GLenum format)
+{
+   switch (format) {
+   case GL_FLOAT:
+      return GL_FALSE;
+   case GL_INT:
+   case GL_UNSIGNED_INT:
+      return GL_TRUE;
+   default:
+      ASSERT(0);
+      return GL_FALSE;
+   }
+}
+
+
+/**
+ * Return default component values for the given format.
+ * The return type is an array of floats, because that's how we declare
+ * the vertex storage despite the fact we sometimes store integers in there.
+ */
+static inline const GLfloat *
+vbo_get_default_vals_as_float(GLenum format)
+{
+   static const GLfloat default_float[4] = { 0, 0, 0, 1 };
+   static const GLint default_int[4] = { 0, 0, 0, 1 };
+
+   switch (format) {
+   case GL_FLOAT:
+      return default_float;
+   case GL_INT:
+   case GL_UNSIGNED_INT:
+      return (const GLfloat*)default_int;
+   default:
+      ASSERT(0);
+      return NULL;
+   }
+}
+
 #endif

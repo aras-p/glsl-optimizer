@@ -101,6 +101,7 @@ struct vbo_exec_context
       struct vbo_exec_copied_vtx copied;
 
       GLubyte attrsz[VBO_ATTRIB_MAX];
+      GLenum attrtype[VBO_ATTRIB_MAX];
       GLubyte active_sz[VBO_ATTRIB_MAX];
 
       GLfloat *attrptr[VBO_ATTRIB_MAX]; 

@@ -157,11 +157,13 @@ static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
 	 GLfloat *current = (GLfloat *)vbo->currval[i].Ptr;
          GLfloat tmp[4];
 
-         COPY_CLEAN_4V(tmp, 
-                       exec->vtx.attrsz[i], 
-                       exec->vtx.attrptr[i]);
+         COPY_CLEAN_4V_TYPE_AS_FLOAT(tmp,
+                                     exec->vtx.attrsz[i],
+                                     exec->vtx.attrptr[i],
+                                     exec->vtx.attrtype[i]);
          
-         if (memcmp(current, tmp, sizeof(tmp)) != 0) { 
+         if (exec->vtx.attrtype[i] != vbo->currval[i].Type ||
+             memcmp(current, tmp, sizeof(tmp)) != 0) {
             memcpy(current, tmp, sizeof(tmp));
 	 
             /* Given that we explicitly state size here, there is no need
@@ -170,8 +172,10 @@ static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
              * directly.
              */
             vbo->currval[i].Size = exec->vtx.attrsz[i];
-            assert(vbo->currval[i].Type == GL_FLOAT);
             vbo->currval[i]._ElementSize = vbo->currval[i].Size * sizeof(GLfloat);
+            vbo->currval[i].Type = exec->vtx.attrtype[i];
+            vbo->currval[i].Integer =
+                  vbo_attrtype_to_integer_flag(exec->vtx.attrtype[i]);
 
             /* This triggers rather too much recalculation of Mesa state
              * that doesn't get used (eg light positions).
@@ -324,7 +328,9 @@ vbo_exec_wrap_upgrade_vertex(struct vbo_exec_context *exec,
 	       if (j == attr) {
 		  if (oldSize) {
 		     GLfloat tmp[4];
-		     COPY_CLEAN_4V(tmp, oldSize, data + old_offset);
+                     COPY_CLEAN_4V_TYPE_AS_FLOAT(tmp, oldSize,
+                                                 data + old_offset,
+                                                 exec->vtx.attrtype[j]);
 		     COPY_SZ_4V(dest + new_offset, newSize, tmp);
 		  } else {
 		     GLfloat *current = (GLfloat *)vbo->currval[j].Ptr;
@@ -365,8 +371,9 @@ vbo_exec_fixup_vertex(struct gl_context *ctx, GLuint attr, GLuint newSize)
       vbo_exec_wrap_upgrade_vertex( exec, attr, newSize );
    }
    else if (newSize < exec->vtx.active_sz[attr]) {
-      static const GLfloat id[4] = { 0, 0, 0, 1 };
       GLuint i;
+      const GLfloat *id =
+            vbo_get_default_vals_as_float(exec->vtx.attrtype[attr]);
 
       /* New size is smaller - just need to fill in some
        * zeros.  Don't need to flush or wrap.
@@ -390,7 +397,7 @@ vbo_exec_fixup_vertex(struct gl_context *ctx, GLuint attr, GLuint newSize)
  * This macro is used to implement all the glVertex, glColor, glTexCoord,
  * glVertexAttrib, etc functions.
  */
-#define ATTR( A, N, V0, V1, V2, V3 )					\
+#define ATTR( A, N, T, V0, V1, V2, V3 )					\
 do {									\
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;		\
 									\
@@ -406,6 +413,7 @@ do {									\
       if (N>1) dest[1] = V1;						\
       if (N>2) dest[2] = V2;						\
       if (N>3) dest[3] = V3;						\
+      exec->vtx.attrtype[A] = T;                                        \
    }									\
 									\
    if ((A) == 0) {							\
@@ -1119,6 +1127,8 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
    for (i = 0 ; i < VBO_ATTRIB_MAX ; i++) {
       ASSERT(i < Elements(exec->vtx.attrsz));
       exec->vtx.attrsz[i] = 0;
+      ASSERT(i < Elements(exec->vtx.attrtype));
+      exec->vtx.attrtype[i] = GL_FLOAT;
       ASSERT(i < Elements(exec->vtx.active_sz));
       exec->vtx.active_sz[i] = 0;
    }
@@ -1255,6 +1265,7 @@ static void reset_attrfv( struct vbo_exec_context *exec )
 
    for (i = 0 ; i < VBO_ATTRIB_MAX ; i++) {
       exec->vtx.attrsz[i] = 0;
+      exec->vtx.attrtype[i] = GL_FLOAT;
       exec->vtx.active_sz[i] = 0;
    }
 
@@ -1309,7 +1320,7 @@ VertexAttrib4f_nopos(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
    GET_CURRENT_CONTEXT(ctx);
    if (index < MAX_VERTEX_GENERIC_ATTRIBS)
-      ATTR(VBO_ATTRIB_GENERIC0 + index, 4, x, y, z, w);
+      ATTR(VBO_ATTRIB_GENERIC0 + index, 4, GL_FLOAT, x, y, z, w);
    else
       ERROR(GL_INVALID_VALUE);
 }

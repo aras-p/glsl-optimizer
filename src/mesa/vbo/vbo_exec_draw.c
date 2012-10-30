@@ -207,9 +207,6 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
       assert(0);
    }
 
-   /* Make all active attributes (including edgeflag) available as
-    * arrays of floats.
-    */
    for (attr = 0; attr < VERT_ATTRIB_MAX ; attr++) {
       const GLuint src = map[attr];
 
@@ -235,7 +232,9 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
 	 arrays[attr].Size = exec->vtx.attrsz[src];
 	 arrays[attr].StrideB = exec->vtx.vertex_size * sizeof(GLfloat);
 	 arrays[attr].Stride = exec->vtx.vertex_size * sizeof(GLfloat);
-	 arrays[attr].Type = GL_FLOAT;
+	 arrays[attr].Type = exec->vtx.attrtype[src];
+	 arrays[attr].Integer =
+               vbo_attrtype_to_integer_flag(exec->vtx.attrtype[src]);
          arrays[attr].Format = GL_RGBA;
 	 arrays[attr].Enabled = 1;
          arrays[attr]._ElementSize = arrays[attr].Size * sizeof(GLfloat);

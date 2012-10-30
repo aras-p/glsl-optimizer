@@ -81,7 +81,7 @@ extern "C" {
  * these casts generate warnings.
  * The following union typedef is used to solve that.
  */
-typedef union { GLfloat f; GLint i; } fi_type;
+typedef union { GLfloat f; GLint i; GLuint u; } fi_type;
 
 
 

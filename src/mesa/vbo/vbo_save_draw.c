@@ -79,16 +79,20 @@ _playback_copy_to_current(struct gl_context *ctx,
 	 GLfloat *current = (GLfloat *)vbo->currval[i].Ptr;
          GLfloat tmp[4];
 
-         COPY_CLEAN_4V(tmp, 
-                       node->attrsz[i], 
-                       data);
+         COPY_CLEAN_4V_TYPE_AS_FLOAT(tmp,
+                                     node->attrsz[i],
+                                     data,
+                                     node->attrtype[i]);
          
-         if (memcmp(current, tmp, 4 * sizeof(GLfloat)) != 0) {
+         if (node->attrtype[i] != vbo->currval[i].Type ||
+             memcmp(current, tmp, 4 * sizeof(GLfloat)) != 0) {
             memcpy(current, tmp, 4 * sizeof(GLfloat));
 
             vbo->currval[i].Size = node->attrsz[i];
-            assert(vbo->currval[i].Type == GL_FLOAT);
             vbo->currval[i]._ElementSize = vbo->currval[i].Size * sizeof(GLfloat);
+            vbo->currval[i].Type = node->attrtype[i];
+            vbo->currval[i].Integer =
+                  vbo_attrtype_to_integer_flag(node->attrtype[i]);
 
             if (i >= VBO_ATTRIB_FIRST_MATERIAL &&
                 i <= VBO_ATTRIB_LAST_MATERIAL)
@@ -134,9 +138,11 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
    const GLuint *map;
    GLuint attr;
    GLubyte node_attrsz[VBO_ATTRIB_MAX];  /* copy of node->attrsz[] */
+   GLenum node_attrtype[VBO_ATTRIB_MAX];  /* copy of node->attrtype[] */
    GLbitfield64 varying_inputs = 0x0;
 
    memcpy(node_attrsz, node->attrsz, sizeof(node->attrsz));
+   memcpy(node_attrtype, node->attrtype, sizeof(node->attrtype));
 
    /* Install the default (ie Current) attributes first, then overlay
     * all active ones.
@@ -170,6 +176,7 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
           (ctx->VertexProgram._Current->Base.InputsRead & VERT_BIT_GENERIC0)) {
          save->inputs[VERT_ATTRIB_GENERIC0] = save->inputs[0];
          node_attrsz[VERT_ATTRIB_GENERIC0] = node_attrsz[0];
+         node_attrtype[VERT_ATTRIB_GENERIC0] = node_attrtype[0];
          node_attrsz[0] = 0;
       }
       break;
@@ -188,7 +195,9 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
 	 arrays[attr].Size = node_attrsz[src];
 	 arrays[attr].StrideB = node->vertex_size * sizeof(GLfloat);
 	 arrays[attr].Stride = node->vertex_size * sizeof(GLfloat);
-	 arrays[attr].Type = GL_FLOAT;
+         arrays[attr].Type = node_attrtype[src];
+         arrays[attr].Integer =
+               vbo_attrtype_to_integer_flag(node_attrtype[src]);
          arrays[attr].Format = GL_RGBA;
 	 arrays[attr].Enabled = 1;
          arrays[attr]._ElementSize = arrays[attr].Size * sizeof(GLfloat);

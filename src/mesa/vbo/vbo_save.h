@@ -63,6 +63,7 @@ struct vbo_save_copied_vtx {
  */
 struct vbo_save_vertex_list {
    GLubyte attrsz[VBO_ATTRIB_MAX];
+   GLenum attrtype[VBO_ATTRIB_MAX];
    GLuint vertex_size;
 
    /* Copy of the final vertex from node->vertex_store->bufferobj.
@@ -127,6 +128,7 @@ struct vbo_save_context {
    const struct gl_client_array *inputs[VBO_ATTRIB_MAX];
 
    GLubyte attrsz[VBO_ATTRIB_MAX];
+   GLenum attrtype[VBO_ATTRIB_MAX];
    GLubyte active_sz[VBO_ATTRIB_MAX];
    GLuint vertex_size;
 
