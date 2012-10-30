@@ -1,8 +1,6 @@
 #include <stdbool.h>
 #include "main/mfeatures.h"
 
-#if FEATURE_ES1
-
 #include "api_loopback.h"
 #include "api_exec.h"
 #include "blend.h"
@@ -938,5 +936,3 @@ _es_Translatex(GLfixed x, GLfixed y, GLfixed z)
                      (GLfloat) (y / 65536.0f),
                      (GLfloat) (z / 65536.0f));
 }
-
-#endif /* FEATURE_ES1 */

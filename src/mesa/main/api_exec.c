@@ -870,7 +870,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_InvalidateFramebuffer(exec, _mesa_InvalidateFramebuffer);
    }
 
-#if FEATURE_ES1
    if (ctx->API == API_OPENGLES) {
       SET_AlphaFuncxOES(exec, _es_AlphaFuncx);
       SET_ClearColorxOES(exec, _es_ClearColorx);
@@ -929,7 +928,6 @@ _mesa_create_exec_table(struct gl_context *ctx)
       SET_TexParameterxvOES(exec, _es_TexParameterxv);
       SET_TranslatexOES(exec, _es_Translatex);
    }
-#endif
 
    return exec;
 }

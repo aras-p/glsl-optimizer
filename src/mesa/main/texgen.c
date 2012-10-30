@@ -212,7 +212,6 @@ _mesa_TexGend(GLenum coord, GLenum pname, GLdouble param )
    _mesa_TexGenfv( coord, pname, p );
 }
 
-#if FEATURE_ES1
 
 void GLAPIENTRY
 _es_GetTexGenfv(GLenum coord, GLenum pname, GLfloat *params)
@@ -250,7 +249,6 @@ _es_TexGenfv(GLenum coord, GLenum pname, const GLfloat *params)
    _mesa_TexGenfv(GL_R, pname, params);
 }
 
-#endif
 
 static void GLAPIENTRY
 _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )

@@ -74,12 +74,9 @@ struct function {
 };
 
 extern const struct function gl_core_functions_possible[];
+extern const struct function gles11_functions_possible[];
 extern const struct function gles2_functions_possible[];
 extern const struct function gles3_functions_possible[];
-
-#if FEATURE_ES1
-extern const struct function gles11_functions_possible[];
-#endif /* FEATURE_ES1 */
 
 class DispatchSanity_test : public ::testing::Test {
 public:
@@ -177,14 +174,12 @@ TEST_F(DispatchSanity_test, GL31_CORE)
    validate_nops(&ctx);
 }
 
-#if FEATURE_ES1
 TEST_F(DispatchSanity_test, GLES11)
 {
    SetUpCtx(API_OPENGLES, 11);
    validate_functions(&ctx, gles11_functions_possible);
    validate_nops(&ctx);
 }
-#endif /* FEATURE_ES1 */
 
 TEST_F(DispatchSanity_test, GLES2)
 {
@@ -898,7 +893,6 @@ const struct function gl_core_functions_possible[] = {
    { NULL, 0, -1 }
 };
 
-#if FEATURE_ES1
 const struct function gles11_functions_possible[] = {
    { "glActiveTexture", 11, _gloffset_ActiveTextureARB },
    { "glAlphaFunc", 11, _gloffset_AlphaFunc },
@@ -1092,7 +1086,6 @@ const struct function gles11_functions_possible[] = {
    { "glViewport", 11, _gloffset_Viewport },
    { NULL, 0, -1 }
 };
-#endif /* FEATURE_ES1 */
 
 const struct function gles2_functions_possible[] = {
    { "glActiveTexture", 20, _gloffset_ActiveTextureARB },
