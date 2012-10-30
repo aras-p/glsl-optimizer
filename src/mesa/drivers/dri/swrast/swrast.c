@@ -192,18 +192,16 @@ swrastFillInModes(__DRIscreen *psp,
 static const __DRIconfig **
 dri_init_screen(__DRIscreen * psp)
 {
-    __DRIconfig **configs8, **configs16, **configs24, **configs32;
+    __DRIconfig **configs16, **configs24, **configs32;
 
     TRACE;
 
     psp->extensions = dri_screen_extensions;
 
-    configs8  = swrastFillInModes(psp,  8,  8, 0, 1);
     configs16 = swrastFillInModes(psp, 16, 16, 0, 1);
     configs24 = swrastFillInModes(psp, 24, 24, 8, 1);
     configs32 = swrastFillInModes(psp, 32, 24, 8, 1);
 
-    configs16 = driConcatConfigs(configs8, configs16);
     configs24 = driConcatConfigs(configs16, configs24);
     configs32 = driConcatConfigs(configs24, configs32);
 
