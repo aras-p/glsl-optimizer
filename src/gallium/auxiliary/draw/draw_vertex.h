@@ -42,6 +42,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 #include "util/u_debug.h"
+#include "util/u_memory.h"
 
 
 /**
@@ -87,7 +88,7 @@ struct vertex_info
       unsigned interp_mode:4;      /**< INTERP_x */
       unsigned emit:4;             /**< EMIT_x */
       unsigned src_index:8;          /**< map to post-xform attribs */
-   } attrib[PIPE_MAX_SHADER_INPUTS];
+   } attrib[PIPE_MAX_SHADER_OUTPUTS];
 };
 
 static INLINE size_t
@@ -127,7 +128,7 @@ draw_emit_vertex_attr(struct vertex_info *vinfo,
                       uint src_index)
 {
    const uint n = vinfo->num_attribs;
-   assert(n < PIPE_MAX_SHADER_INPUTS);
+   assert(n < Elements(vinfo->attrib));
    vinfo->attrib[n].emit = emit;
    vinfo->attrib[n].interp_mode = interp;
    vinfo->attrib[n].src_index = src_index;
