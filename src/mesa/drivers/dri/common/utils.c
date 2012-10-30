@@ -149,13 +149,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
  *                      If the function fails and returns \c GL_FALSE, this
  *                      value will be unmodified, but some elements in the
  *                      linked list may be modified.
- * \param fb_format     Format of the framebuffer.  Currently only \c GL_RGB,
- *                      \c GL_RGBA, \c GL_BGR, and \c GL_BGRA are supported.
- * \param fb_type       Type of the pixels in the framebuffer.  Currently only
- *                      \c GL_UNSIGNED_SHORT_5_6_5, 
- *                      \c GL_UNSIGNED_SHORT_5_6_5_REV,
- *                      \c GL_UNSIGNED_INT_8_8_8_8, and
- *                      \c GL_UNSIGNED_INT_8_8_8_8_REV are supported.
+ * \param format        Mesa gl_format enum describing the pixel format
  * \param depth_bits    Array of depth buffer sizes to be exposed.
  * \param stencil_bits  Array of stencil buffer sizes to be exposed.
  * \param num_depth_stencil_bits  Number of entries in both \c depth_bits and
@@ -174,16 +168,10 @@ driGetRendererString( char * buffer, const char * hardware_name,
  *                      \c GLX_DIRECT_COLOR.
  * 
  * \returns
- * \c GL_TRUE on success or \c GL_FALSE on failure.  Currently the only
- * cause of failure is a bad parameter (i.e., unsupported \c fb_format or
- * \c fb_type).
- * 
- * \todo
- * There is currently no way to support packed RGB modes (i.e., modes with
- * exactly 3 bytes per pixel) or floating-point modes.  This could probably
- * be done by creating some new, private enums with clever names likes
- * \c GL_UNSIGNED_3BYTE_8_8_8, \c GL_4FLOAT_32_32_32_32, 
- * \c GL_4HALF_16_16_16_16, etc.  We can cross that bridge when we come to it.
+ * Pointer to any array of pointers to the \c __DRIconfig structures created
+ * for the specified formats.  If there is an error, \c NULL is returned.
+ * Currently the only cause of failure is a bad parameter (i.e., unsupported
+ * \c format).
  */
 __DRIconfig **
 driCreateConfigs(gl_format format,
