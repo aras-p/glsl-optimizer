@@ -493,20 +493,6 @@ intel_framebuffer_renderbuffer(struct gl_context * ctx,
    intel_draw_buffer(ctx);
 }
 
-/**
- * \par Special case for separate stencil
- *
- *     When wrapping a depthstencil texture that uses separate stencil, this
- *     function is recursively called twice: once to create \c
- *     irb->wrapped_depth and again to create \c irb->wrapped_stencil.  On the
- *     call to create \c irb->wrapped_depth, the \c format and \c
- *     internal_format parameters do not match \c mt->format. In that case, \c
- *     mt->format is MESA_FORMAT_S8_Z24 and \c format is \c
- *     MESA_FORMAT_X8_Z24.
- *
- * @return true on success
- */
-
 static bool
 intel_renderbuffer_update_wrapper(struct intel_context *intel,
                                   struct intel_renderbuffer *irb,
