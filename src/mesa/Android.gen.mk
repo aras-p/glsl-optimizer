@@ -32,6 +32,7 @@ intermediates := $(call local-intermediates-dir)
 # This is the list of auto-generated files: sources and headers
 sources := \
 	main/enums.c \
+	main/api_exec.c \
 	program/program_parse.tab.c \
 	program/lex.yy.c \
 	main/dispatch.h \
@@ -121,6 +122,12 @@ $(intermediates)/main/enums.c: PRIVATE_SCRIPT :=$(MESA_PYTHON2) $(glapi)/gl_enum
 $(intermediates)/main/enums.c: PRIVATE_XML := -f $(glapi)/gl_and_es_API.xml
 
 $(intermediates)/main/enums.c: $(dispatch_deps)
+	$(call es-gen)
+
+$(intermediates)/main/api_exec.c: PRIVATE_SCRIPT := $(MESA_PYTHON2) $(glapi)/gl_genexec.py
+$(intermediates)/main/api_exec.c: PRIVATE_XML := -f $(glapi)/gl_and_es_API.xml
+
+$(intermediates)/main/api_exec.c: $(dispatch_deps)
 	$(call es-gen)
 
 GET_HASH_GEN := $(LOCAL_PATH)/main/get_hash_generator.py

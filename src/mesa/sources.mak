@@ -9,7 +9,7 @@ MAIN_ES_FILES = \
 
 MAIN_FILES = \
 	$(SRCDIR)main/api_arrayelt.c \
-	$(SRCDIR)main/api_exec.c \
+	$(BUILDDIR)main/api_exec.c \
 	$(SRCDIR)main/api_loopback.c \
 	$(SRCDIR)main/api_validate.c \
 	$(SRCDIR)main/accum.c \
