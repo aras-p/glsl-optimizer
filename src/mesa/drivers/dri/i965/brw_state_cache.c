@@ -336,7 +336,7 @@ brw_init_caches(struct brw_context *brw)
    cache->size = 7;
    cache->n_items = 0;
    cache->items =
-      calloc(1, cache->size * sizeof(struct brw_cache_item));
+      calloc(1, cache->size * sizeof(struct brw_cache_item *));
 
    cache->bo = drm_intel_bo_alloc(intel->bufmgr,
 				  "program cache",
