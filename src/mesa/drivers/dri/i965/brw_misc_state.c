@@ -416,11 +416,12 @@ static void emit_depthbuffer(struct brw_context *brw)
    unsigned int len;
    bool separate_stencil = false;
 
-   if (depth_irb &&
-       depth_irb->mt &&
-       depth_irb->mt->hiz_mt) {
+   if (depth_irb){
       depth_mt = depth_irb->mt;
-      hiz_region = depth_irb->mt->hiz_mt->region;
+      if (depth_mt &&
+          depth_mt->hiz_mt) {
+         hiz_region = depth_irb->mt->hiz_mt->region;
+      }
    }
 
    /* 3DSTATE_DEPTH_BUFFER, 3DSTATE_STENCIL_BUFFER are both
