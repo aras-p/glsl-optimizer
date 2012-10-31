@@ -321,13 +321,19 @@ _mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
 
    q = _mesa_lookup_query_object(ctx, id);
    if (!q) {
-      /* create new object */
-      q = ctx->Driver.NewQueryObject(ctx, id);
-      if (!q) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBeginQuery{Indexed}");
+      if (ctx->API == API_OPENGL_CORE) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glBeginQuery{Indexed}(non-gen name)");
          return;
+      } else {
+         /* create new object */
+         q = ctx->Driver.NewQueryObject(ctx, id);
+         if (!q) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBeginQuery{Indexed}");
+            return;
+         }
+         _mesa_HashInsert(ctx->Query.QueryObjects, id, q);
       }
-      _mesa_HashInsert(ctx->Query.QueryObjects, id, q);
    }
    else {
       /* pre-existing object */
