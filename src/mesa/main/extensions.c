@@ -357,8 +357,6 @@ name_to_offset(const char* name)
  * XXX: Should these defaults also apply to GLES?
  */
 static const size_t default_extensions[] = {
-   o(EXT_texture3D),
-
    o(OES_standard_derivatives),
 
    /* Vendor Extensions */
@@ -714,6 +712,7 @@ _mesa_init_extensions( struct gl_context *ctx )
 
    /* Then, selectively turn default extensions on. */
    ctx->Extensions.dummy_true = GL_TRUE;
+   ctx->Extensions.EXT_texture3D = GL_TRUE;
    for (j = default_extensions; *j != 0; ++j)
       base[*j] = GL_TRUE;
 }
