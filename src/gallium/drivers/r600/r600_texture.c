@@ -421,9 +421,10 @@ r600_texture_create_object(struct pipe_screen *screen,
 			return NULL;
 		}
 	} else if (buf) {
+		/* This is usually the window framebuffer. We want it in VRAM, always. */
 		resource->buf = buf;
 		resource->cs_buf = rscreen->ws->buffer_get_cs_handle(buf);
-		resource->domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
+		resource->domains = RADEON_DOMAIN_VRAM;
 	}
 
 	if (rtex->cmask_size) {

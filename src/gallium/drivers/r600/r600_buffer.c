@@ -206,29 +206,31 @@ bool r600_init_resource(struct r600_screen *rscreen,
 {
 	uint32_t initial_domain, domains;
 
-	/* Staging resources particpate in transfers and blits only
-	 * and are used for uploads and downloads from regular
-	 * resources.  We generate them internally for some transfers.
-	 */
-	if (usage == PIPE_USAGE_STAGING) {
-		domains = RADEON_DOMAIN_GTT;
+	switch(usage) {
+	case PIPE_USAGE_STAGING:
+		/* Staging resources participate in transfers, i.e. are used
+		 * for uploads and downloads from regular resources.
+		 * We generate them internally for some transfers.
+		 */
 		initial_domain = RADEON_DOMAIN_GTT;
-	} else {
+		domains = RADEON_DOMAIN_GTT;
+		break;
+	case PIPE_USAGE_DYNAMIC:
+	case PIPE_USAGE_STREAM:
+		/* Default to GTT, but allow the memory manager to move it to VRAM. */
+		initial_domain = RADEON_DOMAIN_GTT;
 		domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
-
-		switch(usage) {
-		case PIPE_USAGE_DYNAMIC:
-		case PIPE_USAGE_STREAM:
-		case PIPE_USAGE_STAGING:
-			initial_domain = RADEON_DOMAIN_GTT;
-			break;
-		case PIPE_USAGE_DEFAULT:
-		case PIPE_USAGE_STATIC:
-		case PIPE_USAGE_IMMUTABLE:
-		default:
-			initial_domain = RADEON_DOMAIN_VRAM;
-			break;
-		}
+		break;
+	case PIPE_USAGE_DEFAULT:
+	case PIPE_USAGE_STATIC:
+	case PIPE_USAGE_IMMUTABLE:
+	default:
+		/* Don't list GTT here, because the memory manager would put some
+		 * resources to GTT no matter what the initial domain is.
+		 * Not listing GTT in the domains improves performance a lot. */
+		initial_domain = RADEON_DOMAIN_VRAM;
+		domains = RADEON_DOMAIN_VRAM;
+		break;
 	}
 
 	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment, bind, initial_domain);
