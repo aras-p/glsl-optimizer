@@ -359,7 +359,7 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
       newObj = lookup_arrayobj(ctx, id);
       if (!newObj) {
          if (genRequired) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glBindVertexArray(id)");
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glBindVertexArray(non-gen name)");
             return;
          }
 

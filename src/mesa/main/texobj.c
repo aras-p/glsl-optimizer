@@ -1220,7 +1220,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       }
       else {
          if (ctx->API == API_OPENGL_CORE) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glBindTexture");
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glBindTexture(non-gen name)");
             return;
          }
 
