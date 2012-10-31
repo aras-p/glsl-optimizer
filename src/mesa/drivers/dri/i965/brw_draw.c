@@ -474,7 +474,10 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
       intel_batchbuffer_require_space(intel, estimated_max_prim_size, false);
       intel_batchbuffer_save_state(intel);
 
-      brw->num_instances = prim->num_instances;
+      if (brw->num_instances != prim->num_instances) {
+         brw->num_instances = prim->num_instances;
+         brw->state.dirty.brw |= BRW_NEW_VERTICES;
+      }
       if (intel->gen < 6)
 	 brw_set_prim(brw, &prim[i]);
       else
