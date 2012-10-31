@@ -10633,20 +10633,6 @@ _mesa_install_dlist_vtxfmt(struct _glapi_table *disp,
 }
 
 
-void _mesa_init_dlist_dispatch(struct _glapi_table *disp)
-{
-   SET_CallList(disp, _mesa_CallList);
-   SET_CallLists(disp, _mesa_CallLists);
-
-   SET_DeleteLists(disp, _mesa_DeleteLists);
-   SET_EndList(disp, _mesa_EndList);
-   SET_GenLists(disp, _mesa_GenLists);
-   SET_IsList(disp, _mesa_IsList);
-   SET_ListBase(disp, _mesa_ListBase);
-   SET_NewList(disp, _mesa_NewList);
-}
-
-
 /**
  * Initialize display list state for given context.
  */

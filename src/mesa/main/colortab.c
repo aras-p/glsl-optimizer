@@ -144,21 +144,3 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
    _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameteriv(target)");
 }
-
-
-void
-_mesa_init_colortable_dispatch(struct _glapi_table *disp)
-{
-   SET_ColorSubTable(disp, _mesa_ColorSubTable);
-   SET_ColorTable(disp, _mesa_ColorTable);
-   SET_ColorTableParameterfv(disp, _mesa_ColorTableParameterfv);
-   SET_ColorTableParameteriv(disp, _mesa_ColorTableParameteriv);
-   SET_CopyColorSubTable(disp, _mesa_CopyColorSubTable);
-   SET_CopyColorTable(disp, _mesa_CopyColorTable);
-   SET_GetColorTable(disp, _mesa_GetColorTable);
-   SET_GetColorTableParameterfv(disp, _mesa_GetColorTableParameterfv);
-   SET_GetColorTableParameteriv(disp, _mesa_GetColorTableParameteriv);
-
-   /* GL_ARB_robustness */
-   SET_GetnColorTableARB(disp, _mesa_GetnColorTableARB);
-}

@@ -365,12 +365,3 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
       _mesa_flush(ctx);
    }
 }
-
-
-void
-_mesa_init_drawpix_dispatch(struct _glapi_table *disp)
-{
-   SET_Bitmap(disp, _mesa_Bitmap);
-   SET_CopyPixels(disp, _mesa_CopyPixels);
-   SET_DrawPixels(disp, _mesa_DrawPixels);
-}

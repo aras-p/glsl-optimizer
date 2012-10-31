@@ -63,9 +63,6 @@ struct atifs_setupinst
 };
 
 
-extern void
-_mesa_init_ati_fragment_shader_dispatch(struct _glapi_table *disp);
-
 extern struct ati_fragment_shader *
 _mesa_new_ati_fragment_shader(struct gl_context *ctx, GLuint id);
 

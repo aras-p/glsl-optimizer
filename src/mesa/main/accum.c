@@ -106,14 +106,6 @@ _mesa_Accum( GLenum op, GLfloat value )
 }
 
 
-void
-_mesa_init_accum_dispatch(struct _glapi_table *disp)
-{
-   SET_Accum(disp, _mesa_Accum);
-   SET_ClearAccum(disp, _mesa_ClearAccum);
-}
-
-
 /**
  * Clear the accumulation buffer by mapping the renderbuffer and
  * writing the clear color to it.  Called by the driver's implementation

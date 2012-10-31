@@ -69,9 +69,6 @@ _mesa_PixelTransferi( GLenum pname, GLint param );
 extern void 
 _mesa_update_pixel( struct gl_context *ctx, GLuint newstate );
 
-extern void
-_mesa_init_pixel_dispatch( struct _glapi_table * disp );
-
 extern void 
 _mesa_init_pixel( struct gl_context * ctx );
 

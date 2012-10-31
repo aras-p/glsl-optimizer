@@ -79,8 +79,6 @@ extern struct _glapi_table *_mesa_create_save_table(const struct gl_context *);
 extern void _mesa_install_dlist_vtxfmt(struct _glapi_table *disp,
                                        const GLvertexformat *vfmt);
 
-extern void _mesa_init_dlist_dispatch(struct _glapi_table *disp);
-
 extern void _mesa_init_display_list( struct gl_context * ctx );
 
 extern void _mesa_free_display_list_data(struct gl_context *ctx);

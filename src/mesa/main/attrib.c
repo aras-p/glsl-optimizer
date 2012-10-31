@@ -1584,16 +1584,6 @@ _mesa_PopClientAttrib(void)
 }
 
 
-void
-_mesa_init_attrib_dispatch(struct _glapi_table *disp)
-{
-   SET_PopAttrib(disp, _mesa_PopAttrib);
-   SET_PushAttrib(disp, _mesa_PushAttrib);
-   SET_PopClientAttrib(disp, _mesa_PopClientAttrib);
-   SET_PushClientAttrib(disp, _mesa_PushClientAttrib);
-}
-
-
 /**
  * Free any attribute state data that might be attached to the context.
  */

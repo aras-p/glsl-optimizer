@@ -848,28 +848,6 @@ _mesa_install_eval_vtxfmt(struct _glapi_table *disp,
 }
 
 
-void
-_mesa_init_eval_dispatch(struct _glapi_table *disp)
-{
-   SET_GetMapdv(disp, _mesa_GetMapdv);
-   SET_GetMapfv(disp, _mesa_GetMapfv);
-   SET_GetMapiv(disp, _mesa_GetMapiv);
-   SET_Map1d(disp, _mesa_Map1d);
-   SET_Map1f(disp, _mesa_Map1f);
-   SET_Map2d(disp, _mesa_Map2d);
-   SET_Map2f(disp, _mesa_Map2f);
-   SET_MapGrid1d(disp, _mesa_MapGrid1d);
-   SET_MapGrid1f(disp, _mesa_MapGrid1f);
-   SET_MapGrid2d(disp, _mesa_MapGrid2d);
-   SET_MapGrid2f(disp, _mesa_MapGrid2f);
-
-   /* GL_ARB_robustness */
-   SET_GetnMapdvARB(disp, _mesa_GetnMapdvARB);
-   SET_GetnMapfvARB(disp, _mesa_GetnMapfvARB);
-   SET_GetnMapivARB(disp, _mesa_GetnMapivARB);
-}
-
-
 /**********************************************************************/
 /*****                      Initialization                        *****/
 /**********************************************************************/

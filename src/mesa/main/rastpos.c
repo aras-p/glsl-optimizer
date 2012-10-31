@@ -474,62 +474,6 @@ void glWindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 #endif
 
 
-void
-_mesa_init_rastpos_dispatch(struct _glapi_table *disp)
-{
-   SET_RasterPos2f(disp, _mesa_RasterPos2f);
-   SET_RasterPos2fv(disp, _mesa_RasterPos2fv);
-   SET_RasterPos2i(disp, _mesa_RasterPos2i);
-   SET_RasterPos2iv(disp, _mesa_RasterPos2iv);
-   SET_RasterPos2d(disp, _mesa_RasterPos2d);
-   SET_RasterPos2dv(disp, _mesa_RasterPos2dv);
-   SET_RasterPos2s(disp, _mesa_RasterPos2s);
-   SET_RasterPos2sv(disp, _mesa_RasterPos2sv);
-   SET_RasterPos3d(disp, _mesa_RasterPos3d);
-   SET_RasterPos3dv(disp, _mesa_RasterPos3dv);
-   SET_RasterPos3f(disp, _mesa_RasterPos3f);
-   SET_RasterPos3fv(disp, _mesa_RasterPos3fv);
-   SET_RasterPos3i(disp, _mesa_RasterPos3i);
-   SET_RasterPos3iv(disp, _mesa_RasterPos3iv);
-   SET_RasterPos3s(disp, _mesa_RasterPos3s);
-   SET_RasterPos3sv(disp, _mesa_RasterPos3sv);
-   SET_RasterPos4d(disp, _mesa_RasterPos4d);
-   SET_RasterPos4dv(disp, _mesa_RasterPos4dv);
-   SET_RasterPos4f(disp, _mesa_RasterPos4f);
-   SET_RasterPos4fv(disp, _mesa_RasterPos4fv);
-   SET_RasterPos4i(disp, _mesa_RasterPos4i);
-   SET_RasterPos4iv(disp, _mesa_RasterPos4iv);
-   SET_RasterPos4s(disp, _mesa_RasterPos4s);
-   SET_RasterPos4sv(disp, _mesa_RasterPos4sv);
-
-   /* 197. GL_MESA_window_pos */
-   SET_WindowPos2dMESA(disp, _mesa_WindowPos2dMESA);
-   SET_WindowPos2dvMESA(disp, _mesa_WindowPos2dvMESA);
-   SET_WindowPos2fMESA(disp, _mesa_WindowPos2fMESA);
-   SET_WindowPos2fvMESA(disp, _mesa_WindowPos2fvMESA);
-   SET_WindowPos2iMESA(disp, _mesa_WindowPos2iMESA);
-   SET_WindowPos2ivMESA(disp, _mesa_WindowPos2ivMESA);
-   SET_WindowPos2sMESA(disp, _mesa_WindowPos2sMESA);
-   SET_WindowPos2svMESA(disp, _mesa_WindowPos2svMESA);
-   SET_WindowPos3dMESA(disp, _mesa_WindowPos3dMESA);
-   SET_WindowPos3dvMESA(disp, _mesa_WindowPos3dvMESA);
-   SET_WindowPos3fMESA(disp, _mesa_WindowPos3fMESA);
-   SET_WindowPos3fvMESA(disp, _mesa_WindowPos3fvMESA);
-   SET_WindowPos3iMESA(disp, _mesa_WindowPos3iMESA);
-   SET_WindowPos3ivMESA(disp, _mesa_WindowPos3ivMESA);
-   SET_WindowPos3sMESA(disp, _mesa_WindowPos3sMESA);
-   SET_WindowPos3svMESA(disp, _mesa_WindowPos3svMESA);
-   SET_WindowPos4dMESA(disp, _mesa_WindowPos4dMESA);
-   SET_WindowPos4dvMESA(disp, _mesa_WindowPos4dvMESA);
-   SET_WindowPos4fMESA(disp, _mesa_WindowPos4fMESA);
-   SET_WindowPos4fvMESA(disp, _mesa_WindowPos4fvMESA);
-   SET_WindowPos4iMESA(disp, _mesa_WindowPos4iMESA);
-   SET_WindowPos4ivMESA(disp, _mesa_WindowPos4ivMESA);
-   SET_WindowPos4sMESA(disp, _mesa_WindowPos4sMESA);
-   SET_WindowPos4svMESA(disp, _mesa_WindowPos4svMESA);
-}
-
-
 /**********************************************************************/
 /** \name Initialization                                              */
 /**********************************************************************/

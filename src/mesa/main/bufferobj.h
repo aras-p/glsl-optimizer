@@ -152,8 +152,4 @@ void GLAPIENTRY
 _mesa_InvalidateBufferData(GLuint buffer);
 
 
-extern void
-_mesa_init_bufferobj_dispatch(struct gl_context *ctx,
-                              struct _glapi_table *disp);
-
 #endif

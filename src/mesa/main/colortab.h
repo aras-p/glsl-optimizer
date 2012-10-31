@@ -63,8 +63,5 @@ _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params );
 void GLAPIENTRY
 _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params );
 
-extern void
-_mesa_init_colortable_dispatch(struct _glapi_table *disp);
-
 
 #endif /* COLORTAB_H */

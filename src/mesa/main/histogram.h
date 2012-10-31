@@ -41,9 +41,6 @@
 
 struct _glapi_table;
 
-extern void
-_mesa_init_histogram_dispatch(struct _glapi_table *disp);
-
 void GLAPIENTRY
 _mesa_GetnMinmaxARB(GLenum target, GLboolean reset, GLenum format,
                     GLenum type, GLsizei bufSize, GLvoid *values);

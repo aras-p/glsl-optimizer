@@ -143,23 +143,3 @@ _mesa_ResetMinmax(GLenum target)
 
    _mesa_error(ctx, GL_INVALID_OPERATION, "glResetMinmax");
 }
-
-
-void
-_mesa_init_histogram_dispatch(struct _glapi_table *disp)
-{
-   SET_GetHistogram(disp, _mesa_GetHistogram);
-   SET_GetHistogramParameterfv(disp, _mesa_GetHistogramParameterfv);
-   SET_GetHistogramParameteriv(disp, _mesa_GetHistogramParameteriv);
-   SET_GetMinmax(disp, _mesa_GetMinmax);
-   SET_GetMinmaxParameterfv(disp, _mesa_GetMinmaxParameterfv);
-   SET_GetMinmaxParameteriv(disp, _mesa_GetMinmaxParameteriv);
-   SET_Histogram(disp, _mesa_Histogram);
-   SET_Minmax(disp, _mesa_Minmax);
-   SET_ResetHistogram(disp, _mesa_ResetHistogram);
-   SET_ResetMinmax(disp, _mesa_ResetMinmax);
-
-   /* GL_ARB_robustness */
-   SET_GetnHistogramARB(disp, _mesa_GetnHistogramARB);
-   SET_GetnMinmaxARB(disp, _mesa_GetnMinmaxARB);
-}

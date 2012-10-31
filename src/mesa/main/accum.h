@@ -50,9 +50,6 @@ void GLAPIENTRY
 _mesa_Accum( GLenum op, GLfloat value );
 
 extern void
-_mesa_init_accum_dispatch(struct _glapi_table *disp);
-
-extern void
 _mesa_accum(struct gl_context *ctx, GLenum op, GLfloat value);
 
 extern void

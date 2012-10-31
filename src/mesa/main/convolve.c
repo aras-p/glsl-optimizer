@@ -176,25 +176,3 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
 
    _mesa_error(ctx, GL_INVALID_ENUM, "glSeparableFilter2D");
 }
-
-void
-_mesa_init_convolve_dispatch(struct _glapi_table *disp)
-{
-   SET_ConvolutionFilter1D(disp, _mesa_ConvolutionFilter1D);
-   SET_ConvolutionFilter2D(disp, _mesa_ConvolutionFilter2D);
-   SET_ConvolutionParameterf(disp, _mesa_ConvolutionParameterf);
-   SET_ConvolutionParameterfv(disp, _mesa_ConvolutionParameterfv);
-   SET_ConvolutionParameteri(disp, _mesa_ConvolutionParameteri);
-   SET_ConvolutionParameteriv(disp, _mesa_ConvolutionParameteriv);
-   SET_CopyConvolutionFilter1D(disp, _mesa_CopyConvolutionFilter1D);
-   SET_CopyConvolutionFilter2D(disp, _mesa_CopyConvolutionFilter2D);
-   SET_GetConvolutionFilter(disp, _mesa_GetConvolutionFilter);
-   SET_GetConvolutionParameterfv(disp, _mesa_GetConvolutionParameterfv);
-   SET_GetConvolutionParameteriv(disp, _mesa_GetConvolutionParameteriv);
-   SET_SeparableFilter2D(disp, _mesa_SeparableFilter2D);
-   SET_GetSeparableFilter(disp, _mesa_GetSeparableFilter);
-
-   /* GL_ARB_robustness */
-   SET_GetnConvolutionFilterARB(disp, _mesa_GetnConvolutionFilterARB);
-   SET_GetnSeparableFilterARB(disp, _mesa_GetnSeparableFilterARB);
-}

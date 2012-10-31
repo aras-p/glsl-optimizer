@@ -33,9 +33,6 @@
 
 struct _glapi_table;
 
-extern void
-_mesa_init_convolve_dispatch(struct _glapi_table *disp);
-
 void GLAPIENTRY
 _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width,
                           GLenum format, GLenum type, const GLvoid *image);

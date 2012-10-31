@@ -70,10 +70,6 @@ _mesa_update_hitflag( struct gl_context *ctx, GLfloat z );
 
 
 extern void
-_mesa_init_feedback_dispatch(struct _glapi_table *disp);
-
-
-extern void
 _mesa_init_feedback( struct gl_context *ctx );
 
 #endif /* FEEDBACK_H */

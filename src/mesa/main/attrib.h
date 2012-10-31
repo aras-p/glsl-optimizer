@@ -45,9 +45,6 @@ _mesa_PushClientAttrib( GLbitfield mask );
 extern void GLAPIENTRY
 _mesa_PopClientAttrib( void );
 
-extern void
-_mesa_init_attrib_dispatch(struct _glapi_table *disp);
-
 extern void 
 _mesa_init_attrib( struct gl_context *ctx );
 

@@ -78,9 +78,6 @@ extern void
 _mesa_install_eval_vtxfmt(struct _glapi_table *disp,
                           const GLvertexformat *vfmt);
 
-extern void
-_mesa_init_eval_dispatch(struct _glapi_table *disp);
-
 extern void _mesa_init_eval( struct gl_context *ctx );
 extern void _mesa_free_eval_data( struct gl_context *ctx );
 

@@ -494,20 +494,6 @@ _mesa_RenderMode( GLenum mode )
 /*@}*/
 
 
-void
-_mesa_init_feedback_dispatch(struct _glapi_table *disp)
-{
-   SET_InitNames(disp, _mesa_InitNames);
-   SET_FeedbackBuffer(disp, _mesa_FeedbackBuffer);
-   SET_LoadName(disp, _mesa_LoadName);
-   SET_PassThrough(disp, _mesa_PassThrough);
-   SET_PopName(disp, _mesa_PopName);
-   SET_PushName(disp, _mesa_PushName);
-   SET_SelectBuffer(disp, _mesa_SelectBuffer);
-   SET_RenderMode(disp, _mesa_RenderMode);
-}
-
-
 /**********************************************************************/
 /** \name Initialization */
 /*@{*/
