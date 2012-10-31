@@ -696,8 +696,10 @@ intel_miptree_copy_slice(struct intel_context *intel,
    intel_miptree_get_image_offset(src_mt, level, face, depth,
 				  &src_x, &src_y);
 
-   DBG("validate blit mt %p %d,%d/%d -> mt %p %d,%d/%d (%dx%d)\n",
+   DBG("validate blit mt %s %p %d,%d/%d -> mt %s %p %d,%d/%d (%dx%d)\n",
+       _mesa_get_format_name(src_mt->format),
        src_mt, src_x, src_y, src_mt->region->pitch * src_mt->region->cpp,
+       _mesa_get_format_name(dst_mt->format),
        dst_mt, dst_x, dst_y, dst_mt->region->pitch * dst_mt->region->cpp,
        width, height);
 
