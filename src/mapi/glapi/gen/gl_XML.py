@@ -613,7 +613,7 @@ class gl_function( gl_item ):
         # the first level of the map; the second level of the map only
         # lists APIs which contain the entry point in at least one
         # version.  For example,
-        # self.entry_point_gles_map['ClipPlanex'] == { 'es1':
+        # self.entry_point_api_map['ClipPlanex'] == { 'es1':
         # Decimal('1.1') }.
         self.entry_point_api_map = {}
 
