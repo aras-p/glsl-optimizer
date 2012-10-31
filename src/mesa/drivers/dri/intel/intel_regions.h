@@ -123,16 +123,6 @@ intel_region_copy(struct intel_context *intel,
 		  bool flip,
 		  GLenum logicop);
 
-void _mesa_copy_rect(GLubyte * dst,
-                GLuint cpp,
-                GLuint dst_pitch,
-                GLuint dst_x,
-                GLuint dst_y,
-                GLuint width,
-                GLuint height,
-                const GLubyte * src,
-                GLuint src_pitch, GLuint src_x, GLuint src_y);
-
 void
 intel_region_get_tile_masks(struct intel_region *region,
                             uint32_t *mask_x, uint32_t *mask_y,
