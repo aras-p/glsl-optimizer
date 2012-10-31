@@ -1086,6 +1086,7 @@ struct brw_context
    } prim_restart;
 
    uint32_t num_instances;
+   int basevertex;
 };
 
 

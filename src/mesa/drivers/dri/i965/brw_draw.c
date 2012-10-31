@@ -478,6 +478,10 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
          brw->num_instances = prim->num_instances;
          brw->state.dirty.brw |= BRW_NEW_VERTICES;
       }
+      if (brw->basevertex != prim->basevertex) {
+         brw->basevertex = prim->basevertex;
+         brw->state.dirty.brw |= BRW_NEW_VERTICES;
+      }
       if (intel->gen < 6)
 	 brw_set_prim(brw, &prim[i]);
       else

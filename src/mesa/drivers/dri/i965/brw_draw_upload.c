@@ -357,8 +357,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
    GLbitfield64 vs_inputs = brw->vs.prog_data->inputs_read;
    const unsigned char *ptr = NULL;
    GLuint interleaved = 0;
-   unsigned int min_index = brw->vb.min_index;
-   unsigned int max_index = brw->vb.max_index;
+   unsigned int min_index = brw->vb.min_index + brw->basevertex;
+   unsigned int max_index = brw->vb.max_index + brw->basevertex;
    int delta, i, j;
 
    struct brw_vertex_element *upload[VERT_ATTRIB_MAX];
