@@ -9,7 +9,7 @@
 #include "nouveau_screen.h"
 #include "nouveau_mm.h"
 
-#define MM_MIN_ORDER 7
+#define MM_MIN_ORDER 7 /* >= 6 to not violate ARB_map_buffer_alignment */
 #define MM_MAX_ORDER 20
 
 #define MM_NUM_BUCKETS (MM_MAX_ORDER - MM_MIN_ORDER + 1)

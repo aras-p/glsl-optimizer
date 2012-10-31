@@ -43,7 +43,7 @@ nouveau_buffer_allocate(struct nouveau_screen *screen,
    }
    if (domain != NOUVEAU_BO_GART) {
       if (!buf->data) {
-         buf->data = MALLOC(buf->base.width0);
+         buf->data = align_malloc(buf->base.width0, 64);
          if (!buf->data)
             return FALSE;
       }
@@ -92,7 +92,7 @@ nouveau_buffer_destroy(struct pipe_screen *pscreen,
    nouveau_buffer_release_gpu_storage(res);
 
    if (res->data && !(res->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY))
-      FREE(res->data);
+      align_free(res->data);
 
    nouveau_fence_ref(NULL, &res->fence);
    nouveau_fence_ref(NULL, &res->fence_wr);
@@ -457,7 +457,7 @@ nouveau_buffer_migrate(struct nouveau_context *nv,
       if (ret)
          return ret;
       memcpy((uint8_t *)buf->bo->map + buf->offset, buf->data, size);
-      FREE(buf->data);
+      align_free(buf->data);
    } else
    if (old_domain != 0 && new_domain != 0) {
       struct nouveau_mm_allocation *mm = buf->mm;
