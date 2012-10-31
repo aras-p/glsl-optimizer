@@ -1779,15 +1779,23 @@ gallium_require_drm_loader() {
 }
 
 radeon_llvm_check() {
-    LLVM_VERSION_MAJOR=`echo $LLVM_VERSION | cut -d. -f1`
-    if test "$LLVM_VERSION_MAJOR" -lt "3" -o "x$LLVM_VERSION" = "x3.0"; then
-        AC_MSG_ERROR([LLVM 3.1 or newer is required for the r600/radeonsi llvm compiler.])
+    LLVM_REQUIRED_VERSION_MAJOR="3"
+    LLVM_REQUIRED_VERSION_MINOR="2"
+    LLVM_AVAILABLE_VERSION_MAJOR=`echo $LLVM_VERSION | cut -d. -f1`
+    LLVM_AVAILABLE_VERSION_MINOR=`echo $LLVM_VERSION | cut -d. -f2`
+    if test "$LLVM_AVAILABLE_VERSION_MAJOR" -lt "$LLVM_REQUIRED_VERSION_MAJOR" -o [ "$LLVM_AVAILABLE_VERSION_MAJOR" -eq "$LLVM_REQUIRED_VERSION_MAJOR" -a "$LLVM_AVAILABLE_VERSION_MINOR" -lt "$LLVM_REQUIRED_VERSION_MINOR" ] ; then
+        AC_MSG_ERROR([LLVM $LLVM_REQUIRED_VERSION_MAJOR.$LLVM_REQUIRED_VERSION_MINOR or newer with AMDGPU target enabled is required.
+                     To use the r600/radeonsi LLVM backend, you need to fetch the LLVM source from:
+                     git://people.freedesktop.org/~tstellar/llvm master
+                     and build with --enable-experimental-targets=AMDGPU])
     fi
-    if test "$LLVM_VERSION_MAJOR" -ge "3" -a "x$LLVM_VERSION" != "x3.1" && $LLVM_CONFIG --targets-built | grep -qv '\<AMDGPU\>' ; then
-        AC_MSG_ERROR([To use the r600/radeonsi LLVM backend with LLVM 3.2 and newer, you need to fetch the LLVM source from:
+    if test true && $LLVM_CONFIG --targets-built | grep -qv '\<AMDGPU\>' ; then
+        AC_MSG_ERROR([LLVM AMDGPU Target not enabled.
+                      To use the r600/radeonsi LLVM backend, you need to fetch the LLVM source from:
                       git://people.freedesktop.org/~tstellar/llvm master
                       and build with --enable-experimental-targets=AMDGPU])
     fi
+    AC_MSG_WARN([Please ensure you use the latest llvm tree from git://people.freedesktop.org/~tstellar/llvm master before submitting a bug])
     if test "x$LLVM_VERSION" = "x3.2"; then
         LLVM_LIBS="$LLVM_LIBS `$LLVM_CONFIG --libs amdgpu`"
     fi
