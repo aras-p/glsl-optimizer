@@ -540,6 +540,9 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
    int width, height, depth;
    BATCH_LOCALS;
 
+   /* This target would require iterating over the slices, which we don't do */
+   assert(intel_image->base.Base.TexObject->Target != GL_TEXTURE_1D_ARRAY);
+
    intel_miptree_get_dimensions_for_image(&intel_image->base.Base,
                                           &width, &height, &depth);
    assert(depth == 1);

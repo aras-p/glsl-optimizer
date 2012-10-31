@@ -70,6 +70,11 @@ intel_copy_texsubimage(struct intel_context *intel,
       assert(region);
    }
 
+   if (intelImage->base.Base.TexObject->Target == GL_TEXTURE_1D_ARRAY ||
+       intelImage->base.Base.TexObject->Target == GL_TEXTURE_2D_ARRAY) {
+      perf_debug("no support for array textures\n");
+   }
+
    copy_supported = intelImage->base.Base.TexFormat == intel_rb_format(irb);
 
    /* Converting ARGB8888 to XRGB8888 is trivial: ignore the alpha bits */
