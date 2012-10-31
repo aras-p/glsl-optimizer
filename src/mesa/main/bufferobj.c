@@ -660,13 +660,18 @@ _mesa_free_buffer_objects( struct gl_context *ctx )
    ctx->UniformBufferBindings = NULL;
 }
 
-static void
+static bool
 handle_bind_buffer_gen(struct gl_context *ctx,
 		       GLenum target,
 		       GLuint buffer,
 		       struct gl_buffer_object **buf_handle)
 {
    struct gl_buffer_object *buf = *buf_handle;
+
+   if (!buf && ctx->API == API_OPENGL_CORE) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glBindBuffer(non-gen name)");
+      return false;
+   }
 
    if (!buf || buf == &DummyBufferObject) {
       /* If this is a new buffer object id, or one which was generated but
@@ -676,11 +681,13 @@ handle_bind_buffer_gen(struct gl_context *ctx,
       buf = ctx->Driver.NewBufferObject(ctx, buffer, target);
       if (!buf) {
 	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindBufferARB");
-	 return;
+	 return false;
       }
       _mesa_HashInsert(ctx->Shared->BufferObjects, buffer, buf);
       *buf_handle = buf;
    }
+
+   return true;
 }
 
 /**
@@ -717,11 +724,8 @@ bind_buffer_object(struct gl_context *ctx, GLenum target, GLuint buffer)
    else {
       /* non-default buffer object */
       newBufObj = _mesa_lookup_bufferobj(ctx, buffer);
-      if (newBufObj == NULL && ctx->API == API_OPENGL_CORE) {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glBindBuffer(non-gen name)");
+      if (!handle_bind_buffer_gen(ctx, target, buffer, &newBufObj))
          return;
-      }
-      handle_bind_buffer_gen(ctx, target, buffer, &newBufObj);
    }
    
    /* bind new buffer */
@@ -2147,7 +2151,8 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
    }
-   handle_bind_buffer_gen(ctx, target, buffer, &bufObj);
+   if (!handle_bind_buffer_gen(ctx, target, buffer, &bufObj))
+      return;
 
    if (!bufObj) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -2193,7 +2198,8 @@ _mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
    }
-   handle_bind_buffer_gen(ctx, target, buffer, &bufObj);
+   if (!handle_bind_buffer_gen(ctx, target, buffer, &bufObj))
+      return;
 
    if (!bufObj) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
