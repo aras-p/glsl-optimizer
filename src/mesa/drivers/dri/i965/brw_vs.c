@@ -212,13 +212,11 @@ do_vs_prog(struct brw_context *brw,
 	   struct brw_vertex_program *vp,
 	   struct brw_vs_prog_key *key)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    GLuint program_size;
    const GLuint *program;
    struct brw_vs_compile c;
    void *mem_ctx;
-   int aux_size;
    int i;
    struct gl_shader *vs = NULL;
 
