@@ -88,12 +88,9 @@ static void r600_texture_barrier(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	rctx->flags |= R600_CONTEXT_CB_FLUSH | R600_CONTEXT_TEX_FLUSH;
-
-	/* R6xx errata */
-	if (rctx->chip_class == R600) {
-		rctx->flags |= R600_CONTEXT_FLUSH_AND_INV;
-	}
+	rctx->flags |= R600_CONTEXT_WAIT_IDLE;
+	rctx->flags |= R600_CONTEXT_GPU_FLUSH;
+	rctx->flags |= R600_CONTEXT_FLUSH_AND_INV;
 }
 
 static unsigned r600_conv_pipe_prim(unsigned prim)
@@ -360,7 +357,7 @@ void r600_sampler_states_dirty(struct r600_context *rctx,
 {
 	if (state->dirty_mask) {
 		if (state->dirty_mask & state->has_bordercolor_mask) {
-			rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
+			rctx->flags |= R600_CONTEXT_WAIT_IDLE;
 		}
 		state->atom.num_dw =
 			util_bitcount(state->dirty_mask & state->has_bordercolor_mask) * 11 +
@@ -423,7 +420,7 @@ static void r600_bind_sampler_states(struct pipe_context *pipe,
 	    seamless_cube_map != -1 &&
 	    seamless_cube_map != rctx->seamless_cube_map.enabled) {
 		/* change in TA_CNTL_AUX need a pipeline flush */
-		rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
+		rctx->flags |= R600_CONTEXT_WAIT_IDLE;
 		rctx->seamless_cube_map.enabled = seamless_cube_map;
 		rctx->seamless_cube_map.atom.dirty = true;
 	}
@@ -491,7 +488,7 @@ static void r600_set_index_buffer(struct pipe_context *ctx,
 void r600_vertex_buffers_dirty(struct r600_context *rctx)
 {
 	if (rctx->vertex_buffer_state.dirty_mask) {
-		rctx->flags |= rctx->has_vertex_cache ? R600_CONTEXT_VTX_FLUSH : R600_CONTEXT_TEX_FLUSH;
+		rctx->flags |= R600_CONTEXT_GPU_FLUSH;
 		rctx->vertex_buffer_state.atom.num_dw = (rctx->chip_class >= EVERGREEN ? 12 : 11) *
 					       util_bitcount(rctx->vertex_buffer_state.dirty_mask);
 		rctx->vertex_buffer_state.atom.dirty = true;
@@ -547,7 +544,7 @@ void r600_sampler_views_dirty(struct r600_context *rctx,
 			      struct r600_samplerview_state *state)
 {
 	if (state->dirty_mask) {
-		rctx->flags |= R600_CONTEXT_TEX_FLUSH;
+		rctx->flags |= R600_CONTEXT_GPU_FLUSH;
 		state->atom.num_dw = (rctx->chip_class >= EVERGREEN ? 14 : 13) *
 				     util_bitcount(state->dirty_mask);
 		state->atom.dirty = true;
@@ -889,7 +886,7 @@ static void r600_delete_vs_state(struct pipe_context *ctx, void *state)
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state)
 {
 	if (state->dirty_mask) {
-		rctx->flags |= R600_CONTEXT_SHADERCONST_FLUSH;
+		rctx->flags |= R600_CONTEXT_GPU_FLUSH;
 		state->atom.num_dw = rctx->chip_class >= EVERGREEN ? util_bitcount(state->dirty_mask)*20
 								   : util_bitcount(state->dirty_mask)*19;
 		state->atom.dirty = true;

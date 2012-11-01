@@ -424,7 +424,7 @@ void r600_context_dirty_block(struct r600_context *ctx,
 		LIST_ADDTAIL(&block->list,&ctx->dirty);
 
 		if (block->flags & REG_FLAG_FLUSH_CHANGE) {
-			ctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
+			ctx->flags |= R600_CONTEXT_WAIT_IDLE;
 		}
 	}
 }
@@ -595,14 +595,11 @@ out:
 void r600_flush_emit(struct r600_context *rctx)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
+	unsigned cp_coher_cntl = 0;
+	unsigned emit_flush = 0;
 
 	if (!rctx->flags) {
 		return;
-	}
-
-	if (rctx->flags & R600_CONTEXT_PS_PARTIAL_FLUSH) {
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 	}
 
 	if (rctx->chip_class >= R700 &&
@@ -614,110 +611,54 @@ void r600_flush_emit(struct r600_context *rctx)
 	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV) {
 		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
-
-		/* DB flushes are special due to errata with hyperz, we need to
-		 * insert a no-op, so that the cache has time to really flush.
-		 */
-		if (rctx->chip_class <= R700 &&
-		    rctx->flags & R600_CONTEXT_HTILE_ERRATA) {
-			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 31, 0);
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
-			cs->buf[cs->cdw++] = 0xdeadcafe;
+		if (rctx->chip_class >= EVERGREEN) {
+			cp_coher_cntl = S_0085F0_CB0_DEST_BASE_ENA(1) |
+					S_0085F0_CB1_DEST_BASE_ENA(1) |
+					S_0085F0_CB2_DEST_BASE_ENA(1) |
+					S_0085F0_CB3_DEST_BASE_ENA(1) |
+					S_0085F0_CB4_DEST_BASE_ENA(1) |
+					S_0085F0_CB5_DEST_BASE_ENA(1) |
+					S_0085F0_CB6_DEST_BASE_ENA(1) |
+					S_0085F0_CB7_DEST_BASE_ENA(1) |
+					S_0085F0_CB8_DEST_BASE_ENA(1) |
+					S_0085F0_CB9_DEST_BASE_ENA(1) |
+					S_0085F0_CB10_DEST_BASE_ENA(1) |
+					S_0085F0_CB11_DEST_BASE_ENA(1) |
+					S_0085F0_DB_DEST_BASE_ENA(1) |
+					S_0085F0_TC_ACTION_ENA(1) |
+					S_0085F0_CB_ACTION_ENA(1) |
+					S_0085F0_DB_ACTION_ENA(1) |
+					S_0085F0_SH_ACTION_ENA(1) |
+					S_0085F0_SMX_ACTION_ENA(1) |
+					(1 << 20); /* unknown bit */
+		} else {
+			cp_coher_cntl = S_0085F0_SMX_ACTION_ENA(1) |
+					S_0085F0_SH_ACTION_ENA(1) |
+					S_0085F0_VC_ACTION_ENA(1) |
+					S_0085F0_TC_ACTION_ENA(1) |
+					(1 << 20); /* unknown bit */
 		}
 	}
 
-	if (rctx->flags & (R600_CONTEXT_CB_FLUSH |
-			   R600_CONTEXT_DB_FLUSH |
-		           R600_CONTEXT_SHADERCONST_FLUSH |
-		           R600_CONTEXT_TEX_FLUSH |
-		           R600_CONTEXT_VTX_FLUSH |
-		           R600_CONTEXT_STREAMOUT_FLUSH)) {
-		/* anything left (cb, vtx, shader, streamout) can be flushed
-		 * using the surface sync packet
-		 */
-		unsigned flags = 0;
+	if (rctx->flags & R600_CONTEXT_GPU_FLUSH) {
+		cp_coher_cntl |= S_0085F0_VC_ACTION_ENA(1) |
+				S_0085F0_TC_ACTION_ENA(1) |
+				(1 << 20); /* unknown bit */
+		emit_flush = 1;
+	}
 
-		if (rctx->flags & R600_CONTEXT_CB_FLUSH) {
-			flags |= S_0085F0_CB_ACTION_ENA(1) |
-				 S_0085F0_CB0_DEST_BASE_ENA(1) |
-				 S_0085F0_CB1_DEST_BASE_ENA(1) |
-				 S_0085F0_CB2_DEST_BASE_ENA(1) |
-				 S_0085F0_CB3_DEST_BASE_ENA(1) |
-				 S_0085F0_CB4_DEST_BASE_ENA(1) |
-				 S_0085F0_CB5_DEST_BASE_ENA(1) |
-				 S_0085F0_CB6_DEST_BASE_ENA(1) |
-				 S_0085F0_CB7_DEST_BASE_ENA(1);
+	if (rctx->family >= CHIP_RV770 && rctx->flags & R600_CONTEXT_STREAMOUT_FLUSH) {
+		cp_coher_cntl |= S_0085F0_SO0_DEST_BASE_ENA(1) |
+				S_0085F0_SO1_DEST_BASE_ENA(1) |
+				S_0085F0_SO2_DEST_BASE_ENA(1) |
+				S_0085F0_SO3_DEST_BASE_ENA(1) |
+				S_0085F0_SMX_ACTION_ENA(1);
+		emit_flush = 1;
+	}
 
-			if (rctx->chip_class >= EVERGREEN) {
-				flags |= S_0085F0_CB8_DEST_BASE_ENA(1) |
-					 S_0085F0_CB9_DEST_BASE_ENA(1) |
-					 S_0085F0_CB10_DEST_BASE_ENA(1) |
-					 S_0085F0_CB11_DEST_BASE_ENA(1);
-			}
-
-			/* RV670 errata
-			 * (CB1_DEST_BASE_ENA is also required, which is
-			 * included unconditionally above). */
-			if (rctx->family == CHIP_RV670 ||
-			    rctx->family == CHIP_RS780 ||
-			    rctx->family == CHIP_RS880) {
-				flags |= S_0085F0_DEST_BASE_0_ENA(1);
-			}
-		}
-
-		if (rctx->flags & R600_CONTEXT_STREAMOUT_FLUSH) {
-			flags |= S_0085F0_SO0_DEST_BASE_ENA(1) |
-				 S_0085F0_SO1_DEST_BASE_ENA(1) |
-				 S_0085F0_SO2_DEST_BASE_ENA(1) |
-				 S_0085F0_SO3_DEST_BASE_ENA(1) |
-				 S_0085F0_SMX_ACTION_ENA(1);
-
-			/* RV670 errata */
-			if (rctx->family == CHIP_RV670 ||
-			    rctx->family == CHIP_RS780 ||
-			    rctx->family == CHIP_RS880) {
-				flags |= S_0085F0_DEST_BASE_0_ENA(1);
-			}
-		}
-
-		flags |= (rctx->flags & R600_CONTEXT_DB_FLUSH) ? S_0085F0_DB_ACTION_ENA(1) |
-								 S_0085F0_DB_DEST_BASE_ENA(1): 0;
-		flags |= (rctx->flags & R600_CONTEXT_SHADERCONST_FLUSH) ? S_0085F0_SH_ACTION_ENA(1) : 0;
-		flags |= (rctx->flags & R600_CONTEXT_TEX_FLUSH) ? S_0085F0_TC_ACTION_ENA(1) : 0;
-		flags |= (rctx->flags & R600_CONTEXT_VTX_FLUSH) ? S_0085F0_VC_ACTION_ENA(1) : 0;
-
+	if (emit_flush) {
 		cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
-		cs->buf[cs->cdw++] = flags;           /* CP_COHER_CNTL */
+		cs->buf[cs->cdw++] = cp_coher_cntl;   /* CP_COHER_CNTL */
 		cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
 		cs->buf[cs->cdw++] = 0;               /* CP_COHER_BASE */
 		cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
@@ -758,16 +699,10 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 		ctx->streamout_suspended = true;
 	}
 
-	/* partial flush is needed to avoid lockups on some chips with user fences */
-	ctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
-
-	/* flush the framebuffer */
-	ctx->flags |= R600_CONTEXT_CB_FLUSH | R600_CONTEXT_DB_FLUSH;
-
-	/* R6xx errata */
-	if (ctx->chip_class == R600) {
-		ctx->flags |= R600_CONTEXT_FLUSH_AND_INV;
-	}
+	/* flush is needed to avoid lockups on some chips with user fences
+	 * this will also flush the framebuffer cache
+	 */
+	ctx->flags |= R600_CONTEXT_WAIT_IDLE | R600_CONTEXT_FLUSH_AND_INV;
 
 	r600_flush_emit(ctx);
 
@@ -884,9 +819,7 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fen
 	va = r600_resource_va(&ctx->screen->screen, (void*)fence_bo);
 	va = va + (offset << 2);
 
-	ctx->flags &= ~R600_CONTEXT_PS_PARTIAL_FLUSH;
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+	r600_write_config_reg(cs, R_008040_WAIT_UNTIL, S_008040_WAIT_3D_IDLE(1));
 
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
@@ -1073,15 +1006,14 @@ void r600_context_streamout_end(struct r600_context *ctx)
 	}
 
 	if (ctx->chip_class >= EVERGREEN) {
+		ctx->flags |= R600_CONTEXT_STREAMOUT_FLUSH;
 		evergreen_set_streamout_enable(ctx, 0);
 	} else {
+		if (ctx->chip_class >= R700) {
+			ctx->flags |= R600_CONTEXT_STREAMOUT_FLUSH;
+		}
 		r600_set_streamout_enable(ctx, 0);
 	}
-	ctx->flags |= R600_CONTEXT_STREAMOUT_FLUSH;
-
-	/* R6xx errata */
-	if (ctx->chip_class == R600) {
-		ctx->flags |= R600_CONTEXT_FLUSH_AND_INV;
-	}
+	ctx->flags |= R600_CONTEXT_WAIT_IDLE | R600_CONTEXT_FLUSH_AND_INV;
 	ctx->num_cs_dw_streamout_end = 0;
 }

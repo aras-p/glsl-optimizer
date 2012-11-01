@@ -1452,7 +1452,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	unsigned i;
 
 	if (rctx->framebuffer.state.nr_cbufs) {
-		rctx->flags |= R600_CONTEXT_CB_FLUSH;
+		rctx->flags |= R600_CONTEXT_WAIT_IDLE | R600_CONTEXT_FLUSH_AND_INV;
 
 		if (rctx->chip_class >= R700 &&
 		    rctx->framebuffer.state.cbufs[0]->texture->nr_samples > 1) {
@@ -1460,11 +1460,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		}
 	}
 	if (rctx->framebuffer.state.zsbuf) {
-		rctx->flags |= R600_CONTEXT_DB_FLUSH;
-	}
-	/* R6xx errata */
-	if (rctx->chip_class == R600) {
-		rctx->flags |= R600_CONTEXT_FLUSH_AND_INV;
+		rctx->flags |= R600_CONTEXT_WAIT_IDLE | R600_CONTEXT_FLUSH_AND_INV;
 	}
 
 	/* Set the new state. */
@@ -1558,7 +1554,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	}
 	if (rctx->framebuffer.state.zsbuf) {
-		rctx->framebuffer.atom.num_dw += 16;
+		rctx->framebuffer.atom.num_dw += 18;
 	} else if (rctx->screen->info.drm_minor >= 18) {
 		rctx->framebuffer.atom.num_dw += 3;
 	}
@@ -1742,6 +1738,13 @@ static void r600_emit_framebuffer_state(struct r600_context *rctx, struct r600_a
 		sbu |= SURFACE_BASE_UPDATE_COLOR_NUM(nr_cbufs);
 	}
 
+	/* SURFACE_BASE_UPDATE */
+	if (rctx->family > CHIP_R600 && rctx->family < CHIP_RV770 && sbu) {
+		r600_write_value(cs, PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0));
+		r600_write_value(cs, sbu);
+		sbu = 0;
+	}
+
 	/* Zbuffer. */
 	if (state->zsbuf) {
 		struct r600_surface *surf = (struct r600_surface*)state->zsbuf;
@@ -1775,6 +1778,7 @@ static void r600_emit_framebuffer_state(struct r600_context *rctx, struct r600_a
 	if (rctx->family > CHIP_R600 && rctx->family < CHIP_RV770 && sbu) {
 		r600_write_value(cs, PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0));
 		r600_write_value(cs, sbu);
+		sbu = 0;
 	}
 
 	/* Framebuffer dimensions. */
@@ -2243,7 +2247,7 @@ bool r600_adjust_gprs(struct r600_context *rctx)
 	if (rctx->config_state.sq_gpr_resource_mgmt_1 != tmp) {
 		rctx->config_state.sq_gpr_resource_mgmt_1 = tmp;
 		rctx->config_state.atom.dirty = true;
-		rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
+		rctx->flags |= R600_CONTEXT_WAIT_IDLE;
 	}
 	return true;
 }
