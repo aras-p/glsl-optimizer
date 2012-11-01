@@ -105,6 +105,13 @@ upload_default_color(struct brw_context *brw, struct gl_sampler_object *sampler,
       color[3] = sampler->BorderColor.f[3];
    }
 
+   /* In some cases we use an RGBA surface format for GL RGB textures,
+    * where we've initialized the A channel to 1.0.  We also have to set
+    * the border color alpha to 1.0 in that case.
+    */
+   if (firstImage->_BaseFormat == GL_RGB)
+      color[3] = 1.0;
+
    if (intel->gen == 5 || intel->gen == 6) {
       struct gen5_sampler_default_color *sdc;
 
