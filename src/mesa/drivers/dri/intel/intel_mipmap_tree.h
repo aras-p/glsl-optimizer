@@ -436,7 +436,7 @@ bool intel_miptree_match_image(struct intel_mipmap_tree *mt,
 
 void
 intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
-			       GLuint level, GLuint face, GLuint depth,
+			       GLuint level, GLuint slice,
 			       GLuint *x, GLuint *y);
 
 void

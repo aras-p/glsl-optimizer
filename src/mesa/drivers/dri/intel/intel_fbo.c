@@ -539,7 +539,6 @@ intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb)
    /* compute offset of the particular 2D image within the texture region */
    intel_miptree_get_image_offset(irb->mt,
 				  irb->mt_level,
-				  0, /* face, which we ignore */
 				  irb->mt_layer,
 				  &dst_x, &dst_y);
 

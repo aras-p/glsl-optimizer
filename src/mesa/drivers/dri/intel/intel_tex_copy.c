@@ -106,7 +106,6 @@ intel_copy_texsubimage(struct intel_context *intel,
       intel_miptree_get_image_offset(intelImage->mt,
 				     intelImage->base.Base.Level,
 				     intelImage->base.Base.Face,
-				     0,
 				     &image_x, &image_y);
 
       /* The blitter can't handle Y-tiled buffers. */

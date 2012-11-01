@@ -184,7 +184,7 @@ try_pbo_upload(struct gl_context *ctx,
       src_stride = image->Width;
 
    intel_miptree_get_image_offset(intelImage->mt, intelImage->base.Base.Level,
-				  intelImage->base.Base.Face, 0,
+				  intelImage->base.Base.Face,
 				  &dst_x, &dst_y);
 
    dst_stride = intelImage->mt->region->pitch;

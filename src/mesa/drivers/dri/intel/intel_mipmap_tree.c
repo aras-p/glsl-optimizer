@@ -640,31 +640,12 @@ intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
        mt->level[level].slice[img].y_offset);
 }
 
-
-/**
- * For cube map textures, either the \c face parameter can be used, of course,
- * or the cube face can be interpreted as a depth layer and the \c layer
- * parameter used.
- */
 void
 intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
-			       GLuint level, GLuint face, GLuint layer,
+			       GLuint level, GLuint slice,
 			       GLuint *x, GLuint *y)
 {
-   int slice;
-
-   if (face > 0) {
-      assert(mt->target == GL_TEXTURE_CUBE_MAP);
-      assert(face < 6);
-      assert(layer == 0);
-      slice = face;
-   } else {
-      /* This branch may be taken even if the texture target is a cube map. In
-       * that case, the caller chose to interpret each cube face as a layer.
-       */
-      assert(face == 0);
-      slice = layer;
-   }
+   assert(slice < mt->level[level].depth);
 
    *x = mt->level[level].slice[slice].x_offset;
    *y = mt->level[level].slice[slice].y_offset;
@@ -682,6 +663,12 @@ intel_miptree_copy_slice(struct intel_context *intel,
    gl_format format = src_mt->format;
    uint32_t width = src_mt->level[level].width;
    uint32_t height = src_mt->level[level].height;
+   int slice;
+
+   if (face > 0)
+      slice = face;
+   else
+      slice = depth;
 
    assert(depth < src_mt->level[level].depth);
 
@@ -691,10 +678,8 @@ intel_miptree_copy_slice(struct intel_context *intel,
    }
 
    uint32_t dst_x, dst_y, src_x, src_y;
-   intel_miptree_get_image_offset(dst_mt, level, face, depth,
-				  &dst_x, &dst_y);
-   intel_miptree_get_image_offset(src_mt, level, face, depth,
-				  &src_x, &src_y);
+   intel_miptree_get_image_offset(dst_mt, level, slice, &dst_x, &dst_y);
+   intel_miptree_get_image_offset(src_mt, level, slice, &src_x, &src_y);
 
    DBG("validate blit mt %s %p %d,%d/%d -> mt %s %p %d,%d/%d (%dx%d)\n",
        _mesa_get_format_name(src_mt->format),
@@ -1094,7 +1079,7 @@ intel_miptree_map_gtt(struct intel_context *intel,
       /* Note that in the case of cube maps, the caller must have passed the
        * slice number referencing the face.
       */
-      intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
+      intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
       x += image_x;
       y += image_y;
 
@@ -1139,7 +1124,7 @@ intel_miptree_map_blit(struct intel_context *intel,
       goto fail;
    }
 
-   intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
+   intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
    x += image_x;
    y += image_y;
 
@@ -1214,7 +1199,7 @@ intel_miptree_map_s8(struct intel_context *intel,
 					       GL_MAP_READ_BIT);
       unsigned int image_x, image_y;
 
-      intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
+      intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
 
       for (uint32_t y = 0; y < map->h; y++) {
 	 for (uint32_t x = 0; x < map->w; x++) {
@@ -1250,7 +1235,7 @@ intel_miptree_unmap_s8(struct intel_context *intel,
       uint8_t *untiled_s8_map = map->ptr;
       uint8_t *tiled_s8_map = intel_region_map(intel, mt->region, map->mode);
 
-      intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
+      intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
 
       for (uint32_t y = 0; y < map->h; y++) {
 	 for (uint32_t x = 0; x < map->w; x++) {
@@ -1309,7 +1294,7 @@ intel_miptree_unmap_etc1(struct intel_context *intel,
 {
    uint32_t image_x;
    uint32_t image_y;
-   intel_miptree_get_image_offset(mt, level, 0, slice, &image_x, &image_y);
+   intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
 
    uint8_t *xbgr = intel_region_map(intel, mt->region, map->mode)
                  + image_y * mt->region->pitch * mt->region->cpp
@@ -1362,9 +1347,9 @@ intel_miptree_map_depthstencil(struct intel_context *intel,
       unsigned int s_image_x, s_image_y;
       unsigned int z_image_x, z_image_y;
 
-      intel_miptree_get_image_offset(s_mt, level, 0, slice,
+      intel_miptree_get_image_offset(s_mt, level, slice,
 				     &s_image_x, &s_image_y);
-      intel_miptree_get_image_offset(z_mt, level, 0, slice,
+      intel_miptree_get_image_offset(z_mt, level, slice,
 				     &z_image_x, &z_image_y);
 
       for (uint32_t y = 0; y < map->h; y++) {
@@ -1422,9 +1407,9 @@ intel_miptree_unmap_depthstencil(struct intel_context *intel,
       unsigned int s_image_x, s_image_y;
       unsigned int z_image_x, z_image_y;
 
-      intel_miptree_get_image_offset(s_mt, level, 0, slice,
+      intel_miptree_get_image_offset(s_mt, level, slice,
 				     &s_image_x, &s_image_y);
-      intel_miptree_get_image_offset(z_mt, level, 0, slice,
+      intel_miptree_get_image_offset(z_mt, level, slice,
 				     &z_image_x, &z_image_y);
 
       for (uint32_t y = 0; y < map->h; y++) {
