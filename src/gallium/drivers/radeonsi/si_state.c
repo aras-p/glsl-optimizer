@@ -2230,16 +2230,12 @@ static void *si_create_sampler_state(struct pipe_context *ctx,
 	return rstate;
 }
 
-static void si_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
-				   struct pipe_sampler_view **views)
+static struct si_pm4_state *si_set_sampler_view(struct r600_context *rctx,
+						unsigned count,
+						struct pipe_sampler_view **views,
+						struct r600_textures_info *samplers,
+						unsigned user_data_reg)
 {
-	assert(count == 0);
-}
-
-static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
-				   struct pipe_sampler_view **views)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pipe_sampler_view **resource = (struct si_pipe_sampler_view **)views;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	int i, j;
@@ -2253,7 +2249,7 @@ static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 	si_pm4_sh_data_begin(pm4);
 	for (i = 0; i < count; i++) {
 		pipe_sampler_view_reference(
-			(struct pipe_sampler_view **)&rctx->ps_samplers.views[i],
+			(struct pipe_sampler_view **)&samplers->views[i],
 			views[i]);
 
 		if (views[i]) {
@@ -2268,26 +2264,45 @@ static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 	}
 
 	for (i = count; i < NUM_TEX_UNITS; i++) {
-		if (rctx->ps_samplers.views[i])
-			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
+		if (samplers->views[i])
+			pipe_sampler_view_reference((struct pipe_sampler_view **)&samplers->views[i], NULL);
 	}
 
-	si_pm4_sh_data_end(pm4, R_00B030_SPI_SHADER_USER_DATA_PS_0, SI_SGPR_RESOURCE);
+	si_pm4_sh_data_end(pm4, user_data_reg, SI_SGPR_RESOURCE);
 
 out:
-	si_pm4_set_state(rctx, ps_sampler_views, pm4);
 	rctx->have_depth_texture = has_depth;
 	rctx->ps_samplers.n_views = count;
+	return pm4;
 }
 
-static void si_bind_vs_sampler(struct pipe_context *ctx, unsigned count, void **states)
-{
-	assert(count == 0);
-}
-
-static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **states)
+static void si_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
+				   struct pipe_sampler_view **views)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pm4_state *pm4;
+
+	pm4 = si_set_sampler_view(rctx, count, views, &rctx->vs_samplers,
+			    R_00B130_SPI_SHADER_USER_DATA_VS_0);
+	si_pm4_set_state(rctx, vs_sampler_views, pm4);
+}
+
+static void si_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
+				   struct pipe_sampler_view **views)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pm4_state *pm4;
+
+	pm4 = si_set_sampler_view(rctx, count, views, &rctx->ps_samplers,
+				  R_00B030_SPI_SHADER_USER_DATA_PS_0);
+	si_pm4_set_state(rctx, ps_sampler_views, pm4);
+}
+
+static struct si_pm4_state *si_bind_sampler(struct r600_context *rctx, unsigned count,
+					    void **states,
+					    struct r600_textures_info *samplers,
+					    unsigned user_data_reg)
+{
 	struct si_pipe_sampler_state **rstates = (struct si_pipe_sampler_state **)states;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	uint32_t *border_color_table = NULL;
@@ -2310,7 +2325,7 @@ static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **
 				rctx->border_color_offset = 0;
 
 				rctx->border_color_table =
-					si_resource_create_custom(ctx->screen,
+					si_resource_create_custom(&rctx->screen->screen,
 								  PIPE_USAGE_STAGING,
 								  4096 * 4 * 4);
 			}
@@ -2339,22 +2354,43 @@ static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **
 			si_pm4_sh_data_add(pm4, rstates[i] ? rstates[i]->val[j] : 0);
 		}
 	}
-	si_pm4_sh_data_end(pm4, R_00B030_SPI_SHADER_USER_DATA_PS_0, SI_SGPR_SAMPLER);
+	si_pm4_sh_data_end(pm4, user_data_reg, SI_SGPR_SAMPLER);
 
 	if (border_color_table) {
 		uint64_t va_offset =
-			r600_resource_va(ctx->screen, (void*)rctx->border_color_table);
+			r600_resource_va(&rctx->screen->screen,
+					 (void*)rctx->border_color_table);
 
 		si_pm4_set_reg(pm4, R_028080_TA_BC_BASE_ADDR, va_offset >> 8);
 		rctx->ws->buffer_unmap(rctx->border_color_table->cs_buf);
 		si_pm4_add_bo(pm4, rctx->border_color_table, RADEON_USAGE_READ);
 	}
 
-	memcpy(rctx->ps_samplers.samplers, states, sizeof(void*) * count);
+	memcpy(samplers->samplers, states, sizeof(void*) * count);
 
 out:
+	samplers->n_samplers = count;
+	return pm4;
+}
+
+static void si_bind_vs_sampler(struct pipe_context *ctx, unsigned count, void **states)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pm4_state *pm4;
+
+	pm4 = si_bind_sampler(rctx, count, states, &rctx->vs_samplers,
+			      R_00B130_SPI_SHADER_USER_DATA_VS_0);
+	si_pm4_set_state(rctx, vs_sampler, pm4);
+}
+
+static void si_bind_ps_sampler(struct pipe_context *ctx, unsigned count, void **states)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_pm4_state *pm4;
+
+	pm4 = si_bind_sampler(rctx, count, states, &rctx->ps_samplers,
+			      R_00B030_SPI_SHADER_USER_DATA_PS_0);
 	si_pm4_set_state(rctx, ps_sampler, pm4);
-	rctx->ps_samplers.n_samplers = count;
 }
 
 static void si_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
