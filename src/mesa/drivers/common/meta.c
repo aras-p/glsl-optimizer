@@ -292,7 +292,6 @@ struct gen_mipmap_state
    GLuint FBO;
    GLuint Sampler;
    GLuint ShaderProg;
-   GLuint IntegerShaderProg;
    struct glsl_sampler sampler_1d;
    struct glsl_sampler sampler_2d;
    struct glsl_sampler sampler_3d;
@@ -3047,27 +3046,6 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
    };
    struct glsl_sampler *sampler;
    const char *vs_source;
-
-   static const char *vs_int_source =
-      "#version 130\n"
-      "in vec2 position;\n"
-      "in vec3 textureCoords;\n"
-      "out vec3 texCoords;\n"
-      "void main()\n"
-      "{\n"
-      "   texCoords = textureCoords;\n"
-      "   gl_Position = gl_Vertex;\n"
-      "}\n";
-   static const char *fs_int_source =
-      "#version 130\n"
-      "uniform isampler2D tex2d;\n"
-      "in vec3 texCoords;\n"
-      "out ivec4 out_color;\n"
-      "\n"
-      "void main()\n"
-      "{\n"
-      "   out_color = texture(tex2d, texCoords.xy);\n"
-      "}\n";
    char *fs_source;
    GLuint vs, fs;
    void *mem_ctx;
@@ -3162,26 +3140,6 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
    link_program_with_debug(ctx, mipmap->ShaderProg);
    sampler->shader_prog = mipmap->ShaderProg;
    ralloc_free(mem_ctx);
-
-   if ((_mesa_is_desktop_gl(ctx) && ctx->Const.GLSLVersion >= 130) ||
-       _mesa_is_gles3(ctx)){
-      vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_int_source);
-      fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_int_source);
-
-      mipmap->IntegerShaderProg = _mesa_CreateProgramObjectARB();
-      _mesa_AttachShader(mipmap->IntegerShaderProg, fs);
-      _mesa_DeleteObjectARB(fs);
-      _mesa_AttachShader(mipmap->IntegerShaderProg, vs);
-      _mesa_DeleteObjectARB(vs);
-      _mesa_BindAttribLocationARB(mipmap->IntegerShaderProg, 0, "position");
-      _mesa_BindAttribLocationARB(mipmap->IntegerShaderProg, 1, "texcoords");
-
-      /* Note that user-defined out attributes get automatically assigned
-       * locations starting from 0, so we don't need to explicitly
-       * BindFragDataLocation to 0.
-       */
-      link_program_with_debug(ctx, mipmap->IntegerShaderProg);
-   }
 }
 
 
@@ -3209,11 +3167,6 @@ meta_glsl_generate_mipmap_cleanup(struct gl_context *ctx,
    mipmap->sampler_cubemap.shader_prog = 0;
    mipmap->sampler_1d_array.shader_prog = 0;
    mipmap->sampler_2d_array.shader_prog = 0;
-
-   if (mipmap->IntegerShaderProg) {
-      _mesa_DeleteObjectARB(mipmap->IntegerShaderProg);
-      mipmap->IntegerShaderProg = 0;
-   }
 }
 
 
@@ -3266,11 +3219,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
     */
    if (use_glsl_version) {
       setup_glsl_generate_mipmap(ctx, mipmap, target);
-
-      if (texObj->_IsIntegerFormat)
-         _mesa_UseProgramObjectARB(mipmap->IntegerShaderProg);
-      else
-         _mesa_UseProgramObjectARB(mipmap->ShaderProg);
+      _mesa_UseProgramObjectARB(mipmap->ShaderProg);
    }
    else {
       setup_ff_generate_mipmap(ctx, mipmap);
@@ -3294,15 +3243,9 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       _mesa_GenSamplers(1, &mipmap->Sampler);
       _mesa_BindSampler(ctx->Texture.CurrentUnit, mipmap->Sampler);
 
-      if (use_glsl_version && texObj->_IsIntegerFormat)
-         _mesa_SamplerParameteri(mipmap->Sampler,
-	                         GL_TEXTURE_MIN_FILTER,
-	                         GL_NEAREST_MIPMAP_NEAREST);
-      else
-         _mesa_SamplerParameteri(mipmap->Sampler,
-	                         GL_TEXTURE_MIN_FILTER,
-	                         GL_LINEAR_MIPMAP_LINEAR);
-
+      _mesa_SamplerParameteri(mipmap->Sampler,
+                              GL_TEXTURE_MIN_FILTER,
+                              GL_LINEAR_MIPMAP_LINEAR);
       _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       _mesa_SamplerParameteri(mipmap->Sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
