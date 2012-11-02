@@ -30,6 +30,7 @@ LD = @LD_FOR_BUILD@
 LDFLAGS = @LDFLAGS_FOR_BUILD@
 
 AM_CFLAGS = \
+	-I $(top_srcdir)/include \
 	-I $(top_srcdir)/src/mapi \
 	-I $(top_srcdir)/src/mesa \
 	-I $(GLSL_SRCDIR) \
