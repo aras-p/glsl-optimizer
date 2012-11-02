@@ -147,7 +147,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		if (shader->shader.output[i].name == TGSI_SEMANTIC_STENCIL)
 			db_shader_control |= 0; // XXX OP_VAL or TEST_VAL?
 	}
-	if (shader->shader.uses_kill)
+	if (shader->shader.uses_kill || shader->key.alpha_func != PIPE_FUNC_ALWAYS)
 		db_shader_control |= S_02880C_KILL_ENABLE(1);
 
 	exports_ps = 0;
@@ -306,23 +306,6 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
 	return true;
 }
 
-static void si_update_alpha_ref(struct r600_context *rctx)
-{
-#if 0
-        unsigned alpha_ref;
-        struct r600_pipe_state rstate;
-
-        alpha_ref = rctx->alpha_ref;
-        rstate.nregs = 0;
-        if (rctx->export_16bpc)
-                alpha_ref &= ~0x1FFF;
-        si_pm4_set_reg(&rstate, R_028438_SX_ALPHA_REF, alpha_ref);
-
-	si_pm4_set_state(rctx, TODO, pm4);
-        rctx->alpha_ref_dirty = false;
-#endif
-}
-
 static void si_update_spi_map(struct r600_context *rctx)
 {
 	struct si_shader *ps = &rctx->ps_shader->current->shader;
@@ -391,10 +374,6 @@ static void si_update_derived_state(struct r600_context *rctx)
 	}
 
 	si_shader_select(ctx, rctx->ps_shader, &ps_dirty);
-
-	if (rctx->alpha_ref_dirty) {
-		si_update_alpha_ref(rctx);
-	}
 
 	if (!rctx->vs_shader->current->pm4) {
 		si_pipe_shader_vs(ctx, rctx->vs_shader->current);

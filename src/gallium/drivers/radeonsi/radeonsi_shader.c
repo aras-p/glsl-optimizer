@@ -31,6 +31,7 @@
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_gather.h"
 #include "gallivm/lp_bld_intr.h"
+#include "gallivm/lp_bld_logic.h"
 #include "gallivm/lp_bld_tgsi.h"
 #include "radeon_llvm.h"
 #include "radeon_llvm_emit.h"
@@ -546,6 +547,37 @@ static void si_llvm_emit_prologue(struct lp_build_tgsi_context *bld_base)
 }
 
 
+static void si_alpha_test(struct lp_build_tgsi_context *bld_base,
+			  unsigned index)
+{
+	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
+	struct gallivm_state *gallivm = bld_base->base.gallivm;
+
+	if (si_shader_ctx->key.alpha_func != PIPE_FUNC_NEVER) {
+		LLVMValueRef out_ptr = si_shader_ctx->radeon_bld.soa.outputs[index][3];
+		LLVMValueRef alpha_pass =
+			lp_build_cmp(&bld_base->base,
+				     si_shader_ctx->key.alpha_func,
+				     LLVMBuildLoad(gallivm->builder, out_ptr, ""),
+				     lp_build_const_float(gallivm, si_shader_ctx->key.alpha_ref));
+		LLVMValueRef arg =
+			lp_build_select(&bld_base->base,
+					alpha_pass,
+					lp_build_const_float(gallivm, 1.0f),
+					lp_build_const_float(gallivm, -1.0f));
+
+		build_intrinsic(gallivm->builder,
+				"llvm.AMDGPU.kill",
+				LLVMVoidTypeInContext(gallivm->context),
+				&arg, 1, 0);
+	} else {
+		build_intrinsic(gallivm->builder,
+				"llvm.AMDGPU.kilp",
+				LLVMVoidTypeInContext(gallivm->context),
+				NULL, 0, 0);
+	}
+}
+
 /* XXX: This is partially implemented for VS only at this point.  It is not complete */
 static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 {
@@ -606,6 +638,10 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 					param_count++;
 				} else {
 					target = V_008DFC_SQ_EXP_MRT + color_count;
+					if (color_count == 0 &&
+					    si_shader_ctx->key.alpha_func != PIPE_FUNC_ALWAYS)
+						si_alpha_test(bld_base, index);
+
 					color_count++;
 				}
 				break;

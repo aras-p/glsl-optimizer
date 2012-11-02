@@ -81,6 +81,8 @@ struct si_shader_key {
 	unsigned		export_16bpc:8;
 	unsigned		nr_cbufs:4;
 	unsigned		color_two_side:1;
+	unsigned		alpha_func:3;
+	float			alpha_ref;
 };
 
 struct si_pipe_shader {

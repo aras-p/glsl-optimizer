@@ -564,7 +564,7 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 {
 	struct si_state_dsa *dsa = CALLOC_STRUCT(si_state_dsa);
 	struct si_pm4_state *pm4 = &dsa->pm4;
-	unsigned db_depth_control, /* alpha_test_control, */ alpha_ref;
+	unsigned db_depth_control;
 	unsigned db_render_override, db_render_control;
 	uint32_t db_stencil_control = 0;
 
@@ -599,14 +599,12 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 	}
 
 	/* alpha */
-	//alpha_test_control = 0;
-	alpha_ref = 0;
 	if (state->alpha.enabled) {
-		//alpha_test_control = S_028410_ALPHA_FUNC(state->alpha.func);
-		//alpha_test_control |= S_028410_ALPHA_TEST_ENABLE(1);
-		alpha_ref = fui(state->alpha.ref_value);
+		dsa->alpha_func = state->alpha.func;
+		dsa->alpha_ref = state->alpha.ref_value;
+	} else {
+		dsa->alpha_func = PIPE_FUNC_ALWAYS;
 	}
-	dsa->alpha_ref = alpha_ref;
 
 	/* misc */
 	db_render_control = 0;
@@ -642,10 +640,6 @@ static void si_bind_dsa_state(struct pipe_context *ctx, void *state)
 
 	si_pm4_bind_state(rctx, dsa, dsa);
 	si_update_dsa_stencil_ref(rctx);
-
-	// TODO
-        rctx->alpha_ref = dsa->alpha_ref;
-        rctx->alpha_ref_dirty = true;
 }
 
 static void si_delete_dsa_state(struct pipe_context *ctx, void *state)
@@ -1639,8 +1633,6 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 		S_028C70_NUMBER_TYPE(ntype) |
 		S_028C70_ENDIAN(endian);
 
-	rctx->alpha_ref_dirty = true;
-
 	offset += r600_resource_va(rctx->context.screen, state->cbufs[cb]->texture);
 	offset >>= 8;
 
@@ -1847,6 +1839,12 @@ static INLINE struct si_shader_key si_shader_selector_key(struct pipe_context *c
 		if (rctx->queued.named.rasterizer) {
 			key.color_two_side = rctx->queued.named.rasterizer->two_side;
 			/*key.flatshade = rctx->queued.named.rasterizer->flatshade;*/
+		}
+		if (rctx->queued.named.dsa) {
+			key.alpha_func = rctx->queued.named.dsa->alpha_func;
+			key.alpha_ref = rctx->queued.named.dsa->alpha_ref;
+		} else {
+			key.alpha_func = PIPE_FUNC_ALWAYS;
 		}
 	}
 
