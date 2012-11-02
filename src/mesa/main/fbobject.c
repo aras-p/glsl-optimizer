@@ -2637,6 +2637,15 @@ _mesa_GenerateMipmapEXT(GLenum target)
       return;
    }
 
+   if (_mesa_is_enum_format_integer(srcImage->InternalFormat) ||
+       _mesa_is_depthstencil_format(srcImage->InternalFormat) ||
+       _mesa_is_stencil_format(srcImage->InternalFormat)) {
+      _mesa_unlock_texture(ctx, texObj);
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGenerateMipmap(invalid internal format)");
+      return;
+   }
+
    if (target == GL_TEXTURE_CUBE_MAP) {
       GLuint face;
       for (face = 0; face < 6; face++)
