@@ -734,7 +734,7 @@ _mesa_create_exec_table(struct gl_context *ctx)
    }
 
    /* GL_ATI_separate_stencil */
-   if (_mesa_is_desktop_gl(ctx)) {
+   if (ctx->API == API_OPENGL) {
       SET_StencilFuncSeparateATI(exec, _mesa_StencilFuncSeparateATI);
    }
 
