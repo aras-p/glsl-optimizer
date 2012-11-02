@@ -33,6 +33,10 @@
 #include "pipe/p_state.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern boolean
 util_framebuffer_state_equal(const struct pipe_framebuffer_state *dst,
                              const struct pipe_framebuffer_state *src);
@@ -50,5 +54,9 @@ extern boolean
 util_framebuffer_min_size(const struct pipe_framebuffer_state *fb,
                           unsigned *width,
                           unsigned *height);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* U_FRAMEBUFFER_H */
