@@ -1102,6 +1102,64 @@ fs_visitor::split_virtual_grfs()
    this->live_intervals_valid = false;
 }
 
+/**
+ * Remove unused virtual GRFs and compact the virtual_grf_* arrays.
+ *
+ * During code generation, we create tons of temporary variables, many of
+ * which get immediately killed and are never used again.  Yet, in later
+ * optimization and analysis passes, such as compute_live_intervals, we need
+ * to loop over all the virtual GRFs.  Compacting them can save a lot of
+ * overhead.
+ */
+void
+fs_visitor::compact_virtual_grfs()
+{
+   /* Mark which virtual GRFs are used, and count how many. */
+   int remap_table[this->virtual_grf_count];
+   memset(remap_table, -1, sizeof(remap_table));
+
+   foreach_list(node, &this->instructions) {
+      const fs_inst *inst = (const fs_inst *) node;
+
+      if (inst->dst.file == GRF)
+         remap_table[inst->dst.reg] = 0;
+
+      for (int i = 0; i < 3; i++) {
+         if (inst->src[i].file == GRF)
+            remap_table[inst->src[i].reg] = 0;
+      }
+   }
+
+   /* Compact the GRF arrays. */
+   int new_index = 0;
+   for (int i = 0; i < this->virtual_grf_count; i++) {
+      if (remap_table[i] != -1) {
+         remap_table[i] = new_index;
+         virtual_grf_sizes[new_index] = virtual_grf_sizes[i];
+         if (live_intervals_valid) {
+            virtual_grf_use[new_index] = virtual_grf_use[i];
+            virtual_grf_def[new_index] = virtual_grf_def[i];
+         }
+         ++new_index;
+      }
+   }
+
+   this->virtual_grf_count = new_index;
+
+   /* Patch all the instructions to use the newly renumbered registers */
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *) node;
+
+      if (inst->dst.file == GRF)
+         inst->dst.reg = remap_table[inst->dst.reg];
+
+      for (int i = 0; i < 3; i++) {
+         if (inst->src[i].file == GRF)
+            inst->src[i].reg = remap_table[inst->src[i].reg];
+      }
+   }
+}
+
 bool
 fs_visitor::remove_dead_constants()
 {
@@ -1859,6 +1917,8 @@ fs_visitor::run()
       bool progress;
       do {
 	 progress = false;
+
+         compact_virtual_grfs();
 
 	 progress = remove_duplicate_mrf_writes() || progress;
 

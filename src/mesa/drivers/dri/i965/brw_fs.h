@@ -240,6 +240,7 @@ public:
    int choose_spill_reg(struct ra_graph *g);
    void spill_reg(int spill_reg);
    void split_virtual_grfs();
+   void compact_virtual_grfs();
    void setup_pull_constants();
    void calculate_live_intervals();
    bool opt_algebraic();
