@@ -71,9 +71,10 @@ else:
     compiler_objs += mesa_objs
 
     builtin_compiler = env.Program(
-        target = 'builtin_compiler',
-        source = compiler_objs + glsl_sources + \
-            source_lists['BUILTIN_COMPILER_CXX_FILES'],
+        target = 'builtin_compiler/builtin_compiler',
+        source = compiler_objs + glsl_sources + [
+            'builtin_compiler/builtin_stubs.cpp',
+        ]
     )
 
     # SCons builtin dependency scanner doesn't detect that glsl_lexer.ll
