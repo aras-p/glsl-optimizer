@@ -33,6 +33,7 @@
 #include "draw/draw_private.h"
 #include "draw/draw_pipe.h"
 #include "util/u_debug.h"
+#include "util/u_math.h"
 
 
 
@@ -193,7 +194,7 @@ static void do_triangle( struct draw_context *draw,
       do_point( draw, verts + stride * (i0) );  \
    } while (0)
 
-#define GET_ELT(idx) (elts[idx])
+#define GET_ELT(idx) (MIN2(elts[idx], max_index))
 
 #define FUNC pipe_run_elts
 #define FUNC_VARS                               \
@@ -203,7 +204,8 @@ static void do_triangle( struct draw_context *draw,
     struct vertex_header *vertices,             \
     unsigned stride,                            \
     const ushort *elts,                         \
-    unsigned count
+    unsigned count,                             \
+    unsigned max_index
 
 #include "draw_pt_decompose.h"
 
@@ -262,7 +264,8 @@ void draw_pipeline_run( struct draw_context *draw,
                     vert_info->verts,
                     vert_info->stride,
                     prim_info->elts + start,
-                    count);
+                    count,
+                    vert_info->count - 1);
    }
 
    draw->pipeline.verts = NULL;
