@@ -42,6 +42,8 @@ def get_coord_dim(sampler_type):
 # Get the number of extra vector components (i.e. shadow comparitor)
 def get_extra_dim(sampler_type, use_proj, unused_fields):
     extra_dim = unused_fields
+    if sampler_type == "CubeArrayShadow":
+        return 0
     if sampler_type.find("Shadow") != -1:
         extra_dim += 1
     if use_proj:
@@ -49,6 +51,8 @@ def get_extra_dim(sampler_type, use_proj, unused_fields):
     return extra_dim
 
 def get_txs_dim(sampler_type):
+    if sampler_type.startswith("CubeArray"):
+        return 3
     if sampler_type.startswith("Cube"):
         return 2
     return get_coord_dim(sampler_type)
@@ -79,6 +83,8 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
         grad_type = vec_type("", sampler_dim)
         print "\n       (declare (in) " + grad_type + " dPdx)",
         print "\n       (declare (in) " + grad_type + " dPdy)",
+    if sampler_type == "CubeArrayShadow" and tex_inst == "tex":
+        print "\n       (declare (in) float compare)",
 
     if variant & Offset:
         print "\n       (declare (const_in) " + vec_type("i", sampler_dim) + " offset)",
@@ -107,7 +113,9 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
             print "1",
 
         # Shadow comparitor
-        if sampler_type == "2DArrayShadow" or sampler_type == "CubeShadow": # a special case:
+        if sampler_type == "CubeArrayShadow": # a special case
+            print "(var_ref compare)",
+        elif sampler_type == "2DArrayShadow" or sampler_type == "CubeShadow": # a special case:
             print "(swiz w (var_ref P))",   # ...array layer is z; shadow is w
         elif sampler_type.endswith("Shadow"):
             print "(swiz z (var_ref P))",
@@ -163,6 +171,8 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txs", "2DRect")
     generate_sigs("", "txs", "2DRectShadow")
     generate_fiu_sigs("txs", "Buffer")
+    generate_fiu_sigs("txs", "CubeArray")
+    generate_sigs("", "txs", "CubeArrayShadow")
     end_function(fs, "textureSize")
 
     start_function("texture")
@@ -179,6 +189,9 @@ def generate_texture_functions(fs):
     generate_sigs("", "tex", "2DArrayShadow", Single);
     generate_fiu_sigs("tex", "2DRect")
     generate_sigs("", "tex", "2DRectShadow", Single);
+    # ARB_texture_cube_map_array extension
+    generate_fiu_sigs("tex", "CubeArray")
+    generate_sigs("", "tex", "CubeArrayShadow", Single);
 
     generate_fiu_sigs("txb", "1D")
     generate_fiu_sigs("txb", "2D")
@@ -186,6 +199,7 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txb", "Cube")
     generate_fiu_sigs("txb", "1DArray")
     generate_fiu_sigs("txb", "2DArray")
+    generate_fiu_sigs("txb", "CubeArray")
     generate_sigs("", "txb", "1DShadow", Single, 1);
     generate_sigs("", "txb", "2DShadow", Single);
     generate_sigs("", "txb", "CubeShadow", Single);
@@ -224,6 +238,8 @@ def generate_texture_functions(fs):
     generate_sigs("", "txl", "1DShadow", Single, 1);
     generate_sigs("", "txl", "2DShadow", Single);
     generate_sigs("", "txl", "1DArrayShadow", Single);
+    # ARB_texture_cube_map_array extension
+    generate_fiu_sigs("txl", "CubeArray")
     end_function(fs, "textureLod")
 
     start_function("textureLodOffset")
@@ -333,6 +349,8 @@ def generate_texture_functions(fs):
     generate_sigs("", "txd", "CubeShadow", Single);
     generate_sigs("", "txd", "1DArrayShadow", Single);
     generate_sigs("", "txd", "2DArrayShadow", Single);
+    # ARB_texture_cube_map_array extension
+    generate_fiu_sigs("txd", "CubeArray")
     end_function(fs, "textureGrad")
 
     start_function("textureGradOffset")

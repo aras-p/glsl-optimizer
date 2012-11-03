@@ -296,12 +296,37 @@ usamplerCube		KEYWORD(130, 130, USAMPLERCUBE);
 usampler1DArray		KEYWORD(130, 130, USAMPLER1DARRAY);
 usampler2DArray		KEYWORD(130, 130, USAMPLER2DARRAY);
 
-samplerExternalOES	{
+samplerCubeArray	{
+			  if (yyextra->ARB_texture_cube_map_array_enable)
+			     return SAMPLERCUBEARRAY;
+			  else
+			     return IDENTIFIER;
+		}
+isamplerCubeArray	{
+			  if (yyextra->ARB_texture_cube_map_array_enable)
+			     return ISAMPLERCUBEARRAY;
+			  else
+			     return IDENTIFIER;
+		}
+usamplerCubeArray	{
+			  if (yyextra->ARB_texture_cube_map_array_enable)
+			     return USAMPLERCUBEARRAY;
+			  else
+			     return IDENTIFIER;
+		}
+samplerCubeArrayShadow	{
+			  if (yyextra->ARB_texture_cube_map_array_enable)
+			     return SAMPLERCUBEARRAYSHADOW;
+			  else
+			     return IDENTIFIER;
+		}
+
+samplerExternalOES		{
 			  if (yyextra->OES_EGL_image_external_enable)
 			     return SAMPLEREXTERNALOES;
 			  else
 			     return IDENTIFIER;
-			}
+		}
 
 
 struct		return STRUCT;

@@ -327,3 +327,18 @@ const glsl_type glsl_type::builtin_OES_EGL_image_external_types[] = {
 	     GLSL_SAMPLER_DIM_EXTERNAL, 0, 0, GLSL_TYPE_FLOAT, "samplerExternalOES"),
 };
 /*@}*/
+
+/** \name Sampler types added by GL_ARB_texture_cube_map_array
+ */
+/*@{*/
+const glsl_type glsl_type::builtin_ARB_texture_cube_map_array_types[] = {
+   glsl_type(GL_SAMPLER_CUBE_MAP_ARRAY,
+	     GLSL_SAMPLER_DIM_CUBE, 0, 1, GLSL_TYPE_FLOAT, "samplerCubeArray"),
+   glsl_type(GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW,
+	     GLSL_SAMPLER_DIM_CUBE, 1, 1, GLSL_TYPE_FLOAT, "samplerCubeArrayShadow"),
+   glsl_type(GL_INT_SAMPLER_CUBE_MAP_ARRAY,
+	     GLSL_SAMPLER_DIM_CUBE, 0, 1, GLSL_TYPE_INT, "isamplerCubeArray"),
+   glsl_type(GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY,
+	     GLSL_SAMPLER_DIM_CUBE, 0, 1, GLSL_TYPE_UINT, "usamplerCubeArray"),
+};
+/*@}*/

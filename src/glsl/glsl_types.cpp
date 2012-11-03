@@ -142,7 +142,7 @@ glsl_type::sampler_index() const
    case GLSL_SAMPLER_DIM_3D:
       return TEXTURE_3D_INDEX;
    case GLSL_SAMPLER_DIM_CUBE:
-      return TEXTURE_CUBE_INDEX;
+      return (t->sampler_array) ? TEXTURE_CUBE_ARRAY_INDEX : TEXTURE_CUBE_INDEX;
    case GLSL_SAMPLER_DIM_RECT:
       return TEXTURE_RECT_INDEX;
    case GLSL_SAMPLER_DIM_BUF:
@@ -256,6 +256,15 @@ glsl_type::generate_OES_EGL_image_external_types(glsl_symbol_table *symtab,
 }
 
 void
+glsl_type::generate_ARB_texture_cube_map_array_types(glsl_symbol_table *symtab,
+						     bool warn)
+{
+   add_types_to_symbol_table(symtab, builtin_ARB_texture_cube_map_array_types,
+			     Elements(builtin_ARB_texture_cube_map_array_types),
+			     warn);
+}
+
+void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
    switch (state->language_version) {
@@ -303,6 +312,11 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
    if (state->OES_EGL_image_external_enable) {
       glsl_type::generate_OES_EGL_image_external_types(state->symbols,
 					       state->OES_EGL_image_external_warn);
+   }
+
+   if (state->ARB_texture_cube_map_array_enable) {
+      glsl_type::generate_ARB_texture_cube_map_array_types(state->symbols,
+				       state->ARB_texture_cube_map_array_warn);
    }
 }
 
