@@ -41,7 +41,7 @@ manifest.txt
 xcuserdata
 *.xcworkspace
 *.out
-
+.DS_Store
 cmake_install.cmake
 Makefile
 CMakeFiles/

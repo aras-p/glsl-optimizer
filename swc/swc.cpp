@@ -39,7 +39,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "loop_analysis.h"
 #include "standalone_scaffolding.h"
 #include "glsl_optimizer.h"
-#include "AS3.h"
+#include <AS3/AS3.h>
+
+extern bool glslOptimizerVerbose;
 
 static void
 initialize_context(struct gl_context *ctx, gl_api api)
@@ -101,7 +103,7 @@ main(int argc, char **argv)
 {
    #if CMDLINE
 
-   bool vertexShader = false, freename = false, optimize = false;
+   bool vertexShader = false, freename = false, optimize = false, gles = false;
    const char* source = 0;
    char* dest = 0;
 
@@ -109,6 +111,10 @@ main(int argc, char **argv)
    {
       if( argv[i][0] == '-' )
       {
+         if( 0 == strcmp("-e", argv[i]) )
+            gles = true;
+         if( 0 == strcmp("-d", argv[i]) )
+            glslOptimizerVerbose = true;
          if( 0 == strcmp("-v", argv[i]) )
             vertexShader = true;
          if( 0 == strcmp("-f", argv[i]) )
@@ -138,15 +144,16 @@ main(int argc, char **argv)
    if( !originalShader )
       abort();
 
-   AS3_ReadString(srcstr, originalShader, strlen(originalShader));
+   AS3_DeclareVar(srcstr, String);
+   AS3_CopyCStringToVar(srcstr, originalShader, strlen(originalShader));
 
    inline_as3(
-      "srcstr = compileShader(srcstr, %0, %1)\n"
-      : : "r"(!vertexShader), "r"(optimize)
+      "srcstr = compileShader(srcstr, %0, %1, %2)\n"
+      : : "r"(vertexShader ? 0 : 1), "r"(optimize), "r"(gles)
    );
 
    char *optimizedShader;
-   AS3_MallocString(srcstr, optimizedShader);
+   AS3_MallocString(optimizedShader, srcstr);
 
    if( !saveFile(dest, optimizedShader) )
       abort();
@@ -155,10 +162,10 @@ main(int argc, char **argv)
 
    #endif
 
-   AS3_LibInit();
+   AS3_GoAsync();
 }
 
-extern "C" void compileShader()  __attribute__((used, annotate("as3sig:public function compileShader(src:String, mode:int, optimize:Boolean):String")));
+extern "C" void compileShader()  __attribute__((used, annotate("as3sig:public function compileShader(src:String, mode:int, optimize:Boolean, gles:Boolean = false):String")));
 
 extern "C" void compileShader()
 {
@@ -166,16 +173,21 @@ extern "C" void compileShader()
    char *src = NULL;
    AS3_MallocString(src, src);
 
-   glslopt_ctx* gContext = glslopt_initialize(false);
+   bool gles = false;
+   AS3_CopyScalarToVar(gles, gles);
+
+
+   glslopt_ctx* gContext = glslopt_initialize(gles);
 
    int mode;
-   AS3_CopyAS3ToC(mode, mode);
+   AS3_GetScalarFromVar(mode, mode);
    const glslopt_shader_type type = mode == 0 ? kGlslOptShaderVertex : kGlslOptShaderFragment;
 
    glslopt_shader* shader = glslopt_optimize(gContext, type, src, 0);
 
    const char* optimizedShader = glslopt_get_output(shader);
-   AS3_ReadString(outputstr, optimizedShader, strlen(optimizedShader));
+   AS3_DeclareVar(outputstr, String);
+   AS3_CopyCStringToVar(outputstr, optimizedShader, strlen(optimizedShader));
 
    glslopt_cleanup(gContext);
 

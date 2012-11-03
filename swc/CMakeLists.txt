@@ -19,8 +19,9 @@ list(REMOVE_ITEM glsl_sources ${glsl_sources_remove})
 
 add_library(glsl2agal ${agalasm_sources} ${glcpp-library_sources} ${mesa_sources} ${glsl_sources})
 
-add_custom_command(TARGET glsl2agal POST_BUILD COMMAND g++ -fno-exceptions -fno-rtti -O4 -flto-api=exports.txt -emit-swc -o glsl2agal.swc agaloptimiser.abc swc.cpp libglsl2agal.a -I../include -I../src/mesa -I../src/mapi -I../src/glsl)
+add_custom_target(agal_optimizer COMMAND cd ../agaloptimiser/src && SDK=${SDK} bash genabc.sh && cd ../../swc && mv ../agaloptimiser/src/agaloptimiser.abc agaloptimiser.abc)
 
-add_custom_command(TARGET glsl2agal POST_BUILD COMMAND g++ -DCMDLINE=1 -fno-exceptions -fno-rtti -O4 -flto-api=exports.txt -o glsl2agalopt agaloptimiser.abc swc.cpp libglsl2agal.a -I../include -I../src/mesa -I../src/mapi -I../src/glsl)
+add_custom_target(swc ALL COMMAND g++ -fno-exceptions -fno-rtti -O4 -flto-api=exports.txt -emit-swc=com.adobe.glsl2agal -o glsl2agal.swc agaloptimiser.abc swc.cpp libglsl2agal.a -I../include -I../src/mesa -I../src/mapi -I../src/glsl DEPENDS glsl2agal agal_optimizer)
 
-add_custom_command(TARGET glsl2agal PRE_BUILD COMMAND cd ../agaloptimiser/src && SDK=${SDK} bash genabc.sh && cd ../../swc && mv ../agaloptimiser/src/agaloptimiser.abc agaloptimiser.abc)
+add_custom_target(glsl2agalopt ALL COMMAND g++ -DCMDLINE=1 -fno-exceptions -fno-rtti --enable-debug -O4 -flto-api=exports.txt -o glsl2agalopt agaloptimiser.abc swc.cpp libglsl2agal.a -I../include -I../src/mesa -I../src/mapi -I../src/glsl DEPENDS glsl2agal agal_optimizer)
+

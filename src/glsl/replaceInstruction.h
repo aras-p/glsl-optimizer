@@ -86,10 +86,8 @@ static bool replaceInstruction(ir_instruction *in, ir_rvalue *oldi, ir_rvalue *n
       }
    } else if(in->as_texture()) {
       ir_texture *t = in->as_texture();
-
-      if(replaceInstruction(t->sampler, oldi, newi)) {
-         flag = true;
-      }
+      flag |= replaceInstruction(t->sampler, oldi, newi);
+      flag |= replaceInstruction(t->coordinate, oldi, newi);
    } else if(in->as_dereference_record()) {
       ir_dereference_record *dr = in->as_dereference_record();
 

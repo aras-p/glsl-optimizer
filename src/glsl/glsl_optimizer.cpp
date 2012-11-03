@@ -320,11 +320,11 @@ print_agal_var_mapping(const void *key, void *data, void *closure) {
 	}
 }
 
-static bool verbose=false;
+bool glslOptimizerVerbose = false;
 
 void dump(const char *nm, exec_list *ir, _mesa_glsl_parse_state *state, PrintGlslMode printMode)
 {
-	if(!verbose) return;
+	if(!glslOptimizerVerbose) return;
 
 	fprintf(stderr, "glsl %s:\n%s", nm, _mesa_print_ir_glsl(ir, state, NULL, printMode));
 	fprintf(stderr, "validate: \n"); validate_ir_tree(ir);
@@ -533,7 +533,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		do_print_storage(ir, shader);
 		ralloc_asprintf_append (&shader->optimizedOutput, "},\n");
 
-		if(verbose)
+		if(glslOptimizerVerbose)
 			fprintf(stderr, "agal:\n%s", agalasmout);
 		std::string sanitisedAGAL;
 		const char *asmsrc = agalasmout;
@@ -551,7 +551,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		}
 		ralloc_asprintf_append (&shader->optimizedOutput, "\"agalasm\":\"%s\"\n}\n", sanitisedAGAL.c_str());
 
-		if(verbose) {
+		if(glslOptimizerVerbose) {
 			char *agalout;
 			size_t agalsz = 0;
 			AGAL::Assemble(agalasmout, printMode == kPrintGlslFragment ? AGAL::shadertype_fragment : AGAL::shadertype_vertex, &agalout, &agalsz);

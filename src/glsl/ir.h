@@ -67,17 +67,17 @@ enum ir_node_type {
    ir_type_assignment,
    ir_type_call,
    ir_type_constant,
-   ir_type_dereference_array,
+   ir_type_dereference_array, // 5
    ir_type_dereference_record,
    ir_type_dereference_variable,
    ir_type_discard,
    ir_type_expression,
-   ir_type_function,
+   ir_type_function, // 10
    ir_type_function_signature,
    ir_type_if,
    ir_type_loop,
    ir_type_loop_jump,
-   ir_type_return,
+   ir_type_return, // 15
    ir_type_swizzle,
    ir_type_texture,
    ir_type_max /**< maximum ir_type enum number, for validation */
