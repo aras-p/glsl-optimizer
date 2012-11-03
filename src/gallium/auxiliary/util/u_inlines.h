@@ -523,6 +523,9 @@ util_pipe_tex_to_tgsi_tex(enum pipe_texture_target pipe_tex_target,
       return nr_samples > 1 ? TGSI_TEXTURE_2D_ARRAY_MSAA :
                               TGSI_TEXTURE_2D_ARRAY;
 
+   case PIPE_TEXTURE_CUBE_ARRAY:
+      return TGSI_TEXTURE_CUBE_ARRAY;
+
    default:
       assert(0 && "unexpected texture target");
       return TGSI_TEXTURE_UNKNOWN;

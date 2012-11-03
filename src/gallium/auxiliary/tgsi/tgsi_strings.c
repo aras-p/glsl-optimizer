@@ -99,7 +99,9 @@ const char *tgsi_texture_names[TGSI_TEXTURE_COUNT] =
    "SHADOWCUBE",
    "2D_MSAA",
    "2D_ARRAY_MSAA",
-   "UNKNOWN"
+   "CUBEARRAY",
+   "SHADOWCUBEARRAY",
+   "UNKNOWN",
 };
 
 const char *tgsi_property_names[TGSI_PROPERTY_COUNT] =

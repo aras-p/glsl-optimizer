@@ -431,7 +431,12 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_ATOMIMIN            175
 #define TGSI_OPCODE_ATOMIMAX            176
 
-#define TGSI_OPCODE_LAST                177
+/* to be used for shadow cube map compares */
+#define TGSI_OPCODE_TEX2                177
+#define TGSI_OPCODE_TXB2                178
+#define TGSI_OPCODE_TXL2                179
+
+#define TGSI_OPCODE_LAST                180
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
@@ -507,8 +512,10 @@ struct tgsi_instruction_label
 #define TGSI_TEXTURE_SHADOWCUBE     13
 #define TGSI_TEXTURE_2D_MSAA        14
 #define TGSI_TEXTURE_2D_ARRAY_MSAA  15
-#define TGSI_TEXTURE_UNKNOWN        16
-#define TGSI_TEXTURE_COUNT          17
+#define TGSI_TEXTURE_CUBE_ARRAY     16
+#define TGSI_TEXTURE_SHADOWCUBE_ARRAY 17
+#define TGSI_TEXTURE_UNKNOWN        18
+#define TGSI_TEXTURE_COUNT          19
 
 struct tgsi_instruction_texture
 {

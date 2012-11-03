@@ -215,7 +215,10 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 3, 0, 0, 0, 0, OTHR, "ATOMUMIN", TGSI_OPCODE_ATOMUMIN },
    { 1, 3, 0, 0, 0, 0, OTHR, "ATOMUMAX", TGSI_OPCODE_ATOMUMAX },
    { 1, 3, 0, 0, 0, 0, OTHR, "ATOMIMIN", TGSI_OPCODE_ATOMIMIN },
-   { 1, 3, 0, 0, 0, 0, OTHR, "ATOMIMAX", TGSI_OPCODE_ATOMIMAX }
+   { 1, 3, 0, 0, 0, 0, OTHR, "ATOMIMAX", TGSI_OPCODE_ATOMIMAX },
+   { 1, 3, 1, 0, 0, 0, OTHR, "TEX2", TGSI_OPCODE_TEX2 },
+   { 1, 3, 1, 0, 0, 0, OTHR, "TXB2", TGSI_OPCODE_TXB2 },
+   { 1, 3, 1, 0, 0, 0, OTHR, "TXL2", TGSI_OPCODE_TXL2 },
 };
 
 const struct tgsi_opcode_info *

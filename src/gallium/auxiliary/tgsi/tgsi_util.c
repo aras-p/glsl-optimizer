@@ -285,8 +285,10 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
             read_mask = TGSI_WRITEMASK_XYZ;
             break;
          case TGSI_TEXTURE_SHADOW2D_ARRAY:
+         case TGSI_TEXTURE_CUBE_ARRAY:
          case TGSI_TEXTURE_SHADOWCUBE:
          case TGSI_TEXTURE_2D_ARRAY_MSAA:
+         case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
             read_mask = TGSI_WRITEMASK_XYZW;
             break;
          default:
