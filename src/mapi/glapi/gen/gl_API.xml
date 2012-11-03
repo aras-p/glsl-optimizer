@@ -8174,7 +8174,7 @@
 <xi:include href="AMD_draw_buffers_blend.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <!-- 70. GL_ARB_sample_shading -->
-<!-- 71. GL_ARB_texture_cube_map_array -->
+<xi:include href="ARB_texture_cube_map_array.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 <!-- 72. GL_ARB_texture_gather -->
 <!-- 73. GL_ARB_texture_query_lod -->
 
