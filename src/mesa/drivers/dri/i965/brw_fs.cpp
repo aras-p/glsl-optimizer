@@ -1311,8 +1311,6 @@ fs_visitor::opt_algebraic()
 {
    bool progress = false;
 
-   calculate_live_intervals();
-
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
