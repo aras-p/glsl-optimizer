@@ -647,9 +647,10 @@ static void blitter_set_texcoords(struct blitter_context_priv *ctx,
 
    get_texcoords(src, src_width0, src_height0, x1, y1, x2, y2, coord);
 
-   if (src->texture->target == PIPE_TEXTURE_CUBE) {
+   if (src->texture->target == PIPE_TEXTURE_CUBE ||
+       src->texture->target == PIPE_TEXTURE_CUBE_ARRAY) {
       set_texcoords_in_vertices(coord, &face_coord[0][0], 2);
-      util_map_texcoords2d_onto_cubemap(layer,
+      util_map_texcoords2d_onto_cubemap(layer % 6,
                                         /* pointer, stride in floats */
                                         &face_coord[0][0], 2,
                                         &ctx->vertices[0][1][0], 8);
