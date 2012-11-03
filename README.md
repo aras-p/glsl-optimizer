@@ -26,12 +26,6 @@ Building
 
 A prebuilt copy of the standalone compiler and SWC is available in the bin directory.
 
-To build the standalone compiler without the AGAL optimizer:
-<pre>
-	PATH=/path/to/alchemy2/sdk/usr/bin:$PATH cmake .
-	make -j8
-</pre>
-
 To build the SWC and the standalone compiler with the AGAL optimizer:
 <pre>
 	cd swc
@@ -50,14 +44,16 @@ Using the standalone tool
 To demonstrate the tool run the following commands:
 
 <pre>
-./bin/glsl2agal -f tests/simple.fs
-./bin/glsl2agal -v tests/simple.vs
-
-or
-
-./bin/glsl2agalopt -f tests/simple.fs
-./bin/glsl2agalopt -v tests/simple.vs
+./bin/glsl2agalopt -optimize -f tests/simple.fs
+./bin/glsl2agalopt -optimize -v tests/simple.vs
 </pre>
+
+Option | Description
+:-------:|------------:|
+ -f/-v | Specify type (fragment / vertex shader)
+ -e | Shader is for GLES rather than OpenGL |
+ -d | dump out intermediate GLSL between optimization passes (useful when debugging) |
+ -optimize | run the AGAL optimizer on the final AGAL |
 
 The resulting ".out" files contain the generated AGAL asm along with the information needed to connect up the various inputs to the AGAL.
 
