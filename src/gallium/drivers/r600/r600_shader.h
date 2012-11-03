@@ -60,6 +60,7 @@ struct r600_shader {
 	/* flag is set if the shader writes VS_OUT_MISC_VEC (e.g. for PSIZE) */
 	boolean			vs_out_misc_write;
 	boolean			vs_out_point_size;
+	boolean			has_txq_cube_array_z_comp;
 };
 
 struct r600_shader_key {

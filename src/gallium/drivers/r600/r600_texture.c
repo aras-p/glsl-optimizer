@@ -133,6 +133,7 @@ static int r600_init_surface(struct r600_screen *rscreen,
 		surface->array_size = ptex->array_size;
 		break;
 	case PIPE_TEXTURE_2D_ARRAY:
+	case PIPE_TEXTURE_CUBE_ARRAY: /* cube array layout like 2d layout for now */
 		surface->flags |= RADEON_SURF_SET(RADEON_SURF_TYPE_2D_ARRAY, TYPE);
 		surface->array_size = ptex->array_size;
 		break;

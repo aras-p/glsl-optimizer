@@ -174,6 +174,7 @@ static unsigned r600_tex_dim(unsigned dim, unsigned nr_samples)
 	case PIPE_TEXTURE_3D:
 		return V_030000_SQ_TEX_DIM_3D;
 	case PIPE_TEXTURE_CUBE:
+	case PIPE_TEXTURE_CUBE_ARRAY:
 		return V_030000_SQ_TEX_DIM_CUBEMAP;
 	}
 }
@@ -1073,7 +1074,8 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 		depth = texture->array_size;
 	} else if (texture->target == PIPE_TEXTURE_2D_ARRAY) {
 		depth = texture->array_size;
-	}
+	} else if (texture->target == PIPE_TEXTURE_CUBE_ARRAY)
+		depth = texture->array_size / 6;
 
 	view->tex_resource = &tmp->resource;
 	view->tex_resource_words[0] = (S_030000_DIM(r600_tex_dim(texture->target, texture->nr_samples)) |

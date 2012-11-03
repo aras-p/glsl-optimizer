@@ -624,7 +624,7 @@ static void r600_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 	dst->views.dirty_mask |= new_mask;
 	dst->views.compressed_depthtex_mask &= dst->views.enabled_mask;
 	dst->views.compressed_colortex_mask &= dst->views.enabled_mask;
-
+	dst->views.dirty_txq_constants = TRUE;
 	r600_sampler_views_dirty(rctx, &dst->views);
 
 	if (dirty_sampler_states_mask) {
@@ -1023,6 +1023,35 @@ static void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask
 	rctx->sample_mask.atom.dirty = true;
 }
 
+static void r600_setup_txq_cube_array_constants(struct r600_context *rctx, int shader_type)
+{
+	struct r600_textures_info *samplers = &rctx->samplers[shader_type];
+	int bits;
+	uint32_t array_size;
+	struct pipe_constant_buffer cb;
+	int i;
+
+	if (!samplers->views.dirty_txq_constants)
+		return;
+
+	samplers->views.dirty_txq_constants = FALSE;
+
+	bits = util_last_bit(samplers->views.enabled_mask);
+	array_size = bits * sizeof(uint32_t) * 4;
+	samplers->txq_constants = realloc(samplers->txq_constants, array_size);
+	memset(samplers->txq_constants, 0, array_size);
+	for (i = 0; i < bits; i++)
+		if (samplers->views.enabled_mask & (1 << i))
+			samplers->txq_constants[i] = samplers->views.views[i]->base.texture->array_size / 6;
+
+	cb.buffer = NULL;
+	cb.user_buffer = samplers->txq_constants;
+	cb.buffer_offset = 0;
+	cb.buffer_size = array_size;
+	rctx->context.set_constant_buffer(&rctx->context, shader_type, R600_TXQ_CONST_BUFFER, &cb);
+	pipe_resource_reference(&cb.buffer, NULL);
+}
+
 static bool r600_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
@@ -1060,6 +1089,11 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 
 	if (ps_dirty)
 		r600_context_pipe_state_set(rctx, &rctx->ps_shader->current->rstate);
+
+	if (rctx->ps_shader && rctx->ps_shader->current->shader.has_txq_cube_array_z_comp)
+		r600_setup_txq_cube_array_constants(rctx, PIPE_SHADER_FRAGMENT);
+	if (rctx->vs_shader && rctx->vs_shader->current->shader.has_txq_cube_array_z_comp)
+		r600_setup_txq_cube_array_constants(rctx, PIPE_SHADER_VERTEX);
 
 	if (rctx->chip_class < EVERGREEN && rctx->ps_shader && rctx->vs_shader) {
 		if (!r600_adjust_gprs(rctx)) {

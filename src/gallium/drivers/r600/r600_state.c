@@ -118,6 +118,7 @@ static unsigned r600_tex_dim(unsigned dim, unsigned nr_samples)
 	case PIPE_TEXTURE_3D:
 		return V_038000_SQ_TEX_DIM_3D;
 	case PIPE_TEXTURE_CUBE:
+	case PIPE_TEXTURE_CUBE_ARRAY:
 		return V_038000_SQ_TEX_DIM_CUBEMAP;
 	}
 }
@@ -1035,7 +1036,8 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 		depth = texture->array_size;
 	} else if (texture->target == PIPE_TEXTURE_2D_ARRAY) {
 		depth = texture->array_size;
-	}
+	} else if (texture->target == PIPE_TEXTURE_CUBE_ARRAY)
+		depth = texture->array_size / 6;
 	switch (tmp->surface.level[offset_level].mode) {
 	case RADEON_SURF_MODE_LINEAR_ALIGNED:
 		array_mode = V_038000_ARRAY_LINEAR_ALIGNED;

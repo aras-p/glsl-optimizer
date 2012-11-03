@@ -37,11 +37,12 @@
 #define R600_NUM_ATOMS 36
 
 #define R600_MAX_USER_CONST_BUFFERS 1
-#define R600_MAX_DRIVER_CONST_BUFFERS 1
+#define R600_MAX_DRIVER_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFERS (R600_MAX_USER_CONST_BUFFERS + R600_MAX_DRIVER_CONST_BUFFERS)
 
 /* start driver buffers after user buffers */
 #define R600_UCP_CONST_BUFFER (R600_MAX_USER_CONST_BUFFERS)
+#define R600_TXQ_CONST_BUFFER (R600_MAX_USER_CONST_BUFFERS + 1)
 
 #define R600_MAX_CONST_BUFFER_SIZE 4096
 
@@ -311,6 +312,7 @@ struct r600_samplerview_state {
 	uint32_t			dirty_mask;
 	uint32_t			compressed_depthtex_mask; /* which textures are depth */
 	uint32_t			compressed_colortex_mask;
+	boolean                         dirty_txq_constants;
 };
 
 struct r600_sampler_states {
@@ -325,6 +327,9 @@ struct r600_textures_info {
 	struct r600_samplerview_state	views;
 	struct r600_sampler_states	states;
 	bool				is_array_sampler[NUM_TEX_UNITS];
+
+	/* cube array txq workaround */
+	uint32_t			*txq_constants;
 };
 
 struct r600_fence {

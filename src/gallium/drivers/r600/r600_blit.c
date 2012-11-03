@@ -107,6 +107,7 @@ static unsigned u_max_layer(struct pipe_resource *r, unsigned level)
 		return u_minify(r->depth0, level) - 1;
 	case PIPE_TEXTURE_1D_ARRAY:
 	case PIPE_TEXTURE_2D_ARRAY:
+	case PIPE_TEXTURE_CUBE_ARRAY:
 		return r->array_size - 1;
 	default:
 		return 0;

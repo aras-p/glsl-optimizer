@@ -420,6 +420,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Supported on Evergreen. */
 	case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
+	case PIPE_CAP_CUBE_MAP_ARRAY:
 		return family >= CHIP_CEDAR ? 1 : 0;
 
 	/* Unsupported features. */
