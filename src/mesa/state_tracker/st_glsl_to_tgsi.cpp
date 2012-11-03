@@ -2565,10 +2565,18 @@ glsl_to_tgsi_visitor::visit(ir_call *ir)
 void
 glsl_to_tgsi_visitor::visit(ir_texture *ir)
 {
-   st_src_reg result_src, coord, lod_info, projector, dx, dy, offset;
-   st_dst_reg result_dst, coord_dst;
+   st_src_reg result_src, coord, cube_sc, lod_info, projector, dx, dy, offset;
+   st_dst_reg result_dst, coord_dst, cube_sc_dst;
    glsl_to_tgsi_instruction *inst = NULL;
    unsigned opcode = TGSI_OPCODE_NOP;
+   const glsl_type *sampler_type = ir->sampler->type;
+   bool is_cube_array = false;
+
+   /* if we are a cube array sampler */
+   if ((sampler_type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE &&
+        sampler_type->sampler_array)) {
+      is_cube_array = true;
+   }
 
    if (ir->coordinate) {
       ir->coordinate->accept(this);
@@ -2596,15 +2604,15 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
 
    switch (ir->op) {
    case ir_tex:
-      opcode = TGSI_OPCODE_TEX;
+      opcode = (is_cube_array && ir->shadow_comparitor) ? TGSI_OPCODE_TEX2 : TGSI_OPCODE_TEX; 
       break;
    case ir_txb:
-      opcode = TGSI_OPCODE_TXB;
+      opcode = is_cube_array ? TGSI_OPCODE_TXB2 : TGSI_OPCODE_TXB;
       ir->lod_info.bias->accept(this);
       lod_info = this->result;
       break;
    case ir_txl:
-      opcode = TGSI_OPCODE_TXL;
+      opcode = is_cube_array ? TGSI_OPCODE_TXL2 : TGSI_OPCODE_TXL;
       ir->lod_info.lod->accept(this);
       lod_info = this->result;
       break;
@@ -2630,8 +2638,6 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       }
       break;
    }
-
-   const glsl_type *sampler_type = ir->sampler->type;
 
    if (ir->projector) {
       if (opcode == TGSI_OPCODE_TEX) {
@@ -2692,17 +2698,25 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
        */
       ir->shadow_comparitor->accept(this);
 
-      /* XXX This will need to be updated for cubemap array samplers. */
-      if ((sampler_type->sampler_dimensionality == GLSL_SAMPLER_DIM_2D &&
-	   sampler_type->sampler_array) ||
-	  sampler_type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE) {
-         coord_dst.writemask = WRITEMASK_W;
-      } else {
-         coord_dst.writemask = WRITEMASK_Z;
+      if (is_cube_array) {
+         cube_sc = get_temp(glsl_type::float_type);
+         cube_sc_dst = st_dst_reg(cube_sc);
+         cube_sc_dst.writemask = WRITEMASK_X;
+         emit(ir, TGSI_OPCODE_MOV, cube_sc_dst, this->result);
+         cube_sc_dst.writemask = WRITEMASK_X;
       }
-
-      emit(ir, TGSI_OPCODE_MOV, coord_dst, this->result);
-      coord_dst.writemask = WRITEMASK_XYZW;
+      else {
+         if ((sampler_type->sampler_dimensionality == GLSL_SAMPLER_DIM_2D &&
+              sampler_type->sampler_array) ||
+             sampler_type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE) {
+            coord_dst.writemask = WRITEMASK_W;
+         } else {
+            coord_dst.writemask = WRITEMASK_Z;
+         }
+         
+         emit(ir, TGSI_OPCODE_MOV, coord_dst, this->result);
+         coord_dst.writemask = WRITEMASK_XYZW;
+      }
    }
 
    if (opcode == TGSI_OPCODE_TXL || opcode == TGSI_OPCODE_TXB ||
@@ -2719,7 +2733,11 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       inst = emit(ir, opcode, result_dst, lod_info);
    else if (opcode == TGSI_OPCODE_TXF) {
       inst = emit(ir, opcode, result_dst, coord);
-   } else
+   } else if (opcode == TGSI_OPCODE_TXL2 || opcode == TGSI_OPCODE_TXB2) {
+      inst = emit(ir, opcode, result_dst, coord, lod_info);
+   } else if (opcode == TGSI_OPCODE_TEX2) {
+      inst = emit(ir, opcode, result_dst, coord, cube_sc);
+   } else 
       inst = emit(ir, opcode, result_dst, coord);
 
    if (ir->shadow_comparitor)
@@ -2751,7 +2769,8 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       inst->tex_target = TEXTURE_3D_INDEX;
       break;
    case GLSL_SAMPLER_DIM_CUBE:
-      inst->tex_target = TEXTURE_CUBE_INDEX;
+      inst->tex_target = (sampler_type->sampler_array)
+         ? TEXTURE_CUBE_ARRAY_INDEX : TEXTURE_CUBE_INDEX;
       break;
    case GLSL_SAMPLER_DIM_RECT:
       inst->tex_target = TEXTURE_RECT_INDEX;
@@ -4209,6 +4228,7 @@ compile_tgsi_instruction(struct st_translate *t,
 
    unsigned num_dst;
    unsigned num_src;
+   unsigned tex_target;
 
    num_dst = num_inst_dst_regs(inst->op);
    num_src = num_inst_src_regs(inst->op);
@@ -4243,14 +4263,19 @@ compile_tgsi_instruction(struct st_translate *t,
    case TGSI_OPCODE_TXP:
    case TGSI_OPCODE_TXQ:
    case TGSI_OPCODE_TXF:
+   case TGSI_OPCODE_TEX2:
+   case TGSI_OPCODE_TXB2:
+   case TGSI_OPCODE_TXL2:
       src[num_src++] = t->samplers[inst->sampler];
       for (i = 0; i < inst->tex_offset_num_offset; i++) {
          texoffsets[i] = translate_tex_offset(t, &inst->tex_offsets[i]);
       }
+      tex_target = st_translate_texture_target(inst->tex_target, inst->tex_shadow);
+
       ureg_tex_insn(ureg,
                     inst->op,
-                    dst, num_dst, 
-                    st_translate_texture_target(inst->tex_target, inst->tex_shadow),
+                    dst, num_dst,
+                    tex_target,
                     texoffsets, inst->tex_offset_num_offset,
                     src, num_src);
       return;

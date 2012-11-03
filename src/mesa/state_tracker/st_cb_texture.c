@@ -102,6 +102,9 @@ gl_target_to_pipe(GLenum target)
       return PIPE_TEXTURE_2D_ARRAY;
    case GL_TEXTURE_BUFFER:
       return PIPE_BUFFER;
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
+      return PIPE_TEXTURE_CUBE_ARRAY;
    default:
       assert(0);
       return 0;
@@ -272,6 +275,7 @@ get_texture_dims(GLenum target)
    case GL_TEXTURE_EXTERNAL_OES:
       return 2;
    case GL_TEXTURE_3D:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
       return 3;
    default:
       assert(0 && "invalid texture target in get_texture_dims()");
@@ -1123,6 +1127,7 @@ copy_image_data_to_texture(struct st_context *st,
       assert(stImage->pt->target == PIPE_TEXTURE_1D_ARRAY ||
              u_minify(stImage->pt->height0, src_level) == stImage->base.Height);
       assert(stImage->pt->target == PIPE_TEXTURE_2D_ARRAY ||
+             stImage->pt->target == PIPE_TEXTURE_CUBE_ARRAY ||
              u_minify(stImage->pt->depth0, src_level) == stImage->base.Depth);
 
       st_texture_image_copy(st->pipe,

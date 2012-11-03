@@ -165,6 +165,13 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       *depthOut = 1;
       *layersOut = depthIn;
       break;
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
+      *widthOut = widthIn;
+      *heightOut = heightIn;
+      *depthOut = 1;
+      *layersOut = depthIn;
+      break;
    default:
       assert(0 && "Unexpected texture in st_gl_texture_dims_to_pipe_dims()");
       /* fall-through */
@@ -277,7 +284,8 @@ st_texture_image_data(struct st_context *st,
    GLuint layers;
 
    if (dst->target == PIPE_TEXTURE_1D_ARRAY ||
-       dst->target == PIPE_TEXTURE_2D_ARRAY)
+       dst->target == PIPE_TEXTURE_2D_ARRAY ||
+       dst->target == PIPE_TEXTURE_CUBE_ARRAY)
       layers = dst->array_size;
    else
       layers = u_minify(dst->depth0, level);
