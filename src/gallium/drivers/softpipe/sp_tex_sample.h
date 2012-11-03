@@ -63,13 +63,14 @@ typedef void (*filter_func)(struct tgsi_sampler *tgsi_sampler,
                             const float t[TGSI_QUAD_SIZE],
                             const float p[TGSI_QUAD_SIZE],
                             const float c0[TGSI_QUAD_SIZE],
+                            const float c1[TGSI_QUAD_SIZE],
                             enum tgsi_sampler_control control,
                             float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
 
 
 union sp_sampler_key {
    struct {
-      unsigned target:3;
+      unsigned target:5;
       unsigned is_pot:1;
       unsigned processor:2;
       unsigned unit:4;
@@ -77,7 +78,7 @@ union sp_sampler_key {
       unsigned swizzle_g:3;
       unsigned swizzle_b:3;
       unsigned swizzle_a:3;
-      unsigned pad:10;
+      unsigned pad:8;
    } bits;
    unsigned value;
 };

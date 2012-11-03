@@ -258,6 +258,7 @@ sp_get_tex_image_offset(const struct softpipe_resource *spr,
    unsigned offset = spr->level_offset[level];
 
    if (spr->base.target == PIPE_TEXTURE_CUBE ||
+       spr->base.target == PIPE_TEXTURE_CUBE_ARRAY ||
        spr->base.target == PIPE_TEXTURE_3D ||
        spr->base.target == PIPE_TEXTURE_2D_ARRAY) {
       offset += layer * nblocksy * spr->stride[level];
@@ -363,6 +364,9 @@ softpipe_transfer_map(struct pipe_context *pipe,
       }
       else if (resource->target == PIPE_TEXTURE_CUBE) {
          assert(box->z < 6);
+      }
+      else if (resource->target == PIPE_TEXTURE_CUBE_ARRAY) {
+         assert(box->z <= resource->array_size);
       }
       else {
          assert(box->z + box->depth <= (u_minify(resource->depth0, level)));

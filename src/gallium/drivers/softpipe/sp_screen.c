@@ -169,6 +169,7 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
       return 0;
    case PIPE_CAP_QUERY_TIMESTAMP:
+   case PIPE_CAP_CUBE_MAP_ARRAY:
       return 1;
    }
    /* should only get here on unhandled cases */
@@ -279,7 +280,8 @@ softpipe_is_format_supported( struct pipe_screen *screen,
           target == PIPE_TEXTURE_2D_ARRAY ||
           target == PIPE_TEXTURE_RECT ||
           target == PIPE_TEXTURE_3D ||
-          target == PIPE_TEXTURE_CUBE);
+          target == PIPE_TEXTURE_CUBE ||
+          target == PIPE_TEXTURE_CUBE_ARRAY);
 
    format_desc = util_format_description(format);
    if (!format_desc)

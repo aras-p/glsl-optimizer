@@ -100,11 +100,24 @@ enum tgsi_sampler_control {
 struct tgsi_sampler
 {
    /** Get samples for four fragments in a quad */
+   /* this interface contains 5 sets of channels that vary
+    * depending on the sampler.
+    * s - the first texture coordinate for sampling.
+    * t - the second texture coordinate for sampling - unused for 1D,
+          layer for 1D arrays.
+    * p - the third coordinate for sampling for 3D, cube, cube arrays,
+    *     layer for 2D arrays. Compare value for 1D/2D shadows.
+    * c0 - lod value for lod variants, compare value for shadow cube
+    *      and shadow 2d arrays.
+    * c1 - cube array only - lod for cube map arrays
+    *                        compare for shadow cube map arrays.
+    */
    void (*get_samples)(struct tgsi_sampler *sampler,
                        const float s[TGSI_QUAD_SIZE],
                        const float t[TGSI_QUAD_SIZE],
                        const float p[TGSI_QUAD_SIZE],
                        const float c0[TGSI_QUAD_SIZE],
+                       const float c1[TGSI_QUAD_SIZE],
                        enum tgsi_sampler_control control,
                        float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
    void (*get_dims)(struct tgsi_sampler *sampler, int level,
