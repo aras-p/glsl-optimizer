@@ -90,6 +90,7 @@ _mesa_alloc_shared_state(struct gl_context *ctx)
    for (i = 0; i < NUM_TEXTURE_TARGETS; i++) {
       /* NOTE: the order of these enums matches the TEXTURE_x_INDEX values */
       static const GLenum targets[] = {
+         GL_TEXTURE_CUBE_MAP_ARRAY,
          GL_TEXTURE_BUFFER,
          GL_TEXTURE_2D_ARRAY_EXT,
          GL_TEXTURE_1D_ARRAY_EXT,

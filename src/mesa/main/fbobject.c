@@ -2025,7 +2025,8 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
              */
             err = (texObj->Target != GL_TEXTURE_3D) &&
                 (texObj->Target != GL_TEXTURE_1D_ARRAY_EXT) &&
-                (texObj->Target != GL_TEXTURE_2D_ARRAY_EXT);
+                (texObj->Target != GL_TEXTURE_2D_ARRAY_EXT) &&
+                (texObj->Target != GL_TEXTURE_CUBE_MAP_ARRAY);
          }
          else {
             /* Make sure textarget is consistent with the texture's type */
@@ -2058,7 +2059,8 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
          }
       }
       else if ((texObj->Target == GL_TEXTURE_1D_ARRAY_EXT) ||
-               (texObj->Target == GL_TEXTURE_2D_ARRAY_EXT)) {
+               (texObj->Target == GL_TEXTURE_2D_ARRAY_EXT) ||
+               (texObj->Target == GL_TEXTURE_CUBE_MAP_ARRAY)) {
          if (zoffset < 0 ||
              zoffset >= (GLint) ctx->Const.MaxArrayTextureLayers) {
             _mesa_error(ctx, GL_INVALID_VALUE,

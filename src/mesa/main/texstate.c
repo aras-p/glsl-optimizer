@@ -706,6 +706,7 @@ alloc_proxy_textures( struct gl_context *ctx )
     * values!
     */
    static const GLenum targets[] = {
+      GL_TEXTURE_CUBE_MAP_ARRAY,
       GL_TEXTURE_BUFFER,
       GL_TEXTURE_2D_ARRAY_EXT,
       GL_TEXTURE_1D_ARRAY_EXT,

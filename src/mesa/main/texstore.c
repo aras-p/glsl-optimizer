@@ -4273,6 +4273,7 @@ store_texsubimage(struct gl_context *ctx,
       dims = 1;
       break;
    case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
    case GL_TEXTURE_3D:
       dims = 3;
       break;
@@ -4319,6 +4320,12 @@ store_texsubimage(struct gl_context *ctx,
       break;
    case GL_TEXTURE_3D:
       /* we'll store 3D images as a series of slices */
+      numSlices = depth;
+      sliceOffset = zoffset;
+      srcImageStride = _mesa_image_image_stride(packing, width, height,
+                                                format, type);
+      break;
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
       numSlices = depth;
       sliceOffset = zoffset;
       srcImageStride = _mesa_image_image_stride(packing, width, height,

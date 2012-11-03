@@ -170,6 +170,11 @@ get_texobj(struct gl_context *ctx, GLenum target, GLboolean get)
          return texUnit->CurrentTex[TEXTURE_EXTERNAL_INDEX];
       }
       break;
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+      if (ctx->Extensions.ARB_texture_cube_map_array) {
+         return texUnit->CurrentTex[TEXTURE_CUBE_ARRAY_INDEX];
+      }
+      break;
    default:
       ;
    }

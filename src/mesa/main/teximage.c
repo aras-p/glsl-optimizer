@@ -649,7 +649,7 @@ _mesa_is_proxy_texture(GLenum target)
     * NUM_TEXTURE_TARGETS should match number of terms below, except there's no
     * proxy for GL_TEXTURE_BUFFER and GL_TEXTURE_EXTERNAL_OES.
     */
-   assert(NUM_TEXTURE_TARGETS == 7 + 2);
+   assert(NUM_TEXTURE_TARGETS == 8 + 2);
 
    return (target == GL_PROXY_TEXTURE_1D ||
            target == GL_PROXY_TEXTURE_2D ||
@@ -657,7 +657,8 @@ _mesa_is_proxy_texture(GLenum target)
            target == GL_PROXY_TEXTURE_CUBE_MAP_ARB ||
            target == GL_PROXY_TEXTURE_RECTANGLE_NV ||
            target == GL_PROXY_TEXTURE_1D_ARRAY_EXT ||
-           target == GL_PROXY_TEXTURE_2D_ARRAY_EXT);
+           target == GL_PROXY_TEXTURE_2D_ARRAY_EXT ||
+           target == GL_PROXY_TEXTURE_CUBE_MAP_ARRAY);
 }
 
 
@@ -695,6 +696,9 @@ _mesa_get_proxy_target(GLenum target)
    case GL_TEXTURE_2D_ARRAY_EXT:
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
       return GL_PROXY_TEXTURE_2D_ARRAY_EXT;
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
+      return GL_PROXY_TEXTURE_CUBE_MAP_ARRAY;
    default:
       _mesa_problem(NULL, "unexpected target in _mesa_get_proxy_target()");
       return 0;
@@ -745,6 +749,12 @@ _mesa_select_tex_object(struct gl_context *ctx,
       case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
          return ctx->Extensions.ARB_texture_cube_map
                 ? ctx->Texture.ProxyTex[TEXTURE_CUBE_INDEX] : NULL;
+      case GL_TEXTURE_CUBE_MAP_ARRAY:
+         return ctx->Extensions.ARB_texture_cube_map_array
+                ? texUnit->CurrentTex[TEXTURE_CUBE_ARRAY_INDEX] : NULL;
+      case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
+         return ctx->Extensions.ARB_texture_cube_map_array
+                ? ctx->Texture.ProxyTex[TEXTURE_CUBE_ARRAY_INDEX] : NULL;
       case GL_TEXTURE_RECTANGLE_NV:
          return ctx->Extensions.NV_texture_rectangle
                 ? texUnit->CurrentTex[TEXTURE_RECT_INDEX] : NULL;
@@ -891,6 +901,11 @@ get_proxy_tex_image(struct gl_context *ctx, GLenum target, GLint level)
          return NULL;
       texIndex = TEXTURE_2D_ARRAY_INDEX;
       break;
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
+      if (level >= ctx->Const.MaxCubeTextureLevels)
+         return NULL;
+      texIndex = TEXTURE_CUBE_ARRAY_INDEX;
+      break;
    default:
       return NULL;
    }
@@ -953,6 +968,10 @@ _mesa_max_texture_levels(struct gl_context *ctx, GLenum target)
       return (ctx->Extensions.MESA_texture_array ||
               ctx->Extensions.EXT_texture_array)
          ? ctx->Const.MaxTextureLevels : 0;
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
+      return ctx->Extensions.ARB_texture_cube_map_array
+         ? ctx->Const.MaxCubeTextureLevels : 0;
    case GL_TEXTURE_BUFFER:
       return _mesa_is_desktop_gl(ctx)
          && ctx->Extensions.ARB_texture_buffer_object
@@ -995,6 +1014,8 @@ _mesa_get_texture_dimensions(GLenum target)
    case GL_PROXY_TEXTURE_3D:
    case GL_TEXTURE_2D_ARRAY:
    case GL_PROXY_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
       return 3;
    case GL_TEXTURE_BUFFER:
       /* fall-through */
@@ -1174,6 +1195,8 @@ _mesa_init_teximage_fields(struct gl_context *ctx,
       break;
    case GL_TEXTURE_2D_ARRAY:
    case GL_PROXY_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
       img->Height2 = height - 2 * border; /* == 1 << img->HeightLog2; */
       img->HeightLog2 = _mesa_logbase2(img->Height2);
       img->Depth2 = depth; /* no border */
@@ -1341,6 +1364,24 @@ _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
       }
       return GL_TRUE;
 
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
+      maxSize = 1 << (ctx->Const.MaxCubeTextureLevels - 1);
+      if (width < 2 * border || width > 2 * border + maxSize)
+         return GL_FALSE;
+      if (height < 2 * border || height > 2 * border + maxSize)
+         return GL_FALSE;
+      if (depth < 1 || depth > ctx->Const.MaxArrayTextureLayers)
+         return GL_FALSE;
+      if (level >= ctx->Const.MaxCubeTextureLevels)
+         return GL_FALSE;
+      if (!ctx->Extensions.ARB_texture_non_power_of_two) {
+         if (width > 0 && !_mesa_is_pow_two(width - 2 * border))
+            return GL_FALSE;
+         if (height > 0 && !_mesa_is_pow_two(height - 2 * border))
+            return GL_FALSE;
+      }
+      return GL_TRUE;
    default:
       _mesa_problem(ctx, "Invalid target in _mesa_legal_texture_dimensions()");
       return GL_FALSE;
@@ -1549,6 +1590,9 @@ target_can_be_compressed(const struct gl_context *ctx, GLenum target,
    case GL_TEXTURE_2D_ARRAY_EXT:
       return (ctx->Extensions.MESA_texture_array ||
               ctx->Extensions.EXT_texture_array);
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+      return ctx->Extensions.ARB_texture_cube_map_array;
    default:
       return GL_FALSE;
    }      
@@ -1614,6 +1658,9 @@ legal_teximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
          return _mesa_is_desktop_gl(ctx)
             && (ctx->Extensions.MESA_texture_array ||
                 ctx->Extensions.EXT_texture_array);
+      case GL_TEXTURE_CUBE_MAP_ARRAY:
+      case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
+         return ctx->Extensions.ARB_texture_cube_map_array;
       default:
          return GL_FALSE;
       }
@@ -1666,6 +1713,9 @@ legal_texsubimage_target(struct gl_context *ctx, GLuint dims, GLenum target)
                  && (ctx->Extensions.MESA_texture_array ||
                      ctx->Extensions.EXT_texture_array))
             || _mesa_is_gles3(ctx);
+      case GL_TEXTURE_CUBE_MAP_ARRAY:
+      case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
+         return ctx->Extensions.ARB_texture_cube_map_array;
       default:
          return GL_FALSE;
       }
@@ -1782,6 +1832,7 @@ texture_error_check( struct gl_context *ctx,
     * Formats and types that require additional extensions (e.g., GL_FLOAT
     * requires GL_OES_texture_float) are filtered elsewhere.
     */
+
    if (_mesa_is_gles(ctx) && !_mesa_is_gles3(ctx)) {
       if (format != internalFormat) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -1807,6 +1858,20 @@ texture_error_check( struct gl_context *ctx,
         _mesa_is_cube_face(target)) && width != height) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glTexImage2D(cube width != height)");
+      return GL_TRUE;
+   }
+
+   if ((target == GL_PROXY_TEXTURE_CUBE_MAP_ARRAY ||
+        target == GL_TEXTURE_CUBE_MAP_ARRAY) && width != height) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glTexImage3D(cube array width != height)");
+      return GL_TRUE;
+   }
+
+   if ((target == GL_PROXY_TEXTURE_CUBE_MAP_ARRAY ||
+        target == GL_TEXTURE_CUBE_MAP_ARRAY) && (depth % 6)) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glTexImage3D(cube array depth not multiple of 6)");
       return GL_TRUE;
    }
 
@@ -1886,7 +1951,10 @@ texture_error_check( struct gl_context *ctx,
           target != GL_TEXTURE_RECTANGLE_ARB &&
           target != GL_PROXY_TEXTURE_RECTANGLE_ARB &&
          !((_mesa_is_cube_face(target) || target == GL_PROXY_TEXTURE_CUBE_MAP) &&
-           (ctx->Version >= 30 || ctx->Extensions.EXT_gpu_shader4))) {
+           (ctx->Version >= 30 || ctx->Extensions.EXT_gpu_shader4)) &&
+          !((target == GL_TEXTURE_CUBE_MAP_ARRAY ||
+             target == GL_PROXY_TEXTURE_CUBE_MAP_ARRAY) &&
+            ctx->Extensions.ARB_texture_cube_map_array)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glTexImage%dD(bad target for depth texture)",
                      dimensions);
@@ -2684,7 +2752,7 @@ strip_texture_border(GLenum target,
       *height = *height - 2;  /* reduce the height by two border pixels */
    }
 
-   if (*depth >= 3 && target != GL_TEXTURE_2D_ARRAY) {
+   if (*depth >= 3 && target != GL_TEXTURE_2D_ARRAY && target != GL_TEXTURE_CUBE_MAP_ARRAY) {
       unpackNew->SkipImages++;  /* skip the border */
       *depth = *depth - 2;      /* reduce the depth by two border pixels */
    }
