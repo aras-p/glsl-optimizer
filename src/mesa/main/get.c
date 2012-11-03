@@ -335,6 +335,7 @@ EXTRA_EXT(ARB_blend_func_extended);
 EXTRA_EXT(ARB_uniform_buffer_object);
 EXTRA_EXT(ARB_timer_query);
 EXTRA_EXT(ARB_map_buffer_alignment);
+EXTRA_EXT(ARB_texture_cube_map_array);
 
 static const int
 extra_NV_primitive_restart[] = {
@@ -667,6 +668,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
    case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
    case GL_TEXTURE_BINDING_RECTANGLE_NV:
    case GL_TEXTURE_BINDING_EXTERNAL_OES:
+   case GL_TEXTURE_BINDING_CUBE_MAP_ARRAY:
       unit = ctx->Texture.CurrentUnit;
       v->value_int =
 	 ctx->Texture.Unit[unit].CurrentTex[d->offset]->Name;
