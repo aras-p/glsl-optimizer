@@ -160,6 +160,8 @@ static void make_state_key( struct gl_context *ctx, struct state_key *key )
 
    key->need_eye_coords = ctx->_NeedEyeCoords;
 
+   /* Make sure fp->Base.InputsRead fits in a 12-bit field */
+   assert(fp->Base.InputsRead < (1 << 12));
    key->fragprog_inputs_read = fp->Base.InputsRead;
    key->varying_vp_inputs = ctx->varying_vp_inputs;
 
