@@ -1480,7 +1480,7 @@ _mesa_GetDoublev(GLenum pname, GLdouble *params)
 }
 
 static enum value_type
-find_value_indexed(const char *func, GLenum pname, int index, union value *v)
+find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
 {
    GET_CURRENT_CONTEXT(ctx);
 
