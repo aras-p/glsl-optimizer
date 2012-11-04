@@ -2248,7 +2248,7 @@ pack_uint_z_Z32_FLOAT(const GLuint *src, void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    const GLdouble scale = 1.0 / (GLdouble) 0xffffffff;
-   *d = *src * scale;
+   *d = (GLuint) (*src * scale);
    assert(*d >= 0.0f);
    assert(*d <= 1.0f);
 }
@@ -2258,7 +2258,7 @@ pack_uint_z_Z32_FLOAT_X24S8(const GLuint *src, void *dst)
 {
    GLfloat *d = ((GLfloat *) dst);
    const GLdouble scale = 1.0 / (GLdouble) 0xffffffff;
-   *d = *src * scale;
+   *d = (GLfloat) (*src * scale);
    assert(*d >= 0.0f);
    assert(*d <= 1.0f);
 }
@@ -2473,7 +2473,7 @@ _mesa_pack_uint_z_row(gl_format format, GLuint n,
          const GLdouble scale = 1.0 / (GLdouble) 0xffffffff;
          GLuint i;
          for (i = 0; i < n; i++) {
-            d[i] = src[i] * scale;
+            d[i] = (GLuint) (src[i] * scale);
             assert(d[i] >= 0.0f);
             assert(d[i] <= 1.0f);
          }
@@ -2485,7 +2485,7 @@ _mesa_pack_uint_z_row(gl_format format, GLuint n,
          const GLdouble scale = 1.0 / (GLdouble) 0xffffffff;
          GLuint i;
          for (i = 0; i < n; i++) {
-            d[i].z = src[i] * scale;
+            d[i].z = (GLfloat) (src[i] * scale);
             assert(d[i].z >= 0.0f);
             assert(d[i].z <= 1.0f);
          }
@@ -2570,9 +2570,9 @@ _mesa_pack_uint_24_8_depth_stencil_row(gl_format format, GLuint n,
       {
          const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
          struct z32f_x24s8 *d = (struct z32f_x24s8 *) dst;
-         GLint i;
+         GLuint i;
          for (i = 0; i < n; i++) {
-            GLfloat z = (src[i] >> 8) * scale;
+            GLfloat z = (GLfloat) ((src[i] >> 8) * scale);
             d[i].z = z;
             d[i].x24s8 = src[i];
          }
@@ -2599,10 +2599,10 @@ _mesa_pack_colormask(gl_format format, const GLubyte colorMask[4], void *dst)
    switch (_mesa_get_format_datatype(format)) {
    case GL_UNSIGNED_NORMALIZED:
       /* simple: 1.0 will convert to ~0 in the right bit positions */
-      maskColor[0] = colorMask[0] ? 1.0 : 0.0;
-      maskColor[1] = colorMask[1] ? 1.0 : 0.0;
-      maskColor[2] = colorMask[2] ? 1.0 : 0.0;
-      maskColor[3] = colorMask[3] ? 1.0 : 0.0;
+      maskColor[0] = colorMask[0] ? 1.0f : 0.0f;
+      maskColor[1] = colorMask[1] ? 1.0f : 0.0f;
+      maskColor[2] = colorMask[2] ? 1.0f : 0.0f;
+      maskColor[3] = colorMask[3] ? 1.0f : 0.0f;
       _mesa_pack_float_rgba_row(format, 1,
                                 (const GLfloat (*)[4]) maskColor, dst);
       break;
