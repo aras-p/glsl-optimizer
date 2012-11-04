@@ -68,9 +68,9 @@ ir_rvalue *
 ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue *ir)
 {
    ir_dereference_array *orig_deref = ir->as_dereference_array();
-   ir_assignment *assign;
-   ir_variable *index, *var;
-   ir_dereference *deref;
+   ir_assignment *assign, *value_assign;
+   ir_variable *index, *var, *value;
+   ir_dereference *deref, *deref_value;
    unsigned i;
 
    if (!orig_deref)
@@ -95,6 +95,14 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
    assign = new(base_ir) ir_assignment(deref, orig_deref->array_index, NULL);
    list.push_tail(assign);
 
+   /* Store the value inside a temp, thus avoiding matrixes duplication */
+   value = new(base_ir) ir_variable(orig_deref->array->type, "vec_value_tmp",
+				    ir_var_temporary);
+   list.push_tail(value);
+   deref_value = new(base_ir) ir_dereference_variable(value);
+   value_assign = new(base_ir) ir_assignment(deref_value, orig_deref->array);
+   list.push_tail(value_assign);
+
    /* Temporary where we store whichever value we swizzle out. */
    var = new(base_ir) ir_variable(ir->type, "vec_index_tmp_v",
 				  ir_var_temporary);
@@ -117,7 +125,7 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
        * underlying variable.
        */
       ir_rvalue *swizzle =
-	 new(base_ir) ir_swizzle(orig_deref->array->clone(mem_ctx, NULL),
+	 new(base_ir) ir_swizzle(deref_value->clone(mem_ctx, NULL),
 				 i, 0, 0, 0, 1);
 
       deref = new(base_ir) ir_dereference_variable(var);
