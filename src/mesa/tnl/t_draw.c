@@ -141,7 +141,8 @@ convert_fixed_to_float(const struct gl_client_array *input,
                        const GLubyte *ptr, GLfloat *fptr,
                        GLuint count)
 {
-   GLuint i, j;
+   GLuint i;
+   GLint j;
    const GLint size = input->Size;
 
    if (input->Normalized) {
