@@ -292,7 +292,7 @@ tex_storage_error_check(struct gl_context *ctx, GLuint dims, GLenum target,
 
    /* check levels against width/height/depth */
    maxDim = MAX3(width, height, depth);
-   if (levels > _mesa_logbase2(maxDim) + 1) {
+   if (levels > (GLint) _mesa_logbase2(maxDim) + 1) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glTexStorage%uD(too many levels for max texture dimension)",
                   dims);
