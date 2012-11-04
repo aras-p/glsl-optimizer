@@ -50,7 +50,7 @@ struct _mesa_prim {
    GLuint start;
    GLuint count;
    GLint basevertex;
-   GLsizei num_instances;
+   GLuint num_instances;
    GLuint base_instance;
 };
 

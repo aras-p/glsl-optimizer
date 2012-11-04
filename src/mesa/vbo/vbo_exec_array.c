@@ -779,7 +779,7 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
 				GLuint start, GLuint end,
 				GLsizei count, GLenum type,
 				const GLvoid *indices,
-				GLint basevertex, GLint numInstances,
+				GLint basevertex, GLuint numInstances,
 				GLuint baseInstance)
 {
    struct vbo_context *vbo = vbo_context(ctx);
