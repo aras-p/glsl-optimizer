@@ -94,7 +94,7 @@ ir_expression *saturate(operand a);
 /**
  * Swizzle away later components, but preserve the ordering.
  */
-ir_swizzle *swizzle_for_size(operand a, int components);
+ir_swizzle *swizzle_for_size(operand a, unsigned components);
 
 ir_swizzle *swizzle_xxxx(operand a);
 ir_swizzle *swizzle_yyyy(operand a);

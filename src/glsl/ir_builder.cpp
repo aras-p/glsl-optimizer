@@ -77,7 +77,7 @@ swizzle(operand a, int swizzle, int components)
 }
 
 ir_swizzle *
-swizzle_for_size(operand a, int components)
+swizzle_for_size(operand a, unsigned components)
 {
    void *mem_ctx = ralloc_parent(a.val);
 
