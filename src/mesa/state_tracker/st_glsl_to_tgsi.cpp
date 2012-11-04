@@ -285,7 +285,7 @@ public:
    st_src_reg return_reg;
 };
 
-class glsl_to_tgsi_visitor : public ir_visitor {
+struct glsl_to_tgsi_visitor : public ir_visitor {
 public:
    glsl_to_tgsi_visitor();
    ~glsl_to_tgsi_visitor();
