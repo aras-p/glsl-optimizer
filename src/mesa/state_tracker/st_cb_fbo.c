@@ -750,7 +750,7 @@ st_MapRenderbuffer(struct gl_context *ctx,
                             usage, x, y2, w, h, &strb->transfer);
    if (map) {
       if (invert) {
-         *rowStrideOut = -strb->transfer->stride;
+         *rowStrideOut = -(int) strb->transfer->stride;
          map += (h - 1) * strb->transfer->stride;
       }
       else {
