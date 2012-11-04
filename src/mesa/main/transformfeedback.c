@@ -599,7 +599,7 @@ _mesa_TransformFeedbackVaryings(GLuint program, GLsizei count,
    }
 
    /* free existing varyings, if any */
-   for (i = 0; i < shProg->TransformFeedback.NumVarying; i++) {
+   for (i = 0; i < (GLint) shProg->TransformFeedback.NumVarying; i++) {
       free(shProg->TransformFeedback.VaryingNames[i]);
    }
    free(shProg->TransformFeedback.VaryingNames);
@@ -614,7 +614,7 @@ _mesa_TransformFeedbackVaryings(GLuint program, GLsizei count,
    }
 
    /* Save the new names and the count */
-   for (i = 0; i < (GLuint) count; i++) {
+   for (i = 0; i < count; i++) {
       shProg->TransformFeedback.VaryingNames[i] = _mesa_strdup(varyings[i]);
    }
    shProg->TransformFeedback.NumVarying = count;
