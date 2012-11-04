@@ -746,7 +746,7 @@ void _mesa_free_matrix_data( struct gl_context *ctx )
  */
 void _mesa_init_transform( struct gl_context *ctx )
 {
-   GLint i;
+   GLuint i;
 
    /* Transformation group */
    ctx->Transform.MatrixMode = GL_MODELVIEW;
