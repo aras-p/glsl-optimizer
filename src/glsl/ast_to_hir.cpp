@@ -4058,7 +4058,7 @@ ast_uniform_block::hir(exec_list *instructions,
       decl_list->hir(&declared_variables, state);
 
       foreach_list_const(node, &declared_variables) {
-	 struct ir_variable *var = (ir_variable *)node;
+	 ir_variable *var = (ir_variable *)node;
 
 	 struct gl_uniform_buffer_variable *ubo_var =
 	    &ubo->Uniforms[ubo->NumUniforms++];
