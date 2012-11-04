@@ -71,7 +71,7 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
    ir_assignment *assign;
    ir_variable *index, *var;
    ir_dereference *deref;
-   int i;
+   unsigned i;
 
    if (!orig_deref)
       return ir;
@@ -164,7 +164,7 @@ ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
    ir_variable *index, *var;
    ir_dereference_variable *deref;
    ir_assignment *assign;
-   int i;
+   unsigned i;
 
    ir->rhs = convert_vec_index_to_cond_assign(ir->rhs);
    if (ir->condition)
