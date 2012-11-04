@@ -892,7 +892,7 @@ getcompressedteximage_error_check(struct gl_context *ctx, GLenum target,
 
    if (!_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* do bounds checking on writing to client memory */
-      if (clientMemSize < compressedSize) {
+      if (clientMemSize < (GLsizei) compressedSize) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetnCompressedTexImageARB(out of bounds access:"
                      " bufSize (%d) is too small)", clientMemSize);
