@@ -35,6 +35,7 @@ AM_CFLAGS = \
 	-I $(top_srcdir)/src/mesa \
 	-I $(GLSL_SRCDIR) \
 	-I $(GLSL_SRCDIR)/glcpp \
+	-I $(GLSL_BUILDDIR) \
 	$(DEFINES_FOR_BUILD)
 
 AM_CXXFLAGS = $(AM_CFLAGS)
@@ -51,7 +52,7 @@ builtin_compiler_SOURCES = \
 	$(GLSL_SRCDIR)/glcpp/glcpp-parse.y \
 	$(LIBGLCPP_FILES) \
 	$(GLSL_SRCDIR)/glsl_lexer.ll \
-	$(GLSL_SRCDIR)/glsl_parser.cc \
+	$(GLSL_BUILDDIR)/glsl_parser.cc \
 	$(LIBGLSL_FILES) \
 	$(LIBGLSL_CXX_FILES) \
 	$(top_srcdir)/src/mesa/program/hash_table.c \
