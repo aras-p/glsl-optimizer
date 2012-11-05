@@ -31,6 +31,10 @@
 
 #include "pipe/p_compiler.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct u_rect {
    int x0, x1;
    int y0, y1;
@@ -75,6 +79,10 @@ u_rect_possible_intersection(const struct u_rect *a,
    }
 }
 
+#ifdef __cplusplus
+}
+#endif
+
 #include "pipe/p_format.h"
 #include "util/u_pack_color.h"
 
@@ -88,6 +96,10 @@ u_rect_possible_intersection(const struct u_rect *a,
  */
 #include "pipe/p_format.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void
 util_copy_rect(ubyte * dst, enum pipe_format format,
                unsigned dst_stride, unsigned dst_x, unsigned dst_y,
@@ -99,5 +111,8 @@ util_fill_rect(ubyte * dst, enum pipe_format format,
                unsigned dst_stride, unsigned dst_x, unsigned dst_y,
                unsigned width, unsigned height, union util_color *uc);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* U_RECT_H */
