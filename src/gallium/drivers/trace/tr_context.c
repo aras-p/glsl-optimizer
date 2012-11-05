@@ -1077,7 +1077,7 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
    trace_dump_struct_array(vertex_buffer, buffers, num_buffers);
    trace_dump_arg_end();
 
-   if (num_buffers) {
+   if (buffers) {
       struct pipe_vertex_buffer *_buffers = MALLOC(num_buffers * sizeof(*_buffers));
       memcpy(_buffers, buffers, num_buffers * sizeof(*_buffers));
       for (i = 0; i < num_buffers; i++)

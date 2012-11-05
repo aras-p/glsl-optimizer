@@ -137,26 +137,34 @@ void trace_dump_transfer_ptr(struct pipe_transfer *_transfer);
 
 #define trace_dump_array(_type, _obj, _size) \
    do { \
-      size_t idx; \
-      trace_dump_array_begin(); \
-      for(idx = 0; idx < (_size); ++idx) { \
-         trace_dump_elem_begin(); \
-         trace_dump_##_type((_obj)[idx]); \
-         trace_dump_elem_end(); \
+      if (_obj) { \
+         size_t idx; \
+         trace_dump_array_begin(); \
+         for(idx = 0; idx < (_size); ++idx) { \
+            trace_dump_elem_begin(); \
+            trace_dump_##_type((_obj)[idx]); \
+            trace_dump_elem_end(); \
+         } \
+         trace_dump_array_end(); \
+      } else { \
+         trace_dump_null(); \
       } \
-      trace_dump_array_end(); \
    } while(0)
 
 #define trace_dump_struct_array(_type, _obj, _size) \
    do { \
-      size_t idx; \
-      trace_dump_array_begin(); \
-      for(idx = 0; idx < (_size); ++idx) { \
-         trace_dump_elem_begin(); \
-         trace_dump_##_type(&(_obj)[idx]); \
-         trace_dump_elem_end(); \
+      if (_obj) { \
+         size_t idx; \
+         trace_dump_array_begin(); \
+         for(idx = 0; idx < (_size); ++idx) { \
+            trace_dump_elem_begin(); \
+            trace_dump_##_type(&(_obj)[idx]); \
+            trace_dump_elem_end(); \
+         } \
+         trace_dump_array_end(); \
+      } else { \
+         trace_dump_null(); \
       } \
-      trace_dump_array_end(); \
    } while(0)
 
 #define trace_dump_member(_type, _obj, _member) \
