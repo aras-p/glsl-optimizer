@@ -630,7 +630,7 @@ galahad_context_set_vertex_buffers(struct pipe_context *_pipe,
    struct pipe_vertex_buffer *buffers = NULL;
    unsigned i;
 
-   if (num_buffers) {
+   if (num_buffers && _buffers) {
       memcpy(unwrapped_buffers, _buffers, num_buffers * sizeof(*_buffers));
       for (i = 0; i < num_buffers; i++)
          unwrapped_buffers[i].buffer = galahad_resource_unwrap(_buffers[i].buffer);
