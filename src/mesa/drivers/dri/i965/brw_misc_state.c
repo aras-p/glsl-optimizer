@@ -317,6 +317,16 @@ brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
    *out_tile_mask_y = tile_mask_y;
 }
 
+static struct intel_mipmap_tree *
+get_stencil_miptree(struct intel_renderbuffer *irb)
+{
+   if (!irb)
+      return NULL;
+   if (irb->mt->stencil_mt)
+      return irb->mt->stencil_mt;
+   return irb->mt;
+}
+
 void
 brw_workaround_depthstencil_alignment(struct brw_context *brw)
 {
@@ -328,13 +338,12 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
    struct intel_renderbuffer *depth_irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
    struct intel_renderbuffer *stencil_irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
    struct intel_mipmap_tree *depth_mt = NULL;
-   struct intel_mipmap_tree *stencil_mt = NULL;
+   struct intel_mipmap_tree *stencil_mt = get_stencil_miptree(stencil_irb);
    uint32_t tile_x = 0, tile_y = 0, stencil_tile_x = 0, stencil_tile_y = 0;
+   uint32_t stencil_draw_x = 0, stencil_draw_y = 0;
 
    if (depth_irb)
       depth_mt = depth_irb->mt;
-   if (stencil_irb)
-      stencil_mt = stencil_irb->mt;
 
    uint32_t tile_mask_x, tile_mask_y;
    brw_get_depthstencil_tile_masks(depth_mt, stencil_mt,
@@ -372,13 +381,20 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
             intel_renderbuffer_set_draw_offset(stencil_irb);
          }
 
+         stencil_mt = get_stencil_miptree(stencil_irb);
+
          tile_x = depth_irb->draw_x & tile_mask_x;
          tile_y = depth_irb->draw_y & tile_mask_y;
       }
 
       if (stencil_irb) {
-         int stencil_tile_x = stencil_irb->draw_x & tile_mask_x;
-         int stencil_tile_y = stencil_irb->draw_y & tile_mask_y;
+         stencil_mt = get_stencil_miptree(stencil_irb);
+         intel_miptree_get_image_offset(stencil_mt,
+                                        stencil_irb->mt_level,
+                                        stencil_irb->mt_layer,
+                                        &stencil_draw_x, &stencil_draw_y);
+         int stencil_tile_x = stencil_draw_x & tile_mask_x;
+         int stencil_tile_y = stencil_draw_y & tile_mask_y;
 
          /* If stencil doesn't match depth, then we'll need to rebase stencil
           * as well.  (if we hadn't decided to rebase stencil before, the
@@ -394,8 +410,12 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
 
    /* If we have (just) stencil, check it for ignored low bits as well */
    if (stencil_irb) {
-      stencil_tile_x = stencil_irb->draw_x & tile_mask_x;
-      stencil_tile_y = stencil_irb->draw_y & tile_mask_y;
+      intel_miptree_get_image_offset(stencil_mt,
+                                     stencil_irb->mt_level,
+                                     stencil_irb->mt_layer,
+                                     &stencil_draw_x, &stencil_draw_y);
+      stencil_tile_x = stencil_draw_x & tile_mask_x;
+      stencil_tile_y = stencil_draw_y & tile_mask_y;
 
       if (stencil_tile_x & 7 || stencil_tile_y & 7)
          rebase_stencil = true;
@@ -408,11 +428,16 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
 
    if (rebase_stencil) {
       intel_renderbuffer_move_to_temp(intel, stencil_irb);
+      stencil_mt = get_stencil_miptree(stencil_irb);
 
-      stencil_tile_x = stencil_irb->draw_x & tile_mask_x;
-      stencil_tile_y = stencil_irb->draw_y & tile_mask_y;
+      intel_miptree_get_image_offset(stencil_mt,
+                                     stencil_irb->mt_level,
+                                     stencil_irb->mt_layer,
+                                     &stencil_draw_x, &stencil_draw_y);
+      stencil_tile_x = stencil_draw_x & tile_mask_x;
+      stencil_tile_y = stencil_draw_y & tile_mask_y;
 
-      if (depth_irb && depth_irb->mt == stencil_mt) {
+      if (depth_irb && depth_irb->mt == stencil_irb->mt) {
          intel_miptree_reference(&depth_irb->mt, stencil_irb->mt);
          intel_renderbuffer_set_draw_offset(depth_irb);
       } else if (depth_irb && !rebase_depth) {
@@ -484,9 +509,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
       }
    }
    if (stencil_irb) {
-      stencil_mt = stencil_irb->mt;
-      if (stencil_mt->stencil_mt)
-         stencil_mt = stencil_mt->stencil_mt;
+      stencil_mt = get_stencil_miptree(stencil_irb);
 
       brw->depthstencil.stencil_mt = stencil_mt;
       if (stencil_mt->format == MESA_FORMAT_S8) {
@@ -495,8 +518,8 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
           * that the region is untiled even though it's W tiled.
           */
          brw->depthstencil.stencil_offset =
-            (stencil_irb->draw_y & ~tile_mask_y) * stencil_mt->region->pitch +
-            (stencil_irb->draw_x & ~tile_mask_x) * 64;
+            (stencil_draw_y & ~tile_mask_y) * stencil_mt->region->pitch +
+            (stencil_draw_x & ~tile_mask_x) * 64;
       }
    }
 }
