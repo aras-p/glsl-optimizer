@@ -1001,7 +1001,7 @@ _mesa_AttachShader(GLuint program, GLuint shader)
 
 
 void GLAPIENTRY
-_mesa_CompileShaderARB(GLhandleARB shaderObj)
+_mesa_CompileShader(GLhandleARB shaderObj)
 {
    GET_CURRENT_CONTEXT(ctx);
    if (MESA_VERBOSE & VERBOSE_API)
@@ -1215,7 +1215,7 @@ _mesa_GetShaderInfoLog(GLuint shader, GLsizei bufSize,
 
 
 void GLAPIENTRY
-_mesa_GetShaderSourceARB(GLhandleARB shader, GLsizei maxLength,
+_mesa_GetShaderSource(GLhandleARB shader, GLsizei maxLength,
                          GLsizei *length, GLcharARB *sourceOut)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1248,7 +1248,7 @@ _mesa_IsShader(GLuint name)
 
 
 void GLAPIENTRY
-_mesa_LinkProgramARB(GLhandleARB programObj)
+_mesa_LinkProgram(GLhandleARB programObj)
 {
    GET_CURRENT_CONTEXT(ctx);
    link_program(ctx, programObj);
@@ -1291,7 +1291,7 @@ read_shader(const char *fname)
  * and pass it to _mesa_shader_source().
  */
 void GLAPIENTRY
-_mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
+_mesa_ShaderSource(GLhandleARB shaderObj, GLsizei count,
                       const GLcharARB ** string, const GLint * length)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1385,7 +1385,7 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
 
 
 void GLAPIENTRY
-_mesa_UseProgramObjectARB(GLhandleARB program)
+_mesa_UseProgram(GLhandleARB program)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *shProg;
@@ -1425,7 +1425,7 @@ _mesa_UseProgramObjectARB(GLhandleARB program)
 
 
 void GLAPIENTRY
-_mesa_ValidateProgramARB(GLhandleARB program)
+_mesa_ValidateProgram(GLhandleARB program)
 {
    GET_CURRENT_CONTEXT(ctx);
    validate_program(ctx, program);
@@ -1706,12 +1706,12 @@ _mesa_init_shader_dispatch(const struct gl_context *ctx,
    }
 
    if (ctx->API != API_OPENGLES) {
-      SET_ShaderSourceARB(exec, _mesa_ShaderSourceARB);
-      SET_CompileShaderARB(exec, _mesa_CompileShaderARB);
-      SET_LinkProgramARB(exec, _mesa_LinkProgramARB);
-      SET_UseProgramObjectARB(exec, _mesa_UseProgramObjectARB);
-      SET_ValidateProgramARB(exec, _mesa_ValidateProgramARB);
-      SET_GetShaderSourceARB(exec, _mesa_GetShaderSourceARB);
+      SET_ShaderSource(exec, _mesa_ShaderSource);
+      SET_CompileShader(exec, _mesa_CompileShader);
+      SET_LinkProgram(exec, _mesa_LinkProgram);
+      SET_UseProgram(exec, _mesa_UseProgram);
+      SET_ValidateProgram(exec, _mesa_ValidateProgram);
+      SET_GetShaderSource(exec, _mesa_GetShaderSource);
 
       /* OpenGL 2.0 */
       SET_AttachShader(exec, _mesa_AttachShader);
@@ -1729,9 +1729,9 @@ _mesa_init_shader_dispatch(const struct gl_context *ctx,
       SET_IsShader(exec, _mesa_IsShader);
 
       /* GL_ARB_vertex_shader */
-      SET_BindAttribLocationARB(exec, _mesa_BindAttribLocationARB);
-      SET_GetActiveAttribARB(exec, _mesa_GetActiveAttribARB);
-      SET_GetAttribLocationARB(exec, _mesa_GetAttribLocationARB);
+      SET_BindAttribLocation(exec, _mesa_BindAttribLocation);
+      SET_GetActiveAttrib(exec, _mesa_GetActiveAttrib);
+      SET_GetAttribLocation(exec, _mesa_GetAttribLocation);
    }
 
    if (ctx->API == API_OPENGL) {
@@ -1742,10 +1742,10 @@ _mesa_init_shader_dispatch(const struct gl_context *ctx,
 
    /* GL_EXT_gpu_shader4 / GL 3.0 */
    if (_mesa_is_desktop_gl(ctx)) {
-      SET_BindFragDataLocationEXT(exec, _mesa_BindFragDataLocation);
+      SET_BindFragDataLocation(exec, _mesa_BindFragDataLocation);
    }
    if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {
-      SET_GetFragDataLocationEXT(exec, _mesa_GetFragDataLocation);
+      SET_GetFragDataLocation(exec, _mesa_GetFragDataLocation);
    }
 
    /* GL_ARB_ES2_compatibility */

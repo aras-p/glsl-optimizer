@@ -248,41 +248,41 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
 
 
 extern void GLAPIENTRY
-_mesa_CompressedTexImage1DARB(GLenum target, GLint level,
+_mesa_CompressedTexImage1D(GLenum target, GLint level,
                               GLenum internalformat, GLsizei width,
                               GLint border, GLsizei imageSize,
                               const GLvoid *data);
 
 extern void GLAPIENTRY
-_mesa_CompressedTexImage2DARB(GLenum target, GLint level,
+_mesa_CompressedTexImage2D(GLenum target, GLint level,
                               GLenum internalformat, GLsizei width,
                               GLsizei height, GLint border, GLsizei imageSize,
                               const GLvoid *data);
 
 extern void GLAPIENTRY
-_mesa_CompressedTexImage3DARB(GLenum target, GLint level,
+_mesa_CompressedTexImage3D(GLenum target, GLint level,
                               GLenum internalformat, GLsizei width,
                               GLsizei height, GLsizei depth, GLint border,
                               GLsizei imageSize, const GLvoid *data);
 
 #ifdef VMS
-#define _mesa_CompressedTexSubImage1DARB _mesa_CompressedTexSubImage1DAR
-#define _mesa_CompressedTexSubImage2DARB _mesa_CompressedTexSubImage2DAR
-#define _mesa_CompressedTexSubImage3DARB _mesa_CompressedTexSubImage3DAR
+#define _mesa_CompressedTexSubImage1D _mesa_CompressedTexSubImage1DAR
+#define _mesa_CompressedTexSubImage2D _mesa_CompressedTexSubImage2DAR
+#define _mesa_CompressedTexSubImage3D _mesa_CompressedTexSubImage3DAR
 #endif
 extern void GLAPIENTRY
-_mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
+_mesa_CompressedTexSubImage1D(GLenum target, GLint level, GLint xoffset,
                                  GLsizei width, GLenum format,
                                  GLsizei imageSize, const GLvoid *data);
 
 extern void GLAPIENTRY
-_mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
+_mesa_CompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset,
                                  GLint yoffset, GLsizei width, GLsizei height,
                                  GLenum format, GLsizei imageSize,
                                  const GLvoid *data);
 
 extern void GLAPIENTRY
-_mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
+_mesa_CompressedTexSubImage3D(GLenum target, GLint level, GLint xoffset,
                                  GLint yoffset, GLint zoffset, GLsizei width,
                                  GLsizei height, GLsizei depth, GLenum format,
                                  GLsizei imageSize, const GLvoid *data);

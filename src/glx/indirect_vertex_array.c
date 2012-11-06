@@ -1030,7 +1030,7 @@ __indirect_glDrawRangeElements(GLenum mode, GLuint start, GLuint end,
 
 
 void
-__indirect_glMultiDrawArraysEXT(GLenum mode, const GLint *first,
+__indirect_glMultiDrawArrays(GLenum mode, const GLint *first,
                                 const GLsizei *count, GLsizei primcount)
 {
    struct glx_context *gc = __glXGetCurrentContext();
@@ -1462,7 +1462,7 @@ __indirect_glTexCoordPointer(GLint size, GLenum type, GLsizei stride,
 
 
 void
-__indirect_glSecondaryColorPointerEXT(GLint size, GLenum type, GLsizei stride,
+__indirect_glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride,
                                       const GLvoid * pointer)
 {
    uint16_t opcode;
@@ -1522,7 +1522,7 @@ __indirect_glSecondaryColorPointerEXT(GLint size, GLenum type, GLsizei stride,
 
 
 void
-__indirect_glFogCoordPointerEXT(GLenum type, GLsizei stride,
+__indirect_glFogCoordPointer(GLenum type, GLsizei stride,
                                 const GLvoid * pointer)
 {
    uint16_t opcode;
@@ -1564,7 +1564,7 @@ __indirect_glFogCoordPointerEXT(GLenum type, GLsizei stride,
 
 
 void
-__indirect_glVertexAttribPointerARB(GLuint index, GLint size,
+__indirect_glVertexAttribPointer(GLuint index, GLint size,
                                     GLenum type, GLboolean normalized,
                                     GLsizei stride, const GLvoid * pointer)
 {
@@ -1701,7 +1701,7 @@ __indirect_glVertexAttribPointerNV(GLuint index, GLint size,
    case GL_SHORT:
    case GL_FLOAT:
    case GL_DOUBLE:
-      __indirect_glVertexAttribPointerARB(index, size, type,
+      __indirect_glVertexAttribPointer(index, size, type,
                                           normalized, stride, pointer);
       return;
    default:
@@ -1712,7 +1712,7 @@ __indirect_glVertexAttribPointerNV(GLuint index, GLint size,
 
 
 void
-__indirect_glClientActiveTextureARB(GLenum texture)
+__indirect_glClientActiveTexture(GLenum texture)
 {
    struct glx_context *const gc = __glXGetCurrentContext();
    __GLXattribute *const state =
@@ -1961,13 +1961,13 @@ __glXPopArrayState(__GLXattribute * state)
                                       stack[i].user_stride, stack[i].data);
          break;
       case GL_SECONDARY_COLOR_ARRAY:
-         __indirect_glSecondaryColorPointerEXT(stack[i].count,
+         __indirect_glSecondaryColorPointer(stack[i].count,
                                                stack[i].data_type,
                                                stack[i].user_stride,
                                                stack[i].data);
          break;
       case GL_FOG_COORDINATE_ARRAY:
-         __indirect_glFogCoordPointerEXT(stack[i].data_type,
+         __indirect_glFogCoordPointer(stack[i].data_type,
                                          stack[i].user_stride, stack[i].data);
          break;
 

@@ -883,7 +883,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
 
 
 GLboolean GLAPIENTRY
-_mesa_IsRenderbufferEXT(GLuint renderbuffer)
+_mesa_IsRenderbuffer(GLuint renderbuffer)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
@@ -897,7 +897,7 @@ _mesa_IsRenderbufferEXT(GLuint renderbuffer)
 
 
 void GLAPIENTRY
-_mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
+_mesa_BindRenderbuffer(GLenum target, GLuint renderbuffer)
 {
    struct gl_renderbuffer *newRb;
    GET_CURRENT_CONTEXT(ctx);
@@ -969,7 +969,7 @@ detach_renderbuffer(struct gl_context *ctx,
 
 
 void GLAPIENTRY
-_mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
+_mesa_DeleteRenderbuffers(GLsizei n, const GLuint *renderbuffers)
 {
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
@@ -986,7 +986,7 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
             if (rb == ctx->CurrentRenderbuffer) {
                /* bind default */
                ASSERT(rb->RefCount >= 2);
-               _mesa_BindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
+               _mesa_BindRenderbuffer(GL_RENDERBUFFER_EXT, 0);
             }
 
             if (_mesa_is_user_fbo(ctx->DrawBuffer)) {
@@ -1014,7 +1014,7 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
 
 
 void GLAPIENTRY
-_mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
+_mesa_GenRenderbuffers(GLsizei n, GLuint *renderbuffers)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint first;
@@ -1398,9 +1398,9 @@ invalidate_rb(GLuint key, void *data, void *userData)
 
 
 /**
- * Helper function used by _mesa_RenderbufferStorageEXT() and 
+ * Helper function used by _mesa_RenderbufferStorage() and 
  * _mesa_RenderbufferStorageMultisample().
- * samples will be NO_SAMPLES if called by _mesa_RenderbufferStorageEXT().
+ * samples will be NO_SAMPLES if called by _mesa_RenderbufferStorage().
  */
 static void
 renderbuffer_storage(GLenum target, GLenum internalFormat,
@@ -1526,8 +1526,8 @@ _mesa_EGLImageTargetRenderbufferStorageOES(GLenum target, GLeglImageOES image)
 
 
 /**
- * Helper function for _mesa_GetRenderbufferParameterivEXT() and
- * _mesa_GetFramebufferAttachmentParameterivEXT()
+ * Helper function for _mesa_GetRenderbufferParameteriv() and
+ * _mesa_GetFramebufferAttachmentParameteriv()
  * We have to be careful to respect the base format.  For example, if a
  * renderbuffer/texture was created with internalFormat=GL_RGB but the
  * driver actually chose a GL_RGBA format, when the user queries ALPHA_SIZE
@@ -1545,7 +1545,7 @@ get_component_bits(GLenum pname, GLenum baseFormat, gl_format format)
 
 
 void GLAPIENTRY
-_mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
+_mesa_RenderbufferStorage(GLenum target, GLenum internalFormat,
                              GLsizei width, GLsizei height)
 {
    /* GL_ARB_fbo says calling this function is equivalent to calling
@@ -1587,7 +1587,7 @@ _es_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
 
 
 void GLAPIENTRY
-_mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
+_mesa_GetRenderbufferParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    struct gl_renderbuffer *rb;
    GET_CURRENT_CONTEXT(ctx);
@@ -1645,7 +1645,7 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
 
 
 GLboolean GLAPIENTRY
-_mesa_IsFramebufferEXT(GLuint framebuffer)
+_mesa_IsFramebuffer(GLuint framebuffer)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
@@ -1705,7 +1705,7 @@ check_end_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 
 
 void GLAPIENTRY
-_mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
+_mesa_BindFramebuffer(GLenum target, GLuint framebuffer)
 {
    struct gl_framebuffer *newDrawFb, *newReadFb;
    struct gl_framebuffer *oldDrawFb, *oldReadFb;
@@ -1839,7 +1839,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 
 
 void GLAPIENTRY
-_mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
+_mesa_DeleteFramebuffers(GLsizei n, const GLuint *framebuffers)
 {
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
@@ -1860,12 +1860,12 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
                if (fb == ctx->DrawBuffer) {
                   /* bind default */
                   ASSERT(fb->RefCount >= 2);
-                  _mesa_BindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
+                  _mesa_BindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, 0);
                }
                if (fb == ctx->ReadBuffer) {
                   /* bind default */
                   ASSERT(fb->RefCount >= 2);
-                  _mesa_BindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0);
+                  _mesa_BindFramebuffer(GL_READ_FRAMEBUFFER_EXT, 0);
                }
             }
             else {
@@ -1873,7 +1873,7 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
                if (fb == ctx->DrawBuffer || fb == ctx->ReadBuffer) {
                   /* bind default */
                   ASSERT(fb->RefCount >= 2);
-                  _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+                  _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
                }
             }
 
@@ -1893,7 +1893,7 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
 
 
 void GLAPIENTRY
-_mesa_GenFramebuffersEXT(GLsizei n, GLuint *framebuffers)
+_mesa_GenFramebuffers(GLsizei n, GLuint *framebuffers)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint first;
@@ -1924,7 +1924,7 @@ _mesa_GenFramebuffersEXT(GLsizei n, GLuint *framebuffers)
 
 
 GLenum GLAPIENTRY
-_mesa_CheckFramebufferStatusEXT(GLenum target)
+_mesa_CheckFramebufferStatus(GLenum target)
 {
    struct gl_framebuffer *buffer;
    GET_CURRENT_CONTEXT(ctx);
@@ -2151,7 +2151,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
 
 
 void GLAPIENTRY
-_mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
+_mesa_FramebufferTexture1D(GLenum target, GLenum attachment,
                               GLenum textarget, GLuint texture, GLint level)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2184,7 +2184,7 @@ _mesa_FramebufferTexture1DEXT(GLenum target, GLenum attachment,
 
 
 void GLAPIENTRY
-_mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
+_mesa_FramebufferTexture2D(GLenum target, GLenum attachment,
                               GLenum textarget, GLuint texture, GLint level)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2230,7 +2230,7 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
 
 
 void GLAPIENTRY
-_mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
+_mesa_FramebufferTexture3D(GLenum target, GLenum attachment,
                               GLenum textarget, GLuint texture,
                               GLint level, GLint zoffset)
 {
@@ -2248,7 +2248,7 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
 
 
 void GLAPIENTRY
-_mesa_FramebufferTextureLayerEXT(GLenum target, GLenum attachment,
+_mesa_FramebufferTextureLayer(GLenum target, GLenum attachment,
                                  GLuint texture, GLint level, GLint layer)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2259,7 +2259,7 @@ _mesa_FramebufferTextureLayerEXT(GLenum target, GLenum attachment,
 
 
 void GLAPIENTRY
-_mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
+_mesa_FramebufferRenderbuffer(GLenum target, GLenum attachment,
                                  GLenum renderbufferTarget,
                                  GLuint renderbuffer)
 {
@@ -2343,7 +2343,7 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
 
 
 void GLAPIENTRY
-_mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
+_mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
                                              GLenum pname, GLint *params)
 {
    const struct gl_renderbuffer_attachment *att;
@@ -2575,7 +2575,7 @@ invalid_pname_enum:
 
 
 void GLAPIENTRY
-_mesa_GenerateMipmapEXT(GLenum target)
+_mesa_GenerateMipmap(GLenum target)
 {
    struct gl_texture_image *srcImage;
    struct gl_texture_object *texObj;
@@ -2833,7 +2833,7 @@ compatible_resolve_formats(const struct gl_renderbuffer *colorReadRb,
  * when the samples must be resolved to a single color.
  */
 void GLAPIENTRY
-_mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+_mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                          GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                          GLbitfield mask, GLenum filter)
 {

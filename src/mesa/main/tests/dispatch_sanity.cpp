@@ -894,7 +894,7 @@ const struct function gl_core_functions_possible[] = {
 };
 
 const struct function gles11_functions_possible[] = {
-   { "glActiveTexture", 11, _gloffset_ActiveTextureARB },
+   { "glActiveTexture", 11, _gloffset_ActiveTexture },
    { "glAlphaFunc", 11, _gloffset_AlphaFunc },
    { "glAlphaFuncx", 11, -1 },
    { "glBindBuffer", 11, -1 },
@@ -914,7 +914,7 @@ const struct function gles11_functions_possible[] = {
    { "glClearDepthf", 11, -1 },
    { "glClearDepthx", 11, -1 },
    { "glClearStencil", 11, _gloffset_ClearStencil },
-   { "glClientActiveTexture", 11, _gloffset_ClientActiveTextureARB },
+   { "glClientActiveTexture", 11, _gloffset_ClientActiveTexture },
    { "glClipPlanef", 11, -1 },
    { "glClipPlanex", 11, -1 },
    { "glColor4f", 11, _gloffset_Color4f },
@@ -1088,7 +1088,7 @@ const struct function gles11_functions_possible[] = {
 };
 
 const struct function gles2_functions_possible[] = {
-   { "glActiveTexture", 20, _gloffset_ActiveTextureARB },
+   { "glActiveTexture", 20, _gloffset_ActiveTexture },
    { "glAttachShader", 20, -1 },
    { "glBindAttribLocation", 20, -1 },
    { "glBindBuffer", 20, -1 },

@@ -40,7 +40,7 @@
 
 
 void
-__indirect_glGetCompressedTexImageARB(GLenum target, GLint level,
+__indirect_glGetCompressedTexImage(GLenum target, GLint level,
                                       GLvoid * img)
 {
    __GLX_SINGLE_DECLARE_VARIABLES();
@@ -191,7 +191,7 @@ CompressedTexSubImage1D2D(GLenum target, GLint level,
 
 
 void
-__indirect_glCompressedTexImage1DARB(GLenum target, GLint level,
+__indirect_glCompressedTexImage1D(GLenum target, GLint level,
                                      GLenum internal_format, GLsizei width,
                                      GLint border, GLsizei image_size,
                                      const GLvoid * data)
@@ -203,7 +203,7 @@ __indirect_glCompressedTexImage1DARB(GLenum target, GLint level,
 
 
 void
-__indirect_glCompressedTexImage2DARB(GLenum target, GLint level,
+__indirect_glCompressedTexImage2D(GLenum target, GLint level,
                                      GLenum internal_format,
                                      GLsizei width, GLsizei height,
                                      GLint border, GLsizei image_size,
@@ -216,7 +216,7 @@ __indirect_glCompressedTexImage2DARB(GLenum target, GLint level,
 
 
 void
-__indirect_glCompressedTexImage3DARB(GLenum target, GLint level,
+__indirect_glCompressedTexImage3D(GLenum target, GLint level,
                                      GLenum internal_format,
                                      GLsizei width, GLsizei height,
                                      GLsizei depth, GLint border,
@@ -264,7 +264,7 @@ __indirect_glCompressedTexImage3DARB(GLenum target, GLint level,
 
 
 void
-__indirect_glCompressedTexSubImage1DARB(GLenum target, GLint level,
+__indirect_glCompressedTexSubImage1D(GLenum target, GLint level,
                                         GLint xoffset,
                                         GLsizei width,
                                         GLenum format, GLsizei image_size,
@@ -277,7 +277,7 @@ __indirect_glCompressedTexSubImage1DARB(GLenum target, GLint level,
 
 
 void
-__indirect_glCompressedTexSubImage2DARB(GLenum target, GLint level,
+__indirect_glCompressedTexSubImage2D(GLenum target, GLint level,
                                         GLint xoffset, GLint yoffset,
                                         GLsizei width, GLsizei height,
                                         GLenum format, GLsizei image_size,
@@ -290,7 +290,7 @@ __indirect_glCompressedTexSubImage2DARB(GLenum target, GLint level,
 
 
 void
-__indirect_glCompressedTexSubImage3DARB(GLenum target, GLint level,
+__indirect_glCompressedTexSubImage3D(GLenum target, GLint level,
                                         GLint xoffset, GLint yoffset,
                                         GLint zoffset, GLsizei width,
                                         GLsizei height, GLsizei depth,

@@ -48,14 +48,14 @@ do_vertex_attrib_enable(GLuint index, GLboolean val)
 
 
 void
-__indirect_glEnableVertexAttribArrayARB(GLuint index)
+__indirect_glEnableVertexAttribArray(GLuint index)
 {
    do_vertex_attrib_enable(index, GL_TRUE);
 }
 
 
 void
-__indirect_glDisableVertexAttribArrayARB(GLuint index)
+__indirect_glDisableVertexAttribArray(GLuint index)
 {
    do_vertex_attrib_enable(index, GL_FALSE);
 }
@@ -119,7 +119,7 @@ __indirect_glGetProgramLocalParameterdvARB(GLenum target, GLuint index,
 
 
 void
-__indirect_glGetVertexAttribPointervNV(GLuint index, GLenum pname,
+__indirect_glGetVertexAttribPointerv(GLuint index, GLenum pname,
                                        GLvoid ** pointer)
 {
    struct glx_context *const gc = __glXGetCurrentContext();
@@ -193,7 +193,7 @@ get_vertex_attrib(struct glx_context * gc, unsigned vop,
 
 
 void
-__indirect_glGetVertexAttribivARB(GLuint index, GLenum pname, GLint * params)
+__indirect_glGetVertexAttribiv(GLuint index, GLenum pname, GLint * params)
 {
    struct glx_context *const gc = __glXGetCurrentContext();
    Display *const dpy = gc->currentDpy;
@@ -226,7 +226,7 @@ __indirect_glGetVertexAttribivARB(GLuint index, GLenum pname, GLint * params)
 
 
 void
-__indirect_glGetVertexAttribfvARB(GLuint index, GLenum pname,
+__indirect_glGetVertexAttribfv(GLuint index, GLenum pname,
                                   GLfloat * params)
 {
    struct glx_context *const gc = __glXGetCurrentContext();
@@ -260,7 +260,7 @@ __indirect_glGetVertexAttribfvARB(GLuint index, GLenum pname,
 
 
 void
-__indirect_glGetVertexAttribdvARB(GLuint index, GLenum pname,
+__indirect_glGetVertexAttribdv(GLuint index, GLenum pname,
                                   GLdouble * params)
 {
    struct glx_context *const gc = __glXGetCurrentContext();

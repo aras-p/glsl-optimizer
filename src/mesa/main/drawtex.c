@@ -55,7 +55,7 @@ draw_texture(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
 
 
 void GLAPIENTRY
-_mesa_DrawTexf(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height)
+_mesa_DrawTexfOES(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height)
 {
    GET_CURRENT_CONTEXT(ctx);
    draw_texture(ctx, x, y, z, width, height);
@@ -63,7 +63,7 @@ _mesa_DrawTexf(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height)
 
 
 void GLAPIENTRY
-_mesa_DrawTexfv(const GLfloat *coords)
+_mesa_DrawTexfvOES(const GLfloat *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
    draw_texture(ctx, coords[0], coords[1], coords[2], coords[3], coords[4]);
@@ -71,7 +71,7 @@ _mesa_DrawTexfv(const GLfloat *coords)
 
 
 void GLAPIENTRY
-_mesa_DrawTexi(GLint x, GLint y, GLint z, GLint width, GLint height)
+_mesa_DrawTexiOES(GLint x, GLint y, GLint z, GLint width, GLint height)
 {
    GET_CURRENT_CONTEXT(ctx);
    draw_texture(ctx, (GLfloat) x, (GLfloat) y, (GLfloat) z,
@@ -80,7 +80,7 @@ _mesa_DrawTexi(GLint x, GLint y, GLint z, GLint width, GLint height)
 
 
 void GLAPIENTRY
-_mesa_DrawTexiv(const GLint *coords)
+_mesa_DrawTexivOES(const GLint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
    draw_texture(ctx, (GLfloat) coords[0], (GLfloat) coords[1],
@@ -89,7 +89,7 @@ _mesa_DrawTexiv(const GLint *coords)
 
 
 void GLAPIENTRY
-_mesa_DrawTexs(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height)
+_mesa_DrawTexsOES(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height)
 {
    GET_CURRENT_CONTEXT(ctx);
    draw_texture(ctx, (GLfloat) x, (GLfloat) y, (GLfloat) z,
@@ -98,7 +98,7 @@ _mesa_DrawTexs(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height)
 
 
 void GLAPIENTRY
-_mesa_DrawTexsv(const GLshort *coords)
+_mesa_DrawTexsvOES(const GLshort *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
    draw_texture(ctx, (GLfloat) coords[0], (GLfloat) coords[1],

@@ -10,7 +10,7 @@
     <enum name="BLEND_EQUATION_RGB_OES"                   value="0x8009"/>
     <enum name="BLEND_EQUATION_ALPHA_OES"                 value="0x883D"/>
 
-    <function name="BlendEquationSeparateOES" alias="BlendEquationSeparateEXT"
+    <function name="BlendEquationSeparateOES" alias="BlendEquationSeparate"
               static_dispatch="false" es1="1.0">
         <param name="modeRGB" type="GLenum"/>
         <param name="modeA" type="GLenum"/>
@@ -24,7 +24,7 @@
     <enum name="BLEND_DST_ALPHA_OES"                      value="0x80CA"/>
     <enum name="BLEND_SRC_ALPHA_OES"                      value="0x80CB"/>
 
-    <function name="BlendFuncSeparateOES" alias="BlendFuncSeparateEXT"
+    <function name="BlendFuncSeparateOES" alias="BlendFuncSeparate"
               static_dispatch="false" es1="1.0">
         <param name="sfactorRGB" type="GLenum"/>
         <param name="dfactorRGB" type="GLenum"/>
@@ -73,7 +73,7 @@
     <enum name="TEXTURE_CROP_RECT_OES"                    value="0x8B9D"/>
 
     <function name="DrawTexiOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false" mesa_name="-OES">
+              es1="1.0" desktop="false">
         <param name="x" type="GLint"/>
         <param name="y" type="GLint"/>
         <param name="z" type="GLint"/>
@@ -82,12 +82,12 @@
     </function>
 
     <function name="DrawTexivOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false" mesa_name="-OES">
+              es1="1.0" desktop="false">
         <param name="coords" type="const GLint *" count="5"/>
     </function>
 
     <function name="DrawTexfOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false" mesa_name="-OES">
+              es1="1.0" desktop="false">
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
@@ -96,12 +96,12 @@
     </function>
 
     <function name="DrawTexfvOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false" mesa_name="-OES">
+              es1="1.0" desktop="false">
         <param name="coords" type="const GLfloat *" count="5"/>
     </function>
 
     <function name="DrawTexsOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false" mesa_name="-OES">
+              es1="1.0" desktop="false">
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
@@ -110,12 +110,12 @@
     </function>
 
     <function name="DrawTexsvOES" offset="assign" static_dispatch="false"
-              es1="1.0" desktop="false" mesa_name="-OES">
+              es1="1.0" desktop="false">
         <param name="coords" type="const GLshort *" count="5"/>
     </function>
 
     <function name="DrawTexxOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="es" desktop="false">
+              es1="1.0" desktop="false">
         <param name="x" type="GLfixed"/>
         <param name="y" type="GLfixed"/>
         <param name="z" type="GLfixed"/>
@@ -124,7 +124,7 @@
     </function>
 
     <function name="DrawTexxvOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="es" desktop="false">
+              es1="1.0" desktop="false">
         <param name="coords" type="const GLfixed *" count="5"/>
     </function>
 
@@ -177,39 +177,39 @@
     <enum name="RENDERBUFFER_STENCIL_SIZE_OES"            value="0x8D55"/>
     <enum name="RGB565_OES"                               value="0x8D62"/>
 
-    <function name="BindFramebufferOES" alias="BindFramebufferEXT"
+    <function name="BindFramebufferOES" alias="BindFramebuffer"
               static_dispatch="false" es1="1.0">
         <param name="target" type="GLenum"/>
         <param name="framebuffer" type="GLuint"/>
     </function>
 
-    <function name="BindRenderbufferOES" alias="BindRenderbufferEXT"
+    <function name="BindRenderbufferOES" alias="BindRenderbuffer"
               static_dispatch="false" es1="1.0">
         <param name="target" type="GLenum"/>
         <param name="renderbuffer" type="GLuint"/>
     </function>
 
     <function name="CheckFramebufferStatusOES"
-              alias="CheckFramebufferStatusEXT" static_dispatch="false"
+              alias="CheckFramebufferStatus" static_dispatch="false"
               es1="1.0">
         <param name="target" type="GLenum"/>
 	<return type="GLenum"/>
     </function>
 
-    <function name="DeleteFramebuffersOES" alias="DeleteFramebuffersEXT"
+    <function name="DeleteFramebuffersOES" alias="DeleteFramebuffers"
               static_dispatch="false" es1="1.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="framebuffers" type="const GLuint *" count="n"/>
     </function>
 
-    <function name="DeleteRenderbuffersOES" alias="DeleteRenderbuffersEXT"
+    <function name="DeleteRenderbuffersOES" alias="DeleteRenderbuffers"
               static_dispatch="false" es1="1.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="renderbuffers" type="const GLuint *" count="n"/>
     </function>
 
     <function name="FramebufferRenderbufferOES"
-              alias="FramebufferRenderbufferEXT" static_dispatch="false"
+              alias="FramebufferRenderbuffer" static_dispatch="false"
               es1="1.0">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
@@ -217,7 +217,7 @@
         <param name="renderbuffer" type="GLuint"/>
     </function>
 
-    <function name="FramebufferTexture2DOES" alias="FramebufferTexture2DEXT"
+    <function name="FramebufferTexture2DOES" alias="FramebufferTexture2D"
               static_dispatch="false" es1="1.0">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
@@ -226,25 +226,25 @@
         <param name="level" type="GLint"/>
     </function>
 
-    <function name="GenerateMipmapOES" alias="GenerateMipmapEXT"
+    <function name="GenerateMipmapOES" alias="GenerateMipmap"
               static_dispatch="false" es1="1.0">
         <param name="target" type="GLenum"/>
     </function>
 
-    <function name="GenFramebuffersOES" alias="GenFramebuffersEXT"
+    <function name="GenFramebuffersOES" alias="GenFramebuffers"
               static_dispatch="false" es1="1.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="framebuffers" type="GLuint *" count="n" output="true"/>
     </function>
 
-    <function name="GenRenderbuffersOES" alias="GenRenderbuffersEXT"
+    <function name="GenRenderbuffersOES" alias="GenRenderbuffers"
               static_dispatch="false" es1="1.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="renderbuffers" type="GLuint *" count="n" output="true"/>
     </function>
 
     <function name="GetFramebufferAttachmentParameterivOES"
-              alias="GetFramebufferAttachmentParameterivEXT"
+              alias="GetFramebufferAttachmentParameteriv"
               static_dispatch="false" es1="1.0">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
@@ -253,26 +253,26 @@
     </function>
 
     <function name="GetRenderbufferParameterivOES"
-              alias="GetRenderbufferParameterivEXT" static_dispatch="false"
+              alias="GetRenderbufferParameteriv" static_dispatch="false"
               es1="1.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
     </function>
 
-    <function name="IsFramebufferOES" alias="IsFramebufferEXT"
+    <function name="IsFramebufferOES" alias="IsFramebuffer"
               static_dispatch="false" es1="1.0">
         <param name="framebuffer" type="GLuint"/>
 	<return type="GLboolean"/>
     </function>
 
-    <function name="IsRenderbufferOES" alias="IsRenderbufferEXT"
+    <function name="IsRenderbufferOES" alias="IsRenderbuffer"
               static_dispatch="false" es1="1.0">
         <param name="renderbuffer" type="GLuint"/>
 	<return type="GLboolean"/>
     </function>
 
-    <function name="RenderbufferStorageOES" alias="RenderbufferStorageEXT"
+    <function name="RenderbufferStorageOES" alias="RenderbufferStorage"
               static_dispatch="false" es1="1.0">
         <param name="target" type="GLenum"/>
         <param name="internalformat" type="GLenum"/>
@@ -343,8 +343,7 @@
     <enum name="POINT_SIZE_ARRAY_BUFFER_BINDING_OES"	  value="0x8B9F"/>
 
     <function name="PointSizePointerOES" offset="assign"
-              static_dispatch="false" es1="1.0" desktop="false"
-              mesa_name="-OES">
+              static_dispatch="false" es1="1.0" desktop="false">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
@@ -360,7 +359,7 @@
 <!-- optional for es1.0 -->
 <category name="GL_OES_query_matrix" number="16">
     <function name="QueryMatrixxOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="es" desktop="false">
+              es1="1.0" desktop="false">
         <param name="mantissa" type="GLfixed *" count="16" />
         <param name="exponent" type="GLint *" count="16" />
 	<return type="GLbitfield"/>
@@ -460,21 +459,21 @@
     <enum name="BUFFER_MAPPED_OES"                        value="0x88BC"/>
     <enum name="BUFFER_MAP_POINTER_OES"                   value="0x88BD"/>
 
-    <function name="GetBufferPointervOES" alias="GetBufferPointervARB"
+    <function name="GetBufferPointervOES" alias="GetBufferPointerv"
               static_dispatch="false" es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLvoid **"/>
     </function>
 
-    <function name="MapBufferOES" alias="MapBufferARB" static_dispatch="false"
+    <function name="MapBufferOES" alias="MapBuffer" static_dispatch="false"
               es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="access" type="GLenum"/>
 	<return type="GLvoid *"/>
     </function>
 
-    <function name="UnmapBufferOES" alias="UnmapBufferARB"
+    <function name="UnmapBufferOES" alias="UnmapBuffer"
               static_dispatch="false" es1="1.0" es2="2.0">
         <param name="target" type="GLenum"/>
 	<return type="GLboolean"/>
@@ -506,7 +505,7 @@
     <enum name="SAMPLER_3D_OES"                           value="0x8B5F"/>
     <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET_OES" value="0x8CD4"/>
 
-    <function name="CompressedTexImage3DOES" alias="CompressedTexImage3DARB"
+    <function name="CompressedTexImage3DOES" alias="CompressedTexImage3D"
               static_dispatch="false" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
@@ -520,7 +519,7 @@
     </function>
 
     <function name="CompressedTexSubImage3DOES"
-              alias="CompressedTexSubImage3DARB" static_dispatch="false"
+              alias="CompressedTexSubImage3D" static_dispatch="false"
               es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
@@ -548,7 +547,7 @@
         <param name="height" type="GLsizei"/>
     </function>
 
-    <function name="FramebufferTexture3DOES" alias="FramebufferTexture3DEXT"
+    <function name="FramebufferTexture3DOES" alias="FramebufferTexture3D"
               static_dispatch="false" es2="2.0">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
@@ -680,7 +679,7 @@
         <param name="array" type="GLuint"/>
     </function>
 
-    <function name="DeleteVertexArraysOES" alias="DeleteVertexArraysAPPLE"
+    <function name="DeleteVertexArraysOES" alias="DeleteVertexArrays"
               es2="2.0">
         <param name="n" type="GLsizei"/>
         <param name="arrays" type="const GLuint *" count="n"/>
@@ -691,7 +690,7 @@
         <param name="arrays" type="GLuint *" output="true" count="n"/>
     </function>
 
-    <function name="IsVertexArrayOES" alias="IsVertexArrayAPPLE" es2="2.0">
+    <function name="IsVertexArrayOES" alias="IsVertexArray" es2="2.0">
         <param name="array" type="GLuint"/>
         <return type="GLboolean"/>
     </function>
@@ -766,7 +765,7 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="DrawBuffersNV" alias="DrawBuffersARB" es2="2.0">
+    <function name="DrawBuffersNV" alias="DrawBuffers" es2="2.0">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="bufs" type="const GLenum *" count="n"/>
     </function>

@@ -10,9 +10,9 @@
         <param name="array" type="GLuint"/>
     </function>
 
-    <function name="DeleteVertexArraysAPPLE" offset="assign" static_dispatch="false">
+    <function name="DeleteVertexArraysAPPLE" static_dispatch="false" alias="DeleteVertexArrays">
         <param name="n" type="GLsizei"/>
-	<param name="arrays" type="const GLuint *" count="n"/>
+	<param name="arrays" type="const GLuint *"/>
     </function>
 
     <function name="GenVertexArraysAPPLE" offset="assign"
@@ -21,7 +21,7 @@
 	<param name="arrays" type="GLuint *" count="n" output="true"/>
     </function>
 
-    <function name="IsVertexArrayAPPLE" offset="assign" static_dispatch="false">
+    <function name="IsVertexArrayAPPLE" static_dispatch="false" alias="IsVertexArray">
         <param name="array" type="GLuint"/>
 	<return type="GLboolean"/>
     </function>

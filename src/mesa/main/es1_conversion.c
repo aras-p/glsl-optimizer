@@ -30,13 +30,13 @@
 #include "main/es1_conversion.h"
 
 void GL_APIENTRY
-_es_AlphaFuncx(GLenum func, GLclampx ref)
+_mesa_AlphaFuncx(GLenum func, GLclampx ref)
 {
    _mesa_AlphaFunc(func, (GLclampf) (ref / 65536.0f));
 }
 
 void GL_APIENTRY
-_es_ClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
+_mesa_ClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
    _mesa_ClearColor((GLclampf) (red / 65536.0f),
                     (GLclampf) (green / 65536.0f),
@@ -45,13 +45,13 @@ _es_ClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 }
 
 void GL_APIENTRY
-_es_ClearDepthx(GLclampx depth)
+_mesa_ClearDepthx(GLclampx depth)
 {
    _mesa_ClearDepthf((GLclampf) (depth / 65536.0f));
 }
 
 void GL_APIENTRY
-_es_ClipPlanef(GLenum plane, const GLfloat *equation)
+_mesa_ClipPlanef(GLenum plane, const GLfloat *equation)
 {
    unsigned int i;
    GLdouble converted_equation[4];
@@ -64,7 +64,7 @@ _es_ClipPlanef(GLenum plane, const GLfloat *equation)
 }
 
 void GL_APIENTRY
-_es_ClipPlanex(GLenum plane, const GLfixed *equation)
+_mesa_ClipPlanex(GLenum plane, const GLfixed *equation)
 {
    unsigned int i;
    GLdouble converted_equation[4];
@@ -86,7 +86,7 @@ _es_Color4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 }
 
 void GL_APIENTRY
-_es_Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
+_mesa_Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 {
     _es_Color4f((GLfloat) (red / 65536.0f),
                 (GLfloat) (green / 65536.0f),
@@ -95,17 +95,17 @@ _es_Color4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 }
 
 void GL_APIENTRY
-_es_DepthRangex(GLclampx zNear, GLclampx zFar)
+_mesa_DepthRangex(GLclampx zNear, GLclampx zFar)
 {
     _mesa_DepthRangef((GLclampf) (zNear / 65536.0f),
                       (GLclampf) (zFar / 65536.0f));
 }
 
 void GL_APIENTRY
-_es_DrawTexxOES(GLfixed x, GLfixed y, GLfixed z, GLfixed w, GLfixed h)
+_mesa_DrawTexxOES(GLfixed x, GLfixed y, GLfixed z, GLfixed w, GLfixed h)
 {
 
-    _mesa_DrawTexf((GLfloat) (x / 65536.0f),
+    _mesa_DrawTexfOES((GLfloat) (x / 65536.0f),
                    (GLfloat) (y / 65536.0f),
                    (GLfloat) (z / 65536.0f),
                    (GLfloat) (w / 65536.0f),
@@ -113,7 +113,7 @@ _es_DrawTexxOES(GLfixed x, GLfixed y, GLfixed z, GLfixed w, GLfixed h)
 }
 
 void GL_APIENTRY
-_es_DrawTexxvOES(const GLfixed *coords)
+_mesa_DrawTexxvOES(const GLfixed *coords)
 {
     unsigned int i;
     GLfloat converted_coords[5];
@@ -122,11 +122,11 @@ _es_DrawTexxvOES(const GLfixed *coords)
         converted_coords[i] = (GLfloat) (coords[i] / 65536.0f);
     }
 
-    _mesa_DrawTexfv(converted_coords);
+    _mesa_DrawTexfvOES(converted_coords);
 }
 
 void GL_APIENTRY
-_es_Fogx(GLenum pname, GLfixed param)
+_mesa_Fogx(GLenum pname, GLfixed param)
 {
    if (pname != GL_FOG_MODE) {
       _mesa_Fogf(pname, (GLfloat) (param / 65536.0f));
@@ -137,7 +137,7 @@ _es_Fogx(GLenum pname, GLfixed param)
 }
 
 void GL_APIENTRY
-_es_Fogxv(GLenum pname, const GLfixed *params)
+_mesa_Fogxv(GLenum pname, const GLfixed *params)
 {
    unsigned int i;
    unsigned int n_params = 4;
@@ -177,7 +177,7 @@ _es_Fogxv(GLenum pname, const GLfixed *params)
 }
 
 void GL_APIENTRY
-_es_Frustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top,
+_mesa_Frustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top,
              GLfloat zNear, GLfloat zFar)
 {
    _mesa_Frustum((GLdouble) (left),
@@ -189,7 +189,7 @@ _es_Frustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top,
 }
 
 void GL_APIENTRY
-_es_Frustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
+_mesa_Frustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
              GLfixed zNear, GLfixed zFar)
 {
    _mesa_Frustum((GLdouble) (left / 65536.0),
@@ -201,7 +201,7 @@ _es_Frustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
 }
 
 void GL_APIENTRY
-_es_GetClipPlanef(GLenum plane, GLfloat *equation)
+_mesa_GetClipPlanef(GLenum plane, GLfloat *equation)
 {
    unsigned int i;
    GLdouble converted_equation[4];
@@ -213,7 +213,7 @@ _es_GetClipPlanef(GLenum plane, GLfloat *equation)
 }
 
 void GL_APIENTRY
-_es_GetClipPlanex(GLenum plane, GLfixed *equation)
+_mesa_GetClipPlanex(GLenum plane, GLfixed *equation)
 {
    unsigned int i;
    GLdouble converted_equation[4];
@@ -225,7 +225,7 @@ _es_GetClipPlanex(GLenum plane, GLfixed *equation)
 }
 
 void GL_APIENTRY
-_es_GetLightxv(GLenum light, GLenum pname, GLfixed *params)
+_mesa_GetLightxv(GLenum light, GLenum pname, GLfixed *params)
 {
    unsigned int i;
    unsigned int n_params = 4;
@@ -266,7 +266,7 @@ _es_GetLightxv(GLenum light, GLenum pname, GLfixed *params)
 }
 
 void GL_APIENTRY
-_es_GetMaterialxv(GLenum face, GLenum pname, GLfixed *params)
+_mesa_GetMaterialxv(GLenum face, GLenum pname, GLfixed *params)
 {
    unsigned int i;
    unsigned int n_params = 4;
@@ -304,7 +304,7 @@ _es_GetMaterialxv(GLenum face, GLenum pname, GLfixed *params)
 }
 
 void GL_APIENTRY
-_es_GetTexEnvxv(GLenum target, GLenum pname, GLfixed *params)
+_mesa_GetTexEnvxv(GLenum target, GLenum pname, GLfixed *params)
 {
    unsigned int i;
    unsigned int n_params = 4;
@@ -396,13 +396,13 @@ _check_GetTexGenivOES(GLenum coord, GLenum pname, GLint *params)
 }
 
 void GL_APIENTRY
-_check_GetTexGenxvOES(GLenum coord, GLenum pname, GLfixed *params)
+_mesa_GetTexGenxvOES(GLenum coord, GLenum pname, GLfixed *params)
 {
    _mesa_GetTexGeniv(coord, pname, (GLint *) params);
 }
 
 void GL_APIENTRY
-_es_GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params)
+_mesa_GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params)
 {
    unsigned int i;
    unsigned int n_params = 4;
@@ -450,13 +450,13 @@ _es_GetTexParameterxv(GLenum target, GLenum pname, GLfixed *params)
 }
 
 void GL_APIENTRY
-_es_LightModelx(GLenum pname, GLfixed param)
+_mesa_LightModelx(GLenum pname, GLfixed param)
 {
    _mesa_LightModelf(pname, (GLfloat) param);
 }
 
 void GL_APIENTRY
-_es_LightModelxv(GLenum pname, const GLfixed *params)
+_mesa_LightModelxv(GLenum pname, const GLfixed *params)
 {
    unsigned int i;
    unsigned int n_params = 4;
@@ -491,13 +491,13 @@ _es_LightModelxv(GLenum pname, const GLfixed *params)
 }
 
 void GL_APIENTRY
-_es_Lightx(GLenum light, GLenum pname, GLfixed param)
+_mesa_Lightx(GLenum light, GLenum pname, GLfixed param)
 {
    _mesa_Lightf(light, pname, (GLfloat) (param / 65536.0f));
 }
 
 void GL_APIENTRY
-_es_Lightxv(GLenum light, GLenum pname, const GLfixed *params)
+_mesa_Lightxv(GLenum light, GLenum pname, const GLfixed *params)
 {
    unsigned int i;
    unsigned int n_params = 4;
@@ -539,13 +539,13 @@ _es_Lightxv(GLenum light, GLenum pname, const GLfixed *params)
 }
 
 void GL_APIENTRY
-_es_LineWidthx(GLfixed width)
+_mesa_LineWidthx(GLfixed width)
 {
    _mesa_LineWidth((GLfloat) (width / 65536.0f));
 }
 
 void GL_APIENTRY
-_es_LoadMatrixx(const GLfixed *m)
+_mesa_LoadMatrixx(const GLfixed *m)
 {
    unsigned int i;
    GLfloat converted_m[16];
@@ -558,7 +558,7 @@ _es_LoadMatrixx(const GLfixed *m)
 }
 
 void GL_APIENTRY
-_es_Materialx(GLenum face, GLenum pname, GLfixed param)
+_mesa_Materialx(GLenum face, GLenum pname, GLfixed param)
 {
    if (face != GL_FRONT_AND_BACK) {
       _mesa_error(_mesa_get_current_context(), GL_INVALID_ENUM,
@@ -576,7 +576,7 @@ _es_Materialx(GLenum face, GLenum pname, GLfixed param)
 }
 
 void GL_APIENTRY
-_es_Materialxv(GLenum face, GLenum pname, const GLfixed *params)
+_mesa_Materialxv(GLenum face, GLenum pname, const GLfixed *params)
 {
    unsigned int i;
    unsigned int n_params = 4;
@@ -613,7 +613,7 @@ _es_Materialxv(GLenum face, GLenum pname, const GLfixed *params)
 }
 
 void GL_APIENTRY
-_es_MultMatrixx(const GLfixed *m)
+_mesa_MultMatrixx(const GLfixed *m)
 {
    unsigned int i;
    GLfloat converted_m[16];
@@ -626,7 +626,7 @@ _es_MultMatrixx(const GLfixed *m)
 }
 
 void GL_APIENTRY
-_es_MultiTexCoord4x(GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q)
+_mesa_MultiTexCoord4x(GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q)
 {
    _es_MultiTexCoord4f(texture,
                        (GLfloat) (s / 65536.0f),
@@ -636,7 +636,7 @@ _es_MultiTexCoord4x(GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q)
 }
 
 void GL_APIENTRY
-_es_Normal3x(GLfixed nx, GLfixed ny, GLfixed nz)
+_mesa_Normal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 {
    _es_Normal3f((GLfloat) (nx / 65536.0f),
                 (GLfloat) (ny / 65536.0f),
@@ -644,7 +644,7 @@ _es_Normal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 }
 
 void GL_APIENTRY
-_es_Orthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top,
+_mesa_Orthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top,
            GLfloat zNear, GLfloat zFar)
 {
    _mesa_Ortho((GLdouble) (left),
@@ -656,7 +656,7 @@ _es_Orthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top,
 }
 
 void GL_APIENTRY
-_es_Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
+_mesa_Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
            GLfixed zNear, GLfixed zFar)
 {
    _mesa_Ortho((GLdouble) (left / 65536.0),
@@ -668,13 +668,13 @@ _es_Orthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top,
 }
 
 void GL_APIENTRY
-_es_PointParameterx(GLenum pname, GLfixed param)
+_mesa_PointParameterx(GLenum pname, GLfixed param)
 {
    _mesa_PointParameterf(pname, (GLfloat) (param / 65536.0f));
 }
 
 void GL_APIENTRY
-_es_PointParameterxv(GLenum pname, const GLfixed *params)
+_mesa_PointParameterxv(GLenum pname, const GLfixed *params)
 {
    unsigned int i;
    unsigned int n_params = 3;
@@ -703,20 +703,20 @@ _es_PointParameterxv(GLenum pname, const GLfixed *params)
 }
 
 void GL_APIENTRY
-_es_PointSizex(GLfixed size)
+_mesa_PointSizex(GLfixed size)
 {
    _mesa_PointSize((GLfloat) (size / 65536.0f));
 }
 
 void GL_APIENTRY
-_es_PolygonOffsetx(GLfixed factor, GLfixed units)
+_mesa_PolygonOffsetx(GLfixed factor, GLfixed units)
 {
    _mesa_PolygonOffset((GLfloat) (factor / 65536.0f),
                        (GLfloat) (units / 65536.0f));
 }
 
 void GL_APIENTRY
-_es_Rotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
+_mesa_Rotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
    _mesa_Rotatef((GLfloat) (angle / 65536.0f),
                  (GLfloat) (x / 65536.0f),
@@ -725,14 +725,14 @@ _es_Rotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 }
 
 void GL_APIENTRY
-_es_SampleCoveragex(GLclampx value, GLboolean invert)
+_mesa_SampleCoveragex(GLclampx value, GLboolean invert)
 {
-   _mesa_SampleCoverageARB((GLclampf) (value / 65536.0f),
+   _mesa_SampleCoverage((GLclampf) (value / 65536.0f),
                            invert);
 }
 
 void GL_APIENTRY
-_es_Scalex(GLfixed x, GLfixed y, GLfixed z)
+_mesa_Scalex(GLfixed x, GLfixed y, GLfixed z)
 {
    _mesa_Scalef((GLfloat) (x / 65536.0f),
                 (GLfloat) (y / 65536.0f),
@@ -740,7 +740,7 @@ _es_Scalex(GLfixed x, GLfixed y, GLfixed z)
 }
 
 void GL_APIENTRY
-_es_TexEnvx(GLenum target, GLenum pname, GLfixed param)
+_mesa_TexEnvx(GLenum target, GLenum pname, GLfixed param)
 {
    switch(target) {
    case GL_POINT_SPRITE:
@@ -785,7 +785,7 @@ _es_TexEnvx(GLenum target, GLenum pname, GLfixed param)
 }
 
 void GL_APIENTRY
-_es_TexEnvxv(GLenum target, GLenum pname, const GLfixed *params)
+_mesa_TexEnvxv(GLenum target, GLenum pname, const GLfixed *params)
 {
    switch(target) {
    case GL_POINT_SPRITE:
@@ -853,19 +853,19 @@ _check_TexGenivOES(GLenum coord, GLenum pname, const GLint *params)
 }
 
 void GL_APIENTRY
-_check_TexGenxOES(GLenum coord, GLenum pname, GLfixed param)
+_mesa_TexGenxOES(GLenum coord, GLenum pname, GLfixed param)
 {
    _es_TexGenf(coord, pname, (GLfloat) param);
 }
 
 void GL_APIENTRY
-_check_TexGenxvOES(GLenum coord, GLenum pname, const GLfixed *params)
+_mesa_TexGenxvOES(GLenum coord, GLenum pname, const GLfixed *params)
 {
    _es_TexGenf(coord, pname, (GLfloat) params[0]);
 }
 
 void GL_APIENTRY
-_es_TexParameterx(GLenum target, GLenum pname, GLfixed param)
+_mesa_TexParameterx(GLenum target, GLenum pname, GLfixed param)
 {
    if (pname == GL_TEXTURE_MAX_ANISOTROPY_EXT) {
       _mesa_TexParameterf(target, pname, (GLfloat) (param / 65536.0f));
@@ -875,7 +875,7 @@ _es_TexParameterx(GLenum target, GLenum pname, GLfixed param)
 }
 
 void GL_APIENTRY
-_es_TexParameterxv(GLenum target, GLenum pname, const GLfixed *params)
+_mesa_TexParameterxv(GLenum target, GLenum pname, const GLfixed *params)
 {
    unsigned int i;
    unsigned int n_params = 4;
@@ -930,7 +930,7 @@ _es_TexParameterxv(GLenum target, GLenum pname, const GLfixed *params)
 }
 
 void GL_APIENTRY
-_es_Translatex(GLfixed x, GLfixed y, GLfixed z)
+_mesa_Translatex(GLfixed x, GLfixed y, GLfixed z)
 {
     _mesa_Translatef((GLfloat) (x / 65536.0f),
                      (GLfloat) (y / 65536.0f),

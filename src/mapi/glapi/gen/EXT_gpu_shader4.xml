@@ -96,8 +96,7 @@
         <param name="w" type="GLuint"/>
     </function>
 
-    <function name="VertexAttribI1ivEXT" offset="assign" exec="loopback"
-              mesa_name="-EXT">
+    <function name="VertexAttribI1ivEXT" alias="VertexAttribI1iv">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *"/>
     </function>
@@ -117,8 +116,7 @@
         <param name="v" type="const GLint *"/>
     </function>
 
-    <function name="VertexAttribI1uivEXT" offset="assign" exec="loopback"
-              mesa_name="-EXT">
+    <function name="VertexAttribI1uivEXT" alias="VertexAttribI1uiv">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLuint *"/>
     </function>
@@ -138,31 +136,27 @@
         <param name="v" type="const GLuint *"/>
     </function>
 
-    <function name="VertexAttribI4bvEXT" offset="assign" exec="loopback"
-              mesa_name="-EXT">
+    <function name="VertexAttribI4bvEXT" alias="VertexAttribI4bv">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLbyte *"/>
     </function>
 
-    <function name="VertexAttribI4svEXT" offset="assign" exec="loopback"
-              mesa_name="-EXT">
+    <function name="VertexAttribI4svEXT" alias="VertexAttribI4sv">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *"/>
     </function>
 
-    <function name="VertexAttribI4ubvEXT" offset="assign" exec="loopback"
-              mesa_name="-EXT">
+    <function name="VertexAttribI4ubvEXT" alias="VertexAttribI4ubv">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *"/>
     </function>
 
-    <function name="VertexAttribI4usvEXT" offset="assign" exec="loopback"
-              mesa_name="-EXT">
+    <function name="VertexAttribI4usvEXT" alias="VertexAttribI4usv">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLushort *"/>
     </function>
 
-    <function name="VertexAttribIPointerEXT" offset="assign" mesa_name="-EXT">
+    <function name="VertexAttribIPointerEXT" alias="VertexAttribIPointer">
         <param name="index" type="GLuint"/>
         <param name="size" type="GLint"/>
         <param name="type" type="GLenum"/>
@@ -170,37 +164,37 @@
         <param name="pointer" type="const GLvoid *"/>
     </function>
 
-    <function name="GetVertexAttribIivEXT" offset="assign" mesa_name="-EXT">
+    <function name="GetVertexAttribIivEXT" alias="GetVertexAttribIiv">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *"/>
     </function>
 
-    <function name="GetVertexAttribIuivEXT" offset="assign" mesa_name="-EXT">
+    <function name="GetVertexAttribIuivEXT" alias="GetVertexAttribIuiv">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLuint *"/>
     </function>
 
-    <function name="Uniform1uiEXT" offset="assign" mesa_name="-EXT">
+    <function name="Uniform1uiEXT" alias="Uniform1ui">
         <param name="location" type="GLint"/>
         <param name="x" type="GLuint"/>
     </function>
 
-    <function name="Uniform2uiEXT" offset="assign" mesa_name="-EXT">
+    <function name="Uniform2uiEXT" alias="Uniform2ui">
         <param name="location" type="GLint"/>
         <param name="x" type="GLuint"/>
         <param name="y" type="GLuint"/>
     </function>
 
-    <function name="Uniform3uiEXT" offset="assign" mesa_name="-EXT">
+    <function name="Uniform3uiEXT" alias="Uniform3ui">
         <param name="location" type="GLint"/>
         <param name="x" type="GLuint"/>
         <param name="y" type="GLuint"/>
         <param name="z" type="GLuint"/>
     </function>
 
-    <function name="Uniform4uiEXT" offset="assign" mesa_name="-EXT">
+    <function name="Uniform4uiEXT" alias="Uniform4ui">
         <param name="location" type="GLint"/>
         <param name="x" type="GLuint"/>
         <param name="y" type="GLuint"/>
@@ -208,43 +202,43 @@
         <param name="w" type="GLuint"/>
     </function>
 
-    <function name="Uniform1uivEXT" offset="assign" mesa_name="-EXT">
+    <function name="Uniform1uivEXT" alias="Uniform1uiv">
         <param name="location" type="GLint"/>
 	<param name="count" type="GLsizei"/>
         <param name="value" type="const GLuint *"/>
     </function>
 
-    <function name="Uniform2uivEXT" offset="assign" mesa_name="-EXT">
+    <function name="Uniform2uivEXT" alias="Uniform2uiv">
         <param name="location" type="GLint"/>
 	<param name="count" type="GLsizei"/>
         <param name="value" type="const GLuint *"/>
     </function>
 
-    <function name="Uniform3uivEXT" offset="assign" mesa_name="-EXT">
+    <function name="Uniform3uivEXT" alias="Uniform3uiv">
         <param name="location" type="GLint"/>
 	<param name="count" type="GLsizei"/>
         <param name="value" type="const GLuint *"/>
     </function>
 
-    <function name="Uniform4uivEXT" offset="assign" mesa_name="-EXT">
+    <function name="Uniform4uivEXT" alias="Uniform4uiv">
         <param name="location" type="GLint"/>
 	<param name="count" type="GLsizei"/>
         <param name="value" type="const GLuint *"/>
     </function>
 
-    <function name="GetUniformuivEXT" offset="assign" mesa_name="-EXT">
+    <function name="GetUniformuivEXT" alias="GetUniformuiv">
         <param name="program" type="GLuint"/>
         <param name="location" type="GLint"/>
         <param name="params" type="GLuint *"/>
     </function>
 
-    <function name="BindFragDataLocationEXT" offset="assign" mesa_name="-EXT">
+    <function name="BindFragDataLocationEXT" alias="BindFragDataLocation">
         <param name="program" type="GLuint"/>
         <param name="colorNumber" type="GLuint"/>
         <param name="name" type="const GLchar *"/>
     </function>
 
-    <function name="GetFragDataLocationEXT" offset="assign" mesa_name="-EXT">
+    <function name="GetFragDataLocationEXT" alias="GetFragDataLocation">
 	<return type="GLint"/>
         <param name="program" type="GLuint"/>
         <param name="name" type="const GLchar *"/>

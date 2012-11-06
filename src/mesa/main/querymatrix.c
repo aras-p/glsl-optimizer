@@ -89,7 +89,7 @@ fpclassify(double x)
 
 #endif
 
-GLbitfield GLAPIENTRY _es_QueryMatrixxOES(GLfixed mantissa[16], GLint exponent[16])
+GLbitfield GLAPIENTRY _mesa_QueryMatrixxOES(GLfixed mantissa[16], GLint exponent[16])
 {
     GLfloat matrix[16];
     GLint tmp;

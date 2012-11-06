@@ -13,12 +13,12 @@
     <enum name="QUERY_BY_REGION_WAIT_NV"     value="0x8E15"/>
     <enum name="QUERY_BY_REGION_NO_WAIT_NV"  value="0x8E16"/>
 
-    <function name="BeginConditionalRenderNV" offset="assign" mesa_name="-NV">
+    <function name="BeginConditionalRenderNV" alias="BeginConditionalRender">
 	<param name="query" type="GLuint"/>
 	<param name="mode" type="GLenum"/>
     </function>
 
-    <function name="EndConditionalRenderNV" offset="assign" mesa_name="-NV">
+    <function name="EndConditionalRenderNV" alias="EndConditionalRender">
     </function>
 
 </category>

@@ -64,7 +64,7 @@ extern void GLAPIENTRY
 _mesa_AttachObjectARB(GLhandleARB, GLhandleARB);
 
 extern void  GLAPIENTRY
-_mesa_CompileShaderARB(GLhandleARB);
+_mesa_CompileShader(GLhandleARB);
 
 extern GLhandleARB GLAPIENTRY
 _mesa_CreateProgramObjectARB(void);
@@ -100,7 +100,7 @@ extern void GLAPIENTRY
 _mesa_GetObjectParameterivARB(GLhandleARB, GLenum, GLint *);
 
 extern void GLAPIENTRY
-_mesa_GetShaderSourceARB(GLhandleARB, GLsizei, GLsizei *, GLcharARB *);
+_mesa_GetShaderSource(GLhandleARB, GLsizei, GLsizei *, GLcharARB *);
 
 extern GLboolean GLAPIENTRY
 _mesa_IsProgram(GLuint name);
@@ -109,20 +109,20 @@ extern GLboolean GLAPIENTRY
 _mesa_IsShader(GLuint name);
 
 extern void GLAPIENTRY
-_mesa_LinkProgramARB(GLhandleARB programObj);
+_mesa_LinkProgram(GLhandleARB programObj);
 
 extern void GLAPIENTRY
-_mesa_ShaderSourceARB(GLhandleARB, GLsizei, const GLcharARB* *, const GLint *);
+_mesa_ShaderSource(GLhandleARB, GLsizei, const GLcharARB* *, const GLint *);
 
 extern void GLAPIENTRY
-_mesa_UseProgramObjectARB(GLhandleARB);
+_mesa_UseProgram(GLhandleARB);
 
 extern void GLAPIENTRY
-_mesa_ValidateProgramARB(GLhandleARB);
+_mesa_ValidateProgram(GLhandleARB);
 
 
 extern void GLAPIENTRY
-_mesa_BindAttribLocationARB(GLhandleARB, GLuint, const GLcharARB *);
+_mesa_BindAttribLocation(GLhandleARB, GLuint, const GLcharARB *);
 
 extern void GLAPIENTRY
 _mesa_BindFragDataLocation(GLuint program, GLuint colorNumber,
@@ -133,11 +133,11 @@ _mesa_BindFragDataLocationIndexed(GLuint program, GLuint colorNumber,
                                   GLuint index, const GLchar *name);
 
 extern void GLAPIENTRY
-_mesa_GetActiveAttribARB(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *,
+_mesa_GetActiveAttrib(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *,
                          GLenum *, GLcharARB *);
 
 extern GLint GLAPIENTRY
-_mesa_GetAttribLocationARB(GLhandleARB, const GLcharARB *);
+_mesa_GetAttribLocation(GLhandleARB, const GLcharARB *);
 
 
 

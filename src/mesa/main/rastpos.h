@@ -90,21 +90,21 @@ _mesa_RasterPos4iv(const GLint *v);
 void GLAPIENTRY
 _mesa_RasterPos4sv(const GLshort *v);
 void GLAPIENTRY
-_mesa_WindowPos2dMESA(GLdouble x, GLdouble y);
+_mesa_WindowPos2d(GLdouble x, GLdouble y);
 void GLAPIENTRY
-_mesa_WindowPos2fMESA(GLfloat x, GLfloat y);
+_mesa_WindowPos2f(GLfloat x, GLfloat y);
 void GLAPIENTRY
-_mesa_WindowPos2iMESA(GLint x, GLint y);
+_mesa_WindowPos2i(GLint x, GLint y);
 void GLAPIENTRY
-_mesa_WindowPos2sMESA(GLshort x, GLshort y);
+_mesa_WindowPos2s(GLshort x, GLshort y);
 void GLAPIENTRY
-_mesa_WindowPos3dMESA(GLdouble x, GLdouble y, GLdouble z);
+_mesa_WindowPos3d(GLdouble x, GLdouble y, GLdouble z);
 void GLAPIENTRY
-_mesa_WindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z);
+_mesa_WindowPos3f(GLfloat x, GLfloat y, GLfloat z);
 void GLAPIENTRY
-_mesa_WindowPos3iMESA(GLint x, GLint y, GLint z);
+_mesa_WindowPos3i(GLint x, GLint y, GLint z);
 void GLAPIENTRY
-_mesa_WindowPos3sMESA(GLshort x, GLshort y, GLshort z);
+_mesa_WindowPos3s(GLshort x, GLshort y, GLshort z);
 void GLAPIENTRY
 _mesa_WindowPos4dMESA(GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 void GLAPIENTRY
@@ -114,21 +114,21 @@ _mesa_WindowPos4iMESA(GLint x, GLint y, GLint z, GLint w);
 void GLAPIENTRY
 _mesa_WindowPos4sMESA(GLshort x, GLshort y, GLshort z, GLshort w);
 void GLAPIENTRY
-_mesa_WindowPos2dvMESA(const GLdouble *v);
+_mesa_WindowPos2dv(const GLdouble *v);
 void GLAPIENTRY
-_mesa_WindowPos2fvMESA(const GLfloat *v);
+_mesa_WindowPos2fv(const GLfloat *v);
 void GLAPIENTRY
-_mesa_WindowPos2ivMESA(const GLint *v);
+_mesa_WindowPos2iv(const GLint *v);
 void GLAPIENTRY
-_mesa_WindowPos2svMESA(const GLshort *v);
+_mesa_WindowPos2sv(const GLshort *v);
 void GLAPIENTRY
-_mesa_WindowPos3dvMESA(const GLdouble *v);
+_mesa_WindowPos3dv(const GLdouble *v);
 void GLAPIENTRY
-_mesa_WindowPos3fvMESA(const GLfloat *v);
+_mesa_WindowPos3fv(const GLfloat *v);
 void GLAPIENTRY
-_mesa_WindowPos3ivMESA(const GLint *v);
+_mesa_WindowPos3iv(const GLint *v);
 void GLAPIENTRY
-_mesa_WindowPos3svMESA(const GLshort *v);
+_mesa_WindowPos3sv(const GLshort *v);
 void GLAPIENTRY
 _mesa_WindowPos4dvMESA(const GLdouble *v);
 void GLAPIENTRY

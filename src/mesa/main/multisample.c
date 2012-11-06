@@ -34,7 +34,7 @@
  * Called via glSampleCoverageARB
  */
 void GLAPIENTRY
-_mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
+_mesa_SampleCoverage(GLclampf value, GLboolean invert)
 {
    GET_CURRENT_CONTEXT(ctx);
 

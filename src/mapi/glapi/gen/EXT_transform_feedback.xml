@@ -24,7 +24,7 @@
   <enum name="TRANSFORM_FEEDBACK_BUFFER_MODE_EXT"             value="0x8C7F"/>
   <enum name="TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH_EXT"      value="0x8C76"/>
 
-  <function name="BindBufferRangeEXT" offset="assign" mesa_name="-EXT">
+  <function name="BindBufferRangeEXT" alias="BindBufferRange">
     <param name="target" type="GLenum"/>
     <param name="index" type="GLuint"/>
     <param name="buffer" type="GLuint"/>
@@ -39,29 +39,27 @@
     <param name="offset" type="GLintptr"/>
   </function>
 
-  <function name="BindBufferBaseEXT" offset="assign" mesa_name="-EXT">
+  <function name="BindBufferBaseEXT" alias="BindBufferBase">
     <param name="target" type="GLenum"/>
     <param name="index" type="GLuint"/>
     <param name="buffer" type="GLuint"/>
   </function>
 
-  <function name="BeginTransformFeedbackEXT" offset="assign" mesa_name="-EXT">
+  <function name="BeginTransformFeedbackEXT" alias="BeginTransformFeedback">
     <param name="mode" type="GLenum"/>
   </function>
 
-  <function name="EndTransformFeedbackEXT" offset="assign" mesa_name="-EXT">
+  <function name="EndTransformFeedbackEXT" alias="EndTransformFeedback">
   </function>
 
-  <function name="TransformFeedbackVaryingsEXT" offset="assign"
-            mesa_name="-EXT">
+  <function name="TransformFeedbackVaryingsEXT" alias="TransformFeedbackVaryings">
     <param name="program" type="GLuint"/>
     <param name="count" type="GLsizei"/>
     <param name="varyings" type="const char **"/>
     <param name="bufferMode" type="GLenum"/>
   </function>
 
-  <function name="GetTransformFeedbackVaryingEXT" offset="assign"
-            mesa_name="-EXT">
+  <function name="GetTransformFeedbackVaryingEXT" alias="GetTransformFeedbackVarying">
     <param name="program" type="GLuint"/>
     <param name="index" type="GLuint"/>
     <param name="bufSize" type="GLsizei"/>

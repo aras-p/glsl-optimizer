@@ -1614,7 +1614,7 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
 }
 
 void GLAPIENTRY
-_mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
+_mesa_GetBooleani_v( GLenum pname, GLuint index, GLboolean *params )
 {
    union value v;
    enum value_type type =
@@ -1639,7 +1639,7 @@ _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
 }
 
 void GLAPIENTRY
-_mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
+_mesa_GetIntegeri_v( GLenum pname, GLuint index, GLint *params )
 {
    union value v;
    enum value_type type =

@@ -46,7 +46,7 @@
  * and glBindProgramARB.
  */
 void GLAPIENTRY
-_mesa_BindProgram(GLenum target, GLuint id)
+_mesa_BindProgramARB(GLenum target, GLuint id)
 {
    struct gl_program *curProg, *newProg;
    GET_CURRENT_CONTEXT(ctx);
@@ -132,7 +132,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
  * \note Called by both glDeleteProgramsNV and glDeleteProgramsARB.
  */
 void GLAPIENTRY 
-_mesa_DeletePrograms(GLsizei n, const GLuint *ids)
+_mesa_DeleteProgramsARB(GLsizei n, const GLuint *ids)
 {
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
@@ -156,14 +156,14 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
                if (ctx->VertexProgram.Current &&
                    ctx->VertexProgram.Current->Base.Id == ids[i]) {
                   /* unbind this currently bound program */
-                  _mesa_BindProgram(prog->Target, 0);
+                  _mesa_BindProgramARB(prog->Target, 0);
                }
                break;
             case GL_FRAGMENT_PROGRAM_ARB:
                if (ctx->FragmentProgram.Current &&
                    ctx->FragmentProgram.Current->Base.Id == ids[i]) {
                   /* unbind this currently bound program */
-                  _mesa_BindProgram(prog->Target, 0);
+                  _mesa_BindProgramARB(prog->Target, 0);
                }
                break;
             default:
@@ -185,7 +185,7 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
  * \note Called by both glGenProgramsNV and glGenProgramsARB.
  */
 void GLAPIENTRY
-_mesa_GenPrograms(GLsizei n, GLuint *ids)
+_mesa_GenProgramsARB(GLsizei n, GLuint *ids)
 {
    GLuint first;
    GLuint i;

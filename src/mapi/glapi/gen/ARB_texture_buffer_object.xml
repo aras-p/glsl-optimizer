@@ -11,7 +11,7 @@
     <enum name="TEXTURE_BUFFER_DATA_STORE_BINDING_ARB"  value="0x8C2D"/>
     <enum name="TEXTURE_BUFFER_FORMAT_ARB"              value="0x8C2E"/>
 
-    <function name="TexBufferARB" offset="assign" mesa_name="-ARB">
+    <function name="TexBufferARB" alias="TexBuffer">
         <param name="target" type="GLenum"/>
         <param name="internalFormat" type="GLenum"/>
         <param name="buffer" type="GLuint"/>

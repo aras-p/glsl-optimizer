@@ -66,7 +66,7 @@ _mesa_ShadeModel( GLenum mode )
  * triangle or line.
  */
 void GLAPIENTRY
-_mesa_ProvokingVertexEXT(GLenum mode)
+_mesa_ProvokingVertex(GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);

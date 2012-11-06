@@ -14,10 +14,9 @@
   <enum name="CLAMP_READ_COLOR_ARB"             value="0x891C"/>
   <enum name="FIXED_ONLY_ARB"                   value="0x891D"/>
 
-  <function name="ClampColorARB" offset="assign">
+  <function name="ClampColorARB" alias="ClampColor">
     <param name="target" type="GLenum"/>
     <param name="clamp" type="GLenum"/>
-    <glx rop="234"/>
   </function>
 
 </category>

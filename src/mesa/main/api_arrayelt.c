@@ -1068,25 +1068,25 @@ VertexAttrib4fvARB(GLuint index, const GLfloat *v)
 static void GLAPIENTRY
 VertexAttrib1dvARB(GLuint index, const GLdouble *v)
 {
-   CALL_VertexAttrib1dvARB(GET_DISPATCH(), (index, v));
+   CALL_VertexAttrib1dv(GET_DISPATCH(), (index, v));
 }
 
 static void GLAPIENTRY
 VertexAttrib2dvARB(GLuint index, const GLdouble *v)
 {
-   CALL_VertexAttrib2dvARB(GET_DISPATCH(), (index, v));
+   CALL_VertexAttrib2dv(GET_DISPATCH(), (index, v));
 }
 
 static void GLAPIENTRY
 VertexAttrib3dvARB(GLuint index, const GLdouble *v)
 {
-   CALL_VertexAttrib3dvARB(GET_DISPATCH(), (index, v));
+   CALL_VertexAttrib3dv(GET_DISPATCH(), (index, v));
 }
 
 static void GLAPIENTRY
 VertexAttrib4dvARB(GLuint index, const GLdouble *v)
 {
-   CALL_VertexAttrib4dvARB(GET_DISPATCH(), (index, v));
+   CALL_VertexAttrib4dv(GET_DISPATCH(), (index, v));
 }
 
 
@@ -1114,7 +1114,7 @@ VertexAttribI3bv(GLuint index, const GLbyte *v)
 static void GLAPIENTRY
 VertexAttribI4bv(GLuint index, const GLbyte *v)
 {
-   CALL_VertexAttribI4bvEXT(GET_DISPATCH(), (index, v));
+   CALL_VertexAttribI4bv(GET_DISPATCH(), (index, v));
 }
 
 
@@ -1139,7 +1139,7 @@ VertexAttribI3ubv(GLuint index, const GLubyte *v)
 static void GLAPIENTRY
 VertexAttribI4ubv(GLuint index, const GLubyte *v)
 {
-   CALL_VertexAttribI4ubvEXT(GET_DISPATCH(), (index, v));
+   CALL_VertexAttribI4ubv(GET_DISPATCH(), (index, v));
 }
 
 
@@ -1165,7 +1165,7 @@ VertexAttribI3sv(GLuint index, const GLshort *v)
 static void GLAPIENTRY
 VertexAttribI4sv(GLuint index, const GLshort *v)
 {
-   CALL_VertexAttribI4svEXT(GET_DISPATCH(), (index, v));
+   CALL_VertexAttribI4sv(GET_DISPATCH(), (index, v));
 }
 
 
@@ -1190,7 +1190,7 @@ VertexAttribI3usv(GLuint index, const GLushort *v)
 static void GLAPIENTRY
 VertexAttribI4usv(GLuint index, const GLushort *v)
 {
-   CALL_VertexAttribI4usvEXT(GET_DISPATCH(), (index, v));
+   CALL_VertexAttribI4usv(GET_DISPATCH(), (index, v));
 }
 
 
@@ -1405,14 +1405,14 @@ GLboolean _ae_create_context( struct gl_context *ctx )
       return GL_TRUE;
 
    /* These _gloffset_* values may not be compile-time constants */
-   SecondaryColorFuncs[0] = _gloffset_SecondaryColor3bvEXT;
-   SecondaryColorFuncs[1] = _gloffset_SecondaryColor3ubvEXT;
-   SecondaryColorFuncs[2] = _gloffset_SecondaryColor3svEXT;
-   SecondaryColorFuncs[3] = _gloffset_SecondaryColor3usvEXT;
-   SecondaryColorFuncs[4] = _gloffset_SecondaryColor3ivEXT;
-   SecondaryColorFuncs[5] = _gloffset_SecondaryColor3uivEXT;
+   SecondaryColorFuncs[0] = _gloffset_SecondaryColor3bv;
+   SecondaryColorFuncs[1] = _gloffset_SecondaryColor3ubv;
+   SecondaryColorFuncs[2] = _gloffset_SecondaryColor3sv;
+   SecondaryColorFuncs[3] = _gloffset_SecondaryColor3usv;
+   SecondaryColorFuncs[4] = _gloffset_SecondaryColor3iv;
+   SecondaryColorFuncs[5] = _gloffset_SecondaryColor3uiv;
    SecondaryColorFuncs[6] = _gloffset_SecondaryColor3fvEXT;
-   SecondaryColorFuncs[7] = _gloffset_SecondaryColor3dvEXT;
+   SecondaryColorFuncs[7] = _gloffset_SecondaryColor3dv;
 
    FogCoordFuncs[0] = -1;
    FogCoordFuncs[1] = -1;
@@ -1421,7 +1421,7 @@ GLboolean _ae_create_context( struct gl_context *ctx )
    FogCoordFuncs[4] = -1;
    FogCoordFuncs[5] = -1;
    FogCoordFuncs[6] = _gloffset_FogCoordfvEXT;
-   FogCoordFuncs[7] = _gloffset_FogCoorddvEXT;
+   FogCoordFuncs[7] = _gloffset_FogCoorddv;
 
    ctx->aelt_context = calloc(1, sizeof(AEcontext));
    if (!ctx->aelt_context)

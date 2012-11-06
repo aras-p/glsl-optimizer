@@ -448,63 +448,63 @@ void __indirect_glResetMinmax(void) { }
 void __indirect_glSeparableFilter2D(void) { }
 void __indirect_glTexImage3D(void) { }
 void __indirect_glTexSubImage3D(void) { }
-void __indirect_glActiveTextureARB(void) { }
-void __indirect_glClientActiveTextureARB(void) { }
-void __indirect_glMultiTexCoord1dARB(void) { }
-void __indirect_glMultiTexCoord1dvARB(void) { }
+void __indirect_glActiveTexture(void) { }
+void __indirect_glClientActiveTexture(void) { }
+void __indirect_glMultiTexCoord1d(void) { }
+void __indirect_glMultiTexCoord1dv(void) { }
 void __indirect_glMultiTexCoord1fARB(void) { }
 void __indirect_glMultiTexCoord1fvARB(void) { }
-void __indirect_glMultiTexCoord1iARB(void) { }
-void __indirect_glMultiTexCoord1ivARB(void) { }
-void __indirect_glMultiTexCoord1sARB(void) { }
-void __indirect_glMultiTexCoord1svARB(void) { }
-void __indirect_glMultiTexCoord2dARB(void) { }
-void __indirect_glMultiTexCoord2dvARB(void) { }
+void __indirect_glMultiTexCoord1i(void) { }
+void __indirect_glMultiTexCoord1iv(void) { }
+void __indirect_glMultiTexCoord1s(void) { }
+void __indirect_glMultiTexCoord1sv(void) { }
+void __indirect_glMultiTexCoord2d(void) { }
+void __indirect_glMultiTexCoord2dv(void) { }
 void __indirect_glMultiTexCoord2fARB(void) { }
 void __indirect_glMultiTexCoord2fvARB(void) { }
-void __indirect_glMultiTexCoord2iARB(void) { }
-void __indirect_glMultiTexCoord2ivARB(void) { }
-void __indirect_glMultiTexCoord2sARB(void) { }
-void __indirect_glMultiTexCoord2svARB(void) { }
-void __indirect_glMultiTexCoord3dARB(void) { }
-void __indirect_glMultiTexCoord3dvARB(void) { }
+void __indirect_glMultiTexCoord2i(void) { }
+void __indirect_glMultiTexCoord2iv(void) { }
+void __indirect_glMultiTexCoord2s(void) { }
+void __indirect_glMultiTexCoord2sv(void) { }
+void __indirect_glMultiTexCoord3d(void) { }
+void __indirect_glMultiTexCoord3dv(void) { }
 void __indirect_glMultiTexCoord3fARB(void) { }
 void __indirect_glMultiTexCoord3fvARB(void) { }
-void __indirect_glMultiTexCoord3iARB(void) { }
-void __indirect_glMultiTexCoord3ivARB(void) { }
-void __indirect_glMultiTexCoord3sARB(void) { }
-void __indirect_glMultiTexCoord3svARB(void) { }
-void __indirect_glMultiTexCoord4dARB(void) { }
-void __indirect_glMultiTexCoord4dvARB(void) { }
+void __indirect_glMultiTexCoord3i(void) { }
+void __indirect_glMultiTexCoord3iv(void) { }
+void __indirect_glMultiTexCoord3s(void) { }
+void __indirect_glMultiTexCoord3sv(void) { }
+void __indirect_glMultiTexCoord4d(void) { }
+void __indirect_glMultiTexCoord4dv(void) { }
 void __indirect_glMultiTexCoord4fARB(void) { }
 void __indirect_glMultiTexCoord4fvARB(void) { }
-void __indirect_glMultiTexCoord4iARB(void) { }
-void __indirect_glMultiTexCoord4ivARB(void) { }
-void __indirect_glMultiTexCoord4sARB(void) { }
-void __indirect_glMultiTexCoord4svARB(void) { }
-void __indirect_glLoadTransposeMatrixdARB(void) { }
-void __indirect_glLoadTransposeMatrixfARB(void) { }
-void __indirect_glMultTransposeMatrixdARB(void) { }
-void __indirect_glMultTransposeMatrixfARB(void) { }
-void __indirect_glSampleCoverageARB(void) { }
-void __indirect_glCompressedTexImage1DARB(void) { }
-void __indirect_glCompressedTexImage2DARB(void) { }
-void __indirect_glCompressedTexImage3DARB(void) { }
-void __indirect_glCompressedTexSubImage1DARB(void) { }
-void __indirect_glCompressedTexSubImage2DARB(void) { }
-void __indirect_glCompressedTexSubImage3DARB(void) { }
-void __indirect_glGetCompressedTexImageARB(void) { }
-void __indirect_glDisableVertexAttribArrayARB(void) { }
-void __indirect_glEnableVertexAttribArrayARB(void) { }
+void __indirect_glMultiTexCoord4i(void) { }
+void __indirect_glMultiTexCoord4iv(void) { }
+void __indirect_glMultiTexCoord4s(void) { }
+void __indirect_glMultiTexCoord4sv(void) { }
+void __indirect_glLoadTransposeMatrixd(void) { }
+void __indirect_glLoadTransposeMatrixf(void) { }
+void __indirect_glMultTransposeMatrixd(void) { }
+void __indirect_glMultTransposeMatrixf(void) { }
+void __indirect_glSampleCoverage(void) { }
+void __indirect_glCompressedTexImage1D(void) { }
+void __indirect_glCompressedTexImage2D(void) { }
+void __indirect_glCompressedTexImage3D(void) { }
+void __indirect_glCompressedTexSubImage1D(void) { }
+void __indirect_glCompressedTexSubImage2D(void) { }
+void __indirect_glCompressedTexSubImage3D(void) { }
+void __indirect_glGetCompressedTexImage(void) { }
+void __indirect_glDisableVertexAttribArray(void) { }
+void __indirect_glEnableVertexAttribArray(void) { }
 void __indirect_glGetProgramEnvParameterdvARB(void) { }
 void __indirect_glGetProgramEnvParameterfvARB(void) { }
 void __indirect_glGetProgramLocalParameterdvARB(void) { }
 void __indirect_glGetProgramLocalParameterfvARB(void) { }
 void __indirect_glGetProgramStringARB(void) { }
 void __indirect_glGetProgramivARB(void) { }
-void __indirect_glGetVertexAttribdvARB(void) { }
-void __indirect_glGetVertexAttribfvARB(void) { }
-void __indirect_glGetVertexAttribivARB(void) { }
+void __indirect_glGetVertexAttribdv(void) { }
+void __indirect_glGetVertexAttribfv(void) { }
+void __indirect_glGetVertexAttribiv(void) { }
 void __indirect_glProgramEnvParameter4dARB(void) { }
 void __indirect_glProgramEnvParameter4dvARB(void) { }
 void __indirect_glProgramEnvParameter4fARB(void) { }
@@ -514,53 +514,53 @@ void __indirect_glProgramLocalParameter4dvARB(void) { }
 void __indirect_glProgramLocalParameter4fARB(void) { }
 void __indirect_glProgramLocalParameter4fvARB(void) { }
 void __indirect_glProgramStringARB(void) { }
-void __indirect_glVertexAttrib1dARB(void) { }
-void __indirect_glVertexAttrib1dvARB(void) { }
+void __indirect_glVertexAttrib1d(void) { }
+void __indirect_glVertexAttrib1dv(void) { }
 void __indirect_glVertexAttrib1fARB(void) { }
 void __indirect_glVertexAttrib1fvARB(void) { }
-void __indirect_glVertexAttrib1sARB(void) { }
-void __indirect_glVertexAttrib1svARB(void) { }
-void __indirect_glVertexAttrib2dARB(void) { }
-void __indirect_glVertexAttrib2dvARB(void) { }
+void __indirect_glVertexAttrib1s(void) { }
+void __indirect_glVertexAttrib1sv(void) { }
+void __indirect_glVertexAttrib2d(void) { }
+void __indirect_glVertexAttrib2dv(void) { }
 void __indirect_glVertexAttrib2fARB(void) { }
 void __indirect_glVertexAttrib2fvARB(void) { }
-void __indirect_glVertexAttrib2sARB(void) { }
-void __indirect_glVertexAttrib2svARB(void) { }
-void __indirect_glVertexAttrib3dARB(void) { }
-void __indirect_glVertexAttrib3dvARB(void) { }
+void __indirect_glVertexAttrib2s(void) { }
+void __indirect_glVertexAttrib2sv(void) { }
+void __indirect_glVertexAttrib3d(void) { }
+void __indirect_glVertexAttrib3dv(void) { }
 void __indirect_glVertexAttrib3fARB(void) { }
 void __indirect_glVertexAttrib3fvARB(void) { }
-void __indirect_glVertexAttrib3sARB(void) { }
-void __indirect_glVertexAttrib3svARB(void) { }
-void __indirect_glVertexAttrib4NbvARB(void) { }
-void __indirect_glVertexAttrib4NivARB(void) { }
-void __indirect_glVertexAttrib4NsvARB(void) { }
-void __indirect_glVertexAttrib4NubARB(void) { }
-void __indirect_glVertexAttrib4NubvARB(void) { }
-void __indirect_glVertexAttrib4NuivARB(void) { }
-void __indirect_glVertexAttrib4NusvARB(void) { }
-void __indirect_glVertexAttrib4bvARB(void) { }
-void __indirect_glVertexAttrib4dARB(void) { }
-void __indirect_glVertexAttrib4dvARB(void) { }
+void __indirect_glVertexAttrib3s(void) { }
+void __indirect_glVertexAttrib3sv(void) { }
+void __indirect_glVertexAttrib4Nbv(void) { }
+void __indirect_glVertexAttrib4Niv(void) { }
+void __indirect_glVertexAttrib4Nsv(void) { }
+void __indirect_glVertexAttrib4Nub(void) { }
+void __indirect_glVertexAttrib4Nubv(void) { }
+void __indirect_glVertexAttrib4Nuiv(void) { }
+void __indirect_glVertexAttrib4Nusv(void) { }
+void __indirect_glVertexAttrib4bv(void) { }
+void __indirect_glVertexAttrib4d(void) { }
+void __indirect_glVertexAttrib4dv(void) { }
 void __indirect_glVertexAttrib4fARB(void) { }
 void __indirect_glVertexAttrib4fvARB(void) { }
-void __indirect_glVertexAttrib4ivARB(void) { }
-void __indirect_glVertexAttrib4sARB(void) { }
-void __indirect_glVertexAttrib4svARB(void) { }
-void __indirect_glVertexAttrib4ubvARB(void) { }
-void __indirect_glVertexAttrib4uivARB(void) { }
-void __indirect_glVertexAttrib4usvARB(void) { }
-void __indirect_glVertexAttribPointerARB(void) { }
-void __indirect_glBeginQueryARB(void) { }
-void __indirect_glDeleteQueriesARB(void) { }
-void __indirect_glEndQueryARB(void) { }
-void __indirect_glGenQueriesARB(void) { }
-void __indirect_glGetQueryObjectivARB(void) { }
-void __indirect_glGetQueryObjectuivARB(void) { }
-void __indirect_glGetQueryivARB(void) { }
-void __indirect_glIsQueryARB(void) { }
-void __indirect_glDrawBuffersARB(void) { }
-void __indirect_glClampColorARB(void) { }
+void __indirect_glVertexAttrib4iv(void) { }
+void __indirect_glVertexAttrib4s(void) { }
+void __indirect_glVertexAttrib4sv(void) { }
+void __indirect_glVertexAttrib4ubv(void) { }
+void __indirect_glVertexAttrib4uiv(void) { }
+void __indirect_glVertexAttrib4usv(void) { }
+void __indirect_glVertexAttribPointer(void) { }
+void __indirect_glBeginQuery(void) { }
+void __indirect_glDeleteQueries(void) { }
+void __indirect_glEndQuery(void) { }
+void __indirect_glGenQueries(void) { }
+void __indirect_glGetQueryObjectiv(void) { }
+void __indirect_glGetQueryObjectuiv(void) { }
+void __indirect_glGetQueryiv(void) { }
+void __indirect_glIsQuery(void) { }
+void __indirect_glDrawBuffers(void) { }
+void __indirect_glClampColor(void) { }
 void __indirect_glRenderbufferStorageMultisample(void) { }
 void __indirect_glSampleMaskSGIS(void) { }
 void __indirect_glSamplePatternSGIS(void) { }
@@ -570,64 +570,64 @@ void __indirect_glIndexPointerEXT(void) { }
 void __indirect_glNormalPointerEXT(void) { }
 void __indirect_glTexCoordPointerEXT(void) { }
 void __indirect_glVertexPointerEXT(void) { }
-void __indirect_glPointParameterfEXT(void) { }
-void __indirect_glPointParameterfvEXT(void) { }
-void __indirect_glSecondaryColor3bEXT(void) { }
-void __indirect_glSecondaryColor3bvEXT(void) { }
-void __indirect_glSecondaryColor3dEXT(void) { }
-void __indirect_glSecondaryColor3dvEXT(void) { }
+void __indirect_glPointParameterf(void) { }
+void __indirect_glPointParameterfv(void) { }
+void __indirect_glSecondaryColor3b(void) { }
+void __indirect_glSecondaryColor3bv(void) { }
+void __indirect_glSecondaryColor3d(void) { }
+void __indirect_glSecondaryColor3dv(void) { }
 void __indirect_glSecondaryColor3fEXT(void) { }
 void __indirect_glSecondaryColor3fvEXT(void) { }
-void __indirect_glSecondaryColor3iEXT(void) { }
-void __indirect_glSecondaryColor3ivEXT(void) { }
-void __indirect_glSecondaryColor3sEXT(void) { }
-void __indirect_glSecondaryColor3svEXT(void) { }
-void __indirect_glSecondaryColor3ubEXT(void) { }
-void __indirect_glSecondaryColor3ubvEXT(void) { }
-void __indirect_glSecondaryColor3uiEXT(void) { }
-void __indirect_glSecondaryColor3uivEXT(void) { }
-void __indirect_glSecondaryColor3usEXT(void) { }
-void __indirect_glSecondaryColor3usvEXT(void) { }
-void __indirect_glSecondaryColorPointerEXT(void) { }
-void __indirect_glMultiDrawArraysEXT(void) { }
+void __indirect_glSecondaryColor3i(void) { }
+void __indirect_glSecondaryColor3iv(void) { }
+void __indirect_glSecondaryColor3s(void) { }
+void __indirect_glSecondaryColor3sv(void) { }
+void __indirect_glSecondaryColor3ub(void) { }
+void __indirect_glSecondaryColor3ubv(void) { }
+void __indirect_glSecondaryColor3ui(void) { }
+void __indirect_glSecondaryColor3uiv(void) { }
+void __indirect_glSecondaryColor3us(void) { }
+void __indirect_glSecondaryColor3usv(void) { }
+void __indirect_glSecondaryColorPointer(void) { }
+void __indirect_glMultiDrawArrays(void) { }
 void __indirect_glMultiDrawElementsEXT(void) { }
-void __indirect_glFogCoordPointerEXT(void) { }
-void __indirect_glFogCoorddEXT(void) { }
-void __indirect_glFogCoorddvEXT(void) { }
+void __indirect_glFogCoordPointer(void) { }
+void __indirect_glFogCoordd(void) { }
+void __indirect_glFogCoorddv(void) { }
 void __indirect_glFogCoordfEXT(void) { }
 void __indirect_glFogCoordfvEXT(void) { }
-void __indirect_glBlendFuncSeparateEXT(void) { }
-void __indirect_glWindowPos2dMESA(void) { }
-void __indirect_glWindowPos2dvMESA(void) { }
-void __indirect_glWindowPos2fMESA(void) { }
-void __indirect_glWindowPos2fvMESA(void) { }
-void __indirect_glWindowPos2iMESA(void) { }
-void __indirect_glWindowPos2ivMESA(void) { }
-void __indirect_glWindowPos2sMESA(void) { }
-void __indirect_glWindowPos2svMESA(void) { }
-void __indirect_glWindowPos3dMESA(void) { }
-void __indirect_glWindowPos3dvMESA(void) { }
-void __indirect_glWindowPos3fMESA(void) { }
-void __indirect_glWindowPos3fvMESA(void) { }
-void __indirect_glWindowPos3iMESA(void) { }
-void __indirect_glWindowPos3ivMESA(void) { }
-void __indirect_glWindowPos3sMESA(void) { }
-void __indirect_glWindowPos3svMESA(void) { }
+void __indirect_glBlendFuncSeparate(void) { }
+void __indirect_glWindowPos2d(void) { }
+void __indirect_glWindowPos2dv(void) { }
+void __indirect_glWindowPos2f(void) { }
+void __indirect_glWindowPos2fv(void) { }
+void __indirect_glWindowPos2i(void) { }
+void __indirect_glWindowPos2iv(void) { }
+void __indirect_glWindowPos2s(void) { }
+void __indirect_glWindowPos2sv(void) { }
+void __indirect_glWindowPos3d(void) { }
+void __indirect_glWindowPos3dv(void) { }
+void __indirect_glWindowPos3f(void) { }
+void __indirect_glWindowPos3fv(void) { }
+void __indirect_glWindowPos3i(void) { }
+void __indirect_glWindowPos3iv(void) { }
+void __indirect_glWindowPos3s(void) { }
+void __indirect_glWindowPos3sv(void) { }
 void __indirect_glAreProgramsResidentNV(void) { }
-void __indirect_glBindProgramNV(void) { }
-void __indirect_glDeleteProgramsNV(void) { }
+void __indirect_glBindProgramARB(void) { }
+void __indirect_glDeleteProgramsARB(void) { }
 void __indirect_glExecuteProgramNV(void) { }
-void __indirect_glGenProgramsNV(void) { }
+void __indirect_glGenProgramsARB(void) { }
 void __indirect_glGetProgramParameterdvNV(void) { }
 void __indirect_glGetProgramParameterfvNV(void) { }
 void __indirect_glGetProgramStringNV(void) { }
 void __indirect_glGetProgramivNV(void) { }
 void __indirect_glGetTrackMatrixivNV(void) { }
-void __indirect_glGetVertexAttribPointervNV(void) { }
+void __indirect_glGetVertexAttribPointerv(void) { }
 void __indirect_glGetVertexAttribdvNV(void) { }
 void __indirect_glGetVertexAttribfvNV(void) { }
 void __indirect_glGetVertexAttribivNV(void) { }
-void __indirect_glIsProgramNV(void) { }
+void __indirect_glIsProgramARB(void) { }
 void __indirect_glLoadProgramNV(void) { }
 void __indirect_glProgramParameters4dvNV(void) { }
 void __indirect_glProgramParameters4fvNV(void) { }
@@ -673,8 +673,8 @@ void __indirect_glVertexAttribs4dvNV(void) { }
 void __indirect_glVertexAttribs4fvNV(void) { }
 void __indirect_glVertexAttribs4svNV(void) { }
 void __indirect_glVertexAttribs4ubvNV(void) { }
-void __indirect_glPointParameteriNV(void) { }
-void __indirect_glPointParameterivNV(void) { }
+void __indirect_glPointParameteri(void) { }
+void __indirect_glPointParameteriv(void) { }
 void __indirect_glActiveStencilFaceEXT(void) { }
 void __indirect_glGetProgramNamedParameterdvNV(void) { }
 void __indirect_glGetProgramNamedParameterfvNV(void) { }
@@ -682,26 +682,26 @@ void __indirect_glProgramNamedParameter4dNV(void) { }
 void __indirect_glProgramNamedParameter4dvNV(void) { }
 void __indirect_glProgramNamedParameter4fNV(void) { }
 void __indirect_glProgramNamedParameter4fvNV(void) { }
-void __indirect_glBlendEquationSeparateEXT(void) { }
-void __indirect_glBindFramebufferEXT(void) { }
-void __indirect_glBindRenderbufferEXT(void) { }
-void __indirect_glCheckFramebufferStatusEXT(void) { }
-void __indirect_glDeleteFramebuffersEXT(void) { }
-void __indirect_glDeleteRenderbuffersEXT(void) { }
-void __indirect_glFramebufferRenderbufferEXT(void) { }
-void __indirect_glFramebufferTexture1DEXT(void) { }
-void __indirect_glFramebufferTexture2DEXT(void) { }
-void __indirect_glFramebufferTexture3DEXT(void) { }
-void __indirect_glGenFramebuffersEXT(void) { }
-void __indirect_glGenRenderbuffersEXT(void) { }
-void __indirect_glGenerateMipmapEXT(void) { }
-void __indirect_glGetFramebufferAttachmentParameterivEXT(void) { }
-void __indirect_glGetRenderbufferParameterivEXT(void) { }
-void __indirect_glIsFramebufferEXT(void) { }
-void __indirect_glIsRenderbufferEXT(void) { }
-void __indirect_glRenderbufferStorageEXT(void) { }
-void __indirect_glBlitFramebufferEXT(void) { }
-void __indirect_glFramebufferTextureLayerEXT(void) { }
+void __indirect_glBlendEquationSeparate(void) { }
+void __indirect_glBindFramebuffer(void) { }
+void __indirect_glBindRenderbuffer(void) { }
+void __indirect_glCheckFramebufferStatus(void) { }
+void __indirect_glDeleteFramebuffers(void) { }
+void __indirect_glDeleteRenderbuffers(void) { }
+void __indirect_glFramebufferRenderbuffer(void) { }
+void __indirect_glFramebufferTexture1D(void) { }
+void __indirect_glFramebufferTexture2D(void) { }
+void __indirect_glFramebufferTexture3D(void) { }
+void __indirect_glGenFramebuffers(void) { }
+void __indirect_glGenRenderbuffers(void) { }
+void __indirect_glGenerateMipmap(void) { }
+void __indirect_glGetFramebufferAttachmentParameteriv(void) { }
+void __indirect_glGetRenderbufferParameteriv(void) { }
+void __indirect_glIsFramebuffer(void) { }
+void __indirect_glIsRenderbuffer(void) { }
+void __indirect_glRenderbufferStorage(void) { }
+void __indirect_glBlitFramebuffer(void) { }
+void __indirect_glFramebufferTextureLayer(void) { }
 }
 /*@}*/
 
@@ -1165,79 +1165,79 @@ TEST_F(IndirectAPI, OpenGL_20_is_nop)
 
 TEST_F(IndirectAPI, ARB_multitexture)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glActiveTextureARB, table[_gloffset_ActiveTextureARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glClientActiveTextureARB, table[_gloffset_ClientActiveTextureARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1dARB, table[_gloffset_MultiTexCoord1dARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1dvARB, table[_gloffset_MultiTexCoord1dvARB]);
+   EXPECT_EQ((_glapi_proc) __indirect_glActiveTexture, table[_gloffset_ActiveTexture]);
+   EXPECT_EQ((_glapi_proc) __indirect_glClientActiveTexture, table[_gloffset_ClientActiveTexture]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1d, table[_gloffset_MultiTexCoord1d]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1dv, table[_gloffset_MultiTexCoord1dv]);
    EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1fARB, table[_gloffset_MultiTexCoord1fARB]);
    EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1fvARB, table[_gloffset_MultiTexCoord1fvARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1iARB, table[_gloffset_MultiTexCoord1iARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1ivARB, table[_gloffset_MultiTexCoord1ivARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1sARB, table[_gloffset_MultiTexCoord1sARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1svARB, table[_gloffset_MultiTexCoord1svARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2dARB, table[_gloffset_MultiTexCoord2dARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2dvARB, table[_gloffset_MultiTexCoord2dvARB]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1i, table[_gloffset_MultiTexCoord1i]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1iv, table[_gloffset_MultiTexCoord1iv]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1s, table[_gloffset_MultiTexCoord1s]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord1sv, table[_gloffset_MultiTexCoord1sv]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2d, table[_gloffset_MultiTexCoord2d]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2dv, table[_gloffset_MultiTexCoord2dv]);
    EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2fARB, table[_gloffset_MultiTexCoord2fARB]);
    EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2fvARB, table[_gloffset_MultiTexCoord2fvARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2iARB, table[_gloffset_MultiTexCoord2iARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2ivARB, table[_gloffset_MultiTexCoord2ivARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2sARB, table[_gloffset_MultiTexCoord2sARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2svARB, table[_gloffset_MultiTexCoord2svARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3dARB, table[_gloffset_MultiTexCoord3dARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3dvARB, table[_gloffset_MultiTexCoord3dvARB]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2i, table[_gloffset_MultiTexCoord2i]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2iv, table[_gloffset_MultiTexCoord2iv]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2s, table[_gloffset_MultiTexCoord2s]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord2sv, table[_gloffset_MultiTexCoord2sv]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3d, table[_gloffset_MultiTexCoord3d]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3dv, table[_gloffset_MultiTexCoord3dv]);
    EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3fARB, table[_gloffset_MultiTexCoord3fARB]);
    EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3fvARB, table[_gloffset_MultiTexCoord3fvARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3iARB, table[_gloffset_MultiTexCoord3iARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3ivARB, table[_gloffset_MultiTexCoord3ivARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3sARB, table[_gloffset_MultiTexCoord3sARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3svARB, table[_gloffset_MultiTexCoord3svARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4dARB, table[_gloffset_MultiTexCoord4dARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4dvARB, table[_gloffset_MultiTexCoord4dvARB]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3i, table[_gloffset_MultiTexCoord3i]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3iv, table[_gloffset_MultiTexCoord3iv]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3s, table[_gloffset_MultiTexCoord3s]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord3sv, table[_gloffset_MultiTexCoord3sv]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4d, table[_gloffset_MultiTexCoord4d]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4dv, table[_gloffset_MultiTexCoord4dv]);
    EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4fARB, table[_gloffset_MultiTexCoord4fARB]);
    EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4fvARB, table[_gloffset_MultiTexCoord4fvARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4iARB, table[_gloffset_MultiTexCoord4iARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4ivARB, table[_gloffset_MultiTexCoord4ivARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4sARB, table[_gloffset_MultiTexCoord4sARB]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4svARB, table[_gloffset_MultiTexCoord4svARB]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4i, table[_gloffset_MultiTexCoord4i]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4iv, table[_gloffset_MultiTexCoord4iv]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4s, table[_gloffset_MultiTexCoord4s]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiTexCoord4sv, table[_gloffset_MultiTexCoord4sv]);
 }
 
 TEST_F(IndirectAPI, ARB_transpose_matrix)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glLoadTransposeMatrixdARB, table[_glapi_get_proc_offset("glLoadTransposeMatrixdARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glLoadTransposeMatrixfARB, table[_glapi_get_proc_offset("glLoadTransposeMatrixfARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultTransposeMatrixdARB, table[_glapi_get_proc_offset("glMultTransposeMatrixdARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glMultTransposeMatrixfARB, table[_glapi_get_proc_offset("glMultTransposeMatrixfARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glLoadTransposeMatrixd, table[_glapi_get_proc_offset("glLoadTransposeMatrixdARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glLoadTransposeMatrixf, table[_glapi_get_proc_offset("glLoadTransposeMatrixfARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultTransposeMatrixd, table[_glapi_get_proc_offset("glMultTransposeMatrixdARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultTransposeMatrixf, table[_glapi_get_proc_offset("glMultTransposeMatrixfARB")]);
 }
 
 TEST_F(IndirectAPI, ARB_multisample)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glSampleCoverageARB, table[_glapi_get_proc_offset("glSampleCoverageARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSampleCoverage, table[_glapi_get_proc_offset("glSampleCoverageARB")]);
 }
 
 TEST_F(IndirectAPI, ARB_texture_compression)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexImage1DARB, table[_glapi_get_proc_offset("glCompressedTexImage1DARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexImage2DARB, table[_glapi_get_proc_offset("glCompressedTexImage2DARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexImage3DARB, table[_glapi_get_proc_offset("glCompressedTexImage3DARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexSubImage1DARB, table[_glapi_get_proc_offset("glCompressedTexSubImage1DARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexSubImage2DARB, table[_glapi_get_proc_offset("glCompressedTexSubImage2DARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexSubImage3DARB, table[_glapi_get_proc_offset("glCompressedTexSubImage3DARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGetCompressedTexImageARB, table[_glapi_get_proc_offset("glGetCompressedTexImageARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexImage1D, table[_glapi_get_proc_offset("glCompressedTexImage1DARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexImage2D, table[_glapi_get_proc_offset("glCompressedTexImage2DARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexImage3D, table[_glapi_get_proc_offset("glCompressedTexImage3DARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexSubImage1D, table[_glapi_get_proc_offset("glCompressedTexSubImage1DARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexSubImage2D, table[_glapi_get_proc_offset("glCompressedTexSubImage2DARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glCompressedTexSubImage3D, table[_glapi_get_proc_offset("glCompressedTexSubImage3DARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGetCompressedTexImage, table[_glapi_get_proc_offset("glGetCompressedTexImageARB")]);
 }
 
 TEST_F(IndirectAPI, ARB_vertex_program)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glDisableVertexAttribArrayARB, table[_glapi_get_proc_offset("glDisableVertexAttribArrayARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glEnableVertexAttribArrayARB, table[_glapi_get_proc_offset("glEnableVertexAttribArrayARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glDisableVertexAttribArray, table[_glapi_get_proc_offset("glDisableVertexAttribArrayARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glEnableVertexAttribArray, table[_glapi_get_proc_offset("glEnableVertexAttribArrayARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetProgramEnvParameterdvARB, table[_glapi_get_proc_offset("glGetProgramEnvParameterdvARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetProgramEnvParameterfvARB, table[_glapi_get_proc_offset("glGetProgramEnvParameterfvARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetProgramLocalParameterdvARB, table[_glapi_get_proc_offset("glGetProgramLocalParameterdvARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetProgramLocalParameterfvARB, table[_glapi_get_proc_offset("glGetProgramLocalParameterfvARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetProgramStringARB, table[_glapi_get_proc_offset("glGetProgramStringARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetProgramivARB, table[_glapi_get_proc_offset("glGetProgramivARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGetVertexAttribdvARB, table[_glapi_get_proc_offset("glGetVertexAttribdvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGetVertexAttribfvARB, table[_glapi_get_proc_offset("glGetVertexAttribfvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGetVertexAttribivARB, table[_glapi_get_proc_offset("glGetVertexAttribivARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGetVertexAttribdv, table[_glapi_get_proc_offset("glGetVertexAttribdvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGetVertexAttribfv, table[_glapi_get_proc_offset("glGetVertexAttribfvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGetVertexAttribiv, table[_glapi_get_proc_offset("glGetVertexAttribivARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glProgramEnvParameter4dARB, table[_glapi_get_proc_offset("glProgramEnvParameter4dARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glProgramEnvParameter4dvARB, table[_glapi_get_proc_offset("glProgramEnvParameter4dvARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glProgramEnvParameter4fARB, table[_glapi_get_proc_offset("glProgramEnvParameter4fARB")]);
@@ -1247,65 +1247,65 @@ TEST_F(IndirectAPI, ARB_vertex_program)
    EXPECT_EQ((_glapi_proc) __indirect_glProgramLocalParameter4fARB, table[_glapi_get_proc_offset("glProgramLocalParameter4fARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glProgramLocalParameter4fvARB, table[_glapi_get_proc_offset("glProgramLocalParameter4fvARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glProgramStringARB, table[_glapi_get_proc_offset("glProgramStringARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib1dARB, table[_glapi_get_proc_offset("glVertexAttrib1dARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib1dvARB, table[_glapi_get_proc_offset("glVertexAttrib1dvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib1d, table[_glapi_get_proc_offset("glVertexAttrib1dARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib1dv, table[_glapi_get_proc_offset("glVertexAttrib1dvARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib1fARB, table[_glapi_get_proc_offset("glVertexAttrib1fARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib1fvARB, table[_glapi_get_proc_offset("glVertexAttrib1fvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib1sARB, table[_glapi_get_proc_offset("glVertexAttrib1sARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib1svARB, table[_glapi_get_proc_offset("glVertexAttrib1svARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib2dARB, table[_glapi_get_proc_offset("glVertexAttrib2dARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib2dvARB, table[_glapi_get_proc_offset("glVertexAttrib2dvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib1s, table[_glapi_get_proc_offset("glVertexAttrib1sARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib1sv, table[_glapi_get_proc_offset("glVertexAttrib1svARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib2d, table[_glapi_get_proc_offset("glVertexAttrib2dARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib2dv, table[_glapi_get_proc_offset("glVertexAttrib2dvARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib2fARB, table[_glapi_get_proc_offset("glVertexAttrib2fARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib2fvARB, table[_glapi_get_proc_offset("glVertexAttrib2fvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib2sARB, table[_glapi_get_proc_offset("glVertexAttrib2sARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib2svARB, table[_glapi_get_proc_offset("glVertexAttrib2svARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib3dARB, table[_glapi_get_proc_offset("glVertexAttrib3dARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib3dvARB, table[_glapi_get_proc_offset("glVertexAttrib3dvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib2s, table[_glapi_get_proc_offset("glVertexAttrib2sARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib2sv, table[_glapi_get_proc_offset("glVertexAttrib2svARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib3d, table[_glapi_get_proc_offset("glVertexAttrib3dARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib3dv, table[_glapi_get_proc_offset("glVertexAttrib3dvARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib3fARB, table[_glapi_get_proc_offset("glVertexAttrib3fARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib3fvARB, table[_glapi_get_proc_offset("glVertexAttrib3fvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib3sARB, table[_glapi_get_proc_offset("glVertexAttrib3sARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib3svARB, table[_glapi_get_proc_offset("glVertexAttrib3svARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4NbvARB, table[_glapi_get_proc_offset("glVertexAttrib4NbvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4NivARB, table[_glapi_get_proc_offset("glVertexAttrib4NivARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4NsvARB, table[_glapi_get_proc_offset("glVertexAttrib4NsvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4NubARB, table[_glapi_get_proc_offset("glVertexAttrib4NubARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4NubvARB, table[_glapi_get_proc_offset("glVertexAttrib4NubvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4NuivARB, table[_glapi_get_proc_offset("glVertexAttrib4NuivARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4NusvARB, table[_glapi_get_proc_offset("glVertexAttrib4NusvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4bvARB, table[_glapi_get_proc_offset("glVertexAttrib4bvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4dARB, table[_glapi_get_proc_offset("glVertexAttrib4dARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4dvARB, table[_glapi_get_proc_offset("glVertexAttrib4dvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib3s, table[_glapi_get_proc_offset("glVertexAttrib3sARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib3sv, table[_glapi_get_proc_offset("glVertexAttrib3svARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4Nbv, table[_glapi_get_proc_offset("glVertexAttrib4NbvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4Niv, table[_glapi_get_proc_offset("glVertexAttrib4NivARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4Nsv, table[_glapi_get_proc_offset("glVertexAttrib4NsvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4Nub, table[_glapi_get_proc_offset("glVertexAttrib4NubARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4Nubv, table[_glapi_get_proc_offset("glVertexAttrib4NubvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4Nuiv, table[_glapi_get_proc_offset("glVertexAttrib4NuivARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4Nusv, table[_glapi_get_proc_offset("glVertexAttrib4NusvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4bv, table[_glapi_get_proc_offset("glVertexAttrib4bvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4d, table[_glapi_get_proc_offset("glVertexAttrib4dARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4dv, table[_glapi_get_proc_offset("glVertexAttrib4dvARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4fARB, table[_glapi_get_proc_offset("glVertexAttrib4fARB")]);
    EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4fvARB, table[_glapi_get_proc_offset("glVertexAttrib4fvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4ivARB, table[_glapi_get_proc_offset("glVertexAttrib4ivARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4sARB, table[_glapi_get_proc_offset("glVertexAttrib4sARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4svARB, table[_glapi_get_proc_offset("glVertexAttrib4svARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4ubvARB, table[_glapi_get_proc_offset("glVertexAttrib4ubvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4uivARB, table[_glapi_get_proc_offset("glVertexAttrib4uivARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4usvARB, table[_glapi_get_proc_offset("glVertexAttrib4usvARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttribPointerARB, table[_glapi_get_proc_offset("glVertexAttribPointerARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4iv, table[_glapi_get_proc_offset("glVertexAttrib4ivARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4s, table[_glapi_get_proc_offset("glVertexAttrib4sARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4sv, table[_glapi_get_proc_offset("glVertexAttrib4svARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4ubv, table[_glapi_get_proc_offset("glVertexAttrib4ubvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4uiv, table[_glapi_get_proc_offset("glVertexAttrib4uivARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttrib4usv, table[_glapi_get_proc_offset("glVertexAttrib4usvARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glVertexAttribPointer, table[_glapi_get_proc_offset("glVertexAttribPointerARB")]);
 }
 
 TEST_F(IndirectAPI, ARB_occlusion_query)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glBeginQueryARB, table[_glapi_get_proc_offset("glBeginQueryARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glDeleteQueriesARB, table[_glapi_get_proc_offset("glDeleteQueriesARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glEndQueryARB, table[_glapi_get_proc_offset("glEndQueryARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGenQueriesARB, table[_glapi_get_proc_offset("glGenQueriesARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGetQueryObjectivARB, table[_glapi_get_proc_offset("glGetQueryObjectivARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGetQueryObjectuivARB, table[_glapi_get_proc_offset("glGetQueryObjectuivARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGetQueryivARB, table[_glapi_get_proc_offset("glGetQueryivARB")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glIsQueryARB, table[_glapi_get_proc_offset("glIsQueryARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glBeginQuery, table[_glapi_get_proc_offset("glBeginQueryARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glDeleteQueries, table[_glapi_get_proc_offset("glDeleteQueriesARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glEndQuery, table[_glapi_get_proc_offset("glEndQueryARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGenQueries, table[_glapi_get_proc_offset("glGenQueriesARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGetQueryObjectiv, table[_glapi_get_proc_offset("glGetQueryObjectivARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGetQueryObjectuiv, table[_glapi_get_proc_offset("glGetQueryObjectuivARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGetQueryiv, table[_glapi_get_proc_offset("glGetQueryivARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glIsQuery, table[_glapi_get_proc_offset("glIsQueryARB")]);
 }
 
 TEST_F(IndirectAPI, ARB_draw_buffers)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glDrawBuffersARB, table[_glapi_get_proc_offset("glDrawBuffersARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glDrawBuffers, table[_glapi_get_proc_offset("glDrawBuffersARB")]);
 }
 
 TEST_F(IndirectAPI, ARB_color_buffer_float)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glClampColorARB, table[_glapi_get_proc_offset("glClampColorARB")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glClampColor, table[_glapi_get_proc_offset("glClampColorARB")]);
 }
 
 TEST_F(IndirectAPI, ARB_framebuffer_object)
@@ -1331,88 +1331,88 @@ TEST_F(IndirectAPI, EXT_vertex_array)
 
 TEST_F(IndirectAPI, EXT_point_parameters)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glPointParameterfEXT, table[_glapi_get_proc_offset("glPointParameterfEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glPointParameterfvEXT, table[_glapi_get_proc_offset("glPointParameterfvEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glPointParameterf, table[_glapi_get_proc_offset("glPointParameterfEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glPointParameterfv, table[_glapi_get_proc_offset("glPointParameterfvEXT")]);
 }
 
 TEST_F(IndirectAPI, EXT_secondary_color)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3bEXT, table[_glapi_get_proc_offset("glSecondaryColor3bEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3bvEXT, table[_glapi_get_proc_offset("glSecondaryColor3bvEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3dEXT, table[_glapi_get_proc_offset("glSecondaryColor3dEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3dvEXT, table[_glapi_get_proc_offset("glSecondaryColor3dvEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3b, table[_glapi_get_proc_offset("glSecondaryColor3bEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3bv, table[_glapi_get_proc_offset("glSecondaryColor3bvEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3d, table[_glapi_get_proc_offset("glSecondaryColor3dEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3dv, table[_glapi_get_proc_offset("glSecondaryColor3dvEXT")]);
    EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3fEXT, table[_glapi_get_proc_offset("glSecondaryColor3fEXT")]);
    EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3fvEXT, table[_glapi_get_proc_offset("glSecondaryColor3fvEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3iEXT, table[_glapi_get_proc_offset("glSecondaryColor3iEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3ivEXT, table[_glapi_get_proc_offset("glSecondaryColor3ivEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3sEXT, table[_glapi_get_proc_offset("glSecondaryColor3sEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3svEXT, table[_glapi_get_proc_offset("glSecondaryColor3svEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3ubEXT, table[_glapi_get_proc_offset("glSecondaryColor3ubEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3ubvEXT, table[_glapi_get_proc_offset("glSecondaryColor3ubvEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3uiEXT, table[_glapi_get_proc_offset("glSecondaryColor3uiEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3uivEXT, table[_glapi_get_proc_offset("glSecondaryColor3uivEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3usEXT, table[_glapi_get_proc_offset("glSecondaryColor3usEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3usvEXT, table[_glapi_get_proc_offset("glSecondaryColor3usvEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColorPointerEXT, table[_glapi_get_proc_offset("glSecondaryColorPointerEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3i, table[_glapi_get_proc_offset("glSecondaryColor3iEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3iv, table[_glapi_get_proc_offset("glSecondaryColor3ivEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3s, table[_glapi_get_proc_offset("glSecondaryColor3sEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3sv, table[_glapi_get_proc_offset("glSecondaryColor3svEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3ub, table[_glapi_get_proc_offset("glSecondaryColor3ubEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3ubv, table[_glapi_get_proc_offset("glSecondaryColor3ubvEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3ui, table[_glapi_get_proc_offset("glSecondaryColor3uiEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3uiv, table[_glapi_get_proc_offset("glSecondaryColor3uivEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3us, table[_glapi_get_proc_offset("glSecondaryColor3usEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColor3usv, table[_glapi_get_proc_offset("glSecondaryColor3usvEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glSecondaryColorPointer, table[_glapi_get_proc_offset("glSecondaryColorPointerEXT")]);
 }
 
 TEST_F(IndirectAPI, EXT_multi_draw_arrays)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glMultiDrawArraysEXT, table[_glapi_get_proc_offset("glMultiDrawArraysEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glMultiDrawArrays, table[_glapi_get_proc_offset("glMultiDrawArraysEXT")]);
    EXPECT_EQ((_glapi_proc) __indirect_glMultiDrawElementsEXT, table[_glapi_get_proc_offset("glMultiDrawElementsEXT")]);
 }
 
 TEST_F(IndirectAPI, EXT_fog_coord)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glFogCoordPointerEXT, table[_glapi_get_proc_offset("glFogCoordPointerEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glFogCoorddEXT, table[_glapi_get_proc_offset("glFogCoorddEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glFogCoorddvEXT, table[_glapi_get_proc_offset("glFogCoorddvEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glFogCoordPointer, table[_glapi_get_proc_offset("glFogCoordPointerEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glFogCoordd, table[_glapi_get_proc_offset("glFogCoorddEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glFogCoorddv, table[_glapi_get_proc_offset("glFogCoorddvEXT")]);
    EXPECT_EQ((_glapi_proc) __indirect_glFogCoordfEXT, table[_glapi_get_proc_offset("glFogCoordfEXT")]);
    EXPECT_EQ((_glapi_proc) __indirect_glFogCoordfvEXT, table[_glapi_get_proc_offset("glFogCoordfvEXT")]);
 }
 
 TEST_F(IndirectAPI, EXT_blend_func_separate)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glBlendFuncSeparateEXT, table[_glapi_get_proc_offset("glBlendFuncSeparateEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glBlendFuncSeparate, table[_glapi_get_proc_offset("glBlendFuncSeparateEXT")]);
 }
 
 TEST_F(IndirectAPI, MESA_window_pos)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2dMESA, table[_glapi_get_proc_offset("glWindowPos2dMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2dvMESA, table[_glapi_get_proc_offset("glWindowPos2dvMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2fMESA, table[_glapi_get_proc_offset("glWindowPos2fMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2fvMESA, table[_glapi_get_proc_offset("glWindowPos2fvMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2iMESA, table[_glapi_get_proc_offset("glWindowPos2iMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2ivMESA, table[_glapi_get_proc_offset("glWindowPos2ivMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2sMESA, table[_glapi_get_proc_offset("glWindowPos2sMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2svMESA, table[_glapi_get_proc_offset("glWindowPos2svMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3dMESA, table[_glapi_get_proc_offset("glWindowPos3dMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3dvMESA, table[_glapi_get_proc_offset("glWindowPos3dvMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3fMESA, table[_glapi_get_proc_offset("glWindowPos3fMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3fvMESA, table[_glapi_get_proc_offset("glWindowPos3fvMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3iMESA, table[_glapi_get_proc_offset("glWindowPos3iMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3ivMESA, table[_glapi_get_proc_offset("glWindowPos3ivMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3sMESA, table[_glapi_get_proc_offset("glWindowPos3sMESA")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3svMESA, table[_glapi_get_proc_offset("glWindowPos3svMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2d, table[_glapi_get_proc_offset("glWindowPos2dMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2dv, table[_glapi_get_proc_offset("glWindowPos2dvMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2f, table[_glapi_get_proc_offset("glWindowPos2fMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2fv, table[_glapi_get_proc_offset("glWindowPos2fvMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2i, table[_glapi_get_proc_offset("glWindowPos2iMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2iv, table[_glapi_get_proc_offset("glWindowPos2ivMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2s, table[_glapi_get_proc_offset("glWindowPos2sMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos2sv, table[_glapi_get_proc_offset("glWindowPos2svMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3d, table[_glapi_get_proc_offset("glWindowPos3dMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3dv, table[_glapi_get_proc_offset("glWindowPos3dvMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3f, table[_glapi_get_proc_offset("glWindowPos3fMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3fv, table[_glapi_get_proc_offset("glWindowPos3fvMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3i, table[_glapi_get_proc_offset("glWindowPos3iMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3iv, table[_glapi_get_proc_offset("glWindowPos3ivMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3s, table[_glapi_get_proc_offset("glWindowPos3sMESA")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glWindowPos3sv, table[_glapi_get_proc_offset("glWindowPos3svMESA")]);
 }
 
 TEST_F(IndirectAPI, NV_vertex_program)
 {
    EXPECT_EQ((_glapi_proc) __indirect_glAreProgramsResidentNV, table[_glapi_get_proc_offset("glAreProgramsResidentNV")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glBindProgramNV, table[_glapi_get_proc_offset("glBindProgramNV")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glDeleteProgramsNV, table[_glapi_get_proc_offset("glDeleteProgramsNV")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glBindProgramARB, table[_glapi_get_proc_offset("glBindProgramNV")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glDeleteProgramsARB, table[_glapi_get_proc_offset("glDeleteProgramsNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glExecuteProgramNV, table[_glapi_get_proc_offset("glExecuteProgramNV")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGenProgramsNV, table[_glapi_get_proc_offset("glGenProgramsNV")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGenProgramsARB, table[_glapi_get_proc_offset("glGenProgramsNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetProgramParameterdvNV, table[_glapi_get_proc_offset("glGetProgramParameterdvNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetProgramParameterfvNV, table[_glapi_get_proc_offset("glGetProgramParameterfvNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetProgramStringNV, table[_glapi_get_proc_offset("glGetProgramStringNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetProgramivNV, table[_glapi_get_proc_offset("glGetProgramivNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetTrackMatrixivNV, table[_glapi_get_proc_offset("glGetTrackMatrixivNV")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGetVertexAttribPointervNV, table[_glapi_get_proc_offset("glGetVertexAttribPointervNV")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGetVertexAttribPointerv, table[_glapi_get_proc_offset("glGetVertexAttribPointervNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetVertexAttribdvNV, table[_glapi_get_proc_offset("glGetVertexAttribdvNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetVertexAttribfvNV, table[_glapi_get_proc_offset("glGetVertexAttribfvNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glGetVertexAttribivNV, table[_glapi_get_proc_offset("glGetVertexAttribivNV")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glIsProgramNV, table[_glapi_get_proc_offset("glIsProgramNV")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glIsProgramARB, table[_glapi_get_proc_offset("glIsProgramNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glLoadProgramNV, table[_glapi_get_proc_offset("glLoadProgramNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glProgramParameters4dvNV, table[_glapi_get_proc_offset("glProgramParameters4dvNV")]);
    EXPECT_EQ((_glapi_proc) __indirect_glProgramParameters4fvNV, table[_glapi_get_proc_offset("glProgramParameters4fvNV")]);
@@ -1462,8 +1462,8 @@ TEST_F(IndirectAPI, NV_vertex_program)
 
 TEST_F(IndirectAPI, NV_point_sprite)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glPointParameteriNV, table[_glapi_get_proc_offset("glPointParameteriNV")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glPointParameterivNV, table[_glapi_get_proc_offset("glPointParameterivNV")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glPointParameteri, table[_glapi_get_proc_offset("glPointParameteriNV")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glPointParameteriv, table[_glapi_get_proc_offset("glPointParameterivNV")]);
 }
 
 TEST_F(IndirectAPI, EXT_stencil_two_side)
@@ -1483,36 +1483,36 @@ TEST_F(IndirectAPI, NV_fragment_program)
 
 TEST_F(IndirectAPI, EXT_blend_equation_separate)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glBlendEquationSeparateEXT, table[_glapi_get_proc_offset("glBlendEquationSeparateEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glBlendEquationSeparate, table[_glapi_get_proc_offset("glBlendEquationSeparateEXT")]);
 }
 
 TEST_F(IndirectAPI, EXT_framebuffer_object)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glBindFramebufferEXT, table[_glapi_get_proc_offset("glBindFramebufferEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glBindRenderbufferEXT, table[_glapi_get_proc_offset("glBindRenderbufferEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glCheckFramebufferStatusEXT, table[_glapi_get_proc_offset("glCheckFramebufferStatusEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glDeleteFramebuffersEXT, table[_glapi_get_proc_offset("glDeleteFramebuffersEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glDeleteRenderbuffersEXT, table[_glapi_get_proc_offset("glDeleteRenderbuffersEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glFramebufferRenderbufferEXT, table[_glapi_get_proc_offset("glFramebufferRenderbufferEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glFramebufferTexture1DEXT, table[_glapi_get_proc_offset("glFramebufferTexture1DEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glFramebufferTexture2DEXT, table[_glapi_get_proc_offset("glFramebufferTexture2DEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glFramebufferTexture3DEXT, table[_glapi_get_proc_offset("glFramebufferTexture3DEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGenFramebuffersEXT, table[_glapi_get_proc_offset("glGenFramebuffersEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGenRenderbuffersEXT, table[_glapi_get_proc_offset("glGenRenderbuffersEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGenerateMipmapEXT, table[_glapi_get_proc_offset("glGenerateMipmapEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGetFramebufferAttachmentParameterivEXT, table[_glapi_get_proc_offset("glGetFramebufferAttachmentParameterivEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glGetRenderbufferParameterivEXT, table[_glapi_get_proc_offset("glGetRenderbufferParameterivEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glIsFramebufferEXT, table[_glapi_get_proc_offset("glIsFramebufferEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glIsRenderbufferEXT, table[_glapi_get_proc_offset("glIsRenderbufferEXT")]);
-   EXPECT_EQ((_glapi_proc) __indirect_glRenderbufferStorageEXT, table[_glapi_get_proc_offset("glRenderbufferStorageEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glBindFramebuffer, table[_glapi_get_proc_offset("glBindFramebufferEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glBindRenderbuffer, table[_glapi_get_proc_offset("glBindRenderbufferEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glCheckFramebufferStatus, table[_glapi_get_proc_offset("glCheckFramebufferStatusEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glDeleteFramebuffers, table[_glapi_get_proc_offset("glDeleteFramebuffersEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glDeleteRenderbuffers, table[_glapi_get_proc_offset("glDeleteRenderbuffersEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glFramebufferRenderbuffer, table[_glapi_get_proc_offset("glFramebufferRenderbufferEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glFramebufferTexture1D, table[_glapi_get_proc_offset("glFramebufferTexture1DEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glFramebufferTexture2D, table[_glapi_get_proc_offset("glFramebufferTexture2DEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glFramebufferTexture3D, table[_glapi_get_proc_offset("glFramebufferTexture3DEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGenFramebuffers, table[_glapi_get_proc_offset("glGenFramebuffersEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGenRenderbuffers, table[_glapi_get_proc_offset("glGenRenderbuffersEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGenerateMipmap, table[_glapi_get_proc_offset("glGenerateMipmapEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGetFramebufferAttachmentParameteriv, table[_glapi_get_proc_offset("glGetFramebufferAttachmentParameterivEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glGetRenderbufferParameteriv, table[_glapi_get_proc_offset("glGetRenderbufferParameterivEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glIsFramebuffer, table[_glapi_get_proc_offset("glIsFramebufferEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glIsRenderbuffer, table[_glapi_get_proc_offset("glIsRenderbufferEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glRenderbufferStorage, table[_glapi_get_proc_offset("glRenderbufferStorageEXT")]);
 }
 
 TEST_F(IndirectAPI, EXT_framebuffer_blit)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glBlitFramebufferEXT, table[_glapi_get_proc_offset("glBlitFramebufferEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glBlitFramebuffer, table[_glapi_get_proc_offset("glBlitFramebufferEXT")]);
 }
 
 TEST_F(IndirectAPI, EXT_texture_array)
 {
-   EXPECT_EQ((_glapi_proc) __indirect_glFramebufferTextureLayerEXT, table[_glapi_get_proc_offset("glFramebufferTextureLayerEXT")]);
+   EXPECT_EQ((_glapi_proc) __indirect_glFramebufferTextureLayer, table[_glapi_get_proc_offset("glFramebufferTextureLayerEXT")]);
 }

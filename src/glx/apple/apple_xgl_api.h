@@ -36,7 +36,7 @@ void __applegl_glCopyColorTable(GLenum target, GLenum internalformat, GLint x, G
                                 GLsizei width);
 
 void __applegl_glDrawBuffer(GLenum mode);
-void __applegl_glDrawBuffersARB(GLsizei n, const GLenum * bufs);
+void __applegl_glDrawBuffers(GLsizei n, const GLenum * bufs);
 
 void __applegl_glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 

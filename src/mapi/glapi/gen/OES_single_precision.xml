@@ -11,10 +11,10 @@
         <param name="depth" type="GLclampf"/>
     </function>
 
-    <function name="ClipPlanefOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="es" mesa_name="-OES">
+    <function name="ClipPlanefOES" static_dispatch="false"
+              es1="1.0" alias="ClipPlanef">
         <param name="plane" type="GLenum"/>
-        <param name="equation" type="const GLfloat *" count="4"/>
+        <param name="equation" type="const GLfloat *"/>
     </function>
 
     <function name="DepthRangefOES" alias="DepthRangef" static_dispatch="false"
@@ -23,14 +23,14 @@
         <param name="zFar" type="GLclampf"/>
     </function>
 
-    <function name="GetClipPlanefOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="es" desktop="false" mesa_name="-OES">
+    <function name="GetClipPlanefOES" static_dispatch="false"
+              es1="1.0" desktop="false" alias="GetClipPlanef">
         <param name="plane" type="GLenum"/>
-        <param name="equation" type="GLfloat *" output="true" count="4"/>
+        <param name="equation" type="GLfloat *"/>
     </function>
 
-    <function name="FrustumfOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="es" mesa_name="-OES">
+    <function name="FrustumfOES" static_dispatch="false"
+              es1="1.0" alias="Frustumf">
         <param name="left" type="GLfloat"/>
         <param name="right" type="GLfloat"/>
         <param name="bottom" type="GLfloat"/>
@@ -39,8 +39,8 @@
         <param name="zFar" type="GLfloat"/>
     </function>
 
-    <function name="OrthofOES" offset="assign" static_dispatch="false"
-              es1="1.0" exec="es" mesa_name="-OES">
+    <function name="OrthofOES" static_dispatch="false"
+              es1="1.0" alias="Orthof">
         <param name="left" type="GLfloat"/>
         <param name="right" type="GLfloat"/>
         <param name="bottom" type="GLfloat"/>

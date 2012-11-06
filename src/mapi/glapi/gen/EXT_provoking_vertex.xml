@@ -13,7 +13,7 @@
     <enum name="PROVOKING_VERTEX_EXT"                         value="0x8E4F"/>
     <enum name="QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT" value="0x8E4C"/>
 
-    <function name="ProvokingVertexEXT" offset="assign">
+    <function name="ProvokingVertexEXT" alias="ProvokingVertex">
         <param name="mode" type="GLenum"/>
     </function>
 
@@ -26,7 +26,7 @@
     <enum name="PROVOKING_VERTEX"                         value="0x8E4F"/>
     <enum name="QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION" value="0x8E4C"/>
 
-    <function name="ProvokingVertex" alias="ProvokingVertexEXT">
+    <function name="ProvokingVertex" offset="assign">
         <param name="mode" type="GLenum"/>
     </function>
 

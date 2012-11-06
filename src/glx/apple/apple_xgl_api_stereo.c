@@ -84,7 +84,7 @@ __applegl_glDrawBuffer(GLenum mode)
 
 
 void
-__applegl_glDrawBuffersARB(GLsizei n, const GLenum * bufs)
+__applegl_glDrawBuffers(GLsizei n, const GLenum * bufs)
 {
    struct glx_context * gc = __glXGetCurrentContext();
 

@@ -55,10 +55,9 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="DrawBuffersARB" offset="assign">
-        <param name="n" type="GLsizei" counter="true"/>
-        <param name="bufs" type="const GLenum *" count="n"/>
-        <glx rop="233" large="true"/>
+    <function name="DrawBuffersARB" alias="DrawBuffers">
+        <param name="n" type="GLsizei"/>
+        <param name="bufs" type="const GLenum *"/>
     </function>
 </category>
 
@@ -115,7 +114,7 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="DrawBuffersATI" alias="DrawBuffersARB">
+    <function name="DrawBuffersATI" alias="DrawBuffers">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="bufs" type="const GLenum *" count="n"/>
     </function>

@@ -28,85 +28,85 @@
 #include "indirect.h"
 
 void
-__indirect_glWindowPos2dMESA(GLdouble x, GLdouble y)
+__indirect_glWindowPos2d(GLdouble x, GLdouble y)
 {
-   __indirect_glWindowPos3fMESA(x, y, 0.0);
+   __indirect_glWindowPos3f(x, y, 0.0);
 }
 
 void
-__indirect_glWindowPos2iMESA(GLint x, GLint y)
+__indirect_glWindowPos2i(GLint x, GLint y)
 {
-   __indirect_glWindowPos3fMESA(x, y, 0.0);
+   __indirect_glWindowPos3f(x, y, 0.0);
 }
 
 void
-__indirect_glWindowPos2fMESA(GLfloat x, GLfloat y)
+__indirect_glWindowPos2f(GLfloat x, GLfloat y)
 {
-   __indirect_glWindowPos3fMESA(x, y, 0.0);
+   __indirect_glWindowPos3f(x, y, 0.0);
 }
 
 void
-__indirect_glWindowPos2sMESA(GLshort x, GLshort y)
+__indirect_glWindowPos2s(GLshort x, GLshort y)
 {
-   __indirect_glWindowPos3fMESA(x, y, 0.0);
+   __indirect_glWindowPos3f(x, y, 0.0);
 }
 
 void
-__indirect_glWindowPos2dvMESA(const GLdouble * p)
+__indirect_glWindowPos2dv(const GLdouble * p)
 {
-   __indirect_glWindowPos3fMESA(p[0], p[1], 0.0);
+   __indirect_glWindowPos3f(p[0], p[1], 0.0);
 }
 
 void
-__indirect_glWindowPos2fvMESA(const GLfloat * p)
+__indirect_glWindowPos2fv(const GLfloat * p)
 {
-   __indirect_glWindowPos3fMESA(p[0], p[1], 0.0);
+   __indirect_glWindowPos3f(p[0], p[1], 0.0);
 }
 
 void
-__indirect_glWindowPos2ivMESA(const GLint * p)
+__indirect_glWindowPos2iv(const GLint * p)
 {
-   __indirect_glWindowPos3fMESA(p[0], p[1], 0.0);
+   __indirect_glWindowPos3f(p[0], p[1], 0.0);
 }
 
 void
-__indirect_glWindowPos2svMESA(const GLshort * p)
+__indirect_glWindowPos2sv(const GLshort * p)
 {
-   __indirect_glWindowPos3fMESA(p[0], p[1], 0.0);
+   __indirect_glWindowPos3f(p[0], p[1], 0.0);
 }
 
 void
-__indirect_glWindowPos3dMESA(GLdouble x, GLdouble y, GLdouble z)
+__indirect_glWindowPos3d(GLdouble x, GLdouble y, GLdouble z)
 {
-   __indirect_glWindowPos3fMESA(x, y, z);
+   __indirect_glWindowPos3f(x, y, z);
 }
 
 void
-__indirect_glWindowPos3iMESA(GLint x, GLint y, GLint z)
+__indirect_glWindowPos3i(GLint x, GLint y, GLint z)
 {
-   __indirect_glWindowPos3fMESA(x, y, z);
+   __indirect_glWindowPos3f(x, y, z);
 }
 
 void
-__indirect_glWindowPos3sMESA(GLshort x, GLshort y, GLshort z)
+__indirect_glWindowPos3s(GLshort x, GLshort y, GLshort z)
 {
-   __indirect_glWindowPos3fMESA(x, y, z);
+   __indirect_glWindowPos3f(x, y, z);
 }
 
 void
-__indirect_glWindowPos3dvMESA(const GLdouble * p)
+__indirect_glWindowPos3dv(const GLdouble * p)
 {
-   __indirect_glWindowPos3fMESA(p[0], p[1], p[2]);
+   __indirect_glWindowPos3f(p[0], p[1], p[2]);
 }
 
 void
-__indirect_glWindowPos3ivMESA(const GLint * p)
+__indirect_glWindowPos3iv(const GLint * p)
 {
-   __indirect_glWindowPos3fMESA(p[0], p[1], p[2]);
+   __indirect_glWindowPos3f(p[0], p[1], p[2]);
 }
 
 void
-__indirect_glWindowPos3svMESA(const GLshort * p)
+__indirect_glWindowPos3sv(const GLshort * p)
 {
-   __indirect_glWindowPos3fMESA(p[0], p[1], p[2]);
+   __indirect_glWindowPos3f(p[0], p[1], p[2]);
 }

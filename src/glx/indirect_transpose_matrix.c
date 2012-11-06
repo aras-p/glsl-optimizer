@@ -49,7 +49,7 @@ TransposeMatrixd(const GLdouble s[16], GLdouble d[16])
 
 
 void
-__indirect_glLoadTransposeMatrixdARB(const GLdouble * m)
+__indirect_glLoadTransposeMatrixd(const GLdouble * m)
 {
    GLdouble mt[16];
 
@@ -58,7 +58,7 @@ __indirect_glLoadTransposeMatrixdARB(const GLdouble * m)
 }
 
 void
-__indirect_glLoadTransposeMatrixfARB(const GLfloat * m)
+__indirect_glLoadTransposeMatrixf(const GLfloat * m)
 {
    GLfloat mt[16];
 
@@ -67,7 +67,7 @@ __indirect_glLoadTransposeMatrixfARB(const GLfloat * m)
 }
 
 void
-__indirect_glMultTransposeMatrixdARB(const GLdouble * m)
+__indirect_glMultTransposeMatrixd(const GLdouble * m)
 {
    GLdouble mt[16];
 
@@ -76,7 +76,7 @@ __indirect_glMultTransposeMatrixdARB(const GLdouble * m)
 }
 
 void
-__indirect_glMultTransposeMatrixfARB(const GLfloat * m)
+__indirect_glMultTransposeMatrixf(const GLfloat * m)
 {
    GLfloat mt[16];
 

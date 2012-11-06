@@ -330,7 +330,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 
 
 void GLAPIENTRY
-_mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
+_mesa_FogCoordPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    const GLbitfield legalTypes = (HALF_BIT | FLOAT_BIT | DOUBLE_BIT);
    GET_CURRENT_CONTEXT(ctx);
@@ -357,7 +357,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 
 
 void GLAPIENTRY
-_mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
+_mesa_SecondaryColorPointer(GLint size, GLenum type,
 			       GLsizei stride, const GLvoid *ptr)
 {
    const GLbitfield legalTypes = (BYTE_BIT | UNSIGNED_BYTE_BIT |
@@ -413,7 +413,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
 
 
 void GLAPIENTRY
-_mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
+_mesa_PointSizePointerOES(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    const GLbitfield legalTypes = (FLOAT_BIT | FIXED_ES_BIT);
    GET_CURRENT_CONTEXT(ctx);
@@ -437,7 +437,7 @@ _mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
  * (position, normal, color, fog, texcoord, etc).
  */
 void GLAPIENTRY
-_mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
+_mesa_VertexAttribPointer(GLuint index, GLint size, GLenum type,
                              GLboolean normalized,
                              GLsizei stride, const GLvoid *ptr)
 {
@@ -493,7 +493,7 @@ _mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
 
 
 void GLAPIENTRY
-_mesa_EnableVertexAttribArrayARB(GLuint index)
+_mesa_EnableVertexAttribArray(GLuint index)
 {
    struct gl_array_object *arrayObj;
    GET_CURRENT_CONTEXT(ctx);
@@ -520,7 +520,7 @@ _mesa_EnableVertexAttribArrayARB(GLuint index)
 
 
 void GLAPIENTRY
-_mesa_DisableVertexAttribArrayARB(GLuint index)
+_mesa_DisableVertexAttribArray(GLuint index)
 {
    struct gl_array_object *arrayObj;
    GET_CURRENT_CONTEXT(ctx);
@@ -630,7 +630,7 @@ get_current_attrib(struct gl_context *ctx, GLuint index, const char *function)
 }
 
 void GLAPIENTRY
-_mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
+_mesa_GetVertexAttribfv(GLuint index, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -649,7 +649,7 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
 
 
 void GLAPIENTRY
-_mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
+_mesa_GetVertexAttribdv(GLuint index, GLenum pname, GLdouble *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -671,7 +671,7 @@ _mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
 
 
 void GLAPIENTRY
-_mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params)
+_mesa_GetVertexAttribiv(GLuint index, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -736,7 +736,7 @@ _mesa_GetVertexAttribIuiv(GLuint index, GLenum pname, GLuint *params)
 
 
 void GLAPIENTRY
-_mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
+_mesa_GetVertexAttribPointerv(GLuint index, GLenum pname, GLvoid **pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -1039,7 +1039,7 @@ _mesa_UnlockArraysEXT( void )
 
 /* GL_EXT_multi_draw_arrays */
 void GLAPIENTRY
-_mesa_MultiDrawArraysEXT( GLenum mode, const GLint *first,
+_mesa_MultiDrawArrays( GLenum mode, const GLint *first,
                           const GLsizei *count, GLsizei primcount )
 {
    GET_CURRENT_CONTEXT(ctx);

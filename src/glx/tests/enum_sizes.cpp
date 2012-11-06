@@ -515,19 +515,19 @@ TEST(InvalidEnumSizes, ConvolutionParameterfv)
 
 TEST(ValidEnumSizes, PointParameterfv)
 {
-   EXPECT_EQ(1, __glPointParameterfvEXT_size(GL_POINT_SIZE_MIN));
-   EXPECT_EQ(1, __glPointParameterfvEXT_size(GL_POINT_SIZE_MIN_ARB));
-   EXPECT_EQ(1, __glPointParameterfvEXT_size(GL_POINT_SIZE_MIN_SGIS));
-   EXPECT_EQ(1, __glPointParameterfvEXT_size(GL_POINT_SIZE_MAX));
-   EXPECT_EQ(1, __glPointParameterfvEXT_size(GL_POINT_SIZE_MAX_ARB));
-   EXPECT_EQ(1, __glPointParameterfvEXT_size(GL_POINT_SIZE_MAX_SGIS));
-   EXPECT_EQ(1, __glPointParameterfvEXT_size(GL_POINT_FADE_THRESHOLD_SIZE));
-   EXPECT_EQ(1, __glPointParameterfvEXT_size(GL_POINT_FADE_THRESHOLD_SIZE_ARB));
-   EXPECT_EQ(1, __glPointParameterfvEXT_size(GL_POINT_FADE_THRESHOLD_SIZE_SGIS));
-   EXPECT_EQ(1, __glPointParameterfvEXT_size(GL_POINT_SPRITE_R_MODE_NV));
-   EXPECT_EQ(1, __glPointParameterfvEXT_size(GL_POINT_SPRITE_COORD_ORIGIN));
-   EXPECT_EQ(3, __glPointParameterfvEXT_size(GL_POINT_DISTANCE_ATTENUATION));
-   EXPECT_EQ(3, __glPointParameterfvEXT_size(GL_POINT_DISTANCE_ATTENUATION_ARB));
+   EXPECT_EQ(1, __glPointParameterfv_size(GL_POINT_SIZE_MIN));
+   EXPECT_EQ(1, __glPointParameterfv_size(GL_POINT_SIZE_MIN_ARB));
+   EXPECT_EQ(1, __glPointParameterfv_size(GL_POINT_SIZE_MIN_SGIS));
+   EXPECT_EQ(1, __glPointParameterfv_size(GL_POINT_SIZE_MAX));
+   EXPECT_EQ(1, __glPointParameterfv_size(GL_POINT_SIZE_MAX_ARB));
+   EXPECT_EQ(1, __glPointParameterfv_size(GL_POINT_SIZE_MAX_SGIS));
+   EXPECT_EQ(1, __glPointParameterfv_size(GL_POINT_FADE_THRESHOLD_SIZE));
+   EXPECT_EQ(1, __glPointParameterfv_size(GL_POINT_FADE_THRESHOLD_SIZE_ARB));
+   EXPECT_EQ(1, __glPointParameterfv_size(GL_POINT_FADE_THRESHOLD_SIZE_SGIS));
+   EXPECT_EQ(1, __glPointParameterfv_size(GL_POINT_SPRITE_R_MODE_NV));
+   EXPECT_EQ(1, __glPointParameterfv_size(GL_POINT_SPRITE_COORD_ORIGIN));
+   EXPECT_EQ(3, __glPointParameterfv_size(GL_POINT_DISTANCE_ATTENUATION));
+   EXPECT_EQ(3, __glPointParameterfv_size(GL_POINT_DISTANCE_ATTENUATION_ARB));
 }
 
 TEST(InvalidEnumSizes, PointParameterfv)
@@ -549,7 +549,7 @@ TEST(InvalidEnumSizes, PointParameterfv)
 /*      case GL_POINT_DISTANCE_ATTENUATION_ARB:*/
          break;
       default:
-         EXPECT_EQ(0, __glPointParameterfvEXT_size(i)) << "i = 0x" <<
+         EXPECT_EQ(0, __glPointParameterfv_size(i)) << "i = 0x" <<
             std::setw(4) << std::setfill('0') << std::hex << i;
       }
    }

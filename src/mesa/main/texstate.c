@@ -286,7 +286,7 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
 
 /* GL_ARB_multitexture */
 void GLAPIENTRY
-_mesa_ActiveTextureARB(GLenum texture)
+_mesa_ActiveTexture(GLenum texture)
 {
    const GLuint texUnit = texture - GL_TEXTURE0;
    GLuint k;
@@ -325,7 +325,7 @@ _mesa_ActiveTextureARB(GLenum texture)
 
 /* GL_ARB_multitexture */
 void GLAPIENTRY
-_mesa_ClientActiveTextureARB(GLenum texture)
+_mesa_ClientActiveTexture(GLenum texture)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint texUnit = texture - GL_TEXTURE0;

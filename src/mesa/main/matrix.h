@@ -85,16 +85,16 @@ extern void GLAPIENTRY
 _mesa_Translated( GLdouble x, GLdouble y, GLdouble z );
 
 extern void GLAPIENTRY
-_mesa_LoadTransposeMatrixfARB( const GLfloat *m );
+_mesa_LoadTransposeMatrixf( const GLfloat *m );
 
 extern void GLAPIENTRY
-_mesa_LoadTransposeMatrixdARB( const GLdouble *m );
+_mesa_LoadTransposeMatrixd( const GLdouble *m );
 
 extern void GLAPIENTRY
-_mesa_MultTransposeMatrixfARB( const GLfloat *m );
+_mesa_MultTransposeMatrixf( const GLfloat *m );
 
 extern void GLAPIENTRY
-_mesa_MultTransposeMatrixdARB( const GLdouble *m );
+_mesa_MultTransposeMatrixd( const GLdouble *m );
 
 
 extern void 

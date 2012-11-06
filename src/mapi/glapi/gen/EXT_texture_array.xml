@@ -26,16 +26,15 @@
     </enum>
 
     <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER_EXT"   count="1" value="0x8CD4">
-        <size name="GetFramebufferAttachmentParameterivEXT" mode="get"/>
+        <size name="GetFramebufferAttachmentParameteriv" mode="get"/>
     </enum>
 
-    <function name="FramebufferTextureLayerEXT" offset="assign">
+    <function name="FramebufferTextureLayerEXT" alias="FramebufferTextureLayer">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="texture" type="GLuint"/>
         <param name="level" type="GLint"/>
         <param name="layer" type="GLint"/>
-	<glx rop="237"/>
     </function>
 </category>
 

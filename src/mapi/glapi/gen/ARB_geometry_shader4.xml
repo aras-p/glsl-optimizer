@@ -38,7 +38,7 @@
         <param name="texture" type="GLuint"/>
         <param name="level" type="GLint"/>
     </function>
-    <function name="FramebufferTextureLayerARB" alias="FramebufferTextureLayerEXT">
+    <function name="FramebufferTextureLayerARB" alias="FramebufferTextureLayer">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="texture" type="GLuint"/>

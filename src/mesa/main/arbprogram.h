@@ -31,13 +31,13 @@
 
 
 extern void GLAPIENTRY
-_mesa_BindProgram(GLenum target, GLuint id);
+_mesa_BindProgramARB(GLenum target, GLuint id);
 
 extern void GLAPIENTRY
-_mesa_DeletePrograms(GLsizei n, const GLuint *ids);
+_mesa_DeleteProgramsARB(GLsizei n, const GLuint *ids);
 
 extern void GLAPIENTRY
-_mesa_GenPrograms(GLsizei n, GLuint *ids);
+_mesa_GenProgramsARB(GLsizei n, GLuint *ids);
 
 
 extern GLboolean GLAPIENTRY

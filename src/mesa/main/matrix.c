@@ -489,7 +489,7 @@ _mesa_Translated( GLdouble x, GLdouble y, GLdouble z )
 
 
 void GLAPIENTRY
-_mesa_LoadTransposeMatrixfARB( const GLfloat *m )
+_mesa_LoadTransposeMatrixf( const GLfloat *m )
 {
    GLfloat tm[16];
    if (!m) return;
@@ -499,7 +499,7 @@ _mesa_LoadTransposeMatrixfARB( const GLfloat *m )
 
 
 void GLAPIENTRY
-_mesa_LoadTransposeMatrixdARB( const GLdouble *m )
+_mesa_LoadTransposeMatrixd( const GLdouble *m )
 {
    GLfloat tm[16];
    if (!m) return;
@@ -509,7 +509,7 @@ _mesa_LoadTransposeMatrixdARB( const GLdouble *m )
 
 
 void GLAPIENTRY
-_mesa_MultTransposeMatrixfARB( const GLfloat *m )
+_mesa_MultTransposeMatrixf( const GLfloat *m )
 {
    GLfloat tm[16];
    if (!m) return;
@@ -519,7 +519,7 @@ _mesa_MultTransposeMatrixfARB( const GLfloat *m )
 
 
 void GLAPIENTRY
-_mesa_MultTransposeMatrixdARB( const GLdouble *m )
+_mesa_MultTransposeMatrixd( const GLdouble *m )
 {
    GLfloat tm[16];
    if (!m) return;

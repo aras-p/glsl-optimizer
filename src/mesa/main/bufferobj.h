@@ -101,29 +101,29 @@ _mesa_init_buffer_object_functions(struct dd_function_table *driver);
  */
 
 void GLAPIENTRY
-_mesa_BindBufferARB(GLenum target, GLuint buffer);
+_mesa_BindBuffer(GLenum target, GLuint buffer);
 void GLAPIENTRY
-_mesa_DeleteBuffersARB(GLsizei n, const GLuint * buffer);
+_mesa_DeleteBuffers(GLsizei n, const GLuint * buffer);
 void GLAPIENTRY
-_mesa_GenBuffersARB(GLsizei n, GLuint * buffer);
+_mesa_GenBuffers(GLsizei n, GLuint * buffer);
 GLboolean GLAPIENTRY
-_mesa_IsBufferARB(GLuint buffer);
+_mesa_IsBuffer(GLuint buffer);
 void GLAPIENTRY
-_mesa_BufferDataARB(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage);
+_mesa_BufferData(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage);
 void GLAPIENTRY
-_mesa_BufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data);
+_mesa_BufferSubData(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data);
 void GLAPIENTRY
-_mesa_GetBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data);
+_mesa_GetBufferSubData(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data);
 void * GLAPIENTRY
-_mesa_MapBufferARB(GLenum target, GLenum access);
+_mesa_MapBuffer(GLenum target, GLenum access);
 GLboolean GLAPIENTRY
-_mesa_UnmapBufferARB(GLenum target);
+_mesa_UnmapBuffer(GLenum target);
 void GLAPIENTRY
-_mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params);
+_mesa_GetBufferParameteriv(GLenum target, GLenum pname, GLint *params);
 void GLAPIENTRY
 _mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params);
 void GLAPIENTRY
-_mesa_GetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params);
+_mesa_GetBufferPointerv(GLenum target, GLenum pname, GLvoid **params);
 void GLAPIENTRY
 _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
                         GLintptr readOffset, GLintptr writeOffset,

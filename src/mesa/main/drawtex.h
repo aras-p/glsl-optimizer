@@ -30,22 +30,22 @@
 
 
 extern void GLAPIENTRY
-_mesa_DrawTexf(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height);
+_mesa_DrawTexfOES(GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height);
 
 extern void GLAPIENTRY
-_mesa_DrawTexfv(const GLfloat *coords);
+_mesa_DrawTexfvOES(const GLfloat *coords);
 
 extern void GLAPIENTRY
-_mesa_DrawTexi(GLint x, GLint y, GLint z, GLint width, GLint height);
+_mesa_DrawTexiOES(GLint x, GLint y, GLint z, GLint width, GLint height);
 
 extern void GLAPIENTRY
-_mesa_DrawTexiv(const GLint *coords);
+_mesa_DrawTexivOES(const GLint *coords);
 
 extern void GLAPIENTRY
-_mesa_DrawTexs(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height);
+_mesa_DrawTexsOES(GLshort x, GLshort y, GLshort z, GLshort width, GLshort height);
 
 extern void GLAPIENTRY
-_mesa_DrawTexsv(const GLshort *coords);
+_mesa_DrawTexsvOES(const GLshort *coords);
 
 extern void GLAPIENTRY
 _mesa_DrawTexx(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height);

@@ -959,7 +959,7 @@ _mesa_GetnCompressedTexImageARB(GLenum target, GLint level, GLsizei bufSize,
 }
 
 void GLAPIENTRY
-_mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
+_mesa_GetCompressedTexImage(GLenum target, GLint level, GLvoid *img)
 {
    _mesa_GetnCompressedTexImageARB(target, level, INT_MAX, img);
 }

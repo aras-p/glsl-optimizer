@@ -40,7 +40,7 @@ extern "C" {
 }
 
 void GLAPIENTRY
-_mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
+_mesa_BindAttribLocation(GLhandleARB program, GLuint index,
                             const GLcharARB *name)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -77,7 +77,7 @@ _mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
 }
 
 void GLAPIENTRY
-_mesa_GetActiveAttribARB(GLhandleARB program, GLuint desired_index,
+_mesa_GetActiveAttrib(GLhandleARB program, GLuint desired_index,
                          GLsizei maxLength, GLsizei * length, GLint * size,
                          GLenum * type, GLcharARB * name)
 {
@@ -132,7 +132,7 @@ _mesa_GetActiveAttribARB(GLhandleARB program, GLuint desired_index,
 }
 
 GLint GLAPIENTRY
-_mesa_GetAttribLocationARB(GLhandleARB program, const GLcharARB * name)
+_mesa_GetAttribLocation(GLhandleARB program, const GLcharARB * name)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *const shProg =

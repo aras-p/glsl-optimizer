@@ -38,7 +38,7 @@
 
 
 extern "C" void GLAPIENTRY
-_mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
+_mesa_GetActiveUniform(GLhandleARB program, GLuint index,
                           GLsizei maxLength, GLsizei *length, GLint *size,
                           GLenum *type, GLcharARB *nameOut)
 {

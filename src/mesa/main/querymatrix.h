@@ -34,6 +34,6 @@
  */
 
 extern GLbitfield GLAPIENTRY
-_es_QueryMatrixxOES(GLfixed mantissa[16], GLint exponent[16]);
+_mesa_QueryMatrixxOES(GLfixed mantissa[16], GLint exponent[16]);
 
 #endif

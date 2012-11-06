@@ -39,7 +39,7 @@ extern void GLAPIENTRY
 _mesa_ShadeModel( GLenum mode );
 
 extern void GLAPIENTRY
-_mesa_ProvokingVertexEXT(GLenum mode);
+_mesa_ProvokingVertex(GLenum mode);
 
 
 extern void GLAPIENTRY

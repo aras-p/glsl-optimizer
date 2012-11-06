@@ -31,7 +31,7 @@
 struct gl_context;
 
 extern void GLAPIENTRY
-_mesa_SampleCoverageARB(GLclampf value, GLboolean invert);
+_mesa_SampleCoverage(GLclampf value, GLboolean invert);
 
 
 extern void

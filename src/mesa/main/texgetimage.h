@@ -54,7 +54,7 @@ _mesa_GetnTexImageARB( GLenum target, GLint level, GLenum format,
                        GLenum type, GLsizei bufSize, GLvoid *pixels );
 
 extern void GLAPIENTRY
-_mesa_GetCompressedTexImageARB(GLenum target, GLint lod, GLvoid *img);
+_mesa_GetCompressedTexImage(GLenum target, GLint lod, GLvoid *img);
 
 extern void GLAPIENTRY
 _mesa_GetnCompressedTexImageARB(GLenum target, GLint level, GLsizei bufSize,
