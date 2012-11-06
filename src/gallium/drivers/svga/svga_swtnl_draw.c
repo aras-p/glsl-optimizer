@@ -39,7 +39,7 @@ enum pipe_error
 svga_swtnl_draw_vbo(struct svga_context *svga,
                     const struct pipe_draw_info *info)
 {
-   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
+   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = { 0 };
    struct pipe_transfer *ib_transfer = NULL;
    struct pipe_transfer *cb_transfer = NULL;
    struct draw_context *draw = svga->swtnl.draw;
