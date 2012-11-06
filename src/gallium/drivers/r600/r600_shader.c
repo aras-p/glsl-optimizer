@@ -345,6 +345,12 @@ static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
 	}
 #endif
 
+	if (alu.inst == CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT)) {
+		ctx->bc->ar_reg = alu.src[0].sel;
+		ctx->bc->ar_loaded = 0;
+		return bytes_read;
+	}
+
 	if (alu.execute_mask) {
 		alu.pred_sel = 0;
 		r600_bytecode_add_alu_type(ctx->bc, &alu, CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE));
