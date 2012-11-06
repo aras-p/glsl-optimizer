@@ -1213,7 +1213,6 @@ fetch_source(const struct tgsi_exec_machine *mach,
       index2.i[1] =
       index2.i[2] =
       index2.i[3] = reg->Indirect.Index;
-      assert(reg->Indirect.File == TGSI_FILE_ADDRESS);
       /* get current value of address register[swizzle] */
       swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, TGSI_CHAN_X );
       fetch_src_file_channel(mach,
