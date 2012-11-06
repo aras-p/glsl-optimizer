@@ -1516,7 +1516,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				alu.src[0].chan = j;
 
 				alu.src[1].sel = 512 + i;
-				alu.src[1].kc_bank = 1;
+				alu.src[1].kc_bank = R600_UCP_CONST_BUFFER;
 				alu.src[1].chan = j;
 
 				alu.dst.sel = ctx.temp_reg + oreg;
