@@ -570,6 +570,16 @@ _mesa_is_color_format(GLenum format)
       case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
       case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
       case GL_ETC1_RGB8_OES:
+      case GL_COMPRESSED_RGB8_ETC2:
+      case GL_COMPRESSED_SRGB8_ETC2:
+      case GL_COMPRESSED_RGBA8_ETC2_EAC:
+      case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+      case GL_COMPRESSED_R11_EAC:
+      case GL_COMPRESSED_RG11_EAC:
+      case GL_COMPRESSED_SIGNED_R11_EAC:
+      case GL_COMPRESSED_SIGNED_RG11_EAC:
+      case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+      case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
       /* generic integer formats */
       case GL_RED_INTEGER_EXT:
       case GL_GREEN_INTEGER_EXT:
@@ -829,6 +839,17 @@ _mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
    case GL_ETC1_RGB8_OES:
       return _mesa_is_gles(ctx)
          && ctx->Extensions.OES_compressed_ETC1_RGB8_texture;
+   case GL_COMPRESSED_RGB8_ETC2:
+   case GL_COMPRESSED_SRGB8_ETC2:
+   case GL_COMPRESSED_RGBA8_ETC2_EAC:
+   case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+   case GL_COMPRESSED_R11_EAC:
+   case GL_COMPRESSED_RG11_EAC:
+   case GL_COMPRESSED_SIGNED_R11_EAC:
+   case GL_COMPRESSED_SIGNED_RG11_EAC:
+   case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+   case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+      return _mesa_is_gles3(ctx);
    case GL_PALETTE4_RGB8_OES:
    case GL_PALETTE4_RGBA8_OES:
    case GL_PALETTE4_R5_G6_B5_OES:

@@ -972,6 +972,43 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       }
    }
 
+   if (_mesa_is_gles3(ctx)) {
+      switch (internalFormat) {
+      case GL_COMPRESSED_RGB8_ETC2:
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_RGB8);
+         break;
+      case GL_COMPRESSED_SRGB8_ETC2:
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_SRGB8);
+         break;
+      case GL_COMPRESSED_RGBA8_ETC2_EAC:
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_RGBA8_EAC);
+         break;
+      case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC);
+         break;
+      case GL_COMPRESSED_R11_EAC:
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_R11_EAC);
+         break;
+      case GL_COMPRESSED_RG11_EAC:
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_RG11_EAC);
+         break;
+      case GL_COMPRESSED_SIGNED_R11_EAC:
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_SIGNED_R11_EAC);
+         break;
+      case GL_COMPRESSED_SIGNED_RG11_EAC:
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_SIGNED_RG11_EAC);
+         break;
+      case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1);
+         break;
+      case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1);
+         break;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
    _mesa_problem(ctx, "unexpected format %s in _mesa_choose_tex_format()",
                  _mesa_lookup_enum_by_nr(internalFormat));
    return MESA_FORMAT_NONE;

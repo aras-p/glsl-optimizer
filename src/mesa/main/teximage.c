@@ -529,6 +529,27 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
+   if (_mesa_is_gles3(ctx)) {
+      switch (internalFormat) {
+      case GL_COMPRESSED_RGB8_ETC2:
+      case GL_COMPRESSED_SRGB8_ETC2:
+         return GL_RGB;
+      case GL_COMPRESSED_RGBA8_ETC2_EAC:
+      case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+      case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+      case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+         return GL_RGBA;
+      case GL_COMPRESSED_R11_EAC:
+      case GL_COMPRESSED_SIGNED_R11_EAC:
+         return GL_RED;
+      case GL_COMPRESSED_RG11_EAC:
+      case GL_COMPRESSED_SIGNED_RG11_EAC:
+         return GL_RG;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
    if (ctx->API == API_OPENGLES) {
       switch (internalFormat) {
       case GL_PALETTE4_RGB8_OES:

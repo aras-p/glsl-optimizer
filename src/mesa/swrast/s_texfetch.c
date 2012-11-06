@@ -1029,6 +1029,66 @@ texfetch_funcs[] =
       NULL
    },
    {
+      MESA_FORMAT_ETC2_RGB8,
+      NULL,
+      NULL /* _mesa_fetch_texel_2d_f_etc2_rgb8 -- not implemented yet */,
+      NULL
+   },
+   {
+      MESA_FORMAT_ETC2_SRGB8,
+      NULL,
+      NULL /* _mesa_fetch_texel_2d_f_etc2_srgb8 -- not implemented yet */,
+      NULL
+   },
+   {
+      MESA_FORMAT_ETC2_RGBA8_EAC,
+      NULL,
+      NULL /* _mesa_fetch_texel_2d_f_etc2_rgba8_eac -- not implemented yet */,
+      NULL
+   },
+   {
+      MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC,
+      NULL,
+      NULL /* _mesa_fetch_texel_2d_f_etc2_srgb8_alpha8_eac -- not implemented yet */,
+      NULL
+   },
+   {
+      MESA_FORMAT_ETC2_R11_EAC,
+      NULL,
+      NULL /* _mesa_fetch_texel_2d_f_etc2_r11_eac -- not implemented yet */,
+      NULL
+   },
+   {
+      MESA_FORMAT_ETC2_RG11_EAC,
+      NULL,
+      NULL /* _mesa_fetch_texel_2d_f_etc2_rg11_eac -- not implemented yet */,
+      NULL
+   },
+   {
+      MESA_FORMAT_ETC2_SIGNED_R11_EAC,
+      NULL,
+      NULL /* _mesa_fetch_texel_2d_f_etc2_signed_r11_eac -- not implemented yet */,
+      NULL
+   },
+   {
+      MESA_FORMAT_ETC2_SIGNED_RG11_EAC,
+      NULL,
+      NULL /* _mesa_fetch_texel_2d_f_etc2_signed_rg11_eac -- not implemented yet */,
+      NULL
+   },
+   {
+      MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1,
+      NULL,
+      NULL /* _mesa_fetch_texel_2d_f_etc2_rgb8_punchthrough_alpha1 -- not implemented yet */,
+      NULL
+   },
+   {
+      MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1,
+      NULL,
+      NULL /* _mesa_fetch_texel_2d_f_etc2_srgb8_punchthrough_alpha1 -- not implemented yet */,
+      NULL
+   },
+   {
       MESA_FORMAT_SIGNED_A8,
       fetch_texel_1d_signed_a8,
       fetch_texel_2d_signed_a8,

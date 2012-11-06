@@ -1398,6 +1398,106 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       4, 4, 8                     /* 8 bytes per 4x4 block */
    },
 
+   {
+      MESA_FORMAT_ETC2_RGB8,
+      "MESA_FORMAT_ETC2_RGB8",
+      GL_RGB,
+      GL_UNSIGNED_NORMALIZED,
+      8, 8, 8, 0,
+      0, 0, 0, 0, 0,
+      4, 4, 8                     /* 8 bytes per 4x4 block */
+   },
+
+   {
+      MESA_FORMAT_ETC2_SRGB8,
+      "MESA_FORMAT_ETC2_SRGB8",
+      GL_RGB,
+      GL_UNSIGNED_NORMALIZED,
+      8, 8, 8, 0,
+      0, 0, 0, 0, 0,
+      4, 4, 8                     /* 8 bytes per 4x4 block */
+   },
+
+   {
+      MESA_FORMAT_ETC2_RGBA8_EAC,
+      "MESA_FORMAT_ETC2_RGBA8_EAC",
+      GL_RGBA,
+      GL_UNSIGNED_NORMALIZED,
+      8, 8, 8, 8,
+      0, 0, 0, 0, 0,
+      4, 4, 16                    /* 16 bytes per 4x4 block */
+   },
+
+   {
+      MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC,
+      "MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC",
+      GL_RGBA,
+      GL_UNSIGNED_NORMALIZED,
+      8, 8, 8, 8,
+      0, 0, 0, 0, 0,
+      4, 4, 16                    /* 16 bytes per 4x4 block */
+   },
+
+   {
+      MESA_FORMAT_ETC2_R11_EAC,
+      "MESA_FORMAT_ETC2_R11_EAC",
+      GL_RED,
+      GL_UNSIGNED_NORMALIZED,
+      11, 0, 0, 0,
+      0, 0, 0, 0, 0,
+      4, 4, 8                    /* 8 bytes per 4x4 block */
+   },
+
+   {
+      MESA_FORMAT_ETC2_RG11_EAC,
+      "MESA_FORMAT_ETC2_RG11_EAC",
+      GL_RG,
+      GL_UNSIGNED_NORMALIZED,
+      11, 11, 0, 0,
+      0, 0, 0, 0, 0,
+      4, 4, 16                    /* 16 bytes per 4x4 block */
+   },
+
+   {
+      MESA_FORMAT_ETC2_SIGNED_R11_EAC,
+      "MESA_FORMAT_ETC2_SIGNED_R11_EAC",
+      GL_RED,
+      GL_SIGNED_NORMALIZED,
+      11, 0, 0, 0,
+      0, 0, 0, 0, 0,
+      4, 4, 8                    /* 8 bytes per 4x4 block */
+   },
+
+   {
+      MESA_FORMAT_ETC2_SIGNED_RG11_EAC,
+      "MESA_FORMAT_ETC2_SIGNED_RG11_EAC",
+      GL_RG,
+      GL_SIGNED_NORMALIZED,
+      11, 11, 0, 0,
+      0, 0, 0, 0, 0,
+      4, 4, 16                    /* 16 bytes per 4x4 block */
+   },
+
+   {
+      MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1,
+      "MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1",
+      GL_RGBA,
+      GL_UNSIGNED_NORMALIZED,
+      8, 8, 8, 1,
+      0, 0, 0, 0, 0,
+      4, 4, 8                     /* 8 bytes per 4x4 block */
+   },
+
+   {
+      MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1,
+      "MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1",
+      GL_RGBA,
+      GL_UNSIGNED_NORMALIZED,
+      8, 8, 8, 1,
+      0, 0, 0, 0, 0,
+      4, 4, 8                     /* 8 bytes per 4x4 block */
+   },
+
    /* Signed formats from EXT_texture_snorm that are not in GL3.1 */
    {
       MESA_FORMAT_SIGNED_A8,
@@ -1840,7 +1940,20 @@ _mesa_get_uncompressed_format(gl_format format)
    case MESA_FORMAT_SIGNED_LA_LATC2:
       return MESA_FORMAT_SIGNED_AL88;
    case MESA_FORMAT_ETC1_RGB8:
+   case MESA_FORMAT_ETC2_RGB8:
+   case MESA_FORMAT_ETC2_SRGB8:
       return MESA_FORMAT_RGB888;
+   case MESA_FORMAT_ETC2_RGBA8_EAC:
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+      return MESA_FORMAT_RGBA8888;
+   case MESA_FORMAT_ETC2_R11_EAC:
+   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
+      return MESA_FORMAT_R16;
+   case MESA_FORMAT_ETC2_RG11_EAC:
+   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
+      return MESA_FORMAT_RG1616;
    default:
 #ifdef DEBUG
       assert(!_mesa_is_format_compressed(format));
@@ -2282,6 +2395,16 @@ _mesa_format_to_type_and_comps(gl_format format,
    case MESA_FORMAT_LA_LATC2:
    case MESA_FORMAT_SIGNED_LA_LATC2:
    case MESA_FORMAT_ETC1_RGB8:
+   case MESA_FORMAT_ETC2_RGB8:
+   case MESA_FORMAT_ETC2_SRGB8:
+   case MESA_FORMAT_ETC2_RGBA8_EAC:
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+   case MESA_FORMAT_ETC2_R11_EAC:
+   case MESA_FORMAT_ETC2_RG11_EAC:
+   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
+   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
+   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
       /* XXX generate error instead? */
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 0;
@@ -2912,6 +3035,16 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_ETC1_RGB8:
+   case MESA_FORMAT_ETC2_RGB8:
+   case MESA_FORMAT_ETC2_SRGB8:
+   case MESA_FORMAT_ETC2_RGBA8_EAC:
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+   case MESA_FORMAT_ETC2_R11_EAC:
+   case MESA_FORMAT_ETC2_RG11_EAC:
+   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
+   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
+   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
       return GL_FALSE;
 
    case MESA_FORMAT_SIGNED_A8:

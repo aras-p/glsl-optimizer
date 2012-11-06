@@ -33,6 +33,7 @@
 #include "glheader.h"
 #include "imports.h"
 #include "colormac.h"
+#include "context.h"
 #include "formats.h"
 #include "mfeatures.h"
 #include "mtypes.h"
@@ -77,12 +78,16 @@ _mesa_gl_compressed_format_base_format(GLenum format)
 {
    switch (format) {
    case GL_COMPRESSED_RED:
+   case GL_COMPRESSED_R11_EAC:
    case GL_COMPRESSED_RED_RGTC1:
+   case GL_COMPRESSED_SIGNED_R11_EAC:
    case GL_COMPRESSED_SIGNED_RED_RGTC1:
       return GL_RED;
 
    case GL_COMPRESSED_RG:
+   case GL_COMPRESSED_RG11_EAC:
    case GL_COMPRESSED_RG_RGTC2:
+   case GL_COMPRESSED_SIGNED_RG11_EAC:
    case GL_COMPRESSED_SIGNED_RG_RGTC2:
       return GL_RG;
 
@@ -92,6 +97,8 @@ _mesa_gl_compressed_format_base_format(GLenum format)
    case GL_COMPRESSED_RGB_FXT1_3DFX:
    case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
    case GL_ETC1_RGB8_OES:
+   case GL_COMPRESSED_RGB8_ETC2:
+   case GL_COMPRESSED_SRGB8_ETC2:
       return GL_RGB;
 
    case GL_COMPRESSED_RGBA:
@@ -107,6 +114,10 @@ _mesa_gl_compressed_format_base_format(GLenum format)
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+   case GL_COMPRESSED_RGBA8_ETC2_EAC:
+   case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+   case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+   case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
       return GL_RGBA;
 
    case GL_COMPRESSED_ALPHA:
@@ -293,6 +304,23 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
       }
    }
 
+   if (_mesa_is_gles3(ctx)) {
+      if (formats) {
+         formats[n++] = GL_COMPRESSED_RGB8_ETC2;
+         formats[n++] = GL_COMPRESSED_SRGB8_ETC2;
+         formats[n++] = GL_COMPRESSED_RGBA8_ETC2_EAC;
+         formats[n++] = GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC;
+         formats[n++] = GL_COMPRESSED_R11_EAC;
+         formats[n++] = GL_COMPRESSED_RG11_EAC;
+         formats[n++] = GL_COMPRESSED_SIGNED_R11_EAC;
+         formats[n++] = GL_COMPRESSED_SIGNED_RG11_EAC;
+         formats[n++] = GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+         formats[n++] = GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+      }
+      else {
+         n += 10;
+      }
+   }
    return n;
 }
 
@@ -352,6 +380,26 @@ _mesa_glenum_to_compressed_format(GLenum format)
 
    case GL_ETC1_RGB8_OES:
       return MESA_FORMAT_ETC1_RGB8;
+   case GL_COMPRESSED_RGB8_ETC2:
+      return MESA_FORMAT_ETC2_RGB8;
+   case GL_COMPRESSED_SRGB8_ETC2:
+      return MESA_FORMAT_ETC2_SRGB8;
+   case GL_COMPRESSED_RGBA8_ETC2_EAC:
+      return MESA_FORMAT_ETC2_RGBA8_EAC;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+      return MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC;
+   case GL_COMPRESSED_R11_EAC:
+      return MESA_FORMAT_ETC2_R11_EAC;
+   case GL_COMPRESSED_RG11_EAC:
+      return MESA_FORMAT_ETC2_RG11_EAC;
+   case GL_COMPRESSED_SIGNED_R11_EAC:
+      return MESA_FORMAT_ETC2_SIGNED_R11_EAC;
+   case GL_COMPRESSED_SIGNED_RG11_EAC:
+      return MESA_FORMAT_ETC2_SIGNED_RG11_EAC;
+   case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+      return MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1;
+   case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+      return MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1;
 
    default:
       return MESA_FORMAT_NONE;
@@ -413,6 +461,26 @@ _mesa_compressed_format_to_glenum(struct gl_context *ctx, gl_format mesaFormat)
 
    case MESA_FORMAT_ETC1_RGB8:
       return GL_ETC1_RGB8_OES;
+   case MESA_FORMAT_ETC2_RGB8:
+      return GL_COMPRESSED_RGB8_ETC2;
+   case MESA_FORMAT_ETC2_SRGB8:
+      return GL_COMPRESSED_SRGB8_ETC2;
+   case MESA_FORMAT_ETC2_RGBA8_EAC:
+      return GL_COMPRESSED_RGBA8_ETC2_EAC;
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+      return GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC;
+   case MESA_FORMAT_ETC2_R11_EAC:
+      return GL_COMPRESSED_R11_EAC;
+   case MESA_FORMAT_ETC2_RG11_EAC:
+      return GL_COMPRESSED_RG11_EAC;
+   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
+      return GL_COMPRESSED_SIGNED_R11_EAC;
+   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
+      return GL_COMPRESSED_SIGNED_RG11_EAC;
+   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
+      return GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2;
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+      return GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2;
 
    default:
       _mesa_problem(ctx, "Unexpected mesa texture format in"
@@ -536,6 +604,38 @@ _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
    /* ETC1 formats */
    case MESA_FORMAT_ETC1_RGB8:
       fetch = _mesa_fetch_texel_2d_f_etc1_rgb8;
+      break;
+
+   /* ETC2 formats */
+   case MESA_FORMAT_ETC2_RGB8:
+      /* fetch = _mesa_fetch_texel_2d_f_etc2_rgb8; -- not implemented yet */
+      break;
+   case MESA_FORMAT_ETC2_SRGB8:
+      /* fetch = _mesa_fetch_texel_2d_f_etc2_srgb8; -- not implemented yet */
+      break;
+   case MESA_FORMAT_ETC2_RGBA8_EAC:
+      /* fetch = _mesa_fetch_texel_2d_f_etc2_rgba8_eac; -- not implemented yet */
+      break;
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+      /* fetch = _mesa_fetch_texel_2d_f_etc2_srgb8_alpha8_eac; -- not implemented yet */
+      break;
+   case MESA_FORMAT_ETC2_R11_EAC:
+      /* fetch = _mesa_fetch_texel_2d_f_etc2_r11_eac; -- not implemented yet */
+      break;
+   case MESA_FORMAT_ETC2_RG11_EAC:
+      /* fetch = _mesa_fetch_texel_2d_f_etc2_rg11_eac; -- not implemented yet */
+      break;
+   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
+      /* fetch = _mesa_fetch_texel_2d_f_etc2_signed_r11_eac; -- not implemented yet */
+      break;
+   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
+      /* fetch = _mesa_fetch_texel_2d_f_etc2_signed_rg11_eac; -- not implemented yet */
+      break;
+   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
+      /* fetch = _mesa_fetch_texel_2d_f_etc2_rgb8_punchthrough_alpha1; -- not implemented yet */
+      break;
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+      /* fetch = _mesa_fetch_texel_2d_f_etc2_srgb8_punchthrough_alpha1; -- not implemented yet */
       break;
 
    default:

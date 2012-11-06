@@ -1337,6 +1337,68 @@ unpack_ETC1_RGB8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
+unpack_ETC2_RGB8(const void *src, GLfloat dst[][4], GLuint n)
+{
+   /* XXX to do */
+}
+
+static void
+unpack_ETC2_SRGB8(const void *src, GLfloat dst[][4], GLuint n)
+{
+   /* XXX to do */
+}
+
+static void
+unpack_ETC2_RGBA8_EAC(const void *src, GLfloat dst[][4], GLuint n)
+{
+   /* XXX to do */
+}
+
+static void
+unpack_ETC2_SRGB8_ALPHA8_EAC(const void *src, GLfloat dst[][4], GLuint n)
+{
+   /* XXX to do */
+}
+
+static void
+unpack_ETC2_R11_EAC(const void *src, GLfloat dst[][4], GLuint n)
+{
+   /* XXX to do */
+}
+
+static void
+unpack_ETC2_RG11_EAC(const void *src, GLfloat dst[][4], GLuint n)
+{
+   /* XXX to do */
+}
+
+static void
+unpack_ETC2_SIGNED_R11_EAC(const void *src, GLfloat dst[][4], GLuint n)
+{
+   /* XXX to do */
+}
+
+static void
+unpack_ETC2_SIGNED_RG11_EAC(const void *src, GLfloat dst[][4], GLuint n)
+{
+   /* XXX to do */
+}
+
+static void
+unpack_ETC2_RGB8_PUNCHTHROUGH_ALPHA1(const void *src, GLfloat dst[][4],
+                                      GLuint n)
+{
+   /* XXX to do */
+}
+
+static void
+unpack_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1(const void *src, GLfloat dst[][4],
+                                      GLuint n)
+{
+   /* XXX to do */
+}
+
+static void
 unpack_SIGNED_A8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLbyte *s = ((const GLbyte *) src);
@@ -1585,7 +1647,18 @@ get_unpack_rgba_function(gl_format format)
       table[MESA_FORMAT_SIGNED_LA_LATC2] = unpack_SIGNED_LA_LATC2;
 
       table[MESA_FORMAT_ETC1_RGB8] = unpack_ETC1_RGB8;
-
+      table[MESA_FORMAT_ETC2_RGB8] = unpack_ETC2_RGB8;
+      table[MESA_FORMAT_ETC2_SRGB8] = unpack_ETC2_SRGB8;
+      table[MESA_FORMAT_ETC2_RGBA8_EAC] = unpack_ETC2_RGBA8_EAC;
+      table[MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC] = unpack_ETC2_SRGB8_ALPHA8_EAC;
+      table[MESA_FORMAT_ETC2_R11_EAC] = unpack_ETC2_R11_EAC;
+      table[MESA_FORMAT_ETC2_RG11_EAC] = unpack_ETC2_RG11_EAC;
+      table[MESA_FORMAT_ETC2_SIGNED_R11_EAC] = unpack_ETC2_SIGNED_R11_EAC;
+      table[MESA_FORMAT_ETC2_SIGNED_RG11_EAC] = unpack_ETC2_SIGNED_RG11_EAC;
+      table[MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1] =
+         unpack_ETC2_RGB8_PUNCHTHROUGH_ALPHA1;
+      table[MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1] =
+         unpack_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1;
       table[MESA_FORMAT_SIGNED_A8] = unpack_SIGNED_A8;
       table[MESA_FORMAT_SIGNED_L8] = unpack_SIGNED_L8;
       table[MESA_FORMAT_SIGNED_AL88] = unpack_SIGNED_AL88;
