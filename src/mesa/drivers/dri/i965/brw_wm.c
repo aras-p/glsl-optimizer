@@ -215,20 +215,7 @@ bool do_wm_prog(struct brw_context *brw,
    if (prog)
       fs = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
-   c = brw->wm.compile_data;
-   if (c == NULL) {
-      brw->wm.compile_data = rzalloc(NULL, struct brw_wm_compile);
-      c = brw->wm.compile_data;
-      if (c == NULL) {
-         /* Ouch - big out of memory problem.  Can't continue
-          * without triggering a segfault, no way to signal,
-          * so just return.
-          */
-         return false;
-      }
-   } else {
-      memset(c, 0, sizeof(*brw->wm.compile_data));
-   }
+   c = rzalloc(NULL, struct brw_wm_compile);
 
    /* Allocate the references to the uniforms that will end up in the
     * prog_data associated with the compiled program, and which will be freed
@@ -239,14 +226,14 @@ bool do_wm_prog(struct brw_context *brw,
       /* The backend also sometimes adds params for texture size. */
       param_count += 2 * BRW_MAX_TEX_UNIT;
 
-      c->prog_data.param = rzalloc_array(c, const float *, param_count);
-      c->prog_data.pull_param = rzalloc_array(c, const float *, param_count);
+      c->prog_data.param = rzalloc_array(NULL, const float *, param_count);
+      c->prog_data.pull_param = rzalloc_array(NULL, const float *, param_count);
    } else {
       /* brw_wm_pass0.c will also add references to 0.0 and 1.0 which are
        * uploaded as push parameters.
        */
       int param_count = (fp->program.Base.Parameters->NumParameters + 2) * 4;
-      c->prog_data.param = rzalloc_array(c, const float *, param_count);
+      c->prog_data.param = rzalloc_array(NULL, const float *, param_count);
       /* The old backend never does pull constants. */
       c->prog_data.pull_param = NULL;
    }
@@ -287,6 +274,8 @@ bool do_wm_prog(struct brw_context *brw,
 		    program, program_size,
 		    &c->prog_data, sizeof(c->prog_data),
 		    &brw->wm.prog_offset, &brw->wm.prog_data);
+
+   ralloc_free(c);
 
    return true;
 }

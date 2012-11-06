@@ -72,8 +72,6 @@ static void brw_destroy_context( struct intel_context *intel )
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
 
-   ralloc_free(brw->wm.compile_data);
-
    dri_bo_release(&brw->curbe.curbe_bo);
    dri_bo_release(&brw->vs.const_bo);
    dri_bo_release(&brw->wm.const_bo);

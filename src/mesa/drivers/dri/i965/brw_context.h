@@ -977,7 +977,6 @@ struct brw_context
 
    struct {
       struct brw_wm_prog_data *prog_data;
-      struct brw_wm_compile *compile_data;
 
       /** Input sizes, calculated from active vertex program.
        * One bit per fragment program input attribute.
