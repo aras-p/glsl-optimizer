@@ -529,7 +529,7 @@ def generate(env):
     env.PkgCheckModules('XF86VIDMODE', ['xxf86vm'])
     env.PkgCheckModules('DRM', ['libdrm >= 2.4.24'])
     env.PkgCheckModules('DRM_INTEL', ['libdrm_intel >= 2.4.30'])
-    env.PkgCheckModules('DRM_RADEON', ['libdrm_radeon >= 2.4.31'])
+    env.PkgCheckModules('DRM_RADEON', ['libdrm_radeon >= 2.4.40'])
     env.PkgCheckModules('XORG', ['xorg-server >= 1.6.0'])
     env.PkgCheckModules('KMS', ['libkms >= 2.4.24'])
     env.PkgCheckModules('UDEV', ['libudev > 150'])
