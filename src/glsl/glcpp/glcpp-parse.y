@@ -327,12 +327,12 @@ control_line:
 			glcpp_warning(& @1, parser, "ignoring illegal #elif without expression");
 		}
 	}
-|	HASH_ELSE NEWLINE {
+|	HASH_ELSE {
 		_glcpp_parser_skip_stack_change_if (parser, & @1, "else", 1);
-	}
-|	HASH_ENDIF NEWLINE {
+	} NEWLINE
+|	HASH_ENDIF {
 		_glcpp_parser_skip_stack_pop (parser, & @1);
-	}
+	} NEWLINE
 |	HASH_VERSION integer_constant NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, "__VERSION__");
 		if (macro) {
