@@ -112,7 +112,7 @@ extern void GLAPIENTRY
 _mesa_LinkProgram(GLhandleARB programObj);
 
 extern void GLAPIENTRY
-_mesa_ShaderSource(GLhandleARB, GLsizei, const GLcharARB* *, const GLint *);
+_mesa_ShaderSource(GLhandleARB, GLsizei, const GLcharARB* const *, const GLint *);
 
 extern void GLAPIENTRY
 _mesa_UseProgram(GLhandleARB);

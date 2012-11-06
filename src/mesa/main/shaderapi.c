@@ -1292,7 +1292,7 @@ read_shader(const char *fname)
  */
 void GLAPIENTRY
 _mesa_ShaderSource(GLhandleARB shaderObj, GLsizei count,
-                      const GLcharARB ** string, const GLint * length)
+                      const GLcharARB * const * string, const GLint * length)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint *offsets;

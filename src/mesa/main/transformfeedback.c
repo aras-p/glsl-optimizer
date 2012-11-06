@@ -512,7 +512,8 @@ _mesa_BindBufferOffsetEXT(GLenum target, GLuint index, GLuint buffer,
  */
 void GLAPIENTRY
 _mesa_TransformFeedbackVaryings(GLuint program, GLsizei count,
-                                const GLchar **varyings, GLenum bufferMode)
+                                const GLchar * const *varyings,
+                                GLenum bufferMode)
 {
    struct gl_shader_program *shProg;
    GLint i;
