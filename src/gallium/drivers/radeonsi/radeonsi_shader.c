@@ -792,6 +792,12 @@ static const struct lp_build_tgsi_action txb_action = {
 	.intr_name = "llvm.SI.sample.bias"
 };
 
+static const struct lp_build_tgsi_action txl_action = {
+	.fetch_args = tex_fetch_args,
+	.emit = lp_build_tgsi_intrinsic,
+	.intr_name = "llvm.SI.sample.lod"
+};
+
 
 int si_pipe_shader_create(
 	struct pipe_context *ctx,
@@ -829,6 +835,7 @@ int si_pipe_shader_create(
 
 	bld_base->op_actions[TGSI_OPCODE_TEX] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXB] = txb_action;
+	bld_base->op_actions[TGSI_OPCODE_TXL] = txl_action;
 	bld_base->op_actions[TGSI_OPCODE_TXP] = tex_action;
 
 	si_shader_ctx.radeon_bld.load_input = declare_input;
