@@ -794,7 +794,7 @@ static EGLBoolean
 dri2_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
 		     EGLint x, EGLint y, EGLint width, EGLint height)
 {
-   const EGLint rect[4] = { x, draw->Height - y - height, width, height };
+   const EGLint rect[4] = { x, y, width, height };
 
    if (x < 0 || y < 0 || width < 0 || height < 0)
       _eglError(EGL_BAD_PARAMETER, "eglPostSubBufferNV");
