@@ -380,11 +380,27 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
       }
       break;
 
+   case PIPE_PRIM_LINES_ADJACENCY:
+      for (i = 3; i < nr; i += 4) {
+         sp_setup_line( setup,
+                        get_vert(vertex_buffer, i-2, stride),
+                        get_vert(vertex_buffer, i-1, stride) );
+      }
+      break;
+
    case PIPE_PRIM_LINE_STRIP:
       for (i = 1; i < nr; i ++) {
          sp_setup_line( setup,
                      get_vert(vertex_buffer, i-1, stride),
                      get_vert(vertex_buffer, i-0, stride) );
+      }
+      break;
+
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+      for (i = 3; i < nr; i++) {
+         sp_setup_line( setup,
+                     get_vert(vertex_buffer, i-2, stride),
+                     get_vert(vertex_buffer, i-1, stride) );
       }
       break;
 
@@ -410,6 +426,15 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
       }
       break;
 
+   case PIPE_PRIM_TRIANGLES_ADJACENCY:
+      for (i = 5; i < nr; i += 6) {
+         sp_setup_tri( setup,
+                       get_vert(vertex_buffer, i-5, stride),
+                       get_vert(vertex_buffer, i-3, stride),
+                       get_vert(vertex_buffer, i-1, stride) );
+      }
+      break;
+
    case PIPE_PRIM_TRIANGLE_STRIP:
       if (flatshade_first) {
          for (i = 2; i < nr; i++) {
@@ -427,6 +452,27 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
                           get_vert(vertex_buffer, i+(i&1)-2, stride),
                           get_vert(vertex_buffer, i-(i&1)-1, stride),
                           get_vert(vertex_buffer, i-0, stride) );
+         }
+      }
+      break;
+
+   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
+      if (flatshade_first) {
+         for (i = 5; i < nr; i += 2) {
+            /* emit first triangle vertex as first triangle vertex */
+            sp_setup_tri( setup,
+                          get_vert(vertex_buffer, i-5, stride),
+                          get_vert(vertex_buffer, i+(i&1)*2-3, stride),
+                          get_vert(vertex_buffer, i-(i&1)*2-1, stride) );
+         }
+      }
+      else {
+         for (i = 5; i < nr; i += 2) {
+            /* emit last triangle vertex as last triangle vertex */
+            sp_setup_tri( setup,
+                          get_vert(vertex_buffer, i+(i&1)*2-5, stride),
+                          get_vert(vertex_buffer, i-(i&1)*2-3, stride),
+                          get_vert(vertex_buffer, i-1, stride) );
          }
       }
       break;
