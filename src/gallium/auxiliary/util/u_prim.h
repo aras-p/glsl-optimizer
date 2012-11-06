@@ -118,7 +118,9 @@ static INLINE unsigned u_reduced_prim( unsigned pipe_prim )
       return PIPE_PRIM_POINTS;
 
    case PIPE_PRIM_LINES:
+   case PIPE_PRIM_LINES_ADJACENCY:
    case PIPE_PRIM_LINE_STRIP:
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
    case PIPE_PRIM_LINE_LOOP:
       return PIPE_PRIM_LINES;
 
