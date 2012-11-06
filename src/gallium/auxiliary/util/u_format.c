@@ -61,30 +61,6 @@ util_format_is_float(enum pipe_format format)
 }
 
 
-/**
- * Return the number of logical channels in the given format by
- * examining swizzles.
- * XXX this could be made into a public function if useful elsewhere.
- */
-static unsigned
-nr_logical_channels(const struct util_format_description *desc)
-{
-   boolean swizzle_used[UTIL_FORMAT_SWIZZLE_MAX];
-
-   memset(swizzle_used, 0, sizeof(swizzle_used));
-
-   swizzle_used[desc->swizzle[0]] = TRUE;
-   swizzle_used[desc->swizzle[1]] = TRUE;
-   swizzle_used[desc->swizzle[2]] = TRUE;
-   swizzle_used[desc->swizzle[3]] = TRUE;
-
-   return (swizzle_used[UTIL_FORMAT_SWIZZLE_X] +
-           swizzle_used[UTIL_FORMAT_SWIZZLE_Y] +
-           swizzle_used[UTIL_FORMAT_SWIZZLE_Z] +
-           swizzle_used[UTIL_FORMAT_SWIZZLE_W]);
-}
-
-
 /** Test if the format contains RGB, but not alpha */
 boolean
 util_format_is_rgb_no_alpha(enum pipe_format format)
@@ -94,7 +70,7 @@ util_format_is_rgb_no_alpha(enum pipe_format format)
 
    if ((desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
         desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) &&
-       nr_logical_channels(desc) == 3) {
+       desc->swizzle[3] == UTIL_FORMAT_SWIZZLE_1) {
       return TRUE;
    }
    return FALSE;
