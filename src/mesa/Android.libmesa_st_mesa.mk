@@ -1,4 +1,6 @@
 # Copyright 2012 Intel Corporation
+# Copyright (C) 2010-2011 Chia-I Wu <olvaffe@gmail.com>
+# Copyright (C) 2010-2011 LunarG Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -18,9 +20,42 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+# ----------------------------------------------------------------------
+# libmesa_st_mesa.a
+# ----------------------------------------------------------------------
+
+ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
+
 LOCAL_PATH := $(call my-dir)
 
-include $(LOCAL_PATH)/Android.mesa_gen_matypes.mk
-include $(LOCAL_PATH)/Android.libmesa_glsl_utils.mk
-include $(LOCAL_PATH)/Android.libmesa_dricore.mk
-include $(LOCAL_PATH)/Android.libmesa_st_mesa.mk
+# Import variables:
+# 	MESA_GALLIUM_FILES.
+# 	X86_FILES
+include $(LOCAL_PATH)/sources.mak
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libmesa_st_mesa
+
+MESA_ENABLED_APIS := ES1 ES2
+
+LOCAL_SRC_FILES := \
+	$(MESA_GALLIUM_FILES)
+
+ifeq ($(strip $(MESA_ENABLE_ASM)),true)
+ifeq ($(TARGET_ARCH),x86)
+	LOCAL_SRC_FILES += $(X86_FILES)
+endif # x86
+endif # MESA_ENABLE_ASM
+
+LOCAL_C_INCLUDES := \
+	$(MESA_TOP)/src/gallium/auxiliary \
+	$(MESA_TOP)/src/gallium/include \
+	$(MESA_TOP)/src/glsl \
+	$(MESA_TOP)/src/mapi
+
+include $(LOCAL_PATH)/Android.gen.mk
+include $(MESA_COMMON_MK)
+include $(BUILD_STATIC_LIBRARY)
+
+endif # MESA_BUILD_GALLIUM
