@@ -1,5 +1,4 @@
-# Mesa 3-D graphics library
-#
+# Copyright 2012 Intel Corporation
 # Copyright (C) 2010-2011 Chia-I Wu <olvaffe@gmail.com>
 # Copyright (C) 2010-2011 LunarG Inc.
 #
@@ -21,53 +20,44 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# Android.mk for core mesa
+# ----------------------------------------------------------------------
+# libmesa_dricore.a
+# ----------------------------------------------------------------------
+
+ifeq ($(strip $(MESA_BUILD_CLASSIC)),true)
 
 LOCAL_PATH := $(call my-dir)
 
 # Import the following variables:
-#     MESA_GALLIUM_FILES
 #     MESA_FILES
 #     X86_FILES
 include $(LOCAL_PATH)/sources.mak
 
-MESA_ENABLED_APIS := ES1 ES2
+include $(CLEAR_VARS)
 
-common_C_INCLUDES := \
-	$(MESA_TOP)/src/mapi \
-	$(MESA_TOP)/src/glsl
+LOCAL_MODULE := libmesa_dricore
+LOCAL_MODULE_CLASS := STATIC_LIBRARIES
+
+MESA_ENABLED_APIS := ES1 ES2 GL
+
+LOCAL_SRC_FILES := \
+	$(MESA_FILES)
 
 ifeq ($(strip $(MESA_ENABLE_ASM)),true)
 ifeq ($(TARGET_ARCH),x86)
-common_ASM := $(X86_FILES)
+	LOCAL_SRC_FILES += $(X86_FILES)
 endif # x86
 endif # MESA_ENABLE_ASM
 
-# ---------------------------------------
-# Build libmesa_st_mesa
-# ---------------------------------------
-
-ifeq ($(strip $(MESA_BUILD_GALLIUM)),true)
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := \
-	$(MESA_GALLIUM_FILES) \
-	$(common_ASM)
-
-LOCAL_CFLAGS := $(common_CFLAGS)
+LOCAL_CFLAGS := \
+   $(patsubst %,-DFEATURE_%=1,$(MESA_ENABLED_APIS))
 
 LOCAL_C_INCLUDES := \
-	$(common_C_INCLUDES) \
-	$(MESA_TOP)/src/gallium/include \
-	$(MESA_TOP)/src/gallium/auxiliary
-
-LOCAL_MODULE := libmesa_st_mesa
+	$(MESA_TOP)/src/mapi \
+	$(MESA_TOP)/src/glsl
 
 include $(LOCAL_PATH)/Android.gen.mk
 include $(MESA_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
-endif # MESA_BUILD_GALLIUM
 
-include $(LOCAL_PATH)/Android.mesa_gen_matypes.mk
-include $(LOCAL_PATH)/Android.libmesa_glsl_utils.mk
-include $(LOCAL_PATH)/Android.libmesa_dricore.mk
+endif # MESA_BUILD_CLASSIC
