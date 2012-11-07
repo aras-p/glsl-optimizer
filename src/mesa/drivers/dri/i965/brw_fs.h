@@ -484,6 +484,12 @@ private:
    void generate_uniform_pull_constant_load(fs_inst *inst, struct brw_reg dst,
                                             struct brw_reg index,
                                             struct brw_reg offset);
+   void generate_varying_pull_constant_load(fs_inst *inst, struct brw_reg dst,
+                                            struct brw_reg index);
+   void generate_varying_pull_constant_load_gen7(fs_inst *inst,
+                                                 struct brw_reg dst,
+                                                 struct brw_reg index,
+                                                 struct brw_reg offset);
    void generate_mov_dispatch_to_flags();
 
    struct brw_context *brw;

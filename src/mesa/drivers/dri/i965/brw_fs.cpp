@@ -518,6 +518,8 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
    case FS_OPCODE_UNSPILL:
       return 1;
+   case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD:
+      return inst->header_present;
    case FS_OPCODE_SPILL:
       return 2;
    default:

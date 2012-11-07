@@ -648,6 +648,92 @@ fs_generator::generate_uniform_pull_constant_load(fs_inst *inst,
    }
 }
 
+void
+fs_generator::generate_varying_pull_constant_load(fs_inst *inst,
+                                                  struct brw_reg dst,
+                                                  struct brw_reg index)
+{
+   assert(intel->gen < 7); /* Should use the gen7 variant. */
+   assert(inst->header_present);
+
+   assert(index.file == BRW_IMMEDIATE_VALUE &&
+	  index.type == BRW_REGISTER_TYPE_UD);
+   uint32_t surf_index = index.dw1.ud;
+
+   uint32_t msg_type, msg_control, rlen;
+   if (intel->gen >= 6)
+      msg_type = GEN6_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ;
+   else if (intel->gen == 5 || intel->is_g4x)
+      msg_type = G45_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ;
+   else
+      msg_type = BRW_DATAPORT_READ_MESSAGE_DWORD_SCATTERED_READ;
+
+   if (dispatch_width == 16) {
+      msg_control = BRW_DATAPORT_DWORD_SCATTERED_BLOCK_16DWORDS;
+      rlen = 2;
+   } else {
+      msg_control = BRW_DATAPORT_DWORD_SCATTERED_BLOCK_8DWORDS;
+      rlen = 1;
+   }
+
+   struct brw_reg header = brw_vec8_grf(0, 0);
+   gen6_resolve_implied_move(p, &header, inst->base_mrf);
+
+   struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_set_dest(p, send, dst);
+   brw_set_src0(p, send, header);
+   if (intel->gen < 6)
+      send->header.destreg__conditionalmod = inst->base_mrf;
+   brw_set_dp_read_message(p, send,
+                           surf_index,
+                           msg_control,
+                           msg_type,
+                           BRW_DATAPORT_READ_TARGET_DATA_CACHE,
+                           inst->mlen,
+                           inst->header_present,
+                           rlen);
+}
+
+void
+fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
+                                                       struct brw_reg dst,
+                                                       struct brw_reg index,
+                                                       struct brw_reg offset)
+{
+   assert(intel->gen >= 7);
+   /* Varying-offset pull constant loads are treated as a normal expression on
+    * gen7, so the fact that it's a send message is hidden at the IR level.
+    */
+   assert(!inst->header_present);
+   assert(!inst->mlen);
+
+   assert(index.file == BRW_IMMEDIATE_VALUE &&
+	  index.type == BRW_REGISTER_TYPE_UD);
+   uint32_t surf_index = index.dw1.ud;
+
+   uint32_t msg_control, rlen, mlen;
+   if (dispatch_width == 16) {
+      msg_control = BRW_DATAPORT_DWORD_SCATTERED_BLOCK_16DWORDS;
+      mlen = rlen = 2;
+   } else {
+      msg_control = BRW_DATAPORT_DWORD_SCATTERED_BLOCK_8DWORDS;
+      mlen = rlen = 1;
+   }
+
+   struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_set_dest(p, send, dst);
+   brw_set_src0(p, send, offset);
+   if (intel->gen < 6)
+      send->header.destreg__conditionalmod = inst->base_mrf;
+   brw_set_dp_read_message(p, send,
+                           surf_index,
+                           msg_control,
+                           GEN7_DATAPORT_DC_DWORD_SCATTERED_READ,
+                           BRW_DATAPORT_READ_TARGET_DATA_CACHE,
+                           mlen,
+                           inst->header_present,
+                           rlen);
+}
 
 /**
  * Cause the current pixel/sample mask (from R1.7 bits 15:0) to be transferred
@@ -1019,6 +1105,14 @@ fs_generator::generate_code(exec_list *instructions)
 
       case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
 	 generate_uniform_pull_constant_load(inst, dst, src[0], src[1]);
+	 break;
+
+      case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD:
+	 generate_varying_pull_constant_load(inst, dst, src[0]);
+	 break;
+
+      case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7:
+	 generate_varying_pull_constant_load_gen7(inst, dst, src[0], src[1]);
 	 break;
 
       case FS_OPCODE_FB_WRITE:
