@@ -515,7 +515,7 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
       return 1;
    case FS_OPCODE_FB_WRITE:
       return 2;
-   case FS_OPCODE_PULL_CONSTANT_LOAD:
+   case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
    case FS_OPCODE_UNSPILL:
       return 1;
    case FS_OPCODE_SPILL:
@@ -1411,8 +1411,9 @@ fs_visitor::setup_pull_constants()
 	 fs_reg index = fs_reg((unsigned)SURF_INDEX_FRAG_CONST_BUFFER);
 	 fs_reg offset = fs_reg((unsigned)(((uniform_nr -
 					     pull_uniform_base) * 4) & ~15));
-	 fs_inst *pull = new(mem_ctx) fs_inst(FS_OPCODE_PULL_CONSTANT_LOAD,
-					      dst, index, offset);
+	 fs_inst *pull =
+            new(mem_ctx) fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
+                                 dst, index, offset);
 	 pull->ir = inst->ir;
 	 pull->annotation = inst->annotation;
 	 pull->base_mrf = 14;

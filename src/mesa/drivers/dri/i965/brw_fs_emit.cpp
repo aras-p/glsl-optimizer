@@ -608,9 +608,10 @@ fs_generator::generate_unspill(fs_inst *inst, struct brw_reg dst)
 }
 
 void
-fs_generator::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst,
-					struct brw_reg index,
-					struct brw_reg offset)
+fs_generator::generate_uniform_pull_constant_load(fs_inst *inst,
+                                                  struct brw_reg dst,
+                                                  struct brw_reg index,
+                                                  struct brw_reg offset)
 {
    assert(inst->mlen != 0);
 
@@ -1016,8 +1017,8 @@ fs_generator::generate_code(exec_list *instructions)
 	 generate_unspill(inst, dst);
 	 break;
 
-      case FS_OPCODE_PULL_CONSTANT_LOAD:
-	 generate_pull_constant_load(inst, dst, src[0], src[1]);
+      case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
+	 generate_uniform_pull_constant_load(inst, dst, src[0], src[1]);
 	 break;
 
       case FS_OPCODE_FB_WRITE:

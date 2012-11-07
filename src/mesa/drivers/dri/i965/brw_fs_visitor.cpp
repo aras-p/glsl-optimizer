@@ -557,7 +557,7 @@ fs_visitor::visit(ir_expression *ir)
       fs_reg packed_consts = fs_reg(this, glsl_type::float_type);
       packed_consts.type = result.type;
       fs_reg surf_index = fs_reg((unsigned)SURF_INDEX_WM_UBO(uniform_block->value.u[0]));
-      fs_inst *pull = emit(fs_inst(FS_OPCODE_PULL_CONSTANT_LOAD,
+      fs_inst *pull = emit(fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
                                    packed_consts,
                                    surf_index,
                                    fs_reg(offset->value.u[0])));
