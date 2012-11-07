@@ -350,23 +350,6 @@ ALL_FILES = \
 	$(MESA_ASM_FILES)	\
 	$(STATETRACKER_FILES)
 
-
-### Object files
-
-MESA_OBJECTS = \
-	$(MESA_FILES:.c=.o) \
-	$(MESA_CXX_FILES:.cpp=.o) \
-	$(MESA_ASM_FILES:.S=.o)
-
-MESA_GALLIUM_OBJECTS = \
-	$(MESA_GALLIUM_FILES:.c=.o) \
-	$(MESA_GALLIUM_CXX_FILES:.cpp=.o) \
-	$(MESA_ASM_FILES:.S=.o)
-
-
-COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_FILES:.c=.o)
-
-
 ### Include directories
 
 INCLUDE_DIRS = \
