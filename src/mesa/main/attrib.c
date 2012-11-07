@@ -684,7 +684,6 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
          _mesa_set_enable(ctx, GL_TEXTURE_2D_ARRAY_EXT,
                           !!(unit->Enabled & TEXTURE_2D_ARRAY_BIT));
       }
-
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, unit->EnvMode);
       _mesa_TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, unit->EnvColor);
       _mesa_TexGeni(GL_S, GL_TEXTURE_GEN_MODE, unit->GenS.Mode);
@@ -762,7 +761,10 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
                   !ctx->Extensions.MESA_texture_array) {
             continue;
          }
-         else if (obj->Target == GL_TEXTURE_BUFFER)
+         else if (obj->Target == GL_TEXTURE_CUBE_MAP_ARRAY &&
+             !ctx->Extensions.ARB_texture_cube_map_array) {
+            continue;
+         } else if (obj->Target == GL_TEXTURE_BUFFER)
             continue;
          else if (obj->Target == GL_TEXTURE_EXTERNAL_OES)
             continue;
