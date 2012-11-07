@@ -552,19 +552,13 @@ vec4_visitor::setup_uniform_clipplane_values()
       /* In Gen6 and later, we don't compact clip planes, because this
        * simplifies the implementation of gl_ClipDistance.
        */
-      int compacted_clipplane_index = 0;
       for (int i = 0; i < c->key.nr_userclip_plane_consts; ++i) {
-	 if (intel->gen < 6 &&
-	     !(c->key.userclip_planes_enabled_gen_4_5 & (1 << i))) {
-	    continue;
-	 }
 	 this->uniform_vector_size[this->uniforms] = 4;
-	 this->userplane[compacted_clipplane_index] = dst_reg(UNIFORM, this->uniforms);
-	 this->userplane[compacted_clipplane_index].type = BRW_REGISTER_TYPE_F;
+	 this->userplane[i] = dst_reg(UNIFORM, this->uniforms);
+	 this->userplane[i].type = BRW_REGISTER_TYPE_F;
 	 for (int j = 0; j < 4; ++j) {
 	    c->prog_data.param[this->uniforms * 4 + j] = &clip_planes[i][j];
 	 }
-	 ++compacted_clipplane_index;
 	 ++this->uniforms;
       }
    }
