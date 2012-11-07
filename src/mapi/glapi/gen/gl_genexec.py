@@ -189,7 +189,7 @@ class PrintCode(gl_XML.gl_print_base):
                 # dynamically.
                 continue
             settings_by_condition[condition].append(
-                'SET_{0}(exec, {1}{2});'.format(f.name, prefix, f.mesa_name))
+                'SET_{0}(exec, {1}{0});'.format(f.name, prefix, f.name))
         # Print out an if statement for each unique condition, with
         # the SET_* calls nested inside it.
         for condition in sorted(settings_by_condition.keys()):

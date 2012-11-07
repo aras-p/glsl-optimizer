@@ -40,8 +40,7 @@
                    es2                 CDATA   "none"
                    deprecated          CDATA   "none"
                    exec                NMTOKEN #IMPLIED
-                   desktop             (true | false) "true"
-                   mesa_name           CDATA   #IMPLIED>
+                   desktop             (true | false) "true">
 <!ATTLIST size     name                NMTOKEN #REQUIRED
                    count               NMTOKEN #IMPLIED
                    mode                (get | set) "set">
