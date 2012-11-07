@@ -129,11 +129,11 @@ util_resource_copy_region(struct pipe_context *pipe,
                           const struct pipe_box *src_box)
 {
    struct pipe_transfer *src_trans, *dst_trans;
-   void *dst_map;
-   const void *src_map;
+   uint8_t *dst_map;
+   const uint8_t *src_map;
    enum pipe_format src_format, dst_format;
-   unsigned w = src_box->width;
-   unsigned h = src_box->height;
+   struct pipe_box dst_box;
+   int z;
 
    assert(src && dst);
    if (!src || !dst)
@@ -145,44 +145,62 @@ util_resource_copy_region(struct pipe_context *pipe,
    src_format = src->format;
    dst_format = dst->format;
 
-   src_map = pipe_transfer_map(pipe,
-                               src,
-                               src_level,
-                               src_box->z,
-                               PIPE_TRANSFER_READ,
-                               src_box->x, src_box->y, w, h, &src_trans);
-
-   dst_map = pipe_transfer_map(pipe,
-                               dst,
-                               dst_level,
-                               dst_z,
-                               PIPE_TRANSFER_WRITE,
-                               dst_x, dst_y, w, h, &dst_trans);
-
    assert(util_format_get_blocksize(dst_format) == util_format_get_blocksize(src_format));
    assert(util_format_get_blockwidth(dst_format) == util_format_get_blockwidth(src_format));
    assert(util_format_get_blockheight(dst_format) == util_format_get_blockheight(src_format));
-   assert(src_map);
-   assert(dst_map);
 
-   if (src_map && dst_map) {
-      if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
-         memcpy(dst_map, src_map, w);
-      } else {
+   src_map = pipe->transfer_map(pipe,
+                                src,
+                                src_level,
+                                PIPE_TRANSFER_READ,
+                                src_box, &src_trans);
+   assert(src_map);
+   if (!src_map) {
+      goto no_src_map;
+   }
+
+   dst_box.x = dst_x;
+   dst_box.y = dst_y;
+   dst_box.z = dst_z;
+   dst_box.width  = src_box->width;
+   dst_box.height = src_box->height;
+   dst_box.depth  = src_box->depth;
+
+   dst_map = pipe->transfer_map(pipe,
+                                dst,
+                                dst_level,
+                                PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
+                                &dst_box, &dst_trans);
+   assert(dst_map);
+   if (!dst_map) {
+      goto no_dst_map;
+   }
+
+   if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+      assert(src_box->height == 1);
+      assert(src_box->depth == 1);
+      memcpy(dst_map, src_map, src_box->width);
+   } else {
+      for (z = 0; z < src_box->depth; ++z) {
          util_copy_rect(dst_map,
                         dst_format,
                         dst_trans->stride,
                         0, 0,
-                        w, h,
+                        src_box->width, src_box->height,
                         src_map,
                         src_trans->stride,
-                        0,
-                        0);
+                        0, 0);
+
+         dst_map += dst_trans->layer_stride;
+         src_map += src_trans->layer_stride;
       }
    }
 
-   pipe->transfer_unmap(pipe, src_trans);
    pipe->transfer_unmap(pipe, dst_trans);
+no_dst_map:
+   pipe->transfer_unmap(pipe, src_trans);
+no_src_map:
+   ;
 }
 
 
