@@ -249,7 +249,8 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 
 	r600_llvm_compile(mod, &bytes, &byte_count, r600_ctx->family , dump);
 	shader_ctx.bc = bytecode;
-	r600_bytecode_init(shader_ctx.bc, r600_ctx->chip_class, r600_ctx->family);
+	r600_bytecode_init(shader_ctx.bc, r600_ctx->chip_class, r600_ctx->family,
+			   r600_ctx->screen->msaa_texture_support);
 	shader_ctx.bc->type = TGSI_PROCESSOR_COMPUTE;
 	r600_bytecode_from_byte_stream(&shader_ctx, bytes, byte_count);
 	if (shader_ctx.bc->chip_class == CAYMAN) {
