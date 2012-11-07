@@ -43,39 +43,30 @@ libdricore@VERSION@_la_SOURCES = \
 libdricore@VERSION@_la_LDFLAGS = -version-number 1:0
 libdricore@VERSION@_la_LIBADD = \
         ../program/libdricore_program.la \
-        libdricore-asm.la
-
-# This is separated from libdricore to avoid conflics in object
-# outputs between main/clip.c and sparc/clip.c.  The documented way to
-# do this is with the automake option subdir-objects, except that
-# option is broken in the presence of variable expansion in *_SOURCES.
-# I have no idea how that option is supposed to be usable as is.
-libdricore_asm_la_SOURCES =
-libdricore_asm_la_CCASFLAGS = $(AM_CCASFLAGS) -DWORKAROUND_AUTOMAKE_OBJ_FILE_CONFLICTS
+        $()
 
 if HAVE_X86_ASM
-libdricore_asm_la_SOURCES += $(X86_FILES)
-libdricore_asm_la_CPPFLAGS = $(AM_CPPFLAGS) \
+libdricore@VERSION@_la_SOURCES += $(X86_FILES)
+AM_CPPFLAGS += \
         -I$(top_builddir)/src/mesa/x86 \
         -I$(top_srcdir)/src/mesa/x86
 endif
 
 if HAVE_X86_64_ASM
-libdricore_asm_la_SOURCES += $(X86_64_FILES)
-libdricore_asm_la_CPPFLAGS = $(AM_CPPFLAGS) \
+libdricore@VERSION@_la_SOURCES += $(X86_64_FILES)
+AM_CPPFLAGS += \
         -I$(top_builddir)/src/mesa/x86-64 \
         -I$(top_srcdir)/src/mesa/x86-64
 endif
 
 if HAVE_SPARC_ASM
-libdricore_asm_la_SOURCES += $(SPARC_FILES)
-libdricore_asm_la_CPPFLAGS = $(AM_CPPFLAGS) \
+libdricore@VERSION@_la_SOURCES += $(SPARC_FILES)
+AM_CPPFLAGS += \
         -I$(top_builddir)/src/mesa/sparc \
         -I$(top_srcdir)/src/mesa/sparc
 endif
 
 if HAVE_DRI
-noinst_LTLIBRARIES = libdricore-asm.la
 lib_LTLIBRARIES = libdricore@VERSION@.la
 
 # Provide compatibility with scripts for the old Mesa build system for
