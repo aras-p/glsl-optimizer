@@ -2961,6 +2961,6 @@ void r600_bytecode_export_read(struct r600_bytecode_output *output, uint32_t wor
 	output->swizzle_w = G_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_W(word1);
 	output->burst_count = G_SQ_CF_ALLOC_EXPORT_WORD1_BURST_COUNT(word1);
 	output->end_of_program = G_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(word1);
-	output->inst = EG_S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(word1));
+	output->inst = R600_S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(word1));
 	output->barrier = G_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(word1);
 }
