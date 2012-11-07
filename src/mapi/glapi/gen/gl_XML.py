@@ -802,6 +802,8 @@ class gl_function( gl_item ):
         comma = ""
 
         for p in self.parameterIterator():
+            if p.is_padding:
+                continue
             p_string = p_string + comma + p.name
             comma = ", "
 
