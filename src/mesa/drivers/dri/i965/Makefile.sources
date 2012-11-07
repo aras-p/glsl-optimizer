@@ -2,7 +2,7 @@ i965_INCLUDES = \
 	$(MESA_TOP)/src \
 	$(MESA_TOP)/src/mesa/drivers/dri/intel
 
-i965_C_FILES = \
+i965_FILES = \
 	intel_batchbuffer.c \
 	intel_blit.c \
 	intel_buffer_objects.c \
@@ -29,7 +29,10 @@ i965_C_FILES = \
 	intel_tex_layout.c \
 	intel_tex_subimage.c \
 	intel_tex_validate.c \
+	brw_blorp.cpp \
+	brw_blorp_blit.cpp \
 	brw_cc.c \
+	brw_cfg.cpp \
 	brw_clear.c \
 	brw_clip.c \
 	brw_clip_line.c \
@@ -39,6 +42,7 @@ i965_C_FILES = \
 	brw_clip_unfilled.c \
 	brw_clip_util.c \
 	brw_context.c \
+	brw_cubemap_normalize.cpp \
 	brw_curbe.c \
 	brw_disasm.c \
 	brw_draw.c \
@@ -48,9 +52,21 @@ i965_C_FILES = \
 	brw_eu_debug.c \
 	brw_eu_emit.c \
 	brw_eu_util.c \
+	brw_fs.cpp \
+	brw_fs_channel_expressions.cpp \
+	brw_fs_copy_propagation.cpp \
+	brw_fs_cse.cpp \
+	brw_fs_emit.cpp \
+	brw_fs_fp.cpp \
+	brw_fs_live_variables.cpp \
+	brw_fs_reg_allocate.cpp \
+	brw_fs_schedule_instructions.cpp \
+	brw_fs_vector_splitting.cpp \
+	brw_fs_visitor.cpp \
 	brw_gs.c \
 	brw_gs_emit.c \
 	brw_gs_state.c \
+	brw_lower_texture_gradients.cpp \
 	brw_misc_state.c \
 	brw_optimize.c \
 	brw_program.c \
@@ -59,6 +75,7 @@ i965_C_FILES = \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \
+	brw_shader.cpp \
 	brw_state_batch.c \
 	brw_state_cache.c \
 	brw_state_dump.c \
@@ -67,6 +84,13 @@ i965_C_FILES = \
 	brw_tex_layout.c \
 	brw_urb.c \
 	brw_util.c \
+	brw_vec4.cpp \
+	brw_vec4_copy_propagation.cpp \
+	brw_vec4_emit.cpp \
+	brw_vec4_live_variables.cpp \
+	brw_vec4_reg_allocate.cpp \
+	brw_vec4_visitor.cpp \
+	brw_vec4_vp.cpp \
 	brw_vs.c \
 	brw_vs_constval.c \
 	brw_vs_state.c \
@@ -77,6 +101,7 @@ i965_C_FILES = \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \
 	brw_wm_surface_state.c \
+	gen6_blorp.cpp \
 	gen6_cc.c \
 	gen6_clip_state.c \
 	gen6_depthstencil.c \
@@ -90,6 +115,7 @@ i965_C_FILES = \
 	gen6_viewport_state.c \
 	gen6_vs_state.c \
 	gen6_wm_state.c \
+	gen7_blorp.cpp \
 	gen7_cc_state.c \
 	gen7_clip_state.c \
 	gen7_disable.c \
@@ -101,34 +127,5 @@ i965_C_FILES = \
 	gen7_viewport_state.c \
 	gen7_vs_state.c \
 	gen7_wm_state.c \
-	gen7_wm_surface_state.c
-
-i965_CXX_FILES = \
-	brw_blorp.cpp \
-	brw_blorp_blit.cpp \
-	brw_cfg.cpp \
-	brw_cubemap_normalize.cpp \
-	brw_fs.cpp \
-	brw_fs_cse.cpp \
-	brw_fs_copy_propagation.cpp \
-	brw_fs_emit.cpp \
-	brw_fs_fp.cpp \
-	brw_fs_live_variables.cpp \
-	brw_fs_visitor.cpp \
-	brw_fs_channel_expressions.cpp \
-	brw_fs_reg_allocate.cpp \
-	brw_fs_schedule_instructions.cpp \
-	brw_fs_vector_splitting.cpp \
-	brw_lower_texture_gradients.cpp \
-	brw_shader.cpp \
-	brw_vec4.cpp \
-	brw_vec4_emit.cpp \
-	brw_vec4_copy_propagation.cpp \
-	brw_vec4_live_variables.cpp \
-	brw_vec4_reg_allocate.cpp \
-	brw_vec4_visitor.cpp \
-	brw_vec4_vp.cpp \
-	gen6_blorp.cpp \
-	gen7_blorp.cpp
-
-i965_ASM_FILES =
+	gen7_wm_surface_state.c \
+        $()

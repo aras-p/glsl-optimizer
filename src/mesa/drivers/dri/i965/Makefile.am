@@ -48,9 +48,7 @@ dridir = $(DRI_DRIVER_INSTALL_DIR)
 noinst_LTLIBRARIES = libi965_dri.la
 dri_LTLIBRARIES = i965_dri.la
 
-libi965_dri_la_SOURCES = \
-	$(i965_C_FILES) \
-	$(i965_CXX_FILES)
+libi965_dri_la_SOURCES = $(i965_FILES)
 
 # list of libs to be linked against by i965_dri.so and i965 test programs.
 COMMON_LIBS = \

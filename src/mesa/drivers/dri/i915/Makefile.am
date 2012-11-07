@@ -46,10 +46,7 @@ if HAVE_I915_DRI
 dri_LTLIBRARIES = i915_dri.la
 endif
 
-i915_dri_la_SOURCES = \
-	$(i915_C_FILES) \
-	$(i915_CXX_FILES)
-
+i915_dri_la_SOURCES = $(i915_FILES)
 i915_dri_la_LDFLAGS = -module -avoid-version -shared
 i915_dri_la_LIBADD = \
 	../common/libdricommon.la \
