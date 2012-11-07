@@ -55,10 +55,6 @@ _mesa_HashWalk(const struct _mesa_HashTable *table,
                void (*callback)(GLuint key, void *data, void *userData),
                void *userData);
 
-extern GLuint _mesa_HashFirstEntry(struct _mesa_HashTable *table);
-
-extern GLuint _mesa_HashNextEntry(const struct _mesa_HashTable *table, GLuint key);
-
 extern void _mesa_HashPrint(const struct _mesa_HashTable *table);
 
 extern GLuint _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys);
