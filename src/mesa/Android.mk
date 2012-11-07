@@ -37,25 +37,9 @@ common_C_INCLUDES := \
 	$(MESA_TOP)/src/mapi \
 	$(MESA_TOP)/src/glsl
 
-common_ASM :=
-
-# ---------------------------------------
-# Build mesa_gen_matypes for host
-# ---------------------------------------
-
 ifeq ($(strip $(MESA_ENABLE_ASM)),true)
 ifeq ($(TARGET_ARCH),x86)
-common_ASM += $(X86_FILES)
-
-include $(CLEAR_VARS)
-LOCAL_SRC_FILES := x86/gen_matypes.c
-LOCAL_CFLAGS := $(common_CFLAGS)
-LOCAL_C_INCLUDES := $(common_C_INCLUDES)
-LOCAL_MODULE := mesa_gen_matypes
-LOCAL_IS_HOST_MODULE := true
-include $(MESA_COMMON_MK)
-include $(BUILD_HOST_EXECUTABLE)
-
+common_ASM := $(X86_FILES)
 endif # x86
 endif # MESA_ENABLE_ASM
 
@@ -113,4 +97,5 @@ include $(BUILD_STATIC_LIBRARY)
 
 endif # MESA_BUILD_CLASSIC
 
+include $(LOCAL_PATH)/Android.mesa_gen_matypes.mk
 include $(LOCAL_PATH)/Android.libmesa_glsl_utils.mk
