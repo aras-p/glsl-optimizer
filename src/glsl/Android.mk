@@ -36,8 +36,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
 	$(LIBGLCPP_FILES) \
-	$(LIBGLSL_FILES) \
-	$(LIBGLSL_CXX_FILES)
+	$(LIBGLSL_FILES)
 
 LOCAL_C_INCLUDES := \
 	external/astl/include \
@@ -59,7 +58,6 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	$(LIBGLCPP_FILES) \
 	$(LIBGLSL_FILES) \
-	$(LIBGLSL_CXX_FILES) \
 	$(GLSL_SRCDIR)/builtin_compiler/builtin_stubs.cpp \
 	$(GLSL_COMPILER_CXX_FILES)
 

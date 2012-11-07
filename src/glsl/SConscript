@@ -46,7 +46,7 @@ glsl_sources = [
 source_lists = env.ParseSourceList('Makefile.sources')
 
 # add non-generated sources
-for l in ('LIBGLCPP_FILES', 'LIBGLSL_FILES', 'LIBGLSL_CXX_FILES'):
+for l in ('LIBGLCPP_FILES', 'LIBGLSL_FILES'):
     glsl_sources += source_lists[l]
 
 if env['msvc']:

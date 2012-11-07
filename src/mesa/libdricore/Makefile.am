@@ -38,7 +38,6 @@ libdricore@VERSION@_la_SOURCES = \
 	$(LIBGLCPP_GENERATED_FILES) \
 	$(LIBGLCPP_FILES) \
 	$(LIBGLSL_FILES) \
-	$(LIBGLSL_CXX_FILES) \
 	$(BUILTIN_COMPILER_GENERATED_CXX_FILES) \
 	$(top_builddir)/src/glsl/builtin_function.cpp
 libdricore@VERSION@_la_LDFLAGS = -version-number 1:0

@@ -15,10 +15,6 @@ LIBGLCPP_GENERATED_FILES = \
 # libglsl
 
 LIBGLSL_FILES = \
-	$(GLSL_SRCDIR)/strtod.c \
-	$(GLSL_SRCDIR)/ralloc.c
-
-LIBGLSL_CXX_FILES = \
 	$(GLSL_SRCDIR)/ast_expr.cpp \
 	$(GLSL_SRCDIR)/ast_function.cpp \
 	$(GLSL_SRCDIR)/ast_to_hir.cpp \
@@ -85,7 +81,10 @@ LIBGLSL_CXX_FILES = \
 	$(GLSL_SRCDIR)/opt_structure_splitting.cpp \
 	$(GLSL_SRCDIR)/opt_swizzle_swizzle.cpp \
 	$(GLSL_SRCDIR)/opt_tree_grafting.cpp \
-	$(GLSL_SRCDIR)/s_expression.cpp
+	$(GLSL_SRCDIR)/s_expression.cpp \
+	$(GLSL_SRCDIR)/strtod.c \
+	$(GLSL_SRCDIR)/ralloc.c \
+	$()
 
 # glsl_compiler
 

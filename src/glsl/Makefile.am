@@ -43,7 +43,6 @@ libglsl_la_SOURCES = \
 	glsl_lexer.ll \
 	glsl_parser.cc \
 	$(LIBGLSL_FILES) \
-	$(LIBGLSL_CXX_FILES) \
 	builtin_function.cpp
 
 libglsl_la_LIBADD = glcpp/libglcpp.la
