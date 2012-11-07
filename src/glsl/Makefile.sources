@@ -95,7 +95,7 @@ GLSL_COMPILER_CXX_FILES = \
 
 # builtin_compiler
 #
-# This is built before libglsl to generate builtin_funciton.cpp for libglsl.
+# This is built before libglsl to generate builtin_function.cpp for libglsl.
 # For this to work, a dummy version of builtin_function.cpp,
 # builtin_stubs.cpp, is used.
 
