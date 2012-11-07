@@ -779,7 +779,7 @@ static struct brw_instruction *brw_alu3(struct brw_compile *p,
 	  dest.file == BRW_MESSAGE_REGISTER_FILE);
    assert(dest.nr < 128);
    assert(dest.address_mode == BRW_ADDRESS_DIRECT);
-   assert(dest.type = BRW_REGISTER_TYPE_F);
+   assert(dest.type == BRW_REGISTER_TYPE_F);
    insn->bits1.da3src.dest_reg_file = (dest.file == BRW_MESSAGE_REGISTER_FILE);
    insn->bits1.da3src.dest_reg_nr = dest.nr;
    insn->bits1.da3src.dest_subreg_nr = dest.subnr / 16;
