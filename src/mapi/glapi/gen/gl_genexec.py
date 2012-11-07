@@ -32,10 +32,7 @@ import sys, getopt
 
 
 exec_flavor_map = {
-    'check': '_check_',
     'dynamic': None,
-    'es': '_es_',
-    'loopback': 'loopback_',
     'mesa': '_mesa_',
     'skip': None,
     }
