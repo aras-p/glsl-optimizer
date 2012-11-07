@@ -271,7 +271,8 @@ util_clear_depth_stencil(struct pipe_context *pipe,
 
    if (dst_map) {
       unsigned dst_stride = dst_trans->stride;
-      unsigned zstencil = util_pack_z_stencil(dst->texture->format, depth, stencil);
+      uint64_t zstencil = util_pack64_z_stencil(dst->texture->format,
+                                                depth, stencil);
       unsigned i, j;
       assert(dst_trans->stride > 0);
 
@@ -279,10 +280,10 @@ util_clear_depth_stencil(struct pipe_context *pipe,
       case 1:
          assert(dst->format == PIPE_FORMAT_S8_UINT);
          if(dst_stride == width)
-            memset(dst_map, (ubyte) zstencil, height * width);
+            memset(dst_map, (uint8_t) zstencil, height * width);
          else {
             for (i = 0; i < height; i++) {
-               memset(dst_map, (ubyte) zstencil, width);
+               memset(dst_map, (uint8_t) zstencil, width);
                dst_map += dst_stride;
             }
          }
@@ -301,7 +302,7 @@ util_clear_depth_stencil(struct pipe_context *pipe,
             for (i = 0; i < height; i++) {
                uint32_t *row = (uint32_t *)dst_map;
                for (j = 0; j < width; j++)
-                  *row++ = zstencil;
+                  *row++ = (uint32_t) zstencil;
                dst_map += dst_stride;
             }
          }
@@ -319,19 +320,13 @@ util_clear_depth_stencil(struct pipe_context *pipe,
                uint32_t *row = (uint32_t *)dst_map;
                for (j = 0; j < width; j++) {
                   uint32_t tmp = *row & dst_mask;
-                  *row++ = tmp | (zstencil & ~dst_mask);
+                  *row++ = tmp | ((uint32_t) zstencil & ~dst_mask);
                }
                dst_map += dst_stride;
             }
          }
          break;
       case 8:
-      {
-         uint64_t zstencil = util_pack64_z_stencil(dst->texture->format,
-                                                   depth, stencil);
-
-         assert(dst->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT);
-
          if (!need_rmw) {
             for (i = 0; i < height; i++) {
                uint64_t *row = (uint64_t *)dst_map;
@@ -358,7 +353,6 @@ util_clear_depth_stencil(struct pipe_context *pipe,
             }
          }
          break;
-      }
       default:
          assert(0);
          break;
