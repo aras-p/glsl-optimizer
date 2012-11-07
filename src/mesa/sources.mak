@@ -50,6 +50,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/getstring.c \
 	$(SRCDIR)main/glformats.c \
 	$(SRCDIR)main/hash.c \
+	$(SRCDIR)main/hash_table.c \
 	$(SRCDIR)main/hint.c \
 	$(SRCDIR)main/histogram.c \
 	$(SRCDIR)main/image.c \

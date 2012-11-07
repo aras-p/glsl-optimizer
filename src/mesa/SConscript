@@ -81,6 +81,7 @@ main_sources = [
     'main/getstring.c',
     'main/glformats.c',
     'main/hash.c',
+    'main/hash_table.c',
     'main/hint.c',
     'main/histogram.c',
     'main/image.c',
