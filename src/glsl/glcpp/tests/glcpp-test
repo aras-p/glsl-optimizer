@@ -1,5 +1,13 @@
 #!/bin/sh
 
+if [ ! -z "$srcdir" ]; then
+   testdir=$srcdir/tests
+   glcpp=`pwd`/glcpp
+else
+   testdir=.
+   glcpp=../glcpp
+fi
+
 trap 'rm $test.valgrind-errors; exit 1' INT QUIT
 
 usage ()
@@ -35,9 +43,9 @@ pass=0
 clean=0
 
 echo "====== Testing for correctness ======"
-for test in *.c; do
+for test in $testdir/*.c; do
     echo -n "Testing $test..."
-    ../glcpp < $test > $test.out 2>&1
+    $glcpp < $test > $test.out 2>&1
     total=$((total+1))
     if cmp $test.expected $test.out >/dev/null 2>&1; then
 	echo "PASS"
@@ -54,9 +62,9 @@ echo ""
 
 if [ "$do_valgrind" = "yes" ]; then
     echo "====== Testing for valgrind cleanliness ======"
-    for test in *.c; do
+    for test in $testdir/*.c; do
 	echo -n "Testing $test with valgrind..."
-	valgrind --error-exitcode=31 --log-file=$test.valgrind-errors ../glcpp < $test >/dev/null 2>&1
+	valgrind --error-exitcode=31 --log-file=$test.valgrind-errors $glcpp < $test >/dev/null 2>&1
 	if [ "$?" = "31" ]; then
 	    echo "ERRORS"
 	    cat $test.valgrind-errors

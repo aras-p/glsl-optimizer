@@ -22,6 +22,8 @@
 
 include ../Makefile.sources
 
+TESTS = tests/glcpp-test
+
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
