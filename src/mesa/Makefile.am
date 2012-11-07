@@ -122,7 +122,6 @@ endif
 
 libmesa_la_SOURCES = \
 	$(MESA_FILES) \
-	$(MESA_CXX_FILES) \
         $(MESA_ASM_FILES_FOR_ARCH)
 
 libmesa_la_LIBADD = $(top_builddir)/src/glsl/libglsl.la
@@ -130,7 +129,6 @@ libmesa_la_LDFLAGS =
 
 libmesagallium_la_SOURCES = \
 	$(MESA_GALLIUM_FILES) \
-	$(MESA_GALLIUM_CXX_FILES) \
         $(MESA_ASM_FILES_FOR_ARCH)
 
 libmesagallium_la_LIBADD = $(top_builddir)/src/glsl/libglsl.la

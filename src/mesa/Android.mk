@@ -26,8 +26,6 @@
 LOCAL_PATH := $(call my-dir)
 
 # Import the following variables:
-#     MESA_CXX_FILES
-#     MESA_GALLIUM_CXX_FILES
 #     MESA_GALLIUM_FILES
 #     MESA_FILES
 #     X86_FILES
@@ -70,7 +68,6 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
 	$(MESA_GALLIUM_FILES) \
-	$(MESA_GALLIUM_CXX_FILES) \
 	$(common_ASM)
 
 LOCAL_CFLAGS := $(common_CFLAGS)
@@ -108,7 +105,6 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_SRC_FILES := \
         $(MESA_FILES) \
-        $(MESA_CXX_FILES) \
         $(common_ASM)
 
 include $(LOCAL_PATH)/Android.gen.mk
