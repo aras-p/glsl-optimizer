@@ -82,8 +82,6 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
 void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
                                   struct draw_context *draw);
 
-void draw_geometry_shader_delete(struct draw_geometry_shader *shader);
-
 int draw_gs_max_output_vertices(struct draw_geometry_shader *shader,
                                 unsigned pipe_prim);
 

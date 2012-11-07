@@ -156,6 +156,8 @@ void draw_bind_geometry_shader(struct draw_context *draw,
 void draw_delete_geometry_shader(struct draw_context *draw,
                                  struct draw_geometry_shader *dgs)
 {
+   FREE(dgs->primitive_lengths);
+   FREE((void*) dgs->state.tokens);
    FREE(dgs);
 }
 
@@ -467,12 +469,6 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
 #endif
 
    return shader->emitted_vertices;
-}
-
-void draw_geometry_shader_delete(struct draw_geometry_shader *shader)
-{
-   FREE((void*) shader->state.tokens);
-   FREE(shader);
 }
 
 void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
