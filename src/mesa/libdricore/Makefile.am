@@ -41,7 +41,9 @@ libdricore@VERSION@_la_SOURCES = \
 	$(BUILTIN_COMPILER_GENERATED_CXX_FILES) \
 	$(top_builddir)/src/glsl/builtin_function.cpp
 libdricore@VERSION@_la_LDFLAGS = -version-number 1:0
-libdricore@VERSION@_la_LIBADD = libdricore-asm.la
+libdricore@VERSION@_la_LIBADD = \
+        ../program/libdricore_program.la \
+        libdricore-asm.la
 
 # This is separated from libdricore to avoid conflics in object
 # outputs between main/clip.c and sparc/clip.c.  The documented way to

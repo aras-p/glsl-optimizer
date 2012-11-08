@@ -53,8 +53,12 @@ LOCAL_CFLAGS := \
    $(patsubst %,-DFEATURE_%=1,$(MESA_ENABLED_APIS))
 
 LOCAL_C_INCLUDES := \
+	$(call intermediates-dir-for STATIC_LIBRARIES,libmesa_program,,) \
 	$(MESA_TOP)/src/mapi \
 	$(MESA_TOP)/src/glsl
+
+LOCAL_WHOLE_STATIC_LIBRARIES := \
+	libmesa_program
 
 include $(LOCAL_PATH)/Android.gen.mk
 include $(MESA_COMMON_MK)

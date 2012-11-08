@@ -316,7 +316,6 @@ MESA_FILES = \
 	$(MATH_XFORM_FILES)	\
 	$(VBO_FILES)		\
 	$(TNL_FILES)		\
-	$(PROGRAM_FILES)	\
 	$(SWRAST_FILES)	\
 	$(SWRAST_SETUP_FILES)	\
 	$(COMMON_DRIVER_FILES)\
@@ -328,7 +327,6 @@ MESA_GALLIUM_FILES = \
 	$(MATH_FILES)		\
 	$(VBO_FILES)		\
 	$(STATETRACKER_FILES)	\
-	$(PROGRAM_FILES)	\
 	$(SRCDIR)x86/common_x86.c
 
 # All the core C sources, for dependency checking

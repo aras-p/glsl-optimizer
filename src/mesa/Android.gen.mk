@@ -32,9 +32,6 @@ intermediates := $(call local-intermediates-dir)
 # This is the list of auto-generated files: sources and headers
 sources := \
 	main/enums.c \
-	main/api_exec.c \
-	program/program_parse.tab.c \
-	program/lex.yy.c \
 	main/dispatch.h \
 	main/remap_helper.h \
 	main/get_hash.h
@@ -62,29 +59,11 @@ dispatch_deps := \
 	$(wildcard $(glapi)/*.py) \
 	$(wildcard $(glapi)/*.xml)
 
-define local-l-to-c
-	@mkdir -p $(dir $@)
-	@echo "Mesa Lex: $(PRIVATE_MODULE) <= $<"
-	$(hide) $(LEX) -o$@ $<
-endef
-
-define mesa_local-y-to-c-and-h
-	@mkdir -p $(dir $@)
-	@echo "Mesa Yacc: $(PRIVATE_MODULE) <= $<"
-	$(hide) $(YACC) -o $@ -p "_mesa_program_" $<
-endef
-
 define es-gen
 	@mkdir -p $(dir $@)
 	@echo "Gen ES: $(PRIVATE_MODULE) <= $(notdir $(@))"
 	$(hide) $(PRIVATE_SCRIPT) $(1) $(PRIVATE_XML) > $@
 endef
-
-$(intermediates)/program/program_parse.tab.c: $(LOCAL_PATH)/program/program_parse.y
-	$(mesa_local-y-to-c-and-h)
-
-$(intermediates)/program/lex.yy.c: $(LOCAL_PATH)/program/program_lexer.l
-	$(local-l-to-c)
 
 $(intermediates)/main/git_sha1.h:
 	@mkdir -p $(dir $@)

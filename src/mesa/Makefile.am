@@ -23,7 +23,7 @@ if NEED_LIBDRICORE
 DRICORE_SUBDIR = libdricore
 endif
 
-SUBDIRS = x86 x86-64 . $(DRICORE_SUBDIR) drivers
+SUBDIRS = program x86 x86-64 . $(DRICORE_SUBDIR) drivers
 
 gldir = $(includedir)/GL
 gl_HEADERS = $(top_srcdir)/include/GL/*.h
@@ -53,21 +53,10 @@ include $(GLAPI)/glapi_gen.mk
 
 BUILT_SOURCES = \
 	main/git_sha1.h \
-	main/get_hash.h \
-	program/program_parse.tab.c \
-	program/program_parse.tab.h \
-	program/lex.yy.c
+	main/get_hash.h
 CLEANFILES = \
 	$(BUILT_SOURCES) \
 	git_sha1.h.tmp
-
-program/program_parse.tab.c program/program_parse.tab.h: program/program_parse.y
-	$(MKDIR_P) program
-	$(AM_V_GEN) $(YACC) -p "_mesa_program_" -v -d --output=program/program_parse.tab.c $<
-
-program/lex.yy.c: program/program_lexer.l
-	$(MKDIR_P) program
-	$(AM_V_GEN) $(LEX) --never-interactive --outfile=$@ $<
 
 GET_HASH_GEN = main/get_hash_generator.py
 GET_HASH_GEN_FLAGS := $(patsubst -DFEATURE_%=1,-a %, \
@@ -124,14 +113,21 @@ libmesa_la_SOURCES = \
 	$(MESA_FILES) \
         $(MESA_ASM_FILES_FOR_ARCH)
 
-libmesa_la_LIBADD = $(top_builddir)/src/glsl/libglsl.la
+libmesa_la_LIBADD = \
+        $(top_builddir)/src/glsl/libglsl.la \
+        $(top_builddir)/src/mesa/program/libprogram.la \
+        $()
 libmesa_la_LDFLAGS =
 
 libmesagallium_la_SOURCES = \
 	$(MESA_GALLIUM_FILES) \
         $(MESA_ASM_FILES_FOR_ARCH)
 
-libmesagallium_la_LIBADD = $(top_builddir)/src/glsl/libglsl.la
+libmesagallium_la_LIBADD = \
+        $(top_builddir)/src/glsl/libglsl.la \
+        $(top_builddir)/src/mesa/program/libprogram.la \
+        $()
+
 libmesagallium_la_LDFLAGS =
 
 if HAVE_GALLIUM
