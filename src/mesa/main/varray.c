@@ -701,14 +701,10 @@ _mesa_GetVertexAttribIiv(GLuint index, GLenum pname, GLint *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
-      const GLfloat *v =
+      const GLint *v = (const GLint *)
 	 get_current_attrib(ctx, index, "glGetVertexAttribIiv");
       if (v != NULL) {
-         /* XXX we don't have true integer-valued vertex attribs yet */
-         params[0] = (GLint) v[0];
-         params[1] = (GLint) v[1];
-         params[2] = (GLint) v[2];
-         params[3] = (GLint) v[3];
+         COPY_4V(params, v);
       }
    }
    else {
@@ -726,14 +722,10 @@ _mesa_GetVertexAttribIuiv(GLuint index, GLenum pname, GLuint *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
-      const GLfloat *v =
+      const GLuint *v = (const GLuint *)
 	 get_current_attrib(ctx, index, "glGetVertexAttribIuiv");
       if (v != NULL) {
-         /* XXX we don't have true integer-valued vertex attribs yet */
-         params[0] = (GLuint) v[0];
-         params[1] = (GLuint) v[1];
-         params[2] = (GLuint) v[2];
-         params[3] = (GLuint) v[3];
+         COPY_4V(params, v);
       }
    }
    else {
