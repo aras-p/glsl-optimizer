@@ -221,22 +221,16 @@ bool do_wm_prog(struct brw_context *brw,
     * prog_data associated with the compiled program, and which will be freed
     * by the state cache.
     */
+   int param_count;
    if (fs) {
-      int param_count = fs->num_uniform_components;
-      /* The backend also sometimes adds params for texture size. */
-      param_count += 2 * BRW_MAX_TEX_UNIT;
-
-      c->prog_data.param = rzalloc_array(NULL, const float *, param_count);
-      c->prog_data.pull_param = rzalloc_array(NULL, const float *, param_count);
+      param_count = fs->num_uniform_components;
    } else {
-      /* brw_wm_pass0.c will also add references to 0.0 and 1.0 which are
-       * uploaded as push parameters.
-       */
-      int param_count = (fp->program.Base.Parameters->NumParameters + 2) * 4;
-      c->prog_data.param = rzalloc_array(NULL, const float *, param_count);
-      /* The old backend never does pull constants. */
-      c->prog_data.pull_param = NULL;
+      param_count = fp->program.Base.Parameters->NumParameters * 4;
    }
+   /* The backend also sometimes adds params for texture size. */
+   param_count += 2 * BRW_MAX_TEX_UNIT;
+   c->prog_data.param = rzalloc_array(NULL, const float *, param_count);
+   c->prog_data.pull_param = rzalloc_array(NULL, const float *, param_count);
 
    memcpy(&c->key, key, sizeof(*key));
 
