@@ -551,38 +551,43 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_ubo_load:
+      /* This IR node takes a constant uniform block and a constant or
+       * variable byte offset within the block and loads a vector from that.
+       */
       ir_constant *uniform_block = ir->operands[0]->as_constant();
-      ir_constant *offset = ir->operands[1]->as_constant();
-
-      fs_reg packed_consts = fs_reg(this, glsl_type::float_type);
-      packed_consts.type = result.type;
+      ir_constant *const_offset = ir->operands[1]->as_constant();
       fs_reg surf_index = fs_reg((unsigned)SURF_INDEX_WM_UBO(uniform_block->value.u[0]));
-      fs_inst *pull = emit(fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
-                                   packed_consts,
-                                   surf_index,
-                                   fs_reg(offset->value.u[0])));
-      pull->base_mrf = 14;
-      pull->mlen = 1;
+      if (const_offset) {
+         fs_reg packed_consts = fs_reg(this, glsl_type::float_type);
+         packed_consts.type = result.type;
+         fs_inst *pull = emit(fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
+                                      packed_consts,
+                                      surf_index,
+                                      fs_reg(const_offset->value.u[0])));
+         pull->base_mrf = 14;
+         pull->mlen = 1;
 
-      packed_consts.smear = offset->value.u[0] % 16 / 4;
-      for (int i = 0; i < ir->type->vector_elements; i++) {
-         /* UBO bools are any nonzero value.  We consider bools to be
-          * values with the low bit set to 1.  Convert them using CMP.
-          */
-         if (ir->type->base_type == GLSL_TYPE_BOOL) {
-            emit(CMP(result, packed_consts, fs_reg(0u), BRW_CONDITIONAL_NZ));
-         } else {
-            emit(MOV(result, packed_consts));
+         packed_consts.smear = const_offset->value.u[0] % 16 / 4;
+         for (int i = 0; i < ir->type->vector_elements; i++) {
+            /* UBO bools are any nonzero value.  We consider bools to be
+             * values with the low bit set to 1.  Convert them using CMP.
+             */
+            if (ir->type->base_type == GLSL_TYPE_BOOL) {
+               emit(CMP(result, packed_consts, fs_reg(0u), BRW_CONDITIONAL_NZ));
+            } else {
+               emit(MOV(result, packed_consts));
+            }
+
+            packed_consts.smear++;
+            result.reg_offset++;
+
+            /* The std140 packing rules don't allow vectors to cross 16-byte
+             * boundaries, and a reg is 32 bytes.
+             */
+            assert(packed_consts.smear < 8);
          }
-
-         packed_consts.smear++;
-         result.reg_offset++;
-
-         /* The std140 packing rules don't allow vectors to cross 16-byte
-          * boundaries, and a reg is 32 bytes.
-          */
-         assert(packed_consts.smear < 8);
       }
+
       result.reg_offset = 0;
       break;
    }
