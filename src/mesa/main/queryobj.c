@@ -216,7 +216,7 @@ _mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids)
    FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glDeleeteQueries(%d)\n", n);
+      _mesa_debug(ctx, "glDeleteQueries(%d)\n", n);
 
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteQueriesARB(n < 0)");
