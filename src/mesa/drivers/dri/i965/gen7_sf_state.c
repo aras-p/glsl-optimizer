@@ -253,7 +253,6 @@ upload_sf_state(struct brw_context *brw)
    }
    if (ctx->Line.SmoothFlag) {
       dw2 |= GEN6_SF_LINE_AA_ENABLE;
-      dw2 |= GEN6_SF_LINE_AA_MODE_TRUE;
       dw2 |= GEN6_SF_LINE_END_CAP_WIDTH_1_0;
    }
    if (ctx->Line.StippleFlag && intel->is_haswell) {
@@ -264,10 +263,9 @@ upload_sf_state(struct brw_context *brw)
       dw2 |= GEN6_SF_MSRAST_ON_PATTERN;
 
    /* FINISHME: Last Pixel Enable?  Vertex Sub Pixel Precision Select?
-    * FINISHME: AA Line Distance Mode?
     */
 
-   dw3 = 0;
+   dw3 = GEN6_SF_LINE_AA_MODE_TRUE;
 
    /* _NEW_PROGRAM | _NEW_POINT */
    if (!(ctx->VertexProgram.PointSizeEnabled || ctx->Point._Attenuated))
