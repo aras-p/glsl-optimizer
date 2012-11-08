@@ -206,6 +206,8 @@ svga_buffer_transfer_map(struct pipe_context *pipe,
       ++sbuf->map.count;
       map += transfer->box.x;
       *ptransfer = transfer;
+   } else {
+      FREE(transfer);
    }
    
    return map;
