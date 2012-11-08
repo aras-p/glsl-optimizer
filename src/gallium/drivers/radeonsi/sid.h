@@ -31,6 +31,8 @@
 #define SI_SH_REG_END                        0x0000C000
 #define SI_CONTEXT_REG_OFFSET                0x00028000
 #define SI_CONTEXT_REG_END                   0x00029000
+#define CIK_UCONFIG_REG_OFFSET               0x00030000
+#define CIK_UCONFIG_REG_END                  0x00031000
 
 #define EVENT_TYPE_CACHE_FLUSH                  0x6
 #define EVENT_TYPE_PS_PARTIAL_FLUSH            0x10
@@ -70,16 +72,15 @@
 #define PKT3_NOP                               0x10
 #define PKT3_DISPATCH_DIRECT                   0x15
 #define PKT3_DISPATCH_INDIRECT                 0x16
+#define PKT3_OCCLUSION_QUERY                   0x1F /* new for CIK */
 #define PKT3_SET_PREDICATION                   0x20
 #define PKT3_COND_EXEC                         0x22
 #define PKT3_PRED_EXEC                         0x23
-#define PKT3_START_3D_CMDBUF                   0x24
 #define PKT3_DRAW_INDEX_2                      0x27
 #define PKT3_CONTEXT_CONTROL                   0x28
 #define PKT3_INDEX_TYPE                        0x2A
-#define PKT3_DRAW_INDEX                        0x2B
 #define PKT3_DRAW_INDEX_AUTO                   0x2D
-#define PKT3_DRAW_INDEX_IMMD                   0x2E
+#define PKT3_DRAW_INDEX_IMMD                   0x2E /* not on CIK */
 #define PKT3_NUM_INSTANCES                     0x2F
 #define PKT3_STRMOUT_BUFFER_UPDATE             0x34
 #define PKT3_WRITE_DATA                        0x37
@@ -97,22 +98,24 @@
 #define PKT3_WRITE_DATA_ENGINE_SEL_PFP             1
 #define PKT3_WRITE_DATA_ENGINE_SEL_CE              2
 #define PKT3_MEM_SEMAPHORE                     0x39
-#define PKT3_MPEG_INDEX                        0x3A
+#define PKT3_MPEG_INDEX                        0x3A /* not on CIK */
 #define PKT3_WAIT_REG_MEM                      0x3C
 #define		WAIT_REG_MEM_EQUAL		3
-#define PKT3_MEM_WRITE                         0x3D
+#define PKT3_MEM_WRITE                         0x3D /* not on CIK */
 #define PKT3_INDIRECT_BUFFER                   0x32
-#define PKT3_SURFACE_SYNC                      0x43
-#define PKT3_ME_INITIALIZE                     0x44
+#define PKT3_SURFACE_SYNC                      0x43 /* deprecated on CIK, use ACQUIRE_MEM */
+#define PKT3_ME_INITIALIZE                     0x44 /* not on CIK */
 #define PKT3_COND_WRITE                        0x45
 #define PKT3_EVENT_WRITE                       0x46
 #define PKT3_EVENT_WRITE_EOP                   0x47
 #define PKT3_EVENT_WRITE_EOS                   0x48
-#define PKT3_ONE_REG_WRITE                     0x57
+#define PKT3_ONE_REG_WRITE                     0x57 /* not on CIK */
+#define PKT3_ACQUIRE_MEM                       0x58 /* new for CIK */
 #define PKT3_SET_CONFIG_REG                    0x68
 #define PKT3_SET_CONTEXT_REG                   0x69
 #define PKT3_SET_SH_REG                        0x76
 #define PKT3_SET_SH_REG_OFFSET                 0x77
+#define PKT3_SET_UCONFIG_REG                   0x79 /* new for CIK */
 
 #define PKT_TYPE_S(x)                   (((x) & 0x3) << 30)
 #define PKT_TYPE_G(x)                   (((x) >> 30) & 0x3)

@@ -70,6 +70,10 @@ void si_pm4_set_reg(struct si_pm4_state *state, unsigned reg, uint32_t val)
 		opcode = PKT3_SET_CONTEXT_REG;
 		reg -= SI_CONTEXT_REG_OFFSET;
 
+	} else if (reg >= CIK_UCONFIG_REG_OFFSET && reg < CIK_UCONFIG_REG_END) {
+		opcode = PKT3_SET_UCONFIG_REG;
+		reg -= CIK_UCONFIG_REG_OFFSET;
+
 	} else {
 		R600_ERR("Invalid register offset %08x!\n", reg);
 		return;
