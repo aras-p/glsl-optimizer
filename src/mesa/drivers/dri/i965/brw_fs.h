@@ -121,6 +121,8 @@ public:
       uint32_t u;
       float f;
    } imm;
+
+   fs_reg *reladdr;
 };
 
 static const fs_reg reg_undef;
@@ -227,6 +229,7 @@ public:
 
    fs_inst *emit(fs_inst inst);
    fs_inst *emit(fs_inst *inst);
+   void emit(exec_list list);
 
    fs_inst *emit(enum opcode opcode);
    fs_inst *emit(enum opcode opcode, fs_reg dst);
@@ -261,6 +264,9 @@ public:
 					   fs_inst *end,
 					   fs_reg reg);
 
+   exec_list VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
+                                        fs_reg offset);
+
    bool run();
    void setup_payload_gen4();
    void setup_payload_gen6();
@@ -278,6 +284,7 @@ public:
    void spill_reg(int spill_reg);
    void split_virtual_grfs();
    void compact_virtual_grfs();
+   void move_uniform_array_access_to_pull_constants();
    void setup_pull_constants();
    void calculate_live_intervals();
    bool opt_algebraic();
@@ -381,6 +388,7 @@ public:
     */
    int param_index[MAX_UNIFORMS * 4];
    int param_offset[MAX_UNIFORMS * 4];
+   int param_size[MAX_UNIFORMS * 4];
 
    int *virtual_grf_sizes;
    int virtual_grf_count;

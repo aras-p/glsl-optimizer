@@ -117,6 +117,7 @@ fs_visitor::visit(ir_variable *ir)
 	 return;
       }
 
+      param_size[param_index] = type_size(ir->type);
       if (!strncmp(ir->name, "gl_", 3)) {
 	 setup_builtin_uniform_values(ir);
       } else {
@@ -160,21 +161,41 @@ fs_visitor::visit(ir_dereference_record *ir)
 void
 fs_visitor::visit(ir_dereference_array *ir)
 {
-   ir_constant *index;
-   int element_size;
+   ir_constant *constant_index;
+   fs_reg src;
+   int element_size = type_size(ir->type);
+
+   constant_index = ir->array_index->as_constant();
 
    ir->array->accept(this);
-   index = ir->array_index->as_constant();
+   src = this->result;
+   src.type = brw_type_for_base_type(ir->type);
 
-   element_size = type_size(ir->type);
-   this->result.type = brw_type_for_base_type(ir->type);
-
-   if (index) {
-      assert(this->result.file == UNIFORM || this->result.file == GRF);
-      this->result.reg_offset += index->value.i[0] * element_size;
+   if (constant_index) {
+      assert(src.file == UNIFORM || src.file == GRF);
+      src.reg_offset += constant_index->value.i[0] * element_size;
    } else {
-      assert(!"FINISHME: non-constant array element");
+      /* Variable index array dereference.  We attach the variable index
+       * component to the reg as a pointer to a register containing the
+       * offset.  Currently only uniform arrays are supported in this patch,
+       * and that reladdr pointer is resolved by
+       * move_uniform_array_access_to_pull_constants().  All other array types
+       * are lowered by lower_variable_index_to_cond_assign().
+       */
+      ir->array_index->accept(this);
+
+      fs_reg index_reg;
+      index_reg = fs_reg(this, glsl_type::int_type);
+      emit(BRW_OPCODE_MUL, index_reg, this->result, fs_reg(element_size));
+
+      if (src.reladdr) {
+         emit(BRW_OPCODE_ADD, index_reg, *src.reladdr, index_reg);
+      }
+
+      src.reladdr = ralloc(mem_ctx, fs_reg);
+      memcpy(src.reladdr, &index_reg, sizeof(index_reg));
    }
+   this->result = src;
 }
 
 void
@@ -585,6 +606,21 @@ fs_visitor::visit(ir_expression *ir)
              * boundaries, and a reg is 32 bytes.
              */
             assert(packed_consts.smear < 8);
+         }
+      } else {
+         /* Turn the byte offset into a dword offset. */
+         fs_reg base_offset = fs_reg(this, glsl_type::int_type);
+         emit(SHR(base_offset, op[1], fs_reg(2)));
+
+         for (int i = 0; i < ir->type->vector_elements; i++) {
+            fs_reg offset = fs_reg(this, glsl_type::int_type);
+            emit(ADD(offset, base_offset, fs_reg(i)));
+            emit(VARYING_PULL_CONSTANT_LOAD(result, surf_index, offset));
+
+            if (ir->type->base_type == GLSL_TYPE_BOOL)
+               emit(CMP(result, result, fs_reg(0), BRW_CONDITIONAL_NZ));
+
+            result.reg_offset++;
          }
       }
 
@@ -1792,6 +1828,16 @@ fs_visitor::emit(fs_inst *inst)
    return inst;
 }
 
+void
+fs_visitor::emit(exec_list list)
+{
+   foreach_list_safe(node, &list) {
+      fs_inst *inst = (fs_inst *)node;
+      inst->remove();
+      emit(inst);
+   }
+}
+
 /** Emits a dummy fragment shader consisting of magenta for bringup purposes. */
 void
 fs_visitor::emit_dummy_fs()
@@ -2220,6 +2266,8 @@ fs_visitor::fs_visitor(struct brw_context *brw,
 
    this->force_uncompressed_stack = 0;
    this->force_sechalf_stack = 0;
+
+   memset(&this->param_size, 0, sizeof(this->param_size));
 }
 
 fs_visitor::~fs_visitor()
