@@ -709,6 +709,7 @@ extSwizSel: INTEGER
 	   }
 
 	   $$.swz = ($1 == 0) ? SWIZZLE_ZERO : SWIZZLE_ONE;
+           $$.negate = 0;
 
 	   /* 0 and 1 are valid for both RGBA swizzle names and XYZW
 	    * swizzle names.
@@ -727,6 +728,10 @@ extSwizSel: INTEGER
 
 	   s = $1[0];
 	   free($1);
+
+           $$.rgba_valid = 0;
+           $$.xyzw_valid = 0;
+           $$.negate = 0;
 
 	   switch (s) {
 	   case 'x':
