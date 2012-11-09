@@ -84,52 +84,44 @@ brwCreateContext(int api,
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *screen = sPriv->driverPrivate;
    struct dd_function_table functions;
+   const unsigned req_version = major_version * 10 + minor_version;
+   unsigned max_supported_version = 0;
    unsigned i;
 
-   /* Filter against the requested API and version.
-    */
-   switch (api) {
-   case API_OPENGL: {
 #ifdef TEXTURE_FLOAT_ENABLED
-      const unsigned max_version =
-         (screen->gen == 6 ||
-          (screen->gen == 7 && screen->kernel_has_gen7_sol_reset))
-         ? 30 : 21;
+   bool has_texture_float = true;
 #else
-      const unsigned max_version = 21;
+   bool has_texture_float = false;
 #endif
-      const unsigned req_version = major_version * 10 + minor_version;
 
-      if (req_version > max_version) {
-         *error = __DRI_CTX_ERROR_BAD_VERSION;
-         return false;
-      }
+   bool supports_gl30 = has_texture_float &&
+                        (screen->gen == 6 ||
+                         (screen->gen == 7 &&
+                          screen->kernel_has_gen7_sol_reset));
+
+   /* Determine max_supported_version. */
+   switch (api) {
+   case API_OPENGL:
+      max_supported_version = supports_gl30 ? 30 : 21;
+      break;
+   case API_OPENGLES:
+      max_supported_version = 11;
+      break;
+   case API_OPENGLES2:
+      max_supported_version = 20;
+      break;
+   case API_OPENGL_CORE:
+      max_supported_version = supports_gl30 ? 31 : 0;
+      break;
+   default:
       break;
    }
-   case API_OPENGLES:
-   case API_OPENGLES2:
-      break;
-   case API_OPENGL_CORE: {
-#ifdef TEXTURE_FLOAT_ENABLED
-      const unsigned max_version =
-         (screen->gen == 6 ||
-          (screen->gen == 7 && screen->kernel_has_gen7_sol_reset))
-         ? 31 : 0;
-      const unsigned req_version = major_version * 10 + minor_version;
 
-      if (req_version > max_version) {
-         *error = (max_version == 0)
-            ? __DRI_CTX_ERROR_BAD_API : __DRI_CTX_ERROR_BAD_VERSION;
-         return false;
-      }
-      break;
-#else
+   if (max_supported_version == 0) {
       *error = __DRI_CTX_ERROR_BAD_API;
       return false;
-#endif
-   }
-   default:
-      *error = __DRI_CTX_ERROR_BAD_API;
+   } else if (req_version > max_supported_version) {
+      *error = __DRI_CTX_ERROR_BAD_VERSION;
       return false;
    }
 
