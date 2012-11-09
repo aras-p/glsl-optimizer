@@ -1445,7 +1445,7 @@ img_filter_cube_array_linear(struct tgsi_sampler *tgsi_sampler,
    int width, height;
    int x0, y0, x1, y1, layer;
    float xw, yw; /* weights */
-   union tex_tile_address addr, addrj;
+   union tex_tile_address addr;
    const float *tx0, *tx1, *tx2, *tx3;
    int c;
 
