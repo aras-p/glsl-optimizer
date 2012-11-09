@@ -457,8 +457,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 				printf("  Z %i: offset=%llu, slice_size=%llu, npix_x=%u, "
 				       "npix_y=%u, npix_z=%u, nblk_x=%u, nblk_y=%u, "
 				       "nblk_z=%u, pitch_bytes=%u, mode=%u\n",
-				       i, rtex->surface.level[i].offset,
-				       rtex->surface.level[i].slice_size,
+				       i, (unsigned long long)rtex->surface.level[i].offset,
+				       (unsigned long long)rtex->surface.level[i].slice_size,
 				       rtex->surface.level[i].npix_x,
 				       rtex->surface.level[i].npix_y,
 				       rtex->surface.level[i].npix_z,
@@ -474,8 +474,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 				printf("  S %i: offset=%llu, slice_size=%llu, npix_x=%u, "
 				       "npix_y=%u, npix_z=%u, nblk_x=%u, nblk_y=%u, "
 				       "nblk_z=%u, pitch_bytes=%u, mode=%u\n",
-				       i, rtex->surface.stencil_level[i].offset,
-				       rtex->surface.stencil_level[i].slice_size,
+				       i, (unsigned long long)rtex->surface.stencil_level[i].offset,
+				       (unsigned long long)rtex->surface.stencil_level[i].slice_size,
 				       rtex->surface.stencil_level[i].npix_x,
 				       rtex->surface.stencil_level[i].npix_y,
 				       rtex->surface.stencil_level[i].npix_z,
