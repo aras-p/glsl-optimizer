@@ -877,13 +877,15 @@ void util_blitter_cache_all_shaders(struct blitter_context *blitter)
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_screen *screen = blitter->pipe->screen;
    unsigned num_cbufs, i, target, max_samples;
-   boolean has_arraytex;
+   boolean has_arraytex, has_cubearraytex;
 
    num_cbufs = MAX2(screen->get_param(screen,
                                       PIPE_CAP_MAX_RENDER_TARGETS), 1);
    max_samples = ctx->has_texture_multisample ? 2 : 1;
    has_arraytex = screen->get_param(screen,
                                     PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS) != 0;
+   has_cubearraytex = screen->get_param(screen,
+                                    PIPE_CAP_CUBE_MAP_ARRAY) != 0;
 
    for (i = 0; i < num_cbufs; i++) {
       blitter_get_fs_col(ctx, i, FALSE);
@@ -898,6 +900,9 @@ void util_blitter_cache_all_shaders(struct blitter_context *blitter)
               target == PIPE_TEXTURE_2D_ARRAY)) {
             continue;
          }
+         if (!has_arraytex &&
+             (target == PIPE_TEXTURE_CUBE_ARRAY))
+            continue;
 
          blitter_get_fs_texfetch_col(ctx, target, i);
          blitter_get_fs_texfetch_depth(ctx, target, i);
