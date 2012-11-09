@@ -288,6 +288,24 @@ fs_inst::is_math()
            opcode == SHADER_OPCODE_POW);
 }
 
+bool
+fs_inst::is_send_from_grf()
+{
+   return opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7;
+}
+
+bool
+fs_visitor::can_do_source_mods(fs_inst *inst)
+{
+   if (intel->gen == 6 && inst->is_math())
+      return false;
+
+   if (inst->is_send_from_grf())
+      return false;
+
+   return true;
+}
+
 void
 fs_reg::init()
 {
@@ -1622,7 +1640,9 @@ fs_visitor::register_coalesce()
 	  inst->dst.type != inst->src[0].type)
 	 continue;
 
-      bool has_source_modifiers = inst->src[0].abs || inst->src[0].negate;
+      bool has_source_modifiers = (inst->src[0].abs ||
+                                   inst->src[0].negate ||
+                                   inst->src[0].file == UNIFORM);
 
       /* Found a move of a GRF to a GRF.  Let's see if we can coalesce
        * them: check for no writes to either one until the exit of the
@@ -1645,10 +1665,8 @@ fs_visitor::register_coalesce()
 	  * unusual register regions, so avoid coalescing those for
 	  * now.  We should do something more specific.
 	  */
-	 if (intel->gen == 6 &&
-	     scan_inst->is_math() &&
-	     (has_source_modifiers || inst->src[0].file == UNIFORM)) {
-	    interfered = true;
+	 if (has_source_modifiers && !can_do_source_mods(scan_inst)) {
+            interfered = true;
 	    break;
 	 }
 

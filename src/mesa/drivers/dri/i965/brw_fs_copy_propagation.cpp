@@ -216,9 +216,8 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
 
    bool has_source_modifiers = entry->src.abs || entry->src.negate;
 
-   if (intel->gen == 6 && inst->is_math() &&
-       (has_source_modifiers || entry->src.file == UNIFORM ||
-        entry->src.smear != -1))
+   if ((has_source_modifiers || entry->src.file == UNIFORM ||
+        entry->src.smear != -1) && !can_do_source_mods(inst))
       return false;
 
    inst->src[arg].file = entry->src.file;

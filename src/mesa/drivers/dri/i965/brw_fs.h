@@ -156,6 +156,7 @@ public:
    bool overwrites_reg(const fs_reg &reg);
    bool is_tex();
    bool is_math();
+   bool is_send_from_grf();
 
    fs_reg dst;
    fs_reg src[3];
@@ -221,6 +222,8 @@ public:
    void visit(ir_function_signature *ir);
 
    void swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler);
+
+   bool can_do_source_mods(fs_inst *inst);
 
    fs_inst *emit(fs_inst inst);
    fs_inst *emit(fs_inst *inst);
