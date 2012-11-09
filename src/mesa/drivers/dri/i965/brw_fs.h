@@ -426,8 +426,6 @@ public:
 
    int force_uncompressed_stack;
    int force_sechalf_stack;
-
-   class bblock_t *bblock;
 };
 
 bool brw_do_channel_expressions(struct exec_list *instructions);
