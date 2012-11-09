@@ -639,6 +639,69 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    return EGL_TRUE;
 }
 
+/**
+ * Set the error code after a call to
+ * dri2_egl_display::dri2::createContextAttribs.
+ */
+static void
+dri2_create_context_attribs_error(int dri_error)
+{
+   EGLint egl_error;
+
+   switch (dri_error) {
+   case __DRI_CTX_ERROR_SUCCESS:
+      return;
+
+   case __DRI_CTX_ERROR_NO_MEMORY:
+      egl_error = EGL_BAD_ALLOC;
+      break;
+
+  /* From the EGL_KHR_create_context spec, section "Errors":
+   *
+   *   * If <config> does not support a client API context compatible
+   *     with the requested API major and minor version, [...] context flags,
+   *     and context reset notification behavior (for client API types where
+   *     these attributes are supported), then an EGL_BAD_MATCH error is
+   *     generated.
+   *
+   *   * If an OpenGL ES context is requested and the values for
+   *     attributes EGL_CONTEXT_MAJOR_VERSION_KHR and
+   *     EGL_CONTEXT_MINOR_VERSION_KHR specify an OpenGL ES version that
+   *     is not defined, than an EGL_BAD_MATCH error is generated.
+   *
+   *   * If an OpenGL context is requested, the requested version is
+   *     greater than 3.2, and the value for attribute
+   *     EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR has no bits set; has any
+   *     bits set other than EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR and
+   *     EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT_KHR; has more than
+   *     one of these bits set; or if the implementation does not support
+   *     the requested profile, then an EGL_BAD_MATCH error is generated.
+   */
+   case __DRI_CTX_ERROR_BAD_API:
+   case __DRI_CTX_ERROR_BAD_VERSION:
+   case __DRI_CTX_ERROR_BAD_FLAG:
+      egl_error = EGL_BAD_MATCH;
+      break;
+
+  /* From the EGL_KHR_create_context spec, section "Errors":
+   *
+   *   * If an attribute name or attribute value in <attrib_list> is not
+   *     recognized (including unrecognized bits in bitmask attributes),
+   *     then an EGL_BAD_ATTRIBUTE error is generated."
+   */
+   case __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE:
+   case __DRI_CTX_ERROR_UNKNOWN_FLAG:
+      egl_error = EGL_BAD_ATTRIBUTE;
+      break;
+
+   default:
+      assert(0);
+      egl_error = EGL_BAD_MATCH;
+      break;
+   }
+
+   _eglError(egl_error, "dri2_create_context");
+}
 
 /**
  * Called via eglCreateContext(), drv->API.CreateContext().
@@ -769,6 +832,7 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
                                                  ctx_attribs,
                                                  & error,
                                                  dri2_ctx);
+	 dri2_create_context_attribs_error(error);
       } else {
 	 dri2_ctx->dri_context =
 	    dri2_dpy->dri2->createNewContextForAPI(dri2_dpy->dri_screen,
