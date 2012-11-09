@@ -162,6 +162,63 @@ ALU2(SHL)
 ALU2(SHR)
 ALU2(ASR)
 
+/** Gen4 predicated IF. */
+fs_inst *
+fs_visitor::IF(uint32_t predicate)
+{
+   fs_inst *inst = new(mem_ctx) fs_inst(BRW_OPCODE_IF);
+   inst->predicate = predicate;
+   return inst;
+}
+
+/** Gen6+ IF with embedded comparison. */
+fs_inst *
+fs_visitor::IF(fs_reg src0, fs_reg src1, uint32_t condition)
+{
+   assert(intel->gen >= 6);
+   fs_inst *inst = new(mem_ctx) fs_inst(BRW_OPCODE_IF,
+                                        reg_null_d, src0, src1);
+   inst->conditional_mod = condition;
+   return inst;
+}
+
+/**
+ * CMP: Sets the low bit of the destination channels with the result
+ * of the comparison, while the upper bits are undefined, and updates
+ * the flag register with the packed 16 bits of the result.
+ */
+fs_inst *
+fs_visitor::CMP(fs_reg dst, fs_reg src0, fs_reg src1, uint32_t condition)
+{
+   fs_inst *inst;
+
+   /* Take the instruction:
+    *
+    * CMP null<d> src0<f> src1<f>
+    *
+    * Original gen4 does type conversion to the destination type before
+    * comparison, producing garbage results for floating point comparisons.
+    * gen5 does the comparison on the execution type (resolved source types),
+    * so dst type doesn't matter.  gen6 does comparison and then uses the
+    * result as if it was the dst type with no conversion, which happens to
+    * mostly work out for float-interpreted-as-int since our comparisons are
+    * for >0, =0, <0.
+    */
+   if (intel->gen == 4) {
+      dst.type = src0.type;
+      if (dst.file == FIXED_HW_REG)
+	 dst.fixed_hw_reg.type = dst.type;
+   }
+
+   resolve_ud_negate(&src0);
+   resolve_ud_negate(&src1);
+
+   inst = new(mem_ctx) fs_inst(BRW_OPCODE_CMP, dst, src0, src1);
+   inst->conditional_mod = condition;
+
+   return inst;
+}
+
 bool
 fs_inst::equals(fs_inst *inst)
 {
@@ -800,10 +857,7 @@ fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
       /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
        * us front face
        */
-      fs_inst *inst = emit(BRW_OPCODE_CMP, *reg,
-			   fs_reg(r1_6ud),
-			   fs_reg(1u << 31));
-      inst->conditional_mod = BRW_CONDITIONAL_L;
+      emit(CMP(*reg, fs_reg(r1_6ud), fs_reg(1u << 31), BRW_CONDITIONAL_L));
       emit(BRW_OPCODE_AND, *reg, *reg, fs_reg(1u));
    }
 

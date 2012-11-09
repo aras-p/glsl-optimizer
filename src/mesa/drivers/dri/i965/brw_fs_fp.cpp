@@ -88,9 +88,8 @@ fs_visitor::emit_fp_sop(uint32_t conditional_mod,
       if (fpi->DstReg.WriteMask & (1 << i)) {
          fs_inst *inst;
 
-         inst = emit(BRW_OPCODE_CMP, fs_reg(brw_null_reg()),
-                     regoffset(src0, i), regoffset(src1, i));
-         inst->conditional_mod = conditional_mod;
+         emit(CMP(reg_null_d, regoffset(src0, i), regoffset(src1, i),
+                  conditional_mod));
 
          inst = emit(BRW_OPCODE_SEL, regoffset(dst, i), one, fs_reg(0.0f));
          inst->predicate = BRW_PREDICATE_NORMAL;
@@ -171,9 +170,8 @@ fs_visitor::emit_fragment_program_code()
             if (fpi->DstReg.WriteMask & (1 << i)) {
                fs_inst *inst;
 
-               inst = emit(BRW_OPCODE_CMP, null,
-                           regoffset(src[0], i), fs_reg(0.0f));
-               inst->conditional_mod = BRW_CONDITIONAL_L;
+               emit(CMP(null, regoffset(src[0], i), fs_reg(0.0f),
+                        BRW_CONDITIONAL_L));
 
                inst = emit(BRW_OPCODE_SEL, regoffset(dst, i),
                            regoffset(src[1], i), regoffset(src[2], i));
@@ -254,12 +252,10 @@ fs_visitor::emit_fragment_program_code()
                continue;
             }
 
-            fs_inst *inst = emit(BRW_OPCODE_CMP, null,
-                                 regoffset(src[0], i), 0.0f);
-            inst->conditional_mod = BRW_CONDITIONAL_L;
+            emit(CMP(null, regoffset(src[0], i), fs_reg(0.0f),
+                     BRW_CONDITIONAL_L));
 
-            inst = emit(BRW_OPCODE_IF);
-            inst->predicate = BRW_PREDICATE_NORMAL;
+            emit(IF(BRW_PREDICATE_NORMAL));
             emit(FS_OPCODE_DISCARD);
             emit(BRW_OPCODE_ENDIF);
          }
@@ -291,9 +287,8 @@ fs_visitor::emit_fragment_program_code()
 
          if (fpi->DstReg.WriteMask & WRITEMASK_YZ) {
             fs_inst *inst;
-            inst = emit(BRW_OPCODE_CMP, null,
-                        regoffset(src[0], 0), fs_reg(0.0f));
-            inst->conditional_mod = BRW_CONDITIONAL_LE;
+            emit(CMP(null, regoffset(src[0], 0), fs_reg(0.0f),
+                     BRW_CONDITIONAL_LE));
 
             if (fpi->DstReg.WriteMask & WRITEMASK_Y) {
                emit(MOV(regoffset(dst, 1), regoffset(src[0], 0)));

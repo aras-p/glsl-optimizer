@@ -187,8 +187,7 @@ fs_visitor::emit_minmax(uint32_t conditionalmod, fs_reg dst,
       inst = emit(BRW_OPCODE_SEL, dst, src0, src1);
       inst->conditional_mod = conditionalmod;
    } else {
-      inst = emit(BRW_OPCODE_CMP, reg_null_cmp, src0, src1);
-      inst->conditional_mod = conditionalmod;
+      emit(CMP(reg_null_d, src0, src1, conditionalmod));
 
       inst = emit(BRW_OPCODE_SEL, dst, src0, src1);
       inst->predicate = BRW_PREDICATE_NORMAL;
@@ -326,13 +325,11 @@ fs_visitor::visit(ir_expression *ir)
 
       emit(MOV(this->result, fs_reg(0.0f)));
 
-      inst = emit(BRW_OPCODE_CMP, reg_null_f, op[0], fs_reg(0.0f));
-      inst->conditional_mod = BRW_CONDITIONAL_G;
+      emit(CMP(reg_null_f, op[0], fs_reg(0.0f), BRW_CONDITIONAL_G));
       inst = emit(MOV(this->result, fs_reg(1.0f)));
       inst->predicate = BRW_PREDICATE_NORMAL;
 
-      inst = emit(BRW_OPCODE_CMP, reg_null_f, op[0], fs_reg(0.0f));
-      inst->conditional_mod = BRW_CONDITIONAL_L;
+      emit(CMP(reg_null_f, op[0], fs_reg(0.0f), BRW_CONDITIONAL_L));
       inst = emit(MOV(this->result, fs_reg(-1.0f)));
       inst->predicate = BRW_PREDICATE_NORMAL;
 
@@ -421,19 +418,11 @@ fs_visitor::visit(ir_expression *ir)
    case ir_binop_all_equal:
    case ir_binop_nequal:
    case ir_binop_any_nequal:
-      temp = this->result;
-      /* original gen4 does implicit conversion before comparison. */
-      if (intel->gen < 5)
-	 temp.type = op[0].type;
-
-      resolve_ud_negate(&op[0]);
-      resolve_ud_negate(&op[1]);
-
       resolve_bool_comparison(ir->operands[0], &op[0]);
       resolve_bool_comparison(ir->operands[1], &op[1]);
 
-      inst = emit(BRW_OPCODE_CMP, temp, op[0], op[1]);
-      inst->conditional_mod = brw_conditional_for_comparison(ir->operation);
+      emit(CMP(this->result, op[0], op[1],
+               brw_conditional_for_comparison(ir->operation)));
       break;
 
    case ir_binop_logic_xor:
@@ -502,15 +491,7 @@ fs_visitor::visit(ir_expression *ir)
 
    case ir_unop_f2b:
    case ir_unop_i2b:
-      temp = this->result;
-      /* original gen4 does implicit conversion before comparison. */
-      if (intel->gen < 5)
-	 temp.type = op[0].type;
-
-      resolve_ud_negate(&op[0]);
-
-      inst = emit(BRW_OPCODE_CMP, temp, op[0], fs_reg(0.0f));
-      inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      emit(CMP(this->result, op[0], fs_reg(0.0f), BRW_CONDITIONAL_NZ));
       break;
 
    case ir_unop_trunc:
@@ -588,9 +569,7 @@ fs_visitor::visit(ir_expression *ir)
           * values with the low bit set to 1.  Convert them using CMP.
           */
          if (ir->type->base_type == GLSL_TYPE_BOOL) {
-            fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP, result,
-                                         packed_consts, fs_reg(0u)));
-            inst->conditional_mod = BRW_CONDITIONAL_NZ;
+            emit(CMP(result, packed_consts, fs_reg(0u), BRW_CONDITIONAL_NZ));
          } else {
             emit(MOV(result, packed_consts));
          }
@@ -1518,20 +1497,20 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 
       case ir_unop_f2b:
 	 if (intel->gen >= 6) {
-	    inst = emit(BRW_OPCODE_CMP, reg_null_d, op[0], fs_reg(0.0f));
+	    emit(CMP(reg_null_d, op[0], fs_reg(0.0f), BRW_CONDITIONAL_NZ));
 	 } else {
 	    inst = emit(MOV(reg_null_f, op[0]));
+            inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 }
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_unop_i2b:
 	 if (intel->gen >= 6) {
-	    inst = emit(BRW_OPCODE_CMP, reg_null_d, op[0], fs_reg(0));
+	    emit(CMP(reg_null_d, op[0], fs_reg(0), BRW_CONDITIONAL_NZ));
 	 } else {
 	    inst = emit(MOV(reg_null_d, op[0]));
+            inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 }
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
 
       case ir_binop_greater:
@@ -1545,9 +1524,8 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 	 resolve_bool_comparison(expr->operands[0], &op[0]);
 	 resolve_bool_comparison(expr->operands[1], &op[1]);
 
-	 inst = emit(BRW_OPCODE_CMP, reg_null_cmp, op[0], op[1]);
-	 inst->conditional_mod =
-	    brw_conditional_for_comparison(expr->operation);
+	 emit(CMP(reg_null_d, op[0], op[1],
+                  brw_conditional_for_comparison(expr->operation)));
 	 break;
 
       default:
@@ -1604,8 +1582,7 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 	 return;
 
       case ir_unop_i2b:
-	 inst = emit(BRW_OPCODE_IF, reg_null_d, op[0], fs_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 emit(IF(op[0], fs_reg(0), BRW_CONDITIONAL_NZ));
 	 return;
 
       case ir_binop_greater:
@@ -1619,14 +1596,12 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 	 resolve_bool_comparison(expr->operands[0], &op[0]);
 	 resolve_bool_comparison(expr->operands[1], &op[1]);
 
-	 inst = emit(BRW_OPCODE_IF, reg_null_d, op[0], op[1]);
-	 inst->conditional_mod =
-	    brw_conditional_for_comparison(expr->operation);
+	 emit(IF(op[0], op[1],
+                 brw_conditional_for_comparison(expr->operation)));
 	 return;
       default:
 	 assert(!"not reached");
-	 inst = emit(BRW_OPCODE_IF, reg_null_d, op[0], fs_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 emit(IF(op[0], fs_reg(0), BRW_CONDITIONAL_NZ));
 	 fail("bad condition\n");
 	 return;
       }
@@ -1640,8 +1615,6 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 void
 fs_visitor::visit(ir_if *ir)
 {
-   fs_inst *inst;
-
    if (intel->gen < 6 && c->dispatch_width == 16) {
       fail("Can't support (non-uniform) control flow on 16-wide\n");
    }
@@ -1656,8 +1629,7 @@ fs_visitor::visit(ir_if *ir)
    } else {
       emit_bool_to_cond_code(ir->condition);
 
-      inst = emit(BRW_OPCODE_IF);
-      inst->predicate = BRW_PREDICATE_NORMAL;
+      emit(IF(BRW_PREDICATE_NORMAL));
    }
 
    foreach_list(node, &ir->then_instructions) {
@@ -1710,10 +1682,10 @@ fs_visitor::visit(ir_loop *ir)
       this->base_ir = ir->to;
       ir->to->accept(this);
 
-      fs_inst *inst = emit(BRW_OPCODE_CMP, reg_null_cmp, counter, this->result);
-      inst->conditional_mod = brw_conditional_for_comparison(ir->cmp);
+      emit(CMP(reg_null_d, counter, this->result,
+               brw_conditional_for_comparison(ir->cmp)));
 
-      inst = emit(BRW_OPCODE_BREAK);
+      fs_inst *inst = emit(BRW_OPCODE_BREAK);
       inst->predicate = BRW_PREDICATE_NORMAL;
    }
 
@@ -2218,23 +2190,6 @@ fs_visitor::fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
    this->variable_ht = hash_table_ctor(0,
                                        hash_table_pointer_hash,
                                        hash_table_pointer_compare);
-
-   /* There's a question that appears to be left open in the spec:
-    * How do implicit dst conversions interact with the CMP
-    * instruction or conditional mods?  On gen6, the instruction:
-    *
-    * CMP null<d> src0<f> src1<f>
-    *
-    * will do src1 - src0 and compare that result as if it was an
-    * integer.  On gen4, it will do src1 - src0 as float, convert
-    * the result to int, and compare as int.  In between, it
-    * appears that it does src1 - src0 and does the compare in the
-    * execution type so dst type doesn't matter.
-    */
-   if (this->intel->gen > 4)
-      this->reg_null_cmp = reg_null_d;
-   else
-      this->reg_null_cmp = reg_null_f;
 
    memset(this->outputs, 0, sizeof(this->outputs));
    memset(this->output_components, 0, sizeof(this->output_components));

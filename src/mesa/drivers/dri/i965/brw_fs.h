@@ -238,6 +238,8 @@ public:
    fs_inst *AND(fs_reg dst, fs_reg src0, fs_reg src1);
    fs_inst *OR(fs_reg dst, fs_reg src0, fs_reg src1);
    fs_inst *XOR(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *IF(uint32_t predicate);
+   fs_inst *IF(fs_reg src0, fs_reg src1, uint32_t condition);
    fs_inst *CMP(fs_reg dst, fs_reg src0, fs_reg src1,
                 uint32_t condition);
 
@@ -440,7 +442,6 @@ public:
    fs_reg pixel_w;
    fs_reg delta_x[BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT];
    fs_reg delta_y[BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT];
-   fs_reg reg_null_cmp;
 
    int grf_used;
 
