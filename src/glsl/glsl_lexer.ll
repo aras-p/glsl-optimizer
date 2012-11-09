@@ -437,7 +437,7 @@ enum		KEYWORD(110, 100, 0, 0, ENUM);
 typedef		KEYWORD(110, 100, 0, 0, TYPEDEF);
 template	KEYWORD(110, 100, 0, 0, TEMPLATE);
 this		KEYWORD(110, 100, 0, 0, THIS);
-packed		KEYWORD_WITH_ALT(110, 100, 140, 0, yyextra->ARB_uniform_buffer_object_enable, PACKED_TOK);
+packed		KEYWORD_WITH_ALT(110, 100, 140, 300, yyextra->ARB_uniform_buffer_object_enable, PACKED_TOK);
 goto		KEYWORD(110, 100, 0, 0, GOTO);
 switch		KEYWORD(110, 100, 130, 300, SWITCH);
 default		KEYWORD(110, 100, 130, 300, DEFAULT);

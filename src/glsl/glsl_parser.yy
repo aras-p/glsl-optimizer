@@ -1143,6 +1143,8 @@ layout_qualifier_id:
 	         $$.flags.q.shared = 1;
 	      } else if (strcmp($1, "column_major") == 0) {
 	         $$.flags.q.column_major = 1;
+	      } else if (strcmp($1, "row_major") == 0) {
+	         $$.flags.q.row_major = 1;
 	      }
 
 	      if ($$.flags.i && state->ARB_uniform_buffer_object_warn) {
