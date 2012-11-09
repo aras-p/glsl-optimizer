@@ -2472,6 +2472,8 @@ static struct si_pm4_state *si_bind_sampler(struct r600_context *rctx, unsigned 
 					 (void*)rctx->border_color_table);
 
 		si_pm4_set_reg(pm4, R_028080_TA_BC_BASE_ADDR, va_offset >> 8);
+		if (rctx->chip_class >= CIK)
+			si_pm4_set_reg(pm4, R_028084_TA_BC_BASE_ADDR_HI, va_offset >> 40);
 		rctx->ws->buffer_unmap(rctx->border_color_table->cs_buf);
 		si_pm4_add_bo(pm4, rctx->border_color_table, RADEON_USAGE_READ);
 	}
