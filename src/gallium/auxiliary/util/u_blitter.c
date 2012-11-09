@@ -900,7 +900,7 @@ void util_blitter_cache_all_shaders(struct blitter_context *blitter)
               target == PIPE_TEXTURE_2D_ARRAY)) {
             continue;
          }
-         if (!has_arraytex &&
+         if (!has_cubearraytex &&
              (target == PIPE_TEXTURE_CUBE_ARRAY))
             continue;
 
