@@ -463,6 +463,7 @@ vec4_generator::generate_scratch_read(vec4_instruction *inst,
 			   msg_type,
 			   BRW_DATAPORT_READ_TARGET_RENDER_CACHE,
 			   2, /* mlen */
+                           true, /* header_present */
 			   1 /* rlen */);
 }
 
@@ -596,6 +597,7 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
 			   msg_type,
 			   BRW_DATAPORT_READ_TARGET_DATA_CACHE,
 			   2, /* mlen */
+                           true, /* header_present */
 			   1 /* rlen */);
 }
 

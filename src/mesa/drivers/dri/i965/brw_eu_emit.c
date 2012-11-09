@@ -620,6 +620,7 @@ brw_set_dp_read_message(struct brw_compile *p,
 			GLuint msg_type,
 			GLuint target_cache,
 			GLuint msg_length,
+                        bool header_present,
 			GLuint response_length)
 {
    struct brw_context *brw = p->brw;
@@ -638,7 +639,7 @@ brw_set_dp_read_message(struct brw_compile *p,
    }
 
    brw_set_message_descriptor(p, insn, sfid, msg_length, response_length,
-			      true, false);
+			      header_present, false);
 
    if (intel->gen >= 7) {
       insn->bits3.gen7_dp.binding_table_index = binding_table_index;
@@ -1967,6 +1968,7 @@ brw_oword_block_read_scratch(struct brw_compile *p,
 			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
 			      BRW_DATAPORT_READ_TARGET_RENDER_CACHE,
 			      1, /* msg_length */
+                              true, /* header_present */
 			      rlen);
    }
 }
@@ -2024,6 +2026,7 @@ void brw_oword_block_read(struct brw_compile *p,
 			   BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ,
 			   BRW_DATAPORT_READ_TARGET_DATA_CACHE,
 			   1, /* msg_length */
+                           true, /* header_present */
 			   1); /* response_length (1 reg, 2 owords!) */
 
    brw_pop_insn_state(p);

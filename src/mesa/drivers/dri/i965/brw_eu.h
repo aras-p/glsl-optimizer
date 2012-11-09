@@ -907,6 +907,7 @@ void brw_set_dp_read_message(struct brw_compile *p,
 			     GLuint msg_type,
 			     GLuint target_cache,
 			     GLuint msg_length,
+                             bool header_present,
 			     GLuint response_length);
 
 void brw_set_dp_write_message(struct brw_compile *p,
