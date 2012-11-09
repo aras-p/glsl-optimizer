@@ -236,10 +236,25 @@ void
 brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
 	     struct brw_reg reg)
 {
+   struct brw_context *brw = p->brw;
+   struct intel_context *intel = &brw->intel;
+
    if (reg.type != BRW_ARCHITECTURE_REGISTER_FILE)
       assert(reg.nr < 128);
 
    gen7_convert_mrf_to_grf(p, &reg);
+
+   if (intel->gen >= 6 && (insn->header.opcode == BRW_OPCODE_SEND ||
+                           insn->header.opcode == BRW_OPCODE_SENDC)) {
+      /* Any source modifiers or regions will be ignored, since this just
+       * identifies the MRF/GRF to start reading the message contents from.
+       * Check for some likely failures.
+       */
+      assert(!reg.negate);
+      assert(!reg.abs);
+      assert(reg.address_mode == BRW_ADDRESS_DIRECT);
+      assert(reg.vstride != BRW_VERTICAL_STRIDE_0);
+   }
 
    validate_reg(insn, reg);
 
