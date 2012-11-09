@@ -213,6 +213,7 @@ public:
    void swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler);
 
    fs_inst *emit(fs_inst inst);
+   fs_inst *emit(fs_inst *inst);
 
    fs_inst *emit(enum opcode opcode);
    fs_inst *emit(enum opcode opcode, fs_reg dst);
@@ -220,6 +221,25 @@ public:
    fs_inst *emit(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1);
    fs_inst *emit(enum opcode opcode, fs_reg dst,
                  fs_reg src0, fs_reg src1, fs_reg src2);
+
+   fs_inst *MOV(fs_reg dst, fs_reg src);
+   fs_inst *NOT(fs_reg dst, fs_reg src);
+   fs_inst *RNDD(fs_reg dst, fs_reg src);
+   fs_inst *RNDE(fs_reg dst, fs_reg src);
+   fs_inst *RNDZ(fs_reg dst, fs_reg src);
+   fs_inst *FRC(fs_reg dst, fs_reg src);
+   fs_inst *ADD(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *MUL(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *MACH(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *MAC(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *SHL(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *SHR(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *ASR(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *AND(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *OR(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *XOR(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *CMP(fs_reg dst, fs_reg src0, fs_reg src1,
+                uint32_t condition);
 
    int type_size(const struct glsl_type *type);
    fs_inst *get_instruction_generating_reg(fs_inst *start,

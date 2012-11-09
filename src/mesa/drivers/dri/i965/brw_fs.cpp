@@ -132,6 +132,36 @@ fs_inst::fs_inst(enum opcode opcode, fs_reg dst,
       assert(src[2].reg_offset >= 0);
 }
 
+#define ALU1(op)                                                        \
+   fs_inst *                                                            \
+   fs_visitor::op(fs_reg dst, fs_reg src0)                              \
+   {                                                                    \
+      return new(mem_ctx) fs_inst(BRW_OPCODE_##op, dst, src0);          \
+   }
+
+#define ALU2(op)                                                        \
+   fs_inst *                                                            \
+   fs_visitor::op(fs_reg dst, fs_reg src0, fs_reg src1)                 \
+   {                                                                    \
+      return new(mem_ctx) fs_inst(BRW_OPCODE_##op, dst, src0, src1);    \
+   }
+
+ALU1(NOT)
+ALU1(MOV)
+ALU1(FRC)
+ALU1(RNDD)
+ALU1(RNDE)
+ALU1(RNDZ)
+ALU2(ADD)
+ALU2(MUL)
+ALU2(MACH)
+ALU2(AND)
+ALU2(OR)
+ALU2(XOR)
+ALU2(SHL)
+ALU2(SHR)
+ALU2(ASR)
+
 bool
 fs_inst::equals(fs_inst *inst)
 {
@@ -600,15 +630,15 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 
    /* gl_FragCoord.x */
    if (ir->pixel_center_integer) {
-      emit(BRW_OPCODE_MOV, wpos, this->pixel_x);
+      emit(MOV(wpos, this->pixel_x));
    } else {
-      emit(BRW_OPCODE_ADD, wpos, this->pixel_x, fs_reg(0.5f));
+      emit(ADD(wpos, this->pixel_x, fs_reg(0.5f)));
    }
    wpos.reg_offset++;
 
    /* gl_FragCoord.y */
    if (!flip && ir->pixel_center_integer) {
-      emit(BRW_OPCODE_MOV, wpos, this->pixel_y);
+      emit(MOV(wpos, this->pixel_y));
    } else {
       fs_reg pixel_y = this->pixel_y;
       float offset = (ir->pixel_center_integer ? 0.0 : 0.5);
@@ -618,14 +648,13 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 	 offset += c->key.drawable_height - 1.0;
       }
 
-      emit(BRW_OPCODE_ADD, wpos, pixel_y, fs_reg(offset));
+      emit(ADD(wpos, pixel_y, fs_reg(offset)));
    }
    wpos.reg_offset++;
 
    /* gl_FragCoord.z */
    if (intel->gen >= 6) {
-      emit(BRW_OPCODE_MOV, wpos,
-	   fs_reg(brw_vec8_grf(c->source_depth_reg, 0)));
+      emit(MOV(wpos, fs_reg(brw_vec8_grf(c->source_depth_reg, 0))));
    } else {
       emit(FS_OPCODE_LINTERP, wpos,
            this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
