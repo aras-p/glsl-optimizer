@@ -180,6 +180,11 @@ public:
    /** @} */
 };
 
+/**
+ * The fragment shader front-end.
+ *
+ * Translates either GLSL IR or Mesa IR (for ARB_fragment_program) into FS IR.
+ */
 class fs_visitor : public backend_visitor
 {
 public:
@@ -292,40 +297,6 @@ public:
    void pop_force_uncompressed();
    void push_force_sechalf();
    void pop_force_sechalf();
-
-   void generate_code();
-   void generate_fb_write(fs_inst *inst);
-   void generate_pixel_xy(struct brw_reg dst, bool is_x);
-   void generate_linterp(fs_inst *inst, struct brw_reg dst,
-			 struct brw_reg *src);
-   void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
-   void generate_math1_gen7(fs_inst *inst,
-			    struct brw_reg dst,
-			    struct brw_reg src);
-   void generate_math2_gen7(fs_inst *inst,
-			    struct brw_reg dst,
-			    struct brw_reg src0,
-			    struct brw_reg src1);
-   void generate_math1_gen6(fs_inst *inst,
-			    struct brw_reg dst,
-			    struct brw_reg src);
-   void generate_math2_gen6(fs_inst *inst,
-			    struct brw_reg dst,
-			    struct brw_reg src0,
-			    struct brw_reg src1);
-   void generate_math_gen4(fs_inst *inst,
-			   struct brw_reg dst,
-			   struct brw_reg src);
-   void generate_discard(fs_inst *inst);
-   void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
-   void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
-                     bool negate_value);
-   void generate_spill(fs_inst *inst, struct brw_reg src);
-   void generate_unspill(fs_inst *inst, struct brw_reg dst);
-   void generate_pull_constant_load(fs_inst *inst, struct brw_reg dst,
-				    struct brw_reg index,
-				    struct brw_reg offset);
-   void generate_mov_dispatch_to_flags();
 
    void emit_dummy_fs();
    fs_reg *emit_fragcoord_interpolation(ir_variable *ir);
@@ -454,6 +425,77 @@ public:
 
    int force_uncompressed_stack;
    int force_sechalf_stack;
+};
+
+/**
+ * The fragment shader code generator.
+ *
+ * Translates FS IR to actual i965 assembly code.
+ */
+class fs_generator
+{
+public:
+   fs_generator(struct brw_context *brw,
+                struct brw_wm_compile *c,
+                struct gl_shader_program *prog,
+                struct gl_fragment_program *fp,
+                bool dual_source_output);
+   ~fs_generator();
+
+   const unsigned *generate_assembly(exec_list *simd8_instructions,
+                                     exec_list *simd16_instructions,
+                                     unsigned *assembly_size);
+
+private:
+   void generate_code(exec_list *instructions);
+   void generate_fb_write(fs_inst *inst);
+   void generate_pixel_xy(struct brw_reg dst, bool is_x);
+   void generate_linterp(fs_inst *inst, struct brw_reg dst,
+			 struct brw_reg *src);
+   void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_math1_gen7(fs_inst *inst,
+			    struct brw_reg dst,
+			    struct brw_reg src);
+   void generate_math2_gen7(fs_inst *inst,
+			    struct brw_reg dst,
+			    struct brw_reg src0,
+			    struct brw_reg src1);
+   void generate_math1_gen6(fs_inst *inst,
+			    struct brw_reg dst,
+			    struct brw_reg src);
+   void generate_math2_gen6(fs_inst *inst,
+			    struct brw_reg dst,
+			    struct brw_reg src0,
+			    struct brw_reg src1);
+   void generate_math_gen4(fs_inst *inst,
+			   struct brw_reg dst,
+			   struct brw_reg src);
+   void generate_discard(fs_inst *inst);
+   void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
+                     bool negate_value);
+   void generate_spill(fs_inst *inst, struct brw_reg src);
+   void generate_unspill(fs_inst *inst, struct brw_reg dst);
+   void generate_pull_constant_load(fs_inst *inst, struct brw_reg dst,
+				    struct brw_reg index,
+				    struct brw_reg offset);
+   void generate_mov_dispatch_to_flags();
+
+   struct brw_context *brw;
+   struct intel_context *intel;
+   struct gl_context *ctx;
+
+   struct brw_compile *p;
+   struct brw_wm_compile *c;
+
+   struct gl_shader_program *prog;
+   struct gl_shader *shader;
+   const struct gl_fragment_program *fp;
+
+   unsigned dispatch_width; /**< 8 or 16 */
+
+   bool dual_source_output;
+   void *mem_ctx;
 };
 
 bool brw_do_channel_expressions(struct exec_list *instructions);

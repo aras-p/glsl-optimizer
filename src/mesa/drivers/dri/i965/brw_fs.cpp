@@ -2025,31 +2025,12 @@ fs_visitor::setup_payload_gen6()
 bool
 fs_visitor::run()
 {
-   uint32_t prog_offset_16 = 0;
    uint32_t orig_nr_params = c->prog_data.nr_params;
 
    if (intel->gen >= 6)
       setup_payload_gen6();
    else
       setup_payload_gen4();
-
-   if (dispatch_width == 16) {
-      /* We have to do a compaction pass now, or the one at the end of
-       * execution will squash down where our prog_offset start needs
-       * to be.
-       */
-      brw_compact_instructions(p);
-
-      /* align to 64 byte boundary. */
-      while ((c->func.nr_insn * sizeof(struct brw_instruction)) % 64) {
-	 brw_NOP(p);
-      }
-
-      /* Save off the start of this 16-wide program in case we succeed. */
-      prog_offset_16 = c->func.nr_insn * sizeof(struct brw_instruction);
-
-      brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
-   }
 
    if (0) {
       emit_dummy_fs();
@@ -2129,13 +2110,10 @@ fs_visitor::run()
    if (failed)
       return false;
 
-   generate_code();
-
    if (dispatch_width == 8) {
       c->prog_data.reg_blocks = brw_register_blocks(grf_used);
    } else {
       c->prog_data.reg_blocks_16 = brw_register_blocks(grf_used);
-      c->prog_data.prog_offset_16 = prog_offset_16;
 
       /* Make sure we didn't try to sneak in an extra uniform */
       assert(orig_nr_params == c->prog_data.nr_params);
@@ -2192,12 +2170,15 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
       return NULL;
    }
 
+   exec_list *simd16_instructions = NULL;
+   fs_visitor v2(brw, c, prog, fp, 16);
    if (intel->gen >= 5 && c->prog_data.nr_pull_params == 0) {
-      fs_visitor v2(brw, c, prog, fp, 16);
       v2.import_uniforms(&v);
       if (!v2.run()) {
          perf_debug("16-wide shader failed to compile, falling back to "
                     "8-wide at a 10-20%% performance cost: %s", v2.fail_msg);
+      } else {
+         simd16_instructions = &v2.instructions;
       }
    }
 
@@ -2214,7 +2195,9 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
       }
    }
 
-   return brw_get_program(&c->func, final_assembly_size);
+   fs_generator g(brw, c, prog, fp, v.dual_src_output.file != BAD_FILE);
+   return g.generate_assembly(&v.instructions, simd16_instructions,
+                              final_assembly_size);
 }
 
 bool
