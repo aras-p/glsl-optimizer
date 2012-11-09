@@ -195,6 +195,7 @@ brw_queryobj_get_results(struct gl_context *ctx,
       break;
 
    case GL_ANY_SAMPLES_PASSED:
+   case GL_ANY_SAMPLES_PASSED_CONSERVATIVE:
       /* Set true if any of the sub-queries passed. */
       for (i = query->first_index; i <= query->last_index; i++) {
 	 if (results[i * 2 + 1] != results[i * 2]) {
@@ -261,6 +262,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
       break;
 
    case GL_ANY_SAMPLES_PASSED:
+   case GL_ANY_SAMPLES_PASSED_CONSERVATIVE:
    case GL_SAMPLES_PASSED_ARB:
       /* Reset our driver's tracking of query state. */
       drm_intel_bo_unreference(query->bo);
@@ -316,6 +318,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
       break;
 
    case GL_ANY_SAMPLES_PASSED:
+   case GL_ANY_SAMPLES_PASSED_CONSERVATIVE:
    case GL_SAMPLES_PASSED_ARB:
       if (query->bo) {
 	 brw_emit_query_end(brw);
