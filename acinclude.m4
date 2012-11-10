@@ -17,7 +17,7 @@ AC_DEFUN([MESA_PIC_FLAGS],
 AC_ARG_VAR([PIC_FLAGS], [compiler flags for PIC code])
 AC_ARG_ENABLE([pic],
     [AS_HELP_STRING([--disable-pic],
-        [compile PIC objects @<:@default=enabled for shared builds
+        [don't compile PIC objects @<:@default=enabled for shared builds
         on supported platforms@:>@])],
     [enable_pic="$enableval"
     test "x$enable_pic" = x && enable_pic=auto],
