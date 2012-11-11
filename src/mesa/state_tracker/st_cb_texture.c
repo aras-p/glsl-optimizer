@@ -253,37 +253,6 @@ default_bindings(struct st_context *st, enum pipe_format format)
 }
 
 
-/** Return number of image dimensions (1, 2 or 3) for a texture target. */
-static GLuint
-get_texture_dims(GLenum target)
-{
-   switch (target) {
-   case GL_TEXTURE_1D:
-   case GL_TEXTURE_1D_ARRAY_EXT:
-   case GL_TEXTURE_BUFFER:
-      return 1;
-   case GL_TEXTURE_2D:
-   case GL_TEXTURE_CUBE_MAP_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-   case GL_TEXTURE_RECTANGLE_NV:
-   case GL_TEXTURE_2D_ARRAY_EXT:
-   case GL_TEXTURE_EXTERNAL_OES:
-      return 2;
-   case GL_TEXTURE_3D:
-   case GL_TEXTURE_CUBE_MAP_ARRAY:
-      return 3;
-   default:
-      assert(0 && "invalid texture target in get_texture_dims()");
-      return 1;
-   }
-}
-
-
 /**
  * Given the size of a mipmap image, try to compute the size of the level=0
  * mipmap image.
@@ -298,32 +267,57 @@ guess_base_level_size(GLenum target,
                       GLuint width, GLuint height, GLuint depth, GLuint level,
                       GLuint *width0, GLuint *height0, GLuint *depth0)
 { 
-   const GLuint dims = get_texture_dims(target);
-
    assert(width >= 1);
    assert(height >= 1);
    assert(depth >= 1);
 
    if (level > 0) {
-      /* Depending on the image's size, we can't always make a guess here */
-      if ((dims >= 1 && width == 1) ||
-          (dims >= 2 && height == 1) ||
-          (dims >= 3 && depth == 1)) {
-         /* we can't determine the image size at level=0 */
-         return GL_FALSE;
-      }
+      /* Guess the size of the base level.
+       * Depending on the image's size, we can't always make a guess here.
+       */
+      switch (target) {
+      case GL_TEXTURE_1D:
+      case GL_TEXTURE_1D_ARRAY:
+         width <<= level;
+         break;
 
-      /* grow the image size until we hit level = 0 */
-      while (level > 0) {
-         if (width > 1)
-            width <<= 1;
-         if (height > 1)
-            height <<= 1;
-         if (depth > 1)
-            depth <<= 1;
-         level--;
+      case GL_TEXTURE_2D:
+      case GL_TEXTURE_2D_ARRAY:
+         /* We can't make a good guess here, because the base level dimensions
+          * can be non-square.
+          */
+         if (width == 1 || height == 1) {
+            return GL_FALSE;
+         }
+         width <<= level;
+         height <<= level;
+         break;
+
+      case GL_TEXTURE_CUBE_MAP:
+      case GL_TEXTURE_CUBE_MAP_ARRAY:
+         width <<= level;
+         height <<= level;
+         break;
+
+      case GL_TEXTURE_3D:
+         /* We can't make a good guess here, because the base level dimensions
+          * can be non-cube.
+          */
+         if (width == 1 || height == 1 || depth == 1) {
+            return GL_FALSE;
+         }
+         width <<= level;
+         height <<= level;
+         depth <<= level;
+         break;
+
+      case GL_TEXTURE_RECTANGLE:
+         break;
+
+      default:
+         assert(0);
       }
-   }      
+   }
 
    *width0 = width;
    *height0 = height;
