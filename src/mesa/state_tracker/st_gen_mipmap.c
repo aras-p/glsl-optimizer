@@ -121,30 +121,16 @@ compute_num_levels(struct gl_context *ctx,
                    struct gl_texture_object *texObj,
                    GLenum target)
 {
-   if (target == GL_TEXTURE_RECTANGLE_ARB) {
-      return 1;
-   }
-   else {
-      const struct gl_texture_image *baseImage = 
-         _mesa_get_tex_image(ctx, texObj, target, texObj->BaseLevel);
-      GLuint size, numLevels;
+   const struct gl_texture_image *baseImage;
+   GLuint numLevels;
 
-      size = MAX2(baseImage->Width2, baseImage->Height2);
-      size = MAX2(size, baseImage->Depth2);
+   baseImage = _mesa_get_tex_image(ctx, texObj, target, texObj->BaseLevel);
 
-      numLevels = texObj->BaseLevel;
+   numLevels = texObj->BaseLevel + baseImage->MaxNumLevels;
+   numLevels = MIN2(numLevels, texObj->MaxLevel + 1);
+   assert(numLevels >= 1);
 
-      while (size > 0) {
-         numLevels++;
-         size >>= 1;
-      }
-
-      numLevels = MIN2(numLevels, texObj->MaxLevel + 1);
-
-      assert(numLevels >= 1);
-
-      return numLevels;
-   }
+   return numLevels;
 }
 
 
