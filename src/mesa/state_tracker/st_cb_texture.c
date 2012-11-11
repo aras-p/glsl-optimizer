@@ -384,10 +384,8 @@ guess_and_alloc_texture(struct st_context *st,
    }
    else {
       /* alloc space for a full mipmap */
-      GLuint l2width = util_logbase2(width);
-      GLuint l2height = util_logbase2(height);
-      GLuint l2depth = util_logbase2(depth);
-      lastLevel = MAX2(MAX2(l2width, l2height), l2depth);
+      lastLevel = _mesa_get_tex_max_num_levels(stObj->base.Target,
+                                               width, height, depth) - 1;
    }
 
    /* Save the level=0 dimensions */
