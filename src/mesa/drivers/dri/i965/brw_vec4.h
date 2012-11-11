@@ -254,8 +254,6 @@ public:
 
    bool need_all_constants_in_pull_buffer;
 
-   src_reg src_reg_for_float(float val);
-
    /**
     * \name Visit methods
     *
