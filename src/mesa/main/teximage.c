@@ -1027,6 +1027,43 @@ _mesa_get_texture_dimensions(GLenum target)
 }
 
 
+/**
+ * Return the maximum number of mipmap levels for the given target
+ * and the dimensions.
+ * The dimensions are expected not to include the border.
+ */
+GLsizei
+_mesa_get_tex_max_num_levels(GLenum target, GLsizei width, GLsizei height,
+                             GLsizei depth)
+{
+   GLsizei size;
+
+   switch (target) {
+   case GL_TEXTURE_1D:
+   case GL_TEXTURE_1D_ARRAY:
+      size = width;
+      break;
+   case GL_TEXTURE_CUBE_MAP:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+      ASSERT(width == height);
+      size = width;
+      break;
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_2D_ARRAY:
+      size = MAX2(width, height);
+      break;
+   case GL_TEXTURE_3D:
+      size = MAX3(width, height, depth);
+      break;
+   case GL_TEXTURE_RECTANGLE:
+      return 1;
+   default:
+      assert(0);
+      return 1;
+   }
+
+   return _mesa_logbase2(size) + 1;
+}
 
 
 #if 000 /* not used anymore */
@@ -1214,7 +1251,9 @@ _mesa_init_teximage_fields(struct gl_context *ctx,
                     target);
    }
 
-   img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
+   img->MaxNumLevels =
+      _mesa_get_tex_max_num_levels(target,
+                                   img->Width2, img->Height2, img->Depth2);
    img->TexFormat = format;
 }
 

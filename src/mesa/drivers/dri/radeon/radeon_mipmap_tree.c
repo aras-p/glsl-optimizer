@@ -270,7 +270,7 @@ static void calculate_min_max_lod(struct gl_sampler_object *samp, struct gl_text
 			minLod = MIN2(minLod, tObj->MaxLevel);
 			maxLod = tObj->BaseLevel + (GLint)(samp->MaxLod + 0.5);
 			maxLod = MIN2(maxLod, tObj->MaxLevel);
-			maxLod = MIN2(maxLod, tObj->Image[0][minLod]->MaxLog2 + minLod);
+			maxLod = MIN2(maxLod, tObj->Image[0][minLod]->MaxNumLevels - 1 + minLod);
 			maxLod = MAX2(maxLod, minLod); /* need at least one level */
 		}
 		break;
@@ -329,7 +329,7 @@ static GLboolean radeon_miptree_matches_texture(radeon_mipmap_tree *mt, struct g
 
 	mtBaseLevel = &mt->levels[texObj->BaseLevel - mt->baseLevel];
 	firstImage = texObj->Image[0][texObj->BaseLevel];
-	numLevels = MIN2(texObj->_MaxLevel - texObj->BaseLevel + 1, firstImage->MaxLog2 + 1);
+	numLevels = MIN2(texObj->_MaxLevel - texObj->BaseLevel + 1, firstImage->MaxNumLevels);
 
 	if (radeon_is_debug_enabled(RADEON_TEXTURE,RADEON_TRACE)) {
 		fprintf(stderr, "Checking if miptree %p matches texObj %p\n", mt, texObj);
@@ -378,7 +378,7 @@ void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t)
 	}
 
 
-	numLevels = MIN2(texObj->MaxLevel - texObj->BaseLevel + 1, texImg->MaxLog2 + 1);
+	numLevels = MIN2(texObj->MaxLevel - texObj->BaseLevel + 1, texImg->MaxNumLevels);
 
 	t->mt = radeon_miptree_create(rmesa, t->base.Target,
 		texImg->TexFormat, texObj->BaseLevel,

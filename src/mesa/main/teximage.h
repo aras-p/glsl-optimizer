@@ -138,6 +138,9 @@ _mesa_tex_target_to_face(GLenum target);
 extern GLint
 _mesa_get_texture_dimensions(GLenum target);
 
+extern GLsizei
+_mesa_get_tex_max_num_levels(GLenum target, GLsizei width, GLsizei height,
+                             GLsizei depth);
 
 extern GLboolean
 _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,

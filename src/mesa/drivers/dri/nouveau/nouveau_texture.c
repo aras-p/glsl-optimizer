@@ -369,7 +369,7 @@ get_last_level(struct gl_texture_object *t)
 	    t->Sampler.MinFilter == GL_LINEAR || !base)
 		return t->BaseLevel;
 	else
-		return MIN2(t->BaseLevel + base->MaxLog2, t->MaxLevel);
+		return MIN2(t->BaseLevel + base->MaxNumLevels - 1, t->MaxLevel);
 }
 
 static void

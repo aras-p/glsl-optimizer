@@ -1203,7 +1203,8 @@ struct gl_texture_image
    GLuint WidthLog2;		/**< = log2(Width2) */
    GLuint HeightLog2;		/**< = log2(Height2) */
    GLuint DepthLog2;		/**< = log2(Depth2) */
-   GLuint MaxLog2;		/**< = MAX(WidthLog2, HeightLog2) */
+   GLuint MaxNumLevels;		/**< = maximum possible number of mipmap
+                                       levels, computed from the dimensions */
 
    struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
    GLuint Level;                /**< Which mipmap level am I? */
