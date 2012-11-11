@@ -445,7 +445,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 {
    const GLint baseLevel = t->BaseLevel;
    const struct gl_texture_image *baseImage;
-   GLint maxLog2 = 0, maxLevels = 0;
+   GLint maxLevels = 0;
 
    /* We'll set these to FALSE if tests fail below */
    t->_BaseComplete = GL_TRUE;
@@ -501,31 +501,22 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
    switch (t->Target) {
    case GL_TEXTURE_1D:
    case GL_TEXTURE_1D_ARRAY_EXT:
-      maxLog2 = baseImage->WidthLog2;
       maxLevels = ctx->Const.MaxTextureLevels;
       break;
    case GL_TEXTURE_2D:
    case GL_TEXTURE_2D_ARRAY_EXT:
-      maxLog2 = MAX2(baseImage->WidthLog2,
-                     baseImage->HeightLog2);
       maxLevels = ctx->Const.MaxTextureLevels;
       break;
    case GL_TEXTURE_3D:
-      maxLog2 = MAX3(baseImage->WidthLog2,
-                     baseImage->HeightLog2,
-                     baseImage->DepthLog2);
       maxLevels = ctx->Const.Max3DTextureLevels;
       break;
    case GL_TEXTURE_CUBE_MAP_ARB:
    case GL_TEXTURE_CUBE_MAP_ARRAY:
-      maxLog2 = MAX2(baseImage->WidthLog2,
-                     baseImage->HeightLog2);
       maxLevels = ctx->Const.MaxCubeTextureLevels;
       break;
    case GL_TEXTURE_RECTANGLE_NV:
    case GL_TEXTURE_BUFFER:
    case GL_TEXTURE_EXTERNAL_OES:
-      maxLog2 = 0;  /* not applicable */
       maxLevels = 1;  /* no mipmapping */
       break;
    default:
@@ -535,7 +526,8 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 
    ASSERT(maxLevels > 0);
 
-   t->_MaxLevel = baseLevel + maxLog2;  /* 'p' in the GL spec */
+   t->_MaxLevel =
+      baseLevel + baseImage->MaxNumLevels - 1; /* 'p' in the GL spec */
    t->_MaxLevel = MIN2(t->_MaxLevel, t->MaxLevel);
    t->_MaxLevel = MIN2(t->_MaxLevel, maxLevels - 1); /* 'q' in the GL spec */
 
