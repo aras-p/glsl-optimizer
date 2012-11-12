@@ -94,6 +94,9 @@ struct llvmpipe_resource
    unsigned tiles_per_image[LP_MAX_TEXTURE_LEVELS];
    /** Number of 3D slices or cube faces per level */
    unsigned num_slices_faces[LP_MAX_TEXTURE_LEVELS];
+   /** Offset to start of mipmap level, in bytes */
+   unsigned tiled_mip_offsets[LP_MAX_TEXTURE_LEVELS];
+   unsigned linear_mip_offsets[LP_MAX_TEXTURE_LEVELS];
 
    /**
     * Display target, for textures with the PIPE_BIND_DISPLAY_TARGET
@@ -104,8 +107,8 @@ struct llvmpipe_resource
    /**
     * Malloc'ed data for regular textures, or a mapping to dt above.
     */
-   struct llvmpipe_texture_image tiled[LP_MAX_TEXTURE_LEVELS];
-   struct llvmpipe_texture_image linear[LP_MAX_TEXTURE_LEVELS];
+   struct llvmpipe_texture_image tiled_img;
+   struct llvmpipe_texture_image linear_img;
 
    /**
     * Data for non-texture resources.
