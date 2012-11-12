@@ -501,16 +501,16 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_f2b:
-      inst = emit(BRW_OPCODE_CMP, this->result, op[0], fs_reg(0.0f));
-      inst->conditional_mod = BRW_CONDITIONAL_NZ;
-      emit(BRW_OPCODE_AND, this->result, this->result, fs_reg(1));
-      break;
    case ir_unop_i2b:
-      assert(op[0].type == BRW_REGISTER_TYPE_D);
+      temp = this->result;
+      /* original gen4 does implicit conversion before comparison. */
+      if (intel->gen < 5)
+	 temp.type = op[0].type;
 
-      inst = emit(BRW_OPCODE_CMP, this->result, op[0], fs_reg(0));
+      resolve_ud_negate(&op[0]);
+
+      inst = emit(BRW_OPCODE_CMP, temp, op[0], fs_reg(0.0f));
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
-      emit(BRW_OPCODE_AND, this->result, this->result, fs_reg(1));
       break;
 
    case ir_unop_trunc:
