@@ -802,17 +802,19 @@ draw_set_mapped_texture(struct draw_context *draw,
                         unsigned sampler_idx,
                         uint32_t width, uint32_t height, uint32_t depth,
                         uint32_t first_level, uint32_t last_level,
+                        const void *base_ptr,
                         uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS],
                         uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS],
-                        const void *data[PIPE_MAX_TEXTURE_LEVELS])
+                        uint32_t mip_offsets[PIPE_MAX_TEXTURE_LEVELS])
 {
    if (shader_stage == PIPE_SHADER_VERTEX) {
 #ifdef HAVE_LLVM
       if (draw->llvm)
          draw_llvm_set_mapped_texture(draw,
                                       sampler_idx,
-                                      width, height, depth, first_level, last_level,
-                                      row_stride, img_stride, data);
+                                      width, height, depth, first_level,
+                                      last_level, base_ptr,
+                                      row_stride, img_stride, mip_offsets);
 #endif
    }
 }

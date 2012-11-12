@@ -151,9 +151,10 @@ LP_LLVM_TEXTURE_MEMBER(height,     LP_JIT_TEXTURE_HEIGHT, TRUE)
 LP_LLVM_TEXTURE_MEMBER(depth,      LP_JIT_TEXTURE_DEPTH, TRUE)
 LP_LLVM_TEXTURE_MEMBER(first_level, LP_JIT_TEXTURE_FIRST_LEVEL, TRUE)
 LP_LLVM_TEXTURE_MEMBER(last_level, LP_JIT_TEXTURE_LAST_LEVEL, TRUE)
+LP_LLVM_TEXTURE_MEMBER(base_ptr,   LP_JIT_TEXTURE_BASE, TRUE)
 LP_LLVM_TEXTURE_MEMBER(row_stride, LP_JIT_TEXTURE_ROW_STRIDE, FALSE)
 LP_LLVM_TEXTURE_MEMBER(img_stride, LP_JIT_TEXTURE_IMG_STRIDE, FALSE)
-LP_LLVM_TEXTURE_MEMBER(data_ptr,   LP_JIT_TEXTURE_DATA, FALSE)
+LP_LLVM_TEXTURE_MEMBER(mip_offsets, LP_JIT_TEXTURE_MIP_OFFSETS, FALSE)
 LP_LLVM_TEXTURE_MEMBER(min_lod,    LP_JIT_TEXTURE_MIN_LOD, TRUE)
 LP_LLVM_TEXTURE_MEMBER(max_lod,    LP_JIT_TEXTURE_MAX_LOD, TRUE)
 LP_LLVM_TEXTURE_MEMBER(lod_bias,   LP_JIT_TEXTURE_LOD_BIAS, TRUE)
@@ -246,9 +247,10 @@ lp_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,
    sampler->dynamic_state.base.depth = lp_llvm_texture_depth;
    sampler->dynamic_state.base.first_level = lp_llvm_texture_first_level;
    sampler->dynamic_state.base.last_level = lp_llvm_texture_last_level;
+   sampler->dynamic_state.base.base_ptr = lp_llvm_texture_base_ptr;
    sampler->dynamic_state.base.row_stride = lp_llvm_texture_row_stride;
    sampler->dynamic_state.base.img_stride = lp_llvm_texture_img_stride;
-   sampler->dynamic_state.base.data_ptr = lp_llvm_texture_data_ptr;
+   sampler->dynamic_state.base.mip_offsets = lp_llvm_texture_mip_offsets;
    sampler->dynamic_state.base.min_lod = lp_llvm_texture_min_lod;
    sampler->dynamic_state.base.max_lod = lp_llvm_texture_max_lod;
    sampler->dynamic_state.base.lod_bias = lp_llvm_texture_lod_bias;

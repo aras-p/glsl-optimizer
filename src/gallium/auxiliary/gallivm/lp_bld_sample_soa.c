@@ -1298,8 +1298,9 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    tex_depth = dynamic_state->depth(dynamic_state, gallivm, unit);
    bld.row_stride_array = dynamic_state->row_stride(dynamic_state, gallivm, unit);
    bld.img_stride_array = dynamic_state->img_stride(dynamic_state, gallivm, unit);
-   bld.data_array = dynamic_state->data_ptr(dynamic_state, gallivm, unit);
-   /* Note that data_array is an array[level] of pointers to texture images */
+   bld.base_ptr = dynamic_state->base_ptr(dynamic_state, gallivm, unit);
+   bld.mip_offsets = dynamic_state->mip_offsets(dynamic_state, gallivm, unit);
+   /* Note that mip_offsets is an array[level] of offsets to texture images */
 
    s = coords[0];
    t = coords[1];
@@ -1439,7 +1440,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
             bld4.dims = bld.dims;
             bld4.row_stride_array = bld.row_stride_array;
             bld4.img_stride_array = bld.img_stride_array;
-            bld4.data_array = bld.data_array;
+            bld4.base_ptr = bld.base_ptr;
+            bld4.mip_offsets = bld.mip_offsets;
             bld4.int_size = bld.int_size;
 
             bld4.vector_width = lp_type_width(type4);

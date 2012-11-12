@@ -733,12 +733,13 @@ lp_build_get_mipmap_level(struct lp_build_sample_context *bld,
                           LLVMValueRef level)
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
-   LLVMValueRef indexes[2], data_ptr;
+   LLVMValueRef indexes[2], data_ptr, mip_offset;
 
    indexes[0] = lp_build_const_int32(bld->gallivm, 0);
    indexes[1] = level;
-   data_ptr = LLVMBuildGEP(builder, bld->data_array, indexes, 2, "");
-   data_ptr = LLVMBuildLoad(builder, data_ptr, "");
+   mip_offset = LLVMBuildGEP(builder, bld->mip_offsets, indexes, 2, "");
+   mip_offset = LLVMBuildLoad(builder, mip_offset, "");
+   data_ptr = LLVMBuildGEP(builder, bld->base_ptr, &mip_offset, 1, "");
    return data_ptr;
 }
 

@@ -157,11 +157,17 @@ struct lp_sampler_dynamic_state
                   struct gallivm_state *gallivm,
                   unsigned unit);
 
-   /** Obtain pointer to array of pointers to mimpap levels */
+   /** Obtain pointer to base of texture */
    LLVMValueRef
-   (*data_ptr)( const struct lp_sampler_dynamic_state *state,
+   (*base_ptr)( const struct lp_sampler_dynamic_state *state,
                 struct gallivm_state *gallivm,
                 unsigned unit);
+
+   /** Obtain pointer to array of mipmap offsets */
+   LLVMValueRef
+   (*mip_offsets)( const struct lp_sampler_dynamic_state *state,
+                   struct gallivm_state *gallivm,
+                   unsigned unit);
 
    /** Obtain texture min lod (returns float) */
    LLVMValueRef
@@ -246,7 +252,8 @@ struct lp_build_sample_context
    /* Common dynamic state values */
    LLVMValueRef row_stride_array;
    LLVMValueRef img_stride_array;
-   LLVMValueRef data_array;
+   LLVMValueRef base_ptr;
+   LLVMValueRef mip_offsets;
 
    /** Integer vector with texture width, height, depth */
    LLVMValueRef int_size;

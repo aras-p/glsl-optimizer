@@ -55,13 +55,12 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
       elem_types[LP_JIT_TEXTURE_HEIGHT] =
       elem_types[LP_JIT_TEXTURE_DEPTH] =
       elem_types[LP_JIT_TEXTURE_FIRST_LEVEL] =
-      elem_types[LP_JIT_TEXTURE_LAST_LEVEL] =  LLVMInt32TypeInContext(lc);
+      elem_types[LP_JIT_TEXTURE_LAST_LEVEL] = LLVMInt32TypeInContext(lc);
+      elem_types[LP_JIT_TEXTURE_BASE] = LLVMPointerType(LLVMInt8TypeInContext(lc), 0);
       elem_types[LP_JIT_TEXTURE_ROW_STRIDE] =
       elem_types[LP_JIT_TEXTURE_IMG_STRIDE] =
+      elem_types[LP_JIT_TEXTURE_MIP_OFFSETS] =
          LLVMArrayType(LLVMInt32TypeInContext(lc), LP_MAX_TEXTURE_LEVELS);
-      elem_types[LP_JIT_TEXTURE_DATA] =
-         LLVMArrayType(LLVMPointerType(LLVMInt8TypeInContext(lc), 0),
-                       LP_MAX_TEXTURE_LEVELS);
       elem_types[LP_JIT_TEXTURE_MIN_LOD] =
       elem_types[LP_JIT_TEXTURE_MAX_LOD] =
       elem_types[LP_JIT_TEXTURE_LOD_BIAS] = LLVMFloatTypeInContext(lc);
@@ -91,15 +90,18 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, last_level,
                              gallivm->target, texture_type,
                              LP_JIT_TEXTURE_LAST_LEVEL);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, base,
+                             gallivm->target, texture_type,
+                             LP_JIT_TEXTURE_BASE);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, row_stride,
                              gallivm->target, texture_type,
                              LP_JIT_TEXTURE_ROW_STRIDE);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, img_stride,
                              gallivm->target, texture_type,
                              LP_JIT_TEXTURE_IMG_STRIDE);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, data,
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, mip_offsets,
                              gallivm->target, texture_type,
-                             LP_JIT_TEXTURE_DATA);
+                             LP_JIT_TEXTURE_MIP_OFFSETS);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, min_lod,
                              gallivm->target, texture_type,
                              LP_JIT_TEXTURE_MIN_LOD);

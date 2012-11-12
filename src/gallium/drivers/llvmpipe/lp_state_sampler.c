@@ -255,7 +255,8 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
    unsigned i;
    uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS];
    uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS];
-   const void *data[PIPE_MAX_TEXTURE_LEVELS];
+   uint32_t mip_offsets[PIPE_MAX_TEXTURE_LEVELS];
+   const void *addr;
 
    assert(num <= PIPE_MAX_SAMPLERS);
    if (!num)
@@ -275,11 +276,24 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
 
          if (!lp_tex->dt) {
             /* regular texture - setup array of mipmap level pointers */
+            /* XXX this may fail due to OOM ? */
             int j;
+            void *mip_ptr;
+            /* must trigger allocation first before we can get base ptr */
+            mip_ptr = llvmpipe_get_texture_image_all(lp_tex, view->u.tex.first_level,
+                                                     LP_TEX_USAGE_READ,
+                                                     LP_TEX_LAYOUT_LINEAR);
+            addr = lp_tex->linear_img.data;
             for (j = view->u.tex.first_level; j <= tex->last_level; j++) {
-               data[j] =
-                  llvmpipe_get_texture_image_all(lp_tex, j, LP_TEX_USAGE_READ,
-                                                 LP_TEX_LAYOUT_LINEAR);
+               mip_ptr = llvmpipe_get_texture_image_all(lp_tex, j,
+                                                        LP_TEX_USAGE_READ,
+                                                        LP_TEX_LAYOUT_LINEAR);
+               mip_offsets[j] = (uint8_t *)mip_ptr - (uint8_t *)addr;
+               /*
+                * could get mip offset directly but need call above to
+                * invoke tiled->linear conversion.
+                */
+               assert(lp_tex->linear_mip_offsets[j] == mip_offsets[j]);
                row_stride[j] = lp_tex->row_stride[j];
                img_stride[j] = lp_tex->img_stride[j];
             }
@@ -291,18 +305,20 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
              */
             struct llvmpipe_screen *screen = llvmpipe_screen(tex->screen);
             struct sw_winsys *winsys = screen->winsys;
-            data[0] = winsys->displaytarget_map(winsys, lp_tex->dt,
+            addr = winsys->displaytarget_map(winsys, lp_tex->dt,
                                                 PIPE_TRANSFER_READ);
             row_stride[0] = lp_tex->row_stride[0];
             img_stride[0] = lp_tex->img_stride[0];
-            assert(data[0]);
+            mip_offsets[0] = 0;
+            assert(addr);
          }
          draw_set_mapped_texture(lp->draw,
                                  PIPE_SHADER_VERTEX,
                                  i,
                                  tex->width0, tex->height0, tex->depth0,
                                  view->u.tex.first_level, tex->last_level,
-                                 row_stride, img_stride, data);
+                                 addr,
+                                 row_stride, img_stride, mip_offsets);
       }
    }
 }

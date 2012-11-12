@@ -360,7 +360,7 @@ i915_prepare_vertex_sampling(struct i915_context *i915)
    unsigned i,j;
    uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS];
    uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS];
-   const void* data[PIPE_MAX_TEXTURE_LEVELS];
+   uint32_t mip_offsets[PIPE_MAX_TEXTURE_LEVELS];
    unsigned num = i915->num_vertex_sampler_views;
    struct pipe_sampler_view **views = i915->vertex_sampler_views;
 
@@ -381,16 +381,15 @@ i915_prepare_vertex_sampling(struct i915_context *i915)
           */
          pipe_resource_reference(&i915->mapped_vs_tex[i], tex);
 
-	 i915->mapped_vs_tex_buffer[i] = i915_tex->buffer;
+         i915->mapped_vs_tex_buffer[i] = i915_tex->buffer;
          addr = iws->buffer_map(iws,
                                 i915_tex->buffer,
                                 FALSE /* read only */);
 
          /* Setup array of mipmap level pointers */
-	 /* FIXME: handle 3D textures? */
+         /* FIXME: handle 3D textures? */
          for (j = view->u.tex.first_level; j <= tex->last_level; j++) {
-            unsigned offset = i915_texture_offset(i915_tex, j , 0 /* FIXME depth */);
-            data[j] = addr + offset;
+            mip_offsets[j] = i915_texture_offset(i915_tex, j , 0 /* FIXME depth */);
             row_stride[j] = i915_tex->stride;
             img_stride[j] = 0; /* FIXME */;
          }
@@ -400,7 +399,8 @@ i915_prepare_vertex_sampling(struct i915_context *i915)
                                  i,
                                  tex->width0, tex->height0, tex->depth0,
                                  view->u.tex.first_level, tex->last_level,
-                                 row_stride, img_stride, data);
+                                 addr,
+                                 row_stride, img_stride, mip_offsets);
       } else
          i915->mapped_vs_tex[i] = NULL;
    }
