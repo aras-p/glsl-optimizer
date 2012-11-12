@@ -27,6 +27,7 @@
  * Supported ETC2 texture formats are:
  * GL_COMPRESSED_RGB8_ETC2
  * GL_COMPRESSED_SRGB8_ETC2
+ * GL_COMPRESSED_RGBA8_ETC2_EAC
  */
 
 #include <stdbool.h>
@@ -40,7 +41,7 @@
 
 struct etc2_block {
    int distance;
-   uint32_t pixel_indices;
+   uint64_t pixel_indices[2];
    const int *modifier_tables[2];
    bool flipped;
    bool is_ind_mode;
@@ -50,10 +51,32 @@ struct etc2_block {
    bool is_planar_mode;
    uint8_t base_colors[3][3];
    uint8_t paint_colors[4][3];
+   uint8_t base_codeword;
+   uint8_t multiplier;
+   uint8_t table_index;
 };
 
 static const int etc2_distance_table[8] = {
    3, 6, 11, 16, 23, 32, 41, 64 };
+
+static const int etc2_modifier_tables[16][8] = {
+   {  -3,   -6,   -9,  -15,   2,   5,   8,   14},
+   {  -3,   -7,  -10,  -13,   2,   6,   9,   12},
+   {  -2,   -5,   -8,  -13,   1,   4,   7,   12},
+   {  -2,   -4,   -6,  -13,   1,   3,   5,   12},
+   {  -3,   -6,   -8,  -12,   2,   5,   7,   11},
+   {  -3,   -7,   -9,  -11,   2,   6,   8,   10},
+   {  -4,   -7,   -8,  -11,   3,   6,   7,   10},
+   {  -3,   -5,   -8,  -11,   2,   4,   7,   10},
+   {  -2,   -6,   -8,  -10,   1,   5,   7,    9},
+   {  -2,   -5,   -8,  -10,   1,   4,   7,    9},
+   {  -2,   -4,   -8,  -10,   1,   3,   7,    9},
+   {  -2,   -5,   -7,  -10,   1,   4,   6,    9},
+   {  -3,   -4,   -7,  -10,   2,   3,   6,    9},
+   {  -1,   -2,   -3,  -10,   0,   1,   2,    9},
+   {  -4,   -6,   -8,   -9,   3,   5,   7,    8},
+   {  -3,   -5,   -7,   -9,   2,   4,   6,    8},
+};
 
 /* define etc1_parse_block and etc. */
 #define UINT8_TYPE GLubyte
@@ -402,7 +425,7 @@ etc2_rgb8_parse_block(struct etc2_block *block, const uint8_t *src)
       block->flipped = (src[3] & 0x1);
    }
 
-   block->pixel_indices =
+   block->pixel_indices[0] =
       (src[4] << 24) | (src[5] << 16) | (src[6] << 8) | src[7];
 }
 
@@ -415,8 +438,8 @@ etc2_rgb8_fetch_texel(const struct etc2_block *block,
 
    /* get pixel index */
    bit = y + x * 4;
-   idx = ((block->pixel_indices >> (15 + bit)) & 0x2) |
-         ((block->pixel_indices >>      (bit)) & 0x1);
+   idx = ((block->pixel_indices[0] >> (15 + bit)) & 0x2) |
+         ((block->pixel_indices[0] >>      (bit)) & 0x1);
 
    if (block->is_ind_mode || block->is_diff_mode) {
       /* Use pixel index and subblock to get the modifier */
@@ -456,6 +479,51 @@ etc2_rgb8_fetch_texel(const struct etc2_block *block,
       dst[1] = etc2_clamp(green);
       dst[2] = etc2_clamp(blue);
   }
+}
+
+static void
+etc2_alpha8_fetch_texel(const struct etc2_block *block,
+      int x, int y, uint8_t *dst)
+{
+   int modifier, alpha, bit, idx;
+   /* get pixel index */
+   bit = ((3 - y) + (3 - x) * 4) * 3;
+   idx = (block->pixel_indices[1] >> bit) & 0x7;
+   modifier = etc2_modifier_tables[block->table_index][idx];
+   alpha = block->base_codeword + modifier * block->multiplier;
+   dst[3] = etc2_clamp(alpha);
+}
+
+static void
+etc2_alpha8_parse_block(struct etc2_block *block, const uint8_t *src)
+{
+   block->base_codeword = src[0];
+   block->multiplier = (src[1] >> 4) & 0xf;
+   block->table_index = src[1] & 0xf;
+   block->pixel_indices[1] = (((uint64_t)src[2] << 40) |
+                              ((uint64_t)src[3] << 32) |
+                              ((uint64_t)src[4] << 24) |
+                              ((uint64_t)src[5] << 16) |
+                              ((uint64_t)src[6] << 8)  |
+                              ((uint64_t)src[7]));
+}
+
+static void
+etc2_rgba8_parse_block(struct etc2_block *block, const uint8_t *src)
+{
+   /* RGB component is parsed the same way as for MESA_FORMAT_ETC2_RGB8 */
+   etc2_rgb8_parse_block(block, src + 8);
+
+   /* Parse Alpha component */
+   etc2_alpha8_parse_block(block, src);
+}
+
+static void
+etc2_rgba8_fetch_texel(const struct etc2_block *block,
+      int x, int y, uint8_t *dst)
+{
+   etc2_rgb8_fetch_texel(block, x, y, dst);
+   etc2_alpha8_fetch_texel(block, x, y, dst);
 }
 
 static void
@@ -531,6 +599,42 @@ etc2_unpack_srgb8(uint8_t *dst_row,
     }
 }
 
+static void
+etc2_unpack_rgba8(uint8_t *dst_row,
+                  unsigned dst_stride,
+                  const uint8_t *src_row,
+                  unsigned src_stride,
+                  unsigned width,
+                  unsigned height)
+{
+   /* If internalformat is COMPRESSED_RGBA8_ETC2_EAC, each 4 × 4 block of
+    * RGBA8888 information is compressed to 128 bits. To decode a block, the
+    * two 64-bit integers int64bitAlpha and int64bitColor are calculated.
+   */
+   const unsigned bw = 4, bh = 4, bs = 16, comps = 4;
+   struct etc2_block block;
+   unsigned x, y, i, j;
+
+   for (y = 0; y < height; y += bh) {
+      const uint8_t *src = src_row;
+
+      for (x = 0; x < width; x+= bw) {
+         etc2_rgba8_parse_block(&block, src);
+
+         for (j = 0; j < bh; j++) {
+            uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
+            for (i = 0; i < bw; i++) {
+               etc2_rgba8_fetch_texel(&block, i, j, dst);
+               dst += comps;
+            }
+         }
+         src += bs;
+       }
+
+      src_row += src_stride;
+    }
+}
+
 /* ETC2 texture formats are valid in glCompressedTexImage2D and
  * glCompressedTexSubImage2D functions */
 GLboolean
@@ -543,6 +647,14 @@ _mesa_texstore_etc2_rgb8(TEXSTORE_PARAMS)
 
 GLboolean
 _mesa_texstore_etc2_srgb8(TEXSTORE_PARAMS)
+{
+   ASSERT(0);
+
+   return GL_FALSE;
+}
+
+GLboolean
+_mesa_texstore_etc2_rgba8_eac(TEXSTORE_PARAMS)
 {
    ASSERT(0);
 
@@ -589,10 +701,31 @@ _mesa_fetch_texel_2d_f_etc2_srgb8(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0f;
 }
 
+void
+_mesa_fetch_texel_2d_f_etc2_rgba8_eac(const struct swrast_texture_image *texImage,
+                                      GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   struct etc2_block block;
+   uint8_t dst[4];
+   const uint8_t *src;
+
+   src = texImage->Map +
+      (((texImage->RowStride + 3) / 4) * (j / 4) + (i / 4)) * 16;
+
+   etc2_rgba8_parse_block(&block, src);
+   etc2_rgba8_fetch_texel(&block, i % 4, j % 4, dst);
+
+   texel[RCOMP] = UBYTE_TO_FLOAT(dst[0]);
+   texel[GCOMP] = UBYTE_TO_FLOAT(dst[1]);
+   texel[BCOMP] = UBYTE_TO_FLOAT(dst[2]);
+   texel[ACOMP] = UBYTE_TO_FLOAT(dst[3]);
+}
+
 /**
  * Decode texture data in any one of following formats:
  * `MESA_FORMAT_ETC2_RGB8`
  * `MESA_FORMAT_ETC2_SRGB8`
+ * `MESA_FORMAT_ETC2_RGBA8_EAC`
  *
  * The size of the source data must be a multiple of the ETC2 block size
  * even if the texture image's dimensions are not aligned to 4.
@@ -617,6 +750,10 @@ _mesa_unpack_etc2_format(uint8_t *dst_row,
                        src_width, src_height);
    else if (format == MESA_FORMAT_ETC2_SRGB8)
       etc2_unpack_srgb8(dst_row, dst_stride,
+                        src_row, src_stride,
+                        src_width, src_height);
+   else if (format == MESA_FORMAT_ETC2_RGBA8_EAC)
+      etc2_unpack_rgba8(dst_row, dst_stride,
                         src_row, src_stride,
                         src_width, src_height);
 }

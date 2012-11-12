@@ -4126,7 +4126,7 @@ _mesa_get_texstore_func(gl_format format)
       table[MESA_FORMAT_ETC1_RGB8] = _mesa_texstore_etc1_rgb8;
       table[MESA_FORMAT_ETC2_RGB8] = _mesa_texstore_etc2_rgb8;
       table[MESA_FORMAT_ETC2_SRGB8] = _mesa_texstore_etc2_srgb8;
-      /* table[MESA_FORMAT_ETC2_RGBA8_EAC] = _mesa_texstore_etc2_rgba8_eac; -- not implemented yet */
+      table[MESA_FORMAT_ETC2_RGBA8_EAC] = _mesa_texstore_etc2_rgba8_eac;
       /* table[MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC] = _mesa_texstore_etc2_srgb8_alpha8_eac; -- not implemented yet */
       /* table[MESA_FORMAT_ETC2_R11_EAC] = _mesa_texstore_etc2_r11_eac; -- not implemented yet */
       /* table[MESA_FORMAT_ETC2_RG11_EAC] = _mesa_texstore_etc2_rg11_eac; -- not implemented yet */
