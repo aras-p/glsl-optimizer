@@ -508,7 +508,8 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	    desc->layout != UTIL_FORMAT_LAYOUT_SUBSAMPLED) {
 		if (!(templ->bind & PIPE_BIND_SCANOUT) &&
 		    templ->usage != PIPE_USAGE_STAGING &&
-		    templ->usage != PIPE_USAGE_STREAM) {
+		    templ->usage != PIPE_USAGE_STREAM &&
+		    templ->target != PIPE_TEXTURE_1D) {
 			array_mode = V_038000_ARRAY_2D_TILED_THIN1;
 		} else if (util_format_is_compressed(templ->format)) {
 			array_mode = V_038000_ARRAY_1D_TILED_THIN1;
