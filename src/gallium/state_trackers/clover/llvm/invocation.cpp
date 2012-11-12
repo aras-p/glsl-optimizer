@@ -132,7 +132,12 @@ namespace {
                                         clang::LangStandard::lang_opencl11);
 #endif
       c.createDiagnostics(0, NULL, new clang::TextDiagnosticPrinter(
-                          s_log, c.getDiagnosticOpts()));
+                          s_log,
+#if HAVE_LLVM <= 0x0301
+                                 c.getDiagnosticOpts()));
+#else
+                                 &c.getDiagnosticOpts()));
+#endif
 
       c.getPreprocessorOpts().addRemappedFile(name,
                                       llvm::MemoryBuffer::getMemBuffer(source));
