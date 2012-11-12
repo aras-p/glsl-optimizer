@@ -108,6 +108,17 @@ struct surface_format_info {
  * Y^: 60 (gen6)
  * Y#: 70 (gen7)
  *
+ * The abbreviations in the header below are:
+ * smpl  - Sampling Engine
+ * filt  - Sampling Engine Filtering
+ * shad  - Sampling Engine Shadow Map
+ * CK    - Sampling Engine Chroma Key
+ * RT    - Render Target
+ * AB    - Alpha Blend Render Target
+ * VB    - Input Vertex Buffer
+ * SO    - Steamed Output Vertex Buffers (transform feedback)
+ * color - Color Processing
+ *
  * See page 88 of the Sandybridge PRM VOL4_Part1 PDF.
  */
 const struct surface_format_info surface_formats[] = {
