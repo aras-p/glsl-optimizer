@@ -494,10 +494,18 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct radeon_surface surface;
-	unsigned array_mode = 0;
+	const struct util_format_description *desc = util_format_description(templ->format);
+	unsigned array_mode;
 	int r;
 
-	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER)) {
+	/* Default tiling mode for staging textures. */
+	array_mode = V_038000_ARRAY_LINEAR_ALIGNED;
+
+	/* Tiling doesn't work with the 422 (SUBSAMPLED) formats. That's not an issue,
+	 * because 422 formats are used for videos, which prefer linear buffers
+	 * for fast uploads anyway. */
+	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
+	    desc->layout != UTIL_FORMAT_LAYOUT_SUBSAMPLED) {
 		if (!(templ->bind & PIPE_BIND_SCANOUT) &&
 		    templ->usage != PIPE_USAGE_STAGING &&
 		    templ->usage != PIPE_USAGE_STREAM) {
@@ -506,10 +514,6 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 			array_mode = V_038000_ARRAY_1D_TILED_THIN1;
 		}
 	}
-
-	/* XXX tiling is broken for the 422 formats */
-	if (util_format_description(templ->format)->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED)
-		array_mode = V_038000_ARRAY_LINEAR_ALIGNED;
 
 	r = r600_init_surface(rscreen, &surface, templ, array_mode,
 			      templ->flags & R600_RESOURCE_FLAG_FLUSHED_DEPTH);
