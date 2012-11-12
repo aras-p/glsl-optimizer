@@ -1592,28 +1592,14 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 
       switch (expr->operation) {
       case ir_unop_logic_not:
-	 inst = emit(BRW_OPCODE_IF, temp, op[0], fs_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_Z;
-	 return;
-
       case ir_binop_logic_xor:
-	 inst = emit(BRW_OPCODE_IF, reg_null_d, op[0], op[1]);
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
-	 return;
-
       case ir_binop_logic_or:
-	 temp = fs_reg(this, glsl_type::bool_type);
-	 emit(BRW_OPCODE_OR, temp, op[0], op[1]);
-	 inst = emit(BRW_OPCODE_IF, reg_null_d, temp, fs_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
-	 return;
-
       case ir_binop_logic_and:
-	 temp = fs_reg(this, glsl_type::bool_type);
-	 emit(BRW_OPCODE_AND, temp, op[0], op[1]);
-	 inst = emit(BRW_OPCODE_IF, reg_null_d, temp, fs_reg(0));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
-	 return;
+         /* For operations on bool arguments, only the low bit of the bool is
+          * valid, and the others are undefined.  Fall back to the condition
+          * code path.
+          */
+         break;
 
       case ir_unop_f2b:
 	 inst = emit(BRW_OPCODE_IF, reg_null_f, op[0], fs_reg(0));
@@ -1633,6 +1619,9 @@ fs_visitor::emit_if_gen6(ir_if *ir)
       case ir_binop_all_equal:
       case ir_binop_nequal:
       case ir_binop_any_nequal:
+	 resolve_bool_comparison(expr->operands[0], &op[0]);
+	 resolve_bool_comparison(expr->operands[1], &op[1]);
+
 	 inst = emit(BRW_OPCODE_IF, reg_null_d, op[0], op[1]);
 	 inst->conditional_mod =
 	    brw_conditional_for_comparison(expr->operation);
@@ -1644,13 +1633,11 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 	 fail("bad condition\n");
 	 return;
       }
-      return;
    }
 
-   ir->condition->accept(this);
-
-   fs_inst *inst = emit(BRW_OPCODE_IF, reg_null_d, this->result, fs_reg(0));
-   inst->conditional_mod = BRW_CONDITIONAL_NZ;
+   emit_bool_to_cond_code(ir->condition);
+   fs_inst *inst = emit(BRW_OPCODE_IF);
+   inst->predicate = BRW_PREDICATE_NORMAL;
 }
 
 void
