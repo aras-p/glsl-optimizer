@@ -604,7 +604,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	else if (micro == RADEON_LAYOUT_TILED)
 		array_mode = V_0280A0_ARRAY_1D_TILED_THIN1;
 	else
-		array_mode = 0;
+		array_mode = V_038000_ARRAY_LINEAR_ALIGNED;
 
 	r = r600_init_surface(rscreen, &surface, templ, array_mode, false);
 	if (r) {
