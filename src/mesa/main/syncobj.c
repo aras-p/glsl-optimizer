@@ -352,7 +352,7 @@ _mesa_WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
    }
 
    if (flags != 0) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glWaitSync(flags=0x%x)", flags);
+      _mesa_error(ctx, GL_INVALID_VALUE, "glWaitSync(flags=0x%x)", flags);
       return;
    }
 
