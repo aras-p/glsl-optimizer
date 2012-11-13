@@ -587,14 +587,15 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 	struct lp_build_context * uint =
 				&si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
 	struct tgsi_parse_context *parse = &si_shader_ctx->parse;
+	LLVMValueRef args[9];
 	LLVMValueRef last_args[9] = { 0 };
 	unsigned color_count = 0;
 	unsigned param_count = 0;
+	int depth_index = -1, stencil_index = -1;
 
 	while (!tgsi_parse_end_of_tokens(parse)) {
 		struct tgsi_full_declaration *d =
 					&parse->FullToken.FullDeclaration;
-		LLVMValueRef args[9];
 		unsigned target;
 		unsigned index;
 		int i;
@@ -627,9 +628,19 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 			/* Select the correct target */
 			switch(d->Semantic.Name) {
 			case TGSI_SEMANTIC_PSIZE:
-			case TGSI_SEMANTIC_POSITION:
 				target = V_008DFC_SQ_EXP_POS;
 				break;
+			case TGSI_SEMANTIC_POSITION:
+				if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
+					target = V_008DFC_SQ_EXP_POS;
+					break;
+				} else {
+					depth_index = index;
+					continue;
+				}
+			case TGSI_SEMANTIC_STENCIL:
+				stencil_index = index;
+				continue;
 			case TGSI_SEMANTIC_COLOR:
 				if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
 			case TGSI_SEMANTIC_BCOLOR:
@@ -679,6 +690,52 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 			}
 
 		}
+	}
+
+	if (depth_index >= 0 || stencil_index >= 0) {
+		LLVMValueRef out_ptr;
+		unsigned mask = 0;
+
+		/* Specify the target we are exporting */
+		args[3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_MRTZ);
+
+		if (depth_index >= 0) {
+			out_ptr = si_shader_ctx->radeon_bld.soa.outputs[depth_index][2];
+			args[5] = LLVMBuildLoad(base->gallivm->builder, out_ptr, "");
+			mask |= 0x1;
+
+			if (stencil_index < 0) {
+				args[6] =
+				args[7] =
+				args[8] = args[5];
+			}
+		}
+
+		if (stencil_index >= 0) {
+			out_ptr = si_shader_ctx->radeon_bld.soa.outputs[stencil_index][1];
+			args[7] =
+			args[8] =
+			args[6] = LLVMBuildLoad(base->gallivm->builder, out_ptr, "");
+			mask |= 0x2;
+
+			if (depth_index < 0)
+				args[5] = args[6];
+		}
+
+		/* Specify which components to enable */
+		args[0] = lp_build_const_int32(base->gallivm, mask);
+
+		args[1] =
+		args[2] =
+		args[4] = uint->zero;
+
+		if (last_args[0])
+			lp_build_intrinsic(base->gallivm->builder,
+					   "llvm.SI.export",
+					   LLVMVoidTypeInContext(base->gallivm->context),
+					   args, 9);
+		else
+			memcpy(last_args, args, sizeof(args));
 	}
 
 	if (!last_args[0]) {
