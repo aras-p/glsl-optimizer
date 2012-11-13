@@ -363,7 +363,7 @@ _mesa_hash_table_random_entry(struct hash_table *ht,
                               bool (*predicate)(struct hash_entry *entry))
 {
    struct hash_entry *entry;
-   uint32_t i = random() % ht->size;
+   uint32_t i = rand() % ht->size;
 
    if (ht->entries == 0)
       return NULL;
