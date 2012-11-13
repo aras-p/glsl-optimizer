@@ -1056,6 +1056,7 @@ _mesa_get_tex_max_num_levels(GLenum target, GLsizei width, GLsizei height,
       size = MAX3(width, height, depth);
       break;
    case GL_TEXTURE_RECTANGLE:
+   case GL_TEXTURE_EXTERNAL_OES:
       return 1;
    default:
       assert(0);
