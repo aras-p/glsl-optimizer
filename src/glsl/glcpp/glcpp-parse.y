@@ -1150,46 +1150,49 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	parser->new_source_number = 0;
 
 	/* Add pre-defined macros. */
-	add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
-	add_builtin_define(parser, "GL_ARB_texture_rectangle", 1);
+	if (extensions != NULL) {
+	   if (extensions->OES_EGL_image_external)
+	      add_builtin_define(parser, "GL_OES_EGL_image_external", 1);
+	}
 
 	if (api == API_OPENGLES2)
 		add_builtin_define(parser, "GL_ES", 1);
+	else {
+	   add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
+	   add_builtin_define(parser, "GL_ARB_texture_rectangle", 1);
 
-	if (extensions != NULL) {
-	   if (extensions->EXT_texture_array) {
-	      add_builtin_define(parser, "GL_EXT_texture_array", 1);
+	   if (extensions != NULL) {
+	      if (extensions->EXT_texture_array) {
+	         add_builtin_define(parser, "GL_EXT_texture_array", 1);
+	      }
+
+	      if (extensions->ARB_fragment_coord_conventions)
+	         add_builtin_define(parser, "GL_ARB_fragment_coord_conventions",
+				    1);
+
+	      if (extensions->ARB_explicit_attrib_location)
+	         add_builtin_define(parser, "GL_ARB_explicit_attrib_location", 1);
+
+	      if (extensions->ARB_shader_texture_lod)
+	         add_builtin_define(parser, "GL_ARB_shader_texture_lod", 1);
+
+	      if (extensions->ARB_draw_instanced)
+	         add_builtin_define(parser, "GL_ARB_draw_instanced", 1);
+
+	      if (extensions->ARB_conservative_depth) {
+	         add_builtin_define(parser, "GL_AMD_conservative_depth", 1);
+	         add_builtin_define(parser, "GL_ARB_conservative_depth", 1);
+	      }
+
+	      if (extensions->ARB_shader_bit_encoding)
+	         add_builtin_define(parser, "GL_ARB_shader_bit_encoding", 1);
+
+	      if (extensions->ARB_uniform_buffer_object)
+	         add_builtin_define(parser, "GL_ARB_uniform_buffer_object", 1);
+
+	      if (extensions->ARB_texture_cube_map_array)
+	         add_builtin_define(parser, "GL_ARB_texture_cube_map_array", 1);
 	   }
-
-	   if (extensions->ARB_fragment_coord_conventions)
-	      add_builtin_define(parser, "GL_ARB_fragment_coord_conventions",
-				 1);
-
-	   if (extensions->ARB_explicit_attrib_location)
-	      add_builtin_define(parser, "GL_ARB_explicit_attrib_location", 1);
-
-	   if (extensions->ARB_shader_texture_lod)
-	      add_builtin_define(parser, "GL_ARB_shader_texture_lod", 1);
-
-	   if (extensions->ARB_draw_instanced)
-	      add_builtin_define(parser, "GL_ARB_draw_instanced", 1);
-
-	   if (extensions->ARB_conservative_depth) {
-	      add_builtin_define(parser, "GL_AMD_conservative_depth", 1);
-	      add_builtin_define(parser, "GL_ARB_conservative_depth", 1);
-	   }
-
-	   if (extensions->OES_EGL_image_external)
-	      add_builtin_define(parser, "GL_OES_EGL_image_external", 1);
-
-	   if (extensions->ARB_shader_bit_encoding)
-	      add_builtin_define(parser, "GL_ARB_shader_bit_encoding", 1);
-
-	   if (extensions->ARB_uniform_buffer_object)
-	      add_builtin_define(parser, "GL_ARB_uniform_buffer_object", 1);
-
-	   if (extensions->ARB_texture_cube_map_array)
-	      add_builtin_define(parser, "GL_ARB_texture_cube_map_array", 1);
 	}
 
 	language_version = 110;
