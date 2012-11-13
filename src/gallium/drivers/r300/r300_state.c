@@ -1632,15 +1632,16 @@ static void r300_set_vertex_buffers_hwtcl(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    /* There must be at least one vertex buffer set, otherwise it locks up. */
-    if (!count) {
-        buffers = &r300->dummy_vb;
-        count = 1;
-    }
-
     util_set_vertex_buffers_count(r300->vertex_buffer,
                                   &r300->nr_vertex_buffers,
                                   buffers, start_slot, count);
+
+    /* There must be at least one vertex buffer set, otherwise it locks up. */
+    if (!r300->nr_vertex_buffers) {
+        util_set_vertex_buffers_count(r300->vertex_buffer,
+                                      &r300->nr_vertex_buffers,
+                                      &r300->dummy_vb, 0, 1);
+    }
 
     r300->vertex_arrays_dirty = TRUE;
 }
