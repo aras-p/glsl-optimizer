@@ -1137,7 +1137,7 @@ _mesa_VertexAttribDivisor(GLuint index, GLuint divisor)
    }
 
    if (index >= ctx->Const.VertexProgram.MaxAttribs) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glVertexAttribDivisor(index = %u)",
+      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribDivisor(index = %u)",
                   index);
       return;
    }
