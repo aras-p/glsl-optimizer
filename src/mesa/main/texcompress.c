@@ -623,7 +623,7 @@ _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
       fetch = _mesa_fetch_texel_2d_f_etc2_r11_eac;
       break;
    case MESA_FORMAT_ETC2_RG11_EAC:
-      /* fetch = _mesa_fetch_texel_2d_f_etc2_rg11_eac; -- not implemented yet */
+      fetch = _mesa_fetch_texel_2d_f_etc2_rg11_eac;
       break;
    case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
       /* fetch = _mesa_fetch_texel_2d_f_etc2_signed_r11_eac; -- not implemented yet */
