@@ -308,7 +308,7 @@ _mesa_ClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
    }
 
    if ((flags & ~GL_SYNC_FLUSH_COMMANDS_BIT) != 0) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glClientWaitSync(flags=0x%x)", flags);
+      _mesa_error(ctx, GL_INVALID_VALUE, "glClientWaitSync(flags=0x%x)", flags);
       return GL_WAIT_FAILED;
    }
 
