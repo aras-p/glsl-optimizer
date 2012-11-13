@@ -75,8 +75,16 @@ static unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 
 static int r600_init_surface(struct radeon_surface *surface,
 			     const struct pipe_resource *ptex,
-			     unsigned array_mode, bool is_transfer)
+			     unsigned array_mode,
+			     bool is_transfer, bool is_flushed_depth)
 {
+	const struct util_format_description *desc =
+		util_format_description(ptex->format);
+	bool is_depth, is_stencil;
+
+	is_depth = util_format_has_depth(desc);
+	is_stencil = util_format_has_stencil(desc);
+
 	surface->npix_x = ptex->width0;
 	surface->npix_y = ptex->height0;
 	surface->npix_z = ptex->depth0;
@@ -136,11 +144,14 @@ static int r600_init_surface(struct radeon_surface *surface,
 	if (ptex->bind & PIPE_BIND_SCANOUT) {
 		surface->flags |= RADEON_SURF_SCANOUT;
 	}
-	if (util_format_is_depth_and_stencil(ptex->format) && !is_transfer) {
-		surface->flags |= RADEON_SURF_ZBUFFER;
-		surface->flags |= RADEON_SURF_SBUFFER;
-	}
 
+	if (!is_transfer && !is_flushed_depth && is_depth) {
+		surface->flags |= RADEON_SURF_ZBUFFER;
+
+		if (is_stencil) {
+			surface->flags |= RADEON_SURF_SBUFFER;
+		}
+	}
 	return 0;
 }
 
@@ -510,7 +521,8 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 #endif
 
 	r = r600_init_surface(&surface, templ, array_mode,
-			      templ->flags & R600_RESOURCE_FLAG_TRANSFER);
+			      templ->flags & R600_RESOURCE_FLAG_TRANSFER,
+			      templ->flags & R600_RESOURCE_FLAG_FLUSHED_DEPTH);
 	if (r) {
 		return NULL;
 	}
@@ -591,7 +603,7 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 	else
 		array_mode = V_009910_ARRAY_LINEAR_ALIGNED;
 
-	r = r600_init_surface(&surface, templ, array_mode, 0);
+	r = r600_init_surface(&surface, templ, array_mode, false, false);
 	if (r) {
 		return NULL;
 	}
@@ -618,7 +630,7 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 	resource.nr_samples = texture->nr_samples;
 	resource.usage = PIPE_USAGE_DYNAMIC;
 	resource.bind = texture->bind | PIPE_BIND_DEPTH_STENCIL;
-	resource.flags = R600_RESOURCE_FLAG_TRANSFER | texture->flags;
+	resource.flags = R600_RESOURCE_FLAG_TRANSFER | R600_RESOURCE_FLAG_FLUSHED_DEPTH | texture->flags;
 
 	rtex->flushed_depth_texture = (struct r600_resource_texture *)ctx->screen->resource_create(ctx->screen, &resource);
 	if (rtex->flushed_depth_texture == NULL) {
