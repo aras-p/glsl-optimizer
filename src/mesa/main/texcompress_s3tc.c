@@ -362,7 +362,6 @@ static void
 fetch_texel_2d_rgb_dxt1(const struct swrast_texture_image *texImage,
                         GLint i, GLint j, GLint k, GLubyte *texel)
 {
-   (void) k;
    if (fetch_ext_rgb_dxt1) {
       GLint sliceOffset = k ? texImage->ImageOffsets[k] / 2 : 0;
       fetch_ext_rgb_dxt1(texImage->RowStride,
@@ -391,7 +390,6 @@ static void
 fetch_texel_2d_rgba_dxt1(const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLubyte *texel)
 {
-   (void) k;
    if (fetch_ext_rgba_dxt1) {
       GLint sliceOffset = k ? texImage->ImageOffsets[k] / 2 : 0;
       fetch_ext_rgba_dxt1(texImage->RowStride,
@@ -420,7 +418,6 @@ static void
 fetch_texel_2d_rgba_dxt3(const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLubyte *texel)
 {
-   (void) k;
    if (fetch_ext_rgba_dxt3) {
       GLint sliceOffset = k ? texImage->ImageOffsets[k] : 0;
       fetch_ext_rgba_dxt3(texImage->RowStride,
@@ -449,7 +446,6 @@ static void
 fetch_texel_2d_rgba_dxt5(const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLubyte *texel)
 {
-   (void) k;
    if (fetch_ext_rgba_dxt5) {
       GLint sliceOffset = k ? texImage->ImageOffsets[k] : 0;
       fetch_ext_rgba_dxt5(texImage->RowStride,
