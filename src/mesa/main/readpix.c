@@ -743,6 +743,17 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
+   if (_mesa_is_user_fbo(ctx->ReadBuffer) &&
+       ctx->ReadBuffer->Visual.samples > 0) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(multisample FBO)");
+      return;
+   }
+
+   if (!_mesa_source_buffer_exists(ctx, format)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(no readbuffer)");
+      return;
+   }
+
    /* Check that the destination format and source buffer are both
     * integer-valued or both non-integer-valued.
     */
@@ -755,17 +766,6 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
                      "glReadPixels(integer / non-integer format mismatch");
          return;
       }
-   }
-
-   if (_mesa_is_user_fbo(ctx->ReadBuffer) &&
-       ctx->ReadBuffer->Visual.samples > 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(multisample FBO)");
-      return;
-   }
-
-   if (!_mesa_source_buffer_exists(ctx, format)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(no readbuffer)");
-      return;
    }
 
    if (width == 0 || height == 0)
