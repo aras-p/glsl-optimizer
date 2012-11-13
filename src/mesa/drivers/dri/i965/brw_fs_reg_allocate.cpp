@@ -90,14 +90,15 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
     * less some day.
     *
     * Additionally, on gen5 we need aligned pairs of registers for the PLN
-    * instruction.
+    * instruction, and on gen4 we need 8 contiguous regs for workaround simd16
+    * texturing.
     *
-    * So we have a need for classes for 1, 2, and 4 registers currently, and
-    * we add in '3' to make indexing the array easier (since we'll probably
-    * want it for texturing later).
+    * So we have a need for classes for 1, 2, 4, and 8 registers currently,
+    * and we add in '3' to make indexing the array easier for the common case
+    * (since we'll probably want it for texturing later).
     */
-   const int class_sizes[4] = {1, 2, 3, 4};
-   const int class_count = 4;
+   const int class_count = 5;
+   const int class_sizes[class_count] = {1, 2, 3, 4, 8};
 
    /* Compute the total number of registers across all classes. */
    int ra_reg_count = 0;
@@ -410,10 +411,17 @@ fs_visitor::assign_regs()
                                                     node_count);
 
    for (int i = 0; i < this->virtual_grf_count; i++) {
-      assert(this->virtual_grf_sizes[i] >= 1 &&
-             this->virtual_grf_sizes[i] <= 4 &&
-             "Register allocation relies on split_virtual_grfs()");
-      int c = brw->wm.reg_sets[rsi].classes[this->virtual_grf_sizes[i] - 1];
+      int size = this->virtual_grf_sizes[i];
+      int c;
+
+      if (size == 8) {
+         c = 4;
+      } else {
+         assert(size >= 1 &&
+                size <= 4 &&
+                "Register allocation relies on split_virtual_grfs()");
+         c = brw->wm.reg_sets[rsi].classes[size - 1];
+      }
 
       /* Special case: on pre-GEN6 hardware that supports PLN, the
        * second operand of a PLN instruction needs to be an
