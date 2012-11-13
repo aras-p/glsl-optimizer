@@ -29,7 +29,7 @@
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 
-#define SI_PM4_MAX_DW		128
+#define SI_PM4_MAX_DW		256
 #define SI_PM4_MAX_BO		32
 #define SI_PM4_MAX_RELOCS	4
 
