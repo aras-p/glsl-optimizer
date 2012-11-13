@@ -57,8 +57,8 @@ struct z32f_x24s8
  * linear RGB value in [0, 1].
  * Implemented with a 256-entry lookup table.
  */
-static inline GLfloat
-nonlinear_to_linear(GLubyte cs8)
+GLfloat
+_mesa_nonlinear_to_linear(GLubyte cs8)
 {
    static GLfloat table[256];
    static GLboolean tableReady = GL_FALSE;
@@ -742,9 +742,9 @@ unpack_SRGB8(const void *src, GLfloat dst[][4], GLuint n)
    const GLubyte *s = (const GLubyte *) src;
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i][RCOMP] = nonlinear_to_linear(s[i*3+2]);
-      dst[i][GCOMP] = nonlinear_to_linear(s[i*3+1]);
-      dst[i][BCOMP] = nonlinear_to_linear(s[i*3+0]);
+      dst[i][RCOMP] = _mesa_nonlinear_to_linear(s[i*3+2]);
+      dst[i][GCOMP] = _mesa_nonlinear_to_linear(s[i*3+1]);
+      dst[i][BCOMP] = _mesa_nonlinear_to_linear(s[i*3+0]);
       dst[i][ACOMP] = 1.0F;
    }
 }
@@ -755,9 +755,9 @@ unpack_SRGBA8(const void *src, GLfloat dst[][4], GLuint n)
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i][RCOMP] = nonlinear_to_linear( (s[i] >> 24) );
-      dst[i][GCOMP] = nonlinear_to_linear( (s[i] >> 16) & 0xff );
-      dst[i][BCOMP] = nonlinear_to_linear( (s[i] >>  8) & 0xff );
+      dst[i][RCOMP] = _mesa_nonlinear_to_linear( (s[i] >> 24) );
+      dst[i][GCOMP] = _mesa_nonlinear_to_linear( (s[i] >> 16) & 0xff );
+      dst[i][BCOMP] = _mesa_nonlinear_to_linear( (s[i] >>  8) & 0xff );
       dst[i][ACOMP] = UBYTE_TO_FLOAT( s[i] & 0xff ); /* linear! */
    }
 }
@@ -768,9 +768,9 @@ unpack_SARGB8(const void *src, GLfloat dst[][4], GLuint n)
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i][RCOMP] = nonlinear_to_linear( (s[i] >> 16) & 0xff );
-      dst[i][GCOMP] = nonlinear_to_linear( (s[i] >>  8) & 0xff );
-      dst[i][BCOMP] = nonlinear_to_linear( (s[i]      ) & 0xff );
+      dst[i][RCOMP] = _mesa_nonlinear_to_linear( (s[i] >> 16) & 0xff );
+      dst[i][GCOMP] = _mesa_nonlinear_to_linear( (s[i] >>  8) & 0xff );
+      dst[i][BCOMP] = _mesa_nonlinear_to_linear( (s[i]      ) & 0xff );
       dst[i][ACOMP] = UBYTE_TO_FLOAT( s[i] >> 24 ); /* linear! */
    }
 }
@@ -783,7 +783,7 @@ unpack_SL8(const void *src, GLfloat dst[][4], GLuint n)
    for (i = 0; i < n; i++) {
       dst[i][RCOMP] = 
       dst[i][GCOMP] = 
-      dst[i][BCOMP] = nonlinear_to_linear(s[i]);
+      dst[i][BCOMP] = _mesa_nonlinear_to_linear(s[i]);
       dst[i][ACOMP] = 1.0F;
    }
 }
@@ -796,7 +796,7 @@ unpack_SLA8(const void *src, GLfloat dst[][4], GLuint n)
    for (i = 0; i < n; i++) {
       dst[i][RCOMP] =
       dst[i][GCOMP] =
-      dst[i][BCOMP] = nonlinear_to_linear(s[i] & 0xff);
+      dst[i][BCOMP] = _mesa_nonlinear_to_linear(s[i] & 0xff);
       dst[i][ACOMP] = UBYTE_TO_FLOAT(s[i] >> 8); /* linear! */
    }
 }

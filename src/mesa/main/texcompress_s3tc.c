@@ -45,6 +45,7 @@
 #include "texcompress_s3tc.h"
 #include "texstore.h"
 #include "swrast/s_context.h"
+#include "format_unpack.h"
 
 
 #if defined(_WIN32) || defined(WIN32)
@@ -56,33 +57,6 @@
 #else
 #define DXTN_LIBNAME "libtxc_dxtn.so"
 #endif
-
-/**
- * Convert an 8-bit sRGB value from non-linear space to a
- * linear RGB value in [0, 1].
- * Implemented with a 256-entry lookup table.
- */
-static inline GLfloat
-nonlinear_to_linear(GLubyte cs8)
-{
-   static GLfloat table[256];
-   static GLboolean tableReady = GL_FALSE;
-   if (!tableReady) {
-      /* compute lookup table now */
-      GLuint i;
-      for (i = 0; i < 256; i++) {
-         const GLfloat cs = UBYTE_TO_FLOAT(i);
-         if (cs <= 0.04045) {
-            table[i] = cs / 12.92f;
-         }
-         else {
-            table[i] = (GLfloat) pow((cs + 0.055) / 1.055, 2.4);
-         }
-      }
-      tableReady = GL_TRUE;
-   }
-   return table[cs8];
-}
 
 typedef void (*dxtFetchTexelFuncExt)( GLint srcRowstride, GLubyte *pixdata, GLint col, GLint row, GLvoid *texelOut );
 
@@ -476,9 +450,9 @@ _mesa_fetch_texel_srgb_dxt1(const struct swrast_texture_image *texImage,
    /* just sample as GLubyte and convert to float here */
    GLubyte rgba[4];
    fetch_texel_2d_rgb_dxt1(texImage, i, j, k, rgba);
-   texel[RCOMP] = nonlinear_to_linear(rgba[RCOMP]);
-   texel[GCOMP] = nonlinear_to_linear(rgba[GCOMP]);
-   texel[BCOMP] = nonlinear_to_linear(rgba[BCOMP]);
+   texel[RCOMP] = _mesa_nonlinear_to_linear(rgba[RCOMP]);
+   texel[GCOMP] = _mesa_nonlinear_to_linear(rgba[GCOMP]);
+   texel[BCOMP] = _mesa_nonlinear_to_linear(rgba[BCOMP]);
    texel[ACOMP] = UBYTE_TO_FLOAT(rgba[ACOMP]);
 }
 
@@ -489,9 +463,9 @@ _mesa_fetch_texel_srgba_dxt1(const struct swrast_texture_image *texImage,
    /* just sample as GLubyte and convert to float here */
    GLubyte rgba[4];
    fetch_texel_2d_rgba_dxt1(texImage, i, j, k, rgba);
-   texel[RCOMP] = nonlinear_to_linear(rgba[RCOMP]);
-   texel[GCOMP] = nonlinear_to_linear(rgba[GCOMP]);
-   texel[BCOMP] = nonlinear_to_linear(rgba[BCOMP]);
+   texel[RCOMP] = _mesa_nonlinear_to_linear(rgba[RCOMP]);
+   texel[GCOMP] = _mesa_nonlinear_to_linear(rgba[GCOMP]);
+   texel[BCOMP] = _mesa_nonlinear_to_linear(rgba[BCOMP]);
    texel[ACOMP] = UBYTE_TO_FLOAT(rgba[ACOMP]);
 }
 
@@ -502,9 +476,9 @@ _mesa_fetch_texel_srgba_dxt3(const struct swrast_texture_image *texImage,
    /* just sample as GLubyte and convert to float here */
    GLubyte rgba[4];
    fetch_texel_2d_rgba_dxt3(texImage, i, j, k, rgba);
-   texel[RCOMP] = nonlinear_to_linear(rgba[RCOMP]);
-   texel[GCOMP] = nonlinear_to_linear(rgba[GCOMP]);
-   texel[BCOMP] = nonlinear_to_linear(rgba[BCOMP]);
+   texel[RCOMP] = _mesa_nonlinear_to_linear(rgba[RCOMP]);
+   texel[GCOMP] = _mesa_nonlinear_to_linear(rgba[GCOMP]);
+   texel[BCOMP] = _mesa_nonlinear_to_linear(rgba[BCOMP]);
    texel[ACOMP] = UBYTE_TO_FLOAT(rgba[ACOMP]);
 }
 
@@ -515,8 +489,8 @@ _mesa_fetch_texel_srgba_dxt5(const struct swrast_texture_image *texImage,
    /* just sample as GLubyte and convert to float here */
    GLubyte rgba[4];
    fetch_texel_2d_rgba_dxt5(texImage, i, j, k, rgba);
-   texel[RCOMP] = nonlinear_to_linear(rgba[RCOMP]);
-   texel[GCOMP] = nonlinear_to_linear(rgba[GCOMP]);
-   texel[BCOMP] = nonlinear_to_linear(rgba[BCOMP]);
+   texel[RCOMP] = _mesa_nonlinear_to_linear(rgba[RCOMP]);
+   texel[GCOMP] = _mesa_nonlinear_to_linear(rgba[GCOMP]);
+   texel[BCOMP] = _mesa_nonlinear_to_linear(rgba[BCOMP]);
    texel[ACOMP] = UBYTE_TO_FLOAT(rgba[ACOMP]);
 }
