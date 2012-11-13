@@ -75,7 +75,7 @@ static unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 
 static int r600_init_surface(struct radeon_surface *surface,
 			     const struct pipe_resource *ptex,
-			     unsigned array_mode)
+			     unsigned array_mode, bool is_transfer)
 {
 	surface->npix_x = ptex->width0;
 	surface->npix_y = ptex->height0;
@@ -136,7 +136,7 @@ static int r600_init_surface(struct radeon_surface *surface,
 	if (ptex->bind & PIPE_BIND_SCANOUT) {
 		surface->flags |= RADEON_SURF_SCANOUT;
 	}
-	if (util_format_is_depth_and_stencil(ptex->format)) {
+	if (util_format_is_depth_and_stencil(ptex->format) && !is_transfer) {
 		surface->flags |= RADEON_SURF_ZBUFFER;
 		surface->flags |= RADEON_SURF_SBUFFER;
 	}
@@ -151,11 +151,6 @@ static int r600_setup_surface(struct pipe_screen *screen,
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	int r;
-
-	if (util_format_is_depth_or_stencil(rtex->real_format)) {
-		rtex->surface.flags |= RADEON_SURF_ZBUFFER;
-		rtex->surface.flags |= RADEON_SURF_SBUFFER;
-	}
 
 	r = rscreen->ws->surface_init(rscreen->ws, &rtex->surface);
 	if (r) {
@@ -514,7 +509,8 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 	}
 #endif
 
-	r = r600_init_surface(&surface, templ, array_mode);
+	r = r600_init_surface(&surface, templ, array_mode,
+			      templ->flags & R600_RESOURCE_FLAG_TRANSFER);
 	if (r) {
 		return NULL;
 	}
@@ -595,7 +591,7 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 	else
 		array_mode = V_009910_ARRAY_LINEAR_ALIGNED;
 
-	r = r600_init_surface(&surface, templ, array_mode);
+	r = r600_init_surface(&surface, templ, array_mode, 0);
 	if (r) {
 		return NULL;
 	}
