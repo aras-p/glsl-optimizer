@@ -534,7 +534,7 @@ dri2Throttle(struct dri2_screen *psc,
 static void
 __dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y,
 		    int width, int height,
-		    enum __DRI2throttleReason reason)
+		    enum __DRI2throttleReason reason, Bool flush)
 {
    struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
    struct dri2_screen *psc = (struct dri2_screen *) pdraw->psc;
@@ -549,6 +549,10 @@ __dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y,
    xrect.y = priv->height - y - height;
    xrect.width = width;
    xrect.height = height;
+
+   if (flush) {
+      glFlush();
+   }
 
    if (psc->f)
       (*psc->f->flush) (priv->driDrawable);
@@ -571,10 +575,10 @@ __dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y,
 
 static void
 dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y,
-		  int width, int height)
+		  int width, int height, Bool flush)
 {
    __dri2CopySubBuffer(pdraw, x, y, width, height,
-		       __DRI2_THROTTLE_COPYSUBBUFFER);
+		       __DRI2_THROTTLE_COPYSUBBUFFER, flush);
 }
 
 
@@ -731,7 +735,7 @@ static void show_fps(struct dri2_drawable *draw)
 
 static int64_t
 dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
-		int64_t remainder)
+		int64_t remainder, Bool flush)
 {
     struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
     struct glx_display *dpyPriv = __glXInitialize(priv->base.psc->dpy);
@@ -747,7 +751,7 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
     /* Old servers can't handle swapbuffers */
     if (!pdp->swapAvailable) {
        __dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height,
-			   __DRI2_THROTTLE_SWAPBUFFER);
+			   __DRI2_THROTTLE_SWAPBUFFER, flush);
     } else {
        xcb_connection_t *c = XGetXCBConnection(pdraw->psc->dpy);
        xcb_dri2_swap_buffers_cookie_t swap_buffers_cookie;
@@ -755,6 +759,10 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
        uint32_t target_msc_hi, target_msc_lo;
        uint32_t divisor_hi, divisor_lo;
        uint32_t remainder_hi, remainder_lo;
+
+       if (flush) {
+          glFlush();
+       }
 
        if (psc->f) {
           struct glx_context *gc = __glXGetCurrentContext();

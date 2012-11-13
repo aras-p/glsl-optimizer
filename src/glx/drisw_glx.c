@@ -551,7 +551,8 @@ driswCreateDrawable(struct glx_screen *base, XID xDrawable,
 
 static int64_t
 driswSwapBuffers(__GLXDRIdrawable * pdraw,
-                 int64_t target_msc, int64_t divisor, int64_t remainder)
+                 int64_t target_msc, int64_t divisor, int64_t remainder,
+                 Bool flush)
 {
    struct drisw_drawable *pdp = (struct drisw_drawable *) pdraw;
    struct drisw_screen *psc = (struct drisw_screen *) pdp->base.psc;
@@ -559,6 +560,10 @@ driswSwapBuffers(__GLXDRIdrawable * pdraw,
    (void) target_msc;
    (void) divisor;
    (void) remainder;
+
+   if (flush) {
+      glFlush();
+   }
 
    (*psc->core->swapBuffers) (pdp->driDrawable);
 

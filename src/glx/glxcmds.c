@@ -781,11 +781,9 @@ glXSwapBuffers(Display * dpy, GLXDrawable drawable)
       __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
 
       if (pdraw != NULL) {
-         if (gc && drawable == gc->currentDrawable) {
-            glFlush();
-         }
+         Bool flush = gc && drawable == gc->currentDrawable;
 
-         (*pdraw->psc->driScreen->swapBuffers)(pdraw, 0, 0, 0);
+         (*pdraw->psc->driScreen->swapBuffers)(pdraw, 0, 0, 0, flush);
          return;
       }
    }
@@ -2171,7 +2169,7 @@ __glXSwapBuffersMscOML(Display * dpy, GLXDrawable drawable,
 #ifdef GLX_DIRECT_RENDERING
    if (psc->driScreen && psc->driScreen->swapBuffers)
       return (*psc->driScreen->swapBuffers)(pdraw, target_msc, divisor,
-					    remainder);
+					    remainder, False);
 #endif
 
    return -1;
@@ -2311,8 +2309,7 @@ __glXCopySubBufferMESA(Display * dpy, GLXDrawable drawable,
    if (pdraw != NULL) {
       struct glx_screen *psc = pdraw->psc;
       if (psc->driScreen->copySubBuffer != NULL) {
-         glFlush();
-         (*psc->driScreen->copySubBuffer) (pdraw, x, y, width, height);
+         (*psc->driScreen->copySubBuffer) (pdraw, x, y, width, height, True);
       }
 
       return;
