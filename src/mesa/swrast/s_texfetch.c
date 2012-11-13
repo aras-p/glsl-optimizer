@@ -1049,7 +1049,7 @@ texfetch_funcs[] =
    {
       MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC,
       NULL,
-      NULL /* _mesa_fetch_texel_2d_f_etc2_srgb8_alpha8_eac -- not implemented yet */,
+      _mesa_fetch_texel_2d_f_etc2_srgb8_alpha8_eac,
       NULL
    },
    {
