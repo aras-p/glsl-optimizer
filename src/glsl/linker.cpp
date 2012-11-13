@@ -2010,8 +2010,7 @@ is_varying_var(GLenum shaderType, const ir_variable *var)
 {
    /* Only fragment shaders will take a varying variable as an input */
    if (shaderType == GL_FRAGMENT_SHADER &&
-       var->mode == ir_var_in &&
-       var->explicit_location) {
+       var->mode == ir_var_in) {
       switch (var->location) {
       case FRAG_ATTRIB_WPOS:
       case FRAG_ATTRIB_FACE:
