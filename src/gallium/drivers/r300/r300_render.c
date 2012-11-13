@@ -395,16 +395,6 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
         }
     }
     END_CS;
-
-    /* Unmap buffers. */
-    for (i = 0; i < vertex_element_count; i++) {
-        vbi = r300->velems->velem[i].vertex_buffer_index;
-
-        if (map[vbi]) {
-            r300->rws->buffer_unmap(r300_resource(r300->vertex_buffer[vbi].buffer)->cs_buf);
-            map[vbi] = NULL;
-        }
-    }
 }
 
 static void r300_emit_draw_arrays(struct r300_context *r300,
@@ -630,7 +620,6 @@ static void r300_draw_elements(struct r300_context *r300,
             r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start,
                                      count, (uint8_t*)ptr);
         }
-        r300->rws->buffer_unmap(r300_resource(orgIndexBuffer)->cs_buf);
     } else {
         if (r300->index_buffer.user_buffer)
             r300_upload_index_buffer(r300, &indexBuffer, indexSize,
