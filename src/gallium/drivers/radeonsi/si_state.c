@@ -510,11 +510,13 @@ static void si_update_dsa_stencil_ref(struct r600_context *rctx)
 	si_pm4_set_reg(pm4, R_028430_DB_STENCILREFMASK,
 		       S_028430_STENCILTESTVAL(ref->ref_value[0]) |
 		       S_028430_STENCILMASK(dsa->valuemask[0]) |
-		       S_028430_STENCILWRITEMASK(dsa->writemask[0]));
+		       S_028430_STENCILWRITEMASK(dsa->writemask[0]) |
+		       S_028430_STENCILOPVAL(1));
 	si_pm4_set_reg(pm4, R_028434_DB_STENCILREFMASK_BF,
 		       S_028434_STENCILTESTVAL_BF(ref->ref_value[1]) |
 		       S_028434_STENCILMASK_BF(dsa->valuemask[1]) |
-		       S_028434_STENCILWRITEMASK_BF(dsa->writemask[1]));
+		       S_028434_STENCILWRITEMASK_BF(dsa->writemask[1]) |
+		       S_028434_STENCILOPVAL_BF(1));
 
 	si_pm4_set_state(rctx, dsa_stencil_ref, pm4);
 }
