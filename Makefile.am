@@ -61,9 +61,15 @@ PACKAGE_NAME = MesaLib-$(PACKAGE_VERSION)
 EXTRA_FILES = \
 	aclocal.m4					\
 	configure					\
+	bin/ar-lib					\
+	bin/compile					\
 	bin/config.sub					\
 	bin/config.guess				\
+	bin/depcomp					\
 	bin/install-sh					\
+	bin/ltmain.sh					\
+	bin/missing					\
+	bin/ylwrap					\
 	src/glsl/glsl_parser.cc				\
 	src/glsl/glsl_parser.h				\
 	src/glsl/glsl_lexer.cc				\
