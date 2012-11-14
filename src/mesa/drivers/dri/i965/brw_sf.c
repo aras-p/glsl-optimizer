@@ -190,9 +190,10 @@ brw_upload_sf_prog(struct brw_context *brw)
    if ((ctx->Point.SpriteOrigin == GL_LOWER_LEFT) != render_to_fbo)
       key.sprite_origin_lower_left = true;
 
-   /* _NEW_LIGHT */
+   /* _NEW_LIGHT | _NEW_PROGRAM */
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
-   key.do_twoside_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
+   key.do_twoside_color = ((ctx->Light.Enabled && ctx->Light.Model.TwoSide) ||
+                           ctx->VertexProgram._TwoSideEnabled);
 
    /* _NEW_POLYGON */
    if (key.do_twoside_color) {
@@ -214,7 +215,7 @@ brw_upload_sf_prog(struct brw_context *brw)
 const struct brw_tracked_state brw_sf_prog = {
    .dirty = {
       .mesa  = (_NEW_HINT | _NEW_LIGHT | _NEW_POLYGON | _NEW_POINT |
-                _NEW_TRANSFORM | _NEW_BUFFERS),
+                _NEW_TRANSFORM | _NEW_BUFFERS | _NEW_PROGRAM),
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
       .cache = CACHE_NEW_VS_PROG
    },
