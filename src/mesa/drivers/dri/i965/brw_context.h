@@ -280,10 +280,6 @@ struct brw_shader {
    struct exec_list *ir;
 };
 
-struct brw_shader_program {
-   struct gl_shader_program base;
-};
-
 /* Data about a particular attempt to compile a program.  Note that
  * there can be many of these, each in a different GL state
  * corresponding to a different brw_wm_prog_key struct, with different

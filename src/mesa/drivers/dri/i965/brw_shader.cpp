@@ -48,13 +48,12 @@ brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type)
 struct gl_shader_program *
 brw_new_shader_program(struct gl_context *ctx, GLuint name)
 {
-   struct brw_shader_program *prog;
-   prog = rzalloc(NULL, struct brw_shader_program);
+   struct gl_shader_program *prog = rzalloc(NULL, struct gl_shader_program);
    if (prog) {
-      prog->base.Name = name;
-      _mesa_init_shader_program(ctx, &prog->base);
+      prog->Name = name;
+      _mesa_init_shader_program(ctx, prog);
    }
-   return &prog->base;
+   return prog;
 }
 
 /**
