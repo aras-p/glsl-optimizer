@@ -25,11 +25,13 @@
  *
  */
 
+#ifndef _HASH_TABLE_H
+#define _HASH_TABLE_H
+
 #include <inttypes.h>
 #include <stdbool.h>
 
-#ifndef _HASH_TABLE_H
-#define _HASH_TABLE_H
+#include "compiler.h"
 
 #ifdef __cplusplus
 extern "C" {
