@@ -1080,7 +1080,6 @@ struct brw_instruction_info {
     char    *name;
     int	    nsrc;
     int	    ndst;
-    bool is_arith;
 };
 extern const struct brw_instruction_info brw_opcodes[128];
 
