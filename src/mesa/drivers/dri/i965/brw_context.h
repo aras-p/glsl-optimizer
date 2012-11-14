@@ -461,14 +461,6 @@ struct brw_vs_prog_data {
    const float **pull_param;
 };
 
-
-/* Size == 0 if output either not written, or always [0,0,0,1]
- */
-struct brw_vs_ouput_sizes {
-   GLubyte output_size[VERT_RESULT_MAX];
-};
-
-
 /** Number of texture sampler units */
 #define BRW_MAX_TEX_UNIT 16
 
