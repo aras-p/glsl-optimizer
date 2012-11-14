@@ -1964,13 +1964,74 @@ fs_visitor::get_instruction_generating_reg(fs_inst *start,
    }
 }
 
+void
+fs_visitor::setup_payload_gen6()
+{
+   struct intel_context *intel = &brw->intel;
+   bool uses_depth =
+      (fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) != 0;
+   unsigned barycentric_interp_modes = c->prog_data.barycentric_interp_modes;
+
+   assert(intel->gen >= 6);
+
+   /* R0-1: masks, pixel X/Y coordinates. */
+   c->nr_payload_regs = 2;
+   /* R2: only for 32-pixel dispatch.*/
+
+   /* R3-26: barycentric interpolation coordinates.  These appear in the
+    * same order that they appear in the brw_wm_barycentric_interp_mode
+    * enum.  Each set of coordinates occupies 2 registers if dispatch width
+    * == 8 and 4 registers if dispatch width == 16.  Coordinates only
+    * appear if they were enabled using the "Barycentric Interpolation
+    * Mode" bits in WM_STATE.
+    */
+   for (int i = 0; i < BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT; ++i) {
+      if (barycentric_interp_modes & (1 << i)) {
+         c->barycentric_coord_reg[i] = c->nr_payload_regs;
+         c->nr_payload_regs += 2;
+         if (c->dispatch_width == 16) {
+            c->nr_payload_regs += 2;
+         }
+      }
+   }
+
+   /* R27: interpolated depth if uses source depth */
+   if (uses_depth) {
+      c->source_depth_reg = c->nr_payload_regs;
+      c->nr_payload_regs++;
+      if (c->dispatch_width == 16) {
+         /* R28: interpolated depth if not 8-wide. */
+         c->nr_payload_regs++;
+      }
+   }
+   /* R29: interpolated W set if GEN6_WM_USES_SOURCE_W. */
+   if (uses_depth) {
+      c->source_w_reg = c->nr_payload_regs;
+      c->nr_payload_regs++;
+      if (c->dispatch_width == 16) {
+         /* R30: interpolated W if not 8-wide. */
+         c->nr_payload_regs++;
+      }
+   }
+   /* R31: MSAA position offsets. */
+   /* R32-: bary for 32-pixel. */
+   /* R58-59: interp W for 32-pixel. */
+
+   if (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
+      c->source_depth_to_render_target = true;
+   }
+}
+
 bool
 fs_visitor::run()
 {
    uint32_t prog_offset_16 = 0;
    uint32_t orig_nr_params = c->prog_data.nr_params;
 
-   brw_wm_payload_setup(brw, c);
+   if (intel->gen >= 6)
+      setup_payload_gen6();
+   else
+      brw_wm_lookup_iz(intel, c);
 
    if (c->dispatch_width == 16) {
       /* We have to do a compaction pass now, or the one at the end of
