@@ -1006,9 +1006,9 @@ fs_visitor::generate_code()
          break;
 
       default:
-	 if (inst->opcode < (int)ARRAY_SIZE(brw_opcodes)) {
+	 if (inst->opcode < (int) ARRAY_SIZE(opcode_descs)) {
 	    _mesa_problem(ctx, "Unsupported opcode `%s' in FS",
-			  brw_opcodes[inst->opcode].name);
+			  opcode_descs[inst->opcode].name);
 	 } else {
 	    _mesa_problem(ctx, "Unsupported opcode %d in FS", inst->opcode);
 	 }

@@ -763,9 +763,9 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
       break;
 
    default:
-      if (inst->opcode < (int)ARRAY_SIZE(brw_opcodes)) {
+      if (inst->opcode < (int) ARRAY_SIZE(opcode_descs)) {
 	 fail("unsupported opcode in `%s' in VS\n",
-	      brw_opcodes[inst->opcode].name);
+	      opcode_descs[inst->opcode].name);
       } else {
 	 fail("Unsupported opcode %d in VS", inst->opcode);
       }

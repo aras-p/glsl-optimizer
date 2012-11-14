@@ -1076,13 +1076,6 @@ struct brw_context
    int basevertex;
 };
 
-struct brw_instruction_info {
-    char    *name;
-    int	    nsrc;
-    int	    ndst;
-};
-extern const struct brw_instruction_info brw_opcodes[128];
-
 /*======================================================================
  * brw_vtbl.c
  */

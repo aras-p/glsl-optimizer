@@ -32,60 +32,6 @@
 #include "brw_defines.h"
 #include "brw_eu.h"
 
-const struct brw_instruction_info brw_opcodes[128] = {
-    [BRW_OPCODE_MOV] = { .name = "mov", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_FRC] = { .name = "frc", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDU] = { .name = "rndu", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDD] = { .name = "rndd", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDE] = { .name = "rnde", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDZ] = { .name = "rndz", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_NOT] = { .name = "not", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_LZD] = { .name = "lzd", .nsrc = 1, .ndst = 1 },
-
-    [BRW_OPCODE_MUL] = { .name = "mul", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_MAC] = { .name = "mac", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_MACH] = { .name = "mach", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_LINE] = { .name = "line", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_PLN] = { .name = "pln", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SAD2] = { .name = "sad2", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SADA2] = { .name = "sada2", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_DP4] = { .name = "dp4", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_DPH] = { .name = "dph", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_DP3] = { .name = "dp3", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_DP2] = { .name = "dp2", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_MATH] = { .name = "math", .nsrc = 2, .ndst = 1 },
-
-    [BRW_OPCODE_AVG] = { .name = "avg", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_ADD] = { .name = "add", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SEL] = { .name = "sel", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_AND] = { .name = "and", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_OR] = { .name = "or", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_XOR] = { .name = "xor", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SHR] = { .name = "shr", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SHL] = { .name = "shl", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_ASR] = { .name = "asr", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_CMP] = { .name = "cmp", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_CMPN] = { .name = "cmpn", .nsrc = 2, .ndst = 1 },
-
-    [BRW_OPCODE_SEND] = { .name = "send", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_NOP] = { .name = "nop", .nsrc = 0, .ndst = 0 },
-    [BRW_OPCODE_JMPI] = { .name = "jmpi", .nsrc = 1, .ndst = 0 },
-    [BRW_OPCODE_IF] = { .name = "if", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_IFF] = { .name = "iff", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_WHILE] = { .name = "while", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_ELSE] = { .name = "else", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_BREAK] = { .name = "break", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_CONTINUE] = { .name = "cont", .nsrc = 1, .ndst = 0 },
-    [BRW_OPCODE_HALT] = { .name = "halt", .nsrc = 1, .ndst = 0 },
-    [BRW_OPCODE_MSAVE] = { .name = "msave", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_PUSH] = { .name = "push", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_MRESTORE] = { .name = "mrest", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_POP] = { .name = "pop", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_WAIT] = { .name = "wait", .nsrc = 1, .ndst = 0 },
-    [BRW_OPCODE_DO] = { .name = "do", .nsrc = 0, .ndst = 0 },
-    [BRW_OPCODE_ENDIF] = { .name = "endif", .nsrc = 2, .ndst = 0 },
-};
-
 static bool
 is_single_channel_dp4(struct brw_instruction *insn)
 {
