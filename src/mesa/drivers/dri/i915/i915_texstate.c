@@ -146,7 +146,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    GLubyte border[4];
    GLfloat maxlod;
 
-   memset(state, 0, sizeof(state));
+   memset(state, 0, sizeof(*state));
 
    /*We need to refcount these. */
 
