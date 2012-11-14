@@ -237,7 +237,7 @@ struct pipe_context {
     * graphics pipeline.  Any resources that were previously bound to
     * the specified range will be unbound after this call.
     *
-    * \param first      first resource to bind.
+    * \param start      first resource to bind.
     * \param count      number of consecutive resources to bind.
     * \param resources  array of pointers to the resources to bind, it
     *                   should contain at least \a count elements
@@ -366,7 +366,6 @@ struct pipe_context {
    /**
     * Get a surface which is a "view" into a resource, used by
     * render target / depth stencil stages.
-    * \param usage  bitmaks of PIPE_BIND_* flags
     */
    struct pipe_surface *(*create_surface)(struct pipe_context *ctx,
                                           struct pipe_resource *resource,
@@ -454,7 +453,7 @@ struct pipe_context {
     * compute program.  Any resources that were previously bound to
     * the specified range will be unbound after this call.
     *
-    * \param first      first resource to bind.
+    * \param start      first resource to bind.
     * \param count      number of consecutive resources to bind.
     * \param resources  array of pointers to the resources to bind, it
     *                   should contain at least \a count elements
