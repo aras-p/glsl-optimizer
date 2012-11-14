@@ -1076,10 +1076,6 @@ struct brw_context
    int basevertex;
 };
 
-
-
-#define BRW_PACKCOLOR8888(r,g,b,a)  ((r<<24) | (g<<16) | (b<<8) | a)
-
 struct brw_instruction_info {
     char    *name;
     int	    nsrc;
