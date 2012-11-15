@@ -36,35 +36,33 @@ upload_clip_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
-   uint32_t depth_clamp = 0;
-   uint32_t provoking, userclip;
-   uint32_t nonperspective_barycentric_enable_flag = 0;
+   uint32_t dw2 = 0;
 
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->barycentric_interp_modes &
        BRW_WM_NONPERSPECTIVE_BARYCENTRIC_BITS) {
-      nonperspective_barycentric_enable_flag =
-         GEN6_CLIP_NON_PERSPECTIVE_BARYCENTRIC_ENABLE;
+      dw2 |= GEN6_CLIP_NON_PERSPECTIVE_BARYCENTRIC_ENABLE;
    }
 
    if (!ctx->Transform.DepthClamp)
-      depth_clamp = GEN6_CLIP_Z_TEST;
+      dw2 |= GEN6_CLIP_Z_TEST;
 
    /* _NEW_LIGHT */
    if (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION) {
-      provoking =
+      dw2 |=
 	 (0 << GEN6_CLIP_TRI_PROVOKE_SHIFT) |
 	 (1 << GEN6_CLIP_TRIFAN_PROVOKE_SHIFT) |
 	 (0 << GEN6_CLIP_LINE_PROVOKE_SHIFT);
    } else {
-      provoking =
+      dw2 |=
 	 (2 << GEN6_CLIP_TRI_PROVOKE_SHIFT) |
 	 (2 << GEN6_CLIP_TRIFAN_PROVOKE_SHIFT) |
 	 (1 << GEN6_CLIP_LINE_PROVOKE_SHIFT);
    }
 
    /* _NEW_TRANSFORM */
-   userclip = ctx->Transform.ClipPlanesEnabled;
+   dw2 |= (ctx->Transform.ClipPlanesEnabled <<
+           GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT);
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
@@ -72,12 +70,9 @@ upload_clip_state(struct brw_context *brw)
    OUT_BATCH(GEN6_CLIP_ENABLE |
 	     GEN6_CLIP_API_OGL |
 	     GEN6_CLIP_MODE_NORMAL |
-             nonperspective_barycentric_enable_flag |
 	     GEN6_CLIP_XY_TEST |
 	     GEN6_CLIP_GB_TEST |
-	     userclip << GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT |
-	     depth_clamp |
-	     provoking);
+	     dw2);
    OUT_BATCH(U_FIXED(0.125, 3) << GEN6_CLIP_MIN_POINT_WIDTH_SHIFT |
              U_FIXED(255.875, 3) << GEN6_CLIP_MAX_POINT_WIDTH_SHIFT |
              GEN6_CLIP_FORCE_ZERO_RTAINDEX);
