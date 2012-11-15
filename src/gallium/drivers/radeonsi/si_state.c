@@ -1109,7 +1109,7 @@ static uint32_t si_translate_dbformat(enum pipe_format format)
 	case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
 		return V_028040_Z_32_FLOAT;
 	default:
-		return ~0U;
+		return V_028040_Z_INVALID;
 	}
 }
 
@@ -1438,7 +1438,7 @@ static bool si_is_colorbuffer_format_supported(enum pipe_format format)
 
 static bool si_is_zs_format_supported(enum pipe_format format)
 {
-	return si_translate_dbformat(format) != ~0U;
+	return si_translate_dbformat(format) != V_028040_Z_INVALID;
 }
 
 boolean si_is_format_supported(struct pipe_screen *screen,
@@ -1687,6 +1687,8 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 
 	format = si_translate_dbformat(rtex->real_format);
 
+	assert(format != V_028040_Z_INVALID);
+
 	z_offs = r600_resource_va(rctx->context.screen, surf->base.texture);
 	z_offs += rtex->surface.level[level].offset;
 
@@ -1739,12 +1741,7 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		       S_028008_SLICE_MAX(state->zsbuf->u.tex.last_layer));
 
 	si_pm4_set_reg(pm4, R_02803C_DB_DEPTH_INFO, 0x1);
-	if (format != ~0U) {
-		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, z_info);
-
-	} else {
-		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, 0);
-	}
+	si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, z_info);
 
 	if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
 		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, s_info);
