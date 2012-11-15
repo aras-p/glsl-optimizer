@@ -831,7 +831,7 @@ static uint32_t si_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_R4A4_UNORM:
 	case PIPE_FORMAT_A4R4_UNORM:
 	default:
-		return ~0U; /* Unsupported. */
+		return V_028C70_COLOR_INVALID; /* Unsupported. */
 	}
 }
 
@@ -1432,7 +1432,7 @@ static bool si_is_vertex_format_supported(struct pipe_screen *screen, enum pipe_
 
 static bool si_is_colorbuffer_format_supported(enum pipe_format format)
 {
-	return si_translate_colorformat(format) != ~0U &&
+	return si_translate_colorformat(format) != V_028C70_COLOR_INVALID &&
 		si_translate_colorswap(format) != ~0U;
 }
 
@@ -1606,6 +1606,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	}
 
 	format = si_translate_colorformat(surf->base.format);
+	assert(format != V_028C70_COLOR_INVALID);
 	swap = si_translate_colorswap(surf->base.format);
 	if (rtex->resource.b.b.usage == PIPE_USAGE_STAGING) {
 		endian = V_028C70_ENDIAN_NONE;
