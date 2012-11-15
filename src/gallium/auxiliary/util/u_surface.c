@@ -266,13 +266,14 @@ util_clear_depth_stencil(struct pipe_context *pipe,
                          unsigned dstx, unsigned dsty,
                          unsigned width, unsigned height)
 {
+   enum pipe_format format = dst->format;
    struct pipe_transfer *dst_trans;
    ubyte *dst_map;
    boolean need_rmw = FALSE;
 
    if ((clear_flags & PIPE_CLEAR_DEPTHSTENCIL) &&
        ((clear_flags & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
-       util_format_is_depth_and_stencil(dst->format))
+       util_format_is_depth_and_stencil(format))
       need_rmw = TRUE;
 
    assert(dst->texture);
@@ -289,14 +290,14 @@ util_clear_depth_stencil(struct pipe_context *pipe,
 
    if (dst_map) {
       unsigned dst_stride = dst_trans->stride;
-      uint64_t zstencil = util_pack64_z_stencil(dst->texture->format,
+      uint64_t zstencil = util_pack64_z_stencil(format,
                                                 depth, stencil);
       unsigned i, j;
       assert(dst_trans->stride > 0);
 
-      switch (util_format_get_blocksize(dst->format)) {
+      switch (util_format_get_blocksize(format)) {
       case 1:
-         assert(dst->format == PIPE_FORMAT_S8_UINT);
+         assert(format == PIPE_FORMAT_S8_UINT);
          if(dst_stride == width)
             memset(dst_map, (uint8_t) zstencil, height * width);
          else {
@@ -307,7 +308,7 @@ util_clear_depth_stencil(struct pipe_context *pipe,
          }
          break;
       case 2:
-         assert(dst->format == PIPE_FORMAT_Z16_UNORM);
+         assert(format == PIPE_FORMAT_Z16_UNORM);
          for (i = 0; i < height; i++) {
             uint16_t *row = (uint16_t *)dst_map;
             for (j = 0; j < width; j++)
@@ -326,10 +327,10 @@ util_clear_depth_stencil(struct pipe_context *pipe,
          }
          else {
             uint32_t dst_mask;
-            if (dst->format == PIPE_FORMAT_Z24_UNORM_S8_UINT)
+            if (format == PIPE_FORMAT_Z24_UNORM_S8_UINT)
                dst_mask = 0xffffff00;
             else {
-               assert(dst->format == PIPE_FORMAT_S8_UINT_Z24_UNORM);
+               assert(format == PIPE_FORMAT_S8_UINT_Z24_UNORM);
                dst_mask = 0xffffff;
             }
             if (clear_flags & PIPE_CLEAR_DEPTH)
