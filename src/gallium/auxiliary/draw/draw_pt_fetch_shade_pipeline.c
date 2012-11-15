@@ -59,18 +59,21 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *vs = draw->vs.vertex_shader;
+   struct draw_geometry_shader *gs = draw->gs.geometry_shader;
    unsigned i;
    unsigned instance_id_index = ~0;
 
-   unsigned gs_out_prim = (draw->gs.geometry_shader ? 
-                           draw->gs.geometry_shader->output_primitive :
-                           prim);
+   unsigned gs_out_prim = (gs ? gs->output_primitive : prim);
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
     */
    unsigned nr = MAX2( vs->info.num_inputs,
 		       vs->info.num_outputs + 1 );
+
+   if (gs) {
+      nr = MAX2(nr, gs->info.num_outputs + 1);
+   }
 
    /* Scan for instanceID system value.
     */
