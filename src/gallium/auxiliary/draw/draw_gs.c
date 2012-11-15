@@ -424,9 +424,10 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
                 __FUNCTION__, num_input_verts, num_in_primitives);
    debug_printf("\tlinear = %d, prim_info->count = %d\n",
                 input_prim->linear, input_prim->count);
-   debug_printf("\tprimt pipe = %d, shader in = %d, shader out = %d, max out = %d\n",
-                input_prim->prim, shader->input_primitive,
-                shader->output_primitive,
+   debug_printf("\tprim pipe = %s, shader in = %s, shader out = %s, max out = %d\n",
+                u_prim_name(input_prim->prim),
+                u_prim_name(shader->input_primitive),
+                u_prim_name(shader->output_primitive),
                 shader->max_output_vertices);
 #endif
 
