@@ -30,6 +30,7 @@
 #include "brw_defines.h"
 #include "brw_util.h"
 #include "intel_batchbuffer.h"
+#include "main/fbobject.h"
 
 static void
 upload_clip_state(struct brw_context *brw)
@@ -37,6 +38,9 @@ upload_clip_state(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    uint32_t dw2 = 0;
+
+   /* _NEW_BUFFERS */
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->barycentric_interp_modes &
@@ -64,6 +68,13 @@ upload_clip_state(struct brw_context *brw)
    dw2 |= (ctx->Transform.ClipPlanesEnabled <<
            GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT);
 
+   if (ctx->Viewport.X == 0 &&
+       ctx->Viewport.Y == 0 &&
+       ctx->Viewport.Width == fb->Width &&
+       ctx->Viewport.Height == fb->Height) {
+      dw2 |= GEN6_CLIP_GB_TEST;
+   }
+
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
    OUT_BATCH(GEN6_CLIP_STATISTICS_ENABLE);
@@ -71,7 +82,6 @@ upload_clip_state(struct brw_context *brw)
 	     GEN6_CLIP_API_OGL |
 	     GEN6_CLIP_MODE_NORMAL |
 	     GEN6_CLIP_XY_TEST |
-	     GEN6_CLIP_GB_TEST |
 	     dw2);
    OUT_BATCH(U_FIXED(0.125, 3) << GEN6_CLIP_MIN_POINT_WIDTH_SHIFT |
              U_FIXED(255.875, 3) << GEN6_CLIP_MAX_POINT_WIDTH_SHIFT |
@@ -81,7 +91,7 @@ upload_clip_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen6_clip_state = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_LIGHT,
+      .mesa  = _NEW_TRANSFORM | _NEW_LIGHT | _NEW_BUFFERS,
       .brw   = (BRW_NEW_CONTEXT),
       .cache = CACHE_NEW_WM_PROG
    },

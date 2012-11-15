@@ -91,6 +91,13 @@ upload_clip_state(struct brw_context *brw)
    dw2 |= (ctx->Transform.ClipPlanesEnabled <<
            GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT);
 
+   if (ctx->Viewport.X == 0 &&
+       ctx->Viewport.Y == 0 &&
+       ctx->Viewport.Width == fb->Width &&
+       ctx->Viewport.Height == fb->Height) {
+      dw2 |= GEN6_CLIP_GB_TEST;
+   }
+
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
    OUT_BATCH(dw1);
@@ -98,7 +105,6 @@ upload_clip_state(struct brw_context *brw)
 	     GEN6_CLIP_API_OGL |
 	     GEN6_CLIP_MODE_NORMAL |
 	     GEN6_CLIP_XY_TEST |
-	     GEN6_CLIP_GB_TEST |
              dw2);
    OUT_BATCH(U_FIXED(0.125, 3) << GEN6_CLIP_MIN_POINT_WIDTH_SHIFT |
              U_FIXED(255.875, 3) << GEN6_CLIP_MAX_POINT_WIDTH_SHIFT |
