@@ -2061,6 +2061,7 @@ exec_txf(struct tgsi_exec_machine *mach,
    case TGSI_TEXTURE_1D_ARRAY:
       IFETCH(&r[1], 0, TGSI_CHAN_Y);
       /* fallthrough */
+   case TGSI_TEXTURE_BUFFER:
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
       IFETCH(&r[0], 0, TGSI_CHAN_X);
