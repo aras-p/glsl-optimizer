@@ -102,6 +102,7 @@ EXTRA_FILES = \
 	src/mapi/es2api/Makefile.in			\
 	src/glsl/tests/Makefile.in			\
 	src/glsl/glcpp/Makefile.in			\
+	src/glsl/builtin_compiler/Makefile.in		\
 	src/glsl/Makefile.in				\
 	src/gtest/Makefile.in				\
 	src/egl/drivers/Makefile.in			\
@@ -130,7 +131,9 @@ EXTRA_FILES = \
 	src/mesa/Makefile.in				\
 	src/mesa/libdricore/Makefile.in			\
 	src/mesa/x86-64/Makefile.in			\
+	src/mesa/program/Makefile.in			\
 	src/mesa/main/tests/Makefile.in			\
+	src/mesa/main/tests/hash_table/Makefile.in	\
 	src/mesa/x86/Makefile.in			\
 	Makefile.in
 
