@@ -128,7 +128,7 @@ struct tgsi_sampler
 		     float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
 };
 
-#define TGSI_EXEC_NUM_TEMPS       128
+#define TGSI_EXEC_NUM_TEMPS       4096
 #define TGSI_EXEC_NUM_IMMEDIATES  256
 #define TGSI_EXEC_NUM_TEMP_ARRAYS 8
 
