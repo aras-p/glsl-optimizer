@@ -34,7 +34,7 @@ extern "C" {
 
 /* Header file version number */
 /* Current version at http://www.khronos.org/registry/egl/ */
-/* $Revision: 19332 $ on $Date: 2012-09-28 17:56:20 -0700 (Fri, 28 Sep 2012) $ */
+/* $Revision: 19571 $ on $Date: 2012-10-31 10:10:33 -0700 (Wed, 31 Oct 2012) $ */
 #define EGL_EGLEXT_VERSION 14
 
 #ifndef EGL_KHR_config_attribs
@@ -460,6 +460,14 @@ typedef EGLStreamKHR (EGLAPIENTRYP PFNEGLCREATESTREAMFROMFILEDESCRIPTORKHRPROC)(
 #ifndef EGL_EXT_multiview_window
 #define EGL_EXT_multiview_window 1
 #define EGL_MULTIVIEW_VIEW_COUNT_EXT		0x3134
+#endif
+
+#ifndef EGL_KHR_wait_sync
+#define EGL_KHR_wait_sync 1
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLint EGLAPIENTRY eglWaitSyncKHR(EGLDisplay dpy, EGLSyncKHR sync, EGLint flags);
+#endif /* EGL_EGLEXT_PROTOTYPES */
+typedef EGLint (EGLAPIENTRYP PFNEGLWAITSYNCKHRPROC)(EGLDisplay dpy, EGLSyncKHR sync, EGLint flags);
 #endif
 
 #include <EGL/eglmesaext.h>
