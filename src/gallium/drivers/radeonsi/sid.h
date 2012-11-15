@@ -4645,6 +4645,8 @@
 #define   S_028044_FORMAT(x)                                          (((x) & 0x1) << 0)
 #define   G_028044_FORMAT(x)                                          (((x) >> 0) & 0x1)
 #define   C_028044_FORMAT                                             0xFFFFFFFE
+#define     V_028044_STENCIL_INVALID                                0x00
+#define     V_028044_STENCIL_8                                      0x01
 #define   S_028044_TILE_MODE_INDEX(x)                                 (((x) & 0x07) << 20)
 #define   G_028044_TILE_MODE_INDEX(x)                                 (((x) >> 20) & 0x07)
 #define   C_028044_TILE_MODE_INDEX                                    0xFF8FFFFF

@@ -1677,8 +1677,8 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	uint64_t z_offs, s_offs;
 
 	if (state->zsbuf == NULL) {
-		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, 0);
-		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, 0);
+		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, S_028040_FORMAT(V_028040_Z_INVALID));
+		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, S_028044_FORMAT(V_028044_STENCIL_INVALID));
 		return;
 	}
 
@@ -1707,7 +1707,10 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	}
 
 	z_info = S_028040_FORMAT(format);
-	s_info = S_028044_FORMAT(1);
+	if (rtex->surface.flags & RADEON_SURF_SBUFFER)
+		s_info = S_028044_FORMAT(V_028044_STENCIL_8);
+	else
+		s_info = S_028044_FORMAT(V_028044_STENCIL_INVALID);
 
 	if (rtex->surface.level[level].mode == RADEON_SURF_MODE_1D) {
 		z_info |= S_028040_TILE_MODE_INDEX(4);
@@ -1732,8 +1735,8 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	} else {
 		R600_ERR("Invalid DB tiling mode %d!\n",
 			 rtex->surface.level[level].mode);
-		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, 0);
-		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, 0);
+		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, S_028040_FORMAT(V_028040_Z_INVALID));
+		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, S_028044_FORMAT(V_028044_STENCIL_INVALID));
 		return;
 	}
 
@@ -1741,14 +1744,9 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		       S_028008_SLICE_START(state->zsbuf->u.tex.first_layer) |
 		       S_028008_SLICE_MAX(state->zsbuf->u.tex.last_layer));
 
-	si_pm4_set_reg(pm4, R_02803C_DB_DEPTH_INFO, 0x1);
+	si_pm4_set_reg(pm4, R_02803C_DB_DEPTH_INFO, S_02803C_ADDR5_SWIZZLE_MASK(1));
 	si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, z_info);
-
-	if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
-		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, s_info);
-	} else {
-		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, 0);
-	}
+	si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, s_info);
 
 	si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE);
 	si_pm4_set_reg(pm4, R_028048_DB_Z_READ_BASE, z_offs);
