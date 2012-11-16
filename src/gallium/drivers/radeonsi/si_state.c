@@ -2925,8 +2925,9 @@ void si_init_config(struct r600_context *rctx)
 		       S_028AA8_PRIMGROUP_SIZE(63));
 	si_pm4_set_reg(pm4, R_028AB4_VGT_REUSE_OFF, 0x00000000);
 	si_pm4_set_reg(pm4, R_028AB8_VGT_VTX_CNT_EN, 0x0);
-	si_pm4_set_reg(pm4, R_008A14_PA_CL_ENHANCE, S_008A14_NUM_CLIP_SEQ(3) |
-		       S_008A14_CLIP_VTX_REORDER_ENA(1));
+	if (rctx->chip_class < CIK)
+		si_pm4_set_reg(pm4, R_008A14_PA_CL_ENHANCE, S_008A14_NUM_CLIP_SEQ(3) |
+			       S_008A14_CLIP_VTX_REORDER_ENA(1));
 
 	si_pm4_set_reg(pm4, R_028B54_VGT_SHADER_STAGES_EN, 0);
 	si_pm4_set_reg(pm4, R_028BD4_PA_SC_CENTROID_PRIORITY_0, 0x76543210);
