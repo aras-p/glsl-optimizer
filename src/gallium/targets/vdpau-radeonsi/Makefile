@@ -23,7 +23,7 @@ C_SOURCES = \
 DRIVER_DEFINES = \
 	-DGALLIUM_RBUG -DGALLIUM_TRACE -DGALLIUM_NOOP
 
-DRIVER_LIBS = $(shell $(PKG_CONFIG) libdrm --libs) -lXfixes -ldrm_radeon
+DRIVER_LIBS = $(LIBDRM_LIBS) $(RADEON_LIBS) -lXfixes
 
 include ../Makefile.vdpau
 

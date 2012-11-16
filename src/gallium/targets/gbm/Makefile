@@ -14,7 +14,7 @@ GBM_INCLUDES = \
 	       -I$(TOP)/src/gallium/winsys \
 	       -I$(TOP)/src/gallium/include
 
-GBM_LIBS = $(LIBUDEV_LIBS) $(LIBDRM_LIB) -lm \
+GBM_LIBS = $(LIBUDEV_LIBS) $(LIBDRM_LIBS) -lm \
 	   $(TOP)/src/gallium/state_trackers/gbm/libgbm.a \
 	   $(GALLIUM_PIPE_LOADER_LIBS) $(GALLIUM_AUXILIARIES)
 

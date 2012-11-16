@@ -21,6 +21,6 @@ DRIVER_DEFINES = \
 
 include ../Makefile.dri
 
-GALLIUM_DRI_LIB_DEPS += -ldrm_radeon
+GALLIUM_DRI_LIB_DEPS += $(RADEON_LIBS)
 
 symlinks:

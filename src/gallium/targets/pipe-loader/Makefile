@@ -24,7 +24,7 @@ PIPE_LIBS = \
 	$(TOP)/src/gallium/drivers/rbug/librbug.a \
 	$(GALLIUM_AUXILIARIES)
 
-PIPE_SYS = $(LIBDRM_LIB) -lm -lpthread $(DLOPEN_LIBS)
+PIPE_SYS = $(LIBDRM_LIBS) -lm -lpthread $(DLOPEN_LIBS)
 
 PIPE_CFLAGS = $(LIBDRM_CFLAGS)
 
@@ -34,7 +34,7 @@ PIPE_LDFLAGS = -Wl,--no-undefined
 i915_LIBS = \
 	$(TOP)/src/gallium/winsys/i915/drm/libi915drm.a \
 	$(TOP)/src/gallium/drivers/i915/libi915.a
-i915_SYS = -ldrm_intel
+i915_SYS = $(INTEL_LIBS)
 
 # nouveau pipe driver
 nouveau_LIBS = \
@@ -43,25 +43,25 @@ nouveau_LIBS = \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nvc0/libnvc0.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a
-nouveau_SYS = -ldrm_nouveau
+nouveau_SYS = $(NOUVEAU_LIBS)
 
 # r300 pipe driver
 r300_LIBS = \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
-r300_SYS += -ldrm_radeon
+r300_SYS += $(RADEON_LIBS)
 
 # r600 pipe driver
 r600_LIBS = \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r600/libr600.a
-r600_SYS += -ldrm_radeon
+r600_SYS += $(RADEON_LIBS)
 
 # radeonsi pipe driver
 radeonsi_LIBS = \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/radeonsi/libradeonsi.a
-radeonsi_SYS += -ldrm_radeon
+radeonsi_SYS += $(RADEON_LIBS)
 
 # vmwgfx pipe driver
 vmwgfx_LIBS = \

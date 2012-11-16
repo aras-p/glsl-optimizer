@@ -48,17 +48,17 @@ egl_SYS += $(LIBUDEV_LIBS) $(DLOPEN_LIBS) -lEGL -lm -lpthread
 ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
 egl_CPPFLAGS += $(LIBDRM_CFLAGS)
 egl_LIBS += $(TOP)/src/gallium/winsys/sw/xlib/libws_xlib.a
-egl_SYS += -lX11 -lXext -lXfixes $(LIBDRM_LIB)
+egl_SYS += -lX11 -lXext -lXfixes $(LIBDRM_LIBS)
 endif
 ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
 egl_CPPFLAGS += $(LIBDRM_CFLAGS)
 egl_LIBS += $(TOP)/src/gallium/winsys/sw/wayland/libws_wayland.a
 egl_LIBS += $(TOP)/src/egl/wayland/wayland-drm/.libs/libwayland-drm.a
-egl_SYS += $(LIBDRM_LIB) $(WAYLAND_LIBS)
+egl_SYS += $(LIBDRM_LIBS) $(WAYLAND_LIBS)
 endif
 ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
 egl_CPPFLAGS += $(LIBDRM_CFLAGS)
-egl_SYS += $(LIBDRM_LIB) -lgbm
+egl_SYS += $(LIBDRM_LIBS) -lgbm
 endif
 ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
 egl_LIBS += $(TOP)/src/gallium/winsys/sw/fbdev/libfbdev.a
@@ -93,7 +93,7 @@ egl_CPPFLAGS += -D_EGL_PIPE_I915=1
 egl_LIBS += \
 	$(TOP)/src/gallium/winsys/i915/drm/libi915drm.a \
 	$(TOP)/src/gallium/drivers/i915/libi915.a
-egl_SYS += -ldrm_intel
+egl_SYS += $(INTEL_LIBS)
 endif
 
 # nouveau
@@ -105,7 +105,7 @@ egl_LIBS += \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nvc0/libnvc0.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a
-egl_SYS += -ldrm_nouveau
+egl_SYS += $(NOUVEAU_LIBS)
 endif
 
 # r300
@@ -115,7 +115,7 @@ egl_CPPFLAGS += -D_EGL_PIPE_R300=1
 egl_LIBS += \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
-egl_SYS += -ldrm_radeon
+egl_SYS += $(RADEON_LIBS)
 endif
 endif
 
@@ -126,7 +126,7 @@ egl_CPPFLAGS += -D_EGL_PIPE_R600=1
 egl_LIBS += \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r600/libr600.a
-egl_SYS += -ldrm_radeon
+egl_SYS += $(RADEON_LIBS)
 endif
 endif
 
@@ -137,7 +137,7 @@ egl_CPPFLAGS += -D_EGL_PIPE_RADEONSI=1
 egl_LIBS += \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/radeonsi/libradeonsi.a
-egl_SYS += -ldrm_radeon
+egl_SYS += $(RADEON_LIBS)
 endif
 endif
 

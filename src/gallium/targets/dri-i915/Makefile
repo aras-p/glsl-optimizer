@@ -28,6 +28,6 @@ endif
 
 include ../Makefile.dri
 
-GALLIUM_DRI_LIB_DEPS += -ldrm_intel
+GALLIUM_DRI_LIB_DEPS += $(INTEL_LIBS)
 
 symlinks:
