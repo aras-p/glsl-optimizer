@@ -222,7 +222,7 @@ _mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
       }
       return &fb->Attachment[BUFFER_COLOR0 + i];
    case GL_DEPTH_STENCIL_ATTACHMENT:
-      if (!_mesa_is_desktop_gl(ctx))
+      if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx))
 	 return NULL;
       /* fall-through */
    case GL_DEPTH_ATTACHMENT_EXT:
