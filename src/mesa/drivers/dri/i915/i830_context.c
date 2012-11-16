@@ -26,7 +26,10 @@
  **************************************************************************/
 
 #include "i830_context.h"
+#include "main/api_exec.h"
 #include "main/imports.h"
+#include "main/version.h"
+#include "main/vtxfmt.h"
 #include "tnl/tnl.h"
 #include "tnl/t_vertex.h"
 #include "tnl/t_context.h"
@@ -110,6 +113,11 @@ i830CreateContext(const struct gl_config * mesaVis,
 
    _tnl_allow_vertex_fog(ctx, 1);
    _tnl_allow_pixel_fog(ctx, 0);
+
+   _mesa_compute_version(ctx);
+
+   _mesa_initialize_exec_table(ctx);
+   _mesa_initialize_vbo_vtxfmt(ctx);
 
    return true;
 }

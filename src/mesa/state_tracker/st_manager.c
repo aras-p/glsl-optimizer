@@ -647,8 +647,6 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
 
    /* need to perform version check */
    if (attribs->major > 1 || attribs->minor > 0) {
-      _mesa_compute_version(st->ctx);
-
       /* Is the actual version less than the requested version?
        */
       if (st->ctx->Version < attribs->major * 10 + attribs->minor) {

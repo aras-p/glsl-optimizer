@@ -71,6 +71,7 @@
 #include "main/macros.h"
 #include "main/renderbuffer.h"
 #include "main/teximage.h"
+#include "main/vtxfmt.h"
 #include "glapi/glthread.h"
 #include "swrast/swrast.h"
 #include "swrast/s_renderbuffer.h"
@@ -957,6 +958,12 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    _swsetup_Wakeup(mesaCtx);
 
    _mesa_meta_init(mesaCtx);
+
+   _mesa_compute_version(ctx);
+
+    /* Exec table initialization requires the version to be computed */
+   _mesa_initialize_exec_table(ctx);
+   _mesa_initialize_vbo_vtxfmt(ctx);
 
    return c;
 }

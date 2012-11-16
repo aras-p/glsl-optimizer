@@ -12,6 +12,7 @@
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/macros.h"
+#include "main/vtxfmt.h"
 #include "drivers/common/driverfuncs.h"
 #include "drivers/common/meta.h"
 #include "vbo/vbo.h"
@@ -636,6 +637,12 @@ WMesaContext WMesaCreateContext(HDC hDC,
     }
     _swsetup_Wakeup(ctx);
     TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
+
+    _mesa_compute_version(ctx);
+
+    /* Exec table initialization requires the version to be computed */
+    _mesa_initialize_exec_table(ctx);
+    _mesa_initialize_vbo_vtxfmt(ctx);
 
     return c;
 }

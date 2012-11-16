@@ -26,8 +26,11 @@
  **************************************************************************/
 
 #include "i915_context.h"
+#include "main/api_exec.h"
 #include "main/imports.h"
 #include "main/macros.h"
+#include "main/version.h"
+#include "main/vtxfmt.h"
 #include "intel_tris.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
@@ -294,6 +297,11 @@ i915CreateContext(int api,
     */
    _tnl_allow_vertex_fog(ctx, 0);
    _tnl_allow_pixel_fog(ctx, 1);
+
+   _mesa_compute_version(ctx);
+
+   _mesa_initialize_exec_table(ctx);
+   _mesa_initialize_vbo_vtxfmt(ctx);
 
    return true;
 }

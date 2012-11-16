@@ -30,9 +30,12 @@
   */
 
 
+#include "main/api_exec.h"
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/simple_list.h"
+#include "main/version.h"
+#include "main/vtxfmt.h"
 
 #include "vbo/vbo_context.h"
 
@@ -385,6 +388,11 @@ brwCreateContext(int api,
 
    if (INTEL_DEBUG & DEBUG_SHADER_TIME)
       brw_init_shader_time(brw);
+
+   _mesa_compute_version(ctx);
+
+   _mesa_initialize_exec_table(ctx);
+   _mesa_initialize_vbo_vtxfmt(ctx);
 
    return true;
 }

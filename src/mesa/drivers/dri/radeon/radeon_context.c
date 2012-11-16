@@ -37,12 +37,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <stdbool.h>
 #include "main/glheader.h"
 #include "main/api_arrayelt.h"
+#include "main/api_exec.h"
 #include "main/context.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
 #include "main/extensions.h"
 #include "main/mfeatures.h"
 #include "main/version.h"
+#include "main/vtxfmt.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -411,6 +413,10 @@ r100CreateContext( gl_api api,
    }
 
    _mesa_compute_version(ctx);
+
+   /* Exec table initialization requires the version to be computed */
+   _mesa_initialize_exec_table(ctx);
+   _mesa_initialize_vbo_vtxfmt(ctx);
 
    *error = __DRI_CTX_ERROR_SUCCESS;
    return GL_TRUE;

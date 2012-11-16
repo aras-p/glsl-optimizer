@@ -35,6 +35,7 @@
 
 #include "main/glheader.h"
 #include "GL/osmesa.h"
+#include "main/api_exec.h"
 #include "main/context.h"
 #include "main/extensions.h"
 #include "main/formats.h"
@@ -43,6 +44,8 @@
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/renderbuffer.h"
+#include "main/version.h"
+#include "main/vtxfmt.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "swrast/s_context.h"
@@ -787,6 +790,12 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
          swrast->choose_line = osmesa_choose_line;
          swrast->choose_triangle = osmesa_choose_triangle;
       }
+
+      _mesa_compute_version(ctx);
+
+      /* Exec table initialization requires the version to be computed */
+      _mesa_initialize_exec_table(ctx);
+      _mesa_initialize_vbo_vtxfmt(ctx);
    }
    return osmesa;
 }

@@ -27,9 +27,12 @@
 
 #include "main/imports.h"
 #include "main/accum.h"
+#include "main/api_exec.h"
 #include "main/context.h"
 #include "main/samplerobj.h"
 #include "main/shaderobj.h"
+#include "main/version.h"
+#include "main/vtxfmt.h"
 #include "program/prog_cache.h"
 #include "vbo/vbo.h"
 #include "glapi/glapi.h"
@@ -183,6 +186,11 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
    /* GL limits and extensions */
    st_init_limits(st);
    st_init_extensions(st);
+
+   _mesa_compute_version(ctx);
+
+   _mesa_initialize_exec_table(ctx);
+   _mesa_initialize_vbo_vtxfmt(ctx);
 
    return st;
 }

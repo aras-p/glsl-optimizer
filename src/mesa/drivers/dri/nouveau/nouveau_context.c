@@ -31,12 +31,14 @@
 #include "nouveau_fbo.h"
 #include "nv_object.xml.h"
 
+#include "main/api_exec.h"
 #include "main/dd.h"
 #include "main/framebuffer.h"
 #include "main/fbobject.h"
 #include "main/light.h"
 #include "main/state.h"
 #include "main/version.h"
+#include "main/vtxfmt.h"
 #include "drivers/common/meta.h"
 #include "drivers/common/driverfuncs.h"
 #include "swrast/swrast.h"
@@ -102,6 +104,10 @@ nouveau_context_create(gl_api api,
 	   *error = __DRI_CTX_ERROR_BAD_VERSION;
 	   return GL_FALSE;
 	}
+
+	/* Exec table initialization requires the version to be computed */
+	_mesa_initialize_exec_table(ctx);
+	_mesa_initialize_vbo_vtxfmt(ctx);
 
 	if (nouveau_bo_new(context_dev(ctx), NOUVEAU_BO_VRAM, 0, 4096,
 			   NULL, &nctx->fence)) {
