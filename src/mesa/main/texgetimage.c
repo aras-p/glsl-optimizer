@@ -229,6 +229,8 @@ get_tex_rgba_compressed(struct gl_context *ctx, GLuint dimensions,
    const gl_format texFormat =
       _mesa_get_srgb_format_linear(texImage->TexFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(texFormat);
+   const GLenum destBaseFormat = _mesa_base_tex_format(ctx, format);
+   GLenum rebaseFormat = GL_NONE;
    const GLuint width = texImage->Width;
    const GLuint height = texImage->Height;
    const GLuint depth = texImage->Depth;
@@ -266,9 +268,31 @@ get_tex_rgba_compressed(struct gl_context *ctx, GLuint dimensions,
    }
 
    if (baseFormat == GL_LUMINANCE ||
+       baseFormat == GL_INTENSITY ||
        baseFormat == GL_LUMINANCE_ALPHA) {
+      /* If a luminance (or intensity) texture is read back as RGB(A), the
+       * returned value should be (L,0,0,1), not (L,L,L,1).  Set rebaseFormat
+       * here to get G=B=0.
+       */
+      rebaseFormat = texImage->_BaseFormat;
+   }
+   else if ((baseFormat == GL_RGBA ||
+             baseFormat == GL_RGB  ||
+             baseFormat == GL_RG) &&
+            (destBaseFormat == GL_LUMINANCE ||
+             destBaseFormat == GL_LUMINANCE_ALPHA ||
+             destBaseFormat == GL_LUMINANCE_INTEGER_EXT ||
+             destBaseFormat == GL_LUMINANCE_ALPHA_INTEGER_EXT)) {
+      /* If we're reading back an RGB(A) texture as luminance then we need
+       * to return L=tex(R).  Note, that's different from glReadPixels which
+       * returns L=R+G+B.
+       */
+      rebaseFormat = GL_LUMINANCE_ALPHA; /* this covers GL_LUMINANCE too */
+   }
+
+   if (rebaseFormat) {
       _mesa_rebase_rgba_float(width * height, (GLfloat (*)[4]) tempImage,
-                              baseFormat);
+                              rebaseFormat);
    }
 
    srcRow = tempImage;
@@ -332,7 +356,8 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
       rebaseFormat = texImage->_BaseFormat;
    }
    else if ((texImage->_BaseFormat == GL_RGBA ||
-             texImage->_BaseFormat == GL_RGB) &&
+             texImage->_BaseFormat == GL_RGB ||
+             texImage->_BaseFormat == GL_RG) &&
             (destBaseFormat == GL_LUMINANCE ||
              destBaseFormat == GL_LUMINANCE_ALPHA ||
              destBaseFormat == GL_LUMINANCE_INTEGER_EXT ||
@@ -418,15 +443,6 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
           format == GL_LUMINANCE_ALPHA) {
          transferOps |= IMAGE_CLAMP_BIT;
       }
-   }
-   /* This applies to RGB, RGBA textures. if the format is either LUMINANCE
-    * or LUMINANCE ALPHA, luminance (L) is computed as L=R+G+B .we need to
-    * clamp the sum to [0,1].
-    */
-   else if ((format == GL_LUMINANCE ||
-            format == GL_LUMINANCE_ALPHA) &&
-            dataType == GL_UNSIGNED_NORMALIZED) {
-      transferOps |= IMAGE_CLAMP_BIT;
    }
 
    if (_mesa_is_format_compressed(texImage->TexFormat)) {

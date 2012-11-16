@@ -3685,6 +3685,7 @@ decompress_texture_image(struct gl_context *ctx,
    /* read pixels from renderbuffer */
    {
       GLenum baseTexFormat = texImage->_BaseFormat;
+      GLenum destBaseFormat = _mesa_base_tex_format(ctx, destFormat);
 
       /* The pixel transfer state will be set to default values at this point
        * (see MESA_META_PIXEL_TRANSFER) so pixel transfer ops are effectively
@@ -3693,9 +3694,19 @@ decompress_texture_image(struct gl_context *ctx,
        * returned as red and two-channel texture values are returned as
        * red/alpha.
        */
-      if (baseTexFormat == GL_LUMINANCE ||
-          baseTexFormat == GL_LUMINANCE_ALPHA ||
-          baseTexFormat == GL_INTENSITY) {
+      if ((baseTexFormat == GL_LUMINANCE ||
+           baseTexFormat == GL_LUMINANCE_ALPHA ||
+           baseTexFormat == GL_INTENSITY) ||
+          /* If we're reading back an RGB(A) texture (using glGetTexImage) as
+	   * luminance then we need to return L=tex(R).
+	   */
+          ((baseTexFormat == GL_RGBA ||
+            baseTexFormat == GL_RGB  ||
+            baseTexFormat == GL_RG) &&
+          (destBaseFormat == GL_LUMINANCE ||
+           destBaseFormat == GL_LUMINANCE_ALPHA ||
+           destBaseFormat == GL_LUMINANCE_INTEGER_EXT ||
+           destBaseFormat == GL_LUMINANCE_ALPHA_INTEGER_EXT))) {
          /* Green and blue must be zero */
          _mesa_PixelTransferf(GL_GREEN_SCALE, 0.0f);
          _mesa_PixelTransferf(GL_BLUE_SCALE, 0.0f);
