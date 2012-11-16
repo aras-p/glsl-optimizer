@@ -108,8 +108,15 @@ util_draw_max_index(
          else {
             /* Per-instance data. Simply make sure the state tracker didn't
              * request more instances than those that fit in the buffer */
-            assert((info->start_instance + info->instance_count)/element->instance_divisor
-                   <= (buffer_max_index + 1));
+            if ((info->start_instance + info->instance_count)/element->instance_divisor
+                > (buffer_max_index + 1)) {
+               /* FIXME: We really should stop thinking in terms of maximum
+                * indices/instances and simply start clamping against buffer
+                * size. */
+               debug_printf("%s: too many instances for vertex buffer\n",
+                            __FUNCTION__);
+               return 0;
+            }
          }
       }
    }
