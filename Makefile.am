@@ -85,57 +85,7 @@ EXTRA_FILES = \
 	src/mesa/program/lex.yy.c			\
 	src/mesa/program/program_parse.tab.c		\
 	src/mesa/program/program_parse.tab.h		\
-	src/gallium/drivers/r600/Makefile.in		\
-	src/gallium/drivers/r300/Makefile.in		\
-	src/gallium/drivers/Makefile.in			\
-	src/gallium/Makefile.in				\
-	src/gallium/auxiliary/pipe-loader/Makefile.in	\
-	src/gallium/targets/opencl/Makefile.in		\
-	src/gallium/state_trackers/clover/Makefile.in	\
-	src/mapi/glapi/tests/Makefile.in		\
-	src/mapi/glapi/Makefile.in			\
-	src/mapi/glapi/gen/Makefile.in			\
-	src/mapi/es1api/Makefile.in			\
-	src/mapi/shared-glapi/tests/Makefile.in		\
-	src/mapi/shared-glapi/Makefile.in		\
-	src/mapi/vgapi/Makefile.in			\
-	src/mapi/es2api/Makefile.in			\
-	src/glsl/tests/Makefile.in			\
-	src/glsl/glcpp/Makefile.in			\
-	src/glsl/builtin_compiler/Makefile.in		\
-	src/glsl/Makefile.in				\
-	src/gtest/Makefile.in				\
-	src/egl/drivers/Makefile.in			\
-	src/egl/drivers/glx/Makefile.in			\
-	src/egl/drivers/dri2/Makefile.in		\
-	src/egl/Makefile.in				\
-	src/egl/main/Makefile.in			\
-	src/egl/wayland/Makefile.in			\
-	src/egl/wayland/wayland-drm/Makefile.in		\
-	src/egl/wayland/wayland-egl/Makefile.in		\
-	src/Makefile.in					\
-	src/glx/tests/Makefile.in			\
-	src/glx/Makefile.in				\
-	src/gbm/Makefile.in				\
-	src/mesa/drivers/Makefile.in			\
-	src/mesa/drivers/dri/common/Makefile.in		\
-	src/mesa/drivers/dri/i965/Makefile.in		\
-	src/mesa/drivers/dri/r200/Makefile.in		\
-	src/mesa/drivers/dri/Makefile.in		\
-	src/mesa/drivers/dri/radeon/Makefile.in		\
-	src/mesa/drivers/dri/swrast/Makefile.in		\
-	src/mesa/drivers/dri/nouveau/Makefile.in	\
-	src/mesa/drivers/dri/i915/Makefile.in		\
-	src/mesa/drivers/osmesa/Makefile.in		\
-	src/mesa/drivers/x11/Makefile.in		\
-	src/mesa/Makefile.in				\
-	src/mesa/libdricore/Makefile.in			\
-	src/mesa/x86-64/Makefile.in			\
-	src/mesa/program/Makefile.in			\
-	src/mesa/main/tests/Makefile.in			\
-	src/mesa/main/tests/hash_table/Makefile.in	\
-	src/mesa/x86/Makefile.in			\
-	Makefile.in
+	`git ls-files | grep "Makefile.am" | sed -e "s/Makefile.am/Makefile.in/"`
 
 
 IGNORE_FILES = \
