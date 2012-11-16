@@ -59,7 +59,7 @@ static void compile_gs_prog( struct brw_context *brw,
    c.vue_map = brw->vs.prog_data->vue_map;
    c.nr_regs = (c.vue_map.num_slots + 1)/2;
 
-   mem_ctx = NULL;
+   mem_ctx = ralloc_context(NULL);
    
    /* Begin the compilation:
     */
