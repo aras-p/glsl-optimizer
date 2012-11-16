@@ -938,9 +938,6 @@ _mesa_initialize_context(struct gl_context *ctx,
    /* setup the API dispatch tables with all nop functions */
    ctx->Exec = _mesa_alloc_dispatch_table(_gloffset_COUNT);
 
-   /* setup the API exec functions */
-   _mesa_initialize_exec_table(ctx);
-
    if (!ctx->Exec) {
       _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
       return GL_FALSE;
