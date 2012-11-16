@@ -33,8 +33,8 @@ struct gl_context;
 extern struct _glapi_table *
 _mesa_alloc_dispatch_table(int size);
 
-extern struct _glapi_table *
-_mesa_create_exec_table(struct gl_context *ctx);
+extern void
+_mesa_initialize_exec_table(struct gl_context *ctx);
 
 
 #endif

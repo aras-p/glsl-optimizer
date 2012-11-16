@@ -22,7 +22,7 @@
 # IN THE SOFTWARE.
 
 # This script generates the file api_exec.c, which contains
-# _mesa_create_exec_table().  It is responsible for populating all
+# _mesa_initialize_exec_table().  It is responsible for populating all
 # entries in the "exec" dispatch table that aren't dynamic.
 
 import collections
@@ -112,29 +112,25 @@ header = """/**
 
 
 /**
- * Initialize a dispatch table with pointers to Mesa's immediate-mode
- * commands.
+ * Initialize a context's exec table with pointers to Mesa's supported
+ * GL functions.
  *
- * Pointers to glBegin()/glEnd() object commands and a few others
- * are provided via the GLvertexformat interface.
+ * This function depends on ctx->Version.
  *
  * \param ctx  GL context to which \c exec belongs.
- * \param exec dispatch table.
  */
-struct _glapi_table *
-_mesa_create_exec_table(struct gl_context *ctx)
+void
+_mesa_initialize_exec_table(struct gl_context *ctx)
 {
    struct _glapi_table *exec;
 
-   exec = _mesa_alloc_dispatch_table(_gloffset_COUNT);
-   if (exec == NULL)
-      return NULL;
+   exec = ctx->Exec;
+   assert(exec != NULL);
 
 """
 
 
 footer = """
-   return exec;
 }
 """
 
