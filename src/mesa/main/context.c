@@ -1461,7 +1461,7 @@ _mesa_make_current( struct gl_context *newCtx,
       }
 
       if (newCtx->FirstTimeCurrent) {
-         _mesa_compute_version(newCtx);
+         assert(newCtx->Version > 0);
 
          newCtx->Extensions.String = _mesa_make_extension_string(newCtx);
 

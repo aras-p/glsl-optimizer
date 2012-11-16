@@ -47,6 +47,8 @@ static void
 install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
                const GLvertexformat *vfmt)
 {
+   assert(ctx->Version > 0);
+
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
       SET_Color4f(tab, vfmt->Color4f);
    }

@@ -127,6 +127,7 @@ _mesa_initialize_exec_table(struct gl_context *ctx)
    exec = ctx->Exec;
    assert(exec != NULL);
 
+   assert(ctx->Version > 0);
 """
 
 
