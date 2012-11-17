@@ -11,6 +11,7 @@ env.Append(CPPPATH = [
 env.Append(CPPDEFINES = ['USE_XSHM'])
 
 env.Prepend(LIBS = env['X11_LIBS'])
+env.Prepend(LIBPATH = env['X11_LIBPATH'])
 
 env.Prepend(LIBS = [
     glapi,

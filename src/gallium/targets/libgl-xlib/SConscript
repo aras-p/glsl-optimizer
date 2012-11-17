@@ -15,6 +15,7 @@ env.Append(CPPPATH = [
 env.Append(CPPDEFINES = ['USE_XSHM'])
 
 env.Prepend(LIBS = env['X11_LIBS'])
+env.Prepend(LIBPATH = env['X11_LIBPATH'])
 
 # when GLES is enabled, gl* and _glapi_* belong to bridge_glapi and
 # shared_glapi respectively
