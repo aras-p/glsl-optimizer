@@ -52,6 +52,7 @@ extern "C" {
 #include "main/api_exec.h"
 #include "main/context.h"
 #include "main/remap.h"
+#include "main/vtxfmt.h"
 #include "glapi/glapi.h"
 #include "drivers/common/driverfuncs.h"
 
@@ -103,13 +104,17 @@ DispatchSanity_test::SetUp()
 void
 DispatchSanity_test::SetUpCtx(gl_api api, unsigned int version)
 {
-   ctx.Version = version;
    _mesa_initialize_context(&ctx,
                             api,
                             &visual,
                             NULL, // share_list
                             &driver_functions);
    _vbo_CreateContext(&ctx);
+
+   ctx.Version = version;
+
+   _mesa_initialize_exec_table(&ctx);
+   _mesa_initialize_vbo_vtxfmt(&ctx);
 }
 
 static const char *
