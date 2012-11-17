@@ -91,6 +91,8 @@ public:
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
    bool equals(const fs_reg &r) const;
+   bool is_zero() const;
+   bool is_one() const;
 
    /** Register file: ARF, GRF, MRF, IMM. */
    enum register_file file;

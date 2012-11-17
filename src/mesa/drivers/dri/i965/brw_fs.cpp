@@ -353,6 +353,24 @@ fs_reg::equals(const fs_reg &r) const
            imm.u == r.imm.u);
 }
 
+bool
+fs_reg::is_zero() const
+{
+   if (file != IMM)
+      return false;
+
+   return type == BRW_REGISTER_TYPE_F ? imm.f == 0.0 : imm.i == 0;
+}
+
+bool
+fs_reg::is_one() const
+{
+   if (file != IMM)
+      return false;
+
+   return type == BRW_REGISTER_TYPE_F ? imm.f == 1.0 : imm.i == 1;
+}
+
 int
 fs_visitor::type_size(const struct glsl_type *type)
 {
@@ -1430,8 +1448,7 @@ fs_visitor::opt_algebraic()
 	    continue;
 
 	 /* a * 1.0 = a */
-	 if (inst->src[1].type == BRW_REGISTER_TYPE_F &&
-	     inst->src[1].imm.f == 1.0) {
+	 if (inst->src[1].is_one()) {
 	    inst->opcode = BRW_OPCODE_MOV;
 	    inst->src[1] = reg_undef;
 	    progress = true;
@@ -1439,10 +1456,9 @@ fs_visitor::opt_algebraic()
 	 }
 
          /* a * 0.0 = 0.0 */
-         if (inst->src[1].type == BRW_REGISTER_TYPE_F &&
-             inst->src[1].imm.f == 0.0) {
+         if (inst->src[1].is_zero()) {
             inst->opcode = BRW_OPCODE_MOV;
-            inst->src[0] = fs_reg(0.0f);
+            inst->src[0] = inst->src[1];
             inst->src[1] = reg_undef;
             progress = true;
             break;
@@ -1454,8 +1470,7 @@ fs_visitor::opt_algebraic()
             continue;
 
          /* a + 0.0 = a */
-         if (inst->src[1].type == BRW_REGISTER_TYPE_F &&
-             inst->src[1].imm.f == 0.0) {
+         if (inst->src[1].is_zero()) {
             inst->opcode = BRW_OPCODE_MOV;
             inst->src[1] = reg_undef;
             progress = true;
