@@ -39,5 +39,6 @@ manifest.txt
 Makefile.in
 .dir-locals.el
 .deps/
+.dirstamp
 .libs/
 /Makefile
