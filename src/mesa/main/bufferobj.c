@@ -136,10 +136,24 @@ get_buffer(struct gl_context *ctx, const char *func, GLenum target)
 }
 
 
-static inline GLbitfield
-default_access_mode(const struct gl_context *ctx)
+/**
+ * Convert a GLbitfield describing the mapped buffer access flags
+ * into one of GL_READ_WRITE, GL_READ_ONLY, or GL_WRITE_ONLY.
+ */
+static GLenum
+simplified_access_mode(struct gl_context *ctx, GLbitfield access)
 {
-   /* Table 2.6 on page 31 (page 44 of the PDF) of the OpenGL 1.5 spec says:
+   const GLbitfield rwFlags = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+   if ((access & rwFlags) == rwFlags)
+      return GL_READ_WRITE;
+   if ((access & GL_MAP_READ_BIT) == GL_MAP_READ_BIT)
+      return GL_READ_ONLY;
+   if ((access & GL_MAP_WRITE_BIT) == GL_MAP_WRITE_BIT)
+      return GL_WRITE_ONLY;
+
+   /* Otherwise, AccessFlags is zero (the default state).
+    *
+    * Table 2.6 on page 31 (page 44 of the PDF) of the OpenGL 1.5 spec says:
     *
     * Name           Type  Initial Value  Legal Values
     * ...            ...   ...            ...
@@ -155,26 +169,9 @@ default_access_mode(const struct gl_context *ctx)
     * The difference is because GL_OES_mapbuffer only supports mapping buffers
     * write-only.
     */
-   return _mesa_is_gles(ctx)
-      ? GL_MAP_WRITE_BIT : (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
-}
+   assert(access == 0);
 
-
-/**
- * Convert a GLbitfield describing the mapped buffer access flags
- * into one of GL_READ_WRITE, GL_READ_ONLY, or GL_WRITE_ONLY.
- */
-static GLenum
-simplified_access_mode(GLbitfield access)
-{
-   const GLbitfield rwFlags = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
-   if ((access & rwFlags) == rwFlags)
-      return GL_READ_WRITE;
-   if ((access & GL_MAP_READ_BIT) == GL_MAP_READ_BIT)
-      return GL_READ_ONLY;
-   if ((access & GL_MAP_WRITE_BIT) == GL_MAP_WRITE_BIT)
-      return GL_WRITE_ONLY;
-   return GL_READ_WRITE; /* this should never happen, but no big deal */
+   return _mesa_is_gles(ctx) ? GL_WRITE_ONLY : GL_READ_WRITE;
 }
 
 
@@ -354,7 +351,7 @@ _mesa_initialize_buffer_object( struct gl_context *ctx,
    obj->RefCount = 1;
    obj->Name = name;
    obj->Usage = GL_STATIC_DRAW_ARB;
-   obj->AccessFlags = default_access_mode(ctx);
+   obj->AccessFlags = 0;
 }
 
 
@@ -864,7 +861,7 @@ _mesa_DeleteBuffers(GLsizei n, const GLuint *ids)
          if (_mesa_bufferobj_mapped(bufObj)) {
             /* if mapped, unmap it now */
             ctx->Driver.UnmapBuffer(ctx, bufObj);
-            bufObj->AccessFlags = default_access_mode(ctx);
+            bufObj->AccessFlags = 0;
             bufObj->Pointer = NULL;
          }
 
@@ -1064,7 +1061,7 @@ _mesa_BufferData(GLenum target, GLsizeiptrARB size,
    if (_mesa_bufferobj_mapped(bufObj)) {
       /* Unmap the existing buffer.  We'll replace it now.  Not an error. */
       ctx->Driver.UnmapBuffer(ctx, bufObj);
-      bufObj->AccessFlags = default_access_mode(ctx);
+      bufObj->AccessFlags = 0;
       ASSERT(bufObj->Pointer == NULL);
    }  
 
@@ -1282,7 +1279,7 @@ _mesa_UnmapBuffer(GLenum target)
 #endif
 
    status = ctx->Driver.UnmapBuffer( ctx, bufObj );
-   bufObj->AccessFlags = default_access_mode(ctx);
+   bufObj->AccessFlags = 0;
    ASSERT(bufObj->Pointer == NULL);
    ASSERT(bufObj->Offset == 0);
    ASSERT(bufObj->Length == 0);
@@ -1310,7 +1307,7 @@ _mesa_GetBufferParameteriv(GLenum target, GLenum pname, GLint *params)
       *params = bufObj->Usage;
       return;
    case GL_BUFFER_ACCESS_ARB:
-      *params = simplified_access_mode(bufObj->AccessFlags);
+      *params = simplified_access_mode(ctx, bufObj->AccessFlags);
       return;
    case GL_BUFFER_MAPPED_ARB:
       *params = _mesa_bufferobj_mapped(bufObj);
@@ -1364,7 +1361,7 @@ _mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params)
       *params = bufObj->Usage;
       return;
    case GL_BUFFER_ACCESS_ARB:
-      *params = simplified_access_mode(bufObj->AccessFlags);
+      *params = simplified_access_mode(ctx, bufObj->AccessFlags);
       return;
    case GL_BUFFER_ACCESS_FLAGS:
       if (!ctx->Extensions.ARB_map_buffer_range)
