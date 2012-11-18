@@ -31,6 +31,7 @@
  *   Brian Paul
  */
 
+#include <stdbool.h>
 
 #include "buffers.h"
 #include "context.h"
@@ -162,13 +163,13 @@ invalidate_framebuffer(struct gl_framebuffer *fb)
 static struct gl_framebuffer *
 get_framebuffer_target(struct gl_context *ctx, GLenum target)
 {
+   bool have_fb_blit = _mesa_is_gles3(ctx) ||
+      (ctx->Extensions.EXT_framebuffer_blit && _mesa_is_desktop_gl(ctx));
    switch (target) {
    case GL_DRAW_FRAMEBUFFER:
-      return ctx->Extensions.EXT_framebuffer_blit && _mesa_is_desktop_gl(ctx)
-	 ? ctx->DrawBuffer : NULL;
+      return have_fb_blit ? ctx->DrawBuffer : NULL;
    case GL_READ_FRAMEBUFFER:
-      return ctx->Extensions.EXT_framebuffer_blit && _mesa_is_desktop_gl(ctx)
-	 ? ctx->ReadBuffer : NULL;
+      return have_fb_blit ? ctx->ReadBuffer : NULL;
    case GL_FRAMEBUFFER_EXT:
       return ctx->DrawBuffer;
    default:
