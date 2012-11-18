@@ -601,8 +601,7 @@
     <param name="data" type="GLint64 *"/>
   </function>
 
-  <function name="GetBufferParameteri64v" offset="assign" es2="3.0"
-            exec="skip">
+  <function name="GetBufferParameteri64v" offset="assign" es2="3.0">
     <param name="target" type="GLenum"/>
     <param name="pname" type="GLenum"/>
     <param name="params" type="GLint64 *"/>

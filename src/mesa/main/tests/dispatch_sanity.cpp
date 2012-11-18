@@ -1301,8 +1301,7 @@ const struct function gles3_functions_possible[] = {
    { "glGetActiveUniformBlockiv", 30, -1 },
    { "glGetActiveUniformBlockName", 30, -1 },
    { "glGetActiveUniformsiv", 30, -1 },
-   // We have an implementation (added Jan 1 2010, 1fbc7193) but never tested...
-   // { "glGetBufferParameteri64v", 30, -1 },
+   { "glGetBufferParameteri64v", 30, -1 },
    // We check for the aliased -OES version in GLES 2
    // { "glGetBufferPointerv", 30, -1 },
    { "glGetFragDataLocation", 30, -1 },
