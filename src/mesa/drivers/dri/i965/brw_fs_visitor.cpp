@@ -1175,7 +1175,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
 
       if (c->dispatch_width == 16) {
 	 fail("rectangle scale uniform setup not supported on 16-wide\n");
-	 return fs_reg(this, ir->type);
+	 return coordinate;
       }
 
       scale_x = fs_reg(UNIFORM, c->prog_data.nr_params);
