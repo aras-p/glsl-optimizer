@@ -321,7 +321,7 @@ _mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
 
    q = _mesa_lookup_query_object(ctx, id);
    if (!q) {
-      if (ctx->API == API_OPENGL_CORE) {
+      if (ctx->API != API_OPENGL) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBeginQuery{Indexed}(non-gen name)");
          return;
