@@ -1120,10 +1120,6 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
    vbo_exec_vtxfmt_init( exec );
    _mesa_noop_vtxfmt_init(&exec->vtxfmt_noop);
 
-   /* Hook our functions into the dispatch table.
-    */
-   _mesa_install_exec_vtxfmt( ctx, &exec->vtxfmt );
-
    for (i = 0 ; i < VBO_ATTRIB_MAX ; i++) {
       ASSERT(i < Elements(exec->vtx.attrsz));
       exec->vtx.attrsz[i] = 0;

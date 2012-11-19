@@ -49,10 +49,6 @@ void vbo_exec_init( struct gl_context *ctx )
    vbo_exec_vtx_init( exec );
    vbo_exec_array_init( exec );
 
-   /* Hook our functions into exec and compile dispatch tables.
-    */
-   _mesa_install_exec_vtxfmt( ctx, &exec->vtxfmt );
-
    ctx->Driver.NeedFlush = 0;
    ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
    ctx->Driver.BeginVertices = vbo_exec_BeginVertices;

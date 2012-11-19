@@ -1667,5 +1667,4 @@ vbo_save_api_init(struct vbo_save_context *save)
    ctx->ListState.ListVtxfmt.DrawRangeElements = _save_OBE_DrawRangeElements;
    ctx->ListState.ListVtxfmt.MultiDrawElementsEXT = _save_OBE_MultiDrawElements;
    ctx->ListState.ListVtxfmt.MultiDrawElementsBaseVertex = _save_OBE_MultiDrawElementsBaseVertex;
-   _mesa_install_save_vtxfmt(ctx, &ctx->ListState.ListVtxfmt);
 }
