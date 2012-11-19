@@ -97,9 +97,6 @@ struct brw_wm_compile {
    GLuint dispatch_width;
 };
 
-void brw_wm_lookup_iz(struct intel_context *intel,
-		      struct brw_wm_compile *c);
-
 bool brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
 		    struct gl_shader_program *prog);
 

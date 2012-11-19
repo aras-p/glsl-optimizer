@@ -249,6 +249,7 @@ public:
 					   fs_reg reg);
 
    bool run();
+   void setup_payload_gen4();
    void setup_payload_gen6();
    void setup_paramvalues_refs();
    void assign_curb_setup();

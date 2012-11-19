@@ -2031,7 +2031,7 @@ fs_visitor::run()
    if (intel->gen >= 6)
       setup_payload_gen6();
    else
-      brw_wm_lookup_iz(intel, c);
+      setup_payload_gen4();
 
    if (c->dispatch_width == 16) {
       /* We have to do a compaction pass now, or the one at the end of

@@ -97,7 +97,7 @@ i965_FILES = \
 	brw_vs_surface_state.c \
 	brw_vtbl.c \
 	brw_wm.c \
-	brw_wm_iz.c \
+	brw_wm_iz.cpp \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \
 	brw_wm_surface_state.c \
