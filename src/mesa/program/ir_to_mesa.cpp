@@ -1427,7 +1427,17 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_fract:
       emit(ir, OPCODE_FRC, result_dst, op[0]);
       break;
-
+   case ir_unop_pack_snorm_2x16:
+   case ir_unop_pack_unorm_2x16:
+   case ir_unop_pack_half_2x16:
+   case ir_unop_unpack_snorm_2x16:
+   case ir_unop_unpack_unorm_2x16:
+   case ir_unop_unpack_half_2x16:
+   case ir_unop_unpack_half_2x16_split_x:
+   case ir_unop_unpack_half_2x16_split_y:
+   case ir_binop_pack_half_2x16_split:
+      assert(!"not supported");
+      break;
    case ir_binop_min:
       emit(ir, OPCODE_MIN, result_dst, op[0], op[1]);
       break;

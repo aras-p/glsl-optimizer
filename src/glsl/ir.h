@@ -971,6 +971,28 @@ enum ir_expression_operation {
    ir_unop_dFdy,
    /*@}*/
 
+   /**
+    * \name Floating point pack and unpack operations.
+    */
+   /*@{*/
+   ir_unop_pack_snorm_2x16,
+   ir_unop_pack_unorm_2x16,
+   ir_unop_pack_half_2x16,
+   ir_unop_unpack_snorm_2x16,
+   ir_unop_unpack_unorm_2x16,
+   ir_unop_unpack_half_2x16,
+   /*@}*/
+
+   /**
+    * \name Lowered floating point unpacking operations.
+    *
+    * \see lower_packing_builtins_visitor::split_unpack_half_2x16
+    */
+   /*@{*/
+   ir_unop_unpack_half_2x16_split_x,
+   ir_unop_unpack_half_2x16_split_y,
+   /*@}*/
+
    ir_unop_noise,
 
    /**
@@ -1036,6 +1058,15 @@ enum ir_expression_operation {
    ir_binop_max,
 
    ir_binop_pow,
+
+   /**
+    * \name Lowered floating point packing operations.
+    *
+    * \see lower_packing_builtins_visitor::split_pack_half_2x16
+    */
+   /*@{*/
+   ir_binop_pack_half_2x16_split,
+   /*@}*/
 
    /**
     * Load a value the size of a given GLSL type from a uniform block.

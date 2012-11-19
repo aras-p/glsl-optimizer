@@ -306,11 +306,25 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
       break;
 
    case ir_unop_noise:
+   case ir_unop_unpack_half_2x16_split_x:
+   case ir_unop_unpack_half_2x16_split_y:
       this->type = glsl_type::float_type;
       break;
 
    case ir_unop_any:
       this->type = glsl_type::bool_type;
+      break;
+
+   case ir_unop_pack_snorm_2x16:
+   case ir_unop_pack_unorm_2x16:
+   case ir_unop_pack_half_2x16:
+      this->type = glsl_type::uint_type;
+      break;
+
+   case ir_unop_unpack_snorm_2x16:
+   case ir_unop_unpack_unorm_2x16:
+   case ir_unop_unpack_half_2x16:
+      this->type = glsl_type::vec2_type;
       break;
 
    default:
@@ -386,6 +400,10 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
       this->type = glsl_type::float_type;
       break;
 
+   case ir_binop_pack_half_2x16_split:
+      this->type = glsl_type::uint_type;
+      break;
+
    case ir_binop_lshift:
    case ir_binop_rshift:
       this->type = op0->type;
@@ -454,6 +472,14 @@ static const char *const operator_strs[] = {
    "cos_reduced",
    "dFdx",
    "dFdy",
+   "packSnorm2x16",
+   "packUnorm2x16",
+   "packHalf2x16",
+   "unpackSnorm2x16",
+   "unpackUnorm2x16",
+   "unpackHalf2x16",
+   "unpackHalf2x16_split_x",
+   "unpackHalf2x16_split_y",
    "noise",
    "+",
    "-",
@@ -480,6 +506,7 @@ static const char *const operator_strs[] = {
    "min",
    "max",
    "pow",
+   "packHalf2x16_split",
    "ubo_load",
    "vector",
 };
