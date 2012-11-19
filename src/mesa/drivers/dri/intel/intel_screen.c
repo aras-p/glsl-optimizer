@@ -158,9 +158,11 @@ aub_dump_bmp(struct gl_context *ctx)
 }
 
 static const __DRItexBufferExtension intelTexBufferExtension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   intelSetTexBuffer,
-   intelSetTexBuffer2,
+   .base = { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
+
+   .setTexBuffer        = intelSetTexBuffer,
+   .setTexBuffer2       = intelSetTexBuffer2,
+   .releaseTexBuffer    = NULL,
 };
 
 static void
@@ -186,9 +188,10 @@ intelDRI2Flush(__DRIdrawable *drawable)
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {
-    { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
-    intelDRI2Flush,
-    dri2InvalidateDrawable,
+    .base = { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
+
+    .flush              = intelDRI2Flush,
+    .invalidate         = dri2InvalidateDrawable,
 };
 
 static struct intel_image_format intel_image_formats[] = {
@@ -574,16 +577,17 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
 }
 
 static struct __DRIimageExtensionRec intelImageExtension = {
-    { __DRI_IMAGE, 5 },
-    intel_create_image_from_name,
-    intel_create_image_from_renderbuffer,
-    intel_destroy_image,
-    intel_create_image,
-    intel_query_image,
-    intel_dup_image,
-    intel_validate_usage,
-    intel_create_image_from_names,
-    intel_from_planar
+    .base = { __DRI_IMAGE, 5 },
+
+    .createImageFromName                = intel_create_image_from_name,
+    .createImageFromRenderbuffer        = intel_create_image_from_renderbuffer,
+    .destroyImage                       = intel_destroy_image,
+    .createImage                        = intel_create_image,
+    .queryImage                         = intel_query_image,
+    .dupImage                           = intel_dup_image,
+    .validateUsage                      = intel_validate_usage,
+    .createImageFromNames               = intel_create_image_from_names,
+    .fromPlanar                         = intel_from_planar
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
