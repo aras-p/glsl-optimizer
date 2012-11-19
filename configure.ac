@@ -1675,8 +1675,8 @@ if test "x$enable_gallium_llvm" = xyes; then
 	fi
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 	LLVM_BINDIR=`$LLVM_CONFIG --bindir`
-	LLVM_CXXFLAGS=`$LLVM_CONFIG --cxxflags`
-	LLVM_CPPFLAGS=`$LLVM_CONFIG --cppflags`
+	LLVM_CXXFLAGS=`$LLVM_CONFIG --cxxflags|sed -e 's/-DNDEBUG\>//g' -e 's/-pedantic//g' -e 's/-Wcovered-switch-default//g'`
+	LLVM_CPPFLAGS=`$LLVM_CONFIG --cppflags|sed -e 's/-DNDEBUG\>//g' -e 's/-pedantic//g' -e 's/-Wcovered-switch-default//g'`
 	LLVM_INCLUDEDIR=`$LLVM_CONFIG --includedir`
 	LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 	DEFINES="${DEFINES} -DHAVE_LLVM=`echo $LLVM_VERSION | sed -e 's/\([[0-9]]\)\.\([[0-9]]\)/0x0\10\2/g'`"
