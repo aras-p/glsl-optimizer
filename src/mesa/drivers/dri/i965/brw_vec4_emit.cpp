@@ -65,6 +65,7 @@ vec4_visitor::setup_attributes(int payload_reg)
 	 int grf = attribute_map[inst->dst.reg + inst->dst.reg_offset];
 
 	 struct brw_reg reg = brw_vec8_grf(grf, 0);
+	 reg.type = inst->dst.type;
 	 reg.dw1.bits.writemask = inst->dst.writemask;
 
 	 inst->dst.file = HW_REG;
