@@ -563,40 +563,43 @@ dri2GetAPIMask(__DRIscreen *screen)
 
 /** Core interface */
 const __DRIcoreExtension driCoreExtension = {
-    { __DRI_CORE, __DRI_CORE_VERSION },
-    NULL,
-    driDestroyScreen,
-    driGetExtensions,
-    driGetConfigAttrib,
-    driIndexConfigAttrib,
-    NULL,
-    driDestroyDrawable,
-    NULL,
-    NULL,
-    driCopyContext,
-    driDestroyContext,
-    driBindContext,
-    driUnbindContext
+    .base = { __DRI_CORE, __DRI_CORE_VERSION },
+
+    .createNewScreen            = NULL,
+    .destroyScreen              = driDestroyScreen,
+    .getExtensions              = driGetExtensions,
+    .getConfigAttrib            = driGetConfigAttrib,
+    .indexConfigAttrib          = driIndexConfigAttrib,
+    .createNewDrawable          = NULL,
+    .destroyDrawable            = driDestroyDrawable,
+    .swapBuffers                = NULL,
+    .createNewContext           = NULL,
+    .copyContext                = driCopyContext,
+    .destroyContext             = driDestroyContext,
+    .bindContext                = driBindContext,
+    .unbindContext              = driUnbindContext
 };
 
 /** DRI2 interface */
 const __DRIdri2Extension driDRI2Extension = {
-    { __DRI_DRI2, 3 },
-    dri2CreateNewScreen,
-    dri2CreateNewDrawable,
-    dri2CreateNewContext,
-    dri2GetAPIMask,
-    dri2CreateNewContextForAPI,
-    dri2AllocateBuffer,
-    dri2ReleaseBuffer,
-    dri2CreateContextAttribs
+    .base = { __DRI_DRI2, 3 },
+
+    .createNewScreen            = dri2CreateNewScreen,
+    .createNewDrawable          = dri2CreateNewDrawable,
+    .createNewContext           = dri2CreateNewContext,
+    .getAPIMask                 = dri2GetAPIMask,
+    .createNewContextForAPI     = dri2CreateNewContextForAPI,
+    .allocateBuffer             = dri2AllocateBuffer,
+    .releaseBuffer              = dri2ReleaseBuffer,
+    .createContextAttribs       = dri2CreateContextAttribs
 };
 
 const __DRI2configQueryExtension dri2ConfigQueryExtension = {
-   { __DRI2_CONFIG_QUERY, __DRI2_CONFIG_QUERY_VERSION },
-   dri2ConfigQueryb,
-   dri2ConfigQueryi,
-   dri2ConfigQueryf,
+   .base = { __DRI2_CONFIG_QUERY, __DRI2_CONFIG_QUERY_VERSION },
+
+   .configQueryb        = dri2ConfigQueryb,
+   .configQueryi        = dri2ConfigQueryi,
+   .configQueryf        = dri2ConfigQueryf,
 };
 
 void
