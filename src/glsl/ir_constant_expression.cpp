@@ -75,6 +75,159 @@ bitcast_f2u(float f)
    return u;
 }
 
+/**
+ * Evaluate one component of a floating-point 2x16 unpacking function.
+ */
+typedef uint16_t
+(*pack_1x16_func_t)(float);
+
+/**
+ * Evaluate one component of a floating-point 2x16 unpacking function.
+ */
+typedef float
+(*unpack_1x16_func_t)(uint16_t);
+
+/**
+ * Evaluate a 2x16 floating-point packing function.
+ */
+static uint32_t
+pack_2x16(pack_1x16_func_t pack_1x16,
+          float x, float y)
+{
+   /* From section 8.4 of the GLSL ES 3.00 spec:
+    *
+    *    packSnorm2x16
+    *    -------------
+    *    The first component of the vector will be written to the least
+    *    significant bits of the output; the last component will be written to
+    *    the most significant bits.
+    *
+    * The specifications for the other packing functions contain similar
+    * language.
+    */
+   uint32_t u = 0;
+   u |= ((uint32_t) pack_1x16(x) << 0);
+   u |= ((uint32_t) pack_1x16(y) << 16);
+   return u;
+}
+
+/**
+ * Evaluate a 2x16 floating-point unpacking function.
+ */
+static void
+unpack_2x16(unpack_1x16_func_t unpack_1x16,
+            uint32_t u,
+            float *x, float *y)
+{
+    /* From section 8.4 of the GLSL ES 3.00 spec:
+     *
+     *    unpackSnorm2x16
+     *    ---------------
+     *    The first component of the returned vector will be extracted from
+     *    the least significant bits of the input; the last component will be
+     *    extracted from the most significant bits.
+     *
+     * The specifications for the other unpacking functions contain similar
+     * language.
+     */
+   *x = unpack_1x16((uint16_t) (u & 0xffff));
+   *y = unpack_1x16((uint16_t) (u >> 16));
+}
+
+/**
+ * Evaluate one component of packSnorm2x16.
+ */
+static uint16_t
+pack_snorm_1x16(float x)
+{
+    /* From section 8.4 of the GLSL ES 3.00 spec:
+     *
+     *    packSnorm2x16
+     *    -------------
+     *    The conversion for component c of v to fixed point is done as
+     *    follows:
+     *
+     *      packSnorm2x16: round(clamp(c, -1, +1) * 32767.0)
+     *
+     * We must first cast the float to an int, because casting a negative
+     * float to a uint is undefined.
+     */
+   return (uint16_t) (int16_t)
+          _mesa_round_to_even(CLAMP(x, -1.0f, +1.0f) * 32767.0f);
+}
+
+/**
+ * Evaluate one component of unpackSnorm2x16.
+ */
+static float
+unpack_snorm_1x16(uint16_t u)
+{
+    /* From section 8.4 of the GLSL ES 3.00 spec:
+     *
+     *    unpackSnorm2x16
+     *    ---------------
+     *    The conversion for unpacked fixed-point value f to floating point is
+     *    done as follows:
+     *
+     *       unpackSnorm2x16: clamp(f / 32767.0, -1, +1)
+     */
+   return CLAMP((int16_t) u / 32767.0f, -1.0f, +1.0f);
+}
+
+/**
+ * Evaluate one component packUnorm2x16.
+ */
+static uint16_t
+pack_unorm_1x16(float x)
+{
+    /* From section 8.4 of the GLSL ES 3.00 spec:
+     *
+     *    packUnorm2x16
+     *    -------------
+     *    The conversion for component c of v to fixed point is done as
+     *    follows:
+     *
+     *       packUnorm2x16: round(clamp(c, 0, +1) * 65535.0)
+     */
+   return (uint16_t) _mesa_round_to_even(CLAMP(x, 0.0f, 1.0f) * 65535.0f);
+}
+
+/**
+ * Evaluate one component of unpackUnorm2x16.
+ */
+static float
+unpack_unorm_1x16(uint16_t u)
+{
+    /* From section 8.4 of the GLSL ES 3.00 spec:
+     *
+     *    unpackUnorm2x16
+     *    ---------------
+     *    The conversion for unpacked fixed-point value f to floating point is
+     *    done as follows:
+     *
+     *       unpackUnorm2x16: f / 65535.0
+     */
+   return (float) u / 65535.0f;
+}
+
+/**
+ * Evaluate one component of packHalf2x16.
+ */
+static uint16_t
+pack_half_1x16(float x)
+{
+   return _mesa_float_to_half(x);
+}
+
+/**
+ * Evaluate one component of unpackHalf2x16.
+ */
+static float
+unpack_half_1x16(uint16_t u)
+{
+   return _mesa_half_to_float(u);
+}
+
 ir_constant *
 ir_rvalue::constant_expression_value(struct hash_table *variable_context)
 {
@@ -440,6 +593,42 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       }
       break;
 
+   case ir_unop_pack_snorm_2x16:
+      assert(op[0]->type == glsl_type::vec2_type);
+      data.u[0] = pack_2x16(pack_snorm_1x16,
+                            op[0]->value.f[0],
+                            op[0]->value.f[1]);
+      break;
+   case ir_unop_unpack_snorm_2x16:
+      assert(op[0]->type == glsl_type::uint_type);
+      unpack_2x16(unpack_snorm_1x16,
+                  op[0]->value.u[0],
+                  &data.f[0], &data.f[1]);
+      break;
+   case ir_unop_pack_unorm_2x16:
+      assert(op[0]->type == glsl_type::vec2_type);
+      data.u[0] = pack_2x16(pack_unorm_1x16,
+                            op[0]->value.f[0],
+                            op[0]->value.f[1]);
+      break;
+   case ir_unop_unpack_unorm_2x16:
+      assert(op[0]->type == glsl_type::uint_type);
+      unpack_2x16(unpack_unorm_1x16,
+                  op[0]->value.u[0],
+                  &data.f[0], &data.f[1]);
+      break;
+   case ir_unop_pack_half_2x16:
+      assert(op[0]->type == glsl_type::vec2_type);
+      data.u[0] = pack_2x16(pack_half_1x16,
+                            op[0]->value.f[0],
+                            op[0]->value.f[1]);
+      break;
+   case ir_unop_unpack_half_2x16:
+      assert(op[0]->type == glsl_type::uint_type);
+      unpack_2x16(unpack_half_1x16,
+                  op[0]->value.u[0],
+                  &data.f[0], &data.f[1]);
+      break;
    case ir_binop_pow:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
