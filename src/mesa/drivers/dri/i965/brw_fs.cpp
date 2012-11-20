@@ -2147,6 +2147,7 @@ fs_visitor::run()
 
 bool
 brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
+               struct gl_fragment_program *fp,
 	       struct gl_shader_program *prog)
 {
    struct intel_context *intel = &brw->intel;
@@ -2170,14 +2171,14 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
          printf("\n\n");
       } else {
          printf("ARB_fragment_program %d ir for native fragment shader\n",
-                c->fp->program.Base.Id);
-         _mesa_print_program(&c->fp->program.Base);
+                fp->Base.Id);
+         _mesa_print_program(&fp->Base);
       }
    }
 
    /* Now the main event: Visit the shader IR and generate our FS IR for it.
     */
-   fs_visitor v(c, prog, 8);
+   fs_visitor v(c, prog, fp, 8);
    if (!v.run()) {
       prog->LinkStatus = false;
       ralloc_strcat(&prog->InfoLog, v.fail_msg);
@@ -2189,7 +2190,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    }
 
    if (intel->gen >= 5 && c->prog_data.nr_pull_params == 0) {
-      fs_visitor v2(c, prog, 16);
+      fs_visitor v2(c, prog, fp, 16);
       v2.import_uniforms(&v);
       if (!v2.run()) {
          perf_debug("16-wide shader failed to compile, falling back to "

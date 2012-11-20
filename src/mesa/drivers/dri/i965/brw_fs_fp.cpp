@@ -591,7 +591,7 @@ fs_visitor::setup_fp_regs()
    /* PROGRAM_STATE_VAR etc. */
    if (dispatch_width == 8) {
       for (unsigned p = 0;
-           p < c->fp->program.Base.Parameters->NumParameters; p++) {
+           p < fp->Base.Parameters->NumParameters; p++) {
          for (unsigned int i = 0; i < 4; i++) {
             this->param_index[c->prog_data.nr_params] = p;
             this->param_offset[c->prog_data.nr_params] = i;
@@ -688,7 +688,7 @@ fs_visitor::get_fp_dst_reg(const prog_dst_register *dst)
 fs_reg
 fs_visitor::get_fp_src_reg(const prog_src_register *src)
 {
-   struct gl_program_parameter_list *plist = c->fp->program.Base.Parameters;
+   struct gl_program_parameter_list *plist = fp->Base.Parameters;
 
    fs_reg result;
 

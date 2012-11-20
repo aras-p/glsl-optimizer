@@ -81,8 +81,6 @@ struct brw_wm_compile {
    struct brw_wm_prog_key key;
    struct brw_wm_prog_data prog_data;
 
-   struct brw_fragment_program *fp;
-
    uint8_t source_depth_reg;
    uint8_t source_w_reg;
    uint8_t aa_dest_stencil_reg;
@@ -96,6 +94,7 @@ struct brw_wm_compile {
 };
 
 bool brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
+                    struct gl_fragment_program *fp,
 		    struct gl_shader_program *prog);
 
 GLboolean brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog);

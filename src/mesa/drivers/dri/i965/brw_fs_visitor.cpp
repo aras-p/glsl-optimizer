@@ -1140,7 +1140,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
        (intel->gen < 6 ||
 	(intel->gen >= 6 && (c->key.tex.gl_clamp_mask[0] & (1 << sampler) ||
 			     c->key.tex.gl_clamp_mask[1] & (1 << sampler))))) {
-      struct gl_program_parameter_list *params = c->fp->program.Base.Parameters;
+      struct gl_program_parameter_list *params = fp->Base.Parameters;
       int tokens[STATE_LENGTH] = {
 	 STATE_INTERNAL,
 	 STATE_TEXRECT_SCALE,
@@ -2174,14 +2174,16 @@ fs_visitor::resolve_bool_comparison(ir_rvalue *rvalue, fs_reg *reg)
    *reg = temp;
 }
 
-fs_visitor::fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
+fs_visitor::fs_visitor(struct brw_wm_compile *c,
+                       struct gl_shader_program *prog,
+                       struct gl_fragment_program *fp,
                        unsigned dispatch_width)
    : dispatch_width(dispatch_width)
 {
    this->c = c;
    this->p = &c->func;
    this->brw = p->brw;
-   this->fp = &c->fp->program;
+   this->fp = fp;
    this->prog = prog;
    this->intel = &brw->intel;
    this->ctx = &intel->ctx;

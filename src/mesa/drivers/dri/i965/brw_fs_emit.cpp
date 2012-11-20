@@ -734,7 +734,7 @@ fs_visitor::generate_code()
                 prog->Name, dispatch_width);
       } else {
          printf("Native code for fragment program %d (%d-wide dispatch):\n",
-                c->fp->program.Base.Id, dispatch_width);
+                fp->Base.Id, dispatch_width);
       }
    }
 
