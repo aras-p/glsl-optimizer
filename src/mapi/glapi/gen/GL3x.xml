@@ -595,7 +595,7 @@
   <enum name="MAX_FRAGMENT_INPUT_COMPONENTS"        value="0x9125"/>
   <enum name="CONTEXT_PROFILE_MASK"                 value="0x9126"/>
 
-  <function name="GetInteger64i_v" offset="assign" es2="3.0" exec="skip">
+  <function name="GetInteger64i_v" offset="assign" es2="3.0">
     <param name="cap" type="GLenum"/>
     <param name="index" type="GLuint"/>
     <param name="data" type="GLint64 *"/>

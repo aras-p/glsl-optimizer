@@ -1709,11 +1709,11 @@ _mesa_GetIntegeri_v( GLenum pname, GLuint index, GLint *params )
 }
 
 void GLAPIENTRY
-_mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
+_mesa_GetInteger64i_v( GLenum pname, GLuint index, GLint64 *params )
 {
    union value v;
    enum value_type type =
-      find_value_indexed("glGetIntegerIndexedv", pname, index, &v);      
+      find_value_indexed("glGetInteger64i_v", pname, index, &v);
 
    switch (type) {
    case TYPE_INT:

@@ -1310,8 +1310,7 @@ const struct function gles3_functions_possible[] = {
    // We check for the aliased -OES version in GLES 2
    // { "glGetBufferPointerv", 30, -1 },
    { "glGetFragDataLocation", 30, -1 },
-   /// XXX: Missing implementation of glGetInteger64i_v
-   // { "glGetInteger64i_v", 30, -1 },
+   { "glGetInteger64i_v", 30, -1 },
    { "glGetInteger64v", 30, -1 },
    { "glGetIntegeri_v", 30, -1 },
    // XXX: Missing implementation of ARB_internalformat_query
