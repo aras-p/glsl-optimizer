@@ -185,7 +185,7 @@ class fs_visitor : public backend_visitor
 public:
 
    fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
-              struct brw_shader *shader, unsigned dispatch_width);
+              unsigned dispatch_width);
    ~fs_visitor();
 
    fs_reg *variable_storage(ir_variable *var);

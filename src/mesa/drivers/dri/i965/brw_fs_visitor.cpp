@@ -2175,7 +2175,7 @@ fs_visitor::resolve_bool_comparison(ir_rvalue *rvalue, fs_reg *reg)
 }
 
 fs_visitor::fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
-                       struct brw_shader *shader, unsigned dispatch_width)
+                       unsigned dispatch_width)
    : dispatch_width(dispatch_width)
 {
    this->c = c;
@@ -2186,7 +2186,10 @@ fs_visitor::fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
    this->intel = &brw->intel;
    this->ctx = &intel->ctx;
    this->mem_ctx = ralloc_context(NULL);
-   this->shader = shader;
+   if (prog)
+      shader = (struct brw_shader *) prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
+   else
+      shader = NULL;
    this->failed = false;
    this->variable_ht = hash_table_ctor(0,
                                        hash_table_pointer_hash,
