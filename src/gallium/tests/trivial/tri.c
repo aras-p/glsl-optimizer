@@ -262,7 +262,7 @@ static void draw(struct program *p)
 	cso_set_vertex_elements(p->cso, 2, p->velem);
 
 	util_draw_vertex_buffer(p->pipe, p->cso,
-	                        p->vbuf, 0,
+	                        p->vbuf, 0, 0,
 	                        PIPE_PRIM_TRIANGLES,
 	                        3,  /* verts */
 	                        2); /* attribs/vert */
