@@ -123,6 +123,7 @@ driCreateContextAttribs(__DRIscreen *screen, int api,
             mesa_api = API_OPENGLES;
             break;
     case __DRI_API_GLES2:
+    case __DRI_API_GLES3:
             mesa_api = API_OPENGLES2;
             break;
     case __DRI_API_OPENGL_CORE:

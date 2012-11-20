@@ -826,8 +826,9 @@ struct __DRIdri2LoaderExtensionRec {
 
 #define __DRI_API_OPENGL	0	/**< OpenGL compatibility profile */
 #define __DRI_API_GLES		1	/**< OpenGL ES 1.x */
-#define __DRI_API_GLES2		2	/**< OpenGL ES 2.0 or 3.0 */
+#define __DRI_API_GLES2		2	/**< OpenGL ES 2.x */
 #define __DRI_API_OPENGL_CORE	3	/**< OpenGL 3.2+ core profile */
+#define __DRI_API_GLES3		4	/**< OpenGL ES 3.x */
 
 #define __DRI_CTX_ATTRIB_MAJOR_VERSION		0
 #define __DRI_CTX_ATTRIB_MINOR_VERSION		1
