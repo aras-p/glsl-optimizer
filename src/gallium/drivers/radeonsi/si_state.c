@@ -1694,12 +1694,9 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		R600_ERR("Invalid DB format: %d, disabling DB.\n", rtex->real_format);
 	}
 
-	z_offs = r600_resource_va(rctx->context.screen, surf->base.texture);
+	s_offs = z_offs = r600_resource_va(rctx->context.screen, surf->base.texture);
 	z_offs += rtex->surface.level[level].offset;
-
-	s_offs = r600_resource_va(rctx->context.screen, surf->base.texture);
-	s_offs += rtex->surface.stencil_offset;
-	z_offs += rtex->surface.level[level].offset / 4;
+	s_offs += rtex->surface.stencil_level[level].offset;
 
 	z_offs >>= 8;
 	s_offs >>= 8;
