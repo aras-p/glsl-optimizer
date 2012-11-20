@@ -160,7 +160,6 @@ brw_wm_payload_setup(struct brw_context *brw,
       if (c->fp->program.Base.OutputsWritten &
 	  BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
 	 c->source_depth_to_render_target = true;
-	 c->computes_depth = true;
       }
    } else {
       brw_wm_lookup_iz(intel, c);

@@ -142,9 +142,6 @@ void brw_wm_lookup_iz(struct intel_context *intel,
       kill_stats_promoted_workaround = true;
    }
 
-   if (lookup & IZ_PS_COMPUTES_DEPTH_BIT)
-      c->computes_depth = 1;
-
    if (wm_iz_table[lookup].sd_present || uses_depth ||
        kill_stats_promoted_workaround) {
       c->source_depth_reg = reg;

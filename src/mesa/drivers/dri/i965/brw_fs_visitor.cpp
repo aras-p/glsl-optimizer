@@ -2049,7 +2049,7 @@ fs_visitor::emit_fb_writes()
 	 fail("Missing support for simd16 depth writes on gen6\n");
       }
 
-      if (c->computes_depth) {
+      if (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
 	 /* Hand over gl_FragDepth. */
 	 assert(this->frag_depth.file != BAD_FILE);
 	 emit(MOV(fs_reg(MRF, nr), this->frag_depth));
