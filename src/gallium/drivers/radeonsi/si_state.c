@@ -2086,7 +2086,10 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	if (tmp->depth && !tmp->is_flushing_texture) {
 		r600_texture_depth_flush(ctx, texture, TRUE);
 		tmp = tmp->flushed_depth_texture;
+		texture = &tmp->resource.b.b;
 	}
+
+	view->resource = &tmp->resource;
 
 	/* not supported any more */
 	//endian = si_colorformat_endian_swap(format);
@@ -2252,11 +2255,8 @@ static struct si_pm4_state *si_set_sampler_view(struct r600_context *rctx,
 			(struct pipe_sampler_view **)&samplers->views[i],
 			views[i]);
 
-		if (views[i]) {
-			struct r600_resource_texture *tex = (void *)resource[i]->base.texture;
-
-			si_pm4_add_bo(pm4, &tex->resource, RADEON_USAGE_READ);
-		}
+		if (views[i])
+			si_pm4_add_bo(pm4, resource[i]->resource, RADEON_USAGE_READ);
 
 		for (j = 0; j < Elements(resource[i]->state); ++j) {
 			si_pm4_sh_data_add(pm4, resource[i] ? resource[i]->state[j] : 0);

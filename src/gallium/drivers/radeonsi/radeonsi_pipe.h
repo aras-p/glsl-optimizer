@@ -71,6 +71,7 @@ struct r600_screen {
 
 struct si_pipe_sampler_view {
 	struct pipe_sampler_view	base;
+	struct si_resource		*resource;
 	uint32_t			state[8];
 };
 
