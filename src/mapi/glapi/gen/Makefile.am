@@ -1,8 +1,3 @@
-# This file isn't used during a normal compilation since we don't want to
-# require Python in order to compile Mesa.
-# Instead, when the Mesa developers update/change the API interface it's
-# up to him/her to re-run this makefile and check in the newly generated files.
-
 # These are the "official" xserver indent flags from utils/modular/x-indent.sh
 XORG_INDENT_FLAGS = -linux -bad -bap -blf -bli0 -cbi0 -cdw -nce -cs -i4 -lc80 -psl -nbbo \
     -nbc -psl -nbfda -nut -nss -T pointer -T ScreenPtr -T ScrnInfoPtr -T pointer \
