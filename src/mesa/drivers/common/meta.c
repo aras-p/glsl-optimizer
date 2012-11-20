@@ -3112,18 +3112,19 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
                                   sampler->func, sampler->texcoords);
    }
    else {
-      vs_source =
-         "#version 130\n"
-         "in vec2 position;\n"
-         "in vec3 textureCoords;\n"
-         "out vec3 texCoords;\n"
-         "void main()\n"
-         "{\n"
-         "   texCoords = textureCoords;\n"
-         "   gl_Position = vec4(position, 0.0, 1.0);\n"
-         "}\n";
+      vs_source = ralloc_asprintf(mem_ctx,
+                                  "#version %s\n"
+                                  "in vec2 position;\n"
+                                  "in vec3 textureCoords;\n"
+                                  "out vec3 texCoords;\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "   texCoords = textureCoords;\n"
+                                  "   gl_Position = vec4(position, 0.0, 1.0);\n"
+                                  "}\n",
+                                  _mesa_is_desktop_gl(ctx) ? "130" : "300 es");
       fs_source = ralloc_asprintf(mem_ctx,
-                                  "#version 130\n"
+                                  "#version %s\n"
                                   "uniform %s texSampler;\n"
                                   "in vec3 texCoords;\n"
                                   "out vec4 out_color;\n"
@@ -3132,6 +3133,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
                                   "{\n"
                                   "   out_color = texture(texSampler, %s);\n"
                                   "}\n",
+                                  _mesa_is_desktop_gl(ctx) ? "130" : "300 es",
                                   sampler->type,
                                   sampler->texcoords);
    }
