@@ -1663,7 +1663,7 @@ _mesa_GetBooleani_v( GLenum pname, GLuint index, GLboolean *params )
 {
    union value v;
    enum value_type type =
-      find_value_indexed("glGetBooleanIndexedv", pname, index, &v);
+      find_value_indexed("glGetBooleani_v", pname, index, &v);
 
    switch (type) {
    case TYPE_INT:
@@ -1688,7 +1688,7 @@ _mesa_GetIntegeri_v( GLenum pname, GLuint index, GLint *params )
 {
    union value v;
    enum value_type type =
-      find_value_indexed("glGetIntegerIndexedv", pname, index, &v);
+      find_value_indexed("glGetIntegeri_v", pname, index, &v);
 
    switch (type) {
    case TYPE_INT:
