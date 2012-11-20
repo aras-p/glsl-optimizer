@@ -11,6 +11,7 @@
 #include "r600_asm.h"
 #include "r600_opcodes.h"
 #include "r600_shader.h"
+#include "r600_pipe.h"
 #include "radeon_llvm.h"
 #include "radeon_llvm_emit.h"
 
@@ -324,6 +325,8 @@ static void llvm_emit_tex(
 
 	sampler_src = emit_data->inst->Instruction.NumSrcRegs-1;
 
+	args[c++] = lp_build_const_int32(gallivm,
+					emit_data->inst->Src[sampler_src].Register.Index + R600_MAX_CONST_BUFFERS);
 	args[c++] = lp_build_const_int32(gallivm,
 					emit_data->inst->Src[sampler_src].Register.Index);
 	args[c++] = lp_build_const_int32(gallivm,
