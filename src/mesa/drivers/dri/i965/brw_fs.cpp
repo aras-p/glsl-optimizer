@@ -483,11 +483,11 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case SHADER_OPCODE_LOG2:
    case SHADER_OPCODE_SIN:
    case SHADER_OPCODE_COS:
-      return 1 * c->dispatch_width / 8;
+      return 1 * dispatch_width / 8;
    case SHADER_OPCODE_POW:
    case SHADER_OPCODE_INT_QUOTIENT:
    case SHADER_OPCODE_INT_REMAINDER:
-      return 2 * c->dispatch_width / 8;
+      return 2 * dispatch_width / 8;
    case SHADER_OPCODE_TEX:
    case FS_OPCODE_TXB:
    case SHADER_OPCODE_TXD:
@@ -901,7 +901,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src)
 
    if (intel->gen < 6) {
       inst->base_mrf = 2;
-      inst->mlen = c->dispatch_width / 8;
+      inst->mlen = dispatch_width / 8;
    }
 
    return inst;
@@ -964,7 +964,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
       inst = emit(opcode, dst, op0, reg_null_f);
 
       inst->base_mrf = base_mrf;
-      inst->mlen = 2 * c->dispatch_width / 8;
+      inst->mlen = 2 * dispatch_width / 8;
    }
    return inst;
 }
@@ -977,7 +977,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
 void
 fs_visitor::setup_paramvalues_refs()
 {
-   if (c->dispatch_width != 8)
+   if (dispatch_width != 8)
       return;
 
    /* Set up the pointers to ParamValues now that that array is finalized. */
@@ -992,7 +992,7 @@ void
 fs_visitor::assign_curb_setup()
 {
    c->prog_data.curb_read_length = ALIGN(c->prog_data.nr_params, 8) / 8;
-   if (c->dispatch_width == 8) {
+   if (dispatch_width == 8) {
       c->prog_data.first_curbe_grf = c->nr_payload_regs;
    } else {
       c->prog_data.first_curbe_grf_16 = c->nr_payload_regs;
@@ -1273,7 +1273,7 @@ fs_visitor::compact_virtual_grfs()
 bool
 fs_visitor::remove_dead_constants()
 {
-   if (c->dispatch_width == 8) {
+   if (dispatch_width == 8) {
       this->params_remap = ralloc_array(mem_ctx, int, c->prog_data.nr_params);
 
       for (unsigned int i = 0; i < c->prog_data.nr_params; i++)
@@ -1367,7 +1367,7 @@ fs_visitor::setup_pull_constants()
    if (c->prog_data.nr_params <= max_uniform_components)
       return;
 
-   if (c->dispatch_width == 16) {
+   if (dispatch_width == 16) {
       fail("Pull constants not supported in 16-wide\n");
       return;
    }
@@ -1711,7 +1711,7 @@ fs_visitor::compute_to_mrf()
       int mrf_high;
       if (inst->dst.reg & BRW_MRF_COMPR4) {
 	 mrf_high = mrf_low + 4;
-      } else if (c->dispatch_width == 16 &&
+      } else if (dispatch_width == 16 &&
 		 (!inst->force_uncompressed && !inst->force_sechalf)) {
 	 mrf_high = mrf_low + 1;
       } else {
@@ -1816,7 +1816,7 @@ fs_visitor::compute_to_mrf()
 
 	    if (scan_inst->dst.reg & BRW_MRF_COMPR4) {
 	       scan_mrf_high = scan_mrf_low + 4;
-	    } else if (c->dispatch_width == 16 &&
+	    } else if (dispatch_width == 16 &&
 		       (!scan_inst->force_uncompressed &&
 			!scan_inst->force_sechalf)) {
 	       scan_mrf_high = scan_mrf_low + 1;
@@ -1867,7 +1867,7 @@ fs_visitor::remove_duplicate_mrf_writes()
    bool progress = false;
 
    /* Need to update the MRF tracking for compressed instructions. */
-   if (c->dispatch_width == 16)
+   if (dispatch_width == 16)
       return false;
 
    memset(last_mrf_move, 0, sizeof(last_mrf_move));
@@ -1989,7 +1989,7 @@ fs_visitor::setup_payload_gen6()
       if (barycentric_interp_modes & (1 << i)) {
          c->barycentric_coord_reg[i] = c->nr_payload_regs;
          c->nr_payload_regs += 2;
-         if (c->dispatch_width == 16) {
+         if (dispatch_width == 16) {
             c->nr_payload_regs += 2;
          }
       }
@@ -1999,7 +1999,7 @@ fs_visitor::setup_payload_gen6()
    if (uses_depth) {
       c->source_depth_reg = c->nr_payload_regs;
       c->nr_payload_regs++;
-      if (c->dispatch_width == 16) {
+      if (dispatch_width == 16) {
          /* R28: interpolated depth if not 8-wide. */
          c->nr_payload_regs++;
       }
@@ -2008,7 +2008,7 @@ fs_visitor::setup_payload_gen6()
    if (uses_depth) {
       c->source_w_reg = c->nr_payload_regs;
       c->nr_payload_regs++;
-      if (c->dispatch_width == 16) {
+      if (dispatch_width == 16) {
          /* R30: interpolated W if not 8-wide. */
          c->nr_payload_regs++;
       }
@@ -2033,7 +2033,7 @@ fs_visitor::run()
    else
       setup_payload_gen4();
 
-   if (c->dispatch_width == 16) {
+   if (dispatch_width == 16) {
       /* We have to do a compaction pass now, or the one at the end of
        * execution will squash down where our prog_offset start needs
        * to be.
@@ -2131,7 +2131,7 @@ fs_visitor::run()
 
    generate_code();
 
-   if (c->dispatch_width == 8) {
+   if (dispatch_width == 8) {
       c->prog_data.reg_blocks = brw_register_blocks(grf_used);
    } else {
       c->prog_data.reg_blocks_16 = brw_register_blocks(grf_used);
@@ -2177,9 +2177,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
 
    /* Now the main event: Visit the shader IR and generate our FS IR for it.
     */
-   c->dispatch_width = 8;
-
-   fs_visitor v(c, prog, shader);
+   fs_visitor v(c, prog, shader, 8);
    if (!v.run()) {
       prog->LinkStatus = false;
       ralloc_strcat(&prog->InfoLog, v.fail_msg);
@@ -2191,8 +2189,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    }
 
    if (intel->gen >= 5 && c->prog_data.nr_pull_params == 0) {
-      c->dispatch_width = 16;
-      fs_visitor v2(c, prog, shader);
+      fs_visitor v2(c, prog, shader, 16);
       v2.import_uniforms(&v);
       if (!v2.run()) {
          perf_debug("16-wide shader failed to compile, falling back to "

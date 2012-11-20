@@ -93,7 +93,7 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 
    if (this->dual_src_output.file != BAD_FILE)
       msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN01;
-   else if (c->dispatch_width == 16)
+   else if (dispatch_width == 16)
       msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
    else
       msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01;
@@ -101,7 +101,7 @@ fs_visitor::generate_fb_write(fs_inst *inst)
    brw_pop_insn_state(p);
 
    brw_fb_WRITE(p,
-		c->dispatch_width,
+		dispatch_width,
 		inst->base_mrf,
 		implied_header,
 		msg_control,
@@ -133,7 +133,7 @@ fs_visitor::generate_pixel_xy(struct brw_reg dst, bool is_x)
       deltas = brw_imm_v(0x11001100);
    }
 
-   if (c->dispatch_width == 16) {
+   if (dispatch_width == 16) {
       dst = vec16(dst);
    }
 
@@ -203,7 +203,7 @@ fs_visitor::generate_math1_gen6(fs_inst *inst,
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 
-   if (c->dispatch_width == 16) {
+   if (dispatch_width == 16) {
       brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
       brw_math(p, sechalf(dst),
 	       op,
@@ -227,7 +227,7 @@ fs_visitor::generate_math2_gen6(fs_inst *inst,
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_math2(p, dst, op, src0, src1);
 
-   if (c->dispatch_width == 16) {
+   if (dispatch_width == 16) {
       brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
       brw_math2(p, sechalf(dst), op, sechalf(src0), sechalf(src1));
       brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
@@ -250,7 +250,7 @@ fs_visitor::generate_math_gen4(fs_inst *inst,
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 
-   if (c->dispatch_width == 16) {
+   if (dispatch_width == 16) {
       brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
       brw_math(p, sechalf(dst),
 	       op,
@@ -282,7 +282,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
       break;
    }
 
-   if (c->dispatch_width == 16)
+   if (dispatch_width == 16)
       simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
 
    if (intel->gen >= 5) {
@@ -328,7 +328,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	 /* Note that G45 and older determines shadow compare and dispatch width
 	  * from message length for most messages.
 	  */
-	 assert(c->dispatch_width == 8);
+	 assert(dispatch_width == 8);
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE;
 	 if (inst->shadow_compare) {
 	    assert(inst->mlen == 6);
@@ -731,10 +731,10 @@ fs_visitor::generate_code()
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       if (shader) {
          printf("Native code for fragment shader %d (%d-wide dispatch):\n",
-                prog->Name, c->dispatch_width);
+                prog->Name, dispatch_width);
       } else {
          printf("Native code for fragment program %d (%d-wide dispatch):\n",
-                c->fp->program.Base.Id, c->dispatch_width);
+                c->fp->program.Base.Id, dispatch_width);
       }
    }
 
@@ -807,7 +807,7 @@ fs_visitor::generate_code()
       brw_set_predicate_inverse(p, inst->predicate_inverse);
       brw_set_saturate(p, inst->saturate);
 
-      if (inst->force_uncompressed || c->dispatch_width == 8) {
+      if (inst->force_uncompressed || dispatch_width == 8) {
 	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       } else if (inst->force_sechalf) {
 	 brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
@@ -833,7 +833,7 @@ fs_visitor::generate_code()
 
       case BRW_OPCODE_MAD:
 	 brw_set_access_mode(p, BRW_ALIGN_16);
-	 if (c->dispatch_width == 16) {
+	 if (dispatch_width == 16) {
 	    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 	    brw_MAD(p, dst, src[0], src[1], src[2]);
 	    brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
@@ -893,7 +893,7 @@ fs_visitor::generate_code()
 	    assert(intel->gen == 6);
 	    gen6_IF(p, inst->conditional_mod, src[0], src[1]);
 	 } else {
-	    brw_IF(p, c->dispatch_width == 16 ? BRW_EXECUTE_16 : BRW_EXECUTE_8);
+	    brw_IF(p, dispatch_width == 16 ? BRW_EXECUTE_16 : BRW_EXECUTE_8);
 	 }
 	 break;
 

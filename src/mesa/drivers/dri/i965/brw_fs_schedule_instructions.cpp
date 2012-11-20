@@ -239,7 +239,7 @@ instruction_scheduler::add_barrier_deps(schedule_node *n)
 bool
 instruction_scheduler::is_compressed(fs_inst *inst)
 {
-   return (v->c->dispatch_width == 16 &&
+   return (v->dispatch_width == 16 &&
 	   !inst->force_uncompressed &&
 	   !inst->force_sechalf);
 }

@@ -185,7 +185,7 @@ class fs_visitor : public backend_visitor
 public:
 
    fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
-              struct brw_shader *shader);
+              struct brw_shader *shader, unsigned dispatch_width);
    ~fs_visitor();
 
    fs_reg *variable_storage(ir_variable *var);
@@ -446,6 +446,8 @@ public:
    fs_reg delta_y[BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT];
 
    int grf_used;
+
+   const unsigned dispatch_width; /**< 8 or 16 */
 
    int force_uncompressed_stack;
    int force_sechalf_stack;

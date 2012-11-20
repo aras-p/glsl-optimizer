@@ -110,7 +110,7 @@ fs_visitor::visit(ir_variable *ir)
       if (ir->uniform_block != -1)
          return;
 
-      if (c->dispatch_width == 16) {
+      if (dispatch_width == 16) {
 	 if (!variable_storage(ir)) {
 	    fail("Failed to find uniform '%s' in 16-wide\n", ir->name);
 	 }
@@ -381,7 +381,7 @@ fs_visitor::visit(ir_expression *ir)
 	  * FINISHME: Emit just the MUL if we know an operand is small
 	  * enough.
 	  */
-	 if (intel->gen >= 7 && c->dispatch_width == 16)
+	 if (intel->gen >= 7 && dispatch_width == 16)
 	    fail("16-wide explicit accumulator operands unsupported\n");
 
 	 struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
@@ -394,7 +394,7 @@ fs_visitor::visit(ir_expression *ir)
       }
       break;
    case ir_binop_div:
-      if (intel->gen >= 7 && c->dispatch_width == 16)
+      if (intel->gen >= 7 && dispatch_width == 16)
 	 fail("16-wide INTDIV unsupported\n");
 
       /* Floating point should be lowered by DIV_TO_MUL_RCP in the compiler. */
@@ -402,7 +402,7 @@ fs_visitor::visit(ir_expression *ir)
       emit_math(SHADER_OPCODE_INT_QUOTIENT, this->result, op[0], op[1]);
       break;
    case ir_binop_mod:
-      if (intel->gen >= 7 && c->dispatch_width == 16)
+      if (intel->gen >= 7 && dispatch_width == 16)
 	 fail("16-wide INTDIV unsupported\n");
 
       /* Floating point should be lowered by MOD_TO_FRACT in the compiler. */
@@ -888,7 +888,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 {
    int mlen = 0;
    int base_mrf = 2;
-   int reg_width = c->dispatch_width / 8;
+   int reg_width = dispatch_width / 8;
    bool header_present = false;
    const int vector_elements =
       ir->coordinate ? ir->coordinate->type->vector_elements : 0;
@@ -1005,7 +1005,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 {
    int mlen = 0;
    int base_mrf = 2;
-   int reg_width = c->dispatch_width / 8;
+   int reg_width = dispatch_width / 8;
    bool header_present = false;
    int offsets[3];
 
@@ -1036,7 +1036,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       mlen += reg_width;
       break;
    case ir_txd: {
-      if (c->dispatch_width == 16)
+      if (dispatch_width == 16)
 	 fail("Gen7 does not support sample_d/sample_d_c in SIMD16 mode.");
 
       /* Load dPdx and the coordinate together:
@@ -1149,7 +1149,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
 	 0
       };
 
-      if (c->dispatch_width == 16) {
+      if (dispatch_width == 16) {
 	 fail("rectangle scale uniform setup not supported on 16-wide\n");
 	 return coordinate;
       }
@@ -1615,7 +1615,7 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 void
 fs_visitor::visit(ir_if *ir)
 {
-   if (intel->gen < 6 && c->dispatch_width == 16) {
+   if (intel->gen < 6 && dispatch_width == 16) {
       fail("Can't support (non-uniform) control flow on 16-wide\n");
    }
 
@@ -1658,7 +1658,7 @@ fs_visitor::visit(ir_loop *ir)
 {
    fs_reg counter = reg_undef;
 
-   if (intel->gen < 6 && c->dispatch_width == 16) {
+   if (intel->gen < 6 && dispatch_width == 16) {
       fail("Can't support (non-uniform) control flow on 16-wide\n");
    }
 
@@ -1790,7 +1790,7 @@ fs_visitor::emit(fs_inst *inst)
 void
 fs_visitor::emit_dummy_fs()
 {
-   int reg_width = c->dispatch_width / 8;
+   int reg_width = dispatch_width / 8;
 
    /* Everyone's favorite color. */
    emit(MOV(fs_reg(MRF, 2 + 0 * reg_width), fs_reg(1.0f)));
@@ -1911,7 +1911,7 @@ fs_visitor::emit_interpolation_setup_gen6()
 void
 fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
 {
-   int reg_width = c->dispatch_width / 8;
+   int reg_width = dispatch_width / 8;
    fs_inst *inst;
    fs_reg color = outputs[target];
    fs_reg mrf;
@@ -1922,7 +1922,7 @@ fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
 
    color.reg_offset += index;
 
-   if (c->dispatch_width == 8 || intel->gen >= 6) {
+   if (dispatch_width == 8 || intel->gen >= 6) {
       /* SIMD8 write looks like:
        * m + 0: r0
        * m + 1: r1
@@ -1992,11 +1992,11 @@ fs_visitor::emit_fb_writes()
     */
    int base_mrf = 1;
    int nr = base_mrf;
-   int reg_width = c->dispatch_width / 8;
+   int reg_width = dispatch_width / 8;
    bool do_dual_src = this->dual_src_output.file != BAD_FILE;
    bool src0_alpha_to_render_target = false;
 
-   if (c->dispatch_width == 16 && do_dual_src) {
+   if (dispatch_width == 16 && do_dual_src) {
       fail("GL_ARB_blend_func_extended not yet supported in 16-wide.");
       do_dual_src = false;
    }
@@ -2040,7 +2040,7 @@ fs_visitor::emit_fb_writes()
       nr += reg_width;
 
    if (c->source_depth_to_render_target) {
-      if (intel->gen == 6 && c->dispatch_width == 16) {
+      if (intel->gen == 6 && dispatch_width == 16) {
 	 /* For outputting oDepth on gen6, SIMD8 writes have to be
 	  * used.  This would require 8-wide moves of each half to
 	  * message regs, kind of like pre-gen5 SIMD16 FB writes.
@@ -2175,7 +2175,8 @@ fs_visitor::resolve_bool_comparison(ir_rvalue *rvalue, fs_reg *reg)
 }
 
 fs_visitor::fs_visitor(struct brw_wm_compile *c, struct gl_shader_program *prog,
-                       struct brw_shader *shader)
+                       struct brw_shader *shader, unsigned dispatch_width)
+   : dispatch_width(dispatch_width)
 {
    this->c = c;
    this->p = &c->func;

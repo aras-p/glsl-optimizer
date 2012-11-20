@@ -93,8 +93,6 @@ struct brw_wm_compile {
    GLuint runtime_check_aads_emit:1;
 
    GLuint last_scratch;
-
-   GLuint dispatch_width;
 };
 
 bool brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,

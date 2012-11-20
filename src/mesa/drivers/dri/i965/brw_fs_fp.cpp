@@ -255,7 +255,7 @@ fs_visitor::emit_fragment_program_code()
             emit(CMP(null, regoffset(src[0], i), fs_reg(0.0f),
                      BRW_CONDITIONAL_L));
 
-            if (intel->gen < 6 && c->dispatch_width == 16)
+            if (intel->gen < 6 && dispatch_width == 16)
                fail("Can't support (non-uniform) control flow on 16-wide");
             emit(IF(BRW_PREDICATE_NORMAL));
             emit(FS_OPCODE_DISCARD);
@@ -589,7 +589,7 @@ fs_visitor::setup_fp_regs()
       fp_temp_regs[i] = fs_reg(this, glsl_type::vec4_type);
 
    /* PROGRAM_STATE_VAR etc. */
-   if (c->dispatch_width == 8) {
+   if (dispatch_width == 8) {
       for (unsigned p = 0;
            p < c->fp->program.Base.Parameters->NumParameters; p++) {
          for (unsigned int i = 0; i < 4; i++) {

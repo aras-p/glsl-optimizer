@@ -45,7 +45,7 @@ fs_visitor::assign_regs_trivial()
 {
    int hw_reg_mapping[this->virtual_grf_count + 1];
    int i;
-   int reg_width = c->dispatch_width / 8;
+   int reg_width = dispatch_width / 8;
 
    /* Note that compressed instructions require alignment to 2 registers. */
    hw_reg_mapping[0] = ALIGN(this->first_non_payload_grf, reg_width);
@@ -216,7 +216,7 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
                                        int payload_node_count,
                                        int first_payload_node)
 {
-   int reg_width = c->dispatch_width / 8;
+   int reg_width = dispatch_width / 8;
    int loop_depth = 0;
    int loop_end_ip = 0;
 
@@ -338,7 +338,7 @@ void
 fs_visitor::setup_mrf_hack_interference(struct ra_graph *g, int first_mrf_node)
 {
    int mrf_count = BRW_MAX_GRF - GEN7_MRF_HACK_START;
-   int reg_width = c->dispatch_width / 8;
+   int reg_width = dispatch_width / 8;
 
    /* Identify all the MRFs used in the program. */
    bool mrf_used[mrf_count];
@@ -394,7 +394,7 @@ fs_visitor::assign_regs()
     * registers it's allocating be contiguous physical pairs of regs
     * for reg_width == 2.
     */
-   int reg_width = c->dispatch_width / 8;
+   int reg_width = dispatch_width / 8;
    int hw_reg_mapping[this->virtual_grf_count];
    int payload_node_count = (ALIGN(this->first_non_payload_grf, reg_width) /
                             reg_width);
@@ -458,7 +458,7 @@ fs_visitor::assign_regs()
 
       if (reg == -1) {
 	 fail("no register to spill\n");
-      } else if (c->dispatch_width == 16) {
+      } else if (dispatch_width == 16) {
 	 fail("Failure to register allocate.  Reduce number of live scalar "
               "values to avoid this.");
       } else {

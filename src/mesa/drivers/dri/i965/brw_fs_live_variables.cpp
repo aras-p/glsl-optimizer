@@ -280,10 +280,10 @@ fs_visitor::virtual_grf_interferes(int a, int b)
     * so our second half values in g6 got overwritten in the first
     * half.
     */
-   if (c->dispatch_width == 16 && (this->pixel_x.reg == a ||
-				   this->pixel_x.reg == b ||
-				   this->pixel_y.reg == a ||
-				   this->pixel_y.reg == b)) {
+   if (dispatch_width == 16 && (this->pixel_x.reg == a ||
+				this->pixel_x.reg == b ||
+				this->pixel_y.reg == a ||
+				this->pixel_y.reg == b)) {
       return start <= end;
    }
 
