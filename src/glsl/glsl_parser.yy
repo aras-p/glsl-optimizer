@@ -1088,6 +1088,7 @@ layout_qualifier_id_list:
 integer_constant:
 	INTCONSTANT { $$ = $1; }
 	| UINTCONSTANT { $$ = $1; }
+	;
 
 layout_qualifier_id:
 	any_identifier
