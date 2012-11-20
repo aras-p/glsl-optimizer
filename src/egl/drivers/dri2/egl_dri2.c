@@ -465,7 +465,10 @@ dri2_setup_screen(_EGLDisplay *disp)
       api_mask = dri2_dpy->dri2->getAPIMask(dri2_dpy->dri_screen);
    } else {
       assert(dri2_dpy->swrast);
-      api_mask = 1 << __DRI_API_OPENGL | 1 << __DRI_API_GLES | 1 << __DRI_API_GLES2;
+      api_mask = 1 << __DRI_API_OPENGL |
+                 1 << __DRI_API_GLES |
+                 1 << __DRI_API_GLES2 |
+                 1 << __DRI_API_GLES3;
    }
 
    disp->ClientAPIs = 0;
@@ -475,6 +478,8 @@ dri2_setup_screen(_EGLDisplay *disp)
       disp->ClientAPIs |= EGL_OPENGL_ES_BIT;
    if (api_mask & (1 << __DRI_API_GLES2))
       disp->ClientAPIs |= EGL_OPENGL_ES2_BIT;
+   if (api_mask & (1 << __DRI_API_GLES3))
+      disp->ClientAPIs |= EGL_OPENGL_ES3_BIT_KHR;
 
    assert(dri2_dpy->dri2 || dri2_dpy->swrast);
    disp->Extensions.KHR_surfaceless_context = EGL_TRUE;
@@ -737,8 +742,10 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
          api = __DRI_API_GLES;
          break;
       case 2:
+         api = __DRI_API_GLES3;
+         break;
       case 3:
-         api = __DRI_API_GLES2;
+         api = __DRI_API_GLES3;
          break;
       default:
 	 _eglError(EGL_BAD_PARAMETER, "eglCreateContext");

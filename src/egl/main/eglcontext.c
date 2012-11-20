@@ -54,8 +54,10 @@ _eglGetContextAPIBit(_EGLContext *ctx)
          bit = EGL_OPENGL_ES_BIT;
          break;
       case 2:
-      case 3:
          bit = EGL_OPENGL_ES2_BIT;
+         break;
+      case 3:
+         bit = EGL_OPENGL_ES3_BIT_KHR;
          break;
       default:
          break;

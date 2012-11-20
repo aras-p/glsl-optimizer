@@ -37,6 +37,7 @@
    (EGL_OPENGL_ES_BIT   | \
     EGL_OPENVG_BIT      | \
     EGL_OPENGL_ES2_BIT  | \
+    EGL_OPENGL_ES3_BIT_KHR | \
     EGL_OPENGL_BIT)
 
 

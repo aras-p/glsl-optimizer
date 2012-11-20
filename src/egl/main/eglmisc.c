@@ -140,6 +140,9 @@ _eglUpdateAPIsString(_EGLDisplay *dpy)
    if (dpy->ClientAPIs & EGL_OPENGL_ES2_BIT)
       strcat(apis, "OpenGL_ES2 ");
 
+   if (dpy->ClientAPIs & EGL_OPENGL_ES3_BIT_KHR)
+      strcat(apis, "OpenGL_ES3 ");
+
    if (dpy->ClientAPIs & EGL_OPENVG_BIT)
       strcat(apis, "OpenVG ");
 
