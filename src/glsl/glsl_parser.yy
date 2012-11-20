@@ -238,6 +238,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <node> conditionopt
 %type <node> for_init_statement
 %type <for_rest_statement> for_rest_statement
+%type <n> integer_constant
 %%
 
 translation_unit: 
@@ -1122,6 +1123,10 @@ layout_qualifier_id_list:
 	}
 	;
 
+integer_constant:
+	INTCONSTANT { $$ = $1; }
+	| UINTCONSTANT { $$ = $1; }
+
 layout_qualifier_id:
 	any_identifier
 	{
@@ -1191,7 +1196,7 @@ layout_qualifier_id:
 	      YYERROR;
 	   }
 	}
-	| any_identifier '=' INTCONSTANT
+	| any_identifier '=' integer_constant
 	{
 	   memset(& $$, 0, sizeof($$));
 
