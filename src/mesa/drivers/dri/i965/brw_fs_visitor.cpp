@@ -1295,6 +1295,10 @@ fs_visitor::visit(ir_texture *ir)
    fs_inst *inst = NULL;
 
    int sampler = _mesa_get_sampler_uniform_value(ir->sampler, prog, &fp->Base);
+   /* FINISHME: We're failing to recompile our programs when the sampler is
+    * updated.  This only matters for the texture rectangle scale parameters
+    * (pre-gen6, or gen6+ with GL_CLAMP).
+    */
    int texunit = fp->Base.SamplerUnits[sampler];
 
    /* Should be lowered by do_lower_texture_projection */
