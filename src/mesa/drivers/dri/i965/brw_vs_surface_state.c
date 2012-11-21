@@ -48,7 +48,6 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
    /* BRW_NEW_VERTEX_PROGRAM */
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
-   const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
    int i;
 
    /* Updates the ParamaterValues[i] pointers for all parameters of the
@@ -81,7 +80,7 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
    }
 
    if (0) {
-      for (i = 0; i < params->NumParameters; i++) {
+      for (i = 0; i < ALIGN(brw->vs.prog_data->nr_pull_params, 4) / 4; i++) {
 	 float *row = (float *)brw->vs.const_bo->virtual + i * 4;
 	 printf("vs const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
 		i, row[0], row[1], row[2], row[3]);
@@ -92,7 +91,7 @@ brw_upload_vs_pull_constants(struct brw_context *brw)
 
    const int surf = SURF_INDEX_VERT_CONST_BUFFER;
    intel->vtbl.create_constant_surface(brw, brw->vs.const_bo, 0,
-				       params->NumParameters,
+				       ALIGN(brw->vs.prog_data->nr_pull_params, 4) / 4,
 				       &brw->vs.surf_offset[surf]);
 
    brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;

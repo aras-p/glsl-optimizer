@@ -1026,7 +1026,7 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    drm_intel_gem_bo_unmap_gtt(brw->wm.const_bo);
 
    intel->vtbl.create_constant_surface(brw, brw->wm.const_bo, 0,
-				       params->NumParameters,
+				       ALIGN(brw->wm.prog_data->nr_pull_params, 4) / 4,
 				       &brw->wm.surf_offset[surf_index]);
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
