@@ -80,6 +80,10 @@ struct gl_uniform_driver_storage {
 
 struct gl_uniform_storage {
    char *name;
+   /** Type of this uniform data stored.
+    *
+    * In the case of an array, it's the type of a single array element.
+    */
    const struct glsl_type *type;
 
    /**
