@@ -1012,7 +1012,7 @@ fs_visitor::generate_code()
 	 } else {
 	    _mesa_problem(ctx, "Unsupported opcode %d in FS", inst->opcode);
 	 }
-	 fail("unsupported opcode in FS\n");
+	 abort();
       }
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
