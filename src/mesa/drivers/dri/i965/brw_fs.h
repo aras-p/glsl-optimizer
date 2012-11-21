@@ -407,7 +407,7 @@ public:
    fs_reg get_timestamp();
 
    struct brw_reg interp_reg(int location, int channel);
-   int setup_uniform_values(int loc, const glsl_type *type);
+   void setup_uniform_values(ir_variable *ir);
    void setup_builtin_uniform_values(ir_variable *ir);
    int implied_mrf_writes(fs_inst *inst);
 

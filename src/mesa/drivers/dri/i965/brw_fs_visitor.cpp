@@ -121,7 +121,7 @@ fs_visitor::visit(ir_variable *ir)
       if (!strncmp(ir->name, "gl_", 3)) {
 	 setup_builtin_uniform_values(ir);
       } else {
-	 setup_uniform_values(ir->location, ir->type);
+	 setup_uniform_values(ir);
       }
 
       reg = new(this->mem_ctx) fs_reg(UNIFORM, param_index);

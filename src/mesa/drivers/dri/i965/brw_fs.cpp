@@ -792,55 +792,41 @@ fs_visitor::import_uniforms(fs_visitor *v)
  * get stored, rather than in some global gl_shader_program uniform
  * store.
  */
-int
-fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
+void
+fs_visitor::setup_uniform_values(ir_variable *ir)
 {
-   unsigned int offset = 0;
+   int namelen = strlen(ir->name);
 
-   if (type->is_matrix()) {
-      const glsl_type *column = glsl_type::get_instance(GLSL_TYPE_FLOAT,
-							type->vector_elements,
-							1);
+   /* The data for our (non-builtin) uniforms is stored in a series of
+    * gl_uniform_driver_storage structs for each subcomponent that
+    * glGetUniformLocation() could name.  We know it's been set up in the same
+    * order we'd walk the type, so walk the list of storage and find anything
+    * with our name, or the prefix of a component that starts with our name.
+    */
+   unsigned params_before = c->prog_data.nr_params;
+   for (unsigned u = 0; u < prog->NumUserUniformStorage; u++) {
+      struct gl_uniform_storage *storage = &prog->UniformStorage[u];
 
-      for (unsigned int i = 0; i < type->matrix_columns; i++) {
-	 offset += setup_uniform_values(loc + offset, column);
+      if (strncmp(ir->name, storage->name, namelen) != 0 ||
+          (storage->name[namelen] != 0 &&
+           storage->name[namelen] != '.' &&
+           storage->name[namelen] != '[')) {
+         continue;
       }
 
-      return offset;
+      unsigned slots = storage->type->component_slots();
+      if (storage->array_elements)
+         slots *= storage->array_elements;
+
+      for (unsigned i = 0; i < slots; i++) {
+         c->prog_data.param[c->prog_data.nr_params++] =
+            &storage->storage[i].f;
+      }
    }
 
-   switch (type->base_type) {
-   case GLSL_TYPE_FLOAT:
-   case GLSL_TYPE_UINT:
-   case GLSL_TYPE_INT:
-   case GLSL_TYPE_BOOL:
-      for (unsigned int i = 0; i < type->vector_elements; i++) {
-	 c->prog_data.param[c->prog_data.nr_params++] =
-            &fp->Base.Parameters->ParameterValues[loc][i].f;
-      }
-      return 1;
-
-   case GLSL_TYPE_STRUCT:
-      for (unsigned int i = 0; i < type->length; i++) {
-	 offset += setup_uniform_values(loc + offset,
-					type->fields.structure[i].type);
-      }
-      return offset;
-
-   case GLSL_TYPE_ARRAY:
-      for (unsigned int i = 0; i < type->length; i++) {
-	 offset += setup_uniform_values(loc + offset, type->fields.array);
-      }
-      return offset;
-
-   case GLSL_TYPE_SAMPLER:
-      /* The sampler takes up a slot, but we don't use any values from it. */
-      return 1;
-
-   default:
-      assert(!"not reached");
-      return 0;
-   }
+   /* Make sure we actually initialized the right amount of stuff here. */
+   assert(params_before + ir->type->component_slots() ==
+          c->prog_data.nr_params);
 }
 
 
