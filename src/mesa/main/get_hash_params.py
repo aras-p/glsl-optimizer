@@ -321,6 +321,11 @@ descriptor=[
 
 # Enums in  OpenGL and ES 3.0
 { "apis": ["GL", "GL_CORE", "GLES3"], "params": [
+# GL 3.0 / GLES3
+  [ "NUM_EXTENSIONS", "LOC_CUSTOM, TYPE_INT, 0, extra_gl30_es3" ],
+  [ "MAJOR_VERSION", "LOC_CUSTOM, TYPE_INT, 0, extra_gl30_es3" ],
+  [ "MINOR_VERSION", "LOC_CUSTOM, TYPE_INT, 0, extra_gl30_es3" ],
+
 # GL_ARB_ES3_compatibility
   [ "MAX_ELEMENT_INDEX", "CONTEXT_INT64(Const.MaxElementIndex), extra_ARB_ES3_compatibility_api_es3"],
 
@@ -661,9 +666,6 @@ descriptor=[
   [ "SAMPLER_BINDING", "LOC_CUSTOM, TYPE_INT, GL_SAMPLER_BINDING, NO_EXTRA" ],
 
 # GL 3.0
-  [ "NUM_EXTENSIONS", "LOC_CUSTOM, TYPE_INT, 0, extra_version_30" ],
-  [ "MAJOR_VERSION", "LOC_CUSTOM, TYPE_INT, 0, extra_version_30" ],
-  [ "MINOR_VERSION", "LOC_CUSTOM, TYPE_INT, 0, extra_version_30" ],
   [ "CONTEXT_FLAGS", "CONTEXT_INT(Const.ContextFlags), extra_version_30" ],
 
 # GL3.0 / GL_EXT_framebuffer_sRGB

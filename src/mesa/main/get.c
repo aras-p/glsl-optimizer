@@ -364,6 +364,12 @@ static const int extra_version_30[] = { EXTRA_VERSION_30, EXTRA_END };
 static const int extra_version_31[] = { EXTRA_VERSION_31, EXTRA_END };
 static const int extra_version_32[] = { EXTRA_VERSION_32, EXTRA_END };
 
+static const int extra_gl30_es3[] = {
+    EXTRA_VERSION_30,
+    EXTRA_API_ES3,
+    EXTRA_END,
+};
+
 static const int
 extra_ARB_vertex_program_api_es2[] = {
    EXT(ARB_vertex_program),
