@@ -2145,14 +2145,17 @@ fs_visitor::run()
    return !failed;
 }
 
-bool
+const unsigned *
 brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
                struct gl_fragment_program *fp,
-	       struct gl_shader_program *prog)
+               struct gl_shader_program *prog,
+               unsigned *final_assembly_size)
 {
    struct intel_context *intel = &brw->intel;
    bool start_busy = false;
    float start_time = 0;
+
+   brw_init_compile(brw, &c->func, c);
 
    if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
       start_busy = (intel->batch.last_bo &&
@@ -2186,7 +2189,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
       _mesa_problem(NULL, "Failed to compile fragment shader: %s\n",
 		    v.fail_msg);
 
-      return false;
+      return NULL;
    }
 
    if (intel->gen >= 5 && c->prog_data.nr_pull_params == 0) {
@@ -2211,7 +2214,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
       }
    }
 
-   return true;
+   return brw_get_program(&c->func, final_assembly_size);
 }
 
 bool

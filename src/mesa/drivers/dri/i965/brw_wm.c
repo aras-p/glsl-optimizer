@@ -168,13 +168,13 @@ bool do_wm_prog(struct brw_context *brw,
 
    memcpy(&c->key, key, sizeof(*key));
 
-   brw_init_compile(brw, &c->func, c);
-
    c->prog_data.barycentric_interp_modes =
       brw_compute_barycentric_interp_modes(brw, c->key.flat_shade,
                                            &fp->program);
 
-   brw_wm_fs_emit(brw, c, &fp->program, prog);
+   program = brw_wm_fs_emit(brw, c, &fp->program, prog, &program_size);
+   if (program == NULL)
+      return false;
 
    /* Scratch space is used for register spilling */
    if (c->last_scratch) {
@@ -190,10 +190,6 @@ bool do_wm_prog(struct brw_context *brw,
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM))
       fprintf(stderr, "\n");
-
-   /* get the program
-    */
-   program = brw_get_program(&c->func, &program_size);
 
    brw_upload_cache(&brw->cache, BRW_WM_PROG,
 		    &c->key, sizeof(c->key),
