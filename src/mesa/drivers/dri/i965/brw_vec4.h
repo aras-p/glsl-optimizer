@@ -215,6 +215,7 @@ public:
    const struct gl_vertex_program *vp;
    struct brw_vs_compile *c;
    struct brw_vs_prog_data *prog_data;
+   struct brw_compile *p;
 
    char *fail_msg;
    bool failed;

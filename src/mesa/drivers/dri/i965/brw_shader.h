@@ -41,7 +41,6 @@ public:
    struct brw_context *brw;
    struct intel_context *intel;
    struct gl_context *ctx;
-   struct brw_compile *p;
    struct brw_shader *shader;
    struct gl_shader_program *prog;
 

@@ -77,7 +77,6 @@ struct brw_wm_prog_key {
 };
 
 struct brw_wm_compile {
-   struct brw_compile func;
    struct brw_wm_prog_key key;
    struct brw_wm_prog_data prog_data;
 

@@ -45,13 +45,15 @@ fs_generator::fs_generator(struct brw_context *brw,
 
    : brw(brw), c(c), prog(prog), fp(fp), dual_source_output(dual_source_output)
 {
-   p = &c->func;
    intel = &brw->intel;
    ctx = &intel->ctx;
 
    shader = prog ? prog->_LinkedShaders[MESA_SHADER_FRAGMENT] : NULL;
 
    mem_ctx = c;
+
+   p = rzalloc(mem_ctx, struct brw_compile);
+   brw_init_compile(brw, p, mem_ctx);
 }
 
 fs_generator::~fs_generator()

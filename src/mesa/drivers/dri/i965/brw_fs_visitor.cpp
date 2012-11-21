@@ -2182,7 +2182,6 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    : dispatch_width(dispatch_width)
 {
    this->c = c;
-   this->p = &c->func;
    this->brw = brw;
    this->fp = fp;
    this->prog = prog;
