@@ -1220,13 +1220,10 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
 
       GLuint index = _mesa_add_state_reference(params,
 					       (gl_state_index *)tokens);
-
-      this->param_index[c->prog_data.nr_params] = index;
-      this->param_offset[c->prog_data.nr_params] = 0;
-      c->prog_data.nr_params++;
-      this->param_index[c->prog_data.nr_params] = index;
-      this->param_offset[c->prog_data.nr_params] = 1;
-      c->prog_data.nr_params++;
+      c->prog_data.param[c->prog_data.nr_params++] =
+         &fp->Base.Parameters->ParameterValues[index][0].f;
+      c->prog_data.param[c->prog_data.nr_params++] =
+         &fp->Base.Parameters->ParameterValues[index][1].f;
    }
 
    /* The 965 requires the EU to do the normalization of GL rectangle

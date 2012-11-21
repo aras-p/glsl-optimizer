@@ -596,9 +596,8 @@ fs_visitor::setup_fp_regs()
       for (unsigned p = 0;
            p < fp->Base.Parameters->NumParameters; p++) {
          for (unsigned int i = 0; i < 4; i++) {
-            this->param_index[c->prog_data.nr_params] = p;
-            this->param_offset[c->prog_data.nr_params] = i;
-            c->prog_data.nr_params++;
+            c->prog_data.param[c->prog_data.nr_params++] =
+               &fp->Base.Parameters->ParameterValues[p][i].f;
          }
       }
    }

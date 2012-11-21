@@ -815,10 +815,8 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
    case GLSL_TYPE_INT:
    case GLSL_TYPE_BOOL:
       for (unsigned int i = 0; i < type->vector_elements; i++) {
-	 unsigned int param = c->prog_data.nr_params++;
-
-	 this->param_index[param] = loc;
-	 this->param_offset[param] = i;
+	 c->prog_data.param[c->prog_data.nr_params++] =
+            &fp->Base.Parameters->ParameterValues[loc][i].f;
       }
       return 1;
 
@@ -874,9 +872,8 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	    break;
 	 last_swiz = swiz;
 
-	 this->param_index[c->prog_data.nr_params] = index;
-	 this->param_offset[c->prog_data.nr_params] = swiz;
-	 c->prog_data.nr_params++;
+	 c->prog_data.param[c->prog_data.nr_params++] =
+            &fp->Base.Parameters->ParameterValues[index][swiz].f;
       }
    }
 }
@@ -1177,25 +1174,6 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
       inst->mlen = 2 * dispatch_width / 8;
    }
    return inst;
-}
-
-/**
- * To be called after the last _mesa_add_state_reference() call, to
- * set up prog_data.param[] for assign_curb_setup() and
- * setup_pull_constants().
- */
-void
-fs_visitor::setup_paramvalues_refs()
-{
-   if (dispatch_width != 8)
-      return;
-
-   /* Set up the pointers to ParamValues now that that array is finalized. */
-   for (unsigned int i = 0; i < c->prog_data.nr_params; i++) {
-      c->prog_data.param[i] =
-	 (const float *)fp->Base.Parameters->ParameterValues[this->param_index[i]] +
-	 this->param_offset[i];
-   }
 }
 
 void
@@ -1528,9 +1506,6 @@ fs_visitor::remove_dead_constants()
 	 if (remapped == -1)
 	    continue;
 
-	 /* We've already done setup_paramvalues_refs() so no need to worry
-	  * about param_index and param_offset.
-	  */
 	 c->prog_data.param[remapped] = c->prog_data.param[i];
       }
 
@@ -2506,7 +2481,6 @@ fs_visitor::run()
 
       split_virtual_grfs();
 
-      setup_paramvalues_refs();
       move_uniform_array_access_to_pull_constants();
       setup_pull_constants();
 

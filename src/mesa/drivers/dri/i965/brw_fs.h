@@ -296,7 +296,6 @@ public:
    bool run();
    void setup_payload_gen4();
    void setup_payload_gen6();
-   void setup_paramvalues_refs();
    void assign_curb_setup();
    void calculate_urb_setup();
    void assign_urb_setup();
@@ -419,11 +418,6 @@ public:
    struct brw_wm_compile *c;
    unsigned int sanity_param_count;
 
-   /* Delayed setup of c->prog_data.params[] due to realloc of
-    * ParamValues[] during compile.
-    */
-   int param_index[MAX_UNIFORMS * 4];
-   int param_offset[MAX_UNIFORMS * 4];
    int param_size[MAX_UNIFORMS * 4];
 
    int *virtual_grf_sizes;
