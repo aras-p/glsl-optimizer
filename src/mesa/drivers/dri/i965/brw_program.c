@@ -143,7 +143,28 @@ brwProgramStringNotify(struct gl_context *ctx,
       _tnl_program_string(ctx, target, prog);
    }
 
+   brw_add_texrect_params(prog);
+
    return true;
+}
+
+void
+brw_add_texrect_params(struct gl_program *prog)
+{
+   for (int texunit = 0; texunit < BRW_MAX_TEX_UNIT; texunit++) {
+      if (!(prog->TexturesUsed[texunit] & (1 << TEXTURE_RECT_INDEX)))
+         continue;
+
+      int tokens[STATE_LENGTH] = {
+         STATE_INTERNAL,
+         STATE_TEXRECT_SCALE,
+         texunit,
+         0,
+         0
+      };
+
+      _mesa_add_state_reference(prog->Parameters, (gl_state_index *)tokens);
+   }
 }
 
 /* Per-thread scratch space is a power-of-two multiple of 1KB. */
