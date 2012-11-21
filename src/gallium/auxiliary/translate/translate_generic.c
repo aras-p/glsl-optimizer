@@ -806,7 +806,6 @@ struct translate *translate_generic_create( const struct translate_key *key )
             util_format_description(key->element[i].input_format);
 
       assert(format_desc);
-      assert(format_desc->fetch_rgba_float);
 
       tg->attrib[i].type = key->element[i].type;
 
@@ -820,11 +819,14 @@ struct translate *translate_generic_create( const struct translate_key *key )
          }
 
          if (format_desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+            assert(format_desc->fetch_rgba_sint);
             tg->attrib[i].fetch = (fetch_func)format_desc->fetch_rgba_sint;
          } else {
+            assert(format_desc->fetch_rgba_uint);
             tg->attrib[i].fetch = (fetch_func)format_desc->fetch_rgba_uint;
          }
       } else {
+         assert(format_desc->fetch_rgba_float);
          tg->attrib[i].fetch = (fetch_func)format_desc->fetch_rgba_float;
       }
 
