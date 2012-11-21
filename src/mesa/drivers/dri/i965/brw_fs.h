@@ -417,6 +417,7 @@ public:
 
    const struct gl_fragment_program *fp;
    struct brw_wm_compile *c;
+   unsigned int sanity_param_count;
 
    /* Delayed setup of c->prog_data.params[] due to realloc of
     * ParamValues[] during compile.

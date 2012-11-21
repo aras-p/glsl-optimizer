@@ -1239,6 +1239,8 @@ vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
 bool
 vec4_visitor::run()
 {
+   sanity_param_count = vp->Base.Parameters->NumParameters;
+
    if (INTEL_DEBUG & DEBUG_SHADER_TIME)
       emit_shader_time_begin();
 
@@ -1316,6 +1318,13 @@ vec4_visitor::run()
       if (failed)
          break;
    }
+
+   /* If any state parameters were appended, then ParameterValues could have
+    * been realloced, in which case the driver uniform storage set up by
+    * _mesa_associate_uniform_storage() would point to freed memory.  Make
+    * sure that didn't happen.
+    */
+   assert(sanity_param_count == vp->Base.Parameters->NumParameters);
 
    return !failed;
 }

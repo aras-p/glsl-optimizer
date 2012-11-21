@@ -2454,6 +2454,7 @@ fs_visitor::setup_payload_gen6()
 bool
 fs_visitor::run()
 {
+   sanity_param_count = fp->Base.Parameters->NumParameters;
    uint32_t orig_nr_params = c->prog_data.nr_params;
 
    if (intel->gen >= 6)
@@ -2566,6 +2567,13 @@ fs_visitor::run()
       assert(orig_nr_params == c->prog_data.nr_params);
       (void) orig_nr_params;
    }
+
+   /* If any state parameters were appended, then ParameterValues could have
+    * been realloced, in which case the driver uniform storage set up by
+    * _mesa_associate_uniform_storage() would point to freed memory.  Make
+    * sure that didn't happen.
+    */
+   assert(sanity_param_count == fp->Base.Parameters->NumParameters);
 
    return !failed;
 }
