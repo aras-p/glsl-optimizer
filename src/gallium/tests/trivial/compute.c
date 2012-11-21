@@ -201,13 +201,11 @@ static void init_tex(struct context *ctx, int slot,
         *tex = ctx->screen->resource_create(ctx->screen, &ttex);
         assert(*tex);
 
-        xfer = pipe->get_transfer(pipe, *tex, 0, PIPE_TRANSFER_WRITE,
+        map = pipe->transfer_map(pipe, *tex, 0, PIPE_TRANSFER_WRITE,
                                   &(struct pipe_box) { .width = w,
                                                   .height = h,
-                                                  .depth = 1 });
+                                                  .depth = 1 }, &xfer);
         assert(xfer);
-
-        map = pipe->transfer_map(pipe, xfer);
         assert(map);
 
         for (y = 0; y < ny; ++y) {
@@ -217,7 +215,6 @@ static void init_tex(struct context *ctx, int slot,
         }
 
         pipe->transfer_unmap(pipe, xfer);
-        pipe->transfer_destroy(pipe, xfer);
 
         ctx->tex_rw[slot] = rw;
 }
@@ -246,13 +243,11 @@ static void check_tex(struct context *ctx, int slot,
         if (!check)
                 check = default_check;
 
-        xfer = pipe->get_transfer(pipe, tex, 0, PIPE_TRANSFER_READ,
+        map = pipe->transfer_map(pipe, tex, 0, PIPE_TRANSFER_READ,
                                   &(struct pipe_box) { .width = tex->width0,
                                         .height = tex->height0,
-                                        .depth = 1 });
+                                        .depth = 1 }, &xfer);
         assert(xfer);
-
-        map = pipe->transfer_map(pipe, xfer);
         assert(map);
 
         for (y = 0; y < ny; ++y) {
@@ -285,7 +280,6 @@ static void check_tex(struct context *ctx, int slot,
         }
 
         pipe->transfer_unmap(pipe, xfer);
-        pipe->transfer_destroy(pipe, xfer);
 
         if (err)
                 printf("(%d, %d): \x1b[31mFAIL\x1b[0m (%d)\n", x, y, err);
