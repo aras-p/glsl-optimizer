@@ -314,7 +314,7 @@ public:
 
    int virtual_grf_alloc(int size);
    void setup_uniform_clipplane_values();
-   int setup_uniform_values(int loc, const glsl_type *type);
+   void setup_uniform_values(ir_variable *ir);
    void setup_builtin_uniform_values(ir_variable *ir);
    int setup_attributes(int payload_reg);
    int setup_uniforms(int payload_reg);

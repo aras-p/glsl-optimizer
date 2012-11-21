@@ -22,6 +22,7 @@
  */
 
 #include "brw_vec4.h"
+#include "glsl/ir_uniform.h"
 extern "C" {
 #include "main/context.h"
 #include "main/macros.h"
@@ -455,66 +456,46 @@ dst_reg::dst_reg(class vec4_visitor *v, const struct glsl_type *type)
  * get stored, rather than in some global gl_shader_program uniform
  * store.
  */
-int
-vec4_visitor::setup_uniform_values(int loc, const glsl_type *type)
+void
+vec4_visitor::setup_uniform_values(ir_variable *ir)
 {
-   unsigned int offset = 0;
-   float *values = &this->vp->Base.Parameters->ParameterValues[loc][0].f;
+   int namelen = strlen(ir->name);
 
-   if (type->is_matrix()) {
-      const glsl_type *column = type->column_type();
+   /* The data for our (non-builtin) uniforms is stored in a series of
+    * gl_uniform_driver_storage structs for each subcomponent that
+    * glGetUniformLocation() could name.  We know it's been set up in the same
+    * order we'd walk the type, so walk the list of storage and find anything
+    * with our name, or the prefix of a component that starts with our name.
+    */
+   for (unsigned u = 0; u < prog->NumUserUniformStorage; u++) {
+      struct gl_uniform_storage *storage = &prog->UniformStorage[u];
 
-      for (unsigned int i = 0; i < type->matrix_columns; i++) {
-	 offset += setup_uniform_values(loc + offset, column);
+      if (strncmp(ir->name, storage->name, namelen) != 0 ||
+          (storage->name[namelen] != 0 &&
+           storage->name[namelen] != '.' &&
+           storage->name[namelen] != '[')) {
+         continue;
       }
 
-      return offset;
-   }
+      gl_constant_value *components = storage->storage;
+      unsigned vector_count = (MAX2(storage->array_elements, 1) *
+                               storage->type->matrix_columns);
 
-   switch (type->base_type) {
-   case GLSL_TYPE_FLOAT:
-   case GLSL_TYPE_UINT:
-   case GLSL_TYPE_INT:
-   case GLSL_TYPE_BOOL:
-      for (unsigned int i = 0; i < type->vector_elements; i++) {
-	 c->prog_data.param[this->uniforms * 4 + i] = &values[i];
+      for (unsigned s = 0; s < vector_count; s++) {
+         uniform_vector_size[uniforms] = storage->type->vector_elements;
+
+         int i;
+         for (i = 0; i < uniform_vector_size[uniforms]; i++) {
+            c->prog_data.param[uniforms * 4 + i] = &components->f;
+            components++;
+         }
+         for (; i < 4; i++) {
+            static float zero = 0;
+            c->prog_data.param[uniforms * 4 + i] = &zero;
+         }
+
+         uniforms++;
       }
-
-      /* Set up pad elements to get things aligned to a vec4 boundary. */
-      for (unsigned int i = type->vector_elements; i < 4; i++) {
-	 static float zero = 0;
-
-	 c->prog_data.param[this->uniforms * 4 + i] = &zero;
-      }
-
-      /* Track the size of this uniform vector, for future packing of
-       * uniforms.
-       */
-      this->uniform_vector_size[this->uniforms] = type->vector_elements;
-      this->uniforms++;
-
-      return 1;
-
-   case GLSL_TYPE_STRUCT:
-      for (unsigned int i = 0; i < type->length; i++) {
-	 offset += setup_uniform_values(loc + offset,
-					type->fields.structure[i].type);
-      }
-      return offset;
-
-   case GLSL_TYPE_ARRAY:
-      for (unsigned int i = 0; i < type->length; i++) {
-	 offset += setup_uniform_values(loc + offset, type->fields.array);
-      }
-      return offset;
-
-   case GLSL_TYPE_SAMPLER:
-      /* The sampler takes up a slot, but we don't use any values from it. */
-      return 1;
-
-   default:
-      assert(!"not reached");
-      return 0;
    }
 }
 
@@ -963,7 +944,7 @@ vec4_visitor::visit(ir_variable *ir)
       if (!strncmp(ir->name, "gl_", 3)) {
 	 setup_builtin_uniform_values(ir);
       } else {
-	 setup_uniform_values(ir->location, ir->type);
+	 setup_uniform_values(ir);
       }
       break;
 
