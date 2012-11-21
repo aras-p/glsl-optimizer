@@ -120,7 +120,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 		return SPACE;
 }
 
-{HASH}version {
+{HASH}version{HSPACE}+ {
 	yylval->str = ralloc_strdup (yyextra, yytext);
 	yyextra->space_tokens = 0;
 	return HASH_VERSION;
@@ -135,7 +135,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return OTHER;
 }
 
-{HASH}line {
+{HASH}line{HSPACE}+ {
 	return HASH_LINE;
 }
 
