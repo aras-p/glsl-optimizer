@@ -68,7 +68,18 @@ bblock_t::make_list(void *mem_ctx)
 
 cfg_t::cfg_t(backend_visitor *v)
 {
-   mem_ctx = ralloc_context(v->mem_ctx);
+   create(v->mem_ctx, &v->instructions);
+}
+
+cfg_t::cfg_t(void *mem_ctx, exec_list *instructions)
+{
+   create(mem_ctx, instructions);
+}
+
+void
+cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
+{
+   mem_ctx = ralloc_context(parent_mem_ctx);
    block_list.make_empty();
    num_blocks = 0;
    ip = 0;
@@ -82,9 +93,9 @@ cfg_t::cfg_t(backend_visitor *v)
 
    set_next_block(entry);
 
-   entry->start = (backend_instruction *)v->instructions.get_head();
+   entry->start = (backend_instruction *) instructions->get_head();
 
-   foreach_list(node, &v->instructions) {
+   foreach_list(node, instructions) {
       backend_instruction *inst = (backend_instruction *)node;
 
       cur->end = inst;

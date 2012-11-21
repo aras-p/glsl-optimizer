@@ -79,7 +79,11 @@ public:
    }
 
    cfg_t(backend_visitor *v);
+   cfg_t(void *mem_ctx, exec_list *instructions);
    ~cfg_t();
+
+   void create(void *mem_ctx, exec_list *instructions);
+
    bblock_t *new_block();
    void set_next_block(bblock_t *block);
    void make_block_array();
