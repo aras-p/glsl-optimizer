@@ -176,7 +176,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
        * uniforms that are used.  This has to be done now (during linking).
        * Code generation doesn't happen until the first time this shader is
        * used for rendering.  Waiting until then to generate the parameters is
-       * too late.  At that point, the values for the built-in informs won't
+       * too late.  At that point, the values for the built-in uniforms won't
        * get sent to the shader.
        */
       foreach_list(node, shader->ir) {
