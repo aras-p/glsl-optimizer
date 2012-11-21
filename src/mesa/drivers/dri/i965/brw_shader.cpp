@@ -100,9 +100,6 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 	return false;
       prog->Parameters = _mesa_new_parameter_list();
 
-      _mesa_generate_parameters_list_for_uniforms(shProg, &shader->base,
-						  prog->Parameters);
-
       if (stage == 0) {
 	 struct gl_vertex_program *vp = (struct gl_vertex_program *) prog;
 	 vp->UsesClipDistance = shProg->Vert.UsesClipDistance;
