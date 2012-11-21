@@ -315,8 +315,8 @@ static void draw(struct program *p)
 	cso_set_viewport(p->cso, &p->viewport);
 
 	/* sampler */
-	cso_single_sampler(p->cso, 0, &p->sampler);
-	cso_single_sampler_done(p->cso);
+	cso_single_sampler(p->cso, PIPE_SHADER_FRAGMENT, 0, &p->sampler);
+	cso_single_sampler_done(p->cso, PIPE_SHADER_FRAGMENT);
 
 	/* texture sampler view */
 	cso_set_sampler_views(p->cso, PIPE_SHADER_FRAGMENT, 1, &p->view);
