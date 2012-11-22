@@ -290,6 +290,11 @@ static GLuint get_size( GLenum type )
    case GL_UNSIGNED_SHORT: return sizeof(GLushort);
    case GL_UNSIGNED_BYTE: return sizeof(GLubyte);
    case GL_FIXED: return sizeof(GLuint);
+   /* packed formats: always have 4 components, and element size is
+    * 4 bytes, so pretend each component is 1 byte.
+    */
+   case GL_INT_2_10_10_10_REV: return sizeof(GLbyte);
+   case GL_UNSIGNED_INT_2_10_10_10_REV: return sizeof(GLubyte);
    default: assert(0); return 0;
    }
 }
