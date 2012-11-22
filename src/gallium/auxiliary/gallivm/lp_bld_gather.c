@@ -32,6 +32,7 @@
 #include "lp_bld_format.h"
 #include "lp_bld_gather.h"
 #include "lp_bld_init.h"
+#include "lp_bld_intr.h"
 
 
 /**
@@ -92,10 +93,15 @@ lp_build_gather_elem(struct gallivm_state *gallivm,
    res = LLVMBuildLoad(gallivm->builder, ptr, "");
 
    assert(src_width <= dst_width);
-   if (src_width > dst_width)
+   if (src_width > dst_width) {
       res = LLVMBuildTrunc(gallivm->builder, res, dst_elem_type, "");
-   if (src_width < dst_width)
+   } else if (src_width < dst_width) {
       res = LLVMBuildZExt(gallivm->builder, res, dst_elem_type, "");
+#ifdef PIPE_ARCH_BIG_ENDIAN
+      res = LLVMBuildShl(gallivm->builder, res,
+                         LLVMConstInt(dst_elem_type, dst_width - src_width, 0), "");
+#endif
+   }
 
    return res;
 }

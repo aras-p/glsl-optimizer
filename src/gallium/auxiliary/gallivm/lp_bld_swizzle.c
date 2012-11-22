@@ -431,9 +431,15 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
        *
        * For example, this will convert BGRA to RGBA by doing
        *
+       * Little endian:
        *   rgba = (bgra & 0x00ff0000) >> 16
        *        | (bgra & 0xff00ff00)
        *        | (bgra & 0x000000ff) << 16
+       *
+       * Big endian:A
+       *   rgba = (bgra & 0x0000ff00) << 16
+       *        | (bgra & 0x00ff00ff)
+       *        | (bgra & 0xff000000) >> 16
        *
        * This is necessary not only for faster cause, but because X86 backend
        * will refuse shuffles of <4 x i8> vectors
@@ -479,7 +485,11 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
             /* FIXME: big endian */
             if (swizzles[chan] < 4 &&
                 chan - swizzles[chan] == shift) {
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
                mask |= ((1ULL << type.width) - 1) << (swizzles[chan] * type.width);
+#else
+               mask |= ((1ULL << type.width) - 1) << (type4.width - type.width) >> (swizzles[chan] * type.width);
+#endif
             }
          }
 
@@ -492,11 +502,21 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
             masked = LLVMBuildAnd(builder, a,
                                   lp_build_const_int_vec(bld->gallivm, type4, mask), "");
             if (shift > 0) {
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
                shifted = LLVMBuildShl(builder, masked,
                                       lp_build_const_int_vec(bld->gallivm, type4, shift*type.width), "");
+#else
+               shifted = LLVMBuildLShr(builder, masked,
+                                       lp_build_const_int_vec(bld->gallivm, type4, shift*type.width), "");
+#endif
             } else if (shift < 0) {
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
                shifted = LLVMBuildLShr(builder, masked,
                                        lp_build_const_int_vec(bld->gallivm, type4, -shift*type.width), "");
+#else
+               shifted = LLVMBuildShl(builder, masked,
+                                      lp_build_const_int_vec(bld->gallivm, type4, -shift*type.width), "");
+#endif
             } else {
                shifted = masked;
             }
