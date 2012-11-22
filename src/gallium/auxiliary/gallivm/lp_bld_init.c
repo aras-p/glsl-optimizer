@@ -468,6 +468,25 @@ lp_build_init(void)
       util_cpu_caps.has_avx = 0;
    }
 
+#ifdef PIPE_ARCH_PPC_64
+   /* Set the NJ bit in VSCR to 0 so denormalized values are handled as
+    * specified by IEEE standard (PowerISA 2.06 - Section 6.3). This garantees
+    * that some rounding and half-float to float handling does not round
+    * incorrectly to 0.
+    */
+   if (util_cpu_caps.has_altivec) {
+      unsigned short mask[] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF,
+                                0xFFFF, 0xFFFF, 0xFFFE, 0xFFFF };
+      __asm (
+        "mfvscr %%v1\n"
+        "vand   %0,%%v1,%0\n"
+        "mtvscr %0"
+        :
+        : "r" (*mask)
+      );
+   }
+#endif
+
    gallivm_initialized = TRUE;
 
 #if 0
