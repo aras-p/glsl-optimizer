@@ -113,14 +113,14 @@ static inline float conv_i2_to_i(int i2)
    return (float)val.x;
 }
 
-static inline float conv_i10_to_norm_float(int i10)
+static inline float conv_i10_to_norm_float(const struct gl_context *ctx, int i10)
 {
    struct attr_bits_10 val;
    val.x = i10;
    return (2.0F * (float)val.x + 1.0F) * (1.0F  / 1023.0F);
 }
 
-static inline float conv_i2_to_norm_float(int i2)
+static inline float conv_i2_to_norm_float(const struct gl_context *ctx, int i2)
 {
    struct attr_bits_2 val;
    val.x = i2;
@@ -142,21 +142,21 @@ static inline float conv_i2_to_norm_float(int i2)
 				conv_i2_to_i(((I10) >> 30) & 0x3))
 
 
-#define ATTRI10N_1( A, I10 ) ATTR( A, 1, GL_FLOAT, conv_i10_to_norm_float((I10) & 0x3ff), 0, 0, 1 )
-#define ATTRI10N_2( A, I10 ) ATTR( A, 2, GL_FLOAT, \
-				conv_i10_to_norm_float((I10) & 0x3ff),		\
-				conv_i10_to_norm_float(((I10) >> 10) & 0x3ff), 0, 1 )
-#define ATTRI10N_3( A, I10 ) ATTR( A, 3, GL_FLOAT, \
-				conv_i10_to_norm_float((I10) & 0x3ff),	    \
-				conv_i10_to_norm_float(((I10) >> 10) & 0x3ff), \
-				conv_i10_to_norm_float(((I10) >> 20) & 0x3ff), 1 )
-#define ATTRI10N_4( A, I10 ) ATTR( A, 4, GL_FLOAT, \
-				conv_i10_to_norm_float((I10) & 0x3ff),		\
-				conv_i10_to_norm_float(((I10) >> 10) & 0x3ff), \
-				conv_i10_to_norm_float(((I10) >> 20) & 0x3ff), \
-				conv_i2_to_norm_float(((I10) >> 30) & 0x3))
+#define ATTRI10N_1(ctx, A, I10) ATTR(A, 1, GL_FLOAT, conv_i10_to_norm_float(ctx, (I10) & 0x3ff), 0, 0, 1 )
+#define ATTRI10N_2(ctx, A, I10) ATTR(A, 2, GL_FLOAT, \
+				conv_i10_to_norm_float(ctx, (I10) & 0x3ff),		\
+				conv_i10_to_norm_float(ctx, ((I10) >> 10) & 0x3ff), 0, 1 )
+#define ATTRI10N_3(ctx, A, I10) ATTR(A, 3, GL_FLOAT, \
+				conv_i10_to_norm_float(ctx, (I10) & 0x3ff),	    \
+				conv_i10_to_norm_float(ctx, ((I10) >> 10) & 0x3ff), \
+				conv_i10_to_norm_float(ctx, ((I10) >> 20) & 0x3ff), 1 )
+#define ATTRI10N_4(ctx, A, I10) ATTR(A, 4, GL_FLOAT, \
+				conv_i10_to_norm_float(ctx, (I10) & 0x3ff),		\
+				conv_i10_to_norm_float(ctx, ((I10) >> 10) & 0x3ff), \
+				conv_i10_to_norm_float(ctx, ((I10) >> 20) & 0x3ff), \
+				conv_i2_to_norm_float(ctx, ((I10) >> 30) & 0x3))
 
-#define ATTR_UI(val, type, normalized, attr, arg) do {		\
+#define ATTR_UI(ctx, val, type, normalized, attr, arg) do {	\
    if ((type) == GL_UNSIGNED_INT_2_10_10_10_REV) {		\
       if (normalized) {						\
 	 ATTRUI10N_##val((attr), (arg));			\
@@ -165,7 +165,7 @@ static inline float conv_i2_to_norm_float(int i2)
       }								\
    }   else if ((type) == GL_INT_2_10_10_10_REV) {		\
       if (normalized) {						\
-	 ATTRI10N_##val((attr), (arg));				\
+	 ATTRI10N_##val(ctx, (attr), (arg));			\
       } else {							\
 	 ATTRI10_##val((attr), (arg));				\
       }								\
@@ -173,11 +173,11 @@ static inline float conv_i2_to_norm_float(int i2)
       ERROR(GL_INVALID_VALUE);					\
    } while(0)
 
-#define ATTR_UI_INDEX(val, type, normalized, index, arg) do {	\
+#define ATTR_UI_INDEX(ctx, val, type, normalized, index, arg) do {	\
       if ((index) == 0) {					\
-	 ATTR_UI(val, (type), normalized, 0, (arg));			\
+	 ATTR_UI(ctx, val, (type), normalized, 0, (arg));		\
       } else if ((index) < MAX_VERTEX_GENERIC_ATTRIBS) {		\
-	 ATTR_UI(val, (type), normalized, VBO_ATTRIB_GENERIC0 + (index), (arg)); \
+	 ATTR_UI(ctx, val, (type), normalized, VBO_ATTRIB_GENERIC0 + (index), (arg)); \
       } else								\
 	 ERROR(GL_INVALID_VALUE);					\
    } while(0)
@@ -804,98 +804,98 @@ static void GLAPIENTRY
 TAG(VertexP2ui)(GLenum type, GLuint value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(2, type, 0, VBO_ATTRIB_POS, value);
+   ATTR_UI(ctx, 2, type, 0, VBO_ATTRIB_POS, value);
 }
 
 static void GLAPIENTRY
 TAG(VertexP2uiv)(GLenum type, const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(2, type, 0, VBO_ATTRIB_POS, value[0]);
+   ATTR_UI(ctx, 2, type, 0, VBO_ATTRIB_POS, value[0]);
 }
 
 static void GLAPIENTRY
 TAG(VertexP3ui)(GLenum type, GLuint value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(3, type, 0, VBO_ATTRIB_POS, value);
+   ATTR_UI(ctx, 3, type, 0, VBO_ATTRIB_POS, value);
 }
 
 static void GLAPIENTRY
 TAG(VertexP3uiv)(GLenum type, const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(3, type, 0, VBO_ATTRIB_POS, value[0]);
+   ATTR_UI(ctx, 3, type, 0, VBO_ATTRIB_POS, value[0]);
 }
 
 static void GLAPIENTRY
 TAG(VertexP4ui)(GLenum type, GLuint value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(4, type, 0, VBO_ATTRIB_POS, value);
+   ATTR_UI(ctx, 4, type, 0, VBO_ATTRIB_POS, value);
 }
 
 static void GLAPIENTRY
 TAG(VertexP4uiv)(GLenum type, const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(4, type, 0, VBO_ATTRIB_POS, value[0]);
+   ATTR_UI(ctx, 4, type, 0, VBO_ATTRIB_POS, value[0]);
 }
 
 static void GLAPIENTRY
 TAG(TexCoordP1ui)(GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(1, type, 0, VBO_ATTRIB_TEX0, coords);
+   ATTR_UI(ctx, 1, type, 0, VBO_ATTRIB_TEX0, coords);
 }
 
 static void GLAPIENTRY
 TAG(TexCoordP1uiv)(GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(1, type, 0, VBO_ATTRIB_TEX0, coords[0]);
+   ATTR_UI(ctx, 1, type, 0, VBO_ATTRIB_TEX0, coords[0]);
 }
 
 static void GLAPIENTRY
 TAG(TexCoordP2ui)(GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(2, type, 0, VBO_ATTRIB_TEX0, coords);
+   ATTR_UI(ctx, 2, type, 0, VBO_ATTRIB_TEX0, coords);
 }
 
 static void GLAPIENTRY
 TAG(TexCoordP2uiv)(GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(2, type, 0, VBO_ATTRIB_TEX0, coords[0]);
+   ATTR_UI(ctx, 2, type, 0, VBO_ATTRIB_TEX0, coords[0]);
 }
 
 static void GLAPIENTRY
 TAG(TexCoordP3ui)(GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(3, type, 0, VBO_ATTRIB_TEX0, coords);
+   ATTR_UI(ctx, 3, type, 0, VBO_ATTRIB_TEX0, coords);
 }
 
 static void GLAPIENTRY
 TAG(TexCoordP3uiv)(GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(3, type, 0, VBO_ATTRIB_TEX0, coords[0]);
+   ATTR_UI(ctx, 3, type, 0, VBO_ATTRIB_TEX0, coords[0]);
 }
 
 static void GLAPIENTRY
 TAG(TexCoordP4ui)(GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(4, type, 0, VBO_ATTRIB_TEX0, coords);
+   ATTR_UI(ctx, 4, type, 0, VBO_ATTRIB_TEX0, coords);
 }
 
 static void GLAPIENTRY
 TAG(TexCoordP4uiv)(GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(4, type, 0, VBO_ATTRIB_TEX0, coords[0]);
+   ATTR_UI(ctx, 4, type, 0, VBO_ATTRIB_TEX0, coords[0]);
 }
 
 static void GLAPIENTRY
@@ -903,7 +903,7 @@ TAG(MultiTexCoordP1ui)(GLenum target, GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
-   ATTR_UI(1, type, 0, attr, coords);
+   ATTR_UI(ctx, 1, type, 0, attr, coords);
 }
 
 static void GLAPIENTRY
@@ -911,7 +911,7 @@ TAG(MultiTexCoordP1uiv)(GLenum target, GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
-   ATTR_UI(1, type, 0, attr, coords[0]);
+   ATTR_UI(ctx, 1, type, 0, attr, coords[0]);
 }
 
 static void GLAPIENTRY
@@ -919,7 +919,7 @@ TAG(MultiTexCoordP2ui)(GLenum target, GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
-   ATTR_UI(2, type, 0, attr, coords);
+   ATTR_UI(ctx, 2, type, 0, attr, coords);
 }
 
 static void GLAPIENTRY
@@ -927,7 +927,7 @@ TAG(MultiTexCoordP2uiv)(GLenum target, GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
-   ATTR_UI(2, type, 0, attr, coords[0]);
+   ATTR_UI(ctx, 2, type, 0, attr, coords[0]);
 }
 
 static void GLAPIENTRY
@@ -935,7 +935,7 @@ TAG(MultiTexCoordP3ui)(GLenum target, GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
-   ATTR_UI(3, type, 0, attr, coords);
+   ATTR_UI(ctx, 3, type, 0, attr, coords);
 }
 
 static void GLAPIENTRY
@@ -943,7 +943,7 @@ TAG(MultiTexCoordP3uiv)(GLenum target, GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
-   ATTR_UI(3, type, 0, attr, coords[0]);
+   ATTR_UI(ctx, 3, type, 0, attr, coords[0]);
 }
 
 static void GLAPIENTRY
@@ -951,7 +951,7 @@ TAG(MultiTexCoordP4ui)(GLenum target, GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
-   ATTR_UI(4, type, 0, attr, coords);
+   ATTR_UI(ctx, 4, type, 0, attr, coords);
 }
 
 static void GLAPIENTRY
@@ -959,63 +959,63 @@ TAG(MultiTexCoordP4uiv)(GLenum target, GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
-   ATTR_UI(4, type, 0, attr, coords[0]);
+   ATTR_UI(ctx, 4, type, 0, attr, coords[0]);
 }
 
 static void GLAPIENTRY
 TAG(NormalP3ui)(GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(3, type, 1, VBO_ATTRIB_NORMAL, coords);
+   ATTR_UI(ctx, 3, type, 1, VBO_ATTRIB_NORMAL, coords);
 }
 
 static void GLAPIENTRY
 TAG(NormalP3uiv)(GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(3, type, 1, VBO_ATTRIB_NORMAL, coords[0]);
+   ATTR_UI(ctx, 3, type, 1, VBO_ATTRIB_NORMAL, coords[0]);
 }
 
 static void GLAPIENTRY
 TAG(ColorP3ui)(GLenum type, GLuint color)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(3, type, 1, VBO_ATTRIB_COLOR0, color);
+   ATTR_UI(ctx, 3, type, 1, VBO_ATTRIB_COLOR0, color);
 }
 
 static void GLAPIENTRY
 TAG(ColorP3uiv)(GLenum type, const GLuint *color)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(3, type, 1, VBO_ATTRIB_COLOR0, color[0]);
+   ATTR_UI(ctx, 3, type, 1, VBO_ATTRIB_COLOR0, color[0]);
 }
 
 static void GLAPIENTRY
 TAG(ColorP4ui)(GLenum type, GLuint color)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(4, type, 1, VBO_ATTRIB_COLOR0, color);
+   ATTR_UI(ctx, 4, type, 1, VBO_ATTRIB_COLOR0, color);
 }
 
 static void GLAPIENTRY
 TAG(ColorP4uiv)(GLenum type, const GLuint *color)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(4, type, 1, VBO_ATTRIB_COLOR0, color[0]);
+   ATTR_UI(ctx, 4, type, 1, VBO_ATTRIB_COLOR0, color[0]);
 }
 
 static void GLAPIENTRY
 TAG(SecondaryColorP3ui)(GLenum type, GLuint color)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(3, type, 1, VBO_ATTRIB_COLOR1, color);
+   ATTR_UI(ctx, 3, type, 1, VBO_ATTRIB_COLOR1, color);
 }
 
 static void GLAPIENTRY
 TAG(SecondaryColorP3uiv)(GLenum type, const GLuint *color)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI(3, type, 1, VBO_ATTRIB_COLOR1, color[0]);
+   ATTR_UI(ctx, 3, type, 1, VBO_ATTRIB_COLOR1, color[0]);
 }
 
 static void GLAPIENTRY
@@ -1023,7 +1023,7 @@ TAG(VertexAttribP1ui)(GLuint index, GLenum type, GLboolean normalized,
 		      GLuint value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI_INDEX(1, type, normalized, index, value);
+   ATTR_UI_INDEX(ctx, 1, type, normalized, index, value);
 }
 
 static void GLAPIENTRY
@@ -1031,7 +1031,7 @@ TAG(VertexAttribP2ui)(GLuint index, GLenum type, GLboolean normalized,
 		      GLuint value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI_INDEX(2, type, normalized, index, value);
+   ATTR_UI_INDEX(ctx, 2, type, normalized, index, value);
 }
 
 static void GLAPIENTRY
@@ -1039,7 +1039,7 @@ TAG(VertexAttribP3ui)(GLuint index, GLenum type, GLboolean normalized,
 		      GLuint value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI_INDEX(3, type, normalized, index, value);
+   ATTR_UI_INDEX(ctx, 3, type, normalized, index, value);
 }
 
 static void GLAPIENTRY
@@ -1047,7 +1047,7 @@ TAG(VertexAttribP4ui)(GLuint index, GLenum type, GLboolean normalized,
 		      GLuint value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI_INDEX(4, type, normalized, index, value);
+   ATTR_UI_INDEX(ctx, 4, type, normalized, index, value);
 }
 
 static void GLAPIENTRY
@@ -1055,7 +1055,7 @@ TAG(VertexAttribP1uiv)(GLuint index, GLenum type, GLboolean normalized,
 		       const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI_INDEX(1, type, normalized, index, *value);
+   ATTR_UI_INDEX(ctx, 1, type, normalized, index, *value);
 }
 
 static void GLAPIENTRY
@@ -1063,7 +1063,7 @@ TAG(VertexAttribP2uiv)(GLuint index, GLenum type, GLboolean normalized,
 		       const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI_INDEX(2, type, normalized, index, *value);
+   ATTR_UI_INDEX(ctx, 2, type, normalized, index, *value);
 }
 
 static void GLAPIENTRY
@@ -1071,7 +1071,7 @@ TAG(VertexAttribP3uiv)(GLuint index, GLenum type, GLboolean normalized,
 		       const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI_INDEX(3, type, normalized, index, *value);
+   ATTR_UI_INDEX(ctx, 3, type, normalized, index, *value);
 }
 
 static void GLAPIENTRY
@@ -1079,7 +1079,7 @@ TAG(VertexAttribP4uiv)(GLuint index, GLenum type, GLboolean normalized,
 		      const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ATTR_UI_INDEX(4, type, normalized, index, *value);
+   ATTR_UI_INDEX(ctx, 4, type, normalized, index, *value);
 }
 
 
