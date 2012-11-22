@@ -433,30 +433,46 @@ lp_build_pack2(struct gallivm_state *gallivm,
    assert(src_type.length * 2 == dst_type.length);
 
    /* Check for special cases first */
-   if(util_cpu_caps.has_sse2 && src_type.width * src_type.length >= 128) {
+   if((util_cpu_caps.has_sse2 || util_cpu_caps.has_altivec) &&
+       src_type.width * src_type.length >= 128) {
       const char *intrinsic = NULL;
 
       switch(src_type.width) {
       case 32:
-         if(dst_type.sign) {
-            intrinsic = "llvm.x86.sse2.packssdw.128";
-         }
-         else {
-            if (util_cpu_caps.has_sse4_1) {
-               intrinsic = "llvm.x86.sse41.packusdw";
+         if (util_cpu_caps.has_sse2) {
+           if(dst_type.sign) {
+              intrinsic = "llvm.x86.sse2.packssdw.128";
+           }
+           else {
+              if (util_cpu_caps.has_sse4_1) {
+                 intrinsic = "llvm.x86.sse41.packusdw";
 #if HAVE_LLVM < 0x0207
-               /* llvm < 2.7 has inconsistent signatures except for packusdw */
-               intr_type = dst_type;
+                 /* llvm < 2.7 has inconsistent signatures except for packusdw */
+                 intr_type = dst_type;
 #endif
-            }
+              }
+           }
+         } else if (util_cpu_caps.has_altivec) {
+            if (dst_type.sign) {
+              intrinsic = "llvm.ppc.altivec.vpkswus";
+           } else {
+              intrinsic = "llvm.ppc.altivec.vpkuwus";
+           }
          }
          break;
       case 16:
          if (dst_type.sign) {
-            intrinsic = "llvm.x86.sse2.packsswb.128";
-         }
-         else {
-            intrinsic = "llvm.x86.sse2.packuswb.128";
+            if (util_cpu_caps.has_sse2) {
+              intrinsic = "llvm.x86.sse2.packsswb.128";
+            } else if (util_cpu_caps.has_altivec) {
+              intrinsic = "llvm.ppc.altivec.vpkshss";
+            }
+         } else {
+            if (util_cpu_caps.has_sse2) {
+              intrinsic = "llvm.x86.sse2.packuswb.128";
+            } else if (util_cpu_caps.has_altivec) {
+	      intrinsic = "llvm.ppc.altivec.vpkshus";
+            }
          }
          break;
       /* default uses generic shuffle below */
