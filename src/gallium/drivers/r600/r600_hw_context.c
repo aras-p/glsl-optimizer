@@ -936,13 +936,14 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 	unsigned *stride_in_dw = ctx->vs_shader->so.stride;
 	unsigned buffer_en, i, update_flags = 0;
 	uint64_t va;
+	unsigned num_cs_dw_streamout_end;
 
 	buffer_en = (ctx->num_so_targets >= 1 && t[0] ? 1 : 0) |
 		    (ctx->num_so_targets >= 2 && t[1] ? 2 : 0) |
 		    (ctx->num_so_targets >= 3 && t[2] ? 4 : 0) |
 		    (ctx->num_so_targets >= 4 && t[3] ? 8 : 0);
 
-	ctx->num_cs_dw_streamout_end =
+	num_cs_dw_streamout_end =
 		12 + /* flush_vgt_streamout */
 		util_bitcount(buffer_en) * 8 + /* STRMOUT_BUFFER_UPDATE */
 		3 /* set_streamout_enable(0) */;
@@ -956,7 +957,10 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 			   util_bitcount(buffer_en & ctx->streamout_append_bitmask) * 8 + /* STRMOUT_BUFFER_UPDATE */
 			   util_bitcount(buffer_en & ~ctx->streamout_append_bitmask) * 6 + /* STRMOUT_BUFFER_UPDATE */
 			   (ctx->family > CHIP_R600 && ctx->family < CHIP_RS780 ? 2 : 0) + /* SURFACE_BASE_UPDATE */
-			   ctx->num_cs_dw_streamout_end, TRUE);
+			   num_cs_dw_streamout_end, TRUE);
+
+	/* This must be set after r600_need_cs_space. */
+	ctx->num_cs_dw_streamout_end = num_cs_dw_streamout_end;
 
 	if (ctx->chip_class >= EVERGREEN) {
 		evergreen_flush_vgt_streamout(ctx);
