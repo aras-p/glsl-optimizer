@@ -365,13 +365,19 @@ lp_build_add(struct lp_build_context *bld,
       if(a == bld->one || b == bld->one)
         return bld->one;
 
-      if(util_cpu_caps.has_sse2 &&
-         type.width * type.length == 128 &&
-         !type.floating && !type.fixed) {
-         if(type.width == 8)
-            intrinsic = type.sign ? "llvm.x86.sse2.padds.b" : "llvm.x86.sse2.paddus.b";
-         if(type.width == 16)
-            intrinsic = type.sign ? "llvm.x86.sse2.padds.w" : "llvm.x86.sse2.paddus.w";
+      if (type.width * type.length == 128 &&
+          !type.floating && !type.fixed) {
+         if(util_cpu_caps.has_sse2) {
+           if(type.width == 8)
+             intrinsic = type.sign ? "llvm.x86.sse2.padds.b" : "llvm.x86.sse2.paddus.b";
+           if(type.width == 16)
+             intrinsic = type.sign ? "llvm.x86.sse2.padds.w" : "llvm.x86.sse2.paddus.w";
+         } else if (util_cpu_caps.has_altivec) {
+           if(type.width == 8)
+              intrinsic = type.sign ? "llvm.ppc.altivec.vaddsbs" : "llvm.ppc.altivec.vaddubs";
+           if(type.width == 16)
+              intrinsic = type.sign ? "llvm.ppc.altivec.vaddsws" : "llvm.ppc.altivec.vadduws";
+         }
       }
    
       if(intrinsic)
@@ -636,13 +642,19 @@ lp_build_sub(struct lp_build_context *bld,
       if(b == bld->one)
         return bld->zero;
 
-      if(util_cpu_caps.has_sse2 &&
-         type.width * type.length == 128 &&
-         !type.floating && !type.fixed) {
-         if(type.width == 8)
-            intrinsic = type.sign ? "llvm.x86.sse2.psubs.b" : "llvm.x86.sse2.psubus.b";
-         if(type.width == 16)
-            intrinsic = type.sign ? "llvm.x86.sse2.psubs.w" : "llvm.x86.sse2.psubus.w";
+      if (type.width * type.length == 128 &&
+          !type.floating && !type.fixed) {
+         if (util_cpu_caps.has_sse2) {
+           if(type.width == 8)
+              intrinsic = type.sign ? "llvm.x86.sse2.psubs.b" : "llvm.x86.sse2.psubus.b";
+           if(type.width == 16)
+              intrinsic = type.sign ? "llvm.x86.sse2.psubs.w" : "llvm.x86.sse2.psubus.w";
+         } else if (util_cpu_caps.has_altivec) {
+           if(type.width == 8)
+              intrinsic = type.sign ? "llvm.ppc.altivec.vsubsbs" : "llvm.ppc.altivec.vsububs";
+           if(type.width == 16)
+              intrinsic = type.sign ? "llvm.ppc.altivec.vsubsws" : "llvm.ppc.altivec.vsubuws";
+         }
       }
    
       if(intrinsic)

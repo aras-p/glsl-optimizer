@@ -246,7 +246,7 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
        *   YYYY YYYY .... YYYY  <= output
        */
       struct lp_type type4;
-      const char shifts[4][2] = {
+      const int shifts[4][2] = {
          { 1,  2},
          {-1,  2},
          { 1, -2},
