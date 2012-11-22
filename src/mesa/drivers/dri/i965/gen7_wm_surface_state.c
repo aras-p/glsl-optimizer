@@ -328,7 +328,8 @@ gen7_update_texture_surface(struct gl_context *ctx,
                                                    firstImage->InternalFormat,
                                                    tObj->DepthMode,
                                                    sampler->sRGBDecode);
-   if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
+   if (tObj->Target == GL_TEXTURE_CUBE_MAP ||
+       tObj->Target == GL_TEXTURE_CUBE_MAP_ARRAY) {
       surf->ss0.cube_pos_x = 1;
       surf->ss0.cube_pos_y = 1;
       surf->ss0.cube_pos_z = 1;

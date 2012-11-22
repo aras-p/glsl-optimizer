@@ -65,6 +65,7 @@ translate_tex_target(GLenum target)
       return BRW_SURFACE_3D;
 
    case GL_TEXTURE_CUBE_MAP: 
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
       return BRW_SURFACE_CUBE;
 
    default: 
