@@ -23,6 +23,7 @@
 
 #include "brw_vec4.h"
 extern "C" {
+#include "main/context.h"
 #include "main/macros.h"
 #include "program/prog_parameter.h"
 #include "program/sampler.h"
@@ -799,6 +800,128 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
    emit(IF(this->result, src_reg(0), BRW_CONDITIONAL_NZ));
 }
 
+static dst_reg
+with_writemask(dst_reg const & r, int mask)
+{
+   dst_reg result = r;
+   result.writemask = mask;
+   return result;
+}
+
+void
+vec4_visitor::emit_attribute_fixups()
+{
+   dst_reg sign_recovery_shift;
+   dst_reg normalize_factor;
+   dst_reg es3_normalize_factor;
+
+   for (int i = 0; i < VERT_ATTRIB_MAX; i++) {
+      if (prog_data->inputs_read & BITFIELD64_BIT(i)) {
+         uint8_t wa_flags = c->key.gl_attrib_wa_flags[i];
+         dst_reg reg(ATTR, i);
+         dst_reg reg_d = reg;
+         reg_d.type = BRW_REGISTER_TYPE_D;
+         dst_reg reg_ud = reg;
+         reg_ud.type = BRW_REGISTER_TYPE_UD;
+
+         /* Do GL_FIXED rescaling for GLES2.0.  Our GL_FIXED attributes
+          * come in as floating point conversions of the integer values.
+          */
+         if (wa_flags & BRW_ATTRIB_WA_COMPONENT_MASK) {
+            dst_reg dst = reg;
+            dst.type = brw_type_for_base_type(glsl_type::vec4_type);
+            dst.writemask = (1 << (wa_flags & BRW_ATTRIB_WA_COMPONENT_MASK)) - 1;
+            emit(MUL(dst, src_reg(dst), src_reg(1.0f / 65536.0f)));
+         }
+
+         /* Do sign recovery for 2101010 formats if required. */
+         if (wa_flags & BRW_ATTRIB_WA_SIGN) {
+            if (sign_recovery_shift.file == BAD_FILE) {
+               /* shift constant: <22,22,22,30> */
+               sign_recovery_shift = dst_reg(this, glsl_type::uvec4_type);
+               emit(MOV(with_writemask(sign_recovery_shift, WRITEMASK_XYZ), src_reg(22u)));
+               emit(MOV(with_writemask(sign_recovery_shift, WRITEMASK_W), src_reg(30u)));
+            }
+
+            emit(SHL(reg_ud, src_reg(reg_ud), src_reg(sign_recovery_shift)));
+            emit(ASR(reg_d, src_reg(reg_d), src_reg(sign_recovery_shift)));
+         }
+
+         /* Apply BGRA swizzle if required. */
+         if (wa_flags & BRW_ATTRIB_WA_BGRA) {
+            src_reg temp = src_reg(reg);
+            temp.swizzle = BRW_SWIZZLE4(2,1,0,3);
+            emit(MOV(reg, temp));
+         }
+
+         if (wa_flags & BRW_ATTRIB_WA_NORMALIZE) {
+            /* ES 3.0 has different rules for converting signed normalized
+             * fixed-point numbers than desktop GL.
+             */
+            if (_mesa_is_gles3(ctx) && (wa_flags & BRW_ATTRIB_WA_SIGN)) {
+               /* According to equation 2.2 of the ES 3.0 specification,
+                * signed normalization conversion is done by:
+                *
+                * f = c / (2^(b-1)-1)
+                */
+               if (es3_normalize_factor.file == BAD_FILE) {
+                  /* mul constant: 1 / (2^(b-1) - 1) */
+                  es3_normalize_factor = dst_reg(this, glsl_type::vec4_type);
+                  emit(MOV(with_writemask(es3_normalize_factor, WRITEMASK_XYZ),
+                           src_reg(1.0f / ((1<<9) - 1))));
+                  emit(MOV(with_writemask(es3_normalize_factor, WRITEMASK_W),
+                           src_reg(1.0f / ((1<<1) - 1))));
+               }
+
+               dst_reg dst = reg;
+               dst.type = brw_type_for_base_type(glsl_type::vec4_type);
+               emit(MOV(dst, src_reg(reg_d)));
+               emit(MUL(dst, src_reg(dst), src_reg(es3_normalize_factor)));
+               emit_minmax(BRW_CONDITIONAL_G, dst, src_reg(dst), src_reg(-1.0f));
+            } else {
+               /* The following equations are from the OpenGL 3.2 specification:
+                *
+                * 2.1 unsigned normalization
+                * f = c/(2^n-1)
+                *
+                * 2.2 signed normalization
+                * f = (2c+1)/(2^n-1)
+                *
+                * Both of these share a common divisor, which is represented by
+                * "normalize_factor" in the code below.
+                */
+               if (normalize_factor.file == BAD_FILE) {
+                  /* 1 / (2^b - 1) for b=<10,10,10,2> */
+                  normalize_factor = dst_reg(this, glsl_type::vec4_type);
+                  emit(MOV(with_writemask(normalize_factor, WRITEMASK_XYZ),
+                           src_reg(1.0f / ((1<<10) - 1))));
+                  emit(MOV(with_writemask(normalize_factor, WRITEMASK_W),
+                           src_reg(1.0f / ((1<<2) - 1))));
+               }
+
+               dst_reg dst = reg;
+               dst.type = brw_type_for_base_type(glsl_type::vec4_type);
+               emit(MOV(dst, src_reg((wa_flags & BRW_ATTRIB_WA_SIGN) ? reg_d : reg_ud)));
+
+               /* For signed normalization, we want the numerator to be 2c+1. */
+               if (wa_flags & BRW_ATTRIB_WA_SIGN) {
+                  emit(MUL(dst, src_reg(dst), src_reg(2.0f)));
+                  emit(ADD(dst, src_reg(dst), src_reg(1.0f)));
+               }
+
+               emit(MUL(dst, src_reg(dst), src_reg(normalize_factor)));
+            }
+         }
+
+         if (wa_flags & BRW_ATTRIB_WA_SCALE) {
+            dst_reg dst = reg;
+            dst.type = brw_type_for_base_type(glsl_type::vec4_type);
+            emit(MOV(dst, src_reg((wa_flags & BRW_ATTRIB_WA_SIGN) ? reg_d : reg_ud)));
+         }
+      }
+   }
+}
+
 void
 vec4_visitor::visit(ir_variable *ir)
 {
@@ -810,19 +933,6 @@ vec4_visitor::visit(ir_variable *ir)
    switch (ir->mode) {
    case ir_var_in:
       reg = new(mem_ctx) dst_reg(ATTR, ir->location);
-
-      /* Do GL_FIXED rescaling for GLES2.0.  Our GL_FIXED attributes
-       * come in as floating point conversions of the integer values.
-       */
-      for (int i = ir->location; i < ir->location + type_size(ir->type); i++) {
-         uint8_t wa_flags = c->key.gl_attrib_wa_flags[i];
-         if (wa_flags & BRW_ATTRIB_WA_COMPONENT_MASK) {
-            dst_reg dst = *reg;
-            dst.type = brw_type_for_base_type(ir->type);
-            dst.writemask = (1 << (wa_flags & BRW_ATTRIB_WA_COMPONENT_MASK)) - 1;
-            emit(MUL(dst, src_reg(dst), src_reg(1.0f / 65536.0f)));
-         }
-      }
       break;
 
    case ir_var_out:

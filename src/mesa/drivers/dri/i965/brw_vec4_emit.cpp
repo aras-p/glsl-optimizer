@@ -776,6 +776,8 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
 bool
 vec4_visitor::run()
 {
+   emit_attribute_fixups();
+
    /* Generate VS IR for main().  (the visitor only descends into
     * functions called "main").
     */

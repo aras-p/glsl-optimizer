@@ -376,6 +376,7 @@ public:
    void visit_instructions(const exec_list *list);
 
    void setup_vp_regs();
+   void emit_attribute_fixups();
    void emit_vertex_program_code();
    void emit_vp_sop(uint32_t condmod, dst_reg dst,
                     src_reg src0, src_reg src1, src_reg one);
