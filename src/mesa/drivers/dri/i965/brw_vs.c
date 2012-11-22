@@ -446,10 +446,32 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 
    /* BRW_NEW_VERTICES */
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      /* TODO: flag w/a for packed vertex formats here too */
-      if (vp->program.Base.InputsRead & BITFIELD64_BIT(i) &&
-	  brw->vb.inputs[i].glarray->Type == GL_FIXED) {
-	 key.gl_attrib_wa_flags[i] = brw->vb.inputs[i].glarray->Size;
+      if (vp->program.Base.InputsRead & BITFIELD64_BIT(i)) {
+         uint8_t wa_flags = 0;
+
+         switch (brw->vb.inputs[i].glarray->Type) {
+
+         case GL_FIXED:
+            wa_flags = brw->vb.inputs[i].glarray->Size;
+            break;
+
+         case GL_INT_2_10_10_10_REV:
+            wa_flags |= BRW_ATTRIB_WA_SIGN;
+            /* fallthough */
+
+         case GL_UNSIGNED_INT_2_10_10_10_REV:
+            if (brw->vb.inputs[i].glarray->Format == GL_BGRA)
+               wa_flags |= BRW_ATTRIB_WA_BGRA;
+
+            if (brw->vb.inputs[i].glarray->Normalized)
+               wa_flags |= BRW_ATTRIB_WA_NORMALIZE;
+            else if (!brw->vb.inputs[i].glarray->Integer)
+               wa_flags |= BRW_ATTRIB_WA_SCALE;
+
+            break;
+         }
+
+         key.gl_attrib_wa_flags[i] = wa_flags;
       }
    }
 
