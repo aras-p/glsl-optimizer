@@ -1530,8 +1530,7 @@ for plat in $egl_platforms; do
 		;;
 
 	wayland)
-		PKG_CHECK_MODULES([WAYLAND], [wayland-client >= 0.99.0 wayland-server >= 0.99.0],, \
-				  [AC_MSG_ERROR([cannot find libwayland-client])])
+		PKG_CHECK_MODULES([WAYLAND], [wayland-client >= 1.0.2 wayland-server >= 1.0.2])
 		GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/wayland"
 
                 WAYLAND_PREFIX=`$PKG_CONFIG --variable=prefix wayland-client`

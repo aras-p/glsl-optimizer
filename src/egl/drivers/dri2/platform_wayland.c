@@ -420,6 +420,9 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
       dri2_egl_display(dri2_surf->base.Resource.Display);
    int i;
 
+   /* There might be a buffer release already queued that wasn't processed */
+   wl_display_dispatch_queue_pending(dri2_dpy->wl_dpy, dri2_dpy->wl_queue);
+
    if (dri2_surf->base.Type == EGL_WINDOW_BIT &&
        (dri2_surf->base.Width != dri2_surf->wl_win->width || 
         dri2_surf->base.Height != dri2_surf->wl_win->height)) {
