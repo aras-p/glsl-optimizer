@@ -252,10 +252,28 @@ static GLuint get_surface_type( GLenum type, GLuint size,
          else {
             return ubyte_types_norm[size];
          }
+      /* See GL_ARB_vertex_type_2_10_10_10_rev.
+       * W/A: the hardware doesn't really support the formats we'd
+       * like to use here, so upload everything as UINT and fix
+       * it in the shader
+       */
+      case GL_INT_2_10_10_10_REV:
+      case GL_UNSIGNED_INT_2_10_10_10_REV:
+         assert(size == 4);
+         return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
       default: assert(0); return 0;
-      }      
+      }
    }
    else {
+      /* See GL_ARB_vertex_type_2_10_10_10_rev.
+       * W/A: the hardware doesn't really support the formats we'd
+       * like to use here, so upload everything as UINT and fix
+       * it in the shader
+       */
+      if (type == GL_INT_2_10_10_10_REV || type == GL_UNSIGNED_INT_2_10_10_10_REV) {
+         assert(size == 4);
+         return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
+      }
       assert(format == GL_RGBA); /* sanity check */
       switch (type) {
       case GL_DOUBLE: return double_types[size];
