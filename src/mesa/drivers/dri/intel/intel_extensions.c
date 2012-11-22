@@ -103,6 +103,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_draw_buffers_blend = true;
       ctx->Extensions.ARB_uniform_buffer_object = true;
       ctx->Extensions.ARB_texture_buffer_object = true;
+      ctx->Extensions.ARB_texture_cube_map_array = true;
    }
 
    if (intel->gen >= 5)
