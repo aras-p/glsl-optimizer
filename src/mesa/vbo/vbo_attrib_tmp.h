@@ -117,14 +117,50 @@ static inline float conv_i10_to_norm_float(const struct gl_context *ctx, int i10
 {
    struct attr_bits_10 val;
    val.x = i10;
-   return (2.0F * (float)val.x + 1.0F) * (1.0F  / 1023.0F);
+
+   /* Traditionally, OpenGL has had two equations for converting from
+    * normalized fixed-point data to floating-point data.  In the OpenGL 3.2
+    * specification, these are equations 2.2 and 2.3, respectively:
+    *
+    *    f = (2c + 1)/(2^b - 1).                                (2.2)
+    *
+    * Comments below this equation state: "In general, this representation is
+    * used for signed normalized fixed-point parameters in GL commands, such
+    * as vertex attribute values."  Which is what we're doing here.
+    *
+    *    f = max{c/(2^(b-1) - 1), -1.0}                         (2.3)
+    *
+    * Comments below this equation state: "In general, this representation is
+    * used for signed normalized fixed-point texture or floating point values."
+    *
+    * OpenGL 4.2+ and ES 3.0 remedy this and state that equation 2.3 (above)
+    * is used in every case.  They remove equation 2.2 completely.
+    */
+   if (_mesa_is_gles3(ctx) ||
+       (ctx->API == API_OPENGL_CORE && ctx->Version >= 42)) {
+      /* Equation 2.3 above. */
+      float f = ((float) val.x) / 511.0F;
+      return MAX2(f, -1.0);
+   } else {
+      /* Equation 2.2 above. */
+      return (2.0F * (float)val.x + 1.0F) * (1.0F  / 1023.0F);
+   }
 }
 
 static inline float conv_i2_to_norm_float(const struct gl_context *ctx, int i2)
 {
    struct attr_bits_2 val;
    val.x = i2;
-   return (2.0F * (float)val.x + 1.0F) * (1.0F / 3.0F);
+
+   if (_mesa_is_gles3(ctx) ||
+       (ctx->API == API_OPENGL_CORE && ctx->Version >= 42)) {
+      /* Equation 2.3 above. */
+      float f = (float) val.x;
+      return MAX2(f, -1.0);
+   } else {
+      /* Equation 2.2 above. */
+      return (2.0F * (float)val.x + 1.0F) * (1.0F / 3.0F);
+   }
 }
 
 #define ATTRI10_1( A, I10 ) ATTR( A, 1, GL_FLOAT, conv_i10_to_i((I10) & 0x3ff), 0, 0, 1 )
