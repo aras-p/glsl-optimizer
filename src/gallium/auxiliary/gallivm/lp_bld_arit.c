@@ -116,7 +116,12 @@ lp_build_min_simple(struct lp_build_context *bld,
          }
       }
    }
-   else if (util_cpu_caps.has_sse2 && type.length >= 2) {
+   else if (type.floating && util_cpu_caps.has_altivec) {
+      if (type.width == 32 && type.length == 4) {
+         intrinsic = "llvm.ppc.altivec.vminfp";
+         intr_size = 128;
+      }
+   } else if (util_cpu_caps.has_sse2 && type.length >= 2) {
       intr_size = 128;
       if ((type.width == 8 || type.width == 16) &&
           (type.width * type.length <= 64) &&
@@ -144,6 +149,27 @@ lp_build_min_simple(struct lp_build_context *bld,
             intrinsic = "llvm.x86.sse41.pminsd";
          }
       }
+   } else if (util_cpu_caps.has_altivec) {
+     intr_size = 128;
+     if (type.width == 8) {
+       if (!type.sign) {
+         intrinsic = "llvm.ppc.altivec.vminub";
+       } else {
+         intrinsic = "llvm.ppc.altivec.vminsb";
+       }
+     } else if (type.width == 16) {
+       if (!type.sign) {
+         intrinsic = "llvm.ppc.altivec.vminuh";
+       } else {
+         intrinsic = "llvm.ppc.altivec.vminsh";
+       }
+     } else if (type.width == 32) {
+       if (!type.sign) {
+         intrinsic = "llvm.ppc.altivec.vminuw";
+       } else {
+         intrinsic = "llvm.ppc.altivec.vminsw";
+       }
+     }
    }
 
    if(intrinsic) {
@@ -206,7 +232,12 @@ lp_build_max_simple(struct lp_build_context *bld,
          }
       }
    }
-   else if (util_cpu_caps.has_sse2 && type.length >= 2) {
+   else if (type.floating && util_cpu_caps.has_altivec) {
+      if (type.width == 32 || type.length == 4) {
+         intrinsic = "llvm.ppc.altivec.vmaxfp";
+         intr_size = 128;
+      }
+   } else if (util_cpu_caps.has_sse2 && type.length >= 2) {
       intr_size = 128;
       if ((type.width == 8 || type.width == 16) &&
           (type.width * type.length <= 64) &&
@@ -235,6 +266,27 @@ lp_build_max_simple(struct lp_build_context *bld,
             intrinsic = "llvm.x86.sse41.pmaxsd";
          }
       }
+   } else if (util_cpu_caps.has_altivec) {
+     intr_size = 128;
+     if (type.width == 8) {
+       if (!type.sign) {
+         intrinsic = "llvm.ppc.altivec.vmaxub";
+       } else {
+         intrinsic = "llvm.ppc.altivec.vmaxsb";
+       }
+     } else if (type.width == 16) {
+       if (!type.sign) {
+         intrinsic = "llvm.ppc.altivec.vmaxuh";
+       } else {
+         intrinsic = "llvm.ppc.altivec.vmaxsh";
+       }
+     } else if (type.width == 32) {
+       if (!type.sign) {
+         intrinsic = "llvm.ppc.altivec.vmaxuw";
+       } else {
+         intrinsic = "llvm.ppc.altivec.vmaxsw";
+       }
+     }
    }
 
    if(intrinsic) {
