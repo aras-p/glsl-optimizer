@@ -2117,6 +2117,19 @@ vec4_visitor::visit(ir_texture *ir)
 
    emit(inst);
 
+   /* fixup num layers (z) for cube arrays: hardware returns faces * layers;
+    * spec requires layers.
+    */
+   if (ir->op == ir_txs) {
+      glsl_type const *type = ir->sampler->type;
+      if (type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE &&
+          type->sampler_array) {
+         emit_math(SHADER_OPCODE_INT_QUOTIENT,
+                   with_writemask(inst->dst, WRITEMASK_Z),
+                   src_reg(inst->dst), src_reg(6));
+      }
+   }
+
    swizzle_result(ir, src_reg(inst->dst), sampler);
 }
 
