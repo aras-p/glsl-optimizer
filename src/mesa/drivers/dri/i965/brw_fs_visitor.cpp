@@ -1371,6 +1371,17 @@ fs_visitor::visit(ir_texture *ir)
    if (ir->shadow_comparitor)
       inst->shadow_compare = true;
 
+   /* fixup #layers for cube map arrays */
+   if (ir->op == ir_txs) {
+      glsl_type const *type = ir->sampler->type;
+      if (type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE &&
+          type->sampler_array) {
+         fs_reg depth = dst;
+         depth.reg_offset = 2;
+         emit_math(SHADER_OPCODE_INT_QUOTIENT, depth, depth, fs_reg(6));
+      }
+   }
+
    swizzle_result(ir, dst, sampler);
 }
 
