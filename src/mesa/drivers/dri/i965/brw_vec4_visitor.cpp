@@ -815,13 +815,13 @@ vec4_visitor::visit(ir_variable *ir)
        * come in as floating point conversions of the integer values.
        */
       for (int i = ir->location; i < ir->location + type_size(ir->type); i++) {
-	 if (!c->key.gl_fixed_input_size[i])
-	    continue;
-
-	 dst_reg dst = *reg;
-         dst.type = brw_type_for_base_type(ir->type);
-	 dst.writemask = (1 << c->key.gl_fixed_input_size[i]) - 1;
-	 emit(MUL(dst, src_reg(dst), src_reg(1.0f / 65536.0f)));
+         uint8_t wa_flags = c->key.gl_attrib_wa_flags[i];
+         if (wa_flags & BRW_ATTRIB_WA_COMPONENT_MASK) {
+            dst_reg dst = *reg;
+            dst.type = brw_type_for_base_type(ir->type);
+            dst.writemask = (1 << (wa_flags & BRW_ATTRIB_WA_COMPONENT_MASK)) - 1;
+            emit(MUL(dst, src_reg(dst), src_reg(1.0f / 65536.0f)));
+         }
       }
       break;
 

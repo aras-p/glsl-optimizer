@@ -362,9 +362,9 @@ brw_vs_debug_recompile(struct brw_context *brw,
    }
 
    for (unsigned int i = 0; i < VERT_ATTRIB_MAX; i++) {
-      found |= key_debug("GL_FIXED rescaling",
-                         old_key->gl_fixed_input_size[i],
-                         key->gl_fixed_input_size[i]);
+      found |= key_debug("Vertex attrib w/a flags",
+                         old_key->gl_attrib_wa_flags[i],
+                         key->gl_attrib_wa_flags[i]);
    }
 
    found |= key_debug("user clip flags",
@@ -446,9 +446,10 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 
    /* BRW_NEW_VERTICES */
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      /* TODO: flag w/a for packed vertex formats here too */
       if (vp->program.Base.InputsRead & BITFIELD64_BIT(i) &&
 	  brw->vb.inputs[i].glarray->Type == GL_FIXED) {
-	 key.gl_fixed_input_size[i] = brw->vb.inputs[i].glarray->Size;
+	 key.gl_attrib_wa_flags[i] = brw->vb.inputs[i].glarray->Size;
       }
    }
 

@@ -39,13 +39,24 @@
 #include "brw_program.h"
 #include "program/program.h"
 
+/**
+ * The VF can't natively handle certain types of attributes, such as GL_FIXED
+ * or most 10_10_10_2 types.  These flags enable various VS workarounds to
+ * "fix" attributes at the beginning of shaders.
+ */
+#define BRW_ATTRIB_WA_COMPONENT_MASK    7  /* mask for GL_FIXED scale channel count */
+#define BRW_ATTRIB_WA_NORMALIZE     8   /* normalize in shader */
+#define BRW_ATTRIB_WA_BGRA          16  /* swap r/b channels in shader */
+#define BRW_ATTRIB_WA_SIGN          32  /* interpret as signed in shader */
+#define BRW_ATTRIB_WA_SCALE         64  /* interpret as scaled in shader */
 
 struct brw_vs_prog_key {
    GLuint program_string_id;
-   /**
-    * Number of channels of the vertex attribute that need GL_FIXED rescaling
+
+   /*
+    * Per-attribute workaround flags
     */
-   uint8_t gl_fixed_input_size[VERT_ATTRIB_MAX];
+   uint8_t gl_attrib_wa_flags[VERT_ATTRIB_MAX];
 
    /**
     * True if at least one clip flag is enabled, regardless of whether the
