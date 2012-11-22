@@ -146,6 +146,7 @@ intelInitExtensions(struct gl_context *ctx)
 #endif
       ctx->Extensions.ARB_texture_compression_rgtc = true;
       ctx->Extensions.ARB_texture_rg = true;
+      ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = true;
       ctx->Extensions.EXT_draw_buffers2 = true;
       ctx->Extensions.EXT_framebuffer_sRGB = true;
       ctx->Extensions.EXT_texture_array = true;
