@@ -622,14 +622,14 @@ _mesa_GetTransformFeedbackVarying(GLuint program, GLuint index,
    shProg = _mesa_lookup_shader_program(ctx, program);
    if (!shProg) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glGetTransformFeedbackVaryings(program=%u)", program);
+                  "glGetTransformFeedbackVarying(program=%u)", program);
       return;
    }
 
    linked_xfb_info = &shProg->LinkedTransformFeedback;
    if (index >= (GLuint) linked_xfb_info->NumVarying) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glGetTransformFeedbackVaryings(index=%u)", index);
+                  "glGetTransformFeedbackVarying(index=%u)", index);
       return;
    }
 
