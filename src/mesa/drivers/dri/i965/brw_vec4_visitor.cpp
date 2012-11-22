@@ -120,6 +120,9 @@ ALU2(XOR)
 ALU2(DP3)
 ALU2(DP4)
 ALU2(DPH)
+ALU2(SHL)
+ALU2(SHR)
+ALU2(ASR)
 
 /** Gen4 predicated IF. */
 vec4_instruction *
@@ -1324,14 +1327,14 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_lshift:
-      inst = emit(BRW_OPCODE_SHL, result_dst, op[0], op[1]);
+      inst = emit(SHL(result_dst, op[0], op[1]));
       break;
 
    case ir_binop_rshift:
       if (ir->type->base_type == GLSL_TYPE_INT)
-	 inst = emit(BRW_OPCODE_ASR, result_dst, op[0], op[1]);
+         inst = emit(ASR(result_dst, op[0], op[1]));
       else
-	 inst = emit(BRW_OPCODE_SHR, result_dst, op[0], op[1]);
+         inst = emit(SHR(result_dst, op[0], op[1]));
       break;
 
    case ir_binop_ubo_load: {
@@ -1350,7 +1353,7 @@ vec4_visitor::visit(ir_expression *ir)
       if (const_offset_ir) {
          offset = src_reg(const_offset / 16);
       } else {
-         emit(BRW_OPCODE_SHR, dst_reg(offset), offset, src_reg(4));
+         emit(SHR(dst_reg(offset), offset, src_reg(4)));
       }
 
       vec4_instruction *pull =

@@ -353,6 +353,9 @@ public:
    vec4_instruction *DP3(dst_reg dst, src_reg src0, src_reg src1);
    vec4_instruction *DP4(dst_reg dst, src_reg src0, src_reg src1);
    vec4_instruction *DPH(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *SHL(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *SHR(dst_reg dst, src_reg src0, src_reg src1);
+   vec4_instruction *ASR(dst_reg dst, src_reg src0, src_reg src1);
    vec4_instruction *CMP(dst_reg dst, src_reg src0, src_reg src1,
 			 uint32_t condition);
    vec4_instruction *IF(src_reg src0, src_reg src1, uint32_t condition);
