@@ -342,7 +342,7 @@ util_format_r8g8bx_snorm_unpack_rgba_float(float *dst_row, unsigned dst_stride,
          int16_t r, g;
 
 #ifdef PIPE_ARCH_BIG_ENDIAN
-         value = util_bswap32(value);
+         value = util_bswap16(value);
 #endif
 
          r = ((int16_t)(value << 8)) >> 8;
@@ -374,7 +374,7 @@ util_format_r8g8bx_snorm_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_strid
          int16_t r, g;
 
 #ifdef PIPE_ARCH_BIG_ENDIAN
-         value = util_bswap32(value);
+         value = util_bswap16(value);
 #endif
 
          r = ((int16_t)(value << 8)) >> 8;
@@ -408,7 +408,7 @@ util_format_r8g8bx_snorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride,
          value |= (uint16_t)((((int8_t)(CLAMP(src[1], -1, 1) * 0x7f)) & 0xff) << 8) ;
 
 #ifdef PIPE_ARCH_BIG_ENDIAN
-         value = util_bswap32(value);
+         value = util_bswap16(value);
 #endif
 
          *dst++ = value;
@@ -438,7 +438,7 @@ util_format_r8g8bx_snorm_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
          value |= (src[1] >> 1) << 8;
 
 #ifdef PIPE_ARCH_BIG_ENDIAN
-         value = util_bswap32(value);
+         value = util_bswap16(value);
 #endif
 
          *dst++ = value;
@@ -459,7 +459,7 @@ util_format_r8g8bx_snorm_fetch_rgba_float(float *dst, const uint8_t *src,
    int16_t r, g;
 
 #ifdef PIPE_ARCH_BIG_ENDIAN
-   value = util_bswap32(value);
+   value = util_bswap16(value);
 #endif
 
    r = ((int16_t)(value << 8)) >> 8;
