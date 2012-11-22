@@ -129,7 +129,8 @@ lp_build_const_unpack_shuffle_half(struct gallivm_state *gallivm,
 }
 
 /**
- * Build shuffle vectors that match PACKxx instructions.
+ * Build shuffle vectors that match PACKxx (SSE) instructions or
+ * VPERM (Altivec).
  */
 static LLVMValueRef
 lp_build_const_pack_shuffle(struct gallivm_state *gallivm, unsigned n)
@@ -140,7 +141,11 @@ lp_build_const_pack_shuffle(struct gallivm_state *gallivm, unsigned n)
    assert(n <= LP_MAX_VECTOR_LENGTH);
 
    for(i = 0; i < n; ++i)
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
       elems[i] = lp_build_const_int32(gallivm, 2*i);
+#else
+      elems[i] = lp_build_const_int32(gallivm, 2*i+1);
+#endif
 
    return LLVMConstVector(elems, n);
 }
