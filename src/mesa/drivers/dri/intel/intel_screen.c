@@ -1199,6 +1199,8 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
       psp->api_mask |= (1 << __DRI_API_GLES);
    if (intelScreen->max_gl_es2_version > 0)
       psp->api_mask |= (1 << __DRI_API_GLES2);
+   if (intelScreen->max_gl_es2_version >= 30)
+      psp->api_mask |= (1 << __DRI_API_GLES3);
 
    psp->extensions = intelScreenExtensions;
 
