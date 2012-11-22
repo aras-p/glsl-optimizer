@@ -168,33 +168,11 @@ i915CreateContext(int api,
 
    i915InitDriverFunctions(&functions);
 
-   if (!intelInitContext(intel, api, mesaVis, driContextPriv,
-                         sharedContextPrivate, &functions)) {
-      *error = __DRI_CTX_ERROR_NO_MEMORY;
-      return false;
-   }
-
-   /* Now that the extension bits are known, filter against the requested API
-    * and version.
-    */
-   switch (api) {
-   case API_OPENGL_COMPAT: {
-      const unsigned max_version =
-         (ctx->Extensions.ARB_fragment_shader &&
-          ctx->Extensions.ARB_occlusion_query) ? 20 : 15;
-      const unsigned req_version = major_version * 10 + minor_version;
-
-      if (req_version > max_version) {
-         *error = __DRI_CTX_ERROR_BAD_VERSION;
-         return false;
-      }
-      break;
-   }
-   case API_OPENGLES:
-   case API_OPENGLES2:
-      break;
-   default:
-      *error = __DRI_CTX_ERROR_BAD_API;
+   if (!intelInitContext(intel, api, major_version, minor_version,
+                         mesaVis, driContextPriv,
+                         sharedContextPrivate, &functions,
+                         error)) {
+      ralloc_free(i915);
       return false;
    }
 

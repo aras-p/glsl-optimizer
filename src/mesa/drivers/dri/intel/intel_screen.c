@@ -754,8 +754,12 @@ intelDestroyBuffer(__DRIdrawable * driDrawPriv)
  * functions.
  */
 extern bool
-i830CreateContext(const struct gl_config *mesaVis,
+i830CreateContext(int api,
+                  const struct gl_config *mesaVis,
 		  __DRIcontext *driContextPriv,
+		  unsigned major_version,
+		  unsigned minor_version,
+		  unsigned *error,
 		  void *sharedContextPrivate);
 
 extern bool
@@ -797,27 +801,10 @@ intelCreateContext(gl_api api,
                                   major_version, minor_version, error,
                                   sharedContextPrivate);
    } else {
-      switch (api) {
-      case API_OPENGL_COMPAT:
-         if (major_version > 1 || minor_version > 3) {
-            *error = __DRI_CTX_ERROR_BAD_VERSION;
-            success = false;
-         }
-         break;
-      case API_OPENGLES:
-         break;
-      default:
-         *error = __DRI_CTX_ERROR_BAD_API;
-         success = false;
-      }
-
-      if (success) {
-         intelScreen->no_vbo = true;
-         success = i830CreateContext(mesaVis, driContextPriv,
-                                     sharedContextPrivate);
-         if (!success)
-            *error = __DRI_CTX_ERROR_NO_MEMORY;
-      }
+      intelScreen->no_vbo = true;
+      success = i830CreateContext(api, mesaVis, driContextPriv,
+                                  major_version, minor_version, error,
+                                  sharedContextPrivate);
    }
 #else
    success = brwCreateContext(api, mesaVis,

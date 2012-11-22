@@ -178,8 +178,12 @@ i830_state_draw_region(struct intel_context *intel,
 /* i830_context.c
  */
 extern bool
-i830CreateContext(const struct gl_config * mesaVis,
+i830CreateContext(int api,
+                  const struct gl_config * mesaVis,
                   __DRIcontext * driContextPriv,
+                  unsigned major_version,
+                  unsigned minor_version,
+                  unsigned *error,
                   void *sharedContextPrivate);
 
 /* i830_tex.c, i830_texstate.c

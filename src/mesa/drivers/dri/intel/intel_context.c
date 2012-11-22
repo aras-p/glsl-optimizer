@@ -580,13 +580,55 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intel_init_syncobj_functions(functions);
 }
 
+static bool
+validate_context_version(struct intel_screen *screen,
+                         int mesa_api,
+                         unsigned major_version,
+                         unsigned minor_version,
+                         unsigned *dri_ctx_error)
+{
+   unsigned req_version = 10 * major_version + minor_version;
+   unsigned max_version = 0;
+
+   switch (mesa_api) {
+   case API_OPENGL_COMPAT:
+      max_version = screen->max_gl_compat_version;
+      break;
+   case API_OPENGL_CORE:
+      max_version = screen->max_gl_core_version;
+      break;
+   case API_OPENGLES:
+      max_version = screen->max_gl_es1_version;
+      break;
+   case API_OPENGLES2:
+      max_version = screen->max_gl_es2_version;
+      break;
+   default:
+      max_version = 0;
+      break;
+   }
+
+   if (max_version == 0) {
+      *dri_ctx_error = __DRI_CTX_ERROR_BAD_API;
+      return false;
+   } else if (req_version > max_version) {
+      *dri_ctx_error = __DRI_CTX_ERROR_BAD_VERSION;
+      return false;
+   }
+
+   return true;
+}
+
 bool
 intelInitContext(struct intel_context *intel,
-		 int api,
+                 int api,
+                 unsigned major_version,
+                 unsigned minor_version,
                  const struct gl_config * mesaVis,
                  __DRIcontext * driContextPriv,
                  void *sharedContextPrivate,
-                 struct dd_function_table *functions)
+                 struct dd_function_table *functions,
+                 unsigned *dri_ctx_error)
 {
    struct gl_context *ctx = &intel->ctx;
    struct gl_context *shareCtx = (struct gl_context *) sharedContextPrivate;
@@ -596,7 +638,14 @@ intelInitContext(struct intel_context *intel,
    struct gl_config visual;
 
    /* we can't do anything without a connection to the device */
-   if (intelScreen->bufmgr == NULL)
+   if (intelScreen->bufmgr == NULL) {
+      *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;
+      return false;
+   }
+
+   if (!validate_context_version(intelScreen,
+                                 api, major_version, minor_version,
+                                 dri_ctx_error))
       return false;
 
    /* Can't rely on invalidate events, fall back to glViewport hack */
@@ -614,6 +663,7 @@ intelInitContext(struct intel_context *intel,
 
    if (!_mesa_initialize_context(&intel->ctx, api, mesaVis, shareCtx,
                                  functions)) {
+      *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;
       printf("%s: failed to init mesa context\n", __FUNCTION__);
       return false;
    }

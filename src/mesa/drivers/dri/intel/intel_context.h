@@ -502,11 +502,14 @@ extern int INTEL_DEBUG;
  */
 
 extern bool intelInitContext(struct intel_context *intel,
-				  int api,
-                                  const struct gl_config * mesaVis,
-                                  __DRIcontext * driContextPriv,
-                                  void *sharedContextPrivate,
-                                  struct dd_function_table *functions);
+                             int api,
+                             unsigned major_version,
+                             unsigned minor_version,
+                             const struct gl_config * mesaVis,
+                             __DRIcontext * driContextPriv,
+                             void *sharedContextPrivate,
+                             struct dd_function_table *functions,
+                             unsigned *dri_ctx_error);
 
 extern void intelFinish(struct gl_context * ctx);
 extern void intel_flush_rendering_to_batch(struct gl_context *ctx);
