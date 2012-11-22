@@ -149,11 +149,14 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 			/* Do a wait-free write-only transfer using a temporary buffer. */
 			struct r600_resource *staging = (struct r600_resource*)
 				pipe_buffer_create(ctx->screen, PIPE_BIND_VERTEX_BUFFER,
-						   PIPE_USAGE_STAGING, box->width);
+						   PIPE_USAGE_STAGING,
+						   box->width + (box->x % R600_MAP_BUFFER_ALIGNMENT));
 			data = rctx->ws->buffer_map(staging->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
 
 			if (!data)
 				return NULL;
+
+			data += box->x % R600_MAP_BUFFER_ALIGNMENT;
 			return r600_buffer_get_transfer(ctx, resource, level, usage, box,
 							ptransfer, data, staging);
 		}
@@ -177,7 +180,7 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 
 	if (rtransfer->staging) {
 		struct pipe_box box;
-		u_box_1d(0, transfer->box.width, &box);
+		u_box_1d(transfer->box.x % R600_MAP_BUFFER_ALIGNMENT, transfer->box.width, &box);
 
 		/* Copy the staging buffer into the original one. */
 		r600_copy_buffer(pipe, transfer->resource, transfer->box.x,
