@@ -180,25 +180,6 @@ validate_shader_target(const struct gl_context *ctx, GLenum type)
 }
 
 
-/**
- * Find the length of the longest transform feedback varying name
- * which was specified with glTransformFeedbackVaryings().
- */
-static GLint
-longest_feedback_varying_name(const struct gl_shader_program *shProg)
-{
-   GLuint i;
-   GLint max = 0;
-   for (i = 0; i < shProg->TransformFeedback.NumVarying; i++) {
-      GLint len = strlen(shProg->TransformFeedback.VaryingNames[i]);
-      if (len > max)
-         max = len;
-   }
-   return max;
-}
-
-
-
 static GLboolean
 is_program(struct gl_context *ctx, GLuint name)
 {
@@ -538,11 +519,24 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
          break;
       *params = shProg->TransformFeedback.NumVarying;
       return;
-   case GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH:
+   case GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH: {
+      unsigned i;
+      GLint max_len = 0;
       if (!has_xfb)
          break;
-      *params = longest_feedback_varying_name(shProg) + 1;
+
+      for (i = 0; i < shProg->TransformFeedback.NumVarying; i++) {
+         /* Add one for the terminating NUL character.
+          */
+         const GLint len = strlen(shProg->TransformFeedback.VaryingNames[i]) + 1;
+
+         if (len > max_len)
+            max_len = len;
+      }
+
+      *params = max_len;
       return;
+   }
    case GL_TRANSFORM_FEEDBACK_BUFFER_MODE:
       if (!has_xfb)
          break;
