@@ -79,6 +79,7 @@ display_front_buffer(struct st_context *st)
 void st_flush( struct st_context *st,
                struct pipe_fence_handle **fence )
 {
+   FLUSH_VERTICES(st->ctx, 0);
    FLUSH_CURRENT(st->ctx, 0);
 
    st_flush_bitmap_cache(st);
