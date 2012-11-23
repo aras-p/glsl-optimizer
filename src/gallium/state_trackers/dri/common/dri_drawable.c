@@ -350,46 +350,88 @@ swap_fences_unref(struct dri_drawable *draw)
    }
 }
 
+/**
+ * DRI2 flush extension, the flush_with_flags function.
+ *
+ * \param context           the context
+ * \param drawable          the drawable to flush
+ * \param flags             a combination of _DRI2_FLUSH_xxx flags
+ * \param throttle_reason   the reason for throttling, 0 = no throttling
+ */
+void
+dri_flush(__DRIcontext *cPriv,
+          __DRIdrawable *dPriv,
+          unsigned flags,
+          enum __DRI2throttleReason reason)
+{
+   struct dri_context *ctx = dri_context(cPriv);
+   struct dri_drawable *drawable = dri_drawable(dPriv);
+   unsigned flush_flags;
+
+   if (!ctx) {
+      assert(0);
+      return;
+   }
+
+   if (!drawable) {
+      flags &= ~__DRI2_FLUSH_DRAWABLE;
+   }
+
+   /* Flush the drawable. */
+   if (flags & __DRI2_FLUSH_DRAWABLE) {
+      struct pipe_resource *ptex = drawable->textures[ST_ATTACHMENT_BACK_LEFT];
+
+      if (ptex && ctx->pp && drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL])
+         pp_run(ctx->pp, ptex, ptex, drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL]);
+   }
+
+   flush_flags = 0;
+   if (flags & __DRI2_FLUSH_CONTEXT)
+      flush_flags |= ST_FLUSH_FRONT;
+
+   /* Flush the context and throttle if needed. */
+   if (dri_screen(ctx->sPriv)->throttling_enabled &&
+       (reason == __DRI2_THROTTLE_SWAPBUFFER ||
+        reason == __DRI2_THROTTLE_FLUSHFRONT)) {
+      /* Throttle.
+       *
+       * This pulls a fence off the throttling queue and waits for it if the
+       * number of fences on the throttling queue has reached the desired
+       * number.
+       *
+       * Then flushes to insert a fence at the current rendering position, and
+       * pushes that fence on the queue. This requires that the st_context_iface
+       * flush method returns a fence even if there are no commands to flush.
+       */
+      struct dri_drawable *draw = dri_drawable(dPriv);
+      struct pipe_screen *screen = draw->screen->base.screen;
+      struct pipe_fence_handle *fence;
+
+      fence = swap_fences_pop_front(draw);
+      if (fence) {
+         (void) screen->fence_finish(screen, fence, PIPE_TIMEOUT_INFINITE);
+         screen->fence_reference(screen, &fence, NULL);
+      }
+
+      ctx->st->flush(ctx->st, flush_flags, &fence);
+      if (fence) {
+         swap_fences_push_back(draw, fence);
+         screen->fence_reference(screen, &fence, NULL);
+      }
+   }
+   else if (flags & (__DRI2_FLUSH_DRAWABLE | __DRI2_FLUSH_CONTEXT)) {
+      ctx->st->flush(ctx->st, flush_flags, NULL);
+   }
+}
 
 /**
  * dri_throttle - A DRI2ThrottleExtension throttling function.
- *
- * pulls a fence off the throttling queue and waits for it if the
- * number of fences on the throttling queue has reached the desired
- * number.
- *
- * Then flushes to insert a fence at the current rendering position, and
- * pushes that fence on the queue. This requires that the st_context_iface
- * flush method returns a fence even if there are no commands to flush.
  */
 static void
-dri_throttle(__DRIcontext *driCtx, __DRIdrawable *dPriv,
-	     enum __DRI2throttleReason reason)
+dri_throttle(__DRIcontext *cPriv, __DRIdrawable *dPriv,
+             enum __DRI2throttleReason reason)
 {
-    struct dri_drawable *draw = dri_drawable(dPriv);
-    struct st_context_iface *ctxi;
-    struct pipe_screen *screen = draw->screen->base.screen;
-    struct pipe_fence_handle *fence;
-
-    if (reason != __DRI2_THROTTLE_SWAPBUFFER &&
-	reason != __DRI2_THROTTLE_FLUSHFRONT)
-	return;
-
-    fence = swap_fences_pop_front(draw);
-    if (fence) {
-	(void) screen->fence_finish(screen, fence, PIPE_TIMEOUT_INFINITE);
-	screen->fence_reference(screen, &fence, NULL);
-    }
-
-    if (driCtx == NULL)
-	return;
-
-    ctxi = dri_context(driCtx)->st;
-    ctxi->flush(ctxi, 0, &fence);
-    if (fence) {
-	swap_fences_push_back(draw, fence);
-	screen->fence_reference(screen, &fence, NULL);
-    }
+   dri_flush(cPriv, dPriv, 0, reason);
 }
 
 

@@ -106,6 +106,12 @@ dri_drawable_get_format(struct dri_drawable *drawable,
                         enum pipe_format *format,
                         unsigned *bind);
 
+void
+dri_flush(__DRIcontext *cPriv,
+          __DRIdrawable *dPriv,
+          unsigned flags,
+          enum __DRI2throttleReason reason);
+
 extern const __DRItexBufferExtension driTexBufferExtension;
 extern const __DRI2throttleExtension dri2ThrottleExtension;
 #endif

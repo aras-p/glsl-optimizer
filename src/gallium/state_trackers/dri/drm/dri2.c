@@ -46,17 +46,7 @@
 static void
 dri2_flush_drawable(__DRIdrawable *dPriv)
 {
-   struct dri_context *ctx = dri_get_current(dPriv->driScreenPriv);
-   struct dri_drawable *drawable = dri_drawable(dPriv);
-
-   struct pipe_resource *ptex = drawable->textures[ST_ATTACHMENT_BACK_LEFT];
-
-   if (ctx) {
-      if (ptex && ctx->pp && drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL])
-         pp_run(ctx->pp, ptex, ptex, drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL]);
-
-      ctx->st->flush(ctx->st, 0, NULL);
-   }
+   dri_flush(dPriv->driContextPriv, dPriv, __DRI2_FLUSH_DRAWABLE, 0);
 }
 
 static void
@@ -74,6 +64,7 @@ static const __DRI2flushExtension dri2FlushExtension = {
     { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
     dri2_flush_drawable,
     dri2_invalidate_drawable,
+    dri_flush,
 };
 
 /**
@@ -756,14 +747,6 @@ static const __DRIextension *dri_screen_extensions[] = {
    &dri2FlushExtension.base,
    &dri2ImageExtension.base,
    &dri2ConfigQueryExtension.base,
-   NULL
-};
-
-static const __DRIextension *dri_screen_extensions_throttle[] = {
-   &driTexBufferExtension.base,
-   &dri2FlushExtension.base,
-   &dri2ImageExtension.base,
-   &dri2ConfigQueryExtension.base,
    &dri2ThrottleExtension.base,
    NULL
 };
@@ -795,10 +778,11 @@ dri2_init_screen(__DRIscreen * sPriv)
       throttle_ret = driver_descriptor.configuration(DRM_CONF_THROTTLE);
 
    if (throttle_ret && throttle_ret->val.val_int != -1) {
-      sPriv->extensions = dri_screen_extensions_throttle;
+      screen->throttling_enabled = TRUE;
       screen->default_throttle_frames = throttle_ret->val.val_int;
-   } else
-      sPriv->extensions = dri_screen_extensions;
+   }
+
+   sPriv->extensions = dri_screen_extensions;
 
    /* dri_init_screen_helper checks pscreen for us */
 
