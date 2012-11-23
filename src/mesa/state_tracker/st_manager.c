@@ -624,6 +624,8 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       api = API_OPENGLES2;
       break;
    case ST_PROFILE_OPENGL_CORE:
+      api = API_OPENGL_CORE;
+      break;
    default:
       *error = ST_CONTEXT_ERROR_BAD_API;
       return NULL;
@@ -884,6 +886,7 @@ static const struct st_api st_gl_api = {
    ST_API_OPENGL,
 #if FEATURE_GL
    ST_PROFILE_DEFAULT_MASK |
+   ST_PROFILE_OPENGL_CORE_MASK |
 #endif
 #if FEATURE_ES1
    ST_PROFILE_OPENGL_ES1_MASK |

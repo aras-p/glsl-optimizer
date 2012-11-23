@@ -82,7 +82,9 @@ dri_create_context(gl_api api, const struct gl_config * visual,
       attribs.profile = ST_PROFILE_OPENGL_ES2;
       break;
    case API_OPENGL:
-      attribs.profile = ST_PROFILE_DEFAULT;
+   case API_OPENGL_CORE:
+      attribs.profile = api == API_OPENGL ? ST_PROFILE_DEFAULT
+                                          : ST_PROFILE_OPENGL_CORE;
       attribs.major = major_version;
       attribs.minor = minor_version;
 
