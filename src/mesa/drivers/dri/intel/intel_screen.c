@@ -188,7 +188,7 @@ intelDRI2Flush(__DRIdrawable *drawable)
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {
-    .base = { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
+    .base = { __DRI2_FLUSH, 3 },
 
     .flush              = intelDRI2Flush,
     .invalidate         = dri2InvalidateDrawable,
