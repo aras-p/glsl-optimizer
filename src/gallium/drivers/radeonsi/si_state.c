@@ -1609,6 +1609,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	if (format == V_028C70_COLOR_INVALID) {
 		R600_ERR("Invalid CB format: %d, disabling CB.\n", surf->base.format);
 	}
+	assert(format != V_028C70_COLOR_INVALID);
 	swap = si_translate_colorswap(surf->base.format);
 	if (rtex->resource.b.b.usage == PIPE_USAGE_STAGING) {
 		endian = V_028C70_ENDIAN_NONE;
@@ -1693,6 +1694,7 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	if (format == V_028040_Z_INVALID) {
 		R600_ERR("Invalid DB format: %d, disabling DB.\n", rtex->real_format);
 	}
+	assert(format != V_028040_Z_INVALID);
 
 	s_offs = z_offs = r600_resource_va(rctx->context.screen, surf->base.texture);
 	z_offs += rtex->surface.level[level].offset;
