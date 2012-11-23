@@ -97,6 +97,7 @@ output_read_remover::visit(ir_dereference_variable *ir)
       temp = new(var_ctx) ir_variable(ir->var->type, ir->var->name,
                                       ir_var_temporary);
       hash_table_insert(replacements, temp, ir->var);
+      ir->var->insert_after(temp);
    }
 
    /* Update the dereference to use the temporary */
