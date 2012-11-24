@@ -602,10 +602,10 @@ const struct function gl_core_functions_possible[] = {
    { "glWaitSync", 43, -1 },
    { "glGetInteger64v", 43, -1 },
    { "glGetSynciv", 43, -1 },
-// { "glTexImage2DMultisample", 43, -1 },               // XXX: Add to xml
-// { "glTexImage3DMultisample", 43, -1 },               // XXX: Add to xml
-// { "glGetMultisamplefv", 43, -1 },                    // XXX: Add to xml
-// { "glSampleMaski", 43, -1 },                         // XXX: Add to xml
+   { "glTexImage2DMultisample", 43, -1 },
+   { "glTexImage3DMultisample", 43, -1 },
+   { "glGetMultisamplefv", 43, -1 },
+   { "glSampleMaski", 43, -1 },
    { "glBlendEquationiARB", 43, -1 },
    { "glBlendEquationSeparateiARB", 43, -1 },
    { "glBlendFunciARB", 43, -1 },

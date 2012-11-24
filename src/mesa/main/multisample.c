@@ -60,3 +60,18 @@ _mesa_init_multisample(struct gl_context *ctx)
    ctx->Multisample.SampleCoverageValue = 1.0;
    ctx->Multisample.SampleCoverageInvert = GL_FALSE;
 }
+
+
+void GLAPIENTRY
+_mesa_GetMultisamplefv(GLenum pname, GLuint index, GLfloat * val)
+{
+   assert(!"Not implemented");
+   // TODO: make this work
+}
+
+void GLAPIENTRY
+_mesa_SampleMaski(GLuint index, GLbitfield mask)
+{
+   assert(!"Not implemented");
+   // TODO: make this work
+}

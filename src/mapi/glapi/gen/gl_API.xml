@@ -8179,7 +8179,8 @@
 
 <xi:include href="ARB_sync.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<!-- 67. GL_ARB_texture_multisample -->
+<xi:include href="ARB_texture_multisample.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <!-- 68. GL_ARB_vertex_array_bgra -->
 
 <xi:include href="ARB_draw_buffers_blend.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>

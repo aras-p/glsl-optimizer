@@ -4102,3 +4102,24 @@ _mesa_TexBufferRange(GLenum target, GLenum internalFormat, GLuint buffer,
 
    texbufferrange(ctx, target, internalFormat, bufObj, offset, size);
 }
+
+
+/** GL_ARB_texture_multisample */
+void GLAPIENTRY
+_mesa_TexImage2DMultisample(GLenum target, GLsizei samples,
+                            GLint internalformat, GLsizei width,
+                            GLsizei height, GLboolean fixedsamplelocations)
+{
+   assert(!"Not implemented");
+   /* allocate a single 2d multisample texture */
+}
+
+void GLAPIENTRY
+_mesa_TexImage3DMultisample(GLenum target, GLsizei samples,
+                            GLint internalformat, GLsizei width,
+                            GLsizei height, GLsizei depth,
+                            GLboolean fixedsamplelocations)
+{
+   assert(!"Not implemented");
+   /* allocate an array of 2d multisample textures */
+}
