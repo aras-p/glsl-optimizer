@@ -4159,15 +4159,174 @@ _mesa_TexBufferRange(GLenum target, GLenum internalFormat, GLuint buffer,
    texbufferrange(ctx, target, internalFormat, bufObj, offset, size);
 }
 
+static GLboolean
+is_renderable_texture_format(struct gl_context *ctx, GLenum internalformat)
+{
+   /* Everything that is allowed for renderbuffers,
+    * except for a base format of GL_STENCIL_INDEX.
+    */
+   GLenum baseFormat = _mesa_base_fbo_format(ctx, internalformat);
+   return baseFormat != 0 && baseFormat != GL_STENCIL_INDEX;
+}
 
 /** GL_ARB_texture_multisample */
+static GLboolean
+check_multisample_target(GLuint dims, GLenum target)
+{
+   switch(target) {
+   case GL_TEXTURE_2D_MULTISAMPLE:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE:
+      return dims == 2;
+
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY:
+      return dims == 3;
+
+   default:
+      return GL_FALSE;
+   }
+}
+
+static void
+teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
+                    GLint internalformat, GLsizei width, GLsizei height,
+                    GLsizei depth, GLboolean fixedsamplelocations)
+{
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   GLboolean sizeOK, dimensionsOK;
+   gl_format texFormat;
+
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (!(ctx->Extensions.ARB_texture_multisample
+      && _mesa_is_desktop_gl(ctx))) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexImage%uDMultisample", dims);
+      return;
+   }
+
+   if (!check_multisample_target(dims, target)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glTexImage%uDMultisample(target)", dims);
+      return;
+   }
+
+   /* check that the specified internalformat is color/depth/stencil-renderable;
+    * refer GL3.1 spec 4.4.4
+    */
+
+   if (!is_renderable_texture_format(ctx, internalformat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+            "glTexImage%uDMultisample(internalformat=%s)",
+            dims,
+            _mesa_lookup_enum_by_nr(internalformat));
+      return;
+   }
+
+   if (_mesa_is_enum_format_integer(internalformat)) {
+      if (samples > ctx->Const.MaxIntegerSamples) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+               "glTexImage%uDMultisample(samples>GL_MAX_INTEGER_SAMPLES)",
+               dims);
+         return;
+      }
+   }
+   else if (_mesa_is_depth_or_stencil_format(internalformat)) {
+      if (samples > ctx->Const.MaxDepthTextureSamples) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+               "glTexImage%uDMultisample(samples>GL_MAX_DEPTH_TEXTURE_SAMPLES)",
+               dims);
+         return;
+      }
+   }
+   else {
+      if (samples > ctx->Const.MaxColorTextureSamples) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+               "glTexImage%uDMultisample(samples>GL_MAX_COLOR_TEXTURE_SAMPLES)",
+               dims);
+         return;
+      }
+   }
+
+   /* TODO: should ask the driver for the exact limit for this internalformat
+    * once IDR's internalformat_query bits land
+    */
+
+   texObj = _mesa_get_current_tex_object(ctx, target);
+   texImage = _mesa_get_tex_image(ctx, texObj, 0, 0);
+
+   if (texImage == NULL) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage%uDMultisample()", dims);
+      return;
+   }
+
+   texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,
+         internalformat, GL_NONE, GL_NONE);
+   assert(texFormat != MESA_FORMAT_NONE);
+
+   dimensionsOK = _mesa_legal_texture_dimensions(ctx, target, 0,
+         width, height, depth, 0);
+
+   sizeOK = ctx->Driver.TestProxyTexImage(ctx, target, 0, texFormat,
+         width, height, depth, 0);
+
+   if (_mesa_is_proxy_texture(target)) {
+      if (dimensionsOK && sizeOK) {
+         _mesa_init_teximage_fields(ctx, texImage,
+               width, height, depth, 0, internalformat, texFormat);
+         texImage->NumSamples = samples;
+         texImage->FixedSampleLocations = fixedsamplelocations;
+      }
+      else {
+         /* clear all image fields */
+         _mesa_init_teximage_fields(ctx, texImage,
+               0, 0, 0, 0, GL_NONE, MESA_FORMAT_NONE);
+      }
+   }
+   else {
+      if (!dimensionsOK) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+               "glTexImage%uDMultisample(invalid width or height)", dims);
+         return;
+      }
+
+      if (!sizeOK) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY,
+               "glTexImage%uDMultisample(texture too large)", dims);
+         return;
+      }
+
+      ctx->Driver.FreeTextureImageBuffer(ctx, texImage);
+
+      _mesa_init_teximage_fields(ctx, texImage,
+            width, height, depth, 0, internalformat, texFormat);
+
+      texImage->NumSamples = samples;
+      texImage->FixedSampleLocations = fixedsamplelocations;
+
+      if (width > 0 && height > 0 && depth > 0) {
+
+         if (!ctx->Driver.AllocTextureStorage(ctx, texObj, 1,
+                  width, height, depth)) {
+            /* tidy up the texture image state. strictly speaking,
+             * we're allowed to just leave this in whatever state we
+             * like, but being tidy is good.
+             */
+            _mesa_init_teximage_fields(ctx, texImage,
+                  0, 0, 0, 0, GL_NONE, MESA_FORMAT_NONE);
+         }
+      }
+
+      _mesa_update_fbo_texture(ctx, texObj, 0, 0);
+   }
+}
+
 void GLAPIENTRY
 _mesa_TexImage2DMultisample(GLenum target, GLsizei samples,
                             GLint internalformat, GLsizei width,
                             GLsizei height, GLboolean fixedsamplelocations)
 {
-   assert(!"Not implemented");
-   /* allocate a single 2d multisample texture */
+   teximagemultisample(2, target, samples, internalformat,
+         width, height, 1, fixedsamplelocations);
 }
 
 void GLAPIENTRY
@@ -4176,6 +4335,6 @@ _mesa_TexImage3DMultisample(GLenum target, GLsizei samples,
                             GLsizei height, GLsizei depth,
                             GLboolean fixedsamplelocations)
 {
-   assert(!"Not implemented");
-   /* allocate an array of 2d multisample textures */
+   teximagemultisample(3, target, samples, internalformat,
+         width, height, depth, fixedsamplelocations);
 }
