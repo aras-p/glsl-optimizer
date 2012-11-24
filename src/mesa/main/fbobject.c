@@ -2069,7 +2069,8 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
             err = (texObj->Target != GL_TEXTURE_3D) &&
                 (texObj->Target != GL_TEXTURE_1D_ARRAY_EXT) &&
                 (texObj->Target != GL_TEXTURE_2D_ARRAY_EXT) &&
-                (texObj->Target != GL_TEXTURE_CUBE_MAP_ARRAY);
+                (texObj->Target != GL_TEXTURE_CUBE_MAP_ARRAY) &&
+                (texObj->Target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY);
          }
          else {
             /* Make sure textarget is consistent with the texture's type */
@@ -2103,7 +2104,8 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
       }
       else if ((texObj->Target == GL_TEXTURE_1D_ARRAY_EXT) ||
                (texObj->Target == GL_TEXTURE_2D_ARRAY_EXT) ||
-               (texObj->Target == GL_TEXTURE_CUBE_MAP_ARRAY)) {
+               (texObj->Target == GL_TEXTURE_CUBE_MAP_ARRAY) ||
+               (texObj->Target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)) {
          if (zoffset < 0 ||
              zoffset >= (GLint) ctx->Const.MaxArrayTextureLayers) {
             _mesa_error(ctx, GL_INVALID_VALUE,
@@ -2254,6 +2256,11 @@ _mesa_FramebufferTexture2D(GLenum target, GLenum attachment,
       case GL_TEXTURE_2D_ARRAY:
          error = (_mesa_is_gles(ctx) && ctx->Version < 30)
             || !ctx->Extensions.EXT_texture_array;
+         break;
+      case GL_TEXTURE_2D_MULTISAMPLE:
+      case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+         error = _mesa_is_gles(ctx)
+            || !ctx->Extensions.ARB_texture_multisample;
          break;
       default:
          error = GL_TRUE;

@@ -966,6 +966,9 @@ legal_get_tex_level_parameter_target(struct gl_context *ctx, GLenum target)
        * "target may also be TEXTURE_BUFFER, indicating the texture buffer."
        */
       return ctx->API == API_OPENGL_CORE && ctx->Version >= 31;
+   case GL_TEXTURE_2D_MULTISAMPLE:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+      return ctx->Extensions.ARB_texture_multisample;
    default:
       return GL_FALSE;
    }
@@ -1103,6 +1106,19 @@ get_tex_level_parameter_image(struct gl_context *ctx,
 	    *params = _mesa_get_format_datatype(texFormat);
 	 else
 	    *params = GL_NONE;
+         break;
+
+      /* GL_ARB_texture_multisample */
+      case GL_TEXTURE_SAMPLES:
+         if (!ctx->Extensions.ARB_texture_multisample)
+            goto invalid_pname;
+         *params = img->NumSamples;
+         break;
+
+      case GL_TEXTURE_FIXED_SAMPLE_LOCATIONS:
+         if (!ctx->Extensions.ARB_texture_multisample)
+            goto invalid_pname;
+         *params = img->FixedSampleLocations;
          break;
 
       default:

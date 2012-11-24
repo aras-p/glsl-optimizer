@@ -109,7 +109,9 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
           target == GL_TEXTURE_2D_ARRAY_EXT ||
           target == GL_TEXTURE_EXTERNAL_OES ||
           target == GL_TEXTURE_CUBE_MAP_ARRAY ||
-          target == GL_TEXTURE_BUFFER);
+          target == GL_TEXTURE_BUFFER ||
+          target == GL_TEXTURE_2D_MULTISAMPLE ||
+          target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY);
 
    memset(obj, 0, sizeof(*obj));
    /* init the non-zero fields */
@@ -166,23 +168,39 @@ static void
 finish_texture_init(struct gl_context *ctx, GLenum target,
                     struct gl_texture_object *obj)
 {
+   GLenum filter = GL_LINEAR;
    assert(obj->Target == 0);
 
-   if (target == GL_TEXTURE_RECTANGLE_NV ||
-       target == GL_TEXTURE_EXTERNAL_OES) {
-      /* have to init wrap and filter state here - kind of klunky */
-      obj->Sampler.WrapS = GL_CLAMP_TO_EDGE;
-      obj->Sampler.WrapT = GL_CLAMP_TO_EDGE;
-      obj->Sampler.WrapR = GL_CLAMP_TO_EDGE;
-      obj->Sampler.MinFilter = GL_LINEAR;
-      if (ctx->Driver.TexParameter) {
-         static const GLfloat fparam_wrap[1] = {(GLfloat) GL_CLAMP_TO_EDGE};
-         static const GLfloat fparam_filter[1] = {(GLfloat) GL_LINEAR};
-         ctx->Driver.TexParameter(ctx, target, obj, GL_TEXTURE_WRAP_S, fparam_wrap);
-         ctx->Driver.TexParameter(ctx, target, obj, GL_TEXTURE_WRAP_T, fparam_wrap);
-         ctx->Driver.TexParameter(ctx, target, obj, GL_TEXTURE_WRAP_R, fparam_wrap);
-         ctx->Driver.TexParameter(ctx, target, obj, GL_TEXTURE_MIN_FILTER, fparam_filter);
-      }
+   switch (target) {
+      case GL_TEXTURE_2D_MULTISAMPLE:
+      case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+         filter = GL_NEAREST;
+         /* fallthrough */
+
+      case GL_TEXTURE_RECTANGLE_NV:
+      case GL_TEXTURE_EXTERNAL_OES:
+         /* have to init wrap and filter state here - kind of klunky */
+         obj->Sampler.WrapS = GL_CLAMP_TO_EDGE;
+         obj->Sampler.WrapT = GL_CLAMP_TO_EDGE;
+         obj->Sampler.WrapR = GL_CLAMP_TO_EDGE;
+         obj->Sampler.MinFilter = filter;
+         obj->Sampler.MagFilter = filter;
+         if (ctx->Driver.TexParameter) {
+            static const GLfloat fparam_wrap[1] = {(GLfloat) GL_CLAMP_TO_EDGE};
+            const GLfloat fparam_filter[1] = {(GLfloat) filter};
+            ctx->Driver.TexParameter(ctx, target, obj, GL_TEXTURE_WRAP_S, fparam_wrap);
+            ctx->Driver.TexParameter(ctx, target, obj, GL_TEXTURE_WRAP_T, fparam_wrap);
+            ctx->Driver.TexParameter(ctx, target, obj, GL_TEXTURE_WRAP_R, fparam_wrap);
+            ctx->Driver.TexParameter(ctx, target, obj,
+                  GL_TEXTURE_MIN_FILTER, fparam_filter);
+            ctx->Driver.TexParameter(ctx, target, obj,
+                  GL_TEXTURE_MAG_FILTER, fparam_filter);
+         }
+         break;
+
+      default:
+         /* nothing needs done */
+         break;
    }
 }
 
@@ -318,6 +336,8 @@ valid_texture_object(const struct gl_texture_object *tex)
    case GL_TEXTURE_BUFFER:
    case GL_TEXTURE_EXTERNAL_OES:
    case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_TEXTURE_2D_MULTISAMPLE:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
       return GL_TRUE;
    case 0x99:
       _mesa_problem(NULL, "invalid reference to a deleted texture object");
@@ -517,6 +537,8 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
    case GL_TEXTURE_RECTANGLE_NV:
    case GL_TEXTURE_BUFFER:
    case GL_TEXTURE_EXTERNAL_OES:
+   case GL_TEXTURE_2D_MULTISAMPLE:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
       maxLevels = 1;  /* no mipmapping */
       break;
    default:
@@ -585,7 +607,9 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       height = baseImage->Height2;
       depth = baseImage->Depth2;
 
-      /* Note: this loop will be a no-op for RECT, BUFFER, EXTERNAL textures */
+      /* Note: this loop will be a no-op for RECT, BUFFER, EXTERNAL,
+       * MULTISAMPLE and MULTISAMPLE_ARRAY textures
+       */
       for (i = baseLevel + 1; i < maxLevels; i++) {
          /* Compute the expected size of image at level[i] */
          if (width > 1) {
@@ -763,13 +787,21 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
          dims = 0;
          target = GL_TEXTURE_BUFFER;
          break;
-     case TEXTURE_CUBE_ARRAY_INDEX:
+      case TEXTURE_CUBE_ARRAY_INDEX:
          dims = 3;
          target = GL_TEXTURE_CUBE_MAP_ARRAY;
          break;
       case TEXTURE_EXTERNAL_INDEX:
          dims = 2;
          target = GL_TEXTURE_EXTERNAL_OES;
+         break;
+      case TEXTURE_2D_MULTISAMPLE_INDEX:
+         dims = 2;
+         target = GL_TEXTURE_2D_MULTISAMPLE;
+         break;
+      case TEXTURE_2D_MULTISAMPLE_ARRAY_INDEX:
+         dims = 3;
+         target = GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
          break;
       default:
          /* no-op */
@@ -1162,6 +1194,12 @@ target_enum_to_index(struct gl_context *ctx, GLenum target)
          ? TEXTURE_EXTERNAL_INDEX : -1;
    case GL_TEXTURE_CUBE_MAP_ARRAY:
       return TEXTURE_CUBE_ARRAY_INDEX;
+   case GL_TEXTURE_2D_MULTISAMPLE:
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_texture_multisample
+         ? TEXTURE_2D_MULTISAMPLE_INDEX: -1;
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_texture_multisample
+         ? TEXTURE_2D_MULTISAMPLE_ARRAY_INDEX: -1;
    default:
       return -1;
    }
@@ -1512,6 +1550,7 @@ _mesa_InvalidateTexSubImage(GLuint texture, GLint level, GLint xoffset,
          break;
       case GL_TEXTURE_2D_ARRAY:
       case GL_TEXTURE_CUBE_MAP_ARRAY:
+      case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
          xBorder = image->Border;
          yBorder = image->Border;
          zBorder = 0;

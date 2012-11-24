@@ -779,6 +779,9 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
             continue;
          else if (obj->Target == GL_TEXTURE_EXTERNAL_OES)
             continue;
+         else if (obj->Target == GL_TEXTURE_2D_MULTISAMPLE ||
+                  obj->Target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)
+            continue;
 
          target = obj->Target;
 
