@@ -5,7 +5,7 @@ This project provides a library and standalone tool for converting GLSL vertex a
 
 GLSL To AGAL Compiler is licensed according to the MIT License. See individual files for exact licensing, other code that doesn't form part of the glsl2agal compiler binary or SWC is licensed differently, please check individual files before reusing any code within this repository.
 
-A live demo showing the glsl2agal compiler hooked up to a Stage3D app is running here: http://www.cmodule.org/glsl2agal/
+A live demo showing the glsl2agal compiler is running here: http://glsl2agal.github.com
 
 How does it work
 ----------------
@@ -24,19 +24,23 @@ Some examples of conversion errors
 Building
 --------
 
-A prebuilt copy of the standalone compiler and SWC is available in the bin directory.
+A prebuilt copy of the standalone compiler (for OSX) and SWC is available in the bin directory.
 
 To build the SWC and the standalone compiler with the AGAL optimizer:
 <pre>
-	cd swc
-	PATH=/path/to/alchemy2/sdk/usr/bin:$PATH cmake -D SDK=/path/to/alchemy2/sdk/ .
-	PATH=/p4/sb/alcmain/mainline/sdk/usr/bin:$PATH make -j8
+	make FLASCC=/path/to/flascc/sdk FLEX=/path/to/flexsdk
+</pre>
+
+To build the example SWF:
+
+<pre>
+	make FLASCC=/path/to/flascc/sdk FLEX=/path/to/flexsdk example
 </pre>
 
 Using the SWC
 -------------
 
-TBD
+Look at the code in examples/Basic/GLSLCompiler.mxml for a simple example of how the SWC can be imported and used to compile GLSL into AGAL assembly.
 
 Using the standalone tool
 -------------------------
@@ -77,16 +81,3 @@ agalasm (optional) - Contains the AGAL asm suitable for assembly by the AGALMini
 agalbin (optional) - Contains the binary AGAL shader code that can be uploaded directly to stage3D
 
 The information in this JSON object should be sufficient to be able to hook up the necessary vertex attribute streams and set all of the required uniforms into the right register. Exactly how this integration is done will depend on the engine you are using.
-
-Proscenium Example
-------------------
-
-The proscenium example displays a spinning teapot that can be rendered using a user supplied GLSL vertex/fragment shader pair. The HTML ui allows you to modify the shader at runtime and an overlaid flex UI allows you to interactively modify any uniform variables exposed by the programs.
-
-
-Starling Example
-----------------
-
-The Starling example uses the BunnyMark demo but replaces the agal shader used to render the background element with an embedded GLSL shader that is compiled at runtime using the glsl2agal swc.
-
-Take a look in Background.as to see how you invoke the compiler on some GLSL source and then how you inspect the resulting json dictionary to figure out where to map the uniform values using the standard stage3D APIs.

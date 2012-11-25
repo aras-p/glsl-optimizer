@@ -78,12 +78,6 @@
                 }
             }
 
-            public function output(s:String):void
-            {
-                errors.text += s
-                trace( s )
-            }
-
             /**
             * The PlayerKernel implementation will use this function to handle
             * C IO write requests to the file "/dev/tty" (e.g. output from
@@ -93,7 +87,8 @@
             public function write(fd:int, bufPtr:int, nbyte:int, errnoPtr:int):int
             {
               var str:String = CModule.readString(bufPtr, nbyte)
-              output(str)
+              errors.text += str
+              trace( str )
               return nbyte
             }
 

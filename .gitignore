@@ -1,3 +1,4 @@
+swc/Makefile
 *.a
 *.dll
 *.exe
@@ -43,7 +44,6 @@ xcuserdata
 *.out
 .DS_Store
 cmake_install.cmake
-Makefile
 CMakeFiles/
 CMakeCache.txt
 .project
