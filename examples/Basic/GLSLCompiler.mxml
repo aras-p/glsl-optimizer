@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+** ADOBE SYSTEMS INCORPORATED
+** Copyright 2012 Adobe Systems Incorporated
+** All Rights Reserved.
+**
+** NOTICE:  Adobe permits you to use, modify, and distribute this file in accordance with the
+** terms of the Adobe license agreement accompanying it.  If you have received this file from a
+** source other than Adobe, then your use, modification, or distribution of it requires the prior
+** written permission of Adobe.
+-->
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+               xmlns:s="library://ns.adobe.com/flex/spark" 
+               xmlns:mx="library://ns.adobe.com/flex/mx"
+               width="960" height="960"
+               applicationComplete="appInit(event)"
+               implements="com.adobe.glsl2agal.vfs.ISpecialFile">
+    <fx:Script>
+        <![CDATA[
+            import com.adobe.glsl2agal.CModule;
+            import com.adobe.glsl2agal.compileShader;
+            import com.adobe.utils.AGALMiniAssembler;
+            import flash.display3D.*;
+            import flash.utils.ByteArray;
+            import flash.utils.getTimer;
+            import mx.controls.Alert;
+
+            internal function appInit(event:Event):void
+            {
+                CModule.rootSprite = this
+                CModule.vfs.console = this
+                CModule.startAsync()
+
+                compile(null)
+            }
+
+            internal function compile(event:Event):void
+            {
+                vsresult.text = ""
+                fsresult.text = ""
+                errors.text = ""
+
+                var compiledVertexShader:Object 
+                var compiledFragmentShader:Object
+
+                errors.text += "Compiling GLSL vertex shader...\n"
+                try {
+                    compiledVertexShader = JSON.parse(com.adobe.glsl2agal.compileShader(vssource.text, 0, true));
+                    vsresult.text = JSON.stringify(compiledVertexShader, null, 1)
+                } catch(e:Error) {
+                    errors.text += "\n Error thrown during GLSL compilation of vertex shader:\n" + e.toString()
+                }
+
+                errors.text += "Compiling GLSL fragment shader...\n"
+                 try {
+                    compiledFragmentShader = JSON.parse(com.adobe.glsl2agal.compileShader(fssource.text, 1, true));
+                    fsresult.text = JSON.stringify(compiledFragmentShader, null, 1)
+                } catch(e:Error) {
+                    errors.text += "\n Error thrown during GLSL compilation of fragment shader:\n" + e.toString()
+                }
+
+                errors.text += "Assembling AGAL vertex shader...\n"
+                try {
+                    var miniasm_vertex : AGALMiniAssembler = new AGALMiniAssembler ();
+                    miniasm_vertex.assemble( Context3DProgramType.VERTEX, compiledVertexShader.agalasm);
+                    errors.text += miniasm_vertex.error
+                } catch(e:Error) {
+                    errors.text += "\n Error thrown by AGAL Assembler for vertex shader:\n" + e.toString()
+                }
+
+                errors.text += "Assembling AGAL fragment shader...\n"
+                try {
+                    var miniasm_fragment : AGALMiniAssembler = new AGALMiniAssembler (); 
+                    miniasm_fragment.assemble(Context3DProgramType.FRAGMENT, compiledFragmentShader.agalasm);
+                    errors.text += miniasm_fragment.error
+                } catch(e:Error) {
+                    errors.text += "\n Error thrown by AGAL Assembler for fragment shader:\n" + e.toString()
+                }
+            }
+
+            public function output(s:String):void
+            {
+                errors.text += s
+                trace( s )
+            }
+
+            /**
+            * The PlayerKernel implementation will use this function to handle
+            * C IO write requests to the file "/dev/tty" (e.g. output from
+            * printf will pass through this function). See the ISpecialFile
+            * documentation for more information about the arguments and return value.
+            */
+            public function write(fd:int, bufPtr:int, nbyte:int, errnoPtr:int):int
+            {
+              var str:String = CModule.readString(bufPtr, nbyte)
+              output(str)
+              return nbyte
+            }
+
+            /**
+            * The PlayerKernel implementation will use this function to handle
+            * C IO read requests to the file "/dev/tty" (e.g. reads from stdin
+            * will expect this function to provide the data). See the ISpecialFile
+            * documentation for more information about the arguments and return value.
+            */
+            public function read(fd:int, bufPtr:int, nbyte:int, errnoPtr:int):int
+            {
+              return 0
+            }
+
+            /**
+            * The PlayerKernel implementation will use this function to handle
+            * C fcntl requests to the file "/dev/tty" 
+            * See the ISpecialFile documentation for more information about the
+            * arguments and return value.
+            */
+            public function fcntl(fd:int, com:int, data:int, errnoPtr:int):int
+            {
+              return 0
+            }
+
+            /**
+            * The PlayerKernel implementation will use this function to handle
+            * C ioctl requests to the file "/dev/tty" 
+            * See the ISpecialFile documentation for more information about the
+            * arguments and return value.
+            */
+            public function ioctl(fd:int, com:int, data:int, errnoPtr:int):int
+            {
+              return 0;
+            }
+        ]]>
+    </fx:Script>
+    <s:Panel title="GLSL To AGAL Compiler" width="100%" height="100%">
+        <s:VGroup left="10" right="10" top="10" bottom="10">
+            <s:HGroup width="100%" height="100%">
+            <mx:TextArea id="vssource" width="100%" height="100%">
+                <mx:text><![CDATA[
+varying vec2 TexCoords;
+
+void main()
+{
+    TexCoords = gl_MultiTexCoord0.xy;
+    gl_Position = gl_ModelViewProjectionMatrix * vec4(gl_Vertex.xy, 0, 0);
+}]]></mx:text>
+            </mx:TextArea>
+            <mx:TextArea id="fssource" width="100%" height="100%">
+                <mx:text><![CDATA[
+varying vec2 TexCoords;
+
+uniform sampler2D baseTexture;
+uniform float time;
+
+vec2 wobbleTexCoords(in vec2 tc)
+{
+    tc.x += (sin(tc.x*10.0 + time*10.0)*0.05);
+    tc.y -= (cos(tc.y*10.0 + time*10.0)*0.05); 
+    return tc;
+}
+
+void main()
+{
+    vec2 tc = wobbleTexCoords(TexCoords);
+    vec4 oc = texture2D(baseTexture, tc);
+    gl_FragColor = oc;
+}       
+]]></mx:text>
+            </mx:TextArea>
+            </s:HGroup>
+            <s:HGroup>
+                <s:Button label="Compile Shaders" click="compile(event)"/>
+            </s:HGroup>
+            <mx:TextArea id="errors" text="" width="100%" height="25%"/>
+            <s:HGroup width="100%" height="100%">
+            <mx:TextArea id="vsresult" text="" width="100%" height="100%"/>
+            <mx:TextArea id="fsresult" text="" width="100%" height="100%"/>
+            </s:HGroup>
+        </s:VGroup>
+    </s:Panel>
+</s:Application>
