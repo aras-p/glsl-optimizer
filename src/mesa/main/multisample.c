@@ -28,6 +28,7 @@
 #include "main/macros.h"
 #include "main/multisample.h"
 #include "main/mtypes.h"
+#include "main/fbobject.h"
 
 
 /**
@@ -65,8 +66,28 @@ _mesa_init_multisample(struct gl_context *ctx)
 void GLAPIENTRY
 _mesa_GetMultisamplefv(GLenum pname, GLuint index, GLfloat * val)
 {
-   assert(!"Not implemented");
-   // TODO: make this work
+   GET_CURRENT_CONTEXT(ctx);
+
+   switch (pname) {
+   case GL_SAMPLE_POSITION: {
+      if (index >= ctx->DrawBuffer->Visual.samples) {
+         _mesa_error( ctx, GL_INVALID_VALUE, "glGetMultisamplefv(index)" );
+         return;
+      }
+
+      ctx->Driver.GetSamplePosition(ctx, ctx->DrawBuffer, index, val);
+
+      /* winsys FBOs are upside down */
+      if (_mesa_is_winsys_fbo(ctx->DrawBuffer))
+         val[1] = 1 - val[1];
+
+      return;
+   }
+
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glGetMultisamplefv(pname)" );
+      return;
+   }
 }
 
 void GLAPIENTRY

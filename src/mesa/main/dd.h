@@ -833,6 +833,14 @@ struct dd_function_table {
     * This should be equivalent to glGetInteger64v(GL_TIMESTAMP);
     */
    uint64_t (*GetTimestamp)(struct gl_context *ctx);
+
+   /**
+    * \name GL_ARB_texture_multisample
+    */
+   void (*GetSamplePosition)(struct gl_context *ctx,
+                             struct gl_framebuffer *fb,
+                             GLuint index,
+                             GLfloat *outValue);
 };
 
 
