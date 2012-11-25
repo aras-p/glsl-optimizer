@@ -5,7 +5,7 @@ This project provides a library and standalone tool for converting GLSL vertex a
 
 GLSL To AGAL Compiler is licensed according to the MIT License. See individual files for exact licensing, other code that doesn't form part of the glsl2agal compiler binary or SWC is licensed differently, please check individual files before reusing any code within this repository.
 
-A live demo showing the glsl2agal compiler is running here: http://glsl2agal.github.com
+A live demo showing the glsl2agal compiler is running here: http://adobe.github.com/glsl2agal/
 
 How does it work
 ----------------
