@@ -16,6 +16,7 @@ swc: check
 example: check
 	cd examples/basic && $(FLEX)/bin/mxmlc \
 		-static-link-runtime-shared-libraries \
+		-omit-trace-statements=false \
 		-library-path+=../../bin/glsl2agal.swc \
 		GLSLCompiler.mxml \
 		-o GLSLCompiler.swf

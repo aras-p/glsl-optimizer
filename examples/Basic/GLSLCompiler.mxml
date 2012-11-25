@@ -34,6 +34,24 @@
                 compile(null)
             }
 
+            private function stringify(json:String):String {
+                try {
+                  return JSON.stringify(JSON.parse(json), null, 1)
+                } catch(e:*) {
+                }
+
+                return json
+            }
+
+            private function parse(json:String):Object {
+                try {
+                  return JSON.parse(json)
+                } catch(e:*) {
+                }
+
+                return null;
+            }
+
             internal function compile(event:Event):void
             {
                 vsresult.text = ""
@@ -42,19 +60,22 @@
 
                 var compiledVertexShader:Object 
                 var compiledFragmentShader:Object
+                var res:String
 
                 errors.text += "Compiling GLSL vertex shader...\n"
                 try {
-                    compiledVertexShader = JSON.parse(com.adobe.glsl2agal.compileShader(vssource.text, 0, true));
-                    vsresult.text = JSON.stringify(compiledVertexShader, null, 1)
+                    res = com.adobe.glsl2agal.compileShader(vssource.text, 0, useoptimizer.selected, usegles.selected)
+                    compiledVertexShader = parse(res);
+                    vsresult.text = stringify(res);
                 } catch(e:Error) {
                     errors.text += "\n Error thrown during GLSL compilation of vertex shader:\n" + e.toString()
                 }
 
                 errors.text += "Compiling GLSL fragment shader...\n"
                  try {
-                    compiledFragmentShader = JSON.parse(com.adobe.glsl2agal.compileShader(fssource.text, 1, true));
-                    fsresult.text = JSON.stringify(compiledFragmentShader, null, 1)
+                    res = com.adobe.glsl2agal.compileShader(fssource.text, 1, useoptimizer.selected, usegles.selected);
+                    compiledFragmentShader = parse(res);
+                    fsresult.text = stringify(res);
                 } catch(e:Error) {
                     errors.text += "\n Error thrown during GLSL compilation of fragment shader:\n" + e.toString()
                 }
@@ -164,6 +185,8 @@ void main()
             </s:HGroup>
             <s:HGroup>
                 <s:Button label="Compile Shaders" click="compile(event)"/>
+                <s:CheckBox id="usegles" label="GLES" selected="false"/>
+                <s:CheckBox id="useoptimizer" label="Optimize" selected="true"/>
             </s:HGroup>
             <mx:TextArea id="errors" text="" width="100%" height="25%"/>
             <s:HGroup width="100%" height="100%">
