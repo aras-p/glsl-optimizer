@@ -15,3 +15,5 @@ _Unwind_SjLj_RaiseException
 
 # symbols specific to glsl2agal
 compileShader
+
+__muldi3
