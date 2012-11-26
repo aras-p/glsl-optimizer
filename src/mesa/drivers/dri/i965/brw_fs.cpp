@@ -1645,7 +1645,7 @@ fs_visitor::register_coalesce()
 	  * unusual register regions, so avoid coalescing those for
 	  * now.  We should do something more specific.
 	  */
-	 if (intel->gen >= 6 &&
+	 if (intel->gen == 6 &&
 	     scan_inst->is_math() &&
 	     (has_source_modifiers || inst->src[0].file == UNIFORM)) {
 	    interfered = true;
