@@ -2100,6 +2100,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/targets/xvmc-r300/Makefile
 		src/gallium/targets/xvmc-r600/Makefile
 		src/gallium/targets/xvmc-softpipe/Makefile
+		src/gallium/tests/trivial/Makefile
 		src/gallium/winsys/Makefile
 		src/gallium/winsys/i915/drm/Makefile
 		src/gallium/winsys/i915/sw/Makefile
