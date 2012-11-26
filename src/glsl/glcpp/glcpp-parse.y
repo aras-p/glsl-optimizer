@@ -1179,15 +1179,18 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	parser->has_new_source_number = 0;
 	parser->new_source_number = 0;
 
+	parser->is_gles = false;
+
 	/* Add pre-defined macros. */
 	if (extensions != NULL) {
 	   if (extensions->OES_EGL_image_external)
 	      add_builtin_define(parser, "GL_OES_EGL_image_external", 1);
 	}
 
-	if (api == API_OPENGLES2)
+	if (api == API_OPENGLES2) {
+		parser->is_gles = true;
 		add_builtin_define(parser, "GL_ES", 1);
-	else {
+	} else {
 	   add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
 	   add_builtin_define(parser, "GL_ARB_texture_rectangle", 1);
 
@@ -2026,11 +2029,6 @@ static void
 _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t version,
                                          const char *es_identifier)
 {
-	/* Note: We assume that if any identifier is present, it means ES.
-         * The GLSL parser will double-check that the identifier is correct.
-	 */
-	bool is_es = es_identifier != NULL;
-
 	macro_t *macro = hash_table_find (parser->defines, "__VERSION__");
 	if (macro) {
 		hash_table_remove (parser->defines, "__VERSION__");
@@ -2038,17 +2036,23 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 	}
 	add_builtin_define (parser, "__VERSION__", version);
 
-	if (version == 100)
-		is_es = true;
-	if (is_es)
+	/* If we didn't have a GLES context to begin with, (indicated
+	 * by parser->api), then the version declaration here might
+	 * indicate GLES. */
+	if (! parser->is_gles &&
+	    (version == 100 ||
+	     (es_identifier && (strcmp(es_identifier, "es") == 0))))
+	{
+		parser->is_gles = true;
 		add_builtin_define (parser, "GL_ES", 1);
+	}
 
 	/* Currently, all ES2/ES3 implementations support highp in the
 	 * fragment shader, so we always define this macro in ES2/ES3.
 	 * If we ever get a driver that doesn't support highp, we'll
 	 * need to add a flag to the gl_context and check that here.
 	 */
-	if (version >= 130 || is_es)
+	if (version >= 130 || parser->is_gles)
 		add_builtin_define (parser, "GL_FRAGMENT_PRECISION_HIGH", 1);
 
 	ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length,

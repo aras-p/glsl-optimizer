@@ -182,6 +182,7 @@ struct glcpp_parser {
 	int new_line_number;
 	bool has_new_source_number;
 	int new_source_number;
+	bool is_gles;
 };
 
 struct gl_extensions;
