@@ -441,6 +441,8 @@ fs_visitor::emit_fragment_program_code()
             break;
          }
 
+         ir->type = glsl_type::vec4_type;
+
          const glsl_type *coordinate_type;
          switch (fpi->TexSrcTarget) {
          case TEXTURE_1D_INDEX:
