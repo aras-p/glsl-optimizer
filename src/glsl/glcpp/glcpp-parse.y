@@ -363,6 +363,8 @@ integer_constant:
 expression:
 	integer_constant
 |	IDENTIFIER {
+		if (parser->is_gles)
+			glcpp_error(& @1, parser, "undefined macro %s in expression (illegal in GLES)", $1);
 		$$ = 0;
 	}
 |	expression OR expression {
