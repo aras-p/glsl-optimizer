@@ -217,6 +217,7 @@ fs_visitor::try_emit_saturate(ir_expression *ir)
     */
    fs_inst *modify = get_instruction_generating_reg(pre_inst, last_inst, src);
    if (!modify || modify->regs_written() != 1) {
+      this->result = fs_reg(this, ir->type);
       fs_inst *inst = emit(MOV(this->result, src));
       inst->saturate = true;
    } else {
