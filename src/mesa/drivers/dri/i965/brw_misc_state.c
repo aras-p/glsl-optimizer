@@ -554,8 +554,10 @@ static void emit_depthbuffer(struct brw_context *brw)
    /* If there's a packed depth/stencil bound to stencil only, we need to
     * emit the packed depth/stencil buffer packet.
     */
-   if (!depth_irb && stencil_irb && !separate_stencil)
+   if (!depth_irb && stencil_irb && !separate_stencil) {
       depth_irb = stencil_irb;
+      depth_mt = stencil_mt;
+   }
 
    if (intel->gen >= 6)
       len = 7;
