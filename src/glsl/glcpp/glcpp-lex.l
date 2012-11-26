@@ -158,7 +158,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return HASH_IF;
 }
 
-{HASH}elif {
+{HASH}elif/[^_a-zA-Z0-9] {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
 	return HASH_ELIF;
