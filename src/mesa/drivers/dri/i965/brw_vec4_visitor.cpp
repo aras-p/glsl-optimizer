@@ -2806,13 +2806,14 @@ vec4_visitor::resolve_ud_negate(src_reg *reg)
    *reg = temp;
 }
 
-vec4_visitor::vec4_visitor(struct brw_vs_compile *c,
+vec4_visitor::vec4_visitor(struct brw_context *brw,
+			   struct brw_vs_compile *c,
 			   struct gl_shader_program *prog,
 			   struct brw_shader *shader)
 {
    this->c = c;
    this->p = &c->func;
-   this->brw = p->brw;
+   this->brw = brw;
    this->intel = &brw->intel;
    this->ctx = &intel->ctx;
    this->prog = prog;

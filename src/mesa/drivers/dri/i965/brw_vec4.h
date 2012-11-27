@@ -198,7 +198,8 @@ public:
 class vec4_visitor : public backend_visitor
 {
 public:
-   vec4_visitor(struct brw_vs_compile *c,
+   vec4_visitor(struct brw_context *brw,
+                struct brw_vs_compile *c,
 		struct gl_shader_program *prog, struct brw_shader *shader);
    ~vec4_visitor();
 

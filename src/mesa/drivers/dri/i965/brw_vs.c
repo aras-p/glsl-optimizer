@@ -280,7 +280,7 @@ do_vs_prog(struct brw_context *brw,
 
    /* Emit GEN4 code.
     */
-   if (!brw_vs_emit(prog, &c)) {
+   if (!brw_vs_emit(brw, prog, &c)) {
       ralloc_free(mem_ctx);
       return false;
    }

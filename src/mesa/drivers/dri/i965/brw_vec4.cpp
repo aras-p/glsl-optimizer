@@ -1128,10 +1128,11 @@ vec4_visitor::run()
 extern "C" {
 
 bool
-brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
+brw_vs_emit(struct brw_context *brw,
+            struct gl_shader_program *prog,
+            struct brw_vs_compile *c)
 {
-   struct brw_context *brw = c->func.brw;
-   struct intel_context *intel = &c->func.brw->intel;
+   struct intel_context *intel = &brw->intel;
    bool start_busy = false;
    float start_time = 0;
 
@@ -1168,7 +1169,7 @@ brw_vs_emit(struct gl_shader_program *prog, struct brw_vs_compile *c)
       shader->compiled_once = true;
    }
 
-   vec4_visitor v(c, prog, shader);
+   vec4_visitor v(brw, c, prog, shader);
    if (!v.run()) {
       prog->LinkStatus = false;
       ralloc_strcat(&prog->InfoLog, v.fail_msg);
