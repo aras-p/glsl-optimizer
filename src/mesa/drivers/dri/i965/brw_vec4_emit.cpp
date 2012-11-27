@@ -641,11 +641,12 @@ vec4_visitor::generate_vs_instruction(vec4_instruction *instruction,
 
    default:
       if (inst->opcode < (int) ARRAY_SIZE(opcode_descs)) {
-	 fail("unsupported opcode in `%s' in VS\n",
-	      opcode_descs[inst->opcode].name);
+         _mesa_problem(ctx, "Unsupported opcode in `%s' in VS\n",
+                       opcode_descs[inst->opcode].name);
       } else {
-	 fail("Unsupported opcode %d in VS", inst->opcode);
+         _mesa_problem(ctx, "Unsupported opcode %d in VS", inst->opcode);
       }
+      abort();
    }
 }
 
