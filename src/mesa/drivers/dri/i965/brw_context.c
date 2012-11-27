@@ -383,6 +383,9 @@ brwCreateContext(int api,
 
    brw_fs_alloc_reg_sets(brw);
 
+   if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+      brw_init_shader_time(brw);
+
    return true;
 }
 

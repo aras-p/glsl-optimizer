@@ -43,6 +43,7 @@
 #include "intel_fbo.h"
 
 #include "brw_context.h"
+#include "brw_program.h"
 #include "brw_defines.h"
 #include "brw_state.h"
 #include "brw_draw.h"
@@ -68,6 +69,11 @@ dri_bo_release(drm_intel_bo **bo)
 static void brw_destroy_context( struct intel_context *intel )
 {
    struct brw_context *brw = brw_context(&intel->ctx);
+
+   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
+      brw_collect_and_report_shader_time(brw);
+      brw_destroy_shader_time(brw);
+   }
 
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
@@ -201,6 +207,14 @@ static void brw_new_batch( struct intel_context *intel )
     * next batch.
     */
    brw->cache.bo_used_by_gpu = true;
+
+   /* We need to periodically reap the shader time results, because rollover
+    * happens every few seconds.  We also want to see results every once in a
+    * while, because many programs won't cleanly destroy our context, so the
+    * end-of-run printout may not happen.
+    */
+   if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+      brw_collect_and_report_shader_time(brw);
 }
 
 static void brw_invalidate_state( struct intel_context *intel, GLuint new_state )

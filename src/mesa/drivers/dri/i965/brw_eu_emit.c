@@ -253,7 +253,6 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
       assert(!reg.negate);
       assert(!reg.abs);
       assert(reg.address_mode == BRW_ADDRESS_DIRECT);
-      assert(reg.vstride != BRW_VERTICAL_STRIDE_0);
    }
 
    validate_reg(insn, reg);
@@ -332,7 +331,8 @@ void brw_set_src1(struct brw_compile *p,
 {
    assert(reg.file != BRW_MESSAGE_REGISTER_FILE);
 
-   assert(reg.nr < 128);
+   if (reg.type != BRW_ARCHITECTURE_REGISTER_FILE)
+      assert(reg.nr < 128);
 
    gen7_convert_mrf_to_grf(p, &reg);
 
@@ -2447,4 +2447,56 @@ brw_svb_write(struct brw_compile *p,
                             send_commit_msg, /* response_length */
                             0, /* end_of_thread */
                             send_commit_msg); /* send_commit_msg */
+}
+
+/**
+ * This instruction is generated as a single-channel align1 instruction by
+ * both the VS and FS stages when using INTEL_DEBUG=shader_time.
+ *
+ * We can't use the typed atomic op in the FS because that has the execution
+ * mask ANDed with the pixel mask, but we just want to write the one dword for
+ * all the pixels.
+ *
+ * We don't use the SIMD4x2 atomic ops in the VS because want to just write
+ * one u32.  So we use the same untyped atomic write message as the pixel
+ * shader.
+ *
+ * The untyped atomic operation requires a BUFFER surface type with RAW
+ * format, and is only accessible through the legacy DATA_CACHE dataport
+ * messages.
+ */
+void brw_shader_time_add(struct brw_compile *p,
+                         int base_mrf,
+                         uint32_t surf_index)
+{
+   struct intel_context *intel = &p->brw->intel;
+   assert(intel->gen >= 7);
+
+   brw_push_insn_state(p);
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
+   brw_pop_insn_state(p);
+
+   /* We use brw_vec1_reg and unmasked because we want to increment the given
+    * offset only once.
+    */
+   brw_set_dest(p, send, brw_vec1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+                                      BRW_ARF_NULL, 0));
+   brw_set_src0(p, send, brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,
+                                      base_mrf, 0));
+
+   bool header_present = false;
+   bool eot = false;
+   uint32_t mlen = 2; /* offset, value */
+   uint32_t rlen = 0;
+   brw_set_message_descriptor(p, send,
+                              GEN7_SFID_DATAPORT_DATA_CACHE,
+                              mlen, rlen, header_present, eot);
+
+   send->bits3.ud |= 6 << 14; /* untyped atomic op */
+   send->bits3.ud |= 0 << 13; /* no return data */
+   send->bits3.ud |= 1 << 12; /* SIMD8 mode */
+   send->bits3.ud |= BRW_AOP_ADD << 8;
+   send->bits3.ud |= surf_index << 0;
 }

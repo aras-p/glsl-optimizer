@@ -456,6 +456,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_VS        0x1000000
 #define DEBUG_CLIP      0x2000000
 #define DEBUG_AUB       0x4000000
+#define DEBUG_SHADER_TIME 0x8000000
 
 #ifdef HAVE_ANDROID_PLATFORM
 #define LOG_TAG "INTEL-MESA"

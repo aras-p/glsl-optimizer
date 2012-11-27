@@ -1124,6 +1124,10 @@ fs_generator::generate_code(exec_list *instructions)
          generate_mov_dispatch_to_flags();
          break;
 
+      case SHADER_OPCODE_SHADER_TIME_ADD:
+         brw_shader_time_add(p, inst->base_mrf, SURF_INDEX_WM_SHADER_TIME);
+         break;
+
       default:
 	 if (inst->opcode < (int) ARRAY_SIZE(opcode_descs)) {
 	    _mesa_problem(ctx, "Unsupported opcode `%s' in FS",

@@ -26,6 +26,7 @@
 
 extern "C" {
 #include "main/macros.h"
+#include "main/shaderobj.h"
 #include "program/prog_print.h"
 #include "program/prog_parameter.h"
 }
@@ -248,6 +249,8 @@ vec4_visitor::implied_mrf_writes(vec4_instruction *inst)
       return 2;
    case VS_OPCODE_SCRATCH_WRITE:
       return 3;
+   case SHADER_OPCODE_SHADER_TIME_ADD:
+      return 0;
    default:
       assert(!"not reached");
       return inst->mlen;
@@ -1039,9 +1042,109 @@ vec4_visitor::setup_payload(void)
    this->first_non_payload_grf = reg;
 }
 
+src_reg
+vec4_visitor::get_timestamp()
+{
+   assert(intel->gen >= 7);
+
+   src_reg ts = src_reg(brw_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+                                BRW_ARF_TIMESTAMP,
+                                0,
+                                BRW_REGISTER_TYPE_UD,
+                                BRW_VERTICAL_STRIDE_0,
+                                BRW_WIDTH_4,
+                                BRW_HORIZONTAL_STRIDE_4,
+                                BRW_SWIZZLE_XYZW,
+                                WRITEMASK_XYZW));
+
+   dst_reg dst = dst_reg(this, glsl_type::uvec4_type);
+
+   vec4_instruction *mov = emit(MOV(dst, ts));
+   /* We want to read the 3 fields we care about (mostly field 0, but also 2)
+    * even if it's not enabled in the dispatch.
+    */
+   mov->force_writemask_all = true;
+
+   return src_reg(dst);
+}
+
+void
+vec4_visitor::emit_shader_time_begin()
+{
+   current_annotation = "shader time start";
+   shader_start_time = get_timestamp();
+}
+
+void
+vec4_visitor::emit_shader_time_end()
+{
+   current_annotation = "shader time end";
+   src_reg shader_end_time = get_timestamp();
+
+   emit_shader_time_write(ST_VS, shader_start_time, shader_end_time);
+}
+
+void
+vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
+                                     src_reg start, src_reg end)
+{
+   /* Choose an index in the buffer and set up tracking information for our
+    * printouts.
+    */
+   int shader_time_index = brw->shader_time.num_entries++;
+   assert(shader_time_index <= brw->shader_time.max_entries);
+   brw->shader_time.types[shader_time_index] = type;
+   if (prog) {
+      _mesa_reference_shader_program(ctx,
+                                     &brw->shader_time.programs[shader_time_index],
+                                     prog);
+   }
+
+   /* Check that there weren't any timestamp reset events (assuming these
+    * were the only two timestamp reads that happened).
+    */
+   src_reg reset_end = end;
+   reset_end.swizzle = BRW_SWIZZLE_ZZZZ;
+   vec4_instruction *test = emit(AND(dst_null_d(), reset_end, src_reg(1u)));
+   test->conditional_mod = BRW_CONDITIONAL_Z;
+
+   emit(IF(BRW_PREDICATE_NORMAL));
+
+   /* Take the current timestamp and get the delta. */
+   start.negate = true;
+   dst_reg diff = dst_reg(this, glsl_type::uint_type);
+   emit(ADD(diff, start, end));
+
+   /* If there were no instructions between the two timestamp gets, the diff
+    * is 2 cycles.  Remove that overhead, so I can forget about that when
+    * trying to determine the time taken for single instructions.
+    */
+   emit(ADD(diff, src_reg(diff), src_reg(-2u)));
+
+   int base_mrf = 6;
+
+   dst_reg offset_mrf = dst_reg(MRF, base_mrf);
+   offset_mrf.type = BRW_REGISTER_TYPE_UD;
+   emit(MOV(offset_mrf, src_reg(shader_time_index * 4)));
+
+   dst_reg time_mrf = dst_reg(MRF, base_mrf + 1);
+   time_mrf.type = BRW_REGISTER_TYPE_UD;
+   emit(MOV(time_mrf, src_reg(diff)));
+
+   vec4_instruction *inst;
+   inst = emit(SHADER_OPCODE_SHADER_TIME_ADD);
+   inst->base_mrf = base_mrf;
+   inst->mlen = 2;
+
+   emit(BRW_OPCODE_ENDIF);
+}
+
 bool
 vec4_visitor::run()
 {
+   if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+      emit_shader_time_begin();
+
    emit_attribute_fixups();
 
    /* Generate VS IR for main().  (the visitor only descends into
@@ -1056,6 +1159,9 @@ vec4_visitor::run()
 
    if (c->key.userclip_active && !c->key.uses_clip_distance)
       setup_uniform_clipplane_values();
+
+   if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+      emit_shader_time_end();
 
    emit_urb_writes();
 

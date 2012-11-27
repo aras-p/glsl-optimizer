@@ -660,6 +660,10 @@ vec4_generator::generate_vs_instruction(vec4_instruction *instruction,
       generate_pull_constant_load(inst, dst, src[0], src[1]);
       break;
 
+   case SHADER_OPCODE_SHADER_TIME_ADD:
+      brw_shader_time_add(p, inst->base_mrf, SURF_INDEX_VS_SHADER_TIME);
+      break;
+
    default:
       if (inst->opcode < (int) ARRAY_SIZE(opcode_descs)) {
          _mesa_problem(ctx, "Unsupported opcode in `%s' in VS\n",

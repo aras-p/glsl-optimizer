@@ -1405,8 +1405,15 @@ const struct brw_tracked_state brw_wm_ubo_surfaces = {
 static void
 brw_upload_wm_binding_table(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    uint32_t *bind;
    int i;
+
+   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
+      intel->vtbl.create_constant_surface(brw, brw->shader_time.bo, 0,
+                                          brw->shader_time.bo->size,
+                                          &brw->wm.surf_offset[SURF_INDEX_WM_SHADER_TIME]);
+   }
 
    /* Might want to calculate nr_surfaces first, to avoid taking up so much
     * space for the binding table.

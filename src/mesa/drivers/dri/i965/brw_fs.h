@@ -363,6 +363,12 @@ public:
 
    void emit_color_write(int target, int index, int first_color_mrf);
    void emit_fb_writes();
+
+   void emit_shader_time_begin();
+   void emit_shader_time_end();
+   void emit_shader_time_write(enum shader_time_shader_type type,
+                               fs_reg start, fs_reg end);
+
    bool try_rewrite_rhs_to_dst(ir_assignment *ir,
 			       fs_reg dst,
 			       fs_reg src,
@@ -372,6 +378,8 @@ public:
 			       const glsl_type *type, bool predicated);
    void resolve_ud_negate(fs_reg *reg);
    void resolve_bool_comparison(ir_rvalue *rvalue, fs_reg *reg);
+
+   fs_reg get_timestamp();
 
    struct brw_reg interp_reg(int location, int channel);
    int setup_uniform_values(int loc, const glsl_type *type);
@@ -435,6 +443,7 @@ public:
    fs_reg pixel_w;
    fs_reg delta_x[BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT];
    fs_reg delta_y[BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT];
+   fs_reg shader_start_time;
 
    int grf_used;
 

@@ -459,6 +459,118 @@ fs_visitor::type_size(const struct glsl_type *type)
    }
 }
 
+fs_reg
+fs_visitor::get_timestamp()
+{
+   assert(intel->gen >= 7);
+
+   fs_reg ts = fs_reg(retype(brw_vec1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+                                          BRW_ARF_TIMESTAMP,
+                                          0),
+                             BRW_REGISTER_TYPE_UD));
+
+   fs_reg dst = fs_reg(this, glsl_type::uint_type);
+
+   fs_inst *mov = emit(MOV(dst, ts));
+   /* We want to read the 3 fields we care about (mostly field 0, but also 2)
+    * even if it's not enabled in the dispatch.
+    */
+   mov->force_writemask_all = true;
+   mov->force_uncompressed = true;
+
+   /* The caller wants the low 32 bits of the timestamp.  Since it's running
+    * at the GPU clock rate of ~1.2ghz, it will roll over every ~3 seconds,
+    * which is plenty of time for our purposes.  It is identical across the
+    * EUs, but since it's tracking GPU core speed it will increment at a
+    * varying rate as render P-states change.
+    *
+    * The caller could also check if render P-states have changed (or anything
+    * else that might disrupt timing) by setting smear to 2 and checking if
+    * that field is != 0.
+    */
+   dst.smear = 0;
+
+   return dst;
+}
+
+void
+fs_visitor::emit_shader_time_begin()
+{
+   current_annotation = "shader time start";
+   shader_start_time = get_timestamp();
+}
+
+void
+fs_visitor::emit_shader_time_end()
+{
+   current_annotation = "shader time end";
+
+   enum shader_time_shader_type type;
+   if (dispatch_width == 8) {
+      type = ST_FS8;
+   } else {
+      assert(dispatch_width == 16);
+      type = ST_FS16;
+   }
+
+   emit_shader_time_write(type, shader_start_time, get_timestamp());
+}
+
+void
+fs_visitor::emit_shader_time_write(enum shader_time_shader_type type,
+                                   fs_reg start, fs_reg end)
+{
+   /* Choose an index in the buffer and set up tracking information for our
+    * printouts.
+    */
+   int shader_time_index = brw->shader_time.num_entries++;
+   assert(shader_time_index <= brw->shader_time.max_entries);
+   brw->shader_time.types[shader_time_index] = type;
+   if (prog) {
+      _mesa_reference_shader_program(ctx,
+                                     &brw->shader_time.programs[shader_time_index],
+                                     prog);
+   }
+
+   /* Check that there weren't any timestamp reset events (assuming these
+    * were the only two timestamp reads that happened).
+    */
+   fs_reg reset = end;
+   reset.smear = 2;
+   fs_inst *test = emit(AND(reg_null_d, reset, fs_reg(1u)));
+   test->conditional_mod = BRW_CONDITIONAL_Z;
+   emit(IF(BRW_PREDICATE_NORMAL));
+
+   push_force_uncompressed();
+   start.negate = true;
+   fs_reg diff = fs_reg(this, glsl_type::uint_type);
+   emit(ADD(diff, start, end));
+
+   /* If there were no instructions between the two timestamp gets, the diff
+    * is 2 cycles.  Remove that overhead, so I can forget about that when
+    * trying to determine the time taken for single instructions.
+    */
+   emit(ADD(diff, diff, fs_reg(-2u)));
+
+   int base_mrf = 6;
+
+   fs_reg offset_mrf = fs_reg(MRF, base_mrf);
+   offset_mrf.type = BRW_REGISTER_TYPE_UD;
+   emit(MOV(offset_mrf, fs_reg(shader_time_index * 4)));
+
+   fs_reg time_mrf = fs_reg(MRF, base_mrf + 1);
+   time_mrf.type = BRW_REGISTER_TYPE_UD;
+   emit(MOV(time_mrf, diff));
+
+   fs_inst *inst = emit(fs_inst(SHADER_OPCODE_SHADER_TIME_ADD));
+   inst->base_mrf = base_mrf;
+   inst->mlen = 2;
+
+   pop_force_uncompressed();
+
+   emit(BRW_OPCODE_ENDIF);
+}
+
 void
 fs_visitor::fail(const char *format, ...)
 {
@@ -571,6 +683,8 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case SHADER_OPCODE_TXL:
    case SHADER_OPCODE_TXS:
       return 1;
+   case SHADER_OPCODE_SHADER_TIME_ADD:
+      return 0;
    case FS_OPCODE_FB_WRITE:
       return 2;
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
@@ -2295,6 +2409,9 @@ fs_visitor::run()
    if (0) {
       emit_dummy_fs();
    } else {
+      if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+         emit_shader_time_begin();
+
       calculate_urb_setup();
       if (intel->gen < 6)
 	 emit_interpolation_setup_gen4();
@@ -2317,6 +2434,9 @@ fs_visitor::run()
       base_ir = NULL;
       if (failed)
 	 return false;
+
+      if (INTEL_DEBUG & DEBUG_SHADER_TIME)
+         emit_shader_time_end();
 
       emit_fb_writes();
 

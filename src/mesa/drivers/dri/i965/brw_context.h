@@ -559,14 +559,15 @@ struct brw_vs_prog_data {
 #define SURF_INDEX_FRAG_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS + 1)
 #define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 2 + (t))
 #define SURF_INDEX_WM_UBO(u)         (SURF_INDEX_TEXTURE(BRW_MAX_TEX_UNIT) + u)
-
+#define SURF_INDEX_WM_SHADER_TIME    (SURF_INDEX_WM_UBO(12))
 /** Maximum size of the binding table. */
-#define BRW_MAX_WM_SURFACES          SURF_INDEX_WM_UBO(BRW_MAX_WM_UBOS)
+#define BRW_MAX_WM_SURFACES          (SURF_INDEX_WM_SHADER_TIME + 1)
 
 #define SURF_INDEX_VERT_CONST_BUFFER (0)
 #define SURF_INDEX_VS_TEXTURE(t)     (SURF_INDEX_VERT_CONST_BUFFER + 1 + (t))
 #define SURF_INDEX_VS_UBO(u)         (SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT) + u)
-#define BRW_MAX_VS_SURFACES          SURF_INDEX_VS_UBO(BRW_MAX_VS_UBOS)
+#define SURF_INDEX_VS_SHADER_TIME    (SURF_INDEX_VS_UBO(12))
+#define BRW_MAX_VS_SURFACES          (SURF_INDEX_VS_SHADER_TIME + 1)
 
 #define SURF_INDEX_SOL_BINDING(t)    ((t))
 #define BRW_MAX_GS_SURFACES          SURF_INDEX_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
@@ -649,6 +650,13 @@ struct brw_cache {
 struct brw_tracked_state {
    struct brw_state_flags dirty;
    void (*emit)( struct brw_context *brw );
+};
+
+enum shader_time_shader_type {
+   ST_NONE,
+   ST_VS,
+   ST_FS8,
+   ST_FS16,
 };
 
 /* Flags for brw->state.cache.
@@ -1089,6 +1097,16 @@ struct brw_context
 
    uint32_t num_instances;
    int basevertex;
+
+   struct {
+      drm_intel_bo *bo;
+      struct gl_shader_program **programs;
+      enum shader_time_shader_type *types;
+      uint64_t *cumulative;
+      int num_entries;
+      int max_entries;
+      double report_time;
+   } shader_time;
 };
 
 /*======================================================================
@@ -1144,7 +1162,9 @@ void brwInitFragProgFuncs( struct dd_function_table *functions );
 int brw_get_scratch_size(int size);
 void brw_get_scratch_bo(struct intel_context *intel,
 			drm_intel_bo **scratch_bo, int size);
-
+void brw_init_shader_time(struct brw_context *brw);
+void brw_collect_and_report_shader_time(struct brw_context *brw);
+void brw_destroy_shader_time(struct brw_context *brw);
 
 /* brw_urb.c
  */

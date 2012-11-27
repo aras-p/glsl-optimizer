@@ -200,7 +200,7 @@ static INLINE struct brw_reg brw_reg( GLuint file,
    else if (file == BRW_MESSAGE_REGISTER_FILE)
       assert((nr & ~(1 << 7)) < BRW_MAX_MRF);
    else if (file == BRW_ARCHITECTURE_REGISTER_FILE)
-      assert(nr <= BRW_ARF_IP);
+      assert(nr <= BRW_ARF_TIMESTAMP);
 
    reg.type = type;
    reg.file = file;
@@ -1005,6 +1005,10 @@ void brw_oword_block_write_scratch(struct brw_compile *p,
 				   struct brw_reg mrf,
 				   int num_regs,
 				   GLuint offset);
+
+void brw_shader_time_add(struct brw_compile *p,
+                         int mrf,
+                         uint32_t surf_index);
 
 /* If/else/endif.  Works by manipulating the execution flags on each
  * channel.

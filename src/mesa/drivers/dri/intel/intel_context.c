@@ -492,6 +492,7 @@ static const struct dri_debug_control debug_control[] = {
    { "vs",    DEBUG_VS },
    { "clip",  DEBUG_CLIP },
    { "aub",   DEBUG_AUB },
+   { "shader_time", DEBUG_SHADER_TIME },
    { NULL,    0 }
 };
 
@@ -747,6 +748,11 @@ intelInitContext(struct intel_context *intel,
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)
       dri_bufmgr_set_debug(intel->bufmgr, true);
+   if ((INTEL_DEBUG & DEBUG_SHADER_TIME) && intel->gen < 7) {
+      fprintf(stderr,
+              "shader_time debugging requires gen7 (Ivybridge) or better.\n");
+      INTEL_DEBUG &= ~DEBUG_SHADER_TIME;
+   }
 
    if (INTEL_DEBUG & DEBUG_AUB)
       drm_intel_bufmgr_gem_set_aub_dump(intel->bufmgr, true);
