@@ -45,7 +45,7 @@ void svga_cleanup_tss_binding(struct svga_context *svga)
       struct svga_hw_view_state *view = &svga->state.hw_draw.views[i];
 
       svga_sampler_view_reference(&view->v, NULL);
-      pipe_sampler_view_reference( &svga->curr.sampler_views[i], NULL );
+      pipe_sampler_view_release(&svga->pipe, &svga->curr.sampler_views[i]);
       pipe_resource_reference( &view->texture, NULL );
 
       view->dirty = 1;
