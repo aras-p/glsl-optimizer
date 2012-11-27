@@ -900,7 +900,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    /* initialize with default driver functions, then plug in XMesa funcs */
    _mesa_init_driver_functions(&functions);
    xmesa_init_driver_functions(v, &functions);
-   if (!_mesa_initialize_context(mesaCtx, API_OPENGL, &v->mesa_visual,
+   if (!_mesa_initialize_context(mesaCtx, API_OPENGL_COMPAT, &v->mesa_visual,
                       share_list ? &(share_list->mesa) : (struct gl_context *) NULL,
                       &functions)) {
       free(c);

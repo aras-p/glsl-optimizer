@@ -821,10 +821,10 @@ _mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
    case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
    case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
    case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
-      return ctx->API == API_OPENGL
+      return ctx->API == API_OPENGL_COMPAT
          && ctx->Extensions.EXT_texture_compression_latc;
    case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
-      return ctx->API == API_OPENGL
+      return ctx->API == API_OPENGL_COMPAT
          && ctx->Extensions.ATI_texture_compression_3dc;
    case GL_ETC1_RGB8_OES:
       return _mesa_is_gles(ctx)

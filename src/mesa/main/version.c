@@ -114,7 +114,7 @@ _mesa_override_gl_version(struct gl_context *ctx)
          } else if (ctx->Version >= 31) {
             ctx->API = API_OPENGL_CORE;
          } else {
-            ctx->API = API_OPENGL;
+            ctx->API = API_OPENGL_COMPAT;
          }
          create_version_string(ctx, "");
       }
@@ -344,7 +344,7 @@ _mesa_compute_version(struct gl_context *ctx)
       return;
 
    switch (ctx->API) {
-   case API_OPENGL:
+   case API_OPENGL_COMPAT:
    case API_OPENGL_CORE:
       compute_version(ctx);
       break;

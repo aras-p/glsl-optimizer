@@ -129,7 +129,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
             _mesa_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
             return;
          }
-         if (ctx->API != API_OPENGL
+         if (ctx->API != API_OPENGL_COMPAT
              && (bit & (TEXGEN_REFLECTION_MAP_NV | TEXGEN_NORMAL_MAP_NV)) == 0) {
             _mesa_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
             return;
@@ -143,7 +143,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 
    case GL_OBJECT_PLANE:
       {
-         if (ctx->API != API_OPENGL) {
+         if (ctx->API != API_OPENGL_COMPAT) {
             _mesa_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
             return;
          }
@@ -158,7 +158,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       {
          GLfloat tmp[4];
 
-         if (ctx->API != API_OPENGL) {
+         if (ctx->API != API_OPENGL_COMPAT) {
             _mesa_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
             return;
          }
@@ -352,14 +352,14 @@ _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
       params[0] = ENUM_TO_FLOAT(texgen->Mode);
       break;
    case GL_OBJECT_PLANE:
-      if (ctx->API != API_OPENGL) {
+      if (ctx->API != API_OPENGL_COMPAT) {
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexGenfv(param)" );
          return;
       }
       COPY_4V(params, texgen->ObjectPlane);
       break;
    case GL_EYE_PLANE:
-      if (ctx->API != API_OPENGL) {
+      if (ctx->API != API_OPENGL_COMPAT) {
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexGenfv(param)" );
          return;
       }
@@ -398,7 +398,7 @@ _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
       params[0] = texgen->Mode;
       break;
    case GL_OBJECT_PLANE:
-      if (ctx->API != API_OPENGL) {
+      if (ctx->API != API_OPENGL_COMPAT) {
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexGeniv(param)" );
          return;
       }
@@ -408,7 +408,7 @@ _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
       params[3] = (GLint) texgen->ObjectPlane[3];
       break;
    case GL_EYE_PLANE:
-      if (ctx->API != API_OPENGL) {
+      if (ctx->API != API_OPENGL_COMPAT) {
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexGeniv(param)" );
          return;
       }

@@ -183,7 +183,7 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
 
     switch (api) {
     case __DRI_API_OPENGL:
-	mesa_api = API_OPENGL;
+	mesa_api = API_OPENGL_COMPAT;
 	break;
     case __DRI_API_GLES:
 	mesa_api = API_OPENGLES;
@@ -221,13 +221,13 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
     }
 
     /* Mesa does not support the GL_ARB_compatibilty extension or the
-     * compatibility profile.  This means that we treat a API_OPENGL 3.1 as
-     * API_OPENGL_CORE and reject API_OPENGL 3.2+.
+     * compatibility profile.  This means that we treat a API_OPENGL_COMPAT 3.1 as
+     * API_OPENGL_CORE and reject API_OPENGL_COMPAT 3.2+.
      */
-    if (mesa_api == API_OPENGL && major_version == 3 && minor_version == 1)
+    if (mesa_api == API_OPENGL_COMPAT && major_version == 3 && minor_version == 1)
        mesa_api = API_OPENGL_CORE;
 
-    if (mesa_api == API_OPENGL
+    if (mesa_api == API_OPENGL_COMPAT
         && ((major_version > 3)
             || (major_version == 3 && minor_version >= 2))) {
        *error = __DRI_CTX_ERROR_BAD_API;
@@ -244,7 +244,7 @@ dri2CreateContextAttribs(__DRIscreen *screen, int api,
      * anything specific about this case.  However, none of the known flags
      * have any meaning in an ES context, so this seems safe.
      */
-    if (mesa_api != API_OPENGL
+    if (mesa_api != API_OPENGL_COMPAT
         && mesa_api != API_OPENGL_CORE
         && flags != 0) {
 	*error = __DRI_CTX_ERROR_BAD_FLAG;

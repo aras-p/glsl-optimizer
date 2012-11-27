@@ -615,7 +615,7 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
 
    switch (attribs->profile) {
    case ST_PROFILE_DEFAULT:
-      api = API_OPENGL;
+      api = API_OPENGL_COMPAT;
       break;
    case ST_PROFILE_OPENGL_ES1:
       api = API_OPENGLES;

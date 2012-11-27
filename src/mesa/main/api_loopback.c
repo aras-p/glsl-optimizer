@@ -1507,7 +1507,7 @@ _mesa_loopback_init_api_table(const struct gl_context *ctx,
       SET_Color4ub(dest, _mesa_Color4ub);
       SET_Materialf(dest, _mesa_Materialf);
    }
-   if (ctx->API == API_OPENGL) {
+   if (ctx->API == API_OPENGL_COMPAT) {
       SET_Color3b(dest, _mesa_Color3b);
       SET_Color3d(dest, _mesa_Color3d);
       SET_Color3i(dest, _mesa_Color3i);
@@ -1654,7 +1654,7 @@ _mesa_loopback_init_api_table(const struct gl_context *ctx,
       SET_FogCoorddv(dest, _mesa_FogCoorddv);
    }
 
-   if (ctx->API == API_OPENGL) {
+   if (ctx->API == API_OPENGL_COMPAT) {
       SET_VertexAttrib1sNV(dest, _mesa_VertexAttrib1sNV);
       SET_VertexAttrib1dNV(dest, _mesa_VertexAttrib1dNV);
       SET_VertexAttrib2sNV(dest, _mesa_VertexAttrib2sNV);

@@ -223,7 +223,7 @@ main(int argc, char **argv)
    if (argc <= optind)
       usage_fail(argv[0]);
 
-   initialize_context(ctx, (glsl_es) ? API_OPENGLES2 : API_OPENGL);
+   initialize_context(ctx, (glsl_es) ? API_OPENGLES2 : API_OPENGL_COMPAT);
 
    struct gl_shader_program *whole_program;
 

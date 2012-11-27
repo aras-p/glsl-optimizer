@@ -1150,7 +1150,7 @@ _mesa_PopAttrib(void)
                      _mesa_PointParameteri(GL_POINT_SPRITE_R_MODE_NV,
                                            ctx->Point.SpriteRMode);
 
-                  if ((ctx->API == API_OPENGL && ctx->Version >= 20)
+                  if ((ctx->API == API_OPENGL_COMPAT && ctx->Version >= 20)
                       || ctx->API == API_OPENGL_CORE)
                      _mesa_PointParameterf(GL_POINT_SPRITE_COORD_ORIGIN,
                                            (GLfloat)ctx->Point.SpriteOrigin);

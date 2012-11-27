@@ -452,7 +452,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
    /* Is transform feedback available in this context?
     */
    const bool has_xfb =
-      (ctx->API == API_OPENGL && ctx->Extensions.EXT_transform_feedback)
+      (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.EXT_transform_feedback)
       || ctx->API == API_OPENGL_CORE
       || _mesa_is_gles3(ctx);
 
@@ -464,7 +464,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
    /* Are uniform buffer objects available in this context?
     */
    const bool has_ubo =
-      (ctx->API == API_OPENGL && ctx->Extensions.ARB_uniform_buffer_object)
+      (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ARB_uniform_buffer_object)
       || ctx->API == API_OPENGL_CORE
       || _mesa_is_gles3(ctx);
 
@@ -1728,7 +1728,7 @@ _mesa_init_shader_dispatch(const struct gl_context *ctx,
       SET_GetAttribLocation(exec, _mesa_GetAttribLocation);
    }
 
-   if (ctx->API == API_OPENGL) {
+   if (ctx->API == API_OPENGL_COMPAT) {
       SET_UseShaderProgramEXT(exec, _mesa_UseShaderProgramEXT);
       SET_ActiveProgramEXT(exec, _mesa_ActiveProgramEXT);
       SET_CreateShaderProgramEXT(exec, _mesa_CreateShaderProgramEXT);

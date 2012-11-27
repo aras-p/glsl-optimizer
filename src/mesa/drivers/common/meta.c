@@ -567,7 +567,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       save->PolygonCull = ctx->Polygon.CullFlag;
       _mesa_PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
       _mesa_set_enable(ctx, GL_POLYGON_OFFSET_FILL, GL_FALSE);
-      if (ctx->API == API_OPENGL) {
+      if (ctx->API == API_OPENGL_COMPAT) {
          _mesa_set_enable(ctx, GL_POLYGON_SMOOTH, GL_FALSE);
          _mesa_set_enable(ctx, GL_POLYGON_STIPPLE, GL_FALSE);
       }
@@ -580,14 +580,14 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
    }
 
    if (state & MESA_META_SHADER) {
-      if (ctx->API == API_OPENGL && ctx->Extensions.ARB_vertex_program) {
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ARB_vertex_program) {
          save->VertexProgramEnabled = ctx->VertexProgram.Enabled;
          _mesa_reference_vertprog(ctx, &save->VertexProgram,
 				  ctx->VertexProgram.Current);
          _mesa_set_enable(ctx, GL_VERTEX_PROGRAM_ARB, GL_FALSE);
       }
 
-      if (ctx->API == API_OPENGL && ctx->Extensions.ARB_fragment_program) {
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ARB_fragment_program) {
          save->FragmentProgramEnabled = ctx->FragmentProgram.Enabled;
          _mesa_reference_fragprog(ctx, &save->FragmentProgram,
 				  ctx->FragmentProgram.Current);
@@ -623,7 +623,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       save->EnvMode = ctx->Texture.Unit[0].EnvMode;
 
       /* Disable all texture units */
-      if (ctx->API == API_OPENGL || ctx->API == API_OPENGLES) {
+      if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) {
          for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
             save->TexEnabled[u] = ctx->Texture.Unit[u].Enabled;
             save->TexGenEnabled[u] = ctx->Texture.Unit[u].TexGenEnabled;
@@ -636,7 +636,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
                if (ctx->Extensions.OES_EGL_image_external)
                   _mesa_set_enable(ctx, GL_TEXTURE_EXTERNAL_OES, GL_FALSE);
 
-               if (ctx->API == API_OPENGL) {
+               if (ctx->API == API_OPENGL_COMPAT) {
                   _mesa_set_enable(ctx, GL_TEXTURE_1D, GL_FALSE);
                   _mesa_set_enable(ctx, GL_TEXTURE_3D, GL_FALSE);
                   if (ctx->Extensions.NV_texture_rectangle)
@@ -661,7 +661,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       /* set defaults for unit[0] */
       _mesa_ActiveTexture(GL_TEXTURE0);
       _mesa_ClientActiveTexture(GL_TEXTURE0);
-      if (ctx->API == API_OPENGL || ctx->API == API_OPENGLES) {
+      if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) {
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
       }
    }
@@ -885,7 +885,7 @@ _mesa_meta_end(struct gl_context *ctx)
          _mesa_PolygonMode(GL_FRONT, save->FrontPolygonMode);
          _mesa_PolygonMode(GL_BACK, save->BackPolygonMode);
       }
-      if (ctx->API == API_OPENGL) {
+      if (ctx->API == API_OPENGL_COMPAT) {
          _mesa_set_enable(ctx, GL_POLYGON_STIPPLE, save->PolygonStipple);
          _mesa_set_enable(ctx, GL_POLYGON_SMOOTH, save->PolygonSmooth);
       }
@@ -900,7 +900,7 @@ _mesa_meta_end(struct gl_context *ctx)
    }
 
    if (state & MESA_META_SHADER) {
-      if (ctx->API == API_OPENGL && ctx->Extensions.ARB_vertex_program) {
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ARB_vertex_program) {
          _mesa_set_enable(ctx, GL_VERTEX_PROGRAM_ARB,
                           save->VertexProgramEnabled);
          _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current, 
@@ -908,7 +908,7 @@ _mesa_meta_end(struct gl_context *ctx)
 	 _mesa_reference_vertprog(ctx, &save->VertexProgram, NULL);
       }
 
-      if (ctx->API == API_OPENGL && ctx->Extensions.ARB_fragment_program) {
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ARB_fragment_program) {
          _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB,
                           save->FragmentProgramEnabled);
          _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
@@ -941,7 +941,7 @@ _mesa_meta_end(struct gl_context *ctx)
 
       _mesa_set_enable(ctx, GL_STENCIL_TEST, stencil->Enabled);
       _mesa_ClearStencil(stencil->Clear);
-      if (ctx->API == API_OPENGL && ctx->Extensions.EXT_stencil_two_side) {
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.EXT_stencil_two_side) {
          _mesa_set_enable(ctx, GL_STENCIL_TEST_TWO_SIDE_EXT,
                           stencil->TestTwoSide);
          _mesa_ActiveStencilFaceEXT(stencil->ActiveFace
@@ -973,7 +973,7 @@ _mesa_meta_end(struct gl_context *ctx)
       ASSERT(ctx->Texture.CurrentUnit == 0);
 
       /* restore texenv for unit[0] */
-      if (ctx->API == API_OPENGL || ctx->API == API_OPENGLES) {
+      if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) {
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, save->EnvMode);
       }
 
@@ -988,7 +988,7 @@ _mesa_meta_end(struct gl_context *ctx)
       }
 
       /* Restore fixed function texture enables, texgen */
-      if (ctx->API == API_OPENGL || ctx->API == API_OPENGLES) {
+      if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) {
          for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
             if (ctx->Texture.Unit[u].Enabled != save->TexEnabled[u]) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -3268,7 +3268,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
    _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, mipmap->FBO);
 
-   if (ctx->API == API_OPENGL || ctx->API == API_OPENGLES)
+   if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES)
       _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
    else
       assert(!genMipmapSave);

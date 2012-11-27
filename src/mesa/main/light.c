@@ -466,7 +466,7 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
          COPY_4V( ctx->Light.Model.Ambient, params );
          break;
       case GL_LIGHT_MODEL_LOCAL_VIEWER:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
          newbool = (params[0]!=0.0);
 	 if (ctx->Light.Model.LocalViewer == newbool)
@@ -486,7 +486,7 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
             ctx->_TriangleCaps &= ~DD_TRI_LIGHT_TWOSIDE;
          break;
       case GL_LIGHT_MODEL_COLOR_CONTROL:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
          if (params[0] == (GLfloat) GL_SINGLE_COLOR)
 	    newenum = GL_SINGLE_COLOR;
@@ -798,7 +798,7 @@ _mesa_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
 	 *params = mat[MAT_ATTRIB_SHININESS(f)][0];
 	 break;
       case GL_COLOR_INDEXES:
-         if (ctx->API != API_OPENGL) {
+         if (ctx->API != API_OPENGL_COMPAT) {
             _mesa_error( ctx, GL_INVALID_ENUM, "glGetMaterialfv(pname)" );
             return;
          }
@@ -820,7 +820,7 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* update materials */
 
-   ASSERT(ctx->API == API_OPENGL);
+   ASSERT(ctx->API == API_OPENGL_COMPAT);
 
    FLUSH_CURRENT(ctx, 0); /* update ctx->Light.Material from vertex buffer */
 

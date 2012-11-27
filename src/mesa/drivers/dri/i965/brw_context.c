@@ -101,7 +101,7 @@ brwCreateContext(int api,
 
    /* Determine max_supported_version. */
    switch (api) {
-   case API_OPENGL:
+   case API_OPENGL_COMPAT:
       max_supported_version = supports_gl30 ? 30 : 21;
       break;
    case API_OPENGLES:

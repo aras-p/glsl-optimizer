@@ -122,7 +122,7 @@ set_combiner_mode(struct gl_context *ctx,
       break;
    case GL_DOT3_RGB_EXT:
    case GL_DOT3_RGBA_EXT:
-      legal = (ctx->API == API_OPENGL &&
+      legal = (ctx->API == API_OPENGL_COMPAT &&
                ctx->Extensions.EXT_texture_env_dot3 &&
                pname == GL_COMBINE_RGB);
       break;
@@ -134,11 +134,11 @@ set_combiner_mode(struct gl_context *ctx,
    case GL_MODULATE_ADD_ATI:
    case GL_MODULATE_SIGNED_ADD_ATI:
    case GL_MODULATE_SUBTRACT_ATI:
-      legal = (ctx->API == API_OPENGL &&
+      legal = (ctx->API == API_OPENGL_COMPAT &&
                ctx->Extensions.ATI_texture_env_combine3);
       break;
    case GL_BUMP_ENVMAP_ATI:
-      legal = (ctx->API == API_OPENGL &&
+      legal = (ctx->API == API_OPENGL_COMPAT &&
                ctx->Extensions.ATI_envmap_bumpmap &&
                pname == GL_COMBINE_RGB);
       break;
@@ -206,7 +206,7 @@ set_combiner_source(struct gl_context *ctx,
       return;
    }
 
-   if ((term == 3) && (ctx->API != API_OPENGL
+   if ((term == 3) && (ctx->API != API_OPENGL_COMPAT
                        || !ctx->Extensions.NV_texture_env_combine4)) {
       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
       return;
@@ -236,12 +236,12 @@ set_combiner_source(struct gl_context *ctx,
                param - GL_TEXTURE0 < ctx->Const.MaxTextureUnits);
       break;
    case GL_ZERO:
-      legal = (ctx->API == API_OPENGL &&
+      legal = (ctx->API == API_OPENGL_COMPAT &&
                (ctx->Extensions.ATI_texture_env_combine3 ||
                 ctx->Extensions.NV_texture_env_combine4));
       break;
    case GL_ONE:
-      legal = (ctx->API == API_OPENGL &&
+      legal = (ctx->API == API_OPENGL_COMPAT &&
                ctx->Extensions.ATI_texture_env_combine3);
       break;
    default:
@@ -293,7 +293,7 @@ set_combiner_operand(struct gl_context *ctx,
       return;
    }
 
-   if ((term == 3) && (ctx->API != API_OPENGL
+   if ((term == 3) && (ctx->API != API_OPENGL_COMPAT
                        || !ctx->Extensions.NV_texture_env_combine4)) {
       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
       return;
@@ -442,7 +442,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
          set_combiner_scale(ctx, texUnit, pname, param[0]);
 	 break;
       case GL_BUMP_TARGET_ATI:
-         if (ctx->API != API_OPENGL || !ctx->Extensions.ATI_envmap_bumpmap) {
+         if (ctx->API != API_OPENGL_COMPAT || !ctx->Extensions.ATI_envmap_bumpmap) {
 	    _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname=0x%x)", pname );
 	    return;
 	 }
@@ -588,7 +588,7 @@ get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
       return texUnit->Combine.SourceRGB[rgb_idx];
    }
    case GL_SOURCE3_RGB_NV:
-      if (ctx->API == API_OPENGL && ctx->Extensions.NV_texture_env_combine4) {
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.NV_texture_env_combine4) {
          return texUnit->Combine.SourceRGB[3];
       }
       else {
@@ -602,7 +602,7 @@ get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
       return texUnit->Combine.SourceA[alpha_idx];
    }
    case GL_SOURCE3_ALPHA_NV:
-      if (ctx->API == API_OPENGL && ctx->Extensions.NV_texture_env_combine4) {
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.NV_texture_env_combine4) {
          return texUnit->Combine.SourceA[3];
       }
       else {
@@ -616,7 +616,7 @@ get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
       return texUnit->Combine.OperandRGB[op_rgb];
    }
    case GL_OPERAND3_RGB_NV:
-      if (ctx->API == API_OPENGL && ctx->Extensions.NV_texture_env_combine4) {
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.NV_texture_env_combine4) {
          return texUnit->Combine.OperandRGB[3];
       }
       else {
@@ -630,7 +630,7 @@ get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
       return texUnit->Combine.OperandA[op_alpha];
    }
    case GL_OPERAND3_ALPHA_NV:
-      if (ctx->API == API_OPENGL && ctx->Extensions.NV_texture_env_combine4) {
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.NV_texture_env_combine4) {
          return texUnit->Combine.OperandA[3];
       }
       else {
@@ -643,7 +643,7 @@ get_texenvi(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
       return 1 << texUnit->Combine.ScaleShiftA;
    case GL_BUMP_TARGET_ATI:
       /* spec doesn't say so, but I think this should be queryable */
-      if (ctx->API == API_OPENGL && ctx->Extensions.ATI_envmap_bumpmap) {
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ATI_envmap_bumpmap) {
          return texUnit->BumpTarget;
       }
       else {

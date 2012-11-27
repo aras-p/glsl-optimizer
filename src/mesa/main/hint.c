@@ -51,7 +51,7 @@ _mesa_Hint( GLenum target, GLenum mode )
 
    switch (target) {
       case GL_FOG_HINT:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_target;
          if (ctx->Hint.Fog == mode)
 	    return;
@@ -67,7 +67,7 @@ _mesa_Hint( GLenum target, GLenum mode )
          ctx->Hint.LineSmooth = mode;
          break;
       case GL_PERSPECTIVE_CORRECTION_HINT:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_target;
          if (ctx->Hint.PerspectiveCorrection == mode)
 	    return;
@@ -75,7 +75,7 @@ _mesa_Hint( GLenum target, GLenum mode )
          ctx->Hint.PerspectiveCorrection = mode;
          break;
       case GL_POINT_SMOOTH_HINT:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_target;
          if (ctx->Hint.PointSmooth == mode)
 	    return;
@@ -93,7 +93,7 @@ _mesa_Hint( GLenum target, GLenum mode )
 
       /* GL_EXT_clip_volume_hint */
       case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_target;
          if (ctx->Hint.ClipVolumeClipping == mode)
 	    return;

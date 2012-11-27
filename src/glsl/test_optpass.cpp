@@ -197,7 +197,7 @@ int test_optpass(int argc, char **argv)
 
    struct gl_context local_ctx;
    struct gl_context *ctx = &local_ctx;
-   initialize_context_to_defaults(ctx, API_OPENGL);
+   initialize_context_to_defaults(ctx, API_OPENGL_COMPAT);
 
    ctx->Driver.NewShader = _mesa_new_shader;
 

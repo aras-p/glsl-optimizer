@@ -175,7 +175,7 @@ i915CreateContext(int api,
     * and version.
     */
    switch (api) {
-   case API_OPENGL: {
+   case API_OPENGL_COMPAT: {
       const unsigned max_version =
          (ctx->Extensions.ARB_fragment_shader &&
           ctx->Extensions.ARB_occlusion_query) ? 20 : 15;

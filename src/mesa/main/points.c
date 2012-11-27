@@ -190,7 +190,7 @@ _mesa_PointParameterfv( GLenum pname, const GLfloat *params)
 	 /* GL_POINT_SPRITE_COORD_ORIGIN was added to point sprites when the
 	  * extension was merged into OpenGL 2.0.
 	  */
-         if ((ctx->API == API_OPENGL && ctx->Version >= 20)
+         if ((ctx->API == API_OPENGL_COMPAT && ctx->Version >= 20)
              || ctx->API == API_OPENGL_CORE) {
             GLenum value = (GLenum) params[0];
             if (value != GL_LOWER_LEFT && value != GL_UPPER_LEFT) {

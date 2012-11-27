@@ -278,7 +278,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
    switch (cap) {
       case GL_ALPHA_TEST:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          if (ctx->Color.AlphaEnabled == state)
             return;
@@ -286,7 +286,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Color.AlphaEnabled = state;
          break;
       case GL_AUTO_NORMAL:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.AutoNormal == state)
             return;
@@ -333,7 +333,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          }
          break;
       case GL_COLOR_MATERIAL:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          if (ctx->Light.ColorMaterialEnabled == state)
             return;
@@ -369,7 +369,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Color.DitherFlag = state;
          break;
       case GL_FOG:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          if (ctx->Fog.Enabled == state)
             return;
@@ -384,7 +384,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
       case GL_LIGHT5:
       case GL_LIGHT6:
       case GL_LIGHT7:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          if (ctx->Light.Light[cap-GL_LIGHT0].Enabled == state)
             return;
@@ -399,7 +399,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          }
          break;
       case GL_LIGHTING:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          if (ctx->Light.Enabled == state)
             return;
@@ -420,7 +420,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->_TriangleCaps ^= DD_LINE_SMOOTH;
          break;
       case GL_LINE_STIPPLE:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Line.StippleFlag == state)
             return;
@@ -429,7 +429,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->_TriangleCaps ^= DD_LINE_STIPPLE;
          break;
       case GL_INDEX_LOGIC_OP:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Color.IndexLogicOpEnabled == state)
             return;
@@ -445,7 +445,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Color.ColorLogicOpEnabled = state;
          break;
       case GL_MAP1_COLOR_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map1Color4 == state)
             return;
@@ -453,7 +453,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map1Color4 = state;
          break;
       case GL_MAP1_INDEX:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map1Index == state)
             return;
@@ -461,7 +461,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map1Index = state;
          break;
       case GL_MAP1_NORMAL:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map1Normal == state)
             return;
@@ -469,7 +469,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map1Normal = state;
          break;
       case GL_MAP1_TEXTURE_COORD_1:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map1TextureCoord1 == state)
             return;
@@ -477,7 +477,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map1TextureCoord1 = state;
          break;
       case GL_MAP1_TEXTURE_COORD_2:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map1TextureCoord2 == state)
             return;
@@ -485,7 +485,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map1TextureCoord2 = state;
          break;
       case GL_MAP1_TEXTURE_COORD_3:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map1TextureCoord3 == state)
             return;
@@ -493,7 +493,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map1TextureCoord3 = state;
          break;
       case GL_MAP1_TEXTURE_COORD_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map1TextureCoord4 == state)
             return;
@@ -501,7 +501,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map1TextureCoord4 = state;
          break;
       case GL_MAP1_VERTEX_3:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map1Vertex3 == state)
             return;
@@ -509,7 +509,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map1Vertex3 = state;
          break;
       case GL_MAP1_VERTEX_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map1Vertex4 == state)
             return;
@@ -517,7 +517,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map1Vertex4 = state;
          break;
       case GL_MAP2_COLOR_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map2Color4 == state)
             return;
@@ -525,7 +525,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map2Color4 = state;
          break;
       case GL_MAP2_INDEX:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map2Index == state)
             return;
@@ -533,7 +533,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map2Index = state;
          break;
       case GL_MAP2_NORMAL:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map2Normal == state)
             return;
@@ -541,7 +541,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map2Normal = state;
          break;
       case GL_MAP2_TEXTURE_COORD_1:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map2TextureCoord1 == state)
             return;
@@ -549,7 +549,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map2TextureCoord1 = state;
          break;
       case GL_MAP2_TEXTURE_COORD_2:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map2TextureCoord2 == state)
             return;
@@ -557,7 +557,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map2TextureCoord2 = state;
          break;
       case GL_MAP2_TEXTURE_COORD_3:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map2TextureCoord3 == state)
             return;
@@ -565,7 +565,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map2TextureCoord3 = state;
          break;
       case GL_MAP2_TEXTURE_COORD_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map2TextureCoord4 == state)
             return;
@@ -573,7 +573,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map2TextureCoord4 = state;
          break;
       case GL_MAP2_VERTEX_3:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map2Vertex3 == state)
             return;
@@ -581,7 +581,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map2Vertex3 = state;
          break;
       case GL_MAP2_VERTEX_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Eval.Map2Vertex4 == state)
             return;
@@ -589,7 +589,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Eval.Map2Vertex4 = state;
          break;
       case GL_NORMALIZE:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          if (ctx->Transform.Normalize == state)
             return;
@@ -597,7 +597,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Transform.Normalize = state;
          break;
       case GL_POINT_SMOOTH:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          if (ctx->Point.SmoothFlag == state)
             return;
@@ -615,7 +615,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->_TriangleCaps ^= DD_TRI_SMOOTH;
          break;
       case GL_POLYGON_STIPPLE:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Polygon.StippleFlag == state)
             return;
@@ -646,7 +646,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Polygon.OffsetFill = state;
          break;
       case GL_RESCALE_NORMAL_EXT:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          if (ctx->Transform.RescaleNormals == state)
             return;
@@ -666,21 +666,21 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Stencil.Enabled = state;
          break;
       case GL_TEXTURE_1D:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (!enable_texture(ctx, state, TEXTURE_1D_BIT)) {
             return;
          }
          break;
       case GL_TEXTURE_2D:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          if (!enable_texture(ctx, state, TEXTURE_2D_BIT)) {
             return;
          }
          break;
       case GL_TEXTURE_3D:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          if (!enable_texture(ctx, state, TEXTURE_3D_BIT)) {
             return;
@@ -693,7 +693,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          {
             struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
 
-            if (ctx->API != API_OPENGL)
+            if (ctx->API != API_OPENGL_COMPAT)
                goto invalid_enum_error;
 
             if (texUnit) {
@@ -745,7 +745,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          CHECK_EXTENSION(ARB_texture_cube_map, cap);
          if (!enable_texture(ctx, state, TEXTURE_CUBE_BIT)) {
@@ -755,7 +755,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL_EXT_secondary_color */
       case GL_COLOR_SUM_EXT:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION2(EXT_secondary_color, ARB_vertex_program, cap);
          if (ctx->Fog.ColorSumEnabled == state)
@@ -801,7 +801,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL_IBM_rasterpos_clip */
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          if (ctx->Transform.RasterPositionUnclipped == state)
             return;
@@ -811,7 +811,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL_NV_point_sprite */
       case GL_POINT_SPRITE_NV:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          CHECK_EXTENSION2(NV_point_sprite, ARB_point_sprite, cap);
          if (ctx->Point.PointSprite == state)
@@ -821,7 +821,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          break;
 
       case GL_VERTEX_PROGRAM_ARB:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(ARB_vertex_program, cap);
          if (ctx->VertexProgram.Enabled == state)
@@ -842,7 +842,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->VertexProgram.PointSizeEnabled = state;
          break;
       case GL_VERTEX_PROGRAM_TWO_SIDE_ARB:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(ARB_vertex_program, cap);
          if (ctx->VertexProgram.TwoSideEnabled == state)
@@ -853,7 +853,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(NV_texture_rectangle, cap);
          if (!enable_texture(ctx, state, TEXTURE_RECT_BIT)) {
@@ -863,7 +863,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL_EXT_stencil_two_side */
       case GL_STENCIL_TEST_TWO_SIDE_EXT:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(EXT_stencil_two_side, cap);
          if (ctx->Stencil.TestTwoSide == state)
@@ -878,7 +878,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          break;
 
       case GL_FRAGMENT_PROGRAM_ARB:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(ARB_fragment_program, cap);
          if (ctx->FragmentProgram.Enabled == state)
@@ -909,7 +909,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 	 break;
 
       case GL_FRAGMENT_SHADER_ATI:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
         CHECK_EXTENSION(ATI_fragment_shader, cap);
 	if (ctx->ATIFragmentShader.Enabled == state)
@@ -920,7 +920,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL_MESA_texture_array */
       case GL_TEXTURE_1D_ARRAY_EXT:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(MESA_texture_array, cap);
          if (!enable_texture(ctx, state, TEXTURE_1D_ARRAY_BIT)) {
@@ -929,7 +929,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          break;
 
       case GL_TEXTURE_2D_ARRAY_EXT:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(MESA_texture_array, cap);
          if (!enable_texture(ctx, state, TEXTURE_2D_ARRAY_BIT)) {
@@ -1154,11 +1154,11 @@ _mesa_IsEnabled( GLenum cap )
 
    switch (cap) {
       case GL_ALPHA_TEST:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          return ctx->Color.AlphaEnabled;
       case GL_AUTO_NORMAL:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.AutoNormal;
       case GL_BLEND:
@@ -1179,7 +1179,7 @@ _mesa_IsEnabled( GLenum cap )
 	 return (ctx->Transform.ClipPlanesEnabled >> p) & 1;
       }
       case GL_COLOR_MATERIAL:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
 	 return ctx->Light.ColorMaterialEnabled;
       case GL_CULL_FACE:
@@ -1193,11 +1193,11 @@ _mesa_IsEnabled( GLenum cap )
       case GL_DITHER:
 	 return ctx->Color.DitherFlag;
       case GL_FOG:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
 	 return ctx->Fog.Enabled;
       case GL_LIGHTING:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          return ctx->Light.Enabled;
       case GL_LIGHT0:
@@ -1208,7 +1208,7 @@ _mesa_IsEnabled( GLenum cap )
       case GL_LIGHT5:
       case GL_LIGHT6:
       case GL_LIGHT7:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          return ctx->Light.Light[cap-GL_LIGHT0].Enabled;
       case GL_LINE_SMOOTH:
@@ -1216,11 +1216,11 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
 	 return ctx->Line.SmoothFlag;
       case GL_LINE_STIPPLE:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Line.StippleFlag;
       case GL_INDEX_LOGIC_OP:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Color.IndexLogicOpEnabled;
       case GL_COLOR_LOGIC_OP:
@@ -1228,83 +1228,83 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
 	 return ctx->Color.ColorLogicOpEnabled;
       case GL_MAP1_COLOR_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map1Color4;
       case GL_MAP1_INDEX:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map1Index;
       case GL_MAP1_NORMAL:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map1Normal;
       case GL_MAP1_TEXTURE_COORD_1:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map1TextureCoord1;
       case GL_MAP1_TEXTURE_COORD_2:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map1TextureCoord2;
       case GL_MAP1_TEXTURE_COORD_3:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map1TextureCoord3;
       case GL_MAP1_TEXTURE_COORD_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map1TextureCoord4;
       case GL_MAP1_VERTEX_3:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map1Vertex3;
       case GL_MAP1_VERTEX_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map1Vertex4;
       case GL_MAP2_COLOR_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map2Color4;
       case GL_MAP2_INDEX:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map2Index;
       case GL_MAP2_NORMAL:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map2Normal;
       case GL_MAP2_TEXTURE_COORD_1:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map2TextureCoord1;
       case GL_MAP2_TEXTURE_COORD_2:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map2TextureCoord2;
       case GL_MAP2_TEXTURE_COORD_3:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map2TextureCoord3;
       case GL_MAP2_TEXTURE_COORD_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map2TextureCoord4;
       case GL_MAP2_VERTEX_3:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map2Vertex3;
       case GL_MAP2_VERTEX_4:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Eval.Map2Vertex4;
       case GL_NORMALIZE:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
 	 return ctx->Transform.Normalize;
       case GL_POINT_SMOOTH:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
 	 return ctx->Point.SmoothFlag;
       case GL_POLYGON_SMOOTH:
@@ -1312,7 +1312,7 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
 	 return ctx->Polygon.SmoothFlag;
       case GL_POLYGON_STIPPLE:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 return ctx->Polygon.StippleFlag;
       case GL_POLYGON_OFFSET_POINT:
@@ -1326,7 +1326,7 @@ _mesa_IsEnabled( GLenum cap )
       case GL_POLYGON_OFFSET_FILL:
 	 return ctx->Polygon.OffsetFill;
       case GL_RESCALE_NORMAL_EXT:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          return ctx->Transform.RescaleNormals;
       case GL_SCISSOR_TEST:
@@ -1334,15 +1334,15 @@ _mesa_IsEnabled( GLenum cap )
       case GL_STENCIL_TEST:
 	 return ctx->Stencil.Enabled;
       case GL_TEXTURE_1D:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          return is_texture_enabled(ctx, TEXTURE_1D_BIT);
       case GL_TEXTURE_2D:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          return is_texture_enabled(ctx, TEXTURE_2D_BIT);
       case GL_TEXTURE_3D:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          return is_texture_enabled(ctx, TEXTURE_3D_BIT);
       case GL_TEXTURE_GEN_S:
@@ -1352,7 +1352,7 @@ _mesa_IsEnabled( GLenum cap )
          {
             const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
 
-            if (ctx->API != API_OPENGL)
+            if (ctx->API != API_OPENGL_COMPAT)
                goto invalid_enum_error;
 
             if (texUnit) {
@@ -1376,37 +1376,37 @@ _mesa_IsEnabled( GLenum cap )
 
       /* client-side state */
       case GL_VERTEX_ARRAY:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled != 0);
       case GL_NORMAL_ARRAY:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled != 0);
       case GL_COLOR_ARRAY:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled != 0);
       case GL_INDEX_ARRAY:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled != 0);
       case GL_TEXTURE_COORD_ARRAY:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_TEX(ctx->Array.ActiveTexture)]
                  .Enabled != 0);
       case GL_EDGE_FLAG_ARRAY:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled != 0);
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(EXT_fog_coord);
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_FOG].Enabled != 0);
       case GL_SECONDARY_COLOR_ARRAY_EXT:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(EXT_secondary_color);
          return (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled != 0);
@@ -1422,7 +1422,7 @@ _mesa_IsEnabled( GLenum cap )
 
       /* GL_EXT_secondary_color */
       case GL_COLOR_SUM_EXT:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION2(EXT_secondary_color, ARB_vertex_program);
          return ctx->Fog.ColorSumEnabled;
@@ -1447,19 +1447,19 @@ _mesa_IsEnabled( GLenum cap )
 
       /* GL_IBM_rasterpos_clip */
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          return ctx->Transform.RasterPositionUnclipped;
 
       /* GL_NV_point_sprite */
       case GL_POINT_SPRITE_NV:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
          CHECK_EXTENSION2(NV_point_sprite, ARB_point_sprite)
          return ctx->Point.PointSprite;
 
       case GL_VERTEX_PROGRAM_ARB:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(ARB_vertex_program);
          return ctx->VertexProgram.Enabled;
@@ -1472,27 +1472,27 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION(ARB_vertex_program);
          return ctx->VertexProgram.PointSizeEnabled;
       case GL_VERTEX_PROGRAM_TWO_SIDE_ARB:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(ARB_vertex_program);
          return ctx->VertexProgram.TwoSideEnabled;
 
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(NV_texture_rectangle);
          return is_texture_enabled(ctx, TEXTURE_RECT_BIT);
 
       /* GL_EXT_stencil_two_side */
       case GL_STENCIL_TEST_TWO_SIDE_EXT:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          CHECK_EXTENSION(EXT_stencil_two_side);
          return ctx->Stencil.TestTwoSide;
 
       case GL_FRAGMENT_PROGRAM_ARB:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
          return ctx->FragmentProgram.Enabled;
 
@@ -1511,7 +1511,7 @@ _mesa_IsEnabled( GLenum cap )
          return ctx->Transform.DepthClamp;
 
       case GL_FRAGMENT_SHADER_ATI:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
 	 CHECK_EXTENSION(ATI_fragment_shader);
 	 return ctx->ATIFragmentShader.Enabled;
@@ -1530,7 +1530,7 @@ _mesa_IsEnabled( GLenum cap )
 
       /* GL_NV_primitive_restart */
       case GL_PRIMITIVE_RESTART_NV:
-         if (ctx->API != API_OPENGL || !ctx->Extensions.NV_primitive_restart) {
+         if (ctx->API != API_OPENGL_COMPAT || !ctx->Extensions.NV_primitive_restart) {
             goto invalid_enum_error;
          }
          return ctx->Array.PrimitiveRestart;

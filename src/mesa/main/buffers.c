@@ -353,7 +353,7 @@ updated_drawbuffers(struct gl_context *ctx)
 {
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
-   if (ctx->API == API_OPENGL && !ctx->Extensions.ARB_ES2_compatibility) {
+   if (ctx->API == API_OPENGL_COMPAT && !ctx->Extensions.ARB_ES2_compatibility) {
       struct gl_framebuffer *fb = ctx->DrawBuffer;
 
       /* Flag the FBO as requiring validation. */

@@ -296,7 +296,7 @@ do {									\
 static inline GLboolean
 _mesa_is_desktop_gl(const struct gl_context *ctx)
 {
-   return ctx->API == API_OPENGL || ctx->API == API_OPENGL_CORE;
+   return ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGL_CORE;
 }
 
 

@@ -3315,7 +3315,7 @@ struct gl_debug_state
  */
 typedef enum
 {
-   API_OPENGL,      /* legacy / compatibility contexts */
+   API_OPENGL_COMPAT,      /* legacy / compatibility contexts */
    API_OPENGLES,
    API_OPENGLES2,
    API_OPENGL_CORE,

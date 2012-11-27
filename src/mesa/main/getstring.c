@@ -40,7 +40,7 @@ static const GLubyte *
 shading_language_version(struct gl_context *ctx)
 {
    switch (ctx->API) {
-   case API_OPENGL:
+   case API_OPENGL_COMPAT:
    case API_OPENGL_CORE:
       if (!ctx->Extensions.ARB_shader_objects) {
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetString");
@@ -136,7 +136,7 @@ _mesa_GetString( GLenum name )
             break;
 	 return shading_language_version(ctx);
       case GL_PROGRAM_ERROR_STRING_NV:
-         if (ctx->API == API_OPENGL &&
+         if (ctx->API == API_OPENGL_COMPAT &&
              (ctx->Extensions.ARB_fragment_program ||
               ctx->Extensions.ARB_vertex_program)) {
             return (const GLubyte *) ctx->Program.ErrorString;
@@ -205,52 +205,52 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
 
    switch (pname) {
       case GL_VERTEX_ARRAY_POINTER:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_pname;
          *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS].Ptr;
          break;
       case GL_NORMAL_ARRAY_POINTER:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_pname;
          *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Ptr;
          break;
       case GL_COLOR_ARRAY_POINTER:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_pname;
          *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Ptr;
          break;
       case GL_SECONDARY_COLOR_ARRAY_POINTER_EXT:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
          *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Ptr;
          break;
       case GL_FOG_COORDINATE_ARRAY_POINTER_EXT:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
          *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_FOG].Ptr;
          break;
       case GL_INDEX_ARRAY_POINTER:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
          *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Ptr;
          break;
       case GL_TEXTURE_COORD_ARRAY_POINTER:
-         if (ctx->API != API_OPENGL && ctx->API != API_OPENGLES)
+         if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_pname;
          *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_TEX(clientUnit)].Ptr;
          break;
       case GL_EDGE_FLAG_ARRAY_POINTER:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
          *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Ptr;
          break;
       case GL_FEEDBACK_BUFFER_POINTER:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
          *params = ctx->Feedback.Buffer;
          break;
       case GL_SELECTION_BUFFER_POINTER:
-         if (ctx->API != API_OPENGL)
+         if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
          *params = ctx->Select.Buffer;
          break;

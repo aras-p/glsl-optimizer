@@ -189,7 +189,7 @@ GLboolean _vbo_CreateContext( struct gl_context *ctx )
     * vtxfmt mechanism can be removed now.
     */
    vbo_exec_init( ctx );
-   if (ctx->API == API_OPENGL)
+   if (ctx->API == API_OPENGL_COMPAT)
       vbo_save_init( ctx );
 
    _math_init_eval();
@@ -221,7 +221,7 @@ void _vbo_DestroyContext( struct gl_context *ctx )
       }
 
       vbo_exec_destroy(ctx);
-      if (ctx->API == API_OPENGL)
+      if (ctx->API == API_OPENGL_COMPAT)
          vbo_save_destroy(ctx);
       free(vbo);
       ctx->swtnl_im = NULL;

@@ -166,7 +166,7 @@ class PrintCode(gl_XML.gl_print_base):
             condition_parts = []
             if f.desktop:
                 if f.deprecated:
-                    condition_parts.append('ctx->API == API_OPENGL')
+                    condition_parts.append('ctx->API == API_OPENGL_COMPAT')
                 else:
                     condition_parts.append('_mesa_is_desktop_gl(ctx)')
             if 'es1' in f.api_map:

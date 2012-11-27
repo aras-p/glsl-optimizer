@@ -124,7 +124,7 @@ check_valid_to_render(struct gl_context *ctx, const char *function)
 	 return GL_FALSE;
       break;
 
-   case API_OPENGL:
+   case API_OPENGL_COMPAT:
    case API_OPENGL_CORE:
       {
          const struct gl_shader_program *vsProg =
@@ -219,7 +219,7 @@ _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
    case GL_QUADS:
    case GL_QUAD_STRIP:
    case GL_POLYGON:
-      valid_enum = (ctx->API == API_OPENGL);
+      valid_enum = (ctx->API == API_OPENGL_COMPAT);
       break;
    case GL_LINES_ADJACENCY:
    case GL_LINE_STRIP_ADJACENCY:

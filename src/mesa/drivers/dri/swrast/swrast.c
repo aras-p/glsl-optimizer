@@ -706,7 +706,7 @@ dri_create_context(gl_api api,
     (void) flags;
 
     switch (api) {
-    case API_OPENGL:
+    case API_OPENGL_COMPAT:
         if (major_version > 2
 	    || (major_version == 2 && minor_version > 1)) {
             *error = __DRI_CTX_ERROR_BAD_VERSION;
@@ -768,7 +768,7 @@ dri_create_context(gl_api api,
     switch (api) {
     case API_OPENGL_CORE:
         /* XXX fix me, fall-through for now */
-    case API_OPENGL:
+    case API_OPENGL_COMPAT:
         _mesa_enable_1_3_extensions(mesaCtx);
         _mesa_enable_1_4_extensions(mesaCtx);
         _mesa_enable_1_5_extensions(mesaCtx);

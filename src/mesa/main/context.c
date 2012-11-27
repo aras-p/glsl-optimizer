@@ -963,7 +963,7 @@ _mesa_initialize_context(struct gl_context *ctx,
 	  sizeof(ctx->TextureFormatSupported));
 
    switch (ctx->API) {
-   case API_OPENGL:
+   case API_OPENGL_COMPAT:
       ctx->Save = _mesa_create_save_table(ctx);
       if (!ctx->Save) {
          _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);

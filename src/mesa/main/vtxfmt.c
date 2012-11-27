@@ -50,7 +50,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_Color4f(tab, vfmt->Color4f);
    }
 
-   if (ctx->API == API_OPENGL) {
+   if (ctx->API == API_OPENGL_COMPAT) {
       _mesa_install_arrayelt_vtxfmt(tab, vfmt);
       SET_Color3f(tab, vfmt->Color3f);
       SET_Color3fv(tab, vfmt->Color3fv);
@@ -58,7 +58,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_EdgeFlag(tab, vfmt->EdgeFlag);
    }
 
-   if (ctx->API == API_OPENGL) {
+   if (ctx->API == API_OPENGL_COMPAT) {
       _mesa_install_eval_vtxfmt(tab, vfmt);
    }
 
@@ -68,7 +68,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_Normal3f(tab, vfmt->Normal3f);
    }
 
-   if (ctx->API == API_OPENGL) {
+   if (ctx->API == API_OPENGL_COMPAT) {
       SET_FogCoordfEXT(tab, vfmt->FogCoordfEXT);
       SET_FogCoordfvEXT(tab, vfmt->FogCoordfvEXT);
       SET_Indexf(tab, vfmt->Indexf);
@@ -83,7 +83,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_Normal3fv(tab, vfmt->Normal3fv);
    }
 
-   if (ctx->API == API_OPENGL) {
+   if (ctx->API == API_OPENGL_COMPAT) {
       SET_SecondaryColor3fEXT(tab, vfmt->SecondaryColor3fEXT);
       SET_SecondaryColor3fvEXT(tab, vfmt->SecondaryColor3fvEXT);
       SET_TexCoord1f(tab, vfmt->TexCoord1f);
@@ -102,7 +102,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_Vertex4fv(tab, vfmt->Vertex4fv);
    }
 
-   if (ctx->API == API_OPENGL) {
+   if (ctx->API == API_OPENGL_COMPAT) {
       _mesa_install_dlist_vtxfmt(tab, vfmt);   /* glCallList / glCallLists */
 
       SET_Begin(tab, vfmt->Begin);
@@ -145,7 +145,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
    }
 
    /* Originally for GL_NV_vertex_program, this is also used by dlist.c */
-   if (ctx->API == API_OPENGL) {
+   if (ctx->API == API_OPENGL_COMPAT) {
       SET_VertexAttrib1fNV(tab, vfmt->VertexAttrib1fNV);
       SET_VertexAttrib1fvNV(tab, vfmt->VertexAttrib1fvNV);
       SET_VertexAttrib2fNV(tab, vfmt->VertexAttrib2fNV);
@@ -189,7 +189,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
       SET_VertexAttribI4uivEXT(tab, vfmt->VertexAttribI4uiv);
    }
 
-   if (ctx->API == API_OPENGL) {
+   if (ctx->API == API_OPENGL_COMPAT) {
       /* GL_ARB_vertex_type_10_10_10_2_rev / GL 3.3 */
       SET_VertexP2ui(tab, vfmt->VertexP2ui);
       SET_VertexP2uiv(tab, vfmt->VertexP2uiv);

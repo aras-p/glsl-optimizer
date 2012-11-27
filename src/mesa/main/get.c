@@ -395,7 +395,7 @@ print_table_stats(int api)
    int i, j, collisions[11], count, hash, mask;
    const struct value_desc *d;
    const char *api_names[] = {
-      [API_OPENGL] = "GL",
+      [API_OPENGL_COMPAT] = "GL",
       [API_OPENGL_CORE] = "GL_CORE",
       [API_OPENGLES] = "GLES",
       [API_OPENGLES2] = "GLES2",

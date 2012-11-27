@@ -60,7 +60,7 @@ nouveau_context_create(gl_api api,
 	struct gl_context *ctx;
 
 	switch (api) {
-	case API_OPENGL:
+	case API_OPENGL_COMPAT:
 		/* Do after-the-fact version checking (below).
 		 */
 		break;
@@ -133,7 +133,7 @@ nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
 	nouveau_fbo_functions_init(&functions);
 
 	/* Initialize the mesa context. */
-	_mesa_initialize_context(ctx, API_OPENGL, visual,
+	_mesa_initialize_context(ctx, API_OPENGL_COMPAT, visual,
                                  share_ctx, &functions);
 
 	nouveau_state_init(ctx);
