@@ -117,7 +117,8 @@ LLVMValueRef
 lp_build_pack_aos_scalars(struct gallivm_state *gallivm,
                           struct lp_type src_type,
                           struct lp_type dst_type,
-                          const LLVMValueRef src);
+                          const LLVMValueRef src,
+                          unsigned channel);
 
 
 LLVMValueRef

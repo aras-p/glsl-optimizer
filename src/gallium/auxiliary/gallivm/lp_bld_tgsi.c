@@ -334,6 +334,66 @@ lp_build_emit_fetch(
 
 }
 
+
+LLVMValueRef
+lp_build_emit_fetch_texoffset(
+   struct lp_build_tgsi_context *bld_base,
+   const struct tgsi_full_instruction *inst,
+   unsigned tex_off_op,
+   const unsigned chan_index)
+{
+   const struct tgsi_texture_offset *off = &inst->TexOffsets[tex_off_op];
+   struct tgsi_full_src_register reg;
+   unsigned swizzle;
+   LLVMValueRef res;
+   enum tgsi_opcode_type stype = TGSI_TYPE_SIGNED;
+
+   /* convert offset "register" to ordinary register so can use normal emit funcs */
+   memset(&reg, 0, sizeof(reg));
+   reg.Register.File = off->File;
+   reg.Register.Index = off->Index;
+   reg.Register.SwizzleX = off->SwizzleX;
+   reg.Register.SwizzleY = off->SwizzleY;
+   reg.Register.SwizzleZ = off->SwizzleZ;
+
+   if (chan_index == LP_CHAN_ALL) {
+      swizzle = ~0;
+   } else {
+      swizzle = tgsi_util_get_src_register_swizzle(&reg.Register, chan_index);
+      if (swizzle > 2) {
+         assert(0 && "invalid swizzle in emit_fetch_texoffset()");
+         return bld_base->base.undef;
+      }
+   }
+
+   assert(off->Index <= bld_base->info->file_max[off->File]);
+
+   if (bld_base->emit_fetch_funcs[off->File]) {
+      res = bld_base->emit_fetch_funcs[off->File](bld_base, &reg, stype,
+                                                           swizzle);
+   } else {
+      assert(0 && "invalid src register in emit_fetch_texoffset()");
+      return bld_base->base.undef;
+   }
+
+   /*
+    * Swizzle the argument
+    */
+
+   if (swizzle == ~0) {
+      res = bld_base->emit_swizzle(bld_base, res,
+                                   off->SwizzleX,
+                                   off->SwizzleY,
+                                   off->SwizzleZ,
+                                   /* there's no 4th channel */
+                                   off->SwizzleX);
+   }
+
+   return res;
+
+}
+
+
 boolean
 lp_build_tgsi_llvm(
    struct lp_build_tgsi_context * bld_base,

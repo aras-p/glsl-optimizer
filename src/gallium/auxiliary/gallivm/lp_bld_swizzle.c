@@ -554,15 +554,16 @@ lp_build_transpose_aos(struct gallivm_state *gallivm,
 
 
 /**
- * Pack first element of aos values,
+ * Pack n-th element of aos values,
  * pad out to destination size.
- * i.e. x1 _ _ _ x2 _ _ _ will become x1 x2 _ _
+ * i.e. x1 y1 _ _ x2 y2 _ _ will become x1 x2 _ _
  */
 LLVMValueRef
 lp_build_pack_aos_scalars(struct gallivm_state *gallivm,
                           struct lp_type src_type,
                           struct lp_type dst_type,
-                          const LLVMValueRef src)
+                          const LLVMValueRef src,
+                          unsigned channel)
 {
    LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
    LLVMValueRef undef = LLVMGetUndef(i32t);
@@ -574,7 +575,7 @@ lp_build_pack_aos_scalars(struct gallivm_state *gallivm,
    assert(num_src <= num_dst);
 
    for (i = 0; i < num_src; i++) {
-      shuffles[i] = LLVMConstInt(i32t, i * 4, 0);
+      shuffles[i] = LLVMConstInt(i32t, i * 4 + channel, 0);
    }
    for (i = num_src; i < num_dst; i++) {
       shuffles[i] = undef;

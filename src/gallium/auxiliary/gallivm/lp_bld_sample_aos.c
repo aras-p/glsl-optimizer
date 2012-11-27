@@ -539,7 +539,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    i32_vec_type = lp_build_vec_type(bld->gallivm, i32.type);
 
    lp_build_extract_image_sizes(bld,
-                                bld->int_size_type,
+                                &bld->int_size_bld,
                                 bld->int_coord_type,
                                 int_size,
                                 &width_vec,
@@ -661,7 +661,7 @@ lp_build_sample_image_nearest_afloat(struct lp_build_sample_context *bld,
    flt_size = lp_build_int_to_float(&bld->float_size_bld, int_size);
 
    lp_build_extract_image_sizes(bld,
-                                bld->float_size_type,
+                                &bld->float_size_bld,
                                 bld->coord_type,
                                 flt_size,
                                 &width_vec,
@@ -994,7 +994,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    i32_vec_type = lp_build_vec_type(bld->gallivm, i32.type);
 
    lp_build_extract_image_sizes(bld,
-                                bld->int_size_type,
+                                &bld->int_size_bld,
                                 bld->int_coord_type,
                                 int_size,
                                 &width_vec,
@@ -1175,7 +1175,7 @@ lp_build_sample_image_linear_afloat(struct lp_build_sample_context *bld,
    flt_size = lp_build_int_to_float(&bld->float_size_bld, int_size);
 
    lp_build_extract_image_sizes(bld,
-                                bld->float_size_type,
+                                &bld->float_size_bld,
                                 bld->coord_type,
                                 flt_size,
                                 &width_vec,

@@ -1146,7 +1146,8 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    unsigned unit;
    LLVMValueRef lod_bias, explicit_lod;
    LLVMValueRef oow = NULL;
-   LLVMValueRef coords[3];
+   LLVMValueRef coords[4];
+   LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
    unsigned num_coords;
    unsigned dims;
@@ -1225,7 +1226,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       if (modifier == LP_BLD_TEX_MODIFIER_PROJECTED)
          coords[i] = lp_build_mul(&bld->bld_base.base, coords[i], oow);
    }
-   for (i = num_coords; i < 3; i++) {
+   for (i = num_coords; i < 4; i++) {
       coords[i] = bld->bld_base.base.undef;
    }
 
@@ -1285,12 +1286,108 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       unit = inst->Src[1].Register.Index;
    }
 
+   /* some advanced gather instructions (txgo) would require 4 offsets */
+   if (inst->Texture.NumOffsets == 1) {
+      unsigned dim;
+      for (dim = 0; dim < dims; dim++) {
+         offsets[dim] = lp_build_emit_fetch_texoffset(&bld->bld_base, inst, 0, dim );
+      }
+   }
+
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->bld_base.base.gallivm,
                                   bld->bld_base.base.type,
-                                  unit, num_coords, coords,
+                                  FALSE,
+                                  unit, coords,
+                                  offsets,
                                   &derivs,
                                   lod_bias, explicit_lod,
+                                  texel);
+}
+
+static void
+emit_txf( struct lp_build_tgsi_soa_context *bld,
+          const struct tgsi_full_instruction *inst,
+          LLVMValueRef *texel)
+{
+   unsigned unit;
+   LLVMValueRef coord_undef = LLVMGetUndef(bld->bld_base.base.int_vec_type);
+   LLVMValueRef explicit_lod = NULL;
+   LLVMValueRef coords[3];
+   LLVMValueRef offsets[3] = { NULL };
+   struct lp_derivatives derivs;
+   unsigned num_coords;
+   unsigned dims;
+   unsigned i;
+
+   if (!bld->sampler) {
+      _debug_printf("warning: found texture instruction but no sampler generator supplied\n");
+      for (i = 0; i < 4; i++) {
+         texel[i] = coord_undef;
+      }
+      return;
+   }
+
+   derivs.ddx_ddy[0] = coord_undef;
+   derivs.ddx_ddy[1] = coord_undef;
+
+   switch (inst->Texture.Texture) {
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_BUFFER:
+      num_coords = 1;
+      dims = 1;
+      break;
+   case TGSI_TEXTURE_1D_ARRAY:
+      num_coords = 2;
+      dims = 1;
+      break;
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
+      num_coords = 2;
+      dims = 2;
+      break;
+   case TGSI_TEXTURE_2D_ARRAY:
+      num_coords = 3;
+      dims = 2;
+      break;
+   case TGSI_TEXTURE_3D:
+      num_coords = 3;
+      dims = 3;
+      break;
+   default:
+      assert(0);
+      return;
+   }
+
+   /* always have lod except for buffers ? */
+   if (inst->Texture.Texture != TGSI_TEXTURE_BUFFER) {
+      explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 0, 3 );
+   }
+
+   for (i = 0; i < num_coords; i++) {
+      coords[i] = lp_build_emit_fetch( &bld->bld_base, inst, 0, i );
+   }
+   for (i = num_coords; i < 3; i++) {
+      coords[i] = coord_undef;
+   }
+
+   unit = inst->Src[1].Register.Index;
+
+   if (inst->Texture.NumOffsets == 1) {
+      unsigned dim;
+      for (dim = 0; dim < dims; dim++) {
+         offsets[dim] = lp_build_emit_fetch_texoffset(&bld->bld_base, inst, 0, dim );
+      }
+   }
+
+   bld->sampler->emit_fetch_texel(bld->sampler,
+                                  bld->bld_base.base.gallivm,
+                                  bld->bld_base.base.type,
+                                  TRUE,
+                                  unit, coords,
+                                  offsets,
+                                  &derivs,
+                                  NULL, explicit_lod,
                                   texel);
 }
 
@@ -1756,6 +1853,17 @@ txq_emit(
 }
 
 static void
+txf_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   emit_txf(bld, emit_data->inst, emit_data->output);
+}
+
+static void
 cal_emit(
    const struct lp_build_tgsi_action * action,
    struct lp_build_tgsi_context * bld_base,
@@ -2126,6 +2234,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.bld_base.op_actions[TGSI_OPCODE_TXL].emit = txl_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_TXP].emit = txp_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_TXQ].emit = txq_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_TXF].emit = txf_emit;
 
    lp_exec_mask_init(&bld.exec_mask, &bld.bld_base.base);
 

@@ -176,9 +176,10 @@ static void
 lp_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
                                      struct gallivm_state *gallivm,
                                      struct lp_type type,
+                                     boolean is_fetch,
                                      unsigned unit,
-                                     unsigned num_coords,
                                      const LLVMValueRef *coords,
+                                     const LLVMValueRef *offsets,
                                      const struct lp_derivatives *derivs,
                                      LLVMValueRef lod_bias, /* optional */
                                      LLVMValueRef explicit_lod, /* optional */
@@ -189,7 +190,7 @@ lp_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
    assert(unit < PIPE_MAX_SAMPLERS);
    
    if (LP_PERF & PERF_NO_TEX) {
-      lp_build_sample_nop(gallivm, type, num_coords, coords, texel);
+      lp_build_sample_nop(gallivm, type, coords, texel);
       return;
    }
 
@@ -197,8 +198,10 @@ lp_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
                        &sampler->dynamic_state.static_state[unit],
                        &sampler->dynamic_state.base,
                        type,
+                       is_fetch,
                        unit,
-                       num_coords, coords,
+                       coords,
+                       offsets,
                        derivs,
                        lod_bias, explicit_lod,
                        texel);

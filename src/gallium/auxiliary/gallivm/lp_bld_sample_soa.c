@@ -610,7 +610,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    LLVMValueRef x, y, z;
 
    lp_build_extract_image_sizes(bld,
-                                bld->int_size_type,
+                                &bld->int_size_bld,
                                 bld->int_coord_type,
                                 size,
                                 &width_vec, &height_vec, &depth_vec);
@@ -618,7 +618,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    flt_size = lp_build_int_to_float(&bld->float_size_bld, size);
 
    lp_build_extract_image_sizes(bld,
-                                bld->float_size_type,
+                                &bld->float_size_bld,
                                 bld->coord_type,
                                 flt_size,
                                 &flt_width_vec, &flt_height_vec, &flt_depth_vec);
@@ -695,7 +695,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    int chan;
 
    lp_build_extract_image_sizes(bld,
-                                bld->int_size_type,
+                                &bld->int_size_bld,
                                 bld->int_coord_type,
                                 size,
                                 &width_vec, &height_vec, &depth_vec);
@@ -703,7 +703,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    flt_size = lp_build_int_to_float(&bld->float_size_bld, size);
 
    lp_build_extract_image_sizes(bld,
-                                bld->float_size_type,
+                                &bld->float_size_bld,
                                 bld->coord_type,
                                 flt_size,
                                 &flt_width_vec, &flt_height_vec, &flt_depth_vec);
@@ -1158,6 +1158,120 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
 
 
 /**
+ * Texel fetch function.
+ * In contrast to general sampling there is no filtering, no coord minification,
+ * lod (if any) is always explicit uint, coords are uints (in terms of texel units)
+ * directly to be applied to the selected mip level (after adding texel offsets).
+ * This function handles texel fetch for all targets where texel fetch is supported
+ * (no cube maps, but 1d, 2d, 3d are supported, arrays and buffers should be too).
+ */
+static void
+lp_build_fetch_texel(struct lp_build_sample_context *bld,
+                     unsigned unit,
+                     const LLVMValueRef *coords,
+                     LLVMValueRef explicit_lod,
+                     const LLVMValueRef *offsets,
+                     LLVMValueRef *colors_out)
+{
+   struct lp_build_context *perquadi_bld = &bld->perquadi_bld;
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   unsigned dims = bld->dims, chan;
+   LLVMValueRef size, ilevel;
+   LLVMValueRef row_stride_vec = NULL, img_stride_vec = NULL;
+   LLVMValueRef x = coords[0], y = coords[1], z = coords[2];
+   LLVMValueRef width, height, depth, i, j;
+   LLVMValueRef offset, out_of_bounds, out1;
+
+   /* XXX just like ordinary sampling, we don't handle per-pixel lod (yet). */
+   if (explicit_lod && bld->static_state->target != PIPE_BUFFER) {
+      /* could also avoid this if there are no mipmaps */
+      /* XXX temporary hack until ordinary sampling handles per-quad lod the same */
+      bld->num_lods = bld->coord_type.length / 4;
+      bld->float_size_type = bld->float_size_in_type;
+      bld->float_size_type.length = bld->num_lods > 1 ? bld->coord_type.length :
+                                      bld->float_size_in_type.length;
+      bld->int_size_type = lp_int_type(bld->float_size_type);
+      lp_build_context_init(&bld->int_size_bld, bld->gallivm, bld->int_size_type);
+      lp_build_context_init(&bld->float_size_bld, bld->gallivm, bld->float_size_type);
+
+      ilevel = lp_build_pack_aos_scalars(bld->gallivm, int_coord_bld->type,
+                                         perquadi_bld->type, explicit_lod, 0);
+      lp_build_nearest_mip_level(bld, unit, ilevel, &ilevel);
+   }
+   else {
+      bld->num_lods = 1;
+      ilevel = lp_build_const_int32(bld->gallivm, 0);
+   }
+   lp_build_mipmap_level_sizes(bld, ilevel,
+                               &size,
+                               &row_stride_vec, &img_stride_vec);
+   lp_build_extract_image_sizes(bld, &bld->int_size_bld, int_coord_bld->type,
+                                size, &width, &height, &depth);
+
+   /* This is a lot like border sampling */
+   if (offsets[0]) {
+      /* XXX coords are really unsigned, offsets are signed */
+      x = lp_build_add(int_coord_bld, x, offsets[0]);
+   }
+   out_of_bounds = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, x, int_coord_bld->zero);
+   out1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, x, width);
+   out_of_bounds = lp_build_or(int_coord_bld, out_of_bounds, out1);
+
+   if (dims >= 2) {
+      if (offsets[1]) {
+         y = lp_build_add(int_coord_bld, y, offsets[1]);
+      }
+      out1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, y, int_coord_bld->zero);
+      out_of_bounds = lp_build_or(int_coord_bld, out_of_bounds, out1);
+      out1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, y, height);
+      out_of_bounds = lp_build_or(int_coord_bld, out_of_bounds, out1);
+
+      if (dims >= 3) {
+         if (offsets[2]) {
+            z = lp_build_add(int_coord_bld, z, offsets[2]);
+         }
+         out1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, z, int_coord_bld->zero);
+         out_of_bounds = lp_build_or(int_coord_bld, out_of_bounds, out1);
+         out1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, z, depth);
+         out_of_bounds = lp_build_or(int_coord_bld, out_of_bounds, out1);
+      }
+   }
+
+   lp_build_sample_offset(int_coord_bld,
+                          bld->format_desc,
+                          x, y, z, row_stride_vec, img_stride_vec,
+                          &offset, &i, &j);
+
+   if (bld->static_state->target != PIPE_BUFFER) {
+      offset = lp_build_add(int_coord_bld, offset,
+                            lp_build_get_mip_offsets(bld, ilevel));
+   }
+
+   offset = lp_build_andnot(int_coord_bld, offset, out_of_bounds);
+
+   lp_build_fetch_rgba_soa(bld->gallivm,
+                           bld->format_desc,
+                           bld->texel_type,
+                           bld->base_ptr, offset,
+                           i, j,
+                           colors_out);
+
+   if (0) {
+      /*
+       * Not needed except for ARB_robust_buffer_access_behavior.
+       * Could use min/max above instead of out-of-bounds comparisons
+       * (in fact cast to unsigned and min only is sufficient)
+       * if we don't care about the result returned for out-of-bounds.
+       */
+      for (chan = 0; chan < 4; chan++) {
+         colors_out[chan] = lp_build_select(&bld->texel_bld, out_of_bounds,
+                                            bld->texel_bld.zero, colors_out[chan]);
+      }
+   }
+}
+
+
+/**
  * Do shadow test/comparison.
  * \param p  the texcoord Z (aka R, aka P) component
  * \param texel  the texel to compare against (use the X channel)
@@ -1209,7 +1323,6 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
 void
 lp_build_sample_nop(struct gallivm_state *gallivm,
                     struct lp_type type,
-                    unsigned num_coords,
                     const LLVMValueRef *coords,
                     LLVMValueRef texel_out[4])
 {
@@ -1227,6 +1340,7 @@ lp_build_sample_nop(struct gallivm_state *gallivm,
  * 'texel' will return a vector of four LLVMValueRefs corresponding to
  * R, G, B, A.
  * \param type  vector float type to use for coords, etc.
+ * \param is_fetch  if this is a texel fetch instruction.
  * \param derivs  partial derivatives of (s,t,r,q) with respect to x and y
  */
 void
@@ -1234,9 +1348,10 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                     const struct lp_sampler_static_state *static_state,
                     struct lp_sampler_dynamic_state *dynamic_state,
                     struct lp_type type,
+                    boolean is_fetch,
                     unsigned unit,
-                    unsigned num_coords,
                     const LLVMValueRef *coords,
+                    const LLVMValueRef *offsets,
                     const struct lp_derivatives *derivs,
                     LLVMValueRef lod_bias, /* optional */
                     LLVMValueRef explicit_lod, /* optional */
@@ -1272,20 +1387,28 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    bld.int_type = lp_type_int(32);
    bld.coord_type = type;
    bld.int_coord_type = lp_int_type(type);
-   bld.float_size_type = lp_type_float(32);
-   bld.float_size_type.length = dims > 1 ? 4 : 1;
-   bld.int_size_type = lp_int_type(bld.float_size_type);
+   bld.float_size_in_type = lp_type_float(32);
+   bld.float_size_in_type.length = dims > 1 ? 4 : 1;
+   bld.int_size_in_type = lp_int_type(bld.float_size_in_type);
    bld.texel_type = type;
    bld.perquadf_type = type;
    /* we want native vector size to be able to use our intrinsics */
    bld.perquadf_type.length = type.length > 4 ? ((type.length + 15) / 16) * 4 : 1;
    bld.perquadi_type = lp_int_type(bld.perquadf_type);
 
+   bld.num_lods = 1;
+   bld.float_size_type = bld.float_size_in_type;
+   bld.float_size_type.length = bld.num_lods > 1 ? type.length :
+                                   bld.float_size_in_type.length;
+   bld.int_size_type = lp_int_type(bld.float_size_type);
+
    lp_build_context_init(&bld.float_bld, gallivm, bld.float_type);
    lp_build_context_init(&bld.float_vec_bld, gallivm, type);
    lp_build_context_init(&bld.int_bld, gallivm, bld.int_type);
    lp_build_context_init(&bld.coord_bld, gallivm, bld.coord_type);
    lp_build_context_init(&bld.int_coord_bld, gallivm, bld.int_coord_type);
+   lp_build_context_init(&bld.int_size_in_bld, gallivm, bld.int_size_in_type);
+   lp_build_context_init(&bld.float_size_in_bld, gallivm, bld.float_size_in_type);
    lp_build_context_init(&bld.int_size_bld, gallivm, bld.int_size_type);
    lp_build_context_init(&bld.float_size_bld, gallivm, bld.float_size_type);
    lp_build_context_init(&bld.texel_bld, gallivm, bld.texel_type);
@@ -1311,7 +1434,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       bld.int_size = tex_width;
    }
    else {
-      bld.int_size = LLVMBuildInsertElement(builder, bld.int_size_bld.undef,
+      bld.int_size = LLVMBuildInsertElement(builder, bld.int_size_in_bld.undef,
                                             tex_width, LLVMConstInt(i32t, 0, 0), "");
       if (dims >= 2) {
          bld.int_size = LLVMBuildInsertElement(builder, bld.int_size,
@@ -1327,7 +1450,6 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       /* For debug: no-op texture sampling */
       lp_build_sample_nop(gallivm,
                           bld.texel_type,
-                          num_coords,
                           coords,
                           texel_out);
    }
@@ -1350,6 +1472,18 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                       static_state->min_mip_filter,
                       static_state->wrap_s,
                       static_state->wrap_t);
+      }
+
+      if (is_fetch) {
+         lp_build_fetch_texel(&bld, unit, coords,
+                              explicit_lod, offsets,
+                              texel_out);
+
+         if (static_state->target != PIPE_BUFFER) {
+            apply_sampler_swizzle(&bld, texel_out);
+         }
+
+         return;
       }
 
       lp_build_sample_common(&bld, unit,
@@ -1450,20 +1584,25 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
             bld4.int_type = lp_type_int(32);
             bld4.coord_type = type4;
             bld4.int_coord_type = lp_int_type(type4);
-            bld4.float_size_type = lp_type_float(32);
-            bld4.float_size_type.length = dims > 1 ? 4 : 1;
-            bld4.int_size_type = lp_int_type(bld4.float_size_type);
+            bld4.float_size_in_type = lp_type_float(32);
+            bld4.float_size_in_type.length = dims > 1 ? 4 : 1;
+            bld4.int_size_in_type = lp_int_type(bld4.float_size_in_type);
+            bld4.float_size_type = bld4.float_size_in_type;
+            bld4.int_size_type =  bld4.int_size_in_type;
             bld4.texel_type = type4;
             bld4.perquadf_type = type4;
             /* we want native vector size to be able to use our intrinsics */
             bld4.perquadf_type.length = 1;
             bld4.perquadi_type = lp_int_type(bld4.perquadf_type);
+            bld4.num_lods = 1;
 
             lp_build_context_init(&bld4.float_bld, gallivm, bld4.float_type);
             lp_build_context_init(&bld4.float_vec_bld, gallivm, type4);
             lp_build_context_init(&bld4.int_bld, gallivm, bld4.int_type);
             lp_build_context_init(&bld4.coord_bld, gallivm, bld4.coord_type);
             lp_build_context_init(&bld4.int_coord_bld, gallivm, bld4.int_coord_type);
+            lp_build_context_init(&bld4.int_size_in_bld, gallivm, bld4.int_size_in_type);
+            lp_build_context_init(&bld4.float_size_in_bld, gallivm, bld4.float_size_in_type);
             lp_build_context_init(&bld4.int_size_bld, gallivm, bld4.int_size_type);
             lp_build_context_init(&bld4.float_size_bld, gallivm, bld4.float_size_type);
             lp_build_context_init(&bld4.texel_bld, gallivm, bld4.texel_type);
