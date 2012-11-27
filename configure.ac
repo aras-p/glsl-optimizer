@@ -1753,7 +1753,7 @@ dnl
 dnl Gallium Tests
 dnl
 if test "x$enable_gallium_tests" = xyes; then
-    SRC_DIRS="$SRC_DIRS gallium/tests/trivial"
+    SRC_DIRS="$SRC_DIRS gallium/tests/trivial gallium/tests/unit"
     enable_gallium_loader=yes
 fi
 
@@ -2101,6 +2101,7 @@ AC_CONFIG_FILES([configs/current
 		src/gallium/targets/xvmc-r600/Makefile
 		src/gallium/targets/xvmc-softpipe/Makefile
 		src/gallium/tests/trivial/Makefile
+		src/gallium/tests/unit/Makefile
 		src/gallium/winsys/Makefile
 		src/gallium/winsys/i915/drm/Makefile
 		src/gallium/winsys/i915/sw/Makefile
