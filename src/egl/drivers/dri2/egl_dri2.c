@@ -495,6 +495,11 @@ dri2_setup_screen(_EGLDisplay *disp)
       disp->Extensions.MESA_drm_image = EGL_TRUE;
       disp->Extensions.KHR_image_base = EGL_TRUE;
       disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
+      if (dri2_dpy->image->base.version >= 5 &&
+          dri2_dpy->image->createImageFromTexture) {
+         disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
+         disp->Extensions.KHR_gl_texture_cubemap_image = EGL_TRUE;
+      }
    }
 }
 
@@ -1217,6 +1222,115 @@ dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 }
 #endif
 
+/**
+ * Set the error code after a call to
+ * dri2_egl_image::dri_image::createImageFromTexture.
+ */
+static void
+dri2_create_image_khr_texture_error(int dri_error)
+{
+   EGLint egl_error;
+
+   switch (dri_error) {
+   case __DRI_IMAGE_ERROR_SUCCESS:
+      return;
+
+   case __DRI_IMAGE_ERROR_BAD_ALLOC:
+      egl_error = EGL_BAD_ALLOC;
+      break;
+
+   case __DRI_IMAGE_ERROR_BAD_MATCH:
+      egl_error = EGL_BAD_MATCH;
+      break;
+
+   case __DRI_IMAGE_ERROR_BAD_PARAMETER:
+      egl_error = EGL_BAD_PARAMETER;
+      break;
+
+   default:
+      assert(0);
+      egl_error = EGL_BAD_MATCH;
+      break;
+   }
+
+   _eglError(egl_error, "dri2_create_image_khr_texture");
+}
+
+static _EGLImage *
+dri2_create_image_khr_texture(_EGLDisplay *disp, _EGLContext *ctx,
+				   EGLenum target,
+				   EGLClientBuffer buffer,
+				   const EGLint *attr_list)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_context *dri2_ctx = dri2_egl_context(ctx);
+   struct dri2_egl_image *dri2_img;
+   GLuint texture = (GLuint) (uintptr_t) buffer;
+   _EGLImageAttribs attrs;
+   GLuint depth;
+   GLenum gl_target;
+   unsigned error;
+
+   if (texture == 0) {
+      _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
+      return EGL_NO_IMAGE_KHR;
+   }
+
+   if (_eglParseImageAttribList(&attrs, disp, attr_list) != EGL_SUCCESS)
+      return EGL_NO_IMAGE_KHR;
+
+   switch (target) {
+   case EGL_GL_TEXTURE_2D_KHR:
+      depth = 0;
+      gl_target = GL_TEXTURE_2D;
+      break;
+   case EGL_GL_TEXTURE_3D_KHR:
+      depth = attrs.GLTextureZOffset;
+      gl_target = GL_TEXTURE_3D;
+      break;
+   case EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_X_KHR:
+   case EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_X_KHR:
+   case EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Y_KHR:
+   case EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_KHR:
+   case EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Z_KHR:
+   case EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_KHR:
+      depth = target - EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_X_KHR;
+      gl_target = GL_TEXTURE_CUBE_MAP;
+      break;
+   default:
+      _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
+      return EGL_NO_IMAGE_KHR;
+   }
+
+   dri2_img = malloc(sizeof *dri2_img);
+   if (!dri2_img) {
+      _eglError(EGL_BAD_ALLOC, "dri2_create_image_khr");
+      return EGL_NO_IMAGE_KHR;
+   }
+
+   if (!_eglInitImage(&dri2_img->base, disp)) {
+      _eglError(EGL_BAD_ALLOC, "dri2_create_image_khr");
+      free(dri2_img);
+      return EGL_NO_IMAGE_KHR;
+   }
+
+   dri2_img->dri_image =
+      dri2_dpy->image->createImageFromTexture(dri2_ctx->dri_context,
+                                              gl_target,
+                                              texture,
+                                              depth,
+                                              attrs.GLTextureLevel,
+                                              &error,
+                                              dri2_img);
+   dri2_create_image_khr_texture_error(error);
+
+   if (!dri2_img->dri_image) {
+      free(dri2_img);
+      return EGL_NO_IMAGE_KHR;
+   }
+   return &dri2_img->base;
+}
+
 _EGLImage *
 dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
 		      _EGLContext *ctx, EGLenum target,
@@ -1225,6 +1339,14 @@ dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
    (void) drv;
 
    switch (target) {
+   case EGL_GL_TEXTURE_2D_KHR:
+   case EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_X_KHR:
+   case EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_X_KHR:
+   case EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Y_KHR:
+   case EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_KHR:
+   case EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Z_KHR:
+   case EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_KHR:
+      return dri2_create_image_khr_texture(disp, ctx, target, buffer, attr_list);
    case EGL_GL_RENDERBUFFER_KHR:
       return dri2_create_image_khr_renderbuffer(disp, ctx, buffer, attr_list);
    case EGL_DRM_BUFFER_MESA:

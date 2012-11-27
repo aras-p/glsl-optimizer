@@ -938,7 +938,7 @@ struct __DRIdri2ExtensionRec {
  * extensions.
  */
 #define __DRI_IMAGE "DRI_IMAGE"
-#define __DRI_IMAGE_VERSION 5
+#define __DRI_IMAGE_VERSION 6
 
 /**
  * These formats correspond to the similarly named MESA_FORMAT_*
@@ -1022,6 +1022,23 @@ struct __DRIdri2ExtensionRec {
 #define __DRI_IMAGE_ATTRIB_HEIGHT	0x2005
 #define __DRI_IMAGE_ATTRIB_COMPONENTS	0x2006 /* available in versions 5+ */
 
+/**
+ * \name Reasons that __DRIimageExtensionRec::createImageFromTexture might fail
+ */
+/*@{*/
+/** Success! */
+#define __DRI_IMAGE_ERROR_SUCCESS       0
+
+/** Memory allocation failure */
+#define __DRI_IMAGE_ERROR_BAD_ALLOC     1
+
+/** Client requested an invalid attribute for a texture object  */
+#define __DRI_IMAGE_ERROR_BAD_MATCH     2
+
+/** Client requested an invalid texture object */
+#define __DRI_IMAGE_ERROR_BAD_PARAMETER 3
+/*@}*/
+
 typedef struct __DRIimageRec          __DRIimage;
 typedef struct __DRIimageExtensionRec __DRIimageExtension;
 struct __DRIimageExtensionRec {
@@ -1087,6 +1104,19 @@ struct __DRIimageExtensionRec {
     */
     __DRIimage *(*fromPlanar)(__DRIimage *image, int plane,
                               void *loaderPrivate);
+
+    /**
+     * Create image from texture.
+     *
+     * \since 6
+     */
+   __DRIimage *(*createImageFromTexture)(__DRIcontext *context,
+                                         int target,
+                                         unsigned texture,
+                                         int depth,
+                                         int level,
+                                         unsigned *error,
+                                         void *loaderPrivate);
 };
 
 
