@@ -496,7 +496,11 @@ static void si_llvm_init_export_args(struct lp_build_tgsi_context *bld_base,
 						LLVMInt32TypeInContext(base->gallivm->context),
 						args, 2,
 						LLVMReadNoneAttribute);
-			args[chan + 7] = args[chan + 5];
+			args[chan + 7] = args[chan + 5] =
+				LLVMBuildBitCast(base->gallivm->builder,
+						 args[chan + 5],
+						 LLVMFloatTypeInContext(base->gallivm->context),
+						 "");
 		}
 
 		/* Set COMPR flag */
