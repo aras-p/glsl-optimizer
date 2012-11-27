@@ -260,6 +260,8 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 "##" {
+	if (parser->is_gles)
+		glcpp_error(yylloc, yyextra, "Token pasting (##) is illegal in GLES");
 	return PASTE;
 }
 
