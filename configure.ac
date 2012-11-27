@@ -2134,6 +2134,12 @@ echo "        CFLAGS:          $cflags"
 echo "        CXXFLAGS:        $cxxflags"
 echo "        Macros:          $defines"
 echo ""
+if test "x$MESA_LLVM" = x1; then
+    echo "        LLVM_CFLAGS:     $LLVM_CFLAGS"
+    echo "        LLVM_CXXFLAGS:   $LLVM_CXXFLAGS"
+    echo "        LLVM_CPPFLAGS:   $LLVM_CPPFLAGS"
+    echo ""
+fi
 echo "        PYTHON2:         $PYTHON2"
 
 echo ""
