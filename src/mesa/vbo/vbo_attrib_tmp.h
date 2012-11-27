@@ -957,8 +957,8 @@ static void GLAPIENTRY
 TAG(MultiTexCoordP1ui)(GLenum target, GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP1ui");
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
+   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP1ui");
    ATTR_UI(ctx, 1, type, 0, attr, coords);
 }
 
@@ -966,8 +966,8 @@ static void GLAPIENTRY
 TAG(MultiTexCoordP1uiv)(GLenum target, GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP1uiv");
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
+   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP1uiv");
    ATTR_UI(ctx, 1, type, 0, attr, coords[0]);
 }
 
@@ -975,8 +975,8 @@ static void GLAPIENTRY
 TAG(MultiTexCoordP2ui)(GLenum target, GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP2ui");
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
+   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP2ui");
    ATTR_UI(ctx, 2, type, 0, attr, coords);
 }
 
@@ -984,8 +984,8 @@ static void GLAPIENTRY
 TAG(MultiTexCoordP2uiv)(GLenum target, GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP2uiv");
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
+   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP2uiv");
    ATTR_UI(ctx, 2, type, 0, attr, coords[0]);
 }
 
@@ -993,8 +993,8 @@ static void GLAPIENTRY
 TAG(MultiTexCoordP3ui)(GLenum target, GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP3ui");
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
+   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP3ui");
    ATTR_UI(ctx, 3, type, 0, attr, coords);
 }
 
@@ -1002,8 +1002,8 @@ static void GLAPIENTRY
 TAG(MultiTexCoordP3uiv)(GLenum target, GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP3uiv");
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
+   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP3uiv");
    ATTR_UI(ctx, 3, type, 0, attr, coords[0]);
 }
 
@@ -1011,8 +1011,8 @@ static void GLAPIENTRY
 TAG(MultiTexCoordP4ui)(GLenum target, GLenum type, GLuint coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP4ui");
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
+   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP4ui");
    ATTR_UI(ctx, 4, type, 0, attr, coords);
 }
 
