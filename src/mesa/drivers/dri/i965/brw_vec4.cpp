@@ -1127,15 +1127,23 @@ vec4_visitor::run()
 
 extern "C" {
 
-bool
+/**
+ * Compile a vertex shader.
+ *
+ * Returns the final assembly and the program's size.
+ */
+const unsigned *
 brw_vs_emit(struct brw_context *brw,
             struct gl_shader_program *prog,
             struct brw_vs_compile *c,
-            void *mem_ctx)
+            void *mem_ctx,
+            unsigned *final_assembly_size)
 {
    struct intel_context *intel = &brw->intel;
    bool start_busy = false;
    float start_time = 0;
+
+   brw_init_compile(brw, &c->func, mem_ctx);
 
    if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
       start_busy = (intel->batch.last_bo &&
@@ -1174,10 +1182,10 @@ brw_vs_emit(struct brw_context *brw,
    if (!v.run()) {
       prog->LinkStatus = false;
       ralloc_strcat(&prog->InfoLog, v.fail_msg);
-      return false;
+      return NULL;
    }
 
-   return true;
+   return brw_get_program(&c->func, final_assembly_size);
 }
 
 } /* extern "C" */

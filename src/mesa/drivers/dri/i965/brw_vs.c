@@ -227,7 +227,6 @@ do_vs_prog(struct brw_context *brw,
 
    mem_ctx = ralloc_context(NULL);
 
-   brw_init_compile(brw, &c.func, mem_ctx);
    c.vp = vp;
 
    /* Allocate the references to the uniforms that will end up in the
@@ -279,7 +278,8 @@ do_vs_prog(struct brw_context *brw,
 
    /* Emit GEN4 code.
     */
-   if (!brw_vs_emit(brw, prog, &c, mem_ctx)) {
+   program = brw_vs_emit(brw, prog, &c, mem_ctx, &program_size);
+   if (program == NULL) {
       ralloc_free(mem_ctx);
       return false;
    }
@@ -305,10 +305,6 @@ do_vs_prog(struct brw_context *brw,
       brw_get_scratch_bo(intel, &brw->vs.scratch_bo,
 			 c.prog_data.total_scratch * brw->max_vs_threads);
    }
-
-   /* get the program
-    */
-   program = brw_get_program(&c.func, &program_size);
 
    brw_upload_cache(&brw->cache, BRW_VS_PROG,
 		    &c.key, sizeof(c.key),
