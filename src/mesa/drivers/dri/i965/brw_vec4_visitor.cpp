@@ -2813,7 +2813,6 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
 			   void *mem_ctx)
 {
    this->c = c;
-   this->p = &c->func;
    this->brw = brw;
    this->intel = &brw->intel;
    this->ctx = &intel->ctx;

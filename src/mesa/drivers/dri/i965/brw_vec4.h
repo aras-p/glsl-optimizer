@@ -195,6 +195,12 @@ public:
    bool is_math();
 };
 
+/**
+ * The vertex shader front-end.
+ *
+ * Translates either GLSL IR or Mesa IR (for ARB_vertex_program and
+ * fixed-function) into VS IR.
+ */
 class vec4_visitor : public backend_visitor
 {
 public:
@@ -218,7 +224,6 @@ public:
    const struct gl_vertex_program *vp;
    struct brw_vs_compile *c;
    struct brw_vs_prog_data *prog_data;
-   struct brw_compile *p;
 
    char *fail_msg;
    bool failed;
@@ -448,7 +453,28 @@ public:
 
    bool process_move_condition(ir_rvalue *ir);
 
-   void generate_code();
+   void dump_instruction(vec4_instruction *inst);
+   void dump_instructions();
+};
+
+/**
+ * The vertex shader code generator.
+ *
+ * Translates VS IR to actual i965 assembly code.
+ */
+class vec4_generator
+{
+public:
+   vec4_generator(struct brw_context *brw,
+                  struct brw_vs_compile *c,
+                  struct gl_shader_program *prog,
+                  void *mem_ctx);
+   ~vec4_generator();
+
+   const unsigned *generate_assembly(exec_list *insts, unsigned *asm_size);
+
+private:
+   void generate_code(exec_list *instructions);
    void generate_vs_instruction(vec4_instruction *inst,
 				struct brw_reg dst,
 				struct brw_reg *src);
@@ -491,8 +517,18 @@ public:
 				    struct brw_reg index,
 				    struct brw_reg offset);
 
-   void dump_instruction(vec4_instruction *inst);
-   void dump_instructions();
+   struct brw_context *brw;
+   struct intel_context *intel;
+   struct gl_context *ctx;
+
+   struct brw_compile *p;
+   struct brw_vs_compile *c;
+
+   struct gl_shader_program *prog;
+   struct gl_shader *shader;
+   const struct gl_vertex_program *vp;
+
+   void *mem_ctx;
 };
 
 } /* namespace brw */

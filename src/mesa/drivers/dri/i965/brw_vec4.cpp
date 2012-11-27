@@ -1113,13 +1113,6 @@ vec4_visitor::run()
          break;
    }
 
-   if (failed)
-      return false;
-
-   brw_set_access_mode(p, BRW_ALIGN_16);
-
-   generate_code();
-
    return !failed;
 }
 
@@ -1185,7 +1178,8 @@ brw_vs_emit(struct brw_context *brw,
       return NULL;
    }
 
-   return brw_get_program(&c->func, final_assembly_size);
+   vec4_generator g(brw, c, prog, mem_ctx);
+   return g.generate_assembly(&v.instructions, final_assembly_size);
 }
 
 } /* extern "C" */
