@@ -1804,7 +1804,7 @@ gallium_require_llvm() {
 gallium_require_drm_loader() {
     if test "x$enable_gallium_loader" = xyes; then
         PKG_CHECK_MODULES([LIBUDEV], [libudev], [],
-                          AC_MSG_ERROR([Gallium drm loader requrires libudev]))
+                          AC_MSG_ERROR([Gallium drm loader requires libudev]))
         if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([Gallium drm loader requires libdrm >= $LIBDRM_REQUIRED])
         fi
