@@ -23,6 +23,7 @@
 #include "core/compiler.hpp"
 
 #include <clang/Frontend/CompilerInstance.h>
+#include <clang/Frontend/TextDiagnosticBuffer.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
 #include <clang/CodeGen/CodeGenAction.h>
 #include <llvm/Bitcode/BitstreamWriter.h>
@@ -51,6 +52,7 @@
 #include <iomanip>
 #include <fstream>
 #include <cstdio>
+#include <sstream>
 
 using namespace clover;
 
@@ -98,15 +100,49 @@ namespace {
 
    llvm::Module *
    compile(const std::string &source, const std::string &name,
-           const std::string &triple) {
+           const std::string &triple, const std::string &opts) {
 
       clang::CompilerInstance c;
+      clang::CompilerInvocation invocation;
       clang::EmitLLVMOnlyAction act(&llvm::getGlobalContext());
       std::string log;
       llvm::raw_string_ostream s_log(log);
 
-      c.getFrontendOpts().Inputs.push_back(
-            clang::FrontendInputFile(name, clang::IK_OpenCL));
+      // Parse the compiler options:
+      std::vector<std::string> opts_array;
+      std::istringstream ss(opts);
+
+      while (!ss.eof()) {
+         std::string opt;
+         getline(ss, opt, ' ');
+         opts_array.push_back(opt);
+      }
+
+      opts_array.push_back(name);
+
+      std::vector<const char *> opts_carray;
+      for (unsigned i = 0; i < opts_array.size(); i++) {
+         opts_carray.push_back(opts_array.at(i).c_str());
+      }
+
+      llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID;
+      llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts;
+      clang::TextDiagnosticBuffer *DiagsBuffer;
+
+      DiagID = new clang::DiagnosticIDs();
+      DiagOpts = new clang::DiagnosticOptions();
+      DiagsBuffer = new clang::TextDiagnosticBuffer();
+
+      clang::DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagsBuffer);
+      bool Success;
+
+      Success = clang::CompilerInvocation::CreateFromArgs(c.getInvocation(),
+                                        opts_carray.data(),
+                                        opts_carray.data() + opts_carray.size(),
+                                        Diags);
+      if (!Success) {
+         throw invalid_option_error();
+      }
       c.getFrontendOpts().ProgramAction = clang::frontend::EmitLLVMOnly;
       c.getHeaderSearchOpts().UseBuiltinIncludes = true;
       c.getHeaderSearchOpts().UseStandardSystemIncludes = true;
@@ -271,11 +307,14 @@ namespace {
 module
 clover::compile_program_llvm(const compat::string &source,
                              enum pipe_shader_ir ir,
-                             const compat::string &triple) {
+                             const compat::string &triple,
+                             const compat::string &opts) {
 
    std::vector<llvm::Function *> kernels;
 
-   llvm::Module *mod = compile(source, "cl_input", triple);
+   // The input file name must have the .cl extension in order for the
+   // CompilerInvocation class to recognize it as an OpenCL source file.
+   llvm::Module *mod = compile(source, "input.cl", triple, opts);
 
    find_kernels(mod, kernels);
 

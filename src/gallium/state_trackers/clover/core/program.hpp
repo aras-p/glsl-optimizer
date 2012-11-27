@@ -41,7 +41,7 @@ public:
                const std::vector<clover::device *> &devs,
                const std::vector<clover::module> &binaries);
 
-   void build(const std::vector<clover::device *> &devs);
+   void build(const std::vector<clover::device *> &devs, const char *opts);
 
    const std::string &source() const;
    const std::map<clover::device *, clover::module> &binaries() const;
@@ -55,6 +55,7 @@ public:
 private:
    std::map<clover::device *, clover::module> __binaries;
    std::map<clover::device *, std::string> __logs;
+   std::map<clover::device *, std::string> __opts;
    std::string __source;
 };
 

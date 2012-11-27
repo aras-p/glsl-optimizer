@@ -41,21 +41,27 @@ _cl_program::_cl_program(clover::context &ctx,
 }
 
 void
-_cl_program::build(const std::vector<clover::device *> &devs) {
+_cl_program::build(const std::vector<clover::device *> &devs,
+                   const char *opts) {
 
    for (auto dev : devs) {
       __binaries.erase(dev);
       __logs.erase(dev);
+      __opts.erase(dev);
+
+      __opts.insert({ dev, opts });
       try {
          auto module = (dev->ir_format() == PIPE_SHADER_IR_TGSI ?
                         compile_program_tgsi(__source) :
                         compile_program_llvm(__source, dev->ir_format(),
-			                     dev->ir_target()));
+                        dev->ir_target(), build_opts(dev)));
          __binaries.insert({ dev, module });
 
       } catch (build_error &e) {
          __logs.insert({ dev, e.what() });
          throw error(CL_BUILD_PROGRAM_FAILURE);
+      } catch (invalid_option_error &e) {
+         throw error(CL_INVALID_BUILD_OPTIONS);
       }
    }
 }
@@ -77,7 +83,7 @@ _cl_program::build_status(clover::device *dev) const {
 
 std::string
 _cl_program::build_opts(clover::device *dev) const {
-   return {};
+   return __opts.count(dev) ? __opts.find(dev)->second : "";
 }
 
 std::string

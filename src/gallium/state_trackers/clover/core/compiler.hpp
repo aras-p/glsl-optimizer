@@ -44,9 +44,19 @@ namespace clover {
       compat::vector<char> log;
    };
 
+   class invalid_option_error {
+   public:
+      invalid_option_error() {
+      }
+
+      virtual ~invalid_option_error() {
+      }
+   };
+
    module compile_program_llvm(const compat::string &source,
                                enum pipe_shader_ir ir,
-                               const compat::string &target);
+                               const compat::string &target,
+                               const compat::string &opts);
 
    module compile_program_tgsi(const compat::string &source);
 }
