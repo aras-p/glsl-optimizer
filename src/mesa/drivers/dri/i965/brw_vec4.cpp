@@ -1136,8 +1136,6 @@ brw_vs_emit(struct brw_context *brw,
    bool start_busy = false;
    float start_time = 0;
 
-   brw_init_compile(brw, &c->func, mem_ctx);
-
    if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
       start_busy = (intel->batch.last_bo &&
                     drm_intel_bo_busy(intel->batch.last_bo));

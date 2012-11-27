@@ -94,7 +94,6 @@ struct brw_vs_prog_key {
 
 
 struct brw_vs_compile {
-   struct brw_compile func;
    struct brw_vs_prog_key key;
    struct brw_vs_prog_data prog_data;
 

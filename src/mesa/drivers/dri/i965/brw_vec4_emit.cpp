@@ -140,7 +140,9 @@ vec4_generator::vec4_generator(struct brw_context *brw,
 {
    intel = &brw->intel;
    vp = &c->vp->program;
-   p = &c->func;
+
+   p = rzalloc(mem_ctx, struct brw_compile);
+   brw_init_compile(brw, p, mem_ctx);
 }
 
 vec4_generator::~vec4_generator()
