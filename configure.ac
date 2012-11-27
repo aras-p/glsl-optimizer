@@ -1651,7 +1651,8 @@ strip_unwanted_llvm_flags() {
 	-e 's/-Wcovered-switch-default\>//g' \
 	-e 's/-O.\>//g' \
 	-e 's/-g\>//g' \
-	-e 's/-Wall\>//g'
+	-e 's/-Wall\>//g' \
+	-e 's/-fomit-frame-pointer\>//g'
 }
 
 
