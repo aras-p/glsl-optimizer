@@ -1644,13 +1644,14 @@ AC_ARG_WITH([llvm-prefix],
 # Call this inside ` ` to get the return value.
 # $1 is the llvm-config command with arguments.
 strip_unwanted_llvm_flags() {
+    # Use \> (marks the end of the word)
     echo `$1` | sed \
 	-e 's/-DNDEBUG\>//g' \
-	-e 's/-pedantic//g' \
-	-e 's/-Wcovered-switch-default//g' \
-	-e 's/-O.//g' \
-	-e 's/-g//g' \
-	-e 's/-Wall//g'
+	-e 's/-pedantic\>//g' \
+	-e 's/-Wcovered-switch-default\>//g' \
+	-e 's/-O.\>//g' \
+	-e 's/-g\>//g' \
+	-e 's/-Wall\>//g'
 }
 
 
