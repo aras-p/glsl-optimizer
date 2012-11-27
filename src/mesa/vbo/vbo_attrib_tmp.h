@@ -1020,8 +1020,8 @@ static void GLAPIENTRY
 TAG(MultiTexCoordP4uiv)(GLenum target, GLenum type, const GLuint *coords)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP4uiv");
    GLuint attr = (target & 0x7) + VBO_ATTRIB_TEX0;
+   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glMultiTexCoordP4uiv");
    ATTR_UI(ctx, 4, type, 0, attr, coords[0]);
 }
 
