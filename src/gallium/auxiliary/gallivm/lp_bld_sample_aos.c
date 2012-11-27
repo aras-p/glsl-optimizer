@@ -516,6 +516,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                               LLVMValueRef row_stride_vec,
                               LLVMValueRef img_stride_vec,
                               LLVMValueRef data_ptr,
+                              LLVMValueRef mipoffsets,
                               LLVMValueRef s,
                               LLVMValueRef t,
                               LLVMValueRef r,
@@ -625,6 +626,9 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
          offset = lp_build_add(&bld->int_coord_bld, offset, z_offset);
       }
    }
+   if (mipoffsets) {
+      offset = lp_build_add(&bld->int_coord_bld, offset, mipoffsets);
+   }
 
    lp_build_sample_fetch_image_nearest(bld, data_ptr, offset,
                                        x_subcoord, y_subcoord,
@@ -645,6 +649,7 @@ lp_build_sample_image_nearest_afloat(struct lp_build_sample_context *bld,
                                      LLVMValueRef row_stride_vec,
                                      LLVMValueRef img_stride_vec,
                                      LLVMValueRef data_ptr,
+                                     LLVMValueRef mipoffsets,
                                      LLVMValueRef s,
                                      LLVMValueRef t,
                                      LLVMValueRef r,
@@ -711,6 +716,9 @@ lp_build_sample_image_nearest_afloat(struct lp_build_sample_context *bld,
                           row_stride_vec, img_stride_vec,
                           &offset,
                           &x_subcoord, &y_subcoord);
+   if (mipoffsets) {
+      offset = lp_build_add(&bld->int_coord_bld, offset, mipoffsets);
+   }
 
    lp_build_sample_fetch_image_nearest(bld, data_ptr, offset,
                                        x_subcoord, y_subcoord,
@@ -966,6 +974,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              LLVMValueRef row_stride_vec,
                              LLVMValueRef img_stride_vec,
                              LLVMValueRef data_ptr,
+                             LLVMValueRef mipoffsets,
                              LLVMValueRef s,
                              LLVMValueRef t,
                              LLVMValueRef r,
@@ -1073,6 +1082,11 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                    bld->static_state->wrap_s,
                                    &x_offset0, &x_offset1,
                                    &x_subcoord[0], &x_subcoord[1]);
+   if (mipoffsets) {
+      x_offset0 = lp_build_add(&bld->int_coord_bld, x_offset0, mipoffsets);
+      x_offset1 = lp_build_add(&bld->int_coord_bld, x_offset1, mipoffsets);
+   }
+
    for (z = 0; z < 2; z++) {
       for (y = 0; y < 2; y++) {
          offset[z][y][0] = x_offset0;
@@ -1149,6 +1163,7 @@ lp_build_sample_image_linear_afloat(struct lp_build_sample_context *bld,
                                     LLVMValueRef row_stride_vec,
                                     LLVMValueRef img_stride_vec,
                                     LLVMValueRef data_ptr,
+                                    LLVMValueRef mipoffsets,
                                     LLVMValueRef s,
                                     LLVMValueRef t,
                                     LLVMValueRef r,
@@ -1238,6 +1253,11 @@ lp_build_sample_image_linear_afloat(struct lp_build_sample_context *bld,
                                   bld->format_desc->block.width,
                                   x_icoord1, x_stride,
                                   &x_offset1, &x_subcoord[1]);
+   if (mipoffsets) {
+      x_offset0 = lp_build_add(&bld->int_coord_bld, x_offset0, mipoffsets);
+      x_offset1 = lp_build_add(&bld->int_coord_bld, x_offset1, mipoffsets);
+   }
+
    for (z = 0; z < 2; z++) {
       for (y = 0; y < 2; y++) {
          offset[z][y][0] = x_offset0;
@@ -1330,6 +1350,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    LLVMValueRef img_stride1_vec = NULL;
    LLVMValueRef data_ptr0;
    LLVMValueRef data_ptr1;
+   LLVMValueRef mipoff0 = NULL;
+   LLVMValueRef mipoff1 = NULL;
    LLVMValueRef colors0_lo, colors0_hi;
    LLVMValueRef colors1_lo, colors1_hi;
 
@@ -1337,13 +1359,21 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    lp_build_mipmap_level_sizes(bld, ilevel0,
                                &size0,
                                &row_stride0_vec, &img_stride0_vec);
-   data_ptr0 = lp_build_get_mipmap_level(bld, ilevel0);
+   if (bld->num_lods == 1) {
+      data_ptr0 = lp_build_get_mipmap_level(bld, ilevel0);
+   }
+   else {
+      /* This path should work for num_lods 1 too but slightly less efficient */
+      data_ptr0 = bld->base_ptr;
+      mipoff0 = lp_build_get_mip_offsets(bld, ilevel0);
+   }
+
    if (util_cpu_caps.has_avx && bld->coord_type.length > 4) {
       if (img_filter == PIPE_TEX_FILTER_NEAREST) {
          lp_build_sample_image_nearest_afloat(bld,
                                               size0,
                                               row_stride0_vec, img_stride0_vec,
-                                              data_ptr0, s, t, r,
+                                              data_ptr0, mipoff0, s, t, r,
                                               &colors0_lo, &colors0_hi);
       }
       else {
@@ -1351,7 +1381,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          lp_build_sample_image_linear_afloat(bld,
                                              size0,
                                              row_stride0_vec, img_stride0_vec,
-                                             data_ptr0, s, t, r,
+                                             data_ptr0, mipoff0, s, t, r,
                                              &colors0_lo, &colors0_hi);
       }
    }
@@ -1360,7 +1390,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          lp_build_sample_image_nearest(bld,
                                        size0,
                                        row_stride0_vec, img_stride0_vec,
-                                       data_ptr0, s, t, r,
+                                       data_ptr0, mipoff0, s, t, r,
                                        &colors0_lo, &colors0_hi);
       }
       else {
@@ -1368,7 +1398,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          lp_build_sample_image_linear(bld,
                                       size0,
                                       row_stride0_vec, img_stride0_vec,
-                                      data_ptr0, s, t, r,
+                                      data_ptr0, mipoff0, s, t, r,
                                       &colors0_lo, &colors0_hi);
       }
    }
@@ -1422,21 +1452,30 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          lp_build_mipmap_level_sizes(bld, ilevel1,
                                      &size1,
                                      &row_stride1_vec, &img_stride1_vec);
-         data_ptr1 = lp_build_get_mipmap_level(bld, ilevel1);
+         lp_build_mipmap_level_sizes(bld, ilevel1,
+                                     &size1,
+                                     &row_stride1_vec, &img_stride1_vec);
+         if (bld->num_lods == 1) {
+            data_ptr1 = lp_build_get_mipmap_level(bld, ilevel1);
+         }
+         else {
+            data_ptr1 = bld->base_ptr;
+            mipoff1 = lp_build_get_mip_offsets(bld, ilevel1);
+         }
 
          if (util_cpu_caps.has_avx && bld->coord_type.length > 4) {
             if (img_filter == PIPE_TEX_FILTER_NEAREST) {
                lp_build_sample_image_nearest_afloat(bld,
                                                     size1,
                                                     row_stride1_vec, img_stride1_vec,
-                                                    data_ptr1, s, t, r,
+                                                    data_ptr1, mipoff1, s, t, r,
                                                     &colors1_lo, &colors1_hi);
             }
             else {
                lp_build_sample_image_linear_afloat(bld,
                                                    size1,
                                                    row_stride1_vec, img_stride1_vec,
-                                                   data_ptr1, s, t, r,
+                                                   data_ptr1, mipoff1, s, t, r,
                                                    &colors1_lo, &colors1_hi);
             }
          }
@@ -1445,14 +1484,14 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                lp_build_sample_image_nearest(bld,
                                              size1,
                                              row_stride1_vec, img_stride1_vec,
-                                             data_ptr1, s, t, r,
+                                             data_ptr1, mipoff1, s, t, r,
                                              &colors1_lo, &colors1_hi);
             }
             else {
                lp_build_sample_image_linear(bld,
                                             size1,
                                             row_stride1_vec, img_stride1_vec,
-                                            data_ptr1, s, t, r,
+                                            data_ptr1, mipoff1, s, t, r,
                                             &colors1_lo, &colors1_hi);
             }
          }
@@ -1579,6 +1618,19 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
        */
       struct lp_build_if_state if_ctx;
       LLVMValueRef minify;
+
+      /*
+       * XXX this should to all lods into account, if some are min
+       * some max probably could hack up the coords/weights in the linear
+       * path with selects to work for nearest.
+       * If that's just two quads sitting next to each other it seems
+       * quite ok to do the same filtering method on both though, at
+       * least unless we have explicit lod (and who uses different
+       * min/mag filter with that?)
+       */
+      if (bld->num_lods > 1)
+         lod_ipart = LLVMBuildExtractElement(builder, lod_ipart,
+                                              lp_build_const_int32(bld->gallivm, 0), "");
 
       /* minify = lod >= 0.0 */
       minify = LLVMBuildICmp(builder, LLVMIntSGE,

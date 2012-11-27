@@ -265,7 +265,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
 
    first_level = bld->dynamic_state->first_level(bld->dynamic_state,
                                                  bld->gallivm, unit);
-   first_level_vec = lp_build_broadcast_scalar(&bld->int_size_bld, first_level);
+   first_level_vec = lp_build_broadcast_scalar(int_size_bld, first_level);
    int_size = lp_build_minify(int_size_bld, bld->int_size, first_level_vec);
    float_size = lp_build_int_to_float(float_size_bld, int_size);
 

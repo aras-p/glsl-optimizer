@@ -82,6 +82,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                           LLVMValueRef y_stride,
                           LLVMValueRef z_stride,
                           LLVMValueRef data_ptr,
+                          LLVMValueRef mipoffsets,
                           LLVMValueRef texel_out[4])
 {
    const struct lp_sampler_static_state *static_state = bld->static_state;
@@ -139,6 +140,9 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                           bld->format_desc,
                           x, y, z, y_stride, z_stride,
                           &offset, &i, &j);
+   if (mipoffsets) {
+      offset = lp_build_add(&bld->int_coord_bld, offset, mipoffsets);
+   }
 
    if (use_border) {
       /* If we can sample the border color, it means that texcoords may
@@ -594,6 +598,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                               LLVMValueRef row_stride_vec,
                               LLVMValueRef img_stride_vec,
                               LLVMValueRef data_ptr,
+                              LLVMValueRef mipoffsets,
                               LLVMValueRef s,
                               LLVMValueRef t,
                               LLVMValueRef r,
@@ -661,7 +666,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                              width_vec, height_vec, depth_vec,
                              x, y, z,
                              row_stride_vec, img_stride_vec,
-                             data_ptr, colors_out);
+                             data_ptr, mipoffsets, colors_out);
 }
 
 
@@ -676,6 +681,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              LLVMValueRef row_stride_vec,
                              LLVMValueRef img_stride_vec,
                              LLVMValueRef data_ptr,
+                             LLVMValueRef mipoffsets,
                              LLVMValueRef s,
                              LLVMValueRef t,
                              LLVMValueRef r,
@@ -756,12 +762,12 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              width_vec, height_vec, depth_vec,
                              x0, y0, z0,
                              row_stride_vec, img_stride_vec,
-                             data_ptr, neighbors[0][0]);
+                             data_ptr, mipoffsets, neighbors[0][0]);
    lp_build_sample_texel_soa(bld, unit,
                              width_vec, height_vec, depth_vec,
                              x1, y0, z0,
                              row_stride_vec, img_stride_vec,
-                             data_ptr, neighbors[0][1]);
+                             data_ptr, mipoffsets, neighbors[0][1]);
 
    if (dims == 1) {
       /* Interpolate two samples from 1D image to produce one color */
@@ -780,12 +786,12 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                 width_vec, height_vec, depth_vec,
                                 x0, y1, z0,
                                 row_stride_vec, img_stride_vec,
-                                data_ptr, neighbors[1][0]);
+                                data_ptr, mipoffsets, neighbors[1][0]);
       lp_build_sample_texel_soa(bld, unit,
                                 width_vec, height_vec, depth_vec,
                                 x1, y1, z0,
                                 row_stride_vec, img_stride_vec,
-                                data_ptr, neighbors[1][1]);
+                                data_ptr, mipoffsets, neighbors[1][1]);
 
       /* Bilinear interpolate the four samples from the 2D image / 3D slice */
       for (chan = 0; chan < 4; chan++) {
@@ -806,22 +812,22 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                    width_vec, height_vec, depth_vec,
                                    x0, y0, z1,
                                    row_stride_vec, img_stride_vec,
-                                   data_ptr, neighbors1[0][0]);
+                                   data_ptr, mipoffsets, neighbors1[0][0]);
          lp_build_sample_texel_soa(bld, unit,
                                    width_vec, height_vec, depth_vec,
                                    x1, y0, z1,
                                    row_stride_vec, img_stride_vec,
-                                   data_ptr, neighbors1[0][1]);
+                                   data_ptr, mipoffsets, neighbors1[0][1]);
          lp_build_sample_texel_soa(bld, unit,
                                    width_vec, height_vec, depth_vec,
                                    x0, y1, z1,
                                    row_stride_vec, img_stride_vec,
-                                   data_ptr, neighbors1[1][0]);
+                                   data_ptr, mipoffsets, neighbors1[1][0]);
          lp_build_sample_texel_soa(bld, unit,
                                    width_vec, height_vec, depth_vec,
                                    x1, y1, z1,
                                    row_stride_vec, img_stride_vec,
-                                   data_ptr, neighbors1[1][1]);
+                                   data_ptr, mipoffsets, neighbors1[1][1]);
 
          /* Bilinear interpolate the four samples from the second Z slice */
          for (chan = 0; chan < 4; chan++) {
@@ -878,6 +884,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    LLVMValueRef img_stride1_vec = NULL;
    LLVMValueRef data_ptr0 = NULL;
    LLVMValueRef data_ptr1 = NULL;
+   LLVMValueRef mipoff0 = NULL;
+   LLVMValueRef mipoff1 = NULL;
    LLVMValueRef colors0[4], colors1[4];
    unsigned chan;
 
@@ -885,12 +893,19 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    lp_build_mipmap_level_sizes(bld, ilevel0,
                                &size0,
                                &row_stride0_vec, &img_stride0_vec);
-   data_ptr0 = lp_build_get_mipmap_level(bld, ilevel0);
+   if (bld->num_lods == 1) {
+      data_ptr0 = lp_build_get_mipmap_level(bld, ilevel0);
+   }
+   else {
+      /* This path should work for num_lods 1 too but slightly less efficient */
+      data_ptr0 = bld->base_ptr;
+      mipoff0 = lp_build_get_mip_offsets(bld, ilevel0);
+   }
    if (img_filter == PIPE_TEX_FILTER_NEAREST) {
       lp_build_sample_image_nearest(bld, unit,
                                     size0,
                                     row_stride0_vec, img_stride0_vec,
-                                    data_ptr0, s, t, r,
+                                    data_ptr0, mipoff0, s, t, r,
                                     colors0);
    }
    else {
@@ -898,7 +913,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
       lp_build_sample_image_linear(bld, unit,
                                    size0,
                                    row_stride0_vec, img_stride0_vec,
-                                   data_ptr0, s, t, r,
+                                   data_ptr0, mipoff0, s, t, r,
                                    colors0);
    }
 
@@ -943,19 +958,25 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          lp_build_mipmap_level_sizes(bld, ilevel1,
                                      &size1,
                                      &row_stride1_vec, &img_stride1_vec);
-         data_ptr1 = lp_build_get_mipmap_level(bld, ilevel1);
+         if (bld->num_lods == 1) {
+            data_ptr1 = lp_build_get_mipmap_level(bld, ilevel1);
+         }
+         else {
+            data_ptr1 = bld->base_ptr;
+            mipoff1 = lp_build_get_mip_offsets(bld, ilevel1);
+         }
          if (img_filter == PIPE_TEX_FILTER_NEAREST) {
             lp_build_sample_image_nearest(bld, unit,
                                           size1,
                                           row_stride1_vec, img_stride1_vec,
-                                          data_ptr1, s, t, r,
+                                          data_ptr1, mipoff1, s, t, r,
                                           colors1);
          }
          else {
             lp_build_sample_image_linear(bld, unit,
                                          size1,
                                          row_stride1_vec, img_stride1_vec,
-                                         data_ptr1, s, t, r,
+                                         data_ptr1, mipoff1, s, t, r,
                                          colors1);
          }
 
@@ -1125,6 +1146,16 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       struct lp_build_if_state if_ctx;
       LLVMValueRef minify;
 
+      /*
+       * XXX this should to all lods into account, if some are min
+       * some max probably could hack up the coords/weights in the linear
+       * path with selects to work for nearest.
+       * If that's just two quads sitting next to each other it seems
+       * quite ok to do the same filtering method on both though, at
+       * least unless we have explicit lod (and who uses different
+       * min/mag filter with that?)
+       */
+
       /* minify = lod >= 0.0 */
       minify = LLVMBuildICmp(builder, LLVMIntSGE,
                              lod_ipart, int_bld->zero, "");
@@ -1184,16 +1215,6 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
 
    /* XXX just like ordinary sampling, we don't handle per-pixel lod (yet). */
    if (explicit_lod && bld->static_state->target != PIPE_BUFFER) {
-      /* could also avoid this if there are no mipmaps */
-      /* XXX temporary hack until ordinary sampling handles per-quad lod the same */
-      bld->num_lods = bld->coord_type.length / 4;
-      bld->float_size_type = bld->float_size_in_type;
-      bld->float_size_type.length = bld->num_lods > 1 ? bld->coord_type.length :
-                                      bld->float_size_in_type.length;
-      bld->int_size_type = lp_int_type(bld->float_size_type);
-      lp_build_context_init(&bld->int_size_bld, bld->gallivm, bld->int_size_type);
-      lp_build_context_init(&bld->float_size_bld, bld->gallivm, bld->float_size_type);
-
       ilevel = lp_build_pack_aos_scalars(bld->gallivm, int_coord_bld->type,
                                          perquadi_bld->type, explicit_lod, 0);
       lp_build_nearest_mip_level(bld, unit, ilevel, &ilevel);
@@ -1275,6 +1296,7 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
  * Do shadow test/comparison.
  * \param p  the texcoord Z (aka R, aka P) component
  * \param texel  the texel to compare against (use the X channel)
+ * Ideally this should really be done per-sample.
  */
 static void
 lp_build_sample_compare(struct lp_build_sample_context *bld,
@@ -1358,6 +1380,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                     LLVMValueRef texel_out[4])
 {
    unsigned dims = texture_dims(static_state->target);
+   unsigned num_quads = type.length / 4;
+   unsigned mip_filter = static_state->min_mip_filter;
    struct lp_build_sample_context bld;
    LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
    LLVMBuilderRef builder = gallivm->builder;
@@ -1396,7 +1420,18 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    bld.perquadf_type.length = type.length > 4 ? ((type.length + 15) / 16) * 4 : 1;
    bld.perquadi_type = lp_int_type(bld.perquadf_type);
 
-   bld.num_lods = 1;
+   /*
+    * There are other situations where at least the multiple int lods could be
+    * avoided like min and max lod being equal.
+    */
+   if ((is_fetch && explicit_lod && bld.static_state->target != PIPE_BUFFER) ||
+       (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
+      bld.num_lods = num_quads;
+   }
+   else {
+      bld.num_lods = 1;
+   }
+
    bld.float_size_type = bld.float_size_in_type;
    bld.float_size_type.length = bld.num_lods > 1 ? type.length :
                                    bld.float_size_in_type.length;
@@ -1456,8 +1491,6 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    else {
       LLVMValueRef lod_ipart = NULL, lod_fpart = NULL;
       LLVMValueRef ilevel0 = NULL, ilevel1 = NULL;
-      unsigned num_quads = type.length / 4;
-      const unsigned mip_filter = bld.static_state->min_mip_filter;
       boolean use_aos = util_format_fits_8unorm(bld.format_desc) &&
                         lp_is_simple_wrap_mode(static_state->wrap_s) &&
                         lp_is_simple_wrap_mode(static_state->wrap_t);
@@ -1494,16 +1527,21 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
 
       /*
        * we only try 8-wide sampling with soa as it appears to
-       * be a loss with aos with AVX.
+       * be a loss with aos with AVX (but it should work).
+       * (It should be faster if we'd support avx2)
        */
-      if (num_quads == 1 || (mip_filter == PIPE_TEX_MIPFILTER_NONE &&
-                             !use_aos)) {
+      if (num_quads == 1 || !use_aos) {
 
          if (num_quads > 1) {
-            LLVMValueRef index0 = lp_build_const_int32(gallivm, 0);
-            /* These parameters are the same for all quads */
-            lod_ipart = LLVMBuildExtractElement(builder, lod_ipart, index0, "");
-            ilevel0 = LLVMBuildExtractElement(builder, ilevel0, index0, "");
+            if (mip_filter == PIPE_TEX_MIPFILTER_NONE) {
+               LLVMValueRef index0 = lp_build_const_int32(gallivm, 0);
+               /*
+                * These parameters are the same for all quads,
+                * could probably simplify.
+                */
+               lod_ipart = LLVMBuildExtractElement(builder, lod_ipart, index0, "");
+               ilevel0 = LLVMBuildExtractElement(builder, ilevel0, index0, "");
+            }
          }
          if (use_aos) {
             /* do sampling/filtering with fixed pt arithmetic */
@@ -1523,170 +1561,99 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          }
       }
       else {
-         struct lp_build_if_state if_ctx;
-         LLVMValueRef notsame_levels, notsame;
-         LLVMValueRef index0 = lp_build_const_int32(gallivm, 0);
-         LLVMValueRef texels[4];
-         LLVMValueRef texelout[4];
          unsigned j;
+         struct lp_build_sample_context bld4;
+         struct lp_type type4 = type;
+         unsigned i;
+         LLVMValueRef texelout4[4];
+         LLVMValueRef texelouttmp[4][LP_MAX_VECTOR_LENGTH/16];
 
-         texels[0] = lp_build_alloca(gallivm, bld.texel_bld.vec_type, "texr");
-         texels[1] = lp_build_alloca(gallivm, bld.texel_bld.vec_type, "texg");
-         texels[2] = lp_build_alloca(gallivm, bld.texel_bld.vec_type, "texb");
-         texels[3] = lp_build_alloca(gallivm, bld.texel_bld.vec_type, "texa");
+         type4.length = 4;
 
-         /* only build the if if we MAY split, otherwise always split */
-         if (!use_aos) {
-            notsame = lp_build_extract_broadcast(gallivm,
-                                                 bld.perquadi_bld.type,
-                                                 bld.perquadi_bld.type,
-                                                 ilevel0, index0);
-            notsame = lp_build_sub(&bld.perquadi_bld, ilevel0, notsame);
-            notsame_levels = lp_build_any_true_range(&bld.perquadi_bld, num_quads,
-                                                     notsame);
+         /* Setup our build context */
+         memset(&bld4, 0, sizeof bld4);
+         bld4.gallivm = bld.gallivm;
+         bld4.static_state = bld.static_state;
+         bld4.dynamic_state = bld.dynamic_state;
+         bld4.format_desc = bld.format_desc;
+         bld4.dims = bld.dims;
+         bld4.row_stride_array = bld.row_stride_array;
+         bld4.img_stride_array = bld.img_stride_array;
+         bld4.base_ptr = bld.base_ptr;
+         bld4.mip_offsets = bld.mip_offsets;
+         bld4.int_size = bld.int_size;
+
+         bld4.vector_width = lp_type_width(type4);
+
+         bld4.float_type = lp_type_float(32);
+         bld4.int_type = lp_type_int(32);
+         bld4.coord_type = type4;
+         bld4.int_coord_type = lp_int_type(type4);
+         bld4.float_size_in_type = lp_type_float(32);
+         bld4.float_size_in_type.length = dims > 1 ? 4 : 1;
+         bld4.int_size_in_type = lp_int_type(bld4.float_size_in_type);
+         bld4.texel_type = type4;
+         bld4.perquadf_type = type4;
+         /* we want native vector size to be able to use our intrinsics */
+         bld4.perquadf_type.length = 1;
+         bld4.perquadi_type = lp_int_type(bld4.perquadf_type);
+
+         bld4.num_lods = 1;
+         bld4.int_size_type = bld4.int_size_in_type;
+         bld4.float_size_type = bld4.float_size_in_type;
+
+         lp_build_context_init(&bld4.float_bld, gallivm, bld4.float_type);
+         lp_build_context_init(&bld4.float_vec_bld, gallivm, type4);
+         lp_build_context_init(&bld4.int_bld, gallivm, bld4.int_type);
+         lp_build_context_init(&bld4.coord_bld, gallivm, bld4.coord_type);
+         lp_build_context_init(&bld4.int_coord_bld, gallivm, bld4.int_coord_type);
+         lp_build_context_init(&bld4.int_size_in_bld, gallivm, bld4.int_size_in_type);
+         lp_build_context_init(&bld4.float_size_in_bld, gallivm, bld4.float_size_in_type);
+         lp_build_context_init(&bld4.int_size_bld, gallivm, bld4.int_size_type);
+         lp_build_context_init(&bld4.float_size_bld, gallivm, bld4.float_size_type);
+         lp_build_context_init(&bld4.texel_bld, gallivm, bld4.texel_type);
+         lp_build_context_init(&bld4.perquadf_bld, gallivm, bld4.perquadf_type);
+         lp_build_context_init(&bld4.perquadi_bld, gallivm, bld4.perquadi_type);
+
+         for (i = 0; i < num_quads; i++) {
+            LLVMValueRef s4, t4, r4;
+            LLVMValueRef lod_iparts, lod_fparts = NULL;
+            LLVMValueRef ilevel0s, ilevel1s = NULL;
+            LLVMValueRef indexi = lp_build_const_int32(gallivm, i);
+
+            s4 = lp_build_extract_range(gallivm, s, 4*i, 4);
+            t4 = lp_build_extract_range(gallivm, t, 4*i, 4);
+            r4 = lp_build_extract_range(gallivm, r, 4*i, 4);
+            lod_iparts = LLVMBuildExtractElement(builder, lod_ipart, indexi, "");
+            ilevel0s = LLVMBuildExtractElement(builder, ilevel0, indexi, "");
             if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-               notsame = lp_build_extract_broadcast(gallivm,
-                                                    bld.perquadi_bld.type,
-                                                    bld.perquadi_bld.type,
-                                                    ilevel1, index0);
-               notsame = lp_build_sub(&bld.perquadi_bld, ilevel1, notsame);
-               notsame = lp_build_any_true_range(&bld.perquadi_bld, num_quads, notsame);
-               notsame_levels = LLVMBuildOr(builder, notsame_levels, notsame, "");
-            }
-            lp_build_if(&if_ctx, gallivm, notsame_levels);
-         }
-
-         {
-            struct lp_build_sample_context bld4;
-            struct lp_type type4 = type;
-            unsigned i;
-            LLVMValueRef texelout4[4];
-            LLVMValueRef texelouttmp[4][LP_MAX_VECTOR_LENGTH/16];
-
-            type4.length = 4;
-
-            /* Setup our build context */
-            memset(&bld4, 0, sizeof bld4);
-            bld4.gallivm = bld.gallivm;
-            bld4.static_state = bld.static_state;
-            bld4.dynamic_state = bld.dynamic_state;
-            bld4.format_desc = bld.format_desc;
-            bld4.dims = bld.dims;
-            bld4.row_stride_array = bld.row_stride_array;
-            bld4.img_stride_array = bld.img_stride_array;
-            bld4.base_ptr = bld.base_ptr;
-            bld4.mip_offsets = bld.mip_offsets;
-            bld4.int_size = bld.int_size;
-
-            bld4.vector_width = lp_type_width(type4);
-
-            bld4.float_type = lp_type_float(32);
-            bld4.int_type = lp_type_int(32);
-            bld4.coord_type = type4;
-            bld4.int_coord_type = lp_int_type(type4);
-            bld4.float_size_in_type = lp_type_float(32);
-            bld4.float_size_in_type.length = dims > 1 ? 4 : 1;
-            bld4.int_size_in_type = lp_int_type(bld4.float_size_in_type);
-            bld4.float_size_type = bld4.float_size_in_type;
-            bld4.int_size_type =  bld4.int_size_in_type;
-            bld4.texel_type = type4;
-            bld4.perquadf_type = type4;
-            /* we want native vector size to be able to use our intrinsics */
-            bld4.perquadf_type.length = 1;
-            bld4.perquadi_type = lp_int_type(bld4.perquadf_type);
-            bld4.num_lods = 1;
-
-            lp_build_context_init(&bld4.float_bld, gallivm, bld4.float_type);
-            lp_build_context_init(&bld4.float_vec_bld, gallivm, type4);
-            lp_build_context_init(&bld4.int_bld, gallivm, bld4.int_type);
-            lp_build_context_init(&bld4.coord_bld, gallivm, bld4.coord_type);
-            lp_build_context_init(&bld4.int_coord_bld, gallivm, bld4.int_coord_type);
-            lp_build_context_init(&bld4.int_size_in_bld, gallivm, bld4.int_size_in_type);
-            lp_build_context_init(&bld4.float_size_in_bld, gallivm, bld4.float_size_in_type);
-            lp_build_context_init(&bld4.int_size_bld, gallivm, bld4.int_size_type);
-            lp_build_context_init(&bld4.float_size_bld, gallivm, bld4.float_size_type);
-            lp_build_context_init(&bld4.texel_bld, gallivm, bld4.texel_type);
-            lp_build_context_init(&bld4.perquadf_bld, gallivm, bld4.perquadf_type);
-            lp_build_context_init(&bld4.perquadi_bld, gallivm, bld4.perquadi_type);
-
-            for (i = 0; i < num_quads; i++) {
-               LLVMValueRef s4, t4, r4;
-               LLVMValueRef lod_iparts, lod_fparts = NULL;
-               LLVMValueRef ilevel0s, ilevel1s = NULL;
-               LLVMValueRef indexi = lp_build_const_int32(gallivm, i);
-
-               s4 = lp_build_extract_range(gallivm, s, 4*i, 4);
-               t4 = lp_build_extract_range(gallivm, t, 4*i, 4);
-               r4 = lp_build_extract_range(gallivm, r, 4*i, 4);
-               lod_iparts = LLVMBuildExtractElement(builder, lod_ipart, indexi, "");
-               ilevel0s = LLVMBuildExtractElement(builder, ilevel0, indexi, "");
-               if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-                  ilevel1s = LLVMBuildExtractElement(builder, ilevel1, indexi, "");
-                  lod_fparts = LLVMBuildExtractElement(builder, lod_fpart, indexi, "");
-               }
-
-               if (use_aos) {
-                  /* do sampling/filtering with fixed pt arithmetic */
-                  lp_build_sample_aos(&bld4, unit,
-                                      s4, t4, r4,
-                                      lod_iparts, lod_fparts,
-                                      ilevel0s, ilevel1s,
-                                      texelout4);
-               }
-
-               else {
-                  lp_build_sample_general(&bld4, unit,
-                                          s4, t4, r4,
-                                          lod_iparts, lod_fparts,
-                                          ilevel0s, ilevel1s,
-                                          texelout4);
-               }
-               for (j = 0; j < 4; j++) {
-                  texelouttmp[j][i] = texelout4[j];
-               }
-            }
-            for (j = 0; j < 4; j++) {
-               texelout[j] = lp_build_concat(gallivm, texelouttmp[j], type4, num_quads);
-               LLVMBuildStore(builder, texelout[j], texels[j]);
-            }
-         }
-         if (!use_aos) {
-            LLVMValueRef ilevel0s, lod_iparts, ilevel1s = NULL;
-
-            lp_build_else(&if_ctx);
-
-            /* These parameters are the same for all quads */
-            lod_iparts = LLVMBuildExtractElement(builder, lod_ipart, index0, "");
-            ilevel0s = LLVMBuildExtractElement(builder, ilevel0, index0, "");
-            if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-               ilevel1s = LLVMBuildExtractElement(builder, ilevel1, index0, "");
+               ilevel1s = LLVMBuildExtractElement(builder, ilevel1, indexi, "");
+               lod_fparts = LLVMBuildExtractElement(builder, lod_fpart, indexi, "");
             }
 
             if (use_aos) {
                /* do sampling/filtering with fixed pt arithmetic */
-               lp_build_sample_aos(&bld, unit,
-                                   s, t, r,
-                                   lod_iparts, lod_fpart,
+               lp_build_sample_aos(&bld4, unit,
+                                   s4, t4, r4,
+                                   lod_iparts, lod_fparts,
                                    ilevel0s, ilevel1s,
-                                   texelout);
+                                   texelout4);
             }
 
             else {
-               lp_build_sample_general(&bld, unit,
-                                       s, t, r,
-                                       lod_iparts, lod_fpart,
+               lp_build_sample_general(&bld4, unit,
+                                       s4, t4, r4,
+                                       lod_iparts, lod_fparts,
                                        ilevel0s, ilevel1s,
-                                       texelout);
+                                       texelout4);
             }
             for (j = 0; j < 4; j++) {
-               LLVMBuildStore(builder, texelout[j], texels[j]);
+               texelouttmp[j][i] = texelout4[j];
             }
-
-            lp_build_endif(&if_ctx);
          }
 
          for (j = 0; j < 4; j++) {
-            texel_out[j] = LLVMBuildLoad(builder, texels[j], "");
+            texel_out[j] = lp_build_concat(gallivm, texelouttmp[j], type4, num_quads);
          }
       }
    }
