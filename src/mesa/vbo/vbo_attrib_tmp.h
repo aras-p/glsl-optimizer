@@ -199,7 +199,7 @@ static inline float conv_i2_to_norm_float(const struct gl_context *ctx, int i2)
       } else {							\
 	 ATTRUI10_##val((attr), (arg));				\
       }								\
-   }   else if ((type) == GL_INT_2_10_10_10_REV) {		\
+   } else if ((type) == GL_INT_2_10_10_10_REV) {		\
       if (normalized) {						\
 	 ATTRI10N_##val(ctx, (attr), (arg));			\
       } else {							\
