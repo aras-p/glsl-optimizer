@@ -2809,7 +2809,8 @@ vec4_visitor::resolve_ud_negate(src_reg *reg)
 vec4_visitor::vec4_visitor(struct brw_context *brw,
 			   struct brw_vs_compile *c,
 			   struct gl_shader_program *prog,
-			   struct brw_shader *shader)
+			   struct brw_shader *shader,
+			   void *mem_ctx)
 {
    this->c = c;
    this->p = &c->func;
@@ -2819,7 +2820,7 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
    this->prog = prog;
    this->shader = shader;
 
-   this->mem_ctx = ralloc_context(NULL);
+   this->mem_ctx = mem_ctx;
    this->failed = false;
 
    this->base_ir = NULL;
@@ -2849,7 +2850,6 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
 
 vec4_visitor::~vec4_visitor()
 {
-   ralloc_free(this->mem_ctx);
    hash_table_dtor(this->variable_ht);
 }
 
