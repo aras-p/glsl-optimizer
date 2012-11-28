@@ -195,6 +195,8 @@ lp_tiled_to_linear(const void *src, void *dst,
       const uint bytes_per_tile = tile_w * tile_h * bpp;
       uint i, j;
 
+      assert(0);
+
       for (j = 0; j < height; j += tile_h) {
          for (i = 0; i < width; i += tile_w) {
             uint ii = i + x, jj = j + y;
@@ -283,6 +285,8 @@ lp_linear_to_tiled(const void *src, void *dst,
       const uint tile_w = TILE_SIZE, tile_h = TILE_SIZE;
       const uint bytes_per_tile = tile_w * tile_h * bpp;
       uint i, j;
+
+      assert(0);
 
       for (j = 0; j < height; j += TILE_SIZE) {
          for (i = 0; i < width; i += TILE_SIZE) {

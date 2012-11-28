@@ -760,27 +760,16 @@ boolean
 llvmpipe_is_format_unswizzled( enum pipe_format format )
 {
    const struct util_format_description *desc = util_format_description(format);
-   unsigned chan;
 
    if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN ||
-       desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB ||
+       (desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&
+        desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB) ||
        desc->block.width != 1 ||
-       desc->block.height != 1) {
+       desc->block.height != 1 ||
+       desc->is_mixed ||
+       (!desc->is_array && !desc->is_bitmask)) {
+      assert(0);
       return FALSE;
-   }
-
-   for (chan = 0; chan < desc->nr_channels; ++chan) {
-      if (desc->channel[chan].type == UTIL_FORMAT_TYPE_VOID && (chan + 1) == desc->nr_channels)
-         continue;
-
-      if (desc->channel[chan].type != desc->channel[0].type)
-         return FALSE;
-
-      if (desc->channel[chan].normalized != desc->channel[0].normalized)
-         return FALSE;
-
-      if (desc->channel[chan].pure_integer != desc->channel[0].pure_integer)
-         return FALSE;
    }
 
    return TRUE;
