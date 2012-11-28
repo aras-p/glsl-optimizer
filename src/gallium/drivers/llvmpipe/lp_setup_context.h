@@ -37,7 +37,6 @@
 
 #include "lp_setup.h"
 #include "lp_rast.h"
-#include "lp_tile_soa.h"        /* for TILE_SIZE */
 #include "lp_scene.h"
 #include "lp_bld_interp.h"	/* for struct lp_shader_input */
 

@@ -224,18 +224,6 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
                            unsigned x, unsigned y);
 
 
-void
-llvmpipe_unswizzle_cbuf_tile(struct llvmpipe_resource *lpr,
-                             unsigned face_slice, unsigned level,
-                             unsigned x, unsigned y,
-                             uint8_t *tile);
-
-void
-llvmpipe_swizzle_cbuf_tile(struct llvmpipe_resource *lpr,
-                           unsigned face_slice, unsigned level,
-                           unsigned x, unsigned y,
-                           uint8_t *tile);
-
 extern void
 llvmpipe_print_resources(void);
 
@@ -255,9 +243,6 @@ unsigned int
 llvmpipe_is_resource_referenced( struct pipe_context *pipe,
                                  struct pipe_resource *presource,
                                  unsigned level, int layer);
-
-boolean
-llvmpipe_is_format_unswizzled(enum pipe_format format);
 
 unsigned
 llvmpipe_get_format_alignment(enum pipe_format format);

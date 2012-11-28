@@ -9,25 +9,6 @@ if not env['llvm']:
 
 env = env.Clone()
 
-env.Append(CPPPATH = ['.'])
-
-env.CodeGenerate(
-	target = 'lp_tile_soa.c',
-	script = 'lp_tile_soa.py',
-	source = ['#src/gallium/auxiliary/util/u_format.csv'],
-	command = python_cmd + ' $SCRIPT $SOURCE > $TARGET'
-)
-
-# XXX: Our dependency scanner only finds depended modules in relative dirs.
-env.Depends('lp_tile_soa.c', [
-    '#src/gallium/auxiliary/util/u_format_parse.py', 
-    '#src/gallium/auxiliary/util/u_format_pack.py', 
-])
-
-
-lp_tile_soa_os = env.SharedObject('lp_tile_soa.c')
-
-
 llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
 	source = [
@@ -74,7 +55,6 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_tex_sample.c',
 		'lp_texture.c',
 		'lp_tile_image.c',
-        lp_tile_soa_os,
 	])
 
 env.Alias('llvmpipe', llvmpipe)

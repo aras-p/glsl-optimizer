@@ -36,7 +36,7 @@
 #include "lp_scene.h"
 #include "lp_state.h"
 #include "lp_texture.h"
-#include "lp_tile_soa.h"
+#include "lp_tile_image.h"
 #include "lp_limits.h"
 
 
@@ -176,42 +176,6 @@ lp_rast_get_depth_block_pointer(struct lp_rasterizer_task *task,
 
 
 /**
- * Get pointer to the swizzled color tile
- */
-static INLINE uint8_t *
-lp_rast_get_color_tile_pointer(struct lp_rasterizer_task *task,
-                               unsigned buf, enum lp_texture_usage usage)
-{
-   const struct lp_scene *scene = task->scene;
-
-   assert(task->x < scene->tiles_x * TILE_SIZE);
-   assert(task->y < scene->tiles_y * TILE_SIZE);
-   assert(task->x % TILE_SIZE == 0);
-   assert(task->y % TILE_SIZE == 0);
-   assert(buf < scene->fb.nr_cbufs);
-   assert(scene->cbufs[buf].unswizzled == 0);
-
-   if (!task->color_tiles[buf]) {
-      struct pipe_surface *cbuf = scene->fb.cbufs[buf];
-      struct llvmpipe_resource *lpt;
-      assert(cbuf);
-      lpt = llvmpipe_resource(cbuf->texture);
-      task->color_tiles[buf] = lp_swizzled_cbuf[task->thread_index][buf];
-
-      if (usage != LP_TEX_USAGE_WRITE_ALL) {
-         llvmpipe_swizzle_cbuf_tile(lpt,
-                                    cbuf->u.tex.first_layer,
-                                    cbuf->u.tex.level,
-                                    task->x, task->y,
-                                    task->color_tiles[buf]);
-      }
-   }
-
-   return task->color_tiles[buf];
-}
-
-
-/**
  * Get pointer to the unswizzled color tile
  */
 static INLINE uint8_t *
@@ -226,7 +190,6 @@ lp_rast_get_unswizzled_color_tile_pointer(struct lp_rasterizer_task *task,
    assert(task->x % TILE_SIZE == 0);
    assert(task->y % TILE_SIZE == 0);
    assert(buf < scene->fb.nr_cbufs);
-   assert(scene->cbufs[buf].unswizzled);
 
    if (!task->color_tiles[buf]) {
       struct pipe_surface *cbuf = scene->fb.cbufs[buf];
@@ -237,41 +200,6 @@ lp_rast_get_unswizzled_color_tile_pointer(struct lp_rasterizer_task *task,
    }
 
    return task->color_tiles[buf];
-}
-
-
-/**
- * Get the pointer to a 4x4 color block (within a 64x64 tile).
- * We'll map the color buffer on demand here.
- * Note that this may be called even when there's no color buffers - return
- * NULL in that case.
- * \param x, y location of 4x4 block in window coords
- */
-static INLINE uint8_t *
-lp_rast_get_color_block_pointer(struct lp_rasterizer_task *task,
-                                unsigned buf, unsigned x, unsigned y)
-{
-   unsigned px, py, pixel_offset;
-   uint8_t *color;
-
-   assert(x < task->scene->tiles_x * TILE_SIZE);
-   assert(y < task->scene->tiles_y * TILE_SIZE);
-   assert((x % TILE_VECTOR_WIDTH) == 0);
-   assert((y % TILE_VECTOR_HEIGHT) == 0);
-   assert(buf < task->scene->fb.nr_cbufs);
-   assert(task->scene->cbufs[buf].unswizzled == 0);
-
-   color = lp_rast_get_color_tile_pointer(task, buf, LP_TEX_USAGE_READ_WRITE);
-   assert(color);
-
-   px = x % TILE_SIZE;
-   py = y % TILE_SIZE;
-   pixel_offset = tile_pixel_offset(px, py, 0);
-
-   color = color + pixel_offset;
-
-   assert(lp_check_alignment(color, 16));
-   return color;
 }
 
 
@@ -291,7 +219,6 @@ lp_rast_get_unswizzled_color_block_pointer(struct lp_rasterizer_task *task,
    assert((x % TILE_VECTOR_WIDTH) == 0);
    assert((y % TILE_VECTOR_HEIGHT) == 0);
    assert(buf < task->scene->fb.nr_cbufs);
-   assert(task->scene->cbufs[buf].unswizzled);
 
    format_bytes = util_format_description(task->scene->fb.cbufs[buf]->format)->block.bits / 8;
 
@@ -332,11 +259,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       stride[i] = scene->cbufs[i].stride;
 
-      if (scene->cbufs[i].unswizzled) {
-         color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, x, y);
-      } else {
-         color[i] = lp_rast_get_color_block_pointer(task, i, x, y);
-      }
+      color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, x, y);
    }
 
    depth = lp_rast_get_depth_block_pointer(task, x, y);

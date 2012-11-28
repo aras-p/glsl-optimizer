@@ -150,8 +150,6 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
                                                   cbuf->u.tex.first_layer,
                                                   LP_TEX_USAGE_READ_WRITE,
                                                   LP_TEX_LAYOUT_LINEAR);
-
-      scene->cbufs[i].unswizzled = llvmpipe_is_format_unswizzled(cbuf->format);
    }
 
    if (fb->zsbuf) {

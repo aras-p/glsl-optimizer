@@ -60,8 +60,6 @@ static const struct debug_named_value lp_debug_flags[] = {
    { "rast",   DEBUG_RAST, NULL },
    { "query",  DEBUG_QUERY, NULL },
    { "screen", DEBUG_SCREEN, NULL },
-   { "show_tiles",    DEBUG_SHOW_TILES, NULL },
-   { "show_subtiles", DEBUG_SHOW_SUBTILES, NULL },
    { "counters", DEBUG_COUNTERS, NULL },
    { "scene", DEBUG_SCENE, NULL },
    { "fence", DEBUG_FENCE, NULL },

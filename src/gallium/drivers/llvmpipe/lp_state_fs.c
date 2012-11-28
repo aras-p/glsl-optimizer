@@ -686,76 +686,6 @@ generate_fs_loop(struct gallivm_state *gallivm,
 
 
 /**
- * Generate color blending and color output.
- * \param rt  the render target index (to index blend, colormask state)
- * \param type  the pixel color type
- * \param context_ptr  pointer to the runtime JIT context
- * \param mask  execution mask (active fragment/pixel mask)
- * \param src  colors from the fragment shader
- * \param dst_ptr  the destination color buffer pointer
- */
-static void
-generate_blend(struct gallivm_state *gallivm,
-               const struct pipe_blend_state *blend,
-               unsigned rt,
-               LLVMBuilderRef builder,
-               struct lp_type type,
-               LLVMValueRef context_ptr,
-               LLVMValueRef mask,
-               LLVMValueRef *src,
-               LLVMValueRef dst_ptr,
-               boolean do_branch)
-{
-   struct lp_build_context bld;
-   struct lp_build_mask_context mask_ctx;
-   LLVMTypeRef vec_type;
-   LLVMValueRef const_ptr;
-   LLVMValueRef con[4];
-   LLVMValueRef dst[4];
-   LLVMValueRef res[4];
-   unsigned chan;
-
-   lp_build_context_init(&bld, gallivm, type);
-
-   lp_build_mask_begin(&mask_ctx, gallivm, type, mask);
-   if (do_branch)
-      lp_build_mask_check(&mask_ctx);
-
-   vec_type = lp_build_vec_type(gallivm, type);
-
-   const_ptr = lp_jit_context_u8_blend_color(gallivm, context_ptr);
-   const_ptr = LLVMBuildBitCast(builder, const_ptr,
-                                LLVMPointerType(vec_type, 0), "");
-
-   /* load constant blend color and colors from the dest color buffer */
-   for(chan = 0; chan < 4; ++chan) {
-      LLVMValueRef index = lp_build_const_int32(gallivm, chan);
-      con[chan] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, const_ptr, &index, 1, ""), "");
-
-      dst[chan] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dst_ptr, &index, 1, ""), "");
-
-      lp_build_name(con[chan], "con.%c", "rgba"[chan]);
-      lp_build_name(dst[chan], "dst.%c", "rgba"[chan]);
-   }
-
-   /* do blend */
-   lp_build_blend_soa(gallivm, blend, type, rt, src, dst, con, res);
-
-   /* store results to color buffer */
-   for(chan = 0; chan < 4; ++chan) {
-      if(blend->rt[rt].colormask & (1 << chan)) {
-         LLVMValueRef index = lp_build_const_int32(gallivm, chan);
-         lp_build_name(res[chan], "res.%c", "rgba"[chan]);
-         res[chan] = lp_build_select(&bld, mask, res[chan], dst[chan]);
-         LLVMBuildStore(builder, res[chan], LLVMBuildGEP(builder, dst_ptr, &index, 1, ""));
-      }
-   }
-
-   lp_build_mask_end(&mask_ctx);
-}
-
-
-/**
  * This function will reorder pixels from the fragment shader SoA to memory layout AoS
  *
  * Fragment Shader outputs pixels in small 2x2 blocks
@@ -1800,7 +1730,6 @@ generate_fragment(struct llvmpipe_context *lp,
    struct lp_build_interp_soa_context interp;
    LLVMValueRef fs_mask[16 / 4];
    LLVMValueRef fs_out_color[PIPE_MAX_COLOR_BUFS][TGSI_NUM_CHANNELS][16 / 4];
-   LLVMValueRef blend_mask;
    LLVMValueRef function;
    LLVMValueRef facing;
    const struct util_format_description *zs_format_desc;
@@ -2058,8 +1987,8 @@ generate_fragment(struct llvmpipe_context *lp,
     */
    for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++) {
       LLVMValueRef color_ptr;
+      LLVMValueRef stride;
       LLVMValueRef index = lp_build_const_int32(gallivm, cbuf);
-      LLVMValueRef blend_in_color[TGSI_NUM_CHANNELS];
       unsigned rt = key->blend.independent_blend_enable ? cbuf : 0;
 
       boolean do_branch = ((key->depth.enabled
@@ -2073,53 +2002,13 @@ generate_fragment(struct llvmpipe_context *lp,
 
       lp_build_name(color_ptr, "color_ptr%d", cbuf);
 
-      if (variant->unswizzled_cbufs & (1 << cbuf)) {
-         LLVMValueRef stride = LLVMBuildLoad(builder,
-                                             LLVMBuildGEP(builder, stride_ptr, &index, 1, ""),
-                                             "");
+      stride = LLVMBuildLoad(builder,
+                             LLVMBuildGEP(builder, stride_ptr, &index, 1, ""),
+                             "");
 
-         generate_unswizzled_blend(gallivm, rt, variant, key->cbuf_format[cbuf],
-                                   num_fs, fs_type, fs_mask, fs_out_color[cbuf],
-                                   context_ptr, color_ptr, stride, partial_mask, do_branch);
-      } else {
-         /*
-          * Convert the fs's output color and mask to fit to the blending type.
-          */
-         for(chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
-            LLVMValueRef fs_color_vals[LP_MAX_VECTOR_LENGTH];
-
-            for (i = 0; i < num_fs; i++) {
-               fs_color_vals[i] =
-                     LLVMBuildLoad(builder, fs_out_color[cbuf][chan][i], "fs_color_vals");
-            }
-
-            lp_build_conv(gallivm, fs_type, blend_type,
-                          fs_color_vals,
-                          num_fs,
-                          &blend_in_color[chan], 1);
-
-            lp_build_name(blend_in_color[chan], "color%d.%c", cbuf, "rgba"[chan]);
-         }
-
-         if (partial_mask || !variant->opaque) {
-            lp_build_conv_mask(gallivm, fs_type, blend_type,
-                               fs_mask, num_fs,
-                               &blend_mask, 1);
-         } else {
-            blend_mask = lp_build_const_int_vec(gallivm, blend_type, ~0);
-         }
-
-         generate_blend(gallivm,
-                        &key->blend,
-                        rt,
-                        builder,
-                        blend_type,
-                        context_ptr,
-                        blend_mask,
-                        blend_in_color,
-                        color_ptr,
-                        do_branch);
-      }
+      generate_unswizzled_blend(gallivm, rt, variant, key->cbuf_format[cbuf],
+                                num_fs, fs_type, fs_mask, fs_out_color[cbuf],
+                                context_ptr, color_ptr, stride, partial_mask, do_branch);
    }
 
    LLVMBuildRetVoid(builder);
@@ -2235,7 +2124,6 @@ generate_variant(struct llvmpipe_context *lp,
    struct lp_fragment_shader_variant *variant;
    const struct util_format_description *cbuf0_format_desc;
    boolean fullcolormask;
-   unsigned i;
 
    variant = CALLOC_STRUCT(lp_fragment_shader_variant);
    if(!variant)
@@ -2272,10 +2160,6 @@ generate_variant(struct llvmpipe_context *lp,
          !key->depth.enabled &&
          !shader->info.base.uses_kill
          ? TRUE : FALSE;
-
-   for (i = 0; i < key->nr_cbufs; ++i) {
-      variant->unswizzled_cbufs |= llvmpipe_is_format_unswizzled(key->cbuf_format[i]) << i;
-   }
 
    if ((LP_DEBUG & DEBUG_FS) || (gallivm_debug & GALLIVM_DEBUG_IR)) {
       lp_debug_fs_variant(variant);

@@ -36,7 +36,6 @@
 #define LP_SCENE_H
 
 #include "os/os_thread.h"
-#include "lp_tile_soa.h"
 #include "lp_rast.h"
 #include "lp_debug.h"
 
@@ -137,7 +136,6 @@ struct lp_scene {
       uint8_t *map;
       unsigned stride;
       unsigned blocksize;
-      unsigned unswizzled;
    } zsbuf, cbufs[PIPE_MAX_COLOR_BUFS];
    
    /** the framebuffer to render the scene into */

@@ -34,7 +34,7 @@
 
 #include "util/u_format.h"
 #include "util/u_memory.h"
-#include "lp_tile_soa.h"
+#include "lp_limits.h"
 #include "lp_tile_image.h"
 
 
@@ -189,27 +189,7 @@ lp_tiled_to_linear(const void *src, void *dst,
       }
    }
    else {
-      /* color image */
-      const uint bpp = 4;
-      const uint tile_w = TILE_SIZE, tile_h = TILE_SIZE;
-      const uint bytes_per_tile = tile_w * tile_h * bpp;
-      uint i, j;
-
       assert(0);
-
-      for (j = 0; j < height; j += tile_h) {
-         for (i = 0; i < width; i += tile_w) {
-            uint ii = i + x, jj = j + y;
-            uint tile_offset = ((jj / tile_h) * tiles_per_row + ii / tile_w);
-            uint byte_offset = tile_offset * bytes_per_tile;
-            const uint8_t *src_tile = (uint8_t *) src + byte_offset;
-
-            lp_tile_unswizzle_4ub(format,
-                              src_tile,
-                              dst, dst_stride,
-                              ii, jj);
-         }
-      }
    }
 }
 
@@ -281,26 +261,7 @@ lp_linear_to_tiled(const void *src, void *dst,
       }
    }
    else {
-      const uint bpp = 4;
-      const uint tile_w = TILE_SIZE, tile_h = TILE_SIZE;
-      const uint bytes_per_tile = tile_w * tile_h * bpp;
-      uint i, j;
-
       assert(0);
-
-      for (j = 0; j < height; j += TILE_SIZE) {
-         for (i = 0; i < width; i += TILE_SIZE) {
-            uint ii = i + x, jj = j + y;
-            uint tile_offset = ((jj / tile_h) * tiles_per_row + ii / tile_w);
-            uint byte_offset = tile_offset * bytes_per_tile;
-            uint8_t *dst_tile = (uint8_t *) dst + byte_offset;
-
-            lp_tile_swizzle_4ub(format,
-                             dst_tile,
-                             src, src_stride,
-                             ii, jj);
-         }
-      }
    }
 }
 

@@ -29,6 +29,10 @@
 #define LP_TILE_IMAGE_H
 
 
+#define TILE_VECTOR_HEIGHT 4
+#define TILE_VECTOR_WIDTH 4
+
+
 void
 lp_tiled_to_linear(const void *src, void *dst,
                    unsigned x, unsigned y,
