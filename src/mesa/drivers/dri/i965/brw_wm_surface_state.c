@@ -837,6 +837,7 @@ brw_update_texture_surface(struct gl_context *ctx,
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    uint32_t *surf;
    int width, height, depth;
+   uint32_t tile_x, tile_y;
 
    if (tObj->Target == GL_TEXTURE_BUFFER) {
       brw_update_buffer_texture_surface(ctx, unit, binding_table, surf_index);
@@ -870,7 +871,16 @@ brw_update_texture_surface(struct gl_context *ctx,
 
    surf[4] = 0;
 
-   surf[5] = (mt->align_h == 4) ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0;
+   intel_miptree_get_tile_offsets(intelObj->mt, 0, 0, &tile_x, &tile_y);
+   assert(brw->has_surface_tile_offset || (tile_x == 0 && tile_y == 0));
+   /* Note that the low bits of these fields are missing, so
+    * there's the possibility of getting in trouble.
+    */
+   assert(tile_x % 4 == 0);
+   assert(tile_y % 2 == 0);
+   surf[5] = ((tile_x / 4) << BRW_SURFACE_X_OFFSET_SHIFT |
+	      (tile_y / 2) << BRW_SURFACE_Y_OFFSET_SHIFT |
+	      (mt->align_h == 4 ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0));
 
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
