@@ -1300,16 +1300,28 @@ _arguments_parse (argument_list_t *arguments,
 }
 
 static token_list_t *
-_token_list_create_with_one_space (void *ctx)
+_token_list_create_with_one_ival (void *ctx, int type, int ival)
 {
 	token_list_t *list;
-	token_t *space;
+	token_t *node;
 
 	list = _token_list_create (ctx);
-	space = _token_create_ival (list, SPACE, SPACE);
-	_token_list_append (list, space);
+	node = _token_create_ival (list, type, ival);
+	_token_list_append (list, node);
 
 	return list;
+}
+
+static token_list_t *
+_token_list_create_with_one_space (void *ctx)
+{
+	return _token_list_create_with_one_ival (ctx, SPACE, SPACE);
+}
+
+static token_list_t *
+_token_list_create_with_one_integer (void *ctx, int ival)
+{
+	return _token_list_create_with_one_ival (ctx, INTEGER, ival);
 }
 
 /* Perform macro expansion on 'list', placing the resulting tokens
@@ -1533,29 +1545,11 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 
 	/* Special handling for __LINE__ and __FILE__, (not through
 	 * the hash table). */
-	if (strcmp(identifier, "__LINE__") == 0) {
-		token_list_t *replacement;
-		token_t *value;
+	if (strcmp(identifier, "__LINE__") == 0)
+		return _token_list_create_with_one_integer (parser, node->token->location.first_line);
 
-		replacement = _token_list_create (parser);
-		value = _token_create_ival (parser, INTEGER,
-					    node->token->location.first_line);
-		_token_list_append (replacement, value);
-
-		return replacement;
-	}
-
-	if (strcmp(identifier, "__FILE__") == 0) {
-		token_list_t *replacement;
-		token_t *value;
-
-		replacement = _token_list_create (parser);
-		value = _token_create_ival (parser, INTEGER,
-					    node->token->location.source);
-		_token_list_append (replacement, value);
-
-		return replacement;
-	}
+	if (strcmp(identifier, "__FILE__") == 0)
+		return _token_list_create_with_one_integer (parser, node->token->location.source);
 
 	/* Look up this identifier in the hash table. */
 	macro = hash_table_find (parser->defines, identifier);
