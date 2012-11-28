@@ -318,7 +318,14 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
       }
    }
 
-   if (!state->blend_enable) {
+   if (blend->logicop_enable) {
+      if(!type.floating) {
+         result = lp_build_logicop(gallivm->builder, blend->logicop_func, src, dst);
+      }
+      else {
+         result = src;
+      }
+   } else if (!state->blend_enable) {
       result = src;
    } else {
       boolean rgb_alpha_same = (state->rgb_src_factor == state->rgb_dst_factor && state->alpha_src_factor == state->alpha_dst_factor) || nr_channels == 1;
