@@ -134,47 +134,6 @@ util_format_is_pure_uint(enum pipe_format format)
    return (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED && desc->channel[i].pure_integer) ? TRUE : FALSE;
 }
 
-boolean
-util_format_is_array(const struct util_format_description *desc)
-{
-   unsigned chan;
-
-   if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN ||
-       desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB ||
-       desc->block.width != 1 ||
-       desc->block.height != 1) {
-      return FALSE;
-   }
-
-   for (chan = 0; chan < desc->nr_channels; ++chan) {
-      if (desc->channel[chan].size != desc->channel[0].size)
-         return FALSE;
-
-      if (desc->channel[chan].type == UTIL_FORMAT_TYPE_VOID && (chan + 1) == desc->nr_channels)
-         continue;
-
-      if (desc->channel[chan].type != desc->channel[0].type)
-         return FALSE;
-
-      if (desc->channel[chan].normalized != desc->channel[0].normalized)
-         return FALSE;
-
-      if (desc->channel[chan].pure_integer != desc->channel[0].pure_integer)
-         return FALSE;
-   }
-
-   if (desc->nr_channels == 4) {
-      if (desc->swizzle[3] < 3)
-         return FALSE;
-   } else {
-      for (chan = 0; chan < desc->nr_channels; ++chan) {
-         if (desc->swizzle[chan] != chan)
-            return FALSE;
-      }
-   }
-
-   return TRUE;
-}
 
 boolean
 util_format_is_luminance_alpha(enum pipe_format format)

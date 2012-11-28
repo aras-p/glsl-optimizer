@@ -176,7 +176,8 @@ struct lp_build_context
 static INLINE void
 lp_type_from_format_desc(struct lp_type* type, const struct util_format_description *format_desc)
 {
-   assert(util_format_is_array(format_desc));
+   assert(format_desc->is_array);
+   assert(!format_desc->is_mixed);
 
    memset(type, 0, sizeof(struct lp_type));
    type->floating = format_desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT;
