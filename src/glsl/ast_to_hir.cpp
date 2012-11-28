@@ -4132,6 +4132,12 @@ ast_uniform_block::hir(exec_list *instructions,
    struct gl_uniform_block *ubo = get_next_uniform_block(state);
    ubo->Name = ralloc_strdup(state->uniform_blocks, this->block_name);
 
+   if (!state->symbols->add_uniform_block(ubo)) {
+      YYLTYPE loc = this->get_location();
+      _mesa_glsl_error(&loc, state, "Uniform block name `%s' already taken in "
+                       "the current scope.\n", ubo->Name);
+   }
+
    unsigned int num_variables = 0;
    foreach_list_typed(ast_declarator_list, decl_list, link, &declarations) {
       foreach_list_const(node, &decl_list->declarations) {

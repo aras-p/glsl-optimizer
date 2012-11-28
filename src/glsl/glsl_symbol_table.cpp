@@ -41,13 +41,15 @@ public:
       ralloc_free(entry);
    }
 
-   symbol_table_entry(ir_variable *v)                     : v(v), f(0), t(0) {}
-   symbol_table_entry(ir_function *f)                     : v(0), f(f), t(0) {}
-   symbol_table_entry(const glsl_type *t)                 : v(0), f(0), t(t) {}
+   symbol_table_entry(ir_variable *v)               : v(v), f(0), t(0), u(0) {}
+   symbol_table_entry(ir_function *f)               : v(0), f(f), t(0), u(0) {}
+   symbol_table_entry(const glsl_type *t)           : v(0), f(0), t(t), u(0) {}
+   symbol_table_entry(struct gl_uniform_block *u)   : v(0), f(0), t(0), u(u) {}
 
    ir_variable *v;
    ir_function *f;
    const glsl_type *t;
+   struct gl_uniform_block *u;
 };
 
 glsl_symbol_table::glsl_symbol_table()
@@ -130,6 +132,12 @@ bool glsl_symbol_table::add_function(ir_function *f)
    }
    symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(f);
    return _mesa_symbol_table_add_symbol(table, -1, f->name, entry) == 0;
+}
+
+bool glsl_symbol_table::add_uniform_block(struct gl_uniform_block *u)
+{
+   symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(u);
+   return _mesa_symbol_table_add_symbol(table, -1, u->Name, entry) == 0;
 }
 
 void glsl_symbol_table::add_global_function(ir_function *f)
