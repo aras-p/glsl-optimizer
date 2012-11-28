@@ -112,6 +112,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %token STRUCT VOID_TOK WHILE
 %token <identifier> IDENTIFIER TYPE_IDENTIFIER NEW_IDENTIFIER
 %type <identifier> any_identifier
+%type <identifier> instance_name_opt
 %token <real> FLOATCONSTANT
 %token <n> INTCONSTANT UINTCONSTANT BOOLCONSTANT
 %token <identifier> FIELD_SELECTION
@@ -1899,11 +1900,11 @@ uniform_block:
 	;
 
 basic_uniform_block:
-	UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
+	UNIFORM NEW_IDENTIFIER '{' member_list '}' instance_name_opt ';'
 	{
 	   void *ctx = state;
 	   $$ = new(ctx) ast_uniform_block(*state->default_uniform_qualifier,
-					   $2, $4);
+					   $2, $4, $6);
 
 	   if (!state->ARB_uniform_buffer_object_enable) {
 	      _mesa_glsl_error(& @1, state,
@@ -1913,6 +1914,21 @@ basic_uniform_block:
 	      _mesa_glsl_warning(& @1, state,
 				 "#version 140 / GL_ARB_uniform_buffer_object "
 				 "required for defining uniform blocks\n");
+	   }
+	}
+	;
+
+instance_name_opt:
+	/* empty */
+	{
+	   $$ = NULL;
+	}
+	| NEW_IDENTIFIER
+	{
+	   if (!(state->language_version == 300 && state->es_shader)) {
+	      _mesa_glsl_error(& @1, state,
+			       "#version 300 es required for using uniform "
+			       "blocks with an instance name\n");
 	   }
 	}
 	;
