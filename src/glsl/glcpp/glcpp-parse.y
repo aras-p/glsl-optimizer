@@ -1528,6 +1528,7 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 		return NULL;
 	}
 
+	*last = node;
 	identifier = token->value.str;
 
 	/* Special handling for __LINE__ and __FILE__, (not through
@@ -1541,7 +1542,6 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 					    node->token->location.first_line);
 		_token_list_append (replacement, value);
 
-		*last = node;
 		return replacement;
 	}
 
@@ -1554,7 +1554,6 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 					    node->token->location.source);
 		_token_list_append (replacement, value);
 
-		*last = node;
 		return replacement;
 	}
 
@@ -1579,14 +1578,12 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 		final = _token_create_str (parser, OTHER, str);
 		expansion = _token_list_create (parser);
 		_token_list_append (expansion, final);
-		*last = node;
 		return expansion;
 	}
 
 	if (! macro->is_function)
 	{
 		token_list_t *replacement;
-		*last = node;
 
 		/* Replace a macro defined as empty with a SPACE token. */
 		if (macro->replacements == NULL)
