@@ -1528,8 +1528,37 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 		return NULL;
 	}
 
-	/* Look up this identifier in the hash table. */
 	identifier = token->value.str;
+
+	/* Special handling for __LINE__ and __FILE__, (not through
+	 * the hash table). */
+	if (strcmp(identifier, "__LINE__") == 0) {
+		token_list_t *replacement;
+		token_t *value;
+
+		replacement = _token_list_create (parser);
+		value = _token_create_ival (parser, INTEGER,
+					    node->token->location.first_line);
+		_token_list_append (replacement, value);
+
+		*last = node;
+		return replacement;
+	}
+
+	if (strcmp(identifier, "__FILE__") == 0) {
+		token_list_t *replacement;
+		token_t *value;
+
+		replacement = _token_list_create (parser);
+		value = _token_create_ival (parser, INTEGER,
+					    node->token->location.source);
+		_token_list_append (replacement, value);
+
+		*last = node;
+		return replacement;
+	}
+
+	/* Look up this identifier in the hash table. */
 	macro = hash_table_find (parser->defines, identifier);
 
 	/* Not a macro, so no expansion needed. */
