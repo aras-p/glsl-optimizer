@@ -2716,127 +2716,16 @@ compatible_color_datatypes(gl_format srcFormat, gl_format dstFormat)
 }
 
 
-/**
- * Return the equivalent non-generic internal format.
- * This is useful for comparing whether two internal formats are semantically
- * equivalent.
- */
-static GLenum
-get_nongeneric_internalformat(GLenum format)
-{
-   switch (format) {
-      /* GL 1.1 formats. */
-      case 4:
-      case GL_RGBA:
-         return GL_RGBA8;
-
-      case 3:
-      case GL_RGB:
-         return GL_RGB8;
-
-      case 2:
-      case GL_LUMINANCE_ALPHA:
-         return GL_LUMINANCE8_ALPHA8;
-
-      case 1:
-      case GL_LUMINANCE:
-         return GL_LUMINANCE8;
-
-      case GL_ALPHA:
-         return GL_ALPHA8;
-
-      case GL_INTENSITY:
-         return GL_INTENSITY8;
-
-      /* GL_ARB_texture_rg */
-      case GL_RED:
-         return GL_R8;
-
-      case GL_RG:
-         return GL_RG8;
-
-      /* GL_EXT_texture_sRGB */
-      case GL_SRGB:
-         return GL_SRGB8;
-
-      case GL_SRGB_ALPHA:
-         return GL_SRGB8_ALPHA8;
-
-      case GL_SLUMINANCE:
-         return GL_SLUMINANCE8;
-
-      case GL_SLUMINANCE_ALPHA:
-         return GL_SLUMINANCE8_ALPHA8;
-
-      /* GL_EXT_texture_snorm */
-      case GL_RGBA_SNORM:
-         return GL_RGBA8_SNORM;
-
-      case GL_RGB_SNORM:
-         return GL_RGB8_SNORM;
-
-      case GL_RG_SNORM:
-         return GL_RG8_SNORM;
-
-      case GL_RED_SNORM:
-         return GL_R8_SNORM;
-
-      case GL_LUMINANCE_ALPHA_SNORM:
-         return GL_LUMINANCE8_ALPHA8_SNORM;
-
-      case GL_LUMINANCE_SNORM:
-         return GL_LUMINANCE8_SNORM;
-
-      case GL_ALPHA_SNORM:
-         return GL_ALPHA8_SNORM;
-
-      case GL_INTENSITY_SNORM:
-         return GL_INTENSITY8_SNORM;
-
-      default:
-         return format;
-   }
-}
-
-
-static GLenum
-get_linear_internalformat(GLenum format)
-{
-   switch (format) {
-   case GL_SRGB:
-      return GL_RGB;
-
-   case GL_SRGB_ALPHA:
-      return GL_RGBA;
-
-   case GL_SRGB8:
-      return GL_RGB8;
-
-   case GL_SRGB8_ALPHA8:
-      return GL_RGBA8;
-
-   case GL_SLUMINANCE:
-      return GL_LUMINANCE8;
-
-   case GL_SLUMINANCE_ALPHA:
-      return GL_LUMINANCE8_ALPHA8;
-
-   default:
-      return format;
-   }
-}
-
-
 static GLboolean
-compatible_resolve_formats(const struct gl_renderbuffer *colorReadRb,
-                           const struct gl_renderbuffer *colorDrawRb)
+compatible_resolve_formats(const struct gl_renderbuffer *readRb,
+                           const struct gl_renderbuffer *drawRb)
 {
    GLenum readFormat, drawFormat;
 
    /* The simple case where we know the backing Mesa formats are the same.
     */
-   if (_mesa_get_srgb_format_linear(colorReadRb->Format) ==
-       _mesa_get_srgb_format_linear(colorDrawRb->Format)) {
+   if (_mesa_get_srgb_format_linear(readRb->Format) ==
+       _mesa_get_srgb_format_linear(drawRb->Format)) {
       return GL_TRUE;
    }
 
@@ -2850,10 +2739,10 @@ compatible_resolve_formats(const struct gl_renderbuffer *colorReadRb,
     *
     * Blits between linear and sRGB formats are also allowed.
     */
-   readFormat = get_nongeneric_internalformat(colorReadRb->InternalFormat);
-   drawFormat = get_nongeneric_internalformat(colorDrawRb->InternalFormat);
-   readFormat = get_linear_internalformat(readFormat);
-   drawFormat = get_linear_internalformat(drawFormat);
+   readFormat = _mesa_get_nongeneric_internalformat(readRb->InternalFormat);
+   drawFormat = _mesa_get_nongeneric_internalformat(drawRb->InternalFormat);
+   readFormat = _mesa_get_linear_internalformat(readFormat);
+   drawFormat = _mesa_get_linear_internalformat(drawFormat);
 
    if (readFormat == drawFormat) {
       return GL_TRUE;
