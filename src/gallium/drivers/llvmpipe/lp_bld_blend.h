@@ -69,17 +69,6 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
                    int nr_channels);
 
 
-void
-lp_build_blend_soa(struct gallivm_state *gallivm,
-                   const struct pipe_blend_state *blend,
-                   struct lp_type type,
-                   unsigned rt,
-                   LLVMValueRef src[4],
-                   LLVMValueRef dst[4],
-                   LLVMValueRef const_[4],
-                   LLVMValueRef res[4]);
-
-
 /**
  * Apply a logic op.
  *
