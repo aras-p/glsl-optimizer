@@ -48,6 +48,16 @@
 #define DEBUG_MEMORY_MAGIC 0x6e34090aU 
 #define DEBUG_MEMORY_STACK 0 /* XXX: disabled until we have symbol lookup */
 
+/**
+ * Set to 1 to enable checking of freed blocks of memory.
+ * Basically, don't really deallocate freed memory; keep it in the list
+ * but mark it as freed and do extra checking in debug_memory_check().
+ * This can detect some cases of use-after-free.  But note that since we
+ * never really free anything this will use a lot of memory.
+ */
+#define DEBUG_FREED_MEMORY 0
+#define DEBUG_FREED_BYTE 0x33
+
 
 struct debug_memory_header 
 {
@@ -61,7 +71,10 @@ struct debug_memory_header
    struct debug_stack_frame backtrace[DEBUG_MEMORY_STACK];
 #endif
    size_t size;
-   
+#if DEBUG_FREED_MEMORY
+   boolean freed;  /**< Is this a freed block? */
+#endif
+
    unsigned magic;
 };
 
@@ -127,6 +140,9 @@ debug_malloc(const char *file, unsigned line, const char *function,
    hdr->function = function;
    hdr->size = size;
    hdr->magic = DEBUG_MEMORY_MAGIC;
+#if DEBUG_FREED_MEMORY
+   hdr->freed = FALSE;
+#endif
 
 #if DEBUG_MEMORY_STACK
    debug_backtrace_capture(hdr->backtrace, 0, DEBUG_MEMORY_STACK);
@@ -169,6 +185,17 @@ debug_free(const char *file, unsigned line, const char *function,
       debug_assert(0);
    }
 
+#if DEBUG_FREED_MEMORY
+   /* Check for double-free */
+   assert(!hdr->freed);
+   /* Mark the block as freed but don't really free it */
+   hdr->freed = TRUE;
+   /* Save file/line where freed */
+   hdr->file = file;
+   hdr->line = line;
+   /* set freed memory to special value */
+   memset(ptr, DEBUG_FREED_BYTE, hdr->size);
+#else
    pipe_mutex_lock(list_mutex);
    LIST_DEL(&hdr->head);
    pipe_mutex_unlock(list_mutex);
@@ -176,6 +203,7 @@ debug_free(const char *file, unsigned line, const char *function,
    ftr->magic = 0;
    
    os_free(hdr);
+#endif
 }
 
 void *
@@ -235,6 +263,9 @@ debug_realloc(const char *file, unsigned line, const char *function,
    new_hdr->function = old_hdr->function;
    new_hdr->size = new_size;
    new_hdr->magic = DEBUG_MEMORY_MAGIC;
+#if DEBUG_FREED_MEMORY
+   new_hdr->freed = FALSE;
+#endif
    
    new_ftr = footer_from_header(new_hdr);
    new_ftr->magic = DEBUG_MEMORY_MAGIC;
@@ -312,5 +343,54 @@ debug_memory_end(unsigned long start_no)
    }
    else {
       debug_printf("No memory leaks detected.\n");
+   }
+}
+
+
+/**
+ * We can periodically call this from elsewhere to do a basic sanity
+ * check of the heap memory we've allocated.
+ */
+void 
+debug_memory_check(void)
+{
+   struct list_head *entry;
+
+   entry = list.prev;
+   for (; entry != &list; entry = entry->prev) {
+      struct debug_memory_header *hdr;
+      struct debug_memory_footer *ftr;
+      const char *ptr;
+
+      hdr = LIST_ENTRY(struct debug_memory_header, entry, head);
+      ftr = footer_from_header(hdr);
+      ptr = (const char *) data_from_header(hdr);
+
+      if (hdr->magic != DEBUG_MEMORY_MAGIC) {
+         debug_printf("%s:%u:%s: bad or corrupted memory %p\n",
+                      hdr->file, hdr->line, hdr->function, ptr);
+         debug_assert(0);
+      }
+
+      if (ftr->magic != DEBUG_MEMORY_MAGIC) {
+         debug_printf("%s:%u:%s: buffer overflow %p\n",
+                      hdr->file, hdr->line, hdr->function, ptr);
+         debug_assert(0);
+      }
+
+#if DEBUG_FREED_MEMORY
+      /* If this block is marked as freed, check that it hasn't been touched */
+      if (hdr->freed) {
+         int i;
+         for (i = 0; i < hdr->size; i++) {
+            if (ptr[i] != DEBUG_FREED_BYTE) {
+               debug_printf("Memory error: byte %d of block at %p of size %d is 0x%x\n",
+                            i, ptr, hdr->size, ptr[i]);
+               debug_printf("Block was freed at %s:%d\n", hdr->file, hdr->line);
+            }
+            assert(ptr[i] == DEBUG_FREED_BYTE);
+         }
+      }
+#endif
    }
 }

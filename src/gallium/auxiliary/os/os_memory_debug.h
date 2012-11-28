@@ -60,6 +60,9 @@ void *
 debug_realloc(const char *file, unsigned line, const char *function,
               void *old_ptr, size_t old_size, size_t new_size );
 
+void 
+debug_memory_check(void);
+
 
 #ifdef __cplusplus
 }
