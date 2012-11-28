@@ -24,6 +24,10 @@
 #include "intel_fbo.h"
 #include "intel_span.h"
 
+#ifndef I915
+#include "brw_context.h"
+#endif
+
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
 /* Work back from the specified level of the image to the baselevel and create a
@@ -255,24 +259,53 @@ intel_set_texture_image_region(struct gl_context *ctx,
 			       GLenum target,
 			       GLenum internalFormat,
 			       gl_format format,
-                               uint32_t offset)
+                               uint32_t offset,
+                               GLuint width,
+                               GLuint height,
+                               GLuint tile_x,
+                               GLuint tile_y)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(image);
    struct gl_texture_object *texobj = image->TexObject;
    struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
+   bool has_surface_tile_offset = false;
+   uint32_t draw_x, draw_y;
 
    _mesa_init_teximage_fields(&intel->ctx, image,
-			      region->width, region->height, 1,
+			      width, height, 1,
 			      0, internalFormat, format);
 
    ctx->Driver.FreeTextureImageBuffer(ctx, image);
 
-   intel_image->mt = intel_miptree_create_for_region(intel, target,
-						     image->TexFormat,
-						     region);
+   intel_image->mt = intel_miptree_create_layout(intel, target, image->TexFormat,
+                                                 0, 0,
+                                                 width, height, 1,
+                                                 true, 0 /* num_samples */);
    if (intel_image->mt == NULL)
        return;
+   intel_region_reference(&intel_image->mt->region, region);
+   intel_image->mt->total_width = width;
+   intel_image->mt->total_height = height;
+   intel_image->mt->level[0].slice[0].x_offset = tile_x;
+   intel_image->mt->level[0].slice[0].y_offset = tile_y;
+
+   intel_miptree_get_tile_offsets(intel_image->mt, 0, 0, &draw_x, &draw_y);
+#ifndef I915
+   has_surface_tile_offset = brw_context(ctx)->has_surface_tile_offset;
+#endif
+
+   /* From "OES_EGL_image" error reporting. We report GL_INVALID_OPERATION
+    * for EGL images from non-tile aligned sufaces in gen4 hw and earlier which has
+    * trouble resolving back to destination image due to alignment issues.
+    */
+   if (!has_surface_tile_offset &&
+       (draw_x != 0 || draw_y != 0)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, __func__);
+      intel_miptree_release(&intel_image->mt);
+      return;
+   }
+
    intel_texobj->needs_validate = true;
 
    intel_image->mt->offset = offset;
@@ -332,7 +365,10 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    _mesa_lock_texture(&intel->ctx, texObj);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    intel_set_texture_image_region(ctx, texImage, rb->mt->region, target,
-				  internalFormat, texFormat, 0);
+                                  internalFormat, texFormat, 0,
+                                  rb->mt->region->width,
+                                  rb->mt->region->height,
+                                  0, 0);
    _mesa_unlock_texture(&intel->ctx, texObj);
 }
 
@@ -361,9 +397,19 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
    if (image == NULL)
       return;
 
+   /* Disallow depth/stencil textures: we don't have a way to pass the
+    * separate stencil miptree of a GL_DEPTH_STENCIL texture through.
+    */
+   if (image->has_depthstencil) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, __func__);
+      return;
+   }
+
    intel_set_texture_image_region(ctx, texImage, image->region,
 				  target, image->internal_format,
-                                  image->format, image->offset);
+                                  image->format, image->offset,
+                                  image->width,  image->height,
+                                  image->tile_x, image->tile_y);
 }
 
 void
