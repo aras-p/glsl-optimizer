@@ -646,16 +646,18 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       return NULL;
    }
 
+   if (attribs->flags & ST_CONTEXT_FLAG_DEBUG)
+      st->ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_DEBUG_BIT;
+   if (attribs->flags & ST_CONTEXT_FLAG_FORWARD_COMPATIBLE)
+      st->ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;
+
    /* need to perform version check */
    if (attribs->major > 1 || attribs->minor > 0) {
       _mesa_compute_version(st->ctx);
 
-      /* Is the actual version less than the requested version?  Mesa can't
-       * yet enforce the added restrictions of a forward-looking context, so
-       * fail that too.
+      /* Is the actual version less than the requested version?
        */
-      if (st->ctx->Version < attribs->major * 10 + attribs->minor
-	  || (attribs->flags & ~ST_CONTEXT_FLAG_DEBUG) != 0) {
+      if (st->ctx->Version < attribs->major * 10 + attribs->minor) {
 	 *error = ST_CONTEXT_ERROR_BAD_VERSION;
          st_destroy_context(st);
          return NULL;

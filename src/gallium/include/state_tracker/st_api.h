@@ -250,8 +250,7 @@ struct st_context_attribs
     * The profile and minimal version to support.
     *
     * The valid profiles and versions are rendering API dependent.  The latest
-    * version satisfying the request should be returned, unless the
-    * ST_CONTEXT_FLAG_FORWARD_COMPATIBLE bit is set.
+    * version satisfying the request should be returned.
     */
    enum st_profile_type profile;
    int major, minor;
