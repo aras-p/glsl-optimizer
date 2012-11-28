@@ -31,6 +31,7 @@
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
+#include "main/texobj.h"
 #include "main/hash.h"
 #include "main/fbobject.h"
 #include "main/mfeatures.h"
@@ -104,6 +105,10 @@ const GLuint __driNConfigOptions = 16;
 #include "intel_screen.h"
 #include "intel_tex.h"
 #include "intel_regions.h"
+
+#ifndef I915
+#include "brw_context.h"
+#endif
 
 #include "i915_drm.h"
 
@@ -296,6 +301,66 @@ intel_allocate_image(int dri_format, void *loaderPrivate)
     return image;
 }
 
+/**
+ * Sets up a DRIImage structure to point to our shared image in a region
+ */
+static void
+intel_setup_image_from_mipmap_tree(struct intel_context *intel, __DRIimage *image,
+                                   struct intel_mipmap_tree *mt, GLuint level,
+                                   GLuint zoffset)
+{
+   unsigned int draw_x, draw_y;
+   uint32_t mask_x, mask_y;
+
+   intel_miptree_check_level_layer(mt, level, zoffset);
+
+   intel_region_get_tile_masks(mt->region, &mask_x, &mask_y, false);
+   intel_miptree_get_image_offset(mt, level, zoffset, &draw_x, &draw_y);
+
+   image->width = mt->level[level].width;
+   image->height = mt->level[level].height;
+   image->tile_x = draw_x & mask_x;
+   image->tile_y = draw_y & mask_y;
+
+   image->offset = intel_region_get_aligned_offset(mt->region,
+                                                   draw_x & ~mask_x,
+                                                   draw_y & ~mask_y,
+                                                   false);
+
+   intel_region_reference(&image->region, mt->region);
+}
+
+static void
+intel_setup_image_from_dimensions(__DRIimage *image)
+{
+   image->width    = image->region->width;
+   image->height   = image->region->height;
+   image->tile_x = 0;
+   image->tile_y = 0;
+   image->has_depthstencil = false;
+}
+
+static inline uint32_t
+intel_dri_format(GLuint format)
+{
+   switch (format) {
+   case MESA_FORMAT_RGB565:
+      return __DRI_IMAGE_FORMAT_RGB565;
+   case MESA_FORMAT_XRGB8888:
+      return __DRI_IMAGE_FORMAT_XRGB8888;
+   case MESA_FORMAT_ARGB8888:
+      return __DRI_IMAGE_FORMAT_ARGB8888;
+   case MESA_FORMAT_RGBA8888_REV:
+      return __DRI_IMAGE_FORMAT_ABGR8888;
+   case MESA_FORMAT_R8:
+      return __DRI_IMAGE_FORMAT_R8;
+   case MESA_FORMAT_RG88:
+      return __DRI_IMAGE_FORMAT_GR88;
+   }
+
+   return MESA_FORMAT_NONE;
+}
+
 static __DRIimage *
 intel_create_image_from_name(__DRIscreen *screen,
 			     int width, int height, int format,
@@ -317,6 +382,8 @@ intel_create_image_from_name(__DRIscreen *screen,
        free(image);
        return NULL;
     }
+
+    intel_setup_image_from_dimensions(image);
 
     return image;	
 }
@@ -347,28 +414,70 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
    image->offset = 0;
    image->data = loaderPrivate;
    intel_region_reference(&image->region, irb->mt->region);
+   intel_setup_image_from_dimensions(image);
+   image->dri_format = intel_dri_format(image->format);
+   image->has_depthstencil = irb->mt->stencil_mt? true : false;
 
-   switch (image->format) {
-   case MESA_FORMAT_RGB565:
-      image->dri_format = __DRI_IMAGE_FORMAT_RGB565;
-      break;
-   case MESA_FORMAT_XRGB8888:
-      image->dri_format = __DRI_IMAGE_FORMAT_XRGB8888;
-      break;
-   case MESA_FORMAT_ARGB8888:
-      image->dri_format = __DRI_IMAGE_FORMAT_ARGB8888;
-      break;
-   case MESA_FORMAT_RGBA8888_REV:
-      image->dri_format = __DRI_IMAGE_FORMAT_ABGR8888;
-      break;
-   case MESA_FORMAT_R8:
-      image->dri_format = __DRI_IMAGE_FORMAT_R8;
-      break;
-   case MESA_FORMAT_RG88:
-      image->dri_format = __DRI_IMAGE_FORMAT_GR88;
-      break;
+   return image;
+}
+
+static __DRIimage *
+intel_create_image_from_texture(__DRIcontext *context, int target,
+                                unsigned texture, int zoffset,
+                                int level,
+                                unsigned *error,
+                                void *loaderPrivate)
+{
+   __DRIimage *image;
+   struct intel_context *intel = context->driverPrivate;
+   struct gl_texture_object *obj;
+   struct intel_texture_object *iobj;
+   GLuint face = 0;
+
+   obj = _mesa_lookup_texture(&intel->ctx, texture);
+   if (!obj || obj->Target != target) {
+      *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
+      return NULL;
    }
 
+   if (target == GL_TEXTURE_CUBE_MAP)
+      face = zoffset;
+
+   _mesa_test_texobj_completeness(&intel->ctx, obj);
+   iobj = intel_texture_object(obj);
+   if (!obj->_BaseComplete || (level > 0 && !obj->_MipmapComplete)) {
+      *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
+      return NULL;
+   }
+
+   if (level < obj->BaseLevel || level > obj->_MaxLevel) {
+      *error = __DRI_IMAGE_ERROR_BAD_MATCH;
+      return NULL;
+   }
+
+   if (target == GL_TEXTURE_3D && obj->Image[face][level]->Depth < zoffset) {
+      *error = __DRI_IMAGE_ERROR_BAD_MATCH;
+      return NULL;
+   }
+   image = calloc(1, sizeof *image);
+   if (image == NULL) {
+      *error = __DRI_IMAGE_ERROR_BAD_ALLOC;
+      return NULL;
+   }
+
+   image->internal_format = obj->Image[face][level]->InternalFormat;
+   image->format = obj->Image[face][level]->TexFormat;
+   image->data = loaderPrivate;
+   intel_setup_image_from_mipmap_tree(intel, image, iobj->mt, level, zoffset);
+   image->dri_format = intel_dri_format(image->format);
+   image->has_depthstencil = iobj->mt->stencil_mt? true : false;
+   if (image->dri_format == MESA_FORMAT_NONE) {
+      *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
+      free(image);
+      return NULL;
+   }
+
+   *error = __DRI_IMAGE_ERROR_SUCCESS;
    return image;
 }
 
@@ -406,6 +515,8 @@ intel_create_image(__DRIscreen *screen,
       return NULL;
    }
    
+   intel_setup_image_from_dimensions(image);
+
    return image;
 }
 
@@ -460,6 +571,11 @@ intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
    image->dri_format      = orig_image->dri_format;
    image->format          = orig_image->format;
    image->offset          = orig_image->offset;
+   image->width           = orig_image->width;
+   image->height          = orig_image->height;
+   image->tile_x          = orig_image->tile_x;
+   image->tile_y          = orig_image->tile_y;
+   image->has_depthstencil = orig_image->has_depthstencil;
    image->data            = loaderPrivate;
 
    memcpy(image->strides, orig_image->strides, sizeof(image->strides));
@@ -576,7 +692,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
 }
 
 static struct __DRIimageExtensionRec intelImageExtension = {
-    .base = { __DRI_IMAGE, 5 },
+    .base = { __DRI_IMAGE, 6 },
 
     .createImageFromName                = intel_create_image_from_name,
     .createImageFromRenderbuffer        = intel_create_image_from_renderbuffer,
@@ -586,7 +702,8 @@ static struct __DRIimageExtensionRec intelImageExtension = {
     .dupImage                           = intel_dup_image,
     .validateUsage                      = intel_validate_usage,
     .createImageFromNames               = intel_create_image_from_names,
-    .fromPlanar                         = intel_from_planar
+    .fromPlanar                         = intel_from_planar,
+    .createImageFromTexture             = intel_create_image_from_texture
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
