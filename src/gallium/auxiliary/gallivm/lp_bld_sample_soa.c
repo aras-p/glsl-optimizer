@@ -1155,6 +1155,9 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
        * least unless we have explicit lod (and who uses different
        * min/mag filter with that?)
        */
+      if (bld->num_lods > 1)
+         lod_ipart = LLVMBuildExtractElement(builder, lod_ipart,
+                                             lp_build_const_int32(bld->gallivm, 0), "");
 
       /* minify = lod >= 0.0 */
       minify = LLVMBuildICmp(builder, LLVMIntSGE,
