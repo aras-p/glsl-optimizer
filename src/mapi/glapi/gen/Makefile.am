@@ -101,6 +101,7 @@ API_XML = \
 	ARB_draw_elements_base_vertex.xml \
 	ARB_draw_instanced.xml \
 	ARB_ES2_compatibility.xml \
+	ARB_ES3_compatibility.xml \
 	ARB_framebuffer_object.xml \
 	ARB_geometry_shader4.xml \
 	ARB_instanced_arrays.xml \
@@ -144,6 +145,7 @@ COMMON = $(API_XML) \
 	gl_and_es_API.xml \
 	es_EXT.xml \
 	ARB_ES2_compatibility.xml \
+	ARB_ES3_compatibility.xml \
 	ARB_get_program_binary.xml \
 	OES_fixed_point.xml \
 	OES_single_precision.xml
