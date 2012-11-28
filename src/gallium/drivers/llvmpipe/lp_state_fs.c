@@ -1377,10 +1377,10 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
 
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef fs_src[4][TGSI_NUM_CHANNELS];
-   LLVMValueRef src_alpha[block_size];
-   LLVMValueRef src_mask[block_size];
-   LLVMValueRef src[block_size];
-   LLVMValueRef dst[block_size];
+   LLVMValueRef src_alpha[4 * 4];
+   LLVMValueRef src_mask[4 * 4];
+   LLVMValueRef src[4 * 4];
+   LLVMValueRef dst[4 * 4];
    LLVMValueRef blend_color;
    LLVMValueRef blend_alpha;
    LLVMValueRef i32_zero;
