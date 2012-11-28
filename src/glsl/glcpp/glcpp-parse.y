@@ -1057,15 +1057,22 @@ _token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 	/* Two string-valued tokens can usually just be mashed
 	 * together.
 	 *
-	 * XXX: This isn't actually legitimate. Several things here
-	 * should result in a diagnostic since the result cannot be a
-	 * valid, single pre-processing token. For example, pasting
-	 * "123" and "abc" is not legal, but we don't catch that
-	 * here. */
+	 * There are some exceptions here. Notably, if the first token
+	 * is a string representing an integer, then the second token
+	 * must also be a an integer and must begin with a digit.
+	 */
 	if ((token->type == IDENTIFIER || token->type == OTHER || token->type == INTEGER_STRING) &&
 	    (other->type == IDENTIFIER || other->type == OTHER || other->type == INTEGER_STRING))
 	{
 		char *str;
+
+		if (token->type == INTEGER_STRING) {
+			if (other->type != INTEGER_STRING)
+				goto FAIL;
+			if (other->value.str[0] < '0' ||
+			    other->value.str[0] > '9')
+				goto FAIL;
+		}
 
 		str = ralloc_asprintf (token, "%s%s", token->value.str,
 				       other->value.str);
@@ -1074,6 +1081,7 @@ _token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 		return combined;
 	}
 
+    FAIL:
 	glcpp_error (&token->location, parser, "");
 	ralloc_asprintf_rewrite_tail (&parser->info_log, &parser->info_log_length, "Pasting \"");
 	_token_print (&parser->info_log, &parser->info_log_length, token);
