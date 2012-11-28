@@ -8277,7 +8277,11 @@
 
 <xi:include href="ARB_robustness.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<!-- ARB extensions #106...#108 -->
+<!-- ARB extensions #106 -->
+
+<xi:include href="ARB_base_instance.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- ARB extensions #108 -->
 
 <category name="GL_ARB_transform_feedback_instanced" number="109">
   <function name="DrawTransformFeedbackInstanced" offset="assign"
@@ -8303,8 +8307,6 @@
 </category>
 
 <!-- ARB extensions #114...#116 -->
-
-<xi:include href="ARB_base_instance.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_texture_storage.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
