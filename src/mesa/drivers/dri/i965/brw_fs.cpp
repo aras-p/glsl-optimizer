@@ -1067,6 +1067,33 @@ fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
    return reg;
 }
 
+fs_reg
+fs_visitor::fix_math_operand(fs_reg src)
+{
+   /* Can't do hstride == 0 args on gen6 math, so expand it out. We
+    * might be able to do better by doing execsize = 1 math and then
+    * expanding that result out, but we would need to be careful with
+    * masking.
+    *
+    * The hardware ignores source modifiers (negate and abs) on math
+    * instructions, so we also move to a temp to set those up.
+    */
+   if (intel->gen == 6 && src.file != UNIFORM && src.file != IMM &&
+       !src.abs && !src.negate)
+      return src;
+
+   /* Gen7 relaxes most of the above restrictions, but still can't use IMM
+    * operands to math
+    */
+   if (intel->gen >= 7 && src.file != IMM)
+      return src;
+
+   fs_reg expanded = fs_reg(this, glsl_type::float_type);
+   expanded.type = src.type;
+   emit(BRW_OPCODE_MOV, expanded, src);
+   return expanded;
+}
+
 fs_inst *
 fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src)
 {
@@ -1092,13 +1119,8 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src)
     * Gen 6 hardware ignores source modifiers (negate and abs) on math
     * instructions, so we also move to a temp to set those up.
     */
-   if (intel->gen == 6 && (src.file == UNIFORM ||
-			   src.abs ||
-			   src.negate)) {
-      fs_reg expanded = fs_reg(this, glsl_type::float_type);
-      emit(BRW_OPCODE_MOV, expanded, src);
-      src = expanded;
-   }
+   if (intel->gen >= 6)
+      src = fix_math_operand(src);
 
    fs_inst *inst = emit(opcode, dst, src);
 
@@ -1126,27 +1148,9 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
       return NULL;
    }
 
-   if (intel->gen >= 7) {
-      inst = emit(opcode, dst, src0, src1);
-   } else if (intel->gen == 6) {
-      /* Can't do hstride == 0 args to gen6 math, so expand it out.
-       *
-       * The hardware ignores source modifiers (negate and abs) on math
-       * instructions, so we also move to a temp to set those up.
-       */
-      if (src0.file == UNIFORM || src0.abs || src0.negate) {
-	 fs_reg expanded = fs_reg(this, glsl_type::float_type);
-	 expanded.type = src0.type;
-	 emit(BRW_OPCODE_MOV, expanded, src0);
-	 src0 = expanded;
-      }
-
-      if (src1.file == UNIFORM || src1.abs || src1.negate) {
-	 fs_reg expanded = fs_reg(this, glsl_type::float_type);
-	 expanded.type = src1.type;
-	 emit(BRW_OPCODE_MOV, expanded, src1);
-	 src1 = expanded;
-      }
+   if (intel->gen >= 6) {
+      src0 = fix_math_operand(src0);
+      src1 = fix_math_operand(src1);
 
       inst = emit(opcode, dst, src0, src1);
    } else {
