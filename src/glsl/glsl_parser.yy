@@ -220,7 +220,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <node> declaration
 %type <node> declaration_statement
 %type <node> jump_statement
-%type <node> uniform_block
+%type <node> uniform_block basic_uniform_block
 %type <struct_specifier> struct_specifier
 %type <declarator_list> struct_declaration_list
 %type <declarator_list> struct_declaration
@@ -1884,31 +1884,26 @@ function_definition:
 
 /* layout_qualifieropt is packed into this rule */
 uniform_block:
+	basic_uniform_block
+	{
+	   $$ = $1;
+	}
+	| layout_qualifier basic_uniform_block
+	{
+	   ast_uniform_block *block = (ast_uniform_block *) $2;
+	   if (!block->layout.merge_qualifier(& @1, state, $1)) {
+	      YYERROR;
+	   }
+	   $$ = block;
+	}
+	;
+
+basic_uniform_block:
 	UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
 	{
 	   void *ctx = state;
 	   $$ = new(ctx) ast_uniform_block(*state->default_uniform_qualifier,
 					   $2, $4);
-
-	   if (!state->ARB_uniform_buffer_object_enable) {
-	      _mesa_glsl_error(& @1, state,
-			       "#version 140 / GL_ARB_uniform_buffer_object "
-			       "required for defining uniform blocks\n");
-	   } else if (state->ARB_uniform_buffer_object_warn) {
-	      _mesa_glsl_warning(& @1, state,
-				 "#version 140 / GL_ARB_uniform_buffer_object "
-				 "required for defining uniform blocks\n");
-	   }
-	}
-	| layout_qualifier UNIFORM NEW_IDENTIFIER '{' member_list '}' ';'
-	{
-	   void *ctx = state;
-
-	   ast_type_qualifier qual = *state->default_uniform_qualifier;
-	   if (!qual.merge_qualifier(& @1, state, $1)) {
-	      YYERROR;
-	   }
-	   $$ = new(ctx) ast_uniform_block(qual, $3, $5);
 
 	   if (!state->ARB_uniform_buffer_object_enable) {
 	      _mesa_glsl_error(& @1, state,
