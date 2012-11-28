@@ -156,7 +156,7 @@ struct util_format_description
    unsigned nr_channels:3;
 
    /**
-    * Whether all channels have the same number of (whole) bytes.
+    * Whether all channels have the same number of (whole) bytes and type.
     */
    unsigned is_array:1;
 

@@ -144,9 +144,18 @@ class Format:
         if self.layout != PLAIN:
             return False
         ref_channel = self.channels[0]
-        for channel in self.channels[1:]:
+        if ref_channel.type == VOID:
+           ref_channel = self.channels[1]
+        for channel in self.channels:
             if channel.size and (channel.size != ref_channel.size or channel.size % 8):
                 return False
+            if channel.type != VOID:
+                if channel.type != ref_channel.type:
+                    return False
+                if channel.norm != ref_channel.norm:
+                    return False
+                if channel.pure != ref_channel.pure:
+                    return False
         return True
 
     def is_mixed(self):
