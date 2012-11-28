@@ -175,6 +175,7 @@ public:
    bool shadow_compare;
    bool force_uncompressed;
    bool force_sechalf;
+   bool force_writemask_all;
    uint32_t offset; /* spill/unspill offset */
 
    /** @{

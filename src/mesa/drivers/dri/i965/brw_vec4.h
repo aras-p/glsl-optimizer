@@ -171,6 +171,7 @@ public:
    src_reg src[3];
 
    bool saturate;
+   bool force_writemask_all;
 
    int conditional_mod; /**< BRW_CONDITIONAL_* */
 

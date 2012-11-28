@@ -723,6 +723,7 @@ vec4_generator::generate_code(exec_list *instructions)
       brw_set_predicate_control(p, inst->predicate);
       brw_set_predicate_inverse(p, inst->predicate_inverse);
       brw_set_saturate(p, inst->saturate);
+      brw_set_mask_control(p, inst->force_writemask_all);
 
       switch (inst->opcode) {
       case BRW_OPCODE_MOV:

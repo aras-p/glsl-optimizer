@@ -916,6 +916,7 @@ fs_generator::generate_code(exec_list *instructions)
       brw_set_predicate_control(p, inst->predicate);
       brw_set_predicate_inverse(p, inst->predicate_inverse);
       brw_set_saturate(p, inst->saturate);
+      brw_set_mask_control(p, inst->force_writemask_all);
 
       if (inst->force_uncompressed || dispatch_width == 8) {
 	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
