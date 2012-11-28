@@ -35,7 +35,7 @@ DRICORE_LIB = libdricore_program.la
 endif
 
 noinst_LTLIBRARIES = $(DRICORE_LIB)
-if HAVE_GALLIUM
+if NEED_LIBPROGRAM
 noinst_LTLIBRARIES += libprogram.la
 else
 check_LTLIBRARIES = libprogram.la
