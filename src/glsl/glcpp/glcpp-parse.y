@@ -1054,29 +1054,62 @@ _token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 		return combined;
 	}
 
-	/* Two string-valued tokens can usually just be mashed
-	 * together.
+	/* Two string-valued (or integer) tokens can usually just be
+	 * mashed together. (We also handle a string followed by an
+	 * integer here as well.)
 	 *
 	 * There are some exceptions here. Notably, if the first token
-	 * is a string representing an integer, then the second token
-	 * must also be a an integer and must begin with a digit.
+	 * is an integer (or a string representing an integer), then
+	 * the second token must also be an integer or must be a
+	 * string representing an integer that begins with a digit.
 	 */
-	if ((token->type == IDENTIFIER || token->type == OTHER || token->type == INTEGER_STRING) &&
-	    (other->type == IDENTIFIER || other->type == OTHER || other->type == INTEGER_STRING))
+	if ((token->type == IDENTIFIER || token->type == OTHER || token->type == INTEGER_STRING || token->type == INTEGER) &&
+	    (other->type == IDENTIFIER || other->type == OTHER || other->type == INTEGER_STRING || other->type == INTEGER))
 	{
 		char *str;
+		int combined_type;
 
-		if (token->type == INTEGER_STRING) {
-			if (other->type != INTEGER_STRING)
+		/* Check that pasting onto an integer doesn't create a
+		 * non-integer, (that is, only digits can be
+		 * pasted. */
+		if (token->type == INTEGER_STRING || token->type == INTEGER)
+		{
+			switch (other->type) {
+			case INTEGER_STRING:
+				if (other->value.str[0] < '0' ||
+				    other->value.str[0] > '9')
+					goto FAIL;
+				break;
+			case INTEGER:
+				if (other->value.ival < 0)
+					goto FAIL;
+				break;
+			default:
 				goto FAIL;
-			if (other->value.str[0] < '0' ||
-			    other->value.str[0] > '9')
-				goto FAIL;
+			}
 		}
 
-		str = ralloc_asprintf (token, "%s%s", token->value.str,
-				       other->value.str);
-		combined = _token_create_str (token, token->type, str);
+		if (token->type == INTEGER)
+			str = ralloc_asprintf (token, "%" PRIiMAX,
+					       token->value.ival);
+		else
+			str = ralloc_strdup (token, token->value.str);
+					       
+
+		if (other->type == INTEGER)
+			ralloc_asprintf_append (&str, "%" PRIiMAX,
+						other->value.ival);
+		else
+			ralloc_strcat (&str, other->value.str);
+
+		/* New token is same type as original token, unless we
+		 * started with an integer, in which case we will be
+		 * creating an integer-string. */
+		combined_type = token->type;
+		if (combined_type == INTEGER)
+			combined_type = INTEGER_STRING;
+
+		combined = _token_create_str (token, combined_type, str);
 		combined->location = token->location;
 		return combined;
 	}
