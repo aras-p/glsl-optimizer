@@ -653,9 +653,15 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
          jit_tex = &setup->fs.current.jit_context.textures[i];
          jit_tex->width = tex->width0;
          jit_tex->height = tex->height0;
-         jit_tex->depth = tex->depth0;
          jit_tex->first_level = view->u.tex.first_level;
          jit_tex->last_level = tex->last_level;
+
+         if (tex->target == PIPE_TEXTURE_3D) {
+            jit_tex->depth = tex->depth0;
+         }
+         else {
+            jit_tex->depth = tex->array_size;
+         }
 
          /* We're referencing the texture's internal data, so save a
           * reference to it.

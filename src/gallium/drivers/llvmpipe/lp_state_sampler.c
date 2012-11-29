@@ -268,6 +268,14 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
       if (view) {
          struct pipe_resource *tex = view->texture;
          struct llvmpipe_resource *lp_tex = llvmpipe_resource(tex);
+         unsigned num_layers;
+
+         if (tex->target == PIPE_TEXTURE_3D) {
+            num_layers = tex->depth0;
+         }
+         else {
+            num_layers = tex->array_size;
+         }
 
          /* We're referencing the texture's internal data, so save a
           * reference to it.
@@ -315,7 +323,7 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
          draw_set_mapped_texture(lp->draw,
                                  PIPE_SHADER_VERTEX,
                                  i,
-                                 tex->width0, tex->height0, tex->depth0,
+                                 tex->width0, tex->height0, num_layers,
                                  view->u.tex.first_level, tex->last_level,
                                  addr,
                                  row_stride, img_stride, mip_offsets);

@@ -88,7 +88,7 @@ struct llvmpipe_resource
 
    /** Row stride in bytes */
    unsigned row_stride[LP_MAX_TEXTURE_LEVELS];
-   /** Image stride (for cube maps or 3D textures) in bytes */
+   /** Image stride (for cube maps, array or 3D textures) in bytes */
    unsigned img_stride[LP_MAX_TEXTURE_LEVELS];
    unsigned tiles_per_row[LP_MAX_TEXTURE_LEVELS];
    unsigned tiles_per_image[LP_MAX_TEXTURE_LEVELS];

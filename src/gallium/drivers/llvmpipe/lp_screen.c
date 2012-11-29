@@ -139,6 +139,8 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return LP_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return LP_MAX_TEXTURE_CUBE_LEVELS;
+   case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
+      return LP_MAX_TEXTURE_ARRAY_LAYERS;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
       return 1;
    case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -155,8 +157,6 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
       return 1;
-   case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
-      return 0;
    case PIPE_CAP_DEPTH_CLIP_DISABLE:
       return 0;
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
@@ -305,7 +305,9 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
 
    assert(target == PIPE_BUFFER ||
           target == PIPE_TEXTURE_1D ||
+          target == PIPE_TEXTURE_1D_ARRAY ||
           target == PIPE_TEXTURE_2D ||
+          target == PIPE_TEXTURE_2D_ARRAY ||
           target == PIPE_TEXTURE_RECT ||
           target == PIPE_TEXTURE_3D ||
           target == PIPE_TEXTURE_CUBE);

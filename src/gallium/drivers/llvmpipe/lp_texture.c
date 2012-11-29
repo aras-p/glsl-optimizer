@@ -67,7 +67,9 @@ resource_is_texture(const struct pipe_resource *resource)
    case PIPE_BUFFER:
       return FALSE;
    case PIPE_TEXTURE_1D:
+   case PIPE_TEXTURE_1D_ARRAY:
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_2D_ARRAY:
    case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_3D:
    case PIPE_TEXTURE_CUBE:
@@ -114,6 +116,7 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
    unsigned height = pt->height0;
    unsigned depth = pt->depth0;
    uint64_t total_size = 0;
+   unsigned layers = pt->array_size;
 
    assert(LP_MAX_TEXTURE_2D_LEVELS <= LP_MAX_TEXTURE_LEVELS);
    assert(LP_MAX_TEXTURE_3D_LEVELS <= LP_MAX_TEXTURE_LEVELS);
@@ -126,6 +129,8 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
 
          /* For non-compressed formats we need to align the texture size
           * to the tile size to facilitate render-to-texture.
+          * XXX this blows up 1d/1d array textures by unreasonable
+          * amount (factor 64), probably should do something about it.
           */
          if (util_format_is_compressed(pt->format))
             alignment = 1;
@@ -157,7 +162,7 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
          lpr->tiles_per_image[level] = width_t * height_t;
       }
 
-      /* Number of 3D image slices or cube faces */
+      /* Number of 3D image slices, cube faces or texture array layers */
       {
          unsigned num_slices;
 
@@ -165,6 +170,9 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
             num_slices = 6;
          else if (lpr->base.target == PIPE_TEXTURE_3D)
             num_slices = depth;
+         else if (lpr->base.target == PIPE_TEXTURE_1D_ARRAY ||
+                  lpr->base.target == PIPE_TEXTURE_2D_ARRAY)
+            num_slices = layers;
          else
             num_slices = 1;
 
@@ -820,7 +828,7 @@ llvmpipe_user_buffer_create(struct pipe_screen *screen,
 
 /**
  * Compute size (in bytes) need to store a texture image / mipmap level,
- * for just one cube face or one 3D texture slice
+ * for just one cube face, one array layer or one 3D texture slice
  */
 static unsigned
 tex_image_face_size(const struct llvmpipe_resource *lpr, unsigned level,
