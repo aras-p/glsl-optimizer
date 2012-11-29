@@ -32,6 +32,7 @@ intermediates := $(call local-intermediates-dir)
 # This is the list of auto-generated files: sources and headers
 sources := \
 	main/enums.c \
+	main/api_exec.c \
 	main/dispatch.h \
 	main/remap_helper.h \
 	main/get_hash.h
