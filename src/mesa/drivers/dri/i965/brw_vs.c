@@ -99,6 +99,7 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
       break;
    case 6:
    case 7:
+   case 8:
       /* There are 8 or 16 DWs (D0-D15) in VUE header on Sandybridge:
        * dword 0-3 of the header is indices, point width, clip flags.
        * dword 4-7 is the 4D space position
