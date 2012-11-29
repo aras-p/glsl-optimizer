@@ -1088,7 +1088,7 @@ convert_to_blend_type(struct gallivm_state *gallivm,
    unsigned pixels = 16 / num_srcs;
    bool is_arith;
 
-   memcpy(dst, src, sizeof(LLVMValueRef*) * num_srcs);
+   memcpy(dst, src, sizeof(LLVMValueRef) * num_srcs);
 
    lp_mem_type_from_format_desc(src_fmt, &mem_type);
    lp_blend_type_from_format_desc(src_fmt, &blend_type);
@@ -1190,7 +1190,7 @@ convert_from_blend_type(struct gallivm_state *gallivm,
    unsigned pixels = 16 / num_srcs;
    bool is_arith;
 
-   memcpy(dst, src, sizeof(LLVMValueRef*) * num_srcs);
+   memcpy(dst, src, sizeof(LLVMValueRef) * num_srcs);
 
    lp_mem_type_from_format_desc(src_fmt, &mem_type);
    lp_blend_type_from_format_desc(src_fmt, &blend_type);
