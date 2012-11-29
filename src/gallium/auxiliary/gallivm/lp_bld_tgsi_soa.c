@@ -1408,13 +1408,13 @@ emit_txq( struct lp_build_tgsi_soa_context *bld,
    switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_SHADOW1D:
-   case TGSI_TEXTURE_SHADOW2D:
-   case TGSI_TEXTURE_SHADOWCUBE:
       num_coords = 1;
       has_lod = 1;
       break;
    case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_CUBE:
+   case TGSI_TEXTURE_SHADOWCUBE:
    case TGSI_TEXTURE_1D_ARRAY:
    case TGSI_TEXTURE_SHADOW1D_ARRAY:
       num_coords = 2;
