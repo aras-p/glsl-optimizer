@@ -116,7 +116,7 @@ gen6_emit_3dstate_multisample(struct brw_context *brw,
 void
 gen6_emit_3dstate_sample_mask(struct brw_context *brw,
                               unsigned num_samples, float coverage,
-                              bool coverage_invert)
+                              bool coverage_invert, unsigned sample_mask)
 {
    struct intel_context *intel = &brw->intel;
 
@@ -127,7 +127,7 @@ gen6_emit_3dstate_sample_mask(struct brw_context *brw,
       uint32_t coverage_bits = (1 << coverage_int) - 1;
       if (coverage_invert)
          coverage_bits ^= (1 << num_samples) - 1;
-      OUT_BATCH(coverage_bits);
+      OUT_BATCH(coverage_bits & sample_mask);
    } else {
       OUT_BATCH(1);
    }
@@ -141,21 +141,28 @@ static void upload_multisample_state(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    float coverage = 1.0;
    float coverage_invert = false;
+   unsigned sample_mask = ~0u;
 
    /* _NEW_BUFFERS */
    unsigned num_samples = ctx->DrawBuffer->Visual.samples;
 
    /* _NEW_MULTISAMPLE */
-   if (ctx->Multisample._Enabled && ctx->Multisample.SampleCoverage) {
-      coverage = ctx->Multisample.SampleCoverageValue;
-      coverage_invert = ctx->Multisample.SampleCoverageInvert;
+   if (ctx->Multisample._Enabled) {
+      if (ctx->Multisample.SampleCoverage) {
+         coverage = ctx->Multisample.SampleCoverageValue;
+         coverage_invert = ctx->Multisample.SampleCoverageInvert;
+      }
+      if (ctx->Multisample.SampleMask) {
+         sample_mask = ctx->Multisample.SampleMaskValue;
+      }
    }
 
    /* 3DSTATE_MULTISAMPLE is nonpipelined. */
    intel_emit_post_sync_nonzero_flush(intel);
 
    gen6_emit_3dstate_multisample(brw, num_samples);
-   gen6_emit_3dstate_sample_mask(brw, num_samples, coverage, coverage_invert);
+   gen6_emit_3dstate_sample_mask(brw, num_samples, coverage,
+         coverage_invert, sample_mask);
 }
 
 

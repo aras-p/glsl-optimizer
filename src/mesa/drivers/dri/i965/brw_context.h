@@ -1229,7 +1229,7 @@ gen6_emit_3dstate_multisample(struct brw_context *brw,
 void
 gen6_emit_3dstate_sample_mask(struct brw_context *brw,
                               unsigned num_samples, float coverage,
-                              bool coverage_invert);
+                              bool coverage_invert, unsigned sample_mask);
 
 /* gen7_urb.c */
 void
