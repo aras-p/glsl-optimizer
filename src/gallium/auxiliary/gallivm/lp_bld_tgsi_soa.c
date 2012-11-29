@@ -1195,6 +1195,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       dims = 3;
       break;
    case TGSI_TEXTURE_SHADOW2D_ARRAY:
+   case TGSI_TEXTURE_SHADOWCUBE:
       num_coords = 4;
       dims = 2;
       break;
@@ -1203,11 +1204,14 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
+   /* Note lod and especially projected are illegal in a LOT of cases */
    if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS) {
+      assert(num_coords < 4);
       lod_bias = lp_build_emit_fetch( &bld->bld_base, inst, 0, 3 );
       explicit_lod = NULL;
    }
    else if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
+      assert(num_coords < 4);
       lod_bias = NULL;
       explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 0, 3 );
    }
@@ -1217,6 +1221,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    }
 
    if (modifier == LP_BLD_TEX_MODIFIER_PROJECTED) {
+      assert(num_coords < 4);
       oow = lp_build_emit_fetch( &bld->bld_base, inst, 0, 3 );
       oow = lp_build_rcp(&bld->bld_base.base, oow);
    }

@@ -303,15 +303,20 @@ apply_sampler_swizzle(struct lp_build_sample_context *bld,
    lp_build_swizzle_soa_inplace(&bld->texel_bld, texel, swizzles);
 }
 
-
+/*
+ * not really dimension as such, this indicates the amount of
+ * "normal" texture coords subject to minification, wrapping etc.
+ */
 static INLINE unsigned
 texture_dims(enum pipe_texture_target tex)
 {
    switch (tex) {
    case PIPE_TEXTURE_1D:
+   case PIPE_TEXTURE_1D_ARRAY:
    case PIPE_BUFFER:
       return 1;
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_2D_ARRAY:
    case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_CUBE:
       return 2;

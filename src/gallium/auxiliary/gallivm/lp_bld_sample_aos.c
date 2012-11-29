@@ -619,12 +619,14 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                                           &z_offset, &z_subcoord);
          offset = lp_build_add(&bld->int_coord_bld, offset, z_offset);
       }
-      else if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
-         LLVMValueRef z_offset;
-         /* The r coord is the cube face in [0,5] */
-         z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
-         offset = lp_build_add(&bld->int_coord_bld, offset, z_offset);
-      }
+   }
+   if (bld->static_state->target == PIPE_TEXTURE_CUBE ||
+       bld->static_state->target == PIPE_TEXTURE_1D_ARRAY ||
+       bld->static_state->target == PIPE_TEXTURE_2D_ARRAY) {
+      LLVMValueRef z_offset;
+      /* The r coord is the cube face in [0,5] or array layer */
+      z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
+      offset = lp_build_add(&bld->int_coord_bld, offset, z_offset);
    }
    if (mipoffsets) {
       offset = lp_build_add(&bld->int_coord_bld, offset, mipoffsets);
@@ -694,9 +696,11 @@ lp_build_sample_image_nearest_afloat(struct lp_build_sample_context *bld,
                                             bld->static_state->wrap_r,
                                             &z_icoord);
       }
-      else if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
-         z_icoord = r;
-      }
+   }
+   if (bld->static_state->target == PIPE_TEXTURE_CUBE ||
+       bld->static_state->target == PIPE_TEXTURE_1D_ARRAY ||
+       bld->static_state->target == PIPE_TEXTURE_2D_ARRAY) {
+      z_icoord = r;
    }
 
    /*
@@ -1082,6 +1086,17 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                    bld->static_state->wrap_s,
                                    &x_offset0, &x_offset1,
                                    &x_subcoord[0], &x_subcoord[1]);
+
+   /* add potential cube/array/mip offsets now as they are constant per pixel */
+   if (bld->static_state->target == PIPE_TEXTURE_CUBE ||
+       bld->static_state->target == PIPE_TEXTURE_1D_ARRAY ||
+       bld->static_state->target == PIPE_TEXTURE_2D_ARRAY) {
+      LLVMValueRef z_offset;
+      z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
+      /* The r coord is the cube face in [0,5] or array layer */
+      x_offset0 = lp_build_add(&bld->int_coord_bld, x_offset0, z_offset);
+      x_offset1 = lp_build_add(&bld->int_coord_bld, x_offset1, z_offset);
+   }
    if (mipoffsets) {
       x_offset0 = lp_build_add(&bld->int_coord_bld, x_offset0, mipoffsets);
       x_offset1 = lp_build_add(&bld->int_coord_bld, x_offset1, mipoffsets);
@@ -1129,17 +1144,6 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                            offset[0][y][x], z_offset0);
             offset[1][y][x] = lp_build_add(&bld->int_coord_bld,
                                            offset[1][y][x], z_offset1);
-         }
-      }
-   }
-   else if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
-      LLVMValueRef z_offset;
-      z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
-      for (y = 0; y < 2; y++) {
-         for (x = 0; x < 2; x++) {
-            /* The r coord is the cube face in [0,5] */
-            offset[0][y][x] = lp_build_add(&bld->int_coord_bld,
-                                           offset[0][y][x], z_offset);
          }
       }
    }
@@ -1253,6 +1257,17 @@ lp_build_sample_image_linear_afloat(struct lp_build_sample_context *bld,
                                   bld->format_desc->block.width,
                                   x_icoord1, x_stride,
                                   &x_offset1, &x_subcoord[1]);
+
+   /* add potential cube/array/mip offsets now as they are constant per pixel */
+   if (bld->static_state->target == PIPE_TEXTURE_CUBE ||
+       bld->static_state->target == PIPE_TEXTURE_1D_ARRAY ||
+       bld->static_state->target == PIPE_TEXTURE_2D_ARRAY) {
+      LLVMValueRef z_offset;
+      z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
+      /* The r coord is the cube face in [0,5] or array layer */
+      x_offset0 = lp_build_add(&bld->int_coord_bld, x_offset0, z_offset);
+      x_offset1 = lp_build_add(&bld->int_coord_bld, x_offset1, z_offset);
+   }
    if (mipoffsets) {
       x_offset0 = lp_build_add(&bld->int_coord_bld, x_offset0, mipoffsets);
       x_offset1 = lp_build_add(&bld->int_coord_bld, x_offset1, mipoffsets);
@@ -1300,17 +1315,6 @@ lp_build_sample_image_linear_afloat(struct lp_build_sample_context *bld,
                                            offset[0][y][x], z_offset0);
             offset[1][y][x] = lp_build_add(&bld->int_coord_bld,
                                            offset[1][y][x], z_offset1);
-         }
-      }
-   }
-   else if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
-      LLVMValueRef z_offset;
-      z_offset = lp_build_mul(&bld->int_coord_bld, r, img_stride_vec);
-      for (y = 0; y < 2; y++) {
-         for (x = 0; x < 2; x++) {
-            /* The r coord is the cube face in [0,5] */
-            offset[0][y][x] = lp_build_add(&bld->int_coord_bld,
-                                           offset[0][y][x], z_offset);
          }
       }
    }

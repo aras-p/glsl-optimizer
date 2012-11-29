@@ -612,7 +612,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    LLVMValueRef flt_width_vec;
    LLVMValueRef flt_height_vec;
    LLVMValueRef flt_depth_vec;
-   LLVMValueRef x, y, z;
+   LLVMValueRef x, y = NULL, z = NULL;
 
    lp_build_extract_image_sizes(bld,
                                 &bld->int_size_bld,
@@ -648,15 +648,12 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                                           bld->static_state->wrap_r);
          lp_build_name(z, "tex.z.wrapped");
       }
-      else if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
-         z = r;
-      }
-      else {
-         z = NULL;
-      }
    }
-   else {
-      y = z = NULL;
+   if (bld->static_state->target == PIPE_TEXTURE_CUBE ||
+       bld->static_state->target == PIPE_TEXTURE_1D_ARRAY ||
+       bld->static_state->target == PIPE_TEXTURE_2D_ARRAY) {
+      z = r;
+      lp_build_name(z, "tex.z.layer");
    }
 
    /*
@@ -695,8 +692,8 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    LLVMValueRef flt_width_vec;
    LLVMValueRef flt_height_vec;
    LLVMValueRef flt_depth_vec;
-   LLVMValueRef x0, y0, z0, x1, y1, z1;
-   LLVMValueRef s_fpart, t_fpart, r_fpart;
+   LLVMValueRef x0, y0 = NULL, z0 = NULL, x1, y1 = NULL, z1 = NULL;
+   LLVMValueRef s_fpart, t_fpart = NULL, r_fpart = NULL;
    LLVMValueRef neighbors[2][2][4];
    int chan;
 
@@ -740,19 +737,15 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
          lp_build_name(z0, "tex.z0.wrapped");
          lp_build_name(z1, "tex.z1.wrapped");
       }
-      else if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
-         z0 = z1 = r;  /* cube face */
-         r_fpart = NULL;
-      }
-      else {
-         z0 = z1 = NULL;
-         r_fpart = NULL;
-      }
    }
-   else {
-      y0 = y1 = t_fpart = NULL;
-      z0 = z1 = r_fpart = NULL;
+   if (bld->static_state->target == PIPE_TEXTURE_CUBE ||
+       bld->static_state->target == PIPE_TEXTURE_1D_ARRAY ||
+       bld->static_state->target == PIPE_TEXTURE_2D_ARRAY) {
+      z0 = z1 = r;  /* cube face or array layer */
+      lp_build_name(z0, "tex.z0.layer");
+      lp_build_name(z1, "tex.z1.layer");
    }
+
 
    /*
     * Get texture colors.
@@ -1017,6 +1010,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
    const unsigned mip_filter = bld->static_state->min_mip_filter;
    const unsigned min_filter = bld->static_state->min_img_filter;
    const unsigned mag_filter = bld->static_state->mag_img_filter;
+   const unsigned target = bld->static_state->target;
    LLVMValueRef first_level;
    struct lp_derivatives face_derivs;
 
@@ -1028,7 +1022,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
    /*
     * Choose cube face, recompute texcoords and derivatives for the chosen face.
     */
-   if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
+   if (target == PIPE_TEXTURE_CUBE) {
       LLVMValueRef face, face_s, face_t;
       lp_build_cube_lookup(bld, *s, *t, *r, &face, &face_s, &face_t);
       *s = face_s; /* vec */
@@ -1040,6 +1034,24 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
       face_derivs.ddx_ddy[0] = lp_build_packed_ddx_ddy_twocoord(&bld->coord_bld, *s, *t);
       face_derivs.ddx_ddy[1] = NULL;
       derivs = &face_derivs;
+   }
+   else if (target == PIPE_TEXTURE_1D_ARRAY ||
+            target == PIPE_TEXTURE_2D_ARRAY) {
+      LLVMValueRef layer, maxlayer;
+
+      if (target == PIPE_TEXTURE_1D_ARRAY) {
+         layer = *t;
+      }
+      else {
+         layer = *r;
+      }
+      layer = lp_build_iround(&bld->coord_bld, layer);
+      maxlayer = bld->dynamic_state->depth(bld->dynamic_state,
+                                           bld->gallivm, unit);
+      maxlayer = lp_build_sub(&bld->int_bld, maxlayer, bld->int_bld.one);
+      maxlayer = lp_build_broadcast_scalar(&bld->int_coord_bld, maxlayer);
+      *r = lp_build_clamp(&bld->int_coord_bld, layer,
+                          bld->int_coord_bld.zero, maxlayer);
    }
 
    /*
@@ -1067,7 +1079,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
       /* fall-through */
    case PIPE_TEX_MIPFILTER_NONE:
       /* always use mip level 0 */
-      if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
+      if (target == PIPE_TEXTURE_CUBE) {
          /* XXX this is a work-around for an apparent bug in LLVM 2.7.
           * We should be able to set ilevel0 = const(0) but that causes
           * bad x86 code to be emitted.
@@ -1297,22 +1309,30 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
 
 /**
  * Do shadow test/comparison.
- * \param p  the texcoord Z (aka R, aka P) component
+ * \param coords  incoming texcoords
  * \param texel  the texel to compare against (use the X channel)
  * Ideally this should really be done per-sample.
  */
 static void
 lp_build_sample_compare(struct lp_build_sample_context *bld,
-                        LLVMValueRef p,
+                        const LLVMValueRef *coords,
                         LLVMValueRef texel[4])
 {
    struct lp_build_context *texel_bld = &bld->texel_bld;
    LLVMBuilderRef builder = bld->gallivm->builder;
-   LLVMValueRef res;
+   LLVMValueRef res, p;
    const unsigned chan = 0;
 
    if (bld->static_state->compare_mode == PIPE_TEX_COMPARE_NONE)
       return;
+
+   if (bld->static_state->target == PIPE_TEXTURE_2D_ARRAY ||
+       bld->static_state->target == PIPE_TEXTURE_CUBE) {
+      p = coords[3];
+   }
+   else {
+      p = coords[2];
+   }
 
    /* debug code */
    if (0) {
@@ -1661,7 +1681,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       }
    }
 
-   lp_build_sample_compare(&bld, r, texel_out);
+   lp_build_sample_compare(&bld, coords, texel_out);
 
    apply_sampler_swizzle(&bld, texel_out);
 }

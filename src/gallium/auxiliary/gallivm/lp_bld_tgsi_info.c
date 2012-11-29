@@ -129,6 +129,7 @@ analyse_tex(struct analysis_context *ctx,
          readmask = TGSI_WRITEMASK_XYZ;
          break;
       case TGSI_TEXTURE_SHADOW2D_ARRAY:
+      case TGSI_TEXTURE_SHADOWCUBE:
          readmask = TGSI_WRITEMASK_XYZW;
          break;
       default:

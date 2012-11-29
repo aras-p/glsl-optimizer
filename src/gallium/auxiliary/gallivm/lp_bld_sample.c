@@ -986,11 +986,14 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
       *row_stride_vec = lp_build_get_level_stride_vec(bld,
                                                       bld->row_stride_array,
                                                       ilevel);
-      if (dims == 3 || bld->static_state->target == PIPE_TEXTURE_CUBE) {
-         *img_stride_vec = lp_build_get_level_stride_vec(bld,
-                                                         bld->img_stride_array,
-                                                         ilevel);
-      }
+   }
+   if (dims == 3 ||
+       bld->static_state->target == PIPE_TEXTURE_CUBE ||
+       bld->static_state->target == PIPE_TEXTURE_1D_ARRAY ||
+       bld->static_state->target == PIPE_TEXTURE_2D_ARRAY) {
+      *img_stride_vec = lp_build_get_level_stride_vec(bld,
+                                                      bld->img_stride_array,
+                                                      ilevel);
    }
 }
 
