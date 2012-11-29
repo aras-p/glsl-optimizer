@@ -65,13 +65,15 @@ struct pp_queue_t
 
 /* Main functions */
 
-struct pp_queue_t *pp_init(struct pipe_screen *, const unsigned int *);
+struct pp_queue_t *pp_init(struct pipe_context *pipe, const unsigned int *,
+                           struct cso_context *);
 void pp_run(struct pp_queue_t *, struct pipe_resource *,
             struct pipe_resource *, struct pipe_resource *);
 void pp_free(struct pp_queue_t *);
 void pp_free_fbos(struct pp_queue_t *);
 void pp_debug(const char *, ...);
-struct program *pp_init_prog(struct pp_queue_t *, struct pipe_screen *);
+struct program *pp_init_prog(struct pp_queue_t *, struct pipe_context *pipe,
+                             struct cso_context *);
 void pp_init_fbos(struct pp_queue_t *, unsigned int, unsigned int);
 
 /* The filters */

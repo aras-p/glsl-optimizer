@@ -39,7 +39,8 @@
 
 /** Initialize the post-processing queue. */
 struct pp_queue_t *
-pp_init(struct pipe_screen *pscreen, const unsigned int *enabled)
+pp_init(struct pipe_context *pipe, const unsigned int *enabled,
+        struct cso_context *cso)
 {
 
    unsigned int curpos = 0, i, tmp_req = 0;
@@ -64,7 +65,7 @@ pp_init(struct pipe_screen *pscreen, const unsigned int *enabled)
    if (!tmp_q || !ppq || !ppq->shaders || !ppq->verts)
       goto error;
 
-   ppq->p = pp_init_prog(ppq, pscreen);
+   ppq->p = pp_init_prog(ppq, pipe, cso);
    if (!ppq->p)
       goto error;
 
@@ -89,7 +90,7 @@ pp_init(struct pipe_screen *pscreen, const unsigned int *enabled)
       }
    }
 
-   ppq->p->blitctx = util_create_blit(ppq->p->pipe, ppq->p->cso);
+   ppq->p->blitctx = util_create_blit(ppq->p->pipe, cso);
    if (!ppq->p->blitctx)
       goto error;
 
@@ -152,9 +153,6 @@ pp_free(struct pp_queue_t *ppq)
 
    util_destroy_blit(ppq->p->blitctx);
 
-   cso_set_sampler_views(ppq->p->cso, PIPE_SHADER_FRAGMENT, 0, NULL);
-   cso_release_all(ppq->p->cso);
-
    for (i = 0; i < ppq->n_filters; i++) {
       for (j = 0; j < PP_MAX_PASSES && ppq->shaders[i][j]; j++) {
          if (j >= ppq->verts[i]) {
@@ -167,9 +165,6 @@ pp_free(struct pp_queue_t *ppq)
          }
       }
    }
-
-   cso_destroy_context(ppq->p->cso);
-   ppq->p->pipe->destroy(ppq->p->pipe);
 
    FREE(ppq->p);
    FREE(ppq->pp_queue);

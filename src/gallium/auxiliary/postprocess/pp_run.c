@@ -44,6 +44,7 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
 {
    struct pipe_resource *refin = NULL, *refout = NULL;
    unsigned int i;
+   struct cso_context *cso = ppq->p->cso;
 
    if (in->width0 != ppq->p->framebuffer.width ||
        in->height0 != ppq->p->framebuffer.height) {
@@ -64,6 +65,28 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
 
       in = ppq->tmp[0];
    }
+
+   /* save state (restored below) */
+   cso_save_blend(cso);
+   cso_save_depth_stencil_alpha(cso);
+   cso_save_fragment_shader(cso);
+   cso_save_framebuffer(cso);
+   cso_save_geometry_shader(cso);
+   cso_save_rasterizer(cso);
+   cso_save_sample_mask(cso);
+   cso_save_samplers(cso, PIPE_SHADER_FRAGMENT);
+   cso_save_sampler_views(cso, PIPE_SHADER_FRAGMENT);
+   cso_save_stencil_ref(cso);
+   cso_save_stream_outputs(cso);
+   cso_save_vertex_elements(cso);
+   cso_save_vertex_shader(cso);
+   cso_save_viewport(cso);
+   cso_save_aux_vertex_buffer_slot(cso);
+
+   /* set default state */
+   cso_set_sample_mask(cso, ~0);
+   cso_set_stream_outputs(cso, 0, NULL, 0);
+   cso_set_geometry_shader_handle(cso, NULL);
 
    // Kept only for this frame.
    pipe_resource_reference(&ppq->depth, indepth);
@@ -99,6 +122,23 @@ pp_run(struct pp_queue_t *ppq, struct pipe_resource *in,
 
       break;
    }
+
+   /* restore state we changed */
+   cso_restore_blend(cso);
+   cso_restore_depth_stencil_alpha(cso);
+   cso_restore_fragment_shader(cso);
+   cso_restore_framebuffer(cso);
+   cso_restore_geometry_shader(cso);
+   cso_restore_rasterizer(cso);
+   cso_restore_sample_mask(cso);
+   cso_restore_samplers(cso, PIPE_SHADER_FRAGMENT);
+   cso_restore_sampler_views(cso, PIPE_SHADER_FRAGMENT);
+   cso_restore_stencil_ref(cso);
+   cso_restore_stream_outputs(cso);
+   cso_restore_vertex_elements(cso);
+   cso_restore_vertex_shader(cso);
+   cso_restore_viewport(cso);
+   cso_restore_aux_vertex_buffer_slot(cso);
 
    pipe_resource_reference(&ppq->depth, NULL);
    pipe_resource_reference(&refin, NULL);
@@ -180,7 +220,6 @@ pp_filter_draw(struct program *p)
 {
    util_draw_vertex_buffer(p->pipe, p->cso, p->vbuf, 0, 0,
                            PIPE_PRIM_QUADS, 4, 2);
-   p->pipe->flush(p->pipe, NULL);
 }
 
 /** Set the framebuffer as active. */

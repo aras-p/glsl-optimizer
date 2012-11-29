@@ -673,6 +673,8 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    st->iface.copy = st_context_copy;
    st->iface.share = st_context_share;
    st->iface.st_context_private = (void *) smapi;
+   st->iface.cso_context = st->cso_context;
+   st->iface.pipe = st->pipe;
 
    *error = ST_CONTEXT_SUCCESS;
    return &st->iface;

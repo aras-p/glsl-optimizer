@@ -353,6 +353,17 @@ struct st_context_iface
    void *st_manager_private;
 
    /**
+    * The CSO context associated with this context in case we need to draw
+    * something before swap buffers.
+    */
+   struct cso_context *cso_context;
+
+   /**
+    * The gallium context.
+    */
+   struct pipe_context *pipe;
+
+   /**
     * Destroy the context.
     */
    void (*destroy)(struct st_context_iface *stctxi);
