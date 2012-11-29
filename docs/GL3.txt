@@ -23,12 +23,12 @@ GL_EXT_texture_shared_exponent                        DONE (i965, r600, swrast)
 Float depth buffers (GL_ARB_depth_buffer_float)       DONE (i965, r600)
 Framebuffer objects (GL_ARB_framebuffer_object)       DONE (i965, r300, r600, swrast)
 Half-float                                            DONE
-Non-normalized Integer texture/framebuffer formats    DONE (i965)
+Non-normalized Integer texture/framebuffer formats    DONE (i965, r600)
 1D/2D Texture arrays                                  DONE
 Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE (i965, r600, swrast)
 GL_EXT_texture_compression_rgtc                       DONE (i965, r300, r600, swrast)
 Red and red/green texture formats                     DONE (i965, swrast, gallium)
-Transform feedback (GL_EXT_transform_feedback)        DONE (i965)
+Transform feedback (GL_EXT_transform_feedback)        DONE (i965, r600)
 Vertex array objects (GL_APPLE_vertex_array_object)   DONE (i965, r300, r600, swrast)
 sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     DONE (i965, r600)
 glClearBuffer commands                                DONE
@@ -79,7 +79,7 @@ GL_ARB_sampler_objects                                DONE (i965, r300, r600)
 GL_ARB_shader_bit_encoding                            DONE
 GL_ARB_texture_rgb10_a2ui                             DONE (i965, r600)
 GL_ARB_texture_swizzle                                DONE (same as EXT version) (i965, r300, r600, swrast)
-GL_ARB_timer_query                                    DONE (i965)
+GL_ARB_timer_query                                    DONE (i965, r600)
 GL_ARB_instanced_arrays                               DONE (i965, r300, r600)
 GL_ARB_vertex_type_2_10_10_10_rev                     DONE (i965, r600)
 
