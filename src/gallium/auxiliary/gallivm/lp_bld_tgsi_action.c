@@ -744,6 +744,32 @@ umul_emit(
                                    emit_data->args[0], emit_data->args[1]);
 }
 
+/* TGSI_OPCODE_MAX */
+static void fmax_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+   emit_data->output[emit_data->chan] = LLVMBuildSelect(builder,
+                                   LLVMBuildFCmp(builder, LLVMRealUGE,
+                                   emit_data->args[0], emit_data->args[1], ""),
+                                   emit_data->args[0], emit_data->args[1], "");
+}
+
+/* TGSI_OPCODE_MIN */
+static void fmin_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+   emit_data->output[emit_data->chan] = LLVMBuildSelect(builder,
+                                   LLVMBuildFCmp(builder, LLVMRealUGE,
+                                   emit_data->args[0], emit_data->args[1], ""),
+                                   emit_data->args[1], emit_data->args[0], "");
+}
+
 /* TGSI_OPCODE_XPD */
 
 static void
@@ -844,6 +870,9 @@ lp_set_default_actions(struct lp_build_tgsi_context * bld_base)
    bld_base->op_actions[TGSI_OPCODE_U2F].emit = u2f_emit;
    bld_base->op_actions[TGSI_OPCODE_UMAD].emit = umad_emit;
    bld_base->op_actions[TGSI_OPCODE_UMUL].emit = umul_emit;
+
+   bld_base->op_actions[TGSI_OPCODE_MAX].emit = fmax_emit;
+   bld_base->op_actions[TGSI_OPCODE_MIN].emit = fmin_emit;
 }
 
 /* CPU Only default actions */
