@@ -151,21 +151,21 @@ update_array(struct gl_context *ctx,
    }
 
    if (_mesa_is_gles(ctx)) {
-      /* Once Mesa gets support for GL_OES_vertex_half_float this mask will
-       * change.  Adding support for this extension isn't quite as trivial as
-       * we'd like because ES uses a different enum value for GL_HALF_FLOAT.
-       */
-      legalTypesMask &= ~(FIXED_GL_BIT | HALF_BIT | DOUBLE_BIT);
+      legalTypesMask &= ~(FIXED_GL_BIT | DOUBLE_BIT);
 
       /* GL_INT and GL_UNSIGNED_INT data is not allowed in OpenGL ES until
        * 3.0.  The 2_10_10_10 types are added in OpenGL ES 3.0 or
-       * GL_OES_vertex_type_10_10_10_2.
+       * GL_OES_vertex_type_10_10_10_2.  GL_HALF_FLOAT data is not allowed
+       * until 3.0 or with the GL_OES_vertex_half float extension, which isn't
+       * quite as trivial as we'd like because it uses a different enum value
+       * for GL_HALF_FLOAT_OES.
        */
       if (ctx->Version < 30) {
          legalTypesMask &= ~(UNSIGNED_INT_BIT
                              | INT_BIT
                              | UNSIGNED_INT_2_10_10_10_REV_BIT
-                             | INT_2_10_10_10_REV_BIT);
+                             | INT_2_10_10_10_REV_BIT
+                             | HALF_BIT);
       }
 
       /* BGRA ordering is not supported in ES contexts.
