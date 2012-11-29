@@ -142,7 +142,8 @@ upload_sbe_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_sbe_state = {
    .dirty = {
-      .mesa  = (_NEW_LIGHT |
+      .mesa  = (_NEW_BUFFERS |
+		_NEW_LIGHT |
 		_NEW_POINT |
 		_NEW_PROGRAM),
       .brw   = (BRW_NEW_CONTEXT |
