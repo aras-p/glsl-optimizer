@@ -136,7 +136,7 @@ extern const struct brw_tracked_state gen8_wm_depth_stencil;
 extern const struct brw_tracked_state gen8_raster_state;
 extern const struct brw_tracked_state gen8_sbe_state;
 extern const struct brw_tracked_state gen8_sf_state;
-
+extern const struct brw_tracked_state gen8_vs_state;
 
 /* brw_misc_state.c */
 void brw_upload_invariant_state(struct brw_context *brw);
@@ -253,6 +253,11 @@ gen7_upload_constant_state(struct brw_context *brw,
                            const struct brw_stage_state *stage_state,
                            bool active, unsigned opcode);
 
+/* gen8_vs_state.c */
+void
+gen8_upload_constant_state(struct brw_context *brw,
+                           const struct brw_stage_state *stage_state,
+                           bool active, unsigned opcode);
 #ifdef __cplusplus
 }
 #endif

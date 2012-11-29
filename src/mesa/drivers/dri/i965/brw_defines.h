@@ -1455,6 +1455,10 @@ enum brw_message_target {
 # define GEN6_VS_STATISTICS_ENABLE			(1 << 10)
 # define GEN6_VS_CACHE_DISABLE				(1 << 1)
 # define GEN6_VS_ENABLE					(1 << 0)
+/* Gen8+ DW8 */
+# define GEN8_VS_URB_ENTRY_OUTPUT_OFFSET_SHIFT          21
+# define GEN8_VS_URB_OUTPUT_LENGTH_SHIFT                16
+# define GEN8_VS_USER_CLIP_DISTANCE_SHIFT               8
 
 #define _3DSTATE_GS		      		0x7811 /* GEN6+ */
 /* DW2 */
