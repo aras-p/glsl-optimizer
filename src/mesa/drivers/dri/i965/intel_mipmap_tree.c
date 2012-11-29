@@ -202,7 +202,7 @@ intel_is_non_msrt_mcs_buffer_supported(struct brw_context *brw,
                                        struct intel_mipmap_tree *mt)
 {
    /* MCS support does not exist prior to Gen7 */
-   if (brw->gen < 7)
+   if (brw->gen < 7 || brw->gen >= 8)
       return false;
 
    /* MCS is only supported for color buffers */

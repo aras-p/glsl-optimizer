@@ -111,7 +111,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
    struct intel_mipmap_tree *mt = depth_irb->mt;
    struct gl_renderbuffer_attachment *depth_att = &fb->Attachment[BUFFER_DEPTH];
 
-   if (brw->gen < 6)
+   if (brw->gen < 6 || brw->gen >= 8)
       return false;
 
    if (!intel_renderbuffer_has_hiz(depth_irb))
@@ -230,7 +230,7 @@ brw_clear(struct gl_context *ctx, GLbitfield mask)
    }
 
    /* BLORP is currently only supported on Gen6+. */
-   if (brw->gen >= 6) {
+   if (brw->gen >= 6 && brw->gen < 8) {
       if (mask & BUFFER_BITS_COLOR) {
          if (brw_blorp_clear_color(brw, fb, partial_clear)) {
             debug_mask("blorp color", mask & BUFFER_BITS_COLOR);

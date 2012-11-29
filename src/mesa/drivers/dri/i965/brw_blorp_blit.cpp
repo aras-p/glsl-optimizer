@@ -350,7 +350,7 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
    struct intel_mipmap_tree *dst_mt = intel_image->mt;
 
    /* BLORP is not supported before Gen6. */
-   if (brw->gen < 6)
+   if (brw->gen < 6 || brw->gen >= 8)
       return false;
 
    if (_mesa_get_format_base_format(src_mt->format) !=
@@ -440,7 +440,7 @@ brw_blorp_framebuffer(struct brw_context *brw,
                       GLbitfield mask, GLenum filter)
 {
    /* BLORP is not supported before Gen6. */
-   if (brw->gen < 6)
+   if (brw->gen < 6 || brw->gen >= 8)
       return mask;
 
    static GLbitfield buffer_bits[] = {

@@ -851,6 +851,9 @@ void
 gen7_blorp_exec(struct brw_context *brw,
                 const brw_blorp_params *params)
 {
+   if (brw->gen >= 8)
+      return;
+
    brw_blorp_prog_data *prog_data = NULL;
    uint32_t cc_blend_state_offset = 0;
    uint32_t cc_state_offset = 0;
