@@ -584,6 +584,29 @@ mul_emit(
                                    emit_data->args[0], emit_data->args[1]);
 }
 
+/*.TGSI_OPCODE_DIV.*/
+static void fdiv_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = LLVMBuildFDiv(
+                                   bld_base->base.gallivm->builder,
+                                   emit_data->args[0], emit_data->args[1], "");
+}
+
+/*.TGSI_OPCODE_RCP.*/
+static void rcp_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   LLVMValueRef one;
+   one = lp_build_const_float(bld_base->base.gallivm, 1.0f);
+   emit_data->output[emit_data->chan] = lp_build_emit_llvm_binary(bld_base,
+                                   TGSI_OPCODE_DIV, one, emit_data->args[0]);
+}
+
 /* TGSI_OPCODE_POW */
 
 static void
@@ -811,6 +834,8 @@ lp_set_default_actions(struct lp_build_tgsi_context * bld_base)
    bld_base->op_actions[TGSI_OPCODE_MAD].emit = mad_emit;
    bld_base->op_actions[TGSI_OPCODE_MOV].emit = mov_emit;
    bld_base->op_actions[TGSI_OPCODE_MUL].emit = mul_emit;
+   bld_base->op_actions[TGSI_OPCODE_DIV].emit = fdiv_emit;
+   bld_base->op_actions[TGSI_OPCODE_RCP].emit = rcp_emit;
    bld_base->op_actions[TGSI_OPCODE_SFL].emit = sfl_emit;
    bld_base->op_actions[TGSI_OPCODE_STR].emit = str_emit;
    bld_base->op_actions[TGSI_OPCODE_SUB].emit = sub_emit;
