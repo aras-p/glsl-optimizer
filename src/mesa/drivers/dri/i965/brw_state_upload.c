@@ -296,7 +296,7 @@ static const struct brw_tracked_state *gen8_atoms[] =
    &brw_gs_samplers,
    &gen6_multisample_state,
 
-   &gen7_disable_stages,
+   &gen8_disable_stages,
    &gen8_vs_state,
    &gen7_gs_state,
    &gen7_sol_state,

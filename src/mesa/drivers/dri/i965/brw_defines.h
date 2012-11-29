@@ -1422,6 +1422,8 @@ enum brw_message_target {
 
 #define _3DSTATE_VF_TOPOLOGY                    0x784b /* GEN8+ */
 
+#define _3DSTATE_WM_CHROMAKEY			0x784c /* GEN8+ */
+
 #define _3DSTATE_URB_VS                         0x7830 /* GEN7+ */
 #define _3DSTATE_URB_HS                         0x7831 /* GEN7+ */
 #define _3DSTATE_URB_DS                         0x7832 /* GEN7+ */
