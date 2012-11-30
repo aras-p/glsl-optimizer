@@ -1052,6 +1052,7 @@ vec4_visitor::run()
    } else {
       emit_vertex_program_code();
    }
+   base_ir = NULL;
 
    if (c->key.userclip_active && !c->key.uses_clip_distance)
       setup_uniform_clipplane_values();

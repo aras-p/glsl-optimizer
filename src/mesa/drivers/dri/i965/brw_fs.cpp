@@ -2158,6 +2158,7 @@ fs_visitor::run()
       } else {
          emit_fragment_program_code();
       }
+      base_ir = NULL;
       if (failed)
 	 return false;
 
