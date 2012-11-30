@@ -145,6 +145,7 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
       compute_vertex_info( llvmpipe );
 
    if (llvmpipe->dirty & (LP_NEW_FS |
+                          LP_NEW_FRAMEBUFFER |
                           LP_NEW_BLEND |
                           LP_NEW_SCISSOR |
                           LP_NEW_DEPTH_STENCIL_ALPHA |
