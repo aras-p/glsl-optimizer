@@ -42,6 +42,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/ffvertex_prog.c \
 	$(SRCDIR)main/ff_fragment_shader.cpp \
 	$(SRCDIR)main/fog.c \
+	$(SRCDIR)main/formatquery.c \
 	$(SRCDIR)main/formats.c \
 	$(SRCDIR)main/format_pack.c \
 	$(SRCDIR)main/format_unpack.c \
