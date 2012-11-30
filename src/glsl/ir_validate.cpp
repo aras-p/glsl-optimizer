@@ -120,7 +120,7 @@ ir_visitor_status
 ir_validate::visit_leave(ir_loop *ir)
 {
    if (ir->counter != NULL) {
-      if ((ir->from == NULL) || (ir->from == NULL) || (ir->increment == NULL)) {
+      if ((ir->from == NULL) || (ir->to == NULL) || (ir->increment == NULL)) {
 	 printf("ir_loop has invalid loop controls:\n"
 		"    counter:   %p\n"
 		"    from:      %p\n"
@@ -136,7 +136,7 @@ ir_validate::visit_leave(ir_loop *ir)
 	 abort();
       }
    } else {
-      if ((ir->from != NULL) || (ir->from != NULL) || (ir->increment != NULL)) {
+      if ((ir->from != NULL) || (ir->to != NULL) || (ir->increment != NULL)) {
 	 printf("ir_loop has invalid loop controls:\n"
 		"    counter:   %p\n"
 		"    from:      %p\n"
