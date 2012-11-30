@@ -1719,6 +1719,26 @@ enum brw_message_target {
 # define GEN8_WM_DS_BF_STENCIL_WRITE_MASK_MASK          INTEL_MASK(7, 0)
 # define GEN8_WM_DS_BF_STENCIL_WRITE_MASK_SHIFT         0
 
+#define _3DSTATE_PS_EXTRA                       0x784F /* GEN8+ */
+/* DW1 */
+# define GEN8_PSX_PIXEL_SHADER_VALID                    (1 << 31)
+# define GEN8_PSX_PIXEL_SHADER_NO_RT_WRITE              (1 << 30)
+# define GEN8_PSX_OMASK_TO_RENDER_TARGET                (1 << 29)
+# define GEN8_PSX_KILL_ENABLE                           (1 << 28)
+# define GEN8_PSX_PSCDEPTH_OFF                          (0 << 26)
+# define GEN8_PSX_PSCDEPTH_ON                           (1 << 26)
+# define GEN8_PSX_PSCDEPTH_ON_GE                        (2 << 26)
+# define GEN8_PSX_PSCDEPTH_ON_LE                        (3 << 26)
+# define GEN8_PSX_FORCE_COMPUTED_DEPTH                  (1 << 25)
+# define GEN8_PSX_USES_SOURCE_DEPTH                     (1 << 24)
+# define GEN8_PSX_USES_SOURCE_W                         (1 << 23)
+# define GEN8_PSX_ATTRIBUTE_ENABLE                      (1 << 8)
+# define GEN8_PSX_SHADER_DISABLES_ALPHA_TO_COVERAGE     (1 << 7)
+# define GEN8_PSX_SHADER_IS_PER_SAMPLE                  (1 << 6)
+# define GEN8_PSX_SHADER_COMPUTES_STENCIL               (1 << 5)
+# define GEN8_PSX_SHADER_HAS_UAV                        (1 << 2)
+# define GEN8_PSX_SHADER_USES_INPUT_COVERAGE_MASK       (1 << 1)
+
 enum brw_wm_barycentric_interp_mode {
    BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC		= 0,
    BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC	= 1,
