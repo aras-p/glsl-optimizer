@@ -92,6 +92,7 @@ public:
    ir_constant_propagation_visitor()
    {
       progress = false;
+      killed_all = false;
       mem_ctx = ralloc_context(0);
       this->acp = new(mem_ctx) exec_list;
       this->kills = new(mem_ctx) exec_list;
