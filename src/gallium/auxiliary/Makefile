@@ -13,7 +13,11 @@ C_SOURCES += \
 	$(GALLIVM_SOURCES)
 CPP_SOURCES += \
 	$(GALLIVM_CPP_SOURCES)
-CXXFLAGS += $(LLVM_CXXFLAGS)
+
+# LLVM >= 3.2 requires -fno-rtti
+ifeq ($(shell expr `echo $(LLVM_VERSION) | sed -e 's/\([0-9]\)\.\([0-9]\)/\10\2/g'` \>= 302),1)
+CXXFLAGS += -fno-rtti
+endif
 endif
 
 
