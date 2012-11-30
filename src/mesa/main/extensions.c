@@ -104,6 +104,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_half_float_pixel",                    o(ARB_half_float_pixel),                    GL,             2003 },
    { "GL_ARB_half_float_vertex",                   o(ARB_half_float_vertex),                   GL,             2008 },
    { "GL_ARB_instanced_arrays",                    o(ARB_instanced_arrays),                    GL,             2008 },
+   { "GL_ARB_internalformat_query",                o(ARB_internalformat_query),                GL,             2011 },
    { "GL_ARB_invalidate_subdata",                  o(dummy_true),                              GL,             2012 },
    { "GL_ARB_map_buffer_alignment",                o(ARB_map_buffer_alignment),                GL,             2011 },
    { "GL_ARB_map_buffer_range",                    o(ARB_map_buffer_range),                    GL,             2008 },
