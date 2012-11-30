@@ -681,7 +681,7 @@ intelInitContext(struct intel_context *intel,
    ctx->Const.MaxPointSizeAA = 3.0;
    ctx->Const.PointSizeGranularity = 1.0;
 
-   ctx->Const.MaxSamples = 1.0;
+   ctx->Const.MaxSamples = 1;
 
    if (intel->gen >= 6)
       ctx->Const.MaxClipPlanes = 8;
