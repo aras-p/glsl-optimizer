@@ -195,10 +195,18 @@ brwCreateContext(int api,
    ctx->Const.MaxTransformFeedbackSeparateComponents =
       BRW_MAX_SOL_BINDINGS / BRW_MAX_SOL_BUFFERS;
 
-   if (intel->gen == 6)
+   if (intel->gen == 6) {
       ctx->Const.MaxSamples = 4;
-   else if (intel->gen >= 7)
+      ctx->Const.MaxColorTextureSamples = 4;
+      ctx->Const.MaxDepthTextureSamples = 1;
+      ctx->Const.MaxIntegerSamples = 4;
+   }
+   else if (intel->gen >= 7) {
       ctx->Const.MaxSamples = 8;
+      ctx->Const.MaxColorTextureSamples = 8;
+      ctx->Const.MaxDepthTextureSamples = 1;
+      ctx->Const.MaxIntegerSamples = 8;
+   }
 
    /* if conformance mode is set, swrast can handle any size AA point */
    ctx->Const.MaxPointSizeAA = 255.0;
