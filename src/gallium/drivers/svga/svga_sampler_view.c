@@ -65,7 +65,6 @@ svga_get_tex_sampler_view(struct pipe_context *pipe,
    boolean view = TRUE;
 
    assert(pt);
-   assert(min_lod >= 0);
    assert(min_lod <= max_lod);
    assert(max_lod <= pt->last_level);
 
