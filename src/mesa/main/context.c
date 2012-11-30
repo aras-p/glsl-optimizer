@@ -661,6 +661,11 @@ _mesa_init_constants(struct gl_context *ctx)
 
    /* ES 3.0 or ARB_ES3_compatibility */
    ctx->Const.MaxElementIndex = 0xffffffffu;
+
+   /* GL_ARB_texture_multisample */
+   ctx->Const.MaxColorTextureSamples = 1;
+   ctx->Const.MaxDepthTextureSamples = 1;
+   ctx->Const.MaxIntegerSamples = 1;
 }
 
 
