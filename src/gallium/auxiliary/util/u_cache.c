@@ -183,12 +183,12 @@ util_cache_set(struct util_cache *cache,
                void *value)
 {
    struct util_cache_entry *entry;
-   uint32_t hash = cache->hash(key);
+   uint32_t hash;
 
    assert(cache);
    if (!cache)
       return;
-
+   hash = cache->hash(key);
    entry = util_cache_entry_get(cache, hash, key);
    if (!entry)
       entry = cache->lru.prev;
@@ -218,12 +218,12 @@ util_cache_get(struct util_cache *cache,
                const void *key)
 {
    struct util_cache_entry *entry;
-   uint32_t hash = cache->hash(key);
+   uint32_t hash;
 
    assert(cache);
    if (!cache)
       return NULL;
-
+   hash = cache->hash(key);
    entry = util_cache_entry_get(cache, hash, key);
    if (!entry)
       return NULL;
