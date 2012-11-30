@@ -1075,18 +1075,16 @@ convert_to_blend_type(struct gallivm_state *gallivm,
                       const struct util_format_description *src_fmt,
                       struct lp_type src_type,
                       struct lp_type dst_type,
-                      LLVMValueRef* src,
-                      unsigned num_srcs,
-                      LLVMValueRef* dst)
+                      LLVMValueRef* src, // and dst
+                      unsigned num_srcs)
 {
+   LLVMValueRef *dst = src;
    LLVMBuilderRef builder = gallivm->builder;
    struct lp_type blend_type;
    struct lp_type mem_type;
    unsigned i, j, k;
    unsigned pixels = 16 / num_srcs;
    bool is_arith;
-
-   memcpy(dst, src, sizeof(LLVMValueRef) * num_srcs);
 
    lp_mem_type_from_format_desc(src_fmt, &mem_type);
    lp_blend_type_from_format_desc(src_fmt, &blend_type);
@@ -1177,18 +1175,16 @@ convert_from_blend_type(struct gallivm_state *gallivm,
                         const struct util_format_description *src_fmt,
                         struct lp_type src_type,
                         struct lp_type dst_type,
-                        LLVMValueRef* src,
-                        unsigned num_srcs,
-                        LLVMValueRef* dst)
+                        LLVMValueRef* src, // and dst
+                        unsigned num_srcs)
 {
+   LLVMValueRef* dst = src;
    unsigned i, j, k;
    struct lp_type mem_type;
    struct lp_type blend_type;
    LLVMBuilderRef builder = gallivm->builder;
    unsigned pixels = 16 / num_srcs;
    bool is_arith;
-
-   memcpy(dst, src, sizeof(LLVMValueRef) * num_srcs);
 
    lp_mem_type_from_format_desc(src_fmt, &mem_type);
    lp_blend_type_from_format_desc(src_fmt, &blend_type);
@@ -1644,7 +1640,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    /*
     * Blending
     */
-   convert_to_blend_type(gallivm, out_format_desc, dst_type, row_type, dst, src_count, dst);
+   convert_to_blend_type(gallivm, out_format_desc, dst_type, row_type, dst, src_count);
 
    for (i = 0; i < src_count; ++i) {
       dst[i] = lp_build_blend_aos(gallivm,
@@ -1662,7 +1658,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
                                   pad_inline ? 4 : dst_channels);
    }
 
-   convert_from_blend_type(gallivm, out_format_desc, row_type, dst_type, dst, src_count, dst);
+   convert_from_blend_type(gallivm, out_format_desc, row_type, dst_type, dst, src_count);
 
    /* Split the blend rows back to memory rows */
    if (dst_count > src_count) {
