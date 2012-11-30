@@ -87,7 +87,38 @@ r300_buffer_transfer_map( struct pipe_context *context,
 
     if (rbuf->malloced_buffer) {
         *ptransfer = transfer;
-        return (uint8_t *) rbuf->malloced_buffer + box->x;
+        return rbuf->malloced_buffer + box->x;
+    }
+
+    if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE &&
+        !(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
+        assert(usage & PIPE_TRANSFER_WRITE);
+
+        /* Check if mapping this buffer would cause waiting for the GPU. */
+        if (r300->rws->cs_is_buffer_referenced(r300->cs, rbuf->cs_buf, RADEON_USAGE_READWRITE) ||
+            r300->rws->buffer_is_busy(rbuf->buf, RADEON_USAGE_READWRITE)) {
+            unsigned i;
+            struct pb_buffer *new_buf;
+
+            /* Create a new one in the same pipe_resource. */
+            new_buf = r300->rws->buffer_create(r300->rws,
+                                               rbuf->b.b.width0, R300_BUFFER_ALIGNMENT,
+                                               rbuf->b.b.bind, rbuf->domain);
+            if (new_buf) {
+                /* Discard the old buffer. */
+                pb_reference(&rbuf->buf, NULL);
+                rbuf->buf = new_buf;
+                rbuf->cs_buf = r300->rws->buffer_get_cs_handle(rbuf->buf);
+
+                /* We changed the buffer, now we need to bind it where the old one was bound. */
+                for (i = 0; i < r300->nr_vertex_buffers; i++) {
+                    if (r300->vertex_buffer[i].buffer == &rbuf->b.b) {
+                        r300->vertex_arrays_dirty = TRUE;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     /* Buffers are never used for write, therefore mapping for read can be
@@ -130,7 +161,6 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 {
     struct r300_screen *r300screen = r300_screen(screen);
     struct r300_resource *rbuf;
-    unsigned alignment = 16;
 
     rbuf = MALLOC_STRUCT(r300_resource);
 
@@ -152,7 +182,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 
     rbuf->buf =
         r300screen->rws->buffer_create(r300screen->rws,
-                                       rbuf->b.b.width0, alignment,
+                                       rbuf->b.b.width0, R300_BUFFER_ALIGNMENT,
                                        rbuf->b.b.bind, rbuf->domain);
     if (!rbuf->buf) {
         FREE(rbuf);

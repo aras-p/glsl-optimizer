@@ -23,6 +23,8 @@
 #ifndef R300_CONTEXT_H
 #define R300_CONTEXT_H
 
+#define R300_BUFFER_ALIGNMENT 64
+
 #include "draw/draw_vertex.h"
 
 #include "util/u_blitter.h"
