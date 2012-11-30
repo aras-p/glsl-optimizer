@@ -1635,6 +1635,15 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
 	 goto invalid_enum;
       v->value_int = ctx->UniformBufferBindings[index].Size;
       return TYPE_INT;
+
+   /* ARB_texture_multisample / GL3.2 */
+   case GL_SAMPLE_MASK_VALUE:
+      if (index != 0)
+         goto invalid_value;
+      if (!ctx->Extensions.ARB_texture_multisample)
+         goto invalid_enum;
+      v->value_int = ctx->Multisample.SampleMaskValue;
+      return TYPE_INT;
    }
 
  invalid_enum:

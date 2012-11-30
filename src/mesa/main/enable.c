@@ -1013,6 +1013,17 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          }
          break;
 
+      /* ARB_texture_multisample */
+      case GL_SAMPLE_MASK:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         CHECK_EXTENSION(ARB_texture_multisample, cap);
+         if (ctx->Multisample.SampleMask == state)
+            return;
+         FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
+         ctx->Multisample.SampleMask = state;
+         break;
+
       default:
          goto invalid_enum_error;
    }
@@ -1582,6 +1593,13 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
 	 CHECK_EXTENSION(OES_EGL_image_external);
          return is_texture_enabled(ctx, TEXTURE_EXTERNAL_BIT);
+
+      /* ARB_texture_multisample */
+      case GL_SAMPLE_MASK:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         CHECK_EXTENSION(ARB_texture_multisample);
+         return ctx->Multisample.SampleMask;
 
       default:
          goto invalid_enum_error;

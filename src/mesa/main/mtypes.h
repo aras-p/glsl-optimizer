@@ -993,6 +993,12 @@ struct gl_multisample_attrib
    GLboolean SampleCoverage;
    GLfloat SampleCoverageValue;
    GLboolean SampleCoverageInvert;
+
+   /* ARB_texture_multisample / GL3.2 additions */
+   GLboolean SampleMask;
+   GLbitfield SampleMaskValue; /* GL spec defines this as an array but >32x MSAA is
+                                * madness
+                                */
 };
 
 

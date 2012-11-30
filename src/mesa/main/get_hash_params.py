@@ -664,6 +664,8 @@ descriptor=[
   [ "MAX_COLOR_TEXTURE_SAMPLES", "CONTEXT_INT(Const.MaxColorTextureSamples), extra_ARB_texture_multisample" ],
   [ "MAX_DEPTH_TEXTURE_SAMPLES", "CONTEXT_INT(Const.MaxDepthTextureSamples), extra_ARB_texture_multisample" ],
   [ "MAX_INTEGER_SAMPLES", "CONTEXT_INT(Const.MaxIntegerSamples), extra_ARB_texture_multisample" ],
+  [ "SAMPLE_MASK", "CONTEXT_BOOL(Multisample.SampleMask), extra_ARB_texture_multisample" ],
+  [ "MAX_SAMPLE_MASK_WORDS", "CONST(1), extra_ARB_texture_multisample" ],
 
 
 # GL_ARB_sampler_objects / GL 3.3
