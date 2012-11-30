@@ -845,12 +845,10 @@ static void tex_fetch_args(
 						ptr, offset);
 
 	/* Dimensions */
-	/* XXX: We might want to pass this information to the shader at some. */
-/*	emit_data->args[4] = lp_build_const_int32(bld_base->base.gallivm,
+	emit_data->args[4] = lp_build_const_int32(bld_base->base.gallivm,
 					emit_data->inst->Texture.Texture);
-*/
 
-	emit_data->arg_count = 4;
+	emit_data->arg_count = 5;
 	/* XXX: To optimize, we could use a float or v2f32, if the last bits of
 	 * the writemask are clear */
 	emit_data->dst_type = LLVMVectorType(
