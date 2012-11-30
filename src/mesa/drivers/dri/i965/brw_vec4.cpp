@@ -1159,6 +1159,17 @@ brw_vs_emit(struct brw_context *brw,
       }
    }
 
+   vec4_visitor v(brw, c, prog, shader, mem_ctx);
+   if (!v.run()) {
+      prog->LinkStatus = false;
+      ralloc_strcat(&prog->InfoLog, v.fail_msg);
+      return NULL;
+   }
+
+   vec4_generator g(brw, c, prog, mem_ctx);
+   const unsigned *generated =g.generate_assembly(&v.instructions,
+                                                  final_assembly_size);
+
    if (unlikely(INTEL_DEBUG & DEBUG_PERF) && shader) {
       if (shader->compiled_once) {
          brw_vs_debug_recompile(brw, prog, &c->key);
@@ -1170,15 +1181,7 @@ brw_vs_emit(struct brw_context *brw,
       shader->compiled_once = true;
    }
 
-   vec4_visitor v(brw, c, prog, shader, mem_ctx);
-   if (!v.run()) {
-      prog->LinkStatus = false;
-      ralloc_strcat(&prog->InfoLog, v.fail_msg);
-      return NULL;
-   }
-
-   vec4_generator g(brw, c, prog, mem_ctx);
-   return g.generate_assembly(&v.instructions, final_assembly_size);
+   return generated;
 }
 
 } /* extern "C" */
