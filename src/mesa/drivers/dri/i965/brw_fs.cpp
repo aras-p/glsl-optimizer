@@ -1855,7 +1855,28 @@ fs_visitor::register_coalesce_2()
       }
 
       inst->remove();
+
+      /* We don't need to recalculate live intervals inside the loop despite
+       * flagging live_intervals_valid because we only use live intervals for
+       * the interferes test, and we must have had a situation where the
+       * intervals were:
+       *
+       *  from  to
+       *  ^
+       *  |
+       *  v
+       *        ^
+       *        |
+       *        v
+       *
+       * Some register R that might get coalesced with one of these two could
+       * only be referencing "to", otherwise "from"'s range would have been
+       * longer.  R's range could also only start at the end of "to" or later,
+       * otherwise it will conflict with "to" when we try to coalesce "to"
+       * into Rw anyway.
+       */
       live_intervals_valid = false;
+
       progress = true;
       continue;
    }
