@@ -510,8 +510,10 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    }
 
    ret = radeon_set_screen_flags(screen, device_id);
-   if (ret == -1)
+   if (ret == -1) {
+     free(screen);
      return NULL;
+   }
 
    if (getenv("RADEON_NO_TCL"))
 	   screen->chip_flags &= ~RADEON_CHIPSET_TCL;
