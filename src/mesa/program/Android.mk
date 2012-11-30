@@ -65,9 +65,6 @@ LOCAL_GENERATED_SOURCES := \
 $(intermediates)/program/program_parse.tab.c: $(LOCAL_PATH)/program_parse.y
 	$(mesa_local-y-to-c-and-h)
 
-$(intermediates)/program/program_parse.tab.h: $(LOCAL_PATH)/program_parse.y
-	$(mesa_local-y-to-c-and-h)
-
 $(intermediates)/program/lex.yy.c: $(LOCAL_PATH)/program_lexer.l
 	$(local-l-to-c)
 
