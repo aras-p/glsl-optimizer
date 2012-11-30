@@ -24,6 +24,9 @@ struct wl_egl_window {
 
 	int attached_width;
 	int attached_height;
+
+	void *private;
+	void (*resize_callback)(struct wl_egl_window *, void *);
 };
 
 #ifdef  __cplusplus
