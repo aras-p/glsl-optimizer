@@ -2824,6 +2824,7 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
 
    this->base_ir = NULL;
    this->current_annotation = NULL;
+   memset(this->output_reg_annotation, 0, sizeof(this->output_reg_annotation));
 
    this->c = c;
    this->vp = &c->vp->program;
