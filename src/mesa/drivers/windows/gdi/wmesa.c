@@ -426,9 +426,9 @@ static void clear(struct gl_context *ctx, GLbitfield mask)
 
 
 static void
-wmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
+wmesa_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
-    free(rb);
+    _mesa_delete_renderbuffer(ctx, rb);
 }
 
 

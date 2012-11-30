@@ -54,7 +54,7 @@ radeon_new_framebuffer(struct gl_context *ctx, GLuint name)
 }
 
 static void
-radeon_delete_renderbuffer(struct gl_renderbuffer *rb)
+radeon_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
   struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
 
@@ -67,7 +67,7 @@ radeon_delete_renderbuffer(struct gl_renderbuffer *rb)
   if (rrb && rrb->bo) {
     radeon_bo_unref(rrb->bo);
   }
-  _mesa_delete_renderbuffer(rb);
+  _mesa_delete_renderbuffer(ctx, rb);
 }
 
 #if defined(RADEON_R100)

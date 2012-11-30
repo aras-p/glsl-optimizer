@@ -2605,7 +2605,7 @@ struct gl_renderbuffer
    gl_format Format;      /**< The actual renderbuffer memory format */
 
    /** Delete this renderbuffer */
-   void (*Delete)(struct gl_renderbuffer *rb);
+   void (*Delete)(struct gl_context *ctx, struct gl_renderbuffer *rb);
 
    /** Allocate new storage for this renderbuffer */
    GLboolean (*AllocStorage)(struct gl_context *ctx,

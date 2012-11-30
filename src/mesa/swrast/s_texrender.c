@@ -16,7 +16,7 @@
 
 
 static void
-delete_texture_wrapper(struct gl_renderbuffer *rb)
+delete_texture_wrapper(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    ASSERT(rb->RefCount == 0);
    free(rb);

@@ -253,10 +253,11 @@ delete_framebuffer_cb(GLuint id, void *data, void *userData)
 static void
 delete_renderbuffer_cb(GLuint id, void *data, void *userData)
 {
+   struct gl_context *ctx = (struct gl_context *) userData;
    struct gl_renderbuffer *rb = (struct gl_renderbuffer *) data;
    rb->RefCount = 0;  /* see comment for FBOs above */
    if (rb->Delete)
-      rb->Delete(rb);
+      rb->Delete(ctx, rb);
 }
 
 

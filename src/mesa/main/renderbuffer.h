@@ -40,7 +40,7 @@ extern struct gl_renderbuffer *
 _mesa_new_renderbuffer(struct gl_context *ctx, GLuint name);
 
 extern void
-_mesa_delete_renderbuffer(struct gl_renderbuffer *rb);
+_mesa_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb);
 
 extern void
 _mesa_add_renderbuffer(struct gl_framebuffer *fb,

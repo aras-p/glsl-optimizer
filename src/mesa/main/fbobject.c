@@ -78,7 +78,7 @@ static struct gl_framebuffer IncompleteFramebuffer;
 
 
 static void
-delete_dummy_renderbuffer(struct gl_renderbuffer *rb)
+delete_dummy_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    /* no op */
 }

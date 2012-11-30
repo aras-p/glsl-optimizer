@@ -225,14 +225,14 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
  * gl_renderbuffer::Delete()
  */
 static void
-st_renderbuffer_delete(struct gl_renderbuffer *rb)
+st_renderbuffer_delete(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    ASSERT(strb);
    pipe_surface_reference(&strb->surface, NULL);
    pipe_resource_reference(&strb->texture, NULL);
    free(strb->data);
-   _mesa_delete_renderbuffer(rb);
+   _mesa_delete_renderbuffer(ctx, rb);
 }
 
 

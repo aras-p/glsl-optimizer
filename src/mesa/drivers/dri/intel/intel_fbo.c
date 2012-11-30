@@ -87,7 +87,7 @@ intel_new_framebuffer(struct gl_context * ctx, GLuint name)
 
 /** Called by gl_renderbuffer::Delete() */
 static void
-intel_delete_renderbuffer(struct gl_renderbuffer *rb)
+intel_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
@@ -95,7 +95,7 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 
    intel_miptree_release(&irb->mt);
 
-   _mesa_delete_renderbuffer(rb);
+   _mesa_delete_renderbuffer(ctx, rb);
 }
 
 /**

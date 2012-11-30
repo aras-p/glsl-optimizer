@@ -102,12 +102,12 @@ nouveau_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
 }
 
 static void
-nouveau_renderbuffer_del(struct gl_renderbuffer *rb)
+nouveau_renderbuffer_del(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
 	struct nouveau_surface *s = &to_nouveau_renderbuffer(rb)->surface;
 
 	nouveau_surface_ref(NULL, s);
-	_mesa_delete_renderbuffer(rb);
+	_mesa_delete_renderbuffer(ctx, rb);
 }
 
 static struct gl_renderbuffer *

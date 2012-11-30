@@ -235,7 +235,7 @@ alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
 
 
 static void
-xmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
+xmesa_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    /* XXX Note: the ximage or Pixmap attached to this renderbuffer
     * should probably get freed here, but that's currently done in

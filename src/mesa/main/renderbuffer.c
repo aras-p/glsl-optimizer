@@ -80,7 +80,7 @@ _mesa_new_renderbuffer(struct gl_context *ctx, GLuint name)
  * free the object in the end.
  */
 void
-_mesa_delete_renderbuffer(struct gl_renderbuffer *rb)
+_mesa_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    _glthread_DESTROY_MUTEX(rb->Mutex);
    free(rb);
@@ -159,7 +159,11 @@ _mesa_reference_renderbuffer_(struct gl_renderbuffer **ptr,
       _glthread_UNLOCK_MUTEX(oldRb->Mutex);
 
       if (deleteFlag) {
-         oldRb->Delete(oldRb);
+         GET_CURRENT_CONTEXT(ctx);
+         if (ctx)
+            oldRb->Delete(ctx, oldRb);
+         else
+            _mesa_problem(NULL, "Unable to delete renderbuffer, no context");
       }
 
       *ptr = NULL;

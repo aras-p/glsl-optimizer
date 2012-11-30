@@ -251,14 +251,14 @@ choose_pixel_format(const struct gl_config *v)
 }
 
 static void
-swrast_delete_renderbuffer(struct gl_renderbuffer *rb)
+swrast_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
     struct dri_swrast_renderbuffer *xrb = dri_swrast_renderbuffer(rb);
 
     TRACE;
 
     free(xrb->Base.Buffer);
-    _mesa_delete_renderbuffer(rb);
+    _mesa_delete_renderbuffer(ctx, rb);
 }
 
 /* see bytes_per_line in libGL */
