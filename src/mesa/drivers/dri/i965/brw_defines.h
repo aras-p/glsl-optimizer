@@ -1673,6 +1673,32 @@ enum brw_message_target {
 # define GEN8_RASTER_SCISSOR_ENABLE                     (1 << 1)
 # define GEN8_RASTER_VIEWPORT_Z_CLIP_TEST_ENABLE        (1 << 0)
 
+#define _3DSTATE_WM_DEPTH_STENCIL               0x784E /* GEN8+ */
+/* DW1 */
+# define GEN8_WM_DS_STENCIL_FAIL_OP_SHIFT               29
+# define GEN8_WM_DS_Z_FAIL_OP_SHIFT                     26
+# define GEN8_WM_DS_Z_PASS_OP_SHIFT                     23
+# define GEN8_WM_DS_BF_STENCIL_FUNC_SHIFT               20
+# define GEN8_WM_DS_BF_STENCIL_FAIL_OP_SHIFT            17
+# define GEN8_WM_DS_BF_Z_FAIL_OP_SHIFT                  14
+# define GEN8_WM_DS_BF_Z_PASS_OP_SHIFT                  11
+# define GEN8_WM_DS_STENCIL_FUNC_SHIFT                  8
+# define GEN8_WM_DS_DEPTH_FUNC_SHIFT                    5
+# define GEN8_WM_DS_DOUBLE_SIDED_STENCIL_ENABLE         (1 << 4)
+# define GEN8_WM_DS_STENCIL_TEST_ENABLE                 (1 << 3)
+# define GEN8_WM_DS_STENCIL_BUFFER_WRITE_ENABLE         (1 << 2)
+# define GEN8_WM_DS_DEPTH_TEST_ENABLE                   (1 << 1)
+# define GEN8_WM_DS_DEPTH_BUFFER_WRITE_ENABLE           (1 << 0)
+/* DW2 */
+# define GEN8_WM_DS_STENCIL_TEST_MASK_MASK              INTEL_MASK(31, 24)
+# define GEN8_WM_DS_STENCIL_TEST_MASK_SHIFT             24
+# define GEN8_WM_DS_STENCIL_WRITE_MASK_MASK             INTEL_MASK(23, 16)
+# define GEN8_WM_DS_STENCIL_WRITE_MASK_SHIFT            16
+# define GEN8_WM_DS_BF_STENCIL_TEST_MASK_MASK           INTEL_MASK(15, 8)
+# define GEN8_WM_DS_BF_STENCIL_TEST_MASK_SHIFT          8
+# define GEN8_WM_DS_BF_STENCIL_WRITE_MASK_MASK          INTEL_MASK(7, 0)
+# define GEN8_WM_DS_BF_STENCIL_WRITE_MASK_SHIFT         0
+
 enum brw_wm_barycentric_interp_mode {
    BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC		= 0,
    BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC	= 1,
