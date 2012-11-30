@@ -228,8 +228,10 @@ static void
 st_renderbuffer_delete(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *strb = st_renderbuffer(rb);
-   ASSERT(strb);
-   pipe_surface_reference(&strb->surface, NULL);
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
+
+   pipe_surface_release(pipe, &strb->surface);
    pipe_resource_reference(&strb->texture, NULL);
    free(strb->data);
    _mesa_delete_renderbuffer(ctx, rb);
@@ -434,7 +436,7 @@ st_render_texture(struct gl_context *ctx,
 
    pipe_resource_reference( &strb->texture, pt );
 
-   pipe_surface_reference(&strb->surface, NULL);
+   pipe_surface_release(pipe, &strb->surface);
 
    assert(strb->rtt_level <= strb->texture->last_level);
 
