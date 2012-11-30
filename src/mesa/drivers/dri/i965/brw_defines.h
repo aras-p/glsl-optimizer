@@ -1673,6 +1673,22 @@ enum brw_message_target {
 # define GEN8_RASTER_SCISSOR_ENABLE                     (1 << 1)
 # define GEN8_RASTER_VIEWPORT_Z_CLIP_TEST_ENABLE        (1 << 0)
 
+#define _3DSTATE_PS_BLEND                       0x784D /* GEN8+ */
+/* DW1 */
+# define GEN8_PS_BLEND_ALPHA_TO_COVERAGE_ENABLE         (1 << 31)
+# define GEN8_PS_BLEND_HAS_WRITEABLE_RT                 (1 << 30)
+# define GEN8_PS_BLEND_COLOR_BUFFER_BLEND_ENABLE        (1 << 29)
+# define GEN8_PS_BLEND_SRC_ALPHA_BLEND_FACTOR_MASK      INTEL_MASK(28, 24)
+# define GEN8_PS_BLEND_SRC_ALPHA_BLEND_FACTOR_SHIFT     24
+# define GEN8_PS_BLEND_DST_ALPHA_BLEND_FACTOR_MASK      INTEL_MASK(23, 19)
+# define GEN8_PS_BLEND_DST_ALPHA_BLEND_FACTOR_SHIFT     19
+# define GEN8_PS_BLEND_SRC_BLEND_FACTOR_MASK            INTEL_MASK(18, 14)
+# define GEN8_PS_BLEND_SRC_BLEND_FACTOR_SHIFT           14
+# define GEN8_PS_BLEND_DST_BLEND_FACTOR_MASK            INTEL_MASK(13, 9)
+# define GEN8_PS_BLEND_DST_BLEND_FACTOR_SHIFT           9
+# define GEN8_PS_BLEND_ALPHA_TEST_ENABLE                (1 << 8)
+# define GEN8_PS_BLEND_INDEPENDENT_ALPHA_BLEND_ENABLE   (1 << 7)
+
 #define _3DSTATE_WM_DEPTH_STENCIL               0x784E /* GEN8+ */
 /* DW1 */
 # define GEN8_WM_DS_STENCIL_FAIL_OP_SHIFT               29
