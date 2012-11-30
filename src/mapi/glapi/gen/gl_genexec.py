@@ -108,6 +108,7 @@ header = """/**
 #include "main/shaderapi.h"
 #include "main/uniforms.h"
 #include "main/syncobj.h"
+#include "main/formatquery.h"
 #include "main/dispatch.h"
 
 

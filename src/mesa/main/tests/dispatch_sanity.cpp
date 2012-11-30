@@ -900,6 +900,9 @@ const struct function gl_core_functions_possible[] = {
 // { "glTextureStorage2DMultisampleEXT", 43, -1 },      // XXX: Add to xml
 // { "glTextureStorage3DMultisampleEXT", 43, -1 },      // XXX: Add to xml
 
+   /* GL_ARB_internalformat_query */
+   { "glGetInternalformativ", 30, -1 },
+
    { NULL, 0, -1 }
 };
 
@@ -1323,8 +1326,7 @@ const struct function gles3_functions_possible[] = {
    { "glGetInteger64i_v", 30, -1 },
    { "glGetInteger64v", 30, -1 },
    { "glGetIntegeri_v", 30, -1 },
-   // XXX: Missing implementation of ARB_internalformat_query
-   // { "glGetInternalformativ", 30, -1 },
+   { "glGetInternalformativ", 30, -1 },
    // glGetProgramBinary aliases glGetProgramBinaryOES in GLES 2
    { "glGetQueryiv", 30, -1 },
    { "glGetQueryObjectuiv", 30, -1 },
