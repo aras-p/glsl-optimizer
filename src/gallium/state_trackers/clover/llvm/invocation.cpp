@@ -149,7 +149,7 @@ namespace {
       c.getHeaderSearchOpts().ResourceDir = CLANG_RESOURCE_DIR;
 
       // Add libclc generic search path
-      c.getHeaderSearchOpts().AddPath(LIBCLC_PATH "/generic/include/",
+      c.getHeaderSearchOpts().AddPath(LIBCLC_INCLUDEDIR,
                                       clang::frontend::Angled,
                                       false, false, false);
 
@@ -205,7 +205,7 @@ namespace {
       llvm::Linker linker("clover", mod);
 
       // Link the kernel with libclc
-      linker.LinkInFile(llvm::sys::Path(LIBCLC_PATH + triple + "/lib/builtins.bc"), isNative);
+      linker.LinkInFile(llvm::sys::Path(LIBCLC_LIBEXECDIR + triple + ".bc"), isNative);
       mod = linker.releaseModule();
 
       // Add a function internalizer pass.
