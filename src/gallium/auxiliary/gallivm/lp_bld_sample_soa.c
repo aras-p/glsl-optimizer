@@ -351,20 +351,16 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       }
 
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      {
-         LLVMValueRef min;
-         if (bld->static_state->normalized_coords) {
-            /* scale coord to length */
-            coord = lp_build_mul(coord_bld, coord, length_f);
-         }
-         /* was: clamp to [-0.5, length + 0.5], then sub 0.5 */
-         coord = lp_build_sub(coord_bld, coord, half);
-         min = lp_build_const_vec(bld->gallivm, coord_bld->type, -1.0F);
-         coord = lp_build_clamp(coord_bld, coord, min, length_f);
-         /* convert to int, compute lerp weight */
-         lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
-         coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
+      if (bld->static_state->normalized_coords) {
+         /* scale coord to length */
+         coord = lp_build_mul(coord_bld, coord, length_f);
       }
+      /* was: clamp to [-0.5, length + 0.5], then sub 0.5 */
+      /* can skip clamp (though might not work for very large coord values */
+      coord = lp_build_sub(coord_bld, coord, half);
+      /* convert to int, compute lerp weight */
+      lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
+      coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       break;
 
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
@@ -438,9 +434,9 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          }
 
          /* was: clamp to [-0.5, length + 0.5] then sub 0.5 */
-         /* skip -0.5 clamp (always positive), do sub first */
+         /* skip clamp - always positive, and other side
+            only potentially matters for very large coords */
          coord = lp_build_sub(coord_bld, coord, half);
-         coord = lp_build_min(coord_bld, coord, length_f);
 
          /* convert to int, compute lerp weight */
          lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
@@ -514,22 +510,12 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       break;
 
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      /* Note: this is the same as CLAMP_TO_EDGE, except min = -1 */
-      {
-         LLVMValueRef min, max;
-
-         if (bld->static_state->normalized_coords) {
-            /* scale coord to length */
-            coord = lp_build_mul(coord_bld, coord, length_f);
-         }
-
-         icoord = lp_build_ifloor(coord_bld, coord);
-
-         /* clamp to [-1, length] */
-         min = lp_build_negate(int_coord_bld, int_coord_bld->one);
-         max = length;
-         icoord = lp_build_clamp(int_coord_bld, icoord, min, max);
+      if (bld->static_state->normalized_coords) {
+         /* scale coord to length */
+         coord = lp_build_mul(coord_bld, coord, length_f);
       }
+      /* no clamp necessary, border masking will handle this */
+      icoord = lp_build_ifloor(coord_bld, coord);
       break;
 
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
@@ -573,9 +559,6 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
 
       /* itrunc == ifloor here */
       icoord = lp_build_itrunc(coord_bld, coord);
-
-      /* clamp to [0, length] */
-      icoord = lp_build_min(int_coord_bld, icoord, length);
       break;
 
    default:
