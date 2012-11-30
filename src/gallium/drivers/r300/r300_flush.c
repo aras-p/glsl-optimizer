@@ -107,7 +107,7 @@ void r300_flush(struct pipe_context *pipe,
     /* Update Hyper-Z status. */
     if (r300->num_z_clears) {
         r300->hyperz_time_of_last_flush = os_time_get();
-    } else if (!r300->hyperz_time_of_last_flush > 2000000) {
+    } else if (r300->hyperz_time_of_last_flush > 2000000) {
         /* 2 seconds without a Z clear pretty much means a dead context
          * for HyperZ. */
 
