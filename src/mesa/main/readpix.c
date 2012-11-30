@@ -679,7 +679,7 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
 		      GLenum format, GLenum type, GLsizei bufSize,
                       GLvoid *pixels )
 {
-   GLenum err;
+   GLenum err = GL_NO_ERROR;
 
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -707,15 +707,19 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
     * preferred combination.  This code doesn't know what that preferred
     * combination is, and Mesa can handle anything valid.  Just work instead.
     */
-   if (_mesa_is_gles(ctx) && ctx->Version < 30) {
-      err = _mesa_es_error_check_format_and_type(format, type, 2);
-      if (err == GL_NO_ERROR) {
-         if (type == GL_FLOAT || type == GL_HALF_FLOAT_OES) {
-            err = GL_INVALID_OPERATION;
-         } else if (format == GL_DEPTH_COMPONENT
-                    || format == GL_DEPTH_STENCIL) {
-            err = GL_INVALID_ENUM;
+   if (_mesa_is_gles(ctx)) {
+      if (ctx->Version < 30) {
+         err = _mesa_es_error_check_format_and_type(format, type, 2);
+         if (err == GL_NO_ERROR) {
+            if (type == GL_FLOAT || type == GL_HALF_FLOAT_OES) {
+               err = GL_INVALID_OPERATION;
+            }
          }
+      }
+
+      if (err == GL_NO_ERROR && (format == GL_DEPTH_COMPONENT
+          || format == GL_DEPTH_STENCIL)) {
+         err = GL_INVALID_ENUM;
       }
 
       if (err != GL_NO_ERROR) {
