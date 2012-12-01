@@ -920,7 +920,9 @@ _mesa_BindRenderbuffer(GLenum target, GLuint renderbuffer)
          /* ID was reserved, but no real renderbuffer object made yet */
          newRb = NULL;
       }
-      else if (!newRb && ctx->Extensions.ARB_framebuffer_object) {
+      else if (!newRb
+               && _mesa_is_desktop_gl(ctx)
+               && ctx->Extensions.ARB_framebuffer_object) {
          /* All RB IDs must be Gen'd */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glBindRenderbuffer(buffer)");
          return;
@@ -1761,7 +1763,9 @@ _mesa_BindFramebuffer(GLenum target, GLuint framebuffer)
          /* ID was reserved, but no real framebuffer object made yet */
          newDrawFb = NULL;
       }
-      else if (!newDrawFb && ctx->Extensions.ARB_framebuffer_object) {
+      else if (!newDrawFb
+               && _mesa_is_desktop_gl(ctx)
+               && ctx->Extensions.ARB_framebuffer_object) {
          /* All FBO IDs must be Gen'd */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glBindFramebuffer(buffer)");
          return;
