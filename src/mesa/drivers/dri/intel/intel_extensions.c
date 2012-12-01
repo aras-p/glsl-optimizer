@@ -45,8 +45,7 @@ intelInitExtensions(struct gl_context *ctx)
 
    ctx->Extensions.ARB_draw_elements_base_vertex = true;
    ctx->Extensions.ARB_explicit_attrib_location = true;
-   if (_mesa_is_desktop_gl(ctx))
-      ctx->Extensions.ARB_framebuffer_object = true;
+   ctx->Extensions.ARB_framebuffer_object = true;
    ctx->Extensions.ARB_half_float_pixel = true;
    ctx->Extensions.ARB_map_buffer_range = true;
    ctx->Extensions.ARB_point_sprite = true;
