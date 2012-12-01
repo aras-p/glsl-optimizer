@@ -867,13 +867,11 @@ _mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
    switch (format) {
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-      return ctx->Extensions.EXT_texture_compression_s3tc;
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      return (_mesa_is_desktop_gl(ctx) &&
-	      ctx->Extensions.EXT_texture_compression_s3tc) ||
-	     (ctx->API == API_OPENGLES2 &&
-	      ctx->Extensions.ANGLE_texture_compression_dxt);
+      /* Assume that the ANGLE flag will always be set if the EXT flag is set.
+       */
+      return ctx->Extensions.ANGLE_texture_compression_dxt;
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
    case GL_RGBA_S3TC:

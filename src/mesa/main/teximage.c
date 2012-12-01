@@ -190,23 +190,13 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.EXT_texture_compression_s3tc) {
+   /* Assume that the ANGLE flag will always be set if the EXT flag is set.
+    */
+   if (ctx->Extensions.ANGLE_texture_compression_dxt) {
       switch (internalFormat) {
          case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
             return GL_RGB;
          case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-         case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-         case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-            return GL_RGBA;
-         default:
-            ; /* fallthrough */
-      }
-   }
-
-   /* GL_COMPRESSED_RGBA_S3TC_DXT3_ANGLE && GL_COMPRESSED_RGBA_S3TC_DXT5_ANGLE */
-   if (ctx->API == API_OPENGLES2 &&
-       ctx->Extensions.ANGLE_texture_compression_dxt) {
-      switch (internalFormat) {
          case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
          case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
             return GL_RGBA;
