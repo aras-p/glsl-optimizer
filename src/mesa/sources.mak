@@ -248,7 +248,7 @@ STATETRACKER_FILES = \
 
 PROGRAM_FILES = \
 	$(SRCDIR)program/arbprogparse.c \
-	$(SRCDIR)program/hash_table.c \
+	$(SRCDIR)program/prog_hash_table.c \
 	$(SRCDIR)program/ir_to_mesa.cpp \
 	$(SRCDIR)program/program.c \
 	$(SRCDIR)program/program_parse_extra.c \

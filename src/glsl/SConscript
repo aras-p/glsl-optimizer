@@ -58,13 +58,13 @@ if env['crosscompile'] and not env['embedded']:
 else:
     # Copy these files to avoid generation object files into src/mesa/program
     env.Prepend(CPPPATH = ['#src/mesa/program'])
-    env.Command('hash_table.c', '#src/mesa/program/hash_table.c', Copy('$TARGET', '$SOURCE'))
+    env.Command('prog_hash_table.c', '#src/mesa/program/prog_hash_table.c', Copy('$TARGET', '$SOURCE'))
     env.Command('symbol_table.c', '#src/mesa/program/symbol_table.c', Copy('$TARGET', '$SOURCE'))
 
     compiler_objs = env.StaticObject(source_lists['GLSL_COMPILER_CXX_FILES'])
 
     mesa_objs = env.StaticObject([
-        'hash_table.c',
+        'prog_hash_table.c',
         'symbol_table.c',
     ])
 

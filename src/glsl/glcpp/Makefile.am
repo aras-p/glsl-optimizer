@@ -46,7 +46,7 @@ libglcpp_la_SOURCES = \
 
 glcpp_SOURCES = \
 	../ralloc.c \
-	$(top_srcdir)/src/mesa/program/hash_table.c \
+	$(top_srcdir)/src/mesa/program/prog_hash_table.c \
 	glcpp.c
 
 glcpp_LDADD = libglcpp.la
