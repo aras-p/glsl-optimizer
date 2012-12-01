@@ -953,15 +953,16 @@ r300_texture_create_object(struct r300_screen *rscreen,
                            struct pb_buffer *buffer)
 {
     struct radeon_winsys *rws = rscreen->rws;
-    struct r300_resource *tex = CALLOC_STRUCT(r300_resource);
-    if (!tex) {
-        if (buffer)
-            pb_reference(&buffer, NULL);
-        return NULL;
+    struct r300_resource *tex = NULL;
+
+    if (base->nr_samples > 1) {
+        goto fail;
     }
 
-    if (base->nr_samples > 1)
-        return NULL;
+    tex = CALLOC_STRUCT(r300_resource);
+    if (!tex) {
+        goto fail;
+    }
 
     pipe_reference_init(&tex->b.b.reference, 1);
     tex->b.b.screen = &rscreen->screen;
@@ -985,8 +986,7 @@ r300_texture_create_object(struct r300_screen *rscreen,
                                       base->bind, tex->domain);
 
         if (!tex->buf) {
-            FREE(tex);
-            return NULL;
+            goto fail;
         }
     }
 
@@ -998,6 +998,12 @@ r300_texture_create_object(struct r300_screen *rscreen,
             tex->tex.stride_in_bytes[0]);
 
     return tex;
+
+fail:
+    FREE(tex);
+    if (buffer)
+        pb_reference(&buffer, NULL);
+    return NULL;
 }
 
 /* Create a new texture. */
