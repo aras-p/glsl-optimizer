@@ -58,6 +58,28 @@
  * Mesa's Driver Functions
  ***************************************/
 
+static size_t
+brw_query_samples_for_format(struct gl_context *ctx, GLenum internalFormat,
+                             int samples[16])
+{
+   struct intel_context *intel = intel_context(ctx);
+
+   switch (intel->gen) {
+   case 7:
+      samples[0] = 8;
+      samples[1] = 4;
+      return 2;
+
+   case 6:
+      samples[0] = 4;
+      return 1;
+
+   default:
+      samples[0] = 1;
+      return 1;
+   }
+}
+
 static void brwInitDriverFunctions(struct intel_screen *screen,
 				   struct dd_function_table *functions)
 {
@@ -66,6 +88,7 @@ static void brwInitDriverFunctions(struct intel_screen *screen,
    brwInitFragProgFuncs( functions );
    brw_init_queryobj_functions(functions);
 
+   functions->QuerySamplesForFormat = brw_query_samples_for_format;
    functions->BeginTransformFeedback = brw_begin_transform_feedback;
 
    if (screen->gen >= 7)
