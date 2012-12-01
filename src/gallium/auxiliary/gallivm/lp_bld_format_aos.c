@@ -481,7 +481,8 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
    }
 
    /* If all channels are of same type and we are not using half-floats */
-   if (format_desc->is_array) {
+   if (format_desc->is_array &&
+       format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB) {
       assert(!format_desc->is_mixed);
       return lp_build_fetch_rgba_aos_array(gallivm, format_desc, type, base_ptr, offset);
    }
