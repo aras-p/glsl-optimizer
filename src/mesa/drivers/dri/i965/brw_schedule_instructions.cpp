@@ -26,9 +26,12 @@
  */
 
 #include "brw_fs.h"
+#include "brw_vec4.h"
 #include "glsl/glsl_types.h"
 #include "glsl/ir_optimization.h"
 #include "glsl/ir_print_visitor.h"
+
+using namespace brw;
 
 /** @file brw_fs_schedule_instructions.cpp
  *
@@ -297,6 +300,7 @@ schedule_node::set_latency_gen7(bool is_haswell)
 
    case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD:
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
+   case VS_OPCODE_PULL_CONSTANT_LOAD:
       /* testing using varying-index pull constants:
        *
        * 16 cycles:
@@ -401,6 +405,23 @@ fs_instruction_scheduler::fs_instruction_scheduler(fs_visitor *v,
                                                    int grf_count,
                                                    bool post_reg_alloc)
    : instruction_scheduler(v, grf_count, post_reg_alloc),
+     v(v)
+{
+}
+
+class vec4_instruction_scheduler : public instruction_scheduler
+{
+public:
+   vec4_instruction_scheduler(vec4_visitor *v, int grf_count);
+   void calculate_deps();
+   schedule_node *choose_instruction_to_schedule();
+   int issue_time(backend_instruction *inst);
+   vec4_visitor *v;
+};
+
+vec4_instruction_scheduler::vec4_instruction_scheduler(vec4_visitor *v,
+                                                       int grf_count)
+   : instruction_scheduler(v, grf_count, true),
      v(v)
 {
 }
@@ -739,6 +760,163 @@ fs_instruction_scheduler::calculate_deps()
    }
 }
 
+void
+vec4_instruction_scheduler::calculate_deps()
+{
+   schedule_node *last_grf_write[grf_count];
+   schedule_node *last_mrf_write[BRW_MAX_MRF];
+   schedule_node *last_conditional_mod = NULL;
+   /* Fixed HW registers are assumed to be separate from the virtual
+    * GRFs, so they can be tracked separately.  We don't really write
+    * to fixed GRFs much, so don't bother tracking them on a more
+    * granular level.
+    */
+   schedule_node *last_fixed_grf_write = NULL;
+
+   /* The last instruction always needs to still be the last instruction.
+    * Either it's flow control (IF, ELSE, ENDIF, DO, WHILE) and scheduling
+    * other things after it would disturb the basic block, or it's the EOT
+    * URB_WRITE and we should do a better job at dead code eliminating
+    * anything that could have been scheduled after it.
+    */
+   schedule_node *last = (schedule_node *)instructions.get_tail();
+   add_barrier_deps(last);
+
+   memset(last_grf_write, 0, sizeof(last_grf_write));
+   memset(last_mrf_write, 0, sizeof(last_mrf_write));
+
+   /* top-to-bottom dependencies: RAW and WAW. */
+   foreach_list(node, &instructions) {
+      schedule_node *n = (schedule_node *)node;
+      vec4_instruction *inst = (vec4_instruction *)n->inst;
+
+      /* read-after-write deps. */
+      for (int i = 0; i < 3; i++) {
+         if (inst->src[i].file == GRF) {
+            add_dep(last_grf_write[inst->src[i].reg], n);
+         } else if (inst->src[i].file == HW_REG &&
+                    (inst->src[i].fixed_hw_reg.file ==
+                     BRW_GENERAL_REGISTER_FILE)) {
+            add_dep(last_fixed_grf_write, n);
+         } else if (inst->src[i].file != BAD_FILE &&
+                    inst->src[i].file != IMM &&
+                    inst->src[i].file != UNIFORM) {
+            /* No reads from MRF, and ATTR is already translated away */
+            assert(inst->src[i].file != MRF &&
+                   inst->src[i].file != ATTR);
+            add_barrier_deps(n);
+         }
+      }
+
+      for (int i = 0; i < inst->mlen; i++) {
+         /* It looks like the MRF regs are released in the send
+          * instruction once it's sent, not when the result comes
+          * back.
+          */
+         add_dep(last_mrf_write[inst->base_mrf + i], n);
+      }
+
+      if (inst->predicate) {
+         assert(last_conditional_mod);
+         add_dep(last_conditional_mod, n);
+      }
+
+      /* write-after-write deps. */
+      if (inst->dst.file == GRF) {
+         add_dep(last_grf_write[inst->dst.reg], n);
+         last_grf_write[inst->dst.reg] = n;
+      } else if (inst->dst.file == MRF) {
+         add_dep(last_mrf_write[inst->dst.reg], n);
+         last_mrf_write[inst->dst.reg] = n;
+     } else if (inst->dst.file == HW_REG &&
+                 inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
+         last_fixed_grf_write = n;
+      } else if (inst->dst.file != BAD_FILE) {
+         add_barrier_deps(n);
+      }
+
+      if (inst->mlen > 0) {
+         for (int i = 0; i < v->implied_mrf_writes(inst); i++) {
+            add_dep(last_mrf_write[inst->base_mrf + i], n);
+            last_mrf_write[inst->base_mrf + i] = n;
+         }
+      }
+
+      if (inst->conditional_mod) {
+         add_dep(last_conditional_mod, n, 0);
+         last_conditional_mod = n;
+      }
+   }
+
+   /* bottom-to-top dependencies: WAR */
+   memset(last_grf_write, 0, sizeof(last_grf_write));
+   memset(last_mrf_write, 0, sizeof(last_mrf_write));
+   last_conditional_mod = NULL;
+   last_fixed_grf_write = NULL;
+
+   exec_node *node;
+   exec_node *prev;
+   for (node = instructions.get_tail(), prev = node->prev;
+        !node->is_head_sentinel();
+        node = prev, prev = node->prev) {
+      schedule_node *n = (schedule_node *)node;
+      vec4_instruction *inst = (vec4_instruction *)n->inst;
+
+      /* write-after-read deps. */
+      for (int i = 0; i < 3; i++) {
+         if (inst->src[i].file == GRF) {
+            add_dep(n, last_grf_write[inst->src[i].reg]);
+         } else if (inst->src[i].file == HW_REG &&
+                    (inst->src[i].fixed_hw_reg.file ==
+                     BRW_GENERAL_REGISTER_FILE)) {
+            add_dep(n, last_fixed_grf_write);
+         } else if (inst->src[i].file != BAD_FILE &&
+                    inst->src[i].file != IMM &&
+                    inst->src[i].file != UNIFORM) {
+            assert(inst->src[i].file != MRF &&
+                   inst->src[i].file != ATTR);
+            add_barrier_deps(n);
+         }
+      }
+
+      for (int i = 0; i < inst->mlen; i++) {
+         /* It looks like the MRF regs are released in the send
+          * instruction once it's sent, not when the result comes
+          * back.
+          */
+         add_dep(n, last_mrf_write[inst->base_mrf + i], 2);
+      }
+
+      if (inst->predicate) {
+         add_dep(n, last_conditional_mod);
+      }
+
+      /* Update the things this instruction wrote, so earlier reads
+       * can mark this as WAR dependency.
+       */
+      if (inst->dst.file == GRF) {
+         last_grf_write[inst->dst.reg] = n;
+      } else if (inst->dst.file == MRF) {
+         last_mrf_write[inst->dst.reg] = n;
+      } else if (inst->dst.file == HW_REG &&
+                 inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
+         last_fixed_grf_write = n;
+      } else if (inst->dst.file != BAD_FILE) {
+         add_barrier_deps(n);
+      }
+
+      if (inst->mlen > 0) {
+         for (int i = 0; i < v->implied_mrf_writes(inst); i++) {
+            last_mrf_write[inst->base_mrf + i] = n;
+         }
+      }
+
+      if (inst->conditional_mod) {
+         last_conditional_mod = n;
+      }
+   }
+}
+
 schedule_node *
 fs_instruction_scheduler::choose_instruction_to_schedule()
 {
@@ -792,6 +970,27 @@ fs_instruction_scheduler::choose_instruction_to_schedule()
    return chosen;
 }
 
+schedule_node *
+vec4_instruction_scheduler::choose_instruction_to_schedule()
+{
+   schedule_node *chosen = NULL;
+   int chosen_time = 0;
+
+   /* Of the instructions ready to execute or the closest to being ready,
+    * choose the oldest one.
+    */
+   foreach_list(node, &instructions) {
+      schedule_node *n = (schedule_node *)node;
+
+      if (!chosen || n->unblocked_time < chosen_time) {
+         chosen = n;
+         chosen_time = n->unblocked_time;
+      }
+   }
+
+   return chosen;
+}
+
 int
 fs_instruction_scheduler::issue_time(backend_instruction *inst)
 {
@@ -799,6 +998,13 @@ fs_instruction_scheduler::issue_time(backend_instruction *inst)
       return 4;
    else
       return 2;
+}
+
+int
+vec4_instruction_scheduler::issue_time(backend_instruction *inst)
+{
+   /* We always execute as two vec4s in parallel. */
+   return 2;
 }
 
 void
@@ -925,6 +1131,19 @@ fs_visitor::schedule_instructions(bool post_reg_alloc)
    if (unlikely(INTEL_DEBUG & DEBUG_WM) && post_reg_alloc) {
       printf("fs%d estimated execution time: %d cycles\n",
              dispatch_width, sched.time);
+   }
+
+   this->live_intervals_valid = false;
+}
+
+void
+vec4_visitor::opt_schedule_instructions()
+{
+   vec4_instruction_scheduler sched(this, prog_data->total_grf);
+   sched.run(&instructions);
+
+   if (unlikely(debug_flag)) {
+      printf("vec4 estimated execution time: %d cycles\n", sched.time);
    }
 
    this->live_intervals_valid = false;

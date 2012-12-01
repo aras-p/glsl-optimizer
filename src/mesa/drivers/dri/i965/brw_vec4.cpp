@@ -259,6 +259,13 @@ vec4_visitor::implied_mrf_writes(vec4_instruction *inst)
       return 3;
    case SHADER_OPCODE_SHADER_TIME_ADD:
       return 0;
+   case SHADER_OPCODE_TEX:
+   case SHADER_OPCODE_TXL:
+   case SHADER_OPCODE_TXD:
+   case SHADER_OPCODE_TXF:
+   case SHADER_OPCODE_TXF_MS:
+   case SHADER_OPCODE_TXS:
+      return inst->header_present ? 1 : 0;
    default:
       assert(!"not reached");
       return inst->mlen;
@@ -1461,6 +1468,8 @@ vec4_visitor::run()
       if (failed)
          break;
    }
+
+   opt_schedule_instructions();
 
    opt_set_dependency_control();
 

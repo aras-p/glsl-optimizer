@@ -327,6 +327,7 @@ public:
    bool opt_algebraic();
    bool opt_register_coalesce();
    void opt_set_dependency_control();
+   void opt_schedule_instructions();
 
    bool can_do_source_mods(vec4_instruction *inst);
 
