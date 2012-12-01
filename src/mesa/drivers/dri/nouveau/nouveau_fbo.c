@@ -195,7 +195,7 @@ nouveau_renderbuffer_dri_new(GLenum format, __DRIdrawable *drawable)
 	rb->AllocStorage = nouveau_renderbuffer_dri_storage;
 
 	if (!set_renderbuffer_format(rb, format)) {
-		nouveau_renderbuffer_del(rb);
+		nouveau_renderbuffer_del(NULL, rb);
 		return NULL;
 	}
 
