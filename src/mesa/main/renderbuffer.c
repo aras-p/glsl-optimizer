@@ -160,10 +160,7 @@ _mesa_reference_renderbuffer_(struct gl_renderbuffer **ptr,
 
       if (deleteFlag) {
          GET_CURRENT_CONTEXT(ctx);
-         if (ctx)
-            oldRb->Delete(ctx, oldRb);
-         else
-            _mesa_problem(NULL, "Unable to delete renderbuffer, no context");
+         oldRb->Delete(ctx, oldRb);
       }
 
       *ptr = NULL;
