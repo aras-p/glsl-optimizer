@@ -122,3 +122,24 @@ TEST_F(register_coalesce_test, test_multiple_use)
 
    EXPECT_NE(mul->dst.file, MRF);
 }
+
+TEST_F(register_coalesce_test, test_dp4_mrf)
+{
+   src_reg some_src_1 = src_reg(v, glsl_type::vec4_type);
+   src_reg some_src_2 = src_reg(v, glsl_type::vec4_type);
+   dst_reg init;
+
+   dst_reg m0 = dst_reg(MRF, 0);
+   m0.writemask = WRITEMASK_Y;
+   m0.type = BRW_REGISTER_TYPE_F;
+
+   dst_reg temp = dst_reg(v, glsl_type::float_type);
+
+   vec4_instruction *dp4 = v->emit(v->DP4(temp, some_src_1, some_src_2));
+   v->emit(v->MOV(m0, src_reg(temp)));
+
+   register_coalesce(v);
+
+   EXPECT_EQ(dp4->dst.file, MRF);
+   EXPECT_EQ(dp4->dst.writemask, WRITEMASK_Y);
+}

@@ -600,6 +600,85 @@ vec4_visitor::move_push_constants_to_pull_constants()
    pack_uniform_registers();
 }
 
+bool
+vec4_instruction::can_reswizzle_dst(int dst_writemask,
+                                    int swizzle,
+                                    int swizzle_mask)
+{
+   /* If this instruction sets anything not referenced by swizzle, then we'd
+    * totally break it when we reswizzle.
+    */
+   if (dst.writemask & ~swizzle_mask)
+      return false;
+
+   switch (opcode) {
+   case BRW_OPCODE_DP4:
+   case BRW_OPCODE_DP3:
+   case BRW_OPCODE_DP2:
+      return true;
+   default:
+      /* Check if there happens to be no reswizzling required. */
+      for (int c = 0; c < 4; c++) {
+         int bit = 1 << BRW_GET_SWZ(swizzle, c);
+         /* Skip components of the swizzle not used by the dst. */
+         if (!(dst_writemask & (1 << c)))
+            continue;
+
+         /* We don't do the reswizzling yet, so just sanity check that we
+          * don't have to.
+          */
+         if (bit != (1 << c))
+            return false;
+      }
+      return true;
+   }
+}
+
+/**
+ * For any channels in the swizzle's source that were populated by this
+ * instruction, rewrite the instruction to put the appropriate result directly
+ * in those channels.
+ *
+ * e.g. for swizzle=yywx, MUL a.xy b c -> MUL a.yy_x b.yy z.yy_x
+ */
+void
+vec4_instruction::reswizzle_dst(int dst_writemask, int swizzle)
+{
+   int new_writemask = 0;
+
+   switch (opcode) {
+   case BRW_OPCODE_DP4:
+   case BRW_OPCODE_DP3:
+   case BRW_OPCODE_DP2:
+      for (int c = 0; c < 4; c++) {
+         int bit = 1 << BRW_GET_SWZ(swizzle, c);
+         /* Skip components of the swizzle not used by the dst. */
+         if (!(dst_writemask & (1 << c)))
+            continue;
+         /* If we were populating this component, then populate the
+          * corresponding channel of the new dst.
+          */
+         if (dst.writemask & bit)
+            new_writemask |= (1 << c);
+      }
+      dst.writemask = new_writemask;
+      break;
+   default:
+      for (int c = 0; c < 4; c++) {
+         int bit = 1 << BRW_GET_SWZ(swizzle, c);
+         /* Skip components of the swizzle not used by the dst. */
+         if (!(dst_writemask & (1 << c)))
+            continue;
+
+         /* We don't do the reswizzling yet, so just sanity check that we
+          * don't have to.
+          */
+         assert(bit == (1 << c));
+      }
+      break;
+   }
+}
+
 /*
  * Tries to reduce extra MOV instructions by taking GRFs that get just
  * written and then MOVed into an MRF and making the original write of
@@ -641,26 +720,20 @@ vec4_visitor::opt_compute_to_mrf()
        */
       bool chans_needed[4] = {false, false, false, false};
       int chans_remaining = 0;
+      int swizzle_mask = 0;
       for (int i = 0; i < 4; i++) {
 	 int chan = BRW_GET_SWZ(inst->src[0].swizzle, i);
 
 	 if (!(inst->dst.writemask & (1 << i)))
 	    continue;
 
-	 /* We don't handle compute-to-MRF across a swizzle.  We would
-	  * need to be able to rewrite instructions above to output
-	  * results to different channels.
-	  */
-	 if (chan != i)
-	    chans_remaining = 5;
+         swizzle_mask |= (1 << chan);
 
 	 if (!chans_needed[chan]) {
 	    chans_needed[chan] = true;
 	    chans_remaining++;
 	 }
       }
-      if (chans_remaining > 4)
-	 continue;
 
       /* Now walk up the instruction stream trying to see if we can
        * rewrite everything writing to the GRF into the MRF instead.
@@ -688,6 +761,13 @@ vec4_visitor::opt_compute_to_mrf()
 		  break;
 	       }
 	    }
+
+            /* If we can't handle the swizzle, bail. */
+            if (!scan_inst->can_reswizzle_dst(inst->dst.writemask,
+                                              inst->src[0].swizzle,
+                                              swizzle_mask)) {
+               break;
+            }
 
 	    /* Mark which channels we found unconditional writes for. */
 	    if (!scan_inst->predicate) {
@@ -759,10 +839,11 @@ vec4_visitor::opt_compute_to_mrf()
 	    if (scan_inst->dst.file == GRF &&
 		scan_inst->dst.reg == inst->src[0].reg &&
 		scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
+               scan_inst->reswizzle_dst(inst->dst.writemask,
+                                        inst->src[0].swizzle);
 	       scan_inst->dst.file = MRF;
 	       scan_inst->dst.reg = mrf;
 	       scan_inst->dst.reg_offset = 0;
-	       scan_inst->dst.writemask &= inst->dst.writemask;
 	       scan_inst->saturate |= inst->saturate;
 	    }
 	    scan_inst = (vec4_instruction *)scan_inst->next;
