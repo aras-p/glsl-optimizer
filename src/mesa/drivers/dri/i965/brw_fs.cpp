@@ -1837,7 +1837,7 @@ fs_visitor::register_coalesce_2()
       int reg_to = inst->dst.reg;
       int reg_to_offset = inst->dst.reg_offset;
 
-      foreach_list_safe(node, &this->instructions) {
+      foreach_list(node, &this->instructions) {
 	 fs_inst *scan_inst = (fs_inst *)node;
 
 	 if (scan_inst->dst.file == GRF &&
