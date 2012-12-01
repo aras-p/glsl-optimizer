@@ -105,30 +105,32 @@ void r300_flush(struct pipe_context *pipe,
     }
 
     /* Update Hyper-Z status. */
-    if (r300->num_z_clears) {
-        r300->hyperz_time_of_last_flush = os_time_get();
-    } else if (r300->hyperz_time_of_last_flush > 2000000) {
-        /* 2 seconds without a Z clear pretty much means a dead context
-         * for HyperZ. */
+    if (r300->hyperz_enabled) {
+        /* If there was a Z clear, keep Hyper-Z access. */
+        if (r300->num_z_clears) {
+            r300->hyperz_time_of_last_flush = os_time_get();
+            r300->num_z_clears = 0;
+        } else if (r300->hyperz_time_of_last_flush - os_time_get() > 2000000) {
+            /* If there hasn't been a Z clear for 2 seconds, revoke Hyper-Z access. */
+            r300->hiz_in_use = FALSE;
 
-        r300->hiz_in_use = FALSE;
+            /* Decompress the Z buffer. */
+            if (r300->zmask_in_use) {
+                if (r300->locked_zbuffer) {
+                    r300_decompress_zmask_locked(r300);
+                } else {
+                    r300_decompress_zmask(r300);
+                }
 
-        /* Decompress Z buffer. */
-        if (r300->zmask_in_use) {
-            if (r300->locked_zbuffer) {
-                r300_decompress_zmask_locked(r300);
-            } else {
-                r300_decompress_zmask(r300);
+                r300_flush_and_cleanup(r300, flags);
             }
 
-            r300_flush_and_cleanup(r300, flags);
+            /* Revoke Hyper-Z access, so that some other process can take it. */
+            r300->rws->cs_request_feature(r300->cs, RADEON_FID_R300_HYPERZ_ACCESS,
+                                          FALSE);
+            r300->hyperz_enabled = FALSE;
         }
-
-        /* Release HyperZ. */
-        r300->rws->cs_request_feature(r300->cs, RADEON_FID_R300_HYPERZ_ACCESS,
-                                      FALSE);
     }
-    r300->num_z_clears = 0;
 }
 
 static void r300_flush_wrapped(struct pipe_context *pipe,
