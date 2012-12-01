@@ -929,7 +929,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    _mesa_enable_2_1_extensions(mesaCtx);
     if (mesaCtx->Mesa_DXTn) {
        _mesa_enable_extension(mesaCtx, "GL_EXT_texture_compression_s3tc");
-       _mesa_enable_extension(mesaCtx, "GL_S3_s3tc");
+       _mesa_enable_extension(mesaCtx, "GL_ANGLE_texture_compression_dxt");
     }
     _mesa_enable_extension(mesaCtx, "GL_3DFX_texture_compression_FXT1");
 #if ENABLE_EXT_timer_query

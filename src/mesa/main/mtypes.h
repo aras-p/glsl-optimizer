@@ -3130,7 +3130,6 @@ struct gl_extensions
    GLboolean NV_texture_env_combine4;
    GLboolean NV_texture_rectangle;
    GLboolean TDFX_texture_compression_FXT1;
-   GLboolean S3_s3tc;
    GLboolean OES_EGL_image;
    GLboolean OES_draw_texture;
    GLboolean OES_depth_texture_cube_map;

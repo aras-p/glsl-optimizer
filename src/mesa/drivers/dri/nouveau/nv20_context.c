@@ -462,7 +462,7 @@ nv20_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 	ctx->Extensions.NV_texture_rectangle = true;
 	if (ctx->Mesa_DXTn) {
 		ctx->Extensions.EXT_texture_compression_s3tc = true;
-		ctx->Extensions.S3_s3tc = true;
+		ctx->Extensions.ANGLE_texture_compression_dxt = true;
 	}
 
 	/* GL constants. */

@@ -409,10 +409,11 @@ GLboolean r200CreateContext( gl_api api,
    }
    if (rmesa->radeon.glCtx.Mesa_DXTn) {
       ctx->Extensions.EXT_texture_compression_s3tc = true;
-      ctx->Extensions.S3_s3tc = true;
+      ctx->Extensions.ANGLE_texture_compression_dxt = true;
    }
    else if (driQueryOptionb (&rmesa->radeon.optionCache, "force_s3tc_enable")) {
       ctx->Extensions.EXT_texture_compression_s3tc = true;
+      ctx->Extensions.ANGLE_texture_compression_dxt = true;
    }
 
    ctx->Extensions.ARB_texture_cube_map = true;

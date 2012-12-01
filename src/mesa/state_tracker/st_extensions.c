@@ -454,7 +454,7 @@ void st_init_extensions(struct st_context *st)
           PIPE_FORMAT_LATC2_SNORM } },
 
       { { o(EXT_texture_compression_s3tc),
-          o(S3_s3tc) },
+          o(ANGLE_texture_compression_dxt) },
         { PIPE_FORMAT_DXT1_RGB,
           PIPE_FORMAT_DXT1_RGBA,
           PIPE_FORMAT_DXT3_RGBA,
@@ -611,7 +611,7 @@ void st_init_extensions(struct st_context *st)
 
    if (!ctx->Mesa_DXTn && !st_get_s3tc_override()) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_FALSE;
-      ctx->Extensions.S3_s3tc = GL_FALSE;
+      ctx->Extensions.ANGLE_texture_compression_dxt = GL_FALSE;
    }
 
    if (screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY,

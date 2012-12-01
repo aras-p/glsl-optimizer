@@ -37,6 +37,7 @@
 #include "formats.h"
 #include "mfeatures.h"
 #include "mtypes.h"
+#include "context.h"
 #include "texcompress.h"
 #include "texcompress_fxt1.h"
 #include "texcompress_rgtc.h"
@@ -264,7 +265,8 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
          n += 3;
       }
    }
-   if (ctx->Extensions.S3_s3tc) {
+   if (_mesa_is_desktop_gl(ctx)
+       && ctx->Extensions.ANGLE_texture_compression_dxt) {
       if (formats) {
          formats[n++] = GL_RGB_S3TC;
          formats[n++] = GL_RGB4_S3TC;

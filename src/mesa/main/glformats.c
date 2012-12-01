@@ -878,7 +878,8 @@ _mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
    case GL_RGB4_S3TC:
    case GL_RGBA_S3TC:
    case GL_RGBA4_S3TC:
-      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.S3_s3tc;
+      return _mesa_is_desktop_gl(ctx) &&
+         ctx->Extensions.ANGLE_texture_compression_dxt;
    case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:

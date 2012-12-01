@@ -215,7 +215,8 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.S3_s3tc) {
+   if (_mesa_is_desktop_gl(ctx)
+       && ctx->Extensions.ANGLE_texture_compression_dxt) {
       switch (internalFormat) {
          case GL_RGB_S3TC:
          case GL_RGB4_S3TC:

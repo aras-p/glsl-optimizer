@@ -180,7 +180,6 @@ intelInitExtensions(struct gl_context *ctx)
    if (intel->ctx.Mesa_DXTn) {
       ctx->Extensions.ANGLE_texture_compression_dxt = true;
       ctx->Extensions.EXT_texture_compression_s3tc = true;
-      ctx->Extensions.S3_s3tc = true;
    }
    else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
       ctx->Extensions.EXT_texture_compression_s3tc = true;
