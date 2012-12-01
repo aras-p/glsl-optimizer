@@ -980,6 +980,21 @@ r300_texture_create_object(struct r300_screen *rscreen,
 
     r300_texture_desc_init(rscreen, tex, base);
 
+    /* Figure out the ideal placement for the texture.. */
+    if (tex->domain & RADEON_DOMAIN_VRAM &&
+        tex->tex.size_in_bytes >= rscreen->info.vram_size) {
+        tex->domain &= ~RADEON_DOMAIN_VRAM;
+        tex->domain |= RADEON_DOMAIN_GTT;
+    }
+    if (tex->domain & RADEON_DOMAIN_GTT &&
+        tex->tex.size_in_bytes >= rscreen->info.gart_size) {
+        tex->domain &= ~RADEON_DOMAIN_GTT;
+    }
+    /* Just fail if the texture is too large. */
+    if (!tex->domain) {
+        goto fail;
+    }
+
     /* Create the backing buffer if needed. */
     if (!tex->buf) {
         tex->buf = rws->buffer_create(rws, tex->tex.size_in_bytes, 2048,
