@@ -399,11 +399,6 @@ void brw_debug_compact_uncompact(struct intel_context *intel,
 				 struct brw_instruction *orig,
 				 struct brw_instruction *uncompacted);
 
-/* brw_optimize.c */
-void brw_optimize(struct brw_compile *p);
-void brw_remove_duplicate_mrf_moves(struct brw_compile *p);
-void brw_remove_grf_to_mrf_moves(struct brw_compile *p);
-
 #ifdef __cplusplus
 }
 #endif

@@ -68,7 +68,6 @@ i965_FILES = \
 	brw_gs_state.c \
 	brw_lower_texture_gradients.cpp \
 	brw_misc_state.c \
-	brw_optimize.c \
 	brw_program.c \
 	brw_primitive_restart.c \
 	brw_queryobj.c \
