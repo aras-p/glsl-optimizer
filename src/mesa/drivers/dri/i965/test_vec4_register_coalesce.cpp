@@ -1,0 +1,124 @@
+/*
+ * Copyright © 2012 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#include <gtest/gtest.h>
+#include "brw_vec4.h"
+
+using namespace brw;
+
+int ret = 0;
+
+#define register_coalesce(v) _register_coalesce(v, __FUNCTION__)
+
+class register_coalesce_test : public ::testing::Test {
+   virtual void SetUp();
+
+public:
+   struct brw_context *brw;
+   struct intel_context *intel;
+   struct gl_context *ctx;
+   struct gl_shader_program *shader_prog;
+   struct brw_vs_compile *c;
+   vec4_visitor *v;
+};
+
+void register_coalesce_test::SetUp()
+{
+   brw = (struct brw_context *)calloc(1, sizeof(*brw));
+   intel = &brw->intel;
+   ctx = &intel->ctx;
+
+   c = ralloc(NULL, struct brw_vs_compile);
+   c->vp = ralloc(NULL, struct brw_vertex_program);
+
+   shader_prog = ralloc(NULL, struct gl_shader_program);
+
+   v = new vec4_visitor(brw, c, shader_prog, NULL, NULL);
+
+   _mesa_init_vertex_program(ctx, &c->vp->program, GL_VERTEX_SHADER, 0);
+
+   intel->gen = 4;
+}
+
+static void
+_register_coalesce(vec4_visitor *v, const char *func)
+{
+   bool print = false;
+
+   if (print) {
+      printf("%s: instructions before:\n", func);
+      v->dump_instructions();
+   }
+
+   v->opt_compute_to_mrf();
+
+   if (print) {
+      printf("%s: instructions after:\n", func);
+      v->dump_instructions();
+   }
+}
+
+TEST_F(register_coalesce_test, test_easy_success)
+{
+   src_reg something = src_reg(v, glsl_type::float_type);
+   dst_reg temp = dst_reg(v, glsl_type::float_type);
+   dst_reg init;
+
+   dst_reg m0 = dst_reg(MRF, 0);
+   m0.writemask = WRITEMASK_X;
+   m0.type = BRW_REGISTER_TYPE_F;
+
+   vec4_instruction *mul = v->emit(v->MUL(temp, something, src_reg(1.0f)));
+   v->emit(v->MOV(m0, src_reg(temp)));
+
+   register_coalesce(v);
+
+   EXPECT_EQ(mul->dst.file, MRF);
+}
+
+
+TEST_F(register_coalesce_test, test_multiple_use)
+{
+   src_reg something = src_reg(v, glsl_type::float_type);
+   dst_reg temp = dst_reg(v, glsl_type::vec4_type);
+   dst_reg init;
+
+   dst_reg m0 = dst_reg(MRF, 0);
+   m0.writemask = WRITEMASK_X;
+   m0.type = BRW_REGISTER_TYPE_F;
+
+   dst_reg m1 = dst_reg(MRF, 1);
+   m1.writemask = WRITEMASK_XYZW;
+   m1.type = BRW_REGISTER_TYPE_F;
+
+   src_reg src = src_reg(temp);
+   vec4_instruction *mul = v->emit(v->MUL(temp, something, src_reg(1.0f)));
+   src.swizzle = BRW_SWIZZLE_XXXX;
+   v->emit(v->MOV(m0, src));
+   src.swizzle = BRW_SWIZZLE_XYZW;
+   v->emit(v->MOV(m1, src));
+
+   register_coalesce(v);
+
+   EXPECT_NE(mul->dst.file, MRF);
+}
