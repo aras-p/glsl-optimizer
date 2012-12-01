@@ -42,6 +42,8 @@ _mesa_GetInternalformativ(GLenum target, GLenum internalformat, GLenum pname,
       return;
    }
 
+   assert(ctx->Driver.QuerySamplesForFormat != NULL);
+
    /* The ARB_internalformat_query spec says:
     *
     *     "If the <target> parameter to GetInternalformativ is not one of
@@ -91,13 +93,34 @@ _mesa_GetInternalformativ(GLenum target, GLenum internalformat, GLenum pname,
 
    switch (pname) {
    case GL_SAMPLES:
-      buffer[0] = ctx->Const.MaxSamples;
+      count = ctx->Driver.QuerySamplesForFormat(ctx, internalformat, buffer);
+      break;
+   case GL_NUM_SAMPLE_COUNTS: {
+      /* The driver can return 0, and we should pass that along to the
+       * application.  The ARB decided that ARB_internalformat_query should
+       * behave as ARB_internalformat_query2 in this situation.
+       *
+       * The ARB_internalformat_query2 spec says:
+       *
+       *     "- NUM_SAMPLE_COUNTS: The number of sample counts that would be
+       *        returned by querying SAMPLES is returned in <params>.
+       *        * If <internalformat> is not color-renderable,
+       *          depth-renderable, or stencil-renderable (as defined in
+       *          section 4.4.4), or if <target> does not support multiple
+       *          samples (ie other than TEXTURE_2D_MULTISAMPLE,
+       *          TEXTURE_2D_MULTISAMPLE_ARRAY, or RENDERBUFFER), 0 is
+       *          returned."
+       */
+      const size_t num_samples =
+         ctx->Driver.QuerySamplesForFormat(ctx, internalformat, buffer);
+
+      /* QuerySamplesForFormat writes some stuff to buffer, so we have to
+       * separately over-write it with the requested value.
+       */
+      buffer[0] = (GLint) num_samples;
       count = 1;
       break;
-   case GL_NUM_SAMPLE_COUNTS:
-      buffer[0] = 1;
-      count = 1;
-      break;
+   }
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glGetInternalformativ(pname=%s)",

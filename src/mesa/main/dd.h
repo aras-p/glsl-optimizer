@@ -201,6 +201,22 @@ struct dd_function_table {
                                      GLenum srcFormat, GLenum srcType );
 
    /**
+    * Determine sample counts support for a particular format
+    *
+    * \param ctx            GL context
+    * \param internalFormat GL format enum
+    * \param samples        Buffer to hold the returned sample counts.
+    *                       Drivers \b must \b not return more than 16 counts.
+    *
+    * \returns
+    * The number of sample counts actually written to \c samples.  If
+    * \c internaFormat is not renderable, zero is returned.
+    */
+   size_t (*QuerySamplesForFormat)(struct gl_context *ctx,
+                                   GLenum internalFormat,
+                                   int samples[16]);
+
+   /**
     * Called by glTexImage[123]D() and glCopyTexImage[12]D()
     * Allocate texture memory and copy the user's image to the buffer.
     * The gl_texture_image fields, etc. will be fully initialized.
