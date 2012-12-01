@@ -75,6 +75,34 @@ brw_shader_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    return true;
 }
 
+static void
+brw_lower_packing_builtins(struct brw_context *brw,
+                           gl_shader_type shader_type,
+                           exec_list *ir)
+{
+   int ops = LOWER_PACK_SNORM_2x16
+           | LOWER_UNPACK_SNORM_2x16
+           | LOWER_PACK_UNORM_2x16
+           | LOWER_UNPACK_UNORM_2x16;
+
+   if (brw->intel.gen >= 7) {
+      /* Gen7 introduced the f32to16 and f16to32 instructions, which can be
+       * used to execute packHalf2x16 and unpackHalf2x16. For AOS code, no
+       * lowering is needed. For SOA code, the Half2x16 ops must be
+       * scalarized.
+       */
+      if (shader_type == MESA_SHADER_FRAGMENT) {
+         ops |= LOWER_PACK_HALF_2x16_TO_SPLIT
+             |  LOWER_UNPACK_HALF_2x16_TO_SPLIT;
+      }
+   } else {
+      ops |= LOWER_PACK_HALF_2x16
+          |  LOWER_UNPACK_HALF_2x16;
+   }
+
+   lower_packing_builtins(ir, ops);
+}
+
 GLboolean
 brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 {
@@ -113,6 +141,10 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       shader->ir = new(shader) exec_list;
       clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
 
+      /* lower_packing_builtins() inserts arithmetic instructions, so it
+       * must precede lower_instructions().
+       */
+      brw_lower_packing_builtins(brw, (gl_shader_type) stage, shader->ir);
       do_mat_op_to_vec(shader->ir);
       lower_instructions(shader->ir,
 			 MOD_TO_FRACT |
