@@ -22,6 +22,7 @@
  */
 
 #include "brw_vec4.h"
+#include "brw_cfg.h"
 #include "glsl/ir_print_visitor.h"
 
 extern "C" {
@@ -618,6 +619,112 @@ vec4_visitor::move_push_constants_to_pull_constants()
 
    /* Repack push constants to remove the now-unused ones. */
    pack_uniform_registers();
+}
+
+/**
+ * Sets the dependency control fields on instructions after register
+ * allocation and before the generator is run.
+ *
+ * When you have a sequence of instructions like:
+ *
+ * DP4 temp.x vertex uniform[0]
+ * DP4 temp.y vertex uniform[0]
+ * DP4 temp.z vertex uniform[0]
+ * DP4 temp.w vertex uniform[0]
+ *
+ * The hardware doesn't know that it can actually run the later instructions
+ * while the previous ones are in flight, producing stalls.  However, we have
+ * manual fields we can set in the instructions that let it do so.
+ */
+void
+vec4_visitor::opt_set_dependency_control()
+{
+   vec4_instruction *last_grf_write[BRW_MAX_GRF];
+   uint8_t grf_channels_written[BRW_MAX_GRF];
+   vec4_instruction *last_mrf_write[BRW_MAX_GRF];
+   uint8_t mrf_channels_written[BRW_MAX_GRF];
+
+   cfg_t cfg(this);
+
+   assert(prog_data->total_grf || !"Must be called after register allocation");
+
+   for (int i = 0; i < cfg.num_blocks; i++) {
+      bblock_t *bblock = cfg.blocks[i];
+      vec4_instruction *inst;
+
+      memset(last_grf_write, 0, sizeof(last_grf_write));
+      memset(last_mrf_write, 0, sizeof(last_mrf_write));
+
+      for (inst = (vec4_instruction *)bblock->start;
+           inst != (vec4_instruction *)bblock->end->next;
+           inst = (vec4_instruction *)inst->next) {
+         /* If we read from a register that we were doing dependency control
+          * on, don't do dependency control across the read.
+          */
+         for (int i = 0; i < 3; i++) {
+            int reg = inst->src[i].reg + inst->src[i].reg_offset;
+            if (inst->src[i].file == GRF) {
+               last_grf_write[reg] = NULL;
+            } else if (inst->src[i].file == HW_REG) {
+               memset(last_grf_write, 0, sizeof(last_grf_write));
+               break;
+            }
+            assert(inst->src[i].file != MRF);
+         }
+
+         /* In the presence of send messages, totally interrupt dependency
+          * control.  They're long enough that the chance of dependency
+          * control around them just doesn't matter.
+          */
+         if (inst->mlen) {
+            memset(last_grf_write, 0, sizeof(last_grf_write));
+            memset(last_mrf_write, 0, sizeof(last_mrf_write));
+            continue;
+         }
+
+         /* It looks like setting dependency control on a predicated
+          * instruction hangs the GPU.
+          */
+         if (inst->predicate) {
+            memset(last_grf_write, 0, sizeof(last_grf_write));
+            memset(last_mrf_write, 0, sizeof(last_mrf_write));
+            continue;
+         }
+
+         /* Now, see if we can do dependency control for this instruction
+          * against a previous one writing to its destination.
+          */
+         int reg = inst->dst.reg + inst->dst.reg_offset;
+         if (inst->dst.file == GRF) {
+            if (last_grf_write[reg] &&
+                !(inst->dst.writemask & grf_channels_written[reg])) {
+               last_grf_write[reg]->no_dd_clear = true;
+               inst->no_dd_check = true;
+            } else {
+               grf_channels_written[reg] = 0;
+            }
+
+            last_grf_write[reg] = inst;
+            grf_channels_written[reg] |= inst->dst.writemask;
+         } else if (inst->dst.file == MRF) {
+            if (last_mrf_write[reg] &&
+                !(inst->dst.writemask & mrf_channels_written[reg])) {
+               last_mrf_write[reg]->no_dd_clear = true;
+               inst->no_dd_check = true;
+            } else {
+               mrf_channels_written[reg] = 0;
+            }
+
+            last_mrf_write[reg] = inst;
+            mrf_channels_written[reg] |= inst->dst.writemask;
+         } else if (inst->dst.reg == HW_REG) {
+            if (inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE)
+               memset(last_grf_write, 0, sizeof(last_grf_write));
+            if (inst->dst.fixed_hw_reg.file == BRW_MESSAGE_REGISTER_FILE)
+               memset(last_mrf_write, 0, sizeof(last_mrf_write));
+         }
+      }
+   }
 }
 
 bool
@@ -1354,6 +1461,8 @@ vec4_visitor::run()
       if (failed)
          break;
    }
+
+   opt_set_dependency_control();
 
    /* If any state parameters were appended, then ParameterValues could have
     * been realloced, in which case the driver uniform storage set up by

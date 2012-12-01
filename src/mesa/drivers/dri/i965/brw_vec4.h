@@ -172,6 +172,7 @@ public:
 
    bool saturate;
    bool force_writemask_all;
+   bool no_dd_clear, no_dd_check;
 
    int conditional_mod; /**< BRW_CONDITIONAL_* */
 
@@ -337,6 +338,7 @@ public:
    bool opt_copy_propagation();
    bool opt_algebraic();
    bool opt_register_coalesce();
+   void opt_set_dependency_control();
 
    bool can_do_source_mods(vec4_instruction *inst);
 
