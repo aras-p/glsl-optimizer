@@ -108,6 +108,8 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
 
    uint8_t *ra_reg_to_grf = ralloc_array(brw, uint8_t, ra_reg_count);
    struct ra_regs *regs = ra_alloc_reg_set(brw, ra_reg_count);
+   if (intel->gen >= 6)
+      ra_set_allocate_round_robin(regs);
    int *classes = ralloc_array(brw, int, class_count);
    int aligned_pairs_class = -1;
 

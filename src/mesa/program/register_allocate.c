@@ -70,6 +70,7 @@
  * this during ra_set_finalize().
  */
 
+#include <stdbool.h>
 #include <ralloc.h>
 
 #include "main/imports.h"
@@ -93,6 +94,8 @@ struct ra_regs {
 
    struct ra_class **classes;
    unsigned int class_count;
+
+   bool round_robin;
 };
 
 struct ra_class {
@@ -183,6 +186,22 @@ ra_alloc_reg_set(void *mem_ctx, unsigned int count)
    }
 
    return regs;
+}
+
+/**
+ * The register allocator by default prefers to allocate low register numbers,
+ * since it was written for hardware (gen4/5 Intel) that is limited in its
+ * multithreadedness by the number of registers used in a given shader.
+ *
+ * However, for hardware without that restriction, densely packed register
+ * allocation can put serious constraints on instruction scheduling.  This
+ * function tells the allocator to rotate around the registers if possible as
+ * it allocates the nodes.
+ */
+void
+ra_set_allocate_round_robin(struct ra_regs *regs)
+{
+   regs->round_robin = true;
 }
 
 static void
@@ -436,16 +455,19 @@ GLboolean
 ra_select(struct ra_graph *g)
 {
    int i;
+   int start_search_reg = 0;
 
    while (g->stack_count != 0) {
-      unsigned int r;
+      unsigned int ri;
+      unsigned int r = -1;
       int n = g->stack[g->stack_count - 1];
       struct ra_class *c = g->regs->classes[g->nodes[n].class];
 
       /* Find the lowest-numbered reg which is not used by a member
        * of the graph adjacent to us.
        */
-      for (r = 0; r < g->regs->count; r++) {
+      for (ri = 0; ri < g->regs->count; ri++) {
+         r = (start_search_reg + ri) % g->regs->count;
 	 if (!c->regs[r])
 	    continue;
 
@@ -461,12 +483,15 @@ ra_select(struct ra_graph *g)
 	 if (i == g->nodes[n].adjacency_count)
 	    break;
       }
-      if (r == g->regs->count)
+      if (ri == g->regs->count)
 	 return GL_FALSE;
 
       g->nodes[n].reg = r;
       g->nodes[n].in_stack = GL_FALSE;
       g->stack_count--;
+
+      if (g->regs->round_robin)
+         start_search_reg = r + 1;
    }
 
    return GL_TRUE;

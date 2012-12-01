@@ -37,6 +37,7 @@ struct ra_regs;
  * two real registers from which they are composed.
  */
 struct ra_regs *ra_alloc_reg_set(void *mem_ctx, unsigned int count);
+void ra_set_allocate_round_robin(struct ra_regs *regs);
 unsigned int ra_alloc_reg_class(struct ra_regs *regs);
 void ra_add_reg_conflict(struct ra_regs *regs,
 			 unsigned int r1, unsigned int r2);
