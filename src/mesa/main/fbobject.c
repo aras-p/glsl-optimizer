@@ -1207,24 +1207,6 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
       return ctx->API == API_OPENGL_COMPAT &&
              ctx->Extensions.EXT_texture_snorm &&
              ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
-   case GL_LUMINANCE_SNORM:
-   case GL_LUMINANCE8_SNORM:
-   case GL_LUMINANCE16_SNORM:
-      return ctx->API == API_OPENGL_COMPAT &&
-             ctx->Extensions.EXT_texture_snorm &&
-             ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE : 0;
-   case GL_LUMINANCE_ALPHA_SNORM:
-   case GL_LUMINANCE8_ALPHA8_SNORM:
-   case GL_LUMINANCE16_ALPHA16_SNORM:
-      return ctx->API == API_OPENGL_COMPAT &&
-             ctx->Extensions.EXT_texture_snorm &&
-             ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE_ALPHA : 0;
-   case GL_INTENSITY_SNORM:
-   case GL_INTENSITY8_SNORM:
-   case GL_INTENSITY16_SNORM:
-      return ctx->API == API_OPENGL_COMPAT &&
-             ctx->Extensions.EXT_texture_snorm &&
-             ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
    case GL_R16F:
    case GL_R32F:
       return ctx->Version >= 30
