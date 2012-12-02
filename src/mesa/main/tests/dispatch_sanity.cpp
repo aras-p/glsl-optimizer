@@ -497,6 +497,11 @@ const struct function gl_core_functions_possible[] = {
    { "glGetInfoLogARB", 31, -1 },
    { "glGetAttachedObjectsARB", 31, -1 },
 
+   /* GL_ARB_get_program_binary */
+   { "glGetProgramBinary", 30, -1 },
+   { "glProgramBinary", 30, -1 },
+   { "glProgramParameteri", 30, -1 },
+
    /* GL_EXT_transform_feedback */
    { "glBindBufferOffsetEXT", 31, -1 },
 
@@ -1256,6 +1261,11 @@ const struct function gles2_functions_possible[] = {
    { "glVertexAttrib4fv", 20, -1 },
    { "glVertexAttribPointer", 20, -1 },
    { "glViewport", 20, _gloffset_Viewport },
+
+   /* GL_OES_get_program_binary - Also part of OpenGL ES 3.0. */
+   { "glGetProgramBinaryOES", 20, -1 },
+   { "glProgramBinaryOES", 20, -1 },
+
    { NULL, 0, -1 }
 };
 
@@ -1315,8 +1325,7 @@ const struct function gles3_functions_possible[] = {
    { "glGetIntegeri_v", 30, -1 },
    // XXX: Missing implementation of ARB_internalformat_query
    // { "glGetInternalformativ", 30, -1 },
-   // XXX: Missing implementation of ARB_get_program_binary
-   /// { "glGetProgramBinary", 30, -1 },
+   // glGetProgramBinary aliases glGetProgramBinaryOES in GLES 2
    { "glGetQueryiv", 30, -1 },
    { "glGetQueryObjectuiv", 30, -1 },
    { "glGetSamplerParameterfv", 30, -1 },
@@ -1340,10 +1349,8 @@ const struct function gles3_functions_possible[] = {
    // We check for the aliased -EXT version in GLES 2
    // { "glMapBufferRange", 30, -1 },
    { "glPauseTransformFeedback", 30, -1 },
-   // XXX: Missing implementation of ARB_get_program_binary
-   // { "glProgramBinary", 30, -1 },
-   // XXX: Missing implementation of ARB_get_program_binary
-   // { "glProgramParameteri", 30, -1 },
+   // glProgramBinary aliases glProgramBinaryOES in GLES 2
+   { "glProgramParameteri", 30, -1 },
    // We check for the aliased -NV version in GLES 2
    // { "glReadBuffer", 30, -1 },
    { "glRenderbufferStorageMultisample", 30, -1 },
