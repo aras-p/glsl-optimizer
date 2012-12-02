@@ -832,11 +832,13 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
           * GLX_ARB_multisample
           */
          case GLX_SAMPLE_BUFFERS_ARB:
-            /* ms not supported */
-            return NULL;
          case GLX_SAMPLES_ARB:
-            /* ms not supported */
-            return NULL;
+            parselist++;
+            if (*parselist++ != 0) {
+               /* ms not supported */
+               return NULL;
+            }
+            break;
 
          /*
           * FBConfig attribs.
