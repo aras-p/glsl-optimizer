@@ -245,8 +245,6 @@ static void r300_clear(struct pipe_context* pipe,
 
         /* If we need Hyper-Z. */
         if (zmask_clear || hiz_clear) {
-            r300->num_z_clears++;
-
             /* Try to obtain the access to Hyper-Z buffers if we don't have one. */
             if (!r300->hyperz_enabled &&
                 (r300->screen->caps.is_r500 || debug_get_option_hyperz())) {
@@ -277,6 +275,7 @@ static void r300_clear(struct pipe_context* pipe,
                     r300->hiz_clear_value = r300_hiz_clear_value(depth);
                     r300_mark_atom_dirty(r300, &r300->hiz_clear);
                 }
+                r300->num_z_clears++;
             }
         }
     }
