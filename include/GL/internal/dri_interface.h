@@ -272,7 +272,11 @@ struct __DRItexBufferExtensionRec {
 #define __DRI2_FLUSH_DRAWABLE (1 << 0) /* the drawable should be flushed. */
 #define __DRI2_FLUSH_CONTEXT  (1 << 1) /* glFlush should be called */
 
-enum __DRI2throttleReason;
+enum __DRI2throttleReason {
+   __DRI2_THROTTLE_SWAPBUFFER,
+   __DRI2_THROTTLE_COPYSUBBUFFER,
+   __DRI2_THROTTLE_FLUSHFRONT
+};
 
 struct __DRI2flushExtensionRec {
     __DRIextension base;
@@ -318,12 +322,6 @@ struct __DRI2flushExtensionRec {
 
 #define __DRI2_THROTTLE "DRI2_Throttle"
 #define __DRI2_THROTTLE_VERSION 1
-
-enum __DRI2throttleReason {
-   __DRI2_THROTTLE_SWAPBUFFER,
-   __DRI2_THROTTLE_COPYSUBBUFFER,
-   __DRI2_THROTTLE_FLUSHFRONT
-};
 
 struct __DRI2throttleExtensionRec {
    __DRIextension base;
