@@ -14,4 +14,7 @@ C_SOURCES := \
 	nvc0_program.c \
 	nvc0_shader_state.c \
 	nvc0_query.c \
-	nvc0_video.c
+	nvc0_video.c \
+	nvc0_video_bsp.c \
+	nvc0_video_vp.c \
+	nvc0_video_ppp.c
