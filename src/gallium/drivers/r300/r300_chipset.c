@@ -24,11 +24,37 @@
 #include "r300_chipset.h"
 
 #include "util/u_debug.h"
+#include "util/u_memory.h"
 
 #include <stdio.h>
+#include <errno.h>
 
 /* r300_chipset: A file all to itself for deducing the various properties of
  * Radeons. */
+
+static void r300_apply_hyperz_blacklist(struct r300_capabilities* caps)
+{
+    static const char *list[] = {
+        "X",    /* the DDX or indirect rendering */
+        "Xorg", /* (alternative name) */
+        "check_gl_texture_size", /* compiz */
+        "Compiz",
+        "gnome-session-check-accelerated-helper",
+        "gnome-shell",
+        "kwin_opengl_test",
+        "kwin",
+        "firefox",
+    };
+    int i;
+
+    for (i = 0; i < Elements(list); i++) {
+        if (strcmp(list[i], program_invocation_short_name) == 0) {
+            caps->zmask_ram = 0;
+            caps->hiz_ram = 0;
+            break;
+        }
+    }
+}
 
 /* Parse a PCI ID and fill an r300_capabilities struct with information. */
 void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
@@ -138,4 +164,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
     if (caps->has_tcl) {
         caps->has_tcl = debug_get_bool_option("RADEON_NO_TCL", FALSE) ? FALSE : TRUE;
     }
+
+    r300_apply_hyperz_blacklist(caps);
 }
