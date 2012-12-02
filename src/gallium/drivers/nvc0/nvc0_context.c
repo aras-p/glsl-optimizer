@@ -261,7 +261,8 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    draw_set_rasterize_stage(nvc0->draw, nvc0_draw_render_stage(nvc0));
 #endif
 
-   nouveau_context_init_vdec(&nvc0->base);
+   pipe->create_video_decoder = nvc0_create_decoder;
+   pipe->create_video_buffer = nvc0_video_buffer_create;
 
    /* shader builtin library is per-screen, but we need a context for m2mf */
    nvc0_program_library_upload(nvc0);

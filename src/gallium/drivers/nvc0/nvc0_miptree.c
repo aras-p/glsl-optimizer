@@ -167,18 +167,15 @@ nvc0_miptree_init_layout_video(struct nv50_miptree *mt)
    const struct pipe_resource *pt = &mt->base.base;
    const unsigned blocksize = util_format_get_blocksize(pt->format);
 
-   unsigned nbx = util_format_get_nblocksx(pt->format, pt->width0);
-   unsigned nby = util_format_get_nblocksy(pt->format, pt->height0);
-
    assert(pt->last_level == 0);
-   assert(mt->ms_x == 0 &&
-          mt->ms_y == 0);
+   assert(mt->ms_x == 0 && mt->ms_y == 0);
    assert(!util_format_is_compressed(pt->format));
 
-   assert(nby > 8);
+   mt->layout_3d = pt->target == PIPE_TEXTURE_3D;
+
    mt->level[0].tile_mode = 0x10;
-   mt->level[0].pitch = align(nbx * blocksize, 64);
-   mt->total_size = align(nby, 16) * mt->level[0].pitch;
+   mt->level[0].pitch = align(pt->width0 * blocksize, 64);
+   mt->total_size = align(pt->height0, 16) * mt->level[0].pitch * (mt->layout_3d ? pt->depth0 : 1);
 
    if (pt->array_size > 1) {
       mt->layer_stride = align(mt->total_size, NVC0_TILE_SIZE(0x10));
