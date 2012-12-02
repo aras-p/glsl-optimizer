@@ -173,6 +173,8 @@ static uint32_t r300_hiz_clear_value(double depth)
     return r | (r << 8) | (r << 16) | (r << 24);
 }
 
+DEBUG_GET_ONCE_BOOL_OPTION(hyperz, "RADEON_HYPERZ", FALSE)
+
 /* Clear currently bound buffers. */
 static void r300_clear(struct pipe_context* pipe,
                        unsigned buffers,
@@ -246,7 +248,8 @@ static void r300_clear(struct pipe_context* pipe,
             r300->num_z_clears++;
 
             /* Try to obtain the access to Hyper-Z buffers if we don't have one. */
-            if (!r300->hyperz_enabled) {
+            if (!r300->hyperz_enabled &&
+                (r300->screen->caps.is_r500 || debug_get_option_hyperz())) {
                 r300->hyperz_enabled =
                     r300->rws->cs_request_feature(r300->cs,
                                                 RADEON_FID_R300_HYPERZ_ACCESS,

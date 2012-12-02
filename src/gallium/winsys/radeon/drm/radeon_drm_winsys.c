@@ -136,13 +136,17 @@ static boolean radeon_set_fd_access(struct radeon_drm_cs *applier,
     if (enable) {
         if (value) {
             *owner = applier;
-            fprintf(stderr, "radeon: Acquired Hyper-Z.\n");
+            if (request == RADEON_INFO_WANT_HYPERZ) {
+                printf("radeon: Acquired Hyper-Z.\n");
+            }
             pipe_mutex_unlock(*mutex);
             return TRUE;
         }
     } else {
         *owner = NULL;
-        fprintf(stderr, "radeon: Released Hyper-Z.\n");
+        if (request == RADEON_INFO_WANT_HYPERZ) {
+            printf("radeon: Released Hyper-Z.\n");
+        }
     }
 
     pipe_mutex_unlock(*mutex);
@@ -352,13 +356,9 @@ static boolean radeon_cs_request_feature(struct radeon_winsys_cs *rcs,
 
     switch (fid) {
     case RADEON_FID_R300_HYPERZ_ACCESS:
-        if (debug_get_bool_option("RADEON_HYPERZ", FALSE)) {
-            return radeon_set_fd_access(cs, &cs->ws->hyperz_owner,
-                                        &cs->ws->hyperz_owner_mutex,
-                                        RADEON_INFO_WANT_HYPERZ, enable);
-        } else {
-            return FALSE;
-        }
+        return radeon_set_fd_access(cs, &cs->ws->hyperz_owner,
+                                    &cs->ws->hyperz_owner_mutex,
+                                    RADEON_INFO_WANT_HYPERZ, enable);
 
     case RADEON_FID_R300_CMASK_ACCESS:
         if (debug_get_bool_option("RADEON_CMASK", FALSE)) {
