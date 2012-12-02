@@ -1571,6 +1571,9 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
 
    switch (pname) {
    case GL_GEOMETRY_VERTICES_OUT_ARB:
+      if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_geometry_shader4)
+         break;
+
       if (value < 1 ||
           (unsigned) value > ctx->Const.MaxGeometryOutputVertices) {
          _mesa_error(ctx, GL_INVALID_VALUE,
@@ -1579,8 +1582,11 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
          return;
       }
       shProg->Geom.VerticesOut = value;
-      break;
+      return;
    case GL_GEOMETRY_INPUT_TYPE_ARB:
+      if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_geometry_shader4)
+         break;
+
       switch (value) {
       case GL_POINTS:
       case GL_LINES:
@@ -1595,8 +1601,11 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
                      _mesa_lookup_enum_by_nr(value));
          return;
       }
-      break;
+      return;
    case GL_GEOMETRY_OUTPUT_TYPE_ARB:
+      if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_geometry_shader4)
+         break;
+
       switch (value) {
       case GL_POINTS:
       case GL_LINE_STRIP:
@@ -1609,12 +1618,13 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
                      _mesa_lookup_enum_by_nr(value));
          return;
       }
-      break;
+      return;
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameteri(pname=%s)",
-                  _mesa_lookup_enum_by_nr(pname));
       break;
    }
+
+   _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameteri(pname=%s)",
+               _mesa_lookup_enum_by_nr(pname));
 }
 
 void
