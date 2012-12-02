@@ -676,15 +676,16 @@ ir_reader::read_expression(s_expression *expr)
 {
    s_expression *s_type;
    s_symbol *s_op;
-   s_expression *s_arg1;
+   s_expression *s_arg[3];
 
-   s_pattern pat[] = { "expression", s_type, s_op, s_arg1 };
+   s_pattern pat[] = { "expression", s_type, s_op, s_arg[0] };
    if (!PARTIAL_MATCH(expr, pat)) {
       ir_read_error(expr, "expected (expression <type> <operator> "
 			  "<operand> [<operand>])");
       return NULL;
    }
-   s_expression *s_arg2 = (s_expression *) s_arg1->next; // may be tail sentinel
+   s_arg[1] = (s_expression *) s_arg[0]->next; // may be tail sentinel
+   s_arg[2] = (s_expression *) s_arg[1]->next; // may be tail sentinel or NULL
 
    const glsl_type *type = read_type(s_type);
    if (type == NULL)
@@ -697,35 +698,27 @@ ir_reader::read_expression(s_expression *expr)
       return NULL;
    }
     
-   unsigned num_operands = ir_expression::get_num_operands(op);
-   if (num_operands == 1 && !s_arg1->next->is_tail_sentinel()) {
-      ir_read_error(expr, "expected (expression <type> %s <operand>)",
-		    s_op->value());
+   int num_operands = -3; /* skip "expression" <type> <operation> */
+   foreach_list(n, &((s_list *) expr)->subexpressions)
+      ++num_operands;
+
+   int expected_operands = ir_expression::get_num_operands(op);
+   if (num_operands != expected_operands) {
+      ir_read_error(expr, "found %d expression operands, expected %d",
+                    num_operands, expected_operands);
       return NULL;
    }
 
-   ir_rvalue *arg1 = read_rvalue(s_arg1);
-   ir_rvalue *arg2 = NULL;
-   if (arg1 == NULL) {
-      ir_read_error(NULL, "when reading first operand of %s", s_op->value());
-      return NULL;
-   }
-
-   if (num_operands == 2) {
-      if (s_arg2->is_tail_sentinel() || !s_arg2->next->is_tail_sentinel()) {
-	 ir_read_error(expr, "expected (expression <type> %s <operand> "
-			     "<operand>)", s_op->value());
-	 return NULL;
-      }
-      arg2 = read_rvalue(s_arg2);
-      if (arg2 == NULL) {
-	 ir_read_error(NULL, "when reading second operand of %s",
-		       s_op->value());
-	 return NULL;
+   ir_rvalue *arg[3] = {NULL, NULL, NULL};
+   for (int i = 0; i < num_operands; i++) {
+      arg[i] = read_rvalue(s_arg[i]);
+      if (arg[i] == NULL) {
+         ir_read_error(NULL, "when reading operand #%d of %s", i, s_op->value());
+         return NULL;
       }
    }
 
-   return new(mem_ctx) ir_expression(op, type, arg1, arg2);
+   return new(mem_ctx) ir_expression(op, type, arg[0], arg[1], arg[2]);
 }
 
 ir_swizzle *
