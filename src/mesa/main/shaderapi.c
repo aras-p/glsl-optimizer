@@ -1502,7 +1502,7 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
 
 
 void GLAPIENTRY
-_mesa_ProgramParameteriARB(GLuint program, GLenum pname, GLint value)
+_mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
 {
    struct gl_shader_program *shProg;
    GET_CURRENT_CONTEXT(ctx);
@@ -1556,7 +1556,7 @@ _mesa_ProgramParameteriARB(GLuint program, GLenum pname, GLint value)
       }
       break;
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameteriARB(pname=%s)",
+      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameteri(pname=%s)",
                   _mesa_lookup_enum_by_nr(pname));
       break;
    }
