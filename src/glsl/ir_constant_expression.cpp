@@ -1248,6 +1248,19 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       }
       break;
 
+   case ir_triop_lrp: {
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(op[1]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(op[2]->type->base_type == GLSL_TYPE_FLOAT);
+
+      unsigned c2_inc = op[2]->type->is_scalar() ? 0 : 1;
+      for (unsigned c = 0, c2 = 0; c < components; c2 += c2_inc, c++) {
+         data.f[c] = op[0]->value.f[c] * (1.0f - op[2]->value.f[c2]) +
+                     (op[1]->value.f[c] * op[2]->value.f[c2]);
+      }
+      break;
+   }
+
    case ir_quadop_vector:
       for (unsigned c = 0; c < this->type->vector_elements; c++) {
 	 switch (this->type->base_type) {

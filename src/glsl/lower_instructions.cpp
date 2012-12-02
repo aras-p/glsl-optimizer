@@ -37,6 +37,7 @@
  * - POW_TO_EXP2
  * - LOG_TO_LOG2
  * - MOD_TO_FRACT
+ * - LRP_TO_ARITH
  *
  * SUB_TO_ADD_NEG:
  * ---------------
@@ -79,12 +80,19 @@
  * Many GPUs don't have a MOD instruction (945 and 965 included), and
  * if we have to break it down like this anyway, it gives an
  * opportunity to do things like constant fold the (1.0 / op1) easily.
+ *
+ * LRP_TO_ARITH:
+ * -------------
+ * Converts ir_triop_lrp to (op0 * (1.0f - op2)) + (op1 * op2).
  */
 
 #include "main/core.h" /* for M_LOG2E */
 #include "glsl_types.h"
 #include "ir.h"
+#include "ir_builder.h"
 #include "ir_optimization.h"
+
+using namespace ir_builder;
 
 class lower_instructions_visitor : public ir_hierarchical_visitor {
 public:
@@ -105,6 +113,7 @@ private:
    void exp_to_exp2(ir_expression *);
    void pow_to_exp2(ir_expression *);
    void log_to_log2(ir_expression *);
+   void lrp_to_arith(ir_expression *);
 };
 
 /**
@@ -268,6 +277,27 @@ lower_instructions_visitor::mod_to_fract(ir_expression *ir)
    this->progress = true;
 }
 
+void
+lower_instructions_visitor::lrp_to_arith(ir_expression *ir)
+{
+   /* (lrp x y a) -> x*(1-a) + y*a */
+
+   /* Save op2 */
+   ir_variable *temp = new(ir) ir_variable(ir->operands[2]->type, "lrp_factor",
+					   ir_var_temporary);
+   this->base_ir->insert_before(temp);
+   this->base_ir->insert_before(assign(temp, ir->operands[2]));
+
+   ir_constant *one = new(ir) ir_constant(1.0f);
+
+   ir->operation = ir_binop_add;
+   ir->operands[0] = mul(ir->operands[0], sub(one, temp));
+   ir->operands[1] = mul(ir->operands[1], temp);
+   ir->operands[2] = NULL;
+
+   this->progress = true;
+}
+
 ir_visitor_status
 lower_instructions_visitor::visit_leave(ir_expression *ir)
 {
@@ -302,6 +332,11 @@ lower_instructions_visitor::visit_leave(ir_expression *ir)
    case ir_binop_pow:
       if (lowering(POW_TO_EXP2))
 	 pow_to_exp2(ir);
+      break;
+
+   case ir_triop_lrp:
+      if (lowering(LRP_TO_ARITH))
+	 lrp_to_arith(ir);
       break;
 
    default:

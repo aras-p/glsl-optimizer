@@ -468,6 +468,12 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[1]->type == glsl_type::uint_type);
       break;
 
+   case ir_triop_lrp:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->operands[0]->type == ir->operands[1]->type);
+      assert(ir->operands[2]->type == ir->operands[0]->type || ir->operands[2]->type == glsl_type::float_type);
+      break;
+
    case ir_quadop_vector:
       /* The vector operator collects some number of scalars and generates a
        * vector from them.

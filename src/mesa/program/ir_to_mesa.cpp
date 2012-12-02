@@ -1478,6 +1478,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       assert(!"not supported");
       break;
 
+   case ir_triop_lrp:
+      assert(!"ir_triop_lrp should have been lowered.");
+      break;
+
    case ir_quadop_vector:
       /* This operation should have already been handled.
        */
@@ -2993,7 +2997,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	 /* Lowering */
 	 do_mat_op_to_vec(ir);
 	 lower_instructions(ir, (MOD_TO_FRACT | DIV_TO_MUL_RCP | EXP_TO_EXP2
-				 | LOG_TO_LOG2 | INT_DIV_TO_MUL_RCP
+				 | LOG_TO_LOG2 | INT_DIV_TO_MUL_RCP | LRP_TO_ARITH
 				 | ((options->EmitNoPow) ? POW_TO_EXP2 : 0)));
 
 	 progress = do_lower_jumps(ir, true, true, options->EmitNoMainReturn, options->EmitNoCont, options->EmitNoLoops) || progress;

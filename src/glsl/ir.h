@@ -1118,6 +1118,13 @@ enum ir_expression_operation {
     */
    ir_last_binop = ir_binop_ubo_load,
 
+   ir_triop_lrp,
+
+   /**
+    * A sentinel marking the last of the ternary operations.
+    */
+   ir_last_triop = ir_triop_lrp,
+
    ir_quadop_vector,
 
    /**

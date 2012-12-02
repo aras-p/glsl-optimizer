@@ -416,6 +416,9 @@ ir_expression::get_num_operands(ir_expression_operation op)
    if (op <= ir_last_binop)
       return 2;
 
+   if (op <= ir_last_triop)
+      return 3;
+
    if (op == ir_quadop_vector)
       return 4;
 
@@ -502,6 +505,7 @@ static const char *const operator_strs[] = {
    "pow",
    "packHalf2x16_split",
    "ubo_load",
+   "lrp",
    "vector",
 };
 
