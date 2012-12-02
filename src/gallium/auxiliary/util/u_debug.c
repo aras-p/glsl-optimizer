@@ -436,7 +436,7 @@ void debug_funclog_enter_exit(const char* f, const int line, const char* file)
 
 #ifdef DEBUG
 /**
- * Dump an image to a .raw or .ppm file (depends on OS).
+ * Dump an image to .ppm file.
  * \param format  PIPE_FORMAT_x
  * \param cpp  bytes per pixel
  * \param width  width in pixels
@@ -444,56 +444,48 @@ void debug_funclog_enter_exit(const char* f, const int line, const char* file)
  * \param stride  row stride in bytes
  */
 void debug_dump_image(const char *prefix,
-                      unsigned format, unsigned cpp,
+                      enum pipe_format format, unsigned cpp,
                       unsigned width, unsigned height,
                       unsigned stride,
                       const void *data)     
 {
    /* write a ppm file */
    char filename[256];
+   unsigned char *rgb8;
    FILE *f;
 
    util_snprintf(filename, sizeof(filename), "%s.ppm", prefix);
 
-   f = fopen(filename, "w");
+   rgb8 = MALLOC(height * width * 3);
+   if (!rgb8) {
+      return;
+   }
+
+   util_format_translate(
+         PIPE_FORMAT_R8G8B8_UNORM,
+         rgb8, width * 3,
+         0, 0,
+         format,
+         data, stride,
+         0, 0, width, height);
+
+   /* Must be opened in binary mode or DOS line ending causes data
+    * to be read with one byte offset.
+    */
+   f = fopen(filename, "wb");
    if (f) {
-      int i, x, y;
-      int r, g, b;
-      const uint8_t *ptr = (uint8_t *) data;
-
-      /* XXX this is a hack */
-      switch (format) {
-      case PIPE_FORMAT_B8G8R8A8_UNORM:
-         r = 2;
-         g = 1;
-         b = 0;
-         break;
-      default:
-         r = 0;
-         g = 1;
-         b = 1;
-      }
-
       fprintf(f, "P6\n");
-      fprintf(f, "# ppm-file created by osdemo.c\n");
+      fprintf(f, "# ppm-file created by gallium\n");
       fprintf(f, "%i %i\n", width, height);
       fprintf(f, "255\n");
-      fclose(f);
-
-      f = fopen(filename, "ab");  /* reopen in binary append mode */
-      for (y = 0; y < height; y++) {
-         for (x = 0; x < width; x++) {
-            i = y * stride + x * cpp;
-            fputc(ptr[i + r], f); /* write red */
-            fputc(ptr[i + g], f); /* write green */
-            fputc(ptr[i + b], f); /* write blue */
-         }
-      }
+      fwrite(rgb8, 1, height * width * 3, f);
       fclose(f);
    }
    else {
       fprintf(stderr, "Can't open %s for writing\n", filename);
    }
+
+   FREE(rgb8);
 }
 
 /* FIXME: dump resources, not surfaces... */

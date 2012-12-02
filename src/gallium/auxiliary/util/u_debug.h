@@ -41,6 +41,8 @@
 
 #include "os/os_misc.h"
 
+#include "pipe/p_format.h"
+
 
 #ifdef	__cplusplus
 extern "C" {
@@ -418,7 +420,7 @@ struct pipe_transfer;
 struct pipe_resource;
 
 void debug_dump_image(const char *prefix,
-                      unsigned format, unsigned cpp,
+                      enum pipe_format format, unsigned cpp,
                       unsigned width, unsigned height,
                       unsigned stride,
                       const void *data);
