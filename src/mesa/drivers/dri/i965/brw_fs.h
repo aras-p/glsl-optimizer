@@ -285,6 +285,7 @@ public:
    fs_inst *IF(fs_reg src0, fs_reg src1, uint32_t condition);
    fs_inst *CMP(fs_reg dst, fs_reg src0, fs_reg src1,
                 uint32_t condition);
+   fs_inst *LRP(fs_reg dst, fs_reg a, fs_reg y, fs_reg x);
    fs_inst *DEP_RESOLVE_MOV(int grf);
 
    int type_size(const struct glsl_type *type);
@@ -361,6 +362,7 @@ public:
    fs_reg fix_math_operand(fs_reg src);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0, fs_reg src1);
+   void emit_lrp(fs_reg dst, fs_reg x, fs_reg y, fs_reg a);
    void emit_minmax(uint32_t conditionalmod, fs_reg dst,
                     fs_reg src0, fs_reg src1);
    bool try_emit_saturate(ir_expression *ir);

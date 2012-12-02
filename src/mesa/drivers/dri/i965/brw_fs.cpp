@@ -146,6 +146,13 @@ fs_inst::fs_inst(enum opcode opcode, fs_reg dst,
       return new(mem_ctx) fs_inst(BRW_OPCODE_##op, dst, src0, src1);    \
    }
 
+#define ALU3(op)                                                        \
+   fs_inst *                                                            \
+   fs_visitor::op(fs_reg dst, fs_reg src0, fs_reg src1, fs_reg src2)    \
+   {                                                                    \
+      return new(mem_ctx) fs_inst(BRW_OPCODE_##op, dst, src0, src1, src2);\
+   }
+
 ALU1(NOT)
 ALU1(MOV)
 ALU1(FRC)
@@ -161,6 +168,7 @@ ALU2(XOR)
 ALU2(SHL)
 ALU2(SHR)
 ALU2(ASR)
+ALU3(LRP)
 
 /** Gen4 predicated IF. */
 fs_inst *

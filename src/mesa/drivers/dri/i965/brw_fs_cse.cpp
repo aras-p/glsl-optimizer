@@ -66,6 +66,7 @@ is_expression(const fs_inst *const inst)
    case BRW_OPCODE_LINE:
    case BRW_OPCODE_PLN:
    case BRW_OPCODE_MAD:
+   case BRW_OPCODE_LRP:
    case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
    case FS_OPCODE_CINTERP:
    case FS_OPCODE_LINTERP:

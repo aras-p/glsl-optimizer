@@ -135,7 +135,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    ir_expression *expr = ir->rhs->as_expression();
    bool found_vector = false;
    unsigned int i, vector_elements = 1;
-   ir_variable *op_var[2];
+   ir_variable *op_var[3];
 
    if (!expr)
       return visit_continue;
@@ -340,6 +340,20 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
 
    case ir_binop_ubo_load:
       assert(!"not yet supported");
+      break;
+
+   case ir_triop_lrp:
+      for (i = 0; i < vector_elements; i++) {
+	 ir_rvalue *op0 = get_element(op_var[0], i);
+	 ir_rvalue *op1 = get_element(op_var[1], i);
+	 ir_rvalue *op2 = get_element(op_var[2], i);
+
+	 assign(ir, i, new(mem_ctx) ir_expression(expr->operation,
+						  element_type,
+						  op0,
+						  op1,
+						  op2));
+      }
       break;
 
    case ir_unop_pack_snorm_2x16:
