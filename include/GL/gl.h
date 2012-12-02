@@ -169,8 +169,8 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
  */
 
 /* Boolean values */
-#define GL_FALSE				0x0
-#define GL_TRUE					0x1
+#define GL_FALSE				0
+#define GL_TRUE					1
 
 /* Data types */
 #define GL_BYTE					0x1400
@@ -370,8 +370,8 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_BLEND				0x0BE2
 #define GL_BLEND_SRC				0x0BE1
 #define GL_BLEND_DST				0x0BE0
-#define GL_ZERO					0x0
-#define GL_ONE					0x1
+#define GL_ZERO					0
+#define GL_ONE					1
 #define GL_SRC_COLOR				0x0300
 #define GL_ONE_MINUS_SRC_COLOR			0x0301
 #define GL_SRC_ALPHA				0x0302
@@ -461,7 +461,7 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_DECR					0x1E03
 
 /* Buffers, Pixel Drawing/Reading */
-#define GL_NONE					0x0
+#define GL_NONE					0
 #define GL_LEFT					0x0406
 #define GL_RIGHT				0x0407
 /*GL_FRONT					0x0404 */
@@ -689,7 +689,7 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_EXTENSIONS				0x1F03
 
 /* Errors */
-#define GL_NO_ERROR 				0x0
+#define GL_NO_ERROR 				0
 #define GL_INVALID_ENUM				0x0500
 #define GL_INVALID_VALUE			0x0501
 #define GL_INVALID_OPERATION			0x0502
