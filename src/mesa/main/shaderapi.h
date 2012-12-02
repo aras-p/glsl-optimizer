@@ -190,6 +190,14 @@ _mesa_ShaderBinary(GLint n, const GLuint *shaders, GLenum binaryformat,
                    const void* binary, GLint length);
 
 extern void GLAPIENTRY
+_mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
+                       GLenum *binaryFormat, GLvoid *binary);
+
+extern void GLAPIENTRY
+_mesa_ProgramBinary(GLuint program, GLenum binaryFormat,
+                    const GLvoid *binary, GLsizei length);
+
+extern void GLAPIENTRY
 _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value);
 
 void

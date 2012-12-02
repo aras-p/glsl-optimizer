@@ -1500,6 +1500,61 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
 
 #endif /* FEATURE_ES2 */
 
+void GLAPIENTRY
+_mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
+                       GLenum *binaryFormat, GLvoid *binary)
+{
+   struct gl_shader_program *shProg;
+   GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetProgramBinary");
+   if (!shProg)
+      return;
+
+   if (!shProg->LinkStatus) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetProgramBinary(program %u not linked)",
+                  shProg->Name);
+      return;
+   }
+
+   if (bufSize < 0){
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramBinary(bufSize < 0)");
+      return;
+   }
+
+   /* The ARB_get_program_binary spec says:
+    *
+    *     "If <length> is NULL, then no length is returned."
+    */
+   if (length != NULL)
+      *length = 0;
+
+   (void) binaryFormat;
+   (void) binary;
+}
+
+void GLAPIENTRY
+_mesa_ProgramBinary(GLuint program, GLenum binaryFormat,
+                    const GLvoid *binary, GLsizei length)
+{
+   struct gl_shader_program *shProg;
+   GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glProgramBinary");
+   if (!shProg)
+      return;
+
+   (void) binaryFormat;
+   (void) binary;
+   (void) length;
+   _mesa_error(ctx, GL_INVALID_OPERATION, __FUNCTION__);
+}
+
 
 void GLAPIENTRY
 _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
