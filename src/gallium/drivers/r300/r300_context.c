@@ -199,9 +199,9 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(texture_cache_inval, 2);
     R300_INIT_ATOM(textures_state, 0);
     /* HiZ Clear */
-    R300_INIT_ATOM(hiz_clear, r300->screen->caps.hiz_ram > 0 ? 4 : 0);
+    R300_INIT_ATOM(hiz_clear, r300->screen->caps.hiz_ram > 0 ? 6 : 0);
     /* zmask clear */
-    R300_INIT_ATOM(zmask_clear, r300->screen->caps.zmask_ram > 0 ? 4 : 0);
+    R300_INIT_ATOM(zmask_clear, r300->screen->caps.zmask_ram > 0 ? 6 : 0);
     /* ZB (unpipelined), SU. */
     R300_INIT_ATOM(query_start, 4);
 
