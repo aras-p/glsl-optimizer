@@ -258,7 +258,7 @@ static const struct brw_tracked_state *gen8_atoms[] =
    &brw_wm_prog,
 
    /* Command packets: */
-   &brw_state_base_address,
+   &gen8_state_base_address,
 
    &brw_cc_vp,
    &gen7_cc_viewport_state_pointer, /* must do after brw_cc_vp */
