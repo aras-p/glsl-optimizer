@@ -72,7 +72,7 @@ static const __DRI2flushExtension dri2FlushExtension = {
  */
 static __DRIbuffer *
 dri2_drawable_get_buffers(struct dri_drawable *drawable,
-                          const enum st_attachment_type *statts,
+                          const enum st_attachment_type *atts,
                           unsigned *count)
 {
    __DRIdrawable *dri_drawable = drawable->dPriv;
@@ -97,11 +97,11 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
       unsigned bind;
       int att, depth;
 
-      dri_drawable_get_format(drawable, statts[i], &format, &bind);
+      dri_drawable_get_format(drawable, atts[i], &format, &bind);
       if (format == PIPE_FORMAT_NONE)
          continue;
 
-      switch (statts[i]) {
+      switch (atts[i]) {
       case ST_ATTACHMENT_FRONT_LEFT:
          /* already added */
          if (!with_format)
@@ -117,18 +117,13 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
       case ST_ATTACHMENT_BACK_RIGHT:
          att = __DRI_BUFFER_BACK_RIGHT;
          break;
-      case ST_ATTACHMENT_DEPTH_STENCIL:
-         att = __DRI_BUFFER_DEPTH_STENCIL;
-         break;
       default:
-         att = -1;
-         break;
+         continue;
       }
 
       /*
        * In this switch statement we must support all formats that
-       * may occur as the stvis->color_format or
-       * stvis->depth_stencil_format.
+       * may occur as the stvis->color_format.
        */
       switch(format) {
       case PIPE_FORMAT_B8G8R8A8_UNORM:
@@ -140,33 +135,14 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
       case PIPE_FORMAT_B5G6R5_UNORM:
 	 depth = 16;
 	 break;
-      case PIPE_FORMAT_Z16_UNORM:
-	 att = __DRI_BUFFER_DEPTH;
-	 depth = 16;
-	 break;
-      case PIPE_FORMAT_Z24X8_UNORM:
-      case PIPE_FORMAT_X8Z24_UNORM:
-	 att = __DRI_BUFFER_DEPTH;
-	 depth = 24;
-	 break;
-      case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-      case PIPE_FORMAT_S8_UINT_Z24_UNORM:
-	 depth = 32;
-	 break;
-      case PIPE_FORMAT_Z32_UNORM:
-	 att = __DRI_BUFFER_DEPTH;
-	 depth = 32;
-	 break;
       default:
 	 depth = util_format_get_blocksizebits(format);
 	 assert(!"Unexpected format in dri2_drawable_get_buffers()");
       }
 
-      if (att >= 0) {
-         attachments[num_attachments++] = att;
-         if (with_format) {
-            attachments[num_attachments++] = depth;
-         }
+      attachments[num_attachments++] = att;
+      if (with_format) {
+         attachments[num_attachments++] = depth;
       }
    }
 
@@ -195,19 +171,21 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
  */
 static void
 dri2_drawable_process_buffers(struct dri_drawable *drawable,
-                              __DRIbuffer *buffers, unsigned count)
+                              __DRIbuffer *buffers, unsigned buffer_count,
+                              const enum st_attachment_type *atts,
+                              unsigned att_count)
 {
    struct dri_screen *screen = dri_screen(drawable->sPriv);
    __DRIdrawable *dri_drawable = drawable->dPriv;
    struct pipe_resource templ;
    struct winsys_handle whandle;
-   boolean have_depth = FALSE;
+   boolean alloc_depthstencil = FALSE;
    unsigned i, bind;
 
-   if (drawable->old_num == count &&
+   if (drawable->old_num == buffer_count &&
        drawable->old_w == dri_drawable->w &&
        drawable->old_h == dri_drawable->h &&
-       memcmp(drawable->old, buffers, sizeof(__DRIbuffer) * count) == 0)
+       memcmp(drawable->old, buffers, sizeof(__DRIbuffer) * buffer_count) == 0)
       return;
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
@@ -223,7 +201,8 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
 
    memset(&whandle, 0, sizeof(whandle));
 
-   for (i = 0; i < count; i++) {
+   /* Process DRI-provided buffers and get pipe_resources. */
+   for (i = 0; i < buffer_count; i++) {
       __DRIbuffer *buf = &buffers[i];
       enum st_attachment_type statt;
       enum pipe_format format;
@@ -231,8 +210,7 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
       switch (buf->attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
          if (!screen->auto_fake_front) {
-            statt = ST_ATTACHMENT_INVALID;
-            break;
+            continue; /* invalid attachment */
          }
          /* fallthrough */
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
@@ -241,25 +219,12 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
       case __DRI_BUFFER_BACK_LEFT:
          statt = ST_ATTACHMENT_BACK_LEFT;
          break;
-      case __DRI_BUFFER_DEPTH:
-      case __DRI_BUFFER_DEPTH_STENCIL:
-      case __DRI_BUFFER_STENCIL:
-         /* use only the first depth/stencil buffer */
-         if (!have_depth) {
-            have_depth = TRUE;
-            statt = ST_ATTACHMENT_DEPTH_STENCIL;
-         }
-         else {
-            statt = ST_ATTACHMENT_INVALID;
-         }
-         break;
       default:
-         statt = ST_ATTACHMENT_INVALID;
-         break;
+         continue; /* invalid attachment */
       }
 
       dri_drawable_get_format(drawable, statt, &format, &bind);
-      if (statt == ST_ATTACHMENT_INVALID || format == PIPE_FORMAT_NONE)
+      if (format == PIPE_FORMAT_NONE)
          continue;
 
       templ.format = format;
@@ -272,10 +237,34 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
                &templ, &whandle);
    }
 
-   drawable->old_num = count;
+   /* See if we need a depth-stencil buffer. */
+   for (i = 0; i < att_count; i++) {
+      if (atts[i] == ST_ATTACHMENT_DEPTH_STENCIL) {
+         alloc_depthstencil = TRUE;
+         break;
+      }
+   }
+
+   /* Allocate a private depth-stencil buffer. */
+   if (alloc_depthstencil) {
+      enum pipe_format format;
+      unsigned bind;
+
+      dri_drawable_get_format(drawable, ST_ATTACHMENT_DEPTH_STENCIL,
+                              &format, &bind);
+      if (format) {
+         templ.format = format;
+         templ.bind = bind;
+
+         drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL] =
+            screen->base.screen->resource_create(screen->base.screen, &templ);
+      }
+   }
+
+   drawable->old_num = buffer_count;
    drawable->old_w = dri_drawable->w;
    drawable->old_h = dri_drawable->h;
-   memcpy(drawable->old, buffers, sizeof(__DRIbuffer) * count);
+   memcpy(drawable->old, buffers, sizeof(__DRIbuffer) * buffer_count);
 }
 
 static __DRIbuffer *
@@ -372,14 +361,15 @@ dri2_release_buffer(__DRIscreen *sPriv, __DRIbuffer *bPriv)
 static void
 dri2_allocate_textures(struct dri_drawable *drawable,
                        const enum st_attachment_type *statts,
-                       unsigned count)
+                       unsigned statts_count)
 {
    __DRIbuffer *buffers;
-   unsigned num_buffers = count;
+   unsigned num_buffers = statts_count;
 
    buffers = dri2_drawable_get_buffers(drawable, statts, &num_buffers);
    if (buffers)
-      dri2_drawable_process_buffers(drawable, buffers, num_buffers);
+      dri2_drawable_process_buffers(drawable, buffers, num_buffers,
+                                    statts, statts_count);
 }
 
 static void
