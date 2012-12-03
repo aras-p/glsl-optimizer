@@ -269,6 +269,8 @@ struct st_context_attribs
    struct st_config_options options;
 };
 
+struct st_context_iface;
+
 /**
  * Represent a windowing system drawable.
  *
@@ -313,7 +315,8 @@ struct st_framebuffer_iface
     *
     * @att is one of the front buffer attachments.
     */
-   boolean (*flush_front)(struct st_framebuffer_iface *stfbi,
+   boolean (*flush_front)(struct st_context_iface *stctx,
+                          struct st_framebuffer_iface *stfbi,
                           enum st_attachment_type statt);
 
    /**

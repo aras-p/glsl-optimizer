@@ -100,14 +100,16 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
 }
 
 static boolean
-dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
+dri_st_framebuffer_flush_front(struct st_context_iface *stctx,
+                               struct st_framebuffer_iface *stfbi,
                                enum st_attachment_type statt)
 {
+   struct dri_context *ctx = (struct dri_context *)stctx->st_manager_private;
    struct dri_drawable *drawable =
       (struct dri_drawable *) stfbi->st_manager_private;
 
    /* XXX remove this and just set the correct one on the framebuffer */
-   drawable->flush_frontbuffer(drawable, statt);
+   drawable->flush_frontbuffer(ctx, drawable, statt);
 
    return TRUE;
 }

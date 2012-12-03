@@ -789,7 +789,7 @@ st_manager_flush_frontbuffer(struct st_context *st)
 
    /* never a dummy fb */
    assert(&stfb->Base != _mesa_get_incomplete_framebuffer());
-   stfb->iface->flush_front(stfb->iface, ST_ATTACHMENT_FRONT_LEFT);
+   stfb->iface->flush_front(&st->iface, stfb->iface, ST_ATTACHMENT_FRONT_LEFT);
 }
 
 /**

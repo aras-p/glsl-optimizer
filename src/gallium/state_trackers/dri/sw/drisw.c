@@ -158,10 +158,10 @@ drisw_swap_buffers(__DRIdrawable *dPriv)
 }
 
 static void
-drisw_flush_frontbuffer(struct dri_drawable *drawable,
+drisw_flush_frontbuffer(struct dri_context *ctx,
+                        struct dri_drawable *drawable,
                         enum st_attachment_type statt)
 {
-   struct dri_context *ctx = dri_get_current(drawable->sPriv);
    struct pipe_resource *ptex;
 
    if (!ctx)

@@ -373,7 +373,8 @@ dri2_allocate_textures(struct dri_drawable *drawable,
 }
 
 static void
-dri2_flush_frontbuffer(struct dri_drawable *drawable,
+dri2_flush_frontbuffer(struct dri_context *ctx,
+                       struct dri_drawable *drawable,
                        enum st_attachment_type statt)
 {
    __DRIdrawable *dri_drawable = drawable->dPriv;

@@ -253,7 +253,8 @@ xmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
  * Called via st_framebuffer_iface::flush_front()
  */
 static boolean
-xmesa_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
+xmesa_st_framebuffer_flush_front(struct st_context_iface *stctx,
+                                 struct st_framebuffer_iface *stfbi,
                                  enum st_attachment_type statt)
 {
    struct xmesa_st_framebuffer *xstfb = xmesa_st_framebuffer(stfbi);

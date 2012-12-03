@@ -91,7 +91,7 @@ vg_manager_flush_frontbuffer(struct vg_context *ctx)
    switch (stfb->strb_att) {
    case ST_ATTACHMENT_FRONT_LEFT:
    case ST_ATTACHMENT_FRONT_RIGHT:
-      stfb->iface->flush_front(stfb->iface, stfb->strb_att);
+      stfb->iface->flush_front(&ctx->iface, stfb->iface, stfb->strb_att);
       break;
    default:
       break;

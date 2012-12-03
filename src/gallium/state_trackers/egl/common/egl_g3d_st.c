@@ -113,7 +113,8 @@ egl_g3d_destroy_st_manager(struct st_manager *smapi)
 }
 
 static boolean
-egl_g3d_st_framebuffer_flush_front_pbuffer(struct st_framebuffer_iface *stfbi,
+egl_g3d_st_framebuffer_flush_front_pbuffer(struct st_context_iface *stctx,
+                                           struct st_framebuffer_iface *stfbi,
                                            enum st_attachment_type statt)
 {
    return TRUE;
@@ -187,7 +188,8 @@ egl_g3d_st_framebuffer_validate_pbuffer(struct st_framebuffer_iface *stfbi,
 }
 
 static boolean
-egl_g3d_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
+egl_g3d_st_framebuffer_flush_front(struct st_context_iface *stctx,
+                                   struct st_framebuffer_iface *stfbi,
                                    enum st_attachment_type statt)
 {
    _EGLSurface *surf = (_EGLSurface *) stfbi->st_manager_private;

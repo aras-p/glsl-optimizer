@@ -171,7 +171,8 @@ stw_st_framebuffer_present_locked(HDC hdc,
 }
 
 static boolean
-stw_st_framebuffer_flush_front(struct st_framebuffer_iface *stfb,
+stw_st_framebuffer_flush_front(struct st_context_iface *stctx,
+                               struct st_framebuffer_iface *stfb,
                                enum st_attachment_type statt)
 {
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);

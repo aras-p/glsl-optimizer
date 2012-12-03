@@ -75,7 +75,8 @@ struct dri_drawable
 
    void (*update_drawable_info)(struct dri_drawable *drawable);
 
-   void (*flush_frontbuffer)(struct dri_drawable *drawable,
+   void (*flush_frontbuffer)(struct dri_context *ctx,
+                             struct dri_drawable *drawable,
                              enum st_attachment_type statt);
 
    void (*update_tex_buffer)(struct dri_drawable *drawable,
