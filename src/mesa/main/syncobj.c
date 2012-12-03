@@ -55,6 +55,7 @@
  * \author Ian Romanick <ian.d.romanick@intel.com>
  */
 
+#include <inttypes.h>
 #include "glheader.h"
 #include "imports.h"
 #include "context.h"
@@ -357,7 +358,8 @@ _mesa_WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
    }
 
    if (timeout != GL_TIMEOUT_IGNORED) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glWaitSync(timeout=0x%lx)", timeout);
+      _mesa_error(ctx, GL_INVALID_VALUE, "glWaitSync(timeout=0x%" PRIx64 ")",
+                  (uint64_t) timeout);
       return;
    }
 
