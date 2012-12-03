@@ -105,6 +105,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_VERTEX_COLOR_CLAMPED:
         case PIPE_CAP_USER_INDEX_BUFFERS:
         case PIPE_CAP_USER_CONSTANT_BUFFERS:
+        case PIPE_CAP_DEPTH_CLIP_DISABLE: /* XXX implemented, but breaks Regnum Online */
             return 1;
 
         case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
@@ -131,7 +132,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
         case PIPE_CAP_INDEP_BLEND_ENABLE:
         case PIPE_CAP_INDEP_BLEND_FUNC:
-        case PIPE_CAP_DEPTH_CLIP_DISABLE:
         case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
         case PIPE_CAP_SHADER_STENCIL_EXPORT:
         case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
