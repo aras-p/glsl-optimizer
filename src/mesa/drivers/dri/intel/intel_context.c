@@ -476,6 +476,7 @@ static const struct dri_debug_control debug_control[] = {
    { "buf",   DEBUG_BUFMGR},
    { "reg",   DEBUG_REGION},
    { "fbo",   DEBUG_FBO},
+   { "fs",    DEBUG_WM },
    { "gs",    DEBUG_GS},
    { "sync",  DEBUG_SYNC},
    { "prim",  DEBUG_PRIMS },
