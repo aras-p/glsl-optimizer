@@ -164,13 +164,25 @@ dri_fill_in_modes(struct dri_screen *screen)
       }
 
       if (num_msaa_modes) {
+         /* Single-sample configs with an accumulation buffer. */
          new_configs = driCreateConfigs(mesa_formats[format],
                                         depth_bits_array, stencil_bits_array,
                                         depth_buffer_factor, back_buffer_modes,
                                         Elements(back_buffer_modes),
-                                        msaa_modes, num_msaa_modes,
+                                        msaa_modes, 1,
                                         GL_TRUE);
          configs = driConcatConfigs(configs, new_configs);
+
+         /* Multi-sample configs without an accumulation buffer. */
+         if (num_msaa_modes > 1) {
+            new_configs = driCreateConfigs(mesa_formats[format],
+                                           depth_bits_array, stencil_bits_array,
+                                           depth_buffer_factor, back_buffer_modes,
+                                           Elements(back_buffer_modes),
+                                           msaa_modes+1, num_msaa_modes-1,
+                                           GL_FALSE);
+            configs = driConcatConfigs(configs, new_configs);
+         }
       }
    }
 
