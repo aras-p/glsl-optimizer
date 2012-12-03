@@ -34,8 +34,54 @@ include $(LOCAL_PATH)/Makefile.sources
 LOCAL_MODULE := libmesa_dri_common
 LOCAL_MODULE_CLASS := STATIC_LIBRARIES
 
-LOCAL_C_INCLUDES := $(MESA_DRI_C_INCLUDES)
+intermediates := $(call local-intermediates-dir)
+
+LOCAL_C_INCLUDES := \
+    $(intermediates) \
+    $(MESA_DRI_C_INCLUDES)
+
 LOCAL_SRC_FILES := $(mesa_dri_common_SOURCES)
+
+LOCAL_GENERATED_SOURCES := \
+    $(intermediates)/xmlpool/options.h
+
+#
+# Generate options.h from gettext translations.
+#
+
+MESA_DRI_OPTIONS_LANGS := de es nl fr sv
+POT := $(intermediates)/xmlpool.pot
+
+$(POT): $(LOCAL_PATH)/xmlpool/t_options.h
+	@mkdir -p $(dir $@)
+	xgettext -L C --from-code utf-8 -o $@ $<
+
+$(intermediates)/xmlpool/%.po: $(LOCAL_PATH)/xmlpool/%.po $(POT)
+	lang=$(basename $(notdir $@)); \
+	mkdir -p $(dir $@); \
+	if [ -f $< ]; then \
+		msgmerge -o $@ $^; \
+	else \
+		msginit -i $(POT) \
+			-o $@ \
+			--locale=$$lang \
+			--no-translator; \
+		sed -i -e 's/charset=.*\\n/charset=UTF-8\\n/' $@; \
+	fi
+
+$(intermediates)/xmlpool/%/LC_MESSAGES/options.mo: $(intermediates)/xmlpool/%.po
+	mkdir -p $(dir $@)
+	msgfmt -o $@ $<
+
+$(intermediates)/xmlpool/options.h: PRIVATE_SCRIPT := $(LOCAL_PATH)/xmlpool/gen_xmlpool.py
+$(intermediates)/xmlpool/options.h: PRIVATE_LOCALEDIR := $(intermediates)/xmlpool
+$(intermediates)/xmlpool/options.h: PRIVATE_TEMPLATE_HEADER := $(LOCAL_PATH)/xmlpool/t_options.h
+$(intermediates)/xmlpool/options.h: PRIVATE_MO_FILES := $(MESA_DRI_OPTIONS_LANGS:%=$(intermediates)/xmlpool/%/LC_MESSAGES/options.mo)
+$(intermediates)/xmlpool/options.h: $(PRIVATE_SCRIPT) $(PRIVATE_TEMPLATE_HEADER) $(PRIVATE_MO_FILES)
+	mkdir -p $(dir $@)
+	mkdir -p $(PRIVATE_LOCALEDIR)
+	$(MESA_PYTHON2) $(PRIVATE_SCRIPT) $(PRIVATE_TEMPLATE_HEADER) \
+		$(PRIVATE_LOCALEDIR) $(MESA_DRI_OPTIONS_LANGS) > $@
 
 include $(MESA_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)

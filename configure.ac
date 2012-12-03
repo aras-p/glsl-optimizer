@@ -2104,6 +2104,7 @@ AC_CONFIG_FILES([Makefile
 		src/mesa/drivers/Makefile
 		src/mesa/drivers/dri/dri.pc
 		src/mesa/drivers/dri/common/Makefile
+		src/mesa/drivers/dri/common/xmlpool/Makefile
 		src/mesa/drivers/dri/i915/Makefile
 		src/mesa/drivers/dri/i965/Makefile
 		src/mesa/drivers/dri/Makefile

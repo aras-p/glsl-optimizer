@@ -54,16 +54,15 @@ POT=xmlpool.pot
 
 all: options.h
 
-# Only intermediate files are cleaned up. options.h is not deleted because
-# it's in CVS. 
+# All generated files are cleaned up.
 clean:
-	-rm -f $(POT) *~
+	-rm -f $(POT) options.h *~
 	-rm -rf $(LANGS)
 
 # Default target options.h
 options.h: LOCALEDIR := .
 options.h: t_options.h mo
-	$(PYTHON2) $(PYTHON_FLAGS) gen_xmlpool.py t_options.h $(LOCALEDIR) $(LANGS) > options.h
+	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/gen_xmlpool.py t_options.h $(LOCALEDIR) $(LANGS) > options.h
 
 # Update .mo files from the corresponding .po files.
 mo:
