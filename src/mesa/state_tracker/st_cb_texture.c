@@ -59,6 +59,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "util/u_tile.h"
 #include "util/u_blit.h"
+#include "util/u_blitter.h"
 #include "util/u_format.h"
 #include "util/u_surface.h"
 #include "util/u_sampler.h"
@@ -922,12 +923,12 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    enum pipe_format dest_format, src_format;
-   GLboolean matching_base_formats;
-   GLuint color_writemask, zs_writemask, sample_count;
+   GLuint color_writemask;
    struct pipe_surface *dest_surface = NULL;
    GLboolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
    struct pipe_surface surf_tmpl;
-   unsigned int dst_usage;
+   unsigned dst_usage;
+   unsigned blit_mask;
    GLint srcY0, srcY1;
 
    /* make sure finalize_textures has been called? 
@@ -939,12 +940,6 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
       return;
    }
 
-   sample_count = strb->surface->texture->nr_samples;
-   /* I believe this would be legal, presumably would need to do a resolve
-      for color, and for depth/stencil spec says to just use one of the
-      depth/stencil samples per pixel? Need some transfer clarifications. */
-   assert(sample_count < 2);
-
    assert(strb);
    assert(strb->surface);
    assert(stImage->pt);
@@ -952,19 +947,21 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    src_format = strb->surface->format;
    dest_format = stImage->pt->format;
 
-   /*
-    * Determine if the src framebuffer and dest texture have the same
-    * base format.  We need this to detect a case such as the framebuffer
-    * being GL_RGBA but the texture being GL_RGB.  If the actual hardware
-    * texture format stores RGBA we need to set A=1 (overriding the
-    * framebuffer's alpha values).  We can't do that with the blit or
-    * textured-quad paths.
-    */
-   matching_base_formats =
-      (_mesa_get_format_base_format(strb->Base.Format) ==
-       _mesa_get_format_base_format(texImage->TexFormat));
+   if (do_flip) {
+      srcY1 = strb->Base.Height - srcY - height;
+      srcY0 = srcY1 + height;
+   }
+   else {
+      srcY0 = srcY;
+      srcY1 = srcY0 + height;
+   }
 
    if (ctx->_ImageTransferState) {
+      goto fallback;
+   }
+
+   /* Compressed and subsampled textures aren't supported for blitting. */
+   if (!util_format_is_plain(dest_format)) {
       goto fallback;
    }
 
@@ -978,67 +975,117 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
       goto fallback;
    }
 
-   if (matching_base_formats &&
-       src_format == dest_format &&
-       !do_flip) {
-      /* use surface_copy() / blit */
-      struct pipe_box src_box;
-      unsigned dstLevel;
+   /* Set the blit writemask. */
+   switch (texBaseFormat) {
+   case GL_DEPTH_STENCIL:
+      switch (strb->Base._BaseFormat) {
+      case GL_DEPTH_STENCIL:
+         blit_mask = PIPE_MASK_ZS;
+         break;
+      case GL_DEPTH_COMPONENT:
+         blit_mask = PIPE_MASK_Z;
+         break;
+      case GL_STENCIL_INDEX:
+         blit_mask = PIPE_MASK_S;
+         break;
+      default:
+         assert(0);
+         return;
+      }
+      dst_usage = PIPE_BIND_DEPTH_STENCIL;
+      break;
 
-      u_box_2d_zslice(srcX, srcY, strb->surface->u.tex.first_layer,
-                      width, height, &src_box);
+   case GL_DEPTH_COMPONENT:
+      blit_mask = PIPE_MASK_Z;
+      dst_usage = PIPE_BIND_DEPTH_STENCIL;
+      break;
 
+   default:
+      /* Colorbuffers.
+       *
+       * Determine if the src framebuffer and dest texture have the same
+       * base format.  We need this to detect a case such as the framebuffer
+       * being GL_RGBA but the texture being GL_RGB.  If the actual hardware
+       * texture format stores RGBA we need to set A=1 (overriding the
+       * framebuffer's alpha values).
+       *
+       * XXX util_blit_pixels doesn't support MSAA resolve, so always use
+       *     pipe->blit
+       */
+      if (texBaseFormat == strb->Base._BaseFormat ||
+          strb->texture->nr_samples > 1) {
+         blit_mask = PIPE_MASK_RGBA;
+      }
+      else {
+         blit_mask = 0;
+      }
+      dst_usage = PIPE_BIND_RENDER_TARGET;
+   }
+
+   /* Blit the texture.
+    * This supports flipping, format conversions, and downsampling.
+    */
+   if (blit_mask) {
       /* If stImage->pt is an independent image (not a pointer into a full
        * mipmap) stImage->pt.last_level will be zero and we need to use that
        * as the dest level.
        */
-      dstLevel = MIN2(stImage->base.Level, stImage->pt->last_level);
+      unsigned dstLevel = MIN2(stImage->base.Level, stImage->pt->last_level);
+      struct pipe_blit_info blit;
 
-      /* for resource_copy_region(), y=0=top, always */
-      pipe->resource_copy_region(pipe,
-                                 /* dest */
-                                 stImage->pt,
-                                 dstLevel,
-                                 destX, destY, destZ + stImage->base.Face,
-                                 /* src */
-                                 strb->texture,
-                                 strb->surface->u.tex.level,
-                                 &src_box);
+      memset(&blit, 0, sizeof(blit));
+      blit.src.resource = strb->texture;
+      blit.src.format = src_format;
+      blit.src.level = strb->surface->u.tex.level;
+      blit.src.box.x = srcX;
+      blit.src.box.y = srcY0;
+      blit.src.box.z = strb->surface->u.tex.first_layer;
+      blit.src.box.width = width;
+      blit.src.box.height = srcY1 - srcY0;
+      blit.src.box.depth = 1;
+      blit.dst.resource = stImage->pt;
+      blit.dst.format = dest_format;
+      blit.dst.level = dstLevel;
+      blit.dst.box.x = destX;
+      blit.dst.box.y = destY;
+      blit.dst.box.z = stImage->base.Face + destZ;
+      blit.dst.box.width = width;
+      blit.dst.box.height = height;
+      blit.dst.box.depth = 1;
+      blit.mask = blit_mask;
+      blit.filter = PIPE_TEX_FILTER_NEAREST;
+
+      /* try resource_copy_region in case the format is not supported
+       * for rendering */
+      if (util_try_blit_via_copy_region(pipe, &blit)) {
+         return; /* done */
+      }
+
+      /* check the format support */
+      if (!screen->is_format_supported(screen, src_format,
+                                       PIPE_TEXTURE_2D, 0,
+                                       PIPE_BIND_SAMPLER_VIEW) ||
+          !screen->is_format_supported(screen, dest_format,
+                                       PIPE_TEXTURE_2D, 0,
+                                       dst_usage)) {
+         goto fallback;
+      }
+
+      pipe->blit(pipe, &blit);
       return;
    }
 
-   if (texBaseFormat == GL_DEPTH_STENCIL) {
-      goto fallback;
-   }
+   /* try u_blit */
+   color_writemask = compatible_src_dst_formats(ctx, &strb->Base, texImage);
 
-   if (texBaseFormat == GL_DEPTH_COMPONENT) {
-      color_writemask = 0;
-      zs_writemask = BLIT_WRITEMASK_Z;
-      dst_usage = PIPE_BIND_DEPTH_STENCIL;
-   }
-   else {
-      color_writemask = compatible_src_dst_formats(ctx, &strb->Base, texImage);
-      zs_writemask = 0;
-      dst_usage = PIPE_BIND_RENDER_TARGET;
-   }
-
-   if ((!color_writemask && !zs_writemask) ||
+   if (!color_writemask ||
        !screen->is_format_supported(screen, src_format,
-                                    PIPE_TEXTURE_2D, sample_count,
+                                    PIPE_TEXTURE_2D, 0,
                                     PIPE_BIND_SAMPLER_VIEW) ||
        !screen->is_format_supported(screen, dest_format,
                                     PIPE_TEXTURE_2D, 0,
                                     dst_usage)) {
       goto fallback;
-   }
-
-   if (do_flip) {
-      srcY1 = strb->Base.Height - srcY - height;
-      srcY0 = srcY1 + height;
-   }
-   else {
-      srcY0 = srcY;
-      srcY1 = srcY0 + height;
    }
 
    /* Disable conditional rendering. */
@@ -1065,7 +1112,7 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
                     destX, destY,
                     destX + width, destY + height,
                     0.0, PIPE_TEX_MIPFILTER_NEAREST,
-                    color_writemask, zs_writemask);
+                    color_writemask, 0);
    pipe_surface_reference(&dest_surface, NULL);
 
    /* Restore conditional rendering state. */
