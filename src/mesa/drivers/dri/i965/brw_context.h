@@ -1732,6 +1732,10 @@ gen6_get_sample_position(struct gl_context *ctx,
                          GLuint index,
                          GLfloat *result);
 
+/* gen8_multisample_state.c */
+void gen8_emit_3dstate_multisample(struct brw_context *brw, unsigned num_samp);
+void gen8_emit_3dstate_sample_pattern(struct brw_context *brw);
+
 /* gen7_urb.c */
 void
 gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,

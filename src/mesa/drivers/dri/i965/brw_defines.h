@@ -2024,12 +2024,17 @@ enum brw_wm_barycentric_interp_mode {
 /* DW3: SVB maximum index */
 
 #define _3DSTATE_MULTISAMPLE			0x790d /* GEN6+ */
+#define GEN8_3DSTATE_MULTISAMPLE		0x780d /* GEN8+ */
 /* DW1 */
 # define MS_PIXEL_LOCATION_CENTER			(0 << 4)
 # define MS_PIXEL_LOCATION_UPPER_LEFT			(1 << 4)
 # define MS_NUMSAMPLES_1				(0 << 1)
+# define MS_NUMSAMPLES_2				(1 << 1)
 # define MS_NUMSAMPLES_4				(2 << 1)
 # define MS_NUMSAMPLES_8				(3 << 1)
+# define MS_NUMSAMPLES_16				(4 << 1)
+
+#define _3DSTATE_SAMPLE_PATTERN                 0x791c
 
 #define _3DSTATE_STENCIL_BUFFER			0x790e /* ILK, SNB */
 #define _3DSTATE_HIER_DEPTH_BUFFER		0x790f /* ILK, SNB */

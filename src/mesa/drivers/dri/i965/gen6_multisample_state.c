@@ -64,6 +64,8 @@ gen6_emit_3dstate_multisample(struct brw_context *brw,
    uint32_t sample_positions_3210 = 0;
    uint32_t sample_positions_7654 = 0;
 
+   assert(brw->gen < 8);
+
    switch (num_samples) {
    case 0:
    case 1:

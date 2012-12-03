@@ -294,7 +294,7 @@ static const struct brw_tracked_state *gen8_atoms[] =
    &brw_fs_samplers,
    &brw_vs_samplers,
    &brw_gs_samplers,
-   &gen6_multisample_state,
+   &gen8_multisample_state,
 
    &gen8_disable_stages,
    &gen8_vs_state,
@@ -342,6 +342,10 @@ brw_upload_initial_gpu_state(struct brw_context *brw)
       return;
 
    brw_upload_invariant_state(brw);
+
+   if (brw->gen >= 8) {
+      gen8_emit_3dstate_sample_pattern(brw);
+   }
 }
 
 void brw_init_state( struct brw_context *brw )
