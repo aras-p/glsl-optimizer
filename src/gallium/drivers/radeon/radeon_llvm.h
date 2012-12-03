@@ -152,6 +152,9 @@ static inline LLVMValueRef bitcast(
 }
 
 
+void radeon_llvm_emit_prepare_cube_coords(struct lp_build_tgsi_context * bld_base,
+                                          LLVMValueRef *arg, unsigned target);
+
 void radeon_llvm_context_init(struct radeon_llvm_context * ctx);
 
 void radeon_llvm_dispose(struct radeon_llvm_context * ctx);

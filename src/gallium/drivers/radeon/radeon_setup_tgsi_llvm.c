@@ -514,11 +514,12 @@ static void kil_emit(
 }
 
 
-static void emit_prepare_cube_coords(
+void radeon_llvm_emit_prepare_cube_coords(
 		struct lp_build_tgsi_context * bld_base,
-		struct lp_build_emit_data * emit_data)
+		LLVMValueRef *arg,
+                unsigned target)
 {
-	boolean shadowcube = (emit_data->inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE);
+	boolean shadowcube = (target == TGSI_TEXTURE_SHADOWCUBE);
 	struct gallivm_state * gallivm = bld_base->base.gallivm;
 	LLVMBuilderRef builder = gallivm->builder;
 	LLVMTypeRef type = bld_base->base.elem_type;
@@ -528,7 +529,7 @@ static void emit_prepare_cube_coords(
 
 	LLVMValueRef v = build_intrinsic(builder, "llvm.AMDGPU.cube",
 			LLVMVectorType(type, 4),
-			&emit_data->args[0],1, LLVMReadNoneAttribute);
+			arg, 1, LLVMReadNoneAttribute);
 
 	/* save src.w for shadow cube */
 	cnt = shadowcube ? 3 : 4;
@@ -559,8 +560,7 @@ static void emit_prepare_cube_coords(
 	coords[1] = coords[0];
 	coords[0] = coords[3];
 
-	emit_data->args[0] = lp_build_gather_values(bld_base->base.gallivm,
-						coords, 4);
+	*arg = lp_build_gather_values(bld_base->base.gallivm, coords, 4);
 }
 
 static void txd_fetch_args(
@@ -609,7 +609,8 @@ static void txp_fetch_args(
 	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
 	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) &&
 	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
-		emit_prepare_cube_coords(bld_base, emit_data);
+		radeon_llvm_emit_prepare_cube_coords(bld_base, &emit_data->args[0],
+                                                     inst->Texture.Texture);
 	}
 }
 
@@ -641,7 +642,8 @@ static void tex_fetch_args(
 	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
 	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) &&
 	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
-		emit_prepare_cube_coords(bld_base, emit_data);
+		radeon_llvm_emit_prepare_cube_coords(bld_base, &emit_data->args[0],
+                                                     inst->Texture.Texture);
 	}
 }
 
