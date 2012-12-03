@@ -30,6 +30,7 @@
 
 #include "util/u_draw_quad.h"
 #include "util/u_index_modify.h"
+#include "util/u_memory.h"
 #include "util/u_upload_mgr.h"
 #include "tgsi/tgsi_parse.h"
 #include <byteswap.h>

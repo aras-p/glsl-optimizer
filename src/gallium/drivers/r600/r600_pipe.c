@@ -27,6 +27,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "util/u_blitter.h"
 #include "util/u_format_s3tc.h"
+#include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_upload_mgr.h"
 #include "vl/vl_decoder.h"

@@ -29,9 +29,13 @@
 
 #include "util/u_framebuffer.h"
 #include "util/u_inlines.h"
-#include "util/u_memory.h"
 
 #include "pipe/p_state.h"
+
+/* u_memory.h conflicts with st/mesa */
+#ifndef Elements
+#define Elements(x) (sizeof(x)/sizeof((x)[0]))
+#endif
 
 
 #ifdef __cplusplus
