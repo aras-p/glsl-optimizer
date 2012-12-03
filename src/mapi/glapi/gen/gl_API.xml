@@ -8269,19 +8269,17 @@
   </function>
 </category>
 
+<!-- ARB extensions #95...#108 -->
+
 <xi:include href="ARB_ES2_compatibility.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<!-- ARB extensions #96...#103 -->
+<xi:include href="ARB_get_program_binary.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_debug_output.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_robustness.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
-<!-- ARB extensions #106 -->
-
 <xi:include href="ARB_base_instance.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<!-- ARB extensions #108 -->
 
 <category name="GL_ARB_transform_feedback_instanced" number="109">
   <function name="DrawTransformFeedbackInstanced" offset="assign"
@@ -12993,7 +12991,5 @@
 <xi:include href="NV_texture_barrier.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="EXT_transform_feedback.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-
-<xi:include href="ARB_get_program_binary.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 </OpenGLAPI>
