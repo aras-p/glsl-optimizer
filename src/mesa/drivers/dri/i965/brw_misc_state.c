@@ -939,10 +939,18 @@ brw_upload_invariant_state(struct brw_context *brw)
       ADVANCE_BATCH();
    }
 
-   BEGIN_BATCH(2);
-   OUT_BATCH(CMD_STATE_SIP << 16 | (2 - 2));
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
+   if (brw->gen >= 8) {
+      BEGIN_BATCH(3);
+      OUT_BATCH(CMD_STATE_SIP << 16 | (3 - 2));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(2);
+      OUT_BATCH(CMD_STATE_SIP << 16 | (2 - 2));
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   }
 
    BEGIN_BATCH(1);
    OUT_BATCH(brw->CMD_VF_STATISTICS << 16 |
