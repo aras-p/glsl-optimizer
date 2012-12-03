@@ -57,6 +57,7 @@ struct dri_drawable
    unsigned old_h;
 
    struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
+   struct pipe_resource *msaa_textures[ST_ATTACHMENT_COUNT];
    unsigned int texture_mask, texture_stamp;
 
    struct pipe_fence_handle *swap_fences[DRI_SWAP_FENCES_MAX];
@@ -106,6 +107,11 @@ dri_drawable_get_format(struct dri_drawable *drawable,
                         enum st_attachment_type statt,
                         enum pipe_format *format,
                         unsigned *bind);
+
+void
+dri_msaa_resolve(struct dri_context *ctx,
+                 struct dri_drawable *drawable,
+                 enum st_attachment_type att);
 
 void
 dri_flush(__DRIcontext *cPriv,

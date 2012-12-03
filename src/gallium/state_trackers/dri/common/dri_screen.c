@@ -104,7 +104,7 @@ dri_fill_in_modes(struct dri_screen *screen)
    stencil_bits_array[0] = 0;
    depth_buffer_factor = 1;
 
-   msaa_samples_max = (screen->st_api->feature_mask & ST_API_FEATURE_MS_VISUALS)
+   msaa_samples_max = (screen->st_api->feature_mask & ST_API_FEATURE_MS_VISUALS_MASK)
       ? MSAA_VISUAL_MAX_SAMPLES : 1;
 
    pf_x8z24 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24X8_UNORM,
@@ -206,7 +206,9 @@ dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
    if (!mode)
       return;
 
-   stvis->samples = mode->samples;
+   if (mode->sampleBuffers) {
+      stvis->samples = mode->samples;
+   }
 
    if (mode->redBits == 8) {
       if (mode->alphaBits == 8)

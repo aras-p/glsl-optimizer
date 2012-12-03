@@ -190,6 +190,8 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
       pipe_resource_reference(&drawable->textures[i], NULL);
+   for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
+      pipe_resource_reference(&drawable->msaa_textures[i], NULL);
 
    memset(&templ, 0, sizeof(templ));
    templ.target = screen->target;
@@ -235,6 +237,25 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
       drawable->textures[statt] =
          screen->base.screen->resource_from_handle(screen->base.screen,
                &templ, &whandle);
+      assert(drawable->textures[statt]);
+   }
+
+   /* Allocate private MSAA colorbuffers. */
+   if (drawable->stvis.samples > 1) {
+      for (i = 0; i < att_count; i++) {
+         enum st_attachment_type att = atts[i];
+
+         if (drawable->textures[att]) {
+            templ.format = drawable->textures[att]->format;
+            templ.bind = drawable->textures[att]->bind;
+            templ.nr_samples = drawable->stvis.samples;
+
+            drawable->msaa_textures[att] =
+               screen->base.screen->resource_create(screen->base.screen,
+                                                    &templ);
+            assert(drawable->msaa_textures[att]);
+         }
+      }
    }
 
    /* See if we need a depth-stencil buffer. */
@@ -256,8 +277,20 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
          templ.format = format;
          templ.bind = bind;
 
-         drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL] =
-            screen->base.screen->resource_create(screen->base.screen, &templ);
+         if (drawable->stvis.samples > 1) {
+            templ.nr_samples = drawable->stvis.samples;
+            drawable->msaa_textures[ST_ATTACHMENT_DEPTH_STENCIL] =
+               screen->base.screen->resource_create(screen->base.screen,
+                                                    &templ);
+            assert(drawable->msaa_textures[ST_ATTACHMENT_DEPTH_STENCIL]);
+         }
+         else {
+            templ.nr_samples = 0;
+            drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL] =
+               screen->base.screen->resource_create(screen->base.screen,
+                                                    &templ);
+            assert(drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL]);
+         }
       }
    }
 
@@ -380,10 +413,17 @@ dri2_flush_frontbuffer(struct dri_context *ctx,
    __DRIdrawable *dri_drawable = drawable->dPriv;
    struct __DRIdri2LoaderExtensionRec *loader = drawable->sPriv->dri2.loader;
 
-   if (loader->flushFrontBuffer == NULL)
+   if (statt != ST_ATTACHMENT_FRONT_LEFT)
       return;
 
-   if (statt == ST_ATTACHMENT_FRONT_LEFT) {
+   if (drawable->stvis.samples > 1) {
+      struct pipe_context *pipe = ctx->st->pipe;
+
+      dri_msaa_resolve(ctx, drawable, ST_ATTACHMENT_FRONT_LEFT);
+      pipe->flush(pipe, NULL);
+   }
+
+   if (loader->flushFrontBuffer) {
       loader->flushFrontBuffer(dri_drawable, dri_drawable->loaderPrivate);
    }
 }

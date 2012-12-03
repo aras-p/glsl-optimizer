@@ -54,6 +54,9 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    boolean new_stamp;
    int i;
    unsigned int lastStamp;
+   struct pipe_resource **textures =
+      drawable->stvis.samples > 1 ? drawable->msaa_textures
+                                  : drawable->textures;
 
    statt_mask = 0x0;
    for (i = 0; i < count; i++)
@@ -79,7 +82,7 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
 
          /* add existing textures */
          for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
-            if (drawable->textures[i])
+            if (textures[i])
                statt_mask |= (1 << i);
          }
 
@@ -91,9 +94,10 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    if (!out)
       return TRUE;
 
+   /* Set the window-system buffers for the state tracker. */
    for (i = 0; i < count; i++) {
       out[i] = NULL;
-      pipe_resource_reference(&out[i], drawable->textures[statts[i]]);
+      pipe_resource_reference(&out[i], textures[statts[i]]);
    }
 
    return TRUE;
@@ -166,6 +170,8 @@ dri_destroy_buffer(__DRIdrawable * dPriv)
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
       pipe_resource_reference(&drawable->textures[i], NULL);
+   for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
+      pipe_resource_reference(&drawable->msaa_textures[i], NULL);
 
    swap_fences_unref(drawable);
 
@@ -352,6 +358,48 @@ swap_fences_unref(struct dri_drawable *draw)
    }
 }
 
+void
+dri_msaa_resolve(struct dri_context *ctx,
+                 struct dri_drawable *drawable,
+                 enum st_attachment_type att)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_resource *dst = drawable->textures[att];
+   struct pipe_resource *src = drawable->msaa_textures[att];
+   struct pipe_blit_info blit;
+
+   if (!dst || !src)
+      return;
+
+   memset(&blit, 0, sizeof(blit));
+   blit.dst.resource = dst;
+   blit.dst.box.width = dst->width0;
+   blit.dst.box.height = dst->width0;
+   blit.dst.box.depth = 1;
+   blit.dst.format = util_format_linear(dst->format);
+   blit.src.resource = src;
+   blit.src.box.width = src->width0;
+   blit.src.box.height = src->width0;
+   blit.src.box.depth = 1;
+   blit.src.format = util_format_linear(src->format);
+   blit.mask = PIPE_MASK_RGBA;
+   blit.filter = PIPE_TEX_FILTER_NEAREST;
+
+   pipe->blit(pipe, &blit);
+}
+
+static void
+dri_postprocessing(struct dri_context *ctx,
+                   struct dri_drawable *drawable,
+                   enum st_attachment_type att)
+{
+   struct pipe_resource *src = drawable->textures[att];
+   struct pipe_resource *zsbuf = drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL];
+
+   if (ctx->pp && src && zsbuf)
+      pp_run(ctx->pp, src, src, zsbuf);
+}
+
 /**
  * DRI2 flush extension, the flush_with_flags function.
  *
@@ -381,10 +429,13 @@ dri_flush(__DRIcontext *cPriv,
 
    /* Flush the drawable. */
    if (flags & __DRI2_FLUSH_DRAWABLE) {
-      struct pipe_resource *ptex = drawable->textures[ST_ATTACHMENT_BACK_LEFT];
+      /* Resolve MSAA buffers. */
+      if (drawable->stvis.samples > 1) {
+         dri_msaa_resolve(ctx, drawable, ST_ATTACHMENT_BACK_LEFT);
+         /* FRONT_LEFT is resolved in drawable->flush_frontbuffer. */
+      }
 
-      if (ptex && ctx->pp && drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL])
-         pp_run(ctx->pp, ptex, ptex, drawable->textures[ST_ATTACHMENT_DEPTH_STENCIL]);
+      dri_postprocessing(ctx, drawable, ST_ATTACHMENT_BACK_LEFT);
    }
 
    flush_flags = 0;

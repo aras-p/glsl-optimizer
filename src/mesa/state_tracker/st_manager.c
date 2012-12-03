@@ -398,7 +398,7 @@ st_visual_to_context_mode(const struct st_visual *visual,
                UTIL_FORMAT_COLORSPACE_RGB, 3);
    }
 
-   if (visual->samples) {
+   if (visual->samples > 1) {
       mode->sampleBuffers = 1;
       mode->samples = visual->samples;
    }
@@ -899,7 +899,7 @@ static const struct st_api st_gl_api = {
    ST_PROFILE_OPENGL_ES2_MASK |
 #endif
    0,
-   0,
+   ST_API_FEATURE_MS_VISUALS_MASK,
    st_api_destroy,
    st_api_get_proc_address,
    st_api_create_context,
