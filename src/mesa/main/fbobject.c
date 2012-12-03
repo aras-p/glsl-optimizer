@@ -1261,10 +1261,8 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RGB8I_EXT:
    case GL_RGB16I_EXT:
    case GL_RGB32I_EXT:
-      return ctx->Version >= 30
-         || (_mesa_is_desktop_gl(ctx) &&
-             ctx->Extensions.EXT_texture_integer) ? GL_RGB : 0;
-
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_integer
+         ? GL_RGB : 0;
    case GL_R8UI:
    case GL_R8I:
    case GL_R16UI:
