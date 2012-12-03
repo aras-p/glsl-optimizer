@@ -839,7 +839,8 @@ load_unswizzled_block(struct gallivm_state *gallivm,
                       unsigned block_height,
                       LLVMValueRef* dst,
                       struct lp_type dst_type,
-                      unsigned dst_count)
+                      unsigned dst_count,
+                      unsigned dst_alignment)
 {
    LLVMBuilderRef builder = gallivm->builder;
    unsigned row_size = dst_count / block_height;
@@ -866,9 +867,7 @@ load_unswizzled_block(struct gallivm_state *gallivm,
 
       dst[i] = LLVMBuildLoad(builder, dst_ptr, "");
 
-      if ((dst_type.length % 3) == 0) {
-         lp_set_load_alignment(dst[i], dst_type.width / 8);
-      }
+      lp_set_load_alignment(dst[i], dst_alignment);
    }
 }
 
@@ -884,7 +883,8 @@ store_unswizzled_block(struct gallivm_state *gallivm,
                        unsigned block_height,
                        LLVMValueRef* src,
                        struct lp_type src_type,
-                       unsigned src_count)
+                       unsigned src_count,
+                       unsigned src_alignment)
 {
    LLVMBuilderRef builder = gallivm->builder;
    unsigned row_size = src_count / block_height;
@@ -911,9 +911,7 @@ store_unswizzled_block(struct gallivm_state *gallivm,
 
       src_ptr = LLVMBuildStore(builder, src[i], src_ptr);
 
-      if ((src_type.length % 3) == 0) {
-         lp_set_store_alignment(src_ptr, src_type.width / 8);
-      }
+      lp_set_store_alignment(src_ptr, src_alignment);
    }
 }
 
@@ -1333,12 +1331,21 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
 
    const struct util_format_description* out_format_desc = util_format_description(out_format);
 
+   unsigned dst_alignment;
+
    bool pad_inline = is_arithmetic_format(out_format_desc);
    bool has_alpha = false;
 
    src_channels = TGSI_NUM_CHANNELS;
    mask_type = lp_int32_vec4_type();
    mask_type.length = fs_type.length;
+
+   /* Compute the alignment of the destination pointer in bytes */
+   dst_alignment = (block_width * out_format_desc->block.bits + 7)/(out_format_desc->block.width * 8);
+   /* Force power-of-two alignment by extracting only the least-significant-bit */
+   dst_alignment = 1 << (ffs(dst_alignment) - 1);
+   /* Resource base and stride pointers are aligned to 16 bytes, so that's the maximum alignment we can guarantee */
+   dst_alignment = MIN2(dst_alignment, 16);
 
    /* Do not bother executing code when mask is empty.. */
    if (do_branch) {
@@ -1616,7 +1623,8 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
 
    dst_type.length *= 16 / dst_count;
 
-   load_unswizzled_block(gallivm, color_ptr, stride, block_width, block_height, dst, dst_type, dst_count);
+   load_unswizzled_block(gallivm, color_ptr, stride, block_width, block_height,
+                         dst, dst_type, dst_count, dst_alignment);
 
 
    /*
@@ -1681,7 +1689,8 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    /*
     * Store blend result to memory
     */
-   store_unswizzled_block(gallivm, color_ptr, stride, block_width, block_height, dst, dst_type, dst_count);
+   store_unswizzled_block(gallivm, color_ptr, stride, block_width, block_height,
+                          dst, dst_type, dst_count, dst_alignment);
 
    if (do_branch) {
       lp_build_mask_end(&mask_ctx);
