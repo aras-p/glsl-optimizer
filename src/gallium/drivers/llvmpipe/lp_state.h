@@ -51,7 +51,7 @@
 #define LP_NEW_SAMPLER_VIEW  0x800
 #define LP_NEW_VERTEX        0x1000
 #define LP_NEW_VS            0x2000
-#define LP_NEW_QUERY         0x4000
+#define LP_NEW_OCCLUSION_QUERY 0x4000
 #define LP_NEW_BLEND_COLOR   0x8000
 #define LP_NEW_GS            0x10000
 #define LP_NEW_SO            0x20000

@@ -96,7 +96,7 @@ struct llvmpipe_context {
 
    unsigned dirty; /**< Mask of LP_NEW_x flags */
 
-   int active_query_count;
+   unsigned active_occlusion_query;
 
    /** Mapped vertex buffers */
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];

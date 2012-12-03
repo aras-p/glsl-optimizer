@@ -32,6 +32,8 @@
 #include "util/u_surface.h"
 #include "util/u_pack_color.h"
 
+#include "os/os_time.h"
+
 #include "lp_scene_queue.h"
 #include "lp_debug.h"
 #include "lp_fence.h"
@@ -429,9 +431,21 @@ lp_rast_begin_query(struct lp_rasterizer_task *task,
 {
    struct llvmpipe_query *pq = arg.query_obj;
 
-   assert(task->query == NULL);
-   task->vis_counter = 0;
-   task->query = pq;
+   assert(task->query[pq->type] == NULL);
+
+   switch (pq->type) {
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+      task->vis_counter = 0;
+      break;
+   case PIPE_QUERY_TIME_ELAPSED:
+      task->query_start = os_time_get_nano();
+      break;
+   default:
+      assert(0);
+      break;
+   }
+
+   task->query[pq->type] = pq;
 }
 
 
@@ -444,10 +458,26 @@ static void
 lp_rast_end_query(struct lp_rasterizer_task *task,
                   const union lp_rast_cmd_arg arg)
 {
-   assert(task->query);
-   if (task->query) {
-      task->query->count[task->thread_index] += task->vis_counter;
-      task->query = NULL;
+   struct llvmpipe_query *pq = arg.query_obj;
+   assert(task->query[pq->type] == pq || pq->type == PIPE_QUERY_TIMESTAMP);
+
+   switch (pq->type) {
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+      pq->count[task->thread_index] += task->vis_counter;
+      break;
+   case PIPE_QUERY_TIME_ELAPSED:
+      pq->count[task->thread_index] = os_time_get_nano() - task->query_start;
+      break;
+   case PIPE_QUERY_TIMESTAMP:
+      pq->count[task->thread_index] = os_time_get_nano();
+      break;
+   default:
+      assert(0);
+      break;
+   }
+
+   if (task->query[pq->type] == pq) {
+      task->query[pq->type] = NULL;
    }
 }
 
@@ -467,9 +497,12 @@ lp_rast_set_state(struct lp_rasterizer_task *task,
 static void
 lp_rast_tile_end(struct lp_rasterizer_task *task)
 {
-   if (task->query) {
-      union lp_rast_cmd_arg dummy = {0};
-      lp_rast_end_query(task, dummy);
+   unsigned i;
+
+   for (i = 0; i < PIPE_QUERY_TYPES; ++i) {
+      if (task->query[i]) {
+         lp_rast_end_query(task, lp_rast_arg_query(task->query[i]));
+      }
    }
 
    /* debug */

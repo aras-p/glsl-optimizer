@@ -36,6 +36,7 @@
 #include "pipe/p_config.h"
 
 #if defined(PIPE_OS_UNIX)
+#  include <time.h> /* timeval */
 #  include <sys/time.h> /* timeval */
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 #  include <windows.h>
@@ -64,6 +65,20 @@ os_time_get(void)
    QueryPerformanceCounter(&counter);
    return counter.QuadPart*INT64_C(1000000)/frequency.QuadPart;
 
+#endif
+}
+
+
+uint64_t
+os_time_get_nano(void)
+{
+#if defined(PIPE_OS_UNIX)
+   struct timespec tv;
+   clock_gettime(CLOCK_REALTIME, &tv);
+   return tv.tv_nsec + tv.tv_sec * 1000000000LL;
+
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+   return os_time_get() * 1000;
 #endif
 }
 

@@ -96,7 +96,8 @@ struct lp_rasterizer_task
 
    /* occlude counter for visiable pixels */
    uint32_t vis_counter;
-   struct llvmpipe_query *query;
+   uint64_t query_start;
+   struct llvmpipe_query *query[PIPE_QUERY_TYPES];
 
    pipe_semaphore work_ready;
    pipe_semaphore work_done;

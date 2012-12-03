@@ -89,7 +89,7 @@ struct lp_setup_context
    struct lp_scene *scene;               /**< current scene being built */
 
    struct lp_fence *last_fence;
-   struct llvmpipe_query *active_query;
+   struct llvmpipe_query *active_query[PIPE_QUERY_TYPES];
 
    boolean flatshade_first;
    boolean ccw_is_frontface;

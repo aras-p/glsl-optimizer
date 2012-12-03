@@ -58,6 +58,13 @@ os_time_get(void);
 
 
 /*
+ * Get the current time in nanoseconds from an unknown base.
+ */
+uint64_t
+os_time_get_nano(void);
+
+
+/*
  * Sleep.
  */
 #if defined(PIPE_OS_UNIX)

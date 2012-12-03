@@ -37,6 +37,7 @@
 #include "draw/draw_context.h"
 #include "gallivm/lp_bld_type.h"
 
+#include "os/os_time.h"
 #include "lp_texture.h"
 #include "lp_fence.h"
 #include "lp_jit.h"
@@ -126,7 +127,8 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
    case PIPE_CAP_TIMER_QUERY:
-      return 0;
+   case PIPE_CAP_QUERY_TIMESTAMP:
+      return 1;
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
       return 1;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
@@ -210,7 +212,6 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
       return 16;
    case PIPE_CAP_START_INSTANCE:
-   case PIPE_CAP_QUERY_TIMESTAMP:
    case PIPE_CAP_TEXTURE_MULTISAMPLE:
    case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
    case PIPE_CAP_CUBE_MAP_ARRAY:
@@ -446,7 +447,11 @@ llvmpipe_fence_finish(struct pipe_screen *screen,
    return TRUE;
 }
 
-
+static uint64_t
+llvmpipe_get_timestamp(struct pipe_screen *_screen)
+{
+   return os_time_get_nano();
+}
 
 /**
  * Create a new pipe_screen object
@@ -490,6 +495,8 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
    screen->base.fence_reference = llvmpipe_fence_reference;
    screen->base.fence_signalled = llvmpipe_fence_signalled;
    screen->base.fence_finish = llvmpipe_fence_finish;
+
+   screen->base.get_timestamp = llvmpipe_get_timestamp;
 
    llvmpipe_init_screen_resource_funcs(&screen->base);
 

@@ -232,12 +232,14 @@ begin_binning( struct lp_setup_context *setup )
       }
    }
 
-   if (setup->active_query) {
-      ok = lp_scene_bin_everywhere( scene,
-                                    LP_RAST_OP_BEGIN_QUERY,
-                                    lp_rast_arg_query(setup->active_query) );
-      if (!ok)
-         return FALSE;
+   for (i = 0; i < PIPE_QUERY_TYPES; ++i) {
+      if (setup->active_query[i]) {
+         ok = lp_scene_bin_everywhere( scene,
+                                       LP_RAST_OP_BEGIN_QUERY,
+                                       lp_rast_arg_query(setup->active_query[i]) );
+         if (!ok)
+            return FALSE;
+      }
    }
 
    setup->clear.flags = 0;
@@ -1116,11 +1118,16 @@ lp_setup_begin_query(struct lp_setup_context *setup,
                      struct llvmpipe_query *pq)
 {
    /* init the query to its beginning state */
-   assert(setup->active_query == NULL);
+   assert(setup->active_query[pq->type] == NULL);
 
    set_scene_state(setup, SETUP_ACTIVE, "begin_query");
    
-   setup->active_query = pq;
+   setup->active_query[pq->type] = pq;
+
+   /* XXX: It is possible that a query is created before the scene
+    * has been created. This means that setup->scene == NULL resulting
+    * in the query not being binned and thus is ignored.
+    */
 
    if (setup->scene) {
       if (!lp_scene_bin_everywhere(setup->scene,
@@ -1146,12 +1153,12 @@ lp_setup_begin_query(struct lp_setup_context *setup,
 void
 lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
 {
-   union lp_rast_cmd_arg dummy = { 0 };
-
    set_scene_state(setup, SETUP_ACTIVE, "end_query");
 
-   assert(setup->active_query == pq);
-   setup->active_query = NULL;
+   if (pq->type != PIPE_QUERY_TIMESTAMP) {
+      assert(setup->active_query[pq->type] == pq);
+      setup->active_query[pq->type] = NULL;
+   }
 
    /* Setup will automatically re-issue any query which carried over a
     * scene boundary, and the rasterizer automatically "ends" queries
@@ -1166,7 +1173,7 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
 
       if (!lp_scene_bin_everywhere(setup->scene,
                                    LP_RAST_OP_END_QUERY,
-                                   dummy)) {
+                                   lp_rast_arg_query(pq))) {
          lp_setup_flush(setup, NULL, __FUNCTION__);
       }
    }
