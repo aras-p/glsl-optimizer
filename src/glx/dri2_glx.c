@@ -557,7 +557,8 @@ __dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y,
    xrect.height = height;
 
    if (psc->f && psc->f->base.version >= 4) {
-      unsigned flags = flush ? __DRI2_FLUSH_CONTEXT : 0;
+      unsigned flags = (flush ? __DRI2_FLUSH_CONTEXT : 0) |
+                       __DRI2_FLUSH_DRAWABLE;
       __DRIcontext *ctx = dri2GetCurrentContext();
 
       if (ctx) {
@@ -815,7 +816,8 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 			   __DRI2_THROTTLE_SWAPBUFFER, flush);
     } else {
        if (psc->f && psc->f->base.version >= 4) {
-          unsigned flags = flush ? __DRI2_FLUSH_CONTEXT : 0;
+          unsigned flags = (flush ? __DRI2_FLUSH_CONTEXT : 0) |
+                           __DRI2_FLUSH_DRAWABLE;
           __DRIcontext *ctx = dri2GetCurrentContext();
 
           if (ctx) {
