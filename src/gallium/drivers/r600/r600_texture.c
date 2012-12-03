@@ -31,17 +31,37 @@
 #include "util/u_format_s3tc.h"
 #include "util/u_memory.h"
 
+
 /* Copy from a full GPU texture to a transfer's staging one. */
 static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
 {
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
-	struct pipe_resource *texture = transfer->resource;
+	struct pipe_resource *dst = &rtransfer->staging->b.b;
+	struct pipe_resource *src = transfer->resource;
 
-	ctx->resource_copy_region(ctx, &rtransfer->staging->b.b,
-				0, 0, 0, 0, texture, transfer->level,
-				&transfer->box);
+	if (src->nr_samples <= 1) {
+		ctx->resource_copy_region(ctx, dst, 0, 0, 0, 0,
+					  src, transfer->level, &transfer->box);
+	} else {
+		/* Resolve the resource. */
+		struct pipe_blit_info blit;
+
+		memset(&blit, 0, sizeof(blit));
+	        blit.src.resource = src;
+	        blit.src.format = src->format;
+	        blit.src.level = transfer->level;
+	        blit.src.box = transfer->box;
+	        blit.dst.resource = dst;
+	        blit.dst.format = dst->format;
+	        blit.dst.box.width = transfer->box.width;
+	        blit.dst.box.height = transfer->box.height;
+	        blit.dst.box.depth = transfer->box.depth;
+	        blit.mask = PIPE_MASK_RGBA;
+	        blit.filter = PIPE_TEX_FILTER_NEAREST;
+
+		ctx->blit(ctx, &blit);
+	}
 }
-
 
 /* Copy from a transfer's staging texture to a full GPU one. */
 static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
@@ -714,6 +734,13 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 		/* XXX: when discard is true, no need to read back from depth texture
 		*/
 		struct r600_texture *staging_depth;
+
+		assert(rtex->resource.b.b.nr_samples <= 1);
+		if (rtex->resource.b.b.nr_samples > 1) {
+			R600_ERR("mapping MSAA zbuffer unimplemented\n");
+			FREE(trans);
+			return NULL;
+		}
 
 		if (!r600_init_flushed_depth_texture(ctx, texture, &staging_depth)) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
