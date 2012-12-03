@@ -207,14 +207,14 @@ msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality"
 msgstr "Morphologische Kantenglättung (Anti-Aliasing) basierend auf "
-"Jimenez\' MLAA. 0 für deaktiviert, 8 für Standardqualität"
+"Jimenez' MLAA. 0 für deaktiviert, 8 für Standardqualität"
 
 #: t_options.h:221
 msgid ""
 "Morphological anti-aliasing based on Jimenez\\' MLAA. 0 to disable, 8 for "
 "default quality. Color version, usable with 2d GL apps"
 msgstr "Morphologische Kantenglättung (Anti-Aliasing) basierend auf "
-"Jimenez\' MLAA. 0 für deaktiviert, 8 für Standardqualität. "
+"Jimenez' MLAA. 0 für deaktiviert, 8 für Standardqualität. "
 "Farbversion, für 2D-Anwendungen"
 
 #: t_options.h:226
