@@ -5,7 +5,7 @@
 
 <OpenGLAPI>
 
-<category name="GL_ARB_get_program_binary " number="96">
+<category name="GL_ARB_get_program_binary" number="96">
     <enum name="PROGRAM_BINARY_RETRIEVABLE_HINT"          value="0x8257"/>
     <enum name="PROGRAM_BINARY_LENGTH"                    value="0x8741"/>
     <enum name="NUM_PROGRAM_BINARY_FORMATS"               value="0x87FE"/>
