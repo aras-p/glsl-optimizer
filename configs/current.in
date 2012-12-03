@@ -41,6 +41,7 @@ GLX_TLS = @GLX_TLS@
 
 # dlopen
 DLOPEN_LIBS = @DLOPEN_LIBS@
+CLOCK_LIB = @CLOCK_LIB@
 
 # Source selection
 MESA_ASM_FILES = @MESA_ASM_FILES@

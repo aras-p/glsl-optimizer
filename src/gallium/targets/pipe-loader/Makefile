@@ -24,7 +24,7 @@ PIPE_LIBS = \
 	$(TOP)/src/gallium/drivers/rbug/librbug.a \
 	$(GALLIUM_AUXILIARIES)
 
-PIPE_SYS = $(LIBDRM_LIBS) -lm -lpthread $(DLOPEN_LIBS)
+PIPE_SYS = $(LIBDRM_LIBS) -lm -lpthread $(CLOCK_LIB) $(DLOPEN_LIBS)
 
 PIPE_CFLAGS = $(LIBDRM_CFLAGS)
 
