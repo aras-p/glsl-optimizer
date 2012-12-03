@@ -776,7 +776,7 @@ dri2_init_screen(__DRIscreen * sPriv)
 
    /* dri_init_screen_helper checks pscreen for us */
 
-   configs = dri_init_screen_helper(screen, pscreen, 32);
+   configs = dri_init_screen_helper(screen, pscreen);
    if (!configs)
       goto fail;
 

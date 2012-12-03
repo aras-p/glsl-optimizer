@@ -41,7 +41,7 @@
 
 #include "util/u_debug.h"
 
-#define MSAA_VISUAL_MAX_SAMPLES 8
+#define MSAA_VISUAL_MAX_SAMPLES 32
 
 #undef false
 
@@ -74,22 +74,26 @@ PUBLIC const char __driConfigOptions[] =
 static const uint __driNConfigOptions = 10;
 
 static const __DRIconfig **
-dri_fill_in_modes(struct dri_screen *screen,
-		  unsigned pixel_bits)
+dri_fill_in_modes(struct dri_screen *screen)
 {
+   static const gl_format mesa_formats[3] = {
+      MESA_FORMAT_ARGB8888,
+      MESA_FORMAT_XRGB8888,
+      MESA_FORMAT_RGB565,
+   };
+   static const enum pipe_format pipe_formats[3] = {
+      PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_B8G8R8X8_UNORM,
+      PIPE_FORMAT_B5G6R5_UNORM,
+   };
+   gl_format format;
    __DRIconfig **configs = NULL;
-   __DRIconfig **configs_r5g6b5 = NULL;
-   __DRIconfig **configs_a8r8g8b8 = NULL;
-   __DRIconfig **configs_x8r8g8b8 = NULL;
    uint8_t depth_bits_array[5];
    uint8_t stencil_bits_array[5];
-   uint8_t msaa_samples_array[MSAA_VISUAL_MAX_SAMPLES];
    unsigned depth_buffer_factor;
-   unsigned back_buffer_factor;
-   unsigned msaa_samples_factor, msaa_samples_max;
+   unsigned msaa_samples_max;
    unsigned i;
    struct pipe_screen *p_screen = screen->base.screen;
-   boolean pf_r5g6b5, pf_a8r8g8b8, pf_x8r8g8b8;
    boolean pf_z16, pf_x8z24, pf_z24x8, pf_s8z24, pf_z24s8, pf_z32;
 
    static const GLenum back_buffer_modes[] = {
@@ -115,28 +119,12 @@ dri_fill_in_modes(struct dri_screen *screen,
    pf_z24s8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_S8_UINT_Z24_UNORM,
 					    PIPE_TEXTURE_2D, 0,
                                             PIPE_BIND_DEPTH_STENCIL);
-   pf_a8r8g8b8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_B8G8R8A8_UNORM,
-					       PIPE_TEXTURE_2D, 0,
-                                               PIPE_BIND_RENDER_TARGET);
-   pf_x8r8g8b8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_B8G8R8X8_UNORM,
-					       PIPE_TEXTURE_2D, 0,
-                                               PIPE_BIND_RENDER_TARGET);
-   pf_r5g6b5 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_B5G6R5_UNORM,
-					     PIPE_TEXTURE_2D, 0,
-                                             PIPE_BIND_RENDER_TARGET);
-
-   /* We can only get a 16 or 32 bit depth buffer with getBuffersWithFormat */
-   if (dri_with_format(screen->sPriv)) {
-      pf_z16 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z16_UNORM,
-                                             PIPE_TEXTURE_2D, 0,
-                                             PIPE_BIND_DEPTH_STENCIL);
-      pf_z32 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z32_UNORM,
-                                             PIPE_TEXTURE_2D, 0,
-                                             PIPE_BIND_DEPTH_STENCIL);
-   } else {
-      pf_z16 = FALSE;
-      pf_z32 = FALSE;
-   }
+   pf_z16 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z16_UNORM,
+                                          PIPE_TEXTURE_2D, 0,
+                                          PIPE_BIND_DEPTH_STENCIL);
+   pf_z32 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z32_UNORM,
+                                          PIPE_TEXTURE_2D, 0,
+                                          PIPE_BIND_DEPTH_STENCIL);
 
    if (pf_z16) {
       depth_bits_array[depth_buffer_factor] = 16;
@@ -157,83 +145,33 @@ dri_fill_in_modes(struct dri_screen *screen,
       stencil_bits_array[depth_buffer_factor++] = 0;
    }
 
-   msaa_samples_array[0] = 0;
-   back_buffer_factor = 3;
+   assert(Elements(mesa_formats) == Elements(pipe_formats));
 
-   /* Also test for color multisample support - just assume it'll work
-    * for all depth buffers.
-    */
-   if (pf_r5g6b5) {
-      msaa_samples_factor = 1;
-      for (i = 2; i <= msaa_samples_max; i++) {
-         if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_B5G6R5_UNORM,
-						   PIPE_TEXTURE_2D, i,
-                                                   PIPE_BIND_RENDER_TARGET)) {
-            msaa_samples_array[msaa_samples_factor] = i;
-            msaa_samples_factor++;
+   /* Add configs. */
+   for (format = 0; format < Elements(mesa_formats); format++) {
+      __DRIconfig **new_configs = NULL;
+      unsigned num_msaa_modes = 0; /* includes a single-sample mode */
+      uint8_t msaa_modes[MSAA_VISUAL_MAX_SAMPLES];
+
+      for (i = 1; i <= msaa_samples_max; i++) {
+         int samples = i > 1 ? i : 0;
+
+         if (p_screen->is_format_supported(p_screen, pipe_formats[format],
+                                           PIPE_TEXTURE_2D, samples,
+                                           PIPE_BIND_RENDER_TARGET)) {
+            msaa_modes[num_msaa_modes++] = samples;
          }
       }
 
-      configs_r5g6b5 = driCreateConfigs(MESA_FORMAT_RGB565,
+      if (num_msaa_modes) {
+         new_configs = driCreateConfigs(mesa_formats[format],
                                         depth_bits_array, stencil_bits_array,
                                         depth_buffer_factor, back_buffer_modes,
-                                        back_buffer_factor,
-                                        msaa_samples_array, msaa_samples_factor,
+                                        Elements(back_buffer_modes),
+                                        msaa_modes, num_msaa_modes,
                                         GL_TRUE);
-   }
-
-   if (pf_a8r8g8b8) {
-      msaa_samples_factor = 1;
-      for (i = 2; i <= msaa_samples_max; i++) {
-         if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_B8G8R8A8_UNORM,
-						   PIPE_TEXTURE_2D, i,
-                                                   PIPE_BIND_RENDER_TARGET)) {
-            msaa_samples_array[msaa_samples_factor] = i;
-            msaa_samples_factor++;
-         }
+         configs = driConcatConfigs(configs, new_configs);
       }
-
-      configs_a8r8g8b8 = driCreateConfigs(MESA_FORMAT_ARGB8888,
-                                          depth_bits_array,
-                                          stencil_bits_array,
-                                          depth_buffer_factor,
-                                          back_buffer_modes,
-                                          back_buffer_factor,
-                                          msaa_samples_array,
-                                          msaa_samples_factor,
-                                          GL_TRUE);
-   }
-
-   if (pf_x8r8g8b8) {
-      msaa_samples_factor = 1;
-      for (i = 2; i <= msaa_samples_max; i++) {
-         if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_B8G8R8X8_UNORM,
-						   PIPE_TEXTURE_2D, i,
-                                                   PIPE_BIND_RENDER_TARGET)) {
-            msaa_samples_array[msaa_samples_factor] = i;
-            msaa_samples_factor++;
-         }
-      }
-
-      configs_x8r8g8b8 = driCreateConfigs(MESA_FORMAT_XRGB8888,
-                                          depth_bits_array,
-                                          stencil_bits_array,
-                                          depth_buffer_factor,
-                                          back_buffer_modes,
-                                          back_buffer_factor,
-                                          msaa_samples_array,
-                                          msaa_samples_factor,
-                                          GL_TRUE);
-   }
-
-   if (pixel_bits == 16) {
-      configs = configs_r5g6b5;
-      configs = driConcatConfigs(configs, configs_a8r8g8b8);
-      configs = driConcatConfigs(configs, configs_x8r8g8b8);
-   } else {
-      configs = configs_a8r8g8b8;
-      configs = driConcatConfigs(configs, configs_x8r8g8b8);
-      configs = driConcatConfigs(configs, configs_r5g6b5);
    }
 
    if (configs == NULL) {
@@ -390,8 +328,7 @@ dri_destroy_screen(__DRIscreen * sPriv)
 
 const __DRIconfig **
 dri_init_screen_helper(struct dri_screen *screen,
-                       struct pipe_screen *pscreen,
-                       unsigned pixel_bits)
+                       struct pipe_screen *pscreen)
 {
    screen->base.screen = pscreen;
    if (!screen->base.screen) {
@@ -414,7 +351,7 @@ dri_init_screen_helper(struct dri_screen *screen,
    driParseOptionInfo(&screen->optionCache,
                       __driConfigOptions, __driNConfigOptions);
 
-   return dri_fill_in_modes(screen, pixel_bits);
+   return dri_fill_in_modes(screen);
 }
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */
