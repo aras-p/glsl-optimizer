@@ -2314,6 +2314,11 @@ struct gl_shader_program
    GLboolean DeletePending;
 
    /**
+    * Is the application intending to glGetProgramBinary this program?
+    */
+   GLboolean BinaryRetreivableHint;
+
+   /**
     * Flags that the linker should not reject the program if it lacks
     * a vertex or fragment shader.  GLES2 doesn't allow separate
     * shader objects, and would reject them.  However, we internally

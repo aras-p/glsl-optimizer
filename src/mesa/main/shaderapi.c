@@ -583,6 +583,18 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
 
       *params = shProg->NumUniformBlocks;
       return;
+   case GL_PROGRAM_BINARY_RETRIEVABLE_HINT:
+      /* This enum isn't part of the OES extension for OpenGL ES 2.0.  It is
+       * only available with desktop OpenGL 3.0+ with the
+       * GL_ARB_get_program_binary extension or OpenGL ES 3.0.
+       *
+       * On desktop, we ignore the 3.0+ requirement because it is silly.
+       */
+      if (!_mesa_is_desktop_gl(ctx) && !_mesa_is_gles3(ctx))
+         break;
+
+      *params = shProg->BinaryRetreivableHint;
+      return;
    default:
       break;
    }
@@ -1618,6 +1630,51 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
                      _mesa_lookup_enum_by_nr(value));
          return;
       }
+      return;
+   case GL_PROGRAM_BINARY_RETRIEVABLE_HINT:
+      /* This enum isn't part of the OES extension for OpenGL ES 2.0, but it
+       * is part of OpenGL ES 3.0.  For the ES2 case, this function shouldn't
+       * even be in the dispatch table, so we shouldn't need to expclicitly
+       * check here.
+       *
+       * On desktop, we ignore the 3.0+ requirement because it is silly.
+       */
+
+      /* The ARB_get_program_binary extension spec says:
+       *
+       *     "An INVALID_VALUE error is generated if the <value> argument to
+       *     ProgramParameteri is not TRUE or FALSE."
+       */
+      if (value != GL_TRUE && value != GL_FALSE) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glProgramParameteri(pname=%s, value=%d): "
+                     "value must be 0 or 1.",
+                     _mesa_lookup_enum_by_nr(pname),
+                     value);
+         return;
+      }
+
+      /* No need to notify the driver.  Any changes will actually take effect
+       * the next time the shader is linked.
+       *
+       * The ARB_get_program_binary extension spec says:
+       *
+       *     "To indicate that a program binary is likely to be retrieved,
+       *     ProgramParameteri should be called with <pname>
+       *     PROGRAM_BINARY_RETRIEVABLE_HINT and <value> TRUE. This setting
+       *     will not be in effect until the next time LinkProgram or
+       *     ProgramBinary has been called successfully."
+       *
+       * The resloution of issue 9 in the extension spec also says:
+       *
+       *     "The application may use the PROGRAM_BINARY_RETRIEVABLE_HINT hint
+       *     to indicate to the GL implementation that this program will
+       *     likely be saved with GetProgramBinary at some point. This will
+       *     give the GL implementation the opportunity to track any state
+       *     changes made to the program before being saved such that when it
+       *     is loaded again a recompile can be avoided."
+       */
+      shProg->BinaryRetreivableHint = value;
       return;
    default:
       break;
