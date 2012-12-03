@@ -272,3 +272,13 @@ DRI_CONF_OPT_END
 DRI_CONF_OPT_BEGIN(always_flush_cache,bool,def) \
         DRI_CONF_DESC(en,gettext("Enable flushing GPU caches with each draw call")) \
 DRI_CONF_OPT_END
+
+#define DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN(def) \
+DRI_CONF_OPT_BEGIN(force_glsl_extensions_warn,bool,def) \
+        DRI_CONF_DESC(en,gettext("Force GLSL extension default behavior to 'warn'")) \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_DISABLE_BLEND_FUNC_EXTENDED(def) \
+DRI_CONF_OPT_BEGIN(disable_blend_func_extended,bool,def) \
+        DRI_CONF_DESC(en,gettext("Disable dual source blending")) \
+DRI_CONF_OPT_END
