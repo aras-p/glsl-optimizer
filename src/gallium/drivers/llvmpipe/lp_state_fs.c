@@ -1337,7 +1337,12 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    mask_type.length = fs_type.length;
 
    /* Compute the alignment of the destination pointer in bytes */
+#if 0
    dst_alignment = (block_width * out_format_desc->block.bits + 7)/(out_format_desc->block.width * 8);
+#else
+   /* FIXME -- currently we're fetching pixels one by one, instead of row by row */
+   dst_alignment = (1 * out_format_desc->block.bits + 7)/(out_format_desc->block.width * 8);
+#endif
    /* Force power-of-two alignment by extracting only the least-significant-bit */
    dst_alignment = 1 << (ffs(dst_alignment) - 1);
    /* Resource base and stride pointers are aligned to 16 bytes, so that's the maximum alignment we can guarantee */
