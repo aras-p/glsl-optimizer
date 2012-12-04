@@ -1362,6 +1362,11 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
 /* brw_vs.c */
 gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx);
 
+/* brw_draw_upload.c */
+unsigned brw_get_vertex_surface_type(struct brw_context *brw,
+                                     const struct gl_client_array *glarray);
+unsigned brw_get_index_type(GLenum type);
+
 /* brw_wm_surface_state.c */
 void brw_init_surface_formats(struct brw_context *brw);
 void

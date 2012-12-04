@@ -222,9 +222,9 @@ static GLuint byte_types_scale[5] = {
  * the appopriate hardware surface type.
  * Format will be GL_RGBA or possibly GL_BGRA for GLubyte[4] color arrays.
  */
-static unsigned
-get_surface_type(struct brw_context *brw,
-                 const struct gl_client_array *glarray)
+unsigned
+brw_get_vertex_surface_type(struct brw_context *brw,
+                            const struct gl_client_array *glarray)
 {
    int size = glarray->Size;
 
@@ -342,7 +342,8 @@ get_surface_type(struct brw_context *brw,
    }
 }
 
-static GLuint get_index_type(GLenum type)
+unsigned
+brw_get_index_type(GLenum type)
 {
    switch (type) {
    case GL_UNSIGNED_BYTE:  return BRW_INDEX_BYTE;
@@ -687,7 +688,7 @@ static void brw_emit_vertices(struct brw_context *brw)
    OUT_BATCH((_3DSTATE_VERTEX_ELEMENTS << 16) | (2 * nr_elements - 1));
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
-      uint32_t format = get_surface_type(brw, input->glarray);
+      uint32_t format = brw_get_vertex_surface_type(brw, input->glarray);
       uint32_t comp0 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp1 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp2 = BRW_VE1_COMPONENT_STORE_SRC;
@@ -748,7 +749,8 @@ static void brw_emit_vertices(struct brw_context *brw)
    }
 
    if (brw->gen >= 6 && gen6_edgeflag_input) {
-      uint32_t format = get_surface_type(brw, gen6_edgeflag_input->glarray);
+      uint32_t format =
+         brw_get_vertex_surface_type(brw, gen6_edgeflag_input->glarray);
 
       OUT_BATCH((gen6_edgeflag_input->buffer << GEN6_VE0_INDEX_SHIFT) |
                 GEN6_VE0_VALID |
@@ -900,7 +902,7 @@ static void brw_emit_index_buffer(struct brw_context *brw)
    BEGIN_BATCH(3);
    OUT_BATCH(CMD_INDEX_BUFFER << 16 |
              cut_index_setting |
-             get_index_type(index_buffer->type) << 8 |
+             brw_get_index_type(index_buffer->type) << 8 |
              1);
    OUT_RELOC(brw->ib.bo,
              I915_GEM_DOMAIN_VERTEX, 0,
