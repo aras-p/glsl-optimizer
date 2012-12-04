@@ -52,6 +52,8 @@
  * from in picking among those.
  */
 
+static bool debug = false;
+
 class schedule_node : public exec_node
 {
 public:
@@ -513,6 +515,11 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
        */
       time = MAX2(time + 1, chosen_time);
 
+      if (debug) {
+         printf("clock %4d, scheduled: ", time);
+         v->dump_instruction(chosen->inst);
+      }
+
       /* Now that we've scheduled a new instruction, some of its
        * children can be promoted to the list of instructions ready to
        * be scheduled.  Update the children's unblocked time for this
@@ -526,6 +533,10 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
 
 	 child->parent_count--;
 	 if (child->parent_count == 0) {
+            if (debug) {
+               printf("now available: ");
+               v->dump_instruction(child->inst);
+            }
 	    instructions.push_tail(child);
 	 }
       }
@@ -560,6 +571,11 @@ fs_visitor::schedule_instructions(bool post_reg_alloc)
    else
       grf_count = virtual_grf_count;
 
+   if (debug) {
+      printf("\nInstructions before scheduling (reg_alloc %d)\n", post_reg_alloc);
+      dump_instructions();
+   }
+
    instruction_scheduler sched(this, mem_ctx, grf_count, post_reg_alloc);
 
    while (!next_block_header->is_tail_sentinel()) {
@@ -581,6 +597,11 @@ fs_visitor::schedule_instructions(bool post_reg_alloc)
       }
       sched.calculate_deps();
       sched.schedule_instructions(next_block_header);
+   }
+
+   if (debug) {
+      printf("\nInstructions after scheduling (reg_alloc %d)\n", post_reg_alloc);
+      dump_instructions();
    }
 
    this->live_intervals_valid = false;
