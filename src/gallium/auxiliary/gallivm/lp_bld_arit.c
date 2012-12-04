@@ -1000,8 +1000,12 @@ lp_build_lerp_simple(struct lp_build_context *bld,
 
    res = lp_build_add(bld, v0, res);
 
-   if (normalized && !bld->type.sign) {
+   if ((normalized && !bld->type.sign) || bld->type.fixed) {
       /* We need to mask out the high order bits when lerping 8bit normalized colors stored on 16bits */
+      /* XXX: This step is necessary for lerping 8bit colors stored on 16bits,
+       * but it will be wrong for true fixed point use cases. Basically we need
+       * a more powerful lp_type, capable of further distinguishing the values
+       * interpretation from the value storage. */
       res = LLVMBuildAnd(builder, res, lp_build_const_int_vec(bld->gallivm, bld->type, (1 << half_width) - 1), "");
    }
 
