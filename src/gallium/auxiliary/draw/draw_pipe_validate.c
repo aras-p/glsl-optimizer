@@ -195,6 +195,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    if (rast->line_smooth && draw->pipeline.aaline) {
       draw->pipeline.aaline->next = next;
       next = draw->pipeline.aaline;
+      precalc_flat = TRUE;
    }
 
    if (rast->point_smooth && draw->pipeline.aapoint) {
