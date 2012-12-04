@@ -234,7 +234,6 @@ lp_build_unpack_arith_rgba_aos(struct gallivm_state *gallivm,
    shifted = LLVMBuildLShr(builder, packed, LLVMConstVector(shifts, 4), "");
    masked = LLVMBuildAnd(builder, shifted, LLVMConstVector(masks, 4), "");
 
-
    if (!needs_uitofp) {
       /* UIToFP can't be expressed in SSE2 */
       casted = LLVMBuildSIToFP(builder, masked, LLVMVectorType(LLVMFloatTypeInContext(gallivm->context), 4), "");
@@ -438,7 +437,8 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
        format_desc->is_bitmask &&
        !format_desc->is_mixed &&
        (format_desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED ||
-        format_desc->channel[1].type == UTIL_FORMAT_TYPE_UNSIGNED)) {
+        format_desc->channel[1].type == UTIL_FORMAT_TYPE_UNSIGNED) &&
+       !format_desc->channel[0].pure_integer) {
 
       LLVMValueRef tmps[LP_MAX_VECTOR_LENGTH/4];
       LLVMValueRef res;

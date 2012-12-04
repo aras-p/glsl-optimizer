@@ -113,6 +113,8 @@ lp_build_fetch_rgba_aos_array(struct gallivm_state *gallivm,
    LLVMTypeRef src_vec_type;
    LLVMValueRef ptr, res = NULL;
    struct lp_type src_type;
+   boolean pure_integer = format_desc->channel[0].pure_integer;
+   struct lp_type tmp_type;
 
    lp_type_from_format_desc(&src_type, format_desc);
 
@@ -144,10 +146,23 @@ lp_build_fetch_rgba_aos_array(struct gallivm_state *gallivm,
       src_type.length = dst_type.length;
    }
 
+   tmp_type = dst_type;
+   if (pure_integer) {
+      assert(dst_type.floating);
+      tmp_type.floating = 0;
+   }
+
    /* Convert to correct format */
-   lp_build_conv(gallivm, src_type, dst_type, &res, 1, &res, 1);
+   lp_build_conv(gallivm, src_type, tmp_type, &res, 1, &res, 1);
 
    /* Swizzle it */
-   lp_build_context_init(&bld, gallivm, dst_type);
-   return lp_build_format_swizzle_aos(format_desc, &bld, res);
+   lp_build_context_init(&bld, gallivm, tmp_type);
+   res = lp_build_format_swizzle_aos(format_desc, &bld, res);
+
+   /* Bitcast to floats (for pure integers) */
+   if (pure_integer) {
+      res = LLVMBuildBitCast(builder, res, lp_build_vec_type(gallivm, dst_type), "");
+   }
+
+   return res;
 }
