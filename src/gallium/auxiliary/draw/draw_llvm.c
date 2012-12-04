@@ -161,8 +161,9 @@ create_jit_context_type(struct gallivm_state *gallivm,
    LLVMTypeRef elem_types[5];
    LLVMTypeRef context_type;
 
-   elem_types[0] = LLVMPointerType(float_type, 0); /* vs_constants */
-   elem_types[1] = LLVMPointerType(float_type, 0); /* gs_constants */
+   elem_types[0] = LLVMArrayType(LLVMPointerType(float_type, 0), /* vs_constants */
+                                 LP_MAX_TGSI_CONST_BUFFERS);
+   elem_types[1] = elem_types[0]; /* gs_constants */
    elem_types[2] = LLVMPointerType(LLVMArrayType(LLVMArrayType(float_type, 4),
                                                  DRAW_TOTAL_CLIP_PLANES), 0);
    elem_types[3] = LLVMPointerType(float_type, 0); /* viewport */

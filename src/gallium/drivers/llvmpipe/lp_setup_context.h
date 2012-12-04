@@ -131,7 +131,7 @@ struct lp_setup_context
       struct pipe_resource *current;
       unsigned stored_size;
       const void *stored_data;
-   } constants;
+   } constants[LP_MAX_TGSI_CONST_BUFFERS];
 
    struct {
       struct pipe_blend_color current;

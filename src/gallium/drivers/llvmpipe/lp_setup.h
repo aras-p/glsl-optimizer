@@ -100,7 +100,8 @@ lp_setup_set_fs_variant( struct lp_setup_context *setup,
 
 void
 lp_setup_set_fs_constants(struct lp_setup_context *setup,
-                          struct pipe_resource *buffer);
+                          unsigned num,
+                          struct pipe_resource **buffers);
 
 
 void

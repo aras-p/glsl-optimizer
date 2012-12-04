@@ -63,6 +63,7 @@
 #include "lp_bld_debug.h"
 #include "lp_bld_printf.h"
 #include "lp_bld_sample.h"
+#include "lp_bld_struct.h"
 
 
 static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context *bld)
@@ -588,9 +589,21 @@ emit_fetch_constant(
    struct lp_build_context *uint_bld = &bld_base->uint_bld;
    LLVMValueRef indirect_index = NULL;
    struct lp_build_context *bld_fetch = stype_to_fetch(bld_base, stype);
-   
+   unsigned dimension = 0;
+   LLVMValueRef dimension_index;
+   LLVMValueRef consts_ptr;
+
    /* XXX: Handle fetching xyzw components as a vector */
    assert(swizzle != ~0);
+
+   if (reg->Register.Dimension) {
+      assert(!reg->Dimension.Indirect);
+      dimension = reg->Dimension.Index;
+      assert(dimension < LP_MAX_TGSI_CONST_BUFFERS);
+   }
+
+   dimension_index = lp_build_const_int32(gallivm, dimension);
+   consts_ptr = lp_build_array_get(gallivm, bld->consts_ptr, dimension_index);
 
    if (reg->Register.Indirect) {
       indirect_index = get_indirect_index(bld,
@@ -609,7 +622,7 @@ emit_fetch_constant(
       index_vec = lp_build_add(uint_bld, index_vec, swizzle_vec);
 
       /* Gather values from the constant buffer */
-      return build_gather(bld_fetch, bld->consts_ptr, index_vec);
+      return build_gather(bld_fetch, consts_ptr, index_vec);
    }
    else {
       LLVMValueRef index;  /* index into the const buffer */
@@ -617,7 +630,7 @@ emit_fetch_constant(
 
       index = lp_build_const_int32(gallivm, reg->Register.Index*4 + swizzle);
 
-      scalar_ptr = LLVMBuildGEP(builder, bld->consts_ptr,
+      scalar_ptr = LLVMBuildGEP(builder, consts_ptr,
                                    &index, 1, "");
 
       if (stype != TGSI_TYPE_FLOAT && stype != TGSI_TYPE_UNTYPED) {

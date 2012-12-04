@@ -124,7 +124,8 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
       LLVMTypeRef elem_types[LP_JIT_CTX_COUNT];
       LLVMTypeRef context_type;
 
-      elem_types[LP_JIT_CTX_CONSTANTS] = LLVMPointerType(LLVMFloatTypeInContext(lc), 0);
+      elem_types[LP_JIT_CTX_CONSTANTS] =
+            LLVMArrayType(LLVMPointerType(LLVMFloatTypeInContext(lc), 0), LP_MAX_TGSI_CONST_BUFFERS);
       elem_types[LP_JIT_CTX_ALPHA_REF] = LLVMFloatTypeInContext(lc);
       elem_types[LP_JIT_CTX_STENCIL_REF_FRONT] =
       elem_types[LP_JIT_CTX_STENCIL_REF_BACK] = LLVMInt32TypeInContext(lc);

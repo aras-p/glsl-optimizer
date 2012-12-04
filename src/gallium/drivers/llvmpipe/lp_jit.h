@@ -37,6 +37,7 @@
 
 
 #include "gallivm/lp_bld_struct.h"
+#include "gallivm/lp_bld_limits.h"
 
 #include "pipe/p_state.h"
 #include "lp_texture.h"
@@ -97,7 +98,7 @@ enum {
  */
 struct lp_jit_context
 {
-   const float *constants;
+   const float *constants[LP_MAX_TGSI_CONST_BUFFERS];
 
    float alpha_ref_value;
 
@@ -127,7 +128,7 @@ enum {
 
 
 #define lp_jit_context_constants(_gallivm, _ptr) \
-   lp_build_struct_get(_gallivm, _ptr, LP_JIT_CTX_CONSTANTS, "constants")
+   lp_build_struct_get_ptr(_gallivm, _ptr, LP_JIT_CTX_CONSTANTS, "constants")
 
 #define lp_jit_context_alpha_ref_value(_gallivm, _ptr) \
    lp_build_struct_get(_gallivm, _ptr, LP_JIT_CTX_ALPHA_REF, "alpha_ref_value")

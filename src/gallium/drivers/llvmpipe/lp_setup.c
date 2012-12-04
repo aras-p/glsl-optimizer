@@ -120,11 +120,15 @@ first_point( struct lp_setup_context *setup,
 
 void lp_setup_reset( struct lp_setup_context *setup )
 {
+   unsigned i;
+
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    /* Reset derived state */
-   setup->constants.stored_size = 0;
-   setup->constants.stored_data = NULL;
+   for (i = 0; i < Elements(setup->constants); ++i) {
+      setup->constants[i].stored_size = 0;
+      setup->constants[i].stored_data = NULL;
+   }
    setup->fs.stored = NULL;
    setup->dirty = ~0;
 
@@ -549,13 +553,21 @@ lp_setup_set_fs_variant( struct lp_setup_context *setup,
 
 void
 lp_setup_set_fs_constants(struct lp_setup_context *setup,
-                          struct pipe_resource *buffer)
+                          unsigned num,
+                          struct pipe_resource **buffers)
 {
-   LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__, (void *) buffer);
+   unsigned i;
 
-   pipe_resource_reference(&setup->constants.current, buffer);
+   LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__, (void *) buffers);
 
-   setup->dirty |= LP_SETUP_NEW_CONSTANTS;
+   assert(num <= Elements(setup->constants));
+
+   for (i = 0; i < num; ++i) {
+      if (setup->constants[i].current != buffers[i]) {
+         pipe_resource_reference(&setup->constants[i].current, buffers[i]);
+         setup->dirty |= LP_SETUP_NEW_CONSTANTS;
+      }
+   }
 }
 
 
@@ -820,6 +832,7 @@ try_update_scene_state( struct lp_setup_context *setup )
 {
    boolean new_scene = (setup->fs.stored == NULL);
    struct lp_scene *scene = setup->scene;
+   unsigned i;
 
    assert(scene);
 
@@ -858,42 +871,44 @@ try_update_scene_state( struct lp_setup_context *setup )
       setup->dirty |= LP_SETUP_NEW_FS;
    }
 
-   if(setup->dirty & LP_SETUP_NEW_CONSTANTS) {
-      struct pipe_resource *buffer = setup->constants.current;
+   if (setup->dirty & LP_SETUP_NEW_CONSTANTS) {
+      for (i = 0; i < Elements(setup->constants); ++i) {
+         struct pipe_resource *buffer = setup->constants[i].current;
 
-      if(buffer) {
-         unsigned current_size = buffer->width0;
-         const void *current_data = llvmpipe_resource_data(buffer);
+         if (buffer) {
+            unsigned current_size = buffer->width0;
+            const void *current_data = llvmpipe_resource_data(buffer);
 
-         /* TODO: copy only the actually used constants? */
+            /* TODO: copy only the actually used constants? */
 
-         if(setup->constants.stored_size != current_size ||
-            !setup->constants.stored_data ||
-            memcmp(setup->constants.stored_data,
-                   current_data,
-                   current_size) != 0) {
-            void *stored;
+            if (setup->constants[i].stored_size != current_size ||
+               !setup->constants[i].stored_data ||
+               memcmp(setup->constants[i].stored_data,
+                      current_data,
+                      current_size) != 0) {
+               void *stored;
 
-            stored = lp_scene_alloc(scene, current_size);
-            if (!stored) {
-               assert(!new_scene);
-               return FALSE;
+               stored = lp_scene_alloc(scene, current_size);
+               if (!stored) {
+                  assert(!new_scene);
+                  return FALSE;
+               }
+
+               memcpy(stored,
+                      current_data,
+                      current_size);
+               setup->constants[i].stored_size = current_size;
+               setup->constants[i].stored_data = stored;
             }
-
-            memcpy(stored,
-                   current_data,
-                   current_size);
-            setup->constants.stored_size = current_size;
-            setup->constants.stored_data = stored;
          }
-      }
-      else {
-         setup->constants.stored_size = 0;
-         setup->constants.stored_data = NULL;
-      }
+         else {
+            setup->constants[i].stored_size = 0;
+            setup->constants[i].stored_data = NULL;
+         }
 
-      setup->fs.current.jit_context.constants = setup->constants.stored_data;
-      setup->dirty |= LP_SETUP_NEW_FS;
+         setup->fs.current.jit_context.constants[i] = setup->constants[i].stored_data;
+         setup->dirty |= LP_SETUP_NEW_FS;
+      }
    }
 
 
@@ -904,7 +919,6 @@ try_update_scene_state( struct lp_setup_context *setup )
                  sizeof setup->fs.current) != 0)
       {
          struct lp_rast_state *stored;
-         uint i;
          
          /* The fs state that's been stored in the scene is different from
           * the new, current state.  So allocate a new lp_rast_state object
@@ -1039,7 +1053,9 @@ lp_setup_destroy( struct lp_setup_context *setup )
       pipe_resource_reference(&setup->fs.current_tex[i], NULL);
    }
 
-   pipe_resource_reference(&setup->constants.current, NULL);
+   for (i = 0; i < Elements(setup->constants); i++) {
+      pipe_resource_reference(&setup->constants[i].current, NULL);
+   }
 
    /* free the scenes in the 'empty' queue */
    for (i = 0; i < Elements(setup->scenes); i++) {

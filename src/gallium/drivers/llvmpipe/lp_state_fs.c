@@ -2422,7 +2422,7 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    data = constants ? llvmpipe_resource_data(constants) : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
-   assert(index < PIPE_MAX_CONSTANT_BUFFERS);
+   assert(index < Elements(llvmpipe->constants[shader]));
 
    if(llvmpipe->constants[shader][index] == constants)
       return;

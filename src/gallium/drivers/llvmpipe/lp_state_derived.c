@@ -174,8 +174,9 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
    }
 
    if (llvmpipe->dirty & LP_NEW_CONSTANTS)
-      lp_setup_set_fs_constants(llvmpipe->setup, 
-                                llvmpipe->constants[PIPE_SHADER_FRAGMENT][0]);
+      lp_setup_set_fs_constants(llvmpipe->setup,
+                                Elements(llvmpipe->constants[PIPE_SHADER_FRAGMENT]),
+                                llvmpipe->constants[PIPE_SHADER_FRAGMENT]);
 
    if (llvmpipe->dirty & (LP_NEW_SAMPLER_VIEW))
       lp_setup_set_fragment_sampler_views(llvmpipe->setup,

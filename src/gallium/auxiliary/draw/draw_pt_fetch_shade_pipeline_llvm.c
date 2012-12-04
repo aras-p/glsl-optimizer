@@ -81,6 +81,8 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    const unsigned nr = MAX2( shader->base.info.num_inputs,
                              shader->base.info.num_outputs + 1 );
 
+   unsigned i;
+
    fpme->input_prim = in_prim;
    fpme->opt = opt;
 
@@ -138,7 +140,6 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    }
    else {
       /* Need to create new variant */
-      unsigned i;
 
       /* First check if we've created too many variants.  If so, free
        * 25% of the LRU to avoid using too much memory.
@@ -171,11 +172,14 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 
    fpme->current_variant = variant;
 
-   /*XXX we only support one constant buffer */
-   fpme->llvm->jit_context.vs_constants =
-      draw->pt.user.vs_constants[0];
-   fpme->llvm->jit_context.gs_constants =
-      draw->pt.user.gs_constants[0];
+   for (i = 0; i < Elements(fpme->llvm->jit_context.vs_constants); ++i) {
+      fpme->llvm->jit_context.vs_constants[i] =
+         draw->pt.user.vs_constants[i];
+   }
+   for (i = 0; i < Elements(fpme->llvm->jit_context.gs_constants); ++i) {
+      fpme->llvm->jit_context.gs_constants[i] =
+         draw->pt.user.gs_constants[i];
+   }
    fpme->llvm->jit_context.planes =
       (float (*) [DRAW_TOTAL_CLIP_PLANES][4]) draw->pt.user.planes[0];
    fpme->llvm->jit_context.viewport =

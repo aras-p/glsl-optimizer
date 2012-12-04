@@ -51,6 +51,9 @@
 
 #define LP_MAX_TGSI_PREDS 16
 
+#define LP_MAX_TGSI_CONST_BUFFERS 16
+
+
 /**
  * Maximum control flow nesting
  *
