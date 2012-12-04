@@ -107,6 +107,7 @@ main_sources = [
     'main/renderbuffer.c',
     'main/samplerobj.c',
     'main/scissor.c',
+    'main/set.c',
     'main/shaderapi.c',
     'main/shaderobj.c',
     'main/shader_query.cpp',

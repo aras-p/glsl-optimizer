@@ -76,6 +76,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/renderbuffer.c \
 	$(SRCDIR)main/samplerobj.c \
 	$(SRCDIR)main/scissor.c \
+	$(SRCDIR)main/set.c \
 	$(SRCDIR)main/shaderapi.c \
 	$(SRCDIR)main/shaderobj.c \
 	$(SRCDIR)main/shader_query.cpp \
