@@ -79,6 +79,8 @@ struct st_context;
 struct gl_uniform_storage;
 struct prog_instruction;
 struct gl_program_parameter_list;
+struct set;
+struct set_entry;
 /*@}*/
 
 
@@ -2509,7 +2511,7 @@ struct gl_query_state
 /** Sync object state */
 struct gl_sync_object
 {
-   struct simple_node link;
+   struct set_entry *SetEntry;
    GLenum Type;               /**< GL_SYNC_FENCE */
    GLuint Name;               /**< Fence name */
    GLint RefCount;            /**< Reference count */
@@ -2576,7 +2578,7 @@ struct gl_shared_state
    struct _mesa_HashTable *FrameBuffers;
 
    /* GL_ARB_sync */
-   struct simple_node SyncObjects;
+   struct set *SyncObjects;
 
    /** GL_ARB_sampler_objects */
    struct _mesa_HashTable *SamplerObjects;

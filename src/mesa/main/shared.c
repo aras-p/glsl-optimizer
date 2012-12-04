@@ -31,12 +31,14 @@
 #include "mfeatures.h"
 #include "mtypes.h"
 #include "hash.h"
+#include "hash_table.h"
 #include "atifragshader.h"
 #include "bufferobj.h"
 #include "shared.h"
 #include "program/program.h"
 #include "dlist.h"
 #include "samplerobj.h"
+#include "set.h"
 #include "shaderobj.h"
 #include "syncobj.h"
 
@@ -115,7 +117,7 @@ _mesa_alloc_shared_state(struct gl_context *ctx)
    shared->FrameBuffers = _mesa_NewHashTable();
    shared->RenderBuffers = _mesa_NewHashTable();
 
-   make_empty_list(& shared->SyncObjects);
+   shared->SyncObjects = _mesa_set_create(NULL, _mesa_key_pointer_equal);
 
    return shared;
 }
@@ -327,13 +329,13 @@ free_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
    _mesa_reference_buffer_object(ctx, &shared->NullBufferObj, NULL);
 
    {
-      struct simple_node *node;
-      struct simple_node *temp;
+      struct set_entry *entry;
 
-      foreach_s(node, temp, & shared->SyncObjects) {
-	 _mesa_unref_sync_object(ctx, (struct gl_sync_object *) node);
+      set_foreach(shared->SyncObjects, entry) {
+         _mesa_unref_sync_object(ctx, (struct gl_sync_object *) entry->key);
       }
    }
+   _mesa_set_destroy(shared->SyncObjects, NULL);
 
    _mesa_HashDeleteAll(shared->SamplerObjects, delete_sampler_object_cb, ctx);
    _mesa_DeleteHashTable(shared->SamplerObjects);
