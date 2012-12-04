@@ -495,13 +495,48 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
       schedule_node *chosen = NULL;
       int chosen_time = 0;
 
-      foreach_list(node, &instructions) {
-	 schedule_node *n = (schedule_node *)node;
+      if (post_reg_alloc) {
+         /* Of the instructions closest ready to execute or the closest to
+          * being ready, choose the oldest one.
+          */
+         foreach_list(node, &instructions) {
+            schedule_node *n = (schedule_node *)node;
 
-	 if (!chosen || n->unblocked_time < chosen_time) {
-	    chosen = n;
-	    chosen_time = n->unblocked_time;
-	 }
+            if (!chosen || n->unblocked_time < chosen_time) {
+               chosen = n;
+               chosen_time = n->unblocked_time;
+            }
+         }
+      } else {
+         /* Before register allocation, we don't care about the latencies of
+          * instructions.  All we care about is reducing live intervals of
+          * variables so that we can avoid register spilling, or get 16-wide
+          * shaders which naturally do a better job of hiding instruction
+          * latency.
+          *
+          * To do so, schedule our instructions in a roughly LIFO/depth-first
+          * order: when new instructions become available as a result of
+          * scheduling something, choose those first so that our result
+          * hopefully is consumed quickly.
+          *
+          * The exception is messages that generate more than one result
+          * register (AKA texturing).  In those cases, the LIFO search would
+          * normally tend to choose them quickly (because scheduling the
+          * previous message not only unblocked the children using its result,
+          * but also the MRF setup for the next sampler message, which in turn
+          * unblocks the next sampler message).
+          */
+         for (schedule_node *node = (schedule_node *)instructions.get_tail();
+              node != instructions.get_head()->prev;
+              node = (schedule_node *)node->prev) {
+            schedule_node *n = (schedule_node *)node;
+
+            chosen = n;
+            if (chosen->inst->regs_written() <= 1)
+               break;
+         }
+
+         chosen_time = chosen->unblocked_time;
       }
 
       /* Schedule this instruction. */
