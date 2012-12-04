@@ -36,11 +36,13 @@ else:
             'x11/native_x11.c',
             'x11/native_dri2.c',
             'x11/native_ximage.c',
-            'x11/x11_screen.c',
             'x11/glxinit.c'])
         if env['drm']:
             env.Append(CPPDEFINES = ['GLX_DIRECT_RENDERING'])
-            sources.append(['#/src/glx/dri2.c'])
+            sources.append([
+                    '#/src/glx/dri2.c',
+                    'x11/x11_screen.c',
+                    ])
     if env['drm'] and False:
         # XXX: Disabled as it depends on gbm, which is not yet built with scons
         env.Append(CPPDEFINES = ['HAVE_DRM_BACKEND'])
