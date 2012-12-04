@@ -500,6 +500,8 @@ def generate(env):
     libs = []
     if env['platform'] in ('darwin', 'freebsd', 'linux', 'posix', 'sunos'):
         libs += ['m', 'pthread', 'dl']
+    if env['platform'] in 'linux':
+        libs += ['rt']
     env.Append(LIBS = libs)
 
     # OpenMP
