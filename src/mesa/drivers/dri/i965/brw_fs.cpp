@@ -2498,7 +2498,7 @@ fs_visitor::run()
 
       remove_dead_constants();
 
-      schedule_instructions();
+      schedule_instructions(false);
 
       assign_curb_setup();
       assign_urb_setup();
@@ -2524,6 +2524,8 @@ fs_visitor::run()
 
    if (failed)
       return false;
+
+   schedule_instructions(true);
 
    if (dispatch_width == 8) {
       c->prog_data.reg_blocks = brw_register_blocks(grf_used);

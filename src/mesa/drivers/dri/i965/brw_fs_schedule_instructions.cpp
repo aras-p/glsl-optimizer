@@ -112,13 +112,15 @@ public:
 
 class instruction_scheduler {
 public:
-   instruction_scheduler(fs_visitor *v, void *mem_ctx, int virtual_grf_count)
+   instruction_scheduler(fs_visitor *v, void *mem_ctx, int grf_count,
+                         bool post_reg_alloc)
    {
       this->v = v;
       this->mem_ctx = ralloc_context(mem_ctx);
-      this->virtual_grf_count = virtual_grf_count;
+      this->grf_count = grf_count;
       this->instructions.make_empty();
       this->instructions_to_schedule = 0;
+      this->post_reg_alloc = post_reg_alloc;
    }
 
    ~instruction_scheduler()
@@ -137,8 +139,9 @@ public:
 
    void *mem_ctx;
 
+   bool post_reg_alloc;
    int instructions_to_schedule;
-   int virtual_grf_count;
+   int grf_count;
    exec_list instructions;
    fs_visitor *v;
 };
@@ -247,7 +250,12 @@ instruction_scheduler::is_compressed(fs_inst *inst)
 void
 instruction_scheduler::calculate_deps()
 {
-   schedule_node *last_grf_write[virtual_grf_count];
+   /* Pre-register-allocation, this tracks the last write per VGRF (so
+    * different reg_offsets within it can interfere when they shouldn't).
+    * After register allocation, reg_offsets are gone and we track individual
+    * GRF registers.
+    */
+   schedule_node *last_grf_write[grf_count];
    schedule_node *last_mrf_write[BRW_MAX_MRF];
    schedule_node *last_conditional_mod[2] = { NULL, NULL };
    /* Fixed HW registers are assumed to be separate from the virtual
@@ -256,6 +264,7 @@ instruction_scheduler::calculate_deps()
     * granular level.
     */
    schedule_node *last_fixed_grf_write = NULL;
+   int reg_width = v->dispatch_width / 8;
 
    /* The last instruction always needs to still be the last
     * instruction.  Either it's flow control (IF, ELSE, ENDIF, DO,
@@ -277,11 +286,21 @@ instruction_scheduler::calculate_deps()
       /* read-after-write deps. */
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
-	    add_dep(last_grf_write[inst->src[i].reg], n);
+            if (post_reg_alloc) {
+               for (int r = 0; r < reg_width; r++)
+                  add_dep(last_grf_write[inst->src[i].reg + r], n);
+            } else {
+               add_dep(last_grf_write[inst->src[i].reg], n);
+            }
 	 } else if (inst->src[i].file == FIXED_HW_REG &&
 		    (inst->src[i].fixed_hw_reg.file ==
 		     BRW_GENERAL_REGISTER_FILE)) {
-	    add_dep(last_fixed_grf_write, n);
+	    if (post_reg_alloc) {
+               for (int r = 0; r < reg_width; r++)
+                  add_dep(last_grf_write[inst->src[i].fixed_hw_reg.nr + r], n);
+            } else {
+               add_dep(last_fixed_grf_write, n);
+            }
 	 } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
 		    inst->src[i].file != UNIFORM) {
@@ -304,8 +323,15 @@ instruction_scheduler::calculate_deps()
 
       /* write-after-write deps. */
       if (inst->dst.file == GRF) {
-	 add_dep(last_grf_write[inst->dst.reg], n);
-	 last_grf_write[inst->dst.reg] = n;
+         if (post_reg_alloc) {
+            for (int r = 0; r < inst->regs_written() * reg_width; r++) {
+               add_dep(last_grf_write[inst->dst.reg + r], n);
+               last_grf_write[inst->dst.reg + r] = n;
+            }
+         } else {
+            add_dep(last_grf_write[inst->dst.reg], n);
+            last_grf_write[inst->dst.reg] = n;
+         }
       } else if (inst->dst.file == MRF) {
 	 int reg = inst->dst.reg & ~BRW_MRF_COMPR4;
 
@@ -321,7 +347,12 @@ instruction_scheduler::calculate_deps()
 	 }
       } else if (inst->dst.file == FIXED_HW_REG &&
 		 inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
-	 last_fixed_grf_write = n;
+         if (post_reg_alloc) {
+            for (int r = 0; r < reg_width; r++)
+               last_grf_write[inst->dst.fixed_hw_reg.nr + r] = n;
+         } else {
+            last_fixed_grf_write = n;
+         }
       } else if (inst->dst.file != BAD_FILE) {
 	 add_barrier_deps(n);
       }
@@ -360,12 +391,22 @@ instruction_scheduler::calculate_deps()
       /* write-after-read deps. */
       for (int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == GRF) {
-	    add_dep(n, last_grf_write[inst->src[i].reg]);
+            if (post_reg_alloc) {
+               for (int r = 0; r < reg_width; r++)
+                  add_dep(n, last_grf_write[inst->src[i].reg + r]);
+            } else {
+               add_dep(n, last_grf_write[inst->src[i].reg]);
+            }
 	 } else if (inst->src[i].file == FIXED_HW_REG &&
 		    (inst->src[i].fixed_hw_reg.file ==
 		     BRW_GENERAL_REGISTER_FILE)) {
-	    add_dep(n, last_fixed_grf_write);
-	 } else if (inst->src[i].file != BAD_FILE &&
+	    if (post_reg_alloc) {
+               for (int r = 0; r < reg_width; r++)
+                  add_dep(n, last_grf_write[inst->src[i].fixed_hw_reg.nr + r]);
+            } else {
+               add_dep(n, last_fixed_grf_write);
+            }
+         } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
 		    inst->src[i].file != UNIFORM) {
 	    assert(inst->src[i].file != MRF);
@@ -389,7 +430,12 @@ instruction_scheduler::calculate_deps()
        * can mark this as WAR dependency.
        */
       if (inst->dst.file == GRF) {
-	 last_grf_write[inst->dst.reg] = n;
+         if (post_reg_alloc) {
+            for (int r = 0; r < inst->regs_written() * reg_width; r++)
+               last_grf_write[inst->dst.reg + r] = n;
+         } else {
+            last_grf_write[inst->dst.reg] = n;
+         }
       } else if (inst->dst.file == MRF) {
 	 int reg = inst->dst.reg & ~BRW_MRF_COMPR4;
 
@@ -405,7 +451,12 @@ instruction_scheduler::calculate_deps()
 	 }
       } else if (inst->dst.file == FIXED_HW_REG &&
 		 inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
-	 last_fixed_grf_write = n;
+         if (post_reg_alloc) {
+            for (int r = 0; r < reg_width; r++)
+               last_grf_write[inst->dst.fixed_hw_reg.nr + r] = n;
+         } else {
+            last_fixed_grf_write = n;
+         }
       } else if (inst->dst.file != BAD_FILE) {
 	 add_barrier_deps(n);
       }
@@ -499,10 +550,17 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
 }
 
 void
-fs_visitor::schedule_instructions()
+fs_visitor::schedule_instructions(bool post_reg_alloc)
 {
    fs_inst *next_block_header = (fs_inst *)instructions.head;
-   instruction_scheduler sched(this, mem_ctx, this->virtual_grf_count);
+
+   int grf_count;
+   if (post_reg_alloc)
+      grf_count = grf_used;
+   else
+      grf_count = virtual_grf_count;
+
+   instruction_scheduler sched(this, mem_ctx, grf_count, post_reg_alloc);
 
    while (!next_block_header->is_tail_sentinel()) {
       /* Add things to be scheduled until we get to a new BB. */

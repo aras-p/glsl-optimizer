@@ -328,7 +328,7 @@ public:
    bool remove_dead_constants();
    bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);
-   void schedule_instructions();
+   void schedule_instructions(bool post_reg_alloc);
    void fail(const char *msg, ...);
 
    void push_force_uncompressed();
