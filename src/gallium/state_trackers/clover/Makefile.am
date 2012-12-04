@@ -73,3 +73,13 @@ libclover_la_SOURCES = \
 	api/event.cpp \
 	api/program.cpp \
 	api/kernel.cpp
+
+cldir = $(includedir)/CL
+cl_HEADERS = \
+	$(top_srcdir)/include/CL/cl.h \
+	$(top_srcdir)/include/CL/cl_ext.h \
+	$(top_srcdir)/include/CL/cl_gl.h \
+	$(top_srcdir)/include/CL/cl_gl_ext.h \
+	$(top_srcdir)/include/CL/cl_platform.h \
+	$(top_srcdir)/include/CL/opencl.h \
+	$(top_srcdir)/include/CL/cl.hpp
