@@ -2022,8 +2022,11 @@ enum brw_wm_barycentric_interp_mode {
 
 #define _3DSTATE_SO_BUFFER                    0x7918 /* GEN7+ */
 /* DW1 */
+# define GEN8_SO_BUFFER_ENABLE                          (1 << 31)
 # define SO_BUFFER_INDEX_SHIFT				29
 # define SO_BUFFER_INDEX_MASK				INTEL_MASK(30, 29)
+# define GEN8_SO_BUFFER_OFFSET_WRITE_ENABLE             (1 << 21)
+# define GEN8_SO_BUFFER_OFFSET_ADDRESS_ENABLE           (1 << 20)
 # define SO_BUFFER_PITCH_SHIFT				0
 # define SO_BUFFER_PITCH_MASK				INTEL_MASK(11, 0)
 /* DW2: start address */

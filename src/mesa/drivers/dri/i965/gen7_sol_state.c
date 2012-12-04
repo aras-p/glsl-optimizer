@@ -409,8 +409,13 @@ gen7_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
    struct brw_transform_feedback_object *brw_obj =
       (struct brw_transform_feedback_object *) obj;
 
-   intel_batchbuffer_flush(brw);
-   brw->batch.needs_sol_reset = true;
+   /* Reset the SO buffer offsets to 0. */
+   if (brw->gen >= 8) {
+      brw_obj->zero_offsets = true;
+   } else {
+      intel_batchbuffer_flush(brw);
+      brw->batch.needs_sol_reset = true;
+   }
 
    /* We're about to lose the information needed to compute the number of
     * vertices written during the last Begin/EndTransformFeedback section,
@@ -466,14 +471,16 @@ gen7_pause_transform_feedback(struct gl_context *ctx,
    intel_batchbuffer_emit_mi_flush(brw);
 
    /* Save the SOL buffer offset register values. */
-   for (int i = 0; i < 4; i++) {
-      BEGIN_BATCH(3);
-      OUT_BATCH(MI_STORE_REGISTER_MEM | (3 - 2));
-      OUT_BATCH(GEN7_SO_WRITE_OFFSET(i));
-      OUT_RELOC(brw_obj->offset_bo,
-                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-                i * sizeof(uint32_t));
-      ADVANCE_BATCH();
+   if (brw->gen < 8) {
+      for (int i = 0; i < 4; i++) {
+         BEGIN_BATCH(3);
+         OUT_BATCH(MI_STORE_REGISTER_MEM | (3 - 2));
+         OUT_BATCH(GEN7_SO_WRITE_OFFSET(i));
+         OUT_RELOC(brw_obj->offset_bo,
+                   I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                   i * sizeof(uint32_t));
+         ADVANCE_BATCH();
+      }
    }
 
    /* Store the temporary ending value of the SO_NUM_PRIMS_WRITTEN counters.
@@ -493,14 +500,16 @@ gen7_resume_transform_feedback(struct gl_context *ctx,
       (struct brw_transform_feedback_object *) obj;
 
    /* Reload the SOL buffer offset registers. */
-   for (int i = 0; i < 4; i++) {
-      BEGIN_BATCH(3);
-      OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
-      OUT_BATCH(GEN7_SO_WRITE_OFFSET(i));
-      OUT_RELOC(brw_obj->offset_bo,
-                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-                i * sizeof(uint32_t));
-      ADVANCE_BATCH();
+   if (brw->gen < 8) {
+      for (int i = 0; i < 4; i++) {
+         BEGIN_BATCH(3);
+         OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+         OUT_BATCH(GEN7_SO_WRITE_OFFSET(i));
+         OUT_RELOC(brw_obj->offset_bo,
+                   I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                   i * sizeof(uint32_t));
+         ADVANCE_BATCH();
+      }
    }
 
    /* Store the new starting value of the SO_NUM_PRIMS_WRITTEN counters. */
