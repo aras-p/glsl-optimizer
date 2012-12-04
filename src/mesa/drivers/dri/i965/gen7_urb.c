@@ -61,7 +61,8 @@ static void
 gen7_allocate_push_constants(struct brw_context *brw)
 {
    unsigned avail_size = 16;
-   unsigned multiplier = (brw->is_haswell && brw->gt == 3) ? 2 : 1;
+   unsigned multiplier =
+      (brw->gen >= 8 || (brw->is_haswell && brw->gt == 3)) ? 2 : 1;
 
    /* BRW_NEW_GEOMETRY_PROGRAM */
    bool gs_present = brw->geometry_program;
@@ -138,7 +139,8 @@ const struct brw_tracked_state gen7_push_constant_space = {
 static void
 gen7_upload_urb(struct brw_context *brw)
 {
-   const int push_size_kB = brw->is_haswell && brw->gt == 3 ? 32 : 16;
+   const int push_size_kB =
+      (brw->gen >= 8 || (brw->is_haswell && brw->gt == 3)) ? 32 : 16;
 
    /* CACHE_NEW_VS_PROG */
    unsigned vs_size = MAX2(brw->vs.prog_data->base.urb_entry_size, 1);
