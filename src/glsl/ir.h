@@ -437,6 +437,15 @@ public:
    unsigned has_initializer:1;
 
    /**
+    * Is this variable a generic output or input that has not yet been matched
+    * up to a variable in another stage of the pipeline?
+    *
+    * This is used by the linker as scratch storage while assigning locations
+    * to generic inputs and outputs.
+    */
+   unsigned is_unmatched_generic_inout:1;
+
+   /**
     * \brief Layout qualifier for gl_FragDepth.
     *
     * This is not equal to \c ir_depth_layout_none if and only if this

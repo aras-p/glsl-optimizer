@@ -225,6 +225,11 @@ link_invalidate_variable_locations(gl_shader *sh, int input_base,
        */
       if ((var->location >= base) && !var->explicit_location)
          var->location = -1;
+
+      if ((var->location == -1) && !var->explicit_location)
+         var->is_unmatched_generic_inout = 1;
+      else
+         var->is_unmatched_generic_inout = 0;
    }
 }
 
@@ -1362,6 +1367,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 	 if (prog->AttributeBindings->get(binding, var->name)) {
 	    assert(binding >= VERT_ATTRIB_GENERIC0);
 	    var->location = binding;
+            var->is_unmatched_generic_inout = 0;
 	 }
       } else if (target_index == MESA_SHADER_FRAGMENT) {
 	 unsigned binding;
@@ -1370,6 +1376,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 	 if (prog->FragDataBindings->get(binding, var->name)) {
 	    assert(binding >= FRAG_RESULT_DATA0);
 	    var->location = binding;
+            var->is_unmatched_generic_inout = 0;
 
 	    if (prog->FragDataIndexBindings->get(index, var->name)) {
 	       var->index = index;
@@ -1485,6 +1492,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
       }
 
       to_assign[i].var->location = generic_base + location;
+      to_assign[i].var->is_unmatched_generic_inout = 0;
       used_locations |= (use_mask << location);
    }
 
@@ -1508,7 +1516,7 @@ demote_shader_inputs_and_outputs(gl_shader *sh, enum ir_variable_mode mode)
        * its value is used by other shader stages.  This will cause the variable
        * to have a location assigned.
        */
-      if (var->location == -1) {
+      if (var->is_unmatched_generic_inout) {
 	 var->mode = ir_var_auto;
       }
    }
@@ -1985,7 +1993,7 @@ void
 assign_varying_location(ir_variable *input_var, ir_variable *output_var,
                         unsigned *input_index, unsigned *output_index)
 {
-   if (output_var->location != -1) {
+   if (!output_var->is_unmatched_generic_inout) {
       /* Location already assigned. */
       return;
    }
@@ -1993,9 +2001,11 @@ assign_varying_location(ir_variable *input_var, ir_variable *output_var,
    if (input_var) {
       assert(input_var->location == -1);
       input_var->location = *input_index;
+      input_var->is_unmatched_generic_inout = 0;
    }
 
    output_var->location = *output_index;
+   output_var->is_unmatched_generic_inout = 0;
 
    /* FINISHME: Support for "varying" records in GLSL 1.50. */
    assert(!output_var->type->is_record());
@@ -2105,7 +2115,7 @@ assign_varying_locations(struct gl_context *ctx,
 
          if (!tfeedback_decls[i].is_assigned() &&
              tfeedback_decls[i].matches_var(output_var)) {
-            if (output_var->location == -1) {
+            if (output_var->is_unmatched_generic_inout) {
                assign_varying_location(input_var, output_var, &input_index,
                                        &output_index);
             }
@@ -2124,7 +2134,7 @@ assign_varying_locations(struct gl_context *ctx,
          if ((var == NULL) || (var->mode != ir_var_in))
             continue;
 
-         if (var->location == -1) {
+         if (var->is_unmatched_generic_inout) {
             if (prog->Version <= 120) {
                /* On page 25 (page 31 of the PDF) of the GLSL 1.20 spec:
                 *
