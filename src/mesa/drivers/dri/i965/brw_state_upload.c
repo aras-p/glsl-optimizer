@@ -322,9 +322,11 @@ static const struct brw_tracked_state *gen8_atoms[] =
 
    &brw_drawing_rect,
 
+   &gen8_vf_topology,
+
    &brw_indices,
-   &brw_index_buffer,
-   &brw_vertices,
+   &gen8_index_buffer,
+   &gen8_vertices,
 
    &haswell_cut_index,
 };

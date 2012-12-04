@@ -1409,6 +1409,19 @@ enum brw_message_target {
 #define _3DSTATE_VF                             0x780c /* GEN7.5+ */
 #define HSW_CUT_INDEX_ENABLE                            (1 << 8)
 
+#define _3DSTATE_VF_INSTANCING                  0x7849 /* GEN8+ */
+# define GEN8_VF_INSTANCING_ENABLE                      (1 << 8)
+
+#define _3DSTATE_VF_SGVS                        0x784a /* GEN8+ */
+# define GEN8_SGVS_ENABLE_INSTANCE_ID                   (1 << 31)
+# define GEN8_SGVS_INSTANCE_ID_COMPONENT_SHIFT          29
+# define GEN8_SGVS_INSTANCE_ID_ELEMENT_OFFSET_SHIFT     16
+# define GEN8_SGVS_ENABLE_VERTEX_ID                     (1 << 15)
+# define GEN8_SGVS_VERTEX_ID_COMPONENT_SHIFT            13
+# define GEN8_SGVS_VERTEX_ID_ELEMENT_OFFSET_SHIFT       0
+
+#define _3DSTATE_VF_TOPOLOGY                    0x784b /* GEN8+ */
+
 #define _3DSTATE_URB_VS                         0x7830 /* GEN7+ */
 #define _3DSTATE_URB_HS                         0x7831 /* GEN7+ */
 #define _3DSTATE_URB_DS                         0x7832 /* GEN7+ */

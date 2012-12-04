@@ -1617,6 +1617,7 @@ gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx);
 unsigned brw_get_vertex_surface_type(struct brw_context *brw,
                                      const struct gl_client_array *glarray);
 unsigned brw_get_index_type(GLenum type);
+void brw_prepare_vertices(struct brw_context *brw);
 
 /* brw_wm_surface_state.c */
 void brw_init_surface_formats(struct brw_context *brw);

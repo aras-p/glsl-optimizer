@@ -131,6 +131,7 @@ extern const struct brw_tracked_state gen7_urb;
 extern const struct brw_tracked_state gen7_vs_state;
 extern const struct brw_tracked_state gen7_wm_state;
 extern const struct brw_tracked_state haswell_cut_index;
+extern const struct brw_tracked_state gen8_index_buffer;
 extern const struct brw_tracked_state gen8_ps_blend;
 extern const struct brw_tracked_state gen8_ps_extra;
 extern const struct brw_tracked_state gen8_ps_state;
@@ -140,6 +141,8 @@ extern const struct brw_tracked_state gen8_raster_state;
 extern const struct brw_tracked_state gen8_sbe_state;
 extern const struct brw_tracked_state gen8_sf_state;
 extern const struct brw_tracked_state gen8_state_base_address;
+extern const struct brw_tracked_state gen8_vertices;
+extern const struct brw_tracked_state gen8_vf_topology;
 extern const struct brw_tracked_state gen8_vs_state;
 
 /* brw_misc_state.c */

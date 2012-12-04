@@ -400,7 +400,8 @@ copy_array_to_vbo_array(struct brw_context *brw,
    buffer->stride = dst_stride;
 }
 
-static void brw_prepare_vertices(struct brw_context *brw)
+void
+brw_prepare_vertices(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
    /* CACHE_NEW_VS_PROG */
