@@ -95,6 +95,7 @@ struct lp_setup_context
    boolean ccw_is_frontface;
    boolean scissor_test;
    boolean point_size_per_vertex;
+   boolean rasterizer_discard;
    unsigned cullmode;
    float pixel_offset;
    float line_width;

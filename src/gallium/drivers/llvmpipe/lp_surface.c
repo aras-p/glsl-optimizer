@@ -208,8 +208,8 @@ static void lp_blit(struct pipe_context *pipe,
    util_blitter_save_vertex_elements(lp->blitter, (void*)lp->velems);
    util_blitter_save_vertex_shader(lp->blitter, (void*)lp->vs);
    util_blitter_save_geometry_shader(lp->blitter, (void*)lp->gs);
-   /*util_blitter_save_so_targets(lp->blitter, lp->num_so_targets,
-                     (struct pipe_stream_output_target**)lp->so_targets);*/
+   util_blitter_save_so_targets(lp->blitter, lp->num_so_targets,
+                                (struct pipe_stream_output_target**)lp->so_targets);
    util_blitter_save_rasterizer(lp->blitter, (void*)lp->rasterizer);
    util_blitter_save_viewport(lp->blitter, &lp->viewport);
    util_blitter_save_scissor(lp->blitter, &lp->scissor);

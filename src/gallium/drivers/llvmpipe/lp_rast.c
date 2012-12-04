@@ -440,6 +440,9 @@ lp_rast_begin_query(struct lp_rasterizer_task *task,
    case PIPE_QUERY_TIME_ELAPSED:
       task->query_start = os_time_get_nano();
       break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      break;
    default:
       assert(0);
       break;
@@ -470,6 +473,9 @@ lp_rast_end_query(struct lp_rasterizer_task *task,
       break;
    case PIPE_QUERY_TIMESTAMP:
       pq->count[task->thread_index] = os_time_get_nano();
+      break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
       break;
    default:
       assert(0);
@@ -606,7 +612,7 @@ rasterize_scene(struct lp_rasterizer_task *task,
 {
    task->scene = scene;
 
-   if (!task->rast->no_rast) {
+   if (!task->rast->no_rast && !scene->discard) {
       /* loop over scene bins, rasterize each */
 #if 0
       {

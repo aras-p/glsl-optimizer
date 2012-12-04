@@ -157,7 +157,7 @@ struct lp_scene {
 
    boolean alloc_failed;
    boolean has_depthstencil_clear;
-
+   boolean discard;
    /**
     * Number of active tiles in each dimension.
     * This basically the framebuffer size divided by tile size
@@ -381,7 +381,8 @@ lp_scene_bin_iter_next( struct lp_scene *scene );
  */
 void
 lp_scene_begin_binning( struct lp_scene *scene,
-                        struct pipe_framebuffer_state *fb );
+                        struct pipe_framebuffer_state *fb,
+                        boolean discard );
 
 void
 lp_scene_end_binning( struct lp_scene *scene );

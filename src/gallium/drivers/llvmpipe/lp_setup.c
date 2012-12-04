@@ -65,7 +65,9 @@ static boolean try_update_scene_state( struct lp_setup_context *setup );
 static void
 lp_setup_get_empty_scene(struct lp_setup_context *setup)
 {
+   struct llvmpipe_context *lp = llvmpipe_context(setup->pipe);
    assert(setup->scene == NULL);
+   boolean discard = lp->rasterizer ? lp->rasterizer->rasterizer_discard : FALSE;
 
    setup->scene_idx++;
    setup->scene_idx %= Elements(setup->scenes);
@@ -80,7 +82,7 @@ lp_setup_get_empty_scene(struct lp_setup_context *setup)
       lp_fence_wait(setup->scene->fence);
    }
 
-   lp_scene_begin_binning(setup->scene, &setup->fb);
+   lp_scene_begin_binning(setup->scene, &setup->fb, discard);
    
 }
 
@@ -620,6 +622,13 @@ lp_setup_set_flatshade_first( struct lp_setup_context *setup,
    setup->flatshade_first = flatshade_first;
 }
 
+void
+lp_setup_set_rasterizer_discard( struct lp_setup_context *setup,
+                                 boolean rasterizer_discard )
+{
+   setup->rasterizer_discard = rasterizer_discard;
+   set_scene_state( setup, SETUP_FLUSHED, __FUNCTION__ );
+}
 
 void 
 lp_setup_set_vertex_info( struct lp_setup_context *setup,
@@ -1057,6 +1066,7 @@ lp_setup_create( struct pipe_context *pipe,
    struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
    struct lp_setup_context *setup;
    unsigned i;
+   struct llvmpipe_context *lp = llvmpipe_context(pipe);
 
    setup = CALLOC_STRUCT(lp_setup_context);
    if (!setup) {

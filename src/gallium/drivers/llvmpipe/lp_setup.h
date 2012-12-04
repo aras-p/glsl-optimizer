@@ -138,6 +138,10 @@ lp_setup_set_flatshade_first( struct lp_setup_context *setup,
                               boolean flatshade_first );
 
 void
+lp_setup_set_rasterizer_discard( struct lp_setup_context *setup, 
+                                 boolean rasterizer_discard );
+
+void
 lp_setup_set_vertex_info( struct lp_setup_context *setup, 
                           struct vertex_info *info );
 

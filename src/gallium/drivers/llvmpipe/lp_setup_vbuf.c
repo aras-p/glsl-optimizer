@@ -37,6 +37,7 @@
 
 
 #include "lp_setup_context.h"
+#include "lp_context.h"
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
 #include "util/u_memory.h"
@@ -533,6 +534,18 @@ lp_setup_vbuf_destroy(struct vbuf_render *vbr)
    lp_setup_destroy(setup);
 }
 
+static void
+lp_setup_so_info(struct vbuf_render *vbr, uint primitives, uint vertices,
+                uint prim_generated)
+{
+   struct lp_setup_context *setup = lp_setup_context(vbr);
+   struct llvmpipe_context *lp = llvmpipe_context(setup->pipe);
+
+   lp->so_stats.num_primitives_written += primitives;
+   lp->so_stats.primitives_storage_needed =
+      vertices * 4 /*sizeof(float|int32)*/ * 4 /*x,y,z,w*/;
+   lp->num_primitives_generated += prim_generated;
+}
 
 /**
  * Create the post-transform vertex handler for the given context.
@@ -552,4 +565,5 @@ lp_setup_init_vbuf(struct lp_setup_context *setup)
    setup->base.draw_arrays = lp_setup_draw_arrays;
    setup->base.release_vertices = lp_setup_release_vertices;
    setup->base.destroy = lp_setup_vbuf_destroy;
+   setup->base.set_stream_output_info = lp_setup_so_info;
 }

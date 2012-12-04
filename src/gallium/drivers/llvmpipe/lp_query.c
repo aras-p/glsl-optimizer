@@ -138,6 +138,12 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
             *result = os_time_get_nano();
       }
       break;
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+      *result = pq->num_primitives_generated;
+      break;
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      *result = pq->num_primitives_written;
+      break;
    default:
       assert(0);
       break;
@@ -165,6 +171,16 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
    memset(pq->count, 0, sizeof(pq->count));
    lp_setup_begin_query(llvmpipe->setup, pq);
 
+   if (pq->type == PIPE_QUERY_PRIMITIVES_EMITTED) {
+      pq->num_primitives_written = 0;
+      llvmpipe->so_stats.num_primitives_written = 0;
+   }
+
+   if (pq->type == PIPE_QUERY_PRIMITIVES_GENERATED) {
+      pq->num_primitives_generated = 0;
+      llvmpipe->num_primitives_generated = 0;
+   }
+
    if (pq->type == PIPE_QUERY_OCCLUSION_COUNTER) {
       llvmpipe->active_occlusion_query = TRUE;
       llvmpipe->dirty |= LP_NEW_OCCLUSION_QUERY;
@@ -179,6 +195,14 @@ llvmpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
    struct llvmpipe_query *pq = llvmpipe_query(q);
 
    lp_setup_end_query(llvmpipe->setup, pq);
+
+   if (pq->type == PIPE_QUERY_PRIMITIVES_EMITTED) {
+      pq->num_primitives_written = llvmpipe->so_stats.num_primitives_written;
+   }
+
+   if (pq->type == PIPE_QUERY_PRIMITIVES_GENERATED) {
+      pq->num_primitives_generated = llvmpipe->num_primitives_generated;
+   }
 
    if (pq->type == PIPE_QUERY_OCCLUSION_COUNTER) {
       assert(llvmpipe->active_occlusion_query);

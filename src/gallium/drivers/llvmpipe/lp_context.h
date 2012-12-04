@@ -81,18 +81,17 @@ struct llvmpipe_context {
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
    struct pipe_index_buffer index_buffer;
-   struct {
-      struct llvmpipe_resource *buffer[PIPE_MAX_SO_BUFFERS];
-      int offset[PIPE_MAX_SO_BUFFERS];
-      int so_count[PIPE_MAX_SO_BUFFERS];
-      int num_buffers;
-   } so_target;
    struct pipe_resource *mapped_vs_tex[PIPE_MAX_SAMPLERS];
 
    unsigned num_samplers[PIPE_SHADER_TYPES];
    unsigned num_sampler_views[PIPE_SHADER_TYPES];
 
    unsigned num_vertex_buffers;
+
+   struct draw_so_target *so_targets[PIPE_MAX_SO_BUFFERS];
+   int num_so_targets;
+   struct pipe_query_data_so_statistics so_stats;
+   unsigned num_primitives_generated;
 
    unsigned dirty; /**< Mask of LP_NEW_x flags */
 
