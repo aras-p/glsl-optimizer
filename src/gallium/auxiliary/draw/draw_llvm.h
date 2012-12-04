@@ -284,6 +284,9 @@ draw_llvm_destroy_variant(struct draw_llvm_variant *variant);
 struct draw_llvm_variant_key *
 draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store);
 
+void
+draw_llvm_dump_variant_key(struct draw_llvm_variant_key *key);
+
 struct lp_build_sampler_soa *
 draw_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,
                              LLVMValueRef context_ptr);

@@ -443,8 +443,9 @@ generate_vs(struct draw_llvm_variant *variant,
    LLVMValueRef consts_ptr = draw_jit_context_vs_constants(variant->gallivm, context_ptr);
    struct lp_build_sampler_soa *sampler = 0;
 
-   if (gallivm_debug & GALLIVM_DEBUG_IR) {
+   if (gallivm_debug & (GALLIVM_DEBUG_TGSI | GALLIVM_DEBUG_IR)) {
       tgsi_dump(tokens, 0);
+      draw_llvm_dump_variant_key(&variant->key);
    }
 
    if (llvm->draw->num_sampler_views && llvm->draw->num_samplers)
@@ -1360,6 +1361,34 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
    }
 
    return key;
+}
+
+
+void
+draw_llvm_dump_variant_key(struct draw_llvm_variant_key *key)
+{
+   unsigned i;
+   struct lp_sampler_static_state *sampler = draw_llvm_variant_key_samplers(key);
+
+   debug_printf("clamp_vertex_color = %u\n", key->clamp_vertex_color);
+   debug_printf("clip_xy = %u\n", key->clip_xy);
+   debug_printf("clip_z = %u\n", key->clip_z);
+   debug_printf("clip_user = %u\n", key->clip_user);
+   debug_printf("bypass_viewport = %u\n", key->bypass_viewport);
+   debug_printf("clip_halfz = %u\n", key->clip_halfz);
+   debug_printf("need_edgeflags = %u\n", key->need_edgeflags);
+   debug_printf("ucp_enable = %u\n", key->ucp_enable);
+
+   for (i = 0 ; i < key->nr_vertex_elements; i++) {
+      debug_printf("vertex_element[%i].src_offset = %u\n", i, key->vertex_element[i].src_offset);
+      debug_printf("vertex_element[%i].instance_divisor = %u\n", i, key->vertex_element[i].instance_divisor);
+      debug_printf("vertex_element[%i].vertex_buffer_index = %u\n", i, key->vertex_element[i].vertex_buffer_index);
+      debug_printf("vertex_element[%i].src_format = %s\n", i, util_format_name(key->vertex_element[i].src_format));
+   }
+
+   for (i = 0 ; i < key->nr_samplers; i++) {
+      debug_printf("sampler[%i].src_format = %s\n", i, util_format_name(sampler[i].format));
+   }
 }
 
 
