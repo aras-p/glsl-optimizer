@@ -45,6 +45,7 @@
  * LowerClipDistance flag in gl_shader_compiler_options to true.
  */
 
+#include "glsl_symbol_table.h"
 #include "ir_hierarchical_visitor.h"
 #include "ir.h"
 
@@ -334,11 +335,14 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
 
 
 bool
-lower_clip_distance(exec_list *instructions)
+lower_clip_distance(gl_shader *shader)
 {
    lower_clip_distance_visitor v;
 
-   visit_list_elements(&v, instructions);
+   visit_list_elements(&v, shader->ir);
+
+   if (v.new_clip_distance_var)
+      shader->symbols->add_variable(v.new_clip_distance_var);
 
    return v.progress;
 }

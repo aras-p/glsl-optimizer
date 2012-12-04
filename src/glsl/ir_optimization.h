@@ -72,7 +72,7 @@ bool lower_noise(exec_list *instructions);
 bool lower_variable_index_to_cond_assign(exec_list *instructions,
     bool lower_input, bool lower_output, bool lower_temp, bool lower_uniform);
 bool lower_quadop_vector(exec_list *instructions, bool dont_lower_swz);
-bool lower_clip_distance(exec_list *instructions);
+bool lower_clip_distance(gl_shader *shader);
 void lower_output_reads(exec_list *instructions);
 void lower_ubo_reference(struct gl_shader *shader, exec_list *instructions);
 bool optimize_redundant_jumps(exec_list *instructions);

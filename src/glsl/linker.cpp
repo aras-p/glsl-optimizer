@@ -2568,8 +2568,9 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       if (!prog->LinkStatus)
 	 goto done;
 
-      if (ctx->ShaderCompilerOptions[i].LowerClipDistance)
-         lower_clip_distance(prog->_LinkedShaders[i]->ir);
+      if (ctx->ShaderCompilerOptions[i].LowerClipDistance) {
+         lower_clip_distance(prog->_LinkedShaders[i]);
+      }
 
       unsigned max_unroll = ctx->ShaderCompilerOptions[i].MaxUnrollIterations;
 
