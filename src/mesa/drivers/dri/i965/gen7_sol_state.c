@@ -97,9 +97,9 @@ upload_3dstate_so_buffers(struct brw_context *brw)
  * stream.  We only have one stream of rendering coming out of the GS unit, so
  * we only emit stream 0 (low 16 bits) SO_DECLs.
  */
-static void
-upload_3dstate_so_decl_list(struct brw_context *brw,
-			    const struct brw_vue_map *vue_map)
+void
+gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
+                                 const struct brw_vue_map *vue_map)
 {
    struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_VERTEX_PROGRAM */
