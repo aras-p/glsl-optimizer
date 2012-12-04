@@ -1961,58 +1961,167 @@ parse_tfeedback_decls(struct gl_context *ctx, struct gl_shader_program *prog,
 
 
 /**
- * Assign a location for a variable that is produced in one pipeline stage
- * (the "producer") and consumed in the next stage (the "consumer").
+ * Data structure recording the relationship between outputs of one shader
+ * stage (the "producer") and inputs of another (the "consumer").
+ */
+class varying_matches
+{
+public:
+   varying_matches();
+   ~varying_matches();
+   void record(ir_variable *producer_var, ir_variable *consumer_var);
+   unsigned assign_locations();
+   void store_locations(unsigned producer_base, unsigned consumer_base) const;
+
+private:
+   /**
+    * Structure recording the relationship between a single producer output
+    * and a single consumer input.
+    */
+   struct match {
+      /**
+       * The output variable in the producer stage.
+       */
+      ir_variable *producer_var;
+
+      /**
+       * The input variable in the consumer stage.
+       */
+      ir_variable *consumer_var;
+
+      /**
+       * The location which has been assigned for this varying.  This is
+       * expressed in multiples of a float, with the first generic varying
+       * (i.e. the one referred to by VERT_RESULT_VAR0 or FRAG_ATTRIB_VAR0)
+       * represented by the value 0.
+       */
+      unsigned generic_location;
+   } *matches;
+
+   /**
+    * The number of elements in the \c matches array that are currently in
+    * use.
+    */
+   unsigned num_matches;
+
+   /**
+    * The number of elements that were set aside for the \c matches array when
+    * it was allocated.
+    */
+   unsigned matches_capacity;
+};
+
+
+varying_matches::varying_matches()
+{
+   /* Note: this initial capacity is rather arbitrarily chosen to be large
+    * enough for many cases without wasting an unreasonable amount of space.
+    * varying_matches::record() will resize the array if there are more than
+    * this number of varyings.
+    */
+   this->matches_capacity = 8;
+   this->matches = (match *)
+      malloc(sizeof(*this->matches) * this->matches_capacity);
+   this->num_matches = 0;
+}
+
+
+varying_matches::~varying_matches()
+{
+   free(this->matches);
+}
+
+
+/**
+ * Record the given producer/consumer variable pair in the list of variables
+ * that should later be assigned locations.
  *
- * \param input_var is the input variable declaration in the consumer.
+ * It is permissible for \c consumer_var to be NULL (this happens if a
+ * variable is output by the producer and consumed by transform feedback, but
+ * not consumed by the consumer).
  *
- * \param output_var is the output variable declaration in the producer.
- *
- * \param input_index is the counter that keeps track of assigned input
- *        locations in the consumer.
- *
- * \param output_index is the counter that keeps track of assigned output
- *        locations in the producer.
- *
- * It is permissible for \c input_var to be NULL (this happens if a variable
- * is output by the producer and consumed by transform feedback, but not
- * consumed by the consumer).
- *
- * If the variable has already been assigned a location, this function has no
- * effect.
+ * If \c producer_var has already been paired up with a consumer_var, or
+ * producer_var is part of fixed pipeline functionality (and hence already has
+ * a location assigned), this function has no effect.
  */
 void
-assign_varying_location(ir_variable *input_var, ir_variable *output_var,
-                        unsigned *input_index, unsigned *output_index)
+varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
 {
-   if (!output_var->is_unmatched_generic_inout) {
-      /* Location already assigned. */
+   if (!producer_var->is_unmatched_generic_inout) {
+      /* Either a location already exists for this variable (since it is part
+       * of fixed functionality), or it has already been recorded as part of a
+       * previous match.
+       */
       return;
    }
 
-   if (input_var) {
-      assert(input_var->location == -1);
-      input_var->location = *input_index;
-      input_var->is_unmatched_generic_inout = 0;
+   if (this->num_matches == this->matches_capacity) {
+      this->matches_capacity *= 2;
+      this->matches = (match *)
+         realloc(this->matches,
+                 sizeof(*this->matches) * this->matches_capacity);
+   }
+   this->matches[this->num_matches].producer_var = producer_var;
+   this->matches[this->num_matches].consumer_var = consumer_var;
+   this->num_matches++;
+   producer_var->is_unmatched_generic_inout = 0;
+   if (consumer_var)
+      consumer_var->is_unmatched_generic_inout = 0;
+}
+
+
+/**
+ * Choose locations for all of the variable matches that were previously
+ * passed to varying_matches::record().
+ */
+unsigned
+varying_matches::assign_locations()
+{
+   unsigned generic_location = 0;
+
+   for (unsigned i = 0; i < this->num_matches; i++) {
+      this->matches[i].generic_location = generic_location;
+
+      ir_variable *producer_var = this->matches[i].producer_var;
+
+      if (producer_var->type->is_array()) {
+         const unsigned slots = producer_var->type->length
+            * producer_var->type->fields.array->matrix_columns;
+
+         generic_location += 4 * slots;
+      } else {
+         const unsigned slots = producer_var->type->matrix_columns;
+
+         generic_location += 4 * slots;
+      }
    }
 
-   output_var->location = *output_index;
-   output_var->is_unmatched_generic_inout = 0;
+   return (generic_location + 3) / 4;
+}
 
-   /* FINISHME: Support for "varying" records in GLSL 1.50. */
-   assert(!output_var->type->is_record());
 
-   if (output_var->type->is_array()) {
-      const unsigned slots = output_var->type->length
-         * output_var->type->fields.array->matrix_columns;
+/**
+ * Update the producer and consumer shaders to reflect the locations
+ * assignments that were made by varying_matches::assign_locations().
+ */
+void
+varying_matches::store_locations(unsigned producer_base,
+                                 unsigned consumer_base) const
+{
+   for (unsigned i = 0; i < this->num_matches; i++) {
+      ir_variable *producer_var = this->matches[i].producer_var;
+      ir_variable *consumer_var = this->matches[i].consumer_var;
+      unsigned generic_location = this->matches[i].generic_location;
+      unsigned slot = generic_location / 4;
+      unsigned offset = generic_location % 4;
 
-      *output_index += slots;
-      *input_index += slots;
-   } else {
-      const unsigned slots = output_var->type->matrix_columns;
-
-      *output_index += slots;
-      *input_index += slots;
+      producer_var->location = producer_base + slot;
+      producer_var->location_frac = offset;
+      if (consumer_var) {
+         assert(consumer_var->location == -1);
+         consumer_var->location = consumer_base + slot;
+         consumer_var->location_frac = offset;
+      }
    }
 }
 
@@ -2070,8 +2179,9 @@ assign_varying_locations(struct gl_context *ctx,
                          tfeedback_decl *tfeedback_decls)
 {
    /* FINISHME: Set dynamically when geometry shader support is added. */
-   unsigned output_index = VERT_RESULT_VAR0;
-   unsigned input_index = FRAG_ATTRIB_VAR0;
+   const unsigned producer_base = VERT_RESULT_VAR0;
+   const unsigned consumer_base = FRAG_ATTRIB_VAR0;
+   varying_matches matches;
 
    /* Operate in a total of three passes.
     *
@@ -2097,8 +2207,7 @@ assign_varying_locations(struct gl_context *ctx,
          input_var = NULL;
 
       if (input_var) {
-         assign_varying_location(input_var, output_var, &input_index,
-                                 &output_index);
+         matches.record(output_var, input_var);
       }
    }
 
@@ -2113,9 +2222,19 @@ assign_varying_locations(struct gl_context *ctx,
          return false;
 
       if (output_var->is_unmatched_generic_inout) {
-         assign_varying_location(NULL, output_var, &input_index,
-                                 &output_index);
+         matches.record(output_var, NULL);
       }
+   }
+
+   matches.assign_locations();
+   matches.store_locations(producer_base, consumer_base);
+
+   for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
+      if (!tfeedback_decls[i].is_varying())
+         continue;
+
+      ir_variable *output_var
+         = tfeedback_decls[i].find_output_var(prog, producer);
 
       if (!tfeedback_decls[i].assign_location(ctx, prog, output_var))
          return false;
