@@ -533,9 +533,24 @@ get_indirect_index(struct lp_build_tgsi_soa_context *bld,
    base = lp_build_const_int_vec(bld->bld_base.base.gallivm, uint_bld->type, reg_index);
 
    assert(swizzle < 4);
-   rel = LLVMBuildLoad(builder,
-                        bld->addr[indirect_reg->Index][swizzle],
-                        "load addr reg");
+   switch (indirect_reg->File) {
+   case TGSI_FILE_ADDRESS:
+      rel = LLVMBuildLoad(builder,
+                          bld->addr[indirect_reg->Index][swizzle],
+                          "load addr reg");
+      /* ADDR LLVM values already have LLVM integer type. */
+      break;
+   case TGSI_FILE_TEMPORARY:
+      rel = lp_get_temp_ptr_soa(bld, indirect_reg->Index, swizzle);
+      rel = LLVMBuildLoad(builder, rel, "load temp reg");
+      /* TEMP LLVM values always have LLVM float type, but for indirection, the
+       * value actually stored is expected to be an integer */
+      rel = LLVMBuildBitCast(builder, rel, uint_bld->vec_type, "");
+      break;
+   default:
+      assert(0);
+      rel = uint_bld->zero;
+   }
 
    index = lp_build_add(uint_bld, base, rel);
 
