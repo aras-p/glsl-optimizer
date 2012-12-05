@@ -251,13 +251,21 @@ r100CreateContext( gl_api api,
    rmesa->radeon.swtcl.RenderIndex = ~0;
    rmesa->radeon.hw.all_dirty = GL_TRUE;
 
+   ctx = &rmesa->radeon.glCtx;
+   /* Initialize the software rasterizer and helper modules.
+    */
+   _swrast_CreateContext( ctx );
+   _vbo_CreateContext( ctx );
+   _tnl_CreateContext( ctx );
+   _swsetup_CreateContext( ctx );
+   _ae_create_context( ctx );
+
    /* Set the maximum texture size small enough that we can guarentee that
     * all texture units can bind a maximal texture and have all of them in
     * texturable memory at once. Depending on the allow_large_textures driconf
     * setting allow larger textures.
     */
 
-   ctx = &rmesa->radeon.glCtx;
    ctx->Const.MaxTextureUnits = driQueryOptioni (&rmesa->radeon.optionCache,
 						 "texture_units");
    ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
@@ -306,14 +314,6 @@ r100CreateContext( gl_api api,
    ctx->Const.MaxRenderbufferSize = 2048;
 
    _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
-
-   /* Initialize the software rasterizer and helper modules.
-    */
-   _swrast_CreateContext( ctx );
-   _vbo_CreateContext( ctx );
-   _tnl_CreateContext( ctx );
-   _swsetup_CreateContext( ctx );
-   _ae_create_context( ctx );
 
    /* Install the customized pipeline:
     */
