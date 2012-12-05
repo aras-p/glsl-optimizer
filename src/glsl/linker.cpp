@@ -1975,10 +1975,40 @@ public:
 
 private:
    /**
+    * Enum representing the order in which varyings are packed within a
+    * packing class.
+    *
+    * Currently we pack vec4's first, then vec2's, then scalar values, then
+    * vec3's.  This order ensures that the only vectors that are at risk of
+    * having to be "double parked" (split between two adjacent varying slots)
+    * are the vec3's.
+    */
+   enum packing_order_enum {
+      PACKING_ORDER_VEC4,
+      PACKING_ORDER_VEC2,
+      PACKING_ORDER_SCALAR,
+      PACKING_ORDER_VEC3,
+   };
+
+   static unsigned compute_packing_class(ir_variable *var);
+   static packing_order_enum compute_packing_order(ir_variable *var);
+   static int match_comparator(const void *x_generic, const void *y_generic);
+
+   /**
     * Structure recording the relationship between a single producer output
     * and a single consumer input.
     */
    struct match {
+      /**
+       * Packing class for this varying, computed by compute_packing_class().
+       */
+      unsigned packing_class;
+
+      /**
+       * Packing order for this varying, computed by compute_packing_order().
+       */
+      packing_order_enum packing_order;
+
       /**
        * The output variable in the producer stage.
        */
@@ -2061,6 +2091,10 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
          realloc(this->matches,
                  sizeof(*this->matches) * this->matches_capacity);
    }
+   this->matches[this->num_matches].packing_class
+      = this->compute_packing_class(producer_var);
+   this->matches[this->num_matches].packing_order
+      = this->compute_packing_order(producer_var);
    this->matches[this->num_matches].producer_var = producer_var;
    this->matches[this->num_matches].consumer_var = consumer_var;
    this->num_matches++;
@@ -2077,6 +2111,10 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
 unsigned
 varying_matches::assign_locations()
 {
+   /* Sort varying matches into an order that makes them easy to pack. */
+   qsort(this->matches, this->num_matches, sizeof(*this->matches),
+         &varying_matches::match_comparator);
+
    unsigned generic_location = 0;
 
    for (unsigned i = 0; i < this->num_matches; i++) {
@@ -2123,6 +2161,72 @@ varying_matches::store_locations(unsigned producer_base,
          consumer_var->location_frac = offset;
       }
    }
+}
+
+
+/**
+ * Compute the "packing class" of the given varying.  This is an unsigned
+ * integer with the property that two variables in the same packing class can
+ * be safely backed into the same vec4.
+ */
+unsigned
+varying_matches::compute_packing_class(ir_variable *var)
+{
+   /* In this initial implementation we conservatively assume that variables
+    * can only be packed if their base type (float/int/uint/bool) matches and
+    * their interpolation and centroid qualifiers match.
+    *
+    * TODO: relax these restrictions when the driver back-end permits.
+    */
+   unsigned packing_class = var->centroid ? 1 : 0;
+   packing_class *= 4;
+   packing_class += var->interpolation;
+   packing_class *= GLSL_TYPE_ERROR;
+   packing_class += var->type->get_scalar_type()->base_type;
+   return packing_class;
+}
+
+
+/**
+ * Compute the "packing order" of the given varying.  This is a sort key we
+ * use to determine when to attempt to pack the given varying relative to
+ * other varyings in the same packing class.
+ */
+varying_matches::packing_order_enum
+varying_matches::compute_packing_order(ir_variable *var)
+{
+   const glsl_type *element_type = var->type;
+
+   /* FINISHME: Support for "varying" records in GLSL 1.50. */
+   while (element_type->base_type == GLSL_TYPE_ARRAY) {
+      element_type = element_type->fields.array;
+   }
+
+   switch (element_type->vector_elements) {
+   case 1: return PACKING_ORDER_SCALAR;
+   case 2: return PACKING_ORDER_VEC2;
+   case 3: return PACKING_ORDER_VEC3;
+   case 4: return PACKING_ORDER_VEC4;
+   default:
+      assert(!"Unexpected value of vector_elements");
+      return PACKING_ORDER_VEC4;
+   }
+}
+
+
+/**
+ * Comparison function passed to qsort() to sort varyings by packing_class and
+ * then by packing_order.
+ */
+int
+varying_matches::match_comparator(const void *x_generic, const void *y_generic)
+{
+   const match *x = (const match *) x_generic;
+   const match *y = (const match *) y_generic;
+
+   if (x->packing_class != y->packing_class)
+      return x->packing_class - y->packing_class;
+   return x->packing_order - y->packing_order;
 }
 
 
