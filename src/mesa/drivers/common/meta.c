@@ -133,6 +133,7 @@ struct save_state
    struct gl_vertex_program *VertexProgram;
    GLboolean FragmentProgramEnabled;
    struct gl_fragment_program *FragmentProgram;
+   GLboolean ATIFragmentShaderEnabled;
    struct gl_shader_program *VertexShader;
    struct gl_shader_program *GeometryShader;
    struct gl_shader_program *FragmentShader;
@@ -594,6 +595,11 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
          _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_FALSE);
       }
 
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ATI_fragment_shader) {
+         save->ATIFragmentShaderEnabled = ctx->ATIFragmentShader.Enabled;
+         _mesa_set_enable(ctx, GL_FRAGMENT_SHADER_ATI, GL_FALSE);
+      }
+
       if (ctx->Extensions.ARB_shader_objects) {
 	 _mesa_reference_shader_program(ctx, &save->VertexShader,
 					ctx->Shader.CurrentVertexProgram);
@@ -912,6 +918,11 @@ _mesa_meta_end(struct gl_context *ctx)
          _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
                                   save->FragmentProgram);
 	 _mesa_reference_fragprog(ctx, &save->FragmentProgram, NULL);
+      }
+
+      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ATI_fragment_shader) {
+         _mesa_set_enable(ctx, GL_FRAGMENT_SHADER_ATI,
+                          save->ATIFragmentShaderEnabled);
       }
 
       if (ctx->Extensions.ARB_vertex_shader)
