@@ -200,19 +200,31 @@ linker_warning(gl_shader_program *prog, const char *fmt, ...)
 
 
 void
-link_invalidate_variable_locations(gl_shader *sh, enum ir_variable_mode mode,
-				   int generic_base)
+link_invalidate_variable_locations(gl_shader *sh, int input_base,
+                                   int output_base)
 {
    foreach_list(node, sh->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if ((var == NULL) || (var->mode != (unsigned) mode))
-	 continue;
+      if (var == NULL)
+         continue;
+
+      int base;
+      switch (var->mode) {
+      case ir_var_in:
+         base = input_base;
+         break;
+      case ir_var_out:
+         base = output_base;
+         break;
+      default:
+         continue;
+      }
 
       /* Only assign locations for generic attributes / varyings / etc.
        */
-      if ((var->location >= generic_base) && !var->explicit_location)
-	  var->location = -1;
+      if ((var->location >= base) && !var->explicit_location)
+         var->location = -1;
    }
 }
 
@@ -1309,8 +1321,6 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
       (target_index == MESA_SHADER_VERTEX) ? ir_var_in : ir_var_out;
 
 
-   link_invalidate_variable_locations(sh, direction, generic_base);
-
    /* Temporary storage for the set of attributes that need locations assigned.
     */
    struct temp_attr {
@@ -2072,10 +2082,6 @@ assign_varying_locations(struct gl_context *ctx,
     *    not being inputs.  This lets the optimizer eliminate them.
     */
 
-   link_invalidate_variable_locations(producer, ir_var_out, VERT_RESULT_VAR0);
-   if (consumer)
-      link_invalidate_variable_locations(consumer, ir_var_in, FRAG_ATTRIB_VAR0);
-
    foreach_list(node, producer->ir) {
       ir_variable *const output_var = ((ir_instruction *) node)->as_variable();
 
@@ -2576,6 +2582,19 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
       while (do_common_optimization(prog->_LinkedShaders[i]->ir, true, false, max_unroll))
 	 ;
+   }
+
+   /* Mark all generic shader inputs and outputs as unpaired. */
+   if (prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL) {
+      link_invalidate_variable_locations(
+            prog->_LinkedShaders[MESA_SHADER_VERTEX],
+            VERT_ATTRIB_GENERIC0, VERT_RESULT_VAR0);
+   }
+   /* FINISHME: Geometry shaders not implemented yet */
+   if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL) {
+      link_invalidate_variable_locations(
+            prog->_LinkedShaders[MESA_SHADER_FRAGMENT],
+            FRAG_ATTRIB_VAR0, FRAG_RESULT_DATA0);
    }
 
    /* FINISHME: The value of the max_attribute_index parameter is
