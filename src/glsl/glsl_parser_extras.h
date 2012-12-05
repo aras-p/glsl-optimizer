@@ -354,7 +354,7 @@ extern "C" {
 #endif
 
 extern int glcpp_preprocess(void *ctx, const char **shader, char **info_log,
-                      const struct gl_extensions *extensions, int api);
+                      const struct gl_extensions *extensions, struct gl_context *gl_ctx);
 
 extern void _mesa_destroy_shader_compiler(void);
 extern void _mesa_destroy_shader_compiler_caches(void);

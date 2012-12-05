@@ -94,6 +94,14 @@ load_text_file(void *ctx, const char *filename)
 	return text;
 }
 
+/* Initialize only those things that glcpp cares about.
+ */
+static void
+init_fake_gl_context (struct gl_context *gl_ctx)
+{
+	gl_ctx->API = API_OPENGL_COMPAT;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -102,6 +110,9 @@ main (int argc, char *argv[])
 	char *info_log = ralloc_strdup(ctx, "");
 	const char *shader;
 	int ret;
+	struct gl_context gl_ctx;
+
+	init_fake_gl_context (&gl_ctx);
 
 	if (argc) {
 		filename = argv[1];
@@ -111,7 +122,7 @@ main (int argc, char *argv[])
 	if (shader == NULL)
 	   return 1;
 
-	ret = glcpp_preprocess(ctx, &shader, &info_log, NULL, API_OPENGL_COMPAT);
+	ret = glcpp_preprocess(ctx, &shader, &info_log, NULL, &gl_ctx);
 
 	printf("%s", shader);
 	fprintf(stderr, "%s", info_log);
