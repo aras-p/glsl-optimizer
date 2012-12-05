@@ -2197,7 +2197,8 @@ static struct si_pm4_state *si_set_sampler_view(struct r600_context *rctx,
 	struct si_pipe_sampler_view **resource = (struct si_pipe_sampler_view **)views;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	int i, j;
-	int has_depth = 0;
+
+	rctx->have_depth_texture = FALSE;
 
 	if (!count)
 		goto out;
@@ -2210,8 +2211,12 @@ static struct si_pm4_state *si_set_sampler_view(struct r600_context *rctx,
 			(struct pipe_sampler_view **)&samplers->views[i],
 			views[i]);
 
-		if (views[i])
+		if (resource[i]) {
+			struct r600_resource_texture *rtex =
+				(struct r600_resource_texture *)views[i]->texture;
+			rctx->have_depth_texture |= rtex->depth && !rtex->is_flushing_texture;
 			si_pm4_add_bo(pm4, resource[i]->resource, RADEON_USAGE_READ);
+		}
 
 		for (j = 0; j < Elements(resource[i]->state); ++j) {
 			si_pm4_sh_data_add(pm4, resource[i] ? resource[i]->state[j] : 0);
@@ -2226,7 +2231,6 @@ static struct si_pm4_state *si_set_sampler_view(struct r600_context *rctx,
 	si_pm4_sh_data_end(pm4, user_data_reg, SI_SGPR_RESOURCE);
 
 out:
-	rctx->have_depth_texture = has_depth;
 	rctx->ps_samplers.n_views = count;
 	return pm4;
 }
