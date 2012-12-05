@@ -76,6 +76,8 @@ extern "C" {
 #include "main/shaderobj.h"
 }
 
+#define ALIGN(value, alignment)  (((value) + alignment - 1) & ~(alignment - 1))
+
 /**
  * Visitor that determines whether or not a variable is ever written.
  */
@@ -1971,13 +1973,20 @@ parse_tfeedback_decls(struct gl_context *ctx, struct gl_shader_program *prog,
 class varying_matches
 {
 public:
-   varying_matches();
+   varying_matches(bool disable_varying_packing);
    ~varying_matches();
    void record(ir_variable *producer_var, ir_variable *consumer_var);
    unsigned assign_locations();
    void store_locations(unsigned producer_base, unsigned consumer_base) const;
 
 private:
+   /**
+    * If true, this driver disables varying packing, so all varyings need to
+    * be aligned on slot boundaries, and take up a number of slots equal to
+    * their number of matrix columns times their array size.
+    */
+   const bool disable_varying_packing;
+
    /**
     * Enum representing the order in which varyings are packed within a
     * packing class.
@@ -2012,6 +2021,7 @@ private:
        * Packing order for this varying, computed by compute_packing_order().
        */
       packing_order_enum packing_order;
+      unsigned num_components;
 
       /**
        * The output variable in the producer stage.
@@ -2046,7 +2056,8 @@ private:
 };
 
 
-varying_matches::varying_matches()
+varying_matches::varying_matches(bool disable_varying_packing)
+   : disable_varying_packing(disable_varying_packing)
 {
    /* Note: this initial capacity is rather arbitrarily chosen to be large
     * enough for many cases without wasting an unreasonable amount of space.
@@ -2099,6 +2110,16 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
       = this->compute_packing_class(producer_var);
    this->matches[this->num_matches].packing_order
       = this->compute_packing_order(producer_var);
+   if (this->disable_varying_packing) {
+      unsigned slots = producer_var->type->is_array()
+         ? (producer_var->type->length
+            * producer_var->type->fields.array->matrix_columns)
+         : producer_var->type->matrix_columns;
+      this->matches[this->num_matches].num_components = 4 * slots;
+   } else {
+      this->matches[this->num_matches].num_components
+         = producer_var->type->component_slots();
+   }
    this->matches[this->num_matches].producer_var = producer_var;
    this->matches[this->num_matches].consumer_var = consumer_var;
    this->num_matches++;
@@ -2122,20 +2143,19 @@ varying_matches::assign_locations()
    unsigned generic_location = 0;
 
    for (unsigned i = 0; i < this->num_matches; i++) {
+      /* Advance to the next slot if this varying has a different packing
+       * class than the previous one, and we're not already on a slot
+       * boundary.
+       */
+      if (i > 0 &&
+          this->matches[i - 1].packing_class
+          != this->matches[i].packing_class) {
+         generic_location = ALIGN(generic_location, 4);
+      }
+
       this->matches[i].generic_location = generic_location;
 
-      ir_variable *producer_var = this->matches[i].producer_var;
-
-      if (producer_var->type->is_array()) {
-         const unsigned slots = producer_var->type->length
-            * producer_var->type->fields.array->matrix_columns;
-
-         generic_location += 4 * slots;
-      } else {
-         const unsigned slots = producer_var->type->matrix_columns;
-
-         generic_location += 4 * slots;
-      }
+      generic_location += this->matches[i].num_components;
    }
 
    return (generic_location + 3) / 4;
@@ -2289,7 +2309,7 @@ assign_varying_locations(struct gl_context *ctx,
    /* FINISHME: Set dynamically when geometry shader support is added. */
    const unsigned producer_base = VERT_RESULT_VAR0;
    const unsigned consumer_base = FRAG_ATTRIB_VAR0;
-   varying_matches matches;
+   varying_matches matches(ctx->Const.DisableVaryingPacking);
 
    /* Operate in a total of three passes.
     *
