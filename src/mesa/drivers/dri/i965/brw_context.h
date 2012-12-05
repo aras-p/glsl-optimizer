@@ -1230,6 +1230,11 @@ void
 gen6_emit_3dstate_sample_mask(struct brw_context *brw,
                               unsigned num_samples, float coverage,
                               bool coverage_invert, unsigned sample_mask);
+void
+gen6_get_sample_position(struct gl_context *ctx,
+                         struct gl_framebuffer *fb,
+                         GLuint index,
+                         GLfloat *result);
 
 /* gen7_urb.c */
 void
