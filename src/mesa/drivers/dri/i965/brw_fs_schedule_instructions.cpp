@@ -67,40 +67,10 @@ public:
       this->parent_count = 0;
       this->unblocked_time = 0;
 
-      int chans = 8;
-      int math_latency = 22;
-
-      switch (inst->opcode) {
-      case SHADER_OPCODE_RCP:
-	 this->latency = 1 * chans * math_latency;
-	 break;
-      case SHADER_OPCODE_RSQ:
-	 this->latency = 2 * chans * math_latency;
-	 break;
-      case SHADER_OPCODE_INT_QUOTIENT:
-      case SHADER_OPCODE_SQRT:
-      case SHADER_OPCODE_LOG2:
-	 /* full precision log.  partial is 2. */
-	 this->latency = 3 * chans * math_latency;
-	 break;
-      case SHADER_OPCODE_INT_REMAINDER:
-      case SHADER_OPCODE_EXP2:
-	 /* full precision.  partial is 3, same throughput. */
-	 this->latency = 4 * chans * math_latency;
-	 break;
-      case SHADER_OPCODE_POW:
-	 this->latency = 8 * chans * math_latency;
-	 break;
-      case SHADER_OPCODE_SIN:
-      case SHADER_OPCODE_COS:
-	 /* minimum latency, max is 12 rounds. */
-	 this->latency = 5 * chans * math_latency;
-	 break;
-      default:
-	 this->latency = 2;
-	 break;
-      }
+      set_latency_gen4();
    }
+
+   void set_latency_gen4();
 
    fs_inst *inst;
    schedule_node **children;
@@ -111,6 +81,44 @@ public:
    int unblocked_time;
    int latency;
 };
+
+void
+schedule_node::set_latency_gen4()
+{
+   int chans = 8;
+   int math_latency = 22;
+
+   switch (inst->opcode) {
+   case SHADER_OPCODE_RCP:
+      this->latency = 1 * chans * math_latency;
+      break;
+   case SHADER_OPCODE_RSQ:
+      this->latency = 2 * chans * math_latency;
+      break;
+   case SHADER_OPCODE_INT_QUOTIENT:
+   case SHADER_OPCODE_SQRT:
+   case SHADER_OPCODE_LOG2:
+      /* full precision log.  partial is 2. */
+      this->latency = 3 * chans * math_latency;
+      break;
+   case SHADER_OPCODE_INT_REMAINDER:
+   case SHADER_OPCODE_EXP2:
+      /* full precision.  partial is 3, same throughput. */
+      this->latency = 4 * chans * math_latency;
+      break;
+   case SHADER_OPCODE_POW:
+      this->latency = 8 * chans * math_latency;
+      break;
+   case SHADER_OPCODE_SIN:
+   case SHADER_OPCODE_COS:
+      /* minimum latency, max is 12 rounds. */
+      this->latency = 5 * chans * math_latency;
+      break;
+   default:
+      this->latency = 2;
+      break;
+   }
+}
 
 class instruction_scheduler {
 public:
