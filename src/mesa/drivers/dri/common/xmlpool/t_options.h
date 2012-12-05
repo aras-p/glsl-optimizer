@@ -282,3 +282,8 @@ DRI_CONF_OPT_END
 DRI_CONF_OPT_BEGIN(disable_blend_func_extended,bool,def) \
         DRI_CONF_DESC(en,gettext("Disable dual source blending")) \
 DRI_CONF_OPT_END
+
+#define DRI_CONF_DISABLE_GLSL_LINE_CONTINUATIONS(def) \
+DRI_CONF_OPT_BEGIN(disable_glsl_line_continuations,bool,def) \
+        DRI_CONF_DESC(en,gettext("Disable backslash-based line continuations in GLSL source")) \
+DRI_CONF_OPT_END

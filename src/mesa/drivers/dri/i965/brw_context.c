@@ -377,6 +377,8 @@ brwCreateContext(int api,
 
    ctx->Const.ForceGLSLExtensionsWarn = driQueryOptionb(&intel->optionCache, "force_glsl_extensions_warn");
 
+   ctx->Const.DisableGLSLLineContinuations = driQueryOptionb(&intel->optionCache, "disable_glsl_line_continuations");
+
    ctx->Const.ContextFlags = 0;
    if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0)
       ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;

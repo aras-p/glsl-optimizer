@@ -2984,6 +2984,12 @@ struct gl_constants
     * \sa _mesa_init_constants
     */
    GLuint64 MaxElementIndex;
+
+   /**
+    * Disable interpretation of line continuations (lines ending with a
+    * backslash character ('\') in GLSL source.
+    */
+   GLboolean DisableGLSLLineContinuations;
 };
 
 
