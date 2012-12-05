@@ -595,6 +595,9 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
 
       *params = shProg->BinaryRetreivableHint;
       return;
+   case GL_PROGRAM_BINARY_LENGTH:
+      *params = 0;
+      return;
    default:
       break;
    }
