@@ -1,5 +1,5 @@
 #include "pipe/p_context.h"
-#include "util/u_rect.h"
+#include "util/u_surface.h"
 #include "util/u_inlines.h"
 #include "util/u_transfer.h"
 #include "util/u_memory.h"
@@ -47,21 +47,19 @@ void u_default_transfer_inline_write( struct pipe_context *pipe,
    }
    else {
       const uint8_t *src_data = data;
-      unsigned i;
 
-      for (i = 0; i < box->depth; i++) {
-         util_copy_rect(map,
-                        resource->format,
-                        transfer->stride, /* bytes */
-                        0, 0,
-                        box->width,
-                        box->height,
-                        src_data,
-                        stride,       /* bytes */
-                        0, 0);
-         map += transfer->layer_stride;
-         src_data += layer_stride;
-      }
+      util_copy_box(map,
+		    resource->format,
+		    transfer->stride, /* bytes */
+		    transfer->layer_stride, /* bytes */
+                    0, 0, 0,
+		    box->width,
+		    box->height,
+		    box->depth,
+		    src_data,
+		    stride,       /* bytes */
+		    layer_stride, /* bytes */
+		    0, 0, 0);
    }
 
    pipe_transfer_unmap(pipe, transfer);
