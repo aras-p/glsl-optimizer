@@ -256,6 +256,16 @@
 #define BRW_STENCILOP_INVERT             7
 
 /* Surface state DW0 */
+#define GEN8_SURFACE_IS_ARRAY                       (1 << 28)
+#define GEN8_SURFACE_VALIGN_4                       (1 << 16)
+#define GEN8_SURFACE_VALIGN_8                       (2 << 16)
+#define GEN8_SURFACE_VALIGN_16                      (3 << 16)
+#define GEN8_SURFACE_HALIGN_4                       (1 << 14)
+#define GEN8_SURFACE_HALIGN_8                       (2 << 14)
+#define GEN8_SURFACE_HALIGN_16                      (3 << 14)
+#define GEN8_SURFACE_TILING_NONE                    (0 << 12)
+#define GEN8_SURFACE_TILING_X                       (2 << 12)
+#define GEN8_SURFACE_TILING_Y                       (3 << 12)
 #define BRW_SURFACE_RC_READ_WRITE	(1 << 8)
 #define BRW_SURFACE_MIPLAYOUT_SHIFT	10
 #define BRW_SURFACE_MIPMAPLAYOUT_BELOW   0
@@ -536,8 +546,10 @@
 #define BRW_SURFACE_MULTISAMPLECOUNT_1  (0 << 4)
 #define BRW_SURFACE_MULTISAMPLECOUNT_4  (2 << 4)
 #define GEN7_SURFACE_MULTISAMPLECOUNT_1         (0 << 3)
+#define GEN8_SURFACE_MULTISAMPLECOUNT_2         (1 << 3)
 #define GEN7_SURFACE_MULTISAMPLECOUNT_4         (2 << 3)
 #define GEN7_SURFACE_MULTISAMPLECOUNT_8         (3 << 3)
+#define GEN8_SURFACE_MULTISAMPLECOUNT_16        (4 << 3)
 #define GEN7_SURFACE_MSFMT_MSS                  (0 << 6)
 #define GEN7_SURFACE_MSFMT_DEPTH_STENCIL        (1 << 6)
 #define GEN7_SURFACE_MIN_ARRAY_ELEMENT_SHIFT	18
@@ -553,6 +565,8 @@
 #define BRW_SURFACE_Y_OFFSET_MASK		INTEL_MASK(23, 20)
 #define GEN7_SURFACE_MIN_LOD_SHIFT              4
 #define GEN7_SURFACE_MIN_LOD_MASK               INTEL_MASK(7, 4)
+#define GEN8_SURFACE_Y_OFFSET_SHIFT		21
+#define GEN8_SURFACE_Y_OFFSET_MASK		INTEL_MASK(23, 21)
 
 #define GEN7_SURFACE_MOCS_SHIFT                 16
 #define GEN7_SURFACE_MOCS_MASK                  INTEL_MASK(19, 16)
