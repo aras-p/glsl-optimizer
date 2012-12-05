@@ -1139,9 +1139,12 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    fs_inst *inst;
 
    switch (opcode) {
-   case SHADER_OPCODE_POW:
    case SHADER_OPCODE_INT_QUOTIENT:
    case SHADER_OPCODE_INT_REMAINDER:
+      if (intel->gen >= 7 && dispatch_width == 16)
+	 fail("16-wide INTDIV unsupported\n");
+      break;
+   case SHADER_OPCODE_POW:
       break;
    default:
       assert(!"not reached: unsupported binary math opcode.");
