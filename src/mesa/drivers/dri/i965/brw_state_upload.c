@@ -262,7 +262,7 @@ static const struct brw_tracked_state *gen8_atoms[] =
 
    &brw_cc_vp,
    &gen7_cc_viewport_state_pointer, /* must do after brw_cc_vp */
-   &gen7_sf_clip_viewport,
+   &gen8_sf_clip_viewport,
 
    &gen7_push_constant_space,
    &gen7_urb,

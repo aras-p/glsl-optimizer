@@ -143,6 +143,7 @@ extern const struct brw_tracked_state gen8_sbe_state;
 extern const struct brw_tracked_state gen8_sf_state;
 extern const struct brw_tracked_state gen8_state_base_address;
 extern const struct brw_tracked_state gen8_sol_state;
+extern const struct brw_tracked_state gen8_sf_clip_viewport;
 extern const struct brw_tracked_state gen8_vertices;
 extern const struct brw_tracked_state gen8_vf_topology;
 extern const struct brw_tracked_state gen8_vs_state;
