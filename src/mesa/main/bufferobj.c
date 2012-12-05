@@ -2160,17 +2160,19 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
       return;
    }
 
-   if (size <= 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glBindBufferRange(size=%d)",
-		  (int) size);
-      return;
-   }
+   if (buffer != 0) {
+      if (size <= 0) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glBindBufferRange(size=%d)",
+                     (int) size);
+         return;
+      }
 
-   if (offset + size > bufObj->Size) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glBindBufferRange(offset + size %d > buffer size %d)",
-		  (int) (offset + size), (int) (bufObj->Size));
-      return;
+      if (offset + size > bufObj->Size) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glBindBufferRange(offset + size %d > buffer size %d)",
+                     (int) (offset + size), (int) (bufObj->Size));
+         return;
+      }
    }
 
    switch (target) {
