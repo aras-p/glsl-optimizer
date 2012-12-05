@@ -48,13 +48,19 @@
 
 
 int64_t
-os_time_get(void)
+os_time_get_nano(void)
 {
-#if defined(PIPE_OS_UNIX)
+#if defined(PIPE_OS_LINUX)
+
+   struct timespec tv;
+   clock_gettime(CLOCK_MONOTONIC, &tv);
+   return tv.tv_nsec + tv.tv_sec*INT64_C(1000000000);
+
+#elif defined(PIPE_OS_UNIX)
 
    struct timeval tv;
    gettimeofday(&tv, NULL);
-   return tv.tv_usec + tv.tv_sec*1000000LL;
+   return tv.tv_usec*INT64_C(1000) + tv.tv_sec*INT64_C(1000000000);
 
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 
@@ -63,22 +69,12 @@ os_time_get(void)
    if(!frequency.QuadPart)
       QueryPerformanceFrequency(&frequency);
    QueryPerformanceCounter(&counter);
-   return counter.QuadPart*INT64_C(1000000)/frequency.QuadPart;
+   return counter.QuadPart*INT64_C(1000000000)/frequency.QuadPart;
 
-#endif
-}
+#else
 
+#error Unsupported OS
 
-uint64_t
-os_time_get_nano(void)
-{
-#if defined(PIPE_OS_UNIX)
-   struct timespec tv;
-   clock_gettime(CLOCK_REALTIME, &tv);
-   return tv.tv_nsec + tv.tv_sec * 1000000000LL;
-
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
-   return os_time_get() * 1000;
 #endif
 }
 
