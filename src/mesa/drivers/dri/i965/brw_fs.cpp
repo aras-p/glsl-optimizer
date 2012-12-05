@@ -330,7 +330,9 @@ fs_inst::is_math()
 bool
 fs_inst::is_send_from_grf()
 {
-   return opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7;
+   return (opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7 ||
+           (opcode == FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD &&
+            src[1].file == GRF));
 }
 
 bool
