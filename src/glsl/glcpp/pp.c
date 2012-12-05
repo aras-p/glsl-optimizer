@@ -155,7 +155,9 @@ glcpp_preprocess(void *ralloc_ctx, const char **shader, char **info_log,
 {
 	int errors;
 	glcpp_parser_t *parser = glcpp_parser_create (extensions, gl_ctx->API);
-	*shader = remove_line_continuations(parser, *shader);
+
+	if (! gl_ctx->Const.DisableGLSLLineContinuations)
+		*shader = remove_line_continuations(parser, *shader);
 
 	glcpp_lex_set_source_string (parser, *shader);
 
