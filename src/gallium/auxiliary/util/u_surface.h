@@ -32,6 +32,8 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 
+#include "util/u_pack_color.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,6 +49,18 @@ extern boolean
 util_create_rgba_texture(struct pipe_context *ctx,
                          uint width, uint height, uint bind,
                          struct pipe_resource **textureOut);
+
+
+extern void
+util_copy_rect(ubyte * dst, enum pipe_format format,
+               unsigned dst_stride, unsigned dst_x, unsigned dst_y,
+               unsigned width, unsigned height, const ubyte * src,
+               int src_stride, unsigned src_x, unsigned src_y);
+
+extern void
+util_fill_rect(ubyte * dst, enum pipe_format format,
+               unsigned dst_stride, unsigned dst_x, unsigned dst_y,
+               unsigned width, unsigned height, union util_color *uc);
 
 
 extern void

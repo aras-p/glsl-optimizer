@@ -83,36 +83,10 @@ u_rect_possible_intersection(const struct u_rect *a,
 }
 #endif
 
-#include "pipe/p_format.h"
-#include "util/u_pack_color.h"
 
-
-
-/**********************************************************************
- * Pipe copy/fill rect helpers.
+/* Include pipe copy/fill rect helpers declarations for backwards compatibility
  */
+#include "util/u_surface.h"
 
-/* These really should move to a different file:
- */
-#include "pipe/p_format.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern void
-util_copy_rect(ubyte * dst, enum pipe_format format,
-               unsigned dst_stride, unsigned dst_x, unsigned dst_y,
-               unsigned width, unsigned height, const ubyte * src,
-               int src_stride, unsigned src_x, unsigned src_y);
-
-extern void
-util_fill_rect(ubyte * dst, enum pipe_format format,
-               unsigned dst_stride, unsigned dst_x, unsigned dst_y,
-               unsigned width, unsigned height, union util_color *uc);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* U_RECT_H */
