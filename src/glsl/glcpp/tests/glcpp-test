@@ -23,6 +23,13 @@ Valid options include:
 EOF
 }
 
+test_specific_args ()
+{
+    test="$1"
+
+    grep 'glcpp-args:' "$test" | sed -e 's,^.*glcpp-args: *,,'
+}
+
 # Parse command-line options
 for option; do
     if [ "${option}" = '--help' ] ; then
@@ -45,7 +52,7 @@ clean=0
 echo "====== Testing for correctness ======"
 for test in $testdir/*.c; do
     echo -n "Testing $test..."
-    $glcpp < $test > $test.out 2>&1
+    $glcpp $(test_specific_args $test) < $test > $test.out 2>&1
     total=$((total+1))
     if cmp $test.expected $test.out >/dev/null 2>&1; then
 	echo "PASS"
@@ -64,7 +71,7 @@ if [ "$do_valgrind" = "yes" ]; then
     echo "====== Testing for valgrind cleanliness ======"
     for test in $testdir/*.c; do
 	echo -n "Testing $test with valgrind..."
-	valgrind --error-exitcode=31 --log-file=$test.valgrind-errors $glcpp < $test >/dev/null 2>&1
+	valgrind --error-exitcode=31 --log-file=$test.valgrind-errors $glcpp $(test_specific_args $test) < $test >/dev/null 2>&1
 	if [ "$?" = "31" ]; then
 	    echo "ERRORS"
 	    cat $test.valgrind-errors
