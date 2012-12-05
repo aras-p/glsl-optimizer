@@ -226,10 +226,12 @@ link_invalidate_variable_locations(gl_shader *sh, int input_base,
       if ((var->location >= base) && !var->explicit_location)
          var->location = -1;
 
-      if ((var->location == -1) && !var->explicit_location)
+      if ((var->location == -1) && !var->explicit_location) {
          var->is_unmatched_generic_inout = 1;
-      else
+         var->location_frac = 0;
+      } else {
          var->is_unmatched_generic_inout = 0;
+      }
    }
 }
 
