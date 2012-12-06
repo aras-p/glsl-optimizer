@@ -1542,7 +1542,6 @@ struct_declarator:
 	   void *ctx = state;
 	   $$ = new(ctx) ast_declaration($1, false, NULL, NULL);
 	   $$->set_location(yylloc);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, $1, ir_var_auto));
 	}
 	| any_identifier '[' constant_expression ']'
 	{
