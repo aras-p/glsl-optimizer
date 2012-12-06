@@ -1446,6 +1446,20 @@ fs_visitor::visit(ir_discard *ir)
                            BRW_CONDITIONAL_NZ));
    cmp->predicate = BRW_PREDICATE_NORMAL;
    cmp->flag_subreg = 1;
+
+   if (intel->gen >= 6) {
+      /* For performance, after a discard, jump to the end of the shader.
+       * However, many people will do foliage by discarding based on a
+       * texture's alpha mask, and then continue on to texture with the
+       * remaining pixels.  To avoid trashing the derivatives for those
+       * texture samples, we'll only jump if all of the pixels in the subspan
+       * have been discarded.
+       */
+      fs_inst *discard_jump = emit(FS_OPCODE_DISCARD_JUMP);
+      discard_jump->flag_subreg = 1;
+      discard_jump->predicate = BRW_PREDICATE_ALIGN1_ANY4H;
+      discard_jump->predicate_inverse = true;
+   }
 }
 
 void

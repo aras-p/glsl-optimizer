@@ -129,6 +129,26 @@ static const fs_reg reg_undef;
 static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
 static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
 
+class ip_record : public exec_node {
+public:
+   static void* operator new(size_t size, void *ctx)
+   {
+      void *node;
+
+      node = rzalloc_size(ctx, size);
+      assert(node != NULL);
+
+      return node;
+   }
+
+   ip_record(int ip)
+   {
+      this->ip = ip;
+   }
+
+   int ip;
+};
+
 class fs_inst : public backend_instruction {
 public:
    /* Callers of this ralloc-based new need not call delete. It's
@@ -516,6 +536,9 @@ private:
                                                  struct brw_reg index,
                                                  struct brw_reg offset);
    void generate_mov_dispatch_to_flags(fs_inst *inst);
+   void generate_discard_jump(fs_inst *inst);
+
+   void patch_discard_jumps_to_fb_writes();
 
    struct brw_context *brw;
    struct intel_context *intel;
@@ -530,6 +553,7 @@ private:
 
    unsigned dispatch_width; /**< 8 or 16 */
 
+   exec_list discard_halt_patches;
    bool dual_source_output;
    void *mem_ctx;
 };
