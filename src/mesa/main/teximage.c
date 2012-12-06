@@ -1893,23 +1893,30 @@ texture_error_check( struct gl_context *ctx,
     * requires GL_OES_texture_float) are filtered elsewhere.
     */
 
-   if (_mesa_is_gles(ctx) && !_mesa_is_gles3(ctx)) {
-      if (format != internalFormat) {
+   if (_mesa_is_gles(ctx)) {
+      if (_mesa_is_gles3(ctx)) {
+         err = _mesa_es3_error_check_format_and_type(format, type,
+                                                     internalFormat,
+                                                     dimensions);
+      } else {
+         if (format != internalFormat) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexImage%dD(format = %s, internalFormat = %s)",
                      dimensions,
                      _mesa_lookup_enum_by_nr(format),
                      _mesa_lookup_enum_by_nr(internalFormat));
          return GL_TRUE;
-      }
+         }
 
-      err = _mesa_es_error_check_format_and_type(format, type, dimensions);
+         err = _mesa_es_error_check_format_and_type(format, type, dimensions);
+      }
       if (err != GL_NO_ERROR) {
          _mesa_error(ctx, err,
-                     "glTexImage%dD(format = %s, type = %s)",
+                     "glTexImage%dD(format = %s, type = %s, internalFormat = %s)",
                      dimensions,
                      _mesa_lookup_enum_by_nr(format),
-                     _mesa_lookup_enum_by_nr(type));
+                     _mesa_lookup_enum_by_nr(type),
+                     _mesa_lookup_enum_by_nr(internalFormat));
          return GL_TRUE;
       }
    }
