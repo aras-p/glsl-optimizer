@@ -1048,7 +1048,7 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
     if (inst->header.predicate_control) {
 	string (file, "(");
 	err |= control (file, "predicate inverse", pred_inv, inst->header.predicate_inverse, NULL);
-	string (file, "f0");
+	format (file, "f%d", gen >= 7 ? inst->bits2.da1.flag_reg_nr : 0);
 	if (inst->bits2.da1.flag_subreg_nr)
 	    format (file, ".%d", inst->bits2.da1.flag_subreg_nr);
 	if (inst->header.access_mode == BRW_ALIGN_1)

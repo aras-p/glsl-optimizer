@@ -1065,7 +1065,8 @@ struct brw_instruction
 	 GLuint src0_width:3;
 	 GLuint src0_vert_stride:4;
 	 GLuint flag_subreg_nr:1;
-	 GLuint pad:6;
+	 GLuint flag_reg_nr:1;
+	 GLuint pad:5;
       } da1;
 
       struct
@@ -1079,7 +1080,8 @@ struct brw_instruction
 	 GLuint src0_width:3;
 	 GLuint src0_vert_stride:4;
 	 GLuint flag_subreg_nr:1;
-	 GLuint pad:6;	
+	 GLuint flag_reg_nr:1;
+	 GLuint pad:5;
       } ia1;
 
       struct
@@ -1096,7 +1098,8 @@ struct brw_instruction
 	 GLuint pad0:1;
 	 GLuint src0_vert_stride:4;
 	 GLuint flag_subreg_nr:1;
-	 GLuint pad1:6;
+	 GLuint flag_reg_nr:1;
+	 GLuint pad1:5;
       } da16;
 
       struct
@@ -1113,7 +1116,8 @@ struct brw_instruction
 	 GLuint pad0:1;
 	 GLuint src0_vert_stride:4;
 	 GLuint flag_subreg_nr:1;
-	 GLuint pad1:6;
+	 GLuint flag_reg_nr:1;
+	 GLuint pad1:5;
       } ia16;
 
       /* Extended Message Descriptor for Ironlake (Gen5) SEND instruction.
