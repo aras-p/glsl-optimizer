@@ -2776,7 +2776,7 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       inst->tex_target = TEXTURE_RECT_INDEX;
       break;
    case GLSL_SAMPLER_DIM_BUF:
-      assert(!"FINISHME: Implement ARB_texture_buffer_object");
+      inst->tex_target = TEXTURE_BUFFER_INDEX;
       break;
    case GLSL_SAMPLER_DIM_EXTERNAL:
       inst->tex_target = TEXTURE_EXTERNAL_INDEX;

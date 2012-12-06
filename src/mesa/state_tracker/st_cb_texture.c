@@ -48,6 +48,7 @@
 #include "state_tracker/st_cb_fbo.h"
 #include "state_tracker/st_cb_flush.h"
 #include "state_tracker/st_cb_texture.h"
+#include "state_tracker/st_cb_bufferobjects.h"
 #include "state_tracker/st_format.h"
 #include "state_tracker/st_texture.h"
 #include "state_tracker/st_gen_mipmap.h"
@@ -1227,6 +1228,20 @@ st_finalize_texture(struct gl_context *ctx,
          stObj->lastLevel = stObj->base.BaseLevel;
       else
          stObj->lastLevel = stObj->base._MaxLevel;
+   }
+
+   if (tObj->Target == GL_TEXTURE_BUFFER) {
+      struct st_buffer_object *st_obj = st_buffer_object(tObj->BufferObject);
+
+      if (st_obj->buffer != stObj->pt) {
+         pipe_resource_reference(&stObj->pt, st_obj->buffer);
+         pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
+         stObj->width0 = stObj->pt->width0 / _mesa_get_format_bytes(tObj->_BufferObjectFormat);
+         stObj->height0 = 1;
+         stObj->depth0 = 1;
+      }
+      return GL_TRUE;
+
    }
 
    firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);

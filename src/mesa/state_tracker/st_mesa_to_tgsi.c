@@ -269,6 +269,7 @@ st_translate_texture_target( GLuint textarget,
    }
 
    switch( textarget ) {
+   case TEXTURE_BUFFER_INDEX: return TGSI_TEXTURE_BUFFER;
    case TEXTURE_1D_INDEX:   return TGSI_TEXTURE_1D;
    case TEXTURE_2D_INDEX:   return TGSI_TEXTURE_2D;
    case TEXTURE_3D_INDEX:   return TGSI_TEXTURE_3D;

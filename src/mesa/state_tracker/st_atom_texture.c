@@ -215,13 +215,19 @@ update_single_texture(struct st_context *st,
 
    /* Determine the format of the texture sampler view */
    st_view_format = stObj->pt->format;
-   {
-      const struct st_texture_image *firstImage =
-	 st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
-      const gl_format texFormat = firstImage->base.TexFormat;
-      enum pipe_format firstImageFormat =
-	 st_mesa_format_to_pipe_format(texFormat);
 
+   {
+      gl_format texFormat;
+      enum pipe_format firstImageFormat;
+
+      if (texObj->Target == GL_TEXTURE_BUFFER) {
+         texFormat = stObj->base._BufferObjectFormat;
+      } else {
+         const struct st_texture_image *firstImage =
+            st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
+         texFormat = firstImage->base.TexFormat;
+      }
+      firstImageFormat = st_mesa_format_to_pipe_format(texFormat);
       if ((samp->sRGBDecode == GL_SKIP_DECODE_EXT) &&
 	  (_mesa_get_format_color_encoding(texFormat) == GL_SRGB)) {
          /* Don't do sRGB->RGB conversion.  Interpret the texture data as
