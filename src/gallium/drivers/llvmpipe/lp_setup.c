@@ -66,8 +66,9 @@ static void
 lp_setup_get_empty_scene(struct lp_setup_context *setup)
 {
    struct llvmpipe_context *lp = llvmpipe_context(setup->pipe);
-   assert(setup->scene == NULL);
    boolean discard = lp->rasterizer ? lp->rasterizer->rasterizer_discard : FALSE;
+
+   assert(setup->scene == NULL);
 
    setup->scene_idx++;
    setup->scene_idx %= Elements(setup->scenes);
