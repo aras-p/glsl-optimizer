@@ -324,7 +324,7 @@ _mesa_set_random_entry(struct set *ht,
                        int (*predicate)(struct set_entry *entry))
 {
    struct set_entry *entry;
-   uint32_t i = random() % ht->size;
+   uint32_t i = rand() % ht->size;
 
    if (ht->entries == 0)
       return NULL;
