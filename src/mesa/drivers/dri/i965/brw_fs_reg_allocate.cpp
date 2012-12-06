@@ -277,9 +277,6 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
          payload_last_use_ip[0 / reg_width] = use_ip;
          payload_last_use_ip[1 / reg_width] = use_ip;
          break;
-      case FS_OPCODE_DISCARD:
-         payload_last_use_ip[1 / reg_width] = use_ip;
-         break;
 
       case FS_OPCODE_LINTERP:
          /* On gen6+ in 16-wide, there are 4 adjacent registers (so 2 nodes)

@@ -252,14 +252,15 @@ fs_visitor::emit_fragment_program_code()
                continue;
             }
 
-            emit(CMP(null, regoffset(src[0], i), fs_reg(0.0f),
-                     BRW_CONDITIONAL_L));
 
-            if (intel->gen < 6 && dispatch_width == 16)
-               fail("Can't support (non-uniform) control flow on 16-wide");
-            emit(IF(BRW_PREDICATE_NORMAL));
-            emit(FS_OPCODE_DISCARD);
-            emit(BRW_OPCODE_ENDIF);
+            /* Emit an instruction that's predicated on the current
+             * undiscarded pixels, and updates just those pixels to be
+             * turned off.
+             */
+            fs_inst *cmp = emit(CMP(null, regoffset(src[0], i), fs_reg(0.0f),
+                                    BRW_CONDITIONAL_GE));
+            cmp->predicate = BRW_PREDICATE_NORMAL;
+            cmp->flag_subreg = 1;
          }
          break;
       }

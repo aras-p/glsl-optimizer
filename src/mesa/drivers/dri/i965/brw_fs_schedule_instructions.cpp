@@ -299,7 +299,6 @@ instruction_scheduler::calculate_deps()
       }
 
       if (inst->predicate) {
-	 assert(last_conditional_mod[inst->flag_subreg]);
 	 add_dep(last_conditional_mod[inst->flag_subreg], n);
       }
 

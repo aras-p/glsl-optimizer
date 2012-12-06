@@ -74,6 +74,17 @@ fs_generator::generate_fb_write(fs_inst *inst)
    brw_set_mask_control(p, BRW_MASK_DISABLE);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
+   if (fp->UsesKill) {
+      struct brw_reg pixel_mask;
+
+      if (intel->gen >= 6)
+         pixel_mask = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
+      else
+         pixel_mask = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
+
+      brw_MOV(p, pixel_mask, brw_flag_reg(0, 1));
+   }
+
    if (inst->header_present) {
       if (intel->gen >= 6) {
 	 brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
@@ -514,58 +525,6 @@ fs_generator::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 }
 
 void
-fs_generator::generate_discard(fs_inst *inst)
-{
-   struct brw_reg f0 = brw_flag_reg(0, 0);
-
-   if (intel->gen >= 6) {
-      struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
-      struct brw_reg some_register;
-
-      /* As of gen6, we no longer have the mask register to look at,
-       * so life gets a bit more complicated.
-       */
-
-      /* Load the flag register with all ones. */
-      brw_push_insn_state(p);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_MOV(p, f0, brw_imm_uw(0xffff));
-      brw_pop_insn_state(p);
-
-      /* Do a comparison that should always fail, to produce 0s in the flag
-       * reg where we have active channels.
-       */
-      some_register = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
-      brw_CMP(p, retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
-	      BRW_CONDITIONAL_NZ, some_register, some_register);
-
-      /* Undo CMP's whacking of predication*/
-      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-
-      brw_push_insn_state(p);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_AND(p, g1, f0, g1);
-      brw_pop_insn_state(p);
-   } else {
-      struct brw_reg g0 = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-
-      brw_push_insn_state(p);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-
-      /* Unlike the 965, we have the mask reg, so we just need
-       * somewhere to invert that (containing channels to be disabled)
-       * so it can be ANDed with the mask of pixels still to be
-       * written. Use the flag reg for consistency with gen6+.
-       */
-      brw_NOT(p, f0, brw_mask_reg(1)); /* IMASK */
-      brw_AND(p, g0, f0, g0);
-
-      brw_pop_insn_state(p);
-   }
-}
-
-void
 fs_generator::generate_spill(fs_inst *inst, struct brw_reg src)
 {
    assert(inst->mlen != 0);
@@ -745,12 +704,16 @@ void
 fs_generator::generate_mov_dispatch_to_flags(fs_inst *inst)
 {
    struct brw_reg flags = brw_flag_reg(0, inst->flag_subreg);
-   struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
+   struct brw_reg dispatch_mask;
 
-   assert (intel->gen >= 6);
+   if (intel->gen >= 6)
+      dispatch_mask = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
+   else
+      dispatch_mask = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
+
    brw_push_insn_state(p);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
-   brw_MOV(p, flags, g1);
+   brw_MOV(p, flags, dispatch_mask);
    brw_pop_insn_state(p);
 }
 
@@ -1082,9 +1045,6 @@ fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_TXL:
       case SHADER_OPCODE_TXS:
 	 generate_tex(inst, dst, src[0]);
-	 break;
-      case FS_OPCODE_DISCARD:
-	 generate_discard(inst);
 	 break;
       case FS_OPCODE_DDX:
 	 generate_ddx(inst, dst, src[0]);
