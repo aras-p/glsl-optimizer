@@ -553,10 +553,22 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
       next_block_header->insert_before(chosen->inst);
       instructions_to_schedule--;
 
-      /* Bump the clock.  If we expected a delay for scheduling, then
-       * bump the clock to reflect that.
+      /* Bump the clock.  Instructions in gen hardware are handled one simd4
+       * vector at a time, with 1 cycle per vector dispatched.  Thus 8-wide
+       * pixel shaders take 2 cycles to dispatch and 16-wide (compressed)
+       * instructions take 4.
        */
-      time = MAX2(time + 1, chosen_time);
+      if (is_compressed(chosen->inst))
+         time += 4;
+      else
+         time += 2;
+
+      /* If we expected a delay for scheduling, then bump the clock to reflect
+       * that as well.  In reality, the hardware will switch to another
+       * hyperthread and may not return to dispatching our thread for a while
+       * even after we're unblocked.
+       */
+      time = MAX2(time, chosen_time);
 
       if (debug) {
          printf("clock %4d, scheduled: ", time);
