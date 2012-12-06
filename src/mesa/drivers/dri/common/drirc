@@ -22,5 +22,8 @@
         <application name="Unigine OilRush (64-bit)" executable="OilRush_x64">
             <option name="disable_blend_func_extended" value="true" />
 	</application>
+        <application name="Savage 2" executable="savage2.bin">
+            <option name="disable_glsl_line_continuations" value="true" />
+        </application>
     </device>
 </driconf>
