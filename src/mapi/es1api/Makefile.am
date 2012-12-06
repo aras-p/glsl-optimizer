@@ -41,8 +41,12 @@ GLES_include_HEADERS = \
 lib_LTLIBRARIES = libGLESv1_CM.la
 
 libGLESv1_CM_la_SOURCES = ../mapi/entry.c glapi_mapi_tmp.h
-libGLESv1_CM_la_LIBADD = $(GLESv1_CM_LIB_DEPS) ../shared-glapi/libglapi.la
+libGLESv1_CM_la_LIBADD = $(GLESv1_CM_LIB_DEPS)
 libGLESv1_CM_la_LDFLAGS = -version-number 1:1 -no-undefined
+
+if HAVE_SHARED_GLAPI
+libGLESv1_CM_la_LIBADD += ../shared-glapi/libglapi.la
+endif
 
 include ../glapi/gen/glapi_gen.mk
 glapi_mapi_tmp.h: ../glapi/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
