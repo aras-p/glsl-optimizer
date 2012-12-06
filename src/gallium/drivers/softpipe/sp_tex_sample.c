@@ -38,6 +38,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "sp_quad.h"   /* only for #define QUAD_* tokens */
 #include "sp_tex_sample.h"
@@ -2502,6 +2503,7 @@ get_lambda_func(const union sp_sampler_key key)
       return compute_lambda_vert;
    
    switch (key.bits.target) {
+   case PIPE_BUFFER:
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_1D_ARRAY:
       return compute_lambda_1d;
@@ -2526,6 +2528,7 @@ get_img_filter(const union sp_sampler_key key,
                const struct pipe_sampler_state *sampler)
 {
    switch (key.bits.target) {
+   case PIPE_BUFFER:
    case PIPE_TEXTURE_1D:
       if (filter == PIPE_TEX_FILTER_NEAREST) 
          return img_filter_1d_nearest;
@@ -2648,7 +2651,6 @@ sample_get_dims(struct tgsi_sampler *tgsi_sampler, int level,
        dims[1] = texture->array_size;
        /* fallthrough */
     case PIPE_TEXTURE_1D:
-    case PIPE_BUFFER:
        return;
     case PIPE_TEXTURE_2D_ARRAY:
        dims[2] = texture->array_size;
@@ -2665,6 +2667,9 @@ sample_get_dims(struct tgsi_sampler *tgsi_sampler, int level,
     case PIPE_TEXTURE_CUBE_ARRAY:
        dims[1] = u_minify(texture->height0, level);
        dims[2] = texture->array_size / 6;
+       break;
+    case PIPE_BUFFER:
+       dims[0] /= util_format_get_blocksize(view->format);
        return;
     default:
        assert(!"unexpected texture target in sample_get_dims()");
@@ -2705,6 +2710,7 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
    layers = texture->array_size;
 
    switch(texture->target) {
+   case PIPE_BUFFER:
    case PIPE_TEXTURE_1D:
       for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          int x = CLAMP(v_i[j] + offset[0], 0, width - 1);
