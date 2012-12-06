@@ -250,12 +250,6 @@ struct draw_context
          uint num_samplers;
       } tgsi;
 
-      const void *aligned_constants[PIPE_MAX_CONSTANT_BUFFERS];
-
-      const void *aligned_constant_storage[PIPE_MAX_CONSTANT_BUFFERS];
-      unsigned const_storage_size[PIPE_MAX_CONSTANT_BUFFERS];
-
-
       struct translate *fetch;
       struct translate_cache *fetch_cache;
       struct translate *emit;
@@ -369,24 +363,12 @@ void draw_vs_destroy( struct draw_context *draw );
 void draw_vs_set_viewport( struct draw_context *, 
                            const struct pipe_viewport_state * );
 
-void
-draw_vs_set_constants(struct draw_context *,
-                      unsigned slot,
-                      const void *constants,
-                      unsigned size);
-
-
 
 /*******************************************************************************
  * Geometry shading code:
  */
 boolean draw_gs_init( struct draw_context *draw );
 
-void
-draw_gs_set_constants(struct draw_context *,
-                      unsigned slot,
-                      const void *constants,
-                      unsigned size);
 
 void draw_gs_destroy( struct draw_context *draw );
 

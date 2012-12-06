@@ -69,19 +69,6 @@ void draw_gs_destroy( struct draw_context *draw )
    tgsi_exec_machine_destroy(draw->gs.tgsi.machine);
 }
 
-void
-draw_gs_set_constants(struct draw_context *draw,
-                      unsigned slot,
-                      const void *constants,
-                      unsigned size)
-{
-   /* noop. added here for symmetry with the VS
-    * code and in case we'll ever want to allign
-    * the constants, e.g. when we'll change to a
-    * different interpreter */
-}
-
-
 struct draw_geometry_shader *
 draw_create_geometry_shader(struct draw_context *draw,
                             const struct pipe_shader_state *state)
