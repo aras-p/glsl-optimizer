@@ -1706,6 +1706,47 @@ enum brw_message_target {
 # define GEN8_RASTER_SCISSOR_ENABLE                     (1 << 1)
 # define GEN8_RASTER_VIEWPORT_Z_CLIP_TEST_ENABLE        (1 << 0)
 
+/* Gen8 BLEND_STATE */
+/* DW0 */
+#define GEN8_BLEND_ALPHA_TO_COVERAGE_ENABLE             (1 << 31)
+#define GEN8_BLEND_INDEPENDENT_ALPHA_BLEND_ENABLE       (1 << 30)
+#define GEN8_BLEND_ALPHA_TO_ONE_ENABLE                  (1 << 29)
+#define GEN8_BLEND_ALPHA_TO_COVERAGE_DITHER_ENABLE      (1 << 28)
+#define GEN8_BLEND_ALPHA_TEST_ENABLE                    (1 << 27)
+#define GEN8_BLEND_ALPHA_TEST_FUNCTION_MASK             INTEL_MASK(26, 24)
+#define GEN8_BLEND_ALPHA_TEST_FUNCTION_SHIFT            24
+#define GEN8_BLEND_COLOR_DITHER_ENABLE                  (1 << 23)
+#define GEN8_BLEND_X_DITHER_OFFSET_MASK                 INTEL_MASK(22, 21)
+#define GEN8_BLEND_X_DITHER_OFFSET_SHIFT                21
+#define GEN8_BLEND_Y_DITHER_OFFSET_MASK                 INTEL_MASK(20, 19)
+#define GEN8_BLEND_Y_DITHER_OFFSET_SHIFT                19
+/* DW1 + 2n */
+#define GEN8_BLEND_COLOR_BUFFER_BLEND_ENABLE            (1 << 31)
+#define GEN8_BLEND_SRC_BLEND_FACTOR_MASK                INTEL_MASK(30, 26)
+#define GEN8_BLEND_SRC_BLEND_FACTOR_SHIFT               26
+#define GEN8_BLEND_DST_BLEND_FACTOR_MASK                INTEL_MASK(25, 21)
+#define GEN8_BLEND_DST_BLEND_FACTOR_SHIFT               21
+#define GEN8_BLEND_COLOR_BLEND_FUNCTION_MASK            INTEL_MASK(20, 18)
+#define GEN8_BLEND_COLOR_BLEND_FUNCTION_SHIFT           18
+#define GEN8_BLEND_SRC_ALPHA_BLEND_FACTOR_MASK          INTEL_MASK(17, 13)
+#define GEN8_BLEND_SRC_ALPHA_BLEND_FACTOR_SHIFT         13
+#define GEN8_BLEND_DST_ALPHA_BLEND_FACTOR_MASK          INTEL_MASK(12, 8)
+#define GEN8_BLEND_DST_ALPHA_BLEND_FACTOR_SHIFT         8
+#define GEN8_BLEND_ALPHA_BLEND_FUNCTION_MASK            INTEL_MASK(7, 5)
+#define GEN8_BLEND_ALPHA_BLEND_FUNCTION_SHIFT           5
+#define GEN8_BLEND_WRITE_DISABLE_ALPHA                  (1 << 3)
+#define GEN8_BLEND_WRITE_DISABLE_RED                    (1 << 2)
+#define GEN8_BLEND_WRITE_DISABLE_GREEN                  (1 << 1)
+#define GEN8_BLEND_WRITE_DISABLE_BLUE                   (1 << 0)
+/* DW1 + 2n + 1 */
+#define GEN8_BLEND_LOGIC_OP_ENABLE                      (1 << 31)
+#define GEN8_BLEND_LOGIC_OP_FUNCTION_MASK               INTEL_MASK(30, 27)
+#define GEN8_BLEND_LOGIC_OP_FUNCTION_SHIFT              27
+#define GEN8_BLEND_PRE_BLEND_SRC_ONLY_CLAMP_ENABLE      (1 << 4)
+#define GEN8_BLEND_COLOR_CLAMP_RANGE_RTFORMAT           (2 << 2)
+#define GEN8_BLEND_PRE_BLEND_COLOR_CLAMP_ENABLE         (1 << 1)
+#define GEN8_BLEND_POST_BLEND_COLOR_CLAMP_ENABLE        (1 << 0)
+
 #define _3DSTATE_PS_BLEND                       0x784D /* GEN8+ */
 /* DW1 */
 # define GEN8_PS_BLEND_ALPHA_TO_COVERAGE_ENABLE         (1 << 31)

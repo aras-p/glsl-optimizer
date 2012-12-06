@@ -266,7 +266,7 @@ static const struct brw_tracked_state *gen8_atoms[] =
 
    &gen7_push_constant_space,
    &gen7_urb,
-   &gen6_blend_state,
+   &gen8_blend_state,
    &gen6_color_calc_state,
 
    &gen6_vs_push_constants, /* Before vs_state */
