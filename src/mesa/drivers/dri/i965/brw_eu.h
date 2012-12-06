@@ -568,11 +568,11 @@ static INLINE struct brw_reg brw_notification_1_reg(void)
 }
 
 
-static INLINE struct brw_reg brw_flag_reg( void )
+static INLINE struct brw_reg brw_flag_reg(int reg, int subreg)
 {
    return brw_uw1_reg(BRW_ARCHITECTURE_REGISTER_FILE,
-		      BRW_ARF_FLAG,
-		      0);
+		      BRW_ARF_FLAG + reg,
+		      subreg);
 }
 
 

@@ -516,7 +516,7 @@ fs_generator::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 void
 fs_generator::generate_discard(fs_inst *inst)
 {
-   struct brw_reg f0 = brw_flag_reg();
+   struct brw_reg f0 = brw_flag_reg(0, 0);
 
    if (intel->gen >= 6) {
       struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
@@ -744,7 +744,7 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
 void
 fs_generator::generate_mov_dispatch_to_flags()
 {
-   struct brw_reg f0 = brw_flag_reg();
+   struct brw_reg f0 = brw_flag_reg(0, 0);
    struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
 
    assert (intel->gen >= 6);
