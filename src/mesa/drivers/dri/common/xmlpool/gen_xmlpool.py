@@ -1,11 +1,24 @@
 #!/usr/bin/python
 
+#
+# Usage:
+#     gen_xmlpool.py /path/to/t_option.h localedir lang lang lang ...
+#
+# For each given language, this script expects to find a .mo file at
+# `{localedir}/{language}/LC_MESSAGES/options.mo`.
+#
+
 import sys
 import gettext
 import re
 
+# Path to t_options.h
+template_header_path = sys.argv[1]
+
+localedir = sys.argv[2]
+
 # List of supported languages
-languages = sys.argv[1:]
+languages = sys.argv[3:]
 
 # Escape special characters in C strings
 def escapeCString (s):
@@ -134,7 +147,7 @@ def expandMatches (matches, translations, end=None):
 translations = [("en", gettext.NullTranslations())]
 for lang in languages:
     try:
-        trans = gettext.translation ("options", ".", [lang])
+        trans = gettext.translation ("options", localedir, [lang])
     except IOError:
         sys.stderr.write ("Warning: language '%s' not found.\n" % lang)
         continue
@@ -155,7 +168,7 @@ print \
 
 # Process the options template and generate options.h with all
 # translations.
-template = file ("t_options.h", "r")
+template = file (template_header_path, "r")
 descMatches = []
 for line in template:
     if len(descMatches) > 0:

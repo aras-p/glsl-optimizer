@@ -61,8 +61,9 @@ clean:
 	-rm -rf $(LANGS)
 
 # Default target options.h
+options.h: LOCALEDIR := .
 options.h: t_options.h mo
-	$(PYTHON2) $(PYTHON_FLAGS) gen_xmlpool.py $(LANGS) > options.h
+	$(PYTHON2) $(PYTHON_FLAGS) gen_xmlpool.py t_options.h $(LOCALEDIR) $(LANGS) > options.h
 
 # Update .mo files from the corresponding .po files.
 mo:
