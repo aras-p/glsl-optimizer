@@ -125,8 +125,19 @@ lp_build_print_value(struct gallivm_state *gallivm,
       params[2] = value;
    } else {
       for (i = 0; i < length; ++i) {
+         LLVMValueRef param;
          util_strncat(format, type_fmt, sizeof(format) - strlen(format) - 1);
-         params[2 + i] = LLVMBuildExtractElement(builder, value, lp_build_const_int32(gallivm, i), "");
+         param = LLVMBuildExtractElement(builder, value, lp_build_const_int32(gallivm, i), "");
+         if (type_kind == LLVMIntegerTypeKind &&
+             LLVMGetIntTypeWidth(type_ref) < sizeof(int) * 8) {
+            LLVMTypeRef int_type = LLVMIntTypeInContext(gallivm->context, sizeof(int) * 8);
+            if (LLVMGetIntTypeWidth(type_ref) == 8) {
+               param = LLVMBuildZExt(builder, param, int_type, "");
+            } else {
+               param = LLVMBuildSExt(builder, param, int_type, "");
+            }
+         }
+         params[2 + i] = param;
       }
    }
 
