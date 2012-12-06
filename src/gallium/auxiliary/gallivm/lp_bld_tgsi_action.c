@@ -580,8 +580,9 @@ mul_emit(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_mul(&bld_base->base,
-                                   emit_data->args[0], emit_data->args[1]);
+   emit_data->output[emit_data->chan] = LLVMBuildFMul(
+                                   bld_base->base.gallivm->builder,
+                                   emit_data->args[0], emit_data->args[1], "");
 }
 
 /*.TGSI_OPCODE_DIV.*/
