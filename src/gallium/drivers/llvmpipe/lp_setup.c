@@ -627,8 +627,10 @@ void
 lp_setup_set_rasterizer_discard( struct lp_setup_context *setup,
                                  boolean rasterizer_discard )
 {
-   setup->rasterizer_discard = rasterizer_discard;
-   set_scene_state( setup, SETUP_FLUSHED, __FUNCTION__ );
+   if (setup->rasterizer_discard != rasterizer_discard) {
+      setup->rasterizer_discard = rasterizer_discard;
+      set_scene_state( setup, SETUP_FLUSHED, __FUNCTION__ );
+   }
 }
 
 void 
