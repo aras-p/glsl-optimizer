@@ -1069,9 +1069,23 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	err |= control (file, "function", math_function,
 			inst->header.destreg__conditionalmod, NULL);
     } else if (inst->header.opcode != BRW_OPCODE_SEND &&
-	       inst->header.opcode != BRW_OPCODE_SENDC)
+	       inst->header.opcode != BRW_OPCODE_SENDC) {
 	err |= control (file, "conditional modifier", conditional_modifier,
 			inst->header.destreg__conditionalmod, NULL);
+
+        /* If we're using the conditional modifier, print which flags reg is
+         * used for it.  Note that on gen6+, the embedded-condition SEL and
+         * control flow doesn't update flags.
+         */
+	if (inst->header.destreg__conditionalmod &&
+            (gen < 6 || (inst->header.opcode != BRW_OPCODE_SEL &&
+                         inst->header.opcode != BRW_OPCODE_IF &&
+                         inst->header.opcode != BRW_OPCODE_WHILE))) {
+	    format (file, ".f%d", gen >= 7 ? inst->bits2.da1.flag_reg_nr : 0);
+	    if (inst->bits2.da1.flag_subreg_nr)
+		format (file, ".%d", inst->bits2.da1.flag_subreg_nr);
+        }
+    }
 
     if (inst->header.opcode != BRW_OPCODE_NOP) {
 	string (file, "(");
