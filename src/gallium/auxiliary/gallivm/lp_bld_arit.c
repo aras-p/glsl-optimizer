@@ -685,7 +685,7 @@ lp_build_sub(struct lp_build_context *bld,
 /**
  * Normalized multiplication.
  *
- * There are several approaches here (using 8-bit normalized multiplication as
+ * There are several approaches for (using 8-bit normalized multiplication as
  * an example):
  *
  * - alpha plus one
@@ -694,7 +694,7 @@ lp_build_sub(struct lp_build_context *bld,
  *    
  *       a*b/255 ~= (a*(b + 1)) >> 256
  *    
- *     which is the fastest method that satisfies the following OpenGL criteria
+ *     which is the fastest method that satisfies the following OpenGL criteria of
  *    
  *       0*0 = 0 and 255*255 = 255
  *
@@ -710,7 +710,7 @@ lp_build_sub(struct lp_build_context *bld,
  *
  *     note that just by itself it doesn't satisfies the OpenGL criteria, as
  *     255*255 = 254, so the special case b = 255 must be accounted or roundoff
- *     must be used
+ *     must be used.
  *
  * - geometric series plus rounding
  *
@@ -719,7 +719,9 @@ lp_build_sub(struct lp_build_context *bld,
  *
  *       t/255 ~= (t + (t >> 8) + 0x80) >> 8
  *
- *     achieving the exact results
+ *     achieving the exact results.
+ *
+ *
  *
  * @sa Alvy Ray Smith, Image Compositing Fundamentals, Tech Memo 4, Aug 15, 1995, 
  *     ftp://ftp.alvyray.com/Acrobat/4_Comp.pdf
@@ -733,8 +735,7 @@ lp_build_mul_norm(struct gallivm_state *gallivm,
 {
    LLVMBuilderRef builder = gallivm->builder;
    struct lp_build_context bld;
-   unsigned bits;
-   LLVMValueRef shift;
+   unsigned n;
    LLVMValueRef half;
    LLVMValueRef ab;
 
@@ -744,29 +745,28 @@ lp_build_mul_norm(struct gallivm_state *gallivm,
 
    lp_build_context_init(&bld, gallivm, wide_type);
 
-   bits = wide_type.width / 2;
+   n = wide_type.width / 2;
    if (wide_type.sign) {
-      --bits;
+      --n;
    }
 
-   shift = lp_build_const_int_vec(gallivm, wide_type, bits);
+   /*
+    * TODO: for 16bits normalized SSE2 vectors we could consider using PMULHUW
+    * http://ssp.impulsetrain.com/2011/07/03/multiplying-normalized-16-bit-numbers-with-sse2/
+    */
 
-#if 0
-   
-   /* a*b/255 ~= (a*(b + 1)) >> 256 */
-   /* XXX: This would not work for signed types */
-   assert(!wide_type.sign);
-   b = LLVMBuildAdd(builder, b, lp_build_const_int_vec(gallium, wide_type, 1), "");
+   /*
+    * a*b / (2**n - 1) ~= (a*b + (a*b >> n) + half) >> n
+    */
+
    ab = LLVMBuildMul(builder, a, b, "");
+   ab = LLVMBuildAdd(builder, ab, lp_build_shr_imm(&bld, ab, n), "");
 
-#else
-   
-   /* ab/255 ~= (ab + (ab >> 8) + 0x80) >> 8 */
-   ab = LLVMBuildMul(builder, a, b, "");
-   ab = LLVMBuildAdd(builder, ab, LLVMBuildLShr(builder, ab, shift, ""), "");
+   /*
+    * half = sgn(ab) * 0.5 * (2 ** n) = sgn(ab) * (1 << (n - 1))
+    */
 
-   /* Add rounding term */
-   half = lp_build_const_int_vec(gallivm, wide_type, 1 << (bits - 1));
+   half = lp_build_const_int_vec(gallivm, wide_type, 1 << (n - 1));
    if (wide_type.sign) {
       LLVMValueRef minus_half = LLVMBuildNeg(builder, half, "");
       LLVMValueRef sign = lp_build_shr_imm(&bld, half, wide_type.width - 1);
@@ -774,9 +774,8 @@ lp_build_mul_norm(struct gallivm_state *gallivm,
    }
    ab = LLVMBuildAdd(builder, ab, half, "");
 
-#endif
-   
-   ab = LLVMBuildLShr(builder, ab, shift, "");
+   /* Final division */
+   ab = lp_build_shr_imm(&bld, ab, n);
 
    return ab;
 }
@@ -988,14 +987,28 @@ lp_build_lerp_simple(struct lp_build_context *bld,
 
    delta = lp_build_sub(bld, v1, v0);
 
-   res = lp_build_mul(bld, x, delta);
-
    if (normalized) {
-      if (bld->type.sign) {
-         res = lp_build_shr_imm(bld, res, half_width - 1);
-      } else {
+      if (!bld->type.sign) {
+         /*
+          * Scale x from [0, 2**n - 1] to [0, 2**n] by adding the
+          * most-significant-bit to the lowest-significant-bit, so that
+          * later we can just divide by 2**n instead of 2**n - 1.
+          */
+         x = lp_build_add(bld, x, lp_build_shr_imm(bld, x, half_width - 1));
+
+         /* (x * delta) >> n */
+         res = lp_build_mul(bld, x, delta);
          res = lp_build_shr_imm(bld, res, half_width);
+      } else {
+         /*
+          * The rescaling trick above doesn't work for signed numbers, so
+          * use the 2**n - 1 divison approximation in lp_build_mul_norm
+          * instead.
+          */
+         res = lp_build_mul_norm(bld->gallivm, bld->type, x, delta);
       }
+   } else {
+      res = lp_build_mul(bld, x, delta);
    }
 
    res = lp_build_add(bld, v0, res);
@@ -1022,7 +1035,6 @@ lp_build_lerp(struct lp_build_context *bld,
               LLVMValueRef v0,
               LLVMValueRef v1)
 {
-   LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
    LLVMValueRef res;
 
@@ -1034,8 +1046,6 @@ lp_build_lerp(struct lp_build_context *bld,
       struct lp_type wide_type;
       struct lp_build_context wide_bld;
       LLVMValueRef xl, xh, v0l, v0h, v1l, v1h, resl, resh;
-      unsigned bits;
-      LLVMValueRef shift;
 
       assert(type.length >= 2);
 
@@ -1053,22 +1063,6 @@ lp_build_lerp(struct lp_build_context *bld,
       lp_build_unpack2(bld->gallivm, type, wide_type, x,  &xl,  &xh);
       lp_build_unpack2(bld->gallivm, type, wide_type, v0, &v0l, &v0h);
       lp_build_unpack2(bld->gallivm, type, wide_type, v1, &v1l, &v1h);
-
-      /*
-       * Scale x from [0, 255] to [0, 256]
-       */
-
-      bits = type.width - 1;
-      if (type.sign) {
-         --bits;
-      }
-
-      shift = lp_build_const_int_vec(bld->gallivm, wide_type, bits - 1);
-
-      xl = lp_build_add(&wide_bld, xl,
-                        LLVMBuildAShr(builder, xl, shift, ""));
-      xh = lp_build_add(&wide_bld, xh,
-                        LLVMBuildAShr(builder, xh, shift, ""));
 
       /*
        * Lerp both halves.
