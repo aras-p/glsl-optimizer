@@ -57,7 +57,7 @@ static bool debug = false;
 class schedule_node : public exec_node
 {
 public:
-   schedule_node(fs_inst *inst)
+   schedule_node(fs_inst *inst, int gen)
    {
       this->inst = inst;
       this->child_array_size = 0;
@@ -67,10 +67,14 @@ public:
       this->parent_count = 0;
       this->unblocked_time = 0;
 
-      set_latency_gen4();
+      if (gen >= 7)
+         set_latency_gen7();
+      else
+         set_latency_gen4();
    }
 
    void set_latency_gen4();
+   void set_latency_gen7();
 
    fs_inst *inst;
    schedule_node **children;
@@ -120,6 +124,178 @@ schedule_node::set_latency_gen4()
    }
 }
 
+void
+schedule_node::set_latency_gen7()
+{
+   switch (inst->opcode) {
+   case BRW_OPCODE_MAD:
+      /* 3 cycles (this is said to be 4 cycles sometimes depending on the
+       * register numbers in the sources):
+       * mad(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g2.1<4,1,1>F.x { align16 WE_normal 1Q };
+       *
+       * 20 cycles:
+       * mad(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g2.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * mov(8) null   g4<4,4,1>F                     { align16 WE_normal 1Q };
+       */
+      latency = 17;
+      break;
+
+   case SHADER_OPCODE_RCP:
+   case SHADER_OPCODE_RSQ:
+   case SHADER_OPCODE_SQRT:
+   case SHADER_OPCODE_LOG2:
+   case SHADER_OPCODE_EXP2:
+   case SHADER_OPCODE_SIN:
+   case SHADER_OPCODE_COS:
+      /* 2 cycles:
+       * math inv(8) g4<1>F g2<0,1,0>F      null       { align1 WE_normal 1Q };
+       *
+       * 18 cycles:
+       * math inv(8) g4<1>F g2<0,1,0>F      null       { align1 WE_normal 1Q };
+       * mov(8)      null   g4<8,8,1>F                 { align1 WE_normal 1Q };
+       *
+       * Same for exp2, log2, rsq, sqrt, sin, cos.
+       */
+      latency = 16;
+      break;
+
+   case SHADER_OPCODE_POW:
+      /* 2 cycles:
+       * math pow(8) g4<1>F g2<0,1,0>F   g2.1<0,1,0>F  { align1 WE_normal 1Q };
+       *
+       * 26 cycles:
+       * math pow(8) g4<1>F g2<0,1,0>F   g2.1<0,1,0>F  { align1 WE_normal 1Q };
+       * mov(8)      null   g4<8,8,1>F                 { align1 WE_normal 1Q };
+       */
+      latency = 24;
+      break;
+
+   case SHADER_OPCODE_TEX:
+   case SHADER_OPCODE_TXD:
+   case SHADER_OPCODE_TXF:
+   case SHADER_OPCODE_TXL:
+      /* 18 cycles:
+       * mov(8)  g115<1>F   0F                         { align1 WE_normal 1Q };
+       * mov(8)  g114<1>F   0F                         { align1 WE_normal 1Q };
+       * send(8) g4<1>UW    g114<8,8,1>F
+       *   sampler (10, 0, 0, 1) mlen 2 rlen 4         { align1 WE_normal 1Q };
+       *
+       * 697 +/-49 cycles (min 610, n=26):
+       * mov(8)  g115<1>F   0F                         { align1 WE_normal 1Q };
+       * mov(8)  g114<1>F   0F                         { align1 WE_normal 1Q };
+       * send(8) g4<1>UW    g114<8,8,1>F
+       *   sampler (10, 0, 0, 1) mlen 2 rlen 4         { align1 WE_normal 1Q };
+       * mov(8)  null       g4<8,8,1>F                 { align1 WE_normal 1Q };
+       *
+       * So the latency on our first texture load of the batchbuffer takes
+       * ~700 cycles, since the caches are cold at that point.
+       *
+       * 840 +/- 92 cycles (min 720, n=25):
+       * mov(8)  g115<1>F   0F                         { align1 WE_normal 1Q };
+       * mov(8)  g114<1>F   0F                         { align1 WE_normal 1Q };
+       * send(8) g4<1>UW    g114<8,8,1>F
+       *   sampler (10, 0, 0, 1) mlen 2 rlen 4         { align1 WE_normal 1Q };
+       * mov(8)  null       g4<8,8,1>F                 { align1 WE_normal 1Q };
+       * send(8) g4<1>UW    g114<8,8,1>F
+       *   sampler (10, 0, 0, 1) mlen 2 rlen 4         { align1 WE_normal 1Q };
+       * mov(8)  null       g4<8,8,1>F                 { align1 WE_normal 1Q };
+       *
+       * On the second load, it takes just an extra ~140 cycles, and after
+       * accounting for the 14 cycles of the MOV's latency, that makes ~130.
+       *
+       * 683 +/- 49 cycles (min = 602, n=47):
+       * mov(8)  g115<1>F   0F                         { align1 WE_normal 1Q };
+       * mov(8)  g114<1>F   0F                         { align1 WE_normal 1Q };
+       * send(8) g4<1>UW    g114<8,8,1>F
+       *   sampler (10, 0, 0, 1) mlen 2 rlen 4         { align1 WE_normal 1Q };
+       * send(8) g50<1>UW   g114<8,8,1>F
+       *   sampler (10, 0, 0, 1) mlen 2 rlen 4         { align1 WE_normal 1Q };
+       * mov(8)  null       g4<8,8,1>F                 { align1 WE_normal 1Q };
+       *
+       * The unit appears to be pipelined, since this matches up with the
+       * cache-cold case, despite there being two loads here.  If you replace
+       * the g4 in the MOV to null with g50, it's still 693 +/- 52 (n=39).
+       *
+       * So, take some number between the cache-hot 140 cycles and the
+       * cache-cold 700 cycles.  No particular tuning was done on this.
+       *
+       * I haven't done significant testing of the non-TEX opcodes.  TXL at
+       * least looked about the same as TEX.
+       */
+      latency = 200;
+      break;
+
+   case SHADER_OPCODE_TXS:
+      /* Testing textureSize(sampler2D, 0), one load was 420 +/- 41
+       * cycles (n=15):
+       * mov(8)   g114<1>UD  0D                        { align1 WE_normal 1Q };
+       * send(8)  g6<1>UW    g114<8,8,1>F
+       *   sampler (10, 0, 10, 1) mlen 1 rlen 4        { align1 WE_normal 1Q };
+       * mov(16)  g6<1>F     g6<8,8,1>D                { align1 WE_normal 1Q };
+       *
+       *
+       * Two loads was 535 +/- 30 cycles (n=19):
+       * mov(16)   g114<1>UD  0D                       { align1 WE_normal 1H };
+       * send(16)  g6<1>UW    g114<8,8,1>F
+       *   sampler (10, 0, 10, 2) mlen 2 rlen 8        { align1 WE_normal 1H };
+       * mov(16)   g114<1>UD  0D                       { align1 WE_normal 1H };
+       * mov(16)   g6<1>F     g6<8,8,1>D               { align1 WE_normal 1H };
+       * send(16)  g8<1>UW    g114<8,8,1>F
+       *   sampler (10, 0, 10, 2) mlen 2 rlen 8        { align1 WE_normal 1H };
+       * mov(16)   g8<1>F     g8<8,8,1>D               { align1 WE_normal 1H };
+       * add(16)   g6<1>F     g6<8,8,1>F   g8<8,8,1>F  { align1 WE_normal 1H };
+       *
+       * Since the only caches that should matter are just the
+       * instruction/state cache containing the surface state, assume that we
+       * always have hot caches.
+       */
+      latency = 100;
+      break;
+
+   case FS_OPCODE_VARYING_PULL_CONSTANT_LOAD:
+   case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
+      /* testing using varying-index pull constants:
+       *
+       * 16 cycles:
+       * mov(8)  g4<1>D  g2.1<0,1,0>F                  { align1 WE_normal 1Q };
+       * send(8) g4<1>F  g4<8,8,1>D
+       *   data (9, 2, 3) mlen 1 rlen 1                { align1 WE_normal 1Q };
+       *
+       * ~480 cycles:
+       * mov(8)  g4<1>D  g2.1<0,1,0>F                  { align1 WE_normal 1Q };
+       * send(8) g4<1>F  g4<8,8,1>D
+       *   data (9, 2, 3) mlen 1 rlen 1                { align1 WE_normal 1Q };
+       * mov(8)  null    g4<8,8,1>F                    { align1 WE_normal 1Q };
+       *
+       * ~620 cycles:
+       * mov(8)  g4<1>D  g2.1<0,1,0>F                  { align1 WE_normal 1Q };
+       * send(8) g4<1>F  g4<8,8,1>D
+       *   data (9, 2, 3) mlen 1 rlen 1                { align1 WE_normal 1Q };
+       * mov(8)  null    g4<8,8,1>F                    { align1 WE_normal 1Q };
+       * send(8) g4<1>F  g4<8,8,1>D
+       *   data (9, 2, 3) mlen 1 rlen 1                { align1 WE_normal 1Q };
+       * mov(8)  null    g4<8,8,1>F                    { align1 WE_normal 1Q };
+       *
+       * So, if it's cache-hot, it's about 140.  If it's cache cold, it's
+       * about 460.  We expect to mostly be cache hot, so pick something more
+       * in that direction.
+       */
+      latency = 200;
+      break;
+
+   default:
+      /* 2 cycles:
+       * mul(8) g4<1>F g2<0,1,0>F      0.5F            { align1 WE_normal 1Q };
+       *
+       * 16 cycles:
+       * mul(8) g4<1>F g2<0,1,0>F      0.5F            { align1 WE_normal 1Q };
+       * mov(8) null   g4<8,8,1>F                      { align1 WE_normal 1Q };
+       */
+      latency = 14;
+      break;
+   }
+}
+
 class instruction_scheduler {
 public:
    instruction_scheduler(fs_visitor *v, void *mem_ctx, int grf_count,
@@ -159,7 +335,7 @@ public:
 void
 instruction_scheduler::add_inst(fs_inst *inst)
 {
-   schedule_node *n = new(mem_ctx) schedule_node(inst);
+   schedule_node *n = new(mem_ctx) schedule_node(inst, v->intel->gen);
 
    assert(!inst->is_head_sentinel());
    assert(!inst->is_tail_sentinel());
