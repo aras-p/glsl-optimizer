@@ -1066,7 +1066,6 @@ lp_setup_create( struct pipe_context *pipe,
    struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
    struct lp_setup_context *setup;
    unsigned i;
-   struct llvmpipe_context *lp = llvmpipe_context(pipe);
 
    setup = CALLOC_STRUCT(lp_setup_context);
    if (!setup) {
