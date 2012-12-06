@@ -45,7 +45,7 @@
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
 #include "st_program.h"
-
+#include "st_cb_bufferobjects.h"
 
 /**
  * Pass the given program parameters to the graphics pipe as a
@@ -175,3 +175,69 @@ const struct st_tracked_state st_update_gs_constants = {
    },
    update_gs_constants					/* update */
 };
+
+static void st_bind_ubos(struct st_context *st,
+                           struct gl_shader *shader,
+                           unsigned shader_type)
+{
+   unsigned i;
+   struct pipe_constant_buffer cb = { 0 };
+
+   if (!shader)
+      return;
+
+   for (i = 0; i < shader->NumUniformBlocks; i++) {
+      struct gl_uniform_buffer_binding *binding;
+      struct st_buffer_object *st_obj;
+
+      binding = &st->ctx->UniformBufferBindings[shader->UniformBlocks[i].Binding];
+      st_obj = st_buffer_object(binding->BufferObject);
+      pipe_resource_reference(&cb.buffer, st_obj->buffer);
+
+      cb.buffer_size = st_obj->buffer->width0 - binding->Offset;
+
+      st->pipe->set_constant_buffer(st->pipe, shader_type, 1 + i, &cb);
+      pipe_resource_reference(&cb.buffer, NULL);
+   }
+}
+
+static void bind_vs_ubos(struct st_context *st)
+{
+   struct gl_shader_program *prog = st->ctx->Shader.CurrentVertexProgram;
+
+   if (!prog)
+      return;
+
+   st_bind_ubos(st, prog->_LinkedShaders[MESA_SHADER_VERTEX], PIPE_SHADER_VERTEX);
+}
+
+const struct st_tracked_state st_bind_vs_ubos = {
+   "st_bind_vs_ubos",
+   {
+      (_NEW_PROGRAM | _NEW_BUFFER_OBJECT),
+      ST_NEW_VERTEX_PROGRAM,
+   },
+   bind_vs_ubos
+};
+
+static void bind_fs_ubos(struct st_context *st)
+{
+   struct gl_shader_program *prog = st->ctx->Shader.CurrentFragmentProgram;
+
+   if (!prog)
+      return;
+
+   st_bind_ubos(st, prog->_LinkedShaders[MESA_SHADER_FRAGMENT], PIPE_SHADER_FRAGMENT);
+
+}
+
+const struct st_tracked_state st_bind_fs_ubos = {
+   "st_bind_fs_ubos",
+   {
+      (_NEW_PROGRAM | _NEW_BUFFER_OBJECT),
+      ST_NEW_FRAGMENT_PROGRAM,
+   },
+   bind_fs_ubos
+};
+
+

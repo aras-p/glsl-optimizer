@@ -107,6 +107,7 @@ public:
       else
          this->swizzle = SWIZZLE_XYZW;
       this->negate = 0;
+      this->index2D = 0;
       this->type = type ? type->base_type : GLSL_TYPE_ERROR;
       this->reladdr = NULL;
    }
@@ -116,6 +117,18 @@ public:
       this->type = type;
       this->file = file;
       this->index = index;
+      this->index2D = 0;
+      this->swizzle = SWIZZLE_XYZW;
+      this->negate = 0;
+      this->reladdr = NULL;
+   }
+
+   st_src_reg(gl_register_file file, int index, int type, int index2D)
+   {
+      this->type = type;
+      this->file = file;
+      this->index = index;
+      this->index2D = index2D;
       this->swizzle = SWIZZLE_XYZW;
       this->negate = 0;
       this->reladdr = NULL;
@@ -126,6 +139,7 @@ public:
       this->type = GLSL_TYPE_ERROR;
       this->file = PROGRAM_UNDEFINED;
       this->index = 0;
+      this->index2D = 0;
       this->swizzle = 0;
       this->negate = 0;
       this->reladdr = NULL;
@@ -135,6 +149,7 @@ public:
 
    gl_register_file file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
+   int index2D;
    GLuint swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
    int negate; /**< NEGATE_XYZW mask from mesa */
    int type; /** GLSL_TYPE_* from GLSL IR (enum glsl_base_type) */
@@ -183,6 +198,7 @@ st_src_reg::st_src_reg(st_dst_reg reg)
    this->swizzle = SWIZZLE_XYZW;
    this->negate = 0;
    this->reladdr = reg.reladdr;
+   this->index2D = 0;
 }
 
 st_dst_reg::st_dst_reg(st_src_reg reg)
@@ -1873,10 +1889,29 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       assert(!"GLSL 1.30 features unsupported");
       break;
 
-   case ir_binop_ubo_load:
-      assert(!"not yet supported");
-      break;
+   case ir_binop_ubo_load: {
+      ir_constant *uniform_block = ir->operands[0]->as_constant();
+      st_src_reg index_reg = get_temp(glsl_type::uint_type);
+      st_src_reg cbuf;
 
+      cbuf.type = glsl_type::vec4_type->base_type;
+      cbuf.file = PROGRAM_CONSTANT;
+      cbuf.index = 0;
+      cbuf.index2D = uniform_block->value.u[0] + 1;
+      cbuf.reladdr = NULL;
+      cbuf.negate = 0;
+      
+      assert(ir->type->is_vector() || ir->type->is_scalar());
+
+      emit(ir, TGSI_OPCODE_USHR, st_dst_reg(index_reg), op[1], st_src_reg_for_int(4));
+
+      cbuf.swizzle = swizzle_for_size(ir->type->vector_elements);
+      cbuf.reladdr = ralloc(mem_ctx, st_src_reg);
+      memcpy(cbuf.reladdr, &index_reg, sizeof(index_reg));
+
+      emit(ir, TGSI_OPCODE_MOV, result_dst, cbuf);
+      break;
+   }
    case ir_quadop_vector:
       /* This operation should have already been handled.
        */
@@ -4061,7 +4096,7 @@ dst_register(struct st_translate *t,
 static struct ureg_src
 src_register(struct st_translate *t,
              gl_register_file file,
-             GLint index)
+             GLint index, GLint index2D)
 {
    switch(file) {
    case PROGRAM_UNDEFINED:
@@ -4081,7 +4116,13 @@ src_register(struct st_translate *t,
       return t->constants[index];
    case PROGRAM_STATE_VAR:
    case PROGRAM_CONSTANT:       /* ie, immediate */
-      if (index < 0)
+      if (index2D) {
+         struct ureg_src src;
+         src = ureg_src_register(TGSI_FILE_CONSTANT, 0);
+         src.Dimension = 1;
+         src.DimensionIndex = index2D;
+         return src;
+      } else if (index < 0)
          return ureg_DECL_constant(t->ureg, 0);
       else
          return t->constants[index];
@@ -4160,7 +4201,7 @@ translate_dst(struct st_translate *t,
 static struct ureg_src
 translate_src(struct st_translate *t, const st_src_reg *src_reg)
 {
-   struct ureg_src src = src_register(t, src_reg->file, src_reg->index);
+   struct ureg_src src = src_register(t, src_reg->file, src_reg->index, src_reg->index2D);
 
    src = ureg_swizzle(src,
                       GET_SWZ(src_reg->swizzle, 0) & 0x3,
@@ -4754,6 +4795,14 @@ st_translate_program(
          }
       }
    }
+
+   if (program->shader_program) {
+      unsigned num_ubos = program->shader_program->NumUniformBlocks;
+
+      for (i = 0; i < num_ubos; i++) {
+         ureg_DECL_constant2D(t->ureg, 0, program->shader_program->UniformBlocks[i].UniformBufferSize / 4, i + 1);
+      }
+   }
    
    /* Emit immediate values.
     */
@@ -5090,6 +5139,8 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
              || progress;
 
          progress = do_vec_index_to_cond_assign(ir) || progress;
+
+         lower_ubo_reference(prog->_LinkedShaders[i], ir);
       } while (progress);
 
       validate_ir_tree(ir);

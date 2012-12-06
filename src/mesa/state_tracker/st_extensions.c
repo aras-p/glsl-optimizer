@@ -70,6 +70,8 @@ void st_init_limits(struct st_context *st)
    struct pipe_screen *screen = st->pipe->screen;
    struct gl_constants *c = &st->ctx->Const;
    gl_shader_type sh;
+   boolean can_ubo = TRUE;
+   int max_const_buffers;
 
    c->MaxTextureLevels
       = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
@@ -218,6 +220,17 @@ void st_init_limits(struct st_context *st)
       options->EmitNoIndirectUniform = !screen->get_shader_param(screen, sh,
                                         PIPE_SHADER_CAP_INDIRECT_CONST_ADDR);
 
+      if (pc->MaxNativeInstructions) {
+         if (options->EmitNoIndirectUniform)
+         can_ubo = FALSE;
+
+         max_const_buffers = screen->get_shader_param(screen, sh,
+                                                      PIPE_SHADER_CAP_MAX_CONST_BUFFERS);
+         /* we need 13 buffers - 1 constant, 12 UBO */
+         if (max_const_buffers < 13)
+            can_ubo = FALSE;
+      }
+
       if (options->EmitNoLoops)
          options->MaxUnrollIterations = MIN2(screen->get_shader_param(screen, sh, PIPE_SHADER_CAP_MAX_INSTRUCTIONS), 65536);
       else
@@ -251,6 +264,9 @@ void st_init_limits(struct st_context *st)
 
    c->GLSLSkipStrictMaxVaryingLimitCheck =
       screen->get_param(screen, PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS);
+
+   if (can_ubo)
+      st->ctx->Extensions.ARB_uniform_buffer_object = GL_TRUE;
 }
 
 
