@@ -214,7 +214,7 @@ gen_PLN_MRF_GRF_GRF(struct brw_compile *p)
 }
 
 static void
-gen_f0_MOV_GRF_GRF(struct brw_compile *p)
+gen_f0_0_MOV_GRF_GRF(struct brw_compile *p)
 {
    struct brw_reg g0 = brw_vec8_grf(0, 0);
    struct brw_reg g2 = brw_vec8_grf(2, 0);
@@ -225,19 +225,19 @@ gen_f0_MOV_GRF_GRF(struct brw_compile *p)
    brw_pop_insn_state(p);
 }
 
-/* The handling of f1 vs f0 changes between gen6 and gen7.  Explicitly test
+/* The handling of f0.1 vs f0.0 changes between gen6 and gen7.  Explicitly test
  * it, so that we run the fuzzing can run over all the other bits that might
  * interact with it.
  */
 static void
-gen_f1_MOV_GRF_GRF(struct brw_compile *p)
+gen_f0_1_MOV_GRF_GRF(struct brw_compile *p)
 {
    struct brw_reg g0 = brw_vec8_grf(0, 0);
    struct brw_reg g2 = brw_vec8_grf(2, 0);
 
    brw_push_insn_state(p);
    brw_set_predicate_control(p, true);
-   current_insn(p)->bits2.da1.flag_reg_nr = 1;
+   current_insn(p)->bits2.da1.flag_subreg_nr = 1;
    brw_MOV(p, g0, g2);
    brw_pop_insn_state(p);
 }
@@ -252,8 +252,8 @@ struct {
    { gen_ADD_MRF_GRF_GRF },
    { gen_ADD_vec1_GRF_GRF_GRF },
    { gen_PLN_MRF_GRF_GRF },
-   { gen_f0_MOV_GRF_GRF },
-   { gen_f1_MOV_GRF_GRF },
+   { gen_f0_0_MOV_GRF_GRF },
+   { gen_f0_1_MOV_GRF_GRF },
 };
 
 static bool

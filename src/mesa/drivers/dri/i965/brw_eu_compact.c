@@ -482,7 +482,7 @@ brw_try_compact_instruction(struct brw_compile *p,
    temp.dw0.acc_wr_control = src->header.acc_wr_control;
    temp.dw0.conditionalmod = src->header.destreg__conditionalmod;
    if (intel->gen <= 6)
-      temp.dw0.flag_reg_nr = src->bits2.da1.flag_reg_nr;
+      temp.dw0.flag_subreg_nr = src->bits2.da1.flag_subreg_nr;
    temp.dw0.cmpt_ctrl = 1;
    if (!set_src0_index(&temp, src))
       return false;
@@ -570,7 +570,7 @@ brw_uncompact_instruction(struct intel_context *intel,
    dst->header.acc_wr_control = src->dw0.acc_wr_control;
    dst->header.destreg__conditionalmod = src->dw0.conditionalmod;
    if (intel->gen <= 6)
-      dst->bits2.da1.flag_reg_nr = src->dw0.flag_reg_nr;
+      dst->bits2.da1.flag_subreg_nr = src->dw0.flag_subreg_nr;
    set_uncompacted_src0(dst, src);
    set_uncompacted_src1(dst, src);
    dst->bits1.da1.dest_reg_nr = src->dw1.dst_reg_nr;

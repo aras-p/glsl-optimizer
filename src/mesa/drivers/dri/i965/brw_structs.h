@@ -1064,7 +1064,7 @@ struct brw_instruction
 	 GLuint src0_horiz_stride:2;
 	 GLuint src0_width:3;
 	 GLuint src0_vert_stride:4;
-	 GLuint flag_reg_nr:1;
+	 GLuint flag_subreg_nr:1;
 	 GLuint pad:6;
       } da1;
 
@@ -1078,7 +1078,7 @@ struct brw_instruction
 	 GLuint src0_horiz_stride:2;
 	 GLuint src0_width:3;
 	 GLuint src0_vert_stride:4;
-	 GLuint flag_reg_nr:1;
+	 GLuint flag_subreg_nr:1;
 	 GLuint pad:6;	
       } ia1;
 
@@ -1095,7 +1095,7 @@ struct brw_instruction
 	 GLuint src0_swz_w:2;
 	 GLuint pad0:1;
 	 GLuint src0_vert_stride:4;
-	 GLuint flag_reg_nr:1;
+	 GLuint flag_subreg_nr:1;
 	 GLuint pad1:6;
       } da16;
 
@@ -1112,7 +1112,7 @@ struct brw_instruction
 	 GLuint src0_swz_w:2;
 	 GLuint pad0:1;
 	 GLuint src0_vert_stride:4;
-	 GLuint flag_reg_nr:1;
+	 GLuint flag_subreg_nr:1;
 	 GLuint pad1:6;
       } ia16;
 
@@ -1545,7 +1545,7 @@ struct brw_compact_instruction {
       unsigned sub_reg_index:5;   /* 18-22 */
       unsigned acc_wr_control:1;  /* 23-23 */
       unsigned conditionalmod:4;  /* 24-27 */
-      unsigned flag_reg_nr:1;     /* 28-28 */
+      unsigned flag_subreg_nr:1;     /* 28-28 */
       unsigned cmpt_ctrl:1;       /* 29-29 */
       unsigned src0_index:2;      /* 30-31 */
    } dw0;
