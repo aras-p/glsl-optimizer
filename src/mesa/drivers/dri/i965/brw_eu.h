@@ -810,6 +810,7 @@ void brw_set_predicate_control_flag_value( struct brw_compile *p, GLuint value )
 void brw_set_predicate_control( struct brw_compile *p, GLuint pc );
 void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse);
 void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional );
+void brw_set_flag_reg(struct brw_compile *p, int reg, int subreg);
 void brw_set_acc_write_control(struct brw_compile *p, GLuint value);
 
 void brw_init_compile(struct brw_context *, struct brw_compile *p,

@@ -2222,6 +2222,12 @@ fs_visitor::remove_duplicate_mrf_writes()
 void
 fs_visitor::dump_instruction(fs_inst *inst)
 {
+   if (inst->predicate) {
+      printf("(%cf0.%d) ",
+             inst->predicate_inverse ? '-' : '+',
+             inst->flag_subreg);
+   }
+
    if (inst->opcode < ARRAY_SIZE(opcode_descs) &&
        opcode_descs[inst->opcode].name) {
       printf("%s", opcode_descs[inst->opcode].name);
@@ -2230,7 +2236,17 @@ fs_visitor::dump_instruction(fs_inst *inst)
    }
    if (inst->saturate)
       printf(".sat");
+   if (inst->conditional_mod) {
+      printf(".cmod");
+      if (!inst->predicate &&
+          (intel->gen < 5 || (inst->opcode != BRW_OPCODE_SEL &&
+                              inst->opcode != BRW_OPCODE_IF &&
+                              inst->opcode != BRW_OPCODE_WHILE))) {
+         printf(".f0.%d\n", inst->flag_subreg);
+      }
+   }
    printf(" ");
+
 
    switch (inst->dst.file) {
    case GRF:

@@ -742,15 +742,15 @@ fs_generator::generate_varying_pull_constant_load_gen7(fs_inst *inst,
  * Used only on Gen6 and above.
  */
 void
-fs_generator::generate_mov_dispatch_to_flags()
+fs_generator::generate_mov_dispatch_to_flags(fs_inst *inst)
 {
-   struct brw_reg f0 = brw_flag_reg(0, 0);
+   struct brw_reg flags = brw_flag_reg(0, inst->flag_subreg);
    struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
 
    assert (intel->gen >= 6);
    brw_push_insn_state(p);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
-   brw_MOV(p, f0, g1);
+   brw_MOV(p, flags, g1);
    brw_pop_insn_state(p);
 }
 
@@ -915,6 +915,7 @@ fs_generator::generate_code(exec_list *instructions)
       brw_set_conditionalmod(p, inst->conditional_mod);
       brw_set_predicate_control(p, inst->predicate);
       brw_set_predicate_inverse(p, inst->predicate_inverse);
+      brw_set_flag_reg(p, 0, inst->flag_subreg);
       brw_set_saturate(p, inst->saturate);
       brw_set_mask_control(p, inst->force_writemask_all);
 
@@ -1121,7 +1122,7 @@ fs_generator::generate_code(exec_list *instructions)
 	 break;
 
       case FS_OPCODE_MOV_DISPATCH_TO_FLAGS:
-         generate_mov_dispatch_to_flags();
+         generate_mov_dispatch_to_flags(inst);
          break;
 
       case SHADER_OPCODE_SHADER_TIME_ADD:

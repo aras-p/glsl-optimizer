@@ -165,6 +165,11 @@ public:
    bool saturate;
    int conditional_mod; /**< BRW_CONDITIONAL_* */
 
+   /* Chooses which flag subregister (f0.0 or f0.1) is used for conditional
+    * mod and predication.
+    */
+   uint8_t flag_subreg;
+
    int mlen; /**< SEND message length */
    int base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
    uint32_t texture_offset; /**< Texture offset bitfield */
@@ -511,7 +516,7 @@ private:
                                                  struct brw_reg dst,
                                                  struct brw_reg index,
                                                  struct brw_reg offset);
-   void generate_mov_dispatch_to_flags();
+   void generate_mov_dispatch_to_flags(fs_inst *inst);
 
    struct brw_context *brw;
    struct intel_context *intel;

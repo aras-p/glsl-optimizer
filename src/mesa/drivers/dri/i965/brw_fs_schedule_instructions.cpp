@@ -249,7 +249,7 @@ instruction_scheduler::calculate_deps()
 {
    schedule_node *last_grf_write[virtual_grf_count];
    schedule_node *last_mrf_write[BRW_MAX_MRF];
-   schedule_node *last_conditional_mod = NULL;
+   schedule_node *last_conditional_mod[2] = { NULL, NULL };
    /* Fixed HW registers are assumed to be separate from the virtual
     * GRFs, so they can be tracked separately.  We don't really write
     * to fixed GRFs much, so don't bother tracking them on a more
@@ -299,8 +299,8 @@ instruction_scheduler::calculate_deps()
       }
 
       if (inst->predicate) {
-	 assert(last_conditional_mod);
-	 add_dep(last_conditional_mod, n);
+	 assert(last_conditional_mod[inst->flag_subreg]);
+	 add_dep(last_conditional_mod[inst->flag_subreg], n);
       }
 
       /* write-after-write deps. */
@@ -339,15 +339,15 @@ instruction_scheduler::calculate_deps()
        */
       if (inst->conditional_mod ||
           inst->opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS) {
-	 add_dep(last_conditional_mod, n, 0);
-	 last_conditional_mod = n;
+	 add_dep(last_conditional_mod[inst->flag_subreg], n, 0);
+	 last_conditional_mod[inst->flag_subreg] = n;
       }
    }
 
    /* bottom-to-top dependencies: WAR */
    memset(last_grf_write, 0, sizeof(last_grf_write));
    memset(last_mrf_write, 0, sizeof(last_mrf_write));
-   last_conditional_mod = NULL;
+   memset(last_conditional_mod, 0, sizeof(last_conditional_mod));
    last_fixed_grf_write = NULL;
 
    exec_node *node;
@@ -383,7 +383,7 @@ instruction_scheduler::calculate_deps()
       }
 
       if (inst->predicate) {
-	 add_dep(n, last_conditional_mod);
+	 add_dep(n, last_conditional_mod[inst->flag_subreg]);
       }
 
       /* Update the things this instruction wrote, so earlier reads
@@ -422,7 +422,7 @@ instruction_scheduler::calculate_deps()
        */
       if (inst->conditional_mod ||
           inst->opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS) {
-	 last_conditional_mod = n;
+	 last_conditional_mod[inst->flag_subreg] = n;
       }
    }
 }

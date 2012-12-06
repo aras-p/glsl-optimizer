@@ -94,6 +94,12 @@ void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional )
    p->current->header.destreg__conditionalmod = conditional;
 }
 
+void brw_set_flag_reg(struct brw_compile *p, int reg, int subreg)
+{
+   p->current->bits2.da1.flag_reg_nr = reg;
+   p->current->bits2.da1.flag_subreg_nr = subreg;
+}
+
 void brw_set_access_mode( struct brw_compile *p, GLuint access_mode )
 {
    p->current->header.access_mode = access_mode;
