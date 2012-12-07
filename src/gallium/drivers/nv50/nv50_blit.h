@@ -72,6 +72,7 @@ nv50_blit_reinterpret_pipe_texture_target(enum pipe_texture_target target)
 {
    switch (target) {
    case PIPE_TEXTURE_CUBE:
+   case PIPE_TEXTURE_CUBE_ARRAY:
       return PIPE_TEXTURE_2D_ARRAY;
    case PIPE_TEXTURE_RECT:
       return PIPE_TEXTURE_2D;

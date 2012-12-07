@@ -43,7 +43,7 @@ static inline bool isMemoryFile(DataFile f)
 // contrary to asTex(), this will never include SULD/SUST
 static inline bool isTextureOp(operation op)
 {
-   return (op >= OP_TEX && op <= OP_TEXCSAA);
+   return (op >= OP_TEX && op <= OP_TEXCSAA) || (op == OP_TEXPREP);
 }
 
 static inline unsigned int typeSizeof(DataType ty)
@@ -304,7 +304,7 @@ const FlowInstruction *Instruction::asFlow() const
 
 TexInstruction *Instruction::asTex()
 {
-   if (op >= OP_TEX && op <= OP_TEXCSAA)
+   if ((op >= OP_TEX && op <= OP_TEXCSAA) || (op == OP_TEXPREP))
       return static_cast<TexInstruction *>(this);
    return NULL;
 }

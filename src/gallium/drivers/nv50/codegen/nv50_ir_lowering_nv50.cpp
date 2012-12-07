@@ -573,7 +573,6 @@ NV50LoweringPreSSA::visit(Function *f)
    return true;
 }
 
-// move array source to first slot, convert to u16, add indirections
 bool
 NV50LoweringPreSSA::handleTEX(TexInstruction *i)
 {
@@ -595,24 +594,26 @@ NV50LoweringPreSSA::handleTEX(TexInstruction *i)
       i->setSrc(arg - 1, src);
 
       if (i->tex.target.isCube()) {
-         // Value *face = layer;
-         Value *x, *y;
-         x = new_LValue(func, FILE_GPR);
-         y = new_LValue(func, FILE_GPR);
-         layer = new_LValue(func, FILE_GPR);
+         Value *acube[4], *a2d[4];
+         int c;
 
-         i->tex.target = TEX_TARGET_2D_ARRAY;
+         for (c = 0; c < 4; ++c)
+            acube[c] = i->getSrc(c);
+         for (c = 0; c < 3; ++c)
+            a2d[c] = new_LValue(func, FILE_GPR);
+         a2d[3] = NULL;
 
-         // TODO: use TEXPREP to convert x,y,z,face -> x,y,layer
-         bld.mkMov(x, i->getSrc(0));
-         bld.mkMov(y, i->getSrc(1));
-         bld.mkMov(layer, i->getSrc(3));
+         bld.mkTex(OP_TEXPREP, TEX_TARGET_CUBE_ARRAY, i->tex.r, i->tex.s,
+                   a2d, acube)->asTex()->tex.mask = 0x7;
 
-         i->setSrc(0, x);
-         i->setSrc(1, y);
-         i->setSrc(2, layer);
-         i->setSrc(3, i->getSrc(4));
-         i->setSrc(4, NULL);
+         for (c = 0; c < 3; ++c)
+            i->setSrc(c, a2d[c]);
+         i->setSrc(c, NULL);
+         for (; i->srcExists(c + 1); ++c)
+            i->setSrc(c, i->getSrc(c + 1));
+
+         i->tex.target = i->tex.target.isShadow() ?
+            TEX_TARGET_2D_ARRAY_SHADOW : TEX_TARGET_2D_ARRAY;
       }
    }
 

@@ -254,6 +254,7 @@ BuildUtil::mkTex(operation op, TexTarget targ, uint8_t tic, uint8_t tsc,
 
    tex->setTexture(targ, tic, tsc);
 
+   insert(tex);
    return tex;
 }
 

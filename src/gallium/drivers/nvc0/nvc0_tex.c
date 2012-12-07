@@ -180,10 +180,7 @@ nvc0_create_texture_view(struct pipe_context *pipe,
       break;
    case PIPE_TEXTURE_CUBE:
       depth /= 6;
-      if (depth > 1)
-         tic[2] |= NV50_TIC_2_TARGET_CUBE_ARRAY;
-      else
-         tic[2] |= NV50_TIC_2_TARGET_CUBE;
+      tic[2] |= NV50_TIC_2_TARGET_CUBE;
       break;
    case PIPE_TEXTURE_1D_ARRAY:
       tic[2] |= NV50_TIC_2_TARGET_1D_ARRAY;
@@ -191,6 +188,10 @@ nvc0_create_texture_view(struct pipe_context *pipe,
 /* case PIPE_TEXTURE_2D_ARRAY_MS: */
    case PIPE_TEXTURE_2D_ARRAY:
       tic[2] |= NV50_TIC_2_TARGET_2D_ARRAY;
+      break;
+   case PIPE_TEXTURE_CUBE_ARRAY:
+      depth /= 6;
+      tic[2] |= NV50_TIC_2_TARGET_CUBE_ARRAY;
       break;
    default:
       NOUVEAU_ERR("invalid texture target: %d\n", mt->base.base.target);

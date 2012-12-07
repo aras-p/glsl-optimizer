@@ -110,7 +110,6 @@ private:
    void emitTEX(const TexInstruction *);
    void emitTEXCSAA(const TexInstruction *);
    void emitTXQ(const TexInstruction *);
-   void emitPIXLD(const TexInstruction *);
 
    void emitQUADOP(const Instruction *, uint8_t qOp, uint8_t laneMask);
 

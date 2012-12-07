@@ -237,6 +237,10 @@ unsigned int Instruction::srcMask(unsigned int s) const
       return 0x1;
    case TGSI_OPCODE_LIT:
       return 0xb;
+   case TGSI_OPCODE_TEX2:
+   case TGSI_OPCODE_TXB2:
+   case TGSI_OPCODE_TXL2:
+      return (s == 0) ? 0xf : 0x3;
    case TGSI_OPCODE_TEX:
    case TGSI_OPCODE_TXB:
    case TGSI_OPCODE_TXD:
@@ -263,6 +267,12 @@ unsigned int Instruction::srcMask(unsigned int s) const
       case TGSI_TEXTURE_2D:
       case TGSI_TEXTURE_RECT:
          mask &= 0xb;
+         break;
+      case TGSI_TEXTURE_CUBE_ARRAY:
+      case TGSI_TEXTURE_SHADOW2D_ARRAY:
+      case TGSI_TEXTURE_SHADOWCUBE:
+      case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+         mask |= 0x8;
          break;
       default:
          break;
@@ -343,12 +353,14 @@ static nv50_ir::TexTarget translateTexture(uint tex)
    NV50_IR_TEX_TARG_CASE(RECT, RECT);
    NV50_IR_TEX_TARG_CASE(1D_ARRAY, 1D_ARRAY);
    NV50_IR_TEX_TARG_CASE(2D_ARRAY, 2D_ARRAY);
+   NV50_IR_TEX_TARG_CASE(CUBE_ARRAY, CUBE_ARRAY);
    NV50_IR_TEX_TARG_CASE(SHADOW1D, 1D_SHADOW);
    NV50_IR_TEX_TARG_CASE(SHADOW2D, 2D_SHADOW);
-   NV50_IR_TEX_TARG_CASE(SHADOW1D_ARRAY, 1D_ARRAY_SHADOW);
-   NV50_IR_TEX_TARG_CASE(SHADOW2D_ARRAY, 2D_ARRAY_SHADOW);
    NV50_IR_TEX_TARG_CASE(SHADOWCUBE, CUBE_SHADOW);
    NV50_IR_TEX_TARG_CASE(SHADOWRECT, RECT_SHADOW);
+   NV50_IR_TEX_TARG_CASE(SHADOW1D_ARRAY, 1D_ARRAY_SHADOW);
+   NV50_IR_TEX_TARG_CASE(SHADOW2D_ARRAY, 2D_ARRAY_SHADOW);
+   NV50_IR_TEX_TARG_CASE(SHADOWCUBE_ARRAY, CUBE_ARRAY_SHADOW);
    NV50_IR_TEX_TARG_CASE(BUFFER, BUFFER);
 
    case TGSI_TEXTURE_UNKNOWN:
@@ -552,6 +564,10 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(SAMPLE_L, TXL);
    NV50_IR_OPCODE_CASE(GATHER4, TXG);
    NV50_IR_OPCODE_CASE(SVIEWINFO, TXQ);
+
+   NV50_IR_OPCODE_CASE(TEX2, TEX);
+   NV50_IR_OPCODE_CASE(TXB2, TXB);
+   NV50_IR_OPCODE_CASE(TXL2, TXL);
 
    NV50_IR_OPCODE_CASE(END, EXIT);
 
@@ -2033,6 +2049,13 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       break;
    case TGSI_OPCODE_TXD:
       handleTEX(dst0, 3, 3, 0x03, 0x0f, 0x10, 0x20);
+      break;
+   case TGSI_OPCODE_TEX2:
+      handleTEX(dst0, 2, 2, 0x03, 0x10, 0x00, 0x00);
+      break;
+   case TGSI_OPCODE_TXB2:
+   case TGSI_OPCODE_TXL2:
+      handleTEX(dst0, 2, 2, 0x10, 0x11, 0x00, 0x00);
       break;
    case TGSI_OPCODE_SAMPLE:
    case TGSI_OPCODE_SAMPLE_B:

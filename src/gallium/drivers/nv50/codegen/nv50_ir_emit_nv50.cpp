@@ -116,6 +116,7 @@ private:
 
    void emitTEX(const TexInstruction *);
    void emitTXQ(const TexInstruction *);
+   void emitTEXPREP(const TexInstruction *);
 
    void emitQUADOP(const Instruction *, uint8_t lane, uint8_t quOp);
 
@@ -1430,6 +1431,19 @@ CodeEmitterNV50::emitTXQ(const TexInstruction *i)
 }
 
 void
+CodeEmitterNV50::emitTEXPREP(const TexInstruction *i)
+{
+   code[0] = 0xf8000001 | (3 << 22) | (i->tex.s << 17) | (i->tex.r << 9);
+   code[1] = 0x60010000;
+
+   code[0] |= (i->tex.mask & 0x3) << 25;
+   code[1] |= (i->tex.mask & 0xc) << 12;
+   defId(i->def(0), 2);
+
+   emitFlagsRd(i);
+}
+
+void
 CodeEmitterNV50::emitPRERETEmu(const FlowInstruction *i)
 {
    uint32_t pos = i->target.bb->binPos + 8; // +8 to skip an op */
@@ -1651,6 +1665,9 @@ CodeEmitterNV50::emitInstruction(Instruction *insn)
       break;
    case OP_TXQ:
       emitTXQ(insn->asTex());
+      break;
+   case OP_TEXPREP:
+      emitTEXPREP(insn->asTex());
       break;
    case OP_EMIT:
    case OP_RESTART:

@@ -111,6 +111,11 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return nv50_screen(pscreen)->tesla->oclass >= NVA0_3D_CLASS;
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
       return 0;
+   case PIPE_CAP_CUBE_MAP_ARRAY:
+      return 0;
+      /*
+      return nv50_screen(pscreen)->tesla->oclass >= NVA3_3D_CLASS;
+      */
    case PIPE_CAP_TWO_SIDED_STENCIL:
    case PIPE_CAP_DEPTH_CLIP_DISABLE:
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:

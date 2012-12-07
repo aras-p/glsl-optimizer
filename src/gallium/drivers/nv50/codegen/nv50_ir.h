@@ -124,7 +124,7 @@ enum operation
    OP_DFDY,
    OP_RDSV, // read system value
    OP_WRSV, // write system value
-   OP_PIXLD,
+   OP_TEXPREP, // turn cube map array into 2d array coordinates, TODO: move
    OP_QUADOP,
    OP_QUADON,
    OP_QUADPOP,
@@ -750,6 +750,7 @@ public:
       Target& operator=(TexTarget targ)
       {
          assert(targ < TEX_TARGET_COUNT);
+         target = targ;
          return *this;
       }
 
