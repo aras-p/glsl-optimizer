@@ -121,7 +121,7 @@ draw_pt_arrays(struct draw_context *draw,
          /* Flush draw state if eltSize changed.
           * This could be improved so only the frontend is flushed since it
           * converts all indices to ushorts and the fetch part of the middle
-          * always perpares both linear and indexed.
+          * always prepares both linear and indexed.
           */
          frontend->flush( frontend, DRAW_FLUSH_STATE_CHANGE );
          frontend = NULL;
