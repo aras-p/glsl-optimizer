@@ -139,6 +139,12 @@ draw_pt_arrays(struct draw_context *draw,
       draw->pt.opt = opt;
    }
 
+   if (draw->pt.rebind_parameters) {
+      /* update constants, viewport dims, clip planes, etc */
+      middle->bind_parameters(middle);
+      draw->pt.rebind_parameters = FALSE;
+   }
+
    frontend->run( frontend, start, count );
 
    return TRUE;
@@ -146,12 +152,18 @@ draw_pt_arrays(struct draw_context *draw,
 
 void draw_pt_flush( struct draw_context *draw, unsigned flags )
 {
+   assert(flags);
+
    if (draw->pt.frontend) {
       draw->pt.frontend->flush( draw->pt.frontend, flags );
 
       /* don't prepare if we only are flushing the backend */
-      if (!(flags & DRAW_FLUSH_BACKEND))
+      if (flags & DRAW_FLUSH_STATE_CHANGE)
          draw->pt.frontend = NULL;
+   }
+
+   if (flags & DRAW_FLUSH_PARAMETER_CHANGE) {
+      draw->pt.rebind_parameters = TRUE;
    }
 }
 

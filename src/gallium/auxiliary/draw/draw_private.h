@@ -144,6 +144,8 @@ struct draw_context
       unsigned opt;     /**< bitmask of PT_x flags */
       unsigned eltSize; /* saved eltSize for flushing */
 
+      boolean rebind_parameters;
+
       struct {
          struct draw_pt_middle_end *fetch_emit;
          struct draw_pt_middle_end *fetch_shade_emit;
@@ -434,8 +436,9 @@ void draw_pipeline_flush( struct draw_context *draw,
  * Flushing 
  */
 
-#define DRAW_FLUSH_STATE_CHANGE              0x8
-#define DRAW_FLUSH_BACKEND                   0x10
+#define DRAW_FLUSH_PARAMETER_CHANGE 0x1  /**< Constants, viewport, etc */
+#define DRAW_FLUSH_STATE_CHANGE     0x2  /**< Other/heavy state changes */
+#define DRAW_FLUSH_BACKEND          0x4  /**< Flush the output buffer */
 
 
 void draw_do_flush( struct draw_context *draw, unsigned flags );

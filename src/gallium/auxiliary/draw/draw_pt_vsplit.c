@@ -182,7 +182,7 @@ static void vsplit_flush(struct draw_pt_front_end *frontend, unsigned flags)
 {
    struct vsplit_frontend *vsplit = (struct vsplit_frontend *) frontend;
 
-   if (!(flags & DRAW_FLUSH_BACKEND)) {
+   if (flags & DRAW_FLUSH_STATE_CHANGE) {
       vsplit->middle->finish(vsplit->middle);
       vsplit->middle = NULL;
    }

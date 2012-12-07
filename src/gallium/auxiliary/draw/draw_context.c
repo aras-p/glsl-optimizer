@@ -289,7 +289,7 @@ void draw_set_rasterize_stage( struct draw_context *draw,
 void draw_set_clip_state( struct draw_context *draw,
                           const struct pipe_clip_state *clip )
 {
-   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+   draw_do_flush(draw, DRAW_FLUSH_PARAMETER_CHANGE);
 
    memcpy(&draw->plane[6], clip->ucp, sizeof(clip->ucp));
 }
@@ -301,7 +301,7 @@ void draw_set_clip_state( struct draw_context *draw,
 void draw_set_viewport_state( struct draw_context *draw,
                               const struct pipe_viewport_state *viewport )
 {
-   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+   draw_do_flush(draw, DRAW_FLUSH_PARAMETER_CHANGE);
    draw->viewport = *viewport; /* struct copy */
    draw->identity_viewport = (viewport->scale[0] == 1.0f &&
                               viewport->scale[1] == 1.0f &&
@@ -367,6 +367,8 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
    debug_assert(shader_type == PIPE_SHADER_VERTEX ||
                 shader_type == PIPE_SHADER_GEOMETRY);
    debug_assert(slot < PIPE_MAX_CONSTANT_BUFFERS);
+
+   draw_do_flush(draw, DRAW_FLUSH_PARAMETER_CHANGE);
 
    switch (shader_type) {
    case PIPE_SHADER_VERTEX:

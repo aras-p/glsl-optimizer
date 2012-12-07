@@ -347,6 +347,6 @@ void draw_pipeline_flush( struct draw_context *draw,
                           unsigned flags )
 {
    draw->pipeline.first->flush( draw->pipeline.first, flags );
-   if (!(flags & DRAW_FLUSH_BACKEND))
+   if (flags & DRAW_FLUSH_STATE_CHANGE)
       draw->pipeline.first = draw->pipeline.validate;
 }

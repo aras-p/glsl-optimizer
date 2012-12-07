@@ -180,24 +180,34 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 
       fpme->current_variant = variant;
    }
+}
 
-   /* Bind the VS and GS input constants, clip planes and viewport */
-   {
-      unsigned i;
 
-      for (i = 0; i < Elements(fpme->llvm->jit_context.vs_constants); ++i) {
-         fpme->llvm->jit_context.vs_constants[i] =
-            draw->pt.user.vs_constants[i];
-      }
-      for (i = 0; i < Elements(fpme->llvm->jit_context.gs_constants); ++i) {
-         fpme->llvm->jit_context.gs_constants[i] =
-            draw->pt.user.gs_constants[i];
-      }
-      fpme->llvm->jit_context.planes =
-         (float (*) [DRAW_TOTAL_CLIP_PLANES][4]) draw->pt.user.planes[0];
-      fpme->llvm->jit_context.viewport =
-         (float *) draw->viewport.scale;
-   }    
+/**
+ * Bind/update constant buffer pointers, clip planes and viewport dims.
+ * These are "light weight" parameters which aren't baked into the
+ * generated code.  Updating these items is much cheaper than revalidating
+ * and rebuilding the generated pipeline code.
+ */
+static void
+llvm_middle_end_bind_parameters(struct draw_pt_middle_end *middle)
+{
+   struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
+   struct draw_context *draw = fpme->draw;
+   unsigned i;
+
+   for (i = 0; i < Elements(fpme->llvm->jit_context.vs_constants); ++i) {
+      fpme->llvm->jit_context.vs_constants[i] = draw->pt.user.vs_constants[i];
+   }
+
+   for (i = 0; i < Elements(fpme->llvm->jit_context.gs_constants); ++i) {
+      fpme->llvm->jit_context.gs_constants[i] = draw->pt.user.gs_constants[i];
+   }
+
+   fpme->llvm->jit_context.planes =
+      (float (*)[DRAW_TOTAL_CLIP_PLANES][4]) draw->pt.user.planes[0];
+
+   fpme->llvm->jit_context.viewport = (float *) draw->viewport.scale;
 }
 
 
@@ -448,6 +458,7 @@ draw_pt_fetch_pipeline_or_emit_llvm(struct draw_context *draw)
       goto fail;
 
    fpme->base.prepare         = llvm_middle_end_prepare;
+   fpme->base.bind_parameters = llvm_middle_end_bind_parameters;
    fpme->base.run             = llvm_middle_end_run;
    fpme->base.run_linear      = llvm_middle_end_linear_run;
    fpme->base.run_linear_elts = llvm_middle_end_linear_run_elts;

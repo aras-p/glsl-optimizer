@@ -137,6 +137,15 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 }
 
 
+static void
+fetch_pipeline_bind_parameters(struct draw_pt_middle_end *middle)
+{
+   /* No-op since the vertex shader executor and drawing pipeline
+    * just grab the constants, viewport, etc. from the draw context state.
+    */
+}
+
+
 static void fetch( struct pt_fetch *fetch,
                    const struct draw_fetch_info *fetch_info,
                    char *output)
@@ -421,6 +430,7 @@ struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit( struct draw_context *
       goto fail;
 
    fpme->base.prepare        = fetch_pipeline_prepare;
+   fpme->base.bind_parameters  = fetch_pipeline_bind_parameters;
    fpme->base.run            = fetch_pipeline_run;
    fpme->base.run_linear     = fetch_pipeline_linear_run;
    fpme->base.run_linear_elts = fetch_pipeline_linear_run_elts;
