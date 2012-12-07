@@ -67,26 +67,6 @@ static void init_colours()
       colour = _colour;
 }
 
-static const char *OpClassStr[OPCLASS_OTHER + 1] =
-{
-   "MOVE",
-   "LOAD",
-   "STORE",
-   "ARITH",
-   "SHIFT",
-   "SFU",
-   "LOGIC",
-   "COMPARE",
-   "CONVERT",
-   "ATOMIC",
-   "TEXTURE",
-   "SURFACE",
-   "FLOW",
-   "(INVALID)",
-   "PSEUDO",
-   "OTHER"
-};
-
 const char *operationStr[OP_LAST + 1] =
 {
    "nop",
