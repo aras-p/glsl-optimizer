@@ -38,6 +38,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "cso_cache/cso_context.h"
 #include "st_context.h"
 #include "st_cb_queryobj.h"
 #include "st_cb_condrender.h"
@@ -53,7 +54,6 @@ st_BeginConditionalRender(struct gl_context *ctx, struct gl_query_object *q,
 {
    struct st_query_object *stq = st_query_object(q);
    struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
    uint m;
 
    st_flush_bitmap_cache(st);
@@ -76,10 +76,7 @@ st_BeginConditionalRender(struct gl_context *ctx, struct gl_query_object *q,
       m = PIPE_RENDER_COND_WAIT;
    }
 
-   st->render_condition = stq->pq;
-   st->condition_mode = m;
-
-   pipe->render_condition(pipe, stq->pq, m);
+   cso_set_render_condition(st->cso_context, stq->pq, m);
 }
 
 
@@ -90,13 +87,11 @@ static void
 st_EndConditionalRender(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
    (void) q;
 
    st_flush_bitmap_cache(st);
 
-   pipe->render_condition(pipe, NULL, 0);
-   st->render_condition = NULL;
+   cso_set_render_condition(st->cso_context, NULL, 0);
 }
 
 

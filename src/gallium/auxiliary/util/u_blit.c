@@ -666,6 +666,7 @@ util_blit_pixels(struct blit_state *ctx,
    cso_save_geometry_shader(ctx->cso);
    cso_save_vertex_elements(ctx->cso);
    cso_save_aux_vertex_buffer_slot(ctx->cso);
+   cso_save_render_condition(ctx->cso);
 
    /* set misc state we care about */
    if (writemask)
@@ -677,6 +678,7 @@ util_blit_pixels(struct blit_state *ctx,
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
    cso_set_stream_outputs(ctx->cso, 0, NULL, 0);
+   cso_set_render_condition(ctx->cso, NULL, 0);
 
    /* default sampler state */
    ctx->sampler.normalized_coords = normalized;
@@ -799,6 +801,7 @@ util_blit_pixels(struct blit_state *ctx,
    cso_restore_vertex_elements(ctx->cso);
    cso_restore_aux_vertex_buffer_slot(ctx->cso);
    cso_restore_stream_outputs(ctx->cso);
+   cso_restore_render_condition(ctx->cso);
 
    pipe_sampler_view_reference(&sampler_view, NULL);
    if (dst_surface != dst)

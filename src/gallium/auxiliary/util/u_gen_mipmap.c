@@ -1566,6 +1566,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_viewport(ctx->cso);
    cso_save_vertex_elements(ctx->cso);
    cso_save_aux_vertex_buffer_slot(ctx->cso);
+   cso_save_render_condition(ctx->cso);
 
    /* bind our state */
    cso_set_blend(ctx->cso, is_depth ? &ctx->blend_keep_color :
@@ -1576,6 +1577,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_set_sample_mask(ctx->cso, ~0);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
    cso_set_stream_outputs(ctx->cso, 0, NULL, 0);
+   cso_set_render_condition(ctx->cso, NULL, 0);
 
    set_fragment_shader(ctx, type, is_depth);
    set_vertex_shader(ctx);
@@ -1699,4 +1701,5 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_vertex_elements(ctx->cso);
    cso_restore_stream_outputs(ctx->cso);
    cso_restore_aux_vertex_buffer_slot(ctx->cso);
+   cso_restore_render_condition(ctx->cso);
 }

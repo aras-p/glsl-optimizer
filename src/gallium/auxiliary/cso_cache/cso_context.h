@@ -173,6 +173,11 @@ enum pipe_error cso_set_stencil_ref(struct cso_context *cso,
 void cso_save_stencil_ref(struct cso_context *cso);
 void cso_restore_stencil_ref(struct cso_context *cso);
 
+void cso_set_render_condition(struct cso_context *cso,
+                              struct pipe_query *query, uint mode);
+void cso_save_render_condition(struct cso_context *cso);
+void cso_restore_render_condition(struct cso_context *cso);
+
 
 /* clip state */
 
