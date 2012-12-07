@@ -47,6 +47,7 @@ extern "C" {
 #include "brw_wm.h"
 #include "brw_shader.h"
 }
+#include "gen8_generator.h"
 #include "glsl/glsl_types.h"
 #include "glsl/ir.h"
 
@@ -616,6 +617,68 @@ private:
    exec_list discard_halt_patches;
    bool dual_source_output;
    void *mem_ctx;
+};
+
+/**
+ * The fragment shader code generator.
+ *
+ * Translates FS IR to actual i965 assembly code.
+ */
+class gen8_fs_generator : public gen8_generator
+{
+public:
+   gen8_fs_generator(struct brw_context *brw,
+                     struct brw_wm_compile *c,
+                     struct gl_shader_program *prog,
+                     struct gl_fragment_program *fp,
+                     bool dual_source_output);
+   ~gen8_fs_generator();
+
+   const unsigned *generate_assembly(exec_list *simd8_instructions,
+                                     exec_list *simd16_instructions,
+                                     unsigned *assembly_size);
+
+private:
+   void generate_code(exec_list *instructions);
+   void generate_fb_write(fs_inst *inst);
+   void generate_linterp(fs_inst *inst, struct brw_reg dst,
+                         struct brw_reg *src);
+   void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_math1(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_math2(fs_inst *inst, struct brw_reg dst,
+                       struct brw_reg src0, struct brw_reg src1);
+   void generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
+   void generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
+                     bool negate_value);
+   void generate_scratch_write(fs_inst *inst, struct brw_reg src);
+   void generate_scratch_read(fs_inst *inst, struct brw_reg dst);
+   void generate_scratch_read_gen7(fs_inst *inst, struct brw_reg dst);
+   void generate_uniform_pull_constant_load(fs_inst *inst,
+                                            struct brw_reg dst,
+                                            struct brw_reg index,
+                                            struct brw_reg offset);
+   void generate_varying_pull_constant_load(fs_inst *inst,
+                                            struct brw_reg dst,
+                                            struct brw_reg index,
+                                            struct brw_reg offset);
+   void generate_mov_dispatch_to_flags(fs_inst *ir);
+   void generate_set_simd4x2_offset(fs_inst *ir,
+                                    struct brw_reg dst,
+                                    struct brw_reg offset);
+   void generate_discard_jump(fs_inst *ir);
+
+   void patch_discard_jumps_to_fb_writes();
+
+   void mark_surface_used(unsigned surf_index);
+
+   struct brw_wm_compile *c;
+   const struct gl_fragment_program *fp;
+
+   unsigned dispatch_width; /** 8 or 16 */
+
+   bool dual_source_output;
+
+   exec_list discard_halt_patches;
 };
 
 bool brw_do_channel_expressions(struct exec_list *instructions);

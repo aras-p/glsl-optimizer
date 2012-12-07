@@ -3346,10 +3346,16 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
       }
    }
 
-   fs_generator g(brw, c, prog, fp, v.dual_src_output.file != BAD_FILE);
-   const unsigned *generated = g.generate_assembly(&v.instructions,
-                                                   simd16_instructions,
-                                                   final_assembly_size);
+   const unsigned *assembly = NULL;
+   if (brw->gen >= 8) {
+      gen8_fs_generator g(brw, c, prog, fp, v.dual_src_output.file != BAD_FILE);
+      assembly = g.generate_assembly(&v.instructions, simd16_instructions,
+                                     final_assembly_size);
+   } else {
+      fs_generator g(brw, c, prog, fp, v.dual_src_output.file != BAD_FILE);
+      assembly = g.generate_assembly(&v.instructions, simd16_instructions,
+                                     final_assembly_size);
+   }
 
    if (unlikely(brw->perf_debug) && shader) {
       if (shader->compiled_once)
@@ -3362,7 +3368,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
       }
    }
 
-   return generated;
+   return assembly;
 }
 
 bool
