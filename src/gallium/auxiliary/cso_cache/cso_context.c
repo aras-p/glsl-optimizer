@@ -547,15 +547,12 @@ void cso_restore_rasterizer(struct cso_context *ctx)
 }
 
 
-
-enum pipe_error cso_set_fragment_shader_handle(struct cso_context *ctx,
-                                               void *handle )
+void cso_set_fragment_shader_handle(struct cso_context *ctx, void *handle )
 {
    if (ctx->fragment_shader != handle) {
       ctx->fragment_shader = handle;
       ctx->pipe->bind_fs_state(ctx->pipe, handle);
    }
-   return PIPE_OK;
 }
 
 void cso_delete_fragment_shader(struct cso_context *ctx, void *handle )
@@ -584,14 +581,12 @@ void cso_restore_fragment_shader(struct cso_context *ctx)
 }
 
 
-enum pipe_error cso_set_vertex_shader_handle(struct cso_context *ctx,
-                                             void *handle )
+void cso_set_vertex_shader_handle(struct cso_context *ctx, void *handle)
 {
    if (ctx->vertex_shader != handle) {
       ctx->vertex_shader = handle;
       ctx->pipe->bind_vs_state(ctx->pipe, handle);
    }
-   return PIPE_OK;
 }
 
 void cso_delete_vertex_shader(struct cso_context *ctx, void *handle )
@@ -620,14 +615,13 @@ void cso_restore_vertex_shader(struct cso_context *ctx)
 }
 
 
-enum pipe_error cso_set_framebuffer(struct cso_context *ctx,
-                                    const struct pipe_framebuffer_state *fb)
+void cso_set_framebuffer(struct cso_context *ctx,
+                         const struct pipe_framebuffer_state *fb)
 {
    if (memcmp(&ctx->fb, fb, sizeof(*fb)) != 0) {
       util_copy_framebuffer_state(&ctx->fb, fb);
       ctx->pipe->set_framebuffer_state(ctx->pipe, fb);
    }
-   return PIPE_OK;
 }
 
 void cso_save_framebuffer(struct cso_context *ctx)
@@ -645,14 +639,13 @@ void cso_restore_framebuffer(struct cso_context *ctx)
 }
 
 
-enum pipe_error cso_set_viewport(struct cso_context *ctx,
-                                 const struct pipe_viewport_state *vp)
+void cso_set_viewport(struct cso_context *ctx,
+                      const struct pipe_viewport_state *vp)
 {
    if (memcmp(&ctx->vp, vp, sizeof(*vp))) {
       ctx->vp = *vp;
       ctx->pipe->set_viewport_state(ctx->pipe, vp);
    }
-   return PIPE_OK;
 }
 
 void cso_save_viewport(struct cso_context *ctx)
@@ -670,24 +663,21 @@ void cso_restore_viewport(struct cso_context *ctx)
 }
 
 
-enum pipe_error cso_set_blend_color(struct cso_context *ctx,
-                                    const struct pipe_blend_color *bc)
+void cso_set_blend_color(struct cso_context *ctx,
+                         const struct pipe_blend_color *bc)
 {
    if (memcmp(&ctx->blend_color, bc, sizeof(ctx->blend_color))) {
       ctx->blend_color = *bc;
       ctx->pipe->set_blend_color(ctx->pipe, bc);
    }
-   return PIPE_OK;
 }
 
-enum pipe_error cso_set_sample_mask(struct cso_context *ctx,
-                                    unsigned sample_mask)
+void cso_set_sample_mask(struct cso_context *ctx, unsigned sample_mask)
 {
    if (ctx->sample_mask != sample_mask) {
       ctx->sample_mask = sample_mask;
       ctx->pipe->set_sample_mask(ctx->pipe, sample_mask);
    }
-   return PIPE_OK;
 }
 
 void cso_save_sample_mask(struct cso_context *ctx)
@@ -700,14 +690,13 @@ void cso_restore_sample_mask(struct cso_context *ctx)
    cso_set_sample_mask(ctx, ctx->sample_mask_saved);
 }
 
-enum pipe_error cso_set_stencil_ref(struct cso_context *ctx,
-                                    const struct pipe_stencil_ref *sr)
+void cso_set_stencil_ref(struct cso_context *ctx,
+                         const struct pipe_stencil_ref *sr)
 {
    if (memcmp(&ctx->stencil_ref, sr, sizeof(ctx->stencil_ref))) {
       ctx->stencil_ref = *sr;
       ctx->pipe->set_stencil_ref(ctx->pipe, sr);
    }
-   return PIPE_OK;
 }
 
 void cso_save_stencil_ref(struct cso_context *ctx)
@@ -749,8 +738,7 @@ void cso_restore_render_condition(struct cso_context *ctx)
                             ctx->render_condition_mode_saved);
 }
 
-enum pipe_error cso_set_geometry_shader_handle(struct cso_context *ctx,
-                                               void *handle)
+void cso_set_geometry_shader_handle(struct cso_context *ctx, void *handle)
 {
    assert(ctx->has_geometry_shader || !handle);
 
@@ -758,7 +746,6 @@ enum pipe_error cso_set_geometry_shader_handle(struct cso_context *ctx,
       ctx->geometry_shader = handle;
       ctx->pipe->bind_gs_state(ctx->pipe, handle);
    }
-   return PIPE_OK;
 }
 
 void cso_delete_geometry_shader(struct cso_context *ctx, void *handle)
