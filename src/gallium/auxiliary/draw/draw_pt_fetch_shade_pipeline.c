@@ -51,6 +51,12 @@ struct fetch_pipeline_middle_end {
    unsigned opt;
 };
 
+
+/**
+ * Prepare/validate middle part of the vertex pipeline.
+ * NOTE: if you change this function, also look at the LLVM
+ * function llvm_middle_end_prepare() for similar changes.
+ */
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
                                     unsigned prim,
 				    unsigned opt,

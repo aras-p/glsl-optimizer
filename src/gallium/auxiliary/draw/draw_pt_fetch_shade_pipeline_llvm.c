@@ -57,6 +57,11 @@ struct llvm_middle_end {
 };
 
 
+/**
+ * Prepare/validate middle part of the vertex pipeline.
+ * NOTE: if you change this function, also look at the non-LLVM
+ * function fetch_pipeline_prepare() for similar changes.
+ */
 static void
 llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
                          unsigned in_prim,
