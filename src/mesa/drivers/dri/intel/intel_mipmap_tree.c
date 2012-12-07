@@ -687,6 +687,21 @@ intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
    *y = mt->level[level].slice[slice].y_offset;
 }
 
+void
+intel_miptree_get_tile_offsets(struct intel_mipmap_tree *mt,
+                               GLuint level, GLuint slice,
+                               uint32_t *tile_x,
+                               uint32_t *tile_y)
+{
+   struct intel_region *region = mt->region;
+   uint32_t mask_x, mask_y;
+
+   intel_region_get_tile_masks(region, &mask_x, &mask_y, false);
+
+   *tile_x = mt->level[level].slice[slice].x_offset & mask_x;
+   *tile_y = mt->level[level].slice[slice].y_offset & mask_y;
+}
+
 static void
 intel_miptree_copy_slice(struct intel_context *intel,
 			 struct intel_mipmap_tree *dst_mt,

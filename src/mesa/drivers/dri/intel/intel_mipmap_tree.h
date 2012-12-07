@@ -467,6 +467,12 @@ void
 intel_miptree_get_dimensions_for_image(struct gl_texture_image *image,
                                        int *width, int *height, int *depth);
 
+void
+intel_miptree_get_tile_offsets(struct intel_mipmap_tree *mt,
+                               GLuint level, GLuint slice,
+                               uint32_t *tile_x,
+                               uint32_t *tile_y);
+
 void intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
                                   GLuint level,
                                   GLuint x, GLuint y,
