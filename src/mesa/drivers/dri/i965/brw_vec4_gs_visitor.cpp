@@ -533,6 +533,25 @@ vec4_gs_visitor::visit(ir_end_primitive *)
    emit(OR(dst_reg(this->control_data_bits), this->control_data_bits, mask));
 }
 
+static const unsigned *
+generate_assembly(struct brw_context *brw,
+                  struct gl_shader_program *shader_prog,
+                  struct gl_program *prog,
+                  struct brw_vec4_prog_data *prog_data,
+                  void *mem_ctx,
+                  exec_list *instructions,
+                  unsigned *final_assembly_size)
+{
+   if (brw->gen >= 8) {
+      gen8_vec4_generator g(brw, shader_prog, prog, prog_data, mem_ctx,
+                            INTEL_DEBUG & DEBUG_GS);
+      return g.generate_assembly(instructions, final_assembly_size);
+   } else {
+      vec4_generator g(brw, shader_prog, prog, prog_data, mem_ctx,
+                       INTEL_DEBUG & DEBUG_GS);
+      return g.generate_assembly(instructions, final_assembly_size);
+   }
+}
 
 extern "C" const unsigned *
 brw_gs_emit(struct brw_context *brw,
@@ -558,12 +577,9 @@ brw_gs_emit(struct brw_context *brw,
 
       vec4_gs_visitor v(brw, c, prog, shader, mem_ctx, true /* no_spills */);
       if (v.run()) {
-         vec4_generator g(brw, prog, &c->gp->program.Base, &c->prog_data.base,
-                          mem_ctx, INTEL_DEBUG & DEBUG_GS);
-         const unsigned *generated =
-            g.generate_assembly(&v.instructions, final_assembly_size);
-
-         return generated;
+         return generate_assembly(brw, prog, &c->gp->program.Base,
+                                  &c->prog_data.base, mem_ctx, &v.instructions,
+                                  final_assembly_size);
       }
    }
 
@@ -586,12 +602,8 @@ brw_gs_emit(struct brw_context *brw,
       return NULL;
    }
 
-   vec4_generator g(brw, prog, &c->gp->program.Base, &c->prog_data.base,
-                    mem_ctx, INTEL_DEBUG & DEBUG_GS);
-   const unsigned *generated =
-      g.generate_assembly(&v.instructions, final_assembly_size);
-
-   return generated;
+   return generate_assembly(brw, prog, &c->gp->program.Base, &c->prog_data.base,
+                            mem_ctx, &v.instructions, final_assembly_size);
 }
 
 

@@ -1676,10 +1676,16 @@ brw_vs_emit(struct brw_context *brw,
       return NULL;
    }
 
-   vec4_generator g(brw, prog, &c->vp->program.Base, &prog_data->base, mem_ctx,
-                    INTEL_DEBUG & DEBUG_VS);
-   const unsigned *generated =g.generate_assembly(&v.instructions,
-                                                  final_assembly_size);
+   const unsigned *assembly = NULL;
+   if (brw->gen >= 8) {
+      gen8_vec4_generator g(brw, prog, &c->vp->program.Base, &prog_data->base,
+                            mem_ctx, INTEL_DEBUG & DEBUG_VS);
+      assembly = g.generate_assembly(&v.instructions, final_assembly_size);
+   } else {
+      vec4_generator g(brw, prog, &c->vp->program.Base, &prog_data->base,
+                       mem_ctx, INTEL_DEBUG & DEBUG_VS);
+      assembly = g.generate_assembly(&v.instructions, final_assembly_size);
+   }
 
    if (unlikely(brw->perf_debug) && shader) {
       if (shader->compiled_once) {
@@ -1692,7 +1698,7 @@ brw_vs_emit(struct brw_context *brw,
       shader->compiled_once = true;
    }
 
-   return generated;
+   return assembly;
 }
 
 
