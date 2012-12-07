@@ -140,5 +140,6 @@ i965_FILES = \
 	gen7_wm_state.c \
 	gen7_wm_surface_state.c \
 	gen8_disasm.c \
+	gen8_generator.cpp \
 	gen8_instruction.c \
         $()
