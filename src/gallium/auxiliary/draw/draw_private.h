@@ -141,7 +141,7 @@ struct draw_context
       /* Current active frontend */
       struct draw_pt_front_end *frontend;
       unsigned prim;
-      unsigned opt;
+      unsigned opt;     /**< bitmask of PT_x flags */
       unsigned eltSize; /* saved eltSize for flushing */
 
       struct {
