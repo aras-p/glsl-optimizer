@@ -139,4 +139,5 @@ i965_FILES = \
 	gen7_vs_state.c \
 	gen7_wm_state.c \
 	gen7_wm_surface_state.c \
+	gen8_instruction.c \
         $()
