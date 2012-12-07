@@ -65,23 +65,15 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 {
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
-   struct llvm_vertex_shader *shader =
-      llvm_vertex_shader(draw->vs.vertex_shader);
-   char store[DRAW_LLVM_MAX_VARIANT_KEY_SIZE];
-   struct draw_llvm_variant_key *key;
-   struct draw_llvm_variant *variant = NULL;
-   struct draw_llvm_variant_list_item *li;
-   const unsigned out_prim = (draw->gs.geometry_shader ? 
-                              draw->gs.geometry_shader->output_primitive :
-                              in_prim);
+   struct draw_vertex_shader *vs = draw->vs.vertex_shader;
+   struct draw_geometry_shader *gs = draw->gs.geometry_shader;
+   const unsigned out_prim = gs ? gs->output_primitive : in_prim;
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
     */
-   const unsigned nr = MAX2( shader->base.info.num_inputs,
-                             shader->base.info.num_outputs + 1 );
-
-   unsigned i;
+   const unsigned nr = MAX2( vs->info.num_inputs,
+                             vs->info.num_outputs + 1 );
 
    fpme->input_prim = in_prim;
    fpme->opt = opt;
@@ -121,70 +113,86 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 
    /* return even number */
    *max_vertices = *max_vertices & ~1;
-   
-   key = draw_llvm_make_variant_key(fpme->llvm, store);
 
-   /* Search shader's list of variants for the key */
-   li = first_elem(&shader->variants);
-   while (!at_end(&shader->variants, li)) {
-      if (memcmp(&li->base->key, key, shader->variant_key_size) == 0) {
-         variant = li->base;
-         break;
+   /* Find/create the vertex shader variant */
+   {
+      struct draw_llvm_variant_key *key;
+      struct draw_llvm_variant *variant = NULL;
+      struct draw_llvm_variant_list_item *li;
+      struct llvm_vertex_shader *shader = llvm_vertex_shader(vs);
+      char store[DRAW_LLVM_MAX_VARIANT_KEY_SIZE];
+      unsigned i;
+
+      key = draw_llvm_make_variant_key(fpme->llvm, store);
+
+      /* Search shader's list of variants for the key */
+      li = first_elem(&shader->variants);
+      while (!at_end(&shader->variants, li)) {
+         if (memcmp(&li->base->key, key, shader->variant_key_size) == 0) {
+            variant = li->base;
+            break;
+         }
+         li = next_elem(li);
       }
-      li = next_elem(li);
-   }
 
-   if (variant) {
-      /* found the variant, move to head of global list (for LRU) */
-      move_to_head(&fpme->llvm->vs_variants_list, &variant->list_item_global);
-   }
-   else {
-      /* Need to create new variant */
+      if (variant) {
+         /* found the variant, move to head of global list (for LRU) */
+         move_to_head(&fpme->llvm->vs_variants_list,
+                      &variant->list_item_global);
+      }
+      else {
+         /* Need to create new variant */
 
-      /* First check if we've created too many variants.  If so, free
-       * 25% of the LRU to avoid using too much memory.
-       */
-      if (fpme->llvm->nr_variants >= DRAW_MAX_SHADER_VARIANTS) {
-         /*
-          * XXX: should we flush here ?
+         /* First check if we've created too many variants.  If so, free
+          * 25% of the LRU to avoid using too much memory.
           */
-         for (i = 0; i < DRAW_MAX_SHADER_VARIANTS / 4; i++) {
-            struct draw_llvm_variant_list_item *item;
-            if (is_empty_list(&fpme->llvm->vs_variants_list)) {
-               break;
+         if (fpme->llvm->nr_variants >= DRAW_MAX_SHADER_VARIANTS) {
+            /*
+             * XXX: should we flush here ?
+             */
+            for (i = 0; i < DRAW_MAX_SHADER_VARIANTS / 4; i++) {
+               struct draw_llvm_variant_list_item *item;
+               if (is_empty_list(&fpme->llvm->vs_variants_list)) {
+                  break;
+               }
+               item = last_elem(&fpme->llvm->vs_variants_list);
+               assert(item);
+               assert(item->base);
+               draw_llvm_destroy_variant(item->base);
             }
-            item = last_elem(&fpme->llvm->vs_variants_list);
-            assert(item);
-            assert(item->base);
-            draw_llvm_destroy_variant(item->base);
+         }
+
+         variant = draw_llvm_create_variant(fpme->llvm, nr, key);
+
+         if (variant) {
+            insert_at_head(&shader->variants, &variant->list_item_local);
+            insert_at_head(&fpme->llvm->vs_variants_list,
+                           &variant->list_item_global);
+            fpme->llvm->nr_variants++;
+            shader->variants_cached++;
          }
       }
 
-      variant = draw_llvm_create_variant(fpme->llvm, nr, key);
+      fpme->current_variant = variant;
+   }
 
-      if (variant) {
-         insert_at_head(&shader->variants, &variant->list_item_local);
-         insert_at_head(&fpme->llvm->vs_variants_list, &variant->list_item_global);
-         fpme->llvm->nr_variants++;
-         shader->variants_cached++;
+   /* Bind the VS and GS input constants, clip planes and viewport */
+   {
+      unsigned i;
+
+      for (i = 0; i < Elements(fpme->llvm->jit_context.vs_constants); ++i) {
+         fpme->llvm->jit_context.vs_constants[i] =
+            draw->pt.user.vs_constants[i];
       }
-   }
-
-   fpme->current_variant = variant;
-
-   for (i = 0; i < Elements(fpme->llvm->jit_context.vs_constants); ++i) {
-      fpme->llvm->jit_context.vs_constants[i] =
-         draw->pt.user.vs_constants[i];
-   }
-   for (i = 0; i < Elements(fpme->llvm->jit_context.gs_constants); ++i) {
-      fpme->llvm->jit_context.gs_constants[i] =
-         draw->pt.user.gs_constants[i];
-   }
-   fpme->llvm->jit_context.planes =
-      (float (*) [DRAW_TOTAL_CLIP_PLANES][4]) draw->pt.user.planes[0];
-   fpme->llvm->jit_context.viewport =
-      (float *)draw->viewport.scale;
-    
+      for (i = 0; i < Elements(fpme->llvm->jit_context.gs_constants); ++i) {
+         fpme->llvm->jit_context.gs_constants[i] =
+            draw->pt.user.gs_constants[i];
+      }
+      fpme->llvm->jit_context.planes =
+         (float (*) [DRAW_TOTAL_CLIP_PLANES][4]) draw->pt.user.planes[0];
+      fpme->llvm->jit_context.viewport =
+         (float *) draw->viewport.scale;
+   }    
 }
 
 
