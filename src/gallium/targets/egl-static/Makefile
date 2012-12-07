@@ -73,7 +73,7 @@ egl_CPPFLAGS += -I$(TOP)/src/mesa $(API_DEFINES)
 # make st/mesa built-in when there is a single glapi provider
 ifeq ($(SHARED_GLAPI),1)
 egl_LIBS += $(TOP)/src/mesa/libmesagallium.a
-egl_SYS += -lm -lpthread $(DLOPEN_LIBS) -l$(GLAPI_LIB)
+egl_SYS += -lm -lpthread $(CLOCK_LIB) $(DLOPEN_LIBS) -l$(GLAPI_LIB)
 else
 egl_CPPFLAGS += -D_EGL_EXTERNAL_GL=1
 OUTPUTS += st_GL
@@ -170,7 +170,7 @@ egl_SYS := $(sort $(egl_SYS))
 # st_GL, built only when shared glapi is not enabled
 st_GL_CPPFLAGS := -I $(TOP)/src/mesa -I$(TOP)/src/gallium/include
 st_GL_LIBS := $(TOP)/src/mesa/libmesagallium.a $(GALLIUM_AUXILIARIES)
-st_GL_SYS := -lm -lpthread $(DLOPEN_LIBS)
+st_GL_SYS := -lm -lpthread $(CLOCK_LIB) $(DLOPEN_LIBS)
 
 # LLVM
 ifeq ($(MESA_LLVM),1)
