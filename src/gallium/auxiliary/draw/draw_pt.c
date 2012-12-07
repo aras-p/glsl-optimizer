@@ -443,9 +443,8 @@ draw_arrays_instanced(struct draw_context *draw,
 /**
  * Draw vertex arrays.
  * This is the main entrypoint into the drawing module.  If drawing an indexed
- * primitive, the draw_set_index_buffer() and draw_set_mapped_index_buffer()
- * functions should have already been called to specify the element/index
- * buffer information.
+ * primitive, the draw_set_indexes() function should have already been called
+ * to specify the element/index buffer information.
  */
 void
 draw_vbo(struct draw_context *draw,
