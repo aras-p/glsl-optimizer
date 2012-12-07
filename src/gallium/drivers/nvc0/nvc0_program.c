@@ -670,8 +670,20 @@ nvc0_program_upload_code(struct nvc0_context *nvc0, struct nvc0_program *prog)
 
    ret = nouveau_heap_alloc(screen->text_heap, size, prog, &prog->mem);
    if (ret) {
-      NOUVEAU_ERR("out of code space\n");
-      return FALSE;
+      struct nouveau_heap *heap = screen->text_heap;
+      struct nouveau_heap *iter;
+      for (iter = heap; iter && iter->next != heap; iter = iter->next) {
+         struct nvc0_program *evict = iter->priv;
+         if (evict)
+            nouveau_heap_free(&evict->mem);
+      }
+      debug_printf("WARNING: out of code space, evicting all shaders.\n");
+      ret = nouveau_heap_alloc(heap, size, prog, &prog->mem);
+      if (ret) {
+         NOUVEAU_ERR("shader too large (0x%x) to fit in code space ?\n", size);
+         return FALSE;
+      }
+      IMMED_NVC0(nvc0->base.pushbuf, NVC0_3D(SERIALIZE), 0);
    }
    prog->code_base = prog->mem->start;
    prog->immd_base = align(prog->mem->start + prog->immd_base, 0x100);

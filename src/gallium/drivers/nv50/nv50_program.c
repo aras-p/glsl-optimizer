@@ -396,6 +396,11 @@ nv50_program_upload_code(struct nv50_context *nv50, struct nv50_program *prog)
             nouveau_heap_free(&evict->mem);
       }
       debug_printf("WARNING: out of code space, evicting all shaders.\n");
+      ret = nouveau_heap_alloc(heap, size, prog, &prog->mem);
+      if (ret) {
+         NOUVEAU_ERR("shader too large (0x%x) to fit in code space ?\n", size);
+         return FALSE;
+      }
    }
    prog->code_base = prog->mem->start;
 
