@@ -3,6 +3,7 @@
 
 #include "nvc0_context.h"
 
+#if 0
 static void
 nvc0_validate_zcull(struct nvc0_context *nvc0)
 {
@@ -51,6 +52,7 @@ nvc0_validate_zcull(struct nvc0_context *nvc0)
     BEGIN_NVC0(push, NVC0_3D(ZCULL_INVALIDATE), 1);
     PUSH_DATA (push, 0);
 }
+#endif
 
 static void
 nvc0_validate_fb(struct nvc0_context *nvc0)
