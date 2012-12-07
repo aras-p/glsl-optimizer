@@ -288,7 +288,11 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
                          dstRGB == PIPE_BLENDFACTOR_ZERO) &&
                         (dstA == PIPE_BLENDFACTOR_SRC_COLOR ||
                          dstA == PIPE_BLENDFACTOR_SRC_ALPHA ||
-                         dstA == PIPE_BLENDFACTOR_ZERO)) {
+                         dstA == PIPE_BLENDFACTOR_ZERO) &&
+                        (srcRGB != PIPE_BLENDFACTOR_DST_COLOR &&
+                         srcRGB != PIPE_BLENDFACTOR_DST_ALPHA &&
+                         srcRGB != PIPE_BLENDFACTOR_INV_DST_COLOR &&
+                         srcRGB != PIPE_BLENDFACTOR_INV_DST_ALPHA)) {
                          blend_control |= R500_SRC_ALPHA_0_NO_READ;
                     }
 
@@ -297,7 +301,11 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
                          dstRGB == PIPE_BLENDFACTOR_ZERO) &&
                         (dstA == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
                          dstA == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
-                         dstA == PIPE_BLENDFACTOR_ZERO)) {
+                         dstA == PIPE_BLENDFACTOR_ZERO) &&
+                        (srcRGB != PIPE_BLENDFACTOR_DST_COLOR &&
+                         srcRGB != PIPE_BLENDFACTOR_DST_ALPHA &&
+                         srcRGB != PIPE_BLENDFACTOR_INV_DST_COLOR &&
+                         srcRGB != PIPE_BLENDFACTOR_INV_DST_ALPHA)) {
                          blend_control |= R500_SRC_ALPHA_1_NO_READ;
                     }
                 }
