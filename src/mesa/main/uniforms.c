@@ -614,14 +614,14 @@ _mesa_UniformBlockBinding(GLuint program,
 
    if (uniformBlockIndex >= shProg->NumUniformBlocks) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-		  "glUniformBlockBinding(block index %d >= %d)",
+		  "glUniformBlockBinding(block index %u >= %u)",
 		  uniformBlockIndex, shProg->NumUniformBlocks);
       return;
    }
 
    if (uniformBlockBinding >= ctx->Const.MaxUniformBufferBindings) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-		  "glUniformBlockBinding(block binding %d >= %d)",
+		  "glUniformBlockBinding(block binding %u >= %u)",
 		  uniformBlockBinding, ctx->Const.MaxUniformBufferBindings);
       return;
    }
@@ -667,7 +667,7 @@ _mesa_GetActiveUniformBlockiv(GLuint program,
 
    if (uniformBlockIndex >= shProg->NumUniformBlocks) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-		  "glGetActiveUniformBlockiv(block index %d >= %d)",
+		  "glGetActiveUniformBlockiv(block index %u >= %u)",
 		  uniformBlockIndex, shProg->NumUniformBlocks);
       return;
    }
@@ -750,7 +750,7 @@ _mesa_GetActiveUniformBlockName(GLuint program,
 
    if (uniformBlockIndex >= shProg->NumUniformBlocks) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-		  "glGetActiveUniformBlockiv(block index %d >= %d)",
+		  "glGetActiveUniformBlockiv(block index %u >= %u)",
 		  uniformBlockIndex, shProg->NumUniformBlocks);
       return;
    }
