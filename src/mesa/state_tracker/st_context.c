@@ -97,22 +97,6 @@ void st_invalidate_state(struct gl_context * ctx, GLuint new_state)
    _vbo_InvalidateState(ctx, new_state);
 }
 
-
-/**
- * Check for multisample env var override.
- */
-int
-st_get_msaa(void)
-{
-   const char *msaa = _mesa_getenv("__GL_FSAA_MODE");
-   if (msaa)
-      return atoi(msaa);
-   return 0;
-}
-
-
-
-
 static struct st_context *
 st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
 		const struct st_config_options *options)
@@ -193,7 +177,6 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
 
    st->pixel_xfer.cache = _mesa_new_program_cache();
 
-   st->force_msaa = st_get_msaa();
    st->has_stencil_export =
       screen->get_param(screen, PIPE_CAP_SHADER_STENCIL_EXPORT);
 

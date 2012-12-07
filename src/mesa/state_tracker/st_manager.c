@@ -285,7 +285,6 @@ st_framebuffer_add_renderbuffer(struct st_framebuffer *stfb,
 {
    struct gl_renderbuffer *rb;
    enum pipe_format format;
-   int samples;
    boolean sw;
 
    if (!stfb->iface)
@@ -313,11 +312,7 @@ st_framebuffer_add_renderbuffer(struct st_framebuffer *stfb,
    if (format == PIPE_FORMAT_NONE)
       return FALSE;
 
-   samples = stfb->iface->visual->samples;
-   if (!samples)
-      samples = st_get_msaa();
-
-   rb = st_new_renderbuffer_fb(format, samples, sw);
+   rb = st_new_renderbuffer_fb(format, stfb->iface->visual->samples, sw);
    if (!rb)
       return FALSE;
 
