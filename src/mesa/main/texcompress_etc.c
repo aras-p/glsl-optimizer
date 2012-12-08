@@ -1461,3 +1461,277 @@ _mesa_unpack_etc2_format(uint8_t *dst_row,
                                             src_row, src_stride,
                                             src_width, src_height);
 }
+
+
+
+static void
+fetch_etc1_rgb8(const GLubyte *map, const GLuint imageOffsets[],
+                GLint rowStride, GLint i, GLint j, GLint k,
+                GLfloat *texel)
+{
+   struct etc1_block block;
+   GLubyte dst[3];
+   const GLubyte *src;
+
+   src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
+
+   etc1_parse_block(&block, src);
+   etc1_fetch_texel(&block, i % 4, j % 4, dst);
+
+   texel[RCOMP] = UBYTE_TO_FLOAT(dst[0]);
+   texel[GCOMP] = UBYTE_TO_FLOAT(dst[1]);
+   texel[BCOMP] = UBYTE_TO_FLOAT(dst[2]);
+   texel[ACOMP] = 1.0f;
+}
+
+
+static void
+fetch_etc2_rgb8(const GLubyte *map, const GLuint imageOffsets[],
+                GLint rowStride, GLint i, GLint j, GLint k,
+                GLfloat *texel)
+{
+   struct etc2_block block;
+   uint8_t dst[3];
+   const uint8_t *src;
+
+   src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
+
+   etc2_rgb8_parse_block(&block, src,
+                         false /* punchthrough_alpha */);
+   etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst,
+                         false /* punchthrough_alpha */);
+
+   texel[RCOMP] = UBYTE_TO_FLOAT(dst[0]);
+   texel[GCOMP] = UBYTE_TO_FLOAT(dst[1]);
+   texel[BCOMP] = UBYTE_TO_FLOAT(dst[2]);
+   texel[ACOMP] = 1.0f;
+}
+
+static void
+fetch_etc2_srgb8(const GLubyte *map, const GLuint imageOffsets[],
+                 GLint rowStride, GLint i, GLint j, GLint k,
+                 GLfloat *texel)
+{
+   struct etc2_block block;
+   uint8_t dst[3];
+   const uint8_t *src;
+
+   src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
+
+   etc2_rgb8_parse_block(&block, src,
+                         false /* punchthrough_alpha */);
+   etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst,
+                         false /* punchthrough_alpha */);
+
+   texel[RCOMP] = _mesa_nonlinear_to_linear(dst[0]);
+   texel[GCOMP] = _mesa_nonlinear_to_linear(dst[1]);
+   texel[BCOMP] = _mesa_nonlinear_to_linear(dst[2]);
+   texel[ACOMP] = 1.0f;
+}
+
+static void
+fetch_etc2_rgba8_eac(const GLubyte *map, const GLuint imageOffsets[],
+                     GLint rowStride, GLint i, GLint j, GLint k,
+                     GLfloat *texel)
+{
+   struct etc2_block block;
+   uint8_t dst[4];
+   const uint8_t *src;
+
+   src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 16;
+
+   etc2_rgba8_parse_block(&block, src);
+   etc2_rgba8_fetch_texel(&block, i % 4, j % 4, dst);
+
+   texel[RCOMP] = UBYTE_TO_FLOAT(dst[0]);
+   texel[GCOMP] = UBYTE_TO_FLOAT(dst[1]);
+   texel[BCOMP] = UBYTE_TO_FLOAT(dst[2]);
+   texel[ACOMP] = UBYTE_TO_FLOAT(dst[3]);
+}
+
+static void
+fetch_etc2_srgb8_alpha8_eac(const GLubyte *map, const GLuint imageOffsets[],
+                            GLint rowStride, GLint i, GLint j, GLint k,
+                            GLfloat *texel)
+{
+   struct etc2_block block;
+   uint8_t dst[4];
+   const uint8_t *src;
+
+   src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 16;
+
+   etc2_rgba8_parse_block(&block, src);
+   etc2_rgba8_fetch_texel(&block, i % 4, j % 4, dst);
+
+   texel[RCOMP] = _mesa_nonlinear_to_linear(dst[0]);
+   texel[GCOMP] = _mesa_nonlinear_to_linear(dst[1]);
+   texel[BCOMP] = _mesa_nonlinear_to_linear(dst[2]);
+   texel[ACOMP] = UBYTE_TO_FLOAT(dst[3]);
+}
+
+static void
+fetch_etc2_r11_eac(const GLubyte *map, const GLuint imageOffsets[],
+                   GLint rowStride, GLint i, GLint j, GLint k,
+                   GLfloat *texel)
+{
+   struct etc2_block block;
+   GLushort dst;
+   const uint8_t *src;
+
+   src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
+
+   etc2_r11_parse_block(&block, src);
+   etc2_r11_fetch_texel(&block, i % 4, j % 4, (uint8_t *)&dst);
+
+   texel[RCOMP] = USHORT_TO_FLOAT(dst);
+   texel[GCOMP] = 0.0f;
+   texel[BCOMP] = 0.0f;
+   texel[ACOMP] = 1.0f;
+}
+
+static void
+fetch_etc2_rg11_eac(const GLubyte *map, const GLuint imageOffsets[],
+                    GLint rowStride, GLint i, GLint j, GLint k,
+                    GLfloat *texel)
+{
+   struct etc2_block block;
+   GLushort dst[2];
+   const uint8_t *src;
+
+   src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 16;
+
+   /* red component */
+   etc2_r11_parse_block(&block, src);
+   etc2_r11_fetch_texel(&block, i % 4, j % 4, (uint8_t *)dst);
+
+   /* green component */
+   etc2_r11_parse_block(&block, src + 8);
+   etc2_r11_fetch_texel(&block, i % 4, j % 4, (uint8_t *)(dst + 1));
+
+   texel[RCOMP] = USHORT_TO_FLOAT(dst[0]);
+   texel[GCOMP] = USHORT_TO_FLOAT(dst[1]);
+   texel[BCOMP] = 0.0f;
+   texel[ACOMP] = 1.0f;
+}
+
+static void
+fetch_etc2_signed_r11_eac(const GLubyte *map, const GLuint imageOffsets[],
+                          GLint rowStride, GLint i, GLint j, GLint k,
+                          GLfloat *texel)
+{
+   struct etc2_block block;
+   GLushort dst;
+   const uint8_t *src;
+
+   src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
+
+   etc2_r11_parse_block(&block, src);
+   etc2_signed_r11_fetch_texel(&block, i % 4, j % 4, (uint8_t *)&dst);
+
+   texel[RCOMP] = SHORT_TO_FLOAT(dst);
+   texel[GCOMP] = 0.0f;
+   texel[BCOMP] = 0.0f;
+   texel[ACOMP] = 1.0f;
+}
+
+static void
+fetch_etc2_signed_rg11_eac(const GLubyte *map, const GLuint imageOffsets[],
+                           GLint rowStride, GLint i, GLint j, GLint k,
+                           GLfloat *texel)
+{
+   struct etc2_block block;
+   GLushort dst[2];
+   const uint8_t *src;
+
+   src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 16;
+
+   /* red component */
+   etc2_r11_parse_block(&block, src);
+   etc2_signed_r11_fetch_texel(&block, i % 4, j % 4, (uint8_t *)dst);
+
+   /* green component */
+   etc2_r11_parse_block(&block, src + 8);
+   etc2_signed_r11_fetch_texel(&block, i % 4, j % 4, (uint8_t *)(dst + 1));
+
+   texel[RCOMP] = SHORT_TO_FLOAT(dst[0]);
+   texel[GCOMP] = SHORT_TO_FLOAT(dst[1]);
+   texel[BCOMP] = 0.0f;
+   texel[ACOMP] = 1.0f;
+}
+
+static void
+fetch_etc2_rgb8_punchthrough_alpha1(const GLubyte *map,
+                                    const GLuint imageOffsets[],
+                                    GLint rowStride, GLint i, GLint j, GLint k,
+                                    GLfloat *texel)
+{
+   struct etc2_block block;
+   uint8_t dst[4];
+   const uint8_t *src;
+
+   src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
+
+   etc2_rgb8_parse_block(&block, src,
+                         true /* punchthrough alpha */);
+   etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst,
+                         true /* punchthrough alpha */);
+   texel[RCOMP] = UBYTE_TO_FLOAT(dst[0]);
+   texel[GCOMP] = UBYTE_TO_FLOAT(dst[1]);
+   texel[BCOMP] = UBYTE_TO_FLOAT(dst[2]);
+   texel[ACOMP] = UBYTE_TO_FLOAT(dst[3]);
+}
+
+static void
+fetch_etc2_srgb8_punchthrough_alpha1(const GLubyte *map,
+                                     const GLuint imageOffsets[],
+                                     GLint rowStride,
+                                     GLint i, GLint j, GLint k,
+                                     GLfloat *texel)
+{
+   struct etc2_block block;
+   uint8_t dst[4];
+   const uint8_t *src;
+
+   src = map + (((rowStride + 3) / 4) * (j / 4) + (i / 4)) * 8;
+
+   etc2_rgb8_parse_block(&block, src,
+                         true /* punchthrough alpha */);
+   etc2_rgb8_fetch_texel(&block, i % 4, j % 4, dst,
+                         true /* punchthrough alpha */);
+   texel[RCOMP] = _mesa_nonlinear_to_linear(dst[0]);
+   texel[GCOMP] = _mesa_nonlinear_to_linear(dst[1]);
+   texel[BCOMP] = _mesa_nonlinear_to_linear(dst[2]);
+   texel[ACOMP] = UBYTE_TO_FLOAT(dst[3]);
+}
+
+
+compressed_fetch_func
+_mesa_get_etc_fetch_func(gl_format format)
+{
+   switch (format) {
+   case MESA_FORMAT_ETC1_RGB8:
+      return fetch_etc1_rgb8;
+   case MESA_FORMAT_ETC2_RGB8:
+      return fetch_etc2_rgb8;
+   case MESA_FORMAT_ETC2_SRGB8:
+      return fetch_etc2_srgb8;
+   case MESA_FORMAT_ETC2_RGBA8_EAC:
+      return fetch_etc2_rgba8_eac;
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+      return fetch_etc2_srgb8_alpha8_eac;
+   case MESA_FORMAT_ETC2_R11_EAC:
+      return fetch_etc2_r11_eac;
+   case MESA_FORMAT_ETC2_RG11_EAC:
+      return fetch_etc2_rg11_eac;
+   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
+      return fetch_etc2_signed_r11_eac;
+   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
+      return fetch_etc2_signed_rg11_eac;
+   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
+      return fetch_etc2_rgb8_punchthrough_alpha1;
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+      return fetch_etc2_srgb8_punchthrough_alpha1;
+   default:
+      return NULL;
+   }
+}

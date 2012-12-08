@@ -27,7 +27,9 @@
 #include <inttypes.h>
 #include "glheader.h"
 #include "mfeatures.h"
+#include "texcompress.h"
 #include "texstore.h"
+
 
 struct swrast_texture_image;
 
@@ -123,4 +125,8 @@ _mesa_unpack_etc2_format(uint8_t *dst_row,
                          unsigned src_width,
                          unsigned src_height,
                          gl_format format);
+
+compressed_fetch_func
+_mesa_get_etc_fetch_func(gl_format format);
+
 #endif
