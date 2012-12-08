@@ -523,6 +523,39 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
 
 
 /**
+ * Return a texel-fetch function for the given format, or NULL if
+ * invalid format.
+ */
+compressed_fetch_func
+_mesa_get_compressed_fetch_func(gl_format format)
+{
+   switch (format) {
+   case MESA_FORMAT_RGB_DXT1:
+   case MESA_FORMAT_RGBA_DXT1:
+   case MESA_FORMAT_RGBA_DXT3:
+   case MESA_FORMAT_RGBA_DXT5:
+      return _mesa_get_dxt_fetch_func(format);
+   case MESA_FORMAT_RGB_FXT1:
+   case MESA_FORMAT_RGBA_FXT1:
+      return _mesa_get_fxt_fetch_func(format);
+   case MESA_FORMAT_RED_RGTC1:
+   case MESA_FORMAT_L_LATC1:
+   case MESA_FORMAT_SIGNED_RED_RGTC1:
+   case MESA_FORMAT_SIGNED_L_LATC1:
+   case MESA_FORMAT_RG_RGTC2:
+   case MESA_FORMAT_LA_LATC2:
+   case MESA_FORMAT_SIGNED_RG_RGTC2:
+   case MESA_FORMAT_SIGNED_LA_LATC2:
+      return _mesa_get_compressed_rgtc_func(format);
+   case MESA_FORMAT_ETC1_RGB8:
+      return _mesa_get_etc_fetch_func(format);
+   default:
+      return NULL;
+   }
+}
+
+
+/**
  * Decompress a compressed texture image, returning a GL_RGBA/GL_FLOAT image.
  * \param srcRowStride  stride in bytes between rows of blocks in the
  *                      compressed source image.
