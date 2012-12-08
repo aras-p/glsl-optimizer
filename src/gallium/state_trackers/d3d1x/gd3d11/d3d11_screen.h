@@ -1226,7 +1226,6 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		templat.format = (desc->Format == DXGI_FORMAT_UNKNOWN) ? resource->format : dxgi_to_pipe_format[desc->Format];
 		if(!templat.format)
 			return E_NOTIMPL;
-		templat.usage = PIPE_BIND_RENDER_TARGET;
 		templat.texture = ((GalliumD3D11Resource<>*)iresource)->resource;
 
 		switch(desc->ViewDimension)
@@ -1316,7 +1315,6 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		templat.format = (desc->Format == DXGI_FORMAT_UNKNOWN) ? resource->format : dxgi_to_pipe_format[desc->Format];
 		if(!templat.format)
 			return E_NOTIMPL;
-		templat.usage = PIPE_BIND_DEPTH_STENCIL;
 		templat.texture = ((GalliumD3D11Resource<>*)iresource)->resource;
 
 		switch(desc->ViewDimension)

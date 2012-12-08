@@ -61,9 +61,7 @@ vg_context_update_color_rb(struct vg_context *ctx, struct pipe_resource *pt)
 
    strb->texture = pt;
 
-   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   u_surface_default_template(&surf_tmpl, strb->texture,
-                              PIPE_BIND_RENDER_TARGET);
+   u_surface_default_template(&surf_tmpl, strb->texture);
    strb->surface = pipe->create_surface(pipe, strb->texture, &surf_tmpl);
 
    if (!strb->surface) {

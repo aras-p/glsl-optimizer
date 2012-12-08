@@ -544,8 +544,6 @@ void trace_dump_surface_template(const struct pipe_surface *state,
    trace_dump_member(uint, state, width);
    trace_dump_member(uint, state, height);
 
-   trace_dump_member(uint, state, usage);
-
    trace_dump_member_begin("u");
    trace_dump_struct_begin(""); /* anonymous */
    if (target == PIPE_BUFFER) {

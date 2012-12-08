@@ -537,8 +537,7 @@ void debug_dump_texture(struct pipe_context *pipe,
       return;
 
    /* XXX for now, just dump image for layer=0, level=0 */
-   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   u_surface_default_template(&surf_tmpl, texture, 0 /* no bind flag - not a surface */);
+   u_surface_default_template(&surf_tmpl, texture);
    surface = pipe->create_surface(pipe, texture, &surf_tmpl);
    if (surface) {
       debug_dump_surface(pipe, prefix, surface);

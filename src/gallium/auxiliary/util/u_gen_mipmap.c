@@ -1617,10 +1617,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 	 } else
             layer = face;
 
-         memset(&surf_templ, 0, sizeof(surf_templ));
-         u_surface_default_template(&surf_templ, pt,
-                                    is_depth ? PIPE_BIND_DEPTH_STENCIL :
-                                               PIPE_BIND_RENDER_TARGET);
+         u_surface_default_template(&surf_templ, pt);
          surf_templ.u.tex.level = dstLevel;
          surf_templ.u.tex.first_layer = layer;
          surf_templ.u.tex.last_layer = layer;

@@ -744,7 +744,6 @@ nouveau_video_buffer_surfaces(struct pipe_video_buffer *buffer)
       if (!buf->surfaces[i]) {
          memset(&surf_templ, 0, sizeof(surf_templ));
          surf_templ.format = buf->resources[i]->format;
-         surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
          buf->surfaces[i] = pipe->create_surface(pipe, buf->resources[i], &surf_templ);
          if (!buf->surfaces[i])
             goto error;

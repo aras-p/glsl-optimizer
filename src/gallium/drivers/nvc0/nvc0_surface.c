@@ -573,7 +573,6 @@ nvc0_blit_set_dst(struct nvc0_blitctx *ctx,
    else
       templ.format = format;
 
-   templ.usage = PIPE_USAGE_STREAM;
    templ.u.tex.level = level;
    templ.u.tex.first_layer = templ.u.tex.last_layer = layer;
 

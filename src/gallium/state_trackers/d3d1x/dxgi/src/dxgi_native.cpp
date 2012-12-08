@@ -1167,7 +1167,6 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 
 			if(!formats_compatible || src->width0 != dst_w || src->height0 != dst_h) {
 				struct pipe_surface templat;
-				templat.usage = PIPE_BIND_RENDER_TARGET;
 				templat.format = dst->format;
 				templat.u.tex.level = 0;
 				templat.u.tex.first_layer = 0;

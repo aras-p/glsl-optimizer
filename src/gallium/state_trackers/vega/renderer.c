@@ -870,8 +870,7 @@ VGboolean renderer_filter_begin(struct renderer *renderer,
    if (!renderer_can_support(renderer, dst, PIPE_BIND_RENDER_TARGET))
       return VG_FALSE;
 
-   u_surface_default_template(&surf_tmpl, dst,
-                              PIPE_BIND_RENDER_TARGET);
+   u_surface_default_template(&surf_tmpl, dst);
    surf = renderer->pipe->create_surface(renderer->pipe, dst, &surf_tmpl);
    if (!surf)
       return VG_FALSE;

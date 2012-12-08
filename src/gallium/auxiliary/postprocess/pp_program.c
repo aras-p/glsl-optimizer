@@ -133,7 +133,6 @@ pp_init_prog(struct pp_queue_t *ppq, struct pipe_context *pipe,
 
    p->framebuffer.nr_cbufs = 1;
 
-   p->surf.usage = PIPE_BIND_RENDER_TARGET;
    p->surf.format = PIPE_FORMAT_B8G8R8A8_UNORM;
 
    return p;

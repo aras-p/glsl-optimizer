@@ -661,8 +661,6 @@ util_dump_surface(FILE *stream, const struct pipe_surface *state)
    util_dump_member(stream, uint, state, width);
    util_dump_member(stream, uint, state, height);
 
-   util_dump_member(stream, uint, state, usage);
-
    util_dump_member(stream, ptr, state, texture);
    util_dump_member(stream, uint, state, u.tex.level);
    util_dump_member(stream, uint, state, u.tex.first_layer);

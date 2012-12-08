@@ -213,7 +213,7 @@ pp_init_fbos(struct pp_queue_t *ppq, unsigned int w,
    tmp_res.depth0 = 1;
    tmp_res.array_size = 1;
    tmp_res.last_level = 0;
-   tmp_res.bind = p->surf.usage = PIPE_BIND_RENDER_TARGET;
+   tmp_res.bind = PIPE_BIND_RENDER_TARGET;
 
    if (!p->screen->is_format_supported(p->screen, tmp_res.format,
                                        tmp_res.target, 1, tmp_res.bind))
@@ -237,7 +237,7 @@ pp_init_fbos(struct pp_queue_t *ppq, unsigned int w,
          goto error;
    }
 
-   tmp_res.bind = p->surf.usage = PIPE_BIND_DEPTH_STENCIL;
+   tmp_res.bind = PIPE_BIND_DEPTH_STENCIL;
 
    tmp_res.format = p->surf.format = PIPE_FORMAT_S8_UINT_Z24_UNORM;
 

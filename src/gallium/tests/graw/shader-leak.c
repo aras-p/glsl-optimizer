@@ -211,7 +211,6 @@ static void init( void )
    }
 
    surf_tmpl.format = templat.format;
-   surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
    surf_tmpl.u.tex.level = 0;
    surf_tmpl.u.tex.first_layer = 0;
    surf_tmpl.u.tex.last_layer = 0;

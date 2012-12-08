@@ -133,12 +133,10 @@ void si_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_tex
 			surf_tmpl.u.tex.level = level;
 			surf_tmpl.u.tex.first_layer = layer;
 			surf_tmpl.u.tex.last_layer = layer;
-			surf_tmpl.usage = PIPE_BIND_DEPTH_STENCIL;
 
 			zsurf = ctx->create_surface(ctx, &texture->resource.b.b, &surf_tmpl);
 
 			surf_tmpl.format = texture->flushed_depth_texture->real_format;
-			surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
 			cbsurf = ctx->create_surface(ctx,
 					(struct pipe_resource*)texture->flushed_depth_texture, &surf_tmpl);
 

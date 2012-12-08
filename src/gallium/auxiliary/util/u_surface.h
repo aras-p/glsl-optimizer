@@ -42,8 +42,7 @@ extern "C" {
 
 extern void
 u_surface_default_template(struct pipe_surface *view,
-                           const struct pipe_resource *texture,
-                           unsigned bind);
+                           const struct pipe_resource *texture);
 
 extern boolean
 util_create_rgba_texture(struct pipe_context *ctx,

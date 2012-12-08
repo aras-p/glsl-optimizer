@@ -603,7 +603,6 @@ init_source(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    surf_templ.format = tex->format;
    surf_templ.u.tex.first_layer = 0;
    surf_templ.u.tex.last_layer = 0;
-   surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
    buffer->fb_state_mismatch.cbufs[0] = idct->pipe->create_surface(idct->pipe, tex, &surf_templ);
 
    buffer->viewport_mismatch.scale[0] = tex->width0;
@@ -643,7 +642,6 @@ init_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
       surf_templ.format = tex->format;
       surf_templ.u.tex.first_layer = i;
       surf_templ.u.tex.last_layer = i;
-      surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
       buffer->fb_state.cbufs[i] = idct->pipe->create_surface(
          idct->pipe, tex, &surf_templ);
 

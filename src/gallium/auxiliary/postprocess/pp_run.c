@@ -166,7 +166,6 @@ void
 pp_filter_setup_out(struct program *p, struct pipe_resource *out)
 {
    p->surf.format = out->format;
-   p->surf.usage = PIPE_BIND_RENDER_TARGET;
 
    p->framebuffer.cbufs[0] = p->pipe->create_surface(p->pipe, out, &p->surf);
 }

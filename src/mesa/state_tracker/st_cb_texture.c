@@ -1090,7 +1090,6 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
 
    memset(&surf_tmpl, 0, sizeof(surf_tmpl));
    surf_tmpl.format = util_format_linear(stImage->pt->format);
-   surf_tmpl.usage = dst_usage;
    surf_tmpl.u.tex.level = stImage->base.Level;
    surf_tmpl.u.tex.first_layer = stImage->base.Face + destZ;
    surf_tmpl.u.tex.last_layer = stImage->base.Face + destZ;

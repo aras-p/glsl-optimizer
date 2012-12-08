@@ -1062,9 +1062,7 @@ struct pipe_surface *
 xorg_gpu_surface(struct pipe_context *pipe, struct exa_pixmap_priv *priv)
 {
    struct pipe_surface surf_tmpl;
-   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   u_surface_default_template(&surf_tmpl, priv->tex,
-                              PIPE_BIND_RENDER_TARGET);
+   u_surface_default_template(&surf_tmpl, priv->tex);
 
    return pipe->create_surface(pipe, priv->tex, &surf_tmpl);
 

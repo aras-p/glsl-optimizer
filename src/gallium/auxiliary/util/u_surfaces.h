@@ -46,14 +46,14 @@ struct util_surfaces
 boolean
 util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size,
                      struct pipe_context *ctx, struct pipe_resource *pt,
-                     unsigned level, unsigned layer, unsigned flags,
+                     unsigned level, unsigned layer,
                      struct pipe_surface **res);
 
 /* fast inline path for the very common case */
 static INLINE boolean
 util_surfaces_get(struct util_surfaces *us, unsigned surface_struct_size,
                   struct pipe_context *ctx, struct pipe_resource *pt,
-                  unsigned level, unsigned layer, unsigned flags,
+                  unsigned level, unsigned layer,
                   struct pipe_surface **res)
 {
    if(likely((pt->target == PIPE_TEXTURE_2D || pt->target == PIPE_TEXTURE_RECT) && us->u.array))
@@ -67,7 +67,7 @@ util_surfaces_get(struct util_surfaces *us, unsigned surface_struct_size,
       }
    }
 
-   return util_surfaces_do_get(us, surface_struct_size, ctx, pt, level, layer, flags, res);
+   return util_surfaces_do_get(us, surface_struct_size, ctx, pt, level, layer, res);
 }
 
 static INLINE struct pipe_surface *

@@ -224,8 +224,7 @@ st_framebuffer_validate(struct st_framebuffer *stfb,
          continue;
       }
 
-      u_surface_default_template(&surf_tmpl, textures[i],
-                                 PIPE_BIND_RENDER_TARGET);
+      u_surface_default_template(&surf_tmpl, textures[i]);
       ps = st->pipe->create_surface(st->pipe, textures[i], &surf_tmpl);
       if (ps) {
          pipe_surface_reference(&strb->surface, ps);
@@ -792,8 +791,7 @@ st_manager_flush_frontbuffer(struct st_context *st)
  * FIXME: I think this should operate on resources, not surfaces
  */
 struct pipe_surface *
-st_manager_get_egl_image_surface(struct st_context *st,
-                                 void *eglimg, unsigned usage)
+st_manager_get_egl_image_surface(struct st_context *st, void *eglimg)
 {
    struct st_manager *smapi =
       (struct st_manager *) st->iface.st_context_private;
@@ -807,7 +805,7 @@ st_manager_get_egl_image_surface(struct st_context *st,
    if (!smapi->get_egl_image(smapi, eglimg, &stimg))
       return NULL;
 
-   u_surface_default_template(&surf_tmpl, stimg.texture, usage);
+   u_surface_default_template(&surf_tmpl, stimg.texture);
    surf_tmpl.u.tex.level = stimg.level;
    surf_tmpl.u.tex.first_layer = stimg.layer;
    surf_tmpl.u.tex.last_layer = stimg.layer;

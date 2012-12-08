@@ -211,7 +211,6 @@ static void init_prog(struct program *p)
 	p->sampler.normalized_coords = 1;
 
 	surf_tmpl.format = PIPE_FORMAT_B8G8R8A8_UNORM; /* All drivers support this */
-	surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
 	surf_tmpl.u.tex.level = 0;
 	surf_tmpl.u.tex.first_layer = 0;
 	surf_tmpl.u.tex.last_layer = 0;

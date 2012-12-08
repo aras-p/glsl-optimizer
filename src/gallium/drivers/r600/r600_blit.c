@@ -182,7 +182,6 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 				surf_tmpl.u.tex.level = level;
 				surf_tmpl.u.tex.first_layer = layer;
 				surf_tmpl.u.tex.last_layer = layer;
-				surf_tmpl.usage = PIPE_BIND_DEPTH_STENCIL;
 
 				zsurf = ctx->create_surface(ctx, &texture->resource.b.b, &surf_tmpl);
 
@@ -190,7 +189,6 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 				surf_tmpl.u.tex.level = level;
 				surf_tmpl.u.tex.first_layer = layer;
 				surf_tmpl.u.tex.last_layer = layer;
-				surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
 				cbsurf = ctx->create_surface(ctx,
 						&flushed_depth_texture->resource.b.b, &surf_tmpl);
 
@@ -231,7 +229,6 @@ static void r600_blit_decompress_depth_in_place(struct r600_context *rctx,
 	rctx->db_misc_state.atom.dirty = true;
 
 	surf_tmpl.format = texture->resource.b.b.format;
-	surf_tmpl.usage = PIPE_BIND_DEPTH_STENCIL;
 
 	for (level = first_level; level <= last_level; level++) {
 		if (!(texture->dirty_level_mask & (1 << level)))
@@ -348,7 +345,6 @@ static void r600_blit_decompress_color(struct pipe_context *ctx,
 			surf_tmpl.u.tex.level = level;
 			surf_tmpl.u.tex.first_layer = layer;
 			surf_tmpl.u.tex.last_layer = layer;
-			surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
 			cbsurf = ctx->create_surface(ctx, &rtex->resource.b.b, &surf_tmpl);
 
 			r600_blitter_begin(ctx, R600_DECOMPRESS);

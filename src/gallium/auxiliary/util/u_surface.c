@@ -49,14 +49,11 @@
  */
 void
 u_surface_default_template(struct pipe_surface *surf,
-                           const struct pipe_resource *texture,
-                           unsigned bind)
+                           const struct pipe_resource *texture)
 {
    memset(surf, 0, sizeof(*surf));
 
    surf->format = texture->format;
-   /* XXX should filter out all non-rt/ds bind flags ? */
-   surf->usage = bind;
 }
 
 /**
@@ -110,7 +107,7 @@ util_create_rgba_texture(struct pipe_context *pipe,
       return FALSE;
 
    /* create surface */
-   u_surface_default_template(&surf_templ, *textureOut, bind);
+   u_surface_default_template(&surf_templ, *textureOut);
    return TRUE;
 }
 

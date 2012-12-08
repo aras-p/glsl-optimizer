@@ -332,7 +332,6 @@ i915_create_surface(struct pipe_context *ctx,
       ps->u.tex.level = surf_tmpl->u.tex.level;
       ps->u.tex.first_layer = surf_tmpl->u.tex.first_layer;
       ps->u.tex.last_layer = surf_tmpl->u.tex.last_layer;
-      ps->usage = surf_tmpl->usage;
       ps->context = ctx;
    }
    return ps;

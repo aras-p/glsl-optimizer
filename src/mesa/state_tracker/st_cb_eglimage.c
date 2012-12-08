@@ -76,10 +76,8 @@ st_egl_image_target_renderbuffer_storage(struct gl_context *ctx,
    struct st_context *st = st_context(ctx);
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    struct pipe_surface *ps;
-   unsigned usage;
 
-   usage = PIPE_BIND_RENDER_TARGET;
-   ps = st_manager_get_egl_image_surface(st, (void *) image_handle, usage);
+   ps = st_manager_get_egl_image_surface(st, (void *) image_handle);
    if (ps) {
       strb->Base.Width = ps->width;
       strb->Base.Height = ps->height;
@@ -146,10 +144,8 @@ st_egl_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 {
    struct st_context *st = st_context(ctx);
    struct pipe_surface *ps;
-   unsigned usage;
 
-   usage = PIPE_BIND_SAMPLER_VIEW;
-   ps = st_manager_get_egl_image_surface(st, (void *) image_handle, usage);
+   ps = st_manager_get_egl_image_surface(st, (void *) image_handle);
    if (ps) {
       st_bind_surface(ctx, target, texObj, texImage, ps);
       pipe_surface_reference(&ps, NULL);

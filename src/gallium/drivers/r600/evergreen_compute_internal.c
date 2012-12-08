@@ -272,7 +272,6 @@ void evergreen_set_rat(
 
 	/* Create the RAT surface */
 	memset(&rat_templ, 0, sizeof(rat_templ));
-	rat_templ.usage = RADEON_USAGE_READWRITE;
 	rat_templ.format = PIPE_FORMAT_R32_UINT;
 	rat_templ.u.tex.level = 0;
 	rat_templ.u.tex.first_layer = 0;

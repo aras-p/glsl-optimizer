@@ -71,7 +71,6 @@ update_renderbuffer_surface(struct st_context *st,
             struct pipe_surface surf_tmpl;
             memset(&surf_tmpl, 0, sizeof(surf_tmpl));
             surf_tmpl.format = format;
-            surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
             surf_tmpl.u.tex.level = level;
             surf_tmpl.u.tex.first_layer = strb->rtt_face + strb->rtt_slice;
             surf_tmpl.u.tex.last_layer = strb->rtt_face + strb->rtt_slice;

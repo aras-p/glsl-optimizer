@@ -368,7 +368,6 @@ vl_video_buffer_surfaces(struct pipe_video_buffer *buffer)
          if (!buf->surfaces[surf]) {
             memset(&surf_templ, 0, sizeof(surf_templ));
             surf_templ.format = vl_video_buffer_surface_format(buf->resources[j]->format);
-            surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
             surf_templ.u.tex.first_layer = surf_templ.u.tex.last_layer = i;
             buf->surfaces[surf] = pipe->create_surface(pipe, buf->resources[j], &surf_templ);
             if (!buf->surfaces[surf])

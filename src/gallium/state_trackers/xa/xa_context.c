@@ -182,8 +182,7 @@ xa_ctx_srf_create(struct xa_context *ctx, struct xa_surface *dst)
 				     PIPE_BIND_RENDER_TARGET))
 	return -XA_ERR_INVAL;
 
-    u_surface_default_template(&srf_templ, dst->tex,
-			       PIPE_BIND_RENDER_TARGET);
+    u_surface_default_template(&srf_templ, dst->tex);
     ctx->srf = ctx->pipe->create_surface(ctx->pipe, dst->tex, &srf_templ);
     if (!ctx->srf)
 	return -XA_ERR_NORES;

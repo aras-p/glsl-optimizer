@@ -1083,12 +1083,6 @@ void util_blitter_default_dst_texture(struct pipe_surface *dst_templ,
                                       const struct pipe_box *srcbox)
 {
     memset(dst_templ, 0, sizeof(*dst_templ));
-    dst_templ->format = dst->format;
-    if (util_format_is_depth_or_stencil(dst->format)) {
-	dst_templ->usage = PIPE_BIND_DEPTH_STENCIL;
-    } else {
-	dst_templ->usage = PIPE_BIND_RENDER_TARGET;
-    }
     dst_templ->format = util_format_linear(dst->format);
     dst_templ->u.tex.level = dstlevel;
     dst_templ->u.tex.first_layer = dstz;
@@ -1743,7 +1737,6 @@ void util_blitter_custom_resolve_color(struct blitter_context *blitter,
    surf_tmpl.u.tex.level = dst_level;
    surf_tmpl.u.tex.first_layer = dst_layer;
    surf_tmpl.u.tex.last_layer = dst_layer;
-   surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
 
    dstsurf = pipe->create_surface(pipe, dst, &surf_tmpl);
 

@@ -602,7 +602,6 @@ llvmpipe_create_surface(struct pipe_context *pipe,
       ps->format = surf_tmpl->format;
       ps->width = u_minify(pt->width0, surf_tmpl->u.tex.level);
       ps->height = u_minify(pt->height0, surf_tmpl->u.tex.level);
-      ps->usage = surf_tmpl->usage;
 
       ps->u.tex.level = surf_tmpl->u.tex.level;
       ps->u.tex.first_layer = surf_tmpl->u.tex.first_layer;

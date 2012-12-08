@@ -1109,7 +1109,6 @@ struct pipe_surface* r300_create_surface_custom(struct pipe_context * ctx,
         surface->base.format = surf_tmpl->format;
         surface->base.width = u_minify(width0_override, level);
         surface->base.height = u_minify(height0_override, level);
-        surface->base.usage = surf_tmpl->usage;
         surface->base.u.tex.level = level;
         surface->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
         surface->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;

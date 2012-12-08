@@ -296,7 +296,6 @@ softpipe_create_surface(struct pipe_context *pipe,
       ps->format = surf_tmpl->format;
       ps->width = u_minify(pt->width0, level);
       ps->height = u_minify(pt->height0, level);
-      ps->usage = surf_tmpl->usage;
 
       ps->u.tex.level = level;
       ps->u.tex.first_layer = surf_tmpl->u.tex.first_layer;

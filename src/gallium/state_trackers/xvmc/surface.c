@@ -386,7 +386,6 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    memset(&surf_templ, 0, sizeof(surf_templ));
    surf_templ.format = tex->format;
-   surf_templ.usage = PIPE_BIND_RENDER_TARGET;
    surf = pipe->create_surface(pipe, tex, &surf_templ);
 
    if (!surf)

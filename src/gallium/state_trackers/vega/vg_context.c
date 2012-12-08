@@ -377,9 +377,7 @@ vg_context_update_depth_stencil_rb(struct vg_context * ctx,
    if (!dsrb->texture)
       return TRUE;
 
-   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   u_surface_default_template(&surf_tmpl, dsrb->texture,
-                              PIPE_BIND_DEPTH_STENCIL);
+   u_surface_default_template(&surf_tmpl, dsrb->texture);
    dsrb->surface = pipe->create_surface(pipe,
                                         dsrb->texture,
                                         &surf_tmpl);
@@ -450,9 +448,7 @@ static void vg_prepare_blend_texture(struct vg_context *ctx,
 
    vg_context_update_blend_texture_view(ctx, stfb->width, stfb->height);
 
-   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   u_surface_default_template(&surf_tmpl, stfb->blend_texture_view->texture,
-                              PIPE_BIND_RENDER_TARGET);
+   u_surface_default_template(&surf_tmpl, stfb->blend_texture_view->texture);
    surf = ctx->pipe->create_surface(ctx->pipe,
                                     stfb->blend_texture_view->texture,
                                     &surf_tmpl);

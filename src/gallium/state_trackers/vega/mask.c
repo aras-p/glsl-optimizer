@@ -398,8 +398,7 @@ void mask_copy(struct vg_mask_layer *layer,
    struct pipe_surface *surf, surf_tmpl;
 
    /* get the destination surface */
-   u_surface_default_template(&surf_tmpl, layer->sampler_view->texture,
-                              PIPE_BIND_RENDER_TARGET);
+   u_surface_default_template(&surf_tmpl, layer->sampler_view->texture);
    surf = ctx->pipe->create_surface(ctx->pipe, layer->sampler_view->texture,
                                     &surf_tmpl);
    if (surf && renderer_copy_begin(ctx->renderer, surf, VG_FALSE, src)) {
@@ -425,8 +424,7 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
    struct pipe_sampler_view *view = vg_get_surface_mask(ctx);
    struct matrix *mat = &ctx->state.vg.path_user_to_surface_matrix;
    struct pipe_surface *surf, surf_tmpl;
-   u_surface_default_template(&surf_tmpl, view->texture,
-                              PIPE_BIND_RENDER_TARGET);
+   u_surface_default_template(&surf_tmpl, view->texture);
    surf = pipe->create_surface(pipe, view->texture, &surf_tmpl);
 
    renderer_validate_for_mask_rendering(ctx->renderer, surf, mat);

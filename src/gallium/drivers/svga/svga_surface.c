@@ -216,7 +216,6 @@ svga_create_surface(struct pipe_context *pipe,
    s->base.format = surf_tmpl->format;
    s->base.width = u_minify(pt->width0, surf_tmpl->u.tex.level);
    s->base.height = u_minify(pt->height0, surf_tmpl->u.tex.level);
-   s->base.usage = surf_tmpl->usage;
    s->base.u.tex.level = surf_tmpl->u.tex.level;
    s->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
    s->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
