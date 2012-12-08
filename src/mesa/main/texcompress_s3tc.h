@@ -29,6 +29,7 @@
 #include "glheader.h"
 #include "mfeatures.h"
 #include "texstore.h"
+#include "texcompress.h"
 
 struct gl_context;
 struct swrast_texture_image;
@@ -79,5 +80,9 @@ _mesa_fetch_texel_srgba_dxt5(const struct swrast_texture_image *texImage,
 
 extern void
 _mesa_init_texture_s3tc(struct gl_context *ctx);
+
+extern compressed_fetch_func
+_mesa_get_dxt_fetch_func(gl_format format);
+
 
 #endif /* TEXCOMPRESS_S3TC_H */

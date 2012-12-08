@@ -58,7 +58,7 @@
 #define DXTN_LIBNAME "libtxc_dxtn.so"
 #endif
 
-typedef void (*dxtFetchTexelFuncExt)( GLint srcRowstride, GLubyte *pixdata, GLint col, GLint row, GLvoid *texelOut );
+typedef void (*dxtFetchTexelFuncExt)( GLint srcRowstride, const GLubyte *pixdata, GLint col, GLint row, GLvoid *texelOut );
 
 static dxtFetchTexelFuncExt fetch_ext_rgb_dxt1 = NULL;
 static dxtFetchTexelFuncExt fetch_ext_rgba_dxt1 = NULL;
@@ -493,4 +493,108 @@ _mesa_fetch_texel_srgba_dxt5(const struct swrast_texture_image *texImage,
    texel[GCOMP] = _mesa_nonlinear_to_linear(rgba[GCOMP]);
    texel[BCOMP] = _mesa_nonlinear_to_linear(rgba[BCOMP]);
    texel[ACOMP] = UBYTE_TO_FLOAT(rgba[ACOMP]);
+}
+
+
+/** Report problem with dxt texture decompression, once */
+static void
+problem(const char *func)
+{
+   static GLboolean warned = GL_FALSE;
+   if (!warned) {
+      _mesa_debug(NULL, "attempted to decode DXT texture without "
+                  "library available: %s\n", func);
+      warned = GL_TRUE;
+   }
+}
+
+
+static void
+fetch_rgb_dxt1(const GLubyte *map, const GLuint imageOffsets[],
+               GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   if (fetch_ext_rgb_dxt1) {
+      GLuint sliceOffset = k ? imageOffsets[k] / 2 : 0;
+      GLubyte tex[4];
+      fetch_ext_rgb_dxt1(rowStride, map + sliceOffset, i, j, tex);
+      texel[RCOMP] = UBYTE_TO_FLOAT(tex[RCOMP]);
+      texel[GCOMP] = UBYTE_TO_FLOAT(tex[GCOMP]);
+      texel[BCOMP] = UBYTE_TO_FLOAT(tex[BCOMP]);
+      texel[ACOMP] = UBYTE_TO_FLOAT(tex[ACOMP]);
+   }
+   else {
+      problem("rgb_dxt1");
+   }
+}
+
+static void
+fetch_rgba_dxt1(const GLubyte *map, const GLuint imageOffsets[],
+                GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   if (fetch_ext_rgba_dxt1) {
+      GLuint sliceOffset = k ? imageOffsets[k] / 2 : 0;
+      GLubyte tex[4];
+      fetch_ext_rgba_dxt1(rowStride, map + sliceOffset, i, j, tex);
+      texel[RCOMP] = UBYTE_TO_FLOAT(tex[RCOMP]);
+      texel[GCOMP] = UBYTE_TO_FLOAT(tex[GCOMP]);
+      texel[BCOMP] = UBYTE_TO_FLOAT(tex[BCOMP]);
+      texel[ACOMP] = UBYTE_TO_FLOAT(tex[ACOMP]);
+   }
+   else {
+      problem("rgba_dxt1");
+   }
+}
+
+static void
+fetch_rgba_dxt3(const GLubyte *map, const GLuint imageOffsets[],
+                GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   if (fetch_ext_rgba_dxt3) {
+      GLuint sliceOffset = k ? imageOffsets[k] : 0;
+      GLubyte tex[4];
+      fetch_ext_rgba_dxt3(rowStride, map + sliceOffset, i, j, tex);
+      texel[RCOMP] = UBYTE_TO_FLOAT(tex[RCOMP]);
+      texel[GCOMP] = UBYTE_TO_FLOAT(tex[GCOMP]);
+      texel[BCOMP] = UBYTE_TO_FLOAT(tex[BCOMP]);
+      texel[ACOMP] = UBYTE_TO_FLOAT(tex[ACOMP]);
+   }
+   else {
+      problem("rgba_dxt3");
+   }
+}
+
+static void
+fetch_rgba_dxt5(const GLubyte *map, const GLuint imageOffsets[],
+                GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   if (fetch_ext_rgba_dxt5) {
+      GLuint sliceOffset = k ? imageOffsets[k] : 0;
+      GLubyte tex[4];
+      fetch_ext_rgba_dxt5(rowStride, map + sliceOffset, i, j, tex);
+      texel[RCOMP] = UBYTE_TO_FLOAT(tex[RCOMP]);
+      texel[GCOMP] = UBYTE_TO_FLOAT(tex[GCOMP]);
+      texel[BCOMP] = UBYTE_TO_FLOAT(tex[BCOMP]);
+      texel[ACOMP] = UBYTE_TO_FLOAT(tex[ACOMP]);
+   }
+   else {
+      problem("rgba_dxt5");
+   }
+}
+
+
+compressed_fetch_func
+_mesa_get_dxt_fetch_func(gl_format format)
+{
+   switch (format) {
+   case MESA_FORMAT_RGB_DXT1:
+      return fetch_rgb_dxt1;
+   case MESA_FORMAT_RGBA_DXT1:
+      return fetch_rgba_dxt1;
+   case MESA_FORMAT_RGBA_DXT3:
+      return fetch_rgba_dxt3;
+   case MESA_FORMAT_RGBA_DXT5:
+      return fetch_rgba_dxt5;
+   default:
+      return NULL;
+   }
 }
