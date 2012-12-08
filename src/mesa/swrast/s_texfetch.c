@@ -1175,9 +1175,15 @@ texfetch_funcs[] =
 };
 
 
-static FetchTexelFunc
-get_texel_fetch_func(gl_format format, GLuint dims)
+/**
+ * Initialize the texture image's FetchTexel methods.
+ */
+static void
+set_fetch_functions(const struct gl_sampler_object *samp,
+                    struct swrast_texture_image *texImage, GLuint dims)
 {
+   gl_format format = texImage->Base.TexFormat;
+
 #ifdef DEBUG
    /* check that the table entries are sorted by format name */
    gl_format fmt;
@@ -1188,39 +1194,27 @@ get_texel_fetch_func(gl_format format, GLuint dims)
 
    STATIC_ASSERT(Elements(texfetch_funcs) == MESA_FORMAT_COUNT);
 
-   assert(format < MESA_FORMAT_COUNT);
-
-   switch (dims) {
-   case 1:
-      return texfetch_funcs[format].Fetch1D;
-   case 2:
-      return texfetch_funcs[format].Fetch2D;
-   case 3:
-      return texfetch_funcs[format].Fetch3D;
-   default:
-      assert(0 && "bad dims in get_texel_fetch_func");
-      return NULL;
-   }
-}
-
-
-/**
- * Initialize the texture image's FetchTexel methods.
- */
-static void
-set_fetch_functions(struct gl_sampler_object *samp,
-                    struct swrast_texture_image *texImage, GLuint dims)
-{
-   gl_format format = texImage->Base.TexFormat;
-
-   ASSERT(dims == 1 || dims == 2 || dims == 3);
-
    if (samp->sRGBDecode == GL_SKIP_DECODE_EXT &&
        _mesa_get_format_color_encoding(format) == GL_SRGB) {
       format = _mesa_get_srgb_format_linear(format);
    }
 
-   texImage->FetchTexel = get_texel_fetch_func(format, dims);
+   assert(format < MESA_FORMAT_COUNT);
+
+   switch (dims) {
+   case 1:
+      texImage->FetchTexel = texfetch_funcs[format].Fetch1D;
+      break;
+   case 2:
+      texImage->FetchTexel = texfetch_funcs[format].Fetch2D;
+      break;
+   case 3:
+      texImage->FetchTexel = texfetch_funcs[format].Fetch3D;
+      break;
+   default:
+      assert(!"Bad dims in set_fetch_functions()");
+   }
+
    ASSERT(texImage->FetchTexel);
 }
 
