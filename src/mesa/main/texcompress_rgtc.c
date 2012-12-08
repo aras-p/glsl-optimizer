@@ -447,3 +447,164 @@ _mesa_fetch_texel_signed_la_latc2(const struct swrast_texture_image *texImage,
 #undef TYPE
 #undef T_MIN
 #undef T_MAX
+
+
+
+static void
+fetch_red_rgtc1(const GLubyte *map, const GLuint imageOffsets[],
+                GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   GLubyte red;
+   GLuint sliceOffset = k ? imageOffsets[k] / 2 : 0;
+   unsigned_fetch_texel_rgtc(rowStride, map + sliceOffset, i, j, &red, 1);
+   texel[RCOMP] = UBYTE_TO_FLOAT(red);
+   texel[GCOMP] = 0.0;
+   texel[BCOMP] = 0.0;
+   texel[ACOMP] = 1.0;
+}
+
+static void
+fetch_l_latc1(const GLubyte *map, const GLuint imageOffsets[],
+              GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   GLubyte red;
+   GLuint sliceOffset = k ? imageOffsets[k] / 2 : 0;
+   unsigned_fetch_texel_rgtc(rowStride, map + sliceOffset, i, j, &red, 1);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = UBYTE_TO_FLOAT(red);
+   texel[ACOMP] = 1.0;
+}
+
+static void
+fetch_signed_red_rgtc1(const GLubyte *map, const GLuint imageOffsets[],
+                       GLint rowStride, GLint i, GLint j, GLint k,
+                       GLfloat *texel)
+{
+   GLbyte red;
+   GLuint sliceOffset = k ? imageOffsets[k] / 2 : 0;
+   signed_fetch_texel_rgtc(rowStride, (const GLbyte *) map + sliceOffset,
+                           i, j, &red, 1);
+   texel[RCOMP] = BYTE_TO_FLOAT_TEX(red);
+   texel[GCOMP] = 0.0;
+   texel[BCOMP] = 0.0;
+   texel[ACOMP] = 1.0;
+}
+
+static void
+fetch_signed_l_latc1(const GLubyte *map, const GLuint imageOffsets[],
+                     GLint rowStride, GLint i, GLint j, GLint k,
+                     GLfloat *texel)
+{
+   GLubyte red;
+   GLuint sliceOffset = k ? imageOffsets[k] / 2 : 0;
+   unsigned_fetch_texel_rgtc(rowStride,  map + sliceOffset, i, j, &red, 1);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = BYTE_TO_FLOAT(red);
+   texel[ACOMP] = 1.0;
+}
+
+static void
+fetch_rg_rgtc2(const GLubyte *map, const GLuint imageOffsets[],
+               GLint rowStride, GLint i, GLint j, GLint k,
+               GLfloat *texel)
+{
+   GLubyte red, green;
+   GLuint sliceOffset = k ? imageOffsets[k] : 0;
+   unsigned_fetch_texel_rgtc(rowStride,
+                             map + sliceOffset,
+                             i, j, &red, 2);
+   unsigned_fetch_texel_rgtc(rowStride,
+                             map + sliceOffset + 8,
+                             i, j, &green, 2);
+   texel[RCOMP] = UBYTE_TO_FLOAT(red);
+   texel[GCOMP] = UBYTE_TO_FLOAT(green);
+   texel[BCOMP] = 0.0;
+   texel[ACOMP] = 1.0;
+}
+
+static void
+fetch_la_latc2(const GLubyte *map, const GLuint imageOffsets[],
+               GLint rowStride, GLint i, GLint j, GLint k,
+               GLfloat *texel)
+{
+   GLubyte red, green;
+   GLuint sliceOffset = k ? imageOffsets[k] : 0;
+   unsigned_fetch_texel_rgtc(rowStride,
+                             map + sliceOffset,
+                             i, j, &red, 2);
+   unsigned_fetch_texel_rgtc(rowStride,
+                             map + sliceOffset + 8,
+                             i, j, &green, 2);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = UBYTE_TO_FLOAT(red);
+   texel[ACOMP] = UBYTE_TO_FLOAT(green);
+}
+
+
+static void
+fetch_signed_rg_rgtc2(const GLubyte *map, const GLuint imageOffsets[],
+                      GLint rowStride, GLint i, GLint j, GLint k,
+                      GLfloat *texel)
+{
+   GLbyte red, green;
+   GLuint sliceOffset = k ? imageOffsets[k] : 0;
+   signed_fetch_texel_rgtc(rowStride,
+                           (GLbyte *) map + sliceOffset,
+                           i, j, &red, 2);
+   signed_fetch_texel_rgtc(rowStride,
+                           (GLbyte *) map + sliceOffset + 8,
+                           i, j, &green, 2);
+   texel[RCOMP] = BYTE_TO_FLOAT_TEX(red);
+   texel[GCOMP] = BYTE_TO_FLOAT_TEX(green);
+   texel[BCOMP] = 0.0;
+   texel[ACOMP] = 1.0;
+}
+
+
+static void
+fetch_signed_la_latc2(const GLubyte *map, const GLuint imageOffsets[],
+                      GLint rowStride, GLint i, GLint j, GLint k,
+                      GLfloat *texel)
+{
+   GLbyte red, green;
+   GLuint sliceOffset = k ? imageOffsets[k] : 0;
+   signed_fetch_texel_rgtc(rowStride,
+                           (GLbyte *) map + sliceOffset,
+                           i, j, &red, 2);
+   signed_fetch_texel_rgtc(rowStride,
+                           (GLbyte *) map + sliceOffset + 8,
+                           i, j, &green, 2);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = BYTE_TO_FLOAT_TEX(red);
+   texel[ACOMP] = BYTE_TO_FLOAT_TEX(green);
+}
+
+
+compressed_fetch_func
+_mesa_get_compressed_rgtc_func(gl_format format)
+{
+   switch (format) {
+   case MESA_FORMAT_RED_RGTC1:
+      return fetch_red_rgtc1;
+   case MESA_FORMAT_L_LATC1:
+      return fetch_l_latc1;
+   case MESA_FORMAT_SIGNED_RED_RGTC1:
+      return fetch_signed_red_rgtc1;
+   case MESA_FORMAT_SIGNED_L_LATC1:
+      return fetch_signed_l_latc1;
+   case MESA_FORMAT_RG_RGTC2:
+      return fetch_rg_rgtc2;
+   case MESA_FORMAT_LA_LATC2:
+      return fetch_la_latc2;
+   case MESA_FORMAT_SIGNED_RG_RGTC2:
+      return fetch_signed_rg_rgtc2;
+   case MESA_FORMAT_SIGNED_LA_LATC2:
+      return fetch_signed_la_latc2;
+   default:
+      return NULL;
+   }
+}
