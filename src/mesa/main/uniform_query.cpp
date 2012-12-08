@@ -97,12 +97,16 @@ _mesa_GetActiveUniformsiv(GLuint program,
 
    for (i = 0; i < uniformCount; i++) {
       GLuint index = uniformIndices[i];
-      const struct gl_uniform_storage *uni = &shProg->UniformStorage[index];
 
       if (index >= shProg->NumUserUniformStorage) {
 	 _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniformsiv(index)");
 	 return;
       }
+   }
+
+   for (i = 0; i < uniformCount; i++) {
+      GLuint index = uniformIndices[i];
+      const struct gl_uniform_storage *uni = &shProg->UniformStorage[index];
 
       switch (pname) {
       case GL_UNIFORM_TYPE:
