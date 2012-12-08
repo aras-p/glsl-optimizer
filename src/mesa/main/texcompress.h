@@ -48,6 +48,15 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
                                gl_format mesaFormat,
                                GLsizei width, const GLubyte *image);
 
+
+/** A function to fetch one texel from a compressed texture */
+typedef void (*compressed_fetch_func)(const GLubyte *map,
+                                      const GLuint imageOffsets[],
+                                      GLint rowStride,
+                                      GLint i, GLint j, GLint k,
+                                      GLfloat *texel);
+
+
 extern void
 _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
                        const GLubyte *src, GLint srcRowStride,
