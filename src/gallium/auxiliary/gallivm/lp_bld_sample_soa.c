@@ -1681,12 +1681,17 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
    LLVMValueRef lod;
    LLVMValueRef size;
    int dims, i;
+   boolean has_array = FALSE;
    struct lp_build_context bld_int_vec;
 
    switch (static_state->target) {
    case PIPE_TEXTURE_1D:
    case PIPE_BUFFER:
       dims = 1;
+      break;
+   case PIPE_TEXTURE_1D_ARRAY:
+      dims = 1;
+      has_array = TRUE;
       break;
    case PIPE_TEXTURE_2D:
    case PIPE_TEXTURE_CUBE:
@@ -1696,7 +1701,10 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
    case PIPE_TEXTURE_3D:
       dims = 3;
       break;
-
+   case PIPE_TEXTURE_2D_ARRAY:
+      dims = 2;
+      has_array = TRUE;
+      break;
    default:
       assert(0);
       return;
@@ -1736,8 +1744,13 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
    }
 
    size = lp_build_minify(&bld_int_vec, size, lod);
+ 
+   if (has_array)
+      size = LLVMBuildInsertElement(gallivm->builder, size,
+                                    dynamic_state->depth(dynamic_state, gallivm, unit),
+                                    lp_build_const_int32(gallivm, dims), "");
 
-   for (i=0; i < dims; i++) {
+   for (i = 0; i < dims + (has_array ? 1 : 0); i++) {
       sizes_out[i] = lp_build_extract_broadcast(gallivm, bld_int_vec.type, int_type,
                                                 size,
                                                 lp_build_const_int32(gallivm, i));
