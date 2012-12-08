@@ -191,9 +191,6 @@ svga_create_surface(struct pipe_context *pipe,
    struct svga_screen *ss = svga_screen(screen);
    struct svga_surface *s;
    unsigned face, zslice;
-   /* XXX surfaces should only be used for rendering purposes nowadays */
-   boolean render = (surf_tmpl->usage & (PIPE_BIND_RENDER_TARGET |
-                                         PIPE_BIND_DEPTH_STENCIL)) ? TRUE : FALSE;
    boolean view = FALSE;
    SVGA3dSurfaceFlags flags;
    SVGA3dSurfaceFormat format;
@@ -224,26 +221,21 @@ svga_create_surface(struct pipe_context *pipe,
    s->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
    s->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
 
-   if (!render) {
-      flags = SVGA3D_SURFACE_HINT_TEXTURE;
-   } else {
-      if (surf_tmpl->usage & PIPE_BIND_RENDER_TARGET) {
-         flags = SVGA3D_SURFACE_HINT_RENDERTARGET;
-      }
-      if (surf_tmpl->usage & PIPE_BIND_DEPTH_STENCIL) {
-         flags = SVGA3D_SURFACE_HINT_DEPTHSTENCIL;
-      }
+   if (util_format_is_depth_or_stencil(surf_tmpl->format)) {
+      flags = SVGA3D_SURFACE_HINT_DEPTHSTENCIL;
+   }
+   else {
+      flags = SVGA3D_SURFACE_HINT_RENDERTARGET;
    }
 
-   format = svga_translate_format(ss, surf_tmpl->format, surf_tmpl->usage);
+   format = svga_translate_format(ss, surf_tmpl->format, 0);
    assert(format != SVGA3D_FORMAT_INVALID);
 
    if (svga_screen(screen)->debug.force_surface_view)
       view = TRUE;
 
    /* Currently only used for compressed textures */
-   if (render && 
-       format != svga_translate_format(ss, surf_tmpl->format, surf_tmpl->usage)) {
+   if (format != svga_translate_format(ss, surf_tmpl->format, 0)) {
       view = TRUE;
    }
 
