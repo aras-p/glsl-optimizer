@@ -29,9 +29,6 @@
 
 #include "swrast/s_context.h"
 
-extern FetchTexelFunc
-_mesa_get_texel_fetch_func(gl_format format, GLuint dims);
-
 void
 _mesa_update_fetch_functions(struct gl_context *ctx, GLuint unit);
 

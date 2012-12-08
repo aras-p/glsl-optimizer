@@ -1175,8 +1175,8 @@ texfetch_funcs[] =
 };
 
 
-FetchTexelFunc
-_mesa_get_texel_fetch_func(gl_format format, GLuint dims)
+static FetchTexelFunc
+get_texel_fetch_func(gl_format format, GLuint dims)
 {
 #ifdef DEBUG
    /* check that the table entries are sorted by format name */
@@ -1198,7 +1198,7 @@ _mesa_get_texel_fetch_func(gl_format format, GLuint dims)
    case 3:
       return texfetch_funcs[format].Fetch3D;
    default:
-      assert(0 && "bad dims in _mesa_get_texel_fetch_func");
+      assert(0 && "bad dims in get_texel_fetch_func");
       return NULL;
    }
 }
@@ -1220,7 +1220,7 @@ set_fetch_functions(struct gl_sampler_object *samp,
       format = _mesa_get_srgb_format_linear(format);
    }
 
-   texImage->FetchTexel = _mesa_get_texel_fetch_func(format, dims);
+   texImage->FetchTexel = get_texel_fetch_func(format, dims);
    ASSERT(texImage->FetchTexel);
 }
 
