@@ -89,11 +89,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_rgb10_a2ui = true;
 
    if (intel->gen >= 6)
-      if (ctx->API == API_OPENGL_CORE) {
-         ctx->Const.GLSLVersion = 140;
-      } else {
-         ctx->Const.GLSLVersion = 130;
-      }
+      ctx->Const.GLSLVersion = 140;
    else
       ctx->Const.GLSLVersion = 120;
    _mesa_override_glsl_version(ctx);

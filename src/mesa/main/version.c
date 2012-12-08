@@ -345,6 +345,12 @@ _mesa_compute_version(struct gl_context *ctx)
 
    switch (ctx->API) {
    case API_OPENGL_COMPAT:
+      /* Disable GLSL 1.40 and later for legacy contexts.
+       * This disallows creation of the GL 3.1 compatibility context. */
+      if (ctx->Const.GLSLVersion > 130) {
+         ctx->Const.GLSLVersion = 130;
+      }
+      /* fall through */
    case API_OPENGL_CORE:
       compute_version(ctx);
       break;

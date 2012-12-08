@@ -570,10 +570,7 @@ void st_init_extensions(struct st_context *st)
    glsl_feature_level = screen->get_param(screen, PIPE_CAP_GLSL_FEATURE_LEVEL);
 
    if (glsl_feature_level >= 140) {
-      if (ctx->API == API_OPENGL_CORE)
-         ctx->Const.GLSLVersion = 140;
-      else
-         ctx->Const.GLSLVersion = 130;
+      ctx->Const.GLSLVersion = 140;
    } else if (glsl_feature_level >= 130) {
       ctx->Const.GLSLVersion = 130;
    } else {
