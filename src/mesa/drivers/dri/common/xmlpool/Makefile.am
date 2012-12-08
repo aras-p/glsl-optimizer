@@ -61,36 +61,34 @@ clean:
 
 # Default target options.h
 options.h: LOCALEDIR := .
-options.h: t_options.h mo
+options.h: t_options.h $(MOS)
 	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/gen_xmlpool.py t_options.h $(LOCALEDIR) $(LANGS) > options.h
 
 # Update .mo files from the corresponding .po files.
-mo:
-	@for mo in $(MOS); do \
-		lang=$${mo%%/*}; \
-		echo "Updating $$mo from $$lang.po."; \
-		mkdir -p $${mo%/*}; \
-		msgfmt -o $$mo $$lang.po; \
-	done
+%/LC_MESSAGES/options.mo: %.po
+	@mo="$@" \
+	lang=$${mo%%/*}; \
+	echo "Updating ($$lang) $@ from $?."; \
+	mkdir -p $$lang/LC_MESSAGES; \
+	msgfmt -o $@ $?
 
 # Use this target to create or update .po files with new messages in
 # driconf.py.
-po: $(POS)
+po: $(POT)
+	@for po in $(POS); do \
+		if [ -f $$po ]; then \
+			echo "Merging new strings from $(POT) into $@."; \
+			mv $$po $$po~; \
+			msgmerge -o $$po $$po~ $(POT); \
+		else \
+			echo "Initializing $$po from $(POT)."; \
+			msginit -i $(POT) -o $$po~ --locale=$*; \
+			sed -e 's/charset=.*\\n/charset=UTF-8\\n/' $$po~ > $$po; \
+		fi \
+	done
 
 pot: $(POT)
 
 # Extract message catalog from driconf.py.
 $(POT): t_options.h
 	xgettext -L C --from-code utf-8 -o $(POT) t_options.h
-
-# Create or update a .po file for a specific language.
-%.po: $(POT)
-	@if [ -f $@ ]; then \
-		echo "Merging new strings from $(POT) into $@."; \
-		mv $@ $@~; \
-		msgmerge -o $@ $@~ $(POT); \
-	else \
-		echo "Initializing $@ from $(POT)."; \
-		msginit -i $(POT) -o $@~ --locale=$*; \
-		sed -e 's/charset=.*\\n/charset=UTF-8\\n/' $@~ > $@; \
-	fi
