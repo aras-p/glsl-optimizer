@@ -91,7 +91,7 @@ softpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
       break;
    case PIPE_QUERY_TIMESTAMP_DISJOINT:
    case PIPE_QUERY_TIME_ELAPSED:
-      sq->start = 1000*os_time_get();
+      sq->start = os_time_get_nano();
       break;
    case PIPE_QUERY_SO_STATISTICS:
       sq->so.primitives_storage_needed = 0;
@@ -131,7 +131,7 @@ softpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
       /* fall through */
    case PIPE_QUERY_TIMESTAMP_DISJOINT:
    case PIPE_QUERY_TIME_ELAPSED:
-      sq->end = 1000*os_time_get();
+      sq->end = os_time_get_nano();
       break;
    case PIPE_QUERY_SO_STATISTICS:
       sq->so.primitives_storage_needed =
@@ -172,8 +172,8 @@ softpipe_get_query_result(struct pipe_context *pipe,
       break;
    case PIPE_QUERY_TIMESTAMP_DISJOINT: {
       struct pipe_query_data_timestamp_disjoint td;
-      /*os_get_time is in microseconds*/
-      td.frequency = 1000000;
+      /* os_get_time_nano return nanoseconds */
+      td.frequency = UINT64_C(1000000000);
       td.disjoint = sq->end != sq->start;
       memcpy(vresult, &td,
              sizeof(struct pipe_query_data_timestamp_disjoint));

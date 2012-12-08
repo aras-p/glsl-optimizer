@@ -366,7 +366,7 @@ softpipe_flush_frontbuffer(struct pipe_screen *_screen,
 static uint64_t
 softpipe_get_timestamp(struct pipe_screen *_screen)
 {
-   return os_time_get()*1000;
+   return os_time_get_nano();
 }
 
 /**
