@@ -2513,7 +2513,6 @@ struct gl_query_state
 /** Sync object state */
 struct gl_sync_object
 {
-   struct set_entry *SetEntry;
    GLenum Type;               /**< GL_SYNC_FENCE */
    GLuint Name;               /**< Fence name */
    GLint RefCount;            /**< Reference count */
