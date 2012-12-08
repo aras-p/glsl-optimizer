@@ -411,9 +411,10 @@ etc2_rgb8_parse_block(struct etc2_block *block,
       }
    }
    else if (G_plus_dG < 0 || G_plus_dG > 31){
+      int base_color_1_value, base_color_2_value;
+
       /* H mode */
       block->is_h_mode = true;
-      int base_color_1_value, base_color_2_value;
 
       for(i = 0; i < 3; i++) {
          block->base_colors[0][i] = etc2_base_color1_h_mode(src, i);
