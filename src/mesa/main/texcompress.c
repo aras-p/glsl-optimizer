@@ -42,7 +42,6 @@
 #include "texcompress_rgtc.h"
 #include "texcompress_s3tc.h"
 #include "texcompress_etc.h"
-#include "swrast/s_context.h"
 
 
 /**
@@ -565,120 +564,25 @@ _mesa_decompress_image(gl_format format, GLuint width, GLuint height,
                        const GLubyte *src, GLint srcRowStride,
                        GLfloat *dest)
 {
-   void (*fetch)(const struct swrast_texture_image *texImage,
-                 GLint i, GLint j, GLint k, GLfloat *texel);
-   struct swrast_texture_image texImage;  /* dummy teximage */
+   compressed_fetch_func fetch;
    GLuint i, j;
    GLuint bytes, bw, bh;
+   GLint stride;
 
    bytes = _mesa_get_format_bytes(format);
    _mesa_get_format_block_size(format, &bw, &bh);
 
-   /* setup dummy texture image info */
-   memset(&texImage, 0, sizeof(texImage));
-   texImage.Map = (void *) src;
-
-   /* XXX This line is a bit of a hack to adapt to the row stride
-    * convention used by the texture decompression functions.
-    */
-   texImage.RowStride = srcRowStride * bh / bytes;
-
-   switch (format) {
-   /* DXT formats */
-   case MESA_FORMAT_RGB_DXT1:
-      fetch = _mesa_fetch_texel_rgb_dxt1;
-      break;
-   case MESA_FORMAT_RGBA_DXT1:
-      fetch = _mesa_fetch_texel_rgba_dxt1;
-      break;
-   case MESA_FORMAT_RGBA_DXT3:
-      fetch = _mesa_fetch_texel_rgba_dxt3;
-      break;
-   case MESA_FORMAT_RGBA_DXT5:
-      fetch = _mesa_fetch_texel_rgba_dxt5;
-      break;
-
-   /* FXT1 formats */
-   case MESA_FORMAT_RGB_FXT1:
-      fetch = _mesa_fetch_texel_2d_f_rgb_fxt1;
-      break;
-   case MESA_FORMAT_RGBA_FXT1:
-      fetch = _mesa_fetch_texel_2d_f_rgba_fxt1;
-      break;
-
-   /* Red/RG formats */
-   case MESA_FORMAT_RED_RGTC1:
-      fetch = _mesa_fetch_texel_red_rgtc1;
-      break;
-   case MESA_FORMAT_SIGNED_RED_RGTC1:
-      fetch = _mesa_fetch_texel_signed_red_rgtc1;
-      break;
-   case MESA_FORMAT_RG_RGTC2:
-      fetch = _mesa_fetch_texel_rg_rgtc2;
-      break;
-   case MESA_FORMAT_SIGNED_RG_RGTC2:
-      fetch = _mesa_fetch_texel_signed_rg_rgtc2;
-      break;
-
-   /* L/LA formats */
-   case MESA_FORMAT_L_LATC1:
-      fetch = _mesa_fetch_texel_l_latc1;
-      break;
-   case MESA_FORMAT_SIGNED_L_LATC1:
-      fetch = _mesa_fetch_texel_signed_l_latc1;
-      break;
-   case MESA_FORMAT_LA_LATC2:
-      fetch = _mesa_fetch_texel_la_latc2;
-      break;
-   case MESA_FORMAT_SIGNED_LA_LATC2:
-      fetch = _mesa_fetch_texel_signed_la_latc2;
-      break;
-
-   /* ETC1 formats */
-   case MESA_FORMAT_ETC1_RGB8:
-      fetch = _mesa_fetch_texel_2d_f_etc1_rgb8;
-      break;
-
-   /* ETC2 formats */
-   case MESA_FORMAT_ETC2_RGB8:
-      fetch = _mesa_fetch_texel_2d_f_etc2_rgb8;
-      break;
-   case MESA_FORMAT_ETC2_SRGB8:
-      fetch = _mesa_fetch_texel_2d_f_etc2_srgb8;
-      break;
-   case MESA_FORMAT_ETC2_RGBA8_EAC:
-      fetch = _mesa_fetch_texel_2d_f_etc2_rgba8_eac;
-      break;
-   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
-      fetch = _mesa_fetch_texel_2d_f_etc2_srgb8_alpha8_eac;
-      break;
-   case MESA_FORMAT_ETC2_R11_EAC:
-      fetch = _mesa_fetch_texel_2d_f_etc2_r11_eac;
-      break;
-   case MESA_FORMAT_ETC2_RG11_EAC:
-      fetch = _mesa_fetch_texel_2d_f_etc2_rg11_eac;
-      break;
-   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
-      fetch = _mesa_fetch_texel_2d_f_etc2_signed_r11_eac;
-      break;
-   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
-      fetch = _mesa_fetch_texel_2d_f_etc2_signed_rg11_eac;
-      break;
-   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
-      fetch = _mesa_fetch_texel_2d_f_etc2_rgb8_punchthrough_alpha1;
-      break;
-   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
-      fetch = _mesa_fetch_texel_2d_f_etc2_srgb8_punchthrough_alpha1;
-      break;
-
-   default:
+   fetch = _mesa_get_compressed_fetch_func(format);
+   if (!fetch) {
       _mesa_problem(NULL, "Unexpected format in _mesa_decompress_image()");
       return;
    }
+ 
+   stride = srcRowStride * bh / bytes;
 
    for (j = 0; j < height; j++) {
       for (i = 0; i < width; i++) {
-         fetch(&texImage, i, j, 0, dest);
+         fetch(src, NULL, stride, i, j, 0, dest);
          dest += 4;
       }
    }
