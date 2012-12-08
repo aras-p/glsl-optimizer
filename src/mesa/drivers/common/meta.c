@@ -1856,6 +1856,7 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       "   gl_FragColor = color;\n"
       "}\n";
    GLuint vs, fs;
+   bool has_integer_textures;
 
    if (clear->ArrayObj != 0)
       return;
@@ -1891,7 +1892,7 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
    clear->ColorLocation = _mesa_GetUniformLocation(clear->ShaderProg,
 						      "color");
 
-   bool has_integer_textures = _mesa_is_gles3(ctx) ||
+   has_integer_textures = _mesa_is_gles3(ctx) ||
       (_mesa_is_desktop_gl(ctx) && ctx->Const.GLSLVersion >= 130);
 
    if (has_integer_textures) {
