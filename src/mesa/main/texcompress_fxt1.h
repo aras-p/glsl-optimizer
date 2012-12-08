@@ -45,4 +45,7 @@ extern void
 _mesa_fetch_texel_2d_f_rgb_fxt1(const struct swrast_texture_image *texImage,
                                 GLint i, GLint j, GLint k, GLfloat *texel);
 
+compressed_fetch_func
+_mesa_get_fxt_fetch_func(gl_format format);
+
 #endif /* TEXCOMPRESS_FXT1_H */
