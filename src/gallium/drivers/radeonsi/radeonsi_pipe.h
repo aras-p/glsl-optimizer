@@ -194,7 +194,7 @@ void si_flush_depth_textures(struct r600_context *rctx);
 bool si_init_resource(struct r600_screen *rscreen,
 		      struct si_resource *res,
 		      unsigned size, unsigned alignment,
-		      unsigned bind, unsigned usage);
+		      boolean use_reusable_pool, unsigned usage);
 struct pipe_resource *si_buffer_create(struct pipe_screen *screen,
 				       const struct pipe_resource *templ);
 void r600_upload_index_buffer(struct r600_context *rctx,

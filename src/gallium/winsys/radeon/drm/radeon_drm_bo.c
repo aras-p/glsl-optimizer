@@ -813,7 +813,7 @@ static struct pb_buffer *
 radeon_winsys_bo_create(struct radeon_winsys *rws,
                         unsigned size,
                         unsigned alignment,
-                        unsigned bind,
+                        boolean use_reusable_pool,
                         enum radeon_bo_domain domain)
 {
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
@@ -829,8 +829,7 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
     desc.initial_domains = domain;
 
     /* Assign a buffer manager. */
-    if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER |
-                PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_CUSTOM))
+    if (use_reusable_pool)
         provider = ws->cman;
     else
         provider = ws->kman;

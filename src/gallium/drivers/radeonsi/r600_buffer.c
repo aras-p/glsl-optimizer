@@ -100,7 +100,7 @@ static const struct u_resource_vtbl r600_buffer_vtbl =
 bool si_init_resource(struct r600_screen *rscreen,
 			struct si_resource *res,
 			unsigned size, unsigned alignment,
-			unsigned bind, unsigned usage)
+			boolean use_reusable_pool, unsigned usage)
 {
 	uint32_t initial_domain, domains;
 
@@ -129,7 +129,9 @@ bool si_init_resource(struct r600_screen *rscreen,
 		}
 	}
 
-	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment, bind, initial_domain);
+	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment,
+                                              use_reusable_pool,
+                                              initial_domain);
 	if (!res->buf) {
 		return false;
 	}
@@ -154,7 +156,7 @@ struct pipe_resource *si_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.b.screen = screen;
 	rbuffer->b.vtbl = &r600_buffer_vtbl;
 
-	if (!si_init_resource(rscreen, rbuffer, templ->width0, alignment, templ->bind, templ->usage)) {
+	if (!si_init_resource(rscreen, rbuffer, templ->width0, alignment, TRUE, templ->usage)) {
 		FREE(rbuffer);
 		return NULL;
 	}

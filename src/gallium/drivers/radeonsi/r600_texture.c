@@ -500,7 +500,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 		unsigned size = rtex->surface.bo_size;
 
 		base_align = rtex->surface.bo_alignment;
-		if (!si_init_resource(rscreen, resource, size, base_align, base->bind, base->usage)) {
+		if (!si_init_resource(rscreen, resource, size, base_align, FALSE, base->usage)) {
 			FREE(rtex);
 			return NULL;
 		}

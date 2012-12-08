@@ -142,14 +142,14 @@ struct radeon_winsys {
      * \param ws        The winsys this function is called from.
      * \param size      The size to allocate.
      * \param alignment An alignment of the buffer in memory.
-     * \param bind      A bitmask of the PIPE_BIND_* flags.
+     * \param use_reusable_pool Whether the cache buffer manager should be used.
      * \param domain    A bitmask of the RADEON_DOMAIN_* flags.
      * \return          The created buffer object.
      */
     struct pb_buffer *(*buffer_create)(struct radeon_winsys *ws,
                                        unsigned size,
                                        unsigned alignment,
-                                       unsigned bind,
+                                       boolean use_reusable_pool,
                                        enum radeon_bo_domain domain);
 
     struct radeon_winsys_cs_handle *(*buffer_get_cs_handle)(

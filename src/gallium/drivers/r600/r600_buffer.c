@@ -112,7 +112,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 			/* Create a new one in the same pipe_resource. */
 			/* XXX We probably want a different alignment for buffers and textures. */
 			r600_init_resource(rctx->screen, rbuffer, rbuffer->b.b.width0, 4096,
-					   rbuffer->b.b.bind, rbuffer->b.b.usage);
+					   TRUE, rbuffer->b.b.usage);
 
 			/* We changed the buffer, now we need to bind it where the old one was bound. */
 			/* Vertex buffers. */
@@ -203,7 +203,7 @@ static const struct u_resource_vtbl r600_buffer_vtbl =
 bool r600_init_resource(struct r600_screen *rscreen,
 			struct r600_resource *res,
 			unsigned size, unsigned alignment,
-			unsigned bind, unsigned usage)
+			bool use_reusable_pool, unsigned usage)
 {
 	uint32_t initial_domain, domains;
 
@@ -234,7 +234,9 @@ bool r600_init_resource(struct r600_screen *rscreen,
 		break;
 	}
 
-	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment, bind, initial_domain);
+	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment,
+                                              use_reusable_pool,
+                                              initial_domain);
 	if (!res->buf) {
 		return false;
 	}
@@ -258,7 +260,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.b.screen = screen;
 	rbuffer->b.vtbl = &r600_buffer_vtbl;
 
-	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, templ->bind, templ->usage)) {
+	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, TRUE, templ->usage)) {
 		FREE(rbuffer);
 		return NULL;
 	}
