@@ -93,8 +93,8 @@ get_buffer_target(struct gl_context *ctx, GLenum target)
       }
       break;
    case GL_TEXTURE_BUFFER:
-      if (_mesa_is_desktop_gl(ctx)
-          && ctx->Extensions.ARB_texture_buffer_object) {
+      if (ctx->API == API_OPENGL_CORE &&
+          ctx->Extensions.ARB_texture_buffer_object) {
          return &ctx->Texture.BufferObject;
       }
       break;

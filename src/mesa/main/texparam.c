@@ -976,7 +976,7 @@ legal_get_tex_level_parameter_target(struct gl_context *ctx, GLenum target)
        * From the OpenGL 3.1 spec:
        * "target may also be TEXTURE_BUFFER, indicating the texture buffer."
        */
-      return _mesa_is_desktop_gl(ctx) && ctx->Version >= 31;
+      return ctx->API == API_OPENGL_CORE && ctx->Version >= 31;
    default:
       return GL_FALSE;
    }

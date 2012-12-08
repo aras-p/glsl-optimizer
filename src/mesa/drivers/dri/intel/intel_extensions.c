@@ -102,10 +102,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_blend_func_extended = !driQueryOptionb(&intel->optionCache, "disable_blend_func_extended");
       ctx->Extensions.ARB_draw_buffers_blend = true;
       ctx->Extensions.ARB_uniform_buffer_object = true;
-
-      if (ctx->API == API_OPENGL_CORE) {
-         ctx->Extensions.ARB_texture_buffer_object = true;
-      }
+      ctx->Extensions.ARB_texture_buffer_object = true;
    }
 
    if (intel->gen >= 5)

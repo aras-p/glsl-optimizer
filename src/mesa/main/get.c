@@ -129,6 +129,7 @@ enum value_extra {
    EXTRA_VERSION_31,
    EXTRA_VERSION_32,
    EXTRA_API_GL,
+   EXTRA_API_GL_CORE,
    EXTRA_API_ES2,
    EXTRA_NEW_BUFFERS, 
    EXTRA_NEW_FRAG_CLAMP,
@@ -283,6 +284,7 @@ static const int extra_GLSL_130[] = {
 };
 
 static const int extra_texture_buffer_object[] = {
+   EXTRA_API_GL_CORE,
    EXTRA_VERSION_31,
    EXT(ARB_texture_buffer_object),
    EXTRA_END
@@ -329,7 +331,6 @@ EXTRA_EXT2(ARB_vertex_program, ARB_fragment_program);
 EXTRA_EXT(ARB_geometry_shader4);
 EXTRA_EXT(ARB_color_buffer_float);
 EXTRA_EXT(EXT_framebuffer_sRGB);
-EXTRA_EXT(ARB_texture_buffer_object);
 EXTRA_EXT(OES_EGL_image_external);
 EXTRA_EXT(ARB_blend_func_extended);
 EXTRA_EXT(ARB_uniform_buffer_object);
@@ -875,6 +876,12 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
 	 break;
       case EXTRA_API_GL:
 	 if (_mesa_is_desktop_gl(ctx)) {
+	    total++;
+	    enabled++;
+	 }
+	 break;
+      case EXTRA_API_GL_CORE:
+	 if (ctx->API == API_OPENGL_CORE) {
 	    total++;
 	    enabled++;
 	 }

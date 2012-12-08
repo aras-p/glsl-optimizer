@@ -126,7 +126,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_shadow",                              o(ARB_shadow),                              GLL,            2001 },
    { "GL_ARB_sync",                                o(ARB_sync),                                GL,             2003 },
    { "GL_ARB_texture_border_clamp",                o(ARB_texture_border_clamp),                GLL,            2000 },
-   { "GL_ARB_texture_buffer_object",               o(ARB_texture_buffer_object),               GL,             2008 },
+   { "GL_ARB_texture_buffer_object",               o(ARB_texture_buffer_object),               GLC,            2008 },
    { "GL_ARB_texture_compression",                 o(dummy_true),                              GLL,            2000 },
    { "GL_ARB_texture_compression_rgtc",            o(ARB_texture_compression_rgtc),            GL,             2004 },
    { "GL_ARB_texture_cube_map",                    o(ARB_texture_cube_map),                    GLL,            1999 },

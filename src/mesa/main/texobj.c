@@ -1148,9 +1148,9 @@ target_enum_to_index(struct gl_context *ctx, GLenum target)
          || _mesa_is_gles3(ctx)
          ? TEXTURE_2D_ARRAY_INDEX : -1;
    case GL_TEXTURE_BUFFER_ARB:
-      return _mesa_is_desktop_gl(ctx)
-         && ctx->Extensions.ARB_texture_buffer_object
-         ? TEXTURE_BUFFER_INDEX : -1;
+      return ctx->API == API_OPENGL_CORE &&
+             ctx->Extensions.ARB_texture_buffer_object ?
+             TEXTURE_BUFFER_INDEX : -1;
    case GL_TEXTURE_EXTERNAL_OES:
       return _mesa_is_gles(ctx) && ctx->Extensions.OES_EGL_image_external
          ? TEXTURE_EXTERNAL_INDEX : -1;

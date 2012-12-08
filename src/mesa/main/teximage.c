@@ -791,9 +791,9 @@ _mesa_select_tex_object(struct gl_context *ctx,
       case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
          return arrayTex ? ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX] : NULL;
       case GL_TEXTURE_BUFFER:
-         return _mesa_is_desktop_gl(ctx) 
-            && ctx->Extensions.ARB_texture_buffer_object
-            ? texUnit->CurrentTex[TEXTURE_BUFFER_INDEX] : NULL;
+         return ctx->API == API_OPENGL_CORE &&
+                ctx->Extensions.ARB_texture_buffer_object ?
+                texUnit->CurrentTex[TEXTURE_BUFFER_INDEX] : NULL;
       case GL_TEXTURE_EXTERNAL_OES:
          return ctx->Extensions.OES_EGL_image_external
             ? texUnit->CurrentTex[TEXTURE_EXTERNAL_INDEX] : NULL;
@@ -994,9 +994,8 @@ _mesa_max_texture_levels(struct gl_context *ctx, GLenum target)
       return ctx->Extensions.ARB_texture_cube_map_array
          ? ctx->Const.MaxCubeTextureLevels : 0;
    case GL_TEXTURE_BUFFER:
-      return _mesa_is_desktop_gl(ctx)
-         && ctx->Extensions.ARB_texture_buffer_object
-         ? 1 : 0;
+      return ctx->API == API_OPENGL_CORE &&
+             ctx->Extensions.ARB_texture_buffer_object ? 1 : 0;
    case GL_TEXTURE_EXTERNAL_OES:
       /* fall-through */
    default:
@@ -3895,8 +3894,8 @@ _mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (!(ctx->Extensions.ARB_texture_buffer_object
-         && _mesa_is_desktop_gl(ctx))) {
+   if (!(ctx->API == API_OPENGL_CORE &&
+         ctx->Extensions.ARB_texture_buffer_object)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glTexBuffer");
       return;
    }
