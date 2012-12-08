@@ -76,7 +76,7 @@ struct lp_sampler_static_state
    unsigned swizzle_a:3;
 
    /* pipe_texture's state */
-   unsigned target:3;        /**< PIPE_TEXTURE_* */
+   unsigned target:4;        /**< PIPE_TEXTURE_* */
    unsigned pot_width:1;     /**< is the width a power of two? */
    unsigned pot_height:1;
    unsigned pot_depth:1;
