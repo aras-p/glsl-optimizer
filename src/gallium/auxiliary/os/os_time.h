@@ -62,7 +62,7 @@ os_time_get_nano(void);
  */
 static INLINE int64_t
 os_time_get(void) {
-    return os_time_get_nano() * 1000;
+    return os_time_get_nano() / 1000;
 }
 
 
