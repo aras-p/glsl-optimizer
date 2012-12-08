@@ -29,7 +29,6 @@
 #include "mfeatures.h"
 #include "texstore.h"
 
-struct swrast_texture_image;
 
 extern GLboolean
 _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS);
@@ -37,13 +36,6 @@ _mesa_texstore_rgb_fxt1(TEXSTORE_PARAMS);
 extern GLboolean
 _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS);
 
-extern void
-_mesa_fetch_texel_2d_f_rgba_fxt1(const struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLfloat *texel);
-
-extern void
-_mesa_fetch_texel_2d_f_rgb_fxt1(const struct swrast_texture_image *texImage,
-                                GLint i, GLint j, GLint k, GLfloat *texel);
 
 compressed_fetch_func
 _mesa_get_fxt_fetch_func(gl_format format);

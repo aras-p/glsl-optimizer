@@ -39,7 +39,6 @@
 #include "texcompress.h"
 #include "texcompress_fxt1.h"
 #include "texstore.h"
-#include "swrast/s_context.h"
 
 
 static void
@@ -149,37 +148,6 @@ _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS)
 
    return GL_TRUE;
 }
-
-
-void
-_mesa_fetch_texel_2d_f_rgba_fxt1( const struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, GLfloat *texel )
-{
-   /* just sample as GLubyte and convert to float here */
-   GLubyte rgba[4];
-   (void) k;
-   fxt1_decode_1(texImage->Map, texImage->RowStride, i, j, rgba);
-   texel[RCOMP] = UBYTE_TO_FLOAT(rgba[RCOMP]);
-   texel[GCOMP] = UBYTE_TO_FLOAT(rgba[GCOMP]);
-   texel[BCOMP] = UBYTE_TO_FLOAT(rgba[BCOMP]);
-   texel[ACOMP] = UBYTE_TO_FLOAT(rgba[ACOMP]);
-}
-
-
-void
-_mesa_fetch_texel_2d_f_rgb_fxt1( const struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLfloat *texel )
-{
-   /* just sample as GLubyte and convert to float here */
-   GLubyte rgba[4];
-   (void) k;
-   fxt1_decode_1(texImage->Map, texImage->RowStride, i, j, rgba);
-   texel[RCOMP] = UBYTE_TO_FLOAT(rgba[RCOMP]);
-   texel[GCOMP] = UBYTE_TO_FLOAT(rgba[GCOMP]);
-   texel[BCOMP] = UBYTE_TO_FLOAT(rgba[BCOMP]);
-   texel[ACOMP] = 1.0F;
-}
-
 
 
 /***************************************************************************\

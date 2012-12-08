@@ -28,7 +28,6 @@
 #include "mfeatures.h"
 #include "texstore.h"
 
-struct swrast_texture_image;
 
 extern GLboolean
 _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS);
@@ -41,39 +40,6 @@ _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS);
 
 extern GLboolean
 _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS);
-
-extern void
-_mesa_fetch_texel_red_rgtc1(const struct swrast_texture_image *texImage,
-                            GLint i, GLint j, GLint k, GLfloat *texel);
-
-extern void
-_mesa_fetch_texel_signed_red_rgtc1(const struct swrast_texture_image *texImage,
-                                   GLint i, GLint j, GLint k, GLfloat *texel);
-
-extern void
-_mesa_fetch_texel_rg_rgtc2(const struct swrast_texture_image *texImage,
-                           GLint i, GLint j, GLint k, GLfloat *texel);
-
-extern void
-_mesa_fetch_texel_signed_rg_rgtc2(const struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, GLfloat *texel);
-
-extern void
-_mesa_fetch_texel_l_latc1(const struct swrast_texture_image *texImage,
-                          GLint i, GLint j, GLint k, GLfloat *texel);
-
-extern void
-_mesa_fetch_texel_signed_l_latc1(const struct swrast_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLfloat *texel);
-
-extern void
-_mesa_fetch_texel_la_latc2(const struct swrast_texture_image *texImage,
-                           GLint i, GLint j, GLint k, GLfloat *texel);
-
-extern void
-_mesa_fetch_texel_signed_la_latc2(const struct swrast_texture_image *texImage,
-                                  GLint i, GLint j, GLint k, GLfloat *texel);
-
 
 extern compressed_fetch_func
 _mesa_get_compressed_rgtc_func(gl_format format);
