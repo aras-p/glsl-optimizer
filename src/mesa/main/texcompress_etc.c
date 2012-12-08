@@ -212,7 +212,7 @@ etc2_base_color1_h_mode(const uint8_t *in, GLuint index)
       break;
    }
    return ((x << 4) | (x & 0xf));
- }
+}
 
 static uint8_t
 etc2_base_color2_h_mode(const uint8_t *in, GLuint index)
@@ -234,7 +234,7 @@ etc2_base_color2_h_mode(const uint8_t *in, GLuint index)
       break;
    }
    return ((x << 4) | (x & 0xf));
- }
+}
 
 static uint8_t
 etc2_base_color_o_planar(const uint8_t *in, GLuint index)
@@ -449,7 +449,7 @@ etc2_rgb8_parse_block(struct etc2_block *block,
           */
          block->base_colors[0][i] = etc1_base_color_diff_hi(src[i]);
          block->base_colors[1][i] = etc1_base_color_diff_lo(src[i]);
-     }
+      }
    }
 
    if (block->is_ind_mode || block->is_diff_mode) {
@@ -737,10 +737,10 @@ etc2_unpack_srgb8(uint8_t *dst_row,
             }
          }
          src += bs;
-       }
+      }
 
       src_row += src_stride;
-    }
+   }
 }
 
 static void
@@ -773,10 +773,10 @@ etc2_unpack_rgba8(uint8_t *dst_row,
             }
          }
          src += bs;
-       }
+      }
 
       src_row += src_stride;
-    }
+   }
 }
 
 static void
@@ -817,10 +817,10 @@ etc2_unpack_srgb8_alpha8(uint8_t *dst_row,
             }
          }
          src += bs;
-       }
+      }
 
       src_row += src_stride;
-    }
+   }
 }
 
 static void
@@ -852,10 +852,10 @@ etc2_unpack_r11(uint8_t *dst_row,
             }
          }
          src += bs;
-       }
+      }
 
       src_row += src_stride;
-    }
+   }
 }
 
 static void
@@ -900,10 +900,10 @@ etc2_unpack_rg11(uint8_t *dst_row,
             }
          }
          src += bs;
-       }
+      }
 
       src_row += src_stride;
-    }
+   }
 }
 
 static void
@@ -936,10 +936,10 @@ etc2_unpack_signed_r11(uint8_t *dst_row,
             }
          }
          src += bs;
-       }
+      }
 
       src_row += src_stride;
-    }
+   }
 }
 
 static void
@@ -984,10 +984,10 @@ etc2_unpack_signed_rg11(uint8_t *dst_row,
             }
          }
          src += bs;
-       }
+      }
 
       src_row += src_stride;
-    }
+   }
 }
 
 static void
