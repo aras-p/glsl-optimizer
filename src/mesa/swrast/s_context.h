@@ -45,6 +45,7 @@
 
 #include "main/compiler.h"
 #include "main/mtypes.h"
+#include "main/texcompress.h"
 #include "program/prog_execute.h"
 #include "swrast.h"
 #include "s_fragprog.h"
@@ -146,6 +147,9 @@ struct swrast_texture_image
    GLubyte *Buffer;
 
    FetchTexelFunc FetchTexel;
+
+   /** For fetching texels from compressed textures */
+   compressed_fetch_func FetchCompressedTexel;
 };
 
 

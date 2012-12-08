@@ -88,6 +88,23 @@ nonlinear_to_linear(GLubyte cs8)
 #define DIM 3
 #include "s_texfetch_tmp.h"
 
+
+/**
+ * All compressed texture texel fetching is done though this function.
+ * Basically just call a core-Mesa texel fetch function.
+ */
+static void
+fetch_compressed(const struct swrast_texture_image *swImage,
+                 GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   swImage->FetchCompressedTexel(swImage->Map,
+                                 swImage->ImageOffsets,
+                                 swImage->RowStride,
+                                 i, j, k, texel);
+}
+
+
+
 /**
  * Null texel fetch function.
  *
@@ -426,64 +443,64 @@ texfetch_funcs[] =
    },
    {
       MESA_FORMAT_SRGB_DXT1,
-      _mesa_fetch_texel_srgb_dxt1,
-      _mesa_fetch_texel_srgb_dxt1,
-      _mesa_fetch_texel_srgb_dxt1
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_SRGBA_DXT1,
-      _mesa_fetch_texel_srgba_dxt1,
-      _mesa_fetch_texel_srgba_dxt1,
-      _mesa_fetch_texel_srgba_dxt1
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_SRGBA_DXT3,
-      _mesa_fetch_texel_srgba_dxt3,
-      _mesa_fetch_texel_srgba_dxt3,
-      _mesa_fetch_texel_srgba_dxt3
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_SRGBA_DXT5,
-      _mesa_fetch_texel_srgba_dxt5,
-      _mesa_fetch_texel_srgba_dxt5,
-      _mesa_fetch_texel_srgba_dxt5
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
 
    {
       MESA_FORMAT_RGB_FXT1,
-      NULL,
-      _mesa_fetch_texel_2d_f_rgb_fxt1,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_RGBA_FXT1,
-      NULL,
-      _mesa_fetch_texel_2d_f_rgba_fxt1,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_RGB_DXT1,
-      _mesa_fetch_texel_rgb_dxt1,
-      _mesa_fetch_texel_rgb_dxt1,
-      _mesa_fetch_texel_rgb_dxt1
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_RGBA_DXT1,
-      _mesa_fetch_texel_rgba_dxt1,
-      _mesa_fetch_texel_rgba_dxt1,
-      _mesa_fetch_texel_rgba_dxt1
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_RGBA_DXT3,
-      _mesa_fetch_texel_rgba_dxt3,
-      _mesa_fetch_texel_rgba_dxt3,
-      _mesa_fetch_texel_rgba_dxt3
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_RGBA_DXT5,
-      _mesa_fetch_texel_rgba_dxt5,
-      _mesa_fetch_texel_rgba_dxt5,
-      _mesa_fetch_texel_rgba_dxt5
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_RGBA_FLOAT32,
@@ -976,117 +993,117 @@ texfetch_funcs[] =
    },
    {
       MESA_FORMAT_RED_RGTC1,
-      _mesa_fetch_texel_red_rgtc1,
-      _mesa_fetch_texel_red_rgtc1,
-      _mesa_fetch_texel_red_rgtc1
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_SIGNED_RED_RGTC1,
-      _mesa_fetch_texel_signed_red_rgtc1,
-      _mesa_fetch_texel_signed_red_rgtc1,
-      _mesa_fetch_texel_signed_red_rgtc1
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_RG_RGTC2,
-      _mesa_fetch_texel_rg_rgtc2,
-      _mesa_fetch_texel_rg_rgtc2,
-      _mesa_fetch_texel_rg_rgtc2
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_SIGNED_RG_RGTC2,
-      _mesa_fetch_texel_signed_rg_rgtc2,
-      _mesa_fetch_texel_signed_rg_rgtc2,
-      _mesa_fetch_texel_signed_rg_rgtc2
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_L_LATC1,
-      _mesa_fetch_texel_l_latc1,
-      _mesa_fetch_texel_l_latc1,
-      _mesa_fetch_texel_l_latc1
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_SIGNED_L_LATC1,
-      _mesa_fetch_texel_signed_l_latc1,
-      _mesa_fetch_texel_signed_l_latc1,
-      _mesa_fetch_texel_signed_l_latc1
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_LA_LATC2,
-      _mesa_fetch_texel_la_latc2,
-      _mesa_fetch_texel_la_latc2,
-      _mesa_fetch_texel_la_latc2
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_SIGNED_LA_LATC2,
-      _mesa_fetch_texel_signed_la_latc2,
-      _mesa_fetch_texel_signed_la_latc2,
-      _mesa_fetch_texel_signed_la_latc2
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_ETC1_RGB8,
-      NULL,
-      _mesa_fetch_texel_2d_f_etc1_rgb8,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_ETC2_RGB8,
-      NULL,
-      _mesa_fetch_texel_2d_f_etc2_rgb8,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_ETC2_SRGB8,
-      NULL,
-      _mesa_fetch_texel_2d_f_etc2_srgb8,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_ETC2_RGBA8_EAC,
-      NULL,
-      _mesa_fetch_texel_2d_f_etc2_rgba8_eac,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC,
-      NULL,
-      _mesa_fetch_texel_2d_f_etc2_srgb8_alpha8_eac,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_ETC2_R11_EAC,
-      NULL,
-      _mesa_fetch_texel_2d_f_etc2_r11_eac,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_ETC2_RG11_EAC,
-      NULL,
-      _mesa_fetch_texel_2d_f_etc2_rg11_eac,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_ETC2_SIGNED_R11_EAC,
-      NULL,
-      _mesa_fetch_texel_2d_f_etc2_signed_r11_eac,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_ETC2_SIGNED_RG11_EAC,
-      NULL,
-      _mesa_fetch_texel_2d_f_etc2_signed_rg11_eac,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1,
-      NULL,
-      _mesa_fetch_texel_2d_f_etc2_rgb8_punchthrough_alpha1,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1,
-      NULL,
-      _mesa_fetch_texel_2d_f_etc2_srgb8_punchthrough_alpha1,
-      NULL
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
    },
    {
       MESA_FORMAT_SIGNED_A8,
@@ -1214,6 +1231,8 @@ set_fetch_functions(const struct gl_sampler_object *samp,
    default:
       assert(!"Bad dims in set_fetch_functions()");
    }
+
+   texImage->FetchCompressedTexel = _mesa_get_compressed_fetch_func(format);
 
    ASSERT(texImage->FetchTexel);
 }
