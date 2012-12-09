@@ -39,6 +39,10 @@ struct st_query_object
 {
    struct gl_query_object base;
    struct pipe_query *pq;
+
+   /* Begin TIMESTAMP query for GL_TIME_ELAPSED_EXT queries */
+   struct pipe_query *pq_begin;
+
    unsigned type;  /**< PIPE_QUERY_x */
 };
 

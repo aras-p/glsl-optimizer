@@ -72,6 +72,11 @@ st_DeleteQuery(struct gl_context *ctx, struct gl_query_object *q)
       stq->pq = NULL;
    }
 
+   if (stq->pq_begin) {
+      pipe->destroy_query(pipe, stq->pq_begin);
+      stq->pq_begin = NULL;
+   }
+
    free(stq);
 }
 
@@ -79,7 +84,8 @@ st_DeleteQuery(struct gl_context *ctx, struct gl_query_object *q)
 static void
 st_BeginQuery(struct gl_context *ctx, struct gl_query_object *q)
 {
-   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    struct st_query_object *stq = st_query_object(q);
    unsigned type;
 
@@ -98,29 +104,46 @@ st_BeginQuery(struct gl_context *ctx, struct gl_query_object *q)
    case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
       type = PIPE_QUERY_PRIMITIVES_EMITTED;
       break;
-   case GL_TIME_ELAPSED_EXT:
-      type = PIPE_QUERY_TIME_ELAPSED;
+   case GL_TIME_ELAPSED:
+      if (st->has_time_elapsed)
+         type = PIPE_QUERY_TIME_ELAPSED;
+      else
+         type = PIPE_QUERY_TIMESTAMP;
       break;
    default:
       assert(0 && "unexpected query target in st_BeginQuery()");
       return;
    }
 
-   if (stq->pq && stq->type != type) {
+   if (stq->type != type) {
       /* free old query of different type */
-      pipe->destroy_query(pipe, stq->pq);
-      stq->pq = NULL;
+      if (stq->pq) {
+         pipe->destroy_query(pipe, stq->pq);
+         stq->pq = NULL;
+      }
+      if (stq->pq_begin) {
+         pipe->destroy_query(pipe, stq->pq_begin);
+         stq->pq_begin = NULL;
+      }
       stq->type = PIPE_QUERY_TYPES; /* an invalid value */
    }
 
-   if (!stq->pq) {
-      stq->pq = pipe->create_query(pipe, type);
-      stq->type = type;
+   if (q->Target == GL_TIME_ELAPSED &&
+       type == PIPE_QUERY_TIMESTAMP) {
+      /* Determine time elapsed by emitting two timestamp queries. */
+      if (!stq->pq_begin) {
+         stq->pq_begin = pipe->create_query(pipe, type);
+         stq->type = type;
+      }
+      pipe->end_query(pipe, stq->pq_begin);
+   } else {
+      if (!stq->pq) {
+         stq->pq = pipe->create_query(pipe, type);
+         stq->type = type;
+      }
+      pipe->begin_query(pipe, stq->pq);
    }
-
    assert(stq->type == type);
-
-   pipe->begin_query(pipe, stq->pq);
 }
 
 
@@ -132,12 +155,41 @@ st_EndQuery(struct gl_context *ctx, struct gl_query_object *q)
 
    st_flush_bitmap_cache(st_context(ctx));
 
-   if (q->Target == GL_TIMESTAMP && !stq->pq) {
+   if ((q->Target == GL_TIMESTAMP ||
+        q->Target == GL_TIME_ELAPSED) &&
+       !stq->pq) {
       stq->pq = pipe->create_query(pipe, PIPE_QUERY_TIMESTAMP);
       stq->type = PIPE_QUERY_TIMESTAMP;
    }
 
    pipe->end_query(pipe, stq->pq);
+}
+
+
+static boolean
+get_query_result(struct pipe_context *pipe,
+                 struct st_query_object *stq,
+                 boolean wait)
+{
+   if (!pipe->get_query_result(pipe,
+                               stq->pq,
+                               wait,
+                               (void *)&stq->base.Result)) {
+      return FALSE;
+   }
+
+   if (stq->base.Target == GL_TIME_ELAPSED &&
+       stq->type == PIPE_QUERY_TIMESTAMP) {
+      /* Calculate the elapsed time from the two timestamp queries */
+      GLuint64EXT Result0 = 0;
+      assert(stq->pq_begin);
+      pipe->get_query_result(pipe, stq->pq_begin, TRUE, (void *)&Result0);
+      stq->base.Result -= Result0;
+   } else {
+      assert(!stq->pq_begin);
+   }
+
+   return TRUE;
 }
 
 
@@ -151,10 +203,7 @@ st_WaitQuery(struct gl_context *ctx, struct gl_query_object *q)
    assert(!stq->base.Ready);
 
    while (!stq->base.Ready &&
-	  !pipe->get_query_result(pipe, 
-				  stq->pq,
-				  TRUE,
-				  (void*)&q->Result))
+	  !get_query_result(pipe, stq, TRUE))
    {
       /* nothing */
    }
@@ -169,7 +218,7 @@ st_CheckQuery(struct gl_context *ctx, struct gl_query_object *q)
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
    assert(!q->Ready);   /* we should not get called if Ready is TRUE */
-   q->Ready = pipe->get_query_result(pipe, stq->pq, FALSE, (void*)&q->Result);
+   q->Ready = get_query_result(pipe, stq, FALSE);
 }
 
 

@@ -371,6 +371,7 @@ void st_init_extensions(struct st_context *st)
       { o(ARB_shader_texture_lod),           PIPE_CAP_SM3                              },
       { o(ARB_shadow),                       PIPE_CAP_TEXTURE_SHADOW_MAP               },
       { o(ARB_texture_non_power_of_two),     PIPE_CAP_NPOT_TEXTURES                    },
+      { o(ARB_timer_query),                  PIPE_CAP_QUERY_TIMESTAMP                  },
       { o(ARB_transform_feedback2),          PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME       },
       { o(ARB_transform_feedback3),          PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME       },
 
@@ -382,7 +383,6 @@ void st_init_extensions(struct st_context *st)
       { o(EXT_texture_filter_anisotropic),   PIPE_CAP_ANISOTROPIC_FILTER               },
       { o(EXT_texture_mirror_clamp),         PIPE_CAP_TEXTURE_MIRROR_CLAMP             },
       { o(EXT_texture_swizzle),              PIPE_CAP_TEXTURE_SWIZZLE                  },
-      { o(EXT_timer_query),                  PIPE_CAP_QUERY_TIME_ELAPSED                      },
       { o(EXT_transform_feedback),           PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS        },
 
       { o(AMD_seamless_cubemap_per_texture), PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE    },
@@ -652,9 +652,12 @@ void st_init_extensions(struct st_context *st)
    if (ctx->Const.MaxDualSourceDrawBuffers > 0)
       ctx->Extensions.ARB_blend_func_extended = GL_TRUE;
 
-   if (screen->get_param(screen, PIPE_CAP_QUERY_TIME_ELAPSED) &&
-       screen->get_param(screen, PIPE_CAP_QUERY_TIMESTAMP)) {
-      ctx->Extensions.ARB_timer_query = GL_TRUE;
+   st->has_time_elapsed =
+      screen->get_param(screen, PIPE_CAP_QUERY_TIME_ELAPSED);
+
+   if (st->has_time_elapsed ||
+       ctx->Extensions.ARB_timer_query) {
+      ctx->Extensions.EXT_timer_query = GL_TRUE;
    }
 
    if (ctx->Extensions.ARB_transform_feedback2 &&
