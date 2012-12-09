@@ -134,7 +134,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_VERTEX_COLOR_CLAMPED:
       return 1;
    case PIPE_CAP_QUERY_TIMESTAMP:
-   case PIPE_CAP_TIMER_QUERY:
+   case PIPE_CAP_QUERY_TIME_ELAPSED:
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:

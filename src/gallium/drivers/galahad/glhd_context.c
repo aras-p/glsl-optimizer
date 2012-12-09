@@ -74,7 +74,7 @@ galahad_context_create_query(struct pipe_context *_pipe,
    }
 
    if (query_type == PIPE_QUERY_TIME_ELAPSED &&
-      !pipe->screen->get_param(pipe->screen, PIPE_CAP_TIMER_QUERY)) {
+      !pipe->screen->get_param(pipe->screen, PIPE_CAP_QUERY_TIME_ELAPSED)) {
       glhd_error("Timer query requested but not supported");
    }
 
