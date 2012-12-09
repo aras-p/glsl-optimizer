@@ -234,9 +234,6 @@ descriptor=[
 
 # GL_ARB_vertex_shader
   [ "MAX_VARYING_FLOATS_ARB", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_vertex_shader" ],
-
-# GL_EXT_texture_lod_bias
-  [ "MAX_TEXTURE_LOD_BIAS_EXT", "CONTEXT_FLOAT(Const.MaxTextureLodBias), NO_EXTRA" ],
 ]},
 
 
@@ -314,6 +311,13 @@ descriptor=[
 # GL_NV_read_buffer
   [ "READ_BUFFER", "LOC_CUSTOM, TYPE_ENUM, NO_OFFSET, extra_NV_read_buffer_api_gl" ],
 ]},
+
+# GLES3 is not a typo.
+{ "apis": ["GL", "GLES", "GLES3", "GL_CORE"], "params": [
+# GL_EXT_texture_lod_bias
+  [ "MAX_TEXTURE_LOD_BIAS_EXT", "CONTEXT_FLOAT(Const.MaxTextureLodBias), NO_EXTRA" ],
+]},
+
 
 # Enums in  OpenGL and ES 3.0
 { "apis": ["GL", "GL_CORE", "GLES3"], "params": [
