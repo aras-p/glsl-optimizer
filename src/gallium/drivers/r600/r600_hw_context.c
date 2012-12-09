@@ -1005,7 +1005,7 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 
 			if (ctx->streamout_append_bitmask & (1 << i)) {
 				va = r600_resource_va(&ctx->screen->screen,
-						      (void*)t[i]->filled_size);
+						      (void*)t[i]->buf_filled_size) + t[i]->buf_filled_size_offset;
 				/* Append. */
 				cs->buf[cs->cdw++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
 				cs->buf[cs->cdw++] = STRMOUT_SELECT_BUFFER(i) |
@@ -1017,7 +1017,7 @@ void r600_context_streamout_begin(struct r600_context *ctx)
 
 				cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
 				cs->buf[cs->cdw++] =
-					r600_context_bo_reloc(ctx,  t[i]->filled_size,
+					r600_context_bo_reloc(ctx,  t[i]->buf_filled_size,
 							      RADEON_USAGE_READ);
 			} else {
 				/* Start from the beginning. */
@@ -1054,7 +1054,7 @@ void r600_context_streamout_end(struct r600_context *ctx)
 	for (i = 0; i < ctx->num_so_targets; i++) {
 		if (t[i]) {
 			va = r600_resource_va(&ctx->screen->screen,
-					      (void*)t[i]->filled_size);
+					      (void*)t[i]->buf_filled_size) + t[i]->buf_filled_size_offset;
 			cs->buf[cs->cdw++] = PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0);
 			cs->buf[cs->cdw++] = STRMOUT_SELECT_BUFFER(i) |
 						       STRMOUT_OFFSET_SOURCE(STRMOUT_OFFSET_NONE) |
@@ -1066,7 +1066,7 @@ void r600_context_streamout_end(struct r600_context *ctx)
 
 			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
 			cs->buf[cs->cdw++] =
-				r600_context_bo_reloc(ctx,  t[i]->filled_size,
+				r600_context_bo_reloc(ctx,  t[i]->buf_filled_size,
 						      RADEON_USAGE_WRITE);
 
 		}

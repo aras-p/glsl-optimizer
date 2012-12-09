@@ -956,10 +956,17 @@ r600_create_so_target(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_so_target *t;
-	void *ptr;
 
 	t = CALLOC_STRUCT(r600_so_target);
 	if (!t) {
+		return NULL;
+	}
+
+	u_suballocator_alloc(rctx->allocator_so_filled_size, 4,
+			     &t->buf_filled_size_offset,
+			     (struct pipe_resource**)&t->buf_filled_size);
+	if (!t->buf_filled_size) {
+		FREE(t);
 		return NULL;
 	}
 
@@ -968,13 +975,6 @@ r600_create_so_target(struct pipe_context *ctx,
 	pipe_resource_reference(&t->b.buffer, buffer);
 	t->b.buffer_offset = buffer_offset;
 	t->b.buffer_size = buffer_size;
-
-	t->filled_size = (struct r600_resource*)
-		pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_STATIC, 4);
-	ptr = rctx->ws->buffer_map(t->filled_size->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
-	memset(ptr, 0, t->filled_size->buf->size);
-	rctx->ws->buffer_unmap(t->filled_size->cs_buf);
-
 	return &t->b;
 }
 
@@ -983,7 +983,7 @@ static void r600_so_target_destroy(struct pipe_context *ctx,
 {
 	struct r600_so_target *t = (struct r600_so_target*)target;
 	pipe_resource_reference(&t->b.buffer, NULL);
-	pipe_resource_reference((struct pipe_resource**)&t->filled_size, NULL);
+	pipe_resource_reference((struct pipe_resource**)&t->buf_filled_size, NULL);
 	FREE(t);
 }
 
@@ -1308,7 +1308,7 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	} else {
 		if (info.count_from_stream_output) {
 			struct r600_so_target *t = (struct r600_so_target*)info.count_from_stream_output;
-			uint64_t va = r600_resource_va(&rctx->screen->screen, (void*)t->filled_size);
+			uint64_t va = r600_resource_va(&rctx->screen->screen, (void*)t->buf_filled_size) + t->buf_filled_size_offset;
 
 			r600_write_context_reg(cs, R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE, t->stride_in_dw);
 
@@ -1320,7 +1320,7 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 			cs->buf[cs->cdw++] = 0; /* unused */
 
 			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-			cs->buf[cs->cdw++] = r600_context_bo_reloc(rctx, t->filled_size, RADEON_USAGE_READ);
+			cs->buf[cs->cdw++] = r600_context_bo_reloc(rctx, t->buf_filled_size, RADEON_USAGE_READ);
 		}
 
 		cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, rctx->predicate_drawing);

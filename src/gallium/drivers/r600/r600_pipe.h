@@ -28,6 +28,7 @@
 
 #include "util/u_blitter.h"
 #include "util/u_slab.h"
+#include "util/u_suballoc.h"
 #include "r600.h"
 #include "r600_llvm.h"
 #include "r600_public.h"
@@ -389,6 +390,7 @@ struct r600_context {
 	struct radeon_winsys_cs		*cs;
 	struct blitter_context		*blitter;
 	struct u_upload_mgr	        *uploader;
+	struct u_suballocator		*allocator_so_filled_size;
 	struct util_slab_mempool	pool_transfers;
 
 	/* Hardware info. */

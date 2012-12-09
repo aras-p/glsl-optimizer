@@ -175,7 +175,9 @@ struct r600_so_target {
 	struct pipe_stream_output_target b;
 
 	/* The buffer where BUFFER_FILLED_SIZE is stored. */
-	struct r600_resource	*filled_size;
+	struct r600_resource	*buf_filled_size;
+	unsigned		buf_filled_size_offset;
+
 	unsigned		stride_in_dw;
 	unsigned		so_index;
 };
