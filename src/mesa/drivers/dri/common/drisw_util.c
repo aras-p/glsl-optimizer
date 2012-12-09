@@ -126,7 +126,10 @@ driCreateContextAttribs(__DRIscreen *screen, int api,
             mesa_api = API_OPENGLES2;
             break;
     case __DRI_API_OPENGL_CORE:
+            mesa_api = API_OPENGL_CORE;
+            break;
     default:
+            *error = __DRI_CTX_ERROR_BAD_API;
             return NULL;
     }
 
@@ -149,6 +152,19 @@ driCreateContextAttribs(__DRIscreen *screen, int api,
 	}
     }
 
+    /* Mesa does not support the GL_ARB_compatibilty extension or the
+     * compatibility profile.  This means that we treat a API_OPENGL_COMPAT 3.1 as
+     * API_OPENGL_CORE and reject API_OPENGL_COMPAT 3.2+.
+     */
+    if (mesa_api == API_OPENGL_COMPAT && major_version == 3 && minor_version == 1)
+       mesa_api = API_OPENGL_CORE;
+
+    if (mesa_api == API_OPENGL_COMPAT
+        && ((major_version > 3)
+            || (major_version == 3 && minor_version >= 2))) {
+       *error = __DRI_CTX_ERROR_BAD_API;
+       return NULL;
+    }
     /* There are no forward-compatible contexts before OpenGL 3.0.  The
      * GLX_ARB_create_context spec says:
      *
