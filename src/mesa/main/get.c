@@ -303,8 +303,12 @@ static const int extra_ARB_uniform_buffer_object_and_geometry_shader[] = {
    EXTRA_END
 };
 
+static const int extra_ARB_ES2_compatibility_api_es2[] = {
+   EXT(ARB_ES2_compatibility),
+   EXTRA_API_ES2,
+   EXTRA_END
+};
 
-EXTRA_EXT(ARB_ES2_compatibility);
 EXTRA_EXT(ARB_texture_cube_map);
 EXTRA_EXT(MESA_texture_array);
 EXTRA_EXT2(EXT_secondary_color, ARB_vertex_program);
