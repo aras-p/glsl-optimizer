@@ -4016,35 +4016,48 @@ ast_type_specifier::hir(exec_list *instructions,
 }
 
 
-ir_rvalue *
-ast_struct_specifier::hir(exec_list *instructions,
-			  struct _mesa_glsl_parse_state *state)
+/**
+ * Process a structure or interface block tree into an array of structure fields
+ *
+ * After parsing, where there are some syntax differnces, structures and
+ * interface blocks are almost identical.  They are similar enough that the
+ * AST for each can be processed the same way into a set of
+ * \c glsl_struct_field to describe the members.
+ *
+ * \return
+ * The number of fields processed.  A pointer to the array structure fields is
+ * stored in \c *fields_ret.
+ */
+unsigned
+ast_process_structure_or_interface_block(exec_list *instructions,
+					 struct _mesa_glsl_parse_state *state,
+					 exec_list *declarations,
+					 YYLTYPE &loc,
+					 glsl_struct_field **fields_ret)
 {
    unsigned decl_count = 0;
 
-   /* Make an initial pass over the list of structure fields to determine how
+   /* Make an initial pass over the list of fields to determine how
     * many there are.  Each element in this list is an ast_declarator_list.
     * This means that we actually need to count the number of elements in the
     * 'declarations' list in each of the elements.
     */
-   foreach_list_typed (ast_declarator_list, decl_list, link,
-		       &this->declarations) {
+   foreach_list_typed (ast_declarator_list, decl_list, link, declarations) {
       foreach_list_const (decl_ptr, & decl_list->declarations) {
 	 decl_count++;
       }
    }
 
-   /* Allocate storage for the structure fields and process the field
+   /* Allocate storage for the fields and process the field
     * declarations.  As the declarations are processed, try to also convert
     * the types to HIR.  This ensures that structure definitions embedded in
-    * other structure definitions are processed.
+    * other structure definitions or in interface blocks are processed.
     */
    glsl_struct_field *const fields = ralloc_array(state, glsl_struct_field,
 						  decl_count);
 
    unsigned i = 0;
-   foreach_list_typed (ast_declarator_list, decl_list, link,
-		       &this->declarations) {
+   foreach_list_typed (ast_declarator_list, decl_list, link, declarations) {
       const char *type_name;
 
       decl_list->type->specifier->hir(instructions, state);
@@ -4053,7 +4066,6 @@ ast_struct_specifier::hir(exec_list *instructions,
        * embedded structure definitions have been removed from the language.
        */
       if (state->es_shader && decl_list->type->specifier->structure != NULL) {
-	 YYLTYPE loc = this->get_location();
 	 _mesa_glsl_error(&loc, state, "Embedded structure definitions are "
 			  "not allowed in GLSL ES 1.00.");
       }
@@ -4065,7 +4077,6 @@ ast_struct_specifier::hir(exec_list *instructions,
 			  &decl_list->declarations) {
 	 const struct glsl_type *field_type = decl_type;
 	 if (decl->is_array) {
-	    YYLTYPE loc = decl->get_location();
 	    field_type = process_array_type(&loc, decl_type, decl->array_size,
 					    state);
 	 }
@@ -4078,10 +4089,27 @@ ast_struct_specifier::hir(exec_list *instructions,
 
    assert(i == decl_count);
 
+   *fields_ret = fields;
+   return decl_count;
+}
+
+
+ir_rvalue *
+ast_struct_specifier::hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   YYLTYPE loc = this->get_location();
+   glsl_struct_field *fields;
+   unsigned decl_count =
+      ast_process_structure_or_interface_block(instructions,
+					       state,
+					       &this->declarations,
+					       loc,
+					       &fields);
+
    const glsl_type *t =
       glsl_type::get_record_instance(fields, decl_count, this->name);
 
-   YYLTYPE loc = this->get_location();
    if (!state->symbols->add_type(name, t)) {
       _mesa_glsl_error(& loc, state, "struct `%s' previously defined", name);
    } else {
