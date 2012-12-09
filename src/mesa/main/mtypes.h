@@ -2962,6 +2962,17 @@ struct gl_constants
     * Drivers that support transform feedback must set this value to GL_FALSE.
     */
    GLboolean DisableVaryingPacking;
+
+   /*
+    * Maximum value supported for an index in DrawElements and friends.
+    *
+    * This must be at least (1ull<<24)-1.  The default value is
+    * (1ull<<32)-1.
+    *
+    * \since ES 3.0 or GL_ARB_ES3_compatibility
+    * \sa _mesa_init_constants
+    */
+   GLuint64 MaxElementIndex;
 };
 
 

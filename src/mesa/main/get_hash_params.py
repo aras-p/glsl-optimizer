@@ -321,6 +321,9 @@ descriptor=[
 
 # Enums in  OpenGL and ES 3.0
 { "apis": ["GL", "GL_CORE", "GLES3"], "params": [
+# GL_ARB_ES3_compatibility
+  [ "MAX_ELEMENT_INDEX", "CONTEXT_INT64(Const.MaxElementIndex), extra_ARB_ES3_compatibility_api_es3"],
+
 # GL_ARB_fragment_shader
   [ "MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB", "CONTEXT_INT(Const.FragmentProgram.MaxUniformComponents), extra_ARB_fragment_shader" ],
 

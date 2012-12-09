@@ -656,6 +656,9 @@ _mesa_init_constants(struct gl_context *ctx)
 
    /* PrimitiveRestart */
    ctx->Const.PrimitiveRestartInSoftware = GL_FALSE;
+
+   /* ES 3.0 or ARB_ES3_compatibility */
+   ctx->Const.MaxElementIndex = 0xffffffffu;
 }
 
 
