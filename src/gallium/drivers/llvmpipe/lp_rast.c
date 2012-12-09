@@ -437,9 +437,6 @@ lp_rast_begin_query(struct lp_rasterizer_task *task,
    case PIPE_QUERY_OCCLUSION_COUNTER:
       task->vis_counter = 0;
       break;
-   case PIPE_QUERY_TIME_ELAPSED:
-      task->query_start = os_time_get_nano();
-      break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
    case PIPE_QUERY_PRIMITIVES_EMITTED:
       break;
@@ -467,9 +464,6 @@ lp_rast_end_query(struct lp_rasterizer_task *task,
    switch (pq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
       pq->count[task->thread_index] += task->vis_counter;
-      break;
-   case PIPE_QUERY_TIME_ELAPSED:
-      pq->count[task->thread_index] = os_time_get_nano() - task->query_start;
       break;
    case PIPE_QUERY_TIMESTAMP:
       pq->count[task->thread_index] = os_time_get_nano();

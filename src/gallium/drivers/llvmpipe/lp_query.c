@@ -122,13 +122,6 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
          *result += pq->count[i];
       }
       break;
-   case PIPE_QUERY_TIME_ELAPSED:
-      for (i = 0; i < LP_MAX_THREADS; i++) {
-         if (pq->count[i] > *result) {
-            *result = pq->count[i];
-         }
-      }
-      break;
    case PIPE_QUERY_TIMESTAMP:
       for (i = 0; i < LP_MAX_THREADS; i++) {
          if (pq->count[i] > *result) {
