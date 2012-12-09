@@ -345,6 +345,10 @@ descriptor=[
 # GL_ARB_vertex_shader
   [ "MAX_VERTEX_UNIFORM_COMPONENTS_ARB", "CONTEXT_INT(Const.VertexProgram.MaxUniformComponents), extra_ARB_vertex_shader" ],
 
+# GL_EXT_framebuffer_blit
+# NOTE: GL_DRAW_FRAMEBUFFER_BINDING_EXT == GL_FRAMEBUFFER_BINDING_EXT
+  [ "READ_FRAMEBUFFER_BINDING_EXT", "LOC_CUSTOM, TYPE_INT, 0, extra_EXT_framebuffer_blit" ],
+
 # GL_EXT_pixel_buffer_object
   [ "PIXEL_PACK_BUFFER_BINDING_EXT", "LOC_CUSTOM, TYPE_INT, 0, extra_EXT_pixel_buffer_object" ],
   [ "PIXEL_UNPACK_BUFFER_BINDING_EXT", "LOC_CUSTOM, TYPE_INT, 0, extra_EXT_pixel_buffer_object" ],
@@ -613,10 +617,6 @@ descriptor=[
   [ "COLOR_ALPHA_PAIRING_ATI", "CONST(GL_TRUE), extra_ATI_fragment_shader" ],
   [ "NUM_LOOPBACK_COMPONENTS_ATI", "CONST(3), extra_ATI_fragment_shader" ],
   [ "NUM_INPUT_INTERPOLATOR_COMPONENTS_ATI", "CONST(3), extra_ATI_fragment_shader" ],
-
-# GL_EXT_framebuffer_blit
-# NOTE: GL_DRAW_FRAMEBUFFER_BINDING_EXT == GL_FRAMEBUFFER_BINDING_EXT
-  [ "READ_FRAMEBUFFER_BINDING_EXT", "LOC_CUSTOM, TYPE_INT, 0, extra_EXT_framebuffer_blit" ],
 
 # GL_EXT_provoking_vertex
   [ "PROVOKING_VERTEX_EXT", "CONTEXT_ENUM(Light.ProvokingVertex), extra_EXT_provoking_vertex" ],
