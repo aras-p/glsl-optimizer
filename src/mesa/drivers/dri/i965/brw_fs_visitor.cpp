@@ -703,7 +703,7 @@ fs_visitor::try_rewrite_rhs_to_dst(ir_assignment *ir,
    /* If last_rhs_inst wrote a different number of components than our LHS,
     * we can't safely rewrite it.
     */
-   if (ir->lhs->type->vector_elements != modify->regs_written())
+   if (virtual_grf_sizes[dst.reg] != modify->regs_written())
       return false;
 
    /* Success!  Rewrite the instruction. */
