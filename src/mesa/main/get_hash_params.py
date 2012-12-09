@@ -331,6 +331,10 @@ descriptor=[
   [ "MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS", "CONTEXT_INT(Const.FragmentProgram.MaxCombinedUniformComponents), extra_ARB_uniform_buffer_object" ],
   [ "UNIFORM_BUFFER_OFFSET_ALIGNMENT", "CONTEXT_INT(Const.UniformBufferOffsetAlignment), extra_ARB_uniform_buffer_object" ],
   [ "UNIFORM_BUFFER_BINDING", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_uniform_buffer_object" ],
+
+# GL_EXT_pixel_buffer_object
+  [ "PIXEL_PACK_BUFFER_BINDING_EXT", "LOC_CUSTOM, TYPE_INT, 0, extra_EXT_pixel_buffer_object" ],
+  [ "PIXEL_UNPACK_BUFFER_BINDING_EXT", "LOC_CUSTOM, TYPE_INT, 0, extra_EXT_pixel_buffer_object" ],
 ]},
 
 { "apis": ["GLES", "GLES2"], "params": [
@@ -549,10 +553,6 @@ descriptor=[
   [ "EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB", "LOC_CUSTOM, TYPE_INT, offsetof(struct gl_array_object, VertexAttrib[VERT_ATTRIB_EDGEFLAG].BufferObj), NO_EXTRA" ],
   [ "SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB", "LOC_CUSTOM, TYPE_INT, offsetof(struct gl_array_object, VertexAttrib[VERT_ATTRIB_COLOR1].BufferObj), NO_EXTRA" ],
   [ "FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB", "LOC_CUSTOM, TYPE_INT, offsetof(struct gl_array_object, VertexAttrib[VERT_ATTRIB_FOG].BufferObj), NO_EXTRA" ],
-
-# GL_EXT_pixel_buffer_object
-  [ "PIXEL_PACK_BUFFER_BINDING_EXT", "LOC_CUSTOM, TYPE_INT, 0, extra_EXT_pixel_buffer_object" ],
-  [ "PIXEL_UNPACK_BUFFER_BINDING_EXT", "LOC_CUSTOM, TYPE_INT, 0, extra_EXT_pixel_buffer_object" ],
 
 # GL_ARB_vertex_program
 # == GL_VERTEX_PROGRAM_NV
