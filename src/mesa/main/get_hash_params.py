@@ -321,6 +321,9 @@ descriptor=[
 
 # Enums in  OpenGL and ES 3.0
 { "apis": ["GL", "GL_CORE", "GLES3"], "params": [
+# GL_ARB_framebuffer_object
+  [ "MAX_SAMPLES", "CONTEXT_INT(Const.MaxSamples), extra_ARB_framebuffer_object_EXT_framebuffer_multisample" ],
+
 # GL_ARB_sync
   [ "MAX_SERVER_WAIT_TIMEOUT", "CONTEXT_INT64(Const.MaxServerWaitTimeout), extra_ARB_sync" ],
 
@@ -616,9 +619,6 @@ descriptor=[
 # GL_EXT_provoking_vertex
   [ "PROVOKING_VERTEX_EXT", "CONTEXT_ENUM(Light.ProvokingVertex), extra_EXT_provoking_vertex" ],
   [ "QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT", "CONTEXT_BOOL(Const.QuadsFollowProvokingVertexConvention), extra_EXT_provoking_vertex" ],
-
-# GL_ARB_framebuffer_object
-  [ "MAX_SAMPLES", "CONTEXT_INT(Const.MaxSamples), extra_ARB_framebuffer_object_EXT_framebuffer_multisample" ],
 
 # GL_ARB_seamless_cube_map
   [ "TEXTURE_CUBE_MAP_SEAMLESS", "CONTEXT_BOOL(Texture.CubeMapSeamless), extra_ARB_seamless_cube_map" ],
