@@ -130,6 +130,7 @@ C_SOURCES := \
 	util/u_slab.c \
 	util/u_snprintf.c \
 	util/u_staging.c \
+	util/u_suballoc.c \
 	util/u_surface.c \
 	util/u_surfaces.c \
 	util/u_texture.c \
