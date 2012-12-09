@@ -2117,11 +2117,11 @@ static void r600_emit_vertex_fetch_shader(struct r600_context *rctx, struct r600
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
 	struct r600_cso_state *state = (struct r600_cso_state*)a;
-	struct r600_resource *shader = (struct r600_resource*)state->cso;
+	struct r600_fetch_shader *shader = (struct r600_fetch_shader*)state->cso;
 
-	r600_write_context_reg(cs, R_028894_SQ_PGM_START_FS, 0);
+	r600_write_context_reg(cs, R_028894_SQ_PGM_START_FS, shader->offset >> 8);
 	r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
-	r600_write_value(cs, r600_context_bo_reloc(rctx, shader, RADEON_USAGE_READ));
+	r600_write_value(cs, r600_context_bo_reloc(rctx, shader->buffer, RADEON_USAGE_READ));
 }
 
 void r600_init_state_functions(struct r600_context *rctx)

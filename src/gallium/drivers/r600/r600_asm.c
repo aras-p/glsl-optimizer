@@ -2766,7 +2766,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	unsigned format, num_format, format_comp, endian;
 	uint32_t *bytecode;
 	int i, j, r, fs_size;
-	struct r600_resource *fetch_shader;
+	struct r600_fetch_shader *shader;
 
 	assert(count < 32);
 
@@ -2873,21 +2873,24 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 
 	fs_size = bc.ndw*4;
 
-	fetch_shader = (struct r600_resource*)
-			pipe_buffer_create(rctx->context.screen,
-					   PIPE_BIND_CUSTOM,
-					   PIPE_USAGE_IMMUTABLE, fs_size);
-	if (fetch_shader == NULL) {
+	/* Allocate the CSO. */
+	shader = CALLOC_STRUCT(r600_fetch_shader);
+	if (!shader) {
 		r600_bytecode_clear(&bc);
 		return NULL;
 	}
 
-	bytecode = rctx->ws->buffer_map(fetch_shader->cs_buf, rctx->cs, PIPE_TRANSFER_WRITE);
-	if (bytecode == NULL) {
+	u_suballocator_alloc(rctx->allocator_fetch_shader, fs_size, &shader->offset,
+			     (struct pipe_resource**)&shader->buffer);
+	if (!shader->buffer) {
 		r600_bytecode_clear(&bc);
-		pipe_resource_reference((struct pipe_resource**)&fetch_shader, NULL);
+		FREE(shader);
 		return NULL;
 	}
+
+	bytecode = rctx->ws->buffer_map(shader->buffer->cs_buf, rctx->cs,
+					PIPE_TRANSFER_WRITE | PIPE_TRANSFER_UNSYNCHRONIZED);
+	bytecode += shader->offset / 4;
 
 	if (R600_BIG_ENDIAN) {
 		for (i = 0; i < fs_size / 4; ++i) {
@@ -2896,11 +2899,10 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	} else {
 		memcpy(bytecode, bc.bytecode, fs_size);
 	}
+	rctx->ws->buffer_unmap(shader->buffer->cs_buf);
 
-	rctx->ws->buffer_unmap(fetch_shader->cs_buf);
 	r600_bytecode_clear(&bc);
-
-	return fetch_shader;
+	return shader;
 }
 
 void r600_bytecode_alu_read(struct r600_bytecode_alu *alu, uint32_t word0, uint32_t word1)

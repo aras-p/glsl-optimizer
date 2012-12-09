@@ -383,6 +383,11 @@ struct r600_scissor_state
 	bool				enable; /* r6xx only */
 };
 
+struct r600_fetch_shader {
+	struct r600_resource		*buffer;
+	unsigned			offset;
+};
+
 struct r600_context {
 	struct pipe_context		context;
 	struct r600_screen		*screen;
@@ -391,6 +396,7 @@ struct r600_context {
 	struct blitter_context		*blitter;
 	struct u_upload_mgr	        *uploader;
 	struct u_suballocator		*allocator_so_filled_size;
+	struct u_suballocator		*allocator_fetch_shader;
 	struct util_slab_mempool	pool_transfers;
 
 	/* Hardware info. */

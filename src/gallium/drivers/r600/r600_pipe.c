@@ -188,6 +188,9 @@ static void r600_destroy_context(struct pipe_context *context)
 	if (rctx->allocator_so_filled_size) {
 		u_suballocator_destroy(rctx->allocator_so_filled_size);
 	}
+	if (rctx->allocator_fetch_shader) {
+		u_suballocator_destroy(rctx->allocator_fetch_shader);
+	}
 	util_slab_destroy(&rctx->pool_transfers);
 
 	r600_release_command_buffer(&rctx->start_cs_cmd);
@@ -292,6 +295,11 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
                                          PIPE_BIND_INDEX_BUFFER |
                                          PIPE_BIND_CONSTANT_BUFFER);
         if (!rctx->uploader)
+                goto fail;
+
+	rctx->allocator_fetch_shader = u_suballocator_create(&rctx->context, 64 * 1024, 256,
+							     0, PIPE_USAGE_STATIC, FALSE);
+        if (!rctx->allocator_fetch_shader)
                 goto fail;
 
 	rctx->allocator_so_filled_size = u_suballocator_create(&rctx->context, 4096, 4,
