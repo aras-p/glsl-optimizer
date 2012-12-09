@@ -324,6 +324,11 @@ descriptor=[
 # GL_ARB_sync
   [ "MAX_SERVER_WAIT_TIMEOUT", "CONTEXT_INT64(Const.MaxServerWaitTimeout), extra_ARB_sync" ],
 
+# GL_ARB_transform_feedback2
+  [ "TRANSFORM_FEEDBACK_BUFFER_PAUSED", "LOC_CUSTOM, TYPE_BOOLEAN, 0, extra_ARB_transform_feedback2_api_es3" ],
+  [ "TRANSFORM_FEEDBACK_BUFFER_ACTIVE", "LOC_CUSTOM, TYPE_BOOLEAN, 0, extra_ARB_transform_feedback2_api_es3" ],
+  [ "TRANSFORM_FEEDBACK_BINDING", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_transform_feedback2_api_es3" ],
+
 # GL_ARB_uniform_buffer_object
   [ "MAX_VERTEX_UNIFORM_BLOCKS", "CONTEXT_INT(Const.VertexProgram.MaxUniformBlocks), extra_ARB_uniform_buffer_object" ],
   [ "MAX_FRAGMENT_UNIFORM_BLOCKS", "CONTEXT_INT(Const.FragmentProgram.MaxUniformBlocks), extra_ARB_uniform_buffer_object" ],
@@ -620,11 +625,6 @@ descriptor=[
 
 # GL_EXT_texture_integer
   [ "RGBA_INTEGER_MODE_EXT", "BUFFER_BOOL(_IntegerColor), extra_EXT_texture_integer" ],
-
-# GL_ARB_transform_feedback2
-  [ "TRANSFORM_FEEDBACK_BUFFER_PAUSED", "LOC_CUSTOM, TYPE_BOOLEAN, 0, extra_ARB_transform_feedback2" ],
-  [ "TRANSFORM_FEEDBACK_BUFFER_ACTIVE", "LOC_CUSTOM, TYPE_BOOLEAN, 0, extra_ARB_transform_feedback2" ],
-  [ "TRANSFORM_FEEDBACK_BINDING", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_transform_feedback2" ],
 
 # GL_ARB_transform_feedback3
   [ "MAX_TRANSFORM_FEEDBACK_BUFFERS", "CONTEXT_INT(Const.MaxTransformFeedbackBuffers), extra_ARB_transform_feedback3" ],
