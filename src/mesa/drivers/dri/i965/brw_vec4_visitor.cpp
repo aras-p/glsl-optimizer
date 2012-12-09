@@ -220,21 +220,33 @@ vec4_visitor::emit_dp(dst_reg dst, src_reg src0, src_reg src1, unsigned elements
    emit(dot_opcodes[elements - 2], dst, src0, src1);
 }
 
-void
-vec4_visitor::emit_math1_gen6(enum opcode opcode, dst_reg dst, src_reg src)
+src_reg
+vec4_visitor::fix_math_operand(src_reg src)
 {
    /* The gen6 math instruction ignores the source modifiers --
     * swizzle, abs, negate, and at least some parts of the register
     * region description.
     *
-    * While it would seem that this MOV could be avoided at this point
-    * in the case that the swizzle is matched up with the destination
-    * writemask, note that uniform packing and register allocation
-    * could rearrange our swizzle, so let's leave this matter up to
-    * copy propagation later.
+    * Rather than trying to enumerate all these cases, *always* expand the
+    * operand to a temp GRF for gen6.
+    *
+    * For gen7, keep the operand as-is, except if immediate, which gen7 still
+    * can't use.
     */
-   src_reg temp_src = src_reg(this, glsl_type::vec4_type);
-   emit(MOV(dst_reg(temp_src), src));
+
+   if (intel->gen == 7 && src.file != IMM)
+      return src;
+
+   dst_reg expanded = dst_reg(this, glsl_type::vec4_type);
+   expanded.type = src.type;
+   emit(MOV(expanded, src));
+   return src_reg(expanded);
+}
+
+void
+vec4_visitor::emit_math1_gen6(enum opcode opcode, dst_reg dst, src_reg src)
+{
+   src = fix_math_operand(src);
 
    if (dst.writemask != WRITEMASK_XYZW) {
       /* The gen6 math instruction must be align1, so we can't do
@@ -242,11 +254,11 @@ vec4_visitor::emit_math1_gen6(enum opcode opcode, dst_reg dst, src_reg src)
        */
       dst_reg temp_dst = dst_reg(this, glsl_type::vec4_type);
 
-      emit(opcode, temp_dst, temp_src);
+      emit(opcode, temp_dst, src);
 
       emit(MOV(dst, src_reg(temp_dst)));
    } else {
-      emit(opcode, dst, temp_src);
+      emit(opcode, dst, src);
    }
 }
 
@@ -275,9 +287,7 @@ vec4_visitor::emit_math(opcode opcode, dst_reg dst, src_reg src)
       return;
    }
 
-   if (intel->gen >= 7) {
-      emit(opcode, dst, src);
-   } else if (intel->gen == 6) {
+   if (intel->gen >= 6) {
       return emit_math1_gen6(opcode, dst, src);
    } else {
       return emit_math1_gen4(opcode, dst, src);
@@ -288,23 +298,8 @@ void
 vec4_visitor::emit_math2_gen6(enum opcode opcode,
 			      dst_reg dst, src_reg src0, src_reg src1)
 {
-   src_reg expanded;
-
-   /* The gen6 math instruction ignores the source modifiers --
-    * swizzle, abs, negate, and at least some parts of the register
-    * region description.  Move the sources to temporaries to make it
-    * generally work.
-    */
-
-   expanded = src_reg(this, glsl_type::vec4_type);
-   expanded.type = src0.type;
-   emit(MOV(dst_reg(expanded), src0));
-   src0 = expanded;
-
-   expanded = src_reg(this, glsl_type::vec4_type);
-   expanded.type = src1.type;
-   emit(MOV(dst_reg(expanded), src1));
-   src1 = expanded;
+   src0 = fix_math_operand(src0);
+   src1 = fix_math_operand(src1);
 
    if (dst.writemask != WRITEMASK_XYZW) {
       /* The gen6 math instruction must be align1, so we can't do
@@ -344,9 +339,7 @@ vec4_visitor::emit_math(enum opcode opcode,
       return;
    }
 
-   if (intel->gen >= 7) {
-      emit(opcode, dst, src0, src1);
-   } else if (intel->gen == 6) {
+   if (intel->gen >= 6) {
       return emit_math2_gen6(opcode, dst, src0, src1);
    } else {
       return emit_math2_gen4(opcode, dst, src0, src1);
