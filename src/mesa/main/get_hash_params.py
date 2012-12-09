@@ -319,6 +319,20 @@ descriptor=[
   [ "READ_BUFFER", "LOC_CUSTOM, TYPE_ENUM, NO_OFFSET, extra_NV_read_buffer_api_gl" ],
 ]},
 
+# Enums in  OpenGL and ES 3.0
+{ "apis": ["GL", "GL_CORE", "GLES3"], "params": [
+# GL_ARB_uniform_buffer_object
+  [ "MAX_VERTEX_UNIFORM_BLOCKS", "CONTEXT_INT(Const.VertexProgram.MaxUniformBlocks), extra_ARB_uniform_buffer_object" ],
+  [ "MAX_FRAGMENT_UNIFORM_BLOCKS", "CONTEXT_INT(Const.FragmentProgram.MaxUniformBlocks), extra_ARB_uniform_buffer_object" ],
+  [ "MAX_COMBINED_UNIFORM_BLOCKS", "CONTEXT_INT(Const.MaxCombinedUniformBlocks), extra_ARB_uniform_buffer_object" ],
+  [ "MAX_UNIFORM_BLOCK_SIZE", "CONTEXT_INT(Const.MaxUniformBlockSize), extra_ARB_uniform_buffer_object" ],
+  [ "MAX_UNIFORM_BUFFER_BINDINGS", "CONTEXT_INT(Const.MaxUniformBufferBindings), extra_ARB_uniform_buffer_object" ],
+  [ "MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS", "CONTEXT_INT(Const.VertexProgram.MaxCombinedUniformComponents), extra_ARB_uniform_buffer_object" ],
+  [ "MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS", "CONTEXT_INT(Const.FragmentProgram.MaxCombinedUniformComponents), extra_ARB_uniform_buffer_object" ],
+  [ "UNIFORM_BUFFER_OFFSET_ALIGNMENT", "CONTEXT_INT(Const.UniformBufferOffsetAlignment), extra_ARB_uniform_buffer_object" ],
+  [ "UNIFORM_BUFFER_BINDING", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_uniform_buffer_object" ],
+]},
+
 { "apis": ["GLES", "GLES2"], "params": [
 # GL_OES_EGL_image_external
   [ "TEXTURE_BINDING_EXTERNAL_OES", "LOC_CUSTOM, TYPE_INT, TEXTURE_EXTERNAL_INDEX, extra_OES_EGL_image_external" ],
@@ -671,17 +685,8 @@ descriptor=[
   [ "MAX_DUAL_SOURCE_DRAW_BUFFERS", "CONTEXT_INT(Const.MaxDualSourceDrawBuffers), extra_ARB_blend_func_extended" ],
 
 # GL_ARB_uniform_buffer_object
-  [ "MAX_VERTEX_UNIFORM_BLOCKS", "CONTEXT_INT(Const.VertexProgram.MaxUniformBlocks), extra_ARB_uniform_buffer_object" ],
-  [ "MAX_FRAGMENT_UNIFORM_BLOCKS", "CONTEXT_INT(Const.FragmentProgram.MaxUniformBlocks), extra_ARB_uniform_buffer_object" ],
   [ "MAX_GEOMETRY_UNIFORM_BLOCKS", "CONTEXT_INT(Const.GeometryProgram.MaxUniformBlocks), extra_ARB_uniform_buffer_object_and_geometry_shader" ],
-  [ "MAX_COMBINED_UNIFORM_BLOCKS", "CONTEXT_INT(Const.MaxCombinedUniformBlocks), extra_ARB_uniform_buffer_object" ],
-  [ "MAX_UNIFORM_BLOCK_SIZE", "CONTEXT_INT(Const.MaxUniformBlockSize), extra_ARB_uniform_buffer_object" ],
-  [ "MAX_UNIFORM_BUFFER_BINDINGS", "CONTEXT_INT(Const.MaxUniformBufferBindings), extra_ARB_uniform_buffer_object" ],
-  [ "MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS", "CONTEXT_INT(Const.VertexProgram.MaxCombinedUniformComponents), extra_ARB_uniform_buffer_object" ],
-  [ "MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS", "CONTEXT_INT(Const.FragmentProgram.MaxCombinedUniformComponents), extra_ARB_uniform_buffer_object" ],
   [ "MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS", "CONTEXT_INT(Const.GeometryProgram.MaxCombinedUniformComponents), extra_ARB_uniform_buffer_object_and_geometry_shader" ],
-  [ "UNIFORM_BUFFER_OFFSET_ALIGNMENT", "CONTEXT_INT(Const.UniformBufferOffsetAlignment), extra_ARB_uniform_buffer_object" ],
-  [ "UNIFORM_BUFFER_BINDING", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_uniform_buffer_object" ],
 
 # GL_ARB_timer_query
   [ "TIMESTAMP", "LOC_CUSTOM, TYPE_INT64, 0, extra_ARB_timer_query" ],
