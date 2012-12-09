@@ -232,11 +232,7 @@ descriptor=[
 # GL_OES_point_sprite
   [ "POINT_SPRITE_NV", "CONTEXT_BOOL(Point.PointSprite), extra_NV_point_sprite_ARB_point_sprite" ],
 
-# GL_ARB_fragment_shader
-  [ "MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB", "CONTEXT_INT(Const.FragmentProgram.MaxUniformComponents), extra_ARB_fragment_shader" ],
-
 # GL_ARB_vertex_shader
-  [ "MAX_VERTEX_UNIFORM_COMPONENTS_ARB", "CONTEXT_INT(Const.VertexProgram.MaxUniformComponents), extra_ARB_vertex_shader" ],
   [ "MAX_VARYING_FLOATS_ARB", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_vertex_shader" ],
 
 # GL_EXT_texture_lod_bias
@@ -321,6 +317,9 @@ descriptor=[
 
 # Enums in  OpenGL and ES 3.0
 { "apis": ["GL", "GL_CORE", "GLES3"], "params": [
+# GL_ARB_fragment_shader
+  [ "MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB", "CONTEXT_INT(Const.FragmentProgram.MaxUniformComponents), extra_ARB_fragment_shader" ],
+
 # GL_ARB_framebuffer_object
   [ "MAX_SAMPLES", "CONTEXT_INT(Const.MaxSamples), extra_ARB_framebuffer_object_EXT_framebuffer_multisample" ],
 
@@ -342,6 +341,9 @@ descriptor=[
   [ "MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS", "CONTEXT_INT(Const.FragmentProgram.MaxCombinedUniformComponents), extra_ARB_uniform_buffer_object" ],
   [ "UNIFORM_BUFFER_OFFSET_ALIGNMENT", "CONTEXT_INT(Const.UniformBufferOffsetAlignment), extra_ARB_uniform_buffer_object" ],
   [ "UNIFORM_BUFFER_BINDING", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_uniform_buffer_object" ],
+
+# GL_ARB_vertex_shader
+  [ "MAX_VERTEX_UNIFORM_COMPONENTS_ARB", "CONTEXT_INT(Const.VertexProgram.MaxUniformComponents), extra_ARB_vertex_shader" ],
 
 # GL_EXT_pixel_buffer_object
   [ "PIXEL_PACK_BUFFER_BINDING_EXT", "LOC_CUSTOM, TYPE_INT, 0, extra_EXT_pixel_buffer_object" ],
