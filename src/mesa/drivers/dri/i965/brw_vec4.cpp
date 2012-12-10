@@ -1081,12 +1081,36 @@ vec4_visitor::emit_shader_time_end()
    current_annotation = "shader time end";
    src_reg shader_end_time = get_timestamp();
 
-   emit_shader_time_write(ST_VS, shader_start_time, shader_end_time);
+
+   /* Check that there weren't any timestamp reset events (assuming these
+    * were the only two timestamp reads that happened).
+    */
+   src_reg reset_end = shader_end_time;
+   reset_end.swizzle = BRW_SWIZZLE_ZZZZ;
+   vec4_instruction *test = emit(AND(dst_null_d(), reset_end, src_reg(1u)));
+   test->conditional_mod = BRW_CONDITIONAL_Z;
+
+   emit(IF(BRW_PREDICATE_NORMAL));
+
+   /* Take the current timestamp and get the delta. */
+   shader_start_time.negate = true;
+   dst_reg diff = dst_reg(this, glsl_type::uint_type);
+   emit(ADD(diff, shader_start_time, shader_end_time));
+
+   /* If there were no instructions between the two timestamp gets, the diff
+    * is 2 cycles.  Remove that overhead, so I can forget about that when
+    * trying to determine the time taken for single instructions.
+    */
+   emit(ADD(diff, src_reg(diff), src_reg(-2u)));
+
+   emit_shader_time_write(ST_VS, src_reg(diff));
+
+   emit(BRW_OPCODE_ENDIF);
 }
 
 void
 vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
-                                     src_reg start, src_reg end)
+                                     src_reg value)
 {
    /* Choose an index in the buffer and set up tracking information for our
     * printouts.
@@ -1100,27 +1124,6 @@ vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
                                      prog);
    }
 
-   /* Check that there weren't any timestamp reset events (assuming these
-    * were the only two timestamp reads that happened).
-    */
-   src_reg reset_end = end;
-   reset_end.swizzle = BRW_SWIZZLE_ZZZZ;
-   vec4_instruction *test = emit(AND(dst_null_d(), reset_end, src_reg(1u)));
-   test->conditional_mod = BRW_CONDITIONAL_Z;
-
-   emit(IF(BRW_PREDICATE_NORMAL));
-
-   /* Take the current timestamp and get the delta. */
-   start.negate = true;
-   dst_reg diff = dst_reg(this, glsl_type::uint_type);
-   emit(ADD(diff, start, end));
-
-   /* If there were no instructions between the two timestamp gets, the diff
-    * is 2 cycles.  Remove that overhead, so I can forget about that when
-    * trying to determine the time taken for single instructions.
-    */
-   emit(ADD(diff, src_reg(diff), src_reg(-2u)));
-
    int base_mrf = 6;
 
    dst_reg offset_mrf = dst_reg(MRF, base_mrf);
@@ -1129,14 +1132,12 @@ vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
 
    dst_reg time_mrf = dst_reg(MRF, base_mrf + 1);
    time_mrf.type = BRW_REGISTER_TYPE_UD;
-   emit(MOV(time_mrf, src_reg(diff)));
+   emit(MOV(time_mrf, src_reg(value)));
 
    vec4_instruction *inst;
    inst = emit(SHADER_OPCODE_SHADER_TIME_ADD);
    inst->base_mrf = base_mrf;
    inst->mlen = 2;
-
-   emit(BRW_OPCODE_ENDIF);
 }
 
 bool

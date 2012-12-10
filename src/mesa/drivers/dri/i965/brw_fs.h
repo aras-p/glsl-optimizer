@@ -392,7 +392,7 @@ public:
    void emit_shader_time_begin();
    void emit_shader_time_end();
    void emit_shader_time_write(enum shader_time_shader_type type,
-                               fs_reg start, fs_reg end);
+                               fs_reg value);
 
    bool try_rewrite_rhs_to_dst(ir_assignment *ir,
 			       fs_reg dst,

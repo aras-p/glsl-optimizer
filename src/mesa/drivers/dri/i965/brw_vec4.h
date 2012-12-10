@@ -439,7 +439,7 @@ public:
    void emit_shader_time_begin();
    void emit_shader_time_end();
    void emit_shader_time_write(enum shader_time_shader_type type,
-                               src_reg start, src_reg end);
+                               src_reg value);
 
    src_reg get_scratch_offset(vec4_instruction *inst,
 			      src_reg *reladdr, int reg_offset);

@@ -513,12 +513,39 @@ fs_visitor::emit_shader_time_end()
       type = ST_FS16;
    }
 
-   emit_shader_time_write(type, shader_start_time, get_timestamp());
+   fs_reg shader_end_time = get_timestamp();
+
+   /* Check that there weren't any timestamp reset events (assuming these
+    * were the only two timestamp reads that happened).
+    */
+   fs_reg reset = shader_end_time;
+   reset.smear = 2;
+   fs_inst *test = emit(AND(reg_null_d, reset, fs_reg(1u)));
+   test->conditional_mod = BRW_CONDITIONAL_Z;
+   emit(IF(BRW_PREDICATE_NORMAL));
+
+   push_force_uncompressed();
+   fs_reg start = shader_start_time;
+   start.negate = true;
+   fs_reg diff = fs_reg(this, glsl_type::uint_type);
+   emit(ADD(diff, start, shader_end_time));
+
+   /* If there were no instructions between the two timestamp gets, the diff
+    * is 2 cycles.  Remove that overhead, so I can forget about that when
+    * trying to determine the time taken for single instructions.
+    */
+   emit(ADD(diff, diff, fs_reg(-2u)));
+
+   emit_shader_time_write(type, diff);
+
+   emit(BRW_OPCODE_ENDIF);
+
+   pop_force_uncompressed();
 }
 
 void
 fs_visitor::emit_shader_time_write(enum shader_time_shader_type type,
-                                   fs_reg start, fs_reg end)
+                                   fs_reg value)
 {
    /* Choose an index in the buffer and set up tracking information for our
     * printouts.
@@ -532,26 +559,6 @@ fs_visitor::emit_shader_time_write(enum shader_time_shader_type type,
                                      prog);
    }
 
-   /* Check that there weren't any timestamp reset events (assuming these
-    * were the only two timestamp reads that happened).
-    */
-   fs_reg reset = end;
-   reset.smear = 2;
-   fs_inst *test = emit(AND(reg_null_d, reset, fs_reg(1u)));
-   test->conditional_mod = BRW_CONDITIONAL_Z;
-   emit(IF(BRW_PREDICATE_NORMAL));
-
-   push_force_uncompressed();
-   start.negate = true;
-   fs_reg diff = fs_reg(this, glsl_type::uint_type);
-   emit(ADD(diff, start, end));
-
-   /* If there were no instructions between the two timestamp gets, the diff
-    * is 2 cycles.  Remove that overhead, so I can forget about that when
-    * trying to determine the time taken for single instructions.
-    */
-   emit(ADD(diff, diff, fs_reg(-2u)));
-
    int base_mrf = 6;
 
    fs_reg offset_mrf = fs_reg(MRF, base_mrf);
@@ -560,15 +567,11 @@ fs_visitor::emit_shader_time_write(enum shader_time_shader_type type,
 
    fs_reg time_mrf = fs_reg(MRF, base_mrf + 1);
    time_mrf.type = BRW_REGISTER_TYPE_UD;
-   emit(MOV(time_mrf, diff));
+   emit(MOV(time_mrf, value));
 
    fs_inst *inst = emit(fs_inst(SHADER_OPCODE_SHADER_TIME_ADD));
    inst->base_mrf = base_mrf;
    inst->mlen = 2;
-
-   pop_force_uncompressed();
-
-   emit(BRW_OPCODE_ENDIF);
 }
 
 void
