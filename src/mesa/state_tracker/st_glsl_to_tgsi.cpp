@@ -1891,6 +1891,8 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
 
    case ir_binop_ubo_load: {
       ir_constant *uniform_block = ir->operands[0]->as_constant();
+      ir_constant *const_offset_ir = ir->operands[1]->as_constant();
+      unsigned const_offset = const_offset_ir ? const_offset_ir->value.u[0] : 0;
       st_src_reg index_reg = get_temp(glsl_type::uint_type);
       st_src_reg cbuf;
 
@@ -1903,13 +1905,28 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       
       assert(ir->type->is_vector() || ir->type->is_scalar());
 
-      emit(ir, TGSI_OPCODE_USHR, st_dst_reg(index_reg), op[1], st_src_reg_for_int(4));
+      if (const_offset_ir) {
+         index_reg = st_src_reg_for_int(const_offset / 16);
+      } else {
+         emit(ir, TGSI_OPCODE_USHR, st_dst_reg(index_reg), op[1], st_src_reg_for_int(4));
+      }
 
       cbuf.swizzle = swizzle_for_size(ir->type->vector_elements);
+      cbuf.swizzle += MAKE_SWIZZLE4(const_offset % 16 / 4,
+                                    const_offset % 16 / 4,
+                                    const_offset % 16 / 4,
+                                    const_offset % 16 / 4);
+
       cbuf.reladdr = ralloc(mem_ctx, st_src_reg);
       memcpy(cbuf.reladdr, &index_reg, sizeof(index_reg));
 
-      emit(ir, TGSI_OPCODE_MOV, result_dst, cbuf);
+      if (ir->type->base_type == GLSL_TYPE_BOOL) {
+         emit(ir, TGSI_OPCODE_USNE, result_dst, cbuf, st_src_reg_for_int(0));
+         result_src.negate = 1;
+         emit(ir, TGSI_OPCODE_UCMP, result_dst, result_src, st_src_reg_for_int(~0), st_src_reg_for_int(0));
+      } else {
+         emit(ir, TGSI_OPCODE_MOV, result_dst, cbuf);
+      }
       break;
    }
    case ir_quadop_vector:
