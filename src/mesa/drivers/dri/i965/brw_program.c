@@ -242,6 +242,21 @@ get_written_and_reset(struct brw_context *brw, int i,
 }
 
 static void
+print_shader_time_line(const char *name, int shader_num,
+                       uint64_t time, uint64_t total)
+{
+   printf("%s", name);
+   for (int i = strlen(name); i < 10; i++)
+      printf(" ");
+   printf("%4d: ", shader_num);
+
+   printf("%16lld (%7.2f Gcycles)      %4.1f%%\n",
+          (long long)time,
+          (double)time / 1000000000.0,
+          (double)time / total * 100.0);
+}
+
+static void
 brw_report_shader_time(struct brw_context *brw)
 {
    if (!brw->shader_time.bo || !brw->shader_time.num_entries)
@@ -249,13 +264,16 @@ brw_report_shader_time(struct brw_context *brw)
 
    uint64_t scaled[brw->shader_time.num_entries];
    uint64_t *sorted[brw->shader_time.num_entries];
+   uint64_t total_by_type[ST_FS16 + 1];
+   memset(total_by_type, 0, sizeof(total_by_type));
    double total = 0;
    for (int i = 0; i < brw->shader_time.num_entries; i++) {
       uint64_t written = 0, reset = 0;
+      enum shader_time_shader_type type = brw->shader_time.types[i];
 
       sorted[i] = &scaled[i];
 
-      switch (brw->shader_time.types[i]) {
+      switch (type) {
       case ST_VS_WRITTEN:
       case ST_VS_RESET:
       case ST_FS8_WRITTEN:
@@ -288,6 +306,16 @@ brw_report_shader_time(struct brw_context *brw)
          scaled[i] = time;
       }
 
+      switch (type) {
+      case ST_VS:
+      case ST_FS8:
+      case ST_FS16:
+         total_by_type[type] += scaled[i];
+         break;
+      default:
+         break;
+      }
+
       total += scaled[i];
    }
 
@@ -314,24 +342,24 @@ brw_report_shader_time(struct brw_context *brw)
 
       switch (brw->shader_time.types[i]) {
       case ST_VS:
-         printf("vs   %4d: ", shader_num);
+         print_shader_time_line("vs", shader_num, scaled[i], total);
          break;
       case ST_FS8:
-         printf("fs8  %4d: ", shader_num);
+         print_shader_time_line("fs8", shader_num, scaled[i], total);
          break;
       case ST_FS16:
-         printf("fs16 %4d: ", shader_num);
+         print_shader_time_line("fs16", shader_num, scaled[i], total);
          break;
       default:
-         printf("other:     ");
+         print_shader_time_line("other", shader_num, scaled[i], total);
          break;
       }
-
-      printf("%16lld (%7.2f Gcycles)      %4.1f%%\n",
-             (long long)scaled[i],
-             (double)scaled[i] / 1000000000.0,
-             (double)scaled[i] / total * 100.0);
    }
+
+   printf("\n");
+   print_shader_time_line("total vs", -1, total_by_type[ST_VS], total);
+   print_shader_time_line("total fs8", -1, total_by_type[ST_FS8], total);
+   print_shader_time_line("total fs16", -1, total_by_type[ST_FS16], total);
 }
 
 static void
