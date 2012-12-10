@@ -222,16 +222,73 @@ compare_time(const void *a, const void *b)
 }
 
 static void
+get_written_and_reset(struct brw_context *brw, int i,
+                      uint64_t *written, uint64_t *reset)
+{
+   enum shader_time_shader_type type = brw->shader_time.types[i];
+   assert(type == ST_VS || type == ST_FS8 || type == ST_FS16);
+
+   /* Find where we recorded written and reset. */
+   int wi, ri;
+
+   for (wi = i; brw->shader_time.types[wi] != type + 1; wi++)
+      ;
+
+   for (ri = i; brw->shader_time.types[ri] != type + 2; ri++)
+      ;
+
+   *written = brw->shader_time.cumulative[wi];
+   *reset = brw->shader_time.cumulative[ri];
+}
+
+static void
 brw_report_shader_time(struct brw_context *brw)
 {
    if (!brw->shader_time.bo || !brw->shader_time.num_entries)
       return;
 
+   uint64_t scaled[brw->shader_time.num_entries];
    uint64_t *sorted[brw->shader_time.num_entries];
    double total = 0;
    for (int i = 0; i < brw->shader_time.num_entries; i++) {
-      sorted[i] = &brw->shader_time.cumulative[i];
-      total += brw->shader_time.cumulative[i];
+      uint64_t written = 0, reset = 0;
+
+      sorted[i] = &scaled[i];
+
+      switch (brw->shader_time.types[i]) {
+      case ST_VS_WRITTEN:
+      case ST_VS_RESET:
+      case ST_FS8_WRITTEN:
+      case ST_FS8_RESET:
+      case ST_FS16_WRITTEN:
+      case ST_FS16_RESET:
+         /* We'll handle these when along with the time. */
+         scaled[i] = 0;
+         continue;
+
+      case ST_VS:
+      case ST_FS8:
+      case ST_FS16:
+         get_written_and_reset(brw, i, &written, &reset);
+         break;
+
+      default:
+         /* I sometimes want to print things that aren't the 3 shader times.
+          * Just print the sum in that case.
+          */
+         written = 1;
+         reset = 0;
+         break;
+      }
+
+      uint64_t time = brw->shader_time.cumulative[i];
+      if (written) {
+         scaled[i] = time / written * (written + reset);
+      } else {
+         scaled[i] = time;
+      }
+
+      total += scaled[i];
    }
 
    if (total == 0) {
@@ -245,7 +302,10 @@ brw_report_shader_time(struct brw_context *brw)
    printf("type   ID      cycles spent                   %% of total\n");
    for (int s = 0; s < brw->shader_time.num_entries; s++) {
       /* Work back from the sorted pointers times to a time to print. */
-      int i = sorted[s] - brw->shader_time.cumulative;
+      int i = sorted[s] - scaled;
+
+      if (scaled[i] == 0)
+         continue;
 
       int shader_num = -1;
       if (brw->shader_time.programs[i]) {
@@ -268,9 +328,9 @@ brw_report_shader_time(struct brw_context *brw)
       }
 
       printf("%16lld (%7.2f Gcycles)      %4.1f%%\n",
-             (long long)brw->shader_time.cumulative[i],
-             (double)brw->shader_time.cumulative[i] / 1000000000.0,
-             (double)brw->shader_time.cumulative[i] / total * 100.0);
+             (long long)scaled[i],
+             (double)scaled[i] / 1000000000.0,
+             (double)scaled[i] / total * 100.0);
    }
 }
 

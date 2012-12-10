@@ -505,12 +505,16 @@ fs_visitor::emit_shader_time_end()
 {
    current_annotation = "shader time end";
 
-   enum shader_time_shader_type type;
+   enum shader_time_shader_type type, written_type, reset_type;
    if (dispatch_width == 8) {
       type = ST_FS8;
+      written_type = ST_FS8_WRITTEN;
+      reset_type = ST_FS8_RESET;
    } else {
       assert(dispatch_width == 16);
       type = ST_FS16;
+      written_type = ST_FS16_WRITTEN;
+      reset_type = ST_FS16_RESET;
    }
 
    fs_reg shader_end_time = get_timestamp();
@@ -537,7 +541,9 @@ fs_visitor::emit_shader_time_end()
    emit(ADD(diff, diff, fs_reg(-2u)));
 
    emit_shader_time_write(type, diff);
-
+   emit_shader_time_write(written_type, fs_reg(1u));
+   emit(BRW_OPCODE_ELSE);
+   emit_shader_time_write(reset_type, fs_reg(1u));
    emit(BRW_OPCODE_ENDIF);
 
    pop_force_uncompressed();

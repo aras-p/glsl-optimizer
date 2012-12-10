@@ -1104,7 +1104,9 @@ vec4_visitor::emit_shader_time_end()
    emit(ADD(diff, src_reg(diff), src_reg(-2u)));
 
    emit_shader_time_write(ST_VS, src_reg(diff));
-
+   emit_shader_time_write(ST_VS_WRITTEN, src_reg(1u));
+   emit(BRW_OPCODE_ELSE);
+   emit_shader_time_write(ST_VS_RESET, src_reg(1u));
    emit(BRW_OPCODE_ENDIF);
 }
 

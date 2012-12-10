@@ -655,8 +655,14 @@ struct brw_tracked_state {
 enum shader_time_shader_type {
    ST_NONE,
    ST_VS,
+   ST_VS_WRITTEN,
+   ST_VS_RESET,
    ST_FS8,
+   ST_FS8_WRITTEN,
+   ST_FS8_RESET,
    ST_FS16,
+   ST_FS16_WRITTEN,
+   ST_FS16_RESET,
 };
 
 /* Flags for brw->state.cache.
