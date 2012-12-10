@@ -442,6 +442,9 @@ public:
    void merge_registers(void);
    void renumber_registers(void);
 
+   void emit_block_mov(ir_assignment *ir, const struct glsl_type *type,
+                       st_dst_reg *l, st_src_reg *r);
+
    void *mem_ctx;
 };
 
@@ -2244,6 +2247,44 @@ glsl_to_tgsi_visitor::process_move_condition(ir_rvalue *ir)
 }
 
 void
+glsl_to_tgsi_visitor::emit_block_mov(ir_assignment *ir, const struct glsl_type *type,
+                                     st_dst_reg *l, st_src_reg *r)
+{
+   if (type->base_type == GLSL_TYPE_STRUCT) {
+      for (unsigned int i = 0; i < type->length; i++) {
+         emit_block_mov(ir, type->fields.structure[i].type, l, r);
+      }
+      return;
+   }
+
+   if (type->is_array()) {
+      for (unsigned int i = 0; i < type->length; i++) {
+         emit_block_mov(ir, type->fields.array, l, r);
+      }
+      return;
+   }
+
+   if (type->is_matrix()) {
+      const struct glsl_type *vec_type;
+
+      vec_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+					 type->vector_elements, 1);
+
+      for (int i = 0; i < type->matrix_columns; i++) {
+         emit_block_mov(ir, vec_type, l, r);
+      }
+      return;
+   }
+
+   assert(type->is_scalar() || type->is_vector());
+
+   r->type = type->base_type;
+   emit(ir, TGSI_OPCODE_MOV, *l, *r);
+   l->index++;
+   r->index++;
+}
+
+void
 glsl_to_tgsi_visitor::visit(ir_assignment *ir)
 {
    st_dst_reg l;
@@ -2347,15 +2388,7 @@ glsl_to_tgsi_visitor::visit(ir_assignment *ir)
       new_inst->saturate = inst->saturate;
       inst->dead_mask = inst->dst.writemask;
    } else {
-      for (i = 0; i < type_size(ir->lhs->type); i++) {
-         if (ir->rhs->type->is_array())
-         	r.type = ir->rhs->type->element_type()->base_type;
-         else if (ir->rhs->type->is_record())
-         	r.type = ir->rhs->type->fields.structure[i].type->base_type;
-         emit(ir, TGSI_OPCODE_MOV, l, r);
-         l.index++;
-         r.index++;
-      }
+      emit_block_mov(ir, ir->rhs->type, &l, &r);
    }
 }
 
