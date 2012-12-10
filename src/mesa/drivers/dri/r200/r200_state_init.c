@@ -266,7 +266,7 @@ TCL_CHECK( tcl_add4, GL_TRUE, 4 )
 TCL_CHECK( tcl_tex_add4, rmesa->state.texture.unit[atom->idx].unitneeded, 4 )
 TCL_CHECK( tcl_lighting_add4, ctx->Light.Enabled, 4 )
 TCL_CHECK( tcl_lighting_add6, ctx->Light.Enabled, 6 )
-TCL_CHECK( tcl_light_add8, ctx->Light.Enabled && ctx->Light.Light[atom->idx].Enabled, 8 )
+TCL_CHECK( tcl_light_add6, ctx->Light.Enabled && ctx->Light.Light[atom->idx].Enabled, 6 )
 TCL_OR_VP_CHECK( tcl_ucp_add4, (ctx->Transform.ClipPlanesEnabled & (1 << (atom->idx))), 4 )
 TCL_OR_VP_CHECK( tcl_or_vp, GL_TRUE, 0 )
 TCL_OR_VP_CHECK( tcl_or_vp_add2, GL_TRUE, 2 )
@@ -360,7 +360,7 @@ static void lit_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
 
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_VEC(atom->cmd[LIT_CMD_0], atom->cmd+1);
-   OUT_VEC(atom->cmd[LIT_CMD_1], atom->cmd+LIT_CMD_1+1);
+   OUT_SCL(atom->cmd[LIT_CMD_1], atom->cmd+LIT_CMD_1+1);
    END_BATCH();
 }
 
@@ -726,14 +726,14 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( ucp[3], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-3", 3 );
    ALLOC_STATE( ucp[4], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-4", 4 );
    ALLOC_STATE( ucp[5], tcl_ucp_add4, UCP_STATE_SIZE, "UCP/userclip-5", 5 );
-   ALLOC_STATE( lit[0], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-0", 0 );
-   ALLOC_STATE( lit[1], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-1", 1 );
-   ALLOC_STATE( lit[2], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-2", 2 );
-   ALLOC_STATE( lit[3], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-3", 3 );
-   ALLOC_STATE( lit[4], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-4", 4 );
-   ALLOC_STATE( lit[5], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-5", 5 );
-   ALLOC_STATE( lit[6], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-6", 6 );
-   ALLOC_STATE( lit[7], tcl_light_add8, LIT_STATE_SIZE, "LIT/light-7", 7 );
+   ALLOC_STATE( lit[0], tcl_light_add6, LIT_STATE_SIZE, "LIT/light-0", 0 );
+   ALLOC_STATE( lit[1], tcl_light_add6, LIT_STATE_SIZE, "LIT/light-1", 1 );
+   ALLOC_STATE( lit[2], tcl_light_add6, LIT_STATE_SIZE, "LIT/light-2", 2 );
+   ALLOC_STATE( lit[3], tcl_light_add6, LIT_STATE_SIZE, "LIT/light-3", 3 );
+   ALLOC_STATE( lit[4], tcl_light_add6, LIT_STATE_SIZE, "LIT/light-4", 4 );
+   ALLOC_STATE( lit[5], tcl_light_add6, LIT_STATE_SIZE, "LIT/light-5", 5 );
+   ALLOC_STATE( lit[6], tcl_light_add6, LIT_STATE_SIZE, "LIT/light-6", 6 );
+   ALLOC_STATE( lit[7], tcl_light_add6, LIT_STATE_SIZE, "LIT/light-7", 7 );
    ALLOC_STATE( sci, rrb, SCI_STATE_SIZE, "SCI/scissor", 0 );
    ALLOC_STATE( pix[0], pix_zero, PIX_STATE_SIZE, "PIX/pixstage-0", 0 );
    ALLOC_STATE( pix[1], texenv, PIX_STATE_SIZE, "PIX/pixstage-1", 1 );
