@@ -554,7 +554,7 @@ lp_setup_set_fs_variant( struct lp_setup_context *setup,
 void
 lp_setup_set_fs_constants(struct lp_setup_context *setup,
                           unsigned num,
-                          struct pipe_resource **buffers)
+                          struct pipe_constant_buffer *buffers)
 {
    unsigned i;
 
@@ -563,11 +563,12 @@ lp_setup_set_fs_constants(struct lp_setup_context *setup,
    assert(num <= Elements(setup->constants));
 
    for (i = 0; i < num; ++i) {
-      if (setup->constants[i].current != buffers[i]) {
-         pipe_resource_reference(&setup->constants[i].current, buffers[i]);
-         setup->dirty |= LP_SETUP_NEW_CONSTANTS;
-      }
+      util_copy_constant_buffer(&setup->constants[i].current, &buffers[i]);
    }
+   for (; i < Elements(setup->constants); i++) {
+      util_copy_constant_buffer(&setup->constants[i].current, NULL);
+   }
+   setup->dirty |= LP_SETUP_NEW_CONSTANTS;
 }
 
 
@@ -873,11 +874,21 @@ try_update_scene_state( struct lp_setup_context *setup )
 
    if (setup->dirty & LP_SETUP_NEW_CONSTANTS) {
       for (i = 0; i < Elements(setup->constants); ++i) {
-         struct pipe_resource *buffer = setup->constants[i].current;
+         struct pipe_resource *buffer = setup->constants[i].current.buffer;
+         const unsigned current_size = setup->constants[i].current.buffer_size;
+         const ubyte *current_data = NULL;
 
          if (buffer) {
-            unsigned current_size = buffer->width0;
-            const void *current_data = llvmpipe_resource_data(buffer);
+            /* resource buffer */
+            current_data = (ubyte *) llvmpipe_resource_data(buffer);
+         }
+         else if (setup->constants[i].current.user_buffer) {
+            /* user-space buffer */
+            current_data = (ubyte *) setup->constants[i].current.user_buffer;
+         }
+
+         if (current_data) {
+            current_data += setup->constants[i].current.buffer_offset;
 
             /* TODO: copy only the actually used constants? */
 
@@ -1054,7 +1065,7 @@ lp_setup_destroy( struct lp_setup_context *setup )
    }
 
    for (i = 0; i < Elements(setup->constants); i++) {
-      pipe_resource_reference(&setup->constants[i].current, NULL);
+      pipe_resource_reference(&setup->constants[i].current.buffer, NULL);
    }
 
    /* free the scenes in the 'empty' queue */

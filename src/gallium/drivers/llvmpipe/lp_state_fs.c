@@ -2408,32 +2408,32 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
    struct pipe_resource *constants = cb ? cb->buffer : NULL;
-   unsigned size;
-   const void *data;
-
-   if (cb && cb->user_buffer) {
-      constants = llvmpipe_user_buffer_create(pipe->screen,
-                                              (void *) cb->user_buffer,
-                                              cb->buffer_size,
-                                              PIPE_BIND_CONSTANT_BUFFER);
-   }
-
-   size = constants ? constants->width0 : 0;
-   data = constants ? llvmpipe_resource_data(constants) : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index < Elements(llvmpipe->constants[shader]));
 
-   if(llvmpipe->constants[shader][index] == constants)
-      return;
-
-   draw_flush(llvmpipe->draw);
-
    /* note: reference counting */
-   pipe_resource_reference(&llvmpipe->constants[shader][index], constants);
+   util_copy_constant_buffer(&llvmpipe->constants[shader][index], cb);
 
-   if(shader == PIPE_SHADER_VERTEX ||
-      shader == PIPE_SHADER_GEOMETRY) {
+   if (shader == PIPE_SHADER_VERTEX ||
+       shader == PIPE_SHADER_GEOMETRY) {
+      /* Pass the constants to the 'draw' module */
+      const unsigned size = cb ? cb->buffer_size : 0;
+      const ubyte *data;
+
+      if (constants) {
+         data = (ubyte *) llvmpipe_resource_data(constants);
+      }
+      else if (cb && cb->user_buffer) {
+         data = (ubyte *) cb->user_buffer;
+      }
+      else {
+         data = NULL;
+      }
+
+      if (data)
+         data += cb->buffer_offset;
+
       draw_set_mapped_constant_buffer(llvmpipe->draw, shader,
                                       index, data, size);
    }

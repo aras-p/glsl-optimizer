@@ -83,7 +83,7 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
 
    for (i = 0; i < Elements(llvmpipe->constants); i++) {
       for (j = 0; j < Elements(llvmpipe->constants[i]); j++) {
-         pipe_resource_reference(&llvmpipe->constants[i][j], NULL);
+         pipe_resource_reference(&llvmpipe->constants[i][j].buffer, NULL);
       }
    }
 

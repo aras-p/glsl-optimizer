@@ -669,8 +669,12 @@ llvmpipe_transfer_map( struct pipe_context *pipe,
       }
    }
 
-   if (resource == llvmpipe->constants[PIPE_SHADER_FRAGMENT][0])
+   /* Check if we're mapping the current constant buffer */
+   if ((usage & PIPE_TRANSFER_WRITE) &&
+       resource == llvmpipe->constants[PIPE_SHADER_FRAGMENT][0].buffer) {
+      /* constants may have changed */
       llvmpipe->dirty |= LP_NEW_CONSTANTS;
+   }
 
    lpt = CALLOC_STRUCT(llvmpipe_transfer);
    if (!lpt)

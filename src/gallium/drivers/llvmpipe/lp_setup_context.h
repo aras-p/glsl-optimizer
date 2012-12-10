@@ -128,7 +128,7 @@ struct lp_setup_context
 
    /** fragment shader constants */
    struct {
-      struct pipe_resource *current;
+      struct pipe_constant_buffer current;
       unsigned stored_size;
       const void *stored_data;
    } constants[LP_MAX_TGSI_CONST_BUFFERS];
