@@ -4243,14 +4243,17 @@ translate_tex_offset(struct st_translate *t,
                      const struct tgsi_texture_offset *in_offset)
 {
    struct tgsi_texture_offset offset;
+   struct ureg_src imm_src;
 
    assert(in_offset->File == PROGRAM_IMMEDIATE);
+   imm_src = t->immediates[in_offset->Index];
 
+   offset.File = imm_src.File;
+   offset.Index = imm_src.Index;
+   offset.SwizzleX = imm_src.SwizzleX;
+   offset.SwizzleY = imm_src.SwizzleY;
+   offset.SwizzleZ = imm_src.SwizzleZ;
    offset.File = TGSI_FILE_IMMEDIATE;
-   offset.Index = in_offset->Index;
-   offset.SwizzleX = in_offset->SwizzleX;
-   offset.SwizzleY = in_offset->SwizzleY;
-   offset.SwizzleZ = in_offset->SwizzleZ;
    offset.Padding = 0;
 
    return offset;
