@@ -42,10 +42,10 @@ _cl_program::_cl_program(clover::context &ctx,
 
 void
 _cl_program::build(const std::vector<clover::device *> &devs) {
-   __binaries.clear();
-   __logs.clear();
 
    for (auto dev : devs) {
+      __binaries.erase(dev);
+      __logs.erase(dev);
       try {
          auto module = (dev->ir_format() == PIPE_SHADER_IR_TGSI ?
                         compile_program_tgsi(__source) :
