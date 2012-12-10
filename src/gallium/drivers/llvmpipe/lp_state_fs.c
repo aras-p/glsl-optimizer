@@ -2312,8 +2312,6 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
    if (llvmpipe->fs == fs)
       return;
 
-   draw_flush(llvmpipe->draw);
-
    llvmpipe->fs = (struct lp_fragment_shader *) fs;
 
    draw_bind_fragment_shader(llvmpipe->draw,
