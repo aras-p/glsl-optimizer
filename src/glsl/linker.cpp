@@ -1601,6 +1601,17 @@ private:
    int location;
 
    /**
+    * If non-zero, then this variable may be packed along with other variables
+    * into a single varying slot, so this offset should be applied when
+    * accessing components.  For example, an offset of 1 means that the x
+    * component of this variable is actually stored in component y of the
+    * location specified by \c location.
+    *
+    * Only valid if location != -1.
+    */
+   unsigned location_frac;
+
+   /**
     * If location != -1, the number of vector elements in this variable, or 1
     * if this variable is a scalar.
     */
@@ -1739,6 +1750,8 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
       /* Array variable */
       const unsigned matrix_cols =
          output_var->type->fields.array->matrix_columns;
+      const unsigned vector_elements =
+         output_var->type->fields.array->vector_elements;
       unsigned actual_array_size = this->is_clip_distance_mesa ?
          prog->Vert.ClipDistanceArraySize : output_var->type->array_size();
 
@@ -1754,16 +1767,22 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
          if (this->is_clip_distance_mesa) {
             this->location =
                output_var->location + this->array_subscript / 4;
+            this->location_frac = this->array_subscript % 4;
          } else {
-            this->location =
-               output_var->location + this->array_subscript * matrix_cols;
+            unsigned fine_location
+               = output_var->location * 4 + output_var->location_frac;
+            unsigned array_elem_size = vector_elements * matrix_cols;
+            fine_location += array_elem_size * this->array_subscript;
+            this->location = fine_location / 4;
+            this->location_frac = fine_location % 4;
          }
          this->size = 1;
       } else {
          this->location = output_var->location;
+         this->location_frac = output_var->location_frac;
          this->size = actual_array_size;
       }
-      this->vector_elements = output_var->type->fields.array->vector_elements;
+      this->vector_elements = vector_elements;
       this->matrix_columns = matrix_cols;
       if (this->is_clip_distance_mesa)
          this->type = GL_FLOAT;
@@ -1778,6 +1797,7 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
          return false;
       }
       this->location = output_var->location;
+      this->location_frac = output_var->location_frac;
       this->size = 1;
       this->vector_elements = output_var->type->vector_elements;
       this->matrix_columns = output_var->type->matrix_columns;
@@ -1812,11 +1832,7 @@ tfeedback_decl::get_num_outputs() const
       return 0;
    }
 
-   unsigned translated_size = this->size;
-   if (this->is_clip_distance_mesa)
-      translated_size = (translated_size + 3) / 4;
-
-   return translated_size * this->matrix_columns;
+   return (this->num_components() + this->location_frac + 3)/4;
 }
 
 
@@ -1854,35 +1870,23 @@ tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
       return false;
    }
 
-   unsigned translated_size = this->size;
-   if (this->is_clip_distance_mesa)
-      translated_size = (translated_size + 3) / 4;
-   unsigned components_so_far = 0;
-   for (unsigned index = 0; index < translated_size; ++index) {
-      for (unsigned v = 0; v < this->matrix_columns; ++v) {
-         unsigned num_components = this->vector_elements;
-         assert(info->NumOutputs < max_outputs);
-         info->Outputs[info->NumOutputs].ComponentOffset = 0;
-         if (this->is_clip_distance_mesa) {
-            if (this->is_subscripted) {
-               num_components = 1;
-               info->Outputs[info->NumOutputs].ComponentOffset =
-                  this->array_subscript % 4;
-            } else {
-               num_components = MIN2(4, this->size - components_so_far);
-            }
-         }
-         info->Outputs[info->NumOutputs].OutputRegister =
-            this->location + v + index * this->matrix_columns;
-         info->Outputs[info->NumOutputs].NumComponents = num_components;
-         info->Outputs[info->NumOutputs].OutputBuffer = buffer;
-         info->Outputs[info->NumOutputs].DstOffset = info->BufferStride[buffer];
-         ++info->NumOutputs;
-         info->BufferStride[buffer] += num_components;
-         components_so_far += num_components;
-      }
+   unsigned location = this->location;
+   unsigned location_frac = this->location_frac;
+   unsigned num_components = this->num_components();
+   while (num_components > 0) {
+      unsigned output_size = MIN2(num_components, 4 - location_frac);
+      assert(info->NumOutputs < max_outputs);
+      info->Outputs[info->NumOutputs].ComponentOffset = location_frac;
+      info->Outputs[info->NumOutputs].OutputRegister = location;
+      info->Outputs[info->NumOutputs].NumComponents = output_size;
+      info->Outputs[info->NumOutputs].OutputBuffer = buffer;
+      info->Outputs[info->NumOutputs].DstOffset = info->BufferStride[buffer];
+      ++info->NumOutputs;
+      info->BufferStride[buffer] += output_size;
+      num_components -= output_size;
+      location++;
+      location_frac = 0;
    }
-   assert(components_so_far == this->num_components());
 
    info->Varyings[info->NumVarying].Name = ralloc_strdup(prog, this->orig_name);
    info->Varyings[info->NumVarying].Type = this->type;
@@ -2330,7 +2334,7 @@ assign_varying_locations(struct gl_context *ctx,
       }
    }
 
-   matches.assign_locations();
+   const unsigned slots_used = matches.assign_locations();
    matches.store_locations(producer_base, consumer_base);
 
    for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
@@ -2342,6 +2346,21 @@ assign_varying_locations(struct gl_context *ctx,
 
       if (!tfeedback_decls[i].assign_location(ctx, prog, output_var))
          return false;
+   }
+
+   if (ctx->Const.DisableVaryingPacking) {
+      /* Transform feedback code assumes varyings are packed, so if the driver
+       * has disabled varying packing, make sure it does not support transform
+       * feedback.
+       */
+      assert(!ctx->Extensions.EXT_transform_feedback);
+   } else {
+      lower_packed_varyings(ctx, producer_base, slots_used, ir_var_out,
+                            producer);
+      if (consumer) {
+         lower_packed_varyings(ctx, consumer_base, slots_used, ir_var_in,
+                               consumer);
+      }
    }
 
    unsigned varying_vectors = 0;
