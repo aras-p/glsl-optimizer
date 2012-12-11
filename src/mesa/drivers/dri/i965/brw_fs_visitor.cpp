@@ -700,6 +700,7 @@ fs_visitor::emit_assignment_writes(fs_reg &l, fs_reg &r,
 
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
+   case GLSL_TYPE_INTERFACE:
       assert(!"not reached");
       break;
    }

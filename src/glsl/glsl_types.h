@@ -54,6 +54,7 @@ enum glsl_base_type {
    GLSL_TYPE_BOOL,
    GLSL_TYPE_SAMPLER,
    GLSL_TYPE_STRUCT,
+   GLSL_TYPE_INTERFACE,
    GLSL_TYPE_ARRAY,
    GLSL_TYPE_VOID,
    GLSL_TYPE_ERROR
@@ -67,6 +68,12 @@ enum glsl_sampler_dim {
    GLSL_SAMPLER_DIM_RECT,
    GLSL_SAMPLER_DIM_BUF,
    GLSL_SAMPLER_DIM_EXTERNAL
+};
+
+enum glsl_interface_packing {
+   GLSL_INTERFACE_PACKING_STD140,
+   GLSL_INTERFACE_PACKING_SHARED,
+   GLSL_INTERFACE_PACKING_PACKED
 };
 
 #ifdef __cplusplus
@@ -84,6 +91,7 @@ struct glsl_type {
 				* only \c GLSL_TYPE_FLOAT, \c GLSL_TYPE_INT,
 				* and \c GLSL_TYPE_UINT are valid.
 				*/
+   unsigned interface_packing:2;
 
    /* Callers of this ralloc-based new need not call delete. It's
     * easier to just ralloc_free 'mem_ctx' (or any of its ancestors). */
@@ -130,8 +138,9 @@ struct glsl_type {
 
    /**
     * For \c GLSL_TYPE_ARRAY, this is the length of the array.  For
-    * \c GLSL_TYPE_STRUCT, it is the number of elements in the structure and
-    * the number of values pointed to by \c fields.structure (below).
+    * \c GLSL_TYPE_STRUCT or \c GLSL_TYPE_INTERFACE, it is the number of
+    * elements in the structure and the number of values pointed to by
+    * \c fields.structure (below).
     */
    unsigned length;
 
@@ -230,6 +239,14 @@ struct glsl_type {
    static const glsl_type *get_record_instance(const glsl_struct_field *fields,
 					       unsigned num_fields,
 					       const char *name);
+
+   /**
+    * Get the instance of an interface block type
+    */
+   static const glsl_type *get_interface_instance(const glsl_struct_field *fields,
+						  unsigned num_fields,
+						  enum glsl_interface_packing packing,
+						  const char *name);
 
    /**
     * Query the total number of scalars that make up a scalar, vector or matrix
@@ -394,6 +411,14 @@ struct glsl_type {
    }
 
    /**
+    * Query whether or not a type is an interface
+    */
+   bool is_interface() const
+   {
+      return base_type == GLSL_TYPE_INTERFACE;
+   }
+
+   /**
     * Query whether or not a type is the void type singleton.
     */
    bool is_void() const
@@ -491,6 +516,10 @@ private:
    glsl_type(const glsl_struct_field *fields, unsigned num_fields,
 	     const char *name);
 
+   /** Constructor for interface types */
+   glsl_type(const glsl_struct_field *fields, unsigned num_fields,
+	     enum glsl_interface_packing packing, const char *name);
+
    /** Constructor for array types */
    glsl_type(const glsl_type *array, unsigned length);
 
@@ -499,6 +528,9 @@ private:
 
    /** Hash table containing the known record types. */
    static struct hash_table *record_types;
+
+   /** Hash table containing the known interface types. */
+   static struct hash_table *interface_types;
 
    static int record_key_compare(const void *a, const void *b);
    static unsigned record_key_hash(const void *key);

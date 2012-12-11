@@ -34,6 +34,7 @@ extern "C" {
 
 hash_table *glsl_type::array_types = NULL;
 hash_table *glsl_type::record_types = NULL;
+hash_table *glsl_type::interface_types = NULL;
 void *glsl_type::mem_ctx = NULL;
 
 void
@@ -51,7 +52,7 @@ glsl_type::glsl_type(GLenum gl_type,
    gl_type(gl_type),
    base_type(base_type),
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
-   sampler_type(0),
+   sampler_type(0), interface_packing(0),
    vector_elements(vector_elements), matrix_columns(matrix_columns),
    length(0)
 {
@@ -69,7 +70,7 @@ glsl_type::glsl_type(GLenum gl_type,
    gl_type(gl_type),
    base_type(GLSL_TYPE_SAMPLER),
    sampler_dimensionality(dim), sampler_shadow(shadow),
-   sampler_array(array), sampler_type(type),
+   sampler_array(array), sampler_type(type), interface_packing(0),
    vector_elements(0), matrix_columns(0),
    length(0)
 {
@@ -82,7 +83,29 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
 		     const char *name) :
    base_type(GLSL_TYPE_STRUCT),
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
-   sampler_type(0),
+   sampler_type(0), interface_packing(0),
+   vector_elements(0), matrix_columns(0),
+   length(num_fields)
+{
+   unsigned int i;
+
+   init_ralloc_type_ctx();
+   this->name = ralloc_strdup(this->mem_ctx, name);
+   this->fields.structure = ralloc_array(this->mem_ctx,
+					 glsl_struct_field, length);
+   for (i = 0; i < length; i++) {
+      this->fields.structure[i].type = fields[i].type;
+      this->fields.structure[i].name = ralloc_strdup(this->fields.structure,
+						     fields[i].name);
+      this->fields.structure[i].row_major = fields[i].row_major;
+   }
+}
+
+glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
+		     enum glsl_interface_packing packing, const char *name) :
+   base_type(GLSL_TYPE_INTERFACE),
+   sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
+   sampler_type(0), interface_packing((unsigned) packing),
    vector_elements(0), matrix_columns(0),
    length(num_fields)
 {
@@ -430,7 +453,7 @@ _mesa_glsl_release_types(void)
 glsl_type::glsl_type(const glsl_type *array, unsigned length) :
    base_type(GLSL_TYPE_ARRAY),
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
-   sampler_type(0),
+   sampler_type(0), interface_packing(0),
    vector_elements(0), matrix_columns(0),
    name(NULL), length(length)
 {
@@ -562,6 +585,9 @@ glsl_type::record_key_compare(const void *a, const void *b)
    if (key1->length != key2->length)
       return 1;
 
+   if (key1->interface_packing != key2->interface_packing)
+      return 1;
+
    for (unsigned i = 0; i < key1->length; i++) {
       if (key1->fields.structure[i].type != key2->fields.structure[i].type)
 	 return 1;
@@ -625,9 +651,37 @@ glsl_type::get_record_instance(const glsl_struct_field *fields,
 
 
 const glsl_type *
+glsl_type::get_interface_instance(const glsl_struct_field *fields,
+				  unsigned num_fields,
+				  enum glsl_interface_packing packing,
+				  const char *name)
+{
+   const glsl_type key(fields, num_fields, packing, name);
+
+   if (interface_types == NULL) {
+      interface_types = hash_table_ctor(64, record_key_hash, record_key_compare);
+   }
+
+   const glsl_type *t = (glsl_type *) hash_table_find(interface_types, & key);
+   if (t == NULL) {
+      t = new glsl_type(fields, num_fields, packing, name);
+
+      hash_table_insert(interface_types, (void *) t, t);
+   }
+
+   assert(t->base_type == GLSL_TYPE_INTERFACE);
+   assert(t->length == num_fields);
+   assert(strcmp(t->name, name) == 0);
+
+   return t;
+}
+
+
+const glsl_type *
 glsl_type::field_type(const char *name) const
 {
-   if (this->base_type != GLSL_TYPE_STRUCT)
+   if (this->base_type != GLSL_TYPE_STRUCT
+       && this->base_type != GLSL_TYPE_INTERFACE)
       return error_type;
 
    for (unsigned i = 0; i < this->length; i++) {
@@ -642,7 +696,8 @@ glsl_type::field_type(const char *name) const
 int
 glsl_type::field_index(const char *name) const
 {
-   if (this->base_type != GLSL_TYPE_STRUCT)
+   if (this->base_type != GLSL_TYPE_STRUCT
+       && this->base_type != GLSL_TYPE_INTERFACE)
       return -1;
 
    for (unsigned i = 0; i < this->length; i++) {
@@ -664,7 +719,8 @@ glsl_type::component_slots() const
    case GLSL_TYPE_BOOL:
       return this->components();
 
-   case GLSL_TYPE_STRUCT: {
+   case GLSL_TYPE_STRUCT:
+   case GLSL_TYPE_INTERFACE: {
       unsigned size = 0;
 
       for (unsigned i = 0; i < this->length; i++)
