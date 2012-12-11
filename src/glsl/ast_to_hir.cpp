@@ -4034,7 +4034,9 @@ ast_process_structure_or_interface_block(exec_list *instructions,
 					 struct _mesa_glsl_parse_state *state,
 					 exec_list *declarations,
 					 YYLTYPE &loc,
-					 glsl_struct_field **fields_ret)
+					 glsl_struct_field **fields_ret,
+                                         bool is_interface,
+                                         bool block_row_major)
 {
    unsigned decl_count = 0;
 
@@ -4076,7 +4078,32 @@ ast_process_structure_or_interface_block(exec_list *instructions,
 
       foreach_list_typed (ast_declaration, decl, link,
 			  &decl_list->declarations) {
-	 const struct glsl_type *field_type = decl_type;
+         /* From the GL_ARB_uniform_buffer_object spec:
+          *
+          *     "Sampler types are not allowed inside of uniform
+          *      blocks. All other types, arrays, and structures
+          *      allowed for uniforms are allowed within a uniform
+          *      block."
+          */
+         const struct glsl_type *field_type = decl_type;
+
+         if (is_interface && field_type->contains_sampler()) {
+            YYLTYPE loc = decl_list->get_location();
+            _mesa_glsl_error(&loc, state,
+                             "Uniform in non-default uniform block contains sampler\n");
+         }
+
+         const struct ast_type_qualifier *const qual =
+            & decl_list->type->qualifier;
+         if (qual->flags.q.std140 ||
+             qual->flags.q.packed ||
+             qual->flags.q.shared) {
+            _mesa_glsl_error(&loc, state,
+                             "uniform block layout qualifiers std140, packed, and "
+                             "shared can only be applied to uniform blocks, not "
+                             "members");
+         }
+
 	 if (decl->is_array) {
 	    field_type = process_array_type(&loc, decl_type, decl->array_size,
 					    state);
@@ -4084,6 +4111,26 @@ ast_process_structure_or_interface_block(exec_list *instructions,
 	 fields[i].type = (field_type != NULL)
 	    ? field_type : glsl_type::error_type;
 	 fields[i].name = decl->identifier;
+
+         if (qual->flags.q.row_major || qual->flags.q.column_major) {
+            if (!field_type->is_matrix() && !field_type->is_record()) {
+               _mesa_glsl_error(&loc, state,
+                                "uniform block layout qualifiers row_major and "
+                                "column_major can only be applied to matrix and "
+                                "structure types");
+            } else
+               validate_matrix_layout_for_type(state, &loc, field_type);
+         }
+
+         if (field_type->is_matrix() ||
+             (field_type->is_array() && field_type->fields.array->is_matrix())) {
+            fields[i].row_major = block_row_major;
+            if (qual->flags.q.row_major)
+               fields[i].row_major = true;
+            else if (qual->flags.q.column_major)
+               fields[i].row_major = false;
+         }
+
 	 i++;
       }
    }
@@ -4106,7 +4153,9 @@ ast_struct_specifier::hir(exec_list *instructions,
 					       state,
 					       &this->declarations,
 					       loc,
-					       &fields);
+					       &fields,
+                                               false,
+                                               false);
 
    const glsl_type *t =
       glsl_type::get_record_instance(fields, decl_count, this->name);
@@ -4152,6 +4201,8 @@ ir_rvalue *
 ast_uniform_block::hir(exec_list *instructions,
 		       struct _mesa_glsl_parse_state *state)
 {
+   YYLTYPE loc = this->get_location();
+
    /* The ast_uniform_block has a list of ast_declarator_lists.  We
     * need to turn those into ir_variables with an association
     * with this uniform block.
@@ -4175,60 +4226,78 @@ ast_uniform_block::hir(exec_list *instructions,
       ubo->_Packing = ubo_packing_std140;
    }
 
-   unsigned int num_variables = 0;
-   foreach_list_typed(ast_declarator_list, decl_list, link, &declarations) {
-      foreach_list_const(node, &decl_list->declarations) {
-	 num_variables++;
+   bool block_row_major = this->layout.flags.q.row_major;
+   exec_list declared_variables;
+   glsl_struct_field *fields;
+   unsigned int num_variables =
+      ast_process_structure_or_interface_block(&declared_variables,
+                                               state,
+                                               &this->declarations,
+                                               loc,
+                                               &fields,
+                                               true,
+                                               block_row_major);
+
+   STATIC_ASSERT(unsigned(GLSL_INTERFACE_PACKING_STD140)
+                 == unsigned(ubo_packing_std140));
+   STATIC_ASSERT(unsigned(GLSL_INTERFACE_PACKING_SHARED)
+                 == unsigned(ubo_packing_shared));
+   STATIC_ASSERT(unsigned(GLSL_INTERFACE_PACKING_PACKED)
+                 == unsigned(ubo_packing_packed));
+
+   const glsl_type *block_type =
+      glsl_type::get_interface_instance(fields,
+                                        num_variables,
+                                        (enum glsl_interface_packing) ubo->_Packing,
+                                        this->block_name);
+
+   /* Since interface blocks cannot contain statements, it should be
+    * impossible for the block to generate any instructions.
+    */
+   assert(declared_variables.is_empty());
+
+   /* Page 39 (page 45 of the PDF) of section 4.3.7 in the GLSL ES 3.00 spec
+    * says:
+    *
+    *     "If an instance name (instance-name) is used, then it puts all the
+    *     members inside a scope within its own name space, accessed with the
+    *     field selector ( . ) operator (analogously to structures)."
+    */
+   if (this->instance_name) {
+      ir_variable *var = new(state) ir_variable(block_type,
+                                                this->instance_name,
+                                                ir_var_uniform);
+
+      state->symbols->add_variable(var);
+      instructions->push_tail(var);
+   } else {
+      for (unsigned i = 0; i < num_variables; i++) {
+         ir_variable *var =
+            new(state) ir_variable(fields[i].type,
+                                   ralloc_strdup(state, fields[i].name),
+                                   ir_var_uniform);
+         var->uniform_block = ubo - state->uniform_blocks;
+
+         state->symbols->add_variable(var);
+         instructions->push_tail(var);
       }
    }
 
-   bool block_row_major = this->layout.flags.q.row_major;
-
+   /* FINISHME: Eventually the rest of this code needs to be moved into the
+    * FINISHME: linker.
+    */
    ubo->Uniforms = rzalloc_array(state->uniform_blocks,
 				 struct gl_uniform_buffer_variable,
 				 num_variables);
 
-   foreach_list_typed(ast_declarator_list, decl_list, link, &declarations) {
-      exec_list declared_variables;
+   for (unsigned i = 0; i < num_variables; i++) {
+      struct gl_uniform_buffer_variable *ubo_var =
+         &ubo->Uniforms[ubo->NumUniforms++];
 
-      decl_list->hir(&declared_variables, state);
-
-      foreach_list_const(node, &declared_variables) {
-	 ir_variable *var = (ir_variable *)node;
-
-	 struct gl_uniform_buffer_variable *ubo_var =
-	    &ubo->Uniforms[ubo->NumUniforms++];
-
-	 var->uniform_block = ubo - state->uniform_blocks;
-
-	 ubo_var->Name = ralloc_strdup(state->uniform_blocks, var->name);
-	 ubo_var->Type = var->type;
-	 ubo_var->Offset = 0; /* Assigned at link time. */
-
-	 if (var->type->is_matrix() ||
-	     (var->type->is_array() && var->type->fields.array->is_matrix())) {
-	    ubo_var->RowMajor = block_row_major;
-	    if (decl_list->type->qualifier.flags.q.row_major)
-	       ubo_var->RowMajor = true;
-	    else if (decl_list->type->qualifier.flags.q.column_major)
-	       ubo_var->RowMajor = false;
-	 }
-
-	 /* From the GL_ARB_uniform_buffer_object spec:
-	  *
-	  *     "Sampler types are not allowed inside of uniform
-	  *      blocks. All other types, arrays, and structures
-	  *      allowed for uniforms are allowed within a uniform
-	  *      block."
-	  */
-	 if (var->type->contains_sampler()) {
-	    YYLTYPE loc = decl_list->get_location();
-	    _mesa_glsl_error(&loc, state,
-			     "Uniform in non-default uniform block contains sampler\n");
-	 }
-      }
-
-      instructions->append_list(&declared_variables);
+      ubo_var->Name = ralloc_strdup(state->uniform_blocks, fields[i].name);
+      ubo_var->Type = fields[i].type;
+      ubo_var->Offset = 0; /* Assigned at link time. */
+      ubo_var->RowMajor = fields[i].row_major;
    }
 
    return NULL;
