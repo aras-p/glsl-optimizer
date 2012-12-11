@@ -96,6 +96,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
       this->fields.structure[i].type = fields[i].type;
       this->fields.structure[i].name = ralloc_strdup(this->fields.structure,
 						     fields[i].name);
+      this->fields.structure[i].row_major = fields[i].row_major;
    }
 }
 
@@ -567,6 +568,9 @@ glsl_type::record_key_compare(const void *a, const void *b)
       if (strcmp(key1->fields.structure[i].name,
 		 key2->fields.structure[i].name) != 0)
 	 return 1;
+      if (key1->fields.structure[i].row_major
+         != key2->fields.structure[i].row_major)
+        return 1;
    }
 
    return 0;

@@ -566,6 +566,7 @@ private:
 struct glsl_struct_field {
    const struct glsl_type *type;
    const char *name;
+   bool row_major;
 };
 
 #endif /* __cplusplus */
