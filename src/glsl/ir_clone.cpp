@@ -375,10 +375,14 @@ ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
       return c;
    }
 
-   default:
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
       assert(!"Should not get here.");
-      return NULL;
+      break;
    }
+
+   return NULL;
 }
 
 

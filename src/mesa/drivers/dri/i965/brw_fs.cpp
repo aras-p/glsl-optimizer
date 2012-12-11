@@ -455,10 +455,13 @@ fs_visitor::type_size(const struct glsl_type *type)
        * link time.
        */
       return 0;
-   default:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
       assert(!"not reached");
-      return 0;
+      break;
    }
+
+   return 0;
 }
 
 fs_reg

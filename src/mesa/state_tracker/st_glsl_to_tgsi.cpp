@@ -984,10 +984,12 @@ type_size(const struct glsl_type *type)
        * at link time.
        */
       return 1;
-   default:
-      assert(0);
-      return 0;
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
+      assert(!"Invalid type in type_size");
+      break;
    }
+   return 0;
 }
 
 /**

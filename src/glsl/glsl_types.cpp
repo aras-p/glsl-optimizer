@@ -672,9 +672,13 @@ glsl_type::component_slots() const
    case GLSL_TYPE_ARRAY:
       return this->length * this->fields.array->component_slots();
 
-   default:
-      return 0;
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
+      break;
    }
+
+   return 0;
 }
 
 bool

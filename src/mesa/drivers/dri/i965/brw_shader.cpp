@@ -285,10 +285,13 @@ brw_type_for_base_type(const struct glsl_type *type)
        * way to trip up if we don't.
        */
       return BRW_REGISTER_TYPE_UD;
-   default:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
       assert(!"not reached");
-      return BRW_REGISTER_TYPE_F;
+      break;
    }
+
+   return BRW_REGISTER_TYPE_F;
 }
 
 uint32_t

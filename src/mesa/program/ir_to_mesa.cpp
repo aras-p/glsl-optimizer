@@ -623,10 +623,13 @@ type_size(const struct glsl_type *type)
        * at link time.
        */
       return 1;
-   default:
-      assert(0);
-      return 0;
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
+      assert(!"Invalid type in type_size");
+      break;
    }
+
+   return 0;
 }
 
 /**
@@ -2529,7 +2532,10 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
 	    format = uniform_native;
 	    columns = 1;
 	    break;
-	 default:
+         case GLSL_TYPE_ARRAY:
+         case GLSL_TYPE_VOID:
+         case GLSL_TYPE_STRUCT:
+         case GLSL_TYPE_ERROR:
 	    assert(!"Should not get here.");
 	    break;
 	 }

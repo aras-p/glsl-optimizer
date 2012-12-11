@@ -861,10 +861,6 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
        * ignores the sampler present in the type.
        */
       break;
-
-   default:
-      assert(!"Should not get here.");
-      break;
    }
 
    if (cmp == NULL)
