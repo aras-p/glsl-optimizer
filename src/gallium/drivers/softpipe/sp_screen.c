@@ -127,7 +127,7 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
-      return 0;
+      return 1;
    case PIPE_CAP_SCALED_RESOLVE:
       return 0;
    case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
