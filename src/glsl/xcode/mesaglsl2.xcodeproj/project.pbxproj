@@ -258,7 +258,6 @@
 		2B6A99EE1223B1670059FBED /* glcpp-parse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "glcpp-parse.c"; path = "../glcpp/glcpp-parse.c"; sourceTree = SOURCE_ROOT; };
 		2B6A99EF1223B1670059FBED /* glcpp-parse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "glcpp-parse.h"; path = "../glcpp/glcpp-parse.h"; sourceTree = SOURCE_ROOT; };
 		2B6A99F01223B1670059FBED /* glcpp-parse.y */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.yacc; name = "glcpp-parse.y"; path = "../glcpp/glcpp-parse.y"; sourceTree = SOURCE_ROOT; };
-		2B6A99F11223B1670059FBED /* glcpp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = glcpp.c; path = ../glcpp/glcpp.c; sourceTree = SOURCE_ROOT; };
 		2B6A99F21223B1670059FBED /* glcpp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = glcpp.h; path = ../glcpp/glcpp.h; sourceTree = SOURCE_ROOT; };
 		2B6A99F31223B1670059FBED /* pp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pp.c; path = ../glcpp/pp.c; sourceTree = SOURCE_ROOT; };
 		2B6AC7B5161EC99C0094FD86 /* prog_instruction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = prog_instruction.h; path = ../../mesa/program/prog_instruction.h; sourceTree = SOURCE_ROOT; };
@@ -422,7 +421,6 @@
 				2B6A99EE1223B1670059FBED /* glcpp-parse.c */,
 				2B6A99EF1223B1670059FBED /* glcpp-parse.h */,
 				2B6A99F01223B1670059FBED /* glcpp-parse.y */,
-				2B6A99F11223B1670059FBED /* glcpp.c */,
 				2B6A99F21223B1670059FBED /* glcpp.h */,
 				2B6A99F31223B1670059FBED /* pp.c */,
 			);
