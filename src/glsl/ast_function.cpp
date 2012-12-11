@@ -183,7 +183,7 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
  */
 static ir_rvalue *
 generate_call(exec_list *instructions, ir_function_signature *sig,
-	      YYLTYPE *loc, exec_list *actual_parameters,
+	      exec_list *actual_parameters,
 	      ir_call **call_ir,
 	      struct _mesa_glsl_parse_state *state)
 {
@@ -1501,7 +1501,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 /* an error has already been emitted */
 	 value = ir_rvalue::error_value(ctx);
       } else {
-	 value = generate_call(instructions, sig, &loc, &actual_parameters,
+	 value = generate_call(instructions, sig, &actual_parameters,
 			       &call, state);
       }
 
