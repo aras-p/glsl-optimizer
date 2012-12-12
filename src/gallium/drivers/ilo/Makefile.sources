@@ -17,6 +17,10 @@ C_SOURCES := \
 	ilo_shader.c \
 	ilo_state.c \
 	ilo_video.c \
+	shader/ilo_shader_cs.c \
+	shader/ilo_shader_fs.c \
+	shader/ilo_shader_gs.c \
+	shader/ilo_shader_vs.c \
 	shader/toy_compiler.c \
 	shader/toy_compiler_asm.c \
 	shader/toy_compiler_disasm.c \

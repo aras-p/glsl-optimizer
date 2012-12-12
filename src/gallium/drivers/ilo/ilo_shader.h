@@ -211,33 +211,27 @@ ilo_shader_cache_mark_busy(struct ilo_shader_cache *shc)
       shc->busy = true;
 }
 
-static inline struct ilo_shader *
+struct ilo_shader *
 ilo_shader_compile_vs(const struct ilo_shader_state *state,
-                      const struct ilo_shader_variant *variant)
-{
-   return NULL;
-}
+                      const struct ilo_shader_variant *variant);
 
-static inline struct ilo_shader *
+struct ilo_shader *
 ilo_shader_compile_gs(const struct ilo_shader_state *state,
-                      const struct ilo_shader_variant *variant)
-{
-   return NULL;
-}
+                      const struct ilo_shader_variant *variant);
 
-static inline struct ilo_shader *
+bool
+ilo_shader_compile_gs_passthrough(const struct ilo_shader_state *vs_state,
+                                  const struct ilo_shader_variant *vs_variant,
+                                  const int *so_mapping,
+                                  struct ilo_shader *vs);
+
+struct ilo_shader *
 ilo_shader_compile_fs(const struct ilo_shader_state *state,
-                      const struct ilo_shader_variant *variant)
-{
-   return NULL;
-}
+                      const struct ilo_shader_variant *variant);
 
-static inline struct ilo_shader *
+struct ilo_shader *
 ilo_shader_compile_cs(const struct ilo_shader_state *state,
-                      const struct ilo_shader_variant *variant)
-{
-   return NULL;
-}
+                      const struct ilo_shader_variant *variant);
 
 static inline void
 ilo_shader_destroy(struct ilo_shader *sh)
