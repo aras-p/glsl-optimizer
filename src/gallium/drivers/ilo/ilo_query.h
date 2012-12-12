@@ -30,9 +30,33 @@
 
 #include "ilo_common.h"
 
+struct intel_bo;
 struct ilo_context;
+
+/**
+ * Queries can be bound to various places in the driver.  While bound, it tells
+ * the driver to collect the data indicated by the type of the query.
+ */
+struct ilo_query {
+   unsigned type;
+   bool active;
+
+   struct list_head list;
+
+   /* storage for the collected data */
+   union pipe_query_result data;
+
+   /* for queries that need to read hardware statistics */
+   struct intel_bo *bo;
+   int reg_read, reg_total;
+   int reg_cmd_size; /* in dwords, as expected by ilo_cp */
+};
 
 void
 ilo_init_query_functions(struct ilo_context *ilo);
+
+bool
+ilo_query_alloc_bo(struct ilo_query *q, int reg_count, int repeat_count,
+                   struct intel_winsys *winsys);
 
 #endif /* ILO_QUERY_H */
