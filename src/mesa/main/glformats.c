@@ -308,6 +308,48 @@ _mesa_bytes_per_pixel(GLenum format, GLenum type)
 
 
 /**
+ * Get the number of bytes for a vertex attrib with the given number of
+ * components and type.
+ *
+ * \param comps number of components.
+ * \param type data type.
+ *
+ * \return bytes per attribute, or -1 if a bad comps/type combination was given.
+ */
+GLint
+_mesa_bytes_per_vertex_attrib(GLint comps, GLenum type)
+{
+   switch (type) {
+   case GL_BYTE:
+   case GL_UNSIGNED_BYTE:
+      return comps * sizeof(GLubyte);
+   case GL_SHORT:
+   case GL_UNSIGNED_SHORT:
+      return comps * sizeof(GLshort);
+   case GL_INT:
+   case GL_UNSIGNED_INT:
+      return comps * sizeof(GLint);
+   case GL_FLOAT:
+      return comps * sizeof(GLfloat);
+   case GL_HALF_FLOAT_ARB:
+      return comps * sizeof(GLhalfARB);
+   case GL_DOUBLE:
+      return comps * sizeof(GLdouble);
+   case GL_FIXED:
+      return comps * sizeof(GLfixed);
+   case GL_INT_2_10_10_10_REV:
+   case GL_UNSIGNED_INT_2_10_10_10_REV:
+      if (comps == 4)
+         return sizeof(GLuint);
+      else
+         return -1;
+   default:
+      return -1;
+   }
+}
+
+
+/**
  * Test if the given format is an integer (non-normalized) format.
  */
 GLboolean

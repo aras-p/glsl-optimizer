@@ -251,7 +251,8 @@ update_array(struct gl_context *ctx,
       return;
    }
 
-   elementSize = _mesa_sizeof_type(type) * size;
+   elementSize = _mesa_bytes_per_vertex_attrib(size, type);
+   assert(elementSize != -1);
 
    array = &ctx->Array.ArrayObj->VertexAttrib[attrib];
    array->Size = size;

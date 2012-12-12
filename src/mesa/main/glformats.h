@@ -49,6 +49,9 @@ _mesa_components_in_format( GLenum format );
 extern GLint
 _mesa_bytes_per_pixel( GLenum format, GLenum type );
 
+extern GLint
+_mesa_bytes_per_vertex_attrib(GLint comps, GLenum type);
+
 extern GLboolean
 _mesa_is_type_integer(GLenum type);
 
