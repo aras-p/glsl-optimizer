@@ -156,7 +156,8 @@ void vbo_check_buffers_are_unmapped(struct gl_context *ctx);
 void vbo_bind_arrays(struct gl_context *ctx);
 
 size_t
-vbo_count_tessellated_primitives(const struct _mesa_prim *prim);
+vbo_count_tessellated_primitives(GLenum mode, GLuint count,
+                                 GLuint num_instances);
 
 void
 vbo_sw_primitive_restart(struct gl_context *ctx,

@@ -94,47 +94,51 @@ void vbo_exec_invalidate_state( struct gl_context *ctx, GLuint new_state )
 
 /**
  * Figure out the number of transform feedback primitives that will be output
- * by the given _mesa_prim command, assuming that no geometry shading is done
- * and primitive restart is not used.
+ * considering the drawing mode, number of vertices, and instance count,
+ * assuming that no geometry shading is done and primitive restart is not
+ * used.
  *
- * This is intended for use by driver back-ends in implementing the
- * PRIMITIVES_GENERATED and TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN queries.
+ * This is used by driver back-ends in implementing the PRIMITIVES_GENERATED
+ * and TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN queries.  It is also used to
+ * pre-validate draw calls in GLES3 (where draw calls only succeed if there is
+ * enough room in the transform feedback buffer for the result).
  */
 size_t
-vbo_count_tessellated_primitives(const struct _mesa_prim *prim)
+vbo_count_tessellated_primitives(GLenum mode, GLuint count,
+                                 GLuint num_instances)
 {
    size_t num_primitives;
-   switch (prim->mode) {
+   switch (mode) {
    case GL_POINTS:
-      num_primitives = prim->count;
+      num_primitives = count;
       break;
    case GL_LINE_STRIP:
-      num_primitives = prim->count >= 2 ? prim->count - 1 : 0;
+      num_primitives = count >= 2 ? count - 1 : 0;
       break;
    case GL_LINE_LOOP:
-      num_primitives = prim->count >= 2 ? prim->count : 0;
+      num_primitives = count >= 2 ? count : 0;
       break;
    case GL_LINES:
-      num_primitives = prim->count / 2;
+      num_primitives = count / 2;
       break;
    case GL_TRIANGLE_STRIP:
    case GL_TRIANGLE_FAN:
    case GL_POLYGON:
-      num_primitives = prim->count >= 3 ? prim->count - 2 : 0;
+      num_primitives = count >= 3 ? count - 2 : 0;
       break;
    case GL_TRIANGLES:
-      num_primitives = prim->count / 3;
+      num_primitives = count / 3;
       break;
    case GL_QUAD_STRIP:
-      num_primitives = prim->count >= 4 ? ((prim->count / 2) - 1) * 2 : 0;
+      num_primitives = count >= 4 ? ((count / 2) - 1) * 2 : 0;
       break;
    case GL_QUADS:
-      num_primitives = (prim->count / 4) * 2;
+      num_primitives = (count / 4) * 2;
       break;
    default:
       assert(!"Unexpected primitive type in count_tessellated_primitives");
       num_primitives = 0;
       break;
    }
-   return num_primitives * prim->num_instances;
+   return num_primitives * num_instances;
 }
