@@ -1093,3 +1093,101 @@ ilo_init_transfer_functions(struct ilo_context *ilo)
    ilo->base.transfer_unmap = ilo_transfer_unmap;
    ilo->base.transfer_inline_write = ilo_transfer_inline_write;
 }
+
+/**
+ * Return the offset (in bytes) to a slice within the bo.
+ *
+ * When tile_aligned is true, the offset is to the tile containing the start
+ * address of the slice.  x_offset and y_offset are offsets (in pixels) from
+ * the tile start to slice start.  x_offset is always a multiple of 4 and
+ * y_offset is always a multiple of 2.
+ */
+unsigned
+ilo_resource_get_slice_offset(const struct ilo_resource *res,
+                              int level, int slice, bool tile_aligned,
+                              unsigned *x_offset, unsigned *y_offset)
+{
+   const unsigned x = res->slice_offsets[level][slice].x / res->block_width;
+   const unsigned y = res->slice_offsets[level][slice].y / res->block_height;
+   unsigned tile_w, tile_h, tile_size, row_size;
+   unsigned slice_offset;
+
+   /* see the Sandy Bridge PRM, volume 1 part 2, page 24 */
+
+   switch (res->tiling) {
+   case INTEL_TILING_NONE:
+      tile_w = res->bo_cpp;
+      tile_h = 1;
+      break;
+   case INTEL_TILING_X:
+      tile_w = 512;
+      tile_h = 8;
+      break;
+   case INTEL_TILING_Y:
+      tile_w = 128;
+      tile_h = 32;
+      break;
+   default:
+      assert(!"unknown tiling");
+      tile_w = res->bo_cpp;
+      tile_h = 1;
+      break;
+   }
+
+   tile_size = tile_w * tile_h;
+   row_size = res->bo_stride * tile_h;
+
+   /*
+    * for non-tiled resources, this is equivalent to
+    *
+    *   slice_offset = y * res->bo_stride + x * res->bo_cpp;
+    */
+   slice_offset =
+      row_size * (y / tile_h) + tile_size * (x * res->bo_cpp / tile_w);
+
+   /*
+    * Since res->bo_stride is a multiple of tile_w, slice_offset should be
+    * aligned at this point.
+    */
+   assert(slice_offset % tile_size == 0);
+
+   if (tile_aligned) {
+      /*
+       * because of the possible values of align_i and align_j in
+       * layout_tex_init(), x_offset must be a multiple of 4 and y_offset must
+       * be a multiple of 2.
+       */
+      if (x_offset) {
+         assert(tile_w % res->bo_cpp == 0);
+         *x_offset = (x % (tile_w / res->bo_cpp)) * res->block_width;
+         assert(*x_offset % 4 == 0);
+      }
+      if (y_offset) {
+         *y_offset = (y % tile_h) * res->block_height;
+         assert(*y_offset % 2 == 0);
+      }
+   }
+   else {
+      const unsigned tx = (x * res->bo_cpp) % tile_w;
+      const unsigned ty = y % tile_h;
+
+      switch (res->tiling) {
+      case INTEL_TILING_NONE:
+         assert(tx == 0 && ty == 0);
+         break;
+      case INTEL_TILING_X:
+         slice_offset += tile_w * ty + tx;
+         break;
+      case INTEL_TILING_Y:
+         slice_offset += tile_h * 16 * (tx / 16) + ty * 16 + (tx % 16);
+         break;
+      }
+
+      if (x_offset)
+         *x_offset = 0;
+      if (y_offset)
+         *y_offset = 0;
+   }
+
+   return slice_offset;
+}

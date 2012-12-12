@@ -85,4 +85,9 @@ ilo_init_resource_functions(struct ilo_screen *is);
 void
 ilo_init_transfer_functions(struct ilo_context *ilo);
 
+unsigned
+ilo_resource_get_slice_offset(const struct ilo_resource *res,
+                              int level, int slice, bool tile_aligned,
+                              unsigned *x_offset, unsigned *y_offset);
+
 #endif /* ILO_RESOURCE_H */
