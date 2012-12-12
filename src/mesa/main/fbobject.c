@@ -2782,7 +2782,6 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                                      GL_DEPTH_BUFFER_BIT |
                                      GL_STENCIL_BUFFER_BIT);
    const struct gl_framebuffer *readFb, *drawFb;
-   const struct gl_renderbuffer *colorReadRb, *colorDrawRb;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -2837,8 +2836,10 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
 
    /* get color read/draw renderbuffers */
    if (mask & GL_COLOR_BUFFER_BIT) {
-      colorReadRb = readFb->_ColorReadBuffer;
-      colorDrawRb = drawFb->_ColorDrawBuffers[0];
+      const GLuint numColorDrawBuffers = ctx->DrawBuffer->_NumColorDrawBuffers;
+      const struct gl_renderbuffer *colorReadRb = readFb->_ColorReadBuffer;
+      const struct gl_renderbuffer *colorDrawRb = NULL;
+      GLuint i;
 
       /* From the EXT_framebuffer_object spec:
        *
@@ -2846,19 +2847,44 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
        *     the read and draw framebuffers, the corresponding bit is silently
        *     ignored."
        */
-      if ((colorReadRb == NULL) || (colorDrawRb == NULL)) {
-	 colorReadRb = colorDrawRb = NULL;
-	 mask &= ~GL_COLOR_BUFFER_BIT;
+      if (!colorReadRb || numColorDrawBuffers == 0) {
+         mask &= ~GL_COLOR_BUFFER_BIT;
       }
-      else if (!compatible_color_datatypes(colorReadRb->Format,
-                                           colorDrawRb->Format)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBlitFramebufferEXT(color buffer datatypes mismatch)");
-         return;
+      else {
+         for (i = 0; i < numColorDrawBuffers; i++) {
+            colorDrawRb = ctx->DrawBuffer->_ColorDrawBuffers[i];
+            if (!colorDrawRb)
+               continue;
+
+            if (!compatible_color_datatypes(colorReadRb->Format,
+                                            colorDrawRb->Format)) {
+               _mesa_error(ctx, GL_INVALID_OPERATION,
+                           "glBlitFramebufferEXT(color buffer datatypes mismatch)");
+               return;
+            }
+            /* extra checks for multisample copies... */
+            if (readFb->Visual.samples > 0 || drawFb->Visual.samples > 0) {
+               /* color formats must match */
+               if (!compatible_resolve_formats(colorReadRb, colorDrawRb)) {
+                  _mesa_error(ctx, GL_INVALID_OPERATION,
+                         "glBlitFramebufferEXT(bad src/dst multisample pixel formats)");
+                  return;
+               }
+            }
+         }
+         if (filter == GL_LINEAR) {
+            /* 3.1 spec, page 199:
+             * "Calling BlitFramebuffer will result in an INVALID_OPERATION error
+             * if filter is LINEAR and read buffer contains integer data."
+             */
+            GLenum type = _mesa_get_format_datatype(colorReadRb->Format);
+            if (type == GL_INT || type == GL_UNSIGNED_INT) {
+               _mesa_error(ctx, GL_INVALID_OPERATION,
+                           "glBlitFramebufferEXT(integer color type)");
+               return;
+            }
+         }
       }
-   }
-   else {
-      colorReadRb = colorDrawRb = NULL;
    }
 
    if (mask & GL_STENCIL_BUFFER_BIT) {
@@ -2963,28 +2989,6 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                 "glBlitFramebufferEXT(bad src/dst multisample region sizes)");
          return;
       }
-
-      /* color formats must match */
-      if (colorReadRb &&
-          colorDrawRb &&
-          !compatible_resolve_formats(colorReadRb, colorDrawRb)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                "glBlitFramebufferEXT(bad src/dst multisample pixel formats)");
-         return;
-      }
-   }
-
-   if (filter == GL_LINEAR && (mask & GL_COLOR_BUFFER_BIT)) {
-      /* 3.1 spec, page 199:
-       * "Calling BlitFramebuffer will result in an INVALID_OPERATION error
-       * if filter is LINEAR and read buffer contains integer data."
-       */
-      GLenum type = _mesa_get_format_datatype(colorReadRb->Format);
-      if (type == GL_INT || type == GL_UNSIGNED_INT) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBlitFramebufferEXT(integer color type)");
-         return;
-      }
    }
 
    if (!ctx->Extensions.EXT_framebuffer_blit) {
@@ -2994,6 +2998,10 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
 
    /* Debug code */
    if (DEBUG_BLIT) {
+      const struct gl_renderbuffer *colorReadRb = readFb->_ColorReadBuffer;
+      const struct gl_renderbuffer *colorDrawRb = NULL;
+      GLuint i = 0;
+
       printf("glBlitFramebuffer(%d, %d, %d, %d,  %d, %d, %d, %d,"
 	     " 0x%x, 0x%x)\n",
 	     srcX0, srcY0, srcX1, srcY1,
@@ -3015,18 +3023,25 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
          }
          printf("\n");
 
-         att = find_attachment(drawFb, colorDrawRb);
-         printf("  Dst FBO %u  RB %u (%dx%d)  ",
-		drawFb->Name, colorDrawRb->Name,
-		colorDrawRb->Width, colorDrawRb->Height);
-         if (att && att->Texture) {
-            printf("Tex %u  tgt 0x%x  level %u  face %u",
-		   att->Texture->Name,
-		   att->Texture->Target,
-		   att->TextureLevel,
-		   att->CubeMapFace);
+         /* Print all active color render buffers */
+         for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+            colorDrawRb = ctx->DrawBuffer->_ColorDrawBuffers[i];
+            if (!colorDrawRb)
+               continue;
+
+            att = find_attachment(drawFb, colorDrawRb);
+            printf("  Dst FBO %u  RB %u (%dx%d)  ",
+		   drawFb->Name, colorDrawRb->Name,
+		   colorDrawRb->Width, colorDrawRb->Height);
+            if (att && att->Texture) {
+               printf("Tex %u  tgt 0x%x  level %u  face %u",
+		      att->Texture->Name,
+		      att->Texture->Target,
+		      att->TextureLevel,
+		      att->CubeMapFace);
+            }
+            printf("\n");
          }
-         printf("\n");
       }
    }
 
