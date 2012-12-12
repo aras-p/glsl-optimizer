@@ -2396,7 +2396,14 @@ brw_set_uip_jip(struct brw_compile *p)
 
 	 assert(insn->bits3.break_cont.uip != 0);
 	 assert(insn->bits3.break_cont.jip != 0);
+
+      case BRW_OPCODE_ENDIF:
+         if (block_end_ip == 0)
+            insn->bits3.break_cont.jip = 2;
+         else
+            insn->bits3.break_cont.jip = (block_end_ip - ip) / scale;
 	 break;
+
       case BRW_OPCODE_HALT:
 	 /* From the Sandy Bridge PRM (volume 4, part 2, section 8.3.19):
 	  *
