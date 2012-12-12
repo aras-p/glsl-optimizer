@@ -28,11 +28,22 @@
 #include "ilo_context.h"
 #include "ilo_gpgpu.h"
 
+/*
+ * This is a placeholder.  We will need something similar to ilo_3d_pipeline.
+ */
+
+static void
+ilo_launch_grid(struct pipe_context *pipe,
+                const uint *block_layout, const uint *grid_layout,
+                uint32_t pc, const void *input)
+{
+}
+
 /**
  * Initialize GPGPU-related functions.
  */
 void
 ilo_init_gpgpu_functions(struct ilo_context *ilo)
 {
-   ilo->base.launch_grid = NULL;
+   ilo->base.launch_grid = ilo_launch_grid;
 }
