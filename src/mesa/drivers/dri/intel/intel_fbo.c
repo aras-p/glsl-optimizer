@@ -793,44 +793,72 @@ intel_blit_framebuffer_copy_tex_sub_image(struct gl_context *ctx,
                                           GLbitfield mask, GLenum filter)
 {
    if (mask & GL_COLOR_BUFFER_BIT) {
+      GLint i;
       const struct gl_framebuffer *drawFb = ctx->DrawBuffer;
       const struct gl_framebuffer *readFb = ctx->ReadBuffer;
-      const struct gl_renderbuffer_attachment *drawAtt =
-         &drawFb->Attachment[drawFb->_ColorDrawBufferIndexes[0]];
+      const struct gl_renderbuffer_attachment *drawAtt;
       struct intel_renderbuffer *srcRb = 
          intel_renderbuffer(readFb->_ColorReadBuffer);
 
-      /* If the source and destination are the same size with no
-         mirroring, the rectangles are within the size of the
-         texture and there is no scissor then we can use
-         glCopyTexSubimage2D to implement the blit. This will end
-         up as a fast hardware blit on some drivers */
-      if (srcRb && drawAtt && drawAtt->Texture &&
-          srcX0 - srcX1 == dstX0 - dstX1 &&
-          srcY0 - srcY1 == dstY0 - dstY1 &&
-          srcX1 >= srcX0 &&
-          srcY1 >= srcY0 &&
-          srcX0 >= 0 && srcX1 <= readFb->Width &&
-          srcY0 >= 0 && srcY1 <= readFb->Height &&
-          dstX0 >= 0 && dstX1 <= drawFb->Width &&
-          dstY0 >= 0 && dstY1 <= drawFb->Height &&
-          !ctx->Scissor.Enabled) {
-         const struct gl_texture_object *texObj = drawAtt->Texture;
-         const GLuint dstLevel = drawAtt->TextureLevel;
-         const GLenum target = texObj->Target;
+      /* If the source and destination are the same size with no mirroring,
+       * the rectangles are within the size of the texture and there is no
+       * scissor then we can use glCopyTexSubimage2D to implement the blit.
+       * This will end up as a fast hardware blit on some drivers.
+       */
+      const GLboolean use_intel_copy_texsubimage =
+         srcX0 - srcX1 == dstX0 - dstX1 &&
+         srcY0 - srcY1 == dstY0 - dstY1 &&
+         srcX1 >= srcX0 &&
+         srcY1 >= srcY0 &&
+         srcX0 >= 0 && srcX1 <= readFb->Width &&
+         srcY0 >= 0 && srcY1 <= readFb->Height &&
+         dstX0 >= 0 && dstX1 <= drawFb->Width &&
+         dstY0 >= 0 && dstY1 <= drawFb->Height &&
+         !ctx->Scissor.Enabled;
 
-         struct gl_texture_image *texImage =
-            _mesa_select_tex_image(ctx, texObj, target, dstLevel);
+      /* Verify that all the draw buffers can be blitted using
+       * intel_copy_texsubimage().
+       */
+      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+         int idx = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
+         if (idx == -1)
+            continue;
+         drawAtt = &drawFb->Attachment[idx];
 
-         if (intel_copy_texsubimage(intel_context(ctx),
-                                    intel_texture_image(texImage),
-                                    dstX0, dstY0,
-                                    srcRb,
-                                    srcX0, srcY0,
-                                    srcX1 - srcX0, /* width */
-                                    srcY1 - srcY0))
-            mask &= ~GL_COLOR_BUFFER_BIT;
+         if (srcRb && drawAtt && drawAtt->Texture &&
+             use_intel_copy_texsubimage)
+            continue;
+         else
+            return mask;
       }
+
+      /* Blit to all active draw buffers */
+      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+         int idx = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
+         if (idx == -1)
+            continue;
+         drawAtt = &drawFb->Attachment[idx];
+
+         {
+            const struct gl_texture_object *texObj = drawAtt->Texture;
+            const GLuint dstLevel = drawAtt->TextureLevel;
+            const GLenum target = texObj->Target;
+
+            struct gl_texture_image *texImage =
+               _mesa_select_tex_image(ctx, texObj, target, dstLevel);
+
+            if (!intel_copy_texsubimage(intel_context(ctx),
+                                        intel_texture_image(texImage),
+                                        dstX0, dstY0,
+                                        srcRb,
+                                        srcX0, srcY0,
+                                        srcX1 - srcX0, /* width */
+                                        srcY1 - srcY0))
+               return mask;
+         }
+      }
+
+      mask &= ~GL_COLOR_BUFFER_BIT;
    }
 
    return mask;

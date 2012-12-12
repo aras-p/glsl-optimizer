@@ -263,8 +263,9 @@ try_blorp_blit(struct intel_context *intel,
       }
       for (unsigned i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; ++i) {
          dst_irb = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i]);
-         do_blorp_blit(intel, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
-                       dstX0, dstY0, dstX1, dstY1, mirror_x, mirror_y);
+	 if (dst_irb)
+            do_blorp_blit(intel, buffer_bit, src_irb, dst_irb, srcX0, srcY0,
+                          dstX0, dstY0, dstX1, dstY1, mirror_x, mirror_y);
       }
       break;
    case GL_DEPTH_BUFFER_BIT:
