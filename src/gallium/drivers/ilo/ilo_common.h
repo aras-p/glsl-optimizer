@@ -43,6 +43,19 @@
 #define ILO_GEN(gen) ((int) (gen * 100))
 #define ILO_GEN_GET_MAJOR(gen) (gen / 100)
 
+enum ilo_debug {
+   ILO_DEBUG_3D        = 1 << 0,
+   ILO_DEBUG_VS        = 1 << 1,
+   ILO_DEBUG_GS        = 1 << 2,
+   ILO_DEBUG_FS        = 1 << 3,
+   ILO_DEBUG_CS        = 1 << 4,
+
+   ILO_DEBUG_NOHW      = 1 << 8,
+   ILO_DEBUG_NOCACHE   = 1 << 9,
+};
+
+extern int ilo_debug;
+
 /**
  * Print a message, for dumping or debugging.
  */

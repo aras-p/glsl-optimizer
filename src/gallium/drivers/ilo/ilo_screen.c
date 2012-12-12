@@ -35,6 +35,19 @@
 #include "ilo_public.h"
 #include "ilo_screen.h"
 
+int ilo_debug;
+
+static const struct debug_named_value ilo_debug_flags[] = {
+   { "3d",        ILO_DEBUG_3D,       "Dump 3D commands and states" },
+   { "vs",        ILO_DEBUG_VS,       "Dump vertex shaders" },
+   { "gs",        ILO_DEBUG_GS,       "Dump geometry shaders" },
+   { "fs",        ILO_DEBUG_FS,       "Dump fragment shaders" },
+   { "cs",        ILO_DEBUG_CS,       "Dump compute shaders" },
+   { "nohw",      ILO_DEBUG_NOHW,     "Do not send commands to HW" },
+   { "nocache",   ILO_DEBUG_NOCACHE,  "Always invalidate HW caches" },
+   DEBUG_NAMED_VALUE_END
+};
+
 static void
 ilo_screen_destroy(struct pipe_screen *screen)
 {
@@ -51,6 +64,8 @@ ilo_screen_create(struct intel_winsys *ws)
 {
    struct ilo_screen *is;
    const struct intel_winsys_info *info;
+
+   ilo_debug = debug_get_flags_option("ILO_DEBUG", ilo_debug_flags, 0);
 
    is = CALLOC_STRUCT(ilo_screen);
    if (!is)
