@@ -1,0 +1,11 @@
+C_SOURCES := \
+	ilo_3d.c \
+	ilo_blit.c \
+	ilo_context.c \
+	ilo_format.c \
+	ilo_gpgpu.c \
+	ilo_query.c \
+	ilo_resource.c \
+	ilo_screen.c \
+	ilo_state.c \
+	ilo_video.c
