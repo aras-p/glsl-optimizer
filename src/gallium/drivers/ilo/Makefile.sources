@@ -2,6 +2,7 @@ C_SOURCES := \
 	ilo_3d.c \
 	ilo_blit.c \
 	ilo_context.c \
+	ilo_cp.c \
 	ilo_format.c \
 	ilo_gpgpu.c \
 	ilo_query.c \
