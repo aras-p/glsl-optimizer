@@ -1224,7 +1224,6 @@ img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
    union tex_tile_address addr;
    const float *out;
    int c;
-   float corner0[TGSI_QUAD_SIZE];
 
    width = u_minify(texture->width0, level);
    height = u_minify(texture->height0, level);
