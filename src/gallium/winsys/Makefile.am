@@ -51,6 +51,10 @@ if HAVE_GALLIUM_I915
 SUBDIRS += i915/sw i915/drm
 endif
 
+if HAVE_GALLIUM_ILO
+SUBDIRS += intel/drm
+endif
+
 if HAVE_GALLIUM_NOUVEAU
 SUBDIRS += nouveau/drm
 endif

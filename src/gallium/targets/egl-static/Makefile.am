@@ -149,6 +149,14 @@ egl_gallium_la_LIBADD += \
 	$(INTEL_LIBS)
 endif
 
+if HAVE_GALLIUM_ILO
+AM_CPPFLAGS += -D_EGL_PIPE_ILO=1
+egl_gallium_la_LIBADD += \
+	$(top_builddir)/src/gallium/winsys/intel/drm/libintelwinsys.la \
+	$(top_builddir)/src/gallium/drivers/ilo/libilo.la \
+	$(INTEL_LIBS)
+endif
+
 if HAVE_GALLIUM_NOUVEAU
 AM_CPPFLAGS += -D_EGL_PIPE_NOUVEAU=1
 egl_gallium_la_LIBADD += \

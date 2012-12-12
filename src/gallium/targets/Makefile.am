@@ -64,6 +64,12 @@ SUBDIRS += xorg-i915
 endif
 endif
 
+if HAVE_GALLIUM_ILO
+if HAVE_DRI
+SUBDIRS += dri-ilo
+endif
+endif
+
 if HAVE_GALLIUM_R300
 if HAVE_DRI
 SUBDIRS += dri-r300
