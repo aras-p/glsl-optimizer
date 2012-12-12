@@ -28,10 +28,56 @@
 #ifndef ILO_RESOURCE_H
 #define ILO_RESOURCE_H
 
+#include "intel_winsys.h"
+
 #include "ilo_common.h"
 
 struct ilo_screen;
 struct ilo_context;
+struct winsys_handle;
+
+/*
+ * TODO we should have
+ *
+ *   ilo_resource, inherited by
+ *    - ilo_buffer
+ *    - ilo_texture
+ *    - ilo_global_binding
+ */
+struct ilo_resource {
+   struct pipe_resource base;
+   struct winsys_handle *handle;
+
+   struct intel_bo *bo;
+
+   /*
+    * These are the values passed to or returned from winsys for bo
+    * allocation.  As such,
+    *
+    *  - width and height are in blocks,
+    *  - cpp is the block size in bytes, and
+    *  - stride is the distance in bytes between two block rows.
+    */
+   int bo_width, bo_height, bo_cpp, bo_stride;
+   enum intel_tiling_mode tiling;
+
+   bool compressed;
+   unsigned block_width;
+   unsigned block_height;
+   bool halign_8, valign_4;
+
+   /* 2D offsets into a layer/slice/face */
+   struct {
+      unsigned x;
+      unsigned y;
+   } *slice_offsets[PIPE_MAX_TEXTURE_LEVELS];
+};
+
+static inline struct ilo_resource *
+ilo_resource(struct pipe_resource *res)
+{
+   return (struct ilo_resource *) res;
+}
 
 void
 ilo_init_resource_functions(struct ilo_screen *is);
