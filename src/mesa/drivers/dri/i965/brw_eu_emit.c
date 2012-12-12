@@ -2317,6 +2317,7 @@ brw_find_next_block_end(struct brw_compile *p, int start)
       case BRW_OPCODE_ENDIF:
       case BRW_OPCODE_ELSE:
       case BRW_OPCODE_WHILE:
+      case BRW_OPCODE_HALT:
 	 return ip;
       }
    }
