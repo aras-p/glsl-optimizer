@@ -1,0 +1,2 @@
+C_SOURCES := \
+	intel_drm_winsys.c
