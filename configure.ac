@@ -341,18 +341,18 @@ AC_ARG_ENABLE([debug],
 if test "x$enable_debug" = xyes; then
     DEFINES_FOR_BUILD="$DEFINES_FOR_BUILD -DDEBUG"
     if test "x$GCC_FOR_BUILD" = xyes; then
-        CFLAGS_FOR_BUILD="$CFLAGS_FOR_BUILD -g"
+        CFLAGS_FOR_BUILD="$CFLAGS_FOR_BUILD -g -O0"
     fi
     if test "x$GXX_FOR_BUILD" = xyes; then
-        CXXFLAGS_FOR_BUILD="$CXXFLAGS_FOR_BUILD -g"
+        CXXFLAGS_FOR_BUILD="$CXXFLAGS_FOR_BUILD -g -O0"
     fi
 
     DEFINES="$DEFINES -DDEBUG"
     if test "x$GCC" = xyes; then
-        CFLAGS="$CFLAGS -g"
+        CFLAGS="$CFLAGS -g -O0"
     fi
     if test "x$GXX" = xyes; then
-        CXXFLAGS="$CXXFLAGS -g"
+        CXXFLAGS="$CXXFLAGS -g -O0"
     fi
 fi
 
