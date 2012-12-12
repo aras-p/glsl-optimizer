@@ -464,7 +464,7 @@ draw_vbo(struct draw_context *draw,
 {
    unsigned instance;
    unsigned index_limit;
-
+   unsigned count;
    assert(info->instance_count > 0);
    if (info->indexed)
       assert(draw->pt.user.elts);
@@ -518,6 +518,11 @@ draw_vbo(struct draw_context *draw,
 
    draw->pt.max_index = index_limit - 1;
 
+   count = info->count;
+   if (count == 0) {
+      if (info->count_from_stream_output)
+         count = draw->pt.max_index + 1;
+   }
 
    /*
     * TODO: We could use draw->pt.max_index to further narrow
@@ -531,7 +536,7 @@ draw_vbo(struct draw_context *draw,
          draw_pt_arrays_restart(draw, info);
       }
       else {
-         draw_pt_arrays(draw, info->mode, info->start, info->count);
+         draw_pt_arrays(draw, info->mode, info->start, count);
       }
    }
 }

@@ -118,6 +118,7 @@ static void so_emit_prim(struct pt_so_emit *so,
    for (i = 0; i < num_vertices; ++i) {
       const float (*input)[4];
       unsigned total_written_compos = 0;
+      int ob;
       /*debug_printf("%d) vertex index = %d (prim idx = %d)\n", i, indices[i], prim_idx);*/
       input = (const float (*)[4])(
          (const char *)input_ptr + (indices[i] * input_vertex_stride));
@@ -126,15 +127,17 @@ static void so_emit_prim(struct pt_so_emit *so,
          unsigned idx = state->output[slot].register_index;
          unsigned start_comp = state->output[slot].start_component;
          unsigned num_comps = state->output[slot].num_components;
-         int ob = state->output[slot].output_buffer;
+
+         ob = state->output[slot].output_buffer;
 
          buffer = (float *)((char *)draw->so.targets[ob]->mapping +
                             draw->so.targets[ob]->target.buffer_offset +
-                            draw->so.targets[ob]->internal_offset);
+                            draw->so.targets[ob]->internal_offset) + state->output[slot].dst_offset;
          memcpy(buffer, &input[idx][start_comp], num_comps * sizeof(float));
-         draw->so.targets[ob]->internal_offset += num_comps * sizeof(float);
          total_written_compos += num_comps;
       }
+      for (ob = 0; ob < draw->so.num_targets; ++ob)
+         draw->so.targets[ob]->internal_offset += state->stride[ob] * sizeof(float);
    }
    so->emitted_vertices += num_vertices;
    ++so->emitted_primitives;
@@ -191,6 +194,9 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
    unsigned start, i;
 
    if (!emit->has_so)
+      return;
+
+   if (!draw->so.num_targets)
       return;
 
    emit->emitted_vertices = 0;
