@@ -245,6 +245,25 @@ _mesa_get_fb0_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
 {
    assert(_mesa_is_winsys_fbo(fb));
 
+   if (_mesa_is_gles3(ctx)) {
+      assert(attachment == GL_BACK ||
+             attachment == GL_DEPTH ||
+             attachment == GL_STENCIL);
+      switch (attachment) {
+      case GL_BACK:
+         /* Since there is no stereo rendering in ES 3.0, only return the
+          * LEFT bits.
+          */
+         if (ctx->DrawBuffer->Visual.doubleBufferMode)
+            return &fb->Attachment[BUFFER_BACK_LEFT];
+         return &fb->Attachment[BUFFER_FRONT_LEFT];
+      case GL_DEPTH:
+      return &fb->Attachment[BUFFER_DEPTH];
+      case GL_STENCIL:
+         return &fb->Attachment[BUFFER_STENCIL];
+      }
+   }
+
    switch (attachment) {
    case GL_FRONT_LEFT:
       return &fb->Attachment[BUFFER_FRONT_LEFT];
@@ -2363,10 +2382,18 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
        * OES_framebuffer_object spec refers to the EXT_framebuffer_object
        * spec.
        */
-      if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_framebuffer_object) {
+      if ((!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_framebuffer_object)
+          && !_mesa_is_gles3(ctx)) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION,
 		     "glGetFramebufferAttachmentParameteriv(bound FBO = 0)");
 	 return;
+      }
+
+      if (_mesa_is_gles3(ctx) && attachment != GL_BACK &&
+          attachment != GL_DEPTH && attachment != GL_STENCIL) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetFramebufferAttachmentParameteriv(attachment)");
+         return;
       }
       /* the default / window-system FBO */
       att = _mesa_get_fb0_attachment(ctx, buffer, attachment);
