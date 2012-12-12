@@ -58,6 +58,7 @@ struct intel_winsys;
 struct intel_bo;
 struct ilo_cp;
 struct ilo_screen;
+struct ilo_shader_state;
 
 struct ilo_context {
    struct pipe_context base;
@@ -78,6 +79,22 @@ struct ilo_context {
 
    struct ilo_cp *cp;
    struct intel_bo *last_cp_bo;
+
+   struct pipe_rasterizer_state *rasterizer;
+   struct ilo_shader_state *vs;
+
+   struct pipe_framebuffer_state framebuffer;
+
+   struct {
+      struct pipe_sampler_state *samplers[ILO_MAX_SAMPLERS];
+      unsigned num_samplers;
+   } samplers[PIPE_SHADER_TYPES];
+
+   struct {
+      struct pipe_sampler_view *views[ILO_MAX_SAMPLER_VIEWS];
+      unsigned num_views;
+   } sampler_views[PIPE_SHADER_TYPES];
+
 };
 
 static inline struct ilo_context *
