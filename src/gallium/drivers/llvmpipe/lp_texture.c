@@ -295,7 +295,9 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
    /* assert(lpr->base.bind); */
 
    if (resource_is_texture(&lpr->base)) {
-      if (lpr->base.bind & PIPE_BIND_DISPLAY_TARGET) {
+      if (lpr->base.bind & (PIPE_BIND_DISPLAY_TARGET |
+                            PIPE_BIND_SCANOUT |
+                            PIPE_BIND_SHARED)) {
          /* displayable surface */
          if (!llvmpipe_displaytarget_layout(screen, lpr))
             goto fail;
