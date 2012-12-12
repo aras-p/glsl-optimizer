@@ -54,6 +54,7 @@
 #define ILO_WM_CONST_SURFACE(i)    (ILO_MAX_DRAW_BUFFERS + i)
 #define ILO_WM_TEXTURE_SURFACE(i)  (ILO_MAX_DRAW_BUFFERS + ILO_MAX_CONST_BUFFERS  + i)
 
+struct blitter_context;
 struct intel_winsys;
 struct intel_bo;
 struct ilo_cp;
@@ -86,6 +87,7 @@ struct ilo_context {
    struct intel_bo *last_cp_bo;
 
    struct ilo_shader_cache *shader_cache;
+   struct blitter_context *blitter;
 
    uint32_t dirty;
 
