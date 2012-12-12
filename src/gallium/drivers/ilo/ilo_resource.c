@@ -25,6 +25,9 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "util/u_transfer.h"
+
+#include "ilo_cp.h"
 #include "ilo_context.h"
 #include "ilo_screen.h"
 #include "ilo_resource.h"
@@ -161,6 +164,238 @@ realloc_bo(struct ilo_resource *res)
       old_bo->unreference(old_bo);
 
    return true;
+}
+
+static void
+ilo_transfer_inline_write(struct pipe_context *pipe,
+                          struct pipe_resource *r,
+                          unsigned level,
+                          unsigned usage,
+                          const struct pipe_box *box,
+                          const void *data,
+                          unsigned stride,
+                          unsigned layer_stride)
+{
+   struct ilo_context *ilo = ilo_context(pipe);
+   struct ilo_resource *res = ilo_resource(r);
+   int offset, size;
+   bool will_be_busy;
+
+   /*
+    * Fall back to map(), memcpy(), and unmap().  We use this path for
+    * unsynchronized write, as the buffer is likely to be busy and pwrite()
+    * will stall.
+    */
+   if (unlikely(res->base.target != PIPE_BUFFER) ||
+       (usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
+      u_default_transfer_inline_write(pipe, r,
+            level, usage, box, data, stride, layer_stride);
+
+      return;
+   }
+
+   /*
+    * XXX With hardware context support, the bo may be needed by GPU without
+    * being referenced by ilo->cp->bo.  We have to flush unconditionally, and
+    * that is bad.
+    */
+   if (ilo->cp->hw_ctx)
+      ilo_cp_flush(ilo->cp);
+
+   will_be_busy = ilo->cp->bo->references(ilo->cp->bo, res->bo);
+
+   /* see if we can avoid stalling */
+   if (will_be_busy || intel_bo_is_busy(res->bo)) {
+      bool will_stall = true;
+
+      if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
+         /* old data not needed so discard the old bo to avoid stalling */
+         if (realloc_bo(res))
+            will_stall = false;
+      }
+      else {
+         /*
+          * We could allocate a temporary bo to hold the data and emit
+          * pipelined copy blit to move them to res->bo.  But for now, do
+          * nothing.
+          */
+      }
+
+      /* flush to make bo busy (so that pwrite() stalls as it should be) */
+      if (will_stall && will_be_busy)
+         ilo_cp_flush(ilo->cp);
+   }
+
+   /* they should specify just an offset and a size */
+   assert(level == 0);
+   assert(box->y == 0);
+   assert(box->z == 0);
+   assert(box->height == 1);
+   assert(box->depth == 1);
+   offset = box->x;
+   size = box->width;
+
+   res->bo->pwrite(res->bo, offset, size, data);
+}
+
+static void
+ilo_transfer_unmap(struct pipe_context *pipe,
+                   struct pipe_transfer *transfer)
+{
+   struct ilo_resource *res = ilo_resource(transfer->resource);
+
+   res->bo->unmap(res->bo);
+
+   pipe_resource_reference(&transfer->resource, NULL);
+   FREE(transfer);
+}
+
+static void
+ilo_transfer_flush_region(struct pipe_context *pipe,
+                          struct pipe_transfer *transfer,
+                          const struct pipe_box *box)
+{
+}
+
+static bool
+map_resource(struct ilo_context *ilo, struct ilo_resource *res,
+             unsigned usage)
+{
+   struct ilo_screen *is = ilo_screen(res->base.screen);
+   bool will_be_busy;
+   int err;
+
+   /* simply map unsynchronized */
+   if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
+      err = res->bo->map_unsynchronized(res->bo);
+      return !err;
+   }
+
+   /*
+    * XXX With hardware context support, the bo may be needed by GPU without
+    * being referenced by ilo->cp->bo.  We have to flush unconditionally, and
+    * that is bad.
+    */
+   if (ilo->cp->hw_ctx)
+      ilo_cp_flush(ilo->cp);
+
+   will_be_busy = ilo->cp->bo->references(ilo->cp->bo, res->bo);
+
+   /* see if we can avoid stalling */
+   if (will_be_busy || intel_bo_is_busy(res->bo)) {
+      bool will_stall = true;
+
+      if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
+         /* discard old bo and allocate a new one for mapping */
+         if (realloc_bo(res))
+            will_stall = false;
+      }
+      else if (usage & PIPE_TRANSFER_MAP_DIRECTLY) {
+         /* nothing we can do */
+      }
+      else if (usage & PIPE_TRANSFER_FLUSH_EXPLICIT) {
+         /*
+          * We could allocate and return a system buffer here.  When a region
+          * of the buffer is explicitly flushed, we pwrite() the region to a
+          * temporary bo and emit pipelined copy blit.
+          *
+          * For now, do nothing.
+          */
+      }
+      else if (usage & PIPE_TRANSFER_DISCARD_RANGE) {
+         /*
+          * We could allocate a temporary bo for mapping, and emit pipelined
+          * copy blit upon unmapping.
+          *
+          * For now, do nothing.
+          */
+      }
+
+      if (will_stall) {
+         if (usage & PIPE_TRANSFER_DONTBLOCK)
+            return false;
+
+         /* flush to make bo busy (so that map() stalls as it should be) */
+         if (will_be_busy)
+            ilo_cp_flush(ilo->cp);
+      }
+   }
+
+   /* prefer map() when there is the last-level cache */
+   if (res->tiling == INTEL_TILING_NONE &&
+       (is->has_llc || (usage & PIPE_TRANSFER_READ)))
+      err = res->bo->map(res->bo, (usage & PIPE_TRANSFER_WRITE));
+   else
+      err = res->bo->map_gtt(res->bo);
+
+   return !err;
+}
+
+static void *
+ilo_transfer_map(struct pipe_context *pipe,
+                 struct pipe_resource *r,
+                 unsigned level,
+                 unsigned usage,
+                 const struct pipe_box *box,
+                 struct pipe_transfer **transfer)
+{
+   struct ilo_context *ilo = ilo_context(pipe);
+   struct ilo_resource *res = ilo_resource(r);
+   struct pipe_transfer *xfer;
+   void *ptr;
+   int x, y;
+
+   xfer = MALLOC_STRUCT(pipe_transfer);
+   if (!xfer)
+      return NULL;
+
+   if (!map_resource(ilo, res, usage)) {
+      FREE(xfer);
+      return NULL;
+   }
+
+   /* init transfer */
+   xfer->resource = NULL;
+   pipe_resource_reference(&xfer->resource, &res->base);
+   xfer->level = level;
+   xfer->usage = usage;
+   xfer->box = *box;
+   /* stride for a block row, not a texel row */
+   xfer->stride = res->bo_stride;
+
+   /*
+    * we can walk through layers when the resource is a texture array or
+    * when this is the first level of a 3D texture being mapped
+    */
+   if (res->base.array_size > 1 ||
+       (res->base.target == PIPE_TEXTURE_3D && level == 0)) {
+      const unsigned qpitch =
+         res->slice_offsets[level][1].y - res->slice_offsets[level][0].y;
+
+      assert(qpitch % res->block_height == 0);
+      xfer->layer_stride = (qpitch / res->block_height) * xfer->stride;
+   }
+   else {
+      xfer->layer_stride = 0;
+   }
+
+   x = res->slice_offsets[level][box->z].x;
+   y = res->slice_offsets[level][box->z].y;
+
+   x += box->x;
+   y += box->y;
+
+   /* in blocks */
+   assert(x % res->block_width == 0 && y % res->block_height == 0);
+   x /= res->block_width;
+   y /= res->block_height;
+
+   ptr = res->bo->get_virtual(res->bo);
+   ptr += y * res->bo_stride + x * res->bo_cpp;
+
+   *transfer = xfer;
+
+   return ptr;
 }
 
 static bool
@@ -853,8 +1088,8 @@ ilo_init_resource_functions(struct ilo_screen *is)
 void
 ilo_init_transfer_functions(struct ilo_context *ilo)
 {
-   ilo->base.transfer_map = NULL;
-   ilo->base.transfer_flush_region = NULL;
-   ilo->base.transfer_unmap = NULL;
-   ilo->base.transfer_inline_write = NULL;
+   ilo->base.transfer_map = ilo_transfer_map;
+   ilo->base.transfer_flush_region = ilo_transfer_flush_region;
+   ilo->base.transfer_unmap = ilo_transfer_unmap;
+   ilo->base.transfer_inline_write = ilo_transfer_inline_write;
 }
