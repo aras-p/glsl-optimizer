@@ -34,6 +34,7 @@
 #include "bufferobj.h"
 #include "context.h"
 #include "hash.h"
+#include "macros.h"
 #include "mfeatures.h"
 #include "mtypes.h"
 #include "transformfeedback.h"
@@ -242,6 +243,34 @@ _mesa_init_transform_feedback_functions(struct dd_function_table *driver)
    driver->EndTransformFeedback = end_transform_feedback;
    driver->PauseTransformFeedback = pause_transform_feedback;
    driver->ResumeTransformFeedback = resume_transform_feedback;
+}
+
+
+/**
+ * Compute the maximum number of vertices that can be written to the currently
+ * enabled transform feedback buffers without overflowing any of them.
+ */
+unsigned
+_mesa_compute_max_transform_feedback_vertices(
+      const struct gl_transform_feedback_object *obj,
+      const struct gl_transform_feedback_info *info)
+{
+   unsigned max_index = 0xffffffff;
+   unsigned i;
+
+   for (i = 0; i < info->NumBuffers; ++i) {
+      unsigned stride = info->BufferStride[i];
+      unsigned max_for_this_buffer;
+
+      /* Skip any inactive buffers, which have a stride of 0. */
+      if (stride == 0)
+	 continue;
+
+      max_for_this_buffer = obj->Size[i] / (4 * stride);
+      max_index = MIN2(max_index, max_for_this_buffer);
+   }
+
+   return max_index;
 }
 
 

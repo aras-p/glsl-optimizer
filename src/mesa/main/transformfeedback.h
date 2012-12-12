@@ -46,6 +46,11 @@ _mesa_validate_transform_feedback_buffers(struct gl_context *ctx);
 extern void
 _mesa_init_transform_feedback_functions(struct dd_function_table *driver);
 
+extern unsigned
+_mesa_compute_max_transform_feedback_vertices(
+      const struct gl_transform_feedback_object *obj,
+      const struct gl_transform_feedback_info *info);
+
 
 /*** GL_EXT_transform_feedback ***/
 

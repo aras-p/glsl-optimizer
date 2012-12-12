@@ -31,6 +31,7 @@
 #include "intel_batchbuffer.h"
 #include "brw_defines.h"
 #include "brw_state.h"
+#include "main/transformfeedback.h"
 
 static void
 gen6_update_sol_surfaces(struct brw_context *brw)
@@ -165,21 +166,12 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
 
-   unsigned max_index = 0xffffffff;
-
    /* Compute the maximum number of vertices that we can write without
     * overflowing any of the buffers currently being used for feedback.
     */
-   for (int i = 0; i < BRW_MAX_SOL_BUFFERS; ++i) {
-      unsigned stride = linked_xfb_info->BufferStride[i];
-
-      /* Skip any inactive buffers, which have a stride of 0. */
-      if (stride == 0)
-	 continue;
-
-      unsigned max_for_this_buffer = xfb_obj->Size[i] / (4 * stride);
-      max_index = MIN2(max_index, max_for_this_buffer);
-   }
+   unsigned max_index
+      = _mesa_compute_max_transform_feedback_vertices(xfb_obj,
+                                                      linked_xfb_info);
 
    /* Initialize the SVBI 0 register to zero and set the maximum index.
     * These values will be sent to the hardware on the next draw.
