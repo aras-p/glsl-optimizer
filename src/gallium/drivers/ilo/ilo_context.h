@@ -32,6 +32,28 @@
 
 #include "ilo_common.h"
 
+/**
+ * \see brw_context.h
+ */
+#define ILO_MAX_DRAW_BUFFERS    8
+#define ILO_MAX_CONST_BUFFERS   1
+#define ILO_MAX_SAMPLER_VIEWS   16
+#define ILO_MAX_SAMPLERS        16
+#define ILO_MAX_SO_BINDINGS     64
+#define ILO_MAX_SO_BUFFERS      4
+
+#define ILO_MAX_VS_SURFACES        (ILO_MAX_CONST_BUFFERS + ILO_MAX_SAMPLER_VIEWS)
+#define ILO_VS_CONST_SURFACE(i)    (i)
+#define ILO_VS_TEXTURE_SURFACE(i)  (ILO_MAX_CONST_BUFFERS  + i)
+
+#define ILO_MAX_GS_SURFACES        (ILO_MAX_SO_BINDINGS)
+#define ILO_GS_SO_SURFACE(i)       (i)
+
+#define ILO_MAX_WM_SURFACES        (ILO_MAX_DRAW_BUFFERS + ILO_MAX_CONST_BUFFERS + ILO_MAX_SAMPLER_VIEWS)
+#define ILO_WM_DRAW_SURFACE(i)     (i)
+#define ILO_WM_CONST_SURFACE(i)    (ILO_MAX_DRAW_BUFFERS + i)
+#define ILO_WM_TEXTURE_SURFACE(i)  (ILO_MAX_DRAW_BUFFERS + ILO_MAX_CONST_BUFFERS  + i)
+
 struct intel_winsys;
 struct ilo_screen;
 
