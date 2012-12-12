@@ -452,7 +452,7 @@ link_cross_validate_uniform_block(void *mem_ctx,
  * would point at the uniform block list in one of the pre-linked
  * shaders).
  */
-static bool
+static void
 link_update_uniform_buffer_variables(struct gl_shader *shader)
 {
    foreach_list(node, shader->ir) {
@@ -478,8 +478,6 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
       }
       assert(found);
    }
-
-   return true;
 }
 
 void
@@ -544,8 +542,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
 
-      if (!link_update_uniform_buffer_variables(prog->_LinkedShaders[i]))
-	 return;
+      link_update_uniform_buffer_variables(prog->_LinkedShaders[i]);
    }
 
    /* First pass: Count the uniform resources used by the user-defined
