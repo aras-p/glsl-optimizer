@@ -49,6 +49,11 @@ struct ilo_3d {
       unsigned mode;
    } render_condition;
 
+   struct list_head occlusion_queries;
+   struct list_head time_elapsed_queries;
+   struct list_head prim_generated_queries;
+   struct list_head prim_emitted_queries;
+
    struct ilo_3d_pipeline *pipeline;
 };
 
@@ -66,6 +71,15 @@ ilo_3d_pre_cp_flush(struct ilo_3d *hw3d);
 
 void
 ilo_3d_post_cp_flush(struct ilo_3d *hw3d);
+
+void
+ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q);
+
+void
+ilo_3d_end_query(struct ilo_context *ilo, struct ilo_query *q);
+
+void
+ilo_3d_process_query(struct ilo_context *ilo, struct ilo_query *q);
 
 void
 ilo_init_3d_functions(struct ilo_context *ilo);

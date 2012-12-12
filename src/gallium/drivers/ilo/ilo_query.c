@@ -27,6 +27,7 @@
 
 #include "intel_winsys.h"
 
+#include "ilo_3d.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_query.h"
@@ -46,13 +47,13 @@ static const struct {
 }
 #define INFOX(prefix, desc) { desc, NULL, NULL, NULL, }
 
-   [PIPE_QUERY_OCCLUSION_COUNTER]      = INFOX(ilo_3d, "occlusion counter"),
+   [PIPE_QUERY_OCCLUSION_COUNTER]      = INFO(ilo_3d, "occlusion counter"),
    [PIPE_QUERY_OCCLUSION_PREDICATE]    = INFOX(ilo_3d, "occlusion pred."),
-   [PIPE_QUERY_TIMESTAMP]              = INFOX(ilo_3d, "timestamp"),
+   [PIPE_QUERY_TIMESTAMP]              = INFO(ilo_3d, "timestamp"),
    [PIPE_QUERY_TIMESTAMP_DISJOINT]     = INFOX(ilo_3d, "timestamp disjoint"),
-   [PIPE_QUERY_TIME_ELAPSED]           = INFOX(ilo_3d, "time elapsed"),
-   [PIPE_QUERY_PRIMITIVES_GENERATED]   = INFOX(ilo_3d, "primitives generated"),
-   [PIPE_QUERY_PRIMITIVES_EMITTED]     = INFOX(ilo_3d, "primitives emitted"),
+   [PIPE_QUERY_TIME_ELAPSED]           = INFO(ilo_3d, "time elapsed"),
+   [PIPE_QUERY_PRIMITIVES_GENERATED]   = INFO(ilo_3d, "primitives generated"),
+   [PIPE_QUERY_PRIMITIVES_EMITTED]     = INFO(ilo_3d, "primitives emitted"),
    [PIPE_QUERY_SO_STATISTICS]          = INFOX(ilo_3d, "so statistics"),
    [PIPE_QUERY_SO_OVERFLOW_PREDICATE]  = INFOX(ilo_3d, "so overflow pred."),
    [PIPE_QUERY_GPU_FINISHED]           = INFOX(ilo_3d, "gpu finished"),
@@ -74,6 +75,12 @@ ilo_create_query(struct pipe_context *pipe, unsigned query_type)
    struct ilo_query *q;
 
    switch (query_type) {
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+   case PIPE_QUERY_TIMESTAMP:
+   case PIPE_QUERY_TIME_ELAPSED:
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      break;
    default:
       return NULL;
    }
@@ -134,6 +141,16 @@ serialize_query_data(unsigned type, const union pipe_query_result *data,
                      void *buf)
 {
    switch (type) {
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+   case PIPE_QUERY_TIMESTAMP:
+   case PIPE_QUERY_TIME_ELAPSED:
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      {
+         uint64_t *r = buf;
+         r[0] = data->u64;
+      }
+      break;
    default:
       memset(buf, 0, sizeof(union pipe_query_result));
       break;
