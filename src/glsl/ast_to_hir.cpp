@@ -4166,7 +4166,6 @@ ast_uniform_block::hir(exec_list *instructions,
 
 	 ubo_var->Name = ralloc_strdup(state->uniform_blocks, var->name);
 	 ubo_var->Type = var->type;
-	 ubo_var->Buffer = ubo - state->uniform_blocks;
 	 ubo_var->Offset = 0; /* Assigned at link time. */
 
 	 if (var->type->is_matrix() ||

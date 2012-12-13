@@ -2274,7 +2274,6 @@ struct gl_uniform_buffer_variable
 {
    char *Name;
    const struct glsl_type *Type;
-   unsigned int Buffer;
    unsigned int Offset;
    GLboolean RowMajor;
 };
