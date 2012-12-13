@@ -54,6 +54,7 @@
 #include "main/pixel.h"
 #include "main/pbo.h"
 #include "main/polygon.h"
+#include "main/queryobj.h"
 #include "main/readpix.h"
 #include "main/scissor.h"
 #include "main/shaderapi.h"
@@ -88,6 +89,9 @@
 struct save_state
 {
    GLbitfield SavedState;  /**< bitmask of MESA_META_* flags */
+
+   /** MESA_META_CLEAR (and others?) */
+   struct gl_query_object *CurrentOcclusionObject;
 
    /** MESA_META_ALPHA_TEST */
    GLboolean AlphaEnabled;
@@ -478,6 +482,15 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
    if (save->TransformFeedbackNeedsResume)
       _mesa_PauseTransformFeedback();
 
+   /* After saving the current occlusion object, call EndQuery so that no
+    * occlusion querying will be active during the meta-operation.
+    */
+   if (state & MESA_META_OCCLUSION_QUERY) {
+      save->CurrentOcclusionObject = ctx->Query.CurrentOcclusionObject;
+      if (save->CurrentOcclusionObject)
+         _mesa_EndQuery(save->CurrentOcclusionObject->Target);
+   }
+
    if (state & MESA_META_ALPHA_TEST) {
       save->AlphaEnabled = ctx->Color.AlphaEnabled;
       save->AlphaFunc = ctx->Color.AlphaFunc;
@@ -805,6 +818,18 @@ _mesa_meta_end(struct gl_context *ctx)
 {
    struct save_state *save = &ctx->Meta->Save[ctx->Meta->SaveStackDepth - 1];
    const GLbitfield state = save->SavedState;
+
+   /* After starting a new occlusion query, initialize the results to the
+    * values saved previously. The driver will then continue to increment
+    * these values.
+    */
+   if (state & MESA_META_OCCLUSION_QUERY) {
+      if (save->CurrentOcclusionObject) {
+         _mesa_BeginQuery(save->CurrentOcclusionObject->Target,
+                          save->CurrentOcclusionObject->Id);
+         ctx->Query.CurrentOcclusionObject->Result = save->CurrentOcclusionObject->Result;
+      }
+   }
 
    if (state & MESA_META_ALPHA_TEST) {
       if (ctx->Color.AlphaEnabled != save->AlphaEnabled)
@@ -1987,7 +2012,8 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
 	       MESA_META_VIEWPORT |
 	       MESA_META_CLIP |
 	       MESA_META_CLAMP_FRAGMENT_COLOR |
-               MESA_META_MULTISAMPLE);
+               MESA_META_MULTISAMPLE |
+               MESA_META_OCCLUSION_QUERY);
 
    if (!(buffers & BUFFER_BITS_COLOR)) {
       /* We'll use colormask to disable color writes.  Otherwise,

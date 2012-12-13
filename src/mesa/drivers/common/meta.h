@@ -57,6 +57,7 @@
 #define MESA_META_SELECT_FEEDBACK       0x80000
 #define MESA_META_MULTISAMPLE          0x100000
 #define MESA_META_FRAMEBUFFER_SRGB     0x200000
+#define MESA_META_OCCLUSION_QUERY      0x400000
 /**\}*/
 
 extern void
