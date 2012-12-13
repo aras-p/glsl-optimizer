@@ -285,6 +285,7 @@ _mesa_BeginTransformFeedback(GLenum mode)
    struct gl_transform_feedback_object *obj;
    struct gl_transform_feedback_info *info;
    GLuint i;
+   unsigned vertices_per_prim;
    GET_CURRENT_CONTEXT(ctx);
 
    obj = ctx->TransformFeedback.CurrentObject;
@@ -305,9 +306,13 @@ _mesa_BeginTransformFeedback(GLenum mode)
 
    switch (mode) {
    case GL_POINTS:
+      vertices_per_prim = 1;
+      break;
    case GL_LINES:
+      vertices_per_prim = 2;
+      break;
    case GL_TRIANGLES:
-      /* legal */
+      vertices_per_prim = 3;
       break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glBeginTransformFeedback(mode)");
@@ -332,6 +337,18 @@ _mesa_BeginTransformFeedback(GLenum mode)
    FLUSH_VERTICES(ctx, _NEW_TRANSFORM_FEEDBACK);
    obj->Active = GL_TRUE;
    ctx->TransformFeedback.Mode = mode;
+
+   if (_mesa_is_gles3(ctx)) {
+      /* In GLES3, we are required to track the usage of the transform
+       * feedback buffer and report INVALID_OPERATION if a draw call tries to
+       * exceed it.  So compute the maximum number of vertices that we can
+       * write without overflowing any of the buffers currently being used for
+       * feedback.
+       */
+      unsigned max_vertices
+         = _mesa_compute_max_transform_feedback_vertices(obj, info);
+      obj->GlesRemainingPrims = max_vertices / vertices_per_prim;
+   }
 
    assert(ctx->Driver.BeginTransformFeedback);
    ctx->Driver.BeginTransformFeedback(ctx, mode, obj);

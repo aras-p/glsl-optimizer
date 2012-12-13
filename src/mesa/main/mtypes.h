@@ -1808,6 +1808,17 @@ struct gl_transform_feedback_object
    GLboolean EndedAnytime; /**< Has EndTransformFeedback been called
                                 at least once? */
 
+   /**
+    * GLES: if Active is true, remaining number of primitives which can be
+    * rendered without overflow.  This is necessary to track because GLES
+    * requires us to generate INVALID_OPERATION if a call to glDrawArrays or
+    * glDrawArraysInstanced would overflow transform feedback buffers.
+    * Undefined if Active is false.
+    *
+    * Not tracked for desktop GL since it's unnecessary.
+    */
+   unsigned GlesRemainingPrims;
+
    /** The feedback buffers */
    GLuint BufferNames[MAX_FEEDBACK_BUFFERS];
    struct gl_buffer_object *Buffers[MAX_FEEDBACK_BUFFERS];
