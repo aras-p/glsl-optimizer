@@ -2278,6 +2278,12 @@ struct gl_uniform_buffer_variable
    GLboolean RowMajor;
 };
 
+enum gl_uniform_block_packing {
+   ubo_packing_std140,
+   ubo_packing_shared,
+   ubo_packing_packed
+};
+
 struct gl_uniform_block
 {
    /** Declared name of the uniform block */
@@ -2299,6 +2305,14 @@ struct gl_uniform_block
     * (GL_UNIFORM_BLOCK_DATA_SIZE).
     */
    GLuint UniformBufferSize;
+
+   /**
+    * Layout specified in the shader
+    *
+    * This isn't accessible through the API, but it is used while
+    * cross-validating uniform blocks.
+    */
+   enum gl_uniform_block_packing _Packing;
 };
 
 /**

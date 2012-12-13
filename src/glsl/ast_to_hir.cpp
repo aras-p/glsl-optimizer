@@ -4136,6 +4136,16 @@ ast_uniform_block::hir(exec_list *instructions,
                        "the current scope.\n", ubo->Name);
    }
 
+   if (this->layout.flags.q.shared) {
+      ubo->_Packing = ubo_packing_shared;
+   } else if (this->layout.flags.q.packed) {
+      ubo->_Packing = ubo_packing_packed;
+   } else {
+      /* The default layout is std140.
+       */
+      ubo->_Packing = ubo_packing_std140;
+   }
+
    unsigned int num_variables = 0;
    foreach_list_typed(ast_declarator_list, decl_list, link, &declarations) {
       foreach_list_const(node, &decl_list->declarations) {
