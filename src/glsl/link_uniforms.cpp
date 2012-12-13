@@ -399,26 +399,10 @@ link_cross_validate_uniform_block(void *mem_ctx,
 {
    for (unsigned int i = 0; i < *num_linked_blocks; i++) {
       struct gl_uniform_block *old_block = &(*linked_blocks)[i];
-      if (strcmp(old_block->Name, new_block->Name) == 0) {
-	 if (old_block->NumUniforms != new_block->NumUniforms) {
-	    return -1;
-	 }
 
-	 for (unsigned j = 0; j < old_block->NumUniforms; j++) {
-	    if (strcmp(old_block->Uniforms[j].Name,
-		       new_block->Uniforms[j].Name) != 0)
-	       return -1;
-
-	    if (old_block->Uniforms[j].Offset !=
-		new_block->Uniforms[j].Offset)
-	       return -1;
-
-	    if (old_block->Uniforms[j].RowMajor !=
-		new_block->Uniforms[j].RowMajor)
-	       return -1;
-	 }
-	 return i;
-      }
+      if (strcmp(old_block->Name, new_block->Name) == 0)
+	 return link_uniform_blocks_are_compatible(old_block, new_block)
+	    ? i : -1;
    }
 
    *linked_blocks = reralloc(mem_ctx, *linked_blocks,

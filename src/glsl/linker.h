@@ -49,6 +49,10 @@ link_cross_validate_uniform_block(void *mem_ctx,
 void
 link_assign_uniform_block_offsets(struct gl_shader *shader);
 
+extern bool
+link_uniform_blocks_are_compatible(const gl_uniform_block *a,
+				   const gl_uniform_block *b);
+
 /**
  * Class for processing all of the leaf fields of an uniform
  *
