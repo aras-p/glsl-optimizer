@@ -36,10 +36,6 @@ ir_rvalue::clone(void *mem_ctx, struct hash_table *ht) const
 
 /**
  * Duplicate an IR variable
- *
- * \note
- * This will probably be made \c virtual and moved to the base class
- * eventually.
  */
 ir_variable *
 ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
