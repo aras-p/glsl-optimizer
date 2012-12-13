@@ -516,10 +516,11 @@ static int r600_vtx_from_byte_stream(struct r600_shader_ctx *ctx,
 static int r600_export_from_byte_stream(struct r600_shader_ctx *ctx,
 	unsigned char * bytes, unsigned bytes_read)
 {
+	uint32_t word0 = 0, word1 = 0;
 	struct r600_bytecode_output output;
 	memset(&output, 0, sizeof(struct r600_bytecode_output));
-	uint32_t word0 = i32_from_byte_stream(bytes, &bytes_read);
-	uint32_t word1 = i32_from_byte_stream(bytes, &bytes_read);
+	word0 = i32_from_byte_stream(bytes, &bytes_read);
+	word1 = i32_from_byte_stream(bytes, &bytes_read);
 	if (ctx->bc->chip_class >= EVERGREEN)
 		eg_bytecode_export_read(&output, word0,word1);
 	else

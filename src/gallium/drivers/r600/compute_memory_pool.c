@@ -93,11 +93,11 @@ int64_t compute_memory_prealloc_chunk(
 	struct compute_memory_pool* pool,
 	int64_t size_in_dw)
 {
-	assert(size_in_dw <= pool->size_in_dw);
-
 	struct compute_memory_item *item;
 
 	int last_end = 0;
+
+	assert(size_in_dw <= pool->size_in_dw);
 
 	COMPUTE_DBG("* compute_memory_prealloc_chunk() size_in_dw = %ld\n",
 		size_in_dw);
@@ -217,6 +217,8 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	int64_t allocated = 0;
 	int64_t unallocated = 0;
 
+	int64_t start_in_dw = 0;
+
 	COMPUTE_DBG("* compute_memory_finalize_pending()\n");
 
 	for (item = pool->item_list; item; item = item->next) {
@@ -291,8 +293,6 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	 * add them back to the item_list. */
 	for (item = pending_list; item; item = next) {
 		next = item->next;
-
-		int64_t start_in_dw;
 
 		/* Search for free space in the pool for this item. */
 		while ((start_in_dw=compute_memory_prealloc_chunk(pool,
@@ -397,7 +397,7 @@ struct compute_memory_item* compute_memory_alloc(
 	struct compute_memory_pool* pool,
 	int64_t size_in_dw)
 {
-	struct compute_memory_item *new_item;
+	struct compute_memory_item *new_item = NULL, *last_item = NULL;
 
 	COMPUTE_DBG("* compute_memory_alloc() size_in_dw = %ld (%ld bytes)\n",
 			size_in_dw, 4 * size_in_dw);
@@ -408,8 +408,6 @@ struct compute_memory_item* compute_memory_alloc(
 	new_item->start_in_dw = -1; /* mark pending */
 	new_item->id = pool->next_id++;
 	new_item->pool = pool;
-
-	struct compute_memory_item *last_item;
 
 	if (pool->item_list) {
 		for (last_item = pool->item_list; last_item->next;

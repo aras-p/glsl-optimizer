@@ -97,6 +97,8 @@ struct evergreen_compute_resource* get_empty_res(
 {
 	int code_index = -1;
 	int code_size = -1;
+	int index = 0;
+	struct evergreen_compute_resource* res = NULL;
 
 	{
 		int i = 0;
@@ -108,9 +110,9 @@ struct evergreen_compute_resource* get_empty_res(
 	assert(code_index != -1 && "internal error: resouce index not found");
 	assert(offset_index < code_size && "internal error: overindexing resource");
 
-	int index = code_index + offset_index;
+	index = code_index + offset_index;
 
-	struct evergreen_compute_resource* res = &pipe->resources[index];
+	res = &pipe->resources[index];
 
 	res->enabled = true;
 	res->bo = NULL;
@@ -125,8 +127,10 @@ void evergreen_emit_raw_reg_set(
 	unsigned index,
 	int num)
 {
+	int cs_end = 0;
+
 	res->enabled = 1;
-	int cs_end = res->cs_end;
+	cs_end = res->cs_end;
 
 	if (index >= EVERGREEN_CONFIG_REG_OFFSET
 			&& index < EVERGREEN_CONFIG_REG_END) {
@@ -213,10 +217,12 @@ void evergreen_emit_ctx_reloc(
 	struct r600_resource *bo,
 	enum radeon_bo_usage usage)
 {
+	u32 rr = 0;
+
 	assert(bo);
 
 	ctx->cs->buf[ctx->cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	u32 rr = r600_context_bo_reloc(ctx, bo, usage);
+	rr = r600_context_bo_reloc(ctx, bo, usage);
 	ctx->cs->buf[ctx->cs->cdw++] = rr;
 }
 
@@ -260,13 +266,15 @@ void evergreen_set_rat(
 	int start,
 	int size)
 {
+	struct pipe_surface rat_templ;
+	struct r600_surface *surf = NULL;
+	struct r600_context *rctx = NULL;
+
 	assert(id < 12);
 	assert((size & 3) == 0);
 	assert((start & 0xFF) == 0);
 
-	struct pipe_surface rat_templ;
-	struct r600_surface *surf;
-	struct r600_context *rctx = pipe->ctx;
+	rctx = pipe->ctx;
 
 	COMPUTE_DBG("bind rat: %i \n", id);
 
@@ -603,13 +611,14 @@ struct r600_resource* r600_compute_buffer_alloc_vram(
 	struct r600_screen *screen,
 	unsigned size)
 {
+	struct pipe_resource * buffer = NULL;
 	assert(size);
 
-	struct pipe_resource * buffer = pipe_buffer_create(
-			(struct pipe_screen*) screen,
-			PIPE_BIND_CUSTOM,
-			PIPE_USAGE_IMMUTABLE,
-			size);
+	buffer = pipe_buffer_create(
+		(struct pipe_screen*) screen,
+		PIPE_BIND_CUSTOM,
+		PIPE_USAGE_IMMUTABLE,
+		size);
 
 	return (struct r600_resource *)buffer;
 }
