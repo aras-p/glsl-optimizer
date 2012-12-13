@@ -320,6 +320,23 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
    case GL_ANY_SAMPLES_PASSED:
    case GL_ANY_SAMPLES_PASSED_CONSERVATIVE:
    case GL_SAMPLES_PASSED_ARB:
+
+      /* No query->bo means that EndQuery was called after BeginQuery with no
+       * intervening drawing. Rather than doing nothing at all here in this
+       * case, we emit the query_begin and query_end state to the
+       * hardware. This is to guarantee that waiting on the result of this
+       * empty state will cause all previous queries to complete at all, as
+       * required by the specification:
+       *
+       * 	It must always be true that if any query object
+       *	returns a result available of TRUE, all queries of the
+       *	same type issued prior to that query must also return
+       *	TRUE. [Open GL 4.3 (Core Profile) Section 4.2.1]
+       */
+      if (!query->bo) {
+         brw_emit_query_begin(brw);
+      }
+
       if (query->bo) {
 	 brw_emit_query_end(brw);
 
