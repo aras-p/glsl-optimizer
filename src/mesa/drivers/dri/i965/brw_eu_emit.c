@@ -1267,7 +1267,7 @@ brw_IF(struct brw_compile *p, unsigned execute_size)
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    insn->header.predicate_control = BRW_PREDICATE_NORMAL;
    insn->header.mask_control = BRW_MASK_ENABLE;
-   if (!p->single_program_flow)
+   if (!p->single_program_flow && brw->gen < 6)
       insn->header.thread_control = BRW_THREAD_SWITCH;
 
    push_if_stack(p, insn);
@@ -1299,9 +1299,6 @@ gen6_IF(struct brw_compile *p, uint32_t conditional,
    assert(insn->header.compression_control == BRW_COMPRESSION_NONE);
    assert(insn->header.predicate_control == BRW_PREDICATE_NONE);
    insn->header.destreg__conditionalmod = conditional;
-
-   if (!p->single_program_flow)
-      insn->header.thread_control = BRW_THREAD_SWITCH;
 
    push_if_stack(p, insn);
    return insn;
@@ -1464,7 +1461,7 @@ brw_ELSE(struct brw_compile *p)
 
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    insn->header.mask_control = BRW_MASK_ENABLE;
-   if (!p->single_program_flow)
+   if (!p->single_program_flow && brw->gen < 6)
       insn->header.thread_control = BRW_THREAD_SWITCH;
 
    push_if_stack(p, insn);
@@ -1534,7 +1531,8 @@ brw_ENDIF(struct brw_compile *p)
 
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    insn->header.mask_control = BRW_MASK_ENABLE;
-   insn->header.thread_control = BRW_THREAD_SWITCH;
+   if (brw->gen < 6)
+      insn->header.thread_control = BRW_THREAD_SWITCH;
 
    /* Also pop item off the stack in the endif instruction: */
    if (brw->gen < 6) {
