@@ -80,6 +80,7 @@ draw_create_vertex_shader(struct draw_context *draw,
    {
       uint i;
       bool found_clipvertex = FALSE;
+      vs->position_output = -1;
       for (i = 0; i < vs->info.num_outputs; i++) {
          if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_POSITION &&
              vs->info.output_semantic_index[i] == 0)
