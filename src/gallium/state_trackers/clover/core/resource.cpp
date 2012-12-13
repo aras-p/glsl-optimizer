@@ -100,7 +100,6 @@ resource::bind_surface(clover::command_queue &q, bool rw) {
    pipe_surface info {};
 
    info.format = pipe->format;
-   info.usage = pipe->bind;
    info.writable = rw;
 
    if (pipe->target == PIPE_BUFFER)
