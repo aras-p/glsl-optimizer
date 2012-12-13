@@ -56,6 +56,14 @@ _mesa_new_query_object(struct gl_context *ctx, GLuint id)
        * 2.13).
        */
       q->Ready = GL_TRUE;
+
+      /* OpenGL 3.1 § 2.13 says about GenQueries, "These names are marked as
+       * used, but no object is associated with them until the first time they
+       * are used by BeginQuery." Since our implementation actually does
+       * allocate an object at this point, use a flag to indicate that this
+       * object has not yet been bound so should not be considered a query.
+       */
+      q->EverBound = GL_FALSE;
    }
    return q;
 }
@@ -257,16 +265,22 @@ _mesa_DeleteQueries(GLsizei n, const GLuint *ids)
 GLboolean GLAPIENTRY
 _mesa_IsQuery(GLuint id)
 {
+   struct gl_query_object *q;
+
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glIsQuery(%u)\n", id);
 
-   if (id && _mesa_lookup_query_object(ctx, id))
-      return GL_TRUE;
-   else
+   if (id == 0)
       return GL_FALSE;
+
+   q = _mesa_lookup_query_object(ctx, id);
+   if (q == NULL)
+      return GL_FALSE;
+
+   return q->EverBound;
 }
 
 static GLboolean
@@ -359,6 +373,7 @@ _mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
    q->Active = GL_TRUE;
    q->Result = 0;
    q->Ready = GL_FALSE;
+   q->EverBound = GL_TRUE;
 
    /* XXX should probably refcount query objects */
    *bindpt = q;
