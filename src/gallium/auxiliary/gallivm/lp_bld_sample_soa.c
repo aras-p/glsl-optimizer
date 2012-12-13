@@ -973,6 +973,28 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    }
 }
 
+
+/**
+ * Clamp layer coord to valid values.
+ */
+static LLVMValueRef
+lp_build_layer_coord(struct lp_build_sample_context *bld,
+                     unsigned unit,
+                     LLVMValueRef layer)
+{
+   LLVMValueRef maxlayer;
+
+   layer = lp_build_iround(&bld->coord_bld, layer);
+   maxlayer = bld->dynamic_state->depth(bld->dynamic_state,
+                                        bld->gallivm, unit);
+   maxlayer = lp_build_sub(&bld->int_bld, maxlayer, bld->int_bld.one);
+   maxlayer = lp_build_broadcast_scalar(&bld->int_coord_bld, maxlayer);
+   return lp_build_clamp(&bld->int_coord_bld, layer,
+                         bld->int_coord_bld.zero, maxlayer);
+
+}
+
+
 /**
  * Calculate cube face, lod, mip levels.
  */
@@ -1018,23 +1040,11 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
       face_derivs.ddx_ddy[1] = NULL;
       derivs = &face_derivs;
    }
-   else if (target == PIPE_TEXTURE_1D_ARRAY ||
-            target == PIPE_TEXTURE_2D_ARRAY) {
-      LLVMValueRef layer, maxlayer;
-
-      if (target == PIPE_TEXTURE_1D_ARRAY) {
-         layer = *t;
-      }
-      else {
-         layer = *r;
-      }
-      layer = lp_build_iround(&bld->coord_bld, layer);
-      maxlayer = bld->dynamic_state->depth(bld->dynamic_state,
-                                           bld->gallivm, unit);
-      maxlayer = lp_build_sub(&bld->int_bld, maxlayer, bld->int_bld.one);
-      maxlayer = lp_build_broadcast_scalar(&bld->int_coord_bld, maxlayer);
-      *r = lp_build_clamp(&bld->int_coord_bld, layer,
-                          bld->int_coord_bld.zero, maxlayer);
+   else if (target == PIPE_TEXTURE_1D_ARRAY) {
+      *r = lp_build_layer_coord(bld, unit, *t);
+   }
+   else if (target == PIPE_TEXTURE_2D_ARRAY) {
+      *r = lp_build_layer_coord(bld, unit, *r);
    }
 
    /*
@@ -1205,6 +1215,7 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
    struct lp_build_context *perquadi_bld = &bld->perquadi_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    unsigned dims = bld->dims, chan;
+   unsigned target = bld->static_state->target;
    LLVMValueRef size, ilevel;
    LLVMValueRef row_stride_vec = NULL, img_stride_vec = NULL;
    LLVMValueRef x = coords[0], y = coords[1], z = coords[2];
@@ -1226,6 +1237,16 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
                                &row_stride_vec, &img_stride_vec);
    lp_build_extract_image_sizes(bld, &bld->int_size_bld, int_coord_bld->type,
                                 size, &width, &height, &depth);
+
+   if (target == PIPE_TEXTURE_1D_ARRAY ||
+       target == PIPE_TEXTURE_2D_ARRAY) {
+      if (target == PIPE_TEXTURE_1D_ARRAY) {
+         z = lp_build_layer_coord(bld, unit, y);
+      }
+      else {
+         z = lp_build_layer_coord(bld, unit, z);
+      }
+   }
 
    /* This is a lot like border sampling */
    if (offsets[0]) {
