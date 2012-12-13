@@ -114,6 +114,7 @@ struct _egl_extensions
    EGLBoolean NV_post_sub_buffer;
 
    EGLBoolean EXT_create_context_robustness;
+   EGLBoolean EXT_buffer_age;
 };
 
 

@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "egldisplay.h"
+#include "egldriver.h"
 #include "eglcontext.h"
 #include "eglconfig.h"
 #include "eglcurrent.h"
@@ -408,6 +409,13 @@ _eglQuerySurface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
       break;
    case EGL_POST_SUB_BUFFER_SUPPORTED_NV:
       *value = surface->PostSubBufferSupportedNV;
+      break;
+   case EGL_BUFFER_AGE_EXT:
+      if (!dpy->Extensions.EXT_buffer_age) {
+         _eglError(EGL_BAD_ATTRIBUTE, "eglQuerySurface");
+         return EGL_FALSE;
+      }
+      *value = drv->API.QueryBufferAge(drv, dpy, surface);
       break;
    default:
       _eglError(EGL_BAD_ATTRIBUTE, "eglQuerySurface");

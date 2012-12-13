@@ -128,6 +128,10 @@ typedef EGLBoolean (*QueryWaylandBufferWL_t)(_EGLDriver *drv, _EGLDisplay *displ
 
 typedef EGLBoolean (*PostSubBufferNV_t)(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surface, EGLint x, EGLint y, EGLint width, EGLint height);
 
+typedef EGLint (*QueryBufferAge_t)(_EGLDriver *drv,
+                                   _EGLDisplay *dpy, _EGLSurface *surface);
+
+
 /**
  * The API dispatcher jumps through these functions
  */
@@ -204,6 +208,8 @@ struct _egl_api
 #endif
 
    PostSubBufferNV_t PostSubBufferNV;
+
+   QueryBufferAge_t QueryBufferAge;
 };
 
 #endif /* EGLAPI_INCLUDED */
