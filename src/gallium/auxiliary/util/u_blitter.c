@@ -1053,29 +1053,6 @@ void util_blitter_custom_clear_depth(struct blitter_context *blitter,
                               0, PIPE_FORMAT_NONE, &color, depth, 0, NULL, custom_dsa);
 }
 
-static
-boolean is_overlap(int dstx, int dsty, int dstz,
-		   const struct pipe_box *srcbox)
-{
-   struct pipe_box src = *srcbox;
-
-   if (src.width < 0) {
-      src.x += src.width;
-      src.width = -src.width;
-   }
-   if (src.height < 0) {
-      src.y += src.height;
-      src.height = -src.height;
-   }
-   if (src.depth < 0) {
-      src.z += src.depth;
-      src.depth = -src.depth;
-   }
-   return src.x < dstx+src.width && src.x+src.width > dstx &&
-          src.y < dsty+src.height && src.y+src.height > dsty &&
-          src.z < dstz+src.depth && src.z+src.depth > dstz;
-}
-
 void util_blitter_default_dst_texture(struct pipe_surface *dst_templ,
                                       struct pipe_resource *dst,
                                       unsigned dstlevel,
@@ -1261,11 +1238,6 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
       return;
    }
 
-   /* Sanity checks. */
-   if (dst->texture == src->texture &&
-       dst->u.tex.level == src->u.tex.first_level) {
-      assert(!is_overlap(dstx, dsty, 0, srcbox));
-   }
    /* XXX should handle 3d regions */
    assert(srcbox->depth == 1);
 
