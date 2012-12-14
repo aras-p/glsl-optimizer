@@ -805,5 +805,36 @@ _mesa_get_uniform_name(const struct gl_uniform_storage *uni,
                        GLsizei maxLength, GLsizei *length,
                        GLchar *nameOut)
 {
+   GLsizei localLength;
+
+   if (length == NULL)
+      length = &localLength;
+
    _mesa_copy_string(nameOut, maxLength, length, uni->name);
+
+   /* Page 61 (page 73 of the PDF) in section 2.11 of the OpenGL ES 3.0
+    * spec says:
+    *
+    *     "If the active uniform is an array, the uniform name returned in
+    *     name will always be the name of the uniform array appended with
+    *     "[0]"."
+    *
+    * The same text also appears in the OpenGL 4.2 spec.  It does not,
+    * however, appear in any previous spec.  Previous specifications are
+    * ambiguous in this regard.  However, either name can later be passed
+    * to glGetUniformLocation (and related APIs), so there shouldn't be any
+    * harm in always appending "[0]" to uniform array names.
+    */
+   if (uni->array_elements != 0) {
+      unsigned i;
+
+      /* The comparison is strange because *length does *NOT* include the
+       * terminating NUL, but maxLength does.
+       */
+      for (i = 0; i < 3 && (*length + i + 1) < maxLength; i++)
+         nameOut[*length + i] = "[0]"[i];
+
+      nameOut[*length + i] = '\0';
+      *length += i;
+   }
 }
