@@ -984,7 +984,6 @@ lp_build_layer_coord(struct lp_build_sample_context *bld,
 {
    LLVMValueRef maxlayer;
 
-   layer = lp_build_iround(&bld->coord_bld, layer);
    maxlayer = bld->dynamic_state->depth(bld->dynamic_state,
                                         bld->gallivm, unit);
    maxlayer = lp_build_sub(&bld->int_bld, maxlayer, bld->int_bld.one);
@@ -1041,9 +1040,11 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
       derivs = &face_derivs;
    }
    else if (target == PIPE_TEXTURE_1D_ARRAY) {
-      *r = lp_build_layer_coord(bld, unit, *t);
+      *r = lp_build_iround(&bld->coord_bld, *t);
+      *r = lp_build_layer_coord(bld, unit, *r);
    }
    else if (target == PIPE_TEXTURE_2D_ARRAY) {
+      *r = lp_build_iround(&bld->coord_bld, *r);
       *r = lp_build_layer_coord(bld, unit, *r);
    }
 
