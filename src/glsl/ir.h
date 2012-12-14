@@ -350,6 +350,14 @@ public:
    glsl_interp_qualifier determine_interpolation_mode(bool flat_shade);
 
    /**
+    * Determine whether or not a variable is part of a uniform block.
+    */
+   inline bool is_in_uniform_block() const
+   {
+      return this->mode == ir_var_uniform && this->uniform_block != -1;
+   }
+
+   /**
     * Declared type of the variable
     */
    const struct glsl_type *type;

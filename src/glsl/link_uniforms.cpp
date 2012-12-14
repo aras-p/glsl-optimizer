@@ -228,7 +228,7 @@ public:
 			ir_variable *var)
    {
       ubo_var = NULL;
-      if (var->uniform_block != -1) {
+      if (var->is_in_uniform_block()) {
 	 struct gl_uniform_block *block =
 	    &shader->UniformBlocks[var->uniform_block];
 
@@ -442,7 +442,7 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
    foreach_list(node, shader->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if ((var == NULL) || (var->uniform_block == -1))
+      if ((var == NULL) || !var->is_in_uniform_block())
 	 continue;
 
       assert(var->mode == ir_var_uniform);

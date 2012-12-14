@@ -78,7 +78,7 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
       return;
 
    ir_variable *var = deref->variable_referenced();
-   if (!var || var->uniform_block == -1)
+   if (!var || !var->is_in_uniform_block())
       return;
 
    mem_ctx = ralloc_parent(*rvalue);

@@ -1052,7 +1052,7 @@ vec4_visitor::visit(ir_variable *ir)
        * ir_binop_ubo_load expressions and not ir_dereference_variable for UBO
        * variables, so no need for them to be in variable_ht.
        */
-      if (ir->uniform_block != -1)
+      if (ir->is_in_uniform_block())
          return;
 
       /* Track how big the whole uniform variable is, in case we need to put a

@@ -1077,7 +1077,7 @@ update_array_sizes(struct gl_shader_program *prog)
 	  * will not be eliminated.  Since we always do std140, just
 	  * don't resize arrays in UBOs.
 	  */
-	 if (var->uniform_block != -1)
+	 if (var->is_in_uniform_block())
 	    continue;
 
 	 unsigned int size = var->max_array_access;

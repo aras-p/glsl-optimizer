@@ -106,7 +106,7 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 	 if (entry->var->mode == ir_var_uniform &&
 	     (uniform_locations_assigned ||
 	      entry->var->constant_value ||
-	      entry->var->uniform_block != -1))
+	      entry->var->is_in_uniform_block()))
 	    continue;
 
 	 entry->var->remove();
