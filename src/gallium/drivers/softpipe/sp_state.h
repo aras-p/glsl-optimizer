@@ -88,7 +88,8 @@ struct sp_fragment_shader_variant
 		   struct quad_header *quad);
 
    /* Deletes this instance of the object */
-   void (*delete)(struct sp_fragment_shader_variant *shader);
+   void (*delete)(struct sp_fragment_shader_variant *shader,
+                  struct tgsi_exec_machine *machine);
 
    struct sp_fragment_shader_variant *next;
 };
