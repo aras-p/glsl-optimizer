@@ -213,6 +213,11 @@ _mesa_sampler_uniforms_are_valid(const struct gl_shader_program *shProg,
 extern const struct gl_program_parameter *
 get_uniform_parameter(struct gl_shader_program *shProg, GLint index);
 
+extern void
+_mesa_get_uniform_name(const struct gl_uniform_storage *uni,
+                       GLsizei maxLength, GLsizei *length,
+                       GLchar *nameOut);
+
 struct gl_builtin_uniform_element {
    const char *field;
    int tokens[STATE_LENGTH];

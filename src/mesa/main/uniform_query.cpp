@@ -59,7 +59,7 @@ _mesa_GetActiveUniform(GLhandleARB program, GLuint index,
    const struct gl_uniform_storage *const uni = &shProg->UniformStorage[index];
 
    if (nameOut) {
-      _mesa_copy_string(nameOut, maxLength, length, uni->name);
+      _mesa_get_uniform_name(uni, maxLength, length, nameOut);
    }
 
    if (size) {

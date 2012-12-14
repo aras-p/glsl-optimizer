@@ -795,7 +795,15 @@ _mesa_GetActiveUniformName(GLuint program, GLuint uniformIndex,
    }
 
    if (uniformName) {
-      _mesa_copy_string(uniformName, bufSize, length,
-			shProg->UniformStorage[uniformIndex].name);
+      _mesa_get_uniform_name(& shProg->UniformStorage[uniformIndex],
+                             bufSize, length, uniformName);
    }
+}
+
+void
+_mesa_get_uniform_name(const struct gl_uniform_storage *uni,
+                       GLsizei maxLength, GLsizei *length,
+                       GLchar *nameOut)
+{
+   _mesa_copy_string(nameOut, maxLength, length, uni->name);
 }
