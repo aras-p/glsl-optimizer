@@ -131,6 +131,7 @@ enum value_extra {
    EXTRA_API_GL,
    EXTRA_API_GL_CORE,
    EXTRA_API_ES2,
+   EXTRA_API_ES3,
    EXTRA_NEW_BUFFERS, 
    EXTRA_NEW_FRAG_CLAMP,
    EXTRA_VALID_DRAW_BUFFER,
@@ -874,6 +875,12 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
 	    enabled++;
 	 }
 	 break;
+      case EXTRA_API_ES3:
+	 if (_mesa_is_gles3(ctx)) {
+	    total++;
+	    enabled++;
+	 }
+	 break;
       case EXTRA_API_GL:
 	 if (_mesa_is_desktop_gl(ctx)) {
 	    total++;
@@ -973,6 +980,15 @@ find_value(const char *func, GLenum pname, void **p, union value *v)
    int api;
 
    api = ctx->API;
+   /* We index into the table_set[] list of per-API hash tables using the API's
+    * value in the gl_api enum. Since GLES 3 doesn't have an API_OPENGL* enum
+    * value since it's compatible with GLES2 its entry in table_set[] is at the
+    * end.
+    */
+   STATIC_ASSERT(Elements(table_set) == API_OPENGL_LAST + 2);
+   if (_mesa_is_gles3(ctx)) {
+      api = API_OPENGL_LAST + 1;
+   }
    mask = Elements(table(api)) - 1;
    hash = (pname * prime_factor);
    while (1) {

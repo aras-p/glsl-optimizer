@@ -44,7 +44,7 @@ prime_factor = 89
 prime_step = 281
 hash_table_size = 1024
 
-gl_apis=set(["GL", "GL_CORE", "GLES", "GLES2"])
+gl_apis=set(["GL", "GL_CORE", "GLES", "GLES2", "GLES3"])
 
 def print_header():
    print "typedef const unsigned short table_t[%d];\n" % (hash_table_size)
@@ -67,6 +67,7 @@ api_enum = [
    'GLES',
    'GLES2',
    'GL_CORE',
+   'GLES3', # Not in gl_api enum in mtypes.h
 ]
 
 def api_index(api):
@@ -166,6 +167,9 @@ def generate_hash_tables(enum_list, enabled_apis, param_descriptors):
 
          for api in valid_apis:
             add_to_hash_table(tables[api], hash_val, len(params))
+            # Also add GLES2 items to the GLES3 hash table
+            if api == "GLES2":
+               add_to_hash_table(tables["GLES3"], hash_val, len(params))
 
          params.append(["GL_" + enum_name, param[1]])
 
@@ -183,6 +187,8 @@ def opt_to_apis(feature):
    apis = set([_map[feature]])
    if "GL" in apis:
       apis.add("GL_CORE")
+   if "GLES2" in apis:
+      apis.add("GLES3")
 
    return apis
 
