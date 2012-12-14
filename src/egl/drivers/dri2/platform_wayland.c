@@ -518,21 +518,11 @@ dri2_get_buffers(__DRIdrawable * driDrawable,
    return buffer;
 }
 
-
 static void
 dri2_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 {
    (void) driDrawable;
-
-   /* FIXME: Does EGL support front buffer rendering at all? */
-
-#if 0
-   struct dri2_egl_surface *dri2_surf = loaderPrivate;
-
-   dri2WaitGL(dri2_surf);
-#else
    (void) loaderPrivate;
-#endif
 }
 
 static void
