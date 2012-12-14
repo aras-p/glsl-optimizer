@@ -189,6 +189,7 @@ struct dri2_egl_surface
    struct {
       struct gbm_bo       *bo;
       int                  locked;
+      int                  age;
    } color_buffers[3], *back, *current;
 #ifndef HAVE_WAYLAND_PLATFORM
    __DRIbuffer           *dri_buffers[__DRI_BUFFER_COUNT];

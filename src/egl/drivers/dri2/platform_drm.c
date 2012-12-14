@@ -324,11 +324,16 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
+   int i;
 
    if (dri2_surf->base.Type == EGL_WINDOW_BIT) {
       if (dri2_surf->current)
 	 _eglError(EGL_BAD_SURFACE, "dri2_swap_buffers");
+      for (i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++)
+         if (dri2_surf->color_buffers[i].age > 0)
+            dri2_surf->color_buffers[i].age++;
       dri2_surf->current = dri2_surf->back;
+      dri2_surf->current->age = 1;
       dri2_surf->back = NULL;
    }
 
@@ -336,6 +341,21 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    (*dri2_dpy->flush->invalidate)(dri2_surf->dri_drawable);
 
    return EGL_TRUE;
+}
+
+static EGLint
+dri2_query_buffer_age(_EGLDriver *drv,
+                      _EGLDisplay *disp, _EGLSurface *surface)
+{
+   struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surface);
+   __DRIbuffer buffer;
+
+   if (get_back_bo(dri2_surf, &buffer) < 0) {
+      _eglError(EGL_BAD_ALLOC, "dri2_query_buffer_age");
+      return 0;
+   }
+
+   return dri2_surf->back->age;
 }
 
 static _EGLImage *
@@ -464,6 +484,9 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.DestroySurface = dri2_destroy_surface;
    drv->API.SwapBuffers = dri2_swap_buffers;
    drv->API.CreateImageKHR = dri2_drm_create_image_khr;
+   drv->API.QueryBufferAge = dri2_query_buffer_age;
+
+   disp->Extensions.EXT_buffer_age = EGL_TRUE;
 
 #ifdef HAVE_WAYLAND_PLATFORM
    disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
