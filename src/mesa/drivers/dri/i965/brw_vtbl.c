@@ -71,6 +71,9 @@ static void brw_destroy_context( struct intel_context *intel )
    struct brw_context *brw = brw_context(&intel->ctx);
 
    if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
+      /* Force a report. */
+      brw->shader_time.report_time = 0;
+
       brw_collect_and_report_shader_time(brw);
       brw_destroy_shader_time(brw);
    }
