@@ -546,7 +546,6 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
-   struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
    int ret = 0;
 
    while (dri2_surf->frame_callback && ret != -1)
@@ -592,13 +591,6 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 	    dri2_surf->base.Width, dri2_surf->base.Height);
 
       wl_surface_commit(dri2_surf->wl_win->surface);
-   }
-
-   _EGLContext *ctx;
-   if (dri2_drv->glFlush) {
-      ctx = _eglGetCurrentContext();
-      if (ctx && ctx->DrawSurface == &dri2_surf->base)
-         dri2_drv->glFlush();
    }
 
    (*dri2_dpy->flush->flush)(dri2_surf->dri_drawable);
