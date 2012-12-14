@@ -204,11 +204,6 @@ struct dri2_egl_surface
 #endif
 };
 
-struct dri2_egl_buffer {
-   __DRIbuffer *dri_buffer;
-   struct dri2_egl_display *dri2_dpy;
-};
-
 
 struct dri2_egl_config
 {
