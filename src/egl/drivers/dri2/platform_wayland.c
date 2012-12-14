@@ -286,6 +286,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
                                         __DRI_BUFFER_BACK_LEFT, 32,
                                         dri2_surf->base.Width,
                                         dri2_surf->base.Height);
+      dri2_surf->back->age = 0;
    }
    if (dri2_surf->back->dri_buffer == NULL)
       return -1;
@@ -445,7 +446,7 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
-   int ret = 0;
+   int i, ret = 0;
 
    while (dri2_surf->frame_callback && ret != -1)
       ret = wl_display_dispatch_queue(dri2_dpy->wl_dpy, dri2_dpy->wl_queue);
@@ -458,6 +459,11 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    wl_proxy_set_queue((struct wl_proxy *) dri2_surf->frame_callback,
                       dri2_dpy->wl_queue);
 
+   for (i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++)
+      if (dri2_surf->color_buffers[i].age > 0)
+         dri2_surf->color_buffers[i].age++;
+
+   dri2_surf->back->age = 1;
    dri2_surf->current = dri2_surf->back;
    dri2_surf->back = NULL;
 
@@ -494,6 +500,21 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    (*dri2_dpy->flush->invalidate)(dri2_surf->dri_drawable);
 
    return EGL_TRUE;
+}
+
+static EGLint
+dri2_query_buffer_age(_EGLDriver *drv,
+                      _EGLDisplay *disp, _EGLSurface *surface)
+{
+   struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surface);
+   __DRIbuffer buffer;
+
+   if (get_back_bo(dri2_surf, &buffer) < 0) {
+      _eglError(EGL_BAD_ALLOC, "dri2_query_buffer_age");
+      return 0;
+   }
+
+   return dri2_surf->back->age;
 }
 
 static int
@@ -633,6 +654,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.DestroySurface = dri2_destroy_surface;
    drv->API.SwapBuffers = dri2_swap_buffers;
    drv->API.Terminate = dri2_terminate;
+   drv->API.QueryBufferAge = dri2_query_buffer_age;
 
    dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)
@@ -697,6 +719,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    }
 
    disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
+   disp->Extensions.EXT_buffer_age = EGL_TRUE;
    dri2_dpy->authenticate = dri2_wayland_authenticate;
 
    /* we're supporting EGL 1.4 */
