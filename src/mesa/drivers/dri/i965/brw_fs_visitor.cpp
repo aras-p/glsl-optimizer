@@ -1103,13 +1103,18 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 	 coordinate.reg_offset++;
 	 mlen += reg_width;
 
-	 emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
-	 lod.reg_offset++;
-	 mlen += reg_width;
+         /* For cube map array, the coordinate is (u,v,r,ai) but there are
+          * only derivatives for (u, v, r).
+          */
+         if (i < ir->lod_info.grad.dPdx->type->vector_elements) {
+            emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
+            lod.reg_offset++;
+            mlen += reg_width;
 
-	 emit(MOV(fs_reg(MRF, base_mrf + mlen), lod2));
-	 lod2.reg_offset++;
-	 mlen += reg_width;
+            emit(MOV(fs_reg(MRF, base_mrf + mlen), lod2));
+            lod2.reg_offset++;
+            mlen += reg_width;
+         }
       }
       break;
    }
