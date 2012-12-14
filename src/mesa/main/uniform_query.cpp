@@ -241,11 +241,14 @@ validate_uniform_parameters(struct gl_context *ctx,
       return false;
    }
 
-   /* This case should be impossible.  The implication is that a call like
-    * glGetUniformLocation(prog, "foo[8]") was successful but "foo" is not an
-    * array.
+   /* If the uniform is an array, check that array_index is in bounds.
+    * If not an array, check that array_index is zero.
+    * array_index is unsigned so no need to check for less than zero.
     */
-   if (*array_index != 0 && shProg->UniformStorage[*loc].array_elements == 0) {
+   unsigned limit = shProg->UniformStorage[*loc].array_elements;
+   if (limit == 0)
+      limit = 1;
+   if (*array_index >= limit) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(location=%d)",
 		  caller, location);
       return false;
@@ -732,9 +735,6 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
     * will have already generated an error.
     */
    if (uni->array_elements != 0) {
-      if (offset >= uni->array_elements)
-	 return;
-
       count = MIN2(count, (int) (uni->array_elements - offset));
    }
 
@@ -889,9 +889,6 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
     * will have already generated an error.
     */
    if (uni->array_elements != 0) {
-      if (offset >= uni->array_elements)
-	 return;
-
       count = MIN2(count, (int) (uni->array_elements - offset));
    }
 
@@ -1025,10 +1022,13 @@ _mesa_get_uniform_location(struct gl_context *ctx,
    if (!found)
       return GL_INVALID_INDEX;
 
-   /* Since array_elements is 0 for non-arrays, this causes look-ups of 'a[0]'
-    * to (correctly) fail if 'a' is not an array.
+   /* If the uniform is an array, fail if the index is out of bounds.
+    * (A negative index is caught above.)  This also fails if the uniform
+    * is not an array, but the user is trying to index it, because
+    * array_elements is zero and offset >= 0.
     */
-   if (array_lookup && shProg->UniformStorage[location].array_elements == 0) {
+   if (array_lookup
+	 && offset >= shProg->UniformStorage[location].array_elements) {
       return GL_INVALID_INDEX;
    }
 
