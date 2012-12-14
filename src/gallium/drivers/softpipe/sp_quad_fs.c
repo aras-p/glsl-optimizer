@@ -148,13 +148,6 @@ shade_quads(struct quad_stage *qs,
 static void
 shade_begin(struct quad_stage *qs)
 {
-   struct softpipe_context *softpipe = qs->softpipe;
-
-   softpipe->fs_variant->prepare( softpipe->fs_variant, 
-                                  softpipe->fs_machine,
-                                  (struct tgsi_sampler **)
-                                  softpipe->tgsi.samplers_list[PIPE_SHADER_FRAGMENT] );
-
    qs->next->begin(qs->next);
 }
 

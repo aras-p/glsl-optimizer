@@ -66,14 +66,11 @@ exec_prepare( const struct sp_fragment_shader_variant *var,
 {
    /*
     * Bind tokens/shader to the interpreter's machine state.
-    * Avoid redundant binding.
     */
-   if (machine->Tokens != var->tokens) {
-      tgsi_exec_machine_bind_shader( machine,
-                                     var->tokens,
-                                     PIPE_MAX_SAMPLERS,
-                                     samplers );
-   }
+   tgsi_exec_machine_bind_shader(machine,
+                                 var->tokens,
+                                 PIPE_MAX_SAMPLERS,
+                                 samplers);
 }
 
 

@@ -242,6 +242,12 @@ update_fragment_shader(struct softpipe_context *softpipe, unsigned prim)
    if (softpipe->fs) {
       softpipe->fs_variant = softpipe_find_fs_variant(softpipe,
                                                       softpipe->fs, &key);
+
+      /* prepare the TGSI interpreter for FS execution */
+      softpipe->fs_variant->prepare(softpipe->fs_variant, 
+                                    softpipe->fs_machine,
+                                    (struct tgsi_sampler **) softpipe->
+                                    tgsi.samplers_list[PIPE_SHADER_FRAGMENT]);
    }
    else {
       softpipe->fs_variant = NULL;
