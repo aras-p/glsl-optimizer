@@ -3848,6 +3848,13 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
    case GL_R32UI:
       return MESA_FORMAT_R_UINT32;
 
+   case GL_RGB32F:
+      return MESA_FORMAT_RGB_FLOAT32;
+   case GL_RGB32UI:
+      return MESA_FORMAT_RGB_UINT32;
+   case GL_RGB32I:
+      return MESA_FORMAT_RGB_INT32;
+
    default:
       return MESA_FORMAT_NONE;
    }
@@ -3878,6 +3885,12 @@ validate_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
 
       if (base_format == GL_R || base_format == GL_RG)
 	 return MESA_FORMAT_NONE;
+   }
+
+   if (!ctx->Extensions.ARB_texture_buffer_object_rgb32) {
+      GLenum base_format = _mesa_get_format_base_format(format);
+      if (base_format == GL_RGB)
+         return MESA_FORMAT_NONE;
    }
    return format;
 }
