@@ -25,9 +25,11 @@
 #ifndef TRANSFORM_FEEDBACK_H
 #define TRANSFORM_FEEDBACK_H
 
+#include <stdbool.h>
 #include "compiler.h"
 #include "glheader.h"
 #include "mfeatures.h"
+#include "mtypes.h"
 
 struct _glapi_table;
 struct dd_function_table;
@@ -110,5 +112,12 @@ _mesa_PauseTransformFeedback(void);
 
 extern void GLAPIENTRY
 _mesa_ResumeTransformFeedback(void);
+
+static inline bool
+_mesa_is_xfb_active_and_unpaused(const struct gl_context *ctx)
+{
+   return ctx->TransformFeedback.CurrentObject->Active &&
+      !ctx->TransformFeedback.CurrentObject->Paused;
+}
 
 #endif /* TRANSFORM_FEEDBACK_H */

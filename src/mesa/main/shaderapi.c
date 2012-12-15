@@ -45,6 +45,7 @@
 #include "main/mtypes.h"
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
+#include "main/transformfeedback.h"
 #include "main/uniforms.h"
 #include "program/program.h"
 #include "program/prog_parameter.h"
@@ -1383,12 +1384,10 @@ _mesa_UseProgram(GLhandleARB program)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *shProg;
-   struct gl_transform_feedback_object *obj =
-      ctx->TransformFeedback.CurrentObject;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (obj->Active && !obj->Paused) {
+   if (_mesa_is_xfb_active_and_unpaused(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glUseProgram(transform feedback active)");
       return;
@@ -1590,8 +1589,7 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
       return;
    }
 
-   if (ctx->TransformFeedback.CurrentObject->Active &&
-       !ctx->TransformFeedback.CurrentObject->Paused) {
+   if (_mesa_is_xfb_active_and_unpaused(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glUseShaderProgramEXT(transform feedback is active)");
       return;

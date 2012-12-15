@@ -33,6 +33,7 @@
 #include "brw_defines.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffer_objects.h"
+#include "main/transformfeedback.h"
 
 static void
 upload_3dstate_so_buffers(struct brw_context *brw)
@@ -236,9 +237,7 @@ upload_sol_state(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
    /* _NEW_TRANSFORM_FEEDBACK */
-   struct gl_transform_feedback_object *xfb_obj =
-      ctx->TransformFeedback.CurrentObject;
-   bool active = xfb_obj->Active && !xfb_obj->Paused;
+   bool active = _mesa_is_xfb_active_and_unpaused(ctx);
 
    if (active) {
       upload_3dstate_so_buffers(brw);

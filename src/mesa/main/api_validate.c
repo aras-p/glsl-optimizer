@@ -32,6 +32,7 @@
 #include "mtypes.h"
 #include "enums.h"
 #include "vbo/vbo.h"
+#include "transformfeedback.h"
 #include <stdbool.h>
 
 
@@ -252,8 +253,7 @@ _mesa_valid_prim_mode(struct gl_context *ctx, GLenum mode, const char *name)
     *        current transform feedback state as given by table X.1.
     *
     */
-   if (ctx->TransformFeedback.CurrentObject->Active &&
-       !ctx->TransformFeedback.CurrentObject->Paused) {
+   if (_mesa_is_xfb_active_and_unpaused(ctx)) {
       GLboolean pass = GL_TRUE;
 
       switch (mode) {
@@ -313,8 +313,6 @@ _mesa_validate_DrawElements(struct gl_context *ctx,
 			    GLenum mode, GLsizei count, GLenum type,
 			    const GLvoid *indices, GLint basevertex)
 {
-   struct gl_transform_feedback_object *xfb_obj
-      = ctx->TransformFeedback.CurrentObject;
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    FLUSH_CURRENT(ctx, 0);
 
@@ -325,7 +323,7 @@ _mesa_validate_DrawElements(struct gl_context *ctx,
     *   DrawElementsInstanced, and DrawRangeElements while transform feedback
     *   is active and not paused, regardless of mode.
     */
-   if (_mesa_is_gles3(ctx) && xfb_obj->Active && !xfb_obj->Paused) {
+   if (_mesa_is_gles3(ctx) && _mesa_is_xfb_active_and_unpaused(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glDrawElements(transform feedback active)");
       return GL_FALSE;
@@ -446,8 +444,6 @@ _mesa_validate_DrawRangeElements(struct gl_context *ctx, GLenum mode,
 				 GLsizei count, GLenum type,
 				 const GLvoid *indices, GLint basevertex)
 {
-   struct gl_transform_feedback_object *xfb_obj
-      = ctx->TransformFeedback.CurrentObject;
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    FLUSH_CURRENT(ctx, 0);
 
@@ -458,7 +454,7 @@ _mesa_validate_DrawRangeElements(struct gl_context *ctx, GLenum mode,
     *   DrawElementsInstanced, and DrawRangeElements while transform feedback
     *   is active and not paused, regardless of mode.
     */
-   if (_mesa_is_gles3(ctx) && xfb_obj->Active && !xfb_obj->Paused) {
+   if (_mesa_is_gles3(ctx) && _mesa_is_xfb_active_and_unpaused(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glDrawElements(transform feedback active)");
       return GL_FALSE;
@@ -552,7 +548,7 @@ _mesa_validate_DrawArrays(struct gl_context *ctx,
     * This is in contrast to the behaviour of desktop GL, where the extra
     * primitives are silently dropped from the transform feedback buffer.
     */
-   if (_mesa_is_gles3(ctx) && xfb_obj->Active && !xfb_obj->Paused) {
+   if (_mesa_is_gles3(ctx) && _mesa_is_xfb_active_and_unpaused(ctx)) {
       size_t prim_count = vbo_count_tessellated_primitives(mode, count, 1);
       if (xfb_obj->GlesRemainingPrims < prim_count) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -620,7 +616,7 @@ _mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint fi
     * This is in contrast to the behaviour of desktop GL, where the extra
     * primitives are silently dropped from the transform feedback buffer.
     */
-   if (_mesa_is_gles3(ctx) && xfb_obj->Active && !xfb_obj->Paused) {
+   if (_mesa_is_gles3(ctx) && _mesa_is_xfb_active_and_unpaused(ctx)) {
       size_t prim_count
          = vbo_count_tessellated_primitives(mode, count, numInstances);
       if (xfb_obj->GlesRemainingPrims < prim_count) {
@@ -641,8 +637,6 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
                                      const GLvoid *indices, GLsizei numInstances,
                                      GLint basevertex)
 {
-   struct gl_transform_feedback_object *xfb_obj
-      = ctx->TransformFeedback.CurrentObject;
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    FLUSH_CURRENT(ctx, 0);
 
@@ -653,7 +647,7 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
     *   DrawElementsInstanced, and DrawRangeElements while transform feedback
     *   is active and not paused, regardless of mode.
     */
-   if (_mesa_is_gles3(ctx) && xfb_obj->Active && !xfb_obj->Paused) {
+   if (_mesa_is_gles3(ctx) && _mesa_is_xfb_active_and_unpaused(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glDrawElements(transform feedback active)");
       return GL_FALSE;

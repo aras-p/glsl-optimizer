@@ -819,8 +819,7 @@ _mesa_BindTransformFeedback(GLenum target, GLuint name)
       return;
    }
 
-   if (ctx->TransformFeedback.CurrentObject->Active &&
-       !ctx->TransformFeedback.CurrentObject->Paused) {
+   if (_mesa_is_xfb_active_and_unpaused(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
               "glBindTransformFeedback(transform is active, or not paused)");
       return;
@@ -890,7 +889,7 @@ _mesa_PauseTransformFeedback(void)
 
    obj = ctx->TransformFeedback.CurrentObject;
 
-   if (!obj->Active || obj->Paused) {
+   if (!_mesa_is_xfb_active_and_unpaused(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
            "glPauseTransformFeedback(feedback not active or already paused)");
       return;

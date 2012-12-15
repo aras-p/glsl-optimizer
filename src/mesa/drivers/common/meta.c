@@ -474,8 +474,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
     * able to change other state.
     */
    save->TransformFeedbackNeedsResume =
-      ctx->TransformFeedback.CurrentObject->Active &&
-      !ctx->TransformFeedback.CurrentObject->Paused;
+      _mesa_is_xfb_active_and_unpaused(ctx);
    if (save->TransformFeedbackNeedsResume)
       _mesa_PauseTransformFeedback();
 
