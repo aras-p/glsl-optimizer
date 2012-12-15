@@ -36,6 +36,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mesa/drivers/dri/common \
 	-I$(top_srcdir)/src/mesa/drivers/dri/intel \
 	-I$(top_srcdir)/src/mesa/drivers/dri/intel/server \
+	-I$(top_srcdir)/src/gtest/include \
 	$(DEFINES) \
 	$(API_DEFINES) \
 	$(VISIBILITY_CFLAGS) \
@@ -71,6 +72,8 @@ TESTS = \
         test_vec4_register_coalesce
 check_PROGRAMS = $(TESTS)
 
+test_vec4_register_coalesce_SOURCES = \
+	test_vec4_register_coalesce.cpp
 test_vec4_register_coalesce_LDADD = \
         $(TEST_LIBS) \
         $(top_builddir)/src/gtest/libgtest.la
