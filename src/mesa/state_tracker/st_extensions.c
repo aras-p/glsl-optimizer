@@ -494,6 +494,14 @@ void st_init_extensions(struct st_context *st)
           PIPE_FORMAT_B10G10R10A2_SSCALED } },
    };
 
+   static const struct st_extension_format_mapping tbo_rgb32[] = {
+      { {o(ARB_texture_buffer_object_rgb32) },
+        { PIPE_FORMAT_R32G32B32_FLOAT,
+          PIPE_FORMAT_R32G32B32_UINT,
+          PIPE_FORMAT_R32G32B32_SINT,
+        } },
+   };
+
    /*
     * Extensions that are supported by all Gallium drivers:
     */
@@ -661,8 +669,12 @@ void st_init_extensions(struct st_context *st)
    if (ctx->Const.MinMapBufferAlignment >= 64) {
       ctx->Extensions.ARB_map_buffer_alignment = GL_TRUE;
    }
-   if (screen->get_param(screen, PIPE_CAP_TEXTURE_BUFFER_OBJECTS))
+   if (screen->get_param(screen, PIPE_CAP_TEXTURE_BUFFER_OBJECTS)) {
       ctx->Extensions.ARB_texture_buffer_object = GL_TRUE;
+      init_format_extensions(st, tbo_rgb32, Elements(tbo_rgb32),
+                             PIPE_BUFFER, PIPE_BIND_SAMPLER_VIEW);
+   }
+
 
    /* Unpacking a varying in the fragment shader costs 1 texture indirection.
     * If the number of available texture indirections is very limited, then we
