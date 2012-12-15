@@ -229,8 +229,10 @@ void paint_destroy(struct vg_paint *paint)
    pipe_sampler_view_reference(&paint->gradient.sampler_view, NULL);
    if (paint->pattern.sampler_view)
       pipe_sampler_view_reference(&paint->pattern.sampler_view, NULL);
-   if (ctx)
+   if (ctx) {
       vg_context_remove_object(ctx, &paint->base);
+      vg_free_object(&paint->base);
+   }
 
    free(paint->gradient.ramp_stopsi);
    free(paint->gradient.ramp_stops);

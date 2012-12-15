@@ -234,6 +234,8 @@ void path_destroy(struct path *p)
    if (p->stroked.path)
       path_destroy(p->stroked.path);
 
+   vg_free_object(&p->base);
+
    FREE(p);
 }
 

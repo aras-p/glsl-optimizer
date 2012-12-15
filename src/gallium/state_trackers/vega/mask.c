@@ -376,6 +376,7 @@ void mask_layer_destroy(struct vg_mask_layer *layer)
 
    vg_context_remove_object(ctx, &layer->base);
    pipe_sampler_view_reference(&layer->sampler_view, NULL);
+   vg_free_object(&layer->base);
    FREE(layer);
 }
 

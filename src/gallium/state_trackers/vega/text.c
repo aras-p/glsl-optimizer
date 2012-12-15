@@ -157,6 +157,8 @@ void font_destroy(struct vg_font *font)
    }
    cso_hash_delete(font->glyphs);
 
+   vg_free_object(&font->base);
+
    FREE(font);
 }
 
