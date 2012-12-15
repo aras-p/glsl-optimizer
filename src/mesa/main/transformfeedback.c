@@ -247,6 +247,55 @@ _mesa_init_transform_feedback_functions(struct dd_function_table *driver)
 
 
 /**
+ * Fill in the correct Size value for each buffer in \c obj.
+ *
+ * From the GL 4.3 spec, section 6.1.1 ("Binding Buffer Objects to Indexed
+ * Targets"):
+ *
+ *   BindBufferBase binds the entire buffer, even when the size of the buffer
+ *   is changed after the binding is established. It is equivalent to calling
+ *   BindBufferRange with offset zero, while size is determined by the size of
+ *   the bound buffer at the time the binding is used.
+ *
+ *   Regardless of the size specified with BindBufferRange, or indirectly with
+ *   BindBufferBase, the GL will never read or write beyond the end of a bound
+ *   buffer. In some cases this constraint may result in visibly different
+ *   behavior when a buffer overflow would otherwise result, such as described
+ *   for transform feedback operations in section 13.2.2.
+ */
+static void
+compute_transform_feedback_buffer_sizes(
+      struct gl_transform_feedback_object *obj)
+{
+   unsigned i = 0;
+   for (i = 0; i < MAX_FEEDBACK_BUFFERS; ++i) {
+      GLintptr offset = obj->Offset[i];
+      GLsizeiptr buffer_size
+         = obj->Buffers[i] == NULL ? 0 : obj->Buffers[i]->Size;
+      GLsizeiptr available_space
+         = buffer_size <= offset ? 0 : buffer_size - offset;
+      GLsizeiptr computed_size;
+      if (obj->RequestedSize[i] == 0) {
+         /* No size was specified at the time the buffer was bound, so allow
+          * writing to all available space in the buffer.
+          */
+         computed_size = available_space;
+      } else {
+         /* A size was specified at the time the buffer was bound, however
+          * it's possible that the buffer has shrunk since then.  So only
+          * allow writing to the minimum of the specified size and the space
+          * available.
+          */
+         computed_size = MIN2(available_space, obj->RequestedSize[i]);
+      }
+
+      /* Legal sizes must be multiples of four, so round down if necessary. */
+      obj->Size[i] = computed_size & ~0x3;
+   }
+}
+
+
+/**
  * Compute the maximum number of vertices that can be written to the currently
  * enabled transform feedback buffers without overflowing any of them.
  */
@@ -338,6 +387,8 @@ _mesa_BeginTransformFeedback(GLenum mode)
    obj->Active = GL_TRUE;
    ctx->TransformFeedback.Mode = mode;
 
+   compute_transform_feedback_buffer_sizes(obj);
+
    if (_mesa_is_gles3(ctx)) {
       /* In GLES3, we are required to track the usage of the transform
        * feedback buffer and report INVALID_OPERATION if a draw call tries to
@@ -408,7 +459,7 @@ bind_buffer_range(struct gl_context *ctx, GLuint index,
    obj->BufferNames[index] = bufObj->Name;
 
    obj->Offset[index] = offset;
-   obj->Size[index] = size;
+   obj->RequestedSize[index] = size;
 }
 
 
@@ -467,7 +518,6 @@ _mesa_bind_buffer_base_transform_feedback(struct gl_context *ctx,
 					  struct gl_buffer_object *bufObj)
 {
    struct gl_transform_feedback_object *obj;
-   GLsizeiptr size;
 
    obj = ctx->TransformFeedback.CurrentObject;
 
@@ -482,12 +532,7 @@ _mesa_bind_buffer_base_transform_feedback(struct gl_context *ctx,
       return;
    }
 
-   /* default size is the buffer size rounded down to nearest
-    * multiple of four.
-    */
-   size = bufObj->Size & ~0x3;
-
-   bind_buffer_range(ctx, index, bufObj, 0, size);
+   bind_buffer_range(ctx, index, bufObj, 0, 0);
 }
 
 
@@ -503,7 +548,6 @@ _mesa_BindBufferOffsetEXT(GLenum target, GLuint index, GLuint buffer,
    struct gl_transform_feedback_object *obj;
    struct gl_buffer_object *bufObj;
    GET_CURRENT_CONTEXT(ctx);
-   GLsizeiptr size;
 
    if (target != GL_TRANSFORM_FEEDBACK_BUFFER) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferOffsetEXT(target)");
@@ -543,12 +587,7 @@ _mesa_BindBufferOffsetEXT(GLenum target, GLuint index, GLuint buffer,
       return;
    }
 
-   /* default size is the buffer size rounded down to nearest
-    * multiple of four.
-    */
-   size = (bufObj->Size - offset) & ~0x3;
-
-   bind_buffer_range(ctx, index, bufObj, offset, size);
+   bind_buffer_range(ctx, index, bufObj, offset, 0);
 }
 
 

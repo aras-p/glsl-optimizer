@@ -1574,7 +1574,8 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
 	 goto invalid_value;
       if (!ctx->Extensions.EXT_transform_feedback)
 	 goto invalid_enum;
-      v->value_int64 = ctx->TransformFeedback.CurrentObject->Size[index];
+      v->value_int64
+         = ctx->TransformFeedback.CurrentObject->RequestedSize[index];
       return TYPE_INT64;
 
    case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:

@@ -1825,8 +1825,19 @@ struct gl_transform_feedback_object
 
    /** Start of feedback data in dest buffer */
    GLintptr Offset[MAX_FEEDBACK_BUFFERS];
-   /** Max data to put into dest buffer (in bytes) */
+
+   /**
+    * Max data to put into dest buffer (in bytes).  Computed based on
+    * RequestedSize and the actual size of the buffer.
+    */
    GLsizeiptr Size[MAX_FEEDBACK_BUFFERS];
+
+   /**
+    * Size that was specified when the buffer was bound.  If the buffer was
+    * bound with glBindBufferBase() or glBindBufferOffsetEXT(), this value is
+    * zero.
+    */
+   GLsizeiptr RequestedSize[MAX_FEEDBACK_BUFFERS];
 };
 
 
