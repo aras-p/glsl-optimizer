@@ -117,6 +117,12 @@ intel_vertical_texture_alignment_unit(struct brw_context *brw,
    if (format == MESA_FORMAT_S8)
       return brw->gen >= 7 ? 8 : 4;
 
+   /* Broadwell only supports VALIGN of 4, 8, and 16.  The BSpec says 4
+    * should always be used, except for stencil buffers, which should be 8.
+    */
+   if (brw->gen >= 8)
+      return 4;
+
    if (multisampled)
       return 4;
 
