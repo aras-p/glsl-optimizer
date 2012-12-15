@@ -2301,6 +2301,7 @@ is_varying_var(GLenum shaderType, const ir_variable *var)
  */
 bool
 assign_varying_locations(struct gl_context *ctx,
+			 void *mem_ctx,
 			 struct gl_shader_program *prog,
 			 gl_shader *producer, gl_shader *consumer,
                          unsigned num_tfeedback_decls,
@@ -2375,10 +2376,10 @@ assign_varying_locations(struct gl_context *ctx,
        */
       assert(!ctx->Extensions.EXT_transform_feedback);
    } else {
-      lower_packed_varyings(ctx, producer_base, slots_used, ir_var_out,
+      lower_packed_varyings(mem_ctx, producer_base, slots_used, ir_var_out,
                             producer);
       if (consumer) {
-         lower_packed_varyings(ctx, consumer_base, slots_used, ir_var_in,
+         lower_packed_varyings(mem_ctx, consumer_base, slots_used, ir_var_in,
                                consumer);
       }
    }
@@ -2910,7 +2911,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 continue;
 
       if (!assign_varying_locations(
-             ctx, prog, prog->_LinkedShaders[prev], prog->_LinkedShaders[i],
+				    ctx, mem_ctx, prog, prog->_LinkedShaders[prev], prog->_LinkedShaders[i],
              i == MESA_SHADER_FRAGMENT ? num_tfeedback_decls : 0,
              tfeedback_decls))
 	 goto done;
@@ -2923,7 +2924,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
        * locations for use by transform feedback.
        */
       if (!assign_varying_locations(
-             ctx, prog, prog->_LinkedShaders[prev], NULL, num_tfeedback_decls,
+				    ctx, mem_ctx, prog, prog->_LinkedShaders[prev], NULL, num_tfeedback_decls,
              tfeedback_decls))
          goto done;
    }
