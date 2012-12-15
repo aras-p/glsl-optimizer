@@ -122,6 +122,16 @@ _mesa_GetActiveUniformsiv(GLuint program,
 
       case GL_UNIFORM_NAME_LENGTH:
 	 params[i] = strlen(uni->name) + 1;
+
+         /* Page 61 (page 73 of the PDF) in section 2.11 of the OpenGL ES 3.0
+          * spec says:
+          *
+          *     "If the active uniform is an array, the uniform name returned
+          *     in name will always be the name of the uniform array appended
+          *     with "[0]"."
+          */
+         if (uni->array_elements != 0)
+            params[i] += 3;
 	 break;
 
       case GL_UNIFORM_BLOCK_INDEX:
