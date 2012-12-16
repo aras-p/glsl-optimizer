@@ -134,6 +134,9 @@ The integer capabilities:
   expected for a pointer returned by transfer_map if the resource is
   PIPE_BUFFER. In other words, the pointer returned by transfer_map is
   always aligned to this value.
+* ``PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT``: Describes the required
+  alignment for pipe_sampler_view::u.buf.first_element, in bytes.
+  If a driver does not support first/last_element, it should return 0.
 
 
 .. _pipe_capf:
