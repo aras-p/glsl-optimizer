@@ -7,6 +7,7 @@
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
+#include "intel_fbo.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -63,6 +64,13 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
 
    assert(image->Border == 0);
 
+   /* Quantize sample count */
+   if (image->NumSamples) {
+      image->NumSamples = intel_quantize_num_samples(intel->intelScreen, image->NumSamples);
+      if (!image->NumSamples)
+         return false;
+   }
+
    /* Because the driver uses AllocTextureImageBuffer() internally, it may end
     * up mismatched with FreeTextureImageBuffer(), but that is safe to call
     * multiple times.
@@ -73,6 +81,7 @@ intel_alloc_texture_image_buffer(struct gl_context *ctx,
    switch (texobj->Target) {
    case GL_TEXTURE_3D:
    case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
       slices = image->Depth;
       break;
    case GL_TEXTURE_1D_ARRAY:

@@ -60,6 +60,8 @@ translate_tex_target(GLenum target)
    case GL_TEXTURE_2D: 
    case GL_TEXTURE_2D_ARRAY_EXT:
    case GL_TEXTURE_EXTERNAL_OES:
+   case GL_TEXTURE_2D_MULTISAMPLE:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
       return BRW_SURFACE_2D;
 
    case GL_TEXTURE_3D: 

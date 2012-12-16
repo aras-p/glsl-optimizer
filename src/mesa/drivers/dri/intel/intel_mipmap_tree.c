@@ -624,9 +624,27 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
     * minification.  This will also catch images not present in the
     * tree, changed targets, etc.
     */
-   if (width != mt->level[level].width ||
-       height != mt->level[level].height ||
-       depth != mt->level[level].depth)
+   if (mt->target == GL_TEXTURE_2D_MULTISAMPLE ||
+         mt->target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
+      /* nonzero level here is always bogus */
+      assert(level == 0);
+
+      if (width != mt->logical_width0 ||
+            height != mt->logical_height0 ||
+            depth != mt->logical_depth0) {
+         return false;
+      }
+   }
+   else {
+      /* all normal textures, renderbuffers, etc */
+      if (width != mt->level[level].width ||
+          height != mt->level[level].height ||
+          depth != mt->level[level].depth) {
+         return false;
+      }
+   }
+
+   if (image->NumSamples != mt->num_samples)
       return false;
 
    return true;

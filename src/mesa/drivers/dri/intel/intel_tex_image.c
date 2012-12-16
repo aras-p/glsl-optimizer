@@ -104,7 +104,7 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 			       height,
 			       depth,
 			       expect_accelerated_upload,
-                               0 /* num_samples */,
+                               intelImage->base.Base.NumSamples,
                                false /* force_y_tiling */);
 }
 

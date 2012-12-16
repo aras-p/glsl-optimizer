@@ -168,6 +168,7 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 
    case GL_TEXTURE_2D_ARRAY:
    case GL_TEXTURE_1D_ARRAY:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
       brw_miptree_layout_texture_array(intel, mt);
       break;
 
