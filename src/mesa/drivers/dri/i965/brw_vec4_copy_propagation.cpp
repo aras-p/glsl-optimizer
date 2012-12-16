@@ -238,6 +238,9 @@ vec4_visitor::try_copy_propagation(vec4_instruction *inst, int arg,
    if (is_3src_inst && value.file == UNIFORM)
       return false;
 
+   if (inst->is_send_from_grf())
+      return false;
+
    /* We can't copy-propagate a UD negation into a condmod
     * instruction, because the condmod ends up looking at the 33-bit
     * signed accumulator value instead of the 32-bit value we wanted
