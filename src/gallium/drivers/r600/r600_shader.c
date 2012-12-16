@@ -3896,6 +3896,128 @@ static inline unsigned tgsi_tex_get_src_gpr(struct r600_shader_ctx *ctx,
 	return ctx->file_offset[inst->Src[index].Register.File] + inst->Src[index].Register.Index;
 }
 
+static int do_vtx_fetch_inst(struct r600_shader_ctx *ctx, boolean src_requires_loading)
+{
+	struct r600_bytecode_vtx vtx;
+	struct r600_bytecode_alu alu;
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	int src_gpr, r, i;
+	int id = tgsi_tex_get_src_gpr(ctx, 1);
+
+	src_gpr = tgsi_tex_get_src_gpr(ctx, 0);
+	if (src_requires_loading) {
+		for (i = 0; i < 4; i++) {
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
+			r600_bytecode_src(&alu.src[0], &ctx->src[0], i);
+			alu.dst.sel = ctx->temp_reg;
+			alu.dst.chan = i;
+			if (i == 3)
+				alu.last = 1;
+			alu.dst.write = 1;
+			r = r600_bytecode_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
+		src_gpr = ctx->temp_reg;
+	}
+
+	memset(&vtx, 0, sizeof(vtx));
+	vtx.inst = 0;
+	vtx.buffer_id = id + R600_MAX_CONST_BUFFERS;
+	vtx.fetch_type = 2;		/* VTX_FETCH_NO_INDEX_OFFSET */
+	vtx.src_gpr = src_gpr;
+	vtx.mega_fetch_count = 16;
+	vtx.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index;
+	vtx.dst_sel_x = (inst->Dst[0].Register.WriteMask & 1) ? 0 : 7;		/* SEL_X */
+	vtx.dst_sel_y = (inst->Dst[0].Register.WriteMask & 2) ? 1 : 7;		/* SEL_Y */
+	vtx.dst_sel_z = (inst->Dst[0].Register.WriteMask & 4) ? 2 : 7;		/* SEL_Z */
+	vtx.dst_sel_w = (inst->Dst[0].Register.WriteMask & 8) ? 3 : 7;		/* SEL_W */
+	vtx.use_const_fields = 1;
+	vtx.srf_mode_all = 1;		/* SRF_MODE_NO_ZERO */
+
+	if ((r = r600_bytecode_add_vtx(ctx->bc, &vtx)))
+		return r;
+
+	if (ctx->bc->chip_class >= EVERGREEN)
+		return 0;
+
+	for (i = 0; i < 4; i++) {
+		int lasti = tgsi_last_instruction(inst->Dst[0].Register.WriteMask);
+		if (!(inst->Dst[0].Register.WriteMask & (1 << i)))
+			continue;
+
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_AND_INT);
+
+		alu.dst.chan = i;
+		alu.dst.sel = vtx.dst_gpr;
+		alu.dst.write = 1;
+
+		alu.src[0].sel = vtx.dst_gpr;
+		alu.src[0].chan = i;
+
+		alu.src[1].sel = 512 + (id * 2);
+		alu.src[1].chan = i % 4;
+		alu.src[1].kc_bank = R600_BUFFER_INFO_CONST_BUFFER;
+
+		if (i == lasti)
+			alu.last = 1;
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+
+	if (inst->Dst[0].Register.WriteMask & 3) {
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_OR_INT);
+
+		alu.dst.chan = 3;
+		alu.dst.sel = vtx.dst_gpr;
+		alu.dst.write = 1;
+
+		alu.src[0].sel = vtx.dst_gpr;
+		alu.src[0].chan = 3;
+
+		alu.src[1].sel = 512 + (id * 2) + 1;
+		alu.src[1].chan = 0;
+		alu.src[1].kc_bank = R600_BUFFER_INFO_CONST_BUFFER;
+
+		alu.last = 1;
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+	return 0;
+}
+
+static int r600_do_buffer_txq(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bytecode_alu alu;
+	int r;
+	int id = tgsi_tex_get_src_gpr(ctx, 1);
+
+	memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+	alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
+
+	if (ctx->bc->chip_class >= EVERGREEN) {
+		alu.src[0].sel = 512 + (id / 4);
+		alu.src[0].chan = id % 4;
+	} else {
+		/* r600 we have them at channel 2 of the second dword */
+		alu.src[0].sel = 512 + (id * 2) + 1;
+		alu.src[0].chan = 1;
+	}
+	alu.src[0].kc_bank = R600_BUFFER_INFO_CONST_BUFFER;
+	tgsi_dst(ctx, &inst->Dst[0], 0, &alu.dst);
+	alu.last = 1;
+	r = r600_bytecode_add_alu(ctx->bc, &alu);
+	if (r)
+		return r;
+	return 0;
+}
+
 static int tgsi_tex(struct r600_shader_ctx *ctx)
 {
 	static float one_point_five = 1.5f;
@@ -3933,6 +4055,18 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		sampler_src_reg = 2;
 
 	src_gpr = tgsi_tex_get_src_gpr(ctx, 0);
+
+	if (inst->Texture.Texture == TGSI_TEXTURE_BUFFER) {
+		if (inst->Instruction.Opcode == TGSI_OPCODE_TXQ) {
+			ctx->shader->uses_tex_buffers = true;
+			return r600_do_buffer_txq(ctx);
+		}
+		else if (inst->Instruction.Opcode == TGSI_OPCODE_TXF) {
+			if (ctx->bc->chip_class < EVERGREEN)
+				ctx->shader->uses_tex_buffers = true;
+			return do_vtx_fetch_inst(ctx, src_requires_loading);
+		}
+	}
 
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TXF) {
 		/* get offset values */

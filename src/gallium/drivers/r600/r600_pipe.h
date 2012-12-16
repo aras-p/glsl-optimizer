@@ -40,12 +40,13 @@
 #define R600_TRACE_CS 0
 
 #define R600_MAX_USER_CONST_BUFFERS 13
-#define R600_MAX_DRIVER_CONST_BUFFERS 2
+#define R600_MAX_DRIVER_CONST_BUFFERS 3
 #define R600_MAX_CONST_BUFFERS (R600_MAX_USER_CONST_BUFFERS + R600_MAX_DRIVER_CONST_BUFFERS)
 
 /* start driver buffers after user buffers */
 #define R600_UCP_CONST_BUFFER (R600_MAX_USER_CONST_BUFFERS)
 #define R600_TXQ_CONST_BUFFER (R600_MAX_USER_CONST_BUFFERS + 1)
+#define R600_BUFFER_INFO_CONST_BUFFER (R600_MAX_USER_CONST_BUFFERS + 2)
 
 #define R600_MAX_CONST_BUFFER_SIZE 4096
 
@@ -330,6 +331,7 @@ struct r600_samplerview_state {
 	uint32_t			compressed_depthtex_mask; /* which textures are depth */
 	uint32_t			compressed_colortex_mask;
 	boolean                         dirty_txq_constants;
+	boolean				dirty_buffer_constants;
 };
 
 struct r600_sampler_states {
@@ -347,6 +349,8 @@ struct r600_textures_info {
 
 	/* cube array txq workaround */
 	uint32_t			*txq_constants;
+	/* buffer related workarounds */
+	uint32_t			*buffer_constants;
 };
 
 struct r600_fence {
@@ -677,6 +681,10 @@ struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
 						struct pipe_resource *texture,
 						const struct pipe_surface *templ,
 						unsigned width, unsigned height);
+
+unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
+				   const unsigned char *swizzle_view,
+				   boolean vtx);
 
 /* r600_state_common.c */
 void r600_init_common_state_functions(struct r600_context *rctx);

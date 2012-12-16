@@ -2609,7 +2609,7 @@ void r600_bytecode_dump(struct r600_bytecode *bc)
 	fprintf(stderr, "--------------------------------------\n");
 }
 
-static void r600_vertex_data_type(enum pipe_format pformat,
+void r600_vertex_data_type(enum pipe_format pformat,
 				  unsigned *format,
 				  unsigned *num_format, unsigned *format_comp, unsigned *endian)
 {

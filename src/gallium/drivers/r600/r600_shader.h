@@ -61,6 +61,7 @@ struct r600_shader {
 	boolean			vs_out_misc_write;
 	boolean			vs_out_point_size;
 	boolean			has_txq_cube_array_z_comp;
+	boolean			uses_tex_buffers;
 };
 
 struct r600_shader_key {

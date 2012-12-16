@@ -976,6 +976,46 @@ static void *r600_create_sampler_state(struct pipe_context *ctx,
 	return ss;
 }
 
+static struct pipe_sampler_view *
+texture_buffer_sampler_view(struct r600_pipe_sampler_view *view,
+			    unsigned width0, unsigned height0)
+			    
+{
+	struct pipe_context *ctx = view->base.context;
+	struct r600_texture *tmp = (struct r600_texture*)view->base.texture;
+	uint64_t va;
+	int stride = util_format_get_blocksize(view->base.format);
+	unsigned format, num_format, format_comp, endian;
+
+	r600_vertex_data_type(view->base.format,
+			      &format, &num_format, &format_comp,
+			      &endian);
+
+	va = r600_resource_va(ctx->screen, view->base.texture);
+	view->tex_resource = &tmp->resource;
+
+	view->skip_mip_address_reloc = true;
+	view->tex_resource_words[0] = va;
+	view->tex_resource_words[1] = width0 - 1;
+	view->tex_resource_words[2] = S_038008_BASE_ADDRESS_HI(va >> 32UL) |
+		S_038008_STRIDE(stride) |
+		S_038008_DATA_FORMAT(format) |
+		S_038008_NUM_FORMAT_ALL(num_format) |
+		S_038008_FORMAT_COMP_ALL(format_comp) |
+		S_038008_SRF_MODE_ALL(1) |
+		S_038008_ENDIAN_SWAP(endian);
+	view->tex_resource_words[3] = 0;
+	/*
+	 * in theory dword 4 is for number of elements, for use with resinfo,
+	 * but it seems to utterly fail to work, the amd gpu shader analyser
+	 * uses a const buffer to store the element sizes for buffer txq
+	 */
+	view->tex_resource_words[4] = 0;
+	view->tex_resource_words[5] = 0;
+	view->tex_resource_words[6] = S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_BUFFER);
+	return &view->base;
+}
+
 struct pipe_sampler_view *
 r600_create_sampler_view_custom(struct pipe_context *ctx,
 				struct pipe_resource *texture,
@@ -999,6 +1039,9 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 	view->base.texture = texture;
 	view->base.reference.count = 1;
 	view->base.context = ctx;
+
+	if (texture->target == PIPE_BUFFER)
+		return texture_buffer_sampler_view(view, texture->width0, 1);
 
 	swizzle[0] = state->swizzle_r;
 	swizzle[1] = state->swizzle_g;

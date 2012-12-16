@@ -912,18 +912,26 @@ void r600_init_surface_functions(struct r600_context *r600)
 	r600->context.surface_destroy = r600_surface_destroy;
 }
 
-static unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
-		const unsigned char *swizzle_view)
+unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
+				   const unsigned char *swizzle_view,
+				   boolean vtx)
 {
 	unsigned i;
 	unsigned char swizzle[4];
 	unsigned result = 0;
-	const uint32_t swizzle_shift[4] = {
+	const uint32_t tex_swizzle_shift[4] = {
 		16, 19, 22, 25,
+	};
+	const uint32_t vtx_swizzle_shift[4] = {
+		3, 6, 9, 12,
 	};
 	const uint32_t swizzle_bit[4] = {
 		0, 1, 2, 3,
 	};
+	const uint32_t *swizzle_shift = tex_swizzle_shift;
+
+	if (vtx)
+		swizzle_shift = vtx_swizzle_shift;
 
 	if (swizzle_view) {
 		util_format_compose_swizzles(swizzle_format, swizzle_view, swizzle);
@@ -977,7 +985,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 	};
 	desc = util_format_description(format);
 
-	word4 |= r600_get_swizzle_combined(desc->swizzle, swizzle_view);
+	word4 |= r600_get_swizzle_combined(desc->swizzle, swizzle_view, FALSE);
 
 	/* Colorspace (return non-RGB formats directly). */
 	switch (desc->colorspace) {
