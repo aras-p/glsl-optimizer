@@ -3828,7 +3828,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 					     read_compressed_msaa;
 	boolean src_loaded = FALSE;
 	unsigned sampler_src_reg = inst->Instruction.Opcode == TGSI_OPCODE_TXQ_LZ ? 0 : 1;
-	uint8_t offset_x = 0, offset_y = 0, offset_z = 0;
+	int8_t offset_x = 0, offset_y = 0, offset_z = 0;
 	boolean has_txq_cube_array_z = false;
 
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TXQ &&

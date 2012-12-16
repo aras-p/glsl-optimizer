@@ -77,9 +77,9 @@ struct r600_bytecode_tex {
 	unsigned			coord_type_y;
 	unsigned			coord_type_z;
 	unsigned			coord_type_w;
-	unsigned			offset_x;
-	unsigned			offset_y;
-	unsigned			offset_z;
+	int				offset_x;
+	int				offset_y;
+	int				offset_z;
 	unsigned			sampler_id;
 	unsigned			src_sel_x;
 	unsigned			src_sel_y;
