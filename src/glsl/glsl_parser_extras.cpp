@@ -151,7 +151,7 @@ _mesa_glsl_parse_state::check_version(unsigned required_glsl_version,
 
    va_list args;
    va_start(args, fmt);
-   char *problem = ralloc_vasprintf(ctx, fmt, args);
+   char *problem = ralloc_vasprintf(this, fmt, args);
    va_end(args);
    const char *glsl_version_string
       = glsl_compute_version_string(ctx, false, required_glsl_version);
@@ -159,14 +159,14 @@ _mesa_glsl_parse_state::check_version(unsigned required_glsl_version,
       = glsl_compute_version_string(ctx, true, required_glsl_es_version);
    const char *requirement_string = "";
    if (required_glsl_version && required_glsl_es_version) {
-      requirement_string = ralloc_asprintf(ctx, " (%s or %s required)",
+      requirement_string = ralloc_asprintf(this, " (%s or %s required)",
                                            glsl_version_string,
                                            glsl_es_version_string);
    } else if (required_glsl_version) {
-      requirement_string = ralloc_asprintf(ctx, " (%s required)",
+      requirement_string = ralloc_asprintf(this, " (%s required)",
                                            glsl_version_string);
    } else if (required_glsl_es_version) {
-      requirement_string = ralloc_asprintf(ctx, " (%s required)",
+      requirement_string = ralloc_asprintf(this, " (%s required)",
                                            glsl_es_version_string);
    }
    _mesa_glsl_error(locp, this, "%s in %s%s.",
