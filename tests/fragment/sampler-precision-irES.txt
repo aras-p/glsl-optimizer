@@ -1,9 +1,9 @@
 varying highp vec4 varUV;
-uniform samplerCube cubehigh;
-uniform samplerCube cubemed;
+uniform highp samplerCube cubehigh;
+uniform mediump samplerCube cubemed;
 uniform samplerCube cubelow;
-uniform sampler2D texhigh;
-uniform sampler2D texmed;
+uniform highp sampler2D texhigh;
+uniform mediump sampler2D texmed;
 uniform sampler2D texlow;
 mediump vec4 xlat_main (
   in highp vec4 uv_1

@@ -219,9 +219,23 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 {
 	if (!this->use_precision)
 		return;
-	if (type && !type->is_float() && (!type->is_array() || !type->element_type()->is_float()))
+	if (type &&
+		!type->is_float() &&
+		!type->is_sampler() &&
+		(!type->is_array() || !type->element_type()->is_float())
+	)
+	{
 		return;
+	}
 	glsl_precision prec = precision_from_ir(ir);
+	
+	// skip precision for samplers that end up being lowp (default anyway) or undefined
+	if (type && type->is_sampler())
+	{
+		if (prec == glsl_precision_low || prec == glsl_precision_undefined)
+			return;
+	}
+	
 	if (prec == glsl_precision_high || prec == glsl_precision_undefined)
 	{
 		if (ir->ir_type == ir_type_function_signature)
