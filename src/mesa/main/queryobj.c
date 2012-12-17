@@ -50,7 +50,12 @@ _mesa_new_query_object(struct gl_context *ctx, GLuint id)
       q->Id = id;
       q->Result = 0;
       q->Active = GL_FALSE;
-      q->Ready = GL_TRUE;   /* correct, see spec */
+
+      /* This is to satisfy the language of the specification: "In the initial
+       * state of a query object, the result is available" (OpenGL 3.1 §
+       * 2.13).
+       */
+      q->Ready = GL_TRUE;
    }
    return q;
 }
