@@ -571,6 +571,8 @@ static void brw_emit_vertices(struct brw_context *brw)
 
    brw_emit_query_begin(brw);
 
+   nr_elements = brw->vb.nr_enabled + brw->vs.prog_data->uses_vertexid;
+
    /* If the VS doesn't read any inputs (calculating vertex position from
     * a state variable for some reason, for example), emit a single pad
     * VERTEX_ELEMENT struct and bail.
@@ -578,7 +580,7 @@ static void brw_emit_vertices(struct brw_context *brw)
     * The stale VB state stays in place, but they don't do anything unless
     * a VE loads from them.
     */
-   if (brw->vb.nr_enabled == 0) {
+   if (nr_elements == 0) {
       BEGIN_BATCH(3);
       OUT_BATCH((_3DSTATE_VERTEX_ELEMENTS << 16) | 1);
       if (intel->gen >= 6) {
@@ -641,8 +643,6 @@ static void brw_emit_vertices(struct brw_context *brw)
       }
       ADVANCE_BATCH();
    }
-
-   nr_elements = brw->vb.nr_enabled + brw->vs.prog_data->uses_vertexid;
 
    /* The hardware allows one more VERTEX_ELEMENTS than VERTEX_BUFFERS, presumably
     * for VertexID/InstanceID.
