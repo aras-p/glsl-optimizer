@@ -12,6 +12,7 @@
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/macros.h"
+#include "main/version.h"
 #include "main/vtxfmt.h"
 #include "drivers/common/driverfuncs.h"
 #include "drivers/common/meta.h"
