@@ -150,6 +150,7 @@ lp_build_fetch_rgba_aos_array(struct gallivm_state *gallivm,
    if (pure_integer) {
       assert(dst_type.floating);
       tmp_type.floating = 0;
+      tmp_type.sign = src_type.sign;
    }
 
    /* Convert to correct format */
