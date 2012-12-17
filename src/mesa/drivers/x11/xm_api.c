@@ -64,6 +64,7 @@
 
 #include "glxheader.h"
 #include "xmesaP.h"
+#include "main/api_exec.h"
 #include "main/context.h"
 #include "main/extensions.h"
 #include "main/framebuffer.h"
@@ -71,6 +72,7 @@
 #include "main/macros.h"
 #include "main/renderbuffer.h"
 #include "main/teximage.h"
+#include "main/version.h"
 #include "main/vtxfmt.h"
 #include "glapi/glthread.h"
 #include "swrast/swrast.h"
