@@ -46,6 +46,7 @@ LIBGLSL_FILES = \
 	$(GLSL_SRCDIR)/link_functions.cpp \
 	$(GLSL_SRCDIR)/link_uniforms.cpp \
 	$(GLSL_SRCDIR)/link_uniform_initializers.cpp \
+	$(GLSL_SRCDIR)/link_varyings.cpp \
 	$(GLSL_SRCDIR)/loop_analysis.cpp \
 	$(GLSL_SRCDIR)/loop_controls.cpp \
 	$(GLSL_SRCDIR)/loop_unroll.cpp \

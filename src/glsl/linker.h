@@ -91,4 +91,13 @@ private:
    void recursion(const glsl_type *t, char **name, size_t name_length);
 };
 
+void
+linker_error(gl_shader_program *prog, const char *fmt, ...);
+
+void
+linker_warning(gl_shader_program *prog, const char *fmt, ...);
+
+unsigned
+count_attribute_slots(const glsl_type *t);
+
 #endif /* GLSL_LINKER_H */
