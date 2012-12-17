@@ -789,13 +789,13 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
          swrast = SWRAST_CONTEXT( ctx );
          swrast->choose_line = osmesa_choose_line;
          swrast->choose_triangle = osmesa_choose_triangle;
+
+         _mesa_compute_version(ctx);
+
+         /* Exec table initialization requires the version to be computed */
+         _mesa_initialize_exec_table(ctx);
+         _mesa_initialize_vbo_vtxfmt(ctx);
       }
-
-      _mesa_compute_version(ctx);
-
-      /* Exec table initialization requires the version to be computed */
-      _mesa_initialize_exec_table(ctx);
-      _mesa_initialize_vbo_vtxfmt(ctx);
    }
    return osmesa;
 }

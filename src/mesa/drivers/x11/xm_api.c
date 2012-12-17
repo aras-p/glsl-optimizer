@@ -959,11 +959,11 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    _mesa_meta_init(mesaCtx);
 
-   _mesa_compute_version(ctx);
+   _mesa_compute_version(mesaCtx);
 
     /* Exec table initialization requires the version to be computed */
-   _mesa_initialize_exec_table(ctx);
-   _mesa_initialize_vbo_vtxfmt(ctx);
+   _mesa_initialize_exec_table(mesaCtx);
+   _mesa_initialize_vbo_vtxfmt(mesaCtx);
 
    return c;
 }
