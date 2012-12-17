@@ -76,8 +76,6 @@ extern "C" {
 #include "main/shaderobj.h"
 }
 
-#define ALIGN(value, alignment)  (((value) + alignment - 1) & ~(alignment - 1))
-
 /**
  * Visitor that determines whether or not a variable is ever written.
  */

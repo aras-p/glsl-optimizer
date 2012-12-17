@@ -350,19 +350,6 @@ extern char *__progname;
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 /**
- * Align a value up to an alignment value
- *
- * If \c value is not already aligned to the requested alignment value, it
- * will be rounded up.
- *
- * \param value  Value to be rounded
- * \param alignment  Alignment value to be used.  This must be a power of two.
- *
- * \sa ROUND_DOWN_TO()
- */
-#define ALIGN(value, alignment)  (((value) + alignment - 1) & ~(alignment - 1))
-
-/**
  * Align a value down to an alignment value
  *
  * If \c value is not already aligned to the requested alignment value, it

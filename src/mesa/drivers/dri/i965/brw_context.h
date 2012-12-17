@@ -36,6 +36,7 @@
 #include "intel_context.h"
 #include "brw_structs.h"
 #include "main/imports.h"
+#include "main/macros.h"
 
 #ifdef __cplusplus
 extern "C" {

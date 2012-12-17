@@ -34,10 +34,9 @@
 #include "imports.h"
 #include "context.h"
 #include "extensions.h"
+#include "macros.h"
 #include "mfeatures.h"
 #include "mtypes.h"
-
-#define ALIGN(value, alignment)  (((value) + alignment - 1) & ~(alignment - 1))
 
 enum {
    DISABLE = 0,
