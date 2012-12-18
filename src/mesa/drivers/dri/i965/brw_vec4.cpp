@@ -218,6 +218,13 @@ vec4_instruction::is_math()
 	   opcode == SHADER_OPCODE_INT_REMAINDER ||
 	   opcode == SHADER_OPCODE_POW);
 }
+
+bool
+vec4_instruction::is_send_from_grf()
+{
+   return false;
+}
+
 /**
  * Returns how many MRFs an opcode will write over.
  *
@@ -878,27 +885,46 @@ vec4_visitor::opt_register_coalesce()
  *
  * We initially create large virtual GRFs for temporary structures, arrays,
  * and matrices, so that the dereference visitor functions can add reg_offsets
- * to work their way down to the actual member being accessed.
+ * to work their way down to the actual member being accessed.  But when it
+ * comes to optimization, we'd like to treat each register as individual
+ * storage if possible.
  *
- * Unlike in the FS visitor, though, we have no SEND messages that return more
- * than 1 register.  We also don't do any array access in register space,
- * which would have required contiguous physical registers.  Thus, all those
- * large virtual GRFs can be split up into independent single-register virtual
- * GRFs, making allocation and optimization easier.
+ * So far, the only thing that might prevent splitting is a send message from
+ * a GRF on IVB.
  */
 void
 vec4_visitor::split_virtual_grfs()
 {
    int num_vars = this->virtual_grf_count;
    int new_virtual_grf[num_vars];
+   bool split_grf[num_vars];
 
    memset(new_virtual_grf, 0, sizeof(new_virtual_grf));
+
+   /* Try to split anything > 0 sized. */
+   for (int i = 0; i < num_vars; i++) {
+      split_grf[i] = this->virtual_grf_sizes[i] != 1;
+   }
+
+   /* Check that the instructions are compatible with the registers we're trying
+    * to split.
+    */
+   foreach_list(node, &this->instructions) {
+      vec4_instruction *inst = (vec4_instruction *)node;
+
+      /* If there's a SEND message loading from a GRF on gen7+, it needs to be
+       * contiguous.  Assume that the GRF for the SEND is always in src[0].
+       */
+      if (inst->is_send_from_grf()) {
+         split_grf[inst->src[0].reg] = false;
+      }
+   }
 
    /* Allocate new space for split regs.  Note that the virtual
     * numbers will be contiguous.
     */
    for (int i = 0; i < num_vars; i++) {
-      if (this->virtual_grf_sizes[i] == 1)
+      if (!split_grf[i])
          continue;
 
       new_virtual_grf[i] = virtual_grf_alloc(1);
@@ -913,21 +939,19 @@ vec4_visitor::split_virtual_grfs()
    foreach_list(node, &this->instructions) {
       vec4_instruction *inst = (vec4_instruction *)node;
 
-      if (inst->dst.file == GRF &&
-	  new_virtual_grf[inst->dst.reg] &&
-	  inst->dst.reg_offset != 0) {
-	 inst->dst.reg = (new_virtual_grf[inst->dst.reg] +
-			  inst->dst.reg_offset - 1);
-	 inst->dst.reg_offset = 0;
+      if (inst->dst.file == GRF && split_grf[inst->dst.reg] &&
+          inst->dst.reg_offset != 0) {
+         inst->dst.reg = (new_virtual_grf[inst->dst.reg] +
+                          inst->dst.reg_offset - 1);
+         inst->dst.reg_offset = 0;
       }
       for (int i = 0; i < 3; i++) {
-	 if (inst->src[i].file == GRF &&
-	     new_virtual_grf[inst->src[i].reg] &&
-	     inst->src[i].reg_offset != 0) {
-	    inst->src[i].reg = (new_virtual_grf[inst->src[i].reg] +
-				inst->src[i].reg_offset - 1);
-	    inst->src[i].reg_offset = 0;
-	 }
+         if (inst->src[i].file == GRF && split_grf[inst->src[i].reg] &&
+             inst->src[i].reg_offset != 0) {
+            inst->src[i].reg = (new_virtual_grf[inst->src[i].reg] +
+                                inst->src[i].reg_offset - 1);
+            inst->src[i].reg_offset = 0;
+         }
       }
    }
    this->live_intervals_valid = false;
