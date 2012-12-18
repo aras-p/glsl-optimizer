@@ -318,17 +318,29 @@ _mesa_DrawBuffers(GLsizei n, const GLenum *buffers)
    supportedMask = supported_buffer_bitmask(ctx, ctx->DrawBuffer);
    usedBufferMask = 0x0;
 
+   /* From the ES 3.0 specification, page 180:
+    * "If the GL is bound to the default framebuffer, then n must be 1
+    *  and the constant must be BACK or NONE."
+    */
+   if (_mesa_is_gles3(ctx) && _mesa_is_winsys_fbo(ctx->DrawBuffer) &&
+       (n != 1 || (buffers[0] != GL_NONE && buffers[0] != GL_BACK))) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffers(buffer)");
+      return;
+   }
+
    /* complicated error checking... */
    for (output = 0; output < n; output++) {
       if (buffers[output] == GL_NONE) {
          destMask[output] = 0x0;
       }
       else {
-         /* From the OpenGL 3.0 specification, page 258:
-          * "If the GL is bound to a framebuffer object and DrawBuffers is
-          *  supplied with [...] COLOR_ATTACHMENTm where m is greater than or
-          *  equal to the value of MAX_COLOR_ATTACHMENTS, then the error
-          *  INVALID_OPERATION results."
+         /* Page 259 (page 275 of the PDF) in section 4.2.1 of the OpenGL 3.0
+          * spec (20080923) says:
+          *
+          *     "If the GL is bound to a framebuffer object and DrawBuffers is
+          *     supplied with [...] COLOR_ATTACHMENTm where m is greater than
+          *     or equal to the value of MAX_COLOR_ATTACHMENTS, then the error
+          *     INVALID_OPERATION results."
           */
          if (_mesa_is_user_fbo(ctx->DrawBuffer) && buffers[output] >=
              GL_COLOR_ATTACHMENT0 + ctx->Const.MaxDrawBuffers) {
