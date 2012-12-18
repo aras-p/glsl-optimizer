@@ -1915,7 +1915,8 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 				 ir_variable *var,
 				 struct _mesa_glsl_parse_state *state,
 				 YYLTYPE *loc,
-				 bool ubo_qualifiers_valid)
+				 bool ubo_qualifiers_valid,
+                                 bool is_parameter)
 {
    if (qual->flags.q.invariant) {
       if (var->used) {
@@ -2626,7 +2627,7 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
       apply_type_qualifier_to_variable(& this->type->qualifier, var, state,
-				       & loc, this->ubo_qualifiers_valid);
+				       & loc, this->ubo_qualifiers_valid, false);
 
       if (this->type->qualifier.flags.q.invariant) {
 	 if ((state->target == vertex_shader) && !(var->mode == ir_var_out ||
@@ -3065,7 +3066,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * for function parameters the default mode is 'in'.
     */
    apply_type_qualifier_to_variable(& this->type->qualifier, var, state, & loc,
-				    false);
+				    false, true);
 
    /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
     *
