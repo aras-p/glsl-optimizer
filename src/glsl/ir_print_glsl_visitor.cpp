@@ -113,7 +113,8 @@ public:
 	virtual void visit(ir_if *);
 	virtual void visit(ir_loop *);
 	virtual void visit(ir_loop_jump *);
-
+	virtual void visit(ir_precision_statement *);
+	
 	int indentation;
 	char* buffer;
 	global_print_tracker* globals;
@@ -1089,4 +1090,10 @@ void
 ir_print_glsl_visitor::visit(ir_loop_jump *ir)
 {
    ralloc_asprintf_append (&buffer, "%s", ir->is_break() ? "break" : "continue");
+}
+
+void
+ir_print_glsl_visitor::visit(ir_precision_statement *ir)
+{
+	ralloc_asprintf_append (&buffer, "%s", ir->precision_statement);
 }

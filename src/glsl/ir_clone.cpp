@@ -388,6 +388,14 @@ ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
 }
 
 
+ir_precision_statement *
+ir_precision_statement::clone(void *mem_ctx, struct hash_table *ht) const
+{
+   return new(mem_ctx) ir_precision_statement(this->precision_statement);
+}
+
+
+
 class fixup_ir_call_visitor : public ir_hierarchical_visitor {
 public:
    fixup_ir_call_visitor(struct hash_table *ht)
