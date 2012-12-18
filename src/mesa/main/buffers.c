@@ -94,7 +94,7 @@ supported_buffer_bitmask(const struct gl_context *ctx,
  * GL_FRONT_AND_BACK), return the corresponding bitmask of BUFFER_BIT_* flags.
  */
 static GLbitfield
-draw_buffer_enum_to_bitmask(GLenum buffer)
+draw_buffer_enum_to_bitmask(const struct gl_context *ctx, GLenum buffer)
 {
    switch (buffer) {
       case GL_NONE:
@@ -102,6 +102,21 @@ draw_buffer_enum_to_bitmask(GLenum buffer)
       case GL_FRONT:
          return BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT;
       case GL_BACK:
+         if (_mesa_is_gles3(ctx)) {
+            /* Page 181 (page 192 of the PDF) in section 4.2.1 of the OpenGL
+             * ES 3.0.1 specification says:
+             *
+             *     "When draw buffer zero is BACK, color values are written
+             *     into the sole buffer for single-buffered contexts, or into
+             *     the back buffer for double-buffered contexts."
+             *
+             * Since there is no stereo rendering in ES 3.0, only return the
+             * LEFT bits.  This also satisfies the "n must be 1" requirement.
+             */
+            if (ctx->DrawBuffer->Visual.doubleBufferMode)
+               return BUFFER_BIT_BACK_LEFT;
+            return BUFFER_BIT_FRONT_LEFT;
+         }
          return BUFFER_BIT_BACK_LEFT | BUFFER_BIT_BACK_RIGHT;
       case GL_RIGHT:
          return BUFFER_BIT_FRONT_RIGHT | BUFFER_BIT_BACK_RIGHT;
@@ -241,7 +256,7 @@ _mesa_DrawBuffer(GLenum buffer)
    else {
       const GLbitfield supportedMask
          = supported_buffer_bitmask(ctx, ctx->DrawBuffer);
-      destMask = draw_buffer_enum_to_bitmask(buffer);
+      destMask = draw_buffer_enum_to_bitmask(ctx, buffer);
       if (destMask == BAD_MASK) {
          /* totally bogus buffer */
          _mesa_error(ctx, GL_INVALID_ENUM,
@@ -321,7 +336,7 @@ _mesa_DrawBuffers(GLsizei n, const GLenum *buffers)
             return;
          }
 
-         destMask[output] = draw_buffer_enum_to_bitmask(buffers[output]);
+         destMask[output] = draw_buffer_enum_to_bitmask(ctx, buffers[output]);
 
          /* From the OpenGL 3.0 specification, page 258:
           * "Each buffer listed in bufs must be one of the values from tables
@@ -451,7 +466,7 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
       const GLbitfield supportedMask = supported_buffer_bitmask(ctx, fb);
       GLuint output;
       for (output = 0; output < n; output++) {
-         mask[output] = draw_buffer_enum_to_bitmask(buffers[output]);
+         mask[output] = draw_buffer_enum_to_bitmask(ctx, buffers[output]);
          ASSERT(mask[output] != BAD_MASK);
          mask[output] &= supportedMask;
       }
