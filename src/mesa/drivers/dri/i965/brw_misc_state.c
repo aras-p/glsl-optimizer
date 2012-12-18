@@ -370,6 +370,10 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
       }
 
       if (rebase_depth) {
+         perf_debug("HW workaround: blitting depth level %d to a temporary "
+                    "to fix alignment (depth tile offset %d,%d)\n",
+                    depth_irb->mt_level, tile_x, tile_y);
+
          intel_renderbuffer_move_to_temp(intel, depth_irb);
          /* In the case of stencil_irb being the same packed depth/stencil
           * texture but not the same rb, make it point at our rebased mt, too.
@@ -427,6 +431,10 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
    }
 
    if (rebase_stencil) {
+      perf_debug("HW workaround: blitting stencil level %d to a temporary "
+                 "to fix alignment (stencil tile offset %d,%d)\n",
+                 stencil_irb->mt_level, stencil_tile_x, stencil_tile_y);
+
       intel_renderbuffer_move_to_temp(intel, stencil_irb);
       stencil_mt = get_stencil_miptree(stencil_irb);
 
@@ -443,6 +451,14 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
       } else if (depth_irb && !rebase_depth) {
          if (tile_x != stencil_tile_x ||
              tile_y != stencil_tile_y) {
+            perf_debug("HW workaround: blitting depth level %d to a temporary "
+                       "to match stencil level %d alignment (depth tile offset "
+                       "%d,%d, stencil offset %d,%d)\n",
+                       depth_irb->mt_level,
+                       stencil_irb->mt_level,
+                       tile_x, tile_y,
+                       stencil_tile_x, stencil_tile_y);
+
             intel_renderbuffer_move_to_temp(intel, depth_irb);
 
             tile_x = depth_irb->draw_x & tile_mask_x;
