@@ -174,7 +174,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
       ir_instruction *ir = (ir_instruction *)iter.get();
 	  if (ir->ir_type == ir_type_variable) {
 		ir_variable *var = static_cast<ir_variable*>(ir);
-		if (strstr(var->name, "gl_") == var->name)
+		if ((strstr(var->name, "gl_") == var->name)
+			  && !var->invariant)
 			continue;
 	  }
 
@@ -303,6 +304,13 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
      }
    }
 
+   // keep invariant declaration for builtin variables
+   if (strstr(ir->name, "gl_") == ir->name) {
+      ralloc_asprintf_append (&buffer, "%s", inv);
+      print_var_name (ir);
+      return;
+   }
+	
    ralloc_asprintf_append (&buffer, "%s%s%s%s",
 	  cent, inv, interp[ir->interpolation], mode[decormode][ir->mode]);
    print_precision (ir, ir->type);
