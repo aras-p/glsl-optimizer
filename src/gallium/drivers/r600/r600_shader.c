@@ -465,6 +465,8 @@ static unsigned r600_tex_from_byte_stream(struct r600_shader_ctx *ctx,
 	tex.src_sel_z = bytes[bytes_read++];
 	tex.src_sel_w = bytes[bytes_read++];
 
+	tex.inst_mod = 0;
+
 	r600_bytecode_add_tex(ctx->bc, &tex);
 
 	return bytes_read;
