@@ -607,6 +607,8 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    gl_format mt_format = mt->format;
    if (mt->format == MESA_FORMAT_X8_Z24 && mt->stencil_mt)
       mt_format = MESA_FORMAT_S8_Z24;
+   if (mt->format == MESA_FORMAT_Z32_FLOAT && mt->stencil_mt)
+      mt_format = MESA_FORMAT_Z32_FLOAT_X24S8;
    if (mt->etc_format != MESA_FORMAT_NONE)
       mt_format = mt->etc_format;
 
