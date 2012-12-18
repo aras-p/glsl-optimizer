@@ -421,9 +421,12 @@ LLVMModuleRef r600_tgsi_llvm(
 	bld_base->op_actions[TGSI_OPCODE_DDX].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_DDY].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_TEX].emit = llvm_emit_tex;
+	bld_base->op_actions[TGSI_OPCODE_TEX2].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_TXB].emit = llvm_emit_tex;
+	bld_base->op_actions[TGSI_OPCODE_TXB2].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_TXD].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_TXL].emit = llvm_emit_tex;
+	bld_base->op_actions[TGSI_OPCODE_TXL2].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_TXF].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_TXQ].emit = llvm_emit_tex;
 	bld_base->op_actions[TGSI_OPCODE_TXP].emit = llvm_emit_tex;
