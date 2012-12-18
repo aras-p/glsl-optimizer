@@ -604,12 +604,14 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    if (target_to_target(image->TexObject->Target) != mt->target)
       return false;
 
-   if (image->TexFormat != mt->format &&
-       !(image->TexFormat == MESA_FORMAT_S8_Z24 &&
-	 mt->format == MESA_FORMAT_X8_Z24 &&
-	 mt->stencil_mt)) {
+   gl_format mt_format = mt->format;
+   if (mt->format == MESA_FORMAT_X8_Z24 && mt->stencil_mt)
+      mt_format = MESA_FORMAT_S8_Z24;
+   if (mt->etc_format != MESA_FORMAT_NONE)
+      mt_format = mt->etc_format;
+
+   if (image->TexFormat != mt_format)
       return false;
-   }
 
    intel_miptree_get_dimensions_for_image(image, &width, &height, &depth);
 
