@@ -356,20 +356,20 @@ vl_video_buffer_surfaces(struct pipe_video_buffer *buffer)
    pipe = buf->base.context;
 
    depth = buffer->interlaced ? 2 : 1;
-   for (i = 0, surf = 0; i < depth; ++i ) {
-      for (j = 0; j < VL_NUM_COMPONENTS; ++j, ++surf) {
+   for (i = 0, surf = 0; i < VL_NUM_COMPONENTS; ++i) {
+      for (j = 0; j < depth; ++j, ++surf) {
          assert(surf < (VL_NUM_COMPONENTS * 2));
 
-         if (!buf->resources[j]) {
+         if (!buf->resources[i]) {
             pipe_surface_reference(&buf->surfaces[surf], NULL);
             continue;
          }
 
          if (!buf->surfaces[surf]) {
             memset(&surf_templ, 0, sizeof(surf_templ));
-            surf_templ.format = vl_video_buffer_surface_format(buf->resources[j]->format);
-            surf_templ.u.tex.first_layer = surf_templ.u.tex.last_layer = i;
-            buf->surfaces[surf] = pipe->create_surface(pipe, buf->resources[j], &surf_templ);
+            surf_templ.format = vl_video_buffer_surface_format(buf->resources[i]->format);
+            surf_templ.u.tex.first_layer = surf_templ.u.tex.last_layer = j;
+            buf->surfaces[surf] = pipe->create_surface(pipe, buf->resources[i], &surf_templ);
             if (!buf->surfaces[surf])
                goto error;
          }
