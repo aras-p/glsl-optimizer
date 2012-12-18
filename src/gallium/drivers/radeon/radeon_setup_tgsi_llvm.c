@@ -608,7 +608,8 @@ static void txp_fetch_args(
 
 	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
 	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) &&
-	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
+	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ &&
+	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ_LZ) {
 		radeon_llvm_emit_prepare_cube_coords(bld_base, &emit_data->args[0],
                                                      inst->Texture.Texture);
 	}
@@ -641,7 +642,8 @@ static void tex_fetch_args(
 
 	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
 	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) &&
-	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
+	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ &&
+	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ_LZ) {
 		radeon_llvm_emit_prepare_cube_coords(bld_base, &emit_data->args[0],
                                                      inst->Texture.Texture);
 	}
