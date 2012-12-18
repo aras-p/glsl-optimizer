@@ -159,9 +159,10 @@ try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
    return false;
 }
 
-static bool
-try_copy_propagation(struct intel_context *intel,
-		     vec4_instruction *inst, int arg, src_reg *values[4])
+bool
+vec4_visitor::try_copy_propagation(struct intel_context *intel,
+                                   vec4_instruction *inst, int arg,
+                                   src_reg *values[4])
 {
    /* For constant propagation, we only handle the same constant
     * across all 4 channels.  Some day, we should handle the 8-bit
@@ -204,11 +205,14 @@ try_copy_propagation(struct intel_context *intel,
    if (inst->src[arg].negate)
       value.negate = !value.negate;
 
-   /* FINISHME: We can't copy-propagate things that aren't normal
-    * vec8s into gen6 math instructions, because of the weird src
-    * handling for those instructions.  Just ignore them for now.
+   bool has_source_modifiers = (value.negate || value.abs ||
+                                value.swizzle != BRW_SWIZZLE_XYZW ||
+                                value.file == UNIFORM);
+
+   /* gen6 math and gen7+ SENDs from GRFs ignore source modifiers on
+    * instructions.
     */
-   if (intel->gen >= 6 && inst->is_math())
+   if (has_source_modifiers && !can_do_source_mods(inst))
       return false;
 
    /* We can't copy-propagate a UD negation into a condmod

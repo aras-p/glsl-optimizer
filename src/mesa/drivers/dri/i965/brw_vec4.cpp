@@ -225,6 +225,18 @@ vec4_instruction::is_send_from_grf()
    return false;
 }
 
+bool
+vec4_visitor::can_do_source_mods(vec4_instruction *inst)
+{
+   if (intel->gen == 6 && inst->is_math())
+      return false;
+
+   if (inst->is_send_from_grf())
+      return false;
+
+   return true;
+}
+
 /**
  * Returns how many MRFs an opcode will write over.
  *
