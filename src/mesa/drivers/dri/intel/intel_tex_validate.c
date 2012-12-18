@@ -113,6 +113,12 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
          if (intelObj->mt != intelImage->mt) {
             intel_miptree_copy_teximage(intel, intelImage, intelObj->mt);
          }
+
+         /* After we're done, we'd better agree that our layout is
+          * appropriate, or we'll end up hitting this function again on the
+          * next draw
+          */
+         assert(intel_miptree_match_image(intelObj->mt, &intelImage->base.Base));
       }
    }
 
