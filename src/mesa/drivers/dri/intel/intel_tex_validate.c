@@ -79,6 +79,11 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
       intel_miptree_get_dimensions_for_image(&firstImage->base.Base,
 					     &width, &height, &depth);
 
+      perf_debug("Creating new %s %dx%dx%d %d..%d miptree to handle finalized "
+                 "texture miptree.\n",
+                 _mesa_get_format_name(firstImage->base.Base.TexFormat),
+                 width, height, depth, tObj->BaseLevel, intelObj->_MaxLevel);
+
       intelObj->mt = intel_miptree_create(intel,
                                           intelObj->base.Target,
 					  firstImage->base.Base.TexFormat,
