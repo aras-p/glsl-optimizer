@@ -674,8 +674,7 @@ vec4_generator::generate_vs_instruction(vec4_instruction *instruction,
       break;
 
    case SHADER_OPCODE_SHADER_TIME_ADD:
-      brw_shader_time_add(p, brw_message_reg(inst->base_mrf),
-                          SURF_INDEX_VS_SHADER_TIME);
+      brw_shader_time_add(p, src[0], SURF_INDEX_VS_SHADER_TIME);
       break;
 
    default:

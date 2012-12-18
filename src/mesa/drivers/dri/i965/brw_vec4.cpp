@@ -222,7 +222,7 @@ vec4_instruction::is_math()
 bool
 vec4_instruction::is_send_from_grf()
 {
-   return false;
+   return opcode == SHADER_OPCODE_SHADER_TIME_ADD;
 }
 
 bool
@@ -1264,20 +1264,20 @@ vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
    int shader_time_index = brw_get_shader_time_index(brw, prog, &vp->Base,
                                                      type);
 
-   int base_mrf = 6;
+   dst_reg dst =
+      dst_reg(this, glsl_type::get_array_instance(glsl_type::vec4_type, 2));
 
-   dst_reg offset_mrf = dst_reg(MRF, base_mrf);
-   offset_mrf.type = BRW_REGISTER_TYPE_UD;
-   emit(MOV(offset_mrf, src_reg(shader_time_index * SHADER_TIME_STRIDE)));
+   dst_reg offset = dst;
+   dst_reg time = dst;
+   time.reg_offset++;
 
-   dst_reg time_mrf = dst_reg(MRF, base_mrf + 1);
-   time_mrf.type = BRW_REGISTER_TYPE_UD;
-   emit(MOV(time_mrf, src_reg(value)));
+   offset.type = BRW_REGISTER_TYPE_UD;
+   emit(MOV(offset, src_reg(shader_time_index * SHADER_TIME_STRIDE)));
 
-   vec4_instruction *inst;
-   inst = emit(SHADER_OPCODE_SHADER_TIME_ADD);
-   inst->base_mrf = base_mrf;
-   inst->mlen = 2;
+   time.type = BRW_REGISTER_TYPE_UD;
+   emit(MOV(time, src_reg(value)));
+
+   emit(SHADER_OPCODE_SHADER_TIME_ADD, dst_reg(), src_reg(dst));
 }
 
 bool
