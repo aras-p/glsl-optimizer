@@ -1910,6 +1910,29 @@ ast_type_specifier::glsl_type(const char **name,
 }
 
 
+/**
+ * Determine whether a toplevel variable declaration declares a varying.  This
+ * function operates by examining the variable's mode and the shader target,
+ * so it correctly identifies linkage variables regardless of whether they are
+ * declared using the deprecated "varying" syntax or the new "in/out" syntax.
+ *
+ * Passing a non-toplevel variable declaration (e.g. a function parameter) to
+ * this function will produce undefined results.
+ */
+static bool
+is_varying_var(ir_variable *var, _mesa_glsl_parser_targets target)
+{
+   switch (target) {
+   case vertex_shader:
+      return var->mode == ir_var_out;
+   case fragment_shader:
+      return var->mode == ir_var_in;
+   default:
+      return var->mode == ir_var_out || var->mode == ir_var_in;
+   }
+}
+
+
 static void
 apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 				 ir_variable *var,
@@ -1945,27 +1968,6 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 		       _mesa_glsl_shader_target_name(state->target));
    }
 
-   /* From page 25 (page 31 of the PDF) of the GLSL 1.10 spec:
-    *
-    *     "The varying qualifier can be used only with the data types
-    *     float, vec2, vec3, vec4, mat2, mat3, and mat4, or arrays of
-    *     these."
-    */
-   if (qual->flags.q.varying) {
-      const glsl_type *non_array_type;
-
-      if (var->type && var->type->is_array())
-	 non_array_type = var->type->fields.array;
-      else
-	 non_array_type = var->type;
-
-      if (non_array_type && non_array_type->base_type != GLSL_TYPE_FLOAT) {
-	 var->type = glsl_type::error_type;
-	 _mesa_glsl_error(loc, state,
-			  "varying variables must be of base type float");
-      }
-   }
-
    /* If there is no qualifier that changes the mode of the variable, leave
     * the setting alone.
     */
@@ -1979,6 +1981,54 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       var->mode = ir_var_out;
    else if (qual->flags.q.uniform)
       var->mode = ir_var_uniform;
+
+   if (!is_parameter && is_varying_var(var, state->target)) {
+      /* This variable is being used to link data between shader stages (in
+       * pre-glsl-1.30 parlance, it's a "varying").  Check that it has a type
+       * that is allowed for such purposes.
+       *
+       * From page 25 (page 31 of the PDF) of the GLSL 1.10 spec:
+       *
+       *     "The varying qualifier can be used only with the data types
+       *     float, vec2, vec3, vec4, mat2, mat3, and mat4, or arrays of
+       *     these."
+       *
+       * This was relaxed in GLSL version 1.30 and GLSL ES version 3.00.  From
+       * page 31 (page 37 of the PDF) of the GLSL 1.30 spec:
+       *
+       *     "Fragment inputs can only be signed and unsigned integers and
+       *     integer vectors, float, floating-point vectors, matrices, or
+       *     arrays of these. Structures cannot be input.
+       *
+       * Similar text exists in the section on vertex shader outputs.
+       *
+       * Similar text exists in the GLSL ES 3.00 spec, except that the GLSL ES
+       * 3.00 spec claims to allow structs as well.  However, this is likely
+       * an error, since section 11 of the spec ("Counting of Inputs and
+       * Outputs") enumerates all possible types of interstage linkage
+       * variables, and it does not mention structs.
+       */
+      switch (var->type->get_scalar_type()->base_type) {
+      case GLSL_TYPE_FLOAT:
+         /* Ok in all GLSL versions */
+         break;
+      case GLSL_TYPE_UINT:
+      case GLSL_TYPE_INT:
+         if (state->is_version(130, 300))
+            break;
+         _mesa_glsl_error(loc, state,
+                          "varying variables must be of base type float in %s",
+                          state->get_version_string());
+         break;
+      case GLSL_TYPE_STRUCT:
+         _mesa_glsl_error(loc, state,
+                          "varying variables may not be of type struct");
+         break;
+      default:
+         _mesa_glsl_error(loc, state, "illegal type for a varying variable");
+         break;
+      }
+   }
 
    if (state->all_invariant && (state->current_function == NULL)) {
       switch (state->target) {
