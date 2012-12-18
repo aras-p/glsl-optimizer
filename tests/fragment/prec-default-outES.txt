@@ -1,3 +1,5 @@
+precision lowp int;
+precision highp float;
 uniform int im;
 uniform int il2;
 uniform int il1;
@@ -6,8 +8,6 @@ uniform highp float fh2;
 uniform float fh1;
 void main ()
 {
-  precision lowp int;
-  precision highp float;
   int i_1;
   lowp float f_2;
   highp float tmpvar_3;
