@@ -558,6 +558,8 @@ struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
 {
 	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
 
+        assert(templ->u.tex.first_layer <= u_max_layer(texture, templ->u.tex.level));
+        assert(templ->u.tex.last_layer <= u_max_layer(texture, templ->u.tex.level));
 	assert(templ->u.tex.first_layer == templ->u.tex.last_layer);
 	if (surface == NULL)
 		return NULL;
