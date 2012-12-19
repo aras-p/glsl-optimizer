@@ -777,17 +777,25 @@ varying_matches::store_locations(unsigned producer_base,
 unsigned
 varying_matches::compute_packing_class(ir_variable *var)
 {
-   /* In this initial implementation we conservatively assume that variables
-    * can only be packed if their base type (float/int/uint/bool) matches and
-    * their interpolation and centroid qualifiers match.
+   /* Without help from the back-end, there is no way to pack together
+    * variables with different interpolation types, because
+    * lower_packed_varyings must choose exactly one interpolation type for
+    * each packed varying it creates.
     *
-    * TODO: relax these restrictions when the driver back-end permits.
+    * However, we can safely pack together floats, ints, and uints, because:
+    *
+    * - varyings of base type "int" and "uint" must use the "flat"
+    *   interpolation type, which can only occur in GLSL 1.30 and above.
+    *
+    * - On platforms that support GLSL 1.30 and above, lower_packed_varyings
+    *   can store flat floats as ints without losing any information (using
+    *   the ir_unop_bitcast_* opcodes).
+    *
+    * Therefore, the packing class depends only on the interpolation type.
     */
    unsigned packing_class = var->centroid ? 1 : 0;
    packing_class *= 4;
    packing_class += var->interpolation;
-   packing_class *= GLSL_TYPE_ERROR;
-   packing_class += var->type->get_scalar_type()->base_type;
    return packing_class;
 }
 
