@@ -1468,6 +1468,9 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		}
 	}
 
+	/* Reset the temporary register counter. */
+	ctx.max_driver_temp_used = 0;
+
 	/* Get instructions if we are using the LLVM backend. */
 	if (use_llvm) {
 		r600_bytecode_from_byte_stream(&ctx, inst_bytes, inst_byte_count);
@@ -1477,15 +1480,20 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	noutput = shader->noutput;
 
 	if (ctx.clip_vertex_write) {
+		unsigned clipdist_temp[2];
+
+		clipdist_temp[0] = r600_get_temp(&ctx);
+		clipdist_temp[1] = r600_get_temp(&ctx);
+
 		/* need to convert a clipvertex write into clipdistance writes and not export
 		   the clip vertex anymore */
 
 		memset(&shader->output[noutput], 0, 2*sizeof(struct r600_shader_io));
 		shader->output[noutput].name = TGSI_SEMANTIC_CLIPDIST;
-		shader->output[noutput].gpr = ctx.temp_reg;
+		shader->output[noutput].gpr = clipdist_temp[0];
 		noutput++;
 		shader->output[noutput].name = TGSI_SEMANTIC_CLIPDIST;
-		shader->output[noutput].gpr = ctx.temp_reg+1;
+		shader->output[noutput].gpr = clipdist_temp[1];
 		noutput++;
 
 		/* reset spi_sid for clipvertex output to avoid confusing spi */
@@ -1508,7 +1516,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				alu.src[1].kc_bank = R600_UCP_CONST_BUFFER;
 				alu.src[1].chan = j;
 
-				alu.dst.sel = ctx.temp_reg + oreg;
+				alu.dst.sel = clipdist_temp[oreg];
 				alu.dst.chan = j;
 				alu.dst.write = (j == ochan);
 				if (j == 3)
