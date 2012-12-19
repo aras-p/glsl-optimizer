@@ -255,8 +255,7 @@ void util_blitter_blit(struct blitter_context *blitter,
 void util_blitter_default_dst_texture(struct pipe_surface *dst_templ,
                                       struct pipe_resource *dst,
                                       unsigned dstlevel,
-                                      unsigned dstz,
-                                      const struct pipe_box *srcbox);
+                                      unsigned dstz);
 
 /**
  * Helper function to initialize a view for copy_texture_view.

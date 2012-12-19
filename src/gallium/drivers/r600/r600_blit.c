@@ -569,7 +569,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	src_widthFL = rsrc->surface.level[src_level].npix_x;
 	src_heightFL = rsrc->surface.level[src_level].npix_y;
 
-	util_blitter_default_dst_texture(&dst_templ, dst, dst_level, dstz, src_box);
+	util_blitter_default_dst_texture(&dst_templ, dst, dst_level, dstz);
 	util_blitter_default_src_texture(&src_templ, src, src_level);
 
 	if (util_format_is_compressed(src->format)) {

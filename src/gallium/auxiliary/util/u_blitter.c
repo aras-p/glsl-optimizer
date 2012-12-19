@@ -1056,14 +1056,13 @@ void util_blitter_custom_clear_depth(struct blitter_context *blitter,
 void util_blitter_default_dst_texture(struct pipe_surface *dst_templ,
                                       struct pipe_resource *dst,
                                       unsigned dstlevel,
-                                      unsigned dstz,
-                                      const struct pipe_box *srcbox)
+                                      unsigned dstz)
 {
     memset(dst_templ, 0, sizeof(*dst_templ));
     dst_templ->format = util_format_linear(dst->format);
     dst_templ->u.tex.level = dstlevel;
     dst_templ->u.tex.first_layer = dstz;
-    dst_templ->u.tex.last_layer = dstz + srcbox->depth - 1;
+    dst_templ->u.tex.last_layer = dstz;
 }
 
 void util_blitter_default_src_texture(struct pipe_sampler_view *src_templ,
@@ -1181,7 +1180,7 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
    assert(src->target < PIPE_MAX_TEXTURE_TYPES);
 
    /* Initialize the surface. */
-   util_blitter_default_dst_texture(&dst_templ, dst, dst_level, dstz, srcbox);
+   util_blitter_default_dst_texture(&dst_templ, dst, dst_level, dstz);
    dst_view = pipe->create_surface(pipe, dst, &dst_templ);
 
    /* Initialize the sampler view. */
@@ -1419,7 +1418,7 @@ util_blitter_blit(struct blitter_context *blitter,
 
    /* Initialize the surface. */
    util_blitter_default_dst_texture(&dst_templ, dst, info->dst.level,
-                                    info->dst.box.z, &info->src.box);
+                                    info->dst.box.z);
    dst_templ.format = info->dst.format;
    dst_view = pipe->create_surface(pipe, dst, &dst_templ);
 
