@@ -239,6 +239,7 @@ static bool brw_is_hiz_depth_format(struct intel_context *intel,
    case MESA_FORMAT_Z32_FLOAT_X24S8:
    case MESA_FORMAT_X8_Z24:
    case MESA_FORMAT_S8_Z24:
+   case MESA_FORMAT_Z16:
       return true;
    default:
       return false;
