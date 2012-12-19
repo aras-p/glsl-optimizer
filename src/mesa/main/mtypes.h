@@ -1807,6 +1807,7 @@ struct gl_transform_feedback_object
    GLboolean Paused;  /**< Is transform feedback paused? */
    GLboolean EndedAnytime; /**< Has EndTransformFeedback been called
                                 at least once? */
+   GLboolean EverBound; /**< Has this object been bound? */
 
    /**
     * GLES: if Active is true, remaining number of primitives which can be

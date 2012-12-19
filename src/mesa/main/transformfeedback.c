@@ -80,6 +80,7 @@ reference_transform_feedback_object(struct gl_transform_feedback_object **ptr,
       }
       else {
          obj->RefCount++;
+         obj->EverBound = GL_TRUE;
          *ptr = obj;
       }
    }
@@ -178,6 +179,7 @@ new_transform_feedback(struct gl_context *ctx, GLuint name)
    if (obj) {
       obj->Name = name;
       obj->RefCount = 1;
+      obj->EverBound = GL_FALSE;
    }
    return obj;
 }
@@ -793,14 +795,19 @@ _mesa_GenTransformFeedbacks(GLsizei n, GLuint *names)
 GLboolean GLAPIENTRY
 _mesa_IsTransformFeedback(GLuint name)
 {
+   struct gl_transform_feedback_object *obj;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (name && _mesa_lookup_transform_feedback_object(ctx, name))
-      return GL_TRUE;
-   else
+   if (name == 0)
       return GL_FALSE;
+
+   obj = _mesa_lookup_transform_feedback_object(ctx, name);
+   if (obj == NULL)
+      return GL_FALSE;
+
+   return obj->EverBound;
 }
 
 
