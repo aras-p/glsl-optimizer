@@ -1587,7 +1587,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 
 			memset(&output, 0, sizeof(struct r600_bytecode_output));
 			output.gpr = so_gpr[i];
-			output.elem_size = 0;
+			output.elem_size = so.output[i].num_components;
 			output.array_base = so.output[i].dst_offset - so.output[i].start_component;
 			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_WRITE;
 			output.burst_count = 1;
