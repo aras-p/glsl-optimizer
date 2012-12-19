@@ -37,6 +37,8 @@
 
 #define R600_NUM_ATOMS 37
 
+#define R600_TRACE_CS 0
+
 #define R600_MAX_USER_CONST_BUFFERS 1
 #define R600_MAX_DRIVER_CONST_BUFFERS 2
 #define R600_MAX_CONST_BUFFERS (R600_MAX_USER_CONST_BUFFERS + R600_MAX_DRIVER_CONST_BUFFERS)
@@ -235,6 +237,11 @@ struct r600_screen {
 	 * XXX: Not sure if this is the best place for global_pool.  Also,
 	 * it's not thread safe, so it won't work with multiple contexts. */
 	struct compute_memory_pool *global_pool;
+#if R600_TRACE_CS
+	struct r600_resource		*trace_bo;
+	uint32_t			*trace_ptr;
+	unsigned			cs_count;
+#endif
 };
 
 struct r600_pipe_sampler_view {
@@ -533,10 +540,19 @@ static INLINE void r600_emit_command_buffer(struct radeon_winsys_cs *cs,
 	cs->cdw += cb->num_dw;
 }
 
+#if R600_TRACE_CS
+void r600_trace_emit(struct r600_context *rctx);
+#endif
+
 static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *atom)
 {
 	atom->emit(rctx, atom);
 	atom->dirty = false;
+#if R600_TRACE_CS
+	if (rctx->screen->trace_bo) {
+		r600_trace_emit(rctx);
+	}
+#endif
 }
 
 static INLINE void r600_set_cso_state(struct r600_cso_state *state, void *cso)

@@ -1328,6 +1328,12 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 					(info.count_from_stream_output ? S_0287F0_USE_OPAQUE(1) : 0);
 	}
 
+#if R600_TRACE_CS
+	if (rctx->screen->trace_bo) {
+		r600_trace_emit(rctx);
+	}
+#endif
+
 	/* Set the depth buffer as dirty. */
 	if (rctx->framebuffer.state.zsbuf) {
 		struct pipe_surface *surf = rctx->framebuffer.state.zsbuf;
@@ -1620,3 +1626,23 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->context.set_stream_output_targets = r600_set_so_targets;
 	rctx->context.draw_vbo = r600_draw_vbo;
 }
+
+#if R600_TRACE_CS
+void r600_trace_emit(struct r600_context *rctx)
+{
+	struct r600_screen *rscreen = rctx->screen;
+	struct radeon_winsys_cs *cs = rctx->cs;
+	uint64_t va;
+	uint32_t reloc;
+
+	va = r600_resource_va(&rscreen->screen, (void*)rscreen->trace_bo);
+	reloc = r600_context_bo_reloc(rctx, rscreen->trace_bo, RADEON_USAGE_READWRITE);
+	r600_write_value(cs, PKT3(PKT3_MEM_WRITE, 3, 0));
+	r600_write_value(cs, va & 0xFFFFFFFFUL);
+	r600_write_value(cs, (va >> 32UL) & 0xFFUL);
+	r600_write_value(cs, cs->cdw);
+	r600_write_value(cs, rscreen->cs_count);
+	r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+	r600_write_value(cs, reloc);
+}
+#endif
