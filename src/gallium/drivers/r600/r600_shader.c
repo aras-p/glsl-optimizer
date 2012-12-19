@@ -1530,23 +1530,63 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 
 	/* Add stream outputs. */
 	if (ctx.type == TGSI_PROCESSOR_VERTEX && so.num_outputs) {
-		for (i = 0; i < so.num_outputs; i++) {
-			struct r600_bytecode_output output;
+		unsigned so_gpr[PIPE_MAX_SHADER_OUTPUTS];
 
+		/* Sanity checking. */
+		if (so.num_outputs > PIPE_MAX_SHADER_OUTPUTS) {
+			R600_ERR("Too many stream outputs: %d\n", so.num_outputs);
+			r = -EINVAL;
+			goto out_err;
+		}
+		for (i = 0; i < so.num_outputs; i++) {
 			if (so.output[i].output_buffer >= 4) {
-				R600_ERR("exceeded the max number of stream output buffers, got: %d\n",
+				R600_ERR("Exceeded the max number of stream output buffers, got: %d\n",
 					 so.output[i].output_buffer);
 				r = -EINVAL;
 				goto out_err;
 			}
+		}
+
+		/* Initialize locations where the outputs are stored. */
+		for (i = 0; i < so.num_outputs; i++) {
+			so_gpr[i] = shader->output[so.output[i].register_index].gpr;
+
+			/* Lower outputs with dst_offset < start_component.
+			 *
+			 * We can only output 4D vectors with a write mask, e.g. we can
+			 * only output the W component at offset 3, etc. If we want
+			 * to store Y, Z, or W at buffer offset 0, we need to use MOV
+			 * to move it to X and output X. */
 			if (so.output[i].dst_offset < so.output[i].start_component) {
-			   R600_ERR("stream_output - dst_offset cannot be less than start_component\n");
-			   r = -EINVAL;
-			   goto out_err;
+				unsigned tmp = r600_get_temp(&ctx);
+
+				for (j = 0; j < so.output[i].num_components; j++) {
+					struct r600_bytecode_alu alu;
+					memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+					alu.inst = BC_INST(ctx.bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
+					alu.src[0].sel = so_gpr[i];
+					alu.src[0].chan = so.output[i].start_component + j;
+
+					alu.dst.sel = tmp;
+					alu.dst.chan = j;
+					alu.dst.write = 1;
+					if (j == so.output[i].num_components - 1)
+						alu.last = 1;
+					r = r600_bytecode_add_alu(ctx.bc, &alu);
+					if (r)
+						return r;
+				}
+				so.output[i].start_component = 0;
+				so_gpr[i] = tmp;
 			}
+		}
+
+		/* Write outputs to buffers. */
+		for (i = 0; i < so.num_outputs; i++) {
+			struct r600_bytecode_output output;
 
 			memset(&output, 0, sizeof(struct r600_bytecode_output));
-			output.gpr = shader->output[so.output[i].register_index].gpr;
+			output.gpr = so_gpr[i];
 			output.elem_size = 0;
 			output.array_base = so.output[i].dst_offset - so.output[i].start_component;
 			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_WRITE;
