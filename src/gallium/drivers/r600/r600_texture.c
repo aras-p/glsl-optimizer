@@ -89,8 +89,7 @@ static int r600_init_surface(struct r600_screen *rscreen,
 			     struct radeon_surface *surface,
 			     const struct pipe_resource *ptex,
 			     unsigned array_mode,
-			     bool is_flushed_depth,
-			     bool from_ddx)
+			     bool is_flushed_depth)
 {
 	const struct util_format_description *desc =
 		util_format_description(ptex->format);
@@ -107,10 +106,6 @@ static int r600_init_surface(struct r600_screen *rscreen,
 	surface->blk_d = 1;
 	surface->array_size = 1;
 	surface->last_level = ptex->last_level;
-
-	if (from_ddx) {
-		surface->npix_y = align(surface->npix_y, 8);
-	}
 
 	if (rscreen->chip_class >= EVERGREEN && !is_flushed_depth &&
 	    ptex->format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT) {
@@ -544,8 +539,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	}
 
 	r = r600_init_surface(rscreen, &surface, templ, array_mode,
-			      templ->flags & R600_RESOURCE_FLAG_FLUSHED_DEPTH,
-			      false);
+			      templ->flags & R600_RESOURCE_FLAG_FLUSHED_DEPTH);
 	if (r) {
 		return NULL;
 	}
@@ -633,7 +627,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	else
 		array_mode = V_038000_ARRAY_LINEAR_ALIGNED;
 
-	r = r600_init_surface(rscreen, &surface, templ, array_mode, false, true);
+	r = r600_init_surface(rscreen, &surface, templ, array_mode, false);
 	if (r) {
 		return NULL;
 	}
