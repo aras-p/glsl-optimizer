@@ -544,7 +544,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	struct pipe_surface *dst_view, dst_templ;
 	struct pipe_sampler_view src_templ, *src_view;
 	unsigned dst_width, dst_height, src_width0, src_height0, src_widthFL, src_heightFL;
-	struct pipe_box sbox;
+	struct pipe_box sbox, dstbox;
 	bool copy_all_samples;
 
 	/* Handle buffers first. */
@@ -647,10 +647,12 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 	copy_all_samples = rctx->screen->msaa_texture_support != MSAA_TEXTURE_SAMPLE_ZERO;
 
+        u_box_3d(dstx, dsty, dstz, abs(src_box->width), abs(src_box->height),
+                 abs(src_box->depth), &dstbox);
+
 	/* Copy. */
 	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
-	util_blitter_blit_generic(rctx->blitter, dst_view, dstx, dsty,
-				  abs(src_box->width), abs(src_box->height),
+	util_blitter_blit_generic(rctx->blitter, dst_view, &dstbox,
 				  src_view, src_box, src_width0, src_height0,
 				  PIPE_MASK_RGBAZS, PIPE_TEX_FILTER_NEAREST, NULL,
 				  copy_all_samples);

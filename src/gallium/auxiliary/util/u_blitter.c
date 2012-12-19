@@ -1175,9 +1175,13 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
    struct pipe_context *pipe = ctx->base.pipe;
    struct pipe_surface *dst_view, dst_templ;
    struct pipe_sampler_view src_templ, *src_view;
+   struct pipe_box dstbox;
 
    assert(dst && src);
    assert(src->target < PIPE_MAX_TEXTURE_TYPES);
+
+   u_box_3d(dstx, dsty, dstz, abs(srcbox->width), abs(srcbox->height),
+            abs(srcbox->depth), &dstbox);
 
    /* Initialize the surface. */
    util_blitter_default_dst_texture(&dst_templ, dst, dst_level, dstz);
@@ -1188,8 +1192,7 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
    src_view = pipe->create_sampler_view(pipe, src, &src_templ);
 
    /* Copy. */
-   util_blitter_blit_generic(blitter, dst_view, dstx, dsty,
-                             abs(srcbox->width), abs(srcbox->height),
+   util_blitter_blit_generic(blitter, dst_view, &dstbox,
                              src_view, srcbox, src->width0, src->height0,
                              mask, PIPE_TEX_FILTER_NEAREST, NULL,
                              copy_all_samples);
@@ -1200,8 +1203,7 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
 
 void util_blitter_blit_generic(struct blitter_context *blitter,
                                struct pipe_surface *dst,
-                               int dstx, int dsty,
-                               unsigned dst_width, unsigned dst_height,
+                               const struct pipe_box *dstbox,
                                struct pipe_sampler_view *src,
                                const struct pipe_box *srcbox,
                                unsigned src_width0, unsigned src_height0,
@@ -1293,7 +1295,8 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
    if (filter == PIPE_TEX_FILTER_LINEAR &&
        !blit_depth && !blit_stencil &&
        src->texture->nr_samples <= 1 &&
-       (dst_width != abs(srcbox->width) || dst_height != abs(srcbox->height))) {
+       (dstbox->width != abs(srcbox->width) ||
+        dstbox->height != abs(srcbox->height))) {
       sampler_state = ctx->sampler_state_linear;
    } else {
       sampler_state = ctx->sampler_state;
@@ -1364,8 +1367,9 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
 
       /* Draw. */
       pipe->set_sample_mask(pipe, ~0);
-      blitter->draw_rectangle(blitter, dstx, dsty,
-                              dstx+dst_width, dsty+dst_height, 0,
+      blitter->draw_rectangle(blitter, dstbox->x, dstbox->y,
+                              dstbox->x + dstbox->width,
+                              dstbox->y + dstbox->height, 0,
                               UTIL_BLITTER_ATTRIB_TEXCOORD, &coord);
    } else {
       /* Draw the quad with the generic codepath. */
@@ -1381,8 +1385,9 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
                                   i, srcbox->x, srcbox->y,
                                   srcbox->x + srcbox->width,
                                   srcbox->y + srcbox->height);
-            blitter_draw(ctx, dstx, dsty,
-                         dstx+dst_width, dsty+dst_height, 0);
+            blitter_draw(ctx, dstbox->x, dstbox->y,
+                         dstbox->x + dstbox->width,
+                         dstbox->y + dstbox->height, 0);
          }
       } else {
          pipe->set_sample_mask(pipe, ~0);
@@ -1390,7 +1395,9 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
                                srcbox->x, srcbox->y,
                                srcbox->x + srcbox->width,
                                srcbox->y + srcbox->height);
-         blitter_draw(ctx, dstx, dsty, dstx+dst_width, dsty+dst_height, 0);
+         blitter_draw(ctx, dstbox->x, dstbox->y,
+                      dstbox->x + dstbox->width,
+                      dstbox->y + dstbox->height, 0);
       }
    }
 
@@ -1428,9 +1435,7 @@ util_blitter_blit(struct blitter_context *blitter,
    src_view = pipe->create_sampler_view(pipe, src, &src_templ);
 
    /* Copy. */
-   util_blitter_blit_generic(blitter, dst_view,
-                             info->dst.box.x, info->dst.box.y,
-                             info->dst.box.width, info->dst.box.height,
+   util_blitter_blit_generic(blitter, dst_view, &info->dst.box,
                              src_view, &info->src.box, src->width0, src->height0,
                              info->mask, info->filter,
                              info->scissor_enable ? &info->scissor : NULL, TRUE);

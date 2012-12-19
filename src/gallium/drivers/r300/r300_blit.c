@@ -466,7 +466,7 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     unsigned dst_width0 = r300_resource(dst)->tex.width0;
     unsigned dst_height0 = r300_resource(dst)->tex.height0;
     unsigned layout;
-    struct pipe_box box;
+    struct pipe_box box, dstbox;
     struct pipe_sampler_view src_templ, *src_view;
     struct pipe_surface dst_templ, *dst_view;
 
@@ -581,12 +581,14 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     dst_view = r300_create_surface_custom(pipe, dst, &dst_templ, dst_width0, dst_height0);
     src_view = r300_create_sampler_view_custom(pipe, src, &src_templ, src_width0, src_height0);
 
+    u_box_3d(dstx, dsty, dstz, abs(src_box->width), abs(src_box->height),
+             abs(src_box->depth), &dstbox);
+
     r300_blitter_begin(r300, R300_COPY);
-    util_blitter_blit_generic(r300->blitter, dst_view, dstx, dsty,
-                              abs(src_box->width), abs(src_box->height),
-                              src_view, src_box,
-                              src_width0, src_height0, PIPE_MASK_RGBAZS,
-                              PIPE_TEX_FILTER_NEAREST, NULL, FALSE);
+    util_blitter_blit_generic(r300->blitter, dst_view, &dstbox,
+                              src_view, src_box, src_width0, src_height0,
+                              PIPE_MASK_RGBAZS, PIPE_TEX_FILTER_NEAREST, NULL,
+                              FALSE);
     r300_blitter_end(r300);
 
     pipe_surface_reference(&dst_view, NULL);
