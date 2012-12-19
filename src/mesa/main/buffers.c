@@ -532,8 +532,8 @@ _mesa_ReadBuffer(GLenum buffer)
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(buffer));
 
-   if (_mesa_is_user_fbo(fb) && buffer == GL_NONE) {
-      /* This is legal for user-created framebuffer objects */
+   if (buffer == GL_NONE) {
+      /* This is legal--it means that no buffer should be bound for reading. */
       srcBuffer = -1;
    }
    else {
