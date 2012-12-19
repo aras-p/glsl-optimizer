@@ -108,6 +108,26 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				 struct r600_pipe_shader *pipeshader,
 				 struct r600_shader_key key);
 
+static void r600_dump_streamout(struct pipe_stream_output_info *so)
+{
+	unsigned i;
+
+	fprintf(stderr, "STREAMOUT\n");
+	for (i = 0; i < so->num_outputs; i++) {
+		unsigned mask = ((1 << so->output[i].num_components) - 1) <<
+				so->output[i].start_component;
+		fprintf(stderr, "  %i: MEM_STREAM0_BUF%i[%i..%i] <- OUT[%i].%s%s%s%s%s\n",
+			i, so->output[i].output_buffer,
+			so->output[i].dst_offset, so->output[i].dst_offset + so->output[i].num_components - 1,
+			so->output[i].register_index,
+			mask & 1 ? "x" : "",
+		        mask & 2 ? "y" : "",
+		        mask & 4 ? "z" : "",
+		        mask & 8 ? "w" : "",
+			so->output[i].dst_offset < so->output[i].start_component ? " (will lower)" : "");
+	}
+}
+
 int r600_pipe_shader_create(struct pipe_context *ctx,
 			    struct r600_pipe_shader *shader,
 			    struct r600_shader_key key)
@@ -127,18 +147,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		tgsi_dump(sel->tokens, 0);
 
 		if (sel->so.num_outputs) {
-			unsigned i;
-			fprintf(stderr, "STREAMOUT\n");
-			for (i = 0; i < sel->so.num_outputs; i++) {
-				unsigned mask = ((1 << sel->so.output[i].num_components) - 1) <<
-						sel->so.output[i].start_component;
-				fprintf(stderr, "  %i: MEM_STREAM0_BUF%i OUT[%i].%s%s%s%s\n", i,
-					sel->so.output[i].output_buffer, sel->so.output[i].register_index,
-				        mask & 1 ? "x" : "_",
-				        (mask >> 1) & 1 ? "y" : "_",
-				        (mask >> 2) & 1 ? "z" : "_",
-				        (mask >> 3) & 1 ? "w" : "_");
-			}
+			r600_dump_streamout(&sel->so);
 		}
 	}
 	r = r600_shader_from_tgsi(rctx->screen, shader, key);
