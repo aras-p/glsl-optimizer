@@ -72,7 +72,7 @@ static INLINE uint16_t
 z32_float_to_z16_unorm(float z)
 {
    const float scale = 0xffff;
-   return (uint16_t)(z * scale);
+   return (uint16_t)(z * scale + 0.5f);
 }
 
 static INLINE float
