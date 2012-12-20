@@ -280,8 +280,8 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(OES_EGL_image_external,         true,  false, true,  false, true,      OES_EGL_image_external),
    EXT(ARB_shader_bit_encoding,        true,  true,  true,  true,  false,     ARB_shader_bit_encoding),
    EXT(ARB_uniform_buffer_object,      true,  false, true,  true,  false,     ARB_uniform_buffer_object),
-   EXT(OES_standard_derivatives,       false, false, true,  false,  true,     OES_standard_derivatives),
-   EXT(EXT_shadow_samplers,            false, false, true,  false, true,      EXT_shadow_samplers),
+   EXT(OES_standard_derivatives,       false, false, true,  false, true,      OES_standard_derivatives),
+   EXT(EXT_shadow_samplers,            true,  false, true,  false, true,      EXT_shadow_samplers),
 };
 
 #undef EXT
