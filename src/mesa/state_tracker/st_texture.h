@@ -176,12 +176,10 @@ st_texture_match_image(const struct pipe_resource *pt,
  * well.
  */
 extern GLubyte *
-st_texture_image_map(struct st_context *st,
-                     struct st_texture_image *stImage,
-		     GLuint zoffset,
+st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
                      enum pipe_transfer_usage usage,
-                     unsigned x, unsigned y,
-                     unsigned w, unsigned h);
+                     GLuint x, GLuint y, GLuint z,
+                     GLuint w, GLuint h, GLuint d);
 
 extern void
 st_texture_image_unmap(struct st_context *st,

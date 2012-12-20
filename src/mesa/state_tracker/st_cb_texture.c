@@ -201,7 +201,7 @@ st_MapTextureImage(struct gl_context *ctx,
    if (mode & GL_MAP_INVALIDATE_RANGE_BIT)
       pipeMode |= PIPE_TRANSFER_DISCARD_RANGE;
 
-   map = st_texture_image_map(st, stImage, slice, pipeMode, x, y, w, h);
+   map = st_texture_image_map(st, stImage, pipeMode, x, y, slice, w, h, 1);
    if (map) {
       *mapOut = map;
       *rowStrideOut = stImage->transfer->stride;
@@ -762,12 +762,23 @@ fallback_copy_texsubimage(struct gl_context *ctx,
    GLvoid *texDest;
    enum pipe_transfer_usage transfer_usage;
    void *map;
+   unsigned dst_width = width;
+   unsigned dst_height = height;
+   unsigned dst_depth = 1;
 
    if (ST_DEBUG & DEBUG_FALLBACK)
       debug_printf("%s: fallback processing\n", __FUNCTION__);
 
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
       srcY = strb->Base.Height - srcY - height;
+   }
+
+   if (stImage->pt->target == PIPE_TEXTURE_1D_ARRAY) {
+      /* Move y/height to z/depth for 1D array textures.  */
+      destZ = destY;
+      destY = 0;
+      dst_depth = dst_height;
+      dst_height = 1;
    }
 
    map = pipe_transfer_map(pipe,
@@ -785,9 +796,9 @@ fallback_copy_texsubimage(struct gl_context *ctx,
    else
       transfer_usage = PIPE_TRANSFER_WRITE;
 
-   /* XXX this used to ignore destZ param */
-   texDest = st_texture_image_map(st, stImage, destZ, transfer_usage,
-                                  destX, destY, width, height);
+   texDest = st_texture_image_map(st, stImage, transfer_usage,
+                                  destX, destY, destZ,
+                                  dst_width, dst_height, dst_depth);
 
    if (baseFormat == GL_DEPTH_COMPONENT ||
        baseFormat == GL_DEPTH_STENCIL) {
@@ -815,8 +826,16 @@ fallback_copy_texsubimage(struct gl_context *ctx,
             if (scaleOrBias) {
                _mesa_scale_and_bias_depth_uint(ctx, width, data);
             }
-            pipe_put_tile_z(stImage->transfer, texDest, 0, row, width, 1,
-                            data);
+
+            if (stImage->pt->target == PIPE_TEXTURE_1D_ARRAY) {
+               pipe_put_tile_z(stImage->transfer,
+                               texDest + row*stImage->transfer->layer_stride,
+                               0, 0, width, 1, data);
+            }
+            else {
+               pipe_put_tile_z(stImage->transfer, texDest, 0, row, width, 1,
+                               data);
+            }
          }
       }
       else {
@@ -832,12 +851,19 @@ fallback_copy_texsubimage(struct gl_context *ctx,
 
       if (tempSrc && texDest) {
          const GLint dims = 2;
-         const GLint dstRowStride = stImage->transfer->stride;
+         GLint dstRowStride;
          struct gl_texture_image *texImage = &stImage->base;
          struct gl_pixelstore_attrib unpack = ctx->DefaultPacking;
 
          if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
             unpack.Invert = GL_TRUE;
+         }
+
+         if (stImage->pt->target == PIPE_TEXTURE_1D_ARRAY) {
+            dstRowStride = stImage->transfer->layer_stride;
+         }
+         else {
+            dstRowStride = stImage->transfer->stride;
          }
 
          /* get float/RGBA image from framebuffer */

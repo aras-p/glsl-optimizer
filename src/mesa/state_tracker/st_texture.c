@@ -232,8 +232,9 @@ st_texture_match_image(const struct pipe_resource *pt,
  */
 GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
-                     GLuint zoffset, enum pipe_transfer_usage usage,
-                     GLuint x, GLuint y, GLuint w, GLuint h)
+                     enum pipe_transfer_usage usage,
+                     GLuint x, GLuint y, GLuint z,
+                     GLuint w, GLuint h, GLuint d)
 {
    struct st_texture_object *stObj =
       st_texture_object(stImage->base.TexObject);
@@ -249,9 +250,9 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
    else
       level = stImage->base.Level;
 
-   return pipe_transfer_map(st->pipe, stImage->pt, level,
-                            stImage->base.Face + zoffset,
-                            usage, x, y, w, h, &stImage->transfer);
+   return pipe_transfer_map_3d(st->pipe, stImage->pt, level, usage,
+                               x, y, z + stImage->base.Face,
+                               w, h, d, &stImage->transfer);
 }
 
 
