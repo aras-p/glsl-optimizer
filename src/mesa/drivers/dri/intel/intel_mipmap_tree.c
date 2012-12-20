@@ -601,8 +601,11 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    GLuint level = intelImage->base.Base.Level;
    int width, height, depth;
 
-   if (target_to_target(image->TexObject->Target) != mt->target)
-      return false;
+   /* glTexImage* choose the texture object based on the target passed in, and
+    * objects can't change targets over their lifetimes, so this should be
+    * true.
+    */
+   assert(target_to_target(image->TexObject->Target) == mt->target);
 
    gl_format mt_format = mt->format;
    if (mt->format == MESA_FORMAT_X8_Z24 && mt->stencil_mt)
