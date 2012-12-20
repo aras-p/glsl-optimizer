@@ -598,7 +598,7 @@ decompress_with_blit(struct gl_context * ctx,
    blit.dst.format = dst_texture->format;
    blit.src.box.x = blit.dst.box.x = 0;
    blit.src.box.y = blit.dst.box.y = 0;
-   blit.src.box.z = 0; /* XXX compressed array textures? */
+   blit.src.box.z = texImage->Face;
    blit.dst.box.z = 0;
    blit.src.box.width = blit.dst.box.width = width;
    blit.src.box.height = blit.dst.box.height = height;
