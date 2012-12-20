@@ -31,6 +31,10 @@
 #include <errno.h>
 #include <dlfcn.h>
 
+#if ANDROID_VERSION >= 0x402
+#include <sync/sync.h>
+#endif
+
 /* for droid_get_pci_id */
 #include <xf86drm.h>
 #include <i915_drm.h>
@@ -79,11 +83,48 @@ get_native_buffer_name(struct ANativeWindowBuffer *buf)
 static EGLBoolean
 droid_window_dequeue_buffer(struct dri2_egl_surface *dri2_surf)
 {
+#if ANDROID_VERSION >= 0x0402
+   int fence_fd;
+
+   if (dri2_surf->window->dequeueBuffer(dri2_surf->window, &dri2_surf->buffer,
+                                        &fence_fd))
+      return EGL_FALSE;
+
+   /* If access to the buffer is controlled by a sync fence, then block on the
+    * fence.
+    *
+    * It may be more performant to postpone blocking until there is an
+    * immediate need to write to the buffer. But doing so would require adding
+    * hooks to the DRI2 loader.
+    *
+    * From the ANativeWindow::dequeueBuffer documentation:
+    *
+    *    The libsync fence file descriptor returned in the int pointed to by
+    *    the fenceFd argument will refer to the fence that must signal
+    *    before the dequeued buffer may be written to.  A value of -1
+    *    indicates that the caller may access the buffer immediately without
+    *    waiting on a fence.  If a valid file descriptor is returned (i.e.
+    *    any value except -1) then the caller is responsible for closing the
+    *    file descriptor.
+    */
+    if (fence_fd >= 0) {
+       /* From the SYNC_IOC_WAIT documentation in <linux/sync.h>:
+        *
+        *    Waits indefinitely if timeout < 0.
+        */
+        int timeout = -1;
+        sync_wait(fence_fd, timeout);
+        close(fence_fd);
+   }
+
+   dri2_surf->buffer->common.incRef(&dri2_surf->buffer->common);
+#else
    if (dri2_surf->window->dequeueBuffer(dri2_surf->window, &dri2_surf->buffer))
       return EGL_FALSE;
 
    dri2_surf->buffer->common.incRef(&dri2_surf->buffer->common);
    dri2_surf->window->lockBuffer(dri2_surf->window, dri2_surf->buffer);
+#endif
 
    return EGL_TRUE;
 }
@@ -91,7 +132,25 @@ droid_window_dequeue_buffer(struct dri2_egl_surface *dri2_surf)
 static EGLBoolean
 droid_window_enqueue_buffer(struct dri2_egl_surface *dri2_surf)
 {
+#if ANDROID_VERSION >= 0x0402
+   /* Queue the buffer without a sync fence. This informs the ANativeWindow
+    * that it may access the buffer immediately.
+    *
+    * From ANativeWindow::dequeueBuffer:
+    *
+    *    The fenceFd argument specifies a libsync fence file descriptor for
+    *    a fence that must signal before the buffer can be accessed.  If
+    *    the buffer can be accessed immediately then a value of -1 should
+    *    be used.  The caller must not use the file descriptor after it
+    *    is passed to queueBuffer, and the ANativeWindow implementation
+    *    is responsible for closing it.
+    */
+   int fence_fd = -1;
+   dri2_surf->window->queueBuffer(dri2_surf->window, dri2_surf->buffer,
+                                  fence_fd);
+#else
    dri2_surf->window->queueBuffer(dri2_surf->window, dri2_surf->buffer);
+#endif
 
    dri2_surf->buffer->common.decRef(&dri2_surf->buffer->common);
    dri2_surf->buffer = NULL;
