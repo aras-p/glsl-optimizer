@@ -56,61 +56,6 @@ u_surface_default_template(struct pipe_surface *surf,
    surf->format = texture->format;
 }
 
-/**
- * Helper to quickly create an RGBA rendering surface of a certain size.
- * \param textureOut  returns the new texture
- * \param surfaceOut  returns the new surface
- * \return TRUE for success, FALSE if failure
- */
-boolean
-util_create_rgba_texture(struct pipe_context *pipe,
-                         uint width, uint height, uint bind,
-                         struct pipe_resource **textureOut)
-{
-   static const enum pipe_format rgbaFormats[] = {
-      PIPE_FORMAT_B8G8R8A8_UNORM,
-      PIPE_FORMAT_A8R8G8B8_UNORM,
-      PIPE_FORMAT_A8B8G8R8_UNORM,
-      PIPE_FORMAT_NONE
-   };
-   const uint target = PIPE_TEXTURE_2D;
-   enum pipe_format format = PIPE_FORMAT_NONE;
-   struct pipe_resource templ;
-   struct pipe_surface surf_templ;
-   struct pipe_screen *screen = pipe->screen;
-   uint i;
-
-   /* Choose surface format */
-   for (i = 0; rgbaFormats[i]; i++) {
-      if (screen->is_format_supported(screen, rgbaFormats[i],
-                                      target, 0, bind)) {
-         format = rgbaFormats[i];
-         break;
-      }
-   }
-   if (format == PIPE_FORMAT_NONE)
-      return FALSE;  /* unable to get an rgba format!?! */
-
-   /* create texture */
-   memset(&templ, 0, sizeof(templ));
-   templ.target = target;
-   templ.format = format;
-   templ.last_level = 0;
-   templ.width0 = width;
-   templ.height0 = height;
-   templ.depth0 = 1;
-   templ.array_size = 1;
-   templ.bind = bind;
-
-   *textureOut = screen->resource_create(screen, &templ);
-   if (!*textureOut)
-      return FALSE;
-
-   /* create surface */
-   u_surface_default_template(&surf_templ, *textureOut);
-   return TRUE;
-}
-
 
 /**
  * Copy 2D rect from one place to another.

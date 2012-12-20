@@ -44,12 +44,6 @@ extern void
 u_surface_default_template(struct pipe_surface *view,
                            const struct pipe_resource *texture);
 
-extern boolean
-util_create_rgba_texture(struct pipe_context *ctx,
-                         uint width, uint height, uint bind,
-                         struct pipe_resource **textureOut);
-
-
 extern void
 util_copy_rect(ubyte * dst, enum pipe_format format,
                unsigned dst_stride, unsigned dst_x, unsigned dst_y,
