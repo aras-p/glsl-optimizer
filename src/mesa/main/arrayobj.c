@@ -373,7 +373,7 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
          save_array_object(ctx, newObj);
       }
 
-      if (!newObj->_Used) {
+      if (!newObj->EverBound) {
          /* The "Interactions with APPLE_vertex_array_object" section of the
           * GL_ARB_vertex_array_object spec says:
           *
@@ -381,7 +381,7 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
           *     BindVertexArrayAPPLE, determines the semantic of the object."
           */
          newObj->ARBsemantics = genRequired;
-         newObj->_Used = GL_TRUE;
+         newObj->EverBound = GL_TRUE;
       }
    }
 
@@ -551,6 +551,8 @@ _mesa_IsVertexArray( GLuint id )
       return GL_FALSE;
 
    obj = lookup_arrayobj(ctx, id);
+   if (obj == NULL)
+      return GL_FALSE;
 
-   return (obj != NULL) ? GL_TRUE : GL_FALSE;
+   return obj->EverBound;
 }
