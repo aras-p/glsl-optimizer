@@ -1677,7 +1677,8 @@ if test "x$enable_gallium_llvm" = xyes; then
 
     if test "x$LLVM_CONFIG" != xno; then
 	LLVM_VERSION=`$LLVM_CONFIG --version | sed 's/svn.*//g'`
-	if test "x$with_llvm_shared_libs" = xyes; then
+	LLVM_VERSION_INT=`echo $LLVM_VERSION | sed -e 's/\([[0-9]]\)\.\([[0-9]]\)/\10\2/g'`
+        if test "x$with_llvm_shared_libs" = xyes; then
 	    dnl We can't use $LLVM_VERSION because it has 'svn' stripped out,
 	    LLVM_LIBS="-lLLVM-`$LLVM_CONFIG --version`"
 	else
@@ -1800,24 +1801,19 @@ gallium_require_drm_loader() {
 radeon_llvm_check() {
     LLVM_REQUIRED_VERSION_MAJOR="3"
     LLVM_REQUIRED_VERSION_MINOR="2"
-    LLVM_AVAILABLE_VERSION_MAJOR=`echo $LLVM_VERSION | cut -d. -f1`
-    LLVM_AVAILABLE_VERSION_MINOR=`echo $LLVM_VERSION | cut -d. -f2`
-    if test "$LLVM_AVAILABLE_VERSION_MAJOR" -lt "$LLVM_REQUIRED_VERSION_MAJOR" -o [ "$LLVM_AVAILABLE_VERSION_MAJOR" -eq "$LLVM_REQUIRED_VERSION_MAJOR" -a "$LLVM_AVAILABLE_VERSION_MINOR" -lt "$LLVM_REQUIRED_VERSION_MINOR" ] ; then
-        AC_MSG_ERROR([LLVM $LLVM_REQUIRED_VERSION_MAJOR.$LLVM_REQUIRED_VERSION_MINOR or newer with AMDGPU target enabled is required.
+    if test "$LLVM_VERSION_INT" -lt "${LLVM_REQUIRED_VERSION_MAJOR}0${LLVM_REQUIRED_VERSION_MINOR}"; then
+        AC_MSG_ERROR([LLVM $LLVM_REQUIRED_VERSION_MAJOR.$LLVM_REQUIRED_VERSION_MINOR or newer with R600 target enabled is required.
                      To use the r600/radeonsi LLVM backend, you need to fetch the LLVM source from:
                      git://people.freedesktop.org/~tstellar/llvm master
-                     and build with --enable-experimental-targets=AMDGPU])
+                     and build with --enable-experimental-targets=R600])
     fi
-    if test true && $LLVM_CONFIG --targets-built | grep -qv '\<AMDGPU\>' ; then
-        AC_MSG_ERROR([LLVM AMDGPU Target not enabled.
-                      To use the r600/radeonsi LLVM backend, you need to fetch the LLVM source from:
-                      git://people.freedesktop.org/~tstellar/llvm master
-                      and build with --enable-experimental-targets=AMDGPU])
+    if test true && $LLVM_CONFIG --targets-built | grep -qv '\<R600\>' ; then
+        AC_MSG_ERROR([LLVM R600 Target not enabled.  You can enable it when building the LLVM
+                      sources with the --enable-experimental-targets=R600
+                      configure flag])
     fi
     AC_MSG_WARN([Please ensure you use the latest llvm tree from git://people.freedesktop.org/~tstellar/llvm master before submitting a bug])
-    if test "x$LLVM_VERSION" = "x3.2"; then
-        LLVM_LIBS="$LLVM_LIBS `$LLVM_CONFIG --libs amdgpu`"
-    fi
+    LLVM_LIBS="$LLVM_LIBS `$LLVM_CONFIG --libs r600`"
 }
 
 dnl Gallium drivers
