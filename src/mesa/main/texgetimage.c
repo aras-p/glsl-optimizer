@@ -683,6 +683,8 @@ legal_getteximage_target(struct gl_context *ctx, GLenum target)
    case GL_TEXTURE_2D_ARRAY_EXT:
       return (ctx->Extensions.MESA_texture_array ||
               ctx->Extensions.EXT_texture_array);
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+      return ctx->Extensions.ARB_texture_cube_map_array;
    default:
       return GL_FALSE;
    }
