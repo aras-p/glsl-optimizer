@@ -421,6 +421,24 @@ pipe_transfer_map(struct pipe_context *context,
                                 &box, transfer);
 }
 
+static INLINE void *
+pipe_transfer_map_3d(struct pipe_context *context,
+                     struct pipe_resource *resource,
+                     unsigned level,
+                     enum pipe_transfer_usage usage,
+                     unsigned x, unsigned y, unsigned z,
+                     unsigned w, unsigned h, unsigned d,
+                     struct pipe_transfer **transfer)
+{
+   struct pipe_box box;
+   u_box_3d(x, y, z, w, h, d, &box);
+   return context->transfer_map(context,
+                                resource,
+                                level,
+                                usage,
+                                &box, transfer);
+}
+
 static INLINE void
 pipe_transfer_unmap( struct pipe_context *context,
                      struct pipe_transfer *transfer )

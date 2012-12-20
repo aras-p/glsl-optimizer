@@ -633,7 +633,7 @@ decompress_with_blit(struct gl_context * ctx,
    blit.dst.box.z = 0;
    blit.src.box.width = blit.dst.box.width = width;
    blit.src.box.height = blit.dst.box.height = height;
-   blit.src.box.depth = blit.dst.box.depth = 1;
+   blit.src.box.depth = blit.dst.box.depth = depth;
    blit.mask = PIPE_MASK_RGBA;
    blit.filter = PIPE_TEX_FILTER_NEAREST;
    blit.scissor_enable = FALSE;
@@ -643,9 +643,8 @@ decompress_with_blit(struct gl_context * ctx,
 
    pixels = _mesa_map_pbo_dest(ctx, &ctx->Pack, pixels);
 
-   map = pipe_transfer_map(pipe, dst, 0, 0,
-                           PIPE_TRANSFER_READ,
-                           0, 0, width, height, &tex_xfer);
+   map = pipe_transfer_map_3d(pipe, dst, 0, PIPE_TRANSFER_READ,
+                              0, 0, 0, width, height, depth, &tex_xfer);
    if (!map) {
       goto end;
    }
@@ -657,18 +656,24 @@ decompress_with_blit(struct gl_context * ctx,
                                             ctx->Pack.SwapBytes)) {
       /* memcpy */
       const uint bytesPerRow = width * util_format_get_blocksize(pipe_format);
-      /* map the dst_surface so we can read from it */
-      GLuint row;
-      for (row = 0; row < height; row++) {
-         GLvoid *dest = _mesa_image_address2d(&ctx->Pack, pixels, width,
-                                              height, format, type, row, 0);
-         memcpy(dest, map, bytesPerRow);
-         map += tex_xfer->stride;
+      GLuint row, slice;
+
+      for (slice = 0; slice < depth; slice++) {
+         ubyte *slice_map = map;
+
+         for (row = 0; row < height; row++) {
+            GLvoid *dest = _mesa_image_address3d(&ctx->Pack, pixels,
+                                                 width, height, format,
+                                                 type, slice, row, 0);
+            memcpy(dest, slice_map, bytesPerRow);
+            slice_map += tex_xfer->stride;
+         }
+         map += tex_xfer->layer_stride;
       }
    }
    else {
       /* format translation via floats */
-      GLuint row;
+      GLuint row, slice;
       enum pipe_format pformat = util_format_linear(dst->format);
       GLfloat *rgba;
 
@@ -678,20 +683,24 @@ decompress_with_blit(struct gl_context * ctx,
          goto end;
       }
 
-      for (row = 0; row < height; row++) {
-         const GLbitfield transferOps = 0x0; /* bypassed for glGetTexImage() */
-         GLvoid *dest = _mesa_image_address2d(&ctx->Pack, pixels, width,
-                                              height, format, type, row, 0);
+      for (slice = 0; slice < depth; slice++) {
+         for (row = 0; row < height; row++) {
+            const GLbitfield transferOps = 0x0; /* bypassed for glGetTexImage() */
+            GLvoid *dest = _mesa_image_address3d(&ctx->Pack, pixels,
+                                                 width, height, format,
+                                                 type, slice, row, 0);
 
-         if (ST_DEBUG & DEBUG_FALLBACK)
-            debug_printf("%s: fallback format translation\n", __FUNCTION__);
+            if (ST_DEBUG & DEBUG_FALLBACK)
+               debug_printf("%s: fallback format translation\n", __FUNCTION__);
 
-         /* get float[4] rgba row from surface */
-         pipe_get_tile_rgba_format(tex_xfer, map, 0, row, width, 1,
-                                   pformat, rgba);
+            /* get float[4] rgba row from surface */
+            pipe_get_tile_rgba_format(tex_xfer, map, 0, row, width, 1,
+                                      pformat, rgba);
 
-         _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
-                                    type, dest, &ctx->Pack, transferOps);
+            _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
+                                       type, dest, &ctx->Pack, transferOps);
+         }
+         map += tex_xfer->layer_stride;
       }
 
       free(rgba);
