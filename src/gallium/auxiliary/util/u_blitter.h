@@ -83,6 +83,15 @@ struct blitter_context
                           enum blitter_attrib_type type,
                           const union pipe_color_union *color);
 
+   /**
+    * Get the next surface layer for the pipe surface, i.e. make a copy
+    * of the surface and increment the first and last layer by 1.
+    *
+    * This callback is exposed, so that drivers can override it if needed.
+    */
+   struct pipe_surface *(*get_next_surface_layer)(struct pipe_context *pipe,
+                                                  struct pipe_surface *surf);
+
    /* Whether the blitter is running. */
    boolean running;
 
