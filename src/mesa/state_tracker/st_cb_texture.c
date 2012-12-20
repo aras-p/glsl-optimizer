@@ -967,6 +967,43 @@ compatible_src_dst_formats(struct gl_context *ctx,
 }
 
 
+/**
+ * Do pipe->blit. Return FALSE if the blitting is unsupported
+ * for the given formats.
+ */
+static GLboolean
+st_pipe_blit(struct pipe_context *pipe, struct pipe_blit_info *blit)
+{
+   struct pipe_screen *screen = pipe->screen;
+   unsigned dst_usage;
+
+   if (util_format_is_depth_or_stencil(blit->dst.format)) {
+      dst_usage = PIPE_BIND_DEPTH_STENCIL;
+   }
+   else {
+      dst_usage = PIPE_BIND_RENDER_TARGET;
+   }
+
+   /* try resource_copy_region in case the format is not supported
+    * for rendering */
+   if (util_try_blit_via_copy_region(pipe, blit)) {
+      return GL_TRUE; /* done */
+   }
+
+   /* check the format support */
+   if (!screen->is_format_supported(screen, blit->src.format,
+                                    PIPE_TEXTURE_2D, 0,
+                                    PIPE_BIND_SAMPLER_VIEW) ||
+       !screen->is_format_supported(screen, blit->dst.format,
+                                    PIPE_TEXTURE_2D, 0,
+                                    dst_usage)) {
+      return GL_FALSE;
+   }
+
+   pipe->blit(pipe, blit);
+   return GL_TRUE;
+}
+
 
 /**
  * Do a CopyTex[Sub]Image1/2/3D() using a hardware (blit) path if possible.
@@ -995,7 +1032,7 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    struct pipe_surface surf_tmpl;
    unsigned dst_usage;
    unsigned blit_mask;
-   GLint srcY0, srcY1;
+   GLint srcY0, srcY1, yStep;
 
    /* make sure finalize_textures has been called? 
     */
@@ -1016,10 +1053,12 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    if (do_flip) {
       srcY1 = strb->Base.Height - srcY - height;
       srcY0 = srcY1 + height;
+      yStep = -1;
    }
    else {
       srcY0 = srcY;
       srcY1 = srcY0 + height;
+      yStep = 1;
    }
 
    if (ctx->_ImageTransferState) {
@@ -1028,16 +1067,6 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
 
    /* Compressed and subsampled textures aren't supported for blitting. */
    if (!util_format_is_plain(dest_format)) {
-      goto fallback;
-   }
-
-   if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
-      /* 1D arrays might be thought of as 2D images but the actual layout
-       * might not be that way.  At some points, we convert OpenGL's 1D
-       * array 'height' into gallium 'layers' and that prevents the blit
-       * utility code from doing the right thing.  Simpy use the memcpy-based
-       * fallback.
-       */
       goto fallback;
    }
 
@@ -1121,27 +1150,38 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
       blit.mask = blit_mask;
       blit.filter = PIPE_TEX_FILTER_NEAREST;
 
-      /* try resource_copy_region in case the format is not supported
-       * for rendering */
-      if (util_try_blit_via_copy_region(pipe, &blit)) {
-         return; /* done */
-      }
+      /* 1D array textures need special treatment.
+       * Blit rows from the source to layers in the destination. */
+      if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
+         int y, layer;
 
-      /* check the format support */
-      if (!screen->is_format_supported(screen, src_format,
-                                       PIPE_TEXTURE_2D, 0,
-                                       PIPE_BIND_SAMPLER_VIEW) ||
-          !screen->is_format_supported(screen, dest_format,
-                                       PIPE_TEXTURE_2D, 0,
-                                       dst_usage)) {
-         goto fallback;
-      }
+         for (y = srcY0, layer = 0; layer < height; y += yStep, layer++) {
+            blit.src.box.y = y;
+            blit.src.box.height = 1;
+            blit.dst.box.y = 0;
+            blit.dst.box.height = 1;
+            blit.dst.box.z = destY + layer;
 
-      pipe->blit(pipe, &blit);
+            if (!st_pipe_blit(pipe, &blit)) {
+               goto fallback;
+            }
+         }
+      }
+      else {
+         /* All the other texture targets. */
+         if (!st_pipe_blit(pipe, &blit)) {
+            goto fallback;
+         }
+      }
       return;
    }
 
    /* try u_blit */
+   if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
+      /* u_blit cannot copy 1D array textures as required by CopyTexSubImage */
+      goto fallback;
+   }
+
    color_writemask = compatible_src_dst_formats(ctx, &strb->Base, texImage);
 
    if (!color_writemask ||
