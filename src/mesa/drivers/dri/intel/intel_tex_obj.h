@@ -49,6 +49,12 @@ struct intel_texture_object
     * regions will be copied to this region and the old storage freed.
     */
    struct intel_mipmap_tree *mt;
+
+   /**
+    * Set when mipmap trees in the texture images of this texture object
+    * might not all be the mipmap tree above.
+    */
+   bool needs_validate;
 };
 
 

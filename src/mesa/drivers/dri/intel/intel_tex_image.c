@@ -274,6 +274,7 @@ intel_set_texture_image_region(struct gl_context *ctx,
 						     region);
    if (intel_image->mt == NULL)
        return;
+   intel_texobj->needs_validate = true;
 
    intel_image->mt->offset = offset;
    intel_image->base.RowStride = region->pitch;

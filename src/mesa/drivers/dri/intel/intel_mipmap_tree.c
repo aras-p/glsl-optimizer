@@ -771,6 +771,8 @@ intel_miptree_copy_teximage(struct intel_context *intel,
 			    struct intel_mipmap_tree *dst_mt)
 {
    struct intel_mipmap_tree *src_mt = intelImage->mt;
+   struct intel_texture_object *intel_obj =
+      intel_texture_object(intelImage->base.Base.TexObject);
    int level = intelImage->base.Base.Level;
    int face = intelImage->base.Base.Face;
    GLuint depth = intelImage->base.Base.Depth;
@@ -780,6 +782,7 @@ intel_miptree_copy_teximage(struct intel_context *intel,
    }
 
    intel_miptree_reference(&intelImage->mt, dst_mt);
+   intel_obj->needs_validate = true;
 }
 
 bool
