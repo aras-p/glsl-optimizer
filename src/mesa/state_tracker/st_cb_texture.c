@@ -572,30 +572,61 @@ decompress_with_blit(struct gl_context * ctx,
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
-   struct st_texture_image *stImage = st_texture_image(texImage);
-   struct st_texture_object *stObj = st_texture_object(texImage->TexObject);
+   struct pipe_screen *screen = pipe->screen;
    const GLuint width = texImage->Width;
    const GLuint height = texImage->Height;
-   struct pipe_resource *dst_texture;
+   const GLuint depth = texImage->Depth;
+   struct pipe_resource *src = st_texture_object(texImage->TexObject)->pt;
+   struct pipe_resource *dst;
+   struct pipe_resource dst_templ;
+   enum pipe_format pipe_format;
+   gl_format mesa_format;
+   GLenum gl_target = texImage->TexObject->Target;
+   enum pipe_texture_target pipe_target;
    struct pipe_blit_info blit;
    unsigned bind = (PIPE_BIND_RENDER_TARGET | PIPE_BIND_TRANSFER_READ);
    struct pipe_transfer *tex_xfer;
    ubyte *map;
 
-   /* create temp / dest surface */
-   if (!util_create_rgba_texture(pipe, width, height, bind,
-                                 &dst_texture)) {
-      _mesa_problem(ctx, "util_create_rgba_texture() failed "
-                    "in decompress_with_blit()");
+   /* GetTexImage only returns a single face for cubemaps. */
+   if (gl_target == GL_TEXTURE_CUBE_MAP) {
+      gl_target = GL_TEXTURE_2D;
+   }
+
+   pipe_target = gl_target_to_pipe(gl_target);
+
+   /* Find the best match for the format+type combo. */
+   pipe_format = st_choose_format(pipe->screen, GL_RGBA8, format, type,
+                                  pipe_target, 0, bind);
+   if (pipe_format == PIPE_FORMAT_NONE) {
+      /* unable to get an rgba format!?! */
+      _mesa_problem(ctx, "%s: cannot find a supported format", __func__);
       return;
    }
 
-   blit.src.resource = stObj->pt;
+   /* create the destination texture */
+   memset(&dst_templ, 0, sizeof(dst_templ));
+   dst_templ.target = pipe_target;
+   dst_templ.format = pipe_format;
+   dst_templ.bind = bind;
+   dst_templ.usage = PIPE_USAGE_STAGING;
+
+   st_gl_texture_dims_to_pipe_dims(gl_target, width, height, depth,
+                                   &dst_templ.width0, &dst_templ.height0,
+                                   &dst_templ.depth0, &dst_templ.array_size);
+
+   dst = screen->resource_create(screen, &dst_templ);
+   if (!dst) {
+      _mesa_problem(ctx, "%s: cannot create a temporary texture", __func__);
+      return;
+   }
+
+   blit.src.resource = src;
    blit.src.level = texImage->Level;
-   blit.src.format = util_format_linear(stObj->pt->format);
-   blit.dst.resource = dst_texture;
+   blit.src.format = util_format_linear(src->format);
+   blit.dst.resource = dst;
    blit.dst.level = 0;
-   blit.dst.format = dst_texture->format;
+   blit.dst.format = dst->format;
    blit.src.box.x = blit.dst.box.x = 0;
    blit.src.box.y = blit.dst.box.y = 0;
    blit.src.box.z = texImage->Face;
@@ -612,19 +643,20 @@ decompress_with_blit(struct gl_context * ctx,
 
    pixels = _mesa_map_pbo_dest(ctx, &ctx->Pack, pixels);
 
-   map = pipe_transfer_map(pipe, dst_texture, 0, 0,
+   map = pipe_transfer_map(pipe, dst, 0, 0,
                            PIPE_TRANSFER_READ,
                            0, 0, width, height, &tex_xfer);
    if (!map) {
       goto end;
    }
 
+   mesa_format = st_pipe_format_to_mesa_format(pipe_format);
+
    /* copy/pack data into user buffer */
-   if (_mesa_format_matches_format_and_type(stImage->base.TexFormat,
-                                            format, type,
+   if (_mesa_format_matches_format_and_type(mesa_format, format, type,
                                             ctx->Pack.SwapBytes)) {
       /* memcpy */
-      const uint bytesPerRow = width * util_format_get_blocksize(stImage->pt->format);
+      const uint bytesPerRow = width * util_format_get_blocksize(pipe_format);
       /* map the dst_surface so we can read from it */
       GLuint row;
       for (row = 0; row < height; row++) {
@@ -633,12 +665,11 @@ decompress_with_blit(struct gl_context * ctx,
          memcpy(dest, map, bytesPerRow);
          map += tex_xfer->stride;
       }
-      pipe_transfer_unmap(pipe, tex_xfer);
    }
    else {
       /* format translation via floats */
       GLuint row;
-      enum pipe_format pformat = util_format_linear(dst_texture->format);
+      enum pipe_format pformat = util_format_linear(dst->format);
       GLfloat *rgba;
 
       rgba = malloc(width * 4 * sizeof(GLfloat));
@@ -671,7 +702,7 @@ end:
       pipe_transfer_unmap(pipe, tex_xfer);
 
    _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
-   pipe_resource_reference(&dst_texture, NULL);
+   pipe_resource_reference(&dst, NULL);
 }
 
 
