@@ -30,6 +30,11 @@
 # module will also be built.  DRI modules will be loaded by libGLES_mesa.
 
 MESA_TOP := $(call my-dir)
+
+MESA_ANDROID_MAJOR_VERSION := $(word 1, $(subst ., , $(PLATFORM_VERSION)))
+MESA_ANDROID_MINOR_VERSION := $(word 2, $(subst ., , $(PLATFORM_VERSION)))
+MESA_ANDROID_VERSION := $(MESA_ANDROID_MAJOR_VERSION).$(MESA_ANDROID_MINOR_VERSION)
+
 MESA_COMMON_MK := $(MESA_TOP)/Android.common.mk
 MESA_PYTHON2 := python
 
