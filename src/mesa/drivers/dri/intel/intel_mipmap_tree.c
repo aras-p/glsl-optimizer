@@ -857,7 +857,7 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
    /* MSAA HiZ surfaces always use IMS layout. */
    mt->hiz_mt = intel_miptree_create(intel,
                                      mt->target,
-                                     MESA_FORMAT_X8_Z24,
+                                     mt->format,
                                      mt->first_level,
                                      mt->last_level,
                                      mt->width0,
