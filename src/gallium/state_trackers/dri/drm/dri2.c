@@ -420,7 +420,7 @@ dri2_flush_frontbuffer(struct dri_context *ctx,
       struct pipe_context *pipe = ctx->st->pipe;
 
       dri_msaa_resolve(ctx, drawable, ST_ATTACHMENT_FRONT_LEFT);
-      pipe->flush(pipe, NULL);
+      pipe->flush(pipe, NULL, 0);
    }
 
    if (loader->flushFrontBuffer) {

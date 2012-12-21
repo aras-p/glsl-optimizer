@@ -288,6 +288,12 @@ enum pipe_transfer_usage {
 
 };
 
+/**
+ * Flags for the flush function.
+ */
+enum pipe_flush_flags {
+   PIPE_FLUSH_END_OF_FRAME = (1 << 0)
+};
 
 /*
  * Resource binding flags -- state tracker must specify in advance all

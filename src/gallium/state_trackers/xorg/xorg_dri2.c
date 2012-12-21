@@ -336,7 +336,7 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
 	/* pixmap glXWaitX */
 	if (pSrcBuffer->attachment == DRI2BufferFrontLeft &&
 	    pDestBuffer->attachment == DRI2BufferFakeFrontLeft) {
-	    ms->ctx->flush(ms->ctx, NULL);
+	    ms->ctx->flush(ms->ctx, NULL, 0);
 	    return;
 	}
 	/* pixmap glXWaitGL */
@@ -394,7 +394,7 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
     ms->ctx->flush(ms->ctx,
 		   (pDestBuffer->attachment == DRI2BufferFrontLeft
 		    && ms->swapThrottling) ?
-		   &dst_priv->fence : NULL);
+		   &dst_priv->fence : NULL, 0);
 
    if (cust && cust->winsys_context_throttle)
        cust->winsys_context_throttle(cust, ms->ctx, THROTTLE_RENDER);

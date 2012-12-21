@@ -29,7 +29,7 @@ static void draw( void )
    union pipe_color_union clear_color = { {1, 0, 1, 1} };
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, &clear_color, 0, 0);
-   ctx->flush(ctx, NULL);
+   ctx->flush(ctx, NULL, 0);
 
    graw_save_surface_to_file(ctx, surf, NULL);
 

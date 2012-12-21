@@ -441,6 +441,8 @@ dri_flush(__DRIcontext *cPriv,
    flush_flags = 0;
    if (flags & __DRI2_FLUSH_CONTEXT)
       flush_flags |= ST_FLUSH_FRONT;
+   if (reason == __DRI2_THROTTLE_SWAPBUFFER)
+      flush_flags |= ST_FLUSH_END_OF_FRAME;
 
    /* Flush the context and throttle if needed. */
    if (dri_screen(ctx->sPriv)->throttling_enabled &&

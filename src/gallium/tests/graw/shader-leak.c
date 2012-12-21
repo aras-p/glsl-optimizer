@@ -152,7 +152,7 @@ static void draw( void )
 
       ctx->clear(ctx, PIPE_CLEAR_COLOR, &clear_color, 0, 0);
       util_draw_arrays(ctx, PIPE_PRIM_POINTS, 0, 1);
-      ctx->flush(ctx, NULL);
+      ctx->flush(ctx, NULL, 0);
 
       ctx->bind_fs_state(ctx, NULL);
       ctx->delete_fs_state(ctx, fs);

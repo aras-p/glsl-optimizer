@@ -762,7 +762,7 @@ i915_texture_transfer_map(struct pipe_context *pipe,
    } else {
       /* TODO this is a sledgehammer */
       tex = i915_texture(resource);
-      pipe->flush(pipe, NULL);
+      pipe->flush(pipe, NULL, 0);
    }
 
    offset = i915_texture_offset(tex, transfer->b.level, box->z);
@@ -805,7 +805,7 @@ i915_texture_transfer_unmap(struct pipe_context *pipe,
                                    itransfer->b.box.x, itransfer->b.box.y, itransfer->b.box.z,
                                    itransfer->staging_texture,
                                    0, &sbox);
-      pipe->flush(pipe, NULL);
+      pipe->flush(pipe, NULL, 0);
       pipe_resource_reference(&itransfer->staging_texture, NULL);
    }
 

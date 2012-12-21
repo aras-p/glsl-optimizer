@@ -434,7 +434,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    vl_compositor_set_layer_dst_area(cstate, 1, &dst_rect);
    vl_compositor_render(cstate, compositor, surf, dirty_area);
 
-   pipe->flush(pipe, &surface_priv->fence);
+   pipe->flush(pipe, &surface_priv->fence, 0);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 

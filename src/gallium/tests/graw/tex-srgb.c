@@ -136,7 +136,7 @@ static void draw( void )
    set_vertices(vertices2, 4);
    util_draw_arrays(info.ctx, PIPE_PRIM_QUADS, 0, 4);
 
-   info.ctx->flush(info.ctx, NULL);
+   info.ctx->flush(info.ctx, NULL, 0);
 
    graw_util_flush_front(&info);
 }

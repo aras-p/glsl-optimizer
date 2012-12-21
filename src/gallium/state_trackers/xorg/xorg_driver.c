@@ -551,7 +551,7 @@ void xorg_flush(ScreenPtr pScreen)
 	ms->ctx->flush(ms->ctx,
 		       ms->dirtyThrottling ?
 		       &ms->fence[XORG_NR_FENCES-1] :
-		       NULL);
+		       NULL, 0);
        
 	if (ms->dirtyThrottling) {
 	    if (ms->fence[0])

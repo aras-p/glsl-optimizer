@@ -164,7 +164,7 @@ draw(void)
               PIPE_CLEAR_COLOR | PIPE_CLEAR_DEPTHSTENCIL,
               &clear_color, 1.0, 0);
    util_draw_arrays(info.ctx, PIPE_PRIM_QUADS, 0, NUM_VERTS);
-   info.ctx->flush(info.ctx, NULL);
+   info.ctx->flush(info.ctx, NULL, 0);
 
 #if 0
    /* At the moment, libgraw leaks out/makes available some of the

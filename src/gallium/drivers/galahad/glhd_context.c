@@ -843,13 +843,13 @@ galahad_context_clear_depth_stencil(struct pipe_context *_pipe,
 
 static void
 galahad_context_flush(struct pipe_context *_pipe,
-               struct pipe_fence_handle **fence)
+                      struct pipe_fence_handle **fence,
+                      enum pipe_flush_flags flags)
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
 
-   pipe->flush(pipe,
-               fence);
+   pipe->flush(pipe, fence, flags);
 }
 
 static struct pipe_sampler_view *

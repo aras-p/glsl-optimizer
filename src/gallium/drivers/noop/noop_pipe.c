@@ -242,7 +242,8 @@ static void noop_blit(struct pipe_context *ctx,
  * context
  */
 static void noop_flush(struct pipe_context *ctx,
-			struct pipe_fence_handle **fence)
+                       struct pipe_fence_handle **fence,
+                       enum pipe_flush_flags flags)
 {
 }
 

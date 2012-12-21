@@ -215,7 +215,7 @@ static void draw( void )
 
    ctx->draw_vbo(ctx, &info);
 
-   ctx->flush(ctx, NULL);
+   ctx->flush(ctx, NULL, 0);
 
    graw_save_surface_to_file(ctx, surf, NULL);
 

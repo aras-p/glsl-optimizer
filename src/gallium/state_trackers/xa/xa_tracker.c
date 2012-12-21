@@ -407,7 +407,7 @@ xa_surface_redefine(struct xa_surface *srf,
 			xa_min(save_height, template->height0), &src_box);
 	pipe->resource_copy_region(pipe, texture,
 				   0, 0, 0, 0, srf->tex, 0, &src_box);
-	pipe->flush(pipe, &xa->default_ctx->last_fence);
+	pipe->flush(pipe, &xa->default_ctx->last_fence, 0);
     }
 
     pipe_resource_reference(&srf->tex, texture);

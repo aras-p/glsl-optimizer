@@ -76,15 +76,16 @@ display_front_buffer(struct st_context *st)
 }
 
 
-void st_flush( struct st_context *st,
-               struct pipe_fence_handle **fence )
+void st_flush(struct st_context *st,
+              struct pipe_fence_handle **fence,
+              enum pipe_flush_flags flags)
 {
    FLUSH_VERTICES(st->ctx, 0);
    FLUSH_CURRENT(st->ctx, 0);
 
    st_flush_bitmap_cache(st);
 
-   st->pipe->flush( st->pipe, fence );
+   st->pipe->flush(st->pipe, fence, flags);
 }
 
 
@@ -95,7 +96,7 @@ void st_finish( struct st_context *st )
 {
    struct pipe_fence_handle *fence = NULL;
 
-   st_flush(st, &fence);
+   st_flush(st, &fence, 0);
 
    if(fence) {
       st->pipe->screen->fence_finish(st->pipe->screen, fence,
@@ -118,7 +119,7 @@ static void st_glFlush(struct gl_context *ctx)
     * synchronization issues.  Calling finish() here will just hide
     * problems that need to be fixed elsewhere.
     */
-   st_flush(st, NULL);
+   st_flush(st, NULL, 0);
 
    if (is_front_buffer_dirty(st)) {
       display_front_buffer(st);

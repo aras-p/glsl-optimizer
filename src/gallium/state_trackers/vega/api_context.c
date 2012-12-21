@@ -56,7 +56,7 @@ void vegaFlush(void)
       return;
 
    pipe = ctx->pipe;
-   pipe->flush(pipe, NULL);
+   pipe->flush(pipe, NULL, 0);
 
    vg_manager_flush_frontbuffer(ctx);
 }
@@ -72,7 +72,7 @@ void vegaFinish(void)
 
    pipe = ctx->pipe;
 
-   pipe->flush(pipe, &fence);
+   pipe->flush(pipe, &fence, 0);
    if (fence) {
       pipe->screen->fence_finish(pipe->screen, fence,
                                  PIPE_TIMEOUT_INFINITE);

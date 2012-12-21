@@ -41,8 +41,9 @@ softpipe_flush(struct pipe_context *pipe,
                struct pipe_fence_handle **fence);
 
 void
-softpipe_flush_wrapped( struct pipe_context *pipe,
-                        struct pipe_fence_handle **fence );
+softpipe_flush_wrapped(struct pipe_context *pipe,
+                       struct pipe_fence_handle **fence,
+                       enum pipe_flush_flags flags);
 
 boolean
 softpipe_flush_resource(struct pipe_context *pipe,

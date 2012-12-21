@@ -32,7 +32,8 @@
 
 
 static void svga_flush( struct pipe_context *pipe,
-                        struct pipe_fence_handle **fence )
+                        struct pipe_fence_handle **fence,
+                        enum pipe_flush_flags flags)
 {
    struct svga_context *svga = svga_context(pipe);
 

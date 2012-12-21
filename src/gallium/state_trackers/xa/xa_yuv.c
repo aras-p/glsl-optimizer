@@ -153,7 +153,7 @@ xa_yuv_planar_blit(struct xa_context *r,
 	box++;
     }
 
-    r->pipe->flush(r->pipe, &r->last_fence);
+    r->pipe->flush(r->pipe, &r->last_fence, 0);
 
     xa_ctx_sampler_views_destroy(r);
     xa_ctx_srf_destroy(r);

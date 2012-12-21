@@ -352,7 +352,7 @@ resource_surface_flush(struct resource_surface *rsurf,
    if (!pipe)
       return FALSE;
 
-   pipe->flush(pipe, &fence);
+   pipe->flush(pipe, &fence, 0);
    if (fence == NULL)
       return FALSE;
 
@@ -398,7 +398,7 @@ native_display_copy_to_pixmap(struct native_display *ndpy,
 
       u_box_origin_2d(src->width0, src->height0, &src_box);
       pipe->resource_copy_region(pipe, dst, 0, 0, 0, 0, src, 0, &src_box);
-      pipe->flush(pipe, NULL);
+      pipe->flush(pipe, NULL, 0);
 
       memset(&ctrl, 0, sizeof(ctrl));
       ctrl.natt = natt;

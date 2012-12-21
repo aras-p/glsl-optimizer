@@ -242,7 +242,7 @@ wsw_dt_unmap(struct sw_winsys *ws,
       return;
 
    pipe->transfer_unmap(pipe, wdt->transfer);
-   pipe->flush(pipe, NULL);
+   pipe->flush(pipe, NULL, 0);
    wdt->transfer = NULL;
 }
 

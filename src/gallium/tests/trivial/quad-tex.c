@@ -333,7 +333,7 @@ static void draw(struct program *p)
 	                        4,  /* verts */
 	                        2); /* attribs/vert */
 
-        p->pipe->flush(p->pipe, NULL);
+        p->pipe->flush(p->pipe, NULL, 0);
 
 	debug_dump_surface_bmp(p->pipe, "result.bmp", p->framebuffer.cbufs[0]);
 }

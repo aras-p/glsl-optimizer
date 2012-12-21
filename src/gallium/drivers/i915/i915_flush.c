@@ -39,7 +39,8 @@
 
 
 static void i915_flush_pipe( struct pipe_context *pipe,
-                             struct pipe_fence_handle **fence )
+                             struct pipe_fence_handle **fence,
+                             enum pipe_flush_flags flags )
 {
    struct i915_context *i915 = i915_context(pipe);
 

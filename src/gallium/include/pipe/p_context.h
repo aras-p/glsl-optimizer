@@ -31,6 +31,7 @@
 #include "p_compiler.h"
 #include "p_format.h"
 #include "p_video_enums.h"
+#include "p_defines.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -349,8 +350,9 @@ struct pipe_context {
 
    /** Flush draw commands
     */
-   void (*flush)( struct pipe_context *pipe,
-                  struct pipe_fence_handle **fence );
+   void (*flush)(struct pipe_context *pipe,
+                 struct pipe_fence_handle **fence,
+                 enum pipe_flush_flags flags);
 
    /**
     * Create a view on a texture to be used by a shader stage.

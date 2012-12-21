@@ -387,7 +387,7 @@ copy_resources(struct native_display *ndpy,
 
    u_box_origin_2d(src->width0, src->height0, &box);
    pipe->resource_copy_region(pipe, dst, 0, 0, 0, 0, src, 0, &box);
-   pipe->flush(pipe, NULL);
+   pipe->flush(pipe, NULL, 0);
 }
 
 static boolean

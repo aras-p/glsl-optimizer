@@ -67,7 +67,8 @@ nv30_context_kick_notify(struct nouveau_pushbuf *push)
 }
 
 static void
-nv30_context_flush(struct pipe_context *pipe, struct pipe_fence_handle **fence)
+nv30_context_flush(struct pipe_context *pipe, struct pipe_fence_handle **fence,
+                   enum pipe_flush_flags flags)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct nouveau_pushbuf *push = nv30->base.pushbuf;

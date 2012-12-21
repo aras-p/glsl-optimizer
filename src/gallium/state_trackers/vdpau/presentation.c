@@ -275,7 +275,7 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
    );
 
    pipe->screen->fence_reference(pipe->screen, &surf->fence, NULL);
-   pipe->flush(pipe, &surf->fence);
+   pipe->flush(pipe, &surf->fence, 0);
 
    if (dump_window == -1) {
       dump_window = debug_get_num_option("VDPAU_DUMP", 0);

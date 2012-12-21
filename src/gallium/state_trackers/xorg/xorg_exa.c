@@ -1071,7 +1071,7 @@ xorg_gpu_surface(struct pipe_context *pipe, struct exa_pixmap_priv *priv)
 void xorg_exa_flush(struct exa_context *exa,
                     struct pipe_fence_handle **fence)
 {
-   exa->pipe->flush(exa->pipe, fence);
+   exa->pipe->flush(exa->pipe, fence, 0);
 }
 
 void xorg_exa_finish(struct exa_context *exa)

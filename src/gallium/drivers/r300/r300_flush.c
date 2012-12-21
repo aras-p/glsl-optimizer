@@ -133,7 +133,8 @@ void r300_flush(struct pipe_context *pipe,
 }
 
 static void r300_flush_wrapped(struct pipe_context *pipe,
-                               struct pipe_fence_handle **fence)
+                               struct pipe_fence_handle **fence,
+                               enum pipe_flush_flags flags)
 {
     r300_flush(pipe, 0, fence);
 }

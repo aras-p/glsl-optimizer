@@ -193,7 +193,7 @@ draw(void)
    if (res2.u64 < expected2_min || res2.u64 > expected2_max)
       printf("  Failure: result2 should be near %d\n", expected2);
 
-   info.ctx->flush(info.ctx, NULL);
+   info.ctx->flush(info.ctx, NULL, 0);
 
    graw_util_flush_front(&info);
 

@@ -152,7 +152,7 @@ static void draw( void )
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, &clear_color, 0, 0);
    util_draw_arrays(ctx, PIPE_PRIM_QUADS, 0, 4);
-   ctx->flush(ctx, NULL);
+   ctx->flush(ctx, NULL, 0);
 
    graw_save_surface_to_file(ctx, surf, NULL);
 

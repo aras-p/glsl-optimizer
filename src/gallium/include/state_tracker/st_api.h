@@ -158,6 +158,7 @@ enum st_context_resource_type {
  * Flush flags.
  */
 #define ST_FLUSH_FRONT                    (1 << 0)
+#define ST_FLUSH_END_OF_FRAME             (1 << 1)
 
 /**
  * Value to st_manager->get_param function.

@@ -248,7 +248,7 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 		   transfer->stride, 0, 0,
 		   64, 64, (void*)image, 64 * 4, 0, 0);
     ctx->transfer_unmap(ctx, transfer);
-    ctx->flush(ctx, &fence);
+    ctx->flush(ctx, &fence, 0);
 
     if (fence) {
 	screen->fence_finish(screen, fence, PIPE_TIMEOUT_INFINITE);
