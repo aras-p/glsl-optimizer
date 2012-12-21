@@ -66,6 +66,9 @@ ir_rvalue_base_visitor::rvalue_visit(ir_texture *ir)
    case ir_txs:
       handle_rvalue(&ir->lod_info.lod);
       break;
+   case ir_txf_ms:
+      handle_rvalue(&ir->lod_info.sample_index);
+      break;
    case ir_txd:
       handle_rvalue(&ir->lod_info.grad.dPdx);
       handle_rvalue(&ir->lod_info.grad.dPdy);

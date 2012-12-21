@@ -57,6 +57,12 @@ def get_txs_dim(sampler_type):
         return 2
     return get_coord_dim(sampler_type)
 
+def has_lod(sampler_type):
+    if 'Buffer' in sampler_type: return False
+    if 'Rect' in sampler_type: return False
+    if 'MS' in sampler_type: return False
+    return True
+
 def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     coord_dim = get_coord_dim(sampler_type)
     extra_dim = get_extra_dim(sampler_type, variant & Proj, unused_fields)
@@ -74,11 +80,13 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     print "     (parameters"
     print "       (declare (in) " + g + "sampler" + sampler_type + " sampler)",
     if tex_inst != "txs":
-        print "\n       (declare (in) " + vec_type("i" if tex_inst == "txf" else "", coord_dim + extra_dim) + " P)",
+        print "\n       (declare (in) " + vec_type("i" if tex_inst in ['txf','txf_ms'] else "", coord_dim + extra_dim) + " P)",
     if tex_inst == "txl":
         print "\n       (declare (in) float lod)",
-    elif ((tex_inst == "txf" or tex_inst == "txs") and "Buffer" not in sampler_type and "Rect" not in sampler_type):
+    elif tex_inst in ['txf', 'txs'] and has_lod(sampler_type):
         print "\n       (declare (in) int lod)",
+    elif tex_inst == "txf_ms":
+        print "\n       (declare (in) int sample)",
     elif tex_inst == "txd":
         grad_type = vec_type("", sampler_dim)
         print "\n       (declare (in) " + grad_type + " dPdx)",
@@ -100,12 +108,14 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
         else:
             print "(var_ref P)",
 
+    if tex_inst not in ['txf_ms', 'txs']:
+        # Coordinate offset
         if variant & Offset:
             print "(var_ref offset)",
         else:
             print "0",
 
-    if tex_inst != "txf" and tex_inst != "txs":
+    if tex_inst not in ['txf', 'txf_ms', 'txs']:
         # Projective divisor
         if variant & Proj:
             print "(swiz " + "xyzw"[coord_dim + extra_dim-1] + " (var_ref P))",
@@ -125,11 +135,13 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     # Bias/explicit LOD/gradient:
     if tex_inst == "txb":
         print "(var_ref bias)",
-    elif tex_inst == "txs" or tex_inst == "txf":
-        if "Rect" not in sampler_type and "Buffer" not in sampler_type:
+    elif tex_inst in ['txs', 'txf', 'txf_ms']:
+        if has_lod(sampler_type):
             print "(var_ref lod)",
+        elif tex_inst == 'txf_ms':
+            print "(var_ref sample)",
         else:
-            print "(constant int (0))"
+            print "(constant int (0))",
     elif tex_inst == "txl":
         print "(var_ref lod)",
     elif tex_inst == "txd":
@@ -173,6 +185,8 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txs", "Buffer")
     generate_fiu_sigs("txs", "CubeArray")
     generate_sigs("", "txs", "CubeArrayShadow")
+    generate_fiu_sigs("txs", "2DMS")
+    generate_fiu_sigs("txs", "2DMSArray")
     end_function(fs, "textureSize")
 
     start_function("texture")
@@ -283,6 +297,8 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txf", "1DArray")
     generate_fiu_sigs("txf", "2DArray")
     generate_fiu_sigs("txf", "Buffer")
+    generate_fiu_sigs("txf_ms", "2DMS")
+    generate_fiu_sigs("txf_ms", "2DMSArray")
     end_function(fs, "texelFetch")
 
     start_function("texelFetchOffset")

@@ -102,6 +102,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.ARB_shading_language_packing = true;
    ctx->Extensions.OES_standard_derivatives = true;
    ctx->Extensions.ARB_texture_cube_map_array = true;
+   ctx->Extensions.ARB_texture_multisample = true;
 
    ctx->Const.GLSLVersion = 120;
 

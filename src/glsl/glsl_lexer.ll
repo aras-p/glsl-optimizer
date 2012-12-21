@@ -315,6 +315,15 @@ usamplerCube		KEYWORD(130, 300, 130, 300, USAMPLERCUBE);
 usampler1DArray		KEYWORD(130, 300, 130, 0, USAMPLER1DARRAY);
 usampler2DArray		KEYWORD(130, 300, 130, 300, USAMPLER2DARRAY);
 
+   /* additional keywords in ARB_texture_multisample, included in GLSL 1.50 */
+   /* these are reserved but not defined in GLSL 3.00 */
+sampler2DMS        KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, SAMPLER2DMS);
+isampler2DMS       KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, ISAMPLER2DMS);
+usampler2DMS       KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, USAMPLER2DMS);
+sampler2DMSArray   KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, SAMPLER2DMSARRAY);
+isampler2DMSArray  KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, ISAMPLER2DMSARRAY);
+usampler2DMSArray  KEYWORD_WITH_ALT(150, 300, 150, 0, yyextra->ARB_texture_multisample_enable, USAMPLER2DMSARRAY);
+
 samplerCubeArray	{
 			  if (yyextra->ARB_texture_cube_map_array_enable)
 			     return SAMPLERCUBEARRAY;
@@ -531,12 +540,6 @@ atomic_uint	KEYWORD(0, 300, 0, 0, ATOMIC_UINT);
 patch		KEYWORD(0, 300, 0, 0, PATCH);
 sample		KEYWORD(0, 300, 0, 0, SAMPLE);
 subroutine	KEYWORD(0, 300, 0, 0, SUBROUTINE);
-sampler2DMS	KEYWORD(0, 300, 0, 0, SAMPLER2DMS);
-isampler2DMS	KEYWORD(0, 300, 0, 0, ISAMPLER2DMS);
-usampler2DMS	KEYWORD(0, 300, 0, 0, USAMPLER2DMS);
-sampler2DMSArray KEYWORD(0, 300, 0, 0, SAMPLER2DMSARRAY);
-isampler2DMSArray KEYWORD(0, 300, 0, 0, ISAMPLER2DMSARRAY);
-usampler2DMSArray KEYWORD(0, 300, 0, 0, USAMPLER2DMSARRAY);
 
 
 [_a-zA-Z][_a-zA-Z0-9]*	{

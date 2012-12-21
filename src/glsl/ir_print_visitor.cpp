@@ -260,7 +260,7 @@ void ir_print_visitor::visit(ir_texture *ir)
       printf(" ");
    }
 
-   if (ir->op != ir_txf && ir->op != ir_txs) {
+   if (ir->op != ir_txf && ir->op != ir_txf_ms && ir->op != ir_txs) {
       if (ir->projector)
 	 ir->projector->accept(this);
       else
@@ -286,6 +286,9 @@ void ir_print_visitor::visit(ir_texture *ir)
    case ir_txf:
    case ir_txs:
       ir->lod_info.lod->accept(this);
+      break;
+   case ir_txf_ms:
+      ir->lod_info.sample_index->accept(this);
       break;
    case ir_txd:
       printf("(");

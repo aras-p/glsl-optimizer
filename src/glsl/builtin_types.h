@@ -347,3 +347,22 @@ const glsl_type glsl_type::builtin_ARB_texture_cube_map_array_types[] = {
 	     GLSL_SAMPLER_DIM_CUBE, 0, 1, GLSL_TYPE_UINT, "usamplerCubeArray"),
 };
 /*@}*/
+
+/** \name Sampler types added by GL_ARB_texture_multisample
+ */
+/*@{*/
+const glsl_type glsl_type::builtin_ARB_texture_multisample_types[] = {
+   glsl_type(GL_SAMPLER_2D_MULTISAMPLE,
+            GLSL_SAMPLER_DIM_MS, 0, 0, GLSL_TYPE_FLOAT, "sampler2DMS"),
+   glsl_type(GL_INT_SAMPLER_2D_MULTISAMPLE,
+            GLSL_SAMPLER_DIM_MS, 0, 0, GLSL_TYPE_INT, "isampler2DMS"),
+   glsl_type(GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE,
+            GLSL_SAMPLER_DIM_MS, 0, 0, GLSL_TYPE_UINT, "usampler2DMS"),
+   glsl_type(GL_SAMPLER_2D_MULTISAMPLE_ARRAY,
+            GLSL_SAMPLER_DIM_MS, 0, 1, GLSL_TYPE_FLOAT, "sampler2DMSArray"),
+   glsl_type(GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY,
+            GLSL_SAMPLER_DIM_MS, 0, 1, GLSL_TYPE_INT, "isampler2DMSArray"),
+   glsl_type(GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY,
+            GLSL_SAMPLER_DIM_MS, 0, 1, GLSL_TYPE_UINT, "usampler2DMSArray"),
+};
+/*@}*/

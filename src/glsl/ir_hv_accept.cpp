@@ -226,6 +226,11 @@ ir_texture::accept(ir_hierarchical_visitor *v)
       if (s != visit_continue)
 	 return (s == visit_continue_with_parent) ? visit_continue : s;
       break;
+   case ir_txf_ms:
+      s = this->lod_info.sample_index->accept(v);
+      if (s != visit_continue)
+         return (s == visit_continue_with_parent) ? visit_continue : s;
+      break;
    case ir_txd:
       s = this->lod_info.grad.dPdx->accept(v);
       if (s != visit_continue)

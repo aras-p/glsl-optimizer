@@ -911,6 +911,7 @@ ir_reader::read_texture(s_expression *expr)
    s_expression *s_proj = NULL;
    s_list *s_shadow = NULL;
    s_expression *s_lod = NULL;
+   s_expression *s_sample_index = NULL;
 
    ir_texture_opcode op = ir_tex; /* silence warning */
 
@@ -918,6 +919,8 @@ ir_reader::read_texture(s_expression *expr)
       { "tex", s_type, s_sampler, s_coord, s_offset, s_proj, s_shadow };
    s_pattern txf_pattern[] =
       { "txf", s_type, s_sampler, s_coord, s_offset, s_lod };
+   s_pattern txf_ms_pattern[] =
+      { "txf_ms", s_type, s_sampler, s_coord, s_sample_index };
    s_pattern txs_pattern[] =
       { "txs", s_type, s_sampler, s_lod };
    s_pattern other_pattern[] =
@@ -927,6 +930,8 @@ ir_reader::read_texture(s_expression *expr)
       op = ir_tex;
    } else if (MATCH(expr, txf_pattern)) {
       op = ir_txf;
+   } else if (MATCH(expr, txf_ms_pattern)) {
+      op = ir_txf_ms;
    } else if (MATCH(expr, txs_pattern)) {
       op = ir_txs;
    } else if (MATCH(expr, other_pattern)) {
@@ -966,18 +971,20 @@ ir_reader::read_texture(s_expression *expr)
 	 return NULL;
       }
 
-      // Read texel offset - either 0 or an rvalue.
-      s_int *si_offset = SX_AS_INT(s_offset);
-      if (si_offset == NULL || si_offset->value() != 0) {
-	 tex->offset = read_rvalue(s_offset);
-	 if (tex->offset == NULL) {
-	    ir_read_error(s_offset, "expected 0 or an expression");
-	    return NULL;
-	 }
+      if (op != ir_txf_ms) {
+         // Read texel offset - either 0 or an rvalue.
+         s_int *si_offset = SX_AS_INT(s_offset);
+         if (si_offset == NULL || si_offset->value() != 0) {
+            tex->offset = read_rvalue(s_offset);
+            if (tex->offset == NULL) {
+               ir_read_error(s_offset, "expected 0 or an expression");
+               return NULL;
+            }
+         }
       }
    }
 
-   if (op != ir_txf && op != ir_txs) {
+   if (op != ir_txf && op != ir_txf_ms && op != ir_txs) {
       s_int *proj_as_int = SX_AS_INT(s_proj);
       if (proj_as_int && proj_as_int->value() == 1) {
 	 tex->projector = NULL;
@@ -1018,6 +1025,13 @@ ir_reader::read_texture(s_expression *expr)
 	 ir_read_error(NULL, "when reading LOD in (%s ...)",
 		       tex->opcode_string());
 	 return NULL;
+      }
+      break;
+   case ir_txf_ms:
+      tex->lod_info.sample_index = read_rvalue(s_sample_index);
+      if (tex->lod_info.sample_index == NULL) {
+         ir_read_error(NULL, "when reading sample_index in (txf_ms ...)");
+         return NULL;
       }
       break;
    case ir_txd: {

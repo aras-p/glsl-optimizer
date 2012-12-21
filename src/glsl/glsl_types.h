@@ -67,7 +67,8 @@ enum glsl_sampler_dim {
    GLSL_SAMPLER_DIM_CUBE,
    GLSL_SAMPLER_DIM_RECT,
    GLSL_SAMPLER_DIM_BUF,
-   GLSL_SAMPLER_DIM_EXTERNAL
+   GLSL_SAMPLER_DIM_EXTERNAL,
+   GLSL_SAMPLER_DIM_MS
 };
 
 enum glsl_interface_packing {
@@ -561,6 +562,7 @@ private:
    static const glsl_type builtin_EXT_texture_buffer_object_types[];
    static const glsl_type builtin_OES_EGL_image_external_types[];
    static const glsl_type builtin_ARB_texture_cube_map_array_types[];
+   static const glsl_type builtin_ARB_texture_multisample_types[];
    /*@}*/
 
    /**
@@ -586,6 +588,7 @@ private:
    static void generate_OES_texture_3D_types(glsl_symbol_table *, bool);
    static void generate_OES_EGL_image_external_types(glsl_symbol_table *, bool);
    static void generate_ARB_texture_cube_map_array_types(glsl_symbol_table *, bool);
+   static void generate_ARB_texture_multisample_types(glsl_symbol_table *, bool);
    /*@}*/
 
    /**

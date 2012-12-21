@@ -198,6 +198,8 @@ glsl_type::sampler_index() const
       return TEXTURE_BUFFER_INDEX;
    case GLSL_SAMPLER_DIM_EXTERNAL:
       return TEXTURE_EXTERNAL_INDEX;
+   case GLSL_SAMPLER_DIM_MS:
+      return (t->sampler_array) ? TEXTURE_2D_MULTISAMPLE_ARRAY_INDEX : TEXTURE_2D_MULTISAMPLE_INDEX;
    default:
       assert(!"Should not get here.");
       return TEXTURE_BUFFER_INDEX;
@@ -345,6 +347,16 @@ glsl_type::generate_ARB_texture_cube_map_array_types(glsl_symbol_table *symtab,
 }
 
 void
+glsl_type::generate_ARB_texture_multisample_types(glsl_symbol_table *symtab,
+                                                  bool warn)
+{
+   bool skip_1d = false;
+   add_types_to_symbol_table(symtab, builtin_ARB_texture_multisample_types,
+                             Elements(builtin_ARB_texture_multisample_types),
+                             warn, skip_1d);
+}
+
+void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
    if (state->es_shader) {
@@ -412,6 +424,11 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
    if (state->ARB_texture_cube_map_array_enable) {
       glsl_type::generate_ARB_texture_cube_map_array_types(state->symbols,
 				       state->ARB_texture_cube_map_array_warn);
+   }
+
+   if (state->ARB_texture_multisample_enable) {
+      glsl_type::generate_ARB_texture_multisample_types(state->symbols,
+         state->ARB_texture_multisample_warn);
    }
 }
 
