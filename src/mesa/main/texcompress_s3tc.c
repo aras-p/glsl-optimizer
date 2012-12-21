@@ -417,6 +417,80 @@ fetch_rgba_dxt5(const GLubyte *map, const GLuint imageOffsets[],
 }
 
 
+static void
+fetch_srgb_dxt1(const GLubyte *map, const GLuint imageOffsets[],
+                GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   if (fetch_ext_rgb_dxt1) {
+      GLuint sliceOffset = k ? imageOffsets[k] / 2 : 0;
+      GLubyte tex[4];
+      fetch_ext_rgb_dxt1(rowStride, map + sliceOffset, i, j, tex);
+      texel[RCOMP] = _mesa_nonlinear_to_linear(tex[RCOMP]);
+      texel[GCOMP] = _mesa_nonlinear_to_linear(tex[GCOMP]);
+      texel[BCOMP] = _mesa_nonlinear_to_linear(tex[BCOMP]);
+      texel[ACOMP] = UBYTE_TO_FLOAT(tex[ACOMP]);
+   }
+   else {
+      problem("srgb_dxt1");
+   }
+}
+
+static void
+fetch_srgba_dxt1(const GLubyte *map, const GLuint imageOffsets[],
+                 GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   if (fetch_ext_rgba_dxt1) {
+      GLuint sliceOffset = k ? imageOffsets[k] / 2 : 0;
+      GLubyte tex[4];
+      fetch_ext_rgba_dxt1(rowStride, map + sliceOffset, i, j, tex);
+      texel[RCOMP] = _mesa_nonlinear_to_linear(tex[RCOMP]);
+      texel[GCOMP] = _mesa_nonlinear_to_linear(tex[GCOMP]);
+      texel[BCOMP] = _mesa_nonlinear_to_linear(tex[BCOMP]);
+      texel[ACOMP] = UBYTE_TO_FLOAT(tex[ACOMP]);
+   }
+   else {
+      problem("srgba_dxt1");
+   }
+}
+
+static void
+fetch_srgba_dxt3(const GLubyte *map, const GLuint imageOffsets[],
+                 GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   if (fetch_ext_rgba_dxt3) {
+      GLuint sliceOffset = k ? imageOffsets[k] : 0;
+      GLubyte tex[4];
+      fetch_ext_rgba_dxt3(rowStride, map + sliceOffset, i, j, tex);
+      texel[RCOMP] = _mesa_nonlinear_to_linear(tex[RCOMP]);
+      texel[GCOMP] = _mesa_nonlinear_to_linear(tex[GCOMP]);
+      texel[BCOMP] = _mesa_nonlinear_to_linear(tex[BCOMP]);
+      texel[ACOMP] = UBYTE_TO_FLOAT(tex[ACOMP]);
+   }
+   else {
+      problem("srgba_dxt3");
+   }
+}
+
+static void
+fetch_srgba_dxt5(const GLubyte *map, const GLuint imageOffsets[],
+                 GLint rowStride, GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   if (fetch_ext_rgba_dxt5) {
+      GLuint sliceOffset = k ? imageOffsets[k] : 0;
+      GLubyte tex[4];
+      fetch_ext_rgba_dxt5(rowStride, map + sliceOffset, i, j, tex);
+      texel[RCOMP] = _mesa_nonlinear_to_linear(tex[RCOMP]);
+      texel[GCOMP] = _mesa_nonlinear_to_linear(tex[GCOMP]);
+      texel[BCOMP] = _mesa_nonlinear_to_linear(tex[BCOMP]);
+      texel[ACOMP] = UBYTE_TO_FLOAT(tex[ACOMP]);
+   }
+   else {
+      problem("srgba_dxt5");
+   }
+}
+
+
+
 compressed_fetch_func
 _mesa_get_dxt_fetch_func(gl_format format)
 {
@@ -429,6 +503,14 @@ _mesa_get_dxt_fetch_func(gl_format format)
       return fetch_rgba_dxt3;
    case MESA_FORMAT_RGBA_DXT5:
       return fetch_rgba_dxt5;
+   case MESA_FORMAT_SRGB_DXT1:
+      return fetch_srgb_dxt1;
+   case MESA_FORMAT_SRGBA_DXT1:
+      return fetch_srgba_dxt1;
+   case MESA_FORMAT_SRGBA_DXT3:
+      return fetch_srgba_dxt3;
+   case MESA_FORMAT_SRGBA_DXT5:
+      return fetch_srgba_dxt5;
    default:
       return NULL;
    }
