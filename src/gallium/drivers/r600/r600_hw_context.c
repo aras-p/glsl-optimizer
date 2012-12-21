@@ -391,7 +391,6 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 
 	/* Count in queries_suspend. */
 	num_dw += ctx->num_cs_dw_nontimer_queries_suspend;
-	num_dw += ctx->num_cs_dw_timer_queries_suspend;
 
 	/* Count in streamout_end at the end of CS. */
 	num_dw += ctx->num_cs_dw_streamout_end;
@@ -691,15 +690,10 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	if (cs->cdw == ctx->start_cs_cmd.num_dw)
 		return;
 
-	ctx->timer_queries_suspended = false;
 	ctx->nontimer_queries_suspended = false;
 	ctx->streamout_suspended = false;
 
 	/* suspend queries */
-	if (ctx->num_cs_dw_timer_queries_suspend) {
-		r600_suspend_timer_queries(ctx);
-		ctx->timer_queries_suspended = true;
-	}
 	if (ctx->num_cs_dw_nontimer_queries_suspend) {
 		r600_suspend_nontimer_queries(ctx);
 		ctx->nontimer_queries_suspended = true;
@@ -827,9 +821,6 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	}
 
 	/* resume queries */
-	if (ctx->timer_queries_suspended) {
-		r600_resume_timer_queries(ctx);
-	}
 	if (ctx->nontimer_queries_suspended) {
 		r600_resume_nontimer_queries(ctx);
 	}

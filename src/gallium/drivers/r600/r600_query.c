@@ -156,9 +156,7 @@ static void r600_emit_query_begin(struct r600_context *ctx, struct r600_query *q
 	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
 	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer.buf, RADEON_USAGE_WRITE);
 
-	if (r600_is_timer_query(query->type)) {
-		ctx->num_cs_dw_timer_queries_suspend += query->num_cs_dw;
-	} else {
+	if (!r600_is_timer_query(query->type)) {
 		ctx->num_cs_dw_nontimer_queries_suspend += query->num_cs_dw;
 	}
 }
@@ -213,9 +211,7 @@ static void r600_emit_query_end(struct r600_context *ctx, struct r600_query *que
 	query->buffer.results_end += query->result_size;
 
 	if (r600_query_needs_begin(query->type)) {
-		if (r600_is_timer_query(query->type)) {
-			ctx->num_cs_dw_timer_queries_suspend -= query->num_cs_dw;
-		} else {
+		if (!r600_is_timer_query(query->type)) {
 			ctx->num_cs_dw_nontimer_queries_suspend -= query->num_cs_dw;
 		}
 	}
@@ -366,9 +362,7 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 
 	r600_emit_query_begin(rctx, rquery);
 
-	if (r600_is_timer_query(rquery->type)) {
-		LIST_ADDTAIL(&rquery->list, &rctx->active_timer_queries);
-	} else {
+	if (!r600_is_timer_query(rquery->type)) {
 		LIST_ADDTAIL(&rquery->list, &rctx->active_nontimer_queries);
 	}
 }
@@ -380,7 +374,7 @@ static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 
 	r600_emit_query_end(rctx, rquery);
 
-	if (r600_query_needs_begin(rquery->type)) {
+	if (r600_query_needs_begin(rquery->type) && !r600_is_timer_query(rquery->type)) {
 		LIST_DELINIT(&rquery->list);
 	}
 }
@@ -577,28 +571,6 @@ void r600_resume_nontimer_queries(struct r600_context *ctx)
 	assert(ctx->num_cs_dw_nontimer_queries_suspend == 0);
 
 	LIST_FOR_EACH_ENTRY(query, &ctx->active_nontimer_queries, list) {
-		r600_emit_query_begin(ctx, query);
-	}
-}
-
-void r600_suspend_timer_queries(struct r600_context *ctx)
-{
-	struct r600_query *query;
-
-	LIST_FOR_EACH_ENTRY(query, &ctx->active_timer_queries, list) {
-		r600_emit_query_end(ctx, query);
-	}
-
-	assert(ctx->num_cs_dw_timer_queries_suspend == 0);
-}
-
-void r600_resume_timer_queries(struct r600_context *ctx)
-{
-	struct r600_query *query;
-
-	assert(ctx->num_cs_dw_timer_queries_suspend == 0);
-
-	LIST_FOR_EACH_ENTRY(query, &ctx->active_timer_queries, list) {
 		r600_emit_query_begin(ctx, query);
 	}
 }

@@ -496,18 +496,12 @@ struct r600_context {
 	/* Queries. */
 	/* The list of active queries. Only one query of each type can be active. */
 	int				num_occlusion_queries;
-	/* Manage queries in two separate groups:
-	 * The timer ones and the others (streamout, occlusion).
-	 *
-	 * We do this because we should only suspend non-timer queries for u_blitter,
-	 * and later if the non-timer queries are suspended, the context flush should
-	 * only suspend and resume the timer queries. */
-	struct list_head		active_timer_queries;
-	unsigned			num_cs_dw_timer_queries_suspend;
+	/* Keep track of non-timer queries, because they should be suspended
+	 * during context flushing.
+	 * The timer queries (TIME_ELAPSED) shouldn't be suspended. */
 	struct list_head		active_nontimer_queries;
 	unsigned			num_cs_dw_nontimer_queries_suspend;
-	/* Flags if queries have been suspended. */
-	bool				timer_queries_suspended;
+	/* If queries have been suspended. */
 	bool				nontimer_queries_suspended;
 
 	/* Render condition. */
@@ -636,8 +630,6 @@ void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 void r600_init_query_functions(struct r600_context *rctx);
 void r600_suspend_nontimer_queries(struct r600_context *ctx);
 void r600_resume_nontimer_queries(struct r600_context *ctx);
-void r600_suspend_timer_queries(struct r600_context *ctx);
-void r600_resume_timer_queries(struct r600_context *ctx);
 
 /* r600_resource.c */
 void r600_init_context_resource_functions(struct r600_context *r600);
