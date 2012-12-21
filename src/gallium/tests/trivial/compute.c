@@ -338,7 +338,6 @@ static void init_compute_resources(struct context *ctx, const int *slots)
         for (i = 0; *slots >= 0; ++i, ++slots) {
                 struct pipe_surface tsurf = {
                         .format = ctx->tex[*slots]->format,
-                        .usage = ctx->tex[*slots]->bind,
                         .writable = ctx->tex_rw[*slots]
                 };
 
