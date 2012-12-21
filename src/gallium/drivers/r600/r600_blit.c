@@ -408,6 +408,8 @@ static boolean is_simple_msaa_resolve(const struct pipe_blit_info *info)
 {
 	unsigned dst_width = u_minify(info->dst.resource->width0, info->dst.level);
 	unsigned dst_height = u_minify(info->dst.resource->height0, info->dst.level);
+	struct r600_texture *dst = (struct r600_texture*)info->dst.resource;
+	unsigned dst_tile_mode = dst->surface.level[info->dst.level].mode;
 
 	return info->dst.resource->format == info->src.resource->format &&
 		info->dst.resource->format == info->dst.format &&
@@ -423,7 +425,10 @@ static boolean is_simple_msaa_resolve(const struct pipe_blit_info *info)
 		info->src.box.x == 0 &&
 		info->src.box.y == 0 &&
 		info->src.box.width == dst_width &&
-		info->src.box.height == dst_height;
+		info->src.box.height == dst_height &&
+		/* Dst must be tiled. If it's not, we have to use a temporary
+		 * resource which is tiled. */
+		dst_tile_mode >= RADEON_SURF_MODE_1D;
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
@@ -729,7 +734,7 @@ static void r600_msaa_color_resolve(struct pipe_context *ctx,
 	templ.nr_samples = 0;
 	templ.usage = PIPE_USAGE_STATIC;
 	templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
-	templ.flags = 0;
+	templ.flags = R600_RESOURCE_FLAG_FORCE_TILING; /* dst must not have a linear layout */
 
 	tmp = screen->resource_create(screen, &templ);
 
