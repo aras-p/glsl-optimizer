@@ -324,7 +324,6 @@ static void r600_texture_allocate_fmask(struct r600_screen *rscreen,
 	r600_texture_get_fmask_info(rscreen, rtex,
 				    rtex->resource.b.b.nr_samples, &fmask);
 
-	/* Reserve space for FMASK while converting bits back to bytes. */
 	rtex->fmask_bank_height = fmask.bank_height;
 	rtex->fmask_offset = align(rtex->size, fmask.alignment);
 	rtex->fmask_size = fmask.size;
