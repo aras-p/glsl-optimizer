@@ -432,6 +432,8 @@ void radeon_drm_cs_sync_flush(struct radeon_drm_cs *cs)
     }
 }
 
+DEBUG_GET_ONCE_BOOL_OPTION(noop, "RADEON_NOOP", FALSE)
+
 static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
@@ -449,7 +451,8 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
     cs->cst = tmp;
 
     /* If the CS is not empty or overflowed, emit it in a separate thread. */
-    if (cs->base.cdw && cs->base.cdw <= RADEON_MAX_CMDBUF_DWORDS) {
+    if (cs->base.cdw && cs->base.cdw <= RADEON_MAX_CMDBUF_DWORDS &&
+	!debug_get_option_noop()) {
         unsigned i, crelocs = cs->cst->crelocs;
 
         cs->cst->chunks[0].length_dw = cs->base.cdw;
