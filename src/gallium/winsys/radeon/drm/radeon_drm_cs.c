@@ -81,8 +81,6 @@
 
 /* The first dword of RADEON_CHUNK_ID_FLAGS is a uint32 of these flags: */
 #define RADEON_CS_KEEP_TILING_FLAGS 0x01
-
-
 #endif
 
 #ifndef RADEON_CS_USE_VM
@@ -90,6 +88,10 @@
 /* The second dword of RADEON_CHUNK_ID_FLAGS is a uint32 that sets the ring type */
 #define RADEON_CS_RING_GFX          0
 #define RADEON_CS_RING_COMPUTE      1
+#endif
+
+#ifndef RADEON_CS_END_OF_FRAME
+#define RADEON_CS_END_OF_FRAME      0x04
 #endif
 
 
@@ -471,6 +473,10 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
         }
         if (cs->ws->info.r600_virtual_address) {
             cs->cst->flags[0] |= RADEON_CS_USE_VM;
+            cs->cst->cs.num_chunks = 3;
+        }
+        if (flags & RADEON_FLUSH_END_OF_FRAME) {
+            cs->cst->flags[0] |= RADEON_CS_END_OF_FRAME;
             cs->cst->cs.num_chunks = 3;
         }
         if (flags & RADEON_FLUSH_COMPUTE) {

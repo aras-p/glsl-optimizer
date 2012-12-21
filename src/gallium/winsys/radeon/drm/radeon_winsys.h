@@ -48,6 +48,7 @@
 #define RADEON_FLUSH_ASYNC		(1 << 0)
 #define RADEON_FLUSH_KEEP_TILING_FLAGS	(1 << 1) /* needs DRM 2.12.0 */
 #define RADEON_FLUSH_COMPUTE		(1 << 2)
+#define RADEON_FLUSH_END_OF_FRAME       (1 << 3)
 
 /* Tiling flags. */
 enum radeon_bo_layout {
