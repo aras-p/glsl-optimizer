@@ -1685,9 +1685,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	     max_comp_size <= 10) ||
 	    (ntype == V_028C70_NUMBER_FLOAT && max_comp_size <= 16)) {
 		rctx->export_16bpc |= 1 << cb;
-		rctx->spi_shader_col_format |= V_028714_SPI_SHADER_FP16_ABGR << (4 * cb);
-	} else
-		rctx->spi_shader_col_format |= V_028714_SPI_SHADER_32_ABGR << (4 * cb);
+	}
 }
 
 static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
@@ -1785,7 +1783,6 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	/* build states */
 	rctx->have_depth_fb = 0;
 	rctx->export_16bpc = 0;
-	rctx->spi_shader_col_format = 0;
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		si_cb(rctx, pm4, state, i);
 	}
@@ -1815,8 +1812,6 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	si_pm4_set_reg(pm4, R_028200_PA_SC_WINDOW_OFFSET, 0x00000000);
 	si_pm4_set_reg(pm4, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
 	si_pm4_set_reg(pm4, R_02823C_CB_SHADER_MASK, shader_mask);
-	si_pm4_set_reg(pm4, R_028714_SPI_SHADER_COL_FORMAT,
-		       rctx->spi_shader_col_format);
 	si_pm4_set_reg(pm4, R_028BE0_PA_SC_AA_CONFIG, 0x00000000);
 
 	si_pm4_set_state(rctx, framebuffer, pm4);

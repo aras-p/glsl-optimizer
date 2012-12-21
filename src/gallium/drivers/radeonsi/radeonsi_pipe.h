@@ -134,7 +134,6 @@ struct r600_context {
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	unsigned			export_16bpc;
-	unsigned			spi_shader_col_format;
 	struct r600_textures_info	vs_samplers;
 	struct r600_textures_info	ps_samplers;
 	struct si_resource		*border_color_table;

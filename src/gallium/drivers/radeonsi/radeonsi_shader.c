@@ -478,6 +478,13 @@ static void si_llvm_init_export_args(struct lp_build_tgsi_context *bld_base,
 		if (cbuf >= 0 && cbuf < 8) {
 			struct r600_context *rctx = si_shader_ctx->rctx;
 			compressed = (si_shader_ctx->key.export_16bpc >> cbuf) & 0x1;
+
+			if (compressed)
+				si_shader_ctx->shader->spi_shader_col_format |=
+					V_028714_SPI_SHADER_FP16_ABGR << (4 * cbuf);
+			else
+				si_shader_ctx->shader->spi_shader_col_format |=
+					V_028714_SPI_SHADER_32_ABGR << (4 * cbuf);
 		}
 	}
 
@@ -759,6 +766,9 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 		last_args[6]= uint->zero;
 		last_args[7]= uint->zero;
 		last_args[8]= uint->zero;
+
+		si_shader_ctx->shader->spi_shader_col_format |=
+			V_028714_SPI_SHADER_32_ABGR;
 	}
 
 	/* Specify whether the EXEC mask represents the valid mask */
