@@ -329,7 +329,7 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	 */
 	r600_emit_command_buffer(ctx->cs, &ctx->start_compute_cs_cmd);
 
-	ctx->flags |= R600_CONTEXT_WAIT_IDLE | R600_CONTEXT_FLUSH_AND_INV;
+	ctx->flags |= R600_CONTEXT_WAIT_3D_IDLE | R600_CONTEXT_FLUSH_AND_INV;
 	r600_flush_emit(ctx);
 
 	/* Emit colorbuffers. */

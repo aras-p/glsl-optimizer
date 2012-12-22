@@ -434,7 +434,7 @@ void r600_context_dirty_block(struct r600_context *ctx,
 		LIST_ADDTAIL(&block->list,&ctx->dirty);
 
 		if (block->flags & REG_FLAG_FLUSH_CHANGE) {
-			ctx->flags |= R600_CONTEXT_WAIT_IDLE;
+			ctx->flags |= R600_CONTEXT_WAIT_3D_IDLE;
 		}
 	}
 }
@@ -606,6 +606,7 @@ void r600_flush_emit(struct r600_context *rctx)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
 	unsigned cp_coher_cntl = 0;
+	unsigned wait_until = 0;
 	unsigned emit_flush = 0;
 
 	if (!rctx->flags) {
@@ -674,9 +675,15 @@ void r600_flush_emit(struct r600_context *rctx)
 		cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
 	}
 
-	if (rctx->flags & R600_CONTEXT_WAIT_IDLE) {
+	if (rctx->flags & R600_CONTEXT_WAIT_3D_IDLE) {
+		wait_until |= S_008040_WAIT_3D_IDLE(1);
+	}
+	if (rctx->flags & R600_CONTEXT_WAIT_CP_DMA_IDLE) {
+		wait_until |= S_008040_WAIT_CP_DMA_IDLE(1);
+	}
+	if (wait_until) {
 		/* wait for things to settle */
-		r600_write_config_reg(cs, R_008040_WAIT_UNTIL, S_008040_WAIT_3D_IDLE(1));
+		r600_write_config_reg(cs, R_008040_WAIT_UNTIL, wait_until);
 	}
 
 	/* everything is properly flushed */
@@ -709,7 +716,8 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	 */
 	ctx->flags |= R600_CONTEXT_FLUSH_AND_INV |
 		      R600_CONTEXT_FLUSH_AND_INV_CB_META |
-		      R600_CONTEXT_WAIT_IDLE;
+		      R600_CONTEXT_WAIT_3D_IDLE |
+		      R600_CONTEXT_WAIT_CP_DMA_IDLE;
 
 	r600_flush_emit(ctx);
 
@@ -1049,6 +1057,73 @@ void r600_context_streamout_end(struct r600_context *ctx)
 		}
 		r600_set_streamout_enable(ctx, 0);
 	}
-	ctx->flags |= R600_CONTEXT_WAIT_IDLE | R600_CONTEXT_FLUSH_AND_INV;
+	ctx->flags |= R600_CONTEXT_WAIT_3D_IDLE | R600_CONTEXT_FLUSH_AND_INV;
 	ctx->num_cs_dw_streamout_end = 0;
+}
+
+/* The max number of bytes to copy per packet. */
+#define CP_DMA_MAX_BYTE_COUNT ((1 << 21) - 8)
+
+void r600_cp_dma_copy_buffer(struct r600_context *rctx,
+			     struct pipe_resource *dst, unsigned dst_offset,
+			     struct pipe_resource *src, unsigned src_offset,
+			     unsigned size)
+{
+	struct radeon_winsys_cs *cs = rctx->cs;
+
+	assert(size);
+	assert(rctx->chip_class != R600);
+
+	/* CP DMA doesn't work on R600 (flushing seems to be unreliable). */
+	if (rctx->chip_class == R600) {
+		return;
+	}
+
+	/* We flush the caches, because we might read from or write
+	 * to resources which are bound right now. */
+	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES |
+		       R600_CONTEXT_FLUSH_AND_INV |
+		       R600_CONTEXT_FLUSH_AND_INV_CB_META |
+		       R600_CONTEXT_STREAMOUT_FLUSH |
+		       R600_CONTEXT_WAIT_3D_IDLE;
+
+	/* There are differences between R700 and EG in CP DMA,
+	 * but we only use the common bits here. */
+	while (size) {
+		unsigned sync = 0;
+		unsigned byte_count = MIN2(size, CP_DMA_MAX_BYTE_COUNT);
+		unsigned src_reloc, dst_reloc;
+
+		r600_need_cs_space(rctx, 10 + (rctx->flags ? R600_MAX_FLUSH_CS_DWORDS : 0), FALSE);
+
+		/* Flush the caches for the first copy only. */
+		if (rctx->flags) {
+			r600_flush_emit(rctx);
+		}
+
+		/* Do the synchronization after the last copy, so that all data is written to memory. */
+		if (size == byte_count) {
+			sync = PKT3_CP_DMA_CP_SYNC;
+		}
+
+		/* This must be done after r600_need_cs_space. */
+		src_reloc = r600_context_bo_reloc(rctx, (struct r600_resource*)src, RADEON_USAGE_READ);
+		dst_reloc = r600_context_bo_reloc(rctx, (struct r600_resource*)dst, RADEON_USAGE_WRITE);
+
+		r600_write_value(cs, PKT3(PKT3_CP_DMA, 4, 0));
+		r600_write_value(cs, src_offset);	/* SRC_ADDR_LO [31:0] */
+		r600_write_value(cs, sync);		/* CP_SYNC [31] | SRC_ADDR_HI [7:0] */
+		r600_write_value(cs, dst_offset);	/* DST_ADDR_LO [31:0] */
+		r600_write_value(cs, 0);		/* DST_ADDR_HI [7:0] */
+		r600_write_value(cs, byte_count);	/* COMMAND [29:22] | BYTE_COUNT [20:0] */
+
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+		r600_write_value(cs, src_reloc);
+		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+		r600_write_value(cs, dst_reloc);
+
+		size -= byte_count;
+		src_offset += byte_count;
+		dst_offset += byte_count;
+	}
 }

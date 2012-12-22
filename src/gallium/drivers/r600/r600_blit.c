@@ -503,15 +503,18 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 	r600_blitter_end(ctx);
 }
 
-void r600_copy_buffer(struct pipe_context *ctx, struct
-		      pipe_resource *dst, unsigned dstx,
+void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst, unsigned dstx,
 		      struct pipe_resource *src, const struct pipe_box *src_box)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 
-	if (rctx->screen->has_streamout &&
-	    /* Require dword alignment. */
-	    dstx % 4 == 0 && src_box->x % 4 == 0 && src_box->width % 4 == 0) {
+	/* CP DMA doesn't work on R600 (flushing seems to be unreliable). */
+	if (rctx->screen->info.drm_minor >= 27 && rctx->chip_class >= R700) {
+		r600_cp_dma_copy_buffer(rctx, dst, dstx, src, src_box->x, src_box->width);
+	}
+	else if (rctx->screen->has_streamout &&
+		 /* Require 4-byte alignment. */
+		 dstx % 4 == 0 && src_box->x % 4 == 0 && src_box->width % 4 == 0) {
 		r600_blitter_begin(ctx, R600_COPY_BUFFER);
 		util_blitter_copy_buffer(rctx->blitter, dst, dstx, src, src_box->x, src_box->width);
 		r600_blitter_end(ctx);

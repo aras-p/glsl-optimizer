@@ -147,9 +147,10 @@ struct r600_so_target {
 
 #define R600_CONTEXT_INVAL_READ_CACHES		(1 << 0)
 #define R600_CONTEXT_STREAMOUT_FLUSH		(1 << 1)
-#define R600_CONTEXT_WAIT_IDLE			(1 << 2)
-#define R600_CONTEXT_FLUSH_AND_INV		(1 << 3)
-#define R600_CONTEXT_FLUSH_AND_INV_CB_META	(1 << 4)
+#define R600_CONTEXT_WAIT_3D_IDLE		(1 << 2)
+#define R600_CONTEXT_WAIT_CP_DMA_IDLE		(1 << 3)
+#define R600_CONTEXT_FLUSH_AND_INV		(1 << 4)
+#define R600_CONTEXT_FLUSH_AND_INV_CB_META	(1 << 5)
 
 struct r600_context;
 struct r600_screen;
@@ -170,6 +171,10 @@ void r600_context_streamout_begin(struct r600_context *ctx);
 void r600_context_streamout_end(struct r600_context *ctx);
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block, unsigned pkt_flags);
+void r600_cp_dma_copy_buffer(struct r600_context *rctx,
+			     struct pipe_resource *dst, unsigned dst_offset,
+			     struct pipe_resource *src, unsigned src_offset,
+			     unsigned size);
 
 int evergreen_context_init(struct r600_context *ctx);
 

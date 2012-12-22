@@ -88,7 +88,7 @@ static void r600_texture_barrier(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	rctx->flags |= R600_CONTEXT_WAIT_IDLE;
+	rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE;
 	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
 	rctx->flags |= R600_CONTEXT_FLUSH_AND_INV;
 }
@@ -357,7 +357,7 @@ void r600_sampler_states_dirty(struct r600_context *rctx,
 {
 	if (state->dirty_mask) {
 		if (state->dirty_mask & state->has_bordercolor_mask) {
-			rctx->flags |= R600_CONTEXT_WAIT_IDLE;
+			rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE;
 		}
 		state->atom.num_dw =
 			util_bitcount(state->dirty_mask & state->has_bordercolor_mask) * 11 +
@@ -420,7 +420,7 @@ static void r600_bind_sampler_states(struct pipe_context *pipe,
 	    seamless_cube_map != -1 &&
 	    seamless_cube_map != rctx->seamless_cube_map.enabled) {
 		/* change in TA_CNTL_AUX need a pipeline flush */
-		rctx->flags |= R600_CONTEXT_WAIT_IDLE;
+		rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE;
 		rctx->seamless_cube_map.enabled = seamless_cube_map;
 		rctx->seamless_cube_map.atom.dirty = true;
 	}

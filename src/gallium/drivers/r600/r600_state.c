@@ -1465,7 +1465,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	unsigned i;
 
 	if (rctx->framebuffer.state.nr_cbufs) {
-		rctx->flags |= R600_CONTEXT_WAIT_IDLE | R600_CONTEXT_FLUSH_AND_INV;
+		rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE | R600_CONTEXT_FLUSH_AND_INV;
 
 		if (rctx->chip_class >= R700 &&
 		    rctx->framebuffer.state.cbufs[0]->texture->nr_samples > 1) {
@@ -1473,7 +1473,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 		}
 	}
 	if (rctx->framebuffer.state.zsbuf) {
-		rctx->flags |= R600_CONTEXT_WAIT_IDLE | R600_CONTEXT_FLUSH_AND_INV;
+		rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE | R600_CONTEXT_FLUSH_AND_INV;
 	}
 
 	/* Set the new state. */
@@ -2299,7 +2299,7 @@ bool r600_adjust_gprs(struct r600_context *rctx)
 	if (rctx->config_state.sq_gpr_resource_mgmt_1 != tmp) {
 		rctx->config_state.sq_gpr_resource_mgmt_1 = tmp;
 		rctx->config_state.atom.dirty = true;
-		rctx->flags |= R600_CONTEXT_WAIT_IDLE;
+		rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE;
 	}
 	return true;
 }
