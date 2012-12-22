@@ -885,7 +885,7 @@ brw_update_texture_surface(struct gl_context *ctx,
 	      (intelObj->mt->region->pitch - 1) <<
 	      BRW_SURFACE_PITCH_SHIFT);
 
-   surf[4] = 0;
+   surf[4] = brw_get_surface_num_multisamples(intelObj->mt->num_samples);
 
    intel_miptree_get_tile_offsets(intelObj->mt, firstImage->Level, 0,
                                   &tile_x, &tile_y);
