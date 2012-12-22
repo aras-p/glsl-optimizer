@@ -393,7 +393,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 			   const struct pipe_resource *base,
 			   unsigned pitch_in_bytes_override,
 			   struct pb_buffer *buf,
-			   boolean alloc_bo,
 			   struct radeon_surface *surface)
 {
 	struct r600_texture *rtex;
@@ -423,7 +422,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 		return NULL;
 	}
 
-	if (base->nr_samples > 1 && !rtex->is_depth && alloc_bo) {
+	if (base->nr_samples > 1 && !rtex->is_depth && !buf) {
 		r600_texture_allocate_cmask(rscreen, rtex);
 		r600_texture_allocate_fmask(rscreen, rtex);
 	}
@@ -476,7 +475,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	}
 
 	/* Now create the backing buffer. */
-	if (!buf && alloc_bo) {
+	if (!buf) {
 		unsigned base_align = rtex->surface.bo_alignment;
 		unsigned usage = R600_TEX_IS_TILED(rtex, 0) ? PIPE_USAGE_STATIC : base->usage;
 
@@ -484,7 +483,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 			FREE(rtex);
 			return NULL;
 		}
-	} else if (buf) {
+	} else {
 		/* This is usually the window framebuffer. We want it in VRAM, always. */
 		resource->buf = buf;
 		resource->cs_buf = rscreen->ws->buffer_get_cs_handle(buf);
@@ -587,7 +586,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 		return NULL;
 	}
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ,
-								  0, NULL, TRUE, &surface);
+								  0, NULL, &surface);
 }
 
 struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
@@ -673,7 +672,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 		return NULL;
 	}
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ,
-								  stride, buf, FALSE, &surface);
+								  stride, buf, &surface);
 }
 
 bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
