@@ -98,7 +98,7 @@ static void evergreen_cs_set_vertex_buffer(
 
 	/* The vertex instructions in the compute shaders use the texture cache,
 	 * so we need to invalidate it. */
-	rctx->flags |= R600_CONTEXT_GPU_FLUSH;
+	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
 	state->enabled_mask |= 1 << vb_index;
 	state->dirty_mask |= 1 << vb_index;
 	state->atom.dirty = true;
@@ -409,7 +409,7 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 
 	/* XXX evergreen_flush_emit() hardcodes the CP_COHER_SIZE to 0xffffffff
 	 */
-	ctx->flags |= R600_CONTEXT_GPU_FLUSH;
+	ctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
 	r600_flush_emit(ctx);
 
 #if 0
@@ -468,7 +468,7 @@ void evergreen_emit_cs_shader(
 	r600_write_value(cs, r600_context_bo_reloc(rctx, kernel->code_bo,
 							RADEON_USAGE_READ));
 
-	rctx->flags |= R600_CONTEXT_GPU_FLUSH;
+	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
 }
 
 static void evergreen_launch_grid(

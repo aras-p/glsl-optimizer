@@ -650,7 +650,7 @@ void r600_flush_emit(struct r600_context *rctx)
 		}
 	}
 
-	if (rctx->flags & R600_CONTEXT_GPU_FLUSH) {
+	if (rctx->flags & R600_CONTEXT_INVAL_READ_CACHES) {
 		cp_coher_cntl |= S_0085F0_VC_ACTION_ENA(1) |
 				S_0085F0_TC_ACTION_ENA(1) |
 				S_0085F0_FULL_CACHE_ENA(1);

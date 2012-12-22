@@ -545,7 +545,7 @@ void evergreen_set_tex_resource(
 			     util_format_get_blockwidth(tmp->resource.b.b.format) *
 			     view->base.texture->width0*height*depth;
 
-	pipe->ctx->flags |= R600_CONTEXT_GPU_FLUSH;
+	pipe->ctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
 
 	evergreen_emit_force_reloc(res);
 	evergreen_emit_force_reloc(res);
@@ -604,7 +604,7 @@ void evergreen_set_const_cache(
 	res->usage = RADEON_USAGE_READ;
 	res->coher_bo_size = size;
 
-	pipe->ctx->flags |= R600_CONTEXT_GPU_FLUSH;
+	pipe->ctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
 }
 
 struct r600_resource* r600_compute_buffer_alloc_vram(

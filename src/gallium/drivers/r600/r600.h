@@ -182,7 +182,7 @@ struct r600_so_target {
 	unsigned		so_index;
 };
 
-#define R600_CONTEXT_GPU_FLUSH			(1 << 0)
+#define R600_CONTEXT_INVAL_READ_CACHES		(1 << 0)
 #define R600_CONTEXT_STREAMOUT_FLUSH		(1 << 1)
 #define R600_CONTEXT_WAIT_IDLE			(1 << 2)
 #define R600_CONTEXT_FLUSH_AND_INV		(1 << 3)
