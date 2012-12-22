@@ -152,7 +152,27 @@ st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
    u_sampler_view_default_template(&templ,
                                    stObj->pt,
                                    format);
-   templ.u.tex.first_level = stObj->base.BaseLevel;
+
+   if (stObj->pt->target == PIPE_BUFFER) {
+      unsigned base, size;
+      unsigned f, n;
+      const struct util_format_description *desc
+         = util_format_description(templ.format);
+
+      base = stObj->base.BufferOffset;
+      if (base >= stObj->pt->width0)
+         return NULL;
+      size = MIN2(stObj->pt->width0 - base, (unsigned)stObj->base.BufferSize);
+
+      f = ((base * 8) / desc->block.bits) * desc->block.width;
+      n = ((size * 8) / desc->block.bits) * desc->block.width;
+      if (!n)
+         return NULL;
+      templ.u.buf.first_element = f;
+      templ.u.buf.last_element  = f + (n - 1);
+   } else {
+      templ.u.tex.first_level = stObj->base.BaseLevel;
+   }
 
    if (swizzle != SWIZZLE_NOOP) {
       templ.swizzle_r = GET_SWZ(swizzle, 0);
