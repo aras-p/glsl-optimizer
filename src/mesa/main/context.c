@@ -652,6 +652,10 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MinProgramTexelOffset = -8;
    ctx->Const.MaxProgramTexelOffset = 7;
 
+   /* GL_ARB_texture_gather */
+   ctx->Const.MinProgramTextureGatherOffset = -8;
+   ctx->Const.MaxProgramTextureGatherOffset = 7;
+
    /* GL_ARB_robustness */
    ctx->Const.ResetStrategy = GL_NO_RESET_NOTIFICATION_ARB;
 

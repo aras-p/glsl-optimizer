@@ -366,6 +366,7 @@ EXTRA_EXT(ARB_map_buffer_alignment);
 EXTRA_EXT(ARB_texture_cube_map_array);
 EXTRA_EXT(ARB_texture_buffer_range);
 EXTRA_EXT(ARB_texture_multisample);
+EXTRA_EXT(ARB_texture_gather);
 
 static const int
 extra_ARB_color_buffer_float_or_glcore[] = {

@@ -8189,7 +8189,7 @@
 
 <!-- 70. GL_ARB_sample_shading -->
 <xi:include href="ARB_texture_cube_map_array.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-<!-- 72. GL_ARB_texture_gather -->
+<xi:include href="ARB_texture_gather.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 <!-- 73. GL_ARB_texture_query_lod -->
 
 <!-- ARB extension number 74 is a WGL extension. -->

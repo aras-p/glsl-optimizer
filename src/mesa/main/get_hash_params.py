@@ -716,6 +716,12 @@ descriptor=[
 
 # GL_ARB_texture_cube_map_array
   [ "TEXTURE_BINDING_CUBE_MAP_ARRAY_ARB", "LOC_CUSTOM, TYPE_INT, TEXTURE_CUBE_ARRAY_INDEX, extra_ARB_texture_cube_map_array" ],
+
+# GL_ARB_texture_gather
+  [ "MIN_PROGRAM_TEXTURE_GATHER_OFFSET_ARB", "CONTEXT_INT(Const.MinProgramTextureGatherOffset), extra_ARB_texture_gather"],
+  [ "MAX_PROGRAM_TEXTURE_GATHER_OFFSET_ARB", "CONTEXT_INT(Const.MaxProgramTextureGatherOffset), extra_ARB_texture_gather"],
+  [ "MAX_PROGRAM_TEXTURE_GATHER_COMPONENTS_ARB", "CONTEXT_INT(Const.MaxProgramTextureGatherComponents), extra_ARB_texture_gather"],
+
 ]},
 
 # Enums restricted to OpenGL Core profile
