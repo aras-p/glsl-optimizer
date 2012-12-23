@@ -1248,6 +1248,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	      if (extensions->EXT_shader_integer_mix)
 	         add_builtin_define(parser, "GL_EXT_shader_integer_mix", 1);
+
+	      if (extensions->ARB_texture_gather)
+	         add_builtin_define(parser, "GL_ARB_texture_gather", 1);
 	   }
 	}
 

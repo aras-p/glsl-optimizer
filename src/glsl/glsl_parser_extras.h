@@ -274,6 +274,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_fragment_coord_conventions_warn;
    bool ARB_texture_rectangle_enable;
    bool ARB_texture_rectangle_warn;
+   bool ARB_texture_gather_enable;
+   bool ARB_texture_gather_warn;
    bool EXT_texture_array_enable;
    bool EXT_texture_array_warn;
    bool ARB_shader_texture_lod_enable;

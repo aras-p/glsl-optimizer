@@ -57,6 +57,7 @@ ir_rvalue_base_visitor::rvalue_visit(ir_texture *ir)
    switch (ir->op) {
    case ir_tex:
    case ir_lod:
+   case ir_tg4:
       break;
    case ir_txb:
       handle_rvalue(&ir->lod_info.bias);

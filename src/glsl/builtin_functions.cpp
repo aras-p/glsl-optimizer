@@ -262,6 +262,13 @@ texture_query_lod(const _mesa_glsl_parse_state *state)
           state->ARB_texture_query_lod_enable;
 }
 
+static bool
+texture_gather(const _mesa_glsl_parse_state *state)
+{
+   return state->is_version(400, 0) ||
+          state->ARB_texture_gather_enable;
+}
+
 /* Desktop GL or OES_standard_derivatives + fragment shader only */
 static bool
 fs_oes_derivatives(const _mesa_glsl_parse_state *state)
@@ -1814,6 +1821,34 @@ builtin_builder::create_builtins()
 
    add_function("shadow2DRectProjGradARB",
                 _texture(ir_txd, shader_texture_lod_and_rect, glsl_type::vec4_type,  glsl_type::sampler2DRectShadow_type, glsl_type::vec4_type, TEX_PROJECT),
+                NULL);
+
+   add_function("textureGather",
+                _texture(ir_tg4, texture_gather, glsl_type::vec4_type, glsl_type::sampler2D_type, glsl_type::vec2_type),
+                _texture(ir_tg4, texture_gather, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type),
+                _texture(ir_tg4, texture_gather, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type),
+
+                _texture(ir_tg4, texture_gather, glsl_type::vec4_type, glsl_type::sampler2DArray_type, glsl_type::vec3_type),
+                _texture(ir_tg4, texture_gather, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type),
+                _texture(ir_tg4, texture_gather, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type),
+
+                _texture(ir_tg4, texture_gather, glsl_type::vec4_type, glsl_type::samplerCube_type, glsl_type::vec3_type),
+                _texture(ir_tg4, texture_gather, glsl_type::ivec4_type, glsl_type::isamplerCube_type, glsl_type::vec3_type),
+                _texture(ir_tg4, texture_gather, glsl_type::uvec4_type, glsl_type::usamplerCube_type, glsl_type::vec3_type),
+
+                _texture(ir_tg4, texture_gather, glsl_type::vec4_type, glsl_type::samplerCubeArray_type, glsl_type::vec4_type),
+                _texture(ir_tg4, texture_gather, glsl_type::ivec4_type, glsl_type::isamplerCubeArray_type, glsl_type::vec4_type),
+                _texture(ir_tg4, texture_gather, glsl_type::uvec4_type, glsl_type::usamplerCubeArray_type, glsl_type::vec4_type),
+                NULL);
+
+   add_function("textureGatherOffset",
+                _texture(ir_tg4, texture_gather, glsl_type::vec4_type, glsl_type::sampler2D_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_tg4, texture_gather, glsl_type::ivec4_type, glsl_type::isampler2D_type, glsl_type::vec2_type, TEX_OFFSET),
+                _texture(ir_tg4, texture_gather, glsl_type::uvec4_type, glsl_type::usampler2D_type, glsl_type::vec2_type, TEX_OFFSET),
+
+                _texture(ir_tg4, texture_gather, glsl_type::vec4_type, glsl_type::sampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tg4, texture_gather, glsl_type::ivec4_type, glsl_type::isampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET),
+                _texture(ir_tg4, texture_gather, glsl_type::uvec4_type, glsl_type::usampler2DArray_type, glsl_type::vec3_type, TEX_OFFSET),
                 NULL);
 
    F(dFdx)

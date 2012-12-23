@@ -522,6 +522,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_gpu_shader5,                true,  false,     ARB_gpu_shader5),
    EXT(AMD_vertex_shader_layer,        true,  false,     AMD_vertex_shader_layer),
    EXT(EXT_shader_integer_mix,         true,  true,      EXT_shader_integer_mix),
+   EXT(ARB_texture_gather,             true,  false,     ARB_texture_gather),
 };
 
 #undef EXT
