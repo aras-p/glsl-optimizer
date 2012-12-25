@@ -70,6 +70,9 @@ roundtrip(struct dri2_egl_display *dri2_dpy)
    while (ret != -1 && !done)
       ret = wl_display_dispatch_queue(dri2_dpy->wl_dpy, dri2_dpy->wl_queue);
 
+   if (!done)
+      wl_callback_destroy(callback);
+
    return ret;
 }
 

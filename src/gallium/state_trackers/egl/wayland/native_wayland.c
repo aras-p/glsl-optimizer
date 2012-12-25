@@ -57,8 +57,11 @@ wayland_roundtrip(struct wayland_display *display)
    callback = wl_display_sync(display->dpy);
    wl_callback_add_listener(callback, &sync_listener, &done);
    wl_proxy_set_queue((struct wl_proxy *) callback, display->queue);
-   while (ret == 0 && !done)
+   while (ret != -1 && !done)
       ret = wl_display_dispatch_queue(display->dpy, display->queue);
+
+   if (!done)
+      wl_callback_destroy(callback);
 
    return ret;
 }
