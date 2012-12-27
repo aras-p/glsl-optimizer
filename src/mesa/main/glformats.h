@@ -62,6 +62,12 @@ extern GLboolean
 _mesa_is_enum_format_integer(GLenum format);
 
 extern GLboolean
+_mesa_is_enum_format_unsigned_int(GLenum format);
+
+extern GLboolean
+_mesa_is_enum_format_signed_int(GLenum format);
+
+extern GLboolean
 _mesa_is_enum_format_or_type_integer(GLenum format, GLenum type);
 
 extern GLboolean

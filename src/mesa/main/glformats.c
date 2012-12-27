@@ -353,21 +353,9 @@ _mesa_bytes_per_vertex_attrib(GLint comps, GLenum type)
  * Test if the given format is an integer (non-normalized) format.
  */
 GLboolean
-_mesa_is_enum_format_integer(GLenum format)
+_mesa_is_enum_format_unsigned_int(GLenum format)
 {
    switch (format) {
-   /* generic integer formats */
-   case GL_RED_INTEGER_EXT:
-   case GL_GREEN_INTEGER_EXT:
-   case GL_BLUE_INTEGER_EXT:
-   case GL_ALPHA_INTEGER_EXT:
-   case GL_RGB_INTEGER_EXT:
-   case GL_RGBA_INTEGER_EXT:
-   case GL_BGR_INTEGER_EXT:
-   case GL_BGRA_INTEGER_EXT:
-   case GL_LUMINANCE_INTEGER_EXT:
-   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
-   case GL_RG_INTEGER:
    /* specific integer formats */
    case GL_RGBA32UI_EXT:
    case GL_RGB32UI_EXT:
@@ -393,6 +381,34 @@ _mesa_is_enum_format_integer(GLenum format)
    case GL_INTENSITY8UI_EXT:
    case GL_LUMINANCE8UI_EXT:
    case GL_LUMINANCE_ALPHA8UI_EXT:
+   case GL_RGB10_A2UI:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+/**
+ * Test if the given format is an integer (non-normalized) format.
+ */
+GLboolean
+_mesa_is_enum_format_signed_int(GLenum format)
+{
+   switch (format) {
+   /* generic integer formats */
+   case GL_RED_INTEGER_EXT:
+   case GL_GREEN_INTEGER_EXT:
+   case GL_BLUE_INTEGER_EXT:
+   case GL_ALPHA_INTEGER_EXT:
+   case GL_RGB_INTEGER_EXT:
+   case GL_RGBA_INTEGER_EXT:
+   case GL_BGR_INTEGER_EXT:
+   case GL_BGRA_INTEGER_EXT:
+   case GL_LUMINANCE_INTEGER_EXT:
+   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
+   case GL_RG_INTEGER:
+   /* specific integer formats */
    case GL_RGBA32I_EXT:
    case GL_RGB32I_EXT:
    case GL_RG32I:
@@ -417,11 +433,21 @@ _mesa_is_enum_format_integer(GLenum format)
    case GL_INTENSITY8I_EXT:
    case GL_LUMINANCE8I_EXT:
    case GL_LUMINANCE_ALPHA8I_EXT:
-   case GL_RGB10_A2UI:
       return GL_TRUE;
    default:
       return GL_FALSE;
    }
+}
+
+
+/**
+ * Test if the given format is an integer (non-normalized) format.
+ */
+GLboolean
+_mesa_is_enum_format_integer(GLenum format)
+{
+   return _mesa_is_enum_format_unsigned_int(format) ||
+          _mesa_is_enum_format_signed_int(format);
 }
 
 
