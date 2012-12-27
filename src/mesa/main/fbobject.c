@@ -523,6 +523,50 @@ _mesa_is_legal_color_format(const struct gl_context *ctx, GLenum baseFormat)
 
 
 /**
+ * Is the given base format a legal format for a color renderbuffer?
+ */
+static GLboolean
+is_format_color_renderable(const struct gl_context *ctx, gl_format format, GLenum internalFormat)
+{
+   const GLenum baseFormat =
+      _mesa_get_format_base_format(format);
+   GLboolean valid;
+
+   valid = _mesa_is_legal_color_format(ctx, baseFormat);
+   if (!valid || _mesa_is_desktop_gl(ctx)) {
+      return valid;
+   }
+
+   /* Reject additional cases for GLES */
+   switch (internalFormat) {
+   case GL_RGBA8_SNORM:
+   case GL_RGB32F:
+   case GL_RGB32I:
+   case GL_RGB32UI:
+   case GL_RGB16F:
+   case GL_RGB16I:
+   case GL_RGB16UI:
+   case GL_RGB8_SNORM:
+   case GL_RGB8I:
+   case GL_RGB8UI:
+   case GL_SRGB8:
+   case GL_RGB9_E5:
+   case GL_RG8_SNORM:
+   case GL_R8_SNORM:
+      return GL_FALSE;
+   default:
+      break;
+   }
+
+   if (format == MESA_FORMAT_ARGB2101010 && internalFormat != GL_RGB10_A2) {
+      return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
+
+/**
  * Is the given base format a legal format for a depth/stencil renderbuffer?
  */
 static GLboolean
@@ -770,7 +814,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          f = texImg->_BaseFormat;
          attFormat = texImg->TexFormat;
          numImages++;
-         if (!_mesa_is_legal_color_format(ctx, f) &&
+         if (!is_format_color_renderable(ctx, attFormat, texImg->InternalFormat) &&
              !is_legal_depth_format(ctx, f)) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
             fbo_incomplete("texture attachment incomplete", -1);
