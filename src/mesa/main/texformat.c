@@ -75,7 +75,9 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB4444);
 	 } else if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB1555);
-	 }
+         } else if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {
+            RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB2101010);
+         }
 	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA8888);
 	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
 	 break;
@@ -111,6 +113,10 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       /* shallow RGB formats */
       case 3:
       case GL_RGB:
+         if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {
+            RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB2101010);
+         }
+         /* fallthrough */
       case GL_RGB8:
 	 RETURN_IF_SUPPORTED(MESA_FORMAT_RGB888);
 	 RETURN_IF_SUPPORTED(MESA_FORMAT_XRGB8888);
