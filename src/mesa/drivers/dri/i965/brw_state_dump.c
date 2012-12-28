@@ -184,8 +184,8 @@ static void dump_surface_state(struct brw_context *brw, uint32_t offset)
 	     get_965_surface_format(GET_FIELD(surf[0], BRW_SURFACE_FORMAT)));
    batch_out(brw, name, offset, 1, "offset\n");
    batch_out(brw, name, offset, 2, "%dx%d size, %d mips\n",
-	     GET_FIELD(surf[2], BRW_SURFACE_WIDTH) + 1,
-	     GET_FIELD(surf[2], BRW_SURFACE_HEIGHT) + 1,
+	     GET_FIELD(surf[2], GEN7_SURFACE_WIDTH) + 1,
+	     GET_FIELD(surf[2], GEN7_SURFACE_HEIGHT) + 1,
 	     GET_FIELD(surf[2], BRW_SURFACE_LOD));
    batch_out(brw, name, offset, 3, "pitch %d, %s tiled\n",
 	     GET_FIELD(surf[3], BRW_SURFACE_PITCH) + 1,
@@ -201,20 +201,24 @@ static void dump_surface_state(struct brw_context *brw, uint32_t offset)
 static void dump_gen7_surface_state(struct brw_context *brw, uint32_t offset)
 {
    const char *name = "SURF";
-   struct gen7_surface_state *surf = brw->intel.batch.bo->virtual + offset;
+   uint32_t *surf = brw->intel.batch.bo->virtual + offset;
 
    batch_out(brw, name, offset, 0, "%s %s\n",
-	     get_965_surfacetype(surf->ss0.surface_type),
-	     get_965_surface_format(surf->ss0.surface_format));
+             get_965_surfacetype(GET_FIELD(surf[0], BRW_SURFACE_TYPE)),
+             get_965_surface_format(GET_FIELD(surf[0], BRW_SURFACE_FORMAT)));
    batch_out(brw, name, offset, 1, "offset\n");
    batch_out(brw, name, offset, 2, "%dx%d size, %d mips\n",
-	     surf->ss2.width + 1, surf->ss2.height + 1, surf->ss5.mip_count);
+             GET_FIELD(surf[2], BRW_SURFACE_WIDTH) + 1,
+             GET_FIELD(surf[2], BRW_SURFACE_HEIGHT) + 1,
+             surf[5] & INTEL_MASK(3, 0));
    batch_out(brw, name, offset, 3, "pitch %d, %stiled\n",
-	     surf->ss3.pitch + 1, surf->ss0.tiled_surface ? "" : "not ");
+	     (surf[3] & INTEL_MASK(17, 0)) + 1,
+             (surf[0] & (1 << 14)) ? "" : "not ");
    batch_out(brw, name, offset, 4, "mip base %d\n",
-	     surf->ss5.min_lod);
+             GET_FIELD(surf[5], GEN7_SURFACE_MIN_LOD));
    batch_out(brw, name, offset, 5, "x,y offset: %d,%d\n",
-	     surf->ss5.x_offset, surf->ss5.y_offset);
+             GET_FIELD(surf[5], BRW_SURFACE_X_OFFSET),
+             GET_FIELD(surf[5], BRW_SURFACE_Y_OFFSET));
 }
 
 static void

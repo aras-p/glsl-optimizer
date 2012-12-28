@@ -439,8 +439,16 @@
 #define BRW_SURFACE_BUFFER  4
 #define BRW_SURFACE_NULL    7
 
-#define GEN7_SURFACE_ARYSPC_FULL	0
-#define GEN7_SURFACE_ARYSPC_LOD0	1
+#define GEN7_SURFACE_IS_ARRAY           (1 << 28)
+#define GEN7_SURFACE_VALIGN_2           (0 << 16)
+#define GEN7_SURFACE_VALIGN_4           (1 << 16)
+#define GEN7_SURFACE_HALIGN_4           (0 << 15)
+#define GEN7_SURFACE_HALIGN_8           (1 << 15)
+#define GEN7_SURFACE_TILING_NONE        (0 << 13)
+#define GEN7_SURFACE_TILING_X           (2 << 13)
+#define GEN7_SURFACE_TILING_Y           (3 << 13)
+#define GEN7_SURFACE_ARYSPC_FULL	(0 << 10)
+#define GEN7_SURFACE_ARYSPC_LOD0	(1 << 10)
 
 /* Surface state DW2 */
 #define BRW_SURFACE_HEIGHT_SHIFT	19
@@ -449,6 +457,10 @@
 #define BRW_SURFACE_WIDTH_MASK		INTEL_MASK(18, 6)
 #define BRW_SURFACE_LOD_SHIFT		2
 #define BRW_SURFACE_LOD_MASK		INTEL_MASK(5, 2)
+#define GEN7_SURFACE_HEIGHT_SHIFT       16
+#define GEN7_SURFACE_HEIGHT_MASK        INTEL_MASK(29, 16)
+#define GEN7_SURFACE_WIDTH_SHIFT        0
+#define GEN7_SURFACE_WIDTH_MASK         INTEL_MASK(13, 0)
 
 /* Surface state DW3 */
 #define BRW_SURFACE_DEPTH_SHIFT		21
@@ -463,11 +475,11 @@
 #define BRW_SURFACE_MIN_LOD_MASK	INTEL_MASK(31, 28)
 #define BRW_SURFACE_MULTISAMPLECOUNT_1  (0 << 4)
 #define BRW_SURFACE_MULTISAMPLECOUNT_4  (2 << 4)
-#define GEN7_SURFACE_MULTISAMPLECOUNT_1 0
-#define GEN7_SURFACE_MULTISAMPLECOUNT_4 2
-#define GEN7_SURFACE_MULTISAMPLECOUNT_8 3
-#define GEN7_SURFACE_MSFMT_MSS			0
-#define GEN7_SURFACE_MSFMT_DEPTH_STENCIL	1
+#define GEN7_SURFACE_MULTISAMPLECOUNT_1         (0 << 3)
+#define GEN7_SURFACE_MULTISAMPLECOUNT_4         (2 << 3)
+#define GEN7_SURFACE_MULTISAMPLECOUNT_8         (3 << 3)
+#define GEN7_SURFACE_MSFMT_MSS                  (0 << 6)
+#define GEN7_SURFACE_MSFMT_DEPTH_STENCIL        (1 << 6)
 
 /* Surface state DW5 */
 #define BRW_SURFACE_X_OFFSET_SHIFT		25
@@ -475,8 +487,25 @@
 #define BRW_SURFACE_VERTICAL_ALIGN_ENABLE	(1 << 24)
 #define BRW_SURFACE_Y_OFFSET_SHIFT		20
 #define BRW_SURFACE_Y_OFFSET_MASK		INTEL_MASK(23, 20)
+#define GEN7_SURFACE_MIN_LOD_SHIFT              4
+#define GEN7_SURFACE_MIN_LOD_MASK               INTEL_MASK(7, 4)
+
+/* Surface state DW6 */
+#define GEN7_SURFACE_MCS_ENABLE                 (1 << 0)
+#define GEN7_SURFACE_MCS_PITCH_SHIFT            3
+#define GEN7_SURFACE_MCS_PITCH_MASK             INTEL_MASK(11, 3)
 
 /* Surface state DW7 */
+#define GEN7_SURFACE_SCS_R_SHIFT                25
+#define GEN7_SURFACE_SCS_R_MASK                 INTEL_MASK(27, 25)
+#define GEN7_SURFACE_SCS_G_SHIFT                22
+#define GEN7_SURFACE_SCS_G_MASK                 INTEL_MASK(24, 22)
+#define GEN7_SURFACE_SCS_B_SHIFT                19
+#define GEN7_SURFACE_SCS_B_MASK                 INTEL_MASK(21, 19)
+#define GEN7_SURFACE_SCS_A_SHIFT                16
+#define GEN7_SURFACE_SCS_A_MASK                 INTEL_MASK(18, 16)
+
+/* The actual swizzle values/what channel to use */
 #define HSW_SCS_ZERO                     0
 #define HSW_SCS_ONE                      1
 #define HSW_SCS_RED                      4

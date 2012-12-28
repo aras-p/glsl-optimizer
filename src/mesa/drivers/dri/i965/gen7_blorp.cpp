@@ -152,64 +152,65 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
    struct intel_region *region = surface->mt->region;
    uint32_t tile_x, tile_y;
 
-   struct gen7_surface_state *surf = (struct gen7_surface_state *)
-      brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, sizeof(*surf), 32,
-                      &wm_surf_offset);
-   memset(surf, 0, sizeof(*surf));
+   uint32_t tiling = surface->map_stencil_as_y_tiled
+      ? I915_TILING_Y : region->tiling;
+
+   uint32_t *surf = (uint32_t *)
+      brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 8 * 4, 32, &wm_surf_offset);
+   memset(surf, 0, 8 * 4);
+
+   surf[0] = BRW_SURFACE_2D << BRW_SURFACE_TYPE_SHIFT |
+             surface->brw_surfaceformat << BRW_SURFACE_FORMAT_SHIFT |
+             gen7_surface_tiling_mode(tiling);
 
    if (surface->mt->align_h == 4)
-      surf->ss0.vertical_alignment = 1;
+      surf[0] |= GEN7_SURFACE_VALIGN_4;
    if (surface->mt->align_w == 8)
-      surf->ss0.horizontal_alignment = 1;
+      surf[0] |= GEN7_SURFACE_HALIGN_8;
 
-   surf->ss0.surface_format = surface->brw_surfaceformat;
-   surf->ss0.surface_type = BRW_SURFACE_2D;
-   surf->ss0.surface_array_spacing = surface->array_spacing_lod0 ?
-      GEN7_SURFACE_ARYSPC_LOD0 : GEN7_SURFACE_ARYSPC_FULL;
+   if (surface->array_spacing_lod0)
+      surf[0] |= GEN7_SURFACE_ARYSPC_LOD0;
+   else
+      surf[0] |= GEN7_SURFACE_ARYSPC_FULL;
 
    /* reloc */
-   surf->ss1.base_addr = surface->compute_tile_offsets(&tile_x, &tile_y);
-   surf->ss1.base_addr += region->bo->offset;
+   surf[1] =
+      surface->compute_tile_offsets(&tile_x, &tile_y) + region->bo->offset;
 
    /* Note that the low bits of these fields are missing, so
     * there's the possibility of getting in trouble.
     */
    assert(tile_x % 4 == 0);
    assert(tile_y % 2 == 0);
-   surf->ss5.x_offset = tile_x / 4;
-   surf->ss5.y_offset = tile_y / 2;
+   surf[5] = SET_FIELD(tile_x / 4, BRW_SURFACE_X_OFFSET) |
+             SET_FIELD(tile_y / 2, BRW_SURFACE_Y_OFFSET);
 
-   surf->ss2.width = width - 1;
-   surf->ss2.height = height - 1;
-
-   uint32_t tiling = surface->map_stencil_as_y_tiled
-      ? I915_TILING_Y : region->tiling;
-   gen7_set_surface_tiling(surf, tiling);
+   surf[2] = SET_FIELD(width - 1, GEN7_SURFACE_WIDTH) |
+             SET_FIELD(height - 1, GEN7_SURFACE_HEIGHT);
 
    uint32_t pitch_bytes = region->pitch * region->cpp;
    if (surface->map_stencil_as_y_tiled)
       pitch_bytes *= 2;
-   surf->ss3.pitch = pitch_bytes - 1;
+   surf[3] = pitch_bytes - 1;
 
-   gen7_set_surface_msaa(surf, surface->num_samples, surface->msaa_layout);
+   surf[4] = gen7_surface_msaa_bits(surface->num_samples, surface->msaa_layout);
    if (surface->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
-      gen7_set_surface_mcs_info(brw, surf, wm_surf_offset,
-                                surface->mt->mcs_mt, is_render_target);
+      gen7_set_surface_mcs_info(brw, surf, wm_surf_offset, surface->mt->mcs_mt,
+                                is_render_target);
    }
 
    if (intel->is_haswell) {
-      surf->ss7.shader_channel_select_r = HSW_SCS_RED;
-      surf->ss7.shader_channel_select_g = HSW_SCS_GREEN;
-      surf->ss7.shader_channel_select_b = HSW_SCS_BLUE;
-      surf->ss7.shader_channel_select_a = HSW_SCS_ALPHA;
+      surf[7] = SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |
+                SET_FIELD(HSW_SCS_GREEN, GEN7_SURFACE_SCS_G) |
+                SET_FIELD(HSW_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
+                SET_FIELD(HSW_SCS_ALPHA, GEN7_SURFACE_SCS_A);
    }
 
    /* Emit relocation to surface contents */
-   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
-                           wm_surf_offset +
-                           offsetof(struct gen7_surface_state, ss1),
+   drm_intel_bo_emit_reloc(intel->batch.bo,
+                           wm_surf_offset + 4,
                            region->bo,
-                           surf->ss1.base_addr - region->bo->offset,
+                           surf[1] - region->bo->offset,
                            read_domains, write_domain);
 
    gen7_check_surface_setup(surf, is_render_target);
