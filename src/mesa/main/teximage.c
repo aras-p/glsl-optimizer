@@ -2428,6 +2428,45 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
 
    rb_internal_format = rb->InternalFormat;
 
+   if ((_mesa_is_desktop_gl(ctx) &&
+        ctx->Extensions.ARB_framebuffer_object) ||
+       _mesa_is_gles3(ctx)) {
+      bool rb_is_srgb = false;
+      bool dst_is_srgb = false;
+
+      if (ctx->Extensions.EXT_framebuffer_sRGB &&
+          _mesa_get_format_color_encoding(rb->Format) == GL_SRGB) {
+         rb_is_srgb = true;
+      }
+
+      if (_mesa_get_linear_internalformat(internalFormat) != internalFormat) {
+         dst_is_srgb = true;
+      }
+
+      if (rb_is_srgb != dst_is_srgb) {
+         /* Page 190 (page 211 of the PDF) in section 8.6 of the OpenGL 4.3
+          * Core Profile spec says:
+          *
+          *     "An INVALID_OPERATION error is generated under any of the
+          *     following conditions:
+          *
+          *     ...
+          *
+          *     - if the value of FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING
+          *       for the framebuffer attachment corresponding to the read
+          *       buffer is LINEAR (see section 9.2.3) and internalformat
+          *       is one of the sRGB formats in table 8.23
+          *     - if the value of FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING
+          *       for the framebuffer attachment corresponding to the read
+          *       buffer is SRGB and internalformat is not one of the sRGB
+          *       formats. in table 8.23."
+          */
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyTexImage%dD(srgb usage mismatch)", dimensions);
+         return GL_TRUE;
+      }
+   }
+
    if (!_mesa_source_buffer_exists(ctx, baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCopyTexImage%dD(missing readbuffer)", dimensions);
