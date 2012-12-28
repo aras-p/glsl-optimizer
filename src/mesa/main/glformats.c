@@ -1058,6 +1058,32 @@ _mesa_base_format_has_channel(GLenum base_format, GLenum pname)
 
 
 /**
+ * Returns the number of channels/components for a base format.
+ */
+GLint
+_mesa_base_format_component_count(GLenum base_format)
+{
+   switch (base_format) {
+   case GL_RED:
+   case GL_ALPHA:
+   case GL_INTENSITY:
+   case GL_DEPTH_COMPONENT:
+      return 1;
+   case GL_RG:
+   case GL_LUMINANCE_ALPHA:
+   case GL_DEPTH_STENCIL:
+      return 2;
+   case GL_RGB:
+      return 3;
+   case GL_RGBA:
+      return 4;
+   default:
+      return -1;
+   }
+}
+
+
+/**
  * If format is a generic compressed format, return the corresponding
  * non-compressed format.  For other formats, return the format as-is.
  */
