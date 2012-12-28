@@ -746,6 +746,15 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+                  "glReadPixels(incomplete framebuffer)" );
+      return;
+   }
+
    rb = _mesa_get_read_renderbuffer_for_format(ctx, format);
    if (rb == NULL) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -786,20 +795,11 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
       }
    }
 
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
    err = _mesa_error_check_format_and_type(ctx, format, type);
    if (err != GL_NO_ERROR) {
       _mesa_error(ctx, err, "glReadPixels(invalid format %s and/or type %s)",
                   _mesa_lookup_enum_by_nr(format),
                   _mesa_lookup_enum_by_nr(type));
-      return;
-   }
-
-   if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
-                  "glReadPixels(incomplete framebuffer)" );
       return;
    }
 
