@@ -1289,6 +1289,10 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
           ctx->Extensions.ARB_texture_rgb10_a2ui) {
          break; /* OK */
       }
+      if (type == GL_UNSIGNED_INT_2_10_10_10_REV && format == GL_RGB &&
+          ctx->API == API_OPENGLES2) {
+         break; /* OK by GL_EXT_texture_type_2_10_10_10_REV */
+      }
       return GL_INVALID_OPERATION;
 
    case GL_UNSIGNED_INT_24_8:
@@ -1402,6 +1406,10 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_SHORT_5_6_5:
             case GL_UNSIGNED_SHORT_5_6_5_REV:
                return GL_NO_ERROR;
+            case GL_UNSIGNED_INT_2_10_10_10_REV:
+               /* OK by GL_EXT_texture_type_2_10_10_10_REV */
+               return (ctx->API == API_OPENGLES2)
+                  ? GL_NO_ERROR : GL_INVALID_ENUM;
             case GL_HALF_FLOAT:
                return ctx->Extensions.ARB_half_float_pixel
                   ? GL_NO_ERROR : GL_INVALID_ENUM;
