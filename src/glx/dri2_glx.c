@@ -537,6 +537,32 @@ dri2Throttle(struct dri2_screen *psc,
    }
 }
 
+/**
+ * Asks the driver to flush any queued work necessary for serializing with the
+ * X command stream, and optionally the slightly more strict requirement of
+ * glFlush() equivalence (which would require flushing even if nothing had
+ * been drawn to a window system framebuffer, for example).
+ */
+static void
+dri2Flush(struct dri2_screen *psc,
+          __DRIcontext *ctx,
+          struct dri2_drawable *draw,
+          unsigned flags,
+          enum __DRI2throttleReason throttle_reason)
+{
+   if (ctx && psc->f && psc->f->base.version >= 4) {
+      psc->f->flush_with_flags(ctx, draw->driDrawable, flags, throttle_reason);
+   } else {
+      if (flags & __DRI2_FLUSH_CONTEXT)
+         glFlush();
+
+      if (psc->f)
+         psc->f->flush(draw->driDrawable);
+
+      dri2Throttle(psc, draw, throttle_reason);
+   }
+}
+
 static void
 __dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y,
 		    int width, int height,
@@ -546,6 +572,8 @@ __dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y,
    struct dri2_screen *psc = (struct dri2_screen *) pdraw->psc;
    XRectangle xrect;
    XserverRegion region;
+   __DRIcontext *ctx = dri2GetCurrentContext();
+   unsigned flags;
 
    /* Check we have the right attachments */
    if (!priv->have_back)
@@ -556,26 +584,10 @@ __dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y,
    xrect.width = width;
    xrect.height = height;
 
-   if (psc->f && psc->f->base.version >= 4) {
-      unsigned flags = (flush ? __DRI2_FLUSH_CONTEXT : 0) |
-                       __DRI2_FLUSH_DRAWABLE;
-      __DRIcontext *ctx = dri2GetCurrentContext();
-
-      if (ctx) {
-         (*psc->f->flush_with_flags)(ctx, priv->driDrawable, flags, reason);
-      }
-   }
-   else {
-      if (flush) {
-         glFlush();
-      }
-
-      if (psc->f) {
-         (*psc->f->flush) (priv->driDrawable);
-      }
-
-      dri2Throttle(psc, priv, reason);
-   }
+   flags = __DRI2_FLUSH_DRAWABLE;
+   if (flush)
+      flags |= __DRI2_FLUSH_CONTEXT;
+   dri2Flush(psc, ctx, priv, flags, __DRI2_THROTTLE_SWAPBUFFER);
 
    region = XFixesCreateRegion(psc->base.dpy, &xrect, 1);
    DRI2CopyRegion(psc->base.dpy, pdraw->xDrawable, region,
@@ -821,31 +833,11 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
        __dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height,
 			   __DRI2_THROTTLE_SWAPBUFFER, flush);
     } else {
-       if (psc->f && psc->f->base.version >= 4) {
-          unsigned flags = (flush ? __DRI2_FLUSH_CONTEXT : 0) |
-                           __DRI2_FLUSH_DRAWABLE;
-          __DRIcontext *ctx = dri2GetCurrentContext();
-
-          if (ctx) {
-             (*psc->f->flush_with_flags)(ctx, priv->driDrawable, flags,
-                                         __DRI2_THROTTLE_SWAPBUFFER);
-          }
-       }
-       else {
-          if (flush) {
-             glFlush();
-          }
-
-          if (psc->f) {
-             struct glx_context *gc = __glXGetCurrentContext();
-
-             if (gc) {
-                (*psc->f->flush)(priv->driDrawable);
-             }
-          }
-
-          dri2Throttle(psc, priv, __DRI2_THROTTLE_SWAPBUFFER);
-       }
+       __DRIcontext *ctx = dri2GetCurrentContext();
+       unsigned flags = __DRI2_FLUSH_DRAWABLE;
+       if (flush)
+          flags |= __DRI2_FLUSH_CONTEXT;
+       dri2Flush(psc, ctx, priv, flags, __DRI2_THROTTLE_SWAPBUFFER);
 
        ret = dri2XcbSwapBuffers(pdraw->psc->dpy, pdraw,
                                 target_msc, divisor, remainder);
