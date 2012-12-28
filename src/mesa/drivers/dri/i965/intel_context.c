@@ -366,8 +366,7 @@ intelFinish(struct gl_context * ctx)
 {
    struct brw_context *brw = brw_context(ctx);
 
-   intel_batchbuffer_flush(brw);
-   intel_flush_front(ctx);
+   intel_glFlush(ctx);
 
    if (brw->batch.last_bo)
       drm_intel_bo_wait_rendering(brw->batch.last_bo);
