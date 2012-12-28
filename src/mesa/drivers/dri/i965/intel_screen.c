@@ -151,29 +151,55 @@ static const __DRItexBufferExtension intelTexBufferExtension = {
 };
 
 static void
-intelDRI2Flush(__DRIdrawable *drawable)
+intel_dri2_flush_with_flags(__DRIcontext *cPriv,
+                            __DRIdrawable *dPriv,
+                            unsigned flags,
+                            enum __DRI2throttleReason reason)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct brw_context *brw = brw_context(ctx);
-   if (brw == NULL)
+   struct brw_context *brw = cPriv->driverPrivate;
+
+   if (!brw)
       return;
 
-   intel_resolve_for_dri2_flush(brw, drawable);
-   brw->need_throttle = true;
+   struct gl_context *ctx = &brw->ctx;
 
-   if (brw->batch.used)
-      intel_batchbuffer_flush(brw);
+   FLUSH_VERTICES(ctx, 0);
+
+   if (flags & __DRI2_FLUSH_DRAWABLE)
+      intel_resolve_for_dri2_flush(brw, dPriv);
+
+   if (reason == __DRI2_THROTTLE_SWAPBUFFER ||
+       reason == __DRI2_THROTTLE_FLUSHFRONT) {
+      brw->need_throttle = true;
+   }
+
+   intel_batchbuffer_flush(brw);
 
    if (INTEL_DEBUG & DEBUG_AUB) {
       aub_dump_bmp(ctx);
    }
 }
 
-static const struct __DRI2flushExtensionRec intelFlushExtension = {
-    .base = { __DRI2_FLUSH, 3 },
+/**
+ * Provides compatibility with loaders that only support the older (version
+ * 1-3) flush interface.
+ *
+ * That includes libGL up to Mesa 9.0, and the X Server at least up to 1.13.
+ */
+static void
+intel_dri2_flush(__DRIdrawable *drawable)
+{
+   intel_dri2_flush_with_flags(drawable->driContextPriv, drawable,
+                               __DRI2_FLUSH_DRAWABLE,
+                               __DRI2_THROTTLE_SWAPBUFFER);
+}
 
-    .flush              = intelDRI2Flush,
+static const struct __DRI2flushExtensionRec intelFlushExtension = {
+    .base = { __DRI2_FLUSH, 4 },
+
+    .flush              = intel_dri2_flush,
     .invalidate         = dri2InvalidateDrawable,
+    .flush_with_flags   = intel_dri2_flush_with_flags,
 };
 
 static struct intel_image_format intel_image_formats[] = {
