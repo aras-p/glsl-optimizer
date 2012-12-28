@@ -645,6 +645,10 @@ dri2_wait_gl(struct glx_context *gc)
    dri2_copy_drawable(priv, DRI2BufferFrontLeft, DRI2BufferFakeFrontLeft);
 }
 
+/**
+ * Called by the driver when it needs to update the real front buffer with the
+ * contents of its fake front buffer.
+ */
 static void
 dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 {
