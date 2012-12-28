@@ -2347,6 +2347,8 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
                          GLint width, GLint height, GLint border )
 {
    GLint baseFormat;
+   struct gl_renderbuffer *rb;
+   GLenum rb_internal_format;
 
    /* check target */
    if (!legal_texsubimage_target(ctx, dimensions, target)) {
@@ -2391,6 +2393,13 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
+   rb = _mesa_get_read_renderbuffer_for_format(ctx, internalFormat);
+   if (rb == NULL) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyTexImage%dD(read buffer)", dimensions);
+      return GL_TRUE;
+   }
+
    /* OpenGL ES 1.x and OpenGL ES 2.0 impose additional restrictions on the
     * internalFormat.
     */
@@ -2416,6 +2425,8 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
+   rb_internal_format = rb->InternalFormat;
+
    if (!_mesa_source_buffer_exists(ctx, baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCopyTexImage%dD(missing readbuffer)", dimensions);
@@ -2430,13 +2441,20 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
     *      integer format and the read color buffer is an integer format."
     */
    if (_mesa_is_color_format(internalFormat)) {
-      struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-
-      if (_mesa_is_enum_format_integer(rb->InternalFormat) !=
-	  _mesa_is_enum_format_integer(internalFormat)) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION,
-		     "glCopyTexImage%dD(integer vs non-integer)", dimensions);
-	 return GL_TRUE;
+      bool is_int = _mesa_is_enum_format_integer(internalFormat);
+      bool is_rbint = _mesa_is_enum_format_integer(rb_internal_format);
+      if (is_int || is_rbint) {
+         if (is_int != is_rbint) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glCopyTexImage%dD(integer vs non-integer)", dimensions);
+            return GL_TRUE;
+         } else if (_mesa_is_gles(ctx) &&
+                    _mesa_is_enum_format_unsigned_int(internalFormat) !=
+                      _mesa_is_enum_format_unsigned_int(rb_internal_format)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glCopyTexImage%dD(signed vs unsigned integer)", dimensions);
+            return GL_TRUE;
+         }
       }
    }
 
