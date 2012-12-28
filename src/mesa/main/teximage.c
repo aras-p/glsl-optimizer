@@ -3507,7 +3507,8 @@ compressed_subtexture_error_check(struct gl_context *ctx, GLint dims,
    GLint expectedSize;
    GLboolean targetOK;
 
-   if (dims == 2) {
+   switch (dims) {
+   case 2:
       switch (target) {
       case GL_TEXTURE_2D:
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
@@ -3520,12 +3521,17 @@ compressed_subtexture_error_check(struct gl_context *ctx, GLint dims,
          break;
       default:
          targetOK = GL_FALSE;
+         break;
       }
-   }
-   else {
-      assert(dims == 1 || dims == 3);
-      /* no 1D or 3D compressed textures at this time */
+      break;
+   case 3:
+      targetOK = (target == GL_TEXTURE_2D_ARRAY);
+      break;
+   default:
+      assert(dims == 1);
+      /* no 1D compressed textures at this time */
       targetOK = GL_FALSE;
+      break;
    }
  
    if (!targetOK) {

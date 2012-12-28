@@ -4441,9 +4441,9 @@ _mesa_store_compressed_teximage(struct gl_context *ctx, GLuint dims,
                                 struct gl_texture_image *texImage,
                                 GLsizei imageSize, const GLvoid *data)
 {
-   /* only 2D compressed images are supported at this time */
-   if (dims != 2) {
-      _mesa_problem(ctx, "Unexpected glCompressedTexImage1D/3D call");
+   /* only 2D and 3D compressed images are supported at this time */
+   if (dims == 1) {
+      _mesa_problem(ctx, "Unexpected glCompressedTexImage1D call");
       return;
    }
 
@@ -4454,11 +4454,11 @@ _mesa_store_compressed_teximage(struct gl_context *ctx, GLuint dims,
    ASSERT(texImage);
    ASSERT(texImage->Width > 0);
    ASSERT(texImage->Height > 0);
-   ASSERT(texImage->Depth == 1);
+   ASSERT(texImage->Depth > 0);
 
    /* allocate storage for texture data */
    if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage)) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage%uD", dims);
       return;
    }
 
@@ -4487,9 +4487,10 @@ _mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
    const GLubyte *src;
    const gl_format texFormat = texImage->TexFormat;
    GLuint bw, bh;
+   GLuint slice;
 
-   if (dims != 2) {
-      _mesa_problem(ctx, "Unexpected 1D/3D compressed texsubimage call");
+   if (dims == 1) {
+      _mesa_problem(ctx, "Unexpected 1D compressed texsubimage call");
       return;
    }
 
@@ -4505,27 +4506,30 @@ _mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
    srcRowStride = _mesa_format_row_stride(texFormat, width);
    src = (const GLubyte *) data;
 
-   /* Map dest texture buffer */
-   ctx->Driver.MapTextureImage(ctx, texImage, 0,
-                               xoffset, yoffset, width, height,
-                               GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT,
-                               &dstMap, &dstRowStride);
+   for (slice = 0; slice < depth; slice++) {
+      /* Map dest texture buffer */
+      ctx->Driver.MapTextureImage(ctx, texImage, slice + zoffset,
+                                  xoffset, yoffset, width, height,
+                                  GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT,
+                                  &dstMap, &dstRowStride);
 
-   if (dstMap) {
-      bytesPerRow = srcRowStride;  /* bytes per row of blocks */
-      rows = (height + bh - 1) / bh;  /* rows in blocks */
+      if (dstMap) {
+         bytesPerRow = srcRowStride;  /* bytes per row of blocks */
+         rows = (height + bh - 1) / bh;  /* rows in blocks */
 
-      /* copy rows of blocks */
-      for (i = 0; i < rows; i++) {
-         memcpy(dstMap, src, bytesPerRow);
-         dstMap += dstRowStride;
-         src += srcRowStride;
+         /* copy rows of blocks */
+         for (i = 0; i < rows; i++) {
+            memcpy(dstMap, src, bytesPerRow);
+            dstMap += dstRowStride;
+            src += srcRowStride;
+         }
+
+         ctx->Driver.UnmapTextureImage(ctx, texImage, slice + zoffset);
       }
-
-      ctx->Driver.UnmapTextureImage(ctx, texImage, 0);
-   }
-   else {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage2D");
+      else {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage%uD",
+                     dims);
+      }
    }
 
    _mesa_unmap_teximage_pbo(ctx, &ctx->Unpack);
