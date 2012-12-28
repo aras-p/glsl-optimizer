@@ -42,6 +42,7 @@
 #include "framebuffer.h"
 #include "renderbuffer.h"
 #include "texobj.h"
+#include "glformats.h"
 
 
 
@@ -894,6 +895,26 @@ _mesa_get_color_read_type(struct gl_context *ctx)
       return GL_UNSIGNED_SHORT_5_6_5_REV;
    default:
       return GL_UNSIGNED_BYTE;
+   }
+}
+
+
+/**
+ * Returns the read renderbuffer for the specified format.
+ */
+struct gl_renderbuffer *
+_mesa_get_read_renderbuffer_for_format(struct gl_context *ctx,
+                                       GLenum format)
+{
+   struct gl_framebuffer *rfb = ctx->ReadBuffer;
+
+   if (_mesa_is_color_format(format)) {
+      return rfb->Attachment[rfb->_ColorReadBufferIndex].Renderbuffer;
+   } else if (_mesa_is_depth_format(format) ||
+              _mesa_is_depthstencil_format(format)) {
+      return rfb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   } else {
+      return rfb->Attachment[BUFFER_STENCIL].Renderbuffer;
    }
 }
 
