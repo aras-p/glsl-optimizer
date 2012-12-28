@@ -271,7 +271,8 @@ _mesa_bytes_per_pixel(GLenum format, GLenum type)
    case GL_UNSIGNED_INT_10_10_10_2:
    case GL_UNSIGNED_INT_2_10_10_10_REV:
       if (format == GL_RGBA || format == GL_BGRA || format == GL_ABGR_EXT ||
-          format == GL_RGBA_INTEGER_EXT || format == GL_BGRA_INTEGER_EXT)
+          format == GL_RGBA_INTEGER_EXT || format == GL_BGRA_INTEGER_EXT ||
+          format == GL_RGB)
          return sizeof(GLuint);
       else
          return -1;
