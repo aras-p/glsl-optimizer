@@ -1,11 +1,11 @@
 if HAVE_SHARED_GLAPI
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = \
-	-I$(top_builddir)/src/gtest/include \
-	-I$(top_builddir)/src/mapi \
-	-I$(top_builddir)/src/mesa \
-	-I$(top_builddir)/src/glx \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/src/gtest/include \
+	-I$(top_srcdir)/src/mapi \
+	-I$(top_srcdir)/src/mesa \
+	-I$(top_srcdir)/src/glx \
+	-I$(top_srcdir)/include \
 	$(X11_CFLAGS)
 
 TESTS = glx-test

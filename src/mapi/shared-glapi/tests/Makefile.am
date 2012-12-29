@@ -1,9 +1,9 @@
 if HAVE_SHARED_GLAPI
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = \
-	-I$(top_builddir)/src/gtest/include \
-	-I$(top_builddir)/src/mapi \
-	-I$(top_builddir)/include
+	-I$(top_srcdir)/src/gtest/include \
+	-I$(top_srcdir)/src/mapi \
+	-I$(top_srcdir)/include
 
 TESTS = shared-glapi-test
 check_PROGRAMS = shared-glapi-test
