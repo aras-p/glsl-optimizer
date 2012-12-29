@@ -107,6 +107,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_texture_cube_map_array = true;
       ctx->Extensions.OES_depth_texture_cube_map = true;
       ctx->Extensions.ARB_shading_language_packing = true;
+      ctx->Extensions.ARB_texture_multisample = true;
    }
 
    if (intel->gen >= 5)
