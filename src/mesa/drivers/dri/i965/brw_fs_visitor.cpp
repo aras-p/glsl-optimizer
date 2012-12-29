@@ -944,6 +944,8 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txf:
       inst = emit(SHADER_OPCODE_TXF, dst);
       break;
+   default:
+      fail("unrecognized texture opcode");
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
@@ -970,7 +972,8 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
  */
 fs_inst *
 fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
-			      fs_reg shadow_c, fs_reg lod, fs_reg lod2)
+                              fs_reg shadow_c, fs_reg lod, fs_reg lod2,
+                              fs_reg sample_index)
 {
    int mlen = 0;
    int base_mrf = 2;
@@ -1068,10 +1071,18 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       break;
    case ir_txf:
       mlen = header_present + 4 * reg_width;
-
-      emit(MOV(fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD),
-               lod));
+      emit(MOV(fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD), lod));
       inst = emit(SHADER_OPCODE_TXF, dst);
+      break;
+   case ir_txf_ms:
+      mlen = header_present + 4 * reg_width;
+
+      /* lod */
+      emit(MOV(fs_reg(MRF, base_mrf + mlen - reg_width, BRW_REGISTER_TYPE_UD), fs_reg(0)));
+      /* sample index */
+      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), sample_index));
+      mlen += reg_width;
+      inst = emit(SHADER_OPCODE_TXF_MS, dst);
       break;
    }
    inst->base_mrf = base_mrf;
@@ -1087,7 +1098,8 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 
 fs_inst *
 fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
-			      fs_reg shadow_c, fs_reg lod, fs_reg lod2)
+                              fs_reg shadow_c, fs_reg lod, fs_reg lod2,
+                              fs_reg sample_index)
 {
    int mlen = 0;
    int base_mrf = 2;
@@ -1183,10 +1195,31 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 	 mlen += reg_width;
       }
       break;
+   case ir_txf_ms:
+      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), sample_index));
+      mlen += reg_width;
+
+      /* constant zero MCS; we arrange to never actually have a compressed
+       * multisample surface here for now. TODO: issue ld_mcs to get this first,
+       * if we ever support texturing from compressed multisample surfaces
+       */
+      emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), fs_reg(0u)));
+      mlen += reg_width;
+
+      /* there is no offsetting for this message; just copy in the integer
+       * texture coordinates
+       */
+      for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+         emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_D),
+                  coordinate));
+         coordinate.reg_offset++;
+         mlen += reg_width;
+      }
+      break;
    }
 
    /* Set up the coordinate (except for cases where it was done above) */
-   if (ir->op != ir_txd && ir->op != ir_txs && ir->op != ir_txf) {
+   if (ir->op != ir_txd && ir->op != ir_txs && ir->op != ir_txf && ir->op != ir_txf_ms) {
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
 	 emit(MOV(fs_reg(MRF, base_mrf + mlen), coordinate));
 	 coordinate.reg_offset++;
@@ -1202,6 +1235,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txl: inst = emit(SHADER_OPCODE_TXL, dst); break;
    case ir_txd: inst = emit(SHADER_OPCODE_TXD, dst); break;
    case ir_txf: inst = emit(SHADER_OPCODE_TXF, dst); break;
+   case ir_txf_ms: inst = emit(SHADER_OPCODE_TXF_MS, dst); break;
    case ir_txs: inst = emit(SHADER_OPCODE_TXS, dst); break;
    }
    inst->base_mrf = base_mrf;
@@ -1351,7 +1385,7 @@ fs_visitor::visit(ir_texture *ir)
       shadow_comparitor = this->result;
    }
 
-   fs_reg lod, lod2;
+   fs_reg lod, lod2, sample_index;
    switch (ir->op) {
    case ir_tex:
       break;
@@ -1372,6 +1406,10 @@ fs_visitor::visit(ir_texture *ir)
       ir->lod_info.lod->accept(this);
       lod = this->result;
       break;
+   case ir_txf_ms:
+      ir->lod_info.sample_index->accept(this);
+      sample_index = this->result;
+      break;
    };
 
    /* Writemasking doesn't eliminate channels on SIMD8 texture
@@ -1381,10 +1419,10 @@ fs_visitor::visit(ir_texture *ir)
 
    if (intel->gen >= 7) {
       inst = emit_texture_gen7(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2);
+                               lod, lod2, sample_index);
    } else if (intel->gen >= 5) {
       inst = emit_texture_gen5(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2);
+                               lod, lod2, sample_index);
    } else {
       inst = emit_texture_gen4(ir, dst, coordinate, shadow_comparitor,
                                lod, lod2);
