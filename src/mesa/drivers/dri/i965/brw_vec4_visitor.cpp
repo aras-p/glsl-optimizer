@@ -2098,8 +2098,8 @@ vec4_visitor::visit(ir_texture *ir)
       shadow_comparitor = this->result;
    }
 
-   const glsl_type *lod_type;
-   src_reg lod, dPdx, dPdy;
+   const glsl_type *lod_type, *sample_index_type;
+   src_reg lod, dPdx, dPdy, sample_index;
    switch (ir->op) {
    case ir_tex:
       lod = src_reg(0.0f);
@@ -2111,6 +2111,11 @@ vec4_visitor::visit(ir_texture *ir)
       ir->lod_info.lod->accept(this);
       lod = this->result;
       lod_type = ir->lod_info.lod->type;
+      break;
+   case ir_txf_ms:
+      ir->lod_info.sample_index->accept(this);
+      sample_index = this->result;
+      sample_index_type = ir->lod_info.sample_index->type;
       break;
    case ir_txd:
       ir->lod_info.grad.dPdx->accept(this);
@@ -2136,6 +2141,9 @@ vec4_visitor::visit(ir_texture *ir)
       break;
    case ir_txf:
       inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXF);
+      break;
+   case ir_txf_ms:
+      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXF_MS);
       break;
    case ir_txs:
       inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXS);
@@ -2223,8 +2231,17 @@ vec4_visitor::visit(ir_texture *ir)
 	 }
 	 emit(MOV(dst_reg(MRF, mrf, lod_type, writemask), lod));
       } else if (ir->op == ir_txf) {
-	 emit(MOV(dst_reg(MRF, param_base, lod_type, WRITEMASK_W),
-		  lod));
+         emit(MOV(dst_reg(MRF, param_base, lod_type, WRITEMASK_W), lod));
+      } else if (ir->op == ir_txf_ms) {
+         emit(MOV(dst_reg(MRF, param_base + 1, sample_index_type, WRITEMASK_X),
+                  sample_index));
+         inst->mlen++;
+
+         /* on Gen7, there is an additional MCS parameter here after SI,
+          * but we don't bother to emit it since it's always zero. If
+          * we start supporting texturing from CMS surfaces, this will have
+          * to change
+          */
       } else if (ir->op == ir_txd) {
 	 const glsl_type *type = lod_type;
 
