@@ -1329,6 +1329,9 @@ intel_miptree_unmap_etc(struct intel_context *intel,
    uint32_t image_y;
    intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
 
+   image_x += map->x;
+   image_y += map->y;
+
    uint8_t *dst = intel_region_map(intel, mt->region, map->mode)
                 + image_y * mt->region->pitch * mt->region->cpp
                 + image_x * mt->region->cpp;
