@@ -3641,7 +3641,11 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
                rgba[i][rDst] = ((p      ) & 0x3ff) * rs;
                rgba[i][gDst] = ((p >> 10) & 0x3ff) * gs;
                rgba[i][bDst] = ((p >> 20) & 0x3ff) * bs;
-               rgba[i][aDst] = ((p >> 30)        ) * as;
+               if (aSrc < 0) {
+                  rgba[i][aDst] = 1.0F;
+               } else {
+                  rgba[i][aDst] = (p >> 30) * as;
+               }
             }
          }
          else {
@@ -3652,7 +3656,11 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
                rgba[i][rDst] = ((p      ) & 0x3ff) * rs;
                rgba[i][gDst] = ((p >> 10) & 0x3ff) * gs;
                rgba[i][bDst] = ((p >> 20) & 0x3ff) * bs;
-               rgba[i][aDst] = ((p >> 30)        ) * as;
+               if (aSrc < 0) {
+                  rgba[i][aDst] = 1.0F;
+               } else {
+                  rgba[i][aDst] = (p >> 30) * as;
+               }
             }
          }
          break;
