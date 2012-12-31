@@ -110,7 +110,7 @@ _mesa_reference_sampler_object_(struct gl_context *ctx,
 /**
  * Initialize the fields of the given sampler object.
  */
-void
+static void
 _mesa_init_sampler_object(struct gl_sampler_object *sampObj, GLuint name)
 {
    sampObj->Name = name;
@@ -151,7 +151,7 @@ _mesa_new_sampler_object(struct gl_context *ctx, GLuint name)
 /**
  * Fallback for ctx->Driver.DeleteSamplerObject();
  */
-void
+static void
 _mesa_delete_sampler_object(struct gl_context *ctx,
                             struct gl_sampler_object *sampObj)
 {

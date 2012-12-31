@@ -63,15 +63,8 @@ _mesa_reference_sampler_object(struct gl_context *ctx,
 }
 
 
-extern void
-_mesa_init_sampler_object(struct gl_sampler_object *sampObj, GLuint name);
-
 extern struct gl_sampler_object *
 _mesa_new_sampler_object(struct gl_context *ctx, GLuint name);
-
-extern void
-_mesa_delete_sampler_object(struct gl_context *ctx,
-                            struct gl_sampler_object *sampObj);
 
 extern void
 _mesa_init_sampler_object_functions(struct dd_function_table *driver);
