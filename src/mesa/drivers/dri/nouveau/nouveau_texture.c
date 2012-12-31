@@ -501,7 +501,7 @@ nouveau_teximage(struct gl_context *ctx, GLint dims,
 
 	if (compressed)
 		pixels = _mesa_validate_pbo_compressed_teximage(ctx,
-			imageSize,
+			dims, imageSize,
 			pixels, packing, "glCompressedTexImage");
 	else
 		pixels = _mesa_validate_pbo_teximage(ctx,
@@ -576,7 +576,7 @@ nouveau_texsubimage(struct gl_context *ctx, GLint dims,
 
 	if (compressed)
 		pixels = _mesa_validate_pbo_compressed_teximage(ctx,
-				imageSize,
+				dims, imageSize,
 				pixels, packing, "glCompressedTexSubImage");
 	else
 		pixels = _mesa_validate_pbo_teximage(ctx,

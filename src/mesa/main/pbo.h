@@ -81,7 +81,8 @@ _mesa_validate_pbo_teximage(struct gl_context *ctx, GLuint dimensions,
 
 extern const GLvoid *
 _mesa_validate_pbo_compressed_teximage(struct gl_context *ctx,
-                                    GLsizei imageSize, const GLvoid *pixels,
+                                    GLuint dimensions, GLsizei imageSize,
+                                    const GLvoid *pixels,
                                     const struct gl_pixelstore_attrib *packing,
                                     const char *funcName);
 

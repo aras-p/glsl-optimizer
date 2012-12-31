@@ -4496,9 +4496,9 @@ _mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
    _mesa_get_format_block_size(texFormat, &bw, &bh);
 
    /* get pointer to src pixels (may be in a pbo which we'll map here) */
-   data = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, data,
+   data = _mesa_validate_pbo_compressed_teximage(ctx, dims, imageSize, data,
                                                  &ctx->Unpack,
-                                                 "glCompressedTexSubImage2D");
+                                                 "glCompressedTexSubImage");
    if (!data)
       return;
 
