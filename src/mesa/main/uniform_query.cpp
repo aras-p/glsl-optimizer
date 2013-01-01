@@ -1028,7 +1028,7 @@ _mesa_get_uniform_location(struct gl_context *ctx,
     * array_elements is zero and offset >= 0.
     */
    if (array_lookup
-	 && offset >= shProg->UniformStorage[location].array_elements) {
+       && offset >= (long) shProg->UniformStorage[location].array_elements) {
       return GL_INVALID_INDEX;
    }
 
