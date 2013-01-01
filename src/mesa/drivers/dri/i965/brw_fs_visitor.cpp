@@ -2393,8 +2393,6 @@ fs_visitor::emit(fs_inst *inst)
 {
    if (force_uncompressed_stack > 0)
       inst->force_uncompressed = true;
-   else if (force_sechalf_stack > 0)
-      inst->force_sechalf = true;
 
    inst->annotation = this->current_annotation;
    inst->ir = this->base_ir;
@@ -2599,12 +2597,11 @@ fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
 	 inst->saturate = c->key.clamp_fragment_color;
 	 pop_force_uncompressed();
 
-	 push_force_sechalf();
 	 color.sechalf = true;
 	 inst = emit(MOV(fs_reg(MRF, first_color_mrf + index + 4, color.type),
                          color));
+	 inst->force_sechalf = true;
 	 inst->saturate = c->key.clamp_fragment_color;
-	 pop_force_sechalf();
 	 color.sechalf = false;
       }
    }
@@ -2923,7 +2920,6 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->nr_params_remap = 0;
 
    this->force_uncompressed_stack = 0;
-   this->force_sechalf_stack = 0;
 
    this->spilled_any_registers = false;
 

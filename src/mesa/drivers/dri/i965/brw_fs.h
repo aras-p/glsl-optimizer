@@ -331,8 +331,6 @@ public:
 
    void push_force_uncompressed();
    void pop_force_uncompressed();
-   void push_force_sechalf();
-   void pop_force_sechalf();
 
    void emit_dummy_fs();
    fs_reg *emit_fragcoord_interpolation(ir_variable *ir);
@@ -489,7 +487,6 @@ public:
    const unsigned dispatch_width; /**< 8 or 16 */
 
    int force_uncompressed_stack;
-   int force_sechalf_stack;
 };
 
 /**

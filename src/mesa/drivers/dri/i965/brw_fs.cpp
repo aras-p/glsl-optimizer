@@ -691,19 +691,6 @@ fs_visitor::pop_force_uncompressed()
    assert(force_uncompressed_stack >= 0);
 }
 
-void
-fs_visitor::push_force_sechalf()
-{
-   force_sechalf_stack++;
-}
-
-void
-fs_visitor::pop_force_sechalf()
-{
-   force_sechalf_stack--;
-   assert(force_sechalf_stack >= 0);
-}
-
 /**
  * Returns true if the instruction has a flag that means it won't
  * update an entire destination register.
@@ -3311,7 +3298,6 @@ fs_visitor::run()
       }
    }
    assert(force_uncompressed_stack == 0);
-   assert(force_sechalf_stack == 0);
 
    /* This must come after all optimization and register allocation, since
     * it inserts dead code that happens to have side effects, and it does
