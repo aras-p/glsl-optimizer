@@ -364,9 +364,10 @@ fetch_signed_l_latc1(const GLubyte *map, const GLuint imageOffsets[],
                      GLint rowStride, GLint i, GLint j, GLint k,
                      GLfloat *texel)
 {
-   GLubyte red;
+   GLbyte red;
    GLuint sliceOffset = k ? imageOffsets[k] / 2 : 0;
-   unsigned_fetch_texel_rgtc(rowStride,  map + sliceOffset, i, j, &red, 1);
+   signed_fetch_texel_rgtc(rowStride, (GLbyte *) map + sliceOffset,
+                           i, j, &red, 1);
    texel[RCOMP] =
    texel[GCOMP] =
    texel[BCOMP] = BYTE_TO_FLOAT(red);
