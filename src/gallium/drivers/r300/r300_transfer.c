@@ -86,7 +86,10 @@ static void r300_copy_into_tiled_texture(struct pipe_context *ctx,
     struct pipe_transfer *transfer = (struct pipe_transfer*)r300transfer;
     struct pipe_resource *tex = transfer->resource;
     struct pipe_box src_box;
-    u_box_origin_2d(transfer->box.width, transfer->box.height, &src_box);
+
+    u_box_3d(0, 0, 0,
+             transfer->box.width, transfer->box.height, transfer->box.depth,
+             &src_box);
 
     ctx->resource_copy_region(ctx, tex, transfer->level,
                               transfer->box.x, transfer->box.y, transfer->box.z,
@@ -107,7 +110,6 @@ r300_texture_transfer_map(struct pipe_context *ctx,
     struct r300_context *r300 = r300_context(ctx);
     struct r300_resource *tex = r300_resource(texture);
     struct r300_transfer *trans;
-    struct pipe_resource base;
     boolean referenced_cs, referenced_hw;
     enum pipe_format format = tex->b.b.format;
     char *map;
@@ -135,6 +137,8 @@ r300_texture_transfer_map(struct pipe_context *ctx,
         if (tex->tex.microtile || tex->tex.macrotile[level] ||
             (referenced_hw && !(usage & PIPE_TRANSFER_READ) &&
              r300_is_blit_supported(texture->format))) {
+            struct pipe_resource base;
+
             if (r300->blitter->running) {
                 fprintf(stderr, "r300: ERROR: Blitter recursion in texture_get_transfer.\n");
                 os_break();
@@ -149,6 +153,15 @@ r300_texture_transfer_map(struct pipe_context *ctx,
             base.array_size = 1;
             base.usage = PIPE_USAGE_STAGING;
             base.flags = R300_RESOURCE_FLAG_TRANSFER;
+
+            /* We must set the correct texture target and dimensions if needed for a 3D transfer. */
+            if (box->depth > 1 && util_max_layer(texture, level) > 0) {
+                base.target = texture->target;
+
+                if (base.target == PIPE_TEXTURE_3D) {
+                    base.depth0 = util_next_power_of_two(box->depth);
+                }
+            }
 
             /* Create the temporary texture. */
             trans->linear_texture = r300_resource(
@@ -178,6 +191,8 @@ r300_texture_transfer_map(struct pipe_context *ctx,
             /* Set the stride. */
             trans->transfer.stride =
                     trans->linear_texture->tex.stride_in_bytes[0];
+            trans->transfer.layer_stride =
+                    trans->linear_texture->tex.layer_size_in_bytes[0];
 
             if (usage & PIPE_TRANSFER_READ) {
                 /* We cannot map a tiled texture directly because the data is
@@ -190,6 +205,7 @@ r300_texture_transfer_map(struct pipe_context *ctx,
         } else {
             /* Unpipelined transfer. */
             trans->transfer.stride = tex->tex.stride_in_bytes[level];
+            trans->transfer.layer_stride = tex->tex.layer_size_in_bytes[level];
             trans->offset = r300_texture_get_offset(tex, level, box->z);
 
             if (referenced_cs &&
