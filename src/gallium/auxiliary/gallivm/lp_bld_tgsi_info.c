@@ -47,7 +47,7 @@ struct analysis_context
    struct lp_tgsi_info *info;
 
    unsigned num_imms;
-   float imm[32][4];
+   float imm[128][4];
 
    struct lp_tgsi_channel_info temp[32][4];
 };
