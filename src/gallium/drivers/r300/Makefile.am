@@ -13,6 +13,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/src/glsl \
 	-I$(top_srcdir)/src/mapi \
+	$(VISIBILITY_CFLAGS) \
 	$(LLVM_CFLAGS) \
 	$(RADEON_CFLAGS) \
 	$(DEFINES) \
