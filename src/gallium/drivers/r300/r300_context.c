@@ -428,7 +428,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
         rtempl.target = PIPE_TEXTURE_2D;
         rtempl.format = PIPE_FORMAT_I8_UNORM;
-        rtempl.bind = PIPE_BIND_SAMPLER_VIEW;
         rtempl.usage = PIPE_USAGE_IMMUTABLE;
         rtempl.width0 = 1;
         rtempl.height0 = 1;

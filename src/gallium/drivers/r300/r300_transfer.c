@@ -120,34 +120,15 @@ r300_texture_transfer_map(struct pipe_context *ctx,
                 os_break();
             }
 
+            memset(&base, 0, sizeof(base));
             base.target = PIPE_TEXTURE_2D;
             base.format = texture->format;
             base.width0 = box->width;
             base.height0 = box->height;
             base.depth0 = 1;
             base.array_size = 1;
-            base.last_level = 0;
-            base.nr_samples = 0;
             base.usage = PIPE_USAGE_STAGING;
-            base.bind = 0;
-            if (usage & PIPE_TRANSFER_READ) {
-                base.bind |= PIPE_BIND_SAMPLER_VIEW;
-            }
-            if (usage & PIPE_TRANSFER_WRITE) {
-                base.bind |= PIPE_BIND_RENDER_TARGET;
-            }
             base.flags = R300_RESOURCE_FLAG_TRANSFER;
-
-            /* For texture reading, the temporary (detiled) texture is used as
-             * a render target when blitting from a tiled texture. */
-            if (usage & PIPE_TRANSFER_READ) {
-                base.bind |= PIPE_BIND_RENDER_TARGET;
-            }
-            /* For texture writing, the temporary texture is used as a sampler
-             * when blitting into a tiled texture. */
-            if (usage & PIPE_TRANSFER_WRITE) {
-                base.bind |= PIPE_BIND_SAMPLER_VIEW;
-            }
 
             /* Create the temporary texture. */
             trans->linear_texture = r300_resource(
