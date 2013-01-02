@@ -36,7 +36,6 @@ C_SOURCES := \
 	draw/draw_vertex.c \
 	draw/draw_vs.c \
 	draw/draw_vs_exec.c \
-	draw/draw_vs_ppc.c \
 	draw/draw_vs_variant.c \
 	os/os_misc.c \
 	os/os_time.c \
@@ -64,7 +63,6 @@ C_SOURCES := \
 	rbug/rbug_shader.c \
 	rtasm/rtasm_cpu.c \
 	rtasm/rtasm_execmem.c \
-	rtasm/rtasm_ppc.c \
 	rtasm/rtasm_x86sse.c \
 	tgsi/tgsi_build.c \
 	tgsi/tgsi_dump.c \
@@ -72,7 +70,6 @@ C_SOURCES := \
 	tgsi/tgsi_info.c \
 	tgsi/tgsi_iterate.c \
 	tgsi/tgsi_parse.c \
-	tgsi/tgsi_ppc.c \
 	tgsi/tgsi_sanity.c \
 	tgsi/tgsi_scan.c \
 	tgsi/tgsi_strings.c \
