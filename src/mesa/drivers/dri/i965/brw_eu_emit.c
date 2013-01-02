@@ -2397,6 +2397,7 @@ brw_set_uip_jip(struct brw_compile *p)
 
 	 assert(insn->bits3.break_cont.uip != 0);
 	 assert(insn->bits3.break_cont.jip != 0);
+	 break;
 
       case BRW_OPCODE_ENDIF:
          if (block_end_ip == 0)
