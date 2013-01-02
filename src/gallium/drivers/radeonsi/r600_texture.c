@@ -312,7 +312,7 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 		resource.flags = R600_RESOURCE_FLAG_TRANSFER;
 
 		/* We must set the correct texture target and dimensions if needed for a 3D transfer. */
-		if (box->depth > 1 && u_max_layer(texture, level) > 0)
+		if (box->depth > 1 && util_max_layer(texture, level) > 0)
 			resource.target = texture->target;
 		else
 			resource.target = PIPE_TEXTURE_2D;
@@ -554,8 +554,8 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
 	unsigned level = surf_tmpl->u.tex.level;
 
-	assert(surf_tmpl->u.tex.first_layer <= u_max_layer(texture, surf_tmpl->u.tex.level));
-	assert(surf_tmpl->u.tex.last_layer <= u_max_layer(texture, surf_tmpl->u.tex.level));
+	assert(surf_tmpl->u.tex.first_layer <= util_max_layer(texture, surf_tmpl->u.tex.level));
+	assert(surf_tmpl->u.tex.last_layer <= util_max_layer(texture, surf_tmpl->u.tex.level));
 	assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
 	if (surface == NULL)
 		return NULL;

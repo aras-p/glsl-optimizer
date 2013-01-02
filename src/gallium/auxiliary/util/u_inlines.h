@@ -582,6 +582,22 @@ util_copy_constant_buffer(struct pipe_constant_buffer *dst,
    }
 }
 
+static INLINE unsigned
+util_max_layer(struct pipe_resource *r, unsigned level)
+{
+   switch (r->target) {
+   case PIPE_TEXTURE_CUBE:
+      return 6 - 1;
+   case PIPE_TEXTURE_3D:
+      return u_minify(r->depth0, level) - 1;
+   case PIPE_TEXTURE_1D_ARRAY:
+   case PIPE_TEXTURE_2D_ARRAY:
+   case PIPE_TEXTURE_CUBE_ARRAY:
+      return r->array_size - 1;
+   default:
+      return 0;
+   }
+}
 
 #ifdef __cplusplus
 }

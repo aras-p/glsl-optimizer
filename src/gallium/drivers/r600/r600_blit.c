@@ -150,7 +150,7 @@ void r600_blit_decompress_depth(struct pipe_context *ctx,
 
 		/* The smaller the mipmap level, the less layers there are
 		 * as far as 3D textures are concerned. */
-		max_layer = u_max_layer(&texture->resource.b.b, level);
+		max_layer = util_max_layer(&texture->resource.b.b, level);
 		checked_last_layer = last_layer < max_layer ? last_layer : max_layer;
 
 		for (layer = first_layer; layer <= checked_last_layer; layer++) {
@@ -222,7 +222,7 @@ static void r600_blit_decompress_depth_in_place(struct r600_context *rctx,
 
 		/* The smaller the mipmap level, the less layers there are
 		 * as far as 3D textures are concerned. */
-		max_layer = u_max_layer(&texture->resource.b.b, level);
+		max_layer = util_max_layer(&texture->resource.b.b, level);
 		checked_last_layer = last_layer < max_layer ? last_layer : max_layer;
 
 		for (layer = first_layer; layer <= checked_last_layer; layer++) {
@@ -273,11 +273,11 @@ void r600_decompress_depth_textures(struct r600_context *rctx,
 		    r600_can_read_depth(tex)) {
 			r600_blit_decompress_depth_in_place(rctx, tex,
 						   view->u.tex.first_level, view->u.tex.last_level,
-						   0, u_max_layer(&tex->resource.b.b, view->u.tex.first_level));
+						   0, util_max_layer(&tex->resource.b.b, view->u.tex.first_level));
 		} else {
 			r600_blit_decompress_depth(&rctx->context, tex, NULL,
 						   view->u.tex.first_level, view->u.tex.last_level,
-						   0, u_max_layer(&tex->resource.b.b, view->u.tex.first_level),
+						   0, util_max_layer(&tex->resource.b.b, view->u.tex.first_level),
 						   0, u_max_sample(&tex->resource.b.b));
 		}
 	}
@@ -319,7 +319,7 @@ static void r600_blit_decompress_color(struct pipe_context *ctx,
 
 		/* The smaller the mipmap level, the less layers there are
 		 * as far as 3D textures are concerned. */
-		max_layer = u_max_layer(&rtex->resource.b.b, level);
+		max_layer = util_max_layer(&rtex->resource.b.b, level);
 		checked_last_layer = last_layer < max_layer ? last_layer : max_layer;
 
 		for (layer = first_layer; layer <= checked_last_layer; layer++) {
@@ -366,7 +366,7 @@ void r600_decompress_color_textures(struct r600_context *rctx,
 
 		r600_blit_decompress_color(&rctx->context, tex,
 					   view->u.tex.first_level, view->u.tex.last_level,
-					   0, u_max_layer(&tex->resource.b.b, view->u.tex.first_level));
+					   0, util_max_layer(&tex->resource.b.b, view->u.tex.first_level));
 	}
 }
 
