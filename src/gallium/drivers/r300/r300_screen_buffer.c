@@ -174,8 +174,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 
     /* Alloc constant buffers and SWTCL buffers in RAM. */
     if (templ->bind & PIPE_BIND_CONSTANT_BUFFER ||
-        (!r300screen->caps.has_tcl &&
-         (templ->bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)))) {
+        !r300screen->caps.has_tcl) {
         rbuf->malloced_buffer = align_malloc(templ->width0, 64);
         return &rbuf->b.b;
     }
