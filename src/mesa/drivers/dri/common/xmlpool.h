@@ -60,6 +60,13 @@
 #define DRI_CONF_OPT_BEGIN(name,type,def) \
 "<option name=\""#name"\" type=\""#type"\" default=\""#def"\">\n"
 
+/**
+ * \brief Begin a boolean option definition, with the default value passed in
+ * as a string
+ */
+#define DRI_CONF_OPT_BEGIN_B(name,def) \
+"<option name=\""#name"\" type=\"bool\" default="#def">\n"
+
 /** \brief Begin an option definition with quoted default value */
 #define DRI_CONF_OPT_BEGIN_Q(name,type,def) \
 "<option name=\""#name"\" type=\""#type"\" default="#def">\n"

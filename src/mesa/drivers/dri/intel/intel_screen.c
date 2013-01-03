@@ -54,37 +54,37 @@ PUBLIC const char __driConfigOptions[] =
 	 DRI_CONF_DESC_END
       DRI_CONF_OPT_END
 
-      DRI_CONF_OPT_BEGIN(hiz, bool, true)
+      DRI_CONF_OPT_BEGIN_B(hiz, "true")
 	 DRI_CONF_DESC(en, "Enable Hierarchical Z on gen6+")
       DRI_CONF_OPT_END
 
-      DRI_CONF_OPT_BEGIN(early_z, bool, false)
+      DRI_CONF_OPT_BEGIN_B(early_z, "false")
 	 DRI_CONF_DESC(en, "Enable early Z in classic mode (unstable, 945-only).")
       DRI_CONF_OPT_END
 
-      DRI_CONF_OPT_BEGIN(fragment_shader, bool, true)
+      DRI_CONF_OPT_BEGIN_B(fragment_shader, "true")
 	 DRI_CONF_DESC(en, "Enable limited ARB_fragment_shader support on 915/945.")
       DRI_CONF_OPT_END
 
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_QUALITY
-      DRI_CONF_FORCE_S3TC_ENABLE(false)
+      DRI_CONF_FORCE_S3TC_ENABLE("false")
       DRI_CONF_ALLOW_LARGE_TEXTURES(2)
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_DEBUG
-     DRI_CONF_NO_RAST(false)
-     DRI_CONF_ALWAYS_FLUSH_BATCH(false)
-     DRI_CONF_ALWAYS_FLUSH_CACHE(false)
-     DRI_CONF_DISABLE_THROTTLING(false)
-     DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN(false)
-     DRI_CONF_DISABLE_GLSL_LINE_CONTINUATIONS(false)
-     DRI_CONF_DISABLE_BLEND_FUNC_EXTENDED(false)
+      DRI_CONF_NO_RAST("false")
+      DRI_CONF_ALWAYS_FLUSH_BATCH("false")
+      DRI_CONF_ALWAYS_FLUSH_CACHE("false")
+      DRI_CONF_DISABLE_THROTTLING("false")
+      DRI_CONF_FORCE_GLSL_EXTENSIONS_WARN("false")
+      DRI_CONF_DISABLE_GLSL_LINE_CONTINUATIONS("false")
+      DRI_CONF_DISABLE_BLEND_FUNC_EXTENDED("false")
 
-      DRI_CONF_OPT_BEGIN(stub_occlusion_query, bool, false)
+      DRI_CONF_OPT_BEGIN_B(stub_occlusion_query, "false")
 	 DRI_CONF_DESC(en, "Enable stub ARB_occlusion_query support on 915/945.")
       DRI_CONF_OPT_END
 
-      DRI_CONF_OPT_BEGIN(shader_precompile, bool, true)
+      DRI_CONF_OPT_BEGIN_B(shader_precompile, "true")
 	 DRI_CONF_DESC(en, "Perform code generation at shader link time.")
       DRI_CONF_OPT_END
    DRI_CONF_SECTION_END
