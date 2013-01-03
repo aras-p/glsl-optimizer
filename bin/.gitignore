@@ -6,3 +6,4 @@ install-sh
 ylwrap
 compile
 ar-lib
+/test-driver
