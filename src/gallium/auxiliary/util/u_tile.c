@@ -801,7 +801,7 @@ pipe_put_tile_z(struct pipe_transfer *pt,
       break;
    case PIPE_FORMAT_Z32_FLOAT:
       {
-         float *pDest = (float *) (map + y * pt->stride + x*2);
+         float *pDest = (float *) (map + y * pt->stride + x*4);
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 32-bit integer Z to float Z */
