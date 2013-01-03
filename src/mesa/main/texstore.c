@@ -1714,36 +1714,24 @@ _mesa_texstore_argb2101010(TEXSTORE_PARAMS)
                                                  srcPacking,
                                                  ctx->_ImageTransferState);
       const GLfloat *src = tempImage;
+      const GLushort aMask = (srcFormat == GL_RGB) ? 0xffff : 0;
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
          GLubyte *dstRow = dstSlices[img];
-         if (baseInternalFormat == GL_RGBA) {
+         if (baseInternalFormat == GL_RGBA || baseInternalFormat == GL_RGB) {
             for (row = 0; row < srcHeight; row++) {
                GLuint *dstUI = (GLuint *) dstRow;
                for (col = 0; col < srcWidth; col++) {
                   GLushort a,r,g,b;
 
                   UNCLAMPED_FLOAT_TO_USHORT(a, src[ACOMP]);
+                  a = a | aMask;
                   UNCLAMPED_FLOAT_TO_USHORT(r, src[RCOMP]);
                   UNCLAMPED_FLOAT_TO_USHORT(g, src[GCOMP]);
                   UNCLAMPED_FLOAT_TO_USHORT(b, src[BCOMP]);
                   dstUI[col] = PACK_COLOR_2101010_US(a, r, g, b);
-                  src += 4;
-               }
-               dstRow += dstRowStride;
-            }
-         } else if (baseInternalFormat == GL_RGB) {
-            for (row = 0; row < srcHeight; row++) {
-               GLuint *dstUI = (GLuint *) dstRow;
-               for (col = 0; col < srcWidth; col++) {
-                  GLushort r,g,b;
-
-                  UNCLAMPED_FLOAT_TO_USHORT(r, src[RCOMP]);
-                  UNCLAMPED_FLOAT_TO_USHORT(g, src[GCOMP]);
-                  UNCLAMPED_FLOAT_TO_USHORT(b, src[BCOMP]);
-                  dstUI[col] = PACK_COLOR_2101010_US(0xffff, r, g, b);
                   src += 4;
                }
                dstRow += dstRowStride;
