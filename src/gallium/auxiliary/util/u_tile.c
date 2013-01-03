@@ -678,6 +678,28 @@ pipe_get_tile_z(struct pipe_transfer *pt,
          }
       }
       break;
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+      {
+         const float *ptrc = (const float *)(map + y * pt->stride + x*8);
+         for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+               /* convert float Z to 32-bit Z */
+               if (ptrc[j] <= 0.0) {
+                  pDest[j*2] = 0;
+               }
+               else if (ptrc[j] >= 1.0) {
+                  pDest[j*2] = 0xffffffff;
+               }
+               else {
+                  double z = ptrc[j] * 0xffffffff;
+                  pDest[j*2] = (uint) z;
+               }
+            }
+            pDest += dstStride;
+            ptrc += pt->stride/4;
+         }
+      }
+      break;
    default:
       assert(0);
    }
@@ -785,6 +807,20 @@ pipe_put_tile_z(struct pipe_transfer *pt,
                /* convert 32-bit integer Z to float Z */
                const double scale = 1.0 / 0xffffffffU;
                pDest[j] = ptrc[j] * scale;
+            }
+            pDest += pt->stride/4;
+            ptrc += srcStride;
+         }
+      }
+      break;
+   case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+      {
+         float *pDest = (float *) (map + y * pt->stride + x*8);
+         for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+               /* convert 32-bit integer Z to float Z */
+               const double scale = 1.0 / 0xffffffffU;
+               pDest[j*2] = ptrc[j] * scale;
             }
             pDest += pt->stride/4;
             ptrc += srcStride;
