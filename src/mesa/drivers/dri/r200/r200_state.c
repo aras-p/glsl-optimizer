@@ -529,6 +529,7 @@ static void r200CullFace( struct gl_context *ctx, GLenum unused )
 static void r200FrontFace( struct gl_context *ctx, GLenum mode )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   int cull_face = (mode == GL_CW) ? R200_FFACE_CULL_CW : R200_FFACE_CULL_CCW;
 
    R200_STATECHANGE( rmesa, set );
    rmesa->hw.set.cmd[SET_SE_CNTL] &= ~R200_FFACE_CULL_DIR_MASK;
@@ -538,17 +539,11 @@ static void r200FrontFace( struct gl_context *ctx, GLenum mode )
 
    /* Winding is inverted when rendering to FBO */
    if (ctx->DrawBuffer && _mesa_is_user_fbo(ctx->DrawBuffer))
-      mode = (mode == GL_CW) ? GL_CCW : GL_CW;
+      cull_face = (mode == GL_CCW) ? R200_FFACE_CULL_CW : R200_FFACE_CULL_CCW;
+   rmesa->hw.set.cmd[SET_SE_CNTL] |= cull_face;
 
-   switch ( mode ) {
-   case GL_CW:
-      rmesa->hw.set.cmd[SET_SE_CNTL] |= R200_FFACE_CULL_CW;
-      break;
-   case GL_CCW:
-      rmesa->hw.set.cmd[SET_SE_CNTL] |= R200_FFACE_CULL_CCW;
+   if ( mode == GL_CCW )
       rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] |= R200_CULL_FRONT_IS_CCW;
-      break;
-   }
 }
 
 /* =============================================================

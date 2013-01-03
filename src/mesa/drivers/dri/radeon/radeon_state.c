@@ -437,6 +437,7 @@ static void radeonCullFace( struct gl_context *ctx, GLenum unused )
 static void radeonFrontFace( struct gl_context *ctx, GLenum mode )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   int cull_face = (mode == GL_CW) ? RADEON_FFACE_CULL_CW : RADEON_FFACE_CULL_CCW;
 
    RADEON_STATECHANGE( rmesa, set );
    rmesa->hw.set.cmd[SET_SE_CNTL] &= ~RADEON_FFACE_CULL_DIR_MASK;
@@ -446,17 +447,11 @@ static void radeonFrontFace( struct gl_context *ctx, GLenum mode )
 
    /* Winding is inverted when rendering to FBO */
    if (ctx->DrawBuffer && _mesa_is_user_fbo(ctx->DrawBuffer))
-      mode = (mode == GL_CW) ? GL_CCW : GL_CW;
+      cull_face = (mode == GL_CCW) ? RADEON_FFACE_CULL_CW : RADEON_FFACE_CULL_CCW;
+   rmesa->hw.set.cmd[SET_SE_CNTL] |= cull_face;
 
-   switch ( mode ) {
-   case GL_CW:
-      rmesa->hw.set.cmd[SET_SE_CNTL] |= RADEON_FFACE_CULL_CW;
-      break;
-   case GL_CCW:
-      rmesa->hw.set.cmd[SET_SE_CNTL] |= RADEON_FFACE_CULL_CCW;
+   if ( mode == GL_CCW )
       rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] |= RADEON_CULL_FRONT_IS_CCW;
-      break;
-   }
 }
 
 
