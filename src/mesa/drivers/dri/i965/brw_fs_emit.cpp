@@ -387,8 +387,13 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO;
 	 break;
       case SHADER_OPCODE_TXD:
-	 /* There is no sample_d_c message; comparisons are done manually */
-	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
+         if (inst->shadow_compare) {
+            /* Gen7.5+.  Otherwise, lowered by brw_lower_texture_gradients(). */
+            assert(intel->is_haswell);
+            msg_type = HSW_SAMPLER_MESSAGE_SAMPLE_DERIV_COMPARE;
+         } else {
+            msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
+         }
 	 break;
       case SHADER_OPCODE_TXF:
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
