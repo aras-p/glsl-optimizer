@@ -39,28 +39,13 @@
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm-c/Target.h>
-
-#if HAVE_LLVM < 0x0302
-#include <llvm/Target/TargetData.h>
-#else
 #include <llvm/DataLayout.h>
-#endif
 
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 
 using namespace llvm;
-
-#ifndef EXTERNAL_LLVM
-extern "C" {
-
-void LLVMInitializeAMDGPUAsmPrinter(void);
-void LLVMInitializeAMDGPUTargetMC(void);
-void LLVMInitializeAMDGPUTarget(void);
-void LLVMInitializeAMDGPUTargetInfo(void);
-}
-#endif
 
 namespace {
 
@@ -89,17 +74,10 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
 
    Triple AMDGPUTriple(sys::getDefaultTargetTriple());
 
-#if HAVE_LLVM == 0x0302
-   LLVMInitializeAMDGPUTargetInfo();
-   LLVMInitializeAMDGPUTarget();
-   LLVMInitializeAMDGPUTargetMC();
-   LLVMInitializeAMDGPUAsmPrinter();
-#else
    LLVMInitializeR600TargetInfo();
    LLVMInitializeR600Target();
    LLVMInitializeR600TargetMC();
    LLVMInitializeR600AsmPrinter();
-#endif
 
    std::string err;
    const Target * AMDGPUTarget = TargetRegistry::lookupTarget("r600", err);
@@ -130,11 +108,7 @@ radeon_llvm_compile(LLVMModuleRef M, unsigned char ** bytes,
                      ));
    TargetMachine &AMDGPUTargetMachine = *tm.get();
    PassManager PM;
-#if HAVE_LLVM < 0x0302
-   PM.add(new TargetData(*AMDGPUTargetMachine.getTargetData()));
-#else
    PM.add(new DataLayout(*AMDGPUTargetMachine.getDataLayout()));
-#endif
    PM.add(createPromoteMemoryToRegisterPass());
    AMDGPUTargetMachine.setAsmVerbosityDefault(true);
 
