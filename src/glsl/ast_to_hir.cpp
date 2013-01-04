@@ -2031,10 +2031,8 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
        * Similar text exists in the section on vertex shader outputs.
        *
        * Similar text exists in the GLSL ES 3.00 spec, except that the GLSL ES
-       * 3.00 spec claims to allow structs as well.  However, this is likely
-       * an error, since section 11 of the spec ("Counting of Inputs and
-       * Outputs") enumerates all possible types of interstage linkage
-       * variables, and it does not mention structs.
+       * 3.00 spec allows structs as well.  Varying structs are also allowed
+       * in GLSL 1.50.
        */
       switch (var->type->get_scalar_type()->base_type) {
       case GLSL_TYPE_FLOAT:
@@ -2049,6 +2047,8 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
                           state->get_version_string());
          break;
       case GLSL_TYPE_STRUCT:
+         if (state->is_version(150, 300))
+            break;
          _mesa_glsl_error(loc, state,
                           "varying variables may not be of type struct");
          break;
