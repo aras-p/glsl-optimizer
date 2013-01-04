@@ -1399,7 +1399,8 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
                               UTIL_BLITTER_ATTRIB_TEXCOORD, &coord);
    } else {
       /* Draw the quad with the generic codepath. */
-      for (int z = 0; z < dstbox->depth; z++) {
+      int z;
+      for (z = 0; z < dstbox->depth; z++) {
          struct pipe_surface *old;
 
          /* Set framebuffer state. */
