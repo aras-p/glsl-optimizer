@@ -70,9 +70,6 @@ void r300_flush(struct pipe_context *pipe,
     struct r300_context *r300 = r300_context(pipe);
     struct pb_buffer **rfence = (struct pb_buffer**)fence;
 
-    if (r300->draw && !r300->draw_vbo_locked)
-	r300_draw_flush_vbuf(r300);
-
     if (r300->screen->info.drm_minor >= 12) {
         flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;
     }

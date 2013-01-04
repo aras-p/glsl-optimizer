@@ -62,7 +62,7 @@ static void r300_release_referenced_objects(struct r300_context *r300)
 
     /* Manually-created vertex buffers. */
     pipe_resource_reference(&r300->dummy_vb.buffer, NULL);
-    pipe_resource_reference(&r300->vbo, NULL);
+    pb_reference(&r300->vbo, NULL);
 
     r300->context.delete_depth_stencil_alpha_state(&r300->context,
                                                    r300->dsa_decompress_zmask);

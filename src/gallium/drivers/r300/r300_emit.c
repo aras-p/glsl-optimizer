@@ -930,7 +930,10 @@ void r300_emit_vertex_arrays_swtcl(struct r300_context *r300, boolean indexed)
             (r300->vertex_info.size << 8));
     OUT_CS(r300->draw_vbo_offset);
     OUT_CS(0);
-    OUT_CS_RELOC(r300_resource(r300->vbo));
+
+    assert(r300->vbo_cs);
+    cs_winsys->cs_write_reloc(cs_copy, r300->vbo_cs);
+    CS_USED_DW(2);
     END_CS;
 }
 
@@ -1212,10 +1215,9 @@ validate:
         r300->rws->cs_add_reloc(r300->cs, r300->query_current->cs_buf,
                                 RADEON_USAGE_WRITE, RADEON_DOMAIN_GTT);
     /* ...vertex buffer for SWTCL path... */
-    if (r300->vbo)
-        r300->rws->cs_add_reloc(r300->cs, r300_resource(r300->vbo)->cs_buf,
-                                RADEON_USAGE_READ,
-                                r300_resource(r300->vbo)->domain);
+    if (r300->vbo_cs)
+        r300->rws->cs_add_reloc(r300->cs, r300->vbo_cs,
+                                RADEON_USAGE_READ, RADEON_DOMAIN_GTT);
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers && r300->vertex_arrays_dirty) {
         struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;

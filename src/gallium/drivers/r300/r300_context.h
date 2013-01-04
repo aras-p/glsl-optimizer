@@ -463,13 +463,10 @@ struct r300_context {
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
     /* Vertex buffer for SW TCL. */
-    struct pipe_resource* vbo;
+    struct pb_buffer *vbo;
+    struct radeon_winsys_cs_handle *vbo_cs;
     /* Offset and size into the SW TCL VBO. */
     size_t draw_vbo_offset;
-    size_t draw_vbo_size;
-    /* Whether the VBO must not be flushed. */
-    boolean draw_vbo_locked;
-    boolean draw_first_emitted;
 
     /* Accelerated blit support. */
     struct blitter_context* blitter;
@@ -721,7 +718,6 @@ void r300_translate_index_buffer(struct r300_context *r300,
 void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
 
 /* r300_render.c */
-void r300_draw_flush_vbuf(struct r300_context *r300);
 void r500_emit_index_bias(struct r300_context *r300, int index_bias);
 void r300_blitter_draw_rectangle(struct blitter_context *blitter,
                                  int x1, int y1, int x2, int y2,
