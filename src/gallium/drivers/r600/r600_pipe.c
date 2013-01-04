@@ -758,7 +758,7 @@ static boolean r600_fence_signalled(struct pipe_screen *pscreen,
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
 	struct r600_fence *rfence = (struct r600_fence*)fence;
 
-	return rscreen->fences.data[rfence->index];
+	return rscreen->fences.data[rfence->index] != 0;
 }
 
 static boolean r600_fence_finish(struct pipe_screen *pscreen,
