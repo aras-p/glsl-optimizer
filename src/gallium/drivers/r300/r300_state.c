@@ -1659,6 +1659,9 @@ static void r300_set_vertex_buffers_swtcl(struct pipe_context* pipe,
                                   buffers, start_slot, count);
     draw_set_vertex_buffers(r300->draw, start_slot, count, buffers);
 
+    if (!buffers)
+        return;
+
     for (i = 0; i < count; i++) {
         if (buffers[i].user_buffer) {
             draw_set_mapped_vertex_buffer(r300->draw, start_slot + i,
