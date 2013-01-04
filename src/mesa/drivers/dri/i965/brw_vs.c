@@ -440,8 +440,14 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    brw_populate_sampler_prog_key_data(ctx, prog, &key.tex);
 
    /* BRW_NEW_VERTICES */
-   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      if (vp->program.Base.InputsRead & BITFIELD64_BIT(i)) {
+   if (intel->gen < 8 && !intel->is_haswell) {
+      /* Prior to Haswell, the hardware can't natively support GL_FIXED or
+       * 2_10_10_10_REV vertex formats.  Set appropriate workaround flags.
+       */
+      for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+         if (!(vp->program.Base.InputsRead & BITFIELD64_BIT(i)))
+            continue;
+
          uint8_t wa_flags = 0;
 
          switch (brw->vb.inputs[i].glarray->Type) {

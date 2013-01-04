@@ -65,6 +65,14 @@ static GLuint half_float_types[5] = {
    BRW_SURFACEFORMAT_R16G16B16A16_FLOAT
 };
 
+static GLuint fixed_point_types[5] = {
+   0,
+   BRW_SURFACEFORMAT_R32_SFIXED,
+   BRW_SURFACEFORMAT_R32G32_SFIXED,
+   BRW_SURFACEFORMAT_R32G32B32_SFIXED,
+   BRW_SURFACEFORMAT_R32G32B32A32_SFIXED,
+};
+
 static GLuint uint_types_direct[5] = {
    0,
    BRW_SURFACEFORMAT_R32_UINT,
@@ -215,8 +223,9 @@ static GLuint byte_types_scale[5] = {
  * the appopriate hardware surface type.
  * Format will be GL_RGBA or possibly GL_BGRA for GLubyte[4] color arrays.
  */
-static GLuint get_surface_type( GLenum type, GLuint size,
-                                GLenum format, bool normalized, bool integer )
+static unsigned
+get_surface_type(struct intel_context *intel, GLenum type, GLuint size,
+                 GLenum format, bool normalized, bool integer)
 {
    if (unlikely(INTEL_DEBUG & DEBUG_VERTS))
       printf("type %s size %d normalized %d\n", 
@@ -253,13 +262,25 @@ static GLuint get_surface_type( GLenum type, GLuint size,
             return ubyte_types_norm[size];
          }
       /* See GL_ARB_vertex_type_2_10_10_10_rev.
-       * W/A: the hardware doesn't really support the formats we'd
+       * W/A: Pre-Haswell, the hardware doesn't really support the formats we'd
        * like to use here, so upload everything as UINT and fix
        * it in the shader
        */
       case GL_INT_2_10_10_10_REV:
+         assert(size == 4);
+         if (intel->gen >= 8 || intel->is_haswell) {
+            return format == GL_BGRA
+               ? BRW_SURFACEFORMAT_B10G10R10A2_SNORM
+               : BRW_SURFACEFORMAT_R10G10B10A2_SNORM;
+         }
+         return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
       case GL_UNSIGNED_INT_2_10_10_10_REV:
          assert(size == 4);
+         if (intel->gen >= 8 || intel->is_haswell) {
+            return format == GL_BGRA
+               ? BRW_SURFACEFORMAT_B10G10R10A2_UNORM
+               : BRW_SURFACEFORMAT_R10G10B10A2_UNORM;
+         }
          return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
       default: assert(0); return 0;
       }
@@ -270,8 +291,21 @@ static GLuint get_surface_type( GLenum type, GLuint size,
        * like to use here, so upload everything as UINT and fix
        * it in the shader
        */
-      if (type == GL_INT_2_10_10_10_REV || type == GL_UNSIGNED_INT_2_10_10_10_REV) {
+      if (type == GL_INT_2_10_10_10_REV) {
          assert(size == 4);
+         if (intel->gen >= 8 || intel->is_haswell) {
+            return format == GL_BGRA
+               ? BRW_SURFACEFORMAT_B10G10R10A2_SSCALED
+               : BRW_SURFACEFORMAT_R10G10B10A2_SSCALED;
+         }
+         return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
+      } else if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {
+         assert(size == 4);
+         if (intel->gen >= 8 || intel->is_haswell) {
+            return format == GL_BGRA
+               ? BRW_SURFACEFORMAT_B10G10R10A2_USCALED
+               : BRW_SURFACEFORMAT_R10G10B10A2_USCALED;
+         }
          return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
       }
       assert(format == GL_RGBA); /* sanity check */
@@ -285,10 +319,14 @@ static GLuint get_surface_type( GLenum type, GLuint size,
       case GL_UNSIGNED_INT: return uint_types_scale[size];
       case GL_UNSIGNED_SHORT: return ushort_types_scale[size];
       case GL_UNSIGNED_BYTE: return ubyte_types_scale[size];
-      /* This produces GL_FIXED inputs as values between INT32_MIN and
-       * INT32_MAX, which will be scaled down by 1/65536 by the VS.
-       */
-      case GL_FIXED: return int_types_scale[size];
+      case GL_FIXED:
+         if (intel->gen >= 8 || intel->is_haswell)
+            return fixed_point_types[size];
+
+         /* This produces GL_FIXED inputs as values between INT32_MIN and
+          * INT32_MAX, which will be scaled down by 1/65536 by the VS.
+          */
+         return int_types_scale[size];
       default: assert(0); return 0;
       }
    }
@@ -659,7 +697,8 @@ static void brw_emit_vertices(struct brw_context *brw)
    OUT_BATCH((_3DSTATE_VERTEX_ELEMENTS << 16) | (2 * nr_elements - 1));
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
-      uint32_t format = get_surface_type(input->glarray->Type,
+      uint32_t format = get_surface_type(intel,
+					 input->glarray->Type,
 					 input->glarray->Size,
 					 input->glarray->Format,
 					 input->glarray->Normalized,
@@ -724,7 +763,8 @@ static void brw_emit_vertices(struct brw_context *brw)
    }
 
    if (intel->gen >= 6 && gen6_edgeflag_input) {
-      uint32_t format = get_surface_type(gen6_edgeflag_input->glarray->Type,
+      uint32_t format = get_surface_type(intel,
+					 gen6_edgeflag_input->glarray->Type,
                                          gen6_edgeflag_input->glarray->Size,
                                          gen6_edgeflag_input->glarray->Format,
                                          gen6_edgeflag_input->glarray->Normalized,
