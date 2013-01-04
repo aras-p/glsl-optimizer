@@ -687,6 +687,20 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
 
    while (*parselist) {
 
+      if (fbConfig &&
+          parselist[1] == GLX_DONT_CARE &&
+          parselist[0] != GLX_LEVEL) {
+         /* For glXChooseFBConfig(), skip attributes whose value is
+          * GLX_DONT_CARE, unless it's GLX_LEVEL (which can legitimately be
+          * a negative value).
+          *
+          * From page 17 (23 of the pdf) of the GLX 1.4 spec:
+          * GLX DONT CARE may be specified for all attributes except GLX LEVEL.
+          */
+         parselist += 2;
+         continue;
+      }
+
       switch (*parselist) {
 	 case GLX_USE_GL:
             if (fbConfig) {
