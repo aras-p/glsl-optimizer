@@ -34,9 +34,9 @@
 #include "os/os_thread.h"
 
 enum radeon_generation {
-    R300,
-    R600,
-    SI
+    DRV_R300,
+    DRV_R600,
+    DRV_SI
 };
 
 struct radeon_drm_winsys {

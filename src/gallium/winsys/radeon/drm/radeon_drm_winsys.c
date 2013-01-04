@@ -228,27 +228,95 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
 
     /* Check PCI ID. */
     switch (ws->info.pci_id) {
-#define CHIPSET(pci_id, name, family) case pci_id:
+#define CHIPSET(pci_id, name, cfamily) case pci_id: ws->info.family = CHIP_##cfamily; ws->gen = DRV_R300; break;
 #include "pci_ids/r300_pci_ids.h"
 #undef CHIPSET
-        ws->gen = R300;
-        break;
 
-#define CHIPSET(pci_id, name, family) case pci_id:
+#define CHIPSET(pci_id, name, cfamily) case pci_id: ws->info.family = CHIP_##cfamily; ws->gen = DRV_R600; break;
 #include "pci_ids/r600_pci_ids.h"
 #undef CHIPSET
-        ws->gen = R600;
-        break;
 
-#define CHIPSET(pci_id, name, family) case pci_id:
+#define CHIPSET(pci_id, name, cfamily) case pci_id: ws->info.family = CHIP_##cfamily; ws->gen = DRV_SI; break;
 #include "pci_ids/radeonsi_pci_ids.h"
 #undef CHIPSET
-        ws->gen = SI;
-        break;
 
     default:
         fprintf(stderr, "radeon: Invalid PCI ID.\n");
         return FALSE;
+    }
+
+    switch (ws->info.family) {
+    default:
+    case CHIP_UNKNOWN:
+        fprintf(stderr, "radeon: Unknown family.\n");
+        return FALSE;
+    case CHIP_R300:
+    case CHIP_R350:
+    case CHIP_RV350:
+    case CHIP_RV370:
+    case CHIP_RV380:
+    case CHIP_RS400:
+    case CHIP_RC410:
+    case CHIP_RS480:
+        ws->info.chip_class = R300;
+        break;
+    case CHIP_R420:     /* R4xx-based cores. */
+    case CHIP_R423:
+    case CHIP_R430:
+    case CHIP_R480:
+    case CHIP_R481:
+    case CHIP_RV410:
+    case CHIP_RS600:
+    case CHIP_RS690:
+    case CHIP_RS740:
+        ws->info.chip_class = R400;
+        break;
+    case CHIP_RV515:    /* R5xx-based cores. */
+    case CHIP_R520:
+    case CHIP_RV530:
+    case CHIP_R580:
+    case CHIP_RV560:
+    case CHIP_RV570:
+        ws->info.chip_class = R500;
+        break;
+    case CHIP_R600:
+    case CHIP_RV610:
+    case CHIP_RV630:
+    case CHIP_RV670:
+    case CHIP_RV620:
+    case CHIP_RV635:
+    case CHIP_RS780:
+    case CHIP_RS880:
+        ws->info.chip_class = R600;
+        break;
+    case CHIP_RV770:
+    case CHIP_RV730:
+    case CHIP_RV710:
+    case CHIP_RV740:
+        ws->info.chip_class = R700;
+        break;
+    case CHIP_CEDAR:
+    case CHIP_REDWOOD:
+    case CHIP_JUNIPER:
+    case CHIP_CYPRESS:
+    case CHIP_HEMLOCK:
+    case CHIP_PALM:
+    case CHIP_SUMO:
+    case CHIP_SUMO2:
+    case CHIP_BARTS:
+    case CHIP_TURKS:
+    case CHIP_CAICOS:
+        ws->info.chip_class = EVERGREEN;
+        break;
+    case CHIP_CAYMAN:
+    case CHIP_ARUBA:
+        ws->info.chip_class = CAYMAN;
+        break;
+    case CHIP_TAHITI:
+    case CHIP_PITCAIRN:
+    case CHIP_VERDE:
+        ws->info.chip_class = TAHITI;
+        break;
     }
 
     /* Get GEM info. */
@@ -265,7 +333,7 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     ws->num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
 
     /* Generation-specific queries. */
-    if (ws->gen == R300) {
+    if (ws->gen == DRV_R300) {
         if (!radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_GB_PIPES,
                                   "GB pipe count",
                                   &ws->info.r300_num_gb_pipes))
@@ -276,7 +344,7 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
                                   &ws->info.r300_num_z_pipes))
             return FALSE;
     }
-    else if (ws->gen >= R600) {
+    else if (ws->gen >= DRV_R600) {
         if (ws->info.drm_minor >= 9 &&
             !radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_BACKENDS,
                                   "num backends",
@@ -333,7 +401,7 @@ static void radeon_winsys_destroy(struct radeon_winsys *rws)
 
     ws->cman->destroy(ws->cman);
     ws->kman->destroy(ws->kman);
-    if (ws->gen >= R600) {
+    if (ws->gen >= DRV_R600) {
         radeon_surface_manager_free(ws->surf_man);
     }
     if (fd_tab) {
@@ -394,7 +462,7 @@ static uint64_t radeon_query_timestamp(struct radeon_winsys *rws)
     uint64_t ts = 0;
 
     if (ws->info.drm_minor < 20 ||
-        ws->gen < R600) {
+        ws->gen < DRV_R600) {
         assert(0);
         return 0;
     }
@@ -446,7 +514,7 @@ struct radeon_winsys *radeon_drm_winsys_create(int fd)
     if (!ws->cman)
         goto fail;
 
-    if (ws->gen >= R600) {
+    if (ws->gen >= DRV_R600) {
         ws->surf_man = radeon_surface_manager_new(fd);
         if (!ws->surf_man)
             goto fail;

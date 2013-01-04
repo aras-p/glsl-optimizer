@@ -115,9 +115,9 @@ static unsigned r300_texture_get_stride(struct r300_screen *screen,
                                         unsigned level)
 {
     unsigned tile_width, width, stride;
-    boolean is_rs690 = (screen->caps.family == CHIP_FAMILY_RS600 ||
-                        screen->caps.family == CHIP_FAMILY_RS690 ||
-                        screen->caps.family == CHIP_FAMILY_RS740);
+    boolean is_rs690 = (screen->caps.family == CHIP_RS600 ||
+                        screen->caps.family == CHIP_RS690 ||
+                        screen->caps.family == CHIP_RS740);
 
     if (tex->tex.stride_in_bytes_override)
         return tex->tex.stride_in_bytes_override;
@@ -214,7 +214,7 @@ static void r300_setup_miptree(struct r300_screen *screen,
 {
     struct pipe_resource *base = &tex->b.b;
     unsigned stride, size, layer_size, nblocksy, i;
-    boolean rv350_mode = screen->caps.family >= CHIP_FAMILY_R350;
+    boolean rv350_mode = screen->caps.family >= CHIP_R350;
     boolean aligned_for_cbzb;
 
     tex->tex.size_in_bytes = 0;
@@ -353,7 +353,7 @@ static void r300_setup_hyperz_properties(struct r300_screen *screen,
         tex->tex.microtile) {
         unsigned i, pipes;
 
-        if (screen->caps.family == CHIP_FAMILY_RV530) {
+        if (screen->caps.family == CHIP_RV530) {
             pipes = screen->info.r300_num_z_pipes;
         } else {
             pipes = screen->info.r300_num_gb_pipes;
@@ -414,7 +414,7 @@ static void r300_setup_tiling(struct r300_screen *screen,
                               struct r300_resource *tex)
 {
     enum pipe_format format = tex->b.b.format;
-    boolean rv350_mode = screen->caps.family >= CHIP_FAMILY_R350;
+    boolean rv350_mode = screen->caps.family >= CHIP_R350;
     boolean is_zb = util_format_is_depth_or_stencil(format);
     boolean dbg_no_tiling = SCREEN_DBG_ON(screen, DBG_NO_TILING);
 

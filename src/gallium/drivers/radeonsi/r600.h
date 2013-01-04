@@ -37,18 +37,6 @@
 
 struct winsys_handle;
 
-enum radeon_family {
-	CHIP_UNKNOWN,
-	CHIP_TAHITI,
-	CHIP_PITCAIRN,
-	CHIP_VERDE,
-	CHIP_LAST,
-};
-
-enum chip_class {
-	TAHITI,
-};
-
 struct r600_tiling_info {
 	unsigned num_channels;
 	unsigned num_banks;

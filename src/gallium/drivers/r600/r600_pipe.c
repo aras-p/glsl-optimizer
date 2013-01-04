@@ -917,17 +917,6 @@ static int r600_init_tiling(struct r600_screen *rscreen)
 	}
 }
 
-static unsigned radeon_family_from_device(unsigned device)
-{
-	switch (device) {
-#define CHIPSET(pciid, name, family) case pciid: return CHIP_##family;
-#include "pci_ids/r600_pci_ids.h"
-#undef CHIPSET
-	default:
-		return CHIP_UNKNOWN;
-	}
-}
-
 static uint64_t r600_get_timestamp(struct pipe_screen *screen)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)screen;
@@ -947,22 +936,12 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->ws = ws;
 	ws->query_info(ws, &rscreen->info);
 
-	rscreen->family = radeon_family_from_device(rscreen->info.pci_id);
+	rscreen->family = rscreen->info.family;
+	rscreen->chip_class = rscreen->info.chip_class;
 	if (rscreen->family == CHIP_UNKNOWN) {
 		fprintf(stderr, "r600: Unknown chipset 0x%04X\n", rscreen->info.pci_id);
 		FREE(rscreen);
 		return NULL;
-	}
-
-	/* setup class */
-	if (rscreen->family >= CHIP_CAYMAN) {
-		rscreen->chip_class = CAYMAN;
-	} else if (rscreen->family >= CHIP_CEDAR) {
-		rscreen->chip_class = EVERGREEN;
-	} else if (rscreen->family >= CHIP_RV770) {
-		rscreen->chip_class = R700;
-	} else {
-		rscreen->chip_class = R600;
 	}
 
 	/* Figure out streamout kernel support. */
@@ -980,6 +959,9 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	case EVERGREEN:
 	case CAYMAN:
 		rscreen->has_streamout = rscreen->info.drm_minor >= 14;
+		break;
+	default:
+		rscreen->has_streamout = FALSE;
 		break;
 	}
 
@@ -1000,6 +982,10 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		rscreen->has_msaa = rscreen->info.drm_minor >= 19;
 		/* We should be able to read compressed MSAA textures, but it doesn't work. */
 		rscreen->msaa_texture_support = MSAA_TEXTURE_SAMPLE_ZERO;
+		break;
+	default:
+		rscreen->has_msaa = FALSE;
+		rscreen->msaa_texture_support = 0;
 		break;
 	}
 

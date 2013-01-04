@@ -40,6 +40,7 @@ static inline unsigned int r600_bytecode_get_num_operands(struct r600_bytecode *
 		return 3;
 
 	switch (bc->chip_class) {
+	default:
 	case R600:
 	case R700:
 		switch (alu->inst) {
@@ -201,8 +202,8 @@ static inline unsigned int r600_bytecode_get_num_operands(struct r600_bytecode *
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT:
 			return 1;
-		default: R600_ERR(
-			"Need instruction operand number for 0x%x.\n", alu->inst);
+		default:
+			R600_ERR("Need instruction operand number for 0x%x.\n", alu->inst);
 		}
 		break;
 	}

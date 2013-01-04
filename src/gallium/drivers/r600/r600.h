@@ -35,43 +35,6 @@
 
 struct winsys_handle;
 
-enum radeon_family {
-	CHIP_UNKNOWN,
-	CHIP_R600,
-	CHIP_RV610,
-	CHIP_RV630,
-	CHIP_RV670,
-	CHIP_RV620,
-	CHIP_RV635,
-	CHIP_RS780,
-	CHIP_RS880,
-	CHIP_RV770,
-	CHIP_RV730,
-	CHIP_RV710,
-	CHIP_RV740,
-	CHIP_CEDAR,
-	CHIP_REDWOOD,
-	CHIP_JUNIPER,
-	CHIP_CYPRESS,
-	CHIP_HEMLOCK,
-	CHIP_PALM,
-	CHIP_SUMO,
-	CHIP_SUMO2,
-	CHIP_BARTS,
-	CHIP_TURKS,
-	CHIP_CAICOS,
-	CHIP_CAYMAN,
-	CHIP_ARUBA,
-	CHIP_LAST,
-};
-
-enum chip_class {
-	R600,
-	R700,
-	EVERGREEN,
-	CAYMAN,
-};
-
 struct r600_tiling_info {
 	unsigned num_channels;
 	unsigned num_banks;

@@ -632,7 +632,7 @@ void r300_emit_query_start(struct r300_context *r300, unsigned size, void*state)
 	return;
 
     BEGIN_CS(size);
-    if (r300->screen->caps.family == CHIP_FAMILY_RV530) {
+    if (r300->screen->caps.family == CHIP_RV530) {
         OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     } else {
         OUT_CS_REG(R300_SU_REG_DEST, R300_RASTER_PIPE_SELECT_ALL);
@@ -735,7 +735,7 @@ void r300_emit_query_end(struct r300_context* r300)
     if (query->begin_emitted == FALSE)
         return;
 
-    if (caps->family == CHIP_FAMILY_RV530) {
+    if (caps->family == CHIP_RV530) {
         if (r300->screen->info.r300_num_z_pipes == 2)
             rv530_emit_query_end_double_z(r300, query);
         else

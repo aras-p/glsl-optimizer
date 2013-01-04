@@ -326,6 +326,7 @@ static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
 	word1 = i32_from_byte_stream(bytes, &bytes_read);
 
 	switch(ctx->bc->chip_class) {
+	default:
 	case R600:
 		r600_bytecode_alu_read(&alu, word0, word1);
 		break;
