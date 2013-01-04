@@ -802,8 +802,7 @@ static void radeon_bo_set_tiling(struct pb_buffer *_buf,
                         sizeof(args));
 }
 
-static struct radeon_winsys_cs_handle *radeon_drm_get_cs_handle(
-        struct pb_buffer *_buf)
+static struct radeon_winsys_cs_handle *radeon_drm_get_cs_handle(struct pb_buffer *_buf)
 {
     /* return radeon_bo. */
     return (struct radeon_winsys_cs_handle*)get_radeon_bo(_buf);

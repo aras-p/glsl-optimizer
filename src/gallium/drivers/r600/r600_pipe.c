@@ -292,21 +292,21 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->cs = rctx->ws->cs_create(rctx->ws);
 	rctx->ws->cs_set_flush_callback(rctx->cs, r600_flush_from_winsys, rctx);
 
-        rctx->uploader = u_upload_create(&rctx->context, 1024 * 1024, 256,
-                                         PIPE_BIND_INDEX_BUFFER |
-                                         PIPE_BIND_CONSTANT_BUFFER);
-        if (!rctx->uploader)
-                goto fail;
+	rctx->uploader = u_upload_create(&rctx->context, 1024 * 1024, 256,
+					PIPE_BIND_INDEX_BUFFER |
+					PIPE_BIND_CONSTANT_BUFFER);
+	if (!rctx->uploader)
+		goto fail;
 
 	rctx->allocator_fetch_shader = u_suballocator_create(&rctx->context, 64 * 1024, 256,
 							     0, PIPE_USAGE_STATIC, FALSE);
-        if (!rctx->allocator_fetch_shader)
-                goto fail;
+	if (!rctx->allocator_fetch_shader)
+		goto fail;
 
 	rctx->allocator_so_filled_size = u_suballocator_create(&rctx->context, 4096, 4,
-                                                               0, PIPE_USAGE_STATIC, TRUE);
+								0, PIPE_USAGE_STATIC, TRUE);
         if (!rctx->allocator_so_filled_size)
-                goto fail;
+		goto fail;
 
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL)

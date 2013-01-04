@@ -33,7 +33,7 @@
 struct radeon_cs_context {
     uint32_t                    buf[RADEON_MAX_CMDBUF_DWORDS];
 
-    int fd;
+    int                         fd;
     struct drm_radeon_cs        cs;
     struct drm_radeon_cs_chunk  chunks[3];
     uint64_t                    chunk_array[3];

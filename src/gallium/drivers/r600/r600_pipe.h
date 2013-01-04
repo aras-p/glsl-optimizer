@@ -408,7 +408,7 @@ struct r600_context {
 	struct radeon_winsys		*ws;
 	struct radeon_winsys_cs		*cs;
 	struct blitter_context		*blitter;
-	struct u_upload_mgr	        *uploader;
+	struct u_upload_mgr		*uploader;
 	struct u_suballocator		*allocator_so_filled_size;
 	struct u_suballocator		*allocator_fetch_shader;
 	struct util_slab_mempool	pool_transfers;
