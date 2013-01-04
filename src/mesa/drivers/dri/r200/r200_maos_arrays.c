@@ -166,8 +166,9 @@ void r200EmitArrays( struct gl_context *ctx, GLubyte *vimap_rev )
 	       /* fallthrough */
 	    case 4:
 	       vfmt0 |= R200_VTX_W1;
-	    break;
+	       /* fallthrough */
 	    }
+	    break;
 	 default:
 	    assert(0);
 	    emitsize = 0;
