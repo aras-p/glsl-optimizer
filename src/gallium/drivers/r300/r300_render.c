@@ -978,6 +978,9 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     CS_LOCALS(r300);
     (void) i; (void) ptr;
 
+    assert(start == 0);
+    assert(count < (1 << 16));
+
     DBG(r300, DBG_DRAW, "r300: render_draw_arrays (count: %d)\n", count);
 
     if (!r300_prepare_for_rendering(r300,
@@ -1002,7 +1005,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
 {
     struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
-    int i;
+    struct radeon_winsys_cs *cs = r300->cs;
     unsigned end_cs_dwords;
     unsigned max_index = (r300->vbo->size - r300->draw_vbo_offset) /
                          (r300render->r300->vertex_info.size * 4) - 1;
@@ -1025,24 +1028,22 @@ static void r300_render_draw_elements(struct vbuf_render* render,
     end_cs_dwords = r300_get_num_cs_end_dwords(r300);
 
     while (count) {
-        free_dwords = RADEON_MAX_CMDBUF_DWORDS - r300->cs->cdw;
+        free_dwords =
+            RADEON_MAX_CMDBUF_DWORDS - r300->cs->cdw - end_cs_dwords - 6;
 
-        short_count = MIN2(count, (free_dwords - end_cs_dwords - 6) * 2);
+        short_count = MIN2(count, free_dwords * 2);
 
-        BEGIN_CS(6 + (short_count+1)/2);
+        BEGIN_CS(6);
         OUT_CS_REG(R300_GA_COLOR_CONTROL,
                 r300_provoking_vertex_fixes(r300, r300render->prim));
         OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, max_index);
         OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (short_count+1)/2);
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (short_count << 16) |
                r300render->hwprim);
-        for (i = 0; i < short_count-1; i += 2) {
-            OUT_CS(indices[i+1] << 16 | indices[i]);
-        }
-        if (short_count % 2) {
-            OUT_CS(indices[short_count-1]);
-        }
         END_CS;
+
+        memcpy(cs->buf+cs->cdw, indices, short_count * 2);
+        cs->cdw += (short_count + 1) / 2;
 
         /* OK now subtract the emitted indices and see if we need to emit
          * another draw packet. */
