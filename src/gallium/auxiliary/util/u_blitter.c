@@ -1816,7 +1816,8 @@ void util_blitter_custom_color(struct blitter_context *blitter,
    blitter_disable_render_cond(ctx);
 
    /* bind states */
-   pipe->bind_blend_state(pipe, custom_blend);
+   pipe->bind_blend_state(pipe, custom_blend ? custom_blend
+                                             : ctx->blend[PIPE_MASK_RGBA]);
    pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
    ctx->bind_fs_state(pipe, blitter_get_fs_col(ctx, 1, FALSE));
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);

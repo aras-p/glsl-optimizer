@@ -93,6 +93,13 @@ void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
         }
     }
 
+    /* Setup alpha-to-coverage. */
+    if (r300->alpha_to_coverage && r300->msaa_enable) {
+        /* Always set 3/6, it improves precision even for 2x and 4x MSAA. */
+        alpha_func |= R300_FG_ALPHA_FUNC_MASK_ENABLE |
+                      R300_FG_ALPHA_FUNC_CFG_3_OF_6;
+    }
+
     OUT_CS_REG(R300_FG_ALPHA_FUNC, alpha_func);
     WRITE_CS_TABLE(fb->zsbuf ? &dsa->cb_begin : dsa->cb_zb_no_readwrite, size-2);
 }
@@ -366,12 +373,16 @@ void r300_emit_aa_state(struct r300_context *r300, unsigned size, void *state)
     OUT_CS_REG(R300_GB_AA_CONFIG, aa->aa_config);
 
     if (aa->dest) {
-        OUT_CS_REG(R300_RB3D_AARESOLVE_OFFSET, aa->dest->offset);
+        OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_OFFSET, 3);
+        OUT_CS(aa->dest->offset);
+        OUT_CS(aa->dest->pitch & R300_RB3D_AARESOLVE_PITCH_MASK);
+        OUT_CS(R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE |
+               R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE);
         OUT_CS_RELOC(aa->dest);
-        OUT_CS_REG(R300_RB3D_AARESOLVE_PITCH, aa->dest->pitch);
+    } else {
+        OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0);
     }
 
-    OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, aa->aaresolve_ctl);
     END_CS;
 }
 
@@ -475,12 +486,85 @@ void r300_emit_hyperz_end(struct r300_context *r300)
     r300_emit_hyperz_state(r300, r300->hyperz_state.size, &z);
 }
 
+#define R300_NIBBLES(x0, y0, x1, y1, x2, y2, d0y, d0x)  \
+    (((x0) & 0xf) | (((y0) & 0xf) << 4) |		   \
+    (((x1) & 0xf) << 8) | (((y1) & 0xf) << 12) |	   \
+    (((x2) & 0xf) << 16) | (((y2) & 0xf) << 20) |	   \
+    (((d0y) & 0xf) << 24) | (((d0x) & 0xf) << 28))
+
+static unsigned r300_get_mspos(int index, unsigned *p)
+{
+    unsigned reg, i, distx, disty, dist;
+
+    if (index == 0) {
+        /* MSPOS0 contains positions for samples 0,1,2 as (X,Y) pairs of nibbles,
+         * followed by a (Y,X) pair containing the minimum distance from the pixel
+         * edge:
+         *     X0, Y0, X1, Y1, X2, Y2, D0_Y, D0_X
+         *
+         * There is a quirk when setting D0_X. The value represents the distance
+         * from the left edge of the pixel quad to the first sample in subpixels.
+         * All values less than eight should use the actual value, but „7‟ should
+         * be used for the distance „8‟. The hardware will convert 7 into 8 internally.
+         */
+        distx = 11;
+        for (i = 0; i < 12; i += 2) {
+            if (p[i] < distx)
+                distx = p[i];
+        }
+
+        disty = 11;
+        for (i = 1; i < 12; i += 2) {
+            if (p[i] < disty)
+                disty = p[i];
+        }
+
+        if (distx == 8)
+            distx = 7;
+
+        reg = R300_NIBBLES(p[0], p[1], p[2], p[3], p[4], p[5], disty, distx);
+    } else {
+        /* MSPOS1 contains positions for samples 3,4,5 as (X,Y) pairs of nibbles,
+         * followed by the minimum distance from the pixel edge (not sure if X or Y):
+         *     X3, Y3, X4, Y4, X5, Y5, D1
+         */
+        dist = 11;
+        for (i = 0; i < 12; i++) {
+            if (p[i] < dist)
+                dist = p[i];
+        }
+
+        reg = R300_NIBBLES(p[6], p[7], p[8], p[9], p[10], p[11], dist, 0);
+    }
+    return reg;
+}
+
 void r300_emit_fb_state_pipelined(struct r300_context *r300,
                                   unsigned size, void *state)
 {
+    /* The sample coordinates are in the range [0,11], because
+     * GB_TILE_CONFIG.SUBPIXEL is set to the 1/12 subpixel precision.
+     *
+     * Some sample coordinates reach to neighboring pixels and should not be used.
+     * (e.g. Y=11)
+     *
+     * The unused samples must be set to the positions of other valid samples. */
+    static unsigned sample_locs_1x[12] = {
+        6,6,  6,6,  6,6,  6,6,  6,6,  6,6
+    };
+    static unsigned sample_locs_2x[12] = {
+        3,9,  9,3,  9,3,  9,3,  9,3,  9,3
+    };
+    static unsigned sample_locs_4x[12] = {
+        4,4,  8,8,  2,10,  10,2,  10,2,  10,2
+    };
+    static unsigned sample_locs_6x[12] = {
+        3,1,  7,3,  11,5,  1,7,  5,9,  9,10
+    };
+
     struct pipe_framebuffer_state* fb =
             (struct pipe_framebuffer_state*)r300->fb_state.state;
-    unsigned i, num_cbufs = fb->nr_cbufs;
+    unsigned i, num_samples, num_cbufs = fb->nr_cbufs;
     unsigned mspos0, mspos1;
     CS_LOCALS(r300);
 
@@ -509,32 +593,28 @@ void r300_emit_fb_state_pipelined(struct r300_context *r300,
 
     /* Multisampling. Depends on framebuffer sample count.
      * These are pipelined regs and as such cannot be moved
-     * to the AA state. */
-    mspos0 = 0x66666666;
-    mspos1 = 0x6666666;
+     * to the AA state.
+     */
+    num_samples = r300->msaa_enable ? r300->num_samples : 1;
 
-    if (fb->nr_cbufs && fb->cbufs[0]->texture->nr_samples > 1) {
-        /* Subsample placement. These may not be optimal. */
-        switch (fb->cbufs[0]->texture->nr_samples) {
-        case 2:
-            mspos0 = 0x33996633;
-            mspos1 = 0x6666663;
-            break;
-        case 3:
-            mspos0 = 0x33936933;
-            mspos1 = 0x6666663;
-            break;
-        case 4:
-            mspos0 = 0x33939933;
-            mspos1 = 0x3966663;
-            break;
-        case 6:
-            mspos0 = 0x22a2aa22;
-            mspos1 = 0x2a65672;
-            break;
-        default:
-            debug_printf("r300: Bad number of multisamples!\n");
-        }
+    /* Sample positions. */
+    switch (num_samples) {
+    default:
+        mspos0 = r300_get_mspos(0, sample_locs_1x);
+        mspos1 = r300_get_mspos(1, sample_locs_1x);
+        break;
+    case 2:
+        mspos0 = r300_get_mspos(0, sample_locs_2x);
+        mspos1 = r300_get_mspos(1, sample_locs_2x);
+        break;
+    case 4:
+        mspos0 = r300_get_mspos(0, sample_locs_4x);
+        mspos1 = r300_get_mspos(1, sample_locs_4x);
+        break;
+    case 6:
+        mspos0 = r300_get_mspos(0, sample_locs_6x);
+        mspos1 = r300_get_mspos(1, sample_locs_6x);
+        break;
     }
 
     OUT_CS_REG_SEQ(R300_GB_MSPOS0, 2);
@@ -748,6 +828,18 @@ void r300_emit_rs_block_state(struct r300_context* r300,
         OUT_CS_REG_SEQ(R300_RS_INST_0, count);
     }
     OUT_CS_TABLE(rs->inst, count);
+    END_CS;
+}
+
+void r300_emit_sample_mask(struct r300_context *r300,
+                           unsigned size, void *state)
+{
+    unsigned mask = (*(unsigned*)state) & ((1 << 6)-1);
+    CS_LOCALS(r300);
+
+    BEGIN_CS(size);
+    OUT_CS_REG(R300_SC_SCREENDOOR,
+               mask | (mask << 6) | (mask << 12) | (mask << 18));
     END_CS;
 }
 
@@ -1176,6 +1268,7 @@ boolean r300_emit_buffer_validate(struct r300_context *r300,
 {
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
     struct r300_textures_state *texstate =
         (struct r300_textures_state*)r300->textures_state.state;
     struct r300_resource *tex;
@@ -1199,6 +1292,14 @@ validate:
             r300->rws->cs_add_reloc(r300->cs, tex->cs_buf,
                                     RADEON_USAGE_READWRITE,
                                     r300_surface(fb->zsbuf)->domain);
+        }
+    }
+    /* The AA resolve buffer. */
+    if (r300->aa_state.dirty) {
+        if (aa->dest) {
+            r300->rws->cs_add_reloc(r300->cs, aa->dest->cs_buf,
+                                    RADEON_USAGE_WRITE,
+                                    aa->dest->domain);
         }
     }
     if (r300->textures_state.dirty) {
@@ -1282,7 +1383,9 @@ unsigned r300_get_num_cs_end_dwords(struct r300_context *r300)
     dwords += 26; /* emit_query_end */
     dwords += r300->hyperz_state.size + 2; /* emit_hyperz_end + zcache flush */
     if (r300->screen->caps.is_r500)
-        dwords += 2;
+        dwords += 2; /* emit_index_bias */
+    if (r300->screen->info.drm_minor >= 6)
+        dwords += 3; /* MSPOS */
 
     return dwords;
 }

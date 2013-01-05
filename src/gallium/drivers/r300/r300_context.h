@@ -73,7 +73,6 @@ struct r300_aa_state {
     struct r300_surface *dest;
 
     uint32_t aa_config;
-    uint32_t aaresolve_ctl;
 };
 
 struct r300_blend_state {
@@ -499,6 +498,8 @@ struct r300_context {
     struct r300_atom blend_color_state;
     /* Scissor state. */
     struct r300_atom scissor_state;
+    /* Sample mask. */
+    struct r300_atom sample_mask;
     /* Invariant state. This must be emitted to get the engine started. */
     struct r300_atom invariant_state;
     /* Viewport state. */
@@ -573,6 +574,10 @@ struct r300_context {
     enum r300_fs_validity_status fs_status;
     /* Framebuffer multi-write. */
     boolean fb_multiwrite;
+    unsigned num_samples;
+    boolean msaa_enable;
+    boolean alpha_to_one;
+    boolean alpha_to_coverage;
 
     void *dsa_decompress_zmask;
 

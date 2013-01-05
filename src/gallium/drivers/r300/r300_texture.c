@@ -955,10 +955,6 @@ r300_texture_create_object(struct r300_screen *rscreen,
     struct radeon_winsys *rws = rscreen->rws;
     struct r300_resource *tex = NULL;
 
-    if (base->nr_samples > 1) {
-        goto fail;
-    }
-
     tex = CALLOC_STRUCT(r300_resource);
     if (!tex) {
         goto fail;

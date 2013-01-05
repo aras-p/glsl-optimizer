@@ -56,7 +56,6 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
         }
     };
 
-    static const unsigned aa_block[2] = {4, 8};
     unsigned tile = 0;
     unsigned pixsize = util_format_get_blocksize(format);
 
@@ -65,22 +64,14 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
     assert(pixsize <= 16);
     assert(dim <= DIM_HEIGHT);
 
-    if (num_samples > 1) {
-        /* Multisampled textures have their own alignment scheme. */
-        if (pixsize == 4)
-            tile = aa_block[dim];
-        /* XXX FP16 AA. */
-    } else {
-        /* Standard alignment. */
-        tile = table[macrotile][util_logbase2(pixsize)][microtile][dim];
-        if (macrotile == 0 && is_rs690 && dim == DIM_WIDTH) {
-            int align;
-            int h_tile;
-            h_tile = table[macrotile][util_logbase2(pixsize)][microtile][DIM_HEIGHT];
-            align = 64 / (pixsize * h_tile);
-            if (tile < align)
-                tile = align;
-        }
+    tile = table[macrotile][util_logbase2(pixsize)][microtile][dim];
+    if (macrotile == 0 && is_rs690 && dim == DIM_WIDTH) {
+        int align;
+        int h_tile;
+        h_tile = table[macrotile][util_logbase2(pixsize)][microtile][DIM_HEIGHT];
+        align = 64 / (pixsize * h_tile);
+        if (tile < align)
+            tile = align;
     }
 
     assert(tile);
@@ -94,6 +85,10 @@ static boolean r300_texture_macro_switch(struct r300_resource *tex,
                                          enum r300_dim dim)
 {
     unsigned tile, texdim;
+
+    if (tex->b.b.nr_samples > 1) {
+        return TRUE;
+    }
 
     tile = r300_get_pixel_alignment(tex->b.b.format, tex->b.b.nr_samples,
                                     tex->tex.microtile, RADEON_LAYOUT_TILED, dim, 0);
@@ -248,7 +243,7 @@ static void r300_setup_miptree(struct r300_screen *screen,
 
         layer_size = stride * nblocksy;
 
-        if (base->nr_samples) {
+        if (base->nr_samples > 1) {
             layer_size *= base->nr_samples;
         }
 
@@ -422,6 +417,12 @@ static void r300_setup_tiling(struct r300_screen *screen,
     boolean rv350_mode = screen->caps.family >= CHIP_FAMILY_R350;
     boolean is_zb = util_format_is_depth_or_stencil(format);
     boolean dbg_no_tiling = SCREEN_DBG_ON(screen, DBG_NO_TILING);
+
+    if (tex->b.b.nr_samples > 1) {
+        tex->tex.microtile = RADEON_LAYOUT_TILED;
+        tex->tex.macrotile[0] = RADEON_LAYOUT_TILED;
+        return;
+    }
 
     tex->tex.microtile = RADEON_LAYOUT_LINEAR;
     tex->tex.macrotile[0] = RADEON_LAYOUT_LINEAR;

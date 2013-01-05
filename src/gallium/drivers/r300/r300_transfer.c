@@ -52,11 +52,31 @@ static void r300_copy_from_tiled_texture(struct pipe_context *ctx,
                                          struct r300_transfer *r300transfer)
 {
     struct pipe_transfer *transfer = (struct pipe_transfer*)r300transfer;
-    struct pipe_resource *tex = transfer->resource;
+    struct pipe_resource *src = transfer->resource;
+    struct pipe_resource *dst = &r300transfer->linear_texture->b.b;
 
-    ctx->resource_copy_region(ctx, &r300transfer->linear_texture->b.b, 0,
-                              0, 0, 0,
-                              tex, transfer->level, &transfer->box);
+    if (src->nr_samples <= 1) {
+        ctx->resource_copy_region(ctx, dst, 0, 0, 0, 0,
+                                  src, transfer->level, &transfer->box);
+    } else {
+        /* Resolve the resource. */
+        struct pipe_blit_info blit;
+
+        memset(&blit, 0, sizeof(blit));
+        blit.src.resource = src;
+        blit.src.format = src->format;
+        blit.src.level = transfer->level;
+        blit.src.box = transfer->box;
+        blit.dst.resource = dst;
+        blit.dst.format = dst->format;
+        blit.dst.box.width = transfer->box.width;
+        blit.dst.box.height = transfer->box.height;
+        blit.dst.box.depth = transfer->box.depth;
+        blit.mask = PIPE_MASK_RGBA;
+        blit.filter = PIPE_TEX_FILTER_NEAREST;
+
+        ctx->blit(ctx, &blit);
+    }
 }
 
 /* Copy a detiled texture to a tiled one. */

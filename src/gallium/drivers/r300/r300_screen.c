@@ -392,17 +392,34 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         case 1:
             break;
         case 2:
-        case 3:
         case 4:
         case 6:
-            return FALSE;
-#if 0
-            if (usage != PIPE_BIND_RENDER_TARGET ||
-                !util_format_is_rgba8_variant(
-                    util_format_description(format))) {
+            /* We need DRM 2.8.0. */
+            if (!drm_2_8_0) {
                 return FALSE;
             }
-#endif
+            /* Only support R500, because I didn't test older chipsets,
+             * but MSAA should work there too. */
+            if (!is_r500 && !debug_get_bool_option("RADEON_MSAA", FALSE)) {
+                return FALSE;
+            }
+            /* No texturing and scanout. */
+            if (usage & (PIPE_BIND_SAMPLER_VIEW |
+                         PIPE_BIND_DISPLAY_TARGET |
+                         PIPE_BIND_SCANOUT)) {
+                return FALSE;
+            }
+            /* Only allow depth/stencil, RGBA8, RGBA16F */
+            if (!util_format_is_depth_or_stencil(format) &&
+                !util_format_is_rgba8_variant(
+                    util_format_description(format)) &&
+                format != PIPE_FORMAT_R16G16B16A16_FLOAT) {
+                return FALSE;
+            }
+            /* RGBA16F AA is only supported on R500. */
+            if (format == PIPE_FORMAT_R16G16B16A16_FLOAT && !is_r500) {
+                return FALSE;
+            }
             break;
         default:
             return FALSE;

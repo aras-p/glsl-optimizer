@@ -43,6 +43,14 @@ static void r300_flush_and_cleanup(struct r300_context *r300, unsigned flags)
     if (r300->screen->caps.is_r500)
         r500_emit_index_bias(r300, 0);
 
+    /* The DDX doesn't set these regs. */
+    if (r300->screen->info.drm_minor >= 6) {
+        CS_LOCALS(r300);
+        OUT_CS_REG_SEQ(R300_GB_MSPOS0, 2);
+        OUT_CS(0x66666666);
+        OUT_CS(0x6666666);
+    }
+
     r300->flush_counter++;
     r300->rws->cs_flush(r300->cs, flags);
     r300->dirty_hw = 0;

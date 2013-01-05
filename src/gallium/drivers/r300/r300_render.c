@@ -1201,58 +1201,6 @@ done:
     r300->sprite_coord_enable = last_sprite_coord_enable;
 }
 
-#if 0
-static void r300_resource_resolve(struct pipe_context *pipe,
-                                  const struct pipe_resolve_info *info)
-{
-    struct r300_context *r300 = r300_context(pipe);
-    struct pipe_surface *srcsurf, *dstsurf, surf_tmpl;
-    struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
-    static const union pipe_color_union color;
-
-    assert(0 && "Resource resolve is unsupported, invalid call.");
-
-    memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-    surf_tmpl.format = info->src.res->format;
-    surf_tmpl.u.tex.first_layer =
-    surf_tmpl.u.tex.last_layer = info->src.layer;
-    srcsurf = pipe->create_surface(pipe, info->src.res, &surf_tmpl);
-    /* XXX Offset both surfaces by x0,y1. */
-
-    surf_tmpl.format = info->dst.res->format;
-    surf_tmpl.u.tex.level = info->dst.level;
-    surf_tmpl.u.tex.first_layer =
-    surf_tmpl.u.tex.last_layer = info->dst.layer;
-    dstsurf = pipe->create_surface(pipe, info->dst.res, &surf_tmpl);
-
-    DBG(r300, DBG_DRAW, "r300: Resolving resource...\n");
-
-    /* Enable AA resolve. */
-    aa->dest = r300_surface(dstsurf);
-    aa->aaresolve_ctl =
-        R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE |
-        R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE;
-    r300->aa_state.size = 10;
-    r300_mark_atom_dirty(r300, &r300->aa_state);
-
-    /* Resolve the surface. */
-    /* XXX: y1 < 0 ==> Y flip */
-    r300->context.clear_render_target(pipe,
-                                      srcsurf, &color, 0, 0,
-                                      info->dst.x1 - info->dst.x0,
-                                      info->dst.y1 - info->dst.y0);
-
-    /* Disable AA resolve. */
-    aa->dest = NULL;
-    aa->aaresolve_ctl = 0;
-    r300->aa_state.size = 4;
-    r300_mark_atom_dirty(r300, &r300->aa_state);
-
-    pipe_surface_reference(&srcsurf, NULL);
-    pipe_surface_reference(&dstsurf, NULL);
-}
-#endif
-
 void r300_init_render_functions(struct r300_context *r300)
 {
     /* Set draw functions based on presence of HW TCL. */

@@ -105,6 +105,7 @@ static void r300_destroy_context(struct pipe_context* context)
         FREE(r300->hyperz_state.state);
         FREE(r300->invariant_state.state);
         FREE(r300->rs_block_state.state);
+        FREE(r300->sample_mask.state);
         FREE(r300->scissor_state.state);
         FREE(r300->textures_state.state);
         FREE(r300->vap_invariant_state.state);
@@ -175,9 +176,10 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(blend_state, 8);
     R300_INIT_ATOM(blend_color_state, is_r500 ? 3 : 2);
     /* SC. */
+    R300_INIT_ATOM(sample_mask, 2);
     R300_INIT_ATOM(scissor_state, 3);
     /* GB, FG, GA, SU, SC, RB3D. */
-    R300_INIT_ATOM(invariant_state, 16 + (is_rv350 ? 4 : 0) + (is_r500 ? 4 : 0));
+    R300_INIT_ATOM(invariant_state, 14 + (is_rv350 ? 4 : 0) + (is_r500 ? 4 : 0));
     /* VAP. */
     R300_INIT_ATOM(viewport_state, 9);
     R300_INIT_ATOM(pvs_flush, 2);
@@ -224,6 +226,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     R300_ALLOC_ATOM(ztop_state, r300_ztop_state);
     R300_ALLOC_ATOM(fb_state, pipe_framebuffer_state);
     R300_ALLOC_ATOM(gpu_flush, pipe_framebuffer_state);
+    r300->sample_mask.state = malloc(4);
     R300_ALLOC_ATOM(scissor_state, pipe_scissor_state);
     R300_ALLOC_ATOM(rs_block_state, r300_rs_block);
     R300_ALLOC_ATOM(fs_constants, r300_constant_buffer);
@@ -270,6 +273,7 @@ static void r300_init_states(struct pipe_context *pipe)
     pipe->set_blend_color(pipe, &bc);
     pipe->set_clip_state(pipe, &cs);
     pipe->set_scissor_state(pipe, &ss);
+    pipe->set_sample_mask(pipe, ~0);
 
     /* Initialize the GPU flush. */
     {
@@ -317,7 +321,6 @@ static void r300_init_states(struct pipe_context *pipe)
         OUT_CB_REG(R300_SU_DEPTH_SCALE, 0x4B7FFFFF);
         OUT_CB_REG(R300_SU_DEPTH_OFFSET, 0);
         OUT_CB_REG(R300_SC_EDGERULE, 0x2DA49525);
-        OUT_CB_REG(R300_SC_SCREENDOOR, 0xffffff);
 
         if (r300->screen->caps.is_rv350) {
             OUT_CB_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x01010101);
