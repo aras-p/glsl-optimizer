@@ -1283,3 +1283,31 @@ void rc_transform_KILP(struct radeon_compiler * c, void *user)
 		}
 	}
 }
+
+int rc_force_output_alpha_to_one(struct radeon_compiler *c,
+				 struct rc_instruction *inst, void *data)
+{
+	struct r300_fragment_program_compiler *fragc = (struct r300_fragment_program_compiler*)c;
+	const struct rc_opcode_info *info = rc_get_opcode_info(inst->U.I.Opcode);
+	unsigned tmp;
+
+	if (!info->HasDstReg || inst->U.I.DstReg.File != RC_FILE_OUTPUT ||
+	    inst->U.I.DstReg.Index == fragc->OutputDepth)
+		return 1;
+
+	tmp = rc_find_free_temporary(c);
+
+	/* Insert MOV after inst, set alpha to 1. */
+	emit1(c, inst, RC_OPCODE_MOV, 0, inst->U.I.DstReg,
+	      srcregswz(RC_FILE_TEMPORARY, tmp, RC_SWIZZLE_XYZ1));
+
+	/* Re-route the destination of inst to the source of mov. */
+	inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
+	inst->U.I.DstReg.Index = tmp;
+
+	/* Move the saturate output modifier to the MOV instruction
+	 * (for better copy propagation). */
+	inst->Next->U.I.SaturateMode = inst->U.I.SaturateMode;
+	inst->U.I.SaturateMode = RC_SATURATE_NONE;
+	return 1;
+}

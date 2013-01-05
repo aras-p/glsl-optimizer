@@ -82,8 +82,14 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
 	int is_r500 = c->Base.is_r500;
 	int opt = !c->Base.disable_optimizations;
+	int alpha2one = c->state.alpha_to_one;
 
 	/* Lists of instruction transformations. */
+	struct radeon_program_transformation force_alpha_to_one[] = {
+		{ &rc_force_output_alpha_to_one, c },
+		{ 0, 0 }
+	};
+
 	struct radeon_program_transformation rewrite_tex[] = {
 		{ &radeonTransformTEX, c },
 		{ 0, 0 }
@@ -117,6 +123,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		{"unroll loops",		1, is_r500,	rc_unroll_loops,		NULL},
 		{"transform loops",		1, !is_r500,	rc_transform_loops,		NULL},
 		{"emulate branches",		1, !is_r500,	rc_emulate_branches,		NULL},
+		{"force alpha to one",		1, alpha2one,	rc_local_transform,		force_alpha_to_one},
 		{"transform TEX",		1, 1,		rc_local_transform,		rewrite_tex},
 		{"transform IF",		1, is_r500,	rc_local_transform,		rewrite_if},
 		{"native rewrite",		1, is_r500,	rc_local_transform,		native_rewrite_r500},

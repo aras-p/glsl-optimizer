@@ -182,6 +182,8 @@ struct r300_fragment_program_external_state {
 		 */
 		unsigned convert_unorm_to_snorm:1;
 	} unit[16];
+
+	unsigned alpha_to_one:1;
 };
 
 
