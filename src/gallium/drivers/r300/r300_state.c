@@ -565,33 +565,37 @@ r300_set_sample_mask(struct pipe_context *pipe,
  * This contains the depth buffer, stencil buffer, alpha test, and such.
  * On the Radeon, depth and stencil buffer setup are intertwined, which is
  * the reason for some of the strange-looking assignments across registers. */
-static void*
-        r300_create_dsa_state(struct pipe_context* pipe,
-                              const struct pipe_depth_stencil_alpha_state* state)
+static void* r300_create_dsa_state(struct pipe_context* pipe,
+                          const struct pipe_depth_stencil_alpha_state* state)
 {
-    struct r300_capabilities *caps = &r300_screen(pipe->screen)->caps;
+    boolean is_r500 = r300_screen(pipe->screen)->caps.is_r500;
     struct r300_dsa_state* dsa = CALLOC_STRUCT(r300_dsa_state);
     CB_LOCALS;
+    uint32_t alpha_value_fp16 = 0;
+    uint32_t z_buffer_control = 0;
+    uint32_t z_stencil_control = 0;
+    uint32_t stencil_ref_mask = 0;
+    uint32_t stencil_ref_bf = 0;
 
     dsa->dsa = *state;
 
     /* Depth test setup. - separate write mask depth for decomp flush */
     if (state->depth.writemask) {
-        dsa->z_buffer_control |= R300_Z_WRITE_ENABLE;
+        z_buffer_control |= R300_Z_WRITE_ENABLE;
     }
 
     if (state->depth.enabled) {
-        dsa->z_buffer_control |= R300_Z_ENABLE;
+        z_buffer_control |= R300_Z_ENABLE;
 
-        dsa->z_stencil_control |=
+        z_stencil_control |=
             (r300_translate_depth_stencil_function(state->depth.func) <<
                 R300_Z_FUNC_SHIFT);
     }
 
     /* Stencil buffer setup. */
     if (state->stencil[0].enabled) {
-        dsa->z_buffer_control |= R300_STENCIL_ENABLE;
-        dsa->z_stencil_control |=
+        z_buffer_control |= R300_STENCIL_ENABLE;
+        z_stencil_control |=
             (r300_translate_depth_stencil_function(state->stencil[0].func) <<
                 R300_S_FRONT_FUNC_SHIFT) |
             (r300_translate_stencil_op(state->stencil[0].fail_op) <<
@@ -601,15 +605,15 @@ static void*
             (r300_translate_stencil_op(state->stencil[0].zfail_op) <<
                 R300_S_FRONT_ZFAIL_OP_SHIFT);
 
-        dsa->stencil_ref_mask =
+        stencil_ref_mask =
                 (state->stencil[0].valuemask << R300_STENCILMASK_SHIFT) |
                 (state->stencil[0].writemask << R300_STENCILWRITEMASK_SHIFT);
 
         if (state->stencil[1].enabled) {
             dsa->two_sided = TRUE;
 
-            dsa->z_buffer_control |= R300_STENCIL_FRONT_BACK;
-            dsa->z_stencil_control |=
+            z_buffer_control |= R300_STENCIL_FRONT_BACK;
+            z_stencil_control |=
             (r300_translate_depth_stencil_function(state->stencil[1].func) <<
                 R300_S_BACK_FUNC_SHIFT) |
             (r300_translate_stencil_op(state->stencil[1].fail_op) <<
@@ -619,12 +623,12 @@ static void*
             (r300_translate_stencil_op(state->stencil[1].zfail_op) <<
                 R300_S_BACK_ZFAIL_OP_SHIFT);
 
-            dsa->stencil_ref_bf =
+            stencil_ref_bf =
                 (state->stencil[1].valuemask << R300_STENCILMASK_SHIFT) |
                 (state->stencil[1].writemask << R300_STENCILWRITEMASK_SHIFT);
 
-            if (caps->is_r500) {
-                dsa->z_buffer_control |= R500_STENCIL_REFMASK_FRONT_BACK;
+            if (is_r500) {
+                z_buffer_control |= R500_STENCIL_REFMASK_FRONT_BACK;
             } else {
                 dsa->two_sided_stencil_ref =
                   (state->stencil[0].valuemask != state->stencil[1].valuemask ||
@@ -640,53 +644,25 @@ static void*
             R300_FG_ALPHA_FUNC_ENABLE;
 
         dsa->alpha_function |= float_to_ubyte(state->alpha.ref_value);
-        dsa->alpha_value = util_float_to_half(state->alpha.ref_value);
-
-        if (caps->is_r500) {
-            dsa->alpha_function_fp16 = dsa->alpha_function |
-                                       R500_FG_ALPHA_FUNC_FP16_ENABLE;
-            dsa->alpha_function |= R500_FG_ALPHA_FUNC_8BIT;
-        }
+        alpha_value_fp16 = util_float_to_half(state->alpha.ref_value);
     }
 
-    BEGIN_CB(&dsa->cb_begin, 10);
-    OUT_CB_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
+    BEGIN_CB(&dsa->cb_begin, 8);
     OUT_CB_REG_SEQ(R300_ZB_CNTL, 3);
-    OUT_CB(dsa->z_buffer_control);
-    OUT_CB(dsa->z_stencil_control);
-    OUT_CB(dsa->stencil_ref_mask);
-    OUT_CB_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf);
-    OUT_CB_REG(R500_FG_ALPHA_VALUE, dsa->alpha_value);
+    OUT_CB(z_buffer_control);
+    OUT_CB(z_stencil_control);
+    OUT_CB(stencil_ref_mask);
+    OUT_CB_REG(R500_ZB_STENCILREFMASK_BF, stencil_ref_bf);
+    OUT_CB_REG(R500_FG_ALPHA_VALUE, alpha_value_fp16);
     END_CB;
 
-    BEGIN_CB(&dsa->cb_begin_fp16, 10);
-    OUT_CB_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function_fp16);
-    OUT_CB_REG_SEQ(R300_ZB_CNTL, 3);
-    OUT_CB(dsa->z_buffer_control);
-    OUT_CB(dsa->z_stencil_control);
-    OUT_CB(dsa->stencil_ref_mask);
-    OUT_CB_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf);
-    OUT_CB_REG(R500_FG_ALPHA_VALUE, dsa->alpha_value);
-    END_CB;
-
-    BEGIN_CB(dsa->cb_zb_no_readwrite, 10);
-    OUT_CB_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
+    BEGIN_CB(dsa->cb_zb_no_readwrite, 8);
     OUT_CB_REG_SEQ(R300_ZB_CNTL, 3);
     OUT_CB(0);
     OUT_CB(0);
     OUT_CB(0);
     OUT_CB_REG(R500_ZB_STENCILREFMASK_BF, 0);
-    OUT_CB_REG(R500_FG_ALPHA_VALUE, dsa->alpha_value);
-    END_CB;
-
-    BEGIN_CB(dsa->cb_fp16_zb_no_readwrite, 10);
-    OUT_CB_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function_fp16);
-    OUT_CB_REG_SEQ(R300_ZB_CNTL, 3);
-    OUT_CB(0);
-    OUT_CB(0);
-    OUT_CB(0);
-    OUT_CB_REG(R500_ZB_STENCILREFMASK_BF, 0);
-    OUT_CB_REG(R500_FG_ALPHA_VALUE, dsa->alpha_value);
+    OUT_CB_REG(R500_FG_ALPHA_VALUE, alpha_value_fp16);
     END_CB;
 
     return (void*)dsa;

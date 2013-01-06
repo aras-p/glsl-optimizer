@@ -79,19 +79,22 @@ void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
     struct r300_dsa_state* dsa = (struct r300_dsa_state*)state;
     struct pipe_framebuffer_state* fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
+    boolean is_r500 = r300->screen->caps.is_r500;
     CS_LOCALS(r300);
+    uint32_t alpha_func = dsa->alpha_function;
 
-    if (fb->zsbuf) {
-        if (fb->nr_cbufs && fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16A16_FLOAT)
-            WRITE_CS_TABLE(&dsa->cb_begin_fp16, size);
-        else
-            WRITE_CS_TABLE(&dsa->cb_begin, size);
-    } else {
-        if (fb->nr_cbufs && fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16A16_FLOAT)
-            WRITE_CS_TABLE(dsa->cb_fp16_zb_no_readwrite, size);
-        else
-            WRITE_CS_TABLE(dsa->cb_zb_no_readwrite, size);
+    /* Choose the alpha ref value between 8-bit (FG_ALPHA_FUNC.AM_VAL) and
+     * 16-bit (FG_ALPHA_VALUE). */
+    if (is_r500 && (alpha_func & R300_FG_ALPHA_FUNC_ENABLE)) {
+        if (fb->nr_cbufs && fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16A16_FLOAT) {
+            alpha_func |= R500_FG_ALPHA_FUNC_FP16_ENABLE;
+        } else {
+            alpha_func |= R500_FG_ALPHA_FUNC_8BIT;
+        }
     }
+
+    OUT_CS_REG(R300_FG_ALPHA_FUNC, alpha_func);
+    WRITE_CS_TABLE(fb->zsbuf ? &dsa->cb_begin : dsa->cb_zb_no_readwrite, size-2);
 }
 
 static void get_rc_constant_state(
