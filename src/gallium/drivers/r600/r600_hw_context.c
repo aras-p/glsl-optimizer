@@ -707,7 +707,9 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	/* flush is needed to avoid lockups on some chips with user fences
 	 * this will also flush the framebuffer cache
 	 */
-	ctx->flags |= R600_CONTEXT_WAIT_IDLE | R600_CONTEXT_FLUSH_AND_INV;
+	ctx->flags |= R600_CONTEXT_FLUSH_AND_INV |
+		      R600_CONTEXT_FLUSH_AND_INV_CB_META |
+		      R600_CONTEXT_WAIT_IDLE;
 
 	r600_flush_emit(ctx);
 
