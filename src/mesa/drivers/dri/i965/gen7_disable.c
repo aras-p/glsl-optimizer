@@ -127,7 +127,7 @@ disable_stages(struct brw_context *brw)
 const struct brw_tracked_state gen7_disable_stages = {
    .dirty = {
       .mesa  = 0,
-      .brw   = BRW_NEW_BATCH,
+      .brw   = BRW_NEW_CONTEXT,
       .cache = 0,
    },
    .emit = disable_stages,
