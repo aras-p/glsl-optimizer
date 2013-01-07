@@ -30,6 +30,7 @@
 #include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_upload_mgr.h"
+#include "util/u_math.h"
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
 #include "os/os_time.h"
@@ -128,12 +129,13 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags)
 	}
 
 	r600_context_flush(rctx, flags);
+	rctx->rings.gfx.flushing = false;
+	r600_begin_new_cs(rctx);
 
 	/* Re-enable render condition. */
 	if (render_cond) {
 		ctx->render_condition(ctx, render_cond, render_cond_mode);
 	}
-	rctx->rings.gfx.flushing = false;
 }
 
 static void r600_flush_from_st(struct pipe_context *ctx,
@@ -1111,8 +1113,10 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 
 	if (rscreen->chip_class >= EVERGREEN) {
 		rscreen->screen.is_format_supported = evergreen_is_format_supported;
+		rscreen->dma_blit = &evergreen_dma_blit;
 	} else {
 		rscreen->screen.is_format_supported = r600_is_format_supported;
+		rscreen->dma_blit = &r600_dma_blit;
 	}
 	rscreen->screen.is_video_format_supported = vl_video_buffer_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;

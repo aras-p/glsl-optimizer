@@ -2317,4 +2317,19 @@
 #define   G_028AA8_SWITCH_ON_EOP(x)                    (((x) >> 17) & 0x1)
 #define   C_028AA8_SWITCH_ON_EOP                       0xFFFDFFFF
 
+/* async DMA packets */
+#define DMA_PACKET(cmd, sub_cmd, n) ((((cmd) & 0xF) << 28) |    \
+                                    (((sub_cmd) & 0xFF) << 20) |\
+                                    (((n) & 0xFFFFF) << 0))
+/* async DMA Packet types */
+#define    DMA_PACKET_WRITE                     0x2
+#define    DMA_PACKET_COPY                      0x3
+#define    DMA_PACKET_INDIRECT_BUFFER           0x4
+#define    DMA_PACKET_SEMAPHORE                 0x5
+#define    DMA_PACKET_FENCE                     0x6
+#define    DMA_PACKET_TRAP                      0x7
+#define    DMA_PACKET_SRBM_WRITE                0x9
+#define    DMA_PACKET_CONSTANT_FILL             0xd
+#define    DMA_PACKET_NOP                       0xf
+
 #endif

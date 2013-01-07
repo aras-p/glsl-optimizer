@@ -762,8 +762,6 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 		}
 	}
 #endif
-
-	r600_begin_new_cs(ctx);
 }
 
 void r600_begin_new_cs(struct r600_context *ctx)
@@ -1127,5 +1125,51 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 		size -= byte_count;
 		src_offset += byte_count;
 		dst_offset += byte_count;
+	}
+}
+
+void r600_need_dma_space(struct r600_context *ctx, unsigned num_dw)
+{
+	/* The number of dwords we already used in the DMA so far. */
+	num_dw += ctx->rings.dma.cs->cdw;
+	/* Flush if there's not enough space. */
+	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {
+		ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
+	}
+}
+
+void r600_dma_copy(struct r600_context *rctx,
+		struct pipe_resource *dst,
+		struct pipe_resource *src,
+		unsigned long dst_offset,
+		unsigned long src_offset,
+		unsigned long size)
+{
+	struct radeon_winsys_cs *cs = rctx->rings.dma.cs;
+	unsigned i, ncopy, csize, shift;
+	struct r600_resource *rdst = (struct r600_resource*)dst;
+	struct r600_resource *rsrc = (struct r600_resource*)src;
+
+	/* make sure that the dma ring is only one active */
+	rctx->rings.gfx.flush(rctx, RADEON_FLUSH_ASYNC);
+
+	size >>= 2;
+	shift = 2;
+	ncopy = (size / 0xffff) + !!(size % 0xffff);
+
+	r600_need_dma_space(rctx, ncopy * 5);
+	for (i = 0; i < ncopy; i++) {
+		csize = size < 0xffff ? size : 0xffff;
+		/* emit reloc before writting cs so that cs is always in consistent state */
+		r600_context_bo_reloc(rctx, &rctx->rings.dma, rsrc, RADEON_USAGE_READ);
+		r600_context_bo_reloc(rctx, &rctx->rings.dma, rdst, RADEON_USAGE_WRITE);
+		cs->buf[cs->cdw++] = DMA_PACKET(DMA_PACKET_COPY, 0, 0, csize);
+		cs->buf[cs->cdw++] = dst_offset & 0xfffffffc;
+		cs->buf[cs->cdw++] = src_offset & 0xfffffffc;
+		cs->buf[cs->cdw++] = (dst_offset >> 32UL) & 0xff;
+		cs->buf[cs->cdw++] = (src_offset >> 32UL) & 0xff;
+		dst_offset += csize << shift;
+		src_offset += csize << shift;
+		size -= csize;
 	}
 }

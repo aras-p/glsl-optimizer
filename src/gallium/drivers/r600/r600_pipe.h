@@ -220,6 +220,14 @@ enum r600_msaa_texture_mode {
 	MSAA_TEXTURE_COMPRESSED
 };
 
+typedef boolean (*r600g_dma_blit_t)(struct pipe_context *ctx,
+				struct pipe_resource *dst,
+				unsigned dst_level,
+				unsigned dst_x, unsigned dst_y, unsigned dst_z,
+				struct pipe_resource *src,
+				unsigned src_level,
+				const struct pipe_box *src_box);
+
 struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon_winsys		*ws;
@@ -243,6 +251,7 @@ struct r600_screen {
 	uint32_t			*trace_ptr;
 	unsigned			cs_count;
 #endif
+	r600g_dma_blit_t		dma_blit;
 };
 
 struct r600_pipe_sampler_view {

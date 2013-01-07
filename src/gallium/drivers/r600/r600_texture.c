@@ -35,13 +35,19 @@
 /* Copy from a full GPU texture to a transfer's staging one. */
 static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
 {
+	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
 	struct pipe_resource *dst = &rtransfer->staging->b.b;
 	struct pipe_resource *src = transfer->resource;
 
 	if (src->nr_samples <= 1) {
-		ctx->resource_copy_region(ctx, dst, 0, 0, 0, 0,
-					  src, transfer->level, &transfer->box);
+		if (!rctx->screen->dma_blit(ctx, dst, 0, 0, 0, 0,
+					    src, transfer->level,
+					    &transfer->box)) {
+			/* async dma could not be use */
+			ctx->resource_copy_region(ctx, dst, 0, 0, 0, 0,
+						  src, transfer->level, &transfer->box);
+		}
 	} else {
 		/* Resolve the resource. */
 		struct pipe_blit_info blit;
@@ -66,16 +72,22 @@ static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_t
 /* Copy from a transfer's staging texture to a full GPU one. */
 static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
 {
+	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
 	struct pipe_resource *texture = transfer->resource;
 	struct pipe_box sbox;
 
 	u_box_3d(0, 0, 0, transfer->box.width, transfer->box.height, transfer->box.depth, &sbox);
 
-	ctx->resource_copy_region(ctx, texture, transfer->level,
-				  transfer->box.x, transfer->box.y, transfer->box.z,
-				  &rtransfer->staging->b.b,
-				  0, &sbox);
+	if (!rctx->screen->dma_blit(ctx, texture, transfer->level,
+				    transfer->box.x, transfer->box.y, transfer->box.z,
+				    &rtransfer->staging->b.b, 0, &sbox)) {
+		/* async dma could not be use */
+		ctx->resource_copy_region(ctx, texture, transfer->level,
+					  transfer->box.x, transfer->box.y, transfer->box.z,
+					  &rtransfer->staging->b.b,
+					  0, &sbox);
+	}
 }
 
 unsigned r600_texture_get_offset(struct r600_texture *rtex,

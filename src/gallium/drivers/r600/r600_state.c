@@ -2945,3 +2945,193 @@ void r600_update_db_shader_control(struct r600_context * rctx)
 		rctx->db_misc_state.atom.dirty = true;
 	}
 }
+
+static INLINE unsigned r600_array_mode(unsigned mode)
+{
+	switch (mode) {
+	case RADEON_SURF_MODE_LINEAR_ALIGNED:	return V_0280A0_ARRAY_LINEAR_ALIGNED;
+		break;
+	case RADEON_SURF_MODE_1D:		return V_0280A0_ARRAY_1D_TILED_THIN1;
+		break;
+	case RADEON_SURF_MODE_2D:		return V_0280A0_ARRAY_2D_TILED_THIN1;
+	default:
+	case RADEON_SURF_MODE_LINEAR:		return V_0280A0_ARRAY_LINEAR_GENERAL;
+	}
+}
+
+static boolean r600_dma_copy_tile(struct r600_context *rctx,
+				struct pipe_resource *dst,
+				unsigned dst_level,
+				unsigned dst_x,
+				unsigned dst_y,
+				unsigned dst_z,
+				struct pipe_resource *src,
+				unsigned src_level,
+				unsigned src_x,
+				unsigned src_y,
+				unsigned src_z,
+				unsigned copy_height,
+				unsigned pitch,
+				unsigned bpp)
+{
+	struct radeon_winsys_cs *cs = rctx->rings.dma.cs;
+	struct r600_texture *rsrc = (struct r600_texture*)src;
+	struct r600_texture *rdst = (struct r600_texture*)dst;
+	unsigned array_mode, lbpp, pitch_tile_max, slice_tile_max, size;
+	unsigned ncopy, height, cheight, detile, i, x, y, z, src_mode, dst_mode;
+	unsigned long base, addr;
+
+	/* make sure that the dma ring is only one active */
+	rctx->rings.gfx.flush(rctx, RADEON_FLUSH_ASYNC);
+
+	dst_mode = rdst->surface.level[dst_level].mode;
+	src_mode = rsrc->surface.level[src_level].mode;
+	/* downcast linear aligned to linear to simplify test */
+	src_mode = src_mode == RADEON_SURF_MODE_LINEAR_ALIGNED ? RADEON_SURF_MODE_LINEAR : src_mode;
+	dst_mode = dst_mode == RADEON_SURF_MODE_LINEAR_ALIGNED ? RADEON_SURF_MODE_LINEAR : dst_mode;
+	assert(dst_mode != src_mode);
+
+	y = 0;
+	lbpp = util_logbase2(bpp);
+	pitch_tile_max = ((pitch / bpp) >> 3) - 1;
+
+	if (dst_mode == RADEON_SURF_MODE_LINEAR) {
+		/* T2L */
+		array_mode = r600_array_mode(src_mode);
+		slice_tile_max = (((pitch * rsrc->surface.level[src_level].npix_y) >> 6) / bpp) - 1;
+		/* linear height must be the same as the slice tile max height, it's ok even
+		 * if the linear destination/source have smaller heigh as the size of the
+		 * dma packet will be using the copy_height which is always smaller or equal
+		 * to the linear height
+		 */
+		height = rsrc->surface.level[src_level].npix_y;
+		detile = 1;
+		x = src_x;
+		y = src_y;
+		z = src_z;
+		base = rsrc->surface.level[src_level].offset;
+		addr = rdst->surface.level[dst_level].offset;
+		addr += rdst->surface.level[dst_level].slice_size * dst_z;
+		addr += dst_y * pitch + dst_x * bpp;
+	} else {
+		/* L2T */
+		array_mode = r600_array_mode(dst_mode);
+		slice_tile_max = (((pitch * rdst->surface.level[dst_level].npix_y) >> 6) / bpp) - 1;
+		/* linear height must be the same as the slice tile max height, it's ok even
+		 * if the linear destination/source have smaller heigh as the size of the
+		 * dma packet will be using the copy_height which is always smaller or equal
+		 * to the linear height
+		 */
+		height = rdst->surface.level[dst_level].npix_y;
+		detile = 0;
+		x = dst_x;
+		y = dst_y;
+		z = dst_z;
+		base = rdst->surface.level[dst_level].offset;
+		addr = rsrc->surface.level[src_level].offset;
+		addr += rsrc->surface.level[src_level].slice_size * src_z;
+		addr += src_y * pitch + src_x * bpp;
+	}
+	/* check that we are in dw/base alignment constraint */
+	if ((addr & 0x3) || (base & 0xff)) {
+		return FALSE;
+	}
+
+	size = (copy_height * pitch) >> 2;
+	ncopy = (size / 0x0000ffff) + !!(size % 0x0000ffff);
+	r600_need_dma_space(rctx, ncopy * 7);
+	for (i = 0; i < ncopy; i++) {
+		cheight = copy_height;
+		if (((cheight * pitch) >> 2) > 0x0000ffff) {
+			cheight = (0x0000ffff << 2) / pitch;
+		}
+		size = (cheight * pitch) >> 2;
+		/* emit reloc before writting cs so that cs is always in consistent state */
+		r600_context_bo_reloc(rctx, &rctx->rings.dma, &rsrc->resource, RADEON_USAGE_READ);
+		r600_context_bo_reloc(rctx, &rctx->rings.dma, &rdst->resource, RADEON_USAGE_WRITE);
+		cs->buf[cs->cdw++] = DMA_PACKET(DMA_PACKET_COPY, 1, 0, size);
+		cs->buf[cs->cdw++] = base >> 8;
+		cs->buf[cs->cdw++] = (detile << 31) | (array_mode << 27) |
+					(lbpp << 24) | ((height - 1) << 10) |
+					pitch_tile_max;
+		cs->buf[cs->cdw++] = (slice_tile_max << 12) | (z << 0);
+		cs->buf[cs->cdw++] = (x << 3) | (y << 17);
+		cs->buf[cs->cdw++] = addr & 0xfffffffc;
+		cs->buf[cs->cdw++] = (addr >> 32UL) & 0xff;
+		copy_height -= cheight;
+		addr += cheight * pitch;
+		y += cheight;
+	}
+	return TRUE;
+}
+
+boolean r600_dma_blit(struct pipe_context *ctx,
+			struct pipe_resource *dst,
+			unsigned dst_level,
+			unsigned dst_x, unsigned dst_y, unsigned dst_z,
+			struct pipe_resource *src,
+			unsigned src_level,
+			const struct pipe_box *src_box)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_texture *rsrc = (struct r600_texture*)src;
+	struct r600_texture *rdst = (struct r600_texture*)dst;
+	unsigned dst_pitch, src_pitch, bpp, dst_mode, src_mode, copy_height;
+	unsigned src_w, dst_w;
+
+	if (rctx->rings.dma.cs == NULL) {
+		return FALSE;
+	}
+	if (src->format != dst->format) {
+		return FALSE;
+	}
+
+	bpp = rdst->surface.bpe;
+	dst_pitch = rdst->surface.level[dst_level].pitch_bytes;
+	src_pitch = rsrc->surface.level[src_level].pitch_bytes;
+	src_w = rsrc->surface.level[src_level].npix_x;
+	dst_w = rdst->surface.level[dst_level].npix_x;
+	copy_height = src_box->height / rsrc->surface.blk_h;
+
+	dst_mode = rdst->surface.level[dst_level].mode;
+	src_mode = rsrc->surface.level[src_level].mode;
+	/* downcast linear aligned to linear to simplify test */
+	src_mode = src_mode == RADEON_SURF_MODE_LINEAR_ALIGNED ? RADEON_SURF_MODE_LINEAR : src_mode;
+	dst_mode = dst_mode == RADEON_SURF_MODE_LINEAR_ALIGNED ? RADEON_SURF_MODE_LINEAR : dst_mode;
+
+	if (src_pitch != dst_pitch || src_box->x || dst_x || src_w != dst_w) {
+		/* strick requirement on r6xx/r7xx */
+		return FALSE;
+	}
+	/* lot of constraint on alignment this should capture them all */
+	if ((src_pitch & 0x7) || (src_box->y & 0x7) || (dst_y & 0x7)) {
+		return FALSE;
+	}
+
+	if (src_mode == dst_mode) {
+		unsigned long dst_offset, src_offset, size;
+
+		/* simple dma blit would do NOTE code here assume :
+		 *   src_box.x/y == 0
+		 *   dst_x/y == 0
+		 *   dst_pitch == src_pitch
+		 */
+		src_offset= rsrc->surface.level[src_level].offset;
+		src_offset += rsrc->surface.level[src_level].slice_size * src_box->z;
+		src_offset += src_box->y * src_pitch + src_box->x * bpp;
+		dst_offset = rdst->surface.level[dst_level].offset;
+		dst_offset += rdst->surface.level[dst_level].slice_size * dst_z;
+		dst_offset += dst_y * dst_pitch + dst_x * bpp;
+		size = src_box->height * src_pitch;
+		/* must be dw aligned */
+		if ((dst_offset & 0x3) || (src_offset & 0x3) || (size & 0x3)) {
+			return FALSE;
+		}
+		r600_dma_copy(rctx, dst, src, dst_offset, src_offset, size);
+	} else {
+		return r600_dma_copy_tile(rctx, dst, dst_level, dst_x, dst_y, dst_z,
+					src, src_level, src_box->x, src_box->y, src_box->z,
+					copy_height, dst_pitch, bpp);
+	}
+	return TRUE;
+}

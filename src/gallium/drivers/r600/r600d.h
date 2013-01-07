@@ -3681,4 +3681,19 @@
 #define SQ_TEX_INST_SAMPLE_C_G_LB	0x1E
 #define SQ_TEX_INST_SAMPLE_C_G_LZ	0x1F
 
+/* async DMA packets */
+#define DMA_PACKET(cmd, t, s, n)	((((cmd) & 0xF) << 28) |	\
+					(((t) & 0x1) << 23) |		\
+					(((s) & 0x1) << 22) |		\
+					(((n) & 0xFFFF) << 0))
+/* async DMA Packet types */
+#define DMA_PACKET_WRITE		0x2
+#define DMA_PACKET_COPY			0x3
+#define DMA_PACKET_INDIRECT_BUFFER	0x4
+#define DMA_PACKET_SEMAPHORE		0x5
+#define DMA_PACKET_FENCE		0x6
+#define DMA_PACKET_TRAP			0x7
+#define DMA_PACKET_CONSTANT_FILL	0xd /* 7xx only */
+#define DMA_PACKET_NOP			0xf
+
 #endif

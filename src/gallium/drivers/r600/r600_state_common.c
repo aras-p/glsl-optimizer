@@ -1273,15 +1273,15 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		return;
 	}
 
+	/* make sure that the gfx ring is only one active */
+	rctx->rings.dma.flush(rctx, RADEON_FLUSH_ASYNC);
+
 	if (!r600_update_derived_state(rctx)) {
 		/* useless to render because current rendering command
 		 * can't be achieved
 		 */
 		return;
 	}
-
-	/* make sure that the gfx ring is only one active */
-	rctx->rings.dma.flush(rctx, RADEON_FLUSH_ASYNC);
 
 	if (info.indexed) {
 		/* Initialize the index buffer struct. */
