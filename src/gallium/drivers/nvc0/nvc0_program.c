@@ -43,8 +43,14 @@ nvc0_mesa_varying_hack(struct nv50_ir_varying *var)
       for (c = 0; c < 4; ++c)
          var->slot[c] = (0x2e0 + c * 0x4) / 4;
    else
+   if (var->si <= 39)
       for (c = 0; c < 4; ++c) /* move down user varyings (first has index 8) */
          var->slot[c] -= 0x80 / 4;
+   else {
+      NOUVEAU_ERR("too many varyings / invalid location: %u !\n", var->si);
+      for (c = 0; c < 4; ++c)
+         var->slot[c] = (0x270 + c * 0x4) / 4; /* catch invalid indices */
+   }
 }
 
 static uint32_t
