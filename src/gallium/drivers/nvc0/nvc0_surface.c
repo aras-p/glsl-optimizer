@@ -544,7 +544,7 @@ nvc0_blit_select_fp(struct nvc0_blitctx *ctx, const struct pipe_blit_info *info)
    struct nvc0_blitter *blitter = ctx->nvc0->screen->blitter;
 
    const enum pipe_texture_target ptarg =
-      nv50_blit_reinterpret_pipe_texture_target(info->dst.resource->target);
+      nv50_blit_reinterpret_pipe_texture_target(info->src.resource->target);
 
    const unsigned targ = nv50_blit_texture_type(ptarg);
    const unsigned mode = ctx->mode;
@@ -553,7 +553,7 @@ nvc0_blit_select_fp(struct nvc0_blitctx *ctx, const struct pipe_blit_info *info)
       pipe_mutex_lock(blitter->mutex);
       if (!blitter->fp[targ][mode])
          blitter->fp[targ][mode] =
-            nv50_blitter_make_fp(&ctx->nvc0->base.pipe, mode, targ);
+            nv50_blitter_make_fp(&ctx->nvc0->base.pipe, mode, ptarg);
       pipe_mutex_unlock(blitter->mutex);
    }
    ctx->fp = blitter->fp[targ][mode];
