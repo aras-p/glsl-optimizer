@@ -439,6 +439,9 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
 
    nvc0_vertex_configure_translate(nvc0, info->index_bias);
 
+   if (unlikely(ctx.edgeflag.enabled))
+      nvc0_push_map_edgeflag(&ctx, nvc0, info->index_bias);
+
    ctx.prim_restart = info->primitive_restart;
    ctx.restart_index = info->restart_index;
 
