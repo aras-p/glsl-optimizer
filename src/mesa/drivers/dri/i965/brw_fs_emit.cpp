@@ -687,8 +687,6 @@ fs_generator::generate_uniform_pull_constant_load_gen7(fs_inst *inst,
 
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, offset);
-   if (intel->gen < 6)
-      send->header.destreg__conditionalmod = inst->base_mrf;
 
    uint32_t msg_control = BRW_DATAPORT_OWORD_BLOCK_2_OWORDS;
    uint32_t msg_type = BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ;
