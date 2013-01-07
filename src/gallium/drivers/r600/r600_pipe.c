@@ -289,7 +289,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		goto fail;
 	}
 
-	rctx->cs = rctx->ws->cs_create(rctx->ws);
+	rctx->cs = rctx->ws->cs_create(rctx->ws, RING_GFX);
 	rctx->ws->cs_set_flush_callback(rctx->cs, r600_flush_from_winsys, rctx);
 
 	rctx->uploader = u_upload_create(&rctx->context, 1024 * 1024, 256,

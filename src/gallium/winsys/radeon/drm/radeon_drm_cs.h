@@ -74,9 +74,8 @@ struct radeon_drm_cs {
     void (*flush_cs)(void *ctx, unsigned flags);
     void *flush_data;
 
-    pipe_thread thread;
-    int flush_started, kill_thread;
-    pipe_semaphore flush_queued, flush_completed;
+    int flush_started;
+    pipe_semaphore flush_completed;
 };
 
 int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo);
@@ -118,7 +117,8 @@ radeon_bo_is_referenced_by_any_cs(struct radeon_bo *bo)
     return bo->num_cs_references != 0;
 }
 
-void radeon_drm_cs_sync_flush(struct radeon_drm_cs *cs);
+void radeon_drm_cs_sync_flush(struct radeon_winsys_cs *rcs);
 void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws);
+void radeon_drm_cs_emit_ioctl_oneshot(struct radeon_cs_context *csc);
 
 #endif

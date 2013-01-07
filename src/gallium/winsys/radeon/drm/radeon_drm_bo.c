@@ -453,7 +453,7 @@ static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
                 } else {
                     /* Try to avoid busy-waiting in radeon_bo_wait. */
                     if (p_atomic_read(&bo->num_active_ioctls))
-                        radeon_drm_cs_sync_flush(cs);
+                        radeon_drm_cs_sync_flush(rcs);
                 }
 
                 radeon_bo_wait((struct pb_buffer*)bo, RADEON_USAGE_READWRITE);

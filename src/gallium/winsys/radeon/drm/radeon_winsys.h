@@ -138,12 +138,19 @@ enum chip_class {
     TAHITI,
 };
 
+enum ring_type {
+    RING_GFX = 0,
+    RING_DMA,
+    RING_LAST,
+};
+
 struct winsys_handle;
 struct radeon_winsys_cs_handle;
 
 struct radeon_winsys_cs {
-    unsigned cdw;  /* Number of used dwords. */
-    uint32_t *buf; /* The command buffer. */
+    unsigned                    cdw;  /* Number of used dwords. */
+    uint32_t                    *buf; /* The command buffer. */
+    enum ring_type              ring_type;
 };
 
 struct radeon_info {
@@ -170,6 +177,7 @@ struct radeon_info {
     uint32_t                    r600_max_pipes;
     boolean                     r600_backend_map_valid;
     boolean                     r600_virtual_address;
+    boolean                     r600_has_dma;
 };
 
 enum radeon_feature_id {
@@ -350,7 +358,7 @@ struct radeon_winsys {
      *
      * \param ws        The winsys this function is called from.
      */
-    struct radeon_winsys_cs *(*cs_create)(struct radeon_winsys *ws);
+    struct radeon_winsys_cs *(*cs_create)(struct radeon_winsys *ws, enum ring_type ring_type);
 
     /**
      * Destroy a command stream.
@@ -433,6 +441,12 @@ struct radeon_winsys {
     boolean (*cs_request_feature)(struct radeon_winsys_cs *cs,
                                   enum radeon_feature_id fid,
                                   boolean enable);
+     /**
+      * Make sure all asynchronous flush of the cs have completed
+      *
+      * \param cs        A command stream.
+      */
+    void (*cs_sync_flush)(struct radeon_winsys_cs *cs);
 
     /**
      * Initialize surface
