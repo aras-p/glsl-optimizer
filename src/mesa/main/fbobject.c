@@ -2849,14 +2849,33 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       if ((readRb == NULL) || (drawRb == NULL)) {
 	 mask &= ~GL_STENCIL_BUFFER_BIT;
       }
-      else if (_mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS) !=
-	       _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS)) {
-	 /* There is no need to check the stencil datatype here, because
-	  * there is only one: GL_UNSIGNED_INT.
-	  */
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBlitFramebufferEXT(stencil buffer size mismatch)");
-         return;
+      else {
+         if (_mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS) !=
+             _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS)) {
+            /* There is no need to check the stencil datatype here, because
+             * there is only one: GL_UNSIGNED_INT.
+             */
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glBlitFramebuffer(stencil attachment format mismatch)");
+            return;
+         }
+
+         int read_z_bits = _mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS);
+         int draw_z_bits = _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS);
+
+         /* If both buffers also have depth data, the depth formats must match
+          * as well.  If one doesn't have depth, it's not blitted, so we should
+          * ignore the depth format check.
+          */
+         if (read_z_bits > 0 && draw_z_bits > 0 &&
+             (read_z_bits != draw_z_bits ||
+              _mesa_get_format_datatype(readRb->Format) !=
+              _mesa_get_format_datatype(drawRb->Format))) {
+
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glBlitFramebuffer"
+                        "(stencil attachment depth format mismatch)");
+            return;
+         }
       }
    }
 
@@ -2875,13 +2894,28 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       if ((readRb == NULL) || (drawRb == NULL)) {
 	 mask &= ~GL_DEPTH_BUFFER_BIT;
       }
-      else if ((_mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS) !=
-	        _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS)) ||
-	       (_mesa_get_format_datatype(readRb->Format) !=
-		_mesa_get_format_datatype(drawRb->Format))) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBlitFramebufferEXT(depth buffer format mismatch)");
-         return;
+      else {
+         if ((_mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS) !=
+              _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS)) ||
+             (_mesa_get_format_datatype(readRb->Format) !=
+              _mesa_get_format_datatype(drawRb->Format))) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glBlitFramebuffer(depth attachment format mismatch)");
+            return;
+         }
+
+         int read_s_bit = _mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS);
+         int draw_s_bit = _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS);
+
+         /* If both buffers also have stencil data, the stencil formats must
+          * match as well.  If one doesn't have stencil, it's not blitted, so
+          * we should ignore the stencil format check.
+          */
+         if (read_s_bit > 0 && draw_s_bit > 0 && read_s_bit != draw_s_bit) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glBlitFramebuffer"
+                        "(depth attachment stencil bits mismatch)");
+            return;
+         }
       }
    }
 
