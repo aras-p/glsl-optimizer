@@ -662,21 +662,16 @@ _mesa_TexParameterf(GLenum target, GLenum pname, GLfloat param)
    case GL_DEPTH_TEXTURE_MODE_ARB:
    case GL_TEXTURE_SRGB_DECODE_EXT:
    case GL_TEXTURE_CUBE_MAP_SEAMLESS:
-      {
-         /* convert float param to int */
-         GLint p[4];
-         p[0] = (GLint) param;
-         p[1] = p[2] = p[3] = 0;
-         need_update = set_tex_parameteri(ctx, texObj, pname, p);
-      }
-      break;
    case GL_TEXTURE_SWIZZLE_R_EXT:
    case GL_TEXTURE_SWIZZLE_G_EXT:
    case GL_TEXTURE_SWIZZLE_B_EXT:
    case GL_TEXTURE_SWIZZLE_A_EXT:
       {
          GLint p[4];
-         p[0] = (GLint) param;
+         p[0] = (param > 0) ?
+                ((param > INT_MAX) ? INT_MAX : (GLint) (param + 0.5)) :
+                ((param < INT_MIN) ? INT_MIN : (GLint) (param - 0.5));
+
          p[1] = p[2] = p[3] = 0;
          need_update = set_tex_parameteri(ctx, texObj, pname, p);
       }
