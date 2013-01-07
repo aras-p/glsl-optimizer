@@ -2890,8 +2890,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 		return NULL;
 	}
 
-	bytecode = rctx->ws->buffer_map(shader->buffer->cs_buf, rctx->cs,
-					PIPE_TRANSFER_WRITE | PIPE_TRANSFER_UNSYNCHRONIZED);
+	bytecode = r600_buffer_mmap_sync_with_rings(rctx, shader->buffer, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_UNSYNCHRONIZED);
 	bytecode += shader->offset / 4;
 
 	if (R600_BIG_ENDIAN) {

@@ -52,7 +52,7 @@ static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, uns
 	switch (type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
-		results = ctx->ws->buffer_map(buf->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
+		results = r600_buffer_mmap_sync_with_rings(ctx, buf, PIPE_TRANSFER_WRITE);
 		memset(results, 0, buf_size);
 
 		/* Set top bits for unused backends. */
@@ -75,7 +75,7 @@ static struct r600_resource *r600_new_query_buffer(struct r600_context *ctx, uns
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-		results = ctx->ws->buffer_map(buf->cs_buf, ctx->cs, PIPE_TRANSFER_WRITE);
+		results = r600_buffer_mmap_sync_with_rings(ctx, buf, PIPE_TRANSFER_WRITE);
 		memset(results, 0, buf_size);
 		ctx->ws->buffer_unmap(buf->cs_buf);
 		break;
@@ -106,7 +106,7 @@ static void r600_update_occlusion_query_state(struct r600_context *rctx,
 
 static void r600_emit_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
-	struct radeon_winsys_cs *cs = ctx->cs;
+	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;
 	uint64_t va;
 
 	r600_update_occlusion_query_state(ctx, query->type, 1);
@@ -154,7 +154,7 @@ static void r600_emit_query_begin(struct r600_context *ctx, struct r600_query *q
 		assert(0);
 	}
 	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer.buf, RADEON_USAGE_WRITE);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, &ctx->rings.gfx, query->buffer.buf, RADEON_USAGE_WRITE);
 
 	if (!r600_is_timer_query(query->type)) {
 		ctx->num_cs_dw_nontimer_queries_suspend += query->num_cs_dw;
@@ -163,7 +163,7 @@ static void r600_emit_query_begin(struct r600_context *ctx, struct r600_query *q
 
 static void r600_emit_query_end(struct r600_context *ctx, struct r600_query *query)
 {
-	struct radeon_winsys_cs *cs = ctx->cs;
+	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;
 	uint64_t va;
 
 	/* The queries which need begin already called this in begin_query. */
@@ -206,7 +206,7 @@ static void r600_emit_query_end(struct r600_context *ctx, struct r600_query *que
 		assert(0);
 	}
 	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, query->buffer.buf, RADEON_USAGE_WRITE);
+	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, &ctx->rings.gfx, query->buffer.buf, RADEON_USAGE_WRITE);
 
 	query->buffer.results_end += query->result_size;
 
@@ -222,7 +222,7 @@ static void r600_emit_query_end(struct r600_context *ctx, struct r600_query *que
 static void r600_emit_query_predication(struct r600_context *ctx, struct r600_query *query,
 					int operation, bool flag_wait)
 {
-	struct radeon_winsys_cs *cs = ctx->cs;
+	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;
 
 	if (operation == PREDICATION_OP_CLEAR) {
 		r600_need_cs_space(ctx, 3, FALSE);
@@ -256,7 +256,7 @@ static void r600_emit_query_predication(struct r600_context *ctx, struct r600_qu
 				cs->buf[cs->cdw++] = (va + results_base) & 0xFFFFFFFFUL;
 				cs->buf[cs->cdw++] = op | (((va + results_base) >> 32UL) & 0xFF);
 				cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-				cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, qbuf->buf, RADEON_USAGE_READ);
+				cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, &ctx->rings.gfx, qbuf->buf, RADEON_USAGE_READ);
 				results_base += query->result_size;
 
 				/* set CONTINUE bit for all packets except the first */
@@ -351,7 +351,7 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 	}
 
 	/* Obtain a new buffer if the current one can't be mapped without a stall. */
-	if (rctx->ws->cs_is_buffer_referenced(rctx->cs, rquery->buffer.buf->cs_buf, RADEON_USAGE_READWRITE) ||
+	if (r600_rings_is_buffer_referenced(rctx, rquery->buffer.buf->cs_buf, RADEON_USAGE_READWRITE) ||
 	    rctx->ws->buffer_is_busy(rquery->buffer.buf->buf, RADEON_USAGE_READWRITE)) {
 		pipe_resource_reference((struct pipe_resource**)&rquery->buffer.buf, NULL);
 		rquery->buffer.buf = r600_new_query_buffer(rctx, rquery->type);
@@ -406,9 +406,9 @@ static boolean r600_get_query_buffer_result(struct r600_context *ctx,
 	unsigned results_base = 0;
 	char *map;
 
-	map = ctx->ws->buffer_map(qbuf->buf->cs_buf, ctx->cs,
-				  PIPE_TRANSFER_READ |
-				  (wait ? 0 : PIPE_TRANSFER_DONTBLOCK));
+	map = r600_buffer_mmap_sync_with_rings(ctx, qbuf->buf,
+						PIPE_TRANSFER_READ |
+						(wait ? 0 : PIPE_TRANSFER_DONTBLOCK));
 	if (!map)
 		return FALSE;
 

@@ -63,7 +63,9 @@ void evergreen_emit_raw_value(
 
 void evergreen_emit_ctx_value(struct r600_context *ctx, unsigned value)
 {
-	ctx->cs->buf[ctx->cs->cdw++] = value;
+	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;
+
+	cs->buf[cs->cdw++] = value;
 }
 
 void evergreen_mult_reg_set_(
@@ -178,37 +180,38 @@ void evergreen_emit_ctx_reg_set(
 	unsigned index,
 	int num)
 {
+	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;
 
 	if (index >= EVERGREEN_CONFIG_REG_OFFSET
 			&& index < EVERGREEN_CONFIG_REG_END) {
-		ctx->cs->buf[ctx->cs->cdw++] = PKT3C(PKT3_SET_CONFIG_REG, num, 0);
-		ctx->cs->buf[ctx->cs->cdw++] = (index - EVERGREEN_CONFIG_REG_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = PKT3C(PKT3_SET_CONFIG_REG, num, 0);
+		cs->buf[cs->cdw++] = (index - EVERGREEN_CONFIG_REG_OFFSET) >> 2;
 	} else if (index >= EVERGREEN_CONTEXT_REG_OFFSET
 			&& index < EVERGREEN_CONTEXT_REG_END) {
-		ctx->cs->buf[ctx->cs->cdw++] = PKT3C(PKT3_SET_CONTEXT_REG, num, 0);
-		ctx->cs->buf[ctx->cs->cdw++] = (index - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = PKT3C(PKT3_SET_CONTEXT_REG, num, 0);
+		cs->buf[cs->cdw++] = (index - EVERGREEN_CONTEXT_REG_OFFSET) >> 2;
 	} else if (index >= EVERGREEN_RESOURCE_OFFSET
 			&& index < EVERGREEN_RESOURCE_END) {
-		ctx->cs->buf[ctx->cs->cdw++] = PKT3C(PKT3_SET_RESOURCE, num, 0);
-		ctx->cs->buf[ctx->cs->cdw++] = (index - EVERGREEN_RESOURCE_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = PKT3C(PKT3_SET_RESOURCE, num, 0);
+		cs->buf[cs->cdw++] = (index - EVERGREEN_RESOURCE_OFFSET) >> 2;
 	} else if (index >= EVERGREEN_SAMPLER_OFFSET
 			&& index < EVERGREEN_SAMPLER_END) {
-		ctx->cs->buf[ctx->cs->cdw++] = PKT3C(PKT3_SET_SAMPLER, num, 0);
-		ctx->cs->buf[ctx->cs->cdw++] = (index - EVERGREEN_SAMPLER_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = PKT3C(PKT3_SET_SAMPLER, num, 0);
+		cs->buf[cs->cdw++] = (index - EVERGREEN_SAMPLER_OFFSET) >> 2;
 	} else if (index >= EVERGREEN_CTL_CONST_OFFSET
 			&& index < EVERGREEN_CTL_CONST_END) {
-		ctx->cs->buf[ctx->cs->cdw++] = PKT3C(PKT3_SET_CTL_CONST, num, 0);
-		ctx->cs->buf[ctx->cs->cdw++] = (index - EVERGREEN_CTL_CONST_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = PKT3C(PKT3_SET_CTL_CONST, num, 0);
+		cs->buf[cs->cdw++] = (index - EVERGREEN_CTL_CONST_OFFSET) >> 2;
 	} else if (index >= EVERGREEN_LOOP_CONST_OFFSET
 			&& index < EVERGREEN_LOOP_CONST_END) {
-		ctx->cs->buf[ctx->cs->cdw++] = PKT3C(PKT3_SET_LOOP_CONST, num, 0);
-		ctx->cs->buf[ctx->cs->cdw++] = (index - EVERGREEN_LOOP_CONST_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = PKT3C(PKT3_SET_LOOP_CONST, num, 0);
+		cs->buf[cs->cdw++] = (index - EVERGREEN_LOOP_CONST_OFFSET) >> 2;
 	} else if (index >= EVERGREEN_BOOL_CONST_OFFSET
 			&& index < EVERGREEN_BOOL_CONST_END) {
-		ctx->cs->buf[ctx->cs->cdw++] = PKT3C(PKT3_SET_BOOL_CONST, num, 0);
-		ctx->cs->buf[ctx->cs->cdw++] = (index - EVERGREEN_BOOL_CONST_OFFSET) >> 2;
+		cs->buf[cs->cdw++] = PKT3C(PKT3_SET_BOOL_CONST, num, 0);
+		cs->buf[cs->cdw++] = (index - EVERGREEN_BOOL_CONST_OFFSET) >> 2;
 	} else {
-		ctx->cs->buf[ctx->cs->cdw++] = PKT0(index, num-1);
+		cs->buf[cs->cdw++] = PKT0(index, num-1);
 	}
 }
 
@@ -217,13 +220,14 @@ void evergreen_emit_ctx_reloc(
 	struct r600_resource *bo,
 	enum radeon_bo_usage usage)
 {
+	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;
 	u32 rr = 0;
 
 	assert(bo);
 
-	ctx->cs->buf[ctx->cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	rr = r600_context_bo_reloc(ctx, bo, usage);
-	ctx->cs->buf[ctx->cs->cdw++] = rr;
+	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
+	rr = r600_context_bo_reloc(ctx, &ctx->rings.gfx, bo, usage);
+	cs->buf[cs->cdw++] = rr;
 }
 
 int evergreen_compute_get_gpu_format(

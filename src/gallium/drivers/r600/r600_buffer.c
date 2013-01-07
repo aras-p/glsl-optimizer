@@ -85,11 +85,11 @@ static void *r600_buffer_get_transfer(struct pipe_context *ctx,
 }
 
 static void *r600_buffer_transfer_map(struct pipe_context *ctx,
-                                      struct pipe_resource *resource,
-                                      unsigned level,
-                                      unsigned usage,
-                                      const struct pipe_box *box,
-				      struct pipe_transfer **ptransfer)
+					struct pipe_resource *resource,
+					unsigned level,
+					unsigned usage,
+					const struct pipe_box *box,
+					struct pipe_transfer **ptransfer)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct r600_resource *rbuffer = r600_resource(resource);
@@ -102,7 +102,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 		assert(usage & PIPE_TRANSFER_WRITE);
 
 		/* Check if mapping this buffer would cause waiting for the GPU. */
-		if (rctx->ws->cs_is_buffer_referenced(rctx->cs, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
+		if (r600_rings_is_buffer_referenced(rctx, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
 		    rctx->ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
 			unsigned i, mask;
 
@@ -144,7 +144,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 		assert(usage & PIPE_TRANSFER_WRITE);
 
 		/* Check if mapping this buffer would cause waiting for the GPU. */
-		if (rctx->ws->cs_is_buffer_referenced(rctx->cs, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
+		if (r600_rings_is_buffer_referenced(rctx, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
 		    rctx->ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
 			/* Do a wait-free write-only transfer using a temporary buffer. */
 			unsigned offset;
@@ -161,7 +161,8 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 		}
 	}
 
-	data = rctx->ws->buffer_map(rbuffer->cs_buf, rctx->cs, usage);
+	/* mmap and synchronize with rings */
+	data = r600_buffer_mmap_sync_with_rings(rctx, rbuffer, usage);
 	if (!data) {
 		return NULL;
 	}

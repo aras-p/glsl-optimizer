@@ -724,7 +724,7 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 	struct r600_transfer *trans;
 	boolean use_staging_texture = FALSE;
 	enum pipe_format format = texture->format;
-	struct radeon_winsys_cs_handle *buf;
+	struct r600_resource *buf;
 	unsigned offset = 0;
 	char *map;
 
@@ -745,7 +745,7 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 
 	/* Use a staging texture for uploads if the underlying BO is busy. */
 	if (!(usage & PIPE_TRANSFER_READ) &&
-	    (rctx->ws->cs_is_buffer_referenced(rctx->cs, rtex->resource.cs_buf, RADEON_USAGE_READWRITE) ||
+	    (r600_rings_is_buffer_referenced(rctx, rtex->resource.cs_buf, RADEON_USAGE_READWRITE) ||
 	     rctx->ws->buffer_is_busy(rtex->resource.buf, RADEON_USAGE_READWRITE))) {
 		use_staging_texture = TRUE;
 	}
@@ -838,8 +838,9 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 		trans->transfer.layer_stride = staging->surface.level[0].slice_size;
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
-			/* Always referenced in the blit. */
-			r600_flush(ctx, NULL, 0);
+			/* flush gfx & dma ring, order does not matter as only one can be live */
+			rctx->rings.dma.flush(rctx, 0);
+			rctx->rings.gfx.flush(rctx, 0);
 		}
 	} else {
 		trans->transfer.stride = rtex->surface.level[level].pitch_bytes;
@@ -848,9 +849,9 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 	}
 
 	if (trans->staging) {
-		buf = trans->staging->cs_buf;
+		buf = trans->staging;
 	} else {
-		buf = rtex->resource.cs_buf;
+		buf = &rtex->resource;
 	}
 
 	if (rtex->is_depth || !trans->staging)
@@ -858,7 +859,7 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 			box->y / util_format_get_blockheight(format) * trans->transfer.stride +
 			box->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 
-	if (!(map = rctx->ws->buffer_map(buf, rctx->cs, usage))) {
+	if (!(map = r600_buffer_mmap_sync_with_rings(rctx, buf, usage))) {
 		pipe_resource_reference((struct pipe_resource**)&trans->staging, NULL);
 		FREE(trans);
 		return NULL;

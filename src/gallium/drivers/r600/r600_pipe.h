@@ -406,11 +406,22 @@ struct r600_fetch_shader {
 	unsigned			offset;
 };
 
+struct r600_ring {
+	struct radeon_winsys_cs		*cs;
+	bool				flushing;
+	void (*flush)(void *ctx, unsigned flags);
+};
+
+struct r600_rings {
+	struct r600_ring		gfx;
+	struct r600_ring		dma;
+};
+
 struct r600_context {
 	struct pipe_context		context;
 	struct r600_screen		*screen;
 	struct radeon_winsys		*ws;
-	struct radeon_winsys_cs		*cs;
+	struct r600_rings		rings;
 	struct blitter_context		*blitter;
 	struct u_upload_mgr		*uploader;
 	struct u_suballocator		*allocator_so_filled_size;
@@ -626,8 +637,12 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 unsigned alignment);
 
 /* r600_pipe.c */
-void r600_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
-		unsigned flags);
+boolean r600_rings_is_buffer_referenced(struct r600_context *ctx,
+					struct radeon_winsys_cs_handle *buf,
+					enum radeon_bo_usage usage);
+void *r600_buffer_mmap_sync_with_rings(struct r600_context *ctx,
+					struct r600_resource *resource,
+					unsigned usage);
 
 /* r600_query.c */
 void r600_init_query_functions(struct r600_context *rctx);
@@ -835,12 +850,25 @@ void r600_release_command_buffer(struct r600_command_buffer *cb);
 /*
  * Helpers for emitting state into a command stream directly.
  */
-
-static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx, struct r600_resource *rbo,
+static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx,
+					     struct r600_ring *ring,
+					     struct r600_resource *rbo,
 					     enum radeon_bo_usage usage)
 {
 	assert(usage);
-	return ctx->ws->cs_add_reloc(ctx->cs, rbo->cs_buf, usage, rbo->domains) * 4;
+	/* make sure that all previous ring use are flushed so everything
+	 * look serialized from driver pov
+	 */
+	if (!ring->flushing) {
+		if (ring == &ctx->rings.gfx) {
+			/* flush dma ring */
+			ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
+		} else {
+			/* flush gfx ring */
+			ctx->rings.gfx.flush(ctx, RADEON_FLUSH_ASYNC);
+		}
+	}
+	return ctx->ws->cs_add_reloc(ring->cs, rbo->cs_buf, usage, rbo->domains) * 4;
 }
 
 static INLINE void r600_write_value(struct radeon_winsys_cs *cs, unsigned value)

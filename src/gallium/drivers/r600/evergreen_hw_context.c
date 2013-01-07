@@ -210,7 +210,7 @@ out_err:
 
 void evergreen_flush_vgt_streamout(struct r600_context *ctx)
 {
-	struct radeon_winsys_cs *cs = ctx->cs;
+	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;
 
 	r600_write_config_reg(cs, R_0084FC_CP_STRMOUT_CNTL, 0);
 
@@ -228,7 +228,7 @@ void evergreen_flush_vgt_streamout(struct r600_context *ctx)
 
 void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_enable_bit)
 {
-	struct radeon_winsys_cs *cs = ctx->cs;
+	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;
 
 	if (buffer_enable_bit) {
 		r600_write_context_reg_seq(cs, R_028B94_VGT_STRMOUT_CONFIG, 2);
