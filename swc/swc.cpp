@@ -198,7 +198,7 @@ extern "C" void compileShader()
       "    try { shader = JSON.parse(outputstr) } catch(e:*) { }\n"
       "    if(shader != null && shader[\"agalasm\"] != null) {\n"
       "        shader = Utils.optimizeShader(shader, mode == 0)\n"
-      "        outputstr = JSON.stringify(shader)\n"
+      "        outputstr = JSON.stringify(shader, null, 1)\n"
       "    }\n"
       "}\n"
    );

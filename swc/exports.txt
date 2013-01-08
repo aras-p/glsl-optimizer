@@ -17,3 +17,6 @@ _Unwind_SjLj_RaiseException
 compileShader
 
 __muldi3
+__umuldi3
+__udivdi3
+__umoddi3
