@@ -759,7 +759,7 @@ fallback_copy_texsubimage(struct gl_context *ctx,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct pipe_transfer *src_trans;
-   GLvoid *texDest;
+   GLubyte *texDest;
    enum pipe_transfer_usage transfer_usage;
    void *map;
    unsigned dst_width = width;
@@ -884,7 +884,7 @@ fallback_copy_texsubimage(struct gl_context *ctx,
                         texImage->_BaseFormat, 
                         texImage->TexFormat, 
                         dstRowStride,
-                        (GLubyte **) &texDest,
+                        &texDest,
                         width, height, 1,
                         GL_RGBA, GL_FLOAT, tempSrc, /* src */
                         &unpack);
