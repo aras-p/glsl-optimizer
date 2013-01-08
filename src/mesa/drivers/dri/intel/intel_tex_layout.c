@@ -143,14 +143,14 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
    GLuint level;
    GLuint x = 0;
    GLuint y = 0;
-   GLuint width = mt->width0;
-   GLuint height = mt->height0;
-   GLuint depth = mt->depth0; /* number of array layers. */
+   GLuint width = mt->physical_width0;
+   GLuint height = mt->physical_height0;
+   GLuint depth = mt->physical_depth0; /* number of array layers. */
 
-   mt->total_width = mt->width0;
+   mt->total_width = mt->physical_width0;
 
    if (mt->compressed) {
-       mt->total_width = ALIGN(mt->width0, mt->align_w);
+       mt->total_width = ALIGN(mt->physical_width0, mt->align_w);
    }
 
    /* May need to adjust width to accomodate the placement of
@@ -162,11 +162,11 @@ void i945_miptree_layout_2d(struct intel_mipmap_tree *mt)
        GLuint mip1_width;
 
        if (mt->compressed) {
-           mip1_width = ALIGN(minify(mt->width0), mt->align_w)
-               + ALIGN(minify(minify(mt->width0)), mt->align_w);
+           mip1_width = ALIGN(minify(mt->physical_width0), mt->align_w)
+               + ALIGN(minify(minify(mt->physical_width0)), mt->align_w);
        } else {
-           mip1_width = ALIGN(minify(mt->width0), mt->align_w)
-               + minify(minify(mt->width0));
+           mip1_width = ALIGN(minify(mt->physical_width0), mt->align_w)
+               + minify(minify(mt->physical_width0));
        }
 
        if (mip1_width > mt->total_width) {

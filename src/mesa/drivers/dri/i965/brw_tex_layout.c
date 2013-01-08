@@ -47,8 +47,8 @@ brw_miptree_layout_texture_array(struct intel_context *intel,
    GLuint qpitch = 0;
    int h0, h1, q;
 
-   h0 = ALIGN(mt->height0, mt->align_h);
-   h1 = ALIGN(minify(mt->height0), mt->align_h);
+   h0 = ALIGN(mt->physical_height0, mt->align_h);
+   h1 = ALIGN(minify(mt->physical_height0), mt->align_h);
    if (mt->array_spacing_lod0)
       qpitch = h0;
    else
@@ -59,11 +59,11 @@ brw_miptree_layout_texture_array(struct intel_context *intel,
    i945_miptree_layout_2d(mt);
 
    for (level = mt->first_level; level <= mt->last_level; level++) {
-      for (q = 0; q < mt->depth0; q++) {
+      for (q = 0; q < mt->physical_depth0; q++) {
 	 intel_miptree_set_image_offset(mt, level, q, 0, q * qpitch);
       }
    }
-   mt->total_height = qpitch * mt->depth0;
+   mt->total_height = qpitch * mt->physical_depth0;
 }
 
 void
@@ -84,13 +84,13 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
 	 brw_miptree_layout_texture_array(intel, mt);
 	 break;
       }
-      assert(mt->depth0 == 6);
+      assert(mt->physical_depth0 == 6);
       /* FALLTHROUGH */
 
    case GL_TEXTURE_3D: {
-      GLuint width  = mt->width0;
-      GLuint height = mt->height0;
-      GLuint depth = mt->depth0;
+      GLuint width  = mt->physical_width0;
+      GLuint height = mt->physical_height0;
+      GLuint depth = mt->physical_depth0;
       GLuint pack_x_pitch, pack_x_nr;
       GLuint pack_y_pitch;
       GLuint level;
@@ -101,8 +101,8 @@ brw_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree *mt)
           mt->total_width = ALIGN(width, mt->align_w);
           pack_y_pitch = (height + 3) / 4;
       } else {
-	 mt->total_width = mt->width0;
-	 pack_y_pitch = ALIGN(mt->height0, mt->align_h);
+	 mt->total_width = mt->physical_width0;
+	 pack_y_pitch = ALIGN(mt->physical_height0, mt->align_h);
       }
 
       pack_x_pitch = width;

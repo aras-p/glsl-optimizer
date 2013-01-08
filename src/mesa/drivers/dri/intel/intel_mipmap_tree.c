@@ -122,8 +122,7 @@ intel_miptree_create_internal(struct intel_context *intel,
 			      GLuint height0,
 			      GLuint depth0,
 			      bool for_region,
-                              GLuint num_samples,
-                              enum intel_msaa_layout msaa_layout)
+                              GLuint num_samples)
 {
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
    int compress_byte = 0;
@@ -140,18 +139,78 @@ intel_miptree_create_internal(struct intel_context *intel,
    mt->format = format;
    mt->first_level = first_level;
    mt->last_level = last_level;
-   mt->width0 = width0;
-   mt->height0 = height0;
+   mt->logical_width0 = width0;
+   mt->logical_height0 = height0;
+   mt->logical_depth0 = depth0;
    mt->cpp = compress_byte ? compress_byte : _mesa_get_format_bytes(mt->format);
    mt->num_samples = num_samples;
    mt->compressed = compress_byte ? 1 : 0;
-   mt->msaa_layout = msaa_layout;
+   mt->msaa_layout = INTEL_MSAA_LAYOUT_NONE;
    mt->refcount = 1; 
+
+   if (num_samples > 1) {
+      /* Adjust width/height/depth for MSAA */
+      mt->msaa_layout = compute_msaa_layout(intel, format);
+      if (mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS) {
+         /* In the Sandy Bridge PRM, volume 4, part 1, page 31, it says:
+          *
+          *     "Any of the other messages (sample*, LOD, load4) used with a
+          *      (4x) multisampled surface will in-effect sample a surface with
+          *      double the height and width as that indicated in the surface
+          *      state. Each pixel position on the original-sized surface is
+          *      replaced with a 2x2 of samples with the following arrangement:
+          *
+          *         sample 0 sample 2
+          *         sample 1 sample 3"
+          *
+          * Thus, when sampling from a multisampled texture, it behaves as
+          * though the layout in memory for (x,y,sample) is:
+          *
+          *      (0,0,0) (0,0,2)   (1,0,0) (1,0,2)
+          *      (0,0,1) (0,0,3)   (1,0,1) (1,0,3)
+          *
+          *      (0,1,0) (0,1,2)   (1,1,0) (1,1,2)
+          *      (0,1,1) (0,1,3)   (1,1,1) (1,1,3)
+          *
+          * However, the actual layout of multisampled data in memory is:
+          *
+          *      (0,0,0) (1,0,0)   (0,0,1) (1,0,1)
+          *      (0,1,0) (1,1,0)   (0,1,1) (1,1,1)
+          *
+          *      (0,0,2) (1,0,2)   (0,0,3) (1,0,3)
+          *      (0,1,2) (1,1,2)   (0,1,3) (1,1,3)
+          *
+          * This pattern repeats for each 2x2 pixel block.
+          *
+          * As a result, when calculating the size of our 4-sample buffer for
+          * an odd width or height, we have to align before scaling up because
+          * sample 3 is in that bottom right 2x2 block.
+          */
+         switch (num_samples) {
+         case 4:
+            width0 = ALIGN(width0, 2) * 2;
+            height0 = ALIGN(height0, 2) * 2;
+            break;
+         case 8:
+            width0 = ALIGN(width0, 2) * 4;
+            height0 = ALIGN(height0, 2) * 2;
+            break;
+         default:
+            /* num_samples should already have been quantized to 0, 1, 4, or
+             * 8.
+             */
+            assert(false);
+         }
+      } else {
+         /* Non-interleaved */
+         depth0 *= num_samples;
+      }
+   }
 
    /* array_spacing_lod0 is only used for non-IMS MSAA surfaces.  TODO: can we
     * use it elsewhere?
     */
-   switch (msaa_layout) {
+   switch (mt->msaa_layout) {
    case INTEL_MSAA_LAYOUT_NONE:
    case INTEL_MSAA_LAYOUT_IMS:
       mt->array_spacing_lod0 = false;
@@ -164,30 +223,28 @@ intel_miptree_create_internal(struct intel_context *intel,
 
    if (target == GL_TEXTURE_CUBE_MAP) {
       assert(depth0 == 1);
-      mt->depth0 = 6;
-   } else {
-      mt->depth0 = depth0;
+      depth0 = 6;
    }
+
+   mt->physical_width0 = width0;
+   mt->physical_height0 = height0;
+   mt->physical_depth0 = depth0;
 
    if (!for_region &&
        _mesa_is_depthstencil_format(_mesa_get_format_base_format(format)) &&
        (intel->must_use_separate_stencil ||
 	(intel->has_separate_stencil &&
 	 intel->vtbl.is_hiz_depth_format(intel, format)))) {
-      /* MSAA stencil surfaces always use IMS layout. */
-      enum intel_msaa_layout msaa_layout =
-         num_samples > 1 ? INTEL_MSAA_LAYOUT_IMS : INTEL_MSAA_LAYOUT_NONE;
       mt->stencil_mt = intel_miptree_create(intel,
                                             mt->target,
                                             MESA_FORMAT_S8,
                                             mt->first_level,
                                             mt->last_level,
-                                            mt->width0,
-                                            mt->height0,
-                                            mt->depth0,
+                                            mt->logical_width0,
+                                            mt->logical_height0,
+                                            mt->logical_depth0,
                                             true,
                                             num_samples,
-                                            msaa_layout,
                                             false /* force_y_tiling */);
       if (!mt->stencil_mt) {
 	 intel_miptree_release(&mt);
@@ -236,7 +293,6 @@ intel_miptree_create(struct intel_context *intel,
 		     GLuint depth0,
 		     bool expect_accelerated_upload,
                      GLuint num_samples,
-                     enum intel_msaa_layout msaa_layout,
                      bool force_y_tiling)
 {
    struct intel_mipmap_tree *mt;
@@ -282,7 +338,7 @@ intel_miptree_create(struct intel_context *intel,
    etc_format = (format != tex_format) ? tex_format : MESA_FORMAT_NONE;
    base_format = _mesa_get_format_base_format(format);
 
-   if (msaa_layout != INTEL_MSAA_LAYOUT_NONE) {
+   if (num_samples > 1) {
       /* From p82 of the Sandy Bridge PRM, dw3[1] of SURFACE_STATE ("Tiled
        * Surface"):
        *
@@ -312,7 +368,7 @@ intel_miptree_create(struct intel_context *intel,
    mt = intel_miptree_create_internal(intel, target, format,
 				      first_level, last_level, width0,
 				      height0, depth0,
-				      false, num_samples, msaa_layout);
+				      false, num_samples);
    /*
     * pitch == 0 || height == 0  indicates the null texture
     */
@@ -364,8 +420,7 @@ intel_miptree_create_for_region(struct intel_context *intel,
    mt = intel_miptree_create_internal(intel, target, format,
 				      0, 0,
 				      region->width, region->height, 1,
-				      true, 0 /* num_samples */,
-                                      INTEL_MSAA_LAYOUT_NONE);
+				      true, 0 /* num_samples */);
    if (!mt)
       return mt;
 
@@ -440,73 +495,11 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
 {
    struct intel_mipmap_tree *mt;
    uint32_t depth = 1;
-   enum intel_msaa_layout msaa_layout = INTEL_MSAA_LAYOUT_NONE;
-   const uint32_t singlesample_width = width;
-   const uint32_t singlesample_height = height;
    bool ok;
-
-   if (num_samples > 1) {
-      /* Adjust width/height/depth for MSAA */
-      msaa_layout = compute_msaa_layout(intel, format);
-      if (msaa_layout == INTEL_MSAA_LAYOUT_IMS) {
-         /* In the Sandy Bridge PRM, volume 4, part 1, page 31, it says:
-          *
-          *     "Any of the other messages (sample*, LOD, load4) used with a
-          *      (4x) multisampled surface will in-effect sample a surface with
-          *      double the height and width as that indicated in the surface
-          *      state. Each pixel position on the original-sized surface is
-          *      replaced with a 2x2 of samples with the following arrangement:
-          *
-          *         sample 0 sample 2
-          *         sample 1 sample 3"
-          *
-          * Thus, when sampling from a multisampled texture, it behaves as
-          * though the layout in memory for (x,y,sample) is:
-          *
-          *      (0,0,0) (0,0,2)   (1,0,0) (1,0,2)
-          *      (0,0,1) (0,0,3)   (1,0,1) (1,0,3)
-          *
-          *      (0,1,0) (0,1,2)   (1,1,0) (1,1,2)
-          *      (0,1,1) (0,1,3)   (1,1,1) (1,1,3)
-          *
-          * However, the actual layout of multisampled data in memory is:
-          *
-          *      (0,0,0) (1,0,0)   (0,0,1) (1,0,1)
-          *      (0,1,0) (1,1,0)   (0,1,1) (1,1,1)
-          *
-          *      (0,0,2) (1,0,2)   (0,0,3) (1,0,3)
-          *      (0,1,2) (1,1,2)   (0,1,3) (1,1,3)
-          *
-          * This pattern repeats for each 2x2 pixel block.
-          *
-          * As a result, when calculating the size of our 4-sample buffer for
-          * an odd width or height, we have to align before scaling up because
-          * sample 3 is in that bottom right 2x2 block.
-          */
-         switch (num_samples) {
-         case 4:
-            width = ALIGN(width, 2) * 2;
-            height = ALIGN(height, 2) * 2;
-            break;
-         case 8:
-            width = ALIGN(width, 2) * 4;
-            height = ALIGN(height, 2) * 2;
-            break;
-         default:
-            /* num_samples should already have been quantized to 0, 1, 4, or
-             * 8.
-             */
-            assert(false);
-         }
-      } else {
-         /* Non-interleaved */
-         depth = num_samples;
-      }
-   }
 
    mt = intel_miptree_create(intel, GL_TEXTURE_2D, format, 0, 0,
 			     width, height, depth, true, num_samples,
-                             msaa_layout, false /* force_y_tiling */);
+                             false /* force_y_tiling */);
    if (!mt)
       goto fail;
 
@@ -521,9 +514,6 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
       if (!ok)
          goto fail;
    }
-
-   mt->singlesample_width0 = singlesample_width;
-   mt->singlesample_height0 = singlesample_height;
 
    return mt;
 
@@ -835,12 +825,11 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
                                      format,
                                      mt->first_level,
                                      mt->last_level,
-                                     mt->width0,
-                                     mt->height0,
-                                     mt->depth0,
+                                     mt->logical_width0,
+                                     mt->logical_height0,
+                                     mt->logical_depth0,
                                      true,
                                      0 /* num_samples */,
-                                     INTEL_MSAA_LAYOUT_NONE,
                                      true /* force_y_tiling */);
 
    /* From the Ivy Bridge PRM, Vol 2 Part 1 p326:
@@ -866,18 +855,16 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
                         GLuint num_samples)
 {
    assert(mt->hiz_mt == NULL);
-   /* MSAA HiZ surfaces always use IMS layout. */
    mt->hiz_mt = intel_miptree_create(intel,
                                      mt->target,
                                      mt->format,
                                      mt->first_level,
                                      mt->last_level,
-                                     mt->width0,
-                                     mt->height0,
-                                     mt->depth0,
+                                     mt->logical_width0,
+                                     mt->logical_height0,
+                                     mt->logical_depth0,
                                      true,
                                      num_samples,
-                                     INTEL_MSAA_LAYOUT_IMS,
                                      false /* force_y_tiling */);
 
    if (!mt->hiz_mt)
@@ -1067,8 +1054,8 @@ intel_miptree_downsample(struct intel_context *intel,
       return;
    intel_miptree_updownsample(intel,
                               mt, mt->singlesample_mt,
-                              mt->singlesample_mt->width0,
-                              mt->singlesample_mt->height0);
+                              mt->logical_width0,
+                              mt->logical_height0);
    mt->need_downsample = false;
 
    /* Strictly speaking, after a downsample on a depth miptree, a hiz
@@ -1094,8 +1081,8 @@ intel_miptree_upsample(struct intel_context *intel,
 
    intel_miptree_updownsample(intel,
                               mt->singlesample_mt, mt,
-                              mt->singlesample_mt->width0,
-                              mt->singlesample_mt->height0);
+                              mt->logical_width0,
+                              mt->logical_height0);
    intel_miptree_slice_set_needs_hiz_resolve(mt, 0, 0);
 }
 
@@ -1658,8 +1645,8 @@ intel_miptree_map_multisample(struct intel_context *intel,
       mt->singlesample_mt =
          intel_miptree_create_for_renderbuffer(intel,
                                                mt->format,
-                                               mt->singlesample_width0,
-                                               mt->singlesample_height0,
+                                               mt->logical_width0,
+                                               mt->logical_height0,
                                                0 /*num_samples*/);
       if (!mt->singlesample_mt)
          goto fail;

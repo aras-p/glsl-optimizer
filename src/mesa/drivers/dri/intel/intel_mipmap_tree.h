@@ -215,22 +215,29 @@ struct intel_mipmap_tree
    GLuint first_level;
    GLuint last_level;
 
-   GLuint width0, height0, depth0; /**< Level zero image dimensions */
+   /**
+    * Level zero image dimensions.  These dimensions correspond to the
+    * physical layout of data in memory.  Accordingly, they account for the
+    * extra width, height, and or depth that must be allocated in order to
+    * accommodate multisample formats, and they account for the extra factor
+    * of 6 in depth that must be allocated in order to accommodate cubemap
+    * textures.
+    */
+   GLuint physical_width0, physical_height0, physical_depth0;
+
    GLuint cpp;
    GLuint num_samples;
    bool compressed;
 
    /**
-    * If num_samples > 0, then singlesample_width0 is the value that width0
-    * would have if instead a singlesample miptree were created. Note that,
-    * for non-interleaved msaa layouts, the two values are the same.
-    *
-    * If num_samples == 0, then singlesample_width0 is undefined.
+    * Level zero image dimensions.  These dimensions correspond to the
+    * logical width, height, and depth of the region as seen by client code.
+    * Accordingly, they do not account for the extra width, height, and/or
+    * depth that must be allocated in order to accommodate multisample
+    * formats, nor do they account for the extra factor of 6 in depth that
+    * must be allocated in order to accommodate cubemap textures.
     */
-   uint32_t singlesample_width0;
-
-   /** \see singlesample_width0 */
-   uint32_t singlesample_height0;
+   uint32_t logical_width0, logical_height0, logical_depth0;
 
    /**
     * For 1D array, 2D array, cube, and 2D multisampled surfaces on Gen7: true
@@ -384,7 +391,6 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLuint depth0,
 					       bool expect_accelerated_upload,
                                                GLuint num_samples,
-                                               enum intel_msaa_layout msaa_layout,
                                                bool force_y_tiling);
 
 struct intel_mipmap_tree *

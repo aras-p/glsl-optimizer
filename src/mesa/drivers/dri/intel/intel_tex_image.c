@@ -101,7 +101,6 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 			       depth,
 			       expect_accelerated_upload,
                                0 /* num_samples */,
-                               INTEL_MSAA_LAYOUT_NONE,
                                false /* force_y_tiling */);
 }
 
