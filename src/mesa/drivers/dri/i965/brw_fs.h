@@ -52,7 +52,7 @@ extern "C" {
 
 class bblock_t;
 namespace {
-   class acp_entry;
+   struct acp_entry;
 }
 
 enum register_file {
