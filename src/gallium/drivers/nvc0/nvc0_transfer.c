@@ -201,7 +201,7 @@ nvc0_m2mf_push_linear(struct nouveau_context *nv,
       PUSH_DATAh(push, dst->offset + offset);
       PUSH_DATA (push, dst->offset + offset);
       BEGIN_NVC0(push, NVC0_M2MF(LINE_LENGTH_IN), 2);
-      PUSH_DATA (push, nr * 4);
+      PUSH_DATA (push, MIN2(size, nr * 4));
       PUSH_DATA (push, 1);
       BEGIN_NVC0(push, NVC0_M2MF(EXEC), 1);
       PUSH_DATA (push, 0x100111);
@@ -213,6 +213,7 @@ nvc0_m2mf_push_linear(struct nouveau_context *nv,
       count -= nr;
       src += nr;
       offset += nr * 4;
+      size -= nr * 4;
    }
 
    nouveau_bufctx_reset(nvc0->bufctx, 0);
@@ -246,7 +247,7 @@ nve4_p2mf_push_linear(struct nouveau_context *nv,
       PUSH_DATAh(push, dst->offset + offset);
       PUSH_DATA (push, dst->offset + offset);
       BEGIN_NVC0(push, NVE4_P2MF(LINE_LENGTH_IN), 2);
-      PUSH_DATA (push, nr * 4);
+      PUSH_DATA (push, MIN2(size, nr * 4));
       PUSH_DATA (push, 1);
       /* must not be interrupted (trap on QUERY fence, 0x50 works however) */
       BEGIN_1IC0(push, NVE4_P2MF(EXEC), nr + 1);
@@ -256,6 +257,7 @@ nve4_p2mf_push_linear(struct nouveau_context *nv,
       count -= nr;
       src += nr;
       offset += nr * 4;
+      size -= nr * 4;
    }
 
    nouveau_bufctx_reset(nvc0->bufctx, 0);
