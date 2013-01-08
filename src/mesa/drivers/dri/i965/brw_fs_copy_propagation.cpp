@@ -70,7 +70,7 @@ class fs_copy_prop_dataflow
 {
 public:
    fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
-                         exec_list out_acp[][ACP_HASH_SIZE]);
+                         exec_list *out_acp[ACP_HASH_SIZE]);
 
    void setup_kills();
    void run();
@@ -86,7 +86,7 @@ public:
 } /* anonymous namespace */
 
 fs_copy_prop_dataflow::fs_copy_prop_dataflow(void *mem_ctx, cfg_t *cfg,
-                                             exec_list out_acp[][ACP_HASH_SIZE])
+                                             exec_list *out_acp[ACP_HASH_SIZE])
    : mem_ctx(mem_ctx), cfg(cfg)
 {
    bd = rzalloc_array(mem_ctx, struct block_data, cfg->num_blocks);
@@ -429,7 +429,9 @@ fs_visitor::opt_copy_propagate()
    bool progress = false;
    void *mem_ctx = ralloc_context(this->mem_ctx);
    cfg_t cfg(this);
-   exec_list out_acp[cfg.num_blocks][ACP_HASH_SIZE];
+   exec_list *out_acp[cfg.num_blocks];
+   for (int i = 0; i < cfg.num_blocks; i++)
+      out_acp[i] = new exec_list [ACP_HASH_SIZE];
 
    /* First, walk through each block doing local copy propagation and getting
     * the set of copies available at the end of the block.
@@ -461,6 +463,8 @@ fs_visitor::opt_copy_propagate()
       progress = opt_copy_propagate_local(mem_ctx, block, in_acp) || progress;
    }
 
+   for (int i = 0; i < cfg.num_blocks; i++)
+      delete [] out_acp[i];
    ralloc_free(mem_ctx);
 
    if (progress)
