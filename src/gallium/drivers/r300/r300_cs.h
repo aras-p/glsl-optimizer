@@ -96,8 +96,8 @@
     OUT_CS(CP_PACKET3(op, count))
 
 #define OUT_CS_TABLE(values, count) do { \
-    memcpy(cs_copy->buf + cs_copy->cdw, values, count * 4); \
-    cs_copy->cdw += count; \
+    memcpy(cs_copy->buf + cs_copy->cdw, (values), (count) * 4); \
+    cs_copy->cdw += (count); \
     CS_USED_DW(count); \
 } while (0)
 

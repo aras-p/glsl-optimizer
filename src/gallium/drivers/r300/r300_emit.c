@@ -100,8 +100,10 @@ void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
                       R300_FG_ALPHA_FUNC_CFG_3_OF_6;
     }
 
+    BEGIN_CS(size);
     OUT_CS_REG(R300_FG_ALPHA_FUNC, alpha_func);
-    WRITE_CS_TABLE(fb->zsbuf ? &dsa->cb_begin : dsa->cb_zb_no_readwrite, size-2);
+    OUT_CS_TABLE(fb->zsbuf ? &dsa->cb_begin : dsa->cb_zb_no_readwrite, 8);
+    END_CS;
 }
 
 static void get_rc_constant_state(
