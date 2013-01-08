@@ -309,15 +309,21 @@ static unsigned r600_src_from_byte_stream(unsigned char * bytes,
 static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
 				unsigned char * bytes, unsigned bytes_read)
 {
-	unsigned src_idx;
+	unsigned src_idx, src_num;
 	struct r600_bytecode_alu alu;
-	unsigned src_const_reg[3];
+	unsigned src_use_sel[3];
+	unsigned src_sel[3] = {};
 	uint32_t word0, word1;
 
+	src_num = bytes[bytes_read++];
+
 	memset(&alu, 0, sizeof(alu));
-	for(src_idx = 0; src_idx < 3; src_idx++) {
+	for(src_idx = 0; src_idx < src_num; src_idx++) {
 		unsigned i;
-		src_const_reg[src_idx] = bytes[bytes_read++];
+		src_use_sel[src_idx] = bytes[bytes_read++];
+		for (i = 0; i < 4; i++) {
+			src_sel[src_idx] |= bytes[bytes_read++] << (i * 8);
+		}
 		for (i = 0; i < 4; i++) {
 			alu.src[src_idx].value |= bytes[bytes_read++] << (i * 8);
 		}
@@ -338,9 +344,22 @@ static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
 		break;
 	}
 
-	for(src_idx = 0; src_idx < 3; src_idx++) {
-		if (src_const_reg[src_idx])
-			alu.src[src_idx].sel += 512;
+	for(src_idx = 0; src_idx < src_num; src_idx++) {
+		if (src_use_sel[src_idx]) {
+			unsigned sel = src_sel[src_idx];
+
+			alu.src[src_idx].chan = sel & 3;
+			sel >>= 2;
+
+			if (sel>=512) { /* constant */
+				sel -= 512;
+				alu.src[src_idx].kc_bank = sel >> 12;
+				alu.src[src_idx].sel = (sel & 4095) + 512;
+			}
+			else {
+				alu.src[src_idx].sel = sel;
+			}
+		}
 	}
 
 #if HAVE_LLVM < 0x0302
@@ -521,8 +540,12 @@ static int r600_vtx_from_byte_stream(struct r600_shader_ctx *ctx,
 	if (r600_bytecode_add_vtx(ctx->bc, &vtx)) {
 		fprintf(stderr, "Error adding vtx\n");
 	}
-	/* Use the Texture Cache */
-	ctx->bc->cf_last->inst = EG_V_SQ_CF_WORD1_SQ_CF_INST_TEX;
+
+	/* Use the Texture Cache for compute shaders*/
+	if (ctx->bc->chip_class >= EVERGREEN &&
+		ctx->bc->type == TGSI_PROCESSOR_COMPUTE) {
+		ctx->bc->cf_last->inst = EG_V_SQ_CF_WORD1_SQ_CF_INST_TEX;
+	}
 	return bytes_read;
 }
 
@@ -1268,7 +1291,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	}
 
 #ifdef R600_USE_LLVM
-	if (use_llvm && ctx.info.indirect_files) {
+	if (use_llvm && ctx.info.indirect_files && (ctx.info.indirect_files & (1 << TGSI_FILE_CONSTANT)) != ctx.info.indirect_files) {
 		fprintf(stderr, "Warning: R600 LLVM backend does not support "
 				"indirect adressing.  Falling back to TGSI "
 				"backend.\n");

@@ -324,6 +324,10 @@ emit_store(
 		}
 
 		switch(reg->Register.File) {
+		case TGSI_FILE_ADDRESS:
+			temp_ptr = bld->addr[reg->Register.Index][chan_index];
+			LLVMBuildStore(builder, value, temp_ptr);
+			continue;
 		case TGSI_FILE_OUTPUT:
 			temp_ptr = bld->outputs[reg->Register.Index][chan_index];
 			break;

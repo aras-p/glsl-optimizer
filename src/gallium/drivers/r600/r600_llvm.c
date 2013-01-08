@@ -19,18 +19,29 @@
 
 #if defined R600_USE_LLVM || defined HAVE_OPENCL
 
+#define CONSTANT_BUFFER_0_ADDR_SPACE 9
+
 static LLVMValueRef llvm_fetch_const(
 	struct lp_build_tgsi_context * bld_base,
 	const struct tgsi_full_src_register *reg,
 	enum tgsi_opcode_type type,
 	unsigned swizzle)
 {
-	LLVMValueRef idx = lp_build_const_int32(bld_base->base.gallivm,
-			radeon_llvm_reg_index_soa(reg->Register.Index, swizzle));
-	LLVMValueRef cval = build_intrinsic(bld_base->base.gallivm->builder,
-		"llvm.AMDGPU.load.const", bld_base->base.elem_type,
-		&idx, 1, LLVMReadNoneAttribute);
-
+	LLVMValueRef offset[2] = {
+		LLVMConstInt(LLVMInt64TypeInContext(bld_base->base.gallivm->context), 0, false),
+		lp_build_const_int32(bld_base->base.gallivm, reg->Register.Index)
+	};
+	if (reg->Register.Indirect) {
+		struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
+		LLVMValueRef index = LLVMBuildLoad(bld_base->base.gallivm->builder, bld->addr[reg->Indirect.Index][reg->Indirect.SwizzleX], "");
+		offset[1] = LLVMBuildAdd(bld_base->base.gallivm->builder, offset[1], index, "");
+	}
+	LLVMTypeRef const_ptr_type = LLVMPointerType(LLVMArrayType(LLVMVectorType(bld_base->base.elem_type, 4), 1024),
+							CONSTANT_BUFFER_0_ADDR_SPACE);
+	LLVMValueRef const_ptr = LLVMBuildIntToPtr(bld_base->base.gallivm->builder, lp_build_const_int32(bld_base->base.gallivm, 0), const_ptr_type, "");
+	LLVMValueRef ptr = LLVMBuildGEP(bld_base->base.gallivm->builder, const_ptr, offset, 2, "");
+	LLVMValueRef cvecval = LLVMBuildLoad(bld_base->base.gallivm->builder, ptr, "");
+	LLVMValueRef cval = LLVMBuildExtractElement(bld_base->base.gallivm->builder, cvecval, lp_build_const_int32(bld_base->base.gallivm, swizzle), "");
 	return bitcast(bld_base, type, cval);
 }
 
