@@ -9,8 +9,15 @@
 #include "nouveau_screen.h"
 #include "nouveau_mm.h"
 
+/* TODO: Higher orders can waste a lot of space for npot size buffers, should
+ * add an extra cache for such buffer objects.
+ *
+ * HACK: Max order == 21 to accommodate TF2's 1.5 MiB, frequently reallocated
+ * vertex buffer (VM flush (?) decreases performance dramatically).
+ */
+
 #define MM_MIN_ORDER 7 /* >= 6 to not violate ARB_map_buffer_alignment */
-#define MM_MAX_ORDER 20
+#define MM_MAX_ORDER 21
 
 #define MM_NUM_BUCKETS (MM_MAX_ORDER - MM_MIN_ORDER + 1)
 
@@ -102,7 +109,7 @@ mm_default_slab_size(unsigned chunk_order)
 {
    static const int8_t slab_order[MM_MAX_ORDER - MM_MIN_ORDER + 1] =
    {
-      12, 12, 13, 14, 14, 17, 17, 17, 17, 19, 19, 20, 21, 22
+      12, 12, 13, 14, 14, 17, 17, 17, 17, 19, 19, 20, 21, 22, 22
    };
 
    assert(chunk_order <= MM_MAX_ORDER && chunk_order >= MM_MIN_ORDER);
