@@ -618,7 +618,8 @@ update_texture_state( struct gl_context *ctx )
       if (enabledFragTargets)
          enabledFragUnits |= (1 << unit);
 
-      update_tex_combine(ctx, texUnit);
+      if (!fprog)
+         update_tex_combine(ctx, texUnit);
    }
 
 
