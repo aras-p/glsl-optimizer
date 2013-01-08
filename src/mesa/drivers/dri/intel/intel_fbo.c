@@ -939,7 +939,8 @@ intel_renderbuffer_move_to_temp(struct intel_context *intel,
                                  width, height, depth,
                                  true,
                                  irb->mt->num_samples,
-                                 irb->mt->msaa_layout);
+                                 irb->mt->msaa_layout,
+                                 false /* force_y_tiling */);
 
    intel_miptree_copy_teximage(intel, intel_image, new_mt);
    intel_miptree_reference(&irb->mt, intel_image->mt);

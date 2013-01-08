@@ -384,7 +384,8 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLuint depth0,
 					       bool expect_accelerated_upload,
                                                GLuint num_samples,
-                                               enum intel_msaa_layout msaa_layout);
+                                               enum intel_msaa_layout msaa_layout,
+                                               bool force_y_tiling);
 
 struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,

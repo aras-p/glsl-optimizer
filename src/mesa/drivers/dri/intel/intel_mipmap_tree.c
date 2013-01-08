@@ -187,7 +187,8 @@ intel_miptree_create_internal(struct intel_context *intel,
                                             mt->depth0,
                                             true,
                                             num_samples,
-                                            msaa_layout);
+                                            msaa_layout,
+                                            false /* force_y_tiling */);
       if (!mt->stencil_mt) {
 	 intel_miptree_release(&mt);
 	 return NULL;
@@ -235,7 +236,8 @@ intel_miptree_create(struct intel_context *intel,
 		     GLuint depth0,
 		     bool expect_accelerated_upload,
                      GLuint num_samples,
-                     enum intel_msaa_layout msaa_layout)
+                     enum intel_msaa_layout msaa_layout,
+                     bool force_y_tiling)
 {
    struct intel_mipmap_tree *mt;
    uint32_t tiling = I915_TILING_NONE;
@@ -280,24 +282,28 @@ intel_miptree_create(struct intel_context *intel,
    etc_format = (format != tex_format) ? tex_format : MESA_FORMAT_NONE;
    base_format = _mesa_get_format_base_format(format);
 
+   if (msaa_layout != INTEL_MSAA_LAYOUT_NONE) {
+      /* From p82 of the Sandy Bridge PRM, dw3[1] of SURFACE_STATE ("Tiled
+       * Surface"):
+       *
+       *   [DevSNB+]: For multi-sample render targets, this field must be
+       *   1. MSRTs can only be tiled.
+       *
+       * Our usual reason for preferring X tiling (fast blits using the
+       * blitting engine) doesn't apply to MSAA, since we'll generally be
+       * downsampling or upsampling when blitting between the MSAA buffer
+       * and another buffer, and the blitting engine doesn't support that.
+       * So use Y tiling, since it makes better use of the cache.
+       */
+      force_y_tiling = true;
+   }
+
    if (intel->use_texture_tiling && !_mesa_is_format_compressed(format)) {
       if (intel->gen >= 4 &&
 	  (base_format == GL_DEPTH_COMPONENT ||
 	   base_format == GL_DEPTH_STENCIL_EXT))
 	 tiling = I915_TILING_Y;
-      else if (msaa_layout != INTEL_MSAA_LAYOUT_NONE) {
-         /* From p82 of the Sandy Bridge PRM, dw3[1] of SURFACE_STATE ("Tiled
-          * Surface"):
-          *
-          *   [DevSNB+]: For multi-sample render targets, this field must be
-          *   1. MSRTs can only be tiled.
-          *
-          * Our usual reason for preferring X tiling (fast blits using the
-          * blitting engine) doesn't apply to MSAA, since we'll generally be
-          * downsampling or upsampling when blitting between the MSAA buffer
-          * and another buffer, and the blitting engine doesn't support that.
-          * So use Y tiling, since it makes better use of the cache.
-          */
+      else if (force_y_tiling) {
          tiling = I915_TILING_Y;
       } else if (width0 >= 64)
 	 tiling = I915_TILING_X;
@@ -500,7 +506,7 @@ intel_miptree_create_for_renderbuffer(struct intel_context *intel,
 
    mt = intel_miptree_create(intel, GL_TEXTURE_2D, format, 0, 0,
 			     width, height, depth, true, num_samples,
-                             msaa_layout);
+                             msaa_layout, false /* force_y_tiling */);
    if (!mt)
       goto fail;
 
@@ -823,10 +829,6 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
    /* From the Ivy Bridge PRM, Vol4 Part1 p76, "MCS Base Address":
     *
     *     "The MCS surface must be stored as Tile Y."
-    *
-    * We set msaa_format to INTEL_MSAA_LAYOUT_CMS to force
-    * intel_miptree_create() to use Y tiling.  msaa_format is otherwise
-    * ignored for the MCS miptree.
     */
    mt->mcs_mt = intel_miptree_create(intel,
                                      mt->target,
@@ -838,7 +840,8 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
                                      mt->depth0,
                                      true,
                                      0 /* num_samples */,
-                                     INTEL_MSAA_LAYOUT_CMS);
+                                     INTEL_MSAA_LAYOUT_NONE,
+                                     true /* force_y_tiling */);
 
    /* From the Ivy Bridge PRM, Vol 2 Part 1 p326:
     *
@@ -874,7 +877,8 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
                                      mt->depth0,
                                      true,
                                      num_samples,
-                                     INTEL_MSAA_LAYOUT_IMS);
+                                     INTEL_MSAA_LAYOUT_IMS,
+                                     false /* force_y_tiling */);
 
    if (!mt->hiz_mt)
       return false;
