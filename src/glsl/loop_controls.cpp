@@ -222,10 +222,10 @@ loop_control_visitor::visit_leave(ir_loop *ir)
 	    limit = cond->operands[0]->as_constant();
 
 	    switch (cmp) {
-	    case ir_binop_less:    cmp = ir_binop_gequal;  break;
-	    case ir_binop_greater: cmp = ir_binop_lequal;  break;
-	    case ir_binop_lequal:  cmp = ir_binop_greater; break;
-	    case ir_binop_gequal:  cmp = ir_binop_less;    break;
+	    case ir_binop_less:    cmp = ir_binop_greater; break;
+	    case ir_binop_greater: cmp = ir_binop_less;    break;
+	    case ir_binop_lequal:  cmp = ir_binop_gequal;  break;
+	    case ir_binop_gequal:  cmp = ir_binop_lequal;  break;
 	    default: assert(!"Should not get here.");
 	    }
 	 }
