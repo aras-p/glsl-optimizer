@@ -28,6 +28,11 @@ struct nouveau_context {
                    unsigned base, unsigned size,
                    unsigned offset, unsigned words, const uint32_t *);
 
+   /* @return: @ref reduced by nr of references found in context */
+   int (*invalidate_resource_storage)(struct nouveau_context *,
+                                      struct pipe_resource *,
+                                      int ref);
+
    struct {
       uint8_t *map;
       unsigned id;
@@ -40,6 +45,11 @@ struct nouveau_context {
       unsigned nr_runout;
       unsigned bo_size;
    } scratch;
+
+   struct {
+      uint32_t buf_cache_count;
+      uint32_t buf_cache_frame;
+   } stats;
 };
 
 static INLINE struct nouveau_context *
@@ -84,4 +94,17 @@ nouveau_context_destroy(struct nouveau_context *ctx)
 
    FREE(ctx);
 }
+
+static INLINE  void
+nouveau_context_update_frame_stats(struct nouveau_context *nv)
+{
+   nv->stats.buf_cache_frame <<= 1;
+   if (nv->stats.buf_cache_count) {
+      nv->stats.buf_cache_count = 0;
+      nv->stats.buf_cache_frame |= 1;
+      if ((nv->stats.buf_cache_frame & 0xf) == 0xf)
+         nv->screen->hint_buf_keep_sysmem_copy = TRUE;
+   }
+}
+
 #endif

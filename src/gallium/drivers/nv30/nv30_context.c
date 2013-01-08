@@ -59,7 +59,8 @@ nv30_context_kick_notify(struct nouveau_pushbuf *push)
 
             if (bref->flags & NOUVEAU_BO_WR) {
                nouveau_fence_ref(screen->fence.current, &res->fence_wr);
-               res->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+               res->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING |
+                  NOUVEAU_BUFFER_STATUS_DIRTY;
             }
          }
       }
@@ -78,6 +79,79 @@ nv30_context_flush(struct pipe_context *pipe, struct pipe_fence_handle **fence,
                         (struct nouveau_fence **)fence);
 
    PUSH_KICK(push);
+
+   nouveau_context_update_frame_stats(&nv30->base);
+}
+
+static int
+nv30_invalidate_resource_storage(struct nouveau_context *nv,
+                                 struct pipe_resource *res,
+                                 int ref)
+{
+   struct nv30_context *nv30 = nv30_context(&nv->pipe);
+   unsigned i;
+
+   if (res->bind & PIPE_BIND_RENDER_TARGET) {
+      for (i = 0; i < nv30->framebuffer.nr_cbufs; ++i) {
+         if (nv30->framebuffer.cbufs[i] &&
+             nv30->framebuffer.cbufs[i]->texture == res) {
+            nv30->dirty |= NV30_NEW_FRAMEBUFFER;
+            nouveau_bufctx_reset(nv30->bufctx, BUFCTX_FB);
+            if (!--ref)
+               return ref;
+         }
+      }
+   }
+   if (res->bind & PIPE_BIND_DEPTH_STENCIL) {
+      if (nv30->framebuffer.zsbuf &&
+          nv30->framebuffer.zsbuf->texture == res) {
+            nv30->dirty |= NV30_NEW_FRAMEBUFFER;
+            nouveau_bufctx_reset(nv30->bufctx, BUFCTX_FB);
+            if (!--ref)
+               return ref;
+      }
+   }
+
+   if (res->bind & PIPE_BIND_VERTEX_BUFFER) {
+      for (i = 0; i < nv30->num_vtxbufs; ++i) {
+         if (nv30->vtxbuf[i].buffer == res) {
+            nv30->dirty |= NV30_NEW_ARRAYS;
+            nouveau_bufctx_reset(nv30->bufctx, BUFCTX_VTXBUF);
+            if (!--ref)
+               return ref;
+         }
+      }
+   }
+   if (res->bind & PIPE_BIND_INDEX_BUFFER) {
+      if (nv30->idxbuf.buffer == res) {
+         nouveau_bufctx_reset(nv30->bufctx, BUFCTX_IDXBUF);
+         if (!--ref)
+            return ref;
+      }
+   }
+
+   if (res->bind & PIPE_BIND_SAMPLER_VIEW) {
+      for (i = 0; i < nv30->fragprog.num_textures; ++i) {
+         if (nv30->fragprog.textures[i] &&
+             nv30->fragprog.textures[i]->texture == res) {
+            nv30->dirty |= NV30_NEW_FRAGTEX;
+            nouveau_bufctx_reset(nv30->bufctx, BUFCTX_FRAGTEX(i));
+            if (!--ref)
+               return ref;
+         }
+      }
+      for (i = 0; i < nv30->vertprog.num_textures; ++i) {
+         if (nv30->vertprog.textures[i] &&
+             nv30->vertprog.textures[i]->texture == res) {
+            nv30->dirty |= NV30_NEW_VERTTEX;
+            nouveau_bufctx_reset(nv30->bufctx, BUFCTX_VERTTEX(i));
+            if (!--ref)
+               return ref;
+         }
+      }
+   }
+
+   return ref;
 }
 
 static void
@@ -137,6 +211,8 @@ nv30_context_create(struct pipe_screen *pscreen, void *priv)
    nv30->base.pushbuf->user_priv = push->user_priv; /* hack at validate time */
    nv30->base.pushbuf->rsvd_kick = 16; /* hack in screen before first space */
    nv30->base.pushbuf->kick_notify = nv30_context_kick_notify;
+
+   nv30->base.invalidate_resource_storage = nv30_invalidate_resource_storage;
 
    ret = nouveau_bufctx_new(nv30->base.client, 64, &nv30->bufctx);
    if (ret) {

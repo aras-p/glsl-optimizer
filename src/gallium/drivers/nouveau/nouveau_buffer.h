@@ -16,7 +16,10 @@ struct nouveau_bo;
  */
 #define NOUVEAU_BUFFER_STATUS_GPU_READING (1 << 0)
 #define NOUVEAU_BUFFER_STATUS_GPU_WRITING (1 << 1)
+#define NOUVEAU_BUFFER_STATUS_DIRTY       (1 << 2)
 #define NOUVEAU_BUFFER_STATUS_USER_MEMORY (1 << 7)
+
+#define NOUVEAU_BUFFER_STATUS_REALLOC_MASK NOUVEAU_BUFFER_STATUS_USER_MEMORY
 
 /* Resources, if mapped into the GPU's address space, are guaranteed to
  * have constant virtual addresses (nv50+).

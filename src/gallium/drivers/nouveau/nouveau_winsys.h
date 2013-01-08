@@ -12,6 +12,9 @@
 #define NV04_PFIFO_MAX_PACKET_LEN 2047
 #endif
 
+#define NOUVEAU_MIN_BUFFER_MAP_ALIGN      64
+#define NOUVEAU_MIN_BUFFER_MAP_ALIGN_MASK (NOUVEAU_MIN_BUFFER_MAP_ALIGN - 1)
+
 static INLINE uint32_t
 PUSH_AVAIL(struct nouveau_pushbuf *push)
 {

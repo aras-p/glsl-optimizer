@@ -97,7 +97,8 @@ nvc0_resource_validate(struct nv04_resource *res, uint32_t flags)
 {
    if (likely(res->bo)) {
       if (flags & NOUVEAU_BO_WR)
-         res->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+         res->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING |
+            NOUVEAU_BUFFER_STATUS_DIRTY;
       if (flags & NOUVEAU_BO_RD)
          res->status |= NOUVEAU_BUFFER_STATUS_GPU_READING;
 

@@ -21,7 +21,7 @@ struct nouveau_screen {
 	unsigned sysmem_bindings; /* PIPE_BIND_* where GART placement is desired */
 	unsigned lowmem_bindings; /* PIPE_BIND_* that require an address < 4 GiB */
 	/*
-	 * For bindings with (vidmem & sysmem) bits set set, PIPE_USAGE_* decides
+	 * For bindings with (vidmem & sysmem) bits set, PIPE_USAGE_* decides
 	 * placement.
 	 */
 
@@ -41,6 +41,8 @@ struct nouveau_screen {
 	struct nouveau_mman *mm_GART;
 
 	int64_t cpu_gpu_time_delta;
+
+	boolean hint_buf_keep_sysmem_copy;
 };
 
 static INLINE struct nouveau_screen *
