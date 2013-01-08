@@ -66,6 +66,47 @@ target_to_target(GLenum target)
    }
 }
 
+
+/**
+ * Determine which MSAA layout should be used by the MSAA surface being
+ * created, based on the chip generation and the surface type.
+ */
+static enum intel_msaa_layout
+compute_msaa_layout(struct intel_context *intel, gl_format format)
+{
+   /* Prior to Gen7, all MSAA surfaces used IMS layout. */
+   if (intel->gen < 7)
+      return INTEL_MSAA_LAYOUT_IMS;
+
+   /* In Gen7, IMS layout is only used for depth and stencil buffers. */
+   switch (_mesa_get_format_base_format(format)) {
+   case GL_DEPTH_COMPONENT:
+   case GL_STENCIL_INDEX:
+   case GL_DEPTH_STENCIL:
+      return INTEL_MSAA_LAYOUT_IMS;
+   default:
+      /* From the Ivy Bridge PRM, Vol4 Part1 p77 ("MCS Enable"):
+       *
+       *   This field must be set to 0 for all SINT MSRTs when all RT channels
+       *   are not written
+       *
+       * In practice this means that we have to disable MCS for all signed
+       * integer MSAA buffers.  The alternative, to disable MCS only when one
+       * of the render target channels is disabled, is impractical because it
+       * would require converting between CMS and UMS MSAA layouts on the fly,
+       * which is expensive.
+       */
+      if (_mesa_get_format_datatype(format) == GL_INT) {
+         /* TODO: is this workaround needed for future chipsets? */
+         assert(intel->gen == 7);
+         return INTEL_MSAA_LAYOUT_UMS;
+      } else {
+         return INTEL_MSAA_LAYOUT_CMS;
+      }
+   }
+}
+
+
 /**
  * @param for_region Indicates that the caller is
  *        intel_miptree_create_for_region(). If true, then do not create
@@ -327,44 +368,6 @@ intel_miptree_create_for_region(struct intel_context *intel,
    return mt;
 }
 
-/**
- * Determine which MSAA layout should be used by the MSAA surface being
- * created, based on the chip generation and the surface type.
- */
-static enum intel_msaa_layout
-compute_msaa_layout(struct intel_context *intel, gl_format format)
-{
-   /* Prior to Gen7, all MSAA surfaces used IMS layout. */
-   if (intel->gen < 7)
-      return INTEL_MSAA_LAYOUT_IMS;
-
-   /* In Gen7, IMS layout is only used for depth and stencil buffers. */
-   switch (_mesa_get_format_base_format(format)) {
-   case GL_DEPTH_COMPONENT:
-   case GL_STENCIL_INDEX:
-   case GL_DEPTH_STENCIL:
-      return INTEL_MSAA_LAYOUT_IMS;
-   default:
-      /* From the Ivy Bridge PRM, Vol4 Part1 p77 ("MCS Enable"):
-       *
-       *   This field must be set to 0 for all SINT MSRTs when all RT channels
-       *   are not written
-       *
-       * In practice this means that we have to disable MCS for all signed
-       * integer MSAA buffers.  The alternative, to disable MCS only when one
-       * of the render target channels is disabled, is impractical because it
-       * would require converting between CMS and UMS MSAA layouts on the fly,
-       * which is expensive.
-       */
-      if (_mesa_get_format_datatype(format) == GL_INT) {
-         /* TODO: is this workaround needed for future chipsets? */
-         assert(intel->gen == 7);
-         return INTEL_MSAA_LAYOUT_UMS;
-      } else {
-         return INTEL_MSAA_LAYOUT_CMS;
-      }
-   }
-}
 
 /**
  * For a singlesample DRI2 buffer, this simply wraps the given region with a miptree.
