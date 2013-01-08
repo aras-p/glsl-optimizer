@@ -500,11 +500,6 @@ update_texture_state( struct gl_context *ctx )
    if (ctx->Shader.CurrentVertexProgram &&
        ctx->Shader.CurrentVertexProgram->LinkStatus) {
       vprog = ctx->Shader.CurrentVertexProgram->_LinkedShaders[MESA_SHADER_VERTEX]->Program;
-   } else if (ctx->VertexProgram._Enabled) {
-      /* XXX enable this if/when non-shader vertex programs get
-       * texture fetches:
-       vprog = &ctx->VertexProgram.Current->Base;
-       */
    }
 
    if (ctx->Shader.CurrentFragmentProgram &&
