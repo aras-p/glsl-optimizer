@@ -358,6 +358,8 @@ public:
    vec4_instruction *RNDE(dst_reg dst, src_reg src0);
    vec4_instruction *RNDZ(dst_reg dst, src_reg src0);
    vec4_instruction *FRC(dst_reg dst, src_reg src0);
+   vec4_instruction *F32TO16(dst_reg dst, src_reg src0);
+   vec4_instruction *F16TO32(dst_reg dst, src_reg src0);
    vec4_instruction *ADD(dst_reg dst, src_reg src0, src_reg src1);
    vec4_instruction *MUL(dst_reg dst, src_reg src0, src_reg src1);
    vec4_instruction *MACH(dst_reg dst, src_reg src0, src_reg src1);
@@ -430,6 +432,9 @@ public:
    void emit_math2_gen4(enum opcode opcode, dst_reg dst, src_reg src0, src_reg src1);
    void emit_math(enum opcode opcode, dst_reg dst, src_reg src0, src_reg src1);
    src_reg fix_math_operand(src_reg src);
+
+   void emit_pack_half_2x16(dst_reg dst, src_reg src0);
+   void emit_unpack_half_2x16(dst_reg dst, src_reg src0);
 
    void swizzle_result(ir_texture *ir, src_reg orig_val, int sampler);
 

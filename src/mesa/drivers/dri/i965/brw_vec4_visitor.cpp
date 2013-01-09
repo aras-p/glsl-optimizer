@@ -113,6 +113,8 @@ ALU1(FRC)
 ALU1(RNDD)
 ALU1(RNDE)
 ALU1(RNDZ)
+ALU1(F32TO16)
+ALU1(F16TO32)
 ALU2(ADD)
 ALU2(MUL)
 ALU2(MACH)
@@ -345,6 +347,119 @@ vec4_visitor::emit_math(enum opcode opcode,
    } else {
       return emit_math2_gen4(opcode, dst, src0, src1);
    }
+}
+
+void
+vec4_visitor::emit_pack_half_2x16(dst_reg dst, src_reg src0)
+{
+   if (intel->gen < 7)
+      assert(!"ir_unop_pack_half_2x16 should be lowered");
+
+   assert(dst.type == BRW_REGISTER_TYPE_UD);
+   assert(src0.type == BRW_REGISTER_TYPE_F);
+
+   /* From the Ivybridge PRM, Vol4, Part3, Section 6.27 f32to16:
+    *
+    *   Because this instruction does not have a 16-bit floating-point type,
+    *   the destination data type must be Word (W).
+    *
+    *   The destination must be DWord-aligned and specify a horizontal stride
+    *   (HorzStride) of 2. The 16-bit result is stored in the lower word of
+    *   each destination channel and the upper word is not modified.
+    *
+    * The above restriction implies that the f32to16 instruction must use
+    * align1 mode, because only in align1 mode is it possible to specify
+    * horizontal stride.  We choose here to defy the hardware docs and emit
+    * align16 instructions.
+    *
+    * (I [chadv] did attempt to emit align1 instructions for VS f32to16
+    * instructions. I was partially successful in that the code passed all
+    * tests.  However, the code was dubiously correct and fragile, and the
+    * tests were not harsh enough to probe that frailty. Not trusting the
+    * code, I chose instead to remain in align16 mode in defiance of the hw
+    * docs).
+    *
+    * I've [chadv] experimentally confirmed that, on gen7 hardware and the
+    * simulator, emitting a f32to16 in align16 mode with UD as destination
+    * data type is safe. The behavior differs from that specified in the PRM
+    * in that the upper word of each destination channel is cleared to 0.
+    */
+
+   dst_reg tmp_dst(this, glsl_type::uvec2_type);
+   src_reg tmp_src(tmp_dst);
+
+#if 0
+   /* Verify the undocumented behavior on which the following instructions
+    * rely.  If f32to16 fails to clear the upper word of the X and Y channels,
+    * then the result of the bit-or instruction below will be incorrect.
+    *
+    * You should inspect the disasm output in order to verify that the MOV is
+    * not optimized away.
+    */
+   emit(MOV(tmp_dst, src_reg(0x12345678u)));
+#endif
+
+   /* Give tmp the form below, where "." means untouched.
+    *
+    *     w z          y          x w z          y          x
+    *   |.|.|0x0000hhhh|0x0000llll|.|.|0x0000hhhh|0x0000llll|
+    *
+    * That the upper word of each write-channel be 0 is required for the
+    * following bit-shift and bit-or instructions to work. Note that this
+    * relies on the undocumented hardware behavior mentioned above.
+    */
+   tmp_dst.writemask = WRITEMASK_XY;
+   emit(F32TO16(tmp_dst, src0));
+
+   /* Give the write-channels of dst the form:
+    *   0xhhhh0000
+    */
+   tmp_src.swizzle = SWIZZLE_Y;
+   emit(SHL(dst, tmp_src, src_reg(16u)));
+
+   /* Finally, give the write-channels of dst the form of packHalf2x16's
+    * output:
+    *   0xhhhhllll
+    */
+   tmp_src.swizzle = SWIZZLE_X;
+   emit(OR(dst, src_reg(dst), tmp_src));
+}
+
+void
+vec4_visitor::emit_unpack_half_2x16(dst_reg dst, src_reg src0)
+{
+   if (intel->gen < 7)
+      assert(!"ir_unop_unpack_half_2x16 should be lowered");
+
+   assert(dst.type == BRW_REGISTER_TYPE_F);
+   assert(src0.type == BRW_REGISTER_TYPE_UD);
+
+   /* From the Ivybridge PRM, Vol4, Part3, Section 6.26 f16to32:
+    *
+    *   Because this instruction does not have a 16-bit floating-point type,
+    *   the source data type must be Word (W). The destination type must be
+    *   F (Float).
+    *
+    * To use W as the source data type, we must adjust horizontal strides,
+    * which is only possible in align1 mode. All my [chadv] attempts at
+    * emitting align1 instructions for unpackHalf2x16 failed to pass the
+    * Piglit tests, so I gave up.
+    *
+    * I've verified that, on gen7 hardware and the simulator, it is safe to
+    * emit f16to32 in align16 mode with UD as source data type.
+    */
+
+   dst_reg tmp_dst(this, glsl_type::uvec2_type);
+   src_reg tmp_src(tmp_dst);
+
+   tmp_dst.writemask = WRITEMASK_X;
+   emit(AND(tmp_dst, src0, src_reg(0xffffu)));
+
+   tmp_dst.writemask = WRITEMASK_Y;
+   emit(SHR(tmp_dst, src0, src_reg(16u)));
+
+   dst.writemask = WRITEMASK_XY;
+   emit(F16TO32(dst, tmp_src));
 }
 
 void
@@ -1468,6 +1583,24 @@ vec4_visitor::visit(ir_expression *ir)
 
    case ir_quadop_vector:
       assert(!"not reached: should be handled by lower_quadop_vector");
+      break;
+
+   case ir_unop_pack_half_2x16:
+      emit_pack_half_2x16(result_dst, op[0]);
+      break;
+   case ir_unop_unpack_half_2x16:
+      emit_unpack_half_2x16(result_dst, op[0]);
+      break;
+   case ir_unop_pack_snorm_2x16:
+   case ir_unop_pack_unorm_2x16:
+   case ir_unop_unpack_snorm_2x16:
+   case ir_unop_unpack_unorm_2x16:
+      assert(!"not reached: should be handled by lower_packing_builtins");
+      break;
+   case ir_unop_unpack_half_2x16_split_x:
+   case ir_unop_unpack_half_2x16_split_y:
+   case ir_binop_pack_half_2x16_split:
+      assert(!"not reached: should not occur in vertex shader");
       break;
    }
 }
