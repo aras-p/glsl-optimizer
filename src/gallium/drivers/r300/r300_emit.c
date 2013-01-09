@@ -102,7 +102,7 @@ void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
 
     BEGIN_CS(size);
     OUT_CS_REG(R300_FG_ALPHA_FUNC, alpha_func);
-    OUT_CS_TABLE(fb->zsbuf ? &dsa->cb_begin : dsa->cb_zb_no_readwrite, 8);
+    OUT_CS_TABLE(fb->zsbuf ? &dsa->cb_begin : dsa->cb_zb_no_readwrite, size-2);
     END_CS;
 }
 
