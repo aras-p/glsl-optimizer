@@ -325,14 +325,14 @@ vec4  uintBitsToFloat(uvec4 value);
 
 /*
  * 8.4 - Floating-Point Pack and Unpack Functions
- * FIXME: implement these
  */
-// uint packSnorm2x16(vec2 v);
-// vec2 unpackSnorm2x16(uint p);
-// uint packUnorm2x16(vec2 v);
-// vec2 unpackUnorm2x16(uint p);
-// uint packHalf2x16(vec2 v);
-// vec2 unpackHalf2x16(uint p);
+highp   uint packSnorm2x16(        vec2 v);
+highp   uint packUnorm2x16(        vec2 v);
+highp   uint packHalf2x16 (mediump vec2 v);
+
+highp   vec2 unpackSnorm2x16(highp uint p);
+highp   vec2 unpackUnorm2x16(highp uint p);
+mediump vec2 unpackHalf2x16 (highp uint p);
 
 /*
  * 8.5 - Geometric Functions

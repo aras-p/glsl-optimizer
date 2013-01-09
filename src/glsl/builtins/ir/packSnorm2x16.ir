@@ -1,0 +1,6 @@
+((function packSnorm2x16
+   (signature uint
+     (parameters
+       (declare (in) vec2 arg0))
+     ((return (expression uint packSnorm2x16 (var_ref arg0)))))
+))

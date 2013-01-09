@@ -1,0 +1,6 @@
+((function unpackUnorm2x16
+   (signature vec2
+     (parameters
+       (declare (in) uint arg0))
+     ((return (expression vec2 unpackUnorm2x16 (var_ref arg0)))))
+))
