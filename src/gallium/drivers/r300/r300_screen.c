@@ -48,6 +48,7 @@ static const char* r300_get_vendor(struct pipe_screen* pscreen)
 }
 
 static const char* chip_families[] = {
+    "unknown",
     "ATI R300",
     "ATI R350",
     "ATI RV350",
