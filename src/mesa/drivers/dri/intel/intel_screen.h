@@ -65,6 +65,11 @@ struct intel_screen
    struct _mesa_HashTable *named_regions;
 
    /**
+    * A unique ID for shader programs.
+    */
+   unsigned program_id;
+
+   /**
    * Configuration cache with default values for all contexts
    */
    driOptionCache optionCache;

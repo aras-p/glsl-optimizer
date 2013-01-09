@@ -1053,9 +1053,6 @@ struct brw_context
       int index;
       bool begin_emitted;
    } query;
-   /* Used to give every program string a unique id
-    */
-   GLuint program_id;
 
    int num_atoms;
    const struct brw_tracked_state **atoms;

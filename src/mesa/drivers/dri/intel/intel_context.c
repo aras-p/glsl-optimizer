@@ -610,6 +610,8 @@ intelInitContext(struct intel_context *intel,
       mesaVis = &visual;
    }
 
+   intel->intelScreen = intelScreen;
+
    if (!_mesa_initialize_context(&intel->ctx, api, mesaVis, shareCtx,
                                  functions)) {
       printf("%s: failed to init mesa context\n", __FUNCTION__);
@@ -617,7 +619,6 @@ intelInitContext(struct intel_context *intel,
    }
 
    driContextPriv->driverPrivate = intel;
-   intel->intelScreen = intelScreen;
    intel->driContext = driContextPriv;
    intel->driFd = sPriv->fd;
 

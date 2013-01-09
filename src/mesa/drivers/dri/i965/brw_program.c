@@ -29,6 +29,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
   
+#include <pthread.h>
 #include "main/imports.h"
 #include "main/enums.h"
 #include "main/shaderobj.h"
@@ -40,6 +41,16 @@
 
 #include "brw_context.h"
 #include "brw_wm.h"
+
+static unsigned
+get_new_program_id(struct intel_screen *screen)
+{
+   static pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
+   pthread_mutex_lock(&m);
+   unsigned id = screen->program_id++;
+   pthread_mutex_unlock(&m);
+   return id;
+}
 
 static void brwBindProgram( struct gl_context *ctx,
 			    GLenum target, 
@@ -67,7 +78,7 @@ static struct gl_program *brwNewProgram( struct gl_context *ctx,
    case GL_VERTEX_PROGRAM_ARB: {
       struct brw_vertex_program *prog = CALLOC_STRUCT(brw_vertex_program);
       if (prog) {
-	 prog->id = brw->program_id++;
+	 prog->id = get_new_program_id(brw->intel.intelScreen);
 
 	 return _mesa_init_vertex_program( ctx, &prog->program,
 					     target, id );
@@ -79,7 +90,7 @@ static struct gl_program *brwNewProgram( struct gl_context *ctx,
    case GL_FRAGMENT_PROGRAM_ARB: {
       struct brw_fragment_program *prog = CALLOC_STRUCT(brw_fragment_program);
       if (prog) {
-	 prog->id = brw->program_id++;
+	 prog->id = get_new_program_id(brw->intel.intelScreen);
 
 	 return _mesa_init_fragment_program( ctx, &prog->program,
 					     target, id );
@@ -123,7 +134,7 @@ brwProgramStringNotify(struct gl_context *ctx,
 
       if (newFP == curFP)
 	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
-      newFP->id = brw->program_id++;      
+      newFP->id = get_new_program_id(brw->intel.intelScreen);
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;
@@ -136,7 +147,7 @@ brwProgramStringNotify(struct gl_context *ctx,
       if (newVP->program.IsPositionInvariant) {
 	 _mesa_insert_mvp_code(ctx, &newVP->program);
       }
-      newVP->id = brw->program_id++;      
+      newVP->id = get_new_program_id(brw->intel.intelScreen);
 
       /* Also tell tnl about it:
        */
