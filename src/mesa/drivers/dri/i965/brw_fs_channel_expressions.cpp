@@ -342,8 +342,20 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
       assert(!"not yet supported");
       break;
 
+   case ir_unop_pack_snorm_2x16:
+   case ir_unop_pack_unorm_2x16:
+   case ir_unop_pack_half_2x16:
+   case ir_unop_unpack_snorm_2x16:
+   case ir_unop_unpack_unorm_2x16:
+   case ir_unop_unpack_half_2x16:
    case ir_quadop_vector:
       assert(!"should have been lowered");
+      break;
+
+   case ir_unop_unpack_half_2x16_split_x:
+   case ir_unop_unpack_half_2x16_split_y:
+   case ir_binop_pack_half_2x16_split:
+      assert("!not reached: expression operates on scalars only");
       break;
    }
 

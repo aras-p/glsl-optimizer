@@ -542,6 +542,14 @@ private:
                                    struct brw_reg offset);
    void generate_discard_jump(fs_inst *inst);
 
+   void generate_pack_half_2x16_split(fs_inst *inst,
+                                      struct brw_reg dst,
+                                      struct brw_reg x,
+                                      struct brw_reg y);
+   void generate_unpack_half_2x16_split(fs_inst *inst,
+                                        struct brw_reg dst,
+                                        struct brw_reg src);
+
    void patch_discard_jumps_to_fb_writes();
 
    struct brw_context *brw;

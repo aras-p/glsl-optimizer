@@ -922,6 +922,95 @@ fs_generator::generate_set_global_offset(fs_inst *inst,
    brw_pop_insn_state(p);
 }
 
+/**
+ * Change the register's data type from UD to W, doubling the strides in order
+ * to compensate for halving the data type width.
+ */
+static struct brw_reg
+ud_reg_to_w(struct brw_reg r)
+{
+   assert(r.type == BRW_REGISTER_TYPE_UD);
+   r.type = BRW_REGISTER_TYPE_W;
+
+   /* The BRW_*_STRIDE enums are defined so that incrementing the field
+    * doubles the real stride.
+    */
+   if (r.hstride != 0)
+      ++r.hstride;
+   if (r.vstride != 0)
+      ++r.vstride;
+
+   return r;
+}
+
+void
+fs_generator::generate_pack_half_2x16_split(fs_inst *inst,
+                                            struct brw_reg dst,
+                                            struct brw_reg x,
+                                            struct brw_reg y)
+{
+   assert(intel->gen >= 7);
+   assert(dst.type == BRW_REGISTER_TYPE_UD);
+   assert(x.type = BRW_REGISTER_TYPE_F);
+   assert(y.type = BRW_REGISTER_TYPE_F);
+
+   /* From the Ivybridge PRM, Vol4, Part3, Section 6.27 f32to16:
+    *
+    *   Because this instruction does not have a 16-bit floating-point type,
+    *   the destination data type must be Word (W).
+    *
+    *   The destination must be DWord-aligned and specify a horizontal stride
+    *   (HorzStride) of 2. The 16-bit result is stored in the lower word of
+    *   each destination channel and the upper word is not modified.
+    */
+   struct brw_reg dst_w = ud_reg_to_w(dst);
+
+   /* Give each 32-bit channel of dst the form below , where "." means
+    * unchanged.
+    *   0x....hhhh
+    */
+   brw_F32TO16(p, dst_w, y);
+
+   /* Now the form:
+    *   0xhhhh0000
+    */
+   brw_SHL(p, dst, dst, brw_imm_ud(16u));
+
+   /* And, finally the form of packHalf2x16's output:
+    *   0xhhhhllll
+    */
+   brw_F32TO16(p, dst_w, x);
+}
+
+void
+fs_generator::generate_unpack_half_2x16_split(fs_inst *inst,
+                                              struct brw_reg dst,
+                                              struct brw_reg src)
+{
+   assert(intel->gen >= 7);
+   assert(dst.type == BRW_REGISTER_TYPE_F);
+   assert(src.type == BRW_REGISTER_TYPE_UD);
+
+   /* From the Ivybridge PRM, Vol4, Part3, Section 6.26 f16to32:
+    *
+    *   Because this instruction does not have a 16-bit floating-point type,
+    *   the source data type must be Word (W). The destination type must be
+    *   F (Float).
+    */
+   struct brw_reg src_w = ud_reg_to_w(src);
+
+   /* Each channel of src has the form of unpackHalf2x16's input: 0xhhhhllll.
+    * For the Y case, we wish to access only the upper word; therefore
+    * a 16-bit subregister offset is needed.
+    */
+   assert(inst->opcode == FS_OPCODE_UNPACK_HALF_2x16_SPLIT_X ||
+          inst->opcode == FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y);
+   if (inst->opcode == FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y)
+      src.subnr += 2;
+
+   brw_F16TO32(p, dst, src_w);
+}
+
 void
 fs_generator::generate_code(exec_list *instructions)
 {
@@ -1082,7 +1171,12 @@ fs_generator::generate_code(exec_list *instructions)
       case BRW_OPCODE_SHL:
 	 brw_SHL(p, dst, src[0], src[1]);
 	 break;
-
+      case BRW_OPCODE_F32TO16:
+         brw_F32TO16(p, dst, src[0]);
+         break;
+      case BRW_OPCODE_F16TO32:
+         brw_F16TO32(p, dst, src[0]);
+         break;
       case BRW_OPCODE_CMP:
 	 brw_CMP(p, dst, inst->conditional_mod, src[0], src[1]);
 	 break;
@@ -1227,6 +1321,15 @@ fs_generator::generate_code(exec_list *instructions)
 
       case FS_OPCODE_SET_GLOBAL_OFFSET:
          generate_set_global_offset(inst, dst, src[0], src[1]);
+         break;
+
+      case FS_OPCODE_PACK_HALF_2x16_SPLIT:
+          generate_pack_half_2x16_split(inst, dst, src[0], src[1]);
+          break;
+
+      case FS_OPCODE_UNPACK_HALF_2x16_SPLIT_X:
+      case FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y:
+         generate_unpack_half_2x16_split(inst, dst, src[0]);
          break;
 
       default:
