@@ -1625,6 +1625,7 @@ int r600_bytecode_add_vtx(struct r600_bytecode *bc, const struct r600_bytecode_v
 			break;
 		default:
 			R600_ERR("Unknown chip class %d.\n", bc->chip_class);
+			free(nvtx);
 			return -EINVAL;
 		}
 	}
