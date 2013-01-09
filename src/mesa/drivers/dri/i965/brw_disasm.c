@@ -41,6 +41,8 @@ const struct opcode_desc opcode_descs[128] = {
     [BRW_OPCODE_RNDZ] = { .name = "rndz", .nsrc = 1, .ndst = 1 },
     [BRW_OPCODE_NOT] = { .name = "not", .nsrc = 1, .ndst = 1 },
     [BRW_OPCODE_LZD] = { .name = "lzd", .nsrc = 1, .ndst = 1 },
+    [BRW_OPCODE_F32TO16] = { .name = "f32to16", .nsrc = 1, .ndst = 1 },
+    [BRW_OPCODE_F16TO32] = { .name = "f16to32", .nsrc = 1, .ndst = 1 },
 
     [BRW_OPCODE_MUL] = { .name = "mul", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_MAC] = { .name = "mac", .nsrc = 2, .ndst = 1 },
