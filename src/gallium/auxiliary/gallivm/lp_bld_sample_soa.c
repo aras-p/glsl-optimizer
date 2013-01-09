@@ -190,6 +190,11 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                                lp_build_const_int32(bld->gallivm, chan));
          LLVMValueRef border_chan_vec =
             lp_build_broadcast_scalar(&bld->float_vec_bld, border_chan);
+
+         if (!bld->texel_type.floating) {
+            border_chan_vec = LLVMBuildBitCast(builder, border_chan_vec,
+                                               bld->texel_bld.vec_type, "");
+         }
          texel_out[chan] = lp_build_select(&bld->texel_bld, use_border,
                                            border_chan_vec, texel_out[chan]);
       }
