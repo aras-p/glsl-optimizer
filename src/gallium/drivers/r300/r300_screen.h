@@ -83,6 +83,7 @@ radeon_winsys(struct pipe_screen *screen) {
 #define DBG_HYPERZ      (1 << 11)
 #define DBG_SCISSOR     (1 << 12)
 #define DBG_INFO        (1 << 13)
+#define DBG_MSAA        (1 << 14)
 /* Features. */
 #define DBG_ANISOHQ     (1 << 16)
 #define DBG_NO_TILING   (1 << 17)

@@ -42,6 +42,7 @@ static const struct debug_named_value debug_options[] = {
     { "cbzb", DBG_CBZB, "Log fast color clear info" },
     { "hyperz", DBG_HYPERZ, "Log HyperZ info" },
     { "scissor", DBG_SCISSOR, "Log scissor info" },
+    { "msaa", DBG_MSAA, "Log MSAA resources"},
     { "anisohq", DBG_ANISOHQ, "Use high quality anisotropic filtering" },
     { "notiling", DBG_NO_TILING, "Disable tiling" },
     { "noimmd", DBG_NO_IMMD, "Disable immediate mode" },
