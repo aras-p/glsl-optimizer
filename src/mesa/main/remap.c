@@ -208,8 +208,10 @@ _mesa_do_init_remap_table(const char *pool,
       offset = _mesa_map_function_spec(spec);
       /* store the dispatch offset in the remap table */
       driDispatchRemapTable[i] = offset;
-      if (offset < 0)
-         _mesa_warning(NULL, "failed to remap index %d", i);
+      if (offset < 0) {
+         const char *name = spec + strlen(spec) + 1;
+         _mesa_warning(NULL, "failed to remap %s", name);
+      }
    }
 }
 
