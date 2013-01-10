@@ -1673,7 +1673,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
    /*
     * Convert to SoA and swizzle.
     */
-   lp_build_rgba8_to_f32_soa(bld->gallivm,
+   lp_build_rgba8_to_fi32_soa(bld->gallivm,
                              bld->texel_type,
                              packed, unswizzled);
 

@@ -1448,6 +1448,19 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    bld.perquadf_type.length = type.length > 4 ? ((type.length + 15) / 16) * 4 : 1;
    bld.perquadi_type = lp_int_type(bld.perquadf_type);
 
+   /* always using the first channel hopefully should be safe,
+    * if not things WILL break in other places anyway.
+    */
+   if (bld.format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB &&
+       bld.format_desc->channel[0].pure_integer) {
+      if (bld.format_desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+         bld.texel_type = lp_type_int_vec(type.width, type.width * type.length);
+      }
+      else if (bld.format_desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED) {
+         bld.texel_type = lp_type_uint_vec(type.width, type.width * type.length);
+      }
+   }
+
    /*
     * There are other situations where at least the multiple int lods could be
     * avoided like min and max lod being equal.
@@ -1516,6 +1529,13 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                           coords,
                           texel_out);
    }
+
+   else if (is_fetch) {
+      lp_build_fetch_texel(&bld, unit, coords,
+                           explicit_lod, offsets,
+                           texel_out);
+   }
+
    else {
       LLVMValueRef lod_ipart = NULL, lod_fpart = NULL;
       LLVMValueRef ilevel0 = NULL, ilevel1 = NULL;
@@ -1533,18 +1553,6 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                       static_state->min_mip_filter,
                       static_state->wrap_s,
                       static_state->wrap_t);
-      }
-
-      if (is_fetch) {
-         lp_build_fetch_texel(&bld, unit, coords,
-                              explicit_lod, offsets,
-                              texel_out);
-
-         if (static_state->target != PIPE_BUFFER) {
-            apply_sampler_swizzle(&bld, texel_out);
-         }
-
-         return;
       }
 
       lp_build_sample_common(&bld, unit,
@@ -1620,7 +1628,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          bld4.float_size_in_type = lp_type_float(32);
          bld4.float_size_in_type.length = dims > 1 ? 4 : 1;
          bld4.int_size_in_type = lp_int_type(bld4.float_size_in_type);
-         bld4.texel_type = type4;
+         bld4.texel_type = bld.texel_type;
+         bld4.texel_type.length = 4;
          bld4.perquadf_type = type4;
          /* we want native vector size to be able to use our intrinsics */
          bld4.perquadf_type.length = 1;
@@ -1684,11 +1693,25 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
             texel_out[j] = lp_build_concat(gallivm, texelouttmp[j], type4, num_quads);
          }
       }
+
+      lp_build_sample_compare(&bld, coords, texel_out);
    }
 
-   lp_build_sample_compare(&bld, coords, texel_out);
+   if (static_state->target != PIPE_BUFFER) {
+      apply_sampler_swizzle(&bld, texel_out);
+   }
 
-   apply_sampler_swizzle(&bld, texel_out);
+   /*
+    * texel type can be a (32bit) int/uint (for pure int formats only),
+    * however we are expected to always return floats (storage is untyped).
+    */
+   if (!bld.texel_type.floating) {
+      unsigned chan;
+      for (chan = 0; chan < 4; chan++) {
+         texel_out[chan] = LLVMBuildBitCast(builder, texel_out[chan],
+                                            lp_build_vec_type(gallivm, type), "");
+      }
+   }
 }
 
 void

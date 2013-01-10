@@ -148,7 +148,7 @@ lp_build_fetch_rgba_aos_array(struct gallivm_state *gallivm,
 
    tmp_type = dst_type;
    if (pure_integer) {
-      assert(dst_type.floating);
+       /* some callers expect (fake) floats other real ints. */
       tmp_type.floating = 0;
       tmp_type.sign = src_type.sign;
    }
@@ -160,8 +160,8 @@ lp_build_fetch_rgba_aos_array(struct gallivm_state *gallivm,
    lp_build_context_init(&bld, gallivm, tmp_type);
    res = lp_build_format_swizzle_aos(format_desc, &bld, res);
 
-   /* Bitcast to floats (for pure integers) */
-   if (pure_integer) {
+   /* Bitcast to floats (for pure integers) when requested */
+   if (pure_integer && dst_type.floating) {
       res = LLVMBuildBitCast(builder, res, lp_build_vec_type(gallivm, dst_type), "");
    }
 

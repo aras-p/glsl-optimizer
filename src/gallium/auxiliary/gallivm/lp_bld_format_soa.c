@@ -114,7 +114,6 @@ lp_build_unpack_rgba_soa(struct gallivm_state *gallivm,
    assert(format_desc->block.height == 1);
    assert(format_desc->block.bits <= type.width);
    /* FIXME: Support more output types */
-   assert(type.floating);
    assert(type.width == 32);
 
    lp_build_context_init(&bld, gallivm, type);
@@ -162,10 +161,11 @@ lp_build_unpack_rgba_soa(struct gallivm_state *gallivm,
                input = LLVMBuildSIToFP(builder, input,
                                        lp_build_vec_type(gallivm, type), "");
          }
-         else {
-            /* FIXME */
-            assert(0);
-            input = lp_build_undef(gallivm, type);
+         else if (format_desc->channel[chan].pure_integer) {
+            /* Nothing to do */
+         } else {
+             /* FIXME */
+             assert(0);
          }
 
          break;
@@ -203,10 +203,11 @@ lp_build_unpack_rgba_soa(struct gallivm_state *gallivm,
                input = LLVMBuildFMul(builder, input, scale_val, "");
             }
          }
-         else {
-            /* FIXME */
-            assert(0);
-            input = lp_build_undef(gallivm, type);
+         else if (format_desc->channel[chan].pure_integer) {
+            /* Nothing to do */
+         } else {
+             /* FIXME */
+             assert(0);
          }
 
          break;
@@ -254,16 +255,28 @@ lp_build_unpack_rgba_soa(struct gallivm_state *gallivm,
 }
 
 
+/**
+ * Convert a vector of rgba8 values into 32bit wide SoA vectors.
+ *
+ * \param dst_type  The desired return type. For pure integer formats
+ *                  this should be a 32bit wide int or uint vector type,
+ *                  otherwise a float vector type.
+ *
+ * \param packed    The rgba8 values to pack.
+ *
+ * \param rgba      The 4 SoA return vectors.
+ */
 void
-lp_build_rgba8_to_f32_soa(struct gallivm_state *gallivm,
-                          struct lp_type dst_type,
-                          LLVMValueRef packed,
-                          LLVMValueRef *rgba)
+lp_build_rgba8_to_fi32_soa(struct gallivm_state *gallivm,
+                           struct lp_type dst_type,
+                           LLVMValueRef packed,
+                           LLVMValueRef *rgba)
 {
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef mask = lp_build_const_int_vec(gallivm, dst_type, 0xff);
    unsigned chan;
 
+   /* XXX technically shouldn't use that for uint dst_type */
    packed = LLVMBuildBitCast(builder, packed,
                              lp_build_int_vec_type(gallivm, dst_type), "");
 
@@ -282,7 +295,8 @@ lp_build_rgba8_to_f32_soa(struct gallivm_state *gallivm,
       if (stop < 32)
          input = LLVMBuildAnd(builder, input, mask, "");
 
-      input = lp_build_unsigned_norm_to_float(gallivm, 8, dst_type, input);
+      if (dst_type.floating)
+         input = lp_build_unsigned_norm_to_float(gallivm, 8, dst_type, input);
 
       rgba[chan] = input;
    }
@@ -372,7 +386,7 @@ lp_build_fetch_rgba_soa(struct gallivm_state *gallivm,
       tmp = lp_build_fetch_rgba_aos(gallivm, format_desc, tmp_type,
                                     base_ptr, offset, i, j);
 
-      lp_build_rgba8_to_f32_soa(gallivm,
+      lp_build_rgba8_to_fi32_soa(gallivm,
                                 type,
                                 tmp,
                                 rgba_out);

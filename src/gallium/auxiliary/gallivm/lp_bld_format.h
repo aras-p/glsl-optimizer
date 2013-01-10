@@ -93,7 +93,7 @@ lp_build_unpack_rgba_soa(struct gallivm_state *gallivm,
                          LLVMValueRef rgba_out[4]);
 
 void
-lp_build_rgba8_to_f32_soa(struct gallivm_state *gallivm,
+lp_build_rgba8_to_fi32_soa(struct gallivm_state *gallivm,
                           struct lp_type dst_type,
                           LLVMValueRef packed,
                           LLVMValueRef *rgba);

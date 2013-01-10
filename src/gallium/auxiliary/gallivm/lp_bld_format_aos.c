@@ -710,6 +710,8 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
       return res;
    }
 
+   assert(!util_format_is_pure_integer(format_desc->format));
+
    assert(0);
    return lp_build_undef(gallivm, type);
 }
