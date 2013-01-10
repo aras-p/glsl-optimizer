@@ -1309,8 +1309,6 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     }
 
     if (last_msaa_enable != r300->msaa_enable) {
-        r300_mark_atom_dirty(r300, &r300->fb_state_pipelined);
-
         if (r300->alpha_to_coverage) {
             r300_mark_atom_dirty(r300, &r300->dsa_state);
         }

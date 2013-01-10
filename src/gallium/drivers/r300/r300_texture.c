@@ -1002,7 +1002,7 @@ r300_texture_create_object(struct r300_screen *rscreen,
     }
 
     if (SCREEN_DBG_ON(rscreen, DBG_MSAA) && base->nr_samples > 1) {
-        fprintf(stderr, "r300: %i MSAA %s buffer created\n",
+        fprintf(stderr, "r300: %ix MSAA %s buffer created\n",
                 base->nr_samples,
                 util_format_is_depth_or_stencil(base->format) ? "depth" : "color");
     }

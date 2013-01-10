@@ -566,7 +566,7 @@ void r300_emit_fb_state_pipelined(struct r300_context *r300,
 
     struct pipe_framebuffer_state* fb =
             (struct pipe_framebuffer_state*)r300->fb_state.state;
-    unsigned i, num_samples, num_cbufs = fb->nr_cbufs;
+    unsigned i, num_cbufs = fb->nr_cbufs;
     unsigned mspos0, mspos1;
     CS_LOCALS(r300);
 
@@ -593,14 +593,10 @@ void r300_emit_fb_state_pipelined(struct r300_context *r300,
         OUT_CS(R300_US_OUT_FMT_UNUSED);
     }
 
-    /* Multisampling. Depends on framebuffer sample count.
-     * These are pipelined regs and as such cannot be moved
-     * to the AA state.
+    /* Set sample positions. It depends on the framebuffer sample count.
+     * These are pipelined regs and as such cannot be moved to the AA state.
      */
-    num_samples = r300->msaa_enable ? r300->num_samples : 1;
-
-    /* Sample positions. */
-    switch (num_samples) {
+    switch (r300->num_samples) {
     default:
         mspos0 = r300_get_mspos(0, sample_locs_1x);
         mspos1 = r300_get_mspos(1, sample_locs_1x);
