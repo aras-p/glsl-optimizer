@@ -188,7 +188,7 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
    surf[2] = SET_FIELD(width - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(height - 1, GEN7_SURFACE_HEIGHT);
 
-   uint32_t pitch_bytes = region->pitch * region->cpp;
+   uint32_t pitch_bytes = region->pitch;
    if (surface->map_stencil_as_y_tiled)
       pitch_bytes *= 2;
    surf[3] = pitch_bytes - 1;
@@ -619,9 +619,7 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
 
       BEGIN_BATCH(7);
       OUT_BATCH(GEN7_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
-      uint32_t pitch_bytes =
-         params->depth.mt->region->pitch * params->depth.mt->region->cpp;
-      OUT_BATCH((pitch_bytes - 1) |
+      OUT_BATCH((params->depth.mt->region->pitch - 1) |
                 params->depth_format << 18 |
                 1 << 22 | /* hiz enable */
                 1 << 28 | /* depth write */
@@ -648,7 +646,7 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
 
       BEGIN_BATCH(3);
       OUT_BATCH((GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
-      OUT_BATCH(hiz_region->pitch * hiz_region->cpp - 1);
+      OUT_BATCH(hiz_region->pitch - 1);
       OUT_RELOC(hiz_region->bo,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                 hiz_offset);

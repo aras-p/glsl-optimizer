@@ -531,7 +531,7 @@ i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
    state[1] = buffer_id;
 
    if (region != NULL) {
-      state[1] |= BUF_3D_PITCH(region->pitch * region->cpp);
+      state[1] |= BUF_3D_PITCH(region->pitch);
 
       if (region->tiling != I915_TILING_NONE) {
 	 state[1] |= BUF_3D_TILED_SURFACE;

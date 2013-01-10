@@ -129,8 +129,6 @@ intel_blit_texsubimage(struct gl_context * ctx,
    }
 
    bool ret;
-   unsigned int dst_pitch = intelImage->mt->region->pitch *
-      intelImage->mt->cpp;
 
    drm_intel_gem_bo_unmap_gtt(temp_bo);
 
@@ -138,7 +136,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
 			   intelImage->mt->cpp,
 			   dstRowStride,
 			   temp_bo, 0, false,
-			   dst_pitch,
+			   intelImage->mt->region->pitch,
 			   intelImage->mt->region->bo, 0,
 			   intelImage->mt->region->tiling,
 			   0, 0, blit_x, blit_y, width, height,
@@ -268,7 +266,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    const uint32_t cpp = 4; /* chars per pixel of GL_BGRA */
    const uint32_t swizzle_width_pixels = 16;
 
-   const uint32_t stride_bytes = image->mt->region->pitch * cpp;
+   const uint32_t stride_bytes = image->mt->region->pitch;
    const uint32_t width_tiles = stride_bytes / tile_width_bytes;
 
    for (uint32_t y_pixels = yoffset; y_pixels < y_max_pixels; ++y_pixels) {

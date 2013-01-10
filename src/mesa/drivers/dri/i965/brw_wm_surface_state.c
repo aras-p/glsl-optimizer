@@ -832,7 +832,7 @@ brw_update_texture_surface(struct gl_context *ctx,
 
    surf[3] = (brw_get_surface_tiling_bits(intelObj->mt->region->tiling) |
 	      (depth - 1) << BRW_SURFACE_DEPTH_SHIFT |
-	      ((intelObj->mt->region->pitch * intelObj->mt->cpp) - 1) <<
+	      (intelObj->mt->region->pitch - 1) <<
 	      BRW_SURFACE_PITCH_SHIFT);
 
    surf[4] = 0;
@@ -1205,7 +1205,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	      (rb->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
 
    surf[3] = (brw_get_surface_tiling_bits(region->tiling) |
-	      ((region->pitch * region->cpp) - 1) << BRW_SURFACE_PITCH_SHIFT);
+	      (region->pitch - 1) << BRW_SURFACE_PITCH_SHIFT);
 
    surf[4] = brw_get_surface_num_multisamples(mt->num_samples);
 

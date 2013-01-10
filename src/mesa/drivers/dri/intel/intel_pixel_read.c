@@ -151,7 +151,7 @@ do_blit_readpixels(struct gl_context * ctx,
 
    if (!intelEmitCopyBlit(intel,
 			  src->cpp,
-			  src->pitch * src->cpp, src->bo, 0, src->tiling,
+			  src->pitch, src->bo, 0, src->tiling,
 			  rowLength * src->cpp, dst_buffer, dst_offset, false,
 			  x, y,
 			  dst_x, dst_y,

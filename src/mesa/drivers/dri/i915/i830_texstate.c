@@ -150,7 +150,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
    drm_intel_bo_reference(intelObj->mt->region->bo);
    i830->state.tex_buffer[unit] = intelObj->mt->region->bo;
-   pitch = intelObj->mt->region->pitch * intelObj->mt->cpp;
+   pitch = intelObj->mt->region->pitch;
 
    /* XXX: This calculation is probably broken for tiled images with
     * a non-page-aligned offset.

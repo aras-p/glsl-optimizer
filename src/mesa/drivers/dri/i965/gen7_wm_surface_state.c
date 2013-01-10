@@ -112,8 +112,7 @@ gen7_set_surface_mcs_info(struct brw_context *brw,
    /* Compute the pitch in units of tiles.  To do this we need to divide the
     * pitch in bytes by 128, since a single Y-tile is 128 bytes wide.
     */
-   unsigned pitch_bytes = mcs_mt->region->pitch * mcs_mt->cpp;
-   unsigned pitch_tiles = pitch_bytes / 128;
+   unsigned pitch_tiles = mcs_mt->region->pitch / 128;
 
    /* The upper 20 bits of surface state DWORD 6 are the upper 20 bits of the
     * GPU address of the MCS buffer; the lower 12 bits contain other control
@@ -332,7 +331,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
    surf[2] = SET_FIELD(width - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(height - 1, GEN7_SURFACE_HEIGHT);
    surf[3] = SET_FIELD(depth - 1, BRW_SURFACE_DEPTH) |
-             ((intelObj->mt->region->pitch * intelObj->mt->cpp) - 1);
+             ((intelObj->mt->region->pitch) - 1);
 
    surf[5] = intelObj->_MaxLevel - tObj->BaseLevel; /* mip count */
 
@@ -529,7 +528,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 
    surf[2] = SET_FIELD(rb->Width - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(rb->Height - 1, GEN7_SURFACE_HEIGHT);
-   surf[3] = (region->pitch * region->cpp) - 1;
+   surf[3] = region->pitch - 1;
 
    surf[4] = gen7_surface_msaa_bits(irb->mt->num_samples, irb->mt->msaa_layout);
 

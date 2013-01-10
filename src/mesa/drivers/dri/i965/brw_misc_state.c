@@ -656,7 +656,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 
       BEGIN_BATCH(len);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
-      OUT_BATCH(((region->pitch * region->cpp) - 1) |
+      OUT_BATCH((region->pitch - 1) |
 		(brw_depthbuffer_format(brw) << 18) |
 		((hiz_mt ? 1 : 0) << 21) | /* separate stencil enable */
 		((hiz_mt ? 1 : 0) << 22) | /* hiz enable */
@@ -695,7 +695,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       if (hiz_mt) {
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
-	 OUT_BATCH(hiz_mt->region->pitch * hiz_mt->region->cpp - 1);
+	 OUT_BATCH(hiz_mt->region->pitch - 1);
 	 OUT_RELOC(hiz_mt->region->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		   brw->depthstencil.hiz_offset);
@@ -719,7 +719,7 @@ static void emit_depthbuffer(struct brw_context *brw)
           *    The pitch must be set to 2x the value computed based on width, as
           *    the stencil buffer is stored with two rows interleaved.
           */
-	 OUT_BATCH(2 * region->pitch * region->cpp - 1);
+	 OUT_BATCH(2 * region->pitch - 1);
 	 OUT_RELOC(region->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		   brw->depthstencil.stencil_offset);

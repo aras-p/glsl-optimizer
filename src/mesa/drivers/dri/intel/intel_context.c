@@ -1074,7 +1074,7 @@ intel_process_dri2_buffer(struct intel_context *intel,
                                           buffer->cpp,
                                           drawable->w,
                                           drawable->h,
-                                          buffer->pitch / buffer->cpp,
+                                          buffer->pitch,
                                           buffer->name,
                                           buffer_name);
    if (!region)

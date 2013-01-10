@@ -139,7 +139,7 @@ try_pbo_upload(struct gl_context *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
-   GLuint dst_x, dst_y, dst_stride;
+   GLuint dst_x, dst_y;
    drm_intel_bo *dst_buffer, *src_buffer;
 
    if (!_mesa_is_bufferobj(unpack->BufferObj))
@@ -188,13 +188,11 @@ try_pbo_upload(struct gl_context *ctx,
 				  intelImage->base.Base.Face,
 				  &dst_x, &dst_y);
 
-   dst_stride = intelImage->mt->region->pitch * intelImage->mt->region->cpp;
-
    if (!intelEmitCopyBlit(intel,
 			  intelImage->mt->cpp,
 			  src_stride, src_buffer,
 			  src_offset, false,
-			  dst_stride, dst_buffer, 0,
+			  intelImage->mt->region->pitch, dst_buffer, 0,
 			  intelImage->mt->region->tiling,
 			  0, 0, dst_x, dst_y, image->Width, image->Height,
 			  GL_COPY)) {
@@ -278,7 +276,8 @@ intel_set_texture_image_region(struct gl_context *ctx,
    intel_texobj->needs_validate = true;
 
    intel_image->mt->offset = offset;
-   intel_image->base.RowStride = region->pitch;
+   assert(region->pitch % region->cpp == 0);
+   intel_image->base.RowStride = region->pitch / region->cpp;
 
    /* Immediately validate the image to the object. */
    intel_miptree_reference(&intel_texobj->mt, intel_image->mt);

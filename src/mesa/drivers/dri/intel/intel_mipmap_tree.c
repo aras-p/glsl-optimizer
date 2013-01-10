@@ -720,16 +720,16 @@ intel_miptree_copy_slice(struct intel_context *intel,
 
    DBG("validate blit mt %s %p %d,%d/%d -> mt %s %p %d,%d/%d (%dx%d)\n",
        _mesa_get_format_name(src_mt->format),
-       src_mt, src_x, src_y, src_mt->region->pitch * src_mt->region->cpp,
+       src_mt, src_x, src_y, src_mt->region->pitch,
        _mesa_get_format_name(dst_mt->format),
-       dst_mt, dst_x, dst_y, dst_mt->region->pitch * dst_mt->region->cpp,
+       dst_mt, dst_x, dst_y, dst_mt->region->pitch,
        width, height);
 
    if (!intelEmitCopyBlit(intel,
 			  dst_mt->region->cpp,
-			  src_mt->region->pitch * src_mt->region->cpp, src_mt->region->bo,
+			  src_mt->region->pitch, src_mt->region->bo,
 			  0, src_mt->region->tiling,
-			  dst_mt->region->pitch * dst_mt->region->cpp, dst_mt->region->bo,
+			  dst_mt->region->pitch, dst_mt->region->bo,
 			  0, dst_mt->region->tiling,
 			  src_x, src_y,
 			  dst_x, dst_y,
@@ -1118,7 +1118,7 @@ intel_miptree_map_gtt(struct intel_context *intel,
       x += image_x;
       y += image_y;
 
-      map->stride = mt->region->pitch * mt->cpp;
+      map->stride = mt->region->pitch;
       map->ptr = base + y * map->stride + x * mt->cpp;
    }
 
@@ -1165,7 +1165,7 @@ intel_miptree_map_blit(struct intel_context *intel,
 
    if (!intelEmitCopyBlit(intel,
 			  mt->region->cpp,
-			  mt->region->pitch * mt->region->cpp, mt->region->bo,
+			  mt->region->pitch, mt->region->bo,
 			  0, mt->region->tiling,
 			  map->stride, map->bo,
 			  0, I915_TILING_NONE,
@@ -1327,15 +1327,15 @@ intel_miptree_unmap_etc(struct intel_context *intel,
    image_y += map->y;
 
    uint8_t *dst = intel_region_map(intel, mt->region, map->mode)
-                + image_y * mt->region->pitch * mt->region->cpp
+                + image_y * mt->region->pitch
                 + image_x * mt->region->cpp;
 
    if (mt->etc_format == MESA_FORMAT_ETC1_RGB8)
-      _mesa_etc1_unpack_rgba8888(dst, mt->region->pitch * mt->region->cpp,
+      _mesa_etc1_unpack_rgba8888(dst, mt->region->pitch,
                                  map->ptr, map->stride,
                                  map->w, map->h);
    else
-      _mesa_unpack_etc2_format(dst, mt->region->pitch * mt->region->cpp,
+      _mesa_unpack_etc2_format(dst, mt->region->pitch,
                                map->ptr, map->stride,
                                map->w, map->h, mt->etc_format);
 
@@ -1394,7 +1394,8 @@ intel_miptree_map_depthstencil(struct intel_context *intel,
 						 map_x + s_image_x,
 						 map_y + s_image_y,
 						 intel->has_swizzling);
-	    ptrdiff_t z_offset = ((map_y + z_image_y) * z_mt->region->pitch +
+	    ptrdiff_t z_offset = ((map_y + z_image_y) *
+                                  (z_mt->region->pitch / 4) +
 				  (map_x + z_image_x));
 	    uint8_t s = s_map[s_offset];
 	    uint32_t z = z_map[z_offset];
@@ -1453,7 +1454,8 @@ intel_miptree_unmap_depthstencil(struct intel_context *intel,
 						 x + s_image_x + map->x,
 						 y + s_image_y + map->y,
 						 intel->has_swizzling);
-	    ptrdiff_t z_offset = ((y + z_image_y) * z_mt->region->pitch +
+	    ptrdiff_t z_offset = ((y + z_image_y) *
+                                  (z_mt->region->pitch / 4) +
 				  (x + z_image_x));
 
 	    if (map_z32f_x24s8) {

@@ -421,7 +421,7 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
    uint32_t tiling = surface->map_stencil_as_y_tiled
       ? BRW_SURFACE_TILED | BRW_SURFACE_TILED_Y
       : brw_get_surface_tiling_bits(region->tiling);
-   uint32_t pitch_bytes = region->pitch * region->cpp;
+   uint32_t pitch_bytes = region->pitch;
    if (surface->map_stencil_as_y_tiled)
       pitch_bytes *= 2;
    surf[3] = (tiling |
@@ -844,9 +844,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
 
       BEGIN_BATCH(7);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
-      uint32_t pitch_bytes =
-         params->depth.mt->region->pitch * params->depth.mt->region->cpp;
-      OUT_BATCH((pitch_bytes - 1) |
+      OUT_BATCH((params->depth.mt->region->pitch - 1) |
                 params->depth_format << 18 |
                 1 << 21 | /* separate stencil enable */
                 1 << 22 | /* hiz enable */
@@ -876,7 +874,7 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
 
       BEGIN_BATCH(3);
       OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
-      OUT_BATCH(hiz_region->pitch * hiz_region->cpp - 1);
+      OUT_BATCH(hiz_region->pitch - 1);
       OUT_RELOC(hiz_region->bo,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                 hiz_offset);

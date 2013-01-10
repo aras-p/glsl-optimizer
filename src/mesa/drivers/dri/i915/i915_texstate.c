@@ -141,7 +141,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage;
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
-   GLuint *state = i915->state.Tex[unit], format, pitch;
+   GLuint *state = i915->state.Tex[unit], format;
    GLint lodbias, aniso = 0;
    GLubyte border[4];
    GLfloat maxlod;
@@ -169,7 +169,6 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
    format = translate_texture_format(firstImage->TexFormat,
 				     tObj->DepthMode);
-   pitch = intelObj->mt->region->pitch * intelObj->mt->cpp;
 
    state[I915_TEXREG_MS3] =
       (((firstImage->Height - 1) << MS3_HEIGHT_SHIFT) |
@@ -187,7 +186,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
     */
    maxlod = MIN2(sampler->MaxLod, tObj->_MaxLevel - tObj->BaseLevel);
    state[I915_TEXREG_MS4] =
-      ((((pitch / 4) - 1) << MS4_PITCH_SHIFT) |
+      ((((intelObj->mt->region->pitch / 4) - 1) << MS4_PITCH_SHIFT) |
        MS4_CUBE_FACE_ENA_MASK |
        (U_FIXED(CLAMP(maxlod, 0.0, 11.0), 2) << MS4_MAX_LOD_SHIFT) |
        ((firstImage->Depth - 1) << MS4_VOLUME_DEPTH_SHIFT));

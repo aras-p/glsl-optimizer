@@ -172,7 +172,8 @@ intel_tex_map_image_for_swrast(struct intel_context *intel,
        */
       for (i = 0; i < mt->level[level].depth; i++) {
 	 intel_miptree_get_image_offset(mt, level, i, &x, &y);
-	 intel_image->base.ImageOffsets[i] = x + y * mt->region->pitch;
+	 intel_image->base.ImageOffsets[i] = x + y * (mt->region->pitch /
+                                                      mt->region->cpp);
       }
 
       DBG("%s \n", __FUNCTION__);
@@ -183,13 +184,14 @@ intel_tex_map_image_for_swrast(struct intel_context *intel,
       intel_miptree_get_image_offset(mt, level, face, &x, &y);
 
       DBG("%s: (%d,%d) -> (%d, %d)/%d\n",
-	  __FUNCTION__, face, level, x, y, mt->region->pitch * mt->cpp);
+	  __FUNCTION__, face, level, x, y, mt->region->pitch);
 
       intel_image->base.Map = intel_region_map(intel, mt->region, mode) +
-	 (x + y * mt->region->pitch) * mt->cpp;
+	 x * mt->cpp + y * mt->region->pitch;
    }
 
-   intel_image->base.RowStride = mt->region->pitch;
+   assert(mt->region->pitch % mt->region->cpp == 0);
+   intel_image->base.RowStride = mt->region->pitch / mt->region->cpp;
 }
 
 static void

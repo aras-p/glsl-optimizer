@@ -145,14 +145,14 @@ aub_dump_bmp(struct gl_context *ctx)
 	    continue;
 	 }
 
+         assert(irb->mt->region->pitch % irb->mt->region->cpp == 0);
 	 drm_intel_gem_bo_aub_dump_bmp(irb->mt->region->bo,
 				       irb->draw_x,
 				       irb->draw_y,
 				       irb->Base.Base.Width,
 				       irb->Base.Base.Height,
 				       format,
-				       irb->mt->region->pitch *
-				       irb->mt->region->cpp,
+				       irb->mt->region->pitch,
 				       0);
       }
    }
@@ -414,7 +414,7 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
 {
    switch (attrib) {
    case __DRI_IMAGE_ATTRIB_STRIDE:
-      *value = image->region->pitch * image->region->cpp;
+      *value = image->region->pitch;
       return true;
    case __DRI_IMAGE_ATTRIB_HANDLE:
       *value = image->region->bo->handle;
@@ -523,7 +523,7 @@ intel_create_image_from_names(__DRIscreen *screen,
 static __DRIimage *
 intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
 {
-    int width, height, offset, stride, dri_format, cpp, index, pitch;
+    int width, height, offset, stride, dri_format, index;
     struct intel_image_format *f;
     uint32_t mask_x, mask_y;
     __DRIimage *image;
@@ -544,9 +544,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     stride = parent->strides[index];
 
     image = intel_allocate_image(dri_format, loaderPrivate);
-    cpp = _mesa_get_format_bytes(image->format); /* safe since no none format */
-    pitch = stride / cpp;
-    if (offset + height * cpp * pitch > parent->region->bo->size) {
+    if (offset + height * stride > parent->region->bo->size) {
        _mesa_warning(NULL, "intel_create_sub_image: subimage out of bounds");
        free(image);
        return NULL;
@@ -561,7 +559,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     image->region->cpp = _mesa_get_format_bytes(image->format);
     image->region->width = width;
     image->region->height = height;
-    image->region->pitch = pitch;
+    image->region->pitch = stride;
     image->region->refcount = 1;
     image->region->bo = parent->region->bo;
     drm_intel_bo_reference(image->region->bo);
@@ -1244,8 +1242,7 @@ intelAllocateBuffer(__DRIscreen *screen,
 
    intelBuffer->base.attachment = attachment;
    intelBuffer->base.cpp = intelBuffer->region->cpp;
-   intelBuffer->base.pitch =
-         intelBuffer->region->pitch * intelBuffer->region->cpp;
+   intelBuffer->base.pitch = intelBuffer->region->pitch;
 
    return &intelBuffer->base;
 }

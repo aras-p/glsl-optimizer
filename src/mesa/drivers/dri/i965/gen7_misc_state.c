@@ -83,7 +83,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       /* _NEW_DEPTH, _NEW_STENCIL */
       BEGIN_BATCH(7);
       OUT_BATCH(GEN7_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
-      OUT_BATCH(((region->pitch * region->cpp) - 1) |
+      OUT_BATCH((region->pitch - 1) |
 		(brw_depthbuffer_format(brw) << 18) |
 		((hiz_mt ? 1 : 0) << 22) | /* hiz enable */
 		((stencil_mt != NULL && ctx->Stencil.WriteMask != 0) << 27) |
@@ -109,7 +109,7 @@ static void emit_depthbuffer(struct brw_context *brw)
    } else {
       BEGIN_BATCH(3);
       OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (3 - 2));
-      OUT_BATCH(hiz_mt->region->pitch * hiz_mt->region->cpp - 1);
+      OUT_BATCH(hiz_mt->region->pitch - 1);
       OUT_RELOC(hiz_mt->region->bo,
                 I915_GEM_DOMAIN_RENDER,
                 I915_GEM_DOMAIN_RENDER,
@@ -143,7 +143,7 @@ static void emit_depthbuffer(struct brw_context *brw)
        * indicate that it does.
        */
       OUT_BATCH(enabled |
-	        (2 * stencil_mt->region->pitch * stencil_mt->region->cpp - 1));
+	        (2 * stencil_mt->region->pitch - 1));
       OUT_RELOC(stencil_mt->region->bo,
 	        I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		brw->depthstencil.stencil_offset);

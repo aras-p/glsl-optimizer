@@ -63,7 +63,7 @@ struct intel_region
    GLuint cpp;      /**< bytes per pixel */
    GLuint width;    /**< in pixels */
    GLuint height;   /**< in pixels */
-   GLuint pitch;    /**< in pixels */
+   GLuint pitch;    /**< in bytes */
    GLubyte *map;    /**< only non-NULL when region is actually mapped */
    GLuint map_refcount;  /**< Reference count for mapping */
 
