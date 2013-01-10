@@ -446,6 +446,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 
 		do_tree_grafting(ir); dump("after-graft", ir, state, printMode);
 
+
+
 		do_agal_expression_flattening(ir, true); dump("", ir, state, printMode);
 
 		do_lower_arrays(ir); dump("post-opt", ir, state, printMode);
@@ -461,6 +463,10 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		do_hoist_constants(ir); dump("post-opt", ir, state, printMode);
 
 		do_agal_expression_flattening(ir, true); dump("post-opt", ir, state, printMode);
+
+		for(int i=0; i<6; i++) {
+				do_shorten_liveranges(ir);  dump("after-shorten-liveranges", ir, state, printMode);
+		}
 		
 		dump("post-opt", ir, state, printMode);
 

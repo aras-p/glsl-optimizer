@@ -1,7 +1,6 @@
 swc/Makefile
 *.a
 *.dll
-*.exe
 *.ilk
 *.o
 *.obj

@@ -183,6 +183,9 @@ ir_visitor_status ir_agal_expression_flattening_visitor::visit_leave(ir_swizzle 
 
 ir_visitor_status ir_agal_expression_flattening_visitor::visit_enter(ir_texture *tex)
 {
+   if(tex->coordinate->as_expression())
+      promoteToVar(tex->coordinate);
+
    if(baseExpr)
       promoteToVar(tex);
 
