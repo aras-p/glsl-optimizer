@@ -95,7 +95,7 @@ GL_ARB_gpu_shader_fp64                               not started
 GL_ARB_sample_shading                                not started
 GL_ARB_shader_subroutine                             not started
 GL_ARB_tessellation_shader                           not started
-GL_ARB_texture_buffer_object_rgb32                   DONE (softpipe)
+GL_ARB_texture_buffer_object_rgb32                   DONE (i965, softpipe)
 GL_ARB_texture_cube_map_array                        DONE (i965, softpipe)
 GL_ARB_texture_gather                                not started
 GL_ARB_transform_feedback2                           DONE
