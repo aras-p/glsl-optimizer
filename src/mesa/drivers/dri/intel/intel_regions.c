@@ -391,8 +391,8 @@ intel_region_copy(struct intel_context *intel,
 
    return intelEmitCopyBlit(intel,
 			    dst->cpp,
-			    src_pitch, src->bo, src_offset, src->tiling,
-			    dst->pitch, dst->bo, dst_offset, dst->tiling,
+			    src_pitch * src->cpp, src->bo, src_offset, src->tiling,
+			    dst->pitch * dst->cpp, dst->bo, dst_offset, dst->tiling,
 			    srcx, srcy, dstx, dsty, width, height,
 			    logicop);
 }

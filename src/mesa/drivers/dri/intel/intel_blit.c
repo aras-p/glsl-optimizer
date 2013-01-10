@@ -144,9 +144,6 @@ intelEmitCopyBlit(struct intel_context *intel,
        src_buffer, src_pitch, src_offset, src_x, src_y,
        dst_buffer, dst_pitch, dst_offset, dst_x, dst_y, w, h);
 
-   src_pitch *= cpp;
-   dst_pitch *= cpp;
-
    /* Blit pitch must be dword-aligned.  Otherwise, the hardware appears to drop
     * the low bits.
     */
@@ -420,8 +417,6 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 
    if (w < 0 || h < 0)
       return true;
-
-   dst_pitch *= cpp;
 
    DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d, %d bytes %d dwords\n",
        __FUNCTION__,
