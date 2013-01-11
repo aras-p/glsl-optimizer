@@ -237,7 +237,7 @@ static void r300_clear(struct pipe_context* pipe,
     uint32_t height = fb->height;
     uint32_t hyperz_dcv = hyperz->zb_depthclearvalue;
 
-    /* Enable fast Z clear.
+    /* Use fast Z clear.
      * The zbuffer must be in micro-tiled mode, otherwise it locks up. */
     if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
         boolean zmask_clear, hiz_clear;

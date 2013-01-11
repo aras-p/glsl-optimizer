@@ -101,7 +101,8 @@ static struct util_hash_table *fd_tab = NULL;
 static boolean radeon_set_fd_access(struct radeon_drm_cs *applier,
                                     struct radeon_drm_cs **owner,
                                     pipe_mutex *mutex,
-                                    unsigned request, boolean enable)
+                                    unsigned request, const char *request_name,
+                                    boolean enable)
 {
     struct drm_radeon_info info;
     unsigned value = enable ? 1 : 0;
@@ -136,17 +137,13 @@ static boolean radeon_set_fd_access(struct radeon_drm_cs *applier,
     if (enable) {
         if (value) {
             *owner = applier;
-            if (request == RADEON_INFO_WANT_HYPERZ) {
-                printf("radeon: Acquired Hyper-Z.\n");
-            }
+            printf("radeon: Acquired access to %s.\n", request_name);
             pipe_mutex_unlock(*mutex);
             return TRUE;
         }
     } else {
         *owner = NULL;
-        if (request == RADEON_INFO_WANT_HYPERZ) {
-            printf("radeon: Released Hyper-Z.\n");
-        }
+        printf("radeon: Released access to %s.\n", request_name);
     }
 
     pipe_mutex_unlock(*mutex);
@@ -426,16 +423,14 @@ static boolean radeon_cs_request_feature(struct radeon_winsys_cs *rcs,
     case RADEON_FID_R300_HYPERZ_ACCESS:
         return radeon_set_fd_access(cs, &cs->ws->hyperz_owner,
                                     &cs->ws->hyperz_owner_mutex,
-                                    RADEON_INFO_WANT_HYPERZ, enable);
+                                    RADEON_INFO_WANT_HYPERZ, "Hyper-Z",
+                                    enable);
 
     case RADEON_FID_R300_CMASK_ACCESS:
-        if (debug_get_bool_option("RADEON_CMASK", FALSE)) {
-            return radeon_set_fd_access(cs, &cs->ws->cmask_owner,
-                                        &cs->ws->cmask_owner_mutex,
-                                        RADEON_INFO_WANT_CMASK, enable);
-        } else {
-            return FALSE;
-        }
+        return radeon_set_fd_access(cs, &cs->ws->cmask_owner,
+                                    &cs->ws->cmask_owner_mutex,
+                                    RADEON_INFO_WANT_CMASK, "AA optimizations",
+                                    enable);
     }
     return FALSE;
 }
