@@ -333,4 +333,33 @@ u2f(operand a)
    return expr(ir_unop_u2f, a);
 }
 
+ir_if*
+if_tree(operand condition,
+        ir_instruction *then_branch)
+{
+   assert(then_branch != NULL);
+
+   void *mem_ctx = ralloc_parent(condition.val);
+
+   ir_if *result = new(mem_ctx) ir_if(condition.val);
+   result->then_instructions.push_tail(then_branch);
+   return result;
+}
+
+ir_if*
+if_tree(operand condition,
+        ir_instruction *then_branch,
+        ir_instruction *else_branch)
+{
+   assert(then_branch != NULL);
+   assert(else_branch != NULL);
+
+   void *mem_ctx = ralloc_parent(condition.val);
+
+   ir_if *result = new(mem_ctx) ir_if(condition.val);
+   result->then_instructions.push_tail(then_branch);
+   result->else_instructions.push_tail(else_branch);
+   return result;
+}
+
 } /* namespace ir_builder */

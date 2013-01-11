@@ -174,4 +174,10 @@ ir_swizzle *swizzle_xy(operand a);
 ir_swizzle *swizzle_xyz(operand a);
 ir_swizzle *swizzle_xyzw(operand a);
 
+ir_if *if_tree(operand condition,
+               ir_instruction *then_branch);
+ir_if *if_tree(operand condition,
+               ir_instruction *then_branch,
+               ir_instruction *else_branch);
+
 } /* namespace ir_builder */
