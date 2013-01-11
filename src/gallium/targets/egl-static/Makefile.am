@@ -79,7 +79,7 @@ if HAVE_EGL_PLATFORM_WAYLAND
 AM_CPPFLAGS += $(LIBDRM_CFLAGS)
 egl_gallium_la_LIBADD += \
 	$(top_builddir)/src/gallium/winsys/sw/wayland/libws_wayland.la \
-	$(top_builddir)/src/egl/wayland/wayland-drm/.libs/libwayland-drm.la \
+	$(top_builddir)/src/egl/wayland/wayland-drm/libwayland-drm.la \
 	$(LIBDRM_LIBS) \
 	$(WAYLAND_LIBS)
 endif
