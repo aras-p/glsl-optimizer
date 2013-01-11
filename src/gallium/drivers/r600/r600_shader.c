@@ -1751,6 +1751,23 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		}
 	}
 
+        /* add fake position export */
+	if (ctx.type == TGSI_PROCESSOR_VERTEX && next_pos_base == 60) {
+			memset(&output[j], 0, sizeof(struct r600_bytecode_output));
+			output[j].gpr = 0;
+			output[j].elem_size = 3;
+			output[j].swizzle_x = 7;
+			output[j].swizzle_y = 7;
+			output[j].swizzle_z = 7;
+			output[j].swizzle_w = 7;
+			output[j].burst_count = 1;
+			output[j].barrier = 1;
+			output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+			output[j].array_base = next_pos_base;
+			output[j].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
+			j++;
+	}
+
 	/* add fake param output for vertex shader if no param is exported */
 	if (ctx.type == TGSI_PROCESSOR_VERTEX && next_param_base == 0) {
 			memset(&output[j], 0, sizeof(struct r600_bytecode_output));
