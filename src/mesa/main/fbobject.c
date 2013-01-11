@@ -1217,21 +1217,27 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
              ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
    case GL_R16F:
    case GL_R32F:
-      return (_mesa_is_desktop_gl(ctx) &&
-             ctx->Extensions.ARB_texture_rg &&
-             ctx->Extensions.ARB_texture_float) ? GL_RED : 0;
+      return ((_mesa_is_desktop_gl(ctx) &&
+               ctx->Extensions.ARB_texture_rg &&
+               ctx->Extensions.ARB_texture_float) ||
+              _mesa_is_gles3(ctx) /* EXT_color_buffer_float */ )
+         ? GL_RED : 0;
    case GL_RG16F:
    case GL_RG32F:
-      return (_mesa_is_desktop_gl(ctx) &&
-             ctx->Extensions.ARB_texture_rg &&
-             ctx->Extensions.ARB_texture_float) ? GL_RG : 0;
+      return ((_mesa_is_desktop_gl(ctx) &&
+               ctx->Extensions.ARB_texture_rg &&
+               ctx->Extensions.ARB_texture_float) ||
+              _mesa_is_gles3(ctx) /* EXT_color_buffer_float */ )
+         ? GL_RG : 0;
    case GL_RGB16F:
    case GL_RGB32F:
       return (_mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_texture_float)
          ? GL_RGB : 0;
    case GL_RGBA16F:
    case GL_RGBA32F:
-      return (_mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_texture_float)
+      return ((_mesa_is_desktop_gl(ctx) &&
+               ctx->Extensions.ARB_texture_float) ||
+              _mesa_is_gles3(ctx) /* EXT_color_buffer_float */ )
          ? GL_RGBA : 0;
    case GL_ALPHA16F_ARB:
    case GL_ALPHA32F_ARB:
@@ -1258,7 +1264,8 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
               && ctx->Extensions.EXT_texture_shared_exponent)
          ? GL_RGB : 0;
    case GL_R11F_G11F_B10F:
-      return (_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_packed_float)
+      return ((_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_packed_float) ||
+              _mesa_is_gles3(ctx) /* EXT_color_buffer_float */ )
          ? GL_RGB : 0;
 
    case GL_RGBA8UI_EXT:
@@ -1423,7 +1430,8 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
 
    baseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    if (baseFormat == 0) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "%s(internalFormat)", func);
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(internalFormat=%s)",
+                  func, _mesa_lookup_enum_by_nr(internalFormat));
       return;
    }
 

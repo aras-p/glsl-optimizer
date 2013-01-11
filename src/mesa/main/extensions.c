@@ -233,6 +233,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_unpack_subimage",                     o(dummy_true),                                         ES2, 2011 },
    { "GL_EXT_vertex_array_bgra",                   o(EXT_vertex_array_bgra),                   GL,             2008 },
    { "GL_EXT_vertex_array",                        o(dummy_true),                              GLL,            1995 },
+   { "GL_EXT_color_buffer_float",                  o(dummy_true),                                         ES3, 2013 },
 
    /* OES extensions */
    { "GL_OES_blend_equation_separate",             o(EXT_blend_equation_separate),                  ES1,       2009 },
