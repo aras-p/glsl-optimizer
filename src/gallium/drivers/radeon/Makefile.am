@@ -4,7 +4,7 @@ include $(top_srcdir)/src/gallium/Automake.inc
 if HAVE_GALLIUM_R600
 if HAVE_GALLIUM_RADEONSI
 lib_LTLIBRARIES = libllvmradeon@VERSION@.la
-libllvmradeon@VERSION@_la_LDFLAGS = -Wl,--no-undefined -shared -avoid-version \
+libllvmradeon@VERSION@_la_LDFLAGS = -Wl, -shared -avoid-version \
 	$(LLVM_LDFLAGS)
 else
 noinst_LTLIBRARIES = libllvmradeon@VERSION@.la
@@ -26,6 +26,5 @@ libllvmradeon@VERSION@_la_SOURCES = \
 	$(C_FILES)
 
 libllvmradeon@VERSION@_la_LIBADD = \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(CLOCK_LIB) \
 	$(LLVM_LIBS)
