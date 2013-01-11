@@ -106,7 +106,7 @@ _mesa_GetActiveAttrib(GLhandleARB program, GLuint desired_index,
       const ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if (var == NULL
-	  || var->mode != ir_var_in
+	  || var->mode != ir_var_shader_in
 	  || var->location == -1)
 	 continue;
 
@@ -169,7 +169,7 @@ _mesa_GetAttribLocation(GLhandleARB program, const GLcharARB * name)
        *     attribute, or if an error occurs, -1 will be returned."
        */
       if (var == NULL
-	  || var->mode != ir_var_in
+	  || var->mode != ir_var_shader_in
 	  || var->location == -1
 	  || var->location < VERT_ATTRIB_GENERIC0)
 	 continue;
@@ -197,7 +197,7 @@ _mesa_count_active_attribs(struct gl_shader_program *shProg)
       const ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if (var == NULL
-	  || var->mode != ir_var_in
+	  || var->mode != ir_var_shader_in
 	  || var->location == -1)
 	 continue;
 
@@ -223,7 +223,7 @@ _mesa_longest_attribute_name_length(struct gl_shader_program *shProg)
       const ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if (var == NULL
-	  || var->mode != ir_var_in
+	  || var->mode != ir_var_shader_in
 	  || var->location == -1)
 	 continue;
 
@@ -333,7 +333,7 @@ _mesa_GetFragDataIndex(GLuint program, const GLchar *name)
        *     attribute, or if an error occurs, -1 will be returned."
        */
       if (var == NULL
-          || var->mode != ir_var_out
+          || var->mode != ir_var_shader_out
           || var->location == -1
           || var->location < FRAG_RESULT_DATA0)
          continue;
@@ -389,7 +389,7 @@ _mesa_GetFragDataLocation(GLuint program, const GLchar *name)
        *     attribute, or if an error occurs, -1 will be returned."
        */
       if (var == NULL
-	  || var->mode != ir_var_out
+	  || var->mode != ir_var_shader_out
 	  || var->location == -1
 	  || var->location < FRAG_RESULT_DATA0)
 	 continue;

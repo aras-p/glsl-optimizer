@@ -265,9 +265,11 @@ protected:
 enum ir_variable_mode {
    ir_var_auto = 0,     /**< Function local variables and globals. */
    ir_var_uniform,      /**< Variable declared as a uniform. */
-   ir_var_in,
-   ir_var_out,
-   ir_var_inout,
+   ir_var_shader_in,
+   ir_var_shader_out,
+   ir_var_function_in,
+   ir_var_function_out,
+   ir_var_function_inout,
    ir_var_const_in,	/**< "in" param that must be a constant expression */
    ir_var_system_value, /**< Ex: front-face, instance-id, etc. */
    ir_var_temporary	/**< Temporary variable generated during compilation. */
@@ -401,7 +403,7 @@ public:
     *
     * \sa ir_variable_mode
     */
-   unsigned mode:3;
+   unsigned mode:4;
 
    /**
     * Interpolation mode for shader inputs / outputs

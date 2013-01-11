@@ -77,10 +77,11 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 
       if (entry->assign) {
 	 /* Remove a single dead assignment to the variable we found.
-	  * Don't do so if it's a shader output, though.
+	  * Don't do so if it's a shader or function output, though.
 	  */
-	 if (entry->var->mode != ir_var_out &&
-	     entry->var->mode != ir_var_inout) {
+	 if (entry->var->mode != ir_var_function_out &&
+	     entry->var->mode != ir_var_function_inout &&
+             entry->var->mode != ir_var_shader_out) {
 	    entry->assign->remove();
 	    progress = true;
 

@@ -905,11 +905,11 @@ vec4_visitor::visit(ir_variable *ir)
       return;
 
    switch (ir->mode) {
-   case ir_var_in:
+   case ir_var_shader_in:
       reg = new(mem_ctx) dst_reg(ATTR, ir->location);
       break;
 
-   case ir_var_out:
+   case ir_var_shader_out:
       reg = new(mem_ctx) dst_reg(this, ir->type);
 
       for (int i = 0; i < type_size(ir->type); i++) {

@@ -137,8 +137,8 @@ ir_constant_variable_visitor::visit_enter(ir_call *ir)
       ir_rvalue *param_rval = (ir_rvalue *)iter.get();
       ir_variable *param = (ir_variable *)sig_iter.get();
 
-      if (param->mode == ir_var_out ||
-	  param->mode == ir_var_inout) {
+      if (param->mode == ir_var_function_out ||
+	  param->mode == ir_var_function_inout) {
 	 ir_variable *var = param_rval->variable_referenced();
 	 struct assignment_entry *entry;
 

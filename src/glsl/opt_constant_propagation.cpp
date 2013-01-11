@@ -285,7 +285,8 @@ ir_constant_propagation_visitor::visit_enter(ir_call *ir)
    foreach_iter(exec_list_iterator, iter, ir->actual_parameters) {
       ir_variable *sig_param = (ir_variable *)sig_param_iter.get();
       ir_rvalue *param = (ir_rvalue *)iter.get();
-      if (sig_param->mode != ir_var_out && sig_param->mode != ir_var_inout) {
+      if (sig_param->mode != ir_var_function_out
+          && sig_param->mode != ir_var_function_inout) {
 	 ir_rvalue *new_param = param;
 	 handle_rvalue(&new_param);
          if (new_param != param)

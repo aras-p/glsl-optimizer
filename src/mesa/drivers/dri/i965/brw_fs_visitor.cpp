@@ -57,7 +57,7 @@ fs_visitor::visit(ir_variable *ir)
    if (variable_storage(ir))
       return;
 
-   if (ir->mode == ir_var_in) {
+   if (ir->mode == ir_var_shader_in) {
       if (!strcmp(ir->name, "gl_FragCoord")) {
 	 reg = emit_fragcoord_interpolation(ir);
       } else if (!strcmp(ir->name, "gl_FrontFacing")) {
@@ -68,7 +68,7 @@ fs_visitor::visit(ir_variable *ir)
       assert(reg);
       hash_table_insert(this->variable_ht, reg, ir);
       return;
-   } else if (ir->mode == ir_var_out) {
+   } else if (ir->mode == ir_var_shader_out) {
       reg = new(this->mem_ctx) fs_reg(this, ir->type);
 
       if (ir->index > 0) {

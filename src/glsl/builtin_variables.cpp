@@ -47,18 +47,18 @@ struct builtin_variable {
 };
 
 static const builtin_variable builtin_core_vs_variables[] = {
-   { ir_var_out, VERT_RESULT_HPOS, "vec4",  "gl_Position" },
-   { ir_var_out, VERT_RESULT_PSIZ, "float", "gl_PointSize" },
+   { ir_var_shader_out, VERT_RESULT_HPOS, "vec4",  "gl_Position" },
+   { ir_var_shader_out, VERT_RESULT_PSIZ, "float", "gl_PointSize" },
 };
 
 static const builtin_variable builtin_core_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord" },
-   { ir_var_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing" },
-   { ir_var_out, FRAG_RESULT_COLOR, "vec4",  "gl_FragColor" },
+   { ir_var_shader_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord" },
+   { ir_var_shader_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing" },
+   { ir_var_shader_out, FRAG_RESULT_COLOR, "vec4",  "gl_FragColor" },
 };
 
 static const builtin_variable builtin_100ES_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+   { ir_var_shader_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
 };
 
 static const builtin_variable builtin_300ES_vs_variables[] = {
@@ -66,46 +66,46 @@ static const builtin_variable builtin_300ES_vs_variables[] = {
 };
 
 static const builtin_variable builtin_300ES_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord" },
-   { ir_var_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing" },
-   { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth" },
-   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+   { ir_var_shader_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord" },
+   { ir_var_shader_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing" },
+   { ir_var_shader_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth" },
+   { ir_var_shader_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
 };
 
 static const builtin_variable builtin_110_fs_variables[] = {
-   { ir_var_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth" },
+   { ir_var_shader_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth" },
 };
 
 static const builtin_variable builtin_110_deprecated_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_COL0,  "vec4",  "gl_Color" },
-   { ir_var_in,  FRAG_ATTRIB_COL1,  "vec4",  "gl_SecondaryColor" },
-   { ir_var_in,  FRAG_ATTRIB_FOGC,  "float", "gl_FogFragCoord" },
+   { ir_var_shader_in,  FRAG_ATTRIB_COL0,  "vec4",  "gl_Color" },
+   { ir_var_shader_in,  FRAG_ATTRIB_COL1,  "vec4",  "gl_SecondaryColor" },
+   { ir_var_shader_in,  FRAG_ATTRIB_FOGC,  "float", "gl_FogFragCoord" },
 };
 
 static const builtin_variable builtin_110_deprecated_vs_variables[] = {
-   { ir_var_in,  VERT_ATTRIB_POS,         "vec4",  "gl_Vertex" },
-   { ir_var_in,  VERT_ATTRIB_NORMAL,      "vec3",  "gl_Normal" },
-   { ir_var_in,  VERT_ATTRIB_COLOR0,      "vec4",  "gl_Color" },
-   { ir_var_in,  VERT_ATTRIB_COLOR1,      "vec4",  "gl_SecondaryColor" },
-   { ir_var_in,  VERT_ATTRIB_TEX0,        "vec4",  "gl_MultiTexCoord0" },
-   { ir_var_in,  VERT_ATTRIB_TEX1,        "vec4",  "gl_MultiTexCoord1" },
-   { ir_var_in,  VERT_ATTRIB_TEX2,        "vec4",  "gl_MultiTexCoord2" },
-   { ir_var_in,  VERT_ATTRIB_TEX3,        "vec4",  "gl_MultiTexCoord3" },
-   { ir_var_in,  VERT_ATTRIB_TEX4,        "vec4",  "gl_MultiTexCoord4" },
-   { ir_var_in,  VERT_ATTRIB_TEX5,        "vec4",  "gl_MultiTexCoord5" },
-   { ir_var_in,  VERT_ATTRIB_TEX6,        "vec4",  "gl_MultiTexCoord6" },
-   { ir_var_in,  VERT_ATTRIB_TEX7,        "vec4",  "gl_MultiTexCoord7" },
-   { ir_var_in,  VERT_ATTRIB_FOG,         "float", "gl_FogCoord" },
-   { ir_var_out, VERT_RESULT_CLIP_VERTEX, "vec4",  "gl_ClipVertex" },
-   { ir_var_out, VERT_RESULT_COL0,        "vec4",  "gl_FrontColor" },
-   { ir_var_out, VERT_RESULT_BFC0,        "vec4",  "gl_BackColor" },
-   { ir_var_out, VERT_RESULT_COL1,        "vec4",  "gl_FrontSecondaryColor" },
-   { ir_var_out, VERT_RESULT_BFC1,        "vec4",  "gl_BackSecondaryColor" },
-   { ir_var_out, VERT_RESULT_FOGC,        "float", "gl_FogFragCoord" },
+   { ir_var_shader_in,  VERT_ATTRIB_POS,         "vec4",  "gl_Vertex" },
+   { ir_var_shader_in,  VERT_ATTRIB_NORMAL,      "vec3",  "gl_Normal" },
+   { ir_var_shader_in,  VERT_ATTRIB_COLOR0,      "vec4",  "gl_Color" },
+   { ir_var_shader_in,  VERT_ATTRIB_COLOR1,      "vec4",  "gl_SecondaryColor" },
+   { ir_var_shader_in,  VERT_ATTRIB_TEX0,        "vec4",  "gl_MultiTexCoord0" },
+   { ir_var_shader_in,  VERT_ATTRIB_TEX1,        "vec4",  "gl_MultiTexCoord1" },
+   { ir_var_shader_in,  VERT_ATTRIB_TEX2,        "vec4",  "gl_MultiTexCoord2" },
+   { ir_var_shader_in,  VERT_ATTRIB_TEX3,        "vec4",  "gl_MultiTexCoord3" },
+   { ir_var_shader_in,  VERT_ATTRIB_TEX4,        "vec4",  "gl_MultiTexCoord4" },
+   { ir_var_shader_in,  VERT_ATTRIB_TEX5,        "vec4",  "gl_MultiTexCoord5" },
+   { ir_var_shader_in,  VERT_ATTRIB_TEX6,        "vec4",  "gl_MultiTexCoord6" },
+   { ir_var_shader_in,  VERT_ATTRIB_TEX7,        "vec4",  "gl_MultiTexCoord7" },
+   { ir_var_shader_in,  VERT_ATTRIB_FOG,         "float", "gl_FogCoord" },
+   { ir_var_shader_out, VERT_RESULT_CLIP_VERTEX, "vec4",  "gl_ClipVertex" },
+   { ir_var_shader_out, VERT_RESULT_COL0,        "vec4",  "gl_FrontColor" },
+   { ir_var_shader_out, VERT_RESULT_BFC0,        "vec4",  "gl_BackColor" },
+   { ir_var_shader_out, VERT_RESULT_COL1,        "vec4",  "gl_FrontSecondaryColor" },
+   { ir_var_shader_out, VERT_RESULT_BFC1,        "vec4",  "gl_BackSecondaryColor" },
+   { ir_var_shader_out, VERT_RESULT_FOGC,        "float", "gl_FogFragCoord" },
 };
 
 static const builtin_variable builtin_120_fs_variables[] = {
-   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+   { ir_var_shader_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
 };
 
 static const builtin_variable builtin_130_vs_variables[] = {
@@ -403,12 +403,12 @@ add_variable(exec_list *instructions, glsl_symbol_table *symtab,
 
    switch (var->mode) {
    case ir_var_auto:
-   case ir_var_in:
+   case ir_var_shader_in:
    case ir_var_uniform:
    case ir_var_system_value:
       var->read_only = true;
       break;
-   case ir_var_out:
+   case ir_var_shader_out:
       break;
    default:
       /* The only variables that are added using this function should be
@@ -754,7 +754,8 @@ generate_110_vs_variables(exec_list *instructions,
       glsl_type::get_array_instance(glsl_type::vec4_type, 0);
 
    add_variable(instructions, state->symbols,
-		"gl_TexCoord", vec4_array_type, ir_var_out, VERT_RESULT_TEX0);
+		"gl_TexCoord", vec4_array_type, ir_var_shader_out,
+                VERT_RESULT_TEX0);
 
    generate_ARB_draw_buffers_variables(instructions, state, false,
 				       vertex_shader);
@@ -814,7 +815,7 @@ generate_130_vs_variables(exec_list *instructions,
       glsl_type::get_array_instance(glsl_type::float_type, 0);
 
    add_variable(instructions, state->symbols,
-		"gl_ClipDistance", clip_distance_array_type, ir_var_out,
+		"gl_ClipDistance", clip_distance_array_type, ir_var_shader_out,
                 VERT_RESULT_CLIP_DIST0);
 
 }
@@ -939,7 +940,8 @@ generate_110_fs_variables(exec_list *instructions,
       glsl_type::get_array_instance(glsl_type::vec4_type, 0);
 
    add_variable(instructions, state->symbols,
-		"gl_TexCoord", vec4_array_type, ir_var_in, FRAG_ATTRIB_TEX0);
+		"gl_TexCoord", vec4_array_type, ir_var_shader_in,
+                FRAG_ATTRIB_TEX0);
 
    generate_ARB_draw_buffers_variables(instructions, state, false,
 				       fragment_shader);
@@ -971,7 +973,7 @@ generate_ARB_draw_buffers_variables(exec_list *instructions,
       ir_variable *const fd =
 	 add_variable(instructions, state->symbols,
 		      "gl_FragData", vec4_array_type,
-		      ir_var_out, FRAG_RESULT_DATA0);
+		      ir_var_shader_out, FRAG_RESULT_DATA0);
 
       if (warn)
 	 fd->warn_extension = "GL_ARB_draw_buffers";
@@ -1028,7 +1030,7 @@ generate_ARB_shader_stencil_export_variables(exec_list *instructions,
    ir_variable *const fd =
       add_variable(instructions, state->symbols,
 		   "gl_FragStencilRefARB", glsl_type::int_type,
-		   ir_var_out, FRAG_RESULT_STENCIL);
+		   ir_var_shader_out, FRAG_RESULT_STENCIL);
 
    if (warn)
       fd->warn_extension = "GL_ARB_shader_stencil_export";
@@ -1044,7 +1046,7 @@ generate_AMD_shader_stencil_export_variables(exec_list *instructions,
    ir_variable *const fd =
       add_variable(instructions, state->symbols,
 		   "gl_FragStencilRefAMD", glsl_type::int_type,
-		   ir_var_out, FRAG_RESULT_STENCIL);
+		   ir_var_shader_out, FRAG_RESULT_STENCIL);
 
    if (warn)
       fd->warn_extension = "GL_AMD_shader_stencil_export";
@@ -1085,7 +1087,7 @@ generate_fs_clipdistance(exec_list *instructions,
       glsl_type::get_array_instance(glsl_type::float_type, 0);
 
    add_variable(instructions, state->symbols,
-		"gl_ClipDistance", clip_distance_array_type, ir_var_in,
+		"gl_ClipDistance", clip_distance_array_type, ir_var_shader_in,
                 FRAG_ATTRIB_CLIP_DIST0);
 }
 

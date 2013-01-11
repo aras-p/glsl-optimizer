@@ -107,8 +107,8 @@ public:
 	 ir_rvalue *param_rval = (ir_rvalue *)iter.get();
 	 ir_variable *sig_param = (ir_variable *)sig_iter.get();
 
-	 if (sig_param->mode == ir_var_out ||
-	     sig_param->mode == ir_var_inout) {
+	 if (sig_param->mode == ir_var_function_out ||
+	     sig_param->mode == ir_var_function_inout) {
 	    ir_variable *var = param_rval->variable_referenced();
 	    if (var && strcmp(name, var->name) == 0) {
 	       found = true;
@@ -212,10 +212,10 @@ link_invalidate_variable_locations(gl_shader *sh, int input_base,
 
       int base;
       switch (var->mode) {
-      case ir_var_in:
+      case ir_var_shader_in:
          base = input_base;
          break;
-      case ir_var_out:
+      case ir_var_shader_out:
          base = output_base;
          break;
       default:
@@ -393,10 +393,9 @@ mode_string(const ir_variable *var)
    case ir_var_auto:
       return (var->read_only) ? "global constant" : "global variable";
 
-   case ir_var_uniform: return "uniform";
-   case ir_var_in:      return "shader input";
-   case ir_var_out:     return "shader output";
-   case ir_var_inout:   return "shader inout";
+   case ir_var_uniform:    return "uniform";
+   case ir_var_shader_in:  return "shader input";
+   case ir_var_shader_out: return "shader output";
 
    case ir_var_const_in:
    case ir_var_temporary:
@@ -1069,8 +1068,8 @@ update_array_sizes(struct gl_shader_program *prog)
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
 	 if ((var == NULL) || (var->mode != ir_var_uniform &&
-			       var->mode != ir_var_in &&
-			       var->mode != ir_var_out) ||
+			       var->mode != ir_var_shader_in &&
+			       var->mode != ir_var_shader_out) ||
 	     !var->type->is_array())
 	    continue;
 
@@ -1206,7 +1205,8 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
       ? (int) VERT_ATTRIB_GENERIC0 : (int) FRAG_RESULT_DATA0;
 
    const enum ir_variable_mode direction =
-      (target_index == MESA_SHADER_VERTEX) ? ir_var_in : ir_var_out;
+      (target_index == MESA_SHADER_VERTEX)
+      ? ir_var_shader_in : ir_var_shader_out;
 
 
    /* Temporary storage for the set of attributes that need locations assigned.
@@ -1428,7 +1428,7 @@ store_fragdepth_layout(struct gl_shader_program *prog)
    foreach_list(node, ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var == NULL || var->mode != ir_var_out) {
+      if (var == NULL || var->mode != ir_var_shader_out) {
          continue;
       }
 
@@ -1809,7 +1809,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    if (prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL) {
       demote_shader_inputs_and_outputs(prog->_LinkedShaders[MESA_SHADER_VERTEX],
-				       ir_var_out);
+				       ir_var_shader_out);
 
       /* Eliminate code that is now dead due to unused vertex outputs being
        * demoted.
@@ -1821,9 +1821,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    if (prog->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL) {
       gl_shader *const sh = prog->_LinkedShaders[MESA_SHADER_GEOMETRY];
 
-      demote_shader_inputs_and_outputs(sh, ir_var_in);
-      demote_shader_inputs_and_outputs(sh, ir_var_inout);
-      demote_shader_inputs_and_outputs(sh, ir_var_out);
+      demote_shader_inputs_and_outputs(sh, ir_var_shader_in);
+      demote_shader_inputs_and_outputs(sh, ir_var_shader_out);
 
       /* Eliminate code that is now dead due to unused geometry outputs being
        * demoted.
@@ -1835,7 +1834,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL) {
       gl_shader *const sh = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
-      demote_shader_inputs_and_outputs(sh, ir_var_in);
+      demote_shader_inputs_and_outputs(sh, ir_var_shader_in);
 
       /* Eliminate code that is now dead due to unused fragment inputs being
        * demoted.  This shouldn't actually do anything other than remove

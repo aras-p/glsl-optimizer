@@ -1529,21 +1529,18 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 					       var->location);
 	 this->variables.push_tail(entry);
 	 break;
-      case ir_var_in:
-      case ir_var_inout:
+      case ir_var_shader_in:
 	 /* The linker assigns locations for varyings and attributes,
 	  * including deprecated builtins (like gl_Color),
 	  * user-assigned generic attributes (glBindVertexLocation),
 	  * and user-defined varyings.
-	  *
-	  * FINISHME: We would hit this path for function arguments.  Fix!
 	  */
 	 assert(var->location != -1);
          entry = new(mem_ctx) variable_storage(var,
                                                PROGRAM_INPUT,
                                                var->location);
          break;
-      case ir_var_out:
+      case ir_var_shader_out:
 	 assert(var->location != -1);
          entry = new(mem_ctx) variable_storage(var,
                                                PROGRAM_OUTPUT,

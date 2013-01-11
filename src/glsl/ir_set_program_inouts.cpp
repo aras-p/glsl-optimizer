@@ -85,7 +85,7 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len,
 
    for (int i = 0; i < len; i++) {
       GLbitfield64 bitfield = BITFIELD64_BIT(var->location + var->index + offset + i);
-      if (var->mode == ir_var_in) {
+      if (var->mode == ir_var_shader_in) {
 	 prog->InputsRead |= bitfield;
          if (is_fragment_shader) {
             gl_fragment_program *fprog = (gl_fragment_program *) prog;
@@ -152,8 +152,8 @@ ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
 ir_visitor_status
 ir_set_program_inouts_visitor::visit(ir_variable *ir)
 {
-   if (ir->mode == ir_var_in ||
-       ir->mode == ir_var_out ||
+   if (ir->mode == ir_var_shader_in ||
+       ir->mode == ir_var_shader_out ||
        ir->mode == ir_var_system_value) {
       hash_table_insert(this->ht, ir, ir);
    }

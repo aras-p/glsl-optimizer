@@ -146,7 +146,8 @@ void ir_print_visitor::visit(ir_variable *ir)
 
    const char *const cent = (ir->centroid) ? "centroid " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
-   const char *const mode[] = { "", "uniform ", "in ", "out ", "inout ",
+   const char *const mode[] = { "", "uniform ", "shader_in ", "shader_out ",
+                                "in ", "out ", "inout ",
 			        "const_in ", "sys ", "temporary " };
    const char *const interp[] = { "", "flat", "noperspective" };
 

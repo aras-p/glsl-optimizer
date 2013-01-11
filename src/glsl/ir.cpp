@@ -1553,8 +1553,8 @@ modes_match(unsigned a, unsigned b)
       return true;
 
    /* Accept "in" vs. "const in" */
-   if ((a == ir_var_const_in && b == ir_var_in) ||
-       (b == ir_var_const_in && a == ir_var_in))
+   if ((a == ir_var_const_in && b == ir_var_function_in) ||
+       (b == ir_var_const_in && a == ir_var_function_in))
       return true;
 
    return false;

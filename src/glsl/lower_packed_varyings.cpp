@@ -135,8 +135,8 @@ private:
    ir_variable **packed_varyings;
 
    /**
-    * Type of varying which is being lowered in this pass (either ir_var_in or
-    * ir_var_out).
+    * Type of varying which is being lowered in this pass (either
+    * ir_var_shader_in or ir_var_shader_out).
     */
    const ir_variable_mode mode;
 
@@ -336,7 +336,7 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
                                                           unpacked_var, name));
       ir_swizzle *swizzle = new(this->mem_ctx)
          ir_swizzle(packed_deref, swizzle_values, components);
-      if (this->mode == ir_var_out) {
+      if (this->mode == ir_var_shader_out) {
          ir_assignment *assignment
             = this->bitwise_assign_pack(swizzle, rvalue);
          this->main_instructions->push_tail(assignment);

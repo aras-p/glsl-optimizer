@@ -400,13 +400,17 @@ ir_reader::read_declaration(s_expression *expr)
       } else if (strcmp(qualifier->value(), "auto") == 0) {
 	 var->mode = ir_var_auto;
       } else if (strcmp(qualifier->value(), "in") == 0) {
-	 var->mode = ir_var_in;
+	 var->mode = ir_var_function_in;
+      } else if (strcmp(qualifier->value(), "shader_in") == 0) {
+         var->mode = ir_var_shader_in;
       } else if (strcmp(qualifier->value(), "const_in") == 0) {
 	 var->mode = ir_var_const_in;
       } else if (strcmp(qualifier->value(), "out") == 0) {
-	 var->mode = ir_var_out;
+	 var->mode = ir_var_function_out;
+      } else if (strcmp(qualifier->value(), "shader_out") == 0) {
+	 var->mode = ir_var_shader_out;
       } else if (strcmp(qualifier->value(), "inout") == 0) {
-	 var->mode = ir_var_inout;
+	 var->mode = ir_var_function_inout;
       } else if (strcmp(qualifier->value(), "temporary") == 0) {
 	 var->mode = ir_var_temporary;
       } else if (strcmp(qualifier->value(), "smooth") == 0) {

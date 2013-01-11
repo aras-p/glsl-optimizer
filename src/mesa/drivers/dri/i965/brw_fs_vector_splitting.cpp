@@ -110,11 +110,13 @@ ir_vector_reference_visitor::get_variable_entry(ir_variable *var)
 
    switch (var->mode) {
    case ir_var_uniform:
-   case ir_var_in:
-   case ir_var_out:
-   case ir_var_inout:
+   case ir_var_shader_in:
+   case ir_var_shader_out:
+   case ir_var_function_in:
+   case ir_var_function_out:
+   case ir_var_function_inout:
       /* Can't split varyings or uniforms.  Function in/outs won't get split
-       * either, so don't care about the ambiguity.
+       * either.
        */
       return NULL;
    case ir_var_auto:

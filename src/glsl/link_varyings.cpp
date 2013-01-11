@@ -54,10 +54,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
    foreach_list(node, producer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      /* FINISHME: For geometry shaders, this should also look for inout
-       * FINISHME: variables.
-       */
-      if ((var == NULL) || (var->mode != ir_var_out))
+      if ((var == NULL) || (var->mode != ir_var_shader_out))
 	 continue;
 
       parameters.add_variable(var);
@@ -71,10 +68,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
    foreach_list(node, consumer->ir) {
       ir_variable *const input = ((ir_instruction *) node)->as_variable();
 
-      /* FINISHME: For geometry shaders, this should also look for inout
-       * FINISHME: variables.
-       */
-      if ((input == NULL) || (input->mode != ir_var_in))
+      if ((input == NULL) || (input->mode != ir_var_shader_in))
 	 continue;
 
       ir_variable *const output = parameters.get_variable(input->name);
@@ -417,7 +411,7 @@ tfeedback_decl::find_output_var(gl_shader_program *prog,
    const char *name = this->is_clip_distance_mesa
       ? "gl_ClipDistanceMESA" : this->var_name;
    ir_variable *var = producer->symbols->get_variable(name);
-   if (var && var->mode == ir_var_out)
+   if (var && var->mode == ir_var_shader_out)
       return var;
 
    /* From GL_EXT_transform_feedback:
@@ -854,7 +848,7 @@ is_varying_var(GLenum shaderType, const ir_variable *var)
 {
    /* Only fragment shaders will take a varying variable as an input */
    if (shaderType == GL_FRAGMENT_SHADER &&
-       var->mode == ir_var_in) {
+       var->mode == ir_var_shader_in) {
       switch (var->location) {
       case FRAG_ATTRIB_WPOS:
       case FRAG_ATTRIB_FACE:
@@ -915,13 +909,13 @@ assign_varying_locations(struct gl_context *ctx,
    foreach_list(node, producer->ir) {
       ir_variable *const output_var = ((ir_instruction *) node)->as_variable();
 
-      if ((output_var == NULL) || (output_var->mode != ir_var_out))
+      if ((output_var == NULL) || (output_var->mode != ir_var_shader_out))
 	 continue;
 
       ir_variable *input_var =
 	 consumer ? consumer->symbols->get_variable(output_var->name) : NULL;
 
-      if (input_var && input_var->mode != ir_var_in)
+      if (input_var && input_var->mode != ir_var_shader_in)
          input_var = NULL;
 
       if (input_var) {
@@ -965,11 +959,11 @@ assign_varying_locations(struct gl_context *ctx,
        */
       assert(!ctx->Extensions.EXT_transform_feedback);
    } else {
-      lower_packed_varyings(mem_ctx, producer_base, slots_used, ir_var_out,
-                            producer);
+      lower_packed_varyings(mem_ctx, producer_base, slots_used,
+                            ir_var_shader_out, producer);
       if (consumer) {
-         lower_packed_varyings(mem_ctx, consumer_base, slots_used, ir_var_in,
-                               consumer);
+         lower_packed_varyings(mem_ctx, consumer_base, slots_used,
+                               ir_var_shader_in, consumer);
       }
    }
 
@@ -979,7 +973,7 @@ assign_varying_locations(struct gl_context *ctx,
       foreach_list(node, consumer->ir) {
          ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-         if ((var == NULL) || (var->mode != ir_var_in))
+         if ((var == NULL) || (var->mode != ir_var_shader_in))
             continue;
 
          if (var->is_unmatched_generic_inout) {

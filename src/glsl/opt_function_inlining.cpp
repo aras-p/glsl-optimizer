@@ -144,9 +144,9 @@ ir_call::generate_inline(ir_instruction *next_ir)
       }
 
       /* Move the actual param into our param variable if it's an 'in' type. */
-      if (parameters[i] && (sig_param->mode == ir_var_in ||
+      if (parameters[i] && (sig_param->mode == ir_var_function_in ||
 			    sig_param->mode == ir_var_const_in ||
-			    sig_param->mode == ir_var_inout)) {
+			    sig_param->mode == ir_var_function_inout)) {
 	 ir_assignment *assign;
 
 	 assign = new(ctx) ir_assignment(new(ctx) ir_dereference_variable(parameters[i]),
@@ -202,8 +202,8 @@ ir_call::generate_inline(ir_instruction *next_ir)
       const ir_variable *const sig_param = (ir_variable *) sig_param_iter.get();
 
       /* Move our param variable into the actual param if it's an 'out' type. */
-      if (parameters[i] && (sig_param->mode == ir_var_out ||
-			    sig_param->mode == ir_var_inout)) {
+      if (parameters[i] && (sig_param->mode == ir_var_function_out ||
+			    sig_param->mode == ir_var_function_inout)) {
 	 ir_assignment *assign;
 
 	 assign = new(ctx) ir_assignment(param->clone(ctx, NULL)->as_rvalue(),
