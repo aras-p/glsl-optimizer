@@ -83,6 +83,30 @@ public:
    void emit(ir_instruction *ir);
    ir_variable *make_temp(const glsl_type *type, const char *name);
 
+   ir_constant*
+   constant(float f)
+   {
+      return new(mem_ctx) ir_constant(f);
+   }
+
+   ir_constant*
+   constant(int i)
+   {
+      return new(mem_ctx) ir_constant(i);
+   }
+
+   ir_constant*
+   constant(unsigned u)
+   {
+      return new(mem_ctx) ir_constant(u);
+   }
+
+   ir_constant*
+   constant(bool b)
+   {
+      return new(mem_ctx) ir_constant(b);
+   }
+
    exec_list *instructions;
    void *mem_ctx;
 };
