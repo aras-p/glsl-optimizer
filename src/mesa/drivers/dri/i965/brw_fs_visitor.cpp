@@ -506,8 +506,10 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_f2b:
-   case ir_unop_i2b:
       emit(CMP(this->result, op[0], fs_reg(0.0f), BRW_CONDITIONAL_NZ));
+      break;
+   case ir_unop_i2b:
+      emit(CMP(this->result, op[0], fs_reg(0), BRW_CONDITIONAL_NZ));
       break;
 
    case ir_unop_trunc:
