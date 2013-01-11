@@ -95,8 +95,34 @@ ir_expression *expr(ir_expression_operation op, operand a, operand b);
 ir_expression *add(operand a, operand b);
 ir_expression *sub(operand a, operand b);
 ir_expression *mul(operand a, operand b);
+ir_expression *div(operand a, operand b);
+ir_expression *round_even(operand a);
 ir_expression *dot(operand a, operand b);
+ir_expression *clamp(operand a, operand b, operand c);
 ir_expression *saturate(operand a);
+
+ir_expression *equal(operand a, operand b);
+ir_expression *less(operand a, operand b);
+ir_expression *greater(operand a, operand b);
+ir_expression *lequal(operand a, operand b);
+ir_expression *gequal(operand a, operand b);
+
+ir_expression *logic_not(operand a);
+ir_expression *logic_and(operand a, operand b);
+ir_expression *logic_or(operand a, operand b);
+
+ir_expression *bit_not(operand a);
+ir_expression *bit_or(operand a, operand b);
+ir_expression *bit_and(operand a, operand b);
+ir_expression *lshift(operand a, operand b);
+ir_expression *rshift(operand a, operand b);
+
+ir_expression *f2i(operand a);
+ir_expression *i2f(operand a);
+ir_expression *f2u(operand a);
+ir_expression *u2f(operand a);
+ir_expression *i2u(operand a);
+ir_expression *u2i(operand a);
 
 /**
  * Swizzle away later components, but preserve the ordering.

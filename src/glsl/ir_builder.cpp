@@ -188,9 +188,25 @@ ir_expression *mul(operand a, operand b)
    return expr(ir_binop_mul, a, b);
 }
 
+ir_expression *div(operand a, operand b)
+{
+   return expr(ir_binop_div, a, b);
+}
+
+ir_expression *round_even(operand a)
+{
+   return expr(ir_unop_round_even, a);
+}
+
 ir_expression *dot(operand a, operand b)
 {
    return expr(ir_binop_dot, a, b);
+}
+
+ir_expression*
+clamp(operand a, operand b, operand c)
+{
+   return expr(ir_binop_min, expr(ir_binop_max, a, b), c);
 }
 
 ir_expression *
@@ -201,6 +217,120 @@ saturate(operand a)
    return expr(ir_binop_max,
 	       expr(ir_binop_min, a, new(mem_ctx) ir_constant(1.0f)),
 	       new(mem_ctx) ir_constant(0.0f));
+}
+
+ir_expression*
+equal(operand a, operand b)
+{
+   return expr(ir_binop_equal, a, b);
+}
+
+ir_expression*
+less(operand a, operand b)
+{
+   return expr(ir_binop_less, a, b);
+}
+
+ir_expression*
+greater(operand a, operand b)
+{
+   return expr(ir_binop_greater, a, b);
+}
+
+ir_expression*
+lequal(operand a, operand b)
+{
+   return expr(ir_binop_lequal, a, b);
+}
+
+ir_expression*
+gequal(operand a, operand b)
+{
+   return expr(ir_binop_gequal, a, b);
+}
+
+ir_expression*
+logic_not(operand a)
+{
+   return expr(ir_unop_logic_not, a);
+}
+
+ir_expression*
+logic_and(operand a, operand b)
+{
+   return expr(ir_binop_logic_and, a, b);
+}
+
+ir_expression*
+logic_or(operand a, operand b)
+{
+   return expr(ir_binop_logic_or, a, b);
+}
+
+ir_expression*
+bit_not(operand a)
+{
+   return expr(ir_unop_bit_not, a);
+}
+
+ir_expression*
+bit_and(operand a, operand b)
+{
+   return expr(ir_binop_bit_and, a, b);
+}
+
+ir_expression*
+bit_or(operand a, operand b)
+{
+   return expr(ir_binop_bit_or, a, b);
+}
+
+ir_expression*
+lshift(operand a, operand b)
+{
+   return expr(ir_binop_lshift, a, b);
+}
+
+ir_expression*
+rshift(operand a, operand b)
+{
+   return expr(ir_binop_rshift, a, b);
+}
+
+ir_expression*
+f2i(operand a)
+{
+   return expr(ir_unop_f2i, a);
+}
+
+ir_expression*
+i2f(operand a)
+{
+   return expr(ir_unop_i2f, a);
+}
+
+ir_expression*
+i2u(operand a)
+{
+   return expr(ir_unop_i2u, a);
+}
+
+ir_expression*
+u2i(operand a)
+{
+   return expr(ir_unop_u2i, a);
+}
+
+ir_expression*
+f2u(operand a)
+{
+   return expr(ir_unop_f2u, a);
+}
+
+ir_expression*
+u2f(operand a)
+{
+   return expr(ir_unop_u2f, a);
 }
 
 } /* namespace ir_builder */
