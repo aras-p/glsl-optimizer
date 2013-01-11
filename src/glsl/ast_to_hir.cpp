@@ -1394,6 +1394,17 @@ ast_expression::hir(exec_list *instructions,
 	    new(ctx) ir_variable(type, "conditional_tmp", ir_var_temporary, higher_precision(op[1], op[2]));
 	 instructions->push_tail(tmp);
 
+    static ir_constant_data constantZero;
+    memset(&constantZero.i, 0, sizeof(constantZero));
+
+    ir_constant *const defaultvalue =
+      new(ctx) ir_constant(type, &constantZero);
+    ir_dereference *const conditional_deref =
+      new(ctx) ir_dereference_variable(tmp);
+    ir_assignment *const constantAssign =
+      new(ctx) ir_assignment(conditional_deref, defaultvalue, NULL);
+    instructions->push_tail(constantAssign);
+
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
