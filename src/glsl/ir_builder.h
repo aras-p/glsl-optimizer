@@ -25,6 +25,15 @@
 
 namespace ir_builder {
 
+#ifndef WRITEMASK_X
+enum writemask {
+   WRITEMASK_X = 0x1,
+   WRITEMASK_Y = 0x2,
+   WRITEMASK_Z = 0x4,
+   WRITEMASK_W = 0x8,
+};
+#endif
+
 /**
  * This little class exists to let the helper expression generators
  * take either an ir_rvalue * or an ir_variable * to be automatically
