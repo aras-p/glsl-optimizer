@@ -52,6 +52,7 @@ union util_color {
    ubyte ub;
    ushort us;
    uint ui;
+   ushort h[4]; /* half float */
    float f[4];
    double d[4];
 };
