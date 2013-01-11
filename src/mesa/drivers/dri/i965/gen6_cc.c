@@ -118,6 +118,21 @@ gen6_upload_blend_state(struct brw_context *brw)
 	    srcA = dstA = GL_ONE;
 	 }
 
+         /* Due to hardware limitations, the destination may have information
+          * in an alpha channel even when the format specifies no alpha
+          * channel. In order to avoid getting any incorrect blending due to
+          * that alpha channel, coerce the blend factors to values that will
+          * not read the alpha channel, but will instead use the correct
+          * implicit value for alpha.
+          */
+         if (_mesa_get_format_bits(rb->Format, GL_ALPHA_BITS) == 0)
+         {
+            srcRGB = brw_fix_xRGB_alpha(srcRGB);
+            srcA = brw_fix_xRGB_alpha(srcA);
+            dstRGB = brw_fix_xRGB_alpha(dstRGB);
+            dstA = brw_fix_xRGB_alpha(dstA);
+         }
+
 	 blend[b].blend0.dest_blend_factor = brw_translate_blend_factor(dstRGB);
 	 blend[b].blend0.source_blend_factor = brw_translate_blend_factor(srcRGB);
 	 blend[b].blend0.blend_func = brw_translate_blend_equation(eqRGB);

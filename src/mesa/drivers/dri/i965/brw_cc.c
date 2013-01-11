@@ -75,8 +75,8 @@ const struct brw_tracked_state brw_cc_vp = {
  * replace it with a function that hard-wires destination alpha to 1.0.  This
  * is used when rendering to xRGB targets.
  */
-static GLenum
-fix_xRGB_alpha(GLenum function)
+GLenum
+brw_fix_xRGB_alpha(GLenum function)
 {
    switch (function) {
    case GL_DST_ALPHA:
@@ -159,10 +159,10 @@ static void upload_cc_unit(struct brw_context *brw)
        * with GL_ONE and GL_ONE_MINUS_DST_ALPHA with GL_ZERO.
        */
       if (ctx->DrawBuffer->Visual.alphaBits == 0) {
-	 srcRGB = fix_xRGB_alpha(srcRGB);
-	 srcA   = fix_xRGB_alpha(srcA);
-	 dstRGB = fix_xRGB_alpha(dstRGB);
-	 dstA   = fix_xRGB_alpha(dstA);
+	 srcRGB = brw_fix_xRGB_alpha(srcRGB);
+	 srcA   = brw_fix_xRGB_alpha(srcA);
+	 dstRGB = brw_fix_xRGB_alpha(dstRGB);
+	 dstA   = brw_fix_xRGB_alpha(dstA);
       }
 
       if (eqRGB == GL_MIN || eqRGB == GL_MAX) {
