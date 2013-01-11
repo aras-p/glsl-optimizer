@@ -161,4 +161,6 @@ void eg_bytecode_export_read(struct r600_bytecode_output *output, uint32_t word0
 	output->end_of_program = G_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(word1);
 	output->inst = EG_S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(G_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(word1));
 	output->barrier = G_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(word1);
+	output->array_size = G_SQ_CF_ALLOC_EXPORT_WORD1_BUF_ARRAY_SIZE(word1);
+	output->comp_mask = G_SQ_CF_ALLOC_EXPORT_WORD1_BUF_COMP_MASK(word1);
 }

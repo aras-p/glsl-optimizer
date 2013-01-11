@@ -240,10 +240,42 @@ static void llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 {
 	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
 	struct lp_build_context * base = &bld_base->base;
+	struct pipe_stream_output_info * so = ctx->stream_outputs;
 	unsigned i;
 	
 	unsigned color_count = 0;
 	boolean has_color = false;
+
+	if (ctx->type == TGSI_PROCESSOR_VERTEX && so->num_outputs) {
+		for (i = 0; i < so->num_outputs; i++) {
+			unsigned register_index = so->output[i].register_index;
+			unsigned start_component = so->output[i].start_component;
+			unsigned num_components = so->output[i].num_components;
+			unsigned dst_offset = so->output[i].dst_offset;
+			unsigned chan;
+			LLVMValueRef elements[4];
+			if (dst_offset < start_component) {
+				for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+					elements[chan] = LLVMBuildLoad(base->gallivm->builder,
+						ctx->soa.outputs[register_index][(chan + start_component) % TGSI_NUM_CHANNELS], "");
+				}
+				start_component = 0;
+			} else {
+				for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+					elements[chan] = LLVMBuildLoad(base->gallivm->builder,
+						ctx->soa.outputs[register_index][chan], "");
+				}
+			}
+			LLVMValueRef output = lp_build_gather_values(base->gallivm, elements, 4);
+			LLVMValueRef args[4];
+			args[0] = output;
+			args[1] = lp_build_const_int32(base->gallivm, dst_offset - start_component);
+			args[2] = lp_build_const_int32(base->gallivm, so->output[i].output_buffer);
+			args[3] = lp_build_const_int32(base->gallivm, ((1 << num_components) - 1) << start_component);
+			lp_build_intrinsic(base->gallivm->builder, "llvm.R600.store.stream.output",
+				LLVMVoidTypeInContext(base->gallivm->context), args, 4);
+		}
+	}
 
 	/* Add the necessary export instructions */
 	for (i = 0; i < ctx->output_reg_count; i++) {

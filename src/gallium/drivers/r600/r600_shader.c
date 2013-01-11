@@ -1416,6 +1416,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		radeon_llvm_ctx.color_buffer_count = MAX2(key.nr_cbufs , 1);
 		radeon_llvm_ctx.chip_class = ctx.bc->chip_class;
 		radeon_llvm_ctx.fs_color_all = shader->fs_write_all && (rscreen->chip_class >= EVERGREEN);
+		radeon_llvm_ctx.stream_outputs = &so;
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 		if (debug_get_bool_option("R600_DUMP_SHADERS", FALSE)) {
 			dump = 1;
@@ -1572,7 +1573,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	}
 
 	/* Add stream outputs. */
-	if (ctx.type == TGSI_PROCESSOR_VERTEX && so.num_outputs) {
+	if (ctx.type == TGSI_PROCESSOR_VERTEX && so.num_outputs && !use_llvm) {
 		unsigned so_gpr[PIPE_MAX_SHADER_OUTPUTS];
 
 		/* Sanity checking. */
