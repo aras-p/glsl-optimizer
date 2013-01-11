@@ -153,9 +153,9 @@ etc1_unpack_rgba8888(uint8_t *dst_row,
       for (x = 0; x < width; x+= bw) {
          etc1_parse_block(&block, src);
 
-         for (j = 0; j < bh; j++) {
+         for (j = 0; j < MIN2(bh, height - y); j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < MIN2(bw, width - x); i++) {
                etc1_fetch_texel(&block, i, j, dst);
                dst[3] = 255;
                dst += comps;
