@@ -146,35 +146,91 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
                     const union lp_rast_cmd_arg arg)
 {
    const struct lp_scene *scene = task->scene;
-   uint8_t clear_color[4];
 
-   unsigned i;
-
-   for (i = 0; i < 4; ++i) {
-      clear_color[i] = float_to_ubyte(arg.clear_color[i]);
-   }
-
-   LP_DBG(DEBUG_RAST, "%s 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__,
-              clear_color[0],
-              clear_color[1],
-              clear_color[2],
-              clear_color[3]);
-
-   for (i = 0; i < scene->fb.nr_cbufs; i++) {
-      const struct lp_scene *scene = task->scene;
+   if (scene->fb.nr_cbufs) {
+      unsigned i;
       union util_color uc;
 
-      util_pack_color(arg.clear_color,
-                      scene->fb.cbufs[i]->format, &uc);
+      if (util_format_is_pure_integer(scene->fb.cbufs[0]->format)) {
+         /*
+          * We expect int/uint clear values here, though some APIs
+          * might disagree (but in any case util_pack_color()
+          * couldn't handle it)...
+          */
+         LP_DBG(DEBUG_RAST, "%s pure int 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__,
+                    arg.clear_color.ui[0],
+                    arg.clear_color.ui[1],
+                    arg.clear_color.ui[2],
+                    arg.clear_color.ui[3]);
 
-      util_fill_rect(scene->cbufs[i].map,
-                     scene->fb.cbufs[i]->format,
-                     scene->cbufs[i].stride,
-                     task->x,
-                     task->y,
-                     TILE_SIZE,
-                     TILE_SIZE,
-                     &uc);
+         for (i = 0; i < scene->fb.nr_cbufs; i++) {
+            enum pipe_format format = scene->fb.cbufs[i]->format;
+            /*
+             * XXX the format_write_4i/ui functions do clamping to max value
+             * and I'm not sure that's actually right - spec doesn't seem to
+             * say much about that topic. If it is should probably adjust the
+             * border color handling to do the same. If not and chopping off
+             * bits is the way to go, the write_4i and write_4ui functions
+             * would be identical.
+             */
+            if (util_format_is_pure_sint(format)) {
+               int rgba[4];
+               rgba[0] = arg.clear_color.i[0];
+               rgba[1] = arg.clear_color.i[1];
+               rgba[2] = arg.clear_color.i[2];
+               rgba[3] = arg.clear_color.i[3];
+
+               util_format_write_4i(format, rgba, 0, &uc, 0, 0, 0, 1, 1);
+            }
+            else {
+               unsigned rgba[4];
+               rgba[0] = arg.clear_color.ui[0];
+               rgba[1] = arg.clear_color.ui[1];
+               rgba[2] = arg.clear_color.ui[2];
+               rgba[3] = arg.clear_color.ui[3];
+
+               assert(util_format_is_pure_uint(format));
+               util_format_write_4ui(format, rgba, 0, &uc, 0, 0, 0, 1, 1);
+            }
+
+            util_fill_rect(scene->cbufs[i].map,
+                           scene->fb.cbufs[i]->format,
+                           scene->cbufs[i].stride,
+                           task->x,
+                           task->y,
+                           TILE_SIZE,
+                           TILE_SIZE,
+                           &uc);
+         }
+      }
+      else {
+         uint8_t clear_color[4];
+
+         for (i = 0; i < 4; ++i) {
+            clear_color[i] = float_to_ubyte(arg.clear_color.f[i]);
+         }
+
+         LP_DBG(DEBUG_RAST, "%s 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__,
+                    clear_color[0],
+                    clear_color[1],
+                    clear_color[2],
+                    clear_color[3]);
+
+         for (i = 0; i < scene->fb.nr_cbufs; i++) {
+
+            util_pack_color(arg.clear_color.f,
+                            scene->fb.cbufs[i]->format, &uc);
+
+            util_fill_rect(scene->cbufs[i].map,
+                           scene->fb.cbufs[i]->format,
+                           scene->cbufs[i].stride,
+                           task->x,
+                           task->y,
+                           TILE_SIZE,
+                           TILE_SIZE,
+                           &uc);
+         }
+      }
    }
 
    LP_COUNT(nr_color_tile_clear);

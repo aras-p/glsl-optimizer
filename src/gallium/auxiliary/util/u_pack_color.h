@@ -329,6 +329,8 @@ util_unpack_color_ub(enum pipe_format format, union util_color *uc,
 
 /**
  * Note rgba outside [0,1] will be clamped for int pixel formats.
+ * This will not work (and might not really be useful with float input)
+ * for pure integer formats (which lack the pack_rgba_float function).
  */
 static INLINE void
 util_pack_color(const float rgba[4], enum pipe_format format, union util_color *uc)

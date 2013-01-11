@@ -385,7 +385,7 @@ lp_setup_bind_framebuffer( struct lp_setup_context *setup,
 
 static boolean
 lp_setup_try_clear( struct lp_setup_context *setup,
-                    const float *color,
+                    const union pipe_color_union *color,
                     double depth,
                     unsigned stencil,
                     unsigned flags )
@@ -399,7 +399,7 @@ lp_setup_try_clear( struct lp_setup_context *setup,
 
    if (flags & PIPE_CLEAR_COLOR) {
       for (i = 0; i < 4; i++)
-         color_arg.clear_color[i] = color[i];
+         color_arg.clear_color.i[i] = color->i[i];
    }
 
    if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
@@ -458,7 +458,7 @@ lp_setup_try_clear( struct lp_setup_context *setup,
       }
 
       if (flags & PIPE_CLEAR_COLOR) {
-         memcpy(setup->clear.color.clear_color,
+         memcpy(&setup->clear.color.clear_color,
                 &color_arg,
                 sizeof setup->clear.color.clear_color);
       }
@@ -469,7 +469,7 @@ lp_setup_try_clear( struct lp_setup_context *setup,
 
 void
 lp_setup_clear( struct lp_setup_context *setup,
-                const float *color,
+                const union pipe_color_union *color,
                 double depth,
                 unsigned stencil,
                 unsigned flags )

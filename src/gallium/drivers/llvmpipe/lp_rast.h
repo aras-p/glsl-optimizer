@@ -152,7 +152,7 @@ union lp_rast_cmd_arg {
       unsigned plane_mask;
    } triangle;
    const struct lp_rast_state *set_state;
-   float clear_color[4];
+   union pipe_color_union clear_color;
    struct {
       uint32_t value;
       uint32_t mask;
