@@ -9,6 +9,7 @@
 
 #include "r600.h"
 #include "r600_asm.h"
+#include "r600_sq.h"
 #include "r600_opcodes.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
@@ -242,7 +243,9 @@ static void llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 	struct lp_build_context * base = &bld_base->base;
 	struct pipe_stream_output_info * so = ctx->stream_outputs;
 	unsigned i;
-	
+	unsigned next_pos = 60;
+	unsigned next_param = 0;
+
 	unsigned color_count = 0;
 	boolean has_color = false;
 
@@ -280,70 +283,152 @@ static void llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 	/* Add the necessary export instructions */
 	for (i = 0; i < ctx->output_reg_count; i++) {
 		unsigned chan;
+		LLVMValueRef elements[4];
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
-			LLVMValueRef output;
-			unsigned adjusted_reg_idx = i +
-					ctx->reserved_reg_count;
-
-			output = LLVMBuildLoad(base->gallivm->builder,
+			elements[chan] = LLVMBuildLoad(base->gallivm->builder,
 				ctx->soa.outputs[i][chan], "");
+		}
+		LLVMValueRef output = lp_build_gather_values(base->gallivm, elements, 4);
 
-			if (ctx->type == TGSI_PROCESSOR_VERTEX) {
-				LLVMValueRef reg_index = lp_build_const_int32(
-					base->gallivm,
-					radeon_llvm_reg_index_soa(adjusted_reg_idx, chan));
-				lp_build_intrinsic_binary(
+		if (ctx->type == TGSI_PROCESSOR_VERTEX) {
+			switch (ctx->r600_outputs[i].name) {
+			case TGSI_SEMANTIC_POSITION:
+			case TGSI_SEMANTIC_PSIZE: {
+				LLVMValueRef args[3];
+				args[0] = output;
+				args[1] = lp_build_const_int32(base->gallivm, next_pos++);
+				args[2] = lp_build_const_int32(base->gallivm, V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS);
+				build_intrinsic(
 					base->gallivm->builder,
-					"llvm.AMDGPU.store.output",
+					"llvm.R600.store.swizzle",
 					LLVMVoidTypeInContext(base->gallivm->context),
-					output, reg_index);
-			} else if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
-				switch (ctx->r600_outputs[i].name) {
-				case TGSI_SEMANTIC_COLOR:
-					has_color = true;
-					if ( color_count/4 < ctx->color_buffer_count) {
-						if (ctx->fs_color_all) {
-							for (unsigned j = 0; j < ctx->color_buffer_count; j++) {
-								LLVMValueRef reg_index = lp_build_const_int32(
-									base->gallivm,
-									(j * 4) + chan);
-								lp_build_intrinsic_binary(
-									base->gallivm->builder,
-									"llvm.R600.store.pixel.color",
-									LLVMVoidTypeInContext(base->gallivm->context),
-									output, reg_index);
-							}
-						} else {
-							LLVMValueRef reg_index = lp_build_const_int32(
-								base->gallivm,
-								(color_count++/4) * 4 + chan);
-							lp_build_intrinsic_binary(
-								base->gallivm->builder,
-								"llvm.R600.store.pixel.color",
-								LLVMVoidTypeInContext(base->gallivm->context),
-								output, reg_index);
-						}
+					args, 3, 0);
+				break;
+			}
+			case TGSI_SEMANTIC_CLIPVERTEX: {
+				LLVMValueRef args[3];
+				unsigned reg_index;
+				unsigned base_vector_chan;
+				LLVMValueRef adjusted_elements[4];
+				for (reg_index = 0; reg_index < 2; reg_index ++) {
+					for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+						LLVMValueRef offset[2] = {
+							LLVMConstInt(LLVMInt64TypeInContext(bld_base->base.gallivm->context), 0, false),
+							lp_build_const_int32(bld_base->base.gallivm, reg_index * 4 + chan)
+						};
+						LLVMTypeRef const_ptr_type = LLVMPointerType(LLVMArrayType(LLVMVectorType(bld_base->base.elem_type, 4), 1024), 9);
+						LLVMValueRef const_ptr = LLVMBuildIntToPtr(bld_base->base.gallivm->builder, lp_build_const_int32(bld_base->base.gallivm, 0), const_ptr_type, "");
+						LLVMValueRef ptr = LLVMBuildGEP(bld_base->base.gallivm->builder, const_ptr, offset, 2, "");
+						LLVMValueRef base_vector = LLVMBuildLoad(bld_base->base.gallivm->builder, ptr, "");
+						args[0] = output;
+						args[1] = base_vector;
+						adjusted_elements[chan] = build_intrinsic(base->gallivm->builder,
+							"llvm.AMDGPU.dp4", bld_base->base.elem_type,
+							args, 2, LLVMReadNoneAttribute);
 					}
-					break;
-				case TGSI_SEMANTIC_POSITION:
-					if (chan != 2)
-						continue;
-					lp_build_intrinsic_unary(
+					args[0] = lp_build_gather_values(base->gallivm,
+						adjusted_elements, 4);
+					args[1] = lp_build_const_int32(base->gallivm, next_pos++);
+					args[2] = lp_build_const_int32(base->gallivm, V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS);
+					build_intrinsic(
 						base->gallivm->builder,
-						"llvm.R600.store.pixel.depth",
+						"llvm.R600.store.swizzle",
 						LLVMVoidTypeInContext(base->gallivm->context),
-						output);
-					break;
-				case TGSI_SEMANTIC_STENCIL:
-					if (chan != 1)
-						continue;
-					lp_build_intrinsic_unary(
-						base->gallivm->builder,
-						"llvm.R600.store.pixel.stencil",
-						LLVMVoidTypeInContext(base->gallivm->context),
-						output);
-					break;
+						args, 3, 0);
 				}
+				break;
+			}
+			case TGSI_SEMANTIC_CLIPDIST : {
+				LLVMValueRef args[3];
+				args[0] = output;
+				args[1] = lp_build_const_int32(base->gallivm, next_pos++);
+				args[2] = lp_build_const_int32(base->gallivm, V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS);
+				build_intrinsic(
+					base->gallivm->builder,
+					"llvm.R600.store.swizzle",
+					LLVMVoidTypeInContext(base->gallivm->context),
+					args, 3, 0);
+				args[1] = lp_build_const_int32(base->gallivm, next_param++);
+				args[2] = lp_build_const_int32(base->gallivm, V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM);
+				build_intrinsic(
+					base->gallivm->builder,
+					"llvm.R600.store.swizzle",
+					LLVMVoidTypeInContext(base->gallivm->context),
+					args, 3, 0);
+				break;
+			}
+			case TGSI_SEMANTIC_FOG: {
+				elements[0] = LLVMBuildLoad(base->gallivm->builder,
+					ctx->soa.outputs[i][0], "");
+				elements[1] = elements[2] = lp_build_const_float(base->gallivm, 0.0f);
+				elements[3] = lp_build_const_float(base->gallivm, 1.0f);
+
+				LLVMValueRef args[3];
+				args[0] = lp_build_gather_values(base->gallivm, elements, 4);
+				args[1] = lp_build_const_int32(base->gallivm, next_param++);
+				args[2] = lp_build_const_int32(base->gallivm, V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM);
+				build_intrinsic(
+					base->gallivm->builder,
+					"llvm.R600.store.swizzle",
+					LLVMVoidTypeInContext(base->gallivm->context),
+					args, 3, 0);
+				break;
+			}
+			default: {
+				LLVMValueRef args[3];
+				args[0] = output;
+				args[1] = lp_build_const_int32(base->gallivm, next_param++);
+				args[2] = lp_build_const_int32(base->gallivm, V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM);
+				build_intrinsic(
+					base->gallivm->builder,
+					"llvm.R600.store.swizzle",
+					LLVMVoidTypeInContext(base->gallivm->context),
+					args, 3, 0);
+				break;
+			}
+			}
+		} else if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
+			switch (ctx->r600_outputs[i].name) {
+			case TGSI_SEMANTIC_COLOR:
+				has_color = true;
+				if ( color_count < ctx->color_buffer_count) {
+					LLVMValueRef args[3];
+					args[0] = output;
+					if (ctx->fs_color_all) {
+						for (unsigned j = 0; j < ctx->color_buffer_count; j++) {
+							args[1] = lp_build_const_int32(base->gallivm, j);
+							args[2] = lp_build_const_int32(base->gallivm, V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL);
+							build_intrinsic(
+								base->gallivm->builder,
+								"llvm.R600.store.swizzle",
+								LLVMVoidTypeInContext(base->gallivm->context),
+								args, 3, 0);
+						}
+					} else {
+						args[1] = lp_build_const_int32(base->gallivm, color_count++);
+						args[2] = lp_build_const_int32(base->gallivm, V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL);
+						build_intrinsic(
+							base->gallivm->builder,
+							"llvm.R600.store.swizzle",
+							LLVMVoidTypeInContext(base->gallivm->context),
+							args, 3, 0);
+					}
+				}
+				break;
+			case TGSI_SEMANTIC_POSITION:
+				lp_build_intrinsic_unary(
+					base->gallivm->builder,
+					"llvm.R600.store.pixel.depth",
+					LLVMVoidTypeInContext(base->gallivm->context),
+					LLVMBuildLoad(base->gallivm->builder, ctx->soa.outputs[i][2], ""));
+				break;
+			case TGSI_SEMANTIC_STENCIL:
+				lp_build_intrinsic_unary(
+					base->gallivm->builder,
+					"llvm.R600.store.pixel.stencil",
+					LLVMVoidTypeInContext(base->gallivm->context),
+					LLVMBuildLoad(base->gallivm->builder, ctx->soa.outputs[i][1], ""));
+				break;
 			}
 		}
 	}

@@ -1417,6 +1417,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		radeon_llvm_ctx.chip_class = ctx.bc->chip_class;
 		radeon_llvm_ctx.fs_color_all = shader->fs_write_all && (rscreen->chip_class >= EVERGREEN);
 		radeon_llvm_ctx.stream_outputs = &so;
+		radeon_llvm_ctx.clip_vertex = ctx.cv_output;
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 		if (debug_get_bool_option("R600_DUMP_SHADERS", FALSE)) {
 			dump = 1;
@@ -1565,7 +1566,8 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				alu.dst.write = (j == ochan);
 				if (j == 3)
 					alu.last = 1;
-				r = r600_bytecode_add_alu(ctx.bc, &alu);
+				if (!use_llvm)
+					r = r600_bytecode_add_alu(ctx.bc, &alu);
 				if (r)
 					return r;
 			}
@@ -1851,7 +1853,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		}
 	}
 	/* add output to bytecode */
-	if (!use_llvm || ctx.type != TGSI_PROCESSOR_FRAGMENT) {
+	if (!use_llvm) {
 		for (i = 0; i < noutput; i++) {
 			r = r600_bytecode_add_output(ctx.bc, &output[i]);
 			if (r)
