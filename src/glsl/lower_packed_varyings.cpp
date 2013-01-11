@@ -70,6 +70,10 @@
  * This lowering pass also packs flat floats, ints, and uints together, by
  * using ivec4 as the base type of flat "varyings", and using appropriate
  * casts to convert floats and uints into ints.
+ *
+ * This lowering pass also handles varyings whose type is a struct or an array
+ * of struct.  Structs are packed in order and with no gaps, so there may be a
+ * performance penalty due to structure elements being double-parked.
  */
 
 #include "glsl_symbol_table.h"
@@ -274,10 +278,20 @@ lower_packed_varyings_visitor::lower_rvalue(ir_rvalue *rvalue,
                                             ir_variable *unpacked_var,
                                             const char *name)
 {
-   /* FINISHME: Support for "varying" records in GLSL 1.50. */
-   assert(!rvalue->type->is_record());
-
-   if (rvalue->type->is_array()) {
+   if (rvalue->type->is_record()) {
+      for (unsigned i = 0; i < rvalue->type->length; i++) {
+         if (i != 0)
+            rvalue = rvalue->clone(this->mem_ctx, NULL);
+         const char *field_name = rvalue->type->fields.structure[i].name;
+         ir_dereference_record *dereference_record = new(this->mem_ctx)
+            ir_dereference_record(rvalue, field_name);
+         char *deref_name
+            = ralloc_asprintf(this->mem_ctx, "%s.%s", name, field_name);
+         fine_location = this->lower_rvalue(dereference_record, fine_location,
+                                            unpacked_var, deref_name);
+      }
+      return fine_location;
+   } else if (rvalue->type->is_array()) {
       /* Arrays are packed/unpacked by considering each array element in
        * sequence.
        */
