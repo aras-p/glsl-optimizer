@@ -58,17 +58,11 @@ swrast_dri_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(GALLIUM_DRI_LIB_DEPS)
 
-if HAVE_MESA_LLVM
-swrast_dri_la_LINK = $(CXXLINK) $(swrast_dri_la_LDFLAGS)
-# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_swrast_dri_la_SOURCES = dummy-cpp.cpp
+nodist_EXTRA_swrast_dri_la_SOURCES = dummy.cpp
 
+if HAVE_MESA_LLVM
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
 swrast_dri_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la $(LLVM_LIBS)
-else
-swrast_dri_la_LINK = $(LINK) $(swrast_dri_la_LDFLAGS)
-# Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_swrast_dri_la_SOURCES = dummy-c.c
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
