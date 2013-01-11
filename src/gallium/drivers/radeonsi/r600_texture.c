@@ -192,47 +192,6 @@ static int r600_setup_surface(struct pipe_screen *screen,
 	return 0;
 }
 
-/* Figure out whether u_blitter will fallback to a transfer operation.
- * If so, don't use a staging resource.
- */
-static boolean permit_hardware_blit(struct pipe_screen *screen,
-					const struct pipe_resource *res)
-{
-	unsigned bind;
-
-	if (util_format_is_depth_or_stencil(res->format))
-		bind = PIPE_BIND_DEPTH_STENCIL;
-	else
-		bind = PIPE_BIND_RENDER_TARGET;
-
-	/* hackaround for S3TC */
-	if (util_format_is_compressed(res->format))
-		return TRUE;
-
-	if (!screen->is_format_supported(screen,
-				res->format,
-				res->target,
-				res->nr_samples,
-                                bind))
-		return FALSE;
-
-	if (!screen->is_format_supported(screen,
-				res->format,
-				res->target,
-				res->nr_samples,
-                                PIPE_BIND_SAMPLER_VIEW))
-		return FALSE;
-
-	switch (res->usage) {
-	case PIPE_USAGE_STREAM:
-	case PIPE_USAGE_STAGING:
-		return FALSE;
-
-	default:
-		return TRUE;
-	}
-}
-
 static boolean r600_texture_get_handle(struct pipe_screen* screen,
 					struct pipe_resource *ptex,
 					struct winsys_handle *whandle)
@@ -310,8 +269,7 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 					PIPE_TRANSFER_UNSYNCHRONIZED)))
 		use_staging_texture = TRUE;
 
-	if (!permit_hardware_blit(ctx->screen, texture) ||
-		(texture->flags & R600_RESOURCE_FLAG_TRANSFER))
+	if (texture->flags & R600_RESOURCE_FLAG_TRANSFER)
 		use_staging_texture = FALSE;
 
 	if (use_staging_texture && (usage & PIPE_TRANSFER_MAP_DIRECTLY))
@@ -483,9 +441,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 	rtex->pitch_override = pitch_in_bytes_override;
 	rtex->real_format = base->format;
 
-	/* only mark depth textures the HW can hit as depth textures */
-	if (util_format_is_depth_or_stencil(rtex->real_format) && permit_hardware_blit(screen, base))
-		rtex->is_depth = 1;
+	/* don't include stencil-only formats which we don't support for rendering */
+	rtex->is_depth = util_format_has_depth(util_format_description(rtex->resource.b.b.format));
 
 	rtex->surface = *surface;
 	r = r600_setup_surface(screen, rtex, array_mode, pitch_in_bytes_override);
@@ -568,9 +525,7 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
 	    !(templ->bind & PIPE_BIND_SCANOUT)) {
-		if (permit_hardware_blit(screen, templ)) {
-			array_mode = V_009910_ARRAY_1D_TILED_THIN1;
-		}
+		array_mode = V_009910_ARRAY_1D_TILED_THIN1;
 	}
 
 	r = r600_init_surface(rscreen, &surface, templ, array_mode,
