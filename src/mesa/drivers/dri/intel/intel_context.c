@@ -493,6 +493,7 @@ static const struct dri_debug_control debug_control[] = {
    { "clip",  DEBUG_CLIP },
    { "aub",   DEBUG_AUB },
    { "shader_time", DEBUG_SHADER_TIME },
+   { "no16",  DEBUG_NO16 },
    { NULL,    0 }
 };
 
