@@ -804,16 +804,15 @@ varying_matches::compute_packing_order(ir_variable *var)
 {
    const glsl_type *element_type = var->type;
 
-   /* FINISHME: Support for "varying" records in GLSL 1.50. */
    while (element_type->base_type == GLSL_TYPE_ARRAY) {
       element_type = element_type->fields.array;
    }
 
-   switch (element_type->vector_elements) {
+   switch (element_type->component_slots() % 4) {
    case 1: return PACKING_ORDER_SCALAR;
    case 2: return PACKING_ORDER_VEC2;
    case 3: return PACKING_ORDER_VEC3;
-   case 4: return PACKING_ORDER_VEC4;
+   case 0: return PACKING_ORDER_VEC4;
    default:
       assert(!"Unexpected value of vector_elements");
       return PACKING_ORDER_VEC4;
