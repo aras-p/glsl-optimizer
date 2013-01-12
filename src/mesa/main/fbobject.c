@@ -1378,12 +1378,27 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
                      GLsizei width, GLsizei height, GLsizei samples)
 {
    const char *func = samples == NO_SAMPLES ?
-      "glRenderbufferStorage" : "RenderbufferStorageMultisample";
+      "glRenderbufferStorage" : "glRenderbufferStorageMultisample";
    struct gl_renderbuffer *rb;
    GLenum baseFormat;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API) {
+      if (samples == NO_SAMPLES)
+         _mesa_debug(ctx, "%s(%s, %s, %d, %d)\n",
+                     func,
+                     _mesa_lookup_enum_by_nr(target),
+                     _mesa_lookup_enum_by_nr(internalFormat),
+                     width, height);
+      else
+         _mesa_debug(ctx, "%s(%s, %s, %d, %d, %d)\n",
+                     func,
+                     _mesa_lookup_enum_by_nr(target),
+                     _mesa_lookup_enum_by_nr(internalFormat),
+                     width, height, samples);
+   }
 
    if (target != GL_RENDERBUFFER_EXT) {
       _mesa_error(ctx, GL_INVALID_ENUM, "%s(target)", func);
