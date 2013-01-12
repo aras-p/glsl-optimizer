@@ -51,24 +51,6 @@ nv50_tic_swizzle(uint32_t tc, unsigned swz, boolean tex_int)
    }
 }
 
-static void
-nv50_init_tic_entry_linear(uint32_t *tic, struct pipe_resource *res)
-{
-   if (res->target == PIPE_BUFFER) {
-      tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_BUFFER;
-      tic[4] = res->width0;
-   } else {
-      struct nv50_miptree *mt = nv50_miptree(res);
-
-      tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_RECT;
-      if (res->target != PIPE_TEXTURE_RECT)
-         tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
-      tic[3] = mt->level[0].pitch;
-      tic[4] = res->width0;
-      tic[5] = (1 << 16) | res->height0;
-   }
-}
-
 struct pipe_sampler_view *
 nv50_create_sampler_view(struct pipe_context *pipe,
                          struct pipe_resource *res,
@@ -76,7 +58,7 @@ nv50_create_sampler_view(struct pipe_context *pipe,
 {
    uint32_t flags = 0;
 
-   if (res->target == PIPE_TEXTURE_RECT)
+   if (res->target == PIPE_TEXTURE_RECT || res->target == PIPE_BUFFER)
       flags |= NV50_TEXVIEW_SCALED_COORDS;
 
    return nv50_create_texture_view(pipe, res, templ, flags, res->target);
@@ -141,21 +123,37 @@ nv50_create_texture_view(struct pipe_context *pipe,
       depth = mt->base.base.depth0;
    }
 
-   tic[1] = addr;
-   tic[2] = (addr >> 32) & 0xff;
-
-   tic[2] |= 0x10001000 | NV50_TIC_2_NO_BORDER;
+   tic[2] = 0x10001000 | NV50_TIC_2_NO_BORDER;
 
    if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
       tic[2] |= NV50_TIC_2_COLORSPACE_SRGB;
 
+   if (!(flags & NV50_TEXVIEW_SCALED_COORDS))
+      tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
+
    if (unlikely(!nouveau_bo_memtype(nv04_resource(texture)->bo))) {
-      nv50_init_tic_entry_linear(tic, texture);
+      if (target == PIPE_BUFFER) {
+         addr += view->pipe.u.buf.first_element * desc->block.bits / 8;
+         tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_BUFFER;
+         tic[3] = 0;
+         tic[4] = /* width */
+            view->pipe.u.buf.last_element - view->pipe.u.buf.first_element + 1;
+         tic[5] = 0;
+      } else {
+         tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_RECT;
+         tic[3] = mt->level[0].pitch;
+         tic[4] = mt->base.base.width0;
+         tic[5] = (1 << 16) | mt->base.base.height0;
+      }
+      tic[6] =
+      tic[7] = 0;
+      tic[1] = addr;
+      tic[2] |= addr >> 32;
       return &view->pipe;
    }
 
-   if (!(flags & NV50_TEXVIEW_SCALED_COORDS))
-      tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
+   tic[1] = addr;
+   tic[2] |= (addr >> 32) & 0xff;
 
    tic[2] |=
       ((mt->level[0].tile_mode & 0x0f0) << (22 - 4)) |

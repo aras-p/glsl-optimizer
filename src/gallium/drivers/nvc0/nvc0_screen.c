@@ -57,6 +57,10 @@ nvc0_screen_is_format_supported(struct pipe_screen *pscreen,
       break;
    }
 
+   if ((bindings & PIPE_BIND_SAMPLER_VIEW) && (target != PIPE_BUFFER))
+      if (util_format_get_blocksizebits(format) == 3 * 32)
+         return FALSE;
+
    /* transfers & shared are always supported */
    bindings &= ~(PIPE_BIND_TRANSFER_READ |
                  PIPE_BIND_TRANSFER_WRITE |
@@ -103,6 +107,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_ANISOTROPIC_FILTER:
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
    case PIPE_CAP_CUBE_MAP_ARRAY:
+   case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
       return 1;
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
       return (class_3d >= NVE4_3D_CLASS) ? 1 : 0;
@@ -162,13 +167,14 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
       return 256;
+   case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
+      return 1; /* 256 for binding as RT, but that's not possible in GL */
    case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
       return NOUVEAU_MIN_BUFFER_MAP_ALIGN;
    case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_TEXTURE_MULTISAMPLE:
-   case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
       return 0;
    default:
       NOUVEAU_ERR("unknown PIPE_CAP %d\n", param);
