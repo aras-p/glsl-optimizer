@@ -59,17 +59,11 @@ r600_dri_la_LIBADD = \
 	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
 
-if HAVE_MESA_LLVM
-r600_dri_la_LINK = $(CXXLINK) $(r600_dri_la_LDFLAGS)
-# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_r600_dri_la_SOURCES = dummy-cpp.cpp
+nodist_EXTRA_r600_dri_la_SOURCES = dummy.cpp
 
+if HAVE_MESA_LLVM
 r600_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
 r600_dri_la_LIBADD += $(LLVM_LIBS)
-else
-r600_dri_la_LINK = $(LINK) $(r600_dri_la_LDFLAGS)
-# Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_r600_dri_la_SOURCES = dummy-c.c
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
