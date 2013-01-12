@@ -28,32 +28,10 @@
 #include "nvc0_context.h"
 #include "nvc0_resource.h"
 
-uint32_t
+static uint32_t
 nvc0_tex_choose_tile_dims(unsigned nx, unsigned ny, unsigned nz)
 {
-   uint32_t tile_mode = 0x000;
-
-   if (ny > 64) tile_mode = 0x040; /* height 128 tiles */
-   else
-   if (ny > 32) tile_mode = 0x030; /* height 64 tiles */
-   else
-   if (ny > 16) tile_mode = 0x020; /* height 32 tiles */
-   else
-   if (ny >  8) tile_mode = 0x010; /* height 16 tiles */
-
-   if (nz == 1)
-      return tile_mode;
-   else
-   if (tile_mode > 0x020)
-      tile_mode = 0x020;
-
-   if (nz > 16 && tile_mode < 0x020)
-      return tile_mode | 0x500; /* depth 32 tiles */
-   if (nz > 8) return tile_mode | 0x400; /* depth 16 tiles */
-   if (nz > 4) return tile_mode | 0x300; /* depth 8 tiles */
-   if (nz > 2) return tile_mode | 0x200; /* depth 4 tiles */
-
-   return tile_mode | 0x100;
+   return nv50_tex_choose_tile_dims_helper(nx, ny, nz);
 }
 
 static uint32_t

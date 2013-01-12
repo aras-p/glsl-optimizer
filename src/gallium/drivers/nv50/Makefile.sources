@@ -15,7 +15,7 @@ C_SOURCES := \
 	nv50_push.c \
 	nv50_query.c
 
-CPP_SOURCES := \
+CODEGEN_NV50_SOURCES := \
 	codegen/nv50_ir.cpp \
 	codegen/nv50_ir_bb.cpp \
 	codegen/nv50_ir_build_util.cpp \
@@ -30,3 +30,13 @@ CPP_SOURCES := \
 	codegen/nv50_ir_target.cpp \
 	codegen/nv50_ir_target_nv50.cpp \
 	codegen/nv50_ir_util.cpp
+
+CODEGEN_NVC0_SOURCES := \
+	$(top_srcdir)/src/gallium/drivers/nvc0/codegen/nv50_ir_emit_gk110.cpp \
+	$(top_srcdir)/src/gallium/drivers/nvc0/codegen/nv50_ir_emit_nvc0.cpp \
+	$(top_srcdir)/src/gallium/drivers/nvc0/codegen/nv50_ir_lowering_nvc0.cpp \
+	$(top_srcdir)/src/gallium/drivers/nvc0/codegen/nv50_ir_target_nvc0.cpp
+
+CPP_SOURCES := \
+	$(CODEGEN_NV50_SOURCES) \
+	$(CODEGEN_NVC0_SOURCES)

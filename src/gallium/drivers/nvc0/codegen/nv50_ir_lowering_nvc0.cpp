@@ -1096,7 +1096,7 @@ NVC0LoweringPass::visit(Instruction *i)
       break;
    default:
       break;
-   }   
+   }
    return true;
 }
 
