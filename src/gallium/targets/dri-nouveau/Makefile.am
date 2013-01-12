@@ -31,6 +31,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/winsys \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/src/mapi \
+	-I$(top_builddir)/src/mesa/drivers/dri/common \
 	-DGALLIUM_RBUG \
 	-DGALLIUM_TRACE
 

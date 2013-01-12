@@ -62,7 +62,7 @@ clean:
 # Default target options.h
 options.h: LOCALEDIR := .
 options.h: t_options.h $(MOS)
-	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/gen_xmlpool.py t_options.h $(LOCALEDIR) $(LANGS) > options.h
+	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/gen_xmlpool.py $(srcdir)/t_options.h $(LOCALEDIR) $(LANGS) > options.h
 
 # Update .mo files from the corresponding .po files.
 %/LC_MESSAGES/options.mo: %.po

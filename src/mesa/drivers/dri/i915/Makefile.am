@@ -32,6 +32,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mesa/drivers/dri/common \
 	-I$(top_srcdir)/src/mesa/drivers/dri/intel \
 	-I$(top_srcdir)/src/mesa/drivers/dri/intel/server \
+	-I$(top_builddir)/src/mesa/drivers/dri/common \
 	$(DEFINES) \
 	$(API_DEFINES) \
 	$(VISIBILITY_CFLAGS) \
