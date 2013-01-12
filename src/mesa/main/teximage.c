@@ -3365,9 +3365,7 @@ copyteximage(struct gl_context *ctx, GLuint dims,
                                     border, internalFormat, texFormat);
 
          /* Allocate texture memory (no pixel data yet) */
-         ctx->Driver.TexImage(ctx, dims, texImage,
-                              GL_NONE, GL_NONE,
-                              NULL, &ctx->Unpack);
+         ctx->Driver.AllocTextureImageBuffer(ctx, texImage);
 
          if (_mesa_clip_copytexsubimage(ctx, &dstX, &dstY, &srcX, &srcY,
                                         &width, &height)) {
