@@ -464,14 +464,15 @@ static void r300_tex_print_info(struct r300_resource *tex,
 {
     fprintf(stderr,
             "r300: %s: Macro: %s, Micro: %s, Pitch: %i, Dim: %ix%ix%i, "
-            "LastLevel: %i, Size: %i, Format: %s\n",
+            "LastLevel: %i, Size: %i, Format: %s, Samples: %i\n",
             func,
             tex->tex.macrotile[0] ? "YES" : " NO",
             tex->tex.microtile ? "YES" : " NO",
             r300_stride_to_width(tex->b.b.format, tex->tex.stride_in_bytes[0]),
             tex->b.b.width0, tex->b.b.height0, tex->b.b.depth0,
             tex->b.b.last_level, tex->tex.size_in_bytes,
-            util_format_short_name(tex->b.b.format));
+            util_format_short_name(tex->b.b.format),
+            tex->b.b.nr_samples);
 }
 
 void r300_texture_desc_init(struct r300_screen *rscreen,

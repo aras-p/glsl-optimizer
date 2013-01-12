@@ -351,6 +351,32 @@ static int r300_get_video_param(struct pipe_screen *screen,
    }
 }
 
+/**
+ * Whether the format matches:
+ *   PIPE_FORMAT_?10?10?10?2_UNORM
+ */
+static INLINE boolean
+util_format_is_rgba1010102_variant(const struct util_format_description *desc)
+{
+   static const unsigned size[4] = {10, 10, 10, 2};
+   unsigned chan;
+
+   if (desc->block.width != 1 ||
+       desc->block.height != 1 ||
+       desc->block.bits != 32)
+      return FALSE;
+
+   for (chan = 0; chan < 4; ++chan) {
+      if(desc->channel[chan].type != UTIL_FORMAT_TYPE_UNSIGNED &&
+         desc->channel[chan].type != UTIL_FORMAT_TYPE_VOID)
+         return FALSE;
+      if (desc->channel[chan].size != size[chan])
+         return FALSE;
+   }
+
+   return TRUE;
+}
+
 static boolean r300_is_format_supported(struct pipe_screen* screen,
                                         enum pipe_format format,
                                         enum pipe_texture_target target,
@@ -383,6 +409,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                             format == PIPE_FORMAT_R16G16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16A16_FLOAT;
+    const struct util_format_description *desc;
 
     if (!util_format_is_supported(format, usage))
        return FALSE;
@@ -410,16 +437,23 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                          PIPE_BIND_SCANOUT)) {
                 return FALSE;
             }
-            /* Only allow depth/stencil, RGBA8, RGBA16F */
-            if (!util_format_is_depth_or_stencil(format) &&
-                !util_format_is_rgba8_variant(
-                    util_format_description(format)) &&
-                format != PIPE_FORMAT_R16G16B16A16_FLOAT) {
-                return FALSE;
-            }
-            /* RGBA16F AA is only supported on R500. */
-            if (format == PIPE_FORMAT_R16G16B16A16_FLOAT && !is_r500) {
-                return FALSE;
+
+            desc = util_format_description(format);
+
+            if (is_r500) {
+                /* Only allow depth/stencil, RGBA8, RGBA1010102, RGBA16F. */
+                if (!util_format_is_depth_or_stencil(format) &&
+                    !util_format_is_rgba8_variant(desc) &&
+                    !util_format_is_rgba1010102_variant(desc) &&
+                    format != PIPE_FORMAT_R16G16B16A16_FLOAT) {
+                    return FALSE;
+                }
+            } else {
+                /* Only allow depth/stencil, RGBA8. */
+                if (!util_format_is_depth_or_stencil(format) &&
+                    !util_format_is_rgba8_variant(desc)) {
+                    return FALSE;
+                }
             }
             break;
         default:
