@@ -773,7 +773,12 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
     * combination is, and Mesa can handle anything valid.  Just work instead.
     */
    if (_mesa_is_gles(ctx)) {
-      if (ctx->Version < 30) {
+      if (ctx->API == API_OPENGLES2 &&
+          _mesa_is_color_format(format) &&
+          _mesa_get_color_read_format(ctx) == format &&
+          _mesa_get_color_read_type(ctx) == type) {
+         err = GL_NO_ERROR;
+      } else if (ctx->Version < 30) {
          err = _mesa_es_error_check_format_and_type(format, type, 2);
          if (err == GL_NO_ERROR) {
             if (type == GL_FLOAT || type == GL_HALF_FLOAT_OES) {
