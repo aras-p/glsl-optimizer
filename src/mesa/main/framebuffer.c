@@ -871,13 +871,20 @@ _mesa_dest_buffer_exists(struct gl_context *ctx, GLenum format)
 GLenum
 _mesa_get_color_read_format(struct gl_context *ctx)
 {
+   const GLenum data_type = _mesa_get_format_datatype(
+                               ctx->ReadBuffer->_ColorReadBuffer->Format);
+
    switch (ctx->ReadBuffer->_ColorReadBuffer->Format) {
    case MESA_FORMAT_ARGB8888:
       return GL_BGRA;
    case MESA_FORMAT_RGB565:
       return GL_BGR;
    default:
-      return GL_RGBA;
+      if (data_type == GL_UNSIGNED_INT || data_type == GL_INT) {
+         return GL_RGBA_INTEGER;
+      } else {
+         return GL_RGBA;
+      }
    }
 }
 
@@ -888,11 +895,24 @@ _mesa_get_color_read_format(struct gl_context *ctx)
 GLenum
 _mesa_get_color_read_type(struct gl_context *ctx)
 {
+   const GLenum data_type = _mesa_get_format_datatype(
+                               ctx->ReadBuffer->_ColorReadBuffer->Format);
+
    switch (ctx->ReadBuffer->_ColorReadBuffer->Format) {
-   case MESA_FORMAT_ARGB8888:
-      return GL_UNSIGNED_BYTE;
    case MESA_FORMAT_RGB565:
       return GL_UNSIGNED_SHORT_5_6_5_REV;
+   default:
+      break;
+   }
+
+   switch (data_type) {
+   case GL_SIGNED_NORMALIZED:
+      return GL_BYTE;
+   case GL_UNSIGNED_INT:
+   case GL_INT:
+   case GL_FLOAT:
+      return data_type;
+   case GL_UNSIGNED_NORMALIZED:
    default:
       return GL_UNSIGNED_BYTE;
    }
