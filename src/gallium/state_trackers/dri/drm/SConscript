@@ -12,6 +12,7 @@ env.Append(CPPPATH = [
     '#/src/mesa',
     '#/src/gallium/state_trackers/dri/common',
     '#/src/mesa/drivers/dri/common',
+    xmlpool_options.dir.dir, # Dir to generated xmlpool/options.h
 ])
 
 sources = [

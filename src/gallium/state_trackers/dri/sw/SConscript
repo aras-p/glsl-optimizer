@@ -10,6 +10,7 @@ env.Append(CPPPATH = [
     '#/src/mesa',
     '#/src/gallium/state_trackers/dri/common',
     '#/src/mesa/drivers/dri/common',
+    xmlpool_options.dir.dir, # Dir to generated xmlpool/options.h
 ])
 
 env.Append(CPPDEFINES = [('__NOT_HAVE_DRM_H', '1')])

@@ -1,0 +1,14 @@
+Import('*')
+
+from sys import executable as python_cmd
+
+LOCALEDIR = env.Dir('.').srcnode().abspath
+
+xmlpool_options, = env.CodeGenerate(
+    target = 'options.h',
+    script = 'gen_xmlpool.py',
+    source = ['t_options.h'],
+    command = python_cmd + ' $SCRIPT $SOURCE ' + LOCALEDIR + ' > $TARGET'
+)
+
+Export('xmlpool_options')

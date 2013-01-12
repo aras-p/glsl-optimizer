@@ -10,6 +10,7 @@ drienv = env.Clone()
 
 drienv.Replace(CPPPATH = [
     '#src/mesa/drivers/dri/common',
+    xmlpool_options.dir.dir, # Dir to generated xmlpool/options.h
     '#include',
     '#include/GL/internal',
     '#src/mapi',
