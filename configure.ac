@@ -1079,8 +1079,8 @@ if test "x$enable_dri" = xyes; then
 	LIBS="$save_LIBS"
     fi
 
-    # if we are building any dri driver other than swrast ...
-    if test -n "$DRI_DIRS" -a x"$DRI_DIRS" != xswrast; then
+    # if we are building any dri driver other than swrast or using the dri state tracker ...
+    if test -n "$DRI_DIRS" -a x"$DRI_DIRS" != xswrast || test "x$enable_dri" = xyes; then
         # ... libdrm is required
         if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([DRI drivers requires libdrm >= $LIBDRM_REQUIRED])
