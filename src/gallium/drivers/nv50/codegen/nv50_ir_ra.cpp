@@ -263,7 +263,7 @@ public:
 
    bool run(const std::list<ValuePair>&);
 
-   Symbol *assignSlot(const Interval&, unsigned int size);
+   Symbol *assignSlot(const Interval&, const unsigned int size);
    inline int32_t getStackSize() const { return stackSize; }
 
 private:
@@ -1384,7 +1384,7 @@ GCRA::cleanup(const bool success)
 }
 
 Symbol *
-SpillCodeInserter::assignSlot(const Interval &livei, unsigned int size)
+SpillCodeInserter::assignSlot(const Interval &livei, const unsigned int size)
 {
    SpillSlot slot;
    int32_t offsetBase = stackSize;
@@ -1397,21 +1397,22 @@ SpillCodeInserter::assignSlot(const Interval &livei, unsigned int size)
    slot.sym = NULL;
 
    for (offset = offsetBase; offset < stackSize; offset += size) {
+      const int32_t entryEnd = offset + size;
       while (it != slots.end() && it->offset < offset)
          ++it;
       if (it == slots.end()) // no slots left
          break;
       std::list<SpillSlot>::iterator bgn = it;
 
-      while (it != slots.end() && it->offset < (offset + size)) {
+      while (it != slots.end() && it->offset < entryEnd) {
          it->occup.print();
          if (it->occup.overlaps(livei))
             break;
          ++it;
       }
-      if (it == slots.end() || it->offset >= (offset + size)) {
+      if (it == slots.end() || it->offset >= entryEnd) {
          // fits
-         for (; bgn != slots.end() && bgn->offset < (offset + size); ++bgn) {
+         for (; bgn != slots.end() && bgn->offset < entryEnd; ++bgn) {
             bgn->occup.insert(livei);
             if (bgn->size() == size)
                slot.sym = bgn->sym;

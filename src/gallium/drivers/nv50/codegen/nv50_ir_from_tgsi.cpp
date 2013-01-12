@@ -722,7 +722,9 @@ bool Source::scanSource()
    if (info->io.genUserClip > 0) {
       info->io.clipDistanceMask = (1 << info->io.genUserClip) - 1;
 
-      for (unsigned int n = 0; n < ((info->io.genUserClip + 3) / 4); ++n) {
+      const unsigned int nOut = (info->io.genUserClip + 3) / 4;
+
+      for (unsigned int n = 0; n < nOut; ++n) {
          unsigned int i = info->numOutputs++;
          info->out[i].id = i;
          info->out[i].sn = TGSI_SEMANTIC_CLIPDIST;
