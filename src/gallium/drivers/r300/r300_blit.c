@@ -26,6 +26,7 @@
 #include "r300_reg.h"
 
 #include "util/u_format.h"
+#include "util/u_half.h"
 #include "util/u_pack_color.h"
 #include "util/u_surface.h"
 
@@ -176,6 +177,25 @@ static uint32_t r300_hiz_clear_value(double depth)
     return r | (r << 8) | (r << 16) | (r << 24);
 }
 
+static void r300_set_clear_color(struct r300_context *r300,
+                                 const union pipe_color_union *color)
+{
+    struct pipe_framebuffer_state *fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
+    union util_color uc;
+
+    memset(&uc, 0, sizeof(uc));
+    util_pack_color(color->f, fb->cbufs[0]->format, &uc);
+
+    if (fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16A16_FLOAT) {
+        /* (0,1,2,3) maps to (B,G,R,A) */
+        r300->color_clear_value_gb = uc.h[0] | ((uint32_t)uc.h[1] << 16);
+        r300->color_clear_value_ar = uc.h[2] | ((uint32_t)uc.h[3] << 16);
+    } else {
+        r300->color_clear_value = uc.ui;
+    }
+}
+
 DEBUG_GET_ONCE_BOOL_OPTION(hyperz, "RADEON_HYPERZ", FALSE)
 
 /* Clear currently bound buffers. */
@@ -287,8 +307,44 @@ static void r300_clear(struct pipe_context* pipe,
         }
     }
 
+    /* Use fast color clear for an AA colorbuffer.
+     * The CMASK is shared between all colorbuffers, so we use it
+     * if there is only one colorbuffer bound. */
+    if ((buffers & PIPE_CLEAR_COLOR) && fb->nr_cbufs == 1 &&
+        r300_resource(fb->cbufs[0]->texture)->tex.cmask_dwords) {
+        /* Try to obtain the access to the CMASK if we don't have one. */
+        if (!r300->cmask_access) {
+            r300->cmask_access =
+                r300->rws->cs_request_feature(r300->cs,
+                                              RADEON_FID_R300_CMASK_ACCESS,
+                                              TRUE);
+        }
+
+        /* Setup the clear. */
+        if (r300->cmask_access) {
+            /* Pair the resource with the CMASK to avoid other resources
+             * accessing it. */
+            if (!r300->screen->cmask_resource) {
+                pipe_mutex_lock(r300->screen->cmask_mutex);
+                /* Double checking (first unlocked, then locked). */
+                if (!r300->screen->cmask_resource) {
+                    /* Don't reference this, so that the texture can be
+                     * destroyed while set in cmask_resource.
+                     * Then in texture_destroy, we set cmask_resource to NULL. */
+                    r300->screen->cmask_resource = fb->cbufs[0]->texture;
+                }
+                pipe_mutex_unlock(r300->screen->cmask_mutex);
+            }
+
+            if (r300->screen->cmask_resource == fb->cbufs[0]->texture) {
+                r300_set_clear_color(r300, color);
+                r300_mark_atom_dirty(r300, &r300->cmask_clear);
+                buffers &= ~PIPE_CLEAR_COLOR;
+            }
+        }
+    }
     /* Enable CBZB clear. */
-    if (r300_cbzb_clear_allowed(r300, buffers)) {
+    else if (r300_cbzb_clear_allowed(r300, buffers)) {
         struct r300_surface *surf = r300_surface(fb->cbufs[0]);
 
         hyperz->zb_depthclearvalue =
@@ -312,13 +368,16 @@ static void r300_clear(struct pipe_context* pipe,
                            fb->nr_cbufs,
                            buffers, cformat, color, depth, stencil);
         r300_blitter_end(r300);
-    } else if (r300->zmask_clear.dirty || r300->hiz_clear.dirty) {
+    } else if (r300->zmask_clear.dirty ||
+               r300->hiz_clear.dirty ||
+               r300->cmask_clear.dirty) {
         /* Just clear zmask and hiz now, this does not use the standard draw
          * procedure. */
         /* Calculate zmask_clear and hiz_clear atom sizes. */
         unsigned dwords =
             (r300->zmask_clear.dirty ? r300->zmask_clear.size : 0) +
             (r300->hiz_clear.dirty ? r300->hiz_clear.size : 0) +
+            (r300->cmask_clear.dirty ? r300->cmask_clear.size : 0) +
             r300_get_num_cs_end_dwords(r300);
 
         /* Reserve CS space. */
@@ -336,6 +395,11 @@ static void r300_clear(struct pipe_context* pipe,
             r300_emit_hiz_clear(r300, r300->hiz_clear.size,
                                 r300->hiz_clear.state);
             r300->hiz_clear.dirty = FALSE;
+        }
+        if (r300->cmask_clear.dirty) {
+            r300_emit_cmask_clear(r300, r300->cmask_clear.size,
+                                  r300->cmask_clear.state);
+            r300->cmask_clear.dirty = FALSE;
         }
     } else {
         assert(0);

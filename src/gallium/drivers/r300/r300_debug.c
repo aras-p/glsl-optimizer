@@ -50,6 +50,7 @@ static const struct debug_named_value debug_options[] = {
     { "nocbzb", DBG_NO_CBZB, "Disable fast color clear" },
     { "nozmask", DBG_NO_ZMASK, "Disable zbuffer compression" },
     { "nohiz", DBG_NO_HIZ, "Disable hierarchical zbuffer" },
+    { "nocmask", DBG_NO_CMASK, "Disable AA compression and fast AA clear" },
 
     /* must be last */
     DEBUG_NAMED_VALUE_END

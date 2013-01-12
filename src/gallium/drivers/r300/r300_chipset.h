@@ -30,6 +30,7 @@
 #define RV530_HIZ_LIMIT 15360
 
 /* rv3xx have only one pipe */
+#define PIPE_CMASK_SIZE 4096
 #define PIPE_ZMASK_SIZE 4096
 #define RV3xx_ZMASK_SIZE 5120
 

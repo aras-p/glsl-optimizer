@@ -409,6 +409,48 @@ static void r300_setup_hyperz_properties(struct r300_screen *screen,
     }
 }
 
+static void r300_setup_cmask_properties(struct r300_screen *screen,
+                                        struct r300_resource *tex)
+{
+    static unsigned cmask_align_x[4] = {16, 32, 48, 32};
+    static unsigned cmask_align_y[4] = {16, 16, 16, 32};
+    unsigned pipes, stride, cmask_num_dw;
+
+    /* We need an AA colorbuffer, no mipmaps. */
+    if (tex->b.b.nr_samples <= 1 ||
+        tex->b.b.last_level > 0 ||
+        util_format_is_depth_or_stencil(tex->b.b.format)) {
+        return;
+    }
+
+    if (tex->b.b.format == PIPE_FORMAT_R16G16B16A16_FLOAT) {
+        return;
+    }
+
+    if (SCREEN_DBG_ON(screen, DBG_NO_CMASK)) {
+        return;
+    }
+
+    /* CMASK is part of raster pipes. The number of Z pipes doesn't matter. */
+    pipes = screen->info.r300_num_gb_pipes;
+
+    stride = r300_stride_to_width(tex->b.b.format,
+                                  tex->tex.stride_in_bytes[0]);
+    stride = align(stride, 16);
+
+    /* Get the CMASK size in dwords. */
+    cmask_num_dw = r300_pixels_to_dwords(stride, tex->b.b.height0,
+                                         cmask_align_x[pipes-1],
+                                         cmask_align_y[pipes-1]);
+
+    /* Check the CMASK size against the CMASK memory limit. */
+    if (cmask_num_dw <= PIPE_CMASK_SIZE * pipes) {
+        tex->tex.cmask_dwords = cmask_num_dw;
+        tex->tex.cmask_stride_in_pixels =
+            util_align_npot(stride, cmask_align_x[pipes-1]);
+    }
+}
+
 static void r300_setup_tiling(struct r300_screen *screen,
                               struct r300_resource *tex)
 {
@@ -532,6 +574,7 @@ void r300_texture_desc_init(struct r300_screen *rscreen,
     }
 
     r300_setup_hyperz_properties(rscreen, tex);
+    r300_setup_cmask_properties(rscreen, tex);
 
     if (SCREEN_DBG_ON(rscreen, DBG_TEX))
         r300_tex_print_info(tex, "texture_desc_init");

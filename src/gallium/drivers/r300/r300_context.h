@@ -309,6 +309,7 @@ struct r300_surface {
     uint32_t pitch;     /* COLORPITCH or DEPTHPITCH. */
     uint32_t pitch_zmask; /* ZMASK_PITCH */
     uint32_t pitch_hiz;   /* HIZ_PITCH */
+    uint32_t pitch_cmask; /* CMASK_PITCH */
     uint32_t format;    /* US_OUT_FMT or ZB_FORMAT. */
 
     /* Parameters dedicated to the CBZB clear. */
@@ -380,6 +381,10 @@ struct r300_texture_desc {
     /* Zmask/HiZ strides for each miplevel. */
     unsigned zmask_stride_in_pixels[R300_MAX_TEXTURE_LEVELS];
     unsigned hiz_stride_in_pixels[R300_MAX_TEXTURE_LEVELS];
+
+    /* CMASK info for AA buffers (no mipmapping). */
+    unsigned cmask_dwords;
+    unsigned cmask_stride_in_pixels;
 };
 
 struct r300_resource
@@ -536,6 +541,8 @@ struct r300_context {
     struct r300_atom hiz_clear;
     /* zmask clear */
     struct r300_atom zmask_clear;
+    /* cmask clear */
+    struct r300_atom cmask_clear;
     /* Occlusion query. */
     struct r300_atom query_start;
 
@@ -615,6 +622,13 @@ struct r300_context {
     boolean hiz_in_use;         /* Whether HIZ is enabled. */
     enum r300_hiz_func hiz_func; /* HiZ function. Can be either MIN or MAX. */
     uint32_t hiz_clear_value;   /* HiZ clear value. */
+
+    /* CMASK state. */
+    boolean cmask_access;
+    boolean cmask_in_use;
+    uint32_t color_clear_value; /* RGBA8 or RGBA1010102 */
+    uint32_t color_clear_value_ar; /* RGBA16F */
+    uint32_t color_clear_value_gb; /* RGBA16F */
 
     /* Compiler state. */
     struct rc_regalloc_state fs_regalloc_state; /* Register allocator info for
@@ -722,7 +736,8 @@ void r300_blitter_draw_rectangle(struct blitter_context *blitter,
 enum r300_fb_state_change {
     R300_CHANGED_FB_STATE = 0,
     R300_CHANGED_HYPERZ_FLAG,
-    R300_CHANGED_MULTIWRITE
+    R300_CHANGED_MULTIWRITE,
+    R300_CHANGED_CMASK_ENABLE,
 };
 
 void r300_mark_fb_state_dirty(struct r300_context *r300,

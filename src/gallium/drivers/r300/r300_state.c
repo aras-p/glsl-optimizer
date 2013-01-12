@@ -825,6 +825,10 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
             r300->fb_state.size += 8;
     }
 
+    if (r300->cmask_in_use) {
+        r300->fb_state.size += 6;
+    }
+
     /* The size of the rest of atoms stays the same. */
 }
 
@@ -899,6 +903,11 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
         }
     }
     assert(state->zsbuf || (r300->locked_zbuffer && !unlock_zbuffer) || !r300->zmask_in_use);
+
+    /* Set whether CMASK can be used. */
+    r300->cmask_in_use =
+        state->nr_cbufs == 1 &&
+        r300->screen->cmask_resource == state->cbufs[0]->texture;
 
     /* Need to reset clamping or colormask. */
     r300_mark_atom_dirty(r300, &r300->blend_state);

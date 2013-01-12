@@ -522,6 +522,8 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     struct r300_screen* r300screen = r300_screen(pscreen);
     struct radeon_winsys *rws = radeon_winsys(pscreen);
 
+    pipe_mutex_destroy(r300screen->cmask_mutex);
+
     if (rws)
       rws->destroy(rws);
 
@@ -612,6 +614,7 @@ struct pipe_screen* r300_screen_create(struct radeon_winsys *rws)
     r300_init_screen_resource_functions(r300screen);
 
     util_format_s3tc_init();
+    pipe_mutex_init(r300screen->cmask_mutex);
 
     return &r300screen->screen;
 }

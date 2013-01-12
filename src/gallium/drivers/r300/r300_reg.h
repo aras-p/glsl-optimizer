@@ -2390,7 +2390,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Program this register with a 32-bit value in ARGB8888 or ARGB2101010
  * formats, ignoring the fields.
  */
-#define RB3D_COLOR_CLEAR_VALUE                   0x4e14
+#define R300_RB3D_COLOR_CLEAR_VALUE                   0x4E14
+/* For FP16 AA. */
+#define R500_RB3D_COLOR_CLEAR_VALUE_AR                0x46C0
+#define R500_RB3D_COLOR_CLEAR_VALUE_GB                0x46C4
 
 /* gap */
 
@@ -2484,6 +2487,18 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_ROUND      (1 << 2)
 #	define R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT        (2 << 2)
 /* reserved */
+
+#define R300_RB3D_CMASK_OFFSET0 0x4E54
+#define R300_RB3D_CMASK_OFFSET1 0x4E58
+#define R300_RB3D_CMASK_OFFSET2 0x4E5C
+#define R300_RB3D_CMASK_OFFSET3 0x4E60
+#define R300_RB3D_CMASK_PITCH0  0x4E64
+#define R300_RB3D_CMASK_PITCH1  0x4E68
+#define R300_RB3D_CMASK_PITCH2  0x4E6C
+#define R300_RB3D_CMASK_PITCH3  0x4E70
+#define R300_RB3D_CMASK_WRINDEX 0x4E74
+#define R300_RB3D_CMASK_DWORD   0x4E78
+#define R300_RB3D_CMASK_RDINDEX 0x4E7C
 
 /* Resolve buffer destination address. The cache must be empty before changing
  * this register if the cb is in resolve mode. Unpipelined
@@ -3504,6 +3519,7 @@ enum {
  * 2. CLEAR_VALUE: Value to write into HIZ RAM.
  */
 #define R300_PACKET3_3D_CLEAR_HIZ           0x00003700
+#define R300_PACKET3_3D_CLEAR_CMASK         0x00003800
 
 /* Draws a set of primitives using vertex buffers pointed by the state data.
  * At least 2 Parameters:

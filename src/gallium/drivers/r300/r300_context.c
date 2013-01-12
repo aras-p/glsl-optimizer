@@ -75,6 +75,9 @@ static void r300_destroy_context(struct pipe_context* context)
     if (r300->cs && r300->hyperz_enabled) {
         r300->rws->cs_request_feature(r300->cs, RADEON_FID_R300_HYPERZ_ACCESS, FALSE);
     }
+    if (r300->cs && r300->cmask_access) {
+        r300->rws->cs_request_feature(r300->cs, RADEON_FID_R300_CMASK_ACCESS, FALSE);
+    }
 
     if (r300->blitter)
         util_blitter_destroy(r300->blitter);
@@ -203,6 +206,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     /* Clear commands */
     R300_INIT_ATOM(hiz_clear, r300->screen->caps.hiz_ram > 0 ? 6 : 0);
     R300_INIT_ATOM(zmask_clear, r300->screen->caps.zmask_ram > 0 ? 6 : 0);
+    R300_INIT_ATOM(cmask_clear, 6);
     /* ZB (unpipelined), SU. */
     R300_INIT_ATOM(query_start, 4);
 
