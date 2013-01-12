@@ -135,7 +135,8 @@ static boolean r300_cbzb_clear_allowed(struct r300_context *r300,
     return r300_surface(fb->cbufs[0])->cbzb_allowed;
 }
 
-static boolean r300_fast_zclear_allowed(struct r300_context *r300)
+static boolean r300_fast_zclear_allowed(struct r300_context *r300,
+                                        unsigned clear_buffers)
 {
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
@@ -242,8 +243,15 @@ static void r300_clear(struct pipe_context* pipe,
     if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
         boolean zmask_clear, hiz_clear;
 
-        zmask_clear = r300_fast_zclear_allowed(r300);
-        hiz_clear = r300_hiz_clear_allowed(r300);
+        /* If both depth and stencil are present, they must be cleared together. */
+        if (fb->zsbuf->texture->format == PIPE_FORMAT_S8_UINT_Z24_UNORM &&
+            (buffers & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) {
+            zmask_clear = FALSE;
+            hiz_clear = FALSE;
+        } else {
+            zmask_clear = r300_fast_zclear_allowed(r300, buffers);
+            hiz_clear = r300_hiz_clear_allowed(r300);
+        }
 
         /* If we need Hyper-Z. */
         if (zmask_clear || hiz_clear) {
@@ -262,9 +270,6 @@ static void r300_clear(struct pipe_context* pipe,
 
             /* Setup Hyper-Z clears. */
             if (r300->hyperz_enabled) {
-                DBG(r300, DBG_HYPERZ, "r300: Clear memory: %s%s\n",
-                    zmask_clear ? "ZMASK " : "", hiz_clear ? "HIZ" : "");
-
                 if (zmask_clear) {
                     hyperz_dcv = hyperz->zb_depthclearvalue =
                         r300_depth_clear_value(fb->zsbuf->format, depth, stencil);
