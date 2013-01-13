@@ -1143,7 +1143,10 @@ convert_to_blend_type(struct gallivm_state *gallivm,
                                  "");
 
          /* Scale bits */
-         chans[j] = scale_bits(gallivm, src_fmt->channel[j].size, blend_type.width, chans[j], src_type);
+         if (src_type.norm) {
+            chans[j] = scale_bits(gallivm, src_fmt->channel[j].size,
+                                  blend_type.width, chans[j], src_type);
+         }
 
          /* Insert bits into correct position */
          chans[j] = LLVMBuildShl(builder,
@@ -1250,7 +1253,10 @@ convert_from_blend_type(struct gallivm_state *gallivm,
                                  "");
 
          /* Scale down bits */
-         chans[j] = scale_bits(gallivm, blend_type.width, src_fmt->channel[j].size, chans[j], src_type);
+         if (src_type.norm) {
+            chans[j] = scale_bits(gallivm, blend_type.width,
+                                  src_fmt->channel[j].size, chans[j], src_type);
+         }
 
          /* Insert bits */
          chans[j] = LLVMBuildShl(builder,
@@ -1435,6 +1441,25 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
       } else {
          src_mask[i] = fs_mask[i];
          src_alpha[i] = alpha;
+      }
+   }
+
+   if (util_format_is_pure_integer(out_format)) {
+      /*
+       * In this case fs_type was really ints or uints disguised as floats,
+       * fix that up now.
+       */
+      fs_type.floating = 0;
+      fs_type.sign = dst_type.sign;
+      for (i = 0; i < num_fs; ++i) {
+         for (j = 0; j < dst_channels; ++j) {
+            fs_src[i][j] = LLVMBuildBitCast(builder, fs_src[i][j],
+                                            lp_build_vec_type(gallivm, fs_type), "");
+         }
+         if (dst_channels == 3 && !has_alpha) {
+            fs_src[i][3] = LLVMBuildBitCast(builder, fs_src[i][3],
+                                            lp_build_vec_type(gallivm, fs_type), "");
+         }
       }
    }
 
@@ -2498,7 +2523,11 @@ make_variant_key(struct llvmpipe_context *lp,
       }
    }
 
-   key->alpha.enabled = lp->depth_stencil->alpha.enabled;
+   /* alpha test only applies if render buffer 0 is non-integer (or does not exist) */
+   if (!lp->framebuffer.nr_cbufs ||
+       !util_format_is_pure_integer(lp->framebuffer.cbufs[0]->format)) {
+      key->alpha.enabled = lp->depth_stencil->alpha.enabled;
+   }
    if(key->alpha.enabled)
       key->alpha.func = lp->depth_stencil->alpha.func;
    /* alpha.ref_value is passed in jit_context */
@@ -2537,6 +2566,13 @@ make_variant_key(struct llvmpipe_context *lp,
        * Mask out color channels not present in the color buffer.
        */
       blend_rt->colormask &= util_format_colormask(format_desc);
+
+      /*
+       * Disable blend for integer formats.
+       */
+      if (util_format_is_pure_integer(format)) {
+         blend_rt->blend_enable = 0;
+      }
 
       /*
        * Our swizzled render tiles always have an alpha channel, but the linear
