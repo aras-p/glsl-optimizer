@@ -397,18 +397,33 @@ intelEmitCopyBlit(struct brw_context *brw,
    assert(dst_offset + (dst_y + h - 1) * abs(dst_pitch) +
           (w * cpp) <= dst_buffer->size);
 
-   BEGIN_BATCH_BLT_TILED(8, dst_y_tiled, src_y_tiled);
+   unsigned length = brw->gen >= 8 ? 10 : 8;
 
-   OUT_BATCH(CMD | (8 - 2));
+   BEGIN_BATCH_BLT_TILED(length, dst_y_tiled, src_y_tiled);
+   OUT_BATCH(CMD | (length - 2));
    OUT_BATCH(BR13 | (uint16_t)dst_pitch);
    OUT_BATCH(SET_FIELD(dst_y, BLT_Y) | SET_FIELD(dst_x, BLT_X));
    OUT_BATCH(SET_FIELD(dst_y2, BLT_Y) | SET_FIELD(dst_x2, BLT_X));
-   OUT_RELOC(dst_buffer,
-             I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-             dst_offset);
+   if (brw->gen >= 8) {
+      OUT_RELOC64(dst_buffer,
+                  I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+                  dst_offset);
+   } else {
+      OUT_RELOC(dst_buffer,
+                I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+                dst_offset);
+   }
    OUT_BATCH(SET_FIELD(src_y, BLT_Y) | SET_FIELD(src_x, BLT_X));
    OUT_BATCH((uint16_t)src_pitch);
-   OUT_RELOC(src_buffer, I915_GEM_DOMAIN_RENDER, 0, src_offset);
+   if (brw->gen >= 8) {
+      OUT_RELOC64(src_buffer,
+                  I915_GEM_DOMAIN_RENDER, 0,
+                  src_offset);
+   } else {
+      OUT_RELOC(src_buffer,
+                I915_GEM_DOMAIN_RENDER, 0,
+                src_offset);
+   }
 
    ADVANCE_BATCH_TILED(dst_y_tiled, src_y_tiled);
 
@@ -467,17 +482,27 @@ intelEmitImmediateColorExpandBlit(struct brw_context *brw,
    if (dst_tiling != I915_TILING_NONE)
       blit_cmd |= XY_DST_TILED;
 
-   BEGIN_BATCH_BLT(8 + 3);
-   OUT_BATCH(opcode | (8 - 2));
+   unsigned xy_setup_blt_length = brw->gen >= 8 ? 10 : 8;
+
+   BEGIN_BATCH_BLT(xy_setup_blt_length + 3);
+   OUT_BATCH(opcode | (xy_setup_blt_length - 2));
    OUT_BATCH(br13);
    OUT_BATCH((0 << 16) | 0); /* clip x1, y1 */
    OUT_BATCH((100 << 16) | 100); /* clip x2, y2 */
-   OUT_RELOC(dst_buffer,
-             I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-             dst_offset);
+   if (brw->gen >= 8) {
+      OUT_RELOC64(dst_buffer,
+                  I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+                  dst_offset);
+   } else {
+      OUT_RELOC(dst_buffer,
+                I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+                dst_offset);
+   }
    OUT_BATCH(0); /* bg */
    OUT_BATCH(fg_color); /* fg */
    OUT_BATCH(0); /* pattern base addr */
+   if (brw->gen >= 8)
+      OUT_BATCH(0);
 
    OUT_BATCH(blit_cmd | ((3 - 2) + dwords));
    OUT_BATCH(SET_FIELD(y, BLT_Y) | SET_FIELD(x, BLT_X));
@@ -584,16 +609,23 @@ intel_miptree_set_alpha_to_one(struct brw_context *brw,
       intel_batchbuffer_flush(brw);
    }
 
+   unsigned length = brw->gen >= 8 ? 7 : 6;
    bool dst_y_tiled = region->tiling == I915_TILING_Y;
 
-   BEGIN_BATCH_BLT_TILED(6, dst_y_tiled, false);
-   OUT_BATCH(CMD | (6 - 2));
+   BEGIN_BATCH_BLT_TILED(length, dst_y_tiled, false);
+   OUT_BATCH(CMD | (length - 2));
    OUT_BATCH(BR13);
    OUT_BATCH(SET_FIELD(y, BLT_Y) | SET_FIELD(x, BLT_X));
    OUT_BATCH(SET_FIELD(y + height, BLT_Y) | SET_FIELD(x + width, BLT_X));
-   OUT_RELOC(region->bo,
-             I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-             0);
+   if (brw->gen >= 8) {
+      OUT_RELOC64(region->bo,
+                  I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+                  0);
+   } else {
+      OUT_RELOC(region->bo,
+                I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+                0);
+   }
    OUT_BATCH(0xffffffff); /* white, but only alpha gets written */
    ADVANCE_BATCH_TILED(dst_y_tiled, false);
 
