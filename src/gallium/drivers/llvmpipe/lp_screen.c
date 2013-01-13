@@ -332,6 +332,20 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
 
       if (!format_desc->is_array && !format_desc->is_bitmask)
          return FALSE;
+
+      /*
+       * XXX refuse formats known to crash in generate_unswizzled_blend().
+       * These include all 3-channel 24bit RGB8 variants, plus 48bit
+       * (except those using floats) 3-channel RGB16 variants (the latter
+       * seems to be more of a llvm bug though).
+       * The mesa state tracker only seems to use these for SINT/UINT formats.
+       */
+      if (format_desc->is_array && format_desc->nr_channels == 3) {
+         if (format_desc->block.bits == 24 || (format_desc->block.bits == 48 &&
+               !util_format_is_float(format))) {
+            return FALSE;
+         }
+      }
    }
 
    if (bind & PIPE_BIND_DISPLAY_TARGET) {
@@ -356,13 +370,9 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
    }
 
    /*
-    * Everything can be supported by u_format.
+    * Everything can be supported by u_format
+    * (those without fetch_rgba_float might be not but shouldn't hit that)
     */
-
-   if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
-       !format_desc->fetch_rgba_float) {
-      return FALSE;
-   }
 
    return TRUE;
 }
