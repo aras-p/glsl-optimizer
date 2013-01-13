@@ -2348,6 +2348,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
                          GLint width, GLint height, GLint border )
 {
    GLint baseFormat;
+   GLint rb_base_format;
    struct gl_renderbuffer *rb;
    GLenum rb_internal_format;
 
@@ -2421,12 +2422,46 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
 
    baseFormat = _mesa_base_tex_format(ctx, internalFormat);
    if (baseFormat < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
+      _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCopyTexImage%dD(internalFormat)", dimensions);
       return GL_TRUE;
    }
 
    rb_internal_format = rb->InternalFormat;
+   rb_base_format = _mesa_base_tex_format(ctx, rb->InternalFormat);
+   if (_mesa_is_color_format(internalFormat)) {
+      if (rb_base_format < 0) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glCopyTexImage%dD(internalFormat)", dimensions);
+         return GL_TRUE;
+      }
+   }
+
+   if (_mesa_is_gles(ctx)) {
+      bool valid = true;
+      if (_mesa_base_format_component_count(baseFormat) >
+          _mesa_base_format_component_count(rb_base_format)) {
+         valid = false;
+      }
+      if (baseFormat == GL_DEPTH_COMPONENT ||
+          baseFormat == GL_DEPTH_STENCIL ||
+          rb_base_format == GL_DEPTH_COMPONENT ||
+          rb_base_format == GL_DEPTH_STENCIL ||
+          ((baseFormat == GL_LUMINANCE_ALPHA ||
+            baseFormat == GL_ALPHA) &&
+           rb_base_format != GL_RGBA) ||
+          internalFormat == GL_RGB9_E5) {
+         valid = false;
+      }
+      if (internalFormat == GL_RGB9_E5) {
+         valid = false;
+      }
+      if (!valid) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyTexImage%dD(internalFormat)", dimensions);
+         return GL_TRUE;
+      }
+   }
 
    if ((_mesa_is_desktop_gl(ctx) &&
         ctx->Extensions.ARB_framebuffer_object) ||
