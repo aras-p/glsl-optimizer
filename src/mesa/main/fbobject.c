@@ -1904,6 +1904,10 @@ _mesa_CheckFramebufferStatus(GLenum target)
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glCheckFramebufferStatus(%s)\n",
+                  _mesa_lookup_enum_by_nr(target));
+
    buffer = get_framebuffer_target(ctx, target);
    if (!buffer) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glCheckFramebufferStatus(target)");
