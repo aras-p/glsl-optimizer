@@ -47,6 +47,7 @@ libGL_la_LDFLAGS = -version-number $(GL_MAJOR):$(GL_MINOR):$(GL_TINY) -no-undefi
 libGL_la_LIBADD = \
 	$(top_builddir)/src/gallium/state_trackers/glx/libxlib.la \
 	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
+	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(top_builddir)/src/gallium/drivers/galahad/libgalahad.la \
@@ -60,8 +61,6 @@ if HAVE_MESA_LLVM
 libGL_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la $(LLVM_LIBS)
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
 libGL_la_LDFLAGS += $(LLVM_LDFLAGS)
-else
-libGL_la_LIBADD += $(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
