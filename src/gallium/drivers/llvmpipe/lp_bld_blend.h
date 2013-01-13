@@ -56,7 +56,7 @@ lp_build_blend(struct lp_build_context *bld,
 LLVMValueRef
 lp_build_blend_aos(struct gallivm_state *gallivm,
                    const struct pipe_blend_state *blend,
-                   const enum pipe_format *cbuf_format,
+                   const enum pipe_format cbuf_format,
                    struct lp_type type,
                    unsigned rt,
                    LLVMValueRef src,

@@ -1645,12 +1645,21 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    /*
     * Blending
     */
+   /* XXX this is broken for RGB8 formats -
+    * they get expanded from 12 to 16 elements (to include alpha)
+    * by convert_to_blend_type then reduced to 15 instead of 12
+    * by convert_from_blend_type (a simple fix though breaks A8...).
+    * R16G16B16 also crashes differently however something going wrong
+    * inside llvm handling npot vector sizes seemingly.
+    * It seems some cleanup could be done here (like skipping conversion/blend
+    * when not needed).
+    */
    convert_to_blend_type(gallivm, out_format_desc, dst_type, row_type, dst, src_count);
 
    for (i = 0; i < src_count; ++i) {
       dst[i] = lp_build_blend_aos(gallivm,
                                   &variant->key.blend,
-                                  variant->key.cbuf_format,
+                                  out_format,
                                   row_type,
                                   rt,
                                   src[i],
@@ -1999,7 +2008,6 @@ generate_fragment(struct llvmpipe_context *lp,
       LLVMValueRef color_ptr;
       LLVMValueRef stride;
       LLVMValueRef index = lp_build_const_int32(gallivm, cbuf);
-      unsigned rt = key->blend.independent_blend_enable ? cbuf : 0;
 
       boolean do_branch = ((key->depth.enabled
                             || key->stencil[0].enabled
@@ -2016,7 +2024,7 @@ generate_fragment(struct llvmpipe_context *lp,
                              LLVMBuildGEP(builder, stride_ptr, &index, 1, ""),
                              "");
 
-      generate_unswizzled_blend(gallivm, rt, variant, key->cbuf_format[cbuf],
+      generate_unswizzled_blend(gallivm, cbuf, variant, key->cbuf_format[cbuf],
                                 num_fs, fs_type, fs_mask, fs_out_color[cbuf],
                                 context_ptr, color_ptr, stride, partial_mask, do_branch);
    }
@@ -2505,6 +2513,15 @@ make_variant_key(struct llvmpipe_context *lp,
    }
 
    key->nr_cbufs = lp->framebuffer.nr_cbufs;
+
+   if (!key->blend.independent_blend_enable) {
+      /* we always need independent blend otherwise the fixups below won't work */
+      for (i = 1; i < key->nr_cbufs; i++) {
+         memcpy(&key->blend.rt[i], &key->blend.rt[0], sizeof(key->blend.rt[0]));
+      }
+      key->blend.independent_blend_enable = 1;
+   }
+
    for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
       enum pipe_format format = lp->framebuffer.cbufs[i]->format;
       struct pipe_rt_blend_state *blend_rt = &key->blend.rt[i];
@@ -2515,8 +2532,6 @@ make_variant_key(struct llvmpipe_context *lp,
       format_desc = util_format_description(format);
       assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
              format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB);
-
-      blend_rt->colormask = lp->blend->rt[i].colormask;
 
       /*
        * Mask out color channels not present in the color buffer.
@@ -2539,7 +2554,7 @@ make_variant_key(struct llvmpipe_context *lp,
        * Also, force rgb/alpha func/factors match, to make AoS blending easier.
        */
       if (format_desc->swizzle[3] > UTIL_FORMAT_SWIZZLE_W ||
-	  format_desc->swizzle[3] == format_desc->swizzle[0]) {
+          format_desc->swizzle[3] == format_desc->swizzle[0]) {
          blend_rt->rgb_src_factor   = force_dst_alpha_one(blend_rt->rgb_src_factor);
          blend_rt->rgb_dst_factor   = force_dst_alpha_one(blend_rt->rgb_dst_factor);
          blend_rt->alpha_func       = blend_rt->rgb_func;

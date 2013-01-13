@@ -266,7 +266,7 @@ lp_build_blend_factor(struct lp_build_blend_aos_context *bld,
  * @param blend         the blend state of the shader variant
  * @param cbuf_format   format of the colour buffer
  * @param type          data type of the pixel vector
- * @param rt            rt number
+ * @param rt            render target index
  * @param src           blend src
  * @param dst           blend dst
  * @param mask          optional mask to apply to the blending result
@@ -278,7 +278,7 @@ lp_build_blend_factor(struct lp_build_blend_aos_context *bld,
 LLVMValueRef
 lp_build_blend_aos(struct gallivm_state *gallivm,
                    const struct pipe_blend_state *blend,
-                   const enum pipe_format *cbuf_format,
+                   const enum pipe_format cbuf_format,
                    struct lp_type type,
                    unsigned rt,
                    LLVMValueRef src,
@@ -298,7 +298,7 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
    unsigned alpha_swizzle = UTIL_FORMAT_SWIZZLE_NONE;
    unsigned i;
 
-   desc = util_format_description(cbuf_format[rt]);
+   desc = util_format_description(cbuf_format);
 
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
