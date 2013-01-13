@@ -1010,7 +1010,7 @@ lp_blend_type_from_format_desc(const struct util_format_description *format_desc
 
 
 /**
- * Scale a normalised value from src_bits to dst_bits
+ * Scale a normalized value from src_bits to dst_bits
  */
 static INLINE LLVMValueRef
 scale_bits(struct gallivm_state *gallivm,
@@ -1047,7 +1047,7 @@ scale_bits(struct gallivm_state *gallivm,
 
          result = LLVMBuildOr(builder, result, lower, "");
       } else if (db > src_bits) {
-         /* Need to repeatedely copy src bits to fill remainder in dst */
+         /* Need to repeatedly copy src bits to fill remainder in dst */
          unsigned n;
 
          for (n = src_bits; n < dst_bits; n *= 2) {
@@ -1213,7 +1213,7 @@ convert_from_blend_type(struct gallivm_state *gallivm,
       }
    }
 
-   /* No bit arithmitic to do */
+   /* No bit arithmetic to do */
    if (!is_arith) {
       return;
    }
@@ -1578,6 +1578,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
             unsigned pixels = block_size / src_count;
             unsigned channels = pad_inline ? TGSI_NUM_CHANNELS : dst_channels;
             unsigned alpha_span = 1;
+            LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
 
             /* Check if we need 2 src_alphas for our shuffles */
             if (pixels > alpha_type.length) {
@@ -1585,21 +1586,20 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
             }
 
             /* Broadcast alpha across all channels, e.g. a1a2 to a1a1a1a1a2a2a2a2 */
+            for (j = 0; j < row_type.length; ++j) {
+               if (j < pixels * channels) {
+                  shuffles[j] = lp_build_const_int32(gallivm, j / channels);
+               } else {
+                  shuffles[j] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
+               }
+            }
+
             for (i = 0; i < src_count; ++i) {
-               LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
                unsigned idx1 = i, idx2 = i;
 
                if (alpha_span > 1){
                   idx1 *= alpha_span;
                   idx2 = idx1 + 1;
-               }
-
-               for (j = 0; j < row_type.length; ++j) {
-                  if (j < pixels * channels) {
-                     shuffles[j] = lp_build_const_int32(gallivm, j / channels);
-                  } else {
-                     shuffles[j] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
-                  }
                }
 
                src_alpha[i] = LLVMBuildShuffleVector(builder,
@@ -2680,8 +2680,6 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
    /* Bind this variant */
    lp_setup_set_fs_variant(lp->setup, variant);
 }
-
-
 
 
 
