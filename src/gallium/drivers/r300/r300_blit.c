@@ -626,7 +626,9 @@ static boolean r300_is_simple_msaa_resolve(const struct pipe_blit_info *info)
            info->src.box.x == 0 &&
            info->src.box.y == 0 &&
            info->src.box.width == dst_width &&
-           info->src.box.height == dst_height;
+           info->src.box.height == dst_height &&
+           (r300_resource(info->dst.resource)->tex.microtile != RADEON_LAYOUT_LINEAR ||
+            r300_resource(info->dst.resource)->tex.macrotile[info->dst.level] != RADEON_LAYOUT_LINEAR);
 }
 
 static void r300_simple_msaa_resolve(struct pipe_context *pipe,
@@ -704,6 +706,7 @@ static void r300_msaa_resolve(struct pipe_context *pipe,
     templ.depth0 = 1;
     templ.array_size = 1;
     templ.usage = PIPE_USAGE_STATIC;
+    templ.flags = R300_RESOURCE_FORCE_MICROTILING;
 
     tmp = screen->resource_create(screen, &templ);
 

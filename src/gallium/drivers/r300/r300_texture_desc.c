@@ -416,6 +416,8 @@ static void r300_setup_tiling(struct r300_screen *screen,
     boolean rv350_mode = screen->caps.family >= CHIP_R350;
     boolean is_zb = util_format_is_depth_or_stencil(format);
     boolean dbg_no_tiling = SCREEN_DBG_ON(screen, DBG_NO_TILING);
+    boolean force_microtiling =
+        (tex->b.b.flags & R300_RESOURCE_FORCE_MICROTILING) != 0;
 
     if (tex->b.b.nr_samples > 1) {
         tex->tex.microtile = RADEON_LAYOUT_TILED;
@@ -431,7 +433,8 @@ static void r300_setup_tiling(struct r300_screen *screen,
     }
 
     /* If height == 1, disable microtiling except for zbuffer. */
-    if (!is_zb && (tex->b.b.height0 == 1 || dbg_no_tiling)) {
+    if (!force_microtiling && !is_zb &&
+        (tex->b.b.height0 == 1 || dbg_no_tiling)) {
         return;
     }
 
