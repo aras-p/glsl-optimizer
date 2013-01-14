@@ -230,19 +230,24 @@ clear_with_quad(struct gl_context *ctx,
    {
       struct pipe_blend_state blend;
       memset(&blend, 0, sizeof(blend));
-      blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
       if (color) {
-         if (ctx->Color.ColorMask[0][0])
-            blend.rt[0].colormask |= PIPE_MASK_R;
-         if (ctx->Color.ColorMask[0][1])
-            blend.rt[0].colormask |= PIPE_MASK_G;
-         if (ctx->Color.ColorMask[0][2])
-            blend.rt[0].colormask |= PIPE_MASK_B;
-         if (ctx->Color.ColorMask[0][3])
-            blend.rt[0].colormask |= PIPE_MASK_A;
+         int num_buffers = ctx->Extensions.EXT_draw_buffers2 ?
+                           ctx->DrawBuffer->_NumColorDrawBuffers : 1;
+         int i;
+
+         blend.independent_blend_enable = num_buffers > 1;
+
+         for (i = 0; i < num_buffers; i++) {
+            if (ctx->Color.ColorMask[i][0])
+               blend.rt[i].colormask |= PIPE_MASK_R;
+            if (ctx->Color.ColorMask[i][1])
+               blend.rt[i].colormask |= PIPE_MASK_G;
+            if (ctx->Color.ColorMask[i][2])
+               blend.rt[i].colormask |= PIPE_MASK_B;
+            if (ctx->Color.ColorMask[i][3])
+               blend.rt[i].colormask |= PIPE_MASK_A;
+         }
+
          if (st->ctx->Color.DitherFlag)
             blend.dither = 1;
       }
@@ -347,12 +352,12 @@ is_scissor_enabled(struct gl_context *ctx, struct gl_renderbuffer *rb)
  * Return if any of the color channels are masked.
  */
 static INLINE GLboolean
-is_color_masked(struct gl_context *ctx)
+is_color_masked(struct gl_context *ctx, int i)
 {
-   return !ctx->Color.ColorMask[0][0] ||
-          !ctx->Color.ColorMask[0][1] ||
-          !ctx->Color.ColorMask[0][2] ||
-          !ctx->Color.ColorMask[0][3];
+   return !ctx->Color.ColorMask[i][0] ||
+          !ctx->Color.ColorMask[i][1] ||
+          !ctx->Color.ColorMask[i][2] ||
+          !ctx->Color.ColorMask[i][3];
 }
 
 
@@ -397,11 +402,13 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
             struct gl_renderbuffer *rb
                = ctx->DrawBuffer->Attachment[b].Renderbuffer;
             struct st_renderbuffer *strb = st_renderbuffer(rb);
+            int colormask_index = ctx->Extensions.EXT_draw_buffers2 ? i : 0;
 
             if (!strb || !strb->surface)
                continue;
 
-            if (is_scissor_enabled(ctx, rb) || is_color_masked(ctx))
+            if (is_scissor_enabled(ctx, rb) ||
+                is_color_masked(ctx, colormask_index))
                quad_buffers |= PIPE_CLEAR_COLOR;
             else
                clear_buffers |= PIPE_CLEAR_COLOR;
