@@ -35,7 +35,8 @@ AM_LFLAGS = --nounistd -o$(LEX_OUTPUT_ROOT).c
 include Makefile.sources
 
 noinst_LTLIBRARIES = libglsl.la
-noinst_PROGRAMS = glsl_compiler glsl_test
+check_PROGRAMS = glsl_test
+noinst_PROGRAMS = glsl_compiler
 
 libglsl_la_SOURCES = \
 	glsl_lexer.ll \
