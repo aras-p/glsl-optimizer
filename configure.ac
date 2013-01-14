@@ -739,7 +739,6 @@ AM_CONDITIONAL(HAVE_SHARED_GLAPI, test "x$enable_shared_glapi" = xyes)
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="gtest"
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_TARGET_DIRS=""
 GALLIUM_WINSYS_DIRS="sw"
@@ -764,7 +763,7 @@ fi
 # build glsl and mesa if OpenGL or OpenGL ES is enabled
 case "x$enable_opengl$enable_gles1$enable_gles2" in
 x*yes*)
-    CORE_DIRS="mapi/glapi/gen $CORE_DIRS glsl mesa"
+    CORE_DIRS="mapi/glapi/gen $CORE_DIRS gtest glsl mesa"
     ;;
 esac
 
