@@ -447,19 +447,7 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
                       quad_buffers & PIPE_CLEAR_DEPTH,
                       quad_buffers & PIPE_CLEAR_STENCIL);
    } else if (clear_buffers) {
-      /* driver cannot know it can clear everything if the buffer
-       * is a combined depth/stencil buffer but this wasn't actually
-       * required from the visual. Hence fix this up to avoid potential
-       * read-modify-write in the driver.
-       */
       union pipe_color_union clearColor;
-
-      if ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) &&
-          ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
-          (depthRb == stencilRb) &&
-          (ctx->DrawBuffer->Visual.depthBits == 0 ||
-           ctx->DrawBuffer->Visual.stencilBits == 0))
-         clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
 
       if (ctx->DrawBuffer->_ColorDrawBuffers[0]) {
          struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
