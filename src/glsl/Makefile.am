@@ -25,9 +25,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
-	$(LIBRARY_INCLUDES) \
 	$(DEFINES) \
-	$(LIBRARY_DEFINES) \
 	$(API_DEFINES)
 AM_CFLAGS = $(VISIBILITY_CFLAGS)
 AM_CXXFLAGS = $(VISIBILITY_CXXFLAGS)
