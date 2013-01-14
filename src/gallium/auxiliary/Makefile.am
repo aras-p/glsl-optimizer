@@ -45,3 +45,9 @@ util/u_format_srgb.c: $(srcdir)/util/u_format_srgb.py
 
 util/u_format_table.c: $(srcdir)/util/u_format_table.py $(srcdir)/util/u_format_pack.py $(srcdir)/util/u_format_parse.py $(srcdir)/util/u_format.csv
 	$(AM_V_GEN) $(PYTHON2) $(srcdir)/util/u_format_table.py $(srcdir)/util/u_format.csv > $@
+
+# XXX: As a work around for https://bugs.freedesktop.org/show_bug.cgi?id=59334
+# clover needs to link against libgallium.a. Delete this once we have a real
+# fix for this bug.
+all-local: libgallium.la
+	ln -f $(builddir)/.libs/libgallium.a $(builddir)/libgallium.a
