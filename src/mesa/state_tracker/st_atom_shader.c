@@ -59,7 +59,8 @@ get_passthrough_fs(struct st_context *st)
 {
    if (!st->passthrough_fs) {
       st->passthrough_fs =
-         util_make_fragment_passthrough_shader(st->pipe);
+         util_make_fragment_passthrough_shader(st->pipe, TGSI_SEMANTIC_COLOR,
+                                               TGSI_INTERPOLATE_PERSPECTIVE);
    }
 
    return st->passthrough_fs;

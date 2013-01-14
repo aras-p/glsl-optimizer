@@ -216,7 +216,8 @@ static void init_prog(struct program *p)
 	}
 
 	/* fragment shader */
-	p->fs = util_make_fragment_passthrough_shader(p->pipe);
+	p->fs = util_make_fragment_passthrough_shader(p->pipe,
+                    TGSI_SEMANTIC_COLOR, TGSI_INTERPOLATE_PERSPECTIVE);
 }
 
 static void close_prog(struct program *p)

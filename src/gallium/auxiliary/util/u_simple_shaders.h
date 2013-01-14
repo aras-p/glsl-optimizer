@@ -87,7 +87,9 @@ util_make_fragment_tex_shader_writestencil(struct pipe_context *pipe,
 
 
 extern void *
-util_make_fragment_passthrough_shader(struct pipe_context *pipe);
+util_make_fragment_passthrough_shader(struct pipe_context *pipe,
+                                      int input_semantic,
+                                      int input_interpolate);
 
 
 extern void *

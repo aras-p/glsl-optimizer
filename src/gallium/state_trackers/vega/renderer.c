@@ -308,7 +308,8 @@ static void renderer_set_fs(struct renderer *r, RendererFs id)
 
       switch (id) {
       case RENDERER_FS_COLOR:
-         fs = util_make_fragment_passthrough_shader(r->pipe);
+         fs = util_make_fragment_passthrough_shader(r->pipe,
+                          TGSI_SEMANTIC_COLOR, TGSI_INTERPOLATE_PERSPECTIVE);
          break;
       case RENDERER_FS_TEXTURE:
          fs = util_make_fragment_tex_shader(r->pipe,

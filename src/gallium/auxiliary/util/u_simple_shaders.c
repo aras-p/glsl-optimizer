@@ -316,13 +316,39 @@ util_make_fragment_tex_shader_writestencil(struct pipe_context *pipe,
 
 
 /**
- * Make simple fragment color pass-through shader.
+ * Make simple fragment color pass-through shader that replicates OUT[0]
+ * to all bound colorbuffers.
  */
 void *
-util_make_fragment_passthrough_shader(struct pipe_context *pipe)
+util_make_fragment_passthrough_shader(struct pipe_context *pipe,
+                                      int input_semantic,
+                                      int input_interpolate)
 {
-   return util_make_fragment_cloneinput_shader(pipe, 1, TGSI_SEMANTIC_COLOR,
-                                               TGSI_INTERPOLATE_PERSPECTIVE);
+   static const char shader_templ[] =
+         "FRAG\n"
+         "PROPERTY FS_COLOR0_WRITES_ALL_CBUFS 1\n"
+         "DCL IN[0], %s[0], %s\n"
+         "DCL OUT[0], COLOR[0]\n"
+
+         "MOV OUT[0], IN[0]\n"
+         "END\n";
+
+   char text[sizeof(shader_templ)+100];
+   struct tgsi_token tokens[1000];
+   struct pipe_shader_state state = {tokens};
+
+   sprintf(text, shader_templ, tgsi_semantic_names[input_semantic],
+           tgsi_interpolate_names[input_interpolate]);
+
+   if (!tgsi_text_translate(text, tokens, Elements(tokens))) {
+      assert(0);
+      return NULL;
+   }
+#if 0
+   tgsi_dump(state.tokens, 0);
+#endif
+
+   return pipe->create_fs_state(pipe, &state);
 }
 
 
