@@ -172,7 +172,6 @@ struct st_context
       struct pipe_viewport_state viewport;
       void *vs;
       void *fs;
-      boolean enable_ds_separate;
    } clear;
 
    /** used for anything using util_draw_vertex_buffer */
