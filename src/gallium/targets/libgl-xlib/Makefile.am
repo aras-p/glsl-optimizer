@@ -53,7 +53,8 @@ libGL_la_LIBADD = \
 	$(top_builddir)/src/mapi/glapi/libglapi.la \
 	$(top_builddir)/src/mesa/libmesagallium.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	-lpthread
+	$(PTHREAD_LIBS) \
+	$(CLOCK_LIB)
 
 if HAVE_MESA_LLVM
 libGL_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la $(LLVM_LIBS)
