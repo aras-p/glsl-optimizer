@@ -97,7 +97,7 @@ set_fragment_shader(struct st_context *st)
 {
    if (!st->clear.fs)
       st->clear.fs =
-         util_make_fragment_passthrough_shader(st->pipe, TGSI_SEMANTIC_COLOR,
+         util_make_fragment_passthrough_shader(st->pipe, TGSI_SEMANTIC_GENERIC,
                                                TGSI_INTERPOLATE_CONSTANT);
 
    cso_set_fragment_shader_handle(st->cso_context, st->clear.fs);
@@ -116,7 +116,7 @@ set_vertex_shader(struct st_context *st)
    if (!st->clear.vs)
    {
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
-                                      TGSI_SEMANTIC_COLOR };
+                                      TGSI_SEMANTIC_GENERIC };
       const uint semantic_indexes[] = { 0, 0 };
       st->clear.vs = util_make_vertex_passthrough_shader(st->pipe, 2,
                                                          semantic_names,
