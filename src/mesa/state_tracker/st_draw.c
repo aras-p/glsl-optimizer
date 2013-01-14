@@ -48,6 +48,7 @@
 #include "st_atom.h"
 #include "st_cb_bufferobjects.h"
 #include "st_cb_xformfb.h"
+#include "st_debug.h"
 #include "st_draw.h"
 #include "st_program.h"
 
@@ -252,6 +253,14 @@ st_draw_vbo(struct gl_context *ctx,
       if (!ib) {
          info.min_index = info.start;
          info.max_index = info.start + info.count - 1;
+      }
+
+      if (ST_DEBUG & DEBUG_DRAW) {
+         debug_printf("st/draw: mode %s  start %u  count %u  indexed %d\n",
+                      u_prim_name(info.mode),
+                      info.start,
+                      info.count,
+                      info.indexed);
       }
 
       if (info.count_from_stream_output) {

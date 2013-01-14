@@ -38,6 +38,7 @@
 
 #include "st_context.h"
 #include "st_cb_bufferobjects.h"
+#include "st_debug.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -229,6 +230,10 @@ st_bufferobj_data(struct gl_context *ctx,
    }
 
    pipe_resource_reference( &st_obj->buffer, NULL );
+
+   if (ST_DEBUG & DEBUG_BUFFER) {
+      debug_printf("Create buffer size %lu bind 0x%x\n", size, bind);
+   }
 
    if (size != 0) {
       st_obj->buffer = pipe_buffer_create(pipe->screen, bind,

@@ -53,6 +53,8 @@ static const struct debug_named_value st_debug_flags[] = {
    { "fallback", DEBUG_FALLBACK, NULL },
    { "screen",   DEBUG_SCREEN, NULL },
    { "query",    DEBUG_QUERY, NULL },
+   { "draw",     DEBUG_DRAW, NULL },
+   { "buffer",   DEBUG_BUFFER, NULL },
    DEBUG_NAMED_VALUE_END
 };
 
