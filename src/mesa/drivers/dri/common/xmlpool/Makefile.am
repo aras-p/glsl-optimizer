@@ -52,7 +52,7 @@ POT=xmlpool.pot
 
 .PHONY: all clean pot po mo
 
-all: options.h
+BUILT_SOURCES = options.h
 
 # All generated files are cleaned up.
 clean:
