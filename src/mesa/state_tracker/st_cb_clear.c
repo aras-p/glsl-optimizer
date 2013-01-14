@@ -380,8 +380,6 @@ is_stencil_masked(struct gl_context *ctx, struct gl_renderbuffer *rb)
 static void
 st_Clear(struct gl_context *ctx, GLbitfield mask)
 {
-   static const GLbitfield BUFFER_BITS_DS
-      = (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
    struct st_context *st = st_context(ctx);
    struct gl_renderbuffer *depthRb
       = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
@@ -416,41 +414,25 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
       }
    }
 
-   if ((mask & BUFFER_BITS_DS) == BUFFER_BITS_DS && depthRb == stencilRb) {
-      /* clearing combined depth + stencil */
+   if (mask & BUFFER_BIT_DEPTH) {
       struct st_renderbuffer *strb = st_renderbuffer(depthRb);
 
       if (strb->surface) {
-         if (is_scissor_enabled(ctx, depthRb) ||
-             is_stencil_masked(ctx, depthRb))
-            quad_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+         if (is_scissor_enabled(ctx, depthRb))
+            quad_buffers |= PIPE_CLEAR_DEPTH;
          else
-            clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+            clear_buffers |= PIPE_CLEAR_DEPTH;
       }
    }
-   else {
-      /* separate depth/stencil clears */
-      /* I don't think truly separate buffers are actually possible in gallium or hw? */
-      if (mask & BUFFER_BIT_DEPTH) {
-         struct st_renderbuffer *strb = st_renderbuffer(depthRb);
+   if (mask & BUFFER_BIT_STENCIL) {
+      struct st_renderbuffer *strb = st_renderbuffer(stencilRb);
 
-         if (strb->surface) {
-            if (is_scissor_enabled(ctx, depthRb))
-               quad_buffers |= PIPE_CLEAR_DEPTH;
-            else
-               clear_buffers |= PIPE_CLEAR_DEPTH;
-         }
-      }
-      if (mask & BUFFER_BIT_STENCIL) {
-         struct st_renderbuffer *strb = st_renderbuffer(stencilRb);
-
-         if (strb->surface) {
-            if (is_scissor_enabled(ctx, stencilRb) ||
-                is_stencil_masked(ctx, stencilRb))
-               quad_buffers |= PIPE_CLEAR_STENCIL;
-            else
-               clear_buffers |= PIPE_CLEAR_STENCIL;
-         }
+      if (strb->surface) {
+         if (is_scissor_enabled(ctx, stencilRb) ||
+             is_stencil_masked(ctx, stencilRb))
+            quad_buffers |= PIPE_CLEAR_STENCIL;
+         else
+            clear_buffers |= PIPE_CLEAR_STENCIL;
       }
    }
 
