@@ -209,9 +209,6 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 0;
 
-   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
-      return 1;
-
    case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:
       return 1; /* The color outputs of vertex shaders are not clamped */
    case PIPE_CAP_VERTEX_COLOR_CLAMPED:

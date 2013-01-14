@@ -61,8 +61,6 @@ The integer capabilities:
 * ``PIPE_CAP_INDEP_BLEND_FUNC``: Whether per-rendertarget blend functions are
   available. If 0, then the first rendertarget's blend functions affect all
   MRTs.
-* ``PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE``: Whether clearing only depth or only
-  stencil in a combined depth-stencil buffer is supported.
 * ``PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS``: The maximum number of texture array
   layers supported. If 0, the array textures are not supported at all and
   the ARRAY texture targets are invalid.

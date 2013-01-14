@@ -118,7 +118,6 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       */
    case PIPE_CAP_TWO_SIDED_STENCIL:
    case PIPE_CAP_DEPTH_CLIP_DISABLE:
-   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
    case PIPE_CAP_POINT_SPRITE:
       return 1;
    case PIPE_CAP_SM3:
