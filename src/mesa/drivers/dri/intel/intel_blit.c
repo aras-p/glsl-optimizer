@@ -194,7 +194,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    assert(dst_y < dst_y2);
 
    BEGIN_BATCH_BLT(8);
-   OUT_BATCH(CMD);
+   OUT_BATCH(CMD | (8 - 2));
    OUT_BATCH(BR13 | (uint16_t)dst_pitch);
    OUT_BATCH((dst_y << 16) | dst_x);
    OUT_BATCH((dst_y2 << 16) | dst_x2);
@@ -368,7 +368,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
       }
 
       BEGIN_BATCH_BLT(6);
-      OUT_BATCH(CMD);
+      OUT_BATCH(CMD | (6 - 2));
       OUT_BATCH(BR13);
       OUT_BATCH((y1 << 16) | x1);
       OUT_BATCH((y2 << 16) | x2);
@@ -445,7 +445,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
       blit_cmd |= XY_DST_TILED;
 
    BEGIN_BATCH_BLT(8 + 3);
-   OUT_BATCH(opcode);
+   OUT_BATCH(opcode | (8 - 2));
    OUT_BATCH(br13);
    OUT_BATCH((0 << 16) | 0); /* clip x1, y1 */
    OUT_BATCH((100 << 16) | 100); /* clip x2, y2 */
@@ -587,7 +587,7 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
    }
 
    BEGIN_BATCH_BLT(6);
-   OUT_BATCH(CMD);
+   OUT_BATCH(CMD | (6 - 2));
    OUT_BATCH(BR13);
    OUT_BATCH((y1 << 16) | x1);
    OUT_BATCH((y2 << 16) | x2);

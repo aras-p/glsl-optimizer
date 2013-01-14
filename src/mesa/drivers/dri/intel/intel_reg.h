@@ -240,11 +240,11 @@
 #define PRIM3D_DIB		(0x9<<18)
 #define PRIM3D_MASK		(0x1f<<18)
 
-#define XY_SETUP_BLT_CMD		(CMD_2D | (0x01 << 22) | 6)
+#define XY_SETUP_BLT_CMD		(CMD_2D | (0x01 << 22))
 
-#define XY_COLOR_BLT_CMD		(CMD_2D | (0x50 << 22) | 4)
+#define XY_COLOR_BLT_CMD		(CMD_2D | (0x50 << 22))
 
-#define XY_SRC_COPY_BLT_CMD             (CMD_2D | (0x53 << 22) | 6)
+#define XY_SRC_COPY_BLT_CMD             (CMD_2D | (0x53 << 22))
 
 #define XY_TEXT_IMMEDIATE_BLIT_CMD	(CMD_2D | (0x31 << 22))
 # define XY_TEXT_BYTE_PACKED		(1 << 16)
