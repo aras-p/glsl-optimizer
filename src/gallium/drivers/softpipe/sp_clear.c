@@ -34,6 +34,7 @@
 
 #include "pipe/p_defines.h"
 #include "util/u_pack_color.h"
+#include "util/u_surface.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_query.h"
@@ -50,6 +51,8 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers,
                double depth, unsigned stencil)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+   struct pipe_surface *zsbuf = softpipe->framebuffer.zsbuf;
+   unsigned zs_buffers = buffers & PIPE_CLEAR_DEPTHSTENCIL;
    uint64_t cv;
    uint i;
 
@@ -69,11 +72,17 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers,
       }
    }
 
-   if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
+   if (zs_buffers &&
+       util_format_is_depth_and_stencil(zsbuf->texture->format) &&
+       zs_buffers != PIPE_CLEAR_DEPTHSTENCIL) {
+      /* Clearing only depth or stencil in a combined depth-stencil buffer. */
+      util_clear_depth_stencil(pipe, zsbuf, zs_buffers, depth, stencil,
+                               0, 0, zsbuf->width, zsbuf->height);
+   }
+   else if (zs_buffers) {
       static const union pipe_color_union zero;
-      struct pipe_surface *ps = softpipe->framebuffer.zsbuf;
 
-      cv = util_pack64_z_stencil(ps->format, depth, stencil);
+      cv = util_pack64_z_stencil(zsbuf->format, depth, stencil);
       sp_tile_cache_clear(softpipe->zsbuf_cache, &zero, cv);
    }
 
