@@ -29,7 +29,7 @@
 import sys
 # make it possible to import glapi
 import os
-GLAPI = "./%s/../glapi/gen" % (os.path.dirname(sys.argv[0]))
+GLAPI = os.path.join(".", os.path.dirname(sys.argv[0]), "../glapi/gen")
 sys.path.append(GLAPI)
 
 import re
