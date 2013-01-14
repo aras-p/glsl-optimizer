@@ -295,12 +295,14 @@ static void r300_clear(struct pipe_context* pipe,
                         r300_depth_clear_value(fb->zsbuf->format, depth, stencil);
 
                     r300_mark_atom_dirty(r300, &r300->zmask_clear);
+                    r300_mark_atom_dirty(r300, &r300->gpu_flush);
                     buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
                 }
 
                 if (hiz_clear) {
                     r300->hiz_clear_value = r300_hiz_clear_value(depth);
                     r300_mark_atom_dirty(r300, &r300->hiz_clear);
+                    r300_mark_atom_dirty(r300, &r300->gpu_flush);
                 }
                 r300->num_z_clears++;
             }
@@ -339,6 +341,7 @@ static void r300_clear(struct pipe_context* pipe,
             if (r300->screen->cmask_resource == fb->cbufs[0]->texture) {
                 r300_set_clear_color(r300, color);
                 r300_mark_atom_dirty(r300, &r300->cmask_clear);
+                r300_mark_atom_dirty(r300, &r300->gpu_flush);
                 buffers &= ~PIPE_CLEAR_COLOR;
             }
         }
@@ -375,6 +378,7 @@ static void r300_clear(struct pipe_context* pipe,
          * procedure. */
         /* Calculate zmask_clear and hiz_clear atom sizes. */
         unsigned dwords =
+            r300->gpu_flush.size +
             (r300->zmask_clear.dirty ? r300->zmask_clear.size : 0) +
             (r300->hiz_clear.dirty ? r300->hiz_clear.size : 0) +
             (r300->cmask_clear.dirty ? r300->cmask_clear.size : 0) +
@@ -386,6 +390,9 @@ static void r300_clear(struct pipe_context* pipe,
         }
 
         /* Emit clear packets. */
+        r300_emit_gpu_flush(r300, r300->gpu_flush.size, r300->gpu_flush.state);
+        r300->gpu_flush.dirty = FALSE;
+
         if (r300->zmask_clear.dirty) {
             r300_emit_zmask_clear(r300, r300->zmask_clear.size,
                                   r300->zmask_clear.state);

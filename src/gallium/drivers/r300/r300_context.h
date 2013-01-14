@@ -487,6 +487,13 @@ struct r300_context {
      * performance and stability if not handled with care. */
     /* GPU flush. */
     struct r300_atom gpu_flush;
+    /* Clears must be emitted immediately after the flush. */
+    /* HiZ clear */
+    struct r300_atom hiz_clear;
+    /* zmask clear */
+    struct r300_atom zmask_clear;
+    /* cmask clear */
+    struct r300_atom cmask_clear;
     /* Anti-aliasing (MSAA) state. */
     struct r300_atom aa_state;
     /* Framebuffer state. */
@@ -537,12 +544,6 @@ struct r300_context {
     struct r300_atom texture_cache_inval;
     /* Textures state. */
     struct r300_atom textures_state;
-    /* HiZ clear */
-    struct r300_atom hiz_clear;
-    /* zmask clear */
-    struct r300_atom zmask_clear;
-    /* cmask clear */
-    struct r300_atom cmask_clear;
     /* Occlusion query. */
     struct r300_atom query_start;
 

@@ -1210,9 +1210,6 @@ void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
     tex = r300_resource(fb->zsbuf->texture);
 
     BEGIN_CS(size);
-    OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
     OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_HIZ, 2);
     OUT_CS(0);
     OUT_CS(tex->tex.hiz_dwords[fb->zsbuf->u.tex.level]);
@@ -1235,9 +1232,6 @@ void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state
     tex = r300_resource(fb->zsbuf->texture);
 
     BEGIN_CS(size);
-    OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
     OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_ZMASK, 2);
     OUT_CS(0);
     OUT_CS(tex->tex.zmask_dwords[fb->zsbuf->u.tex.level]);
@@ -1259,9 +1253,6 @@ void r300_emit_cmask_clear(struct r300_context *r300, unsigned size, void *state
     tex = r300_resource(fb->cbufs[0]->texture);
 
     BEGIN_CS(size);
-    OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
-               R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
-               R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
     OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_CMASK, 2);
     OUT_CS(0);
     OUT_CS(tex->tex.cmask_dwords);
