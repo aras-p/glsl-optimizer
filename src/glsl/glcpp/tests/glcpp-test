@@ -1,8 +1,8 @@
 #!/bin/sh
 
 if [ ! -z "$srcdir" ]; then
-   testdir=$srcdir/tests
-   glcpp=`pwd`/glcpp
+   testdir=$srcdir/glcpp/tests
+   glcpp=`pwd`/glcpp/glcpp
 else
    testdir=.
    glcpp=../glcpp

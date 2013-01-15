@@ -6,6 +6,7 @@ GLSL_BUILDDIR = $(top_builddir)/src/glsl
 # libglcpp
 
 LIBGLCPP_FILES = \
+	$(GLSL_SRCDIR)/ralloc.c \
 	$(GLSL_SRCDIR)/glcpp/pp.c
 
 LIBGLCPP_GENERATED_FILES = \
@@ -84,8 +85,7 @@ LIBGLSL_FILES = \
 	$(GLSL_SRCDIR)/opt_swizzle_swizzle.cpp \
 	$(GLSL_SRCDIR)/opt_tree_grafting.cpp \
 	$(GLSL_SRCDIR)/s_expression.cpp \
-	$(GLSL_SRCDIR)/strtod.c \
-	$(GLSL_SRCDIR)/ralloc.c
+	$(GLSL_SRCDIR)/strtod.c
 
 # glsl_compiler
 
@@ -103,8 +103,8 @@ BUILTIN_COMPILER_CXX_FILES = \
 	$(GLSL_SRCDIR)/builtin_stubs.cpp
 
 BUILTIN_COMPILER_GENERATED_CXX_FILES = \
-	$(GLSL_BUILDDIR)/glsl_lexer.cc \
-	$(GLSL_BUILDDIR)/glsl_parser.cc
+	$(GLSL_BUILDDIR)/glsl_lexer.cpp \
+	$(GLSL_BUILDDIR)/glsl_parser.cpp
 
 # libglsl generated sources
 LIBGLSL_GENERATED_CXX_FILES = \
