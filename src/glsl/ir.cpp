@@ -379,9 +379,9 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
    case ir_binop_bit_xor:
    case ir_binop_bit_or:
       if (op0->type->is_scalar()) {
-	 this->type = op1->type;
+         this->type = op1->type;
       } else if (op1->type->is_scalar()) {
-	 this->type = op0->type;
+         this->type = op0->type;
       }
       break;
 
