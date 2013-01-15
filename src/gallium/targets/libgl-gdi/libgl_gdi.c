@@ -159,8 +159,10 @@ DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
       break;
 
    case DLL_PROCESS_DETACH:
-      stw_cleanup_thread();
-      stw_cleanup();
+      if (lpReserved == NULL) {
+         stw_cleanup_thread();
+         stw_cleanup();
+      }
       break;
    }
    return TRUE;
