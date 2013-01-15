@@ -98,8 +98,9 @@ Begin by saving your current directory location:
   <pre>
   git clone git://anongit.freedesktop.org/git/mesa/vmwgfx
   </pre>
-
-<li>libdrm, A user-space library that interfaces with drm. Most distros ship with this driver. Safest bet is really to replace the system one. Optionally you can point LIBDRM_CFLAGS and LIBDRM_LIBS to the libdrm-2.4.22 package in toolchain. But here, we replace: 
+<li>libdrm, a user-space library that interfaces with drm.
+Most distros ship with this but it's safest to install a newer version.
+To get the latest code from git:
   <pre>
   git clone git://anongit.freedesktop.org/git/mesa/drm
   </pre>
@@ -116,7 +117,7 @@ Begin by saving your current directory location:
 <li>Build libdrm: If you're on a 32-bit system, you should skip the --libdir configure option. Note also the comment about toolchain libdrm above. 
   <pre>
   cd $TOP/drm
-  ./autogen.sh --prefix=/usr --enable-vmwgfx-experimental-api --libdir=/usr/lib64
+  ./autogen.sh --prefix=/usr --libdir=/usr/lib64
   make
   sudo make install
   </pre>
