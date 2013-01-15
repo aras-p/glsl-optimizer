@@ -36,7 +36,7 @@ struct r600_transfer {
 	/* Buffer transfer. */
 	struct pipe_transfer		*buffer_transfer;
 	unsigned			offset;
-	struct pipe_resource		*staging_texture;
+	struct pipe_resource		*staging;
 };
 
 struct r600_resource_texture {
@@ -48,7 +48,7 @@ struct r600_resource_texture {
 	enum pipe_format		real_format;
 
 	unsigned			pitch_override;
-	unsigned			depth;
+	unsigned			is_depth;
 	unsigned			dirty_db;
 	struct r600_resource_texture	*flushed_depth_texture;
 	boolean				is_flushing_texture;
@@ -69,9 +69,11 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 					     struct winsys_handle *whandle);
 
 void r600_init_flushed_depth_texture(struct pipe_context *ctx,
-				     struct pipe_resource *texture);
+				     struct pipe_resource *texture,
+				     struct r600_resource_texture **staging);
 void r600_texture_depth_flush(struct pipe_context *ctx,
-			      struct pipe_resource *texture);
+			      struct pipe_resource *texture,
+			      struct r600_resource_texture **staging);
 
 
 struct r600_context;

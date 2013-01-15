@@ -114,13 +114,17 @@ static unsigned u_num_layers(struct pipe_resource *r, unsigned level)
 	}
 }
 
-void si_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
+void si_blit_uncompress_depth(struct pipe_context *ctx,
+		struct r600_resource_texture *texture,
+		struct r600_resource_texture *staging)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	unsigned layer, level;
 	float depth = 1.0f;
+	struct r600_resource_texture *flushed_depth_texture = staging ?
+			staging : texture->flushed_depth_texture;
 
-	if (!texture->dirty_db)
+	if (!staging && !texture->dirty_db)
 		return;
 
 	for (level = 0; level <= texture->resource.b.b.last_level; level++) {
@@ -136,9 +140,9 @@ void si_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_tex
 
 			zsurf = ctx->create_surface(ctx, &texture->resource.b.b, &surf_tmpl);
 
-			surf_tmpl.format = texture->flushed_depth_texture->real_format;
+			surf_tmpl.format = flushed_depth_texture->real_format;
 			cbsurf = ctx->create_surface(ctx,
-					(struct pipe_resource*)texture->flushed_depth_texture, &surf_tmpl);
+					(struct pipe_resource*)flushed_depth_texture, &surf_tmpl);
 
 			r600_blitter_begin(ctx, R600_DECOMPRESS);
 			util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, ~0, rctx->custom_dsa_flush, depth);
@@ -149,7 +153,8 @@ void si_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_tex
 		}
 	}
 
-	texture->dirty_db = FALSE;
+	if (!staging)
+		texture->dirty_db = FALSE;
 }
 
 void si_flush_depth_textures(struct r600_context *rctx)
@@ -166,13 +171,13 @@ void si_flush_depth_textures(struct r600_context *rctx)
 		if (!view) continue;
 
 		tex = (struct r600_resource_texture *)view->base.texture;
-		if (!tex->depth)
+		if (!tex->is_depth)
 			continue;
 
 		if (tex->is_flushing_texture)
 			continue;
 
-		si_blit_uncompress_depth(&rctx->context, tex);
+		si_blit_uncompress_depth(&rctx->context, tex, NULL);
 	}
 
 	/* also check CB here */
@@ -180,13 +185,13 @@ void si_flush_depth_textures(struct r600_context *rctx)
 		struct r600_resource_texture *tex;
 		tex = (struct r600_resource_texture *)rctx->framebuffer.cbufs[i]->texture;
 
-		if (!tex->depth)
+		if (!tex->is_depth)
 			continue;
 
 		if (tex->is_flushing_texture)
 			continue;
 
-		si_blit_uncompress_depth(&rctx->context, tex);
+		si_blit_uncompress_depth(&rctx->context, tex, NULL);
 	}
 }
 
@@ -317,8 +322,8 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		return;
 	}
 
-	if (rsrc->depth && !rsrc->is_flushing_texture)
-		r600_texture_depth_flush(ctx, src);
+	if (rsrc->is_depth && !rsrc->is_flushing_texture)
+		r600_texture_depth_flush(ctx, src, NULL);
 
 	restore_orig[0] = restore_orig[1] = FALSE;
 
@@ -371,8 +376,8 @@ static void si_blit(struct pipe_context *ctx,
 		return;
 	}
 
-	if (rsrc->depth && !rsrc->is_flushing_texture)
-		r600_texture_depth_flush(ctx, info->src.resource);
+	if (rsrc->is_depth && !rsrc->is_flushing_texture)
+		r600_texture_depth_flush(ctx, info->src.resource, NULL);
 
 	r600_blitter_begin(ctx, R600_BLIT);
 	util_blitter_blit(rctx->blitter, info);

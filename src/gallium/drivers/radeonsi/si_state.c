@@ -1581,11 +1581,12 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 
-	if (rtex->depth)
+	if (rtex->is_depth)
 		rctx->have_depth_fb = TRUE;
 
-	if (rtex->depth && !rtex->is_flushing_texture) {
-	        r600_init_flushed_depth_texture(&rctx->context, state->cbufs[cb]->texture);
+	if (rtex->is_depth && !rtex->is_flushing_texture) {
+		r600_init_flushed_depth_texture(&rctx->context,
+				state->cbufs[cb]->texture, NULL);
 		rtex = rtex->flushed_depth_texture;
 		assert(rtex);
 	}
@@ -2083,8 +2084,8 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 		format = 0;
 	}
 
-	if (tmp->depth && !tmp->is_flushing_texture) {
-		r600_init_flushed_depth_texture(ctx, texture);
+	if (tmp->is_depth && !tmp->is_flushing_texture) {
+		r600_init_flushed_depth_texture(ctx, texture, NULL);
 		tmp = tmp->flushed_depth_texture;
 		if (!tmp) {
 			FREE(view);
@@ -2222,7 +2223,7 @@ static struct si_pm4_state *si_set_sampler_view(struct r600_context *rctx,
 		if (resource[i]) {
 			struct r600_resource_texture *rtex =
 				(struct r600_resource_texture *)views[i]->texture;
-			rctx->have_depth_texture |= rtex->depth && !rtex->is_flushing_texture;
+			rctx->have_depth_texture |= rtex->is_depth && !rtex->is_flushing_texture;
 			si_pm4_add_bo(pm4, resource[i]->resource, RADEON_USAGE_READ);
 		}
 
