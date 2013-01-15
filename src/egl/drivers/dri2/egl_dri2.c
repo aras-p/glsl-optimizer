@@ -742,7 +742,7 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
          api = __DRI_API_GLES;
          break;
       case 2:
-         api = __DRI_API_GLES3;
+         api = __DRI_API_GLES2;
          break;
       case 3:
          api = __DRI_API_GLES3;
