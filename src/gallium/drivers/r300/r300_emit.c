@@ -427,6 +427,11 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
             OUT_CS_REG(R300_RB3D_CMASK_OFFSET0, 0);
             OUT_CS_REG(R300_RB3D_CMASK_PITCH0, surf->pitch_cmask);
             OUT_CS_REG(R300_RB3D_COLOR_CLEAR_VALUE, r300->color_clear_value);
+            if (r300->screen->caps.is_r500 && r300->screen->info.drm_minor >= 29) {
+                OUT_CS_REG_SEQ(R500_RB3D_COLOR_CLEAR_VALUE_AR, 2);
+                OUT_CS(r300->color_clear_value_ar);
+                OUT_CS(r300->color_clear_value_gb);
+            }
         }
     }
 
