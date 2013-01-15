@@ -281,7 +281,6 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct pipe_resource resource;
 	struct r600_transfer *trans;
-	int r;
 	boolean use_staging_texture = FALSE;
 	struct radeon_winsys_cs_handle *buf;
 	enum pipe_format format = texture->format;
@@ -329,8 +328,8 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 		*/
 		/* XXX: when discard is true, no need to read back from depth texture
 		*/
-		r = r600_texture_depth_flush(ctx, texture, FALSE);
-		if (r < 0) {
+		r600_texture_depth_flush(ctx, texture);
+		if (!rtex->flushed_depth_texture) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
 			pipe_resource_reference(&trans->transfer.resource, NULL);
 			FREE(trans);
@@ -438,8 +437,19 @@ static void si_texture_transfer_unmap(struct pipe_context *ctx,
 	}
 
 	if (rtex->depth && !rtex->is_flushing_texture) {
-		if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtex->flushed_depth_texture)
-			r600_blit_push_depth(ctx, rtex);
+		if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtex->flushed_depth_texture) {
+			struct pipe_box sbox;
+
+			sbox.x = sbox.y = sbox.z = 0;
+			sbox.width = texture->width0;
+			sbox.height = texture->height0;
+			/* XXX that might be wrong */
+			sbox.depth = 1;
+
+			ctx->resource_copy_region(ctx, texture, 0, 0, 0, 0,
+						  &rtex->flushed_depth_texture->resource.b.b, 0,
+						  &sbox);
+		}
 	}
 
 	pipe_resource_reference(&transfer->resource, NULL);
@@ -617,14 +627,14 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 								  stride, 0, buf, FALSE, &surface);
 }
 
-int r600_texture_depth_flush(struct pipe_context *ctx,
-			     struct pipe_resource *texture, boolean just_create)
+void r600_init_flushed_depth_texture(struct pipe_context *ctx,
+				     struct pipe_resource *texture)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct pipe_resource resource;
 
 	if (rtex->flushed_depth_texture)
-		goto out;
+		return; /* it's ready */
 
 	resource.target = texture->target;
 	resource.format = texture->format;
@@ -641,18 +651,25 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 	rtex->flushed_depth_texture = (struct r600_resource_texture *)ctx->screen->resource_create(ctx->screen, &resource);
 	if (rtex->flushed_depth_texture == NULL) {
 		R600_ERR("failed to create temporary texture to hold untiled copy\n");
-		return -ENOMEM;
+		return;
 	}
 
 	((struct r600_resource_texture *)rtex->flushed_depth_texture)->is_flushing_texture = TRUE;
-out:
-	if (just_create)
-		return 0;
+}
+
+void r600_texture_depth_flush(struct pipe_context *ctx,
+			      struct pipe_resource *texture)
+{
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
+
+	r600_init_flushed_depth_texture(ctx, texture);
+
+	if (!rtex->flushed_depth_texture)
+		return; /* error */
 
 	/* XXX: only do this if the depth texture has actually changed:
 	 */
 	si_blit_uncompress_depth(ctx, rtex);
-	return 0;
 }
 
 void si_init_surface_functions(struct r600_context *r600)

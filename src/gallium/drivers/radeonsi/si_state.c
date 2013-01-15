@@ -1585,8 +1585,9 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 		rctx->have_depth_fb = TRUE;
 
 	if (rtex->depth && !rtex->is_flushing_texture) {
-	        r600_texture_depth_flush(&rctx->context, state->cbufs[cb]->texture, TRUE);
+	        r600_init_flushed_depth_texture(&rctx->context, state->cbufs[cb]->texture);
 		rtex = rtex->flushed_depth_texture;
+		assert(rtex);
 	}
 
 	offset = rtex->surface.level[level].offset;
@@ -2083,8 +2084,12 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	}
 
 	if (tmp->depth && !tmp->is_flushing_texture) {
-		r600_texture_depth_flush(ctx, texture, TRUE);
+		r600_init_flushed_depth_texture(ctx, texture);
 		tmp = tmp->flushed_depth_texture;
+		if (!tmp) {
+			FREE(view);
+			return NULL;
+		}
 		texture = &tmp->resource.b.b;
 	}
 

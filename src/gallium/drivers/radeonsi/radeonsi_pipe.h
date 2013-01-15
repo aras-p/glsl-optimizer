@@ -186,7 +186,6 @@ struct r600_context {
 /* r600_blit.c */
 void si_init_blit_functions(struct r600_context *rctx);
 void si_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
-void r600_blit_push_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
 void si_flush_depth_textures(struct r600_context *rctx);
 
 /* r600_buffer.c */

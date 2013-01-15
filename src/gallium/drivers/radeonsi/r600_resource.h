@@ -68,7 +68,10 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 					     const struct pipe_resource *base,
 					     struct winsys_handle *whandle);
 
-int r600_texture_depth_flush(struct pipe_context *ctx, struct pipe_resource *texture, boolean just_create);
+void r600_init_flushed_depth_texture(struct pipe_context *ctx,
+				     struct pipe_resource *texture);
+void r600_texture_depth_flush(struct pipe_context *ctx,
+			      struct pipe_resource *texture);
 
 
 struct r600_context;
