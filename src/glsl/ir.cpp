@@ -378,10 +378,15 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
    case ir_binop_bit_and:
    case ir_binop_bit_xor:
    case ir_binop_bit_or:
+       assert(!op0->type->is_matrix());
+       assert(!op1->type->is_matrix());
       if (op0->type->is_scalar()) {
          this->type = op1->type;
       } else if (op1->type->is_scalar()) {
          this->type = op0->type;
+      } else {
+          assert(op0->type->vector_elements == op1->type->vector_elements);
+          this->type = op0->type;
       }
       break;
 
