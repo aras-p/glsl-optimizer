@@ -28,6 +28,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
 	-I$(top_srcdir)/src/glsl/glcpp \
+	-I$(top_srcdir)/src/gtest/include \
 	$(DEFINES) \
 	$(API_DEFINES)
 AM_CFLAGS = $(VISIBILITY_CFLAGS)
@@ -35,10 +36,43 @@ AM_CXXFLAGS = $(VISIBILITY_CXXFLAGS)
 
 include Makefile.sources
 
-TESTS = glcpp/tests/glcpp-test
+TESTS = glcpp/tests/glcpp-test				\
+	tests/optimization-test				\
+	tests/ralloc-test				\
+	tests/uniform-initializer-test
+
+TESTS_ENVIRONMENT= \
+	export PYTHON2=$(PYTHON2); \
+	export PYTHON_FLAGS=$(PYTHON_FLAGS);
 
 noinst_LTLIBRARIES = libglcpp.la libglsl.la
-check_PROGRAMS = glcpp/glcpp glsl_test
+check_PROGRAMS =					\
+	glcpp/glcpp					\
+	glsl_test					\
+	tests/ralloc-test				\
+	tests/uniform-initializer-test
+
+tests_uniform_initializer_test_SOURCES =		\
+	$(top_srcdir)/src/mesa/main/hash_table.c	\
+	$(top_srcdir)/src/mesa/program/prog_hash_table.c\
+	$(top_srcdir)/src/mesa/program/symbol_table.c	\
+	tests/copy_constant_to_storage_tests.cpp	\
+	tests/set_uniform_initializer_tests.cpp		\
+	tests/uniform_initializer_utils.cpp
+tests_uniform_initializer_test_CFLAGS =			\
+	$(PTHREAD_CFLAGS)
+tests_uniform_initializer_test_LDADD =			\
+	$(top_builddir)/src/gtest/libgtest.la		\
+	$(top_builddir)/src/glsl/libglsl.la		\
+	$(PTHREAD_LIBS)
+
+tests_ralloc_test_SOURCES =				\
+	tests/ralloc_test.cpp				\
+	$(top_builddir)/src/glsl/ralloc.c
+tests_ralloc_test_CFLAGS = $(PTHREAD_CFLAGS)
+tests_ralloc_test_LDADD =				\
+	$(top_builddir)/src/gtest/libgtest.la		\
+	$(PTHREAD_LIBS)
 
 libglcpp_la_SOURCES =					\
 	glcpp/glcpp-lex.c				\

@@ -30,7 +30,6 @@ check-local:
 	$(MAKE) -C src/mapi/glapi/tests check
 	$(MAKE) -C src/mapi/shared-glapi/tests check
 	$(MAKE) -C src/mesa/main/tests check
-	$(MAKE) -C src/glsl/tests check
 	$(MAKE) -C src/glx/tests check
 
 .PHONY: doxygen
