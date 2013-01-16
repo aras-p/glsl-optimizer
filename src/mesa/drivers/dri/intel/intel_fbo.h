@@ -140,6 +140,10 @@ intel_create_wrapped_renderbuffer(struct gl_context * ctx,
 				  int width, int height,
 				  gl_format format);
 
+struct intel_renderbuffer *
+intel_create_fake_renderbuffer_wrapper(struct intel_context *intel,
+                                       struct gl_texture_image *image);
+
 extern void
 intel_fbo_init(struct intel_context *intel);
 

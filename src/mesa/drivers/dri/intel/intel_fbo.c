@@ -531,6 +531,36 @@ intel_renderbuffer_update_wrapper(struct intel_context *intel,
    return true;
 }
 
+/**
+ * Create a fake intel_renderbuffer that wraps a gl_texture_image.
+ */
+struct intel_renderbuffer *
+intel_create_fake_renderbuffer_wrapper(struct intel_context *intel,
+                                       struct gl_texture_image *image)
+{
+   struct gl_context *ctx = &intel->ctx;
+   struct intel_renderbuffer *irb;
+   struct gl_renderbuffer *rb;
+
+   irb = CALLOC_STRUCT(intel_renderbuffer);
+   if (!irb) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "creating renderbuffer");
+      return NULL;
+   }
+
+   rb = &irb->Base.Base;
+
+   _mesa_init_renderbuffer(rb, 0);
+   rb->ClassID = INTEL_RB_CLASS;
+
+   if (!intel_renderbuffer_update_wrapper(intel, irb, image, image->Face)) {
+      intel_delete_renderbuffer(ctx, rb);
+      return NULL;
+   }
+
+   return irb;
+}
+
 void
 intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb)
 {

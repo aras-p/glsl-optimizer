@@ -1215,6 +1215,14 @@ brw_blorp_framebuffer(struct intel_context *intel,
                       GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                       GLbitfield mask, GLenum filter);
 
+bool
+brw_blorp_copytexsubimage(struct intel_context *intel,
+                          struct gl_renderbuffer *src_rb,
+                          struct gl_texture_image *dst_image,
+                          int srcX0, int srcY0,
+                          int dstX0, int dstY0,
+                          int width, int height);
+
 /* gen6_multisample_state.c */
 void
 gen6_emit_3dstate_multisample(struct brw_context *brw,

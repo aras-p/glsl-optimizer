@@ -41,6 +41,9 @@
 #include "intel_fbo.h"
 #include "intel_tex.h"
 #include "intel_blit.h"
+#ifndef I915
+#include "brw_context.h"
+#endif
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -177,15 +180,28 @@ intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
                      GLint x, GLint y,
                      GLsizei width, GLsizei height)
 {
-   if (dims == 3 || !intel_copy_texsubimage(intel_context(ctx),
-                               intel_texture_image(texImage),
-                               xoffset, yoffset,
-                               intel_renderbuffer(rb), x, y, width, height)) {
-      fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
-      _mesa_meta_CopyTexSubImage(ctx, dims, texImage,
-                                 xoffset, yoffset, zoffset,
-                                 rb, x, y, width, height);
+   struct intel_context *intel = intel_context(ctx);
+   if (dims != 3) {
+#ifndef I915
+      /* Try BLORP first.  It can handle almost everything. */
+      if (brw_blorp_copytexsubimage(intel, rb, texImage, x, y,
+                                    xoffset, yoffset, width, height))
+         return;
+#endif
+
+      /* Next, try the BLT engine. */
+      if (intel_copy_texsubimage(intel_context(ctx),
+                                 intel_texture_image(texImage),
+                                 xoffset, yoffset,
+                                 intel_renderbuffer(rb), x, y, width, height))
+         return;
    }
+
+   /* Finally, fall back to meta.  This will likely be slow. */
+   fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
+   _mesa_meta_CopyTexSubImage(ctx, dims, texImage,
+                              xoffset, yoffset, zoffset,
+                              rb, x, y, width, height);
 }
 
 

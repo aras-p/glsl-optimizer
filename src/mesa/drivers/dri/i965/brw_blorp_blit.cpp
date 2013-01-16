@@ -23,6 +23,7 @@
 
 #include "main/teximage.h"
 #include "main/fbobject.h"
+#include "main/renderbuffer.h"
 
 #include "glsl/ralloc.h"
 
@@ -294,6 +295,93 @@ try_blorp_blit(struct intel_context *intel,
 
    return true;
 }
+
+bool
+brw_blorp_copytexsubimage(struct intel_context *intel,
+                          struct gl_renderbuffer *src_rb,
+                          struct gl_texture_image *dst_image,
+                          int srcX0, int srcY0,
+                          int dstX0, int dstY0,
+                          int width, int height)
+{
+   struct gl_context *ctx = &intel->ctx;
+   struct intel_renderbuffer *src_irb = intel_renderbuffer(src_rb);
+   struct intel_renderbuffer *dst_irb;
+
+   /* BLORP is not supported before Gen6. */
+   if (intel->gen < 6)
+      return false;
+
+   /* Create a fake/wrapper renderbuffer to allow us to use do_blorp_blit(). */
+   dst_irb = intel_create_fake_renderbuffer_wrapper(intel, dst_image);
+   if (!dst_irb)
+      return false;
+
+   struct gl_renderbuffer *dst_rb = &dst_irb->Base.Base;
+
+   /* Unlike BlitFramebuffer, CopyTexSubImage doesn't have a buffer bit.
+    * It's only used by find_miptee() to decide whether to dereference the
+    * separate stencil miptree.  In the case of packed depth/stencil, core
+    * Mesa hands us the depth attachment as src_rb (not stencil), so assume
+    * non-stencil for now.  A buffer bit of 0 works for both color and depth.
+    */
+   GLbitfield buffer_bit = 0;
+
+   if (!formats_match(buffer_bit, src_irb, dst_irb)) {
+      _mesa_delete_renderbuffer(ctx, dst_rb);
+      return false;
+   }
+
+   /* Source clipping shouldn't be necessary, since copytexsubimage (in
+    * src/mesa/main/teximage.c) calls _mesa_clip_copytexsubimage() which
+    * takes care of it.
+    *
+    * Destination clipping shouldn't be necessary since the restrictions on
+    * glCopyTexSubImage prevent the user from specifying a destination rectangle
+    * that falls outside the bounds of the destination texture.
+    * See error_check_subtexture_dimensions().
+    */
+
+   int srcY1 = srcY0 + height;
+   int dstX1 = dstX0 + width;
+   int dstY1 = dstY0 + height;
+
+   /* Sync up the state of window system buffers.  We need to do this before
+    * we go looking for the buffers.
+    */
+   intel_prepare_render(intel);
+
+   /* Account for the fact that in the system framebuffer, the origin is at
+    * the lower left.
+    */
+   bool mirror_y = false;
+   if (_mesa_is_winsys_fbo(ctx->ReadBuffer)) {
+      GLint tmp = src_rb->Height - srcY0;
+      srcY0 = src_rb->Height - srcY1;
+      srcY1 = tmp;
+      mirror_y = true;
+   }
+
+   do_blorp_blit(intel, buffer_bit, src_irb, dst_irb,
+                 srcX0, srcY0, dstX0, dstY0, dstX1, dstY1, false, mirror_y);
+
+   /* If we're copying a packed depth stencil texture, the above do_blorp_blit
+    * copied depth (since buffer_bit != GL_STENCIL_BIT).  Now copy stencil as
+    * well.  There's no need to do a formats_match() check because the separate
+    * stencil buffer is always S8.
+    */
+   src_rb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+   if (_mesa_get_format_bits(dst_image->TexFormat, GL_STENCIL_BITS) > 0 &&
+       src_rb != NULL) {
+      src_irb = intel_renderbuffer(src_rb);
+      do_blorp_blit(intel, GL_STENCIL_BUFFER_BIT, src_irb, dst_irb,
+                    srcX0, srcY0, dstX0, dstY0, dstX1, dstY1, false, mirror_y);
+   }
+
+   _mesa_delete_renderbuffer(ctx, dst_rb);
+   return true;
+}
+
 
 GLbitfield
 brw_blorp_framebuffer(struct intel_context *intel,
