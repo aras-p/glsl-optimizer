@@ -803,9 +803,6 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
 
    vbo_draw_method(vbo_context(ctx), DRAW_BEGIN_END);
 
-   if (ctx->Driver.PrepareExecBegin)
-      ctx->Driver.PrepareExecBegin(ctx);
-
    if (ctx->NewState) {
       _mesa_update_state( ctx );
 
