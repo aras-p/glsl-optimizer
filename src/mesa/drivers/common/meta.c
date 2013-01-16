@@ -4126,7 +4126,7 @@ _mesa_meta_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
       const GLfloat x1 = x + width;
       const GLfloat y1 = y + height;
 
-      z = CLAMP(z, 0.0, 1.0);
+      z = CLAMP(z, 0.0f, 1.0f);
       z = invert_z(z);
 
       verts[0].x = x;
