@@ -1697,8 +1697,7 @@ _mesa_es_error_check_format_and_type(GLenum format, GLenum type,
  */
 GLenum
 _mesa_es3_error_check_format_and_type(GLenum format, GLenum type,
-                                      GLenum internalFormat,
-                                      unsigned dimensions)
+                                      GLenum internalFormat)
 {
    GLboolean type_valid = GL_TRUE;
 
@@ -2068,9 +2067,6 @@ _mesa_es3_error_check_format_and_type(GLenum format, GLenum type,
       break;
 
    case GL_DEPTH_COMPONENT:
-      if (dimensions != 2) {
-         return GL_INVALID_OPERATION;
-      }
       switch (type) {
       case GL_UNSIGNED_SHORT:
          if (internalFormat != GL_DEPTH_COMPONENT16)
@@ -2098,9 +2094,6 @@ _mesa_es3_error_check_format_and_type(GLenum format, GLenum type,
       break;
 
    case GL_DEPTH_STENCIL:
-      if (dimensions != 2) {
-         return GL_INVALID_OPERATION;
-      }
       switch (type) {
       case GL_UNSIGNED_INT_24_8:
          if (internalFormat != GL_DEPTH24_STENCIL8)

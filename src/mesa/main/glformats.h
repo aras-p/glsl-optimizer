@@ -122,8 +122,7 @@ _mesa_es_error_check_format_and_type(GLenum format, GLenum type,
 
 extern GLenum
 _mesa_es3_error_check_format_and_type(GLenum format, GLenum type,
-                                      GLenum internalFormat,
-                                      unsigned dimensions);
+                                      GLenum internalFormat);
 
 
 #ifdef __cplusplus

@@ -1896,8 +1896,7 @@ texture_error_check( struct gl_context *ctx,
    if (_mesa_is_gles(ctx)) {
       if (_mesa_is_gles3(ctx)) {
          err = _mesa_es3_error_check_format_and_type(format, type,
-                                                     internalFormat,
-                                                     dimensions);
+                                                     internalFormat);
       } else {
          if (format != internalFormat) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
