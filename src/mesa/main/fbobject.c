@@ -2903,6 +2903,8 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
 	 mask &= ~GL_STENCIL_BUFFER_BIT;
       }
       else {
+         int read_z_bits, draw_z_bits;
+
          if (_mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS) !=
              _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS)) {
             /* There is no need to check the stencil datatype here, because
@@ -2913,8 +2915,8 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
             return;
          }
 
-         int read_z_bits = _mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS);
-         int draw_z_bits = _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS);
+         read_z_bits = _mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS);
+         draw_z_bits = _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS);
 
          /* If both buffers also have depth data, the depth formats must match
           * as well.  If one doesn't have depth, it's not blitted, so we should
@@ -2948,6 +2950,8 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
 	 mask &= ~GL_DEPTH_BUFFER_BIT;
       }
       else {
+         int read_s_bit, draw_s_bit;
+
          if ((_mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS) !=
               _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS)) ||
              (_mesa_get_format_datatype(readRb->Format) !=
@@ -2957,8 +2961,8 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
             return;
          }
 
-         int read_s_bit = _mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS);
-         int draw_s_bit = _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS);
+         read_s_bit = _mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS);
+         draw_s_bit = _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS);
 
          /* If both buffers also have stencil data, the stencil formats must
           * match as well.  If one doesn't have stencil, it's not blitted, so
