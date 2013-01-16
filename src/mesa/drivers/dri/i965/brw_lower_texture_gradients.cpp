@@ -27,6 +27,7 @@
 
 #include "glsl/ir.h"
 #include "glsl/ir_builder.h"
+#include "program/prog_instruction.h"
 
 using namespace ir_builder;
 
@@ -89,10 +90,6 @@ lower_texture_grad_visitor::visit_leave(ir_texture *ir)
    if (ir->op != ir_txd || !ir->shadow_comparitor)
       return visit_continue;
 
-   /* Cubes are broken.  Avoid assertion failures when swizzling. */
-   if (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE)
-      return visit_continue;
-
    void *mem_ctx = ralloc_parent(ir);
 
    const glsl_type *grad_type = ir->lod_info.grad.dPdx->type;
@@ -106,8 +103,14 @@ lower_texture_grad_visitor::visit_leave(ir_texture *ir)
    txs->lod_info.lod = new(mem_ctx) ir_constant(0);
    ir_variable *size =
       new(mem_ctx) ir_variable(grad_type, "size", ir_var_temporary);
-   emit(size, expr(ir_unop_i2f,
-		   swizzle_for_size(txs, grad_type->vector_elements)));
+   if (ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE) {
+      base_ir->insert_before(size);
+      base_ir->insert_before(assign(size, expr(ir_unop_i2f, txs), WRITEMASK_XY));
+      base_ir->insert_before(assign(size, new(mem_ctx) ir_constant(1.0f), WRITEMASK_Z));
+   } else {
+      emit(size, expr(ir_unop_i2f,
+                      swizzle_for_size(txs, grad_type->vector_elements)));
+   }
 
    /* Scale the gradients by width and height.  Effectively, the incoming
     * gradients are s'(x,y), t'(x,y), and r'(x,y) from equation 3.19 in the
