@@ -22,6 +22,7 @@
  */
 
 #include "mtypes.h"
+#include "context.h"
 #include "glformats.h"
 #include "macros.h"
 #include "mfeatures.h"
@@ -36,6 +37,8 @@ _mesa_GetInternalformativ(GLenum target, GLenum internalformat, GLenum pname,
    GLint buffer[16];
    GLsizei count = 0;
    GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.ARB_internalformat_query) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetInternalformativ");
