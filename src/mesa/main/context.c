@@ -81,6 +81,7 @@
 #include "imports.h"
 #include "accum.h"
 #include "api_exec.h"
+#include "api_loopback.h"
 #include "arrayobj.h"
 #include "attrib.h"
 #include "blend.h"
@@ -859,6 +860,81 @@ _mesa_alloc_dispatch_table(int size)
    return table;
 }
 
+/**
+ * Creates a minimal dispatch table for use within glBegin()/glEnd().
+ *
+ * This ensures that we generate GL_INVALID_OPERATION errors from most
+ * functions, since the set of functions that are valid within Begin/End is
+ * very small.
+ *
+ * From the GL 1.0 specification section 2.6.3, "GL Commands within
+ * Begin/End"
+ *
+ *     "The only GL commands that are allowed within any Begin/End pairs are
+ *      the commands for specifying vertex coordinates, vertex color, normal
+ *      coordinates, and texture coordinates (Vertex, Color, Index, Normal,
+ *      TexCoord), EvalCoord and EvalPoint commands (see section 5.1),
+ *      commands for specifying lighting material parameters (Material
+ *      commands see section 2.12.2), display list invocation commands
+ *      (CallList and CallLists see section 5.4), and the EdgeFlag
+ *      command. Executing Begin after Begin has already been executed but
+ *      before an End is issued generates the INVALID OPERATION error, as does
+ *      executing End without a previous corresponding Begin. Executing any
+ *      other GL command within Begin/End results in the error INVALID
+ *      OPERATION."
+ *
+ * The table entries for specifying vertex attributes are set up by
+ * install_vtxfmt() and _mesa_loopback_init_api_table(), and End() and dlists
+ * are set by install_vtxfmt() as well.
+ */
+static struct _glapi_table *
+create_beginend_table(const struct gl_context *ctx)
+{
+   struct _glapi_table *table;
+
+   table = _mesa_alloc_dispatch_table(_gloffset_COUNT);
+   if (!table)
+      return NULL;
+
+   /* Fill in functions which return a value, since they should return some
+    * specific value even if they emit a GL_INVALID_OPERATION error from them
+    * being called within glBegin()/glEnd().
+    */
+#define COPY_DISPATCH(func) SET_##func(table, GET_##func(ctx->Exec))
+
+   COPY_DISPATCH(GenLists);
+   COPY_DISPATCH(IsProgram);
+   COPY_DISPATCH(IsVertexArray);
+   COPY_DISPATCH(IsBuffer);
+   COPY_DISPATCH(IsEnabled);
+   COPY_DISPATCH(IsEnabledi);
+   COPY_DISPATCH(IsRenderbuffer);
+   COPY_DISPATCH(IsFramebuffer);
+   COPY_DISPATCH(CheckFramebufferStatus);
+   COPY_DISPATCH(RenderMode);
+   COPY_DISPATCH(GetString);
+   COPY_DISPATCH(GetStringi);
+   COPY_DISPATCH(GetPointerv);
+   COPY_DISPATCH(IsQuery);
+   COPY_DISPATCH(IsSampler);
+   COPY_DISPATCH(IsSync);
+   COPY_DISPATCH(IsTexture);
+   COPY_DISPATCH(IsTransformFeedback);
+   COPY_DISPATCH(DeleteQueries);
+   COPY_DISPATCH(AreTexturesResident);
+   COPY_DISPATCH(FenceSync);
+   COPY_DISPATCH(ClientWaitSync);
+   COPY_DISPATCH(MapBuffer);
+   COPY_DISPATCH(UnmapBuffer);
+   COPY_DISPATCH(MapBufferRange);
+   COPY_DISPATCH(MapBufferRange);
+   COPY_DISPATCH(ObjectPurgeableAPPLE);
+   COPY_DISPATCH(ObjectUnpurgeableAPPLE);
+
+   _mesa_loopback_init_api_table(ctx, table);
+
+   return table;
+}
 
 /**
  * Initialize a struct gl_context struct (rendering context).
@@ -933,19 +1009,15 @@ _mesa_initialize_context(struct gl_context *ctx,
 
    _mesa_reference_shared_state(ctx, &ctx->Shared, shared);
 
-   if (!init_attrib_groups( ctx )) {
-      _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
-      return GL_FALSE;
-   }
+   if (!init_attrib_groups( ctx ))
+      goto fail;
 
    /* setup the API dispatch tables with all nop functions */
-   ctx->Exec = _mesa_alloc_dispatch_table(_gloffset_COUNT);
-
-   if (!ctx->Exec) {
-      _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
-      return GL_FALSE;
-   }
-   ctx->CurrentDispatch = ctx->Exec;
+   ctx->OutsideBeginEnd = _mesa_alloc_dispatch_table(_gloffset_COUNT);
+   if (!ctx->OutsideBeginEnd)
+      goto fail;
+   ctx->Exec = ctx->OutsideBeginEnd;
+   ctx->CurrentDispatch = ctx->OutsideBeginEnd;
 
    ctx->FragmentProgram._MaintainTexEnvProgram
       = (_mesa_getenv("MESA_TEX_PROG") != NULL);
@@ -967,12 +1039,10 @@ _mesa_initialize_context(struct gl_context *ctx,
 
    switch (ctx->API) {
    case API_OPENGL_COMPAT:
+      ctx->BeginEnd = create_beginend_table(ctx);
       ctx->Save = _mesa_create_save_table(ctx);
-      if (!ctx->Save) {
-         _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
-	 free(ctx->Exec);
-	 return GL_FALSE;
-      }
+      if (!ctx->BeginEnd || !ctx->Save)
+         goto fail;
 
       /* fall-through */
    case API_OPENGL_CORE:
@@ -1002,6 +1072,12 @@ _mesa_initialize_context(struct gl_context *ctx,
    ctx->FirstTimeCurrent = GL_TRUE;
 
    return GL_TRUE;
+
+fail:
+   free(ctx->BeginEnd);
+   free(ctx->Exec);
+   free(ctx->Save);
+   return GL_FALSE;
 }
 
 

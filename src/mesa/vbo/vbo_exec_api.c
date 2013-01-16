@@ -833,6 +833,17 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
    exec->vtx.prim[i].base_instance = 0;
 
    ctx->Driver.CurrentExecPrimitive = mode;
+
+   ctx->Exec = ctx->BeginEnd;
+   /* We may have been called from a display list, in which case we should
+    * leave dlist.c's dispatch table in place.
+    */
+   if (ctx->CurrentDispatch == ctx->OutsideBeginEnd) {
+      ctx->CurrentDispatch = ctx->BeginEnd;
+      _glapi_set_dispatch(ctx->CurrentDispatch);
+   } else {
+      assert(ctx->CurrentDispatch == ctx->Save);
+   }
 }
 
 
@@ -847,6 +858,12 @@ static void GLAPIENTRY vbo_exec_End( void )
    if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glEnd");
       return;
+   }
+
+   ctx->Exec = ctx->OutsideBeginEnd;
+   if (ctx->CurrentDispatch == ctx->BeginEnd) {
+      ctx->CurrentDispatch = ctx->OutsideBeginEnd;
+      _glapi_set_dispatch(ctx->CurrentDispatch);
    }
 
    if (exec->vtx.prim_count > 0) {
