@@ -1623,9 +1623,10 @@ blitframebuffer_texture(struct gl_context *ctx,
          GLuint sampler, samplerSave =
             ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
             ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
+         int i;
 
          /* Iterate through all draw buffers */
-         for (int i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+         for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
             int idx = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
             if (idx == -1)
                continue;
