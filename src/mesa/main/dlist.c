@@ -5648,16 +5648,9 @@ save_Begin(GLenum mode)
    Node *n;
    GLboolean error = GL_FALSE;
 
-   if (mode > GL_POLYGON) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBegin(mode=%x)", mode);
+   if (ctx->ExecuteFlag && !_mesa_valid_prim_mode(ctx, mode, "glBegin")) {
       error = GL_TRUE;
    }
-   if (ctx->ExecuteFlag) {
-      if (!_mesa_valid_prim_mode(ctx, mode, "glBegin")) {
-	 error = GL_TRUE;
-      }
-   }
-
    else if (ctx->Driver.CurrentSavePrimitive == PRIM_UNKNOWN) {
       /* Typically the first begin.  This may raise an error on
        * playback, depending on whether CallList is issued from inside
