@@ -507,7 +507,8 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
       }
    }
    else {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(target=0x%x)",target );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glTexEnv(target=%s)",
+                  _mesa_lookup_enum_by_nr(target));
       return;
    }
 
