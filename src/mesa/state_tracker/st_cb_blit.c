@@ -184,48 +184,70 @@ st_BlitFramebuffer(struct gl_context *ctx,
       blit.mask = PIPE_MASK_RGBA;
 
       if (srcAtt->Type == GL_TEXTURE) {
-         struct st_texture_object *srcObj =
-            st_texture_object(srcAtt->Texture);
-         struct st_renderbuffer *dstRb =
-            st_renderbuffer(drawFB->_ColorDrawBuffers[0]);
-         struct pipe_surface *dstSurf = dstRb->surface;
+         struct st_texture_object *srcObj = st_texture_object(srcAtt->Texture);
+         GLuint i;
 
-         assert(srcObj->pt);
-         if (!srcObj->pt) {
+         if (!srcObj || !srcObj->pt) {
             return;
          }
 
-         blit.dst.resource = dstSurf->texture;
-         blit.dst.level = dstSurf->u.tex.level;
-         blit.dst.box.z = dstSurf->u.tex.first_layer;
-         blit.dst.format = util_format_linear(dstSurf->format);
+         for (i = 0; i < drawFB->_NumColorDrawBuffers; i++) {
+            struct st_renderbuffer *dstRb =
+               st_renderbuffer(drawFB->_ColorDrawBuffers[i]);
 
-         blit.src.resource = srcObj->pt;
-         blit.src.level = srcAtt->TextureLevel;
-         blit.src.box.z = srcAtt->Zoffset + srcAtt->CubeMapFace;
-         blit.src.format = util_format_linear(srcObj->pt->format);
+            if (dstRb) {
+               struct pipe_surface *dstSurf = dstRb->surface;
 
-         st->pipe->blit(st->pipe, &blit);
+               if (dstSurf) {
+                  blit.dst.resource = dstSurf->texture;
+                  blit.dst.level = dstSurf->u.tex.level;
+                  blit.dst.box.z = dstSurf->u.tex.first_layer;
+                  blit.dst.format = util_format_linear(dstSurf->format);
+
+                  blit.src.resource = srcObj->pt;
+                  blit.src.level = srcAtt->TextureLevel;
+                  blit.src.box.z = srcAtt->Zoffset + srcAtt->CubeMapFace;
+                  blit.src.format = util_format_linear(srcObj->pt->format);
+
+                  st->pipe->blit(st->pipe, &blit);
+               }
+            }
+         }
       }
       else {
          struct st_renderbuffer *srcRb =
             st_renderbuffer(readFB->_ColorReadBuffer);
-         struct st_renderbuffer *dstRb =
-            st_renderbuffer(drawFB->_ColorDrawBuffers[0]);
-         struct pipe_surface *srcSurf = srcRb->surface;
-         struct pipe_surface *dstSurf = dstRb->surface;
+         struct pipe_surface *srcSurf;
+         GLuint i;
 
-         blit.dst.resource = dstSurf->texture;
-         blit.dst.level = dstSurf->u.tex.level;
-         blit.dst.box.z = dstSurf->u.tex.first_layer;
-         blit.dst.format = util_format_linear(dstSurf->format);
+         if (!srcRb || !srcRb->surface) {
+            return;
+         }
 
-         blit.src.resource = srcSurf->texture;
-         blit.src.level = srcSurf->u.tex.level;
-         blit.src.box.z = srcSurf->u.tex.first_layer;
-         blit.src.format = util_format_linear(srcSurf->format);
+         srcSurf = srcRb->surface;
 
-         st->pipe->blit(st->pipe, &blit);
+         for (i = 0; i < drawFB->_NumColorDrawBuffers; i++) {
+            struct st_renderbuffer *dstRb =
+               st_renderbuffer(drawFB->_ColorDrawBuffers[i]);
+
+            if (dstRb) {
+               struct pipe_surface *dstSurf = dstRb->surface;
+
+               if (dstSurf) {
+                  blit.dst.resource = dstSurf->texture;
+                  blit.dst.level = dstSurf->u.tex.level;
+                  blit.dst.box.z = dstSurf->u.tex.first_layer;
+                  blit.dst.format = util_format_linear(dstSurf->format);
+
+                  blit.src.resource = srcSurf->texture;
+                  blit.src.level = srcSurf->u.tex.level;
+                  blit.src.box.z = srcSurf->u.tex.first_layer;
+                  blit.src.format = util_format_linear(srcSurf->format);
+
+                  st->pipe->blit(st->pipe, &blit);
+               }
+            }
+         }
       }
    }
 
