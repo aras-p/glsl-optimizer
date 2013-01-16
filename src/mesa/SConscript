@@ -74,6 +74,7 @@ main_sources = [
     'main/ff_fragment_shader.cpp',
     'main/ffvertex_prog.c',
     'main/fog.c',
+    'main/formatquery.c',
     'main/formats.c',
     'main/format_pack.c',
     'main/format_unpack.c',
