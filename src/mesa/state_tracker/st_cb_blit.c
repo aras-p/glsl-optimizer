@@ -243,16 +243,16 @@ st_BlitFramebuffer(struct gl_context *ctx,
          &drawFB->Attachment[BUFFER_STENCIL];
 
       struct st_renderbuffer *srcDepthRb =
-         st_renderbuffer(readFB->Attachment[BUFFER_DEPTH].Renderbuffer);
+         st_renderbuffer(srcDepth->Renderbuffer);
       struct st_renderbuffer *dstDepthRb = 
-         st_renderbuffer(drawFB->Attachment[BUFFER_DEPTH].Renderbuffer);
+         st_renderbuffer(dstDepth->Renderbuffer);
       struct pipe_surface *dstDepthSurf =
          dstDepthRb ? dstDepthRb->surface : NULL;
 
       struct st_renderbuffer *srcStencilRb =
-         st_renderbuffer(readFB->Attachment[BUFFER_STENCIL].Renderbuffer);
+         st_renderbuffer(srcStencil->Renderbuffer);
       struct st_renderbuffer *dstStencilRb =
-         st_renderbuffer(drawFB->Attachment[BUFFER_STENCIL].Renderbuffer);
+         st_renderbuffer(dstStencil->Renderbuffer);
       struct pipe_surface *dstStencilSurf =
          dstStencilRb ? dstStencilRb->surface : NULL;
 
