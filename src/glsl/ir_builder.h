@@ -73,6 +73,13 @@ public:
 
 class ir_factory {
 public:
+   ir_factory()
+      : instructions(NULL),
+        mem_ctx(NULL)
+   {
+      return;
+   }
+
    void emit(ir_instruction *ir);
    ir_variable *make_temp(const glsl_type *type, const char *name);
 
