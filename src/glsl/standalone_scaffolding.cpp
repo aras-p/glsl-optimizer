@@ -34,6 +34,24 @@
 #include "ralloc.h"
 
 void
+_mesa_warning(struct gl_context *ctx, const char *fmt, ...)
+{
+    va_list vargs;
+    (void) ctx;
+
+    va_start(vargs, fmt);
+
+    /* This output is not thread-safe, but that's good enough for the
+     * standalone compiler.
+     */
+    fprintf(stderr, "Mesa warning: ");
+    vfprintf(stderr, fmt, vargs);
+    fprintf(stderr, "\n");
+
+    va_end(vargs);
+}
+
+void
 _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
                        struct gl_shader *sh)
 {
