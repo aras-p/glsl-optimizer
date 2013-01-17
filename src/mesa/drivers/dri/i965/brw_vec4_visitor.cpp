@@ -1953,6 +1953,7 @@ vec4_visitor::visit(ir_texture *ir)
       shadow_comparitor = this->result;
    }
 
+   const glsl_type *lod_type;
    src_reg lod, dPdx, dPdy;
    switch (ir->op) {
    case ir_txf:
@@ -1960,6 +1961,7 @@ vec4_visitor::visit(ir_texture *ir)
    case ir_txs:
       ir->lod_info.lod->accept(this);
       lod = this->result;
+      lod_type = ir->lod_info.lod->type;
       break;
    case ir_txd:
       ir->lod_info.grad.dPdx->accept(this);
@@ -1967,6 +1969,8 @@ vec4_visitor::visit(ir_texture *ir)
 
       ir->lod_info.grad.dPdy->accept(this);
       dPdy = this->result;
+
+      lod_type = ir->lod_info.grad.dPdx->type;
       break;
    case ir_tex:
    case ir_txb:
@@ -2008,8 +2012,7 @@ vec4_visitor::visit(ir_texture *ir)
 
    if (ir->op == ir_txs) {
       int writemask = intel->gen == 4 ? WRITEMASK_W : WRITEMASK_X;
-      emit(MOV(dst_reg(MRF, param_base, ir->lod_info.lod->type, writemask),
-	   lod));
+      emit(MOV(dst_reg(MRF, param_base, lod_type, writemask), lod));
    } else {
       int i, coord_mask = 0, zero_mask = 0;
       /* Load the coordinate */
@@ -2067,12 +2070,12 @@ vec4_visitor::visit(ir_texture *ir)
 	    mrf = param_base;
 	    writemask = WRITEMASK_Z;
 	 }
-	 emit(MOV(dst_reg(MRF, mrf, ir->lod_info.lod->type, writemask), lod));
+	 emit(MOV(dst_reg(MRF, mrf, lod_type, writemask), lod));
       } else if (ir->op == ir_txf) {
-	 emit(MOV(dst_reg(MRF, param_base, ir->lod_info.lod->type, WRITEMASK_W),
+	 emit(MOV(dst_reg(MRF, param_base, lod_type, WRITEMASK_W),
 		  lod));
       } else if (ir->op == ir_txd) {
-	 const glsl_type *type = ir->lod_info.grad.dPdx->type;
+	 const glsl_type *type = lod_type;
 
 	 if (intel->gen >= 5) {
 	    dPdx.swizzle = BRW_SWIZZLE4(SWIZZLE_X,SWIZZLE_X,SWIZZLE_Y,SWIZZLE_Y);
