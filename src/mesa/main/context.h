@@ -262,31 +262,6 @@ do {									\
    }									\
 } while (0)
 
-/**
- * Macro to assert that the API call was made outside the
- * glBegin()/glEnd() pair and flush the vertices.
- * 
- * \param ctx GL context.
- */
-#define ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx)				\
-do {									\
-   ASSERT_OUTSIDE_BEGIN_END(ctx);					\
-   FLUSH_VERTICES(ctx, 0);						\
-} while (0)
-
-/**
- * Macro to assert that the API call was made outside the
- * glBegin()/glEnd() pair and flush the vertices, with return value.
- * 
- * \param ctx GL context.
- * \param retval value to return in case the assertion fails.
- */
-#define ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, retval)	\
-do {									\
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval);			\
-   FLUSH_VERTICES(ctx, 0);						\
-} while (0)
-
 /*@}*/
 
 
