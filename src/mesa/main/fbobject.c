@@ -2885,6 +2885,23 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
             if (!colorDrawRb)
                continue;
 
+            /* Page 193 (page 205 of the PDF) in section 4.3.2 of the OpenGL
+             * ES 3.0.1 spec says:
+             *
+             *     "If the source and destination buffers are identical, an
+             *     INVALID_OPERATION error is generated. Different mipmap
+             *     levels of a texture, different layers of a three-
+             *     dimensional texture or two-dimensional array texture, and
+             *     different faces of a cube map texture do not constitute
+             *     identical buffers."
+             */
+            if (_mesa_is_gles3(ctx) && (colorDrawRb == colorReadRb)) {
+               _mesa_error(ctx, GL_INVALID_OPERATION,
+                           "glBlitFramebuffer(source and destination color "
+                           "buffer cannot be the same)");
+               return;
+            }
+
             if (!compatible_color_datatypes(colorReadRb->Format,
                                             colorDrawRb->Format)) {
                _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -2934,6 +2951,13 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       else {
          int read_z_bits, draw_z_bits;
 
+         if (_mesa_is_gles3(ctx) && (drawRb == readRb)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glBlitFramebuffer(source and destination stencil "
+                        "buffer cannot be the same)");
+            return;
+         }
+
          if (_mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS) !=
              _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS)) {
             /* There is no need to check the stencil datatype here, because
@@ -2980,6 +3004,13 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       }
       else {
          int read_s_bit, draw_s_bit;
+
+         if (_mesa_is_gles3(ctx) && (drawRb == readRb)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glBlitFramebuffer(source and destination depth "
+                        "buffer cannot be the same)");
+            return;
+         }
 
          if ((_mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS) !=
               _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS)) ||
