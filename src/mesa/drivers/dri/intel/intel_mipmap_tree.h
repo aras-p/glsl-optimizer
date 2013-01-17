@@ -394,6 +394,18 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                bool force_y_tiling);
 
 struct intel_mipmap_tree *
+intel_miptree_create_layout(struct intel_context *intel,
+                            GLenum target,
+                            gl_format format,
+                            GLuint first_level,
+                            GLuint last_level,
+                            GLuint width0,
+                            GLuint height0,
+                            GLuint depth0,
+                            bool for_region,
+                            GLuint num_samples);
+
+struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,
 				GLenum target,
 				gl_format format,

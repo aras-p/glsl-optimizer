@@ -112,17 +112,17 @@ compute_msaa_layout(struct intel_context *intel, gl_format format)
  *        intel_miptree_create_for_region(). If true, then do not create
  *        \c stencil_mt.
  */
-static struct intel_mipmap_tree *
-intel_miptree_create_internal(struct intel_context *intel,
-			      GLenum target,
-			      gl_format format,
-			      GLuint first_level,
-			      GLuint last_level,
-			      GLuint width0,
-			      GLuint height0,
-			      GLuint depth0,
-			      bool for_region,
-                              GLuint num_samples)
+struct intel_mipmap_tree *
+intel_miptree_create_layout(struct intel_context *intel,
+                            GLenum target,
+                            gl_format format,
+                            GLuint first_level,
+                            GLuint last_level,
+                            GLuint width0,
+                            GLuint height0,
+                            GLuint depth0,
+                            bool for_region,
+                            GLuint num_samples)
 {
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
    int compress_byte = 0;
@@ -365,7 +365,7 @@ intel_miptree_create(struct intel_context *intel,
 	 tiling = I915_TILING_X;
    }
 
-   mt = intel_miptree_create_internal(intel, target, format,
+   mt = intel_miptree_create_layout(intel, target, format,
 				      first_level, last_level, width0,
 				      height0, depth0,
 				      false, num_samples);
@@ -408,7 +408,6 @@ intel_miptree_create(struct intel_context *intel,
    return mt;
 }
 
-
 struct intel_mipmap_tree *
 intel_miptree_create_for_region(struct intel_context *intel,
 				GLenum target,
@@ -417,7 +416,7 @@ intel_miptree_create_for_region(struct intel_context *intel,
 {
    struct intel_mipmap_tree *mt;
 
-   mt = intel_miptree_create_internal(intel, target, format,
+   mt = intel_miptree_create_layout(intel, target, format,
 				      0, 0,
 				      region->width, region->height, 1,
 				      true, 0 /* num_samples */);
