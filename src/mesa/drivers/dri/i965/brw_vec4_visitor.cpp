@@ -1956,6 +1956,10 @@ vec4_visitor::visit(ir_texture *ir)
    const glsl_type *lod_type;
    src_reg lod, dPdx, dPdy;
    switch (ir->op) {
+   case ir_tex:
+      lod = src_reg(0.0f);
+      lod_type = glsl_type::float_type;
+      break;
    case ir_txf:
    case ir_txl:
    case ir_txs:
@@ -1972,7 +1976,6 @@ vec4_visitor::visit(ir_texture *ir)
 
       lod_type = ir->lod_info.grad.dPdx->type;
       break;
-   case ir_tex:
    case ir_txb:
       break;
    }
@@ -2055,7 +2058,7 @@ vec4_visitor::visit(ir_texture *ir)
       }
 
       /* Load the LOD info */
-      if (ir->op == ir_txl) {
+      if (ir->op == ir_tex || ir->op == ir_txl) {
 	 int mrf, writemask;
 	 if (intel->gen >= 5) {
 	    mrf = param_base + 1;
