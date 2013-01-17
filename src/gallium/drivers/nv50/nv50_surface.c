@@ -156,9 +156,8 @@ nv50_2d_texture_do_copy(struct nouveau_pushbuf *push,
    const enum pipe_format sfmt = src->base.base.format;
    int ret;
 
-   ret = PUSH_SPACE(push, 2 * 16 + 32);
-   if (ret)
-      return ret;
+   if (!PUSH_SPACE(push, 2 * 16 + 32))
+      return PIPE_ERROR;
 
    ret = nv50_2d_texture_set(push, 1, dst, dst_level, dz, dfmt);
    if (ret)
@@ -277,16 +276,19 @@ nv50_clear_render_target(struct pipe_context *pipe,
    struct nv50_miptree *mt = nv50_miptree(dst->texture);
    struct nv50_surface *sf = nv50_surface(dst);
    struct nouveau_bo *bo = mt->base.bo;
+   unsigned z;
 
    BEGIN_NV04(push, NV50_3D(CLEAR_COLOR(0)), 4);
    PUSH_DATAf(push, color->f[0]);
    PUSH_DATAf(push, color->f[1]);
    PUSH_DATAf(push, color->f[2]);
    PUSH_DATAf(push, color->f[3]);
-#if 0
-   if (MARK_RING(chan, 18, 2))
+
+   if (nouveau_pushbuf_space(push, 32 + sf->depth, 1, 0))
       return;
-#endif
+
+   PUSH_REFN(push, bo, mt->base.domain | NOUVEAU_BO_WR);
+
    BEGIN_NV04(push, NV50_3D(RT_CONTROL), 1);
    PUSH_DATA (push, 1);
    BEGIN_NV04(push, NV50_3D(RT_ADDRESS_HIGH(0)), 5);
@@ -315,8 +317,11 @@ nv50_clear_render_target(struct pipe_context *pipe,
    PUSH_DATA (push, (width << 16) | dstx);
    PUSH_DATA (push, (height << 16) | dsty);
 
-   BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
-   PUSH_DATA (push, 0x3c);
+   BEGIN_NI04(push, NV50_3D(CLEAR_BUFFERS), sf->depth);
+   for (z = 0; z < sf->depth; ++z) {
+      PUSH_DATA (push, 0x3c |
+                 (z << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
+   }
 
    nv50->dirty |= NV50_NEW_FRAMEBUFFER;
 }
@@ -336,6 +341,7 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
    struct nv50_surface *sf = nv50_surface(dst);
    struct nouveau_bo *bo = mt->base.bo;
    uint32_t mode = 0;
+   unsigned z;
 
    assert(nouveau_bo_memtype(bo)); /* ZETA cannot be linear */
 
@@ -350,10 +356,12 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
       PUSH_DATA (push, stencil & 0xff);
       mode |= NV50_3D_CLEAR_BUFFERS_S;
    }
-#if 0
-   if (MARK_RING(chan, 17, 2))
+
+   if (nouveau_pushbuf_space(push, 32 + sf->depth, 1, 0))
       return;
-#endif
+
+   PUSH_REFN(push, bo, mt->base.domain | NOUVEAU_BO_WR);
+
    BEGIN_NV04(push, NV50_3D(ZETA_ADDRESS_HIGH), 5);
    PUSH_DATAh(push, bo->offset + sf->offset);
    PUSH_DATA (push, bo->offset + sf->offset);
@@ -371,8 +379,11 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
    PUSH_DATA (push, (width << 16) | dstx);
    PUSH_DATA (push, (height << 16) | dsty);
 
-   BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
-   PUSH_DATA (push, mode);
+   BEGIN_NI04(push, NV50_3D(CLEAR_BUFFERS), sf->depth);
+   for (z = 0; z < sf->depth; ++z) {
+      PUSH_DATA (push, mode |
+                 (z << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
+   }
 
    nv50->dirty |= NV50_NEW_FRAMEBUFFER;
 }
