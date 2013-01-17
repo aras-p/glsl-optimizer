@@ -411,8 +411,17 @@ tfeedback_decl::find_output_var(gl_shader_program *prog,
    const char *name = this->is_clip_distance_mesa
       ? "gl_ClipDistanceMESA" : this->var_name;
    ir_variable *var = producer->symbols->get_variable(name);
-   if (var && var->mode == ir_var_shader_out)
+   if (var && var->mode == ir_var_shader_out) {
+      const glsl_type *type = var->type;
+      while (type->base_type == GLSL_TYPE_ARRAY)
+         type = type->fields.array;
+      if (type->base_type == GLSL_TYPE_STRUCT) {
+         linker_error(prog, "Transform feedback of varying structs not "
+                      "implemented yet.");
+         return NULL;
+      }
       return var;
+   }
 
    /* From GL_EXT_transform_feedback:
     *   A program will fail to link if:
