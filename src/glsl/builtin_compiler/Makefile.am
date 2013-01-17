@@ -40,19 +40,16 @@ AM_CFLAGS = \
 
 AM_CXXFLAGS = $(AM_CFLAGS)
 
-AM_YFLAGS = -v -d -p "glcpp_parser_"
-AM_LFLAGS = --nounistd -o$(LEX_OUTPUT_ROOT).c
-
 include ../Makefile.sources
 
 noinst_PROGRAMS = builtin_compiler
 
 builtin_compiler_SOURCES = \
-	$(GLSL_SRCDIR)/glcpp/glcpp-lex.l \
-	$(GLSL_SRCDIR)/glcpp/glcpp-parse.y \
+	$(GLSL_BUILDDIR)/glcpp/glcpp-lex.c \
+	$(GLSL_BUILDDIR)/glcpp/glcpp-parse.c \
 	$(LIBGLCPP_FILES) \
-	$(GLSL_SRCDIR)/glsl_lexer.ll \
-	$(GLSL_BUILDDIR)/glsl_parser.cc \
+	$(GLSL_BUILDDIR)/glsl_lexer.cpp \
+	$(GLSL_BUILDDIR)/glsl_parser.cpp \
 	$(LIBGLSL_FILES) \
 	$(LIBGLSL_CXX_FILES) \
 	$(top_srcdir)/src/mesa/main/hash_table.c \
@@ -60,11 +57,3 @@ builtin_compiler_SOURCES = \
 	$(top_srcdir)/src/mesa/program/symbol_table.c \
 	$(GLSL_COMPILER_CXX_FILES) \
 	builtin_stubs.cpp
-
-BUILT_SOURCES = \
-	glcpp-lex.c \
-	glcpp-parse.c \
-	glcpp-parse.h \
-	glsl_lexer.cc
-
-CLEANFILES = $(BUILT_SOURCES)
