@@ -521,14 +521,13 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 	unsigned array_mode = V_009910_ARRAY_LINEAR_ALIGNED;
 	int r;
 
-#if 0
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
-	    !(templ->bind & PIPE_BIND_SCANOUT)) {
+	    !(templ->bind & PIPE_BIND_SCANOUT) &&
+	    util_format_is_depth_or_stencil(templ->format)) {
 		if (permit_hardware_blit(screen, templ)) {
-			array_mode = V_009910_ARRAY_2D_TILED_THIN1;
+			array_mode = V_009910_ARRAY_1D_TILED_THIN1;
 		}
 	}
-#endif
 
 	r = r600_init_surface(rscreen, &surface, templ, array_mode,
 			      templ->flags & R600_RESOURCE_FLAG_FLUSHED_DEPTH);
