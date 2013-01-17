@@ -174,6 +174,13 @@ struct __DRIimageRec {
    uint32_t offsets[3];
    struct intel_image_format *planar_format;
 
+   /* particular miptree level */
+   GLuint width;
+   GLuint height;
+   GLuint tile_x;
+   GLuint tile_y;
+   bool has_depthstencil;
+
    void *data;
 };
 
