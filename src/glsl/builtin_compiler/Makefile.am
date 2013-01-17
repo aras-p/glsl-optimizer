@@ -55,6 +55,7 @@ libglslcore_la_SOURCES =				\
 
 builtin_compiler_SOURCES = \
 	$(top_srcdir)/src/mesa/main/hash_table.c	\
+	$(top_srcdir)/src/mesa/main/imports.c		\
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c\
 	$(top_srcdir)/src/mesa/program/symbol_table.c	\
 	$(BUILTIN_COMPILER_CXX_FILES)			\

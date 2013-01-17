@@ -314,6 +314,26 @@ _mesa_bitcount_64(uint64_t n)
 #endif
 
 
+/* Using C99 rounding functions for roundToEven() implementation is
+ * difficult, because round(), rint, and nearbyint() are affected by
+ * fesetenv(), which the application may have done for its own
+ * purposes.  Mesa's IROUND macro is close to what we want, but it
+ * rounds away from 0 on n + 0.5.
+ */
+int
+_mesa_round_to_even(float val)
+{
+   int rounded = IROUND(val);
+
+   if (val - floor(val) == 0.5) {
+      if (rounded % 2 != 0)
+         rounded += val > 0 ? -1 : 1;
+   }
+
+   return rounded;
+}
+
+
 /**
  * Convert a 4-byte float to a 2-byte half float.
  * Based on code from:

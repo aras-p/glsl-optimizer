@@ -52,6 +52,7 @@ check_PROGRAMS =					\
 
 tests_uniform_initializer_test_SOURCES =		\
 	$(top_srcdir)/src/mesa/main/hash_table.c	\
+	$(top_srcdir)/src/mesa/main/imports.c		\
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c\
 	$(top_srcdir)/src/mesa/program/symbol_table.c	\
 	tests/copy_constant_to_storage_tests.cpp	\
@@ -100,6 +101,7 @@ endif
 
 glsl_test_SOURCES = \
 	$(top_srcdir)/src/mesa/main/hash_table.c \
+	$(top_srcdir)/src/mesa/main/imports.c \
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c \
 	$(top_srcdir)/src/mesa/program/symbol_table.c \
 	$(GLSL_SRCDIR)/standalone_scaffolding.cpp \

@@ -548,6 +548,9 @@ _mesa_fls(unsigned int n)
 #endif
 }
 
+extern int
+_mesa_round_to_even(float val);
+
 extern GLhalfARB
 _mesa_float_to_half(float f);
 

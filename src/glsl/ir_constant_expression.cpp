@@ -40,25 +40,6 @@
 #include "glsl_types.h"
 #include "program/hash_table.h"
 
-/* Using C99 rounding functions for roundToEven() implementation is
- * difficult, because round(), rint, and nearbyint() are affected by
- * fesetenv(), which the application may have done for its own
- * purposes.  Mesa's IROUND macro is close to what we want, but it
- * rounds away from 0 on n + 0.5.
- */
-static int
-round_to_even(float val)
-{
-   int rounded = IROUND(val);
-
-   if (val - floor(val) == 0.5) {
-      if (rounded % 2 != 0)
-	 rounded += val > 0 ? -1 : 1;
-   }
-
-   return rounded;
-}
-
 static float
 dot(ir_constant *op0, ir_constant *op1)
 {
@@ -279,7 +260,7 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
    case ir_unop_round_even:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = round_to_even(op[0]->value.f[c]);
+	 data.f[c] = _mesa_round_to_even(op[0]->value.f[c]);
       }
       break;
 
