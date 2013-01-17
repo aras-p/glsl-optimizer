@@ -53,7 +53,7 @@ rasterpos(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    p[2] = z;
    p[3] = w;
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
    FLUSH_CURRENT(ctx, 0);
 
    if (ctx->NewState)
@@ -225,7 +225,7 @@ window_pos3f(GLfloat x, GLfloat y, GLfloat z)
    GET_CURRENT_CONTEXT(ctx);
    GLfloat z2;
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
    FLUSH_CURRENT(ctx, 0);
 
    z2 = CLAMP(z, 0.0F, 1.0F) * (ctx->Viewport.Far - ctx->Viewport.Near)

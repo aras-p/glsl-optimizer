@@ -54,7 +54,6 @@ void GLAPIENTRY
 _mesa_CullFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glCullFace %s\n", _mesa_lookup_enum_by_nr(mode));
@@ -90,7 +89,6 @@ void GLAPIENTRY
 _mesa_FrontFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glFrontFace %s\n", _mesa_lookup_enum_by_nr(mode));
@@ -129,7 +127,6 @@ void GLAPIENTRY
 _mesa_PolygonMode( GLenum face, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glPolygonMode %s %s\n",
@@ -220,7 +217,6 @@ void GLAPIENTRY
 _mesa_PolygonStipple( const GLubyte *pattern )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glPolygonStipple\n");
@@ -241,7 +237,6 @@ void GLAPIENTRY
 _mesa_GetnPolygonStippleARB( GLsizei bufSize, GLubyte *dest )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glGetPolygonStipple\n");
@@ -270,7 +265,6 @@ void GLAPIENTRY
 _mesa_PolygonOffset( GLfloat factor, GLfloat units )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glPolygonOffset %f %f\n", factor, units);

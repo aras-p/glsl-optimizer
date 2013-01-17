@@ -8703,7 +8703,7 @@ _mesa_EndList(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    SAVE_FLUSH_VERTICES(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glEndList\n");

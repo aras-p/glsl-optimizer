@@ -244,7 +244,8 @@ _mesa_DrawBuffer(GLenum buffer)
 {
    GLbitfield destMask;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* too complex... */
+
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API) {
       _mesa_debug(ctx, "glDrawBuffer %s\n", _mesa_lookup_enum_by_nr(buffer));
@@ -301,7 +302,8 @@ _mesa_DrawBuffers(GLsizei n, const GLenum *buffers)
    GLbitfield usedBufferMask, supportedMask;
    GLbitfield destMask[MAX_DRAW_BUFFERS];
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
 
    /* Turns out n==0 is a valid input that should not produce an error.
     * The remaining code below correctly handles the n==0 case.
@@ -609,7 +611,8 @@ _mesa_ReadBuffer(GLenum buffer)
    GLbitfield supportedMask;
    GLint srcBuffer;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(buffer));

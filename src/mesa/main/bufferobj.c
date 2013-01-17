@@ -819,7 +819,6 @@ void GLAPIENTRY
 _mesa_BindBuffer(GLenum target, GLuint buffer)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glBindBuffer(%s, %u)\n",
@@ -840,7 +839,6 @@ _mesa_DeleteBuffers(GLsizei n, const GLuint *ids)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLsizei i;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    FLUSH_VERTICES(ctx, 0);
 
    if (n < 0) {
@@ -951,7 +949,6 @@ _mesa_GenBuffers(GLsizei n, GLuint *buffer)
    GET_CURRENT_CONTEXT(ctx);
    GLuint first;
    GLint i;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGenBuffers(%d)\n", n);
@@ -1012,7 +1009,6 @@ _mesa_BufferData(GLenum target, GLsizeiptrARB size,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
    bool valid_usage;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glBufferData(%s, %ld, %p, %s)\n",
@@ -1091,7 +1087,6 @@ _mesa_BufferSubData(GLenum target, GLintptrARB offset,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    bufObj = buffer_object_subdata_range_good( ctx, target, offset, size,
                                               "glBufferSubDataARB" );
@@ -1116,7 +1111,6 @@ _mesa_GetBufferSubData(GLenum target, GLintptrARB offset,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    bufObj = buffer_object_subdata_range_good( ctx, target, offset, size,
                                               "glGetBufferSubDataARB" );
@@ -1293,7 +1287,6 @@ _mesa_GetBufferParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    bufObj = get_buffer(ctx, "glGetBufferParameterivARB", target);
    if (!bufObj)
@@ -1347,7 +1340,6 @@ _mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    bufObj = get_buffer(ctx, "glGetBufferParameteri64v", target);
    if (!bufObj)
@@ -1396,7 +1388,6 @@ _mesa_GetBufferPointerv(GLenum target, GLenum pname, GLvoid **params)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object * bufObj;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (pname != GL_BUFFER_MAP_POINTER_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferPointervARB(pname)");
@@ -1418,7 +1409,6 @@ _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *src, *dst;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    src = get_buffer(ctx, "glCopyBufferSubData", readTarget);
    if (!src)
@@ -1628,7 +1618,6 @@ _mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.ARB_map_buffer_range) {
       _mesa_error(ctx, GL_INVALID_OPERATION,

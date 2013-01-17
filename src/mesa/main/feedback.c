@@ -51,7 +51,6 @@ void GLAPIENTRY
 _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->RenderMode==GL_FEEDBACK) {
       _mesa_error( ctx, GL_INVALID_OPERATION, "glFeedbackBuffer" );
@@ -100,7 +99,6 @@ void GLAPIENTRY
 _mesa_PassThrough( GLfloat token )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->RenderMode==GL_FEEDBACK) {
       FLUSH_VERTICES(ctx, 0);
@@ -163,7 +161,6 @@ void GLAPIENTRY
 _mesa_SelectBuffer( GLsizei size, GLuint *buffer )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (size < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glSelectBuffer(size)");
@@ -275,7 +272,7 @@ void GLAPIENTRY
 _mesa_InitNames( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    /* Record the hit before the HitFlag is wiped out again. */
    if (ctx->RenderMode == GL_SELECT) {
@@ -306,7 +303,6 @@ void GLAPIENTRY
 _mesa_LoadName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->RenderMode != GL_SELECT) {
       return;
@@ -345,7 +341,6 @@ void GLAPIENTRY
 _mesa_PushName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->RenderMode != GL_SELECT) {
       return;
@@ -376,7 +371,6 @@ void GLAPIENTRY
 _mesa_PopName( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->RenderMode != GL_SELECT) {
       return;

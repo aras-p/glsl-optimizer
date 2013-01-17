@@ -44,7 +44,6 @@ void GLAPIENTRY
 _mesa_PointSize( GLfloat size )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (size <= 0.0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glPointSize" );
@@ -99,7 +98,6 @@ void GLAPIENTRY
 _mesa_PointParameterfv( GLenum pname, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    /* Drivers that support point sprites must also support point parameters.
     * If point parameters aren't supported, then this function shouldn't even

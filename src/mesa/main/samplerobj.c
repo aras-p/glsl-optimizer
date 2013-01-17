@@ -166,8 +166,6 @@ _mesa_GenSamplers(GLsizei count, GLuint *samplers)
    GLuint first;
    GLint i;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGenSamplers(%d)\n", count);
 
@@ -197,7 +195,6 @@ _mesa_DeleteSamplers(GLsizei count, const GLuint *samplers)
    GET_CURRENT_CONTEXT(ctx);
    GLsizei i;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    FLUSH_VERTICES(ctx, 0);
 
    if (count < 0) {
@@ -606,8 +603,6 @@ _mesa_SamplerParameteri(GLuint sampler, GLenum pname, GLint param)
    GLuint res;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    sampObj = _mesa_lookup_samplerobj(ctx, sampler);
    if (!sampObj) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glSamplerParameteri(sampler %u)",
@@ -693,8 +688,6 @@ _mesa_SamplerParameterf(GLuint sampler, GLenum pname, GLfloat param)
    GLuint res;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    sampObj = _mesa_lookup_samplerobj(ctx, sampler);
    if (!sampObj) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glSamplerParameterf(sampler %u)",
@@ -778,8 +771,6 @@ _mesa_SamplerParameteriv(GLuint sampler, GLenum pname, const GLint *params)
    struct gl_sampler_object *sampObj;
    GLuint res;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    sampObj = _mesa_lookup_samplerobj(ctx, sampler);
    if (!sampObj) {
@@ -873,8 +864,6 @@ _mesa_SamplerParameterfv(GLuint sampler, GLenum pname, const GLfloat *params)
    GLuint res;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    sampObj = _mesa_lookup_samplerobj(ctx, sampler);
    if (!sampObj) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glSamplerParameterfv(sampler %u)",
@@ -959,8 +948,6 @@ _mesa_SamplerParameterIiv(GLuint sampler, GLenum pname, const GLint *params)
    struct gl_sampler_object *sampObj;
    GLuint res;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    sampObj = _mesa_lookup_samplerobj(ctx, sampler);
    if (!sampObj) {
@@ -1048,8 +1035,6 @@ _mesa_SamplerParameterIuiv(GLuint sampler, GLenum pname, const GLuint *params)
    GLuint res;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    sampObj = _mesa_lookup_samplerobj(ctx, sampler);
    if (!sampObj) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glSamplerParameterIuiv(sampler %u)",
@@ -1135,8 +1120,6 @@ _mesa_GetSamplerParameteriv(GLuint sampler, GLenum pname, GLint *params)
    struct gl_sampler_object *sampObj;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    sampObj = _mesa_lookup_samplerobj(ctx, sampler);
    if (!sampObj) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetSamplerParameteriv(sampler %u)",
@@ -1214,8 +1197,6 @@ _mesa_GetSamplerParameterfv(GLuint sampler, GLenum pname, GLfloat *params)
 {
    struct gl_sampler_object *sampObj;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    sampObj = _mesa_lookup_samplerobj(ctx, sampler);
    if (!sampObj) {
@@ -1295,8 +1276,6 @@ _mesa_GetSamplerParameterIiv(GLuint sampler, GLenum pname, GLint *params)
    struct gl_sampler_object *sampObj;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    sampObj = _mesa_lookup_samplerobj(ctx, sampler);
    if (!sampObj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
@@ -1375,8 +1354,6 @@ _mesa_GetSamplerParameterIuiv(GLuint sampler, GLenum pname, GLuint *params)
 {
    struct gl_sampler_object *sampObj;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    sampObj = _mesa_lookup_samplerobj(ctx, sampler);
    if (!sampObj) {

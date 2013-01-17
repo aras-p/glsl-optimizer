@@ -38,7 +38,7 @@ _mesa_SampleCoverage(GLclampf value, GLboolean invert)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
+   FLUSH_VERTICES(ctx, 0);
 
    ctx->Multisample.SampleCoverageValue = (GLfloat) CLAMP(value, 0.0, 1.0);
    ctx->Multisample.SampleCoverageInvert = invert;

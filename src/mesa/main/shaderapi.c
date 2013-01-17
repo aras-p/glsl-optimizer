@@ -1400,8 +1400,6 @@ _mesa_UseProgram(GLhandleARB program)
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *shProg;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    if (_mesa_is_xfb_active_and_unpaused(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glUseProgram(transform feedback active)");
@@ -1522,8 +1520,6 @@ _mesa_GetProgramBinary(GLuint program, GLsizei bufSize, GLsizei *length,
    struct gl_shader_program *shProg;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetProgramBinary");
    if (!shProg)
       return;
@@ -1558,8 +1554,6 @@ _mesa_ProgramBinary(GLuint program, GLenum binaryFormat,
    struct gl_shader_program *shProg;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    shProg = _mesa_lookup_shader_program_err(ctx, program, "glProgramBinary");
    if (!shProg)
       return;
@@ -1576,8 +1570,6 @@ _mesa_ProgramParameteri(GLuint program, GLenum pname, GLint value)
 {
    struct gl_shader_program *shProg;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    shProg = _mesa_lookup_shader_program_err(ctx, program,
                                             "glProgramParameteri");
@@ -1706,8 +1698,6 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *shProg = NULL;
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!validate_shader_target(ctx, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glUseShaderProgramEXT(type)");

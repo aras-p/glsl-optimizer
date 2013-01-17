@@ -50,7 +50,6 @@ _mesa_BindProgramARB(GLenum target, GLuint id)
 {
    struct gl_program *curProg, *newProg;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    /* Error-check target and get curProg */
    if (target == GL_VERTEX_PROGRAM_ARB && ctx->Extensions.ARB_vertex_program) {
@@ -136,7 +135,8 @@ _mesa_DeleteProgramsARB(GLsizei n, const GLuint *ids)
 {
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
 
    if (n < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glDeleteProgramsNV" );
@@ -190,7 +190,6 @@ _mesa_GenProgramsARB(GLsizei n, GLuint *ids)
    GLuint first;
    GLuint i;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGenPrograms");
@@ -304,7 +303,6 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 {
    struct gl_program *base;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
@@ -385,7 +383,6 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
    GLfloat *param;
 
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
@@ -408,7 +405,6 @@ _mesa_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
    GLfloat *param;
 
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
@@ -425,7 +421,6 @@ _mesa_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat * dest;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
@@ -480,8 +475,6 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
 
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    if (get_env_param_pointer(ctx, "glGetProgramEnvParameterfv",
 			      target, index, &param)) {
       COPY_4V(params, param);
@@ -495,7 +488,6 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *param;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
@@ -522,7 +514,6 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat *dest;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
@@ -581,7 +572,6 @@ _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
 {
    GLfloat *param;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (get_local_param_pointer(ctx, "glProgramLocalParameters4fvEXT",
 				target, index, &param)) {
@@ -596,7 +586,6 @@ _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
 {
    GLfloat *param;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (get_local_param_pointer(ctx, "glProgramLocalParameters4fvEXT",
 				target, index, &param)) {
@@ -611,8 +600,6 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
    const struct gl_program_constants *limits;
    struct gl_program *prog;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
@@ -795,8 +782,6 @@ _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
    const struct gl_program *prog;
    char *dst = (char *) string;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target == GL_VERTEX_PROGRAM_ARB) {
       prog = &(ctx->VertexProgram.Current->Base);

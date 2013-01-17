@@ -165,7 +165,6 @@ void GLAPIENTRY
 _mesa_EnableClientState( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    client_state( ctx, cap, GL_TRUE );
 }
 
@@ -181,7 +180,6 @@ void GLAPIENTRY
 _mesa_DisableClientState( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    client_state( ctx, cap, GL_FALSE );
 }
 
@@ -1039,7 +1037,6 @@ void GLAPIENTRY
 _mesa_Enable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    _mesa_set_enable( ctx, cap, GL_TRUE );
 }
@@ -1053,7 +1050,6 @@ void GLAPIENTRY
 _mesa_Disable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    _mesa_set_enable( ctx, cap, GL_FALSE );
 }
@@ -1102,7 +1098,6 @@ void GLAPIENTRY
 _mesa_Disablei( GLenum cap, GLuint index )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    _mesa_set_enablei(ctx, cap, index, GL_FALSE);
 }
 
@@ -1111,7 +1106,6 @@ void GLAPIENTRY
 _mesa_Enablei( GLenum cap, GLuint index )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    _mesa_set_enablei(ctx, cap, index, GL_TRUE);
 }
 

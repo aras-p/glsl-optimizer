@@ -297,8 +297,6 @@ _mesa_ActiveTexture(GLenum texture)
             ctx->Const.MaxTextureCoordUnits);
 
    ASSERT(k <= Elements(ctx->Texture.Unit));
-   
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       _mesa_debug(ctx, "glActiveTexture %s\n",
@@ -329,7 +327,6 @@ _mesa_ClientActiveTexture(GLenum texture)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint texUnit = texture - GL_TEXTURE0;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API | VERBOSE_TEXTURE))
       _mesa_debug(ctx, "glClientActiveTexture %s\n",

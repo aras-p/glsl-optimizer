@@ -335,7 +335,7 @@ _mesa_resize_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 void
 _mesa_resizebuffers( struct gl_context *ctx )
 {
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glResizeBuffersMESA\n");

@@ -74,7 +74,6 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
    struct gl_texture_unit *texUnit;
    struct gl_texgen *texgen;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&(VERBOSE_API|VERBOSE_TEXTURE))
       _mesa_debug(ctx, "glTexGen %s %s %.1f(%s)...\n",
@@ -294,7 +293,6 @@ _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
    struct gl_texture_unit *texUnit;
    struct gl_texgen *texgen;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexGendv(current unit)");
@@ -332,7 +330,6 @@ _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
    struct gl_texture_unit *texUnit;
    struct gl_texgen *texgen;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexGenfv(current unit)");
@@ -378,7 +375,6 @@ _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
    struct gl_texture_unit *texUnit;
    struct gl_texgen *texgen;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexGeniv(current unit)");

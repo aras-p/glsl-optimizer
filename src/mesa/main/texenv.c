@@ -392,9 +392,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    const GLint iparam0 = (GLint) param[0];
    struct gl_texture_unit *texUnit;
    GLuint maxUnit;
-
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
       ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
@@ -668,7 +666,6 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
    GLuint maxUnit;
    const struct gl_texture_unit *texUnit;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
       ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
@@ -732,7 +729,6 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
    GLuint maxUnit;
    const struct gl_texture_unit *texUnit;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
       ? ctx->Const.MaxTextureCoordUnits : ctx->Const.MaxCombinedTextureImageUnits;
@@ -797,7 +793,6 @@ _mesa_TexBumpParameterivATI( GLenum pname, const GLint *param )
 {
    GLfloat p[4];
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.ATI_envmap_bumpmap) {
       /* This isn't an "official" error case, but let's tell the user
@@ -827,7 +822,6 @@ _mesa_TexBumpParameterfvATI( GLenum pname, const GLfloat *param )
 {
    struct gl_texture_unit *texUnit;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.ATI_envmap_bumpmap) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glTexBumpParameterfvATI");
@@ -860,7 +854,6 @@ _mesa_GetTexBumpParameterivATI( GLenum pname, GLint *param )
    const struct gl_texture_unit *texUnit;
    GLuint i;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.ATI_envmap_bumpmap) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexBumpParameterivATI");
@@ -912,7 +905,6 @@ _mesa_GetTexBumpParameterfvATI( GLenum pname, GLfloat *param )
    const struct gl_texture_unit *texUnit;
    GLuint i;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.ATI_envmap_bumpmap) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexBumpParameterfvATI");

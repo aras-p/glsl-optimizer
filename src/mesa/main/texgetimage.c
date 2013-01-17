@@ -813,7 +813,8 @@ _mesa_GetnTexImageARB( GLenum target, GLint level, GLenum format,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
 
    if (getteximage_error_check(ctx, target, level, format, type,
                                bufSize, pixels)) {
@@ -944,7 +945,8 @@ _mesa_GetnCompressedTexImageARB(GLenum target, GLint level, GLsizei bufSize,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
 
    if (getcompressedteximage_error_check(ctx, target, level, bufSize, img)) {
       return;

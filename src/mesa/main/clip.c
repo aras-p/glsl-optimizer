@@ -54,7 +54,6 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
    GET_CURRENT_CONTEXT(ctx);
    GLint p;
    GLfloat equation[4];
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
    if (p < 0 || p >= (GLint) ctx->Const.MaxClipPlanes) {
@@ -101,7 +100,6 @@ _mesa_GetClipPlane( GLenum plane, GLdouble *equation )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint p;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    p = (GLint) (plane - GL_CLIP_PLANE0);
    if (p < 0 || p >= (GLint) ctx->Const.MaxClipPlanes) {

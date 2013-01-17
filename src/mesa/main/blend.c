@@ -207,7 +207,6 @@ _mesa_BlendFuncSeparate( GLenum sfactorRGB, GLenum dfactorRGB,
    GLuint buf, numBuffers;
    GLboolean changed;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glBlendFuncSeparate %s %s %s %s\n",
@@ -274,7 +273,6 @@ _mesa_BlendFuncSeparateiARB(GLuint buf, GLenum sfactorRGB, GLenum dfactorRGB,
                          GLenum sfactorA, GLenum dfactorA)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.ARB_draw_buffers_blend) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBlendFunc[Separate]i()");
@@ -343,7 +341,6 @@ _mesa_BlendEquation( GLenum mode )
    GLuint buf, numBuffers;
    GLboolean changed;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glBlendEquation(%s)\n",
@@ -387,7 +384,6 @@ void GLAPIENTRY
 _mesa_BlendEquationiARB(GLuint buf, GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glBlendEquationi(%u, %s)\n",
@@ -424,7 +420,6 @@ _mesa_BlendEquationSeparate( GLenum modeRGB, GLenum modeA )
    GLuint buf, numBuffers;
    GLboolean changed;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glBlendEquationSeparateEXT(%s %s)\n",
@@ -480,7 +475,6 @@ void GLAPIENTRY
 _mesa_BlendEquationSeparateiARB(GLuint buf, GLenum modeRGB, GLenum modeA)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glBlendEquationSeparatei(%u, %s %s)\n", buf,
@@ -536,7 +530,6 @@ _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 {
    GLfloat tmp[4];
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    tmp[0] = red;
    tmp[1] = green;
@@ -573,7 +566,6 @@ void GLAPIENTRY
 _mesa_AlphaFunc( GLenum func, GLclampf ref )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glAlphaFunc(%s, %f)\n",
@@ -621,7 +613,6 @@ void GLAPIENTRY
 _mesa_LogicOp( GLenum opcode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glLogicOp(%s)\n", _mesa_lookup_enum_by_nr(opcode));
@@ -664,7 +655,6 @@ void GLAPIENTRY
 _mesa_IndexMask( GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->Color.IndexMask == mask)
       return;
@@ -696,7 +686,6 @@ _mesa_ColorMask( GLboolean red, GLboolean green,
    GLubyte tmp[4];
    GLuint i;
    GLboolean flushed;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glColorMask(%d, %d, %d, %d)\n",
@@ -735,7 +724,6 @@ _mesa_ColorMaski( GLuint buf, GLboolean red, GLboolean green,
 {
    GLubyte tmp[4];
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glColorMaskIndexed %u %d %d %d %d\n",
@@ -769,8 +757,6 @@ void GLAPIENTRY
 _mesa_ClampColor(GLenum target, GLenum clamp)
 {
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (clamp != GL_TRUE && clamp != GL_FALSE && clamp != GL_FIXED_ONLY_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glClampColorARB(clamp)");

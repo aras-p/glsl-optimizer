@@ -311,7 +311,6 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
    GLfloat *pnts;
    struct gl_1d_map *map = NULL;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    ASSERT(type == GL_FLOAT || type == GL_DOUBLE);
 
    if (u1 == u2) {
@@ -394,7 +393,6 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    GLfloat *pnts;
    struct gl_2d_map *map = NULL;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    ASSERT(type == GL_FLOAT || type == GL_DOUBLE);
 
    if (u1==u2) {
@@ -501,8 +499,6 @@ _mesa_GetnMapdvARB( GLenum target, GLenum query, GLsizei bufSize, GLdouble *v )
    GLuint comps;
    GLsizei numBytes;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    comps = _mesa_evaluator_components(target);
    if (!comps) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapdv(target)" );
@@ -592,8 +588,6 @@ _mesa_GetnMapfvARB( GLenum target, GLenum query, GLsizei bufSize, GLfloat *v )
    GLfloat *data;
    GLuint comps;
    GLsizei numBytes;
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    comps = _mesa_evaluator_components(target);
    if (!comps) {
@@ -687,8 +681,6 @@ _mesa_GetnMapivARB( GLenum target, GLenum query, GLsizei bufSize, GLint *v )
    GLuint comps;
    GLsizei numBytes;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    comps = _mesa_evaluator_components(target);
    if (!comps) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapiv(target)" );
@@ -774,7 +766,6 @@ void GLAPIENTRY
 _mesa_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (un<1) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glMapGrid1f" );
@@ -800,7 +791,6 @@ _mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
                  GLint vn, GLfloat v1, GLfloat v2 )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (un<1) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glMapGrid2f(un)" );

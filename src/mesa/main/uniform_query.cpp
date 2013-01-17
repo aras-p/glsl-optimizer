@@ -46,8 +46,6 @@ _mesa_GetActiveUniform(GLhandleARB program, GLuint index,
    struct gl_shader_program *shProg =
       _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniform");
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    if (!shProg)
       return;
 
@@ -593,8 +591,6 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
    enum glsl_base_type basicType;
    struct gl_uniform_storage *uni;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    if (!validate_uniform_parameters(ctx, shProg, location, count,
 				    &loc, &offset, "glUniform", false))
       return;
@@ -845,8 +841,6 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
    unsigned components;
    unsigned elements;
    struct gl_uniform_storage *uni;
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!validate_uniform_parameters(ctx, shProg, location, count,
 				    &loc, &offset, "glUniformMatrix", false))

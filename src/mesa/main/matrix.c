@@ -68,7 +68,8 @@ _mesa_Frustum( GLdouble left, GLdouble right,
                GLdouble nearval, GLdouble farval )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
 
    if (nearval <= 0.0 ||
        farval <= 0.0 ||
@@ -110,7 +111,8 @@ _mesa_Ortho( GLdouble left, GLdouble right,
              GLdouble nearval, GLdouble farval )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glOrtho(%f, %f, %f, %f, %f, %f)\n",
@@ -147,7 +149,6 @@ void GLAPIENTRY
 _mesa_MatrixMode( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->Transform.MatrixMode == mode && mode != GL_TEXTURE)
       return;
@@ -226,7 +227,6 @@ _mesa_PushMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_matrix_stack *stack = ctx->CurrentStack;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glPushMatrix %s\n",
@@ -266,7 +266,8 @@ _mesa_PopMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_matrix_stack *stack = ctx->CurrentStack;
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glPopMatrix %s\n",
@@ -303,7 +304,8 @@ void GLAPIENTRY
 _mesa_LoadIdentity( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glLoadIdentity()\n");
@@ -337,7 +339,7 @@ _mesa_LoadMatrixf( const GLfloat *m )
           m[2], m[6], m[10], m[14],
           m[3], m[7], m[11], m[15]);
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
    _math_matrix_loadf( ctx->CurrentStack->Top, m );
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
 }
@@ -366,7 +368,8 @@ _mesa_MultMatrixf( const GLfloat *m )
           m[1], m[5], m[9], m[13],
           m[2], m[6], m[10], m[14],
           m[3], m[7], m[11], m[15]);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
    _math_matrix_mul_floats( ctx->CurrentStack->Top, m );
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
 }
@@ -390,7 +393,8 @@ void GLAPIENTRY
 _mesa_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
    if (angle != 0.0F) {
       _math_matrix_rotate( ctx->CurrentStack->Top, angle, x, y, z);
       ctx->NewState |= ctx->CurrentStack->DirtyFlag;
@@ -415,7 +419,8 @@ void GLAPIENTRY
 _mesa_Scalef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
    _math_matrix_scale( ctx->CurrentStack->Top, x, y, z);
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
 }
@@ -438,7 +443,8 @@ void GLAPIENTRY
 _mesa_Translatef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
    _math_matrix_translate( ctx->CurrentStack->Top, x, y, z);
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
 }

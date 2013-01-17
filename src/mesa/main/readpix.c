@@ -731,8 +731,8 @@ _mesa_ReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height,
    struct gl_renderbuffer *rb;
 
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   FLUSH_VERTICES(ctx, 0);
    FLUSH_CURRENT(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)

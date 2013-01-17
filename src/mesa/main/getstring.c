@@ -195,7 +195,6 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
 {
    GET_CURRENT_CONTEXT(ctx);
    const GLuint clientUnit = ctx->Array.ActiveTexture;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
       return;

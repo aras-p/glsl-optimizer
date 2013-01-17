@@ -192,7 +192,6 @@ _mesa_GenQueries(GLsizei n, GLuint *ids)
 {
    GLuint first;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGenQueries(%d)\n", n);
@@ -231,7 +230,6 @@ _mesa_DeleteQueries(GLsizei n, const GLuint *ids)
 {
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
@@ -309,7 +307,6 @@ _mesa_BeginQueryIndexed(GLenum target, GLuint index, GLuint id)
 {
    struct gl_query_object *q, **bindpt;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glBeginQueryIndexed(%s, %u, %u)\n",
@@ -387,7 +384,6 @@ _mesa_EndQueryIndexed(GLenum target, GLuint index)
 {
    struct gl_query_object *q, **bindpt;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glEndQueryIndexed(%s, %u)\n",
@@ -445,7 +441,6 @@ _mesa_QueryCounter(GLuint id, GLenum target)
 {
    struct gl_query_object *q;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glQueryCounter(%u, %s)\n", id,
@@ -503,7 +498,6 @@ _mesa_GetQueryIndexediv(GLenum target, GLuint index, GLenum pname,
 {
    struct gl_query_object *q = NULL, **bindpt = NULL;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetQueryIndexediv(%s, %u, %s)\n",
@@ -583,7 +577,6 @@ _mesa_GetQueryObjectiv(GLuint id, GLenum pname, GLint *params)
 {
    struct gl_query_object *q = NULL;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetQueryObjectiv(%u, %s)\n", id,
@@ -635,7 +628,6 @@ _mesa_GetQueryObjectuiv(GLuint id, GLenum pname, GLuint *params)
 {
    struct gl_query_object *q = NULL;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetQueryObjectuiv(%u, %s)\n", id,
@@ -690,7 +682,6 @@ _mesa_GetQueryObjecti64v(GLuint id, GLenum pname, GLint64EXT *params)
 {
    struct gl_query_object *q = NULL;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetQueryObjecti64v(%u, %s)\n", id,
@@ -731,7 +722,6 @@ _mesa_GetQueryObjectui64v(GLuint id, GLenum pname, GLuint64EXT *params)
 {
    struct gl_query_object *q = NULL;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetQueryObjectui64v(%u, %s)\n", id,

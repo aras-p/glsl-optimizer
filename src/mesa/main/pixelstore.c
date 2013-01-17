@@ -41,7 +41,6 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 {
    /* NOTE: this call can't be compiled into the display list */
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (pname) {
       case GL_PACK_SWAP_BYTES:

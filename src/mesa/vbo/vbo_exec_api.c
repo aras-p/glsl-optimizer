@@ -658,8 +658,6 @@ vbo_exec_EvalMesh1(GLenum mode, GLint i1, GLint i2)
    GLfloat u, du;
    GLenum prim;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    switch (mode) {
    case GL_POINT:
       prim = GL_POINTS;
@@ -695,8 +693,6 @@ vbo_exec_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
    GET_CURRENT_CONTEXT(ctx);
    GLfloat u, du, v, dv, v1, u1;
    GLint i, j;
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (mode) {
    case GL_POINT:
@@ -771,9 +767,6 @@ vbo_exec_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
 static void GLAPIENTRY
 vbo_exec_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    CALL_Begin(GET_DISPATCH(), (GL_QUADS));
    CALL_Vertex2f(GET_DISPATCH(), (x1, y1));
    CALL_Vertex2f(GET_DISPATCH(), (x2, y1));

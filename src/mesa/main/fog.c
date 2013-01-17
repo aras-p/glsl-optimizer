@@ -97,7 +97,6 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLenum m;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (pname) {
       case GL_FOG_MODE:

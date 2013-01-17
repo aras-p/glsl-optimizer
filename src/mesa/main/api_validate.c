@@ -313,7 +313,6 @@ _mesa_validate_DrawElements(struct gl_context *ctx,
 			    GLenum mode, GLsizei count, GLenum type,
 			    const GLvoid *indices, GLint basevertex)
 {
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    FLUSH_CURRENT(ctx, 0);
 
    /* From the GLES3 specification, section 2.14.2 (Transform Feedback
@@ -380,7 +379,6 @@ _mesa_validate_MultiDrawElements(struct gl_context *ctx,
 {
    unsigned i;
 
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    FLUSH_CURRENT(ctx, 0);
 
    for (i = 0; i < primcount; i++) {
@@ -444,7 +442,6 @@ _mesa_validate_DrawRangeElements(struct gl_context *ctx, GLenum mode,
 				 GLsizei count, GLenum type,
 				 const GLvoid *indices, GLint basevertex)
 {
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    FLUSH_CURRENT(ctx, 0);
 
    /* From the GLES3 specification, section 2.14.2 (Transform Feedback
@@ -514,7 +511,6 @@ _mesa_validate_DrawArrays(struct gl_context *ctx,
 {
    struct gl_transform_feedback_object *xfb_obj
       = ctx->TransformFeedback.CurrentObject;
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    FLUSH_CURRENT(ctx, 0);
 
    if (count <= 0) {
@@ -568,7 +564,6 @@ _mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint fi
 {
    struct gl_transform_feedback_object *xfb_obj
       = ctx->TransformFeedback.CurrentObject;
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    FLUSH_CURRENT(ctx, 0);
 
    if (count <= 0) {
@@ -637,7 +632,6 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
                                      const GLvoid *indices, GLsizei numInstances,
                                      GLint basevertex)
 {
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    FLUSH_CURRENT(ctx, 0);
 
    /* From the GLES3 specification, section 2.14.2 (Transform Feedback
@@ -707,7 +701,6 @@ _mesa_validate_DrawTransformFeedback(struct gl_context *ctx,
                                      GLuint stream,
                                      GLsizei numInstances)
 {
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    FLUSH_CURRENT(ctx, 0);
 
    if (!_mesa_valid_prim_mode(ctx, mode, "glDrawTransformFeedback*(mode)")) {

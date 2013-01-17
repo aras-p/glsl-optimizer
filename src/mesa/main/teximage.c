@@ -2944,7 +2944,7 @@ teximage(struct gl_context *ctx, GLboolean compressed, GLuint dims,
    gl_format texFormat;
    GLboolean dimensionsOK, sizeOK;
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE)) {
       if (compressed)
@@ -3174,7 +3174,7 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
    struct gl_texture_image *texImage;
    bool valid_target;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    switch (target) {
    case GL_TEXTURE_2D:
@@ -3236,7 +3236,7 @@ texsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       _mesa_debug(ctx, "glTexSubImage%uD %s %d %d %d %d %d %d %d %s %s %p\n",
@@ -3375,7 +3375,7 @@ copyteximage(struct gl_context *ctx, GLuint dims,
    const GLuint face = _mesa_tex_target_to_face(target);
    gl_format texFormat;
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       _mesa_debug(ctx, "glCopyTexImage%uD %s %d %s %d %d %d %d %d\n",
@@ -3498,7 +3498,7 @@ copytexsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       _mesa_debug(ctx, "glCopyTexSubImage%uD %s %d %d %d %d %d %d %d %d\n",
@@ -3746,7 +3746,7 @@ compressed_tex_sub_image(GLuint dims, GLenum target, GLint level,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    if (compressed_subtexture_error_check(ctx, dims, target, level,
                                          xoffset, yoffset, zoffset,
@@ -4012,7 +4012,7 @@ _mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer)
    gl_format format;
 
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    if (!(ctx->API == API_OPENGL_CORE &&
          ctx->Extensions.ARB_texture_buffer_object)) {

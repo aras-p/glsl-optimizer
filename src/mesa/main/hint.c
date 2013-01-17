@@ -37,7 +37,6 @@ void GLAPIENTRY
 _mesa_Hint( GLenum target, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glHint %s %s\n",

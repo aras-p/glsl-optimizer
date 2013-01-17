@@ -46,7 +46,7 @@ void GLAPIENTRY
 _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
    _mesa_set_viewport(ctx, x, y, width, height);
 }
 
@@ -116,7 +116,8 @@ void GLAPIENTRY
 _mesa_DepthRange(GLclampd nearval, GLclampd farval)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glDepthRange %f %f\n", nearval, farval);

@@ -757,8 +757,6 @@ _mesa_GenTransformFeedbacks(GLsizei n, GLuint *names)
    GLuint first;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGenTransformFeedbacks(n < 0)");
       return;
@@ -853,8 +851,6 @@ _mesa_DeleteTransformFeedbacks(GLsizei n, const GLuint *names)
 {
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteTransformFeedbacks(n < 0)");

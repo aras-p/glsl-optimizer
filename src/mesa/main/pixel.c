@@ -49,8 +49,6 @@ _mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    if (ctx->Pixel.ZoomX == xfactor &&
        ctx->Pixel.ZoomY == yfactor)
       return;
@@ -181,7 +179,6 @@ void GLAPIENTRY
 _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    /* XXX someday, test against ctx->Const.MaxPixelMapTableSize */
    if (mapsize < 1 || mapsize > MAX_PIXEL_MAP_TABLE) {
@@ -224,7 +221,6 @@ _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
 {
    GLfloat fvalues[MAX_PIXEL_MAP_TABLE];
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (mapsize < 1 || mapsize > MAX_PIXEL_MAP_TABLE) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glPixelMapuiv(mapsize)" );
@@ -280,7 +276,6 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
 {
    GLfloat fvalues[MAX_PIXEL_MAP_TABLE];
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (mapsize < 1 || mapsize > MAX_PIXEL_MAP_TABLE) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glPixelMapusv(mapsize)" );
@@ -338,8 +333,6 @@ _mesa_GetnPixelMapfvARB( GLenum map, GLsizei bufSize, GLfloat *values )
    GLint mapsize, i;
    const struct gl_pixelmap *pm;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    pm = get_pixelmap(ctx, map);
    if (!pm) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetPixelMapfv(map)");
@@ -389,8 +382,6 @@ _mesa_GetnPixelMapuivARB( GLenum map, GLsizei bufSize, GLuint *values )
    GLint mapsize, i;
    const struct gl_pixelmap *pm;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    pm = get_pixelmap(ctx, map);
    if (!pm) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetPixelMapuiv(map)");
@@ -439,8 +430,6 @@ _mesa_GetnPixelMapusvARB( GLenum map, GLsizei bufSize, GLushort *values )
    GET_CURRENT_CONTEXT(ctx);
    GLint mapsize, i;
    const struct gl_pixelmap *pm;
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    pm = get_pixelmap(ctx, map);
    if (!pm) {
@@ -506,7 +495,6 @@ void GLAPIENTRY
 _mesa_PixelTransferf( GLenum pname, GLfloat param )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (pname) {
       case GL_MAP_COLOR:

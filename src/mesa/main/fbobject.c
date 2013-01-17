@@ -967,8 +967,6 @@ _mesa_BindRenderbuffer(GLenum target, GLuint renderbuffer)
    struct gl_renderbuffer *newRb;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    if (target != GL_RENDERBUFFER_EXT) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBindRenderbufferEXT(target)");
       return;
@@ -1041,7 +1039,6 @@ _mesa_DeleteRenderbuffers(GLsizei n, const GLuint *renderbuffers)
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    for (i = 0; i < n; i++) {
@@ -1086,8 +1083,6 @@ _mesa_GenRenderbuffers(GLsizei n, GLuint *renderbuffers)
    GET_CURRENT_CONTEXT(ctx);
    GLuint first;
    GLint i;
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGenRenderbuffersEXT(n)");
@@ -1450,8 +1445,6 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
    GLenum baseFormat;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    if (MESA_VERBOSE & VERBOSE_API) {
       if (samples == NO_SAMPLES)
          _mesa_debug(ctx, "%s(%s, %s, %d, %d)\n",
@@ -1552,7 +1545,6 @@ _mesa_EGLImageTargetRenderbufferStorageOES(GLenum target, GLeglImageOES image)
 {
    struct gl_renderbuffer *rb;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.OES_EGL_image) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -1645,8 +1637,6 @@ _mesa_GetRenderbufferParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    struct gl_renderbuffer *rb;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target != GL_RENDERBUFFER_EXT) {
       _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1773,8 +1763,6 @@ _mesa_BindFramebuffer(GLenum target, GLuint framebuffer)
    }
 #endif
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    if (!ctx->Extensions.EXT_framebuffer_object) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBindFramebufferEXT(unsupported)");
@@ -1900,7 +1888,6 @@ _mesa_DeleteFramebuffers(GLsizei n, const GLuint *framebuffers)
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    for (i = 0; i < n; i++) {
@@ -1954,8 +1941,6 @@ _mesa_GenFramebuffers(GLsizei n, GLuint *framebuffers)
    GET_CURRENT_CONTEXT(ctx);
    GLuint first;
    GLint i;
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGenFramebuffersEXT(n)");
@@ -2052,8 +2037,6 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
    struct gl_texture_object *texObj = NULL;
    struct gl_framebuffer *fb;
    GLenum maxLevelsTarget;
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    fb = get_framebuffer_target(ctx, target);
    if (!fb) {
@@ -2328,8 +2311,6 @@ _mesa_FramebufferRenderbuffer(GLenum target, GLenum attachment,
    struct gl_renderbuffer *rb;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    fb = get_framebuffer_target(ctx, target);
    if (!fb) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glFramebufferRenderbufferEXT(target)");
@@ -2410,8 +2391,6 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
    struct gl_framebuffer *buffer;
    GLenum err;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    /* The error differs in GL and GLES. */
    err = _mesa_is_desktop_gl(ctx) ? GL_INVALID_OPERATION : GL_INVALID_ENUM;
@@ -2651,7 +2630,6 @@ _mesa_GenerateMipmap(GLenum target)
 
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    switch (target) {
@@ -2836,7 +2814,6 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    const struct gl_framebuffer *readFb, *drawFb;
    GET_CURRENT_CONTEXT(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
    if (MESA_VERBOSE & VERBOSE_API)
@@ -3121,8 +3098,6 @@ invalidate_framebuffer_storage(GLenum target, GLsizei numAttachments,
    int i;
    struct gl_framebuffer *fb;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    fb = get_framebuffer_target(ctx, target);
    if (!fb) {

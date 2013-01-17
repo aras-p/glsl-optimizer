@@ -36,7 +36,6 @@ void GLAPIENTRY
 _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glScissor %d %d %d %d\n", x, y, width, height);

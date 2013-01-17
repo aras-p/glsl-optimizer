@@ -338,7 +338,6 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
 {
    struct gl_array_object * const oldObj = ctx->Array.ArrayObj;
    struct gl_array_object *newObj = NULL;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    ASSERT(oldObj != NULL);
 
@@ -435,7 +434,6 @@ _mesa_DeleteVertexArrays(GLsizei n, const GLuint *ids)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLsizei i;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteVertexArrayAPPLE(n)");
@@ -480,7 +478,6 @@ gen_vertex_arrays(struct gl_context *ctx, GLsizei n, GLuint *arrays)
 {
    GLuint first;
    GLint i;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGenVertexArraysAPPLE");

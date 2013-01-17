@@ -39,7 +39,6 @@ void GLAPIENTRY
 _mesa_ShadeModel( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glShadeModel %s\n", _mesa_lookup_enum_by_nr(mode));
@@ -69,7 +68,6 @@ void GLAPIENTRY
 _mesa_ProvokingVertex(GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glProvokingVertexEXT 0x%x\n", mode);
@@ -212,7 +210,6 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
    GET_CURRENT_CONTEXT(ctx);
    GLint i = (GLint) (light - GL_LIGHT0);
    GLfloat temp[4];
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (i < 0 || i >= (GLint) ctx->Const.MaxLights) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glLight(light=0x%x)", light );
@@ -335,7 +332,6 @@ _mesa_GetLightfv( GLenum light, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint l = (GLint) (light - GL_LIGHT0);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (l < 0 || l >= (GLint) ctx->Const.MaxLights) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glGetLightfv" );
@@ -385,7 +381,6 @@ _mesa_GetLightiv( GLenum light, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint l = (GLint) (light - GL_LIGHT0);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (l < 0 || l >= (GLint) ctx->Const.MaxLights) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glGetLightiv" );
@@ -456,7 +451,6 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
    GLenum newenum;
    GLboolean newbool;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (pname) {
       case GL_LIGHT_MODEL_AMBIENT:
@@ -729,7 +723,6 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
 		   MAT_BIT_FRONT_SPECULAR | MAT_BIT_BACK_SPECULAR |
 		   MAT_BIT_FRONT_DIFFUSE  | MAT_BIT_BACK_DIFFUSE  |
 		   MAT_BIT_FRONT_AMBIENT  | MAT_BIT_BACK_AMBIENT);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glColorMaterial %s %s\n",
@@ -766,7 +759,7 @@ _mesa_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
    GET_CURRENT_CONTEXT(ctx);
    GLuint f;
    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* update materials */
+   FLUSH_VERTICES(ctx, 0); /* update materials */
 
    FLUSH_CURRENT(ctx, 0); /* update ctx->Light.Material from vertex buffer */
 
@@ -818,10 +811,10 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
    GET_CURRENT_CONTEXT(ctx);
    GLuint f;
    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* update materials */
 
    ASSERT(ctx->API == API_OPENGL_COMPAT);
 
+   FLUSH_VERTICES(ctx, 0); /* update materials */
    FLUSH_CURRENT(ctx, 0); /* update ctx->Light.Material from vertex buffer */
 
    if (face==GL_FRONT) {

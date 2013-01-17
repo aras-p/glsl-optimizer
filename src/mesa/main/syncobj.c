@@ -234,7 +234,6 @@ _mesa_DeleteSync(GLsync sync)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_sync_object *const syncObj = (struct gl_sync_object *) sync;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    /* From the GL_ARB_sync spec:
     *
@@ -358,7 +357,6 @@ _mesa_WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_sync_object *const syncObj = (struct gl_sync_object *) sync;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!_mesa_validate_sync(ctx, syncObj)) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glWaitSync (not a valid sync object)");
@@ -388,7 +386,6 @@ _mesa_GetSynciv(GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length,
    struct gl_sync_object *const syncObj = (struct gl_sync_object *) sync;
    GLsizei size = 0;
    GLint v[1];
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!_mesa_validate_sync(ctx, syncObj)) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetSynciv (not a valid sync object)");

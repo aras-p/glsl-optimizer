@@ -48,7 +48,6 @@ void GLAPIENTRY
 _mesa_TextureBarrierNV(void)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    ctx->Driver.TextureBarrier(ctx);
 }

@@ -782,8 +782,6 @@ _mesa_GetActiveUniformName(GLuint program, GLuint uniformIndex,
       return;
    }
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniformName");
 
    if (!shProg)

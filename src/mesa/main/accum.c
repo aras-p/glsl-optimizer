@@ -41,7 +41,6 @@ _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
 {
    GLfloat tmp[4];
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    tmp[0] = CLAMP( red,   -1.0F, 1.0F );
    tmp[1] = CLAMP( green, -1.0F, 1.0F );
@@ -59,7 +58,7 @@ void GLAPIENTRY
 _mesa_Accum( GLenum op, GLfloat value )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    switch (op) {
    case GL_ADD:

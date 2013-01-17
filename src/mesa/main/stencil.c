@@ -108,7 +108,6 @@ void GLAPIENTRY
 _mesa_ClearStencil( GLint s )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->Stencil.Clear == (GLuint) s)
       return;
@@ -137,7 +136,6 @@ _mesa_StencilFuncSeparateATI( GLenum frontfunc, GLenum backfunc, GLint ref, GLui
 {
    GET_CURRENT_CONTEXT(ctx);
    const GLint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glStencilFuncSeparateATI()\n");
@@ -196,7 +194,6 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
    GET_CURRENT_CONTEXT(ctx);
    const GLint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
    const GLint face = ctx->Stencil.ActiveFace;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glStencilFunc()\n");
@@ -268,8 +265,6 @@ _mesa_StencilMask( GLuint mask )
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glStencilMask()\n");
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
    if (face != 0) {
       /* Only modify the EXT_stencil_two_side back-face state.
        */
@@ -324,8 +319,6 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glStencilOp()\n");
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!validate_stencil_op(ctx, fail)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glStencilOp(sfail)");
@@ -387,7 +380,6 @@ void GLAPIENTRY
 _mesa_ActiveStencilFaceEXT(GLenum face)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glActiveStencilFaceEXT()\n");
@@ -419,7 +411,6 @@ _mesa_StencilOpSeparate(GLenum face, GLenum sfail, GLenum zfail, GLenum zpass)
 {
    GLboolean set = GL_FALSE;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glStencilOpSeparate()\n");
@@ -477,7 +468,6 @@ _mesa_StencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
 {
    GET_CURRENT_CONTEXT(ctx);
    const GLint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glStencilFuncSeparate()\n");
@@ -518,7 +508,6 @@ void GLAPIENTRY
 _mesa_StencilMaskSeparate(GLenum face, GLuint mask)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glStencilMaskSeparate()\n");
