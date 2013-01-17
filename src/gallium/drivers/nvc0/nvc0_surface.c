@@ -158,9 +158,8 @@ nvc0_2d_texture_do_copy(struct nouveau_pushbuf *push,
    const enum pipe_format sfmt = src->base.base.format;
    int ret;
 
-   ret = PUSH_SPACE(push, 2 * 16 + 32);
-   if (ret)
-      return ret;
+   if (!PUSH_SPACE(push, 2 * 16 + 32))
+      return PIPE_ERROR;
 
    ret = nvc0_2d_texture_set(push, TRUE, dst, dst_level, dz, dfmt);
    if (ret)
@@ -278,6 +277,11 @@ nvc0_clear_render_target(struct pipe_context *pipe,
    struct nv04_resource *res = nv04_resource(sf->base.texture);
    unsigned z;
 
+   if (!PUSH_SPACE(push, 32 + sf->depth))
+      return;
+
+   PUSH_REFN (push, res->bo, res->domain | NOUVEAU_BO_WR);
+
    BEGIN_NVC0(push, NVC0_3D(CLEAR_COLOR(0)), 4);
    PUSH_DATAf(push, color->f[0]);
    PUSH_DATAf(push, color->f[1]);
@@ -324,8 +328,8 @@ nvc0_clear_render_target(struct pipe_context *pipe,
       nvc0_resource_fence(res, NOUVEAU_BO_WR);
    }
 
+   BEGIN_NIC0(push, NVC0_3D(CLEAR_BUFFERS), sf->depth);
    for (z = 0; z < sf->depth; ++z) {
-      BEGIN_NVC0(push, NVC0_3D(CLEAR_BUFFERS), 1);
       PUSH_DATA (push, 0x3c |
                  (z << NVC0_3D_CLEAR_BUFFERS_LAYER__SHIFT));
    }
@@ -349,6 +353,11 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 	uint32_t mode = 0;
 	int unk = mt->base.base.target == PIPE_TEXTURE_2D;
 	unsigned z;
+
+	if (!PUSH_SPACE(push, 32 + sf->depth))
+		return;
+
+	PUSH_REFN (push, mt->base.bo, mt->base.domain | NOUVEAU_BO_WR);
 
 	if (clear_flags & PIPE_CLEAR_DEPTH) {
 		BEGIN_NVC0(push, NVC0_3D(CLEAR_DEPTH), 1);
@@ -381,8 +390,8 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 	BEGIN_NVC0(push, NVC0_3D(ZETA_BASE_LAYER), 1);
 	PUSH_DATA (push, dst->u.tex.first_layer);
 
+	BEGIN_NIC0(push, NVC0_3D(CLEAR_BUFFERS), sf->depth);
 	for (z = 0; z < sf->depth; ++z) {
-		BEGIN_NVC0(push, NVC0_3D(CLEAR_BUFFERS), 1);
 		PUSH_DATA (push, mode |
 			   (z << NVC0_3D_CLEAR_BUFFERS_LAYER__SHIFT));
 	}
