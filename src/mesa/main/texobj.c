@@ -468,7 +468,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
    }
 
    if (t->MaxLevel < baseLevel) {
-      incomplete(t, BASE, "MAX_LEVEL (%d) < BASE_LEVEL (%d)",
+      incomplete(t, MIPMAP, "MAX_LEVEL (%d) < BASE_LEVEL (%d)",
 		 t->MaxLevel, baseLevel);
       return;
    }
@@ -576,7 +576,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       GLuint width, height, depth, face;
 
       if (minLevel > maxLevel) {
-         incomplete(t, BASE, "minLevel > maxLevel");
+         incomplete(t, MIPMAP, "minLevel > maxLevel");
          return;
       }
 
