@@ -336,8 +336,21 @@ _mesa_round_to_even(float val)
 
 /**
  * Convert a 4-byte float to a 2-byte half float.
- * Based on code from:
- * http://www.opengl.org/discussion_boards/ubb/Forum3/HTML/008786.html
+ *
+ * Not all float32 values can be represented exactly as a float16 value. We
+ * round such intermediate float32 values to the nearest float16. When the
+ * float32 lies exactly between to float16 values, we round to the one with
+ * an even mantissa.
+ *
+ * This rounding behavior has several benefits:
+ *   - It has no sign bias.
+ *
+ *   - It reproduces the behavior of real hardware: opcode F32TO16 in Intel's
+ *     GPU ISA.
+ *
+ *   - By reproducing the behavior of the GPU (at least on Intel hardware),
+ *     compile-time evaluation of constant packHalf2x16 GLSL expressions will
+ *     result in the same value as if the expression were executed on the GPU.
  */
 GLhalfARB
 _mesa_float_to_half(float val)
@@ -376,32 +389,13 @@ _mesa_float_to_half(float val)
    else {
       /* regular number */
       const int new_exp = flt_e - 127;
-      if (new_exp < -24) {
-         /* this maps to 0 */
-         /* m = 0; - already set */
+      if (new_exp < -14) {
+         /* The float32 lies in the range (0.0, min_normal16) and is rounded
+          * to a nearby float16 value. The result will be either zero, subnormal,
+          * or normal.
+          */
          e = 0;
-      }
-      else if (new_exp < -14) {
-         /* this maps to a denorm */
-         unsigned int exp_val = (unsigned int) (-14 - new_exp); /* 2^-exp_val*/
-         e = 0;
-         switch (exp_val) {
-            case 0:
-               _mesa_warning(NULL,
-                   "float_to_half: logical error in denorm creation!\n");
-               /* m = 0; - already set */
-               break;
-            case 1: m = 512 + (flt_m >> 14); break;
-            case 2: m = 256 + (flt_m >> 15); break;
-            case 3: m = 128 + (flt_m >> 16); break;
-            case 4: m = 64 + (flt_m >> 17); break;
-            case 5: m = 32 + (flt_m >> 18); break;
-            case 6: m = 16 + (flt_m >> 19); break;
-            case 7: m = 8 + (flt_m >> 20); break;
-            case 8: m = 4 + (flt_m >> 21); break;
-            case 9: m = 2 + (flt_m >> 22); break;
-            case 10: m = 1; break;
-         }
+         m = _mesa_round_to_even((1 << 24) * fabsf(fi.f));
       }
       else if (new_exp > 15) {
          /* map this value to infinity */
@@ -409,10 +403,24 @@ _mesa_float_to_half(float val)
          e = 31;
       }
       else {
-         /* regular */
+         /* The float32 lies in the range
+          *   [min_normal16, max_normal16 + max_step16)
+          * and is rounded to a nearby float16 value. The result will be
+          * either normal or infinite.
+          */
          e = new_exp + 15;
-         m = flt_m >> 13;
+         m = _mesa_round_to_even(flt_m / (float) (1 << 13));
       }
+   }
+
+   assert(0 <= m && m <= 1024);
+   if (m == 1024) {
+      /* The float32 was rounded upwards into the range of the next exponent,
+       * so bump the exponent. This correctly handles the case where f32
+       * should be rounded up to float16 infinity.
+       */
+      ++e;
+      m = 0;
    }
 
    result = (s << 15) | (e << 10) | m;
