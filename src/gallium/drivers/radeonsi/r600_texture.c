@@ -331,13 +331,15 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 		*/
 		struct r600_resource_texture *staging_depth;
 
-		r600_texture_depth_flush(ctx, texture, &staging_depth);
-		if (!staging_depth) {
+		if (!r600_init_flushed_depth_texture(ctx, texture, &staging_depth)) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
 			pipe_resource_reference(&trans->transfer.resource, NULL);
 			FREE(trans);
 			return NULL;
 		}
+		si_blit_uncompress_depth(ctx, rtex, staging_depth,
+					 level, level,
+					 box->z, box->z + box->depth - 1);
 		trans->transfer.stride = staging_depth->surface.level[level].pitch_bytes;
 		trans->offset = r600_texture_get_offset(staging_depth, level, box->z);
 
@@ -424,22 +426,13 @@ static void si_texture_transfer_unmap(struct pipe_context *ctx,
 	}
 	rctx->ws->buffer_unmap(buf);
 
-	if (rtex->is_depth) {
-		if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtransfer->staging) {
-			struct pipe_box sbox;
-
-			sbox.x = sbox.y = sbox.z = 0;
-			sbox.width = texture->width0;
-			sbox.height = texture->height0;
-			/* XXX that might be wrong */
-			sbox.depth = 1;
-
-			ctx->resource_copy_region(ctx, texture, 0, 0, 0, 0,
-						  &si_resource(rtransfer->staging)->b.b, 0,
-						  &sbox);
-		}
-	} else if (rtransfer->staging) {
-		if (transfer->usage & PIPE_TRANSFER_WRITE) {
+	if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtransfer->staging) {
+		if (rtex->is_depth) {
+			ctx->resource_copy_region(ctx, texture, transfer->level,
+						  transfer->box.x, transfer->box.y, transfer->box.z,
+						  &si_resource(rtransfer->staging)->b.b, transfer->level,
+						  &transfer->box);
+		} else {
 			r600_copy_from_staging_texture(ctx, rtransfer);
 		}
 	}
@@ -460,6 +453,8 @@ static const struct u_resource_vtbl r600_texture_vtbl =
 	si_texture_transfer_unmap,	/* transfer_unmap */
 	NULL	/* transfer_inline_write */
 };
+
+DEBUG_GET_ONCE_BOOL_OPTION(print_texdepth, "RADEON_PRINT_TEXDEPTH", FALSE);
 
 static struct r600_resource_texture *
 r600_texture_create_object(struct pipe_screen *screen,
@@ -515,6 +510,51 @@ r600_texture_create_object(struct pipe_screen *screen,
 		resource->domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
 	}
 
+	if (debug_get_option_print_texdepth() && rtex->is_depth) {
+		printf("Texture: npix_x=%u, npix_y=%u, npix_z=%u, blk_w=%u, "
+		       "blk_h=%u, blk_d=%u, array_size=%u, last_level=%u, "
+		       "bpe=%u, nsamples=%u, flags=%u\n",
+		       rtex->surface.npix_x, rtex->surface.npix_y,
+		       rtex->surface.npix_z, rtex->surface.blk_w,
+		       rtex->surface.blk_h, rtex->surface.blk_d,
+		       rtex->surface.array_size, rtex->surface.last_level,
+		       rtex->surface.bpe, rtex->surface.nsamples,
+		       rtex->surface.flags);
+		if (rtex->surface.flags & RADEON_SURF_ZBUFFER) {
+			for (int i = 0; i <= rtex->surface.last_level; i++) {
+				printf("  Z %i: offset=%llu, slice_size=%llu, npix_x=%u, "
+				       "npix_y=%u, npix_z=%u, nblk_x=%u, nblk_y=%u, "
+				       "nblk_z=%u, pitch_bytes=%u, mode=%u\n",
+				       i, rtex->surface.level[i].offset,
+				       rtex->surface.level[i].slice_size,
+				       rtex->surface.level[i].npix_x,
+				       rtex->surface.level[i].npix_y,
+				       rtex->surface.level[i].npix_z,
+				       rtex->surface.level[i].nblk_x,
+				       rtex->surface.level[i].nblk_y,
+				       rtex->surface.level[i].nblk_z,
+				       rtex->surface.level[i].pitch_bytes,
+				       rtex->surface.level[i].mode);
+			}
+		}
+		if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
+			for (int i = 0; i <= rtex->surface.last_level; i++) {
+				printf("  S %i: offset=%llu, slice_size=%llu, npix_x=%u, "
+				       "npix_y=%u, npix_z=%u, nblk_x=%u, nblk_y=%u, "
+				       "nblk_z=%u, pitch_bytes=%u, mode=%u\n",
+				       i, rtex->surface.stencil_level[i].offset,
+				       rtex->surface.stencil_level[i].slice_size,
+				       rtex->surface.stencil_level[i].npix_x,
+				       rtex->surface.stencil_level[i].npix_y,
+				       rtex->surface.stencil_level[i].npix_z,
+				       rtex->surface.stencil_level[i].nblk_x,
+				       rtex->surface.stencil_level[i].nblk_y,
+				       rtex->surface.stencil_level[i].nblk_z,
+				       rtex->surface.stencil_level[i].pitch_bytes,
+				       rtex->surface.stencil_level[i].mode);
+			}
+		}
+	}
 	return rtex;
 }
 
@@ -622,7 +662,7 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 								  stride, 0, buf, FALSE, &surface);
 }
 
-void r600_init_flushed_depth_texture(struct pipe_context *ctx,
+bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
 				     struct r600_resource_texture **staging)
 {
@@ -632,7 +672,7 @@ void r600_init_flushed_depth_texture(struct pipe_context *ctx,
 			staging : &rtex->flushed_depth_texture;
 
 	if (!staging && rtex->flushed_depth_texture)
-		return; /* it's ready */
+		return true; /* it's ready */
 
 	resource.target = texture->target;
 	resource.format = texture->format;
@@ -649,36 +689,16 @@ void r600_init_flushed_depth_texture(struct pipe_context *ctx,
 	if (staging)
 		resource.flags |= R600_RESOURCE_FLAG_TRANSFER;
 	else
-		rtex->dirty_db = TRUE;
+		rtex->dirty_db_mask = (1 << (resource.last_level+1)) - 1;
 
 	*flushed_depth_texture = (struct r600_resource_texture *)ctx->screen->resource_create(ctx->screen, &resource);
 	if (*flushed_depth_texture == NULL) {
 		R600_ERR("failed to create temporary texture to hold flushed depth\n");
-		return;
+		return false;
 	}
 
 	(*flushed_depth_texture)->is_flushing_texture = TRUE;
-}
-
-void r600_texture_depth_flush(struct pipe_context *ctx,
-			      struct pipe_resource *texture,
-			      struct r600_resource_texture **staging)
-{
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
-
-	r600_init_flushed_depth_texture(ctx, texture, staging);
-
-	if (staging) {
-		if (!*staging)
-			return; /* error */
-
-		si_blit_uncompress_depth(ctx, rtex, *staging);
-	} else {
-		if (!rtex->flushed_depth_texture)
-			return; /* error */
-
-		si_blit_uncompress_depth(ctx, rtex, NULL);
-	}
+	return true;
 }
 
 void si_init_surface_functions(struct r600_context *r600)

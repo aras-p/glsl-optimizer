@@ -49,7 +49,7 @@ struct r600_resource_texture {
 
 	unsigned			pitch_override;
 	unsigned			is_depth;
-	unsigned			dirty_db;
+	unsigned			dirty_db_mask; /* each bit says if that miplevel is dirty */
 	struct r600_resource_texture	*flushed_depth_texture;
 	boolean				is_flushing_texture;
 	struct radeon_surface		surface;
@@ -68,12 +68,9 @@ struct pipe_resource *si_texture_from_handle(struct pipe_screen *screen,
 					     const struct pipe_resource *base,
 					     struct winsys_handle *whandle);
 
-void r600_init_flushed_depth_texture(struct pipe_context *ctx,
+bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
 				     struct r600_resource_texture **staging);
-void r600_texture_depth_flush(struct pipe_context *ctx,
-			      struct pipe_resource *texture,
-			      struct r600_resource_texture **staging);
 
 
 struct r600_context;

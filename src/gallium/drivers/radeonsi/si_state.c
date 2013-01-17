@@ -650,7 +650,8 @@ static void si_delete_dsa_state(struct pipe_context *ctx, void *state)
 	si_pm4_delete_state(rctx, dsa, (struct si_state_dsa *)state);
 }
 
-static void *si_create_db_flush_dsa(struct r600_context *rctx)
+static void *si_create_db_flush_dsa(struct r600_context *rctx, bool copy_depth,
+				    bool copy_stencil)
 {
 	struct pipe_depth_stencil_alpha_state dsa;
         struct si_state_dsa *state;
@@ -658,10 +659,22 @@ static void *si_create_db_flush_dsa(struct r600_context *rctx)
 	memset(&dsa, 0, sizeof(dsa));
 
 	state = rctx->context.create_depth_stencil_alpha_state(&rctx->context, &dsa);
-	si_pm4_set_reg(&state->pm4, R_028000_DB_RENDER_CONTROL,
-		       S_028000_DEPTH_COPY(1) |
-		       S_028000_STENCIL_COPY(1) |
-		       S_028000_COPY_CENTROID(1));
+	if (copy_depth || copy_stencil) {
+		si_pm4_set_reg(&state->pm4, R_028000_DB_RENDER_CONTROL,
+			       S_028000_DEPTH_COPY(copy_depth) |
+			       S_028000_STENCIL_COPY(copy_stencil) |
+			       S_028000_COPY_CENTROID(1));
+	} else {
+		si_pm4_set_reg(&state->pm4, R_028000_DB_RENDER_CONTROL,
+			       S_028000_DEPTH_COMPRESS_DISABLE(1) |
+			       S_028000_STENCIL_COMPRESS_DISABLE(1));
+		si_pm4_set_reg(&state->pm4, R_02800C_DB_RENDER_OVERRIDE,
+			       S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE) |
+			       S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
+			       S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE) |
+			       S_02800C_DISABLE_TILE_RATE_TILES(1));
+	}
+
         return state;
 }
 
@@ -1581,16 +1594,6 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 
-	if (rtex->is_depth)
-		rctx->have_depth_fb = TRUE;
-
-	if (rtex->is_depth && !rtex->is_flushing_texture) {
-		r600_init_flushed_depth_texture(&rctx->context,
-				state->cbufs[cb]->texture, NULL);
-		rtex = rtex->flushed_depth_texture;
-		assert(rtex);
-	}
-
 	offset = rtex->surface.level[level].offset;
 	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
 		offset += rtex->surface.level[level].slice_size *
@@ -1786,7 +1789,6 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
 
 	/* build states */
-	rctx->have_depth_fb = 0;
 	rctx->export_16bpc = 0;
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		si_cb(rctx, pm4, state, i);
@@ -2041,11 +2043,12 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 {
 	struct si_pipe_sampler_view *view = CALLOC_STRUCT(si_pipe_sampler_view);
 	struct r600_resource_texture *tmp = (struct r600_resource_texture*)texture;
-	const struct util_format_description *desc = util_format_description(state->format);
+	const struct util_format_description *desc;
 	unsigned format, num_format;
 	uint32_t pitch = 0;
 	unsigned char state_swizzle[4], swizzle[4];
 	unsigned height, depth, width;
+	enum pipe_format pipe_format = state->format;
 	int first_non_void;
 	uint64_t va;
 
@@ -2064,9 +2067,26 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	state_swizzle[1] = state->swizzle_g;
 	state_swizzle[2] = state->swizzle_b;
 	state_swizzle[3] = state->swizzle_a;
+
+	/* Texturing with separate depth and stencil. */
+	if (tmp->is_depth && !tmp->is_flushing_texture) {
+		switch (pipe_format) {
+		case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+			pipe_format = PIPE_FORMAT_Z32_FLOAT;
+			break;
+		case PIPE_FORMAT_X24S8_UINT:
+		case PIPE_FORMAT_S8X24_UINT:
+		case PIPE_FORMAT_X32_S8X24_UINT:
+			pipe_format = PIPE_FORMAT_S8_UINT;
+			break;
+		default:;
+		}
+	}
+
+	desc = util_format_description(pipe_format);
 	util_format_compose_swizzles(desc->swizzle, state_swizzle, swizzle);
 
-	first_non_void = util_format_get_first_non_void_channel(state->format);
+	first_non_void = util_format_get_first_non_void_channel(pipe_format);
 	switch (desc->channel[first_non_void].type) {
 	case UTIL_FORMAT_TYPE_FLOAT:
 		num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
@@ -2079,19 +2099,9 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 		num_format = V_008F14_IMG_NUM_FORMAT_UNORM;
 	}
 
-	format = si_translate_texformat(ctx->screen, state->format, desc, first_non_void);
+	format = si_translate_texformat(ctx->screen, pipe_format, desc, first_non_void);
 	if (format == ~0) {
 		format = 0;
-	}
-
-	if (tmp->is_depth && !tmp->is_flushing_texture) {
-		r600_init_flushed_depth_texture(ctx, texture, NULL);
-		tmp = tmp->flushed_depth_texture;
-		if (!tmp) {
-			FREE(view);
-			return NULL;
-		}
-		texture = &tmp->resource.b.b;
 	}
 
 	view->resource = &tmp->resource;
@@ -2102,7 +2112,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	width = tmp->surface.level[0].npix_x;
 	height = tmp->surface.level[0].npix_y;
 	depth = tmp->surface.level[0].npix_z;
-	pitch = tmp->surface.level[0].nblk_x * util_format_get_blockwidth(state->format);
+	pitch = tmp->surface.level[0].nblk_x * util_format_get_blockwidth(pipe_format);
 
 	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
 	        height = 1;
@@ -2207,8 +2217,6 @@ static struct si_pm4_state *si_set_sampler_view(struct r600_context *rctx,
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	int i, j;
 
-	rctx->have_depth_texture = FALSE;
-
 	if (!count)
 		goto out;
 
@@ -2220,11 +2228,19 @@ static struct si_pm4_state *si_set_sampler_view(struct r600_context *rctx,
 			(struct pipe_sampler_view **)&samplers->views[i],
 			views[i]);
 
-		if (resource[i]) {
+		if (views[i]) {
 			struct r600_resource_texture *rtex =
-				(struct r600_resource_texture *)views[i]->texture;
-			rctx->have_depth_texture |= rtex->is_depth && !rtex->is_flushing_texture;
+				(struct r600_resource_texture*)views[i]->texture;
+
+			if (rtex->is_depth && !rtex->is_flushing_texture) {
+				samplers->depth_texture_mask |= 1 << i;
+			} else {
+				samplers->depth_texture_mask &= ~(1 << i);
+			}
+
 			si_pm4_add_bo(pm4, resource[i]->resource, RADEON_USAGE_READ);
+		} else {
+			samplers->depth_texture_mask &= ~(1 << i);
 		}
 
 		for (j = 0; j < Elements(resource[i]->state); ++j) {
@@ -2546,7 +2562,10 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->context.create_depth_stencil_alpha_state = si_create_dsa_state;
 	rctx->context.bind_depth_stencil_alpha_state = si_bind_dsa_state;
 	rctx->context.delete_depth_stencil_alpha_state = si_delete_dsa_state;
-	rctx->custom_dsa_flush = si_create_db_flush_dsa(rctx);
+	rctx->custom_dsa_flush_depth_stencil = si_create_db_flush_dsa(rctx, true, true);
+	rctx->custom_dsa_flush_depth = si_create_db_flush_dsa(rctx, true, false);
+	rctx->custom_dsa_flush_stencil = si_create_db_flush_dsa(rctx, false, true);
+	rctx->custom_dsa_flush_inplace = si_create_db_flush_dsa(rctx, false, false);
 
 	rctx->context.set_clip_state = si_set_clip_state;
 	rctx->context.set_scissor_state = si_set_scissor_state;

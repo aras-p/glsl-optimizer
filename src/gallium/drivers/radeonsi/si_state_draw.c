@@ -376,8 +376,13 @@ static void si_update_derived_state(struct r600_context *rctx)
 	unsigned ps_dirty = 0;
 
 	if (!rctx->blitter->running) {
-		if (rctx->have_depth_fb || rctx->have_depth_texture)
-			si_flush_depth_textures(rctx);
+		/* Flush depth textures which need to be flushed. */
+		if (rctx->vs_samplers.depth_texture_mask) {
+			si_flush_depth_textures(rctx, &rctx->vs_samplers);
+		}
+		if (rctx->ps_samplers.depth_texture_mask) {
+			si_flush_depth_textures(rctx, &rctx->ps_samplers);
+		}
 	}
 
 	si_shader_select(ctx, rctx->ps_shader, &ps_dirty);
@@ -580,10 +585,12 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	rctx->flags |= R600_CONTEXT_DST_CACHES_DIRTY;
 
-	if (rctx->framebuffer.zsbuf)
-	{
-		struct pipe_resource *tex = rctx->framebuffer.zsbuf->texture;
-		((struct r600_resource_texture *)tex)->dirty_db = TRUE;
+	/* Set the depth buffer as dirty. */
+	if (rctx->framebuffer.zsbuf) {
+		struct pipe_surface *surf = rctx->framebuffer.zsbuf;
+		struct r600_resource_texture *rtex = (struct r600_resource_texture *)surf->texture;
+
+		rtex->dirty_db_mask |= 1 << surf->u.tex.level;
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);
