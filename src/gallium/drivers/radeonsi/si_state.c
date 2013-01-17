@@ -1524,7 +1524,10 @@ static unsigned si_tile_mode_index(struct r600_resource_texture *rtex, unsigned 
 	case RADEON_SURF_MODE_LINEAR_ALIGNED:
 		return 8;
 	case RADEON_SURF_MODE_1D:
-		return 9;
+		if (rtex->surface.flags & RADEON_SURF_SCANOUT)
+			return 9;
+		else
+			return 13;
 	case RADEON_SURF_MODE_2D:
 		if (rtex->surface.flags & RADEON_SURF_SCANOUT) {
 			switch (util_format_get_blocksize(rtex->real_format)) {
