@@ -114,7 +114,7 @@ blit_nearest(struct gl_context *ctx,
    struct gl_renderbuffer_attachment *readAtt, *drawAtt;
    struct gl_framebuffer *readFb = ctx->ReadBuffer;
    struct gl_framebuffer *drawFb = ctx->DrawBuffer;
-   GLint NumDrawBuffers = 0;
+   GLuint numDrawBuffers = 0;
    GLuint i;
 
    const GLint srcWidth = ABS(srcX1 - srcX0);
@@ -153,14 +153,14 @@ blit_nearest(struct gl_context *ctx,
    case GL_COLOR_BUFFER_BIT:
       readAtt = &readFb->Attachment[readFb->_ColorReadBufferIndex];
       readRb = readFb->_ColorReadBuffer;
-      NumDrawBuffers = drawFb->_NumColorDrawBuffers;
+      numDrawBuffers = drawFb->_NumColorDrawBuffers;
       break;
    case GL_DEPTH_BUFFER_BIT:
       readAtt = &readFb->Attachment[BUFFER_DEPTH];
       drawAtt = &drawFb->Attachment[BUFFER_DEPTH];
       readRb = readAtt->Renderbuffer;
       drawRb = drawAtt->Renderbuffer;
-      NumDrawBuffers = 1;
+      numDrawBuffers = 1;
 
       /* Note that for depth/stencil, the formats of src/dst must match.  By
        * using the core helpers for pack/unpack, we avoid needing to handle
@@ -179,7 +179,7 @@ blit_nearest(struct gl_context *ctx,
       drawAtt = &drawFb->Attachment[BUFFER_STENCIL];
       readRb = readAtt->Renderbuffer;
       drawRb = drawAtt->Renderbuffer;
-      NumDrawBuffers = 1;
+      numDrawBuffers = 1;
       mode = UNPACK_S;
       pixelSize = 1;
       break;
@@ -212,13 +212,16 @@ blit_nearest(struct gl_context *ctx,
    }
 
    /* Blit to all the draw buffers */
-   for (i = 0; i < NumDrawBuffers; i++) {
+   for (i = 0; i < numDrawBuffers; i++) {
       if (buffer == GL_COLOR_BUFFER_BIT) {
          int idx = drawFb->_ColorDrawBufferIndexes[i];
          if (idx == -1)
             continue;
          drawAtt = &drawFb->Attachment[idx];
          drawRb = drawAtt->Renderbuffer;
+
+         if (!drawRb)
+            continue;
 
          if (readRb->Format == drawRb->Format) {
             mode = DIRECT;
@@ -514,8 +517,6 @@ blit_linear(struct gl_context *ctx,
             GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1)
 {
    struct gl_framebuffer *drawFb = ctx->DrawBuffer;
-   struct gl_renderbuffer *drawRb = NULL;
-   struct gl_renderbuffer_attachment *drawAtt = NULL;
    struct gl_framebuffer *readFb = ctx->ReadBuffer;
    struct gl_renderbuffer *readRb = readFb->_ColorReadBuffer;
    struct gl_renderbuffer_attachment *readAtt =
@@ -543,7 +544,6 @@ blit_linear(struct gl_context *ctx,
    GLvoid *dstBuffer;
 
    gl_format readFormat = _mesa_get_srgb_format_linear(readRb->Format);
-   gl_format drawFormat = _mesa_get_srgb_format_linear(drawRb->Format);
    GLuint bpp = _mesa_get_format_bytes(readFormat);
 
    GLenum pixelType;
@@ -587,17 +587,27 @@ blit_linear(struct gl_context *ctx,
    }
 
    for (i = 0; i < drawFb->_NumColorDrawBuffers; i++) {
-      int idx = drawFb->_ColorDrawBufferIndexes[i];
+      GLint idx = drawFb->_ColorDrawBufferIndexes[i];
+      struct gl_renderbuffer_attachment *drawAtt;
+      struct gl_renderbuffer *drawRb;
+      gl_format drawFormat;
+
       if (idx == -1)
          continue;
+
       drawAtt = &drawFb->Attachment[idx];
       drawRb = drawAtt->Renderbuffer;
+      if (!drawRb)
+         continue;
+
+      drawFormat = _mesa_get_srgb_format_linear(drawRb->Format);
+
       /*
        * Map src / dst renderbuffers
        */
       if ((readRb == drawRb) ||
           (readAtt->Texture && drawAtt->Texture &&
-           (readAtt->Texture = drawAtt->Texture))) {
+           (readAtt->Texture == drawAtt->Texture))) {
          /* map whole buffer for read/write */
          ctx->Driver.MapRenderbuffer(ctx, readRb,
                                      0, 0, readRb->Width, readRb->Height,
