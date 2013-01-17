@@ -522,8 +522,7 @@ struct pipe_resource *si_texture_create(struct pipe_screen *screen,
 	int r;
 
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
-	    !(templ->bind & PIPE_BIND_SCANOUT) &&
-	    util_format_is_depth_or_stencil(templ->format)) {
+	    !(templ->bind & PIPE_BIND_SCANOUT)) {
 		if (permit_hardware_blit(screen, templ)) {
 			array_mode = V_009910_ARRAY_1D_TILED_THIN1;
 		}
