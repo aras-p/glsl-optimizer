@@ -19,9 +19,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-if CROSS_COMPILING
 SUBDIRS = builtin_compiler
-endif
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
@@ -45,7 +43,7 @@ TESTS_ENVIRONMENT= \
 	export PYTHON2=$(PYTHON2); \
 	export PYTHON_FLAGS=$(PYTHON_FLAGS);
 
-noinst_LTLIBRARIES = libglcpp.la libglsl.la
+noinst_LTLIBRARIES = libglsl.la libglcpp.la
 check_PROGRAMS =					\
 	glcpp/glcpp					\
 	glsl_test					\
@@ -74,22 +72,31 @@ tests_ralloc_test_LDADD =				\
 	$(top_builddir)/src/gtest/libgtest.la		\
 	$(PTHREAD_LIBS)
 
+if CROSS_COMPILING
 libglcpp_la_SOURCES =					\
 	glcpp/glcpp-lex.c				\
 	glcpp/glcpp-parse.c				\
 	$(LIBGLCPP_FILES)
+else
+libglcpp_la_LIBADD = builtin_compiler/libglcpp.la
+endif
 
 glcpp_glcpp_SOURCES =					\
 	glcpp/glcpp.c					\
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c
 glcpp_glcpp_LDADD = libglcpp.la
 
-libglsl_la_SOURCES =					\
+libglsl_la_SOURCES = builtin_function.cpp
+libglsl_la_LIBADD = libglcpp.la
+if CROSS_COMPILING
+libglsl_la_SOURCES +=					\
 	glsl_lexer.cpp					\
 	glsl_parser.cpp					\
-	$(LIBGLSL_FILES)				\
-	builtin_function.cpp
-libglsl_la_LIBADD = libglcpp.la
+	$(LIBGLSL_FILES)
+else
+libglsl_la_LIBADD +=					\
+	builtin_compiler/libglslcore.la
+endif
 
 glsl_test_SOURCES = \
 	$(top_srcdir)/src/mesa/main/hash_table.c \
@@ -100,27 +107,6 @@ glsl_test_SOURCES = \
 	test_optpass.cpp
 
 glsl_test_LDADD = libglsl.la
-
-if CROSS_COMPILING
-BUILTIN_COMPILER = builtin_compiler/builtin_compiler$(BUILD_EXEEXT)
-else
-BUILTIN_COMPILER = builtincompiler$(BUILD_EXEEXT)
-
-noinst_PROGRAMS = builtincompiler
-noinst_LTLIBRARIES += libglslcore.la
-
-libglslcore_la_SOURCES =				\
-	glsl_lexer.cpp					\
-	glsl_parser.cpp					\
-	$(LIBGLSL_FILES)
-builtincompiler_SOURCES = \
-	$(top_srcdir)/src/mesa/main/hash_table.c	\
-	$(top_srcdir)/src/mesa/program/prog_hash_table.c\
-	$(top_srcdir)/src/mesa/program/symbol_table.c	\
-	$(top_srcdir)/src/glsl/builtin_compiler/builtin_stubs.cpp \
-	$(GLSL_COMPILER_CXX_FILES)
-builtincompiler_LDADD = libglslcore.la libglcpp.la
-endif
 
 # We write our own rules for yacc and lex below. We'd rather use automake,
 # but automake makes it especially difficult for a number of reasons:
@@ -174,13 +160,13 @@ glcpp/glcpp-lex.c: glcpp/glcpp-lex.l
 # dependency rules.
 BUILT_SOURCES =						\
 	glsl_parser.cpp					\
-	glcpp/glcpp-parse.c
+	glsl_lexer.cpp					\
+	glcpp/glcpp-parse.c				\
+	glcpp/glcpp-lex.c
 CLEANFILES =						\
 	glcpp/glcpp-parse.h				\
-	glcpp/glcpp-lex.c				\
 	glsl_parser.h					\
-	glsl_lexer.cpp					\
 	$(BUILT_SOURCES)
 
-builtin_function.cpp: $(srcdir)/builtins/profiles/* $(srcdir)/builtins/ir/* $(srcdir)/builtins/glsl/* $(srcdir)/builtins/tools/generate_builtins.py $(srcdir)/builtins/tools/texture_builtins.py $(BUILTIN_COMPILER)
-	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/builtins/tools/generate_builtins.py $(builddir)/$(BUILTIN_COMPILER) > builtin_function.cpp || rm -f builtin_function.cpp
+builtin_function.cpp: $(srcdir)/builtins/profiles/* $(srcdir)/builtins/ir/* $(srcdir)/builtins/glsl/* $(srcdir)/builtins/tools/generate_builtins.py $(srcdir)/builtins/tools/texture_builtins.py $(builddir)/builtin_compiler/builtin_compiler$(BUILD_EXEEXT)
+	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(srcdir)/builtins/tools/generate_builtins.py $(builddir)/builtin_compiler/builtin_compiler$(BUILD_EXEEXT) > builtin_function.cpp || rm -f builtin_function.cpp
