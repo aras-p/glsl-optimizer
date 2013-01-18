@@ -1660,10 +1660,7 @@ if test "x$enable_gallium_llvm" = xyes; then
     if test "x$LLVM_CONFIG" != xno; then
 	LLVM_VERSION=`$LLVM_CONFIG --version | sed 's/svn.*//g'`
 	LLVM_VERSION_INT=`echo $LLVM_VERSION | sed -e 's/\([[0-9]]\)\.\([[0-9]]\)/\10\2/g'`
-        if test "x$with_llvm_shared_libs" = xyes; then
-	    dnl We can't use $LLVM_VERSION because it has 'svn' stripped out,
-	    LLVM_LIBS="-lLLVM-`$LLVM_CONFIG --version`"
-	else
+        if test "x$with_llvm_shared_libs" != xyes; then
             LLVM_COMPONENTS="engine bitwriter"
             if $LLVM_CONFIG --components | grep -q '\<mcjit\>'; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} mcjit"
@@ -1672,7 +1669,6 @@ if test "x$enable_gallium_llvm" = xyes; then
             if test "x$enable_opencl" = xyes; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} ipo linker instrumentation"
             fi
-            LLVM_LIBS="`$LLVM_CONFIG --libs ${LLVM_COMPONENTS}`"
 	fi
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 	LLVM_BINDIR=`$LLVM_CONFIG --bindir`
@@ -1797,7 +1793,7 @@ radeon_llvm_check() {
                       configure flag])
     fi
     AC_MSG_WARN([Please ensure you use the latest llvm tree from git://people.freedesktop.org/~tstellar/llvm master before submitting a bug])
-    LLVM_LIBS="$LLVM_LIBS `$LLVM_CONFIG --libs r600`"
+    LLVM_COMPONENTS="${LLVM_COMPONENTS} r600"
 }
 
 dnl Gallium drivers
@@ -1836,12 +1832,13 @@ if test "x$with_gallium_drivers" != x; then
             if test "x$enable_r600_llvm" = xyes -o "x$enable_opencl" = xyes; then
                 radeon_llvm_check
                 NEED_RADEON_GALLIUM=yes;
+                LLVM_COMPONENTS="${LLVM_COMPONENTS} ipo"
             fi
             if test "x$enable_r600_llvm" = xyes; then
                 USE_R600_LLVM_COMPILER=yes;
             fi
             if test "x$enable_opencl" = xyes -a "x$with_llvm_shared_libs" = xno; then
-                LLVM_LIBS="${LLVM_LIBS} `$LLVM_CONFIG --libs bitreader asmparser`"
+                LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
             gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600"
             ;;
@@ -1891,6 +1888,21 @@ if test "x$with_gallium_drivers" != x; then
         esac
     done
 fi
+
+dnl Set LLVM_LIBS - This is done after the driver configuration so
+dnl that drivers can add additonal components to LLVM_COMPONENTS.
+dnl Previously, gallium drivers were updating LLVM_LIBS directly
+dnl by calling llvm-config --libs ${DRIVER_LLVM_COMPONENTS}, but
+dnl this was causing the same libraries to be appear multiple times
+dnl in LLVM_LIBS.
+
+if test "x$with_llvm_shared_libs" = xyes; then
+    dnl We can't use $LLVM_VERSION because it has 'svn' stripped out,
+    LLVM_LIBS="-lLLVM-`$LLVM_CONFIG --version`"
+else
+    LLVM_LIBS="`$LLVM_CONFIG --libs ${LLVM_COMPONENTS}`"
+fi
+
 AM_CONDITIONAL(HAVE_GALLIUM_SVGA, test "x$HAVE_GALLIUM_SVGA" = xyes)
 AM_CONDITIONAL(HAVE_GALLIUM_I915, test "x$HAVE_GALLIUM_I915" = xyes)
 AM_CONDITIONAL(HAVE_GALLIUM_R300, test "x$HAVE_GALLIUM_R300" = xyes)

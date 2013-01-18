@@ -21,10 +21,6 @@ libr600_la_SOURCES += \
 
 libr600_la_LIBADD = ../radeon/libllvmradeon@VERSION@.la
 
-libr600_la_LDFLAGS = \
-	$(LLVM_LDFLAGS) \
-	$(shell $(LLVM_CONFIG) --libs asmparser bitreader ipo)
-
 AM_CFLAGS += \
 	$(LLVM_CFLAGS) \
 	-I$(top_srcdir)/src/gallium/drivers/radeon/
