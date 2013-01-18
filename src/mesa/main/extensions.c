@@ -45,6 +45,7 @@ enum {
    GL  = (1 << API_OPENGL_COMPAT) | (1 << API_OPENGL_CORE),
    ES1 = 1 << API_OPENGLES,
    ES2 = 1 << API_OPENGLES2,
+   ES3 = 1 << (API_OPENGL_LAST + 1),
 };
 
 /**
@@ -746,6 +747,9 @@ _mesa_make_extension_string(struct gl_context *ctx)
    const struct extension *i;
    unsigned j;
    unsigned maxYear = ~0;
+   unsigned api_set = (1 << ctx->API);
+   if (_mesa_is_gles3(ctx))
+      api_set |= ES3;
 
    /* Check if the MESA_EXTENSION_MAX_YEAR env var is set */
    {
@@ -762,7 +766,7 @@ _mesa_make_extension_string(struct gl_context *ctx)
    for (i = extension_table; i->name != 0; ++i) {
       if (base[i->offset] &&
           i->year <= maxYear &&
-          (i->api_set & (1 << ctx->API))) {
+          (i->api_set & api_set)) {
 	 length += strlen(i->name) + 1; /* +1 for space */
 	 ++count;
       }
@@ -792,7 +796,7 @@ _mesa_make_extension_string(struct gl_context *ctx)
    for (i = extension_table; i->name != 0; ++i) {
       if (base[i->offset] &&
           i->year <= maxYear &&
-          (i->api_set & (1 << ctx->API))) {
+          (i->api_set & api_set)) {
          extension_indices[j++] = i - extension_table;
       }
    }
@@ -802,7 +806,7 @@ _mesa_make_extension_string(struct gl_context *ctx)
    /* Build the extension string.*/
    for (j = 0; j < count; ++j) {
       i = &extension_table[extension_indices[j]];
-      assert(base[i->offset] && (i->api_set & (1 << ctx->API)));
+      assert(base[i->offset] && (i->api_set & api_set));
       strcat(exts, i->name);
       strcat(exts, " ");
    }
@@ -823,6 +827,9 @@ _mesa_get_extension_count(struct gl_context *ctx)
 {
    GLboolean *base;
    const struct extension *i;
+   unsigned api_set = (1 << ctx->API);
+   if (_mesa_is_gles3(ctx))
+      api_set |= ES3;
 
    /* only count once */
    if (ctx->Extensions.Count != 0)
@@ -830,7 +837,7 @@ _mesa_get_extension_count(struct gl_context *ctx)
 
    base = (GLboolean *) &ctx->Extensions;
    for (i = extension_table; i->name != 0; ++i) {
-      if (base[i->offset] && (i->api_set & (1 << ctx->API))) {
+      if (base[i->offset] && (i->api_set & api_set)) {
 	 ctx->Extensions.Count++;
       }
    }
@@ -846,11 +853,14 @@ _mesa_get_enabled_extension(struct gl_context *ctx, GLuint index)
    const GLboolean *base;
    size_t n;
    const struct extension *i;
+   unsigned api_set = (1 << ctx->API);
+   if (_mesa_is_gles3(ctx))
+      api_set |= ES3;
 
    base = (GLboolean*) &ctx->Extensions;
    n = 0;
    for (i = extension_table; i->name != 0; ++i) {
-      if (base[i->offset] && (i->api_set & (1 << ctx->API))) {
+      if (base[i->offset] && (i->api_set & api_set)) {
          if (n == index)
             return (const GLubyte*) i->name;
          else
