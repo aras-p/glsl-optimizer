@@ -43,9 +43,6 @@ extern void
 _mesa_init_sync_object_functions(struct dd_function_table *driver);
 
 extern void
-_mesa_init_sync_dispatch(struct _glapi_table *disp);
-
-extern void
 _mesa_init_sync(struct gl_context *);
 
 extern void

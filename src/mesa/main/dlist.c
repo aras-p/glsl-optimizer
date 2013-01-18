@@ -9570,6 +9570,13 @@ void
 _mesa_initialize_save_table(const struct gl_context *ctx)
 {
    struct _glapi_table *table = ctx->Save;
+   int numEntries = MAX2(_gloffset_COUNT, _glapi_get_dispatch_table_size());
+
+   /* Initially populate the dispatch table with the contents of the
+    * normal-execution dispatch table.  This lets us skip populating functions
+    * that should be called directly instead of compiled into display lists.
+    */
+   memcpy(table, ctx->Exec, numEntries * sizeof(_glapi_proc));
 
    _mesa_loopback_init_api_table(ctx, table);
 
@@ -9592,7 +9599,6 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    SET_ColorMaterial(table, save_ColorMaterial);
    SET_CopyPixels(table, save_CopyPixels);
    SET_CullFace(table, save_CullFace);
-   SET_DeleteLists(table, _mesa_DeleteLists);
    SET_DepthFunc(table, save_DepthFunc);
    SET_DepthMask(table, save_DepthMask);
    SET_DepthRange(table, save_DepthRange);
@@ -9602,7 +9608,6 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    SET_DrawPixels(table, save_DrawPixels);
    SET_Enable(table, save_Enable);
    SET_Enablei(table, save_EnableIndexed);
-   SET_EndList(table, _mesa_EndList);
    SET_EvalMesh1(table, save_EvalMesh1);
    SET_EvalMesh2(table, save_EvalMesh2);
    SET_Finish(table, exec_Finish);
@@ -9613,7 +9618,6 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    SET_Fogiv(table, save_Fogiv);
    SET_FrontFace(table, save_FrontFace);
    SET_Frustum(table, save_Frustum);
-   SET_GenLists(table, _mesa_GenLists);
    SET_GetBooleanv(table, exec_GetBooleanv);
    SET_GetClipPlane(table, exec_GetClipPlane);
    SET_GetDoublev(table, exec_GetDoublev);
@@ -9646,7 +9650,6 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    SET_IndexMask(table, save_IndexMask);
    SET_InitNames(table, save_InitNames);
    SET_IsEnabled(table, exec_IsEnabled);
-   SET_IsList(table, _mesa_IsList);
    SET_LightModelf(table, save_LightModelf);
    SET_LightModelfv(table, save_LightModelfv);
    SET_LightModeli(table, save_LightModeli);
@@ -9886,9 +9889,6 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    /* 173. GL_EXT_blend_func_separate */
    SET_BlendFuncSeparate(table, save_BlendFuncSeparateEXT);
 
-   /* 196. GL_MESA_resize_buffers */
-   SET_ResizeBuffersMESA(table, _mesa_ResizeBuffersMESA);
-
    /* 197. GL_MESA_window_pos */
    SET_WindowPos2d(table, save_WindowPos2dMESA);
    SET_WindowPos2dv(table, save_WindowPos2dvMESA);
@@ -9925,9 +9925,6 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
     * VertexAttribPointerNV, GetProgram*, GetVertexAttrib*
     */
    SET_BindProgramARB(table, save_BindProgramNV);
-   SET_DeleteProgramsARB(table, _mesa_DeleteProgramsARB);
-   SET_GenProgramsARB(table, _mesa_GenProgramsARB);
-   SET_IsProgramARB(table, _mesa_IsProgramARB);
 
    /* 244. GL_ATI_envmap_bumpmap */
    SET_TexBumpParameterivATI(table, save_TexBumpParameterivATI);
@@ -9943,34 +9940,6 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
 
    /* 268. GL_EXT_stencil_two_side */
    SET_ActiveStencilFaceEXT(table, save_ActiveStencilFaceEXT);
-
-   /* 273. GL_APPLE_vertex_array_object */
-   SET_BindVertexArrayAPPLE(table, _mesa_BindVertexArrayAPPLE);
-   SET_DeleteVertexArrays(table, _mesa_DeleteVertexArrays);
-   SET_GenVertexArraysAPPLE(table, _mesa_GenVertexArraysAPPLE);
-   SET_IsVertexArray(table, _mesa_IsVertexArray);
-
-   /* 310. GL_EXT_framebuffer_object */
-   SET_GenFramebuffers(table, _mesa_GenFramebuffers);
-   SET_BindFramebuffer(table, _mesa_BindFramebuffer);
-   SET_DeleteFramebuffers(table, _mesa_DeleteFramebuffers);
-   SET_CheckFramebufferStatus(table, _mesa_CheckFramebufferStatus);
-   SET_GenRenderbuffers(table, _mesa_GenRenderbuffers);
-   SET_BindRenderbuffer(table, _mesa_BindRenderbuffer);
-   SET_DeleteRenderbuffers(table, _mesa_DeleteRenderbuffers);
-   SET_RenderbufferStorage(table, _mesa_RenderbufferStorage);
-   SET_FramebufferTexture1D(table, _mesa_FramebufferTexture1D);
-   SET_FramebufferTexture2D(table, _mesa_FramebufferTexture2D);
-   SET_FramebufferTexture3D(table, _mesa_FramebufferTexture3D);
-   SET_FramebufferRenderbuffer(table, _mesa_FramebufferRenderbuffer);
-   SET_GenerateMipmap(table, _mesa_GenerateMipmap);
-
-   /* 317. GL_EXT_framebuffer_multisample */
-   SET_RenderbufferStorageMultisample(table, _mesa_RenderbufferStorageMultisample);
-
-   /* GL_ARB_vertex_array_object */
-   SET_BindVertexArray(table, _mesa_BindVertexArray);
-   SET_GenVertexArrays(table, _mesa_GenVertexArrays);
 
    /* ???. GL_EXT_depth_bounds_test */
    SET_DepthBoundsEXT(table, save_DepthBoundsEXT);
@@ -10006,18 +9975,8 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    /* ARB 26. GL_ARB_vertex_program */
    /* ARB 27. GL_ARB_fragment_program */
    /* glVertexAttrib* functions alias the NV ones, handled elsewhere */
-   SET_VertexAttribPointer(table, _mesa_VertexAttribPointer);
-   SET_EnableVertexAttribArray(table, _mesa_EnableVertexAttribArray);
-   SET_DisableVertexAttribArray(table, _mesa_DisableVertexAttribArray);
    SET_ProgramStringARB(table, save_ProgramStringARB);
    SET_BindProgramARB(table, save_BindProgramNV);
-   SET_DeleteProgramsARB(table, _mesa_DeleteProgramsARB);
-   SET_GenProgramsARB(table, _mesa_GenProgramsARB);
-   SET_IsProgramARB(table, _mesa_IsProgramARB);
-   SET_GetVertexAttribdv(table, _mesa_GetVertexAttribdv);
-   SET_GetVertexAttribfv(table, _mesa_GetVertexAttribfv);
-   SET_GetVertexAttribiv(table, _mesa_GetVertexAttribiv);
-   SET_GetVertexAttribPointerv(table, _mesa_GetVertexAttribPointerv);
    SET_ProgramEnvParameter4dARB(table, save_ProgramEnvParameter4dARB);
    SET_ProgramEnvParameter4dvARB(table, save_ProgramEnvParameter4dvARB);
    SET_ProgramEnvParameter4fARB(table, save_ProgramEnvParameter4fARB);
@@ -10026,30 +9985,7 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    SET_ProgramLocalParameter4dvARB(table, save_ProgramLocalParameter4dvARB);
    SET_ProgramLocalParameter4fARB(table, save_ProgramLocalParameter4fARB);
    SET_ProgramLocalParameter4fvARB(table, save_ProgramLocalParameter4fvARB);
-   SET_GetProgramEnvParameterdvARB(table, _mesa_GetProgramEnvParameterdvARB);
-   SET_GetProgramEnvParameterfvARB(table, _mesa_GetProgramEnvParameterfvARB);
-   SET_GetProgramLocalParameterdvARB(table,
-                                     _mesa_GetProgramLocalParameterdvARB);
-   SET_GetProgramLocalParameterfvARB(table,
-                                     _mesa_GetProgramLocalParameterfvARB);
-   SET_GetProgramivARB(table, _mesa_GetProgramivARB);
-   SET_GetProgramStringARB(table, _mesa_GetProgramStringARB);
 
-   /* ARB 28. GL_ARB_vertex_buffer_object */
-   /* None of the extension's functions get compiled */
-   SET_BindBuffer(table, _mesa_BindBuffer);
-   SET_BufferData(table, _mesa_BufferData);
-   SET_BufferSubData(table, _mesa_BufferSubData);
-   SET_DeleteBuffers(table, _mesa_DeleteBuffers);
-   SET_GenBuffers(table, _mesa_GenBuffers);
-   SET_GetBufferParameteriv(table, _mesa_GetBufferParameteriv);
-   SET_GetBufferPointerv(table, _mesa_GetBufferPointerv);
-   SET_GetBufferSubData(table, _mesa_GetBufferSubData);
-   SET_IsBuffer(table, _mesa_IsBuffer);
-   SET_MapBuffer(table, _mesa_MapBuffer);
-   SET_UnmapBuffer(table, _mesa_UnmapBuffer);
-
-   _mesa_init_queryobj_dispatch(ctx, table); /* glGetQuery, etc */
    SET_BeginQuery(table, save_BeginQueryARB);
    SET_EndQuery(table, save_EndQueryARB);
    SET_QueryCounter(table, save_QueryCounter);
@@ -10058,8 +9994,6 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
 
    SET_BlitFramebuffer(table, save_BlitFramebufferEXT);
 
-   /* GL_ARB_shader_objects */
-   _mesa_init_shader_dispatch(ctx, table); /* Plug in glCreate/Delete/Get, etc */
    SET_UseProgram(table, save_UseProgramObjectARB);
    SET_Uniform1f(table, save_Uniform1fARB);
    SET_Uniform2f(table, save_Uniform2fARB);
@@ -10100,23 +10034,8 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    SET_ProgramEnvParameters4fvEXT(table, save_ProgramEnvParameters4fvEXT);
    SET_ProgramLocalParameters4fvEXT(table, save_ProgramLocalParameters4fvEXT);
 
-   /* ARB 50. GL_ARB_map_buffer_range */
-   SET_MapBufferRange(table, _mesa_MapBufferRange); /* no dlist save */
-   SET_FlushMappedBufferRange(table, _mesa_FlushMappedBufferRange); /* no dl */
-
-   /* ARB 51. GL_ARB_texture_buffer_object */
-   SET_TexBuffer(table, _mesa_TexBuffer); /* no dlist save */
-
-   /* ARB 59. GL_ARB_copy_buffer */
-   SET_CopyBufferSubData(table, _mesa_CopyBufferSubData); /* no dlist save */
-
    /* 364. GL_EXT_provoking_vertex */
    SET_ProvokingVertex(table, save_ProvokingVertexEXT);
-
-   /* 371. GL_APPLE_object_purgeable */
-   SET_ObjectPurgeableAPPLE(table, _mesa_ObjectPurgeableAPPLE);
-   SET_ObjectUnpurgeableAPPLE(table, _mesa_ObjectUnpurgeableAPPLE);
-   SET_GetObjectParameterivAPPLE(table, _mesa_GetObjectParameterivAPPLE);
 
    /* GL_EXT_texture_integer */
    SET_ClearColorIiEXT(table, save_ClearColorIi);
@@ -10158,11 +10077,6 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    (void) save_Uniform4uiv;
 #endif
 
-   /* These are not compiled into display lists: */
-   SET_BindBufferBase(table, _mesa_BindBufferBase);
-   SET_BindBufferOffsetEXT(table, _mesa_BindBufferOffsetEXT);
-   SET_BindBufferRange(table, _mesa_BindBufferRange);
-   SET_TransformFeedbackVaryings(table, _mesa_TransformFeedbackVaryings);
    /* These are: */
    SET_BeginTransformFeedback(table, save_BeginTransformFeedback);
    SET_EndTransformFeedback(table, save_EndTransformFeedback);
@@ -10184,8 +10098,6 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    /* GL_NV_texture_barrier */
    SET_TextureBarrierNV(table, save_TextureBarrierNV);
 
-   /* GL_ARB_sampler_objects */
-   _mesa_init_sampler_object_dispatch(ctx, table); /* plug in Gen/Get/etc functions */
    SET_BindSampler(table, save_BindSampler);
    SET_SamplerParameteri(table, save_SamplerParameteri);
    SET_SamplerParameterf(table, save_SamplerParameterf);
@@ -10210,25 +10122,10 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    SET_EndConditionalRender(table, save_EndConditionalRender);
 
    /* GL_ARB_sync */
-   _mesa_init_sync_dispatch(table);
    SET_WaitSync(table, save_WaitSync);
-
-   /* GL_ARB_texture_storage (no dlist support) */
-   SET_TexStorage1D(table, _mesa_TexStorage1D);
-   SET_TexStorage2D(table, _mesa_TexStorage2D);
-   SET_TexStorage3D(table, _mesa_TexStorage3D);
-   SET_TextureStorage1DEXT(table, _mesa_TextureStorage1DEXT);
-   SET_TextureStorage2DEXT(table, _mesa_TextureStorage2DEXT);
-   SET_TextureStorage3DEXT(table, _mesa_TextureStorage3DEXT);
-
-   /* GL_ARB_debug_output (no dlist support) */
-   _mesa_init_errors_dispatch(table);
 
    /* GL_ARB_uniform_buffer_object */
    SET_UniformBlockBinding(table, save_UniformBlockBinding);
-
-   /* GL_NV_primitive_restart */
-   SET_PrimitiveRestartIndex(table, _mesa_PrimitiveRestartIndex);
 }
 
 

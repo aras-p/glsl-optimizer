@@ -753,33 +753,6 @@ _mesa_GetQueryObjectui64v(GLuint id, GLenum pname, GLuint64EXT *params)
    }
 }
 
-
-void
-_mesa_init_queryobj_dispatch(const struct gl_context *ctx,
-                             struct _glapi_table *disp)
-{
-   SET_GenQueries(disp, _mesa_GenQueries);
-   SET_DeleteQueries(disp, _mesa_DeleteQueries);
-   SET_IsQuery(disp, _mesa_IsQuery);
-   SET_BeginQuery(disp, _mesa_BeginQuery);
-   SET_EndQuery(disp, _mesa_EndQuery);
-   SET_GetQueryiv(disp, _mesa_GetQueryiv);
-   SET_GetQueryObjectuiv(disp, _mesa_GetQueryObjectuiv);
-
-   if (_mesa_is_desktop_gl(ctx)) {
-      SET_GetQueryObjectiv(disp, _mesa_GetQueryObjectiv);
-      SET_QueryCounter(disp, _mesa_QueryCounter);
-
-      SET_GetQueryObjecti64v(disp, _mesa_GetQueryObjecti64v);
-      SET_GetQueryObjectui64v(disp, _mesa_GetQueryObjectui64v);
-
-      SET_BeginQueryIndexed(disp, _mesa_BeginQueryIndexed);
-      SET_EndQueryIndexed(disp, _mesa_EndQueryIndexed);
-      SET_GetQueryIndexediv(disp, _mesa_GetQueryIndexediv);
-   }
-}
-
-
 /**
  * Allocate/init the context state related to query objects.
  */

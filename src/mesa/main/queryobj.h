@@ -44,10 +44,6 @@ extern void
 _mesa_init_query_object_functions(struct dd_function_table *driver);
 
 extern void
-_mesa_init_queryobj_dispatch(const struct gl_context *ctx,
-                             struct _glapi_table *disp);
-
-extern void
 _mesa_init_queryobj(struct gl_context *ctx);
 
 extern void

@@ -69,10 +69,6 @@ _mesa_new_sampler_object(struct gl_context *ctx, GLuint name);
 extern void
 _mesa_init_sampler_object_functions(struct dd_function_table *driver);
 
-extern void
-_mesa_init_sampler_object_dispatch(const struct gl_context *ctx,
-                                   struct _glapi_table *disp);
-
 void GLAPIENTRY
 _mesa_GenSamplers(GLsizei count, GLuint *samplers);
 void GLAPIENTRY

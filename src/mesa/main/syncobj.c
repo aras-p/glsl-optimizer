@@ -141,20 +141,6 @@ _mesa_init_sync_object_functions(struct dd_function_table *driver)
    driver->ServerWaitSync = _mesa_wait_sync;
 }
 
-
-void
-_mesa_init_sync_dispatch(struct _glapi_table *disp)
-{
-   SET_IsSync(disp, _mesa_IsSync);
-   SET_DeleteSync(disp, _mesa_DeleteSync);
-   SET_FenceSync(disp, _mesa_FenceSync);
-   SET_ClientWaitSync(disp, _mesa_ClientWaitSync);
-   SET_WaitSync(disp, _mesa_WaitSync);
-   SET_GetInteger64v(disp, _mesa_GetInteger64v);
-   SET_GetSynciv(disp, _mesa_GetSynciv);
-}
-
-
 /**
  * Allocate/init the context state related to sync objects.
  */
