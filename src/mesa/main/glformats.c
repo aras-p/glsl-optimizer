@@ -2069,12 +2069,14 @@ _mesa_es3_error_check_format_and_type(GLenum format, GLenum type,
    case GL_DEPTH_COMPONENT:
       switch (type) {
       case GL_UNSIGNED_SHORT:
-         if (internalFormat != GL_DEPTH_COMPONENT16)
+         if (internalFormat != GL_DEPTH_COMPONENT
+             && internalFormat != GL_DEPTH_COMPONENT16)
             return GL_INVALID_OPERATION;
          break;
 
       case GL_UNSIGNED_INT:
          switch (internalFormat) {
+         case GL_DEPTH_COMPONENT:
          case GL_DEPTH_COMPONENT16:
          case GL_DEPTH_COMPONENT24:
             break;
@@ -2096,7 +2098,8 @@ _mesa_es3_error_check_format_and_type(GLenum format, GLenum type,
    case GL_DEPTH_STENCIL:
       switch (type) {
       case GL_UNSIGNED_INT_24_8:
-         if (internalFormat != GL_DEPTH24_STENCIL8)
+         if (internalFormat != GL_DEPTH_STENCIL
+             && internalFormat != GL_DEPTH24_STENCIL8)
             return GL_INVALID_OPERATION;
          break;
 
