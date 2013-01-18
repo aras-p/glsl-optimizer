@@ -608,8 +608,10 @@ AC_ARG_ENABLE([vdpau],
    [enable_vdpau=auto])
 AC_ARG_ENABLE([opencl],
    [AS_HELP_STRING([--enable-opencl],
-         [enable OpenCL library @<:@default=no@:>@])],
-   [enable_opencl="$enableval"],
+         [enable OpenCL library NOTE: Enabling this option will also enable
+          --with-llvm-shared-libs
+          @<:@default=no@:>@])],
+   [enable_opencl="$enableval" with_llvm_shared_libs="$enableval"],
    [enable_opencl=no])
 AC_ARG_ENABLE([xlib_glx],
     [AS_HELP_STRING([--enable-xlib-glx],
@@ -1896,11 +1898,37 @@ dnl by calling llvm-config --libs ${DRIVER_LLVM_COMPONENTS}, but
 dnl this was causing the same libraries to be appear multiple times
 dnl in LLVM_LIBS.
 
+LLVM_LIBS="`$LLVM_CONFIG --libs ${LLVM_COMPONENTS}`"
+
 if test "x$with_llvm_shared_libs" = xyes; then
     dnl We can't use $LLVM_VERSION because it has 'svn' stripped out,
-    LLVM_LIBS="-lLLVM-`$LLVM_CONFIG --version`"
-else
-    LLVM_LIBS="`$LLVM_CONFIG --libs ${LLVM_COMPONENTS}`"
+    LLVM_SO_NAME=LLVM-`$LLVM_CONFIG --version`
+    AC_CHECK_FILE("$LLVM_LIBDIR/lib$LLVM_SO_NAME.so", llvm_have_one_so=yes,)
+
+    if test "x$llvm_have_one_so" = xyes; then
+        dnl LLVM was built using auto*, so there is only one shared object.
+        LLVM_LIBS="-l$LLVM_SO_NAME"
+    else
+        dnl If LLVM was built with CMake, there will be one shared object per
+        dnl component.
+        AC_CHECK_FILE("$LLVM_LIBDIR/libLLVMTarget.so",,
+                AC_MSG_ERROR([Could not find llvm shared libraries:
+	Please make sure you have built llvm with the --enable-shared option
+	and that your llvm libraries are installed in $LLVM_LIBDIR
+	If you have installed your llvm libraries to a different directory you
+	can use the --with-llvm-prefix= configure flag to specify this directory.
+	NOTE: Mesa is attempting to use llvm shared libraries because you have
+	passed one of the following options to configure:
+		--with-llvm-shared-libs
+		--enable-opencl
+	If you do not want to build with llvm shared libraries and instead want to
+	use llvm static libraries then remove these options from your configure
+	invocation and reconfigure.]))
+
+       dnl We don't need to update LLVM_LIBS in this case because the LLVM
+       dnl install uses a shared object for each compoenent and we have
+       dnl already added all of these objects to LLVM_LIBS. 
+    fi
 fi
 
 AM_CONDITIONAL(HAVE_GALLIUM_SVGA, test "x$HAVE_GALLIUM_SVGA" = xyes)
