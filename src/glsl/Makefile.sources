@@ -100,7 +100,7 @@ GLSL_COMPILER_CXX_FILES = \
 # builtin_stubs.cpp, is used.
 
 BUILTIN_COMPILER_CXX_FILES = \
-	$(GLSL_SRCDIR)/builtin_stubs.cpp
+	$(GLSL_SRCDIR)/builtin_compiler/builtin_stubs.cpp
 
 BUILTIN_COMPILER_GENERATED_CXX_FILES = \
 	$(GLSL_BUILDDIR)/glsl_lexer.cpp \

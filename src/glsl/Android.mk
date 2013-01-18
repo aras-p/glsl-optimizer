@@ -58,7 +58,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	$(LIBGLCPP_FILES) \
 	$(LIBGLSL_FILES) \
-	$(GLSL_SRCDIR)/builtin_compiler/builtin_stubs.cpp \
+	$(BUILTIN_COMPILER_CXX_FILES) \
 	$(GLSL_COMPILER_CXX_FILES)
 
 LOCAL_C_INCLUDES := \
