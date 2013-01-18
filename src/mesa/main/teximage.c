@@ -2020,7 +2020,8 @@ texture_error_check( struct gl_context *ctx,
           target != GL_TEXTURE_RECTANGLE_ARB &&
           target != GL_PROXY_TEXTURE_RECTANGLE_ARB &&
          !((_mesa_is_cube_face(target) || target == GL_PROXY_TEXTURE_CUBE_MAP) &&
-           (ctx->Version >= 30 || ctx->Extensions.EXT_gpu_shader4)) &&
+           (ctx->Version >= 30 || ctx->Extensions.EXT_gpu_shader4
+            || (ctx->API == API_OPENGLES2 && ctx->Extensions.OES_depth_texture_cube_map))) &&
           !((target == GL_TEXTURE_CUBE_MAP_ARRAY ||
              target == GL_PROXY_TEXTURE_CUBE_MAP_ARRAY) &&
             ctx->Extensions.ARB_texture_cube_map_array)) {
