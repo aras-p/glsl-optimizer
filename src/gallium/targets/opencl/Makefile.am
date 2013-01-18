@@ -6,11 +6,9 @@ libOpenCL_la_LDFLAGS = \
 	$(LLVM_LDFLAGS) \
 	-version-number 1:0
 
-# We are linking against libgallium.a rather than libgallium.la to work around
-# https://bugs.freedesktop.org/show_bug.cgi?id=59334
 libOpenCL_la_LIBADD = \
 	$(top_builddir)/src/gallium/state_trackers/clover/libclover.la \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.a \
+	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(GALLIUM_PIPE_LOADER_LIBS) $(LIBUDEV_LIBS) \
 	-ldl \
 	-lclangCodeGen \
