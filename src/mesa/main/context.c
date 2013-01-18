@@ -938,6 +938,9 @@ _mesa_initialize_dispatch_tables(struct gl_context *ctx)
 {
    /* Do the code-generated setup of the exec table in api_exec.c. */
    _mesa_initialize_exec_table(ctx);
+
+   if (ctx->Save)
+      _mesa_initialize_save_table(ctx);
 }
 
 /**
@@ -1044,7 +1047,7 @@ _mesa_initialize_context(struct gl_context *ctx,
    switch (ctx->API) {
    case API_OPENGL_COMPAT:
       ctx->BeginEnd = create_beginend_table(ctx);
-      ctx->Save = _mesa_create_save_table(ctx);
+      ctx->Save = _mesa_alloc_dispatch_table();
       if (!ctx->BeginEnd || !ctx->Save)
          goto fail;
 

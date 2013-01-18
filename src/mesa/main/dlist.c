@@ -9566,14 +9566,10 @@ exec_MultiModeDrawElementsIBM(const GLenum * mode,
  * initialized from _mesa_init_api_defaults and from the active vtxfmt
  * struct.
  */
-struct _glapi_table *
-_mesa_create_save_table(const struct gl_context *ctx)
+void
+_mesa_initialize_save_table(const struct gl_context *ctx)
 {
-   struct _glapi_table *table;
-
-   table = _mesa_alloc_dispatch_table();
-   if (table == NULL)
-      return NULL;
+   struct _glapi_table *table = ctx->Save;
 
    _mesa_loopback_init_api_table(ctx, table);
 
@@ -10233,8 +10229,6 @@ _mesa_create_save_table(const struct gl_context *ctx)
 
    /* GL_NV_primitive_restart */
    SET_PrimitiveRestartIndex(table, _mesa_PrimitiveRestartIndex);
-
-   return table;
 }
 
 
