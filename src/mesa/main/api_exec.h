@@ -31,7 +31,7 @@ struct _glapi_table;
 struct gl_context;
 
 extern struct _glapi_table *
-_mesa_alloc_dispatch_table(int size);
+_mesa_alloc_dispatch_table(void);
 
 extern void
 _mesa_initialize_exec_table(struct gl_context *ctx);

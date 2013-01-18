@@ -9571,7 +9571,7 @@ _mesa_create_save_table(const struct gl_context *ctx)
 {
    struct _glapi_table *table;
 
-   table = _mesa_alloc_dispatch_table(_gloffset_COUNT);
+   table = _mesa_alloc_dispatch_table();
    if (table == NULL)
       return NULL;
 

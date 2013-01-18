@@ -836,7 +836,7 @@ _mesa_generic_nop(void)
  * Allocate and initialize a new dispatch table.
  */
 struct _glapi_table *
-_mesa_alloc_dispatch_table(int size)
+_mesa_alloc_dispatch_table()
 {
    /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
     * In practice, this'll be the same for stand-alone Mesa.  But for DRI
@@ -845,9 +845,6 @@ _mesa_alloc_dispatch_table(int size)
     */
    GLint numEntries = MAX2(_glapi_get_dispatch_table_size(), _gloffset_COUNT);
    struct _glapi_table *table;
-
-   /* should never happen, but just in case */
-   numEntries = MAX2(numEntries, size);
 
    table = malloc(numEntries * sizeof(_glapi_proc));
    if (table) {
@@ -892,7 +889,7 @@ create_beginend_table(const struct gl_context *ctx)
 {
    struct _glapi_table *table;
 
-   table = _mesa_alloc_dispatch_table(_gloffset_COUNT);
+   table = _mesa_alloc_dispatch_table();
    if (!table)
       return NULL;
 
@@ -1013,7 +1010,7 @@ _mesa_initialize_context(struct gl_context *ctx,
       goto fail;
 
    /* setup the API dispatch tables with all nop functions */
-   ctx->OutsideBeginEnd = _mesa_alloc_dispatch_table(_gloffset_COUNT);
+   ctx->OutsideBeginEnd = _mesa_alloc_dispatch_table();
    if (!ctx->OutsideBeginEnd)
       goto fail;
    ctx->Exec = ctx->OutsideBeginEnd;
