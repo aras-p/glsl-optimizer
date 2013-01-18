@@ -193,7 +193,7 @@ static void brw_emit_prim(struct brw_context *brw,
    OUT_BATCH(verts_per_instance);
    OUT_BATCH(start_vertex_location);
    OUT_BATCH(prim->num_instances);
-   OUT_BATCH(0); // start instance location
+   OUT_BATCH(prim->base_instance);
    OUT_BATCH(base_vertex_location);
    ADVANCE_BATCH();
 
@@ -249,7 +249,7 @@ static void gen7_emit_prim(struct brw_context *brw,
    OUT_BATCH(verts_per_instance);
    OUT_BATCH(start_vertex_location);
    OUT_BATCH(prim->num_instances);
-   OUT_BATCH(0); // start instance location
+   OUT_BATCH(prim->base_instance);
    OUT_BATCH(base_vertex_location);
    ADVANCE_BATCH();
 
