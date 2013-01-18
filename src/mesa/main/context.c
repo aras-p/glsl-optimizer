@@ -933,6 +933,13 @@ create_beginend_table(const struct gl_context *ctx)
    return table;
 }
 
+void
+_mesa_initialize_dispatch_tables(struct gl_context *ctx)
+{
+   /* Do the code-generated setup of the exec table in api_exec.c. */
+   _mesa_initialize_exec_table(ctx);
+}
+
 /**
  * Initialize a struct gl_context struct (rendering context).
  *

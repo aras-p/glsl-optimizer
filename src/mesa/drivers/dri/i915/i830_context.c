@@ -126,7 +126,7 @@ i830CreateContext(int api,
 
    _mesa_compute_version(ctx);
 
-   _mesa_initialize_exec_table(ctx);
+   _mesa_initialize_dispatch_tables(ctx);
    _mesa_initialize_vbo_vtxfmt(ctx);
 
    return true;

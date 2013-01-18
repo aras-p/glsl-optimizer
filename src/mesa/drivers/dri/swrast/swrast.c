@@ -791,7 +791,7 @@ dri_create_context(gl_api api,
 
     _mesa_compute_version(mesaCtx);
 
-    _mesa_initialize_exec_table(mesaCtx);
+    _mesa_initialize_dispatch_tables(mesaCtx);
     _mesa_initialize_vbo_vtxfmt(mesaCtx);
 
     *error = __DRI_CTX_ERROR_SUCCESS;

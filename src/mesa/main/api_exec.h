@@ -36,5 +36,7 @@ _mesa_alloc_dispatch_table(void);
 extern void
 _mesa_initialize_exec_table(struct gl_context *ctx);
 
+extern void
+_mesa_initialize_dispatch_tables(struct gl_context *ctx);
 
 #endif
