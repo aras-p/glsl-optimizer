@@ -692,7 +692,7 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
 struct format_mapping
 {
    GLenum glFormats[18];       /**< list of GLenum formats, 0-terminated */
-   enum pipe_format pipeFormats[10]; /**< list of pipe formats, 0-terminated */
+   enum pipe_format pipeFormats[13]; /**< list of pipe formats, 0-terminated */
 };
 
 
@@ -701,7 +701,6 @@ struct format_mapping
       PIPE_FORMAT_R8G8B8A8_UNORM, \
       PIPE_FORMAT_A8R8G8B8_UNORM, \
       PIPE_FORMAT_A8B8G8R8_UNORM, \
-      PIPE_FORMAT_B5G6R5_UNORM, \
       0
 
 #define DEFAULT_RGB_FORMATS \
@@ -709,11 +708,8 @@ struct format_mapping
       PIPE_FORMAT_R8G8B8X8_UNORM, \
       PIPE_FORMAT_X8R8G8B8_UNORM, \
       PIPE_FORMAT_X8B8G8R8_UNORM, \
-      PIPE_FORMAT_B8G8R8A8_UNORM, \
-      PIPE_FORMAT_A8R8G8B8_UNORM, \
-      PIPE_FORMAT_A8B8G8R8_UNORM, \
       PIPE_FORMAT_B5G6R5_UNORM, \
-      0
+      DEFAULT_RGBA_FORMATS
 
 #define DEFAULT_SRGBA_FORMATS \
       PIPE_FORMAT_B8G8R8A8_SRGB, \
@@ -776,16 +772,16 @@ static const struct format_mapping format_map[] = {
    {
       { GL_R3_G3_B2, 0 },
       { PIPE_FORMAT_B2G3R3_UNORM, PIPE_FORMAT_B5G6R5_UNORM,
-        PIPE_FORMAT_B5G5R5A1_UNORM, DEFAULT_RGBA_FORMATS }
+        PIPE_FORMAT_B5G5R5A1_UNORM, DEFAULT_RGB_FORMATS }
    },
    {
       { GL_RGB5, GL_RGB4 },
       { PIPE_FORMAT_B5G6R5_UNORM, PIPE_FORMAT_B5G5R5A1_UNORM,
-        DEFAULT_RGBA_FORMATS }
+        DEFAULT_RGB_FORMATS }
    },
    {
       { GL_RGB565 },
-      { PIPE_FORMAT_B5G6R5_UNORM, DEFAULT_RGBA_FORMATS }
+      { PIPE_FORMAT_B5G6R5_UNORM, DEFAULT_RGB_FORMATS }
    },
 
    /* basic Alpha formats */
@@ -947,11 +943,12 @@ static const struct format_mapping format_map[] = {
    },
    {
       { GL_SLUMINANCE_ALPHA_EXT, GL_SLUMINANCE8_ALPHA8_EXT,
-        GL_COMPRESSED_SLUMINANCE_EXT, GL_COMPRESSED_SLUMINANCE_ALPHA_EXT, 0 },
+        GL_COMPRESSED_SLUMINANCE_ALPHA_EXT, 0 },
       { PIPE_FORMAT_L8A8_SRGB, DEFAULT_SRGBA_FORMATS }
    },
    {
-      { GL_SLUMINANCE_EXT, GL_SLUMINANCE8_EXT, 0 },
+      { GL_SLUMINANCE_EXT, GL_SLUMINANCE8_EXT, GL_COMPRESSED_SLUMINANCE_EXT,
+        0 },
       { PIPE_FORMAT_L8_SRGB, DEFAULT_SRGBA_FORMATS }
    },
 
@@ -1108,10 +1105,7 @@ static const struct format_mapping format_map[] = {
    /* signed/unsigned integer formats.
     */
    {
-      { GL_RED_INTEGER_EXT,
-        GL_GREEN_INTEGER_EXT,
-        GL_BLUE_INTEGER_EXT,
-        GL_RGBA_INTEGER_EXT,
+      { GL_RGBA_INTEGER_EXT,
         GL_BGRA_INTEGER_EXT,
         GL_RGBA8I_EXT, 0 },
       { PIPE_FORMAT_R8G8B8A8_SINT, 0 }
@@ -1119,7 +1113,8 @@ static const struct format_mapping format_map[] = {
    {
       { GL_RGB_INTEGER_EXT, 
         GL_BGR_INTEGER_EXT,
-        GL_RGB8I_EXT, 0 },
+        GL_RGB8I_EXT,
+        GL_BLUE_INTEGER_EXT, 0 },
       { PIPE_FORMAT_R8G8B8_SINT,
         PIPE_FORMAT_R8G8B8A8_SINT, 0 }
    },
@@ -1268,7 +1263,7 @@ static const struct format_mapping format_map[] = {
       { PIPE_FORMAT_R32G32B32A32_UINT, 0 }
    },
    {
-     { GL_R8I, 0},
+     { GL_R8I, GL_RED_INTEGER_EXT, 0},
      { PIPE_FORMAT_R8_SINT, 0},
    },
    {
@@ -1292,7 +1287,7 @@ static const struct format_mapping format_map[] = {
      { PIPE_FORMAT_R32_UINT, 0},
    },
    {
-     { GL_RG8I, 0},
+     { GL_RG8I, GL_GREEN_INTEGER_EXT, 0},
      { PIPE_FORMAT_R8G8_SINT, 0},
    },
    {
