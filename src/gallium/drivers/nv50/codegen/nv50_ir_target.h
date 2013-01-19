@@ -62,7 +62,7 @@ class CodeEmitter
 {
 public:
    CodeEmitter(const Target *);
-   virtual ~CodeEmitter();
+   virtual ~CodeEmitter() { }
 
    // returns whether the instruction was encodable and written
    virtual bool emitInstruction(Instruction *) = 0;
@@ -118,7 +118,7 @@ class Target
 {
 public:
    Target(bool j, bool s) : joinAnterior(j), hasSWSched(s) { }
-   virtual ~Target();
+   virtual ~Target() { }
 
    static Target *create(uint32_t chipset);
    static void destroy(Target *);
