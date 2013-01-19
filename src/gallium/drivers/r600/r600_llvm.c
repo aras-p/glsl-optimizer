@@ -21,6 +21,7 @@
 #if defined R600_USE_LLVM || defined HAVE_OPENCL
 
 #define CONSTANT_BUFFER_0_ADDR_SPACE 9
+#define CONSTANT_BUFFER_1_ADDR_SPACE (CONSTANT_BUFFER_0_ADDR_SPACE + R600_UCP_CONST_BUFFER)
 
 static LLVMValueRef llvm_fetch_const(
 	struct lp_build_tgsi_context * bld_base,
@@ -316,7 +317,7 @@ static void llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 							LLVMConstInt(LLVMInt64TypeInContext(bld_base->base.gallivm->context), 0, false),
 							lp_build_const_int32(bld_base->base.gallivm, reg_index * 4 + chan)
 						};
-						LLVMTypeRef const_ptr_type = LLVMPointerType(LLVMArrayType(LLVMVectorType(bld_base->base.elem_type, 4), 1024), 9);
+						LLVMTypeRef const_ptr_type = LLVMPointerType(LLVMArrayType(LLVMVectorType(bld_base->base.elem_type, 4), 1024), CONSTANT_BUFFER_1_ADDR_SPACE);
 						LLVMValueRef const_ptr = LLVMBuildIntToPtr(bld_base->base.gallivm->builder, lp_build_const_int32(bld_base->base.gallivm, 0), const_ptr_type, "");
 						LLVMValueRef ptr = LLVMBuildGEP(bld_base->base.gallivm->builder, const_ptr, offset, 2, "");
 						LLVMValueRef base_vector = LLVMBuildLoad(bld_base->base.gallivm->builder, ptr, "");
