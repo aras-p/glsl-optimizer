@@ -1642,6 +1642,40 @@ st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
 }
 
 
+/**
+ * Called via ctx->Driver.ChooseTextureFormat().
+ */
+size_t
+st_QuerySamplesForFormat(struct gl_context *ctx, GLenum internalFormat,
+                         int samples[16])
+{
+   struct pipe_screen *screen = st_context(ctx)->pipe->screen;
+   enum pipe_format format;
+   unsigned i, bind, num_sample_counts = 0;
+
+   if (_mesa_is_depth_or_stencil_format(internalFormat))
+      bind = PIPE_BIND_DEPTH_STENCIL;
+   else
+      bind = PIPE_BIND_RENDER_TARGET;
+
+   /* Set sample counts in descending order. */
+   for (i = 16; i > 1; i--) {
+      format = st_choose_format(screen, internalFormat, GL_NONE, GL_NONE,
+                                PIPE_TEXTURE_2D, i, bind);
+
+      if (format != PIPE_FORMAT_NONE) {
+         samples[num_sample_counts++] = i;
+      }
+   }
+
+   if (!num_sample_counts) {
+      samples[num_sample_counts++] = 1;
+   }
+
+   return num_sample_counts;
+}
+
+
 GLboolean
 st_sampler_compat_formats(enum pipe_format format1, enum pipe_format format2)
 {

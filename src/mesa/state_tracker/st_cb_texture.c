@@ -1555,6 +1555,7 @@ void
 st_init_texture_functions(struct dd_function_table *functions)
 {
    functions->ChooseTextureFormat = st_ChooseTextureFormat;
+   functions->QuerySamplesForFormat = st_QuerySamplesForFormat;
    functions->TexImage = st_TexImage;
    functions->TexSubImage = _mesa_store_texsubimage;
    functions->CompressedTexSubImage = _mesa_store_compressed_texsubimage;

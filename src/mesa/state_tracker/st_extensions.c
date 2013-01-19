@@ -516,6 +516,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
    ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
+   ctx->Extensions.ARB_internalformat_query = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
    ctx->Extensions.ARB_shader_objects = GL_TRUE;
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
