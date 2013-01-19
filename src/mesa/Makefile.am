@@ -23,7 +23,19 @@ if NEED_LIBDRICORE
 DRICORE_SUBDIR = libdricore
 endif
 
-SUBDIRS = program x86 x86-64 . $(DRICORE_SUBDIR) drivers
+SUBDIRS = program x86 x86-64 . $(DRICORE_SUBDIR)
+
+if HAVE_X11_DRIVER
+SUBDIRS += drivers/x11
+endif
+
+if HAVE_DRI
+SUBDIRS += drivers/dri
+endif
+
+if HAVE_OSMESA
+SUBDIRS += drivers/osmesa
+endif
 
 gldir = $(includedir)/GL
 gl_HEADERS = $(top_srcdir)/include/GL/*.h

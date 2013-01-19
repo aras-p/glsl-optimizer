@@ -759,7 +759,6 @@ GALLIUM_STATE_TRACKERS_DIRS=""
 
 case "x$enable_glx$enable_xlib_glx" in
 xyesyes)
-    DRIVER_DIRS="$DRIVER_DIRS x11"
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS libgl-xlib"
     GALLIUM_STATE_TRACKERS_DIRS="glx $GALLIUM_STATE_TRACKERS_DIRS"
@@ -768,20 +767,16 @@ xyesyes)
 esac
 
 if test "x$enable_dri" = xyes; then
-    DRIVER_DIRS="$DRIVER_DIRS dri"
-
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/dri"
     GALLIUM_STATE_TRACKERS_DIRS="dri $GALLIUM_STATE_TRACKERS_DIRS"
     HAVE_ST_DRI="yes"
 fi
 
 if test "x$enable_osmesa" = xyes; then
-    DRIVER_DIRS="$DRIVER_DIRS osmesa"
     GALLIUM_STATE_TRACKERS_DIRS="osmesa $GALLIUM_STATE_TRACKERS_DIRS"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS osmesa"
 fi
 
-AC_SUBST([DRIVER_DIRS])
 AC_SUBST([GALLIUM_TARGET_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DIRS])
 AC_SUBST([GALLIUM_STATE_TRACKERS_DIRS])
@@ -1976,7 +1971,8 @@ AC_SUBST([ELF_LIB])
 AM_CONDITIONAL(NEED_LIBPROGRAM, test "x$with_gallium_drivers" != x -o \
                                      "x$enable_xlib_glx" = xyes -o \
                                      "x$enable_osmesa" = xyes)
-AM_CONDITIONAL(HAVE_X11_DRIVER, echo "$DRIVER_DIRS" | grep 'x11' >/dev/null 2>&1)
+AM_CONDITIONAL(HAVE_X11_DRIVER, test "x$enable_xlib_glx" = xyes)
+AM_CONDITIONAL(HAVE_OSMESA, test "x$enable_osmesa" = xyes)
 
 AM_CONDITIONAL(HAVE_X86_ASM, echo "$DEFINES" | grep 'X86_ASM' >/dev/null 2>&1)
 AM_CONDITIONAL(HAVE_X86_64_ASM, echo "$DEFINES" | grep 'X86_64_ASM' >/dev/null 2>&1)
@@ -2115,7 +2111,6 @@ AC_CONFIG_FILES([Makefile
 		src/mapi/vgapi/vg.pc
 		src/mesa/Makefile
 		src/mesa/gl.pc
-		src/mesa/drivers/Makefile
 		src/mesa/drivers/dri/dri.pc
 		src/mesa/drivers/dri/common/Makefile
 		src/mesa/drivers/dri/common/xmlpool/Makefile
