@@ -25,4 +25,27 @@ if NEED_OPENGL_COMMON
 SUBDIRS += glsl mesa
 endif
 
-SUBDIRS += $(SRC_DIRS)
+if HAVE_DRI_GLX
+SUBDIRS += glx
+endif
+
+if HAVE_GBM
+SUBDIRS += gbm
+endif
+
+if HAVE_EGL
+SUBDIRS += egl
+endif
+
+if HAVE_GALLIUM
+SUBDIRS +=			\
+	gallium			\
+	gallium/winsys		\
+	gallium/targets
+
+if HAVE_GALLIUM_TESTS
+SUBDIRS +=			\
+	gallium/tests/trivial	\
+	gallium/tests/unit
+endif
+endif

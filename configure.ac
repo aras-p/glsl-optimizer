@@ -724,6 +724,8 @@ if test "x$enable_glx" = xyes -a \
     enable_glx=no
 fi
 
+AM_CONDITIONAL(HAVE_DRI_GLX, test "x$enable_glx" = xyes -a \
+                                  "x$enable_dri" = xyes)
 AM_CONDITIONAL(HAVE_DRI, test "x$enable_dri" = xyes)
 AM_CONDITIONAL(NEED_LIBMESA, test "x$enable_xlib_glx" = xyes -o \
                                   "x$enable_osmesa" = xyes)
@@ -764,10 +766,6 @@ xyesyes)
     GALLIUM_STATE_TRACKERS_DIRS="glx $GALLIUM_STATE_TRACKERS_DIRS"
     HAVE_WINSYS_XLIB="yes"
     ;;
-xyesno)
-    # DRI-based GLX
-    SRC_DIRS="$SRC_DIRS glx"
-    ;;
 esac
 
 if test "x$enable_dri" = xyes; then
@@ -784,7 +782,6 @@ if test "x$enable_osmesa" = xyes; then
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS osmesa"
 fi
 
-AC_SUBST([SRC_DIRS])
 AC_SUBST([DRIVER_DIRS])
 AC_SUBST([GALLIUM_DIRS])
 AC_SUBST([GALLIUM_TARGET_DIRS])
@@ -1181,8 +1178,6 @@ if test "x$enable_gbm" = xauto; then
     esac
 fi
 if test "x$enable_gbm" = xyes; then
-    SRC_DIRS="$SRC_DIRS gbm"
-
     PKG_CHECK_MODULES([LIBUDEV], [libudev], [],
                       AC_MSG_ERROR([gbm needs udev]))
 
@@ -1193,6 +1188,7 @@ if test "x$enable_gbm" = xyes; then
         fi
     fi
 fi
+AM_CONDITIONAL(HAVE_GBM, test "x$enable_gbm" = xyes)
 GBM_PC_REQ_PRIV="libudev"
 GBM_PC_LIB_PRIV="$DLOPEN_LIBS"
 AC_SUBST([GBM_PC_REQ_PRIV])
@@ -1204,7 +1200,6 @@ dnl
 EGL_CLIENT_APIS=""
 
 if test "x$enable_egl" = xyes; then
-    SRC_DIRS="$SRC_DIRS egl"
     EGL_LIB_DEPS="$DLOPEN_LIBS $SELINUX_LIBS $PTHREAD_LIBS"
 
     AC_CHECK_FUNC(mincore, [DEFINES="$DEFINES -DHAVE_MINCORE"])
@@ -1223,6 +1218,7 @@ if test "x$enable_egl" = xyes; then
 
     fi
 fi
+AM_CONDITIONAL(HAVE_EGL, test "x$enable_egl" = xyes)
 AC_SUBST([EGL_LIB_DEPS])
 
 dnl
@@ -1419,10 +1415,7 @@ fi
 dnl
 dnl Gallium configuration
 dnl
-if test "x$with_gallium_drivers" != x; then
-    SRC_DIRS="$SRC_DIRS gallium gallium/winsys gallium/targets"
-fi
-AM_CONDITIONAL(HAVE_GALLIUM, test "x$with_gallium_drivers" != x)
+AM_CONDITIONAL(HAVE_GALLIUM, test -n "$with_gallium_drivers")
 
 AC_SUBST([LLVM_BINDIR])
 AC_SUBST([LLVM_CFLAGS])
@@ -1680,9 +1673,9 @@ dnl
 dnl Gallium Tests
 dnl
 if test "x$enable_gallium_tests" = xyes; then
-    SRC_DIRS="$SRC_DIRS gallium/tests/trivial gallium/tests/unit"
     enable_gallium_loader=yes
 fi
+AM_CONDITIONAL(HAVE_GALLIUM_TESTS, test "x$enable_gallium_tests" = xyes)
 
 dnl Directory for VDPAU libs
 AC_ARG_WITH([vdpau-libdir],
@@ -2234,7 +2227,7 @@ else
 fi
 
 echo ""
-if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
+if test -n "$with_gallium_drivers"; then
     echo "        Gallium:         yes"
     echo "        Gallium dirs:    $GALLIUM_DIRS"
     echo "        Target dirs:     $GALLIUM_TARGET_DIRS"
