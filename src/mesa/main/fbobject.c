@@ -3052,22 +3052,57 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       }
    }
 
-   if (readFb->Visual.samples > 0 &&
-       drawFb->Visual.samples > 0 &&
-       readFb->Visual.samples != drawFb->Visual.samples) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glBlitFramebufferEXT(mismatched samples)");
-      return;
-   }
 
-   /* extra checks for multisample copies... */
-   if (readFb->Visual.samples > 0 || drawFb->Visual.samples > 0) {
-      /* src and dest region sizes must be the same */
-      if (abs(srcX1 - srcX0) != abs(dstX1 - dstX0) ||
-          abs(srcY1 - srcY0) != abs(dstY1 - dstY0)) {
+   if (_mesa_is_gles3(ctx)) {
+      /* Page 194 (page 206 of the PDF) in section 4.3.2 of the OpenGL ES
+       * 3.0.1 spec says:
+       *
+       *     "If SAMPLE_BUFFERS for the draw framebuffer is greater than zero,
+       *     an INVALID_OPERATION error is generated."
+       */
+      if (drawFb->Visual.samples > 0) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                "glBlitFramebufferEXT(bad src/dst multisample region sizes)");
+                     "glBlitFramebuffer(destination samples must be 0)");
          return;
+      }
+
+      /* Page 194 (page 206 of the PDF) in section 4.3.2 of the OpenGL ES
+       * 3.0.1 spec says:
+       *
+       *     "If SAMPLE_BUFFERS for the read framebuffer is greater than zero,
+       *     no copy is performed and an INVALID_OPERATION error is generated
+       *     if the formats of the read and draw framebuffers are not
+       *     identical or if the source and destination rectangles are not
+       *     defined with the same (X0, Y0) and (X1, Y1) bounds."
+       *
+       * The format check was made above because desktop OpenGL has the same
+       * requirement.
+       */
+      if (readFb->Visual.samples > 0
+          && (srcX0 != dstX0 || srcY0 != dstY0
+              || srcX1 != dstX1 || srcY1 != dstY1)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glBlitFramebuffer(bad src/dst multisample region)");
+         return;
+      }
+   } else {
+      if (readFb->Visual.samples > 0 &&
+          drawFb->Visual.samples > 0 &&
+          readFb->Visual.samples != drawFb->Visual.samples) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glBlitFramebufferEXT(mismatched samples)");
+         return;
+      }
+
+      /* extra checks for multisample copies... */
+      if (readFb->Visual.samples > 0 || drawFb->Visual.samples > 0) {
+         /* src and dest region sizes must be the same */
+         if (abs(srcX1 - srcX0) != abs(dstX1 - dstX0) ||
+             abs(srcY1 - srcY0) != abs(dstY1 - dstY0)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glBlitFramebufferEXT(bad src/dst multisample region sizes)");
+            return;
+         }
       }
    }
 
