@@ -2555,6 +2555,22 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
       }
       else {
          gl_format format = att->Renderbuffer->Format;
+
+         /* Page 235 (page 247 of the PDF) in section 6.1.13 of the OpenGL ES
+          * 3.0.1 spec says:
+          *
+          *     "If pname is FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE.... If
+          *     attachment is DEPTH_STENCIL_ATTACHMENT the query will fail and
+          *     generate an INVALID_OPERATION error.
+          */
+         if (_mesa_is_gles3(ctx) && attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGetFramebufferAttachmentParameteriv(cannot query "
+                        "GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE of "
+                        "GL_DEPTH_STENCIL_ATTACHMENT");
+            return;
+         }
+
          if (format == MESA_FORMAT_S8) {
             /* special cases */
             *params = GL_INDEX;
