@@ -769,7 +769,6 @@ esac
 if test "x$enable_dri" = xyes; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/dri"
     GALLIUM_STATE_TRACKERS_DIRS="dri $GALLIUM_STATE_TRACKERS_DIRS"
-    HAVE_ST_DRI="yes"
 fi
 
 if test "x$enable_osmesa" = xyes; then
@@ -779,7 +778,6 @@ fi
 
 AC_SUBST([GALLIUM_TARGET_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DIRS])
-AC_SUBST([GALLIUM_STATE_TRACKERS_DIRS])
 AC_SUBST([MESA_LLVM])
 
 # Check for libdrm
@@ -1228,14 +1226,14 @@ if test "x$enable_gallium_egl" = xyes; then
 
     GALLIUM_STATE_TRACKERS_DIRS="egl $GALLIUM_STATE_TRACKERS_DIRS"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-static"
-    HAVE_ST_EGL="yes"
 fi
+AM_CONDITIONAL(HAVE_GALLIUM_EGL, test "x$enable_gallium_egl" = xyes)
 
 dnl
 dnl gbm Gallium configuration
 dnl
 if test "x$enable_gallium_gbm" = xauto; then
-    case "$enable_gbm$HAVE_ST_EGL$enable_dri$with_egl_platforms" in
+    case "$enable_gbm$enable_gallium_egl$enable_dri$with_egl_platforms" in
         yesyesyes*drm*)
             enable_gallium_gbm=yes ;;
          *)
@@ -1256,9 +1254,9 @@ if test "x$enable_gallium_gbm" = xyes; then
 
     GALLIUM_STATE_TRACKERS_DIRS="gbm $GALLIUM_STATE_TRACKERS_DIRS"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS gbm"
-    HAVE_ST_GBM="yes"
     enable_gallium_loader=yes
 fi
+AM_CONDITIONAL(HAVE_GALLIUM_GBM, test "x$enable_gallium_gbm" = xyes)
 
 dnl
 dnl X.Org DDX configuration
@@ -1271,8 +1269,8 @@ if test "x$enable_xorg" = xyes; then
         HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71",
         HAVE_XEXTPROTO_71="no")
     GALLIUM_STATE_TRACKERS_DIRS="xorg $GALLIUM_STATE_TRACKERS_DIRS"
-    HAVE_ST_XORG=yes
 fi
+AM_CONDITIONAL(HAVE_ST_XORG, test "x$enable_xorg" = xyes)
 
 dnl
 dnl XA configuration
@@ -1288,11 +1286,11 @@ fi
 fi
 if test "x$enable_xa" = xyes; then
     GALLIUM_STATE_TRACKERS_DIRS="xa $GALLIUM_STATE_TRACKERS_DIRS"
-    HAVE_ST_XA=yes
     AC_SUBST(AWK)
     AC_SUBST(GREP)
     AC_SUBST(NM)
 fi
+AM_CONDITIONAL(HAVE_ST_XA, test "x$enable_xa" = xyes)
 
 dnl
 dnl OpenVG configuration
@@ -1313,7 +1311,6 @@ if test "x$enable_openvg" = xyes; then
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(VG_LIB)'
     VG_LIB_DEPS="$VG_LIB_DEPS $SELINUX_LIBS $PTHREAD_LIBS"
     GALLIUM_STATE_TRACKERS_DIRS="vega $GALLIUM_STATE_TRACKERS_DIRS"
-    HAVE_ST_VEGA=yes
     VG_PC_LIB_PRIV="-lm $CLOCK_LIB $PTHREAD_LIBS $DLOPEN_LIBS"
     AC_SUBST([VG_PC_LIB_PRIV])
 fi
@@ -1344,14 +1341,14 @@ fi
 if test "x$enable_xvmc" = xyes; then
     PKG_CHECK_MODULES([XVMC], [xvmc >= 1.0.6 x11-xcb xcb-dri2 >= 1.8])
     GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xvmc"
-    HAVE_ST_XVMC="yes"
 fi
+AM_CONDITIONAL(HAVE_ST_XVMC, test "x$enable_xvmc" = xyes)
 
 if test "x$enable_vdpau" = xyes; then
     PKG_CHECK_MODULES([VDPAU], [vdpau >= 0.4.1 x11-xcb xcb-dri2 >= 1.8])
     GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS vdpau"
-    HAVE_ST_VDPAU="yes"
 fi
+AM_CONDITIONAL(HAVE_ST_VDPAU, test "x$enable_vdpau" = xyes)
 
 dnl
 dnl OpenCL configuration
@@ -1398,6 +1395,7 @@ if test "x$enable_opencl" = xyes; then
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS opencl"
     enable_gallium_loader=yes
 fi
+AM_CONDITIONAL(HAVE_CLOVER, test "x$enable_opencl" = xyes)
 
 if test "x$enable_gallium_gbm" = xyes || test "x$enable_opencl" = xyes; then
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS pipe-loader"
@@ -1688,28 +1686,28 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes ||
-	 test "x$HAVE_ST_XA" = xyes || test "x$HAVE_ST_XVMC" = xyes ||
-	 test "x$HAVE_ST_VDPAU" = xyes; then
+    if test "x$enable_dri" = xyes -o "x$enable_xorg" = xyes -o \
+            "x$enable_xa" = xyes -o "x$enable_xvmc" = xyes -o \
+            "x$enable_vdpau" = xyes; then
          if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([DRI or Xorg DDX requires libdrm >= $LIBDRM_REQUIRED])
          fi
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
     fi
-    if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
+    if test "x$enable_dri" = xyes && test "x$2" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $2"
          HAVE_COMMON_DRI=yes
     fi
-    if test "x$HAVE_ST_XORG" = xyes && test "x$3" != x; then
+    if test "x$enable_xorg" = xyes && test "x$3" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
     fi
-    if test "x$HAVE_ST_XA" = xyes && test "x$4" != x; then
+    if test "x$enable_xa" = xyes && test "x$4" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
     fi
-    if test "x$HAVE_ST_XVMC" = xyes && test "x$5" != x; then
+    if test "x$enable_xvmc" = xyes && test "x$5" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
     fi
-    if test "x$HAVE_ST_VDPAU" = xyes && test "x$6" != x; then
+    if test "x$enable_vdpau" = xyes && test "x$6" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
     fi
 }
@@ -1826,17 +1824,16 @@ if test "x$with_gallium_drivers" != x; then
                 GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
             fi
 
-            if test "x$HAVE_ST_DRI" = xyes; then
+            if test "x$enable_dri" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
             fi
-            if test "x$HAVE_ST_VDPAU" = xyes; then
+            if test "x$enable_vdpau" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS vdpau-softpipe"
             fi
-            if test "x$HAVE_ST_XVMC" = xyes; then
+            if test "x$enable_xvmc" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS xvmc-softpipe"
             fi
-            if test "x$HAVE_ST_VDPAU" = xyes ||
-               test "x$HAVE_ST_XVMC" = xyes; then
+            if test "x$enable_vdpau" = xyes -o "x$enable_xvmc" = xyes; then
                if test "x$HAVE_WINSYS_XLIB" != xyes; then
                   GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
                fi
@@ -2199,7 +2196,7 @@ if test "$enable_egl" = yes; then
         egl_drivers="$egl_drivers builtin:egl_dri2"
     fi
 
-    if test "x$HAVE_ST_EGL" = xyes; then
+    if test "x$enable_gallium_egl" = xyes; then
         echo "        EGL drivers:    ${egl_drivers} egl_gallium"
         echo "        EGL Gallium STs:$EGL_CLIENT_APIS"
     else
