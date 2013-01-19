@@ -708,7 +708,7 @@ intelInitContext(struct intel_context *intel,
    if (intel->gen < 4)
       intel->maxBatchSize = 4096;
    else
-      intel->maxBatchSize = sizeof(intel->batch.map);
+      intel->maxBatchSize = BATCH_SZ;
 
    intel->bufmgr = intelScreen->bufmgr;
 

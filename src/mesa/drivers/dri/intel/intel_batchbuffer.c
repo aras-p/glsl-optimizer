@@ -68,6 +68,11 @@ intel_batchbuffer_init(struct intel_context *intel)
 						      "pipe_control workaround",
 						      4096, 4096);
    }
+
+   if (!intel->has_llc) {
+      intel->batch.cpu_map = malloc(intel->maxBatchSize);
+      intel->batch.map = intel->batch.cpu_map;
+   }
 }
 
 static void
@@ -83,6 +88,10 @@ intel_batchbuffer_reset(struct intel_context *intel)
 
    intel->batch.bo = drm_intel_bo_alloc(intel->bufmgr, "batchbuffer",
 					intel->maxBatchSize, 4096);
+   if (intel->has_llc) {
+      drm_intel_bo_map(intel->batch.bo, true);
+      intel->batch.map = intel->batch.bo->virtual;
+   }
 
    intel->batch.reserved_space = BATCH_RESERVED;
    intel->batch.state_batch_offset = intel->batch.bo->size;
@@ -114,6 +123,7 @@ intel_batchbuffer_reset_to_saved(struct intel_context *intel)
 void
 intel_batchbuffer_free(struct intel_context *intel)
 {
+   free(intel->batch.cpu_map);
    drm_intel_bo_unreference(intel->batch.last_bo);
    drm_intel_bo_unreference(intel->batch.bo);
    drm_intel_bo_unreference(intel->batch.workaround_bo);
@@ -168,12 +178,16 @@ do_flush_locked(struct intel_context *intel)
    struct intel_batchbuffer *batch = &intel->batch;
    int ret = 0;
 
-   ret = drm_intel_bo_subdata(batch->bo, 0, 4*batch->used, batch->map);
-   if (ret == 0 && batch->state_batch_offset != batch->bo->size) {
-      ret = drm_intel_bo_subdata(batch->bo,
-				 batch->state_batch_offset,
-				 batch->bo->size - batch->state_batch_offset,
-				 (char *)batch->map + batch->state_batch_offset);
+   if (intel->has_llc) {
+      drm_intel_bo_unmap(batch->bo);
+   } else {
+      ret = drm_intel_bo_subdata(batch->bo, 0, 4*batch->used, batch->map);
+      if (ret == 0 && batch->state_batch_offset != batch->bo->size) {
+	 ret = drm_intel_bo_subdata(batch->bo,
+				    batch->state_batch_offset,
+				    batch->bo->size - batch->state_batch_offset,
+				    (char *)batch->map + batch->state_batch_offset);
+      }
    }
 
    if (!intel->intelScreen->no_hw) {
