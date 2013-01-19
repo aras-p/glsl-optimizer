@@ -346,3 +346,17 @@ PIPE_FORMAT_L32_SINT                , plain, 1, 1, sp32, , , , xxx1, rgb
 PIPE_FORMAT_L32A32_SINT             , plain, 1, 1, sp32, sp32, , , xxxy, rgb
 
 PIPE_FORMAT_B10G10R10A2_UINT        , plain, 1, 1, up10, up10, up10, up2, zyxw, rgb
+
+PIPE_FORMAT_R8G8B8X8_SNORM          , plain, 1, 1, sn8,  sn8,  sn8,  x8,  xyz1, rgb
+PIPE_FORMAT_R8G8B8X8_SRGB           , plain, 1, 1, un8,  un8,  un8,  x8,  xyz1, srgb
+PIPE_FORMAT_R8G8B8X8_UINT           , plain, 1, 1, up8,  up8,  up8,  x8,  xyz1, rgb
+PIPE_FORMAT_R8G8B8X8_SINT           , plain, 1, 1, sp8,  sp8,  sp8,  x8,  xyz1, rgb
+PIPE_FORMAT_B10G10R10X2_UNORM       , plain, 1, 1, un10, un10, un10, x2,  zyx1, rgb
+PIPE_FORMAT_R16G16B16X16_UNORM      , plain, 1, 1, un16, un16, un16, x16, xyz1, rgb
+PIPE_FORMAT_R16G16B16X16_SNORM      , plain, 1, 1, sn16, sn16, sn16, x16, xyz1, rgb
+PIPE_FORMAT_R16G16B16X16_FLOAT      , plain, 1, 1, f16,  f16,  f16,  x16, xyz1, rgb
+PIPE_FORMAT_R16G16B16X16_UINT       , plain, 1, 1, up16, up16, up16, x16, xyz1, rgb
+PIPE_FORMAT_R16G16B16X16_SINT       , plain, 1, 1, sp16, sp16, sp16, x16, xyz1, rgb
+PIPE_FORMAT_R32G32B32X32_FLOAT      , plain, 1, 1, f32,  f32,  f32,  x32, xyz1, rgb
+PIPE_FORMAT_R32G32B32X32_UINT       , plain, 1, 1, up32, up32, up32, x32, xyz1, rgb
+PIPE_FORMAT_R32G32B32X32_SINT       , plain, 1, 1, sp32, sp32, sp32, x32, xyz1, rgb

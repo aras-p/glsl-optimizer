@@ -798,6 +798,10 @@ util_format_srgb(enum pipe_format format)
       return PIPE_FORMAT_A8R8G8B8_SRGB;
    case PIPE_FORMAT_X8R8G8B8_UNORM:
       return PIPE_FORMAT_X8R8G8B8_SRGB;
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+      return PIPE_FORMAT_R8G8B8A8_SRGB;
+   case PIPE_FORMAT_R8G8B8X8_UNORM:
+      return PIPE_FORMAT_R8G8B8X8_SRGB;
    case PIPE_FORMAT_DXT1_RGB:
       return PIPE_FORMAT_DXT1_SRGB;
    case PIPE_FORMAT_DXT1_RGBA:
@@ -837,6 +841,10 @@ util_format_linear(enum pipe_format format)
       return PIPE_FORMAT_A8R8G8B8_UNORM;
    case PIPE_FORMAT_X8R8G8B8_SRGB:
       return PIPE_FORMAT_X8R8G8B8_UNORM;
+   case PIPE_FORMAT_R8G8B8A8_SRGB:
+      return PIPE_FORMAT_R8G8B8A8_UNORM;
+   case PIPE_FORMAT_R8G8B8X8_SRGB:
+      return PIPE_FORMAT_R8G8B8X8_UNORM;
    case PIPE_FORMAT_DXT1_SRGB:
       return PIPE_FORMAT_DXT1_RGB;
    case PIPE_FORMAT_DXT1_SRGBA:
