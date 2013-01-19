@@ -690,6 +690,13 @@ if test "x$enable_gles2" = xyes; then
 fi
 AC_SUBST([API_DEFINES])
 
+AM_CONDITIONAL(HAVE_OPENGL, test "x$enable_opengl" = xyes)
+AM_CONDITIONAL(HAVE_OPENGL_ES1, test "x$enable_gles1" = xyes)
+AM_CONDITIONAL(HAVE_OPENGL_ES2, test "x$enable_gles2" = xyes)
+AM_CONDITIONAL(NEED_OPENGL_COMMON, test "x$enable_opengl" = xyes -o \
+                                        "x$enable_gles1" = xyes -o \
+                                        "x$enable_gles2" = xyes)
+
 if test "x$enable_glx" = xno; then
     AC_MSG_WARN([GLX disabled, disabling Xlib-GLX])
     enable_xlib_glx=no
@@ -737,7 +744,6 @@ if test "x$enable_shared_glapi" = xyes; then
     # libGL will use libglapi for function lookups (IN_DRI_DRIVER means to use
     # the remap table)
     DEFINES="$DEFINES -DIN_DRI_DRIVER"
-    CORE_DIRS="mapi/shared-glapi"
 fi
 AM_CONDITIONAL(HAVE_SHARED_GLAPI, test "x$enable_shared_glapi" = xyes)
 
@@ -749,28 +755,6 @@ GALLIUM_TARGET_DIRS=""
 GALLIUM_WINSYS_DIRS="sw"
 GALLIUM_DRIVERS_DIRS="galahad trace rbug noop identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
-
-# build glapi if OpenGL is enabled
-if test "x$enable_opengl" = xyes; then
-    CORE_DIRS="$CORE_DIRS mapi/glapi"
-fi
-
-# build es1api if OpenGL ES 1.x is enabled
-if test "x$enable_gles1" = xyes; then
-    CORE_DIRS="$CORE_DIRS mapi/es1api"
-fi
-
-# build es2api if OpenGL ES 2.x is enabled
-if test "x$enable_gles2" = xyes; then
-    CORE_DIRS="$CORE_DIRS mapi/es2api"
-fi
-
-# build glsl and mesa if OpenGL or OpenGL ES is enabled
-case "x$enable_opengl$enable_gles1$enable_gles2" in
-x*yes*)
-    CORE_DIRS="mapi/glapi/gen $CORE_DIRS gtest glsl mesa"
-    ;;
-esac
 
 case "x$enable_glx$enable_xlib_glx" in
 xyesyes)
@@ -1341,7 +1325,6 @@ if test "x$enable_openvg" = xyes; then
 
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(VG_LIB)'
     VG_LIB_DEPS="$VG_LIB_DEPS $SELINUX_LIBS $PTHREAD_LIBS"
-    CORE_DIRS="$CORE_DIRS mapi/vgapi"
     GALLIUM_STATE_TRACKERS_DIRS="vega $GALLIUM_STATE_TRACKERS_DIRS"
     HAVE_ST_VEGA=yes
     VG_PC_LIB_PRIV="-lm $CLOCK_LIB $PTHREAD_LIBS $DLOPEN_LIBS"
@@ -1455,10 +1438,8 @@ AC_SUBST([CLANG_RESOURCE_DIR])
 case "x$enable_opengl$enable_gles1$enable_gles2" in
 x*yes*)
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(GL_LIB)'
-    HAVE_OPENGL=yes
     ;;
 esac
-AM_CONDITIONAL(HAVE_OPENGL, test "x$HAVE_OPENGL" = xyes)
 
 AC_SUBST([VG_LIB_DEPS])
 AC_SUBST([EGL_CLIENT_APIS])
@@ -2025,9 +2006,6 @@ AC_SUBST([XA_MINOR], 0)
 AC_SUBST([XA_TINY], 0)
 AC_SUBST([XA_VERSION], "$XA_MAJOR.$XA_MINOR.$XA_TINY")
 
-dnl prepend CORE_DIRS to SRC_DIRS
-SRC_DIRS="$CORE_DIRS $SRC_DIRS"
-
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"
 CPPFLAGS="$_SAVE_CPPFLAGS"
@@ -2135,6 +2113,7 @@ AC_CONFIG_FILES([Makefile
 		src/glx/Makefile
 		src/glx/tests/Makefile
 		src/gtest/Makefile
+		src/mapi/Makefile
 		src/mapi/es1api/Makefile
 		src/mapi/es1api/glesv1_cm.pc
 		src/mapi/es2api/Makefile

@@ -19,10 +19,24 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-SUBDIRS = gtest mapi
+SUBDIRS = glapi/gen
 
-if NEED_OPENGL_COMMON
-SUBDIRS += glsl mesa
+if HAVE_SHARED_GLAPI
+SUBDIRS += shared-glapi
 endif
 
-SUBDIRS += $(SRC_DIRS)
+if HAVE_OPENGL
+SUBDIRS += glapi
+endif
+
+if HAVE_OPENGL_ES1
+SUBDIRS += es1api
+endif
+
+if HAVE_OPENGL_ES2
+SUBDIRS += es2api
+endif
+
+if HAVE_OPENVG
+SUBDIRS += vgapi
+endif
