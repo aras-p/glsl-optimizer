@@ -28,7 +28,6 @@
 #   EGL_PLATFORMS       - platforms to support
 #   EGL_CLIENT_APIS     - state trackers to support
 #   GALLIUM_WINSYS_DIRS - pipe drivers to support
-#   SHARED_GLAPI        - st/mesa can be statically linked or not
 #
 include $(top_srcdir)/src/gallium/Automake.inc
 
