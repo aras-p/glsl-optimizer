@@ -39,7 +39,9 @@ endif
 
 if HAVE_GALLIUM
 SUBDIRS +=			\
-	gallium			\
+	gallium/auxiliary	\
+	gallium/drivers		\
+	gallium/state_trackers	\
 	gallium/winsys		\
 	gallium/targets
 

@@ -752,7 +752,6 @@ AM_CONDITIONAL(HAVE_SHARED_GLAPI, test "x$enable_shared_glapi" = xyes)
 dnl
 dnl Driver specific build directories
 dnl
-GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_TARGET_DIRS=""
 GALLIUM_WINSYS_DIRS="sw"
 GALLIUM_DRIVERS_DIRS="galahad trace rbug noop identity"
@@ -783,7 +782,6 @@ if test "x$enable_osmesa" = xyes; then
 fi
 
 AC_SUBST([DRIVER_DIRS])
-AC_SUBST([GALLIUM_DIRS])
 AC_SUBST([GALLIUM_TARGET_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DIRS])
 AC_SUBST([GALLIUM_DRIVERS_DIRS])
@@ -2020,7 +2018,6 @@ AC_CONFIG_FILES([Makefile
 		src/egl/wayland/wayland-drm/Makefile
 		src/egl/wayland/wayland-egl/Makefile
 		src/egl/wayland/wayland-egl/wayland-egl.pc
-		src/gallium/Makefile
 		src/gallium/auxiliary/Makefile
 		src/gallium/auxiliary/pipe-loader/Makefile
 		src/gallium/drivers/Makefile
@@ -2229,7 +2226,6 @@ fi
 echo ""
 if test -n "$with_gallium_drivers"; then
     echo "        Gallium:         yes"
-    echo "        Gallium dirs:    $GALLIUM_DIRS"
     echo "        Target dirs:     $GALLIUM_TARGET_DIRS"
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
     echo "        Driver dirs:     $GALLIUM_DRIVERS_DIRS"
