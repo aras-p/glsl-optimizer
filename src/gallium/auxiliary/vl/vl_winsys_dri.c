@@ -65,7 +65,7 @@ struct vl_dri_screen
    xcb_dri2_wait_sbc_cookie_t wait_cookie;
    xcb_dri2_get_buffers_cookie_t buffers_cookie;
 
-   int64_t last_ust, ns_frame, last_msc, next_msc, skew_msc;
+   int64_t last_ust, ns_frame, last_msc, next_msc;
 };
 
 static const unsigned int attachments[1] = { XCB_DRI2_ATTACHMENT_BUFFER_BACK_LEFT };
@@ -80,9 +80,6 @@ vl_dri2_handle_stamps(struct vl_dri_screen* scrn,
 
    if (scrn->last_ust && scrn->last_msc && (ust > scrn->last_ust) && (msc > scrn->last_msc))
       scrn->ns_frame = (ust - scrn->last_ust) / (msc - scrn->last_msc);
-
-   if (scrn->next_msc && (scrn->next_msc < msc))
-      scrn->skew_msc++;
 
    scrn->last_ust = ust;
    scrn->last_msc = msc;
@@ -282,7 +279,7 @@ vl_screen_set_next_timestamp(struct vl_screen *vscreen, uint64_t stamp)
    struct vl_dri_screen *scrn = (struct vl_dri_screen*)vscreen;
    assert(scrn);
    if (stamp && scrn->last_ust && scrn->ns_frame && scrn->last_msc)
-      scrn->next_msc = ((int64_t)stamp - scrn->last_ust) / scrn->ns_frame + scrn->last_msc + scrn->skew_msc;
+      scrn->next_msc = ((int64_t)stamp - scrn->last_ust + scrn->ns_frame/2) / scrn->ns_frame + scrn->last_msc;
    else
       scrn->next_msc = 0;
 }
