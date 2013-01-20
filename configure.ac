@@ -762,7 +762,7 @@ xyesyes)
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS libgl-xlib"
     GALLIUM_STATE_TRACKERS_DIRS="glx $GALLIUM_STATE_TRACKERS_DIRS"
-    HAVE_WINSYS_XLIB="yes"
+    NEED_WINSYS_XLIB="yes"
     ;;
 esac
 
@@ -776,7 +776,6 @@ if test "x$enable_osmesa" = xyes; then
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS osmesa"
 fi
 
-AC_SUBST([GALLIUM_WINSYS_DIRS])
 AC_SUBST([MESA_LLVM])
 
 # Check for libdrm
@@ -1445,10 +1444,6 @@ fi
 egl_platforms=`IFS=', '; echo $with_egl_platforms`
 for plat in $egl_platforms; do
 	case "$plat" in
-	fbdev|null)
-		GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/$plat"
-		;;
-
 	wayland)
 		PKG_CHECK_MODULES([WAYLAND], [wayland-client >= 1.0.2 wayland-server >= 1.0.2])
 		GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/wayland"
@@ -1471,7 +1466,7 @@ for plat in $egl_platforms; do
 			AC_MSG_ERROR([EGL platform drm needs gbm])
 		;;
 
-	android|gdi)
+	android|fbdev|gdi|null)
 		;;
 
 	*)
@@ -1496,6 +1491,9 @@ fi
 
 EGL_PLATFORMS="$egl_platforms"
 
+if echo "$egl_platforms" | grep 'x11' >/dev/null 2>&1; then
+    NEED_WINSYS_XLIB=yes
+fi
 AM_CONDITIONAL(HAVE_EGL_PLATFORM_X11, echo "$egl_platforms" | grep 'x11' >/dev/null 2>&1)
 AM_CONDITIONAL(HAVE_EGL_PLATFORM_WAYLAND, echo "$egl_platforms" | grep 'wayland' >/dev/null 2>&1)
 AM_CONDITIONAL(HAVE_EGL_PLATFORM_DRM, echo "$egl_platforms" | grep 'drm' >/dev/null 2>&1)
@@ -1686,9 +1684,7 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-    if test "x$enable_dri" = xyes -o "x$enable_xorg" = xyes -o \
-            "x$enable_xa" = xyes -o "x$enable_xvmc" = xyes -o \
-            "x$enable_vdpau" = xyes; then
+    if test "x$NEED_NONNULL_WINSYS" = xyes; then
          if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([DRI or Xorg DDX requires libdrm >= $LIBDRM_REQUIRED])
          fi
@@ -1749,6 +1745,13 @@ radeon_llvm_check() {
 }
 
 dnl Gallium drivers
+if test "x$enable_dri" = xyes -o "x$enable_xorg" = xyes -o \
+        "x$enable_xa" = xyes -o "x$enable_xvmc" = xyes -o \
+        "x$enable_vdpau" = xyes; then
+    NEED_NONNULL_WINSYS=yes
+fi
+AM_CONDITIONAL(NEED_NONNULL_WINSYS, test "x$NEED_NONNULL_WINSYS" = xyes)
+
 dnl Duplicates in GALLIUM_DRIVERS_DIRS are removed by sorting it after this block
 if test "x$with_gallium_drivers" != x; then
     gallium_drivers=`IFS=', '; echo $with_gallium_drivers`
@@ -1834,9 +1837,8 @@ if test "x$with_gallium_drivers" != x; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS xvmc-softpipe"
             fi
             if test "x$enable_vdpau" = xyes -o "x$enable_xvmc" = xyes; then
-               if test "x$HAVE_WINSYS_XLIB" != xyes; then
-                  GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
-               fi
+                NEED_WINSYS_XLIB=yes
+                GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
             fi
             ;;
         *)
@@ -1912,7 +1914,7 @@ if test "x$enable_gallium_loader" = xyes; then
     GALLIUM_PIPE_LOADER_LIBS="\$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la"
     GALLIUM_PIPE_LOADER_LIBS="$GALLIUM_PIPE_LOADER_LIBS \$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la"
 
-    if test "x$HAVE_WINSYS_XLIB" = xyes; then
+    if test "x$NEED_WINSYS_XLIB" = xyes; then
         GALLIUM_PIPE_LOADER_DEFINES="$GALLIUM_PIPE_LOADER_DEFINES -DHAVE_PIPE_LOADER_XLIB"
         GALLIUM_PIPE_LOADER_LIBS="$GALLIUM_PIPE_LOADER_LIBS \$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la"
     fi
@@ -1939,6 +1941,13 @@ AM_CONDITIONAL(HAVE_RADEON_DRI, test x$HAVE_RADEON_DRI = xyes)
 AM_CONDITIONAL(HAVE_SWRAST_DRI, test x$HAVE_SWRAST_DRI = xyes)
 AM_CONDITIONAL(HAVE_COMMON_DRI, test x$HAVE_COMMON_DRI = xyes)
 
+AM_CONDITIONAL(NEED_RADEON_DRM_WINSYS, test "x$NEED_NONNULL_WINSYS" = xyes -a \
+                                            "x$HAVE_GALLIUM_R300" = xyes -o \
+                                            "x$HAVE_GALLIUM_R600" = xyes -o \
+                                            "x$HAVE_GALLIUM_RADEONSI" = xyes)
+AM_CONDITIONAL(NEED_WINSYS_WRAPPER, test "x$HAVE_GALLIUM_I915" = xyes -o \
+                                         "x$HAVE_GALLIUM_SVGA" = xyes)
+AM_CONDITIONAL(NEED_WINSYS_XLIB, test "x$NEED_WINSYS_XLIB" = xyes)
 AM_CONDITIONAL(NEED_RADEON_LLVM, test x$NEED_RADEON_LLVM = xyes)
 AM_CONDITIONAL(R600_NEED_RADEON_GALLIUM, test x$R600_NEED_RADEON_GALLIUM = xyes)
 AM_CONDITIONAL(USE_R600_LLVM_COMPILER, test x$USE_R600_LLVM_COMPILER = xyes)
@@ -2065,7 +2074,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/winsys/nouveau/drm/Makefile
 		src/gallium/winsys/radeon/drm/Makefile
 		src/gallium/winsys/svga/drm/Makefile
-		src/gallium/winsys/sw/Makefile
 		src/gallium/winsys/sw/dri/Makefile
 		src/gallium/winsys/sw/fbdev/Makefile
 		src/gallium/winsys/sw/null/Makefile
