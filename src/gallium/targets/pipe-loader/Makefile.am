@@ -39,15 +39,11 @@ PIPE_LIBS = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
+	$(top_builddir)/src/gallium/drivers/galahad/libgalahad.la \
 	$(DLOPEN_LIBS) \
 	$(CLOCK_LIB) \
 	-lpthread \
 	-lm
-
-if HAVE_GALAHAD_GALLIUM
-PIPE_LIBS += $(top_builddir)/src/gallium/drivers/galahad/libgalahad.la
-endif
-
 
 if HAVE_GALLIUM_I915
 pipe_LTLIBRARIES += pipe_i915.la
