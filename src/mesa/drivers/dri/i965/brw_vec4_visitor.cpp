@@ -1344,7 +1344,7 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_mul:
-      if (ir->type->is_integer()) {
+      if (brw->gen < 8 && ir->type->is_integer()) {
 	 /* For integer multiplication, the MUL uses the low 16 bits of one of
 	  * the operands (src0 through SNB, src1 on IVB and later).  The MACH
 	  * accumulates in the contribution of the upper 16 bits of that
