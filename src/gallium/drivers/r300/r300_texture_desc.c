@@ -414,7 +414,7 @@ static void r300_setup_cmask_properties(struct r300_screen *screen,
 {
     static unsigned cmask_align_x[4] = {16, 32, 48, 32};
     static unsigned cmask_align_y[4] = {16, 16, 16, 32};
-    unsigned pipes, stride, cmask_num_dw;
+    unsigned pipes, stride, cmask_num_dw, cmask_max_size;
 
     /* We need an AA colorbuffer, no mipmaps. */
     if (tex->b.b.nr_samples <= 1 ||
@@ -436,6 +436,10 @@ static void r300_setup_cmask_properties(struct r300_screen *screen,
     /* CMASK is part of raster pipes. The number of Z pipes doesn't matter. */
     pipes = screen->info.r300_num_gb_pipes;
 
+    /* The single-pipe cards have 5120 dwords of CMASK RAM,
+     * the other cards have 4096 dwords of CMASK RAM per pipe. */
+    cmask_max_size = pipes == 1 ? 5120 : pipes * 4096;
+
     stride = r300_stride_to_width(tex->b.b.format,
                                   tex->tex.stride_in_bytes[0]);
     stride = align(stride, 16);
@@ -446,7 +450,7 @@ static void r300_setup_cmask_properties(struct r300_screen *screen,
                                          cmask_align_y[pipes-1]);
 
     /* Check the CMASK size against the CMASK memory limit. */
-    if (cmask_num_dw <= PIPE_CMASK_SIZE * pipes) {
+    if (cmask_num_dw <= cmask_max_size) {
         tex->tex.cmask_dwords = cmask_num_dw;
         tex->tex.cmask_stride_in_pixels =
             util_align_npot(stride, cmask_align_x[pipes-1]);
