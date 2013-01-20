@@ -646,6 +646,53 @@ store_aos(struct gallivm_state *gallivm,
    lp_set_store_alignment(LLVMBuildStore(builder, value, data_ptr), sizeof(float));
 }
 
+/**
+ * Adjust the mask to architecture endianess. The mask will the store in struct:
+ *
+ * struct vertex_header {
+ *    unsigned clipmask:DRAW_TOTAL_CLIP_PLANES;
+ *    unsigned edgeflag:1;
+ *    unsigned have_clipdist:1;
+ *    unsigned vertex_id:16;
+ *    [...]
+ * }
+ *
+ * On little-endian machine nothing needs to done, however on bit-endian machine
+ * the mask's fields need to be adjusted with the algorithm:
+ *
+ * uint32_t reverse (uint32_t x)
+ * {
+ *   return (x >> 16) |              // vertex_id
+ *          ((x & 0x3fff) << 18) |   // clipmask
+ *          ((x & 0x4000) << 3) |    // have_clipdist
+ *          ((x & 0x8000) << 1);     // edgeflag
+ * }
+ */
+static LLVMValueRef
+adjust_mask(struct gallivm_state *gallivm,
+            LLVMValueRef mask)
+{
+#ifdef PIPE_ARCH_BIG_ENDIAN
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef vertex_id;
+   LLVMValueRef clipmask;
+   LLVMValueRef have_clipdist;
+   LLVMValueRef edgeflag;
+
+   vertex_id = LLVMBuildLShr(builder, mask, lp_build_const_int32(gallivm, 16), "");
+   clipmask  = LLVMBuildAnd(builder, mask, lp_build_const_int32(gallivm, 0x3fff), "");
+   clipmask  = LLVMBuildShl(builder, clipmask, lp_build_const_int32(gallivm, 18), "");
+   have_clipdist = LLVMBuildAnd(builder, mask, lp_build_const_int32(gallivm, 0x4000), "");
+   have_clipdist = LLVMBuildShl(builder, have_clipdist, lp_build_const_int32(gallivm, 3), "");
+   edgeflag = LLVMBuildAnd(builder, mask, lp_build_const_int32(gallivm, 0x8000), "");
+   edgeflag = LLVMBuildShl(builder, edgeflag, lp_build_const_int32(gallivm, 1), "");
+
+   mask = LLVMBuildOr(builder, vertex_id, clipmask, "");
+   mask = LLVMBuildOr(builder, mask, have_clipdist, "");
+   mask = LLVMBuildOr(builder, mask, edgeflag, "");
+#endif
+   return mask;
+}
 
 static void
 store_aos_array(struct gallivm_state *gallivm,
@@ -690,6 +737,7 @@ store_aos_array(struct gallivm_state *gallivm,
       for (i = 0; i < vector_length; i++) {
          LLVMValueRef id_ptr = draw_jit_header_id(gallivm, io_ptrs[i]);
          val = LLVMBuildExtractElement(builder, cliptmp, inds[i], "");
+         val = adjust_mask(gallivm, val);
          LLVMBuildStore(builder, val, id_ptr);
 #if DEBUG_STORE
          lp_build_printf(gallivm, "io = %p, index %d\n, clipmask = %x\n",
