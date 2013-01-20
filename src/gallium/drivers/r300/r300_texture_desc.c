@@ -542,6 +542,37 @@ void r300_texture_desc_init(struct r300_screen *rscreen,
     tex->tex.height0 = base->height0;
     tex->tex.depth0 = base->depth0;
 
+    /* There is a CB memory addressing hardware bug that limits the width
+     * of the MSAA buffer in some cases in R520. In order to get around it,
+     * the following code lowers the sample count depending on the format and
+     * the width.
+     *
+     * The only catch is that all MSAA colorbuffers and a zbuffer which are
+     * supposed to be used together should always be bound together. Only
+     * then the correct minimum sample count of all bound buffers is used
+     * for rendering. */
+    if (rscreen->caps.is_r500) {
+        /* FP16 6x MSAA buffers are limited to a width of 1360 pixels. */
+        if (tex->b.b.format == PIPE_FORMAT_R16G16B16A16_FLOAT &&
+            tex->b.b.nr_samples == 6 && tex->b.b.width0 > 1360) {
+            tex->b.b.nr_samples = 4;
+        }
+
+        /* FP16 4x MSAA buffers are limited to a width of 2048 pixels. */
+        if (tex->b.b.format == PIPE_FORMAT_R16G16B16A16_FLOAT &&
+            tex->b.b.nr_samples == 4 && tex->b.b.width0 > 2048) {
+            tex->b.b.nr_samples = 2;
+        }
+    }
+
+    /* 32-bit 6x MSAA buffers are limited to a width of 2720 pixels.
+     * This applies to all R300-R500 cards. */
+    if (util_format_get_blocksizebits(tex->b.b.format) == 32 &&
+        !util_format_is_depth_or_stencil(tex->b.b.format) &&
+        tex->b.b.nr_samples == 6 && tex->b.b.width0 > 2720) {
+        tex->b.b.nr_samples = 4;
+    }
+
     r300_setup_flags(tex);
 
     /* Align a 3D NPOT texture to POT. */

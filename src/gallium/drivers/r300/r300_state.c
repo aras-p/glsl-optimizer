@@ -839,14 +839,18 @@ static unsigned r300_get_num_samples(struct r300_context *r300)
 {
     struct pipe_framebuffer_state* fb =
             (struct pipe_framebuffer_state*)r300->fb_state.state;
-    unsigned num_samples;
+    unsigned i, num_samples;
 
-    if (fb->nr_cbufs)
-        num_samples = fb->cbufs[0]->texture->nr_samples;
-    else if (fb->zsbuf)
-        num_samples = fb->zsbuf->texture->nr_samples;
-    else
-        num_samples = 1;
+    if (!fb->nr_cbufs && !fb->zsbuf)
+        return 1;
+
+    num_samples = 6;
+
+    for (i = 0; i < fb->nr_cbufs; i++)
+        num_samples = MIN2(num_samples, fb->cbufs[i]->texture->nr_samples);
+
+    if (fb->zsbuf)
+        num_samples = MIN2(num_samples, fb->zsbuf->texture->nr_samples);
 
     if (!num_samples)
         num_samples = 1;
