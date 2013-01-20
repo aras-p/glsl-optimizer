@@ -1397,10 +1397,6 @@ if test "x$enable_opencl" = xyes; then
 fi
 AM_CONDITIONAL(HAVE_CLOVER, test "x$enable_opencl" = xyes)
 
-if test "x$enable_gallium_gbm" = xyes || test "x$enable_opencl" = xyes; then
-    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS pipe-loader"
-fi
-
 dnl
 dnl Gallium configuration
 dnl
@@ -1665,6 +1661,10 @@ if test "x$enable_gallium_tests" = xyes; then
     enable_gallium_loader=yes
 fi
 AM_CONDITIONAL(HAVE_GALLIUM_TESTS, test "x$enable_gallium_tests" = xyes)
+
+if test "x$enable_gallium_loader" = xyes; then
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS pipe-loader"
+fi
 
 dnl Directory for VDPAU libs
 AC_ARG_WITH([vdpau-libdir],

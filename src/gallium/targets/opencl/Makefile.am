@@ -32,11 +32,8 @@ libOpenCL_la_SOURCES =
 # Force usage of a C++ linker
 nodist_EXTRA_libOpenCL_la_SOURCES = dummy.cpp
 
-PIPE_BUILD_DIR = $(top_builddir)/src/gallium/targets/pipe-loader
-
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
 all-local: libOpenCL.la
-	@$(MAKE) -C $(PIPE_BUILD_DIR)
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)
 	ln -f .libs/libOpenCL.so* $(top_builddir)/$(LIB_DIR)/

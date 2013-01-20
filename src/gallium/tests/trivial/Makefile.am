@@ -26,9 +26,5 @@ tri_SOURCES = tri.c
 
 quad_tex_SOURCES = quad-tex.c
 
-all-local:
-	@$(MAKE) -C $(PIPE_SRC_DIR)
-
 clean-local:
-	@$(MAKE) -C $(PIPE_SRC_DIR) clean
 	-rm -f result.bmp
