@@ -188,29 +188,6 @@ blit_nearest(struct gl_context *ctx,
       return;
    }
 
-   /* choose row resampler */
-   switch (pixelSize) {
-   case 1:
-      resampleRow = resample_row_1;
-      break;
-   case 2:
-      resampleRow = resample_row_2;
-      break;
-   case 4:
-      resampleRow = resample_row_4;
-      break;
-   case 8:
-      resampleRow = resample_row_8;
-      break;
-   case 16:
-      resampleRow = resample_row_16;
-      break;
-   default:
-      _mesa_problem(ctx, "unexpected pixel size (%d) in blit_nearest",
-                    pixelSize);
-      return;
-   }
-
    /* Blit to all the draw buffers */
    for (i = 0; i < numDrawBuffers; i++) {
       if (buffer == GL_COLOR_BUFFER_BIT) {
@@ -230,6 +207,29 @@ blit_nearest(struct gl_context *ctx,
             mode = UNPACK_RGBA_FLOAT;
             pixelSize = 16;
          }
+      }
+
+      /* choose row resampler */
+      switch (pixelSize) {
+      case 1:
+         resampleRow = resample_row_1;
+         break;
+      case 2:
+         resampleRow = resample_row_2;
+         break;
+      case 4:
+         resampleRow = resample_row_4;
+         break;
+      case 8:
+         resampleRow = resample_row_8;
+         break;
+      case 16:
+         resampleRow = resample_row_16;
+         break;
+      default:
+         _mesa_problem(ctx, "unexpected pixel size (%d) in blit_nearest",
+                       pixelSize);
+         return;
       }
 
       if ((readRb == drawRb) ||
