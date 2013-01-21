@@ -1,0 +1,6 @@
+((function packSnorm4x8
+   (signature uint
+     (parameters
+       (declare (in) vec4 arg0))
+     ((return (expression uint packSnorm4x8 (var_ref arg0)))))
+))
