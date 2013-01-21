@@ -81,7 +81,7 @@ endif
 
 SRCDIR = $(top_srcdir)/src/mesa/
 BUILDDIR = $(top_builddir)/src/mesa/
-include sources.mak
+include Makefile.sources
 
 AM_CPPFLAGS = $(API_DEFINES) $(DEFINES) $(INCLUDE_DIRS)
 AM_CFLAGS = $(LLVM_CFLAGS) $(VISIBILITY_CFLAGS)

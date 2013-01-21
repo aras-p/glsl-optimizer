@@ -20,8 +20,8 @@
 # IN THE SOFTWARE.
 
 TOP = $(top_srcdir)
-include sources.mak
-include ../mapi/sources.mak
+include Makefile.sources
+include ../mapi/Makefile.sources
 
 AM_CPPFLAGS = \
         $(DEFINES) \

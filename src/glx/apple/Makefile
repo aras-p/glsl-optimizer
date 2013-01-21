@@ -58,7 +58,7 @@ SOURCES = \
 	../xfont.c \
 	../applegl_glx.c
 
-include $(TOP)/src/mesa/sources.mak
+include $(TOP)/src/mesa/Makefile.sources
 
 # override GLAPI_LIB
 GLAPI_LIB = $(TOP)/src/mapi/glapi/libglapi.a

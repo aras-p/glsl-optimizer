@@ -31,7 +31,7 @@ LOCAL_PATH := $(call my-dir)
 # Import variables:
 # 	MESA_GALLIUM_FILES.
 # 	X86_FILES
-include $(LOCAL_PATH)/sources.mak
+include $(LOCAL_PATH)/Makefile.sources
 
 include $(CLEAR_VARS)
 

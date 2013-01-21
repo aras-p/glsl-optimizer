@@ -40,7 +40,7 @@ VG_include_HEADERS = \
 lib_LTLIBRARIES = libOpenVG.la
 
 TOP=$(top_srcdir)
-include ../mapi/sources.mak
+include ../mapi/Makefile.sources
 libOpenVG_la_SOURCES = $(MAPI_FILES) vgapi_tmp.h
 libOpenVG_la_LIBADD = $(VG_LIB_DEPS)
 libOpenVG_la_LDFLAGS = -version-number 1 -no-undefined
