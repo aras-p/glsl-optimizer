@@ -42,6 +42,10 @@
 #include "draw_fs.h"
 
 
+/** Set to 1 to enable printing of coords before/after clipping */
+#define DEBUG_CLIP 0
+
+
 #ifndef IS_NEGATIVE
 #define IS_NEGATIVE(X) ((X) < 0.0)
 #endif
@@ -237,12 +241,17 @@ static void emit_poly( struct draw_stage *stage,
       if (i == n - 1 && edgeflags[i])
          header.flags |= edge_last;
 
-      if (0) {
+      if (DEBUG_CLIP) {
          const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
          uint j, k;
          debug_printf("Clipped tri: (flat-shade-first = %d)\n",
                       stage->draw->rasterizer->flatshade_first);
          for (j = 0; j < 3; j++) {
+            debug_printf("  Vert %d: clip: %f %f %f %f\n", j,
+                         header.v[j]->clip[0],
+                         header.v[j]->clip[1],
+                         header.v[j]->clip[2],
+                         header.v[j]->clip[3]);
             for (k = 0; k < vs->info.num_outputs; k++) {
                debug_printf("  Vert %d: Attr %d:  %f %f %f %f\n", j, k,
                             header.v[j]->data[k][0],
@@ -314,6 +323,16 @@ do_clip_tri( struct draw_stage *stage,
    inlist[0] = header->v[0];
    inlist[1] = header->v[1];
    inlist[2] = header->v[2];
+
+   if (DEBUG_CLIP) {
+      const float *v0 = header->v[0]->clip;
+      const float *v1 = header->v[1]->clip;
+      const float *v2 = header->v[2]->clip;
+      debug_printf("Clip triangle:\n");
+      debug_printf(" %f, %f, %f, %f\n", v0[0], v0[1], v0[2], v0[3]);
+      debug_printf(" %f, %f, %f, %f\n", v1[0], v1[1], v1[2], v1[3]);
+      debug_printf(" %f, %f, %f, %f\n", v2[0], v2[1], v2[2], v2[3]);
+   }
 
    /*
     * Note: at this point we can't just use the per-vertex edge flags.
