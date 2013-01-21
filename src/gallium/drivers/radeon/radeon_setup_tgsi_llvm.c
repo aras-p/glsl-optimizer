@@ -125,7 +125,17 @@ emit_fetch_immediate(
 	}
 
 	struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
-	return LLVMConstBitCast(bld->immediates[reg->Register.Index][swizzle], ctype);
+	if (swizzle == ~0) {
+		LLVMValueRef values[TGSI_NUM_CHANNELS] = {};
+		unsigned chan;
+		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+                   values[chan] = LLVMConstBitCast(bld->immediates[reg->Register.Index][chan], ctype);
+		}
+		return lp_build_gather_values(bld_base->base.gallivm, values,
+						TGSI_NUM_CHANNELS);
+	} else {
+		return LLVMConstBitCast(bld->immediates[reg->Register.Index][swizzle], ctype);
+	}
 }
 
 static LLVMValueRef
