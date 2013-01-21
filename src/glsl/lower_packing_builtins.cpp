@@ -84,8 +84,14 @@ public:
       case LOWER_PACK_SNORM_2x16:
          *rvalue = lower_pack_snorm_2x16(op0);
          break;
+      case LOWER_PACK_SNORM_4x8:
+         *rvalue = lower_pack_snorm_4x8(op0);
+         break;
       case LOWER_PACK_UNORM_2x16:
          *rvalue = lower_pack_unorm_2x16(op0);
+         break;
+      case LOWER_PACK_UNORM_4x8:
+         *rvalue = lower_pack_unorm_4x8(op0);
          break;
       case LOWER_PACK_HALF_2x16:
          *rvalue = lower_pack_half_2x16(op0);
@@ -96,8 +102,14 @@ public:
       case LOWER_UNPACK_SNORM_2x16:
          *rvalue = lower_unpack_snorm_2x16(op0);
          break;
+      case LOWER_UNPACK_SNORM_4x8:
+         *rvalue = lower_unpack_snorm_4x8(op0);
+         break;
       case LOWER_UNPACK_UNORM_2x16:
          *rvalue = lower_unpack_unorm_2x16(op0);
+         break;
+      case LOWER_UNPACK_UNORM_4x8:
+         *rvalue = lower_unpack_unorm_4x8(op0);
          break;
       case LOWER_UNPACK_HALF_2x16:
          *rvalue = lower_unpack_half_2x16(op0);
@@ -137,8 +149,14 @@ private:
       case ir_unop_pack_snorm_2x16:
          result = op_mask & LOWER_PACK_SNORM_2x16;
          break;
+      case ir_unop_pack_snorm_4x8:
+         result = op_mask & LOWER_PACK_SNORM_4x8;
+         break;
       case ir_unop_pack_unorm_2x16:
          result = op_mask & LOWER_PACK_UNORM_2x16;
+         break;
+      case ir_unop_pack_unorm_4x8:
+         result = op_mask & LOWER_PACK_UNORM_4x8;
          break;
       case ir_unop_pack_half_2x16:
          result = op_mask & (LOWER_PACK_HALF_2x16 | LOWER_PACK_HALF_2x16_TO_SPLIT);
@@ -146,8 +164,14 @@ private:
       case ir_unop_unpack_snorm_2x16:
          result = op_mask & LOWER_UNPACK_SNORM_2x16;
          break;
+      case ir_unop_unpack_snorm_4x8:
+         result = op_mask & LOWER_UNPACK_SNORM_4x8;
+         break;
       case ir_unop_unpack_unorm_2x16:
          result = op_mask & LOWER_UNPACK_UNORM_2x16;
+         break;
+      case ir_unop_unpack_unorm_4x8:
+         result = op_mask & LOWER_UNPACK_UNORM_4x8;
          break;
       case ir_unop_unpack_half_2x16:
          result = op_mask & (LOWER_UNPACK_HALF_2x16 | LOWER_UNPACK_HALF_2x16_TO_SPLIT);
@@ -207,6 +231,30 @@ private:
    }
 
    /**
+    * \brief Pack four uint8's into a single uint32.
+    *
+    * Interpret the given uvec4 as a uint32 4-typle. Pack the 4-tuple into a
+    * uint32 where the least significant bits specify the first element of the
+    * 4-tuple. Return the uint32.
+    */
+   ir_rvalue*
+   pack_uvec4_to_uint(ir_rvalue *uvec4_rval)
+   {
+      assert(uvec4_rval->type == glsl_type::uvec4_type);
+
+      /* uvec4 u = UVEC4_RVAL; */
+      ir_variable *u = factory.make_temp(glsl_type::uvec4_type,
+                                          "tmp_pack_uvec4_to_uint");
+      factory.emit(assign(u, bit_and(uvec4_rval, constant(0xffu))));
+
+      /* return (u.w << 24) | (u.z << 16) | (u.y << 8) | u.x; */
+      return bit_or(bit_or(lshift(swizzle_w(u), constant(24u)),
+                           lshift(swizzle_z(u), constant(16u))),
+                    bit_or(lshift(swizzle_y(u), constant(8u)),
+                           swizzle_x(u)));
+   }
+
+   /**
     * \brief Unpack a uint32 into two uint16's.
     *
     * Interpret the given uint32 as a uint16 pair where the uint32's least
@@ -234,6 +282,44 @@ private:
       factory.emit(assign(u2, rshift(u, constant(16u)), WRITEMASK_Y));
 
       return deref(u2).val;
+   }
+
+   /**
+    * \brief Unpack a uint32 into four uint8's.
+    *
+    * Interpret the given uint32 as a uint8 4-tuple where the uint32's least
+    * significant bits specify the 4-tuple's first element. Return the uint8
+    * 4-tuple as a uvec4.
+    */
+   ir_rvalue*
+   unpack_uint_to_uvec4(ir_rvalue *uint_rval)
+   {
+      assert(uint_rval->type == glsl_type::uint_type);
+
+      /* uint u = UINT_RVAL; */
+      ir_variable *u = factory.make_temp(glsl_type::uint_type,
+                                          "tmp_unpack_uint_to_uvec4_u");
+      factory.emit(assign(u, uint_rval));
+
+      /* uvec4 u4; */
+      ir_variable *u4 = factory.make_temp(glsl_type::uvec4_type,
+                                           "tmp_unpack_uint_to_uvec4_u4");
+
+      /* u4.x = u & 0xffu; */
+      factory.emit(assign(u4, bit_and(u, constant(0xffu)), WRITEMASK_X));
+
+      /* u4.y = (u >> 8u) & 0xffu; */
+      factory.emit(assign(u4, bit_and(rshift(u, constant(8u)),
+                                      constant(0xffu)), WRITEMASK_Y));
+
+      /* u4.z = (u >> 16u) & 0xffu; */
+      factory.emit(assign(u4, bit_and(rshift(u, constant(16u)),
+                                      constant(0xffu)), WRITEMASK_Z));
+
+      /* u4.w = (u >> 24u) */
+      factory.emit(assign(u4, rshift(u, constant(24u)), WRITEMASK_W));
+
+      return deref(u4).val;
    }
 
    /**
@@ -280,6 +366,55 @@ private:
                                          constant(-1.0f),
                                          constant(1.0f)),
                                    constant(32767.0f))))));
+
+      assert(result->type == glsl_type::uint_type);
+      return result;
+   }
+
+   /**
+    * \brief Lower a packSnorm4x8 expression.
+    *
+    * \param vec4_rval is packSnorm4x8's input
+    * \return packSnorm4x8's output as a uint rvalue
+    */
+   ir_rvalue*
+   lower_pack_snorm_4x8(ir_rvalue *vec4_rval)
+   {
+      /* From page 137 (143 of pdf) of the GLSL 4.30 spec:
+       *
+       *    highp uint packSnorm4x8(vec4 v)
+       *    -------------------------------
+       *    First, converts each component of the normalized floating-point value
+       *    v into 8-bit integer values. Then, the results are packed into the
+       *    returned 32-bit unsigned integer.
+       *
+       *    The conversion for component c of v to fixed point is done as
+       *    follows:
+       *
+       *       packSnorm4x8: round(clamp(c, -1, +1) * 127.0)
+       *
+       *    The first component of the vector will be written to the least
+       *    significant bits of the output; the last component will be written to
+       *    the most significant bits.
+       *
+       * This function generates IR that approximates the following pseudo-GLSL:
+       *
+       *     return pack_uvec4_to_uint(
+       *         uvec4(ivec4(
+       *           round(clamp(VEC4_RVALUE, -1.0f, 1.0f) * 127.0f))));
+       *
+       * It is necessary to first convert the vec4 to ivec4 rather than directly
+       * converting vec4 to uvec4 because the latter conversion is undefined.
+       * From page 87 (93 of pdf) of the GLSL 4.30 spec: "It is undefined to
+       * convert a negative floating point value to an uint".
+       */
+      assert(vec4_rval->type == glsl_type::vec4_type);
+
+      ir_rvalue *result = pack_uvec4_to_uint(
+            i2u(f2i(round_even(mul(clamp(vec4_rval,
+                                         constant(-1.0f),
+                                         constant(1.0f)),
+                                   constant(127.0f))))));
 
       assert(result->type == glsl_type::uint_type);
       return result;
@@ -345,6 +480,65 @@ private:
    }
 
    /**
+    * \brief Lower an unpackSnorm4x8 expression.
+    *
+    * \param uint_rval is unpackSnorm4x8's input
+    * \return unpackSnorm4x8's output as a vec4 rvalue
+    */
+   ir_rvalue*
+   lower_unpack_snorm_4x8(ir_rvalue *uint_rval)
+   {
+      /* From page 137 (143 of pdf) of the GLSL 4.30 spec:
+       *
+       *    highp vec4 unpackSnorm4x8 (highp uint p)
+       *    ----------------------------------------
+       *    First, unpacks a single 32-bit unsigned integer p into four
+       *    8-bit unsigned integers. Then, each component is converted to
+       *    a normalized floating-point value to generate the returned
+       *    four-component vector.
+       *
+       *    The conversion for unpacked fixed-point value f to floating point is
+       *    done as follows:
+       *
+       *       unpackSnorm4x8: clamp(f / 127.0, -1, +1)
+       *
+       *    The first component of the returned vector will be extracted from the
+       *    least significant bits of the input; the last component will be
+       *    extracted from the most significant bits.
+       *
+       * This function generates IR that approximates the following pseudo-GLSL:
+       *
+       *    return clamp(
+       *       ((ivec4(unpack_uint_to_uvec4(UINT_RVALUE)) << 24) >> 24) / 127.0f,
+       *       -1.0f, 1.0f);
+       *
+       * The above IR may appear unnecessarily complex, but the intermediate
+       * conversion to ivec4 and the bit shifts are necessary to correctly unpack
+       * negative floats.
+       *
+       * To see why, consider packing and then unpacking vec4(-1.0, 0.0, 0.0,
+       * 0.0). packSnorm4x8 encodes -1.0 as the int8 0xff. During unpacking, we
+       * place that int8 into an int32, which results in the *positive* integer
+       * 0x000000ff.  The int8's sign bit becomes, in the int32, the rather
+       * unimportant bit 8. We must now extend the int8's sign bit into bits
+       * 9-32, which is accomplished by left-shifting then right-shifting.
+       */
+
+      assert(uint_rval->type == glsl_type::uint_type);
+
+      ir_rvalue *result =
+        clamp(div(i2f(rshift(lshift(u2i(unpack_uint_to_uvec4(uint_rval)),
+                                    constant(24u)),
+                             constant(24u))),
+                  constant(127.0f)),
+              constant(-1.0f),
+              constant(1.0f));
+
+      assert(result->type == glsl_type::vec4_type);
+      return result;
+   }
+
+   /**
     * \brief Lower a packUnorm2x16 expression.
     *
     * \param vec2_rval is packUnorm2x16's input
@@ -389,6 +583,50 @@ private:
    }
 
    /**
+    * \brief Lower a packUnorm4x8 expression.
+    *
+    * \param vec4_rval is packUnorm4x8's input
+    * \return packUnorm4x8's output as a uint rvalue
+    */
+   ir_rvalue*
+   lower_pack_unorm_4x8(ir_rvalue *vec4_rval)
+   {
+      /* From page 137 (143 of pdf) of the GLSL 4.30 spec:
+       *
+       *    highp uint packUnorm4x8 (vec4 v)
+       *    --------------------------------
+       *    First, converts each component of the normalized floating-point value
+       *    v into 8-bit integer values. Then, the results are packed into the
+       *    returned 32-bit unsigned integer.
+       *
+       *    The conversion for component c of v to fixed point is done as
+       *    follows:
+       *
+       *       packUnorm4x8: round(clamp(c, 0, +1) * 255.0)
+       *
+       *    The first component of the vector will be written to the least
+       *    significant bits of the output; the last component will be written to
+       *    the most significant bits.
+       *
+       * This function generates IR that approximates the following pseudo-GLSL:
+       *
+       *     return pack_uvec4_to_uint(uvec4(
+       *                round(clamp(VEC2_RVALUE, 0.0f, 1.0f) * 255.0f)));
+       *
+       * Here it is safe to directly convert the vec4 to uvec4 because the the
+       * vec4 has been clamped to a non-negative range.
+       */
+
+      assert(vec4_rval->type == glsl_type::vec4_type);
+
+      ir_rvalue *result = pack_uvec4_to_uint(
+         f2u(round_even(mul(saturate(vec4_rval), constant(255.0f)))));
+
+      assert(result->type == glsl_type::uint_type);
+      return result;
+   }
+
+   /**
     * \brief Lower an unpackUnorm2x16 expression.
     *
     * \param uint_rval is unpackUnorm2x16's input
@@ -426,6 +664,47 @@ private:
                               constant(65535.0f));
 
       assert(result->type == glsl_type::vec2_type);
+      return result;
+   }
+
+   /**
+    * \brief Lower an unpackUnorm4x8 expression.
+    *
+    * \param uint_rval is unpackUnorm4x8's input
+    * \return unpackUnorm4x8's output as a vec4 rvalue
+    */
+   ir_rvalue*
+   lower_unpack_unorm_4x8(ir_rvalue *uint_rval)
+   {
+      /* From page 137 (143 of pdf) of the GLSL 4.30 spec:
+       *
+       *    highp vec4 unpackUnorm4x8 (highp uint p)
+       *    ----------------------------------------
+       *    First, unpacks a single 32-bit unsigned integer p into four
+       *    8-bit unsigned integers. Then, each component is converted to
+       *    a normalized floating-point value to generate the returned
+       *    two-component vector.
+       *
+       *    The conversion for unpacked fixed-point value f to floating point is
+       *    done as follows:
+       *
+       *       unpackUnorm4x8: f / 255.0
+       *
+       *    The first component of the returned vector will be extracted from the
+       *    least significant bits of the input; the last component will be
+       *    extracted from the most significant bits.
+       *
+       * This function generates IR that approximates the following pseudo-GLSL:
+       *
+       *     return vec4(unpack_uint_to_uvec4(UINT_RVALUE)) / 255.0;
+       */
+
+      assert(uint_rval->type == glsl_type::uint_type);
+
+      ir_rvalue *result = div(u2f(unpack_uint_to_uvec4(uint_rval)),
+                              constant(255.0f));
+
+      assert(result->type == glsl_type::vec4_type);
       return result;
    }
 
