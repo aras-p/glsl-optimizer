@@ -168,9 +168,9 @@ static void interp( const struct clip_stage *clip,
       int k;
       t_nopersp = t;
       for (k = 0; k < 2; k++)
-         if (in->data[pos_attr][k] != out->data[pos_attr][k]) {
-            t_nopersp = (dst->data[pos_attr][k] - out->data[pos_attr][k]) /
-               (in->data[pos_attr][k] - out->data[pos_attr][k]);
+         if (in->clip[k] != out->clip[k]) {
+            t_nopersp = (dst->clip[k] - out->clip[k]) /
+               (in->clip[k] - out->clip[k]);
             break;
          }
    }
