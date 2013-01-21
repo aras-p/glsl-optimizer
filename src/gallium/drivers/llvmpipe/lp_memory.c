@@ -29,17 +29,6 @@
 #include "lp_limits.h"
 #include "lp_memory.h"
 
-/**
- * 32bpp RGBA swizzled tiles.  One for for each thread and each
- * possible colorbuf.  Adds up to quite a bit 8*8*64*64*4 == 1MB.
- * Several schemes exist to reduce this, such as scaling back the
- * number of threads or using a smaller tilesize when multiple
- * colorbuffers are bound.
- */
-PIPE_ALIGN_VAR(LP_MIN_VECTOR_ALIGN)
-uint8_t lp_swizzled_cbuf[LP_MAX_THREADS][PIPE_MAX_COLOR_BUFS][TILE_SIZE * TILE_SIZE * 4];
-
-
 /* A single dummy tile used in a couple of out-of-memory situations. 
  */
 PIPE_ALIGN_VAR(LP_MIN_VECTOR_ALIGN)

@@ -867,8 +867,6 @@ lp_rast_create( unsigned num_threads )
    /* for synchronizing rasterization threads */
    pipe_barrier_init( &rast->barrier, rast->num_threads );
 
-   memset(lp_swizzled_cbuf, 0, sizeof lp_swizzled_cbuf);
-
    memset(lp_dummy_tile, 0, sizeof lp_dummy_tile);
 
    return rast;
