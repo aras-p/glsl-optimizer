@@ -129,6 +129,10 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
          need_pipeline |= out->clipmask;
       }
 
+      /*
+       * Transform the vertex position from clip coords to window coords,
+       * if the vertex is unclipped.
+       */
       if ((flags & DO_VIEWPORT) && mask == 0)
       {
 	 /* divide by w */
@@ -140,6 +144,17 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
 	 position[2] = position[2] * w * scale[2] + trans[2];
 	 position[3] = w;
       }
+#ifdef DEBUG
+      /* For debug builds, set the clipped vertex's window coordinate
+       * to NaN to help catch potential errors later.
+       */
+      else {
+         position[0] =
+         position[1] =
+         position[2] =
+         position[3] = 0.0f / 0.0f;
+      }
+#endif
 
       if ((flags & DO_EDGEFLAG) && ef) {
          const float *edgeflag = out->data[ef];
