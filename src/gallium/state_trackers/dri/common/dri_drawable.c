@@ -423,7 +423,14 @@ dri_flush(__DRIcontext *cPriv,
       return;
    }
 
-   if (!drawable) {
+   if (drawable) {
+      /* prevent recursion */
+      if (drawable->flushing)
+         return;
+
+      drawable->flushing = TRUE;
+   }
+   else {
       flags &= ~__DRI2_FLUSH_DRAWABLE;
    }
 
@@ -477,6 +484,10 @@ dri_flush(__DRIcontext *cPriv,
    }
    else if (flags & (__DRI2_FLUSH_DRAWABLE | __DRI2_FLUSH_CONTEXT)) {
       ctx->st->flush(ctx->st, flush_flags, NULL);
+   }
+
+   if (drawable) {
+      drawable->flushing = FALSE;
    }
 }
 
