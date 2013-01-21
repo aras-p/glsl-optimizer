@@ -304,7 +304,8 @@ blit_nearest(struct gl_context *ctx,
       }
 
       for (dstRow = 0; dstRow < dstHeight; dstRow++) {
-         GLint srcRow = (dstRow * srcHeight) / dstHeight;
+         GLfloat srcRowF = (dstRow + 0.5F) / dstHeight * srcHeight - 0.5F;
+         GLint srcRow = IROUND(srcRowF);
          GLubyte *dstRowStart = dstMap + dstRowStride * dstRow;
 
          ASSERT(srcRow >= 0);
@@ -404,17 +405,15 @@ resample_linear_row_ub(GLint srcWidth, GLint dstWidth,
    const GLubyte (*srcColor0)[4] = (const GLubyte (*)[4]) srcBuffer0;
    const GLubyte (*srcColor1)[4] = (const GLubyte (*)[4]) srcBuffer1;
    GLubyte (*dstColor)[4] = (GLubyte (*)[4]) dstBuffer;
-   const GLfloat dstWidthF = (GLfloat) dstWidth;
    GLint dstCol;
 
    for (dstCol = 0; dstCol < dstWidth; dstCol++) {
-      const GLfloat srcCol = (dstCol * srcWidth) / dstWidthF;
-      GLint srcCol0 = IFLOOR(srcCol);
+      const GLfloat srcCol = (dstCol + 0.5F) / dstWidth * srcWidth - 0.5F;
+      GLint srcCol0 = MAX2(0, IFLOOR(srcCol));
       GLint srcCol1 = srcCol0 + 1;
       GLfloat colWeight = srcCol - srcCol0; /* fractional part of srcCol */
       GLfloat red, green, blue, alpha;
 
-      ASSERT(srcCol0 >= 0);
       ASSERT(srcCol0 < srcWidth);
       ASSERT(srcCol1 <= srcWidth);
 
@@ -461,17 +460,15 @@ resample_linear_row_float(GLint srcWidth, GLint dstWidth,
    const GLfloat (*srcColor0)[4] = (const GLfloat (*)[4]) srcBuffer0;
    const GLfloat (*srcColor1)[4] = (const GLfloat (*)[4]) srcBuffer1;
    GLfloat (*dstColor)[4] = (GLfloat (*)[4]) dstBuffer;
-   const GLfloat dstWidthF = (GLfloat) dstWidth;
    GLint dstCol;
 
    for (dstCol = 0; dstCol < dstWidth; dstCol++) {
-      const GLfloat srcCol = (dstCol * srcWidth) / dstWidthF;
-      GLint srcCol0 = IFLOOR(srcCol);
+      const GLfloat srcCol = (dstCol + 0.5F) / dstWidth * srcWidth - 0.5F;
+      GLint srcCol0 = MAX2(0, IFLOOR(srcCol));
       GLint srcCol1 = srcCol0 + 1;
       GLfloat colWeight = srcCol - srcCol0; /* fractional part of srcCol */
       GLfloat red, green, blue, alpha;
 
-      ASSERT(srcCol0 >= 0);
       ASSERT(srcCol0 < srcWidth);
       ASSERT(srcCol1 <= srcWidth);
 
@@ -526,7 +523,6 @@ blit_linear(struct gl_context *ctx,
    const GLint dstWidth = ABS(dstX1 - dstX0);
    const GLint srcHeight = ABS(srcY1 - srcY0);
    const GLint dstHeight = ABS(dstY1 - dstY0);
-   const GLfloat dstHeightF = (GLfloat) dstHeight;
 
    const GLint srcXpos = MIN2(srcX0, srcX1);
    const GLint srcYpos = MIN2(srcY0, srcY1);
@@ -654,13 +650,10 @@ blit_linear(struct gl_context *ctx,
 
       for (dstRow = 0; dstRow < dstHeight; dstRow++) {
          const GLint dstY = dstYpos + dstRow;
-         const GLfloat srcRow = (dstRow * srcHeight) / dstHeightF;
-         GLint srcRow0 = IFLOOR(srcRow);
+         GLfloat srcRow = (dstRow + 0.5F) / dstHeight * srcHeight - 0.5F;
+         GLint srcRow0 = MAX2(0, IFLOOR(srcRow));
          GLint srcRow1 = srcRow0 + 1;
          GLfloat rowWeight = srcRow - srcRow0; /* fractional part of srcRow */
-
-         ASSERT(srcRow >= 0);
-         ASSERT(srcRow < srcHeight);
 
          if (srcRow1 == srcHeight) {
             /* last row fudge */
