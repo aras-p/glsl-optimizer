@@ -904,9 +904,8 @@ intel_detect_swizzling(struct intel_screen *screen)
 static __DRIconfig**
 intel_screen_make_configs(__DRIscreen *dri_screen)
 {
-   static const gl_format formats[3] = {
+   static const gl_format formats[] = {
       MESA_FORMAT_RGB565,
-      MESA_FORMAT_XRGB8888,
       MESA_FORMAT_ARGB8888
    };
 
