@@ -4,7 +4,7 @@ glapi_gen_common_deps := \
 	$(wildcard $(top_srcdir)/src/mapi/glapi/gen/*.xml) \
 	$(wildcard $(top_srcdir)/src/mapi/glapi/gen/*.py)
 
-glapi_gen_mapi_script := $(top_srcdir)/src/mapi/mapi/mapi_abi.py
+glapi_gen_mapi_script := $(top_srcdir)/src/mapi/mapi_abi.py
 glapi_gen_mapi_deps := \
 	$(glapi_gen_mapi_script) \
 	$(glapi_gen_common_deps)

@@ -2,7 +2,7 @@
 
 TOP = $(top_srcdir)
 GLAPI = $(top_srcdir)/src/mapi/glapi
-include $(top_srcdir)/src/mapi/mapi/Makefile.sources
+include $(top_srcdir)/src/mapi/Makefile.sources
 
 lib_LTLIBRARIES = libglapi.la
 libglapi_la_SOURCES = $(MAPI_GLAPI_FILES)

@@ -29,9 +29,9 @@
 
 #include <string.h>
 #include "glapi/glapi.h"
-#include "mapi/u_current.h"
-#include "mapi/table.h" /* for MAPI_TABLE_NUM_SLOTS */
-#include "mapi/stub.h"
+#include "u_current.h"
+#include "table.h" /* for MAPI_TABLE_NUM_SLOTS */
+#include "stub.h"
 
 /*
  * Global variables, _glapi_get_context, and _glapi_get_dispatch are defined in

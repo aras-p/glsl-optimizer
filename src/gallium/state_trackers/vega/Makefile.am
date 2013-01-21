@@ -63,6 +63,6 @@ libvega_la_SOURCES =	\
 BUILT_SOURCES = api_tmp.h
 CLEANFILES = api_tmp.h
 
-api_tmp.h: $(top_srcdir)/src/mapi/vgapi/vgapi.csv $(top_srcdir)/src/mapi/mapi/mapi_abi.py
-	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(top_srcdir)/src/mapi/mapi/mapi_abi.py \
+api_tmp.h: $(top_srcdir)/src/mapi/vgapi/vgapi.csv $(top_srcdir)/src/mapi/mapi_abi.py
+	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(top_srcdir)/src/mapi/mapi_abi.py \
 			--printer vgapi --mode app $< > $@

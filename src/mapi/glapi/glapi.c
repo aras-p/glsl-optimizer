@@ -27,7 +27,7 @@
  */
 
 #include "glapi/glapi.h"
-#include "mapi/u_current.h"
+#include "u_current.h"
 
 /*
  * Global variables, _glapi_get_context, and _glapi_get_dispatch are defined in

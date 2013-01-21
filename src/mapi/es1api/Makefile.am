@@ -42,7 +42,7 @@ GLES_include_HEADERS = \
 
 lib_LTLIBRARIES = libGLESv1_CM.la
 
-libGLESv1_CM_la_SOURCES = ../mapi/entry.c glapi_mapi_tmp.h
+libGLESv1_CM_la_SOURCES = ../entry.c glapi_mapi_tmp.h
 libGLESv1_CM_la_LIBADD = $(GLESv1_CM_LIB_DEPS)
 libGLESv1_CM_la_LDFLAGS = -version-number 1:1 -no-undefined
 

@@ -49,7 +49,7 @@ vega_sources = [
 
 api_tmp, = env.CodeGenerate(
         target = 'api_tmp.h',
-        script = '#src/mapi/mapi/mapi_abi.py',
+        script = '#src/mapi/mapi_abi.py',
         source = '#src/mapi/vgapi/vgapi.csv',
         command = python_cmd + ' $SCRIPT --printer vgapi --mode app $SOURCE > $TARGET'
 )

@@ -21,7 +21,7 @@
 
 TOP = $(top_srcdir)
 include Makefile.sources
-include ../mapi/Makefile.sources
+include ../Makefile.sources
 
 AM_CPPFLAGS = \
         $(DEFINES) \

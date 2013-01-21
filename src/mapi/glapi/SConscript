@@ -43,7 +43,7 @@ mapi_sources = [
     'u_execmem.c',
 ]
 for s in mapi_sources:
-    o = env.SharedObject(s[:-2], '../mapi/' + s)
+    o = env.SharedObject(s[:-2], '../' + s)
     glapi_sources.append(o)
 
 #

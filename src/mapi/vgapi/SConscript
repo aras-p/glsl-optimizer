@@ -9,7 +9,7 @@ env = env.Clone()
 
 vgapi_header, = env.CodeGenerate(
     target = 'vgapi_tmp.h',
-    script = '../mapi/mapi_abi.py',
+    script = '../mapi_abi.py',
     source = 'vgapi.csv',
     command = python_cmd + ' $SCRIPT --printer vgapi --mode lib $SOURCE > $TARGET'
 )
@@ -37,7 +37,7 @@ mapi_sources = [
 
 vgapi_objects = []
 for s in mapi_sources:
-    o = env.SharedObject(s[:-2], '../mapi/' + s)
+    o = env.SharedObject(s[:-2], '../' + s)
     vgapi_objects.append(o)
 
 env.Depends(vgapi_objects, vgapi_header)

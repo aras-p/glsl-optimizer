@@ -20,7 +20,7 @@ XORG_INDENT_FLAGS = -linux -bad -bap -blf -bli0 -cbi0 -cdw -nce -cs -i4 -lc80 -p
 
 MESA_DIR = $(top_srcdir)/src/mesa
 MESA_GLAPI_DIR = $(top_srcdir)/src/mapi/glapi
-MESA_MAPI_DIR = $(top_srcdir)/src/mapi/mapi
+MESA_MAPI_DIR = $(top_srcdir)/src/mapi
 MESA_GLX_DIR = $(top_srcdir)/src/glx
 
 MESA_GLAPI_OUTPUTS = \

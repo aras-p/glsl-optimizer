@@ -30,7 +30,7 @@
 
 
 #include "glapi/glapi_priv.h"
-#include "mapi/u_execmem.h"
+#include "u_execmem.h"
 
 
 #ifdef USE_X86_ASM
