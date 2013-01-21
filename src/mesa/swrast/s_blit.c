@@ -347,7 +347,7 @@ blit_nearest(struct gl_context *ctx,
          /* store pixel row in destination */
          switch (mode) {
          case DIRECT:
-            memcpy(dstRowStart, dstBuffer, pixelSize * srcWidth);
+            memcpy(dstRowStart, dstBuffer, pixelSize * dstWidth);
             break;
          case UNPACK_RGBA_FLOAT:
             _mesa_pack_float_rgba_row(drawRb->Format, dstWidth, dstBuffer,
