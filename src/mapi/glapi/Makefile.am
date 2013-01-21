@@ -19,6 +19,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+SUBDIRS = . tests
+
 TOP = $(top_srcdir)
 include Makefile.sources
 include ../Makefile.sources

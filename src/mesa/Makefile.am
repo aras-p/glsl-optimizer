@@ -23,7 +23,7 @@ if NEED_LIBDRICORE
 DRICORE_SUBDIR = libdricore
 endif
 
-SUBDIRS = program x86 x86-64 . $(DRICORE_SUBDIR)
+SUBDIRS = program x86 x86-64 . $(DRICORE_SUBDIR) main/tests
 
 if HAVE_X11_DRIVER
 SUBDIRS += drivers/x11

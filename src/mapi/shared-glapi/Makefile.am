@@ -1,5 +1,7 @@
 # Used by OpenGL ES or when --enable-shared-glapi is specified
 
+SUBDIRS = . tests
+
 TOP = $(top_srcdir)
 GLAPI = $(top_srcdir)/src/mapi/glapi
 include $(top_srcdir)/src/mapi/Makefile.sources
