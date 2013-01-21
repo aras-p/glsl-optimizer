@@ -6022,6 +6022,11 @@ _mesa_rebase_rgba_float(GLuint n, GLfloat rgba[][4], GLenum baseFormat)
          rgba[i][BCOMP] = 0.0F;
       }
       break;
+   case GL_RGB:
+      for (i = 0; i < n; i++) {
+         rgba[i][ACOMP] = 1.0F;
+      }
+      break;
    default:
       /* no-op */
       ;
@@ -6058,6 +6063,11 @@ _mesa_rebase_rgba_uint(GLuint n, GLuint rgba[][4], GLenum baseFormat)
       for (i = 0; i < n; i++) {
          rgba[i][GCOMP] = 0;
          rgba[i][BCOMP] = 0;
+      }
+      break;
+   case GL_RGB:
+      for (i = 0; i < n; i++) {
+         rgba[i][ACOMP] = 1;
       }
       break;
    default:
