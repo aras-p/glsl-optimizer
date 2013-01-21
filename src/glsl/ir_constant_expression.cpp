@@ -76,10 +76,22 @@ bitcast_f2u(float f)
 }
 
 /**
+ * Evaluate one component of a floating-point 4x8 unpacking function.
+ */
+typedef uint8_t
+(*pack_1x8_func_t)(float);
+
+/**
  * Evaluate one component of a floating-point 2x16 unpacking function.
  */
 typedef uint16_t
 (*pack_1x16_func_t)(float);
+
+/**
+ * Evaluate one component of a floating-point 4x8 unpacking function.
+ */
+typedef float
+(*unpack_1x8_func_t)(uint8_t);
 
 /**
  * Evaluate one component of a floating-point 2x16 unpacking function.
@@ -112,6 +124,32 @@ pack_2x16(pack_1x16_func_t pack_1x16,
 }
 
 /**
+ * Evaluate a 4x8 floating-point packing function.
+ */
+static uint32_t
+pack_4x8(pack_1x8_func_t pack_1x8,
+         float x, float y, float z, float w)
+{
+   /* From section 8.4 of the GLSL 4.30 spec:
+    *
+    *    packSnorm4x8
+    *    ------------
+    *    The first component of the vector will be written to the least
+    *    significant bits of the output; the last component will be written to
+    *    the most significant bits.
+    *
+    * The specifications for the other packing functions contain similar
+    * language.
+    */
+   uint32_t u = 0;
+   u |= ((uint32_t) pack_1x8(x) << 0);
+   u |= ((uint32_t) pack_1x8(y) << 8);
+   u |= ((uint32_t) pack_1x8(z) << 16);
+   u |= ((uint32_t) pack_1x8(w) << 24);
+   return u;
+}
+
+/**
  * Evaluate a 2x16 floating-point unpacking function.
  */
 static void
@@ -132,6 +170,52 @@ unpack_2x16(unpack_1x16_func_t unpack_1x16,
      */
    *x = unpack_1x16((uint16_t) (u & 0xffff));
    *y = unpack_1x16((uint16_t) (u >> 16));
+}
+
+/**
+ * Evaluate a 4x8 floating-point unpacking function.
+ */
+static void
+unpack_4x8(unpack_1x8_func_t unpack_1x8, uint32_t u,
+           float *x, float *y, float *z, float *w)
+{
+    /* From section 8.4 of the GLSL 4.30 spec:
+     *
+     *    unpackSnorm4x8
+     *    --------------
+     *    The first component of the returned vector will be extracted from
+     *    the least significant bits of the input; the last component will be
+     *    extracted from the most significant bits.
+     *
+     * The specifications for the other unpacking functions contain similar
+     * language.
+     */
+   *x = unpack_1x8((uint8_t) (u & 0xff));
+   *y = unpack_1x8((uint8_t) (u >> 8));
+   *z = unpack_1x8((uint8_t) (u >> 16));
+   *w = unpack_1x8((uint8_t) (u >> 24));
+}
+
+/**
+ * Evaluate one component of packSnorm4x8.
+ */
+static uint8_t
+pack_snorm_1x8(float x)
+{
+    /* From section 8.4 of the GLSL 4.30 spec:
+     *
+     *    packSnorm4x8
+     *    ------------
+     *    The conversion for component c of v to fixed point is done as
+     *    follows:
+     *
+     *      packSnorm4x8: round(clamp(c, -1, +1) * 127.0)
+     *
+     * We must first cast the float to an int, because casting a negative
+     * float to a uint is undefined.
+     */
+   return (uint8_t) (int8_t)
+          _mesa_round_to_even(CLAMP(x, -1.0f, +1.0f) * 127.0f);
 }
 
 /**
@@ -157,6 +241,24 @@ pack_snorm_1x16(float x)
 }
 
 /**
+ * Evaluate one component of unpackSnorm4x8.
+ */
+static float
+unpack_snorm_1x8(uint8_t u)
+{
+    /* From section 8.4 of the GLSL 4.30 spec:
+     *
+     *    unpackSnorm4x8
+     *    --------------
+     *    The conversion for unpacked fixed-point value f to floating point is
+     *    done as follows:
+     *
+     *       unpackSnorm4x8: clamp(f / 127.0, -1, +1)
+     */
+   return CLAMP((int8_t) u / 127.0f, -1.0f, +1.0f);
+}
+
+/**
  * Evaluate one component of unpackSnorm2x16.
  */
 static float
@@ -175,6 +277,24 @@ unpack_snorm_1x16(uint16_t u)
 }
 
 /**
+ * Evaluate one component packUnorm4x8.
+ */
+static uint8_t
+pack_unorm_1x8(float x)
+{
+    /* From section 8.4 of the GLSL 4.30 spec:
+     *
+     *    packUnorm4x8
+     *    ------------
+     *    The conversion for component c of v to fixed point is done as
+     *    follows:
+     *
+     *       packUnorm4x8: round(clamp(c, 0, +1) * 255.0)
+     */
+   return (uint8_t) _mesa_round_to_even(CLAMP(x, 0.0f, 1.0f) * 255.0f);
+}
+
+/**
  * Evaluate one component packUnorm2x16.
  */
 static uint16_t
@@ -190,6 +310,24 @@ pack_unorm_1x16(float x)
      *       packUnorm2x16: round(clamp(c, 0, +1) * 65535.0)
      */
    return (uint16_t) _mesa_round_to_even(CLAMP(x, 0.0f, 1.0f) * 65535.0f);
+}
+
+/**
+ * Evaluate one component of unpackUnorm4x8.
+ */
+static float
+unpack_unorm_1x8(uint8_t u)
+{
+    /* From section 8.4 of the GLSL 4.30 spec:
+     *
+     *    unpackUnorm4x8
+     *    --------------
+     *    The conversion for unpacked fixed-point value f to floating point is
+     *    done as follows:
+     *
+     *       unpackUnorm4x8: f / 255.0
+     */
+   return (float) u / 255.0f;
 }
 
 /**
@@ -599,11 +737,25 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
                             op[0]->value.f[0],
                             op[0]->value.f[1]);
       break;
+   case ir_unop_pack_snorm_4x8:
+      assert(op[0]->type == glsl_type::vec4_type);
+      data.u[0] = pack_4x8(pack_snorm_1x8,
+                           op[0]->value.f[0],
+                           op[0]->value.f[1],
+                           op[0]->value.f[2],
+                           op[0]->value.f[3]);
+      break;
    case ir_unop_unpack_snorm_2x16:
       assert(op[0]->type == glsl_type::uint_type);
       unpack_2x16(unpack_snorm_1x16,
                   op[0]->value.u[0],
                   &data.f[0], &data.f[1]);
+      break;
+   case ir_unop_unpack_snorm_4x8:
+      assert(op[0]->type == glsl_type::uint_type);
+      unpack_4x8(unpack_snorm_1x8,
+                 op[0]->value.u[0],
+                 &data.f[0], &data.f[1], &data.f[2], &data.f[3]);
       break;
    case ir_unop_pack_unorm_2x16:
       assert(op[0]->type == glsl_type::vec2_type);
@@ -611,11 +763,25 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
                             op[0]->value.f[0],
                             op[0]->value.f[1]);
       break;
+   case ir_unop_pack_unorm_4x8:
+      assert(op[0]->type == glsl_type::vec4_type);
+      data.u[0] = pack_4x8(pack_unorm_1x8,
+                           op[0]->value.f[0],
+                           op[0]->value.f[1],
+                           op[0]->value.f[2],
+                           op[0]->value.f[3]);
+      break;
    case ir_unop_unpack_unorm_2x16:
       assert(op[0]->type == glsl_type::uint_type);
       unpack_2x16(unpack_unorm_1x16,
                   op[0]->value.u[0],
                   &data.f[0], &data.f[1]);
+      break;
+   case ir_unop_unpack_unorm_4x8:
+      assert(op[0]->type == glsl_type::uint_type);
+      unpack_4x8(unpack_unorm_1x8,
+                 op[0]->value.u[0],
+                 &data.f[0], &data.f[1], &data.f[2], &data.f[3]);
       break;
    case ir_unop_pack_half_2x16:
       assert(op[0]->type == glsl_type::vec2_type);
