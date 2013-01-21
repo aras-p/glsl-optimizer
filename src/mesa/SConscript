@@ -14,6 +14,8 @@ env.Append(CPPPATH = [
     '#/src/mapi',
     '#/src/glsl',
     '#/src/mesa',
+    Dir('../mapi'), # src/mapi build path
+    Dir('.'), # src/mesa build path
 ])
 
 enabled_apis = []
@@ -290,9 +292,6 @@ program_lex = env.CFile('program/lex.yy.c', 'program/program_lexer.l')
 program_parse = env.CFile('program/program_parse.tab.c',
                           'program/program_parse.y')
 
-# Make program/program_parse.tab.h reacheable from the include path
-env.Append(CPPPATH = [Dir('.').abspath])
-
 program_sources = [
     'program/arbprogparse.c',
     'program/prog_hash_table.c',
@@ -341,19 +340,6 @@ if env['gles']:
 
     enabled_apis += ['ES1', 'ES2']
 
-    # generate GLES sources
-    gles_sources = []
-
-    # generate GLES headers
-    gles_headers = []
-
-    env.Depends(gles_sources, gles_headers)
-
-    # gles_sources #include gles_headers with full path
-    env.Append(CPPPATH = [gles_headers[0].dir.up().up()])
-
-    mesa_sources += gles_sources
-
 env.Append(CPPDEFINES = ["FEATURE_%s=1" % api for api in enabled_apis])
 
 get_hash_gen_opts = ' '.join(["-a %s" % api for api in enabled_apis])
@@ -365,8 +351,6 @@ get_hash_header = env.CodeGenerate(
       command = python_cmd + ' $SCRIPT ' + get_hash_gen_opts +
                 ' -f $SOURCE > $TARGET'
 )
-
-env.Depends(glget_sources, get_hash_header)
 
 #
 # Assembly sources
@@ -452,9 +436,6 @@ env.CodeGenerate(
     source = GLAPI + 'gen/gl_and_es_API.xml',
     command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
     )
-
-# We also depend on the auto-generated GL API headers
-env.Depends(mesa_sources, glapi_headers)
 
 
 def write_git_sha1_h_file(filename):

@@ -7,8 +7,8 @@ Import('*')
 
 env = env.Clone()
 
-vgapi_header = env.CodeGenerate(
-    target = '#src/mapi/vgapi/vgapi_tmp.h',
+vgapi_header, = env.CodeGenerate(
+    target = 'vgapi_tmp.h',
     script = '../mapi/mapi_abi.py',
     source = 'vgapi.csv',
     command = python_cmd + ' $SCRIPT --printer vgapi --mode lib $SOURCE > $TARGET'
@@ -23,6 +23,7 @@ env.Append(CPPDEFINES = [
 env.Append(CPPPATH = [
     '#/include',
     '#/src/mapi',
+    Dir('..'), # vgapi/vgapi_tmp.h build path
 ])
 
 mapi_sources = [

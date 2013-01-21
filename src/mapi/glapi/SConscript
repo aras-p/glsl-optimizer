@@ -26,6 +26,7 @@ if env['platform'] == 'windows':
 env.Append(CPPPATH = [
     '#/src/mapi',
     '#/src/mesa',
+    Dir('..'), # src/mapi build path
 ])
 
 glapi_sources = [
@@ -103,6 +104,3 @@ glapi = env.ConvenienceLibrary(
     source = glapi_sources,
 )
 Export('glapi')
-
-
-env.Depends(glapi_sources, glapi_headers)

@@ -6,6 +6,7 @@ env.Append(CPPPATH = [
     '#/src/mapi',
     '#/src/mesa',
     '#/src/mesa/main',
+    Dir('../../../mapi'), # src/mapi build path for python-generated GL API files/headers
 ])
 
 env.Append(CPPDEFINES = ['USE_XSHM'])
@@ -29,9 +30,6 @@ sources = [
 	'xm_line.c',
 	'xm_tri.c',
 ]
-
-# The sources depend on the python-generated GL API files/headers.
-env.Depends(sources, glapi_headers)
 
 # libGL.so.1.6
 libgl_1_6 = env.SharedLibrary(

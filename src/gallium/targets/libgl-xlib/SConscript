@@ -10,6 +10,7 @@ env.Append(CPPPATH = [
     '#/src/mesa',
     '#/src/mesa/main',
     '#src/gallium/state_trackers/glx/xlib',
+    Dir('../../../mapi'), # src/mapi build path for python-generated GL API files/headers
 ])
 
 env.Append(CPPDEFINES = ['USE_XSHM'])
@@ -35,9 +36,6 @@ env.Prepend(LIBS = [
 sources = [
     'xlib.c',
 ]
-
-# The sources depend on the python-generated GL API files/headers.
-env.Depends(sources, glapi_headers)
 
 if True:
     env.Append(CPPDEFINES = ['GALLIUM_TRACE', 'GALLIUM_RBUG', 'GALLIUM_GALAHAD', 'GALLIUM_SOFTPIPE'])

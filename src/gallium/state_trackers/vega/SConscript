@@ -9,6 +9,7 @@ env = env.Clone()
 
 env.Append(CPPPATH = [
     '#/src/mapi',
+    Dir('.'),
 ])
 env.Append(CPPDEFINES = [
     'VEGA_VERSION_STRING=',
@@ -47,13 +48,12 @@ vega_sources = [
     'vgu.c'
 ]
 
-api_tmp = env.CodeGenerate(
-        target = '#/src/gallium/state_trackers/vega/api_tmp.h',
+api_tmp, = env.CodeGenerate(
+        target = 'api_tmp.h',
         script = '#src/mapi/mapi/mapi_abi.py',
         source = '#src/mapi/vgapi/vgapi.csv',
         command = python_cmd + ' $SCRIPT --printer vgapi --mode app $SOURCE > $TARGET'
 )
-env.Depends(vega_sources, api_tmp)
 
 st_vega = env.ConvenienceLibrary(
     target = 'st_vega',

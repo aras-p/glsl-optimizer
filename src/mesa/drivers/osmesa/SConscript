@@ -5,6 +5,7 @@ env = env.Clone()
 env.Prepend(CPPPATH = [
     '#src/mapi',
     '#src/mesa',
+    Dir('../../../mapi'), # src/mapi build path for python-generated GL API files/headers
 ])
 
 env.Prepend(LIBS = [
@@ -34,5 +35,3 @@ osmesa = env.SharedLibrary(
 )
 
 env.Alias('osmesa', osmesa)
-
-env.Depends(sources, glapi_headers)

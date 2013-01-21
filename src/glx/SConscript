@@ -114,24 +114,19 @@ env.CodeGenerate(
     command = python_cmd + ' $SCRIPT -f $SOURCE -m init_c > $TARGET'
 )
 
-headers = []
-
-headers += env.CodeGenerate(
+env.CodeGenerate(
     target = 'indirect_size.h',
     script = GLAPI + 'gen/glX_proto_size.py',
     source = GLAPI + 'gen/gl_API.xml',
     command = python_cmd + ' $SCRIPT -f $SOURCE -m size_h --only-set -h _INDIRECT_SIZE_H > $TARGET'
 )
 
-headers += env.CodeGenerate(
+env.CodeGenerate(
     target = 'indirect.h',
     script = GLAPI + 'gen/glX_proto_send.py',
     source = GLAPI + 'gen/gl_API.xml',
     command = python_cmd + ' $SCRIPT -m init_h -f $SOURCE > $TARGET',
     )
-
-
-env.Depends(sources, headers)
 
 
 libgl = env.InstallSharedLibrary(libgl, version=(1, 2))
