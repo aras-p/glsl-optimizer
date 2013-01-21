@@ -1009,10 +1009,14 @@ enum ir_expression_operation {
     */
    /*@{*/
    ir_unop_pack_snorm_2x16,
+   ir_unop_pack_snorm_4x8,
    ir_unop_pack_unorm_2x16,
+   ir_unop_pack_unorm_4x8,
    ir_unop_pack_half_2x16,
    ir_unop_unpack_snorm_2x16,
+   ir_unop_unpack_snorm_4x8,
    ir_unop_unpack_unorm_2x16,
+   ir_unop_unpack_unorm_4x8,
    ir_unop_unpack_half_2x16,
    /*@}*/
 

@@ -336,10 +336,22 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type == glsl_type::vec2_type);
       break;
 
+   case ir_unop_pack_snorm_4x8:
+   case ir_unop_pack_unorm_4x8:
+      assert(ir->type == glsl_type::uint_type);
+      assert(ir->operands[0]->type == glsl_type::vec4_type);
+      break;
+
    case ir_unop_unpack_snorm_2x16:
    case ir_unop_unpack_unorm_2x16:
    case ir_unop_unpack_half_2x16:
       assert(ir->type == glsl_type::vec2_type);
+      assert(ir->operands[0]->type == glsl_type::uint_type);
+      break;
+
+   case ir_unop_unpack_snorm_4x8:
+   case ir_unop_unpack_unorm_4x8:
+      assert(ir->type == glsl_type::vec4_type);
       assert(ir->operands[0]->type == glsl_type::uint_type);
       break;
 

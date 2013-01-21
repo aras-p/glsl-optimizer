@@ -316,7 +316,9 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
       break;
 
    case ir_unop_pack_snorm_2x16:
+   case ir_unop_pack_snorm_4x8:
    case ir_unop_pack_unorm_2x16:
+   case ir_unop_pack_unorm_4x8:
    case ir_unop_pack_half_2x16:
       this->type = glsl_type::uint_type;
       break;
@@ -325,6 +327,11 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_unpack_unorm_2x16:
    case ir_unop_unpack_half_2x16:
       this->type = glsl_type::vec2_type;
+      break;
+
+   case ir_unop_unpack_snorm_4x8:
+   case ir_unop_unpack_unorm_4x8:
+      this->type = glsl_type::vec4_type;
       break;
 
    default:
@@ -478,10 +485,14 @@ static const char *const operator_strs[] = {
    "dFdx",
    "dFdy",
    "packSnorm2x16",
+   "packSnorm4x8",
    "packUnorm2x16",
+   "packUnorm4x8",
    "packHalf2x16",
    "unpackSnorm2x16",
+   "unpackSnorm4x8",
    "unpackUnorm2x16",
+   "unpackUnorm4x8",
    "unpackHalf2x16",
    "unpackHalf2x16_split_x",
    "unpackHalf2x16_split_y",
