@@ -73,7 +73,7 @@ uniform_field_visitor::process(ir_variable *var)
       recursion(var->type, &name, strlen(name), false);
       ralloc_free(name);
    } else {
-      this->visit_field(t, var->name);
+      this->visit_field(t, var->name, false);
    }
 }
 
@@ -109,7 +109,7 @@ uniform_field_visitor::recursion(const glsl_type *t, char **name,
                    t->fields.structure[i].row_major);
       }
    } else {
-      this->visit_field(t, *name);
+      this->visit_field(t, *name, row_major);
    }
 }
 
@@ -159,10 +159,13 @@ public:
    unsigned num_shader_uniform_components;
 
 private:
-   virtual void visit_field(const glsl_type *type, const char *name)
+   virtual void visit_field(const glsl_type *type, const char *name,
+                            bool row_major)
    {
       assert(!type->is_record());
       assert(!(type->is_array() && type->fields.array->is_record()));
+
+      (void) row_major;
 
       /* Count the number of samplers regardless of whether the uniform is
        * already in the hash table.  The hash table prevents adding the same
@@ -263,10 +266,13 @@ public:
    int ubo_byte_offset;
 
 private:
-   virtual void visit_field(const glsl_type *type, const char *name)
+   virtual void visit_field(const glsl_type *type, const char *name,
+                            bool row_major)
    {
       assert(!type->is_record());
       assert(!(type->is_array() && type->fields.array->is_record()));
+
+      (void) row_major;
 
       unsigned id;
       bool found = this->map->get(id, name);

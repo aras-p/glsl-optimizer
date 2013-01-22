@@ -2389,7 +2389,8 @@ public:
    }
 
 private:
-   virtual void visit_field(const glsl_type *type, const char *name);
+   virtual void visit_field(const glsl_type *type, const char *name,
+                            bool row_major);
 
    struct gl_shader_program *shader_program;
    struct gl_program_parameter_list *params;
@@ -2397,9 +2398,12 @@ private:
 };
 
 void
-add_uniform_to_shader::visit_field(const glsl_type *type, const char *name)
+add_uniform_to_shader::visit_field(const glsl_type *type, const char *name,
+                                   bool row_major)
 {
    unsigned int size;
+
+   (void) row_major;
 
    if (type->is_vector() || type->is_scalar()) {
       size = type->vector_elements;

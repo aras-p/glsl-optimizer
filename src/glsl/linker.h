@@ -90,8 +90,10 @@ protected:
     *
     * \param type  Type of the field.
     * \param name  Fully qualified name of the field.
+    * \param row_major  For a matrix type, is it stored row-major.
     */
-   virtual void visit_field(const glsl_type *type, const char *name) = 0;
+   virtual void visit_field(const glsl_type *type, const char *name,
+                            bool row_major) = 0;
 
 private:
    /**
