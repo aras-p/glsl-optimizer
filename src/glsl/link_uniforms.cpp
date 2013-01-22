@@ -209,6 +209,8 @@ private:
    {
       assert(!type->is_record());
       assert(!(type->is_array() && type->fields.array->is_record()));
+      assert(!type->is_interface());
+      assert(!(type->is_array() && type->fields.array->is_interface()));
 
       (void) row_major;
 
@@ -316,6 +318,8 @@ private:
    {
       assert(!type->is_record());
       assert(!(type->is_array() && type->fields.array->is_record()));
+      assert(!type->is_interface());
+      assert(!(type->is_array() && type->fields.array->is_interface()));
 
       (void) row_major;
 
