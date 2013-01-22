@@ -113,6 +113,13 @@ uniform_field_visitor::recursion(const glsl_type *t, char **name,
    }
 }
 
+void
+uniform_field_visitor::visit_field(const glsl_struct_field *field)
+{
+   (void) field;
+   /* empty */
+}
+
 /**
  * Class to help calculate the storage requirements for a set of uniforms
  *
