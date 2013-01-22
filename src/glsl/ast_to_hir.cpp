@@ -1622,6 +1622,15 @@ ast_expression::hir(exec_list *instructions,
 	 }
       } else if (array->type->array_size() == 0) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
+      } else if (array->type->is_array()
+                 && array->type->fields.array->is_interface()) {
+         /* Page 46 in section 4.3.7 of the OpenGL ES 3.00 spec says:
+          *
+          *     "All indexes used to index a uniform block array must be
+          *     constant integral expressions."
+          */
+         _mesa_glsl_error(&loc, state,
+                          "uniform block array index must be constant");
       } else {
 	 if (array->type->is_array()) {
 	    /* whole_variable_referenced can return NULL if the array is a
