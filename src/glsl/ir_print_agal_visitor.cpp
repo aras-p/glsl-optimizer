@@ -471,8 +471,8 @@ void ir_print_agal_visitor::visit(ir_swizzle *ir)
    int p=0;
    for (unsigned i = 0; i < 4; i++) {
 		ralloc_asprintf_append (&buffer, "%c", "xyzw"[swiz[p]]);
-		if(writeMask & (1 << i))
-			p = std::min(p+1, writeComponents-1);
+		if(writeMask & (1 << i) && p+1 < ir->mask.num_components)
+			p++;
    }
 }
 
