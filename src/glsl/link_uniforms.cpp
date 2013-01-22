@@ -62,10 +62,15 @@ uniform_field_visitor::process(ir_variable *var)
 {
    const glsl_type *t = var->type;
 
+   /* false is always passed for the row_major parameter to the other
+    * processing functions because no information is available to do
+    * otherwise.  See the warning in linker.h.
+    */
+
    /* Only strdup the name if we actually will need to modify it. */
    if (t->is_record() || (t->is_array() && t->fields.array->is_record())) {
       char *name = ralloc_strdup(NULL, var->name);
-      recursion(var->type, &name, strlen(name));
+      recursion(var->type, &name, strlen(name), false);
       ralloc_free(name);
    } else {
       this->visit_field(t, var->name);
@@ -74,7 +79,7 @@ uniform_field_visitor::process(ir_variable *var)
 
 void
 uniform_field_visitor::recursion(const glsl_type *t, char **name,
-				 size_t name_length)
+                                 size_t name_length, bool row_major)
 {
    /* Records need to have each field processed individually.
     *
@@ -90,7 +95,8 @@ uniform_field_visitor::recursion(const glsl_type *t, char **name,
 	 /* Append '.field' to the current uniform name. */
 	 ralloc_asprintf_rewrite_tail(name, &new_length, ".%s", field);
 
-	 recursion(t->fields.structure[i].type, name, new_length);
+         recursion(t->fields.structure[i].type, name, new_length,
+                   t->fields.structure[i].row_major);
       }
    } else if (t->is_array() && t->fields.array->is_record()) {
       for (unsigned i = 0; i < t->length; i++) {
@@ -99,7 +105,8 @@ uniform_field_visitor::recursion(const glsl_type *t, char **name,
 	 /* Append the subscript to the current uniform name */
 	 ralloc_asprintf_rewrite_tail(name, &new_length, "[%u]", i);
 
-	 recursion(t->fields.array, name, new_length);
+         recursion(t->fields.array, name, new_length,
+                   t->fields.structure[i].row_major);
       }
    } else {
       this->visit_field(t, *name);

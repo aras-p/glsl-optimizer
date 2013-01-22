@@ -75,6 +75,12 @@ public:
     * \param var  The uniform variable that is to be processed
     *
     * Calls \c ::visit_field for each leaf of the uniform.
+    *
+    * \warning
+    * This entry should only be used with uniform blocks in cases where the
+    * row / column ordering of matrices in the block does not matter.  For
+    * example, enumerating the names of members of the block, but not for
+    * determining the offsets of members.
     */
    void process(ir_variable *var);
 
@@ -92,7 +98,8 @@ private:
     * \param name_length  Length of the current name \b not including the
     *                     terminating \c NUL character.
     */
-   void recursion(const glsl_type *t, char **name, size_t name_length);
+   void recursion(const glsl_type *t, char **name, size_t name_length,
+                  bool row_major);
 };
 
 void
