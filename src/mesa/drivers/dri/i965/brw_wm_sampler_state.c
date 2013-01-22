@@ -143,7 +143,17 @@ upload_default_color(struct brw_context *brw,
    if (firstImage->_BaseFormat == GL_RGB)
       color[3] = 1.0;
 
-   if (brw->gen == 5 || brw->gen == 6) {
+   if (brw->gen >= 8) {
+      /* On Broadwell, the border color is represented as four 32-bit floats,
+       * integers, or unsigned values, interpreted according to the surface
+       * format.  This matches the sampler->BorderColor union exactly.  Since
+       * we use floats both here and in the above reswizzling code, we preserve
+       * the original bit pattern.  So we actually handle all three formats.
+       */
+      float *sdc = brw_state_batch(brw, AUB_TRACE_SAMPLER_DEFAULT_COLOR,
+                                   4 * 4, 64, sdc_offset);
+      COPY_4FV(sdc, color);
+   } else if (brw->gen == 5 || brw->gen == 6) {
       struct gen5_sampler_default_color *sdc;
 
       sdc = brw_state_batch(brw, AUB_TRACE_SAMPLER_DEFAULT_COLOR,
