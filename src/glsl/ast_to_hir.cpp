@@ -4273,14 +4273,30 @@ ast_uniform_block::hir(exec_list *instructions,
     *     field selector ( . ) operator (analogously to structures)."
     */
    if (this->instance_name) {
-      ir_variable *var = new(state) ir_variable(block_type,
-                                                this->instance_name,
-                                                ir_var_uniform);
+      ir_variable *var;
+
+      if (this->array_size != NULL) {
+         const glsl_type *block_array_type =
+            process_array_type(&loc, block_type, this->array_size, state);
+
+         var = new(state) ir_variable(block_array_type,
+                                      this->instance_name,
+                                      ir_var_uniform);
+      } else {
+         var = new(state) ir_variable(block_type,
+                                      this->instance_name,
+                                      ir_var_uniform);
+      }
 
       var->interface_type = block_type;
       state->symbols->add_variable(var);
       instructions->push_tail(var);
    } else {
+      /* In order to have an array size, the block must also be declared with
+       * an instane name.
+       */
+      assert(this->array_size == NULL);
+
       for (unsigned i = 0; i < num_variables; i++) {
          ir_variable *var =
             new(state) ir_variable(fields[i].type,
