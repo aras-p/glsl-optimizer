@@ -61,6 +61,60 @@ public:
    bool progress;
 };
 
+/**
+ * Determine the name of the interface block field
+ *
+ * This is the name of the specific member as it would appear in the
+ * \c gl_uniform_buffer_variable::Name field in the shader's
+ * \c UniformBlocks array.
+ */
+static const char *
+interface_field_name(void *mem_ctx, char *base_name, ir_dereference *d)
+{
+   ir_constant *previous_index = NULL;
+
+   while (d != NULL) {
+      switch (d->ir_type) {
+      case ir_type_dereference_variable: {
+         ir_dereference_variable *v = (ir_dereference_variable *) d;
+         if (previous_index
+             && v->var->is_interface_instance()
+             && v->var->type->is_array())
+            return ralloc_asprintf(mem_ctx,
+                                   "%s[%d]",
+                                   base_name,
+                                   previous_index->get_uint_component(0));
+         else
+            return base_name;
+
+         break;
+      }
+
+      case ir_type_dereference_record: {
+         ir_dereference_record *r = (ir_dereference_record *) d;
+
+         d = r->record->as_dereference();
+         break;
+      }
+
+      case ir_type_dereference_array: {
+         ir_dereference_array *a = (ir_dereference_array *) d;
+
+         d = a->array->as_dereference();
+         previous_index = a->array_index->as_constant();
+         break;
+      }
+
+      default:
+         assert(!"Should not get here.");
+         break;
+      }
+   }
+
+   assert(!"Should not get here.");
+   return NULL;
+}
+
 void
 lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 {
@@ -76,9 +130,26 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
       return;
 
    mem_ctx = ralloc_parent(*rvalue);
-   uniform_block = var->uniform_block;
-   struct gl_uniform_block *block = &shader->UniformBlocks[uniform_block];
-   this->ubo_var = &block->Uniforms[var->location];
+
+   const char *const field_name =
+      interface_field_name(mem_ctx, (char *) var->interface_type->name, deref);
+
+   this->uniform_block = -1;
+   for (unsigned i = 0; i < shader->NumUniformBlocks; i++) {
+      if (strcmp(field_name, shader->UniformBlocks[i].Name) == 0) {
+         this->uniform_block = i;
+
+         struct gl_uniform_block *block = &shader->UniformBlocks[i];
+
+         this->ubo_var = var->is_interface_instance()
+            ? &block->Uniforms[0] : &block->Uniforms[var->location];
+
+         break;
+      }
+   }
+
+   assert(this->uniform_block != (unsigned) -1);
+
    ir_rvalue *offset = new(mem_ctx) ir_constant(0u);
    unsigned const_offset = 0;
    bool row_major = ubo_var->RowMajor;
@@ -105,6 +176,18 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 	     * vector) is handled below in emit_ubo_loads.
 	     */
 	    array_stride = 4;
+         } else if (deref_array->type->is_interface()) {
+            /* We're processing an array dereference of an interface instance
+	     * array.  The thing being dereferenced *must* be a variable
+	     * dereference because intefaces cannot be embedded an other
+	     * types.  In terms of calculating the offsets for the lowering
+	     * pass, we don't care about the array index.  All elements of an
+	     * interface instance array will have the same offsets relative to
+	     * the base of the block that backs them.
+             */
+            assert(deref_array->array->as_dereference_variable());
+            deref = deref_array->array->as_dereference();
+            break;
 	 } else {
 	    array_stride = deref_array->type->std140_size(row_major);
 	    array_stride = glsl_align(array_stride, 16);
