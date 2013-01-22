@@ -77,6 +77,8 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
       var->constant_initializer =
 	 this->constant_initializer->clone(mem_ctx, ht);
 
+   var->interface_type = this->interface_type;
+
    if (ht) {
       hash_table_insert(ht, var, (void *)const_cast<ir_variable *>(this));
    }

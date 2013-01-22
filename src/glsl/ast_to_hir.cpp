@@ -4268,6 +4268,7 @@ ast_uniform_block::hir(exec_list *instructions,
                                                 this->instance_name,
                                                 ir_var_uniform);
 
+      var->interface_type = block_type;
       state->symbols->add_variable(var);
       instructions->push_tail(var);
    } else {
@@ -4277,6 +4278,7 @@ ast_uniform_block::hir(exec_list *instructions,
                                    ralloc_strdup(state, fields[i].name),
                                    ir_var_uniform);
          var->uniform_block = ubo - state->uniform_blocks;
+         var->interface_type = block_type;
 
          state->symbols->add_variable(var);
          instructions->push_tail(var);

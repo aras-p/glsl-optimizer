@@ -354,7 +354,7 @@ public:
     */
    inline bool is_in_uniform_block() const
    {
-      return this->mode == ir_var_uniform && this->uniform_block != -1;
+      return this->mode == ir_var_uniform && this->interface_type != NULL;
    }
 
    /**
@@ -540,6 +540,14 @@ public:
     * objects.
     */
    ir_constant *constant_initializer;
+
+   /**
+    * For variables that are in an interface block or are an instance of an
+    * interface block, this is the \c GLSL_TYPE_INTERFACE type for that block.
+    *
+    * \sa ir_variable::location
+    */
+   const glsl_type *interface_type;
 };
 
 
