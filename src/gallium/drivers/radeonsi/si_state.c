@@ -1613,7 +1613,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 			break;
 		}
 	}
-	if (desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT) {
+	if (i == 4 || desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT) {
 		ntype = V_028C70_NUMBER_FLOAT;
 	} else {
 		ntype = V_028C70_NUMBER_UNORM;
@@ -2087,7 +2087,9 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	util_format_compose_swizzles(desc->swizzle, state_swizzle, swizzle);
 
 	first_non_void = util_format_get_first_non_void_channel(pipe_format);
-	switch (desc->channel[first_non_void].type) {
+	if (first_non_void < 0) {
+		num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
+	} else switch (desc->channel[first_non_void].type) {
 	case UTIL_FORMAT_TYPE_FLOAT:
 		num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
 		break;
