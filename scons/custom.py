@@ -240,6 +240,11 @@ def parse_source_list(env, filename, names=None):
     top_srcdir = env.Dir('#').abspath
     top_builddir = os.path.join(top_srcdir, env['build_dir'])
 
+    # Normalize everything to / slashes
+    cur_srcdir = cur_srcdir.replace('\\', '/')
+    top_srcdir = top_srcdir.replace('\\', '/')
+    top_builddir = top_builddir.replace('\\', '/')
+
     # Populate the symbol table of the Makefile parser.
     parser.add_symbol('top_srcdir', top_srcdir)
     parser.add_symbol('top_builddir', top_builddir)
@@ -263,8 +268,8 @@ def parse_source_list(env, filename, names=None):
             if f:
                 # Process source paths
                 if f.startswith(top_builddir + '/src'):
-                    # Automake puts build output on a `src` subdirectory, bue
-                    # SCons does no, so strip it here.
+                    # Automake puts build output on a `src` subdirectory, but
+                    # SCons does not, so strip it here.
                     f = top_builddir + f[len(top_builddir + '/src'):]
                 if f.startswith(cur_srcdir + '/'):
                     # Prefer relative source paths, as absolute files tend to
