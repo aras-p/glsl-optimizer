@@ -518,16 +518,6 @@ public:
    int location;
 
    /**
-    * Uniform block number for uniforms.
-    *
-    * This index is into the shader's list of uniform blocks, not the
-    * linked program's merged list.
-    *
-    * If the variable is not in a uniform block, the value will be -1.
-    */
-   int uniform_block;
-
-   /**
     * output index for dual source blending.
     */
    int index;

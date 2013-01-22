@@ -575,7 +575,6 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
             } else if (!strcmp(var->name,
                                shader->UniformBlocks[i].Uniforms[j].Name)) {
 	       found = true;
-	       var->uniform_block = i;
 	       var->location = j;
 	       break;
 	    }

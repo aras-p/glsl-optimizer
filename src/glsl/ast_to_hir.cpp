@@ -4274,7 +4274,6 @@ ast_uniform_block::hir(exec_list *instructions,
             new(state) ir_variable(fields[i].type,
                                    ralloc_strdup(state, fields[i].name),
                                    ir_var_uniform);
-         var->uniform_block = ubo - state->uniform_blocks;
          var->interface_type = block_type;
 
          state->symbols->add_variable(var);
