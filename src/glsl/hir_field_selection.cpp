@@ -61,7 +61,8 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 	 _mesa_glsl_error(& loc, state, "Invalid swizzle / mask `%s'",
 			  expr->primary_expression.identifier);
       }
-   } else if (op->type->base_type == GLSL_TYPE_STRUCT) {
+   } else if (op->type->base_type == GLSL_TYPE_STRUCT
+              || op->type->base_type == GLSL_TYPE_INTERFACE) {
       result = new(ctx) ir_dereference_record(op,
 					      expr->primary_expression.identifier);
 
