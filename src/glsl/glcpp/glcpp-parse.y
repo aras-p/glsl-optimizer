@@ -1227,6 +1227,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	      if (extensions->ARB_texture_cube_map_array)
 	         add_builtin_define(parser, "GL_ARB_texture_cube_map_array", 1);
+
+	      if (extensions->ARB_shading_language_packing)
+	         add_builtin_define(parser, "GL_ARB_shading_language_packing", 1);
 	   }
 	}
 

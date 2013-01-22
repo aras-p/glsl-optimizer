@@ -462,6 +462,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_uniform_buffer_object,      true,  false, true,  true,  false,     ARB_uniform_buffer_object),
    EXT(OES_standard_derivatives,       false, false, true,  false,  true,     OES_standard_derivatives),
    EXT(ARB_texture_cube_map_array,     true,  false, true,  true,  false,     ARB_texture_cube_map_array),
+   EXT(ARB_shading_language_packing,   true,  false, true,  true,  false,     ARB_shading_language_packing),
 };
 
 #undef EXT

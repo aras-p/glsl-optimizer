@@ -272,6 +272,8 @@ struct _mesa_glsl_parse_state {
    bool OES_standard_derivatives_warn;
    bool ARB_texture_cube_map_array_enable;
    bool ARB_texture_cube_map_array_warn;
+   bool ARB_shading_language_packing_enable;
+   bool ARB_shading_language_packing_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */

@@ -189,6 +189,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
    st->OES_EGL_image_external_enable = true;
    st->ARB_shader_bit_encoding_enable = true;
    st->ARB_texture_cube_map_array_enable = true;
+   st->ARB_shading_language_packing_enable = true;
    _mesa_glsl_initialize_types(st);
 
    sh->ir = new(sh) exec_list;
