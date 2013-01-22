@@ -28,6 +28,7 @@ noinst_LTLIBRARIES = libnv50.la
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/include \
-	$(GALLIUM_CFLAGS)
+	$(GALLIUM_CFLAGS) \
+	$(NOUVEAU_CFLAGS)
 
 libnv50_la_SOURCES = $(C_SOURCES) $(CPP_SOURCES)

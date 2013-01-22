@@ -28,6 +28,7 @@ noinst_LTLIBRARIES = libnv30.la
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/include \
-	$(GALLIUM_CFLAGS)
+	$(GALLIUM_CFLAGS) \
+	$(NOUVEAU_CFLAGS)
 
 libnv30_la_SOURCES = $(C_SOURCES)
