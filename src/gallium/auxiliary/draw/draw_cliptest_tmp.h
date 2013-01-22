@@ -149,10 +149,11 @@ static boolean TAG(do_cliptest)( struct pt_post_vs *pvs,
        * to NaN to help catch potential errors later.
        */
       else {
+         float zero = 0.0f;
          position[0] =
          position[1] =
          position[2] =
-         position[3] = 0.0f / 0.0f;
+         position[3] = zero / zero; /* MSVC doesn't accept 0.0 / 0.0 */
       }
 #endif
 
