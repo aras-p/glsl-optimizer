@@ -8,6 +8,7 @@
 #include "GL/wmesa.h"
 #include <winuser.h>
 #include "main/context.h"
+#include "main/api_exec.h"
 #include "main/extensions.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
