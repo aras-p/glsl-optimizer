@@ -16,6 +16,8 @@ extern "C" struct gl_shader *
 _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
 
 
+PrintGlslMode printMode;
+
 static void
 initialize_mesa_context(struct gl_context *ctx, gl_api api)
 {
@@ -267,8 +269,10 @@ do_print_storage(exec_list *instructions, glslopt_shader* shader)
 class ir_constant_printing_visitor : public ir_hierarchical_visitor {
 public:
 	glslopt_shader *shader;
+	int numConsts;
    ir_constant_printing_visitor(glslopt_shader* _shader)
    {
+   		numConsts = 0;
    		shader = _shader;
    }
    virtual ir_visitor_status visit(ir_variable *);
@@ -293,6 +297,7 @@ ir_constant_printing_visitor::visit(ir_variable *ir)
 		n > 1 ? ir->constant_value->get_float_component(1) : 0.0f,
 		n > 2 ? ir->constant_value->get_float_component(2) : 0.0f,
 		n > 3 ? ir->constant_value->get_float_component(3) : 0.0f);
+		numConsts++;
    } else {
    	ralloc_asprintf_append (&shader->optimizedOutput, "%c\"%s\": UNHANDLED_CONST_TYPE\n", emitComma ? ',' : ' ', ir->name);
    }
@@ -306,6 +311,9 @@ do_print_constants(exec_list *instructions, glslopt_shader* shader)
 {
    ir_constant_printing_visitor v(shader);
    v.run(instructions);
+   if(v.numConsts == 0) {
+   	ralloc_asprintf_append (&shader->optimizedOutput, " \"%s\": [0.0, 0.0, 0.0, 0.0]\n", printMode == kPrintGlslVertex ? "vc0" : "fc0");
+   }
    return false;
 }
 
@@ -337,7 +345,6 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	glslopt_shader* shader = new (ctx->mem_ctx) glslopt_shader ();
 
 	GLenum glType = 0;
-	PrintGlslMode printMode;
 	switch (type) {
 	case kGlslOptShaderVertex: glType = GL_VERTEX_SHADER; printMode = kPrintGlslVertex; break;
 	case kGlslOptShaderFragment: glType = GL_FRAGMENT_SHADER; printMode = kPrintGlslFragment; break;
