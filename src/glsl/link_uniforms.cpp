@@ -539,10 +539,41 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
 
       assert(var->mode == ir_var_uniform);
 
+      if (var->is_interface_instance()) {
+         var->location = 0;
+         continue;
+      }
+
       bool found = false;
+      char sentinel = '\0';
+
+      if (var->type->is_record()) {
+         sentinel = '.';
+      } else if (var->type->is_array()
+                 && var->type->fields.array->is_record()) {
+         sentinel = '[';
+      }
+
+      const unsigned l = strlen(var->name);
       for (unsigned i = 0; i < shader->NumUniformBlocks; i++) {
 	 for (unsigned j = 0; j < shader->UniformBlocks[i].NumUniforms; j++) {
-	    if (!strcmp(var->name, shader->UniformBlocks[i].Uniforms[j].Name)) {
+            if (sentinel) {
+               const char *begin = shader->UniformBlocks[i].Uniforms[j].Name;
+               const char *end = strchr(begin, sentinel);
+
+               if (end == NULL)
+                  continue;
+
+               if (l != (end - begin))
+                  continue;
+
+               if (strncmp(var->name, begin, l) == 0) {
+                  found = true;
+                  var->location = j;
+                  break;
+               }
+            } else if (!strcmp(var->name,
+                               shader->UniformBlocks[i].Uniforms[j].Name)) {
 	       found = true;
 	       var->uniform_block = i;
 	       var->location = j;
@@ -614,13 +645,6 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
     */
    memset(prog->SamplerUnits, 0, sizeof(prog->SamplerUnits));
 
-   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
-      if (prog->_LinkedShaders[i] == NULL)
-	 continue;
-
-      link_update_uniform_buffer_variables(prog->_LinkedShaders[i]);
-   }
-
    /* First pass: Count the uniform resources used by the user-defined
     * uniforms.  While this happens, each active uniform will have an index
     * assigned to it.
@@ -632,6 +656,8 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
+
+      link_update_uniform_buffer_variables(prog->_LinkedShaders[i]);
 
       /* Reset various per-shader target counts.
        */

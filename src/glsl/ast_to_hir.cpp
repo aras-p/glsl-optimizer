@@ -4187,25 +4187,6 @@ ast_struct_specifier::hir(exec_list *instructions,
    return NULL;
 }
 
-static struct gl_uniform_block *
-get_next_uniform_block(struct _mesa_glsl_parse_state *state)
-{
-   if (state->num_uniform_blocks >= state->uniform_block_array_size) {
-      state->uniform_block_array_size *= 2;
-      if (state->uniform_block_array_size <= 4)
-	 state->uniform_block_array_size = 4;
-
-      state->uniform_blocks = reralloc(state,
-				       state->uniform_blocks,
-				       struct gl_uniform_block,
-				       state->uniform_block_array_size);
-   }
-
-   memset(&state->uniform_blocks[state->num_uniform_blocks],
-	  0, sizeof(*state->uniform_blocks));
-   return &state->uniform_blocks[state->num_uniform_blocks++];
-}
-
 ir_rvalue *
 ast_uniform_block::hir(exec_list *instructions,
 		       struct _mesa_glsl_parse_state *state)
@@ -4216,17 +4197,15 @@ ast_uniform_block::hir(exec_list *instructions,
     * need to turn those into ir_variables with an association
     * with this uniform block.
     */
-   struct gl_uniform_block *ubo = get_next_uniform_block(state);
-   ubo->Name = ralloc_strdup(state->uniform_blocks, this->block_name);
-
+   enum glsl_interface_packing packing;
    if (this->layout.flags.q.shared) {
-      ubo->_Packing = ubo_packing_shared;
+      packing = GLSL_INTERFACE_PACKING_SHARED;
    } else if (this->layout.flags.q.packed) {
-      ubo->_Packing = ubo_packing_packed;
+      packing = GLSL_INTERFACE_PACKING_PACKED;
    } else {
       /* The default layout is std140.
        */
-      ubo->_Packing = ubo_packing_std140;
+      packing = GLSL_INTERFACE_PACKING_STD140;
    }
 
    bool block_row_major = this->layout.flags.q.row_major;
@@ -4241,17 +4220,10 @@ ast_uniform_block::hir(exec_list *instructions,
                                                true,
                                                block_row_major);
 
-   STATIC_ASSERT(unsigned(GLSL_INTERFACE_PACKING_STD140)
-                 == unsigned(ubo_packing_std140));
-   STATIC_ASSERT(unsigned(GLSL_INTERFACE_PACKING_SHARED)
-                 == unsigned(ubo_packing_shared));
-   STATIC_ASSERT(unsigned(GLSL_INTERFACE_PACKING_PACKED)
-                 == unsigned(ubo_packing_packed));
-
    const glsl_type *block_type =
       glsl_type::get_interface_instance(fields,
                                         num_variables,
-                                        (enum glsl_interface_packing) ubo->_Packing,
+                                        packing,
                                         this->block_name);
 
    if (!state->symbols->add_type(block_type->name, block_type)) {
@@ -4308,24 +4280,6 @@ ast_uniform_block::hir(exec_list *instructions,
          state->symbols->add_variable(var);
          instructions->push_tail(var);
       }
-   }
-
-   /* FINISHME: Eventually the rest of this code needs to be moved into the
-    * FINISHME: linker.
-    */
-   ubo->Uniforms = rzalloc_array(state->uniform_blocks,
-				 struct gl_uniform_buffer_variable,
-				 num_variables);
-
-   for (unsigned i = 0; i < num_variables; i++) {
-      struct gl_uniform_buffer_variable *ubo_var =
-         &ubo->Uniforms[ubo->NumUniforms++];
-
-      ubo_var->Name = ralloc_strdup(state->uniform_blocks, fields[i].name);
-      ubo_var->IndexName = ubo_var->Name;
-      ubo_var->Type = fields[i].type;
-      ubo_var->Offset = 0; /* Assigned at link time. */
-      ubo_var->RowMajor = fields[i].row_major;
    }
 
    return NULL;

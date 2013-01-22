@@ -873,7 +873,6 @@ link_intrastage_shaders(void *mem_ctx,
 			unsigned num_shaders)
 {
    struct gl_uniform_block *uniform_blocks = NULL;
-   unsigned num_uniform_blocks = 0;
 
    /* Check that global variables defined in multiple shaders are consistent.
     */
@@ -881,23 +880,11 @@ link_intrastage_shaders(void *mem_ctx,
       return NULL;
 
    /* Check that uniform blocks between shaders for a stage agree. */
-   for (unsigned i = 0; i < num_shaders; i++) {
-      struct gl_shader *sh = shader_list[i];
-
-      for (unsigned j = 0; j < sh->NumUniformBlocks; j++) {
-	 link_assign_uniform_block_offsets(sh);
-
-	 int index = link_cross_validate_uniform_block(mem_ctx,
-						       &uniform_blocks,
-						       &num_uniform_blocks,
-						       &sh->UniformBlocks[j]);
-	 if (index == -1) {
-	    linker_error(prog, "uniform block `%s' has mismatching definitions",
-			 sh->UniformBlocks[j].Name);
-	    return NULL;
-	 }
-      }
-   }
+   const int num_uniform_blocks =
+      link_uniform_blocks(mem_ctx, prog, shader_list, num_shaders,
+                          &uniform_blocks);
+   if (num_uniform_blocks < 0)
+      return NULL;
 
    /* Check that there is only a single definition of each function signature
     * across all shaders.
