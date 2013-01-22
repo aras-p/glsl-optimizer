@@ -84,6 +84,23 @@ public:
     */
    void process(ir_variable *var);
 
+   /**
+    * Begin processing a uniform of a structured type.
+    *
+    * This flavor of \c process should be used to handle structured types
+    * (i.e., structures, interfaces, or arrays there of) that need special
+    * name handling.  A common usage is to handle cases where the block name
+    * (instead of the instance name) is used for an interface block.
+    *
+    * \param type  Type that is to be processed, associated with \c name
+    * \param name  Base name of the structured uniform being processed
+    *
+    * \note
+    * \c type must be \c GLSL_TYPE_RECORD, \c GLSL_TYPE_INTERFACE, or an array
+    * there of.
+    */
+   void process(const glsl_type *type, const char *name);
+
 protected:
    /**
     * Method invoked for each leaf of the uniform

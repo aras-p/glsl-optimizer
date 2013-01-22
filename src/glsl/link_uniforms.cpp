@@ -58,6 +58,19 @@ values_for_type(const glsl_type *type)
 }
 
 void
+uniform_field_visitor::process(const glsl_type *type, const char *name)
+{
+   assert(type->is_record()
+          || (type->is_array() && type->fields.array->is_record())
+          || type->is_interface()
+          || (type->is_array() && type->fields.array->is_interface()));
+
+   char *name_copy = ralloc_strdup(NULL, name);
+   recursion(type, &name_copy, strlen(name), false);
+   ralloc_free(name_copy);
+}
+
+void
 uniform_field_visitor::process(ir_variable *var)
 {
    const glsl_type *t = var->type;
@@ -159,6 +172,15 @@ public:
    {
       this->num_shader_samplers = 0;
       this->num_shader_uniform_components = 0;
+   }
+
+   void process(ir_variable *var)
+   {
+      if (var->is_interface_instance())
+         uniform_field_visitor::process(var->interface_type,
+                                        var->interface_type->name);
+      else
+         uniform_field_visitor::process(var);
    }
 
    /**
