@@ -480,6 +480,23 @@ static int is_alu_mova_inst(struct r600_bytecode *bc, struct r600_bytecode_alu *
 	}
 }
 
+static int alu_uses_rel(struct r600_bytecode *bc, struct r600_bytecode_alu *alu)
+{
+	unsigned num_src = r600_bytecode_get_num_operands(bc, alu);
+	unsigned src;
+
+	if (alu->dst.rel) {
+		return 1;
+	}
+
+	for (src = 0; src < num_src; ++src) {
+		if (alu->src[src].rel) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static int is_opcode_in_range(unsigned opcode, unsigned min, unsigned max)
 {
 	return min <= opcode && opcode <= max;
@@ -1084,6 +1101,14 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 					return 0;
 				have_mova = 1;
 			}
+
+			if (alu_uses_rel(bc, prev[i])) {
+				if (have_mova) {
+					return 0;
+				}
+				have_rel = 1;
+			}
+
 			num_once_inst += is_alu_once_inst(bc, prev[i]);
 		}
 		if (slots[i] && r600_bytecode_alu_nliterals(bc, slots[i], literal, &nliteral))
@@ -1131,21 +1156,23 @@ static int merge_inst_groups(struct r600_bytecode *bc, struct r600_bytecode_alu 
 		if (is_nop_inst(bc, alu))
 			return 0;
 
-		/* Let's check dst gpr. */
-		if (alu->dst.rel) {
-			if (have_mova)
+		if (is_alu_mova_inst(bc, alu)) {
+			if (have_rel) {
 				return 0;
+			}
+			have_mova = 1;
+		}
+
+		if (alu_uses_rel(bc, alu)) {
+			if (have_mova) {
+				return 0;
+			}
 			have_rel = 1;
 		}
 
 		/* Let's check source gprs */
 		num_src = r600_bytecode_get_num_operands(bc, alu);
 		for (src = 0; src < num_src; ++src) {
-			if (alu->src[src].rel) {
-				if (have_mova)
-					return 0;
-				have_rel = 1;
-			}
 
 			/* Constants don't matter. */
 			if (!is_gpr(alu->src[src].sel))
