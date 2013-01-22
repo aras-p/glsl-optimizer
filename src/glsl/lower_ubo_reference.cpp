@@ -61,12 +61,6 @@ public:
    bool progress;
 };
 
-static inline unsigned int
-align(unsigned int a, unsigned int align)
-{
-   return (a + align - 1) / align * align;
-}
-
 void
 lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 {
@@ -113,7 +107,7 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 	    array_stride = 4;
 	 } else {
 	    array_stride = deref_array->type->std140_size(row_major);
-	    array_stride = align(array_stride, 16);
+	    array_stride = glsl_align(array_stride, 16);
 	 }
 
 	 ir_constant *const_index = deref_array->array_index->as_constant();
@@ -138,7 +132,7 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 	    const glsl_type *type = struct_type->fields.structure[i].type;
 	    unsigned field_align = type->std140_base_alignment(row_major);
 	    max_field_align = MAX2(field_align, max_field_align);
-	    intra_struct_offset = align(intra_struct_offset, field_align);
+	    intra_struct_offset = glsl_align(intra_struct_offset, field_align);
 
 	    if (strcmp(struct_type->fields.structure[i].name,
 		       deref_record->field) == 0)
@@ -146,7 +140,7 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 	    intra_struct_offset += type->std140_size(row_major);
 	 }
 
-	 const_offset = align(const_offset, max_field_align);
+	 const_offset = glsl_align(const_offset, max_field_align);
 	 const_offset += intra_struct_offset;
 
 	 deref = deref_record->record->as_dereference();
@@ -217,8 +211,8 @@ lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
 					       field->name);
 
 	 field_offset =
-	    align(field_offset,
-		  field->type->std140_base_alignment(ubo_var->RowMajor));
+	    glsl_align(field_offset,
+		       field->type->std140_base_alignment(ubo_var->RowMajor));
 
 	 emit_ubo_loads(field_deref, base_offset, deref_offset + field_offset);
 
@@ -229,7 +223,8 @@ lower_ubo_reference_visitor::emit_ubo_loads(ir_dereference *deref,
 
    if (deref->type->is_array()) {
       unsigned array_stride =
-	 align(deref->type->fields.array->std140_size(ubo_var->RowMajor), 16);
+	 glsl_align(deref->type->fields.array->std140_size(ubo_var->RowMajor),
+		    16);
 
       for (unsigned i = 0; i < deref->type->length; i++) {
 	 ir_constant *element = new(mem_ctx) ir_constant(i);

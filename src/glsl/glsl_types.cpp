@@ -863,12 +863,6 @@ glsl_type::std140_base_alignment(bool row_major) const
    return -1;
 }
 
-static unsigned
-align(unsigned val, unsigned align)
-{
-   return (val + align - 1) / align * align;
-}
-
 unsigned
 glsl_type::std140_size(bool row_major) const
 {
@@ -970,11 +964,11 @@ glsl_type::std140_size(bool row_major) const
       for (unsigned i = 0; i < this->length; i++) {
 	 const struct glsl_type *field_type = this->fields.structure[i].type;
 	 unsigned align = field_type->std140_base_alignment(row_major);
-	 size = (size + align - 1) / align * align;
+	 size = glsl_align(size, align);
 	 size += field_type->std140_size(row_major);
       }
-      size = align(size,
-		   this->fields.structure[0].type->std140_base_alignment(row_major));
+      size = glsl_align(size,
+			this->fields.structure[0].type->std140_base_alignment(row_major));
       return size;
    }
 

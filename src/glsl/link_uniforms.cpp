@@ -29,12 +29,6 @@
 #include "program/hash_table.h"
 #include "program.h"
 
-static inline unsigned int
-align(unsigned int a, unsigned int align)
-{
-   return (a + align - 1) / align * align;
-}
-
 /**
  * \file link_uniforms.cpp
  * Assign locations for GLSL uniforms.
@@ -426,13 +420,13 @@ private:
 	 this->uniforms[id].block_index = this->ubo_block_index;
 
 	 unsigned alignment = type->std140_base_alignment(ubo_row_major);
-	 this->ubo_byte_offset = align(this->ubo_byte_offset, alignment);
+	 this->ubo_byte_offset = glsl_align(this->ubo_byte_offset, alignment);
 	 this->uniforms[id].offset = this->ubo_byte_offset;
 	 this->ubo_byte_offset += type->std140_size(ubo_row_major);
 
 	 if (type->is_array()) {
 	    this->uniforms[id].array_stride =
-	       align(type->fields.array->std140_size(ubo_row_major), 16);
+	       glsl_align(type->fields.array->std140_size(ubo_row_major), 16);
 	 } else {
 	    this->uniforms[id].array_stride = 0;
 	 }
@@ -570,7 +564,7 @@ link_assign_uniform_block_offsets(struct gl_shader *shader)
 	 unsigned alignment = type->std140_base_alignment(ubo_var->RowMajor);
 	 unsigned size = type->std140_size(ubo_var->RowMajor);
 
-	 offset = align(offset, alignment);
+	 offset = glsl_align(offset, alignment);
 	 ubo_var->Offset = offset;
 	 offset += size;
       }
@@ -586,7 +580,7 @@ link_assign_uniform_block_offsets(struct gl_shader *shader)
        *      and rounding up to the next multiple of the base
        *      alignment required for a vec4."
        */
-      block->UniformBufferSize = align(offset, 16);
+      block->UniformBufferSize = glsl_align(offset, 16);
    }
 }
 

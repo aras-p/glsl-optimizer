@@ -601,6 +601,12 @@ struct glsl_struct_field {
    bool row_major;
 };
 
+static inline unsigned int
+glsl_align(unsigned int a, unsigned int align)
+{
+   return (a + align - 1) / align * align;
+}
+
 #endif /* __cplusplus */
 
 #endif /* GLSL_TYPES_H */
