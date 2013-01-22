@@ -817,6 +817,8 @@ static uint32_t si_translate_colorformat(enum pipe_format format)
 		return V_028C70_COLOR_16_16_16_16;
 
 	case PIPE_FORMAT_L32A32_FLOAT:
+	case PIPE_FORMAT_L32A32_UINT:
+	case PIPE_FORMAT_L32A32_SINT:
 	case PIPE_FORMAT_R32G32_FLOAT:
 	case PIPE_FORMAT_R32G32_USCALED:
 	case PIPE_FORMAT_R32G32_SSCALED:
@@ -1003,6 +1005,8 @@ static uint32_t si_translate_colorswap(enum pipe_format format)
 		return V_028C70_SWAP_STD;
 
 	case PIPE_FORMAT_L32A32_FLOAT:
+	case PIPE_FORMAT_L32A32_UINT:
+	case PIPE_FORMAT_L32A32_SINT:
 		return V_028C70_SWAP_ALT;
 
 	/* 128-bit buffers. */
