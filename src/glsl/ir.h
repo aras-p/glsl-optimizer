@@ -358,6 +358,33 @@ public:
    }
 
    /**
+    * Determine whether or not a variable is the declaration of an interface
+    * block
+    *
+    * For the first declaration below, there will be an \c ir_variable named
+    * "instance" whose type and whose instance_type will be the same
+    *  \cglsl_type.  For the second declaration, there will be an \c ir_variable
+    * named "f" whose type is float and whose instance_type is B2.
+    *
+    * "instance" is an interface instance variable, but "f" is not.
+    *
+    * uniform B1 {
+    *     float f;
+    * } instance;
+    *
+    * uniform B2 {
+    *     float f;
+    * };
+    */
+   inline bool is_interface_instance() const
+   {
+      const glsl_type *const t = this->type;
+
+      return (t == this->interface_type)
+         || (t->is_array() && t->fields.array == this->interface_type);
+    }
+
+   /**
     * Declared type of the variable
     */
    const struct glsl_type *type;
