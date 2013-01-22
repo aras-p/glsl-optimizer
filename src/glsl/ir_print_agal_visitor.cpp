@@ -113,7 +113,10 @@ public:
 	PrintGlslMode mode;
 	bool	use_precision;
 	_mesa_glsl_parse_state *state;
+	
 };
+
+static int writeMask = 0;
 
 
 char*
@@ -464,8 +467,12 @@ void ir_print_agal_visitor::visit(ir_swizzle *ir)
 	ir->val->accept(this);
 
    ralloc_asprintf_append (&buffer, ".");
-   for (unsigned i = 0; i < ir->mask.num_components; i++) {
-		ralloc_asprintf_append (&buffer, "%c", "xyzw"[swiz[i]]);
+
+   int p=0;
+   for (unsigned i = 0; i < 4; i++) {
+		ralloc_asprintf_append (&buffer, "%c", "xyzw"[swiz[p]]);
+		if(writeMask & (1 << i))
+			p++;
    }
 }
 
@@ -503,6 +510,7 @@ int min(int x, int y) { return x < y ? x : y; }
 
 static void computeSwizzle(char *swizbuf, ir_assignment *ir)
 {
+	writeMask = ir->write_mask;
    char mask[5] = {0,0,0,0,0};
    unsigned elementCount = 0;
    for (unsigned i = 0; i < 4; i++) {

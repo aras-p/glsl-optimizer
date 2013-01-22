@@ -98,6 +98,10 @@ public final class RegisterCategory
     {
         return programCategory_;
     }
+	
+	nsinternal function isConstant():Boolean{
+		return code == CONSTANT;
+	}
 
     nsinternal static function registerCategoryToString(rt : RegisterCategory,
                                                            flags : int) : String

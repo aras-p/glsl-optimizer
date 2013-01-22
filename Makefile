@@ -13,6 +13,11 @@ swc: check
 	mv swc/glsl2agal.swc bin/
 	mv swc/glsl2agalopt bin/
 
+win:
+	python $(FLASCC)/usr/bin/projector-dis.py bin/glsl2agalopt
+	$(FLASCC)/usr/bin/avmshell external/projectormake.abc -- -o bin/glsl2agalopt.exe external/avmshell.exe output.swf -- -osr=1
+	rm -f output*
+
 example: check
 	cd examples/basic && $(FLEX)/bin/mxmlc \
 		-static-link-runtime-shared-libraries \

@@ -322,12 +322,14 @@ print_agal_var_mapping(const void *key, void *data, void *closure) {
 
 bool glslOptimizerVerbose = false;
 
-void dump(const char *nm, exec_list *ir, _mesa_glsl_parse_state *state, PrintGlslMode printMode)
+void dump(const char *nm, exec_list *ir, _mesa_glsl_parse_state *state, PrintGlslMode printMode, bool validate = true)
 {
 	if(!glslOptimizerVerbose) return;
 
 	fprintf(stderr, "glsl %s:\n%s", nm, _mesa_print_ir_glsl(ir, state, NULL, printMode));
-	fprintf(stderr, "validate: \n"); validate_ir_tree(ir);
+	if(validate) {
+		fprintf(stderr, "validate: \n"); validate_ir_tree(ir);
+	}
 }
 
 glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options)

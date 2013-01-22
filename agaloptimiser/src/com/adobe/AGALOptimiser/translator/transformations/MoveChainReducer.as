@@ -178,14 +178,22 @@ public final class MoveChainReducer extends Transformation
         // move or different ones.  The candidateCode tells us which of them (or both) 
         // to transform.  Once transformed, it is likely we've created dead code 
         // with the moves which can be removed via subsequent DCE.
+		
+		var newOperand:SourceRegister;
 
         if ((candidateCode == 1) || (candidateCode == 3))
         {
             // first operand is changed
             movInst = inst.operand0.definitionLine.definitionSite as Instruction;
 
-            inst.operand0 = transformSourceRegister(inst.operand0, movInst.operand0);
-
+			newOperand = transformSourceRegister(inst.operand0, movInst.operand0);
+			
+			// bail out if this would result in invalid AGAL
+			if(newOperand.register.category.isConstant() && inst.operand1.register.category.isConstant()) {
+				return
+			}
+				
+			inst.operand0 = newOperand;
             ++numChanges_;
         }
         else if ((candidateCode == 2) || (candidateCode == 3))
@@ -193,8 +201,14 @@ public final class MoveChainReducer extends Transformation
             // second operand is changed
             movInst = inst.operand1.definitionLine.definitionSite as Instruction;
 
-            inst.operand1 = transformSourceRegister(inst.operand1, movInst.operand0);
+            newOperand = transformSourceRegister(inst.operand1, movInst.operand0);
+			
+			// bail out if this would result in invalid AGAL
+			if(newOperand.register.category.isConstant() && inst.operand1.register.category.isConstant()) {
+				return
+			}
 
+			inst.operand1 = newOperand;
             ++numChanges_;
         }
     }
