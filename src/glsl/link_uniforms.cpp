@@ -281,36 +281,66 @@ public:
    }
 
    void set_and_process(struct gl_shader_program *prog,
-			struct gl_shader *shader,
 			ir_variable *var)
    {
-      ubo_var = NULL;
+      ubo_block_index = -1;
       if (var->is_in_uniform_block()) {
-	 struct gl_uniform_block *block =
-	    &shader->UniformBlocks[var->uniform_block];
+         if (var->is_interface_instance() && var->type->is_array()) {
+            unsigned l = strlen(var->interface_type->name);
 
-	 ubo_block_index = -1;
-	 for (unsigned i = 0; i < prog->NumUniformBlocks; i++) {
-	    if (!strcmp(prog->UniformBlocks[i].Name,
-			shader->UniformBlocks[var->uniform_block].Name)) {
-	       ubo_block_index = i;
-	       break;
+            for (unsigned i = 0; i < prog->NumUniformBlocks; i++) {
+               if (strncmp(var->interface_type->name,
+                           prog->UniformBlocks[i].Name,
+                           l) == 0
+                   && prog->UniformBlocks[i].Name[l] == '[') {
+                  ubo_block_index = i;
+                  break;
+               }
+            }
+         } else {
+            for (unsigned i = 0; i < prog->NumUniformBlocks; i++) {
+               if (strcmp(var->interface_type->name,
+                          prog->UniformBlocks[i].Name) == 0) {
+                  ubo_block_index = i;
+                  break;
+               }
 	    }
 	 }
 	 assert(ubo_block_index != -1);
 
-	 ubo_var_index = var->location;
-	 ubo_var = &block->Uniforms[var->location];
-	 ubo_byte_offset = ubo_var->Offset;
-      }
+         /* Uniform blocks that were specified with an instance name must be
+          * handled a little bit differently.  The name of the variable is the
+          * name used to reference the uniform block instead of being the name
+          * of a variable within the block.  Therefore, searching for the name
+          * within the block will fail.
+          */
+         if (var->is_interface_instance()) {
+            ubo_byte_offset = 0;
+            ubo_row_major = false;
+         } else {
+            const struct gl_uniform_block *const block =
+               &prog->UniformBlocks[ubo_block_index];
 
-      process(var);
+            assert(var->location != -1);
+
+            const struct gl_uniform_buffer_variable *const ubo_var =
+               &block->Uniforms[var->location];
+
+            ubo_row_major = ubo_var->RowMajor;
+            ubo_byte_offset = ubo_var->Offset;
+         }
+
+         if (var->is_interface_instance())
+            process(var->interface_type, var->interface_type->name);
+         else
+            process(var);
+      } else
+         process(var);
    }
 
-   struct gl_uniform_buffer_variable *ubo_var;
    int ubo_block_index;
-   int ubo_var_index;
    int ubo_byte_offset;
+   bool ubo_row_major;
 
 private:
    virtual void visit_field(const glsl_type *type, const char *name,
@@ -392,17 +422,17 @@ private:
       this->uniforms[id].num_driver_storage = 0;
       this->uniforms[id].driver_storage = NULL;
       this->uniforms[id].storage = this->values;
-      if (this->ubo_var) {
+      if (this->ubo_block_index != -1) {
 	 this->uniforms[id].block_index = this->ubo_block_index;
 
-	 unsigned alignment = type->std140_base_alignment(ubo_var->RowMajor);
+	 unsigned alignment = type->std140_base_alignment(ubo_row_major);
 	 this->ubo_byte_offset = align(this->ubo_byte_offset, alignment);
 	 this->uniforms[id].offset = this->ubo_byte_offset;
-	 this->ubo_byte_offset += type->std140_size(ubo_var->RowMajor);
+	 this->ubo_byte_offset += type->std140_size(ubo_row_major);
 
 	 if (type->is_array()) {
 	    this->uniforms[id].array_stride =
-	       align(type->fields.array->std140_size(ubo_var->RowMajor), 16);
+	       align(type->fields.array->std140_size(ubo_row_major), 16);
 	 } else {
 	    this->uniforms[id].array_stride = 0;
 	 }
@@ -410,7 +440,7 @@ private:
 	 if (type->is_matrix() ||
 	     (type->is_array() && type->fields.array->is_matrix())) {
 	    this->uniforms[id].matrix_stride = 16;
-	    this->uniforms[id].row_major = ubo_var->RowMajor;
+	    this->uniforms[id].row_major = ubo_row_major;
 	 } else {
 	    this->uniforms[id].matrix_stride = 0;
 	    this->uniforms[id].row_major = false;
@@ -666,7 +696,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 	 if (strncmp("gl_", var->name, 3) == 0)
 	    continue;
 
-	 parcel.set_and_process(prog, prog->_LinkedShaders[i], var);
+	 parcel.set_and_process(prog, var);
       }
 
       prog->_LinkedShaders[i]->active_samplers = parcel.shader_samplers_used;
