@@ -343,10 +343,14 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
       break;
 
    case ir_unop_pack_snorm_2x16:
+   case ir_unop_pack_snorm_4x8:
    case ir_unop_pack_unorm_2x16:
+   case ir_unop_pack_unorm_4x8:
    case ir_unop_pack_half_2x16:
    case ir_unop_unpack_snorm_2x16:
+   case ir_unop_unpack_snorm_4x8:
    case ir_unop_unpack_unorm_2x16:
+   case ir_unop_unpack_unorm_4x8:
    case ir_unop_unpack_half_2x16:
    case ir_quadop_vector:
       assert(!"should have been lowered");

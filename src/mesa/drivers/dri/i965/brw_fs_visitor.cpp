@@ -539,9 +539,13 @@ fs_visitor::visit(ir_expression *ir)
                   this->result, op[0], op[1]);
       break;
    case ir_unop_pack_snorm_2x16:
+   case ir_unop_pack_snorm_4x8:
    case ir_unop_pack_unorm_2x16:
+   case ir_unop_pack_unorm_4x8:
    case ir_unop_unpack_snorm_2x16:
+   case ir_unop_unpack_snorm_4x8:
    case ir_unop_unpack_unorm_2x16:
+   case ir_unop_unpack_unorm_4x8:
    case ir_unop_unpack_half_2x16:
    case ir_unop_pack_half_2x16:
       assert(!"not reached: should be handled by lower_packing_builtins");
