@@ -72,6 +72,14 @@ uniform_field_visitor::process(ir_variable *var)
       char *name = ralloc_strdup(NULL, var->name);
       recursion(var->type, &name, strlen(name), false);
       ralloc_free(name);
+   } else if (t->is_interface()) {
+      char *name = ralloc_strdup(NULL, var->type->name);
+      recursion(var->type, &name, strlen(name), false);
+      ralloc_free(name);
+   } else if (t->is_array() && t->fields.array->is_interface()) {
+      char *name = ralloc_strdup(NULL, var->type->fields.array->name);
+      recursion(var->type, &name, strlen(name), false);
+      ralloc_free(name);
    } else {
       this->visit_field(t, var->name, false);
    }
@@ -87,18 +95,26 @@ uniform_field_visitor::recursion(const glsl_type *t, char **name,
     * individually, then each field of the resulting array elements processed
     * individually.
     */
-   if (t->is_record()) {
+   if (t->is_record() || t->is_interface()) {
       for (unsigned i = 0; i < t->length; i++) {
 	 const char *field = t->fields.structure[i].name;
 	 size_t new_length = name_length;
 
-	 /* Append '.field' to the current uniform name. */
-	 ralloc_asprintf_rewrite_tail(name, &new_length, ".%s", field);
+         if (t->fields.structure[i].type->is_record())
+            this->visit_field(&t->fields.structure[i]);
+
+         /* Append '.field' to the current uniform name. */
+         if (name_length == 0) {
+            ralloc_asprintf_rewrite_tail(name, &new_length, "%s", field);
+         } else {
+            ralloc_asprintf_rewrite_tail(name, &new_length, ".%s", field);
+         }
 
          recursion(t->fields.structure[i].type, name, new_length,
                    t->fields.structure[i].row_major);
       }
-   } else if (t->is_array() && t->fields.array->is_record()) {
+   } else if (t->is_array() && (t->fields.array->is_record()
+                                || t->fields.array->is_interface())) {
       for (unsigned i = 0; i < t->length; i++) {
 	 size_t new_length = name_length;
 
