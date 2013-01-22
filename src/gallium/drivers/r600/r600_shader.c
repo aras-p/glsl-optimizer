@@ -377,6 +377,7 @@ static unsigned r600_alu_from_byte_stream(struct r600_shader_ctx *ctx,
 
 	if (alu.inst == CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT)) {
 		ctx->bc->ar_reg = alu.src[0].sel;
+		ctx->bc->ar_chan = alu.src[0].chan;
 		ctx->bc->ar_loaded = 0;
 		return bytes_read;
 	}

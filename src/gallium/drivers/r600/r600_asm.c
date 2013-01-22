@@ -1421,6 +1421,7 @@ static int load_ar_r6xx(struct r600_bytecode *bc)
 	memset(&alu, 0, sizeof(alu));
 	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT;
 	alu.src[0].sel = bc->ar_reg;
+	alu.src[0].chan = bc->ar_chan;
 	alu.last = 1;
 	alu.index_mode = INDEX_MODE_LOOP;
 	r = r600_bytecode_add_alu(bc, &alu);
@@ -1451,6 +1452,7 @@ static int load_ar(struct r600_bytecode *bc)
 	memset(&alu, 0, sizeof(alu));
 	alu.inst = BC_INST(bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT);
 	alu.src[0].sel = bc->ar_reg;
+	alu.src[0].chan = bc->ar_chan;
 	alu.last = 1;
 	r = r600_bytecode_add_alu(bc, &alu);
 	if (r)
