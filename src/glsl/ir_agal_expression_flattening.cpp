@@ -103,6 +103,7 @@ public:
    virtual ir_visitor_status visit_enter(ir_swizzle *);
    virtual ir_visitor_status visit_leave(ir_swizzle *);
    virtual ir_visitor_status visit_enter(ir_texture *);
+   virtual ir_visitor_status visit_leave(ir_texture *);
    virtual ir_visitor_status visit_enter(ir_dereference_array *);
    virtual ir_visitor_status visit_leave(ir_dereference_array *);
 
@@ -181,14 +182,23 @@ ir_visitor_status ir_agal_expression_flattening_visitor::visit_leave(ir_swizzle 
    return visit_continue;
 }
 
-ir_visitor_status ir_agal_expression_flattening_visitor::visit_enter(ir_texture *tex)
+ir_visitor_status ir_agal_expression_flattening_visitor::visit_enter(ir_texture *expr)
 {
-   if(tex->coordinate->as_expression())
-      promoteToVar(tex->coordinate);
+   if(!baseExpr) {
+      baseExpr = expr;
+      return visit_continue;
+   }
 
-   if(baseExpr)
-      promoteToVar(tex);
+   promoteToVar(expr);
+   return visit_continue;
+}
 
+ir_visitor_status ir_agal_expression_flattening_visitor::visit_leave(ir_texture *expr)
+{
+   if(baseExpr == expr) {
+      baseExpr = NULL;
+      insertionPoint = NULL;
+   }
    return visit_continue;
 }
 

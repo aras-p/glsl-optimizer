@@ -457,7 +457,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 
 
 
-		do_agal_expression_flattening(ir, true); dump("", ir, state, printMode);
+		do_agal_expression_flattening(ir, true); dump("after flattening", ir, state, printMode);
 
 		do_lower_arrays(ir); dump("post-opt", ir, state, printMode);
 
