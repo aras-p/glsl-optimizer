@@ -729,6 +729,18 @@ brw_get_texture_swizzle(const struct gl_texture_object *t)
       }
    }
 
+   /* For a format with no alpha channel, force the alpha result to
+    * 1.0. (This allows for an RGBA texture to be used for an RGB
+    * format, for example).
+    */
+   switch (img->_BaseFormat) {
+   case GL_RED:
+   case GL_RG:
+   case GL_RGB:
+      swizzles[3] = SWIZZLE_ONE;
+      break;
+   }
+
    return MAKE_SWIZZLE4(swizzles[GET_SWZ(t->_Swizzle, 0)],
                         swizzles[GET_SWZ(t->_Swizzle, 1)],
                         swizzles[GET_SWZ(t->_Swizzle, 2)],
