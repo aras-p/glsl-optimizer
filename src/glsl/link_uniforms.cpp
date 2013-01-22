@@ -510,7 +510,13 @@ link_cross_validate_uniform_block(void *mem_ctx,
       struct gl_uniform_buffer_variable *ubo_var =
 	 &linked_block->Uniforms[i];
 
-      ubo_var->Name = ralloc_strdup(*linked_blocks, ubo_var->Name);
+      if (ubo_var->Name == ubo_var->IndexName) {
+         ubo_var->Name = ralloc_strdup(*linked_blocks, ubo_var->Name);
+         ubo_var->IndexName = ubo_var->Name;
+      } else {
+         ubo_var->Name = ralloc_strdup(*linked_blocks, ubo_var->Name);
+         ubo_var->IndexName = ralloc_strdup(*linked_blocks, ubo_var->IndexName);
+      }
    }
 
    return linked_block_index;

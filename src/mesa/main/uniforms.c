@@ -695,7 +695,7 @@ _mesa_GetActiveUniformBlockiv(GLuint program,
       for (i = 0; i < block->NumUniforms; i++) {
 	 unsigned offset;
 	 params[i] = _mesa_get_uniform_location(ctx, shProg,
-						block->Uniforms[i].Name,
+						block->Uniforms[i].IndexName,
 						&offset);
       }
       return;

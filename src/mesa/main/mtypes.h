@@ -2273,6 +2273,19 @@ typedef enum
 struct gl_uniform_buffer_variable
 {
    char *Name;
+
+   /**
+    * Name of the uniform as seen by glGetUniformIndices.
+    *
+    * glGetUniformIndices requires that the block instance index \b not be
+    * present in the name of queried uniforms.
+    *
+    * \note
+    * \c gl_uniform_buffer_variable::IndexName and
+    * \c gl_uniform_buffer_variable::Name may point to identical storage.
+    */
+   char *IndexName;
+
    const struct glsl_type *Type;
    unsigned int Offset;
    GLboolean RowMajor;

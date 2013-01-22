@@ -4322,6 +4322,7 @@ ast_uniform_block::hir(exec_list *instructions,
          &ubo->Uniforms[ubo->NumUniforms++];
 
       ubo_var->Name = ralloc_strdup(state->uniform_blocks, fields[i].name);
+      ubo_var->IndexName = ubo_var->Name;
       ubo_var->Type = fields[i].type;
       ubo_var->Offset = 0; /* Assigned at link time. */
       ubo_var->RowMajor = fields[i].row_major;
