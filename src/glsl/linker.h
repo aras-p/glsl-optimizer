@@ -53,6 +53,13 @@ extern bool
 link_uniform_blocks_are_compatible(const gl_uniform_block *a,
 				   const gl_uniform_block *b);
 
+extern int
+link_uniform_blocks(void *mem_ctx,
+                    struct gl_shader_program *prog,
+                    struct gl_shader **shader_list,
+                    unsigned num_shaders,
+                    struct gl_uniform_block **blocks_ret);
+
 /**
  * Class for processing all of the leaf fields of an uniform
  *
