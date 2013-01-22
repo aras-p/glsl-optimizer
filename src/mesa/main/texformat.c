@@ -295,54 +295,81 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
       }
    }
 
-   if (ctx->Extensions.TDFX_texture_compression_FXT1) {
-      switch (internalFormat) {
-         case GL_COMPRESSED_RGB_FXT1_3DFX:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_FXT1);
-	 break;
-         case GL_COMPRESSED_RGBA_FXT1_3DFX:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_FXT1);
-	 break;
-         default:
-            ; /* fallthrough */
-      }
-   }
-
-   if (ctx->Extensions.EXT_texture_compression_s3tc ||
-       (ctx->API == API_OPENGLES2 &&
-	ctx->Extensions.ANGLE_texture_compression_dxt)) {
-      switch (internalFormat) {
-         case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_DXT1);
-	    break;
-         case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_DXT1);
-	    break;
-         case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_DXT3);
-	    break;
-         case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_DXT5);
-	    break;
-         default:
-            ; /* fallthrough */
-      }
-   }
-
-   if (_mesa_is_desktop_gl(ctx)
-       && ctx->Extensions.ANGLE_texture_compression_dxt) {
-      switch (internalFormat) {
-         case GL_RGB_S3TC:
-         case GL_RGB4_S3TC:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGB_DXT1);
-	    break;
-         case GL_RGBA_S3TC:
-         case GL_RGBA4_S3TC:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_RGBA_DXT3);
-	    break;
-         default:
-            ; /* fallthrough */
-      }
+   /* For non-generic compressed format we assert two things:
+    *
+    * 1. The format has already been validated against the set of available
+    *    extensions.
+    *
+    * 2. The driver only enables the extension if it supports all of the
+    *    formats that are part of that extension.
+    */
+   switch (internalFormat) {
+   case GL_COMPRESSED_RGB_FXT1_3DFX:
+      return MESA_FORMAT_RGB_FXT1;
+   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+      return MESA_FORMAT_RGBA_FXT1;
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
+      return MESA_FORMAT_RGB_DXT1;
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      return MESA_FORMAT_RGBA_DXT1;
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
+      return MESA_FORMAT_RGBA_DXT3;
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      return MESA_FORMAT_RGBA_DXT5;
+   case GL_COMPRESSED_RED_RGTC1:
+      return MESA_FORMAT_RED_RGTC1;
+   case GL_COMPRESSED_SIGNED_RED_RGTC1:
+      return MESA_FORMAT_SIGNED_RED_RGTC1;
+   case GL_COMPRESSED_RG_RGTC2:
+      return MESA_FORMAT_RG_RGTC2;
+   case GL_COMPRESSED_SIGNED_RG_RGTC2:
+      return MESA_FORMAT_SIGNED_RG_RGTC2;
+   case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
+      return MESA_FORMAT_L_LATC1;
+   case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
+      return MESA_FORMAT_SIGNED_L_LATC1;
+   case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+      return MESA_FORMAT_LA_LATC2;
+   case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
+      return MESA_FORMAT_SIGNED_LA_LATC2;
+   case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
+      return MESA_FORMAT_LA_LATC2;
+   case GL_ETC1_RGB8_OES:
+      return MESA_FORMAT_ETC1_RGB8;
+   case GL_COMPRESSED_RGB8_ETC2:
+      return MESA_FORMAT_ETC2_RGB8;
+   case GL_COMPRESSED_SRGB8_ETC2:
+      return MESA_FORMAT_ETC2_SRGB8;
+   case GL_COMPRESSED_RGBA8_ETC2_EAC:
+      return MESA_FORMAT_ETC2_RGBA8_EAC;
+   case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+      return MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC;
+   case GL_COMPRESSED_R11_EAC:
+      return MESA_FORMAT_ETC2_R11_EAC;
+   case GL_COMPRESSED_RG11_EAC:
+      return MESA_FORMAT_ETC2_RG11_EAC;
+   case GL_COMPRESSED_SIGNED_R11_EAC:
+      return MESA_FORMAT_ETC2_SIGNED_R11_EAC;
+   case GL_COMPRESSED_SIGNED_RG11_EAC:
+      return MESA_FORMAT_ETC2_SIGNED_RG11_EAC;
+   case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+      return MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1;
+   case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+      return MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1;
+   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+      return MESA_FORMAT_SRGB_DXT1;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+      return MESA_FORMAT_SRGBA_DXT1;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+      return MESA_FORMAT_SRGBA_DXT3;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+      return MESA_FORMAT_SRGBA_DXT5;
+   default:
+      ; /* fallthrough */
    }
 
    if (ctx->Extensions.ARB_texture_float) {
@@ -602,30 +629,6 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA8);
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
 	    break;
-         case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
-            if (ctx->Extensions.EXT_texture_compression_s3tc)
-	       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGB_DXT1);
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
-            break;
-         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-            if (ctx->Extensions.EXT_texture_compression_s3tc)
-	       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA_DXT1);
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
-            break;
-         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-            if (ctx->Extensions.EXT_texture_compression_s3tc ||
-		(ctx->API == API_OPENGLES2 &&
-		 ctx->Extensions.ANGLE_texture_compression_dxt))
-	       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA_DXT3);
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
-            break;
-         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-            if (ctx->Extensions.EXT_texture_compression_s3tc ||
-		(ctx->API == API_OPENGLES2 &&
-		 ctx->Extensions.ANGLE_texture_compression_dxt))
-	       RETURN_IF_SUPPORTED(MESA_FORMAT_SRGBA_DXT5);
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_SARGB8);
-            break;
          default:
             ; /* fallthrough */
       }
@@ -916,101 +919,6 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
 	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
 	 break;
 
-      default:
-         ; /* fallthrough */
-      }
-   }
-
-   if (ctx->Extensions.ARB_texture_compression_rgtc) {
-      switch (internalFormat) {
-         case GL_COMPRESSED_RED_RGTC1:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_RED_RGTC1);
-	    break;
-         case GL_COMPRESSED_SIGNED_RED_RGTC1:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RED_RGTC1);
-	    break;
-         case GL_COMPRESSED_RG_RGTC2:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_RG_RGTC2);
-	    break;
-         case GL_COMPRESSED_SIGNED_RG_RGTC2:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RG_RGTC2);
-	    break;
-         default:
-            ; /* fallthrough */
-      }
-   }
-
-   if (ctx->Extensions.EXT_texture_compression_latc) {
-      switch (internalFormat) {
-         case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
-            RETURN_IF_SUPPORTED(MESA_FORMAT_L_LATC1);
-            break;
-         case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
-            RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_L_LATC1);
-            break;
-         case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
-            RETURN_IF_SUPPORTED(MESA_FORMAT_LA_LATC2);
-            break;
-         case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
-            RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_LA_LATC2);
-            break;
-         default:
-            ; /* fallthrough */
-      }
-   }
-
-   if (ctx->Extensions.ATI_texture_compression_3dc) {
-      switch (internalFormat) {
-         case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
-            RETURN_IF_SUPPORTED(MESA_FORMAT_LA_LATC2);
-            break;
-         default:
-            ; /* fallthrough */
-      }
-   }
-
-   if (ctx->Extensions.OES_compressed_ETC1_RGB8_texture) {
-      switch (internalFormat) {
-         case GL_ETC1_RGB8_OES:
-            RETURN_IF_SUPPORTED(MESA_FORMAT_ETC1_RGB8);
-            break;
-         default:
-            ; /* fallthrough */
-      }
-   }
-
-   if (_mesa_is_gles3(ctx)) {
-      switch (internalFormat) {
-      case GL_COMPRESSED_RGB8_ETC2:
-         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_RGB8);
-         break;
-      case GL_COMPRESSED_SRGB8_ETC2:
-         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_SRGB8);
-         break;
-      case GL_COMPRESSED_RGBA8_ETC2_EAC:
-         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_RGBA8_EAC);
-         break;
-      case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
-         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC);
-         break;
-      case GL_COMPRESSED_R11_EAC:
-         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_R11_EAC);
-         break;
-      case GL_COMPRESSED_RG11_EAC:
-         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_RG11_EAC);
-         break;
-      case GL_COMPRESSED_SIGNED_R11_EAC:
-         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_SIGNED_R11_EAC);
-         break;
-      case GL_COMPRESSED_SIGNED_RG11_EAC:
-         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_SIGNED_RG11_EAC);
-         break;
-      case GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1);
-         break;
-      case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-         RETURN_IF_SUPPORTED(MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1);
-         break;
       default:
          ; /* fallthrough */
       }
