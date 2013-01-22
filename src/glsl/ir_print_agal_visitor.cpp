@@ -116,7 +116,7 @@ public:
 	
 };
 
-static int writeMask = 0;
+static int writeMask = 0, writeComponents = 0;
 
 
 char*
@@ -472,7 +472,7 @@ void ir_print_agal_visitor::visit(ir_swizzle *ir)
    for (unsigned i = 0; i < 4; i++) {
 		ralloc_asprintf_append (&buffer, "%c", "xyzw"[swiz[p]]);
 		if(writeMask & (1 << i))
-			p++;
+			p = std::min(p+1, writeComponents-1);
    }
 }
 
@@ -511,15 +511,15 @@ int min(int x, int y) { return x < y ? x : y; }
 static void computeSwizzle(char *swizbuf, ir_assignment *ir)
 {
 	writeMask = ir->write_mask;
+	writeComponents = 0;
    char mask[5] = {0,0,0,0,0};
-   unsigned elementCount = 0;
    for (unsigned i = 0; i < 4; i++) {
 	   if ((ir->write_mask & (1 << i)) != 0) {
-		   mask[elementCount] = "xyzw"[i];
-		   elementCount++;
+		   mask[writeComponents] = "xyzw"[i];
+		   writeComponents++;
 	   }
    }
-   mask[elementCount] = '\0';
+   mask[writeComponents] = '\0';
    if (!mask[0])
    {
 	   strcpy(&mask[0], "xyzw");
