@@ -25,8 +25,6 @@
  * 
  **************************************************************************/
 
-#undef NDEBUG
-
 #include "main/glheader.h"
 #include "main/bufferobj.h"
 #include "main/context.h"
