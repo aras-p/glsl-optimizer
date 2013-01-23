@@ -344,9 +344,8 @@ gen7_update_texture_surface(struct gl_context *ctx,
          (firstImage->_BaseFormat == GL_DEPTH_COMPONENT ||
           firstImage->_BaseFormat == GL_DEPTH_STENCIL);
 
-      const int swizzle =
-         unlikely(alpha_depth) ? SWIZZLE_XYZW : brw_get_texture_swizzle(tObj);
-
+      const int swizzle = unlikely(alpha_depth)
+         ? SWIZZLE_XYZW : brw_get_texture_swizzle(ctx, tObj);
 
       surf[7] =
          SET_FIELD(swizzle_to_scs(GET_SWZ(swizzle, 0)), GEN7_SURFACE_SCS_R) |

@@ -30,6 +30,7 @@
   */
                    
 
+#include "main/context.h"
 #include "main/mtypes.h"
 #include "main/samplerobj.h"
 #include "program/prog_parameter.h"
@@ -685,7 +686,8 @@ brw_get_surface_num_multisamples(unsigned num_samples)
  * swizzling.
  */
 int
-brw_get_texture_swizzle(const struct gl_texture_object *t)
+brw_get_texture_swizzle(const struct gl_context *ctx,
+                        const struct gl_texture_object *t)
 {
    const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
 
@@ -701,7 +703,19 @@ brw_get_texture_swizzle(const struct gl_texture_object *t)
 
    if (img->_BaseFormat == GL_DEPTH_COMPONENT ||
        img->_BaseFormat == GL_DEPTH_STENCIL) {
-      switch (t->DepthMode) {
+      GLenum depth_mode = t->DepthMode;
+
+      /* In ES 3.0, DEPTH_TEXTURE_MODE is expected to be GL_RED for textures
+       * with depth component data specified with a sized internal format.
+       * Otherwise, it's left at the old default, GL_LUMINANCE.
+       */
+      if (_mesa_is_gles3(ctx) &&
+          img->InternalFormat != GL_DEPTH_COMPONENT &&
+          img->InternalFormat != GL_DEPTH_STENCIL) {
+         depth_mode = GL_RED;
+      }
+
+      switch (depth_mode) {
       case GL_ALPHA:
          swizzles[0] = SWIZZLE_ZERO;
          swizzles[1] = SWIZZLE_ZERO;

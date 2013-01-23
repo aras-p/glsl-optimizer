@@ -316,7 +316,7 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
           * (except for GL_ALPHA); all other platforms need MOVs in the shader.
           */
          if (!intel->is_haswell || alpha_depth)
-            key->swizzles[s] = brw_get_texture_swizzle(t);
+            key->swizzles[s] = brw_get_texture_swizzle(ctx, t);
 
 	 if (img->InternalFormat == GL_YCBCR_MESA) {
 	    key->yuvtex_mask |= 1 << s;
