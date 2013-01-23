@@ -449,8 +449,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
       vs_inputs &= ~BITFIELD64_BIT(i);
-      if (input->glarray->Size && get_size(input->glarray->Type))
-         brw->vb.enabled[brw->vb.nr_enabled++] = input;
+      brw->vb.enabled[brw->vb.nr_enabled++] = input;
    }
 
    if (brw->vb.nr_enabled == 0)
