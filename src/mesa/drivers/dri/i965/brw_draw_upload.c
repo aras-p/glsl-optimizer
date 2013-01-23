@@ -840,7 +840,7 @@ static void brw_upload_indices(struct brw_context *brw)
       /* If the index buffer isn't aligned to its element size, we have to
        * rebase it into a temporary.
        */
-       if ((get_size(index_buffer->type) - 1) & offset) {
+       if ((ib_type_size - 1) & offset) {
            GLubyte *map = ctx->Driver.MapBufferRange(ctx,
 						     offset,
 						     ib_size,
