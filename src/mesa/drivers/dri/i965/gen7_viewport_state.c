@@ -44,12 +44,17 @@ gen7_upload_sf_clip_viewport(struct brw_context *brw)
    brw->clip.vp_offset = brw->sf.vp_offset;
 
    /* According to the "Vertex X,Y Clamping and Quantization" section of the
-    * Strips and Fans documentation, Ivybridge and later don't have a maximum
-    * post-clamp delta.  However, the guardband extent must fit in [-32K, 32K)
-    * which gives us a maximum size of 64K.  Use 65000 rather than 65536 to be
-    * somewhat cautious---make the guardband slightly smaller than the maximum.
+    * Strips and Fans documentation, objects must not have a screen-space
+    * extents of over 8192 pixels, or they may be mis-rasterized.  The maximum
+    * screen space coordinates of a small object may larger, but we have no
+    * way to enforce the object size other than through clipping.
+    *
+    * If you're surprised that we set clip to -gbx to +gbx and it seems like
+    * we'll end up with 16384 wide, note that for a 8192-wide render target,
+    * we'll end up with a normal (-1, 1) clip volume that just covers the
+    * drawable.
     */
-   const float maximum_guardband_extent = 65000;
+   const float maximum_guardband_extent = 8192;
    float gbx = maximum_guardband_extent / (float) ctx->Viewport.Width;
    float gby = maximum_guardband_extent / (float) ctx->Viewport.Height;
 

@@ -43,11 +43,18 @@ gen6_upload_clip_vp(struct brw_context *brw)
    vp = brw_state_batch(brw, AUB_TRACE_CLIP_VP_STATE,
 			sizeof(*vp), 32, &brw->clip.vp_offset);
 
-   /* According to the Sandybridge PRM, Volume 2, Part 1, Section 6.3.8
-    * "Vertex X,Y Clamping and Quantization", the screen-aligned 2D
-    * bounding-box of an object must not exceed 16K pixels in either X or Y.
+   /* According to the "Vertex X,Y Clamping and Quantization" section of the
+    * Strips and Fans documentation, objects must not have a screen-space
+    * extents of over 8192 pixels, or they may be mis-rasterized.  The maximum
+    * screen space coordinates of a small object may larger, but we have no
+    * way to enforce the object size other than through clipping.
+    *
+    * If you're surprised that we set clip to -gbx to +gbx and it seems like
+    * we'll end up with 16384 wide, note that for a 8192-wide render target,
+    * we'll end up with a normal (-1, 1) clip volume that just covers the
+    * drawable.
     */
-   const float maximum_post_clamp_delta = 16384;
+   const float maximum_post_clamp_delta = 8192;
    float gbx = maximum_post_clamp_delta / (float) ctx->Viewport.Width;
    float gby = maximum_post_clamp_delta / (float) ctx->Viewport.Height;
 
