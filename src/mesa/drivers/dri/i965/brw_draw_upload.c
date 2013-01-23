@@ -808,17 +808,17 @@ static void brw_upload_indices(struct brw_context *brw)
        * rebase it into a temporary.
        */
        if ((ib_type_size - 1) & offset) {
-           GLubyte *map = ctx->Driver.MapBufferRange(ctx,
-						     offset,
-						     ib_size,
-						     GL_MAP_WRITE_BIT,
-						     bufferobj);
+          GLubyte *map = ctx->Driver.MapBufferRange(ctx,
+                                                    offset,
+                                                    ib_size,
+                                                    GL_MAP_WRITE_BIT,
+                                                    bufferobj);
 
-	   intel_upload_data(&brw->intel, map, ib_size, ib_type_size,
-			     &bo, &offset);
-	   brw->ib.start_vertex_offset = offset / ib_type_size;
+          intel_upload_data(&brw->intel, map, ib_size, ib_type_size,
+                            &bo, &offset);
+          brw->ib.start_vertex_offset = offset / ib_type_size;
 
-           ctx->Driver.UnmapBuffer(ctx, bufferobj);
+          ctx->Driver.UnmapBuffer(ctx, bufferobj);
        } else {
 	  /* Use CMD_3D_PRIM's start_vertex_offset to avoid re-uploading
 	   * the index buffer state when we're just moving the start index
