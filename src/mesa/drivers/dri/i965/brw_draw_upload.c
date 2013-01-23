@@ -32,6 +32,7 @@
 #include "main/context.h"
 #include "main/enums.h"
 #include "main/macros.h"
+#include "main/glformats.h"
 
 #include "brw_draw.h"
 #include "brw_defines.h"
@@ -329,29 +330,6 @@ get_surface_type(struct intel_context *intel, GLenum type, GLuint size,
          return int_types_scale[size];
       default: assert(0); return 0;
       }
-   }
-}
-
-
-static GLuint get_size( GLenum type )
-{
-   switch (type) {
-   case GL_DOUBLE: return sizeof(GLdouble);
-   case GL_FLOAT: return sizeof(GLfloat);
-   case GL_HALF_FLOAT: return sizeof(GLhalfARB);
-   case GL_INT: return sizeof(GLint);
-   case GL_SHORT: return sizeof(GLshort);
-   case GL_BYTE: return sizeof(GLbyte);
-   case GL_UNSIGNED_INT: return sizeof(GLuint);
-   case GL_UNSIGNED_SHORT: return sizeof(GLushort);
-   case GL_UNSIGNED_BYTE: return sizeof(GLubyte);
-   case GL_FIXED: return sizeof(GLuint);
-   /* packed formats: always have 4 components, and element size is
-    * 4 bytes, so pretend each component is 1 byte.
-    */
-   case GL_INT_2_10_10_10_REV: return sizeof(GLbyte);
-   case GL_UNSIGNED_INT_2_10_10_10_REV: return sizeof(GLubyte);
-   default: assert(0); return 0;
    }
 }
 
@@ -821,7 +799,7 @@ static void brw_upload_indices(struct brw_context *brw)
    if (index_buffer == NULL)
       return;
 
-   ib_type_size = get_size(index_buffer->type);
+   ib_type_size = _mesa_sizeof_type(index_buffer->type);
    ib_size = ib_type_size * index_buffer->count;
    bufferobj = index_buffer->obj;
 
