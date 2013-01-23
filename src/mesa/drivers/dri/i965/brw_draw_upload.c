@@ -380,8 +380,8 @@ copy_array_to_vbo_array(struct brw_context *brw,
     */
    if (src_stride == 0) {
       intel_upload_data(&brw->intel, element->glarray->Ptr,
-                        element->element_size,
-                        element->element_size,
+                        element->glarray->_ElementSize,
+                        element->glarray->_ElementSize,
 			&buffer->bo, &buffer->offset);
 
       buffer->stride = 0;
@@ -463,8 +463,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
       struct brw_vertex_element *input = brw->vb.enabled[i];
       const struct gl_client_array *glarray = input->glarray;
       int type_size = get_size(glarray->Type);
-
-      input->element_size = type_size * glarray->Size;
 
       if (_mesa_is_bufferobj(glarray->BufferObj)) {
 	 struct intel_buffer_object *intel_buffer =
@@ -579,7 +577,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
       struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
       if (upload[i]->glarray->InstanceDivisor == 0) {
          copy_array_to_vbo_array(brw, upload[i], min_index, max_index,
-                                 buffer, upload[i]->element_size);
+                                 buffer, upload[i]->glarray->_ElementSize);
       } else {
          /* This is an instanced attribute, since its InstanceDivisor
           * is not zero. Therefore, its data will be stepped after the
@@ -588,7 +586,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
          uint32_t instanced_attr_max_index =
             (brw->num_instances - 1) / upload[i]->glarray->InstanceDivisor;
          copy_array_to_vbo_array(brw, upload[i], 0, instanced_attr_max_index,
-                                 buffer, upload[i]->element_size);
+                                 buffer, upload[i]->glarray->_ElementSize);
       }
       buffer->offset -= delta * buffer->stride;
       buffer->step_rate = upload[i]->glarray->InstanceDivisor;
