@@ -54,13 +54,21 @@ libGL_la_LIBADD = \
 	$(top_builddir)/src/mapi/glapi/libglapi.la \
 	$(top_builddir)/src/mesa/libmesagallium.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(PTHREAD_LIBS) \
+	$(GL_LIB_DEPS) \
 	$(CLOCK_LIB)
 
 if HAVE_MESA_LLVM
+libGL_la_LINK = $(CXXLINK) $(libGL_la_LDFLAGS)
+# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
+nodist_EXTRA_libGL_la_SOURCES = dummy-cpp.cpp
+
 libGL_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la $(LLVM_LIBS)
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
 libGL_la_LDFLAGS += $(LLVM_LDFLAGS)
+else
+libGL_la_LINK = $(CXXLINK) $(libGL_la_LDFLAGS)
+# Mention a dummy pure C file to trigger generation of the $(LINK) variable
+nodist_EXTRA_libGL_la_SOURCES = dummy-c.c
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
