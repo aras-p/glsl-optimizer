@@ -45,13 +45,13 @@ struct pipe_transfer;
 static INLINE boolean
 u_clip_tile(uint x, uint y, uint *w, uint *h, const struct pipe_box *box)
 {
-   if (x >= box->width)
+   if ((int) x >= box->width)
       return TRUE;
-   if (y >= box->height)
+   if ((int) y >= box->height)
       return TRUE;
-   if (x + *w > box->width)
+   if ((int) (x + *w) > box->width)
       *w = box->width - x;
-   if (y + *h > box->height)
+   if ((int) (y + *h) > box->height)
       *h = box->height - y;
    return FALSE;
 }
