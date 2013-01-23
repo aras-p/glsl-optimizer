@@ -808,6 +808,9 @@ static void brw_upload_indices(struct brw_context *brw)
        * rebase it into a temporary.
        */
        if ((ib_type_size - 1) & offset) {
+          perf_debug("copying index buffer to a temporary to work around "
+                     "misaligned offset %d\n", offset);
+
           GLubyte *map = ctx->Driver.MapBufferRange(ctx,
                                                     offset,
                                                     ib_size,
