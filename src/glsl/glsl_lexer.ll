@@ -399,23 +399,23 @@ layout		{
 			}
 
 [0-9]+\.[0-9]+([eE][+-]?[0-9]+)?[fF]?	{
-			    yylval->real = glsl_strtod(yytext, NULL);
+			    yylval->real = glsl_strtof(yytext, NULL);
 			    return FLOATCONSTANT;
 			}
 \.[0-9]+([eE][+-]?[0-9]+)?[fF]?		{
-			    yylval->real = glsl_strtod(yytext, NULL);
+			    yylval->real = glsl_strtof(yytext, NULL);
 			    return FLOATCONSTANT;
 			}
 [0-9]+\.([eE][+-]?[0-9]+)?[fF]?		{
-			    yylval->real = glsl_strtod(yytext, NULL);
+			    yylval->real = glsl_strtof(yytext, NULL);
 			    return FLOATCONSTANT;
 			}
 [0-9]+[eE][+-]?[0-9]+[fF]?		{
-			    yylval->real = glsl_strtod(yytext, NULL);
+			    yylval->real = glsl_strtof(yytext, NULL);
 			    return FLOATCONSTANT;
 			}
 [0-9]+[fF]		{
-			    yylval->real = glsl_strtod(yytext, NULL);
+			    yylval->real = glsl_strtof(yytext, NULL);
 			    return FLOATCONSTANT;
 			}
 

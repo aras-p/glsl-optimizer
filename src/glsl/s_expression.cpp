@@ -66,18 +66,18 @@ read_atom(void *ctx, const char *&src, char *&symbol_buffer)
       return NULL; // no atom
 
    // Check for the special symbol '+INF', which means +Infinity.  Note: C99
-   // requires strtod to parse '+INF' as +Infinity, but we still support some
+   // requires strtof to parse '+INF' as +Infinity, but we still support some
    // non-C99-compliant compilers (e.g. MSVC).
    if (n == 4 && strncmp(src, "+INF", 4) == 0) {
       expr = new(ctx) s_float(std::numeric_limits<float>::infinity());
    } else {
       // Check if the atom is a number.
       char *float_end = NULL;
-      double f = glsl_strtod(src, &float_end);
+      float f = glsl_strtof(src, &float_end);
       if (float_end != src) {
          char *int_end = NULL;
          int i = strtol(src, &int_end, 10);
-         // If strtod matched more characters, it must have a decimal part
+         // If strtof matched more characters, it must have a decimal part
          if (float_end > int_end)
             expr = new(ctx) s_float(f);
          else
