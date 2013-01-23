@@ -1647,14 +1647,14 @@ sample_2d_ewa(struct gl_context *ctx,
               GLfloat rgba[])
 {
    GLint level = lod > 0 ? lod : 0;
-   GLfloat scaling = 1.0 / (1 << level);
+   GLfloat scaling = 1.0f / (1 << level);
    const struct gl_texture_image *img =	tObj->Image[0][level];
    const struct gl_texture_image *mostDetailedImage =
       tObj->Image[0][tObj->BaseLevel];
    const struct swrast_texture_image *swImg =
       swrast_texture_image_const(mostDetailedImage);
-   GLfloat tex_u=-0.5 + texcoord[0] * swImg->WidthScale * scaling;
-   GLfloat tex_v=-0.5 + texcoord[1] * swImg->HeightScale * scaling;
+   GLfloat tex_u = -0.5f + texcoord[0] * swImg->WidthScale * scaling;
+   GLfloat tex_v = -0.5f + texcoord[1] * swImg->HeightScale * scaling;
 
    GLfloat ux = dudx * scaling;
    GLfloat vx = dvdx * scaling;
@@ -1667,20 +1667,20 @@ sample_2d_ewa(struct gl_context *ctx,
    GLfloat A = vx*vx+vy*vy+1;
    GLfloat B = -2*(ux*vx+uy*vy);
    GLfloat C = ux*ux+uy*uy+1;
-   GLfloat F = A*C-B*B/4.0;
+   GLfloat F = A*C-B*B/4.0f;
 
    /* check if it is an ellipse */
    /* ASSERT(F > 0.0); */
 
    /* Compute the ellipse's (u,v) bounding box in texture space */
-   GLfloat d = -B*B+4.0*C*A;
-   GLfloat box_u = 2.0 / d * sqrt(d*C*F); /* box_u -> half of bbox with   */
-   GLfloat box_v = 2.0 / d * sqrt(A*d*F); /* box_v -> half of bbox height */
+   GLfloat d = -B*B+4.0f*C*A;
+   GLfloat box_u = 2.0f / d * sqrtf(d*C*F); /* box_u -> half of bbox with   */
+   GLfloat box_v = 2.0f / d * sqrtf(A*d*F); /* box_v -> half of bbox height */
 
-   GLint u0 = floor(tex_u - box_u);
-   GLint u1 = ceil (tex_u + box_u);
-   GLint v0 = floor(tex_v - box_v);
-   GLint v1 = ceil (tex_v + box_v);
+   GLint u0 = (GLint) floorf(tex_u - box_u);
+   GLint u1 = (GLint) ceilf (tex_u + box_u);
+   GLint v0 = (GLint) floorf(tex_v - box_v);
+   GLint v1 = (GLint) ceilf (tex_v + box_v);
 
    GLfloat num[4] = {0.0F, 0.0F, 0.0F, 0.0F};
    GLfloat newCoord[2];
@@ -1692,7 +1692,7 @@ sample_2d_ewa(struct gl_context *ctx,
    /* Scale ellipse formula to directly index the Filter Lookup Table.
     * i.e. scale so that F = WEIGHT_LUT_SIZE-1
     */
-   double formScale = (double) (WEIGHT_LUT_SIZE - 1) / F;
+   GLfloat formScale = (GLfloat) (WEIGHT_LUT_SIZE - 1) / F;
    A *= formScale;
    B *= formScale;
    C *= formScale;
@@ -1715,7 +1715,7 @@ sample_2d_ewa(struct gl_context *ctx,
             /* as a LUT is used, q must never be negative;
              * should not happen, though
              */
-            const GLint qClamped = q >= 0.0F ? q : 0;
+            const GLint qClamped = q >= 0.0F ? (GLint) q : 0;
             GLfloat weight = weightLut[qClamped];
 
             newCoord[0] = u / ((GLfloat) img->Width2);
@@ -1795,19 +1795,19 @@ sample_2d_footprint(struct gl_context *ctx,
 
    /*  Calculate the per anisotropic sample offsets in s,t space. */
    if (Px2 > Py2) {
-      numSamples = ceil(sqrtf(Px2));
+      numSamples = (GLint) ceilf(sqrtf(Px2));
       ds = ux / ((GLfloat) img->Width2);
       dt = vx / ((GLfloat) img->Height2);
    }
    else {
-      numSamples = ceil(sqrtf(Py2));
+      numSamples = (GLint) ceilf(sqrtf(Py2));
       ds = uy / ((GLfloat) img->Width2);
       dt = vy / ((GLfloat) img->Height2);
    }
 
    for (s = 0; s<numSamples; s++) {
-      newCoord[0] = texcoord[0] + ds * ((GLfloat)(s+1) / (numSamples+1) -0.5);
-      newCoord[1] = texcoord[1] + dt * ((GLfloat)(s+1) / (numSamples+1) -0.5);
+      newCoord[0] = texcoord[0] + ds * ((GLfloat)(s+1) / (numSamples+1) -0.5f);
+      newCoord[1] = texcoord[1] + dt * ((GLfloat)(s+1) / (numSamples+1) -0.5f);
 
       sample_2d_linear(ctx, samp, img, newCoord, rgba);
       num[0] += rgba[0];
@@ -1956,7 +1956,7 @@ sample_lambda_2d_aniso(struct gl_context *ctx,
       /* note: we need to have Pmin=sqrt(Pmin2) here, but we can avoid
        * this since 0.5*log(x) = log(sqrt(x))
        */
-      lod = 0.5 * LOG2(Pmin2);
+      lod = 0.5f * LOG2(Pmin2);
       
       if (adjustLOD) {
          /* from swrast/s_texcombine.c _swrast_texture_span */
@@ -1988,7 +1988,7 @@ sample_lambda_2d_aniso(struct gl_context *ctx,
           * seem to be worth the extra running time.
           */
          sample_2d_ewa(ctx, samp, tObj, texcoords[i],
-                       dudx, dvdx, dudy, dvdy, floor(lod), rgba[i]);
+                       dudx, dvdx, dudy, dvdy, (GLint) floorf(lod), rgba[i]);
 
          /* unused: */
          (void) sample_2d_footprint;
