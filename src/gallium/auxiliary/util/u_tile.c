@@ -806,7 +806,7 @@ pipe_put_tile_z(struct pipe_transfer *pt,
             for (j = 0; j < w; j++) {
                /* convert 32-bit integer Z to float Z */
                const double scale = 1.0 / 0xffffffffU;
-               pDest[j] = ptrc[j] * scale;
+               pDest[j] = (float) (ptrc[j] * scale);
             }
             pDest += pt->stride/4;
             ptrc += srcStride;
@@ -820,7 +820,7 @@ pipe_put_tile_z(struct pipe_transfer *pt,
             for (j = 0; j < w; j++) {
                /* convert 32-bit integer Z to float Z */
                const double scale = 1.0 / 0xffffffffU;
-               pDest[j*2] = ptrc[j] * scale;
+               pDest[j*2] = (float) (ptrc[j] * scale);
             }
             pDest += pt->stride/4;
             ptrc += srcStride;
