@@ -795,7 +795,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    y1 = y + height * ctx->Pixel.ZoomY;
 
    /* convert Z from [0,1] to [-1,-1] to match viewport Z scale/bias */
-   z = z * 2.0 - 1.0;
+   z = z * 2.0f - 1.0f;
 
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex,
              normalized ? ((GLfloat) width / sv[0]->texture->width0) : (GLfloat)width,
@@ -1063,7 +1063,7 @@ static void
 clamp_size(struct pipe_context *pipe, GLsizei *width, GLsizei *height,
            struct gl_pixelstore_attrib *unpack)
 {
-   const unsigned maxSize = 
+   const int maxSize =
       1 << (pipe->screen->get_param(pipe->screen,
                                     PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
 
