@@ -253,7 +253,7 @@ clear_tile(struct softpipe_cached_tile *tile,
 
    switch (util_format_get_blocksize(format)) {
    case 1:
-      memset(tile->data.any, clear_value, TILE_SIZE * TILE_SIZE);
+      memset(tile->data.any, (int) clear_value, TILE_SIZE * TILE_SIZE);
       break;
    case 2:
       if (clear_value == 0) {
@@ -274,7 +274,7 @@ clear_tile(struct softpipe_cached_tile *tile,
       else {
          for (i = 0; i < TILE_SIZE; i++) {
             for (j = 0; j < TILE_SIZE; j++) {
-               tile->data.depth32[i][j] = clear_value;
+               tile->data.depth32[i][j] = (uint) clear_value;
             }
          }
       }
