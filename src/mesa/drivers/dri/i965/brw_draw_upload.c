@@ -413,8 +413,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
       vs_inputs |= VERT_BIT_EDGEFLAG;
    }
 
-   /* First build an array of pointers to ve's in vb.inputs_read
-    */
    if (0)
       printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
 
