@@ -696,7 +696,7 @@ _mesa_combine_programs(struct gl_context *ctx,
    const GLuint newLength = lenA + lenB;
    GLboolean usedTemps[MAX_PROGRAM_TEMPS];
    GLuint firstTemp = 0;
-   GLbitfield inputsB;
+   GLbitfield64 inputsB;
    GLuint i;
 
    ASSERT(progA->Target == progB->Target);
@@ -724,7 +724,7 @@ _mesa_combine_programs(struct gl_context *ctx,
    if (newProg->Target == GL_FRAGMENT_PROGRAM_ARB) {
       const struct gl_fragment_program *fprogA, *fprogB;
       struct gl_fragment_program *newFprog;
-      GLbitfield progB_inputsRead = progB->InputsRead;
+      GLbitfield64 progB_inputsRead = progB->InputsRead;
       GLint progB_colorFile, progB_colorIndex;
 
       fprogA = gl_fragment_program_const(progA);
