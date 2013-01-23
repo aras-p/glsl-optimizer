@@ -462,7 +462,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
    for (i = j = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
       const struct gl_client_array *glarray = input->glarray;
-      int type_size = get_size(glarray->Type);
 
       if (_mesa_is_bufferobj(glarray->BufferObj)) {
 	 struct intel_buffer_object *intel_buffer =
@@ -490,7 +489,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
 	    /* Named buffer object: Just reference its contents directly. */
             buffer->bo = intel_bufferobj_source(intel,
-                                                intel_buffer, type_size,
+                                                intel_buffer, 1,
 						&buffer->offset);
 	    drm_intel_bo_reference(buffer->bo);
 	    buffer->offset += (uintptr_t)glarray->Ptr;
@@ -525,11 +524,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 else if (interleaved != glarray->StrideB ||
 		  (uintptr_t)(glarray->Ptr - ptr) > interleaved)
 	 {
-	    interleaved = 0;
-	 }
-	 else if ((uintptr_t)(glarray->Ptr - ptr) & (type_size -1))
-	 {
-	    /* enforce natural alignment (for doubles) */
 	    interleaved = 0;
 	 }
 
