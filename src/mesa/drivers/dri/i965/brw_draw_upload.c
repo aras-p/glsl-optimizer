@@ -811,7 +811,7 @@ static void brw_upload_indices(struct brw_context *brw)
           GLubyte *map = ctx->Driver.MapBufferRange(ctx,
                                                     offset,
                                                     ib_size,
-                                                    GL_MAP_WRITE_BIT,
+                                                    GL_MAP_READ_BIT,
                                                     bufferobj);
 
           intel_upload_data(&brw->intel, map, ib_size, ib_type_size,
