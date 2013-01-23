@@ -232,7 +232,7 @@ debug_get_flags_option(const char *name,
    unsigned long result;
    const char *str;
    const struct debug_named_value *orig = flags;
-   int namealign = 0;
+   unsigned namealign = 0;
    
    str = os_get_option(name);
    if(!str)
