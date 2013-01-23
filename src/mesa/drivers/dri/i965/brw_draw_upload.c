@@ -223,16 +223,19 @@ static GLuint byte_types_scale[5] = {
  * Format will be GL_RGBA or possibly GL_BGRA for GLubyte[4] color arrays.
  */
 static unsigned
-get_surface_type(struct intel_context *intel, GLenum type, GLuint size,
-                 GLenum format, bool normalized, bool integer)
+get_surface_type(struct intel_context *intel,
+                 const struct gl_client_array *glarray)
 {
+   int size = glarray->Size;
+
    if (unlikely(INTEL_DEBUG & DEBUG_VERTS))
       printf("type %s size %d normalized %d\n", 
-		   _mesa_lookup_enum_by_nr(type), size, normalized);
+             _mesa_lookup_enum_by_nr(glarray->Type),
+             glarray->Size, glarray->Normalized);
 
-   if (integer) {
-      assert(format == GL_RGBA); /* sanity check */
-      switch (type) {
+   if (glarray->Integer) {
+      assert(glarray->Format == GL_RGBA); /* sanity check */
+      switch (glarray->Type) {
       case GL_INT: return int_types_direct[size];
       case GL_SHORT: return short_types_direct[size];
       case GL_BYTE: return byte_types_direct[size];
@@ -241,8 +244,8 @@ get_surface_type(struct intel_context *intel, GLenum type, GLuint size,
       case GL_UNSIGNED_BYTE: return ubyte_types_direct[size];
       default: assert(0); return 0;
       }
-   } else if (normalized) {
-      switch (type) {
+   } else if (glarray->Normalized) {
+      switch (glarray->Type) {
       case GL_DOUBLE: return double_types[size];
       case GL_FLOAT: return float_types[size];
       case GL_HALF_FLOAT: return half_float_types[size];
@@ -252,7 +255,7 @@ get_surface_type(struct intel_context *intel, GLenum type, GLuint size,
       case GL_UNSIGNED_INT: return uint_types_norm[size];
       case GL_UNSIGNED_SHORT: return ushort_types_norm[size];
       case GL_UNSIGNED_BYTE:
-         if (format == GL_BGRA) {
+         if (glarray->Format == GL_BGRA) {
             /* See GL_EXT_vertex_array_bgra */
             assert(size == 4);
             return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
@@ -268,7 +271,7 @@ get_surface_type(struct intel_context *intel, GLenum type, GLuint size,
       case GL_INT_2_10_10_10_REV:
          assert(size == 4);
          if (intel->gen >= 8 || intel->is_haswell) {
-            return format == GL_BGRA
+            return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_SNORM
                : BRW_SURFACEFORMAT_R10G10B10A2_SNORM;
          }
@@ -276,7 +279,7 @@ get_surface_type(struct intel_context *intel, GLenum type, GLuint size,
       case GL_UNSIGNED_INT_2_10_10_10_REV:
          assert(size == 4);
          if (intel->gen >= 8 || intel->is_haswell) {
-            return format == GL_BGRA
+            return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_UNORM
                : BRW_SURFACEFORMAT_R10G10B10A2_UNORM;
          }
@@ -290,25 +293,25 @@ get_surface_type(struct intel_context *intel, GLenum type, GLuint size,
        * like to use here, so upload everything as UINT and fix
        * it in the shader
        */
-      if (type == GL_INT_2_10_10_10_REV) {
+      if (glarray->Type == GL_INT_2_10_10_10_REV) {
          assert(size == 4);
          if (intel->gen >= 8 || intel->is_haswell) {
-            return format == GL_BGRA
+            return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_SSCALED
                : BRW_SURFACEFORMAT_R10G10B10A2_SSCALED;
          }
          return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
-      } else if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {
+      } else if (glarray->Type == GL_UNSIGNED_INT_2_10_10_10_REV) {
          assert(size == 4);
          if (intel->gen >= 8 || intel->is_haswell) {
-            return format == GL_BGRA
+            return glarray->Format == GL_BGRA
                ? BRW_SURFACEFORMAT_B10G10R10A2_USCALED
                : BRW_SURFACEFORMAT_R10G10B10A2_USCALED;
          }
          return BRW_SURFACEFORMAT_R10G10B10A2_UINT;
       }
-      assert(format == GL_RGBA); /* sanity check */
-      switch (type) {
+      assert(glarray->Format == GL_RGBA); /* sanity check */
+      switch (glarray->Type) {
       case GL_DOUBLE: return double_types[size];
       case GL_FLOAT: return float_types[size];
       case GL_HALF_FLOAT: return half_float_types[size];
@@ -662,12 +665,7 @@ static void brw_emit_vertices(struct brw_context *brw)
    OUT_BATCH((_3DSTATE_VERTEX_ELEMENTS << 16) | (2 * nr_elements - 1));
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
-      uint32_t format = get_surface_type(intel,
-					 input->glarray->Type,
-					 input->glarray->Size,
-					 input->glarray->Format,
-					 input->glarray->Normalized,
-                                         input->glarray->Integer);
+      uint32_t format = get_surface_type(intel, input->glarray);
       uint32_t comp0 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp1 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp2 = BRW_VE1_COMPONENT_STORE_SRC;
@@ -728,12 +726,7 @@ static void brw_emit_vertices(struct brw_context *brw)
    }
 
    if (intel->gen >= 6 && gen6_edgeflag_input) {
-      uint32_t format = get_surface_type(intel,
-					 gen6_edgeflag_input->glarray->Type,
-                                         gen6_edgeflag_input->glarray->Size,
-                                         gen6_edgeflag_input->glarray->Format,
-                                         gen6_edgeflag_input->glarray->Normalized,
-                                         gen6_edgeflag_input->glarray->Integer);
+      uint32_t format = get_surface_type(intel, gen6_edgeflag_input->glarray);
 
       OUT_BATCH((gen6_edgeflag_input->buffer << GEN6_VE0_INDEX_SHIFT) |
                 GEN6_VE0_VALID |
