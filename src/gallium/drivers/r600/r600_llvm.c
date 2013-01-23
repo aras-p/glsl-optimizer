@@ -83,48 +83,40 @@ static LLVMValueRef llvm_fetch_system_value(
 static LLVMValueRef
 llvm_load_input_helper(
 	struct radeon_llvm_context * ctx,
-	const char *intrinsic, unsigned idx)
+	unsigned idx, int interp, int ij_index)
 {
-	LLVMValueRef reg = lp_build_const_int32(
-		ctx->soa.bld_base.base.gallivm,
-		idx);
-	return build_intrinsic(
-		ctx->soa.bld_base.base.gallivm->builder,
-		intrinsic,
-		ctx->soa.bld_base.base.elem_type, &reg, 1,
-		LLVMReadNoneAttribute);
+	const struct lp_build_context * bb = &ctx->soa.bld_base.base;
+	LLVMValueRef arg[2];
+	int arg_count;
+	const char * intrinsic;
+
+	arg[0] = lp_build_const_int32(bb->gallivm, idx);
+
+	if (interp) {
+		intrinsic = "llvm.R600.interp.input";
+		arg[1] = lp_build_const_int32(bb->gallivm, ij_index);
+		arg_count = 2;
+	} else {
+		intrinsic = "llvm.R600.load.input";
+		arg_count = 1;
+	}
+
+	return build_intrinsic(bb->gallivm->builder, intrinsic,
+		bb->elem_type, &arg[0], arg_count, LLVMReadNoneAttribute);
 }
 
 static LLVMValueRef
 llvm_face_select_helper(
 	struct radeon_llvm_context * ctx,
-	const char *intrinsic, unsigned face_register,
-	unsigned frontcolor_register, unsigned backcolor_regiser)
+	unsigned face_loc, LLVMValueRef front_color, LLVMValueRef back_color)
 {
-
-	LLVMValueRef backcolor = llvm_load_input_helper(
-		ctx,
-		intrinsic,
-		backcolor_regiser);
-	LLVMValueRef front_color = llvm_load_input_helper(
-		ctx,
-		intrinsic,
-		frontcolor_register);
-	LLVMValueRef face = llvm_load_input_helper(
-		ctx,
-		"llvm.R600.load.input",
-		face_register);
-	LLVMValueRef is_face_positive = LLVMBuildFCmp(
-		ctx->soa.bld_base.base.gallivm->builder,
-		LLVMRealUGT, face,
-		lp_build_const_float(ctx->soa.bld_base.base.gallivm, 0.0f),
-		"");
-	return LLVMBuildSelect(
-		ctx->soa.bld_base.base.gallivm->builder,
-		is_face_positive,
-		front_color,
-		backcolor,
-		"");
+	const struct lp_build_context * bb = &ctx->soa.bld_base.base;
+	LLVMValueRef face = llvm_load_input_helper(ctx, face_loc, 0, 0);
+	LLVMValueRef is_front = LLVMBuildFCmp(
+		bb->gallivm->builder, LLVMRealUGT, face,
+		lp_build_const_float(bb->gallivm, 0.0f),	"");
+	return LLVMBuildSelect(bb->gallivm->builder, is_front,
+		front_color, back_color, "");
 }
 
 static void llvm_load_input(
@@ -132,110 +124,59 @@ static void llvm_load_input(
 	unsigned input_index,
 	const struct tgsi_full_declaration *decl)
 {
+	const struct r600_shader_io * input = &ctx->r600_inputs[input_index];
 	unsigned chan;
+	unsigned interp = 0;
+	int ij_index;
+	int two_side = (ctx->two_side && input->name == TGSI_SEMANTIC_COLOR);
+	LLVMValueRef v;
 
-	const char *intrinsics = "llvm.R600.load.input";
-	unsigned offset = 4 * ctx->reserved_reg_count;
-
-	if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->chip_class >= EVERGREEN) {
-		switch (decl->Interp.Interpolate) {
-		case TGSI_INTERPOLATE_COLOR:
-		case TGSI_INTERPOLATE_PERSPECTIVE:
-			offset = 0;
-			intrinsics = "llvm.R600.load.input.perspective";
-			break;
-		case TGSI_INTERPOLATE_LINEAR:
-			offset = 0;
-			intrinsics = "llvm.R600.load.input.linear";
-			break;
-		case TGSI_INTERPOLATE_CONSTANT:
-			offset = 0;
-			intrinsics = "llvm.R600.load.input.constant";
-			break;
-		default:
-			assert(0 && "Unknow Interpolate mode");
-		}
+	if (ctx->chip_class >= EVERGREEN && ctx->type == TGSI_PROCESSOR_FRAGMENT &&
+			input->spi_sid) {
+		interp = 1;
+		ij_index = (input->interpolate > 0) ? input->ij_index : -1;
 	}
 
 	for (chan = 0; chan < 4; chan++) {
-		unsigned soa_index = radeon_llvm_reg_index_soa(input_index,
-								chan);
+		unsigned soa_index = radeon_llvm_reg_index_soa(input_index, chan);
+		int loc;
 
-		switch (decl->Semantic.Name) {
-		case TGSI_SEMANTIC_FACE:
-			ctx->inputs[soa_index] = llvm_load_input_helper(ctx,
-				"llvm.R600.load.input",
-				4 * ctx->face_input);
-			break;
-		case TGSI_SEMANTIC_POSITION:
-			if (ctx->type != TGSI_PROCESSOR_FRAGMENT || chan != 3) {
-				ctx->inputs[soa_index] = llvm_load_input_helper(ctx,
-					"llvm.R600.load.input",
-					soa_index + (ctx->reserved_reg_count * 4));
-			} else {
-				LLVMValueRef w_coord = llvm_load_input_helper(ctx,
-				"llvm.R600.load.input",
-				soa_index + (ctx->reserved_reg_count * 4));
-				ctx->inputs[soa_index] = LLVMBuildFDiv(ctx->gallivm.builder,
-				lp_build_const_float(&(ctx->gallivm), 1.0f), w_coord, "");
-			}
-			break;
-		case TGSI_SEMANTIC_COLOR:
-			if (ctx->two_side) {
-				unsigned front_location, back_location;
-				unsigned back_reg = ctx->r600_inputs[input_index]
-					.potential_back_facing_reg;
-				if (ctx->chip_class >= EVERGREEN) {
-					front_location = 4 * ctx->r600_inputs[input_index].lds_pos + chan;
-					back_location = 4 * ctx->r600_inputs[back_reg].lds_pos + chan;
-				} else {
-					front_location = soa_index + 4 * ctx->reserved_reg_count;
-					back_location = radeon_llvm_reg_index_soa(
-						ctx->r600_inputs[back_reg].gpr,
-						chan);
-				}
-				ctx->inputs[soa_index] = llvm_face_select_helper(ctx,
-					intrinsics,
-					4 * ctx->face_input, front_location, back_location);
-				break;
-			}
-		default:
-			{
-				unsigned location;
-				if (ctx->chip_class >= EVERGREEN) {
-					location = 4 * ctx->r600_inputs[input_index].lds_pos + chan;
-				} else {
-					location = soa_index + 4 * ctx->reserved_reg_count;
-				}
-				/* The * 4 is assuming that we are in soa mode. */
-				ctx->inputs[soa_index] = llvm_load_input_helper(ctx,
-					intrinsics, location);
-					
-			break;
-			}
+		if (interp) {
+			loc = 4 * input->lds_pos + chan;
+		} else {
+			if (input->name == TGSI_SEMANTIC_FACE)
+				loc = 4 * ctx->face_gpr;
+			else
+				loc = 4 * input->gpr + chan;
 		}
+
+		v = llvm_load_input_helper(ctx, loc, interp, ij_index);
+
+		if (two_side) {
+			struct r600_shader_io * back_input =
+					&ctx->r600_inputs[input->back_color_input];
+			int back_loc = interp ? back_input->lds_pos : back_input->gpr;
+			LLVMValueRef v2;
+
+			back_loc = 4 * back_loc + chan;
+			v2 = llvm_load_input_helper(ctx, back_loc, interp, ij_index);
+			v = llvm_face_select_helper(ctx, 4 * ctx->face_gpr, v, v2);
+		} else if (input->name == TGSI_SEMANTIC_POSITION &&
+				ctx->type == TGSI_PROCESSOR_FRAGMENT && chan == 3) {
+			/* RCP for fragcoord.w */
+			v = LLVMBuildFDiv(ctx->gallivm.builder,
+					lp_build_const_float(&(ctx->gallivm), 1.0f),
+					v, "");
+		}
+
+		ctx->inputs[soa_index] = v;
 	}
 }
 
 static void llvm_emit_prologue(struct lp_build_tgsi_context * bld_base)
 {
 	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
-	struct lp_build_context * base = &bld_base->base;
-	unsigned i;
 
-	/* Reserve special input registers */
-	for (i = 0; i < ctx->reserved_reg_count; i++) {
-		unsigned chan;
-		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
-			LLVMValueRef reg_index = lp_build_const_int32(
-					base->gallivm,
-					radeon_llvm_reg_index_soa(i, chan));
-			lp_build_intrinsic_unary(base->gallivm->builder,
-				"llvm.AMDGPU.reserve.reg",
-				LLVMVoidTypeInContext(base->gallivm->context),
-				reg_index);
-		}
-	}
 }
 
 static void llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)

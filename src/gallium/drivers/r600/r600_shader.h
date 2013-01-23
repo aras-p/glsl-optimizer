@@ -32,9 +32,10 @@ struct r600_shader_io {
 	int			sid;
 	int			spi_sid;
 	unsigned		interpolate;
+	unsigned		ij_index;
 	boolean                 centroid;
 	unsigned		lds_pos; /* for evergreen */
-	unsigned		potential_back_facing_reg;
+	unsigned		back_color_input;
 	unsigned		write_mask;
 };
 

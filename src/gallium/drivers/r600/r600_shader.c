@@ -650,19 +650,15 @@ static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
-static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int input)
+static void evergreen_interp_assign_ij_index(struct r600_shader_ctx *ctx,
+		int input)
 {
-	int i, r;
-	struct r600_bytecode_alu alu;
-	int gpr = 0, base_chan = 0;
 	int ij_index = 0;
 
 	if (ctx->shader->input[input].interpolate == TGSI_INTERPOLATE_PERSPECTIVE) {
-		ij_index = 0;
 		if (ctx->shader->input[input].centroid)
 			ij_index++;
 	} else if (ctx->shader->input[input].interpolate == TGSI_INTERPOLATE_LINEAR) {
-		ij_index = 0;
 		/* if we have perspective add one */
 		if (ctx->input_perspective)  {
 			ij_index++;
@@ -673,6 +669,16 @@ static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int input)
 		if (ctx->shader->input[input].centroid)
 			ij_index++;
 	}
+
+	ctx->shader->input[input].ij_index = ij_index;
+}
+
+static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int input)
+{
+	int i, r;
+	struct r600_bytecode_alu alu;
+	int gpr = 0, base_chan = 0;
+	int ij_index = ctx->shader->input[input].ij_index;
 
 	/* work out gpr and base_chan from index */
 	gpr = ij_index / 2;
@@ -806,12 +812,13 @@ static int evergreen_interp_input(struct r600_shader_ctx *ctx, int index)
 
 	if (ctx->shader->input[index].spi_sid) {
 		ctx->shader->input[index].lds_pos = ctx->shader->nlds++;
-		if (!ctx->use_llvm) {
-			if (ctx->shader->input[index].interpolate > 0) {
+		if (ctx->shader->input[index].interpolate > 0) {
+			evergreen_interp_assign_ij_index(ctx, index);
+			if (!ctx->use_llvm)
 				r = evergreen_interp_alu(ctx, index);
-			} else {
+		} else {
+			if (!ctx->use_llvm)
 				r = evergreen_interp_flat(ctx, index);
-			}
 		}
 	}
 	return r;
@@ -857,11 +864,11 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		i = ctx->shader->ninput++;
 		ctx->shader->input[i].name = d->Semantic.Name;
 		ctx->shader->input[i].sid = d->Semantic.Index;
-		ctx->shader->input[i].spi_sid = r600_spi_sid(&ctx->shader->input[i]);
 		ctx->shader->input[i].interpolate = d->Interp.Interpolate;
 		ctx->shader->input[i].centroid = d->Interp.Centroid;
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + d->Range.First;
 		if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
+			ctx->shader->input[i].spi_sid = r600_spi_sid(&ctx->shader->input[i]);
 			switch (ctx->shader->input[i].name) {
 			case TGSI_SEMANTIC_FACE:
 				ctx->face_gpr = ctx->shader->input[i].gpr;
@@ -883,11 +890,11 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		i = ctx->shader->noutput++;
 		ctx->shader->output[i].name = d->Semantic.Name;
 		ctx->shader->output[i].sid = d->Semantic.Index;
-		ctx->shader->output[i].spi_sid = r600_spi_sid(&ctx->shader->output[i]);
 		ctx->shader->output[i].gpr = ctx->file_offset[TGSI_FILE_OUTPUT] + d->Range.First;
 		ctx->shader->output[i].interpolate = d->Interp.Interpolate;
 		ctx->shader->output[i].write_mask = d->Declaration.UsageMask;
 		if (ctx->type == TGSI_PROCESSOR_VERTEX) {
+			ctx->shader->output[i].spi_sid = r600_spi_sid(&ctx->shader->output[i]);
 			switch (d->Semantic.Name) {
 			case TGSI_SEMANTIC_CLIPDIST:
 				ctx->shader->clip_dist_write |= d->Declaration.UsageMask << (d->Semantic.Index << 2);
@@ -1193,17 +1200,9 @@ static int process_twoside_color_inputs(struct r600_shader_ctx *ctx)
 
 	for (i = 0; i < count; i++) {
 		if (ctx->shader->input[i].name == TGSI_SEMANTIC_COLOR) {
-			unsigned back_facing_reg = ctx->shader->input[i].potential_back_facing_reg;
-			if (ctx->bc->chip_class >= EVERGREEN) {
-				if ((r = evergreen_interp_input(ctx, back_facing_reg)))
-					return r;
-			}
-			
-			if (!ctx->use_llvm) {
-				r = select_twoside_color(ctx, i, back_facing_reg);
-				if (r)
-					return r;
-			}
+			r = select_twoside_color(ctx, i, ctx->shader->input[i].back_color_input);
+			if (r)
+				return r;
 		}
 	}
 	return 0;
@@ -1396,7 +1395,11 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				// TGSI to LLVM needs to know the lds position of inputs.
 				// Non LLVM path computes it later (in process_twoside_color)
 				ctx.shader->input[ni].lds_pos = next_lds_loc++;
-				ctx.shader->input[i].potential_back_facing_reg = ni;
+				ctx.shader->input[i].back_color_input = ni;
+				if (ctx.bc->chip_class >= EVERGREEN) {
+					if ((r = evergreen_interp_input(&ctx, ni)))
+						return r;
+				}
 			}
 		}
 	}
@@ -1408,10 +1411,9 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		LLVMModuleRef mod;
 		unsigned dump = 0;
 		memset(&radeon_llvm_ctx, 0, sizeof(radeon_llvm_ctx));
-		radeon_llvm_ctx.reserved_reg_count = ctx.file_offset[TGSI_FILE_INPUT];
 		radeon_llvm_ctx.type = ctx.type;
 		radeon_llvm_ctx.two_side = shader->two_side;
-		radeon_llvm_ctx.face_input = ctx.face_gpr;
+		radeon_llvm_ctx.face_gpr = ctx.face_gpr;
 		radeon_llvm_ctx.r600_inputs = ctx.shader->input;
 		radeon_llvm_ctx.r600_outputs = ctx.shader->output;
 		radeon_llvm_ctx.color_buffer_count = MAX2(key.nr_cbufs , 1);
@@ -1442,9 +1444,24 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	if (shader->fs_write_all && rscreen->chip_class >= EVERGREEN)
 		shader->nr_ps_max_color_exports = 8;
 
-	if (ctx.fragcoord_input >= 0 && !use_llvm) {
-		if (ctx.bc->chip_class == CAYMAN) {
-			for (j = 0 ; j < 4; j++) {
+	if (!use_llvm) {
+		if (ctx.fragcoord_input >= 0) {
+			if (ctx.bc->chip_class == CAYMAN) {
+				for (j = 0 ; j < 4; j++) {
+					struct r600_bytecode_alu alu;
+					memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+					alu.inst = BC_INST(ctx.bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE);
+					alu.src[0].sel = shader->input[ctx.fragcoord_input].gpr;
+					alu.src[0].chan = 3;
+
+					alu.dst.sel = shader->input[ctx.fragcoord_input].gpr;
+					alu.dst.chan = j;
+					alu.dst.write = (j == 3);
+					alu.last = 1;
+					if ((r = r600_bytecode_add_alu(ctx.bc, &alu)))
+						return r;
+				}
+			} else {
 				struct r600_bytecode_alu alu;
 				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 				alu.inst = BC_INST(ctx.bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE);
@@ -1452,65 +1469,49 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				alu.src[0].chan = 3;
 
 				alu.dst.sel = shader->input[ctx.fragcoord_input].gpr;
-				alu.dst.chan = j;
-				alu.dst.write = (j == 3);
+				alu.dst.chan = 3;
+				alu.dst.write = 1;
 				alu.last = 1;
 				if ((r = r600_bytecode_add_alu(ctx.bc, &alu)))
 					return r;
 			}
-		} else {
-			struct r600_bytecode_alu alu;
-			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
-			alu.inst = BC_INST(ctx.bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE);
-			alu.src[0].sel = shader->input[ctx.fragcoord_input].gpr;
-			alu.src[0].chan = 3;
+		}
 
-			alu.dst.sel = shader->input[ctx.fragcoord_input].gpr;
-			alu.dst.chan = 3;
-			alu.dst.write = 1;
-			alu.last = 1;
-			if ((r = r600_bytecode_add_alu(ctx.bc, &alu)))
+		if (shader->two_side && ctx.colors_used) {
+			if ((r = process_twoside_color_inputs(&ctx)))
 				return r;
 		}
-	}
 
-	if (shader->two_side && ctx.colors_used) {
-		if ((r = process_twoside_color_inputs(&ctx)))
-			return r;
-	}
+		tgsi_parse_init(&ctx.parse, tokens);
+		while (!tgsi_parse_end_of_tokens(&ctx.parse)) {
+			tgsi_parse_token(&ctx.parse);
+			switch (ctx.parse.FullToken.Token.Type) {
+			case TGSI_TOKEN_TYPE_INSTRUCTION:
+				r = tgsi_is_supported(&ctx);
+				if (r)
+					goto out_err;
+				ctx.max_driver_temp_used = 0;
+				/* reserve first tmp for everyone */
+				r600_get_temp(&ctx);
 
-	tgsi_parse_init(&ctx.parse, tokens);
-	while (!tgsi_parse_end_of_tokens(&ctx.parse)) {
-		tgsi_parse_token(&ctx.parse);
-		switch (ctx.parse.FullToken.Token.Type) {
-		case TGSI_TOKEN_TYPE_INSTRUCTION:
-			if (use_llvm) {
-				continue;
+				opcode = ctx.parse.FullToken.FullInstruction.Instruction.Opcode;
+				if ((r = tgsi_split_constant(&ctx)))
+					goto out_err;
+				if ((r = tgsi_split_literal_constant(&ctx)))
+					goto out_err;
+				if (ctx.bc->chip_class == CAYMAN)
+					ctx.inst_info = &cm_shader_tgsi_instruction[opcode];
+				else if (ctx.bc->chip_class >= EVERGREEN)
+					ctx.inst_info = &eg_shader_tgsi_instruction[opcode];
+				else
+					ctx.inst_info = &r600_shader_tgsi_instruction[opcode];
+				r = ctx.inst_info->process(&ctx);
+				if (r)
+					goto out_err;
+				break;
+			default:
+				break;
 			}
-			r = tgsi_is_supported(&ctx);
-			if (r)
-				goto out_err;
-			ctx.max_driver_temp_used = 0;
-			/* reserve first tmp for everyone */
-			r600_get_temp(&ctx);
-
-			opcode = ctx.parse.FullToken.FullInstruction.Instruction.Opcode;
-			if ((r = tgsi_split_constant(&ctx)))
-				goto out_err;
-			if ((r = tgsi_split_literal_constant(&ctx)))
-				goto out_err;
-			if (ctx.bc->chip_class == CAYMAN)
-				ctx.inst_info = &cm_shader_tgsi_instruction[opcode];
-			else if (ctx.bc->chip_class >= EVERGREEN)
-				ctx.inst_info = &eg_shader_tgsi_instruction[opcode];
-			else
-				ctx.inst_info = &r600_shader_tgsi_instruction[opcode];
-			r = ctx.inst_info->process(&ctx);
-			if (r)
-				goto out_err;
-			break;
-		default:
-			break;
 		}
 	}
 
