@@ -1388,10 +1388,10 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          if (ctx->API != API_OPENGLES || !ctx->Extensions.OES_draw_texture)
             goto invalid_pname;
 
-         params[0] = obj->CropRect[0];
-         params[1] = obj->CropRect[1];
-         params[2] = obj->CropRect[2];
-         params[3] = obj->CropRect[3];
+         params[0] = (GLfloat) obj->CropRect[0];
+         params[1] = (GLfloat) obj->CropRect[1];
+         params[2] = (GLfloat) obj->CropRect[2];
+         params[3] = (GLfloat) obj->CropRect[3];
          break;
 
       case GL_TEXTURE_SWIZZLE_R_EXT:
