@@ -72,7 +72,7 @@ target_to_target(GLenum target)
  * created, based on the chip generation and the surface type.
  */
 static enum intel_msaa_layout
-compute_msaa_layout(struct intel_context *intel, gl_format format)
+compute_msaa_layout(struct intel_context *intel, gl_format format, GLenum target)
 {
    /* Prior to Gen7, all MSAA surfaces used IMS layout. */
    if (intel->gen < 7)
@@ -101,7 +101,23 @@ compute_msaa_layout(struct intel_context *intel, gl_format format)
          assert(intel->gen == 7);
          return INTEL_MSAA_LAYOUT_UMS;
       } else {
-         return INTEL_MSAA_LAYOUT_CMS;
+         /* For now, if we're going to be texturing from this surface,
+          * force UMS, so that the shader doesn't have to do different things
+          * based on whether there's a multisample control surface needing sampled first.
+          * We can't just blindly read the MCS surface in all cases because:
+          *
+          * From the Ivy Bridge PRM, Vol4 Part1 p77 ("MCS Enable"):
+          *
+          *    If this field is disabled and the sampling engine <ld_mcs> message
+          *    is issued on this surface, the MCS surface may be accessed. Software
+          *    must ensure that the surface is defined to avoid GTT errors.
+          */
+         if (target == GL_TEXTURE_2D_MULTISAMPLE ||
+             target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
+            return INTEL_MSAA_LAYOUT_UMS;
+         } else {
+            return INTEL_MSAA_LAYOUT_CMS;
+         }
       }
    }
 }
@@ -150,7 +166,7 @@ intel_miptree_create_layout(struct intel_context *intel,
 
    if (num_samples > 1) {
       /* Adjust width/height/depth for MSAA */
-      mt->msaa_layout = compute_msaa_layout(intel, format);
+      mt->msaa_layout = compute_msaa_layout(intel, format, mt->target);
       if (mt->msaa_layout == INTEL_MSAA_LAYOUT_IMS) {
          /* In the Sandy Bridge PRM, volume 4, part 1, page 31, it says:
           *
