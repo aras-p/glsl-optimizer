@@ -984,8 +984,8 @@ intel_query_dri2_buffers(struct intel_context *intel,
    __DRIscreen *screen = intel->intelScreen->driScrnPriv;
    struct gl_framebuffer *fb = drawable->driverPrivate;
    int i = 0;
-   const int max_attachments = 4;
-   unsigned *attachments = calloc(2 * max_attachments, sizeof(unsigned));
+   unsigned attachments[8];
+   const int max_attachments = ARRAY_SIZE(attachments) / 2;
 
    struct intel_renderbuffer *front_rb;
    struct intel_renderbuffer *back_rb;
@@ -993,6 +993,7 @@ intel_query_dri2_buffers(struct intel_context *intel,
    front_rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
    back_rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
 
+   memset(attachments, 0, sizeof(attachments));
    if ((intel->is_front_buffer_rendering ||
 	intel->is_front_buffer_reading ||
 	!back_rb) && front_rb) {
@@ -1013,7 +1014,6 @@ intel_query_dri2_buffers(struct intel_context *intel,
 							attachments, i / 2,
 							buffer_count,
 							drawable->loaderPrivate);
-   free(attachments);
 }
 
 /**
