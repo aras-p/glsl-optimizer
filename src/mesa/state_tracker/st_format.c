@@ -1449,14 +1449,12 @@ static const struct exact_format_mapping rgbx8888_tbl[] =
    { GL_BGRA,     GL_UNSIGNED_INT_8_8_8_8,        PIPE_FORMAT_X8R8G8B8_UNORM },
    { GL_BGRA,     GL_UNSIGNED_INT_8_8_8_8_REV,    PIPE_FORMAT_B8G8R8X8_UNORM },
    { GL_BGRA,     GL_UNSIGNED_BYTE,               PIPE_FORMAT_B8G8R8X8_UNORM },
-   /* No Mesa formats for these Gallium formats:
    { GL_RGBA,     GL_UNSIGNED_INT_8_8_8_8,        PIPE_FORMAT_X8B8G8R8_UNORM },
    { GL_ABGR_EXT, GL_UNSIGNED_INT_8_8_8_8_REV,    PIPE_FORMAT_X8B8G8R8_UNORM },
    { GL_RGBA,     GL_UNSIGNED_INT_8_8_8_8_REV,    PIPE_FORMAT_R8G8B8X8_UNORM },
    { GL_ABGR_EXT, GL_UNSIGNED_INT_8_8_8_8,        PIPE_FORMAT_R8G8B8X8_UNORM },
    { GL_RGBA,     GL_UNSIGNED_BYTE,               PIPE_FORMAT_R8G8B8X8_UNORM },
    { GL_ABGR_EXT, GL_UNSIGNED_BYTE,               PIPE_FORMAT_X8B8G8R8_UNORM },
-   */
    { 0,           0,                              0                          }
 };
 
