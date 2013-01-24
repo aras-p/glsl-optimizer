@@ -65,7 +65,9 @@ LOCAL_SHARED_LIBRARIES := \
 	libdl \
 	libhardware \
 	liblog \
-	libcutils
+	libcutils \
+	libgralloc_drm \
+
 
 # add libdrm if there are hardware drivers
 ifneq ($(MESA_GPU_DRIVERS),swrast)
