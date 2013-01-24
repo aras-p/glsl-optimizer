@@ -124,6 +124,11 @@ void vbo_exec_vtx_wrap( struct vbo_exec_context *exec )
     */
    vbo_exec_wrap_buffers( exec );
    
+   if (!exec->vtx.buffer_ptr) {
+      /* probably ran out of memory earlier when allocating the VBO */
+      return;
+   }
+
    /* Copy stored stored vertices to start of new list. 
     */
    assert(exec->vtx.max_vert - exec->vtx.vert_count > exec->vtx.copied.nr);
