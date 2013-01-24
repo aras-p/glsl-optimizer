@@ -568,9 +568,8 @@ draw_quad(struct gl_context *ctx, GLfloat x0, GLfloat y0, GLfloat z,
    struct pipe_resource *buf = NULL;
    unsigned offset;
 
-   u_upload_alloc(st->uploader, 0, 4 * sizeof(verts[0]), &offset, &buf,
-		  (void**)&verts);
-   if (!buf) {
+   if (u_upload_alloc(st->uploader, 0, 4 * sizeof(verts[0]), &offset,
+                      &buf, (void **) &verts) != PIPE_OK) {
       return;
    }
 

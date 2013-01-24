@@ -350,9 +350,8 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
       tBot = (GLfloat) height;
    }
 
-   u_upload_alloc(st->uploader, 0, 4 * sizeof(vertices[0]), vbuf_offset, vbuf,
-		  (void**)&vertices);
-   if (!vbuf) {
+   if (u_upload_alloc(st->uploader, 0, 4 * sizeof(vertices[0]),
+                      vbuf_offset, vbuf, (void **) &vertices) != PIPE_OK) {
       return;
    }
 

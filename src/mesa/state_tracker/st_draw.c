@@ -84,7 +84,12 @@ all_varyings_in_vbos(const struct gl_client_array *arrays[])
 }
 
 
-static void
+/**
+ * Basically, translate Mesa's index buffer information into
+ * a pipe_index_buffer object.
+ * \return TRUE or FALSE for success/failure
+ */
+static boolean
 setup_index_buffer(struct st_context *st,
                    const struct _mesa_index_buffer *ib,
                    struct pipe_index_buffer *ibuffer)
@@ -100,8 +105,12 @@ setup_index_buffer(struct st_context *st,
       ibuffer->offset = pointer_to_offset(ib->ptr);
    }
    else if (st->indexbuf_uploader) {
-      u_upload_data(st->indexbuf_uploader, 0, ib->count * ibuffer->index_size,
-                    ib->ptr, &ibuffer->offset, &ibuffer->buffer);
+      if (u_upload_data(st->indexbuf_uploader, 0,
+                        ib->count * ibuffer->index_size, ib->ptr,
+                        &ibuffer->offset, &ibuffer->buffer) != PIPE_OK) {
+         /* out of memory */
+         return FALSE;
+      }
       u_upload_unmap(st->indexbuf_uploader);
    }
    else {
@@ -110,6 +119,7 @@ setup_index_buffer(struct st_context *st,
    }
 
    cso_set_index_buffer(st->cso_context, ibuffer);
+   return TRUE;
 }
 
 
@@ -220,7 +230,10 @@ st_draw_vbo(struct gl_context *ctx,
             vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index,
                                    nr_prims);
 
-      setup_index_buffer(st, ib, &ibuffer);
+      if (!setup_index_buffer(st, ib, &ibuffer)) {
+         /* out of memory */
+         return;
+      }
 
       info.indexed = TRUE;
       if (min_index != ~0 && max_index != ~0) {

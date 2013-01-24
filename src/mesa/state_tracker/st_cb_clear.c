@@ -141,9 +141,8 @@ draw_quad(struct st_context *st,
    GLuint i, offset;
    float (*vertices)[2][4];  /**< vertex pos + color */
 
-   u_upload_alloc(st->uploader, 0, 4 * sizeof(vertices[0]), &offset, &vbuf,
-		  (void**)&vertices);
-   if (!vbuf) {
+   if (u_upload_alloc(st->uploader, 0, 4 * sizeof(vertices[0]),
+                      &offset, &vbuf, (void **) &vertices) != PIPE_OK) {
       return;
    }
 
