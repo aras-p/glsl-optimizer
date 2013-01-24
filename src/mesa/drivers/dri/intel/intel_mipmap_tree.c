@@ -1565,10 +1565,30 @@ intel_miptree_map_singlesample(struct intel_context *intel,
       intel_miptree_map_etc(intel, mt, map, level, slice);
    } else if (mt->stencil_mt) {
       intel_miptree_map_depthstencil(intel, mt, map, level, slice);
-   } else if (intel->has_llc &&
-	      !(mode & GL_MAP_WRITE_BIT) &&
-	      !mt->compressed &&
-	      mt->region->tiling == I915_TILING_X) {
+   }
+   /* According to the Ivy Bridge PRM, Vol1 Part4, section 1.2.1.2 (Graphics
+    * Data Size Limitations):
+    *
+    *    The BLT engine is capable of transferring very large quantities of
+    *    graphics data. Any graphics data read from and written to the
+    *    destination is permitted to represent a number of pixels that
+    *    occupies up to 65,536 scan lines and up to 32,768 bytes per scan line
+    *    at the destination. The maximum number of pixels that may be
+    *    represented per scan line’s worth of graphics data depends on the
+    *    color depth.
+    *
+    * Furthermore, intelEmitCopyBlit (which is called by
+    * intel_miptree_map_blit) uses a signed 16-bit integer to represent buffer
+    * pitch, so it can only handle buffer pitches < 32k.
+    *
+    * As a result of these two limitations, we can only use
+    * intel_miptree_map_blit() when the region's pitsh is less than 32k.
+    */
+   else if (intel->has_llc &&
+            !(mode & GL_MAP_WRITE_BIT) &&
+            !mt->compressed &&
+            mt->region->tiling == I915_TILING_X &&
+            mt->region->pitch < 32768) {
       intel_miptree_map_blit(intel, mt, map, level, slice);
    } else {
       intel_miptree_map_gtt(intel, mt, map, level, slice);
