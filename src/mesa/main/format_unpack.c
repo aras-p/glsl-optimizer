@@ -570,7 +570,7 @@ unpack_R16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RG1616(const void *src, GLfloat dst[][4], GLuint n)
+unpack_GR1616(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -583,7 +583,7 @@ unpack_RG1616(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RG1616_REV(const void *src, GLfloat dst[][4], GLuint n)
+unpack_RG1616(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -1572,8 +1572,8 @@ get_unpack_rgba_function(gl_format format)
       table[MESA_FORMAT_GR88] = unpack_GR88;
       table[MESA_FORMAT_RG88] = unpack_RG88;
       table[MESA_FORMAT_R16] = unpack_R16;
+      table[MESA_FORMAT_GR1616] = unpack_GR1616;
       table[MESA_FORMAT_RG1616] = unpack_RG1616;
-      table[MESA_FORMAT_RG1616_REV] = unpack_RG1616_REV;
       table[MESA_FORMAT_ARGB2101010] = unpack_ARGB2101010;
       table[MESA_FORMAT_ABGR2101010_UINT] = unpack_ABGR2101010_UINT;
       table[MESA_FORMAT_Z24_S8] = unpack_Z24_S8;

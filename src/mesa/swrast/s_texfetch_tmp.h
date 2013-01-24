@@ -797,7 +797,7 @@ static void FETCH(f_al88_rev)( const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_RG1616 ********************************************************/
+/* MESA_FORMAT_GR1616 ********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rg1616 texture, return 4 GLchans */
 static void FETCH(f_rg1616)( const struct swrast_texture_image *texImage,
@@ -813,7 +813,7 @@ static void FETCH(f_rg1616)( const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_RG1616_REV ****************************************************/
+/* MESA_FORMAT_RG1616 ****************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rg1616_rev texture, return 4 GLchans */
 static void FETCH(f_rg1616_rev)( const struct swrast_texture_image *texImage,

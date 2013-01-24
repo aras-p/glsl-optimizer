@@ -934,10 +934,10 @@ pack_float_R16(const GLfloat src[4], void *dst)
 }
 
 
-/* MESA_FORMAT_RG1616 */
+/* MESA_FORMAT_GR1616 */
 
 static void
-pack_ubyte_RG1616(const GLubyte src[4], void *dst)
+pack_ubyte_GR1616(const GLubyte src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLushort r = UBYTE_TO_USHORT(src[RCOMP]);
@@ -946,7 +946,7 @@ pack_ubyte_RG1616(const GLubyte src[4], void *dst)
 }
 
 static void
-pack_float_RG1616(const GLfloat src[4], void *dst)
+pack_float_GR1616(const GLfloat src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLushort r, g;
@@ -956,10 +956,10 @@ pack_float_RG1616(const GLfloat src[4], void *dst)
 }
 
 
-/* MESA_FORMAT_RG1616_REV */
+/* MESA_FORMAT_RG1616 */
 
 static void
-pack_ubyte_RG1616_REV(const GLubyte src[4], void *dst)
+pack_ubyte_RG1616(const GLubyte src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLushort r = UBYTE_TO_USHORT(src[RCOMP]);
@@ -969,7 +969,7 @@ pack_ubyte_RG1616_REV(const GLubyte src[4], void *dst)
 
 
 static void
-pack_float_RG1616_REV(const GLfloat src[4], void *dst)
+pack_float_RG1616(const GLfloat src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLushort r, g;
@@ -1719,8 +1719,8 @@ _mesa_get_pack_ubyte_rgba_function(gl_format format)
       table[MESA_FORMAT_GR88] = pack_ubyte_GR88;
       table[MESA_FORMAT_RG88] = pack_ubyte_RG88;
       table[MESA_FORMAT_R16] = pack_ubyte_R16;
+      table[MESA_FORMAT_GR1616] = pack_ubyte_GR1616;
       table[MESA_FORMAT_RG1616] = pack_ubyte_RG1616;
-      table[MESA_FORMAT_RG1616_REV] = pack_ubyte_RG1616_REV;
       table[MESA_FORMAT_ARGB2101010] = pack_ubyte_ARGB2101010;
       table[MESA_FORMAT_ABGR2101010_UINT] = pack_ubyte_ABGR2101010_UINT;
 
@@ -1865,8 +1865,8 @@ _mesa_get_pack_float_rgba_function(gl_format format)
       table[MESA_FORMAT_GR88] = pack_float_GR88;
       table[MESA_FORMAT_RG88] = pack_float_RG88;
       table[MESA_FORMAT_R16] = pack_float_R16;
+      table[MESA_FORMAT_GR1616] = pack_float_GR1616;
       table[MESA_FORMAT_RG1616] = pack_float_RG1616;
-      table[MESA_FORMAT_RG1616_REV] = pack_float_RG1616_REV;
       table[MESA_FORMAT_ARGB2101010] = pack_float_ARGB2101010;
       table[MESA_FORMAT_ABGR2101010_UINT] = pack_float_ABGR2101010_UINT;
 

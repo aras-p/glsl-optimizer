@@ -352,13 +352,13 @@ texfetch_funcs[] =
       fetch_texel_3d_f_r16
    },
    {
-      MESA_FORMAT_RG1616,
+      MESA_FORMAT_GR1616,
       fetch_texel_1d_f_rg1616,
       fetch_texel_2d_f_rg1616,
       fetch_texel_3d_f_rg1616
    },
    {
-      MESA_FORMAT_RG1616_REV,
+      MESA_FORMAT_RG1616,
       fetch_texel_1d_f_rg1616_rev,
       fetch_texel_2d_f_rg1616_rev,
       fetch_texel_3d_f_rg1616_rev

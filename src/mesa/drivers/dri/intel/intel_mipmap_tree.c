@@ -325,7 +325,7 @@ intel_miptree_create(struct intel_context *intel,
       format = MESA_FORMAT_SIGNED_R16;
       break;
    case MESA_FORMAT_ETC2_RG11_EAC:
-      format = MESA_FORMAT_RG1616;
+      format = MESA_FORMAT_GR1616;
       break;
    case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
       format = MESA_FORMAT_SIGNED_GR1616;

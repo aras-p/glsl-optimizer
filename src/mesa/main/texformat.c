@@ -812,7 +812,7 @@ _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
 	 break;
 
       case GL_RG16:
-	 RETURN_IF_SUPPORTED(MESA_FORMAT_RG1616);
+	 RETURN_IF_SUPPORTED(MESA_FORMAT_GR1616);
 	 break;
 
       default:

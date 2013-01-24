@@ -404,8 +404,8 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 2
    },
    {
-      MESA_FORMAT_RG1616,
-      "MESA_FORMAT_RG1616",
+      MESA_FORMAT_GR1616,
+      "MESA_FORMAT_GR1616",
       GL_RG,
       GL_UNSIGNED_NORMALIZED,
       16, 16, 0, 0,
@@ -413,8 +413,8 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 4
    },
    {
-      MESA_FORMAT_RG1616_REV,
-      "MESA_FORMAT_RG1616_REV",
+      MESA_FORMAT_RG1616,
+      "MESA_FORMAT_RG1616",
       GL_RG,
       GL_UNSIGNED_NORMALIZED,
       16, 16, 0, 0,
@@ -1953,7 +1953,7 @@ _mesa_get_uncompressed_format(gl_format format)
       return MESA_FORMAT_R16;
    case MESA_FORMAT_ETC2_RG11_EAC:
    case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
-      return MESA_FORMAT_RG1616;
+      return MESA_FORMAT_GR1616;
    default:
 #ifdef DEBUG
       assert(!_mesa_is_format_compressed(format));
@@ -2234,8 +2234,8 @@ _mesa_format_to_type_and_comps(gl_format format,
 
    case MESA_FORMAT_AL1616:
    case MESA_FORMAT_AL1616_REV:
+   case MESA_FORMAT_GR1616:
    case MESA_FORMAT_RG1616:
-   case MESA_FORMAT_RG1616_REV:
       *datatype = GL_UNSIGNED_SHORT;
       *comps = 2;
       return;
@@ -2839,10 +2839,10 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
    case MESA_FORMAT_R16:
       return format == GL_RED && type == GL_UNSIGNED_SHORT && littleEndian &&
          !swapBytes;
-   case MESA_FORMAT_RG1616:
+   case MESA_FORMAT_GR1616:
       return format == GL_RG && type == GL_UNSIGNED_SHORT && littleEndian &&
          !swapBytes;
-   case MESA_FORMAT_RG1616_REV:
+   case MESA_FORMAT_RG1616:
       return GL_FALSE;
 
    case MESA_FORMAT_ARGB2101010:

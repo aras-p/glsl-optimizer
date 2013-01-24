@@ -1915,8 +1915,8 @@ _mesa_texstore_unorm1616(TEXSTORE_PARAMS)
 
    ASSERT(dstFormat == MESA_FORMAT_AL1616 ||
           dstFormat == MESA_FORMAT_AL1616_REV ||
-	  dstFormat == MESA_FORMAT_RG1616 ||
-          dstFormat == MESA_FORMAT_RG1616_REV);
+	  dstFormat == MESA_FORMAT_GR1616 ||
+          dstFormat == MESA_FORMAT_RG1616);
    ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
 
    if (!ctx->_ImageTransferState &&
@@ -1924,7 +1924,7 @@ _mesa_texstore_unorm1616(TEXSTORE_PARAMS)
        ((dstFormat == MESA_FORMAT_AL1616 &&
          baseInternalFormat == GL_LUMINANCE_ALPHA &&
          srcFormat == GL_LUMINANCE_ALPHA) ||
-        (dstFormat == MESA_FORMAT_RG1616 &&
+        (dstFormat == MESA_FORMAT_GR1616 &&
          baseInternalFormat == srcFormat)) &&
        srcType == GL_UNSIGNED_SHORT &&
        littleEndian) {
@@ -1953,7 +1953,7 @@ _mesa_texstore_unorm1616(TEXSTORE_PARAMS)
          for (row = 0; row < srcHeight; row++) {
             GLuint *dstUI = (GLuint *) dstRow;
             if (dstFormat == MESA_FORMAT_AL1616 ||
-		dstFormat == MESA_FORMAT_RG1616) {
+		dstFormat == MESA_FORMAT_GR1616) {
                for (col = 0; col < srcWidth; col++) {
 		  GLushort l, a;
 
@@ -4051,8 +4051,8 @@ _mesa_get_texstore_func(gl_format format)
       table[MESA_FORMAT_GR88] = _mesa_texstore_unorm88;
       table[MESA_FORMAT_RG88] = _mesa_texstore_unorm88;
       table[MESA_FORMAT_R16] = _mesa_texstore_unorm16;
+      table[MESA_FORMAT_GR1616] = _mesa_texstore_unorm1616;
       table[MESA_FORMAT_RG1616] = _mesa_texstore_unorm1616;
-      table[MESA_FORMAT_RG1616_REV] = _mesa_texstore_unorm1616;
       table[MESA_FORMAT_ARGB2101010] = _mesa_texstore_argb2101010;
       table[MESA_FORMAT_Z24_S8] = _mesa_texstore_z24_s8;
       table[MESA_FORMAT_S8_Z24] = _mesa_texstore_s8_z24;

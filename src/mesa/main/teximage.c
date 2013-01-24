@@ -3917,7 +3917,7 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
    case GL_RG8:
       return MESA_FORMAT_GR88;
    case GL_RG16:
-      return MESA_FORMAT_RG1616;
+      return MESA_FORMAT_GR1616;
    case GL_RG16F:
       return MESA_FORMAT_RG_FLOAT16;
    case GL_RG32F:
