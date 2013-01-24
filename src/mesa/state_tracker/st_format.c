@@ -1522,17 +1522,17 @@ find_exact_format(GLint internalFormat, GLenum format, GLenum type)
  *                   when we're getting called from gl[Copy]TexImage().
  */
 enum pipe_format
-st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
+st_choose_format(struct st_context *st, GLenum internalFormat,
                  GLenum format, GLenum type,
                  enum pipe_texture_target target, unsigned sample_count,
                  unsigned bindings, boolean allow_dxt)
 {
-   GET_CURRENT_CONTEXT(ctx); /* XXX this should be a function parameter */
+   struct pipe_screen *screen = st->pipe->screen;
    int i, j;
    enum pipe_format pf;
 
    /* can't render to compressed formats at this time */
-   if (_mesa_is_compressed_format(ctx, internalFormat)
+   if (_mesa_is_compressed_format(st->ctx, internalFormat)
        && (bindings & ~PIPE_BIND_SAMPLER_VIEW)) {
       return PIPE_FORMAT_NONE;
    }
@@ -1568,7 +1568,7 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
  * Called by FBO code to choose a PIPE_FORMAT_ for drawing surfaces.
  */
 enum pipe_format
-st_choose_renderbuffer_format(struct pipe_screen *screen,
+st_choose_renderbuffer_format(struct st_context *st,
                               GLenum internalFormat, unsigned sample_count)
 {
    uint usage;
@@ -1576,7 +1576,7 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
       usage = PIPE_BIND_DEPTH_STENCIL;
    else
       usage = PIPE_BIND_RENDER_TARGET;
-   return st_choose_format(screen, internalFormat, GL_NONE, GL_NONE,
+   return st_choose_format(st, internalFormat, GL_NONE, GL_NONE,
                            PIPE_TEXTURE_2D, sample_count, usage, FALSE);
 }
 
@@ -1594,7 +1594,7 @@ st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
       internalFormat == GL_RGB || internalFormat == GL_RGBA ||
       internalFormat == GL_RGB8 || internalFormat == GL_RGBA8 ||
       internalFormat == GL_BGRA;
-   struct pipe_screen *screen = st_context(ctx)->pipe->screen;
+   struct st_context *st = st_context(ctx);
    enum pipe_format pFormat;
    unsigned bindings;
 
@@ -1618,12 +1618,12 @@ st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
 	 bindings |= PIPE_BIND_RENDER_TARGET;
    }
 
-   pFormat = st_choose_format(screen, internalFormat, format, type,
+   pFormat = st_choose_format(st, internalFormat, format, type,
                               PIPE_TEXTURE_2D, 0, bindings, ctx->Mesa_DXTn);
 
    if (pFormat == PIPE_FORMAT_NONE) {
       /* try choosing format again, this time without render target bindings */
-      pFormat = st_choose_format(screen, internalFormat, format, type,
+      pFormat = st_choose_format(st, internalFormat, format, type,
                                  PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW,
                                  ctx->Mesa_DXTn);
    }
@@ -1644,7 +1644,7 @@ size_t
 st_QuerySamplesForFormat(struct gl_context *ctx, GLenum internalFormat,
                          int samples[16])
 {
-   struct pipe_screen *screen = st_context(ctx)->pipe->screen;
+   struct st_context *st = st_context(ctx);
    enum pipe_format format;
    unsigned i, bind, num_sample_counts = 0;
 
@@ -1655,7 +1655,7 @@ st_QuerySamplesForFormat(struct gl_context *ctx, GLenum internalFormat,
 
    /* Set sample counts in descending order. */
    for (i = 16; i > 1; i--) {
-      format = st_choose_format(screen, internalFormat, GL_NONE, GL_NONE,
+      format = st_choose_format(st, internalFormat, GL_NONE, GL_NONE,
                                 PIPE_TEXTURE_2D, i, bind, FALSE);
 
       if (format != PIPE_FORMAT_NONE) {

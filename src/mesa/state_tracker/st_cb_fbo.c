@@ -63,7 +63,7 @@ st_renderbuffer_alloc_sw_storage(struct gl_context * ctx,
                                  GLenum internalFormat,
                                  GLuint width, GLuint height)
 {
-   struct pipe_screen *screen = st_context(ctx)->pipe->screen;
+   struct st_context *st = st_context(ctx);
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    enum pipe_format format;
    size_t size;
@@ -80,7 +80,7 @@ st_renderbuffer_alloc_sw_storage(struct gl_context * ctx,
       format = PIPE_FORMAT_R16G16B16A16_SNORM;
    }
    else {
-      format = st_choose_renderbuffer_format(screen, internalFormat, 0);
+      format = st_choose_renderbuffer_format(st, internalFormat, 0);
 
       /* Not setting gl_renderbuffer::Format here will cause
        * FRAMEBUFFER_UNSUPPORTED and ValidateFramebuffer will not be called.
@@ -153,7 +153,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
       unsigned i;
 
       for (i = rb->NumSamples; i <= ctx->Const.MaxSamples; i++) {
-         format = st_choose_renderbuffer_format(screen, internalFormat, i);
+         format = st_choose_renderbuffer_format(st, internalFormat, i);
 
          if (format != PIPE_FORMAT_NONE) {
             rb->NumSamples = i;
@@ -161,7 +161,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
          }
       }
    } else {
-      format = st_choose_renderbuffer_format(screen, internalFormat, 0);
+      format = st_choose_renderbuffer_format(st, internalFormat, 0);
    }
 
    /* Not setting gl_renderbuffer::Format here will cause

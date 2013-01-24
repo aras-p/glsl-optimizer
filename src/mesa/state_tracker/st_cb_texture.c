@@ -596,7 +596,7 @@ decompress_with_blit(struct gl_context * ctx,
    pipe_target = gl_target_to_pipe(gl_target);
 
    /* Find the best match for the format+type combo. */
-   pipe_format = st_choose_format(pipe->screen, GL_RGBA8, format, type,
+   pipe_format = st_choose_format(st, GL_RGBA8, format, type,
                                   pipe_target, 0, bind, FALSE);
    if (pipe_format == PIPE_FORMAT_NONE) {
       /* unable to get an rgba format!?! */

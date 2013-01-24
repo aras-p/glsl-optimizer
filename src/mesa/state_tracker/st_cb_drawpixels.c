@@ -492,7 +492,7 @@ make_texture(struct st_context *st,
    /* Choose a pixel format for the temp texture which will hold the
     * image to draw.
     */
-   pipeFormat = st_choose_format(pipe->screen, intFormat, format, type,
+   pipeFormat = st_choose_format(st, intFormat, format, type,
                                  PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW,
                                  FALSE);
    assert(pipeFormat != PIPE_FORMAT_NONE);
@@ -1499,7 +1499,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    else {
       /* srcFormat can't be used as a texture format */
       if (type == GL_DEPTH) {
-         texFormat = st_choose_format(screen, GL_DEPTH_COMPONENT,
+         texFormat = st_choose_format(st, GL_DEPTH_COMPONENT,
                                       GL_NONE, GL_NONE, st->internal_target,
                                       sample_count, PIPE_BIND_DEPTH_STENCIL,
                                       FALSE);
@@ -1507,7 +1507,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       }
       else {
          /* default color format */
-         texFormat = st_choose_format(screen, GL_RGBA,
+         texFormat = st_choose_format(st, GL_RGBA,
                                       GL_NONE, GL_NONE, st->internal_target,
                                       sample_count, PIPE_BIND_SAMPLER_VIEW,
                                       FALSE);
