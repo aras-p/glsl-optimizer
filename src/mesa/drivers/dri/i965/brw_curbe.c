@@ -326,12 +326,6 @@ emit:
    ADVANCE_BATCH();
 }
 
-/* This tracked state is unique in that the state it monitors varies
- * dynamically depending on the parameters tracked by the fragment and
- * vertex programs.  This is the template used as a starting point,
- * each context will maintain a copy of this internally and update as
- * required.
- */
 const struct brw_tracked_state brw_constant_buffer = {
    .dirty = {
       .mesa = _NEW_PROGRAM_CONSTANTS,
