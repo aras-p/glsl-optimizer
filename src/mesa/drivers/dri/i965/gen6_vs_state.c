@@ -41,7 +41,6 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
    /* _BRW_NEW_VERTEX_PROGRAM */
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
-   unsigned int nr_params = brw->vs.prog_data->nr_params / 4;
 
    /* Updates the ParamaterValues[i] pointers for all parameters of the
     * basic type of PROGRAM_STATE_VAR.
@@ -49,23 +48,28 @@ gen6_upload_vs_push_constants(struct brw_context *brw)
    /* XXX: Should this happen somewhere before to get our state flag set? */
    _mesa_load_state_parameters(ctx, vp->program.Base.Parameters);
 
-   /* CACHE_NEW_VS_PROG | _NEW_TRANSFORM */
-   if (brw->vs.prog_data->nr_params == 0 && !ctx->Transform.ClipPlanesEnabled) {
+   /* CACHE_NEW_VS_PROG */
+   if (brw->vs.prog_data->nr_params == 0) {
       brw->vs.push_const_size = 0;
    } else {
-      int params_uploaded = 0;
+      int params_uploaded;
       float *param;
       int i;
 
       param = brw_state_batch(brw, AUB_TRACE_VS_CONSTANTS,
-			      (MAX_CLIP_PLANES + nr_params) *
-			      4 * sizeof(float),
+			      brw->vs.prog_data->nr_params * sizeof(float),
 			      32, &brw->vs.push_const_offset);
 
+      /* _NEW_PROGRAM_CONSTANTS
+       *
+       * Also _NEW_TRANSFORM -- we may reference clip planes other than as a
+       * side effect of dereferencing uniforms, so _NEW_PROGRAM_CONSTANTS
+       * wouldn't be set for them.
+      */
       for (i = 0; i < brw->vs.prog_data->nr_params; i++) {
          param[i] = *brw->vs.prog_data->param[i];
       }
-      params_uploaded += brw->vs.prog_data->nr_params / 4;
+      params_uploaded = brw->vs.prog_data->nr_params / 4;
 
       if (0) {
 	 printf("VS constant buffer:\n");
