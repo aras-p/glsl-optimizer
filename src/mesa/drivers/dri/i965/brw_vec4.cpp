@@ -146,6 +146,7 @@ vec4_instruction::is_tex()
    return (opcode == SHADER_OPCODE_TEX ||
 	   opcode == SHADER_OPCODE_TXD ||
 	   opcode == SHADER_OPCODE_TXF ||
+	   opcode == SHADER_OPCODE_TXF_MS ||
 	   opcode == SHADER_OPCODE_TXL ||
 	   opcode == SHADER_OPCODE_TXS);
 }

@@ -398,6 +398,12 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       case SHADER_OPCODE_TXF:
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
 	 break;
+      case SHADER_OPCODE_TXF_MS:
+         if (intel->gen >= 7)
+            msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DMS;
+         else
+            msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
+         break;
       default:
 	 assert(!"not reached");
 	 break;
@@ -1236,6 +1242,7 @@ fs_generator::generate_code(exec_list *instructions)
       case FS_OPCODE_TXB:
       case SHADER_OPCODE_TXD:
       case SHADER_OPCODE_TXF:
+      case SHADER_OPCODE_TXF_MS:
       case SHADER_OPCODE_TXL:
       case SHADER_OPCODE_TXS:
 	 generate_tex(inst, dst, src[0]);
