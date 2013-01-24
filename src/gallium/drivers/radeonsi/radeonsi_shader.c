@@ -791,9 +791,12 @@ static void tex_fetch_args(
 	struct lp_build_tgsi_context * bld_base,
 	struct lp_build_emit_data * emit_data)
 {
+	struct gallivm_state *gallivm = bld_base->base.gallivm;
 	const struct tgsi_full_instruction * inst = emit_data->inst;
 	LLVMValueRef ptr;
 	LLVMValueRef offset;
+	LLVMValueRef coords[5];
+	unsigned chan;
 
 	/* WriteMask */
 	/* XXX: should be optimized using emit_data->inst->Dst[0].Register.WriteMask*/
@@ -801,27 +804,22 @@ static void tex_fetch_args(
 
 	/* Coordinates */
 	/* XXX: Not all sample instructions need 4 address arguments. */
-	if (inst->Instruction.Opcode == TGSI_OPCODE_TXP) {
-		LLVMValueRef src_w;
-		unsigned chan;
-		LLVMValueRef coords[4];
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TXP)
+		coords[3] = lp_build_emit_fetch(bld_base, emit_data->inst, 0, TGSI_CHAN_W)
+;
 
-		emit_data->dst_type = LLVMVectorType(bld_base->base.elem_type, 4);
-		src_w = lp_build_emit_fetch(bld_base, emit_data->inst, 0, TGSI_CHAN_W);
-
-		for (chan = 0; chan < 3; chan++ ) {
-			LLVMValueRef arg = lp_build_emit_fetch(bld_base,
-							       emit_data->inst, 0, chan);
+	for (chan = 0; chan < 3; chan++ ) {
+		coords[chan] = lp_build_emit_fetch(bld_base,
+						   emit_data->inst, 0,
+						   chan);
+		if (inst->Instruction.Opcode == TGSI_OPCODE_TXP)
 			coords[chan] = lp_build_emit_llvm_binary(bld_base,
 								 TGSI_OPCODE_DIV,
-								 arg, src_w);
-		}
-		coords[3] = bld_base->base.one;
-		emit_data->args[1] = lp_build_gather_values(bld_base->base.gallivm,
-							    coords, 4);
-	} else
-		emit_data->args[1] = lp_build_emit_fetch(bld_base, emit_data->inst,
-							 0, LP_CHAN_ALL);
+								 coords[chan],
+								 coords[3]);
+	}
+
+	coords[3] = bld_base->base.one;
 
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TEX2 ||
 		inst->Instruction.Opcode == TGSI_OPCODE_TXB2 ||
@@ -831,14 +829,23 @@ static void tex_fetch_args(
 		 * That operand should be passed as a float value in the args array
 		 * right after the coord vector. After packing it's not used anymore,
 		 * that's why arg_count is not increased */
-		emit_data->args[2] = lp_build_emit_fetch(bld_base, inst, 1, 0);
+		coords[4] = lp_build_emit_fetch(bld_base, inst, 1, 0);
 	}
 
 	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
 	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) &&
 	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
-		radeon_llvm_emit_prepare_cube_coords(bld_base, emit_data, 1);
+		radeon_llvm_emit_prepare_cube_coords(bld_base, emit_data, coords);
 	}
+
+	for (chan = 0; chan < 4; chan++ ) {
+		coords[chan] = LLVMBuildBitCast(gallivm->builder,
+						coords[chan],
+						LLVMInt32TypeInContext(gallivm->context),
+						"");
+	}
+
+	emit_data->args[1] = lp_build_gather_values(gallivm, coords, 4);
 
 	/* Resource */
 	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V8I32, SI_SGPR_RESOURCE);
@@ -869,19 +876,19 @@ static void tex_fetch_args(
 static const struct lp_build_tgsi_action tex_action = {
 	.fetch_args = tex_fetch_args,
 	.emit = lp_build_tgsi_intrinsic,
-	.intr_name = "llvm.SI.sample"
+	.intr_name = "llvm.SI.sample."
 };
 
 static const struct lp_build_tgsi_action txb_action = {
 	.fetch_args = tex_fetch_args,
 	.emit = lp_build_tgsi_intrinsic,
-	.intr_name = "llvm.SI.sample.bias"
+	.intr_name = "llvm.SI.sampleb."
 };
 
 static const struct lp_build_tgsi_action txl_action = {
 	.fetch_args = tex_fetch_args,
 	.emit = lp_build_tgsi_intrinsic,
-	.intr_name = "llvm.SI.sample.lod"
+	.intr_name = "llvm.SI.samplel."
 };
 
 

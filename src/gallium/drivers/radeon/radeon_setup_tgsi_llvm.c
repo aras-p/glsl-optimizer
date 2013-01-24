@@ -531,7 +531,7 @@ static void kil_emit(
 void radeon_llvm_emit_prepare_cube_coords(
 		struct lp_build_tgsi_context * bld_base,
 		struct lp_build_emit_data * emit_data,
-		unsigned coord_arg)
+		LLVMValueRef *coords_arg)
 {
 
 	unsigned target = emit_data->inst->Texture.Texture;
@@ -542,11 +542,13 @@ void radeon_llvm_emit_prepare_cube_coords(
 	LLVMValueRef coords[4];
 	LLVMValueRef mad_args[3];
 	LLVMValueRef idx;
+	struct LLVMOpaqueValue *cube_vec;
+	LLVMValueRef v;
 	unsigned i;
 
-	LLVMValueRef v = build_intrinsic(builder, "llvm.AMDGPU.cube",
-			LLVMVectorType(type, 4),
-			&emit_data->args[coord_arg], 1, LLVMReadNoneAttribute);
+	cube_vec = lp_build_gather_values(bld_base->base.gallivm, coords_arg, 4);
+	v = build_intrinsic(builder, "llvm.AMDGPU.cube", LLVMVectorType(type, 4),
+                            &cube_vec, 1, LLVMReadNoneAttribute);
 
 	for (i = 0; i < 4; ++i) {
 		idx = lp_build_const_int32(gallivm, i);
@@ -579,18 +581,14 @@ void radeon_llvm_emit_prepare_cube_coords(
 	if (target != TGSI_TEXTURE_CUBE ||
 		opcode != TGSI_OPCODE_TEX) {
 
-		/* load source coord.w component - array_index for cube arrays or
-		 * compare value for SHADOWCUBE */
-		idx = lp_build_const_int32(gallivm, 3);
-		coords[3] = LLVMBuildExtractElement(builder,
-				emit_data->args[coord_arg], idx, "");
-
 		/* for cube arrays coord.z = coord.w(array_index) * 8 + face */
 		if (target == TGSI_TEXTURE_CUBE_ARRAY ||
 			target == TGSI_TEXTURE_SHADOWCUBE_ARRAY) {
 
+			/* coords_arg.w component - array_index for cube arrays or
+			 * compare value for SHADOWCUBE */
 			coords[2] = lp_build_emit_llvm_ternary(bld_base, TGSI_OPCODE_MAD,
-					coords[3], lp_build_const_float(gallivm, 8.0), coords[2]);
+					coords_arg[3], lp_build_const_float(gallivm, 8.0), coords[2]);
 		}
 
 		/* for instructions that need additional src (compare/lod/bias),
@@ -598,12 +596,11 @@ void radeon_llvm_emit_prepare_cube_coords(
 		if (opcode == TGSI_OPCODE_TEX2 ||
 			opcode == TGSI_OPCODE_TXB2 ||
 			opcode == TGSI_OPCODE_TXL2) {
-			coords[3] = emit_data->args[coord_arg + 1];
+			coords[3] = coords_arg[4];
 		}
 	}
 
-	emit_data->args[coord_arg] =
-			lp_build_gather_values(bld_base->base.gallivm, coords, 4);
+	memcpy(coords_arg, coords, sizeof(coords));
 }
 
 static void txd_fetch_args(
@@ -645,9 +642,6 @@ static void txp_fetch_args(
 					TGSI_OPCODE_DIV, arg, src_w);
 	}
 	coords[3] = bld_base->base.one;
-	emit_data->args[0] = lp_build_gather_values(bld_base->base.gallivm,
-						coords, 4);
-	emit_data->arg_count = 1;
 
 	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
 	     inst->Texture.Texture == TGSI_TEXTURE_CUBE_ARRAY ||
@@ -655,8 +649,12 @@ static void txp_fetch_args(
 	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE_ARRAY) &&
 	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ &&
 	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ_LZ) {
-		radeon_llvm_emit_prepare_cube_coords(bld_base, emit_data, 0);
+		radeon_llvm_emit_prepare_cube_coords(bld_base, emit_data, coords);
 	}
+
+	emit_data->args[0] = lp_build_gather_values(bld_base->base.gallivm,
+						coords, 4);
+	emit_data->arg_count = 1;
 }
 
 static void tex_fetch_args(
@@ -673,16 +671,11 @@ static void tex_fetch_args(
 
 	const struct tgsi_full_instruction * inst = emit_data->inst;
 
-	LLVMValueRef coords[4];
+	LLVMValueRef coords[5];
 	unsigned chan;
 	for (chan = 0; chan < 4; chan++) {
 		coords[chan] = lp_build_emit_fetch(bld_base, inst, 0, chan);
 	}
-
-	emit_data->arg_count = 1;
-	emit_data->args[0] = lp_build_gather_values(bld_base->base.gallivm,
-						coords, 4);
-	emit_data->dst_type = LLVMVectorType(bld_base->base.elem_type, 4);
 
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TEX2 ||
 		inst->Instruction.Opcode == TGSI_OPCODE_TXB2 ||
@@ -692,7 +685,7 @@ static void tex_fetch_args(
 		 * That operand should be passed as a float value in the args array
 		 * right after the coord vector. After packing it's not used anymore,
 		 * that's why arg_count is not increased */
-		emit_data->args[1] = lp_build_emit_fetch(bld_base, inst, 1, 0);
+		coords[4] = lp_build_emit_fetch(bld_base, inst, 1, 0);
 	}
 
 	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
@@ -701,8 +694,13 @@ static void tex_fetch_args(
 	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE_ARRAY) &&
 	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ &&
 	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ_LZ) {
-		radeon_llvm_emit_prepare_cube_coords(bld_base, emit_data, 0);
+		radeon_llvm_emit_prepare_cube_coords(bld_base, emit_data, coords);
 	}
+
+	emit_data->arg_count = 1;
+	emit_data->args[0] = lp_build_gather_values(bld_base->base.gallivm,
+						coords, 4);
+	emit_data->dst_type = LLVMVectorType(bld_base->base.elem_type, 4);
 }
 
 static void txf_fetch_args(
