@@ -163,6 +163,13 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
    unsigned alloc_offset = align(min_out_offset, upload->alignment);
    unsigned offset;
 
+   /* Init these return values here in case we fail below to make
+    * sure the caller doesn't get garbage values.
+    */
+   *out_offset = ~0;
+   *outbuf = NULL;
+   *ptr = NULL;
+
    /* Make sure we have enough space in the upload buffer
     * for the sub-allocation. */
    if (MAX2(upload->offset, alloc_offset) + alloc_size > upload->size) {
@@ -183,7 +190,6 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
 					  &upload->transfer);
       if (!upload->map) {
          pipe_resource_reference(outbuf, NULL);
-         *ptr = NULL;
          upload->transfer = NULL;
          return PIPE_ERROR_OUT_OF_MEMORY;
       }
