@@ -59,6 +59,7 @@ else:
     # Copy these files to avoid generation object files into src/mesa/program
     env.Prepend(CPPPATH = ['#src/mesa/main'])
     env.Command('hash_table.c', '#src/mesa/main/hash_table.c', Copy('$TARGET', '$SOURCE'))
+    env.Command('imports.c', '#src/mesa/main/imports.c', Copy('$TARGET', '$SOURCE'))
     # Copy these files to avoid generation object files into src/mesa/program
     env.Prepend(CPPPATH = ['#src/mesa/program'])
     env.Command('prog_hash_table.c', '#src/mesa/program/prog_hash_table.c', Copy('$TARGET', '$SOURCE'))
@@ -68,6 +69,7 @@ else:
 
     mesa_objs = env.StaticObject([
         'hash_table.c',
+        'imports.c',
         'prog_hash_table.c',
         'symbol_table.c',
     ])
