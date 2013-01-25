@@ -1006,7 +1006,7 @@ fs_generator::generate_unpack_half_2x16_split(fs_inst *inst,
    assert(inst->opcode == FS_OPCODE_UNPACK_HALF_2x16_SPLIT_X ||
           inst->opcode == FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y);
    if (inst->opcode == FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y)
-      src.subnr += 2;
+      src_w.subnr += 2;
 
    brw_F16TO32(p, dst, src_w);
 }
