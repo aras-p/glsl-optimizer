@@ -124,6 +124,9 @@ nouveau_transfer_staging(struct nouveau_context *nv,
    const unsigned adj = tx->base.box.x & NOUVEAU_MIN_BUFFER_MAP_ALIGN_MASK;
    const unsigned size = align(tx->base.box.width, 4) + adj;
 
+   if (!nv->push_data)
+      permit_pb = FALSE;
+
    if ((size <= NOUVEAU_TRANSFER_PUSHBUF_THRESHOLD) && permit_pb) {
       tx->map = align_malloc(size, NOUVEAU_MIN_BUFFER_MAP_ALIGN);
       if (tx->map)
