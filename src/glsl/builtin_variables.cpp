@@ -404,15 +404,17 @@ add_variable(exec_list *instructions, glsl_symbol_table *symtab,
    switch (var->mode) {
    case ir_var_auto:
    case ir_var_in:
-   case ir_var_const_in:
    case ir_var_uniform:
    case ir_var_system_value:
       var->read_only = true;
       break;
-   case ir_var_inout:
    case ir_var_out:
       break;
    default:
+      /* The only variables that are added using this function should be
+       * uniforms, shader inputs, and shader outputs, constants (which use
+       * ir_var_auto), and system values.
+       */
       assert(0);
       break;
    }
