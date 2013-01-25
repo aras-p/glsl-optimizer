@@ -514,9 +514,9 @@ r600_texture_create_object(struct pipe_screen *screen,
 				       "nblk_z=%u, pitch_bytes=%u, mode=%u\n",
 				       i, (unsigned long long)rtex->surface.level[i].offset,
 				       (unsigned long long)rtex->surface.level[i].slice_size,
-				       rtex->surface.level[i].npix_x,
-				       rtex->surface.level[i].npix_y,
-				       rtex->surface.level[i].npix_z,
+				       u_minify(rtex->resource.b.b.width0, i),
+				       u_minify(rtex->resource.b.b.height0, i),
+				       u_minify(rtex->resource.b.b.depth0, i),
 				       rtex->surface.level[i].nblk_x,
 				       rtex->surface.level[i].nblk_y,
 				       rtex->surface.level[i].nblk_z,
@@ -531,9 +531,9 @@ r600_texture_create_object(struct pipe_screen *screen,
 				       "nblk_z=%u, pitch_bytes=%u, mode=%u\n",
 				       i, (unsigned long long)rtex->surface.stencil_level[i].offset,
 				       (unsigned long long)rtex->surface.stencil_level[i].slice_size,
-				       rtex->surface.stencil_level[i].npix_x,
-				       rtex->surface.stencil_level[i].npix_y,
-				       rtex->surface.stencil_level[i].npix_z,
+                                       u_minify(rtex->resource.b.b.width0, i),
+				       u_minify(rtex->resource.b.b.height0, i),
+				       u_minify(rtex->resource.b.b.depth0, i),
 				       rtex->surface.stencil_level[i].nblk_x,
 				       rtex->surface.stencil_level[i].nblk_y,
 				       rtex->surface.stencil_level[i].nblk_z,
@@ -612,15 +612,14 @@ struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
 }
 
 static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
-						struct pipe_resource *texture,
+						struct pipe_resource *tex,
 						const struct pipe_surface *templ)
 {
-	struct r600_texture *rtex = (struct r600_texture*)texture;
 	unsigned level = templ->u.tex.level;
 
-	return r600_create_surface_custom(pipe, texture, templ,
-					  rtex->surface.level[level].npix_x,
-					  rtex->surface.level[level].npix_y);
+	return r600_create_surface_custom(pipe, tex, templ,
+                                          u_minify(tex->width0, level),
+					  u_minify(tex->height0, level));
 }
 
 static void r600_surface_destroy(struct pipe_context *pipe,

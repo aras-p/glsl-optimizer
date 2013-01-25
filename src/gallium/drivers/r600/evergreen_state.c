@@ -1090,7 +1090,7 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 
 	width = width0;
 	height = height0;
-	depth = surflevel[0].npix_z;
+	depth = texture->depth0;
 	pitch = surflevel[0].nblk_x * util_format_get_blockwidth(pipe_format);
 	non_disp_tiling = tmp->non_disp_tiling;
 

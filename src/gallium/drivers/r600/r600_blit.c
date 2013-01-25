@@ -542,8 +542,6 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      const struct pipe_box *src_box)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_texture *rsrc = (struct r600_texture*)src;
-	struct r600_texture *rdst = (struct r600_texture*)dst;
 	struct pipe_surface *dst_view, dst_templ;
 	struct pipe_sampler_view src_templ, *src_view;
 	unsigned dst_width, dst_height, src_width0, src_height0, src_widthFL, src_heightFL;
@@ -565,12 +563,12 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		return; /* error */
 	}
 
-	dst_width = rdst->surface.level[dst_level].npix_x;
-	dst_height = rdst->surface.level[dst_level].npix_y;
+	dst_width = u_minify(dst->width0, dst_level);
+        dst_height = u_minify(dst->height0, dst_level);
 	src_width0 = src->width0;
 	src_height0 = src->height0;
-	src_widthFL = rsrc->surface.level[src_level].npix_x;
-	src_heightFL = rsrc->surface.level[src_level].npix_y;
+        src_widthFL = u_minify(src->width0, src_level);
+        src_heightFL = u_minify(src->height0, src_level);
 
 	util_blitter_default_dst_texture(&dst_templ, dst, dst_level, dstz);
 	util_blitter_default_src_texture(&src_templ, src, src_level);
@@ -584,12 +582,12 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 			src_templ.format = PIPE_FORMAT_R32G32B32A32_UINT; /* 128-bit block */
 		dst_templ.format = src_templ.format;
 
-		dst_width = util_format_get_nblocksx(dst->format, rdst->surface.level[dst_level].npix_x);
-		dst_height = util_format_get_nblocksy(dst->format, rdst->surface.level[dst_level].npix_y);
-		src_width0 = util_format_get_nblocksx(src->format, src->width0);
-		src_height0 = util_format_get_nblocksy(src->format, src->height0);
-		src_widthFL = util_format_get_nblocksx(src->format, rsrc->surface.level[src_level].npix_x);
-		src_heightFL = util_format_get_nblocksy(src->format, rsrc->surface.level[src_level].npix_y);
+		dst_width = util_format_get_nblocksx(dst->format, dst_width);
+		dst_height = util_format_get_nblocksy(dst->format, dst_height);
+		src_width0 = util_format_get_nblocksx(src->format, src_width0);
+		src_height0 = util_format_get_nblocksy(src->format, src_height0);
+		src_widthFL = util_format_get_nblocksx(src->format, src_widthFL);
+		src_heightFL = util_format_get_nblocksy(src->format, src_heightFL);
 
 		dstx = util_format_get_nblocksx(dst->format, dstx);
 		dsty = util_format_get_nblocksy(dst->format, dsty);
@@ -608,9 +606,9 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 			src_templ.format = PIPE_FORMAT_R8G8B8A8_UINT;
 			dst_templ.format = PIPE_FORMAT_R8G8B8A8_UINT;
 
-			dst_width = util_format_get_nblocksx(dst->format, rdst->surface.level[dst_level].npix_x);
-			src_width0 = util_format_get_nblocksx(src->format, src->width0);
-			src_widthFL = util_format_get_nblocksx(src->format, rsrc->surface.level[src_level].npix_x);
+			dst_width = util_format_get_nblocksx(dst->format, dst_width);
+			src_width0 = util_format_get_nblocksx(src->format, src_width0);
+			src_widthFL = util_format_get_nblocksx(src->format, src_widthFL);
 
 			dstx = util_format_get_nblocksx(dst->format, dstx);
 

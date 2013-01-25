@@ -1071,7 +1071,7 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 	last_level = state->u.tex.last_level - offset_level;
 	width = width_first_level;
 	height = height_first_level;
-	depth = tmp->surface.level[offset_level].npix_z;
+        depth = u_minify(texture->depth0, offset_level);
 	pitch = tmp->surface.level[offset_level].nblk_x * util_format_get_blockwidth(state->format);
 
 	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
@@ -1135,11 +1135,9 @@ r600_create_sampler_view(struct pipe_context *ctx,
 			 struct pipe_resource *tex,
 			 const struct pipe_sampler_view *state)
 {
-	struct r600_texture *rtex = (struct r600_texture*)tex;
-
 	return r600_create_sampler_view_custom(ctx, tex, state,
-					       rtex->surface.level[state->u.tex.first_level].npix_x,
-					       rtex->surface.level[state->u.tex.first_level].npix_y);
+                                               u_minify(tex->width0, state->u.tex.first_level),
+                                               u_minify(tex->height0, state->u.tex.first_level));
 }
 
 static void r600_emit_clip_state(struct r600_context *rctx, struct r600_atom *atom)
