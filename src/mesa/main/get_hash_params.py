@@ -701,6 +701,12 @@ descriptor=[
 
 # GL_ARB_texture_cube_map_array
   [ "TEXTURE_BINDING_CUBE_MAP_ARRAY_ARB", "LOC_CUSTOM, TYPE_INT, TEXTURE_CUBE_ARRAY_INDEX, extra_ARB_texture_cube_map_array" ],
+]},
+
+# Enums restricted to OpenGL Core profile
+{ "apis": ["GL_CORE"], "params": [
+# GL_ARB_texture_buffer_range
+  [ "TEXTURE_BUFFER_OFFSET_ALIGNMENT", "CONTEXT_INT(Const.TextureBufferOffsetAlignment), extra_ARB_texture_buffer_range" ],
 ]}
 
 ]

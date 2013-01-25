@@ -1295,6 +1295,9 @@ struct gl_texture_object
    GLenum BufferObjectFormat;
    /** Equivalent Mesa format for BufferObjectFormat. */
    gl_format _BufferObjectFormat;
+   /** GL_ARB_texture_buffer_range */
+   GLintptr BufferOffset;
+   GLsizeiptr BufferSize; /**< if this is -1, use BufferObject->Size instead */
 
    /** GL_OES_EGL_image_external */
    GLint RequiredTextureImageUnits;
@@ -2851,6 +2854,8 @@ struct gl_constants
    GLfloat MaxTextureLodBias;        /**< GL_EXT_texture_lod_bias */
    GLuint MaxTextureBufferSize;      /**< GL_ARB_texture_buffer_object */
 
+   GLuint TextureBufferOffsetAlignment; /**< GL_ARB_texture_buffer_range */
+
    GLuint MaxArrayLockSize;
 
    GLint SubPixelBits;
@@ -3075,6 +3080,7 @@ struct gl_extensions
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_buffer_object;
    GLboolean ARB_texture_buffer_object_rgb32;
+   GLboolean ARB_texture_buffer_range;
    GLboolean ARB_texture_compression_rgtc;
    GLboolean ARB_texture_cube_map;
    GLboolean ARB_texture_cube_map_array;

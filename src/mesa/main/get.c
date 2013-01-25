@@ -353,6 +353,7 @@ EXTRA_EXT(ARB_uniform_buffer_object);
 EXTRA_EXT(ARB_timer_query);
 EXTRA_EXT(ARB_map_buffer_alignment);
 EXTRA_EXT(ARB_texture_cube_map_array);
+EXTRA_EXT(ARB_texture_buffer_range);
 
 static const int
 extra_NV_primitive_restart[] = {

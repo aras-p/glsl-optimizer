@@ -289,6 +289,10 @@ _mesa_CompressedTexSubImage3D(GLenum target, GLint level, GLint xoffset,
 extern void GLAPIENTRY
 _mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer);
 
+extern void GLAPIENTRY
+_mesa_TexBufferRange(GLenum target, GLenum internalFormat, GLuint buffer,
+                     GLintptr offset, GLsizeiptr size);
+
 
 /*@}*/
 

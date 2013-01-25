@@ -1181,6 +1181,18 @@ get_tex_level_parameter_buffer(struct gl_context *ctx,
          *params = _mesa_get_format_bits(texFormat, pname);
          break;
 
+      /* GL_ARB_texture_buffer_range */
+      case GL_TEXTURE_BUFFER_OFFSET:
+         if (!ctx->Extensions.ARB_texture_buffer_range)
+            goto invalid_pname;
+         *params = texObj->BufferOffset;
+         break;
+      case GL_TEXTURE_BUFFER_SIZE:
+         if (!ctx->Extensions.ARB_texture_buffer_range)
+            goto invalid_pname;
+         *params = (texObj->BufferSize == -1) ? bo->Size : texObj->BufferSize;
+         break;
+
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSED_IMAGE_SIZE:
          /* Always illegal for GL_TEXTURE_BUFFER */
