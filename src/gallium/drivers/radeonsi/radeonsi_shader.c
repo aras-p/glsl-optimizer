@@ -793,59 +793,127 @@ static void tex_fetch_args(
 {
 	struct gallivm_state *gallivm = bld_base->base.gallivm;
 	const struct tgsi_full_instruction * inst = emit_data->inst;
+	unsigned opcode = inst->Instruction.Opcode;
+	unsigned target = inst->Texture.Texture;
 	LLVMValueRef ptr;
 	LLVMValueRef offset;
-	LLVMValueRef coords[5];
+	LLVMValueRef coords[4];
+	LLVMValueRef address[16];
+	unsigned count = 0;
 	unsigned chan;
 
 	/* WriteMask */
 	/* XXX: should be optimized using emit_data->inst->Dst[0].Register.WriteMask*/
 	emit_data->args[0] = lp_build_const_int32(bld_base->base.gallivm, 0xf);
 
-	/* Coordinates */
-	/* XXX: Not all sample instructions need 4 address arguments. */
-	if (inst->Instruction.Opcode == TGSI_OPCODE_TXP)
-		coords[3] = lp_build_emit_fetch(bld_base, emit_data->inst, 0, TGSI_CHAN_W)
-;
-
+	/* Fetch and project texture coordinates */
+	coords[3] = lp_build_emit_fetch(bld_base, emit_data->inst, 0, TGSI_CHAN_W);
 	for (chan = 0; chan < 3; chan++ ) {
 		coords[chan] = lp_build_emit_fetch(bld_base,
 						   emit_data->inst, 0,
 						   chan);
-		if (inst->Instruction.Opcode == TGSI_OPCODE_TXP)
+		if (opcode == TGSI_OPCODE_TXP)
 			coords[chan] = lp_build_emit_llvm_binary(bld_base,
 								 TGSI_OPCODE_DIV,
 								 coords[chan],
 								 coords[3]);
 	}
 
-	coords[3] = bld_base->base.one;
+	if (opcode == TGSI_OPCODE_TXP)
+		coords[3] = bld_base->base.one;
 
-	if (inst->Instruction.Opcode == TGSI_OPCODE_TEX2 ||
-		inst->Instruction.Opcode == TGSI_OPCODE_TXB2 ||
-		inst->Instruction.Opcode == TGSI_OPCODE_TXL2) {
-		/* These instructions have additional operand that should be packed
-		 * into the cube coord vector by radeon_llvm_emit_prepare_cube_coords.
-		 * That operand should be passed as a float value in the args array
-		 * right after the coord vector. After packing it's not used anymore,
-		 * that's why arg_count is not increased */
-		coords[4] = lp_build_emit_fetch(bld_base, inst, 1, 0);
-	}
+	/* Pack LOD bias value */
+	if (opcode == TGSI_OPCODE_TXB)
+		address[count++] = coords[3];
 
-	if ((inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
-	     inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE) &&
-	    inst->Instruction.Opcode != TGSI_OPCODE_TXQ) {
+	if ((target == TGSI_TEXTURE_CUBE || target == TGSI_TEXTURE_SHADOWCUBE) &&
+	    opcode != TGSI_OPCODE_TXQ)
 		radeon_llvm_emit_prepare_cube_coords(bld_base, emit_data, coords);
+
+	/* Pack depth comparison value */
+	switch (target) {
+	case TGSI_TEXTURE_SHADOW1D:
+	case TGSI_TEXTURE_SHADOW1D_ARRAY:
+	case TGSI_TEXTURE_SHADOW2D:
+	case TGSI_TEXTURE_SHADOWRECT:
+		address[count++] = coords[2];
+		break;
+	case TGSI_TEXTURE_SHADOWCUBE:
+	case TGSI_TEXTURE_SHADOW2D_ARRAY:
+		address[count++] = coords[3];
+		break;
+	case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+		address[count++] = lp_build_emit_fetch(bld_base, inst, 1, 0);
 	}
 
-	for (chan = 0; chan < 4; chan++ ) {
-		coords[chan] = LLVMBuildBitCast(gallivm->builder,
-						coords[chan],
-						LLVMInt32TypeInContext(gallivm->context),
-						"");
+	/* Pack texture coordinates */
+	address[count++] = coords[0];
+	switch (target) {
+	case TGSI_TEXTURE_2D:
+	case TGSI_TEXTURE_2D_ARRAY:
+	case TGSI_TEXTURE_3D:
+	case TGSI_TEXTURE_CUBE:
+	case TGSI_TEXTURE_RECT:
+	case TGSI_TEXTURE_SHADOW2D:
+	case TGSI_TEXTURE_SHADOWRECT:
+	case TGSI_TEXTURE_SHADOW2D_ARRAY:
+	case TGSI_TEXTURE_SHADOWCUBE:
+	case TGSI_TEXTURE_2D_MSAA:
+	case TGSI_TEXTURE_2D_ARRAY_MSAA:
+	case TGSI_TEXTURE_CUBE_ARRAY:
+	case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+		address[count++] = coords[1];
+	}
+	switch (target) {
+	case TGSI_TEXTURE_3D:
+	case TGSI_TEXTURE_CUBE:
+	case TGSI_TEXTURE_SHADOWCUBE:
+	case TGSI_TEXTURE_CUBE_ARRAY:
+	case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+		address[count++] = coords[2];
 	}
 
-	emit_data->args[1] = lp_build_gather_values(gallivm, coords, 4);
+	/* Pack array slice */
+	switch (target) {
+	case TGSI_TEXTURE_1D_ARRAY:
+		address[count++] = coords[1];
+	}
+	switch (target) {
+	case TGSI_TEXTURE_2D_ARRAY:
+	case TGSI_TEXTURE_2D_ARRAY_MSAA:
+	case TGSI_TEXTURE_SHADOW2D_ARRAY:
+		address[count++] = coords[2];
+	}
+	switch (target) {
+	case TGSI_TEXTURE_CUBE_ARRAY:
+	case TGSI_TEXTURE_SHADOW1D_ARRAY:
+	case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+		address[count++] = coords[3];
+	}
+
+	/* Pack LOD */
+	if (opcode == TGSI_OPCODE_TXL)
+		address[count++] = coords[3];
+
+	if (count > 16) {
+		assert(!"Cannot handle more than 16 texture address parameters");
+		count = 16;
+	}
+
+	for (chan = 0; chan < count; chan++ ) {
+		address[chan] = LLVMBuildBitCast(gallivm->builder,
+						 address[chan],
+						 LLVMInt32TypeInContext(gallivm->context),
+						 "");
+	}
+
+	/* Pad to power of two vector */
+	while (count < util_next_power_of_two(count))
+		address[count++] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
+
+	emit_data->dst_type = LLVMVectorType(LLVMInt32TypeInContext(gallivm->context),
+					     count);
+	emit_data->args[1] = lp_build_gather_values(gallivm, address, count);
 
 	/* Resource */
 	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V8I32, SI_SGPR_RESOURCE);
@@ -862,8 +930,7 @@ static void tex_fetch_args(
 						ptr, offset);
 
 	/* Dimensions */
-	emit_data->args[4] = lp_build_const_int32(bld_base->base.gallivm,
-					emit_data->inst->Texture.Texture);
+	emit_data->args[4] = lp_build_const_int32(bld_base->base.gallivm, target);
 
 	emit_data->arg_count = 5;
 	/* XXX: To optimize, we could use a float or v2f32, if the last bits of
