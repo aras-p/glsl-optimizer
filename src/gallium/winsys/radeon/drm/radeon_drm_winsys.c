@@ -312,6 +312,7 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     case CHIP_TAHITI:
     case CHIP_PITCAIRN:
     case CHIP_VERDE:
+    case CHIP_OLAND:
         ws->info.chip_class = TAHITI;
         break;
     }

@@ -2665,6 +2665,9 @@ void si_init_config(struct r600_context *rctx)
 	default:
 		si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x0000124a);
 		break;
+	case CHIP_OLAND:
+		si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x00000082);
+		break;
 	}
 
 	si_pm4_set_state(rctx, init, pm4);
