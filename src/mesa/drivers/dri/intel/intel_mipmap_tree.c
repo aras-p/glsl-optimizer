@@ -1120,7 +1120,7 @@ intel_miptree_map_gtt(struct intel_context *intel,
    assert(y % bh == 0);
    y /= bh;
 
-   base = intel_region_map(intel, mt->region, map->mode);
+   base = intel_region_map(intel, mt->region, map->mode) + mt->offset;
 
    if (base == NULL)
       map->ptr = NULL;
@@ -1180,7 +1180,7 @@ intel_miptree_map_blit(struct intel_context *intel,
    if (!intelEmitCopyBlit(intel,
 			  mt->region->cpp,
 			  mt->region->pitch, mt->region->bo,
-			  0, mt->region->tiling,
+			  mt->offset, mt->region->tiling,
 			  map->stride, map->bo,
 			  0, I915_TILING_NONE,
 			  x, y,
