@@ -1065,8 +1065,8 @@ void r600_context_streamout_end(struct r600_context *ctx)
 #define CP_DMA_MAX_BYTE_COUNT ((1 << 21) - 8)
 
 void r600_cp_dma_copy_buffer(struct r600_context *rctx,
-			     struct pipe_resource *dst, unsigned dst_offset,
-			     struct pipe_resource *src, unsigned src_offset,
+			     struct pipe_resource *dst, unsigned long dst_offset,
+			     struct pipe_resource *src, unsigned long src_offset,
 			     unsigned size)
 {
 	struct radeon_winsys_cs *cs = rctx->cs;
@@ -1078,6 +1078,9 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 	if (rctx->chip_class == R600) {
 		return;
 	}
+
+	dst_offset += r600_resource_va(&rctx->screen->screen, dst);
+	src_offset += r600_resource_va(&rctx->screen->screen, src);
 
 	/* We flush the caches, because we might read from or write
 	 * to resources which are bound right now. */
@@ -1112,9 +1115,9 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 
 		r600_write_value(cs, PKT3(PKT3_CP_DMA, 4, 0));
 		r600_write_value(cs, src_offset);	/* SRC_ADDR_LO [31:0] */
-		r600_write_value(cs, sync);		/* CP_SYNC [31] | SRC_ADDR_HI [7:0] */
+		r600_write_value(cs, sync | ((src_offset >> 32) & 0xff));		/* CP_SYNC [31] | SRC_ADDR_HI [7:0] */
 		r600_write_value(cs, dst_offset);	/* DST_ADDR_LO [31:0] */
-		r600_write_value(cs, 0);		/* DST_ADDR_HI [7:0] */
+		r600_write_value(cs, (dst_offset >> 32) & 0xff);		/* DST_ADDR_HI [7:0] */
 		r600_write_value(cs, byte_count);	/* COMMAND [29:22] | BYTE_COUNT [20:0] */
 
 		r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
