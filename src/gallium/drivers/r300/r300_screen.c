@@ -468,6 +468,9 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
 
     /* Check sampler format support. */
     if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
+        /* these two are broken for an unknown reason */
+        format != PIPE_FORMAT_R8G8B8X8_SNORM &&
+        format != PIPE_FORMAT_R16G16B16X16_SNORM &&
         /* ATI1N is r5xx-only. */
         (is_r500 || !is_ati1n) &&
         /* ATI2N is supported on r4xx-r5xx. */
