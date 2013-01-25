@@ -984,6 +984,7 @@ type_size(const struct glsl_type *type)
        * at link time.
        */
       return 1;
+   case GLSL_TYPE_INTERFACE:
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
       assert(!"Invalid type in type_size");
@@ -1934,10 +1935,23 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       }
       break;
    }
+   case ir_unop_pack_snorm_2x16:
+   case ir_unop_pack_unorm_2x16:
+   case ir_unop_pack_half_2x16:
+   case ir_unop_pack_snorm_4x8:
+   case ir_unop_pack_unorm_4x8:
+   case ir_unop_unpack_snorm_2x16:
+   case ir_unop_unpack_unorm_2x16:
+   case ir_unop_unpack_half_2x16:
+   case ir_unop_unpack_half_2x16_split_x:
+   case ir_unop_unpack_half_2x16_split_y:
+   case ir_unop_unpack_snorm_4x8:
+   case ir_unop_unpack_unorm_4x8:
+   case ir_binop_pack_half_2x16_split:
    case ir_quadop_vector:
-      /* This operation should have already been handled.
+      /* This operation is not supported, or should have already been handled.
        */
-      assert(!"Should not get here.");
+      assert(!"Invalid ir opcode in glsl_to_tgsi_visitor::visit()");
       break;
    }
 
