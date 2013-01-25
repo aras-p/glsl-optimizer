@@ -433,9 +433,27 @@ static void llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 			}
 		}
 	}
+	// Add dummy exports
+	if (ctx->type == TGSI_PROCESSOR_VERTEX) {
+		if (!next_param) {
+			lp_build_intrinsic_unary(base->gallivm->builder, "llvm.R600.store.dummy",
+				LLVMVoidTypeInContext(base->gallivm->context),
+				lp_build_const_int32(base->gallivm, V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM));
+		}
+		if (!(next_pos-60)) {
+			lp_build_intrinsic_unary(base->gallivm->builder, "llvm.R600.store.dummy",
+				LLVMVoidTypeInContext(base->gallivm->context),
+				lp_build_const_int32(base->gallivm, V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS));
+		}
+	}
+	if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
+		if (!has_color) {
+			lp_build_intrinsic_unary(base->gallivm->builder, "llvm.R600.store.dummy",
+				LLVMVoidTypeInContext(base->gallivm->context),
+				lp_build_const_int32(base->gallivm, V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL));
+		}
+	}
 
-	if (!has_color && ctx->type == TGSI_PROCESSOR_FRAGMENT)
-		lp_build_intrinsic(base->gallivm->builder, "llvm.R600.store.pixel.dummy", LLVMVoidTypeInContext(base->gallivm->context), 0, 0);
 }
 
 static void llvm_emit_tex(
