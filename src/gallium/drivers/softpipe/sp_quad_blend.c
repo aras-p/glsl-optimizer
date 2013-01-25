@@ -1268,7 +1268,7 @@ choose_blend_quad(struct quad_stage *qs,
          bqs->base_format[i] = LUMINANCE;
       else if (util_format_is_luminance_alpha(format))
          bqs->base_format[i] = LUMINANCE_ALPHA;
-      else if (util_format_is_rgb_no_alpha(format))
+      else if (!util_format_has_alpha(format))
          bqs->base_format[i] = RGB;
       else
          bqs->base_format[i] = RGBA;

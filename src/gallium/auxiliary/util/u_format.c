@@ -63,17 +63,14 @@ util_format_is_float(enum pipe_format format)
 
 /** Test if the format contains RGB, but not alpha */
 boolean
-util_format_is_rgb_no_alpha(enum pipe_format format)
+util_format_has_alpha(enum pipe_format format)
 {
    const struct util_format_description *desc =
       util_format_description(format);
 
-   if ((desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
-        desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) &&
-       desc->swizzle[3] == UTIL_FORMAT_SWIZZLE_1) {
-      return TRUE;
-   }
-   return FALSE;
+   return (desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
+           desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) &&
+          desc->swizzle[3] != UTIL_FORMAT_SWIZZLE_1;
 }
 
 

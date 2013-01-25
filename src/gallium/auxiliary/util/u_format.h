@@ -567,7 +567,7 @@ util_format_is_float(enum pipe_format format);
 
 
 boolean
-util_format_is_rgb_no_alpha(enum pipe_format format);
+util_format_has_alpha(enum pipe_format format);
 
 
 boolean
@@ -769,30 +769,6 @@ util_format_get_component_bits(enum pipe_format format,
       return desc->channel[3].size;
    default:
       return 0;
-   }
-}
-
-static INLINE boolean
-util_format_has_alpha(enum pipe_format format)
-{
-   const struct util_format_description *desc = util_format_description(format);
-
-   assert(format);
-   if (!format) {
-      return FALSE;
-   }
-
-   switch (desc->colorspace) {
-   case UTIL_FORMAT_COLORSPACE_RGB:
-   case UTIL_FORMAT_COLORSPACE_SRGB:
-      return desc->swizzle[3] != UTIL_FORMAT_SWIZZLE_1;
-   case UTIL_FORMAT_COLORSPACE_YUV:
-      return FALSE;
-   case UTIL_FORMAT_COLORSPACE_ZS:
-      return FALSE;
-   default:
-      assert(0);
-      return FALSE;
    }
 }
 
