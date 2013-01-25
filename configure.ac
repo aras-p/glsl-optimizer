@@ -1683,16 +1683,14 @@ if test "x$enable_gallium_llvm" = xyes; then
     if test "x$LLVM_CONFIG" != xno; then
 	LLVM_VERSION=`$LLVM_CONFIG --version | sed 's/svn.*//g'`
 	LLVM_VERSION_INT=`echo $LLVM_VERSION | sed -e 's/\([[0-9]]\)\.\([[0-9]]\)/\10\2/g'`
-        if test "x$with_llvm_shared_libs" != xyes; then
-            LLVM_COMPONENTS="engine bitwriter"
-            if $LLVM_CONFIG --components | grep -q '\<mcjit\>'; then
-                LLVM_COMPONENTS="${LLVM_COMPONENTS} mcjit"
-            fi
+        LLVM_COMPONENTS="engine bitwriter"
+        if $LLVM_CONFIG --components | grep -q '\<mcjit\>'; then
+            LLVM_COMPONENTS="${LLVM_COMPONENTS} mcjit"
+        fi
 
-            if test "x$enable_opencl" = xyes; then
-                LLVM_COMPONENTS="${LLVM_COMPONENTS} ipo linker instrumentation"
-            fi
-	fi
+        if test "x$enable_opencl" = xyes; then
+            LLVM_COMPONENTS="${LLVM_COMPONENTS} ipo linker instrumentation"
+        fi
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 	LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 	LLVM_CPPFLAGS=`strip_unwanted_llvm_flags "$LLVM_CONFIG --cppflags"`
@@ -1860,6 +1858,9 @@ if test "x$with_gallium_drivers" != x; then
             fi
             if test "x$enable_r600_llvm" = xyes; then
                 USE_R600_LLVM_COMPILER=yes;
+            fi
+            if test "x$enable_opencl" = xyes; then
+                LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
             gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600"
             ;;
