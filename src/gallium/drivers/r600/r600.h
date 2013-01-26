@@ -172,8 +172,8 @@ void r600_context_streamout_end(struct r600_context *ctx);
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
 void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block, unsigned pkt_flags);
 void r600_cp_dma_copy_buffer(struct r600_context *rctx,
-			     struct pipe_resource *dst, unsigned long dst_offset,
-			     struct pipe_resource *src, unsigned long src_offset,
+			     struct pipe_resource *dst, uint64_t dst_offset,
+			     struct pipe_resource *src, uint64_t src_offset,
 			     unsigned size);
 
 int evergreen_context_init(struct r600_context *ctx);
