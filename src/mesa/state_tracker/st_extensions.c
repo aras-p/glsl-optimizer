@@ -653,6 +653,10 @@ void st_init_extensions(struct st_context *st)
          break;
       }
    }
+   if (ctx->Const.MaxSamples == 1) {
+      /* one sample doesn't really make sense */
+      ctx->Const.MaxSamples = 0;
+   }
 
    if (ctx->Const.MaxDualSourceDrawBuffers > 0)
       ctx->Extensions.ARB_blend_func_extended = GL_TRUE;
