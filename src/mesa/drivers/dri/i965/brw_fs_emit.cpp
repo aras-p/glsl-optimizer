@@ -951,8 +951,8 @@ fs_generator::generate_pack_half_2x16_split(fs_inst *inst,
 {
    assert(intel->gen >= 7);
    assert(dst.type == BRW_REGISTER_TYPE_UD);
-   assert(x.type = BRW_REGISTER_TYPE_F);
-   assert(y.type = BRW_REGISTER_TYPE_F);
+   assert(x.type == BRW_REGISTER_TYPE_F);
+   assert(y.type == BRW_REGISTER_TYPE_F);
 
    /* From the Ivybridge PRM, Vol4, Part3, Section 6.27 f32to16:
     *
