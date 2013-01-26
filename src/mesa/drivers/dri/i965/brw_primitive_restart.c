@@ -82,7 +82,7 @@ can_cut_index_handle_prims(struct gl_context *ctx,
    struct intel_context *intel = intel_context(ctx);
 
    /* Otherwise Haswell can do it all. */
-   if (intel->is_haswell)
+   if (intel->gen >= 8 || intel->is_haswell)
       return true;
 
    if (!can_cut_index_handle_restart_index(ctx, ib)) {
