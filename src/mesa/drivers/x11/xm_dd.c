@@ -34,6 +34,7 @@
 #include "main/colormac.h"
 #include "main/fbobject.h"
 #include "main/macros.h"
+#include "main/mipmap.h"
 #include "main/image.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
@@ -868,6 +869,8 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
 
    driver->MapRenderbuffer = xmesa_MapRenderbuffer;
    driver->UnmapRenderbuffer = xmesa_UnmapRenderbuffer;
+
+   driver->GenerateMipmap = _mesa_generate_mipmap;
 
 #if ENABLE_EXT_timer_query
    driver->NewQueryObject = xmesa_new_query_object;
