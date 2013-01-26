@@ -1834,13 +1834,11 @@ if test "x$with_gallium_drivers" != x; then
             if test "x$enable_r600_llvm" = xyes -o "x$enable_opencl" = xyes; then
                 radeon_llvm_check
                 NEED_RADEON_GALLIUM=yes;
-                LLVM_COMPONENTS="${LLVM_COMPONENTS} ipo"
+                R600_NEED_RADEON_GALLIUM=yes;
+                LLVM_COMPONENTS="${LLVM_COMPONENTS} ipo bitreader asmparser"
             fi
             if test "x$enable_r600_llvm" = xyes; then
                 USE_R600_LLVM_COMPILER=yes;
-            fi
-            if test "x$enable_opencl" = xyes -a "x$with_llvm_shared_libs" = xno; then
-                LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
             gallium_check_st "radeon/drm" "dri-r600" "xorg-r600" "" "xvmc-r600" "vdpau-r600"
             ;;
@@ -1990,6 +1988,7 @@ AM_CONDITIONAL(HAVE_GALAHAD_GALLIUM, test x$HAVE_GALAHAD_GALLIUM = xyes)
 AM_CONDITIONAL(HAVE_IDENTITY_GALLIUM, test x$HAVE_IDENTITY_GALLIUM = xyes)
 AM_CONDITIONAL(HAVE_NOOP_GALLIUM, test x$HAVE_NOOP_GALLIUM = xyes)
 AM_CONDITIONAL(NEED_RADEON_GALLIUM, test x$NEED_RADEON_GALLIUM = xyes)
+AM_CONDITIONAL(R600_NEED_RADEON_GALLIUM, test x$R600_NEED_RADEON_GALLIUM = xyes)
 AM_CONDITIONAL(USE_R600_LLVM_COMPILER, test x$USE_R600_LLVM_COMPILER = xyes)
 AM_CONDITIONAL(HAVE_LOADER_GALLIUM, test x$enable_gallium_loader = xyes)
 AM_CONDITIONAL(HAVE_DRM_LOADER_GALLIUM, test x$enable_gallium_drm_loader = xyes)
