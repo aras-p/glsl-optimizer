@@ -92,7 +92,7 @@ struct lp_llvm_sampler_soa
 static LLVMValueRef
 lp_llvm_texture_member(const struct lp_sampler_dynamic_state *base,
                        struct gallivm_state *gallivm,
-                       unsigned unit,
+                       unsigned texture_unit,
                        unsigned member_index,
                        const char *member_name,
                        boolean emit_load)
@@ -104,14 +104,14 @@ lp_llvm_texture_member(const struct lp_sampler_dynamic_state *base,
    LLVMValueRef ptr;
    LLVMValueRef res;
 
-   assert(unit < PIPE_MAX_SHADER_SAMPLER_VIEWS);
+   assert(texture_unit < PIPE_MAX_SHADER_SAMPLER_VIEWS);
 
    /* context[0] */
    indices[0] = lp_build_const_int32(gallivm, 0);
    /* context[0].textures */
    indices[1] = lp_build_const_int32(gallivm, LP_JIT_CTX_TEXTURES);
    /* context[0].textures[unit] */
-   indices[2] = lp_build_const_int32(gallivm, unit);
+   indices[2] = lp_build_const_int32(gallivm, texture_unit);
    /* context[0].textures[unit].member */
    indices[3] = lp_build_const_int32(gallivm, member_index);
 
@@ -122,7 +122,7 @@ lp_llvm_texture_member(const struct lp_sampler_dynamic_state *base,
    else
       res = ptr;
 
-   lp_build_name(res, "context.texture%u.%s", unit, member_name);
+   lp_build_name(res, "context.texture%u.%s", texture_unit, member_name);
 
    return res;
 }
@@ -141,9 +141,9 @@ lp_llvm_texture_member(const struct lp_sampler_dynamic_state *base,
    static LLVMValueRef \
    lp_llvm_texture_##_name( const struct lp_sampler_dynamic_state *base, \
                             struct gallivm_state *gallivm, \
-                            unsigned unit) \
+                            unsigned texture_unit) \
    { \
-      return lp_llvm_texture_member(base, gallivm, unit, _index, #_name, _emit_load ); \
+      return lp_llvm_texture_member(base, gallivm, texture_unit, _index, #_name, _emit_load ); \
    }
 
 
@@ -169,7 +169,7 @@ LP_LLVM_TEXTURE_MEMBER(mip_offsets, LP_JIT_TEXTURE_MIP_OFFSETS, FALSE)
 static LLVMValueRef
 lp_llvm_sampler_member(const struct lp_sampler_dynamic_state *base,
                        struct gallivm_state *gallivm,
-                       unsigned unit,
+                       unsigned sampler_unit,
                        unsigned member_index,
                        const char *member_name,
                        boolean emit_load)
@@ -181,14 +181,14 @@ lp_llvm_sampler_member(const struct lp_sampler_dynamic_state *base,
    LLVMValueRef ptr;
    LLVMValueRef res;
 
-   assert(unit < PIPE_MAX_SAMPLERS);
+   assert(sampler_unit < PIPE_MAX_SAMPLERS);
 
    /* context[0] */
    indices[0] = lp_build_const_int32(gallivm, 0);
    /* context[0].samplers */
    indices[1] = lp_build_const_int32(gallivm, LP_JIT_CTX_SAMPLERS);
    /* context[0].samplers[unit] */
-   indices[2] = lp_build_const_int32(gallivm, unit);
+   indices[2] = lp_build_const_int32(gallivm, sampler_unit);
    /* context[0].samplers[unit].member */
    indices[3] = lp_build_const_int32(gallivm, member_index);
 
@@ -199,7 +199,7 @@ lp_llvm_sampler_member(const struct lp_sampler_dynamic_state *base,
    else
       res = ptr;
 
-   lp_build_name(res, "context.sampler%u.%s", unit, member_name);
+   lp_build_name(res, "context.sampler%u.%s", sampler_unit, member_name);
 
    return res;
 }
@@ -209,9 +209,9 @@ lp_llvm_sampler_member(const struct lp_sampler_dynamic_state *base,
    static LLVMValueRef \
    lp_llvm_sampler_##_name( const struct lp_sampler_dynamic_state *base, \
                             struct gallivm_state *gallivm, \
-                            unsigned unit) \
+                            unsigned sampler_unit) \
    { \
-      return lp_llvm_sampler_member(base, gallivm, unit, _index, #_name, _emit_load ); \
+      return lp_llvm_sampler_member(base, gallivm, sampler_unit, _index, #_name, _emit_load ); \
    }
 
 
@@ -278,19 +278,19 @@ static void
 lp_llvm_sampler_soa_emit_size_query(const struct lp_build_sampler_soa *base,
                                     struct gallivm_state *gallivm,
                                     struct lp_type type,
-                                    unsigned unit,
+                                    unsigned texture_unit,
                                     LLVMValueRef explicit_lod, /* optional */
                                     LLVMValueRef *sizes_out)
 {
    struct lp_llvm_sampler_soa *sampler = (struct lp_llvm_sampler_soa *)base;
 
-   assert(unit < PIPE_MAX_SAMPLERS);
+   assert(texture_unit < PIPE_MAX_SHADER_SAMPLER_VIEWS);
 
    lp_build_size_query_soa(gallivm,
-                           &sampler->dynamic_state.static_state[unit].texture_state,
+                           &sampler->dynamic_state.static_state[texture_unit].texture_state,
                            &sampler->dynamic_state.base,
                            type,
-                           unit,
+                           texture_unit,
                            explicit_lod,
                            sizes_out);
 }

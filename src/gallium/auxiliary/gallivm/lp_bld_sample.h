@@ -131,77 +131,77 @@ struct lp_sampler_dynamic_state
    LLVMValueRef
    (*width)( const struct lp_sampler_dynamic_state *state,
              struct gallivm_state *gallivm,
-             unsigned unit);
+             unsigned texture_unit);
 
    /** Obtain the base texture height (returns int32) */
    LLVMValueRef
    (*height)( const struct lp_sampler_dynamic_state *state,
               struct gallivm_state *gallivm,
-              unsigned unit);
+              unsigned texture_unit);
 
    /** Obtain the base texture depth (returns int32) */
    LLVMValueRef
    (*depth)( const struct lp_sampler_dynamic_state *state,
              struct gallivm_state *gallivm,
-             unsigned unit);
+             unsigned texture_unit);
 
    /** Obtain the first mipmap level (base level) (returns int32) */
    LLVMValueRef
    (*first_level)( const struct lp_sampler_dynamic_state *state,
                    struct gallivm_state *gallivm,
-                   unsigned unit);
+                   unsigned texture_unit);
 
    /** Obtain the number of mipmap levels minus one (returns int32) */
    LLVMValueRef
    (*last_level)( const struct lp_sampler_dynamic_state *state,
                   struct gallivm_state *gallivm,
-                  unsigned unit);
+                  unsigned texture_unit);
 
    /** Obtain stride in bytes between image rows/blocks (returns int32) */
    LLVMValueRef
    (*row_stride)( const struct lp_sampler_dynamic_state *state,
                   struct gallivm_state *gallivm,
-                  unsigned unit);
+                  unsigned texture_unit);
 
    /** Obtain stride in bytes between image slices (returns int32) */
    LLVMValueRef
    (*img_stride)( const struct lp_sampler_dynamic_state *state,
                   struct gallivm_state *gallivm,
-                  unsigned unit);
+                  unsigned texture_unit);
 
    /** Obtain pointer to base of texture */
    LLVMValueRef
    (*base_ptr)( const struct lp_sampler_dynamic_state *state,
                 struct gallivm_state *gallivm,
-                unsigned unit);
+                unsigned texture_unit);
 
    /** Obtain pointer to array of mipmap offsets */
    LLVMValueRef
    (*mip_offsets)( const struct lp_sampler_dynamic_state *state,
                    struct gallivm_state *gallivm,
-                   unsigned unit);
+                   unsigned texture_unit);
 
    /* These are callbacks for sampler state */
 
    /** Obtain texture min lod (returns float) */
    LLVMValueRef
    (*min_lod)(const struct lp_sampler_dynamic_state *state,
-              struct gallivm_state *gallivm, unsigned unit);
+              struct gallivm_state *gallivm, unsigned sampler_unit);
 
    /** Obtain texture max lod (returns float) */
    LLVMValueRef
    (*max_lod)(const struct lp_sampler_dynamic_state *state,
-              struct gallivm_state *gallivm, unsigned unit);
+              struct gallivm_state *gallivm, unsigned sampler_unit);
 
    /** Obtain texture lod bias (returns float) */
    LLVMValueRef
    (*lod_bias)(const struct lp_sampler_dynamic_state *state,
-               struct gallivm_state *gallivm, unsigned unit);
+               struct gallivm_state *gallivm, unsigned sampler_unit);
 
    /** Obtain texture border color (returns ptr to float[4]) */
    LLVMValueRef
    (*border_color)(const struct lp_sampler_dynamic_state *state,
-                   struct gallivm_state *gallivm, unsigned unit);
+                   struct gallivm_state *gallivm, unsigned sampler_unit);
 };
 
 
@@ -375,13 +375,13 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 
 void
 lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
-                           unsigned unit,
+                           unsigned texture_unit,
                            LLVMValueRef lod,
                            LLVMValueRef *level_out);
 
 void
 lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
-                           unsigned unit,
+                           unsigned texture_unit,
                            LLVMValueRef lod_ipart,
                            LLVMValueRef *lod_fpart_inout,
                            LLVMValueRef *level0_out,
@@ -486,7 +486,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
                         const struct lp_static_texture_state *static_state,
                         struct lp_sampler_dynamic_state *dynamic_state,
                         struct lp_type int_type,
-                        unsigned unit,
+                        unsigned texture_unit,
                         LLVMValueRef explicit_lod,
                         LLVMValueRef *sizes_out);
 

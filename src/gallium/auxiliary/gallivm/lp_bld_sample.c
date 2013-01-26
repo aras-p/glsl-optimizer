@@ -647,7 +647,7 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
  */
 void
 lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
-                           unsigned unit,
+                           unsigned texture_unit,
                            LLVMValueRef lod_ipart,
                            LLVMValueRef *level_out)
 {
@@ -655,9 +655,9 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
    LLVMValueRef first_level, last_level, level;
 
    first_level = bld->dynamic_state->first_level(bld->dynamic_state,
-                                                 bld->gallivm, unit);
+                                                 bld->gallivm, texture_unit);
    last_level = bld->dynamic_state->last_level(bld->dynamic_state,
-                                               bld->gallivm, unit);
+                                               bld->gallivm, texture_unit);
    first_level = lp_build_broadcast_scalar(perquadi_bld, first_level);
    last_level = lp_build_broadcast_scalar(perquadi_bld, last_level);
 
@@ -675,7 +675,7 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
  */
 void
 lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
-                           unsigned unit,
+                           unsigned texture_unit,
                            LLVMValueRef lod_ipart,
                            LLVMValueRef *lod_fpart_inout,
                            LLVMValueRef *level0_out,
@@ -689,9 +689,9 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
    LLVMValueRef clamp_max;
 
    first_level = bld->dynamic_state->first_level(bld->dynamic_state,
-                                                 bld->gallivm, unit);
+                                                 bld->gallivm, texture_unit);
    last_level = bld->dynamic_state->last_level(bld->dynamic_state,
-                                               bld->gallivm, unit);
+                                               bld->gallivm, texture_unit);
    first_level = lp_build_broadcast_scalar(perquadi_bld, first_level);
    last_level = lp_build_broadcast_scalar(perquadi_bld, last_level);
 
@@ -741,9 +741,9 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
    *lod_fpart_inout = LLVMBuildSelect(builder, clamp_max,
                                       perquadf_bld->zero, *lod_fpart_inout, "");
 
-   lp_build_name(*level0_out, "sampler%u_miplevel0", unit);
-   lp_build_name(*level1_out, "sampler%u_miplevel1", unit);
-   lp_build_name(*lod_fpart_inout, "sampler%u_mipweight", unit);
+   lp_build_name(*level0_out, "texture%u_miplevel0", texture_unit);
+   lp_build_name(*level1_out, "texture%u_miplevel1", texture_unit);
+   lp_build_name(*lod_fpart_inout, "texture%u_mipweight", texture_unit);
 }
 
 

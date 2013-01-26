@@ -72,7 +72,7 @@
  */
 static void
 lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
-                          unsigned unit,
+                          unsigned sampler_unit,
                           LLVMValueRef width,
                           LLVMValueRef height,
                           LLVMValueRef depth,
@@ -182,7 +182,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
       /* select texel color or border color depending on use_border */
       LLVMValueRef border_color_ptr = 
          bld->dynamic_state->border_color(bld->dynamic_state,
-                                          bld->gallivm, unit);
+                                          bld->gallivm, sampler_unit);
       int chan;
       for (chan = 0; chan < 4; chan++) {
          LLVMValueRef border_chan =
@@ -581,7 +581,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
  */
 static void
 lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
-                              unsigned unit,
+                              unsigned sampler_unit,
                               LLVMValueRef size,
                               LLVMValueRef row_stride_vec,
                               LLVMValueRef img_stride_vec,
@@ -647,7 +647,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    /*
     * Get texture colors.
     */
-   lp_build_sample_texel_soa(bld, unit,
+   lp_build_sample_texel_soa(bld, sampler_unit,
                              width_vec, height_vec, depth_vec,
                              x, y, z,
                              row_stride_vec, img_stride_vec,
@@ -661,7 +661,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
  */
 static void
 lp_build_sample_image_linear(struct lp_build_sample_context *bld,
-                             unsigned unit,
+                             unsigned sampler_unit,
                              LLVMValueRef size,
                              LLVMValueRef row_stride_vec,
                              LLVMValueRef img_stride_vec,
@@ -739,12 +739,12 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
     * Get texture colors.
     */
    /* get x0/x1 texels */
-   lp_build_sample_texel_soa(bld, unit,
+   lp_build_sample_texel_soa(bld, sampler_unit,
                              width_vec, height_vec, depth_vec,
                              x0, y0, z0,
                              row_stride_vec, img_stride_vec,
                              data_ptr, mipoffsets, neighbors[0][0]);
-   lp_build_sample_texel_soa(bld, unit,
+   lp_build_sample_texel_soa(bld, sampler_unit,
                              width_vec, height_vec, depth_vec,
                              x1, y0, z0,
                              row_stride_vec, img_stride_vec,
@@ -763,12 +763,12 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       LLVMValueRef colors0[4];
 
       /* get x0/x1 texels at y1 */
-      lp_build_sample_texel_soa(bld, unit,
+      lp_build_sample_texel_soa(bld, sampler_unit,
                                 width_vec, height_vec, depth_vec,
                                 x0, y1, z0,
                                 row_stride_vec, img_stride_vec,
                                 data_ptr, mipoffsets, neighbors[1][0]);
-      lp_build_sample_texel_soa(bld, unit,
+      lp_build_sample_texel_soa(bld, sampler_unit,
                                 width_vec, height_vec, depth_vec,
                                 x1, y1, z0,
                                 row_stride_vec, img_stride_vec,
@@ -789,22 +789,22 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
          LLVMValueRef colors1[4];
 
          /* get x0/x1/y0/y1 texels at z1 */
-         lp_build_sample_texel_soa(bld, unit,
+         lp_build_sample_texel_soa(bld, sampler_unit,
                                    width_vec, height_vec, depth_vec,
                                    x0, y0, z1,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, mipoffsets, neighbors1[0][0]);
-         lp_build_sample_texel_soa(bld, unit,
+         lp_build_sample_texel_soa(bld, sampler_unit,
                                    width_vec, height_vec, depth_vec,
                                    x1, y0, z1,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, mipoffsets, neighbors1[0][1]);
-         lp_build_sample_texel_soa(bld, unit,
+         lp_build_sample_texel_soa(bld, sampler_unit,
                                    width_vec, height_vec, depth_vec,
                                    x0, y1, z1,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, mipoffsets, neighbors1[1][0]);
-         lp_build_sample_texel_soa(bld, unit,
+         lp_build_sample_texel_soa(bld, sampler_unit,
                                    width_vec, height_vec, depth_vec,
                                    x1, y1, z1,
                                    row_stride_vec, img_stride_vec,
@@ -845,7 +845,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
  */
 static void
 lp_build_sample_mipmap(struct lp_build_sample_context *bld,
-                       unsigned unit,
+                       unsigned sampler_unit,
                        unsigned img_filter,
                        unsigned mip_filter,
                        LLVMValueRef s,
@@ -883,7 +883,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
       mipoff0 = lp_build_get_mip_offsets(bld, ilevel0);
    }
    if (img_filter == PIPE_TEX_FILTER_NEAREST) {
-      lp_build_sample_image_nearest(bld, unit,
+      lp_build_sample_image_nearest(bld, sampler_unit,
                                     size0,
                                     row_stride0_vec, img_stride0_vec,
                                     data_ptr0, mipoff0, s, t, r,
@@ -891,7 +891,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    }
    else {
       assert(img_filter == PIPE_TEX_FILTER_LINEAR);
-      lp_build_sample_image_linear(bld, unit,
+      lp_build_sample_image_linear(bld, sampler_unit,
                                    size0,
                                    row_stride0_vec, img_stride0_vec,
                                    data_ptr0, mipoff0, s, t, r,
@@ -947,14 +947,14 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
             mipoff1 = lp_build_get_mip_offsets(bld, ilevel1);
          }
          if (img_filter == PIPE_TEX_FILTER_NEAREST) {
-            lp_build_sample_image_nearest(bld, unit,
+            lp_build_sample_image_nearest(bld, sampler_unit,
                                           size1,
                                           row_stride1_vec, img_stride1_vec,
                                           data_ptr1, mipoff1, s, t, r,
                                           colors1);
          }
          else {
-            lp_build_sample_image_linear(bld, unit,
+            lp_build_sample_image_linear(bld, sampler_unit,
                                          size1,
                                          row_stride1_vec, img_stride1_vec,
                                          data_ptr1, mipoff1, s, t, r,
@@ -984,13 +984,13 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
  */
 static LLVMValueRef
 lp_build_layer_coord(struct lp_build_sample_context *bld,
-                     unsigned unit,
+                     unsigned texture_unit,
                      LLVMValueRef layer)
 {
    LLVMValueRef maxlayer;
 
    maxlayer = bld->dynamic_state->depth(bld->dynamic_state,
-                                        bld->gallivm, unit);
+                                        bld->gallivm, texture_unit);
    maxlayer = lp_build_sub(&bld->int_bld, maxlayer, bld->int_bld.one);
    maxlayer = lp_build_broadcast_scalar(&bld->int_coord_bld, maxlayer);
    return lp_build_clamp(&bld->int_coord_bld, layer,
@@ -1116,7 +1116,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
  */
 static void
 lp_build_sample_general(struct lp_build_sample_context *bld,
-                        unsigned unit,
+                        unsigned sampler_unit,
                         LLVMValueRef s,
                         LLVMValueRef t,
                         LLVMValueRef r,
@@ -1140,12 +1140,12 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
 
    for (chan = 0; chan < 4; ++chan) {
      texels[chan] = lp_build_alloca(bld->gallivm, bld->texel_bld.vec_type, "");
-     lp_build_name(texels[chan], "sampler%u_texel_%c_var", unit, "xyzw"[chan]);
+     lp_build_name(texels[chan], "sampler%u_texel_%c_var", sampler_unit, "xyzw"[chan]);
    }
 
    if (min_filter == mag_filter) {
       /* no need to distinguish between minification and magnification */
-      lp_build_sample_mipmap(bld, unit,
+      lp_build_sample_mipmap(bld, sampler_unit,
                              min_filter, mip_filter,
                              s, t, r,
                              ilevel0, ilevel1, lod_fpart,
@@ -1178,7 +1178,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       lp_build_if(&if_ctx, bld->gallivm, minify);
       {
          /* Use the minification filter */
-         lp_build_sample_mipmap(bld, unit,
+         lp_build_sample_mipmap(bld, sampler_unit,
                                 min_filter, mip_filter,
                                 s, t, r,
                                 ilevel0, ilevel1, lod_fpart,
@@ -1187,7 +1187,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       lp_build_else(&if_ctx);
       {
          /* Use the magnification filter */
-         lp_build_sample_mipmap(bld, unit,
+         lp_build_sample_mipmap(bld, sampler_unit,
                                 mag_filter, PIPE_TEX_MIPFILTER_NONE,
                                 s, t, r,
                                 ilevel0, NULL, NULL,
@@ -1198,7 +1198,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
 
    for (chan = 0; chan < 4; ++chan) {
      colors_out[chan] = LLVMBuildLoad(builder, texels[chan], "");
-     lp_build_name(colors_out[chan], "sampler%u_texel_%c", unit, "xyzw"[chan]);
+     lp_build_name(colors_out[chan], "sampler%u_texel_%c", sampler_unit, "xyzw"[chan]);
    }
 }
 
@@ -1213,7 +1213,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
  */
 static void
 lp_build_fetch_texel(struct lp_build_sample_context *bld,
-                     unsigned unit,
+                     unsigned texture_unit,
                      const LLVMValueRef *coords,
                      LLVMValueRef explicit_lod,
                      const LLVMValueRef *offsets,
@@ -1233,7 +1233,7 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
    if (explicit_lod && bld->static_texture_state->target != PIPE_BUFFER) {
       ilevel = lp_build_pack_aos_scalars(bld->gallivm, int_coord_bld->type,
                                          perquadi_bld->type, explicit_lod, 0);
-      lp_build_nearest_mip_level(bld, unit, ilevel, &ilevel);
+      lp_build_nearest_mip_level(bld, texture_unit, ilevel, &ilevel);
    }
    else {
       bld->num_lods = 1;
@@ -1248,10 +1248,10 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
    if (target == PIPE_TEXTURE_1D_ARRAY ||
        target == PIPE_TEXTURE_2D_ARRAY) {
       if (target == PIPE_TEXTURE_1D_ARRAY) {
-         z = lp_build_layer_coord(bld, unit, y);
+         z = lp_build_layer_coord(bld, texture_unit, y);
       }
       else {
-         z = lp_build_layer_coord(bld, unit, z);
+         z = lp_build_layer_coord(bld, texture_unit, z);
       }
    }
 
@@ -1741,7 +1741,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
                         const struct lp_static_texture_state *static_state,
                         struct lp_sampler_dynamic_state *dynamic_state,
                         struct lp_type int_type,
-                        unsigned unit,
+                        unsigned texture_unit,
                         LLVMValueRef explicit_lod,
                         LLVMValueRef *sizes_out)
 {
@@ -1784,7 +1784,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
    if (explicit_lod) {
       LLVMValueRef first_level;
       lod = LLVMBuildExtractElement(gallivm->builder, explicit_lod, lp_build_const_int32(gallivm, 0), "");
-      first_level = dynamic_state->first_level(dynamic_state, gallivm, unit);
+      first_level = dynamic_state->first_level(dynamic_state, gallivm, texture_unit);
       lod = lp_build_broadcast_scalar(&bld_int_vec,
                                       LLVMBuildAdd(gallivm->builder, lod, first_level, "lod"));
 
@@ -1795,18 +1795,18 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
    size = bld_int_vec.undef;
 
    size = LLVMBuildInsertElement(gallivm->builder, size,
-                                 dynamic_state->width(dynamic_state, gallivm, unit),
+                                 dynamic_state->width(dynamic_state, gallivm, texture_unit),
                                  lp_build_const_int32(gallivm, 0), "");
 
    if (dims >= 2) {
       size = LLVMBuildInsertElement(gallivm->builder, size,
-                                    dynamic_state->height(dynamic_state, gallivm, unit),
+                                    dynamic_state->height(dynamic_state, gallivm, texture_unit),
                                     lp_build_const_int32(gallivm, 1), "");
    }
 
    if (dims >= 3) {
       size = LLVMBuildInsertElement(gallivm->builder, size,
-                                    dynamic_state->depth(dynamic_state, gallivm, unit),
+                                    dynamic_state->depth(dynamic_state, gallivm, texture_unit),
                                     lp_build_const_int32(gallivm, 2), "");
    }
 
@@ -1814,7 +1814,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
  
    if (has_array)
       size = LLVMBuildInsertElement(gallivm->builder, size,
-                                    dynamic_state->depth(dynamic_state, gallivm, unit),
+                                    dynamic_state->depth(dynamic_state, gallivm, texture_unit),
                                     lp_build_const_int32(gallivm, dims), "");
 
    for (i = 0; i < dims + (has_array ? 1 : 0); i++) {
