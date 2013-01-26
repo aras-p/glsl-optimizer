@@ -42,6 +42,7 @@
 #include "main/framebuffer.h"
 #include "main/imports.h"
 #include "main/macros.h"
+#include "main/mipmap.h"
 #include "main/mtypes.h"
 #include "main/renderbuffer.h"
 #include "main/version.h"
@@ -782,6 +783,8 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
 
          ctx->Driver.MapRenderbuffer = osmesa_MapRenderbuffer;
          ctx->Driver.UnmapRenderbuffer = osmesa_UnmapRenderbuffer;
+
+         ctx->Driver.GenerateMipmap = _mesa_generate_mipmap;
 
          /* Extend the software rasterizer with our optimized line and triangle
           * drawing functions.
