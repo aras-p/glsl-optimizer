@@ -499,10 +499,16 @@ AC_CHECK_FUNC([dlopen], [DEFINES="$DEFINES -DHAVE_DLOPEN"],
        [DEFINES="$DEFINES -DHAVE_DLOPEN"; DLOPEN_LIBS="-ldl"])])
 AC_SUBST([DLOPEN_LIBS])
 
-AC_CHECK_FUNCS([clock_gettime], [CLOCK_LIB=],
-               [AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIB=-lrt],
-                             [AC_MSG_ERROR([Couldn't find clock_gettime])])])
-AC_SUBST([CLOCK_LIB])
+case "$host_os" in
+darwin*)
+    ;;
+*)
+    AC_CHECK_FUNCS([clock_gettime], [CLOCK_LIB=],
+                   [AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIB=-lrt],
+                                 [AC_MSG_ERROR([Couldn't find clock_gettime])])])
+    AC_SUBST([CLOCK_LIB])
+    ;;
+esac
 
 dnl See if posix_memalign is available
 AC_CHECK_FUNC([posix_memalign], [DEFINES="$DEFINES -DHAVE_POSIX_MEMALIGN"])
