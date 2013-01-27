@@ -65,8 +65,6 @@ struct intel_region
    GLuint width;    /**< in pixels */
    GLuint height;   /**< in pixels */
    GLuint pitch;    /**< in bytes */
-   GLubyte *map;    /**< only non-NULL when region is actually mapped */
-   GLuint map_refcount;  /**< Reference count for mapping */
 
    uint32_t tiling; /**< Which tiling mode the region is in */
 
@@ -98,17 +96,6 @@ void intel_region_reference(struct intel_region **dst,
 void intel_region_release(struct intel_region **ib);
 
 void intel_recreate_static_regions(struct intel_context *intel);
-
-/**
- * Map/unmap regions.  This is refcounted also:
- *
- * \param mode  bitmask of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT
- */
-void *intel_region_map(struct intel_context *intel,
-		       struct intel_region *ib,
-		       GLbitfield mode);
-
-void intel_region_unmap(struct intel_context *intel, struct intel_region *ib);
 
 /* Copy rectangular sub-regions
  */

@@ -104,60 +104,6 @@ debug_backtrace(void)
 
 #endif
 
-
-
-/* XXX: Thread safety?
- */
-void *
-intel_region_map(struct intel_context *intel, struct intel_region *region,
-                 GLbitfield mode)
-{
-   /* We have the region->map_refcount controlling mapping of the BO because
-    * in software fallbacks we may end up mapping the same buffer multiple
-    * times on Mesa's behalf, so we refcount our mappings to make sure that
-    * the pointer stays valid until the end of the unmap chain.  However, we
-    * must not emit any batchbuffers between the start of mapping and the end
-    * of unmapping, or further use of the map will be incoherent with the GPU
-    * rendering done by that batchbuffer. Hence we assert in
-    * intel_batchbuffer_flush() that that doesn't happen, which means that the
-    * flush is only needed on first map of the buffer.
-    */
-
-   if (unlikely(intel->perf_debug)) {
-      if (drm_intel_bo_busy(region->bo)) {
-         perf_debug("Mapping a busy BO, causing a stall on the GPU.\n");
-      }
-   }
-
-   _DBG("%s %p\n", __FUNCTION__, region);
-   if (!region->map_refcount) {
-      intel_flush(&intel->ctx);
-
-      if (region->tiling != I915_TILING_NONE)
-	 drm_intel_gem_bo_map_gtt(region->bo);
-      else
-	 drm_intel_bo_map(region->bo, true);
-
-      region->map = region->bo->virtual;
-   }
-
-   return region->map;
-}
-
-void
-intel_region_unmap(struct intel_context *intel, struct intel_region *region)
-{
-   _DBG("%s %p\n", __FUNCTION__, region);
-   if (!--region->map_refcount) {
-      if (region->tiling != I915_TILING_NONE)
-	 drm_intel_gem_bo_unmap_gtt(region->bo);
-      else
-	 drm_intel_bo_unmap(region->bo);
-
-      region->map = NULL;
-   }
-}
-
 static struct intel_region *
 intel_region_alloc_internal(struct intel_screen *screen,
 			    GLuint cpp,
@@ -291,8 +237,6 @@ intel_region_release(struct intel_region **region_handle)
    region->refcount--;
 
    if (region->refcount == 0) {
-      assert(region->map_refcount == 0);
-
       drm_intel_bo_unreference(region->bo);
 
       free(region);

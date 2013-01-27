@@ -948,9 +948,9 @@ intel_miptree_alloc_mcs(struct intel_context *intel,
     *
     * Note: the clear value for MCS buffers is all 1's, so we memset to 0xff.
     */
-   void *data = intel_region_map(intel, mt->mcs_mt->region, 0);
+   void *data = intel_miptree_map_raw(intel, mt->mcs_mt);
    memset(data, 0xff, mt->mcs_mt->region->bo->size);
-   intel_region_unmap(intel, mt->mcs_mt->region);
+   intel_miptree_unmap_raw(intel, mt->mcs_mt);
 
    return mt->mcs_mt;
 }
@@ -1192,6 +1192,34 @@ intel_miptree_upsample(struct intel_context *intel,
    intel_miptree_slice_set_needs_hiz_resolve(mt, 0, 0);
 }
 
+void *
+intel_miptree_map_raw(struct intel_context *intel, struct intel_mipmap_tree *mt)
+{
+   drm_intel_bo *bo = mt->region->bo;
+
+   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+      if (drm_intel_bo_busy(bo)) {
+         perf_debug("Mapping a busy BO, causing a stall on the GPU.\n");
+      }
+   }
+
+   intel_flush(&intel->ctx);
+
+   if (mt->region->tiling != I915_TILING_NONE)
+      drm_intel_gem_bo_map_gtt(bo);
+   else
+      drm_intel_bo_map(bo, true);
+
+   return bo->virtual;
+}
+
+void
+intel_miptree_unmap_raw(struct intel_context *intel,
+                        struct intel_mipmap_tree *mt)
+{
+   drm_intel_bo_unmap(mt->region->bo);
+}
+
 static void
 intel_miptree_map_gtt(struct intel_context *intel,
 		      struct intel_mipmap_tree *mt,
@@ -1212,7 +1240,7 @@ intel_miptree_map_gtt(struct intel_context *intel,
    assert(y % bh == 0);
    y /= bh;
 
-   base = intel_region_map(intel, mt->region, map->mode) + mt->offset;
+   base = intel_miptree_map_raw(intel, mt) + mt->offset;
 
    if (base == NULL)
       map->ptr = NULL;
@@ -1241,7 +1269,7 @@ intel_miptree_unmap_gtt(struct intel_context *intel,
 			unsigned int level,
 			unsigned int slice)
 {
-   intel_region_unmap(intel, mt->region);
+   intel_miptree_unmap_raw(intel, mt);
 }
 
 static void
@@ -1336,8 +1364,7 @@ intel_miptree_map_s8(struct intel_context *intel,
     */
    if (!(map->mode & GL_MAP_INVALIDATE_RANGE_BIT)) {
       uint8_t *untiled_s8_map = map->ptr;
-      uint8_t *tiled_s8_map = intel_region_map(intel, mt->region,
-					       GL_MAP_READ_BIT);
+      uint8_t *tiled_s8_map = intel_miptree_map_raw(intel, mt);
       unsigned int image_x, image_y;
 
       intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
@@ -1352,7 +1379,7 @@ intel_miptree_map_s8(struct intel_context *intel,
 	 }
       }
 
-      intel_region_unmap(intel, mt->region);
+      intel_miptree_unmap_raw(intel, mt);
 
       DBG("%s: %d,%d %dx%d from mt %p %d,%d = %p/%d\n", __FUNCTION__,
 	  map->x, map->y, map->w, map->h,
@@ -1374,7 +1401,7 @@ intel_miptree_unmap_s8(struct intel_context *intel,
    if (map->mode & GL_MAP_WRITE_BIT) {
       unsigned int image_x, image_y;
       uint8_t *untiled_s8_map = map->ptr;
-      uint8_t *tiled_s8_map = intel_region_map(intel, mt->region, map->mode);
+      uint8_t *tiled_s8_map = intel_miptree_map_raw(intel, mt);
 
       intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
 
@@ -1388,7 +1415,7 @@ intel_miptree_unmap_s8(struct intel_context *intel,
 	 }
       }
 
-      intel_region_unmap(intel, mt->region);
+      intel_miptree_unmap_raw(intel, mt);
    }
 
    free(map->buffer);
@@ -1429,7 +1456,7 @@ intel_miptree_unmap_etc(struct intel_context *intel,
    image_x += map->x;
    image_y += map->y;
 
-   uint8_t *dst = intel_region_map(intel, mt->region, map->mode)
+   uint8_t *dst = intel_miptree_map_raw(intel, mt)
                 + image_y * mt->region->pitch
                 + image_x * mt->region->cpp;
 
@@ -1442,7 +1469,7 @@ intel_miptree_unmap_etc(struct intel_context *intel,
                                map->ptr, map->stride,
                                map->w, map->h, mt->etc_format);
 
-   intel_region_unmap(intel, mt->region);
+   intel_miptree_unmap_raw(intel, mt);
    free(map->buffer);
 }
 
@@ -1480,8 +1507,8 @@ intel_miptree_map_depthstencil(struct intel_context *intel,
     */
    if (!(map->mode & GL_MAP_INVALIDATE_RANGE_BIT)) {
       uint32_t *packed_map = map->ptr;
-      uint8_t *s_map = intel_region_map(intel, s_mt->region, GL_MAP_READ_BIT);
-      uint32_t *z_map = intel_region_map(intel, z_mt->region, GL_MAP_READ_BIT);
+      uint8_t *s_map = intel_miptree_map_raw(intel, s_mt);
+      uint32_t *z_map = intel_miptree_map_raw(intel, z_mt);
       unsigned int s_image_x, s_image_y;
       unsigned int z_image_x, z_image_y;
 
@@ -1512,8 +1539,8 @@ intel_miptree_map_depthstencil(struct intel_context *intel,
 	 }
       }
 
-      intel_region_unmap(intel, s_mt->region);
-      intel_region_unmap(intel, z_mt->region);
+      intel_miptree_unmap_raw(intel, s_mt);
+      intel_miptree_unmap_raw(intel, z_mt);
 
       DBG("%s: %d,%d %dx%d from z mt %p %d,%d, s mt %p %d,%d = %p/%d\n",
 	  __FUNCTION__,
@@ -1541,8 +1568,8 @@ intel_miptree_unmap_depthstencil(struct intel_context *intel,
 
    if (map->mode & GL_MAP_WRITE_BIT) {
       uint32_t *packed_map = map->ptr;
-      uint8_t *s_map = intel_region_map(intel, s_mt->region, map->mode);
-      uint32_t *z_map = intel_region_map(intel, z_mt->region, map->mode);
+      uint8_t *s_map = intel_miptree_map_raw(intel, s_mt);
+      uint32_t *z_map = intel_miptree_map_raw(intel, z_mt);
       unsigned int s_image_x, s_image_y;
       unsigned int z_image_x, z_image_y;
 
@@ -1572,8 +1599,8 @@ intel_miptree_unmap_depthstencil(struct intel_context *intel,
 	 }
       }
 
-      intel_region_unmap(intel, s_mt->region);
-      intel_region_unmap(intel, z_mt->region);
+      intel_miptree_unmap_raw(intel, s_mt);
+      intel_miptree_unmap_raw(intel, z_mt);
 
       DBG("%s: %d,%d %dx%d from z mt %p (%s) %d,%d, s mt %p %d,%d = %p/%d\n",
 	  __FUNCTION__,

@@ -590,6 +590,12 @@ void i945_miptree_layout(struct intel_mipmap_tree *mt);
 void brw_miptree_layout(struct intel_context *intel,
 			struct intel_mipmap_tree *mt);
 
+void *intel_miptree_map_raw(struct intel_context *intel,
+                            struct intel_mipmap_tree *mt);
+
+void intel_miptree_unmap_raw(struct intel_context *intel,
+                             struct intel_mipmap_tree *mt);
+
 void
 intel_miptree_map(struct intel_context *intel,
 		  struct intel_mipmap_tree *mt,
