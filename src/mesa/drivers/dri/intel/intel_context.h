@@ -325,14 +325,6 @@ struct intel_context
     */
    bool is_front_buffer_reading;
 
-   /**
-    * Count of intel_regions that are mapped.
-    *
-    * This allows us to assert that no batch buffer is emitted if a
-    * region is mapped.
-    */
-   int num_mapped_regions;
-
    bool use_texture_tiling;
    bool use_early_z;
 

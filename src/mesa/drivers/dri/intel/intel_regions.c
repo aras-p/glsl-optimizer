@@ -140,10 +140,6 @@ intel_region_map(struct intel_context *intel, struct intel_region *region,
 
       region->map = region->bo->virtual;
    }
-   if (region->map) {
-      intel->num_mapped_regions++;
-      region->map_refcount++;
-   }
 
    return region->map;
 }
@@ -159,8 +155,6 @@ intel_region_unmap(struct intel_context *intel, struct intel_region *region)
 	 drm_intel_bo_unmap(region->bo);
 
       region->map = NULL;
-      --intel->num_mapped_regions;
-      assert(intel->num_mapped_regions >= 0);
    }
 }
 
