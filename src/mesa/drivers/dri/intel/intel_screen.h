@@ -67,7 +67,6 @@ struct intel_screen
 
    bool no_vbo;
    dri_bufmgr *bufmgr;
-   struct _mesa_HashTable *named_regions;
 
    /**
     * A unique ID for shader programs.

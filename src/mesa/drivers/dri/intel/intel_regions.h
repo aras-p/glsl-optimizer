@@ -46,6 +46,7 @@ extern "C" {
 #endif
 
 struct intel_context;
+struct intel_screen;
 struct intel_buffer_object;
 
 /**
@@ -70,7 +71,6 @@ struct intel_region
    uint32_t tiling; /**< Which tiling mode the region is in */
 
    uint32_t name; /**< Global name for the bo */
-   struct intel_screen *screen;
 };
 
 

@@ -680,7 +680,6 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     image->region->bo = parent->region->bo;
     drm_intel_bo_reference(image->region->bo);
     image->region->tiling = parent->region->tiling;
-    image->region->screen = parent->region->screen;
     image->offset = offset;
     intel_setup_image_from_dimensions(image);
 
@@ -743,23 +742,12 @@ intel_get_boolean(__DRIscreen *psp, int param)
 }
 
 static void
-nop_callback(GLuint key, void *data, void *userData)
-{
-}
-
-static void
 intelDestroyScreen(__DRIscreen * sPriv)
 {
    struct intel_screen *intelScreen = sPriv->driverPrivate;
 
    dri_bufmgr_destroy(intelScreen->bufmgr);
    driDestroyOptionInfo(&intelScreen->optionCache);
-
-   /* Some regions may still have references to them at this point, so
-    * flush the hash table to prevent _mesa_DeleteHashTable() from
-    * complaining about the hash not being empty; */
-   _mesa_HashDeleteAll(intelScreen->named_regions, nop_callback, NULL);
-   _mesa_DeleteHashTable(intelScreen->named_regions);
 
    free(intelScreen);
    sPriv->driverPrivate = NULL;
@@ -967,8 +955,6 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    }
 
    drm_intel_bufmgr_gem_enable_fenced_relocs(intelScreen->bufmgr);
-
-   intelScreen->named_regions = _mesa_NewHashTable();
 
    intelScreen->relaxed_relocations = 0;
    intelScreen->relaxed_relocations |=

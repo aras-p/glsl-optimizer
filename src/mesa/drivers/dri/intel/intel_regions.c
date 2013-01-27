@@ -183,7 +183,6 @@ intel_region_alloc_internal(struct intel_screen *screen,
    region->refcount = 1;
    region->bo = buffer;
    region->tiling = tiling;
-   region->screen = screen;
 
    _DBG("%s <-- %p\n", __FUNCTION__, region);
    return region;
@@ -225,9 +224,6 @@ intel_region_flink(struct intel_region *region, uint32_t *name)
    if (region->name == 0) {
       if (drm_intel_bo_flink(region->bo, &region->name))
 	 return false;
-      
-      _mesa_HashInsert(region->screen->named_regions,
-		       region->name, region);
    }
 
    *name = region->name;
@@ -241,24 +237,10 @@ intel_region_alloc_for_handle(struct intel_screen *screen,
 			      GLuint width, GLuint height, GLuint pitch,
 			      GLuint handle, const char *name)
 {
-   struct intel_region *region, *dummy;
+   struct intel_region *region;
    drm_intel_bo *buffer;
    int ret;
    uint32_t bit_6_swizzle, tiling;
-
-   region = _mesa_HashLookup(screen->named_regions, handle);
-   if (region != NULL) {
-      dummy = NULL;
-      if (region->width != width || region->height != height ||
-	  region->cpp != cpp || region->pitch != pitch) {
-	 fprintf(stderr,
-		 "Region for name %d already exists but is not compatible\n",
-		 handle);
-	 return NULL;
-      }
-      intel_region_reference(&dummy, region);
-      return dummy;
-   }
 
    buffer = intel_bo_gem_create_from_name(screen->bufmgr, name, handle);
    if (buffer == NULL)
@@ -279,7 +261,6 @@ intel_region_alloc_for_handle(struct intel_screen *screen,
    }
 
    region->name = handle;
-   _mesa_HashInsert(screen->named_regions, handle, region);
 
    return region;
 }
@@ -319,9 +300,6 @@ intel_region_release(struct intel_region **region_handle)
       assert(region->map_refcount == 0);
 
       drm_intel_bo_unreference(region->bo);
-
-      if (region->name > 0)
-	 _mesa_HashRemove(region->screen->named_regions, region->name);
 
       free(region);
    }
