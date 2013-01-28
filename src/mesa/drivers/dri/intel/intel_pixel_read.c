@@ -39,6 +39,8 @@
 #include "intel_context.h"
 #include "intel_blit.h"
 #include "intel_buffers.h"
+#include "intel_fbo.h"
+#include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_pixel.h"
 #include "intel_buffer_objects.h"
@@ -94,9 +96,12 @@ do_blit_readpixels(struct gl_context * ctx,
       return false;
    }
 
+   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    if (ctx->_ImageTransferState ||
-       !intel_check_blit_format(src, format, type)) {
+       !_mesa_format_matches_format_and_type(irb->mt->format, format, type,
+                                             false)) {
       DBG("%s - bad format for blit\n", __FUNCTION__);
       return false;
    }

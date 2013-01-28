@@ -123,38 +123,6 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
    return true;
 }
 
-/* The intel_region struct doesn't really do enough to capture the
- * format of the pixels in the region.  For now this code assumes that
- * the region is a display surface and hence is either ARGB8888 or
- * RGB565.
- * XXX FBO: If we'd pass in the intel_renderbuffer instead of region, we'd
- * know the buffer's pixel format.
- *
- * \param format  as given to glDraw/ReadPixels
- * \param type  as given to glDraw/ReadPixels
- */
-bool
-intel_check_blit_format(struct intel_region * region,
-                        GLenum format, GLenum type)
-{
-   if (region->cpp == 4 &&
-       (type == GL_UNSIGNED_INT_8_8_8_8_REV ||
-        type == GL_UNSIGNED_BYTE) && format == GL_BGRA) {
-      return true;
-   }
-
-   if (region->cpp == 2 &&
-       type == GL_UNSIGNED_SHORT_5_6_5_REV && format == GL_BGR) {
-      return true;
-   }
-
-   DBG("%s: bad format for blit (cpp %d, type %s format %s)\n",
-       __FUNCTION__, region->cpp,
-       _mesa_lookup_enum_by_nr(type), _mesa_lookup_enum_by_nr(format));
-
-   return false;
-}
-
 void
 intelInitPixelFuncs(struct dd_function_table *functions)
 {

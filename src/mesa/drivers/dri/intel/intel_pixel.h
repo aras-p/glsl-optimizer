@@ -34,10 +34,6 @@ void intelInitPixelFuncs(struct dd_function_table *functions);
 bool intel_check_blit_fragment_ops(struct gl_context * ctx,
 					bool src_alpha_is_one);
 
-bool intel_check_blit_format(struct intel_region *region,
-                                  GLenum format, GLenum type);
-
-
 void intelReadPixels(struct gl_context * ctx,
                      GLint x, GLint y,
                      GLsizei width, GLsizei height,
