@@ -2375,7 +2375,7 @@ print_program(struct prog_instruction *mesa_instructions,
    }
 }
 
-class add_uniform_to_shader : public uniform_field_visitor {
+class add_uniform_to_shader : public program_resource_visitor {
 public:
    add_uniform_to_shader(struct gl_shader_program *shader_program,
 			 struct gl_program_parameter_list *params)
@@ -2387,7 +2387,7 @@ public:
    void process(ir_variable *var)
    {
       this->idx = -1;
-      this->uniform_field_visitor::process(var);
+      this->program_resource_visitor::process(var);
 
       var->location = this->idx;
    }

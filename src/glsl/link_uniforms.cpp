@@ -52,7 +52,7 @@ values_for_type(const glsl_type *type)
 }
 
 void
-uniform_field_visitor::process(const glsl_type *type, const char *name)
+program_resource_visitor::process(const glsl_type *type, const char *name)
 {
    assert(type->is_record()
           || (type->is_array() && type->fields.array->is_record())
@@ -65,7 +65,7 @@ uniform_field_visitor::process(const glsl_type *type, const char *name)
 }
 
 void
-uniform_field_visitor::process(ir_variable *var)
+program_resource_visitor::process(ir_variable *var)
 {
    const glsl_type *t = var->type;
 
@@ -93,8 +93,8 @@ uniform_field_visitor::process(ir_variable *var)
 }
 
 void
-uniform_field_visitor::recursion(const glsl_type *t, char **name,
-                                 size_t name_length, bool row_major)
+program_resource_visitor::recursion(const glsl_type *t, char **name,
+                                    size_t name_length, bool row_major)
 {
    /* Records need to have each field processed individually.
     *
@@ -110,7 +110,7 @@ uniform_field_visitor::recursion(const glsl_type *t, char **name,
          if (t->fields.structure[i].type->is_record())
             this->visit_field(&t->fields.structure[i]);
 
-         /* Append '.field' to the current uniform name. */
+         /* Append '.field' to the current variable name. */
          if (name_length == 0) {
             ralloc_asprintf_rewrite_tail(name, &new_length, "%s", field);
          } else {
@@ -125,7 +125,7 @@ uniform_field_visitor::recursion(const glsl_type *t, char **name,
       for (unsigned i = 0; i < t->length; i++) {
 	 size_t new_length = name_length;
 
-	 /* Append the subscript to the current uniform name */
+	 /* Append the subscript to the current variable name */
 	 ralloc_asprintf_rewrite_tail(name, &new_length, "[%u]", i);
 
          recursion(t->fields.array, name, new_length,
@@ -137,7 +137,7 @@ uniform_field_visitor::recursion(const glsl_type *t, char **name,
 }
 
 void
-uniform_field_visitor::visit_field(const glsl_struct_field *field)
+program_resource_visitor::visit_field(const glsl_struct_field *field)
 {
    (void) field;
    /* empty */
@@ -153,7 +153,7 @@ uniform_field_visitor::visit_field(const glsl_struct_field *field)
  * If the same uniform is added multiple times (i.e., once for each shader
  * target), it will only be accounted once.
  */
-class count_uniform_size : public uniform_field_visitor {
+class count_uniform_size : public program_resource_visitor {
 public:
    count_uniform_size(struct string_to_uint_map *map)
       : num_active_uniforms(0), num_values(0), num_shader_samplers(0),
@@ -171,10 +171,10 @@ public:
    void process(ir_variable *var)
    {
       if (var->is_interface_instance())
-         uniform_field_visitor::process(var->interface_type,
-                                        var->interface_type->name);
+         program_resource_visitor::process(var->interface_type,
+                                           var->interface_type->name);
       else
-         uniform_field_visitor::process(var);
+         program_resource_visitor::process(var);
    }
 
    /**
@@ -258,7 +258,7 @@ private:
  * the \c gl_uniform_storage and \c gl_constant_value arrays are "big
  * enough."
  */
-class parcel_out_uniform_storage : public uniform_field_visitor {
+class parcel_out_uniform_storage : public program_resource_visitor {
 public:
    parcel_out_uniform_storage(struct string_to_uint_map *map,
 			      struct gl_uniform_storage *uniforms,

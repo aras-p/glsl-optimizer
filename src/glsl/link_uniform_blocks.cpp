@@ -29,7 +29,7 @@
 #include "main/hash_table.h"
 #include "program.h"
 
-class ubo_visitor : public uniform_field_visitor {
+class ubo_visitor : public program_resource_visitor {
 public:
    ubo_visitor(void *mem_ctx, gl_uniform_buffer_variable *variables,
                unsigned num_variables)
@@ -44,7 +44,7 @@ public:
       this->offset = 0;
       this->buffer_size = 0;
       this->is_array_instance = strchr(name, ']') != NULL;
-      this->uniform_field_visitor::process(type, name);
+      this->program_resource_visitor::process(type, name);
    }
 
    unsigned index;
@@ -112,7 +112,7 @@ private:
    }
 };
 
-class count_block_size : public uniform_field_visitor {
+class count_block_size : public program_resource_visitor {
 public:
    count_block_size() : num_active_uniforms(0)
    {
