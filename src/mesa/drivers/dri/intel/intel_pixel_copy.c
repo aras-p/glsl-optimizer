@@ -39,6 +39,7 @@
 #include "intel_regions.h"
 #include "intel_pixel.h"
 #include "intel_fbo.h"
+#include "intel_blit.h"
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 
@@ -193,12 +194,21 @@ do_blit_copypixels(struct gl_context * ctx,
    dstx += draw_irb->draw_x;
    dsty += draw_irb->draw_y;
 
-   if (!intel_region_copy(intel,
-			  draw_irb->mt->region, 0, dstx, dsty,
-			  read_irb->mt->region, 0, srcx, srcy,
-			  width, height, flip,
-			  ctx->Color.ColorLogicOpEnabled ?
-			  ctx->Color.LogicOp : GL_COPY)) {
+   uint32_t src_pitch = read_irb->mt->region->pitch;
+   if (flip)
+      src_pitch = -src_pitch;
+
+   if (!intelEmitCopyBlit(intel,
+                          draw_irb->mt->cpp,
+                          src_pitch, read_irb->mt->region->bo,
+                          0, read_irb->mt->region->tiling,
+                          draw_irb->mt->region->pitch, draw_irb->mt->region->bo,
+                          0, draw_irb->mt->region->tiling,
+                          srcx, srcy,
+                          dstx, dsty,
+                          width, height,
+                          ctx->Color.ColorLogicOpEnabled ?
+                          ctx->Color.LogicOp : GL_COPY)) {
       DBG("%s: blit failure\n", __FUNCTION__);
       return false;
    }

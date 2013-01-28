@@ -244,40 +244,6 @@ intel_region_release(struct intel_region **region_handle)
    *region_handle = NULL;
 }
 
-/* Copy rectangular sub-regions. Need better logic about when to
- * push buffers into AGP - will currently do so whenever possible.
- */
-bool
-intel_region_copy(struct intel_context *intel,
-                  struct intel_region *dst,
-                  GLuint dst_offset,
-                  GLuint dstx, GLuint dsty,
-                  struct intel_region *src,
-                  GLuint src_offset,
-                  GLuint srcx, GLuint srcy, GLuint width, GLuint height,
-		  bool flip,
-		  GLenum logicop)
-{
-   uint32_t src_pitch = src->pitch;
-
-   _DBG("%s\n", __FUNCTION__);
-
-   if (intel == NULL)
-      return false;
-
-   assert(src->cpp == dst->cpp);
-
-   if (flip)
-      src_pitch = -src_pitch;
-
-   return intelEmitCopyBlit(intel,
-			    dst->cpp,
-			    src_pitch, src->bo, src_offset, src->tiling,
-			    dst->pitch, dst->bo, dst_offset, dst->tiling,
-			    srcx, srcy, dstx, dsty, width, height,
-			    logicop);
-}
-
 /**
  * This function computes masks that may be used to select the bits of the X
  * and Y coordinates that indicate the offset within a tile.  If the region is

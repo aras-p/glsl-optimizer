@@ -97,19 +97,6 @@ void intel_region_release(struct intel_region **ib);
 
 void intel_recreate_static_regions(struct intel_context *intel);
 
-/* Copy rectangular sub-regions
- */
-bool
-intel_region_copy(struct intel_context *intel,
-		  struct intel_region *dest,
-		  GLuint dest_offset,
-		  GLuint destx, GLuint desty,
-		  struct intel_region *src,
-		  GLuint src_offset,
-		  GLuint srcx, GLuint srcy, GLuint width, GLuint height,
-		  bool flip,
-		  GLenum logicop);
-
 void
 intel_region_get_tile_masks(struct intel_region *region,
                             uint32_t *mask_x, uint32_t *mask_y,
