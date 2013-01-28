@@ -3352,7 +3352,8 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return format == GL_DEPTH_COMPONENT && type == GL_FLOAT && !swapBytes;
 
    case MESA_FORMAT_Z32_FLOAT_X24S8:
-      return GL_FALSE;
+      return format == GL_DEPTH_STENCIL &&
+             type == GL_FLOAT_32_UNSIGNED_INT_24_8_REV && !swapBytes;
 
    case MESA_FORMAT_XRGB4444_UNORM:
    case MESA_FORMAT_XRGB1555_UNORM:
