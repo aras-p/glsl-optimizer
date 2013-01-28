@@ -612,6 +612,22 @@ void r600_flush_emit(struct r600_context *rctx)
 		return;
 	}
 
+	if (rctx->flags & R600_CONTEXT_WAIT_3D_IDLE) {
+		wait_until |= S_008040_WAIT_3D_IDLE(1);
+	}
+	if (rctx->flags & R600_CONTEXT_WAIT_CP_DMA_IDLE) {
+		wait_until |= S_008040_WAIT_CP_DMA_IDLE(1);
+	}
+
+	if (wait_until) {
+		/* Use of WAIT_UNTIL is deprecated on Cayman+ */
+		if (rctx->family >= CHIP_CAYMAN) {
+			/* emit a PS partial flush on Cayman/TN */
+			cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+			cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+		}
+	}
+
 	if (rctx->chip_class >= R700 &&
 	    (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_CB_META)) {
 		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
@@ -674,15 +690,12 @@ void r600_flush_emit(struct r600_context *rctx)
 		cs->buf[cs->cdw++] = 0x0000000A;      /* POLL_INTERVAL */
 	}
 
-	if (rctx->flags & R600_CONTEXT_WAIT_3D_IDLE) {
-		wait_until |= S_008040_WAIT_3D_IDLE(1);
-	}
-	if (rctx->flags & R600_CONTEXT_WAIT_CP_DMA_IDLE) {
-		wait_until |= S_008040_WAIT_CP_DMA_IDLE(1);
-	}
 	if (wait_until) {
-		/* wait for things to settle */
-		r600_write_config_reg(cs, R_008040_WAIT_UNTIL, wait_until);
+		/* Use of WAIT_UNTIL is deprecated on Cayman+ */
+		if (rctx->family < CHIP_CAYMAN) {
+			/* wait for things to settle */
+			r600_write_config_reg(cs, R_008040_WAIT_UNTIL, wait_until);
+		}
 	}
 
 	/* everything is properly flushed */
@@ -859,7 +872,13 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fen
 	va = r600_resource_va(&ctx->screen->screen, (void*)fence_bo);
 	va = va + (offset << 2);
 
-	r600_write_config_reg(cs, R_008040_WAIT_UNTIL, S_008040_WAIT_3D_IDLE(1));
+	/* Use of WAIT_UNTIL is deprecated on Cayman+ */
+	if (ctx->family >= CHIP_CAYMAN) {
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+	} else {
+		r600_write_config_reg(cs, R_008040_WAIT_UNTIL, S_008040_WAIT_3D_IDLE(1));
+	}
 
 	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
