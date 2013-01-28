@@ -69,7 +69,8 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
                             boolean do_branch);
 
 void
-lp_build_depth_write(LLVMBuilderRef builder,
+lp_build_depth_write(struct gallivm_state *gallivm,
+                     struct lp_type z_src_type,
                      const struct util_format_description *format_desc,
                      LLVMValueRef zs_dst_ptr,
                      LLVMValueRef zs_value);

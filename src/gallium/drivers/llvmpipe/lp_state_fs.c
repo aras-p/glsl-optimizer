@@ -335,7 +335,7 @@ generate_fs(struct gallivm_state *gallivm,
                                   !simple_shader);
 
       if (depth_mode & EARLY_DEPTH_WRITE) {
-         lp_build_depth_write(builder, zs_format_desc, depth_ptr, zs_value);
+         lp_build_depth_write(gallivm, type, zs_format_desc, depth_ptr, zs_value);
       }
    }
 
@@ -392,7 +392,7 @@ generate_fs(struct gallivm_state *gallivm,
                                   !simple_shader);
       /* Late Z write */
       if (depth_mode & LATE_DEPTH_WRITE) {
-         lp_build_depth_write(builder, zs_format_desc, depth_ptr, zs_value);
+         lp_build_depth_write(gallivm, type, zs_format_desc, depth_ptr, zs_value);
       }
    }
    else if ((depth_mode & EARLY_DEPTH_TEST) &&
@@ -574,7 +574,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
                                   !simple_shader);
 
       if (depth_mode & EARLY_DEPTH_WRITE) {
-         lp_build_depth_write(builder, zs_format_desc, depth_ptr_i, zs_value);
+         lp_build_depth_write(gallivm, type, zs_format_desc, depth_ptr_i, zs_value);
       }
    }
 
@@ -631,7 +631,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
                                   !simple_shader);
       /* Late Z write */
       if (depth_mode & LATE_DEPTH_WRITE) {
-         lp_build_depth_write(builder, zs_format_desc, depth_ptr_i, zs_value);
+         lp_build_depth_write(gallivm, type, zs_format_desc, depth_ptr_i, zs_value);
       }
    }
    else if ((depth_mode & EARLY_DEPTH_TEST) &&
