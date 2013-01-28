@@ -1582,7 +1582,7 @@ intel_miptree_map_singlesample(struct intel_context *intel,
     * pitch, so it can only handle buffer pitches < 32k.
     *
     * As a result of these two limitations, we can only use
-    * intel_miptree_map_blit() when the region's pitsh is less than 32k.
+    * intel_miptree_map_blit() when the region's pitch is less than 32k.
     */
    else if (intel->has_llc &&
             !(mode & GL_MAP_WRITE_BIT) &&
