@@ -167,7 +167,7 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
     * sure the caller doesn't get garbage values.
     */
    *out_offset = ~0;
-   *outbuf = NULL;
+   pipe_resource_reference(outbuf, NULL);
    *ptr = NULL;
 
    /* Make sure we have enough space in the upload buffer
@@ -189,7 +189,6 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
 					  PIPE_TRANSFER_UNSYNCHRONIZED,
 					  &upload->transfer);
       if (!upload->map) {
-         pipe_resource_reference(outbuf, NULL);
          upload->transfer = NULL;
          return PIPE_ERROR_OUT_OF_MEMORY;
       }
