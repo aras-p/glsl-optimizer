@@ -869,7 +869,7 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_context *ctx,
 	 * look serialized from driver pov
 	 */
 	if (!ring->flushing) {
-		if (ring == &ctx->rings.gfx) {
+		if (ring == &ctx->rings.gfx && ctx->rings.dma.cs) {
 			/* flush dma ring */
 			ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
 		} else {

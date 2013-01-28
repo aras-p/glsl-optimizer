@@ -851,7 +851,9 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
 			/* flush gfx & dma ring, order does not matter as only one can be live */
-			rctx->rings.dma.flush(rctx, 0);
+			if (rctx->rings.dma.cs) {
+				rctx->rings.dma.flush(rctx, 0);
+			}
 			rctx->rings.gfx.flush(rctx, 0);
 		}
 	} else {

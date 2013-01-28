@@ -151,7 +151,9 @@ static void r600_flush_from_st(struct pipe_context *ctx,
 		*rfence = r600_create_fence(rctx);
 	}
 	/* flush gfx & dma ring, order does not matter as only one can be live */
-	rctx->rings.dma.flush(rctx, fflags);
+	if (rctx->rings.dma.cs) {
+		rctx->rings.dma.flush(rctx, fflags);
+	}
 	rctx->rings.gfx.flush(rctx, fflags);
 }
 
@@ -179,8 +181,10 @@ boolean r600_rings_is_buffer_referenced(struct r600_context *ctx,
 	if (ctx->ws->cs_is_buffer_referenced(ctx->rings.gfx.cs, buf, usage)) {
 		return TRUE;
 	}
-	if (ctx->ws->cs_is_buffer_referenced(ctx->rings.dma.cs, buf, usage)) {
-		return TRUE;
+	if (ctx->rings.dma.cs) {
+		if (ctx->ws->cs_is_buffer_referenced(ctx->rings.dma.cs, buf, usage)) {
+			return TRUE;
+		}
 	}
 	return FALSE;
 }
@@ -211,10 +215,12 @@ void *r600_buffer_mmap_sync_with_rings(struct r600_context *ctx,
 			return NULL;
 		}
 	}
-	if (ctx->ws->cs_is_buffer_referenced(ctx->rings.dma.cs, resource->cs_buf, rusage) && ctx->rings.dma.cs->cdw) {
-		ctx->rings.dma.flush(ctx, flags);
-		if (usage & PIPE_TRANSFER_DONTBLOCK) {
-			return NULL;
+	if (ctx->rings.dma.cs) {
+		if (ctx->ws->cs_is_buffer_referenced(ctx->rings.dma.cs, resource->cs_buf, rusage) && ctx->rings.dma.cs->cdw) {
+			ctx->rings.dma.flush(ctx, flags);
+			if (usage & PIPE_TRANSFER_DONTBLOCK) {
+				return NULL;
+			}
 		}
 	}
 

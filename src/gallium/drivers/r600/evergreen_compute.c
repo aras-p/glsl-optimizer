@@ -321,7 +321,9 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 					ctx->cs_shader_state.shader->resources;
 
 	/* make sure that the gfx ring is only one active */
-	ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
+	if (ctx->rings.dma.cs) {
+		ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
+	}
 
 	/* Initialize all the compute-related registers.
 	 *
