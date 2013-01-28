@@ -4317,6 +4317,58 @@ _mesa_get_texstore_func(gl_format format)
 }
 
 
+static GLboolean
+_mesa_texstore_memcpy(TEXSTORE_PARAMS)
+{
+   GLenum dstType;
+
+   /* There are different restrictions depending on the base format... */
+   switch (baseInternalFormat) {
+   case GL_DEPTH_COMPONENT:
+   case GL_DEPTH_STENCIL:
+      /* Depth scale and bias are not allowed. */
+      if (ctx->Pixel.DepthScale != 1.0f ||
+          ctx->Pixel.DepthBias != 0.0f) {
+        return GL_FALSE;
+      }
+      break;
+
+   case GL_STENCIL_INDEX:
+      break;
+
+   default:
+      /* Color formats.
+       * Pixel transfer ops (scale, bias, table lookup) do not apply
+       * to integer formats.
+       */
+      dstType = _mesa_get_format_datatype(dstFormat);
+
+      if (dstType != GL_INT && dstType != GL_UNSIGNED_INT &&
+          ctx->_ImageTransferState) {
+         return GL_FALSE;
+      }
+   }
+
+   /* The base internal format and the base Mesa format must match. */
+   if (baseInternalFormat != _mesa_get_format_base_format(dstFormat)) {
+      return GL_FALSE;
+   }
+
+   /* The Mesa format must match the input format and type. */
+   if (!_mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
+                                             srcPacking->SwapBytes)) {
+      return GL_FALSE;
+   }
+
+   memcpy_texture(ctx, dims,
+                  dstFormat,
+                  dstRowStride, dstSlices,
+                  srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                  srcAddr, srcPacking);
+   return GL_TRUE;
+}
+
+
 /**
  * Store user data into texture memory.
  * Called via glTex[Sub]Image1/2/3D()
@@ -4326,6 +4378,14 @@ _mesa_texstore(TEXSTORE_PARAMS)
 {
    StoreTexImageFunc storeImage;
    GLboolean success;
+
+   if (_mesa_texstore_memcpy(ctx, dims, baseInternalFormat,
+                             dstFormat,
+                             dstRowStride, dstSlices,
+                             srcWidth, srcHeight, srcDepth,
+                             srcFormat, srcType, srcAddr, srcPacking)) {
+      return GL_TRUE;
+   }
 
    storeImage = _mesa_get_texstore_func(dstFormat);
 
