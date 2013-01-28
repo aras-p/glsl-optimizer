@@ -3021,8 +3021,13 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
          littleEndian && !swapBytes;
 
    case MESA_FORMAT_YCBCR:
+      return format == GL_YCBCR_MESA &&
+             ((type == GL_UNSIGNED_SHORT_8_8_MESA && littleEndian != swapBytes) ||
+              (type == GL_UNSIGNED_SHORT_8_8_REV_MESA && littleEndian == swapBytes));
    case MESA_FORMAT_YCBCR_REV:
-      return GL_FALSE;
+      return format == GL_YCBCR_MESA &&
+             ((type == GL_UNSIGNED_SHORT_8_8_MESA && littleEndian == swapBytes) ||
+              (type == GL_UNSIGNED_SHORT_8_8_REV_MESA && littleEndian != swapBytes));
 
    case MESA_FORMAT_R8:
       return format == GL_RED && type == GL_UNSIGNED_BYTE;
