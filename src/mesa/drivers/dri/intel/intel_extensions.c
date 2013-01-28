@@ -67,7 +67,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_blend_minmax = true;
    ctx->Extensions.EXT_framebuffer_blit = true;
    ctx->Extensions.EXT_framebuffer_object = true;
-   ctx->Extensions.EXT_framebuffer_multisample = true;
    ctx->Extensions.EXT_fog_coord = true;
    ctx->Extensions.EXT_gpu_program_parameters = true;
    ctx->Extensions.EXT_packed_depth_stencil = true;
@@ -100,6 +99,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.EXT_transform_feedback = true;
 
    if (intel->gen >= 6) {
+      ctx->Extensions.EXT_framebuffer_multisample = true;
       ctx->Extensions.ARB_blend_func_extended = !driQueryOptionb(&intel->optionCache, "disable_blend_func_extended");
       ctx->Extensions.ARB_draw_buffers_blend = true;
       ctx->Extensions.ARB_ES3_compatibility = true;

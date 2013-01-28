@@ -202,15 +202,7 @@ intel_quantize_num_samples(struct intel_screen *intel, unsigned num_samples)
          return 0;
       return 0;
    default:
-      /* MSAA unsupported.  However, a careful reading of
-       * EXT_framebuffer_multisample reveals that we need to permit
-       * num_samples to be 1 (since num_samples is permitted to be as high as
-       * GL_MAX_SAMPLES, and GL_MAX_SAMPLES must be at least 1).  Since
-       * platforms before Gen6 don't support MSAA, this is safe, because
-       * multisampling won't happen anyhow.
-       */
-      if (num_samples > 0)
-         return 1;
+      /* MSAA unsupported. */
       return 0;
    }
 }
