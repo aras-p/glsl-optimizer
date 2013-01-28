@@ -143,7 +143,7 @@ llvmpipe_set_sampler_views(struct pipe_context *pipe,
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
    uint i;
 
-   assert(num <= PIPE_MAX_SAMPLERS);
+   assert(num <= PIPE_MAX_SHADER_SAMPLER_VIEWS);
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(start + num <= Elements(llvmpipe->sampler_views[shader]));
@@ -258,11 +258,11 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
    uint32_t mip_offsets[PIPE_MAX_TEXTURE_LEVELS];
    const void *addr;
 
-   assert(num <= PIPE_MAX_SAMPLERS);
+   assert(num <= PIPE_MAX_SHADER_SAMPLER_VIEWS);
    if (!num)
       return;
 
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+   for (i = 0; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
       if (view) {

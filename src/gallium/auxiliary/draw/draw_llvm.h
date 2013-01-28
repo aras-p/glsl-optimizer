@@ -52,11 +52,29 @@ struct draw_jit_texture
    uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS];
    uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS];
    uint32_t mip_offsets[PIPE_MAX_TEXTURE_LEVELS];
+};
+
+
+struct draw_sampler_static_state
+{
+   /*
+    * These attributes are effectively interleaved for more sane key handling.
+    * However, there might be lots of null space if the amount of samplers and
+    * textures isn't the same.
+    */
+   struct lp_static_sampler_state sampler_state;
+   struct lp_static_texture_state texture_state;
+};
+
+
+struct draw_jit_sampler
+{
    float min_lod;
    float max_lod;
    float lod_bias;
    float border_color[4];
 };
+
 
 enum {
    DRAW_JIT_TEXTURE_WIDTH = 0,
@@ -68,12 +86,18 @@ enum {
    DRAW_JIT_TEXTURE_ROW_STRIDE,
    DRAW_JIT_TEXTURE_IMG_STRIDE,
    DRAW_JIT_TEXTURE_MIP_OFFSETS,
-   DRAW_JIT_TEXTURE_MIN_LOD,
-   DRAW_JIT_TEXTURE_MAX_LOD,
-   DRAW_JIT_TEXTURE_LOD_BIAS,
-   DRAW_JIT_TEXTURE_BORDER_COLOR,
    DRAW_JIT_TEXTURE_NUM_FIELDS  /* number of fields above */
 };
+
+
+enum {
+   DRAW_JIT_SAMPLER_MIN_LOD,
+   DRAW_JIT_SAMPLER_MAX_LOD,
+   DRAW_JIT_SAMPLER_LOD_BIAS,
+   DRAW_JIT_SAMPLER_BORDER_COLOR,
+   DRAW_JIT_SAMPLER_NUM_FIELDS  /* number of fields above */
+};
+
 
 enum {
    DRAW_JIT_VERTEX_VERTEX_ID = 0,
@@ -81,6 +105,9 @@ enum {
    DRAW_JIT_VERTEX_PRE_CLIP_POS,
    DRAW_JIT_VERTEX_DATA
 };
+
+#define DRAW_JIT_CTX_TEXTURES 4
+#define DRAW_JIT_CTX_SAMPLERS 5
 
 /**
  * This structure is passed directly to the generated vertex shader.
@@ -100,7 +127,8 @@ struct draw_jit_context
    float (*planes) [DRAW_TOTAL_CLIP_PLANES][4];
    float *viewport;
 
-   struct draw_jit_texture textures[PIPE_MAX_SAMPLERS];
+   struct draw_jit_texture textures[PIPE_MAX_SHADER_SAMPLER_VIEWS];
+   struct draw_jit_sampler samplers[PIPE_MAX_SAMPLERS];
 };
 
 
@@ -117,9 +145,13 @@ struct draw_jit_context
    lp_build_struct_get(_gallivm, _ptr, 3, "viewport")
 
 #define DRAW_JIT_CTX_TEXTURES 4
+#define DRAW_JIT_CTX_SAMPLERS 5
 
 #define draw_jit_context_textures(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_CTX_TEXTURES, "textures")
+
+#define draw_jit_context_samplers(_gallivm, _ptr) \
+   lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_CTX_SAMPLERS, "samplers")
 
 #define draw_jit_header_id(_gallivm, _ptr)              \
    lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_VERTEX_VERTEX_ID, "id")
@@ -166,6 +198,7 @@ struct draw_llvm_variant_key
 {
    unsigned nr_vertex_elements:8;
    unsigned nr_samplers:8;
+   unsigned nr_sampler_views:8;
    unsigned clamp_vertex_color:1;
    unsigned clip_xy:1;
    unsigned clip_z:1;
@@ -174,7 +207,7 @@ struct draw_llvm_variant_key
    unsigned bypass_viewport:1;
    unsigned need_edgeflags:1;
    unsigned ucp_enable:PIPE_MAX_CLIP_PLANES;
-   unsigned pad:9-PIPE_MAX_CLIP_PLANES;
+   unsigned pad:33-PIPE_MAX_CLIP_PLANES;
 
    /* Variable number of vertex elements:
     */
@@ -182,32 +215,31 @@ struct draw_llvm_variant_key
 
    /* Followed by variable number of samplers:
     */
-/*   struct lp_sampler_static_state sampler; */
+/*   struct draw_sampler_static_state sampler; */
 };
 
 #define DRAW_LLVM_MAX_VARIANT_KEY_SIZE \
    (sizeof(struct draw_llvm_variant_key) +	\
-    PIPE_MAX_SAMPLERS * sizeof(struct lp_sampler_static_state) +	\
+    PIPE_MAX_SHADER_SAMPLER_VIEWS * sizeof(struct draw_sampler_static_state) +	\
     (PIPE_MAX_ATTRIBS-1) * sizeof(struct pipe_vertex_element))
 
 
 static INLINE size_t
 draw_llvm_variant_key_size(unsigned nr_vertex_elements,
-			   unsigned nr_samplers)
+                           unsigned nr_samplers)
 {
    return (sizeof(struct draw_llvm_variant_key) +
-	   nr_samplers * sizeof(struct lp_sampler_static_state) +
-	   (nr_vertex_elements - 1) * sizeof(struct pipe_vertex_element));
+           nr_samplers * sizeof(struct draw_sampler_static_state) +
+           (nr_vertex_elements - 1) * sizeof(struct pipe_vertex_element));
 }
 
 
-static INLINE struct lp_sampler_static_state *
+static INLINE struct draw_sampler_static_state *
 draw_llvm_variant_key_samplers(struct draw_llvm_variant_key *key)
 {
-   return (struct lp_sampler_static_state *)
+   return (struct draw_sampler_static_state *)
       &key->vertex_element[key->nr_vertex_elements];
 }
-
 
 
 struct draw_llvm_variant_list_item
@@ -275,8 +307,8 @@ draw_llvm_destroy(struct draw_llvm *llvm);
 
 struct draw_llvm_variant *
 draw_llvm_create_variant(struct draw_llvm *llvm,
-			 unsigned num_vertex_header_attribs,
-			 const struct draw_llvm_variant_key *key);
+                         unsigned num_vertex_header_attribs,
+                         const struct draw_llvm_variant_key *key);
 
 void
 draw_llvm_destroy_variant(struct draw_llvm_variant *variant);
@@ -288,7 +320,7 @@ void
 draw_llvm_dump_variant_key(struct draw_llvm_variant_key *key);
 
 struct lp_build_sampler_soa *
-draw_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,
+draw_llvm_sampler_soa_create(const struct draw_sampler_static_state *static_state,
                              LLVMValueRef context_ptr);
 
 void

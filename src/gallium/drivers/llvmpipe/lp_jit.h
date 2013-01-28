@@ -58,7 +58,11 @@ struct lp_jit_texture
    uint32_t row_stride[LP_MAX_TEXTURE_LEVELS];
    uint32_t img_stride[LP_MAX_TEXTURE_LEVELS];
    uint32_t mip_offsets[LP_MAX_TEXTURE_LEVELS];
-   /* sampler state, actually */
+};
+
+
+struct lp_jit_sampler
+{
    float min_lod;
    float max_lod;
    float lod_bias;
@@ -76,13 +80,17 @@ enum {
    LP_JIT_TEXTURE_ROW_STRIDE,
    LP_JIT_TEXTURE_IMG_STRIDE,
    LP_JIT_TEXTURE_MIP_OFFSETS,
-   LP_JIT_TEXTURE_MIN_LOD,
-   LP_JIT_TEXTURE_MAX_LOD,
-   LP_JIT_TEXTURE_LOD_BIAS,
-   LP_JIT_TEXTURE_BORDER_COLOR,
    LP_JIT_TEXTURE_NUM_FIELDS  /* number of fields above */
 };
 
+
+enum {
+   LP_JIT_SAMPLER_MIN_LOD,
+   LP_JIT_SAMPLER_MAX_LOD,
+   LP_JIT_SAMPLER_LOD_BIAS,
+   LP_JIT_SAMPLER_BORDER_COLOR,
+   LP_JIT_SAMPLER_NUM_FIELDS  /* number of fields above */
+};
 
 
 /**
@@ -107,7 +115,8 @@ struct lp_jit_context
    uint8_t *u8_blend_color;
    float *f_blend_color;
 
-   struct lp_jit_texture textures[PIPE_MAX_SAMPLERS];
+   struct lp_jit_texture textures[PIPE_MAX_SHADER_SAMPLER_VIEWS];
+   struct lp_jit_sampler samplers[PIPE_MAX_SAMPLERS];
 };
 
 
@@ -123,6 +132,7 @@ enum {
    LP_JIT_CTX_U8_BLEND_COLOR,
    LP_JIT_CTX_F_BLEND_COLOR,
    LP_JIT_CTX_TEXTURES,
+   LP_JIT_CTX_SAMPLERS,
    LP_JIT_CTX_COUNT
 };
 
@@ -148,6 +158,8 @@ enum {
 #define lp_jit_context_textures(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, LP_JIT_CTX_TEXTURES, "textures")
 
+#define lp_jit_context_samplers(_gallivm, _ptr) \
+   lp_build_struct_get_ptr(_gallivm, _ptr, LP_JIT_CTX_SAMPLERS, "samplers")
 
 
 /**

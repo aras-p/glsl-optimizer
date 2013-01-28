@@ -668,9 +668,9 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
-   assert(num <= PIPE_MAX_SAMPLERS);
+   assert(num <= PIPE_MAX_SHADER_SAMPLER_VIEWS);
 
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+   for (i = 0; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
       if (view) {
@@ -780,13 +780,13 @@ lp_setup_set_fragment_sampler_state(struct lp_setup_context *setup,
       const struct pipe_sampler_state *sampler = i < num ? samplers[i] : NULL;
 
       if (sampler) {
-         struct lp_jit_texture *jit_tex;
-         jit_tex = &setup->fs.current.jit_context.textures[i];
+         struct lp_jit_sampler *jit_sam;
+         jit_sam = &setup->fs.current.jit_context.samplers[i];
 
-         jit_tex->min_lod = sampler->min_lod;
-         jit_tex->max_lod = sampler->max_lod;
-         jit_tex->lod_bias = sampler->lod_bias;
-         COPY_4V(jit_tex->border_color, sampler->border_color.f);
+         jit_sam->min_lod = sampler->min_lod;
+         jit_sam->max_lod = sampler->max_lod;
+         jit_sam->lod_bias = sampler->lod_bias;
+         COPY_4V(jit_sam->border_color, sampler->border_color.f);
       }
    }
 

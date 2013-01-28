@@ -1904,7 +1904,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMPositionBuilderAtEnd(builder, block);
 
    /* code generated texture sampling */
-   sampler = lp_llvm_sampler_soa_create(key->sampler, context_ptr);
+   sampler = lp_llvm_sampler_soa_create(key->state, context_ptr);
 
    zs_format_desc = util_format_description(key->zsbuf_format);
 
@@ -2113,32 +2113,39 @@ dump_fs_variant_key(const struct lp_fragment_shader_variant_key *key)
    }
    debug_printf("blend.colormask = 0x%x\n", key->blend.rt[0].colormask);
    for (i = 0; i < key->nr_samplers; ++i) {
+      const struct lp_static_sampler_state *sampler = &key->state[i].sampler_state;
       debug_printf("sampler[%u] = \n", i);
-      debug_printf("  .format = %s\n",
-                   util_format_name(key->sampler[i].format));
-      debug_printf("  .target = %s\n",
-                   util_dump_tex_target(key->sampler[i].target, TRUE));
-      debug_printf("  .pot = %u %u %u\n",
-                   key->sampler[i].pot_width,
-                   key->sampler[i].pot_height,
-                   key->sampler[i].pot_depth);
       debug_printf("  .wrap = %s %s %s\n",
-                   util_dump_tex_wrap(key->sampler[i].wrap_s, TRUE),
-                   util_dump_tex_wrap(key->sampler[i].wrap_t, TRUE),
-                   util_dump_tex_wrap(key->sampler[i].wrap_r, TRUE));
+                   util_dump_tex_wrap(sampler->wrap_s, TRUE),
+                   util_dump_tex_wrap(sampler->wrap_t, TRUE),
+                   util_dump_tex_wrap(sampler->wrap_r, TRUE));
       debug_printf("  .min_img_filter = %s\n",
-                   util_dump_tex_filter(key->sampler[i].min_img_filter, TRUE));
+                   util_dump_tex_filter(sampler->min_img_filter, TRUE));
       debug_printf("  .min_mip_filter = %s\n",
-                   util_dump_tex_mipfilter(key->sampler[i].min_mip_filter, TRUE));
+                   util_dump_tex_mipfilter(sampler->min_mip_filter, TRUE));
       debug_printf("  .mag_img_filter = %s\n",
-                   util_dump_tex_filter(key->sampler[i].mag_img_filter, TRUE));
-      if (key->sampler[i].compare_mode != PIPE_TEX_COMPARE_NONE)
-         debug_printf("  .compare_func = %s\n", util_dump_func(key->sampler[i].compare_func, TRUE));
-      debug_printf("  .normalized_coords = %u\n", key->sampler[i].normalized_coords);
-      debug_printf("  .min_max_lod_equal = %u\n", key->sampler[i].min_max_lod_equal);
-      debug_printf("  .lod_bias_non_zero = %u\n", key->sampler[i].lod_bias_non_zero);
-      debug_printf("  .apply_min_lod = %u\n", key->sampler[i].apply_min_lod);
-      debug_printf("  .apply_max_lod = %u\n", key->sampler[i].apply_max_lod);
+                   util_dump_tex_filter(sampler->mag_img_filter, TRUE));
+      if (sampler->compare_mode != PIPE_TEX_COMPARE_NONE)
+         debug_printf("  .compare_func = %s\n", util_dump_func(sampler->compare_func, TRUE));
+      debug_printf("  .normalized_coords = %u\n", sampler->normalized_coords);
+      debug_printf("  .min_max_lod_equal = %u\n", sampler->min_max_lod_equal);
+      debug_printf("  .lod_bias_non_zero = %u\n", sampler->lod_bias_non_zero);
+      debug_printf("  .apply_min_lod = %u\n", sampler->apply_min_lod);
+      debug_printf("  .apply_max_lod = %u\n", sampler->apply_max_lod);
+   }
+   for (i = 0; i < key->nr_sampler_views; ++i) {
+      const struct lp_static_texture_state *texture = &key->state[i].texture_state;
+      debug_printf("texture[%u] = \n", i);
+      debug_printf("  .format = %s\n",
+                   util_format_name(texture->format));
+      debug_printf("  .target = %s\n",
+                   util_dump_tex_target(texture->target, TRUE));
+      debug_printf("  .level_zero_only = %u\n",
+                   texture->level_zero_only);
+      debug_printf("  .pot = %u %u %u\n",
+                   texture->pot_width,
+                   texture->pot_height,
+                   texture->pot_depth);
    }
 }
 
@@ -2251,6 +2258,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
    struct lp_fragment_shader *shader;
    int nr_samplers;
+   int nr_sampler_views;
    int i;
 
    shader = CALLOC_STRUCT(lp_fragment_shader);
@@ -2274,9 +2282,10 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    }
 
    nr_samplers = shader->info.base.file_max[TGSI_FILE_SAMPLER] + 1;
+   nr_sampler_views = shader->info.base.file_max[TGSI_FILE_SAMPLER_VIEW] + 1;
 
    shader->variant_key_size = Offset(struct lp_fragment_shader_variant_key,
-				     sampler[nr_samplers]);
+                                     state[MAX2(nr_samplers, nr_sampler_views)]);
 
    for (i = 0; i < shader->info.base.num_inputs; i++) {
       shader->inputs[i].usage_mask = shader->info.base.input_usage_mask[i];
@@ -2605,9 +2614,32 @@ make_variant_key(struct llvmpipe_context *lp,
 
    for(i = 0; i < key->nr_samplers; ++i) {
       if(shader->info.base.file_mask[TGSI_FILE_SAMPLER] & (1 << i)) {
-         lp_sampler_static_state(&key->sampler[i],
-				 lp->sampler_views[PIPE_SHADER_FRAGMENT][i],
-				 lp->samplers[PIPE_SHADER_FRAGMENT][i]);
+         lp_sampler_static_sampler_state(&key->state[i].sampler_state,
+                                         lp->samplers[PIPE_SHADER_FRAGMENT][i]);
+      }
+   }
+
+   /*
+    * XXX If TGSI_FILE_SAMPLER_VIEW exists assume all texture opcodes
+    * are dx10-style? Can't really have mixed opcodes, at least not
+    * if we want to skip the holes here (without rescanning tgsi).
+    */
+   if (shader->info.base.file_max[TGSI_FILE_SAMPLER_VIEW] != -1) {
+      key->nr_sampler_views = shader->info.base.file_max[TGSI_FILE_SAMPLER_VIEW] + 1;
+      for(i = 0; i < key->nr_sampler_views; ++i) {
+         if(shader->info.base.file_mask[TGSI_FILE_SAMPLER_VIEW] & (1 << i)) {
+            lp_sampler_static_texture_state(&key->state[i].texture_state,
+                                            lp->sampler_views[PIPE_SHADER_FRAGMENT][i]);
+         }
+      }
+   }
+   else {
+      key->nr_sampler_views = key->nr_samplers;
+      for(i = 0; i < key->nr_sampler_views; ++i) {
+         if(shader->info.base.file_mask[TGSI_FILE_SAMPLER] & (1 << i)) {
+            lp_sampler_static_texture_state(&key->state[i].texture_state,
+                                            lp->sampler_views[PIPE_SHADER_FRAGMENT][i]);
+         }
       }
    }
 }

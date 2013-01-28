@@ -61,12 +61,12 @@ struct lp_derivatives
 
 
 /**
- * Sampler static state.
+ * Texture static state.
  *
- * These are the bits of state from pipe_resource and pipe_sampler_state that
+ * These are the bits of state from pipe_resource/pipe_sampler_view that
  * are embedded in the generated code.
  */
-struct lp_sampler_static_state
+struct lp_static_texture_state
 {
    /* pipe_sampler_view's state */
    enum pipe_format format;
@@ -80,7 +80,18 @@ struct lp_sampler_static_state
    unsigned pot_width:1;     /**< is the width a power of two? */
    unsigned pot_height:1;
    unsigned pot_depth:1;
+   unsigned level_zero_only:1;
+};
 
+
+/**
+ * Sampler static state.
+ *
+ * These are the bits of state from pipe_sampler_state that
+ * are embedded in the generated code.
+ */
+struct lp_static_sampler_state
+{
    /* pipe_sampler_state's state */
    unsigned wrap_s:3;
    unsigned wrap_t:3;
@@ -105,8 +116,8 @@ struct lp_sampler_static_state
 /**
  * Sampler dynamic state.
  *
- * These are the bits of state from pipe_resource and pipe_sampler_state that
- * are computed in runtime.
+ * These are the bits of state from pipe_resource/pipe_sampler_view
+ * as well as from sampler state that are computed at runtime.
  *
  * There are obtained through callbacks, as we don't want to tie the texture
  * sampling code generation logic to any particular texture layout or pipe
@@ -114,6 +125,7 @@ struct lp_sampler_static_state
  */
 struct lp_sampler_dynamic_state
 {
+   /* First callbacks for sampler view state */
 
    /** Obtain the base texture width (returns int32) */
    LLVMValueRef
@@ -169,6 +181,8 @@ struct lp_sampler_dynamic_state
                    struct gallivm_state *gallivm,
                    unsigned unit);
 
+   /* These are callbacks for sampler state */
+
    /** Obtain texture min lod (returns float) */
    LLVMValueRef
    (*min_lod)(const struct lp_sampler_dynamic_state *state,
@@ -198,7 +212,8 @@ struct lp_build_sample_context
 {
    struct gallivm_state *gallivm;
 
-   const struct lp_sampler_static_state *static_state;
+   const struct lp_static_texture_state *static_texture_state;
+   const struct lp_static_sampler_state *static_sampler_state;
 
    struct lp_sampler_dynamic_state *dynamic_state;
 
@@ -295,10 +310,10 @@ apply_sampler_swizzle(struct lp_build_sample_context *bld,
 {
    unsigned char swizzles[4];
 
-   swizzles[0] = bld->static_state->swizzle_r;
-   swizzles[1] = bld->static_state->swizzle_g;
-   swizzles[2] = bld->static_state->swizzle_b;
-   swizzles[3] = bld->static_state->swizzle_a;
+   swizzles[0] = bld->static_texture_state->swizzle_r;
+   swizzles[1] = bld->static_texture_state->swizzle_g;
+   swizzles[2] = bld->static_texture_state->swizzle_b;
+   swizzles[3] = bld->static_texture_state->swizzle_a;
 
    lp_build_swizzle_soa_inplace(&bld->texel_bld, texel, swizzles);
 }
@@ -338,14 +353,19 @@ lp_sampler_wrap_mode_uses_border_color(unsigned mode,
  * Derive the sampler static state.
  */
 void
-lp_sampler_static_state(struct lp_sampler_static_state *state,
-                        const struct pipe_sampler_view *view,
-                        const struct pipe_sampler_state *sampler);
+lp_sampler_static_sampler_state(struct lp_static_sampler_state *state,
+                                const struct pipe_sampler_state *sampler);
+
+
+void
+lp_sampler_static_texture_state(struct lp_static_texture_state *state,
+                                const struct pipe_sampler_view *view);
 
 
 void
 lp_build_lod_selector(struct lp_build_sample_context *bld,
-                      unsigned unit,
+                      unsigned texture_index,
+                      unsigned sampler_index,
                       const struct lp_derivatives *derivs,
                       LLVMValueRef lod_bias, /* optional */
                       LLVMValueRef explicit_lod, /* optional */
@@ -437,11 +457,13 @@ lp_build_sample_offset(struct lp_build_context *bld,
 
 void
 lp_build_sample_soa(struct gallivm_state *gallivm,
-                    const struct lp_sampler_static_state *static_state,
-                    struct lp_sampler_dynamic_state *dynamic_state,
+                    const struct lp_static_texture_state *static_texture_state,
+                    const struct lp_static_sampler_state *static_sampler_state,
+                    struct lp_sampler_dynamic_state *dynamic_texture_state,
                     struct lp_type fp_type,
                     boolean is_fetch,
-                    unsigned unit,
+                    unsigned texture_index,
+                    unsigned sampler_index,
                     const LLVMValueRef *coords,
                     const LLVMValueRef *offsets,
                     const struct lp_derivatives *derivs,
@@ -461,7 +483,7 @@ lp_build_coord_repeat_npot_linear(struct lp_build_sample_context *bld,
 
 void
 lp_build_size_query_soa(struct gallivm_state *gallivm,
-                        const struct lp_sampler_static_state *static_state,
+                        const struct lp_static_texture_state *static_state,
                         struct lp_sampler_dynamic_state *dynamic_state,
                         struct lp_type int_type,
                         unsigned unit,

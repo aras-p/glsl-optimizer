@@ -762,11 +762,11 @@ draw_set_sampler_views(struct draw_context *draw,
    unsigned i;
 
    debug_assert(shader_stage < PIPE_SHADER_TYPES);
-   debug_assert(num <= PIPE_MAX_SAMPLERS);
+   debug_assert(num <= PIPE_MAX_SHADER_SAMPLER_VIEWS);
 
    for (i = 0; i < num; ++i)
       draw->sampler_views[shader_stage][i] = views[i];
-   for (i = num; i < PIPE_MAX_SAMPLERS; ++i)
+   for (i = num; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; ++i)
       draw->sampler_views[shader_stage][i] = NULL;
 
    draw->num_sampler_views[shader_stage] = num;

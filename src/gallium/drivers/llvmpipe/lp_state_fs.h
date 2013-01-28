@@ -47,6 +47,18 @@ struct lp_fragment_shader;
 #define RAST_EDGE_TEST 1
 
 
+struct lp_sampler_static_state
+{
+   /*
+    * These attributes are effectively interleaved for more sane key handling.
+    * However, there might be lots of null space if the amount of samplers and
+    * textures isn't the same.
+    */
+   struct lp_static_sampler_state sampler_state;
+   struct lp_static_texture_state texture_state;
+};
+
+
 struct lp_fragment_shader_variant_key
 {
    struct pipe_depth_state depth;
@@ -59,14 +71,15 @@ struct lp_fragment_shader_variant_key
    } alpha;
 
    unsigned nr_cbufs:8;
-   unsigned nr_samplers:8;	/* actually derivable from just the shader */
+   unsigned nr_samplers:8;      /* actually derivable from just the shader */
+   unsigned nr_sampler_views:8; /* actually derivable from just the shader */
    unsigned flatshade:1;
    unsigned occlusion_count:1;
 
    enum pipe_format zsbuf_format;
    enum pipe_format cbuf_format[PIPE_MAX_COLOR_BUFS];
 
-   struct lp_sampler_static_state sampler[PIPE_MAX_SAMPLERS];
+   struct lp_sampler_static_state state[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 };
 
 

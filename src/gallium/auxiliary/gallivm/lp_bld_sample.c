@@ -87,23 +87,53 @@ lp_sampler_wrap_mode_uses_border_color(unsigned mode,
 
 
 /**
- * Initialize lp_sampler_static_state object with the gallium sampler
- * and texture state.
- * The former is considered to be static and the later dynamic.
+ * Initialize lp_sampler_static_texture_state object with the gallium
+ * texture/sampler_view state (this contains the parts which are
+ * considered static).
  */
 void
-lp_sampler_static_state(struct lp_sampler_static_state *state,
-                        const struct pipe_sampler_view *view,
-                        const struct pipe_sampler_state *sampler)
+lp_sampler_static_texture_state(struct lp_static_texture_state *state,
+                                const struct pipe_sampler_view *view)
 {
    const struct pipe_resource *texture;
 
    memset(state, 0, sizeof *state);
 
-   if (!sampler || !view || !view->texture)
+   if (!view || !view->texture)
       return;
 
    texture = view->texture;
+
+   state->format            = view->format;
+   state->swizzle_r         = view->swizzle_r;
+   state->swizzle_g         = view->swizzle_g;
+   state->swizzle_b         = view->swizzle_b;
+   state->swizzle_a         = view->swizzle_a;
+
+   state->target            = texture->target;
+   state->pot_width         = util_is_power_of_two(texture->width0);
+   state->pot_height        = util_is_power_of_two(texture->height0);
+   state->pot_depth         = util_is_power_of_two(texture->depth0);
+   state->level_zero_only   = !view->u.tex.last_level;
+
+   /*
+    * FIXME: Handle the remainder of pipe_sampler_view.
+    */
+}
+
+
+/**
+ * Initialize lp_sampler_static_sampler_state object with the gallium sampler
+ * state (this contains the parts which are considered static).
+ */
+void
+lp_sampler_static_sampler_state(struct lp_static_sampler_state *state,
+                                const struct pipe_sampler_state *sampler)
+{
+   memset(state, 0, sizeof *state);
+
+   if (!sampler)
+      return;
 
    /*
     * We don't copy sampler state over unless it is actually enabled, to avoid
@@ -117,24 +147,13 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
     * regarding 1D/2D/3D/CUBE textures, wrap modes, etc.
     */
 
-   state->format            = view->format;
-   state->swizzle_r         = view->swizzle_r;
-   state->swizzle_g         = view->swizzle_g;
-   state->swizzle_b         = view->swizzle_b;
-   state->swizzle_a         = view->swizzle_a;
-
-   state->target            = texture->target;
-   state->pot_width         = util_is_power_of_two(texture->width0);
-   state->pot_height        = util_is_power_of_two(texture->height0);
-   state->pot_depth         = util_is_power_of_two(texture->depth0);
-
    state->wrap_s            = sampler->wrap_s;
    state->wrap_t            = sampler->wrap_t;
    state->wrap_r            = sampler->wrap_r;
    state->min_img_filter    = sampler->min_img_filter;
    state->mag_img_filter    = sampler->mag_img_filter;
 
-   if (view->u.tex.last_level && sampler->max_lod > 0.0f) {
+   if (sampler->max_lod > 0.0f) {
       state->min_mip_filter = sampler->min_mip_filter;
    } else {
       state->min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
@@ -155,7 +174,11 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
             state->apply_min_lod = 1;
          }
 
-         if (sampler->max_lod < (float)view->u.tex.last_level) {
+         /*
+          * XXX this won't do anything with the mesa state tracker which always
+          * sets max_lod to not more than actually present mip maps...
+          */
+         if (sampler->max_lod < (PIPE_MAX_TEXTURE_LEVELS - 1)) {
             state->apply_max_lod = 1;
          }
       }
@@ -167,10 +190,6 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    }
 
    state->normalized_coords = sampler->normalized_coords;
-
-   /*
-    * FIXME: Handle the remainder of pipe_sampler_view.
-    */
 }
 
 
@@ -182,7 +201,7 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
  */
 static LLVMValueRef
 lp_build_rho(struct lp_build_sample_context *bld,
-             unsigned unit,
+             unsigned texture_unit,
              const struct lp_derivatives *derivs)
 {
    struct gallivm_state *gallivm = bld->gallivm;
@@ -264,7 +283,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
    rho_vec = lp_build_max(coord_bld, rho_xvec, rho_yvec);
 
    first_level = bld->dynamic_state->first_level(bld->dynamic_state,
-                                                 bld->gallivm, unit);
+                                                 bld->gallivm, texture_unit);
    first_level_vec = lp_build_broadcast_scalar(int_size_bld, first_level);
    int_size = lp_build_minify(int_size_bld, bld->int_size, first_level_vec);
    float_size = lp_build_int_to_float(float_size_bld, int_size);
@@ -489,7 +508,8 @@ lp_build_brilinear_rho(struct lp_build_context *bld,
  */
 void
 lp_build_lod_selector(struct lp_build_sample_context *bld,
-                      unsigned unit,
+                      unsigned texture_unit,
+                      unsigned sampler_unit,
                       const struct lp_derivatives *derivs,
                       LLVMValueRef lod_bias, /* optional */
                       LLVMValueRef explicit_lod, /* optional */
@@ -505,12 +525,13 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
    *out_lod_ipart = bld->perquadi_bld.zero;
    *out_lod_fpart = perquadf_bld->zero;
 
-   if (bld->static_state->min_max_lod_equal) {
+   if (bld->static_sampler_state->min_max_lod_equal) {
       /* User is forcing sampling from a particular mipmap level.
        * This is hit during mipmap generation.
        */
       LLVMValueRef min_lod =
-         bld->dynamic_state->min_lod(bld->dynamic_state, bld->gallivm, unit);
+         bld->dynamic_state->min_lod(bld->dynamic_state,
+                                     bld->gallivm, sampler_unit);
 
       lod = lp_build_broadcast_scalar(perquadf_bld, min_lod);
    }
@@ -522,16 +543,16 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       else {
          LLVMValueRef rho;
 
-         rho = lp_build_rho(bld, unit, derivs);
+         rho = lp_build_rho(bld, texture_unit, derivs);
 
          /*
           * Compute lod = log2(rho)
           */
 
          if (!lod_bias &&
-             !bld->static_state->lod_bias_non_zero &&
-             !bld->static_state->apply_max_lod &&
-             !bld->static_state->apply_min_lod) {
+             !bld->static_sampler_state->lod_bias_non_zero &&
+             !bld->static_sampler_state->apply_max_lod &&
+             !bld->static_sampler_state->apply_min_lod) {
             /*
              * Special case when there are no post-log2 adjustments, which
              * saves instructions but keeping the integer and fractional lod
@@ -568,25 +589,28 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       }
 
       /* add sampler lod bias */
-      if (bld->static_state->lod_bias_non_zero) {
+      if (bld->static_sampler_state->lod_bias_non_zero) {
          LLVMValueRef sampler_lod_bias =
-            bld->dynamic_state->lod_bias(bld->dynamic_state, bld->gallivm, unit);
+            bld->dynamic_state->lod_bias(bld->dynamic_state,
+                                         bld->gallivm, sampler_unit);
          sampler_lod_bias = lp_build_broadcast_scalar(perquadf_bld,
                                                       sampler_lod_bias);
          lod = LLVMBuildFAdd(builder, lod, sampler_lod_bias, "sampler_lod_bias");
       }
 
       /* clamp lod */
-      if (bld->static_state->apply_max_lod) {
+      if (bld->static_sampler_state->apply_max_lod) {
          LLVMValueRef max_lod =
-            bld->dynamic_state->max_lod(bld->dynamic_state, bld->gallivm, unit);
+            bld->dynamic_state->max_lod(bld->dynamic_state,
+                                        bld->gallivm, sampler_unit);
          max_lod = lp_build_broadcast_scalar(perquadf_bld, max_lod);
 
          lod = lp_build_min(perquadf_bld, lod, max_lod);
       }
-      if (bld->static_state->apply_min_lod) {
+      if (bld->static_sampler_state->apply_min_lod) {
          LLVMValueRef min_lod =
-            bld->dynamic_state->min_lod(bld->dynamic_state, bld->gallivm, unit);
+            bld->dynamic_state->min_lod(bld->dynamic_state,
+                                        bld->gallivm, sampler_unit);
          min_lod = lp_build_broadcast_scalar(perquadf_bld, min_lod);
 
          lod = lp_build_max(perquadf_bld, lod, min_lod);
@@ -988,9 +1012,9 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
                                                       ilevel);
    }
    if (dims == 3 ||
-       bld->static_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_state->target == PIPE_TEXTURE_2D_ARRAY) {
+       bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
+       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
+       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
       *img_stride_vec = lp_build_get_level_stride_vec(bld,
                                                       bld->img_stride_array,
                                                       ilevel);

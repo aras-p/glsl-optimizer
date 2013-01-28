@@ -45,7 +45,7 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
 {
    struct gallivm_state *gallivm = lp->gallivm;
    LLVMContextRef lc = gallivm->context;
-   LLVMTypeRef texture_type;
+   LLVMTypeRef texture_type, sampler_type;
 
    /* struct lp_jit_texture */
    {
@@ -61,11 +61,6 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
       elem_types[LP_JIT_TEXTURE_IMG_STRIDE] =
       elem_types[LP_JIT_TEXTURE_MIP_OFFSETS] =
          LLVMArrayType(LLVMInt32TypeInContext(lc), LP_MAX_TEXTURE_LEVELS);
-      elem_types[LP_JIT_TEXTURE_MIN_LOD] =
-      elem_types[LP_JIT_TEXTURE_MAX_LOD] =
-      elem_types[LP_JIT_TEXTURE_LOD_BIAS] = LLVMFloatTypeInContext(lc);
-      elem_types[LP_JIT_TEXTURE_BORDER_COLOR] = 
-         LLVMArrayType(LLVMFloatTypeInContext(lc), 4);
 
       texture_type = LLVMStructTypeInContext(lc, elem_types,
                                              Elements(elem_types), 0);
@@ -102,21 +97,41 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, mip_offsets,
                              gallivm->target, texture_type,
                              LP_JIT_TEXTURE_MIP_OFFSETS);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, min_lod,
-                             gallivm->target, texture_type,
-                             LP_JIT_TEXTURE_MIN_LOD);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, max_lod,
-                             gallivm->target, texture_type,
-                             LP_JIT_TEXTURE_MAX_LOD);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, lod_bias,
-                             gallivm->target, texture_type,
-                             LP_JIT_TEXTURE_LOD_BIAS);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, border_color,
-                             gallivm->target, texture_type,
-                             LP_JIT_TEXTURE_BORDER_COLOR);
-
       LP_CHECK_STRUCT_SIZE(struct lp_jit_texture,
                            gallivm->target, texture_type);
+   }
+
+   {
+   /* struct lp_jit_sampler */
+      LLVMTypeRef elem_types[LP_JIT_SAMPLER_NUM_FIELDS];
+      elem_types[LP_JIT_SAMPLER_MIN_LOD] =
+      elem_types[LP_JIT_SAMPLER_MAX_LOD] =
+      elem_types[LP_JIT_SAMPLER_LOD_BIAS] = LLVMFloatTypeInContext(lc);
+      elem_types[LP_JIT_SAMPLER_BORDER_COLOR] =
+         LLVMArrayType(LLVMFloatTypeInContext(lc), 4);
+
+      sampler_type = LLVMStructTypeInContext(lc, elem_types,
+                                             Elements(elem_types), 0);
+#if HAVE_LLVM < 0x0300
+      LLVMAddTypeName(gallivm->module, "texture", texture_type);
+
+      LLVMInvalidateStructLayout(gallivm->target, texture_type);
+#endif
+
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_sampler, min_lod,
+                             gallivm->target, texture_type,
+                             LP_JIT_SAMPLER_MIN_LOD);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_sampler, max_lod,
+                             gallivm->target, texture_type,
+                             LP_JIT_SAMPLER_MAX_LOD);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_sampler, lod_bias,
+                             gallivm->target, texture_type,
+                             LP_JIT_SAMPLER_LOD_BIAS);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_sampler, border_color,
+                             gallivm->target, texture_type,
+                             LP_JIT_SAMPLER_BORDER_COLOR);
+      LP_CHECK_STRUCT_SIZE(struct lp_jit_sampler,
+                           gallivm->target, sampler_type);
    }
 
    /* struct lp_jit_context */
@@ -132,6 +147,8 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
       elem_types[LP_JIT_CTX_U8_BLEND_COLOR] = LLVMPointerType(LLVMInt8TypeInContext(lc), 0);
       elem_types[LP_JIT_CTX_F_BLEND_COLOR] = LLVMPointerType(LLVMFloatTypeInContext(lc), 0);
       elem_types[LP_JIT_CTX_TEXTURES] = LLVMArrayType(texture_type,
+                                                      PIPE_MAX_SHADER_SAMPLER_VIEWS);
+      elem_types[LP_JIT_CTX_SAMPLERS] = LLVMArrayType(sampler_type,
                                                       PIPE_MAX_SAMPLERS);
 
       context_type = LLVMStructTypeInContext(lc, elem_types,
@@ -164,6 +181,9 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, textures,
                              gallivm->target, context_type,
                              LP_JIT_CTX_TEXTURES);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, samplers,
+                             gallivm->target, context_type,
+                             LP_JIT_CTX_SAMPLERS);
       LP_CHECK_STRUCT_SIZE(struct lp_jit_context,
                            gallivm->target, context_type);
 

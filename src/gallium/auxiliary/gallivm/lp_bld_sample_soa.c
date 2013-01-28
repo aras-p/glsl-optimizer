@@ -85,7 +85,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                           LLVMValueRef mipoffsets,
                           LLVMValueRef texel_out[4])
 {
-   const struct lp_sampler_static_state *static_state = bld->static_state;
+   const struct lp_static_sampler_state *static_state = bld->static_sampler_state;
    const unsigned dims = bld->dims;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMBuilderRef builder = bld->gallivm->builder;
@@ -317,7 +317,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       break;
 
    case PIPE_TEX_WRAP_CLAMP:
-      if (bld->static_state->normalized_coords) {
+      if (bld->static_sampler_state->normalized_coords) {
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
@@ -337,7 +337,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          struct lp_build_context abs_coord_bld = bld->coord_bld;
          abs_coord_bld.type.sign = FALSE;
 
-         if (bld->static_state->normalized_coords) {
+         if (bld->static_sampler_state->normalized_coords) {
             /* mul by tex size */
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
@@ -356,7 +356,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       }
 
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      if (bld->static_state->normalized_coords) {
+      if (bld->static_sampler_state->normalized_coords) {
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
@@ -389,7 +389,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
       coord = lp_build_abs(coord_bld, coord);
 
-      if (bld->static_state->normalized_coords) {
+      if (bld->static_sampler_state->normalized_coords) {
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
@@ -411,7 +411,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          abs_coord_bld.type.sign = FALSE;
          coord = lp_build_abs(coord_bld, coord);
 
-         if (bld->static_state->normalized_coords) {
+         if (bld->static_sampler_state->normalized_coords) {
             /* scale coord to length */
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
@@ -433,7 +433,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       {
          coord = lp_build_abs(coord_bld, coord);
 
-         if (bld->static_state->normalized_coords) {
+         if (bld->static_sampler_state->normalized_coords) {
             /* scale coord to length */
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
@@ -500,7 +500,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
 
    case PIPE_TEX_WRAP_CLAMP:
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-      if (bld->static_state->normalized_coords) {
+      if (bld->static_sampler_state->normalized_coords) {
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
@@ -515,7 +515,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       break;
 
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      if (bld->static_state->normalized_coords) {
+      if (bld->static_sampler_state->normalized_coords) {
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
@@ -528,7 +528,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       coord = lp_build_coord_mirror(bld, coord);
 
       /* scale coord to length */
-      assert(bld->static_state->normalized_coords);
+      assert(bld->static_sampler_state->normalized_coords);
       coord = lp_build_mul(coord_bld, coord, length_f);
 
       /* itrunc == ifloor here */
@@ -542,7 +542,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
       coord = lp_build_abs(coord_bld, coord);
 
-      if (bld->static_state->normalized_coords) {
+      if (bld->static_sampler_state->normalized_coords) {
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
@@ -557,7 +557,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       coord = lp_build_abs(coord_bld, coord);
 
-      if (bld->static_state->normalized_coords) {
+      if (bld->static_sampler_state->normalized_coords) {
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
@@ -620,26 +620,26 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
     * Compute integer texcoords.
     */
    x = lp_build_sample_wrap_nearest(bld, s, width_vec, flt_width_vec,
-                                    bld->static_state->pot_width,
-                                    bld->static_state->wrap_s);
+                                    bld->static_texture_state->pot_width,
+                                    bld->static_sampler_state->wrap_s);
    lp_build_name(x, "tex.x.wrapped");
 
    if (dims >= 2) {
       y = lp_build_sample_wrap_nearest(bld, t, height_vec, flt_height_vec,
-                                       bld->static_state->pot_height,
-                                       bld->static_state->wrap_t);
+                                       bld->static_texture_state->pot_height,
+                                       bld->static_sampler_state->wrap_t);
       lp_build_name(y, "tex.y.wrapped");
 
       if (dims == 3) {
          z = lp_build_sample_wrap_nearest(bld, r, depth_vec, flt_depth_vec,
-                                          bld->static_state->pot_depth,
-                                          bld->static_state->wrap_r);
+                                          bld->static_texture_state->pot_depth,
+                                          bld->static_sampler_state->wrap_r);
          lp_build_name(z, "tex.z.wrapped");
       }
    }
-   if (bld->static_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_state->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
+       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
+       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
       z = r;
       lp_build_name(z, "tex.z.layer");
    }
@@ -703,32 +703,32 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
     * Compute integer texcoords.
     */
    lp_build_sample_wrap_linear(bld, s, width_vec, flt_width_vec,
-                               bld->static_state->pot_width,
-                               bld->static_state->wrap_s,
+                               bld->static_texture_state->pot_width,
+                               bld->static_sampler_state->wrap_s,
                                &x0, &x1, &s_fpart);
    lp_build_name(x0, "tex.x0.wrapped");
    lp_build_name(x1, "tex.x1.wrapped");
 
    if (dims >= 2) {
       lp_build_sample_wrap_linear(bld, t, height_vec, flt_height_vec,
-                                  bld->static_state->pot_height,
-                                  bld->static_state->wrap_t,
+                                  bld->static_texture_state->pot_height,
+                                  bld->static_sampler_state->wrap_t,
                                   &y0, &y1, &t_fpart);
       lp_build_name(y0, "tex.y0.wrapped");
       lp_build_name(y1, "tex.y1.wrapped");
 
       if (dims == 3) {
          lp_build_sample_wrap_linear(bld, r, depth_vec, flt_depth_vec,
-                                     bld->static_state->pot_depth,
-                                     bld->static_state->wrap_r,
+                                     bld->static_texture_state->pot_depth,
+                                     bld->static_sampler_state->wrap_r,
                                      &z0, &z1, &r_fpart);
          lp_build_name(z0, "tex.z0.wrapped");
          lp_build_name(z1, "tex.z1.wrapped");
       }
    }
-   if (bld->static_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_state->target == PIPE_TEXTURE_2D_ARRAY) {
+   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
+       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
+       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
       z0 = z1 = r;  /* cube face or array layer */
       lp_build_name(z0, "tex.z0.layer");
       lp_build_name(z1, "tex.z1.layer");
@@ -1004,7 +1004,8 @@ lp_build_layer_coord(struct lp_build_sample_context *bld,
  */
 static void
 lp_build_sample_common(struct lp_build_sample_context *bld,
-                       unsigned unit,
+                       unsigned texture_index,
+                       unsigned sampler_index,
                        LLVMValueRef *s,
                        LLVMValueRef *t,
                        LLVMValueRef *r,
@@ -1016,10 +1017,10 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
                        LLVMValueRef *ilevel0,
                        LLVMValueRef *ilevel1)
 {
-   const unsigned mip_filter = bld->static_state->min_mip_filter;
-   const unsigned min_filter = bld->static_state->min_img_filter;
-   const unsigned mag_filter = bld->static_state->mag_img_filter;
-   const unsigned target = bld->static_state->target;
+   const unsigned mip_filter = bld->static_sampler_state->min_mip_filter;
+   const unsigned min_filter = bld->static_sampler_state->min_img_filter;
+   const unsigned mag_filter = bld->static_sampler_state->mag_img_filter;
+   const unsigned target = bld->static_texture_state->target;
    LLVMValueRef first_level;
    struct lp_derivatives face_derivs;
 
@@ -1046,11 +1047,11 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
    }
    else if (target == PIPE_TEXTURE_1D_ARRAY) {
       *r = lp_build_iround(&bld->coord_bld, *t);
-      *r = lp_build_layer_coord(bld, unit, *r);
+      *r = lp_build_layer_coord(bld, texture_index, *r);
    }
    else if (target == PIPE_TEXTURE_2D_ARRAY) {
       *r = lp_build_iround(&bld->coord_bld, *r);
-      *r = lp_build_layer_coord(bld, unit, *r);
+      *r = lp_build_layer_coord(bld, texture_index, *r);
    }
 
    /*
@@ -1061,8 +1062,8 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
       /* Need to compute lod either to choose mipmap levels or to
        * distinguish between minification/magnification with one mipmap level.
        */
-      lp_build_lod_selector(bld, unit, derivs,
-                            lod_bias, explicit_lod,
+      lp_build_lod_selector(bld, texture_index, sampler_index,
+                            derivs, lod_bias, explicit_lod,
                             mip_filter,
                             lod_ipart, lod_fpart);
    } else {
@@ -1085,23 +1086,23 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
           * XXX should probably disable that on other llvm versions.
           */
          assert(*lod_ipart);
-         lp_build_nearest_mip_level(bld, unit, *lod_ipart, ilevel0);
+         lp_build_nearest_mip_level(bld, texture_index, *lod_ipart, ilevel0);
       }
       else {
          first_level = bld->dynamic_state->first_level(bld->dynamic_state,
-                                                       bld->gallivm, unit);
+                                                       bld->gallivm, texture_index);
          first_level = lp_build_broadcast_scalar(&bld->perquadi_bld, first_level);
          *ilevel0 = first_level;
       }
       break;
    case PIPE_TEX_MIPFILTER_NEAREST:
       assert(*lod_ipart);
-      lp_build_nearest_mip_level(bld, unit, *lod_ipart, ilevel0);
+      lp_build_nearest_mip_level(bld, texture_index, *lod_ipart, ilevel0);
       break;
    case PIPE_TEX_MIPFILTER_LINEAR:
       assert(*lod_ipart);
       assert(*lod_fpart);
-      lp_build_linear_mip_levels(bld, unit,
+      lp_build_linear_mip_levels(bld, texture_index,
                                  *lod_ipart, lod_fpart,
                                  ilevel0, ilevel1);
       break;
@@ -1127,9 +1128,9 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
 {
    struct lp_build_context *int_bld = &bld->int_bld;
    LLVMBuilderRef builder = bld->gallivm->builder;
-   const unsigned mip_filter = bld->static_state->min_mip_filter;
-   const unsigned min_filter = bld->static_state->min_img_filter;
-   const unsigned mag_filter = bld->static_state->mag_img_filter;
+   const unsigned mip_filter = bld->static_sampler_state->min_mip_filter;
+   const unsigned min_filter = bld->static_sampler_state->min_img_filter;
+   const unsigned mag_filter = bld->static_sampler_state->mag_img_filter;
    LLVMValueRef texels[4];
    unsigned chan;
 
@@ -1221,7 +1222,7 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
    struct lp_build_context *perquadi_bld = &bld->perquadi_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    unsigned dims = bld->dims, chan;
-   unsigned target = bld->static_state->target;
+   unsigned target = bld->static_texture_state->target;
    LLVMValueRef size, ilevel;
    LLVMValueRef row_stride_vec = NULL, img_stride_vec = NULL;
    LLVMValueRef x = coords[0], y = coords[1], z = coords[2];
@@ -1229,7 +1230,7 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
    LLVMValueRef offset, out_of_bounds, out1;
 
    /* XXX just like ordinary sampling, we don't handle per-pixel lod (yet). */
-   if (explicit_lod && bld->static_state->target != PIPE_BUFFER) {
+   if (explicit_lod && bld->static_texture_state->target != PIPE_BUFFER) {
       ilevel = lp_build_pack_aos_scalars(bld->gallivm, int_coord_bld->type,
                                          perquadi_bld->type, explicit_lod, 0);
       lp_build_nearest_mip_level(bld, unit, ilevel, &ilevel);
@@ -1288,7 +1289,7 @@ lp_build_fetch_texel(struct lp_build_sample_context *bld,
                           x, y, z, row_stride_vec, img_stride_vec,
                           &offset, &i, &j);
 
-   if (bld->static_state->target != PIPE_BUFFER) {
+   if (bld->static_texture_state->target != PIPE_BUFFER) {
       offset = lp_build_add(int_coord_bld, offset,
                             lp_build_get_mip_offsets(bld, ilevel));
    }
@@ -1333,11 +1334,11 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
    LLVMValueRef res, p;
    const unsigned chan = 0;
 
-   if (bld->static_state->compare_mode == PIPE_TEX_COMPARE_NONE)
+   if (bld->static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE)
       return;
 
-   if (bld->static_state->target == PIPE_TEXTURE_2D_ARRAY ||
-       bld->static_state->target == PIPE_TEXTURE_CUBE) {
+   if (bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY ||
+       bld->static_texture_state->target == PIPE_TEXTURE_CUBE) {
       p = coords[3];
    }
    else {
@@ -1359,7 +1360,7 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
                       bld->coord_bld.one);
 
    /* result = (p FUNC texel) ? 1 : 0 */
-   res = lp_build_cmp(texel_bld, bld->static_state->compare_func,
+   res = lp_build_cmp(texel_bld, bld->static_sampler_state->compare_func,
                       p, texel[chan]);
    res = lp_build_select(texel_bld, res, texel_bld->one, texel_bld->zero);
 
@@ -1400,11 +1401,13 @@ lp_build_sample_nop(struct gallivm_state *gallivm,
  */
 void
 lp_build_sample_soa(struct gallivm_state *gallivm,
-                    const struct lp_sampler_static_state *static_state,
+                    const struct lp_static_texture_state *static_texture_state,
+                    const struct lp_static_sampler_state *static_sampler_state,
                     struct lp_sampler_dynamic_state *dynamic_state,
                     struct lp_type type,
                     boolean is_fetch,
-                    unsigned unit,
+                    unsigned texture_index,
+                    unsigned sampler_index,
                     const LLVMValueRef *coords,
                     const LLVMValueRef *offsets,
                     const struct lp_derivatives *derivs,
@@ -1412,10 +1415,11 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                     LLVMValueRef explicit_lod, /* optional */
                     LLVMValueRef texel_out[4])
 {
-   unsigned dims = texture_dims(static_state->target);
+   unsigned dims = texture_dims(static_texture_state->target);
    unsigned num_quads = type.length / 4;
-   unsigned mip_filter = static_state->min_mip_filter;
+   unsigned mip_filter;
    struct lp_build_sample_context bld;
+   struct lp_static_sampler_state derived_sampler_state = *static_sampler_state;
    LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef tex_width, tex_height, tex_depth;
@@ -1424,7 +1428,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    LLVMValueRef r;
 
    if (0) {
-      enum pipe_format fmt = static_state->format;
+      enum pipe_format fmt = static_texture_state->format;
       debug_printf("Sample from %s\n", util_format_name(fmt));
    }
 
@@ -1433,9 +1437,10 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    /* Setup our build context */
    memset(&bld, 0, sizeof bld);
    bld.gallivm = gallivm;
-   bld.static_state = static_state;
+   bld.static_sampler_state = &derived_sampler_state;
+   bld.static_texture_state = static_texture_state;
    bld.dynamic_state = dynamic_state;
-   bld.format_desc = util_format_description(static_state->format);
+   bld.format_desc = util_format_description(static_texture_state->format);
    bld.dims = dims;
 
    bld.vector_width = lp_type_width(type);
@@ -1466,11 +1471,22 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       }
    }
 
+   if (!static_texture_state->level_zero_only) {
+      derived_sampler_state.min_mip_filter = static_sampler_state->min_mip_filter;
+   } else {
+      derived_sampler_state.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+   }
+   mip_filter = derived_sampler_state.min_mip_filter;
+
+   if (0) {
+      debug_printf("  .min_mip_filter = %u\n", derived_sampler_state.min_mip_filter);
+   }
+
    /*
     * There are other situations where at least the multiple int lods could be
     * avoided like min and max lod being equal.
     */
-   if ((is_fetch && explicit_lod && bld.static_state->target != PIPE_BUFFER) ||
+   if ((is_fetch && explicit_lod && bld.static_texture_state->target != PIPE_BUFFER) ||
        (!is_fetch && mip_filter != PIPE_TEX_MIPFILTER_NONE)) {
       bld.num_lods = num_quads;
    }
@@ -1497,13 +1513,13 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    lp_build_context_init(&bld.perquadi_bld, gallivm, bld.perquadi_type);
 
    /* Get the dynamic state */
-   tex_width = dynamic_state->width(dynamic_state, gallivm, unit);
-   tex_height = dynamic_state->height(dynamic_state, gallivm, unit);
-   tex_depth = dynamic_state->depth(dynamic_state, gallivm, unit);
-   bld.row_stride_array = dynamic_state->row_stride(dynamic_state, gallivm, unit);
-   bld.img_stride_array = dynamic_state->img_stride(dynamic_state, gallivm, unit);
-   bld.base_ptr = dynamic_state->base_ptr(dynamic_state, gallivm, unit);
-   bld.mip_offsets = dynamic_state->mip_offsets(dynamic_state, gallivm, unit);
+   tex_width = dynamic_state->width(dynamic_state, gallivm, texture_index);
+   tex_height = dynamic_state->height(dynamic_state, gallivm, texture_index);
+   tex_depth = dynamic_state->depth(dynamic_state, gallivm, texture_index);
+   bld.row_stride_array = dynamic_state->row_stride(dynamic_state, gallivm, texture_index);
+   bld.img_stride_array = dynamic_state->img_stride(dynamic_state, gallivm, texture_index);
+   bld.base_ptr = dynamic_state->base_ptr(dynamic_state, gallivm, texture_index);
+   bld.mip_offsets = dynamic_state->mip_offsets(dynamic_state, gallivm, texture_index);
    /* Note that mip_offsets is an array[level] of offsets to texture images */
 
    s = coords[0];
@@ -1536,7 +1552,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    }
 
    else if (is_fetch) {
-      lp_build_fetch_texel(&bld, unit, coords,
+      lp_build_fetch_texel(&bld, texture_index, coords,
                            explicit_lod, offsets,
                            texel_out);
    }
@@ -1545,22 +1561,22 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       LLVMValueRef lod_ipart = NULL, lod_fpart = NULL;
       LLVMValueRef ilevel0 = NULL, ilevel1 = NULL;
       boolean use_aos = util_format_fits_8unorm(bld.format_desc) &&
-                        lp_is_simple_wrap_mode(static_state->wrap_s) &&
-                        lp_is_simple_wrap_mode(static_state->wrap_t);
+                        lp_is_simple_wrap_mode(static_sampler_state->wrap_s) &&
+                        lp_is_simple_wrap_mode(static_sampler_state->wrap_t);
 
       if ((gallivm_debug & GALLIVM_DEBUG_PERF) &&
           !use_aos && util_format_fits_8unorm(bld.format_desc)) {
          debug_printf("%s: using floating point linear filtering for %s\n",
                       __FUNCTION__, bld.format_desc->short_name);
          debug_printf("  min_img %d  mag_img %d  mip %d  wraps %d  wrapt %d\n",
-                      static_state->min_img_filter,
-                      static_state->mag_img_filter,
-                      static_state->min_mip_filter,
-                      static_state->wrap_s,
-                      static_state->wrap_t);
+                      static_sampler_state->min_img_filter,
+                      static_sampler_state->mag_img_filter,
+                      static_sampler_state->min_mip_filter,
+                      static_sampler_state->wrap_s,
+                      static_sampler_state->wrap_t);
       }
 
-      lp_build_sample_common(&bld, unit,
+      lp_build_sample_common(&bld, texture_index, sampler_index,
                              &s, &t, &r,
                              derivs, lod_bias, explicit_lod,
                              &lod_ipart, &lod_fpart,
@@ -1586,7 +1602,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          }
          if (use_aos) {
             /* do sampling/filtering with fixed pt arithmetic */
-            lp_build_sample_aos(&bld, unit,
+            lp_build_sample_aos(&bld, sampler_index,
                                 s, t, r,
                                 lod_ipart, lod_fpart,
                                 ilevel0, ilevel1,
@@ -1594,7 +1610,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          }
 
          else {
-            lp_build_sample_general(&bld, unit,
+            lp_build_sample_general(&bld, sampler_index,
                                     s, t, r,
                                     lod_ipart, lod_fpart,
                                     ilevel0, ilevel1,
@@ -1614,7 +1630,8 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          /* Setup our build context */
          memset(&bld4, 0, sizeof bld4);
          bld4.gallivm = bld.gallivm;
-         bld4.static_state = bld.static_state;
+         bld4.static_texture_state = bld.static_texture_state;
+         bld4.static_sampler_state = bld.static_sampler_state;
          bld4.dynamic_state = bld.dynamic_state;
          bld4.format_desc = bld.format_desc;
          bld4.dims = bld.dims;
@@ -1675,7 +1692,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
 
             if (use_aos) {
                /* do sampling/filtering with fixed pt arithmetic */
-               lp_build_sample_aos(&bld4, unit,
+               lp_build_sample_aos(&bld4, sampler_index,
                                    s4, t4, r4,
                                    lod_iparts, lod_fparts,
                                    ilevel0s, ilevel1s,
@@ -1683,7 +1700,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
             }
 
             else {
-               lp_build_sample_general(&bld4, unit,
+               lp_build_sample_general(&bld4, sampler_index,
                                        s4, t4, r4,
                                        lod_iparts, lod_fparts,
                                        ilevel0s, ilevel1s,
@@ -1702,7 +1719,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       lp_build_sample_compare(&bld, coords, texel_out);
    }
 
-   if (static_state->target != PIPE_BUFFER) {
+   if (static_texture_state->target != PIPE_BUFFER) {
       apply_sampler_swizzle(&bld, texel_out);
    }
 
@@ -1721,7 +1738,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
 
 void
 lp_build_size_query_soa(struct gallivm_state *gallivm,
-                        const struct lp_sampler_static_state *static_state,
+                        const struct lp_static_texture_state *static_state,
                         struct lp_sampler_dynamic_state *dynamic_state,
                         struct lp_type int_type,
                         unsigned unit,
