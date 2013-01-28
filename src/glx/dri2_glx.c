@@ -789,9 +789,11 @@ dri2XcbSwapBuffers(Display *dpy,
 
    swap_buffers_reply =
       xcb_dri2_swap_buffers_reply(c, swap_buffers_cookie, NULL);
-   ret = merge_counter(swap_buffers_reply->swap_hi,
-                       swap_buffers_reply->swap_lo);
-   free(swap_buffers_reply);
+   if (swap_buffers_reply) {
+      ret = merge_counter(swap_buffers_reply->swap_hi,
+                          swap_buffers_reply->swap_lo);
+      free(swap_buffers_reply);
+   }
    return ret;
 }
 
