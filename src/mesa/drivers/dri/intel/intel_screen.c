@@ -377,7 +377,7 @@ intel_create_image_from_name(__DRIscreen *screen,
        cpp = _mesa_get_format_bytes(image->format);
     image->region = intel_region_alloc_for_handle(intelScreen,
 						  cpp, width, height,
-						  pitch, name, "image");
+						  pitch * cpp, name, "image");
     if (image->region == NULL) {
        free(image);
        return NULL;
