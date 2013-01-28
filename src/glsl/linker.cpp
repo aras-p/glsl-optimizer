@@ -200,6 +200,65 @@ linker_warning(gl_shader_program *prog, const char *fmt, ...)
 }
 
 
+/**
+ * Given a string identifying a program resource, break it into a base name
+ * and an optional array index in square brackets.
+ *
+ * If an array index is present, \c out_base_name_end is set to point to the
+ * "[" that precedes the array index, and the array index itself is returned
+ * as a long.
+ *
+ * If no array index is present (or if the array index is negative or
+ * mal-formed), \c out_base_name_end, is set to point to the null terminator
+ * at the end of the input string, and -1 is returned.
+ *
+ * Only the final array index is parsed; if the string contains other array
+ * indices (or structure field accesses), they are left in the base name.
+ *
+ * No attempt is made to check that the base name is properly formed;
+ * typically the caller will look up the base name in a hash table, so
+ * ill-formed base names simply turn into hash table lookup failures.
+ */
+long
+parse_program_resource_name(const GLchar *name,
+                            const GLchar **out_base_name_end)
+{
+   /* Section 7.3.1 ("Program Interfaces") of the OpenGL 4.3 spec says:
+    *
+    *     "When an integer array element or block instance number is part of
+    *     the name string, it will be specified in decimal form without a "+"
+    *     or "-" sign or any extra leading zeroes. Additionally, the name
+    *     string will not include white space anywhere in the string."
+    */
+
+   const size_t len = strlen(name);
+   *out_base_name_end = name + len;
+
+   if (len == 0 || name[len-1] != ']')
+      return -1;
+
+   /* Walk backwards over the string looking for a non-digit character.  This
+    * had better be the opening bracket for an array index.
+    *
+    * Initially, i specifies the location of the ']'.  Since the string may
+    * contain only the ']' charcater, walk backwards very carefully.
+    */
+   unsigned i;
+   for (i = len - 1; (i > 0) && isdigit(name[i-1]); --i)
+      /* empty */ ;
+
+   if ((i == 0) || name[i-1] != '[')
+      return -1;
+
+   long array_index = strtol(&name[i], NULL, 10);
+   if (array_index < 0)
+      return -1;
+
+   *out_base_name_end = name + (i - 1);
+   return array_index;
+}
+
+
 void
 link_invalidate_variable_locations(gl_shader *sh, int input_base,
                                    int output_base)

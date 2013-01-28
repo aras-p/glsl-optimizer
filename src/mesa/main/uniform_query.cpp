@@ -929,6 +929,7 @@ _mesa_uniform_matrix(struct gl_context *ctx, struct gl_shader_program *shProg,
    _mesa_propagate_uniforms_to_driver_storage(uni, offset, count);
 }
 
+
 /**
  * Called via glGetUniformLocation().
  *
@@ -944,73 +945,35 @@ _mesa_get_uniform_location(struct gl_context *ctx,
                            const GLchar *name,
                            unsigned *out_offset)
 {
-   const size_t len = strlen(name);
-   long offset;
-   bool array_lookup;
+   /* Page 80 (page 94 of the PDF) of the OpenGL 2.1 spec says:
+    *
+    *     "The first element of a uniform array is identified using the
+    *     name of the uniform array appended with "[0]". Except if the last
+    *     part of the string name indicates a uniform array, then the
+    *     location of the first element of that array can be retrieved by
+    *     either using the name of the uniform array, or the name of the
+    *     uniform array appended with "[0]"."
+    *
+    * Note: since uniform names are not allowed to use whitespace, and array
+    * indices within uniform names are not allowed to use "+", "-", or leading
+    * zeros, it follows that each uniform has a unique name up to the possible
+    * ambiguity with "[0]" noted above.  Therefore we don't need to worry
+    * about mal-formed inputs--they will properly fail when we try to look up
+    * the uniform name in shProg->UniformHash.
+    */
+
+   const GLchar *base_name_end;
+   long offset = parse_program_resource_name(name, &base_name_end);
+   bool array_lookup = offset >= 0;
    char *name_copy;
 
-   /* If the name ends with a ']', assume that it refers to some element of an
-    * array.  Malformed array references will fail the hash table look up
-    * below, so it doesn't matter that they are not caught here.  This code
-    * only wants to catch the "leaf" array references so that arrays of
-    * structures containing arrays will be handled correctly.
-    */
-   if (name[len-1] == ']') {
-      unsigned i;
-
-      /* Walk backwards over the string looking for a non-digit character.
-       * This had better be the opening bracket for an array index.
-       *
-       * Initially, i specifies the location of the ']'.  Since the string may
-       * contain only the ']' charcater, walk backwards very carefully.
-       */
-      for (i = len - 1; (i > 0) && isdigit(name[i-1]); --i)
-	 /* empty */ ;
-
-      /* Page 80 (page 94 of the PDF) of the OpenGL 2.1 spec says:
-       *
-       *     "The first element of a uniform array is identified using the
-       *     name of the uniform array appended with "[0]". Except if the last
-       *     part of the string name indicates a uniform array, then the
-       *     location of the first element of that array can be retrieved by
-       *     either using the name of the uniform array, or the name of the
-       *     uniform array appended with "[0]"."
-       *
-       * Page 79 (page 93 of the PDF) of the OpenGL 2.1 spec says:
-       *
-       *     "name must be a null terminated string, without white space."
-       *
-       * Return an error if there is no opening '[' to match the closing ']'.
-       * An error will also be returned if there is intervening white space
-       * (or other non-digit characters) before the opening '['.
-       */
-      if ((i == 0) || name[i-1] != '[')
-	 return GL_INVALID_INDEX;
-
-      /* Return an error if there are no digits between the opening '[' to
-       * match the closing ']'.
-       */
-      if (i == (len - 1))
-	 return GL_INVALID_INDEX;
-
-      /* Make a new string that is a copy of the old string up to (but not
-       * including) the '[' character.
-       */
-      name_copy = (char *) malloc(i);
-      memcpy(name_copy, name, i - 1);
-      name_copy[i-1] = '\0';
-
-      offset = strtol(&name[i], NULL, 10);
-      if (offset < 0) {
-	 free(name_copy);
-	 return GL_INVALID_INDEX;
-      }
-
-      array_lookup = true;
+   if (array_lookup) {
+      name_copy = (char *) malloc(base_name_end - name + 1);
+      memcpy(name_copy, name, base_name_end - name);
+      name_copy[base_name_end - name] = '\0';
    } else {
       name_copy = (char *) name;
       offset = 0;
-      array_lookup = false;
    }
 
    unsigned location = 0;

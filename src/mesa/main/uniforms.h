@@ -167,6 +167,10 @@ _mesa_GetActiveUniformsiv(GLuint program,
 void GLAPIENTRY
 _mesa_GetUniformiv(GLhandleARB, GLint, GLint *);
 
+long
+_mesa_parse_program_resource_name(const GLchar *name,
+                                  const GLchar **out_base_name_end);
+
 unsigned
 _mesa_get_uniform_location(struct gl_context *ctx, struct gl_shader_program *shProg,
 			   const GLchar *name, unsigned *offset);
