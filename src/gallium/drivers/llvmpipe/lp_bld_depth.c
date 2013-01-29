@@ -893,6 +893,7 @@ lp_build_deferred_depth_write(struct gallivm_state *gallivm,
    struct lp_build_context z_bld;
    LLVMValueRef z_dst;
    LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef mask_value;
 
    /* XXX: pointlessly redo type logic:
     */
@@ -904,11 +905,15 @@ lp_build_deferred_depth_write(struct gallivm_state *gallivm,
 
    z_dst = LLVMBuildLoad(builder, zs_dst_ptr, "zsbufval");
 
+   mask_value = lp_build_mask_value(mask);
+
    if (z_type.width < z_src_type.width) {
+      /* Truncate incoming ZS and mask values (e.g., when writing to Z16_UNORM) */
       zs_value = LLVMBuildTrunc(builder, zs_value, z_bld.vec_type, "");
+      mask_value = LLVMBuildTrunc(builder, mask_value, z_bld.int_vec_type, "");
    }
 
-   z_dst = lp_build_select(&z_bld, lp_build_mask_value(mask), zs_value, z_dst);
+   z_dst = lp_build_select(&z_bld, mask_value, zs_value, z_dst);
 
    LLVMBuildStore(builder, z_dst, zs_dst_ptr);
 }
