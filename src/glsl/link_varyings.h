@@ -42,6 +42,49 @@ class ir_variable;
 
 
 /**
+ * Data structure describing a varying which is available for use in transform
+ * feedback.
+ *
+ * For example, if the vertex shader contains:
+ *
+ *     struct S {
+ *       vec4 foo;
+ *       float[3] bar;
+ *     };
+ *
+ *     varying S[2] v;
+ *
+ * Then there would be tfeedback_candidate objects corresponding to the
+ * following varyings:
+ *
+ *     v[0].foo
+ *     v[0].bar
+ *     v[1].foo
+ *     v[1].bar
+ */
+struct tfeedback_candidate
+{
+   /**
+    * Toplevel variable containing this varying.  In the above example, this
+    * would point to the declaration of the varying v.
+    */
+   ir_variable *toplevel_var;
+
+   /**
+    * Type of this varying.  In the above example, this would point to the
+    * glsl_type for "vec4" or "float[3]".
+    */
+   const glsl_type *type;
+
+   /**
+    * Offset within the toplevel variable where this varying occurs (counted
+    * in multiples of the size of a float).
+    */
+   unsigned offset;
+};
+
+
+/**
  * Data structure tracking information about a transform feedback declaration
  * during linking.
  */
@@ -51,14 +94,14 @@ public:
    void init(struct gl_context *ctx, struct gl_shader_program *prog,
              const void *mem_ctx, const char *input);
    static bool is_same(const tfeedback_decl &x, const tfeedback_decl &y);
-   bool assign_location(struct gl_context *ctx, struct gl_shader_program *prog,
-                        ir_variable *output_var);
+   bool assign_location(struct gl_context *ctx,
+                        struct gl_shader_program *prog);
    unsigned get_num_outputs() const;
    bool store(struct gl_context *ctx, struct gl_shader_program *prog,
               struct gl_transform_feedback_info *info, unsigned buffer,
               const unsigned max_outputs) const;
-   ir_variable *find_output_var(gl_shader_program *prog,
-                                gl_shader *producer) const;
+   const tfeedback_candidate *find_candidate(gl_shader_program *prog,
+                                             hash_table *tfeedback_candidates);
 
    bool is_next_buffer_separator() const
    {
@@ -158,6 +201,12 @@ private:
     * Whether this is gl_NextBuffer from ARB_transform_feedback3.
     */
    bool next_buffer_separator;
+
+   /**
+    * If find_candidate() has been called, pointer to the tfeedback_candidate
+    * data structure that was found.  Otherwise NULL.
+    */
+   const tfeedback_candidate *matched_candidate;
 };
 
 

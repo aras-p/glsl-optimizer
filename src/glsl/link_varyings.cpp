@@ -35,6 +35,7 @@
 #include "linker.h"
 #include "link_varyings.h"
 #include "main/macros.h"
+#include "program/hash_table.h"
 #include "program.h"
 
 
@@ -174,6 +175,7 @@ tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
    this->is_clip_distance_mesa = false;
    this->skip_components = 0;
    this->next_buffer_separator = false;
+   this->matched_candidate = NULL;
 
    if (ctx->Extensions.ARB_transform_feedback3) {
       /* Parse gl_NextBuffer. */
@@ -238,27 +240,32 @@ tfeedback_decl::is_same(const tfeedback_decl &x, const tfeedback_decl &y)
 
 
 /**
- * Assign a location for this tfeedback_decl object based on the location
- * assignment in output_var.
+ * Assign a location for this tfeedback_decl object based on the transform
+ * feedback candidate found by find_candidate.
  *
  * If an error occurs, the error is reported through linker_error() and false
  * is returned.
  */
 bool
 tfeedback_decl::assign_location(struct gl_context *ctx,
-                                struct gl_shader_program *prog,
-                                ir_variable *output_var)
+                                struct gl_shader_program *prog)
 {
    assert(this->is_varying());
 
-   if (output_var->type->is_array()) {
+   unsigned fine_location
+      = this->matched_candidate->toplevel_var->location * 4
+      + this->matched_candidate->toplevel_var->location_frac
+      + this->matched_candidate->offset;
+
+   if (this->matched_candidate->type->is_array()) {
       /* Array variable */
       const unsigned matrix_cols =
-         output_var->type->fields.array->matrix_columns;
+         this->matched_candidate->type->fields.array->matrix_columns;
       const unsigned vector_elements =
-         output_var->type->fields.array->vector_elements;
+         this->matched_candidate->type->fields.array->vector_elements;
       unsigned actual_array_size = this->is_clip_distance_mesa ?
-         prog->Vert.ClipDistanceArraySize : output_var->type->array_size();
+         prog->Vert.ClipDistanceArraySize :
+         this->matched_candidate->type->array_size();
 
       if (this->is_subscripted) {
          /* Check array bounds. */
@@ -269,22 +276,11 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
                          actual_array_size);
             return false;
          }
-         if (this->is_clip_distance_mesa) {
-            this->location =
-               output_var->location + this->array_subscript / 4;
-            this->location_frac = this->array_subscript % 4;
-         } else {
-            unsigned fine_location
-               = output_var->location * 4 + output_var->location_frac;
-            unsigned array_elem_size = vector_elements * matrix_cols;
-            fine_location += array_elem_size * this->array_subscript;
-            this->location = fine_location / 4;
-            this->location_frac = fine_location % 4;
-         }
+         unsigned array_elem_size = this->is_clip_distance_mesa ?
+            1 : vector_elements * matrix_cols;
+         fine_location += array_elem_size * this->array_subscript;
          this->size = 1;
       } else {
-         this->location = output_var->location;
-         this->location_frac = output_var->location_frac;
          this->size = actual_array_size;
       }
       this->vector_elements = vector_elements;
@@ -292,7 +288,7 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
       if (this->is_clip_distance_mesa)
          this->type = GL_FLOAT;
       else
-         this->type = output_var->type->fields.array->gl_type;
+         this->type = this->matched_candidate->type->fields.array->gl_type;
    } else {
       /* Regular variable (scalar, vector, or matrix) */
       if (this->is_subscripted) {
@@ -301,13 +297,13 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
                       this->orig_name, this->var_name);
          return false;
       }
-      this->location = output_var->location;
-      this->location_frac = output_var->location_frac;
       this->size = 1;
-      this->vector_elements = output_var->type->vector_elements;
-      this->matrix_columns = output_var->type->matrix_columns;
-      this->type = output_var->type->gl_type;
+      this->vector_elements = this->matched_candidate->type->vector_elements;
+      this->matrix_columns = this->matched_candidate->type->matrix_columns;
+      this->type = this->matched_candidate->type->gl_type;
    }
+   this->location = fine_location / 4;
+   this->location_frac = fine_location % 4;
 
    /* From GL_EXT_transform_feedback:
     *   A program will fail to link if:
@@ -402,35 +398,26 @@ tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
 }
 
 
-ir_variable *
-tfeedback_decl::find_output_var(gl_shader_program *prog,
-                                gl_shader *producer) const
+const tfeedback_candidate *
+tfeedback_decl::find_candidate(gl_shader_program *prog,
+                               hash_table *tfeedback_candidates)
 {
    const char *name = this->is_clip_distance_mesa
       ? "gl_ClipDistanceMESA" : this->var_name;
-   ir_variable *var = producer->symbols->get_variable(name);
-   if (var && var->mode == ir_var_shader_out) {
-      const glsl_type *type = var->type;
-      while (type->base_type == GLSL_TYPE_ARRAY)
-         type = type->fields.array;
-      if (type->base_type == GLSL_TYPE_STRUCT) {
-         linker_error(prog, "Transform feedback of varying structs not "
-                      "implemented yet.");
-         return NULL;
-      }
-      return var;
+   this->matched_candidate = (const tfeedback_candidate *)
+      hash_table_find(tfeedback_candidates, name);
+   if (!this->matched_candidate) {
+      /* From GL_EXT_transform_feedback:
+       *   A program will fail to link if:
+       *
+       *   * any variable name specified in the <varyings> array is not
+       *     declared as an output in the geometry shader (if present) or
+       *     the vertex shader (if no geometry shader is present);
+       */
+      linker_error(prog, "Transform feedback varying %s undeclared.",
+                   this->orig_name);
    }
-
-   /* From GL_EXT_transform_feedback:
-    *   A program will fail to link if:
-    *
-    *   * any variable name specified in the <varyings> array is not
-    *     declared as an output in the geometry shader (if present) or
-    *     the vertex shader (if no geometry shader is present);
-    */
-   linker_error(prog, "Transform feedback varying %s undeclared.",
-                this->orig_name);
-   return NULL;
+   return this->matched_candidate;
 }
 
 
@@ -868,6 +855,80 @@ is_varying_var(GLenum shaderType, const ir_variable *var)
 
 
 /**
+ * Visitor class that generates tfeedback_candidate structs describing all
+ * possible targets of transform feedback.
+ *
+ * tfeedback_candidate structs are stored in the hash table
+ * tfeedback_candidates, which is passed to the constructor.  This hash table
+ * maps varying names to instances of the tfeedback_candidate struct.
+ */
+class tfeedback_candidate_generator : public program_resource_visitor
+{
+public:
+   tfeedback_candidate_generator(void *mem_ctx,
+                                 hash_table *tfeedback_candidates)
+      : mem_ctx(mem_ctx),
+        tfeedback_candidates(tfeedback_candidates)
+   {
+   }
+
+   void process(ir_variable *var)
+   {
+      this->toplevel_var = var;
+      this->varying_floats = 0;
+      if (var->is_interface_instance())
+         program_resource_visitor::process(var->interface_type,
+                                           var->interface_type->name);
+      else
+         program_resource_visitor::process(var);
+   }
+
+private:
+   virtual void visit_field(const glsl_type *type, const char *name,
+                            bool row_major)
+   {
+      assert(!type->is_record());
+      assert(!(type->is_array() && type->fields.array->is_record()));
+      assert(!type->is_interface());
+      assert(!(type->is_array() && type->fields.array->is_interface()));
+
+      (void) row_major;
+
+      tfeedback_candidate *candidate
+         = rzalloc(this->mem_ctx, tfeedback_candidate);
+      candidate->toplevel_var = this->toplevel_var;
+      candidate->type = type;
+      candidate->offset = this->varying_floats;
+      hash_table_insert(this->tfeedback_candidates, candidate,
+                        ralloc_strdup(this->mem_ctx, name));
+      this->varying_floats += type->component_slots();
+   }
+
+   /**
+    * Memory context used to allocate hash table keys and values.
+    */
+   void * const mem_ctx;
+
+   /**
+    * Hash table in which tfeedback_candidate objects should be stored.
+    */
+   hash_table * const tfeedback_candidates;
+
+   /**
+    * Pointer to the toplevel variable that is being traversed.
+    */
+   ir_variable *toplevel_var;
+
+   /**
+    * Total number of varying floats that have been visited so far.  This is
+    * used to determine the offset to each varying within the toplevel
+    * variable.
+    */
+   unsigned varying_floats;
+};
+
+
+/**
  * Assign locations for all variables that are produced in one pipeline stage
  * (the "producer") and consumed in the next stage (the "consumer").
  *
@@ -899,6 +960,8 @@ assign_varying_locations(struct gl_context *ctx,
    const unsigned producer_base = VERT_RESULT_VAR0;
    const unsigned consumer_base = FRAG_ATTRIB_VAR0;
    varying_matches matches(ctx->Const.DisableVaryingPacking);
+   hash_table *tfeedback_candidates
+      = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
 
    /* Operate in a total of three passes.
     *
@@ -917,6 +980,9 @@ assign_varying_locations(struct gl_context *ctx,
       if ((output_var == NULL) || (output_var->mode != ir_var_shader_out))
 	 continue;
 
+      tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates);
+      g.process(output_var);
+
       ir_variable *input_var =
 	 consumer ? consumer->symbols->get_variable(output_var->name) : NULL;
 
@@ -932,15 +998,16 @@ assign_varying_locations(struct gl_context *ctx,
       if (!tfeedback_decls[i].is_varying())
          continue;
 
-      ir_variable *output_var
-         = tfeedback_decls[i].find_output_var(prog, producer);
+      const tfeedback_candidate *matched_candidate
+         = tfeedback_decls[i].find_candidate(prog, tfeedback_candidates);
 
-      if (output_var == NULL)
+      if (matched_candidate == NULL) {
+         hash_table_dtor(tfeedback_candidates);
          return false;
-
-      if (output_var->is_unmatched_generic_inout) {
-         matches.record(output_var, NULL);
       }
+
+      if (matched_candidate->toplevel_var->is_unmatched_generic_inout)
+         matches.record(matched_candidate->toplevel_var, NULL);
    }
 
    const unsigned slots_used = matches.assign_locations();
@@ -950,12 +1017,13 @@ assign_varying_locations(struct gl_context *ctx,
       if (!tfeedback_decls[i].is_varying())
          continue;
 
-      ir_variable *output_var
-         = tfeedback_decls[i].find_output_var(prog, producer);
-
-      if (!tfeedback_decls[i].assign_location(ctx, prog, output_var))
+      if (!tfeedback_decls[i].assign_location(ctx, prog)) {
+         hash_table_dtor(tfeedback_candidates);
          return false;
+      }
    }
+
+   hash_table_dtor(tfeedback_candidates);
 
    if (ctx->Const.DisableVaryingPacking) {
       /* Transform feedback code assumes varyings are packed, so if the driver
