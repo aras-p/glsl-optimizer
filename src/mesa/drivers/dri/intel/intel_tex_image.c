@@ -108,29 +108,6 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
                                false /* force_y_tiling */);
 }
 
-/* There are actually quite a few combinations this will work for,
- * more than what I've listed here.
- */
-static bool
-check_pbo_format(GLenum format, GLenum type,
-                 gl_format mesa_format)
-{
-   switch (mesa_format) {
-   case MESA_FORMAT_ARGB8888:
-      return (format == GL_BGRA && (type == GL_UNSIGNED_BYTE ||
-				    type == GL_UNSIGNED_INT_8_8_8_8_REV));
-   case MESA_FORMAT_RGB565:
-      return (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5);
-   case MESA_FORMAT_L8:
-      return (format == GL_LUMINANCE && type == GL_UNSIGNED_BYTE);
-   case MESA_FORMAT_YCBCR:
-      return (type == GL_UNSIGNED_SHORT_8_8_MESA || type == GL_UNSIGNED_BYTE);
-   default:
-      return false;
-   }
-}
-
-
 /* XXX: Do this for TexSubImage also:
  */
 static bool
@@ -157,9 +134,10 @@ try_pbo_upload(struct gl_context *ctx,
       return false;
    }
 
-   if (!check_pbo_format(format, type, intelImage->base.Base.TexFormat)) {
+   if (!_mesa_format_matches_format_and_type(image->TexFormat,
+                                             format, type, false)) {
       DBG("%s: format mismatch (upload to %s with format 0x%x, type 0x%x)\n",
-	  __FUNCTION__, _mesa_get_format_name(intelImage->base.Base.TexFormat),
+	  __FUNCTION__, _mesa_get_format_name(image->TexFormat),
 	  format, type);
       return false;
    }
