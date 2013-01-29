@@ -57,10 +57,10 @@ LT_PREREQ([2.2])
 LT_INIT([disable-static])
 
 AX_PROG_BISON([],
-              AS_IF([test ! -f "$srcdir/src/glsl/glcpp/glcpp-parse.c"]
+              AS_IF([test ! -f "$srcdir/src/glsl/glcpp/glcpp-parse.c"],
                     [AC_MSG_ERROR([bison not found - unable to compile glcpp-parse.y])]))
 AX_PROG_FLEX([],
-             AS_IF([test ! -f "$srcdir/src/glsl/glcpp/glcpp-lex.c"]
+             AS_IF([test ! -f "$srcdir/src/glsl/glcpp/glcpp-lex.c"],
                    [AC_MSG_ERROR([flex not found - unable to compile glcpp-lex.l])]))
 
 AC_PATH_PROG([PERL], [perl])
