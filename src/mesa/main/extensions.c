@@ -298,7 +298,7 @@ static const struct extension extension_table[] = {
    { "GL_ATI_texture_float",                       o(ARB_texture_float),                       GL,             2002 },
    { "GL_ATI_texture_mirror_once",                 o(ATI_texture_mirror_once),                 GL,             2006 },
    { "GL_IBM_multimode_draw_arrays",               o(dummy_true),                              GL,             1998 },
-   { "GL_IBM_rasterpos_clip",                      o(dummy_true),                              GL,             1996 },
+   { "GL_IBM_rasterpos_clip",                      o(dummy_true),                              GLL,            1996 },
    { "GL_IBM_texture_mirrored_repeat",             o(dummy_true),                              GLL,            1998 },
    { "GL_INGR_blend_func_separate",                o(EXT_blend_func_separate),                 GLL,            1999 },
    { "GL_MESA_pack_invert",                        o(MESA_pack_invert),                        GL,             2002 },
