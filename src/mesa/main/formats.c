@@ -3006,19 +3006,16 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
    case MESA_FORMAT_A8:
       return format == GL_ALPHA && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_A16:
-      return format == GL_ALPHA && type == GL_UNSIGNED_SHORT &&
-         littleEndian && !swapBytes;
+      return format == GL_ALPHA && type == GL_UNSIGNED_SHORT && !swapBytes;
    case MESA_FORMAT_L8:
    case MESA_FORMAT_SL8:
       return format == GL_LUMINANCE && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_L16:
-      return format == GL_LUMINANCE && type == GL_UNSIGNED_SHORT &&
-         littleEndian && !swapBytes;
+      return format == GL_LUMINANCE && type == GL_UNSIGNED_SHORT && !swapBytes;
    case MESA_FORMAT_I8:
       return format == GL_INTENSITY && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_I16:
-      return format == GL_INTENSITY && type == GL_UNSIGNED_SHORT &&
-         littleEndian && !swapBytes;
+      return format == GL_INTENSITY && type == GL_UNSIGNED_SHORT && !swapBytes;
 
    case MESA_FORMAT_YCBCR:
       return format == GL_YCBCR_MESA &&
@@ -3037,7 +3034,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_R16:
-      return format == GL_RED && type == GL_UNSIGNED_SHORT && littleEndian &&
+      return format == GL_RED && type == GL_UNSIGNED_SHORT &&
          !swapBytes;
    case MESA_FORMAT_GR1616:
       return format == GL_RG && type == GL_UNSIGNED_SHORT && littleEndian &&
@@ -3125,8 +3122,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return format == GL_RG && type == GL_HALF_FLOAT && !swapBytes;
 
    case MESA_FORMAT_ALPHA_UINT8:
-      return format == GL_ALPHA_INTEGER && type == GL_UNSIGNED_BYTE &&
-             !swapBytes;
+      return format == GL_ALPHA_INTEGER && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_ALPHA_UINT16:
       return format == GL_ALPHA_INTEGER && type == GL_UNSIGNED_SHORT &&
              !swapBytes;
@@ -3134,7 +3130,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return format == GL_ALPHA_INTEGER && type == GL_UNSIGNED_INT &&
              !swapBytes;
    case MESA_FORMAT_ALPHA_INT8:
-      return format == GL_ALPHA_INTEGER && type == GL_BYTE && !swapBytes;
+      return format == GL_ALPHA_INTEGER && type == GL_BYTE;
    case MESA_FORMAT_ALPHA_INT16:
       return format == GL_ALPHA_INTEGER && type == GL_SHORT && !swapBytes;
    case MESA_FORMAT_ALPHA_INT32:
@@ -3150,8 +3146,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_LUMINANCE_UINT8:
-      return format == GL_LUMINANCE_INTEGER_EXT && type == GL_UNSIGNED_BYTE &&
-             !swapBytes;
+      return format == GL_LUMINANCE_INTEGER_EXT && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_LUMINANCE_UINT16:
       return format == GL_LUMINANCE_INTEGER_EXT && type == GL_UNSIGNED_SHORT &&
              !swapBytes;
@@ -3159,8 +3154,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return format == GL_LUMINANCE_INTEGER_EXT && type == GL_UNSIGNED_INT &&
              !swapBytes;
    case MESA_FORMAT_LUMINANCE_INT8:
-      return format == GL_LUMINANCE_INTEGER_EXT && type == GL_BYTE &&
-             !swapBytes;
+      return format == GL_LUMINANCE_INTEGER_EXT && type == GL_BYTE;
    case MESA_FORMAT_LUMINANCE_INT16:
       return format == GL_LUMINANCE_INTEGER_EXT && type == GL_SHORT &&
              !swapBytes;
@@ -3187,7 +3181,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
              !swapBytes;
 
    case MESA_FORMAT_R_INT8:
-      return format == GL_RED_INTEGER && type == GL_BYTE && !swapBytes;
+      return format == GL_RED_INTEGER && type == GL_BYTE;
    case MESA_FORMAT_RG_INT8:
       return format == GL_RG_INTEGER && type == GL_BYTE && !swapBytes;
    case MESA_FORMAT_RGB_INT8:
@@ -3212,7 +3206,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return format == GL_RGBA_INTEGER && type == GL_INT && !swapBytes;
 
    case MESA_FORMAT_R_UINT8:
-      return format == GL_RED_INTEGER && type == GL_UNSIGNED_BYTE && !swapBytes;
+      return format == GL_RED_INTEGER && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_RG_UINT8:
       return format == GL_RG_INTEGER && type == GL_UNSIGNED_BYTE && !swapBytes;
    case MESA_FORMAT_RGB_UINT8:
@@ -3245,7 +3239,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
              type == GL_BYTE && littleEndian && !swapBytes;
 
    case MESA_FORMAT_SIGNED_R8:
-      return format == GL_RED && type == GL_BYTE && !swapBytes;
+      return format == GL_RED && type == GL_BYTE;
    case MESA_FORMAT_SIGNED_RG88_REV:
       return format == GL_RG && type == GL_BYTE && littleEndian &&
              !swapBytes;
@@ -3271,7 +3265,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_SIGNED_R16:
-      return format == GL_RED && type == GL_SHORT && littleEndian &&
+      return format == GL_RED && type == GL_SHORT &&
              !swapBytes;
    case MESA_FORMAT_SIGNED_GR1616:
       return format == GL_RG && type == GL_SHORT && littleEndian && !swapBytes;
@@ -3309,20 +3303,18 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return GL_FALSE;
 
    case MESA_FORMAT_SIGNED_A8:
-      return format == GL_ALPHA && type == GL_BYTE && !swapBytes;
+      return format == GL_ALPHA && type == GL_BYTE;
    case MESA_FORMAT_SIGNED_L8:
-      return format == GL_LUMINANCE && type == GL_BYTE && !swapBytes;
+      return format == GL_LUMINANCE && type == GL_BYTE;
    case MESA_FORMAT_SIGNED_AL88:
       return format == GL_LUMINANCE_ALPHA && type == GL_BYTE &&
              littleEndian && !swapBytes;
    case MESA_FORMAT_SIGNED_I8:
-      return format == GL_INTENSITY && type == GL_BYTE && !swapBytes;
+      return format == GL_INTENSITY && type == GL_BYTE;
    case MESA_FORMAT_SIGNED_A16:
-      return format == GL_ALPHA && type == GL_SHORT && littleEndian &&
-             !swapBytes;
+      return format == GL_ALPHA && type == GL_SHORT && !swapBytes;
    case MESA_FORMAT_SIGNED_L16:
-      return format == GL_LUMINANCE && type == GL_SHORT && littleEndian &&
-             !swapBytes;
+      return format == GL_LUMINANCE && type == GL_SHORT && !swapBytes;
    case MESA_FORMAT_SIGNED_AL1616:
       return format == GL_LUMINANCE_ALPHA && type == GL_SHORT &&
              littleEndian && !swapBytes;
