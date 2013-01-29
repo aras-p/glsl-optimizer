@@ -306,35 +306,35 @@ lp_depth_type(const struct util_format_description *format_desc,
               unsigned length)
 {
    struct lp_type type;
-   unsigned swizzle;
+   unsigned z_swizzle;
 
    assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS);
    assert(format_desc->block.width == 1);
    assert(format_desc->block.height == 1);
 
-   swizzle = format_desc->swizzle[0];
-   assert(swizzle < 4);
-
    memset(&type, 0, sizeof type);
    type.width = format_desc->block.bits;
 
-   if(format_desc->channel[swizzle].type == UTIL_FORMAT_TYPE_FLOAT) {
-      type.floating = TRUE;
-      assert(swizzle == 0);
-      assert(format_desc->channel[swizzle].size == format_desc->block.bits);
-   }
-   else if(format_desc->channel[swizzle].type == UTIL_FORMAT_TYPE_UNSIGNED) {
-      assert(format_desc->block.bits <= 32);
-      assert(format_desc->channel[swizzle].normalized);
-      if (format_desc->channel[swizzle].size < format_desc->block.bits) {
-         /* Prefer signed integers when possible, as SSE has less support
-          * for unsigned comparison;
-          */
-         type.sign = TRUE;
+   z_swizzle = format_desc->swizzle[0];
+   if (z_swizzle < 4) {
+      if (format_desc->channel[z_swizzle].type == UTIL_FORMAT_TYPE_FLOAT) {
+         type.floating = TRUE;
+         assert(z_swizzle == 0);
+         assert(format_desc->channel[z_swizzle].size == format_desc->block.bits);
       }
+      else if(format_desc->channel[z_swizzle].type == UTIL_FORMAT_TYPE_UNSIGNED) {
+         assert(format_desc->block.bits <= 32);
+         assert(format_desc->channel[z_swizzle].normalized);
+         if (format_desc->channel[z_swizzle].size < format_desc->block.bits) {
+            /* Prefer signed integers when possible, as SSE has less support
+             * for unsigned comparison;
+             */
+            type.sign = TRUE;
+         }
+      }
+      else
+         assert(0);
    }
-   else
-      assert(0);
 
    type.length = length;
 
@@ -604,24 +604,29 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
       assert(format_desc->block.height == 1);
 
       if (stencil[0].enabled) {
-         assert(format_desc->format == PIPE_FORMAT_Z24_UNORM_S8_UINT ||
-                format_desc->format == PIPE_FORMAT_S8_UINT_Z24_UNORM);
+         assert(s_swizzle < 4);
+         assert(format_desc->channel[s_swizzle].type == UTIL_FORMAT_TYPE_UNSIGNED);
+         assert(format_desc->channel[s_swizzle].pure_integer);
+         assert(!format_desc->channel[s_swizzle].normalized);
+         assert(format_desc->channel[s_swizzle].size == 8);
       }
 
-      assert(z_swizzle < 4);
-      assert(format_desc->block.bits <= z_type.width);
-      if (z_type.floating) {
-         assert(z_swizzle == 0);
-         assert(format_desc->channel[z_swizzle].type ==
-                UTIL_FORMAT_TYPE_FLOAT);
-         assert(format_desc->channel[z_swizzle].size ==
-                format_desc->block.bits);
-      }
-      else {
-         assert(format_desc->channel[z_swizzle].type ==
-                UTIL_FORMAT_TYPE_UNSIGNED);
-         assert(format_desc->channel[z_swizzle].normalized);
-         assert(!z_type.fixed);
+      if (depth->enabled) {
+         assert(z_swizzle < 4);
+         assert(format_desc->block.bits <= z_type.width);
+         if (z_type.floating) {
+            assert(z_swizzle == 0);
+            assert(format_desc->channel[z_swizzle].type ==
+                   UTIL_FORMAT_TYPE_FLOAT);
+            assert(format_desc->channel[z_swizzle].size ==
+                   format_desc->block.bits);
+         }
+         else {
+            assert(format_desc->channel[z_swizzle].type ==
+                   UTIL_FORMAT_TYPE_UNSIGNED);
+            assert(format_desc->channel[z_swizzle].normalized);
+            assert(!z_type.fixed);
+         }
       }
    }
 

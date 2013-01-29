@@ -356,9 +356,14 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
       if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
          return FALSE;
 
-      /* FIXME: Temporary restriction. See lp_bld_depth.c. */
+      /* TODO: Support Z32_FLOAT_S8X24_UINT. See lp_bld_depth.c. */
       if (format_desc->block.bits > 32)
          return FALSE;
+
+      /* TODO: Support stencil-only formats */
+      if (format_desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_NONE) {
+         return FALSE;
+      }
    }
 
    if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
