@@ -109,12 +109,6 @@ struct dd_function_table {
                           GLuint width, GLuint height);
 
    /**
-    * Called whenever an error is generated.  
-    * __struct gl_contextRec::ErrorValue contains the error value.
-    */
-   void (*Error)( struct gl_context *ctx );
-
-   /**
     * This is called whenever glFinish() is called.
     */
    void (*Finish)( struct gl_context *ctx );

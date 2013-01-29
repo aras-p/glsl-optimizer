@@ -75,7 +75,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->UpdateState = NULL;  /* REQUIRED! */
    driver->GetBufferSize = NULL;  /* REQUIRED! */
    driver->ResizeBuffers = _mesa_resize_framebuffer;
-   driver->Error = NULL;
 
    driver->Finish = NULL;
    driver->Flush = NULL;

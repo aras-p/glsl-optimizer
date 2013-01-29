@@ -1663,11 +1663,6 @@ _mesa_record_error(struct gl_context *ctx, GLenum error)
    if (ctx->ErrorValue == GL_NO_ERROR) {
       ctx->ErrorValue = error;
    }
-
-   /* Call device driver's error handler, if any.  This is used on the Mac. */
-   if (ctx->Driver.Error) {
-      ctx->Driver.Error(ctx);
-   }
 }
 
 
