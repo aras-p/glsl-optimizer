@@ -3481,7 +3481,7 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 	unsigned array_mode, lbpp, pitch_tile_max, slice_tile_max, size;
 	unsigned ncopy, height, cheight, detile, i, x, y, z, src_mode, dst_mode;
 	unsigned sub_cmd, bank_h, bank_w, mt_aspect, nbanks, tile_split;
-	unsigned long base, addr;
+	uint64_t base, addr;
 
 	/* make sure that the dma ring is only one active */
 	rctx->rings.gfx.flush(rctx, RADEON_FLUSH_ASYNC);
@@ -3625,7 +3625,7 @@ boolean evergreen_dma_blit(struct pipe_context *ctx,
 	}
 
 	if (src_mode == dst_mode) {
-		unsigned long dst_offset, src_offset;
+		uint64_t dst_offset, src_offset;
 		/* simple dma blit would do NOTE code here assume :
 		 *   src_box.x/y == 0
 		 *   dst_x/y == 0

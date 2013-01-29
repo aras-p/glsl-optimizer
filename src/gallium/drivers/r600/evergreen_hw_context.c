@@ -243,9 +243,9 @@ void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_en
 void evergreen_dma_copy(struct r600_context *rctx,
 		struct pipe_resource *dst,
 		struct pipe_resource *src,
-		unsigned long dst_offset,
-		unsigned long src_offset,
-		unsigned long size)
+		uint64_t dst_offset,
+		uint64_t src_offset,
+		uint64_t size)
 {
 	struct radeon_winsys_cs *cs = rctx->rings.dma.cs;
 	unsigned i, ncopy, csize, sub_cmd, shift;

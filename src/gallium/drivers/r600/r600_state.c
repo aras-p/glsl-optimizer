@@ -2979,7 +2979,7 @@ static boolean r600_dma_copy_tile(struct r600_context *rctx,
 	struct r600_texture *rdst = (struct r600_texture*)dst;
 	unsigned array_mode, lbpp, pitch_tile_max, slice_tile_max, size;
 	unsigned ncopy, height, cheight, detile, i, x, y, z, src_mode, dst_mode;
-	unsigned long base, addr;
+	uint64_t base, addr;
 
 	/* make sure that the dma ring is only one active */
 	rctx->rings.gfx.flush(rctx, RADEON_FLUSH_ASYNC);
@@ -3109,7 +3109,7 @@ boolean r600_dma_blit(struct pipe_context *ctx,
 	}
 
 	if (src_mode == dst_mode) {
-		unsigned long dst_offset, src_offset, size;
+		uint64_t dst_offset, src_offset, size;
 
 		/* simple dma blit would do NOTE code here assume :
 		 *   src_box.x/y == 0

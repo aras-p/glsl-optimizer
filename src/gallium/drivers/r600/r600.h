@@ -174,9 +174,9 @@ void r600_need_dma_space(struct r600_context *ctx, unsigned num_dw);
 void r600_dma_copy(struct r600_context *rctx,
 		struct pipe_resource *dst,
 		struct pipe_resource *src,
-		unsigned long dst_offset,
-		unsigned long src_offset,
-		unsigned long size);
+		uint64_t dst_offset,
+		uint64_t src_offset,
+		uint64_t size);
 boolean r600_dma_blit(struct pipe_context *ctx,
 			struct pipe_resource *dst,
 			unsigned dst_level,
@@ -187,9 +187,9 @@ boolean r600_dma_blit(struct pipe_context *ctx,
 void evergreen_dma_copy(struct r600_context *rctx,
 		struct pipe_resource *dst,
 		struct pipe_resource *src,
-		unsigned long dst_offset,
-		unsigned long src_offset,
-		unsigned long size);
+		uint64_t dst_offset,
+		uint64_t src_offset,
+		uint64_t size);
 boolean evergreen_dma_blit(struct pipe_context *ctx,
 			struct pipe_resource *dst,
 			unsigned dst_level,
