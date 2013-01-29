@@ -234,7 +234,8 @@ trace_dump_trace_close(void)
    }
 }
 
-boolean trace_dump_trace_begin()
+boolean
+trace_dump_trace_begin(void)
 {
    const char *filename;
 
