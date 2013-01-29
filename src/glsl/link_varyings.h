@@ -48,7 +48,7 @@ class ir_variable;
 class tfeedback_decl
 {
 public:
-   bool init(struct gl_context *ctx, struct gl_shader_program *prog,
+   void init(struct gl_context *ctx, struct gl_shader_program *prog,
              const void *mem_ctx, const char *input);
    static bool is_same(const tfeedback_decl &x, const tfeedback_decl &y);
    bool assign_location(struct gl_context *ctx, struct gl_shader_program *prog,

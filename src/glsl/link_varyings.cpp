@@ -35,6 +35,7 @@
 #include "linker.h"
 #include "link_varyings.h"
 #include "main/macros.h"
+#include "program.h"
 
 
 /**
@@ -154,10 +155,13 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 
 /**
  * Initialize this object based on a string that was passed to
- * glTransformFeedbackVaryings.  If there is a parse error, the error is
- * reported using linker_error(), and false is returned.
+ * glTransformFeedbackVaryings.
+ *
+ * If the input is mal-formed, this call still succeeds, but it sets
+ * this->var_name to a mal-formed input, so tfeedback_decl::find_output_var()
+ * will fail to find any matching variable.
  */
-bool
+void
 tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
                      const void *mem_ctx, const char *input)
 {
@@ -175,7 +179,7 @@ tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
       /* Parse gl_NextBuffer. */
       if (strcmp(input, "gl_NextBuffer") == 0) {
          this->next_buffer_separator = true;
-         return true;
+         return;
       }
 
       /* Parse gl_SkipComponents. */
@@ -189,21 +193,17 @@ tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
          this->skip_components = 4;
 
       if (this->skip_components)
-         return true;
+         return;
    }
 
    /* Parse a declaration. */
-   const char *bracket = strrchr(input, '[');
-
-   if (bracket) {
-      this->var_name = ralloc_strndup(mem_ctx, input, bracket - input);
-      if (sscanf(bracket, "[%u]", &this->array_subscript) != 1) {
-         linker_error(prog, "Cannot parse transform feedback varying %s", input);
-         return false;
-      }
+   const char *base_name_end;
+   long subscript = parse_program_resource_name(input, &base_name_end);
+   this->var_name = ralloc_strndup(mem_ctx, input, base_name_end - input);
+   if (subscript >= 0) {
+      this->array_subscript = subscript;
       this->is_subscripted = true;
    } else {
-      this->var_name = ralloc_strdup(mem_ctx, input);
       this->is_subscripted = false;
    }
 
@@ -215,8 +215,6 @@ tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
        strcmp(this->var_name, "gl_ClipDistance") == 0) {
       this->is_clip_distance_mesa = true;
    }
-
-   return true;
 }
 
 
@@ -449,8 +447,7 @@ parse_tfeedback_decls(struct gl_context *ctx, struct gl_shader_program *prog,
                       char **varying_names, tfeedback_decl *decls)
 {
    for (unsigned i = 0; i < num_names; ++i) {
-      if (!decls[i].init(ctx, prog, mem_ctx, varying_names[i]))
-         return false;
+      decls[i].init(ctx, prog, mem_ctx, varying_names[i]);
 
       if (!decls[i].is_varying())
          continue;
