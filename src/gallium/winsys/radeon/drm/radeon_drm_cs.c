@@ -383,6 +383,16 @@ static boolean radeon_drm_cs_validate(struct radeon_winsys_cs *rcs)
     return status;
 }
 
+static boolean radeon_drm_cs_memory_below_limit(struct radeon_winsys_cs *rcs, uint64_t vram, uint64_t gtt)
+{
+    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
+    boolean status =
+        (cs->csc->used_gart + gtt) < cs->ws->info.gart_size * 0.7 &&
+        (cs->csc->used_vram + vram) < cs->ws->info.vram_size * 0.7;
+
+    return status;
+}
+
 static void radeon_drm_cs_write_reloc(struct radeon_winsys_cs *rcs,
                                       struct radeon_winsys_cs_handle *buf)
 {
@@ -575,6 +585,7 @@ void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws)
     ws->base.cs_destroy = radeon_drm_cs_destroy;
     ws->base.cs_add_reloc = radeon_drm_cs_add_reloc;
     ws->base.cs_validate = radeon_drm_cs_validate;
+    ws->base.cs_memory_below_limit = radeon_drm_cs_memory_below_limit;
     ws->base.cs_write_reloc = radeon_drm_cs_write_reloc;
     ws->base.cs_flush = radeon_drm_cs_flush;
     ws->base.cs_set_flush_callback = radeon_drm_cs_set_flush;

@@ -1668,6 +1668,8 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		surf = (struct r600_surface*)state->cbufs[i];
 		rtex = (struct r600_texture*)surf->base.texture;
 
+		r600_context_add_resource_size(ctx, state->cbufs[i]->texture);
+
 		if (!surf->color_initialized) {
 			evergreen_init_color_surface(rctx, surf);
 		}
@@ -1698,6 +1700,8 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	/* ZS buffer. */
 	if (state->zsbuf) {
 		surf = (struct r600_surface*)state->zsbuf;
+
+		r600_context_add_resource_size(ctx, state->zsbuf->texture);
 
 		if (!surf->depth_initialized) {
 			evergreen_init_depth_surface(rctx, surf);

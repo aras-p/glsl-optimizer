@@ -393,6 +393,16 @@ struct radeon_winsys {
     boolean (*cs_validate)(struct radeon_winsys_cs *cs);
 
     /**
+     * Return TRUE if there is enough memory in VRAM and GTT for the relocs
+     * added so far.
+     *
+     * \param cs        A command stream to validate.
+     * \param vram      VRAM memory size pending to be use
+     * \param gtt       GTT memory size pending to be use
+     */
+    boolean (*cs_memory_below_limit)(struct radeon_winsys_cs *cs, uint64_t vram, uint64_t gtt);
+
+    /**
      * Write a relocated dword to a command buffer.
      *
      * \param cs        A command stream the relocation is written to.

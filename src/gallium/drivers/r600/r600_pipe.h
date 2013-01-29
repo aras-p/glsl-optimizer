@@ -447,6 +447,10 @@ struct r600_context {
 	unsigned			backend_mask;
 	unsigned			max_db; /* for OQ */
 
+	/* current unaccounted memory usage */
+	uint64_t			vram;
+	uint64_t			gtt;
+
 	/* Miscellaneous state objects. */
 	void				*custom_dsa_flush;
 	void				*custom_blend_resolve;
@@ -995,6 +999,30 @@ static INLINE unsigned u_max_layer(struct pipe_resource *r, unsigned level)
 		return r->array_size - 1;
 	default:
 		return 0;
+	}
+}
+
+static INLINE void r600_context_add_resource_size(struct pipe_context *ctx, struct pipe_resource *r)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_resource *rr = (struct r600_resource *)r;
+
+	if (r == NULL) {
+		return;
+	}
+
+	/*
+	 * The idea is to compute a gross estimate of memory requirement of
+	 * each draw call. After each draw call, memory will be precisely
+	 * accounted. So the uncertainty is only on the current draw call.
+	 * In practice this gave very good estimate (+/- 10% of the target
+	 * memory limit).
+	 */
+	if (rr->domains & RADEON_DOMAIN_GTT) {
+		rctx->gtt += rr->buf->size;
+	}
+	if (rr->domains & RADEON_DOMAIN_VRAM) {
+		rctx->vram += rr->buf->size;
 	}
 }
 
