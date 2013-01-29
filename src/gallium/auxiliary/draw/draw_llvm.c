@@ -1378,7 +1378,8 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
    key->clip_halfz = !llvm->draw->rasterizer->gl_rasterization_rules;
    key->need_edgeflags = (llvm->draw->vs.edgeflag_output ? TRUE : FALSE);
    key->ucp_enable = llvm->draw->rasterizer->clip_plane_enable;
-   key->pad = 0;
+   key->pad1 = 0;
+   key->pad2 = 0;
 
    /* All variants of this shader will have the same value for
     * nr_samplers.  Not yet trying to compact away holes in the

@@ -206,8 +206,13 @@ struct draw_llvm_variant_key
    unsigned clip_halfz:1;
    unsigned bypass_viewport:1;
    unsigned need_edgeflags:1;
+   /*
+    * it is important there are no holes in this struct
+    * (and all padding gets zeroed).
+    */
+   unsigned pad1:1;
    unsigned ucp_enable:PIPE_MAX_CLIP_PLANES;
-   unsigned pad:33-PIPE_MAX_CLIP_PLANES;
+   unsigned pad2:32-PIPE_MAX_CLIP_PLANES;
 
    /* Variable number of vertex elements:
     */
