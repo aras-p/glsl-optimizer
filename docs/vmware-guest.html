@@ -29,6 +29,7 @@ MacOS are all supported.
 <p>
 End users shouldn't have to go through all these steps once the driver is
 included in newer Linux distributions.
+Fedora 18 and Ubuntu 12.10 include the VMware guest GL driver, for example.
 </p>
 
 <p>
@@ -162,6 +163,22 @@ Then
   sudo cp 00-vmwgfx.rules /etc/udev/rules.d
   sudo depmod -ae
   </pre>
+
+Note: some distros put DRM kernel drivers in different directories.
+For example, sometimes vmwgfx.ko might be found in
+<code>/lib/modules/{version}/extra/vmwgfx.ko</code> or in
+<code>/lib/modules/{version}/kernel/drivers/gpu/drm/vmwgfx/vmwgfx.ko</code>.
+<p>
+After installing vmwgfx.ko you might want to run the following command to
+check that the new kernel module is in the expected place:
+<pre>
+  find /lib/modules -name vmwgfx.ko -exec ls -l '{}' \;
+</pre>
+If you see the kernel module listed in more than one place, you may need to
+move things around.
+<p>
+Finally, if you update your kernel you'll probably have to rebuild and
+reinstall the vmwgfx.ko module again.
 </ul>
 
 
