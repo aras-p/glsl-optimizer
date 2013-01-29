@@ -244,9 +244,17 @@ boolean trace_dump_trace_begin()
 
    if(!stream) {
 
-      stream = fopen(filename, "wt");
-      if(!stream)
-         return FALSE;
+      if (strcmp(filename, "stderr") == 0) {
+         stream = stderr;
+      }
+      else if (strcmp(filename, "stdout") == 0) {
+         stream = stdout;
+      }
+      else {
+         stream = fopen(filename, "wt");
+         if (!stream)
+            return FALSE;
+      }
 
       trace_dump_writes("<?xml version='1.0' encoding='UTF-8'?>\n");
       trace_dump_writes("<?xml-stylesheet type='text/xsl' href='trace.xsl'?>\n");
