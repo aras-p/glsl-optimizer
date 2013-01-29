@@ -2463,6 +2463,8 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->virtual_grf_end = NULL;
    this->live_intervals_valid = false;
 
+   this->params_remap = NULL;
+
    this->force_uncompressed_stack = 0;
    this->force_sechalf_stack = 0;
 
