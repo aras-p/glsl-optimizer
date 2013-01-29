@@ -184,10 +184,19 @@ formats_match(GLbitfield buffer_bit, struct intel_renderbuffer *src_irb,
    gl_format src_format = find_miptree(buffer_bit, src_irb)->format;
    gl_format dst_format = find_miptree(buffer_bit, dst_irb)->format;
 
-   return _mesa_get_srgb_format_linear(src_format) ==
-          _mesa_get_srgb_format_linear(dst_format);
-}
+   gl_format linear_src_format = _mesa_get_srgb_format_linear(src_format);
+   gl_format linear_dst_format = _mesa_get_srgb_format_linear(dst_format);
 
+   /* Normally, we require the formats to be equal.  However, we also support
+    * blitting from ARGB to XRGB (discarding alpha), and from XRGB to ARGB
+    * (overriding alpha to 1.0 via blending).
+    */
+   return linear_src_format == linear_dst_format ||
+          (linear_src_format == MESA_FORMAT_XRGB8888 &&
+           linear_dst_format == MESA_FORMAT_ARGB8888) ||
+          (linear_src_format == MESA_FORMAT_ARGB8888 &&
+           linear_dst_format == MESA_FORMAT_XRGB8888);
+}
 
 static bool
 try_blorp_blit(struct intel_context *intel,
@@ -1730,17 +1739,6 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    src.set(brw, src_mt, src_level, src_layer);
    dst.set(brw, dst_mt, dst_level, dst_layer);
 
-   /* If we are blitting from sRGB to linear or vice versa, we still want the
-    * blit to be a direct copy, so we need source and destination to use the
-    * same format.  However, we want the destination sRGB/linear state to be
-    * correct (so that sRGB blending is used when doing an MSAA resolve to an
-    * sRGB surface, and linear blending is used when doing an MSAA resolve to
-    * a linear surface).  Since blorp blits don't support any format
-    * conversion (except between sRGB and linear), we can accomplish this by
-    * simply setting up the source to use the same format as the destination.
-    */
-   assert(_mesa_get_srgb_format_linear(src_mt->format) ==
-          _mesa_get_srgb_format_linear(dst_mt->format));
    src.brw_surfaceformat = dst.brw_surfaceformat;
 
    use_wm_prog = true;
