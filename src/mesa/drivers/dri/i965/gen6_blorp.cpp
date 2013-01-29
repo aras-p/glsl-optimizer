@@ -283,6 +283,25 @@ gen6_blorp_emit_blend_state(struct brw_context *brw,
    blend->blend1.write_disable_b = false;
    blend->blend1.write_disable_a = false;
 
+   /* When blitting from an XRGB source to a ARGB destination, we need to
+    * interpret the missing channel as 1.0.  Blending can do that for us:
+    * we simply use the RGB values from the fragment shader ("source RGB"),
+    * but smash the alpha channel to 1.
+    */
+   if (_mesa_get_format_bits(params->dst.mt->format, GL_ALPHA_BITS) > 0 &&
+       _mesa_get_format_bits(params->src.mt->format, GL_ALPHA_BITS) == 0) {
+      blend->blend0.blend_enable = 1;
+      blend->blend0.ia_blend_enable = 1;
+
+      blend->blend0.blend_func = BRW_BLENDFUNCTION_ADD;
+      blend->blend0.ia_blend_func = BRW_BLENDFUNCTION_ADD;
+
+      blend->blend0.source_blend_factor = BRW_BLENDFACTOR_SRC_COLOR;
+      blend->blend0.dest_blend_factor = BRW_BLENDFACTOR_ZERO;
+      blend->blend0.ia_source_blend_factor = BRW_BLENDFACTOR_ONE;
+      blend->blend0.ia_dest_blend_factor = BRW_BLENDFACTOR_ZERO;
+   }
+
    return cc_blend_state_offset;
 }
 
