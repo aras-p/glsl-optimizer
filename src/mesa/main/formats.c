@@ -2649,7 +2649,7 @@ _mesa_format_to_type_and_comps(gl_format format,
 }
 
 /**
- * Check if a gl_format exactly matches a GL formaat/type combination
+ * Check if a gl_format exactly matches a GL format/type combination
  * such that we can use memcpy() from one to the other.
  * \param gl_format  a MESA_FORMAT_x value
  * \param format  the user-specified image format
