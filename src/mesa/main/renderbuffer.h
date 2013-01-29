@@ -29,6 +29,10 @@
 #include "glheader.h"
 #include "mtypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct gl_context;
 struct gl_framebuffer;
 struct gl_renderbuffer;
@@ -62,6 +66,8 @@ _mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
       _mesa_reference_renderbuffer_(ptr, rb);
 }
       
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RENDERBUFFER_H */
