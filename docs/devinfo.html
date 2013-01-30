@@ -217,7 +217,7 @@ Update <a href="index.html">docs/index.html</a>.
 
 <p>
 Tag the files with the release name (in the form <b>mesa-x.y</b>)
-with: <code>git tag -a mesa-x.y</code>
+with: <code>git tag -s mesa-x.y -m "Mesa x.y Release"</code>
 Then: <code>git push origin mesa-x.y</code>
 </p>
 
@@ -226,6 +226,7 @@ Then: <code>git push origin mesa-x.y</code>
 <p>
 Make the distribution files.  From inside the Mesa directory:
 <pre>
+	./autogen.sh
 	make tarballs
 </pre>
 
@@ -242,15 +243,18 @@ compile everything, and run some demos to be sure everything works.
 
 <h3>Update the website and announce the release</h3>
 <p>
-Follow the directions on SourceForge for creating a new "release" and
-uploading the tarballs.
+Make a new directory for the release on annarchy.freedesktop.org with:
+<br>
+<code>
+mkdir /srv/ftp.freedesktop.org/pub/mesa/x.y
+</code>
 </p>
 
 <p>
 Basically, to upload the tarball files with:
 <br>
 <code>
-rsync -avP ssh Mesa*-X.Y.* USERNAME@frs.sourceforge.net:uploads/
+rsync -avP -e ssh MesaLib-x.y.* USERNAME@annarchy.freedesktop.org:/srv/ftp.freedesktop.org/pub/mesa/x.y/
 </code>
 </p>
 
