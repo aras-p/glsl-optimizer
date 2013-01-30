@@ -1485,18 +1485,8 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
          else if (ctx->Extensions.ARB_depth_buffer_float &&
              type == GL_FLOAT_32_UNSIGNED_INT_24_8_REV)
             return GL_NO_ERROR;
-         switch (type) {
-         case GL_BYTE:
-         case GL_UNSIGNED_BYTE:
-         case GL_SHORT:
-         case GL_UNSIGNED_SHORT:
-         case GL_INT:
-         case GL_UNSIGNED_INT:
-         case GL_FLOAT:
-            return GL_INVALID_OPERATION;
-         default:
+         else
             return GL_INVALID_ENUM;
-         }
 
       case GL_DUDV_ATI:
       case GL_DU8DV8_ATI:
