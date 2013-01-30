@@ -45,6 +45,7 @@
 
 #include "pipe/p_compiler.h"
 #include "os/os_thread.h"
+#include "os/os_time.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
@@ -234,6 +235,20 @@ trace_dump_trace_close(void)
    }
 }
 
+
+static void
+trace_dump_call_time(int64_t time)
+{
+   if (stream) {
+      trace_dump_indent(2);
+      trace_dump_tag_begin("time");
+      trace_dump_int(time);
+      trace_dump_tag_end("time");
+      trace_dump_newline();
+   }
+}
+
+
 boolean
 trace_dump_trace_begin(void)
 {
@@ -345,6 +360,8 @@ boolean trace_dumping_enabled(void)
  * Dump functions
  */
 
+static int64_t call_start_time = 0;
+
 void trace_dump_call_begin_locked(const char *klass, const char *method)
 {
    if (!dumping)
@@ -360,13 +377,20 @@ void trace_dump_call_begin_locked(const char *klass, const char *method)
    trace_dump_escape(method);
    trace_dump_writes("\'>");
    trace_dump_newline();
+
+   call_start_time = os_time_get();
 }
 
 void trace_dump_call_end_locked(void)
 {
+   int64_t call_end_time;
+
    if (!dumping)
       return;
 
+   call_end_time = os_time_get();
+
+   trace_dump_call_time(call_end_time - call_start_time);
    trace_dump_indent(1);
    trace_dump_tag_end("call");
    trace_dump_newline();

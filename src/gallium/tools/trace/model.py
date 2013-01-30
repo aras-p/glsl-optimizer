@@ -101,12 +101,13 @@ class Pointer(Node):
 
 class Call:
     
-    def __init__(self, no, klass, method, args, ret):
+    def __init__(self, no, klass, method, args, ret, time):
         self.no = no
         self.klass = klass
         self.method = method
         self.args = args
         self.ret = ret
+        self.time = time
         
     def visit(self, visitor):
         visitor.visit_call(self)
@@ -210,7 +211,9 @@ class PrettyPrinter:
         if node.ret is not None:
             self.formatter.text(' = ')
             node.ret.visit(self)
-    
+        self.formatter.text(' // time ')
+        node.time.visit(self)
+
     def visit_trace(self, node):
         for call in node.calls:
             call.visit(self)

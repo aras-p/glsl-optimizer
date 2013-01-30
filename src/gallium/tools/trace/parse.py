@@ -215,6 +215,7 @@ class TraceParser(XmlParser):
         method = attrs['method']
         args = []
         ret = None
+        time = 0
         while self.token.type == ELEMENT_START:
             if self.token.name_or_data == 'arg':
                 arg = self.parse_arg()
@@ -224,11 +225,13 @@ class TraceParser(XmlParser):
             elif self.token.name_or_data == 'call':
                 # ignore nested function calls
                 self.parse_call()
+            elif self.token.name_or_data == 'time':
+                time = self.parse_time()
             else:
                 raise TokenMismatch("<arg ...> or <ret ...>", self.token)
         self.element_end('call')
         
-        return Call(no, klass, method, args, ret)
+        return Call(no, klass, method, args, ret, time)
 
     def parse_arg(self):
         attrs = self.element_start('arg')
@@ -244,6 +247,12 @@ class TraceParser(XmlParser):
         self.element_end('ret')
 
         return value
+
+    def parse_time(self):
+        attrs = self.element_start('time')
+        time = self.parse_value();
+        self.element_end('time')
+        return time
 
     def parse_value(self):
         expected_tokens = ('null', 'bool', 'int', 'uint', 'float', 'string', 'enum', 'array', 'struct', 'ptr', 'bytes')
