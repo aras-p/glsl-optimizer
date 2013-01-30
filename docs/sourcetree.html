@@ -31,16 +31,17 @@ each directory.
     <ul>
     <li><b>docs</b> - EGL documentation
     <li><b>drivers</b> - EGL drivers
-    <li><b>glsl</b> - the GLSL compiler
     <li><b>main</b> - main EGL library implementation.  This is where all
         the EGL API functions are implemented, like eglCreateContext().
     </ul>
-  <li><b>mesa</b> - Main Mesa sources
-    <ul>
+  <li><b>glsl</b> - the GLSL compiler
+  <li><b>mapi</b> - Mesa APIs
     <li><b>glapi</b> - OpenGL API dispatch layer.  This is where all the
         GL entrypoints like glClear, glBegin, etc. are generated, as well as
         the GL dispatch table.  All GL function calls jump through the
         dispatch table to functions found in main/.
+  <li><b>mesa</b> - Main Mesa sources
+    <ul>
     <li><b>main</b> - The core Mesa code (mainly state management)
     <li><b>drivers</b> - Mesa drivers (not used with Gallium)
         <ul>
@@ -56,15 +57,12 @@ each directory.
            </ul>
         <li><b>x11</b> - Xlib-based software driver
         <li><b>osmesa</b> - off-screen software driver
-	<li><b>glslcompiler</b> - a stand-alone GLSL compiler driver
         <li>XXX more
         </ul>
     <li><b>es</b> - OpenGL ES overlay, parallelly buildable with the core Mesa
     <li><b>math</b> - vertex array translation and transformation code
         (not used with Gallium)
-    <li><b>ppc</b> - Assembly code/optimizations for PPC systems
-        (not used with Gallium)
-    <li><b>shader</b> - Vertex/fragment shader and GLSL compiler code
+    <li><b>program</b> - Vertex/fragment shader and GLSL compiler code
     <li><b>sparc</b> - Assembly code/optimizations for SPARC systems
         (not used with Gallium)
     <li><b>state_tracker</b> - State tracker / driver for Gallium.  This
