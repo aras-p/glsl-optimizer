@@ -893,7 +893,7 @@ const struct function gl_core_functions_possible[] = {
 // { "glGetProgramResourceLocation", 43, -1 },          // XXX: Add to xml
 // { "glGetProgramResourceLocationIndex", 43, -1 },     // XXX: Add to xml
 // { "glShaderStorageBlockBinding", 43, -1 },           // XXX: Add to xml
-// { "glTexBufferRange", 43, -1 },                      // XXX: Add to xml
+   { "glTexBufferRange", 43, -1 },
 // { "glTextureBufferRangeEXT", 43, -1 },               // XXX: Add to xml
 // { "glTexStorage2DMultisample", 43, -1 },             // XXX: Add to xml
 // { "glTexStorage3DMultisample", 43, -1 },             // XXX: Add to xml
