@@ -415,6 +415,10 @@ svga_texture_create(struct pipe_screen *screen,
       tex->key.numFaces = 1;
    }
 
+   if (template->target == PIPE_TEXTURE_3D) {
+      tex->key.flags |= SVGA3D_SURFACE_HINT_VOLUME;
+   }
+
    tex->key.cachable = 1;
 
    if (template->bind & PIPE_BIND_SAMPLER_VIEW)

@@ -1147,6 +1147,7 @@ typedef enum {
    SVGA3D_SURFACE_HINT_WRITEONLY       = (1 << 8),
    SVGA3D_SURFACE_MASKABLE_ANTIALIAS   = (1 << 9),
    SVGA3D_SURFACE_AUTOGENMIPMAPS       = (1 << 10),
+   SVGA3D_SURFACE_HINT_VOLUME          = (1 << 15),
 } SVGA3dSurfaceFlags;
 
 typedef
