@@ -1287,11 +1287,12 @@ glsl_to_tgsi_visitor::try_emit_mad_for_and_not(ir_expression *ir, int try_operan
 bool
 glsl_to_tgsi_visitor::try_emit_sat(ir_expression *ir)
 {
-   /* Saturates were only introduced to vertex programs in
-    * NV_vertex_program3, so don't give them to drivers in the VP.
+   /* Emit saturates in the vertex shader only if SM 3.0 is supported.
     */
-   if (this->prog->Target == GL_VERTEX_PROGRAM_ARB)
+   if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
+       !st_context(this->ctx)->has_shader_model3) {
       return false;
+   }
 
    ir_rvalue *sat_src = ir->as_rvalue_to_saturate();
    if (!sat_src)
