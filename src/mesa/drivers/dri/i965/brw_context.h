@@ -907,7 +907,6 @@ struct brw_context
 
    struct {
       struct brw_vs_prog_data *prog_data;
-      int8_t *constant_map; /* variable array following prog_data */
 
       drm_intel_bo *scratch_bo;
       drm_intel_bo *const_bo;
