@@ -701,6 +701,16 @@ if test "x$enable_dri$enable_xlib_glx" = xyesyes; then
     AC_MSG_ERROR([DRI and Xlib-GLX cannot be built together])
 fi
 
+if test "x$enable_opengl$enable_xlib_glx" = xnoyes; then
+    AC_MSG_ERROR([Xlib-GLX cannot be built without OpenGL])
+fi
+
+# Disable GLX if OpenGL is not enabled
+if test "x$enable_glx$enable_opengl" = xyesno; then
+    AC_MSG_WARN([OpenGL not enabled, disabling GLX])
+    enable_glx=no
+fi
+
 # Disable GLX if DRI and Xlib-GLX are not enabled
 if test "x$enable_glx" = xyes -a \
         "x$enable_dri" = xno -a \
