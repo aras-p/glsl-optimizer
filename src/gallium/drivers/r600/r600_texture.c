@@ -270,6 +270,7 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	if (rtex->flushed_depth_texture)
 		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 
+        pipe_resource_reference((struct pipe_resource**)&rtex->htile, NULL);
 	pb_reference(&resource->buf, NULL);
 	FREE(rtex);
 }
