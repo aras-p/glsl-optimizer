@@ -207,6 +207,18 @@ const float round_values[] = {
       -10.0, -1, 0.0, 12.0,
       -1.49, -0.25, 1.25, 2.51,
       -0.99, -0.01, 0.01, 0.99,
+      1.401298464324817e-45f, // smallest denormal
+      -1.401298464324817e-45f,
+      1.62981451e-08f,
+      -1.62981451e-08f,
+      1.62981451e15f, // large number not representable as 32bit int
+      -1.62981451e15f,
+      FLT_EPSILON,
+      -FLT_EPSILON,
+      1.0f - 0.5f*FLT_EPSILON,
+      -1.0f + FLT_EPSILON,
+      FLT_MAX,
+      -FLT_MAX
 };
 
 static float fractf(float x)

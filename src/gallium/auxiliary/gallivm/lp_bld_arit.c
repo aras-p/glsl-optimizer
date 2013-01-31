@@ -1590,12 +1590,37 @@ lp_build_trunc(struct lp_build_context *bld,
       return lp_build_round_arch(bld, a, LP_BUILD_ROUND_TRUNCATE);
    }
    else {
-      LLVMTypeRef vec_type = lp_build_vec_type(bld->gallivm, type);
-      LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->gallivm, type);
-      LLVMValueRef res;
-      res = LLVMBuildFPToSI(builder, a, int_vec_type, "");
-      res = LLVMBuildSIToFP(builder, res, vec_type, "");
-      return res;
+      const struct lp_type type = bld->type;
+      struct lp_type inttype;
+      struct lp_build_context intbld;
+      LLVMValueRef cmpval = lp_build_const_vec(bld->gallivm, type, 2^24);
+      LLVMValueRef trunc, res, anosign, mask;
+      LLVMTypeRef int_vec_type = bld->int_vec_type;
+      LLVMTypeRef vec_type = bld->vec_type;
+
+      assert(type.width == 32); /* might want to handle doubles at some point */
+
+      inttype = type;
+      inttype.floating = 0;
+      lp_build_context_init(&intbld, bld->gallivm, inttype);
+
+      /* round by truncation */
+      trunc = LLVMBuildFPToSI(builder, a, int_vec_type, "");
+      res = LLVMBuildSIToFP(builder, trunc, vec_type, "floor.trunc");
+
+      /* mask out sign bit */
+      anosign = lp_build_abs(bld, a);
+      /*
+       * mask out all values if anosign > 2^24
+       * This should work both for large ints (all rounding is no-op for them
+       * because such floats are always exact) as well as special cases like
+       * NaNs, Infs (taking advantage of the fact they use max exponent).
+       * (2^24 is arbitrary anything between 2^24 and 2^31 should work.)
+       */
+      anosign = LLVMBuildBitCast(builder, anosign, int_vec_type, "");
+      cmpval = LLVMBuildBitCast(builder, cmpval, int_vec_type, "");
+      mask = lp_build_cmp(&intbld, PIPE_FUNC_GREATER, anosign, cmpval);
+      return lp_build_select(bld, mask, a, res);
    }
 }
 
@@ -1620,11 +1645,36 @@ lp_build_round(struct lp_build_context *bld,
       return lp_build_round_arch(bld, a, LP_BUILD_ROUND_NEAREST);
    }
    else {
-      LLVMTypeRef vec_type = lp_build_vec_type(bld->gallivm, type);
-      LLVMValueRef res;
+      const struct lp_type type = bld->type;
+      struct lp_type inttype;
+      struct lp_build_context intbld;
+      LLVMValueRef cmpval = lp_build_const_vec(bld->gallivm, type, 2^24);
+      LLVMValueRef res, anosign, mask;
+      LLVMTypeRef int_vec_type = bld->int_vec_type;
+      LLVMTypeRef vec_type = bld->vec_type;
+
+      assert(type.width == 32); /* might want to handle doubles at some point */
+
+      inttype = type;
+      inttype.floating = 0;
+      lp_build_context_init(&intbld, bld->gallivm, inttype);
+
       res = lp_build_iround(bld, a);
       res = LLVMBuildSIToFP(builder, res, vec_type, "");
-      return res;
+
+      /* mask out sign bit */
+      anosign = lp_build_abs(bld, a);
+      /*
+       * mask out all values if anosign > 2^24
+       * This should work both for large ints (all rounding is no-op for them
+       * because such floats are always exact) as well as special cases like
+       * NaNs, Infs (taking advantage of the fact they use max exponent).
+       * (2^24 is arbitrary anything between 2^24 and 2^31 should work.)
+       */
+      anosign = LLVMBuildBitCast(builder, anosign, int_vec_type, "");
+      cmpval = LLVMBuildBitCast(builder, cmpval, int_vec_type, "");
+      mask = lp_build_cmp(&intbld, PIPE_FUNC_GREATER, anosign, cmpval);
+      return lp_build_select(bld, mask, a, res);
    }
 }
 
@@ -1648,11 +1698,52 @@ lp_build_floor(struct lp_build_context *bld,
       return lp_build_round_arch(bld, a, LP_BUILD_ROUND_FLOOR);
    }
    else {
-      LLVMTypeRef vec_type = lp_build_vec_type(bld->gallivm, type);
-      LLVMValueRef res;
-      res = lp_build_ifloor(bld, a);
-      res = LLVMBuildSIToFP(builder, res, vec_type, "");
-      return res;
+      const struct lp_type type = bld->type;
+      struct lp_type inttype;
+      struct lp_build_context intbld;
+      LLVMValueRef cmpval = lp_build_const_vec(bld->gallivm, type, 2^24);
+      LLVMValueRef trunc, res, anosign, mask;
+      LLVMTypeRef int_vec_type = bld->int_vec_type;
+      LLVMTypeRef vec_type = bld->vec_type;
+
+      assert(type.width == 32); /* might want to handle doubles at some point */
+
+      inttype = type;
+      inttype.floating = 0;
+      lp_build_context_init(&intbld, bld->gallivm, inttype);
+
+      /* round by truncation */
+      trunc = LLVMBuildFPToSI(builder, a, int_vec_type, "");
+      res = LLVMBuildSIToFP(builder, trunc, vec_type, "floor.trunc");
+
+      if (type.sign) {
+         LLVMValueRef tmp;
+
+         /*
+          * fix values if rounding is wrong (for non-special cases)
+          * - this is the case if trunc > a
+          */
+         mask = lp_build_cmp(bld, PIPE_FUNC_GREATER, res, a);
+         /* tmp = trunc > a ? 1.0 : 0.0 */
+         tmp = LLVMBuildBitCast(builder, bld->one, int_vec_type, "");
+         tmp = lp_build_and(&intbld, mask, tmp);
+         tmp = LLVMBuildBitCast(builder, tmp, vec_type, "");
+         res = lp_build_sub(bld, res, tmp);
+      }
+
+      /* mask out sign bit */
+      anosign = lp_build_abs(bld, a);
+      /*
+       * mask out all values if anosign > 2^24
+       * This should work both for large ints (all rounding is no-op for them
+       * because such floats are always exact) as well as special cases like
+       * NaNs, Infs (taking advantage of the fact they use max exponent).
+       * (2^24 is arbitrary anything between 2^24 and 2^31 should work.)
+       */
+      anosign = LLVMBuildBitCast(builder, anosign, int_vec_type, "");
+      cmpval = LLVMBuildBitCast(builder, cmpval, int_vec_type, "");
+      mask = lp_build_cmp(&intbld, PIPE_FUNC_GREATER, anosign, cmpval);
+      return lp_build_select(bld, mask, a, res);
    }
 }
 
@@ -1676,11 +1767,48 @@ lp_build_ceil(struct lp_build_context *bld,
       return lp_build_round_arch(bld, a, LP_BUILD_ROUND_CEIL);
    }
    else {
-      LLVMTypeRef vec_type = lp_build_vec_type(bld->gallivm, type);
-      LLVMValueRef res;
-      res = lp_build_iceil(bld, a);
-      res = LLVMBuildSIToFP(builder, res, vec_type, "");
-      return res;
+      const struct lp_type type = bld->type;
+      struct lp_type inttype;
+      struct lp_build_context intbld;
+      LLVMValueRef cmpval = lp_build_const_vec(bld->gallivm, type, 2^24);
+      LLVMValueRef trunc, res, anosign, mask, tmp;
+      LLVMTypeRef int_vec_type = bld->int_vec_type;
+      LLVMTypeRef vec_type = bld->vec_type;
+
+      assert(type.width == 32); /* might want to handle doubles at some point */
+
+      inttype = type;
+      inttype.floating = 0;
+      lp_build_context_init(&intbld, bld->gallivm, inttype);
+
+      /* round by truncation */
+      trunc = LLVMBuildFPToSI(builder, a, int_vec_type, "");
+      trunc = LLVMBuildSIToFP(builder, trunc, vec_type, "ceil.trunc");
+
+      /*
+       * fix values if rounding is wrong (for non-special cases)
+       * - this is the case if trunc < a
+       */
+      mask = lp_build_cmp(bld, PIPE_FUNC_LESS, trunc, a);
+      /* tmp = trunc < a ? 1.0 : 0.0 */
+      tmp = LLVMBuildBitCast(builder, bld->one, int_vec_type, "");
+      tmp = lp_build_and(&intbld, mask, tmp);
+      tmp = LLVMBuildBitCast(builder, tmp, vec_type, "");
+      res = lp_build_add(bld, trunc, tmp);
+
+      /* mask out sign bit */
+      anosign = lp_build_abs(bld, a);
+      /*
+       * mask out all values if anosign > 2^24
+       * This should work both for large ints (all rounding is no-op for them
+       * because such floats are always exact) as well as special cases like
+       * NaNs, Infs (taking advantage of the fact they use max exponent).
+       * (2^24 is arbitrary anything between 2^24 and 2^31 should work.)
+       */
+      anosign = LLVMBuildBitCast(builder, anosign, int_vec_type, "");
+      cmpval = LLVMBuildBitCast(builder, cmpval, int_vec_type, "");
+      mask = lp_build_cmp(&intbld, PIPE_FUNC_GREATER, anosign, cmpval);
+      return lp_build_select(bld, mask, a, res);
    }
 }
 
@@ -1826,32 +1954,30 @@ lp_build_ifloor(struct lp_build_context *bld,
          res = lp_build_round_arch(bld, a, LP_BUILD_ROUND_FLOOR);
       }
       else {
-         /* Take the sign bit and add it to 1 constant */
-         LLVMTypeRef vec_type = bld->vec_type;
-         unsigned mantissa = lp_mantissa(type);
-         LLVMValueRef mask = lp_build_const_int_vec(bld->gallivm, type,
-                                  (unsigned long long)1 << (type.width - 1));
-         LLVMValueRef sign;
-         LLVMValueRef offset;
+         struct lp_type inttype;
+         struct lp_build_context intbld;
+         LLVMValueRef trunc, itrunc, mask;
 
-         /* sign = a < 0 ? ~0 : 0 */
-         sign = LLVMBuildBitCast(builder, a, int_vec_type, "");
-         sign = LLVMBuildAnd(builder, sign, mask, "");
-         sign = LLVMBuildAShr(builder, sign,
-                              lp_build_const_int_vec(bld->gallivm, type,
-                                                     type.width - 1),
-                              "ifloor.sign");
+         assert(type.floating);
+         assert(lp_check_value(type, a));
 
-         /* offset = -0.99999(9)f */
-         offset = lp_build_const_vec(bld->gallivm, type,
-                                     -(double)(((unsigned long long)1 << mantissa) - 10)/((unsigned long long)1 << mantissa));
-         offset = LLVMConstBitCast(offset, int_vec_type);
+         inttype = type;
+         inttype.floating = 0;
+         lp_build_context_init(&intbld, bld->gallivm, inttype);
 
-         /* offset = a < 0 ? offset : 0.0f */
-         offset = LLVMBuildAnd(builder, offset, sign, "");
-         offset = LLVMBuildBitCast(builder, offset, vec_type, "ifloor.offset");
+         /* round by truncation */
+         itrunc = LLVMBuildFPToSI(builder, a, int_vec_type, "");
+         trunc = LLVMBuildSIToFP(builder, itrunc, bld->vec_type, "ifloor.trunc");
 
-         res = LLVMBuildFAdd(builder, res, offset, "ifloor.res");
+         /*
+          * fix values if rounding is wrong (for non-special cases)
+          * - this is the case if trunc > a
+          * The results of doing this with NaNs, very large values etc.
+          * are undefined but this seems to be the case anyway.
+          */
+         mask = lp_build_cmp(bld, PIPE_FUNC_GREATER, trunc, a);
+         /* cheapie minus one with mask since the mask is minus one / zero */
+         return lp_build_add(&intbld, itrunc, mask);
       }
    }
 
@@ -1883,35 +2009,30 @@ lp_build_iceil(struct lp_build_context *bld,
       res = lp_build_round_arch(bld, a, LP_BUILD_ROUND_CEIL);
    }
    else {
-      LLVMTypeRef vec_type = bld->vec_type;
-      unsigned mantissa = lp_mantissa(type);
-      LLVMValueRef offset;
+      struct lp_type inttype;
+      struct lp_build_context intbld;
+      LLVMValueRef trunc, itrunc, mask;
 
-      /* offset = 0.99999(9)f */
-      offset = lp_build_const_vec(bld->gallivm, type,
-                                  (double)(((unsigned long long)1 << mantissa) - 10)/((unsigned long long)1 << mantissa));
+      assert(type.floating);
+      assert(lp_check_value(type, a));
 
-      if (type.sign) {
-         LLVMValueRef mask = lp_build_const_int_vec(bld->gallivm, type,
-                                (unsigned long long)1 << (type.width - 1));
-         LLVMValueRef sign;
+      inttype = type;
+      inttype.floating = 0;
+      lp_build_context_init(&intbld, bld->gallivm, inttype);
 
-         /* sign = a < 0 ? 0 : ~0 */
-         sign = LLVMBuildBitCast(builder, a, int_vec_type, "");
-         sign = LLVMBuildAnd(builder, sign, mask, "");
-         sign = LLVMBuildAShr(builder, sign,
-                              lp_build_const_int_vec(bld->gallivm, type,
-                                                     type.width - 1),
-                              "iceil.sign");
-         sign = LLVMBuildNot(builder, sign, "iceil.not");
+      /* round by truncation */
+      itrunc = LLVMBuildFPToSI(builder, a, int_vec_type, "");
+      trunc = LLVMBuildSIToFP(builder, itrunc, bld->vec_type, "iceil.trunc");
 
-         /* offset = a < 0 ? 0.0 : offset */
-         offset = LLVMConstBitCast(offset, int_vec_type);
-         offset = LLVMBuildAnd(builder, offset, sign, "");
-         offset = LLVMBuildBitCast(builder, offset, vec_type, "iceil.offset");
-      }
-
-      res = LLVMBuildFAdd(builder, a, offset, "iceil.res");
+      /*
+       * fix values if rounding is wrong (for non-special cases)
+       * - this is the case if trunc < a
+       * The results of doing this with NaNs, very large values etc.
+       * are undefined but this seems to be the case anyway.
+       */
+      mask = lp_build_cmp(bld, PIPE_FUNC_LESS, trunc, a);
+      /* cheapie plus one with mask since the mask is minus one / zero */
+      return lp_build_sub(&intbld, itrunc, mask);
    }
 
    /* round to nearest (toward zero) */
