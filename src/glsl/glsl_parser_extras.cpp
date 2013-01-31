@@ -1195,8 +1195,8 @@ ast_struct_specifier::ast_struct_specifier(const char *identifier,
  *                                    The setting of this flag only matters if
  *                                    \c linked is \c true.
  * \param max_unroll_iterations       Maximum number of loop iterations to be
- *                                    unrolled.  Setting to 0 forces all loops
- *                                    to be unrolled.
+ *                                    unrolled.  Setting to 0 disables loop
+ *                                    unrolling.
  */
 bool
 do_common_optimization(exec_list *ir, bool linked,
