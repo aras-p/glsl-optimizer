@@ -2931,32 +2931,12 @@ glsl_to_tgsi_visitor::visit(ir_discard *ir)
 void
 glsl_to_tgsi_visitor::visit(ir_if *ir)
 {
-   glsl_to_tgsi_instruction *cond_inst, *if_inst;
-   glsl_to_tgsi_instruction *prev_inst;
-
-   prev_inst = (glsl_to_tgsi_instruction *)this->instructions.get_tail();
+   glsl_to_tgsi_instruction *if_inst;
 
    ir->condition->accept(this);
    assert(this->result.file != PROGRAM_UNDEFINED);
 
-   if (this->options->EmitCondCodes) {
-      cond_inst = (glsl_to_tgsi_instruction *)this->instructions.get_tail();
-
-      /* See if we actually generated any instruction for generating
-       * the condition.  If not, then cook up a move to a temp so we
-       * have something to set cond_update on.
-       */
-      if (cond_inst == prev_inst) {
-         st_src_reg temp = get_temp(glsl_type::bool_type);
-         cond_inst = emit(ir->condition, TGSI_OPCODE_MOV, st_dst_reg(temp), result);
-      }
-      cond_inst->cond_update = GL_TRUE;
-
-      if_inst = emit(ir->condition, TGSI_OPCODE_IF);
-      if_inst->dst.cond_mask = COND_NE;
-   } else {
-      if_inst = emit(ir->condition, TGSI_OPCODE_IF, undef_dst, this->result);
-   }
+   if_inst = emit(ir->condition, TGSI_OPCODE_IF, undef_dst, this->result);
 
    this->instructions.push_tail(if_inst);
 
