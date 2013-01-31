@@ -38,7 +38,6 @@
  */
 
 #include "main/core.h" /* for struct gl_program */
-#include "program/hash_table.h"
 #include "ir.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"
@@ -50,13 +49,9 @@ public:
    {
       this->prog = prog;
       this->is_fragment_shader = is_fragment_shader;
-      this->ht = hash_table_ctor(0,
-				 hash_table_pointer_hash,
-				 hash_table_pointer_compare);
    }
    ~ir_set_program_inouts_visitor()
    {
-      hash_table_dtor(this->ht);
    }
 
    virtual ir_visitor_status visit_enter(ir_dereference_array *);
@@ -64,12 +59,18 @@ public:
    virtual ir_visitor_status visit_enter(ir_expression *);
    virtual ir_visitor_status visit_enter(ir_discard *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
-   virtual ir_visitor_status visit(ir_variable *);
 
    struct gl_program *prog;
-   struct hash_table *ht;
    bool is_fragment_shader;
 };
+
+static inline bool
+is_shader_inout(ir_variable *var)
+{
+   return var->mode == ir_var_shader_in ||
+          var->mode == ir_var_shader_out ||
+          var->mode == ir_var_system_value;
+}
 
 static void
 mark(struct gl_program *prog, ir_variable *var, int offset, int len,
@@ -97,6 +98,7 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len,
       } else if (var->mode == ir_var_system_value) {
          prog->SystemValuesRead |= bitfield;
       } else {
+         assert(var->mode == ir_var_shader_out);
 	 prog->OutputsWritten |= bitfield;
       }
    }
@@ -106,7 +108,7 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len,
 ir_visitor_status
 ir_set_program_inouts_visitor::visit(ir_dereference_variable *ir)
 {
-   if (hash_table_find(this->ht, ir->var) == NULL)
+   if (!is_shader_inout(ir->var))
       return visit_continue;
 
    if (ir->type->is_array()) {
@@ -127,13 +129,13 @@ ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
    ir_dereference_variable *deref_var;
    ir_constant *index = ir->array_index->as_constant();
    deref_var = ir->array->as_dereference_variable();
-   ir_variable *var = NULL;
+   ir_variable *var = deref_var ? deref_var->var : NULL;
 
    /* Check that we're dereferencing a shader in or out */
-   if (deref_var)
-      var = (ir_variable *)hash_table_find(this->ht, deref_var->var);
+   if (!var || !is_shader_inout(var))
+      return visit_continue;
 
-   if (index && var) {
+   if (index) {
       int width = 1;
 
       if (deref_var->type->is_array() &&
@@ -144,18 +146,6 @@ ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
       mark(this->prog, var, index->value.i[0] * width, width,
            this->is_fragment_shader);
       return visit_continue_with_parent;
-   }
-
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_set_program_inouts_visitor::visit(ir_variable *ir)
-{
-   if (ir->mode == ir_var_shader_in ||
-       ir->mode == ir_var_shader_out ||
-       ir->mode == ir_var_system_value) {
-      hash_table_insert(this->ht, ir, ir);
    }
 
    return visit_continue;
