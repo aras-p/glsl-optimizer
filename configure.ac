@@ -676,6 +676,17 @@ if test "x$enable_opengl" = xno -a \
     AC_MSG_ERROR([at least one API should be enabled])
 fi
 
+# Building OpenGL ES1 and/or ES2 without OpenGL is not supported on mesa 9.0.x
+if test "x$enable_opengl" = xno -a \
+        "x$enable_gles1" = xyes; then
+    AC_MSG_ERROR([Building OpenGL ES1 without OpenGL is not supported])
+fi
+
+if test "x$enable_opengl" = xno -a \
+        "x$enable_gles2" = xyes; then
+    AC_MSG_ERROR([Building OpenGL ES2 without OpenGL is not supported])
+fi
+
 API_DEFINES=""
 if test "x$enable_opengl" = xno; then
     API_DEFINES="$API_DEFINES -DFEATURE_GL=0"
