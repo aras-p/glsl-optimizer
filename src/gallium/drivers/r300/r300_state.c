@@ -344,9 +344,11 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     uint32_t blend_control = 0;       /* R300_RB3D_CBLEND: 0x4e04 */
     uint32_t blend_control_noclamp = 0;    /* R300_RB3D_CBLEND: 0x4e04 */
     uint32_t blend_control_noalpha = 0;    /* R300_RB3D_CBLEND: 0x4e04 */
+    uint32_t blend_control_noalpha_noclamp = 0;    /* R300_RB3D_CBLEND: 0x4e04 */
     uint32_t alpha_blend_control = 0; /* R300_RB3D_ABLEND: 0x4e08 */
     uint32_t alpha_blend_control_noclamp = 0; /* R300_RB3D_ABLEND: 0x4e08 */
     uint32_t alpha_blend_control_noalpha = 0; /* R300_RB3D_ABLEND: 0x4e08 */
+    uint32_t alpha_blend_control_noalpha_noclamp = 0; /* R300_RB3D_ABLEND: 0x4e08 */
     uint32_t rop = 0;                 /* R300_RB3D_ROPCNTL: 0x4e18 */
     uint32_t dither = 0;              /* R300_RB3D_DITHER_CTL: 0x4e50 */
     int i;
@@ -386,7 +388,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
 
     /* Get blending register values. */
     if (state->rt[0].blend_enable) {
-        unsigned blend_eq;
+        unsigned blend_eq, blend_eq_noclamp;
 
         /* despite the name, ALPHA_BLEND_ENABLE has nothing to do with alpha,
          * this is just the crappy D3D naming */
@@ -395,15 +397,18 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
             ( r300_translate_blend_factor(srcRGB) << R300_SRC_BLEND_SHIFT) |
             ( r300_translate_blend_factor(dstRGB) << R300_DST_BLEND_SHIFT);
 
-        blend_control_noalpha =
+        blend_control_noalpha = blend_control_noalpha_noclamp =
             R300_ALPHA_BLEND_ENABLE |
             ( r300_translate_blend_factor(srcRGBX) << R300_SRC_BLEND_SHIFT) |
             ( r300_translate_blend_factor(dstRGBX) << R300_DST_BLEND_SHIFT);
 
         blend_eq = r300_translate_blend_function(eqRGB, TRUE);
+        blend_eq_noclamp = r300_translate_blend_function(eqRGB, FALSE);
+
         blend_control |= blend_eq;
         blend_control_noalpha |= blend_eq;
-        blend_control_noclamp |= r300_translate_blend_function(eqRGB, FALSE);
+        blend_control_noclamp |= blend_eq_noclamp;
+        blend_control_noalpha_noclamp |= blend_eq_noclamp;
 
         /* Optimization: some operations do not require the destination color. */
         blend_control |= blend_read_enable(eqRGB, eqA, dstRGB, dstA,
@@ -412,6 +417,8 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
                                                    srcRGB, srcA, FALSE);
         blend_control_noalpha |= blend_read_enable(eqRGB, eqA, dstRGBX, dstA,
                                                    srcRGBX, srcA, r300screen->caps.is_r500);
+        blend_control_noalpha_noclamp |= blend_read_enable(eqRGB, eqA, dstRGBX, dstA,
+                                                           srcRGBX, srcA, FALSE);
 
         /* Optimization: discard pixels which don't change the colorbuffer.
          * It cannot be used with FP16 AA. */
@@ -433,11 +440,13 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
         }
         if (srcA != srcRGBX || dstA != dstRGBX || eqA != eqRGB) {
             blend_control_noalpha |= R300_SEPARATE_ALPHA_ENABLE;
+            blend_control_noalpha_noclamp |= R300_SEPARATE_ALPHA_ENABLE;
 
-            alpha_blend_control_noalpha =
+            alpha_blend_control_noalpha = alpha_blend_control_noalpha_noclamp =
                 (r300_translate_blend_factor(srcA) << R300_SRC_BLEND_SHIFT) |
-                (r300_translate_blend_factor(dstA) << R300_DST_BLEND_SHIFT) |
-                r300_translate_blend_function(eqA, TRUE);
+                (r300_translate_blend_factor(dstA) << R300_DST_BLEND_SHIFT);
+            alpha_blend_control_noalpha |= r300_translate_blend_function(eqA, TRUE);
+            alpha_blend_control_noalpha_noclamp |= r300_translate_blend_function(eqA, FALSE);
         }
     }
 
@@ -486,12 +495,22 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
         }
     }
 
-    /* Build a command buffer (for FP16). */
+    /* Build a command buffer (for RGBA16F). */
     BEGIN_CB(blend->cb_noclamp, 8);
     OUT_CB_REG(R300_RB3D_ROPCNTL, rop);
     OUT_CB_REG_SEQ(R300_RB3D_CBLEND, 3);
     OUT_CB(blend_control_noclamp);
     OUT_CB(alpha_blend_control_noclamp);
+    OUT_CB(rgba_cmask(state->rt[0].colormask));
+    OUT_CB_REG(R300_RB3D_DITHER_CTL, dither);
+    END_CB;
+
+    /* Build a command buffer (for RGB16F). */
+    BEGIN_CB(blend->cb_noclamp_noalpha, 8);
+    OUT_CB_REG(R300_RB3D_ROPCNTL, rop);
+    OUT_CB_REG_SEQ(R300_RB3D_CBLEND, 3);
+    OUT_CB(blend_control_noalpha_noclamp);
+    OUT_CB(alpha_blend_control_noalpha_noclamp);
     OUT_CB(rgba_cmask(state->rt[0].colormask));
     OUT_CB_REG(R300_RB3D_DITHER_CTL, dither);
     END_CB;
@@ -605,6 +624,7 @@ static void r300_set_blend_color(struct pipe_context* pipe,
 
         switch (format) {
         case PIPE_FORMAT_R16G16B16A16_FLOAT:
+        case PIPE_FORMAT_R16G16B16X16_FLOAT:
             OUT_CB(util_float_to_half(c.color[2]) |
                    (util_float_to_half(c.color[3]) << 16));
             OUT_CB(util_float_to_half(c.color[0]) |

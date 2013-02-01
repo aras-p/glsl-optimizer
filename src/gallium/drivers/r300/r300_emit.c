@@ -47,6 +47,8 @@ void r300_emit_blend_state(struct r300_context* r300,
     if (fb->nr_cbufs) {
         if (fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16A16_FLOAT) {
             WRITE_CS_TABLE(blend->cb_noclamp, size);
+        } else if (fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16X16_FLOAT) {
+            WRITE_CS_TABLE(blend->cb_noclamp_noalpha, size);
         } else {
             unsigned swz = r300_surface(fb->cbufs[0])->colormask_swizzle;
             WRITE_CS_TABLE(blend->cb_clamp[swz], size);
@@ -86,7 +88,9 @@ void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
     /* Choose the alpha ref value between 8-bit (FG_ALPHA_FUNC.AM_VAL) and
      * 16-bit (FG_ALPHA_VALUE). */
     if (is_r500 && (alpha_func & R300_FG_ALPHA_FUNC_ENABLE)) {
-        if (fb->nr_cbufs && fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16A16_FLOAT) {
+        if (fb->nr_cbufs &&
+            (fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16A16_FLOAT ||
+             fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16X16_FLOAT)) {
             alpha_func |= R500_FG_ALPHA_FUNC_FP16_ENABLE;
         } else {
             alpha_func |= R500_FG_ALPHA_FUNC_8BIT;

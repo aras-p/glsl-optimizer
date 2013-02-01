@@ -82,6 +82,7 @@ struct r300_blend_state {
 
     uint32_t cb_clamp[COLORMASK_NUM_SWIZZLES][8];
     uint32_t cb_noclamp[8];
+    uint32_t cb_noclamp_noalpha[8];
     uint32_t cb_no_readwrite[8];
 };
 

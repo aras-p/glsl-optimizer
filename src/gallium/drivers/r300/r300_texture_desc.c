@@ -424,7 +424,8 @@ static void r300_setup_cmask_properties(struct r300_screen *screen,
     }
 
     /* FP16 AA needs R500 and a fairly new DRM. */
-    if (tex->b.b.format == PIPE_FORMAT_R16G16B16A16_FLOAT &&
+    if ((tex->b.b.format == PIPE_FORMAT_R16G16B16A16_FLOAT ||
+         tex->b.b.format == PIPE_FORMAT_R16G16B16X16_FLOAT) &&
         (!screen->caps.is_r500 || screen->info.drm_minor < 29)) {
         return;
     }
@@ -553,13 +554,15 @@ void r300_texture_desc_init(struct r300_screen *rscreen,
      * for rendering. */
     if (rscreen->caps.is_r500) {
         /* FP16 6x MSAA buffers are limited to a width of 1360 pixels. */
-        if (tex->b.b.format == PIPE_FORMAT_R16G16B16A16_FLOAT &&
+        if ((tex->b.b.format == PIPE_FORMAT_R16G16B16A16_FLOAT ||
+             tex->b.b.format == PIPE_FORMAT_R16G16B16X16_FLOAT) &&
             tex->b.b.nr_samples == 6 && tex->b.b.width0 > 1360) {
             tex->b.b.nr_samples = 4;
         }
 
         /* FP16 4x MSAA buffers are limited to a width of 2048 pixels. */
-        if (tex->b.b.format == PIPE_FORMAT_R16G16B16A16_FLOAT &&
+        if ((tex->b.b.format == PIPE_FORMAT_R16G16B16A16_FLOAT ||
+             tex->b.b.format == PIPE_FORMAT_R16G16B16X16_FLOAT) &&
             tex->b.b.nr_samples == 4 && tex->b.b.width0 > 2048) {
             tex->b.b.nr_samples = 2;
         }

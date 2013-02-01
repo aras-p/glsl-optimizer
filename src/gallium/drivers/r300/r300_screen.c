@@ -414,7 +414,8 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     boolean is_half_float = format == PIPE_FORMAT_R16_FLOAT ||
                             format == PIPE_FORMAT_R16G16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16_FLOAT ||
-                            format == PIPE_FORMAT_R16G16B16A16_FLOAT;
+                            format == PIPE_FORMAT_R16G16B16A16_FLOAT ||
+                            format == PIPE_FORMAT_R16G16B16X16_FLOAT;
     const struct util_format_description *desc;
 
     if (!util_format_is_supported(format, usage))
@@ -451,7 +452,8 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                 if (!util_format_is_depth_or_stencil(format) &&
                     !util_format_is_rgba8_variant(desc) &&
                     !util_format_is_rgba1010102_variant(desc) &&
-                    format != PIPE_FORMAT_R16G16B16A16_FLOAT) {
+                    format != PIPE_FORMAT_R16G16B16A16_FLOAT &&
+                    format != PIPE_FORMAT_R16G16B16X16_FLOAT) {
                     return FALSE;
                 }
             } else {
