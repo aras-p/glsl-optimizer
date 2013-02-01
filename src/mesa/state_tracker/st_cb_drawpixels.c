@@ -1462,8 +1462,8 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       driver_vp = make_passthrough_vertex_shader(st, GL_FALSE);
 
       if (st->pixel_xfer.pixelmap_enabled) {
-	  sv[1] = st->pixel_xfer.pixelmap_sampler_view;
-	  num_sampler_view++;
+         sv[1] = st->pixel_xfer.pixelmap_sampler_view;
+         num_sampler_view++;
       }
    }
    else {
