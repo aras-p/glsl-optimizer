@@ -1340,6 +1340,200 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
 }
 
 static void
+emit_sample(struct lp_build_tgsi_soa_context *bld,
+            const struct tgsi_full_instruction *inst,
+            enum lp_build_tex_modifier modifier,
+            LLVMValueRef *texel)
+{
+   LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
+   struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
+   unsigned texture_unit, sampler_unit;
+   LLVMValueRef lod_bias, explicit_lod;
+   LLVMValueRef coords[4];
+   LLVMValueRef offsets[3] = { NULL };
+   struct lp_derivatives derivs;
+   unsigned num_coords, dims;
+   unsigned i;
+   boolean compare = FALSE;
+
+   if (!bld->sampler) {
+      _debug_printf("warning: found texture instruction but no sampler generator supplied\n");
+      for (i = 0; i < 4; i++) {
+         texel[i] = bld->bld_base.base.undef;
+      }
+      return;
+   }
+
+   derivs.ddx_ddy[0] = bld->bld_base.base.undef;
+   derivs.ddx_ddy[1] = bld->bld_base.base.undef;
+
+   switch (inst->Texture.Texture) {
+   case TGSI_TEXTURE_SHADOW1D:
+      compare = TRUE;
+      /* Fallthrough */
+   case TGSI_TEXTURE_1D:
+      num_coords = 1;
+      dims = 1;
+      break;
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
+      compare = TRUE;
+      /* Fallthrough */
+   case TGSI_TEXTURE_1D_ARRAY:
+      num_coords = 2;
+      dims = 1;
+      break;
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+      compare = TRUE;
+      /* Fallthrough */
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
+      num_coords = 2;
+      dims = 2;
+      break;
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+   case TGSI_TEXTURE_SHADOWCUBE:
+      compare = TRUE;
+      /* Fallthrough */
+   case TGSI_TEXTURE_2D_ARRAY:
+   case TGSI_TEXTURE_CUBE:
+      num_coords = 3;
+      dims = 2;
+      break;
+   case TGSI_TEXTURE_3D:
+      num_coords = 3;
+      dims = 3;
+      break;
+   case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+      compare = TRUE;
+      /* Fallthrough */
+   case TGSI_TEXTURE_CUBE_ARRAY:
+      num_coords = 4;
+      dims = 3;
+      break;
+   default:
+      assert(0);
+      return;
+   }
+
+   /*
+    * unlike old-style tex opcodes the texture/sampler indices
+    * always come from src1 and src2 respectively.
+    */
+   texture_unit = inst->Src[1].Register.Index;
+   sampler_unit = inst->Src[2].Register.Index;
+
+   if (modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS) {
+      lod_bias = lp_build_emit_fetch( &bld->bld_base, inst, 3, 0 );
+      explicit_lod = NULL;
+   }
+   else if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
+      /* lod bias comes from src 3.r but explicit lod from 0.a */
+      lod_bias = NULL;
+      explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 0, 3 );
+   }
+   else if (modifier == LP_BLD_TEX_MODIFIER_LOD_ZERO) {
+      lod_bias = NULL;
+      /* XXX might be better to explicitly pass the level zero information */
+      explicit_lod = lp_build_const_vec(gallivm, bld->bld_base.base.type, 0.0F);
+   }
+   else {
+      lod_bias = NULL;
+      explicit_lod = NULL;
+   }
+
+   for (i = 0; i < num_coords; i++) {
+      coords[i] = lp_build_emit_fetch( &bld->bld_base, inst, 0, i );
+   }
+   for (i = num_coords; i < 4; i++) {
+      coords[i] = bld->bld_base.base.undef;
+   }
+   /*
+    * XXX: whack shadow comparison value into place.
+    * Should probably fix the interface for separate value
+    * (it will not work for cube arrays if it is part of coords).
+    */
+   if (compare) {
+      unsigned c_coord = num_coords > 2 ? 3 : 2;
+      assert(num_coords < 4);
+      coords[c_coord] = lp_build_emit_fetch( &bld->bld_base, inst, 3, 0 );
+   }
+
+   if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
+      LLVMValueRef i32undef = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
+      LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
+      LLVMValueRef ddxdyonec[3];
+      unsigned length = bld->bld_base.base.type.length;
+      unsigned num_quads = length / 4;
+      unsigned dim;
+      unsigned quad;
+
+      for (dim = 0; dim < dims; ++dim) {
+         LLVMValueRef srcx = lp_build_emit_fetch( &bld->bld_base, inst, 3, dim );
+         LLVMValueRef srcy = lp_build_emit_fetch( &bld->bld_base, inst, 4, dim );
+         for (quad = 0; quad < num_quads; ++quad) {
+            unsigned s1 = 4*quad;
+            unsigned s2 = 4*quad + length;
+            shuffles[4*quad + 0] = lp_build_const_int32(gallivm, s1);
+            shuffles[4*quad + 1] = lp_build_const_int32(gallivm, s2);
+            shuffles[4*quad + 2] = i32undef;
+            shuffles[4*quad + 3] = i32undef;
+         }
+         ddxdyonec[dim] = LLVMBuildShuffleVector(builder, srcx, srcy,
+                                               LLVMConstVector(shuffles, length), "");
+      }
+      if (dims == 1) {
+         derivs.ddx_ddy[0] = ddxdyonec[0];
+      }
+      else if (dims >= 2) {
+         for (quad = 0; quad < num_quads; ++quad) {
+            unsigned s1 = 4*quad;
+            unsigned s2 = 4*quad + length;
+            shuffles[4*quad + 0] = lp_build_const_int32(gallivm, s1);
+            shuffles[4*quad + 1] = lp_build_const_int32(gallivm, s1 + 1);
+            shuffles[4*quad + 2] = lp_build_const_int32(gallivm, s2);
+            shuffles[4*quad + 3] = lp_build_const_int32(gallivm, s2 + 1);
+         }
+         derivs.ddx_ddy[0] = LLVMBuildShuffleVector(builder, ddxdyonec[0], ddxdyonec[1],
+                                                  LLVMConstVector(shuffles, length), "");
+         if (dims == 3) {
+            derivs.ddx_ddy[1] = ddxdyonec[2];
+         }
+      }
+   }  else {
+      if (dims == 1) {
+         derivs.ddx_ddy[0] = lp_build_packed_ddx_ddy_onecoord(&bld->bld_base.base, coords[0]);
+      }
+      else if (dims >= 2) {
+         derivs.ddx_ddy[0] = lp_build_packed_ddx_ddy_twocoord(&bld->bld_base.base,
+                                                            coords[0], coords[1]);
+         if (dims == 3) {
+            derivs.ddx_ddy[1] = lp_build_packed_ddx_ddy_onecoord(&bld->bld_base.base, coords[2]);
+         }
+      }
+   }
+
+   /* some advanced gather instructions (txgo) would require 4 offsets */
+   if (inst->Texture.NumOffsets == 1) {
+      unsigned dim;
+      for (dim = 0; dim < dims; dim++) {
+         offsets[dim] = lp_build_emit_fetch_texoffset(&bld->bld_base, inst, 0, dim );
+      }
+   }
+
+   bld->sampler->emit_fetch_texel(bld->sampler,
+                                  bld->bld_base.base.gallivm,
+                                  bld->bld_base.base.type,
+                                  FALSE,
+                                  texture_unit, sampler_unit,
+                                  coords,
+                                  offsets,
+                                  &derivs,
+                                  lod_bias, explicit_lod,
+                                  texel);
+}
+
+static void
 emit_txf( struct lp_build_tgsi_soa_context *bld,
           const struct tgsi_full_instruction *inst,
           LLVMValueRef *texel)
@@ -1899,6 +2093,97 @@ txf_emit(
 }
 
 static void
+sample_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_NONE,
+               emit_data->output);
+}
+
+static void
+sample_b_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_LOD_BIAS,
+               emit_data->output);
+}
+
+static void
+sample_c_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+   /*
+    * note that we can ignore this is a comparison instruction here
+    * since it should be encoded elsewhere (SHADOW target).
+    */
+   emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_NONE,
+               emit_data->output);
+}
+
+static void
+sample_c_lz_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_LOD_ZERO,
+               emit_data->output);
+}
+
+static void
+sample_d_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV,
+               emit_data->output);
+}
+
+static void
+sample_l_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_EXPLICIT_LOD,
+               emit_data->output);
+}
+
+static void
+sviewinfo_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+   /*
+    * FIXME: unlike txq we are required to return number of mipmap levels
+    * too, and the unused channels are defined to be zero.
+    * Either always do that (and hope llvm can optimize it away?)
+    * or pass a parameter all the way down.
+    */
+   emit_txq(bld, emit_data->inst, emit_data->output);
+}
+
+static void
 cal_emit(
    const struct lp_build_tgsi_action * action,
    struct lp_build_tgsi_context * bld_base,
@@ -2270,6 +2555,15 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.bld_base.op_actions[TGSI_OPCODE_TXP].emit = txp_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_TXQ].emit = txq_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_TXF].emit = txf_emit;
+   /* DX10 sampling ops */
+   bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE].emit = sample_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_B].emit = sample_b_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_C].emit = sample_c_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_C_LZ].emit = sample_c_lz_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_D].emit = sample_d_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_I].emit = txf_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_L].emit = sample_l_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_SVIEWINFO].emit = sviewinfo_emit;
 
    lp_exec_mask_init(&bld.exec_mask, &bld.bld_base.base);
 

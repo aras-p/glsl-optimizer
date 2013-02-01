@@ -68,7 +68,8 @@ enum lp_build_tex_modifier {
    LP_BLD_TEX_MODIFIER_PROJECTED,
    LP_BLD_TEX_MODIFIER_LOD_BIAS,
    LP_BLD_TEX_MODIFIER_EXPLICIT_LOD,
-   LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV
+   LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV,
+   LP_BLD_TEX_MODIFIER_LOD_ZERO
 };
 
 
@@ -104,7 +105,8 @@ struct lp_tgsi_texture_info
 {
    struct lp_tgsi_channel_info coord[4];
    unsigned target:8; /* TGSI_TEXTURE_* */
-   unsigned unit:8;  /* Sampler unit */
+   unsigned sampler_unit:8;  /* Sampler unit */
+   unsigned texture_unit:8;  /* Texture unit */
    unsigned modifier:8; /* LP_BLD_TEX_MODIFIER_* */
 };
 
