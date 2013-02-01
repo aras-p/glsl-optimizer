@@ -51,7 +51,7 @@ extern enum pipe_format
 st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
                  GLenum format, GLenum type,
                  enum pipe_texture_target target, unsigned sample_count,
-                 unsigned bindings);
+                 unsigned bindings, boolean allow_dxt);
 
 extern enum pipe_format
 st_choose_renderbuffer_format(struct pipe_screen *screen,

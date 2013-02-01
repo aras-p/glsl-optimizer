@@ -1499,14 +1499,16 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       if (type == GL_DEPTH) {
          texFormat = st_choose_format(screen, GL_DEPTH_COMPONENT,
                                       GL_NONE, GL_NONE, st->internal_target,
-				      sample_count, PIPE_BIND_DEPTH_STENCIL);
+                                      sample_count, PIPE_BIND_DEPTH_STENCIL,
+                                      FALSE);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
       else {
          /* default color format */
          texFormat = st_choose_format(screen, GL_RGBA,
                                       GL_NONE, GL_NONE, st->internal_target,
-                                      sample_count, PIPE_BIND_SAMPLER_VIEW);
+                                      sample_count, PIPE_BIND_SAMPLER_VIEW,
+                                      FALSE);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
    }

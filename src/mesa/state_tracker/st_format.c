@@ -1398,18 +1398,25 @@ static const struct format_mapping format_map[] = {
 
 /**
  * Return first supported format from the given list.
+ * \param allow_dxt  indicates whether it's OK to return a DXT format.
  */
 static enum pipe_format
 find_supported_format(struct pipe_screen *screen,
                       const enum pipe_format formats[],
                       enum pipe_texture_target target,
                       unsigned sample_count,
-                      unsigned tex_usage)
+                      unsigned tex_usage,
+                      boolean allow_dxt)
 {
    uint i;
    for (i = 0; formats[i]; i++) {
       if (screen->is_format_supported(screen, formats[i], target,
                                       sample_count, tex_usage)) {
+         if (!allow_dxt && util_format_is_s3tc(formats[i])) {
+            /* we can't return a dxt format, continue searching */
+            continue;
+         }
+
          return formats[i];
       }
    }
@@ -1514,12 +1521,16 @@ find_exact_format(GLint internalFormat, GLenum format, GLenum type)
  * \param internalFormat  the user value passed to glTexImage2D
  * \param target  one of PIPE_TEXTURE_x
  * \param bindings  bitmask of PIPE_BIND_x flags.
+ * \param allow_dxt  indicates whether it's OK to return a DXT format.  This
+ *                   only matters when internalFormat names a generic or
+ *                   specific compressed format.  And that should only happen
+ *                   when we're getting called from gl[Copy]TexImage().
  */
 enum pipe_format
 st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
                  GLenum format, GLenum type,
                  enum pipe_texture_target target, unsigned sample_count,
-                 unsigned bindings)
+                 unsigned bindings, boolean allow_dxt)
 {
    GET_CURRENT_CONTEXT(ctx); /* XXX this should be a function parameter */
    int i, j;
@@ -1547,7 +1558,8 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
              * which is supported by the driver.
              */
             return find_supported_format(screen, mapping->pipeFormats,
-                                         target, sample_count, bindings);
+                                         target, sample_count, bindings,
+                                         allow_dxt);
          }
       }
    }
@@ -1569,8 +1581,8 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
       usage = PIPE_BIND_DEPTH_STENCIL;
    else
       usage = PIPE_BIND_RENDER_TARGET;
-   return st_choose_format(screen, internalFormat, GL_NONE, GL_NONE, PIPE_TEXTURE_2D,
-                           sample_count, usage);
+   return st_choose_format(screen, internalFormat, GL_NONE, GL_NONE,
+                           PIPE_TEXTURE_2D, sample_count, usage, FALSE);
 }
 
 
@@ -1597,12 +1609,13 @@ st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
    }
 
    pFormat = st_choose_format(screen, internalFormat, format, type,
-                              PIPE_TEXTURE_2D, 0, bindings);
+                              PIPE_TEXTURE_2D, 0, bindings, ctx->Mesa_DXTn);
 
    if (pFormat == PIPE_FORMAT_NONE) {
       /* try choosing format again, this time without render target bindings */
       pFormat = st_choose_format(screen, internalFormat, format, type,
-                                 PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW);
+                                 PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW,
+                                 ctx->Mesa_DXTn);
    }
 
    if (pFormat == PIPE_FORMAT_NONE) {
@@ -1661,7 +1674,7 @@ st_QuerySamplesForFormat(struct gl_context *ctx, GLenum internalFormat,
    /* Set sample counts in descending order. */
    for (i = 16; i > 1; i--) {
       format = st_choose_format(screen, internalFormat, GL_NONE, GL_NONE,
-                                PIPE_TEXTURE_2D, i, bind);
+                                PIPE_TEXTURE_2D, i, bind, FALSE);
 
       if (format != PIPE_FORMAT_NONE) {
          samples[num_sample_counts++] = i;
