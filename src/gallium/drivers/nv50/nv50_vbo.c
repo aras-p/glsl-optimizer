@@ -85,6 +85,7 @@ nv50_vertex_state_create(struct pipe_context *pipe,
             case 4: fmt = PIPE_FORMAT_R32G32B32A32_FLOAT; break;
             default:
                 assert(0);
+                FREE(so);
                 return NULL;
             }
             so->element[i].state = nv50_format_table[fmt].vtx;
