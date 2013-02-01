@@ -142,7 +142,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 	/* Would like some magic "get_bool_option_once" routine.
 	*/
 	if (dump_shaders == -1)
-		dump_shaders = debug_get_bool_option("R600_DUMP_SHADERS", FALSE);
+		dump_shaders = debug_get_num_option("R600_DUMP_SHADERS", 0);
 
 	if (dump_shaders) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
@@ -162,10 +162,17 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		R600_ERR("building bytecode failed !\n");
 		return r;
 	}
-	if (dump_shaders) {
+	if (dump_shaders & 1) {
+		fprintf(stderr, "--------------------------------------------------------------\n");
 		r600_bytecode_dump(&shader->shader.bc);
 		fprintf(stderr, "______________________________________________________________\n");
 	}
+	if (dump_shaders & 2) {
+		fprintf(stderr, "--------------------------------------------------------------\n");
+		r600_bytecode_disasm(&shader->shader.bc);
+		fprintf(stderr, "______________________________________________________________\n");
+	}
+
 	return r600_pipe_shader(ctx, shader);
 }
 

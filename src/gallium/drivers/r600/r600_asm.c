@@ -1651,6 +1651,433 @@ void r600_bytecode_clear(struct r600_bytecode *bc)
 	LIST_INITHEAD(&cf->list);
 }
 
+static int print_swizzle(unsigned swz)
+{
+	const char * swzchars = "xyzw01?_";
+	assert(swz<8 && swz != 6);
+	return fprintf(stderr, "%c", swzchars[swz]);
+}
+
+static int print_sel(unsigned sel, unsigned rel, unsigned index_mode,
+		unsigned need_brackets)
+{
+	int o = 0;
+	if (rel && index_mode >= 5 && sel < 128)
+		o += fprintf(stderr, "G");
+	if (rel || need_brackets) {
+		o += fprintf(stderr, "[");
+	}
+	o += fprintf(stderr, "%d", sel);
+	if (rel) {
+		if (index_mode == 0 || index_mode == 6)
+			o += fprintf(stderr, "+AR");
+		else if (index_mode == 4)
+			o += fprintf(stderr, "+AL");
+	}
+	if (rel || need_brackets) {
+		o += fprintf(stderr, "]");
+	}
+	return o;
+}
+
+static int print_dst(struct r600_bytecode_alu *alu)
+{
+	int o = 0;
+	unsigned sel = alu->dst.sel;
+	char reg_char = 'R';
+	if (sel > 128 - 4) { /* clause temporary gpr */
+		sel -= 128 - 4;
+		reg_char = 'T';
+	}
+
+	if (alu->dst.write || alu->is_op3) {
+		o += fprintf(stderr, "%c", reg_char);
+		o += print_sel(alu->dst.sel, alu->dst.rel, alu->index_mode, 0);
+	} else {
+		o += fprintf(stderr, "__");
+	}
+	o += fprintf(stderr, ".");
+	o += print_swizzle(alu->dst.chan);
+	return o;
+}
+
+static int print_src(struct r600_bytecode_alu *alu, unsigned idx)
+{
+	int o = 0;
+	struct r600_bytecode_alu_src *src = &alu->src[idx];
+	unsigned sel = src->sel, need_sel = 1, need_chan = 1, need_brackets = 0;
+
+	if (src->neg)
+		o += fprintf(stderr,"-");
+	if (src->abs)
+		o += fprintf(stderr,"|");
+
+	if (sel < 128 - 4) {
+		o += fprintf(stderr, "R");
+	} else if (sel < 128) {
+		o += fprintf(stderr, "T");
+		sel -= 128 - 4;
+	} else if (sel < 160) {
+		o += fprintf(stderr, "KC0");
+		need_brackets = 1;
+		sel -= 128;
+	} else if (sel < 192) {
+		o += fprintf(stderr, "KC1");
+		need_brackets = 1;
+		sel -= 160;
+	} else if (sel >= 512) {
+		o += fprintf(stderr, "C%d", src->kc_bank);
+		need_brackets = 1;
+		sel -= 512;
+	} else if (sel >= 448) {
+		o += fprintf(stderr, "Param");
+		sel -= 448;
+		need_chan = 0;
+	} else if (sel >= 288) {
+		o += fprintf(stderr, "KC3");
+		need_brackets = 1;
+		sel -= 288;
+	} else if (sel >= 256) {
+		o += fprintf(stderr, "KC2");
+		need_brackets = 1;
+		sel -= 256;
+	} else {
+		need_sel = 0;
+		need_chan = 0;
+		switch (sel) {
+		case V_SQ_ALU_SRC_PS:
+			o += fprintf(stderr, "PS");
+			break;
+		case V_SQ_ALU_SRC_PV:
+			o += fprintf(stderr, "PV");
+			need_chan = 1;
+			break;
+		case V_SQ_ALU_SRC_LITERAL:
+			o += fprintf(stderr, "[0x%08X %f]", src->value, *(float*)&src->value);
+			break;
+		case V_SQ_ALU_SRC_0_5:
+			o += fprintf(stderr, "0.5");
+			break;
+		case V_SQ_ALU_SRC_M_1_INT:
+			o += fprintf(stderr, "-1");
+			break;
+		case V_SQ_ALU_SRC_1_INT:
+			o += fprintf(stderr, "1");
+			break;
+		case V_SQ_ALU_SRC_1:
+			o += fprintf(stderr, "1.0");
+			break;
+		case V_SQ_ALU_SRC_0:
+			o += fprintf(stderr, "0");
+			break;
+		default:
+			o += fprintf(stderr, "??IMM_%d", sel);
+			break;
+		}
+	}
+
+	if (need_sel)
+		o += print_sel(sel, src->rel, alu->index_mode, need_brackets);
+
+	if (need_chan) {
+		o += fprintf(stderr, ".");
+		o += print_swizzle(src->chan);
+	}
+
+	if (src->abs)
+		o += fprintf(stderr,"|");
+
+	return o;
+}
+
+static int print_indent(int p, int c)
+{
+	int o = 0;
+	while (p++ < c)
+		o += fprintf(stderr, " ");
+	return o;
+}
+
+void r600_bytecode_disasm(struct r600_bytecode *bc)
+{
+	static int index = 0;
+	struct r600_bytecode_cf *cf = NULL;
+	struct r600_bytecode_alu *alu = NULL;
+	struct r600_bytecode_vtx *vtx = NULL;
+	struct r600_bytecode_tex *tex = NULL;
+
+	unsigned i, id, ngr = 0, last;
+	uint32_t literal[4];
+	unsigned nliteral;
+	char chip = '6';
+
+	switch (bc->chip_class) {
+	case R700:
+		chip = '7';
+		break;
+	case EVERGREEN:
+		chip = 'E';
+		break;
+	case CAYMAN:
+		chip = 'C';
+		break;
+	case R600:
+	default:
+		chip = '6';
+		break;
+	}
+	fprintf(stderr, "bytecode %d dw -- %d gprs ---------------------\n",
+	        bc->ndw, bc->ngpr);
+	fprintf(stderr, "shader %d -- %c\n", index++, chip);
+
+	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
+		id = cf->id;
+		if (cf->op == CF_NATIVE) {
+			fprintf(stderr, "%04d %08X %08X CF_NATIVE\n", id, bc->bytecode[id],
+					bc->bytecode[id + 1]);
+		} else {
+			const struct cf_op_info *cfop = r600_isa_cf(cf->op);
+			if (cfop->flags & CF_ALU) {
+				if (cf->eg_alu_extended) {
+					fprintf(stderr, "%04d %08X %08X  %s\n", id, bc->bytecode[id],
+							bc->bytecode[id + 1], "ALU_EXT");
+					id += 2;
+				}
+				fprintf(stderr, "%04d %08X %08X  %s ", id, bc->bytecode[id],
+						bc->bytecode[id + 1], cfop->name);
+				fprintf(stderr, "%d @%d ", cf->ndw / 2, cf->addr);
+				for (i = 0; i < 4; ++i) {
+					if (cf->kcache[i].mode) {
+						int c_start = (cf->kcache[i].addr << 4);
+						int c_end = c_start + (cf->kcache[i].mode << 4);
+						fprintf(stderr, "KC%d[CB%d:%d-%d] ",
+						        i, cf->kcache[i].bank, c_start, c_end);
+					}
+				}
+				fprintf(stderr, "\n");
+			} else if (cfop->flags & CF_FETCH) {
+				fprintf(stderr, "%04d %08X %08X  %s ", id, bc->bytecode[id],
+						bc->bytecode[id + 1], cfop->name);
+				fprintf(stderr, "%d @%d ", cf->ndw / 4, cf->addr);
+				fprintf(stderr, "\n");
+			} else if (cfop->flags & CF_EXP) {
+				int o = 0;
+				const char *exp_type[] = {"PIXEL", "POS  ", "PARAM"};
+				o += fprintf(stderr, "%04d %08X %08X  %s ", id, bc->bytecode[id],
+						bc->bytecode[id + 1], cfop->name);
+				o += print_indent(o, 43);
+				o += fprintf(stderr, "%s ", exp_type[cf->output.type]);
+				if (cf->output.burst_count > 1) {
+					o += fprintf(stderr, "%d-%d ", cf->output.array_base,
+							cf->output.array_base + cf->output.burst_count - 1);
+
+					o += print_indent(o, 55);
+					o += fprintf(stderr, "R%d-%d.", cf->output.gpr,
+							cf->output.gpr + cf->output.burst_count - 1);
+				} else {
+					o += fprintf(stderr, "%d ", cf->output.array_base);
+					o += print_indent(o, 55);
+					o += fprintf(stderr, "R%d.", cf->output.gpr);
+				}
+
+				o += print_swizzle(cf->output.swizzle_x);
+				o += print_swizzle(cf->output.swizzle_y);
+				o += print_swizzle(cf->output.swizzle_z);
+				o += print_swizzle(cf->output.swizzle_w);
+
+				print_indent(o, 67);
+
+				fprintf(stderr, " ES:%X ", cf->output.elem_size);
+				if (!cf->output.barrier)
+					fprintf(stderr, "NO_BARRIER ");
+				if (cf->output.end_of_program)
+					fprintf(stderr, "EOP ");
+				fprintf(stderr, "\n");
+			} else if (r600_isa_cf(cf->op)->flags & CF_STRM) {
+				int o = 0;
+				const char *exp_type[] = {"WRITE", "WRITE_IND", "WRITE_ACK",
+						"WRITE_IND_ACK"};
+				o += fprintf(stderr, "%04d %08X %08X  %s ", id,
+						bc->bytecode[id], bc->bytecode[id + 1], cfop->name);
+				o += print_indent(o, 43);
+				o += fprintf(stderr, "%s ", exp_type[cf->output.type]);
+				if (cf->output.burst_count > 1) {
+					o += fprintf(stderr, "%d-%d ", cf->output.array_base,
+							cf->output.array_base + cf->output.burst_count - 1);
+					o += print_indent(o, 55);
+					o += fprintf(stderr, "R%d-%d.", cf->output.gpr,
+							cf->output.gpr + cf->output.burst_count - 1);
+				} else {
+					o += fprintf(stderr, "%d ", cf->output.array_base);
+					o += print_indent(o, 55);
+					o += fprintf(stderr, "R%d.", cf->output.gpr);
+				}
+				for (i = 0; i < 4; ++i) {
+					if (cf->output.comp_mask & (1 << i))
+						o += print_swizzle(i);
+					else
+						o += print_swizzle(7);
+				}
+
+				o += print_indent(o, 67);
+
+				fprintf(stderr, " ES:%i ", cf->output.elem_size);
+				if (cf->output.array_size != 0xFFF)
+					fprintf(stderr, "AS:%i ", cf->output.array_size);
+				if (!cf->output.barrier)
+					fprintf(stderr, "NO_BARRIER ");
+				if (cf->output.end_of_program)
+					fprintf(stderr, "EOP ");
+				fprintf(stderr, "\n");
+			} else {
+				fprintf(stderr, "%04d %08X %08X  %s ", id, bc->bytecode[id],
+						bc->bytecode[id + 1], cfop->name);
+				fprintf(stderr, "@%d ", cf->cf_addr);
+				if (cf->cond)
+					fprintf(stderr, "CND:%X ", cf->cond);
+				if (cf->pop_count)
+					fprintf(stderr, "POP:%X ", cf->pop_count);
+				fprintf(stderr, "\n");
+			}
+		}
+
+		id = cf->addr;
+		nliteral = 0;
+		last = 1;
+		LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
+			const char *omod_str[] = {"","*2","*4","/2"};
+			const struct alu_op_info *aop = r600_isa_alu(alu->op);
+			int o = 0;
+
+			r600_bytecode_alu_nliterals(bc, alu, literal, &nliteral);
+			o += fprintf(stderr, " %04d %08X %08X  ", id, bc->bytecode[id], bc->bytecode[id+1]);
+			if (last)
+				o += fprintf(stderr, "%4d ", ++ngr);
+			else
+				o += fprintf(stderr, "     ");
+			o += fprintf(stderr, "%c%c %c ", alu->execute_mask ? 'M':' ',
+					alu->update_pred ? 'P':' ',
+					alu->pred_sel ? alu->pred_sel==2 ? '0':'1':' ');
+
+			o += fprintf(stderr, "%s%s%s ", aop->name,
+					omod_str[alu->omod], alu->dst.clamp ? "_sat":"");
+
+			o += print_indent(o,60);
+			o += print_dst(alu);
+			for (i = 0; i < aop->src_count; ++i) {
+				o += fprintf(stderr, i == 0 ? ",  ": ", ");
+				o += print_src(alu, i);
+			}
+
+			if (alu->bank_swizzle) {
+				o += print_indent(o,75);
+				o += fprintf(stderr, "  BS:%d", alu->bank_swizzle);
+			}
+
+			fprintf(stderr, "\n");
+			id += 2;
+
+			if (alu->last) {
+				for (i = 0; i < nliteral; i++, id++) {
+					float *f = (float*)(bc->bytecode + id);
+					o = fprintf(stderr, " %04d %08X", id, bc->bytecode[id]);
+					print_indent(o, 60);
+					fprintf(stderr, " %f (%d)\n", *f, *(bc->bytecode + id));
+				}
+				id += nliteral & 1;
+				nliteral = 0;
+			}
+			last = alu->last;
+		}
+
+		LIST_FOR_EACH_ENTRY(tex, &cf->tex, list) {
+			int o = 0;
+			o += fprintf(stderr, " %04d %08X %08X %08X   ", id, bc->bytecode[id],
+					bc->bytecode[id + 1], bc->bytecode[id + 2]);
+
+			o += fprintf(stderr, "%s ", r600_isa_fetch(tex->op)->name);
+
+			o += print_indent(o, 50);
+
+			o += fprintf(stderr, "R%d.", tex->dst_gpr);
+			o += print_swizzle(tex->dst_sel_x);
+			o += print_swizzle(tex->dst_sel_y);
+			o += print_swizzle(tex->dst_sel_z);
+			o += print_swizzle(tex->dst_sel_w);
+
+			o += fprintf(stderr, ", R%d.", tex->src_gpr);
+			o += print_swizzle(tex->src_sel_x);
+			o += print_swizzle(tex->src_sel_y);
+			o += print_swizzle(tex->src_sel_z);
+			o += print_swizzle(tex->src_sel_w);
+
+			o += fprintf(stderr, ",  RID:%d", tex->resource_id);
+			o += fprintf(stderr, ", SID:%d  ", tex->sampler_id);
+
+			if (tex->lod_bias)
+				fprintf(stderr, "LB:%d ", tex->lod_bias);
+
+			fprintf(stderr, "CT:%c%c%c%c ",
+					tex->coord_type_x ? 'N' : 'U',
+					tex->coord_type_y ? 'N' : 'U',
+					tex->coord_type_z ? 'N' : 'U',
+					tex->coord_type_w ? 'N' : 'U');
+
+			if (tex->offset_x)
+				fprintf(stderr, "OX:%d ", tex->offset_x);
+			if (tex->offset_y)
+				fprintf(stderr, "OY:%d ", tex->offset_y);
+			if (tex->offset_z)
+				fprintf(stderr, "OZ:%d ", tex->offset_z);
+
+			id += 4;
+			fprintf(stderr, "\n");
+		}
+
+		LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
+			int o = 0;
+			const char * fetch_type[] = {"VERTEX", "INSTANCE", ""};
+			o += fprintf(stderr, " %04d %08X %08X %08X   ", id, bc->bytecode[id],
+					bc->bytecode[id + 1], bc->bytecode[id + 2]);
+
+			o += fprintf(stderr, "%s ", r600_isa_fetch(vtx->op)->name);
+
+			o += print_indent(o, 50);
+
+			o += fprintf(stderr, "R%d.", vtx->dst_gpr);
+			o += print_swizzle(vtx->dst_sel_x);
+			o += print_swizzle(vtx->dst_sel_y);
+			o += print_swizzle(vtx->dst_sel_z);
+			o += print_swizzle(vtx->dst_sel_w);
+
+			o += fprintf(stderr, ", R%d.", vtx->src_gpr);
+			o += print_swizzle(vtx->src_sel_x);
+
+			if (vtx->offset)
+				fprintf(stderr, " +%db", vtx->offset);
+
+			o += print_indent(o, 55);
+
+			fprintf(stderr, ",  RID:%d ", vtx->buffer_id);
+
+			fprintf(stderr, "%s ", fetch_type[vtx->fetch_type]);
+
+			if (bc->chip_class < CAYMAN && vtx->mega_fetch_count)
+				fprintf(stderr, "MFC:%d ", vtx->mega_fetch_count);
+
+			fprintf(stderr, "UCF:%d ", vtx->use_const_fields);
+			fprintf(stderr, "FMT(DTA:%d ", vtx->data_format);
+			fprintf(stderr, "NUM:%d ", vtx->num_format_all);
+			fprintf(stderr, "COMP:%d ", vtx->format_comp_all);
+			fprintf(stderr, "MODE:%d)\n", vtx->srf_mode_all);
+
+			id += 4;
+		}
+	}
+
+	fprintf(stderr, "--------------------------------------\n");
+}
+
 void r600_bytecode_dump(struct r600_bytecode *bc)
 {
 	struct r600_bytecode_cf *cf = NULL;
@@ -2148,11 +2575,16 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 	}
 
 	if (dump_shaders == -1)
-		dump_shaders = debug_get_bool_option("R600_DUMP_SHADERS", FALSE);
+		dump_shaders = debug_get_num_option("R600_DUMP_SHADERS", 0);
 
-	if (dump_shaders) {
+	if (dump_shaders & 1) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
 		r600_bytecode_dump(&bc);
+		fprintf(stderr, "______________________________________________________________\n");
+	}
+	if (dump_shaders & 2) {
+		fprintf(stderr, "--------------------------------------------------------------\n");
+		r600_bytecode_disasm(&bc);
 		fprintf(stderr, "______________________________________________________________\n");
 	}
 
