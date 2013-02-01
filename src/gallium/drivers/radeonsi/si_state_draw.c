@@ -524,10 +524,8 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	struct pipe_index_buffer ib = {};
 	uint32_t cp_coher_cntl;
 
-	if ((!info->count && (info->indexed || !info->count_from_stream_output)) ||
-	    (info->indexed && !rctx->index_buffer.buffer)) {
+	if (!info->count && (info->indexed || !info->count_from_stream_output))
 		return;
-	}
 
 	if (!rctx->ps_shader || !rctx->vs_shader)
 		return;
@@ -538,13 +536,14 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	if (info->indexed) {
 		/* Initialize the index buffer struct. */
 		pipe_resource_reference(&ib.buffer, rctx->index_buffer.buffer);
+		ib.user_buffer = rctx->index_buffer.user_buffer;
 		ib.index_size = rctx->index_buffer.index_size;
 		ib.offset = rctx->index_buffer.offset + info->start * ib.index_size;
 
 		/* Translate or upload, if needed. */
 		r600_translate_index_buffer(rctx, &ib, info->count);
 
-		if (ib.user_buffer) {
+		if (ib.user_buffer && !ib.buffer) {
 			r600_upload_index_buffer(rctx, &ib, info->count);
 		}
 
