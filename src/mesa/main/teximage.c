@@ -3004,8 +3004,18 @@ teximage(struct gl_context *ctx, GLboolean compressed, GLuint dims,
    texObj = _mesa_get_current_tex_object(ctx, target);
    assert(texObj);
 
-   texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
-                                           internalFormat, format, type);
+   if (compressed) {
+      /* For glCompressedTexImage() the driver has no choice about the
+       * texture format since we'll never transcode the user's compressed
+       * image data.  The internalFormat was error checked earlier.
+       */
+      texFormat = _mesa_glenum_to_compressed_format(internalFormat);
+   }
+   else {
+      texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
+                                              internalFormat, format, type);
+   }
+
    assert(texFormat != MESA_FORMAT_NONE);
 
    /* check that width, height, depth are legal for the mipmap level */
