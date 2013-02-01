@@ -309,6 +309,8 @@ struct lp_build_tgsi_context
     * should compute 1 / sqrt (src0.x) */
    struct lp_build_tgsi_action rsq_action;
 
+   struct lp_build_tgsi_action sqrt_action;
+
    const struct tgsi_shader_info *info;
 
    lp_build_emit_fetch_fn emit_fetch_funcs[TGSI_FILE_COUNT];

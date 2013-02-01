@@ -648,6 +648,26 @@ const struct lp_build_tgsi_action rsq_action = {
 
 };
 
+/* TGSI_OPCODE_SQRT */
+
+static void
+sqrt_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   if (bld_base->sqrt_action.emit) {
+      bld_base->sqrt_action.emit(&bld_base->sqrt_action, bld_base, emit_data);
+   } else {
+      emit_data->output[emit_data->chan] = bld_base->base.undef;
+   }
+}
+
+const struct lp_build_tgsi_action sqrt_action = {
+   scalar_unary_fetch_args,	 /* fetch_args */
+   sqrt_emit	 /* emit */
+};
+
 /* TGSI_OPCODE_SCS */
 static void
 scs_emit(
@@ -839,6 +859,7 @@ lp_set_default_actions(struct lp_build_tgsi_context * bld_base)
    bld_base->op_actions[TGSI_OPCODE_LIT] = lit_action;
    bld_base->op_actions[TGSI_OPCODE_LOG] = log_action;
    bld_base->op_actions[TGSI_OPCODE_RSQ] = rsq_action;
+   bld_base->op_actions[TGSI_OPCODE_SQRT] = sqrt_action;
    bld_base->op_actions[TGSI_OPCODE_POW] = pow_action;
    bld_base->op_actions[TGSI_OPCODE_SCS] = scs_action;
    bld_base->op_actions[TGSI_OPCODE_XPD] = xpd_action;
@@ -1322,6 +1343,17 @@ recip_sqrt_emit_cpu(
                                                          emit_data->args[0]);
 }
 
+static void
+sqrt_emit_cpu(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] = lp_build_sqrt(&bld_base->base,
+                                                      emit_data->args[0]);
+}
+
+
 /* TGSI_OPCODE_ROUND (CPU Only) */
 static void
 round_emit_cpu(
@@ -1665,6 +1697,7 @@ lp_set_default_actions_cpu(
    bld_base->op_actions[TGSI_OPCODE_TRUNC].emit = trunc_emit_cpu;
 
    bld_base->rsq_action.emit = recip_sqrt_emit_cpu;
+   bld_base->sqrt_action.emit = sqrt_emit_cpu;
 
    bld_base->op_actions[TGSI_OPCODE_UADD].emit = uadd_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_UDIV].emit = udiv_emit_cpu;
