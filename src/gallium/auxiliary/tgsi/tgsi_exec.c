@@ -343,6 +343,16 @@ micro_rsq(union tgsi_exec_channel *dst,
 }
 
 static void
+micro_sqrt(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src)
+{
+   dst->f[0] = sqrtf(fabsf(src->f[0]));
+   dst->f[1] = sqrtf(fabsf(src->f[1]));
+   dst->f[2] = sqrtf(fabsf(src->f[2]));
+   dst->f[3] = sqrtf(fabsf(src->f[3]));
+}
+
+static void
 micro_seq(union tgsi_exec_channel *dst,
           const union tgsi_exec_channel *src0,
           const union tgsi_exec_channel *src1)
@@ -3560,6 +3570,10 @@ exec_instruction(
 
    case TGSI_OPCODE_CND:
       exec_vector_trinary(mach, inst, micro_cnd, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
+      break;
+
+   case TGSI_OPCODE_SQRT:
+      exec_vector_unary(mach, inst, micro_sqrt, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_DP2A:

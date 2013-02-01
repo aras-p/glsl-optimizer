@@ -57,7 +57,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 2, 0, 0, 0, 0, COMP, "SUB", TGSI_OPCODE_SUB },
    { 1, 3, 0, 0, 0, 0, COMP, "LRP", TGSI_OPCODE_LRP },
    { 1, 3, 0, 0, 0, 0, COMP, "CND", TGSI_OPCODE_CND },
-   { 0, 0, 0, 0, 0, 0, NONE, "", 20 },      /* removed */
+   { 1, 1, 0, 0, 0, 0, REPL, "SQRT", TGSI_OPCODE_SQRT },
    { 1, 3, 0, 0, 0, 0, REPL, "DP2A", TGSI_OPCODE_DP2A },
    { 0, 0, 0, 0, 0, 0, NONE, "", 22 },      /* removed */
    { 0, 0, 0, 0, 0, 0, NONE, "", 23 },      /* removed */
