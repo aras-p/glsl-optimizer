@@ -28,19 +28,12 @@
 #include "r600_isa.h"
 
 int r600_isa_init(struct r600_context *ctx, struct r600_isa *isa) {
+	unsigned i;
 
 	assert(ctx->chip_class >= R600 && ctx->chip_class <= CAYMAN);
 	isa->hw_class = ctx->chip_class - R600;
 
-	/* reverse lookup maps are required for bytecode parsing only,
-	 * currently it's needed for handling the bytestream from llvm backend */
-#if defined R600_USE_LLVM || defined HAVE_OPENCL
-	unsigned i, use_llvm;
-
-	use_llvm = !(ctx->screen->debug_flags & DBG_NO_LLVM);
-
-	if (!use_llvm)
-		return 0;
+	/* reverse lookup maps are required for bytecode parsing */
 
 	isa->alu_op2_map = calloc(256, sizeof(unsigned));
 	if (!isa->alu_op2_map)
@@ -88,7 +81,6 @@ int r600_isa_init(struct r600_context *ctx, struct r600_isa *isa) {
 		isa->cf_map[opc] = i + 1;
 	}
 
-#endif
 	return 0;
 }
 
