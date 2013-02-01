@@ -489,12 +489,14 @@ make_texture(struct st_context *st,
    intFormat = internal_format(ctx, format, type);
    baseInternalFormat = _mesa_base_tex_format(ctx, intFormat);
 
-   mformat = st_ChooseTextureFormat_renderable(ctx, intFormat,
-                                               format, type, GL_FALSE);
-   assert(mformat);
-
-   pipeFormat = st_mesa_format_to_pipe_format(mformat);
-   assert(pipeFormat);
+   /* Choose a pixel format for the temp texture which will hold the
+    * image to draw.
+    */
+   pipeFormat = st_choose_format(pipe->screen, intFormat, format, type,
+                                 PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW,
+                                 FALSE);
+   assert(pipeFormat != PIPE_FORMAT_NONE);
+   mformat = st_pipe_format_to_mesa_format(pipeFormat);
 
    pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
    if (!pixels)
