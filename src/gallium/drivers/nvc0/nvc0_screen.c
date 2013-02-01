@@ -231,6 +231,8 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
       return NVC0_CAP_MAX_PROGRAM_TEMPS;
    case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
       return 1;
+   case PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED:
+      return 0;
    case PIPE_SHADER_CAP_SUBROUTINES:
       return 1; /* but inlining everything, we need function declarations */
    case PIPE_SHADER_CAP_INTEGERS:
