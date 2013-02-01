@@ -89,6 +89,15 @@ This instruction replicates its result.
   dst = \frac{1}{\sqrt{|src.x|}}
 
 
+.. opcode:: SQRT - Square Root
+
+This instruction replicates its result.
+
+.. math::
+
+  dst = {\sqrt{src.x}}
+
+
 .. opcode:: EXP - Approximate Exponential Base 2
 
 .. math::
