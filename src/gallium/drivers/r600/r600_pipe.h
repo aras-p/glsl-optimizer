@@ -552,6 +552,8 @@ struct r600_context {
 	struct list_head		dirty;
 	struct list_head		enable_list;
 	unsigned			pm4_dirty_cdwords;
+
+	struct r600_isa		*isa;
 };
 
 static INLINE void r600_emit_command_buffer(struct radeon_winsys_cs *cs,

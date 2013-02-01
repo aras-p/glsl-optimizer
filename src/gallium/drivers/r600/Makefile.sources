@@ -3,6 +3,7 @@ C_SOURCES = \
 	r600_blit.c \
 	r600_buffer.c \
 	r600_hw_context.c \
+	r600_isa.c \
 	r600_pipe.c \
 	r600_query.c \
 	r600_resource.c \

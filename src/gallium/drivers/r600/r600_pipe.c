@@ -22,6 +22,7 @@
  */
 #include "r600_pipe.h"
 #include "r600_public.h"
+#include "r600_isa.h"
 
 #include <errno.h>
 #include "pipe/p_shader_tokens.h"
@@ -260,6 +261,8 @@ static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_context *rctx = (struct r600_context *)context;
 
+	r600_isa_destroy(rctx->isa);
+
 	pipe_resource_reference((struct pipe_resource**)&rctx->dummy_cmask, NULL);
 	pipe_resource_reference((struct pipe_resource**)&rctx->dummy_fmask, NULL);
 
@@ -419,7 +422,11 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	rctx->allocator_so_filled_size = u_suballocator_create(&rctx->context, 4096, 4,
 								0, PIPE_USAGE_STATIC, TRUE);
-        if (!rctx->allocator_so_filled_size)
+	if (!rctx->allocator_so_filled_size)
+		goto fail;
+
+	rctx->isa = calloc(1, sizeof(struct r600_isa));
+	if (!rctx->isa || r600_isa_init(rctx, rctx->isa))
 		goto fail;
 
 	rctx->blitter = util_blitter_create(&rctx->context);
