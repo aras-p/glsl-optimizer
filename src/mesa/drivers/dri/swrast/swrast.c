@@ -363,6 +363,7 @@ swrast_new_renderbuffer(const struct gl_config *visual, __DRIdrawable *dPriv,
 	xrb->bpp = 8;
 	break;
     default:
+	free(xrb);
 	return NULL;
     }
 
