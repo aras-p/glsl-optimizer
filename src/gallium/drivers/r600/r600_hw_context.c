@@ -201,8 +201,10 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 			/* create block table if it doesn't exist */
 			if (!range->blocks)
 				range->blocks = calloc(1 << HASH_SHIFT, sizeof(void *));
-			if (!range->blocks)
+			if (!range->blocks) {
+				free(block);
 				return -1;
+			}
 
 			range->blocks[CTX_BLOCK_ID(reg[i + j].offset)] = block;
 		}
