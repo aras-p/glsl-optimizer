@@ -32,8 +32,6 @@ int r600_isa_init(struct r600_context *ctx, struct r600_isa *isa) {
 	assert(ctx->chip_class >= R600 && ctx->chip_class <= CAYMAN);
 	isa->hw_class = ctx->chip_class - R600;
 
-	assert(isa->hw_class >= ISA_CC_R600 && isa->hw_class <= ISA_CC_EVERGREEN);
-
 	/* reverse lookup maps are required for bytecode parsing only,
 	 * currently it's needed for handling the bytestream from llvm backend */
 #if defined R600_USE_LLVM || defined HAVE_OPENCL
