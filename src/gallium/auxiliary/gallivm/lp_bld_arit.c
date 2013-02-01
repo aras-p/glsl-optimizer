@@ -769,7 +769,7 @@ lp_build_mul_norm(struct gallivm_state *gallivm,
    half = lp_build_const_int_vec(gallivm, wide_type, 1 << (n - 1));
    if (wide_type.sign) {
       LLVMValueRef minus_half = LLVMBuildNeg(builder, half, "");
-      LLVMValueRef sign = lp_build_shr_imm(&bld, half, wide_type.width - 1);
+      LLVMValueRef sign = lp_build_shr_imm(&bld, ab, wide_type.width - 1);
       half = lp_build_select(&bld, sign, minus_half, half);
    }
    ab = LLVMBuildAdd(builder, ab, half, "");
