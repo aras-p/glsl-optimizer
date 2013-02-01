@@ -170,6 +170,59 @@ static boolean blend_discard_if_src_alpha_color_1(unsigned srcRGB, unsigned srcA
             dstA == PIPE_BLENDFACTOR_ONE);
 }
 
+static unsigned blend_discard_conditionally(unsigned eqRGB, unsigned eqA,
+                                            unsigned dstRGB, unsigned dstA,
+                                            unsigned srcRGB, unsigned srcA)
+{
+    unsigned blend_control = 0;
+
+    /* Optimization: discard pixels which don't change the colorbuffer.
+     *
+     * The code below is non-trivial and some math is involved.
+     *
+     * Discarding pixels must be disabled when FP16 AA is enabled.
+     * This is a hardware bug. Also, this implementation wouldn't work
+     * with FP blending enabled and equation clamping disabled.
+     *
+     * Equations other than ADD are rarely used and therefore won't be
+     * optimized. */
+    if ((eqRGB == PIPE_BLEND_ADD || eqRGB == PIPE_BLEND_REVERSE_SUBTRACT) &&
+        (eqA == PIPE_BLEND_ADD || eqA == PIPE_BLEND_REVERSE_SUBTRACT)) {
+        /* ADD: X+Y
+         * REVERSE_SUBTRACT: Y-X
+         *
+         * The idea is:
+         * If X = src*srcFactor = 0 and Y = dst*dstFactor = 1,
+         * then CB will not be changed.
+         *
+         * Given the srcFactor and dstFactor variables, we can derive
+         * what src and dst should be equal to and discard appropriate
+         * pixels.
+         */
+        if (blend_discard_if_src_alpha_0(srcRGB, srcA, dstRGB, dstA)) {
+            blend_control |= R300_DISCARD_SRC_PIXELS_SRC_ALPHA_0;
+        } else if (blend_discard_if_src_alpha_1(srcRGB, srcA,
+                                                dstRGB, dstA)) {
+            blend_control |= R300_DISCARD_SRC_PIXELS_SRC_ALPHA_1;
+        } else if (blend_discard_if_src_color_0(srcRGB, srcA,
+                                                dstRGB, dstA)) {
+            blend_control |= R300_DISCARD_SRC_PIXELS_SRC_COLOR_0;
+        } else if (blend_discard_if_src_color_1(srcRGB, srcA,
+                                                dstRGB, dstA)) {
+            blend_control |= R300_DISCARD_SRC_PIXELS_SRC_COLOR_1;
+        } else if (blend_discard_if_src_alpha_color_0(srcRGB, srcA,
+                                                      dstRGB, dstA)) {
+            blend_control |=
+                R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_0;
+        } else if (blend_discard_if_src_alpha_color_1(srcRGB, srcA,
+                                                      dstRGB, dstA)) {
+            blend_control |=
+                R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_1;
+        }
+    }
+    return blend_control;
+}
+
 /* The hardware colormask is clunky a must be swizzled depending on the format.
  * This was figured out by trial-and-error. */
 static unsigned bgra_cmask(unsigned mask)
@@ -216,6 +269,70 @@ static unsigned arra_cmask(unsigned mask)
            (mask & PIPE_MASK_A);
 }
 
+static unsigned blend_read_enable(unsigned eqRGB, unsigned eqA,
+                                  unsigned dstRGB, unsigned dstA,
+                                  unsigned srcRGB, unsigned srcA,
+                                  boolean src_alpha_optz)
+{
+    unsigned blend_control = 0;
+
+    /* Optimization: some operations do not require the destination color.
+     *
+     * When SRC_ALPHA_SATURATE is used, colorbuffer reads must be enabled,
+     * otherwise blending gives incorrect results. It seems to be
+     * a hardware bug. */
+    if (eqRGB == PIPE_BLEND_MIN || eqA == PIPE_BLEND_MIN ||
+        eqRGB == PIPE_BLEND_MAX || eqA == PIPE_BLEND_MAX ||
+        dstRGB != PIPE_BLENDFACTOR_ZERO ||
+        dstA != PIPE_BLENDFACTOR_ZERO ||
+        srcRGB == PIPE_BLENDFACTOR_DST_COLOR ||
+        srcRGB == PIPE_BLENDFACTOR_DST_ALPHA ||
+        srcRGB == PIPE_BLENDFACTOR_INV_DST_COLOR ||
+        srcRGB == PIPE_BLENDFACTOR_INV_DST_ALPHA ||
+        srcA == PIPE_BLENDFACTOR_DST_COLOR ||
+        srcA == PIPE_BLENDFACTOR_DST_ALPHA ||
+        srcA == PIPE_BLENDFACTOR_INV_DST_COLOR ||
+        srcA == PIPE_BLENDFACTOR_INV_DST_ALPHA ||
+        srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE) {
+        /* Enable reading from the colorbuffer. */
+        blend_control |= R300_READ_ENABLE;
+
+        if (src_alpha_optz) {
+            /* Optimization: Depending on incoming pixels, we can
+             * conditionally disable the reading in hardware... */
+            if (eqRGB != PIPE_BLEND_MIN && eqA != PIPE_BLEND_MIN &&
+                eqRGB != PIPE_BLEND_MAX && eqA != PIPE_BLEND_MAX) {
+                /* Disable reading if SRC_ALPHA == 0. */
+                if ((dstRGB == PIPE_BLENDFACTOR_SRC_ALPHA ||
+                     dstRGB == PIPE_BLENDFACTOR_ZERO) &&
+                    (dstA == PIPE_BLENDFACTOR_SRC_COLOR ||
+                     dstA == PIPE_BLENDFACTOR_SRC_ALPHA ||
+                     dstA == PIPE_BLENDFACTOR_ZERO) &&
+                    (srcRGB != PIPE_BLENDFACTOR_DST_COLOR &&
+                     srcRGB != PIPE_BLENDFACTOR_DST_ALPHA &&
+                     srcRGB != PIPE_BLENDFACTOR_INV_DST_COLOR &&
+                     srcRGB != PIPE_BLENDFACTOR_INV_DST_ALPHA)) {
+                     blend_control |= R500_SRC_ALPHA_0_NO_READ;
+                }
+
+                /* Disable reading if SRC_ALPHA == 1. */
+                if ((dstRGB == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+                     dstRGB == PIPE_BLENDFACTOR_ZERO) &&
+                    (dstA == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
+                     dstA == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
+                     dstA == PIPE_BLENDFACTOR_ZERO) &&
+                    (srcRGB != PIPE_BLENDFACTOR_DST_COLOR &&
+                     srcRGB != PIPE_BLENDFACTOR_DST_ALPHA &&
+                     srcRGB != PIPE_BLENDFACTOR_INV_DST_COLOR &&
+                     srcRGB != PIPE_BLENDFACTOR_INV_DST_ALPHA)) {
+                     blend_control |= R500_SRC_ALPHA_1_NO_READ;
+                }
+            }
+        }
+    }
+    return blend_control;
+}
+
 /* Create a new blend state based on the CSO blend state.
  *
  * This encompasses alpha blending, logic/raster ops, and blend dithering. */
@@ -226,24 +343,50 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     struct r300_blend_state* blend = CALLOC_STRUCT(r300_blend_state);
     uint32_t blend_control = 0;       /* R300_RB3D_CBLEND: 0x4e04 */
     uint32_t blend_control_noclamp = 0;    /* R300_RB3D_CBLEND: 0x4e04 */
+    uint32_t blend_control_noalpha = 0;    /* R300_RB3D_CBLEND: 0x4e04 */
     uint32_t alpha_blend_control = 0; /* R300_RB3D_ABLEND: 0x4e08 */
     uint32_t alpha_blend_control_noclamp = 0; /* R300_RB3D_ABLEND: 0x4e08 */
+    uint32_t alpha_blend_control_noalpha = 0; /* R300_RB3D_ABLEND: 0x4e08 */
     uint32_t rop = 0;                 /* R300_RB3D_ROPCNTL: 0x4e18 */
     uint32_t dither = 0;              /* R300_RB3D_DITHER_CTL: 0x4e50 */
     int i;
+
+    const unsigned eqRGB = state->rt[0].rgb_func;
+    const unsigned srcRGB = state->rt[0].rgb_src_factor;
+    const unsigned dstRGB = state->rt[0].rgb_dst_factor;
+
+    const unsigned eqA = state->rt[0].alpha_func;
+    const unsigned srcA = state->rt[0].alpha_src_factor;
+    const unsigned dstA = state->rt[0].alpha_dst_factor;
+
+    unsigned srcRGBX = srcRGB;
+    unsigned dstRGBX = dstRGB;
     CB_LOCALS;
 
     blend->state = *state;
 
-    if (state->rt[0].blend_enable)
-    {
-        unsigned eqRGB = state->rt[0].rgb_func;
-        unsigned srcRGB = state->rt[0].rgb_src_factor;
-        unsigned dstRGB = state->rt[0].rgb_dst_factor;
+    /* force DST_ALPHA to ONE where we can */
+    switch (srcRGBX) {
+    case PIPE_BLENDFACTOR_DST_ALPHA:
+        srcRGBX = PIPE_BLENDFACTOR_ONE;
+        break;
+    case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+        srcRGBX = PIPE_BLENDFACTOR_ZERO;
+        break;
+    }
 
-        unsigned eqA = state->rt[0].alpha_func;
-        unsigned srcA = state->rt[0].alpha_src_factor;
-        unsigned dstA = state->rt[0].alpha_dst_factor;
+    switch (dstRGBX) {
+    case PIPE_BLENDFACTOR_DST_ALPHA:
+        dstRGBX = PIPE_BLENDFACTOR_ONE;
+        break;
+    case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+        dstRGBX = PIPE_BLENDFACTOR_ZERO;
+        break;
+    }
+
+    /* Get blending register values. */
+    if (state->rt[0].blend_enable) {
+        unsigned blend_eq;
 
         /* despite the name, ALPHA_BLEND_ENABLE has nothing to do with alpha,
          * this is just the crappy D3D naming */
@@ -251,123 +394,50 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
             R300_ALPHA_BLEND_ENABLE |
             ( r300_translate_blend_factor(srcRGB) << R300_SRC_BLEND_SHIFT) |
             ( r300_translate_blend_factor(dstRGB) << R300_DST_BLEND_SHIFT);
-        blend_control |=
-            r300_translate_blend_function(eqRGB, TRUE);
-        blend_control_noclamp |=
-            r300_translate_blend_function(eqRGB, FALSE);
 
-        /* Optimization: some operations do not require the destination color.
-         *
-         * When SRC_ALPHA_SATURATE is used, colorbuffer reads must be enabled,
-         * otherwise blending gives incorrect results. It seems to be
-         * a hardware bug. */
-        if (eqRGB == PIPE_BLEND_MIN || eqA == PIPE_BLEND_MIN ||
-            eqRGB == PIPE_BLEND_MAX || eqA == PIPE_BLEND_MAX ||
-            dstRGB != PIPE_BLENDFACTOR_ZERO ||
-            dstA != PIPE_BLENDFACTOR_ZERO ||
-            srcRGB == PIPE_BLENDFACTOR_DST_COLOR ||
-            srcRGB == PIPE_BLENDFACTOR_DST_ALPHA ||
-            srcRGB == PIPE_BLENDFACTOR_INV_DST_COLOR ||
-            srcRGB == PIPE_BLENDFACTOR_INV_DST_ALPHA ||
-            srcA == PIPE_BLENDFACTOR_DST_COLOR ||
-            srcA == PIPE_BLENDFACTOR_DST_ALPHA ||
-            srcA == PIPE_BLENDFACTOR_INV_DST_COLOR ||
-            srcA == PIPE_BLENDFACTOR_INV_DST_ALPHA ||
-            srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE) {
-            /* Enable reading from the colorbuffer. */
-            blend_control |= R300_READ_ENABLE;
-            blend_control_noclamp |= R300_READ_ENABLE;
+        blend_control_noalpha =
+            R300_ALPHA_BLEND_ENABLE |
+            ( r300_translate_blend_factor(srcRGBX) << R300_SRC_BLEND_SHIFT) |
+            ( r300_translate_blend_factor(dstRGBX) << R300_DST_BLEND_SHIFT);
 
-            if (r300screen->caps.is_r500) {
-                /* Optimization: Depending on incoming pixels, we can
-                 * conditionally disable the reading in hardware... */
-                if (eqRGB != PIPE_BLEND_MIN && eqA != PIPE_BLEND_MIN &&
-                    eqRGB != PIPE_BLEND_MAX && eqA != PIPE_BLEND_MAX) {
-                    /* Disable reading if SRC_ALPHA == 0. */
-                    if ((dstRGB == PIPE_BLENDFACTOR_SRC_ALPHA ||
-                         dstRGB == PIPE_BLENDFACTOR_ZERO) &&
-                        (dstA == PIPE_BLENDFACTOR_SRC_COLOR ||
-                         dstA == PIPE_BLENDFACTOR_SRC_ALPHA ||
-                         dstA == PIPE_BLENDFACTOR_ZERO) &&
-                        (srcRGB != PIPE_BLENDFACTOR_DST_COLOR &&
-                         srcRGB != PIPE_BLENDFACTOR_DST_ALPHA &&
-                         srcRGB != PIPE_BLENDFACTOR_INV_DST_COLOR &&
-                         srcRGB != PIPE_BLENDFACTOR_INV_DST_ALPHA)) {
-                         blend_control |= R500_SRC_ALPHA_0_NO_READ;
-                    }
+        blend_eq = r300_translate_blend_function(eqRGB, TRUE);
+        blend_control |= blend_eq;
+        blend_control_noalpha |= blend_eq;
+        blend_control_noclamp |= r300_translate_blend_function(eqRGB, FALSE);
 
-                    /* Disable reading if SRC_ALPHA == 1. */
-                    if ((dstRGB == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
-                         dstRGB == PIPE_BLENDFACTOR_ZERO) &&
-                        (dstA == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
-                         dstA == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
-                         dstA == PIPE_BLENDFACTOR_ZERO) &&
-                        (srcRGB != PIPE_BLENDFACTOR_DST_COLOR &&
-                         srcRGB != PIPE_BLENDFACTOR_DST_ALPHA &&
-                         srcRGB != PIPE_BLENDFACTOR_INV_DST_COLOR &&
-                         srcRGB != PIPE_BLENDFACTOR_INV_DST_ALPHA)) {
-                         blend_control |= R500_SRC_ALPHA_1_NO_READ;
-                    }
-                }
-            }
-        }
+        /* Optimization: some operations do not require the destination color. */
+        blend_control |= blend_read_enable(eqRGB, eqA, dstRGB, dstA,
+                                           srcRGB, srcA, r300screen->caps.is_r500);
+        blend_control_noclamp |= blend_read_enable(eqRGB, eqA, dstRGB, dstA,
+                                                   srcRGB, srcA, FALSE);
+        blend_control_noalpha |= blend_read_enable(eqRGB, eqA, dstRGBX, dstA,
+                                                   srcRGBX, srcA, r300screen->caps.is_r500);
 
         /* Optimization: discard pixels which don't change the colorbuffer.
-         *
-         * The code below is non-trivial and some math is involved.
-         *
-         * Discarding pixels must be disabled when FP16 AA is enabled.
-         * This is a hardware bug. Also, this implementation wouldn't work
-         * with FP blending enabled and equation clamping disabled.
-         *
-         * Equations other than ADD are rarely used and therefore won't be
-         * optimized. */
-        if ((eqRGB == PIPE_BLEND_ADD || eqRGB == PIPE_BLEND_REVERSE_SUBTRACT) &&
-            (eqA == PIPE_BLEND_ADD || eqA == PIPE_BLEND_REVERSE_SUBTRACT)) {
-            /* ADD: X+Y
-             * REVERSE_SUBTRACT: Y-X
-             *
-             * The idea is:
-             * If X = src*srcFactor = 0 and Y = dst*dstFactor = 1,
-             * then CB will not be changed.
-             *
-             * Given the srcFactor and dstFactor variables, we can derive
-             * what src and dst should be equal to and discard appropriate
-             * pixels.
-             */
-            if (blend_discard_if_src_alpha_0(srcRGB, srcA, dstRGB, dstA)) {
-                blend_control |= R300_DISCARD_SRC_PIXELS_SRC_ALPHA_0;
-            } else if (blend_discard_if_src_alpha_1(srcRGB, srcA,
-                                                    dstRGB, dstA)) {
-                blend_control |= R300_DISCARD_SRC_PIXELS_SRC_ALPHA_1;
-            } else if (blend_discard_if_src_color_0(srcRGB, srcA,
-                                                    dstRGB, dstA)) {
-                blend_control |= R300_DISCARD_SRC_PIXELS_SRC_COLOR_0;
-            } else if (blend_discard_if_src_color_1(srcRGB, srcA,
-                                                    dstRGB, dstA)) {
-                blend_control |= R300_DISCARD_SRC_PIXELS_SRC_COLOR_1;
-            } else if (blend_discard_if_src_alpha_color_0(srcRGB, srcA,
-                                                          dstRGB, dstA)) {
-                blend_control |=
-                    R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_0;
-            } else if (blend_discard_if_src_alpha_color_1(srcRGB, srcA,
-                                                          dstRGB, dstA)) {
-                blend_control |=
-                    R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_1;
-            }
-        }
+         * It cannot be used with FP16 AA. */
+        blend_control |= blend_discard_conditionally(eqRGB, eqA, dstRGB, dstA,
+                                                     srcRGB, srcA);
+        blend_control_noalpha |= blend_discard_conditionally(eqRGB, eqA, dstRGBX, dstA,
+                                                             srcRGBX, srcA);
 
         /* separate alpha */
         if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
             blend_control |= R300_SEPARATE_ALPHA_ENABLE;
             blend_control_noclamp |= R300_SEPARATE_ALPHA_ENABLE;
+
             alpha_blend_control = alpha_blend_control_noclamp =
                 (r300_translate_blend_factor(srcA) << R300_SRC_BLEND_SHIFT) |
                 (r300_translate_blend_factor(dstA) << R300_DST_BLEND_SHIFT);
-            alpha_blend_control |=
+            alpha_blend_control |= r300_translate_blend_function(eqA, TRUE);
+            alpha_blend_control_noclamp |= r300_translate_blend_function(eqA, FALSE);
+        }
+        if (srcA != srcRGBX || dstA != dstRGBX || eqA != eqRGB) {
+            blend_control_noalpha |= R300_SEPARATE_ALPHA_ENABLE;
+
+            alpha_blend_control_noalpha =
+                (r300_translate_blend_factor(srcA) << R300_SRC_BLEND_SHIFT) |
+                (r300_translate_blend_factor(dstA) << R300_DST_BLEND_SHIFT) |
                 r300_translate_blend_function(eqA, TRUE);
-            alpha_blend_control_noclamp |=
-                r300_translate_blend_function(eqA, FALSE);
         }
     }
 
@@ -397,22 +467,26 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
             rrrr_cmask,
             aaaa_cmask,
             grrg_cmask,
-            arra_cmask
+            arra_cmask,
+            bgra_cmask,
+            rgba_cmask
         };
 
         for (i = 0; i < COLORMASK_NUM_SWIZZLES; i++) {
+            boolean has_alpha = i != COLORMASK_RGBX && i != COLORMASK_BGRX;
+
             BEGIN_CB(blend->cb_clamp[i], 8);
             OUT_CB_REG(R300_RB3D_ROPCNTL, rop);
             OUT_CB_REG_SEQ(R300_RB3D_CBLEND, 3);
-            OUT_CB(blend_control);
-            OUT_CB(alpha_blend_control);
+            OUT_CB(has_alpha ? blend_control : blend_control_noalpha);
+            OUT_CB(has_alpha ? alpha_blend_control : alpha_blend_control_noalpha);
             OUT_CB(func[i](state->rt[0].colormask));
             OUT_CB_REG(R300_RB3D_DITHER_CTL, dither);
             END_CB;
         }
     }
 
-    /* Build a command buffer. */
+    /* Build a command buffer (for FP16). */
     BEGIN_CB(blend->cb_noclamp, 8);
     OUT_CB_REG(R300_RB3D_ROPCNTL, rop);
     OUT_CB_REG_SEQ(R300_RB3D_CBLEND, 3);

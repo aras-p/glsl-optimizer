@@ -51,6 +51,8 @@ enum colormask_swizzle {
     COLORMASK_AAAA,
     COLORMASK_GRRG,
     COLORMASK_ARRA,
+    COLORMASK_BGRX,
+    COLORMASK_RGBX,
     COLORMASK_NUM_SWIZZLES
 };
 
