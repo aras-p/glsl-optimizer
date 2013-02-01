@@ -301,6 +301,47 @@ _save_reset_counters(struct gl_context *ctx)
    save->dangling_attr_ref = 0;
 }
 
+/**
+ * For a list of prims, try merging prims that can just be extensions of the
+ * previous prim.
+ */
+static void
+vbo_merge_prims(struct gl_context *ctx,
+                struct _mesa_prim *prim_list,
+                GLuint *prim_count)
+{
+   GLuint i;
+   struct _mesa_prim *prev_prim = prim_list;
+
+   for (i = 1; i < *prim_count; i++) {
+      struct _mesa_prim *this_prim = prim_list + i;
+
+      if (this_prim->mode == prev_prim->mode &&
+          this_prim->mode == GL_QUADS &&
+          this_prim->count % 4 == 0 &&
+          prev_prim->count % 4 == 0 &&
+          this_prim->start == prev_prim->start + prev_prim->count &&
+          this_prim->basevertex == prev_prim->basevertex &&
+          this_prim->num_instances == prev_prim->num_instances &&
+          this_prim->base_instance == prev_prim->base_instance) {
+         /* We've found a prim that just extend the previous one.  Tack it
+          * onto the previous one, and let this primitive struct get dropped.
+          */
+         prev_prim->count += this_prim->count;
+         prev_prim->end = this_prim->end;
+         continue;
+      }
+
+      /* If any previous primitives have been dropped, then we need to copy
+       * this later one into the next available slot.
+       */
+      prev_prim++;
+      if (prev_prim != this_prim)
+         *prev_prim = *this_prim;
+   }
+
+   *prim_count = prev_prim - prim_list + 1;
+}
 
 /**
  * Insert the active immediate struct onto the display list currently
@@ -379,6 +420,8 @@ _save_compile_vertex_list(struct gl_context *ctx)
    /* Copy duplicated vertices 
     */
    save->copied.nr = _save_copy_vertices(ctx, node, save->buffer);
+
+   vbo_merge_prims(ctx, node->prim, &node->prim_count);
 
    /* Deal with GL_COMPILE_AND_EXECUTE:
     */
