@@ -322,6 +322,7 @@ public:
    
    int glsl_version;
    bool native_integers;
+   bool have_sqrt;
 
    variable_storage *find_variable_storage(ir_variable *var);
 
@@ -1761,13 +1762,18 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_sqrt:
-      /* sqrt(x) = x * rsq(x). */
-      emit_scalar(ir, TGSI_OPCODE_RSQ, result_dst, op[0]);
-      emit(ir, TGSI_OPCODE_MUL, result_dst, result_src, op[0]);
-      /* For incoming channels <= 0, set the result to 0. */
-      op[0].negate = ~op[0].negate;
-      emit(ir, TGSI_OPCODE_CMP, result_dst,
-        		  op[0], result_src, st_src_reg_for_float(0.0));
+      if (have_sqrt) {
+         emit_scalar(ir, TGSI_OPCODE_SQRT, result_dst, op[0]);
+      }
+      else {
+         /* sqrt(x) = x * rsq(x). */
+         emit_scalar(ir, TGSI_OPCODE_RSQ, result_dst, op[0]);
+         emit(ir, TGSI_OPCODE_MUL, result_dst, result_src, op[0]);
+         /* For incoming channels <= 0, set the result to 0. */
+         op[0].negate = ~op[0].negate;
+         emit(ir, TGSI_OPCODE_CMP, result_dst,
+              op[0], result_src, st_src_reg_for_float(0.0));
+      }
       break;
    case ir_unop_rsq:
       emit_scalar(ir, TGSI_OPCODE_RSQ, result_dst, op[0]);
@@ -4956,18 +4962,23 @@ get_mesa_program(struct gl_context *ctx,
    bool progress;
    struct gl_shader_compiler_options *options =
          &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(shader->Type)];
+   struct pipe_screen *pscreen = ctx->st->pipe->screen;
+   unsigned ptarget;
 
    switch (shader->Type) {
    case GL_VERTEX_SHADER:
       target = GL_VERTEX_PROGRAM_ARB;
+      ptarget = PIPE_SHADER_VERTEX;
       target_string = "vertex";
       break;
    case GL_FRAGMENT_SHADER:
       target = GL_FRAGMENT_PROGRAM_ARB;
+      ptarget = PIPE_SHADER_FRAGMENT;
       target_string = "fragment";
       break;
    case GL_GEOMETRY_SHADER:
       target = GL_GEOMETRY_PROGRAM_NV;
+      ptarget = PIPE_SHADER_GEOMETRY;
       target_string = "geometry";
       break;
    default:
@@ -4988,6 +4999,9 @@ get_mesa_program(struct gl_context *ctx,
    v->options = options;
    v->glsl_version = ctx->Const.GLSLVersion;
    v->native_integers = ctx->Const.NativeIntegers;
+
+   v->have_sqrt = pscreen->get_shader_param(pscreen, ptarget,
+                                            PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED);
 
    _mesa_generate_parameters_list_for_uniforms(shader_program, shader,
 					       prog->Parameters);
