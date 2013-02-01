@@ -768,6 +768,7 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       break;
    default:
       _eglError(EGL_BAD_PARAMETER, "eglCreateContext");
+      free(dri2_ctx);
       return NULL;
    }
 
