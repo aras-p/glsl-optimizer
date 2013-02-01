@@ -1586,22 +1586,37 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
 }
 
 
+/**
+ * Called via ctx->Driver.ChooseTextureFormat().
+ */
 gl_format
-st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
-				  GLenum format, GLenum type, GLboolean renderable)
+st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
+                       GLint internalFormat,
+                       GLenum format, GLenum type)
 {
+   const boolean want_renderable =
+      internalFormat == 3 || internalFormat == 4 ||
+      internalFormat == GL_RGB || internalFormat == GL_RGBA ||
+      internalFormat == GL_RGB8 || internalFormat == GL_RGBA8 ||
+      internalFormat == GL_BGRA;
    struct pipe_screen *screen = st_context(ctx)->pipe->screen;
    enum pipe_format pFormat;
-   uint bindings;
+   unsigned bindings;
 
-   (void) format;
-   (void) type;
+   if (target == GL_TEXTURE_1D || target == GL_TEXTURE_1D_ARRAY) {
+      /* We don't do compression for these texture targets because of
+       * difficulty with sub-texture updates on non-block boundaries, etc.
+       * So change the internal format request to an uncompressed format.
+       */
+      internalFormat =
+        _mesa_generic_compressed_format_to_uncompressed_format(internalFormat);
+   }
 
    /* GL textures may wind up being render targets, but we don't know
     * that in advance.  Specify potential render target flags now.
     */
    bindings = PIPE_BIND_SAMPLER_VIEW;
-   if (renderable) {
+   if (want_renderable) {
       if (_mesa_is_depth_or_stencil_format(internalFormat))
 	 bindings |= PIPE_BIND_DEPTH_STENCIL;
       else
@@ -1624,34 +1639,6 @@ st_ChooseTextureFormat_renderable(struct gl_context *ctx, GLint internalFormat,
    }
 
    return st_pipe_format_to_mesa_format(pFormat);
-}
-
-
-/**
- * Called via ctx->Driver.ChooseTextureFormat().
- */
-gl_format
-st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
-                       GLint internalFormat,
-                       GLenum format, GLenum type)
-{
-   boolean want_renderable =
-      internalFormat == 3 || internalFormat == 4 ||
-      internalFormat == GL_RGB || internalFormat == GL_RGBA ||
-      internalFormat == GL_RGB8 || internalFormat == GL_RGBA8 ||
-      internalFormat == GL_BGRA;
-
-   if (target == GL_TEXTURE_1D || target == GL_TEXTURE_1D_ARRAY) {
-      /* We don't do compression for these texture targets because of
-       * difficulty with sub-texture updates on non-block boundaries, etc.
-       * So change the internal format request to an uncompressed format.
-       */
-      internalFormat =
-        _mesa_generic_compressed_format_to_uncompressed_format(internalFormat);
-   }
-
-   return st_ChooseTextureFormat_renderable(ctx, internalFormat,
-					    format, type, want_renderable);
 }
 
 
