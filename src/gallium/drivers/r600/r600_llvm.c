@@ -537,6 +537,7 @@ const char * r600_llvm_gpu_string(enum radeon_family family)
 	case CHIP_RV630:
 	case CHIP_RV620:
 	case CHIP_RV635:
+	case CHIP_RV670:
 	case CHIP_RS780:
 	case CHIP_RS880:
 		gpu_family = "r600";
@@ -547,7 +548,6 @@ const char * r600_llvm_gpu_string(enum radeon_family family)
 	case CHIP_RV730:
 		gpu_family = "rv730";
 		break;
-	case CHIP_RV670:
 	case CHIP_RV740:
 	case CHIP_RV770:
 		gpu_family = "rv770";
