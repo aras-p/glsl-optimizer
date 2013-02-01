@@ -487,6 +487,7 @@ static void r300_set_blend_color(struct pipe_context* pipe,
         (struct r300_blend_color_state*)r300->blend_color_state.state;
     struct pipe_blend_color c;
     enum pipe_format format = fb->nr_cbufs ? fb->cbufs[0]->format : 0;
+    float tmp;
     CB_LOCALS;
 
     state->state = *color; /* Save it, so that we can reuse it in set_fb_state */
@@ -511,6 +512,13 @@ static void r300_set_blend_color(struct pipe_context* pipe,
 
         case PIPE_FORMAT_L8A8_UNORM:
             c.color[2] = c.color[3];
+            break;
+
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
+        case PIPE_FORMAT_R8G8B8X8_UNORM:
+            tmp = c.color[0];
+            c.color[0] = c.color[2];
+            c.color[2] = tmp;
             break;
 
         default:;
@@ -918,6 +926,9 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
 
     /* Need to reset clamping or colormask. */
     r300_mark_atom_dirty(r300, &r300->blend_state);
+
+    /* Re-swizzle the blend color. */
+    r300_set_blend_color(pipe, &((struct r300_blend_color_state*)r300->blend_color_state.state)->state);
 
     /* If zsbuf is set from NULL to non-NULL or vice versa.. */
     if (!!old_state->zsbuf != !!state->zsbuf) {
