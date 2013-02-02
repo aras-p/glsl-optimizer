@@ -72,6 +72,7 @@ AM_CPPFLAGS += \
 	-I$(top_srcdir)/src/gallium/winsys \
 	-I$(top_srcdir)/src/egl/wayland/wayland-egl \
 	-I$(top_srcdir)/src/egl/wayland/wayland-drm \
+	-I$(top_builddir)/src/egl/wayland/wayland-drm \
 	-DHAVE_WAYLAND_BACKEND
 endif
 
