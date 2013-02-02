@@ -54,7 +54,7 @@
  */
 uint32_t
 get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
-                  int fs_attr, bool two_side_color)
+                  int fs_attr, bool two_side_color, uint32_t *max_source_attr)
 {
    int vs_attr = _mesa_frag_attrib_to_vert_result(fs_attr);
    if (vs_attr < 0 || vs_attr == VERT_RESULT_HPOS) {
@@ -100,6 +100,10 @@ get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
         vue_map->slot_to_vert_result[slot+1] == VERT_RESULT_BFC0) ||
        (vue_map->slot_to_vert_result[slot] == VERT_RESULT_COL1 &&
         vue_map->slot_to_vert_result[slot+1] == VERT_RESULT_BFC1));
+
+   /* Update max_source_attr.  If swizzling, the SF will read this slot + 1. */
+   if (*max_source_attr < source_attr + swizzling)
+      *max_source_attr = source_attr + swizzling;
 
    if (swizzling) {
       return source_attr |
@@ -281,6 +285,7 @@ upload_sf_state(struct brw_context *brw)
    /* Create the mapping from the FS inputs we produce to the VS outputs
     * they source from.
     */
+   uint32_t max_source_attr = 0;
    for (; attr < FRAG_ATTRIB_MAX; attr++) {
       enum glsl_interp_qualifier interp_qualifier =
          brw->fragment_program->InterpQualifier[attr];
@@ -316,7 +321,8 @@ upload_sf_state(struct brw_context *brw)
       attr_overrides[input_index++] =
          get_attr_override(&brw->vs.prog_data->vue_map,
 			   urb_entry_read_offset, attr,
-                           ctx->VertexProgram._TwoSideEnabled);
+                           ctx->VertexProgram._TwoSideEnabled,
+                           &max_source_attr);
    }
 
    for (; input_index < FRAG_ATTRIB_MAX; input_index++)

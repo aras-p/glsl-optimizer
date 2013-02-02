@@ -84,6 +84,7 @@ upload_sbe_state(struct brw_context *brw)
    /* Create the mapping from the FS inputs we produce to the VS outputs
     * they source from.
     */
+   uint32_t max_source_attr = 0;
    for (; attr < FRAG_ATTRIB_MAX; attr++) {
       enum glsl_interp_qualifier interp_qualifier =
          brw->fragment_program->InterpQualifier[attr];
@@ -118,7 +119,8 @@ upload_sbe_state(struct brw_context *brw)
       attr_overrides[input_index++] =
          get_attr_override(&brw->vs.prog_data->vue_map,
 			   urb_entry_read_offset, attr,
-                           ctx->VertexProgram._TwoSideEnabled);
+                           ctx->VertexProgram._TwoSideEnabled,
+                           &max_source_attr);
    }
 
    for (; input_index < FRAG_ATTRIB_MAX; input_index++)

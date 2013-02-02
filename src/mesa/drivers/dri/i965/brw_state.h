@@ -225,7 +225,7 @@ void upload_default_color(struct brw_context *brw,
 /* gen6_sf_state.c */
 uint32_t
 get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
-                  int fs_attr, bool two_side_color);
+                  int fs_attr, bool two_side_color, uint32_t *max_source_attr);
 
 #ifdef __cplusplus
 }
