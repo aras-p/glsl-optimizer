@@ -547,11 +547,15 @@ public:
 
 class ast_parameter_declarator : public ast_node {
 public:
-   ast_parameter_declarator()
+   ast_parameter_declarator() :
+      type(NULL),
+      identifier(NULL),
+      is_array(false),
+      array_size(NULL),
+      formal_parameter(false),
+      is_void(false)
    {
-      this->identifier = NULL;
-      this->is_array = false;
-      this->array_size = 0;
+      /* empty */
    }
 
    virtual void print(void) const;
