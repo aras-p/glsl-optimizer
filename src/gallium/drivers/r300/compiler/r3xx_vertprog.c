@@ -193,7 +193,8 @@ static void ei_vector1(struct r300_vertex_program_code *vp,
 				     0,
 				     t_dst_index(vp, &vpi->DstReg),
 				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
+				     t_dst_class(vpi->DstReg.File),
+                                     vpi->SaturateMode == RC_SATURATE_ZERO_ONE);
 	inst[1] = t_src(vp, &vpi->SrcReg[0]);
 	inst[2] = __CONST(0, RC_SWIZZLE_ZERO);
 	inst[3] = __CONST(0, RC_SWIZZLE_ZERO);
@@ -209,7 +210,8 @@ static void ei_vector2(struct r300_vertex_program_code *vp,
 				     0,
 				     t_dst_index(vp, &vpi->DstReg),
 				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
+				     t_dst_class(vpi->DstReg.File),
+                                     vpi->SaturateMode == RC_SATURATE_ZERO_ONE);
 	inst[1] = t_src(vp, &vpi->SrcReg[0]);
 	inst[2] = t_src(vp, &vpi->SrcReg[1]);
 	inst[3] = __CONST(1, RC_SWIZZLE_ZERO);
@@ -225,7 +227,8 @@ static void ei_math1(struct r300_vertex_program_code *vp,
 				     0,
 				     t_dst_index(vp, &vpi->DstReg),
 				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
+				     t_dst_class(vpi->DstReg.File),
+                                     vpi->SaturateMode == RC_SATURATE_ZERO_ONE);
 	inst[1] = t_src_scalar(vp, &vpi->SrcReg[0]);
 	inst[2] = __CONST(0, RC_SWIZZLE_ZERO);
 	inst[3] = __CONST(0, RC_SWIZZLE_ZERO);
@@ -242,7 +245,8 @@ static void ei_lit(struct r300_vertex_program_code *vp,
 				     0,
 				     t_dst_index(vp, &vpi->DstReg),
 				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
+				     t_dst_class(vpi->DstReg.File),
+                                     vpi->SaturateMode == RC_SATURATE_ZERO_ONE);
 	/* NOTE: Users swizzling might not work. */
 	inst[1] = PVS_SRC_OPERAND(t_src_index(vp, &vpi->SrcReg[0]), t_swizzle(GET_SWZ(vpi->SrcReg[0].Swizzle, 0)),	// X
 				  t_swizzle(GET_SWZ(vpi->SrcReg[0].Swizzle, 3)),	// W
@@ -309,14 +313,16 @@ static void ei_mad(struct r300_vertex_program_code *vp,
 				1,
 				t_dst_index(vp, &vpi->DstReg),
 				t_dst_mask(vpi->DstReg.WriteMask),
-				t_dst_class(vpi->DstReg.File));
+				t_dst_class(vpi->DstReg.File),
+                                vpi->SaturateMode == RC_SATURATE_ZERO_ONE);
 	} else {
 		inst[0] = PVS_OP_DST_OPERAND(VE_MULTIPLY_ADD,
 				0,
 				0,
 				t_dst_index(vp, &vpi->DstReg),
 				t_dst_mask(vpi->DstReg.WriteMask),
-				t_dst_class(vpi->DstReg.File));
+				t_dst_class(vpi->DstReg.File),
+                                vpi->SaturateMode == RC_SATURATE_ZERO_ONE);
 
 		/* Arguments with constant swizzles still count as a unique
 		 * temporary, so we should make sure these arguments share a
@@ -349,7 +355,8 @@ static void ei_pow(struct r300_vertex_program_code *vp,
 				     0,
 				     t_dst_index(vp, &vpi->DstReg),
 				     t_dst_mask(vpi->DstReg.WriteMask),
-				     t_dst_class(vpi->DstReg.File));
+				     t_dst_class(vpi->DstReg.File),
+                                     vpi->SaturateMode == RC_SATURATE_ZERO_ONE);
 	inst[1] = t_src_scalar(vp, &vpi->SrcReg[0]);
 	inst[2] = __CONST(0, RC_SWIZZLE_ZERO);
 	inst[3] = t_src_scalar(vp, &vpi->SrcReg[1]);
@@ -380,7 +387,7 @@ static void translate_vertex_program(struct radeon_compiler *c, void *user)
 
 		if (info->HasDstReg) {
 			/* Neither is Saturate. */
-			if (vpi->SaturateMode != RC_SATURATE_NONE) {
+			if (vpi->SaturateMode != RC_SATURATE_NONE && !c->is_r500) {
 				rc_error(&compiler->Base, "Vertex program does not support the Saturate "
 					 "modifier (yet).\n");
 			}
