@@ -205,6 +205,39 @@ intel_region_alloc_for_handle(struct intel_screen *screen,
    return region;
 }
 
+struct intel_region *
+intel_region_alloc_for_fd(struct intel_screen *screen,
+                          GLuint cpp,
+                          GLuint width, GLuint height, GLuint pitch,
+                          int fd, const char *name)
+{
+   struct intel_region *region;
+   drm_intel_bo *buffer;
+   int ret;
+   uint32_t bit_6_swizzle, tiling;
+
+   buffer = drm_intel_bo_gem_create_from_prime(screen->bufmgr,
+                                               fd, height * pitch);
+   if (buffer == NULL)
+      return NULL;
+   ret = drm_intel_bo_get_tiling(buffer, &tiling, &bit_6_swizzle);
+   if (ret != 0) {
+      fprintf(stderr, "Couldn't get tiling of buffer (%s): %s\n",
+	      name, strerror(-ret));
+      drm_intel_bo_unreference(buffer);
+      return NULL;
+   }
+
+   region = intel_region_alloc_internal(screen, cpp,
+					width, height, pitch, tiling, buffer);
+   if (region == NULL) {
+      drm_intel_bo_unreference(buffer);
+      return NULL;
+   }
+
+   return region;
+}
+
 void
 intel_region_reference(struct intel_region **dst, struct intel_region *src)
 {

@@ -87,6 +87,12 @@ intel_region_alloc_for_handle(struct intel_screen *screen,
 			      GLuint width, GLuint height, GLuint pitch,
 			      unsigned int handle, const char *name);
 
+struct intel_region *
+intel_region_alloc_for_fd(struct intel_screen *screen,
+                          GLuint cpp,
+                          GLuint width, GLuint height, GLuint pitch,
+                          int fd, const char *name);
+
 bool
 intel_region_flink(struct intel_region *region, uint32_t *name);
 
