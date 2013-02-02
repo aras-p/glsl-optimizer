@@ -451,6 +451,46 @@ static const struct wl_callback_listener frame_listener = {
 	wayland_frame_callback
 };
 
+static void
+create_wl_buffer(struct dri2_egl_surface *dri2_surf)
+{
+   struct dri2_egl_display *dri2_dpy =
+      dri2_egl_display(dri2_surf->base.Resource.Display);
+   int fd;
+
+   if (dri2_surf->current->wl_buffer != NULL)
+      return;
+
+   if (dri2_dpy->capabilities & WL_DRM_CAPABILITY_PRIME) {
+      dri2_dpy->image->queryImage(dri2_surf->current->dri_image,
+                                  __DRI_IMAGE_ATTRIB_FD, &fd);
+
+      dri2_surf->current->wl_buffer =
+         wl_drm_create_prime_buffer(dri2_dpy->wl_drm,
+                                    fd,
+                                    dri2_surf->base.Width,
+                                    dri2_surf->base.Height,
+                                    dri2_surf->format,
+                                    0, dri2_surf->current->pitch,
+                                    0, 0,
+                                    0, 0);
+      close(fd);
+   } else {
+      dri2_surf->current->wl_buffer =
+         wl_drm_create_buffer(dri2_dpy->wl_drm,
+                              dri2_surf->current->name,
+                              dri2_surf->base.Width,
+                              dri2_surf->base.Height,
+                              dri2_surf->current->pitch,
+                              dri2_surf->format);
+   }
+
+   wl_proxy_set_queue((struct wl_proxy *) dri2_surf->current->wl_buffer,
+                      dri2_dpy->wl_queue);
+   wl_buffer_add_listener(dri2_surf->current->wl_buffer,
+                          &wl_buffer_listener, dri2_surf);
+}
+
 /**
  * Called via eglSwapBuffers(), drv->API.SwapBuffers().
  */
@@ -488,19 +528,7 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    dri2_surf->current = dri2_surf->back;
    dri2_surf->back = NULL;
 
-   if (dri2_surf->current->wl_buffer == NULL) {
-      dri2_surf->current->wl_buffer =
-         wl_drm_create_buffer(dri2_dpy->wl_drm,
-                              dri2_surf->current->name,
-                              dri2_surf->base.Width,
-                              dri2_surf->base.Height,
-                              dri2_surf->current->pitch,
-                              dri2_surf->format);
-      wl_proxy_set_queue((struct wl_proxy *) dri2_surf->current->wl_buffer,
-                         dri2_dpy->wl_queue);
-      wl_buffer_add_listener(dri2_surf->current->wl_buffer,
-                             &wl_buffer_listener, dri2_surf);
-   }
+   create_wl_buffer(dri2_surf);
 
    wl_surface_attach(dri2_surf->wl_win->surface,
                      dri2_surf->current->wl_buffer,
@@ -630,6 +658,14 @@ drm_handle_format(void *data, struct wl_drm *drm, uint32_t format)
 }
 
 static void
+drm_handle_capabilities(void *data, struct wl_drm *drm, uint32_t value)
+{
+   struct dri2_egl_display *dri2_dpy = data;
+
+   dri2_dpy->capabilities = value;
+}
+
+static void
 drm_handle_authenticated(void *data, struct wl_drm *drm)
 {
    struct dri2_egl_display *dri2_dpy = data;
@@ -640,7 +676,8 @@ drm_handle_authenticated(void *data, struct wl_drm *drm)
 static const struct wl_drm_listener drm_listener = {
 	drm_handle_device,
 	drm_handle_format,
-	drm_handle_authenticated
+	drm_handle_authenticated,
+	drm_handle_capabilities
 };
 
 static void
@@ -649,9 +686,11 @@ registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
 {
    struct dri2_egl_display *dri2_dpy = data;
 
+   if (version > 1)
+      version = 2;
    if (strcmp(interface, "wl_drm") == 0) {
       dri2_dpy->wl_drm =
-         wl_registry_bind(registry, name, &wl_drm_interface, 1);
+         wl_registry_bind(registry, name, &wl_drm_interface, version);
       wl_drm_add_listener(dri2_dpy->wl_drm, &drm_listener, dri2_dpy);
    }
 }

@@ -132,6 +132,7 @@ struct dri2_egl_display
    struct wl_event_queue    *wl_queue;
    int			     authenticated;
    int			     formats;
+   uint32_t                  capabilities;
 #endif
 
    int (*authenticate) (_EGLDisplay *disp, uint32_t id);

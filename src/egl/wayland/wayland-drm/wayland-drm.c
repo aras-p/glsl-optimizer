@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <unistd.h>
 
 #include <wayland-server.h>
 #include "wayland-drm.h"
@@ -41,6 +42,7 @@ struct wl_drm {
 
 	void *user_data;
 	char *device_name;
+        uint32_t flags;
 
 	struct wayland_drm_callbacks *callbacks;
 };
@@ -67,7 +69,8 @@ const static struct wl_buffer_interface drm_buffer_interface = {
 
 static void
 create_buffer(struct wl_client *client, struct wl_resource *resource,
-              uint32_t id, uint32_t name, int32_t width, int32_t height,
+              uint32_t id, uint32_t name, int fd,
+              int32_t width, int32_t height,
               uint32_t format,
               int32_t offset0, int32_t stride0,
               int32_t offset1, int32_t stride1,
@@ -93,7 +96,7 @@ create_buffer(struct wl_client *client, struct wl_resource *resource,
 	buffer->offset[2] = offset2;
 	buffer->stride[2] = stride2;
 
-        drm->callbacks->reference_buffer(drm->user_data, name, buffer);
+        drm->callbacks->reference_buffer(drm->user_data, name, fd, buffer);
 	if (buffer->driver_buffer == NULL) {
 		wl_resource_post_error(resource,
 				       WL_DRM_ERROR_INVALID_NAME,
@@ -131,7 +134,7 @@ drm_create_buffer(struct wl_client *client, struct wl_resource *resource,
         }
 
         create_buffer(client, resource, id,
-                      name, width, height, format, 0, stride, 0, 0, 0, 0);
+                      name, -1, width, height, format, 0, stride, 0, 0, 0, 0);
 }
 
 static void
@@ -159,8 +162,22 @@ drm_create_planar_buffer(struct wl_client *client,
            return;
         }
 
-        create_buffer(client, resource, id, name, width, height, format,
+        create_buffer(client, resource, id, name, -1, width, height, format,
                       offset0, stride0, offset1, stride1, offset2, stride2);
+}
+
+static void
+drm_create_prime_buffer(struct wl_client *client,
+                        struct wl_resource *resource,
+                        uint32_t id, int fd,
+                        int32_t width, int32_t height, uint32_t format,
+                        int32_t offset0, int32_t stride0,
+                        int32_t offset1, int32_t stride1,
+                        int32_t offset2, int32_t stride2)
+{
+        create_buffer(client, resource, id, 0, fd, width, height, format,
+                      offset0, stride0, offset1, stride1, offset2, stride2);
+        close(fd);
 }
 
 static void
@@ -180,7 +197,8 @@ drm_authenticate(struct wl_client *client,
 const static struct wl_drm_interface drm_interface = {
 	drm_authenticate,
 	drm_create_buffer,
-        drm_create_planar_buffer
+        drm_create_planar_buffer,
+        drm_create_prime_buffer
 };
 
 static void
@@ -188,6 +206,7 @@ bind_drm(struct wl_client *client, void *data, uint32_t version, uint32_t id)
 {
 	struct wl_drm *drm = data;
 	struct wl_resource *resource;
+        uint32_t capabilities;
 
 	resource = wl_client_add_object(client, &wl_drm_interface,
 					&drm_interface, id, data);
@@ -204,11 +223,19 @@ bind_drm(struct wl_client *client, void *data, uint32_t version, uint32_t id)
         wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_NV12);
         wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_NV16);
         wl_resource_post_event(resource, WL_DRM_FORMAT, WL_DRM_FORMAT_YUYV);
+
+        capabilities = 0;
+        if (drm->flags & WAYLAND_DRM_PRIME)
+           capabilities |= WL_DRM_CAPABILITY_PRIME;
+
+        if (version >= 2)
+           wl_resource_post_event(resource, WL_DRM_CAPABILITIES, capabilities);
 }
 
 struct wl_drm *
 wayland_drm_init(struct wl_display *display, char *device_name,
-                 struct wayland_drm_callbacks *callbacks, void *user_data)
+                 struct wayland_drm_callbacks *callbacks, void *user_data,
+                 uint32_t flags)
 {
 	struct wl_drm *drm;
 
@@ -218,6 +245,7 @@ wayland_drm_init(struct wl_display *display, char *device_name,
 	drm->device_name = strdup(device_name);
 	drm->callbacks = callbacks;
 	drm->user_data = user_data;
+        drm->flags = flags;
 
 	wl_display_add_global(display, &wl_drm_interface, drm, bind_drm);
 
