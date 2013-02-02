@@ -34,7 +34,6 @@ upload_sbe_state(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
-   uint32_t urb_entry_read_length;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    uint32_t num_outputs = _mesa_bitcount_64(brw->fragment_program->Base.InputsRead);
    /* _NEW_LIGHT */
@@ -48,22 +47,8 @@ upload_sbe_state(struct brw_context *brw)
    bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    uint32_t point_sprite_origin;
 
-   /* CACHE_NEW_VS_PROG */
-   urb_entry_read_length = ((brw->vs.prog_data->vue_map.num_slots + 1) / 2 -
-			    urb_entry_read_offset);
-   if (urb_entry_read_length == 0) {
-      /* Setting the URB entry read length to 0 causes undefined behavior, so
-       * if we have no URB data to read, set it to 1.
-       */
-      urb_entry_read_length = 1;
-   }
-
    /* FINISHME: Attribute Swizzle Control Mode? */
-   dw1 =
-      GEN7_SBE_SWIZZLE_ENABLE |
-      num_outputs << GEN7_SBE_NUM_OUTPUTS_SHIFT |
-      urb_entry_read_length << GEN7_SBE_URB_ENTRY_READ_LENGTH_SHIFT |
-      urb_entry_read_offset << GEN7_SBE_URB_ENTRY_READ_OFFSET_SHIFT;
+   dw1 = GEN7_SBE_SWIZZLE_ENABLE | num_outputs << GEN7_SBE_NUM_OUTPUTS_SHIFT;
 
    /* _NEW_POINT
     *
@@ -122,6 +107,21 @@ upload_sbe_state(struct brw_context *brw)
                            ctx->VertexProgram._TwoSideEnabled,
                            &max_source_attr);
    }
+
+   /* From the Ivy Bridge PRM, Volume 2, Part 1, documentation for
+    * 3DSTATE_SBE DWord 1 bits 15:11, "Vertex URB Entry Read Length":
+    *
+    * "This field should be set to the minimum length required to read the
+    *  maximum source attribute.  The maximum source attribute is indicated
+    *  by the maximum value of the enabled Attribute # Source Attribute if
+    *  Attribute Swizzle Enable is set, Number of Output Attributes-1 if
+    *  enable is not set.
+    *
+    *  read_length = ceiling((max_source_attr + 1) / 2)"
+    */
+   uint32_t urb_entry_read_length = ALIGN(max_source_attr + 1, 2) / 2;
+   dw1 |= urb_entry_read_length << GEN7_SBE_URB_ENTRY_READ_LENGTH_SHIFT |
+          urb_entry_read_offset << GEN7_SBE_URB_ENTRY_READ_OFFSET_SHIFT;
 
    for (; input_index < FRAG_ATTRIB_MAX; input_index++)
       attr_overrides[input_index] = 0;
