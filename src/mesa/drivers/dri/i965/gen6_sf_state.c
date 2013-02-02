@@ -56,7 +56,6 @@ uint32_t
 get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color)
 {
-   int attr_override, slot;
    int vs_attr = _mesa_frag_attrib_to_vert_result(fs_attr);
    if (vs_attr < 0 || vs_attr == VERT_RESULT_HPOS) {
       /* These attributes will be overwritten by the fragment shader's
@@ -67,7 +66,7 @@ get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
    }
 
    /* Find the VUE slot for this attribute. */
-   slot = vue_map->vert_result_to_slot[vs_attr];
+   int slot = vue_map->vert_result_to_slot[vs_attr];
 
    /* If there was only a back color written but not front, use back
     * as the color instead of undefined
@@ -89,23 +88,25 @@ get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
     * Each increment of urb_entry_read_offset represents a 256-bit value, so
     * it counts for two 128-bit VUE slots.
     */
-   attr_override = slot - 2 * urb_entry_read_offset;
-   assert (attr_override >= 0 && attr_override < 32);
+   int source_attr = slot - 2 * urb_entry_read_offset;
+   assert(source_attr >= 0 && source_attr < 32);
 
    /* If we are doing two-sided color, and the VUE slot following this one
     * represents a back-facing color, then we need to instruct the SF unit to
     * do back-facing swizzling.
     */
-   if (two_side_color) {
-      if (vue_map->slot_to_vert_result[slot] == VERT_RESULT_COL0 &&
-          vue_map->slot_to_vert_result[slot+1] == VERT_RESULT_BFC0)
-         attr_override |= (ATTRIBUTE_SWIZZLE_INPUTATTR_FACING << ATTRIBUTE_SWIZZLE_SHIFT);
-      else if (vue_map->slot_to_vert_result[slot] == VERT_RESULT_COL1 &&
-               vue_map->slot_to_vert_result[slot+1] == VERT_RESULT_BFC1)
-         attr_override |= (ATTRIBUTE_SWIZZLE_INPUTATTR_FACING << ATTRIBUTE_SWIZZLE_SHIFT);
+   bool swizzling = two_side_color &&
+      ((vue_map->slot_to_vert_result[slot] == VERT_RESULT_COL0 &&
+        vue_map->slot_to_vert_result[slot+1] == VERT_RESULT_BFC0) ||
+       (vue_map->slot_to_vert_result[slot] == VERT_RESULT_COL1 &&
+        vue_map->slot_to_vert_result[slot+1] == VERT_RESULT_BFC1));
+
+   if (swizzling) {
+      return source_attr |
+         (ATTRIBUTE_SWIZZLE_INPUTATTR_FACING << ATTRIBUTE_SWIZZLE_SHIFT);
    }
 
-   return attr_override;
+   return source_attr;
 }
 
 static void
