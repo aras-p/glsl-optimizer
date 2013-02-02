@@ -187,7 +187,8 @@ struct dri2_egl_surface
    struct {
 #ifdef HAVE_WAYLAND_PLATFORM
       struct wl_buffer   *wl_buffer;
-      __DRIbuffer        *dri_buffer;
+      __DRIimage         *dri_image;
+      int                 pitch, name;
 #endif
 #ifdef HAVE_DRM_PLATFORM
       struct gbm_bo       *bo;

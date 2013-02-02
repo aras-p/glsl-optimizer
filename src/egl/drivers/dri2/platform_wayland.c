@@ -204,9 +204,8 @@ dri2_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
    for (i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
       if (dri2_surf->color_buffers[i].wl_buffer)
          wl_buffer_destroy(dri2_surf->color_buffers[i].wl_buffer);
-      if (dri2_surf->color_buffers[i].dri_buffer)
-         dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
-                                       dri2_surf->color_buffers[i].dri_buffer);
+      if (dri2_surf->color_buffers[i].dri_image)
+         dri2_dpy->image->destroyImage(dri2_surf->color_buffers[i].dri_image);
    }
 
    for (i = 0; i < __DRI_BUFFER_COUNT; i++)
@@ -239,12 +238,11 @@ dri2_release_buffers(struct dri2_egl_surface *dri2_surf)
       if (dri2_surf->color_buffers[i].wl_buffer &&
           !dri2_surf->color_buffers[i].locked)
          wl_buffer_destroy(dri2_surf->color_buffers[i].wl_buffer);
-      if (dri2_surf->color_buffers[i].dri_buffer)
-         dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
-                                       dri2_surf->color_buffers[i].dri_buffer);
+      if (dri2_surf->color_buffers[i].dri_image)
+         dri2_dpy->image->destroyImage(dri2_surf->color_buffers[i].dri_image);
 
       dri2_surf->color_buffers[i].wl_buffer = NULL;
-      dri2_surf->color_buffers[i].dri_buffer = NULL;
+      dri2_surf->color_buffers[i].dri_image = NULL;
       dri2_surf->color_buffers[i].locked = 0;
    }
 
@@ -260,7 +258,8 @@ get_back_bo(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
 {
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
-   int i;
+   __DRIimage *image;
+   int i, name, pitch;
 
    /* There might be a buffer release already queued that wasn't processed */
    wl_display_dispatch_queue_pending(dri2_dpy->wl_dpy, dri2_dpy->wl_queue);
@@ -273,26 +272,41 @@ get_back_bo(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
             continue;
          if (dri2_surf->back == NULL)
 	    dri2_surf->back = &dri2_surf->color_buffers[i];
-         else if (dri2_surf->back->dri_buffer == NULL)
+         else if (dri2_surf->back->dri_image == NULL)
 	    dri2_surf->back = &dri2_surf->color_buffers[i];
       }
    }
 
    if (dri2_surf->back == NULL)
       return -1;
-   if (dri2_surf->back->dri_buffer == NULL) {
-      dri2_surf->back->dri_buffer = 
-         dri2_dpy->dri2->allocateBuffer(dri2_dpy->dri_screen,
-                                        __DRI_BUFFER_BACK_LEFT, 32,
-                                        dri2_surf->base.Width,
-                                        dri2_surf->base.Height);
+   if (dri2_surf->back->dri_image == NULL) {
+      dri2_surf->back->dri_image = 
+         dri2_dpy->image->createImage(dri2_dpy->dri_screen,
+                                      dri2_surf->base.Width,
+                                      dri2_surf->base.Height,
+                                      __DRI_IMAGE_FORMAT_ARGB8888,
+                                      __DRI_IMAGE_USE_SHARE,
+                                      NULL);
       dri2_surf->back->age = 0;
    }
-   if (dri2_surf->back->dri_buffer == NULL)
+   if (dri2_surf->back->dri_image == NULL)
       return -1;
 
+   image = dri2_surf->back->dri_image;
+
+   dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_NAME, &name);
+   dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_STRIDE, &pitch);
+
+   dri2_surf->back->name = name;
+   dri2_surf->back->pitch = pitch;
+
+   buffer->attachment = __DRI_BUFFER_BACK_LEFT;
+   buffer->name = name;
+   buffer->pitch = pitch;
+   buffer->cpp = 4;
+   buffer->flags = 0;
+
    dri2_surf->back->locked = 1;
-   memcpy(buffer, dri2_surf->back->dri_buffer, sizeof *buffer);
 
    return 0;
 }
@@ -368,10 +382,9 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
       if (!dri2_surf->color_buffers[i].locked &&
           dri2_surf->color_buffers[i].wl_buffer) {
          wl_buffer_destroy(dri2_surf->color_buffers[i].wl_buffer);
-         dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
-                                       dri2_surf->color_buffers[i].dri_buffer);
+         dri2_dpy->image->destroyImage(dri2_surf->color_buffers[i].dri_image);
          dri2_surf->color_buffers[i].wl_buffer = NULL;
-         dri2_surf->color_buffers[i].dri_buffer = NULL;
+         dri2_surf->color_buffers[i].dri_image = NULL;
       }
    }
 
@@ -478,10 +491,10 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    if (dri2_surf->current->wl_buffer == NULL) {
       dri2_surf->current->wl_buffer =
          wl_drm_create_buffer(dri2_dpy->wl_drm,
-                              dri2_surf->current->dri_buffer->name,
+                              dri2_surf->current->name,
                               dri2_surf->base.Width,
                               dri2_surf->base.Height,
-                              dri2_surf->current->dri_buffer->pitch,
+                              dri2_surf->current->pitch,
                               dri2_surf->format);
       wl_proxy_set_queue((struct wl_proxy *) dri2_surf->current->wl_buffer,
                          dri2_dpy->wl_queue);
