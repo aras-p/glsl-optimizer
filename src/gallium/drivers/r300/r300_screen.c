@@ -103,7 +103,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TEXTURE_BARRIER:
         case PIPE_CAP_TGSI_CAN_COMPACT_VARYINGS:
         case PIPE_CAP_TGSI_CAN_COMPACT_CONSTANTS:
-        case PIPE_CAP_VERTEX_COLOR_CLAMPED:
         case PIPE_CAP_USER_INDEX_BUFFERS:
         case PIPE_CAP_USER_CONSTANT_BUFFERS:
         case PIPE_CAP_DEPTH_CLIP_DISABLE: /* XXX implemented, but breaks Regnum Online */
@@ -121,6 +120,11 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         /* r300 cannot do swizzling of compressed textures. Supported otherwise. */
         case PIPE_CAP_TEXTURE_SWIZZLE:
             return util_format_s3tc_enabled ? r300screen->caps.dxtc_swizzle : 1;
+
+        /* We don't support color clamping on r500, so that we can use color
+         * intepolators for generic varyings. */
+        case PIPE_CAP_VERTEX_COLOR_CLAMPED:
+            return !is_r500;
 
         /* Supported on r500 only. */
         case PIPE_CAP_VERTEX_COLOR_UNCLAMPED:

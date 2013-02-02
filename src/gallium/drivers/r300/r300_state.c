@@ -1181,8 +1181,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     float point_texcoord_bottom = 0;/* R300_GA_POINT_T0: 0x4204 */
     float point_texcoord_right = 1; /* R300_GA_POINT_S1: 0x4208 */
     float point_texcoord_top = 0;   /* R300_GA_POINT_T1: 0x420c */
-    boolean vclamp = state->clamp_vertex_color ||
-                     !r300_context(pipe)->screen->caps.is_r500;
+    boolean vclamp = !r300_context(pipe)->screen->caps.is_r500;
     CB_LOCALS;
 
     /* Copy rasterizer state. */
@@ -1384,6 +1383,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     int last_sprite_coord_enable = r300->sprite_coord_enable;
     boolean last_two_sided_color = r300->two_sided_color;
     boolean last_msaa_enable = r300->msaa_enable;
+    boolean last_flatshade = r300->flatshade;
 
     if (r300->draw && rs) {
         draw_set_rasterizer_state(r300->draw, &rs->rs_draw, state);
@@ -1394,18 +1394,21 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
         r300->sprite_coord_enable = rs->rs.sprite_coord_enable;
         r300->two_sided_color = rs->rs.light_twoside;
         r300->msaa_enable = rs->rs.multisample;
+        r300->flatshade = rs->rs.flatshade;
     } else {
         r300->polygon_offset_enabled = FALSE;
         r300->sprite_coord_enable = 0;
         r300->two_sided_color = FALSE;
         r300->msaa_enable = FALSE;
+        r300->flatshade = FALSE;
     }
 
     UPDATE_STATE(state, r300->rs_state);
     r300->rs_state.size = RS_STATE_MAIN_SIZE + (r300->polygon_offset_enabled ? 5 : 0);
 
     if (last_sprite_coord_enable != r300->sprite_coord_enable ||
-        last_two_sided_color != r300->two_sided_color) {
+        last_two_sided_color != r300->two_sided_color ||
+        last_flatshade != r300->flatshade) {
         r300_mark_atom_dirty(r300, &r300->rs_block_state);
     }
 

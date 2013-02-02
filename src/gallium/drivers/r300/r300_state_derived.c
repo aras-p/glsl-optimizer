@@ -316,6 +316,7 @@ static void r300_update_rs_block(struct r300_context *r300)
     struct r300_shader_semantics *fs_inputs = &r300_fs(r300)->shader->inputs;
     struct r300_rs_block rs = {0};
     int i, col_count = 0, tex_count = 0, fp_offset = 0, count, loc = 0, tex_ptr = 0;
+    int gen_offset = 0;
     void (*rX00_rs_col)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
     void (*rX00_rs_col_write)(struct r300_rs_block*, int, int, enum r300_rs_col_write_type);
     void (*rX00_rs_tex)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
@@ -436,8 +437,60 @@ static void r300_update_rs_block(struct r300_context *r300)
         fprintf(stderr, "r300: ERROR: FS input FACE unassigned.\n");
     }
 
+    /* Re-use color varyings for texcoords if possible.
+     *
+     * The colors are interpolated as 20-bit floats (reduced precision),
+     * Use this hack only if there are too many generic varyings.
+     * (number of generic varyings + fog + wpos > 8) */
+    if (r300->screen->caps.is_r500 && !any_bcolor_used && !r300->flatshade &&
+	fs_inputs->face == ATTR_UNUSED &&
+        vs_outputs->num_generic + (vs_outputs->fog != ATTR_UNUSED) +
+        (fs_inputs->wpos != ATTR_UNUSED) > 8) {
+	for (i = 0; i < ATTR_GENERIC_COUNT && col_count < 2; i++) {
+	    /* Cannot use color varyings for sprite coords. */
+	    if (fs_inputs->generic[i] != ATTR_UNUSED &&
+		(r300->sprite_coord_enable & (1 << i))) {
+		break;
+	    }
+
+	    if (vs_outputs->generic[i] != ATTR_UNUSED) {
+		/* Set up the color in VAP. */
+		rs.vap_vsm_vtx_assm |= R300_INPUT_CNTL_COLOR;
+		rs.vap_out_vtx_fmt[0] |=
+			R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << col_count;
+		stream_loc_notcl[loc++] = 2 + col_count;
+
+		/* Rasterize it. */
+		rX00_rs_col(&rs, col_count, col_count, SWIZ_XYZW);
+
+		/* Write it to the FS input register if it's needed by the FS. */
+		if (fs_inputs->generic[i] != ATTR_UNUSED) {
+		    rX00_rs_col_write(&rs, col_count, fp_offset, WRITE_COLOR);
+		    fp_offset++;
+
+		    DBG(r300, DBG_RS,
+			"r300: Rasterized generic %i redirected to color %i and written to FS.\n",
+		        i, col_count);
+		} else {
+		    DBG(r300, DBG_RS, "r300: Rasterized generic %i redirected to color %i unused.\n",
+		        i, col_count);
+		}
+		col_count++;
+	    } else {
+		/* Skip the FS input register, leave it uninitialized. */
+		/* If we try to set it to (0,0,0,1), it will lock up. */
+		if (fs_inputs->generic[i] != ATTR_UNUSED) {
+		    fp_offset++;
+
+		    DBG(r300, DBG_RS, "r300: FS input generic %i unassigned%s.\n", i);
+		}
+	    }
+	}
+	gen_offset = i;
+    }
+
     /* Rasterize texture coordinates. */
-    for (i = 0; i < ATTR_GENERIC_COUNT && tex_count < 8; i++) {
+    for (i = gen_offset; i < ATTR_GENERIC_COUNT && tex_count < 8; i++) {
 	boolean sprite_coord = false;
 
 	if (fs_inputs->generic[i] != ATTR_UNUSED) {

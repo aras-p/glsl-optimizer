@@ -72,6 +72,7 @@ static void r300_shader_read_vs_outputs(
             case TGSI_SEMANTIC_GENERIC:
                 assert(index < ATTR_GENERIC_COUNT);
                 vs_outputs->generic[index] = i;
+                vs_outputs->num_generic++;
                 break;
 
             case TGSI_SEMANTIC_FOG:

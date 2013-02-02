@@ -578,6 +578,7 @@ struct r300_context {
     int sprite_coord_enable;
     /* Whether two-sided color selection is enabled (AKA light_twoside). */
     boolean two_sided_color;
+    boolean flatshade;
     /* Whether fast color clear is enabled. */
     boolean cbzb_clear;
     /* Whether fragment shader needs to be validated. */
