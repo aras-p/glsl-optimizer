@@ -143,8 +143,7 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 	unsigned int i;
 
 	if (inst_mov->U.I.DstReg.File != RC_FILE_TEMPORARY ||
-	    inst_mov->U.I.WriteALUResult ||
-	    inst_mov->U.I.SaturateMode)
+	    inst_mov->U.I.WriteALUResult)
 		return;
 
 	/* Get a list of all the readers of this MOV instruction. */
@@ -156,6 +155,22 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 	if (reader_data.Abort || reader_data.ReaderCount == 0)
 		return;
 
+	/* We can propagate SaturateMode if all the readers are MOV instructions
+	 * without a presubtract operation, source negation and absolute.
+	 * In that case, we just move SaturateMode to all readers. */
+        if (inst_mov->U.I.SaturateMode) {
+		for (i = 0; i < reader_data.ReaderCount; i++) {
+			struct rc_instruction * inst = reader_data.Readers[i].Inst;
+
+			if (inst->U.I.Opcode != RC_OPCODE_MOV ||
+			    inst->U.I.SrcReg[0].File == RC_FILE_PRESUB ||
+			    inst->U.I.SrcReg[0].Abs ||
+			    inst->U.I.SrcReg[0].Negate) {
+				return;
+			}
+		}
+	}
+
 	/* Propagate the MOV instruction. */
 	for (i = 0; i < reader_data.ReaderCount; i++) {
 		struct rc_instruction * inst = reader_data.Readers[i].Inst;
@@ -163,6 +178,8 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 
 		if (inst_mov->U.I.SrcReg[0].File == RC_FILE_PRESUB)
 			inst->U.I.PreSub = inst_mov->U.I.PreSub;
+		if (!inst->U.I.SaturateMode)
+			inst->U.I.SaturateMode = inst_mov->U.I.SaturateMode;
 	}
 
 	/* Finally, remove the original MOV instruction */
