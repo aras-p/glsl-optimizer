@@ -359,6 +359,7 @@ nv30_screen_create(struct nouveau_device *dev)
 
    if (!oclass) {
       NOUVEAU_ERR("unknown 3d class for 0x%02x\n", dev->chipset);
+      FREE(screen);
       return NULL;
    }
 
