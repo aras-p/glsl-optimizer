@@ -150,9 +150,9 @@ void
 intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb);
 
 static inline uint32_t
-intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
-				uint32_t *tile_x,
-				uint32_t *tile_y)
+intel_renderbuffer_get_tile_offsets(struct intel_renderbuffer *irb,
+                                    uint32_t *tile_x,
+                                    uint32_t *tile_y)
 {
    return intel_miptree_get_tile_offsets(irb->mt, irb->mt_level, irb->mt_layer,
                                          tile_x, tile_y);

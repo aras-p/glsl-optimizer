@@ -560,7 +560,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
       surf[0] |= GEN7_SURFACE_HALIGN_8;
 
    /* reloc */
-   surf[1] = intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y) +
+   surf[1] = intel_renderbuffer_get_tile_offsets(irb, &tile_x, &tile_y) +
              region->bo->offset; /* reloc */
 
    assert(brw->has_surface_tile_offset);

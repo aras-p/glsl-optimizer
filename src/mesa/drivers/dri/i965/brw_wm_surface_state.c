@@ -1329,7 +1329,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    gl_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
 
    if (rb->TexImage && !brw->has_surface_tile_offset) {
-      intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y);
+      intel_renderbuffer_get_tile_offsets(irb, &tile_x, &tile_y);
 
       if (tile_x != 0 || tile_y != 0) {
 	 /* Original gen4 hardware couldn't draw to a non-tile-aligned
@@ -1358,7 +1358,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	      format << BRW_SURFACE_FORMAT_SHIFT);
 
    /* reloc */
-   surf[1] = (intel_renderbuffer_tile_offsets(irb, &tile_x, &tile_y) +
+   surf[1] = (intel_renderbuffer_get_tile_offsets(irb, &tile_x, &tile_y) +
 	      region->bo->offset);
 
    surf[2] = ((rb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
