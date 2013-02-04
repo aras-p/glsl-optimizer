@@ -433,6 +433,15 @@ static LLVMValueRef fetch_constant(
 	LLVMValueRef offset;
 	LLVMValueRef load;
 
+	if (swizzle == LP_CHAN_ALL) {
+		unsigned chan;
+		LLVMValueRef values[4];
+		for (chan = 0; chan < TGSI_NUM_CHANNELS; ++chan)
+			values[chan] = fetch_constant(bld_base, reg, type, chan);
+
+		return lp_build_gather_values(bld_base->base.gallivm, values, 4);
+	}
+
 	/* currently not supported */
 	if (reg->Register.Indirect) {
 		assert(0);
