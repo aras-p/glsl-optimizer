@@ -33,6 +33,7 @@
 #include "main/formats.h"
 #include "main/macros.h"
 #include "intel_context.h"
+#include "intel_mipmap_tree.h"
 #include "intel_screen.h"
 
 #ifdef __cplusplus
@@ -148,10 +149,14 @@ intel_flip_renderbuffers(struct gl_framebuffer *fb);
 void
 intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb);
 
-uint32_t
+static inline uint32_t
 intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
 				uint32_t *tile_x,
-				uint32_t *tile_y);
+				uint32_t *tile_y)
+{
+   return intel_miptree_get_tile_offsets(irb->mt, irb->mt_level, irb->mt_layer,
+                                         tile_x, tile_y);
+}
 
 struct intel_region*
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex);

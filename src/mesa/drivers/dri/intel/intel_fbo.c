@@ -535,32 +535,6 @@ intel_renderbuffer_set_draw_offset(struct intel_renderbuffer *irb)
 }
 
 /**
- * Rendering to tiled buffers requires that the base address of the
- * buffer be aligned to a page boundary.  We generally render to
- * textures by pointing the surface at the mipmap image level, which
- * may not be aligned to a tile boundary.
- *
- * This function returns an appropriately-aligned base offset
- * according to the tiling restrictions, plus any required x/y offset
- * from there.
- */
-uint32_t
-intel_renderbuffer_tile_offsets(struct intel_renderbuffer *irb,
-				uint32_t *tile_x,
-				uint32_t *tile_y)
-{
-   struct intel_region *region = irb->mt->region;
-   uint32_t mask_x, mask_y;
-
-   intel_region_get_tile_masks(region, &mask_x, &mask_y, false);
-
-   *tile_x = irb->draw_x & mask_x;
-   *tile_y = irb->draw_y & mask_y;
-   return intel_region_get_aligned_offset(region, irb->draw_x & ~mask_x,
-                                          irb->draw_y & ~mask_y, false);
-}
-
-/**
  * Called by glFramebufferTexture[123]DEXT() (and other places) to
  * prepare for rendering into texture memory.  This might be called
  * many times to choose different texture levels, cube faces, etc
