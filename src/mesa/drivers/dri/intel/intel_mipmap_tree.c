@@ -925,17 +925,10 @@ intel_miptree_copy_slice(struct intel_context *intel,
    intel_miptree_slice_resolve_depth(intel, src_mt, level, slice);
    intel_miptree_slice_resolve_depth(intel, dst_mt, level, slice);
 
-   if (!intelEmitCopyBlit(intel,
-			  dst_mt->region->cpp,
-			  src_mt->region->pitch, src_mt->region->bo,
-			  0, src_mt->region->tiling,
-			  dst_mt->region->pitch, dst_mt->region->bo,
-			  0, dst_mt->region->tiling,
-			  src_x, src_y,
-			  dst_x, dst_y,
-			  width, height,
-			  GL_COPY)) {
-
+   if (!intel_miptree_blit(intel,
+                           src_mt, level, slice, 0, 0, false,
+                           dst_mt, level, slice, 0, 0, false,
+                           width, height, GL_COPY)) {
       perf_debug("miptree validate blit for %s failed\n",
                  _mesa_get_format_name(format));
 

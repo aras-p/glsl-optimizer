@@ -56,7 +56,6 @@ intel_copy_texsubimage(struct intel_context *intel,
                        GLint x, GLint y, GLsizei width, GLsizei height)
 {
    struct gl_context *ctx = &intel->ctx;
-   struct intel_region *region;
    const GLenum internalFormat = intelImage->base.Base.InternalFormat;
    bool copy_supported = false;
    bool copy_supported_with_alpha_override = false;
@@ -68,31 +67,7 @@ intel_copy_texsubimage(struct intel_context *intel,
 	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
 		 __FUNCTION__, intelImage->mt, irb, internalFormat);
       return false;
-   } else {
-      region = irb->mt->region;
-      assert(region);
    }
-
-   /* According to the Ivy Bridge PRM, Vol1 Part4, section 1.2.1.2 (Graphics
-    * Data Size Limitations):
-    *
-    *    The BLT engine is capable of transferring very large quantities of
-    *    graphics data. Any graphics data read from and written to the
-    *    destination is permitted to represent a number of pixels that
-    *    occupies up to 65,536 scan lines and up to 32,768 bytes per scan line
-    *    at the destination. The maximum number of pixels that may be
-    *    represented per scan line’s worth of graphics data depends on the
-    *    color depth.
-    *
-    * Furthermore, intelEmitCopyBlit (which is called below) uses a signed
-    * 16-bit integer to represent buffer pitch, so it can only handle buffer
-    * pitches < 32k.
-    *
-    * As a result of these two limitations, we can only use the blitter to do
-    * this copy when the region's pitch is less than 32k.
-    */
-   if (region->pitch >= 32768)
-      return false;
 
    if (intelImage->base.Base.TexObject->Target == GL_TEXTURE_1D_ARRAY ||
        intelImage->base.Base.TexObject->Target == GL_TEXTURE_2D_ARRAY) {
@@ -121,47 +96,20 @@ intel_copy_texsubimage(struct intel_context *intel,
       return false;
    }
 
-   {
-      GLuint image_x, image_y;
-      GLshort src_pitch;
+   /* The blitter can't handle Y-tiled buffers. */
+   if (intelImage->mt->region->tiling == I915_TILING_Y) {
+      return false;
+   }
 
-      /* get dest x/y in destination texture */
-      intel_miptree_get_image_offset(intelImage->mt,
-				     intelImage->base.Base.Level,
-				     intelImage->base.Base.Face,
-				     &image_x, &image_y);
-
-      /* The blitter can't handle Y-tiled buffers. */
-      if (intelImage->mt->region->tiling == I915_TILING_Y) {
-	 return false;
-      }
-
-      if (_mesa_is_winsys_fbo(ctx->ReadBuffer)) {
-	 /* Flip vertical orientation for system framebuffers */
-	 y = ctx->ReadBuffer->Height - (y + height);
-	 src_pitch = -region->pitch;
-      } else {
-	 /* reading from a FBO, y is already oriented the way we like */
-	 src_pitch = region->pitch;
-      }
-
-      /* blit from src buffer to texture */
-      if (!intelEmitCopyBlit(intel,
-			     intelImage->mt->cpp,
-			     src_pitch,
-			     region->bo,
-			     0,
-			     region->tiling,
-			     intelImage->mt->region->pitch,
-			     intelImage->mt->region->bo,
-			     0,
-			     intelImage->mt->region->tiling,
-			     irb->draw_x + x, irb->draw_y + y,
-			     image_x + dstx, image_y + dsty,
-			     width, height,
-			     GL_COPY)) {
-	 return false;
-      }
+   /* blit from src buffer to texture */
+   if (!intel_miptree_blit(intel,
+                           irb->mt, irb->mt_level, irb->mt_layer,
+                           x, y, irb->Base.Base.Name == 0,
+                           intelImage->mt, intelImage->base.Base.Level,
+                           intelImage->base.Base.Face,
+                           dstx, dsty, false,
+                           width, height, GL_COPY)) {
+      return false;
    }
 
    if (copy_supported_with_alpha_override)

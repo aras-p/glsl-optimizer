@@ -87,7 +87,6 @@ do_blit_copypixels(struct gl_context * ctx,
    GLint orig_dsty;
    GLint orig_srcx;
    GLint orig_srcy;
-   bool flip = false;
    struct intel_renderbuffer *draw_irb = NULL;
    struct intel_renderbuffer *read_irb = NULL;
    gl_format read_format, draw_format;
@@ -176,39 +175,14 @@ do_blit_copypixels(struct gl_context * ctx,
    dstx += srcx - orig_srcx;
    dsty += srcy - orig_srcy;
 
-   /* Flip dest Y if it's a window system framebuffer. */
-   if (_mesa_is_winsys_fbo(fb)) {
-      /* copypixels to a window system framebuffer */
-      dsty = fb->Height - dsty - height;
-      flip = !flip;
-   }
-
-   /* Flip source Y if it's a window system framebuffer. */
-   if (_mesa_is_winsys_fbo(read_fb)) {
-      srcy = read_fb->Height - srcy - height;
-      flip = !flip;
-   }
-
-   srcx += read_irb->draw_x;
-   srcy += read_irb->draw_y;
-   dstx += draw_irb->draw_x;
-   dsty += draw_irb->draw_y;
-
-   uint32_t src_pitch = read_irb->mt->region->pitch;
-   if (flip)
-      src_pitch = -src_pitch;
-
-   if (!intelEmitCopyBlit(intel,
-                          draw_irb->mt->cpp,
-                          src_pitch, read_irb->mt->region->bo,
-                          0, read_irb->mt->region->tiling,
-                          draw_irb->mt->region->pitch, draw_irb->mt->region->bo,
-                          0, draw_irb->mt->region->tiling,
-                          srcx, srcy,
-                          dstx, dsty,
-                          width, height,
-                          ctx->Color.ColorLogicOpEnabled ?
-                          ctx->Color.LogicOp : GL_COPY)) {
+   if (!intel_miptree_blit(intel,
+                           read_irb->mt, read_irb->mt_level, read_irb->mt_layer,
+                           srcx, srcy, _mesa_is_winsys_fbo(read_fb),
+                           draw_irb->mt, draw_irb->mt_level, draw_irb->mt_layer,
+                           dstx, dsty, _mesa_is_winsys_fbo(fb),
+                           width, height,
+                           (ctx->Color.ColorLogicOpEnabled ?
+                            ctx->Color.LogicOp : GL_COPY))) {
       DBG("%s: blit failure\n", __FUNCTION__);
       return false;
    }

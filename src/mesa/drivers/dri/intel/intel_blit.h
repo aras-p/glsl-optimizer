@@ -51,6 +51,16 @@ intelEmitCopyBlit(struct intel_context *intel,
                               GLshort w, GLshort h,
 			      GLenum logicop );
 
+bool intel_miptree_blit(struct intel_context *intel,
+                        struct intel_mipmap_tree *src_mt,
+                        int src_level, int src_slice,
+                        uint32_t src_x, uint32_t src_y, bool src_flip,
+                        struct intel_mipmap_tree *dst_mt,
+                        int dst_level, int dst_slice,
+                        uint32_t dst_x, uint32_t dst_y, bool dst_flip,
+                        uint32_t width, uint32_t height,
+                        GLenum logicop);
+
 bool
 intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLuint cpp,
