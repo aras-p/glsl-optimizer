@@ -871,7 +871,8 @@ brw_update_texture_surface(struct gl_context *ctx,
 
    surf[4] = 0;
 
-   intel_miptree_get_tile_offsets(intelObj->mt, 0, 0, &tile_x, &tile_y);
+   intel_miptree_get_tile_offsets(intelObj->mt, firstImage->Level, 0,
+                                  &tile_x, &tile_y);
    assert(brw->has_surface_tile_offset || (tile_x == 0 && tile_y == 0));
    /* Note that the low bits of these fields are missing, so
     * there's the possibility of getting in trouble.
