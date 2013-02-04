@@ -456,7 +456,7 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		/* FIXME Isn't this equal to TEMPS? */
 		return 1; /* Max native address registers */
 	case PIPE_SHADER_CAP_MAX_CONSTS:
-		return 64;
+		return 4096; /* actually only memory limits this */
 	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
 		return 1;
 	case PIPE_SHADER_CAP_MAX_PREDS:

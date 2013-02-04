@@ -455,12 +455,6 @@ static LLVMValueRef fetch_constant(
 	 * CONST[0].x will have an offset of 0 and CONST[1].x will have an
 	 * offset of 4. */
 	idx = (reg->Register.Index * 4) + swizzle;
-
-	/* index loads above 255 are currently not supported */
-	if (idx > 255) {
-		assert(0);
-		idx = 0;
-	}
 	offset = lp_build_const_int32(base->gallivm, idx);
 
 	load = build_indexed_load(base->gallivm, const_ptr, offset);
