@@ -682,6 +682,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     image->region->tiling = parent->region->tiling;
     image->region->screen = parent->region->screen;
     image->offset = offset;
+    intel_setup_image_from_dimensions(image);
 
     intel_region_get_tile_masks(image->region, &mask_x, &mask_y, false);
     if (offset & mask_x)
