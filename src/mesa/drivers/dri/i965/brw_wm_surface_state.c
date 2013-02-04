@@ -986,6 +986,8 @@ brw_update_texture_surface(struct gl_context *ctx,
 	       BRW_SURFACE_FORMAT_SHIFT));
 
    surf[1] = intelObj->mt->region->bo->offset + intelObj->mt->offset; /* reloc */
+   surf[1] += intel_miptree_get_tile_offsets(intelObj->mt, firstImage->Level, 0,
+                                             &tile_x, &tile_y);
 
    surf[2] = ((intelObj->_MaxLevel - tObj->BaseLevel) << BRW_SURFACE_LOD_SHIFT |
 	      (width - 1) << BRW_SURFACE_WIDTH_SHIFT |
@@ -998,8 +1000,6 @@ brw_update_texture_surface(struct gl_context *ctx,
 
    surf[4] = brw_get_surface_num_multisamples(intelObj->mt->num_samples);
 
-   intel_miptree_get_tile_offsets(intelObj->mt, firstImage->Level, 0,
-                                  &tile_x, &tile_y);
    assert(brw->has_surface_tile_offset || (tile_x == 0 && tile_y == 0));
    /* Note that the low bits of these fields are missing, so
     * there's the possibility of getting in trouble.
@@ -1014,7 +1014,7 @@ brw_update_texture_surface(struct gl_context *ctx,
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   binding_table[surf_index] + 4,
 			   intelObj->mt->region->bo,
-                           intelObj->mt->offset,
+                           surf[1] - intelObj->mt->region->bo->offset,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
 

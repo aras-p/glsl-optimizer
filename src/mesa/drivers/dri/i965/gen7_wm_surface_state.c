@@ -331,6 +331,8 @@ gen7_update_texture_surface(struct gl_context *ctx,
       surf[0] |= GEN7_SURFACE_ARYSPC_LOD0;
 
    surf[1] = mt->region->bo->offset + mt->offset; /* reloc */
+   surf[1] += intel_miptree_get_tile_offsets(intelObj->mt, firstImage->Level, 0,
+                                             &tile_x, &tile_y);
 
    surf[2] = SET_FIELD(width - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(height - 1, GEN7_SURFACE_HEIGHT);
@@ -339,8 +341,6 @@ gen7_update_texture_surface(struct gl_context *ctx,
 
    surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout);
 
-   intel_miptree_get_tile_offsets(intelObj->mt, firstImage->Level, 0,
-                                  &tile_x, &tile_y);
    assert(brw->has_surface_tile_offset || (tile_x == 0 && tile_y == 0));
    /* Note that the low bits of these fields are missing, so
     * there's the possibility of getting in trouble.
@@ -372,7 +372,8 @@ gen7_update_texture_surface(struct gl_context *ctx,
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   binding_table[surf_index] + 4,
-			   intelObj->mt->region->bo, intelObj->mt->offset,
+			   intelObj->mt->region->bo,
+                           surf[1] - intelObj->mt->region->bo->offset,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 
    gen7_check_surface_setup(surf, false /* is_render_target */);

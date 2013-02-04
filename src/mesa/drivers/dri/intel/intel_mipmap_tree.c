@@ -777,19 +777,34 @@ intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
    *y = mt->level[level].slice[slice].y_offset;
 }
 
-void
+/**
+ * Rendering with tiled buffers requires that the base address of the buffer
+ * be aligned to a page boundary.  For renderbuffers, and sometimes with
+ * textures, we may want the surface to point at a texture image level that
+ * isn't at a page boundary.
+ *
+ * This function returns an appropriately-aligned base offset
+ * according to the tiling restrictions, plus any required x/y offset
+ * from there.
+ */
+uint32_t
 intel_miptree_get_tile_offsets(struct intel_mipmap_tree *mt,
                                GLuint level, GLuint slice,
                                uint32_t *tile_x,
                                uint32_t *tile_y)
 {
    struct intel_region *region = mt->region;
+   uint32_t x, y;
    uint32_t mask_x, mask_y;
 
    intel_region_get_tile_masks(region, &mask_x, &mask_y, false);
+   intel_miptree_get_image_offset(mt, level, slice, &x, &y);
 
-   *tile_x = mt->level[level].slice[slice].x_offset & mask_x;
-   *tile_y = mt->level[level].slice[slice].y_offset & mask_y;
+   *tile_x = x & mask_x;
+   *tile_y = y & mask_y;
+
+   return intel_region_get_aligned_offset(region, x & ~mask_x, y & ~mask_y,
+                                          false);
 }
 
 static void
