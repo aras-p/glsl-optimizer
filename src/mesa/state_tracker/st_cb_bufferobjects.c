@@ -232,7 +232,7 @@ st_bufferobj_data(struct gl_context *ctx,
    pipe_resource_reference( &st_obj->buffer, NULL );
 
    if (ST_DEBUG & DEBUG_BUFFER) {
-      debug_printf("Create buffer size %lu bind 0x%x\n", size, bind);
+      debug_printf("Create buffer size %td bind 0x%x\n", size, bind);
    }
 
    if (size != 0) {
