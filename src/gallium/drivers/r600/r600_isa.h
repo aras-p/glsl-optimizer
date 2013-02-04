@@ -650,7 +650,8 @@ static const struct cf_op_info cf_op_table[] = {
 		{"ALU_EXT",                       {   -1,   -1, 0x0C, 0x0C },  CF_CLAUSE | CF_ALU | CF_ALU_EXT  },
 		{"ALU_CONTINUE",                  { 0x0D, 0x0D, 0x0D,   -1 },  CF_CLAUSE | CF_ALU  },
 		{"ALU_BREAK",                     { 0x0E, 0x0E, 0x0E,   -1 },  CF_CLAUSE | CF_ALU  },
-		{"ALU_ELSE_AFTER",                { 0x0F, 0x0F, 0x0F, 0x0F },  CF_CLAUSE | CF_ALU  }
+		{"ALU_ELSE_AFTER",                { 0x0F, 0x0F, 0x0F, 0x0F },  CF_CLAUSE | CF_ALU  },
+		{"CF_NATIVE",                     { 0x00, 0x00, 0x00, 0x00 },  0  }
 };
 
 
@@ -1112,7 +1113,7 @@ static const struct cf_op_info cf_op_table[] = {
 #define CF_OP_ALU_ELSE_AFTER               87
 
 /* CF_NATIVE means that r600_bytecode_cf contains pre-encoded native data */
-#define CF_NATIVE							(-1)
+#define CF_NATIVE                          88
 
 enum r600_chip_class {
 	ISA_CC_R600,
