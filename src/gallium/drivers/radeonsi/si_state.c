@@ -720,7 +720,6 @@ static uint32_t si_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_L8A8_SNORM:
 	case PIPE_FORMAT_L8A8_UINT:
 	case PIPE_FORMAT_L8A8_SINT:
-	case PIPE_FORMAT_L8A8_SRGB:
 	case PIPE_FORMAT_R8G8_SNORM:
 	case PIPE_FORMAT_R8G8_UNORM:
 	case PIPE_FORMAT_R8G8_UINT:
@@ -908,7 +907,6 @@ static uint32_t si_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_L8A8_SNORM:
 	case PIPE_FORMAT_L8A8_UINT:
 	case PIPE_FORMAT_L8A8_SINT:
-	case PIPE_FORMAT_L8A8_SRGB:
 		return V_028C70_SWAP_ALT;
 	case PIPE_FORMAT_R8G8_SNORM:
 	case PIPE_FORMAT_R8G8_UNORM:
@@ -1195,6 +1193,8 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 		goto out_unknown; /* TODO */
 
 	case UTIL_FORMAT_COLORSPACE_SRGB:
+		if (desc->nr_channels != 4 && desc->nr_channels != 1)
+			goto out_unknown;
 		break;
 
 	default:
