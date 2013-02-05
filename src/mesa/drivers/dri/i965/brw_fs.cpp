@@ -258,6 +258,26 @@ fs_visitor::VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
    return instructions;
 }
 
+/**
+ * A helper for MOV generation for fixing up broken hardware SEND dependency
+ * handling.
+ */
+fs_inst *
+fs_visitor::DEP_RESOLVE_MOV(int grf)
+{
+   fs_inst *inst = MOV(brw_null_reg(), fs_reg(GRF, grf, BRW_REGISTER_TYPE_F));
+
+   inst->ir = NULL;
+   inst->annotation = "send dependency resolve";
+
+   /* The caller always wants uncompressed to emit the minimal extra
+    * dependencies, and to avoid having to deal with aligning its regs to 2.
+    */
+   inst->force_uncompressed = true;
+
+   return inst;
+}
+
 bool
 fs_inst::equals(fs_inst *inst)
 {
@@ -2228,6 +2248,205 @@ fs_visitor::remove_duplicate_mrf_writes()
    return progress;
 }
 
+static void
+clear_deps_for_inst_src(fs_inst *inst, int dispatch_width, bool *deps,
+                        int first_grf, int grf_len)
+{
+   bool inst_16wide = (dispatch_width > 8 &&
+                       !inst->force_uncompressed &&
+                       !inst->force_sechalf);
+
+   /* Clear the flag for registers that actually got read (as expected). */
+   for (int i = 0; i < 3; i++) {
+      int grf;
+      if (inst->src[i].file == GRF) {
+         grf = inst->src[i].reg;
+      } else if (inst->src[i].file == FIXED_HW_REG &&
+                 inst->src[i].fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
+         grf = inst->src[i].fixed_hw_reg.nr;
+      } else {
+         continue;
+      }
+
+      if (grf >= first_grf &&
+          grf < first_grf + grf_len) {
+         deps[grf - first_grf] = false;
+         if (inst_16wide)
+            deps[grf - first_grf + 1] = false;
+      }
+   }
+}
+
+/**
+ * Implements this workaround for the original 965:
+ *
+ *     "[DevBW, DevCL] Implementation Restrictions: As the hardware does not
+ *      check for post destination dependencies on this instruction, software
+ *      must ensure that there is no destination hazard for the case of ‘write
+ *      followed by a posted write’ shown in the following example.
+ *
+ *      1. mov r3 0
+ *      2. send r3.xy <rest of send instruction>
+ *      3. mov r2 r3
+ *
+ *      Due to no post-destination dependency check on the ‘send’, the above
+ *      code sequence could have two instructions (1 and 2) in flight at the
+ *      same time that both consider ‘r3’ as the target of their final writes.
+ */
+void
+fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
+{
+   int write_len = inst->regs_written() * dispatch_width / 8;
+   int first_write_grf = inst->dst.reg;
+   bool needs_dep[BRW_MAX_MRF];
+   assert(write_len < (int)sizeof(needs_dep) - 1);
+
+   memset(needs_dep, false, sizeof(needs_dep));
+   memset(needs_dep, true, write_len);
+
+   clear_deps_for_inst_src(inst, dispatch_width,
+                           needs_dep, first_write_grf, write_len);
+
+   /* Walk backwards looking for writes to registers we're writing which
+    * aren't read since being written.  If we hit the start of the program,
+    * we assume that there are no outstanding dependencies on entry to the
+    * program.
+    */
+   for (fs_inst *scan_inst = (fs_inst *)inst->prev;
+        scan_inst != NULL;
+        scan_inst = (fs_inst *)scan_inst->prev) {
+
+      /* If we hit control flow, assume that there *are* outstanding
+       * dependencies, and force their cleanup before our instruction.
+       */
+      if (scan_inst->is_control_flow()) {
+         for (int i = 0; i < write_len; i++) {
+            if (needs_dep[i]) {
+               inst->insert_before(DEP_RESOLVE_MOV(first_write_grf + i));
+            }
+         }
+      }
+
+      bool scan_inst_16wide = (dispatch_width > 8 &&
+                               !scan_inst->force_uncompressed &&
+                               !scan_inst->force_sechalf);
+
+      /* We insert our reads as late as possible on the assumption that any
+       * instruction but a MOV that might have left us an outstanding
+       * dependency has more latency than a MOV.
+       */
+      if (scan_inst->dst.file == GRF &&
+          scan_inst->dst.reg >= first_write_grf &&
+          scan_inst->dst.reg < first_write_grf + write_len &&
+          needs_dep[scan_inst->dst.reg - first_write_grf]) {
+         inst->insert_before(DEP_RESOLVE_MOV(scan_inst->dst.reg));
+         needs_dep[scan_inst->dst.reg - first_write_grf] = false;
+         if (scan_inst_16wide)
+            needs_dep[scan_inst->dst.reg - first_write_grf + 1] = false;
+      }
+
+      /* Clear the flag for registers that actually got read (as expected). */
+      clear_deps_for_inst_src(scan_inst, dispatch_width,
+                              needs_dep, first_write_grf, write_len);
+
+      /* Continue the loop only if we haven't resolved all the dependencies */
+      int i;
+      for (i = 0; i < write_len; i++) {
+         if (needs_dep[i])
+            break;
+      }
+      if (i == write_len)
+         return;
+   }
+}
+
+/**
+ * Implements this workaround for the original 965:
+ *
+ *     "[DevBW, DevCL] Errata: A destination register from a send can not be
+ *      used as a destination register until after it has been sourced by an
+ *      instruction with a different destination register.
+ */
+void
+fs_visitor::insert_gen4_post_send_dependency_workarounds(fs_inst *inst)
+{
+   int write_len = inst->regs_written() * dispatch_width / 8;
+   int first_write_grf = inst->dst.reg;
+   bool needs_dep[BRW_MAX_MRF];
+   assert(write_len < (int)sizeof(needs_dep) - 1);
+
+   memset(needs_dep, false, sizeof(needs_dep));
+   memset(needs_dep, true, write_len);
+   /* Walk forwards looking for writes to registers we're writing which aren't
+    * read before being written.
+    */
+   for (fs_inst *scan_inst = (fs_inst *)inst->next;
+        !scan_inst->is_tail_sentinel();
+        scan_inst = (fs_inst *)scan_inst->next) {
+      /* If we hit control flow, force resolve all remaining dependencies. */
+      if (scan_inst->is_control_flow()) {
+         for (int i = 0; i < write_len; i++) {
+            if (needs_dep[i])
+               scan_inst->insert_before(DEP_RESOLVE_MOV(first_write_grf + i));
+         }
+      }
+
+      /* Clear the flag for registers that actually got read (as expected). */
+      clear_deps_for_inst_src(scan_inst, dispatch_width,
+                              needs_dep, first_write_grf, write_len);
+
+      /* We insert our reads as late as possible since they're reading the
+       * result of a SEND, which has massive latency.
+       */
+      if (scan_inst->dst.file == GRF &&
+          scan_inst->dst.reg >= first_write_grf &&
+          scan_inst->dst.reg < first_write_grf + write_len &&
+          needs_dep[scan_inst->dst.reg - first_write_grf]) {
+         scan_inst->insert_before(DEP_RESOLVE_MOV(scan_inst->dst.reg));
+         needs_dep[scan_inst->dst.reg - first_write_grf] = false;
+      }
+
+      /* Continue the loop only if we haven't resolved all the dependencies */
+      int i;
+      for (i = 0; i < write_len; i++) {
+         if (needs_dep[i])
+            break;
+      }
+      if (i == write_len)
+         return;
+   }
+
+   /* If we hit the end of the program, resolve all remaining dependencies out
+    * of paranoia.
+    */
+   fs_inst *last_inst = (fs_inst *)this->instructions.get_tail();
+   assert(last_inst->eot);
+   for (int i = 0; i < write_len; i++) {
+      if (needs_dep[i])
+         last_inst->insert_before(DEP_RESOLVE_MOV(first_write_grf + i));
+   }
+}
+
+void
+fs_visitor::insert_gen4_send_dependency_workarounds()
+{
+   if (intel->gen != 4 || intel->is_g4x)
+      return;
+
+   /* Note that we're done with register allocation, so GRF fs_regs always
+    * have a .reg_offset of 0.
+    */
+
+   foreach_list_safe(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
+
+      if (inst->mlen != 0 && inst->dst.file == GRF) {
+         insert_gen4_pre_send_dependency_workarounds(inst);
+         insert_gen4_post_send_dependency_workarounds(inst);
+      }
+   }
+}
+
 void
 fs_visitor::dump_instruction(fs_inst *inst)
 {
@@ -2521,6 +2740,12 @@ fs_visitor::run()
    }
    assert(force_uncompressed_stack == 0);
    assert(force_sechalf_stack == 0);
+
+   /* This must come after all optimization and register allocation, since
+    * it inserts dead code that happens to have side effects, and it does
+    * so based on the actual physical registers in use.
+    */
+   insert_gen4_send_dependency_workarounds();
 
    if (failed)
       return false;

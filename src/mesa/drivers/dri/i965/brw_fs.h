@@ -285,6 +285,7 @@ public:
    fs_inst *IF(fs_reg src0, fs_reg src1, uint32_t condition);
    fs_inst *CMP(fs_reg dst, fs_reg src0, fs_reg src1,
                 uint32_t condition);
+   fs_inst *DEP_RESOLVE_MOV(int grf);
 
    int type_size(const struct glsl_type *type);
    fs_inst *get_instruction_generating_reg(fs_inst *start,
@@ -329,6 +330,9 @@ public:
    bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);
    void schedule_instructions(bool post_reg_alloc);
+   void insert_gen4_send_dependency_workarounds();
+   void insert_gen4_pre_send_dependency_workarounds(fs_inst *inst);
+   void insert_gen4_post_send_dependency_workarounds(fs_inst *inst);
    void fail(const char *msg, ...);
 
    void push_force_uncompressed();

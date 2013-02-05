@@ -604,29 +604,8 @@ fs_generator::generate_unspill(fs_inst *inst, struct brw_reg dst)
 {
    assert(inst->mlen != 0);
 
-   /* Clear any post destination dependencies that would be ignored by
-    * the block read.  See the B-Spec for pre-gen5 send instruction.
-    *
-    * This could use a better solution, since texture sampling and
-    * math reads could potentially run into it as well -- anywhere
-    * that we have a SEND with a destination that is a register that
-    * was written but not read within the last N instructions (what's
-    * N?  unsure).  This is rare because of dead code elimination, but
-    * not impossible.
-    */
-   if (intel->gen == 4 && !intel->is_g4x)
-      brw_MOV(p, brw_null_reg(), dst);
-
    brw_oword_block_read_scratch(p, dst, brw_message_reg(inst->base_mrf), 1,
 				inst->offset);
-
-   if (intel->gen == 4 && !intel->is_g4x) {
-      /* gen4 errata: destination from a send can't be used as a
-       * destination until it's been read.  Just read it so we don't
-       * have to worry.
-       */
-      brw_MOV(p, brw_null_reg(), dst);
-   }
 }
 
 void
@@ -636,19 +615,6 @@ fs_generator::generate_uniform_pull_constant_load(fs_inst *inst,
                                                   struct brw_reg offset)
 {
    assert(inst->mlen != 0);
-
-   /* Clear any post destination dependencies that would be ignored by
-    * the block read.  See the B-Spec for pre-gen5 send instruction.
-    *
-    * This could use a better solution, since texture sampling and
-    * math reads could potentially run into it as well -- anywhere
-    * that we have a SEND with a destination that is a register that
-    * was written but not read within the last N instructions (what's
-    * N?  unsure).  This is rare because of dead code elimination, but
-    * not impossible.
-    */
-   if (intel->gen == 4 && !intel->is_g4x)
-      brw_MOV(p, brw_null_reg(), dst);
 
    assert(index.file == BRW_IMMEDIATE_VALUE &&
 	  index.type == BRW_REGISTER_TYPE_UD);
@@ -660,14 +626,6 @@ fs_generator::generate_uniform_pull_constant_load(fs_inst *inst,
 
    brw_oword_block_read(p, dst, brw_message_reg(inst->base_mrf),
 			read_offset, surf_index);
-
-   if (intel->gen == 4 && !intel->is_g4x) {
-      /* gen4 errata: destination from a send can't be used as a
-       * destination until it's been read.  Just read it so we don't
-       * have to worry.
-       */
-      brw_MOV(p, brw_null_reg(), dst);
-   }
 }
 
 void
