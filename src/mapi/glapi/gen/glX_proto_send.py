@@ -700,7 +700,9 @@ generic_%u_byte( GLint rop, const void * ptr )
                         if f.reply_always_array:
                             print '        (void)memcpy(%s, %s_data(reply), %s_data_length(reply) * sizeof(%s));' % (output.name, xcb_name, xcb_name, output.get_base_type_string())
                         else:
-                            print '        if (%s_data_length(reply) == 0)' % (xcb_name)
+                            print '        /* the XXX_data_length() xcb function name is misleading, it returns the number */'
+                            print '        /* of elements, not the length of the data part. A single element is embedded. */'
+                            print '        if (%s_data_length(reply) == 1)' % (xcb_name)
                             print '            (void)memcpy(%s, &reply->datum, sizeof(reply->datum));' % (output.name)
                             print '        else'
                             print '            (void)memcpy(%s, %s_data(reply), %s_data_length(reply) * sizeof(%s));' % (output.name, xcb_name, xcb_name, output.get_base_type_string())
