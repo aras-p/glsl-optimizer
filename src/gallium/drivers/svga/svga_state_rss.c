@@ -23,6 +23,7 @@
  *
  **********************************************************/
 
+#include "util/u_format.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "pipe/p_defines.h"
@@ -246,6 +247,16 @@ emit_rss(struct svga_context *svga, unsigned dirty)
 
       EMIT_RS_FLOAT( svga, slope, SLOPESCALEDEPTHBIAS, fail );
       EMIT_RS_FLOAT( svga, bias, DEPTHBIAS, fail );
+   }
+
+   if (dirty & SVGA_NEW_FRAME_BUFFER) {
+      /* XXX: we only look at the first color buffer's sRGB state */
+      float gamma = 1.0f;
+      if (svga->curr.framebuffer.cbufs[0] &&
+          util_format_is_srgb(svga->curr.framebuffer.cbufs[0]->format)) {
+         gamma = 2.2f;
+      }
+      EMIT_RS_FLOAT(svga, gamma, OUTPUTGAMMA, fail);
    }
 
    if (dirty & SVGA_NEW_RAST) {
