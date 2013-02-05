@@ -328,6 +328,23 @@ fs_inst::is_math()
 }
 
 bool
+fs_inst::is_control_flow()
+{
+   switch (opcode) {
+   case BRW_OPCODE_DO:
+   case BRW_OPCODE_WHILE:
+   case BRW_OPCODE_IF:
+   case BRW_OPCODE_ELSE:
+   case BRW_OPCODE_ENDIF:
+   case BRW_OPCODE_BREAK:
+   case BRW_OPCODE_CONTINUE:
+      return true;
+   default:
+      return false;
+   }
+}
+
+bool
 fs_inst::is_send_from_grf()
 {
    return (opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7 ||
@@ -2070,16 +2087,12 @@ fs_visitor::compute_to_mrf()
 	    break;
 	 }
 
-	 /* We don't handle flow control here.  Most computation of
+	 /* We don't handle control flow here.  Most computation of
 	  * values that end up in MRFs are shortly before the MRF
 	  * write anyway.
 	  */
-	 if (scan_inst->opcode == BRW_OPCODE_DO ||
-	     scan_inst->opcode == BRW_OPCODE_WHILE ||
-	     scan_inst->opcode == BRW_OPCODE_ELSE ||
-	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
+	 if (scan_inst->is_control_flow() && scan_inst->opcode != BRW_OPCODE_IF)
 	    break;
-	 }
 
 	 /* You can't read from an MRF, so if someone else reads our
 	  * MRF's source GRF that we wanted to rewrite, that stops us.
@@ -2163,16 +2176,8 @@ fs_visitor::remove_duplicate_mrf_writes()
    foreach_list_safe(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
-      switch (inst->opcode) {
-      case BRW_OPCODE_DO:
-      case BRW_OPCODE_WHILE:
-      case BRW_OPCODE_IF:
-      case BRW_OPCODE_ELSE:
-      case BRW_OPCODE_ENDIF:
+      if (inst->is_control_flow()) {
 	 memset(last_mrf_move, 0, sizeof(last_mrf_move));
-	 continue;
-      default:
-	 break;
       }
 
       if (inst->opcode == BRW_OPCODE_MOV &&

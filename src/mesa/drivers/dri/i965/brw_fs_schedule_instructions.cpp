@@ -816,15 +816,8 @@ fs_visitor::schedule_instructions(bool post_reg_alloc)
 	 next_block_header = (fs_inst *)next_block_header->next;
 
 	 sched.add_inst(inst);
-	 if (inst->opcode == BRW_OPCODE_IF ||
-	     inst->opcode == BRW_OPCODE_ELSE ||
-	     inst->opcode == BRW_OPCODE_ENDIF ||
-	     inst->opcode == BRW_OPCODE_DO ||
-	     inst->opcode == BRW_OPCODE_WHILE ||
-	     inst->opcode == BRW_OPCODE_BREAK ||
-	     inst->opcode == BRW_OPCODE_CONTINUE) {
+         if (inst->is_control_flow())
 	    break;
-	 }
       }
       sched.calculate_deps();
       sched.schedule_instructions(next_block_header);
