@@ -579,21 +579,13 @@ SVGA3D_SetRenderTarget(struct svga_winsys_context *swc,
    if(!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
-
    cmd->cid = swc->cid;
-
    cmd->type = type;
-
    surface_to_surfaceid(swc, surface, &cmd->target, SVGA_RELOC_WRITE);
-
    swc->commit(swc);
 
    return PIPE_OK;
 }
-
-
-
-
 
 
 /*
