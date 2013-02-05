@@ -52,7 +52,7 @@ do {									\
    printf( "\n" );							\
    printf( "/* ====================================================="	\
 	   "========\n" );						\
-   printf( " * Offsets for %s\n", x );					\
+   printf( " * Offsets for " x "\n" );					\
    printf( " */\n" );							\
    printf( "\n" );							\
 } while (0)
@@ -61,19 +61,42 @@ do {									\
 do {									\
    printf( "\n" );							\
    printf( "/*\n" );							\
-   printf( " * Flags for %s\n", x );					\
+   printf( " * Flags for " x "\n" );					\
    printf( " */\n" );							\
    printf( "\n" );							\
 } while (0)
 
-#define OFFSET( s, t, m )						\
-   printf( "#define %s\t%lu\n", s, (unsigned long) offsetof( t, m ) );
+#ifdef ASM_OFFSETS
 
-#define SIZEOF( s, t )							\
-   printf( "#define %s\t%lu\n", s, (unsigned long) sizeof(t) );
+/*
+ * Format the asm output in a special way that we can manipulate
+ * after the fact and turn into the final header for the target.
+ */
+
+#define DEFINE_UL( s, ul )						\
+   __asm__ __volatile__ ( "\n->" s " %0" : : "i" (ul) )
+
+#define DEFINE( s, d )							\
+   DEFINE_UL( s, d )
+
+#define printf( x )							\
+   __asm__ __volatile__ ( "\n->" x )
+
+#else
+
+#define DEFINE_UL( s, ul )						\
+   printf( "#define %s\t%lu\n", s, (unsigned long) (ul) );
 
 #define DEFINE( s, d )							\
    printf( "#define %s\t0x%" PRIx64 "\n", s, (uint64_t) d );
+
+#endif
+
+#define OFFSET( s, t, m )						\
+   DEFINE_UL( s, offsetof( t, m ) )
+
+#define SIZEOF( s, t )							\
+   DEFINE_UL( s, sizeof(t) )
 
 
 

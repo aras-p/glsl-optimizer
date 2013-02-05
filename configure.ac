@@ -100,6 +100,7 @@ AC_MSG_RESULT([$acv_mesa_CLANG])
 
 dnl If we're using GCC, make sure that it is at least version 3.3.0.  Older
 dnl versions are explictly not supported.
+GEN_ASM_OFFSETS=no
 if test "x$GCC" = xyes -a "x$acv_mesa_CLANG" = xno; then
     AC_MSG_CHECKING([whether gcc version is sufficient])
     major=0
@@ -117,7 +118,12 @@ if test "x$GCC" = xyes -a "x$acv_mesa_CLANG" = xno; then
     else
         AC_MSG_RESULT([yes])
     fi
+
+    if test "x$cross_compiling" = xyes; then
+        GEN_ASM_OFFSETS=yes
+    fi
 fi
+AM_CONDITIONAL([GEN_ASM_OFFSETS], test "x$GEN_ASM_OFFSETS" = xyes)
 
 dnl Make sure the pkg-config macros are defined
 m4_ifndef([PKG_PROG_PKG_CONFIG],
