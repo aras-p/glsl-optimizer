@@ -1647,15 +1647,19 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 		if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 			ntype = V_028C70_NUMBER_SRGB;
 		else if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
-			if (desc->channel[i].normalized)
-				ntype = V_028C70_NUMBER_SNORM;
-			else if (desc->channel[i].pure_integer)
+			if (desc->channel[i].pure_integer) {
 				ntype = V_028C70_NUMBER_SINT;
+			} else {
+				assert(desc->channel[i].normalized);
+				ntype = V_028C70_NUMBER_SNORM;
+			}
 		} else if (desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED) {
-			if (desc->channel[i].normalized)
-				ntype = V_028C70_NUMBER_UNORM;
-			else if (desc->channel[i].pure_integer)
+			if (desc->channel[i].pure_integer) {
 				ntype = V_028C70_NUMBER_UINT;
+			} else {
+				assert(desc->channel[i].normalized);
+				ntype = V_028C70_NUMBER_UNORM;
+			}
 		}
 	}
 
@@ -2116,16 +2120,31 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	first_non_void = util_format_get_first_non_void_channel(pipe_format);
 	if (first_non_void < 0) {
 		num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
-	} else switch (desc->channel[first_non_void].type) {
-	case UTIL_FORMAT_TYPE_FLOAT:
-		num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
-		break;
-	case UTIL_FORMAT_TYPE_SIGNED:
-		num_format = V_008F14_IMG_NUM_FORMAT_SNORM;
-		break;
-	case UTIL_FORMAT_TYPE_UNSIGNED:
-	default:
+	} else if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
+		num_format = V_008F14_IMG_NUM_FORMAT_SRGB;
+	} else {
 		num_format = V_008F14_IMG_NUM_FORMAT_UNORM;
+
+		switch (desc->channel[first_non_void].type) {
+		case UTIL_FORMAT_TYPE_FLOAT:
+			num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
+			break;
+		case UTIL_FORMAT_TYPE_SIGNED:
+			if (desc->channel[first_non_void].normalized)
+				num_format = V_008F14_IMG_NUM_FORMAT_SNORM;
+			else if (desc->channel[first_non_void].pure_integer)
+				num_format = V_008F14_IMG_NUM_FORMAT_SINT;
+			else
+				num_format = V_008F14_IMG_NUM_FORMAT_SSCALED;
+			break;
+		case UTIL_FORMAT_TYPE_UNSIGNED:
+			if (desc->channel[first_non_void].normalized)
+				num_format = V_008F14_IMG_NUM_FORMAT_UNORM;
+			else if (desc->channel[first_non_void].pure_integer)
+				num_format = V_008F14_IMG_NUM_FORMAT_UINT;
+			else
+				num_format = V_008F14_IMG_NUM_FORMAT_USCALED;
+		}
 	}
 
 	format = si_translate_texformat(ctx->screen, pipe_format, desc, first_non_void);
@@ -2499,10 +2518,20 @@ static void *si_create_vertex_elements(struct pipe_context *ctx,
 			num_format = V_008F0C_BUF_NUM_FORMAT_USCALED; /* XXX */
 			break;
 		case UTIL_FORMAT_TYPE_SIGNED:
-			num_format = V_008F0C_BUF_NUM_FORMAT_SNORM;
+			if (desc->channel[first_non_void].normalized)
+				num_format = V_008F0C_BUF_NUM_FORMAT_SNORM;
+			else if (desc->channel[i].pure_integer)
+				num_format = V_008F0C_BUF_NUM_FORMAT_SINT;
+			else
+				num_format = V_008F0C_BUF_NUM_FORMAT_SSCALED;
 			break;
 		case UTIL_FORMAT_TYPE_UNSIGNED:
-			num_format = V_008F0C_BUF_NUM_FORMAT_UNORM;
+			if (desc->channel[first_non_void].normalized)
+				num_format = V_008F0C_BUF_NUM_FORMAT_UNORM;
+			else if (desc->channel[i].pure_integer)
+				num_format = V_008F0C_BUF_NUM_FORMAT_UINT;
+			else
+				num_format = V_008F0C_BUF_NUM_FORMAT_USCALED;
 			break;
 		case UTIL_FORMAT_TYPE_FLOAT:
 		default:
