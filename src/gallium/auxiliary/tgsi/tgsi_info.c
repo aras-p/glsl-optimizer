@@ -293,7 +293,10 @@ tgsi_opcode_infer_src_type( uint opcode )
    case TGSI_OPCODE_USHR:
    case TGSI_OPCODE_SHL:
    case TGSI_OPCODE_TXQ:
+   case TGSI_OPCODE_SVIEWINFO:
    case TGSI_OPCODE_TXF:
+   case TGSI_OPCODE_SAMPLE_I:
+   case TGSI_OPCODE_SAMPLE_I_MS:
       return TGSI_TYPE_UNSIGNED;
    case TGSI_OPCODE_MOD:
    case TGSI_OPCODE_I2F:
@@ -343,6 +346,7 @@ tgsi_opcode_infer_dst_type( uint opcode )
    case TGSI_OPCODE_SHL:
    case TGSI_OPCODE_TXQ:
    case TGSI_OPCODE_TXQ_LZ:
+   case TGSI_OPCODE_SVIEWINFO:
       return TGSI_TYPE_UNSIGNED;
    case TGSI_OPCODE_F2I:
    case TGSI_OPCODE_IDIV:

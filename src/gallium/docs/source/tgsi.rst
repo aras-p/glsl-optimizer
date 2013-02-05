@@ -1444,7 +1444,7 @@ instructions. If in doubt double check Direct3D documentation.
 
 .. opcode:: SVIEWINFO - query the dimensions of a given sampler view.
                dst receives width, height, depth or array size and
-               number of mipmap levels. The dst can have a writemask
+               number of mipmap levels as int4. The dst can have a writemask
                which will specify what info is the caller interested
                in.
                SVIEWINFO dst, src_mip_level, sampler_view

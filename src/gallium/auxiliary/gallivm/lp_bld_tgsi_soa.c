@@ -1621,69 +1621,35 @@ emit_txf( struct lp_build_tgsi_soa_context *bld,
 }
 
 static void
-emit_txq( struct lp_build_tgsi_soa_context *bld,
-          const struct tgsi_full_instruction *inst,
-          LLVMValueRef *sizes_out)
+emit_size_query( struct lp_build_tgsi_soa_context *bld,
+                 const struct tgsi_full_instruction *inst,
+                 LLVMValueRef *sizes_out,
+                 boolean is_sviewinfo)
 {
    LLVMValueRef explicit_lod;
-   unsigned num_coords, has_lod;
+   unsigned has_lod;
    unsigned i;
 
    switch (inst->Texture.Texture) {
-   case TGSI_TEXTURE_1D:
-   case TGSI_TEXTURE_SHADOW1D:
-      num_coords = 1;
-      has_lod = 1;
-      break;
-   case TGSI_TEXTURE_2D:
-   case TGSI_TEXTURE_SHADOW2D:
-   case TGSI_TEXTURE_CUBE:
-   case TGSI_TEXTURE_SHADOWCUBE:
-   case TGSI_TEXTURE_1D_ARRAY:
-   case TGSI_TEXTURE_SHADOW1D_ARRAY:
-      num_coords = 2;
-      has_lod = 1;
-      break;
-   case TGSI_TEXTURE_3D:
-// case TGSI_TEXTURE_CUBE_ARRAY:
-// case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
-   case TGSI_TEXTURE_2D_ARRAY:
-   case TGSI_TEXTURE_SHADOW2D_ARRAY:
-      num_coords = 3;
-      has_lod = 1;
-      break;
-
    case TGSI_TEXTURE_BUFFER:
-      num_coords = 1;
-      has_lod = 0;
-      break;
-
    case TGSI_TEXTURE_RECT:
    case TGSI_TEXTURE_SHADOWRECT:
-// case TGSI_TEXTURE_2D_MS:
-      num_coords = 2;
       has_lod = 0;
       break;
-
-// case TGSI_TEXTURE_2D_MS_ARRAY:
-//    num_coords = 3;
-//    has_lod = 0;
-//    break;
-
    default:
-      assert(0);
-      return;
+      has_lod = 1;
+      break;
    }
 
    if (!bld->sampler) {
       _debug_printf("warning: found texture query instruction but no sampler generator supplied\n");
-      for (i = 0; i < num_coords; i++)
-         sizes_out[i] = bld->bld_base.base.undef;
+      for (i = 0; i < 4; i++)
+         sizes_out[i] = bld->bld_base.int_bld.undef;
       return;
    }
 
    if (has_lod)
-      explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 0, 2 );
+      explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 0, 0 );
    else
       explicit_lod = NULL;
 
@@ -1691,6 +1657,7 @@ emit_txq( struct lp_build_tgsi_soa_context *bld,
                                  bld->bld_base.base.gallivm,
                                  bld->bld_base.int_bld.type,
                                  inst->Src[1].Register.Index,
+                                 is_sviewinfo,
                                  explicit_lod,
                                  sizes_out);
 }
@@ -2078,7 +2045,7 @@ txq_emit(
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
 
-   emit_txq(bld, emit_data->inst, emit_data->output);
+   emit_size_query(bld, emit_data->inst, emit_data->output, FALSE);
 }
 
 static void
@@ -2174,13 +2141,8 @@ sviewinfo_emit(
    struct lp_build_emit_data * emit_data)
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
-   /*
-    * FIXME: unlike txq we are required to return number of mipmap levels
-    * too, and the unused channels are defined to be zero.
-    * Either always do that (and hope llvm can optimize it away?)
-    * or pass a parameter all the way down.
-    */
-   emit_txq(bld, emit_data->inst, emit_data->output);
+
+   emit_size_query(bld, emit_data->inst, emit_data->output, TRUE);
 }
 
 static void
