@@ -148,6 +148,12 @@ struct _mesa_glsl_parse_state {
    unsigned uniform_block_array_size;
    struct gl_uniform_block *uniform_blocks;
 
+   unsigned num_supported_versions;
+   struct {
+      unsigned ver;
+      bool es;
+   } supported_versions[12];
+
    bool es_shader;
    unsigned language_version;
    enum _mesa_glsl_parser_targets target;
