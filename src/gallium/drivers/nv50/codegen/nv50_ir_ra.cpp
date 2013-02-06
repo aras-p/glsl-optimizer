@@ -43,9 +43,12 @@ public:
 
    bool assign(int32_t& reg, DataFile f, unsigned int size);
    void release(DataFile f, int32_t reg, unsigned int size);
-   bool occupy(DataFile f, int32_t reg, unsigned int size, bool noTest = false);
-   bool occupy(const Value *);
+   void occupy(DataFile f, int32_t reg, unsigned int size);
+   void occupy(const Value *);
    void occupyMask(DataFile f, int32_t reg, uint8_t mask);
+   bool isOccupied(DataFile f, int32_t reg, unsigned int size) const;
+   bool testOccupy(const Value *);
+   bool testOccupy(DataFile f, int32_t reg, unsigned int size);
 
    inline int getMaxAssigned(DataFile f) const { return fill[f]; }
 
@@ -155,9 +158,15 @@ RegisterSet::assign(int32_t& reg, DataFile f, unsigned int size)
 }
 
 bool
+RegisterSet::isOccupied(DataFile f, int32_t reg, unsigned int size) const
+{
+   return bits[f].testRange(reg, size);
+}
+
+void
 RegisterSet::occupy(const Value *v)
 {
-   return occupy(v->reg.file, idToUnits(v), v->reg.size >> unit[v->reg.file]);
+   occupy(v->reg.file, idToUnits(v), v->reg.size >> unit[v->reg.file]);
 }
 
 void
@@ -166,18 +175,29 @@ RegisterSet::occupyMask(DataFile f, int32_t reg, uint8_t mask)
    bits[f].setMask(reg & ~31, static_cast<uint32_t>(mask) << (reg % 32));
 }
 
-bool
-RegisterSet::occupy(DataFile f, int32_t reg, unsigned int size, bool noTest)
+void
+RegisterSet::occupy(DataFile f, int32_t reg, unsigned int size)
 {
-   if (!noTest && bits[f].testRange(reg, size))
-      return false;
-
    bits[f].setRange(reg, size);
 
    INFO_DBG(0, REG_ALLOC, "reg occupy: %u[%i] %u\n", f, reg, size);
 
    fill[f] = MAX2(fill[f], (int32_t)(reg + size - 1));
+}
 
+bool
+RegisterSet::testOccupy(const Value *v)
+{
+   return testOccupy(v->reg.file,
+                     idToUnits(v), v->reg.size >> unit[v->reg.file]);
+}
+
+bool
+RegisterSet::testOccupy(DataFile f, int32_t reg, unsigned int size)
+{
+   if (isOccupied(f, reg, size))
+      return false;
+   occupy(f, reg, size);
    return true;
 }
 
@@ -426,7 +446,7 @@ RegAlloc::ArgumentMovesPass::visit(BasicBlock *bb)
       for (std::deque<Value *>::iterator it = cal->target.fn->clobbers.begin();
            it != cal->target.fn->clobbers.end();
            ++it) {
-         if (clobberSet.occupy(*it)) {
+         if (clobberSet.testOccupy(*it)) {
             Value *tmp = new_LValue(func, (*it)->asLValue());
             tmp->reg.data.id = (*it)->reg.data.id;
             cal->setDef(cal->defCount(), tmp);
@@ -1243,7 +1263,7 @@ GCRA::checkInterference(const RIG_Node *node, Graph::EdgeIterator& ei)
       INFO_DBG(prog->dbgFlags, REG_ALLOC,
                "(%%%i) X (%%%i): $r%i + %u\n",
                vA->id, vB->id, intf->reg, intf->colors);
-      regs.occupy(node->f, intf->reg, intf->colors, true);
+      regs.occupy(node->f, intf->reg, intf->colors);
    }
 }
 
@@ -1271,7 +1291,7 @@ GCRA::selectRegisters()
               it != node->prefRegs.end();
               ++it) {
             if ((*it)->reg >= 0 &&
-                regs.occupy(node->f, (*it)->reg, node->colors)) {
+                regs.testOccupy(node->f, (*it)->reg, node->colors)) {
                node->reg = (*it)->reg;
                break;
             }

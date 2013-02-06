@@ -528,7 +528,7 @@ public:
       return data[i / 32] & (1 << (i % 32));
    }
    // NOTE: range may not cross 32 bit boundary (implies n <= 32)
-   inline bool testRange(unsigned int i, unsigned int n)
+   inline bool testRange(unsigned int i, unsigned int n) const
    {
       assert((i + n) <= size && (((i % 32) + n) <= 32));
       return data[i / 32] & (((1 << n) - 1) << (i % 32));
