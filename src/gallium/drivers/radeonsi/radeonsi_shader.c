@@ -911,8 +911,6 @@ static void tex_fetch_args(
 	while (count < util_next_power_of_two(count))
 		address[count++] = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
 
-	emit_data->dst_type = LLVMVectorType(LLVMInt32TypeInContext(gallivm->context),
-					     count);
 	emit_data->args[1] = lp_build_gather_values(gallivm, address, count);
 
 	/* Resource */
