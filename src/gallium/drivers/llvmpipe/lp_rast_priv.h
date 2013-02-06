@@ -94,8 +94,8 @@ struct lp_rasterizer_task
    /** "my" index */
    unsigned thread_index;
 
-   /* occlude counter for visiable pixels */
-   uint32_t vis_counter;
+   /* occlude counter for visible pixels */
+   struct lp_jit_thread_data thread_data;
    uint64_t query_start;
    struct llvmpipe_query *query[PIPE_QUERY_TYPES];
 
@@ -276,7 +276,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
                                       color,
                                       depth,
                                       0xffff,
-                                      &task->vis_counter,
+                                      &task->thread_data,
                                       stride );
    END_JIT_CALL();
 }

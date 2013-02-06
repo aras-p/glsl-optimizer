@@ -233,7 +233,7 @@ generate_fs(struct gallivm_state *gallivm,
             LLVMValueRef facing,
             unsigned partial_mask,
             LLVMValueRef mask_input,
-            LLVMValueRef counter)
+            LLVMValueRef thread_data_ptr)
 {
    const struct util_format_description *zs_format_desc = NULL;
    const struct tgsi_token *tokens = shader->base.tokens;
@@ -431,9 +431,12 @@ generate_fs(struct gallivm_state *gallivm,
       }
    }
 
-   if (counter)
+   if (key->occlusion_count) {
+      LLVMValueRef counter = lp_jit_thread_data_counter(gallivm, thread_data_ptr);
+      lp_build_name(counter, "counter");
       lp_build_occlusion_count(gallivm, type,
                                lp_build_mask_value(&mask), counter);
+   }
 
    *pmask = lp_build_mask_end(&mask);
 }
@@ -457,7 +460,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
                  LLVMValueRef depth_ptr,
                  unsigned depth_bits,
                  LLVMValueRef facing,
-                 LLVMValueRef counter)
+                 LLVMValueRef thread_data_ptr)
 {
    const struct util_format_description *zs_format_desc = NULL;
    const struct tgsi_token *tokens = shader->base.tokens;
@@ -674,6 +677,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
    }
 
    if (key->occlusion_count) {
+      LLVMValueRef counter = lp_jit_thread_data_counter(gallivm, thread_data_ptr);
       lp_build_name(counter, "counter");
       lp_build_occlusion_count(gallivm, type,
                                lp_build_mask_value(&mask), counter);
@@ -1767,7 +1771,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef stride_ptr;
    LLVMValueRef depth_ptr;
    LLVMValueRef mask_input;
-   LLVMValueRef counter = NULL;
+   LLVMValueRef thread_data_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    struct lp_build_sampler_soa *sampler;
@@ -1848,7 +1852,7 @@ generate_fragment(struct llvmpipe_context *lp,
    arg_types[7] = LLVMPointerType(LLVMPointerType(blend_vec_type, 0), 0);  /* color */
    arg_types[8] = LLVMPointerType(int8_type, 0);       /* depth */
    arg_types[9] = int32_type;                          /* mask_input */
-   arg_types[10] = LLVMPointerType(int32_type, 0);     /* counter */
+   arg_types[10] = variant->jit_thread_data_ptr_type;  /* per thread data */
    arg_types[11] = LLVMPointerType(int32_type, 0);     /* stride */
 
    func_type = LLVMFunctionType(LLVMVoidTypeInContext(gallivm->context),
@@ -1876,6 +1880,7 @@ generate_fragment(struct llvmpipe_context *lp,
    color_ptr_ptr = LLVMGetParam(function, 7);
    depth_ptr    = LLVMGetParam(function, 8);
    mask_input   = LLVMGetParam(function, 9);
+   thread_data_ptr  = LLVMGetParam(function, 10);
    stride_ptr   = LLVMGetParam(function, 11);
 
    lp_build_name(context_ptr, "context");
@@ -1886,13 +1891,9 @@ generate_fragment(struct llvmpipe_context *lp,
    lp_build_name(dady_ptr, "dady");
    lp_build_name(color_ptr_ptr, "color_ptr_ptr");
    lp_build_name(depth_ptr, "depth");
+   lp_build_name(thread_data_ptr, "thread_data");
    lp_build_name(mask_input, "mask_input");
    lp_build_name(stride_ptr, "stride_ptr");
-
-   if (key->occlusion_count) {
-      counter = LLVMGetParam(function, 10);
-      lp_build_name(counter, "counter");
-   }
 
    /*
     * Function body
@@ -1947,7 +1948,7 @@ generate_fragment(struct llvmpipe_context *lp,
                      facing,
                      partial_mask,
                      mask_input,
-                     counter);
+                     thread_data_ptr);
 
          for (cbuf = 0; cbuf < key->nr_cbufs; cbuf++)
             for (chan = 0; chan < TGSI_NUM_CHANNELS; ++chan)
@@ -2006,7 +2007,7 @@ generate_fragment(struct llvmpipe_context *lp,
                        depth_ptr,
                        depth_bits,
                        facing,
-                       counter);
+                       thread_data_ptr);
 
       for (i = 0; i < num_fs; i++) {
          LLVMValueRef indexi = lp_build_const_int32(gallivm, i);

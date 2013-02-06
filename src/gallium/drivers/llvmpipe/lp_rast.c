@@ -386,7 +386,7 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
                                             color,
                                             depth,
                                             0xffff,
-                                            &task->vis_counter,
+                                            &task->thread_data,
                                             stride);
          END_JIT_CALL();
       }
@@ -469,7 +469,7 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
                                          color,
                                          depth,
                                          mask,
-                                         &task->vis_counter,
+                                         &task->thread_data,
                                          stride);
    END_JIT_CALL();
 }
@@ -491,7 +491,7 @@ lp_rast_begin_query(struct lp_rasterizer_task *task,
 
    switch (pq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
-      task->vis_counter = 0;
+      task->thread_data.vis_counter = 0;
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
    case PIPE_QUERY_PRIMITIVES_EMITTED:
@@ -519,7 +519,7 @@ lp_rast_end_query(struct lp_rasterizer_task *task,
 
    switch (pq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
-      pq->count[task->thread_index] += task->vis_counter;
+      pq->count[task->thread_index] += task->thread_data.vis_counter;
       break;
    case PIPE_QUERY_TIMESTAMP:
       pq->count[task->thread_index] = os_time_get_nano();

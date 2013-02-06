@@ -190,6 +190,25 @@ lp_jit_create_types(struct lp_fragment_shader_variant *lp)
       lp->jit_context_ptr_type = LLVMPointerType(context_type, 0);
    }
 
+   /* struct lp_jit_thread_data */
+   {
+      LLVMTypeRef elem_types[LP_JIT_THREAD_DATA_COUNT];
+      LLVMTypeRef thread_data_type;
+
+      elem_types[LP_JIT_THREAD_DATA_COUNTER] = LLVMInt32TypeInContext(lc);
+
+      thread_data_type = LLVMStructTypeInContext(lc, elem_types,
+                                                 Elements(elem_types), 0);
+
+#if HAVE_LLVM < 0x0300
+      LLVMInvalidateStructLayout(gallivm->target, thread_data_type);
+
+      LLVMAddTypeName(gallivm->module, "thread_data", thread_data_type);
+#endif
+
+      lp->jit_thread_data_ptr_type = LLVMPointerType(thread_data_type, 0);
+   }
+
    if (gallivm_debug & GALLIVM_DEBUG_IR) {
       LLVMDumpModule(gallivm->module);
    }
