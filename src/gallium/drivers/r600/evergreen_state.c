@@ -3532,7 +3532,8 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 	if (dst_mode == RADEON_SURF_MODE_LINEAR) {
 		/* T2L */
 		array_mode = evergreen_array_mode(src_mode);
-		slice_tile_max = (((pitch * rsrc->surface.level[src_level].npix_y) >> 6) / bpp) - 1;
+		slice_tile_max = (rsrc->surface.level[src_level].nblk_x * rsrc->surface.level[src_level].nblk_y) >> 6;
+		slice_tile_max = slice_tile_max ? slice_tile_max - 1 : 0;
 		/* linear height must be the same as the slice tile max height, it's ok even
 		 * if the linear destination/source have smaller heigh as the size of the
 		 * dma packet will be using the copy_height which is always smaller or equal
@@ -3556,7 +3557,8 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 	} else {
 		/* L2T */
 		array_mode = evergreen_array_mode(dst_mode);
-		slice_tile_max = (((pitch * rdst->surface.level[dst_level].npix_y) >> 6) / bpp) - 1;
+		slice_tile_max = (rdst->surface.level[dst_level].nblk_x * rdst->surface.level[dst_level].nblk_y) >> 6;
+		slice_tile_max = slice_tile_max ? slice_tile_max - 1 : 0;
 		/* linear height must be the same as the slice tile max height, it's ok even
 		 * if the linear destination/source have smaller heigh as the size of the
 		 * dma packet will be using the copy_height which is always smaller or equal
