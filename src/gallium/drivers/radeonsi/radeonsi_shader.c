@@ -940,21 +940,36 @@ static void tex_fetch_args(
 			4);
 }
 
+static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
+				struct lp_build_tgsi_context * bld_base,
+				struct lp_build_emit_data * emit_data)
+{
+	struct lp_build_context * base = &bld_base->base;
+	char intr_name[23];
+
+	sprintf(intr_name, "%sv%ui32", action->intr_name,
+		LLVMGetVectorSize(LLVMTypeOf(emit_data->args[1])));
+
+	emit_data->output[emit_data->chan] = lp_build_intrinsic(
+		base->gallivm->builder, intr_name, emit_data->dst_type,
+		emit_data->args, emit_data->arg_count);
+}
+
 static const struct lp_build_tgsi_action tex_action = {
 	.fetch_args = tex_fetch_args,
-	.emit = lp_build_tgsi_intrinsic,
+	.emit = build_tex_intrinsic,
 	.intr_name = "llvm.SI.sample."
 };
 
 static const struct lp_build_tgsi_action txb_action = {
 	.fetch_args = tex_fetch_args,
-	.emit = lp_build_tgsi_intrinsic,
+	.emit = build_tex_intrinsic,
 	.intr_name = "llvm.SI.sampleb."
 };
 
 static const struct lp_build_tgsi_action txl_action = {
 	.fetch_args = tex_fetch_args,
-	.emit = lp_build_tgsi_intrinsic,
+	.emit = build_tex_intrinsic,
 	.intr_name = "llvm.SI.samplel."
 };
 
