@@ -446,6 +446,7 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
+   __DRIbuffer buffer;
    int i, ret = 0;
 
    while (dri2_surf->frame_callback && ret != -1)
@@ -462,6 +463,13 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    for (i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++)
       if (dri2_surf->color_buffers[i].age > 0)
          dri2_surf->color_buffers[i].age++;
+
+   /* Make sure we have a back buffer in case we're swapping without ever
+    * rendering. */
+   if (get_back_bo(dri2_surf, &buffer) < 0) {
+      _eglError(EGL_BAD_ALLOC, "dri2_swap_buffers");
+      return EGL_FALSE;
+   }
 
    dri2_surf->back->age = 1;
    dri2_surf->current = dri2_surf->back;
