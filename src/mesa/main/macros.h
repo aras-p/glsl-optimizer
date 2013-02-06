@@ -766,5 +766,8 @@ DIFFERENT_SIGNS(GLfloat x, GLfloat y)
 #define ENUM_TO_DOUBLE(E)  ((GLdouble)(GLint)(E))
 #define ENUM_TO_BOOLEAN(E) ((E) ? GL_TRUE : GL_FALSE)
 
+/* Compute the size of an array */
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+
 
 #endif

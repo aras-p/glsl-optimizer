@@ -701,8 +701,6 @@ radeonDestroyBuffer(__DRIdrawable *driDrawPriv)
     _mesa_reference_framebuffer((struct gl_framebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
-#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
-
 /**
  * This is the driver specific part of the createNewScreen entry point.
  * Called when using DRI2.

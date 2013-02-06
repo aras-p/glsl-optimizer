@@ -348,8 +348,6 @@ extern char *__progname;
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
-
 /**
  * Align a value down to an alignment value
  *

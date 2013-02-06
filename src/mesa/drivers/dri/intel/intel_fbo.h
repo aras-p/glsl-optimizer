@@ -31,6 +31,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include "main/formats.h"
+#include "main/macros.h"
 #include "intel_context.h"
 #include "intel_screen.h"
 

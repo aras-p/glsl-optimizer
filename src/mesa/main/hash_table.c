@@ -44,9 +44,8 @@
 #include <string.h>
 
 #include "main/hash_table.h"
+#include "main/macros.h"
 #include "ralloc.h"
-
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
 static const uint32_t deleted_key_value;
 

@@ -32,6 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/cpuinfo.h"
 #include "main/extensions.h"
@@ -390,8 +391,6 @@ static const struct { unsigned int attrib, offset; } attribMap[] = {
     __ATTRIB(__DRI_ATTRIB_CONFIG_CAVEAT,		level),
     __ATTRIB(__DRI_ATTRIB_SWAP_METHOD,			level)
 };
-
-#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 
 
 /**
