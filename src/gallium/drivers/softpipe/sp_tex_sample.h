@@ -55,7 +55,6 @@ typedef void (*img_filter_func)(struct tgsi_sampler *tgsi_sampler,
                                 float p,
                                 unsigned level,
                                 unsigned face_id,
-                                enum tgsi_sampler_control control,
                                 float *rgba);
 
 typedef void (*filter_func)(struct tgsi_sampler *tgsi_sampler,

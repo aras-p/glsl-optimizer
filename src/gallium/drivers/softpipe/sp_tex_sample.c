@@ -903,9 +903,8 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
                                 float s,
                                 float t,
                                 float p,
-				unsigned level,
+                                unsigned level,
                                 unsigned face_id,
-                                enum tgsi_sampler_control control,
                                 float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -964,7 +963,6 @@ img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
                                  float p,
                                  unsigned level,
                                  unsigned face_id,
-                                 enum tgsi_sampler_control control,
                                  float rgba[TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1003,7 +1001,6 @@ img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
                                 float p,
                                 unsigned level,
                                 unsigned face_id,
-                                enum tgsi_sampler_control control,
                                 float rgba[TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1050,7 +1047,6 @@ img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
                       float p,
                       unsigned level,
                       unsigned face_id,
-                      enum tgsi_sampler_control control,
                       float rgba[TGSI_QUAD_SIZE])
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1087,7 +1083,6 @@ img_filter_1d_array_nearest(struct tgsi_sampler *tgsi_sampler,
                             float p,
                             unsigned level,
                             unsigned face_id,
-                            enum tgsi_sampler_control control,
                             float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1125,7 +1120,6 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
                       float p,
                       unsigned level,
                       unsigned face_id,
-                      enum tgsi_sampler_control control,
                       float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1165,7 +1159,6 @@ img_filter_2d_array_nearest(struct tgsi_sampler *tgsi_sampler,
                             float p,
                             unsigned level,
                             unsigned face_id,
-                            enum tgsi_sampler_control control,
                             float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1214,7 +1207,6 @@ img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
                         float p,
                         unsigned level,
                         unsigned face_id,
-                        enum tgsi_sampler_control control,
                         float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1262,7 +1254,6 @@ img_filter_cube_array_nearest(struct tgsi_sampler *tgsi_sampler,
                         float p,
                         unsigned level,
                         unsigned face_id,
-                        enum tgsi_sampler_control control,
                         float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1302,7 +1293,6 @@ img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
                       float p,
                       unsigned level,
                       unsigned face_id,
-                      enum tgsi_sampler_control control,
                       float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1341,7 +1331,6 @@ img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
                      float p,
                      unsigned level,
                      unsigned face_id,
-                     enum tgsi_sampler_control control,
                      float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1378,7 +1367,6 @@ img_filter_1d_array_linear(struct tgsi_sampler *tgsi_sampler,
                            float p,
                            unsigned level,
                            unsigned face_id,
-                           enum tgsi_sampler_control control,
                            float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1416,7 +1404,6 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
                      float p,
                      unsigned level,
                      unsigned face_id,
-                     enum tgsi_sampler_control control,
                      float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1460,7 +1447,6 @@ img_filter_2d_array_linear(struct tgsi_sampler *tgsi_sampler,
                            float p,
                            unsigned level,
                            unsigned face_id,
-                           enum tgsi_sampler_control control,
                            float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1505,7 +1491,6 @@ img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
                        float p,
                        unsigned level,
                        unsigned face_id,
-                       enum tgsi_sampler_control control,
                        float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1567,7 +1552,6 @@ img_filter_cube_array_linear(struct tgsi_sampler *tgsi_sampler,
                              float p,
                              unsigned level,
                              unsigned face_id,
-                             enum tgsi_sampler_control control,
                              float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1611,7 +1595,6 @@ img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
                      float p,
                      unsigned level,
                      unsigned face_id,
-                     enum tgsi_sampler_control control,
                      float *rgba)
 {
    const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
@@ -1712,18 +1695,22 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
       int level0 = samp->view->u.tex.first_level + (int)lod[j];
 
       if (lod[j] < 0.0)
-         samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level, samp->faces[j], tgsi_sampler_lod_bias, &rgba[0][j]);
+         samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level,
+                              samp->faces[j], &rgba[0][j]);
 
       else if (level0 >= texture->last_level)
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], texture->last_level, samp->faces[j], tgsi_sampler_lod_bias, &rgba[0][j]);
+         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], texture->last_level,
+                              samp->faces[j], &rgba[0][j]);
 
       else {
          float levelBlend = frac(lod[j]);
          float rgbax[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
          int c;
 
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], level0,   samp->faces[j], tgsi_sampler_lod_bias, &rgbax[0][0]);
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], level0+1, samp->faces[j], tgsi_sampler_lod_bias, &rgbax[0][1]);
+         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], level0,
+                              samp->faces[j], &rgbax[0][0]);
+         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], level0+1,
+                              samp->faces[j], &rgbax[0][1]);
 
          for (c = 0; c < 4; c++) {
             rgba[c][j] = lerp(levelBlend, rgbax[c][0], rgbax[c][1]);
@@ -1774,11 +1761,13 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       if (lod[j] < 0.0)
-         samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level, samp->faces[j], tgsi_sampler_lod_bias, &rgba[0][j]);
+         samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level,
+                              samp->faces[j], &rgba[0][j]);
       else {
          float level = samp->view->u.tex.first_level + (int)(lod[j] + 0.5F) ;
          level = MIN2(level, (int)texture->last_level);
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], level, samp->faces[j], tgsi_sampler_lod_bias, &rgba[0][j]);
+         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], level, samp->faces[j],
+                              &rgba[0][j]);
       }
    }
 
@@ -1819,10 +1808,12 @@ mip_filter_none(struct tgsi_sampler *tgsi_sampler,
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       if (lod[j] < 0.0) { 
-         samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level, samp->faces[j], tgsi_sampler_lod_bias, &rgba[0][j]);
+         samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level,
+                              samp->faces[j], &rgba[0][j]);
       }
       else {
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level, samp->faces[j], tgsi_sampler_lod_bias, &rgba[0][j]);
+         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level,
+                              samp->faces[j], &rgba[0][j]);
       }
    }
 }
@@ -1842,7 +1833,8 @@ mip_filter_none_no_filter_select(struct tgsi_sampler *tgsi_sampler,
    int j;
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++)
-      samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level, samp->faces[j], tgsi_sampler_lod_bias, &rgba[0][j]);
+      samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level,
+                           samp->faces[j], &rgba[0][j]);
 }
 
 
@@ -1884,7 +1876,6 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
                   const float t[TGSI_QUAD_SIZE],
                   const float p[TGSI_QUAD_SIZE],
                   unsigned level,
-                  enum tgsi_sampler_control control,
                   const float dudx, const float dvdx,
                   const float dudy, const float dvdy,
                   float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
@@ -1995,8 +1986,8 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
                    * accelerated img_filter_2d_nearest_XXX functions.
                    */
                   for (jj = 0; jj < buffer_next; jj++) {
-                     samp->min_img_filter(tgsi_sampler, s_buffer[jj], t_buffer[jj], p[jj], level, samp->faces[j],
-                                          tgsi_sampler_lod_bias, &rgba_temp[0][jj]);
+                     samp->min_img_filter(tgsi_sampler, s_buffer[jj], t_buffer[jj], p[jj],
+                                          level, samp->faces[j], &rgba_temp[0][jj]);
                      num[0] += weight_buffer[jj] * rgba_temp[0][jj];
                      num[1] += weight_buffer[jj] * rgba_temp[1][jj];
                      num[2] += weight_buffer[jj] * rgba_temp[2][jj];
@@ -2023,8 +2014,8 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
           * accelerated img_filter_2d_nearest_XXX functions.
           */
          for (jj = 0; jj < buffer_next; jj++) {
-            samp->min_img_filter(tgsi_sampler, s_buffer[jj], t_buffer[jj], p[jj], level, samp->faces[j],
-                                 tgsi_sampler_lod_bias, &rgba_temp[0][jj]);
+            samp->min_img_filter(tgsi_sampler, s_buffer[jj], t_buffer[jj], p[jj], level,
+                                 samp->faces[j], &rgba_temp[0][jj]);
             num[0] += weight_buffer[jj] * rgba_temp[0][jj];
             num[1] += weight_buffer[jj] * rgba_temp[1][jj];
             num[2] += weight_buffer[jj] * rgba_temp[2][jj];
@@ -2044,7 +2035,7 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
          rgba[3]=0;*/
          /* not enough pixels in resampling, resort to direct interpolation */
          samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], level, samp->faces[j],
-                              tgsi_sampler_lod_bias, &rgba_temp[0][j]);
+                              &rgba_temp[0][j]);
          den = 1;
          num[0] = rgba_temp[0][j];
          num[1] = rgba_temp[1][j];
@@ -2142,13 +2133,14 @@ mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
    if (level0 >= (int) texture->last_level) {
       int j;
       for (j = 0; j < TGSI_QUAD_SIZE; j++)
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], texture->last_level, samp->faces[j], tgsi_sampler_lod_bias, &rgba[0][j]);
+         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], texture->last_level,
+                              samp->faces[j], &rgba[0][j]);
    }
    else {
       /* don't bother interpolating between multiple LODs; it doesn't
        * seem to be worth the extra running time.
        */
-      img_filter_2d_ewa(tgsi_sampler, s, t, p, level0, tgsi_sampler_lod_bias,
+      img_filter_2d_ewa(tgsi_sampler, s, t, p, level0,
                         dudx, dvdx, dudy, dvdy, rgba);
    }
 
@@ -2195,9 +2187,13 @@ mip_filter_linear_2d_linear_repeat_POT(
        */
       if ((unsigned)level0 >= texture->last_level) { 
          if (level0 < 0)
-            img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level, samp->faces[j], tgsi_sampler_lod_bias, &rgba[0][j]);
+            img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j],
+                                            samp->view->u.tex.first_level,
+                                            samp->faces[j], &rgba[0][j]);
          else
-            img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], samp->view->texture->last_level, samp->faces[j], tgsi_sampler_lod_bias, &rgba[0][j]);
+            img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j],
+                                            samp->view->texture->last_level,
+                                            samp->faces[j], &rgba[0][j]);
 
       }
       else {
@@ -2205,8 +2201,10 @@ mip_filter_linear_2d_linear_repeat_POT(
          float rgbax[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
          int c;
 
-         img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], level0,   samp->faces[j], tgsi_sampler_lod_bias, &rgbax[0][0]);
-         img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], level0+1, samp->faces[j], tgsi_sampler_lod_bias, &rgbax[0][1]);
+         img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], level0,
+                                         samp->faces[j], &rgbax[0][0]);
+         img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], level0+1,
+                                         samp->faces[j], &rgbax[0][1]);
 
          for (c = 0; c < TGSI_NUM_CHANNELS; c++)
             rgba[c][j] = lerp(levelBlend, rgbax[c][0], rgbax[c][1]);
