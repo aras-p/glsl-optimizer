@@ -502,16 +502,18 @@ get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type,
 {
    const GLenum target = texImage->TexObject->Target;
    GLboolean memCopy = GL_FALSE;
+   GLenum texBaseFormat = _mesa_get_format_base_format(texImage->TexFormat);
 
    /*
     * Check if we can use memcpy to copy from the hardware texture
     * format to the user's format/type.
     * Note that GL's pixel transfer ops don't apply to glGetTexImage()
     */
-   if (target == GL_TEXTURE_1D ||
-       target == GL_TEXTURE_2D ||
-       target == GL_TEXTURE_RECTANGLE ||
-       _mesa_is_cube_face(target)) {
+   if ((target == GL_TEXTURE_1D ||
+        target == GL_TEXTURE_2D ||
+        target == GL_TEXTURE_RECTANGLE ||
+        _mesa_is_cube_face(target)) &&
+       texBaseFormat == texImage->_BaseFormat) {
       memCopy = _mesa_format_matches_format_and_type(texImage->TexFormat,
                                                      format, type,
                                                      ctx->Pack.SwapBytes);
