@@ -3068,14 +3068,15 @@ static boolean r600_dma_copy_tile(struct r600_context *rctx,
 		return FALSE;
 	}
 
-	size = (copy_height * pitch) >> 2;
-	ncopy = (size / 0x0000ffff) + !!(size % 0x0000ffff);
+	/* It's a r6xx/r7xx limitation, the blit must be on 8 boundary for number
+	 * line in the blit. Compute max 8 line we can copy in the size limit
+	 */
+	cheight = ((0x0000ffff << 2) / pitch) & 0xfffffff8;
+	ncopy = (copy_height / cheight) + !!(copy_height % cheight);
 	r600_need_dma_space(rctx, ncopy * 7);
+
 	for (i = 0; i < ncopy; i++) {
-		cheight = copy_height;
-		if (((cheight * pitch) >> 2) > 0x0000ffff) {
-			cheight = (0x0000ffff << 2) / pitch;
-		}
+		cheight = cheight > copy_height ? copy_height : cheight;
 		size = (cheight * pitch) >> 2;
 		/* emit reloc before writting cs so that cs is always in consistent state */
 		r600_context_bo_reloc(rctx, &rctx->rings.dma, &rsrc->resource, RADEON_USAGE_READ);
