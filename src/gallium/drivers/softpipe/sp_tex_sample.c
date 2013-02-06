@@ -2963,6 +2963,7 @@ sp_create_sampler_variant( const struct pipe_sampler_state *sampler,
 
    case PIPE_TEX_MIPFILTER_LINEAR:
       if (key.bits.is_pot &&
+          key.bits.target == PIPE_TEXTURE_2D &&
           sampler->min_img_filter == sampler->mag_img_filter &&
           sampler->normalized_coords &&
           sampler->wrap_s == PIPE_TEX_WRAP_REPEAT &&
