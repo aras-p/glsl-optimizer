@@ -2420,18 +2420,14 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
        * clipped against all fixed planes.
        */
       if (brw->has_negative_rhw_bug) {
-#if 0
-	 /* FINISHME */
-	 brw_CMP(p,
-		 vec8(brw_null_reg()),
-		 BRW_CONDITIONAL_L,
-		 brw_swizzle1(output_reg[BRW_VERT_RESULT_NDC], 3),
-		 brw_imm_f(0));
-
-	 brw_OR(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(1<<6));
-	 brw_MOV(p, output_reg[BRW_VERT_RESULT_NDC], brw_imm_f(0));
-	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-#endif
+         src_reg ndc_w = src_reg(output_reg[BRW_VERT_RESULT_NDC]);
+         ndc_w.swizzle = BRW_SWIZZLE_WWWW;
+         emit(CMP(dst_null_f(), ndc_w, src_reg(0.0f), BRW_CONDITIONAL_L));
+         vec4_instruction *inst;
+         inst = emit(OR(header1_w, src_reg(header1_w), src_reg(1u << 6)));
+         inst->predicate = BRW_PREDICATE_NORMAL;
+         inst = emit(MOV(output_reg[BRW_VERT_RESULT_NDC], src_reg(0.0f)));
+         inst->predicate = BRW_PREDICATE_NORMAL;
       }
 
       emit(MOV(retype(reg, BRW_REGISTER_TYPE_UD), src_reg(header1)));
