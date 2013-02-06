@@ -311,6 +311,41 @@ get_tex_rgba_compressed(struct gl_context *ctx, GLuint dimensions,
 
 
 /**
+ * Return a base GL format given the user-requested format
+ * for glGetTexImage().
+ */
+static GLenum
+_mesa_base_pack_format(GLenum format)
+{
+   switch (format) {
+   case GL_ABGR_EXT:
+   case GL_BGRA:
+   case GL_BGRA_INTEGER:
+   case GL_RGBA_INTEGER:
+      return GL_RGBA;
+   case GL_BGR:
+   case GL_BGR_INTEGER:
+   case GL_RGB_INTEGER:
+      return GL_RGB;
+   case GL_RED_INTEGER:
+      return GL_RED;
+   case GL_GREEN_INTEGER:
+      return GL_GREEN;
+   case GL_BLUE_INTEGER:
+      return GL_BLUE;
+   case GL_ALPHA_INTEGER:
+      return GL_ALPHA;
+   case GL_LUMINANCE_INTEGER_EXT:
+      return GL_LUMINANCE;
+   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
+      return GL_LUMINANCE_ALPHA;
+   default:
+      return format;
+   }
+}
+
+
+/**
  * Get an uncompressed color texture image.
  */
 static void
@@ -323,7 +358,7 @@ get_tex_rgba_uncompressed(struct gl_context *ctx, GLuint dimensions,
    const gl_format texFormat =
       _mesa_get_srgb_format_linear(texImage->TexFormat);
    const GLuint width = texImage->Width;
-   const GLenum destBaseFormat = _mesa_base_tex_format(ctx, format);
+   GLenum destBaseFormat = _mesa_base_pack_format(format);
    GLenum rebaseFormat = GL_NONE;
    GLuint height = texImage->Height;
    GLuint depth = texImage->Depth;
