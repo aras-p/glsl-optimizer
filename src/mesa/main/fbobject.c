@@ -43,6 +43,7 @@
 #include "hash.h"
 #include "macros.h"
 #include "mfeatures.h"
+#include "multisample.h"
 #include "mtypes.h"
 #include "renderbuffer.h"
 #include "state.h"
@@ -1492,6 +1493,7 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
       "glRenderbufferStorage" : "glRenderbufferStorageMultisample";
    struct gl_renderbuffer *rb;
    GLenum baseFormat;
+   GLenum sample_count_error;
    GET_CURRENT_CONTEXT(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API) {
@@ -1535,9 +1537,14 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
       /* NumSamples == 0 indicates non-multisampling */
       samples = 0;
    }
-   else if (samples > (GLsizei) ctx->Const.MaxSamples) {
-      /* note: driver may choose to use more samples than what's requested */
-      _mesa_error(ctx, GL_INVALID_VALUE, "%s(samples)", func);
+
+   /* check the sample count;
+    * note: driver may choose to use more samples than what's requested
+    */
+   sample_count_error = _mesa_check_sample_count(ctx, target,
+         internalFormat, samples);
+   if (sample_count_error != GL_NO_ERROR) {
+      _mesa_error(ctx, sample_count_error, "%s(samples)", func);
       return;
    }
 

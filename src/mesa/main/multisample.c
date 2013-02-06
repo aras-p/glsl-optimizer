@@ -29,6 +29,7 @@
 #include "main/multisample.h"
 #include "main/mtypes.h"
 #include "main/fbobject.h"
+#include "main/glformats.h"
 
 
 /**
@@ -111,4 +112,57 @@ _mesa_SampleMaski(GLuint index, GLbitfield mask)
 
    FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
    ctx->Multisample.SampleMaskValue = mask;
+}
+
+
+/* Helper for checking a requested sample count against the limit
+ * for a particular (target, internalFormat) pair. The limit imposed,
+ * and the error generated, both depend on which extensions are supported.
+ *
+ * Returns a GL error enum, or GL_NO_ERROR if the requested sample count is
+ * acceptable.
+ */
+GLenum
+_mesa_check_sample_count(struct gl_context *ctx, GLenum target,
+                         GLenum internalFormat, GLsizei samples)
+{
+   /* If ARB_internalformat_query is supported, then treat its highest returned sample
+    * count as the absolute maximum for this format; it is allowed to exceed MAX_SAMPLES.
+    *
+    * From the ARB_internalformat_query spec:
+    *
+    * "If <samples is greater than the maximum number of samples supported
+    * for <internalformat> then the error INVALID_OPERATION is generated."
+    */
+   if (ctx->Extensions.ARB_internalformat_query) {
+      GLint buffer[16];
+      int count = ctx->Driver.QuerySamplesForFormat(ctx, target, internalFormat, buffer);
+      int limit = count ? buffer[0] : -1;
+
+      return samples > limit ? GL_INVALID_OPERATION : GL_NO_ERROR;
+   }
+
+   /* If ARB_texture_multisample is supported, we have separate limits for
+    * integer formats.
+    *
+    * From the ARB_texture_multisample spec:
+    *
+    * "If <internalformat> is a signed or unsigned integer format and
+    * <samples> is greater than the value of MAX_INTEGER_SAMPLES, then the
+    * error INVALID_OPERATION is generated"
+    */
+
+   if (ctx->Extensions.ARB_texture_multisample) {
+      if (_mesa_is_enum_format_integer(internalFormat))
+         return samples > ctx->Const.MaxIntegerSamples ? GL_INVALID_OPERATION : GL_NO_ERROR;
+   }
+
+   /* No more specific limit is available, so just use MAX_SAMPLES:
+    *
+    * On p205 of the GL3.1 spec:
+    *
+    * "... or if samples is greater than MAX_SAMPLES, then the error
+    * INVALID_VALUE is generated"
+    */
+   return samples > ctx->Const.MaxSamples ? GL_INVALID_VALUE : GL_NO_ERROR;
 }
