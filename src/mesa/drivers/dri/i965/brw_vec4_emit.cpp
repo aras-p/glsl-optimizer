@@ -372,7 +372,6 @@ vec4_generator::generate_tex(vec4_instruction *inst,
 	      src,
 	      SURF_INDEX_VS_TEXTURE(inst->sampler),
 	      inst->sampler,
-	      WRITEMASK_XYZW,
 	      msg_type,
 	      1, /* response length */
 	      inst->mlen,

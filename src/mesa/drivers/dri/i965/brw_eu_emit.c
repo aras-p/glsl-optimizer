@@ -2124,7 +2124,6 @@ void brw_SAMPLE(struct brw_compile *p,
 		struct brw_reg src0,
 		GLuint binding_table_index,
 		GLuint sampler,
-		GLuint writemask,
 		GLuint msg_type,
 		GLuint response_length,
 		GLuint msg_length,
@@ -2133,113 +2132,27 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint return_format)
 {
    struct intel_context *intel = &p->brw->intel;
-   bool need_stall = 0;
+   struct brw_instruction *insn;
 
-   if (writemask == 0) {
-      /*printf("%s: zero writemask??\n", __FUNCTION__); */
-      return;
-   }
-   
-   /* Hardware doesn't do destination dependency checking on send
-    * instructions properly.  Add a workaround which generates the
-    * dependency by other means.  In practice it seems like this bug
-    * only crops up for texture samples, and only where registers are
-    * written by the send and then written again later without being
-    * read in between.  Luckily for us, we already track that
-    * information and use it to modify the writemask for the
-    * instruction, so that is a guide for whether a workaround is
-    * needed.
-    */
-   if (writemask != WRITEMASK_XYZW) {
-      GLuint dst_offset = 0;
-      GLuint i, newmask = 0, len = 0;
+   gen6_resolve_implied_move(p, &src0, msg_reg_nr);
 
-      for (i = 0; i < 4; i++) {
-	 if (writemask & (1<<i))
-	    break;
-	 dst_offset += 2;
-      }
-      for (; i < 4; i++) {
-	 if (!(writemask & (1<<i)))
-	    break;
-	 newmask |= 1<<i;
-	 len++;
-      }
+   insn = next_insn(p, BRW_OPCODE_SEND);
+   insn->header.predicate_control = 0; /* XXX */
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+   if (intel->gen < 6)
+      insn->header.destreg__conditionalmod = msg_reg_nr;
 
-      if (newmask != writemask) {
-	 need_stall = 1;
-         /* printf("need stall %x %x\n", newmask , writemask); */
-      }
-      else {
-	 bool dispatch_16 = false;
-
-	 struct brw_reg m1 = brw_message_reg(msg_reg_nr);
-
-	 guess_execution_size(p, p->current, dest);
-	 if (p->current->header.execution_size == BRW_EXECUTE_16)
-	    dispatch_16 = true;
-
-	 newmask = ~newmask & WRITEMASK_XYZW;
-
-	 brw_push_insn_state(p);
-
-	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-	 brw_set_mask_control(p, BRW_MASK_DISABLE);
-
-	 brw_MOV(p, retype(m1, BRW_REGISTER_TYPE_UD),
-		 retype(brw_vec8_grf(0,0), BRW_REGISTER_TYPE_UD));
-  	 brw_MOV(p, get_element_ud(m1, 2), brw_imm_ud(newmask << 12)); 
-
-	 brw_pop_insn_state(p);
-
-  	 src0 = retype(brw_null_reg(), BRW_REGISTER_TYPE_UW); 
-	 dest = offset(dest, dst_offset);
-
-	 /* For 16-wide dispatch, masked channels are skipped in the
-	  * response.  For 8-wide, masked channels still take up slots,
-	  * and are just not written to.
-	  */
-	 if (dispatch_16)
-	    response_length = len * 2;
-      }
-   }
-
-   {
-      struct brw_instruction *insn;
-   
-      gen6_resolve_implied_move(p, &src0, msg_reg_nr);
-
-      insn = next_insn(p, BRW_OPCODE_SEND);
-      insn->header.predicate_control = 0; /* XXX */
-      insn->header.compression_control = BRW_COMPRESSION_NONE;
-      if (intel->gen < 6)
-	  insn->header.destreg__conditionalmod = msg_reg_nr;
-
-      brw_set_dest(p, insn, dest);
-      brw_set_src0(p, insn, src0);
-      brw_set_sampler_message(p, insn,
-			      binding_table_index,
-			      sampler,
-			      msg_type,
-			      response_length, 
-			      msg_length,
-			      header_present,
-			      simd_mode,
-			      return_format);
-   }
-
-   if (need_stall) {
-      struct brw_reg reg = vec8(offset(dest, response_length-1));
-
-      /*  mov (8) r9.0<1>:f    r9.0<8;8,1>:f    { Align1 }
-       */
-      brw_push_insn_state(p);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_MOV(p, retype(reg, BRW_REGISTER_TYPE_UD),
-	      retype(reg, BRW_REGISTER_TYPE_UD));
-      brw_pop_insn_state(p);
-   }
-
+   brw_set_dest(p, insn, dest);
+   brw_set_src0(p, insn, src0);
+   brw_set_sampler_message(p, insn,
+                           binding_table_index,
+                           sampler,
+                           msg_type,
+                           response_length,
+                           msg_length,
+                           header_present,
+                           simd_mode,
+                           return_format);
 }
 
 /* All these variables are pretty confusing - we might be better off

@@ -491,7 +491,6 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 	      src,
               SURF_INDEX_TEXTURE(inst->sampler),
 	      inst->sampler,
-	      WRITEMASK_XYZW,
 	      msg_type,
 	      rlen,
 	      inst->mlen,
