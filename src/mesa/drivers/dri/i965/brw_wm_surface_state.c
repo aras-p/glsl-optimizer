@@ -622,7 +622,8 @@ brw_render_target_supported(struct intel_context *intel,
 }
 
 GLuint
-translate_tex_format(gl_format mesa_format,
+translate_tex_format(struct intel_context *intel,
+                     gl_format mesa_format,
 		     GLenum internal_format,
 		     GLenum depth_mode,
 		     GLenum srgb_decode)
@@ -650,6 +651,17 @@ translate_tex_format(gl_format mesa_format,
        * assertion below.
        */
       return BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
+
+   case MESA_FORMAT_SRGB_DXT1:
+      if (intel->gen == 4 && !intel->is_g4x) {
+         /* Work around missing SRGB DXT1 support on original gen4 by just
+          * skipping SRGB decode.  It's not worth not supporting sRGB in
+          * general to prevent this.
+          */
+         WARN_ONCE(true, "Demoting sRGB DXT1 texture to non-sRGB\n");
+         mesa_format = MESA_FORMAT_RGB_DXT1;
+      }
+      return brw_format_for_mesa_format(mesa_format);
 
    default:
       assert(brw_format_for_mesa_format(mesa_format) != 0);
@@ -829,6 +841,7 @@ brw_update_texture_surface(struct gl_context *ctx,
                            uint32_t *binding_table,
                            unsigned surf_index)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
@@ -852,7 +865,8 @@ brw_update_texture_surface(struct gl_context *ctx,
    surf[0] = (translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
 	      BRW_SURFACE_CUBEFACE_ENABLES |
-	      (translate_tex_format(mt->format,
+	      (translate_tex_format(intel,
+                                    mt->format,
 				    firstImage->InternalFormat,
 				    tObj->DepthMode,
 				    sampler->sRGBDecode) <<

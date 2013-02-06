@@ -309,7 +309,8 @@ gen7_update_texture_surface(struct gl_context *ctx,
                                     8 * 4, 32, &binding_table[surf_index]);
    memset(surf, 0, 8 * 4);
 
-   uint32_t tex_format = translate_tex_format(mt->format,
+   uint32_t tex_format = translate_tex_format(intel,
+                                              mt->format,
                                               firstImage->InternalFormat,
                                               tObj->DepthMode,
                                               sampler->sRGBDecode);
