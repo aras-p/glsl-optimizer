@@ -868,7 +868,9 @@ public:
    tfeedback_candidate_generator(void *mem_ctx,
                                  hash_table *tfeedback_candidates)
       : mem_ctx(mem_ctx),
-        tfeedback_candidates(tfeedback_candidates)
+        tfeedback_candidates(tfeedback_candidates),
+        toplevel_var(NULL),
+        varying_floats(0)
    {
    }
 
