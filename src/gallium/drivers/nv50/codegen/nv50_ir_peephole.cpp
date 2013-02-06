@@ -1885,42 +1885,46 @@ FlatteningPass::mayPredicate(const Instruction *insn, const Value *pred) const
    return true;
 }
 
-// If we conditionally skip over or to a branch instruction, replace it.
+// If we jump to BRA/RET/EXIT, replace the jump with it.
 // NOTE: We do not update the CFG anymore here !
+//
+// TODO: Handle cases where we skip over a branch (maybe do that elsewhere ?):
+//  BB:0
+//   @p0 bra BB:2 -> @!p0 bra BB:3 iff (!) BB:2 immediately adjoins BB:1
+//  BB1:
+//   bra BB:3
+//  BB2:
+//   ...
+//  BB3:
+//   ...
 void
 FlatteningPass::tryPropagateBranch(BasicBlock *bb)
 {
-   BasicBlock *bf = NULL;
-   unsigned int i;
+   for (Instruction *i = bb->getExit(); i && i->op == OP_BRA; i = i->prev) {
+      BasicBlock *bf = i->asFlow()->target.bb;
 
-   if (bb->cfg.outgoingCount() != 2)
-      return;
-   if (!bb->getExit() || bb->getExit()->op != OP_BRA)
-      return;
-   Graph::EdgeIterator ei = bb->cfg.outgoing();
+      if (bf->getInsnCount() != 1)
+         continue;
 
-   for (i = 0; !ei.end(); ++i, ei.next()) {
-      bf = BasicBlock::get(ei.getNode());
-      if (bf->getInsnCount() == 1)
-         break;
+      FlowInstruction *bra = i->asFlow();
+      FlowInstruction *rep = bf->getExit()->asFlow();
+
+      if (!rep || rep->getPredicate())
+         continue;
+      if (rep->op != OP_BRA &&
+          rep->op != OP_JOIN &&
+          rep->op != OP_EXIT)
+         continue;
+
+      // TODO: If there are multiple branches to @rep, only the first would
+      // be replaced, so only remove them after this pass is done ?
+      // Also, need to check all incident blocks for fall-through exits and
+      // add the branch there.
+      bra->op = rep->op;
+      bra->target.bb = rep->target.bb;
+      if (bf->cfg.incidentCount() == 1)
+         bf->remove(rep);
    }
-   if (ei.end() || !bf->getExit())
-      return;
-   FlowInstruction *bra = bb->getExit()->asFlow();
-   FlowInstruction *rep = bf->getExit()->asFlow();
-
-   if (rep->getPredicate())
-      return;
-   if (rep->op != OP_BRA &&
-       rep->op != OP_JOIN &&
-       rep->op != OP_EXIT)
-      return;
-
-   bra->op = rep->op;
-   bra->target.bb = rep->target.bb;
-   if (i) // 2nd out block means branch not taken
-      bra->cc = inverseCondCode(bra->cc);
-   bf->remove(rep);
 }
 
 bool
