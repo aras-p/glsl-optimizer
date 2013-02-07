@@ -481,6 +481,7 @@ create_dumb(struct gbm_device *gbm,
    bo->base.base.width = width;
    bo->base.base.height = height;
    bo->base.base.stride = create_arg.pitch;
+   bo->base.base.format = format;
    bo->base.base.handle.u32 = create_arg.handle;
    bo->handle = create_arg.handle;
    bo->size = create_arg.size;
@@ -529,6 +530,7 @@ gbm_dri_bo_create(struct gbm_device *gbm,
    bo->base.base.gbm = gbm;
    bo->base.base.width = width;
    bo->base.base.height = height;
+   bo->base.base.format = format;
 
    switch (format) {
    case GBM_FORMAT_RGB565:
