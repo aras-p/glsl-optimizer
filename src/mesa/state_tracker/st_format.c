@@ -390,7 +390,6 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       return PIPE_FORMAT_R32G32B32X32_SINT;
 
    default:
-      assert(0);
       return PIPE_FORMAT_NONE;
    }
 }

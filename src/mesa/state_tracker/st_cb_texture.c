@@ -560,15 +560,52 @@ st_CompressedTexImage(struct gl_context *ctx, GLuint dims,
 }
 
 
+static enum pipe_format
+choose_matching_format(struct pipe_screen *screen, unsigned bind,
+                       GLenum format, GLenum type, GLboolean swapBytes)
+{
+   gl_format mesa_format;
+
+   for (mesa_format = 1; mesa_format < MESA_FORMAT_COUNT; mesa_format++) {
+      if (_mesa_get_format_color_encoding(mesa_format) == GL_SRGB) {
+         continue;
+      }
+
+      if (_mesa_format_matches_format_and_type(mesa_format, format, type,
+                                               swapBytes)) {
+         enum pipe_format format = st_mesa_format_to_pipe_format(mesa_format);
+
+         if (format &&
+             screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0,
+                                         bind)) {
+            return format;
+         }
+         /* It's unlikely to find 2 matching Mesa formats. */
+         break;
+      }
+   }
+   return PIPE_FORMAT_NONE;
+}
+
 
 /**
- * glGetTexImage() helper: decompress a compressed texture by rendering
- * a textured quad.  Store the results in the user's buffer.
+ * Called via ctx->Driver.GetTexImage()
+ *
+ * This uses a blit to copy the texture to a texture format which matches
+ * the format and type combo and then a fast read-back is done using memcpy.
+ * We can do arbitrary X/Y/Z/W/0/1 swizzling here as long as there is
+ * a format which matches the swizzling.
+ *
+ * If such a format isn't available, it falls back to _mesa_get_teximage.
+ *
+ * NOTE: Drivers usually do a blit to convert between tiled and linear
+ *       texture layouts during texture uploads/downloads, so the blit
+ *       we do here should be free in such cases.
  */
 static void
-decompress_with_blit(struct gl_context * ctx,
-                     GLenum format, GLenum type, GLvoid *pixels,
-                     struct gl_texture_image *texImage)
+st_GetTexImage(struct gl_context * ctx,
+               GLenum format, GLenum type, GLvoid * pixels,
+               struct gl_texture_image *texImage)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
@@ -576,38 +613,125 @@ decompress_with_blit(struct gl_context * ctx,
    const GLuint width = texImage->Width;
    const GLuint height = texImage->Height;
    const GLuint depth = texImage->Depth;
+   struct st_texture_image *stImage = st_texture_image(texImage);
    struct pipe_resource *src = st_texture_object(texImage->TexObject)->pt;
-   struct pipe_resource *dst;
+   struct pipe_resource *dst = NULL;
    struct pipe_resource dst_templ;
-   enum pipe_format pipe_format;
+   enum pipe_format dst_format, src_format;
    gl_format mesa_format;
    GLenum gl_target = texImage->TexObject->Target;
    enum pipe_texture_target pipe_target;
    struct pipe_blit_info blit;
-   unsigned bind = (PIPE_BIND_RENDER_TARGET | PIPE_BIND_TRANSFER_READ);
+   unsigned bind = PIPE_BIND_TRANSFER_READ;
    struct pipe_transfer *tex_xfer;
-   ubyte *map;
+   ubyte *map = NULL;
+   boolean done = FALSE;
+
+   if (!stImage->pt) {
+      goto fallback;
+   }
+
+   /* XXX Fallback to _mesa_get_teximage for depth-stencil formats
+    * due to an incomplete stencil blit implementation in some drivers. */
+   if (format == GL_DEPTH_STENCIL) {
+      goto fallback;
+   }
+
+   /* If the base internal format and the texture format don't match, we have
+    * to fall back to _mesa_get_teximage. */
+   if (texImage->_BaseFormat !=
+       _mesa_get_format_base_format(texImage->TexFormat)) {
+      goto fallback;
+   }
+
+   /* See if the texture format already matches the format and type,
+    * in which case the memcpy-based fast path will be used. */
+   if (_mesa_format_matches_format_and_type(texImage->TexFormat, format,
+                                            type, ctx->Pack.SwapBytes)) {
+      goto fallback;
+   }
+
+   /* Convert the source format to what is expected by GetTexImage
+    * and see if it's supported.
+    *
+    * This only applies to glGetTexImage:
+    * - Luminance must be returned as (L,0,0,1).
+    * - Luminance alpha must be returned as (L,0,0,A).
+    * - Intensity must be returned as (I,0,0,1)
+    */
+   src_format = util_format_linear(src->format);
+   src_format = util_format_luminance_to_red(src_format);
+   src_format = util_format_intensity_to_red(src_format);
+
+   if (!src_format ||
+       !screen->is_format_supported(screen, src_format, src->target,
+                                    src->nr_samples,
+                                    PIPE_BIND_SAMPLER_VIEW)) {
+      goto fallback;
+   }
+
+   if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL)
+      bind |= PIPE_BIND_DEPTH_STENCIL;
+   else
+      bind |= PIPE_BIND_RENDER_TARGET;
 
    /* GetTexImage only returns a single face for cubemaps. */
    if (gl_target == GL_TEXTURE_CUBE_MAP) {
       gl_target = GL_TEXTURE_2D;
    }
-
    pipe_target = gl_target_to_pipe(gl_target);
 
-   /* Find the best match for the format+type combo. */
-   pipe_format = st_choose_format(st, GL_RGBA8, format, type,
-                                  pipe_target, 0, bind, FALSE);
-   if (pipe_format == PIPE_FORMAT_NONE) {
-      /* unable to get an rgba format!?! */
-      _mesa_problem(ctx, "%s: cannot find a supported format", __func__);
-      return;
+   /* Choose the destination format by finding the best match
+    * for the format+type combo. */
+   dst_format = choose_matching_format(screen, bind, format, type,
+                                       ctx->Pack.SwapBytes);
+
+   if (dst_format == PIPE_FORMAT_NONE) {
+      GLenum dst_glformat;
+
+      /* Fall back to _mesa_get_teximage except for compressed formats,
+       * where decompression with a blit is always preferred. */
+      if (!util_format_is_compressed(src->format)) {
+         goto fallback;
+      }
+
+      /* Set the appropriate format for the decompressed texture.
+       * Luminance and sRGB formats shouldn't appear here.*/
+      switch (src_format) {
+      case PIPE_FORMAT_DXT1_RGB:
+      case PIPE_FORMAT_DXT1_RGBA:
+      case PIPE_FORMAT_DXT3_RGBA:
+      case PIPE_FORMAT_DXT5_RGBA:
+      case PIPE_FORMAT_RGTC1_UNORM:
+      case PIPE_FORMAT_RGTC2_UNORM:
+      case PIPE_FORMAT_ETC1_RGB8:
+         dst_glformat = GL_RGBA8;
+         break;
+      case PIPE_FORMAT_RGTC1_SNORM:
+      case PIPE_FORMAT_RGTC2_SNORM:
+         if (!ctx->Extensions.EXT_texture_snorm)
+            goto fallback;
+         dst_glformat = GL_RGBA8_SNORM;
+         break;
+      /* TODO: for BPTC_*FLOAT, set RGBA32F and check for ARB_texture_float */
+      default:
+         assert(0);
+         goto fallback;
+      }
+
+      dst_format = st_choose_format(st, dst_glformat, format, type,
+                                    pipe_target, 0, bind, FALSE);
+
+      if (dst_format == PIPE_FORMAT_NONE) {
+         /* unable to get an rgba format!?! */
+         goto fallback;
+      }
    }
 
    /* create the destination texture */
    memset(&dst_templ, 0, sizeof(dst_templ));
    dst_templ.target = pipe_target;
-   dst_templ.format = pipe_format;
+   dst_templ.format = dst_format;
    dst_templ.bind = bind;
    dst_templ.usage = PIPE_USAGE_STAGING;
 
@@ -617,13 +741,12 @@ decompress_with_blit(struct gl_context * ctx,
 
    dst = screen->resource_create(screen, &dst_templ);
    if (!dst) {
-      _mesa_problem(ctx, "%s: cannot create a temporary texture", __func__);
-      return;
+      goto fallback;
    }
 
    blit.src.resource = src;
    blit.src.level = texImage->Level;
-   blit.src.format = util_format_linear(src->format);
+   blit.src.format = src_format;
    blit.dst.resource = dst;
    blit.dst.level = 0;
    blit.dst.format = dst->format;
@@ -649,13 +772,13 @@ decompress_with_blit(struct gl_context * ctx,
       goto end;
    }
 
-   mesa_format = st_pipe_format_to_mesa_format(pipe_format);
+   mesa_format = st_pipe_format_to_mesa_format(dst_format);
 
    /* copy/pack data into user buffer */
    if (_mesa_format_matches_format_and_type(mesa_format, format, type,
                                             ctx->Pack.SwapBytes)) {
       /* memcpy */
-      const uint bytesPerRow = width * util_format_get_blocksize(pipe_format);
+      const uint bytesPerRow = width * util_format_get_blocksize(dst_format);
       GLuint row, slice;
 
       for (slice = 0; slice < depth; slice++) {
@@ -674,12 +797,12 @@ decompress_with_blit(struct gl_context * ctx,
    else {
       /* format translation via floats */
       GLuint row, slice;
-      enum pipe_format pformat = util_format_linear(dst->format);
       GLfloat *rgba;
+
+      assert(util_format_is_compressed(src->format));
 
       rgba = malloc(width * 4 * sizeof(GLfloat));
       if (!rgba) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage()");
          goto end;
       }
 
@@ -695,7 +818,7 @@ decompress_with_blit(struct gl_context * ctx,
 
             /* get float[4] rgba row from surface */
             pipe_get_tile_rgba_format(tex_xfer, map, 0, row, width, 1,
-                                      pformat, rgba);
+                                      dst_format, rgba);
 
             _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
                                        type, dest, &ctx->Pack, transferOps);
@@ -705,6 +828,7 @@ decompress_with_blit(struct gl_context * ctx,
 
       free(rgba);
    }
+   done = TRUE;
 
 end:
    if (map)
@@ -712,29 +836,9 @@ end:
 
    _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
    pipe_resource_reference(&dst, NULL);
-}
 
-
-
-/**
- * Called via ctx->Driver.GetTexImage()
- */
-static void
-st_GetTexImage(struct gl_context * ctx,
-               GLenum format, GLenum type, GLvoid * pixels,
-               struct gl_texture_image *texImage)
-{
-   struct st_texture_image *stImage = st_texture_image(texImage);
-
-   if (stImage->pt && util_format_is_s3tc(stImage->pt->format)) {
-      /* Need to decompress the texture.
-       * We'll do this by rendering a textured quad (which is hopefully
-       * faster than using the fallback code in texcompress.c).
-       * Note that we only expect RGBA formats (no Z/depth formats).
-       */
-      decompress_with_blit(ctx, format, type, pixels, texImage);
-   }
-   else {
+fallback:
+   if (!done) {
       _mesa_get_teximage(ctx, format, type, pixels, texImage);
    }
 }
