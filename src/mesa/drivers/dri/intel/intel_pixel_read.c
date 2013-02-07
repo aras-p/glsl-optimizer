@@ -77,7 +77,6 @@ do_blit_readpixels(struct gl_context * ctx,
    struct intel_region *src = intel_readbuf_region(intel);
    struct intel_buffer_object *dst = intel_buffer_object(pack->BufferObj);
    GLuint dst_offset;
-   GLuint rowLength;
    drm_intel_bo *dst_buffer;
    bool all;
    GLint dst_x, dst_y;
@@ -102,23 +101,19 @@ do_blit_readpixels(struct gl_context * ctx,
       return false;
    }
 
-   if (pack->Alignment != 1 || pack->SwapBytes || pack->LsbFirst) {
+   if (pack->SwapBytes || pack->LsbFirst) {
       DBG("%s: bad packing params\n", __FUNCTION__);
       return false;
    }
 
-   if (pack->RowLength > 0)
-      rowLength = pack->RowLength;
-   else
-      rowLength = width;
-
+   int dst_stride = _mesa_image_row_stride(pack, width, format, type);
    if (pack->Invert) {
       DBG("%s: MESA_PACK_INVERT not done yet\n", __FUNCTION__);
       return false;
    }
    else {
       if (_mesa_is_winsys_fbo(ctx->ReadBuffer))
-	 rowLength = -rowLength;
+	 dst_stride = -dst_stride;
    }
 
    dst_offset = (GLintptr)pixels;
@@ -152,7 +147,7 @@ do_blit_readpixels(struct gl_context * ctx,
    if (!intelEmitCopyBlit(intel,
 			  src->cpp,
 			  src->pitch, src->bo, 0, src->tiling,
-			  rowLength * src->cpp, dst_buffer, dst_offset, false,
+			  dst_stride, dst_buffer, dst_offset, false,
 			  x, y,
 			  dst_x, dst_y,
 			  width, height,
