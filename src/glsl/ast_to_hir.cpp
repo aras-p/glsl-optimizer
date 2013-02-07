@@ -2829,9 +2829,9 @@ ast_declarator_list::hir(exec_list *instructions,
        *    flat."
        *
        * From section 4.3.4 of the GLSL 3.00 ES spec:
-       *    "Fragment shader inputs that are signed or unsigned integers or
-       *    integer vectors must be qualified with the interpolation qualifier
-       *    flat."
+       *    "Fragment shader inputs that are, or contain, signed or unsigned
+       *    integers or integer vectors must be qualified with the
+       *    interpolation qualifier flat."
        *
        * Since vertex outputs and fragment inputs must have matching
        * qualifiers, these two requirements are equivalent.
@@ -2839,12 +2839,12 @@ ast_declarator_list::hir(exec_list *instructions,
       if (state->is_version(130, 300)
           && state->target == vertex_shader
           && state->current_function == NULL
-          && var->type->is_integer()
+          && var->type->contains_integer()
           && var->mode == ir_var_shader_out
           && var->interpolation != INTERP_QUALIFIER_FLAT) {
 
-         _mesa_glsl_error(&loc, state, "If a vertex output is an integer, "
-                          "then it must be qualified with 'flat'");
+         _mesa_glsl_error(&loc, state, "If a vertex output is (or contains) "
+                          "an integer, then it must be qualified with 'flat'");
       }
 
 

@@ -158,6 +158,24 @@ glsl_type::contains_sampler() const
    }
 }
 
+
+bool
+glsl_type::contains_integer() const
+{
+   if (this->is_array()) {
+      return this->fields.array->contains_integer();
+   } else if (this->is_record()) {
+      for (unsigned int i = 0; i < this->length; i++) {
+	 if (this->fields.structure[i].type->contains_integer())
+	    return true;
+      }
+      return false;
+   } else {
+      return this->is_integer();
+   }
+}
+
+
 gl_texture_index
 glsl_type::sampler_index() const
 {

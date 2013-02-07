@@ -360,6 +360,12 @@ struct glsl_type {
    }
 
    /**
+    * Query whether or not type is an integral type, or for struct and array
+    * types, contains an integral type.
+    */
+   bool contains_integer() const;
+
+   /**
     * Query whether or not a type is a float type
     */
    bool is_float() const
