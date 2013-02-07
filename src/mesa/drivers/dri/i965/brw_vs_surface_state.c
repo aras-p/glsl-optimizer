@@ -137,14 +137,11 @@ const struct brw_tracked_state brw_vs_ubo_surfaces = {
 static void
 brw_vs_upload_binding_table(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    uint32_t *bind;
    int i;
 
    if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
-      intel->vtbl.create_constant_surface(brw, brw->shader_time.bo, 0,
-                                          brw->shader_time.bo->size,
-                                          &brw->vs.surf_offset[SURF_INDEX_VS_SHADER_TIME]);
+      gen7_create_shader_time_surface(brw, &brw->vs.surf_offset[SURF_INDEX_VS_SHADER_TIME]);
 
       assert(brw->vs.prog_data->num_surfaces <= SURF_INDEX_VS_SHADER_TIME);
       brw->vs.prog_data->num_surfaces = SURF_INDEX_VS_SHADER_TIME;
