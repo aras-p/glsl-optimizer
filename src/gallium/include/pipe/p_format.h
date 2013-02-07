@@ -328,6 +328,18 @@ enum pipe_format {
    PIPE_FORMAT_R32G32B32X32_UINT       = 240,
    PIPE_FORMAT_R32G32B32X32_SINT       = 241,
 
+   PIPE_FORMAT_R8A8_SNORM              = 242,
+   PIPE_FORMAT_R16A16_UNORM            = 243,
+   PIPE_FORMAT_R16A16_SNORM            = 244,
+   PIPE_FORMAT_R16A16_FLOAT            = 245,
+   PIPE_FORMAT_R32A32_FLOAT            = 246,
+   PIPE_FORMAT_R8A8_UINT               = 247,
+   PIPE_FORMAT_R8A8_SINT               = 248,
+   PIPE_FORMAT_R16A16_UINT             = 249,
+   PIPE_FORMAT_R16A16_SINT             = 250,
+   PIPE_FORMAT_R32A32_UINT             = 251,
+   PIPE_FORMAT_R32A32_SINT             = 252,
+
    PIPE_FORMAT_COUNT
 };
 

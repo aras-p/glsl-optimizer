@@ -888,6 +888,123 @@ util_format_stencil_only(enum pipe_format format)
 }
 
 /**
+ * Converts PIPE_FORMAT_*I* to PIPE_FORMAT_*R*.
+ * This is identity for non-intensity formats.
+ */
+static INLINE enum pipe_format
+util_format_intensity_to_red(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_I8_UNORM:
+      return PIPE_FORMAT_R8_UNORM;
+   case PIPE_FORMAT_I8_SNORM:
+      return PIPE_FORMAT_R8_SNORM;
+   case PIPE_FORMAT_I16_UNORM:
+      return PIPE_FORMAT_R16_UNORM;
+   case PIPE_FORMAT_I16_SNORM:
+      return PIPE_FORMAT_R16_SNORM;
+   case PIPE_FORMAT_I16_FLOAT:
+      return PIPE_FORMAT_R16_FLOAT;
+   case PIPE_FORMAT_I32_FLOAT:
+      return PIPE_FORMAT_R32_FLOAT;
+   case PIPE_FORMAT_I8_UINT:
+      return PIPE_FORMAT_R8_UINT;
+   case PIPE_FORMAT_I8_SINT:
+      return PIPE_FORMAT_R8_SINT;
+   case PIPE_FORMAT_I16_UINT:
+      return PIPE_FORMAT_R16_UINT;
+   case PIPE_FORMAT_I16_SINT:
+      return PIPE_FORMAT_R16_SINT;
+   case PIPE_FORMAT_I32_UINT:
+      return PIPE_FORMAT_R32_UINT;
+   case PIPE_FORMAT_I32_SINT:
+      return PIPE_FORMAT_R32_SINT;
+   default:
+      assert(!util_format_is_intensity(format));
+      return format;
+   }
+}
+
+/**
+ * Converts PIPE_FORMAT_*L* to PIPE_FORMAT_*R*.
+ * This is identity for non-luminance formats.
+ */
+static INLINE enum pipe_format
+util_format_luminance_to_red(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_L8_UNORM:
+      return PIPE_FORMAT_R8_UNORM;
+   case PIPE_FORMAT_L8_SNORM:
+      return PIPE_FORMAT_R8_SNORM;
+   case PIPE_FORMAT_L16_UNORM:
+      return PIPE_FORMAT_R16_UNORM;
+   case PIPE_FORMAT_L16_SNORM:
+      return PIPE_FORMAT_R16_SNORM;
+   case PIPE_FORMAT_L16_FLOAT:
+      return PIPE_FORMAT_R16_FLOAT;
+   case PIPE_FORMAT_L32_FLOAT:
+      return PIPE_FORMAT_R32_FLOAT;
+   case PIPE_FORMAT_L8_UINT:
+      return PIPE_FORMAT_R8_UINT;
+   case PIPE_FORMAT_L8_SINT:
+      return PIPE_FORMAT_R8_SINT;
+   case PIPE_FORMAT_L16_UINT:
+      return PIPE_FORMAT_R16_UINT;
+   case PIPE_FORMAT_L16_SINT:
+      return PIPE_FORMAT_R16_SINT;
+   case PIPE_FORMAT_L32_UINT:
+      return PIPE_FORMAT_R32_UINT;
+   case PIPE_FORMAT_L32_SINT:
+      return PIPE_FORMAT_R32_SINT;
+
+   case PIPE_FORMAT_LATC1_UNORM:
+      return PIPE_FORMAT_RGTC1_UNORM;
+   case PIPE_FORMAT_LATC1_SNORM:
+      return PIPE_FORMAT_RGTC1_SNORM;
+
+   case PIPE_FORMAT_L4A4_UNORM:
+      /* XXX A4R4 is defined as x00y in u_format.csv */
+      return PIPE_FORMAT_A4R4_UNORM;
+
+   case PIPE_FORMAT_L8A8_UNORM:
+      return PIPE_FORMAT_R8A8_UNORM;
+   case PIPE_FORMAT_L8A8_SNORM:
+      return PIPE_FORMAT_R8A8_SNORM;
+   case PIPE_FORMAT_L16A16_UNORM:
+      return PIPE_FORMAT_R16A16_UNORM;
+   case PIPE_FORMAT_L16A16_SNORM:
+      return PIPE_FORMAT_R16A16_SNORM;
+   case PIPE_FORMAT_L16A16_FLOAT:
+      return PIPE_FORMAT_R16A16_FLOAT;
+   case PIPE_FORMAT_L32A32_FLOAT:
+      return PIPE_FORMAT_R32A32_FLOAT;
+   case PIPE_FORMAT_L8A8_UINT:
+      return PIPE_FORMAT_R8A8_UINT;
+   case PIPE_FORMAT_L8A8_SINT:
+      return PIPE_FORMAT_R8A8_SINT;
+   case PIPE_FORMAT_L16A16_UINT:
+      return PIPE_FORMAT_R16A16_UINT;
+   case PIPE_FORMAT_L16A16_SINT:
+      return PIPE_FORMAT_R16A16_SINT;
+   case PIPE_FORMAT_L32A32_UINT:
+      return PIPE_FORMAT_R32A32_UINT;
+   case PIPE_FORMAT_L32A32_SINT:
+      return PIPE_FORMAT_R32A32_SINT;
+
+   /* We don't have compressed red-alpha variants for these. */
+   case PIPE_FORMAT_LATC2_UNORM:
+   case PIPE_FORMAT_LATC2_SNORM:
+      return PIPE_FORMAT_NONE;
+
+   default:
+      assert(!util_format_is_luminance(format) &&
+	     !util_format_is_luminance_alpha(format));
+      return format;
+   }
+}
+
+/**
  * Return the number of components stored.
  * Formats with block size != 1x1 will always have 1 component (the block).
  */

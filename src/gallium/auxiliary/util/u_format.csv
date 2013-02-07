@@ -360,3 +360,15 @@ PIPE_FORMAT_R16G16B16X16_SINT       , plain, 1, 1, sp16, sp16, sp16, x16, xyz1, 
 PIPE_FORMAT_R32G32B32X32_FLOAT      , plain, 1, 1, f32,  f32,  f32,  x32, xyz1, rgb
 PIPE_FORMAT_R32G32B32X32_UINT       , plain, 1, 1, up32, up32, up32, x32, xyz1, rgb
 PIPE_FORMAT_R32G32B32X32_SINT       , plain, 1, 1, sp32, sp32, sp32, x32, xyz1, rgb
+
+PIPE_FORMAT_R8A8_SNORM              , plain, 1, 1, sn8  ,  sn8 ,     ,     , x00y, rgb
+PIPE_FORMAT_R16A16_UNORM            , plain, 1, 1, un16 , un16 ,     ,     , x00y, rgb
+PIPE_FORMAT_R16A16_SNORM            , plain, 1, 1, sn16 , sn16 ,     ,     , x00y, rgb
+PIPE_FORMAT_R16A16_FLOAT            , plain, 1, 1, f16  , f16  ,     ,     , x00y, rgb
+PIPE_FORMAT_R32A32_FLOAT            , plain, 1, 1, f32  , f32  ,     ,     , x00y, rgb
+PIPE_FORMAT_R8A8_UINT               , plain, 1, 1, up8  , up8  ,     ,     , x00y, rgb
+PIPE_FORMAT_R8A8_SINT               , plain, 1, 1, sp8  , sp8  ,     ,     , x00y, rgb
+PIPE_FORMAT_R16A16_UINT             , plain, 1, 1, up16 , up16 ,     ,     , x00y, rgb
+PIPE_FORMAT_R16A16_SINT             , plain, 1, 1, sp16 , sp16 ,     ,     , x00y, rgb
+PIPE_FORMAT_R32A32_UINT             , plain, 1, 1, up32 , up32 ,     ,     , x00y, rgb
+PIPE_FORMAT_R32A32_SINT             , plain, 1, 1, sp32 , sp32 ,     ,     , x00y, rgb
