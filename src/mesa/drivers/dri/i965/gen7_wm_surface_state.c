@@ -438,15 +438,14 @@ gen7_create_shader_time_surface(struct brw_context *brw, uint32_t *out_offset)
    memset(surf, 0, 8 * 4);
 
    surf[0] = BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
-             BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_SURFACE_FORMAT_SHIFT |
+             BRW_SURFACEFORMAT_RAW << BRW_SURFACE_FORMAT_SHIFT |
              BRW_SURFACE_RC_READ_WRITE;
 
    surf[1] = brw->shader_time.bo->offset; /* reloc */
 
    surf[2] = SET_FIELD(w & 0x7f, GEN7_SURFACE_WIDTH) |
              SET_FIELD((w >> 7) & 0x1fff, GEN7_SURFACE_HEIGHT);
-   surf[3] = SET_FIELD((w >> 20) & 0x7f, BRW_SURFACE_DEPTH) |
-             (16 - 1); /* stride between samples */
+   surf[3] = SET_FIELD((w >> 20) & 0x7f, BRW_SURFACE_DEPTH);
 
    /* Unlike texture or renderbuffer surfaces, we only do untyped operations
     * on the shader_time surface, so there's no need to set HSW channel
