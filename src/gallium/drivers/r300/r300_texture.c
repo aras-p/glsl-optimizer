@@ -998,7 +998,8 @@ r300_texture_create_object(struct r300_screen *rscreen,
     tex->tex.microtile = microtile;
     tex->tex.macrotile[0] = macrotile;
     tex->tex.stride_in_bytes_override = stride_in_bytes_override;
-    tex->domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ? RADEON_DOMAIN_GTT :
+    tex->domain = (base->flags & R300_RESOURCE_FLAG_TRANSFER ||
+                   base->usage == PIPE_USAGE_STAGING) ? RADEON_DOMAIN_GTT :
                   base->nr_samples > 1 ? RADEON_DOMAIN_VRAM :
                                          RADEON_DOMAIN_VRAM | RADEON_DOMAIN_GTT;
     tex->buf = buffer;

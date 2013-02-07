@@ -477,6 +477,10 @@ static void r300_setup_tiling(struct r300_screen *screen,
     tex->tex.microtile = RADEON_LAYOUT_LINEAR;
     tex->tex.macrotile[0] = RADEON_LAYOUT_LINEAR;
 
+    if (tex->b.b.usage == PIPE_USAGE_STAGING) {
+       return;
+    }
+
     if (!util_format_is_plain(format)) {
         return;
     }
