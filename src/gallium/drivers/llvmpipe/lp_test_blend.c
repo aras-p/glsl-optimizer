@@ -45,7 +45,8 @@
 #include "lp_test.h"
 
 
-typedef void (*blend_test_ptr_t)(const void *src, const void *dst, const void *con, void *res);
+typedef void (*blend_test_ptr_t)(const void *src, const void *src1,
+                                 const void *dst, const void *con, void *res);
 
 
 void
@@ -138,9 +139,10 @@ add_blend_test(struct gallivm_state *gallivm,
    LLVMModuleRef module = gallivm->module;
    LLVMContextRef context = gallivm->context;
    LLVMTypeRef vec_type;
-   LLVMTypeRef args[4];
+   LLVMTypeRef args[5];
    LLVMValueRef func;
    LLVMValueRef src_ptr;
+   LLVMValueRef src1_ptr;
    LLVMValueRef dst_ptr;
    LLVMValueRef const_ptr;
    LLVMValueRef res_ptr;
@@ -150,29 +152,32 @@ add_blend_test(struct gallivm_state *gallivm,
    const unsigned rt = 0;
    const unsigned char swizzle[4] = { 0, 1, 2, 3 };
    LLVMValueRef src;
+   LLVMValueRef src1;
    LLVMValueRef dst;
    LLVMValueRef con;
    LLVMValueRef res;
 
    vec_type = lp_build_vec_type(gallivm, type);
 
-   args[3] = args[2] = args[1] = args[0] = LLVMPointerType(vec_type, 0);
-   func = LLVMAddFunction(module, "test", LLVMFunctionType(LLVMVoidTypeInContext(context), args, 4, 0));
+   args[4] = args[3] = args[2] = args[1] = args[0] = LLVMPointerType(vec_type, 0);
+   func = LLVMAddFunction(module, "test", LLVMFunctionType(LLVMVoidTypeInContext(context), args, 5, 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
    src_ptr = LLVMGetParam(func, 0);
-   dst_ptr = LLVMGetParam(func, 1);
-   const_ptr = LLVMGetParam(func, 2);
-   res_ptr = LLVMGetParam(func, 3);
+   src1_ptr = LLVMGetParam(func, 1);
+   dst_ptr = LLVMGetParam(func, 2);
+   const_ptr = LLVMGetParam(func, 3);
+   res_ptr = LLVMGetParam(func, 4);
 
    block = LLVMAppendBasicBlockInContext(context, func, "entry");
    builder = gallivm->builder;
    LLVMPositionBuilderAtEnd(builder, block);
 
    src = LLVMBuildLoad(builder, src_ptr, "src");
+   src1 = LLVMBuildLoad(builder, src1_ptr, "src1");
    dst = LLVMBuildLoad(builder, dst_ptr, "dst");
    con = LLVMBuildLoad(builder, const_ptr, "const");
 
-   res = lp_build_blend_aos(gallivm, blend, format, type, rt, src, NULL, dst, NULL, con, NULL, swizzle, 4);
+   res = lp_build_blend_aos(gallivm, blend, format, type, rt, src, NULL, src1, dst, NULL, con, NULL, swizzle, 4);
 
    lp_build_name(res, "res");
 
@@ -189,6 +194,7 @@ compute_blend_ref_term(unsigned rgb_factor,
                        unsigned alpha_factor,
                        const double *factor,
                        const double *src,
+                       const double *src1,
                        const double *dst,
                        const double *con,
                        double *term)
@@ -238,10 +244,14 @@ compute_blend_ref_term(unsigned rgb_factor,
       term[2] = factor[2] * con[3]; /* B */
       break;
    case PIPE_BLENDFACTOR_SRC1_COLOR:
-      assert(0); /* to do */
+      term[0] = factor[0] * src1[0]; /* R */
+      term[1] = factor[1] * src1[1]; /* G */
+      term[2] = factor[2] * src1[2]; /* B */
       break;
    case PIPE_BLENDFACTOR_SRC1_ALPHA:
-      assert(0); /* to do */
+      term[0] = factor[0] * src1[3]; /* R */
+      term[1] = factor[1] * src1[3]; /* G */
+      term[2] = factor[2] * src1[3]; /* B */
       break;
    case PIPE_BLENDFACTOR_ZERO:
       term[0] = 0.0f; /* R */
@@ -279,10 +289,14 @@ compute_blend_ref_term(unsigned rgb_factor,
       term[2] = factor[2] * (1.0f - con[3]); /* B */
       break;
    case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
-      assert(0); /* to do */
+      term[0] = factor[0] * (1.0f - src1[0]); /* R */
+      term[1] = factor[1] * (1.0f - src1[1]); /* G */
+      term[2] = factor[2] * (1.0f - src1[2]); /* B */
       break;
    case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
-      assert(0); /* to do */
+      term[0] = factor[0] * (1.0f - src1[3]); /* R */
+      term[1] = factor[1] * (1.0f - src1[3]); /* G */
+      term[2] = factor[2] * (1.0f - src1[3]); /* B */
       break;
    default:
       assert(0);
@@ -310,6 +324,10 @@ compute_blend_ref_term(unsigned rgb_factor,
    case PIPE_BLENDFACTOR_CONST_ALPHA:
       term[3] = factor[3] * con[3]; /* A */
       break;
+   case PIPE_BLENDFACTOR_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_SRC1_ALPHA:
+      term[3] = factor[3] * src1[3]; /* A */
+      break;
    case PIPE_BLENDFACTOR_ZERO:
       term[3] = 0.0f; /* A */
       break;
@@ -325,6 +343,10 @@ compute_blend_ref_term(unsigned rgb_factor,
    case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
       term[3] = factor[3] * (1.0f - con[3]);
       break;
+   case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+      term[3] = factor[3] * (1.0f - src1[3]); /* A */
+      break;
    default:
       assert(0);
    }
@@ -334,6 +356,7 @@ compute_blend_ref_term(unsigned rgb_factor,
 static void
 compute_blend_ref(const struct pipe_blend_state *blend,
                   const double *src,
+                  const double *src1,
                   const double *dst,
                   const double *con,
                   double *res)
@@ -342,9 +365,9 @@ compute_blend_ref(const struct pipe_blend_state *blend,
    double dst_term[4];
 
    compute_blend_ref_term(blend->rt[0].rgb_src_factor, blend->rt[0].alpha_src_factor,
-                          src, src, dst, con, src_term);
+                          src, src, src1, dst, con, src_term);
    compute_blend_ref_term(blend->rt[0].rgb_dst_factor, blend->rt[0].alpha_dst_factor,
-                          dst, src, dst, con, dst_term);
+                          dst, src, src1, dst, con, dst_term);
 
    /*
     * Combine RGB terms
@@ -435,8 +458,9 @@ test_one(unsigned verbose,
    success = TRUE;
 
    {
-      uint8_t *src, *dst, *con, *res, *ref;
+      uint8_t *src, *src1, *dst, *con, *res, *ref;
       src = align_malloc(stride, stride);
+      src1 = align_malloc(stride, stride);
       dst = align_malloc(stride, stride);
       con = align_malloc(stride, stride);
       res = align_malloc(stride, stride);
@@ -447,27 +471,30 @@ test_one(unsigned verbose,
          int64_t end_counter = 0;
 
          random_vec(type, src);
+         random_vec(type, src1);
          random_vec(type, dst);
          random_vec(type, con);
 
          {
             double fsrc[LP_MAX_VECTOR_LENGTH];
+            double fsrc1[LP_MAX_VECTOR_LENGTH];
             double fdst[LP_MAX_VECTOR_LENGTH];
             double fcon[LP_MAX_VECTOR_LENGTH];
             double fref[LP_MAX_VECTOR_LENGTH];
 
             read_vec(type, src, fsrc);
+            read_vec(type, src1, fsrc1);
             read_vec(type, dst, fdst);
             read_vec(type, con, fcon);
 
             for(j = 0; j < type.length; j += 4)
-               compute_blend_ref(blend, fsrc + j, fdst + j, fcon + j, fref + j);
+               compute_blend_ref(blend, fsrc + j, fsrc1 + j, fdst + j, fcon + j, fref + j);
 
             write_vec(type, ref, fref);
          }
 
          start_counter = rdtsc();
-         blend_test_ptr(src, dst, con, res);
+         blend_test_ptr(src, src1, dst, con, res);
          end_counter = rdtsc();
 
          cycles[i] = end_counter - start_counter;
@@ -481,6 +508,10 @@ test_one(unsigned verbose,
 
             fprintf(stderr, "  Src: ");
             dump_vec(stderr, type, src);
+            fprintf(stderr, "\n");
+
+            fprintf(stderr, "  Src1: ");
+            dump_vec(stderr, type, src1);
             fprintf(stderr, "\n");
 
             fprintf(stderr, "  Dst: ");
@@ -501,6 +532,7 @@ test_one(unsigned verbose,
          }
       }
       align_free(src);
+      align_free(src1);
       align_free(dst);
       align_free(con);
       align_free(res);
@@ -559,10 +591,8 @@ blend_factors[] = {
    PIPE_BLENDFACTOR_DST_ALPHA,
    PIPE_BLENDFACTOR_CONST_COLOR,
    PIPE_BLENDFACTOR_CONST_ALPHA,
-#if 0
    PIPE_BLENDFACTOR_SRC1_COLOR,
    PIPE_BLENDFACTOR_SRC1_ALPHA,
-#endif
    PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE,
    PIPE_BLENDFACTOR_INV_SRC_COLOR,
    PIPE_BLENDFACTOR_INV_SRC_ALPHA,
@@ -570,10 +600,8 @@ blend_factors[] = {
    PIPE_BLENDFACTOR_INV_DST_ALPHA,
    PIPE_BLENDFACTOR_INV_CONST_COLOR,
    PIPE_BLENDFACTOR_INV_CONST_ALPHA,
-#if 0
    PIPE_BLENDFACTOR_INV_SRC1_COLOR,
    PIPE_BLENDFACTOR_INV_SRC1_ALPHA,
-#endif
 };
 
 

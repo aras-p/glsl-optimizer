@@ -69,6 +69,7 @@ struct lp_build_blend_aos_context
 
    LLVMValueRef src;
    LLVMValueRef src_alpha;
+   LLVMValueRef src1;
    LLVMValueRef dst;
    LLVMValueRef const_;
    LLVMValueRef const_alpha;
@@ -123,9 +124,7 @@ lp_build_blend_factor_unswizzled(struct lp_build_blend_aos_context *bld,
       return const_alpha;
    case PIPE_BLENDFACTOR_SRC1_COLOR:
    case PIPE_BLENDFACTOR_SRC1_ALPHA:
-      /* TODO */
-      assert(0);
-      return bld->base.zero;
+      return bld->src1;
    case PIPE_BLENDFACTOR_INV_SRC_COLOR:
       if(!bld->inv_src)
          bld->inv_src = lp_build_comp(&bld->base, bld->src);
@@ -149,9 +148,7 @@ lp_build_blend_factor_unswizzled(struct lp_build_blend_aos_context *bld,
       return bld->inv_const_alpha;
    case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
    case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
-      /* TODO */
-      assert(0);
-      return bld->base.zero;
+      return lp_build_comp(&bld->base, bld->src1);
    default:
       assert(0);
       return bld->base.zero;
@@ -268,6 +265,7 @@ lp_build_blend_factor(struct lp_build_blend_aos_context *bld,
  * @param type          data type of the pixel vector
  * @param rt            render target index
  * @param src           blend src
+ * @param src1          second blend src (for dual source blend)
  * @param dst           blend dst
  * @param mask          optional mask to apply to the blending result
  * @param const_        const blend color
@@ -283,6 +281,7 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
                    unsigned rt,
                    LLVMValueRef src,
                    LLVMValueRef src_alpha,
+                   LLVMValueRef src1,
                    LLVMValueRef dst,
                    LLVMValueRef mask,
                    LLVMValueRef const_,
@@ -304,6 +303,7 @@ lp_build_blend_aos(struct gallivm_state *gallivm,
    memset(&bld, 0, sizeof bld);
    lp_build_context_init(&bld.base, gallivm, type);
    bld.src = src;
+   bld.src1 = src1;
    bld.dst = dst;
    bld.const_ = const_;
    bld.src_alpha = src_alpha;
