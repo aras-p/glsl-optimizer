@@ -81,6 +81,7 @@ glsl_type::glsl_type(GLenum gl_type,
 
 glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
 		     const char *name) :
+   gl_type(0),
    base_type(GLSL_TYPE_STRUCT),
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
    sampler_type(0), interface_packing(0),
@@ -103,6 +104,7 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
 
 glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
 		     enum glsl_interface_packing packing, const char *name) :
+   gl_type(0),
    base_type(GLSL_TYPE_INTERFACE),
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
    sampler_type(0), interface_packing((unsigned) packing),
