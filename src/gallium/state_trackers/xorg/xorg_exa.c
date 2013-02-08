@@ -318,7 +318,7 @@ ExaFinishAccess(PixmapPtr pPix, int index)
     if (!priv)
 	return;
 
-    if (!priv->map_transfer || pPix->devPrivate.ptr == NULL)
+    if (!priv->map_transfer)
 	return;
 
     exa_debug_printf("ExaFinishAccess %d\n", index);
