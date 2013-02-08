@@ -2152,13 +2152,6 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
                      (int) size);
          return;
       }
-
-      if (offset + size > bufObj->Size) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glBindBufferRange(offset + size %d > buffer size %d)",
-                     (int) (offset + size), (int) (bufObj->Size));
-         return;
-      }
    }
 
    switch (target) {
