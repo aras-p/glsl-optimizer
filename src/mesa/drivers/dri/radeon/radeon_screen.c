@@ -44,7 +44,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/fbobject.h"
 #include "swrast/s_renderbuffer.h"
 
-#define STANDALONE_MMIO
 #include "radeon_chipset.h"
 #include "radeon_macros.h"
 #include "radeon_screen.h"
