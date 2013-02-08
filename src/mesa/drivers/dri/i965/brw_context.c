@@ -376,6 +376,7 @@ brwCreateContext(int api,
 
    ctx->Const.NativeIntegers = true;
    ctx->Const.UniformBooleanTrue = 1;
+   ctx->Const.UniformBufferOffsetAlignment = 16;
 
    ctx->Const.ForceGLSLExtensionsWarn = driQueryOptionb(&intel->optionCache, "force_glsl_extensions_warn");
 
