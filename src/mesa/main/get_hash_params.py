@@ -225,9 +225,6 @@ descriptor=[
 
 # GL_OES_point_sprite
   [ "POINT_SPRITE_NV", "CONTEXT_BOOL(Point.PointSprite), extra_NV_point_sprite_ARB_point_sprite" ],
-
-# GL_ARB_vertex_shader
-  [ "MAX_VARYING_FLOATS_ARB", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_vertex_shader" ],
 ]},
 
 
@@ -362,6 +359,7 @@ descriptor=[
 
 # GL_ARB_vertex_shader
   [ "MAX_VERTEX_UNIFORM_COMPONENTS_ARB", "CONTEXT_INT(Const.VertexProgram.MaxUniformComponents), extra_ARB_vertex_shader" ],
+  [ "MAX_VARYING_FLOATS_ARB", "LOC_CUSTOM, TYPE_INT, 0, extra_ARB_vertex_shader" ],
 
 # GL_EXT_framebuffer_blit
 # NOTE: GL_DRAW_FRAMEBUFFER_BINDING_EXT == GL_FRAMEBUFFER_BINDING_EXT
