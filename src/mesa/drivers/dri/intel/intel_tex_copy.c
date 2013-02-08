@@ -190,7 +190,7 @@ intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
 #endif
 
       /* Next, try the BLT engine. */
-      if (intel_copy_texsubimage(intel_context(ctx),
+      if (intel_copy_texsubimage(intel,
                                  intel_texture_image(texImage),
                                  xoffset, yoffset,
                                  intel_renderbuffer(rb), x, y, width, height))
