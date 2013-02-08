@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include "intel_batchbuffer.h"
 #include "intel_fbo.h"
 
 #include "brw_blorp.h"
@@ -163,6 +164,8 @@ intel_hiz_exec(struct intel_context *intel, struct intel_mipmap_tree *mt,
 void
 brw_blorp_exec(struct intel_context *intel, const brw_blorp_params *params)
 {
+   struct brw_context *brw = brw_context(&intel->ctx);
+
    switch (intel->gen) {
    case 6:
       gen6_blorp_exec(intel, params);
@@ -175,6 +178,22 @@ brw_blorp_exec(struct intel_context *intel, const brw_blorp_params *params)
       assert(false);
       break;
    }
+
+   if (unlikely(intel->always_flush_batch))
+      intel_batchbuffer_flush(intel);
+
+   /* We've smashed all state compared to what the normal 3D pipeline
+    * rendering tracks for GL.
+    */
+   brw->state.dirty.brw = ~0;
+   brw->state.dirty.cache = ~0;
+   brw->state_batch_count = 0;
+   intel->batch.need_workaround_flush = true;
+
+   /* Flush the sampler cache so any texturing from the destination is
+    * coherent.
+    */
+   intel_batchbuffer_emit_mi_flush(intel);
 }
 
 brw_hiz_op_params::brw_hiz_op_params(struct intel_mipmap_tree *mt,

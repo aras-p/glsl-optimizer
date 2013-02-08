@@ -807,13 +807,4 @@ gen7_blorp_exec(struct intel_context *intel,
    gen7_blorp_emit_clear_params(brw, params);
    gen6_blorp_emit_drawing_rectangle(brw, params);
    gen7_blorp_emit_primitive(brw, params);
-
-   /* See comments above at first invocation of intel_flush() in
-    * gen6_blorp_emit_batch_head().
-    */
-   intel_flush(ctx);
-
-   /* Be safe. */
-   brw->state.dirty.brw = ~0;
-   brw->state.dirty.cache = ~0;
 }
