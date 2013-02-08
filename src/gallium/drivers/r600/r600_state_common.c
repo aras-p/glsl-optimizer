@@ -293,6 +293,11 @@ static void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 		rctx->alphatest_state.sx_alpha_test_control = dsa->sx_alpha_test_control;
 		rctx->alphatest_state.sx_alpha_ref = dsa->alpha_ref;
 		rctx->alphatest_state.atom.dirty = true;
+		if (rctx->chip_class >= EVERGREEN) {
+			evergreen_update_db_shader_control(rctx);
+		} else {
+			r600_update_db_shader_control(rctx);
+		}
 	}
 }
 

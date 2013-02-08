@@ -2251,6 +2251,13 @@ static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_
 	if (rctx->db_state.rsurf && rctx->db_state.rsurf->htile_enabled) {
 		/* FORCE_OFF means HiZ/HiS are determined by DB_SHADER_CONTROL */
 		db_render_override |= S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_OFF);
+		/* This is to fix a lockup when hyperz and alpha test are enabled at
+		 * the same time somehow GPU get confuse on which order to pick for
+		 * z test
+		 */
+		if (rctx->alphatest_state.sx_alpha_test_control) {
+			db_render_override |= S_02800C_FORCE_SHADER_Z_ORDER(1);
+		}
 	} else {
 		db_render_override |= S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE);
 	}
@@ -3240,7 +3247,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control;
+	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control = 0;
 	int pos_index = -1, face_index = -1;
 	int ninterp = 0;
 	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
@@ -3250,7 +3257,6 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 
 	rstate->nregs = 0;
 
-	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	for (i = 0; i < rshader->ninput; i++) {
 		/* evergreen NUM_INTERP only contains values interpolated into the LDS,
 		   POSITION goes via GPRs from the SC so isn't counted */
@@ -3483,6 +3489,21 @@ void evergreen_update_db_shader_control(struct r600_context * rctx)
 			S_02880C_DB_SOURCE_FORMAT(dual_export ? V_02880C_EXPORT_DB_TWO :
 								V_02880C_EXPORT_DB_FULL) |
 			S_02880C_ALPHA_TO_MASK_DISABLE(rctx->framebuffer.cb0_is_integer);
+
+	/* When alpha test is enabled we can't trust the hw to make the proper
+	 * decision on the order in which ztest should be run related to fragment
+	 * shader execution.
+	 *
+	 * If alpha test is enabled perform early z rejection (RE_Z) but don't early
+	 * write to the zbuffer. Write to zbuffer is delayed after fragment shader
+	 * execution and thus after alpha test so if discarded by the alpha test
+	 * the z value is not written.
+	 */
+	if (rctx->alphatest_state.sx_alpha_test_control) {
+		db_shader_control |= S_02880C_Z_ORDER(V_02880C_RE_Z);
+	} else {
+		db_shader_control |= S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
+	}
 
 	if (db_shader_control != rctx->db_misc_state.db_shader_control) {
 		rctx->db_misc_state.db_shader_control = db_shader_control;
