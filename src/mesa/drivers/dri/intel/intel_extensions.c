@@ -85,8 +85,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.TDFX_texture_compression_FXT1 = true;
    ctx->Extensions.OES_EGL_image = true;
    ctx->Extensions.OES_draw_texture = true;
-   ctx->Extensions.OES_compressed_ETC1_RGB8_texture = true;
-   ctx->Extensions.ARB_texture_rgb10_a2ui = true;
 
    if (intel->gen >= 6)
       ctx->Const.GLSLVersion = 140;
@@ -144,6 +142,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.EXT_packed_float = true;
       ctx->Extensions.ARB_texture_compression_rgtc = true;
       ctx->Extensions.ARB_texture_rg = true;
+      ctx->Extensions.ARB_texture_rgb10_a2ui = true;
       ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = true;
       ctx->Extensions.EXT_draw_buffers2 = true;
       ctx->Extensions.EXT_framebuffer_sRGB = true;
@@ -157,6 +156,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ATI_envmap_bumpmap = true;
       ctx->Extensions.MESA_texture_array = true;
       ctx->Extensions.NV_conditional_render = true;
+      ctx->Extensions.OES_compressed_ETC1_RGB8_texture = true;
       ctx->Extensions.OES_standard_derivatives = true;
    }
 
