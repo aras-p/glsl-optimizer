@@ -2821,30 +2821,46 @@ ast_declarator_list::hir(exec_list *instructions,
 	 }
       }
 
-      /* Integer vertex outputs must be qualified with 'flat'.
+      /* Integer fragment inputs must be qualified with 'flat'.  In GLSL ES,
+       * so must integer vertex outputs.
        *
-       * From section 4.3.6 of the GLSL 1.30 spec:
-       *    "If a vertex output is a signed or unsigned integer or integer
-       *    vector, then it must be qualified with the interpolation qualifier
+       * From section 4.3.4 ("Inputs") of the GLSL 1.50 spec:
+       *    "Fragment shader inputs that are signed or unsigned integers or
+       *    integer vectors must be qualified with the interpolation qualifier
        *    flat."
        *
-       * From section 4.3.4 of the GLSL 3.00 ES spec:
+       * From section 4.3.4 ("Input Variables") of the GLSL 3.00 ES spec:
        *    "Fragment shader inputs that are, or contain, signed or unsigned
        *    integers or integer vectors must be qualified with the
        *    interpolation qualifier flat."
        *
-       * Since vertex outputs and fragment inputs must have matching
-       * qualifiers, these two requirements are equivalent.
+       * From section 4.3.6 ("Output Variables") of the GLSL 3.00 ES spec:
+       *    "Vertex shader outputs that are, or contain, signed or unsigned
+       *    integers or integer vectors must be qualified with the
+       *    interpolation qualifier flat."
+       *
+       * Note that prior to GLSL 1.50, this requirement applied to vertex
+       * outputs rather than fragment inputs.  That creates problems in the
+       * presence of geometry shaders, so we adopt the GLSL 1.50 rule for all
+       * desktop GL shaders.  For GLSL ES shaders, we follow the spec and
+       * apply the restriction to both vertex outputs and fragment inputs.
+       *
+       * Note also that the desktop GLSL specs are missing the text "or
+       * contain"; this is presumably an oversight, since there is no
+       * reasonable way to interpolate a fragment shader input that contains
+       * an integer.
        */
-      if (state->is_version(130, 300)
-          && state->target == vertex_shader
-          && state->current_function == NULL
-          && var->type->contains_integer()
-          && var->mode == ir_var_shader_out
-          && var->interpolation != INTERP_QUALIFIER_FLAT) {
-
-         _mesa_glsl_error(&loc, state, "If a vertex output is (or contains) "
-                          "an integer, then it must be qualified with 'flat'");
+      if (state->is_version(130, 300) &&
+          var->type->contains_integer() &&
+          var->interpolation != INTERP_QUALIFIER_FLAT &&
+          ((state->target == fragment_shader && var->mode == ir_var_shader_in)
+           || (state->target == vertex_shader && var->mode == ir_var_shader_out
+               && state->es_shader))) {
+         const char *var_type = (state->target == vertex_shader) ?
+            "vertex output" : "fragment input";
+         _mesa_glsl_error(&loc, state, "If a %s is (or contains) "
+                          "an integer, then it must be qualified with 'flat'",
+                          var_type);
       }
 
 
