@@ -62,7 +62,7 @@ typedef void (*filter_func)(struct tgsi_sampler *tgsi_sampler,
                             const float t[TGSI_QUAD_SIZE],
                             const float p[TGSI_QUAD_SIZE],
                             const float c0[TGSI_QUAD_SIZE],
-                            const float c1[TGSI_QUAD_SIZE],
+                            const float lod[TGSI_QUAD_SIZE],
                             enum tgsi_sampler_control control,
                             float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
 

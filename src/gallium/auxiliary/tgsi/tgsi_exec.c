@@ -1728,6 +1728,7 @@ fetch_texel( struct tgsi_sampler *sampler,
    uint j;
    float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
 
+   /* FIXME: handle explicit derivs, offsets */
    sampler->get_samples(sampler, s->f, t->f, p->f, c0->f, c1->f, control, rgba);
 
    for (j = 0; j < 4; j++) {
@@ -1760,8 +1761,10 @@ exec_tex(struct tgsi_exec_machine *mach,
    const uint unit = inst->Src[sampler].Register.Index;
    union tgsi_exec_channel r[4], cubearraycomp, cubelod;
    const union tgsi_exec_channel *lod = &ZeroVec;
-   enum tgsi_sampler_control control;
+   enum tgsi_sampler_control control =  tgsi_sampler_lod_none;
    uint chan;
+
+   assert(modifier != TEX_MODIFIER_LEVEL_ZERO);
 
    if (modifier != TEX_MODIFIER_NONE && (sampler == 1)) {
       FETCH(&r[3], 0, TGSI_CHAN_W);
@@ -1772,7 +1775,7 @@ exec_tex(struct tgsi_exec_machine *mach,
 
    if (modifier == TEX_MODIFIER_EXPLICIT_LOD) {
       control = tgsi_sampler_lod_explicit;
-   } else {
+   } else if (modifier == TEX_MODIFIER_LOD_BIAS){
       control = tgsi_sampler_lod_bias;
    }
 
@@ -1785,7 +1788,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &ZeroVec, &ZeroVec, lod, &ZeroVec, /* S, T, P, LOD */
+                  &r[0], &ZeroVec, &ZeroVec, &ZeroVec, lod, /* S, T, P, C, LOD */
                   control,
                   &r[0], &r[1], &r[2], &r[3]);     /* R, G, B, A */
       break;
@@ -1798,7 +1801,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &ZeroVec, &r[2], lod, &ZeroVec, /* S, T, P, LOD */
+                  &r[0], &ZeroVec, &r[2], &ZeroVec, lod, /* S, T, P, C, LOD */
                   control,
                   &r[0], &r[1], &r[2], &r[3]);     /* R, G, B, A */
       break;
@@ -1818,7 +1821,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], lod, &ZeroVec,    /* S, T, P, LOD */
+                  &r[0], &r[1], &r[2], &ZeroVec, lod,    /* S, T, P, C, LOD */
                   control,
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
@@ -1832,7 +1835,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &ZeroVec, lod, &ZeroVec,    /* S, T, P, LOD */
+                  &r[0], &r[1], &ZeroVec, &ZeroVec, lod,   /* S, T, P, C, LOD */
                   control,
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
@@ -1846,7 +1849,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], lod, &ZeroVec,    /* S, T, P, LOD */
+                  &r[0], &r[1], &r[2], &ZeroVec, lod,   /* S, T, P, C, LOD */
                   control,
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
@@ -1862,7 +1865,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], lod, &ZeroVec,    /* S, T, P, LOD */
+                  &r[0], &r[1], &r[2], &ZeroVec, lod,   /* S, T, P, C, LOD */
                   control,
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
@@ -1874,7 +1877,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       FETCH(&r[3], 0, TGSI_CHAN_W);
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], &r[3], &ZeroVec,    /* S, T, P, LOD */
+                  &r[0], &r[1], &r[2], &r[3], &ZeroVec,    /* S, T, P, C, LOD */
                   control,
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
@@ -1891,7 +1894,7 @@ exec_tex(struct tgsi_exec_machine *mach,
          cubelod = ZeroVec;
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], &r[3], &cubelod,    /* S, T, P, LOD */
+                  &r[0], &r[1], &r[2], &r[3], &cubelod,    /* S, T, P, C, LOD */
                   control,
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
@@ -1908,7 +1911,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], lod, &ZeroVec,
+                  &r[0], &r[1], &r[2], &ZeroVec, lod,
                   control,
                   &r[0], &r[1], &r[2], &r[3]);
       break;
@@ -1922,7 +1925,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       FETCH(&cubearraycomp, 1, TGSI_CHAN_X);
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &r[1], &r[2], &r[3], &cubearraycomp, /* S, T, P, LOD */
+                  &r[0], &r[1], &r[2], &r[3], &cubearraycomp, /* S, T, P, C, LOD */
                   control,
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
@@ -1967,8 +1970,8 @@ exec_txd(struct tgsi_exec_machine *mach,
       FETCH(&r[0], 0, TGSI_CHAN_X);
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], &ZeroVec, &ZeroVec, &ZeroVec, &ZeroVec,   /* S, T, P, BIAS */
-                  tgsi_sampler_lod_bias,
+                  &r[0], &ZeroVec, &ZeroVec, &ZeroVec, &ZeroVec,   /* S, T, P, C, LOD */
+                  tgsi_sampler_lod_none,
                   &r[0], &r[1], &r[2], &r[3]);           /* R, G, B, A */
       break;
 
@@ -1985,7 +1988,7 @@ exec_txd(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[unit],
                   &r[0], &r[1], &r[2], &ZeroVec, &ZeroVec,   /* inputs */
-                  tgsi_sampler_lod_bias,
+                  tgsi_sampler_lod_none,
                   &r[0], &r[1], &r[2], &r[3]);     /* outputs */
       break;
 
@@ -1999,7 +2002,7 @@ exec_txd(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[unit],
                   &r[0], &r[1], &r[2], &ZeroVec, &ZeroVec,
-                  tgsi_sampler_lod_bias,
+                  tgsi_sampler_lod_none,
                   &r[0], &r[1], &r[2], &r[3]);
       break;
 
@@ -2012,7 +2015,7 @@ exec_txd(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[unit],
                   &r[0], &r[1], &r[2], &r[3], &ZeroVec,
-                  tgsi_sampler_lod_bias,
+                  tgsi_sampler_lod_none,
                   &r[0], &r[1], &r[2], &r[3]);
       break;
 
@@ -2137,31 +2140,28 @@ exec_sample(struct tgsi_exec_machine *mach,
 {
    const uint resource_unit = inst->Src[1].Register.Index;
    const uint sampler_unit = inst->Src[2].Register.Index;
-   union tgsi_exec_channel r[4];
+   union tgsi_exec_channel r[4], c1;
    const union tgsi_exec_channel *lod = &ZeroVec;
-   enum tgsi_sampler_control control;
+   enum tgsi_sampler_control control = tgsi_sampler_lod_none;
    uint chan;
 
    assert(modifier != TEX_MODIFIER_PROJECTED);
 
    if (modifier != TEX_MODIFIER_NONE) {
       if (modifier == TEX_MODIFIER_LOD_BIAS) {
-         FETCH(&r[3], 3, TGSI_CHAN_X);
-         lod = &r[3];
+         FETCH(&c1, 3, TGSI_CHAN_X);
+         lod = &c1;
+         control = tgsi_sampler_lod_bias;
       }
       else if (modifier == TEX_MODIFIER_EXPLICIT_LOD) {
-         FETCH(&r[3], 0, TGSI_CHAN_W);
-         lod = &r[3];
+         FETCH(&c1, 0, TGSI_CHAN_W);
+         lod = &c1;
+         control = tgsi_sampler_lod_explicit;
       }
-      else
+      else {
          assert(modifier == TEX_MODIFIER_LEVEL_ZERO);
-   }
-
-   if (modifier == TEX_MODIFIER_EXPLICIT_LOD ||
-       modifier == TEX_MODIFIER_LEVEL_ZERO) {
-      control = tgsi_sampler_lod_explicit;
-   } else {
-      control = tgsi_sampler_lod_bias;
+         control = tgsi_sampler_lod_zero;
+      }
    }
 
    FETCH(&r[0], 0, TGSI_CHAN_X);
@@ -2171,13 +2171,13 @@ exec_sample(struct tgsi_exec_machine *mach,
       if (compare) {
          FETCH(&r[2], 3, TGSI_CHAN_X);
          fetch_texel(mach->Samplers[sampler_unit],
-                     &r[0], &ZeroVec, &r[2], lod, &ZeroVec,  /* S, T, P, LOD */
+                     &r[0], &ZeroVec, &r[2], &ZeroVec, lod, /* S, T, P, C, LOD */
                      control,
                      &r[0], &r[1], &r[2], &r[3]);     /* R, G, B, A */
       }
       else {
          fetch_texel(mach->Samplers[sampler_unit],
-                     &r[0], &ZeroVec, &ZeroVec, lod, &ZeroVec,  /* S, T, P, LOD */
+                     &r[0], &ZeroVec, &ZeroVec, &ZeroVec, lod, /* S, T, P, C, LOD */
                      control,
                      &r[0], &r[1], &r[2], &r[3]);     /* R, G, B, A */
       }
@@ -2190,13 +2190,13 @@ exec_sample(struct tgsi_exec_machine *mach,
       if (compare) {
          FETCH(&r[2], 3, TGSI_CHAN_X);
          fetch_texel(mach->Samplers[sampler_unit],
-                     &r[0], &r[1], &r[2], lod, &ZeroVec,     /* S, T, P, LOD */
+                     &r[0], &r[1], &r[2], &ZeroVec, lod,    /* S, T, P, C, LOD */
                      control,
                      &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       }
       else {
          fetch_texel(mach->Samplers[sampler_unit],
-                     &r[0], &r[1], &ZeroVec, lod, &ZeroVec,     /* S, T, P, LOD */
+                     &r[0], &r[1], &ZeroVec, &ZeroVec, lod,    /* S, T, P, C, LOD */
                      control,
                      &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       }
@@ -2210,13 +2210,13 @@ exec_sample(struct tgsi_exec_machine *mach,
       if(compare) {
          FETCH(&r[3], 3, TGSI_CHAN_X);
          fetch_texel(mach->Samplers[sampler_unit],
-                     &r[0], &r[1], &r[2], &r[3], &ZeroVec,
+                     &r[0], &r[1], &r[2], &r[3], lod,
                      control,
                      &r[0], &r[1], &r[2], &r[3]);
       }
       else {
          fetch_texel(mach->Samplers[sampler_unit],
-                     &r[0], &r[1], &r[2], lod, &ZeroVec,
+                     &r[0], &r[1], &r[2], &ZeroVec, lod,
                      control,
                      &r[0], &r[1], &r[2], &r[3]);
       }
@@ -2227,12 +2227,6 @@ exec_sample(struct tgsi_exec_machine *mach,
       FETCH(&r[2], 0, TGSI_CHAN_Z);
       FETCH(&r[3], 0, TGSI_CHAN_W);
       if(compare) {
-         assert(modifier == TEX_MODIFIER_NONE);
-         /*
-          * FIXME: lod bias and explicit lod are prohibited but
-          * for sample_c_lz we pass the level zero info as explicit
-          * lod 0.
-          */
          FETCH(&r[4], 3, TGSI_CHAN_X);
          fetch_texel(mach->Samplers[sampler_unit],
                      &r[0], &r[1], &r[2], &r[3], &r[4],
@@ -2276,8 +2270,8 @@ exec_sample_d(struct tgsi_exec_machine *mach,
       FETCH(&r[0], 0, TGSI_CHAN_X);
 
       fetch_texel(mach->Samplers[sampler_unit],
-                  &r[0], &ZeroVec, &ZeroVec, &ZeroVec, &ZeroVec,   /* S, T, P, BIAS */
-                  tgsi_sampler_lod_bias,
+                  &r[0], &ZeroVec, &ZeroVec, &ZeroVec, &ZeroVec,   /* S, T, P, C, LOD */
+                  tgsi_sampler_lod_none,
                   &r[0], &r[1], &r[2], &r[3]);           /* R, G, B, A */
       break;
 
@@ -2288,7 +2282,7 @@ exec_sample_d(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[sampler_unit],
                   &r[0], &r[1], &ZeroVec, &ZeroVec, &ZeroVec,   /* inputs */
-                  tgsi_sampler_lod_bias,
+                  tgsi_sampler_lod_none,
                   &r[0], &r[1], &r[2], &r[3]);     /* outputs */
       break;
 
@@ -2300,7 +2294,7 @@ exec_sample_d(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[sampler_unit],
                   &r[0], &r[1], &r[2], &ZeroVec, &ZeroVec,
-                  tgsi_sampler_lod_bias,
+                  tgsi_sampler_lod_none,
                   &r[0], &r[1], &r[2], &r[3]);
       break;
 
@@ -2312,7 +2306,7 @@ exec_sample_d(struct tgsi_exec_machine *mach,
 
       fetch_texel(mach->Samplers[sampler_unit],
                   &r[0], &r[1], &r[2], &r[3], &ZeroVec,
-                  tgsi_sampler_lod_bias,
+                  tgsi_sampler_lod_none,
                   &r[0], &r[1], &r[2], &r[3]);
       break;
 

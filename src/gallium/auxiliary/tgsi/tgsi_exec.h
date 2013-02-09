@@ -89,8 +89,11 @@ struct tgsi_interp_coef
 };
 
 enum tgsi_sampler_control {
+   tgsi_sampler_lod_none,
    tgsi_sampler_lod_bias,
-   tgsi_sampler_lod_explicit
+   tgsi_sampler_lod_explicit,
+   tgsi_sampler_lod_zero
+   /* FIXME: tgsi_sampler_derivs_explicit */
 };
 
 /**
@@ -107,15 +110,14 @@ struct tgsi_sampler
           layer for 1D arrays.
     * p - the third coordinate for sampling for 3D, cube, cube arrays,
     *     layer for 2D arrays. Compare value for 1D/2D shadows.
-    * c0 - lod value for lod variants, compare value for shadow cube
-    *      and shadow 2d arrays.
-    * c1 - cube array only - lod for cube map arrays
-    *                        compare for shadow cube map arrays.
+    * c0 - Compare value for shadow cube and shadow 2d arrays,
+    *      layer for cube arrays.
+    * lod - lod value, except for shadow cube arrays (compare value there).
     */
    void (*get_samples)(struct tgsi_sampler *sampler,
                        const float s[TGSI_QUAD_SIZE],
                        const float t[TGSI_QUAD_SIZE],
-                       const float p[TGSI_QUAD_SIZE],
+                       const float r[TGSI_QUAD_SIZE],
                        const float c0[TGSI_QUAD_SIZE],
                        const float c1[TGSI_QUAD_SIZE],
                        enum tgsi_sampler_control control,

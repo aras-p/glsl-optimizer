@@ -127,7 +127,6 @@ repeat(int coord, unsigned size)
  * \param s  the incoming texcoords
  * \param size  the texture image size
  * \param icoord  returns the integer texcoords
- * \return  integer texture index
  */
 static void
 wrap_nearest_repeat(float s, unsigned size, int *icoord)
@@ -1642,20 +1641,91 @@ img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
 }
 
 
-/* Calculate level of detail for every fragment.
+/* Calculate level of detail for every fragment,
+ * with lambda already computed.
  * Note that lambda has already been biased by global LOD bias.
+ * \param biased_lambda per-quad lambda.
+ * \param lod_in per-fragment lod_bias or explicit_lod.
+ * \param lod returns the per-fragment lod.
  */
 static INLINE void
 compute_lod(const struct pipe_sampler_state *sampler,
+            enum tgsi_sampler_control control,
             const float biased_lambda,
-            const float lodbias[TGSI_QUAD_SIZE],
+            const float lod_in[TGSI_QUAD_SIZE],
             float lod[TGSI_QUAD_SIZE])
 {
+   float min_lod = sampler->min_lod;
+   float max_lod = sampler->max_lod;
    uint i;
 
-   for (i = 0; i < TGSI_QUAD_SIZE; i++) {
-      lod[i] = biased_lambda + lodbias[i];
-      lod[i] = CLAMP(lod[i], sampler->min_lod, sampler->max_lod);
+   switch (control) {
+   case tgsi_sampler_lod_none:
+   case tgsi_sampler_lod_zero:
+      lod[0] = lod[1] = lod[2] = lod[3] = CLAMP(biased_lambda, min_lod, max_lod);
+      break;
+   case tgsi_sampler_lod_bias:
+      for (i = 0; i < TGSI_QUAD_SIZE; i++) {
+         lod[i] = biased_lambda + lod_in[i];
+         lod[i] = CLAMP(lod[i], min_lod, max_lod);
+      }
+      break;
+   case tgsi_sampler_lod_explicit:
+      for (i = 0; i < TGSI_QUAD_SIZE; i++) {
+         lod[i] = CLAMP(lod_in[i], min_lod, max_lod);
+      }
+      break;
+   default:
+      assert(0);
+      lod[0] = lod[1] = lod[2] = lod[3] = 0.0f;
+   }
+}
+
+
+/* Calculate level of detail for every fragment.
+ * \param lod_in per-fragment lod_bias or explicit_lod.
+ * \param lod results per-fragment lod.
+ */
+static INLINE void
+compute_lambda_lod(struct sp_sampler_variant *samp,
+                   const float s[TGSI_QUAD_SIZE],
+                   const float t[TGSI_QUAD_SIZE],
+                   const float p[TGSI_QUAD_SIZE],
+                   const float lod_in[TGSI_QUAD_SIZE],
+                   enum tgsi_sampler_control control,
+                   float lod[TGSI_QUAD_SIZE])
+{
+   const struct pipe_sampler_state *sampler = samp->sampler;
+   float lod_bias = sampler->lod_bias;
+   float min_lod = sampler->min_lod;
+   float max_lod = sampler->max_lod;
+   float lambda;
+   uint i;
+
+   switch (control) {
+   case tgsi_sampler_lod_none:
+      lambda = samp->compute_lambda(samp, s, t, p) + lod_bias;
+      lod[0] = lod[1] = lod[2] = lod[3] = CLAMP(lambda, min_lod, max_lod);
+      break;
+   case tgsi_sampler_lod_bias:
+      lambda = samp->compute_lambda(samp, s, t, p) + lod_bias;
+      for (i = 0; i < TGSI_QUAD_SIZE; i++) {
+         lod[i] = lambda + lod_in[i];
+         lod[i] = CLAMP(lod[i], min_lod, max_lod);
+      }
+      break;
+   case tgsi_sampler_lod_explicit:
+      for (i = 0; i < TGSI_QUAD_SIZE; i++) {
+         lod[i] = CLAMP(lod_in[i], min_lod, max_lod);
+      }
+      break;
+   case tgsi_sampler_lod_zero:
+      /* this is all static state in the sampler really need clamp here? */
+      lod[0] = lod[1] = lod[2] = lod[3] = CLAMP(lod_bias, min_lod, max_lod);
+      break;
+   default:
+      assert(0);
+      lod[0] = lod[1] = lod[2] = lod[3] = 0.0f;
    }
 }
 
@@ -1666,7 +1736,7 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
                   const float t[TGSI_QUAD_SIZE],
                   const float p[TGSI_QUAD_SIZE],
                   const float c0[TGSI_QUAD_SIZE],
-                  const float c1[TGSI_QUAD_SIZE],
+                  const float lod_in[TGSI_QUAD_SIZE],
                   enum tgsi_sampler_control control,
                   float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
@@ -1675,21 +1745,7 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
    int j;
    float lod[TGSI_QUAD_SIZE];
 
-   if (control == tgsi_sampler_lod_bias) {
-      float lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
-      if (samp->key.bits.target == PIPE_TEXTURE_CUBE_ARRAY)
-         compute_lod(samp->sampler, lambda, c1, lod);
-      else
-         compute_lod(samp->sampler, lambda, c0, lod);
-   } else {
-      assert(control == tgsi_sampler_lod_explicit);
-
-      if (samp->key.bits.target == PIPE_TEXTURE_CUBE_ARRAY)
-         memcpy(lod, c1, sizeof(lod));
-      else
-         memcpy(lod, c0, sizeof(lod));
-
-   }
+   compute_lambda_lod(samp, s, t, p, lod_in, control, lod);
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       int level0 = samp->view->u.tex.first_level + (int)lod[j];
@@ -1735,7 +1791,7 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
                    const float t[TGSI_QUAD_SIZE],
                    const float p[TGSI_QUAD_SIZE],
                    const float c0[TGSI_QUAD_SIZE],
-                   const float c1[TGSI_QUAD_SIZE],
+                   const float lod_in[TGSI_QUAD_SIZE],
                    enum tgsi_sampler_control control,
                    float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
@@ -1744,20 +1800,7 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
    float lod[TGSI_QUAD_SIZE];
    int j;
 
-   if (control == tgsi_sampler_lod_bias) {
-      float lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
-      if (samp->key.bits.target == PIPE_TEXTURE_CUBE_ARRAY)
-         compute_lod(samp->sampler, lambda, c1, lod);
-      else
-         compute_lod(samp->sampler, lambda, c0, lod);
-   } else {
-      assert(control == tgsi_sampler_lod_explicit);
-
-      if (samp->key.bits.target == PIPE_TEXTURE_CUBE_ARRAY)
-         memcpy(lod, c1, sizeof(lod));
-      else
-         memcpy(lod, c0, sizeof(lod));
-   }
+   compute_lambda_lod(samp, s, t, p, lod_in, control, lod);
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       if (lod[j] < 0.0)
@@ -1783,7 +1826,7 @@ mip_filter_none(struct tgsi_sampler *tgsi_sampler,
                 const float t[TGSI_QUAD_SIZE],
                 const float p[TGSI_QUAD_SIZE],
                 const float c0[TGSI_QUAD_SIZE],
-                const float c1[TGSI_QUAD_SIZE],
+                const float lod_in[TGSI_QUAD_SIZE],
                 enum tgsi_sampler_control control,
                 float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
@@ -1791,20 +1834,7 @@ mip_filter_none(struct tgsi_sampler *tgsi_sampler,
    float lod[TGSI_QUAD_SIZE];
    int j;
 
-   if (control == tgsi_sampler_lod_bias) {
-      float lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
-      if (samp->key.bits.target == PIPE_TEXTURE_CUBE_ARRAY)
-         compute_lod(samp->sampler, lambda, c1, lod);
-      else
-         compute_lod(samp->sampler, lambda, c0, lod);
-   } else {
-      assert(control == tgsi_sampler_lod_explicit);
-
-      if (samp->key.bits.target == PIPE_TEXTURE_CUBE_ARRAY)
-         memcpy(lod, c1, sizeof(lod));
-      else
-         memcpy(lod, c0, sizeof(lod));
-   }
+   compute_lambda_lod(samp, s, t, p, lod_in, control, lod);
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       if (lod[j] < 0.0) { 
@@ -1825,7 +1855,7 @@ mip_filter_none_no_filter_select(struct tgsi_sampler *tgsi_sampler,
                                      const float t[TGSI_QUAD_SIZE],
                                      const float p[TGSI_QUAD_SIZE],
                                      const float c0[TGSI_QUAD_SIZE],
-                                     const float c1[TGSI_QUAD_SIZE],
+                                     const float lod_in[TGSI_QUAD_SIZE],
                                      enum tgsi_sampler_control control,
                                      float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
@@ -2060,7 +2090,7 @@ mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
                         const float t[TGSI_QUAD_SIZE],
                         const float p[TGSI_QUAD_SIZE],
                         const float c0[TGSI_QUAD_SIZE],
-                        const float c1[TGSI_QUAD_SIZE],
+                        const float lod_in[TGSI_QUAD_SIZE],
                         enum tgsi_sampler_control control,
                         float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
@@ -2077,7 +2107,8 @@ mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
    float dvdx = (t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT]) * t_to_v;
    float dvdy = (t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT]) * t_to_v;
    
-   if (control == tgsi_sampler_lod_bias) {
+   if (control == tgsi_sampler_lod_bias ||
+       control == tgsi_sampler_lod_none) {
       /* note: instead of working with Px and Py, we will use the 
        * squared length instead, to avoid sqrt.
        */
@@ -2114,12 +2145,12 @@ mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
        * this since 0.5*log(x) = log(sqrt(x))
        */
       lambda = 0.5F * util_fast_log2(Pmin2) + samp->sampler->lod_bias;
-      compute_lod(samp->sampler, lambda, c0, lod);
+      compute_lod(samp->sampler, control, lambda, lod_in, lod);
    }
    else {
-      assert(control == tgsi_sampler_lod_explicit);
-
-      memcpy(lod, c0, sizeof(lod));
+      assert(control == tgsi_sampler_lod_explicit ||
+             control == tgsi_sampler_lod_zero);
+      compute_lod(samp->sampler, control, samp->sampler->lod_bias, lod_in, lod);
    }
    
    /* XXX: Take into account all lod values.
@@ -2161,24 +2192,16 @@ mip_filter_linear_2d_linear_repeat_POT(
    const float t[TGSI_QUAD_SIZE],
    const float p[TGSI_QUAD_SIZE],
    const float c0[TGSI_QUAD_SIZE],
-   const float c1[TGSI_QUAD_SIZE],
+   const float lod_in[TGSI_QUAD_SIZE],
    enum tgsi_sampler_control control,
    float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int j;
-   float lambda;
    float lod[TGSI_QUAD_SIZE];
 
-   if (control == tgsi_sampler_lod_bias) {
-      lambda = samp->compute_lambda(samp, s, t, p) + samp->sampler->lod_bias;
-      compute_lod(samp->sampler, lambda, c0, lod);
-   } else {
-      assert(control == tgsi_sampler_lod_explicit);
-
-      memcpy(lod, c0, sizeof(lod));
-   }
+   compute_lambda_lod(samp, s, t, p, lod_in, control, lod);
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       int level0 = samp->view->u.tex.first_level + (int)lod[j];
