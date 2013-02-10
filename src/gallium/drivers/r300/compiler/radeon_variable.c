@@ -491,7 +491,7 @@ struct rc_list * rc_variable_list_get_writers(
 			}
 			/* Once we have indentifed the variable and its
 			 * friends that write this source, we can stop
-			 * stop searching, because we know know of the
+			 * stop searching, because we know none of the
 			 * other variables in the list will write this source.
 			 * If they did they would be friends of var.
 			 */
