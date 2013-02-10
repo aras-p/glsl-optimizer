@@ -833,7 +833,7 @@ static int peephole_mul_omod(
 
 	/* Rewrite the instructions */
 	for (var = writer_list->Item; var; var = var->Friend) {
-		struct rc_variable * writer = writer_list->Item;
+		struct rc_variable * writer = var;
 		unsigned conversion_swizzle = rc_make_conversion_swizzle(
 					writer->Inst->U.I.DstReg.WriteMask,
 					inst_mul->U.I.DstReg.WriteMask);
