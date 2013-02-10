@@ -861,7 +861,7 @@ static void rc_emulate_negative_addressing(struct radeon_compiler *compiler, voi
 		transform_negative_addressing(c, lastARL, inst, min_offset);
 }
 
-static struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
+struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
 	.IsNative = &swizzle_is_native,
 	.Split = 0 /* should never be called */
 };

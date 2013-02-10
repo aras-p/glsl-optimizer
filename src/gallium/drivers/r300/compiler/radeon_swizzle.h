@@ -54,4 +54,6 @@ struct rc_swizzle_caps {
 	void (*Split)(struct rc_src_register reg, unsigned int mask, struct rc_swizzle_split * split);
 };
 
+extern struct rc_swizzle_caps r300_vertprog_swizzle_caps;
+
 #endif /* RADEON_SWIZZLE_H */
