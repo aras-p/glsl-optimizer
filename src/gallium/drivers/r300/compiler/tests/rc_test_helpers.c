@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Tom Stellard <tstellar@gmail.com>
+ * Copyright 2013 Advanced Micro Devices, Inc.
  *
  * All Rights Reserved.
  *
@@ -23,6 +24,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
+ * Author: Tom Stellard <thomas.stellard@amd.com>
  */
 
 #include <errno.h>
@@ -32,9 +34,14 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "../radeon_compiler_util.h"
-#include "../radeon_opcodes.h"
-#include "../radeon_program.h"
+#include "r500_fragprog.h"
+#include "r300_fragprog_swizzle.h"
+#include "radeon_compiler.h"
+#include "radeon_compiler_util.h"
+#include "radeon_opcodes.h"
+#include "radeon_program.h"
+#include "radeon_regalloc.h"
+#include "radeon_swizzle.h"
 
 #include "rc_test_helpers.h"
 
@@ -286,6 +293,7 @@ int init_rc_normal_dst(
 	if (tokens.WriteMask.Length == 0) {
 		inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
 	} else {
+		inst->U.I.DstReg.WriteMask = 0;
 		/* The first character should be '.' */
 		if (tokens.WriteMask.String[0] != '.') {
 			fprintf(stderr, "1st char of writemask is not valid.\n");
@@ -338,7 +346,8 @@ struct inst_tokens {
  * this string is the same that is output by rc_program_print.
  * @return 1 On success, 0 on failure
  */
-int init_rc_normal_instruction(
+
+int parse_rc_normal_instruction(
 	struct rc_instruction * inst,
 	const char * inst_str)
 {
@@ -346,10 +355,6 @@ int init_rc_normal_instruction(
 	int i;
 	regmatch_t matches[REGEX_INST_MATCHES];
 	struct inst_tokens tokens;
-
-	/* Initialize inst */
-	memset(inst, 0, sizeof(struct rc_instruction));
-	inst->Type = RC_INSTRUCTION_NORMAL;
 
 	/* Execute the regex */
 	if (!regex_helper(regex_str, inst_str, matches, REGEX_INST_MATCHES)) {
@@ -367,6 +372,8 @@ int init_rc_normal_instruction(
 
 
 	/* Fill out the rest of the instruction. */
+	inst->Type = RC_INSTRUCTION_NORMAL;
+
 	for (i = 0; i < MAX_RC_OPCODE; i++) {
 		const struct rc_opcode_info * info = rc_get_opcode_info(i);
 		unsigned int first_src = 3;
@@ -404,4 +411,48 @@ int init_rc_normal_instruction(
 		break;
 	}
 	return 1;
+}
+
+int init_rc_normal_instruction(
+	struct rc_instruction * inst,
+	const char * inst_str)
+{
+	/* Initialize inst */
+	memset(inst, 0, sizeof(struct rc_instruction));
+
+	return parse_rc_normal_instruction(inst, inst_str);
+}
+
+void add_instruction(struct radeon_compiler *c, const char * inst_string)
+{
+	struct rc_instruction * new_inst =
+		rc_insert_new_instruction(c, c->Program.Instructions.Prev);
+
+	parse_rc_normal_instruction(new_inst, inst_string);
+
+}
+
+void init_compiler(
+	struct radeon_compiler *c,
+	enum rc_program_type program_type,
+	unsigned is_r500,
+	unsigned is_r400)
+{
+	struct rc_regalloc_state *rs = malloc(sizeof(struct rc_regalloc_state));
+	rc_init(c, rs);
+
+	c->is_r500 = is_r500;
+	c->max_temp_regs = is_r500 ? 128 : (is_r400 ? 64 : 32);
+	c->max_constants = is_r500 ? 256 : 32;
+	c->max_alu_insts = (is_r500 || is_r400) ? 512 : 64;
+	c->max_tex_insts = (is_r500 || is_r400) ? 512 : 32;
+	if (program_type == RC_FRAGMENT_PROGRAM) {
+		c->has_half_swizzles = 1;
+		c->has_presub = 1;
+		c->has_omod = 1;
+		c->SwizzleCaps =
+			is_r500 ? &r500_swizzle_caps : &r300_swizzle_caps;
+	} else {
+		c->SwizzleCaps = &r300_vertprog_swizzle_caps;
+	}
 }

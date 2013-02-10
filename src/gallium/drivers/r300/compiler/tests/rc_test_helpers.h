@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Tom Stellard <tstellar@gmail.com>
+ * Copyright 2013 Advanced Micro Devices, Inc.
  *
  * All Rights Reserved.
  *
@@ -23,7 +24,10 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
+ * Author: Tom Stellard <thomas.stellard@amd.com>
  */
+
+#include "radeon_compiler.h"
 
 int init_rc_normal_src(
 	struct rc_instruction * inst,
@@ -34,6 +38,18 @@ int init_rc_normal_dst(
 	struct rc_instruction * inst,
 	const char * dst_str);
 
+int parse_rc_normal_instruction(
+	struct rc_instruction * inst,
+	const char * inst_str);
+
 int init_rc_normal_instruction(
 	struct rc_instruction * inst,
 	const char * inst_str);
+
+void add_instruction(struct radeon_compiler *c, const char * inst_string);
+
+void init_compiler(
+	struct radeon_compiler *c,
+	enum rc_program_type program_type,
+	unsigned is_r500,
+	unsigned is_r400);
