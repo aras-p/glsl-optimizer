@@ -1115,7 +1115,8 @@ ast_function::print(void) const
 
 
 ast_function::ast_function(void)
-   : is_definition(false), signature(NULL)
+   : return_type(NULL), identifier(NULL), is_definition(false),
+     signature(NULL)
 {
    /* empty */
 }
