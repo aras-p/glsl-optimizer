@@ -37,7 +37,7 @@ struct test {
 	struct test_result result;
 };
 
-void run_tests(struct test tests[]);
+unsigned run_tests(struct test tests[]);
 
 void test_begin(struct test_result * result);
 void test_check(struct test_result * result, int cond);

@@ -25,4 +25,5 @@
  *
  */
 
-void radeon_compiler_util_run_tests(void);
+unsigned radeon_compiler_optimize_run_tests(void);
+unsigned radeon_compiler_util_run_tests(void);

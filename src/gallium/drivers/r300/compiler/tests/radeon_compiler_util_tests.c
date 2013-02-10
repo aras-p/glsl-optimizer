@@ -94,11 +94,11 @@ static void test_runner_rc_inst_can_use_presub(struct test_result * result)
 		"MAD temp[0].xyz, temp[2].xyz_, -temp[3].xxx_, input[5].xyz_;");
 }
 
-void radeon_compiler_util_run_tests()
+unsigned radeon_compiler_util_run_tests()
 {
 	struct test tests[] = {
 		{"rc_inst_can_use_presub()", test_runner_rc_inst_can_use_presub},
 		{NULL, NULL}
 	};
-	run_tests(tests);
+	return run_tests(tests);
 }

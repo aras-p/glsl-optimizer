@@ -27,7 +27,17 @@
 
 #include "r300_compiler_tests.h"
 
+#include <stdlib.h>
+
 int main(int argc, char ** argv)
 {
-	radeon_compiler_util_run_tests();
+	unsigned pass = 1;
+	pass &= radeon_compiler_optimize_run_tests();
+	pass &= radeon_compiler_util_run_tests();
+
+	if (pass) {
+		return EXIT_SUCCESS;
+	} else {
+		return EXIT_FAILURE;
+	}
 }
