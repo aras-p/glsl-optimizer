@@ -1708,7 +1708,8 @@ void brw_math( struct brw_compile *p,
    if (intel->gen >= 6) {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
 
-      assert(dest.file == BRW_GENERAL_REGISTER_FILE);
+      assert(dest.file == BRW_GENERAL_REGISTER_FILE ||
+             (intel->gen >= 7 && dest.file == BRW_MESSAGE_REGISTER_FILE));
       assert(src.file == BRW_GENERAL_REGISTER_FILE);
 
       assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
@@ -1772,7 +1773,8 @@ void brw_math2(struct brw_compile *p,
    (void) intel;
 
 
-   assert(dest.file == BRW_GENERAL_REGISTER_FILE);
+   assert(dest.file == BRW_GENERAL_REGISTER_FILE ||
+          (intel->gen >= 7 && dest.file == BRW_MESSAGE_REGISTER_FILE));
    assert(src0.file == BRW_GENERAL_REGISTER_FILE);
    assert(src1.file == BRW_GENERAL_REGISTER_FILE);
 
