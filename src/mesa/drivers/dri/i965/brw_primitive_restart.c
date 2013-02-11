@@ -196,11 +196,11 @@ haswell_upload_cut_index(struct brw_context *brw)
       return;
 
    const unsigned cut_index_setting =
-      ctx->Array.PrimitiveRestart ? HSW_CUT_INDEX_ENABLE : 0;
+      ctx->Array._PrimitiveRestart ? HSW_CUT_INDEX_ENABLE : 0;
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_VF << 16 | cut_index_setting | (2 - 2));
-   OUT_BATCH(ctx->Array.RestartIndex);
+   OUT_BATCH(ctx->Array._RestartIndex);
    ADVANCE_BATCH();
 }
 
