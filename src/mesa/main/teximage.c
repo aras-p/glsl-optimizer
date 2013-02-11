@@ -2454,9 +2454,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
       }
    }
 
-   if ((_mesa_is_desktop_gl(ctx) &&
-        ctx->Extensions.ARB_framebuffer_object) ||
-       _mesa_is_gles3(ctx)) {
+   if (_mesa_is_gles3(ctx)) {
       bool rb_is_srgb = false;
       bool dst_is_srgb = false;
 
@@ -2470,22 +2468,16 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
       }
 
       if (rb_is_srgb != dst_is_srgb) {
-         /* Page 190 (page 211 of the PDF) in section 8.6 of the OpenGL 4.3
-          * Core Profile spec says:
+         /* Page 137 (page 149 of the PDF) in section 3.8.5 of the
+          * OpenGLES 3.0.0 spec says:
           *
-          *     "An INVALID_OPERATION error is generated under any of the
-          *     following conditions:
-          *
-          *     ...
-          *
-          *     - if the value of FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING
-          *       for the framebuffer attachment corresponding to the read
-          *       buffer is LINEAR (see section 9.2.3) and internalformat
-          *       is one of the sRGB formats in table 8.23
-          *     - if the value of FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING
-          *       for the framebuffer attachment corresponding to the read
-          *       buffer is SRGB and internalformat is not one of the sRGB
-          *       formats. in table 8.23."
+          *     "The error INVALID_OPERATION is also generated if the
+          *     value of FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING for the
+          *     framebuffer attachment corresponding to the read buffer
+          *     is LINEAR (see section 6.1.13) and internalformat is
+          *     one of the sRGB formats described in section 3.8.16, or
+          *     if the value of FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING is
+          *     SRGB and internalformat is not one of the sRGB formats."
           */
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glCopyTexImage%dD(srgb usage mismatch)", dimensions);
