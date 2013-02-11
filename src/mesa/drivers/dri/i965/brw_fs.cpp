@@ -2061,11 +2061,6 @@ fs_visitor::compute_to_mrf()
 	     * into a compute-to-MRF.
 	     */
 
-            /* SENDs can only write to GRFs, so no compute-to-MRF. */
-	    if (scan_inst->mlen) {
-	       break;
-	    }
-
 	    /* If it's predicated, it (probably) didn't populate all
 	     * the channels.  We might be able to rewrite everything
 	     * that writes that reg, but it would require smarter
