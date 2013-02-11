@@ -421,10 +421,10 @@ util_clear_depth_stencil(struct pipe_context *pipe,
          else {
             uint32_t dst_mask;
             if (format == PIPE_FORMAT_Z24_UNORM_S8_UINT)
-               dst_mask = 0xffffff00;
+               dst_mask = 0x00ffffff;
             else {
                assert(format == PIPE_FORMAT_S8_UINT_Z24_UNORM);
-               dst_mask = 0xffffff;
+               dst_mask = 0xffffff00;
             }
             if (clear_flags & PIPE_CLEAR_DEPTH)
                dst_mask = ~dst_mask;
