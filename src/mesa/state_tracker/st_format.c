@@ -1675,6 +1675,41 @@ st_choose_renderbuffer_format(struct st_context *st,
 
 
 /**
+ * Given an OpenGL user-requested format and type, and swapBytes state,
+ * return the format which exactly matches those parameters, so that
+ * a memcpy-based transfer can be done.
+ *
+ * If no format is supported, return PIPE_FORMAT_NONE.
+ */
+enum pipe_format
+st_choose_matching_format(struct pipe_screen *screen, unsigned bind,
+			  GLenum format, GLenum type, GLboolean swapBytes)
+{
+   gl_format mesa_format;
+
+   for (mesa_format = 1; mesa_format < MESA_FORMAT_COUNT; mesa_format++) {
+      if (_mesa_get_format_color_encoding(mesa_format) == GL_SRGB) {
+         continue;
+      }
+
+      if (_mesa_format_matches_format_and_type(mesa_format, format, type,
+                                               swapBytes)) {
+         enum pipe_format format = st_mesa_format_to_pipe_format(mesa_format);
+
+         if (format &&
+             screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0,
+                                         bind)) {
+            return format;
+         }
+         /* It's unlikely to find 2 matching Mesa formats. */
+         break;
+      }
+   }
+   return PIPE_FORMAT_NONE;
+}
+
+
+/**
  * Called via ctx->Driver.ChooseTextureFormat().
  */
 gl_format

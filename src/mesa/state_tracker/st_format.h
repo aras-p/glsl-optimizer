@@ -57,6 +57,9 @@ extern enum pipe_format
 st_choose_renderbuffer_format(struct st_context *st,
                               GLenum internalFormat, unsigned sample_count);
 
+extern enum pipe_format
+st_choose_matching_format(struct pipe_screen *screen, unsigned bind,
+			  GLenum format, GLenum type, GLboolean swapBytes);
 
 extern gl_format
 st_ChooseTextureFormat(struct gl_context * ctx, GLenum target,

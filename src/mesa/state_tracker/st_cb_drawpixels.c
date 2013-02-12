@@ -484,19 +484,29 @@ make_texture(struct st_context *st,
    gl_format mformat;
    struct pipe_resource *pt;
    enum pipe_format pipeFormat;
-   GLenum baseInternalFormat, intFormat;
-
-   intFormat = internal_format(ctx, format, type);
-   baseInternalFormat = _mesa_base_tex_format(ctx, intFormat);
+   GLenum baseInternalFormat;
 
    /* Choose a pixel format for the temp texture which will hold the
     * image to draw.
     */
-   pipeFormat = st_choose_format(st, intFormat, format, type,
-                                 PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW,
-                                 FALSE);
-   assert(pipeFormat != PIPE_FORMAT_NONE);
-   mformat = st_pipe_format_to_mesa_format(pipeFormat);
+   pipeFormat = st_choose_matching_format(pipe->screen, PIPE_BIND_SAMPLER_VIEW,
+                                          format, type, unpack->SwapBytes);
+
+   if (pipeFormat != PIPE_FORMAT_NONE) {
+      mformat = st_pipe_format_to_mesa_format(pipeFormat);
+      baseInternalFormat = _mesa_get_format_base_format(mformat);
+   }
+   else {
+      /* Use the generic approach. */
+      GLenum intFormat = internal_format(ctx, format, type);
+
+      baseInternalFormat = _mesa_base_tex_format(ctx, intFormat);
+      pipeFormat = st_choose_format(st, intFormat, format, type,
+                                    PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW,
+                                    FALSE);
+      assert(pipeFormat != PIPE_FORMAT_NONE);
+      mformat = st_pipe_format_to_mesa_format(pipeFormat);
+   }
 
    pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
    if (!pixels)

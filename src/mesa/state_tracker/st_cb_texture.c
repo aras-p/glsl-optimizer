@@ -560,32 +560,6 @@ st_CompressedTexImage(struct gl_context *ctx, GLuint dims,
 }
 
 
-static enum pipe_format
-choose_matching_format(struct pipe_screen *screen, unsigned bind,
-                       GLenum format, GLenum type, GLboolean swapBytes)
-{
-   gl_format mesa_format;
-
-   for (mesa_format = 1; mesa_format < MESA_FORMAT_COUNT; mesa_format++) {
-      if (_mesa_get_format_color_encoding(mesa_format) == GL_SRGB) {
-         continue;
-      }
-
-      if (_mesa_format_matches_format_and_type(mesa_format, format, type,
-                                               swapBytes)) {
-         enum pipe_format format = st_mesa_format_to_pipe_format(mesa_format);
-
-         if (format &&
-             screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0,
-                                         bind)) {
-            return format;
-         }
-         /* It's unlikely to find 2 matching Mesa formats. */
-         break;
-      }
-   }
-   return PIPE_FORMAT_NONE;
-}
 
 
 /**
@@ -683,8 +657,8 @@ st_GetTexImage(struct gl_context * ctx,
 
    /* Choose the destination format by finding the best match
     * for the format+type combo. */
-   dst_format = choose_matching_format(screen, bind, format, type,
-                                       ctx->Pack.SwapBytes);
+   dst_format = st_choose_matching_format(screen, bind, format, type,
+					  ctx->Pack.SwapBytes);
 
    if (dst_format == PIPE_FORMAT_NONE) {
       GLenum dst_glformat;
