@@ -1383,9 +1383,10 @@ instructions. If in doubt double check Direct3D documentation.
 
 .. opcode:: SAMPLE_I_MS - Just like SAMPLE_I but allows fetch data from
                multi-sampled surfaces.
+               SAMPLE_I_MS dst, address, sampler_view, sample
 
 .. opcode:: SAMPLE_B - Just like the SAMPLE instruction with the
-               exception that an additiona bias is applied to the
+               exception that an additional bias is applied to the
                level of detail computed as part of the instruction
                execution.
                SAMPLE_B dst, address, sampler_view, sampler, lod_bias
@@ -1394,7 +1395,7 @@ instructions. If in doubt double check Direct3D documentation.
 
 .. opcode:: SAMPLE_C - Similar to the SAMPLE instruction but it
                performs a comparison filter. The operands to SAMPLE_C
-               are identical to SAMPLE, except that tere is an additional
+               are identical to SAMPLE, except that there is an additional
                float32 operand, reference value, which must be a register
                with single-component, or a scalar literal.
                SAMPLE_C makes the hardware use the current samplers
