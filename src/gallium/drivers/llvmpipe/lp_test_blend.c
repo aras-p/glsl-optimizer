@@ -177,7 +177,8 @@ add_blend_test(struct gallivm_state *gallivm,
    dst = LLVMBuildLoad(builder, dst_ptr, "dst");
    con = LLVMBuildLoad(builder, const_ptr, "const");
 
-   res = lp_build_blend_aos(gallivm, blend, format, type, rt, src, NULL, src1, dst, NULL, con, NULL, swizzle, 4);
+   res = lp_build_blend_aos(gallivm, blend, format, type, rt, src, NULL,
+                            src1, NULL, dst, NULL, con, NULL, swizzle, 4);
 
    lp_build_name(res, "res");
 

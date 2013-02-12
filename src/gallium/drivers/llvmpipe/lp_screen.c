@@ -115,7 +115,7 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_SM3:
       return 1;
    case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
-      return 0;
+      return 1;
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
       return PIPE_MAX_SO_BUFFERS;
    case PIPE_CAP_ANISOTROPIC_FILTER:
