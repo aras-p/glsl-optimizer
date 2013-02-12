@@ -2065,7 +2065,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
    case TGSI_OPCODE_SAMPLE_L:
    case TGSI_OPCODE_SAMPLE_C:
    case TGSI_OPCODE_SAMPLE_C_LZ:
-      handleTEX(dst0, 1, 2, 0x30, 0x31, 0x40, 0x50);
+      handleTEX(dst0, 1, 2, 0x30, 0x30, 0x30, 0x40);
       break;
    case TGSI_OPCODE_TXF:
    case TGSI_OPCODE_LOAD:
