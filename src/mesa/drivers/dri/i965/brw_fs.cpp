@@ -2081,7 +2081,7 @@ fs_visitor::compute_to_mrf()
 	    if (scan_inst->mlen)
 	       break;
 
-	    if (intel->gen >= 6) {
+	    if (intel->gen == 6) {
 	       /* gen6 math instructions must have the destination be
 		* GRF, so no compute-to-MRF for them.
 		*/
