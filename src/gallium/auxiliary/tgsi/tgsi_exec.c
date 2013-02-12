@@ -2154,7 +2154,7 @@ exec_sample(struct tgsi_exec_machine *mach,
          control = tgsi_sampler_lod_bias;
       }
       else if (modifier == TEX_MODIFIER_EXPLICIT_LOD) {
-         FETCH(&c1, 0, TGSI_CHAN_W);
+         FETCH(&c1, 3, TGSI_CHAN_X);
          lod = &c1;
          control = tgsi_sampler_lod_explicit;
       }

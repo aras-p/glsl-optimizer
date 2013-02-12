@@ -190,7 +190,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 4, 0, 0, 0, 0, OTHR, "SAMPLE_C",    TGSI_OPCODE_SAMPLE_C },
    { 1, 4, 0, 0, 0, 0, OTHR, "SAMPLE_C_LZ", TGSI_OPCODE_SAMPLE_C_LZ },
    { 1, 5, 0, 0, 0, 0, OTHR, "SAMPLE_D",    TGSI_OPCODE_SAMPLE_D },
-   { 1, 3, 0, 0, 0, 0, OTHR, "SAMPLE_L",    TGSI_OPCODE_SAMPLE_L },
+   { 1, 4, 0, 0, 0, 0, OTHR, "SAMPLE_L",    TGSI_OPCODE_SAMPLE_L },
    { 1, 3, 0, 0, 0, 0, OTHR, "GATHER4",     TGSI_OPCODE_GATHER4 },
    { 1, 2, 0, 0, 0, 0, OTHR, "SVIEWINFO",   TGSI_OPCODE_SVIEWINFO },
    { 1, 2, 0, 0, 0, 0, OTHR, "SAMPLE_POS",  TGSI_OPCODE_SAMPLE_POS },

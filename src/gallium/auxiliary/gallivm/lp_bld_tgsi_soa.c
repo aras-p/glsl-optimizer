@@ -1428,9 +1428,8 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
       explicit_lod = NULL;
    }
    else if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
-      /* lod bias comes from src 3.r but explicit lod from 0.a */
       lod_bias = NULL;
-      explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 0, 3 );
+      explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 3, 0 );
    }
    else if (modifier == LP_BLD_TEX_MODIFIER_LOD_ZERO) {
       lod_bias = NULL;

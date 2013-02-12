@@ -470,14 +470,9 @@ struct sm4_to_tgsi_converter
 			case SM4_OPCODE_SAMPLE_D: // dst, coord, res, samp, ddx, ddy
 				ureg_SAMPLE_D(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)], samplers[_idx(SM4_FILE_SAMPLER, 3)], _src(4), _src(5));
 				break;
-			case SM4_OPCODE_SAMPLE_L: // dst, coord, res, samp, bias.x
-			{
-				struct ureg_dst tmp = _tmp();
-				ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_XYZ), _src(1));
-				ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_W), ureg_swizzle(_src(4), 0, 0, 0, 0));
-				ureg_SAMPLE_L(ureg, _dst(), ureg_src(tmp), resources[_idx(SM4_FILE_RESOURCE, 2)], samplers[_idx(SM4_FILE_SAMPLER, 3)]);
+			case SM4_OPCODE_SAMPLE_L: // dst, coord, res, samp, lod.x
+				ureg_SAMPLE_L(ureg, _dst(), _src(1), resources[_idx(SM4_FILE_RESOURCE, 2)], samplers[_idx(SM4_FILE_SAMPLER, 3)], _src(4));
 				break;
-			}
 			default:
 				ok = false;
 				break;

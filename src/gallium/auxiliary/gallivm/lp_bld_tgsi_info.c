@@ -241,13 +241,10 @@ analyse_sample(struct analysis_context *ctx,
       tex_info->sampler_unit = inst->Src[2].Register.Index;
 
       if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV ||
+          modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD ||
           modifier == LP_BLD_TEX_MODIFIER_LOD_BIAS || shadow) {
          /* We don't track insts with additional regs, although we could */
          indirect = TRUE;
-      }  else {
-         if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_LOD) {
-            readmask |= TGSI_WRITEMASK_W;
-         }
       }
 
       for (chan = 0; chan < 4; ++chan) {

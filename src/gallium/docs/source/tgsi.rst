@@ -1423,11 +1423,10 @@ instructions. If in doubt double check Direct3D documentation.
 
 .. opcode:: SAMPLE_L - SAMPLE_L is identical to the SAMPLE opcode except
                that the LOD is provided directly as a scalar value,
-               representing no anisotropy. Source addresses A channel
-               is used as the LOD.
-               SAMPLE_L dst, address, sampler_view, sampler
+               representing no anisotropy.
+               SAMPLE_L dst, address, sampler_view, sampler, explicit_lod
                e.g.
-               SAMPLE_L TEMP[0], TEMP[1], SVIEW[0], SAMP[0]
+               SAMPLE_L TEMP[0], TEMP[1], SVIEW[0], SAMP[0], TEMP[2].x
 
 .. opcode:: GATHER4 - Gathers the four texels to be used in a bi-linear
                filtering operation and packs them into a single register.
