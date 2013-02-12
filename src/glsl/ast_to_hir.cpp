@@ -3967,6 +3967,47 @@ ast_iteration_statement::hir(exec_list *instructions,
 }
 
 
+/**
+ * Determine if the given type is valid for establishing a default precision
+ * qualifier.
+ *
+ * From GLSL ES 3.00 section 4.5.4 ("Default Precision Qualifiers"):
+ *
+ *     "The precision statement
+ *
+ *         precision precision-qualifier type;
+ *
+ *     can be used to establish a default precision qualifier. The type field
+ *     can be either int or float or any of the sampler types, and the
+ *     precision-qualifier can be lowp, mediump, or highp."
+ *
+ * GLSL ES 1.00 has similar language.  GLSL 1.30 doesn't allow precision
+ * qualifiers on sampler types, but this seems like an oversight (since the
+ * intention of including these in GLSL 1.30 is to allow compatibility with ES
+ * shaders).  So we allow int, float, and all sampler types regardless of GLSL
+ * version.
+ */
+static bool
+is_valid_default_precision_type(const struct _mesa_glsl_parse_state *state,
+                                const char *type_name)
+{
+   const struct glsl_type *type = state->symbols->get_type(type_name);
+   if (type == NULL)
+      return false;
+
+   switch (type->base_type) {
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+      /* "int" and "float" are valid, but vectors and matrices are not. */
+      return type->vector_elements == 1 && type->matrix_columns == 1;
+   case GLSL_TYPE_SAMPLER:
+      return true;
+   default:
+      return false;
+   }
+}
+
+
 ir_rvalue *
 ast_type_specifier::hir(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
@@ -4007,11 +4048,10 @@ ast_type_specifier::hir(exec_list *instructions,
                           "arrays");
          return NULL;
       }
-      if (strcmp(this->type_name, "float") != 0 &&
-	  strcmp(this->type_name, "int") != 0) {
+      if (!is_valid_default_precision_type(state, this->type_name)) {
          _mesa_glsl_error(&loc, state,
                           "default precision statements apply only to types "
-                          "float and int");
+                          "float, int, and sampler types");
          return NULL;
       }
 
