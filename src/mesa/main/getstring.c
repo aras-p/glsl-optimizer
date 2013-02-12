@@ -137,7 +137,7 @@ _mesa_GetString( GLenum name )
          if (ctx->API == API_OPENGLES)
             break;
 	 return shading_language_version(ctx);
-      case GL_PROGRAM_ERROR_STRING_NV:
+      case GL_PROGRAM_ERROR_STRING_ARB:
          if (ctx->API == API_OPENGL_COMPAT &&
              (ctx->Extensions.ARB_fragment_program ||
               ctx->Extensions.ARB_vertex_program)) {
