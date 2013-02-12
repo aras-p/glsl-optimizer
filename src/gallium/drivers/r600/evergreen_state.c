@@ -200,6 +200,8 @@ static uint32_t r600_translate_dbformat(enum pipe_format format)
 		return V_028040_Z_16;
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+	case PIPE_FORMAT_X8Z24_UNORM:
+	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
 		return V_028040_Z_24;
 	case PIPE_FORMAT_Z32_FLOAT:
 	case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
@@ -339,7 +341,7 @@ static uint32_t r600_translate_colorswap(enum pipe_format format)
 
 	case PIPE_FORMAT_X8Z24_UNORM:
 	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
-		return V_028C70_SWAP_STD;
+		return V_028C70_SWAP_STD_REV;
 
 	case PIPE_FORMAT_R10G10B10A2_UNORM:
 	case PIPE_FORMAT_R10G10B10X2_SNORM:
@@ -1106,6 +1108,11 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 		case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
 			pipe_format = PIPE_FORMAT_Z32_FLOAT;
 			break;
+		case PIPE_FORMAT_X8Z24_UNORM:
+		case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+			/* Z24 is always stored like this. */
+			pipe_format = PIPE_FORMAT_Z24X8_UNORM;
+			break;
 		case PIPE_FORMAT_X24S8_UINT:
 		case PIPE_FORMAT_S8X24_UINT:
 		case PIPE_FORMAT_X32_S8X24_UINT:
@@ -1603,6 +1610,8 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 	switch (surf->base.format) {
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+	case PIPE_FORMAT_X8Z24_UNORM:
+	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
 		surf->pa_su_poly_offset_db_fmt_cntl =
 			S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS((char)-24);
 		break;
@@ -2179,6 +2188,8 @@ static void evergreen_emit_polygon_offset(struct r600_context *rctx, struct r600
 	switch (state->zs_format) {
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+	case PIPE_FORMAT_X8Z24_UNORM:
+	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
 		offset_units *= 2.0f;
 		break;
 	case PIPE_FORMAT_Z16_UNORM:
