@@ -2520,7 +2520,7 @@ static void *si_create_vertex_elements(struct pipe_context *ctx,
 		case UTIL_FORMAT_TYPE_SIGNED:
 			if (desc->channel[first_non_void].normalized)
 				num_format = V_008F0C_BUF_NUM_FORMAT_SNORM;
-			else if (desc->channel[i].pure_integer)
+			else if (desc->channel[first_non_void].pure_integer)
 				num_format = V_008F0C_BUF_NUM_FORMAT_SINT;
 			else
 				num_format = V_008F0C_BUF_NUM_FORMAT_SSCALED;
@@ -2528,7 +2528,7 @@ static void *si_create_vertex_elements(struct pipe_context *ctx,
 		case UTIL_FORMAT_TYPE_UNSIGNED:
 			if (desc->channel[first_non_void].normalized)
 				num_format = V_008F0C_BUF_NUM_FORMAT_UNORM;
-			else if (desc->channel[i].pure_integer)
+			else if (desc->channel[first_non_void].pure_integer)
 				num_format = V_008F0C_BUF_NUM_FORMAT_UINT;
 			else
 				num_format = V_008F0C_BUF_NUM_FORMAT_USCALED;
