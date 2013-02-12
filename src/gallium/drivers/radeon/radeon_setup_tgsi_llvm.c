@@ -766,6 +766,22 @@ static void emit_icmp(
 	emit_data->output[emit_data->chan] = v;
 }
 
+static void emit_ucmp(
+		const struct lp_build_tgsi_action * action,
+		struct lp_build_tgsi_context * bld_base,
+		struct lp_build_emit_data * emit_data)
+{
+	unsigned pred;
+	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+	LLVMContextRef context = bld_base->base.gallivm->context;
+
+
+	LLVMValueRef v = LLVMBuildFCmp(builder, LLVMRealUGE,
+			emit_data->args[0], lp_build_const_float(bld_base->base.gallivm, 0.), "");
+
+	emit_data->output[emit_data->chan] = LLVMBuildSelect(builder, v, emit_data->args[2], emit_data->args[1], "");
+}
+
 static void emit_cmp(
 		const struct lp_build_tgsi_action *action,
 		struct lp_build_tgsi_context * bld_base,
@@ -1241,6 +1257,7 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	bld_base->op_actions[TGSI_OPCODE_USNE].emit = emit_icmp;
 	bld_base->op_actions[TGSI_OPCODE_U2F].emit = emit_u2f;
 	bld_base->op_actions[TGSI_OPCODE_XOR].emit = emit_xor;
+	bld_base->op_actions[TGSI_OPCODE_UCMP].emit = emit_ucmp;
 
 	bld_base->rsq_action.emit = build_tgsi_intrinsic_nomem;
 	bld_base->rsq_action.intr_name = "llvm.AMDGPU.rsq";

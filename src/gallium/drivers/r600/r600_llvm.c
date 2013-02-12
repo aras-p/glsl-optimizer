@@ -38,8 +38,12 @@ static LLVMValueRef llvm_fetch_const(
 		LLVMValueRef index = LLVMBuildLoad(bld_base->base.gallivm->builder, bld->addr[reg->Indirect.Index][reg->Indirect.SwizzleX], "");
 		offset[1] = LLVMBuildAdd(bld_base->base.gallivm->builder, offset[1], index, "");
 	}
+	unsigned ConstantAddressSpace = CONSTANT_BUFFER_0_ADDR_SPACE ;
+	if (reg->Register.Dimension) {
+		ConstantAddressSpace += reg->Dimension.Index;
+	}
 	LLVMTypeRef const_ptr_type = LLVMPointerType(LLVMArrayType(LLVMVectorType(bld_base->base.elem_type, 4), 1024),
-							CONSTANT_BUFFER_0_ADDR_SPACE);
+							ConstantAddressSpace);
 	LLVMValueRef const_ptr = LLVMBuildIntToPtr(bld_base->base.gallivm->builder, lp_build_const_int32(bld_base->base.gallivm, 0), const_ptr_type, "");
 	LLVMValueRef ptr = LLVMBuildGEP(bld_base->base.gallivm->builder, const_ptr, offset, 2, "");
 	LLVMValueRef cvecval = LLVMBuildLoad(bld_base->base.gallivm->builder, ptr, "");
