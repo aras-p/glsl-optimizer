@@ -615,6 +615,12 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 		int i;
 
 		tgsi_parse_token(parse);
+
+		if (parse->FullToken.Token.Type == TGSI_TOKEN_TYPE_PROPERTY &&
+		    parse->FullToken.FullProperty.Property.PropertyName ==
+		    TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS)
+			shader->fs_write_all = TRUE;
+
 		if (parse->FullToken.Token.Type != TGSI_TOKEN_TYPE_DECLARATION)
 			continue;
 
@@ -777,6 +783,29 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 	/* Specify whether the EXEC mask represents the valid mask */
 	last_args[1] = lp_build_const_int32(base->gallivm,
 					    si_shader_ctx->type == TGSI_PROCESSOR_FRAGMENT);
+
+	if (shader->fs_write_all && shader->nr_cbufs > 1) {
+		int i;
+
+		/* Specify that this is not yet the last export */
+		last_args[2] = lp_build_const_int32(base->gallivm, 0);
+
+		for (i = 1; i < shader->nr_cbufs; i++) {
+			/* Specify the target we are exporting */
+			last_args[3] = lp_build_const_int32(base->gallivm,
+							    V_008DFC_SQ_EXP_MRT + i);
+
+			lp_build_intrinsic(base->gallivm->builder,
+					   "llvm.SI.export",
+					   LLVMVoidTypeInContext(base->gallivm->context),
+					   last_args, 9);
+
+			si_shader_ctx->shader->spi_shader_col_format |=
+				si_shader_ctx->shader->spi_shader_col_format << 4;
+		}
+
+		last_args[3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_MRT);
+	}
 
 	/* Specify that this is the last export */
 	last_args[2] = lp_build_const_int32(base->gallivm, 1);
