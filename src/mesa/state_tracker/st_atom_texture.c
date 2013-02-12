@@ -234,11 +234,17 @@ update_single_texture(struct st_context *st,
    }
 
    /* Determine the format of the texture sampler view */
-   view_format = stObj->pt->format;
+   if (texObj->Target == GL_TEXTURE_BUFFER) {
+      view_format =
+         st_mesa_format_to_pipe_format(stObj->base._BufferObjectFormat);
+   }
+   else {
+      view_format = stObj->pt->format;
 
-   /* If sRGB decoding is off, use the linear format */
-   if (samp->sRGBDecode == GL_SKIP_DECODE_EXT) {
-      view_format = util_format_linear(view_format);
+      /* If sRGB decoding is off, use the linear format */
+      if (samp->sRGBDecode == GL_SKIP_DECODE_EXT) {
+         view_format = util_format_linear(view_format);
+      }
    }
 
    /* if sampler view has changed dereference it */
