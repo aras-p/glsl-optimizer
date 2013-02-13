@@ -1428,6 +1428,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		radeon_llvm_ctx.fs_color_all = shader->fs_write_all && (rscreen->chip_class >= EVERGREEN);
 		radeon_llvm_ctx.stream_outputs = &so;
 		radeon_llvm_ctx.clip_vertex = ctx.cv_output;
+		radeon_llvm_ctx.alpha_to_one = key.alpha_to_one;
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
 		if (debug_get_bool_option("R600_DUMP_SHADERS", FALSE)) {
 			dump = 1;

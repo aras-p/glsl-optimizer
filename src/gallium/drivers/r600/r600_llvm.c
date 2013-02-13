@@ -234,6 +234,8 @@ static void llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 			elements[chan] = LLVMBuildLoad(base->gallivm->builder,
 				ctx->soa.outputs[i][chan], "");
 		}
+		if (ctx->alpha_to_one && ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->r600_outputs[i].name == TGSI_SEMANTIC_COLOR)
+			elements[3] = lp_build_const_float(base->gallivm, 1.0f);
 		LLVMValueRef output = lp_build_gather_values(base->gallivm, elements, 4);
 
 		if (ctx->type == TGSI_PROCESSOR_VERTEX) {

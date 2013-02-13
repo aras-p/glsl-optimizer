@@ -64,6 +64,7 @@ struct radeon_llvm_context {
 	struct pipe_stream_output_info *stream_outputs;
 	unsigned color_buffer_count;
 	unsigned fs_color_all;
+	unsigned alpha_to_one;
 
 	/*=== Front end configuration ===*/
 
