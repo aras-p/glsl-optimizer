@@ -964,6 +964,8 @@ assign_varying_locations(struct gl_context *ctx,
    varying_matches matches(ctx->Const.DisableVaryingPacking);
    hash_table *tfeedback_candidates
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
+   hash_table *consumer_inputs
+      = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
 
    /* Operate in a total of three passes.
     *
@@ -976,6 +978,18 @@ assign_varying_locations(struct gl_context *ctx,
     *    not being inputs.  This lets the optimizer eliminate them.
     */
 
+   if (consumer) {
+      foreach_list(node, consumer->ir) {
+         ir_variable *const input_var =
+            ((ir_instruction *) node)->as_variable();
+
+         if ((input_var != NULL) && (input_var->mode == ir_var_shader_in)) {
+            hash_table_insert(consumer_inputs, input_var,
+                              ralloc_strdup(mem_ctx, input_var->name));
+         }
+      }
+   }
+
    foreach_list(node, producer->ir) {
       ir_variable *const output_var = ((ir_instruction *) node)->as_variable();
 
@@ -986,7 +1000,7 @@ assign_varying_locations(struct gl_context *ctx,
       g.process(output_var);
 
       ir_variable *input_var =
-	 consumer ? consumer->symbols->get_variable(output_var->name) : NULL;
+         (ir_variable *) hash_table_find(consumer_inputs, output_var->name);
 
       if (input_var && input_var->mode != ir_var_shader_in)
          input_var = NULL;
@@ -1005,6 +1019,7 @@ assign_varying_locations(struct gl_context *ctx,
 
       if (matched_candidate == NULL) {
          hash_table_dtor(tfeedback_candidates);
+         hash_table_dtor(consumer_inputs);
          return false;
       }
 
@@ -1021,11 +1036,13 @@ assign_varying_locations(struct gl_context *ctx,
 
       if (!tfeedback_decls[i].assign_location(ctx, prog)) {
          hash_table_dtor(tfeedback_candidates);
+         hash_table_dtor(consumer_inputs);
          return false;
       }
    }
 
    hash_table_dtor(tfeedback_candidates);
+   hash_table_dtor(consumer_inputs);
 
    if (ctx->Const.DisableVaryingPacking) {
       /* Transform feedback code assumes varyings are packed, so if the driver
