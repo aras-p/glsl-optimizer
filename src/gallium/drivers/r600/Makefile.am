@@ -26,7 +26,8 @@ AM_CFLAGS += \
 	-I$(top_srcdir)/src/gallium/drivers/radeon/
 
 AM_CXXFLAGS= \
-	$(LLVM_CXXFLAGS)
+	$(LLVM_CXXFLAGS) \
+	$(DEFINES)
 endif
 
 if USE_R600_LLVM_COMPILER
