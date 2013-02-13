@@ -539,6 +539,52 @@ prep_teximage(struct gl_context *ctx, struct gl_texture_image *texImage,
 }
 
 
+/**
+ * Return a writemask for the gallium blit. The parameters can be base
+ * formats or "format" from glDrawPixels/glTexImage/glGetTexImage.
+ */
+static unsigned
+get_blit_mask(GLenum srcFormat, GLenum dstFormat)
+{
+   switch (dstFormat) {
+   case GL_DEPTH_STENCIL:
+      switch (srcFormat) {
+      case GL_DEPTH_STENCIL:
+         return PIPE_MASK_ZS;
+      case GL_DEPTH_COMPONENT:
+         return PIPE_MASK_Z;
+      case GL_STENCIL_INDEX:
+         return PIPE_MASK_S;
+      default:
+         assert(0);
+         return 0;
+      }
+
+   case GL_DEPTH_COMPONENT:
+      switch (srcFormat) {
+      case GL_DEPTH_STENCIL:
+      case GL_DEPTH_COMPONENT:
+         return PIPE_MASK_Z;
+      default:
+         assert(0);
+         return 0;
+      }
+
+   case GL_STENCIL_INDEX:
+      switch (srcFormat) {
+      case GL_STENCIL_INDEX:
+         return PIPE_MASK_S;
+      default:
+         assert(0);
+         return 0;
+      }
+
+   default:
+      return PIPE_MASK_RGBA;
+   }
+}
+
+
 static void
 st_TexImage(struct gl_context * ctx, GLuint dims,
             struct gl_texture_image *texImage,
@@ -1148,51 +1194,29 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
       goto fallback;
    }
 
-   /* Set the blit writemask. */
-   switch (texBaseFormat) {
-   case GL_DEPTH_STENCIL:
-      switch (strb->Base._BaseFormat) {
-      case GL_DEPTH_STENCIL:
-         blit_mask = PIPE_MASK_ZS;
-         break;
-      case GL_DEPTH_COMPONENT:
-         blit_mask = PIPE_MASK_Z;
-         break;
-      case GL_STENCIL_INDEX:
-         blit_mask = PIPE_MASK_S;
-         break;
-      default:
-         assert(0);
-         return;
-      }
+   if (texBaseFormat == GL_DEPTH_STENCIL ||
+       texBaseFormat == GL_DEPTH_COMPONENT) {
       dst_usage = PIPE_BIND_DEPTH_STENCIL;
-      break;
-
-   case GL_DEPTH_COMPONENT:
-      blit_mask = PIPE_MASK_Z;
-      dst_usage = PIPE_BIND_DEPTH_STENCIL;
-      break;
-
-   default:
-      /* Colorbuffers.
-       *
-       * Determine if the src framebuffer and dest texture have the same
-       * base format.  We need this to detect a case such as the framebuffer
-       * being GL_RGBA but the texture being GL_RGB.  If the actual hardware
-       * texture format stores RGBA we need to set A=1 (overriding the
-       * framebuffer's alpha values).
-       *
-       * XXX util_blit_pixels doesn't support MSAA resolve, so always use
-       *     pipe->blit
-       */
-      if (texBaseFormat == strb->Base._BaseFormat ||
-          strb->texture->nr_samples > 1) {
-         blit_mask = PIPE_MASK_RGBA;
-      }
-      else {
-         blit_mask = 0;
-      }
+   }
+   else {
       dst_usage = PIPE_BIND_RENDER_TARGET;
+   }
+
+   blit_mask = get_blit_mask(rb->_BaseFormat, texImage->_BaseFormat);
+
+   /* Determine if the src framebuffer and dest texture have the same
+    * base format.  We need this to detect a case such as the framebuffer
+    * being GL_RGBA but the texture being GL_RGB.  If the actual hardware
+    * texture format stores RGBA we need to set A=1 (overriding the
+    * framebuffer's alpha values).
+    *
+    * XXX util_blit_pixels doesn't support MSAA resolve, so always use
+    *     pipe->blit for MSAA textures
+    */
+   if ((blit_mask & PIPE_MASK_RGBA) &&
+       texBaseFormat != strb->Base._BaseFormat &&
+       strb->texture->nr_samples <= 1) {
+      blit_mask = 0;
    }
 
    /* Blit the texture.
