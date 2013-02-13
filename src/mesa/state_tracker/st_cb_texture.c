@@ -630,9 +630,9 @@ st_GetTexImage(struct gl_context * ctx,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   const GLuint width = texImage->Width;
-   const GLuint height = texImage->Height;
-   const GLuint depth = texImage->Depth;
+   GLuint width = texImage->Width;
+   GLuint height = texImage->Height;
+   GLuint depth = texImage->Depth;
    struct st_texture_image *stImage = st_texture_image(texImage);
    struct pipe_resource *src = st_texture_object(texImage->TexObject)->pt;
    struct pipe_resource *dst = NULL;
@@ -764,6 +764,12 @@ st_GetTexImage(struct gl_context * ctx,
       goto fallback;
    }
 
+   /* From now on, we need the gallium representation of dimensions. */
+   if (gl_target == GL_TEXTURE_1D_ARRAY) {
+      depth = height;
+      height = 1;
+   }
+
    blit.src.resource = src;
    blit.src.level = texImage->Level;
    blit.src.format = src_format;
@@ -802,14 +808,25 @@ st_GetTexImage(struct gl_context * ctx,
       GLuint row, slice;
 
       for (slice = 0; slice < depth; slice++) {
-         ubyte *slice_map = map;
-
-         for (row = 0; row < height; row++) {
+         if (gl_target == GL_TEXTURE_1D_ARRAY) {
+            /* 1D array textures.
+             * We need to convert gallium coords to GL coords.
+             */
             GLvoid *dest = _mesa_image_address3d(&ctx->Pack, pixels,
-                                                 width, height, format,
-                                                 type, slice, row, 0);
-            memcpy(dest, slice_map, bytesPerRow);
-            slice_map += tex_xfer->stride;
+                                                 width, depth, format,
+                                                 type, 0, slice, 0);
+            memcpy(dest, map, bytesPerRow);
+         }
+         else {
+            ubyte *slice_map = map;
+
+            for (row = 0; row < height; row++) {
+               GLvoid *dest = _mesa_image_address3d(&ctx->Pack, pixels,
+                                                    width, height, format,
+                                                    type, slice, row, 0);
+               memcpy(dest, slice_map, bytesPerRow);
+               slice_map += tex_xfer->stride;
+            }
          }
          map += tex_xfer->layer_stride;
       }
@@ -826,22 +843,38 @@ st_GetTexImage(struct gl_context * ctx,
          goto end;
       }
 
-      for (slice = 0; slice < depth; slice++) {
-         for (row = 0; row < height; row++) {
-            const GLbitfield transferOps = 0x0; /* bypassed for glGetTexImage() */
-            GLvoid *dest = _mesa_image_address3d(&ctx->Pack, pixels,
-                                                 width, height, format,
-                                                 type, slice, row, 0);
+      if (ST_DEBUG & DEBUG_FALLBACK)
+         debug_printf("%s: fallback format translation\n", __FUNCTION__);
 
-            if (ST_DEBUG & DEBUG_FALLBACK)
-               debug_printf("%s: fallback format translation\n", __FUNCTION__);
+      for (slice = 0; slice < depth; slice++) {
+         if (gl_target == GL_TEXTURE_1D_ARRAY) {
+            /* 1D array textures.
+             * We need to convert gallium coords to GL coords.
+             */
+            GLvoid *dest = _mesa_image_address3d(&ctx->Pack, pixels,
+                                                 width, depth, format,
+                                                 type, 0, slice, 0);
 
             /* get float[4] rgba row from surface */
-            pipe_get_tile_rgba_format(tex_xfer, map, 0, row, width, 1,
+            pipe_get_tile_rgba_format(tex_xfer, map, 0, 0, width, 1,
                                       dst_format, rgba);
 
             _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
-                                       type, dest, &ctx->Pack, transferOps);
+                                       type, dest, &ctx->Pack, 0);
+         }
+         else {
+            for (row = 0; row < height; row++) {
+               GLvoid *dest = _mesa_image_address3d(&ctx->Pack, pixels,
+                                                    width, height, format,
+                                                    type, slice, row, 0);
+
+               /* get float[4] rgba row from surface */
+               pipe_get_tile_rgba_format(tex_xfer, map, 0, row, width, 1,
+                                         dst_format, rgba);
+
+               _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
+                                          type, dest, &ctx->Pack, 0);
+            }
          }
          map += tex_xfer->layer_stride;
       }
