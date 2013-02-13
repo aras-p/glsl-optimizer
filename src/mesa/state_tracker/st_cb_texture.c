@@ -777,7 +777,7 @@ st_GetTexImage(struct gl_context * ctx,
    blit.src.box.width = blit.dst.box.width = width;
    blit.src.box.height = blit.dst.box.height = height;
    blit.src.box.depth = blit.dst.box.depth = depth;
-   blit.mask = PIPE_MASK_RGBA;
+   blit.mask = get_blit_mask(texImage->_BaseFormat, format);
    blit.filter = PIPE_TEX_FILTER_NEAREST;
    blit.scissor_enable = FALSE;
 
