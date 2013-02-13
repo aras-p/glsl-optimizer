@@ -2271,7 +2271,7 @@ vec4_visitor::visit(ir_texture *ir)
       emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, zero_mask),
 	       src_reg(0)));
       /* Load the shadow comparitor */
-      if (ir->shadow_comparitor) {
+      if (ir->shadow_comparitor && ir->op != ir_txd) {
 	 emit(MOV(dst_reg(MRF, param_base + 1, ir->shadow_comparitor->type,
 			  WRITEMASK_X),
 		  shadow_comparitor));
@@ -2317,12 +2317,18 @@ vec4_visitor::visit(ir_texture *ir)
 	    emit(MOV(dst_reg(MRF, param_base + 1, type, WRITEMASK_YW), dPdy));
 	    inst->mlen++;
 
-	    if (ir->type->vector_elements == 3) {
+	    if (ir->type->vector_elements == 3 || ir->shadow_comparitor) {
 	       dPdx.swizzle = BRW_SWIZZLE_ZZZZ;
 	       dPdy.swizzle = BRW_SWIZZLE_ZZZZ;
 	       emit(MOV(dst_reg(MRF, param_base + 2, type, WRITEMASK_X), dPdx));
 	       emit(MOV(dst_reg(MRF, param_base + 2, type, WRITEMASK_Y), dPdy));
 	       inst->mlen++;
+
+               if (ir->shadow_comparitor) {
+                  emit(MOV(dst_reg(MRF, param_base + 2,
+                                   ir->shadow_comparitor->type, WRITEMASK_Z),
+                           shadow_comparitor));
+               }
 	    }
 	 } else /* intel->gen == 4 */ {
 	    emit(MOV(dst_reg(MRF, param_base + 1, type, WRITEMASK_XYZ), dPdx));
