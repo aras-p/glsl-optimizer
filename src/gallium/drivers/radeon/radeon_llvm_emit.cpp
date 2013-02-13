@@ -25,8 +25,16 @@
  */
 #include "radeon_llvm_emit.h"
 
+#if HAVE_LLVM < 0x0303
 #include <llvm/LLVMContext.h>
 #include <llvm/Module.h>
+#include <llvm/DataLayout.h>
+#else
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/DataLayout.h>
+#endif
+
 #include <llvm/PassManager.h>
 #include <llvm/ADT/Triple.h>
 #include <llvm/Support/FormattedStream.h>
@@ -39,7 +47,6 @@
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm-c/Target.h>
-#include <llvm/DataLayout.h>
 
 #include <iostream>
 #include <stdlib.h>

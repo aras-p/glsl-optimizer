@@ -1,6 +1,10 @@
 #include <llvm/ADT/OwningPtr.h>
 #include <llvm/ADT/StringRef.h>
+#if HAVE_LLVM < 0x0303
 #include <llvm/LLVMContext.h>
+#else
+#include <llvm/IR/LLVMContext.h>
+#endif
 #include <llvm/PassManager.h>
 #include <llvm/Support/IRReader.h>
 #include <llvm/Support/MemoryBuffer.h>
