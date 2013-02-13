@@ -28,12 +28,14 @@
 #include "glsl/ir.h"
 #include "glsl/ir_builder.h"
 #include "program/prog_instruction.h"
+#include "brw_context.h"
 
 using namespace ir_builder;
 
 class lower_texture_grad_visitor : public ir_hierarchical_visitor {
 public:
-   lower_texture_grad_visitor()
+   lower_texture_grad_visitor(bool has_sample_d_c)
+      : has_sample_d_c(has_sample_d_c)
    {
       progress = false;
    }
@@ -42,6 +44,7 @@ public:
 
 
    bool progress;
+   bool has_sample_d_c;
 
 private:
    void emit(ir_variable *, ir_rvalue *);
@@ -89,6 +92,22 @@ lower_texture_grad_visitor::visit_leave(ir_texture *ir)
 {
    /* Only lower textureGrad with shadow samplers */
    if (ir->op != ir_txd || !ir->shadow_comparitor)
+      return visit_continue;
+
+   /* Lower textureGrad() with samplerCubeShadow even if we have the sample_d_c
+    * message.  GLSL provides gradients for the 'r' coordinate.  Unfortunately:
+    *
+    * From the Ivybridge PRM, Volume 4, Part 1, sample_d message description:
+    * "The r coordinate contains the faceid, and the r gradients are ignored
+    *  by hardware."
+    *
+    * We likely need to do a similar treatment for samplerCube and
+    * samplerCubeArray, but we have insufficient testing for that at the moment.
+    */
+   bool need_lowering = !has_sample_d_c ||
+      ir->sampler->type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE;
+
+   if (!need_lowering)
       return visit_continue;
 
    void *mem_ctx = ralloc_parent(ir);
@@ -146,9 +165,11 @@ lower_texture_grad_visitor::visit_leave(ir_texture *ir)
 extern "C" {
 
 bool
-brw_lower_texture_gradients(struct exec_list *instructions)
+brw_lower_texture_gradients(struct intel_context *intel,
+                            struct exec_list *instructions)
 {
-   lower_texture_grad_visitor v;
+   bool has_sample_d_c = intel->gen >= 8 || intel->is_haswell;
+   lower_texture_grad_visitor v(has_sample_d_c);
 
    visit_list_elements(&v, instructions);
 
