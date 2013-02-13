@@ -263,6 +263,14 @@ static void declare_input_fs(
 				build_intrinsic(base->gallivm->builder,
 					"llvm.SI.fs.read.pos", input_type,
 					args, 1, LLVMReadNoneAttribute);
+
+			if (chan == 3)
+				/* RCP for fragcoord.w */
+				si_shader_ctx->radeon_bld.inputs[soa_index] =
+					LLVMBuildFDiv(gallivm->builder,
+						      lp_build_const_float(gallivm, 1.0f),
+						      si_shader_ctx->radeon_bld.inputs[soa_index],
+						      "");
 		}
 		return;
 	}
