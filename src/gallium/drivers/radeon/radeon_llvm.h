@@ -31,8 +31,8 @@
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_tgsi.h"
 
-#define RADEON_LLVM_MAX_INPUTS 16 * 4
-#define RADEON_LLVM_MAX_OUTPUTS 16 * 4
+#define RADEON_LLVM_MAX_INPUTS 32 * 4
+#define RADEON_LLVM_MAX_OUTPUTS 32 * 4
 #define RADEON_LLVM_MAX_BRANCH_DEPTH 16
 #define RADEON_LLVM_MAX_LOOP_DEPTH 16
 
