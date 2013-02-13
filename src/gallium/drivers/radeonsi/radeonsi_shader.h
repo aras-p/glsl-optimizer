@@ -82,6 +82,7 @@ struct si_shader_key {
 	unsigned		nr_cbufs:4;
 	unsigned		color_two_side:1;
 	unsigned		alpha_func:3;
+	unsigned		flatshade:1;
 	float			alpha_ref;
 };
 

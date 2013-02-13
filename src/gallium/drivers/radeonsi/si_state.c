@@ -421,8 +421,7 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 	rs->offset_units = state->offset_units;
 	rs->offset_scale = state->offset_scale * 12.0f;
 
-	/* XXX: Flat shading hangs the GPU */
-	tmp = S_0286D4_FLAT_SHADE_ENA(0);
+	tmp = S_0286D4_FLAT_SHADE_ENA(1);
 	if (state->sprite_coord_enable) {
 		tmp |= S_0286D4_PNT_SPRITE_ENA(1) |
 			S_0286D4_PNT_SPRITE_OVRD_X(V_0286D4_SPI_PNT_SPRITE_SEL_S) |
@@ -1885,7 +1884,7 @@ static INLINE struct si_shader_key si_shader_selector_key(struct pipe_context *c
 		key.export_16bpc = rctx->export_16bpc;
 		if (rctx->queued.named.rasterizer) {
 			key.color_two_side = rctx->queued.named.rasterizer->two_side;
-			/*key.flatshade = rctx->queued.named.rasterizer->flatshade;*/
+			key.flatshade = rctx->queued.named.rasterizer->flatshade;
 		}
 		if (rctx->queued.named.dsa) {
 			key.alpha_func = rctx->queued.named.dsa->alpha_func;
