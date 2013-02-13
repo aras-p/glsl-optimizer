@@ -319,11 +319,14 @@ static void si_update_spi_map(struct r600_context *rctx)
 		unsigned name = ps->input[i].name;
 		unsigned param_offset = ps->input[i].param_offset;
 
+		if (name == TGSI_SEMANTIC_POSITION)
+			/* Read from preloaded VGPRs, not parameters */
+			continue;
+
 bcolor:
 		tmp = 0;
 
-		if (name == TGSI_SEMANTIC_POSITION ||
-		    ps->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
+		if (ps->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
 		    (ps->input[i].interpolate == TGSI_INTERPOLATE_COLOR &&
 		     rctx->ps_shader->current->key.flatshade)) {
 			tmp |= S_028644_FLAT_SHADE(1);
