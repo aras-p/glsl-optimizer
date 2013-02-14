@@ -38,11 +38,6 @@ extern "C" {
 #endif
 
 
-struct tr_list {
-   struct tr_list *next;
-   struct tr_list *prev;
-};
-
 /**
  * It often happens that new data is written directly to the user buffers
  * without mapping/unmapping. This flag marks user buffers, so that their

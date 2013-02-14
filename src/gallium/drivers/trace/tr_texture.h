@@ -36,6 +36,14 @@
 
 struct trace_context;
 
+
+struct tr_list
+{
+   struct tr_list *next;
+   struct tr_list *prev;
+};
+
+
 struct trace_resource
 {
    struct pipe_resource base;
