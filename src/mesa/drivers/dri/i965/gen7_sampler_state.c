@@ -196,7 +196,7 @@ gen7_upload_samplers(struct brw_context *brw)
 
    GLbitfield SamplersUsed = vs->SamplersUsed | fs->SamplersUsed;
 
-   brw->sampler.count = _mesa_bitcount(SamplersUsed);
+   brw->sampler.count = _mesa_fls(SamplersUsed);
 
    if (brw->sampler.count == 0)
       return;
