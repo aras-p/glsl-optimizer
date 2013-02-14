@@ -410,6 +410,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                             format == PIPE_FORMAT_A16_FLOAT ||
                             format == PIPE_FORMAT_L16_FLOAT ||
                             format == PIPE_FORMAT_L16A16_FLOAT ||
+                            format == PIPE_FORMAT_R16A16_FLOAT ||
                             format == PIPE_FORMAT_I16_FLOAT;
     boolean is_half_float = format == PIPE_FORMAT_R16_FLOAT ||
                             format == PIPE_FORMAT_R16G16_FLOAT ||

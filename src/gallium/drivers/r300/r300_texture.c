@@ -415,6 +415,8 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_L8A8_SNORM:
         case PIPE_FORMAT_R8G8_UNORM:
         case PIPE_FORMAT_R8G8_SNORM:
+        case PIPE_FORMAT_R8A8_UNORM:
+        case PIPE_FORMAT_R8A8_SNORM:
         /* These formats work fine with UV88 if US_OUT_FMT is set correctly. */
         case PIPE_FORMAT_A16_UNORM:
         case PIPE_FORMAT_A16_SNORM:
@@ -458,6 +460,9 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_L16A16_UNORM:
         case PIPE_FORMAT_L16A16_SNORM:
         case PIPE_FORMAT_L16A16_FLOAT:
+        case PIPE_FORMAT_R16A16_UNORM:
+        case PIPE_FORMAT_R16A16_SNORM:
+        case PIPE_FORMAT_R16A16_FLOAT:
         case PIPE_FORMAT_A32_FLOAT:
         case PIPE_FORMAT_L32_FLOAT:
         case PIPE_FORMAT_I32_FLOAT:
@@ -481,6 +486,7 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
          * correctly. */
         case PIPE_FORMAT_R32G32_FLOAT:
         case PIPE_FORMAT_L32A32_FLOAT:
+        case PIPE_FORMAT_R32A32_FLOAT:
             return R300_COLOR_FORMAT_ARGB16161616;
 
         /* 128-bit buffers. */
@@ -630,6 +636,8 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
          * COLORFORMAT_UV88 stores ZX (C2 and C0). */
         case PIPE_FORMAT_L8A8_SNORM:
         case PIPE_FORMAT_L8A8_UNORM:
+        case PIPE_FORMAT_R8A8_SNORM:
+        case PIPE_FORMAT_R8A8_UNORM:
             return modifier | R300_C0_SEL_A | R300_C2_SEL_R;
         case PIPE_FORMAT_R8G8_SNORM:
         case PIPE_FORMAT_R8G8_UNORM:
@@ -705,7 +713,11 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_L16A16_UNORM:
         case PIPE_FORMAT_L16A16_SNORM:
         case PIPE_FORMAT_L16A16_FLOAT:
+        case PIPE_FORMAT_R16A16_UNORM:
+        case PIPE_FORMAT_R16A16_SNORM:
+        case PIPE_FORMAT_R16A16_FLOAT:
         case PIPE_FORMAT_L32A32_FLOAT:
+        case PIPE_FORMAT_R32A32_FLOAT:
             return modifier |
                 R300_C0_SEL_R | R300_C1_SEL_A;
 
@@ -738,10 +750,16 @@ static uint32_t r300_translate_colormask_swizzle(enum pipe_format format)
 
     case PIPE_FORMAT_L8A8_SNORM:
     case PIPE_FORMAT_L8A8_UNORM:
+    case PIPE_FORMAT_R8A8_UNORM:
+    case PIPE_FORMAT_R8A8_SNORM:
     case PIPE_FORMAT_L16A16_UNORM:
     case PIPE_FORMAT_L16A16_SNORM:
     case PIPE_FORMAT_L16A16_FLOAT:
+    case PIPE_FORMAT_R16A16_UNORM:
+    case PIPE_FORMAT_R16A16_SNORM:
+    case PIPE_FORMAT_R16A16_FLOAT:
     case PIPE_FORMAT_L32A32_FLOAT:
+    case PIPE_FORMAT_R32A32_FLOAT:
         return COLORMASK_ARRA;
 
     case PIPE_FORMAT_R8G8_SNORM:
