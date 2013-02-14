@@ -412,6 +412,34 @@ static void llvm_emit_tex(
 	LLVMValueRef args[6];
 	unsigned c, sampler_src;
 
+	if (emit_data->inst->Texture.Texture == TGSI_TEXTURE_BUFFER) {
+		switch (emit_data->inst->Instruction.Opcode) {
+		case TGSI_OPCODE_TXQ: {
+			LLVMValueRef offset[2] = {
+				LLVMConstInt(LLVMInt64TypeInContext(bld_base->base.gallivm->context), 0, false),
+				lp_build_const_int32(bld_base->base.gallivm, 1)
+			};
+			LLVMTypeRef const_ptr_type = LLVMPointerType(LLVMArrayType(LLVMVectorType(bld_base->base.elem_type, 4), 1024),
+									R600_BUFFER_INFO_CONST_BUFFER);
+			LLVMValueRef const_ptr = LLVMBuildIntToPtr(bld_base->base.gallivm->builder, lp_build_const_int32(bld_base->base.gallivm, 0), const_ptr_type, "");
+			LLVMValueRef ptr = LLVMBuildGEP(bld_base->base.gallivm->builder, const_ptr, offset, 2, "");
+			LLVMValueRef cvecval = LLVMBuildLoad(bld_base->base.gallivm->builder, ptr, "");
+			emit_data->output[0] = cvecval;
+			return;
+		}
+		case TGSI_OPCODE_TXF: {
+			args[0] = LLVMBuildExtractElement(gallivm->builder, emit_data->args[0], lp_build_const_int32(gallivm, 0), "");
+			args[1] = lp_build_const_int32(gallivm, R600_MAX_CONST_BUFFERS);
+			emit_data->output[0] = build_intrinsic(gallivm->builder,
+							"llvm.R600.load.texbuf",
+							emit_data->dst_type, args, 2, LLVMReadNoneAttribute);
+		}
+			return;
+		default:
+			break;
+		}
+	}
+
 	assert(emit_data->arg_count + 2 <= Elements(args));
 
 	for (c = 0; c < emit_data->arg_count; ++c)
