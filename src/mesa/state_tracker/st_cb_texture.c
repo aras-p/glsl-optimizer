@@ -1272,110 +1272,6 @@ fallback_copy_texsubimage(struct gl_context *ctx,
 }
 
 
-
-/**
- * If the format of the src renderbuffer and the format of the dest
- * texture are compatible (in terms of blitting), return a TGSI writemask
- * to be used during the blit.
- * If the src/dest are incompatible, return 0.
- */
-static unsigned
-compatible_src_dst_formats(struct gl_context *ctx,
-                           const struct gl_renderbuffer *src,
-                           const struct gl_texture_image *dst)
-{
-   /* Get logical base formats for the src and dest.
-    * That is, use the user-requested formats and not the actual, device-
-    * chosen formats.
-    * For example, the user may have requested an A8 texture but the
-    * driver may actually be using an RGBA texture format.  When we
-    * copy/blit to that texture, we only want to copy the Alpha channel
-    * and not the RGB channels.
-    *
-    * Similarly, when the src FBO was created an RGB format may have been
-    * requested but the driver actually chose an RGBA format.  In that case,
-    * we don't want to copy the undefined Alpha channel to the dest texture
-    * (it should be 1.0).
-    */
-   const GLenum srcFormat = _mesa_base_fbo_format(ctx, src->InternalFormat);
-   const GLenum dstFormat = _mesa_base_tex_format(ctx, dst->InternalFormat);
-
-   /**
-    * XXX when we have red-only and red/green renderbuffers we'll need
-    * to add more cases here (or implement a general-purpose routine that
-    * queries the existance of the R,G,B,A channels in the src and dest).
-    */
-   if (srcFormat == dstFormat) {
-      /* This is the same as matching_base_formats, which should
-       * always pass, as it did previously.
-       */
-      return TGSI_WRITEMASK_XYZW;
-   }
-   else if (srcFormat == GL_RGB && dstFormat == GL_RGBA) {
-      /* Make sure that A in the dest is 1.  The actual src format
-       * may be RGBA and have undefined A values.
-       */
-      return TGSI_WRITEMASK_XYZ;
-   }
-   else if (srcFormat == GL_RGBA && dstFormat == GL_RGB) {
-      /* Make sure that A in the dest is 1.  The actual dst format
-       * may be RGBA and will need A=1 to provide proper alpha values
-       * when sampled later.
-       */
-      return TGSI_WRITEMASK_XYZ;
-   }
-   else {
-      if (ST_DEBUG & DEBUG_FALLBACK)
-         debug_printf("%s failed for src %s, dst %s\n",
-                      __FUNCTION__, 
-                      _mesa_lookup_enum_by_nr(srcFormat),
-                      _mesa_lookup_enum_by_nr(dstFormat));
-
-      /* Otherwise fail.
-       */
-      return 0;
-   }
-}
-
-
-/**
- * Do pipe->blit. Return FALSE if the blitting is unsupported
- * for the given formats.
- */
-static GLboolean
-st_pipe_blit(struct pipe_context *pipe, struct pipe_blit_info *blit)
-{
-   struct pipe_screen *screen = pipe->screen;
-   unsigned dst_usage;
-
-   if (util_format_is_depth_or_stencil(blit->dst.format)) {
-      dst_usage = PIPE_BIND_DEPTH_STENCIL;
-   }
-   else {
-      dst_usage = PIPE_BIND_RENDER_TARGET;
-   }
-
-   /* try resource_copy_region in case the format is not supported
-    * for rendering */
-   if (util_try_blit_via_copy_region(pipe, blit)) {
-      return GL_TRUE; /* done */
-   }
-
-   /* check the format support */
-   if (!screen->is_format_supported(screen, blit->src.format,
-                                    PIPE_TEXTURE_2D, 0,
-                                    PIPE_BIND_SAMPLER_VIEW) ||
-       !screen->is_format_supported(screen, blit->dst.format,
-                                    PIPE_TEXTURE_2D, 0,
-                                    dst_usage)) {
-      return GL_FALSE;
-   }
-
-   pipe->blit(pipe, blit);
-   return GL_TRUE;
-}
-
-
 /**
  * Do a CopyTex[Sub]Image1/2/3D() using a hardware (blit) path if possible.
  * Note that the region to copy has already been clipped so we know we
@@ -1391,36 +1287,57 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
                    GLint srcX, GLint srcY, GLsizei width, GLsizei height)
 {
    struct st_texture_image *stImage = st_texture_image(texImage);
-   const GLenum texBaseFormat = texImage->_BaseFormat;
+   struct st_texture_object *stObj = st_texture_object(texImage->TexObject);
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   enum pipe_format dest_format, src_format;
-   GLuint color_writemask;
-   struct pipe_surface *dest_surface = NULL;
+   struct pipe_blit_info blit;
+   enum pipe_format dst_format;
    GLboolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
-   struct pipe_surface surf_tmpl;
-   unsigned dst_usage;
-   unsigned blit_mask;
+   unsigned bind;
    GLint srcY0, srcY1, yStep;
-
-   /* make sure finalize_textures has been called? 
-    */
-   if (0) st_validate_state(st);
 
    if (!strb || !strb->surface || !stImage->pt) {
       debug_printf("%s: null strb or stImage\n", __FUNCTION__);
       return;
    }
 
-   assert(strb);
-   assert(strb->surface);
-   assert(stImage->pt);
+   if (_mesa_texstore_needs_transfer_ops(ctx, texImage->_BaseFormat,
+                                         texImage->TexFormat)) {
+      goto fallback;
+   }
 
-   src_format = util_format_linear(strb->surface->format);
-   dest_format = util_format_linear(stImage->pt->format);
+   /* The base internal format must match the mesa format, so make sure
+    * e.g. an RGB internal format is really allocated as RGB and not as RGBA.
+    */
+   if (texImage->_BaseFormat !=
+       _mesa_get_format_base_format(texImage->TexFormat) ||
+       rb->_BaseFormat != _mesa_get_format_base_format(rb->Format)) {
+      goto fallback;
+   }
 
+   /* Choose the destination format to match the TexImage behavior. */
+   dst_format = util_format_linear(stImage->pt->format);
+   dst_format = util_format_luminance_to_red(dst_format);
+   dst_format = util_format_intensity_to_red(dst_format);
+
+   /* See if the destination format is supported. */
+   if (texImage->_BaseFormat == GL_DEPTH_STENCIL ||
+       texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
+      bind = PIPE_BIND_DEPTH_STENCIL;
+   }
+   else {
+      bind = PIPE_BIND_RENDER_TARGET;
+   }
+
+   if (!dst_format ||
+       !screen->is_format_supported(screen, dst_format, stImage->pt->target,
+                                    stImage->pt->nr_samples, bind)) {
+      goto fallback;
+   }
+
+   /* Y flipping for the main framebuffer. */
    if (do_flip) {
       srcY1 = strb->Base.Height - srcY - height;
       srcY0 = srcY1 + height;
@@ -1432,143 +1349,56 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
       yStep = 1;
    }
 
-   if (ctx->_ImageTransferState) {
-      goto fallback;
-   }
-
-   /* Compressed and subsampled textures aren't supported for blitting. */
-   if (!util_format_is_plain(dest_format)) {
-      goto fallback;
-   }
-
-   if (texBaseFormat == GL_DEPTH_STENCIL ||
-       texBaseFormat == GL_DEPTH_COMPONENT) {
-      dst_usage = PIPE_BIND_DEPTH_STENCIL;
-   }
-   else {
-      dst_usage = PIPE_BIND_RENDER_TARGET;
-   }
-
-   blit_mask = get_blit_mask(rb->_BaseFormat, texImage->_BaseFormat);
-
-   /* Determine if the src framebuffer and dest texture have the same
-    * base format.  We need this to detect a case such as the framebuffer
-    * being GL_RGBA but the texture being GL_RGB.  If the actual hardware
-    * texture format stores RGBA we need to set A=1 (overriding the
-    * framebuffer's alpha values).
-    *
-    * XXX util_blit_pixels doesn't support MSAA resolve, so always use
-    *     pipe->blit for MSAA textures
-    */
-   if ((blit_mask & PIPE_MASK_RGBA) &&
-       texBaseFormat != strb->Base._BaseFormat &&
-       strb->texture->nr_samples <= 1) {
-      blit_mask = 0;
-   }
-
    /* Blit the texture.
     * This supports flipping, format conversions, and downsampling.
     */
-   if (blit_mask) {
-      /* If stImage->pt is an independent image (not a pointer into a full
-       * mipmap) stImage->pt.last_level will be zero and we need to use that
-       * as the dest level.
-       */
-      unsigned dstLevel = MIN2(stImage->base.Level, stImage->pt->last_level);
-      struct pipe_blit_info blit;
+   memset(&blit, 0, sizeof(blit));
+   blit.src.resource = strb->texture;
+   blit.src.format = util_format_linear(strb->surface->format);
+   blit.src.level = strb->surface->u.tex.level;
+   blit.src.box.x = srcX;
+   blit.src.box.y = srcY0;
+   blit.src.box.z = strb->surface->u.tex.first_layer;
+   blit.src.box.width = width;
+   blit.src.box.height = srcY1 - srcY0;
+   blit.src.box.depth = 1;
+   blit.dst.resource = stImage->pt;
+   blit.dst.format = dst_format;
+   blit.dst.level = stObj->pt != stImage->pt ? 0 : texImage->Level;
+   blit.dst.box.x = destX;
+   blit.dst.box.y = destY;
+   blit.dst.box.z = stImage->base.Face + destZ;
+   blit.dst.box.width = width;
+   blit.dst.box.height = height;
+   blit.dst.box.depth = 1;
+   blit.mask = get_blit_mask(rb->_BaseFormat, texImage->_BaseFormat);
+   blit.filter = PIPE_TEX_FILTER_NEAREST;
 
-      memset(&blit, 0, sizeof(blit));
-      blit.src.resource = strb->texture;
-      blit.src.format = src_format;
-      blit.src.level = strb->surface->u.tex.level;
-      blit.src.box.x = srcX;
-      blit.src.box.y = srcY0;
-      blit.src.box.z = strb->surface->u.tex.first_layer;
-      blit.src.box.width = width;
-      blit.src.box.height = srcY1 - srcY0;
-      blit.src.box.depth = 1;
-      blit.dst.resource = stImage->pt;
-      blit.dst.format = dest_format;
-      blit.dst.level = dstLevel;
-      blit.dst.box.x = destX;
-      blit.dst.box.y = destY;
-      blit.dst.box.z = stImage->base.Face + destZ;
-      blit.dst.box.width = width;
-      blit.dst.box.height = height;
-      blit.dst.box.depth = 1;
-      blit.mask = blit_mask;
-      blit.filter = PIPE_TEX_FILTER_NEAREST;
-
-      /* 1D array textures need special treatment.
-       * Blit rows from the source to layers in the destination. */
-      if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
-         int y, layer;
-
-         for (y = srcY0, layer = 0; layer < height; y += yStep, layer++) {
-            blit.src.box.y = y;
-            blit.src.box.height = 1;
-            blit.dst.box.y = 0;
-            blit.dst.box.height = 1;
-            blit.dst.box.z = destY + layer;
-
-            if (!st_pipe_blit(pipe, &blit)) {
-               goto fallback;
-            }
-         }
-      }
-      else {
-         /* All the other texture targets. */
-         if (!st_pipe_blit(pipe, &blit)) {
-            goto fallback;
-         }
-      }
-      return;
-   }
-
-   /* try u_blit */
+   /* 1D array textures need special treatment.
+    * Blit rows from the source to layers in the destination. */
    if (texImage->TexObject->Target == GL_TEXTURE_1D_ARRAY) {
-      /* u_blit cannot copy 1D array textures as required by CopyTexSubImage */
-      goto fallback;
+      int y, layer;
+
+      for (y = srcY0, layer = 0; layer < height; y += yStep, layer++) {
+         blit.src.box.y = y;
+         blit.src.box.height = 1;
+         blit.dst.box.y = 0;
+         blit.dst.box.height = 1;
+         blit.dst.box.z = destY + layer;
+
+         pipe->blit(pipe, &blit);
+      }
    }
-
-   color_writemask = compatible_src_dst_formats(ctx, &strb->Base, texImage);
-
-   if (!color_writemask ||
-       !screen->is_format_supported(screen, src_format,
-                                    PIPE_TEXTURE_2D, 0,
-                                    PIPE_BIND_SAMPLER_VIEW) ||
-       !screen->is_format_supported(screen, dest_format,
-                                    PIPE_TEXTURE_2D, 0,
-                                    dst_usage)) {
-      goto fallback;
+   else {
+      /* All the other texture targets. */
+      pipe->blit(pipe, &blit);
    }
-
-   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   surf_tmpl.format = util_format_linear(stImage->pt->format);
-   surf_tmpl.u.tex.level = stImage->base.Level;
-   surf_tmpl.u.tex.first_layer = stImage->base.Face + destZ;
-   surf_tmpl.u.tex.last_layer = stImage->base.Face + destZ;
-
-   dest_surface = pipe->create_surface(pipe, stImage->pt,
-                                       &surf_tmpl);
-   util_blit_pixels(st->blit,
-                    strb->texture,
-                    strb->surface->u.tex.level,
-                    srcX, srcY0,
-                    srcX + width, srcY1,
-                    strb->surface->u.tex.first_layer,
-                    dest_surface,
-                    destX, destY,
-                    destX + width, destY + height,
-                    0.0, PIPE_TEX_MIPFILTER_NEAREST,
-                    color_writemask, 0);
-   pipe_surface_reference(&dest_surface, NULL);
    return;
 
 fallback:
    /* software fallback */
    fallback_copy_texsubimage(ctx,
-                             strb, stImage, texBaseFormat,
+                             strb, stImage, texImage->_BaseFormat,
                              destX, destY, destZ,
                              srcX, srcY, width, height);
 }

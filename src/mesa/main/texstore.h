@@ -69,6 +69,10 @@
 extern GLboolean
 _mesa_texstore(TEXSTORE_PARAMS);
 
+extern GLboolean
+_mesa_texstore_needs_transfer_ops(struct gl_context *ctx,
+                                  GLenum baseInternalFormat,
+                                  gl_format dstFormat);
 
 extern GLboolean
 _mesa_texstore_can_use_memcpy(struct gl_context *ctx,
