@@ -41,7 +41,7 @@ extern "C" {
 /**
  * It often happens that new data is written directly to the user buffers
  * without mapping/unmapping. This flag marks user buffers, so that their
- * contents can be dumpped before being used by the pipe context.
+ * contents can be dumped before being used by the pipe context.
  */
 #define TRACE_FLAG_USER_BUFFER  (1 << 31)
 
@@ -54,13 +54,9 @@ struct trace_screen
 };
 
 
-/*
- * tr_screen.c
- */
-
-
 struct trace_screen *
 trace_screen(struct pipe_screen *screen);
+
 
 #ifdef __cplusplus
 }
