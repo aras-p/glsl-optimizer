@@ -586,13 +586,227 @@ get_blit_mask(GLenum srcFormat, GLenum dstFormat)
 
 
 static void
+st_TexSubImage(struct gl_context *ctx, GLuint dims,
+               struct gl_texture_image *texImage,
+               GLint xoffset, GLint yoffset, GLint zoffset,
+               GLint width, GLint height, GLint depth,
+               GLenum format, GLenum type, const void *pixels,
+               const struct gl_pixelstore_attrib *unpack)
+{
+   struct st_context *st = st_context(ctx);
+   struct st_texture_image *stImage = st_texture_image(texImage);
+   struct st_texture_object *stObj = st_texture_object(texImage->TexObject);
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_resource *dst = stImage->pt;
+   struct pipe_resource *src = NULL;
+   struct pipe_resource src_templ;
+   struct pipe_transfer *transfer;
+   struct pipe_blit_info blit;
+   enum pipe_format src_format, dst_format;
+   gl_format mesa_src_format;
+   GLenum gl_target = texImage->TexObject->Target;
+   unsigned bind;
+   GLubyte *map;
+
+   if (!dst) {
+      goto fallback;
+   }
+
+   /* XXX Fallback for depth-stencil formats due to an incomplete stencil
+    * blit implementation in some drivers. */
+   if (format == GL_DEPTH_STENCIL) {
+      goto fallback;
+   }
+
+   /* If the base internal format and the texture format don't match,
+    * we can't use blit-based TexSubImage. */
+   if (texImage->_BaseFormat !=
+       _mesa_get_format_base_format(texImage->TexFormat)) {
+      goto fallback;
+   }
+
+   /* See if the texture format already matches the format and type,
+    * in which case the memcpy-based fast path will likely be used and
+    * we don't have to blit. */
+   if (_mesa_format_matches_format_and_type(texImage->TexFormat, format,
+                                            type, unpack->SwapBytes)) {
+      goto fallback;
+   }
+
+   if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL)
+      bind = PIPE_BIND_DEPTH_STENCIL;
+   else
+      bind = PIPE_BIND_RENDER_TARGET;
+
+   /* See if the destination format is supported.
+    * For luminance and intensity, only the red channel is stored there. */
+   dst_format = util_format_linear(dst->format);
+   dst_format = util_format_luminance_to_red(dst_format);
+   dst_format = util_format_intensity_to_red(dst_format);
+
+   if (!dst_format ||
+       !screen->is_format_supported(screen, dst_format, dst->target,
+                                    dst->nr_samples, bind)) {
+      goto fallback;
+   }
+
+   /* Choose the source format. */
+   src_format = st_choose_matching_format(screen, PIPE_BIND_SAMPLER_VIEW,
+                                          format, type, unpack->SwapBytes);
+   if (!src_format) {
+      goto fallback;
+   }
+
+   mesa_src_format = st_pipe_format_to_mesa_format(src_format);
+
+   /* There is no reason to do this if we cannot use memcpy for the temporary
+    * source texture at least. This also takes transfer ops into account,
+    * etc. */
+   if (!_mesa_texstore_can_use_memcpy(ctx,
+                             _mesa_get_format_base_format(mesa_src_format),
+                             mesa_src_format, format, type, unpack)) {
+      goto fallback;
+   }
+
+   /* TexSubImage only sets a single cubemap face. */
+   if (gl_target == GL_TEXTURE_CUBE_MAP) {
+      gl_target = GL_TEXTURE_2D;
+   }
+
+   /* Initialize the source texture description. */
+   memset(&src_templ, 0, sizeof(src_templ));
+   src_templ.target = gl_target_to_pipe(gl_target);
+   src_templ.format = src_format;
+   src_templ.bind = PIPE_BIND_SAMPLER_VIEW;
+   src_templ.usage = PIPE_USAGE_STAGING;
+
+   st_gl_texture_dims_to_pipe_dims(gl_target, width, height, depth,
+                                   &src_templ.width0, &src_templ.height0,
+                                   &src_templ.depth0, &src_templ.array_size);
+
+   /* Check for NPOT texture support. */
+   if (!screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES) &&
+       (!util_is_power_of_two(src_templ.width0) ||
+        !util_is_power_of_two(src_templ.height0) ||
+        !util_is_power_of_two(src_templ.depth0))) {
+      goto fallback;
+   }
+
+   /* Create the source texture. */
+   src = screen->resource_create(screen, &src_templ);
+   if (!src) {
+      goto fallback;
+   }
+
+   /* Map source pixels. */
+   pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, depth,
+                                        format, type, pixels, unpack,
+                                        "glTexSubImage");
+   if (!pixels) {
+      /* This is a GL error. */
+      pipe_resource_reference(&src, NULL);
+      return;
+   }
+
+   /* From now on, we need the gallium representation of dimensions. */
+   if (gl_target == GL_TEXTURE_1D_ARRAY) {
+      depth = height;
+      height = 1;
+   }
+
+   map = pipe_transfer_map_3d(pipe, src, 0, PIPE_TRANSFER_WRITE, 0, 0, 0,
+                              width, height, depth, &transfer);
+   if (!map) {
+      _mesa_unmap_teximage_pbo(ctx, unpack);
+      pipe_resource_reference(&src, NULL);
+      goto fallback;
+   }
+
+   /* Upload pixels (just memcpy). */
+   {
+      const uint bytesPerRow = width * util_format_get_blocksize(src_format);
+      GLuint row, slice;
+
+      for (slice = 0; slice < depth; slice++) {
+         if (gl_target == GL_TEXTURE_1D_ARRAY) {
+            /* 1D array textures.
+             * We need to convert gallium coords to GL coords.
+             */
+            GLvoid *src = _mesa_image_address3d(unpack, pixels,
+                                                width, depth, format,
+                                                type, 0, slice, 0);
+            memcpy(map, src, bytesPerRow);
+         }
+         else {
+            ubyte *slice_map = map;
+
+            for (row = 0; row < height; row++) {
+               GLvoid *src = _mesa_image_address3d(unpack, pixels,
+                                                   width, height, format,
+                                                   type, slice, row, 0);
+               memcpy(slice_map, src, bytesPerRow);
+               slice_map += transfer->stride;
+            }
+         }
+         map += transfer->layer_stride;
+      }
+   }
+
+   pipe_transfer_unmap(pipe, transfer);
+   _mesa_unmap_teximage_pbo(ctx, unpack);
+
+   /* Blit. */
+   blit.src.resource = src;
+   blit.src.level = 0;
+   blit.src.format = src_format;
+   blit.dst.resource = dst;
+   blit.dst.level = stObj->pt != stImage->pt ? 0 : texImage->Level;
+   blit.dst.format = dst_format;
+   blit.src.box.x = blit.src.box.y = blit.src.box.z = 0;
+   blit.dst.box.x = xoffset;
+   blit.dst.box.y = yoffset;
+   blit.dst.box.z = zoffset + texImage->Face;
+   blit.src.box.width = blit.dst.box.width = width;
+   blit.src.box.height = blit.dst.box.height = height;
+   blit.src.box.depth = blit.dst.box.depth = depth;
+   blit.mask = get_blit_mask(format, texImage->_BaseFormat);
+   blit.filter = PIPE_TEX_FILTER_NEAREST;
+   blit.scissor_enable = FALSE;
+
+   st->pipe->blit(st->pipe, &blit);
+
+   pipe_resource_reference(&src, NULL);
+   return;
+
+fallback:
+   _mesa_store_texsubimage(ctx, dims, texImage, xoffset, yoffset, zoffset,
+                           width, height, depth, format, type, pixels,
+                           unpack);
+}
+
+static void
 st_TexImage(struct gl_context * ctx, GLuint dims,
             struct gl_texture_image *texImage,
             GLenum format, GLenum type, const void *pixels,
             const struct gl_pixelstore_attrib *unpack)
 {
+   assert(dims == 1 || dims == 2 || dims == 3);
+
    prep_teximage(ctx, texImage, format, type);
-   _mesa_store_teximage(ctx, dims, texImage, format, type, pixels, unpack);
+
+   if (texImage->Width == 0 || texImage->Height == 0 || texImage->Depth == 0)
+      return;
+
+   /* allocate storage for texture data */
+   if (!ctx->Driver.AllocTextureImageBuffer(ctx, texImage)) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage%uD", dims);
+      return;
+   }
+
+   st_TexSubImage(ctx, dims, texImage, 0, 0, 0,
+                  texImage->Width, texImage->Height, texImage->Depth,
+                  format, type, pixels, unpack);
 }
 
 
@@ -1692,7 +1906,7 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->ChooseTextureFormat = st_ChooseTextureFormat;
    functions->QuerySamplesForFormat = st_QuerySamplesForFormat;
    functions->TexImage = st_TexImage;
-   functions->TexSubImage = _mesa_store_texsubimage;
+   functions->TexSubImage = st_TexSubImage;
    functions->CompressedTexSubImage = _mesa_store_compressed_texsubimage;
    functions->CopyTexSubImage = st_CopyTexSubImage;
    functions->GenerateMipmap = st_generate_mipmap;

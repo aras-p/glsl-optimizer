@@ -3791,8 +3791,11 @@ _mesa_get_texstore_func(gl_format format)
 }
 
 
-static GLboolean
-_mesa_texstore_memcpy(TEXSTORE_PARAMS)
+GLboolean
+_mesa_texstore_can_use_memcpy(struct gl_context *ctx,
+                              GLenum baseInternalFormat, gl_format dstFormat,
+                              GLenum srcFormat, GLenum srcType,
+                              const struct gl_pixelstore_attrib *srcPacking)
 {
    GLenum dstType;
 
@@ -3831,6 +3834,17 @@ _mesa_texstore_memcpy(TEXSTORE_PARAMS)
    /* The Mesa format must match the input format and type. */
    if (!_mesa_format_matches_format_and_type(dstFormat, srcFormat, srcType,
                                              srcPacking->SwapBytes)) {
+      return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
+static GLboolean
+_mesa_texstore_memcpy(TEXSTORE_PARAMS)
+{
+   if (!_mesa_texstore_can_use_memcpy(ctx, baseInternalFormat, dstFormat,
+                                      srcFormat, srcType, srcPacking)) {
       return GL_FALSE;
    }
 

@@ -70,6 +70,13 @@ extern GLboolean
 _mesa_texstore(TEXSTORE_PARAMS);
 
 
+extern GLboolean
+_mesa_texstore_can_use_memcpy(struct gl_context *ctx,
+                              GLenum baseInternalFormat, gl_format dstFormat,
+                              GLenum srcFormat, GLenum srcType,
+                              const struct gl_pixelstore_attrib *srcPacking);
+
+
 extern GLubyte *
 _mesa_make_temp_ubyte_image(struct gl_context *ctx, GLuint dims,
                            GLenum logicalBaseFormat,
