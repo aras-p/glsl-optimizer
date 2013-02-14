@@ -41,23 +41,7 @@
 #include "st_cb_fbo.h"
 #include "st_atom.h"
 
-#include "util/u_blit.h"
 #include "util/u_format.h"
-
-
-void
-st_init_blit(struct st_context *st)
-{
-   st->blit = util_create_blit(st->pipe, st->cso_context);
-}
-
-
-void
-st_destroy_blit(struct st_context *st)
-{
-   util_destroy_blit(st->blit);
-   st->blit = NULL;
-}
 
 
 static void

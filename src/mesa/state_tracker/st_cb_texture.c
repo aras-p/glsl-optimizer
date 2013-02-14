@@ -59,7 +59,6 @@
 #include "util/u_inlines.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_tile.h"
-#include "util/u_blit.h"
 #include "util/u_format.h"
 #include "util/u_surface.h"
 #include "util/u_sampler.h"

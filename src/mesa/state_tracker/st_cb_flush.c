@@ -44,7 +44,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "util/u_gen_mipmap.h"
-#include "util/u_blit.h"
 
 
 /** Check if we have a front color buffer and if it's been drawn to. */

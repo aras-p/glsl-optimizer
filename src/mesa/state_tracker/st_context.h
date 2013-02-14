@@ -34,7 +34,6 @@
 #include "main/fbobject.h"
 
 struct bitmap_cache;
-struct blit_state;
 struct dd_function_table;
 struct draw_context;
 struct draw_stage;
@@ -182,7 +181,6 @@ struct st_context
 
    enum pipe_texture_target internal_target;
    struct gen_mipmap_state *gen_mipmap;
-   struct blit_state *blit;
 
    struct cso_context *cso_context;
 
