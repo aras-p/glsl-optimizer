@@ -1418,8 +1418,8 @@ st_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    assert(strb->surface);
    assert(stImage->pt);
 
-   src_format = strb->surface->format;
-   dest_format = stImage->pt->format;
+   src_format = util_format_linear(strb->surface->format);
+   dest_format = util_format_linear(stImage->pt->format);
 
    if (do_flip) {
       srcY1 = strb->Base.Height - srcY - height;
