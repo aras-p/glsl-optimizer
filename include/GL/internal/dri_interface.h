@@ -1287,4 +1287,33 @@ typedef struct __DRIDriverVtableExtensionRec {
     const struct __DriverAPIRec *vtable;
 } __DRIDriverVtableExtension;
 
+/**
+ * Query renderer driver extension
+ *
+ * This allows the window system layer (either EGL or GLX) to query aspects of
+ * hardware and driver support without creating a context.
+ */
+#define __DRI2_RENDERER_QUERY "DRI_RENDERER_QUERY"
+#define __DRI2_RENDERER_QUERY_VERSION 1
+
+#define __DRI2_RENDERER_VENDOR_ID                             0x0000
+#define __DRI2_RENDERER_DEVICE_ID                             0x0001
+#define __DRI2_RENDERER_VERSION                               0x0002
+#define __DRI2_RENDERER_ACCELERATED                           0x0003
+#define __DRI2_RENDERER_VIDEO_MEMORY                          0x0004
+#define __DRI2_RENDERER_UNIFIED_MEMORY_ARCHITECTURE           0x0005
+#define __DRI2_RENDERER_PREFERRED_PROFILE                     0x0006
+#define __DRI2_RENDERER_OPENGL_CORE_PROFILE_VERSION           0x0007
+#define __DRI2_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION  0x0008
+#define __DRI2_RENDERER_OPENGL_ES_PROFILE_VERSION             0x0009
+#define __DRI2_RENDERER_OPENGL_ES2_PROFILE_VERSION            0x000a
+
+typedef struct __DRI2rendererQueryExtensionRec __DRI2rendererQueryExtension;
+struct __DRI2rendererQueryExtensionRec {
+   __DRIextension base;
+
+   int (*queryInteger)(__DRIscreen *screen, int attribute, unsigned int *val);
+   int (*queryString)(__DRIscreen *screen, int attribute, const char **val);
+};
+
 #endif
