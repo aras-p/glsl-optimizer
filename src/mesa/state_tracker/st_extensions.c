@@ -421,6 +421,10 @@ void st_init_extensions(struct st_context *st)
       { { o(EXT_texture_integer) },
         { PIPE_FORMAT_R32G32B32A32_UINT,
           PIPE_FORMAT_R32G32B32A32_SINT } },
+
+      { { o(ARB_texture_rg) },
+        { PIPE_FORMAT_R8_UNORM,
+          PIPE_FORMAT_R8G8_UNORM } },
    };
 
    /* Required: depth stencil and sampler support */
@@ -443,9 +447,6 @@ void st_init_extensions(struct st_context *st)
           PIPE_FORMAT_RGTC1_SNORM,
           PIPE_FORMAT_RGTC2_UNORM,
           PIPE_FORMAT_RGTC2_SNORM } },
-
-      { { o(ARB_texture_rg) },
-        { PIPE_FORMAT_R8G8_UNORM } },
 
       { { o(EXT_texture_compression_latc) },
         { PIPE_FORMAT_LATC1_UNORM,
