@@ -116,7 +116,7 @@ public:
 	
 };
 
-static int writeMask = 0, writeComponents = 0;
+static int writeMask = 0, readComponents= 0, writeComponents = 0;
 
 
 char*
@@ -471,7 +471,7 @@ void ir_print_agal_visitor::visit(ir_swizzle *ir)
    int p=0;
    for (unsigned i = 0; i < 4; i++) {
 		ralloc_asprintf_append (&buffer, "%c", "xyzw"[swiz[p]]);
-		if(writeMask & (1 << i) && p+1 < ir->mask.num_components)
+		if((writeMask & (1 << i) && p+1 < ir->mask.num_components) || p+1 < readComponents)
 			p++;
    }
 }
@@ -552,6 +552,7 @@ void ir_print_agal_visitor::visit(ir_assignment *ir)
 
     char mask[5] = {0,0,0,0,0};
 	computeSwizzle(&mask[0], ir);
+	readComponents = 0;
 	if(strlen(mask) < 4 && ir->lhs->as_dereference_variable()) {
 		ir_dereference_variable *dv = ir->lhs->as_dereference_variable();
 		ir_variable *var =  dv->variable_referenced();
@@ -632,9 +633,9 @@ void ir_print_agal_visitor::visit(ir_assignment *ir)
 
 				if(mat && vec) {
 					switch(matsz) {
-						case 9:  ralloc_asprintf_append (&buffer, "m33 "); break;
-						case 12: ralloc_asprintf_append (&buffer, "m34 "); break;
-						case 16: ralloc_asprintf_append (&buffer, "m44 "); break;
+						case 9:  ralloc_asprintf_append (&buffer, "m33 "); readComponents = 3; break;
+						case 12: ralloc_asprintf_append (&buffer, "m34 "); readComponents = 4; break;
+						case 16: ralloc_asprintf_append (&buffer, "m44 "); readComponents = 4; break;
 						default: abort();
 					}
 				} else {
@@ -650,7 +651,8 @@ void ir_print_agal_visitor::visit(ir_assignment *ir)
 			case ir_binop_dot:
       			ec1 = countElements(op1);
       			ec2 = countElements(op2);
-      			ralloc_asprintf_append (&buffer, (min(ec1,ec2) == 3) ? "dp3 " : "dp4 ");
+      			readComponents = expr->operation == ir_binop_dot ? min(ec1,ec2) : 0;
+      			ralloc_asprintf_append (&buffer, (readComponents == 3) ? "dp3 " : "dp4 ");
       			isBinOp=true;
 				break;
 			
@@ -705,10 +707,11 @@ void ir_print_agal_visitor::visit(ir_assignment *ir)
       		isBinOp = true;
       		int ec1 = countElements(op1);
       		int ec2 = countElements(op2);
-      		ralloc_asprintf_append (&buffer, (min(ec1,ec2) == 3) ? "dp3 " : "dp4 ");
+      		readComponents = min(ec1,ec2); 
+      		ralloc_asprintf_append (&buffer, (readComponents == 3) ? "dp3 " : "dp4 ");
       	}
       	else if(strcmp(name, "pow") == 0)       { ralloc_asprintf_append (&buffer, "pow "); op1 = (ir_instruction*)args.get(); args.next(); op2 = (ir_instruction*)args.get(); isBinOp = true; }
-      	else if(strcmp(name, "cross") == 0)     { ralloc_asprintf_append (&buffer, "crs "); op1 = (ir_instruction*)args.get(); args.next(); op2 = (ir_instruction*)args.get(); isBinOp = true; }
+      	else if(strcmp(name, "cross") == 0)     { ralloc_asprintf_append (&buffer, "crs "); op1 = (ir_instruction*)args.get(); args.next(); op2 = (ir_instruction*)args.get(); isBinOp = true; readComponents = 3; }
       	else if(strcmp(name, "clamp") == 0)     { ralloc_asprintf_append (&buffer, "sat "); op1 = (ir_instruction*)args.get(); args.next(); op2 = (ir_instruction*)args.get(); isBinOp = true; }
       	else if(strcmp(name, "max") == 0)       { ralloc_asprintf_append (&buffer, "max "); op1 = (ir_instruction*)args.get(); args.next(); op2 = (ir_instruction*)args.get(); isBinOp = true; }
       	else if(strcmp(name, "min") == 0)       { ralloc_asprintf_append (&buffer, "min "); op1 = (ir_instruction*)args.get(); args.next(); op2 = (ir_instruction*)args.get(); isBinOp = true; }
