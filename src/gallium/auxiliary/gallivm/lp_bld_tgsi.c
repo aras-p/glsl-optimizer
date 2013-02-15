@@ -211,7 +211,6 @@ lp_build_tgsi_inst_llvm(
    case TGSI_OPCODE_X2D:
    case TGSI_OPCODE_ARA:
    case TGSI_OPCODE_BRA:
-   case TGSI_OPCODE_DIV:
    case TGSI_OPCODE_PUSHA:
    case TGSI_OPCODE_POPA:
    case TGSI_OPCODE_SAD:
