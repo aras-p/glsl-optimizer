@@ -686,8 +686,11 @@ builtin_variable_generator::generate_gs_special_vars()
     * the specific case of gl_PrimitiveIDIn.  So we don't need to treat
     * gl_PrimitiveIDIn as an {ARB,EXT}_geometry_shader4-only variable.
     */
-   add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveIDIn");
-   add_output(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID");
+   ir_variable *var;
+   var = add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveIDIn");
+   var->interpolation = INTERP_QUALIFIER_FLAT;
+   var = add_output(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID");
+   var->interpolation = INTERP_QUALIFIER_FLAT;
 }
 
 
@@ -701,6 +704,12 @@ builtin_variable_generator::generate_fs_special_vars()
    add_input(VARYING_SLOT_FACE, bool_t, "gl_FrontFacing");
    if (state->is_version(120, 100))
       add_input(VARYING_SLOT_PNTC, vec2_t, "gl_PointCoord");
+
+   if (state->is_version(150, 0)) {
+      ir_variable *var =
+         add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID");
+      var->interpolation = INTERP_QUALIFIER_FLAT;
+   }
 
    /* gl_FragColor and gl_FragData were deprecated starting in desktop GLSL
     * 1.30, and were relegated to the compatibility profile in GLSL 4.20.
