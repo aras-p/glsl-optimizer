@@ -314,6 +314,8 @@ static void si_update_fb_rs_state(struct r600_context *rctx)
 
 	offset_units = rctx->queued.named.rasterizer->offset_units;
 	switch (rctx->framebuffer.zsbuf->texture->format) {
+	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+	case PIPE_FORMAT_X8Z24_UNORM:
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
 		depth = -24;
@@ -779,6 +781,7 @@ static uint32_t si_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
 		return V_028C70_COLOR_8_24;
 
+	case PIPE_FORMAT_S8X24_UINT:
 	case PIPE_FORMAT_X8Z24_UNORM:
 	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
 		return V_028C70_COLOR_24_8;
@@ -967,9 +970,10 @@ static uint32_t si_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
 		return V_028C70_SWAP_STD;
 
+	case PIPE_FORMAT_S8X24_UINT:
 	case PIPE_FORMAT_X8Z24_UNORM:
 	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
-		return V_028C70_SWAP_STD;
+		return V_028C70_SWAP_STD_REV;
 
 	case PIPE_FORMAT_R10G10B10A2_UNORM:
 	case PIPE_FORMAT_R10G10B10X2_SNORM:
@@ -1140,9 +1144,11 @@ static uint32_t si_translate_dbformat(enum pipe_format format)
 	switch (format) {
 	case PIPE_FORMAT_Z16_UNORM:
 		return V_028040_Z_16;
+	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+	case PIPE_FORMAT_X8Z24_UNORM:
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-		return V_028040_Z_24; /* XXX no longer supported on SI */
+		return V_028040_Z_24; /* deprecated on SI */
 	case PIPE_FORMAT_Z32_FLOAT:
 	case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
 		return V_028040_Z_32_FLOAT;
@@ -1175,10 +1181,10 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 		case PIPE_FORMAT_Z24_UNORM_S8_UINT:
 			return V_008F14_IMG_DATA_FORMAT_8_24;
 		case PIPE_FORMAT_X8Z24_UNORM:
-		case PIPE_FORMAT_S8_UINT_Z24_UNORM:
-			return V_008F14_IMG_DATA_FORMAT_24_8;
 		case PIPE_FORMAT_X32_S8X24_UINT:
 		case PIPE_FORMAT_S8X24_UINT:
+		case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+			return V_008F14_IMG_DATA_FORMAT_24_8;
 		case PIPE_FORMAT_S8_UINT:
 			return V_008F14_IMG_DATA_FORMAT_8;
 		case PIPE_FORMAT_Z32_FLOAT:
@@ -1546,6 +1552,8 @@ static unsigned si_tile_mode_index(struct r600_resource_texture *rtex, unsigned 
 			switch (rtex->real_format) {
 			case PIPE_FORMAT_Z16_UNORM:
 				return 5;
+			case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+			case PIPE_FORMAT_X8Z24_UNORM:
 			case PIPE_FORMAT_Z24X8_UNORM:
 			case PIPE_FORMAT_Z24_UNORM_S8_UINT:
 			case PIPE_FORMAT_Z32_FLOAT:
@@ -2105,6 +2113,11 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 		case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
 			pipe_format = PIPE_FORMAT_Z32_FLOAT;
 			break;
+		case PIPE_FORMAT_X8Z24_UNORM:
+		case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+			/* Z24 is always stored like this. */
+			pipe_format = PIPE_FORMAT_Z24X8_UNORM;
+			break;
 		case PIPE_FORMAT_X24S8_UINT:
 		case PIPE_FORMAT_S8X24_UINT:
 		case PIPE_FORMAT_X32_S8X24_UINT:
@@ -2115,35 +2128,59 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	}
 
 	desc = util_format_description(pipe_format);
-	util_format_compose_swizzles(desc->swizzle, state_swizzle, swizzle);
+
+	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+		const unsigned char swizzle_xxxx[4] = {0, 0, 0, 0};
+		const unsigned char swizzle_yyyy[4] = {1, 1, 1, 1};
+
+		switch (pipe_format) {
+		case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+		case PIPE_FORMAT_X24S8_UINT:
+		case PIPE_FORMAT_X32_S8X24_UINT:
+		case PIPE_FORMAT_X8Z24_UNORM:
+			util_format_compose_swizzles(swizzle_yyyy, state_swizzle, swizzle);
+			break;
+		default:
+			util_format_compose_swizzles(swizzle_xxxx, state_swizzle, swizzle);
+		}
+	} else {
+		util_format_compose_swizzles(desc->swizzle, state_swizzle, swizzle);
+	}
 
 	first_non_void = util_format_get_first_non_void_channel(pipe_format);
-	if (first_non_void < 0) {
-		num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
-	} else if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
-		num_format = V_008F14_IMG_NUM_FORMAT_SRGB;
-	} else {
-		num_format = V_008F14_IMG_NUM_FORMAT_UNORM;
 
-		switch (desc->channel[first_non_void].type) {
-		case UTIL_FORMAT_TYPE_FLOAT:
+	switch (pipe_format) {
+	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+		num_format = V_008F14_IMG_NUM_FORMAT_UNORM;
+		break;
+	default:
+		if (first_non_void < 0) {
 			num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
-			break;
-		case UTIL_FORMAT_TYPE_SIGNED:
-			if (desc->channel[first_non_void].normalized)
-				num_format = V_008F14_IMG_NUM_FORMAT_SNORM;
-			else if (desc->channel[first_non_void].pure_integer)
-				num_format = V_008F14_IMG_NUM_FORMAT_SINT;
-			else
-				num_format = V_008F14_IMG_NUM_FORMAT_SSCALED;
-			break;
-		case UTIL_FORMAT_TYPE_UNSIGNED:
-			if (desc->channel[first_non_void].normalized)
-				num_format = V_008F14_IMG_NUM_FORMAT_UNORM;
-			else if (desc->channel[first_non_void].pure_integer)
-				num_format = V_008F14_IMG_NUM_FORMAT_UINT;
-			else
-				num_format = V_008F14_IMG_NUM_FORMAT_USCALED;
+		} else if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
+			num_format = V_008F14_IMG_NUM_FORMAT_SRGB;
+		} else {
+			num_format = V_008F14_IMG_NUM_FORMAT_UNORM;
+
+			switch (desc->channel[first_non_void].type) {
+			case UTIL_FORMAT_TYPE_FLOAT:
+				num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
+				break;
+			case UTIL_FORMAT_TYPE_SIGNED:
+				if (desc->channel[first_non_void].normalized)
+					num_format = V_008F14_IMG_NUM_FORMAT_SNORM;
+				else if (desc->channel[first_non_void].pure_integer)
+					num_format = V_008F14_IMG_NUM_FORMAT_SINT;
+				else
+					num_format = V_008F14_IMG_NUM_FORMAT_SSCALED;
+				break;
+			case UTIL_FORMAT_TYPE_UNSIGNED:
+				if (desc->channel[first_non_void].normalized)
+					num_format = V_008F14_IMG_NUM_FORMAT_UNORM;
+				else if (desc->channel[first_non_void].pure_integer)
+					num_format = V_008F14_IMG_NUM_FORMAT_UINT;
+				else
+					num_format = V_008F14_IMG_NUM_FORMAT_USCALED;
+			}
 		}
 	}
 
