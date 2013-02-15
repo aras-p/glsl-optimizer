@@ -40,6 +40,7 @@
 #include "draw_vs.h"
 #include "draw_pipe.h"
 #include "draw_fs.h"
+#include "draw_gs.h"
 
 
 /** Set to 1 to enable printing of coords before/after clipping */
@@ -596,8 +597,10 @@ clip_init_state( struct draw_stage *stage )
 {
    struct clip_stage *clipper = clip_stage( stage );
    const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
+   const struct draw_geometry_shader *gs = stage->draw->gs.geometry_shader;
    const struct draw_fragment_shader *fs = stage->draw->fs.fragment_shader;
    uint i;
+   struct tgsi_shader_info *vs_info = gs ? &gs->info : &vs->info;
 
    /* We need to know for each attribute what kind of interpolation is
     * done on it (flat, smooth or noperspective).  But the information
@@ -640,16 +643,16 @@ clip_init_state( struct draw_stage *stage )
 
    clipper->num_flat_attribs = 0;
    memset(clipper->noperspective_attribs, 0, sizeof(clipper->noperspective_attribs));
-   for (i = 0; i < vs->info.num_outputs; i++) {
+   for (i = 0; i < vs_info->num_outputs; i++) {
       /* Find the interpolation mode for a specific attribute
        */
       int interp;
 
       /* If it's gl_{Front,Back}{,Secondary}Color, pick up the mode
        * from the array we've filled before. */
-      if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
-          vs->info.output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
-         interp = indexed_interp[vs->info.output_semantic_index[i]];
+      if (vs_info->output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
+          vs_info->output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
+         interp = indexed_interp[vs_info->output_semantic_index[i]];
       } else {
          /* Otherwise, search in the FS inputs, with a decent default
           * if we don't find it.
@@ -658,8 +661,8 @@ clip_init_state( struct draw_stage *stage )
          interp = TGSI_INTERPOLATE_PERSPECTIVE;
          if (fs) {
             for (j = 0; j < fs->info.num_inputs; j++) {
-               if (vs->info.output_semantic_name[i] == fs->info.input_semantic_name[j] &&
-                   vs->info.output_semantic_index[i] == fs->info.input_semantic_index[j]) {
+               if (vs_info->output_semantic_name[i] == fs->info.input_semantic_name[j] &&
+                   vs_info->output_semantic_index[i] == fs->info.input_semantic_index[j]) {
                   interp = fs->info.input_interpolate[j];
                   break;
                }
