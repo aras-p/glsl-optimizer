@@ -108,6 +108,7 @@ error:
 void
 trace_surf_destroy(struct trace_surface *tr_surf)
 {
+   trace_context_check(tr_surf->base.context);
    pipe_resource_reference(&tr_surf->base.texture, NULL);
    pipe_surface_reference(&tr_surf->surface, NULL);
    FREE(tr_surf);

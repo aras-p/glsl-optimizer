@@ -50,10 +50,17 @@ struct trace_context
 };
 
 
+void
+trace_context_check(const struct pipe_context *pipe);
+
+
 static INLINE struct trace_context *
 trace_context(struct pipe_context *pipe)
 {
    assert(pipe);
+#ifdef DEBUG
+   trace_context_check(pipe);
+#endif
    return (struct trace_context *)pipe;
 }
 
