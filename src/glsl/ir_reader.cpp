@@ -59,6 +59,8 @@ private:
    ir_swizzle *read_swizzle(s_expression *);
    ir_constant *read_constant(s_expression *);
    ir_texture *read_texture(s_expression *);
+   ir_emit_vertex *read_emit_vertex(s_expression *);
+   ir_end_primitive *read_end_primitive(s_expression *);
 
    ir_dereference *read_dereference(s_expression *);
    ir_dereference_variable *read_var_ref(s_expression *);
@@ -355,6 +357,10 @@ ir_reader::read_instruction(s_expression *expr, ir_loop *loop_ctx)
       inst = read_return(list);
    } else if (strcmp(tag->value(), "function") == 0) {
       inst = read_function(list, false);
+   } else if (strcmp(tag->value(), "emit-vertex") == 0) {
+      inst = read_emit_vertex(list);
+   } else if (strcmp(tag->value(), "end-primitive") == 0) {
+      inst = read_end_primitive(list);
    } else {
       inst = read_rvalue(list);
       if (inst == NULL)
@@ -1064,4 +1070,28 @@ ir_reader::read_texture(s_expression *expr)
       break;
    };
    return tex;
+}
+
+ir_emit_vertex *
+ir_reader::read_emit_vertex(s_expression *expr)
+{
+   s_pattern pat[] = { "emit-vertex" };
+
+   if (MATCH(expr, pat)) {
+      return new(mem_ctx) ir_emit_vertex();
+   }
+   ir_read_error(NULL, "when reading emit-vertex");
+   return NULL;
+}
+
+ir_end_primitive *
+ir_reader::read_end_primitive(s_expression *expr)
+{
+   s_pattern pat[] = { "end-primitive" };
+
+   if (MATCH(expr, pat)) {
+      return new(mem_ctx) ir_end_primitive();
+   }
+   ir_read_error(NULL, "when reading end-primitive");
+   return NULL;
 }

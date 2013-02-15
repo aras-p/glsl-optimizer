@@ -2582,6 +2582,18 @@ vec4_visitor::visit(ir_if *ir)
 }
 
 void
+vec4_visitor::visit(ir_emit_vertex *)
+{
+   assert(!"not reached");
+}
+
+void
+vec4_visitor::visit(ir_end_primitive *)
+{
+   assert(!"not reached");
+}
+
+void
 vec4_visitor::emit_ndc_computation()
 {
    /* Get the position */

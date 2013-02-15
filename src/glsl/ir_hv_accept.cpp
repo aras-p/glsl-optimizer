@@ -415,3 +415,16 @@ ir_if::accept(ir_hierarchical_visitor *v)
 
    return v->visit_leave(this);
 }
+
+ir_visitor_status
+ir_emit_vertex::accept(ir_hierarchical_visitor *v)
+{
+   return v->visit(this);
+}
+
+
+ir_visitor_status
+ir_end_primitive::accept(ir_hierarchical_visitor *v)
+{
+   return v->visit(this);
+}

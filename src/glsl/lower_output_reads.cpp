@@ -50,6 +50,7 @@ public:
    output_read_remover();
    ~output_read_remover();
    virtual ir_visitor_status visit(class ir_dereference_variable *);
+   virtual ir_visitor_status visit(class ir_emit_vertex *);
    virtual ir_visitor_status visit_leave(class ir_return *);
    virtual ir_visitor_status visit_leave(class ir_function_signature *);
 };
@@ -117,7 +118,9 @@ copy(void *ctx, ir_variable *output, ir_variable *temp)
    return new(ctx) ir_assignment(lhs, rhs);
 }
 
-/** Insert a copy-back assignment before a "return" statement */
+/** Insert a copy-back assignment before a "return" statement or a call to
+ * EmitVertex().
+ */
 static void
 emit_return_copy(const void *key, void *data, void *closure)
 {
@@ -137,6 +140,14 @@ ir_visitor_status
 output_read_remover::visit_leave(ir_return *ir)
 {
    hash_table_call_foreach(replacements, emit_return_copy, ir);
+   return visit_continue;
+}
+
+ir_visitor_status
+output_read_remover::visit(ir_emit_vertex *ir)
+{
+   hash_table_call_foreach(replacements, emit_return_copy, ir);
+   hash_table_clear(replacements);
    return visit_continue;
 }
 

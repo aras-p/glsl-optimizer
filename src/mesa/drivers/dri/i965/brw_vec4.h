@@ -283,6 +283,8 @@ public:
    virtual void visit(ir_discard *);
    virtual void visit(ir_texture *);
    virtual void visit(ir_if *);
+   virtual void visit(ir_emit_vertex *);
+   virtual void visit(ir_end_primitive *);
    /*@}*/
 
    src_reg result;

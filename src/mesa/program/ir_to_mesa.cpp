@@ -265,6 +265,8 @@ public:
    virtual void visit(ir_discard *);
    virtual void visit(ir_texture *);
    virtual void visit(ir_if *);
+   virtual void visit(ir_emit_vertex *);
+   virtual void visit(ir_end_primitive *);
    /*@}*/
 
    src_reg result;
@@ -2250,6 +2252,18 @@ ir_to_mesa_visitor::visit(ir_if *ir)
    }
 
    if_inst = emit(ir->condition, OPCODE_ENDIF);
+}
+
+void
+ir_to_mesa_visitor::visit(ir_emit_vertex *ir)
+{
+   assert(!"Geometry shaders not supported.");
+}
+
+void
+ir_to_mesa_visitor::visit(ir_end_primitive *ir)
+{
+   assert(!"Geometry shaders not supported.");
 }
 
 ir_to_mesa_visitor::ir_to_mesa_visitor()

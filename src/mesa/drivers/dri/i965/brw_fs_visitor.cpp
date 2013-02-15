@@ -1991,6 +1991,18 @@ fs_visitor::visit(ir_function_signature *ir)
    (void)ir;
 }
 
+void
+fs_visitor::visit(ir_emit_vertex *)
+{
+   assert(!"not reached");
+}
+
+void
+fs_visitor::visit(ir_end_primitive *)
+{
+   assert(!"not reached");
+}
+
 fs_inst *
 fs_visitor::emit(fs_inst inst)
 {

@@ -539,3 +539,15 @@ ir_print_visitor::visit(ir_loop_jump *ir)
 {
    printf("%s", ir->is_break() ? "break" : "continue");
 }
+
+void
+ir_print_visitor::visit(ir_emit_vertex *ir)
+{
+   printf("(emit-vertex)");
+}
+
+void
+ir_print_visitor::visit(ir_end_primitive *ir)
+{
+   printf("(end-primitive)");
+}

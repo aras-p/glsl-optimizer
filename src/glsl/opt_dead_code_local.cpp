@@ -114,6 +114,23 @@ public:
       return visit_continue_with_parent;
    }
 
+   virtual ir_visitor_status visit(ir_emit_vertex *ir)
+   {
+      /* For the purpose of dead code elimination, emitting a vertex counts as
+       * "reading" all of the currently assigned output variables.
+       */
+      foreach_iter(exec_list_iterator, iter, *this->assignments) {
+         assignment_entry *entry = (assignment_entry *)iter.get();
+         if (entry->lhs->mode == ir_var_shader_out) {
+            if (debug)
+               printf("kill %s\n", entry->lhs->name);
+            entry->remove();
+         }
+      }
+
+      return visit_continue;
+   }
+
 private:
    exec_list *assignments;
 };

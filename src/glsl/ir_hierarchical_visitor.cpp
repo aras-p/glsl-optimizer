@@ -69,6 +69,24 @@ ir_hierarchical_visitor::visit(ir_loop_jump *ir)
 }
 
 ir_visitor_status
+ir_hierarchical_visitor::visit(ir_emit_vertex *ir)
+{
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_hierarchical_visitor::visit(ir_end_primitive *ir)
+{
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
 ir_hierarchical_visitor::visit(ir_dereference_variable *ir)
 {
    if (this->callback != NULL)
