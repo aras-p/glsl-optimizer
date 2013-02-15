@@ -270,6 +270,7 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
                                draw->pt.user.gs_constants_size,
                                vert_info,
                                prim_info,
+                               &vshader->info,
                                &gs_vert_info,
                                &gs_prim_info);
 

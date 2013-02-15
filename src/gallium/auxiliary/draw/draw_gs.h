@@ -64,6 +64,7 @@ struct draw_geometry_shader {
    unsigned in_prim_idx;
    unsigned input_vertex_stride;
    const float (*input)[4];
+   const struct tgsi_shader_info *input_info;
 };
 
 /*
@@ -76,6 +77,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
                              const unsigned constants_size[PIPE_MAX_CONSTANT_BUFFERS], 
                              const struct draw_vertex_info *input_verts,
                              const struct draw_prim_info *input_prim,
+                             const struct tgsi_shader_info *input_info,
                              struct draw_vertex_info *output_verts,
                              struct draw_prim_info *output_prims );
 
