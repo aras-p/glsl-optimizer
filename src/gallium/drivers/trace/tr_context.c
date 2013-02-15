@@ -897,7 +897,7 @@ trace_context_create_surface(struct pipe_context *_pipe,
 
    trace_dump_call_end();
 
-   result = trace_surf_create(tr_res, result);
+   result = trace_surf_create(tr_ctx, tr_res, result);
 
    return result;
 }
