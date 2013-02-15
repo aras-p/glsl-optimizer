@@ -795,8 +795,15 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       rgbFormat = MESA_FORMAT_SARGB8;
    else if (mesaVis->alphaBits == 0)
       rgbFormat = MESA_FORMAT_XRGB8888;
-   else
-      rgbFormat = MESA_FORMAT_ARGB8888;
+   else {
+      if (screen->gen >= 4) {
+         rgbFormat = MESA_FORMAT_SARGB8;
+         fb->Visual.sRGBCapable = true;
+      } else {
+         rgbFormat = MESA_FORMAT_ARGB8888;
+      }
+
+   }
 
    /* setup the hardware-based renderbuffers */
    rb = intel_create_renderbuffer(rgbFormat, num_samples);
