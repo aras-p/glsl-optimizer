@@ -2056,12 +2056,12 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       var->interpolation = INTERP_QUALIFIER_NONE;
 
    if (var->interpolation != INTERP_QUALIFIER_NONE &&
-       !(state->target == vertex_shader && var->mode == ir_var_shader_out) &&
-       !(state->target == fragment_shader && var->mode == ir_var_shader_in)) {
+       ((state->target == vertex_shader && var->mode == ir_var_shader_in) ||
+        (state->target == fragment_shader && var->mode == ir_var_shader_out))) {
       _mesa_glsl_error(loc, state,
-		       "interpolation qualifier `%s' can only be applied to "
-		       "vertex shader outputs and fragment shader inputs",
-		       var->interpolation_string());
+                       "interpolation qualifier `%s' cannot be applied to "
+                       "vertex shader inputs or fragment shader outputs",
+                       var->interpolation_string());
    }
 
    var->pixel_center_integer = qual->flags.q.pixel_center_integer;
@@ -2662,6 +2662,26 @@ ast_declarator_list::hir(exec_list *instructions,
 
       var = new(ctx) ir_variable(var_type, decl->identifier, ir_var_auto);
 
+      /* The 'varying in' and 'varying out' qualifiers can only be used with
+       * ARB_geometry_shader4 and EXT_geometry_shader4, which we don't support
+       * yet.
+       */
+      if (this->type->qualifier.flags.q.varying) {
+         if (this->type->qualifier.flags.q.in) {
+            _mesa_glsl_error(& loc, state,
+                             "`varying in' qualifier in declaration of "
+                             "`%s' only valid for geometry shaders using "
+                             "ARB_geometry_shader4 or EXT_geometry_shader4",
+                             decl->identifier);
+         } else if (this->type->qualifier.flags.q.out) {
+            _mesa_glsl_error(& loc, state,
+                             "`varying out' qualifier in declaration of "
+                             "`%s' only valid for geometry shaders using "
+                             "ARB_geometry_shader4 or EXT_geometry_shader4",
+                             decl->identifier);
+         }
+      }
+
       /* From page 22 (page 28 of the PDF) of the GLSL 1.10 specification;
        *
        *     "Global variables can only use the qualifiers const,
@@ -2906,7 +2926,7 @@ ast_declarator_list::hir(exec_list *instructions,
             }
             break;
          default:
-            assert(0);
+            break;
          }
       }
 

@@ -73,10 +73,13 @@
 #include "linker.h"
 #include "link_varyings.h"
 #include "ir_optimization.h"
+#include "ir_rvalue_visitor.h"
 
 extern "C" {
 #include "main/shaderobj.h"
 }
+
+void linker_error(gl_shader_program *, const char *, ...);
 
 /**
  * Visitor that determines whether or not a variable is ever written.
@@ -400,6 +403,24 @@ validate_fragment_shader_executable(struct gl_shader_program *prog,
       linker_error(prog,  "fragment shader writes to both "
 		   "`gl_FragColor' and `gl_FragData'\n");
    }
+}
+
+/**
+ * Verify that a geometry shader executable meets all semantic requirements
+ *
+ * Also sets prog->Geom.VerticesIn as a side effect.
+ *
+ * \param shader Geometry shader executable to be verified
+ */
+void
+validate_geometry_shader_executable(struct gl_shader_program *prog,
+				    struct gl_shader *shader)
+{
+   if (shader == NULL)
+      return;
+
+   unsigned num_vertices = vertices_per_prim(prog->Geom.InputType);
+   prog->Geom.VerticesIn = num_vertices;
 }
 
 
@@ -1613,10 +1634,14 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    unsigned num_vert_shaders = 0;
    struct gl_shader **frag_shader_list;
    unsigned num_frag_shaders = 0;
+   struct gl_shader **geom_shader_list;
+   unsigned num_geom_shaders = 0;
 
    vert_shader_list = (struct gl_shader **)
       calloc(prog->NumShaders, sizeof(struct gl_shader *));
    frag_shader_list = (struct gl_shader **)
+      calloc(prog->NumShaders, sizeof(struct gl_shader *));
+   geom_shader_list = (struct gl_shader **)
       calloc(prog->NumShaders, sizeof(struct gl_shader *));
 
    unsigned min_version = UINT_MAX;
@@ -1643,8 +1668,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 num_frag_shaders++;
 	 break;
       case GL_GEOMETRY_SHADER:
-	 /* FINISHME: Support geometry shaders. */
-	 assert(prog->Shaders[i]->Type != GL_GEOMETRY_SHADER);
+	 geom_shader_list[num_geom_shaders] = prog->Shaders[i];
+	 num_geom_shaders++;
 	 break;
       }
    }
@@ -1703,6 +1728,22 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 goto done;
 
       _mesa_reference_shader(ctx, &prog->_LinkedShaders[MESA_SHADER_FRAGMENT],
+			     sh);
+   }
+
+   if (num_geom_shaders > 0) {
+      gl_shader *const sh =
+	 link_intrastage_shaders(mem_ctx, ctx, prog, geom_shader_list,
+				 num_geom_shaders);
+
+      if (!prog->LinkStatus)
+	 goto done;
+
+      validate_geometry_shader_executable(prog, sh);
+      if (!prog->LinkStatus)
+	 goto done;
+
+      _mesa_reference_shader(ctx, &prog->_LinkedShaders[MESA_SHADER_GEOMETRY],
 			     sh);
    }
 
@@ -1792,7 +1833,11 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
             prog->_LinkedShaders[MESA_SHADER_VERTEX],
             VERT_ATTRIB_GENERIC0, VARYING_SLOT_VAR0);
    }
-   /* FINISHME: Geometry shaders not implemented yet */
+   if (prog->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL) {
+      link_invalidate_variable_locations(
+            prog->_LinkedShaders[MESA_SHADER_GEOMETRY],
+            VARYING_SLOT_VAR0, VARYING_SLOT_VAR0);
+   }
    if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL) {
       link_invalidate_variable_locations(
             prog->_LinkedShaders[MESA_SHADER_FRAGMENT],
@@ -1826,7 +1871,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
        *     non-zero, but the program object has no vertex or geometry
        *     shader;
        */
-      if (first >= MESA_SHADER_FRAGMENT) {
+      if (first == MESA_SHADER_FRAGMENT) {
          linker_error(prog, "Transform feedback varyings specified, but "
                       "no vertex or geometry shader is present.");
          goto done;
@@ -1950,6 +1995,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 done:
    free(vert_shader_list);
    free(frag_shader_list);
+   free(geom_shader_list);
 
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       if (prog->_LinkedShaders[i] == NULL)

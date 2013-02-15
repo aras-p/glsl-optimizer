@@ -2128,4 +2128,7 @@ extern void _mesa_print_ir(struct exec_list *instructions,
 } /* extern "C" */
 #endif
 
+unsigned
+vertices_per_prim(GLenum prim);
+
 #endif /* IR_H */
