@@ -1181,7 +1181,6 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 		case PIPE_FORMAT_Z24_UNORM_S8_UINT:
 			return V_008F14_IMG_DATA_FORMAT_8_24;
 		case PIPE_FORMAT_X8Z24_UNORM:
-		case PIPE_FORMAT_X32_S8X24_UINT:
 		case PIPE_FORMAT_S8X24_UINT:
 		case PIPE_FORMAT_S8_UINT_Z24_UNORM:
 			return V_008F14_IMG_DATA_FORMAT_24_8;
@@ -1189,6 +1188,7 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 			return V_008F14_IMG_DATA_FORMAT_8;
 		case PIPE_FORMAT_Z32_FLOAT:
 			return V_008F14_IMG_DATA_FORMAT_32;
+		case PIPE_FORMAT_X32_S8X24_UINT:
 		case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
 			return V_008F14_IMG_DATA_FORMAT_X24_8_32;
 		default:
