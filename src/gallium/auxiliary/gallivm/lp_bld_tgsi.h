@@ -374,6 +374,8 @@ struct lp_build_tgsi_soa_context
 
    const struct lp_build_sampler_soa *sampler;
 
+   struct tgsi_declaration_sampler_view sv[PIPE_MAX_SHADER_SAMPLER_VIEWS];
+
    LLVMValueRef immediates[LP_MAX_TGSI_IMMEDIATES][TGSI_NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TGSI_TEMPS][TGSI_NUM_CHANNELS];
    LLVMValueRef addr[LP_MAX_TGSI_ADDRS][TGSI_NUM_CHANNELS];

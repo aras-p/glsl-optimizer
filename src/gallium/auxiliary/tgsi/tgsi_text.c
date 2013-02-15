@@ -941,6 +941,17 @@ parse_instruction(
    inst.Instruction.NumDstRegs = info->num_dst;
    inst.Instruction.NumSrcRegs = info->num_src;
 
+   if (i >= TGSI_OPCODE_SAMPLE && i <= TGSI_OPCODE_GATHER4) {
+      /*
+       * These are not considered tex opcodes here (no additional
+       * target argument) however we're required to set the Texture
+       * bit so we can set the number of tex offsets (offsets aren't
+       * actually handled here yet in any case).
+       */
+      inst.Instruction.Texture = 1;
+      inst.Texture.Texture = TGSI_TEXTURE_UNKNOWN;
+   }
+
    /* Parse instruction operands.
     */
    for (i = 0; i < info->num_dst + info->num_src + info->is_tex; i++) {

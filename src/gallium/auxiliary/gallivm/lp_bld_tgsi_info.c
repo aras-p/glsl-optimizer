@@ -188,7 +188,8 @@ analyse_tex(struct analysis_context *ctx,
 static void
 analyse_sample(struct analysis_context *ctx,
                const struct tgsi_full_instruction *inst,
-               enum lp_build_tex_modifier modifier)
+               enum lp_build_tex_modifier modifier,
+               boolean shadow)
 {
    struct lp_tgsi_info *info = ctx->info;
    unsigned chan;
@@ -197,45 +198,14 @@ analyse_sample(struct analysis_context *ctx,
       struct lp_tgsi_texture_info *tex_info = &info->tex[info->num_texs];
       boolean indirect = FALSE;
       boolean shadow = FALSE;
-      unsigned readmask = 0;
+      unsigned readmask;
 
-      tex_info->target = inst->Texture.Texture;
-      switch (inst->Texture.Texture) {
-      case TGSI_TEXTURE_SHADOW1D:
-         shadow = TRUE;
-         /* Fallthrough */
-      case TGSI_TEXTURE_1D:
-         readmask = TGSI_WRITEMASK_X;
-         break;
-      case TGSI_TEXTURE_SHADOW1D_ARRAY:
-      case TGSI_TEXTURE_SHADOW2D:
-      case TGSI_TEXTURE_SHADOWRECT:
-         shadow = TRUE;
-         /* Fallthrough */
-      case TGSI_TEXTURE_1D_ARRAY:
-      case TGSI_TEXTURE_2D:
-      case TGSI_TEXTURE_RECT:
-         readmask = TGSI_WRITEMASK_XY;
-         break;
-      case TGSI_TEXTURE_SHADOW2D_ARRAY:
-      case TGSI_TEXTURE_SHADOWCUBE:
-         shadow = TRUE;
-         /* Fallthrough */
-      case TGSI_TEXTURE_2D_ARRAY:
-      case TGSI_TEXTURE_3D:
-      case TGSI_TEXTURE_CUBE:
-         readmask = TGSI_WRITEMASK_XYZ;
-         break;
-      case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
-         shadow = TRUE;
-         /* Fallthrough */
-      case TGSI_TEXTURE_CUBE_ARRAY:
-         readmask = TGSI_WRITEMASK_XYZW;
-         break;
-      default:
-         assert(0);
-         return;
-      }
+      /*
+       * We don't really get much information here, in particular not
+       * the target info, hence no useful writemask neither. Maybe should just
+       * forget the whole function.
+       */
+      readmask = TGSI_WRITEMASK_XYZW;
 
       tex_info->texture_unit = inst->Src[1].Register.Index;
       tex_info->sampler_unit = inst->Src[2].Register.Index;
@@ -327,20 +297,22 @@ analyse_instruction(struct analysis_context *ctx,
          analyse_tex(ctx, inst, LP_BLD_TEX_MODIFIER_PROJECTED);
          break;
       case TGSI_OPCODE_SAMPLE:
+         analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_NONE, FALSE);
+         break;
       case TGSI_OPCODE_SAMPLE_C:
-         analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_NONE);
+         analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_NONE, TRUE);
          break;
       case TGSI_OPCODE_SAMPLE_C_LZ:
-         analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_LOD_ZERO);
+         analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_LOD_ZERO, TRUE);
          break;
       case TGSI_OPCODE_SAMPLE_D:
-         analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV);
+         analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV, FALSE);
          break;
       case TGSI_OPCODE_SAMPLE_B:
-         analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_LOD_BIAS);
+         analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_LOD_BIAS, FALSE);
          break;
       case TGSI_OPCODE_SAMPLE_L:
-         analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_EXPLICIT_LOD);
+         analyse_sample(ctx, inst, LP_BLD_TEX_MODIFIER_EXPLICIT_LOD, FALSE);
          break;
       default:
          break;

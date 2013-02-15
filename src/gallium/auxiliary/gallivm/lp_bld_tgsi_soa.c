@@ -1343,6 +1343,7 @@ static void
 emit_sample(struct lp_build_tgsi_soa_context *bld,
             const struct tgsi_full_instruction *inst,
             enum lp_build_tex_modifier modifier,
+            boolean compare,
             LLVMValueRef *texel)
 {
    LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
@@ -1354,7 +1355,6 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    struct lp_derivatives derivs;
    unsigned num_coords, dims;
    unsigned i;
-   boolean compare = FALSE;
 
    if (!bld->sampler) {
       _debug_printf("warning: found texture instruction but no sampler generator supplied\n");
@@ -1364,37 +1364,35 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
+   /*
+    * unlike old-style tex opcodes the texture/sampler indices
+    * always come from src1 and src2 respectively.
+    */
+   texture_unit = inst->Src[1].Register.Index;
+   sampler_unit = inst->Src[2].Register.Index;
+
    derivs.ddx_ddy[0] = bld->bld_base.base.undef;
    derivs.ddx_ddy[1] = bld->bld_base.base.undef;
 
-   switch (inst->Texture.Texture) {
-   case TGSI_TEXTURE_SHADOW1D:
-      compare = TRUE;
-      /* Fallthrough */
+   /*
+    * Note inst->Texture.Texture will contain the number of offsets,
+    * however the target information is NOT there and comes from the
+    * declared sampler views instead.
+    */
+   switch (bld->sv[texture_unit].Resource) {
    case TGSI_TEXTURE_1D:
       num_coords = 1;
       dims = 1;
       break;
-   case TGSI_TEXTURE_SHADOW1D_ARRAY:
-      compare = TRUE;
-      /* Fallthrough */
    case TGSI_TEXTURE_1D_ARRAY:
       num_coords = 2;
       dims = 1;
       break;
-   case TGSI_TEXTURE_SHADOW2D:
-   case TGSI_TEXTURE_SHADOWRECT:
-      compare = TRUE;
-      /* Fallthrough */
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
       num_coords = 2;
       dims = 2;
       break;
-   case TGSI_TEXTURE_SHADOW2D_ARRAY:
-   case TGSI_TEXTURE_SHADOWCUBE:
-      compare = TRUE;
-      /* Fallthrough */
    case TGSI_TEXTURE_2D_ARRAY:
    case TGSI_TEXTURE_CUBE:
       num_coords = 3;
@@ -1404,9 +1402,6 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
       num_coords = 3;
       dims = 3;
       break;
-   case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
-      compare = TRUE;
-      /* Fallthrough */
    case TGSI_TEXTURE_CUBE_ARRAY:
       num_coords = 4;
       dims = 3;
@@ -1533,11 +1528,12 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
 }
 
 static void
-emit_txf( struct lp_build_tgsi_soa_context *bld,
-          const struct tgsi_full_instruction *inst,
-          LLVMValueRef *texel)
+emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
+                   const struct tgsi_full_instruction *inst,
+                   LLVMValueRef *texel,
+                   boolean is_samplei)
 {
-   unsigned unit;
+   unsigned unit, target;
    LLVMValueRef coord_undef = LLVMGetUndef(bld->bld_base.base.int_vec_type);
    LLVMValueRef explicit_lod = NULL;
    LLVMValueRef coords[3];
@@ -1555,10 +1551,19 @@ emit_txf( struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
+   unit = inst->Src[1].Register.Index;
+
    derivs.ddx_ddy[0] = coord_undef;
    derivs.ddx_ddy[1] = coord_undef;
 
-   switch (inst->Texture.Texture) {
+   if (is_samplei) {
+      target = bld->sv[unit].Resource;
+   }
+   else {
+      target = inst->Texture.Texture;
+   }
+
+   switch (target) {
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_BUFFER:
       num_coords = 1;
@@ -1587,7 +1592,7 @@ emit_txf( struct lp_build_tgsi_soa_context *bld,
    }
 
    /* always have lod except for buffers ? */
-   if (inst->Texture.Texture != TGSI_TEXTURE_BUFFER) {
+   if (target != TGSI_TEXTURE_BUFFER) {
       explicit_lod = lp_build_emit_fetch( &bld->bld_base, inst, 0, 3 );
    }
 
@@ -1597,8 +1602,6 @@ emit_txf( struct lp_build_tgsi_soa_context *bld,
    for (i = num_coords; i < 3; i++) {
       coords[i] = coord_undef;
    }
-
-   unit = inst->Src[1].Register.Index;
 
    if (inst->Texture.NumOffsets == 1) {
       unsigned dim;
@@ -1628,8 +1631,16 @@ emit_size_query( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef explicit_lod;
    unsigned has_lod;
    unsigned i;
+   unsigned unit = inst->Src[1].Register.Index;
+   unsigned target;
 
-   switch (inst->Texture.Texture) {
+   if (is_sviewinfo) {
+      target = bld->sv[unit].Resource;
+   }
+   else {
+      target = inst->Texture.Texture;
+   }
+   switch (target) {
    case TGSI_TEXTURE_BUFFER:
    case TGSI_TEXTURE_RECT:
    case TGSI_TEXTURE_SHADOWRECT:
@@ -1655,7 +1666,7 @@ emit_size_query( struct lp_build_tgsi_soa_context *bld,
    bld->sampler->emit_size_query(bld->sampler,
                                  bld->bld_base.base.gallivm,
                                  bld->bld_base.int_bld.type,
-                                 inst->Src[1].Register.Index,
+                                 unit,
                                  is_sviewinfo,
                                  explicit_lod,
                                  sizes_out);
@@ -1881,6 +1892,15 @@ lp_emit_declaration_soa(
                                                  "predicate");
          break;
 
+      case TGSI_FILE_SAMPLER_VIEW:
+         /*
+          * The target stored here MUST match whatever there actually
+          * is in the set sampler views (what about return type?).
+          */
+         assert(idx < PIPE_MAX_SHADER_SAMPLER_VIEWS);
+         bld->sv[idx] = decl->SamplerView;
+         break;
+
       default:
          /* don't need to declare other vars */
          break;
@@ -2055,7 +2075,18 @@ txf_emit(
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
 
-   emit_txf(bld, emit_data->inst, emit_data->output);
+   emit_fetch_texels(bld, emit_data->inst, emit_data->output, FALSE);
+}
+
+static void
+sample_i_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   emit_fetch_texels(bld, emit_data->inst, emit_data->output, TRUE);
 }
 
 static void
@@ -2067,7 +2098,7 @@ sample_emit(
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
 
    emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_NONE,
-               emit_data->output);
+               FALSE, emit_data->output);
 }
 
 static void
@@ -2079,7 +2110,7 @@ sample_b_emit(
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
 
    emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_LOD_BIAS,
-               emit_data->output);
+               FALSE, emit_data->output);
 }
 
 static void
@@ -2089,12 +2120,9 @@ sample_c_emit(
    struct lp_build_emit_data * emit_data)
 {
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
-   /*
-    * note that we can ignore this is a comparison instruction here
-    * since it should be encoded elsewhere (SHADOW target).
-    */
+
    emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_NONE,
-               emit_data->output);
+               TRUE, emit_data->output);
 }
 
 static void
@@ -2106,7 +2134,7 @@ sample_c_lz_emit(
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
 
    emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_LOD_ZERO,
-               emit_data->output);
+               TRUE, emit_data->output);
 }
 
 static void
@@ -2118,7 +2146,7 @@ sample_d_emit(
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
 
    emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV,
-               emit_data->output);
+               FALSE, emit_data->output);
 }
 
 static void
@@ -2130,7 +2158,7 @@ sample_l_emit(
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
 
    emit_sample(bld, emit_data->inst, LP_BLD_TEX_MODIFIER_EXPLICIT_LOD,
-               emit_data->output);
+               FALSE, emit_data->output);
 }
 
 static void
@@ -2522,7 +2550,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_C].emit = sample_c_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_C_LZ].emit = sample_c_lz_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_D].emit = sample_d_emit;
-   bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_I].emit = txf_emit;
+   bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_I].emit = sample_i_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_L].emit = sample_l_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_SVIEWINFO].emit = sviewinfo_emit;
 
