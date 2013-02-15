@@ -393,6 +393,8 @@ extern int INTEL_DEBUG;
  * intel_context.c:
  */
 
+extern const char *const i915_vendor_string;
+
 extern bool intelInitContext(struct intel_context *intel,
                              int api,
                              unsigned major_version,

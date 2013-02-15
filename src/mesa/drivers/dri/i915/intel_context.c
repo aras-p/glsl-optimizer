@@ -60,6 +60,7 @@
 
 int INTEL_DEBUG = (0);
 
+const char *const i915_vendor_string = "Intel Open Source Technology Center";
 
 static const GLubyte *
 intelGetString(struct gl_context * ctx, GLenum name)
@@ -70,8 +71,7 @@ intelGetString(struct gl_context * ctx, GLenum name)
 
    switch (name) {
    case GL_VENDOR:
-      return (GLubyte *) "Intel Open Source Technology Center";
-      break;
+      return (GLubyte *) i915_vendor_string;
 
    case GL_RENDERER:
       switch (intel->intelScreen->deviceID) {
