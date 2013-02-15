@@ -153,8 +153,7 @@ static int r600_init_surface(struct r600_screen *rscreen,
 		surface->flags |= RADEON_SURF_SCANOUT;
 	}
 
-	if ((ptex->bind & PIPE_BIND_DEPTH_STENCIL) &&
-	    !is_flushed_depth && is_depth) {
+	if (!is_flushed_depth && is_depth) {
 		surface->flags |= RADEON_SURF_ZBUFFER;
 
 		if (is_stencil) {

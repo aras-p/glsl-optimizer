@@ -2088,6 +2088,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	unsigned char state_swizzle[4], swizzle[4];
 	unsigned height, depth, width;
 	enum pipe_format pipe_format = state->format;
+	struct radeon_surface_level *surflevel;
 	int first_non_void;
 	uint64_t va;
 
@@ -2107,6 +2108,8 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	state_swizzle[2] = state->swizzle_b;
 	state_swizzle[3] = state->swizzle_a;
 
+	surflevel = tmp->surface.level;
+
 	/* Texturing with separate depth and stencil. */
 	if (tmp->is_depth && !tmp->is_flushing_texture) {
 		switch (pipe_format) {
@@ -2122,6 +2125,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 		case PIPE_FORMAT_S8X24_UINT:
 		case PIPE_FORMAT_X32_S8X24_UINT:
 			pipe_format = PIPE_FORMAT_S8_UINT;
+			surflevel = tmp->surface.stencil_level;
 			break;
 		default:;
 		}
@@ -2194,10 +2198,10 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	/* not supported any more */
 	//endian = si_colorformat_endian_swap(format);
 
-	width = tmp->surface.level[0].npix_x;
-	height = tmp->surface.level[0].npix_y;
-	depth = tmp->surface.level[0].npix_z;
-	pitch = tmp->surface.level[0].nblk_x * util_format_get_blockwidth(pipe_format);
+	width = surflevel[0].npix_x;
+	height = surflevel[0].npix_y;
+	depth = surflevel[0].npix_z;
+	pitch = surflevel[0].nblk_x * util_format_get_blockwidth(pipe_format);
 
 	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
 	        height = 1;
@@ -2207,7 +2211,7 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 	}
 
 	va = r600_resource_va(ctx->screen, texture);
-	va += tmp->surface.level[0].offset;
+	va += surflevel[0].offset;
 	view->state[0] = va >> 8;
 	view->state[1] = (S_008F14_BASE_ADDRESS_HI(va >> 40) |
 			  S_008F14_DATA_FORMAT(format) |
