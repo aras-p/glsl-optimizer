@@ -1910,6 +1910,14 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
       GLuint *tmp = malloc(srcW * srcH * sizeof(GLuint));
 
       if (tmp) {
+
+         newTex = alloc_texture(depthTex, srcW, srcH, GL_DEPTH_COMPONENT);
+         _mesa_ReadPixels(srcX, srcY, srcW, srcH, GL_DEPTH_COMPONENT,
+                          GL_UNSIGNED_INT, tmp);
+         setup_drawpix_texture(ctx, depthTex, newTex, GL_DEPTH_COMPONENT,
+                               srcW, srcH, GL_DEPTH_COMPONENT,
+                               GL_UNSIGNED_INT, tmp);
+
          /* texcoords (after texture allocation!) */
          {
             verts[0].s = 0.0F;
@@ -1927,15 +1935,6 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
 
          if (!blit->DepthFP)
             init_blit_depth_pixels(ctx);
-
-         /* maybe change tex format here */
-         newTex = alloc_texture(depthTex, srcW, srcH, GL_DEPTH_COMPONENT);
-
-         _mesa_ReadPixels(srcX, srcY, srcW, srcH,
-                          GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, tmp);
-
-         setup_drawpix_texture(ctx, depthTex, newTex, GL_DEPTH_COMPONENT, srcW, srcH,
-                               GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, tmp);
 
          _mesa_BindProgramARB(GL_FRAGMENT_PROGRAM_ARB, blit->DepthFP);
          _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_TRUE);
