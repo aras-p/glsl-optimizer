@@ -114,6 +114,8 @@ public:
       this->index2D = 0;
       this->type = type ? type->base_type : GLSL_TYPE_ERROR;
       this->reladdr = NULL;
+      this->reladdr2 = NULL;
+      this->has_index2 = false;
    }
 
    st_src_reg(gl_register_file file, int index, int type)
@@ -125,6 +127,8 @@ public:
       this->swizzle = SWIZZLE_XYZW;
       this->negate = 0;
       this->reladdr = NULL;
+      this->reladdr2 = NULL;
+      this->has_index2 = false;
    }
 
    st_src_reg(gl_register_file file, int index, int type, int index2D)
@@ -136,6 +140,8 @@ public:
       this->swizzle = SWIZZLE_XYZW;
       this->negate = 0;
       this->reladdr = NULL;
+      this->reladdr2 = NULL;
+      this->has_index2 = false;
    }
 
    st_src_reg()
@@ -147,6 +153,8 @@ public:
       this->swizzle = 0;
       this->negate = 0;
       this->reladdr = NULL;
+      this->reladdr2 = NULL;
+      this->has_index2 = false;
    }
 
    explicit st_src_reg(st_dst_reg reg);
@@ -159,10 +167,22 @@ public:
    int type; /** GLSL_TYPE_* from GLSL IR (enum glsl_base_type) */
    /** Register index should be offset by the integer in this reg. */
    st_src_reg *reladdr;
+   st_src_reg *reladdr2;
+   bool has_index2;
 };
 
 class st_dst_reg {
 public:
+   st_dst_reg(gl_register_file file, int writemask, int type, int index)
+   {
+      this->file = file;
+      this->index = index;
+      this->writemask = writemask;
+      this->cond_mask = COND_TR;
+      this->reladdr = NULL;
+      this->type = type;
+   }
+
    st_dst_reg(gl_register_file file, int writemask, int type)
    {
       this->file = file;
@@ -203,6 +223,8 @@ st_src_reg::st_src_reg(st_dst_reg reg)
    this->negate = 0;
    this->reladdr = reg.reladdr;
    this->index2D = 0;
+   this->reladdr2 = NULL;
+   this->has_index2 = false;
 }
 
 st_dst_reg::st_dst_reg(st_src_reg reg)
@@ -449,7 +471,8 @@ static st_src_reg undef_src = st_src_reg(PROGRAM_UNDEFINED, 0, GLSL_TYPE_ERROR);
 
 static st_dst_reg undef_dst = st_dst_reg(PROGRAM_UNDEFINED, SWIZZLE_NOOP, GLSL_TYPE_ERROR);
 
-static st_dst_reg address_reg = st_dst_reg(PROGRAM_ADDRESS, WRITEMASK_X, GLSL_TYPE_FLOAT);
+static st_dst_reg address_reg = st_dst_reg(PROGRAM_ADDRESS, WRITEMASK_X, GLSL_TYPE_FLOAT, 0);
+static st_dst_reg address_reg2 = st_dst_reg(PROGRAM_ADDRESS, WRITEMASK_X, GLSL_TYPE_FLOAT, 1);
 
 static void
 fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
@@ -515,9 +538,9 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
     * sources into temps.
     */
    num_reladdr += dst.reladdr != NULL;
-   num_reladdr += src0.reladdr != NULL;
-   num_reladdr += src1.reladdr != NULL;
-   num_reladdr += src2.reladdr != NULL;
+   num_reladdr += src0.reladdr != NULL || src0.reladdr2 != NULL;
+   num_reladdr += src1.reladdr != NULL || src1.reladdr2 != NULL;
+   num_reladdr += src2.reladdr != NULL || src2.reladdr2 != NULL;
 
    reladdr_to_temp(ir, &src2, &num_reladdr);
    reladdr_to_temp(ir, &src1, &num_reladdr);
@@ -538,9 +561,6 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
    inst->dead_mask = 0;
 
    inst->function = NULL;
-   
-   if (op == TGSI_OPCODE_ARL || op == TGSI_OPCODE_UARL)
-      this->num_address_regs = 1;
    
    /* Update indirect addressing status used by TGSI */
    if (dst.reladdr) {
@@ -764,6 +784,10 @@ glsl_to_tgsi_visitor::emit_arl(ir_instruction *ir,
 
    if (src0.type == GLSL_TYPE_INT || src0.type == GLSL_TYPE_UINT)
       op = TGSI_OPCODE_UARL;
+
+   assert(dst.file == PROGRAM_ADDRESS);
+   if (dst.index >= this->num_address_regs)
+      this->num_address_regs = dst.index + 1;
 
    emit(NULL, op, dst, src0);
 }
@@ -1328,10 +1352,11 @@ void
 glsl_to_tgsi_visitor::reladdr_to_temp(ir_instruction *ir,
         			    st_src_reg *reg, int *num_reladdr)
 {
-   if (!reg->reladdr)
+   if (!reg->reladdr && !reg->reladdr2)
       return;
 
-   emit_arl(ir, address_reg, *reg->reladdr);
+   if (reg->reladdr) emit_arl(ir, address_reg, *reg->reladdr);
+   if (reg->reladdr2) emit_arl(ir, address_reg2, *reg->reladdr2);
 
    if (*num_reladdr != 1) {
       st_src_reg temp = get_temp(glsl_type::vec4_type);
@@ -2098,14 +2123,26 @@ glsl_to_tgsi_visitor::visit(ir_dereference_array *ir)
    ir_constant *index;
    st_src_reg src;
    int element_size = type_size(ir->type);
+   bool is_2D_input;
 
    index = ir->array_index->constant_expression_value();
 
    ir->array->accept(this);
    src = this->result;
 
+   is_2D_input = this->prog->Target == GL_GEOMETRY_PROGRAM_NV &&
+                 src.file == PROGRAM_INPUT &&
+                 ir->array->ir_type != ir_type_dereference_array;
+
+   if (is_2D_input)
+      element_size = 1;
+
    if (index) {
-      src.index += index->value.i[0] * element_size;
+      if (is_2D_input) {
+         src.index2D = index->value.i[0];
+         src.has_index2 = true;
+      } else
+         src.index += index->value.i[0] * element_size;
    } else {
       /* Variable index array dereference.  It eats the "vec4" of the
        * base of the array and an index that offsets the TGSI register
@@ -2128,7 +2165,7 @@ glsl_to_tgsi_visitor::visit(ir_dereference_array *ir)
       /* If there was already a relative address register involved, add the
        * new and the old together to get the new offset.
        */
-      if (src.reladdr != NULL) {
+      if (!is_2D_input && src.reladdr != NULL) {
          st_src_reg accum_reg = get_temp(native_integers ?
                                 glsl_type::int_type : glsl_type::float_type);
 
@@ -2138,8 +2175,15 @@ glsl_to_tgsi_visitor::visit(ir_dereference_array *ir)
          index_reg = accum_reg;
       }
 
-      src.reladdr = ralloc(mem_ctx, st_src_reg);
-      memcpy(src.reladdr, &index_reg, sizeof(index_reg));
+      if (is_2D_input) {
+         src.reladdr2 = ralloc(mem_ctx, st_src_reg);
+         memcpy(src.reladdr2, &index_reg, sizeof(index_reg));
+         src.index2D = 0;
+         src.has_index2 = true;
+      } else {
+         src.reladdr = ralloc(mem_ctx, st_src_reg);
+         memcpy(src.reladdr, &index_reg, sizeof(index_reg));
+      }
    }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
@@ -3018,16 +3062,19 @@ glsl_to_tgsi_visitor::visit(ir_if *ir)
    if_inst = emit(ir->condition, TGSI_OPCODE_ENDIF);
 }
 
+
 void
 glsl_to_tgsi_visitor::visit(ir_emit_vertex *ir)
 {
-   assert(!"Geometry shaders not supported.");
+   assert(this->prog->Target == GL_GEOMETRY_PROGRAM_NV);
+   emit(ir, TGSI_OPCODE_EMIT);
 }
 
 void
 glsl_to_tgsi_visitor::visit(ir_end_primitive *ir)
 {
-   assert(!"Geometry shaders not supported.");
+   assert(this->prog->Target == GL_GEOMETRY_PROGRAM_NV);
+   emit(ir, TGSI_OPCODE_ENDPRIM);
 }
 
 glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
@@ -3440,7 +3487,8 @@ glsl_to_tgsi_visitor::copy_propagate(void)
          int acp_base = inst->src[r].index * 4;
 
          if (inst->src[r].file != PROGRAM_TEMPORARY ||
-             inst->src[r].reladdr)
+             inst->src[r].reladdr ||
+             inst->src[r].reladdr2)
             continue;
 
          /* See if we can find entries in the ACP consisting of MOVs
@@ -3475,6 +3523,8 @@ glsl_to_tgsi_visitor::copy_propagate(void)
              */
             inst->src[r].file = first->src[0].file;
             inst->src[r].index = first->src[0].index;
+            inst->src[r].index2D = first->src[0].index2D;
+            inst->src[r].has_index2 = first->src[0].has_index2;
 
             int swizzle = 0;
             for (int i = 0; i < 4; i++) {
@@ -3579,6 +3629,7 @@ glsl_to_tgsi_visitor::copy_propagate(void)
           !inst->dst.reladdr &&
           !inst->saturate &&
           !inst->src[0].reladdr &&
+          !inst->src[0].reladdr2 &&
           !inst->src[0].negate) {
          for (int i = 0; i < 4; i++) {
             if (inst->dst.writemask & (1 << i)) {
@@ -4078,7 +4129,7 @@ struct st_translate {
    struct ureg_src *immediates;
    struct ureg_dst outputs[PIPE_MAX_SHADER_OUTPUTS];
    struct ureg_src inputs[PIPE_MAX_SHADER_INPUTS];
-   struct ureg_dst address[1];
+   struct ureg_dst address[2];
    struct ureg_src samplers[PIPE_MAX_SAMPLERS];
    struct ureg_src systemValues[SYSTEM_VALUE_MAX];
 
@@ -4354,6 +4405,15 @@ static struct ureg_src
 translate_src(struct st_translate *t, const st_src_reg *src_reg)
 {
    struct ureg_src src = src_register(t, src_reg->file, src_reg->index, src_reg->index2D);
+
+   if (t->procType == TGSI_PROCESSOR_GEOMETRY && src_reg->has_index2) {
+      src = src_register(t, src_reg->file, src_reg->index, src_reg->index2D);
+      if (src_reg->reladdr2)
+         src = ureg_src_dimension_indirect(src, ureg_src(t->address[1]),
+                                           src_reg->index2D);
+      else
+         src = ureg_src_dimension(src, src_reg->index2D);
+   }
 
    src = ureg_swizzle(src,
                       GET_SWZ(src_reg->swizzle, 0) & 0x3,
@@ -4844,8 +4904,10 @@ st_translate_program(
    /* Declare address register.
     */
    if (program->num_address_regs > 0) {
-      assert(program->num_address_regs == 1);
+      assert(program->num_address_regs <= 2);
       t->address[0] = ureg_DECL_address(ureg);
+      if (program->num_address_regs == 2)
+         t->address[1] = ureg_DECL_address(ureg);
    }
 
    /* Declare misc input registers
@@ -5166,6 +5228,9 @@ get_mesa_program(struct gl_context *ctx,
    case GL_GEOMETRY_SHADER:
       stgp = (struct st_geometry_program *)prog;
       stgp->glsl_to_tgsi = v;
+      stgp->Base.InputType = shader_program->Geom.InputType;
+      stgp->Base.OutputType = shader_program->Geom.OutputType;
+      stgp->Base.VerticesOut = shader_program->Geom.VerticesOut;
       break;
    default:
       assert(!"should not be reached");
