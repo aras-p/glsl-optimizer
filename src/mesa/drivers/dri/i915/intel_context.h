@@ -395,6 +395,8 @@ extern int INTEL_DEBUG;
 
 extern const char *const i915_vendor_string;
 
+extern const char *i915_get_renderer_string(unsigned deviceID);
+
 extern bool intelInitContext(struct intel_context *intel,
                              int api,
                              unsigned major_version,

@@ -62,29 +62,37 @@ int INTEL_DEBUG = (0);
 
 const char *const i915_vendor_string = "Intel Open Source Technology Center";
 
+const char *
+i915_get_renderer_string(unsigned deviceID)
+{
+   const char *chipset;
+   static char buffer[128];
+
+   switch (deviceID) {
+#undef CHIPSET
+#define CHIPSET(id, symbol, str) case id: chipset = str; break;
+#include "pci_ids/i915_pci_ids.h"
+   default:
+      chipset = "Unknown Intel Chipset";
+      break;
+   }
+
+   (void) driGetRendererString(buffer, chipset, 0);
+   return buffer;
+}
+
 static const GLubyte *
 intelGetString(struct gl_context * ctx, GLenum name)
 {
    const struct intel_context *const intel = intel_context(ctx);
-   const char *chipset;
-   static char buffer[128];
 
    switch (name) {
    case GL_VENDOR:
       return (GLubyte *) i915_vendor_string;
 
    case GL_RENDERER:
-      switch (intel->intelScreen->deviceID) {
-#undef CHIPSET
-#define CHIPSET(id, symbol, str) case id: chipset = str; break;
-#include "pci_ids/i915_pci_ids.h"
-      default:
-         chipset = "Unknown Intel Chipset";
-         break;
-      }
-
-      (void) driGetRendererString(buffer, chipset, 0);
-      return (GLubyte *) buffer;
+      return
+         (GLubyte *) i915_get_renderer_string(intel->intelScreen->deviceID);
 
    default:
       return NULL;
