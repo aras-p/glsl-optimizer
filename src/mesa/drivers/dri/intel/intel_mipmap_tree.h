@@ -360,20 +360,6 @@ struct intel_mipmap_tree
     */
    struct intel_mipmap_tree *mcs_mt;
 
-   /**
-    * \brief The miptree contains uncompressed data that was originally
-    * ETC1/ETC2 data.
-    *
-    * On hardware that lacks support for ETC1/ETC2 textures, we do the following
-    * on calls to glCompressedTexImage2D() with an ETC1/ETC2 texture format:
-    *   1. Create a miptree whose format is a suitable uncompressed mesa format
-    *      with the wraps_etc flag set.
-    *   2. Translate the ETC1/ETC2 data into uncompressed mesa format.
-    *   3. Store the uncompressed  data into the miptree and discard the ETC1/ETC2
-    *      data.
-    */
-   bool wraps_etc;
-
    /* These are also refcounted:
     */
    GLuint refcount;

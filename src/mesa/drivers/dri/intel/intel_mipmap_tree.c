@@ -390,7 +390,6 @@ intel_miptree_create(struct intel_context *intel,
       total_height = ALIGN(total_height, 64);
    }
 
-   mt->wraps_etc = (etc_format != MESA_FORMAT_NONE) ? true : false;
    mt->etc_format = etc_format;
    mt->region = intel_region_alloc(intel->intelScreen,
 				   tiling,
@@ -1309,10 +1308,7 @@ intel_miptree_map_etc(struct intel_context *intel,
                       unsigned int level,
                       unsigned int slice)
 {
-   /* For justification see intel_mipmap_tree:wraps_etc.
-    */
-   assert(mt->wraps_etc);
-
+   assert(mt->etc_format != MESA_FORMAT_NONE);
    if (mt->etc_format == MESA_FORMAT_ETC1_RGB8) {
       assert(mt->format == MESA_FORMAT_RGBX8888_REV);
    }
@@ -1575,7 +1571,7 @@ intel_miptree_map_singlesample(struct intel_context *intel,
 
    if (mt->format == MESA_FORMAT_S8) {
       intel_miptree_map_s8(intel, mt, map, level, slice);
-   } else if (mt->wraps_etc) {
+   } else if (mt->etc_format != MESA_FORMAT_NONE) {
       intel_miptree_map_etc(intel, mt, map, level, slice);
    } else if (mt->stencil_mt) {
       intel_miptree_map_depthstencil(intel, mt, map, level, slice);
@@ -1633,7 +1629,7 @@ intel_miptree_unmap_singlesample(struct intel_context *intel,
 
    if (mt->format == MESA_FORMAT_S8) {
       intel_miptree_unmap_s8(intel, mt, map, level, slice);
-   } else if (mt->wraps_etc) {
+   } else if (mt->etc_format != MESA_FORMAT_NONE) {
       intel_miptree_unmap_etc(intel, mt, map, level, slice);
    } else if (mt->stencil_mt) {
       intel_miptree_unmap_depthstencil(intel, mt, map, level, slice);
