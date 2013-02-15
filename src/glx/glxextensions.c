@@ -87,6 +87,7 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(EXT_create_context_es2_profile), VER(0,0), Y, N, N, Y },
    { GLX(MESA_copy_sub_buffer),        VER(0,0), Y, N, N, N },
    { GLX(MESA_multithread_makecurrent),VER(0,0), Y, N, Y, N },
+   { GLX(MESA_query_renderer),         VER(0,0), Y, N, N, Y },
    { GLX(MESA_swap_control),           VER(0,0), Y, N, N, Y },
    { GLX(NV_float_buffer),             VER(0,0), N, N, N, N },
    { GLX(OML_swap_method),             VER(0,0), Y, Y, N, N },
