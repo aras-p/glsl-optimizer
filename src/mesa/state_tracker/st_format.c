@@ -1769,12 +1769,14 @@ st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
  * Called via ctx->Driver.ChooseTextureFormat().
  */
 size_t
-st_QuerySamplesForFormat(struct gl_context *ctx, GLenum internalFormat,
-                         int samples[16])
+st_QuerySamplesForFormat(struct gl_context *ctx, GLenum target,
+                         GLenum internalFormat, int samples[16])
 {
    struct st_context *st = st_context(ctx);
    enum pipe_format format;
    unsigned i, bind, num_sample_counts = 0;
+
+   (void) target;
 
    if (_mesa_is_depth_or_stencil_format(internalFormat))
       bind = PIPE_BIND_DEPTH_STENCIL;

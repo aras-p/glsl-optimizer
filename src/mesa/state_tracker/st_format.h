@@ -67,8 +67,8 @@ st_ChooseTextureFormat(struct gl_context * ctx, GLenum target,
                        GLenum format, GLenum type);
 
 size_t
-st_QuerySamplesForFormat(struct gl_context *ctx, GLenum internalFormat,
-                         int samples[16]);
+st_QuerySamplesForFormat(struct gl_context *ctx, GLenum target,
+                         GLenum internalFormat, int samples[16]);
 
 /* can we use a sampler view to translate these formats
    only used to make TFP so far */

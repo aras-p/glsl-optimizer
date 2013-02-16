@@ -195,9 +195,10 @@ struct dd_function_table {
                                      GLenum srcFormat, GLenum srcType );
 
    /**
-    * Determine sample counts support for a particular format
+    * Determine sample counts support for a particular target and format
     *
     * \param ctx            GL context
+    * \param target         GL target enum
     * \param internalFormat GL format enum
     * \param samples        Buffer to hold the returned sample counts.
     *                       Drivers \b must \b not return more than 16 counts.
@@ -207,6 +208,7 @@ struct dd_function_table {
     * \c internaFormat is not renderable, zero is returned.
     */
    size_t (*QuerySamplesForFormat)(struct gl_context *ctx,
+                                   GLenum target,
                                    GLenum internalFormat,
                                    int samples[16]);
 

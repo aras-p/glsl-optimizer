@@ -59,10 +59,12 @@
  ***************************************/
 
 static size_t
-brw_query_samples_for_format(struct gl_context *ctx, GLenum internalFormat,
-                             int samples[16])
+brw_query_samples_for_format(struct gl_context *ctx, GLenum target,
+                             GLenum internalFormat, int samples[16])
 {
    struct intel_context *intel = intel_context(ctx);
+
+   (void) target;
 
    switch (intel->gen) {
    case 7:

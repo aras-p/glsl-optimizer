@@ -59,9 +59,10 @@ _mesa_GetInternalformativ(GLenum target, GLenum internalformat, GLenum pname,
 
    case GL_TEXTURE_2D_MULTISAMPLE:
    case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
-      /* Mesa does not currently support GL_ARB_texture_multisample, so these
-       * enums are not valid on this implementation either.
-       */
+      /* These enums are only valid if ARB_texture_multisample is supported */
+      if (_mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_texture_multisample)
+         break;
+
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glGetInternalformativ(target=%s)",
@@ -96,7 +97,8 @@ _mesa_GetInternalformativ(GLenum target, GLenum internalformat, GLenum pname,
 
    switch (pname) {
    case GL_SAMPLES:
-      count = ctx->Driver.QuerySamplesForFormat(ctx, internalformat, buffer);
+      count = ctx->Driver.QuerySamplesForFormat(ctx, target,
+            internalformat, buffer);
       break;
    case GL_NUM_SAMPLE_COUNTS: {
       /* The driver can return 0, and we should pass that along to the
@@ -115,7 +117,7 @@ _mesa_GetInternalformativ(GLenum target, GLenum internalformat, GLenum pname,
        *          returned."
        */
       const size_t num_samples =
-         ctx->Driver.QuerySamplesForFormat(ctx, internalformat, buffer);
+         ctx->Driver.QuerySamplesForFormat(ctx, target, internalformat, buffer);
 
       /* QuerySamplesForFormat writes some stuff to buffer, so we have to
        * separately over-write it with the requested value.
