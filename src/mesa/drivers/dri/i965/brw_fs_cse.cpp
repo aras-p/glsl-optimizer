@@ -66,6 +66,7 @@ is_expression(const fs_inst *const inst)
    case BRW_OPCODE_LINE:
    case BRW_OPCODE_PLN:
    case BRW_OPCODE_MAD:
+   case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
    case FS_OPCODE_CINTERP:
    case FS_OPCODE_LINTERP:
       return true;
@@ -136,8 +137,10 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	    }
 
 	    /* dest <- temp */
+            assert(inst->dst.type == entry->tmp.type);
 	    fs_inst *copy = new(ralloc_parent(inst))
 	       fs_inst(BRW_OPCODE_MOV, inst->dst, entry->tmp);
+            copy->force_writemask_all = inst->force_writemask_all;
 	    inst->replace_with(copy);
 
 	    /* Appending an instruction may have changed our bblock end. */
