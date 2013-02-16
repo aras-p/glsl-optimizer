@@ -86,7 +86,17 @@ struct brw_vs_prog_key {
    GLuint userclip_planes_enabled_gen_4_5:MAX_CLIP_PLANES;
 
    GLuint copy_edgeflag:1;
+
+   /**
+    * For pre-Gen6 hardware, a bitfield indicating which texture coordinates
+    * are going to be replaced with point coordinates (as a consequence of a
+    * call to glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE)).  Because
+    * our SF thread requires exact matching between VS outputs and FS inputs,
+    * these texture coordinates will need to be unconditionally included in
+    * the VUE, even if they aren't written by the vertex shader.
+    */
    GLuint point_coord_replace:8;
+
    GLuint clamp_vertex_color:1;
 
    struct brw_sampler_prog_key_data tex;

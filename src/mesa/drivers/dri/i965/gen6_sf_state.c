@@ -78,7 +78,18 @@ get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
 
    if (slot == -1) {
       /* This attribute does not exist in the VUE--that means that the vertex
-       * shader did not write to it.  Behavior is undefined in this case, so
+       * shader did not write to it.  This means that either:
+       *
+       * (a) This attribute is a texture coordinate, and it is going to be
+       * replaced with point coordinates (as a consequence of a call to
+       * glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE)), so the
+       * hardware will ignore whatever attribute override we supply.
+       *
+       * (b) This attribute is read by the fragment shader but not written by
+       * the vertex shader, so its value is undefined.  Therefore the
+       * attribute override we supply doesn't matter.
+       *
+       * In either case the attribute override we supply doesn't matter, so
        * just reference the first available attribute.
        */
       return 0;

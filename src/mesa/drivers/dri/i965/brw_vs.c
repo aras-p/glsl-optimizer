@@ -258,15 +258,17 @@ do_vs_prog(struct brw_context *brw,
       c.prog_data.inputs_read |= VERT_BIT_EDGEFLAG;
    }
 
-   /* Put dummy slots into the VUE for the SF to put the replaced
-    * point sprite coords in.  We shouldn't need these dummy slots,
-    * which take up precious URB space, but it would mean that the SF
-    * doesn't get nice aligned pairs of input coords into output
-    * coords, which would be a pain to handle.
-    */
-   for (i = 0; i < 8; i++) {
-      if (c.key.point_coord_replace & (1 << i))
-	 c.prog_data.outputs_written |= BITFIELD64_BIT(VERT_RESULT_TEX0 + i);
+   if (intel->gen < 6) {
+      /* Put dummy slots into the VUE for the SF to put the replaced
+       * point sprite coords in.  We shouldn't need these dummy slots,
+       * which take up precious URB space, but it would mean that the SF
+       * doesn't get nice aligned pairs of input coords into output
+       * coords, which would be a pain to handle.
+       */
+      for (i = 0; i < 8; i++) {
+         if (c.key.point_coord_replace & (1 << i))
+            c.prog_data.outputs_written |= BITFIELD64_BIT(VERT_RESULT_TEX0 + i);
+      }
    }
 
    brw_compute_vue_map(brw, &c);
@@ -429,7 +431,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    key.clamp_vertex_color = ctx->Light._ClampVertexColor;
 
    /* _NEW_POINT */
-   if (ctx->Point.PointSprite) {
+   if (intel->gen < 6 && ctx->Point.PointSprite) {
       for (i = 0; i < 8; i++) {
 	 if (ctx->Point.CoordReplace[i])
 	    key.point_coord_replace |= (1 << i);
