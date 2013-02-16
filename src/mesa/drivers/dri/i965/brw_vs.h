@@ -50,13 +50,8 @@
 #define BRW_ATTRIB_WA_SIGN          32  /* interpret as signed in shader */
 #define BRW_ATTRIB_WA_SCALE         64  /* interpret as scaled in shader */
 
-struct brw_vs_prog_key {
+struct brw_vec4_prog_key {
    GLuint program_string_id;
-
-   /*
-    * Per-attribute workaround flags
-    */
-   uint8_t gl_attrib_wa_flags[VERT_ATTRIB_MAX];
 
    /**
     * True if at least one clip flag is enabled, regardless of whether the
@@ -85,6 +80,20 @@ struct brw_vs_prog_key {
     */
    GLuint userclip_planes_enabled_gen_4_5:MAX_CLIP_PLANES;
 
+   GLuint clamp_vertex_color:1;
+
+   struct brw_sampler_prog_key_data tex;
+};
+
+
+struct brw_vs_prog_key {
+   struct brw_vec4_prog_key base;
+
+   /*
+    * Per-attribute workaround flags
+    */
+   uint8_t gl_attrib_wa_flags[VERT_ATTRIB_MAX];
+
    GLuint copy_edgeflag:1;
 
    /**
@@ -96,10 +105,6 @@ struct brw_vs_prog_key {
     * the VUE, even if they aren't written by the vertex shader.
     */
    GLuint point_coord_replace:8;
-
-   GLuint clamp_vertex_color:1;
-
-   struct brw_sampler_prog_key_data tex;
 };
 
 

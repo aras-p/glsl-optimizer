@@ -286,7 +286,7 @@ do_vs_prog(struct brw_context *brw,
    }
 
    brw_compute_vue_map(brw, &prog_data.vue_map, outputs_written,
-                       c.key.userclip_active);
+                       c.key.base.userclip_active);
 
    if (0) {
       _mesa_fprint_program_opt(stdout, &c.vp->program.Base, PROG_PRINT_DEBUG,
@@ -360,7 +360,7 @@ brw_vs_debug_recompile(struct brw_context *brw,
          if (c->cache_id == BRW_VS_PROG) {
             old_key = c->key;
 
-            if (old_key->program_string_id == key->program_string_id)
+            if (old_key->base.program_string_id == key->base.program_string_id)
                break;
          }
       }
@@ -381,25 +381,26 @@ brw_vs_debug_recompile(struct brw_context *brw,
    }
 
    found |= key_debug(intel, "user clip flags",
-                      old_key->userclip_active, key->userclip_active);
+                      old_key->base.userclip_active, key->base.userclip_active);
 
    found |= key_debug(intel, "user clipping planes as push constants",
-                      old_key->nr_userclip_plane_consts,
-                      key->nr_userclip_plane_consts);
+                      old_key->base.nr_userclip_plane_consts,
+                      key->base.nr_userclip_plane_consts);
 
    found |= key_debug(intel, "clip distance enable",
-                      old_key->uses_clip_distance, key->uses_clip_distance);
+                      old_key->base.uses_clip_distance, key->base.uses_clip_distance);
    found |= key_debug(intel, "clip plane enable bitfield",
-                      old_key->userclip_planes_enabled_gen_4_5,
-                      key->userclip_planes_enabled_gen_4_5);
+                      old_key->base.userclip_planes_enabled_gen_4_5,
+                      key->base.userclip_planes_enabled_gen_4_5);
    found |= key_debug(intel, "copy edgeflag",
                       old_key->copy_edgeflag, key->copy_edgeflag);
    found |= key_debug(intel, "PointCoord replace",
                       old_key->point_coord_replace, key->point_coord_replace);
    found |= key_debug(intel, "vertex color clamping",
-                      old_key->clamp_vertex_color, key->clamp_vertex_color);
+                      old_key->base.clamp_vertex_color, key->base.clamp_vertex_color);
 
-   found |= brw_debug_recompile_sampler_key(intel, &old_key->tex, &key->tex);
+   found |= brw_debug_recompile_sampler_key(intel, &old_key->base.tex,
+                                            &key->base.tex);
 
    if (!found) {
       perf_debug("  Something else\n");
@@ -422,17 +423,17 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    /* Just upload the program verbatim for now.  Always send it all
     * the inputs it asks for, whether they are varying or not.
     */
-   key.program_string_id = vp->id;
-   key.userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
-   key.uses_clip_distance = vp->program.UsesClipDistance;
-   if (key.userclip_active && !key.uses_clip_distance) {
+   key.base.program_string_id = vp->id;
+   key.base.userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
+   key.base.uses_clip_distance = vp->program.UsesClipDistance;
+   if (key.base.userclip_active && !key.base.uses_clip_distance) {
       if (intel->gen < 6) {
-         key.nr_userclip_plane_consts
+         key.base.nr_userclip_plane_consts
             = _mesa_bitcount_64(ctx->Transform.ClipPlanesEnabled);
-         key.userclip_planes_enabled_gen_4_5
+         key.base.userclip_planes_enabled_gen_4_5
             = ctx->Transform.ClipPlanesEnabled;
       } else {
-         key.nr_userclip_plane_consts
+         key.base.nr_userclip_plane_consts
             = _mesa_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
       }
    }
@@ -444,7 +445,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    }
 
    /* _NEW_LIGHT | _NEW_BUFFERS */
-   key.clamp_vertex_color = ctx->Light._ClampVertexColor;
+   key.base.clamp_vertex_color = ctx->Light._ClampVertexColor;
 
    /* _NEW_POINT */
    if (intel->gen < 6 && ctx->Point.PointSprite) {
@@ -455,7 +456,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    }
 
    /* _NEW_TEXTURE */
-   brw_populate_sampler_prog_key_data(ctx, prog, &key.tex);
+   brw_populate_sampler_prog_key_data(ctx, prog, &key.base.tex);
 
    /* BRW_NEW_VERTICES */
    if (intel->gen < 8 && !intel->is_haswell) {
@@ -541,17 +542,17 @@ brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    memset(&key, 0, sizeof(key));
 
-   key.program_string_id = bvp->id;
-   key.clamp_vertex_color = true;
+   key.base.program_string_id = bvp->id;
+   key.base.clamp_vertex_color = true;
 
    for (int i = 0; i < MAX_SAMPLERS; i++) {
       if (vp->Base.ShadowSamplers & (1 << i)) {
          /* Assume DEPTH_TEXTURE_MODE is the default: X, X, X, 1 */
-         key.tex.swizzles[i] =
+         key.base.tex.swizzles[i] =
             MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_ONE);
       } else {
          /* Color sampler: assume no swizzling. */
-         key.tex.swizzles[i] = SWIZZLE_XYZW;
+         key.base.tex.swizzles[i] = SWIZZLE_XYZW;
       }
    }
 

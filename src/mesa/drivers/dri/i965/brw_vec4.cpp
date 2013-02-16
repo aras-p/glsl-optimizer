@@ -1415,7 +1415,7 @@ vec4_visitor::run()
    }
    base_ir = NULL;
 
-   if (c->key.userclip_active && !c->key.uses_clip_distance)
+   if (c->key.base.userclip_active && !c->key.base.uses_clip_distance)
       setup_uniform_clipplane_values();
 
    emit_urb_writes();

@@ -632,7 +632,7 @@ vec4_visitor::setup_uniform_clipplane_values()
        */
       int compacted_clipplane_index = 0;
       for (int i = 0; i < MAX_CLIP_PLANES; ++i) {
-	 if (!(c->key.userclip_planes_enabled_gen_4_5 & (1 << i)))
+	 if (!(c->key.base.userclip_planes_enabled_gen_4_5 & (1 << i)))
 	    continue;
 
 	 this->uniform_vector_size[this->uniforms] = 4;
@@ -648,7 +648,7 @@ vec4_visitor::setup_uniform_clipplane_values()
       /* In Gen6 and later, we don't compact clip planes, because this
        * simplifies the implementation of gl_ClipDistance.
        */
-      for (int i = 0; i < c->key.nr_userclip_plane_consts; ++i) {
+      for (int i = 0; i < c->key.base.nr_userclip_plane_consts; ++i) {
 	 this->uniform_vector_size[this->uniforms] = 4;
 	 this->userplane[i] = dst_reg(UNIFORM, this->uniforms);
 	 this->userplane[i].type = BRW_REGISTER_TYPE_F;
@@ -2294,7 +2294,7 @@ vec4_visitor::visit(ir_texture *ir)
 void
 vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, int sampler)
 {
-   int s = c->key.tex.swizzles[sampler];
+   int s = c->key.base.tex.swizzles[sampler];
 
    this->result = src_reg(this, ir->type);
    dst_reg swizzled_result(this->result);
@@ -2409,7 +2409,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 {
    if (intel->gen < 6 &&
        ((prog_data->vue_map.slots_valid & VARYING_BIT_PSIZ) ||
-        c->key.userclip_active || brw->has_negative_rhw_bug)) {
+        c->key.base.userclip_active || brw->has_negative_rhw_bug)) {
       dst_reg header1 = dst_reg(this, glsl_type::uvec4_type);
       dst_reg header1_w = header1;
       header1_w.writemask = WRITEMASK_W;
@@ -2426,7 +2426,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
       }
 
       current_annotation = "Clipping flags";
-      for (i = 0; i < c->key.nr_userclip_plane_consts; i++) {
+      for (i = 0; i < c->key.base.nr_userclip_plane_consts; i++) {
 	 vec4_instruction *inst;
 
 	 inst = emit(DP4(dst_null_f(), src_reg(output_reg[VARYING_SLOT_POS]),
@@ -2497,7 +2497,7 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
       clip_vertex = VARYING_SLOT_POS;
    }
 
-   for (int i = 0; i + offset < c->key.nr_userclip_plane_consts && i < 4;
+   for (int i = 0; i + offset < c->key.base.nr_userclip_plane_consts && i < 4;
         ++i) {
       emit(DP4(dst_reg(brw_writemask(reg, 1 << i)),
                src_reg(output_reg[clip_vertex]),
@@ -2518,7 +2518,7 @@ vec4_visitor::emit_generic_urb_slot(dst_reg reg, int varying)
         varying == VARYING_SLOT_COL1 ||
         varying == VARYING_SLOT_BFC0 ||
         varying == VARYING_SLOT_BFC1) &&
-       c->key.clamp_vertex_color) {
+       c->key.base.clamp_vertex_color) {
       inst->saturate = true;
    }
 }
@@ -2547,7 +2547,7 @@ vec4_visitor::emit_urb_slot(int mrf, int varying)
       break;
    case VARYING_SLOT_CLIP_DIST0:
    case VARYING_SLOT_CLIP_DIST1:
-      if (this->c->key.uses_clip_distance) {
+      if (this->c->key.base.uses_clip_distance) {
          emit_generic_urb_slot(reg, varying);
       } else {
          current_annotation = "user clip distances";
