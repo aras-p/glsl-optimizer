@@ -42,6 +42,7 @@ struct dri2_screen {
    const __DRI2configQueryExtension *config;
    const __DRItexBufferExtension *texBuffer;
    const __DRI2throttleExtension *throttle;
+   const __DRI2rendererQueryExtension *rendererQuery;
    const __DRIconfig **driver_configs;
 
    void *driver;
