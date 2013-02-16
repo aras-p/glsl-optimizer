@@ -312,12 +312,12 @@ do_vs_prog(struct brw_context *brw,
    }
 
    /* Scratch space is used for register spilling */
-   if (c.last_scratch) {
+   if (c.base.last_scratch) {
       perf_debug("Vertex shader triggered register spilling.  "
                  "Try reducing the number of live vec4 values to "
                  "improve performance.\n");
 
-      prog_data.total_scratch = brw_get_scratch_size(c.last_scratch*REG_SIZE);
+      prog_data.total_scratch = brw_get_scratch_size(c.base.last_scratch*REG_SIZE);
 
       brw_get_scratch_bo(intel, &brw->vs.scratch_bo,
 			 prog_data.total_scratch * brw->max_vs_threads);

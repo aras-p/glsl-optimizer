@@ -103,12 +103,16 @@ struct brw_vs_prog_key {
 };
 
 
+struct brw_vec4_compile {
+   GLuint last_scratch; /**< measured in 32-byte (register size) units */
+};
+
+
 struct brw_vs_compile {
+   struct brw_vec4_compile base;
    struct brw_vs_prog_key key;
 
    struct brw_vertex_program *vp;
-
-   GLuint last_scratch; /**< measured in 32-byte (register size) units */
 };
 
 const unsigned *brw_vs_emit(struct brw_context *brw,
