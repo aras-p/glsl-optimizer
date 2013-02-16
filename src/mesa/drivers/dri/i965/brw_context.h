@@ -448,7 +448,6 @@ struct brw_vs_prog_data {
    GLuint urb_entry_size;
 
    bool uses_vertexid;
-   bool userclip;
 
    int num_surfaces;
 

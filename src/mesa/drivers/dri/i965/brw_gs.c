@@ -181,9 +181,6 @@ static void populate_key( struct brw_context *brw,
       key->pv_first = true;
    }
 
-   /* CACHE_NEW_VS_PROG (part of VUE map)*/
-   key->userclip_active = brw->vs.prog_data->userclip;
-
    if (intel->gen >= 7) {
       /* On Gen7 and later, we don't use GS (yet). */
       key->need_gs_prog = false;
