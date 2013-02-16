@@ -597,31 +597,9 @@ fs_visitor::visit(ir_expression *ir)
          fs_reg packed_consts = fs_reg(this, glsl_type::float_type);
          packed_consts.type = result.type;
 
-         if (intel->gen >= 7) {
-            fs_reg const_offset_reg = fs_reg(const_offset->value.u[0] / 16);
-            fs_reg payload = fs_reg(this, glsl_type::uint_type);
-            struct brw_reg g0 = retype(brw_vec8_grf(0, 0),
-                                       BRW_REGISTER_TYPE_UD);
-            fs_inst *setup = emit(MOV(payload, fs_reg(g0)));
-            setup->force_writemask_all = true;
-            /* We don't need the second half of this vgrf to be filled with g1
-             * in the 16-wide case, but if we use force_uncompressed then live
-             * variable analysis won't consider this a def!
-             */
-
-            emit(FS_OPCODE_SET_GLOBAL_OFFSET, payload,
-                 payload, const_offset_reg);
-            emit(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7, packed_consts,
-                 surf_index, payload);
-         } else {
-            fs_reg const_offset_reg = fs_reg(const_offset->value.u[0]);
-            fs_inst *pull = emit(fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
-                                         packed_consts,
-                                         surf_index,
-                                         const_offset_reg));
-            pull->base_mrf = 14;
-            pull->mlen = 1;
-         }
+         fs_reg const_offset_reg = fs_reg(const_offset->value.u[0] & ~15);
+         emit(fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
+                      packed_consts, surf_index, const_offset_reg));
 
          packed_consts.smear = const_offset->value.u[0] % 16 / 4;
          for (int i = 0; i < ir->type->vector_elements; i++) {

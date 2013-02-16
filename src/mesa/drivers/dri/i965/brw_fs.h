@@ -334,6 +334,7 @@ public:
    void insert_gen4_pre_send_dependency_workarounds(fs_inst *inst);
    void insert_gen4_post_send_dependency_workarounds(fs_inst *inst);
    void fail(const char *msg, ...);
+   void lower_uniform_pull_constant_loads();
 
    void push_force_uncompressed();
    void pop_force_uncompressed();
