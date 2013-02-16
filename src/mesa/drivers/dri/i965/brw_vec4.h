@@ -401,11 +401,8 @@ public:
    /** Walks an exec_list of ir_instruction and sends it through this visitor. */
    void visit_instructions(const exec_list *list);
 
-   void setup_vp_regs();
    void emit_vp_sop(uint32_t condmod, dst_reg dst,
                     src_reg src0, src_reg src1, src_reg one);
-   dst_reg get_vp_dst_reg(const prog_dst_register &dst);
-   src_reg get_vp_src_reg(const prog_src_register &src);
 
    void emit_bool_to_cond_code(ir_rvalue *ir, uint32_t *predicate);
    void emit_bool_comparison(unsigned int op, dst_reg dst, src_reg src0, src_reg src1);
@@ -505,6 +502,11 @@ protected:
    virtual void emit_prolog();
    virtual void emit_program_code();
    virtual void emit_thread_end();
+
+private:
+   void setup_vp_regs();
+   dst_reg get_vp_dst_reg(const prog_dst_register &dst);
+   src_reg get_vp_src_reg(const prog_src_register &src);
 };
 
 /**

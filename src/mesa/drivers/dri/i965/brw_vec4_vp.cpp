@@ -420,7 +420,7 @@ vec4_vs_visitor::emit_program_code()
 }
 
 void
-vec4_visitor::setup_vp_regs()
+vec4_vs_visitor::setup_vp_regs()
 {
    /* PROGRAM_TEMPORARY */
    int num_temp = prog->NumTemporaries;
@@ -464,7 +464,7 @@ vec4_visitor::setup_vp_regs()
 }
 
 dst_reg
-vec4_visitor::get_vp_dst_reg(const prog_dst_register &dst)
+vec4_vs_visitor::get_vp_dst_reg(const prog_dst_register &dst)
 {
    dst_reg result;
 
@@ -498,7 +498,7 @@ vec4_visitor::get_vp_dst_reg(const prog_dst_register &dst)
 }
 
 src_reg
-vec4_visitor::get_vp_src_reg(const prog_src_register &src)
+vec4_vs_visitor::get_vp_src_reg(const prog_src_register &src)
 {
    struct gl_program_parameter_list *plist = c->vp->program.Base.Parameters;
 
