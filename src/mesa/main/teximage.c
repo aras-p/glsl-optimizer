@@ -47,6 +47,7 @@
 #include "teximage.h"
 #include "texobj.h"
 #include "texstate.h"
+#include "texstorage.h"
 #include "mtypes.h"
 #include "glformats.h"
 
@@ -4194,7 +4195,8 @@ check_multisample_target(GLuint dims, GLenum target)
 static void
 teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
                     GLint internalformat, GLsizei width, GLsizei height,
-                    GLsizei depth, GLboolean fixedsamplelocations)
+                    GLsizei depth, GLboolean fixedsamplelocations,
+                    GLboolean immutable)
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
@@ -4219,6 +4221,13 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
     * refer GL3.1 spec 4.4.4
     */
 
+   if (immutable && !_mesa_is_legal_tex_storage_format(ctx, internalformat)) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+            "%s(internalformat=%s not legal for immutable-format)",
+            func, _mesa_lookup_enum_by_nr(internalformat));
+      return;
+   }
+
    if (!is_renderable_texture_format(ctx, internalformat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
             "glTexImage%uDMultisample(internalformat=%s)",
@@ -4235,6 +4244,14 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
    }
 
    texObj = _mesa_get_current_tex_object(ctx, target);
+
+   if (immutable && (!texObj || (texObj->Name == 0))) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+            "%s(texture object 0)",
+            func);
+      return;
+   }
+
    texImage = _mesa_get_tex_image(ctx, texObj, 0, 0);
 
    if (texImage == NULL) {
@@ -4278,6 +4295,13 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
          return;
       }
 
+      /* Check if texObj->Immutable is set */
+      if (texObj->Immutable) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glTexImage%uDMultisample(immutable)",
+                     dims);
+         return;
+      }
+
       ctx->Driver.FreeTextureImageBuffer(ctx, texImage);
 
       _mesa_init_teximage_fields(ctx, texImage,
@@ -4299,6 +4323,7 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
          }
       }
 
+      texObj->Immutable = immutable;
       _mesa_update_fbo_texture(ctx, texObj, 0, 0);
    }
 }
@@ -4309,7 +4334,7 @@ _mesa_TexImage2DMultisample(GLenum target, GLsizei samples,
                             GLsizei height, GLboolean fixedsamplelocations)
 {
    teximagemultisample(2, target, samples, internalformat,
-         width, height, 1, fixedsamplelocations);
+         width, height, 1, fixedsamplelocations, GL_FALSE);
 }
 
 void GLAPIENTRY
@@ -4319,5 +4344,5 @@ _mesa_TexImage3DMultisample(GLenum target, GLsizei samples,
                             GLboolean fixedsamplelocations)
 {
    teximagemultisample(3, target, samples, internalformat,
-         width, height, depth, fixedsamplelocations);
+         width, height, depth, fixedsamplelocations, GL_FALSE);
 }
