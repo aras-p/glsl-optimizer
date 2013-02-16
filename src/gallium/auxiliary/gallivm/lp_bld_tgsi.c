@@ -310,11 +310,43 @@ lp_build_emit_fetch(
    }
 
    if (reg->Register.Absolute) {
-      res = lp_build_emit_llvm_unary(bld_base, TGSI_OPCODE_ABS, res);
+      switch (stype) {
+      case TGSI_TYPE_FLOAT:
+      case TGSI_TYPE_DOUBLE:
+      case TGSI_TYPE_UNTYPED:
+          /* modifiers on movs assume data is float */
+         res = lp_build_emit_llvm_unary(bld_base, TGSI_OPCODE_ABS, res);
+         break;
+      case TGSI_TYPE_UNSIGNED:
+      case TGSI_TYPE_SIGNED:
+      case TGSI_TYPE_VOID:
+      default:
+         /* abs modifier is only legal on floating point types */
+         assert(0);
+         break;
+      }
    }
 
    if (reg->Register.Negate) {
-      res = lp_build_negate( &bld_base->base, res );
+      switch (stype) {
+      case TGSI_TYPE_FLOAT:
+      case TGSI_TYPE_UNTYPED:
+         /* modifiers on movs assume data is float */
+         res = lp_build_negate( &bld_base->base, res );
+         break;
+      case TGSI_TYPE_DOUBLE:
+         /* no double build context */
+         assert(0);
+         break;
+      case TGSI_TYPE_SIGNED:
+         res = lp_build_negate( &bld_base->int_bld, res );
+         break;
+      case TGSI_TYPE_UNSIGNED:
+      case TGSI_TYPE_VOID:
+      default:
+         assert(0);
+         break;
+      }
    }
 
    /*

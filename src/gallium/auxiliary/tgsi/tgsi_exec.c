@@ -4150,7 +4150,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_UADD:
-      exec_vector_binary(mach, inst, micro_uadd, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_UINT);
+      exec_vector_binary(mach, inst, micro_uadd, TGSI_EXEC_DATA_INT, TGSI_EXEC_DATA_INT);
       break;
 
    case TGSI_OPCODE_UDIV:

@@ -23,6 +23,21 @@ When an instruction has a scalar result, the result is usually copied into
 each of the components of *dst*. When this happens, the result is said to be
 *replicated* to *dst*. :opcode:`RCP` is one such instruction.
 
+Modifiers
+^^^^^^^^^^^^^^^
+
+TGSI supports modifiers on inputs (as well as saturate modifier on instructions).
+
+For inputs which have a floating point type, both absolute value and negation
+modifiers are supported (with absolute value being applied first).
+TGSI_OPCODE_MOV is considered to have float input type for applying modifiers.
+
+For inputs which have signed type only the negate modifier is supported. This
+includes instructions which are otherwise ignorant if the type is signed or
+unsigned, such as TGSI_OPCODE_UADD.
+
+For inputs with unsigned type no modifiers are allowed.
+
 Instruction Set
 ---------------
 
