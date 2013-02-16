@@ -105,7 +105,8 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	    /* Match current instruction's expression against those in AEB. */
 	    if (inst->opcode == entry->generator->opcode &&
 		inst->saturate == entry->generator->saturate &&
-		operands_match(entry->generator->src, inst->src)) {
+                inst->dst.type == entry->generator->dst.type &&
+                operands_match(entry->generator->src, inst->src)) {
 
 	       found = true;
 	       progress = true;
