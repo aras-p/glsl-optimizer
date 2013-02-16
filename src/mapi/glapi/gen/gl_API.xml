@@ -8321,6 +8321,10 @@
 
 <xi:include href="ARB_texture_buffer_range.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<!-- 140. GL_ARB_texture_query_levels -->
+
+<xi:include href="ARB_texture_storage_multisample.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <!-- Non-ARB extensions sorted by extension number. -->
 
 <category name="GL_EXT_blend_color" number="2">

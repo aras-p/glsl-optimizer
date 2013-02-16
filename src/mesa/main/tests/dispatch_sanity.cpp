@@ -895,8 +895,8 @@ const struct function gl_core_functions_possible[] = {
 // { "glShaderStorageBlockBinding", 43, -1 },           // XXX: Add to xml
    { "glTexBufferRange", 43, -1 },
 // { "glTextureBufferRangeEXT", 43, -1 },               // XXX: Add to xml
-// { "glTexStorage2DMultisample", 43, -1 },             // XXX: Add to xml
-// { "glTexStorage3DMultisample", 43, -1 },             // XXX: Add to xml
+   { "glTexStorage2DMultisample", 43, -1 },
+   { "glTexStorage3DMultisample", 43, -1 },
 // { "glTextureStorage2DMultisampleEXT", 43, -1 },      // XXX: Add to xml
 // { "glTextureStorage3DMultisampleEXT", 43, -1 },      // XXX: Add to xml
 

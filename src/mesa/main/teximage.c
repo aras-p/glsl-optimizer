@@ -4346,3 +4346,23 @@ _mesa_TexImage3DMultisample(GLenum target, GLsizei samples,
    teximagemultisample(3, target, samples, internalformat,
          width, height, depth, fixedsamplelocations, GL_FALSE);
 }
+
+
+void GLAPIENTRY
+_mesa_TexStorage2DMultisample(GLenum target, GLsizei samples,
+                              GLint internalformat, GLsizei width,
+                              GLsizei height, GLboolean fixedsamplelocations)
+{
+   teximagemultisample(2, target, samples, internalformat,
+         width, height, 1, fixedsamplelocations, GL_TRUE);
+}
+
+void GLAPIENTRY
+_mesa_TexStorage3DMultisample(GLenum target, GLsizei samples,
+                              GLint internalformat, GLsizei width,
+                              GLsizei height, GLsizei depth,
+                              GLboolean fixedsamplelocations)
+{
+   teximagemultisample(3, target, samples, internalformat,
+         width, height, depth, fixedsamplelocations, GL_TRUE);
+}
