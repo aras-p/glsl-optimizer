@@ -2460,7 +2460,20 @@ fs_visitor::dump_instruction(fs_inst *inst)
        opcode_descs[inst->opcode].name) {
       printf("%s", opcode_descs[inst->opcode].name);
    } else {
-      printf("op%d", inst->opcode);
+      switch (inst->opcode) {
+      case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
+         printf("uniform_pull_const");
+         break;
+      case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7:
+         printf("uniform_pull_const_gen7");
+         break;
+      case FS_OPCODE_SET_GLOBAL_OFFSET:
+         printf("set_global_offset");
+         break;
+      default:
+         printf("op%d", inst->opcode);
+         break;
+      }
    }
    if (inst->saturate)
       printf(".sat");
@@ -2518,6 +2531,22 @@ fs_visitor::dump_instruction(fs_inst *inst)
          break;
       case BAD_FILE:
          printf("(null)");
+         break;
+      case IMM:
+         switch (inst->src[i].type) {
+         case BRW_REGISTER_TYPE_F:
+            printf("%ff", inst->src[i].imm.f);
+            break;
+         case BRW_REGISTER_TYPE_D:
+            printf("%dd", inst->src[i].imm.i);
+            break;
+         case BRW_REGISTER_TYPE_UD:
+            printf("%uu", inst->src[i].imm.u);
+            break;
+         default:
+            printf("???");
+            break;
+         }
          break;
       default:
          printf("???");
