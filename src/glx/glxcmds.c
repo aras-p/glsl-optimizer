@@ -2603,6 +2603,12 @@ static const struct name_address_pair GLX_functions[] = {
    /*** GLX_ARB_create_context and GLX_ARB_create_context_profile ***/
    GLX_FUNCTION(glXCreateContextAttribsARB),
 
+   /*** GLX_MESA_query_renderer ***/
+   GLX_FUNCTION(glXQueryRendererIntegerMESA),
+   GLX_FUNCTION(glXQueryRendererStringMESA),
+   GLX_FUNCTION(glXQueryCurrentRendererIntegerMESA),
+   GLX_FUNCTION(glXQueryCurrentRendererStringMESA),
+
    {NULL, NULL}                 /* end of list */
 };
 

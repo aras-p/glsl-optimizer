@@ -474,7 +474,12 @@ struct glx_screen_vtable {
 						 unsigned num_attrib,
 						 const uint32_t *attribs,
 						 unsigned *error);
-
+   int (*query_renderer_integer)(struct glx_screen *psc,
+                                 int attribute,
+                                 int *value);
+   int (*query_renderer_string)(struct glx_screen *psc,
+                                int attribute,
+                                const char **value);
 };
 
 struct glx_screen

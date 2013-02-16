@@ -77,6 +77,7 @@ libglx_la_SOURCES = \
 	  indirect_vertex_program.c \
 	  pixel.c \
 	  pixelstore.c \
+	  query_renderer.c \
 	  render2.c \
 	  renderpix.c \
 	  single2.c \
