@@ -337,7 +337,7 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
    GLbitfield buffer_bit = 0;
 
    if (!formats_match(buffer_bit, src_irb, dst_irb)) {
-      _mesa_delete_renderbuffer(ctx, dst_rb);
+      dst_rb->Delete(ctx, dst_rb);
       return false;
    }
 
@@ -387,7 +387,7 @@ brw_blorp_copytexsubimage(struct intel_context *intel,
                     srcX0, srcY0, dstX0, dstY0, dstX1, dstY1, false, mirror_y);
    }
 
-   _mesa_delete_renderbuffer(ctx, dst_rb);
+   dst_rb->Delete(ctx, dst_rb);
    return true;
 }
 
