@@ -469,7 +469,7 @@ nv10_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 		goto fail;
 
 	/* 3D engine. */
-	if (context_chipset(ctx) >= 0x17)
+	if (context_chipset(ctx) >= 0x17 && context_chipset(ctx) != 0x1a)
 		celsius_class = NV17_3D_CLASS;
 	else if (context_chipset(ctx) >= 0x11)
 		celsius_class = NV15_3D_CLASS;
