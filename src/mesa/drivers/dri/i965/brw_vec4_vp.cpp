@@ -84,8 +84,8 @@ vec4_visitor::emit_vertex_program_code()
    src_reg one = src_reg(this, glsl_type::float_type);
    emit(MOV(dst_reg(one), src_reg(1.0f)));
 
-   for (unsigned int insn = 0; insn < vp->Base.NumInstructions; insn++) {
-      const struct prog_instruction *vpi = &vp->Base.Instructions[insn];
+   for (unsigned int insn = 0; insn < prog->NumInstructions; insn++) {
+      const struct prog_instruction *vpi = &prog->Instructions[insn];
       base_ir = vpi;
 
       dst_reg dst;
@@ -423,7 +423,7 @@ void
 vec4_visitor::setup_vp_regs()
 {
    /* PROGRAM_TEMPORARY */
-   int num_temp = vp->Base.NumTemporaries;
+   int num_temp = prog->NumTemporaries;
    vp_temp_regs = rzalloc_array(mem_ctx, src_reg, num_temp);
    for (int i = 0; i < num_temp; i++)
       vp_temp_regs[i] = src_reg(this, glsl_type::vec4_type);

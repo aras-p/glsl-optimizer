@@ -226,7 +226,7 @@ public:
       return dst_reg(retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
    }
 
-   struct gl_vertex_program *vp;
+   struct gl_program *prog;
    struct brw_vs_compile *c;
    struct brw_vs_prog_data *prog_data;
    unsigned int sanity_param_count;

@@ -676,9 +676,9 @@ vec4_visitor::setup_builtin_uniform_values(ir_variable *ir)
        * ParameterValues directly, since unlike brw_fs.cpp, we never
        * add new state references during compile.
        */
-      int index = _mesa_add_state_reference(this->vp->Base.Parameters,
+      int index = _mesa_add_state_reference(this->prog->Parameters,
 					    (gl_state_index *)slots[i].tokens);
-      float *values = &this->vp->Base.Parameters->ParameterValues[index][0].f;
+      float *values = &this->prog->Parameters->ParameterValues[index][0].f;
 
       this->uniform_vector_size[this->uniforms] = 0;
       /* Add each of the unique swizzled channels of the element.
@@ -2078,7 +2078,7 @@ void
 vec4_visitor::visit(ir_texture *ir)
 {
    int sampler =
-      _mesa_get_sampler_uniform_value(ir->sampler, shader_prog, &vp->Base);
+      _mesa_get_sampler_uniform_value(ir->sampler, shader_prog, prog);
 
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
@@ -3004,7 +3004,7 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
    memset(this->output_reg_annotation, 0, sizeof(this->output_reg_annotation));
 
    this->c = c;
-   this->vp = &c->vp->program;
+   this->prog = &c->vp->program.Base;
    this->prog_data = &c->prog_data;
 
    this->variable_ht = hash_table_ctor(0,
