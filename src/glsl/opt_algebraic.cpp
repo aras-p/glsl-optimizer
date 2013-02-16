@@ -415,6 +415,17 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
       break;
 
+   case ir_triop_lrp:
+      /* Operands are (x, y, a). */
+      if (is_vec_zero(op_const[2])) {
+         this->progress = true;
+         return swizzle_if_required(ir, ir->operands[0]);
+      } else if (is_vec_one(op_const[2])) {
+         this->progress = true;
+         return swizzle_if_required(ir, ir->operands[1]);
+      }
+      break;
+
    default:
       break;
    }
