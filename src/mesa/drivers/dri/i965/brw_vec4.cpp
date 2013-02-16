@@ -423,8 +423,8 @@ vec4_visitor::pack_uniform_registers()
 
 	 /* Move the references to the data */
 	 for (int j = 0; j < size; j++) {
-	    c->prog_data.param[dst * 4 + new_chan[src] + j] =
-	       c->prog_data.param[src * 4 + j];
+	    prog_data->param[dst * 4 + new_chan[src] + j] =
+	       prog_data->param[src * 4 + j];
 	 }
 
 	 this->uniform_vector_size[dst] += size;
@@ -1248,12 +1248,12 @@ vec4_visitor::setup_attributes(int payload_reg)
 
    prog_data->urb_read_length = (nr_attributes + 1) / 2;
 
-   unsigned vue_entries = MAX2(nr_attributes, c->prog_data.vue_map.num_slots);
+   unsigned vue_entries = MAX2(nr_attributes, prog_data->vue_map.num_slots);
 
    if (intel->gen == 6)
-      c->prog_data.urb_entry_size = ALIGN(vue_entries, 8) / 8;
+      prog_data->urb_entry_size = ALIGN(vue_entries, 8) / 8;
    else
-      c->prog_data.urb_entry_size = ALIGN(vue_entries, 4) / 4;
+      prog_data->urb_entry_size = ALIGN(vue_entries, 4) / 4;
 
    return payload_reg + nr_attributes;
 }
@@ -1270,7 +1270,7 @@ vec4_visitor::setup_uniforms(int reg)
       for (unsigned int i = 0; i < 4; i++) {
 	 unsigned int slot = this->uniforms * 4 + i;
 	 static float zero = 0.0;
-	 c->prog_data.param[slot] = &zero;
+	 prog_data->param[slot] = &zero;
       }
 
       this->uniforms++;
@@ -1279,9 +1279,9 @@ vec4_visitor::setup_uniforms(int reg)
       reg += ALIGN(uniforms, 2) / 2;
    }
 
-   c->prog_data.nr_params = this->uniforms * 4;
+   prog_data->nr_params = this->uniforms * 4;
 
-   c->prog_data.curb_read_length = reg - 1;
+   prog_data->curb_read_length = reg - 1;
 
    return reg;
 }
@@ -1500,6 +1500,7 @@ const unsigned *
 brw_vs_emit(struct brw_context *brw,
             struct gl_shader_program *prog,
             struct brw_vs_compile *c,
+            struct brw_vs_prog_data *prog_data,
             void *mem_ctx,
             unsigned *final_assembly_size)
 {
@@ -1529,7 +1530,7 @@ brw_vs_emit(struct brw_context *brw,
       }
    }
 
-   vec4_visitor v(brw, c, prog, shader, mem_ctx);
+   vec4_visitor v(brw, c, prog_data, prog, shader, mem_ctx);
    if (!v.run()) {
       prog->LinkStatus = false;
       ralloc_strcat(&prog->InfoLog, v.fail_msg);

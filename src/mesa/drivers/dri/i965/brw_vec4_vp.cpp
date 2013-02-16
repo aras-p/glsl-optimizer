@@ -413,9 +413,9 @@ vec4_visitor::emit_vertex_program_code()
       const struct gl_program_parameter_list *params = c->vp->program.Base.Parameters;
       unsigned i;
       for (i = 0; i < params->NumParameters * 4; i++) {
-         c->prog_data.pull_param[i] = &params->ParameterValues[i / 4][i % 4].f;
+         prog_data->pull_param[i] = &params->ParameterValues[i / 4][i % 4].f;
       }
-      c->prog_data.nr_pull_params = i;
+      prog_data->nr_pull_params = i;
    }
 }
 
@@ -442,15 +442,15 @@ vec4_visitor::setup_vp_regs()
       this->uniform_size[this->uniforms] = 1; /* 1 vec4 */
       this->uniform_vector_size[this->uniforms] = components;
       for (unsigned i = 0; i < 4; i++) {
-         c->prog_data.param[this->uniforms * 4 + i] = i >= components ? 0 :
+         prog_data->param[this->uniforms * 4 + i] = i >= components ? 0 :
             &plist->ParameterValues[p][i].f;
       }
       this->uniforms++; /* counted in vec4 units */
    }
 
    /* PROGRAM_OUTPUT */
-   for (int slot = 0; slot < c->prog_data.vue_map.num_slots; slot++) {
-      int varying = c->prog_data.vue_map.slot_to_varying[slot];
+   for (int slot = 0; slot < prog_data->vue_map.num_slots; slot++) {
+      int varying = prog_data->vue_map.slot_to_varying[slot];
       if (varying == VARYING_SLOT_PSIZ)
          output_reg[varying] = dst_reg(this, glsl_type::float_type);
       else

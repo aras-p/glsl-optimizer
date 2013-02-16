@@ -105,7 +105,6 @@ struct brw_vs_prog_key {
 
 struct brw_vs_compile {
    struct brw_vs_prog_key key;
-   struct brw_vs_prog_data prog_data;
 
    struct brw_vertex_program *vp;
 
@@ -115,6 +114,7 @@ struct brw_vs_compile {
 const unsigned *brw_vs_emit(struct brw_context *brw,
                             struct gl_shader_program *prog,
                             struct brw_vs_compile *c,
+                            struct brw_vs_prog_data *prog_data,
                             void *mem_ctx,
                             unsigned *program_size);
 bool brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog);

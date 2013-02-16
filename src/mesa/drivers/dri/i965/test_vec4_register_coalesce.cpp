@@ -53,7 +53,7 @@ void register_coalesce_test::SetUp()
 
    shader_prog = ralloc(NULL, struct gl_shader_program);
 
-   v = new vec4_visitor(brw, c, shader_prog, NULL, NULL);
+   v = new vec4_visitor(brw, c, NULL, shader_prog, NULL, NULL);
 
    _mesa_init_vertex_program(ctx, &c->vp->program, GL_VERTEX_SHADER, 0);
 

@@ -227,6 +227,7 @@ do_vs_prog(struct brw_context *brw,
    GLuint program_size;
    const GLuint *program;
    struct brw_vs_compile c;
+   struct brw_vs_prog_data prog_data;
    void *mem_ctx;
    int i;
    struct gl_shader *vs = NULL;
@@ -236,6 +237,7 @@ do_vs_prog(struct brw_context *brw,
 
    memset(&c, 0, sizeof(c));
    memcpy(&c.key, key, sizeof(*key));
+   memset(&prog_data, 0, sizeof(prog_data));
 
    mem_ctx = ralloc_context(NULL);
 
@@ -259,15 +261,15 @@ do_vs_prog(struct brw_context *brw,
    /* We also upload clip plane data as uniforms */
    param_count += MAX_CLIP_PLANES * 4;
 
-   c.prog_data.param = rzalloc_array(NULL, const float *, param_count);
-   c.prog_data.pull_param = rzalloc_array(NULL, const float *, param_count);
+   prog_data.param = rzalloc_array(NULL, const float *, param_count);
+   prog_data.pull_param = rzalloc_array(NULL, const float *, param_count);
 
    GLbitfield64 outputs_written = vp->program.Base.OutputsWritten;
-   c.prog_data.inputs_read = vp->program.Base.InputsRead;
+   prog_data.inputs_read = vp->program.Base.InputsRead;
 
    if (c.key.copy_edgeflag) {
       outputs_written |= BITFIELD64_BIT(VARYING_SLOT_EDGE);
-      c.prog_data.inputs_read |= VERT_BIT_EDGEFLAG;
+      prog_data.inputs_read |= VERT_BIT_EDGEFLAG;
    }
 
    if (intel->gen < 6) {
@@ -283,7 +285,7 @@ do_vs_prog(struct brw_context *brw,
       }
    }
 
-   brw_compute_vue_map(brw, &c.prog_data.vue_map, outputs_written,
+   brw_compute_vue_map(brw, &prog_data.vue_map, outputs_written,
                        c.key.userclip_active);
 
    if (0) {
@@ -293,19 +295,19 @@ do_vs_prog(struct brw_context *brw,
 
    /* Emit GEN4 code.
     */
-   program = brw_vs_emit(brw, prog, &c, mem_ctx, &program_size);
+   program = brw_vs_emit(brw, prog, &c, &prog_data, mem_ctx, &program_size);
    if (program == NULL) {
       ralloc_free(mem_ctx);
       return false;
    }
 
-   if (c.prog_data.nr_pull_params)
-      c.prog_data.num_surfaces = 1;
+   if (prog_data.nr_pull_params)
+      prog_data.num_surfaces = 1;
    if (c.vp->program.Base.SamplersUsed)
-      c.prog_data.num_surfaces = SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT);
+      prog_data.num_surfaces = SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT);
    if (prog &&
        prog->_LinkedShaders[MESA_SHADER_VERTEX]->NumUniformBlocks) {
-      c.prog_data.num_surfaces =
+      prog_data.num_surfaces =
 	 SURF_INDEX_VS_UBO(prog->_LinkedShaders[MESA_SHADER_VERTEX]->NumUniformBlocks);
    }
 
@@ -315,16 +317,16 @@ do_vs_prog(struct brw_context *brw,
                  "Try reducing the number of live vec4 values to "
                  "improve performance.\n");
 
-      c.prog_data.total_scratch = brw_get_scratch_size(c.last_scratch*REG_SIZE);
+      prog_data.total_scratch = brw_get_scratch_size(c.last_scratch*REG_SIZE);
 
       brw_get_scratch_bo(intel, &brw->vs.scratch_bo,
-			 c.prog_data.total_scratch * brw->max_vs_threads);
+			 prog_data.total_scratch * brw->max_vs_threads);
    }
 
    brw_upload_cache(&brw->cache, BRW_VS_PROG,
 		    &c.key, sizeof(c.key),
 		    program, program_size,
-		    &c.prog_data, sizeof(c.prog_data),
+		    &prog_data, sizeof(prog_data),
 		    &brw->vs.prog_offset, &brw->vs.prog_data);
    ralloc_free(mem_ctx);
 

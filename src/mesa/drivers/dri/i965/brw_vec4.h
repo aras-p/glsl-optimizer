@@ -211,6 +211,7 @@ class vec4_visitor : public backend_visitor
 public:
    vec4_visitor(struct brw_context *brw,
                 struct brw_vs_compile *c,
+                struct brw_vs_prog_data *prog_data,
 		struct gl_shader_program *shader_prog,
 		struct brw_shader *shader,
 		void *mem_ctx);
