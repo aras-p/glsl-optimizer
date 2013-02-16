@@ -467,7 +467,32 @@ extern void glXReleaseTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer
 #endif /* GLX_EXT_texture_from_pixmap */
 
 
+#ifndef GLX_MESA_query_renderer
+#define GLX_MESA_query_renderer 1
 
+#define GLX_RENDERER_VENDOR_ID_MESA                      0x8183
+#define GLX_RENDERER_DEVICE_ID_MESA                      0x8184
+#define GLX_RENDERER_VERSION_MESA                        0x8185
+#define GLX_RENDERER_ACCELERATED_MESA                    0x8186
+#define GLX_RENDERER_VIDEO_MEMORY_MESA                   0x8187
+#define GLX_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_MESA    0x8188
+#define GLX_RENDERER_PREFERRED_PROFILE_MESA              0x8189
+#define GLX_RENDERER_OPENGL_CORE_PROFILE_VERSION_MESA    0x818A
+#define GLX_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_MESA    0x818B
+#define GLX_RENDERER_OPENGL_ES_PROFILE_VERSION_MESA      0x818C
+#define GLX_RENDERER_OPENGL_ES2_PROFILE_VERSION_MESA     0x818D
+#define GLX_RENDERER_ID_MESA                             0x818E
+
+Bool glXQueryRendererIntegerMESA(Display *dpy, int screen, int renderer, int attribute, unsigned int *value);
+Bool glXQueryCurrentRendererIntegerMESA(int attribute, unsigned int *value);
+const char *glXQueryRendererStringMESA(Display *dpy, int screen, int renderer, int attribute);
+const char *glXQueryCurrentRendererStringMESA(int attribute);
+
+typedef Bool (*PFNGLXQUERYRENDERERINTEGERMESAPROC) (Display *dpy, int screen, int renderer, int attribute, unsigned int *value);
+typedef Bool (*PFNGLXQUERYCURRENTRENDERERINTEGERMESAPROC) (int attribute, unsigned int *value);
+typedef const char *(*PFNGLXQUERYRENDERERSTRINGMESAPROC) (Display *dpy, int screen, int renderer, int attribute);
+typedef const char *(*PFNGLXQUERYCURRENTRENDERERSTRINGMESAPROC) (int attribute);
+#endif /* GLX_MESA_query_renderer */
 
 /*** Should these go here, or in another header? */
 /*
