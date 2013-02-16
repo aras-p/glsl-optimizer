@@ -223,7 +223,8 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
    inst->src[arg].file = entry->src.file;
    inst->src[arg].reg = entry->src.reg;
    inst->src[arg].reg_offset = entry->src.reg_offset;
-   inst->src[arg].smear = entry->src.smear;
+   if (entry->src.smear != -1)
+      inst->src[arg].smear = entry->src.smear;
 
    if (!inst->src[arg].abs) {
       inst->src[arg].abs = entry->src.abs;
