@@ -486,6 +486,17 @@ public:
    void dump_instructions();
 };
 
+class vec4_vs_visitor : public vec4_visitor
+{
+public:
+   vec4_vs_visitor(struct brw_context *brw,
+                   struct brw_vs_compile *c,
+                   struct brw_vs_prog_data *prog_data,
+                   struct gl_shader_program *prog,
+                   struct brw_shader *shader,
+                   void *mem_ctx);
+};
+
 /**
  * The vertex shader code generator.
  *

@@ -3033,6 +3033,17 @@ vec4_visitor::~vec4_visitor()
 }
 
 
+vec4_vs_visitor::vec4_vs_visitor(struct brw_context *brw,
+                                 struct brw_vs_compile *c,
+                                 struct brw_vs_prog_data *prog_data,
+                                 struct gl_shader_program *prog,
+                                 struct brw_shader *shader,
+                                 void *mem_ctx)
+   : vec4_visitor(brw, c, prog_data, prog, shader, mem_ctx)
+{
+}
+
+
 void
 vec4_visitor::fail(const char *format, ...)
 {

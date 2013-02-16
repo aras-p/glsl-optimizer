@@ -1532,7 +1532,7 @@ brw_vs_emit(struct brw_context *brw,
       }
    }
 
-   vec4_visitor v(brw, c, prog_data, prog, shader, mem_ctx);
+   vec4_vs_visitor v(brw, c, prog_data, prog, shader, mem_ctx);
    if (!v.run()) {
       prog->LinkStatus = false;
       ralloc_strcat(&prog->InfoLog, v.fail_msg);

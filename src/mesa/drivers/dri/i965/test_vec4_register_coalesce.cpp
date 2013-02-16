@@ -42,6 +42,19 @@ public:
    vec4_visitor *v;
 };
 
+
+class register_coalesce_vec4_visitor : public vec4_visitor
+{
+public:
+   register_coalesce_vec4_visitor(struct brw_context *brw,
+                                  struct brw_vs_compile *c,
+                                  struct gl_shader_program *shader_prog)
+      : vec4_visitor(brw, c, NULL, shader_prog, NULL, NULL)
+   {
+   }
+};
+
+
 void register_coalesce_test::SetUp()
 {
    brw = (struct brw_context *)calloc(1, sizeof(*brw));
@@ -53,7 +66,7 @@ void register_coalesce_test::SetUp()
 
    shader_prog = ralloc(NULL, struct gl_shader_program);
 
-   v = new vec4_visitor(brw, c, NULL, shader_prog, NULL, NULL);
+   v = new register_coalesce_vec4_visitor(brw, c, shader_prog);
 
    _mesa_init_vertex_program(ctx, &c->vp->program, GL_VERTEX_SHADER, 0);
 
