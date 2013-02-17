@@ -605,12 +605,12 @@ vec4_visitor::setup_uniform_values(ir_variable *ir)
 
          int i;
          for (i = 0; i < uniform_vector_size[uniforms]; i++) {
-            prog_data->param[uniforms * 4 + i] = &components->f;
+            prog_data->base.param[uniforms * 4 + i] = &components->f;
             components++;
          }
          for (; i < 4; i++) {
             static float zero = 0;
-            prog_data->param[uniforms * 4 + i] = &zero;
+            prog_data->base.param[uniforms * 4 + i] = &zero;
          }
 
          uniforms++;
@@ -639,7 +639,7 @@ vec4_visitor::setup_uniform_clipplane_values()
 	 this->userplane[compacted_clipplane_index] = dst_reg(UNIFORM, this->uniforms);
 	 this->userplane[compacted_clipplane_index].type = BRW_REGISTER_TYPE_F;
 	 for (int j = 0; j < 4; ++j) {
-	    prog_data->param[this->uniforms * 4 + j] = &clip_planes[i][j];
+	    prog_data->base.param[this->uniforms * 4 + j] = &clip_planes[i][j];
 	 }
 	 ++compacted_clipplane_index;
 	 ++this->uniforms;
@@ -653,7 +653,7 @@ vec4_visitor::setup_uniform_clipplane_values()
 	 this->userplane[i] = dst_reg(UNIFORM, this->uniforms);
 	 this->userplane[i].type = BRW_REGISTER_TYPE_F;
 	 for (int j = 0; j < 4; ++j) {
-	    prog_data->param[this->uniforms * 4 + j] = &clip_planes[i][j];
+	    prog_data->base.param[this->uniforms * 4 + j] = &clip_planes[i][j];
 	 }
 	 ++this->uniforms;
       }
@@ -689,7 +689,7 @@ vec4_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	 int swiz = GET_SWZ(slots[i].swizzle, j);
 	 last_swiz = swiz;
 
-	 prog_data->param[this->uniforms * 4 + j] = &values[swiz];
+	 prog_data->base.param[this->uniforms * 4 + j] = &values[swiz];
 	 if (swiz <= last_swiz)
 	    this->uniform_vector_size[this->uniforms]++;
       }
@@ -2408,7 +2408,7 @@ void
 vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 {
    if (intel->gen < 6 &&
-       ((prog_data->vue_map.slots_valid & VARYING_BIT_PSIZ) ||
+       ((prog_data->base.vue_map.slots_valid & VARYING_BIT_PSIZ) ||
         c->key.base.userclip_active || brw->has_negative_rhw_bug)) {
       dst_reg header1 = dst_reg(this, glsl_type::uvec4_type);
       dst_reg header1_w = header1;
@@ -2417,7 +2417,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 
       emit(MOV(header1, 0u));
 
-      if (prog_data->vue_map.slots_valid & VARYING_BIT_PSIZ) {
+      if (prog_data->base.vue_map.slots_valid & VARYING_BIT_PSIZ) {
 	 src_reg psiz = src_reg(output_reg[VARYING_SLOT_PSIZ]);
 
 	 current_annotation = "Point size";
@@ -2462,7 +2462,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
       emit(MOV(retype(reg, BRW_REGISTER_TYPE_UD), 0u));
    } else {
       emit(MOV(retype(reg, BRW_REGISTER_TYPE_D), src_reg(0)));
-      if (prog_data->vue_map.slots_valid & VARYING_BIT_PSIZ) {
+      if (prog_data->base.vue_map.slots_valid & VARYING_BIT_PSIZ) {
          emit(MOV(brw_writemask(reg, WRITEMASK_W),
                   src_reg(output_reg[VARYING_SLOT_PSIZ])));
       }
@@ -2493,7 +2493,7 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
     * if the user wrote to it; otherwise we use gl_Position.
     */
    gl_varying_slot clip_vertex = VARYING_SLOT_CLIP_VERTEX;
-   if (!(prog_data->vue_map.slots_valid & VARYING_BIT_CLIP_VERTEX)) {
+   if (!(prog_data->base.vue_map.slots_valid & VARYING_BIT_CLIP_VERTEX)) {
       clip_vertex = VARYING_SLOT_POS;
    }
 
@@ -2632,8 +2632,8 @@ vec4_visitor::emit_urb_writes()
 
    /* Set up the VUE data for the first URB write */
    int slot;
-   for (slot = 0; slot < prog_data->vue_map.num_slots; ++slot) {
-      emit_urb_slot(mrf++, prog_data->vue_map.slot_to_varying[slot]);
+   for (slot = 0; slot < prog_data->base.vue_map.num_slots; ++slot) {
+      emit_urb_slot(mrf++, prog_data->base.vue_map.slot_to_varying[slot]);
 
       /* If this was max_usable_mrf, we can't fit anything more into this URB
        * WRITE.
@@ -2644,7 +2644,7 @@ vec4_visitor::emit_urb_writes()
       }
    }
 
-   bool eot = slot >= prog_data->vue_map.num_slots;
+   bool eot = slot >= prog_data->base.vue_map.num_slots;
    if (eot) {
       if (INTEL_DEBUG & DEBUG_SHADER_TIME)
          emit_shader_time_end();
@@ -2659,10 +2659,10 @@ vec4_visitor::emit_urb_writes()
    if (!inst->eot) {
       mrf = base_mrf + 1;
 
-      for (; slot < prog_data->vue_map.num_slots; ++slot) {
+      for (; slot < prog_data->base.vue_map.num_slots; ++slot) {
 	 assert(mrf < max_usable_mrf);
 
-         emit_urb_slot(mrf++, prog_data->vue_map.slot_to_varying[slot]);
+         emit_urb_slot(mrf++, prog_data->base.vue_map.slot_to_varying[slot]);
       }
 
       if (INTEL_DEBUG & DEBUG_SHADER_TIME)
@@ -2938,12 +2938,13 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
 	  * add it.
 	  */
 	 if (pull_constant_loc[uniform] == -1) {
-	    const float **values = &prog_data->param[uniform * 4];
+	    const float **values = &prog_data->base.param[uniform * 4];
 
-	    pull_constant_loc[uniform] = prog_data->nr_pull_params / 4;
+	    pull_constant_loc[uniform] = prog_data->base.nr_pull_params / 4;
 
 	    for (int j = 0; j < uniform_size[uniform] * 4; j++) {
-	       prog_data->pull_param[prog_data->nr_pull_params++] = values[j];
+	       prog_data->base.pull_param[prog_data->base.nr_pull_params++]
+                  = values[j];
 	    }
 	 }
 

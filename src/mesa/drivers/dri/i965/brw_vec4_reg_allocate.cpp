@@ -76,7 +76,7 @@ vec4_visitor::reg_allocate_trivial()
 	 next += this->virtual_grf_sizes[i];
       }
    }
-   prog_data->total_grf = next;
+   prog_data->base.total_grf = next;
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       vec4_instruction *inst = (vec4_instruction *)iter.get();
@@ -87,9 +87,9 @@ vec4_visitor::reg_allocate_trivial()
       assign(hw_reg_mapping, &inst->src[2]);
    }
 
-   if (prog_data->total_grf > max_grf) {
+   if (prog_data->base.total_grf > max_grf) {
       fail("Ran out of regs on trivial allocator (%d/%d)\n",
-	   prog_data->total_grf, max_grf);
+	   prog_data->base.total_grf, max_grf);
       return false;
    }
 
@@ -221,12 +221,12 @@ vec4_visitor::reg_allocate()
     * regs in the register classes back down to real hardware reg
     * numbers.
     */
-   prog_data->total_grf = first_assigned_grf;
+   prog_data->base.total_grf = first_assigned_grf;
    for (int i = 0; i < virtual_grf_count; i++) {
       int reg = ra_get_node_reg(g, i);
 
       hw_reg_mapping[i] = first_assigned_grf + brw->vs.ra_reg_to_grf[reg];
-      prog_data->total_grf = MAX2(prog_data->total_grf,
+      prog_data->base.total_grf = MAX2(prog_data->base.total_grf,
 				  hw_reg_mapping[i] + virtual_grf_sizes[i]);
    }
 

@@ -435,10 +435,11 @@ struct brw_gs_prog_data {
    unsigned svbi_postincrement_value;
 };
 
-/* Note: brw_vs_prog_data_compare() must be updated when adding fields to this
- * struct!
+
+/* Note: brw_vec4_prog_data_compare() must be updated when adding fields to
+ * this struct!
  */
-struct brw_vs_prog_data {
+struct brw_vec4_prog_data {
    struct brw_vue_map vue_map;
 
    GLuint curb_read_length;
@@ -448,19 +449,29 @@ struct brw_vs_prog_data {
    GLuint nr_pull_params; /**< number of dwords referenced by pull_param[] */
    GLuint total_scratch;
 
-   GLbitfield64 inputs_read;
-
-   /* Used for calculating urb partitions:
+   /* Used for calculating urb partitions.  In the VS, this is the size of the
+    * URB entry used for both input and output to the thread.  In the GS, this
+    * is the size of the URB entry used for output.
     */
    GLuint urb_entry_size;
 
-   bool uses_vertexid;
-
    int num_surfaces;
 
-   /* These pointers must appear last.  See brw_vs_prog_data_compare(). */
+   /* These pointers must appear last.  See brw_vec4_prog_data_compare(). */
    const float **param;
    const float **pull_param;
+};
+
+
+/* Note: brw_vs_prog_data_compare() must be updated when adding fields to this
+ * struct!
+ */
+struct brw_vs_prog_data {
+   struct brw_vec4_prog_data base;
+
+   GLbitfield64 inputs_read;
+
+   bool uses_vertexid;
 };
 
 /** Number of texture sampler units */

@@ -423,8 +423,8 @@ vec4_visitor::pack_uniform_registers()
 
 	 /* Move the references to the data */
 	 for (int j = 0; j < size; j++) {
-	    prog_data->param[dst * 4 + new_chan[src] + j] =
-	       prog_data->param[src * 4 + j];
+	    prog_data->base.param[dst * 4 + new_chan[src] + j] =
+	       prog_data->base.param[src * 4 + j];
 	 }
 
 	 this->uniform_vector_size[dst] += size;
@@ -575,16 +575,16 @@ vec4_visitor::move_push_constants_to_pull_constants()
       pull_constant_loc[i / 4] = -1;
 
       if (i >= max_uniform_components) {
-	 const float **values = &prog_data->param[i];
+	 const float **values = &prog_data->base.param[i];
 
 	 /* Try to find an existing copy of this uniform in the pull
 	  * constants if it was part of an array access already.
 	  */
-	 for (unsigned int j = 0; j < prog_data->nr_pull_params; j += 4) {
+	 for (unsigned int j = 0; j < prog_data->base.nr_pull_params; j += 4) {
 	    int matches;
 
 	    for (matches = 0; matches < 4; matches++) {
-	       if (prog_data->pull_param[j + matches] != values[matches])
+	       if (prog_data->base.pull_param[j + matches] != values[matches])
 		  break;
 	    }
 
@@ -595,11 +595,11 @@ vec4_visitor::move_push_constants_to_pull_constants()
 	 }
 
 	 if (pull_constant_loc[i / 4] == -1) {
-	    assert(prog_data->nr_pull_params % 4 == 0);
-	    pull_constant_loc[i / 4] = prog_data->nr_pull_params / 4;
+	    assert(prog_data->base.nr_pull_params % 4 == 0);
+	    pull_constant_loc[i / 4] = prog_data->base.nr_pull_params / 4;
 
 	    for (int j = 0; j < 4; j++) {
-	       prog_data->pull_param[prog_data->nr_pull_params++] = values[j];
+	       prog_data->base.pull_param[prog_data->base.nr_pull_params++] = values[j];
 	    }
 	 }
       }
@@ -659,7 +659,8 @@ vec4_visitor::opt_set_dependency_control()
 
    cfg_t cfg(this);
 
-   assert(prog_data->total_grf || !"Must be called after register allocation");
+   assert(prog_data->base.total_grf ||
+          !"Must be called after register allocation");
 
    for (int i = 0; i < cfg.num_blocks; i++) {
       bblock_t *bblock = cfg.blocks[i];
@@ -1246,14 +1247,15 @@ vec4_visitor::setup_attributes(int payload_reg)
    if (nr_attributes == 0)
       nr_attributes = 1;
 
-   prog_data->urb_read_length = (nr_attributes + 1) / 2;
+   prog_data->base.urb_read_length = (nr_attributes + 1) / 2;
 
-   unsigned vue_entries = MAX2(nr_attributes, prog_data->vue_map.num_slots);
+   unsigned vue_entries =
+      MAX2(nr_attributes, prog_data->base.vue_map.num_slots);
 
    if (intel->gen == 6)
-      prog_data->urb_entry_size = ALIGN(vue_entries, 8) / 8;
+      prog_data->base.urb_entry_size = ALIGN(vue_entries, 8) / 8;
    else
-      prog_data->urb_entry_size = ALIGN(vue_entries, 4) / 4;
+      prog_data->base.urb_entry_size = ALIGN(vue_entries, 4) / 4;
 
    return payload_reg + nr_attributes;
 }
@@ -1270,7 +1272,7 @@ vec4_visitor::setup_uniforms(int reg)
       for (unsigned int i = 0; i < 4; i++) {
 	 unsigned int slot = this->uniforms * 4 + i;
 	 static float zero = 0.0;
-	 prog_data->param[slot] = &zero;
+	 prog_data->base.param[slot] = &zero;
       }
 
       this->uniforms++;
@@ -1279,9 +1281,9 @@ vec4_visitor::setup_uniforms(int reg)
       reg += ALIGN(uniforms, 2) / 2;
    }
 
-   prog_data->nr_params = this->uniforms * 4;
+   prog_data->base.nr_params = this->uniforms * 4;
 
-   prog_data->curb_read_length = reg - 1;
+   prog_data->base.curb_read_length = reg - 1;
 
    return reg;
 }

@@ -54,7 +54,7 @@ gen6_upload_urb( struct brw_context *brw )
    int total_urb_size = brw->urb.size * 1024; /* in bytes */
 
    /* CACHE_NEW_VS_PROG */
-   unsigned vs_size = MAX2(brw->vs.prog_data->urb_entry_size, 1);
+   unsigned vs_size = MAX2(brw->vs.prog_data->base.urb_entry_size, 1);
 
    /* We use the same VUE layout for VS outputs and GS outputs (as it's what
     * the SF and Clipper expect), so we can simply make the GS URB entry size

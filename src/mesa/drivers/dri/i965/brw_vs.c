@@ -197,15 +197,13 @@ gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx)
    }
 }
 
-bool
-brw_vs_prog_data_compare(const void *in_a, const void *in_b,
-                         int aux_size, const void *in_key)
-{
-   const struct brw_vs_prog_data *a = in_a;
-   const struct brw_vs_prog_data *b = in_b;
 
+bool
+brw_vec4_prog_data_compare(const struct brw_vec4_prog_data *a,
+                           const struct brw_vec4_prog_data *b)
+{
    /* Compare all the struct up to the pointers. */
-   if (memcmp(a, b, offsetof(struct brw_vs_prog_data, param)))
+   if (memcmp(a, b, offsetof(struct brw_vec4_prog_data, param)))
       return false;
 
    if (memcmp(a->param, b->param, a->nr_params * sizeof(void *)))
@@ -213,6 +211,28 @@ brw_vs_prog_data_compare(const void *in_a, const void *in_b,
 
    if (memcmp(a->pull_param, b->pull_param, a->nr_pull_params * sizeof(void *)))
       return false;
+
+   return true;
+}
+
+
+bool
+brw_vs_prog_data_compare(const void *in_a, const void *in_b,
+                         int aux_size, const void *in_key)
+{
+   const struct brw_vs_prog_data *a = in_a;
+   const struct brw_vs_prog_data *b = in_b;
+
+   /* Compare the base vec4 structure. */
+   if (!brw_vec4_prog_data_compare(&a->base, &b->base))
+      return false;
+
+   /* Compare the rest of the struct. */
+   const unsigned offset = sizeof(struct brw_vec4_prog_data);
+   if (memcmp(((char *) &a) + offset, ((char *) &b) + offset,
+              sizeof(struct brw_vs_prog_data) - offset)) {
+      return false;
+   }
 
    return true;
 }
@@ -261,8 +281,8 @@ do_vs_prog(struct brw_context *brw,
    /* We also upload clip plane data as uniforms */
    param_count += MAX_CLIP_PLANES * 4;
 
-   prog_data.param = rzalloc_array(NULL, const float *, param_count);
-   prog_data.pull_param = rzalloc_array(NULL, const float *, param_count);
+   prog_data.base.param = rzalloc_array(NULL, const float *, param_count);
+   prog_data.base.pull_param = rzalloc_array(NULL, const float *, param_count);
 
    GLbitfield64 outputs_written = vp->program.Base.OutputsWritten;
    prog_data.inputs_read = vp->program.Base.InputsRead;
@@ -285,7 +305,7 @@ do_vs_prog(struct brw_context *brw,
       }
    }
 
-   brw_compute_vue_map(brw, &prog_data.vue_map, outputs_written,
+   brw_compute_vue_map(brw, &prog_data.base.vue_map, outputs_written,
                        c.key.base.userclip_active);
 
    if (0) {
@@ -301,13 +321,13 @@ do_vs_prog(struct brw_context *brw,
       return false;
    }
 
-   if (prog_data.nr_pull_params)
-      prog_data.num_surfaces = 1;
+   if (prog_data.base.nr_pull_params)
+      prog_data.base.num_surfaces = 1;
    if (c.vp->program.Base.SamplersUsed)
-      prog_data.num_surfaces = SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT);
+      prog_data.base.num_surfaces = SURF_INDEX_VS_TEXTURE(BRW_MAX_TEX_UNIT);
    if (prog &&
        prog->_LinkedShaders[MESA_SHADER_VERTEX]->NumUniformBlocks) {
-      prog_data.num_surfaces =
+      prog_data.base.num_surfaces =
 	 SURF_INDEX_VS_UBO(prog->_LinkedShaders[MESA_SHADER_VERTEX]->NumUniformBlocks);
    }
 
@@ -317,10 +337,11 @@ do_vs_prog(struct brw_context *brw,
                  "Try reducing the number of live vec4 values to "
                  "improve performance.\n");
 
-      prog_data.total_scratch = brw_get_scratch_size(c.base.last_scratch*REG_SIZE);
+      prog_data.base.total_scratch
+         = brw_get_scratch_size(c.base.last_scratch*REG_SIZE);
 
       brw_get_scratch_bo(intel, &brw->vs.scratch_bo,
-			 prog_data.total_scratch * brw->max_vs_threads);
+			 prog_data.base.total_scratch * brw->max_vs_threads);
    }
 
    brw_upload_cache(&brw->cache, BRW_VS_PROG,
@@ -503,9 +524,9 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 
       assert(success);
    }
-   if (memcmp(&brw->vs.prog_data->vue_map, &brw->vue_map_geom_out,
+   if (memcmp(&brw->vs.prog_data->base.vue_map, &brw->vue_map_geom_out,
               sizeof(brw->vue_map_geom_out)) != 0) {
-      brw->vue_map_geom_out = brw->vs.prog_data->vue_map;
+      brw->vue_map_geom_out = brw->vs.prog_data->base.vue_map;
       brw->state.dirty.brw |= BRW_NEW_VUE_MAP_GEOM_OUT;
    }
 }
@@ -564,11 +585,19 @@ brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    return success;
 }
 
+
+void
+brw_vec4_prog_data_free(const struct brw_vec4_prog_data *prog_data)
+{
+   ralloc_free((void *)prog_data->param);
+   ralloc_free((void *)prog_data->pull_param);
+}
+
+
 void
 brw_vs_prog_data_free(const void *in_prog_data)
 {
    const struct brw_vs_prog_data *prog_data = in_prog_data;
 
-   ralloc_free((void *)prog_data->param);
-   ralloc_free((void *)prog_data->pull_param);
+   brw_vec4_prog_data_free(&prog_data->base);
 }

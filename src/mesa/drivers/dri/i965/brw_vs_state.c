@@ -47,7 +47,8 @@ brw_upload_vs_unit(struct brw_context *brw)
    memset(vs, 0, sizeof(*vs));
 
    /* BRW_NEW_PROGRAM_CACHE | CACHE_NEW_VS_PROG */
-   vs->thread0.grf_reg_count = ALIGN(brw->vs.prog_data->total_grf, 16) / 16 - 1;
+   vs->thread0.grf_reg_count =
+      ALIGN(brw->vs.prog_data->base.total_grf, 16) / 16 - 1;
    vs->thread0.kernel_start_pointer =
       brw_program_reloc(brw,
 			brw->vs.state_offset +
@@ -72,18 +73,19 @@ brw_upload_vs_unit(struct brw_context *brw)
 
    vs->thread1.binding_table_entry_count = 0;
 
-   if (brw->vs.prog_data->total_scratch != 0) {
+   if (brw->vs.prog_data->base.total_scratch != 0) {
       vs->thread2.scratch_space_base_pointer =
 	 brw->vs.scratch_bo->offset >> 10; /* reloc */
       vs->thread2.per_thread_scratch_space =
-	 ffs(brw->vs.prog_data->total_scratch) - 11;
+	 ffs(brw->vs.prog_data->base.total_scratch) - 11;
    } else {
       vs->thread2.scratch_space_base_pointer = 0;
       vs->thread2.per_thread_scratch_space = 0;
    }
 
-   vs->thread3.urb_entry_read_length = brw->vs.prog_data->urb_read_length;
-   vs->thread3.const_urb_entry_read_length = brw->vs.prog_data->curb_read_length;
+   vs->thread3.urb_entry_read_length = brw->vs.prog_data->base.urb_read_length;
+   vs->thread3.const_urb_entry_read_length
+      = brw->vs.prog_data->base.curb_read_length;
    vs->thread3.dispatch_grf_start_reg = 1;
    vs->thread3.urb_entry_read_offset = 0;
 
@@ -144,7 +146,7 @@ brw_upload_vs_unit(struct brw_context *brw)
    vs->vs6.vs_enable = 1;
 
    /* Emit scratch space relocation */
-   if (brw->vs.prog_data->total_scratch != 0) {
+   if (brw->vs.prog_data->base.total_scratch != 0) {
       drm_intel_bo_emit_reloc(intel->batch.bo,
 			      brw->vs.state_offset +
 			      offsetof(struct brw_vs_unit_state, thread2),

@@ -57,7 +57,7 @@ static void compile_gs_prog( struct brw_context *brw,
    memset(&c, 0, sizeof(c));
    
    c.key = *key;
-   c.vue_map = brw->vs.prog_data->vue_map;
+   c.vue_map = brw->vs.prog_data->base.vue_map;
    c.nr_regs = (c.vue_map.num_slots + 1)/2;
 
    mem_ctx = ralloc_context(NULL);
@@ -167,7 +167,7 @@ static void populate_key( struct brw_context *brw,
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_VS_PROG (part of VUE map) */
-   key->attrs = brw->vs.prog_data->vue_map.slots_valid;
+   key->attrs = brw->vs.prog_data->base.vue_map.slots_valid;
 
    /* BRW_NEW_PRIMITIVE */
    key->primitive = brw->primitive;

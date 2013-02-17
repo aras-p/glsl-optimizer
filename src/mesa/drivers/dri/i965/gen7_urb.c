@@ -83,7 +83,7 @@ gen7_upload_urb(struct brw_context *brw)
    int handle_region_size = (brw->urb.size - push_size_kB) * 1024; /* bytes */
 
    /* CACHE_NEW_VS_PROG */
-   unsigned vs_size = MAX2(brw->vs.prog_data->urb_entry_size, 1);
+   unsigned vs_size = MAX2(brw->vs.prog_data->base.urb_entry_size, 1);
 
    int nr_vs_entries = handle_region_size / (vs_size * 64);
    if (nr_vs_entries > brw->urb.max_vs_entries)
