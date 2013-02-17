@@ -133,13 +133,12 @@ vec4_instruction::get_src(int i)
 }
 
 vec4_generator::vec4_generator(struct brw_context *brw,
-                               struct brw_vs_compile *c,
                                struct gl_shader_program *shader_prog,
+                               struct gl_program *prog,
                                void *mem_ctx)
-   : brw(brw), c(c), shader_prog(shader_prog), mem_ctx(mem_ctx)
+   : brw(brw), shader_prog(shader_prog), prog(prog), mem_ctx(mem_ctx)
 {
    intel = &brw->intel;
-   vp = &c->vp->program;
 
    shader = shader_prog ? shader_prog->_LinkedShaders[MESA_SHADER_VERTEX] : NULL;
 
@@ -710,7 +709,7 @@ vec4_generator::generate_code(exec_list *instructions)
       if (shader) {
          printf("Native code for vertex shader %d:\n", shader_prog->Name);
       } else {
-         printf("Native code for vertex program %d:\n", c->vp->program.Base.Id);
+         printf("Native code for vertex program %d:\n", prog->Id);
       }
    }
 
@@ -728,7 +727,7 @@ vec4_generator::generate_code(exec_list *instructions)
                } else {
                   const prog_instruction *vpi;
                   vpi = (const prog_instruction *) inst->ir;
-                  printf("%d: ", (int)(vpi - vp->Base.Instructions));
+                  printf("%d: ", (int)(vpi - prog->Instructions));
                   _mesa_fprint_instruction_opt(stdout, vpi, 0,
                                                PROG_PRINT_DEBUG, NULL);
                }
