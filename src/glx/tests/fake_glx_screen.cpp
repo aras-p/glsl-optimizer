@@ -74,3 +74,11 @@ indirect_create_context_attribs(struct glx_screen *base,
 
    return indirect_create_context(base, config_base, shareList, 0);
 }
+
+__thread void *__glX_tls_Context = NULL;
+
+extern "C" struct glx_context *
+__glXGetCurrentContext()
+{
+   return (struct glx_context *) __glX_tls_Context;
+}
