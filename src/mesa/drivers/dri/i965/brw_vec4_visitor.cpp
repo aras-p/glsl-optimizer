@@ -605,12 +605,12 @@ vec4_visitor::setup_uniform_values(ir_variable *ir)
 
          int i;
          for (i = 0; i < uniform_vector_size[uniforms]; i++) {
-            prog_data->base.param[uniforms * 4 + i] = &components->f;
+            prog_data->param[uniforms * 4 + i] = &components->f;
             components++;
          }
          for (; i < 4; i++) {
             static float zero = 0;
-            prog_data->base.param[uniforms * 4 + i] = &zero;
+            prog_data->param[uniforms * 4 + i] = &zero;
          }
 
          uniforms++;
@@ -632,14 +632,14 @@ vec4_visitor::setup_uniform_clipplane_values()
        */
       int compacted_clipplane_index = 0;
       for (int i = 0; i < MAX_CLIP_PLANES; ++i) {
-	 if (!(c->key.base.userclip_planes_enabled_gen_4_5 & (1 << i)))
+	 if (!(key->userclip_planes_enabled_gen_4_5 & (1 << i)))
 	    continue;
 
 	 this->uniform_vector_size[this->uniforms] = 4;
 	 this->userplane[compacted_clipplane_index] = dst_reg(UNIFORM, this->uniforms);
 	 this->userplane[compacted_clipplane_index].type = BRW_REGISTER_TYPE_F;
 	 for (int j = 0; j < 4; ++j) {
-	    prog_data->base.param[this->uniforms * 4 + j] = &clip_planes[i][j];
+	    prog_data->param[this->uniforms * 4 + j] = &clip_planes[i][j];
 	 }
 	 ++compacted_clipplane_index;
 	 ++this->uniforms;
@@ -648,12 +648,12 @@ vec4_visitor::setup_uniform_clipplane_values()
       /* In Gen6 and later, we don't compact clip planes, because this
        * simplifies the implementation of gl_ClipDistance.
        */
-      for (int i = 0; i < c->key.base.nr_userclip_plane_consts; ++i) {
+      for (int i = 0; i < key->nr_userclip_plane_consts; ++i) {
 	 this->uniform_vector_size[this->uniforms] = 4;
 	 this->userplane[i] = dst_reg(UNIFORM, this->uniforms);
 	 this->userplane[i].type = BRW_REGISTER_TYPE_F;
 	 for (int j = 0; j < 4; ++j) {
-	    prog_data->base.param[this->uniforms * 4 + j] = &clip_planes[i][j];
+	    prog_data->param[this->uniforms * 4 + j] = &clip_planes[i][j];
 	 }
 	 ++this->uniforms;
       }
@@ -689,7 +689,7 @@ vec4_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	 int swiz = GET_SWZ(slots[i].swizzle, j);
 	 last_swiz = swiz;
 
-	 prog_data->base.param[this->uniforms * 4 + j] = &values[swiz];
+	 prog_data->param[this->uniforms * 4 + j] = &values[swiz];
 	 if (swiz <= last_swiz)
 	    this->uniform_vector_size[this->uniforms]++;
       }
@@ -909,8 +909,8 @@ vec4_vs_visitor::emit_prolog()
    dst_reg es3_normalize_factor;
 
    for (int i = 0; i < VERT_ATTRIB_MAX; i++) {
-      if (prog_data->inputs_read & BITFIELD64_BIT(i)) {
-         uint8_t wa_flags = c->key.gl_attrib_wa_flags[i];
+      if (vs_prog_data->inputs_read & BITFIELD64_BIT(i)) {
+         uint8_t wa_flags = vs_compile->key.gl_attrib_wa_flags[i];
          dst_reg reg(ATTR, i);
          dst_reg reg_d = reg;
          reg_d.type = BRW_REGISTER_TYPE_D;
@@ -1024,7 +1024,7 @@ vec4_vs_visitor::make_reg_for_system_value(ir_variable *ir)
     * it VERT_ATTRIB_MAX, which setup_attributes() picks up on.
     */
    dst_reg *reg = new(mem_ctx) dst_reg(ATTR, VERT_ATTRIB_MAX);
-   prog_data->uses_vertexid = true;
+   vs_prog_data->uses_vertexid = true;
 
    switch (ir->location) {
    case SYSTEM_VALUE_VERTEX_ID:
@@ -2304,7 +2304,7 @@ vec4_visitor::visit(ir_texture *ir)
 void
 vec4_visitor::swizzle_result(ir_texture *ir, src_reg orig_val, int sampler)
 {
-   int s = c->key.base.tex.swizzles[sampler];
+   int s = key->tex.swizzles[sampler];
 
    this->result = src_reg(this, ir->type);
    dst_reg swizzled_result(this->result);
@@ -2418,8 +2418,8 @@ void
 vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 {
    if (intel->gen < 6 &&
-       ((prog_data->base.vue_map.slots_valid & VARYING_BIT_PSIZ) ||
-        c->key.base.userclip_active || brw->has_negative_rhw_bug)) {
+       ((prog_data->vue_map.slots_valid & VARYING_BIT_PSIZ) ||
+        key->userclip_active || brw->has_negative_rhw_bug)) {
       dst_reg header1 = dst_reg(this, glsl_type::uvec4_type);
       dst_reg header1_w = header1;
       header1_w.writemask = WRITEMASK_W;
@@ -2427,7 +2427,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
 
       emit(MOV(header1, 0u));
 
-      if (prog_data->base.vue_map.slots_valid & VARYING_BIT_PSIZ) {
+      if (prog_data->vue_map.slots_valid & VARYING_BIT_PSIZ) {
 	 src_reg psiz = src_reg(output_reg[VARYING_SLOT_PSIZ]);
 
 	 current_annotation = "Point size";
@@ -2436,7 +2436,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
       }
 
       current_annotation = "Clipping flags";
-      for (i = 0; i < c->key.base.nr_userclip_plane_consts; i++) {
+      for (i = 0; i < key->nr_userclip_plane_consts; i++) {
 	 vec4_instruction *inst;
 
 	 inst = emit(DP4(dst_null_f(), src_reg(output_reg[VARYING_SLOT_POS]),
@@ -2472,7 +2472,7 @@ vec4_visitor::emit_psiz_and_flags(struct brw_reg reg)
       emit(MOV(retype(reg, BRW_REGISTER_TYPE_UD), 0u));
    } else {
       emit(MOV(retype(reg, BRW_REGISTER_TYPE_D), src_reg(0)));
-      if (prog_data->base.vue_map.slots_valid & VARYING_BIT_PSIZ) {
+      if (prog_data->vue_map.slots_valid & VARYING_BIT_PSIZ) {
          emit(MOV(brw_writemask(reg, WRITEMASK_W),
                   src_reg(output_reg[VARYING_SLOT_PSIZ])));
       }
@@ -2503,11 +2503,11 @@ vec4_visitor::emit_clip_distances(struct brw_reg reg, int offset)
     * if the user wrote to it; otherwise we use gl_Position.
     */
    gl_varying_slot clip_vertex = VARYING_SLOT_CLIP_VERTEX;
-   if (!(prog_data->base.vue_map.slots_valid & VARYING_BIT_CLIP_VERTEX)) {
+   if (!(prog_data->vue_map.slots_valid & VARYING_BIT_CLIP_VERTEX)) {
       clip_vertex = VARYING_SLOT_POS;
    }
 
-   for (int i = 0; i + offset < c->key.base.nr_userclip_plane_consts && i < 4;
+   for (int i = 0; i + offset < key->nr_userclip_plane_consts && i < 4;
         ++i) {
       emit(DP4(dst_reg(brw_writemask(reg, 1 << i)),
                src_reg(output_reg[clip_vertex]),
@@ -2528,7 +2528,7 @@ vec4_visitor::emit_generic_urb_slot(dst_reg reg, int varying)
         varying == VARYING_SLOT_COL1 ||
         varying == VARYING_SLOT_BFC0 ||
         varying == VARYING_SLOT_BFC1) &&
-       c->key.base.clamp_vertex_color) {
+       key->clamp_vertex_color) {
       inst->saturate = true;
    }
 }
@@ -2557,7 +2557,7 @@ vec4_visitor::emit_urb_slot(int mrf, int varying)
       break;
    case VARYING_SLOT_CLIP_DIST0:
    case VARYING_SLOT_CLIP_DIST1:
-      if (this->c->key.base.uses_clip_distance) {
+      if (this->key->uses_clip_distance) {
          emit_generic_urb_slot(reg, varying);
       } else {
          current_annotation = "user clip distances";
@@ -2642,8 +2642,8 @@ vec4_vs_visitor::emit_thread_end()
 
    /* Set up the VUE data for the first URB write */
    int slot;
-   for (slot = 0; slot < prog_data->base.vue_map.num_slots; ++slot) {
-      emit_urb_slot(mrf++, prog_data->base.vue_map.slot_to_varying[slot]);
+   for (slot = 0; slot < prog_data->vue_map.num_slots; ++slot) {
+      emit_urb_slot(mrf++, prog_data->vue_map.slot_to_varying[slot]);
 
       /* If this was max_usable_mrf, we can't fit anything more into this URB
        * WRITE.
@@ -2654,7 +2654,7 @@ vec4_vs_visitor::emit_thread_end()
       }
    }
 
-   bool eot = slot >= prog_data->base.vue_map.num_slots;
+   bool eot = slot >= prog_data->vue_map.num_slots;
    if (eot) {
       if (INTEL_DEBUG & DEBUG_SHADER_TIME)
          emit_shader_time_end();
@@ -2669,10 +2669,10 @@ vec4_vs_visitor::emit_thread_end()
    if (!inst->eot) {
       mrf = base_mrf + 1;
 
-      for (; slot < prog_data->base.vue_map.num_slots; ++slot) {
+      for (; slot < prog_data->vue_map.num_slots; ++slot) {
 	 assert(mrf < max_usable_mrf);
 
-         emit_urb_slot(mrf++, prog_data->base.vue_map.slot_to_varying[slot]);
+         emit_urb_slot(mrf++, prog_data->vue_map.slot_to_varying[slot]);
       }
 
       if (INTEL_DEBUG & DEBUG_SHADER_TIME)
@@ -2829,8 +2829,8 @@ vec4_visitor::move_grf_array_access_to_scratch()
 
       if (inst->dst.file == GRF && inst->dst.reladdr &&
 	  scratch_loc[inst->dst.reg] == -1) {
-	 scratch_loc[inst->dst.reg] = c->base.last_scratch;
-	 c->base.last_scratch += this->virtual_grf_sizes[inst->dst.reg];
+	 scratch_loc[inst->dst.reg] = c->last_scratch;
+	 c->last_scratch += this->virtual_grf_sizes[inst->dst.reg];
       }
 
       for (int i = 0 ; i < 3; i++) {
@@ -2838,8 +2838,8 @@ vec4_visitor::move_grf_array_access_to_scratch()
 
 	 if (src->file == GRF && src->reladdr &&
 	     scratch_loc[src->reg] == -1) {
-	    scratch_loc[src->reg] = c->base.last_scratch;
-	    c->base.last_scratch += this->virtual_grf_sizes[src->reg];
+	    scratch_loc[src->reg] = c->last_scratch;
+	    c->last_scratch += this->virtual_grf_sizes[src->reg];
 	 }
       }
    }
@@ -2948,12 +2948,12 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
 	  * add it.
 	  */
 	 if (pull_constant_loc[uniform] == -1) {
-	    const float **values = &prog_data->base.param[uniform * 4];
+	    const float **values = &prog_data->param[uniform * 4];
 
-	    pull_constant_loc[uniform] = prog_data->base.nr_pull_params / 4;
+	    pull_constant_loc[uniform] = prog_data->nr_pull_params / 4;
 
 	    for (int j = 0; j < uniform_size[uniform] * 4; j++) {
-	       prog_data->base.pull_param[prog_data->base.nr_pull_params++]
+	       prog_data->pull_param[prog_data->nr_pull_params++]
                   = values[j];
 	    }
 	 }
@@ -2995,13 +2995,14 @@ vec4_visitor::resolve_ud_negate(src_reg *reg)
 }
 
 vec4_visitor::vec4_visitor(struct brw_context *brw,
-			   struct brw_vs_compile *c,
-                           struct brw_vs_prog_data *prog_data,
+                           struct brw_vec4_compile *c,
+                           struct gl_program *prog,
+                           const struct brw_vec4_prog_key *key,
+                           struct brw_vec4_prog_data *prog_data,
 			   struct gl_shader_program *shader_prog,
 			   struct brw_shader *shader,
 			   void *mem_ctx)
 {
-   this->c = c;
    this->brw = brw;
    this->intel = &brw->intel;
    this->ctx = &intel->ctx;
@@ -3016,7 +3017,8 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
    memset(this->output_reg_annotation, 0, sizeof(this->output_reg_annotation));
 
    this->c = c;
-   this->prog = &c->vp->program.Base;
+   this->prog = prog;
+   this->key = key;
    this->prog_data = prog_data;
 
    this->variable_ht = hash_table_ctor(0,
@@ -3044,12 +3046,16 @@ vec4_visitor::~vec4_visitor()
 
 
 vec4_vs_visitor::vec4_vs_visitor(struct brw_context *brw,
-                                 struct brw_vs_compile *c,
-                                 struct brw_vs_prog_data *prog_data,
+                                 struct brw_vs_compile *vs_compile,
+                                 struct brw_vs_prog_data *vs_prog_data,
                                  struct gl_shader_program *prog,
                                  struct brw_shader *shader,
                                  void *mem_ctx)
-   : vec4_visitor(brw, c, prog_data, prog, shader, mem_ctx)
+   : vec4_visitor(brw, &vs_compile->base, &vs_compile->vp->program.Base,
+                  &vs_compile->key.base, &vs_prog_data->base, prog, shader,
+                  mem_ctx),
+     vs_compile(vs_compile),
+     vs_prog_data(vs_prog_data)
 {
 }
 

@@ -210,8 +210,10 @@ class vec4_visitor : public backend_visitor
 {
 public:
    vec4_visitor(struct brw_context *brw,
-                struct brw_vs_compile *c,
-                struct brw_vs_prog_data *prog_data,
+                struct brw_vec4_compile *c,
+                struct gl_program *prog,
+                const struct brw_vec4_prog_key *key,
+                struct brw_vec4_prog_data *prog_data,
 		struct gl_shader_program *shader_prog,
 		struct brw_shader *shader,
 		void *mem_ctx);
@@ -228,8 +230,9 @@ public:
    }
 
    struct gl_program *prog;
-   struct brw_vs_compile *c;
-   struct brw_vs_prog_data *prog_data;
+   struct brw_vec4_compile *c;
+   const struct brw_vec4_prog_key *key;
+   struct brw_vec4_prog_data *prog_data;
    unsigned int sanity_param_count;
 
    char *fail_msg;
@@ -250,9 +253,6 @@ public:
    int *virtual_grf_def;
    int *virtual_grf_use;
    dst_reg userplane[MAX_CLIP_PLANES];
-
-   src_reg *vp_temp_regs;
-   src_reg vp_addr_reg;
 
    /**
     * This is the size to be used for an array with an element per
@@ -490,8 +490,8 @@ class vec4_vs_visitor : public vec4_visitor
 {
 public:
    vec4_vs_visitor(struct brw_context *brw,
-                   struct brw_vs_compile *c,
-                   struct brw_vs_prog_data *prog_data,
+                   struct brw_vs_compile *vs_compile,
+                   struct brw_vs_prog_data *vs_prog_data,
                    struct gl_shader_program *prog,
                    struct brw_shader *shader,
                    void *mem_ctx);
@@ -507,6 +507,11 @@ private:
    void setup_vp_regs();
    dst_reg get_vp_dst_reg(const prog_dst_register &dst);
    src_reg get_vp_src_reg(const prog_src_register &src);
+
+   struct brw_vs_compile * const vs_compile;
+   struct brw_vs_prog_data * const vs_prog_data;
+   src_reg *vp_temp_regs;
+   src_reg vp_addr_reg;
 };
 
 /**
