@@ -620,9 +620,9 @@ vec4_generator::generate_pull_constant_load_gen7(vec4_instruction *inst,
 }
 
 void
-vec4_generator::generate_vs_instruction(vec4_instruction *instruction,
-                                        struct brw_reg dst,
-                                        struct brw_reg *src)
+vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
+                                          struct brw_reg dst,
+                                          struct brw_reg *src)
 {
    vec4_instruction *inst = (vec4_instruction *)instruction;
 
@@ -876,7 +876,7 @@ vec4_generator::generate_code(exec_list *instructions)
 	 break;
 
       default:
-	 generate_vs_instruction(inst, dst, src);
+	 generate_vec4_instruction(inst, dst, src);
 	 break;
       }
 
