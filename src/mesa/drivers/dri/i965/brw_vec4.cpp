@@ -1185,7 +1185,7 @@ vec4_visitor::dump_instructions()
 }
 
 int
-vec4_visitor::setup_attributes(int payload_reg)
+vec4_vs_visitor::setup_attributes(int payload_reg)
 {
    int nr_attributes;
    int attribute_map[VERT_ATTRIB_MAX + 1];
@@ -1405,7 +1405,7 @@ vec4_visitor::run()
    if (INTEL_DEBUG & DEBUG_SHADER_TIME)
       emit_shader_time_begin();
 
-   emit_attribute_fixups();
+   emit_prolog();
 
    /* Generate VS IR for main().  (the visitor only descends into
     * functions called "main").
@@ -1413,14 +1413,14 @@ vec4_visitor::run()
    if (shader) {
       visit_instructions(shader->ir);
    } else {
-      emit_vertex_program_code();
+      emit_program_code();
    }
    base_ir = NULL;
 
    if (c->key.base.userclip_active && !c->key.base.uses_clip_distance)
       setup_uniform_clipplane_values();
 
-   emit_urb_writes();
+   emit_thread_end();
 
    /* Before any optimization, push array accesses out to scratch
     * space where we need them to be.  This pass may allocate new

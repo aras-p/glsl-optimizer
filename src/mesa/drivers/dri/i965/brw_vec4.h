@@ -319,7 +319,6 @@ public:
    void setup_uniform_clipplane_values();
    void setup_uniform_values(ir_variable *ir);
    void setup_builtin_uniform_values(ir_variable *ir);
-   int setup_attributes(int payload_reg);
    int setup_uniforms(int payload_reg);
    void setup_payload();
    bool reg_allocate_trivial();
@@ -403,8 +402,6 @@ public:
    void visit_instructions(const exec_list *list);
 
    void setup_vp_regs();
-   void emit_attribute_fixups();
-   void emit_vertex_program_code();
    void emit_vp_sop(uint32_t condmod, dst_reg dst,
                     src_reg src0, src_reg src1, src_reg one);
    dst_reg get_vp_dst_reg(const prog_dst_register &dst);
@@ -453,7 +450,6 @@ public:
    void emit_clip_distances(struct brw_reg reg, int offset);
    void emit_generic_urb_slot(dst_reg reg, int varying);
    void emit_urb_slot(int mrf, int varying);
-   void emit_urb_writes(void);
 
    void emit_shader_time_begin();
    void emit_shader_time_end();
@@ -484,6 +480,12 @@ public:
 
    void dump_instruction(vec4_instruction *inst);
    void dump_instructions();
+
+protected:
+   virtual int setup_attributes(int payload_reg) = 0;
+   virtual void emit_prolog() = 0;
+   virtual void emit_program_code() = 0;
+   virtual void emit_thread_end() = 0;
 };
 
 class vec4_vs_visitor : public vec4_visitor
@@ -495,6 +497,12 @@ public:
                    struct gl_shader_program *prog,
                    struct brw_shader *shader,
                    void *mem_ctx);
+
+protected:
+   virtual int setup_attributes(int payload_reg);
+   virtual void emit_prolog();
+   virtual void emit_program_code();
+   virtual void emit_thread_end();
 };
 
 /**

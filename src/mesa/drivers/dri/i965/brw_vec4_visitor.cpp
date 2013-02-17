@@ -902,7 +902,7 @@ with_writemask(dst_reg const & r, int mask)
 }
 
 void
-vec4_visitor::emit_attribute_fixups()
+vec4_vs_visitor::emit_prolog()
 {
    dst_reg sign_recovery_shift;
    dst_reg normalize_factor;
@@ -2602,7 +2602,7 @@ align_interleaved_urb_mlen(struct brw_context *brw, int mlen)
  * The VUE layout is documented in Volume 2a.
  */
 void
-vec4_visitor::emit_urb_writes()
+vec4_vs_visitor::emit_thread_end()
 {
    /* MRF 0 is reserved for the debugger, so start with message header
     * in MRF 1.

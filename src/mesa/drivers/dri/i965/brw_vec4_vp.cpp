@@ -65,7 +65,7 @@ reswizzle(src_reg orig, unsigned x, unsigned y, unsigned z, unsigned w)
 }
 
 void
-vec4_visitor::emit_vertex_program_code()
+vec4_vs_visitor::emit_program_code()
 {
    this->need_all_constants_in_pull_buffer = false;
 

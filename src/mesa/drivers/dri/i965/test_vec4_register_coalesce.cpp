@@ -52,6 +52,28 @@ public:
       : vec4_visitor(brw, c, NULL, shader_prog, NULL, NULL)
    {
    }
+
+protected:
+   virtual int setup_attributes(int payload_reg)
+   {
+      assert(!"Not reached");
+      return 0;
+   }
+
+   virtual void emit_prolog()
+   {
+      assert(!"Not reached");
+   }
+
+   virtual void emit_program_code()
+   {
+      assert(!"Not reached");
+   }
+
+   virtual void emit_thread_end()
+   {
+      assert(!"Not reached");
+   }
 };
 
 
