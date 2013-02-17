@@ -54,6 +54,12 @@ public:
    }
 
 protected:
+   virtual dst_reg *make_reg_for_system_value(ir_variable *ir)
+   {
+      assert(!"Not reached");
+      return NULL;
+   }
+
    virtual int setup_attributes(int payload_reg)
    {
       assert(!"Not reached");

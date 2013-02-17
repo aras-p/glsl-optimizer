@@ -482,6 +482,7 @@ public:
    void dump_instructions();
 
 protected:
+   virtual dst_reg *make_reg_for_system_value(ir_variable *ir) = 0;
    virtual int setup_attributes(int payload_reg) = 0;
    virtual void emit_prolog() = 0;
    virtual void emit_program_code() = 0;
@@ -499,6 +500,7 @@ public:
                    void *mem_ctx);
 
 protected:
+   virtual dst_reg *make_reg_for_system_value(ir_variable *ir);
    virtual int setup_attributes(int payload_reg);
    virtual void emit_prolog();
    virtual void emit_program_code();

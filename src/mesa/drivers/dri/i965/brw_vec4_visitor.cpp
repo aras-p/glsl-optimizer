@@ -1015,6 +1015,33 @@ vec4_vs_visitor::emit_prolog()
    }
 }
 
+
+dst_reg *
+vec4_vs_visitor::make_reg_for_system_value(ir_variable *ir)
+{
+   /* VertexID is stored by the VF as the last vertex element, but
+    * we don't represent it with a flag in inputs_read, so we call
+    * it VERT_ATTRIB_MAX, which setup_attributes() picks up on.
+    */
+   dst_reg *reg = new(mem_ctx) dst_reg(ATTR, VERT_ATTRIB_MAX);
+   prog_data->uses_vertexid = true;
+
+   switch (ir->location) {
+   case SYSTEM_VALUE_VERTEX_ID:
+      reg->writemask = WRITEMASK_X;
+      break;
+   case SYSTEM_VALUE_INSTANCE_ID:
+      reg->writemask = WRITEMASK_Y;
+      break;
+   default:
+      assert(!"not reached");
+      break;
+   }
+
+   return reg;
+}
+
+
 void
 vec4_visitor::visit(ir_variable *ir)
 {
@@ -1068,24 +1095,7 @@ vec4_visitor::visit(ir_variable *ir)
       break;
 
    case ir_var_system_value:
-      /* VertexID is stored by the VF as the last vertex element, but
-       * we don't represent it with a flag in inputs_read, so we call
-       * it VERT_ATTRIB_MAX, which setup_attributes() picks up on.
-       */
-      reg = new(mem_ctx) dst_reg(ATTR, VERT_ATTRIB_MAX);
-      prog_data->uses_vertexid = true;
-
-      switch (ir->location) {
-      case SYSTEM_VALUE_VERTEX_ID:
-	 reg->writemask = WRITEMASK_X;
-	 break;
-      case SYSTEM_VALUE_INSTANCE_ID:
-	 reg->writemask = WRITEMASK_Y;
-	 break;
-      default:
-	 assert(!"not reached");
-	 break;
-      }
+      reg = make_reg_for_system_value(ir);
       break;
 
    default:
