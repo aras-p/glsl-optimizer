@@ -661,29 +661,44 @@ Instruction::swapSources(int a, int b)
    srcs[b].mod = m;
 }
 
-// TODO: extend for delta < 0
+static inline void moveSourcesAdjustIndex(int8_t &index, int s, int delta)
+{
+   if (index >= s)
+      index += delta;
+   else
+   if ((delta < 0) && (index >= (s + delta)))
+      index = -1;
+}
+
+// Moves sources [@s,last_source] by @delta.
+// If @delta < 0, sources [@s - abs(@delta), @s) are erased.
 void
-Instruction::moveSources(int s, int delta)
+Instruction::moveSources(const int s, const int delta)
 {
    if (delta == 0)
       return;
-   assert(delta > 0);
+   assert(s + delta >= 0);
 
    int k;
-   for (k = 0; srcExists(k); ++k) {
-      for (int i = 0; i < 2; ++i) {
-         if (src(k).indirect[i] >= s)
-            src(k).indirect[i] += delta;
-      }
-   }
-   if (predSrc >= s)
-      predSrc += delta;
-   if (flagsSrc >= s)
-      flagsSrc += delta;
 
-   --k;
-   for (int p = k + delta; k >= s; --k, --p)
-      setSrc(p, src(k));
+   for (k = 0; srcExists(k); ++k) {
+      for (int i = 0; i < 2; ++i)
+         moveSourcesAdjustIndex(src(k).indirect[i], s, delta);
+   }
+   moveSourcesAdjustIndex(predSrc, s, delta);
+   moveSourcesAdjustIndex(flagsSrc, s, delta);
+
+   if (delta > 0) {
+      --k;
+      for (int p = k + delta; k >= s; --k, --p)
+         setSrc(p, src(k));
+   } else {
+      int p;
+      for (p = s; p < k; ++p)
+         setSrc(p + delta, src(p));
+      for (; (p + delta) < k; ++p)
+         setSrc(p + delta, NULL);
+   }
 }
 
 void
