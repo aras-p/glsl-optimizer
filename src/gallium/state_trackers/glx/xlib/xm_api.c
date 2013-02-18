@@ -438,7 +438,6 @@ create_xmesa_buffer(Drawable d, BufferType type,
 {
    XMesaDisplay xmdpy = xmesa_init_display(vis->display);
    XMesaBuffer b;
-   uint width, height;
 
    ASSERT(type == WINDOW || type == PIXMAP || type == PBUFFER);
 
@@ -457,7 +456,7 @@ create_xmesa_buffer(Drawable d, BufferType type,
    b->type = type;
    b->cmap = cmap;
 
-   get_drawable_size(vis->display, d, &width, &height);
+   get_drawable_size(vis->display, d, &b->width, &b->height);
 
    /*
     * Create framebuffer, but we'll plug in our own renderbuffers below.
