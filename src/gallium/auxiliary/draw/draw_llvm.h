@@ -31,6 +31,8 @@
 #include "draw/draw_private.h"
 
 #include "draw/draw_vs.h"
+#include "draw/draw_gs.h"
+
 #include "gallivm/lp_bld_sample.h"
 #include "gallivm/lp_bld_limits.h"
 
@@ -40,6 +42,7 @@
 
 struct draw_llvm;
 struct llvm_vertex_shader;
+struct llvm_geometry_shader;
 
 struct draw_jit_texture
 {
@@ -166,6 +169,61 @@ struct draw_jit_context
    lp_build_struct_get(_gallivm, _ptr, 1, "buffer_offset")
 
 
+/**
+ * This structure is passed directly to the generated geometry shader.
+ *
+ * It contains the derived state.
+ *
+ * Changes here must be reflected in the draw_gs_jit_context_* macros.
+ * Changes to the ordering should be avoided.
+ *
+ * Only use types with a clear size and padding here, in particular prefer the
+ * stdint.h types to the basic integer types.
+ */
+struct draw_gs_jit_context
+{
+   const float *constants[LP_MAX_TGSI_CONST_BUFFERS];
+   float (*planes) [DRAW_TOTAL_CLIP_PLANES][4];
+   float *viewport;
+
+   int **prim_lengths;
+   int *emitted_vertices;
+   int *emitted_prims;
+
+   struct draw_jit_texture textures[PIPE_MAX_SHADER_SAMPLER_VIEWS];
+   struct draw_jit_sampler samplers[PIPE_MAX_SAMPLERS];
+};
+
+
+#define draw_gs_jit_context_constants(_gallivm, _ptr) \
+   lp_build_struct_get_ptr(_gallivm, _ptr, 0, "constants")
+
+#define draw_gs_jit_context_planes(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, 1, "planes")
+
+#define draw_gs_jit_context_viewport(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, 2, "viewport")
+
+#define draw_gs_jit_prim_lengths(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, 3, "prim_lengths")
+
+#define draw_gs_jit_emitted_vertices(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, 4, "emitted_vertices")
+
+#define draw_gs_jit_emitted_prims(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, 5, "emitted_prims")
+
+#define DRAW_GS_JIT_CTX_TEXTURES 6
+#define DRAW_GS_JIT_CTX_SAMPLERS 7
+
+#define draw_gs_jit_context_textures(_gallivm, _ptr) \
+   lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_GS_JIT_CTX_TEXTURES, "textures")
+
+#define draw_gs_jit_context_samplers(_gallivm, _ptr) \
+   lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_GS_JIT_CTX_SAMPLERS, "samplers")
+
+
+
 typedef int
 (*draw_jit_vert_func)(struct draw_jit_context *context,
                       struct vertex_header *io,
@@ -187,6 +245,14 @@ typedef int
                            struct pipe_vertex_buffer *vertex_buffers,
                            unsigned instance_id);
 
+
+typedef int
+(*draw_gs_jit_func)(struct draw_gs_jit_context *context,
+                    float inputs[6][PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS][TGSI_NUM_CHANNELS],
+                    struct vertex_header *output,
+                    unsigned num_prims,
+                    unsigned instance_id);
+
 struct draw_llvm_variant_key
 {
    unsigned nr_vertex_elements:8;
@@ -199,13 +265,13 @@ struct draw_llvm_variant_key
    unsigned clip_halfz:1;
    unsigned bypass_viewport:1;
    unsigned need_edgeflags:1;
+   unsigned has_gs:1;
    /*
     * it is important there are no holes in this struct
     * (and all padding gets zeroed).
     */
-   unsigned pad1:1;
    unsigned ucp_enable:PIPE_MAX_CLIP_PLANES;
-   unsigned pad2:32-PIPE_MAX_CLIP_PLANES;
+   unsigned pad1:32-PIPE_MAX_CLIP_PLANES;
 
    /* Variable number of vertex elements:
     */
@@ -216,10 +282,22 @@ struct draw_llvm_variant_key
 /*   struct draw_sampler_static_state sampler; */
 };
 
+struct draw_gs_llvm_variant_key
+{
+   unsigned nr_samplers:8;
+   unsigned nr_sampler_views:8;
+
+   struct draw_sampler_static_state samplers[1];
+};
+
 #define DRAW_LLVM_MAX_VARIANT_KEY_SIZE \
    (sizeof(struct draw_llvm_variant_key) +	\
     PIPE_MAX_SHADER_SAMPLER_VIEWS * sizeof(struct draw_sampler_static_state) +	\
     (PIPE_MAX_ATTRIBS-1) * sizeof(struct pipe_vertex_element))
+
+#define DRAW_GS_LLVM_MAX_VARIANT_KEY_SIZE \
+   (sizeof(struct draw_gs_llvm_variant_key) +	\
+    PIPE_MAX_SHADER_SAMPLER_VIEWS * sizeof(struct draw_sampler_static_state))
 
 
 static INLINE size_t
@@ -229,6 +307,14 @@ draw_llvm_variant_key_size(unsigned nr_vertex_elements,
    return (sizeof(struct draw_llvm_variant_key) +
            nr_samplers * sizeof(struct draw_sampler_static_state) +
            (nr_vertex_elements - 1) * sizeof(struct pipe_vertex_element));
+}
+
+
+static INLINE size_t
+draw_gs_llvm_variant_key_size(unsigned nr_samplers)
+{
+   return (sizeof(struct draw_gs_llvm_variant_key) +
+           (nr_samplers - 1) * sizeof(struct draw_sampler_static_state));
 }
 
 
@@ -245,6 +331,13 @@ struct draw_llvm_variant_list_item
    struct draw_llvm_variant *base;
    struct draw_llvm_variant_list_item *next, *prev;
 };
+
+struct draw_gs_llvm_variant_list_item
+{
+   struct draw_gs_llvm_variant *base;
+   struct draw_gs_llvm_variant_list_item *next, *prev;
+};
+
 
 struct draw_llvm_variant
 {
@@ -271,6 +364,32 @@ struct draw_llvm_variant
    struct draw_llvm_variant_key key;
 };
 
+
+struct draw_gs_llvm_variant
+{
+   struct gallivm_state *gallivm;
+
+   /* LLVM JIT builder types */
+   LLVMTypeRef context_ptr_type;
+   LLVMTypeRef vertex_header_ptr_type;
+   LLVMTypeRef input_array_type;
+
+   LLVMValueRef context_ptr;
+   LLVMValueRef io_ptr;
+   LLVMValueRef num_prims;
+   LLVMValueRef function;
+   draw_gs_jit_func jit_func;
+
+   struct llvm_geometry_shader *shader;
+
+   struct draw_llvm *llvm;
+   struct draw_gs_llvm_variant_list_item list_item_global;
+   struct draw_gs_llvm_variant_list_item list_item_local;
+
+   /* key is variable-sized, must be last */
+   struct draw_gs_llvm_variant_key key;
+};
+
 struct llvm_vertex_shader {
    struct draw_vertex_shader base;
 
@@ -280,13 +399,27 @@ struct llvm_vertex_shader {
    unsigned variants_cached;
 };
 
+struct llvm_geometry_shader {
+   struct draw_geometry_shader base;
+
+   unsigned variant_key_size;
+   struct draw_gs_llvm_variant_list_item variants;
+   unsigned variants_created;
+   unsigned variants_cached;
+};
+
+
 struct draw_llvm {
    struct draw_context *draw;
 
    struct draw_jit_context jit_context;
+   struct draw_gs_jit_context gs_jit_context;
 
    struct draw_llvm_variant_list_item vs_variants_list;
    int nr_variants;
+
+   struct draw_gs_llvm_variant_list_item gs_variants_list;
+   int nr_gs_variants;
 };
 
 
@@ -295,6 +428,14 @@ llvm_vertex_shader(struct draw_vertex_shader *vs)
 {
    return (struct llvm_vertex_shader *)vs;
 }
+
+static INLINE struct llvm_geometry_shader *
+llvm_geometry_shader(struct draw_geometry_shader *gs)
+{
+   return (struct llvm_geometry_shader *)gs;
+}
+
+
 
 
 struct draw_llvm *
@@ -317,6 +458,21 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store);
 void
 draw_llvm_dump_variant_key(struct draw_llvm_variant_key *key);
 
+
+struct draw_gs_llvm_variant *
+draw_gs_llvm_create_variant(struct draw_llvm *llvm,
+                            unsigned num_vertex_header_attribs,
+                            const struct draw_gs_llvm_variant_key *key);
+
+void
+draw_gs_llvm_destroy_variant(struct draw_gs_llvm_variant *variant);
+
+struct draw_gs_llvm_variant_key *
+draw_gs_llvm_make_variant_key(struct draw_llvm *llvm, char *store);
+
+void
+draw_gs_llvm_dump_variant_key(struct draw_gs_llvm_variant_key *key);
+
 struct lp_build_sampler_soa *
 draw_llvm_sampler_soa_create(const struct draw_sampler_static_state *static_state,
                              LLVMValueRef context_ptr);
@@ -326,6 +482,7 @@ draw_llvm_set_sampler_state(struct draw_context *draw);
 
 void
 draw_llvm_set_mapped_texture(struct draw_context *draw,
+                             unsigned shader_stage,
                              unsigned sview_idx,
                              uint32_t width, uint32_t height, uint32_t depth,
                              uint32_t first_level, uint32_t last_level,

@@ -31,10 +31,27 @@
 #include "draw_context.h"
 #include "draw_private.h"
 
-
 #define MAX_TGSI_PRIMITIVES 4
 
 struct draw_context;
+
+#ifdef HAVE_LLVM
+struct draw_gs_jit_context;
+struct draw_gs_llvm_variant;
+
+/**
+ * Structure holding the inputs to the geometry shader. It uses SOA layout.
+ * The dimensions are as follows:
+ * - maximum number of vertices for a geometry shader input primitive
+ *   (6 for triangle_adjacency)
+ * - maximum number of attributes for each vertex
+ * - four channels per each attribute (x,y,z,w)
+ * - number of input primitives equal to the SOA vector length
+ */
+struct draw_gs_inputs {
+   float data[6][PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS][TGSI_NUM_CHANNELS];
+};
+#endif
 
 /**
  * Private version of the compiled geometry shader
@@ -66,6 +83,19 @@ struct draw_geometry_shader {
    unsigned fetched_prim_count;
    const float (*input)[4];
    const struct tgsi_shader_info *input_info;
+   unsigned vector_length;
+   unsigned max_out_prims;
+
+#ifdef HAVE_LLVM
+   struct draw_gs_inputs *gs_input;
+   struct draw_gs_jit_context *jit_context;
+   struct draw_gs_llvm_variant *current_variant;
+   struct vertex_header *gs_output;
+
+   int **llvm_prim_lengths;
+   int *llvm_emitted_primitives;
+   int *llvm_emitted_vertices;
+#endif
 
    void (*fetch_inputs)(struct draw_geometry_shader *shader,
                         unsigned *indices,
@@ -101,5 +131,8 @@ void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
 
 int draw_gs_max_output_vertices(struct draw_geometry_shader *shader,
                                 unsigned pipe_prim);
+
+void draw_gs_set_current_variant(struct draw_geometry_shader *shader,
+                                 struct draw_gs_llvm_variant *variant);
 
 #endif

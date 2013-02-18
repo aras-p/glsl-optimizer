@@ -437,6 +437,26 @@ lp_get_output_ptr(struct lp_build_tgsi_soa_context *bld,
    }
 }
 
+/*
+ * If we have indirect addressing in outputs copy our alloca array
+ * to the outputs slots specified by the caller to make sure
+ * our outputs are delivered consistently via the same interface.
+ */
+static void
+gather_outputs(struct lp_build_tgsi_soa_context * bld)
+{
+   if ((bld->indirect_files & (1 << TGSI_FILE_OUTPUT))) {
+      unsigned index, chan;
+      assert(bld->bld_base.info->num_outputs <=
+             bld->bld_base.info->file_max[TGSI_FILE_OUTPUT] + 1);
+      for (index = 0; index < bld->bld_base.info->num_outputs; ++index) {
+         for (chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
+            bld->outputs[index][chan] = lp_get_output_ptr(bld, index, chan);
+         }
+      }
+   }
+}
+
 /**
  * Gather vector.
  * XXX the lp_build_gather() function should be capable of doing this
@@ -745,6 +765,60 @@ emit_fetch_input(
          res = bld->inputs[reg->Register.Index][swizzle];
       }
    }
+
+   assert(res);
+
+   if (stype == TGSI_TYPE_UNSIGNED) {
+      res = LLVMBuildBitCast(builder, res, bld_base->uint_bld.vec_type, "");
+   } else if (stype == TGSI_TYPE_SIGNED) {
+      res = LLVMBuildBitCast(builder, res, bld_base->int_bld.vec_type, "");
+   }
+
+   return res;
+}
+
+
+static LLVMValueRef
+emit_fetch_gs_input(
+   struct lp_build_tgsi_context * bld_base,
+   const struct tgsi_full_src_register * reg,
+   enum tgsi_opcode_type stype,
+   unsigned swizzle)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+   struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
+   LLVMBuilderRef builder = gallivm->builder;
+   //struct lp_build_context *uint_bld = &bld_base->uint_bld;
+   LLVMValueRef attrib_index = NULL;
+   LLVMValueRef vertex_index = NULL;
+   LLVMValueRef swizzle_index = lp_build_const_int32(gallivm, swizzle);
+   LLVMValueRef indices[3];
+   LLVMValueRef res;
+
+   if (reg->Register.Indirect) {
+      attrib_index = get_indirect_index(bld,
+                                          reg->Register.File,
+                                          reg->Register.Index,
+                                          &reg->Indirect);
+   } else {
+      attrib_index = lp_build_const_int32(gallivm, reg->Register.Index);
+   }
+   
+   if (reg->Dimension.Indirect) {
+      vertex_index = get_indirect_index(bld,
+                                        reg->Register.File,
+                                        reg->Dimension.Index,
+                                        &reg->DimIndirect);
+   } else {
+      vertex_index = lp_build_const_int32(gallivm, reg->Dimension.Index);
+   }
+
+   indices[0] = vertex_index;
+   indices[1] = attrib_index;
+   indices[2] = swizzle_index;
+
+   res = LLVMBuildGEP(builder, bld->gs_iface->input, indices, 3, "");
+   res = LLVMBuildLoad(builder, res, "");
 
    assert(res);
 
@@ -2081,6 +2155,66 @@ sviewinfo_emit(
    emit_size_query(bld, emit_data->inst, emit_data->output, TRUE);
 }
 
+static LLVMValueRef
+mask_to_one_vec(struct lp_build_tgsi_context *bld_base)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+   LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
+   LLVMValueRef one_vec = bld_base->int_bld.one;
+   struct lp_exec_mask *exec_mask = &bld->exec_mask;
+
+   if (exec_mask->has_mask) {
+      one_vec = LLVMBuildAnd(builder, one_vec, exec_mask->exec_mask, "");
+   }
+   one_vec = LLVMBuildAnd(builder, one_vec,
+                          lp_build_mask_value(bld->mask), "");
+   return one_vec;
+}
+
+static void
+emit_vertex(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+   LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
+
+   if (bld->gs_iface->emit_vertex) {
+      LLVMValueRef masked_ones = mask_to_one_vec(bld_base);
+      gather_outputs(bld);
+      bld->gs_iface->emit_vertex(&bld->bld_base, bld->outputs,
+                                bld->total_emitted_vertices_vec,
+                                bld->gs_iface->user_data);
+      bld->emitted_vertices_vec =
+         LLVMBuildAdd(builder, bld->emitted_vertices_vec, masked_ones, "");
+      bld->total_emitted_vertices_vec =
+         LLVMBuildAdd(builder, bld->total_emitted_vertices_vec, masked_ones, "");
+   }
+}
+
+
+static void
+end_primitive(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+   LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
+
+   if (bld->gs_iface->end_primitive) {
+      LLVMValueRef masked_ones = mask_to_one_vec(bld_base);
+      bld->gs_iface->end_primitive(&bld->bld_base,
+                                  bld->emitted_vertices_vec,
+                                  bld->emitted_prims_vec,
+                                  bld->gs_iface->user_data);
+      bld->emitted_prims_vec =
+         LLVMBuildAdd(builder, bld->emitted_prims_vec, masked_ones, "");
+      bld->emitted_vertices_vec = bld_base->uint_bld.zero;
+   }
+}
+
 static void
 cal_emit(
    const struct lp_build_tgsi_action * action,
@@ -2324,7 +2458,7 @@ static void emit_prologue(struct lp_build_tgsi_context * bld_base)
 
    /* If we have indirect addressing in inputs we need to copy them into
     * our alloca array to be able to iterate over them */
-   if (bld->indirect_files & (1 << TGSI_FILE_INPUT)) {
+   if (bld->indirect_files & (1 << TGSI_FILE_INPUT) && !bld->gs_iface) {
       unsigned index, chan;
       LLVMTypeRef vec_type = bld_base->base.vec_type;
       LLVMValueRef array_size = lp_build_const_int32(gallivm,
@@ -2349,6 +2483,13 @@ static void emit_prologue(struct lp_build_tgsi_context * bld_base)
          }
       }
    }
+
+   if (bld->gs_iface) {
+      struct lp_build_context *uint_bld = &bld->bld_base.uint_bld;
+      bld->emitted_prims_vec = uint_bld->zero;
+      bld->emitted_vertices_vec = uint_bld->zero;
+      bld->total_emitted_vertices_vec = uint_bld->zero;
+   }
 }
 
 static void emit_epilogue(struct lp_build_tgsi_context * bld_base)
@@ -2361,16 +2502,14 @@ static void emit_epilogue(struct lp_build_tgsi_context * bld_base)
    }
 
    /* If we have indirect addressing in outputs we need to copy our alloca array
-    * to the outputs slots specified by the called */
-   if (bld->indirect_files & (1 << TGSI_FILE_OUTPUT)) {
-      unsigned index, chan;
-      assert(bld_base->info->num_outputs <=
-                        bld_base->info->file_max[TGSI_FILE_OUTPUT] + 1);
-      for (index = 0; index < bld_base->info->num_outputs; ++index) {
-         for (chan = 0; chan < TGSI_NUM_CHANNELS; ++chan) {
-            bld->outputs[index][chan] = lp_get_output_ptr(bld, index, chan);
-         }
-      }
+    * to the outputs slots specified by the caller */
+   if (bld->gs_iface) {
+      bld->gs_iface->gs_epilogue(&bld->bld_base,
+                                bld->total_emitted_vertices_vec,
+                                bld->emitted_prims_vec,
+                                bld->gs_iface->user_data);
+   } else {
+      gather_outputs(bld);
    }
 }
 
@@ -2385,7 +2524,8 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
                   const LLVMValueRef (*inputs)[TGSI_NUM_CHANNELS],
                   LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
                   struct lp_build_sampler_soa *sampler,
-                  const struct tgsi_shader_info *info)
+                  const struct tgsi_shader_info *info,
+                  const struct lp_build_tgsi_gs_iface *gs_iface)
 {
    struct lp_build_tgsi_soa_context bld;
 
@@ -2462,6 +2602,15 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_I].emit = sample_i_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_SAMPLE_L].emit = sample_l_emit;
    bld.bld_base.op_actions[TGSI_OPCODE_SVIEWINFO].emit = sviewinfo_emit;
+
+   if (gs_iface) {
+      /* inputs are always indirect with gs */
+      bld.indirect_files |= (1 << TGSI_FILE_INPUT);
+      bld.gs_iface = gs_iface;
+      bld.bld_base.emit_fetch_funcs[TGSI_FILE_INPUT] = emit_fetch_gs_input;
+      bld.bld_base.op_actions[TGSI_OPCODE_EMIT].emit = emit_vertex;
+      bld.bld_base.op_actions[TGSI_OPCODE_ENDPRIM].emit = end_primitive;
+   }
 
    lp_exec_mask_init(&bld.exec_mask, &bld.bld_base.base);
 

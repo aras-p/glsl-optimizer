@@ -57,6 +57,71 @@ struct llvm_middle_end {
 };
 
 
+static void
+llvm_middle_end_prepare_gs(struct llvm_middle_end *fpme)
+{
+   struct draw_context *draw = fpme->draw;
+   struct draw_geometry_shader *gs = draw->gs.geometry_shader;
+   struct draw_gs_llvm_variant_key *key;
+   struct draw_gs_llvm_variant *variant = NULL;
+   struct draw_gs_llvm_variant_list_item *li;
+   struct llvm_geometry_shader *shader = llvm_geometry_shader(gs);
+   char store[DRAW_GS_LLVM_MAX_VARIANT_KEY_SIZE];
+   unsigned i;
+
+   key = draw_gs_llvm_make_variant_key(fpme->llvm, store);
+
+   /* Search shader's list of variants for the key */
+   li = first_elem(&shader->variants);
+   while (!at_end(&shader->variants, li)) {
+      if (memcmp(&li->base->key, key, shader->variant_key_size) == 0) {
+         variant = li->base;
+         break;
+      }
+      li = next_elem(li);
+   }
+
+   if (variant) {
+      /* found the variant, move to head of global list (for LRU) */
+      move_to_head(&fpme->llvm->gs_variants_list,
+                   &variant->list_item_global);
+   }
+   else {
+      /* Need to create new variant */
+
+      /* First check if we've created too many variants.  If so, free
+       * 25% of the LRU to avoid using too much memory.
+       */
+      if (fpme->llvm->nr_gs_variants >= DRAW_MAX_SHADER_VARIANTS) {
+         /*
+          * XXX: should we flush here ?
+          */
+         for (i = 0; i < DRAW_MAX_SHADER_VARIANTS / 4; i++) {
+            struct draw_gs_llvm_variant_list_item *item;
+            if (is_empty_list(&fpme->llvm->gs_variants_list)) {
+               break;
+            }
+            item = last_elem(&fpme->llvm->gs_variants_list);
+            assert(item);
+            assert(item->base);
+            draw_gs_llvm_destroy_variant(item->base);
+         }
+      }
+
+      variant = draw_gs_llvm_create_variant(fpme->llvm, gs->info.num_outputs, key);
+
+      if (variant) {
+         insert_at_head(&shader->variants, &variant->list_item_local);
+         insert_at_head(&fpme->llvm->gs_variants_list,
+                        &variant->list_item_global);
+         fpme->llvm->nr_gs_variants++;
+         shader->variants_cached++;
+      }
+   }
+
+   gs->current_variant = variant;
+}
+
 /**
  * Prepare/validate middle part of the vertex pipeline.
  * NOTE: if you change this function, also look at the non-LLVM
@@ -180,6 +245,10 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 
       fpme->current_variant = variant;
    }
+
+   if (gs) {
+      llvm_middle_end_prepare_gs(fpme);
+   }
 }
 
 
@@ -199,11 +268,17 @@ llvm_middle_end_bind_parameters(struct draw_pt_middle_end *middle)
    for (i = 0; i < Elements(fpme->llvm->jit_context.vs_constants); ++i) {
       fpme->llvm->jit_context.vs_constants[i] = draw->pt.user.vs_constants[i];
    }
+   for (i = 0; i < Elements(fpme->llvm->gs_jit_context.constants); ++i) {
+      fpme->llvm->gs_jit_context.constants[i] = draw->pt.user.gs_constants[i];
+   }
 
    fpme->llvm->jit_context.planes =
       (float (*)[DRAW_TOTAL_CLIP_PLANES][4]) draw->pt.user.planes[0];
+   fpme->llvm->gs_jit_context.planes =
+      (float (*)[DRAW_TOTAL_CLIP_PLANES][4]) draw->pt.user.planes[0];
 
    fpme->llvm->jit_context.viewport = (float *) draw->viewport.scale;
+   fpme->llvm->gs_jit_context.viewport = (float *) draw->viewport.scale;
 }
 
 

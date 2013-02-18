@@ -354,7 +354,7 @@ generate_fs(struct gallivm_state *gallivm,
    lp_build_tgsi_soa(gallivm, tokens, type, &mask,
                      consts_ptr, &system_values,
                      interp->pos, interp->inputs,
-                     outputs, sampler, &shader->info.base);
+                     outputs, sampler, &shader->info.base, NULL);
 
    /* Alpha test */
    if (key->alpha.enabled) {
@@ -607,7 +607,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
    lp_build_tgsi_soa(gallivm, tokens, type, &mask,
                      consts_ptr, &system_values,
                      interp->pos, interp->inputs,
-                     outputs, sampler, &shader->info.base);
+                     outputs, sampler, &shader->info.base, NULL);
 
    /* Alpha test */
    if (key->alpha.enabled) {

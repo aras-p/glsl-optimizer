@@ -29,6 +29,9 @@
 
 #include "draw_private.h"
 #include "draw_context.h"
+#ifdef HAVE_LLVM
+#include "draw_llvm.h"
+#endif
 
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_exec.h"
@@ -67,7 +70,7 @@ draw_gs_get_input_index(int semantic, int index,
 static INLINE boolean
 draw_gs_should_flush(struct draw_geometry_shader *shader)
 {
-   return (shader->fetched_prim_count == 4);
+   return (shader->fetched_prim_count == shader->vector_length);
 }
 
 /*#define DEBUG_OUTPUTS 1*/
@@ -182,7 +185,7 @@ static void tgsi_fetch_gs_input(struct draw_geometry_shader *shader,
 }
 
 static void tgsi_gs_prepare(struct draw_geometry_shader *shader,
-                            const void *constants[PIPE_MAX_CONSTANT_BUFFERS], 
+                            const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
                             const unsigned constants_size[PIPE_MAX_CONSTANT_BUFFERS])
 {
    struct tgsi_exec_machine *machine = shader->machine;
@@ -205,9 +208,147 @@ static unsigned tgsi_gs_run(struct draw_geometry_shader *shader,
    /* run interpreter */
    tgsi_exec_machine_run(machine);
 
-   return 
+   return
       machine->Temps[TGSI_EXEC_TEMP_PRIMITIVE_I].xyzw[TGSI_EXEC_TEMP_PRIMITIVE_C].u[0];
 }
+
+#ifdef HAVE_LLVM
+
+static void
+llvm_fetch_gs_input(struct draw_geometry_shader *shader,
+                    unsigned *indices,
+                    unsigned num_vertices,
+                    unsigned prim_idx)
+{
+   unsigned slot, vs_slot, i;
+   unsigned input_vertex_stride = shader->input_vertex_stride;
+   const float (*input_ptr)[4];
+   float (*input_data)[6][PIPE_MAX_SHADER_INPUTS][TGSI_NUM_CHANNELS][TGSI_NUM_CHANNELS] = &shader->gs_input->data;
+
+   input_ptr = shader->input;
+
+   for (i = 0; i < num_vertices; ++i) {
+      const float (*input)[4];
+#if DEBUG_INPUTS
+      debug_printf("%d) vertex index = %d (prim idx = %d)\n",
+                   i, indices[i], prim_idx);
+#endif
+      input = (const float (*)[4])(
+         (const char *)input_ptr + (indices[i] * input_vertex_stride));
+      for (slot = 0, vs_slot = 0; slot < shader->info.num_inputs; ++slot) {
+         if (shader->info.input_semantic_name[slot] == TGSI_SEMANTIC_PRIMID) {
+            (*input_data)[i][slot][0][prim_idx] = (float)shader->in_prim_idx;
+            (*input_data)[i][slot][1][prim_idx] = (float)shader->in_prim_idx;
+            (*input_data)[i][slot][2][prim_idx] = (float)shader->in_prim_idx;
+            (*input_data)[i][slot][3][prim_idx] = (float)shader->in_prim_idx;
+         } else {
+            vs_slot = draw_gs_get_input_index(
+                        shader->info.input_semantic_name[slot],
+                        shader->info.input_semantic_index[slot],
+                        shader->input_info);
+#if DEBUG_INPUTS
+            debug_printf("\tSlot = %d, vs_slot = %d, idx = %d:\n",
+                         slot, vs_slot, idx);
+#endif
+#if 0
+            assert(!util_is_inf_or_nan(input[vs_slot][0]));
+            assert(!util_is_inf_or_nan(input[vs_slot][1]));
+            assert(!util_is_inf_or_nan(input[vs_slot][2]));
+            assert(!util_is_inf_or_nan(input[vs_slot][3]));
+#endif
+            (*input_data)[i][slot][0][prim_idx] = input[vs_slot][0];
+            (*input_data)[i][slot][1][prim_idx] = input[vs_slot][1];
+            (*input_data)[i][slot][2][prim_idx] = input[vs_slot][2];
+            (*input_data)[i][slot][3][prim_idx] = input[vs_slot][3];
+#if DEBUG_INPUTS
+            debug_printf("\t\t%f %f %f %f\n",
+                         (*input_data)[i][slot][0][prim_idx],
+                         (*input_data)[i][slot][1][prim_idx],
+                         (*input_data)[i][slot][2][prim_idx],
+                         (*input_data)[i][slot][3][prim_idx]);
+#endif
+            ++vs_slot;
+         }
+      }
+   }
+}
+
+static void
+llvm_fetch_gs_outputs(struct draw_geometry_shader *shader,
+                      unsigned num_primitives,
+                      float (**p_output)[4])
+{
+   int total_verts = 0;
+   int vertex_count = 0;
+   int total_prims = 0;
+   int max_prims_per_invocation = 0;
+   char *output_ptr = (char*)shader->gs_output;
+   int i, j, prim_idx;
+
+   for (i = 0; i < shader->vector_length; ++i) {
+      int prims = shader->llvm_emitted_primitives[i];
+      total_prims += prims;
+      max_prims_per_invocation = MAX2(max_prims_per_invocation, prims);
+   }
+   for (i = 0; i < shader->vector_length; ++i) {
+      total_verts += shader->llvm_emitted_vertices[i];
+   }
+
+
+   output_ptr += shader->emitted_vertices * shader->vertex_size;
+   for (i = 0; i < shader->vector_length - 1; ++i) {
+      int current_verts = shader->llvm_emitted_vertices[i];
+
+      if (current_verts != shader->max_output_vertices) {
+         memcpy(output_ptr + (vertex_count + current_verts) * shader->vertex_size,
+                output_ptr + (vertex_count + shader->max_output_vertices) * shader->vertex_size,
+                shader->vertex_size * (total_verts - vertex_count - current_verts));
+      }
+      vertex_count += current_verts;
+   }
+
+   prim_idx = 0;
+   for (i = 0; i < shader->vector_length; ++i) {
+      int num_prims = shader->llvm_emitted_primitives[i];
+      for (j = 0; j < num_prims; ++j) {
+         int prim_length =
+            shader->llvm_prim_lengths[j][i];
+         shader->primitive_lengths[shader->emitted_primitives + prim_idx] =
+            prim_length;
+         ++prim_idx;
+      }
+   }
+
+   shader->emitted_primitives += total_prims;
+   shader->emitted_vertices += total_verts;
+}
+
+static void
+llvm_gs_prepare(struct draw_geometry_shader *shader,
+                const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
+                const unsigned constants_size[PIPE_MAX_CONSTANT_BUFFERS])
+{
+}
+
+static unsigned
+llvm_gs_run(struct draw_geometry_shader *shader,
+            unsigned input_primitives)
+{
+   unsigned ret;
+   char *input = (char*)shader->gs_output;
+
+   input += (shader->emitted_vertices * shader->vertex_size);
+
+   ret = shader->current_variant->jit_func(
+      shader->jit_context, shader->gs_input->data,
+      (struct vertex_header*)input,
+      input_primitives,
+      shader->draw->instance_id);
+
+   return ret;
+}
+
+#endif
 
 static void gs_flush(struct draw_geometry_shader *shader)
 {
@@ -219,13 +360,15 @@ static void gs_flush(struct draw_geometry_shader *shader)
                 input_primitives <= 4);
 
    out_prim_count = shader->run(shader, input_primitives);
+   shader->fetch_outputs(shader, out_prim_count,
+                         &shader->tmp_output);
+
 #if 0
    debug_printf("PRIM emitted prims = %d (verts=%d), cur prim count = %d\n",
                 shader->emitted_primitives, shader->emitted_vertices,
                 out_prim_count);
 #endif
-   shader->fetch_outputs(shader, out_prim_count,
-                         &shader->tmp_output);
+
    shader->fetched_prim_count = 0;
 }
 
@@ -331,8 +474,8 @@ static void gs_tri_adj(struct draw_geometry_shader *shader,
  * Execute geometry shader.
  */
 int draw_geometry_shader_run(struct draw_geometry_shader *shader,
-                             const void *constants[PIPE_MAX_CONSTANT_BUFFERS], 
-                             const unsigned constants_size[PIPE_MAX_CONSTANT_BUFFERS], 
+                             const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
+                             const unsigned constants_size[PIPE_MAX_CONSTANT_BUFFERS],
                              const struct draw_vertex_info *input_verts,
                              const struct draw_prim_info *input_prim,
                              const struct tgsi_shader_info *input_info,
@@ -344,14 +487,20 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    unsigned num_outputs = shader->info.num_outputs;
    unsigned vertex_size = sizeof(struct vertex_header) + num_outputs * 4 * sizeof(float);
    unsigned num_input_verts = input_prim->linear ?
-                              input_verts->count :
-                              input_prim->count;
+      input_verts->count :
+      input_prim->count;
    unsigned num_in_primitives =
-      MAX2(u_gs_prims_for_vertices(input_prim->prim, num_input_verts),
-           u_gs_prims_for_vertices(shader->input_primitive, num_input_verts));
+      align(
+         MAX2(u_gs_prims_for_vertices(input_prim->prim, num_input_verts),
+              u_gs_prims_for_vertices(shader->input_primitive, num_input_verts)),
+         shader->vector_length);
    unsigned max_out_prims = u_gs_prims_for_vertices(shader->output_primitive,
                                                     shader->max_output_vertices)
-                            * num_in_primitives;
+      * num_in_primitives;
+
+   //Assume at least one primitive
+   max_out_prims = MAX2(max_out_prims, 1);
+
 
    output_verts->vertex_size = vertex_size;
    output_verts->stride = output_verts->vertex_size;
@@ -384,6 +533,34 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    shader->input_info = input_info;
    FREE(shader->primitive_lengths);
    shader->primitive_lengths = MALLOC(max_out_prims * sizeof(unsigned));
+
+
+#ifdef HAVE_LLVM
+   if (draw_get_option_use_llvm()) {
+      shader->gs_output = output_verts->verts;
+      if (max_out_prims > shader->max_out_prims) {
+         unsigned i;
+         if (shader->llvm_prim_lengths) {
+            for (i = 0; i < shader->max_out_prims; ++i) {
+               align_free(shader->llvm_prim_lengths[i]);
+            }
+            FREE(shader->llvm_prim_lengths);
+         }
+
+         shader->llvm_prim_lengths = MALLOC(max_out_prims * sizeof(unsigned*));
+         for (i = 0; i < max_out_prims; ++i) {
+            int vector_size = shader->vector_length * sizeof(unsigned);
+            shader->llvm_prim_lengths[i] =
+               align_malloc(vector_size, vector_size);
+         }
+
+         shader->max_out_prims = max_out_prims;
+      }
+      shader->jit_context->prim_lengths = shader->llvm_prim_lengths;
+      shader->jit_context->emitted_vertices = shader->llvm_emitted_vertices;
+      shader->jit_context->emitted_prims = shader->llvm_emitted_primitives;
+   }
+#endif
 
    shader->prepare(shader, constants, constants_size);
 
@@ -464,10 +641,27 @@ struct draw_geometry_shader *
 draw_create_geometry_shader(struct draw_context *draw,
                             const struct pipe_shader_state *state)
 {
+#ifdef HAVE_LLVM
+   struct llvm_geometry_shader *llvm_gs;
+#endif
    struct draw_geometry_shader *gs;
    unsigned i;
 
-   gs = CALLOC_STRUCT(draw_geometry_shader);
+#ifdef HAVE_LLVM
+   if (draw_get_option_use_llvm()) {
+      llvm_gs = CALLOC_STRUCT(llvm_geometry_shader);
+
+      if (llvm_gs == NULL)
+         return NULL;
+
+      gs = &llvm_gs->base;
+
+      make_empty_list(&llvm_gs->variants);
+   } else
+#endif
+   {
+      gs = CALLOC_STRUCT(draw_geometry_shader);
+   }
 
    if (!gs)
       return NULL;
@@ -486,6 +680,17 @@ draw_create_geometry_shader(struct draw_context *draw,
    gs->input_primitive = PIPE_PRIM_TRIANGLES;
    gs->output_primitive = PIPE_PRIM_TRIANGLE_STRIP;
    gs->max_output_vertices = 32;
+   gs->max_out_prims = 0;
+
+   if (draw_get_option_use_llvm()) {
+      /* TODO: change the input array to handle the following
+         vector length, instead of the currently hardcoded
+         TGSI_NUM_CHANNELS
+      gs->vector_length = lp_native_vector_width / 32;*/
+      gs->vector_length = TGSI_NUM_CHANNELS;
+   } else {
+      gs->vector_length = TGSI_NUM_CHANNELS;
+   }
 
    for (i = 0; i < gs->info.num_properties; ++i) {
       if (gs->info.properties[i].name ==
@@ -507,10 +712,36 @@ draw_create_geometry_shader(struct draw_context *draw,
 
    gs->machine = draw->gs.tgsi.machine;
 
-   gs->fetch_outputs = tgsi_fetch_gs_outputs;
-   gs->fetch_inputs = tgsi_fetch_gs_input;
-   gs->prepare = tgsi_gs_prepare;
-   gs->run = tgsi_gs_run;
+#ifdef HAVE_LLVM
+   if (draw_get_option_use_llvm()) {
+      int vector_size = gs->vector_length * sizeof(float);
+      gs->gs_input = align_malloc(sizeof(struct draw_gs_inputs), 16);
+      memset(gs->gs_input, 0, sizeof(struct draw_gs_inputs));
+      gs->llvm_prim_lengths = 0;
+
+      gs->llvm_emitted_primitives = align_malloc(vector_size, vector_size);
+      gs->llvm_emitted_vertices = align_malloc(vector_size, vector_size);
+
+      gs->fetch_outputs = llvm_fetch_gs_outputs;
+      gs->fetch_inputs = llvm_fetch_gs_input;
+      gs->prepare = llvm_gs_prepare;
+      gs->run = llvm_gs_run;
+
+      gs->jit_context = &draw->llvm->gs_jit_context;
+
+
+      llvm_gs->variant_key_size =
+         draw_gs_llvm_variant_key_size(
+            MAX2(gs->info.file_max[TGSI_FILE_SAMPLER]+1,
+                 gs->info.file_max[TGSI_FILE_SAMPLER_VIEW]+1));
+   } else
+#endif
+   {
+      gs->fetch_outputs = tgsi_fetch_gs_outputs;
+      gs->fetch_inputs = tgsi_fetch_gs_input;
+      gs->prepare = tgsi_gs_prepare;
+      gs->run = tgsi_gs_run;
+   }
 
    return gs;
 }
@@ -535,7 +766,42 @@ void draw_bind_geometry_shader(struct draw_context *draw,
 void draw_delete_geometry_shader(struct draw_context *draw,
                                  struct draw_geometry_shader *dgs)
 {
+#ifdef HAVE_LLVM
+   if (draw_get_option_use_llvm()) {
+      struct llvm_geometry_shader *shader = llvm_geometry_shader(dgs);
+      struct draw_gs_llvm_variant_list_item *li;
+
+      li = first_elem(&shader->variants);
+      while(!at_end(&shader->variants, li)) {
+         struct draw_gs_llvm_variant_list_item *next = next_elem(li);
+         draw_gs_llvm_destroy_variant(li->base);
+         li = next;
+      }
+
+      assert(shader->variants_cached == 0);
+
+      if (dgs->llvm_prim_lengths) {
+         unsigned i;
+         for (i = 0; i < dgs->max_out_prims; ++i) {
+            align_free(dgs->llvm_prim_lengths[i]);
+         }
+         FREE(dgs->llvm_prim_lengths);
+      }
+      align_free(dgs->llvm_emitted_primitives);
+      align_free(dgs->llvm_emitted_vertices);
+
+      align_free(dgs->gs_input);
+   }
+#endif
+
    FREE(dgs->primitive_lengths);
    FREE((void*) dgs->state.tokens);
    FREE(dgs);
+}
+
+
+void draw_gs_set_current_variant(struct draw_geometry_shader *shader,
+                                 struct draw_gs_llvm_variant *variant)
+{
+   shader->current_variant = variant;
 }

@@ -282,4 +282,9 @@ draw_get_shader_param(unsigned shader, enum pipe_shader_cap param);
 int
 draw_get_shader_param_no_llvm(unsigned shader, enum pipe_shader_cap param);
 
+#ifdef HAVE_LLVM
+boolean
+draw_get_option_use_llvm(void);
+#endif
+
 #endif /* DRAW_CONTEXT_H */
