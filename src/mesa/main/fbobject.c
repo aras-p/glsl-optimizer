@@ -3310,3 +3310,56 @@ _mesa_InvalidateFramebuffer(GLenum target, GLsizei numAttachments,
                                   0, 0, MAX_VIEWPORT_WIDTH, MAX_VIEWPORT_HEIGHT,
                                   "glInvalidateFramebuffer");
 }
+
+void GLAPIENTRY
+_mesa_DiscardFramebufferEXT(GLenum target, GLsizei numAttachments,
+                            const GLenum *attachments)
+{
+   struct gl_framebuffer *fb;
+   GLint i;
+
+   GET_CURRENT_CONTEXT(ctx);
+
+   fb = get_framebuffer_target(ctx, target);
+   if (!fb) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+         "glDiscardFramebufferEXT(target %s)",
+         _mesa_lookup_enum_by_nr(target));
+      return;
+   }
+
+   if (numAttachments < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glDiscardFramebufferEXT(numAttachments < 0)");
+      return;
+   }
+
+   for (i = 0; i < numAttachments; i++) {
+      switch (attachments[i]) {
+      case GL_COLOR:
+      case GL_DEPTH:
+      case GL_STENCIL:
+         if (_mesa_is_user_fbo(fb))
+            goto invalid_enum;
+         break;
+      case GL_COLOR_ATTACHMENT0:
+      case GL_DEPTH_ATTACHMENT:
+      case GL_STENCIL_ATTACHMENT:
+         if (_mesa_is_winsys_fbo(fb))
+            goto invalid_enum;
+         break;
+      default:
+         goto invalid_enum;
+      }
+   }
+
+   if (ctx->Driver.DiscardFramebuffer)
+      ctx->Driver.DiscardFramebuffer(ctx, target, numAttachments, attachments);
+
+   return;
+
+invalid_enum:
+   _mesa_error(ctx, GL_INVALID_ENUM,
+               "glDiscardFramebufferEXT(attachment %s)",
+              _mesa_lookup_enum_by_nr(attachments[i]));
+}

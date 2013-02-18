@@ -174,6 +174,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->ValidateFramebuffer = _mesa_validate_framebuffer;
 
    driver->BlitFramebuffer = _swrast_BlitFramebuffer;
+   driver->DiscardFramebuffer = NULL;
 
    _mesa_init_texture_barrier_functions(driver);
 

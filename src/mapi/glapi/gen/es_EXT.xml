@@ -663,6 +663,19 @@
     <enum name="MAX_TEXTURE_LOD_BIAS_EXT"                 value="0x84FD"/>
 </category>
 
+<!-- 64. GL_EXT_discard_framebuffer -->
+
+<category name="GL_EXT_discard_framebuffer" number="64">
+    <function name="DiscardFramebufferEXT" es1="1.0" es2="2.0" offset="assign" desktop="false">
+        <param name="target" type="GLenum"/>
+        <param name="numAttachments" type="GLsizei"/>
+        <param name="attachments" type="const GLenum *" count="numAttachments"/>
+    </function>
+    <enum name="COLOR_EXT"                                value="0x1800"/>
+    <enum name="DEPTH_EXT"                                value="0x1801"/>
+    <enum name="STENCIL_EXT"                              value="0x1802"/>
+</category>
+
 <!-- 65. GL_EXT_blend_minmax -->
 
 <category name="GL_EXT_read_format_bgra" number="66">

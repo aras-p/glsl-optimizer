@@ -168,6 +168,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_blend_color",                         o(EXT_blend_color),                         GLL,            1995 },
    { "GL_EXT_blend_equation_separate",             o(EXT_blend_equation_separate),             GL,             2003 },
    { "GL_EXT_blend_func_separate",                 o(EXT_blend_func_separate),                 GLL,            1999 },
+   { "GL_EXT_discard_framebuffer",                 o(EXT_framebuffer_object),                        ES1 | ES2, 2009 },
    { "GL_EXT_blend_minmax",                        o(EXT_blend_minmax),                        GLL | ES1 | ES2, 1995 },
    { "GL_EXT_blend_subtract",                      o(dummy_true),                              GLL,            1995 },
    { "GL_EXT_clip_volume_hint",                    o(EXT_clip_volume_hint),                    GL,             1996 },

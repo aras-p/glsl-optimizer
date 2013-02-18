@@ -214,4 +214,8 @@ extern void GLAPIENTRY
 _mesa_InvalidateFramebuffer(GLenum target, GLsizei numAttachments,
                             const GLenum *attachments);
 
+extern void GLAPIENTRY
+_mesa_DiscardFramebufferEXT(GLenum target, GLsizei numAttachments,
+                            const GLenum *attachments);
+
 #endif /* FBOBJECT_H */

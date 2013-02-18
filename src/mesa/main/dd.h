@@ -604,7 +604,7 @@ struct dd_function_table {
    /*@}*/
 
    /**
-    * \name Functions for GL_EXT_framebuffer_{object,blit}.
+    * \name Functions for GL_EXT_framebuffer_{object,blit,discard}.
     */
    /*@{*/
    struct gl_framebuffer * (*NewFramebuffer)(struct gl_context *ctx, GLuint name);
@@ -628,6 +628,8 @@ struct dd_function_table {
                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                            GLbitfield mask, GLenum filter);
+   void (*DiscardFramebuffer)(struct gl_context *ctx,
+                              GLenum target, GLsizei numAttachments, const GLenum *attachments);
 
    /**
     * \name Query objects
