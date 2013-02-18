@@ -1617,7 +1617,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
-	unsigned color_info;
+	unsigned color_info, color_attrib;
 	unsigned tile_mode_index;
 	unsigned format, swap, ntype, endian;
 	uint64_t offset;
@@ -1705,6 +1705,9 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 		S_028C70_NUMBER_TYPE(ntype) |
 		S_028C70_ENDIAN(endian);
 
+	color_attrib = S_028C74_TILE_MODE_INDEX(tile_mode_index) |
+		S_028C74_FORCE_DST_ALPHA_1(desc->swizzle[3] == UTIL_FORMAT_SWIZZLE_1);
+
 	offset += r600_resource_va(rctx->context.screen, state->cbufs[cb]->texture);
 	offset >>= 8;
 
@@ -1722,8 +1725,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 			       S_028C6C_SLICE_MAX(state->cbufs[cb]->u.tex.last_layer));
 	}
 	si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + cb * 0x3C, color_info);
-	si_pm4_set_reg(pm4, R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C,
-		       S_028C74_TILE_MODE_INDEX(tile_mode_index));
+	si_pm4_set_reg(pm4, R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C, color_attrib);
 
 	/* Determine pixel shader export format */
 	max_comp_size = si_colorformat_max_comp_size(format);
