@@ -675,11 +675,12 @@ st_flush_bitmap_cache(struct st_context *st)
  * \return  GL_TRUE for success, GL_FALSE if bitmap is too large, etc.
  */
 static GLboolean
-accum_bitmap(struct st_context *st,
+accum_bitmap(struct gl_context *ctx,
              GLint x, GLint y, GLsizei width, GLsizei height,
              const struct gl_pixelstore_attrib *unpack,
              const GLubyte *bitmap )
 {
+   struct st_context *st = ctx->st;
    struct bitmap_cache *cache = st->bitmap.cache;
    int px = -999, py = -999;
    const GLfloat z = st->ctx->Current.RasterPos[2];
@@ -729,8 +730,16 @@ accum_bitmap(struct st_context *st,
    /* create the transfer if needed */
    create_cache_trans(st);
 
+   /* PBO source... */
+   bitmap = _mesa_map_pbo_source(ctx, unpack, bitmap);
+   if (!bitmap) {
+      return FALSE;
+   }
+
    unpack_bitmap(st, px, py, width, height, unpack, bitmap,
                  cache->buffer, BITMAP_CACHE_WIDTH);
+
+   _mesa_unmap_pbo_source(ctx, unpack);
 
    return GL_TRUE; /* accumulated */
 }
@@ -764,7 +773,7 @@ st_Bitmap(struct gl_context *ctx, GLint x, GLint y,
                                                           semantic_indexes);
    }
 
-   if (UseBitmapCache && accum_bitmap(st, x, y, width, height, unpack, bitmap))
+   if (UseBitmapCache && accum_bitmap(ctx, x, y, width, height, unpack, bitmap))
       return;
 
    pt = make_bitmap_texture(ctx, width, height, unpack, bitmap);
