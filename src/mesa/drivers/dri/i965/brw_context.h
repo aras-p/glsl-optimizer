@@ -153,6 +153,7 @@ enum brw_state_id {
    BRW_STATE_PROGRAM_CACHE,
    BRW_STATE_STATE_BASE_ADDRESS,
    BRW_STATE_SOL_INDICES,
+   BRW_STATE_VUE_MAP_GEOM_OUT,
 };
 
 #define BRW_NEW_URB_FENCE               (1 << BRW_STATE_URB_FENCE)
@@ -182,6 +183,7 @@ enum brw_state_id {
 #define BRW_NEW_PROGRAM_CACHE		(1 << BRW_STATE_PROGRAM_CACHE)
 #define BRW_NEW_STATE_BASE_ADDRESS	(1 << BRW_STATE_STATE_BASE_ADDRESS)
 #define BRW_NEW_SOL_INDICES		(1 << BRW_STATE_SOL_INDICES)
+#define BRW_NEW_VUE_MAP_GEOM_OUT	(1 << BRW_STATE_VUE_MAP_GEOM_OUT)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -917,6 +919,15 @@ struct brw_context
       GLuint count;
       uint32_t offset;
    } sampler;
+
+   /**
+    * Layout of vertex data exiting the geometry portion of the pipleine.
+    * This comes from the geometry shader if one exists, otherwise from the
+    * vertex shader.
+    *
+    * BRW_NEW_VUE_MAP_GEOM_OUT is flagged when the VUE map changes.
+    */
+   struct brw_vue_map vue_map_geom_out;
 
    struct {
       struct brw_vs_prog_data *prog_data;

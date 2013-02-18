@@ -376,6 +376,7 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_PROGRAM_CACHE),
    DEFINE_BIT(BRW_NEW_STATE_BASE_ADDRESS),
    DEFINE_BIT(BRW_NEW_SOL_INDICES),
+   DEFINE_BIT(BRW_NEW_VUE_MAP_GEOM_OUT),
    {0, 0, 0}
 };
 
