@@ -240,8 +240,8 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
    /* Round up the surface size to a multiple of the tile size to
     * avoid tile clipping.
     */
-   const unsigned width = align(lpr->base.width0, TILE_SIZE);
-   const unsigned height = align(lpr->base.height0, TILE_SIZE);
+   const unsigned width = MAX2(1, align(lpr->base.width0, TILE_SIZE));
+   const unsigned height = MAX2(1, align(lpr->base.height0, TILE_SIZE));
    const unsigned width_t = width / TILE_SIZE;
    const unsigned height_t = height / TILE_SIZE;
 
