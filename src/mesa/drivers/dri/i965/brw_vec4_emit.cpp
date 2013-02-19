@@ -502,6 +502,20 @@ vec4_generator::generate_gs_set_vertex_count(struct brw_reg dst,
 }
 
 void
+vec4_generator::generate_gs_set_dword_2_immed(struct brw_reg dst,
+                                              struct brw_reg src)
+{
+   assert(src.file == BRW_IMMEDIATE_VALUE);
+
+   brw_push_insn_state(p);
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_MOV(p, suboffset(vec1(dst), 2), src);
+   brw_set_access_mode(p, BRW_ALIGN_16);
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -983,6 +997,10 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 
    case GS_OPCODE_SET_VERTEX_COUNT:
       generate_gs_set_vertex_count(dst, src[0]);
+      break;
+
+   case GS_OPCODE_SET_DWORD_2_IMMED:
+      generate_gs_set_dword_2_immed(dst, src[0]);
       break;
 
    case SHADER_OPCODE_SHADER_TIME_ADD:

@@ -505,6 +505,8 @@ brw_instruction_name(enum opcode op)
       return "set_write_offset";
    case GS_OPCODE_SET_VERTEX_COUNT:
       return "set_vertex_count";
+   case GS_OPCODE_SET_DWORD_2_IMMED:
+      return "set_dword_2_immed";
 
    default:
       /* Yes, this leaks.  It's in debug code, it should never occur, and if

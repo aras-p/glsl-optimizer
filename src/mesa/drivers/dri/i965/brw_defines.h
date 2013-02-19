@@ -843,6 +843,13 @@ enum opcode {
     * - src0.x is the vertex count.  The upper 16 bits will be ignored.
     */
    GS_OPCODE_SET_VERTEX_COUNT,
+
+   /**
+    * Set DWORD 2 of dst to the immediate value in src.  Used by geometry
+    * shaders to initialize DWORD 2 of R0, which needs to be 0 in order for
+    * scratch reads and writes to operate correctly.
+    */
+   GS_OPCODE_SET_DWORD_2_IMMED,
 };
 
 #define BRW_PREDICATE_NONE             0

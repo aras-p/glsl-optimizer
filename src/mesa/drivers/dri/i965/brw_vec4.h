@@ -635,6 +635,7 @@ private:
                                      struct brw_reg src1);
    void generate_gs_set_vertex_count(struct brw_reg dst,
                                      struct brw_reg src);
+   void generate_gs_set_dword_2_immed(struct brw_reg dst, struct brw_reg src);
    void generate_oword_dual_block_offsets(struct brw_reg m1,
 					  struct brw_reg index);
    void generate_scratch_write(vec4_instruction *inst,
