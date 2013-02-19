@@ -242,7 +242,7 @@ llvmpipe_init_context_texture_funcs(struct pipe_context *pipe);
 unsigned int
 llvmpipe_is_resource_referenced( struct pipe_context *pipe,
                                  struct pipe_resource *presource,
-                                 unsigned level, int layer);
+                                 unsigned level);
 
 unsigned
 llvmpipe_get_format_alignment(enum pipe_format format);

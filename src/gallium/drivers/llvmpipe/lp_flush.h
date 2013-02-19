@@ -47,7 +47,6 @@ boolean
 llvmpipe_flush_resource(struct pipe_context *pipe,
                         struct pipe_resource *resource,
                         unsigned level,
-                        int layer,
                         boolean read_only,
                         boolean cpu_access,
                         boolean do_not_block,

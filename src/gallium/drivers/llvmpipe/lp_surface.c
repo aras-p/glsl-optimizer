@@ -57,14 +57,12 @@ lp_resource_copy(struct pipe_context *pipe,
                  struct pipe_resource *src, unsigned src_level,
                  const struct pipe_box *src_box)
 {
-   /* XXX this used to ignore srcz/dstz
-    * assume it works the same for cube and 3d
-    */
    struct llvmpipe_resource *src_tex = llvmpipe_resource(src);
    struct llvmpipe_resource *dst_tex = llvmpipe_resource(dst);
    const enum pipe_format format = src_tex->base.format;
    unsigned width = src_box->width;
    unsigned height = src_box->height;
+   unsigned depth = src_box->depth;
    unsigned z;
 
    /* Fallback for buffers. */
@@ -74,27 +72,28 @@ lp_resource_copy(struct pipe_context *pipe,
       return;
    }
 
+   llvmpipe_flush_resource(pipe,
+                           dst, dst_level,
+                           FALSE, /* read_only */
+                           TRUE, /* cpu_access */
+                           FALSE, /* do_not_block */
+                           "blit dest");
+
+   llvmpipe_flush_resource(pipe,
+                           src, src_level,
+                           TRUE, /* read_only */
+                           TRUE, /* cpu_access */
+                           FALSE, /* do_not_block */
+                           "blit src");
+
+   /*
+   printf("surface copy from %u lvl %u to %u lvl %u: %u,%u,%u to %u,%u,%u %u x %u x %u\n",
+          src_tex->id, src_level, dst_tex->id, dst_level,
+          src_box->x, src_box->y, src_box->z, dstx, dsty, dstz,
+          src_box->width, src_box->height, src_box->depth);
+   */
+
    for (z = 0; z < src_box->depth; z++){
-      llvmpipe_flush_resource(pipe,
-                              dst, dst_level, dstz + z,
-                              FALSE, /* read_only */
-                              TRUE, /* cpu_access */
-                              FALSE, /* do_not_block */
-                              "blit dest");
-
-      llvmpipe_flush_resource(pipe,
-                              src, src_level, src_box->z + z,
-                              TRUE, /* read_only */
-                              TRUE, /* cpu_access */
-                              FALSE, /* do_not_block */
-                              "blit src");
-
-      /*
-      printf("surface copy from %u lvl %u to %u lvl %u: %u,%u,%u to %u,%u,%u %u x %u x %u\n",
-             src_tex->id, src_level, dst_tex->id, dst_level,
-             src_box->x, src_box->y, src_box->z, dstx, dsty, dstz,
-             src_box->width, src_box->height, src_box->depth);
-      */
 
       /* set src tiles to linear layout */
       {
@@ -148,27 +147,29 @@ lp_resource_copy(struct pipe_context *pipe,
             }
          }
       }
+   }
 
-      /* copy */
-      {
-         const ubyte *src_linear_ptr
-            = llvmpipe_get_texture_image_address(src_tex, src_box->z + z,
-                                                 src_level,
-                                                 LP_TEX_LAYOUT_LINEAR);
-         ubyte *dst_linear_ptr
-            = llvmpipe_get_texture_image_address(dst_tex, dstz + z,
-                                                 dst_level,
-                                                 LP_TEX_LAYOUT_LINEAR);
+   /* copy */
+   {
+      const ubyte *src_linear_ptr
+         = llvmpipe_get_texture_image_address(src_tex, src_box->z,
+                                              src_level,
+                                              LP_TEX_LAYOUT_LINEAR);
+      ubyte *dst_linear_ptr
+         = llvmpipe_get_texture_image_address(dst_tex, dstz,
+                                              dst_level,
+                                              LP_TEX_LAYOUT_LINEAR);
 
-         if (dst_linear_ptr && src_linear_ptr) {
-            util_copy_rect(dst_linear_ptr, format,
-                           llvmpipe_resource_stride(&dst_tex->base, dst_level),
-                           dstx, dsty,
-                           width, height,
-                           src_linear_ptr,
-                           llvmpipe_resource_stride(&src_tex->base, src_level),
-                           src_box->x, src_box->y);
-         }
+      if (dst_linear_ptr && src_linear_ptr) {
+         util_copy_box(dst_linear_ptr, format,
+                       llvmpipe_resource_stride(&dst_tex->base, dst_level),
+                       dst_tex->img_stride[dst_level],
+                       dstx, dsty, 0,
+                       width, height, depth,
+                       src_linear_ptr,
+                       llvmpipe_resource_stride(&src_tex->base, src_level),
+                       src_tex->img_stride[src_level],
+                       src_box->x, src_box->y, 0);
       }
    }
 }

@@ -655,7 +655,6 @@ llvmpipe_transfer_map( struct pipe_context *pipe,
       boolean do_not_block = !!(usage & PIPE_TRANSFER_DONTBLOCK);
       if (!llvmpipe_flush_resource(pipe, resource,
                                    level,
-                                   box->depth > 1 ? -1 : box->z,
                                    read_only,
                                    TRUE, /* cpu_access */
                                    do_not_block,
@@ -757,7 +756,7 @@ llvmpipe_transfer_unmap(struct pipe_context *pipe,
 unsigned int
 llvmpipe_is_resource_referenced( struct pipe_context *pipe,
                                  struct pipe_resource *presource,
-                                 unsigned level, int layer)
+                                 unsigned level)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
 

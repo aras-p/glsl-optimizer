@@ -98,7 +98,6 @@ boolean
 llvmpipe_flush_resource(struct pipe_context *pipe,
                         struct pipe_resource *resource,
                         unsigned level,
-                        int layer,
                         boolean read_only,
                         boolean cpu_access,
                         boolean do_not_block,
@@ -106,7 +105,7 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
 {
    unsigned referenced;
 
-   referenced = llvmpipe_is_resource_referenced(pipe, resource, level, layer);
+   referenced = llvmpipe_is_resource_referenced(pipe, resource, level);
 
    if ((referenced & LP_REFERENCED_FOR_WRITE) ||
        ((referenced & LP_REFERENCED_FOR_READ) && !read_only)) {
