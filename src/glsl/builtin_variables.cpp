@@ -849,6 +849,7 @@ initialize_vs_variables(exec_list *instructions,
          generate_130_vs_variables(instructions, state, true);
          break;
       case 140:
+      case 150:
          generate_130_vs_variables(instructions, state, false);
          break;
       default:
@@ -1140,6 +1141,7 @@ initialize_fs_variables(exec_list *instructions,
          generate_130_fs_variables(instructions, state);
          break;
       case 140:
+      case 150:
          generate_140_fs_variables(instructions, state);
          break;
       default:

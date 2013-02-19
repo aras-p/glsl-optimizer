@@ -373,6 +373,7 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
          glsl_type::generate_130_types(state->symbols, true, skip_1d);
          break;
       case 140:
+      case 150:
          glsl_type::generate_140_types(state->symbols);
          break;
       default:
