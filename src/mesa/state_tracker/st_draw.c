@@ -283,7 +283,7 @@ st_draw_vbo(struct gl_context *ctx,
          /* don't trim, restarts might be inside index list */
          cso_draw_vbo(st->cso_context, &info);
       }
-      else if (u_trim_pipe_prim(info.mode, &info.count))
+      else if (u_trim_pipe_prim(prims[i].mode, &info.count))
          cso_draw_vbo(st->cso_context, &info);
    }
 
