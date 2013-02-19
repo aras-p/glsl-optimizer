@@ -545,6 +545,8 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
 	unsigned level = surf_tmpl->u.tex.level;
 
+	assert(surf_tmpl->u.tex.first_layer <= u_max_layer(texture, surf_tmpl->u.tex.level));
+	assert(surf_tmpl->u.tex.last_layer <= u_max_layer(texture, surf_tmpl->u.tex.level));
 	assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
 	if (surface == NULL)
 		return NULL;

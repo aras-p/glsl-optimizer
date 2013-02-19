@@ -98,21 +98,6 @@ static void r600_blitter_end(struct pipe_context *ctx)
 	r600_context_queries_resume(rctx);
 }
 
-static unsigned u_max_layer(struct pipe_resource *r, unsigned level)
-{
-	switch (r->target) {
-	case PIPE_TEXTURE_CUBE:
-		return 6 - 1;
-	case PIPE_TEXTURE_3D:
-		return u_minify(r->depth0, level) - 1;
-	case PIPE_TEXTURE_1D_ARRAY:
-	case PIPE_TEXTURE_2D_ARRAY:
-		return r->array_size - 1;
-	default:
-		return 0;
-	}
-}
-
 void si_blit_uncompress_depth(struct pipe_context *ctx,
 		struct r600_resource_texture *texture,
 		struct r600_resource_texture *staging,
