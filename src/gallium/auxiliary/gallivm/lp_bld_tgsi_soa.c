@@ -603,10 +603,10 @@ emit_fetch_constant(
    LLVMBuilderRef builder = gallivm->builder;
    struct lp_build_context *uint_bld = &bld_base->uint_bld;
    LLVMValueRef indirect_index = NULL;
-   struct lp_build_context *bld_fetch = stype_to_fetch(bld_base, stype);
    unsigned dimension = 0;
    LLVMValueRef dimension_index;
    LLVMValueRef consts_ptr;
+   LLVMValueRef res;
 
    /* XXX: Handle fetching xyzw components as a vector */
    assert(swizzle != ~0);
@@ -637,7 +637,7 @@ emit_fetch_constant(
       index_vec = lp_build_add(uint_bld, index_vec, swizzle_vec);
 
       /* Gather values from the constant buffer */
-      return build_gather(bld_fetch, consts_ptr, index_vec);
+      res = build_gather(&bld_base->base, consts_ptr, index_vec);
    }
    else {
       LLVMValueRef index;  /* index into the const buffer */
@@ -646,18 +646,16 @@ emit_fetch_constant(
       index = lp_build_const_int32(gallivm, reg->Register.Index*4 + swizzle);
 
       scalar_ptr = LLVMBuildGEP(builder, consts_ptr,
-                                   &index, 1, "");
-
-      if (stype != TGSI_TYPE_FLOAT && stype != TGSI_TYPE_UNTYPED) {
-         LLVMTypeRef ivtype = LLVMPointerType(LLVMInt32TypeInContext(gallivm->context), 0);
-         LLVMValueRef temp_ptr;
-         temp_ptr = LLVMBuildBitCast(builder, scalar_ptr, ivtype, "");
-         scalar = LLVMBuildLoad(builder, temp_ptr, "");
-      } else
-         scalar = LLVMBuildLoad(builder, scalar_ptr, "");
-
-      return lp_build_broadcast_scalar(bld_fetch, scalar);
+                                &index, 1, "");
+      scalar = LLVMBuildLoad(builder, scalar_ptr, "");
+      res = lp_build_broadcast_scalar(&bld_base->base, scalar);
    }
+
+   if (stype == TGSI_TYPE_SIGNED || stype == TGSI_TYPE_UNSIGNED) {
+      struct lp_build_context *bld_fetch = stype_to_fetch(bld_base, stype);
+      res = LLVMBuildBitCast(builder, res, bld_fetch->vec_type, "");
+   }
+   return res;
 }
 
 static LLVMValueRef
@@ -791,16 +789,13 @@ emit_fetch_temporary(
    }
    else {
       LLVMValueRef temp_ptr;
-      if (stype != TGSI_TYPE_FLOAT && stype != TGSI_TYPE_UNTYPED) {
-         LLVMTypeRef itype = LLVMPointerType(bld->bld_base.int_bld.vec_type, 0);
-         LLVMValueRef tint_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index,
-                                                     swizzle);
-         temp_ptr = LLVMBuildBitCast(builder, tint_ptr, itype, "");
-      } else
-         temp_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index, swizzle);
+      temp_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index, swizzle);
       res = LLVMBuildLoad(builder, temp_ptr, "");
-      if (!res)
-         return bld->bld_base.base.undef;
+   }
+
+   if (stype == TGSI_TYPE_SIGNED || stype == TGSI_TYPE_UNSIGNED) {
+      struct lp_build_context *bld_fetch = stype_to_fetch(bld_base, stype);
+      res = LLVMBuildBitCast(builder, res, bld_fetch->vec_type, "");
    }
 
    return res;
