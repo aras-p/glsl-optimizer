@@ -26,6 +26,7 @@
  */
 
 #include "brw_fs.h"
+#include "main/bitset.h"
 
 namespace brw {
 
@@ -36,18 +37,18 @@ struct block_data {
     * Note that for our purposes, "defined" means unconditionally, completely
     * defined.
     */
-   bool *def;
+   BITSET_WORD *def;
 
    /**
     * Which variables are used before being defined in the block.
     */
-   bool *use;
+   BITSET_WORD *use;
 
    /** Which defs reach the entry point of the block. */
-   bool *livein;
+   BITSET_WORD *livein;
 
    /** Which defs reach the exit point of the block. */
-   bool *liveout;
+   BITSET_WORD *liveout;
 };
 
 class fs_live_variables {
@@ -73,6 +74,7 @@ public:
    void *mem_ctx;
 
    int num_vars;
+   int bitset_words;
 
    /** Per-basic-block information on live variables */
    struct block_data *bd;

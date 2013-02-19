@@ -40,7 +40,7 @@ using namespace brw;
  */
 
 /**
- * Sets up the use[] and def[] arrays.
+ * Sets up the use[] and def[] bitsets.
  *
  * The basic-block-level live variable analysis needs to know which
  * variables get used before they're completely defined, and which
@@ -67,8 +67,8 @@ fs_live_variables::setup_def_use()
 	    if (inst->src[i].file == GRF) {
 	       int reg = inst->src[i].reg;
 
-	       if (!bd[b].def[reg])
-		  bd[b].use[reg] = true;
+	       if (!BITSET_TEST(bd[b].def, reg))
+		  BITSET_SET(bd[b].use, reg);
 	    }
 	 }
 
@@ -82,8 +82,8 @@ fs_live_variables::setup_def_use()
 	     !inst->force_uncompressed &&
 	     !inst->force_sechalf) {
 	    int reg = inst->dst.reg;
-	    if (!bd[b].use[reg])
-	       bd[b].def[reg] = true;
+            if (!BITSET_TEST(bd[b].use, reg))
+               BITSET_SET(bd[b].def, reg);
 	 }
 
 	 ip++;
@@ -107,12 +107,12 @@ fs_live_variables::compute_live_variables()
 
       for (int b = 0; b < cfg->num_blocks; b++) {
 	 /* Update livein */
-	 for (int i = 0; i < num_vars; i++) {
-	    if (bd[b].use[i] || (bd[b].liveout[i] && !bd[b].def[i])) {
-	       if (!bd[b].livein[i]) {
-		  bd[b].livein[i] = true;
-		  cont = true;
-	       }
+	 for (int i = 0; i < bitset_words; i++) {
+            BITSET_WORD new_livein = (bd[b].use[i] |
+                                      (bd[b].liveout[i] & ~bd[b].def[i]));
+	    if (new_livein & ~bd[b].livein[i]) {
+               bd[b].livein[i] |= new_livein;
+               cont = true;
 	    }
 	 }
 
@@ -121,11 +121,13 @@ fs_live_variables::compute_live_variables()
 	    bblock_link *link = (bblock_link *)block_node;
 	    bblock_t *block = link->block;
 
-	    for (int i = 0; i < num_vars; i++) {
-	       if (bd[block->block_num].livein[i] && !bd[b].liveout[i]) {
-		  bd[b].liveout[i] = true;
-		  cont = true;
-	       }
+	    for (int i = 0; i < bitset_words; i++) {
+               BITSET_WORD new_liveout = (bd[block->block_num].livein[i] &
+                                          ~bd[b].liveout[i]);
+               if (new_liveout) {
+                  bd[b].liveout[i] |= new_liveout;
+                  cont = true;
+               }
 	    }
 	 }
       }
@@ -140,11 +142,13 @@ fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
    num_vars = v->virtual_grf_count;
    bd = rzalloc_array(mem_ctx, struct block_data, cfg->num_blocks);
 
+   bitset_words = (ALIGN(v->virtual_grf_count, BITSET_WORDBITS) /
+                   BITSET_WORDBITS);
    for (int i = 0; i < cfg->num_blocks; i++) {
-      bd[i].def = rzalloc_array(mem_ctx, bool, num_vars);
-      bd[i].use = rzalloc_array(mem_ctx, bool, num_vars);
-      bd[i].livein = rzalloc_array(mem_ctx, bool, num_vars);
-      bd[i].liveout = rzalloc_array(mem_ctx, bool, num_vars);
+      bd[i].def = rzalloc_array(mem_ctx, BITSET_WORD, bitset_words);
+      bd[i].use = rzalloc_array(mem_ctx, BITSET_WORD, bitset_words);
+      bd[i].livein = rzalloc_array(mem_ctx, BITSET_WORD, bitset_words);
+      bd[i].liveout = rzalloc_array(mem_ctx, BITSET_WORD, bitset_words);
    }
 
    setup_def_use();
@@ -239,12 +243,12 @@ fs_visitor::calculate_live_intervals()
 
    for (int b = 0; b < cfg.num_blocks; b++) {
       for (int i = 0; i < num_vars; i++) {
-	 if (livevars.bd[b].livein[i]) {
+	 if (BITSET_TEST(livevars.bd[b].livein, i)) {
 	    def[i] = MIN2(def[i], cfg.blocks[b]->start_ip);
 	    use[i] = MAX2(use[i], cfg.blocks[b]->start_ip);
 	 }
 
-	 if (livevars.bd[b].liveout[i]) {
+	 if (BITSET_TEST(livevars.bd[b].liveout, i)) {
 	    def[i] = MIN2(def[i], cfg.blocks[b]->end_ip);
 	    use[i] = MAX2(use[i], cfg.blocks[b]->end_ip);
 	 }
