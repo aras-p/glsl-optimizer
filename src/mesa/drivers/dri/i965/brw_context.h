@@ -275,6 +275,13 @@ struct brw_vertex_program {
 };
 
 
+/** Subclass of Mesa geometry program */
+struct brw_geometry_program {
+   struct gl_geometry_program program;
+   unsigned id;  /**< serial no. to identify geom progs, never re-used */
+};
+
+
 /** Subclass of Mesa fragment program */
 struct brw_fragment_program {
    struct gl_fragment_program program;
@@ -518,6 +525,22 @@ struct brw_vs_prog_data {
    GLbitfield64 inputs_read;
 
    bool uses_vertexid;
+};
+
+
+/* Note: brw_vec4_gs_prog_data_compare() must be updated when adding fields to
+ * this struct!
+ */
+struct brw_vec4_gs_prog_data
+{
+   struct brw_vec4_prog_data base;
+
+   /**
+    * Size of an output vertex, measured in HWORDS (32 bytes).
+    */
+   unsigned output_vertex_size_hwords;
+
+   unsigned output_topology;
 };
 
 /** Number of texture sampler units */
