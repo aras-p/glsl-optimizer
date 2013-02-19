@@ -500,7 +500,7 @@ AC_CHECK_FUNC([dlopen], [DEFINES="$DEFINES -DHAVE_DLOPEN"],
 AC_SUBST([DLOPEN_LIBS])
 
 case "$host_os" in
-darwin*)
+darwin*|mingw*)
     ;;
 *)
     AC_CHECK_FUNCS([clock_gettime], [CLOCK_LIB=],
