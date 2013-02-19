@@ -1585,6 +1585,10 @@ vec4_visitor::visit(ir_expression *ir)
       break;
    }
 
+   case ir_triop_lrp:
+      assert(!"not reached: should be handled by lrp_to_arith");
+      break;
+
    case ir_quadop_vector:
       assert(!"not reached: should be handled by lower_quadop_vector");
       break;
