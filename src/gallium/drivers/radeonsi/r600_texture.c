@@ -55,11 +55,8 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 	struct pipe_resource *texture = transfer->resource;
 	struct pipe_box sbox;
 
-	sbox.x = sbox.y = sbox.z = 0;
-	sbox.width = transfer->box.width;
-	sbox.height = transfer->box.height;
-	/* XXX that might be wrong */
-	sbox.depth = 1;
+	u_box_origin_2d(transfer->box.width, transfer->box.height, &sbox);
+
 	ctx->resource_copy_region(ctx, texture, transfer->level,
 				  transfer->box.x, transfer->box.y, transfer->box.z,
 				  rtransfer->staging,
