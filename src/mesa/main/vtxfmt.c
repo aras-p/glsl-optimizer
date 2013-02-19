@@ -45,7 +45,7 @@
  */
 static void
 install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
-               const GLvertexformat *vfmt)
+               const GLvertexformat *vfmt, bool beginend)
 {
    assert(ctx->Version > 0);
 
@@ -62,7 +62,7 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
    }
 
    if (ctx->API == API_OPENGL_COMPAT) {
-      _mesa_install_eval_vtxfmt(tab, vfmt);
+      _mesa_install_eval_vtxfmt(tab, vfmt, beginend);
    }
 
    if (ctx->API != API_OPENGL_CORE && ctx->API != API_OPENGLES2) {
@@ -251,9 +251,9 @@ install_vtxfmt(struct gl_context *ctx, struct _glapi_table *tab,
 void
 _mesa_install_exec_vtxfmt(struct gl_context *ctx, const GLvertexformat *vfmt)
 {
-   install_vtxfmt( ctx, ctx->Exec, vfmt );
+   install_vtxfmt(ctx, ctx->Exec, vfmt, false);
    if (ctx->BeginEnd)
-      install_vtxfmt( ctx, ctx->BeginEnd, vfmt );
+      install_vtxfmt(ctx, ctx->BeginEnd, vfmt, true);
 }
 
 
@@ -265,7 +265,7 @@ void
 _mesa_install_save_vtxfmt(struct gl_context *ctx, const GLvertexformat *vfmt)
 {
    if (_mesa_is_desktop_gl(ctx))
-      install_vtxfmt( ctx, ctx->Save, vfmt );
+      install_vtxfmt(ctx, ctx->Save, vfmt, false);
 }
 
 

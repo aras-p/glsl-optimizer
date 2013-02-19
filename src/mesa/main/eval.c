@@ -824,7 +824,8 @@ _mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
 
 void
 _mesa_install_eval_vtxfmt(struct _glapi_table *disp,
-                          const GLvertexformat *vfmt)
+                          const GLvertexformat *vfmt,
+                          bool beginend)
 {
    SET_EvalCoord1f(disp, vfmt->EvalCoord1f);
    SET_EvalCoord1fv(disp, vfmt->EvalCoord1fv);
@@ -833,8 +834,12 @@ _mesa_install_eval_vtxfmt(struct _glapi_table *disp,
    SET_EvalPoint1(disp, vfmt->EvalPoint1);
    SET_EvalPoint2(disp, vfmt->EvalPoint2);
 
-   SET_EvalMesh1(disp, vfmt->EvalMesh1);
-   SET_EvalMesh2(disp, vfmt->EvalMesh2);
+   /* glEvalMesh1 and glEvalMesh2 are not allowed between glBegin and glEnd.
+    */
+   if (!beginend) {
+      SET_EvalMesh1(disp, vfmt->EvalMesh1);
+      SET_EvalMesh2(disp, vfmt->EvalMesh2);
+   }
 }
 
 
