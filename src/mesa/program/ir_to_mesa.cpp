@@ -1479,7 +1479,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
 
    case ir_triop_lrp:
-      assert(!"ir_triop_lrp should have been lowered.");
+      /* ir_triop_lrp operands are (x, y, a) while
+       * OPCODE_LRP operands are (a, y, x) to match ARB_fragment_program.
+       */
+      emit(ir, OPCODE_LRP, result_dst, op[2], op[1], op[0]);
       break;
 
    case ir_quadop_vector:
@@ -2997,7 +3000,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	 /* Lowering */
 	 do_mat_op_to_vec(ir);
 	 lower_instructions(ir, (MOD_TO_FRACT | DIV_TO_MUL_RCP | EXP_TO_EXP2
-				 | LOG_TO_LOG2 | INT_DIV_TO_MUL_RCP | LRP_TO_ARITH
+				 | LOG_TO_LOG2 | INT_DIV_TO_MUL_RCP
 				 | ((options->EmitNoPow) ? POW_TO_EXP2 : 0)));
 
 	 progress = do_lower_jumps(ir, true, true, options->EmitNoMainReturn, options->EmitNoCont, options->EmitNoLoops) || progress;
