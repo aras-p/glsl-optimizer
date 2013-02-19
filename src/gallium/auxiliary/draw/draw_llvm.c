@@ -420,8 +420,8 @@ draw_llvm_destroy(struct draw_llvm *llvm)
  */
 struct draw_llvm_variant *
 draw_llvm_create_variant(struct draw_llvm *llvm,
-			 unsigned num_inputs,
-			 const struct draw_llvm_variant_key *key)
+                         unsigned num_inputs,
+                         const struct draw_llvm_variant_key *key)
 {
    struct draw_llvm_variant *variant;
    struct llvm_vertex_shader *shader =
@@ -429,8 +429,8 @@ draw_llvm_create_variant(struct draw_llvm *llvm,
    LLVMTypeRef vertex_header;
 
    variant = MALLOC(sizeof *variant +
-		    shader->variant_key_size -
-		    sizeof variant->key);
+                    shader->variant_key_size -
+                    sizeof variant->key);
    if (variant == NULL)
       return NULL;
 
@@ -1415,8 +1415,12 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
 
    /* Presumably all variants of the shader should have the same
     * number of vertex elements - ie the number of shader inputs.
+    * NOTE: we NEED to store the needed number of needed inputs
+    * here, not the number of provided elements to match keysize
+    * (and the offset of sampler state in the key).
     */
-   key->nr_vertex_elements = llvm->draw->pt.nr_vertex_elements;
+   key->nr_vertex_elements = llvm->draw->vs.vertex_shader->info.file_max[TGSI_FILE_INPUT] + 1;
+   assert(key->nr_vertex_elements <= llvm->draw->pt.nr_vertex_elements);
 
    /* will have to rig this up properly later */
    key->clip_xy = llvm->draw->clip_xy;
