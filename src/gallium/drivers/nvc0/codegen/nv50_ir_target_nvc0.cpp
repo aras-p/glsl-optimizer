@@ -39,165 +39,40 @@ TargetNVC0::TargetNVC0(unsigned int card) : Target(false, card >= 0xe4)
 
 // lazyness -> will just hardcode everything for the time being
 
-// Will probably make this nicer once we support subroutines properly,
-// i.e. when we have an input IR that provides function declarations.
-
-// TODO: separate version for nve4+ which doesn't like the 4-byte insn formats
-static const uint32_t nvc0_builtin_code[] =
-{
-// DIV U32: slow unsigned integer division
-//
-// UNR recurrence (q = a / b):
-// look for z such that 2^32 - b <= b * z < 2^32
-// then q - 1 <= (a * z) / 2^32 <= q
-//
-// INPUT:   $r0: dividend, $r1: divisor
-// OUTPUT:  $r0: result, $r1: modulus
-// CLOBBER: $r2 - $r3, $p0 - $p1
-// SIZE:    22 / 14 * 8 bytes
-//
-#if 1
-   0x04009c03, 0x78000000,
-   0x7c209c82, 0x38000000, // 0x7c209cdd,
-   0x0400dde2, 0x18000000, // 0x0010dd18,
-   0x08309c03, 0x60000000,
-   0x05205d04, 0x1c000000, // 0x05605c18,
-   0x0810dc03, 0x50000000, // 0x0810dc2a,
-   0x0c209c43, 0x20040000,
-   0x0810dc03, 0x50000000,
-   0x0c209c43, 0x20040000,
-   0x0810dc03, 0x50000000,
-   0x0c209c43, 0x20040000,
-   0x0810dc03, 0x50000000,
-   0x0c209c43, 0x20040000,
-   0x0810dc03, 0x50000000,
-   0x0c209c43, 0x20040000,
-   0x0000dde4, 0x28000000,
-   0x08001c43, 0x50000000,
-   0x05209d04, 0x1c000000, // 0x05609c18,
-   0x00105c03, 0x20060000, // 0x0010430d,
-   0x0811dc03, 0x1b0e0000,
-   0x08104103, 0x48000000,
-   0x04000002, 0x08000000,
-   0x0811c003, 0x1b0e0000,
-   0x08104103, 0x48000000,
-   0x04000002, 0x08000000, // 0x040000ac,
-   0x00001de7, 0x90000000, // 0x90001dff,
-#else
-   0x0401dc03, 0x1b0e0000,
-   0x00008003, 0x78000000,
-   0x0400c003, 0x78000000,
-   0x0c20c103, 0x48000000,
-   0x0c108003, 0x60000000,
-   0x00005c28,
-   0x00001d18,
-   0x0031c023, 0x1b0ec000,
-   0xb000a1e7, 0x40000000,
-   0x04000003, 0x6000c000,
-   0x0813dc03, 0x1b000000,
-   0x0420446c,
-   0x040004bd,
-   0x04208003, 0x5800c000,
-   0x0430c103, 0x4800c000,
-   0x0ffc5dff,
-   0x90001dff,
-#endif
-
-// DIV S32: slow signed integer division
-//
-// INPUT:   $r0: dividend, $r1: divisor
-// OUTPUT:  $r0: result, $r1: modulus
-// CLOBBER: $r2 - $r3, $p0 - $p3
-// SIZE:    18 * 8 bytes
-//
-   0xfc05dc23, 0x188e0000,
-   0xfc17dc23, 0x18c40000,
-   0x01201ec4, 0x1c000000, // 0x03301e18,
-   0x05205ec4, 0x1c000000, // 0x07305e18,
-   0x0401dc03, 0x1b0e0000,
-   0x00008003, 0x78000000,
-   0x0400c003, 0x78000000,
-   0x0c20c103, 0x48000000,
-   0x0c108003, 0x60000000,
-   0x00005de4, 0x28000000, // 0x00005c28,
-   0x00001de2, 0x18000000, // 0x00001d18,
-   0x0031c023, 0x1b0ec000,
-   0xe000a1e7, 0x40000000, // 0xb000a1e7, 0x40000000,
-   0x04000003, 0x6000c000,
-   0x0813dc03, 0x1b000000,
-   0x04204603, 0x48000000, // 0x0420446c,
-   0x04000442, 0x38000000, // 0x040004bd,
-   0x04208003, 0x5800c000,
-   0x0430c103, 0x4800c000,
-   0xe0001de7, 0x4003fffe, // 0x0ffc5dff,
-   0x01200f84, 0x1c000000, // 0x01700e18,
-   0x05204b84, 0x1c000000, // 0x05704a18,
-   0x00001de7, 0x90000000, // 0x90001dff,
-
-// RCP F64: Newton Raphson reciprocal(x): r_{i+1} = r_i * (2.0 - x * r_i)
-//
-// INPUT:   $r0d (x)
-// OUTPUT:  $r0d (rcp(x))
-// CLOBBER: $r2 - $r7
-// SIZE:    9 * 8 bytes
-//
-   0x9810dc08,
-   0x00009c28,
-   0x4001df18,
-   0x00019d18,
-   0x08011e01, 0x200c0000,
-   0x10209c01, 0x50000000,
-   0x08011e01, 0x200c0000,
-   0x10209c01, 0x50000000,
-   0x08011e01, 0x200c0000,
-   0x10201c01, 0x50000000,
-   0x00001de7, 0x90000000,
-
-// RSQ F64: Newton Raphson rsqrt(x): r_{i+1} = r_i * (1.5 - 0.5 * x * r_i * r_i)
-//
-// INPUT:   $r0d (x)
-// OUTPUT:  $r0d (rsqrt(x))
-// CLOBBER: $r2 - $r7
-// SIZE:    14 * 8 bytes
-//
-   0x9c10dc08,
-   0x00009c28,
-   0x00019d18,
-   0x3fe1df18,
-   0x18001c01, 0x50000000,
-   0x0001dde2, 0x18ffe000,
-   0x08211c01, 0x50000000,
-   0x10011e01, 0x200c0000,
-   0x10209c01, 0x50000000,
-   0x08211c01, 0x50000000,
-   0x10011e01, 0x200c0000,
-   0x10209c01, 0x50000000,
-   0x08211c01, 0x50000000,
-   0x10011e01, 0x200c0000,
-   0x10201c01, 0x50000000,
-   0x00001de7, 0x90000000,
-};
-
-static const uint16_t nvc0_builtin_offsets[NVC0_BUILTIN_COUNT] =
-{
-   0,
-   8 * (26),
-   8 * (26 + 23),
-   8 * (26 + 23 + 9)
-};
+#include "target_lib_nvc0.asm.h"
+#include "target_lib_nve4.asm.h"
+#include "target_lib_nvf0.asm.h"
 
 void
 TargetNVC0::getBuiltinCode(const uint32_t **code, uint32_t *size) const
 {
-   *code = &nvc0_builtin_code[0];
-   *size = sizeof(nvc0_builtin_code);
+   switch (chipset & 0xf0) {
+   case 0xe0:
+      *code = (const uint32_t *)&nve4_builtin_code[0];
+      *size = sizeof(nve4_builtin_code);
+      break;
+   case 0xf0:
+      *code = (const uint32_t *)&nvf0_builtin_code[0];
+      *size = sizeof(nvf0_builtin_code);
+      break;
+   default:
+      *code = (const uint32_t *)&nvc0_builtin_code[0];
+      *size = sizeof(nvc0_builtin_code);
+      break;
+   }
 }
 
 uint32_t
 TargetNVC0::getBuiltinOffset(int builtin) const
 {
    assert(builtin < NVC0_BUILTIN_COUNT);
-   return nvc0_builtin_offsets[builtin];
+
+   switch (chipset & 0xf0) {
+   case 0xe0: return nve4_builtin_offsets[builtin];
+   case 0xf0: return nvf0_builtin_offsets[builtin];
+   default:
+      return nvc0_builtin_offsets[builtin];
+   }
 }
 
 struct opProperties
