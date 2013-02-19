@@ -55,7 +55,7 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 	struct pipe_resource *texture = transfer->resource;
 	struct pipe_box sbox;
 
-	u_box_origin_2d(transfer->box.width, transfer->box.height, &sbox);
+	u_box_3d(0, 0, 0, transfer->box.width, transfer->box.height, transfer->box.depth, &sbox);
 
 	ctx->resource_copy_region(ctx, texture, transfer->level,
 				  transfer->box.x, transfer->box.y, transfer->box.z,
@@ -235,7 +235,6 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
-	struct pipe_resource resource;
 	struct r600_transfer *trans;
 	boolean use_staging_texture = FALSE;
 	struct radeon_winsys_cs_handle *buf;
@@ -295,42 +294,52 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 					 level, level,
 					 box->z, box->z + box->depth - 1);
 		trans->transfer.stride = staging_depth->surface.level[level].pitch_bytes;
+		trans->transfer.layer_stride = staging_depth->surface.level[level].slice_size;
 		trans->offset = r600_texture_get_offset(staging_depth, level, box->z);
 
 		trans->staging = &staging_depth->resource.b.b;
 	} else if (use_staging_texture) {
-		resource.target = PIPE_TEXTURE_2D;
+		struct pipe_resource resource;
+		struct r600_resource_texture *staging;
+
+		memset(&resource, 0, sizeof(resource));
 		resource.format = texture->format;
 		resource.width0 = box->width;
 		resource.height0 = box->height;
 		resource.depth0 = 1;
 		resource.array_size = 1;
-		resource.last_level = 0;
-		resource.nr_samples = 0;
 		resource.usage = PIPE_USAGE_STAGING;
-		resource.bind = 0;
 		resource.flags = R600_RESOURCE_FLAG_TRANSFER;
-		/* For texture reading, the temporary (detiled) texture is used as
-		 * a render target when blitting from a tiled texture. */
-		if (usage & PIPE_TRANSFER_READ) {
-			resource.bind |= PIPE_BIND_RENDER_TARGET;
-		}
-		/* For texture writing, the temporary texture is used as a sampler
-		 * when blitting into a tiled texture. */
-		if (usage & PIPE_TRANSFER_WRITE) {
-			resource.bind |= PIPE_BIND_SAMPLER_VIEW;
+
+		/* We must set the correct texture target and dimensions if needed for a 3D transfer. */
+		if (box->depth > 1 && u_max_layer(texture, level) > 0)
+			resource.target = texture->target;
+		else
+			resource.target = PIPE_TEXTURE_2D;
+
+		switch (resource.target) {
+		case PIPE_TEXTURE_1D_ARRAY:
+		case PIPE_TEXTURE_2D_ARRAY:
+		case PIPE_TEXTURE_CUBE_ARRAY:
+			resource.array_size = box->depth;
+			break;
+		case PIPE_TEXTURE_3D:
+			resource.depth0 = box->depth;
+			break;
+		default:;
 		}
 		/* Create the temporary texture. */
-		trans->staging = ctx->screen->resource_create(ctx->screen, &resource);
-		if (trans->staging == NULL) {
+		staging = (struct r600_resource_texture*)ctx->screen->resource_create(ctx->screen, &resource);
+		if (staging == NULL) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
 			pipe_resource_reference(&trans->transfer.resource, NULL);
 			FREE(trans);
 			return NULL;
 		}
 
-		trans->transfer.stride = ((struct r600_resource_texture *)trans->staging)
-					->surface.level[0].pitch_bytes;
+		trans->staging = &staging->resource.b.b;
+		trans->transfer.stride = staging->surface.level[0].pitch_bytes;
+		trans->transfer.layer_stride = staging->surface.level[0].slice_size;
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
 			/* Always referenced in the blit. */
@@ -345,7 +354,7 @@ static void *si_texture_transfer_map(struct pipe_context *ctx,
 	if (trans->staging) {
 		buf = si_resource(trans->staging)->cs_buf;
 	} else {
-		buf = si_resource(trans->transfer.resource)->cs_buf;
+		buf = rtex->resource.cs_buf;
 	}
 
 	if (rtex->is_depth || !trans->staging)
