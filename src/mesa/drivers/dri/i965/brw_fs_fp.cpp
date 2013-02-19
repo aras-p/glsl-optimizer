@@ -316,14 +316,10 @@ fs_visitor::emit_fragment_program_code()
       case OPCODE_LRP:
          for (int i = 0; i < 4; i++) {
             if (fpi->DstReg.WriteMask & (1 << i)) {
-               fs_reg neg_src0 = regoffset(src[0], i);
-               neg_src0.negate = !neg_src0.negate;
-               fs_reg temp = fs_reg(this, glsl_type::float_type);
-               fs_reg temp2 = fs_reg(this, glsl_type::float_type);
-               emit(ADD(temp, neg_src0, fs_reg(1.0f)));
-               emit(MUL(temp, temp, regoffset(src[2], i)));
-               emit(MUL(temp2, regoffset(src[0], i), regoffset(src[1], i)));
-               emit(ADD(regoffset(dst, i), temp, temp2));
+               fs_reg a = regoffset(src[0], i);
+               fs_reg y = regoffset(src[1], i);
+               fs_reg x = regoffset(src[2], i);
+               emit_lrp(regoffset(dst, i), x, y, a);
             }
          }
          break;
