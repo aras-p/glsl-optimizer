@@ -1460,10 +1460,15 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 			S_028C74_NON_DISP_TILING_ORDER(non_disp_tiling) |
 		        S_028C74_FMASK_BANK_HEIGHT(fmask_bankh);
 
-	if (rctx->chip_class == CAYMAN && rtex->resource.b.b.nr_samples > 1) {
-		unsigned log_samples = util_logbase2(rtex->resource.b.b.nr_samples);
-		color_attrib |= S_028C74_NUM_SAMPLES(log_samples) |
-				S_028C74_NUM_FRAGMENTS(log_samples);
+	if (rctx->chip_class == CAYMAN) {
+		color_attrib |=	S_028C74_FORCE_DST_ALPHA_1(desc->swizzle[3] ==
+							   UTIL_FORMAT_SWIZZLE_1);
+
+		if (rtex->resource.b.b.nr_samples > 1) {
+			unsigned log_samples = util_logbase2(rtex->resource.b.b.nr_samples);
+			color_attrib |= S_028C74_NUM_SAMPLES(log_samples) |
+					S_028C74_NUM_FRAGMENTS(log_samples);
+		}
 	}
 
 	ntype = V_028C70_NUMBER_UNORM;
