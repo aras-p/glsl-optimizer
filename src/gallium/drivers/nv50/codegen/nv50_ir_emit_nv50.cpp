@@ -122,6 +122,8 @@ private:
 
    void emitFlow(const Instruction *, uint8_t flowOp);
    void emitPRERETEmu(const FlowInstruction *);
+
+   void emitATOM(const Instruction *);
 };
 
 #define SDATA(a) ((a).rep()->reg.data)
@@ -1532,6 +1534,42 @@ CodeEmitterNV50::emitFlow(const Instruction *i, uint8_t flowOp)
    }
 }
 
+void
+CodeEmitterNV50::emitATOM(const Instruction *i)
+{
+   uint8_t subOp;
+   switch (i->subOp) {
+   case NV50_IR_SUBOP_ATOM_ADD:  subOp = 0x0; break;
+   case NV50_IR_SUBOP_ATOM_MIN:  subOp = 0x7; break;
+   case NV50_IR_SUBOP_ATOM_MAX:  subOp = 0x6; break;
+   case NV50_IR_SUBOP_ATOM_INC:  subOp = 0x4; break;
+   case NV50_IR_SUBOP_ATOM_DEC:  subOp = 0x5; break;
+   case NV50_IR_SUBOP_ATOM_AND:  subOp = 0xa; break;
+   case NV50_IR_SUBOP_ATOM_OR:   subOp = 0xb; break;
+   case NV50_IR_SUBOP_ATOM_XOR:  subOp = 0xc; break;
+   case NV50_IR_SUBOP_ATOM_CAS:  subOp = 0x2; break;
+   case NV50_IR_SUBOP_ATOM_EXCH: subOp = 0x1; break;
+   default:
+      assert(!"invalid subop");
+      break;
+   }
+   code[0] = 0xd0000001;
+   code[1] = 0xe0c00000 | (subOp << 2);
+   if (isSignedType(i->dType))
+      code[1] |= 1 << 21;
+
+   // args
+   emitFlagsRd(i);
+   setDst(i, 0);
+   setSrc(i, 1, 1);
+   if (i->subOp == NV50_IR_SUBOP_ATOM_CAS)
+      setSrc(i, 2, 2);
+
+   // g[] pointer
+   code[0] |= i->getSrc(0)->reg.fileIndex << 23;
+   srcId(i->getIndirect(0, 0), 9);
+}
+
 bool
 CodeEmitterNV50::emitInstruction(Instruction *insn)
 {
@@ -1711,6 +1749,9 @@ CodeEmitterNV50::emitInstruction(Instruction *insn)
       break;
    case OP_DFDY:
       emitQUADOP(insn, 5, insn->src(0).mod.neg() ? 0x5a : 0xa5);
+      break;
+   case OP_ATOM:
+      emitATOM(insn);
       break;
    case OP_PHI:
    case OP_UNION:
