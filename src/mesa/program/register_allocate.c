@@ -120,6 +120,7 @@ struct ra_node {
     */
    GLboolean *adjacency;
    unsigned int *adjacency_list;
+   unsigned int adjacency_list_size;
    unsigned int adjacency_count;
    /** @} */
 
@@ -307,6 +308,15 @@ static void
 ra_add_node_adjacency(struct ra_graph *g, unsigned int n1, unsigned int n2)
 {
    g->nodes[n1].adjacency[n2] = GL_TRUE;
+
+   if (g->nodes[n1].adjacency_count >=
+       g->nodes[n1].adjacency_list_size) {
+      g->nodes[n1].adjacency_list_size *= 2;
+      g->nodes[n1].adjacency_list = reralloc(g, g->nodes[n1].adjacency_list,
+                                             unsigned int,
+                                             g->nodes[n1].adjacency_list_size);
+   }
+
    g->nodes[n1].adjacency_list[g->nodes[n1].adjacency_count] = n2;
    g->nodes[n1].adjacency_count++;
 }
@@ -326,7 +336,9 @@ ra_alloc_interference_graph(struct ra_regs *regs, unsigned int count)
 
    for (i = 0; i < count; i++) {
       g->nodes[i].adjacency = rzalloc_array(g, GLboolean, count);
-      g->nodes[i].adjacency_list = ralloc_array(g, unsigned int, count);
+      g->nodes[i].adjacency_list_size = 4;
+      g->nodes[i].adjacency_list =
+         ralloc_array(g, unsigned int, g->nodes[i].adjacency_list_size);
       g->nodes[i].adjacency_count = 0;
       ra_add_node_adjacency(g, i, i);
       g->nodes[i].reg = NO_REG;
