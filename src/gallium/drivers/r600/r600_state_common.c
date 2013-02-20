@@ -284,6 +284,16 @@ static void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 	ref.valuemask[1] = dsa->valuemask[1];
 	ref.writemask[0] = dsa->writemask[0];
 	ref.writemask[1] = dsa->writemask[1];
+	if (rctx->zwritemask != dsa->zwritemask) {
+		rctx->zwritemask = dsa->zwritemask;
+		if (rctx->chip_class >= EVERGREEN) {
+			/* work around some issue when not writting to zbuffer
+			 * we are having lockup on evergreen so do not enable
+			 * hyperz when not writting zbuffer
+			 */
+			rctx->db_misc_state.atom.dirty = true;
+		}
+	}
 
 	r600_set_stencil_ref(ctx, &ref);
 

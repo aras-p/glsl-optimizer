@@ -842,6 +842,7 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	dsa->valuemask[1] = state->stencil[1].valuemask;
 	dsa->writemask[0] = state->stencil[0].writemask;
 	dsa->writemask[1] = state->stencil[1].writemask;
+	dsa->zwritemask = state->depth.writemask;
 
 	db_depth_control = S_028800_Z_ENABLE(state->depth.enabled) |
 		S_028800_Z_WRITE_ENABLE(state->depth.writemask) |

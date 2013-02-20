@@ -858,6 +858,7 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 	dsa->valuemask[1] = state->stencil[1].valuemask;
 	dsa->writemask[0] = state->stencil[0].writemask;
 	dsa->writemask[1] = state->stencil[1].writemask;
+	dsa->zwritemask = state->depth.writemask;
 
 	db_depth_control = S_028800_Z_ENABLE(state->depth.enabled) |
 		S_028800_Z_WRITE_ENABLE(state->depth.writemask) |
@@ -2286,7 +2287,14 @@ static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_
 		}
 		db_render_override |= S_02800C_NOOP_CULL_DISABLE(1);
 	}
-	if (rctx->db_state.rsurf && rctx->db_state.rsurf->htile_enabled) {
+	/* FIXME we should be able to use hyperz even if we are not writing to
+	 * zbuffer but somehow this trigger GPU lockup. See :
+	 *
+	 * https://bugs.freedesktop.org/show_bug.cgi?id=60848
+	 *
+	 * Disable hyperz for now if not writing to zbuffer.
+	 */
+	if (rctx->db_state.rsurf && rctx->db_state.rsurf->htile_enabled && rctx->zwritemask) {
 		/* FORCE_OFF means HiZ/HiS are determined by DB_SHADER_CONTROL */
 		db_render_override |= S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_OFF);
 		/* This is to fix a lockup when hyperz and alpha test are enabled at

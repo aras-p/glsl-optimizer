@@ -298,7 +298,8 @@ struct r600_dsa_state {
 	unsigned			alpha_ref;
 	ubyte				valuemask[2];
 	ubyte				writemask[2];
-	unsigned                        sx_alpha_test_control;
+	unsigned			zwritemask;
+	unsigned			sx_alpha_test_control;
 };
 
 struct r600_pipe_shader;
@@ -513,6 +514,7 @@ struct r600_context {
 	bool				alpha_to_one;
 	bool				force_blend_disable;
 	boolean				dual_src_blend;
+	unsigned			zwritemask;
 
 	/* Index buffer. */
 	struct pipe_index_buffer	index_buffer;
