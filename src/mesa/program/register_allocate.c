@@ -75,6 +75,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
+#include "main/bitset.h"
 #include "register_allocate.h"
 
 #define NO_REG ~0
@@ -118,7 +119,7 @@ struct ra_node {
     * List of which nodes this node interferes with.  This should be
     * symmetric with the other node.
     */
-   GLboolean *adjacency;
+   BITSET_WORD *adjacency;
    unsigned int *adjacency_list;
    unsigned int adjacency_list_size;
    unsigned int adjacency_count;
@@ -307,7 +308,7 @@ ra_set_finalize(struct ra_regs *regs, unsigned int **q_values)
 static void
 ra_add_node_adjacency(struct ra_graph *g, unsigned int n1, unsigned int n2)
 {
-   g->nodes[n1].adjacency[n2] = GL_TRUE;
+   BITSET_SET(g->nodes[n1].adjacency, n2);
 
    if (g->nodes[n1].adjacency_count >=
        g->nodes[n1].adjacency_list_size) {
@@ -335,11 +336,14 @@ ra_alloc_interference_graph(struct ra_regs *regs, unsigned int count)
    g->stack = rzalloc_array(g, unsigned int, count);
 
    for (i = 0; i < count; i++) {
-      g->nodes[i].adjacency = rzalloc_array(g, GLboolean, count);
+      int bitset_count = ALIGN(count, BITSET_WORDBITS) / BITSET_WORDBITS;
+      g->nodes[i].adjacency = rzalloc_array(g, BITSET_WORD, bitset_count);
+
       g->nodes[i].adjacency_list_size = 4;
       g->nodes[i].adjacency_list =
          ralloc_array(g, unsigned int, g->nodes[i].adjacency_list_size);
       g->nodes[i].adjacency_count = 0;
+
       ra_add_node_adjacency(g, i, i);
       g->nodes[i].reg = NO_REG;
    }
@@ -358,7 +362,7 @@ void
 ra_add_node_interference(struct ra_graph *g,
 			 unsigned int n1, unsigned int n2)
 {
-   if (!g->nodes[n1].adjacency[n2]) {
+   if (!BITSET_TEST(g->nodes[n1].adjacency, n2)) {
       ra_add_node_adjacency(g, n1, n2);
       ra_add_node_adjacency(g, n2, n1);
    }
