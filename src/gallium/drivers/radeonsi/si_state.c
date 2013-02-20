@@ -1942,6 +1942,7 @@ int si_shader_select(struct pipe_context *ctx,
 			R600_ERR("Failed to build shader variant (type=%u) %d\n",
 				 sel->type, r);
 			sel->current = NULL;
+			FREE(shader);
 			return r;
 		}
 
