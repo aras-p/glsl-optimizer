@@ -3536,9 +3536,12 @@ void evergreen_update_db_shader_control(struct r600_context * rctx)
 	 * write to the zbuffer. Write to zbuffer is delayed after fragment shader
 	 * execution and thus after alpha test so if discarded by the alpha test
 	 * the z value is not written.
+	 * If ReZ is enabled, and the zfunc/zenable/zwrite values change you can
+	 * get a hang unless you flush the DB in between.  For now just use
+	 * LATE_Z.
 	 */
 	if (rctx->alphatest_state.sx_alpha_test_control) {
-		db_shader_control |= S_02880C_Z_ORDER(V_02880C_RE_Z);
+		db_shader_control |= S_02880C_Z_ORDER(V_02880C_LATE_Z);
 	} else {
 		db_shader_control |= S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	}
