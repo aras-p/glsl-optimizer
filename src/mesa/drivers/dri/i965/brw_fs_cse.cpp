@@ -89,6 +89,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 
    void *mem_ctx = ralloc_context(this->mem_ctx);
 
+   int ip = block->start_ip;
    for (fs_inst *inst = (fs_inst *)block->start;
 	inst != block->end->next;
 	inst = (fs_inst *) inst->next) {
@@ -154,18 +155,33 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	 }
       }
 
-      /* Kill all AEB entries that use the destination. */
       foreach_list_safe(entry_node, aeb) {
 	 aeb_entry *entry = (aeb_entry *)entry_node;
 
 	 for (int i = 0; i < 3; i++) {
+            fs_reg *src_reg = &entry->generator->src[i];
+
+            /* Kill all AEB entries that use the destination we just
+             * overwrote.
+             */
             if (inst->overwrites_reg(entry->generator->src[i])) {
 	       entry->remove();
 	       ralloc_free(entry);
 	       break;
 	    }
+
+            /* Kill any AEB entries using registers that don't get reused any
+             * more -- a sure sign they'll fail operands_match().
+             */
+            if (src_reg->file == GRF && virtual_grf_use[src_reg->reg] < ip) {
+               entry->remove();
+               ralloc_free(entry);
+	       break;
+            }
 	 }
       }
+
+      ip++;
    }
 
    ralloc_free(mem_ctx);
@@ -180,6 +196,8 @@ bool
 fs_visitor::opt_cse()
 {
    bool progress = false;
+
+   calculate_live_intervals();
 
    cfg_t cfg(this);
 
