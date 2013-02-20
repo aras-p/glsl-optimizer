@@ -395,6 +395,14 @@ nv50_ir::DataType Instruction::inferSrcType() const
    case TGSI_OPCODE_USNE:
    case TGSI_OPCODE_USHR:
    case TGSI_OPCODE_UCMP:
+   case TGSI_OPCODE_ATOMUADD:
+   case TGSI_OPCODE_ATOMXCHG:
+   case TGSI_OPCODE_ATOMCAS:
+   case TGSI_OPCODE_ATOMAND:
+   case TGSI_OPCODE_ATOMOR:
+   case TGSI_OPCODE_ATOMXOR:
+   case TGSI_OPCODE_ATOMUMIN:
+   case TGSI_OPCODE_ATOMUMAX:
       return nv50_ir::TYPE_U32;
    case TGSI_OPCODE_I2F:
    case TGSI_OPCODE_IDIV:
@@ -409,6 +417,8 @@ nv50_ir::DataType Instruction::inferSrcType() const
    case TGSI_OPCODE_SAD: // not sure about SAD, but no one has a float version
    case TGSI_OPCODE_MOD:
    case TGSI_OPCODE_UARL:
+   case TGSI_OPCODE_ATOMIMIN:
+   case TGSI_OPCODE_ATOMIMAX:
       return nv50_ir::TYPE_S32;
    default:
       return nv50_ir::TYPE_F32;
@@ -567,6 +577,17 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(SAMPLE_L, TXL);
    NV50_IR_OPCODE_CASE(GATHER4, TXG);
    NV50_IR_OPCODE_CASE(SVIEWINFO, TXQ);
+
+   NV50_IR_OPCODE_CASE(ATOMUADD, ATOM);
+   NV50_IR_OPCODE_CASE(ATOMXCHG, ATOM);
+   NV50_IR_OPCODE_CASE(ATOMCAS, ATOM);
+   NV50_IR_OPCODE_CASE(ATOMAND, ATOM);
+   NV50_IR_OPCODE_CASE(ATOMOR, ATOM);
+   NV50_IR_OPCODE_CASE(ATOMXOR, ATOM);
+   NV50_IR_OPCODE_CASE(ATOMUMIN, ATOM);
+   NV50_IR_OPCODE_CASE(ATOMUMAX, ATOM);
+   NV50_IR_OPCODE_CASE(ATOMIMIN, ATOM);
+   NV50_IR_OPCODE_CASE(ATOMIMAX, ATOM);
 
    NV50_IR_OPCODE_CASE(TEX2, TEX);
    NV50_IR_OPCODE_CASE(TXB2, TXB);
@@ -1115,6 +1136,7 @@ private:
 
    void handleLOAD(Value *dst0[4]);
    void handleSTORE();
+   void handleATOM(Value *dst0[4], DataType, uint16_t subOp);
 
    Value *interpolate(tgsi::Instruction::SrcRegister, int c, Value *ptr);
 
@@ -1965,6 +1987,47 @@ Converter::handleSTORE()
    }
 }
 
+// XXX: These only work on resources with the single-component u32/s32 formats.
+// Therefore the result is replicated. This might not be intended by TGSI, but
+// operating on more than 1 component would produce undefined results because
+// they do not exist.
+void
+Converter::handleATOM(Value *dst0[4], DataType ty, uint16_t subOp)
+{
+   const int r = tgsi.getSrc(0).getIndex(0);
+   std::vector<Value *> srcv;
+   std::vector<Value *> defv;
+   LValue *dst = getScratch();
+
+   getResourceCoords(srcv, r, 1);
+
+   if (isResourceSpecial(r)) {
+      assert(r != TGSI_RESOURCE_INPUT);
+      Instruction *insn;
+      insn = mkOp2(OP_ATOM, ty, dst, getResourceBase(r), fetchSrc(2, 0));
+      insn->subOp = subOp;
+      if (subOp == NV50_IR_SUBOP_ATOM_CAS)
+         insn->setSrc(2, fetchSrc(3, 0));
+      insn->setIndirect(0, 0, srcv.at(0));
+   } else {
+      operation op = isResourceRaw(code, r) ? OP_SUREDB : OP_SUREDP;
+      TexTarget targ = getResourceTarget(code, r);
+      int idx = code->resources[r].slot;
+      defv.push_back(dst);
+      srcv.push_back(fetchSrc(2, 0));
+      if (subOp == NV50_IR_SUBOP_ATOM_CAS)
+         srcv.push_back(fetchSrc(3, 0));
+      TexInstruction *tex = mkTex(op, targ, idx, 0, defv, srcv);
+      tex->subOp = subOp;
+      tex->tex.mask = 1;
+      tex->setType(ty);
+   }
+
+   for (int c = 0; c < 4; ++c)
+      if (dst0[c])
+         dst0[c] = dst; // not equal to rDst so handleInstruction will do mkMov
+}
+
 Converter::Subroutine *
 Converter::getSubroutine(unsigned ip)
 {
@@ -2516,6 +2579,32 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       break;
    case TGSI_OPCODE_STORE:
       handleSTORE();
+      break;
+   case TGSI_OPCODE_ATOMUADD:
+      handleATOM(dst0, dstTy, NV50_IR_SUBOP_ATOM_ADD);
+      break;
+   case TGSI_OPCODE_ATOMXCHG:
+      handleATOM(dst0, dstTy, NV50_IR_SUBOP_ATOM_EXCH);
+      break;
+   case TGSI_OPCODE_ATOMCAS:
+      handleATOM(dst0, dstTy, NV50_IR_SUBOP_ATOM_CAS);
+      break;
+   case TGSI_OPCODE_ATOMAND:
+      handleATOM(dst0, dstTy, NV50_IR_SUBOP_ATOM_AND);
+      break;
+   case TGSI_OPCODE_ATOMOR:
+      handleATOM(dst0, dstTy, NV50_IR_SUBOP_ATOM_OR);
+      break;
+   case TGSI_OPCODE_ATOMXOR:
+      handleATOM(dst0, dstTy, NV50_IR_SUBOP_ATOM_XOR);
+      break;
+   case TGSI_OPCODE_ATOMUMIN:
+   case TGSI_OPCODE_ATOMIMIN:
+      handleATOM(dst0, dstTy, NV50_IR_SUBOP_ATOM_MIN);
+      break;
+   case TGSI_OPCODE_ATOMUMAX:
+   case TGSI_OPCODE_ATOMIMAX:
+      handleATOM(dst0, dstTy, NV50_IR_SUBOP_ATOM_MAX);
       break;
    default:
       ERROR("unhandled TGSI opcode: %u\n", tgsi.getOpcode());
