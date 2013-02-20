@@ -253,7 +253,8 @@ _mesa_init_point(struct gl_context *ctx)
     * In a core context, the state will default to true, and the setters and
     * getters are disabled.
     */
-   ctx->Point.PointSprite = (ctx->API == API_OPENGL_CORE);
+   ctx->Point.PointSprite = (ctx->API == API_OPENGL_CORE ||
+                             ctx->API == API_OPENGLES2);
 
    ctx->Point.SpriteRMode = GL_ZERO; /* GL_NV_point_sprite (only!) */
    ctx->Point.SpriteOrigin = GL_UPPER_LEFT; /* GL_ARB_point_sprite */

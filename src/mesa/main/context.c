@@ -1073,7 +1073,6 @@ _mesa_initialize_context(struct gl_context *ctx,
    case API_OPENGLES2:
       ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
       ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
-      ctx->Point.PointSprite = GL_TRUE;  /* always on for ES 2.x */
       break;
    }
 
