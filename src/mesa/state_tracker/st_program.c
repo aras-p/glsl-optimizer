@@ -1142,7 +1142,7 @@ st_print_shaders(struct gl_context *ctx)
 static void
 destroy_program_variants(struct st_context *st, struct gl_program *program)
 {
-   if (!program)
+   if (!program || program == &_mesa_DummyProgram)
       return;
 
    switch (program->Target) {
