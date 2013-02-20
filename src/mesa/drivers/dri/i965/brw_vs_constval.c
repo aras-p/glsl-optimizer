@@ -238,6 +238,23 @@ static void calc_wm_input_sizes( struct brw_context *brw )
 
    calc_sizes(&t);
 
+   /* _NEW_POINT
+    *
+    * If the SF will be replacing the vertex output with a reference to
+    * gl_PointCoord, then tell the fragment shader that the value actually
+    * does vary.
+    */
+   if (ctx->Point.PointSprite) {
+      for (int i = 0; i < 8; i++) {
+         if (ctx->Point.CoordReplace[i]) {
+            t.size_masks[4-1] |= FRAG_BIT_TEX(i);
+            t.size_masks[3-1] |= FRAG_BIT_TEX(i);
+            t.size_masks[2-1] |= FRAG_BIT_TEX(i);
+            t.size_masks[1-1] |= FRAG_BIT_TEX(i);
+         }
+      }
+   }
+
    if (memcmp(brw->wm.input_size_masks, t.size_masks, sizeof(t.size_masks)) != 0) {
       memcpy(brw->wm.input_size_masks, t.size_masks, sizeof(t.size_masks));
       brw->state.dirty.brw |= BRW_NEW_WM_INPUT_DIMENSIONS;
@@ -246,7 +263,7 @@ static void calc_wm_input_sizes( struct brw_context *brw )
 
 const struct brw_tracked_state brw_wm_input_sizes = {
    .dirty = {
-      .mesa  = _NEW_LIGHT | _NEW_PROGRAM,
+      .mesa  = _NEW_LIGHT | _NEW_PROGRAM | _NEW_POINT,
       .brw   = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_INPUT_DIMENSIONS,
       .cache = 0
    },
