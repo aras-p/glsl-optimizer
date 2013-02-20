@@ -363,13 +363,15 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	memcpy(shader->shader->builtins_to_link, state->builtins_to_link, sizeof(shader->shader->builtins_to_link[0]) * state->num_builtins_to_link);
 	shader->shader->num_builtins_to_link = state->num_builtins_to_link;
 	
+	struct gl_shader* linked_shader = 0;
+
 	if (!state->error && !ir->is_empty())
 	{
-		struct gl_shader* linked_shader = link_intrastage_shaders(ctx->mem_ctx,
-																  &ctx->mesa_ctx,
-																  shader->whole_program,
-																  shader->whole_program->Shaders,
-																  shader->whole_program->NumShaders);
+		linked_shader = link_intrastage_shaders(ctx->mem_ctx,
+												&ctx->mesa_ctx,
+												shader->whole_program,
+												shader->whole_program->Shaders,
+												shader->whole_program->NumShaders);
 		if (!linked_shader)
 		{
 			shader->status = false;
@@ -400,6 +402,9 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 
 	ralloc_free (ir);
 	ralloc_free (state);
+
+	if (linked_shader)
+		ralloc_free(linked_shader);
 
 	return shader;
 }
