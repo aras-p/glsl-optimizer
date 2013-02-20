@@ -37,6 +37,8 @@ Instruction::isNop() const
       return true;
    if (terminator || join) // XXX: should terminator imply flow ?
       return false;
+   if (op == OP_ATOM)
+      return false;
    if (!fixed && op == OP_NOP)
       return true;
 
@@ -63,6 +65,8 @@ bool Instruction::isDead() const
 {
    if (op == OP_STORE ||
        op == OP_EXPORT ||
+       op == OP_ATOM ||
+       op == OP_SUSTB || op == OP_SUSTP || op == OP_SUREDP || op == OP_SUREDB ||
        op == OP_WRSV)
       return false;
 
@@ -1727,11 +1731,22 @@ MemoryOpt::runOpt(BasicBlock *bb)
          isLoad = false;
       } else {
          // TODO: maybe have all fixed ops act as barrier ?
-         if (ldst->op == OP_CALL) {
+         if (ldst->op == OP_CALL ||
+             ldst->op == OP_BAR ||
+             ldst->op == OP_MEMBAR) {
             purgeRecords(NULL, FILE_MEMORY_LOCAL);
             purgeRecords(NULL, FILE_MEMORY_GLOBAL);
             purgeRecords(NULL, FILE_MEMORY_SHARED);
             purgeRecords(NULL, FILE_SHADER_OUTPUT);
+         } else
+         if (ldst->op == OP_ATOM) {
+            if (ldst->src(0).getFile() == FILE_MEMORY_GLOBAL) {
+               purgeRecords(NULL, FILE_MEMORY_LOCAL);
+               purgeRecords(NULL, FILE_MEMORY_GLOBAL);
+               purgeRecords(NULL, FILE_MEMORY_SHARED);
+            } else {
+               purgeRecords(NULL, ldst->src(0).getFile());
+            }
          } else
          if (ldst->op == OP_EMIT || ldst->op == OP_RESTART) {
             purgeRecords(NULL, FILE_SHADER_OUTPUT);
@@ -1941,6 +1956,7 @@ FlatteningPass::visit(BasicBlock *bb)
           !insn->asFlow() &&
           insn->op != OP_TEXBAR &&
           !isTextureOp(insn->op) && // probably just nve4
+          !isSurfaceOp(insn->op) && // not confirmed
           insn->op != OP_LINTERP && // probably just nve4
           insn->op != OP_PINTERP && // probably just nve4
           ((insn->op != OP_LOAD && insn->op != OP_STORE) ||
@@ -2286,6 +2302,12 @@ DeadCodeElim::visit(BasicBlock *bb)
       } else
       if (i->defExists(1) && (i->op == OP_VFETCH || i->op == OP_LOAD)) {
          checkSplitLoad(i);
+      } else
+      if (i->defExists(0) && !i->getDef(0)->refCount()) {
+         if (i->op == OP_ATOM ||
+             i->op == OP_SUREDP ||
+             i->op == OP_SUREDB)
+            i->setDef(0, NULL);
       }
    }
    return true;

@@ -46,6 +46,11 @@ static inline bool isTextureOp(operation op)
    return (op >= OP_TEX && op <= OP_TEXPREP);
 }
 
+static inline bool isSurfaceOp(operation op)
+{
+   return (op >= OP_SULDB && op <= OP_SULEA);
+}
+
 static inline unsigned int typeSizeof(DataType ty)
 {
    switch (ty) {
