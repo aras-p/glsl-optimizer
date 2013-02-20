@@ -126,7 +126,7 @@ gen6_upload_blend_state(struct brw_context *brw)
           * not read the alpha channel, but will instead use the correct
           * implicit value for alpha.
           */
-         if (!_mesa_base_format_has_channel(rb->_BaseFormat, GL_TEXTURE_ALPHA_TYPE))
+         if (rb && !_mesa_base_format_has_channel(rb->_BaseFormat, GL_TEXTURE_ALPHA_TYPE))
          {
             srcRGB = brw_fix_xRGB_alpha(srcRGB);
             srcA = brw_fix_xRGB_alpha(srcA);
