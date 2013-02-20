@@ -3187,6 +3187,12 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
       return;
    }
 
+   if (!image) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+		  "glEGLImageTargetTexture2D(image=%p)", image);
+      return;
+   }
+
    if (ctx->NewState & _NEW_PIXEL)
       _mesa_update_state(ctx);
 
