@@ -1307,6 +1307,8 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    set_max_gl_versions(intelScreen);
 
    psp->api_mask = (1 << __DRI_API_OPENGL);
+   if (intelScreen->max_gl_core_version > 0)
+      psp->api_mask |= (1 << __DRI_API_OPENGL_CORE);
    if (intelScreen->max_gl_es1_version > 0)
       psp->api_mask |= (1 << __DRI_API_GLES);
    if (intelScreen->max_gl_es2_version > 0)
