@@ -152,6 +152,15 @@ struct intel_mipmap_level
        * intel_miptree_map/unmap on this slice.
        */
       struct intel_miptree_map *map;
+
+      /**
+       * \brief Is HiZ enabled for this slice?
+       *
+       * If \c mt->level[l].slice[s].has_hiz is set, then (1) \c mt->hiz_mt
+       * has been allocated and (2) the HiZ memory corresponding to this slice
+       * resides at \c mt->hiz_mt->level[l].slice[s].
+       */
+      bool has_hiz;
    } *slice;
 };
 
@@ -333,9 +342,11 @@ struct intel_mipmap_tree
    /**
     * \brief HiZ miptree
     *
-    * This is non-null only if HiZ is enabled for this miptree.
+    * The hiz miptree contains the miptree's hiz buffer. To allocate the hiz
+    * miptree, use intel_miptree_alloc_hiz().
     *
-    * \see intel_miptree_alloc_hiz()
+    * To determine if hiz is enabled, do not check this pointer. Instead, use
+    * intel_miptree_slice_has_hiz().
     */
    struct intel_mipmap_tree *hiz_mt;
 
@@ -531,6 +542,11 @@ bool
 intel_miptree_alloc_hiz(struct intel_context *intel,
 			struct intel_mipmap_tree *mt,
                         GLuint num_samples);
+
+bool
+intel_miptree_slice_has_hiz(struct intel_mipmap_tree *mt,
+                            uint32_t level,
+                            uint32_t layer);
 
 void
 intel_miptree_slice_set_needs_hiz_resolve(struct intel_mipmap_tree *mt,

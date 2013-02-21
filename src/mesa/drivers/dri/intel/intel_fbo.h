@@ -166,6 +166,9 @@ intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex);
 void
 intel_renderbuffer_set_needs_downsample(struct intel_renderbuffer *irb);
 
+bool
+intel_renderbuffer_has_hiz(struct intel_renderbuffer *irb);
+
 void
 intel_renderbuffer_set_needs_hiz_resolve(struct intel_renderbuffer *irb);
 

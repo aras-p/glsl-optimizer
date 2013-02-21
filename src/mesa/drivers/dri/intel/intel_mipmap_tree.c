@@ -1010,6 +1010,8 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
    struct intel_resolve_map *head = &mt->hiz_map;
    for (int level = mt->first_level; level <= mt->last_level; ++level) {
       for (int layer = 0; layer < mt->level[level].depth; ++layer) {
+         mt->level[level].slice[layer].has_hiz = true;
+
 	 head->next = malloc(sizeof(*head->next));
 	 head->next->prev = head;
 	 head->next->next = NULL;
@@ -1022,6 +1024,18 @@ intel_miptree_alloc_hiz(struct intel_context *intel,
    }
 
    return true;
+}
+
+/**
+ * Does the miptree slice have hiz enabled?
+ */
+bool
+intel_miptree_slice_has_hiz(struct intel_mipmap_tree *mt,
+                            uint32_t level,
+                            uint32_t layer)
+{
+   intel_miptree_check_level_layer(mt, level, layer);
+   return mt->level[level].slice[layer].has_hiz;
 }
 
 void
