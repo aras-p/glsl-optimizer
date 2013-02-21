@@ -47,6 +47,8 @@ libxatracker_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la
 
+nodist_EXTRA_libxatracker_la_SOURCES = dummy.cpp
+
 if HAVE_MESA_LLVM
 libxatracker_la_LDFLAGS += $(LLVM_LDFLAGS)
 libxatracker_la_LIBADD += $(LLVM_LIBS)
