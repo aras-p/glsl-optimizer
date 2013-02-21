@@ -46,6 +46,10 @@ clear_flags(struct pipe_rasterizer_state *rast)
 {
    rast->light_twoside = 0;
    rast->offset_tri = 0;
+   rast->offset_line = 0;
+   rast->offset_point = 0;
+   rast->offset_units = 0.0f;
+   rast->offset_scale = 0.0f;
 }
 
 
@@ -74,6 +78,8 @@ llvmpipe_create_rasterizer_state(struct pipe_context *pipe,
     */
    need_pipeline = (rast->fill_front != PIPE_POLYGON_MODE_FILL ||
 		    rast->fill_back != PIPE_POLYGON_MODE_FILL ||
+                    rast->offset_point ||
+                    rast->offset_line ||
 		    rast->point_smooth ||
 		    rast->line_smooth ||
 		    rast->line_stipple_enable ||
