@@ -288,12 +288,15 @@ lp_do_offset_tri(struct gallivm_state *gallivm,
    dzdx = LLVMBuildExtractElement(b, dzdxdzdy, zeroi, "");
    dzdy = LLVMBuildExtractElement(b, dzdxdzdy, onei, "");
 
-   /* zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale */
+   /* zoffset = pgon_offset_units + MAX2(dzdx, dzdy) * pgon_offset_scale */
    max = LLVMBuildFCmp(b, LLVMRealUGT, dzdx, dzdy, "");
    max_value = LLVMBuildSelect(b, max, dzdx, dzdy, "max"); 
 
-   mult = LLVMBuildFMul(b, max_value, lp_build_const_float(gallivm, key->scale), "");
-   zoffset = LLVMBuildFAdd(b, lp_build_const_float(gallivm, key->units), mult, "zoffset");
+   mult = LLVMBuildFMul(b, max_value,
+                        lp_build_const_float(gallivm, key->pgon_offset_scale), "");
+   zoffset = LLVMBuildFAdd(b,
+                           lp_build_const_float(gallivm, key->pgon_offset_units),
+                           mult, "zoffset");
 
    /* yuck */
    shuffles[0] = twoi;
@@ -639,7 +642,7 @@ init_args(struct gallivm_state *gallivm,
    ooa = vec4f_from_scalar(gallivm, ooa, "");
 
    /* tri offset calc shares a lot of arithmetic, do it here */
-   if (key->scale != 0.0f || key->units != 0.0f) {
+   if (key->pgon_offset_scale != 0.0f || key->pgon_offset_units != 0.0f) {
       lp_do_offset_tri(gallivm, args, key, ooa, dxy01, dxy20, attr_pos);
    }
 
@@ -818,8 +821,8 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
    assert(key->spec_slot   == lp->color_slot [1]);
    assert(key->bspec_slot  == lp->bcolor_slot[1]);
 
-   key->units = (float) (lp->rasterizer->offset_units * lp->mrd);
-   key->scale = lp->rasterizer->offset_scale;
+   key->pgon_offset_units = (float) (lp->rasterizer->offset_units * lp->mrd);
+   key->pgon_offset_scale = lp->rasterizer->offset_scale;
    key->pad = 0;
    memcpy(key->inputs, fs->inputs, key->num_inputs * sizeof key->inputs[0]);
    for (i = 0; i < key->num_inputs; i++) {

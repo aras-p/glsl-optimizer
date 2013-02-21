@@ -27,8 +27,8 @@ struct lp_setup_variant_key {
    unsigned twoside:1;
    unsigned pad:5;
 
-   float units;
-   float scale;      
+   float pgon_offset_units;
+   float pgon_offset_scale;
    struct lp_shader_input inputs[PIPE_MAX_SHADER_INPUTS];
 };
 
