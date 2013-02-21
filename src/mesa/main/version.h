@@ -51,4 +51,7 @@ _mesa_override_gl_version(struct gl_context *ctx);
 extern void
 _mesa_override_glsl_version(struct gl_context *ctx);
 
+extern int
+_mesa_get_gl_version_override(void);
+
 #endif /* VERSION_H */
