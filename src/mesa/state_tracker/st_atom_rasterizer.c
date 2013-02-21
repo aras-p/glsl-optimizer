@@ -135,16 +135,12 @@ static void update_raster_state( struct st_context *st )
 
    /* _NEW_POLYGON 
     */
-   if (ctx->Polygon.OffsetUnits != 0.0 ||
-       ctx->Polygon.OffsetFactor != 0.0) {
-      raster->offset_point = ctx->Polygon.OffsetPoint;
-      raster->offset_line = ctx->Polygon.OffsetLine;
-      raster->offset_tri = ctx->Polygon.OffsetFill;
-   }
-
    if (ctx->Polygon.OffsetPoint ||
        ctx->Polygon.OffsetLine ||
        ctx->Polygon.OffsetFill) {
+      raster->offset_point = ctx->Polygon.OffsetPoint;
+      raster->offset_line = ctx->Polygon.OffsetLine;
+      raster->offset_tri = ctx->Polygon.OffsetFill;
       raster->offset_units = ctx->Polygon.OffsetUnits;
       raster->offset_scale = ctx->Polygon.OffsetFactor;
    }
