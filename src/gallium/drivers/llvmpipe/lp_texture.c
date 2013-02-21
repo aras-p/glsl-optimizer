@@ -311,13 +311,11 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
    }
    else {
       /* other data (vertex buffer, const buffer, etc) */
-      const enum pipe_format format = templat->format;
-      const uint w = templat->width0 / util_format_get_blockheight(format);
-      /* XXX buffers should only have one dimension, those values should be 1 */
-      const uint h = templat->height0 / util_format_get_blockwidth(format);
-      const uint d = templat->depth0;
-      const uint bpp = util_format_get_blocksize(format);
-      const uint bytes = w * h * d * bpp;
+      const uint bytes = templat->width0;
+      assert(util_format_get_blocksize(templat->format) == 1);
+      assert(templat->height0 == 1);
+      assert(templat->depth0 == 1);
+      assert(templat->last_level == 0);
       lpr->data = align_malloc(bytes, 16);
       if (!lpr->data)
          goto fail;
