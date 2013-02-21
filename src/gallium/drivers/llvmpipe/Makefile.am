@@ -85,23 +85,30 @@ check_PROGRAMS = \
 	lp_test_printf
 TESTS = $(check_PROGRAMS)
 
+TEST_LIBS = \
+	    libllvmpipe.la \
+	    $(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	    $(LLVM_LIBS) \
+	    $(DLOPEN_LIBS) \
+	    $(PTHREAD_LIBS)
+
 lp_test_format_SOURCES = lp_test_format.c lp_test_main.c
-lp_test_format_LDADD = libllvmpipe.la ../../auxiliary/libgallium.la $(LLVM_LIBS)
+lp_test_format_LDADD = $(TEST_LIBS)
 nodist_EXTRA_lp_test_format_SOURCES = dummy.cpp
 
 lp_test_arit_SOURCES = lp_test_arit.c lp_test_main.c
-lp_test_arit_LDADD = libllvmpipe.la ../../auxiliary/libgallium.la $(LLVM_LIBS)
+lp_test_arit_LDADD = $(TEST_LIBS)
 nodist_EXTRA_lp_test_arit_SOURCES = dummy.cpp
 
 lp_test_blend_SOURCES = lp_test_blend.c lp_test_main.c
-lp_test_blend_LDADD = libllvmpipe.la ../../auxiliary/libgallium.la $(LLVM_LIBS)
+lp_test_blend_LDADD = $(TEST_LIBS)
 nodist_EXTRA_lp_test_blend_SOURCES = dummy.cpp
 
 lp_test_conv_SOURCES = lp_test_conv.c lp_test_main.c
-lp_test_conv_LDADD = libllvmpipe.la ../../auxiliary/libgallium.la $(LLVM_LIBS)
+lp_test_conv_LDADD = $(TEST_LIBS)
 nodist_EXTRA_lp_test_conv_SOURCES = dummy.cpp
 
 lp_test_printf_SOURCES = lp_test_printf.c lp_test_main.c
-lp_test_printf_LDADD = libllvmpipe.la ../../auxiliary/libgallium.la $(LLVM_LIBS)
+lp_test_printf_LDADD = $(TEST_LIBS)
 nodist_EXTRA_lp_test_printf_SOURCES = dummy.cpp
 
