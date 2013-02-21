@@ -875,6 +875,7 @@ static void tex_fetch_args(
 	const struct tgsi_full_instruction * inst = emit_data->inst;
 	unsigned opcode = inst->Instruction.Opcode;
 	unsigned target = inst->Texture.Texture;
+	unsigned sampler_src;
 	LLVMValueRef coords[4];
 	LLVMValueRef address[16];
 	int ref_pos;
@@ -920,6 +921,15 @@ static void tex_fetch_args(
 		address[count++] = lp_build_emit_fetch(bld_base, inst, 1, 0);
 	}
 
+	/* Pack user derivatives */
+	if (opcode == TGSI_OPCODE_TXD) {
+		for (chan = 0; chan < 2; chan++) {
+			address[count++] = lp_build_emit_fetch(bld_base, inst, 1, chan);
+			if (num_coords > 1)
+				address[count++] = lp_build_emit_fetch(bld_base, inst, 2, chan);
+		}
+	}
+
 	/* Pack texture coordinates */
 	address[count++] = coords[0];
 	if (num_coords > 1)
@@ -961,8 +971,10 @@ static void tex_fetch_args(
 						 "");
 	}
 
+	sampler_src = emit_data->inst->Instruction.NumSrcRegs - 1;
+
 	/* Resource */
-	emit_data->args[1] = si_shader_ctx->resources[emit_data->inst->Src[1].Register.Index];
+	emit_data->args[1] = si_shader_ctx->resources[emit_data->inst->Src[sampler_src].Register.Index];
 
 	if (opcode == TGSI_OPCODE_TXF) {
 		/* add tex offsets */
@@ -993,7 +1005,7 @@ static void tex_fetch_args(
 		emit_data->arg_count = 3;
 	} else {
 		/* Sampler */
-		emit_data->args[2] = si_shader_ctx->samplers[emit_data->inst->Src[1].Register.Index];
+		emit_data->args[2] = si_shader_ctx->samplers[emit_data->inst->Src[sampler_src].Register.Index];
 
 		emit_data->dst_type = LLVMVectorType(
 			LLVMFloatTypeInContext(bld_base->base.gallivm->context),
@@ -1064,6 +1076,14 @@ static const struct lp_build_tgsi_action txb_action = {
 	.emit = build_tex_intrinsic,
 	.intr_name = "llvm.SI.sampleb."
 };
+
+#if HAVE_LLVM >= 0x0304
+static const struct lp_build_tgsi_action txd_action = {
+	.fetch_args = tex_fetch_args,
+	.emit = build_tex_intrinsic,
+	.intr_name = "llvm.SI.sampled."
+};
+#endif
 
 static const struct lp_build_tgsi_action txf_action = {
 	.fetch_args = tex_fetch_args,
@@ -1321,6 +1341,9 @@ int si_pipe_shader_create(
 
 	bld_base->op_actions[TGSI_OPCODE_TEX] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXB] = txb_action;
+#if HAVE_LLVM >= 0x0304
+	bld_base->op_actions[TGSI_OPCODE_TXD] = txd_action;
+#endif
 	bld_base->op_actions[TGSI_OPCODE_TXF] = txf_action;
 	bld_base->op_actions[TGSI_OPCODE_TXL] = txl_action;
 	bld_base->op_actions[TGSI_OPCODE_TXP] = tex_action;
