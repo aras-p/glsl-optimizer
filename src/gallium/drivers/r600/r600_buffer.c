@@ -189,7 +189,7 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 		doffset = transfer->box.x;
 		soffset = rtransfer->offset + transfer->box.x % R600_MAP_BUFFER_ALIGNMENT;
 		/* Copy the staging buffer into the original one. */
-		if (rctx->rings.dma.cs && !(size % 4) && !(doffset % 4) && !(soffset)) {
+		if (rctx->rings.dma.cs && !(size % 4) && !(doffset % 4) && !(soffset % 4)) {
 			if (rctx->screen->chip_class >= EVERGREEN) {
 				evergreen_dma_copy(rctx, dst, src, doffset, soffset, size);
 			} else {
