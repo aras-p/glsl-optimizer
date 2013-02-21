@@ -1929,6 +1929,7 @@ fs_visitor::register_coalesce()
 
       bool has_source_modifiers = (inst->src[0].abs ||
                                    inst->src[0].negate ||
+                                   inst->src[0].smear != -1 ||
                                    inst->src[0].file == UNIFORM);
 
       /* Found a move of a GRF to a GRF.  Let's see if we can coalesce
