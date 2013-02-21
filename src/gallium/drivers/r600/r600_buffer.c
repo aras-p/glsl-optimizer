@@ -150,9 +150,10 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 	}
 	else if ((usage & PIPE_TRANSFER_DISCARD_RANGE) &&
 		 !(usage & PIPE_TRANSFER_UNSYNCHRONIZED) &&
-		 rctx->screen->has_streamout &&
-		 /* The buffer range must be aligned to 4. */
-		 box->x % 4 == 0 && box->width % 4 == 0) {
+		 (rctx->screen->has_cp_dma ||
+		  (rctx->screen->has_streamout &&
+		   /* The buffer range must be aligned to 4 with streamout. */
+		   box->x % 4 == 0 && box->width % 4 == 0))) {
 		assert(usage & PIPE_TRANSFER_WRITE);
 
 		/* Check if mapping this buffer would cause waiting for the GPU. */

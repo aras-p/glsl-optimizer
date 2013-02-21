@@ -508,8 +508,7 @@ void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst, unsig
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 
-	/* CP DMA doesn't work on R600 (flushing seems to be unreliable). */
-	if (rctx->screen->info.drm_minor >= 27 && rctx->chip_class >= R700) {
+	if (rctx->screen->has_cp_dma) {
 		r600_cp_dma_copy_buffer(rctx, dst, dstx, src, src_box->x, src_box->width);
 	}
 	else if (rctx->screen->has_streamout &&

@@ -1087,12 +1087,7 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
 
 	assert(size);
-	assert(rctx->chip_class != R600);
-
-	/* CP DMA doesn't work on R600 (flushing seems to be unreliable). */
-	if (rctx->chip_class == R600) {
-		return;
-	}
+	assert(rctx->screen->has_cp_dma);
 
 	dst_offset += r600_resource_va(&rctx->screen->screen, dst);
 	src_offset += r600_resource_va(&rctx->screen->screen, src);

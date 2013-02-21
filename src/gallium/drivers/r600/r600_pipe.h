@@ -232,6 +232,7 @@ struct r600_screen {
 	struct radeon_info		info;
 	bool				has_streamout;
 	bool				has_msaa;
+	bool				has_cp_dma;
 	enum r600_msaa_texture_mode	msaa_texture_support;
 	bool				use_hyperz;
 	struct r600_tiling_info		tiling_info;
