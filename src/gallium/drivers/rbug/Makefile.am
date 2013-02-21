@@ -30,6 +30,7 @@ noinst_LTLIBRARIES = librbug.la
 # preprocessor is determined by the ordering of the -I flags.
 AM_CFLAGS = \
 	$(GALLIUM_CFLAGS) \
+	$(VISIBILITY_CFLAGS) \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/include
 

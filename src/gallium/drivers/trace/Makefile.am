@@ -1,7 +1,8 @@
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
-	$(GALLIUM_CFLAGS)
+	$(GALLIUM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
 
 noinst_LTLIBRARIES = libtrace.la
 

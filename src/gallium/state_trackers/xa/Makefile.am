@@ -24,7 +24,9 @@ include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
 	-Wall -pedantic \
-	$(GALLIUM_CFLAGS)
+	$(GALLIUM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
+
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/ \
 	-I$(top_srcdir)/src/gallium/winsys \

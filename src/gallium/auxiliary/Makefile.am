@@ -7,7 +7,10 @@ noinst_LTLIBRARIES = libgallium.la
 
 AM_CFLAGS = \
 	-I$(top_srcdir)/src/gallium/auxiliary/util \
-	$(GALLIUM_CFLAGS)
+	$(GALLIUM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
+
+AM_CXXFLAGS = $(VISIBILITY_CXXFLAGS)
 
 libgallium_la_SOURCES = \
 	$(C_SOURCES) \
@@ -18,7 +21,7 @@ if HAVE_MESA_LLVM
 AM_CFLAGS += \
 	$(LLVM_CFLAGS)
 
-AM_CXXFLAGS = \
+AM_CXXFLAGS += \
 	$(GALLIUM_CFLAGS) \
 	$(LLVM_CXXFLAGS)
 
