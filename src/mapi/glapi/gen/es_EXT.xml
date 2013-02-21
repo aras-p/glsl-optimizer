@@ -666,7 +666,8 @@
 <!-- 64. GL_EXT_discard_framebuffer -->
 
 <category name="GL_EXT_discard_framebuffer" number="64">
-    <function name="DiscardFramebufferEXT" es1="1.0" es2="2.0" offset="assign" desktop="false">
+    <function name="DiscardFramebufferEXT" es1="1.0" es2="2.0"
+              offset="assign" static_dispatch="false" desktop="false">
         <param name="target" type="GLenum"/>
         <param name="numAttachments" type="GLsizei"/>
         <param name="attachments" type="const GLenum *" count="numAttachments"/>
