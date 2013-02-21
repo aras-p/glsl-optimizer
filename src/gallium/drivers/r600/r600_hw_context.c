@@ -689,7 +689,7 @@ void r600_flush_emit(struct r600_context *rctx)
 		emit_flush = 1;
 	}
 
-	if (rctx->family >= CHIP_RV770 && rctx->flags & R600_CONTEXT_STREAMOUT_FLUSH) {
+	if (rctx->flags & R600_CONTEXT_STREAMOUT_FLUSH) {
 		cp_coher_cntl |= S_0085F0_SO0_DEST_BASE_ENA(1) |
 				S_0085F0_SO1_DEST_BASE_ENA(1) |
 				S_0085F0_SO2_DEST_BASE_ENA(1) |
