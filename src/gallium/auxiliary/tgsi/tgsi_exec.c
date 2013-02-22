@@ -62,6 +62,9 @@
 #include "util/u_math.h"
 
 
+#define DEBUG_EXECUTION 0
+
+
 #define FAST_MATH 0
 
 #define TILE_TOP_LEFT     0
@@ -2456,6 +2459,23 @@ exec_declaration(struct tgsi_exec_machine *mach,
                }
             }
          }
+
+         if (DEBUG_EXECUTION) {
+            uint i, j;
+            for (i = first; i <= last; ++i) {
+               debug_printf("IN[%2u] = ", i);
+               for (j = 0; j < TGSI_NUM_CHANNELS; j++) {
+                  if (j > 0) {
+                     debug_printf("         ");
+                  }
+                  debug_printf("(%6f %u, %6f %u, %6f %u, %6f %u)\n",
+                               mach->Inputs[i].xyzw[0].f[j], mach->Inputs[i].xyzw[0].u[j],
+                               mach->Inputs[i].xyzw[1].f[j], mach->Inputs[i].xyzw[1].u[j],
+                               mach->Inputs[i].xyzw[2].f[j], mach->Inputs[i].xyzw[2].u[j],
+                               mach->Inputs[i].xyzw[3].f[j], mach->Inputs[i].xyzw[3].u[j]);
+               }
+            }
+         }
       }
    }
 
@@ -4304,9 +4324,6 @@ exec_instruction(
 }
 
 
-#define DEBUG_EXECUTION 0
-
-
 /**
  * Run TGSI interpreter.
  * \return bitmask of "alive" quad components
@@ -4351,8 +4368,10 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
       struct tgsi_exec_vector outputs[PIPE_MAX_ATTRIBS];
       uint inst = 1;
 
-      memcpy(temps, mach->Temps, sizeof(temps));
-      memcpy(outputs, mach->Outputs, sizeof(outputs));
+      memset(mach->Temps, 0, sizeof(temps));
+      memset(mach->Outputs, 0, sizeof(outputs));
+      memset(temps, 0, sizeof(temps));
+      memset(outputs, 0, sizeof(outputs));
 #endif
 
       /* execute instructions, until pc is set to -1 */
