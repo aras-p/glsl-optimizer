@@ -83,6 +83,7 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
    if (!res) {
       pipe_mutex_unlock(dev->mutex);
       FREE(dev);
+      FREE(vlsurface);
       return VDP_STATUS_RESOURCES;
    }
 
