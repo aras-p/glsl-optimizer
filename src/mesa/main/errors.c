@@ -29,7 +29,7 @@
 
 
 #include "errors.h"
-
+#include "enums.h"
 #include "imports.h"
 #include "context.h"
 #include "dispatch.h"
@@ -836,38 +836,6 @@ output_if_debug(const char *prefixString, const char *outputString,
    }
 }
 
-
-/**
- * Return string version of GL error code.
- */
-static const char *
-error_string( GLenum error )
-{
-   switch (error) {
-   case GL_NO_ERROR:
-      return "GL_NO_ERROR";
-   case GL_INVALID_VALUE:
-      return "GL_INVALID_VALUE";
-   case GL_INVALID_ENUM:
-      return "GL_INVALID_ENUM";
-   case GL_INVALID_OPERATION:
-      return "GL_INVALID_OPERATION";
-   case GL_STACK_OVERFLOW:
-      return "GL_STACK_OVERFLOW";
-   case GL_STACK_UNDERFLOW:
-      return "GL_STACK_UNDERFLOW";
-   case GL_OUT_OF_MEMORY:
-      return "GL_OUT_OF_MEMORY";
-   case GL_TABLE_TOO_LARGE:
-      return "GL_TABLE_TOO_LARGE";
-   case GL_INVALID_FRAMEBUFFER_OPERATION_EXT:
-      return "GL_INVALID_FRAMEBUFFER_OPERATION";
-   default:
-      return "unknown";
-   }
-}
-
-
 /**
  * When a new type of error is recorded, print a message describing
  * previous errors which were accumulated.
@@ -880,7 +848,7 @@ flush_delayed_errors( struct gl_context *ctx )
    if (ctx->ErrorDebugCount) {
       _mesa_snprintf(s, MAX_DEBUG_MESSAGE_LENGTH, "%d similar %s errors", 
                      ctx->ErrorDebugCount,
-                     error_string(ctx->ErrorValue));
+                     _mesa_lookup_enum_by_nr(ctx->ErrorValue));
 
       output_if_debug("Mesa", s, GL_TRUE);
 
@@ -1015,7 +983,7 @@ _mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... )
       }
 
       len = _mesa_snprintf(s2, MAX_DEBUG_MESSAGE_LENGTH, "%s in %s",
-                           error_string(error), s);
+                           _mesa_lookup_enum_by_nr(error), s);
       if (len >= MAX_DEBUG_MESSAGE_LENGTH) {
          /* Same as above. */
          ASSERT(0);
