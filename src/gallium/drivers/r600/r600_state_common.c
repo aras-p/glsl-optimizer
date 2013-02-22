@@ -1360,6 +1360,12 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		rctx->vgt_state.atom.dirty = true;
 	}
 
+	/* Workaround for hardware deadlock on certain R600 ASICs: write into a CB register. */
+	if (rctx->chip_class == R600) {
+		rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
+		rctx->cb_misc_state.atom.dirty = true;
+	}
+
 	/* Emit states. */
 	r600_need_cs_space(rctx, ib.user_buffer ? 5 : 0, TRUE);
 	r600_flush_emit(rctx);
