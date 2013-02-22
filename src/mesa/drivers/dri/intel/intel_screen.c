@@ -1156,6 +1156,8 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
 static void
 set_max_gl_versions(struct intel_screen *screen)
 {
+   int gl_version_override = _mesa_get_gl_version_override();
+
    switch (screen->gen) {
    case 7:
       if (screen->kernel_has_gen7_sol_reset) {
@@ -1213,6 +1215,14 @@ set_max_gl_versions(struct intel_screen *screen)
    default:
       assert(!"unrecognized intel_screen::gen");
       break;
+   }
+
+   if (gl_version_override >= 31) {
+      screen->max_gl_core_version = MAX2(screen->max_gl_core_version,
+                                         gl_version_override);
+   } else {
+      screen->max_gl_compat_version = MAX2(screen->max_gl_compat_version,
+                                           gl_version_override);
    }
 
 #ifndef FEATURE_ES1
