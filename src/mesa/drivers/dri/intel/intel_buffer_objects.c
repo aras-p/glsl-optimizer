@@ -330,6 +330,8 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 	    drm_intel_bo_unreference(intel_obj->buffer);
 	    intel_bufferobj_alloc_buffer(intel, intel_obj);
 	 } else {
+            perf_debug("Stalling on the GPU for mapping a busy buffer "
+                       "object\n");
 	    intel_flush(ctx);
 	 }
       } else if (drm_intel_bo_busy(intel_obj->buffer) &&
