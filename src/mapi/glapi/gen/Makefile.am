@@ -59,7 +59,9 @@ EXTRA_DIST= \
 	$(BUILT_SOURCES) \
 	$(MESA_GLAPI_DIR)/glapi_x86.S \
 	$(MESA_GLAPI_DIR)/glapi_x86-64.S \
-	$(MESA_GLAPI_DIR)/glapi_sparc.S
+	$(MESA_GLAPI_DIR)/glapi_sparc.S \
+	$(COMMON_GLX) \
+	gl_API.dtd
 
 ######################################################################
 
