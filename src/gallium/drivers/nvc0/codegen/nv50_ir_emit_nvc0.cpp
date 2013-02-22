@@ -1192,8 +1192,8 @@ CodeEmitterNVC0::emitFlow(const Instruction *i)
       break;
    case OP_CALL:
       code[1] = f->absolute ? 0x10000000 : 0x50000000;
-      if (i->srcExists(0) && i->src(0).getFile() == FILE_MEMORY_CONST)
-         code[0] |= 0x4000;
+      if (f->indirect)
+         code[0] |= 0x4000; // indirect calls always use c[] source
       mask = 2;
       break;
 
@@ -1230,7 +1230,22 @@ CodeEmitterNVC0::emitFlow(const Instruction *i)
    if (f->limit)
       code[0] |= 1 << 16;
 
+   if (f->indirect) {
+      if (code[0] & 0x4000) {
+         assert(i->srcExists(0) && i->src(0).getFile() == FILE_MEMORY_CONST);
+         setAddress16(i->src(0));
+         code[1] |= i->getSrc(0)->reg.fileIndex << 10;
+         if (f->op == OP_BRA)
+            srcId(f->src(0).getIndirect(0), 20);
+      } else {
+         srcId(f, 0, 20);
+      }
+   }
+
    if (f->op == OP_CALL) {
+      if (f->indirect) {
+         // nothing
+      } else
       if (f->builtin) {
          assert(f->absolute);
          uint32_t pcAbs = targNVC0->getBuiltinOffset(f->target.builtin);

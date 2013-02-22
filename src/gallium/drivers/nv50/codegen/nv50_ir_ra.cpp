@@ -409,14 +409,17 @@ RegAlloc::ArgumentMovesPass::visit(BasicBlock *bb)
    // conflict arises.
    for (Instruction *i = bb->getEntry(); i; i = i->next) {
       FlowInstruction *cal = i->asFlow();
-      if (!cal || cal->op != OP_CALL || cal->builtin)
+      // TODO: Handle indirect calls.
+      // Right now they should only be generated for builtins.
+      if (!cal || cal->op != OP_CALL || cal->builtin || cal->indirect)
          continue;
       RegisterSet clobberSet(prog->getTarget());
 
       // Bind input values.
-      for (int s = 0; cal->srcExists(s); ++s) {
+      for (int s = cal->indirect ? 1 : 0; cal->srcExists(s); ++s) {
+         const int t = cal->indirect ? (s - 1) : s;
          LValue *tmp = new_LValue(func, cal->getSrc(s)->asLValue());
-         tmp->reg.data.id = cal->target.fn->ins[s].rep()->reg.data.id;
+         tmp->reg.data.id = cal->target.fn->ins[t].rep()->reg.data.id;
 
          Instruction *mov =
             new_Instruction(func, OP_MOV, typeOfSize(tmp->reg.size));

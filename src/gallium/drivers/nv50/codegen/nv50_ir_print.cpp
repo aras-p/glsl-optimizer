@@ -500,6 +500,10 @@ void Instruction::print() const
 
    if (asFlow()) {
       PRINT("%s", operationStr[op]);
+      if (asFlow()->indirect)
+         PRINT(" ind");
+      if (asFlow()->absolute)
+         PRINT(" abs");
       if (op == OP_CALL && asFlow()->builtin) {
          PRINT(" %sBUILTIN:%i", colour[TXT_BRA], asFlow()->target.builtin);
       } else
