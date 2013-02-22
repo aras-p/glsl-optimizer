@@ -28,10 +28,17 @@
 #include <clang/CodeGen/CodeGenAction.h>
 #include <llvm/Bitcode/BitstreamWriter.h>
 #include <llvm/Bitcode/ReaderWriter.h>
-#include <llvm/DerivedTypes.h>
 #include <llvm/Linker.h>
+#if HAVE_LLVM < 0x0303
+#include <llvm/DerivedTypes.h>
 #include <llvm/LLVMContext.h>
 #include <llvm/Module.h>
+#else
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Support/IRReader.h>
+#endif
 #include <llvm/PassManager.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/MemoryBuffer.h>
@@ -41,8 +48,10 @@
 
 #if HAVE_LLVM < 0x0302
 #include <llvm/Target/TargetData.h>
-#else
+#elif HAVE_LLVM < 0x0303
 #include <llvm/DataLayout.h>
+#else
+#include <llvm/IR/DataLayout.h>
 #endif
 
 #include "pipe/p_state.h"
@@ -151,7 +160,11 @@ namespace {
       // Add libclc generic search path
       c.getHeaderSearchOpts().AddPath(LIBCLC_INCLUDEDIR,
                                       clang::frontend::Angled,
-                                      false, false, false);
+                                      false, false
+#if HAVE_LLVM < 0x0303
+                                      , false
+#endif
+                                      );
 
       // Add libclc include
       c.getPreprocessorOpts().Includes.push_back("clc/clc.h");
@@ -167,8 +180,12 @@ namespace {
       c.getInvocation().setLangDefaults(c.getLangOpts(), clang::IK_OpenCL,
                                         clang::LangStandard::lang_opencl11);
 #endif
-      c.createDiagnostics(0, NULL, new clang::TextDiagnosticPrinter(
-                          s_log,
+      c.createDiagnostics(
+#if HAVE_LLVM < 0x0303
+                          0, NULL,
+#endif
+                          new clang::TextDiagnosticPrinter(
+                                 s_log,
 #if HAVE_LLVM <= 0x0301
                                  c.getDiagnosticOpts()));
 #else
@@ -201,12 +218,26 @@ namespace {
 
       llvm::PassManager PM;
       llvm::PassManagerBuilder Builder;
-      bool isNative;
-      llvm::Linker linker("clover", mod);
+      llvm::sys::Path libclc_path =
+                            llvm::sys::Path(LIBCLC_LIBEXECDIR + triple + ".bc");
 
       // Link the kernel with libclc
-      linker.LinkInFile(llvm::sys::Path(LIBCLC_LIBEXECDIR + triple + ".bc"), isNative);
+#if HAVE_LLVM < 0x0303
+      bool isNative;
+      llvm::Linker linker("clover", mod);
+      linker.LinkInFile(libclc_path, isNative);
       mod = linker.releaseModule();
+#else
+      std::string err_str;
+      llvm::SMDiagnostic err;
+      llvm::Module *libclc_mod = llvm::ParseIRFile(libclc_path.str(), err,
+                                                   mod->getContext());
+      if (llvm::Linker::LinkModules(mod, libclc_mod,
+                                    llvm::Linker::DestroySource,
+                                    &err_str)) {
+         throw build_error(err_str);
+      }
+#endif
 
       // Add a function internalizer pass.
       //

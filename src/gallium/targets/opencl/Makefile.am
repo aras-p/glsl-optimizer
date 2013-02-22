@@ -21,9 +21,9 @@ libOpenCL_la_LIBADD = \
 	-lclangSema \
 	-lclangAnalysis \
 	-lclangAST \
+	-lclangEdit \
 	-lclangLex \
 	-lclangBasic \
-	-lclangEdit \
 	$(LLVM_LIBS)
 
 
