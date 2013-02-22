@@ -263,6 +263,10 @@ arb_output_attrib_string(GLint index, GLenum progType)
       "result.(sixteen)", /* VERT_RESULT_CLIP_VERTEX */
       "result.(seventeen)", /* VERT_RESULT_CLIP_DIST0 */
       "result.(eighteen)", /* VERT_RESULT_CLIP_DIST1 */
+      "result.(nineteen)", /* VARYING_SLOT_PRIMITIVE_ID */
+      "result.(twenty)", /* VARYING_SLOT_LAYER */
+      "result.(twenty-one)", /* VARYING_SLOT_FACE */
+      "result.(twenty-two)", /* VARYING_SLOT_PNTC */
       "result.varying[0]",
       "result.varying[1]",
       "result.varying[2]",

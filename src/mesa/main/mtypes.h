@@ -213,6 +213,11 @@ typedef enum
  * fragment shader inputs.
  *
  * Note that some of these values are not available to all pipeline stages.
+ *
+ * When this enum is updated, the following code must be updated too:
+ * - vertResults (in prog_print.c's arb_output_attrib_string())
+ * - _mesa_vert_result_to_frag_attrib()
+ * - _mesa_frag_attrib_to_vert_result()
  */
 typedef enum
 {
@@ -285,27 +290,27 @@ typedef enum
  */
 typedef enum
 {
-   VERT_RESULT_HPOS = 0,
-   VERT_RESULT_COL0 = 1,
-   VERT_RESULT_COL1 = 2,
-   VERT_RESULT_FOGC = 3,
-   VERT_RESULT_TEX0 = 4,
-   VERT_RESULT_TEX1 = 5,
-   VERT_RESULT_TEX2 = 6,
-   VERT_RESULT_TEX3 = 7,
-   VERT_RESULT_TEX4 = 8,
-   VERT_RESULT_TEX5 = 9,
-   VERT_RESULT_TEX6 = 10,
-   VERT_RESULT_TEX7 = 11,
-   VERT_RESULT_PSIZ = 12,
-   VERT_RESULT_BFC0 = 13,
-   VERT_RESULT_BFC1 = 14,
-   VERT_RESULT_EDGE = 15,
-   VERT_RESULT_CLIP_VERTEX = 16,
-   VERT_RESULT_CLIP_DIST0 = 17,
-   VERT_RESULT_CLIP_DIST1 = 18,
-   VERT_RESULT_VAR0 = 19,  /**< shader varying */
-   VERT_RESULT_MAX = (VERT_RESULT_VAR0 + MAX_VARYING)
+   VERT_RESULT_HPOS = VARYING_SLOT_POS,
+   VERT_RESULT_COL0 = VARYING_SLOT_COL0,
+   VERT_RESULT_COL1 = VARYING_SLOT_COL1,
+   VERT_RESULT_FOGC = VARYING_SLOT_FOGC,
+   VERT_RESULT_TEX0 = VARYING_SLOT_TEX0,
+   VERT_RESULT_TEX1 = VARYING_SLOT_TEX1,
+   VERT_RESULT_TEX2 = VARYING_SLOT_TEX2,
+   VERT_RESULT_TEX3 = VARYING_SLOT_TEX3,
+   VERT_RESULT_TEX4 = VARYING_SLOT_TEX4,
+   VERT_RESULT_TEX5 = VARYING_SLOT_TEX5,
+   VERT_RESULT_TEX6 = VARYING_SLOT_TEX6,
+   VERT_RESULT_TEX7 = VARYING_SLOT_TEX7,
+   VERT_RESULT_PSIZ = VARYING_SLOT_PSIZ,
+   VERT_RESULT_BFC0 = VARYING_SLOT_BFC0,
+   VERT_RESULT_BFC1 = VARYING_SLOT_BFC1,
+   VERT_RESULT_EDGE = VARYING_SLOT_EDGE,
+   VERT_RESULT_CLIP_VERTEX = VARYING_SLOT_CLIP_VERTEX,
+   VERT_RESULT_CLIP_DIST0 = VARYING_SLOT_CLIP_DIST0,
+   VERT_RESULT_CLIP_DIST1 = VARYING_SLOT_CLIP_DIST1,
+   VERT_RESULT_VAR0 = VARYING_SLOT_VAR0,  /**< shader varying */
+   VERT_RESULT_MAX = VARYING_SLOT_MAX
 } gl_vert_result;
 
 
@@ -421,12 +426,16 @@ typedef enum
 static inline int
 _mesa_vert_result_to_frag_attrib(gl_vert_result vert_result)
 {
-   if (vert_result >= VERT_RESULT_CLIP_DIST0)
-      return vert_result - VERT_RESULT_CLIP_DIST0 + FRAG_ATTRIB_CLIP_DIST0;
-   else if (vert_result <= VERT_RESULT_TEX7)
+   if (vert_result <= VERT_RESULT_TEX7)
       return vert_result;
-   else
+   else if (vert_result < VERT_RESULT_CLIP_DIST0)
       return -1;
+   else if (vert_result <= VERT_RESULT_CLIP_DIST1)
+      return vert_result - VERT_RESULT_CLIP_DIST0 + FRAG_ATTRIB_CLIP_DIST0;
+   else if (vert_result < VERT_RESULT_VAR0)
+      return -1;
+   else
+      return vert_result - VERT_RESULT_VAR0 + FRAG_ATTRIB_VAR0;
 }
 
 
@@ -443,10 +452,12 @@ _mesa_frag_attrib_to_vert_result(gl_frag_attrib frag_attrib)
 {
    if (frag_attrib <= FRAG_ATTRIB_TEX7)
       return frag_attrib;
-   else if (frag_attrib >= FRAG_ATTRIB_CLIP_DIST0)
-      return frag_attrib - FRAG_ATTRIB_CLIP_DIST0 + VERT_RESULT_CLIP_DIST0;
-   else
+   else if (frag_attrib < FRAG_ATTRIB_CLIP_DIST0)
       return -1;
+   else if (frag_attrib <= FRAG_ATTRIB_CLIP_DIST1)
+      return frag_attrib - FRAG_ATTRIB_CLIP_DIST0 + VERT_RESULT_CLIP_DIST0;
+   else /* frag_attrib >= FRAG_ATTRIB_VAR0 */
+      return frag_attrib - FRAG_ATTRIB_VAR0 + VERT_RESULT_VAR0;
 }
 
 
