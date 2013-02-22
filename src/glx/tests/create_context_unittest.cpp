@@ -54,11 +54,15 @@ glx_context_init(struct glx_context *gc,
    return GL_TRUE;
 }
 
+bool GetGLXScreenConfigs_called = false;
+
 extern "C" struct glx_screen *
 GetGLXScreenConfigs(Display * dpy, int scrn)
 {
    (void) dpy;
    (void) scrn;
+
+   GetGLXScreenConfigs_called = true;
    return psc;
 }
 
