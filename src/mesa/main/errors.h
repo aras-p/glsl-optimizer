@@ -74,7 +74,8 @@ _mesa_gl_debug(struct gl_context *ctx,
                const char *fmtString, ...) PRINTFLIKE(5, 6);
 
 extern void
-_mesa_shader_debug( struct gl_context *ctx, GLenum type, GLuint id, const char *msg, int len );
+_mesa_shader_debug(struct gl_context *ctx, GLenum type, GLuint *id,
+                   const char *msg, int len);
 
 void GLAPIENTRY
 _mesa_DebugMessageInsertARB(GLenum source, GLenum type, GLuint id,

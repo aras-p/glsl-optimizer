@@ -1009,11 +1009,13 @@ _mesa_debug( const struct gl_context *ctx, const char *fmtString, ... )
  * \param len The length of 'msg'. If negative, 'msg' must be null-terminated.
  */
 void
-_mesa_shader_debug( struct gl_context *ctx, GLenum type, GLuint id,
+_mesa_shader_debug( struct gl_context *ctx, GLenum type, GLuint *id,
                     const char *msg, int len )
 {
    enum mesa_debug_source source = MESA_DEBUG_SOURCE_SHADER_COMPILER;
    enum mesa_debug_severity severity = MESA_DEBUG_SEVERITY_HIGH;
+
+   debug_get_id(id);
 
    if (len < 0)
       len = strlen(msg);
@@ -1022,7 +1024,7 @@ _mesa_shader_debug( struct gl_context *ctx, GLenum type, GLuint id,
    if (len >= MAX_DEBUG_MESSAGE_LENGTH)
       len = MAX_DEBUG_MESSAGE_LENGTH - 1;
 
-   _mesa_log_msg(ctx, source, type, id, severity, len, msg);
+   _mesa_log_msg(ctx, source, type, *id, severity, len, msg);
 }
 
 /*@}*/

@@ -308,9 +308,10 @@ _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
    'id' is the implementation-defined ID of the given message. */
 static void
 _mesa_glsl_msg(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
-               GLenum type, GLuint id, const char *fmt, va_list ap)
+               GLenum type, const char *fmt, va_list ap)
 {
-   bool error = (type == GL_DEBUG_TYPE_ERROR_ARB);
+   bool error = (type == MESA_DEBUG_TYPE_ERROR);
+   GLuint msg_id = 0;
 
    assert(state->info_log != NULL);
 
@@ -326,9 +327,9 @@ _mesa_glsl_msg(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
 
    const char *const msg = &state->info_log[msg_offset];
    struct gl_context *ctx = state->ctx;
+
    /* Report the error via GL_ARB_debug_output. */
-   if (error)
-      _mesa_shader_debug(ctx, type, id, msg, strlen(msg));
+   _mesa_shader_debug(ctx, type, &msg_id, msg, strlen(msg));
 
    ralloc_strcat(&state->info_log, "\n");
 }
@@ -338,12 +339,11 @@ _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
 		 const char *fmt, ...)
 {
    va_list ap;
-   GLenum type = GL_DEBUG_TYPE_ERROR_ARB;
 
    state->error = true;
 
    va_start(ap, fmt);
-   _mesa_glsl_msg(locp, state, type, SHADER_ERROR_UNKNOWN, fmt, ap);
+   _mesa_glsl_msg(locp, state, MESA_DEBUG_TYPE_ERROR, fmt, ap);
    va_end(ap);
 }
 
@@ -353,10 +353,9 @@ _mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
 		   const char *fmt, ...)
 {
    va_list ap;
-   GLenum type = GL_DEBUG_TYPE_OTHER_ARB;
 
    va_start(ap, fmt);
-   _mesa_glsl_msg(locp, state, type, 0, fmt, ap);
+   _mesa_glsl_msg(locp, state, MESA_DEBUG_TYPE_OTHER, fmt, ap);
    va_end(ap);
 }
 
