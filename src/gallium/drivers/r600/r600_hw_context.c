@@ -624,11 +624,6 @@ void r600_flush_emit(struct r600_context *rctx)
 		return;
 	}
 
-	if (rctx->flags & R600_CONTEXT_PS_PARTIAL_FLUSH) {
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
-	}
-
 	if (rctx->flags & R600_CONTEXT_WAIT_3D_IDLE) {
 		wait_until |= S_008040_WAIT_3D_IDLE(1);
 	}
@@ -640,9 +635,13 @@ void r600_flush_emit(struct r600_context *rctx)
 		/* Use of WAIT_UNTIL is deprecated on Cayman+ */
 		if (rctx->family >= CHIP_CAYMAN) {
 			/* emit a PS partial flush on Cayman/TN */
-			cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-			cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+			rctx->flags |= R600_CONTEXT_PS_PARTIAL_FLUSH;
 		}
+	}
+
+	if (rctx->flags & R600_CONTEXT_PS_PARTIAL_FLUSH) {
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 	}
 
 	if (rctx->chip_class >= R700 &&
