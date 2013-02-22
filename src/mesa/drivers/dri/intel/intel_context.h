@@ -474,10 +474,15 @@ extern int INTEL_DEBUG;
 #define WARN_ONCE(cond, fmt...) do {                            \
    if (unlikely(cond)) {                                        \
       static bool _warned = false;                              \
+      static GLuint msg_id = 0;                                 \
       if (!_warned) {                                           \
          fprintf(stderr, "WARNING: ");                          \
          fprintf(stderr, fmt);                                  \
          _warned = true;                                        \
+                                                                \
+         _mesa_gl_debug(ctx, &msg_id,                           \
+                        MESA_DEBUG_TYPE_OTHER,                  \
+                        MESA_DEBUG_SEVERITY_HIGH, fmt);         \
       }                                                         \
    }                                                            \
 } while (0)

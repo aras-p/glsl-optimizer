@@ -579,6 +579,7 @@ gen7_blorp_emit_depth_stencil_config(struct brw_context *brw,
                                      const brw_blorp_params *params)
 {
    struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
    uint32_t draw_x = params->depth.x_offset;
    uint32_t draw_y = params->depth.y_offset;
    uint32_t tile_mask_x, tile_mask_y;

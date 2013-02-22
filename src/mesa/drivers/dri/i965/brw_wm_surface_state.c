@@ -630,6 +630,7 @@ translate_tex_format(struct intel_context *intel,
 		     GLenum depth_mode,
 		     GLenum srgb_decode)
 {
+   struct gl_context *ctx = &intel->ctx;
    if (srgb_decode == GL_SKIP_DECODE_EXT)
       mesa_format = _mesa_get_srgb_format_linear(mesa_format);
 
