@@ -44,8 +44,9 @@
 extern "C" {
 #endif
 
+#include "mtypes.h"
+
 struct _glapi_table;
-struct gl_context;
 
 extern void
 _mesa_init_errors( struct gl_context *ctx );
@@ -64,6 +65,13 @@ _mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... ) 
 
 extern void
 _mesa_debug( const struct gl_context *ctx, const char *fmtString, ... ) PRINTFLIKE(2, 3);
+
+extern void
+_mesa_gl_debug(struct gl_context *ctx,
+               GLuint *id,
+               enum mesa_debug_type type,
+               enum mesa_debug_severity severity,
+               const char *fmtString, ...) PRINTFLIKE(5, 6);
 
 extern void
 _mesa_shader_debug( struct gl_context *ctx, GLenum type, GLuint id, const char *msg, int len );
