@@ -433,7 +433,6 @@ AC_ARG_ENABLE([asm],
     [enable_asm=yes]
 )
 asm_arch=""
-MESA_ASM_FILES=""
 AC_MSG_CHECKING([whether to enable assembly])
 test "x$enable_asm" = xno && AC_MSG_RESULT([no])
 # disable if cross compiling on x86/x86_64 since we must run gen_matypes
@@ -474,17 +473,14 @@ if test "x$enable_asm" = xyes; then
     case "$asm_arch" in
     x86)
         DEFINES="$DEFINES -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
-        MESA_ASM_FILES='$(X86_FILES)'
         AC_MSG_RESULT([yes, x86])
         ;;
     x86_64)
         DEFINES="$DEFINES -DUSE_X86_64_ASM"
-        MESA_ASM_FILES='$(X86_64_FILES)'
         AC_MSG_RESULT([yes, x86_64])
         ;;
     sparc)
         DEFINES="$DEFINES -DUSE_SPARC_ASM"
-        MESA_ASM_FILES='$(SPARC_FILES)'
         AC_MSG_RESULT([yes, sparc])
         ;;
     *)
@@ -492,7 +488,6 @@ if test "x$enable_asm" = xyes; then
         ;;
     esac
 fi
-AC_SUBST([MESA_ASM_FILES])
 
 dnl Check to see if dlopen is in default libraries (like Solaris, which
 dnl has it in libc), or if libdl is needed to get it.
