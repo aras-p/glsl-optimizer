@@ -3422,14 +3422,6 @@ typedef enum {
 } gl_api_error;
 
 typedef enum {
-   WINSYS_ERROR_UNKNOWN,
-} gl_winsys_error;
-
-typedef enum {
-   SHADER_ERROR_UNKNOWN,
-} gl_shader_error;
-
-typedef enum {
    OTHER_ERROR_UNKNOWN,
    OTHER_ERROR_OUT_OF_MEMORY,
 } gl_other_error;
