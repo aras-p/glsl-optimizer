@@ -624,6 +624,11 @@ void r600_flush_emit(struct r600_context *rctx)
 		return;
 	}
 
+	if (rctx->flags & R600_CONTEXT_PS_PARTIAL_FLUSH) {
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+	}
+
 	if (rctx->flags & R600_CONTEXT_WAIT_3D_IDLE) {
 		wait_until |= S_008040_WAIT_3D_IDLE(1);
 	}

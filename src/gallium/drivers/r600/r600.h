@@ -151,6 +151,7 @@ struct r600_so_target {
 #define R600_CONTEXT_WAIT_CP_DMA_IDLE		(1 << 3)
 #define R600_CONTEXT_FLUSH_AND_INV		(1 << 4)
 #define R600_CONTEXT_FLUSH_AND_INV_CB_META	(1 << 5)
+#define R600_CONTEXT_PS_PARTIAL_FLUSH		(1 << 6)
 
 struct r600_context;
 struct r600_screen;
