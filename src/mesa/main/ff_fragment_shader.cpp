@@ -1350,22 +1350,6 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
 
    _mesa_glsl_link_shader(ctx, p.shader_program);
 
-   /* Set the sampler uniforms, and relink to get them into the linked
-    * program.
-    */
-   struct gl_shader *const fs =
-      p.shader_program->_LinkedShaders[MESA_SHADER_FRAGMENT];
-   struct gl_program *const fp = fs->Program;
-
-   _mesa_generate_parameters_list_for_uniforms(p.shader_program, fs,
-					       fp->Parameters);
-
-   _mesa_associate_uniform_storage(ctx, p.shader_program, fp->Parameters);
-
-   _mesa_update_shader_textures_used(p.shader_program, fp);
-   if (ctx->Driver.SamplerUniformChange)
-      ctx->Driver.SamplerUniformChange(ctx, fp->Target, fp);
-
    if (!p.shader_program->LinkStatus)
       _mesa_problem(ctx, "Failed to link fixed function fragment shader: %s\n",
 		    p.shader_program->InfoLog);
