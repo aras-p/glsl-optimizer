@@ -991,7 +991,7 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       }
 
       intel_prepare_render(intel);
-      _mesa_make_current(&intel->ctx, fb, readFb);
+      _mesa_make_current(ctx, fb, readFb);
 
       intel_gles3_srgb_workaround(intel, ctx->WinSysDrawBuffer);
       intel_gles3_srgb_workaround(intel, ctx->WinSysReadBuffer);
@@ -1000,7 +1000,7 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
        * is NULL at that point.  We can't call _mesa_makecurrent()
        * first, since we need the buffer size for the initial
        * viewport.  So just call intel_draw_buffer() again here. */
-      intel_draw_buffer(&intel->ctx);
+      intel_draw_buffer(ctx);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);
