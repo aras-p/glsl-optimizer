@@ -598,6 +598,7 @@ private:
    bool handleTXD(TexInstruction *);
    bool handleTXQ(TexInstruction *);
    bool handleManualTXD(TexInstruction *);
+   bool handleATOM(Instruction *);
 
    void checkPredicate(Instruction *);
 
@@ -833,6 +834,35 @@ bool
 NVC0LoweringPass::handleTXQ(TexInstruction *txq)
 {
    // TODO: indirect resource/sampler index
+   return true;
+}
+
+bool
+NVC0LoweringPass::handleATOM(Instruction *atom)
+{
+   SVSemantic sv;
+
+   switch (atom->src(0).getFile()) {
+   case FILE_MEMORY_LOCAL:
+      sv = SV_LBASE;
+      break;
+   case FILE_MEMORY_SHARED:
+      sv = SV_SBASE;
+      break;
+   default:
+      assert(atom->src(0).getFile() == FILE_MEMORY_GLOBAL);
+      return true;
+   }
+   Value *base =
+      bld.mkOp1v(OP_RDSV, TYPE_U32, bld.getScratch(), bld.mkSysVal(sv, 0));
+   Value *ptr = atom->getIndirect(0, 0);
+
+   atom->setSrc(0, cloneShallow(func, atom->getSrc(0)));
+   atom->getSrc(0)->reg.file = FILE_MEMORY_GLOBAL;
+   if (ptr)
+      base = bld.mkOp2v(OP_ADD, TYPE_U32, base, base, ptr);
+   atom->setIndirect(0, 0, base);
+
    return true;
 }
 
@@ -1093,6 +1123,9 @@ NVC0LoweringPass::visit(Instruction *i)
          i->op = OP_VFETCH;
          assert(prog->getType() != Program::TYPE_FRAGMENT);
       }
+      break;
+   case OP_ATOM:
+      handleATOM(i);
       break;
    default:
       break;
