@@ -260,13 +260,13 @@ void TargetNVC0::initOpInfo()
    static const uint32_t commutative[(OP_LAST + 31) / 32] =
    {
       // ADD, MAD, MUL, AND, OR, XOR, MAX, MIN
-      0x0670ca00, 0x0000003f, 0x00000000
+      0x0670ca00, 0x0000003f, 0x00000000, 0x00000000
    };
 
    static const uint32_t shortForm[(OP_LAST + 31) / 32] =
    {
       // ADD, MAD, MUL, AND, OR, XOR, PRESIN, PREEX2, SFN, CVT, PINTERP, MOV
-      0x0670ca00, 0x00000000, 0x00000000
+      0x0670ca00, 0x00000000, 0x00000000, 0x00000000
    };
 
    static const operation noDest[] =
@@ -274,7 +274,8 @@ void TargetNVC0::initOpInfo()
       OP_STORE, OP_WRSV, OP_EXPORT, OP_BRA, OP_CALL, OP_RET, OP_EXIT,
       OP_DISCARD, OP_CONT, OP_BREAK, OP_PRECONT, OP_PREBREAK, OP_PRERET,
       OP_JOIN, OP_JOINAT, OP_BRKPT, OP_MEMBAR, OP_EMIT, OP_RESTART,
-      OP_QUADON, OP_QUADPOP, OP_TEXBAR
+      OP_QUADON, OP_QUADPOP, OP_TEXBAR, OP_SUSTB, OP_SUSTP, OP_SUREDP,
+      OP_SUREDB, OP_BAR
    };
 
    for (i = 0; i < DATA_FILE_COUNT; ++i)

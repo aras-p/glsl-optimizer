@@ -132,7 +132,7 @@ const char *operationStr[OP_LAST + 1] =
    "join",
    "discard",
    "exit",
-   "barrier",
+   "membar",
    "vfetch",
    "pfetch",
    "export",
@@ -148,21 +148,47 @@ const char *operationStr[OP_LAST + 1] =
    "texgrad",
    "texgather",
    "texcsaa",
-   "suld",
-   "sust",
+   "texprep",
+   "suldb",
+   "suldp",
+   "sustb",
+   "sustp",
+   "suredb",
+   "suredp",
+   "sulea",
+   "subfm",
+   "suclamp",
+   "sueau",
+   "madsp",
+   "texbar",
    "dfdx",
    "dfdy",
    "rdsv",
    "wrsv",
-   "texprep",
    "quadop",
    "quadon",
    "quadpop",
    "popcnt",
    "insbf",
    "extbf",
-   "texbar",
+   "permt",
+   "atom",
+   "bar",
+   "vadd",
+   "vavg",
+   "vmin",
+   "vmax",
+   "vsad",
+   "vset",
+   "vshr",
+   "vshl",
+   "vsel",
    "(invalid)"
+};
+
+static const char *atomSubOpStr[] =
+{
+   "add", "min", "max", "inc", "dec", "and", "or", "xor", "cas", "exch"
 };
 
 static const char *DataTypeStr[] =
@@ -488,8 +514,17 @@ void Instruction::print() const
       PRINT("%s ", operationStr[op]);
       if (op == OP_LINTERP || op == OP_PINTERP)
          PRINT("%s ", interpStr[ipa]);
-      if (subOp)
-         PRINT("(SUBOP:%u) ", subOp);
+      switch (op) {
+      case OP_SUREDP:
+      case OP_ATOM:
+         if (subOp < Elements(atomSubOpStr))
+            PRINT("%s ", atomSubOpStr[subOp]);
+         break;
+      default:
+         if (subOp)
+            PRINT("(SUBOP:%u) ", subOp);
+         break;
+      }
       if (perPatch)
          PRINT("patch ");
       if (asTex())

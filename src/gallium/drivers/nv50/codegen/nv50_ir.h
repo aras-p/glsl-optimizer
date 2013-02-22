@@ -66,7 +66,7 @@ enum operation
    OP_SHR,
    OP_MAX,
    OP_MIN,
-   OP_SAT,  // CLAMP(f32, 0.0, 1.0)
+   OP_SAT, // CLAMP(f32, 0.0, 1.0)
    OP_CEIL,
    OP_FLOOR,
    OP_TRUNC,
@@ -102,7 +102,7 @@ enum operation
    OP_JOIN,      // converge
    OP_DISCARD,
    OP_EXIT,
-   OP_MEMBAR,
+   OP_MEMBAR, // memory barrier (mfence, lfence, sfence)
    OP_VFETCH, // indirection 0 in attribute space, indirection 1 is vertex base
    OP_PFETCH, // fetch base address of vertex src0 (immediate) [+ src1]
    OP_EXPORT,
@@ -117,21 +117,42 @@ enum operation
    OP_TXQ, // texture size query
    OP_TXD, // texture derivatives
    OP_TXG, // texture gather
-   OP_TEXCSAA,
-   OP_SULD, // surface load
-   OP_SUST, // surface store
+   OP_TEXCSAA, // texture op for coverage sampling
+   OP_TEXPREP, // turn cube map array into 2d array coordinates
+   OP_SULDB, // surface load (raw)
+   OP_SULDP, // surface load (formatted)
+   OP_SUSTB, // surface store (raw)
+   OP_SUSTP, // surface store (formatted)
+   OP_SUREDB,
+   OP_SUREDP, // surface reduction (atomic op)
+   OP_SULEA,   // surface load effective address
+   OP_SUBFM,   // surface bitfield manipulation
+   OP_SUCLAMP, // clamp surface coordinates
+   OP_SUEAU,   // surface effective address
+   OP_MADSP,   // special integer multiply-add
+   OP_TEXBAR, // texture dependency barrier
    OP_DFDX,
    OP_DFDY,
    OP_RDSV, // read system value
    OP_WRSV, // write system value
-   OP_TEXPREP, // turn cube map array into 2d array coordinates, TODO: move
    OP_QUADOP,
    OP_QUADON,
    OP_QUADPOP,
    OP_POPCNT, // bitcount(src0 & src1)
    OP_INSBF,  // insert first src1[8:15] bits of src0 into src2 at src1[0:7]
-   OP_EXTBF,
-   OP_TEXBAR,
+   OP_EXTBF,  // place bits [K,K+N) of src0 into dst, src1 = 0xNNKK
+   OP_PERMT,  // dst = bytes from src2,src0 selected by src1 (nvc0's src order)
+   OP_ATOM,
+   OP_BAR,    // execution barrier, sources = { id, thread count, predicate }
+   OP_VADD,   // byte/word vector operations
+   OP_VAVG,
+   OP_VMIN,
+   OP_VMAX,
+   OP_VSAD,
+   OP_VSET,
+   OP_VSHR,
+   OP_VSHL,
+   OP_VSEL,
    OP_LAST
 };
 
@@ -146,6 +167,59 @@ enum operation
 #define NV50_IR_SUBOP_EMU_PRERET   1
 #define NV50_IR_SUBOP_TEXBAR(n)    n
 #define NV50_IR_SUBOP_MOV_FINAL    1
+#define NV50_IR_SUBOP_EXTBF_REV    1
+#define NV50_IR_SUBOP_PERMT_F4E    1
+#define NV50_IR_SUBOP_PERMT_B4E    2
+#define NV50_IR_SUBOP_PERMT_RC8    3
+#define NV50_IR_SUBOP_PERMT_ECL    4
+#define NV50_IR_SUBOP_PERMT_ECR    5
+#define NV50_IR_SUBOP_PERMT_RC16   6
+#define NV50_IR_SUBOP_BAR_SYNC     0
+#define NV50_IR_SUBOP_BAR_ARRIVE   1
+#define NV50_IR_SUBOP_BAR_RED_AND  2
+#define NV50_IR_SUBOP_BAR_RED_OR   3
+#define NV50_IR_SUBOP_BAR_RED_POPC 4
+#define NV50_IR_SUBOP_MEMBAR_L     1
+#define NV50_IR_SUBOP_MEMBAR_S     2
+#define NV50_IR_SUBOP_MEMBAR_M     3
+#define NV50_IR_SUBOP_MEMBAR_CTA  (0 << 2)
+#define NV50_IR_SUBOP_MEMBAR_GL   (1 << 2)
+#define NV50_IR_SUBOP_MEMBAR_SYS  (2 << 2)
+#define NV50_IR_SUBOP_MEMBAR_DIR(m)   ((m) & 0x3)
+#define NV50_IR_SUBOP_MEMBAR_SCOPE(m) ((m) & ~0x3)
+#define NV50_IR_SUBOP_MEMBAR(d,s) \
+   (NV50_IR_SUBOP_MEMBAR_##d | NV50_IR_SUBOP_MEMBAR_##s)
+#define NV50_IR_SUBOP_ATOM_ADD      0
+#define NV50_IR_SUBOP_ATOM_MIN      1
+#define NV50_IR_SUBOP_ATOM_MAX      2
+#define NV50_IR_SUBOP_ATOM_INC      3
+#define NV50_IR_SUBOP_ATOM_DEC      4
+#define NV50_IR_SUBOP_ATOM_AND      5
+#define NV50_IR_SUBOP_ATOM_OR       6
+#define NV50_IR_SUBOP_ATOM_XOR      7
+#define NV50_IR_SUBOP_ATOM_CAS      8
+#define NV50_IR_SUBOP_ATOM_EXCH     9
+#define NV50_IR_SUBOP_SUST_IGN     0
+#define NV50_IR_SUBOP_SUST_TRAP    1
+#define NV50_IR_SUBOP_SUST_SDCL    3
+#define NV50_IR_SUBOP_SULD_ZERO    0
+#define NV50_IR_SUBOP_SULD_TRAP    1
+#define NV50_IR_SUBOP_SULD_SDCL    3
+#define NV50_IR_SUBOP_SUBFM_3D     1
+#define NV50_IR_SUBOP_SUCLAMP_2D   0x10
+#define NV50_IR_SUBOP_SUCLAMP_SD(r, d) (( 0 + (r)) | ((d == 2) ? 0x10 : 0))
+#define NV50_IR_SUBOP_SUCLAMP_PL(r, d) (( 5 + (r)) | ((d == 2) ? 0x10 : 0))
+#define NV50_IR_SUBOP_SUCLAMP_BL(r, d) ((10 + (r)) | ((d == 2) ? 0x10 : 0))
+#define NV50_IR_SUBOP_MADSP_SD     0xffff
+// Yes, we could represent those with DataType.
+// Or put the type into operation and have a couple 1000 values in that enum.
+// This will have to do for now.
+// The bitfields are supposed to correspond to nve4 ISA.
+#define NV50_IR_SUBOP_MADSP(a,b,c) (((c) << 8) | ((b) << 4) | (a))
+#define NV50_IR_SUBOP_V1(d,a,b)    (((d) << 10) | ((b) << 5) | (a) | 0x0000)
+#define NV50_IR_SUBOP_V2(d,a,b)    (((d) << 10) | ((b) << 5) | (a) | 0x4000)
+#define NV50_IR_SUBOP_V4(d,a,b)    (((d) << 10) | ((b) << 5) | (a) | 0x8000)
+#define NV50_IR_SUBOP_Vn(n)        ((n) >> 14)
 
 enum DataType
 {
@@ -680,28 +754,28 @@ public:
    RoundMode rnd;
    CacheMode cache;
 
-   uint8_t subOp; // quadop, 1 for mul-high, etc.
-
-   uint8_t sched; // scheduling data (NOTE: maybe move to separate storage)
+   uint16_t subOp; // quadop, 1 for mul-high, etc.
 
    unsigned encSize    : 4; // encoding size in bytes
    unsigned saturate   : 1; // to [0.0f, 1.0f]
    unsigned join       : 1; // converge control flow (use OP_JOIN until end)
    unsigned fixed      : 1; // prevent dead code elimination
    unsigned terminator : 1; // end of basic block
-   unsigned atomic     : 1;
    unsigned ftz        : 1; // flush denormal to zero
    unsigned dnz        : 1; // denormals, NaN are zero
    unsigned ipa        : 4; // interpolation mode
    unsigned lanes      : 4;
    unsigned perPatch   : 1;
    unsigned exit       : 1; // terminate program after insn
+   unsigned mask       : 4; // for vector ops
 
    int8_t postFactor; // MUL/DIV(if < 0) by 1 << postFactor
 
    int8_t predSrc;
    int8_t flagsDef;
    int8_t flagsSrc;
+
+   uint8_t sched; // scheduling data (NOTE: maybe move to separate storage)
 
    BasicBlock *bb;
 

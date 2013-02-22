@@ -567,11 +567,11 @@ void Instruction::init()
    terminator = 0;
    ftz = 0;
    dnz = 0;
-   atomic = 0;
    perPatch = 0;
    fixed = 0;
    encSize = 0;
    ipa = 0;
+   mask = 0;
 
    lanes = 0xf;
 
@@ -733,7 +733,7 @@ Instruction::clone(ClonePolicy<Function>& pol, Instruction *i) const
    i->saturate = saturate;
    i->join = join;
    i->exit = exit;
-   i->atomic = atomic;
+   i->mask = mask;
    i->ftz = ftz;
    i->dnz = dnz;
    i->ipa = ipa;

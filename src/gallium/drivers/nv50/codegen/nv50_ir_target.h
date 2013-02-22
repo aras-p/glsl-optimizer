@@ -111,7 +111,10 @@ enum OpClass
    OPCLASS_SURFACE       = 11,
    OPCLASS_FLOW          = 12,
    OPCLASS_PSEUDO        = 14,
-   OPCLASS_OTHER         = 15
+   OPCLASS_VECTOR        = 15,
+   OPCLASS_BITFIELD      = 16,
+   OPCLASS_CONTROL       = 17,
+   OPCLASS_OTHER         = 18
 };
 
 class Target

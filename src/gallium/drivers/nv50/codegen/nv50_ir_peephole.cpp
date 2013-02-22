@@ -2060,8 +2060,7 @@ Instruction::isActionEqual(const Instruction *that) const
    if (this->asFlow()) {
       return false;
    } else {
-      if (this->atomic != that->atomic ||
-          this->ipa != that->ipa ||
+      if (this->ipa != that->ipa ||
           this->lanes != that->lanes ||
           this->perPatch != that->perPatch)
          return false;
@@ -2074,7 +2073,8 @@ Instruction::isActionEqual(const Instruction *that) const
        this->rnd != that->rnd ||
        this->ftz != that->ftz ||
        this->dnz != that->dnz ||
-       this->cache != that->cache)
+       this->cache != that->cache ||
+       this->mask != that->mask)
       return false;
 
    return true;
