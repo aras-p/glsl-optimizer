@@ -332,12 +332,6 @@ MESA_GALLIUM_FILES = \
 	$(STATETRACKER_FILES)	\
 	$(SRCDIR)x86/common_x86.c
 
-# All the core C sources, for dependency checking
-ALL_FILES = \
-	$(MESA_FILES)		\
-	$(MESA_ASM_FILES)	\
-	$(STATETRACKER_FILES)
-
 ### Include directories
 
 INCLUDE_DIRS = \
