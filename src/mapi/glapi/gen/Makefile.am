@@ -61,6 +61,23 @@ EXTRA_DIST= \
 	$(MESA_GLAPI_DIR)/glapi_x86-64.S \
 	$(MESA_GLAPI_DIR)/glapi_sparc.S \
 	$(COMMON_GLX) \
+	extension_helper.py \
+	gl_apitemp.py \
+	gl_enums.py \
+	gl_genexec.py \
+	gl_gentable.py \
+	gl_offsets.py \
+	gl_procs.py \
+	gl_SPARC_asm.py \
+	gl_table.py \
+	gl_x86-64_asm.py \
+	gl_x86_asm.py \
+	glX_proto_recv.py \
+	glX_proto_send.py \
+	glX_proto_size.py \
+	glX_server_table.py \
+	mesadef.py \
+	remap_helper.py \
 	gl_API.dtd
 
 ######################################################################
