@@ -969,13 +969,19 @@ static INLINE void
 lp_mem_type_from_format_desc(const struct util_format_description *format_desc,
                              struct lp_type* type)
 {
-   int i;
+   unsigned i;
+   unsigned chan;
+
+   for (i = 0; i < 4; i++)
+      if (format_desc->channel[i].type != UTIL_FORMAT_TYPE_VOID)
+         break;
+   chan = i;
 
    memset(type, 0, sizeof(struct lp_type));
-   type->floating = format_desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT;
-   type->fixed    = format_desc->channel[0].type == UTIL_FORMAT_TYPE_FIXED;
-   type->sign     = format_desc->channel[0].type != UTIL_FORMAT_TYPE_UNSIGNED;
-   type->norm     = format_desc->channel[0].normalized;
+   type->floating = format_desc->channel[chan].type == UTIL_FORMAT_TYPE_FLOAT;
+   type->fixed    = format_desc->channel[chan].type == UTIL_FORMAT_TYPE_FIXED;
+   type->sign     = format_desc->channel[chan].type != UTIL_FORMAT_TYPE_UNSIGNED;
+   type->norm     = format_desc->channel[chan].normalized;
 
    if (is_arithmetic_format(format_desc)) {
       type->width = 0;
@@ -985,7 +991,7 @@ lp_mem_type_from_format_desc(const struct util_format_description *format_desc,
          type->width += format_desc->channel[i].size;
       }
    } else {
-      type->width = format_desc->channel[0].size;
+      type->width = format_desc->channel[chan].size;
       type->length = format_desc->nr_channels;
    }
 }
@@ -1000,14 +1006,20 @@ static INLINE void
 lp_blend_type_from_format_desc(const struct util_format_description *format_desc,
                                struct lp_type* type)
 {
-   int i;
+   unsigned i;
+   unsigned chan;
+
+   for (i = 0; i < 4; i++)
+      if (format_desc->channel[i].type != UTIL_FORMAT_TYPE_VOID)
+         break;
+   chan = i;
 
    memset(type, 0, sizeof(struct lp_type));
-   type->floating = format_desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT;
-   type->fixed    = format_desc->channel[0].type == UTIL_FORMAT_TYPE_FIXED;
-   type->sign     = format_desc->channel[0].type != UTIL_FORMAT_TYPE_UNSIGNED;
-   type->norm     = format_desc->channel[0].normalized;
-   type->width    = format_desc->channel[0].size;
+   type->floating = format_desc->channel[chan].type == UTIL_FORMAT_TYPE_FLOAT;
+   type->fixed    = format_desc->channel[chan].type == UTIL_FORMAT_TYPE_FIXED;
+   type->sign     = format_desc->channel[chan].type != UTIL_FORMAT_TYPE_UNSIGNED;
+   type->norm     = format_desc->channel[chan].normalized;
+   type->width    = format_desc->channel[chan].size;
    type->length   = format_desc->nr_channels;
 
    for (i = 1; i < format_desc->nr_channels; ++i) {
@@ -1493,7 +1505,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    vector_width    = dst_type.floating ? lp_native_vector_width : lp_integer_vector_width;
 
    /* Compute correct swizzle and count channels */
-   memset(swizzle, 0xFF, TGSI_NUM_CHANNELS);
+   memset(swizzle, LP_BLD_SWIZZLE_DONTCARE, TGSI_NUM_CHANNELS);
    dst_channels = 0;
 
    for (i = 0; i < TGSI_NUM_CHANNELS; ++i) {
@@ -1522,8 +1534,10 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
 
    /* If 3 channels then pad to include alpha for 4 element transpose */
    if (dst_channels == 3 && !has_alpha) {
-      swizzle[3] = 3;
-
+      for (i = 0; i < TGSI_NUM_CHANNELS; i++) {
+         if (swizzle[i] > TGSI_NUM_CHANNELS)
+            swizzle[i] = 3;
+      }
       if (out_format_desc->nr_channels == 4) {
          dst_channels = 4;
       }
@@ -1538,6 +1552,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
 
       /* Load each channel */
       for (j = 0; j < dst_channels; ++j) {
+         assert(swizzle[j] < 4);
          fs_src[i][j] = LLVMBuildLoad(builder, fs_out_color[rt][swizzle[j]][i], "");
       }
 
@@ -1568,6 +1583,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
          LLVMValueRef alpha = LLVMBuildLoad(builder, fs_out_color[1][alpha_channel][i], "");
 
          for (j = 0; j < dst_channels; ++j) {
+            assert(swizzle[j] < 4);
             fs_src1[i][j] = LLVMBuildLoad(builder, fs_out_color[1][swizzle[j]][i], "");
          }
          if (dst_channels == 3 && !has_alpha) {
