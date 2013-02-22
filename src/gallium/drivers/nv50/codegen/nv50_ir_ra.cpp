@@ -1852,17 +1852,23 @@ RegAlloc::InsertConstraintsPass::condenseSrcs(Instruction *insn,
 void
 RegAlloc::InsertConstraintsPass::texConstraintNVE0(TexInstruction *tex)
 {
-   textureMask(tex);
+   if (isTextureOp(tex->op))
+      textureMask(tex);
    condenseDefs(tex);
 
-   int n = tex->srcCount(0xff, true);
-   if (n > 4) {
-      condenseSrcs(tex, 0, 3);
-      if (n > 5) // NOTE: first call modified positions already
-         condenseSrcs(tex, 4 - (4 - 1), n - 1 - (4 - 1));
+   if (tex->op == OP_SUSTB || tex->op == OP_SUSTP) {
+      condenseSrcs(tex, 3, (3 + typeSizeof(tex->dType) / 4) - 1);
    } else
-   if (n > 1) {
-      condenseSrcs(tex, 0, n - 1);
+   if (isTextureOp(tex->op)) {
+      int n = tex->srcCount(0xff, true);
+      if (n > 4) {
+         condenseSrcs(tex, 0, 3);
+         if (n > 5) // NOTE: first call modified positions already
+            condenseSrcs(tex, 4 - (4 - 1), n - 1 - (4 - 1));
+      } else
+      if (n > 1) {
+         condenseSrcs(tex, 0, n - 1);
+      }
    }
 }
 

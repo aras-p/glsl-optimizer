@@ -315,7 +315,7 @@ nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
    info->bin.sourceRep = NV50_PROGRAM_IR_TGSI;
    info->bin.source = (void *)prog->pipe.tokens;
 
-   info->io.ucpBinding = 15;
+   info->io.ucpCBSlot = 15;
    info->io.ucpBase = 0;
    info->io.genUserClip = prog->vp.clpd_nr;
 

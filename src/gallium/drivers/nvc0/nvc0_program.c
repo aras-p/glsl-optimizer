@@ -564,7 +564,25 @@ nvc0_program_translate(struct nvc0_program *prog, uint16_t chipset)
 
    info->io.genUserClip = prog->vp.num_ucps;
    info->io.ucpBase = 256;
-   info->io.ucpBinding = 15;
+   info->io.ucpCBSlot = 15;
+
+   if (prog->type == PIPE_SHADER_COMPUTE) {
+      if (chipset >= NVISA_GK104_CHIPSET) {
+         info->io.resInfoCBSlot = 0;
+         info->io.texBindBase = 0; /* TODO */
+         info->io.suInfoBase = 0; /* TODO */
+      }
+      info->io.msInfoCBSlot = 0;
+      info->io.msInfoBase = 0; /* TODO */
+   } else {
+      if (chipset >= NVISA_GK104_CHIPSET) {
+         info->io.resInfoCBSlot = 15;
+         info->io.texBindBase = 0x20;
+         info->io.suInfoBase = 0; /* TODO */
+      }
+      info->io.msInfoCBSlot = 15;
+      info->io.msInfoBase = 0; /* TODO */
+   }
 
    info->assignSlots = nvc0_program_assign_varying_slots;
 

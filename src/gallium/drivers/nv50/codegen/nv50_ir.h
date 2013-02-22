@@ -829,6 +829,9 @@ public:
       }
 
       inline bool operator==(TexTarget targ) const { return target == targ; }
+      inline bool operator!=(TexTarget targ) const { return target != targ; }
+
+      enum TexTarget getEnum() const { return target; }
 
    private:
       struct Desc
@@ -1148,6 +1151,8 @@ public:
    uint8_t  optLevel;
 
    void *targetPriv; // e.g. to carry information between passes
+
+   const struct nv50_ir_prog_info *driver; // for driver configuration
 
    void releaseInstruction(Instruction *);
    void releaseValue(Value *);

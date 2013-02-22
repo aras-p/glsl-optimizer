@@ -169,7 +169,7 @@ struct nv50_ir_prog_info
       uint8_t cullDistanceMask;  /* clip distance mode (1 bit per output) */
       int8_t genUserClip;        /* request user clip planes for ClipVertex */
       uint16_t ucpBase;          /* base address for UCPs */
-      uint8_t ucpBinding;        /* constant buffer index of UCP data */
+      uint8_t ucpCBSlot;         /* constant buffer index of UCP data */
       uint8_t pointSize;         /* output index for PointSize */
       uint8_t instanceId;        /* system value index of InstanceID */
       uint8_t vertexId;          /* system value index of VertexID */
@@ -179,6 +179,11 @@ struct nv50_ir_prog_info
       uint8_t sampleMask;        /* output index of SampleMask */
       uint8_t backFaceColor[2];  /* input/output indices of back face colour */
       uint8_t globalAccess;      /* 1 for read, 2 for wr, 3 for rw */
+      uint8_t resInfoCBSlot;     /* cX[] used for tex handles, surface info */
+      uint16_t texBindBase;      /* base address for tex handles (nve4) */
+      uint16_t suInfoBase;       /* base address for surface info (nve4) */
+      uint8_t msInfoCBSlot;      /* cX[] used for multisample info */
+      uint16_t msInfoBase;       /* base address for multisample info */
    } io;
 
    /* driver callback to assign input/output locations */
