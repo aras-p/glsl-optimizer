@@ -78,6 +78,7 @@ private:
    void emitLOAD(const Instruction *);
    void emitSTORE(const Instruction *);
    void emitMOV(const Instruction *);
+   void emitATOM(const Instruction *);
 
    void emitINTERP(const Instruction *);
    void emitPFETCH(const Instruction *);
@@ -98,6 +99,8 @@ private:
    void emitLogicOp(const Instruction *, uint8_t subOp);
    void emitPOPC(const Instruction *);
    void emitINSBF(const Instruction *);
+   void emitEXTBF(const Instruction *);
+   void emitPERMT(const Instruction *);
    void emitShift(const Instruction *);
 
    void emitSFnOp(const Instruction *, uint8_t subOp);
@@ -739,7 +742,26 @@ CodeEmitterNVC0::emitPOPC(const Instruction *i)
 void
 CodeEmitterNVC0::emitINSBF(const Instruction *i)
 {
-   emitForm_A(i, HEX64(28000000, 30000000));
+   emitForm_A(i, HEX64(28000000, 00000003));
+}
+
+void
+CodeEmitterNVC0::emitEXTBF(const Instruction *i)
+{
+   emitForm_A(i, HEX64(70000000, 00000003));
+
+   if (i->dType == TYPE_S32)
+      code[0] |= 1 << 5;
+   if (i->subOp == NV50_IR_SUBOP_EXTBF_REV)
+      code[0] |= 1 << 8;
+}
+
+void
+CodeEmitterNVC0::emitPERMT(const Instruction *i)
+{
+   emitForm_A(i, HEX64(24000000, 00000004));
+
+   code[0] |= i->subOp << 5;
 }
 
 void
@@ -1635,6 +1657,103 @@ CodeEmitterNVC0::emitMOV(const Instruction *i)
 }
 
 void
+CodeEmitterNVC0::emitATOM(const Instruction *i)
+{
+   const bool hasDst = i->defExists(0);
+   const bool casOrExch =
+      i->subOp == NV50_IR_SUBOP_ATOM_EXCH ||
+      i->subOp == NV50_IR_SUBOP_ATOM_CAS;
+
+   if (i->dType == TYPE_U64) {
+      switch (i->subOp) {
+      case NV50_IR_SUBOP_ATOM_ADD:
+         code[0] = 0x205;
+         if (hasDst)
+            code[1] = 0x507e0000;
+         else
+            code[1] = 0x10000000;
+         break;
+      case NV50_IR_SUBOP_ATOM_EXCH:
+         code[0] = 0x305;
+         code[1] = 0x507e0000;
+         break;
+      case NV50_IR_SUBOP_ATOM_CAS:
+         code[0] = 0x325;
+         code[1] = 0x50000000;
+         break;
+      default:
+         assert(!"invalid u64 red op");
+         break;
+      }
+   } else
+   if (i->dType == TYPE_U32) {
+      switch (i->subOp) {
+      case NV50_IR_SUBOP_ATOM_EXCH:
+         code[0] = 0x105;
+         code[1] = 0x507e0000;
+         break;
+      case NV50_IR_SUBOP_ATOM_CAS:
+         code[0] = 0x125;
+         code[1] = 0x50000000;
+         break;
+      default:
+         code[0] = 0x5 | (i->subOp << 5);
+         if (hasDst)
+            code[1] = 0x507e0000;
+         else
+            code[1] = 0x10000000;
+         break;
+      }
+   } else
+   if (i->dType == TYPE_S32) {
+      assert(i->subOp <= 2);
+      code[0] = 0x205 | (i->subOp << 5);
+      if (hasDst)
+         code[1] = 0x587e0000;
+      else
+         code[1] = 0x18000000;
+   } else
+   if (i->dType == TYPE_F32) {
+      assert(i->subOp == NV50_IR_SUBOP_ATOM_ADD);
+      code[0] = 0x205;
+      if (hasDst)
+         code[1] = 0x687e0000;
+      else
+         code[1] = 0x28000000;
+   }
+
+   emitPredicate(i);
+
+   srcId(i->src(1), 14);
+
+   if (hasDst)
+      defId(i->def(0), 32 + 11);
+   else
+   if (casOrExch)
+      code[1] |= 63 << 11;
+
+   if (hasDst || casOrExch) {
+      const int32_t offset = SDATA(i->src(0)).offset;
+      assert(offset < 0x80000 && offset >= -0x80000);
+      code[0] |= offset << 26;
+      code[1] |= (offset & 0x1ffc0) >> 6;
+      code[1] |= (offset & 0xe0000) << 6;
+   } else {
+      srcAddr32(i->src(0), 26);
+   }
+   if (i->getIndirect(0, 0)) {
+      srcId(i->getIndirect(0, 0), 20);
+      if (i->getIndirect(0, 0)->reg.size == 8)
+         code[1] |= 1 << 26;
+   } else {
+      code[0] |= 63 << 20;
+   }
+
+   if (i->subOp == NV50_IR_SUBOP_ATOM_CAS)
+      srcId(i->src(2), 32 + 17);
+}
+
+void
 CodeEmitterNVC0::emitSUCLAMPMode(uint16_t subOp)
 {
    uint8_t m;
@@ -2047,6 +2166,9 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
       else
          ERROR("SUSTx not yet supported on < nve4\n");
       break;
+   case OP_ATOM:
+      emitATOM(insn);
+      break;
    case OP_BRA:
    case OP_CALL:
    case OP_PRERET:
@@ -2074,6 +2196,15 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
       break;
    case OP_POPCNT:
       emitPOPC(insn);
+      break;
+   case OP_INSBF:
+      emitINSBF(insn);
+      break;
+   case OP_EXTBF:
+      emitEXTBF(insn);
+      break;
+   case OP_PERMT:
+      emitPERMT(insn);
       break;
    case OP_JOIN:
       emitNOP(insn);
