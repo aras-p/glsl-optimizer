@@ -57,6 +57,7 @@
 #include "tr_texture.h"
 
 
+static boolean close_stream = FALSE;
 static FILE *stream = NULL;
 static unsigned refcount = 0;
 pipe_static_mutex(call_mutex);
@@ -228,8 +229,11 @@ trace_dump_trace_close(void)
 {
    if(stream) {
       trace_dump_writes("</trace>\n");
-      fclose(stream);
-      stream = NULL;
+      if (close_stream) {
+         fclose(stream);
+         close_stream = FALSE;
+         stream = NULL;
+      }
       refcount = 0;
       call_no = 0;
    }
@@ -261,12 +265,15 @@ trace_dump_trace_begin(void)
    if(!stream) {
 
       if (strcmp(filename, "stderr") == 0) {
+         close_stream = FALSE;
          stream = stderr;
       }
       else if (strcmp(filename, "stdout") == 0) {
+         close_stream = FALSE;
          stream = stdout;
       }
       else {
+         close_stream = TRUE;
          stream = fopen(filename, "wt");
          if (!stream)
             return FALSE;
