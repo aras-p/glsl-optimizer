@@ -527,7 +527,6 @@ static void kil_emit(
 	}
 }
 
-/* coord_arg - index of the source coord vector in the emit_data->args array */
 void radeon_llvm_emit_prepare_cube_coords(
 		struct lp_build_tgsi_context * bld_base,
 		struct lp_build_emit_data * emit_data,
