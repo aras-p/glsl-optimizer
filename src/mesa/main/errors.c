@@ -64,26 +64,44 @@ enum {
    SOURCE_ANY = -1
 };
 
-enum {
-   TYPE_ERROR,
-   TYPE_DEPRECATED,
-   TYPE_UNDEFINED,
-   TYPE_PORTABILITY,
-   TYPE_PERFORMANCE,
-   TYPE_OTHER,
-
-   TYPE_COUNT,
-   TYPE_ANY = -1
+static const GLenum debug_type_enums[] = {
+   GL_DEBUG_TYPE_ERROR,
+   GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR,
+   GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR,
+   GL_DEBUG_TYPE_PORTABILITY,
+   GL_DEBUG_TYPE_PERFORMANCE,
+   GL_DEBUG_TYPE_OTHER,
 };
 
-enum {
-   SEVERITY_LOW,
-   SEVERITY_MEDIUM,
-   SEVERITY_HIGH,
-
-   SEVERITY_COUNT,
-   SEVERITY_ANY = -1
+static const GLenum debug_severity_enums[] = {
+   GL_DEBUG_SEVERITY_LOW,
+   GL_DEBUG_SEVERITY_MEDIUM,
+   GL_DEBUG_SEVERITY_HIGH,
 };
+
+static enum mesa_debug_type
+gl_enum_to_debug_type(GLenum e)
+{
+   int i;
+
+   for (i = 0; i < Elements(debug_type_enums); i++) {
+      if (debug_type_enums[i] == e)
+         break;
+   }
+   return i;
+}
+
+static enum mesa_debug_severity
+gl_enum_to_debug_severity(GLenum e)
+{
+   int i;
+
+   for (i = 0; i < Elements(debug_severity_enums); i++) {
+      if (debug_severity_enums[i] == e)
+         break;
+   }
+   return i;
+}
 
 static int
 enum_to_index(GLenum e)
@@ -94,35 +112,14 @@ enum_to_index(GLenum e)
    case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
       return (int)SOURCE_THIRD_PARTY;
 
-   case GL_DEBUG_TYPE_ERROR_ARB:
-      return (int)TYPE_ERROR;
-   case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
-      return (int)TYPE_DEPRECATED;
-   case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
-      return (int)TYPE_UNDEFINED;
-   case GL_DEBUG_TYPE_PERFORMANCE_ARB:
-      return (int)TYPE_PERFORMANCE;
-   case GL_DEBUG_TYPE_PORTABILITY_ARB:
-      return (int)TYPE_PORTABILITY;
-   case GL_DEBUG_TYPE_OTHER_ARB:
-      return (int)TYPE_OTHER;
-
-   case GL_DEBUG_SEVERITY_LOW_ARB:
-      return (int)SEVERITY_LOW;
-   case GL_DEBUG_SEVERITY_MEDIUM_ARB:
-      return (int)SEVERITY_MEDIUM;
-   case GL_DEBUG_SEVERITY_HIGH_ARB:
-      return (int)SEVERITY_HIGH;
-
    case GL_DONT_CARE:
-      return (int)TYPE_ANY;
+      return (int)SOURCE_ANY;
 
    default:
       assert(0 && "unreachable");
       return -2;
    };
 }
-
 
 /*
  * We store a bitfield in the hash table, with five possible values total.
@@ -172,8 +169,10 @@ enum {
  * not GL enums.
  */
 static GLboolean
-get_message_state(struct gl_context *ctx, int source, int type,
-                  GLuint id, int severity)
+get_message_state(struct gl_context *ctx, int source,
+                  enum mesa_debug_type type,
+                  GLuint id,
+                  enum mesa_debug_severity severity)
 {
    struct gl_client_namespace *nspace =
          &ctx->Debug.ClientIDs.Namespaces[source][type];
@@ -265,10 +264,9 @@ should_log(struct gl_context *ctx, GLenum source, GLenum type,
 {
    if (source == GL_DEBUG_SOURCE_APPLICATION_ARB ||
        source == GL_DEBUG_SOURCE_THIRD_PARTY_ARB) {
-      int s, t, sev;
-      s = enum_to_index(source);
-      t = enum_to_index(type);
-      sev = enum_to_index(severity);
+      int s = enum_to_index(source);
+      enum mesa_debug_type t = gl_enum_to_debug_type(type);
+      enum mesa_debug_severity sev = gl_enum_to_debug_severity(severity);
 
       return get_message_state(ctx, s, t, sev, id);
    }
@@ -602,16 +600,16 @@ control_app_messages_by_group(struct gl_context *ctx, int source, int type,
       smax = source+1;
    }
 
-   if (type == TYPE_ANY) {
+   if (type == MESA_DEBUG_TYPE_COUNT) {
       type = 0;
-      tmax = TYPE_COUNT;
+      tmax = MESA_DEBUG_TYPE_COUNT;
    } else {
       tmax = type+1;
    }
 
-   if (severity == SEVERITY_ANY) {
+   if (severity == MESA_DEBUG_SEVERITY_COUNT) {
       severity = 0;
-      sevmax = SEVERITY_COUNT;
+      sevmax = MESA_DEBUG_SEVERITY_COUNT;
    } else {
       sevmax = severity+1;
    }
@@ -650,15 +648,14 @@ control_app_messages(struct gl_context *ctx, GLenum esource, GLenum etype,
                      GLenum eseverity, GLsizei count, const GLuint *ids,
                      GLboolean enabled)
 {
-   int source, type, severity;
    GLsizei i;
-
-   source = enum_to_index(esource);
-   type = enum_to_index(etype);
-   severity = enum_to_index(eseverity);
+   int source = enum_to_index(esource);
+   enum mesa_debug_type type = gl_enum_to_debug_type(etype);
+   enum mesa_debug_severity severity = gl_enum_to_debug_severity(eseverity);
 
    if (count)
-      assert(severity == SEVERITY_ANY && type != TYPE_ANY
+      assert(severity == MESA_DEBUG_SEVERITY_COUNT
+             && type != MESA_DEBUG_TYPE_COUNT
              && source != SOURCE_ANY);
 
    for (i = 0; i < count; i++)
@@ -741,20 +738,20 @@ _mesa_init_errors(struct gl_context *ctx)
    memset(ctx->Debug.WinsysErrors, GL_TRUE, sizeof ctx->Debug.WinsysErrors);
    memset(ctx->Debug.ShaderErrors, GL_TRUE, sizeof ctx->Debug.ShaderErrors);
    memset(ctx->Debug.OtherErrors, GL_TRUE, sizeof ctx->Debug.OtherErrors);
-   memset(ClientIDs->Defaults[SEVERITY_HIGH], GL_TRUE,
-          sizeof ClientIDs->Defaults[SEVERITY_HIGH]);
-   memset(ClientIDs->Defaults[SEVERITY_MEDIUM], GL_TRUE,
-          sizeof ClientIDs->Defaults[SEVERITY_MEDIUM]);
-   memset(ClientIDs->Defaults[SEVERITY_LOW], GL_FALSE,
-          sizeof ClientIDs->Defaults[SEVERITY_LOW]);
+   memset(ClientIDs->Defaults[MESA_DEBUG_SEVERITY_HIGH], GL_TRUE,
+          sizeof ClientIDs->Defaults[MESA_DEBUG_SEVERITY_HIGH]);
+   memset(ClientIDs->Defaults[MESA_DEBUG_SEVERITY_MEDIUM], GL_TRUE,
+          sizeof ClientIDs->Defaults[MESA_DEBUG_SEVERITY_MEDIUM]);
+   memset(ClientIDs->Defaults[MESA_DEBUG_SEVERITY_LOW], GL_FALSE,
+          sizeof ClientIDs->Defaults[MESA_DEBUG_SEVERITY_LOW]);
 
    /* Initialize state for filtering client-provided debug messages. */
    for (s = 0; s < SOURCE_COUNT; s++)
-      for (t = 0; t < TYPE_COUNT; t++) {
+      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
          ClientIDs->Namespaces[s][t].IDs = _mesa_NewHashTable();
          assert(ClientIDs->Namespaces[s][t].IDs);
 
-         for (sev = 0; sev < SEVERITY_COUNT; sev++)
+         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++)
             make_empty_list(&ClientIDs->Namespaces[s][t].Severity[sev]);
       }
 }
@@ -767,9 +764,9 @@ _mesa_free_errors_data(struct gl_context *ctx)
 
    /* Tear down state for filtering client-provided debug messages. */
    for (s = 0; s < SOURCE_COUNT; s++)
-      for (t = 0; t < TYPE_COUNT; t++) {
+      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
          _mesa_DeleteHashTable(ClientIDs->Namespaces[s][t].IDs);
-         for (sev = 0; sev < SEVERITY_COUNT; sev++) {
+         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
             struct simple_node *node, *tmp;
             struct gl_client_severity *entry;
 
