@@ -680,6 +680,7 @@ void r600_flush_emit(struct r600_context *rctx)
 					S_0085F0_TC_ACTION_ENA(1) |
 					S_0085F0_FULL_CACHE_ENA(1);
 		}
+		emit_flush = 1;
 	}
 
 	if (rctx->flags & R600_CONTEXT_INVAL_READ_CACHES) {
