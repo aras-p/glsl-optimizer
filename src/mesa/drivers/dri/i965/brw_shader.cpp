@@ -183,7 +183,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
          lower_variable_index_to_cond_assign(shader->ir,
                                              input, output, temp, uniform);
 
-      if (unlikely((INTEL_DEBUG & DEBUG_PERF) && lowered_variable_indexing)) {
+      if (unlikely((intel->perf_debug) && lowered_variable_indexing)) {
          perf_debug("Unsupported form of variable indexing in FS; falling "
                     "back to very inefficient code generation\n");
       }

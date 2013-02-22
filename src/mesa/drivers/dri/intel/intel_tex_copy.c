@@ -114,8 +114,7 @@ intel_copy_texsubimage(struct intel_context *intel,
    }
 
    if (!copy_supported && !copy_supported_with_alpha_override) {
-      if (unlikely(INTEL_DEBUG & DEBUG_PERF))
-	 fprintf(stderr, "%s mismatched formats %s, %s\n",
+      perf_debug("%s mismatched formats %s, %s\n",
 		 __FUNCTION__,
 		 _mesa_get_format_name(intelImage->base.Base.TexFormat),
 		 _mesa_get_format_name(intel_rb_format(irb)));

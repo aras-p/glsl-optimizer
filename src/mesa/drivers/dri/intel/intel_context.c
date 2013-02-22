@@ -803,6 +803,8 @@ intelInitContext(struct intel_context *intel,
               "shader_time debugging requires gen7 (Ivybridge) or better.\n");
       INTEL_DEBUG &= ~DEBUG_SHADER_TIME;
    }
+   if (INTEL_DEBUG & DEBUG_PERF)
+      intel->perf_debug = true;
 
    if (INTEL_DEBUG & DEBUG_AUB)
       drm_intel_bufmgr_gem_set_aub_dump(intel->bufmgr, true);

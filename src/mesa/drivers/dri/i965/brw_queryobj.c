@@ -152,7 +152,7 @@ brw_queryobj_get_results(struct gl_context *ctx,
    if (drm_intel_bo_references(intel->batch.bo, query->bo))
       intel_batchbuffer_flush(intel);
 
-   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+   if (unlikely(intel->perf_debug)) {
       if (drm_intel_bo_busy(query->bo)) {
          perf_debug("Stalling on the GPU waiting for a query object.\n");
       }

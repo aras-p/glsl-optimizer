@@ -123,7 +123,7 @@ intel_region_map(struct intel_context *intel, struct intel_region *region,
     * flush is only needed on first map of the buffer.
     */
 
-   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+   if (unlikely(intel->perf_debug)) {
       if (drm_intel_bo_busy(region->bo)) {
          perf_debug("Mapping a busy BO, causing a stall on the GPU.\n");
       }

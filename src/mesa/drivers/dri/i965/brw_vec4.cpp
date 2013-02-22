@@ -1350,7 +1350,7 @@ brw_vs_emit(struct brw_context *brw,
    bool start_busy = false;
    float start_time = 0;
 
-   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+   if (unlikely(intel->perf_debug)) {
       start_busy = (intel->batch.last_bo &&
                     drm_intel_bo_busy(intel->batch.last_bo));
       start_time = get_time();
@@ -1383,7 +1383,7 @@ brw_vs_emit(struct brw_context *brw,
    const unsigned *generated =g.generate_assembly(&v.instructions,
                                                   final_assembly_size);
 
-   if (unlikely(INTEL_DEBUG & DEBUG_PERF) && shader) {
+   if (unlikely(intel->perf_debug) && shader) {
       if (shader->compiled_once) {
          brw_vs_debug_recompile(brw, prog, &c->key);
       }

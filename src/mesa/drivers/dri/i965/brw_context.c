@@ -397,8 +397,12 @@ brwCreateContext(int api,
    if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0)
       ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;
 
-   if ((flags & __DRI_CTX_FLAG_DEBUG) != 0)
+   if ((flags & __DRI_CTX_FLAG_DEBUG) != 0) {
       ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_DEBUG_BIT;
+
+      /* Turn on some extra GL_ARB_debug_output generation. */
+      intel->perf_debug = true;
+   }
 
    brw_fs_alloc_reg_sets(brw);
 

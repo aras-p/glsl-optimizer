@@ -239,6 +239,13 @@ struct intel_context
    bool no_batch_wrap;
    bool tnl_pipeline_running; /**< Set while i915's _tnl_run_pipeline. */
 
+   /**
+    * Set if we're either a debug context or the INTEL_DEBUG=perf environment
+    * variable is set, this is the flag indicating to do expensive work that
+    * might lead to a perf_debug() call.
+    */
+   bool perf_debug;
+
    struct
    {
       GLuint id;
@@ -462,8 +469,14 @@ extern int INTEL_DEBUG;
 } while(0)
 
 #define perf_debug(...) do {					\
-	if (unlikely(INTEL_DEBUG & DEBUG_PERF))			\
-		dbg_printf(__VA_ARGS__);			\
+   static GLuint msg_id = 0;                                    \
+   if (unlikely(INTEL_DEBUG & DEBUG_PERF))                      \
+      dbg_printf(__VA_ARGS__);                                  \
+   if (intel->perf_debug)                                       \
+      _mesa_gl_debug(&intel->ctx, &msg_id,                      \
+                     MESA_DEBUG_TYPE_PERFORMANCE,               \
+                     MESA_DEBUG_SEVERITY_MEDIUM,                \
+                     __VA_ARGS__);                              \
 } while(0)
 
 #define WARN_ONCE(cond, fmt...) do {                            \

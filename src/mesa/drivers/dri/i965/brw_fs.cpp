@@ -2877,7 +2877,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    bool start_busy = false;
    float start_time = 0;
 
-   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
+   if (unlikely(intel->perf_debug)) {
       start_busy = (intel->batch.last_bo &&
                     drm_intel_bo_busy(intel->batch.last_bo));
       start_time = get_time();
@@ -2932,7 +2932,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
                                                    simd16_instructions,
                                                    final_assembly_size);
 
-   if (unlikely(INTEL_DEBUG & DEBUG_PERF) && shader) {
+   if (unlikely(intel->perf_debug) && shader) {
       if (shader->compiled_once)
          brw_wm_debug_recompile(brw, prog, &c->key);
       shader->compiled_once = true;
