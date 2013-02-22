@@ -594,11 +594,13 @@ NV50LoweringPreSSA::handleTEX(TexInstruction *i)
       i->setSrc(arg - 1, src);
 
       if (i->tex.target.isCube()) {
-         Value *acube[4], *a2d[4];
+         std::vector<Value *> acube, a2d;
          int c;
 
+         acube.resize(4);
          for (c = 0; c < 4; ++c)
             acube[c] = i->getSrc(c);
+         a2d.resize(4);
          for (c = 0; c < 3; ++c)
             a2d[c] = new_LValue(func, FILE_GPR);
          a2d[3] = NULL;

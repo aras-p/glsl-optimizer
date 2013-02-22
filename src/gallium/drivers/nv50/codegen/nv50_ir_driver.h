@@ -161,6 +161,10 @@ struct nv50_ir_prog_info
          boolean separateFragData;
          boolean usesDiscard;
       } fp;
+      struct {
+         uint32_t inputOffset; /* base address for user args */
+         uint32_t sharedOffset; /* reserved space in s[] */
+      } cp;
    } prop;
 
    struct {
@@ -179,6 +183,7 @@ struct nv50_ir_prog_info
       uint8_t sampleMask;        /* output index of SampleMask */
       uint8_t backFaceColor[2];  /* input/output indices of back face colour */
       uint8_t globalAccess;      /* 1 for read, 2 for wr, 3 for rw */
+      boolean nv50styleSurfaces; /* generate gX[] access for raw buffers */
       uint8_t resInfoCBSlot;     /* cX[] used for tex handles, surface info */
       uint16_t texBindBase;      /* base address for tex handles (nve4) */
       uint16_t suInfoBase;       /* base address for surface info (nve4) */

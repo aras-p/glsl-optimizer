@@ -240,15 +240,17 @@ BuildUtil::mkCmp(operation op, CondCode cc, DataType ty, Value *dst,
    return insn;
 }
 
-Instruction *
-BuildUtil::mkTex(operation op, TexTarget targ, uint8_t tic, uint8_t tsc,
-                 Value **def, Value **src)
+TexInstruction *
+BuildUtil::mkTex(operation op, TexTarget targ,
+                 uint16_t tic, uint16_t tsc,
+                 const std::vector<Value *> &def,
+                 const std::vector<Value *> &src)
 {
    TexInstruction *tex = new_TexInstruction(func, op);
 
-   for (int d = 0; d < 4 && def[d]; ++d)
+   for (size_t d = 0; d < def.size() && def[d]; ++d)
       tex->setDef(d, def[d]);
-   for (int s = 0; s < 4 && src[s]; ++s)
+   for (size_t s = 0; s < src.size() && src[s]; ++s)
       tex->setSrc(s, src[s]);
 
    tex->setTexture(targ, tic, tsc);

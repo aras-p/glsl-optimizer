@@ -871,9 +871,9 @@ public:
    struct {
       Target target;
 
-      uint8_t r;
+      uint16_t r;
+      uint16_t s;
       int8_t rIndirectSrc;
-      uint8_t s;
       int8_t sIndirectSrc;
 
       uint8_t mask;

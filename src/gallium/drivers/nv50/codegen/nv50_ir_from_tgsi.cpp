@@ -559,7 +559,6 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(USLT, SET);
    NV50_IR_OPCODE_CASE(USNE, SET);
 
-   NV50_IR_OPCODE_CASE(LOAD, TXF);
    NV50_IR_OPCODE_CASE(SAMPLE, TEX);
    NV50_IR_OPCODE_CASE(SAMPLE_B, TXB);
    NV50_IR_OPCODE_CASE(SAMPLE_C, TEX);
@@ -620,8 +619,17 @@ public:
 
    int clipVertexOutput;
 
-   uint8_t *samplerViewTargets; // TGSI_TEXTURE_*
-   unsigned samplerViewCount;
+   struct TextureView {
+      uint8_t target; // TGSI_TEXTURE_*
+   };
+   std::vector<TextureView> textureViews;
+
+   struct Resource {
+      uint8_t target; // TGSI_TEXTURE_*
+      bool raw;
+      uint8_t slot; // $surface index
+   };
+   std::vector<Resource> resources;
 
 private:
    int inferSysValDirection(unsigned sn) const;
@@ -640,8 +648,6 @@ Source::Source(struct nv50_ir_prog_info *prog) : info(prog)
    if (prog->dbgFlags & NV50_IR_DEBUG_BASIC)
       tgsi_dump(tokens, 0);
 
-   samplerViewTargets = NULL;
-
    mainTempsInLMem = FALSE;
 }
 
@@ -654,9 +660,6 @@ Source::~Source()
       FREE(info->immd.data);
    if (info->immd.type)
       FREE(info->immd.type);
-
-   if (samplerViewTargets)
-      delete[] samplerViewTargets;
 }
 
 bool Source::scanSource()
@@ -673,8 +676,8 @@ bool Source::scanSource()
 
    clipVertexOutput = -1;
 
-   samplerViewCount = scan.file_max[TGSI_FILE_SAMPLER_VIEW] + 1;
-   samplerViewTargets = new uint8_t[samplerViewCount];
+   textureViews.resize(scan.file_max[TGSI_FILE_SAMPLER_VIEW] + 1);
+   resources.resize(scan.file_max[TGSI_FILE_RESOURCE] + 1);
 
    info->immd.bufSize = 0;
    tempArrayCount = 0;
@@ -899,9 +902,16 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
          info->sv[i].input = inferSysValDirection(sn);
       }
       break;
+   case TGSI_FILE_RESOURCE:
+      for (i = first; i <= last; ++i) {
+         resources[i].target = decl->Resource.Resource;
+         resources[i].raw = decl->Resource.Raw;
+         resources[i].slot = i;
+      }
+      break;
    case TGSI_FILE_SAMPLER_VIEW:
       for (i = first; i <= last; ++i)
-         samplerViewTargets[i] = decl->SamplerView.Resource;
+         textureViews[i].target = decl->SamplerView.Resource;
       break;
    case TGSI_FILE_IMMEDIATE_ARRAY:
    {
@@ -997,9 +1007,15 @@ bool Source::scanInstruction(const struct tgsi_full_instruction *inst)
 
    for (unsigned s = 0; s < insn.srcCount(); ++s) {
       Instruction::SrcRegister src = insn.getSrc(s);
-      if (src.getFile() == TGSI_FILE_TEMPORARY)
+      if (src.getFile() == TGSI_FILE_TEMPORARY) {
          if (src.isIndirect(0))
             mainTempsInLMem = TRUE;
+      } else
+      if (src.getFile() == TGSI_FILE_RESOURCE) {
+         if (src.getIndex(0) == TGSI_RESOURCE_GLOBAL)
+            info->io.globalAccess |= (insn.getOpcode() == TGSI_OPCODE_LOAD) ?
+               0x1 : 0x2;
+      }
       if (src.getFile() != TGSI_FILE_INPUT)
          continue;
       unsigned mask = insn.srcMask(s);
@@ -1025,13 +1041,16 @@ bool Source::scanInstruction(const struct tgsi_full_instruction *inst)
 nv50_ir::TexInstruction::Target
 Instruction::getTexture(const tgsi::Source *code, int s) const
 {
+   // XXX: indirect access
+   unsigned int r;
+
    switch (getSrc(s).getFile()) {
-   case TGSI_FILE_SAMPLER_VIEW: {
-      // XXX: indirect access
-      unsigned int r = getSrc(s).getIndex(0);
-      assert(r < code->samplerViewCount);
-      return translateTexture(code->samplerViewTargets[r]);
-   }
+   case TGSI_FILE_RESOURCE:
+      r = getSrc(s).getIndex(0);
+      return translateTexture(code->resources.at(r).target);
+   case TGSI_FILE_SAMPLER_VIEW:
+      r = getSrc(s).getIndex(0);
+      return translateTexture(code->textureViews.at(r).target);
    default:
       return translateTexture(insn->Texture.Texture);
    }
@@ -1090,6 +1109,12 @@ private:
    void handleTXQ(Value *dst0[4], enum TexQuery);
    void handleLIT(Value *dst0[4]);
    void handleUserClipPlanes();
+
+   Symbol *getResourceBase(int r);
+   void getResourceCoords(std::vector<Value *>&, int r, int s);
+
+   void handleLOAD(Value *dst0[4]);
+   void handleSTORE();
 
    Value *interpolate(tgsi::Instruction::SrcRegister, int c, Value *ptr);
 
@@ -1710,6 +1735,236 @@ Converter::handleLIT(Value *dst0[4])
    }
 }
 
+static inline bool
+isResourceSpecial(const int r)
+{
+   return (r == TGSI_RESOURCE_GLOBAL ||
+           r == TGSI_RESOURCE_LOCAL ||
+           r == TGSI_RESOURCE_PRIVATE ||
+           r == TGSI_RESOURCE_INPUT);
+}
+
+static inline bool
+isResourceRaw(const struct tgsi::Source *code, const int r)
+{
+   return isResourceSpecial(r) || code->resources[r].raw;
+}
+
+static inline nv50_ir::TexTarget
+getResourceTarget(const struct tgsi::Source *code, int r)
+{
+   if (isResourceSpecial(r))
+      return nv50_ir::TEX_TARGET_BUFFER;
+   return tgsi::translateTexture(code->resources.at(r).target);
+}
+
+Symbol *
+Converter::getResourceBase(const int r)
+{
+   Symbol *sym = NULL;
+
+   switch (r) {
+   case TGSI_RESOURCE_GLOBAL:
+      sym = new_Symbol(prog, nv50_ir::FILE_MEMORY_GLOBAL, 15);
+      break;
+   case TGSI_RESOURCE_LOCAL:
+      assert(prog->getType() == Program::TYPE_COMPUTE);
+      sym = mkSymbol(nv50_ir::FILE_MEMORY_SHARED, 0, TYPE_U32,
+                     info->prop.cp.sharedOffset);
+      break;
+   case TGSI_RESOURCE_PRIVATE:
+      sym = mkSymbol(nv50_ir::FILE_MEMORY_LOCAL, 0, TYPE_U32,
+                     info->bin.tlsSpace);
+      break;
+   case TGSI_RESOURCE_INPUT:
+      assert(prog->getType() == Program::TYPE_COMPUTE);
+      sym = mkSymbol(nv50_ir::FILE_SHADER_INPUT, 0, TYPE_U32,
+                     info->prop.cp.inputOffset);
+      break;
+   default:
+      sym = new_Symbol(prog,
+                       nv50_ir::FILE_MEMORY_GLOBAL, code->resources.at(r).slot);
+      break;
+   }
+   return sym;
+}
+
+void
+Converter::getResourceCoords(std::vector<Value *> &coords, int r, int s)
+{
+   const int arg =
+      TexInstruction::Target(getResourceTarget(code, r)).getArgCount();
+
+   for (int c = 0; c < arg; ++c)
+      coords.push_back(fetchSrc(s, c));
+
+   // NOTE: TGSI_RESOURCE_GLOBAL needs FILE_GPR; this is an nv50 quirk
+   if (r == TGSI_RESOURCE_LOCAL ||
+       r == TGSI_RESOURCE_PRIVATE ||
+       r == TGSI_RESOURCE_INPUT)
+      coords[0] = mkOp1v(OP_MOV, TYPE_U32, getScratch(4, FILE_ADDRESS),
+                         coords[0]);
+}
+
+static inline int
+partitionLoadStore(uint8_t comp[2], uint8_t size[2], uint8_t mask)
+{
+   int n = 0;
+
+   while (mask) {
+      if (mask & 1) {
+         size[n]++;
+      } else {
+         if (size[n])
+            comp[n = 1] = size[0] + 1;
+         else
+            comp[n]++;
+      }
+      mask >>= 1;
+   }
+   if (size[0] == 3) {
+      n = 1;
+      size[0] = (comp[0] == 1) ? 1 : 2;
+      size[1] = 3 - size[0];
+      comp[1] = comp[0] + size[0];
+   }
+   return n + 1;
+}
+
+// For raw loads, granularity is 4 byte.
+// Usage of the texture read mask on OP_SULDP is not allowed.
+void
+Converter::handleLOAD(Value *dst0[4])
+{
+   const int r = tgsi.getSrc(0).getIndex(0);
+   int c;
+   std::vector<Value *> off, src, ldv, def;
+
+   getResourceCoords(off, r, 1);
+
+   if (isResourceRaw(code, r)) {
+      uint8_t mask = 0;
+      uint8_t comp[2] = { 0, 0 };
+      uint8_t size[2] = { 0, 0 };
+
+      Symbol *base = getResourceBase(r);
+
+      // determine the base and size of the at most 2 load ops
+      for (c = 0; c < 4; ++c)
+         if (!tgsi.getDst(0).isMasked(c))
+            mask |= 1 << (tgsi.getSrc(0).getSwizzle(c) - TGSI_SWIZZLE_X);
+
+      int n = partitionLoadStore(comp, size, mask);
+
+      src = off;
+
+      def.resize(4); // index by component, the ones we need will be non-NULL
+      for (c = 0; c < 4; ++c) {
+         if (dst0[c] && tgsi.getSrc(0).getSwizzle(c) == (TGSI_SWIZZLE_X + c))
+            def[c] = dst0[c];
+         else
+         if (mask & (1 << c))
+            def[c] = getScratch();
+      }
+
+      const bool useLd = isResourceSpecial(r) ||
+         (info->io.nv50styleSurfaces &&
+          code->resources[r].target == TGSI_TEXTURE_BUFFER);
+
+      for (int i = 0; i < n; ++i) {
+         ldv.assign(def.begin() + comp[i], def.begin() + comp[i] + size[i]);
+
+         if (comp[i]) // adjust x component of source address if necessary
+            src[0] = mkOp2v(OP_ADD, TYPE_U32, getSSA(4, off[0]->reg.file),
+                            off[0], mkImm(comp[i] * 4));
+         else
+            src[0] = off[0];
+
+         if (useLd) {
+            Instruction *ld =
+               mkLoad(typeOfSize(size[i] * 4), ldv[0], base, src[0]);
+            for (size_t c = 1; c < ldv.size(); ++c)
+               ld->setDef(c, ldv[c]);
+         } else {
+            mkTex(OP_SULDB, getResourceTarget(code, r), code->resources[r].slot,
+                  0, ldv, src)->dType = typeOfSize(size[i] * 4);
+         }
+      }
+   } else {
+      def.resize(4);
+      for (c = 0; c < 4; ++c) {
+         if (!dst0[c] || tgsi.getSrc(0).getSwizzle(c) != (TGSI_SWIZZLE_X + c))
+            def[c] = getScratch();
+         else
+            def[c] = dst0[c];
+      }
+
+      mkTex(OP_SULDP, getResourceTarget(code, r), code->resources[r].slot, 0,
+            def, off);
+   }
+   FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi)
+      if (dst0[c] != def[c])
+         mkMov(dst0[c], def[tgsi.getSrc(0).getSwizzle(c)]);
+}
+
+// For formatted stores, the write mask on OP_SUSTP can be used.
+// Raw stores have to be split.
+void
+Converter::handleSTORE()
+{
+   const int r = tgsi.getDst(0).getIndex(0);
+   int c;
+   std::vector<Value *> off, src, dummy;
+
+   getResourceCoords(off, r, 0);
+   src = off;
+   const int s = src.size();
+
+   if (isResourceRaw(code, r)) {
+      uint8_t comp[2] = { 0, 0 };
+      uint8_t size[2] = { 0, 0 };
+
+      int n = partitionLoadStore(comp, size, tgsi.getDst(0).getMask());
+
+      Symbol *base = getResourceBase(r);
+
+      const bool useSt = isResourceSpecial(r) ||
+         (info->io.nv50styleSurfaces &&
+          code->resources[r].target == TGSI_TEXTURE_BUFFER);
+
+      for (int i = 0; i < n; ++i) {
+         if (comp[i]) // adjust x component of source address if necessary
+            src[0] = mkOp2v(OP_ADD, TYPE_U32, getSSA(4, off[0]->reg.file),
+                            off[0], mkImm(comp[i] * 4));
+         else
+            src[0] = off[0];
+
+         const DataType stTy = typeOfSize(size[i] * 4);
+
+         if (useSt) {
+            Instruction *st =
+               mkStore(OP_STORE, stTy, base, NULL, fetchSrc(1, comp[i]));
+            for (c = 1; c < size[i]; ++c)
+               st->setSrc(1 + c, fetchSrc(1, comp[i] + c));
+            st->setIndirect(0, 0, src[0]);
+         } else {
+            // attach values to be stored
+            src.resize(s + size[i]);
+            for (c = 0; c < size[i]; ++c)
+               src[s + c] = fetchSrc(1, comp[i] + c);
+            mkTex(OP_SUSTB, getResourceTarget(code, r), code->resources[r].slot,
+                  0, dummy, src)->setType(stTy);
+         }
+      }
+   } else {
+      FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi)
+         src.push_back(fetchSrc(1, c));
+
+      mkTex(OP_SUSTP, getResourceTarget(code, r), code->resources[r].slot, 0,
+            dummy, src)->tex.mask = tgsi.getDst(0).getMask();
+   }
+}
+
 Converter::Subroutine *
 Converter::getSubroutine(unsigned ip)
 {
@@ -2072,7 +2327,6 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       handleTEX(dst0, 1, 2, 0x30, 0x30, 0x30, 0x40);
       break;
    case TGSI_OPCODE_TXF:
-   case TGSI_OPCODE_LOAD:
       handleTXF(dst0, 1);
       break;
    case TGSI_OPCODE_TXQ:
@@ -2256,6 +2510,12 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
    case TGSI_OPCODE_CASE:
       ERROR("switch/case opcode encountered, should have been lowered\n");
       abort();
+      break;
+   case TGSI_OPCODE_LOAD:
+      handleLOAD(dst0);
+      break;
+   case TGSI_OPCODE_STORE:
+      handleSTORE();
       break;
    default:
       ERROR("unhandled TGSI opcode: %u\n", tgsi.getOpcode());
