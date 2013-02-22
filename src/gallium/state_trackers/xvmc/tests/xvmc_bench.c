@@ -222,6 +222,10 @@ int main(int argc, char **argv)
 		Atom xv_colorkey = XInternAtom(display, "XV_COLORKEY", 0);
 		XvGetPortAttribute(display, port_num, xv_colorkey, &colorkey);
 	}
+	else
+	{
+		colorkey = 0;
+	}
 
 	root = XDefaultRootWindow(display);
 	window = XCreateSimpleWindow(display, root, 0, 0, config.output_width, config.output_height, 0, 0, colorkey);
