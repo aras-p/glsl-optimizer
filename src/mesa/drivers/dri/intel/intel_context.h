@@ -461,11 +461,6 @@ extern int INTEL_DEBUG;
 		dbg_printf(__VA_ARGS__);			\
 } while(0)
 
-#define fallback_debug(...) do {				\
-	if (unlikely(INTEL_DEBUG & DEBUG_PERF))			\
-		dbg_printf(__VA_ARGS__);			\
-} while(0)
-
 #define perf_debug(...) do {					\
 	if (unlikely(INTEL_DEBUG & DEBUG_PERF))			\
 		dbg_printf(__VA_ARGS__);			\

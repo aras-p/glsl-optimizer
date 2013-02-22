@@ -97,7 +97,7 @@ do_blit_copypixels(struct gl_context * ctx,
    switch (type) {
    case GL_COLOR:
       if (fb->_NumColorDrawBuffers != 1) {
-	 fallback_debug("glCopyPixels() fallback: MRT\n");
+	 perf_debug("glCopyPixels() fallback: MRT\n");
 	 return false;
       }
 
@@ -110,23 +110,23 @@ do_blit_copypixels(struct gl_context * ctx,
 	 intel_renderbuffer(read_fb->Attachment[BUFFER_DEPTH].Renderbuffer);
       break;
    case GL_DEPTH:
-      fallback_debug("glCopyPixels() fallback: GL_DEPTH\n");
+      perf_debug("glCopyPixels() fallback: GL_DEPTH\n");
       return false;
    case GL_STENCIL:
-      fallback_debug("glCopyPixels() fallback: GL_STENCIL\n");
+      perf_debug("glCopyPixels() fallback: GL_STENCIL\n");
       return false;
    default:
-      fallback_debug("glCopyPixels(): Unknown type\n");
+      perf_debug("glCopyPixels(): Unknown type\n");
       return false;
    }
 
    if (!draw_irb) {
-      fallback_debug("glCopyPixels() fallback: missing draw buffer\n");
+      perf_debug("glCopyPixels() fallback: missing draw buffer\n");
       return false;
    }
 
    if (!read_irb) {
-      fallback_debug("glCopyPixels() fallback: missing read buffer\n");
+      perf_debug("glCopyPixels() fallback: missing read buffer\n");
       return false;
    }
 
@@ -136,9 +136,9 @@ do_blit_copypixels(struct gl_context * ctx,
    if (draw_format != read_format &&
        !(draw_format == MESA_FORMAT_XRGB8888 &&
 	 read_format == MESA_FORMAT_ARGB8888)) {
-      fallback_debug("glCopyPixels() fallback: mismatched formats (%s -> %s\n",
-		     _mesa_get_format_name(read_format),
-                     _mesa_get_format_name(draw_format));
+      perf_debug("glCopyPixels() fallback: mismatched formats (%s -> %s\n",
+                 _mesa_get_format_name(read_format),
+                 _mesa_get_format_name(draw_format));
       return false;
    }
 

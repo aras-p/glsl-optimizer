@@ -198,7 +198,7 @@ intelCopyTexSubImage(struct gl_context *ctx, GLuint dims,
    }
 
    /* Finally, fall back to meta.  This will likely be slow. */
-   fallback_debug("%s - fallback to swrast\n", __FUNCTION__);
+   perf_debug("%s - fallback to swrast\n", __FUNCTION__);
    _mesa_meta_CopyTexSubImage(ctx, dims, texImage,
                               xoffset, yoffset, zoffset,
                               rb, x, y, width, height);

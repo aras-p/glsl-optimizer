@@ -183,7 +183,7 @@ intelReadPixels(struct gl_context * ctx,
    intel_prepare_render(intel);
    intel->front_buffer_dirty = dirty;
 
-   fallback_debug("%s: fallback to swrast\n", __FUNCTION__);
+   perf_debug("%s: fallback to swrast\n", __FUNCTION__);
 
    /* Update Mesa state before calling _mesa_readpixels().
     * XXX this may not be needed since ReadPixels no longer uses the

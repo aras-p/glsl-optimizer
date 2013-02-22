@@ -858,8 +858,8 @@ intel_miptree_copy_slice(struct intel_context *intel,
 			  width, height,
 			  GL_COPY)) {
 
-      fallback_debug("miptree validate blit for %s failed\n",
-		     _mesa_get_format_name(format));
+      perf_debug("miptree validate blit for %s failed\n",
+                 _mesa_get_format_name(format));
 
       intel_miptree_copy_slice_sw(intel, dst_mt, src_mt, level, slice,
                                   width, height);
