@@ -262,7 +262,11 @@ util_dump_tex_target_names[] = {
    "PIPE_TEXTURE_1D",
    "PIPE_TEXTURE_2D",
    "PIPE_TEXTURE_3D",
-   "PIPE_TEXTURE_CUBE"
+   "PIPE_TEXTURE_CUBE",
+   "PIPE_TEXTURE_RECT",
+   "PIPE_TEXTURE_1D_ARRAY",
+   "PIPE_TEXTURE_2D_ARRAY",
+   "PIPE_TEXTURE_CUBE_ARRAY",
 };
 
 static const char *
@@ -271,7 +275,11 @@ util_dump_tex_target_short_names[] = {
    "1d",
    "2d",
    "3d",
-   "cube"
+   "cube",
+   "rect",
+   "1d_array",
+   "2d_array",
+   "cube_array",
 };
 
 DEFINE_UTIL_DUMP_CONTINUOUS(tex_target)
