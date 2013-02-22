@@ -88,8 +88,11 @@ XORG_OUTPUTS = \
 
 API_XML = \
 	gl_API.xml \
+	es_EXT.xml \
+	gl_and_es_API.xml \
 	ARB_base_instance.xml \
 	ARB_blend_func_extended.xml \
+	ARB_clear_buffer_object.xml \
 	ARB_color_buffer_float.xml \
 	ARB_compute_shader.xml \
 	ARB_copy_buffer.xml \
@@ -105,6 +108,8 @@ API_XML = \
 	ARB_ES3_compatibility.xml \
 	ARB_framebuffer_object.xml \
 	ARB_geometry_shader4.xml \
+	ARB_get_program_binary.xml \
+	ARB_gpu_shader5.xml \
 	ARB_instanced_arrays.xml \
 	ARB_internalformat_query.xml \
 	ARB_invalidate_subdata.xml \
@@ -129,6 +134,7 @@ API_XML = \
 	ARB_texture_storage_multisample.xml \
 	ARB_texture_storage.xml \
 	ARB_texture_view.xml \
+	ARB_uniform_buffer_object.xml \
 	ARB_vertex_array_object.xml \
 	ARB_vertex_attrib_binding.xml \
 	ARB_viewport_array.xml \
@@ -137,7 +143,6 @@ API_XML = \
 	ARB_vertex_type_2_10_10_10_rev.xml \
 	APPLE_object_purgeable.xml \
 	APPLE_vertex_array_object.xml \
-	ARB_uniform_buffer_object.xml \
 	EXT_draw_buffers2.xml \
 	EXT_framebuffer_object.xml \
 	EXT_gpu_shader4.xml \
@@ -147,28 +152,22 @@ API_XML = \
 	EXT_texture_array.xml \
 	EXT_texture_integer.xml \
 	EXT_transform_feedback.xml \
+	KHR_debug.xml \
 	NV_conditional_render.xml \
 	NV_primitive_restart.xml \
 	NV_texture_barrier.xml \
 	NV_vdpau_interop.xml \
 	OES_EGL_image.xml \
+	OES_fixed_point.xml \
+	OES_single_precision.xml \
 	GL3x.xml \
 	GL4x.xml
-
-
 
 COMMON = $(API_XML) \
 	gl_XML.py \
 	glX_XML.py \
 	license.py \
-	typeexpr.py \
-	gl_and_es_API.xml \
-	es_EXT.xml \
-	ARB_ES2_compatibility.xml \
-	ARB_ES3_compatibility.xml \
-	ARB_get_program_binary.xml \
-	OES_fixed_point.xml \
-	OES_single_precision.xml
+	typeexpr.py
 
 COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
 
