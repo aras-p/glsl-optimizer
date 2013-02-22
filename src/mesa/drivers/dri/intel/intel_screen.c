@@ -1174,7 +1174,7 @@ set_max_gl_versions(struct intel_screen *screen)
       screen->max_gl_core_version = 31;
       screen->max_gl_compat_version = 30;
       screen->max_gl_es1_version = 11;
-      screen->max_gl_es2_version = 20;
+      screen->max_gl_es2_version = 30;
       break;
    case 5:
    case 4:
