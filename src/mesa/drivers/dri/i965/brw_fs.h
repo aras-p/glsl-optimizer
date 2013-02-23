@@ -452,7 +452,7 @@ public:
    int first_non_payload_grf;
    /** Either BRW_MAX_GRF or GEN7_MRF_HACK_START */
    int max_grf;
-   int urb_setup[FRAG_ATTRIB_MAX];
+   int urb_setup[VARYING_SLOT_MAX];
 
    fs_reg *fp_temp_regs;
    fs_reg *fp_input_regs;

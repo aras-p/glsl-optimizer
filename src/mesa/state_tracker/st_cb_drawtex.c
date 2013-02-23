@@ -116,7 +116,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    st_validate_state(st);
 
    /* determine if we need vertex color */
-   if (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_COL0)
+   if (ctx->FragmentProgram._Current->Base.InputsRead & VARYING_BIT_COL0)
       emitColor = GL_TRUE;
    else
       emitColor = GL_FALSE;

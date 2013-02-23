@@ -2034,7 +2034,7 @@ fs_visitor::emit_interpolation_setup_gen4()
    emit(FS_OPCODE_LINTERP, wpos_w,
         this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
         this->delta_y[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
-	interp_reg(FRAG_ATTRIB_WPOS, 3));
+	interp_reg(VARYING_SLOT_POS, 3));
    /* Compute the pixel 1/W value from wpos.w. */
    this->pixel_w = fs_reg(this, glsl_type::float_type);
    emit_math(SHADER_OPCODE_RCP, this->pixel_w, wpos_w);

@@ -502,7 +502,7 @@ _swrast_update_active_attribs(struct gl_context *ctx)
    if (_swrast_use_fragment_program(ctx)) {
       /* fragment program/shader */
       attribsMask = ctx->FragmentProgram._Current->Base.InputsRead;
-      attribsMask &= ~FRAG_BIT_WPOS; /* WPOS is always handled specially */
+      attribsMask &= ~VARYING_BIT_POS; /* WPOS is always handled specially */
    }
    else if (ctx->ATIFragmentShader._Enabled) {
       attribsMask = ~0;  /* XXX fix me */
@@ -512,19 +512,19 @@ _swrast_update_active_attribs(struct gl_context *ctx)
       attribsMask = 0x0;
 
 #if CHAN_TYPE == GL_FLOAT
-      attribsMask |= FRAG_BIT_COL0;
+      attribsMask |= VARYING_BIT_COL0;
 #endif
 
       if (ctx->Fog.ColorSumEnabled ||
           (ctx->Light.Enabled &&
            ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)) {
-         attribsMask |= FRAG_BIT_COL1;
+         attribsMask |= VARYING_BIT_COL1;
       }
 
       if (swrast->_FogEnabled)
-         attribsMask |= FRAG_BIT_FOGC;
+         attribsMask |= VARYING_BIT_FOGC;
 
-      attribsMask |= (ctx->Texture._EnabledUnits << FRAG_ATTRIB_TEX0);
+      attribsMask |= (ctx->Texture._EnabledUnits << VARYING_SLOT_TEX0);
    }
 
    swrast->_ActiveAttribMask = attribsMask;
@@ -532,11 +532,11 @@ _swrast_update_active_attribs(struct gl_context *ctx)
    /* Update _ActiveAttribs[] list */
    {
       GLuint i, num = 0;
-      for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
+      for (i = 0; i < VARYING_SLOT_MAX; i++) {
          if (attribsMask & BITFIELD64_BIT(i)) {
             swrast->_ActiveAttribs[num++] = i;
             /* how should this attribute be interpolated? */
-            if (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1)
+            if (i == VARYING_SLOT_COL0 || i == VARYING_SLOT_COL1)
                swrast->_InterpMode[i] = ctx->Light.ShadeModel;
             else
                swrast->_InterpMode[i] = GL_SMOOTH;
@@ -785,7 +785,7 @@ _swrast_CreateContext( struct gl_context *ctx )
 #elif CHAN_TYPE == GL_UNSIGNED_SHORT
       swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].rgba16;
 #else
-      swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].attribs[FRAG_ATTRIB_COL0];
+      swrast->SpanArrays[i].rgba = swrast->SpanArrays[i].attribs[VARYING_SLOT_COL0];
 #endif
    }
 
@@ -918,18 +918,18 @@ _swrast_print_vertex( struct gl_context *ctx, const SWvertex *v )
 
    if (SWRAST_DEBUG_VERTICES) {
       _mesa_debug(ctx, "win %f %f %f %f\n",
-                  v->attrib[FRAG_ATTRIB_WPOS][0],
-                  v->attrib[FRAG_ATTRIB_WPOS][1],
-                  v->attrib[FRAG_ATTRIB_WPOS][2],
-                  v->attrib[FRAG_ATTRIB_WPOS][3]);
+                  v->attrib[VARYING_SLOT_POS][0],
+                  v->attrib[VARYING_SLOT_POS][1],
+                  v->attrib[VARYING_SLOT_POS][2],
+                  v->attrib[VARYING_SLOT_POS][3]);
 
       for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
 	 if (ctx->Texture.Unit[i]._ReallyEnabled)
 	    _mesa_debug(ctx, "texcoord[%d] %f %f %f %f\n", i,
-                        v->attrib[FRAG_ATTRIB_TEX0 + i][0],
-                        v->attrib[FRAG_ATTRIB_TEX0 + i][1],
-                        v->attrib[FRAG_ATTRIB_TEX0 + i][2],
-                        v->attrib[FRAG_ATTRIB_TEX0 + i][3]);
+                        v->attrib[VARYING_SLOT_TEX0 + i][0],
+                        v->attrib[VARYING_SLOT_TEX0 + i][1],
+                        v->attrib[VARYING_SLOT_TEX0 + i][2],
+                        v->attrib[VARYING_SLOT_TEX0 + i][3]);
 
 #if CHAN_TYPE == GL_FLOAT
       _mesa_debug(ctx, "color %f %f %f %f\n",
@@ -939,12 +939,12 @@ _swrast_print_vertex( struct gl_context *ctx, const SWvertex *v )
                   v->color[0], v->color[1], v->color[2], v->color[3]);
 #endif
       _mesa_debug(ctx, "spec %g %g %g %g\n",
-                  v->attrib[FRAG_ATTRIB_COL1][0],
-                  v->attrib[FRAG_ATTRIB_COL1][1],
-                  v->attrib[FRAG_ATTRIB_COL1][2],
-                  v->attrib[FRAG_ATTRIB_COL1][3]);
-      _mesa_debug(ctx, "fog %f\n", v->attrib[FRAG_ATTRIB_FOGC][0]);
-      _mesa_debug(ctx, "index %f\n", v->attrib[FRAG_ATTRIB_CI][0]);
+                  v->attrib[VARYING_SLOT_COL1][0],
+                  v->attrib[VARYING_SLOT_COL1][1],
+                  v->attrib[VARYING_SLOT_COL1][2],
+                  v->attrib[VARYING_SLOT_COL1][3]);
+      _mesa_debug(ctx, "fog %f\n", v->attrib[VARYING_SLOT_FOGC][0]);
+      _mesa_debug(ctx, "index %f\n", v->attrib[VARYING_SLOT_CI][0]);
       _mesa_debug(ctx, "pointsize %f\n", v->pointSize);
       _mesa_debug(ctx, "\n");
    }

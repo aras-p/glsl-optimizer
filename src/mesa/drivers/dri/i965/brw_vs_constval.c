@@ -244,10 +244,10 @@ static void calc_wm_input_sizes( struct brw_context *brw )
    if (ctx->Point.PointSprite) {
       for (int i = 0; i < 8; i++) {
          if (ctx->Point.CoordReplace[i]) {
-            t.size_masks[4-1] |= FRAG_BIT_TEX(i);
-            t.size_masks[3-1] |= FRAG_BIT_TEX(i);
-            t.size_masks[2-1] |= FRAG_BIT_TEX(i);
-            t.size_masks[1-1] |= FRAG_BIT_TEX(i);
+            t.size_masks[4-1] |= VARYING_BIT_TEX(i);
+            t.size_masks[3-1] |= VARYING_BIT_TEX(i);
+            t.size_masks[2-1] |= VARYING_BIT_TEX(i);
+            t.size_masks[1-1] |= VARYING_BIT_TEX(i);
          }
       }
    }

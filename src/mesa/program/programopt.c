@@ -240,7 +240,7 @@ _mesa_insert_mvp_code(struct gl_context *ctx, struct gl_vertex_program *vprog)
  * \param saturate True if writes to color outputs should be clamped to [0, 1]
  *
  * \note
- * This function sets \c FRAG_BIT_FOGC in \c fprog->Base.InputsRead.
+ * This function sets \c VARYING_BIT_FOGC in \c fprog->Base.InputsRead.
  *
  * \todo With a little work, this function could be adapted to add fog code
  * to vertex programs too.
@@ -323,7 +323,7 @@ _mesa_append_fog_code(struct gl_context *ctx,
       inst->DstReg.Index = fogFactorTemp;
       inst->DstReg.WriteMask = WRITEMASK_X;
       inst->SrcReg[0].File = PROGRAM_INPUT;
-      inst->SrcReg[0].Index = FRAG_ATTRIB_FOGC;
+      inst->SrcReg[0].Index = VARYING_SLOT_FOGC;
       inst->SrcReg[0].Swizzle = SWIZZLE_XXXX;
       inst->SrcReg[1].File = PROGRAM_STATE_VAR;
       inst->SrcReg[1].Index = fogPRefOpt;
@@ -348,7 +348,7 @@ _mesa_append_fog_code(struct gl_context *ctx,
       inst->SrcReg[0].Swizzle
          = (fog_mode == GL_EXP) ? SWIZZLE_ZZZZ : SWIZZLE_WWWW;
       inst->SrcReg[1].File = PROGRAM_INPUT;
-      inst->SrcReg[1].Index = FRAG_ATTRIB_FOGC;
+      inst->SrcReg[1].Index = VARYING_SLOT_FOGC;
       inst->SrcReg[1].Swizzle = SWIZZLE_XXXX;
       inst++;
       if (fog_mode == GL_EXP2) {
@@ -411,7 +411,7 @@ _mesa_append_fog_code(struct gl_context *ctx,
    /* install new instructions */
    fprog->Base.Instructions = newInst;
    fprog->Base.NumInstructions = inst - newInst;
-   fprog->Base.InputsRead |= FRAG_BIT_FOGC;
+   fprog->Base.InputsRead |= VARYING_BIT_FOGC;
    assert(fprog->Base.OutputsWritten & (1 << FRAG_RESULT_COLOR));
 }
 
@@ -615,10 +615,10 @@ _mesa_nop_fragment_program(struct gl_context *ctx, struct gl_fragment_program *p
    inst[0].DstReg.File = PROGRAM_OUTPUT;
    inst[0].DstReg.Index = FRAG_RESULT_COLOR;
    inst[0].SrcReg[0].File = PROGRAM_INPUT;
-   if (prog->Base.InputsRead & FRAG_BIT_COL0)
-      inputAttr = FRAG_ATTRIB_COL0;
+   if (prog->Base.InputsRead & VARYING_BIT_COL0)
+      inputAttr = VARYING_SLOT_COL0;
    else
-      inputAttr = FRAG_ATTRIB_TEX0;
+      inputAttr = VARYING_SLOT_TEX0;
    inst[0].SrcReg[0].Index = inputAttr;
 
    inst[1].Opcode = OPCODE_END;

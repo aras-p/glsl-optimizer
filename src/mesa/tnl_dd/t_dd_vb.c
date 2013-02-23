@@ -89,15 +89,15 @@ void TAG(translate_vertex)(struct gl_context *ctx,
 
    if (format == TINY_VERTEX_FORMAT) {
       if (HAVE_HW_VIEWPORT) {
-	 dst->attrib[FRAG_ATTRIB_WPOS][0] = s[0]  * src->v.x + s[12];
-	 dst->attrib[FRAG_ATTRIB_WPOS][1] = s[5]  * src->v.y + s[13];
-	 dst->attrib[FRAG_ATTRIB_WPOS][2] = s[10] * src->v.z + s[14];
-	 dst->attrib[FRAG_ATTRIB_WPOS][3] = 1.0;
+	 dst->attrib[VARYING_SLOT_POS][0] = s[0]  * src->v.x + s[12];
+	 dst->attrib[VARYING_SLOT_POS][1] = s[5]  * src->v.y + s[13];
+	 dst->attrib[VARYING_SLOT_POS][2] = s[10] * src->v.z + s[14];
+	 dst->attrib[VARYING_SLOT_POS][3] = 1.0;
       } else {
-	 dst->attrib[FRAG_ATTRIB_WPOS][0] = UNVIEWPORT_X( src->v.x );
-	 dst->attrib[FRAG_ATTRIB_WPOS][1] = UNVIEWPORT_Y( src->v.y );
-	 dst->attrib[FRAG_ATTRIB_WPOS][2] = UNVIEWPORT_Z( src->v.z );
-	 dst->attrib[FRAG_ATTRIB_WPOS][3] = 1.0;
+	 dst->attrib[VARYING_SLOT_POS][0] = UNVIEWPORT_X( src->v.x );
+	 dst->attrib[VARYING_SLOT_POS][1] = UNVIEWPORT_Y( src->v.y );
+	 dst->attrib[VARYING_SLOT_POS][2] = UNVIEWPORT_Z( src->v.z );
+	 dst->attrib[VARYING_SLOT_POS][3] = 1.0;
       }
 
       dst->color[0] = src->tv.color.red;
@@ -109,21 +109,21 @@ void TAG(translate_vertex)(struct gl_context *ctx,
       if (HAVE_HW_VIEWPORT) {
 	 if (HAVE_HW_DIVIDE && CHECK_HW_DIVIDE) {
 	    GLfloat oow = 1.0 / src->v.w;
-	    dst->attrib[FRAG_ATTRIB_WPOS][0] = s[0]  * src->v.x * oow + s[12];
-	    dst->attrib[FRAG_ATTRIB_WPOS][1] = s[5]  * src->v.y * oow + s[13];
-	    dst->attrib[FRAG_ATTRIB_WPOS][2] = s[10] * src->v.z * oow + s[14];
-	    dst->attrib[FRAG_ATTRIB_WPOS][3] = oow;
+	    dst->attrib[VARYING_SLOT_POS][0] = s[0]  * src->v.x * oow + s[12];
+	    dst->attrib[VARYING_SLOT_POS][1] = s[5]  * src->v.y * oow + s[13];
+	    dst->attrib[VARYING_SLOT_POS][2] = s[10] * src->v.z * oow + s[14];
+	    dst->attrib[VARYING_SLOT_POS][3] = oow;
 	 } else {
-	    dst->attrib[FRAG_ATTRIB_WPOS][0] = s[0]  * src->v.x + s[12];
-	    dst->attrib[FRAG_ATTRIB_WPOS][1] = s[5]  * src->v.y + s[13];
-	    dst->attrib[FRAG_ATTRIB_WPOS][2] = s[10] * src->v.z + s[14];
-	    dst->attrib[FRAG_ATTRIB_WPOS][3] = src->v.w;
+	    dst->attrib[VARYING_SLOT_POS][0] = s[0]  * src->v.x + s[12];
+	    dst->attrib[VARYING_SLOT_POS][1] = s[5]  * src->v.y + s[13];
+	    dst->attrib[VARYING_SLOT_POS][2] = s[10] * src->v.z + s[14];
+	    dst->attrib[VARYING_SLOT_POS][3] = src->v.w;
 	 }
       } else {
-	 dst->attrib[FRAG_ATTRIB_WPOS][0] = UNVIEWPORT_X( src->v.x );
-	 dst->attrib[FRAG_ATTRIB_WPOS][1] = UNVIEWPORT_Y( src->v.y );
-	 dst->attrib[FRAG_ATTRIB_WPOS][2] = UNVIEWPORT_Z( src->v.z );
-	 dst->attrib[FRAG_ATTRIB_WPOS][3] = src->v.w;
+	 dst->attrib[VARYING_SLOT_POS][0] = UNVIEWPORT_X( src->v.x );
+	 dst->attrib[VARYING_SLOT_POS][1] = UNVIEWPORT_Y( src->v.y );
+	 dst->attrib[VARYING_SLOT_POS][2] = UNVIEWPORT_Z( src->v.z );
+	 dst->attrib[VARYING_SLOT_POS][3] = src->v.w;
       }
 
       dst->color[0] = src->v.color.red;
@@ -131,55 +131,55 @@ void TAG(translate_vertex)(struct gl_context *ctx,
       dst->color[2] = src->v.color.blue;
       dst->color[3] = src->v.color.alpha;
 
-      dst->attrib[FRAG_ATTRIB_COL1][0] = UBYTE_TO_FLOAT(src->v.specular.red);
-      dst->attrib[FRAG_ATTRIB_COL1][1] = UBYTE_TO_FLOAT(src->v.specular.green);
-      dst->attrib[FRAG_ATTRIB_COL1][2] = UBYTE_TO_FLOAT(src->v.specular.blue);
+      dst->attrib[VARYING_SLOT_COL1][0] = UBYTE_TO_FLOAT(src->v.specular.red);
+      dst->attrib[VARYING_SLOT_COL1][1] = UBYTE_TO_FLOAT(src->v.specular.green);
+      dst->attrib[VARYING_SLOT_COL1][2] = UBYTE_TO_FLOAT(src->v.specular.blue);
 
-      dst->attrib[FRAG_ATTRIB_FOGC][0] = UBYTE_TO_FLOAT(src->v.specular.alpha);
+      dst->attrib[VARYING_SLOT_FOGC][0] = UBYTE_TO_FLOAT(src->v.specular.alpha);
 
       if (HAVE_PTEX_VERTICES &&
 	  ((HAVE_TEX2_VERTICES && format == PROJ_TEX3_VERTEX_FORMAT) ||
 	   (format == PROJ_TEX1_VERTEX_FORMAT))) {
 
-	 dst->attrib[FRAG_ATTRIB_TEX0][0] = src->pv.u0;
-	 dst->attrib[FRAG_ATTRIB_TEX0][1] = src->pv.v0;
-	 dst->attrib[FRAG_ATTRIB_TEX0][3] = src->pv.q0;
+	 dst->attrib[VARYING_SLOT_TEX0][0] = src->pv.u0;
+	 dst->attrib[VARYING_SLOT_TEX0][1] = src->pv.v0;
+	 dst->attrib[VARYING_SLOT_TEX0][3] = src->pv.q0;
 
-	 dst->attrib[FRAG_ATTRIB_TEX1][0] = src->pv.u1;
-	 dst->attrib[FRAG_ATTRIB_TEX1][1] = src->pv.v1;
-	 dst->attrib[FRAG_ATTRIB_TEX1][3] = src->pv.q1;
+	 dst->attrib[VARYING_SLOT_TEX1][0] = src->pv.u1;
+	 dst->attrib[VARYING_SLOT_TEX1][1] = src->pv.v1;
+	 dst->attrib[VARYING_SLOT_TEX1][3] = src->pv.q1;
 
 	 if (HAVE_TEX2_VERTICES) {
-	    dst->attrib[FRAG_ATTRIB_TEX2][0] = src->pv.u2;
-	    dst->attrib[FRAG_ATTRIB_TEX2][1] = src->pv.v2;
-	    dst->attrib[FRAG_ATTRIB_TEX2][3] = src->pv.q2;
+	    dst->attrib[VARYING_SLOT_TEX2][0] = src->pv.u2;
+	    dst->attrib[VARYING_SLOT_TEX2][1] = src->pv.v2;
+	    dst->attrib[VARYING_SLOT_TEX2][3] = src->pv.q2;
 	 }
 
 	 if (HAVE_TEX3_VERTICES) {
-	    dst->attrib[FRAG_ATTRIB_TEX3][0] = src->pv.u3;
-	    dst->attrib[FRAG_ATTRIB_TEX3][1] = src->pv.v3;
-	    dst->attrib[FRAG_ATTRIB_TEX3][3] = src->pv.q3;
+	    dst->attrib[VARYING_SLOT_TEX3][0] = src->pv.u3;
+	    dst->attrib[VARYING_SLOT_TEX3][1] = src->pv.v3;
+	    dst->attrib[VARYING_SLOT_TEX3][3] = src->pv.q3;
 	 }
       }
       else {
-	 dst->attrib[FRAG_ATTRIB_TEX0][0] = src->v.u0;
-	 dst->attrib[FRAG_ATTRIB_TEX0][1] = src->v.v0;
-	 dst->attrib[FRAG_ATTRIB_TEX0][3] = 1.0;
+	 dst->attrib[VARYING_SLOT_TEX0][0] = src->v.u0;
+	 dst->attrib[VARYING_SLOT_TEX0][1] = src->v.v0;
+	 dst->attrib[VARYING_SLOT_TEX0][3] = 1.0;
 
-	 dst->attrib[FRAG_ATTRIB_TEX1][0] = src->v.u1;
-	 dst->attrib[FRAG_ATTRIB_TEX1][1] = src->v.v1;
-	 dst->attrib[FRAG_ATTRIB_TEX1][3] = 1.0;
+	 dst->attrib[VARYING_SLOT_TEX1][0] = src->v.u1;
+	 dst->attrib[VARYING_SLOT_TEX1][1] = src->v.v1;
+	 dst->attrib[VARYING_SLOT_TEX1][3] = 1.0;
 
 	 if (HAVE_TEX2_VERTICES) {
-	    dst->attrib[FRAG_ATTRIB_TEX2][0] = src->v.u2;
-	    dst->attrib[FRAG_ATTRIB_TEX2][1] = src->v.v2;
-	    dst->attrib[FRAG_ATTRIB_TEX2][3] = 1.0;
+	    dst->attrib[VARYING_SLOT_TEX2][0] = src->v.u2;
+	    dst->attrib[VARYING_SLOT_TEX2][1] = src->v.v2;
+	    dst->attrib[VARYING_SLOT_TEX2][3] = 1.0;
 	 }
 
 	 if (HAVE_TEX3_VERTICES) {
-	    dst->attrib[FRAG_ATTRIB_TEX3][0] = src->v.u3;
-	    dst->attrib[FRAG_ATTRIB_TEX3][1] = src->v.v3;
-	    dst->attrib[FRAG_ATTRIB_TEX3][3] = 1.0;
+	    dst->attrib[VARYING_SLOT_TEX3][0] = src->v.u3;
+	    dst->attrib[VARYING_SLOT_TEX3][1] = src->v.v3;
+	    dst->attrib[VARYING_SLOT_TEX3][3] = 1.0;
 	 }
       }
    }

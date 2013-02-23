@@ -1553,7 +1553,7 @@ ir_variable::determine_interpolation_mode(bool flat_shade)
       return (glsl_interp_qualifier) this->interpolation;
    int location = this->location;
    bool is_gl_Color =
-      location == FRAG_ATTRIB_COL0 || location == FRAG_ATTRIB_COL1;
+      location == VARYING_SLOT_COL0 || location == VARYING_SLOT_COL1;
    if (flat_shade && is_gl_Color)
       return INTERP_QUALIFIER_FLAT;
    else

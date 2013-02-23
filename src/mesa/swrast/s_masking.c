@@ -90,7 +90,7 @@ _swrast_mask_rgba_span(struct gl_context *ctx, struct gl_renderbuffer *rb,
       const GLuint bMask = ctx->Color.ColorMask[buf][BCOMP] ? ~0x0 : 0x0;
       const GLuint aMask = ctx->Color.ColorMask[buf][ACOMP] ? ~0x0 : 0x0;
       const GLuint (*dst)[4] = (const GLuint (*)[4]) rbPixels;
-      GLuint (*src)[4] = (GLuint (*)[4]) span->array->attribs[FRAG_ATTRIB_COL0];
+      GLuint (*src)[4] = (GLuint (*)[4]) span->array->attribs[VARYING_SLOT_COL0];
       GLuint i;
       for (i = 0; i < n; i++) {
          src[i][RCOMP] = (src[i][RCOMP] & rMask) | (dst[i][RCOMP] & ~rMask);

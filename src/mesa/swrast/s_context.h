@@ -224,13 +224,13 @@ typedef struct
    GLboolean _DeferredTexture;
 
    /** List/array of the fragment attributes to interpolate */
-   GLuint _ActiveAttribs[FRAG_ATTRIB_MAX];
-   /** Same info, but as a bitmask of FRAG_BIT_x bits */
+   GLuint _ActiveAttribs[VARYING_SLOT_MAX];
+   /** Same info, but as a bitmask of VARYING_BIT_x bits */
    GLbitfield64 _ActiveAttribMask;
    /** Number of fragment attributes to interpolate */
    GLuint _NumActiveAttribs;
    /** Indicates how each attrib is to be interpolated (lines/tris) */
-   GLenum _InterpMode[FRAG_ATTRIB_MAX]; /* GL_FLAT or GL_SMOOTH (for now) */
+   GLenum _InterpMode[VARYING_SLOT_MAX]; /* GL_FLAT or GL_SMOOTH (for now) */
 
    /* Working values:
     */

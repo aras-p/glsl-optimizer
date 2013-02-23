@@ -52,13 +52,13 @@ static const builtin_variable builtin_core_vs_variables[] = {
 };
 
 static const builtin_variable builtin_core_fs_variables[] = {
-   { ir_var_shader_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord" },
-   { ir_var_shader_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing" },
+   { ir_var_shader_in,  VARYING_SLOT_POS,  "vec4",  "gl_FragCoord" },
+   { ir_var_shader_in,  VARYING_SLOT_FACE, "bool",  "gl_FrontFacing" },
    { ir_var_shader_out, FRAG_RESULT_COLOR, "vec4",  "gl_FragColor" },
 };
 
 static const builtin_variable builtin_100ES_fs_variables[] = {
-   { ir_var_shader_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+   { ir_var_shader_in,  VARYING_SLOT_PNTC,   "vec2",   "gl_PointCoord" },
 };
 
 static const builtin_variable builtin_300ES_vs_variables[] = {
@@ -66,10 +66,10 @@ static const builtin_variable builtin_300ES_vs_variables[] = {
 };
 
 static const builtin_variable builtin_300ES_fs_variables[] = {
-   { ir_var_shader_in,  FRAG_ATTRIB_WPOS,  "vec4",  "gl_FragCoord" },
-   { ir_var_shader_in,  FRAG_ATTRIB_FACE,  "bool",  "gl_FrontFacing" },
+   { ir_var_shader_in,  VARYING_SLOT_POS,  "vec4",  "gl_FragCoord" },
+   { ir_var_shader_in,  VARYING_SLOT_FACE, "bool",  "gl_FrontFacing" },
    { ir_var_shader_out, FRAG_RESULT_DEPTH, "float", "gl_FragDepth" },
-   { ir_var_shader_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+   { ir_var_shader_in,  VARYING_SLOT_PNTC, "vec2",  "gl_PointCoord" },
 };
 
 static const builtin_variable builtin_110_fs_variables[] = {
@@ -77,9 +77,9 @@ static const builtin_variable builtin_110_fs_variables[] = {
 };
 
 static const builtin_variable builtin_110_deprecated_fs_variables[] = {
-   { ir_var_shader_in,  FRAG_ATTRIB_COL0,  "vec4",  "gl_Color" },
-   { ir_var_shader_in,  FRAG_ATTRIB_COL1,  "vec4",  "gl_SecondaryColor" },
-   { ir_var_shader_in,  FRAG_ATTRIB_FOGC,  "float", "gl_FogFragCoord" },
+   { ir_var_shader_in,  VARYING_SLOT_COL0,  "vec4",  "gl_Color" },
+   { ir_var_shader_in,  VARYING_SLOT_COL1,  "vec4",  "gl_SecondaryColor" },
+   { ir_var_shader_in,  VARYING_SLOT_FOGC,  "float", "gl_FogFragCoord" },
 };
 
 static const builtin_variable builtin_110_deprecated_vs_variables[] = {
@@ -105,7 +105,7 @@ static const builtin_variable builtin_110_deprecated_vs_variables[] = {
 };
 
 static const builtin_variable builtin_120_fs_variables[] = {
-   { ir_var_shader_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+   { ir_var_shader_in,  VARYING_SLOT_PNTC,   "vec2",   "gl_PointCoord" },
 };
 
 static const builtin_variable builtin_130_vs_variables[] = {
@@ -681,7 +681,7 @@ generate_110_uniforms(exec_list *instructions,
       glsl_type::get_array_instance(glsl_type::vec4_type, VERT_ATTRIB_MAX);
    add_uniform(instructions, symtab, "gl_CurrentAttribVertMESA", vert_attribs);
    const glsl_type *const frag_attribs =
-      glsl_type::get_array_instance(glsl_type::vec4_type, FRAG_ATTRIB_MAX);
+      glsl_type::get_array_instance(glsl_type::vec4_type, VARYING_SLOT_MAX);
    add_uniform(instructions, symtab, "gl_CurrentAttribFragMESA", frag_attribs);
 }
 
@@ -942,7 +942,7 @@ generate_110_fs_variables(exec_list *instructions,
 
    add_variable(instructions, state->symbols,
 		"gl_TexCoord", vec4_array_type, ir_var_shader_in,
-                FRAG_ATTRIB_TEX0);
+                VARYING_SLOT_TEX0);
 
    generate_ARB_draw_buffers_variables(instructions, state, false,
 				       fragment_shader);
@@ -1089,7 +1089,7 @@ generate_fs_clipdistance(exec_list *instructions,
 
    add_variable(instructions, state->symbols,
 		"gl_ClipDistance", clip_distance_array_type, ir_var_shader_in,
-                FRAG_ATTRIB_CLIP_DIST0);
+                VARYING_SLOT_CLIP_DIST0);
 }
 
 static void

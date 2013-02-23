@@ -150,7 +150,7 @@ brw_upload_wm_unit(struct brw_context *brw)
 
    /* BRW_NEW_FRAGMENT_PROGRAM */
    wm->wm5.program_uses_depth = (fp->Base.InputsRead &
-				 (1 << FRAG_ATTRIB_WPOS)) != 0;
+				 (1 << VARYING_SLOT_POS)) != 0;
    wm->wm5.program_computes_depth = (fp->Base.OutputsWritten &
 				     BITFIELD64_BIT(FRAG_RESULT_DEPTH)) != 0;
    /* _NEW_BUFFERS

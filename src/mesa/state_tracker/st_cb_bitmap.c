@@ -139,7 +139,7 @@ make_bitmap_fragment_program(struct gl_context *ctx, GLuint samplerIndex)
    p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
    p->Instructions[ic].DstReg.Index = 0;
    p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
-   p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
+   p->Instructions[ic].SrcReg[0].Index = VARYING_SLOT_TEX0;
    p->Instructions[ic].TexSrcUnit = samplerIndex;
    p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
    ic++;
@@ -160,7 +160,7 @@ make_bitmap_fragment_program(struct gl_context *ctx, GLuint samplerIndex)
 
    assert(ic == p->NumInstructions);
 
-   p->InputsRead = FRAG_BIT_TEX0;
+   p->InputsRead = VARYING_BIT_TEX0;
    p->OutputsWritten = 0x0;
    p->SamplersUsed = (1 << samplerIndex);
 

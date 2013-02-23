@@ -148,7 +148,7 @@ public:
    explicit st_src_reg(st_dst_reg reg);
 
    gl_register_file file; /**< PROGRAM_* from Mesa */
-   int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
+   int index; /**< temporary index, VERT_ATTRIB_*, VARYING_SLOT_*, etc. */
    int index2D;
    GLuint swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
    int negate; /**< NEGATE_XYZW mask from mesa */
@@ -182,7 +182,7 @@ public:
    explicit st_dst_reg(st_src_reg reg);
 
    gl_register_file file; /**< PROGRAM_* from Mesa */
-   int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
+   int index; /**< temporary index, VERT_ATTRIB_*, VARYING_SLOT_*, etc. */
    int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
    GLuint cond_mask:4;
    int type; /** GLSL_TYPE_* from GLSL IR (enum glsl_base_type) */
@@ -3830,14 +3830,14 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
     * Get initial pixel color from the texture.
     * TEX colorTemp, fragment.texcoord[0], texture[0], 2D;
     */
-   coord = st_src_reg(PROGRAM_INPUT, FRAG_ATTRIB_TEX0, glsl_type::vec2_type);
+   coord = st_src_reg(PROGRAM_INPUT, VARYING_SLOT_TEX0, glsl_type::vec2_type);
    src0 = v->get_temp(glsl_type::vec4_type);
    dst0 = st_dst_reg(src0);
    inst = v->emit(NULL, TGSI_OPCODE_TEX, dst0, coord);
    inst->sampler = 0;
    inst->tex_target = TEXTURE_2D_INDEX;
 
-   prog->InputsRead |= FRAG_BIT_TEX0;
+   prog->InputsRead |= VARYING_BIT_TEX0;
    prog->SamplersUsed |= (1 << 0); /* mark sampler 0 as used */
    v->samplers_used |= (1 << 0);
 
@@ -3903,7 +3903,7 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
       for (int i=0; i<3; i++) {
          src_regs[i] = inst->src[i];
          if (src_regs[i].file == PROGRAM_INPUT &&
-             src_regs[i].index == FRAG_ATTRIB_COL0)
+             src_regs[i].index == VARYING_SLOT_COL0)
          {
             src_regs[i].file = PROGRAM_TEMPORARY;
             src_regs[i].index = src0.index;
@@ -3958,14 +3958,14 @@ get_bitmap_visitor(struct st_fragment_program *fp,
    v->num_immediates = original->num_immediates;
 
    /* TEX tmp0, fragment.texcoord[0], texture[0], 2D; */
-   coord = st_src_reg(PROGRAM_INPUT, FRAG_ATTRIB_TEX0, glsl_type::vec2_type);
+   coord = st_src_reg(PROGRAM_INPUT, VARYING_SLOT_TEX0, glsl_type::vec2_type);
    src0 = v->get_temp(glsl_type::vec4_type);
    dst0 = st_dst_reg(src0);
    inst = v->emit(NULL, TGSI_OPCODE_TEX, dst0, coord);
    inst->sampler = samplerIndex;
    inst->tex_target = TEXTURE_2D_INDEX;
 
-   prog->InputsRead |= FRAG_BIT_TEX0;
+   prog->InputsRead |= VARYING_BIT_TEX0;
    prog->SamplersUsed |= (1 << samplerIndex); /* mark sampler as used */
    v->samplers_used |= (1 << samplerIndex);
 
@@ -4441,7 +4441,7 @@ emit_wpos_adjustment( struct st_translate *t,
 
    struct ureg_src wpostrans = ureg_DECL_constant( ureg, wposTransConst );
    struct ureg_dst wpos_temp = ureg_DECL_temporary( ureg );
-   struct ureg_src wpos_input = t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]];
+   struct ureg_src wpos_input = t->inputs[t->inputMapping[VARYING_SLOT_POS]];
 
    /* First, apply the coordinate shift: */
    if (adjX || adjY[0] || adjY[1]) {
@@ -4492,7 +4492,7 @@ emit_wpos_adjustment( struct st_translate *t,
 
    /* Use wpos_temp as position input from here on:
     */
-   t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]] = ureg_src(wpos_temp);
+   t->inputs[t->inputMapping[VARYING_SLOT_POS]] = ureg_src(wpos_temp);
 }
 
 
@@ -4610,14 +4610,14 @@ emit_face_var(struct st_translate *t)
 {
    struct ureg_program *ureg = t->ureg;
    struct ureg_dst face_temp = ureg_DECL_temporary(ureg);
-   struct ureg_src face_input = t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]];
+   struct ureg_src face_input = t->inputs[t->inputMapping[VARYING_SLOT_FACE]];
 
    /* MOV_SAT face_temp, input[face] */
    face_temp = ureg_saturate(face_temp);
    ureg_MOV(ureg, face_temp, face_input);
 
    /* Use face_temp as face input from here on: */
-   t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]] = ureg_src(face_temp);
+   t->inputs[t->inputMapping[VARYING_SLOT_FACE]] = ureg_src(face_temp);
 }
 
 static void
@@ -4710,14 +4710,14 @@ st_translate_program(
                                                         is_centroid[i]);
       }
 
-      if (proginfo->InputsRead & FRAG_BIT_WPOS) {
+      if (proginfo->InputsRead & VARYING_BIT_POS) {
          /* Must do this after setting up t->inputs, and before
           * emitting constant references, below:
           */
           emit_wpos(st_context(ctx), t, proginfo, ureg);
       }
 
-      if (proginfo->InputsRead & FRAG_BIT_FACE)
+      if (proginfo->InputsRead & VARYING_BIT_FACE)
          emit_face_var(t);
 
       /*

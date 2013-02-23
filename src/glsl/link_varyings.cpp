@@ -604,8 +604,8 @@ private:
       /**
        * The location which has been assigned for this varying.  This is
        * expressed in multiples of a float, with the first generic varying
-       * (i.e. the one referred to by VARYING_SLOT_VAR0 or FRAG_ATTRIB_VAR0)
-       * represented by the value 0.
+       * (i.e. the one referred to by VARYING_SLOT_VAR0) represented by the
+       * value 0.
        */
       unsigned generic_location;
    } *matches;
@@ -842,9 +842,9 @@ is_varying_var(GLenum shaderType, const ir_variable *var)
    if (shaderType == GL_FRAGMENT_SHADER &&
        var->mode == ir_var_shader_in) {
       switch (var->location) {
-      case FRAG_ATTRIB_WPOS:
-      case FRAG_ATTRIB_FACE:
-      case FRAG_ATTRIB_PNTC:
+      case VARYING_SLOT_POS:
+      case VARYING_SLOT_FACE:
+      case VARYING_SLOT_PNTC:
          return false;
       default:
          return true;
@@ -958,9 +958,8 @@ assign_varying_locations(struct gl_context *ctx,
                          unsigned num_tfeedback_decls,
                          tfeedback_decl *tfeedback_decls)
 {
-   /* FINISHME: Set dynamically when geometry shader support is added. */
    const unsigned producer_base = VARYING_SLOT_VAR0;
-   const unsigned consumer_base = FRAG_ATTRIB_VAR0;
+   const unsigned consumer_base = VARYING_SLOT_VAR0;
    varying_matches matches(ctx->Const.DisableVaryingPacking);
    hash_table *tfeedback_candidates
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);

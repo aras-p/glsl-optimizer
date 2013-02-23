@@ -344,7 +344,6 @@ dummy_enum_func(void)
 {
    gl_buffer_index bi = BUFFER_FRONT_LEFT;
    gl_face_index fi = FACE_POS_X;
-   gl_frag_attrib fa = FRAG_ATTRIB_WPOS;
    gl_frag_result fr = FRAG_RESULT_DEPTH;
    gl_texture_index ti = TEXTURE_2D_ARRAY_INDEX;
    gl_vert_attrib va = VERT_ATTRIB_POS;
@@ -352,7 +351,6 @@ dummy_enum_func(void)
 
    (void) bi;
    (void) fi;
-   (void) fa;
    (void) fr;
    (void) ti;
    (void) va;
@@ -675,7 +673,7 @@ check_context_limits(struct gl_context *ctx)
    /* check that we don't exceed the size of various bitfields */
    assert(VARYING_SLOT_MAX <=
 	  (8 * sizeof(ctx->VertexProgram._Current->Base.OutputsWritten)));
-   assert(FRAG_ATTRIB_MAX <=
+   assert(VARYING_SLOT_MAX <=
 	  (8 * sizeof(ctx->FragmentProgram._Current->Base.InputsRead)));
 
    assert(MAX_COMBINED_TEXTURE_IMAGE_UNITS <= 8 * sizeof(GLbitfield));

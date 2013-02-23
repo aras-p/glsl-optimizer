@@ -286,32 +286,6 @@ typedef enum
 /*********************************************/
 
 /**
- * Indexes for fragment program input attributes.
- */
-typedef enum
-{
-   FRAG_ATTRIB_WPOS = VARYING_SLOT_POS,
-   FRAG_ATTRIB_COL0 = VARYING_SLOT_COL0,
-   FRAG_ATTRIB_COL1 = VARYING_SLOT_COL1,
-   FRAG_ATTRIB_FOGC = VARYING_SLOT_FOGC,
-   FRAG_ATTRIB_TEX0 = VARYING_SLOT_TEX0,
-   FRAG_ATTRIB_TEX1 = VARYING_SLOT_TEX1,
-   FRAG_ATTRIB_TEX2 = VARYING_SLOT_TEX2,
-   FRAG_ATTRIB_TEX3 = VARYING_SLOT_TEX3,
-   FRAG_ATTRIB_TEX4 = VARYING_SLOT_TEX4,
-   FRAG_ATTRIB_TEX5 = VARYING_SLOT_TEX5,
-   FRAG_ATTRIB_TEX6 = VARYING_SLOT_TEX6,
-   FRAG_ATTRIB_TEX7 = VARYING_SLOT_TEX7,
-   FRAG_ATTRIB_FACE = VARYING_SLOT_FACE,  /**< front/back face */
-   FRAG_ATTRIB_PNTC = VARYING_SLOT_PNTC,  /**< sprite/point coord */
-   FRAG_ATTRIB_CLIP_DIST0 = VARYING_SLOT_CLIP_DIST0,
-   FRAG_ATTRIB_CLIP_DIST1 = VARYING_SLOT_CLIP_DIST1,
-   FRAG_ATTRIB_VAR0 = VARYING_SLOT_VAR0,  /**< shader varying */
-   FRAG_ATTRIB_MAX = VARYING_SLOT_MAX
-} gl_frag_attrib;
-
-
-/**
  * Determine if the given gl_varying_slot appears in the fragment shader.
  */
 static inline GLboolean
@@ -329,40 +303,6 @@ _mesa_varying_slot_in_fs(gl_varying_slot slot)
       return GL_TRUE;
    }
 }
-
-
-/**
- * Bitflags for fragment program input attributes.
- */
-/*@{*/
-#define FRAG_BIT_WPOS  (1 << FRAG_ATTRIB_WPOS)
-#define FRAG_BIT_COL0  (1 << FRAG_ATTRIB_COL0)
-#define FRAG_BIT_COL1  (1 << FRAG_ATTRIB_COL1)
-#define FRAG_BIT_FOGC  (1 << FRAG_ATTRIB_FOGC)
-#define FRAG_BIT_FACE  (1 << FRAG_ATTRIB_FACE)
-#define FRAG_BIT_PNTC  (1 << FRAG_ATTRIB_PNTC)
-#define FRAG_BIT_TEX0  (1 << FRAG_ATTRIB_TEX0)
-#define FRAG_BIT_TEX1  (1 << FRAG_ATTRIB_TEX1)
-#define FRAG_BIT_TEX2  (1 << FRAG_ATTRIB_TEX2)
-#define FRAG_BIT_TEX3  (1 << FRAG_ATTRIB_TEX3)
-#define FRAG_BIT_TEX4  (1 << FRAG_ATTRIB_TEX4)
-#define FRAG_BIT_TEX5  (1 << FRAG_ATTRIB_TEX5)
-#define FRAG_BIT_TEX6  (1 << FRAG_ATTRIB_TEX6)
-#define FRAG_BIT_TEX7  (1 << FRAG_ATTRIB_TEX7)
-#define FRAG_BIT_VAR0  (1 << FRAG_ATTRIB_VAR0)
-
-#define FRAG_BIT_TEX(U)  (FRAG_BIT_TEX0 << (U))
-#define FRAG_BIT_VAR(V)  (FRAG_BIT_VAR0 << (V))
-
-#define FRAG_BITS_TEX_ANY (FRAG_BIT_TEX0|	\
-			   FRAG_BIT_TEX1|	\
-			   FRAG_BIT_TEX2|	\
-			   FRAG_BIT_TEX3|	\
-			   FRAG_BIT_TEX4|	\
-			   FRAG_BIT_TEX5|	\
-			   FRAG_BIT_TEX6|	\
-			   FRAG_BIT_TEX7)
-/*@}*/
 
 
 /**
@@ -2016,7 +1956,7 @@ struct gl_fragment_program
     * For inputs that do not have an interpolation qualifier specified in
     * GLSL, the value is INTERP_QUALIFIER_NONE.
     */
-   enum glsl_interp_qualifier InterpQualifier[FRAG_ATTRIB_MAX];
+   enum glsl_interp_qualifier InterpQualifier[VARYING_SLOT_MAX];
 
    /**
     * Bitfield indicating, for each fragment shader input, 1 if that input

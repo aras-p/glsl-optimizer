@@ -87,7 +87,7 @@ is_passthrough_program(const struct gl_fragment_program *prog)
           inst[0].DstReg.Index == FRAG_RESULT_COLOR &&
           inst[0].DstReg.WriteMask == WRITEMASK_XYZW &&
           inst[0].SrcReg[0].File == PROGRAM_INPUT &&
-          inst[0].SrcReg[0].Index == FRAG_ATTRIB_COL0 &&
+          inst[0].SrcReg[0].Index == VARYING_SLOT_COL0 &&
           inst[0].SrcReg[0].Swizzle == SWIZZLE_XYZW) {
          return GL_TRUE;
       }
@@ -233,7 +233,7 @@ st_make_drawpix_z_stencil_program(struct st_context *st,
       p->Instructions[ic].DstReg.Index = FRAG_RESULT_DEPTH;
       p->Instructions[ic].DstReg.WriteMask = WRITEMASK_Z;
       p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
-      p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
+      p->Instructions[ic].SrcReg[0].Index = VARYING_SLOT_TEX0;
       p->Instructions[ic].TexSrcUnit = 0;
       p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
       ic++;
@@ -242,7 +242,7 @@ st_make_drawpix_z_stencil_program(struct st_context *st,
       p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
       p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLOR;
       p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
-      p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_COL0;
+      p->Instructions[ic].SrcReg[0].Index = VARYING_SLOT_COL0;
       ic++;
    }
 
@@ -253,7 +253,7 @@ st_make_drawpix_z_stencil_program(struct st_context *st,
       p->Instructions[ic].DstReg.Index = FRAG_RESULT_STENCIL;
       p->Instructions[ic].DstReg.WriteMask = WRITEMASK_Y;
       p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
-      p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
+      p->Instructions[ic].SrcReg[0].Index = VARYING_SLOT_TEX0;
       p->Instructions[ic].TexSrcUnit = 1;
       p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
       ic++;
@@ -264,7 +264,7 @@ st_make_drawpix_z_stencil_program(struct st_context *st,
 
    assert(ic == p->NumInstructions);
 
-   p->InputsRead = FRAG_BIT_TEX0 | FRAG_BIT_COL0;
+   p->InputsRead = VARYING_BIT_TEX0 | VARYING_BIT_COL0;
    p->OutputsWritten = 0;
    if (write_depth) {
       p->OutputsWritten |= BITFIELD64_BIT(FRAG_RESULT_DEPTH);

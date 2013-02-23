@@ -165,7 +165,7 @@ static void make_state_key( struct gl_context *ctx, struct state_key *key )
 
    if (ctx->RenderMode == GL_FEEDBACK) {
       /* make sure the vertprog emits color and tex0 */
-      key->fragprog_inputs_read |= (FRAG_BIT_COL0 | FRAG_BIT_TEX0);
+      key->fragprog_inputs_read |= (VARYING_BIT_COL0 | VARYING_BIT_TEX0);
    }
 
    key->separate_specular = (ctx->Light.Model.ColorControl ==
@@ -1407,7 +1407,7 @@ static void build_texture_transform( struct tnl_program *p )
 
    for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
 
-      if (!(p->state->fragprog_inputs_read & FRAG_BIT_TEX(i)))
+      if (!(p->state->fragprog_inputs_read & VARYING_BIT_TEX(i)))
 	 continue;
 
       if (p->state->unit[i].coord_replace)
@@ -1575,22 +1575,22 @@ static void build_tnl_program( struct tnl_program *p )
 
    /* Lighting calculations:
     */
-   if (p->state->fragprog_inputs_read & (FRAG_BIT_COL0|FRAG_BIT_COL1)) {
+   if (p->state->fragprog_inputs_read & (VARYING_BIT_COL0|VARYING_BIT_COL1)) {
       if (p->state->light_global_enabled)
 	 build_lighting(p);
       else {
-	 if (p->state->fragprog_inputs_read & FRAG_BIT_COL0)
+	 if (p->state->fragprog_inputs_read & VARYING_BIT_COL0)
 	    emit_passthrough(p, VERT_ATTRIB_COLOR0, VARYING_SLOT_COL0);
 
-	 if (p->state->fragprog_inputs_read & FRAG_BIT_COL1)
+	 if (p->state->fragprog_inputs_read & VARYING_BIT_COL1)
 	    emit_passthrough(p, VERT_ATTRIB_COLOR1, VARYING_SLOT_COL1);
       }
    }
 
-   if (p->state->fragprog_inputs_read & FRAG_BIT_FOGC)
+   if (p->state->fragprog_inputs_read & VARYING_BIT_FOGC)
       build_fog(p);
 
-   if (p->state->fragprog_inputs_read & FRAG_BITS_TEX_ANY)
+   if (p->state->fragprog_inputs_read & VARYING_BITS_TEX_ANY)
       build_texture_transform(p);
 
    if (p->state->point_attenuated)

@@ -37,13 +37,13 @@ static void
 feedback_vertex(struct gl_context * ctx, const SWvertex * v, const SWvertex * pv)
 {
    GLfloat win[4];
-   const GLfloat *vtc = v->attrib[FRAG_ATTRIB_TEX0];
-   const GLfloat *color = v->attrib[FRAG_ATTRIB_COL0];
+   const GLfloat *vtc = v->attrib[VARYING_SLOT_TEX0];
+   const GLfloat *color = v->attrib[VARYING_SLOT_COL0];
 
-   win[0] = v->attrib[FRAG_ATTRIB_WPOS][0];
-   win[1] = v->attrib[FRAG_ATTRIB_WPOS][1];
-   win[2] = v->attrib[FRAG_ATTRIB_WPOS][2] / ctx->DrawBuffer->_DepthMaxF;
-   win[3] = 1.0F / v->attrib[FRAG_ATTRIB_WPOS][3];
+   win[0] = v->attrib[VARYING_SLOT_POS][0];
+   win[1] = v->attrib[VARYING_SLOT_POS][1];
+   win[2] = v->attrib[VARYING_SLOT_POS][2] / ctx->DrawBuffer->_DepthMaxF;
+   win[3] = 1.0F / v->attrib[VARYING_SLOT_POS][3];
 
    _mesa_feedback_vertex(ctx, win, color, vtc);
 }
@@ -114,9 +114,9 @@ _swrast_select_triangle(struct gl_context *ctx, const SWvertex *v0,
    if (!_swrast_culltriangle(ctx, v0, v1, v2)) {
       const GLfloat zs = 1.0F / ctx->DrawBuffer->_DepthMaxF;
 
-      _mesa_update_hitflag( ctx, v0->attrib[FRAG_ATTRIB_WPOS][2] * zs );
-      _mesa_update_hitflag( ctx, v1->attrib[FRAG_ATTRIB_WPOS][2] * zs );
-      _mesa_update_hitflag( ctx, v2->attrib[FRAG_ATTRIB_WPOS][2] * zs );
+      _mesa_update_hitflag( ctx, v0->attrib[VARYING_SLOT_POS][2] * zs );
+      _mesa_update_hitflag( ctx, v1->attrib[VARYING_SLOT_POS][2] * zs );
+      _mesa_update_hitflag( ctx, v2->attrib[VARYING_SLOT_POS][2] * zs );
    }
 }
 
@@ -125,8 +125,8 @@ void
 _swrast_select_line(struct gl_context *ctx, const SWvertex *v0, const SWvertex *v1)
 {
    const GLfloat zs = 1.0F / ctx->DrawBuffer->_DepthMaxF;
-   _mesa_update_hitflag( ctx, v0->attrib[FRAG_ATTRIB_WPOS][2] * zs );
-   _mesa_update_hitflag( ctx, v1->attrib[FRAG_ATTRIB_WPOS][2] * zs );
+   _mesa_update_hitflag( ctx, v0->attrib[VARYING_SLOT_POS][2] * zs );
+   _mesa_update_hitflag( ctx, v1->attrib[VARYING_SLOT_POS][2] * zs );
 }
 
 
@@ -134,5 +134,5 @@ void
 _swrast_select_point(struct gl_context *ctx, const SWvertex *v)
 {
    const GLfloat zs = 1.0F / ctx->DrawBuffer->_DepthMaxF;
-   _mesa_update_hitflag( ctx, v->attrib[FRAG_ATTRIB_WPOS][2] * zs );
+   _mesa_update_hitflag( ctx, v->attrib[VARYING_SLOT_POS][2] * zs );
 }

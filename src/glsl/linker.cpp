@@ -1783,7 +1783,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL) {
       link_invalidate_variable_locations(
             prog->_LinkedShaders[MESA_SHADER_FRAGMENT],
-            FRAG_ATTRIB_VAR0, FRAG_RESULT_DATA0);
+            VARYING_SLOT_VAR0, FRAG_RESULT_DATA0);
    }
 
    /* FINISHME: The value of the max_attribute_index parameter is

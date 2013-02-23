@@ -248,7 +248,7 @@ handle_pass_op(struct atifs_machine *machine, struct atifs_setupinst *texinst,
    if (pass_tex >= GL_TEXTURE0_ARB && pass_tex <= GL_TEXTURE7_ARB) {
       pass_tex -= GL_TEXTURE0_ARB;
       COPY_4V(machine->Registers[idx],
-	      span->array->attribs[FRAG_ATTRIB_TEX0 + pass_tex][column]);
+	      span->array->attribs[VARYING_SLOT_TEX0 + pass_tex][column]);
    }
    else if (pass_tex >= GL_REG_0_ATI && pass_tex <= GL_REG_5_ATI) {
       pass_tex -= GL_REG_0_ATI;
@@ -271,7 +271,7 @@ handle_sample_op(struct gl_context * ctx, struct atifs_machine *machine,
    if (coord_source >= GL_TEXTURE0_ARB && coord_source <= GL_TEXTURE7_ARB) {
       coord_source -= GL_TEXTURE0_ARB;
       COPY_4V(tex_coords,
-              span->array->attribs[FRAG_ATTRIB_TEX0 + coord_source][column]);
+              span->array->attribs[VARYING_SLOT_TEX0 + coord_source][column]);
    }
    else if (coord_source >= GL_REG_0_ATI && coord_source <= GL_REG_5_ATI) {
       coord_source -= GL_REG_0_ATI;
@@ -554,8 +554,8 @@ init_machine(struct gl_context * ctx, struct atifs_machine *machine,
 	 machine->Registers[i][j] = 0.0;
    }
 
-   COPY_4V(inputs[ATI_FS_INPUT_PRIMARY], span->array->attribs[FRAG_ATTRIB_COL0][col]);
-   COPY_4V(inputs[ATI_FS_INPUT_SECONDARY], span->array->attribs[FRAG_ATTRIB_COL1][col]);
+   COPY_4V(inputs[ATI_FS_INPUT_PRIMARY], span->array->attribs[VARYING_SLOT_COL0][col]);
+   COPY_4V(inputs[ATI_FS_INPUT_SECONDARY], span->array->attribs[VARYING_SLOT_COL1][col]);
 }
 
 
@@ -584,7 +584,7 @@ _swrast_exec_fragment_shader(struct gl_context * ctx, SWspan *span)
 	    const GLfloat *colOut = machine.Registers[0];
             /*fprintf(stderr,"outputs %f %f %f %f\n",
               colOut[0], colOut[1], colOut[2], colOut[3]); */
-            COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0][i], colOut);
+            COPY_4V(span->array->attribs[VARYING_SLOT_COL0][i], colOut);
 	 }
       }
    }

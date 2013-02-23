@@ -162,7 +162,7 @@ init_machine(struct gl_context *ctx, struct gl_program_machine *machine,
              const struct gl_fragment_program *program,
              const SWspan *span, GLuint col)
 {
-   GLfloat *wpos = span->array->attribs[FRAG_ATTRIB_WPOS][col];
+   GLfloat *wpos = span->array->attribs[VARYING_SLOT_POS][col];
 
    /* ARB_fragment_coord_conventions */
    if (program->OriginUpperLeft)
@@ -177,14 +177,14 @@ init_machine(struct gl_context *ctx, struct gl_program_machine *machine,
 
    machine->DerivX = (GLfloat (*)[4]) span->attrStepX;
    machine->DerivY = (GLfloat (*)[4]) span->attrStepY;
-   machine->NumDeriv = FRAG_ATTRIB_MAX;
+   machine->NumDeriv = VARYING_SLOT_MAX;
 
    machine->Samplers = program->Base.SamplerUnits;
 
    /* if running a GLSL program (not ARB_fragment_program) */
    if (ctx->Shader.CurrentFragmentProgram) {
       /* Store front/back facing value */
-      machine->Attribs[FRAG_ATTRIB_FACE][col][0] = 1.0F - span->facing;
+      machine->Attribs[VARYING_SLOT_FACE][col][0] = 1.0F - span->facing;
    }
 
    machine->CurElement = col;
@@ -223,7 +223,7 @@ run_program(struct gl_context *ctx, SWspan *span, GLuint start, GLuint end)
 
             /* Store result color */
 	    if (outputsWritten & BITFIELD64_BIT(FRAG_RESULT_COLOR)) {
-               COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0][i],
+               COPY_4V(span->array->attribs[VARYING_SLOT_COL0][i],
                        machine->Outputs[FRAG_RESULT_COLOR]);
             }
             else {
@@ -234,7 +234,7 @@ run_program(struct gl_context *ctx, SWspan *span, GLuint start, GLuint end)
                GLuint buf;
                for (buf = 0; buf < ctx->DrawBuffer->_NumColorDrawBuffers; buf++) {
                   if (outputsWritten & BITFIELD64_BIT(FRAG_RESULT_DATA0 + buf)) {
-                     COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0 + buf][i],
+                     COPY_4V(span->array->attribs[VARYING_SLOT_COL0 + buf][i],
                              machine->Outputs[FRAG_RESULT_DATA0 + buf]);
                   }
                }
@@ -272,7 +272,7 @@ _swrast_exec_fragment_program( struct gl_context *ctx, SWspan *span )
    const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
 
    /* incoming colors should be floats */
-   if (program->Base.InputsRead & FRAG_BIT_COL0) {
+   if (program->Base.InputsRead & VARYING_BIT_COL0) {
       ASSERT(span->array->ChanType == GL_FLOAT);
    }
 

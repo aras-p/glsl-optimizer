@@ -648,9 +648,9 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
       if (texUnit->_ReallyEnabled &&
          texUnit->_CurrentCombine->ModeRGB == GL_BUMP_ENVMAP_ATI) {
          const GLfloat (*texcoords)[4] = (const GLfloat (*)[4])
-            span->array->attribs[FRAG_ATTRIB_TEX0 + unit];
+            span->array->attribs[VARYING_SLOT_TEX0 + unit];
          float4_array targetcoords =
-            span->array->attribs[FRAG_ATTRIB_TEX0 +
+            span->array->attribs[VARYING_SLOT_TEX0 +
                ctx->Texture.Unit[unit].BumpTarget - GL_TEXTURE0];
 
          const struct gl_sampler_object *samp = _mesa_get_samplerobj(ctx, unit);
@@ -714,7 +714,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
       if (texUnit->_ReallyEnabled &&
           texUnit->_CurrentCombine->ModeRGB != GL_BUMP_ENVMAP_ATI) {
          const GLfloat (*texcoords)[4] = (const GLfloat (*)[4])
-            span->array->attribs[FRAG_ATTRIB_TEX0 + unit];
+            span->array->attribs[VARYING_SLOT_TEX0 + unit];
          const struct gl_texture_object *curObj = texUnit->_Current;
          const struct gl_sampler_object *samp = _mesa_get_samplerobj(ctx, unit);
          GLfloat *lambda = span->array->lambda[unit];

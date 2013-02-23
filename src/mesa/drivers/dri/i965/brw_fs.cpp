@@ -953,7 +953,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
       emit(FS_OPCODE_LINTERP, wpos,
            this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
            this->delta_y[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
-           interp_reg(FRAG_ATTRIB_WPOS, 2));
+           interp_reg(VARYING_SLOT_POS, 2));
    }
    wpos.reg_offset++;
 
@@ -1042,8 +1042,8 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 		* attribute, as well as making brw_vs_constval.c
 		* handle varyings other than gl_TexCoord.
 		*/
-	       if (location >= FRAG_ATTRIB_TEX0 &&
-		   location <= FRAG_ATTRIB_TEX7 &&
+	       if (location >= VARYING_SLOT_TEX0 &&
+		   location <= VARYING_SLOT_TEX7 &&
 		   k == 3 && !(c->key.proj_attrib_mask
                                & BITFIELD64_BIT(location))) {
 		  emit(BRW_OPCODE_MOV, attr, fs_reg(1.0f));
@@ -1245,14 +1245,14 @@ fs_visitor::assign_curb_setup()
 void
 fs_visitor::calculate_urb_setup()
 {
-   for (unsigned int i = 0; i < FRAG_ATTRIB_MAX; i++) {
+   for (unsigned int i = 0; i < VARYING_SLOT_MAX; i++) {
       urb_setup[i] = -1;
    }
 
    int urb_next = 0;
    /* Figure out where each of the incoming setup attributes lands. */
    if (intel->gen >= 6) {
-      for (unsigned int i = 0; i < FRAG_ATTRIB_MAX; i++) {
+      for (unsigned int i = 0; i < VARYING_SLOT_MAX; i++) {
 	 if (fp->Base.InputsRead & BITFIELD64_BIT(i)) {
 	    urb_setup[i] = urb_next++;
 	 }
@@ -1283,8 +1283,8 @@ fs_visitor::calculate_urb_setup()
        *
        * See compile_sf_prog() for more info.
        */
-      if (fp->Base.InputsRead & BITFIELD64_BIT(FRAG_ATTRIB_PNTC))
-         urb_setup[FRAG_ATTRIB_PNTC] = urb_next++;
+      if (fp->Base.InputsRead & BITFIELD64_BIT(VARYING_SLOT_PNTC))
+         urb_setup[VARYING_SLOT_PNTC] = urb_next++;
    }
 
    /* Each attribute is 4 setup channels, each of which is half a reg. */
@@ -2690,7 +2690,7 @@ fs_visitor::setup_payload_gen6()
 {
    struct intel_context *intel = &brw->intel;
    bool uses_depth =
-      (fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) != 0;
+      (fp->Base.InputsRead & (1 << VARYING_SLOT_POS)) != 0;
    unsigned barycentric_interp_modes = c->prog_data.barycentric_interp_modes;
 
    assert(intel->gen >= 6);
@@ -2989,9 +2989,9 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
       key.proj_attrib_mask = ~(GLbitfield64) 0;
 
    if (intel->gen < 6)
-      key.vp_outputs_written |= BITFIELD64_BIT(FRAG_ATTRIB_WPOS);
+      key.vp_outputs_written |= BITFIELD64_BIT(VARYING_SLOT_POS);
 
-   for (int i = 0; i < FRAG_ATTRIB_MAX; i++) {
+   for (int i = 0; i < VARYING_SLOT_MAX; i++) {
       if (!(fp->Base.InputsRead & BITFIELD64_BIT(i)))
 	 continue;
 
@@ -3017,11 +3017,11 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
       }
    }
 
-   if (fp->Base.InputsRead & FRAG_BIT_WPOS) {
+   if (fp->Base.InputsRead & VARYING_BIT_POS) {
       key.drawable_height = ctx->DrawBuffer->Height;
    }
 
-   if ((fp->Base.InputsRead & FRAG_BIT_WPOS) || program_uses_dfdy) {
+   if ((fp->Base.InputsRead & VARYING_BIT_POS) || program_uses_dfdy) {
       key.render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    }
 

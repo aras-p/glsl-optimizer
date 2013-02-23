@@ -55,18 +55,18 @@ brw_compute_barycentric_interp_modes(struct brw_context *brw,
     * modes are in use, and set the appropriate bits in
     * barycentric_interp_modes.
     */
-   for (attr = 0; attr < FRAG_ATTRIB_MAX; ++attr) {
+   for (attr = 0; attr < VARYING_SLOT_MAX; ++attr) {
       enum glsl_interp_qualifier interp_qualifier =
          fprog->InterpQualifier[attr];
       bool is_centroid = fprog->IsCentroid & BITFIELD64_BIT(attr);
-      bool is_gl_Color = attr == FRAG_ATTRIB_COL0 || attr == FRAG_ATTRIB_COL1;
+      bool is_gl_Color = attr == VARYING_SLOT_COL0 || attr == VARYING_SLOT_COL1;
 
       /* Ignore unused inputs. */
       if (!(fprog->Base.InputsRead & BITFIELD64_BIT(attr)))
          continue;
 
       /* Ignore WPOS and FACE, because they don't require interpolation. */
-      if (attr == FRAG_ATTRIB_WPOS || attr == FRAG_ATTRIB_FACE)
+      if (attr == VARYING_SLOT_POS || attr == VARYING_SLOT_FACE)
          continue;
 
       /* Determine the set (or sets) of barycentric coordinates needed to
@@ -462,11 +462,11 @@ static void brw_wm_populate_key( struct brw_context *brw,
     * For DRI2 the origin_x/y will always be (0,0) but we still need the
     * drawable height in order to invert the Y axis.
     */
-   if (fp->program.Base.InputsRead & FRAG_BIT_WPOS) {
+   if (fp->program.Base.InputsRead & VARYING_BIT_POS) {
       key->drawable_height = ctx->DrawBuffer->Height;
    }
 
-   if ((fp->program.Base.InputsRead & FRAG_BIT_WPOS) || program_uses_dfdy) {
+   if ((fp->program.Base.InputsRead & VARYING_BIT_POS) || program_uses_dfdy) {
       key->render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
    }
 

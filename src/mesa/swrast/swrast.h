@@ -74,7 +74,7 @@
  * improve its usefulness as a fallback mechanism for hardware
  * drivers.
  *
- * wpos = attr[FRAG_ATTRIB_WPOS] and MUST BE THE FIRST values in the
+ * wpos = attr[VARYING_SLOT_POS] and MUST BE THE FIRST values in the
  * vertex because of the tnl clipping code.
 
  * wpos[0] and [1] are the screen-coords of SWvertex.
@@ -98,13 +98,13 @@
  *     primitives unaccelerated), hook in swrast_setup instead.
  */
 typedef struct {
-   GLfloat attrib[FRAG_ATTRIB_MAX][4];
+   GLfloat attrib[VARYING_SLOT_MAX][4];
    GLchan color[4];   /** integer color */
    GLfloat pointSize;
 } SWvertex;
 
 
-#define FRAG_ATTRIB_CI FRAG_ATTRIB_COL0
+#define VARYING_SLOT_CI VARYING_SLOT_COL0
 
 
 struct swrast_device_driver;

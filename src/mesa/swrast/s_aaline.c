@@ -63,10 +63,10 @@ struct LineInfo
    GLfloat rPlane[4], gPlane[4], bPlane[4], aPlane[4];
    /* DO_ATTRIBS */
    GLfloat wPlane[4];
-   GLfloat attrPlane[FRAG_ATTRIB_MAX][4][4];
-   GLfloat lambda[FRAG_ATTRIB_MAX];
-   GLfloat texWidth[FRAG_ATTRIB_MAX];
-   GLfloat texHeight[FRAG_ATTRIB_MAX];
+   GLfloat attrPlane[VARYING_SLOT_MAX][4][4];
+   GLfloat lambda[VARYING_SLOT_MAX];
+   GLfloat texWidth[VARYING_SLOT_MAX];
+   GLfloat texHeight[VARYING_SLOT_MAX];
 
    SWspan span;
 };

@@ -1187,19 +1187,19 @@ vtxWeightNum: INTEGER;
 
 fragAttribItem: POSITION
 	{
-	   $$ = FRAG_ATTRIB_WPOS;
+	   $$ = VARYING_SLOT_POS;
 	}
 	| COLOR optColorType
 	{
-	   $$ = FRAG_ATTRIB_COL0 + $2;
+	   $$ = VARYING_SLOT_COL0 + $2;
 	}
 	| FOGCOORD
 	{
-	   $$ = FRAG_ATTRIB_FOGC;
+	   $$ = VARYING_SLOT_FOGC;
 	}
 	| TEXCOORD optTexCoordUnitNum
 	{
-	   $$ = FRAG_ATTRIB_TEX0 + $2;
+	   $$ = VARYING_SLOT_TEX0 + $2;
 	}
 	;
 

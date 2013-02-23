@@ -68,10 +68,10 @@ NAME( struct gl_context *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    SWspan span;
    GLuint interpFlags = 0;
-   GLint x0 = (GLint) vert0->attrib[FRAG_ATTRIB_WPOS][0];
-   GLint x1 = (GLint) vert1->attrib[FRAG_ATTRIB_WPOS][0];
-   GLint y0 = (GLint) vert0->attrib[FRAG_ATTRIB_WPOS][1];
-   GLint y1 = (GLint) vert1->attrib[FRAG_ATTRIB_WPOS][1];
+   GLint x0 = (GLint) vert0->attrib[VARYING_SLOT_POS][0];
+   GLint x1 = (GLint) vert1->attrib[VARYING_SLOT_POS][0];
+   GLint y0 = (GLint) vert0->attrib[VARYING_SLOT_POS][1];
+   GLint y1 = (GLint) vert1->attrib[VARYING_SLOT_POS][1];
    GLint dx, dy;
    GLint numPixels;
    GLint xstep, ystep;
@@ -99,8 +99,8 @@ NAME( struct gl_context *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    /* Cull primitives with malformed coordinates.
     */
    {
-      GLfloat tmp = vert0->attrib[FRAG_ATTRIB_WPOS][0] + vert0->attrib[FRAG_ATTRIB_WPOS][1]
-                  + vert1->attrib[FRAG_ATTRIB_WPOS][0] + vert1->attrib[FRAG_ATTRIB_WPOS][1];
+      GLfloat tmp = vert0->attrib[VARYING_SLOT_POS][0] + vert0->attrib[VARYING_SLOT_POS][1]
+                  + vert1->attrib[VARYING_SLOT_POS][0] + vert1->attrib[VARYING_SLOT_POS][1];
       if (IS_INF_OR_NAN(tmp))
 	 return;
    }
@@ -108,12 +108,12 @@ NAME( struct gl_context *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    /*
    printf("%s():\n", __FUNCTION__);
    printf(" (%f, %f, %f) -> (%f, %f, %f)\n",
-          vert0->attrib[FRAG_ATTRIB_WPOS][0],
-          vert0->attrib[FRAG_ATTRIB_WPOS][1],
-          vert0->attrib[FRAG_ATTRIB_WPOS][2],
-          vert1->attrib[FRAG_ATTRIB_WPOS][0],
-          vert1->attrib[FRAG_ATTRIB_WPOS][1],
-          vert1->attrib[FRAG_ATTRIB_WPOS][2]);
+          vert0->attrib[VARYING_SLOT_POS][0],
+          vert0->attrib[VARYING_SLOT_POS][1],
+          vert0->attrib[VARYING_SLOT_POS][2],
+          vert1->attrib[VARYING_SLOT_POS][0],
+          vert1->attrib[VARYING_SLOT_POS][1],
+          vert1->attrib[VARYING_SLOT_POS][2]);
    printf(" (%d, %d, %d) -> (%d, %d, %d)\n",
           vert0->color[0], vert0->color[1], vert0->color[2], 
           vert1->color[0], vert1->color[1], vert1->color[2]);
@@ -155,14 +155,14 @@ NAME( struct gl_context *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 
    /*
    printf("%s %d,%d  %g %g %g %g  %g %g %g %g\n", __FUNCTION__, dx, dy,
-          vert0->attrib[FRAG_ATTRIB_COL1][0],
-          vert0->attrib[FRAG_ATTRIB_COL1][1],
-          vert0->attrib[FRAG_ATTRIB_COL1][2],
-          vert0->attrib[FRAG_ATTRIB_COL1][3],
-          vert1->attrib[FRAG_ATTRIB_COL1][0],
-          vert1->attrib[FRAG_ATTRIB_COL1][1],
-          vert1->attrib[FRAG_ATTRIB_COL1][2],
-          vert1->attrib[FRAG_ATTRIB_COL1][3]);
+          vert0->attrib[VARYING_SLOT_COL1][0],
+          vert0->attrib[VARYING_SLOT_COL1][1],
+          vert0->attrib[VARYING_SLOT_COL1][2],
+          vert0->attrib[VARYING_SLOT_COL1][3],
+          vert1->attrib[VARYING_SLOT_COL1][0],
+          vert1->attrib[VARYING_SLOT_COL1][1],
+          vert1->attrib[VARYING_SLOT_COL1][2],
+          vert1->attrib[VARYING_SLOT_COL1][3]);
    */
 
 #ifdef DEPTH_TYPE
@@ -245,27 +245,27 @@ NAME( struct gl_context *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    interpFlags |= SPAN_Z;
    {
       if (depthBits <= 16) {
-         span.z = FloatToFixed(vert0->attrib[FRAG_ATTRIB_WPOS][2]) + FIXED_HALF;
-         span.zStep = FloatToFixed(  vert1->attrib[FRAG_ATTRIB_WPOS][2]
-                                   - vert0->attrib[FRAG_ATTRIB_WPOS][2]) / numPixels;
+         span.z = FloatToFixed(vert0->attrib[VARYING_SLOT_POS][2]) + FIXED_HALF;
+         span.zStep = FloatToFixed(  vert1->attrib[VARYING_SLOT_POS][2]
+                                   - vert0->attrib[VARYING_SLOT_POS][2]) / numPixels;
       }
       else {
          /* don't use fixed point */
-         span.z = (GLuint) vert0->attrib[FRAG_ATTRIB_WPOS][2];
-         span.zStep = (GLint) ((  vert1->attrib[FRAG_ATTRIB_WPOS][2]
-                                - vert0->attrib[FRAG_ATTRIB_WPOS][2]) / numPixels);
+         span.z = (GLuint) vert0->attrib[VARYING_SLOT_POS][2];
+         span.zStep = (GLint) ((  vert1->attrib[VARYING_SLOT_POS][2]
+                                - vert0->attrib[VARYING_SLOT_POS][2]) / numPixels);
       }
    }
 #endif
 #if defined(INTERP_ATTRIBS)
    {
       const GLfloat invLen = 1.0F / numPixels;
-      const GLfloat invw0 = vert0->attrib[FRAG_ATTRIB_WPOS][3];
-      const GLfloat invw1 = vert1->attrib[FRAG_ATTRIB_WPOS][3];
+      const GLfloat invw0 = vert0->attrib[VARYING_SLOT_POS][3];
+      const GLfloat invw1 = vert1->attrib[VARYING_SLOT_POS][3];
 
-      span.attrStart[FRAG_ATTRIB_WPOS][3] = invw0;
-      span.attrStepX[FRAG_ATTRIB_WPOS][3] = (invw1 - invw0) * invLen;
-      span.attrStepY[FRAG_ATTRIB_WPOS][3] = 0.0;
+      span.attrStart[VARYING_SLOT_POS][3] = invw0;
+      span.attrStepX[VARYING_SLOT_POS][3] = (invw1 - invw0) * invLen;
+      span.attrStepY[VARYING_SLOT_POS][3] = 0.0;
 
       ATTRIB_LOOP_BEGIN
          if (swrast->_InterpMode[attr] == GL_FLAT) {

@@ -108,7 +108,7 @@ get_src_register_pointer(const struct prog_src_register *source,
          return machine->VertAttribs[reg];
       }
       else {
-         if (reg >= FRAG_ATTRIB_MAX)
+         if (reg >= VARYING_SLOT_MAX)
             return ZeroVec;
          return machine->Attribs[reg][machine->CurElement];
       }
@@ -283,7 +283,7 @@ fetch_vector4_deriv(struct gl_context * ctx,
    if (source->File == PROGRAM_INPUT &&
        source->Index < (GLint) machine->NumDeriv) {
       const GLint col = machine->CurElement;
-      const GLfloat w = machine->Attribs[FRAG_ATTRIB_WPOS][col][3];
+      const GLfloat w = machine->Attribs[VARYING_SLOT_POS][col][3];
       const GLfloat invQ = 1.0f / w;
       GLfloat deriv[4];
 
@@ -371,7 +371,7 @@ fetch_texel(struct gl_context *ctx,
     */
    if (machine->NumDeriv > 0 &&
        inst->SrcReg[0].File == PROGRAM_INPUT &&
-       inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0 + inst->TexSrcUnit) {
+       inst->SrcReg[0].Index == VARYING_SLOT_TEX0 + inst->TexSrcUnit) {
       /* simple texture fetch for which we should have derivatives */
       GLuint attr = inst->SrcReg[0].Index;
       machine->FetchTexelDeriv(ctx, texcoord,

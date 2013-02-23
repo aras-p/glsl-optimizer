@@ -50,10 +50,10 @@ static void TAG(triangle)(struct gl_context *ctx, GLuint e0, GLuint e1, GLuint e
 
    if (IND & (SS_TWOSIDE_BIT | SS_OFFSET_BIT | SS_UNFILLED_BIT))
    {
-      GLfloat ex = v[0]->attrib[FRAG_ATTRIB_WPOS][0] - v[2]->attrib[FRAG_ATTRIB_WPOS][0];
-      GLfloat ey = v[0]->attrib[FRAG_ATTRIB_WPOS][1] - v[2]->attrib[FRAG_ATTRIB_WPOS][1];
-      GLfloat fx = v[1]->attrib[FRAG_ATTRIB_WPOS][0] - v[2]->attrib[FRAG_ATTRIB_WPOS][0];
-      GLfloat fy = v[1]->attrib[FRAG_ATTRIB_WPOS][1] - v[2]->attrib[FRAG_ATTRIB_WPOS][1];
+      GLfloat ex = v[0]->attrib[VARYING_SLOT_POS][0] - v[2]->attrib[VARYING_SLOT_POS][0];
+      GLfloat ey = v[0]->attrib[VARYING_SLOT_POS][1] - v[2]->attrib[VARYING_SLOT_POS][1];
+      GLfloat fx = v[1]->attrib[VARYING_SLOT_POS][0] - v[2]->attrib[VARYING_SLOT_POS][0];
+      GLfloat fy = v[1]->attrib[VARYING_SLOT_POS][1] - v[2]->attrib[VARYING_SLOT_POS][1];
       GLfloat cc  = ex*fy - ey*fx;
 
       if (IND & (SS_TWOSIDE_BIT | SS_UNFILLED_BIT))
@@ -74,9 +74,9 @@ static void TAG(triangle)(struct gl_context *ctx, GLuint e0, GLuint e1, GLuint e
                      COPY_CHAN4(saved_color[2], v[2]->color);
                   }
                   else {
-                     COPY_4V(saved_col0[0], v[0]->attrib[FRAG_ATTRIB_COL0]);
-                     COPY_4V(saved_col0[1], v[1]->attrib[FRAG_ATTRIB_COL0]);
-                     COPY_4V(saved_col0[2], v[2]->attrib[FRAG_ATTRIB_COL0]);
+                     COPY_4V(saved_col0[0], v[0]->attrib[VARYING_SLOT_COL0]);
+                     COPY_4V(saved_col0[1], v[1]->attrib[VARYING_SLOT_COL0]);
+                     COPY_4V(saved_col0[2], v[2]->attrib[VARYING_SLOT_COL0]);
                   }
 
                   if (VB->BackfaceColorPtr->stride) {
@@ -86,9 +86,9 @@ static void TAG(triangle)(struct gl_context *ctx, GLuint e0, GLuint e1, GLuint e
                         SS_COLOR(v[2]->color, vbcolor[e2]);
                      }
                      else {
-                        COPY_4V(v[0]->attrib[FRAG_ATTRIB_COL0], vbcolor[e0]);
-                        COPY_4V(v[1]->attrib[FRAG_ATTRIB_COL0], vbcolor[e1]);
-                        COPY_4V(v[2]->attrib[FRAG_ATTRIB_COL0], vbcolor[e2]);
+                        COPY_4V(v[0]->attrib[VARYING_SLOT_COL0], vbcolor[e0]);
+                        COPY_4V(v[1]->attrib[VARYING_SLOT_COL0], vbcolor[e1]);
+                        COPY_4V(v[2]->attrib[VARYING_SLOT_COL0], vbcolor[e2]);
                      }
                   }
                   else {
@@ -99,9 +99,9 @@ static void TAG(triangle)(struct gl_context *ctx, GLuint e0, GLuint e1, GLuint e
                         SS_COLOR(v[2]->color, vbcolor[0]);
                      }
                      else {
-                        COPY_4V(v[0]->attrib[FRAG_ATTRIB_COL0], vbcolor[0]);
-                        COPY_4V(v[1]->attrib[FRAG_ATTRIB_COL0], vbcolor[0]);
-                        COPY_4V(v[2]->attrib[FRAG_ATTRIB_COL0], vbcolor[0]);
+                        COPY_4V(v[0]->attrib[VARYING_SLOT_COL0], vbcolor[0]);
+                        COPY_4V(v[1]->attrib[VARYING_SLOT_COL0], vbcolor[0]);
+                        COPY_4V(v[2]->attrib[VARYING_SLOT_COL0], vbcolor[0]);
                      }
                   }
                }
@@ -109,19 +109,19 @@ static void TAG(triangle)(struct gl_context *ctx, GLuint e0, GLuint e1, GLuint e
                if (VB->BackfaceSecondaryColorPtr) {
 		  GLfloat (*vbspec)[4] = VB->BackfaceSecondaryColorPtr->data;
 
-		  COPY_4V(saved_spec[0], v[0]->attrib[FRAG_ATTRIB_COL1]);
-		  COPY_4V(saved_spec[1], v[1]->attrib[FRAG_ATTRIB_COL1]);
-		  COPY_4V(saved_spec[2], v[2]->attrib[FRAG_ATTRIB_COL1]);
+		  COPY_4V(saved_spec[0], v[0]->attrib[VARYING_SLOT_COL1]);
+		  COPY_4V(saved_spec[1], v[1]->attrib[VARYING_SLOT_COL1]);
+		  COPY_4V(saved_spec[2], v[2]->attrib[VARYING_SLOT_COL1]);
 
 		  if (VB->BackfaceSecondaryColorPtr->stride) {
-		    SS_SPEC(v[0]->attrib[FRAG_ATTRIB_COL1], vbspec[e0]);
-		    SS_SPEC(v[1]->attrib[FRAG_ATTRIB_COL1], vbspec[e1]);
-		    SS_SPEC(v[2]->attrib[FRAG_ATTRIB_COL1], vbspec[e2]);
+		    SS_SPEC(v[0]->attrib[VARYING_SLOT_COL1], vbspec[e0]);
+		    SS_SPEC(v[1]->attrib[VARYING_SLOT_COL1], vbspec[e1]);
+		    SS_SPEC(v[2]->attrib[VARYING_SLOT_COL1], vbspec[e2]);
 		  }
 		  else {
-		    SS_SPEC(v[0]->attrib[FRAG_ATTRIB_COL1], vbspec[0]);
-		    SS_SPEC(v[1]->attrib[FRAG_ATTRIB_COL1], vbspec[0]);
-		    SS_SPEC(v[2]->attrib[FRAG_ATTRIB_COL1], vbspec[0]);
+		    SS_SPEC(v[0]->attrib[VARYING_SLOT_COL1], vbspec[0]);
+		    SS_SPEC(v[1]->attrib[VARYING_SLOT_COL1], vbspec[0]);
+		    SS_SPEC(v[2]->attrib[VARYING_SLOT_COL1], vbspec[0]);
 		  }
 	       }
 	    }
@@ -131,9 +131,9 @@ static void TAG(triangle)(struct gl_context *ctx, GLuint e0, GLuint e1, GLuint e
       if (IND & SS_OFFSET_BIT) {
          const GLfloat max = ctx->DrawBuffer->_DepthMaxF;
          /* save original Z values (restored later) */
-	 z[0] = v[0]->attrib[FRAG_ATTRIB_WPOS][2];
-	 z[1] = v[1]->attrib[FRAG_ATTRIB_WPOS][2];
-	 z[2] = v[2]->attrib[FRAG_ATTRIB_WPOS][2];
+	 z[0] = v[0]->attrib[VARYING_SLOT_POS][2];
+	 z[1] = v[1]->attrib[VARYING_SLOT_POS][2];
+	 z[2] = v[2]->attrib[VARYING_SLOT_POS][2];
          /* Note that Z values are already scaled to [0,65535] (for example)
           * so no MRD value is used here.
           */
@@ -147,31 +147,31 @@ static void TAG(triangle)(struct gl_context *ctx, GLuint e0, GLuint e1, GLuint e
 	    offset += MAX2(dzdx, dzdy) * ctx->Polygon.OffsetFactor;
 	 }
          /* new Z values */
-         oz0 = CLAMP(v[0]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0F, max);
-         oz1 = CLAMP(v[1]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0F, max);
-         oz2 = CLAMP(v[2]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0F, max);
+         oz0 = CLAMP(v[0]->attrib[VARYING_SLOT_POS][2] + offset, 0.0F, max);
+         oz1 = CLAMP(v[1]->attrib[VARYING_SLOT_POS][2] + offset, 0.0F, max);
+         oz2 = CLAMP(v[2]->attrib[VARYING_SLOT_POS][2] + offset, 0.0F, max);
       }
    }
 
    if (mode == GL_POINT) {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetPoint) {
-	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] = oz0;
-	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] = oz1;
-	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] = oz2;
+	 v[0]->attrib[VARYING_SLOT_POS][2] = oz0;
+	 v[1]->attrib[VARYING_SLOT_POS][2] = oz1;
+	 v[2]->attrib[VARYING_SLOT_POS][2] = oz2;
       }
       _swsetup_render_tri(ctx, e0, e1, e2, facing, _swsetup_edge_render_point_tri);
    } else if (mode == GL_LINE) {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetLine) {
-	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] = oz0;
-	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] = oz1;
-	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] = oz2;
+	 v[0]->attrib[VARYING_SLOT_POS][2] = oz0;
+	 v[1]->attrib[VARYING_SLOT_POS][2] = oz1;
+	 v[2]->attrib[VARYING_SLOT_POS][2] = oz2;
       }
       _swsetup_render_tri(ctx, e0, e1, e2, facing, _swsetup_edge_render_line_tri);
    } else {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetFill) {
-	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] = oz0;
-	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] = oz1;
-	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] = oz2;
+	 v[0]->attrib[VARYING_SLOT_POS][2] = oz0;
+	 v[1]->attrib[VARYING_SLOT_POS][2] = oz1;
+	 v[2]->attrib[VARYING_SLOT_POS][2] = oz2;
       }
       _swrast_Triangle( ctx, v[0], v[1], v[2] );
    }
@@ -180,9 +180,9 @@ static void TAG(triangle)(struct gl_context *ctx, GLuint e0, GLuint e1, GLuint e
     * Restore original vertex colors, etc.
     */
    if (IND & SS_OFFSET_BIT) {
-      v[0]->attrib[FRAG_ATTRIB_WPOS][2] = z[0];
-      v[1]->attrib[FRAG_ATTRIB_WPOS][2] = z[1];
-      v[2]->attrib[FRAG_ATTRIB_WPOS][2] = z[2];
+      v[0]->attrib[VARYING_SLOT_POS][2] = z[0];
+      v[1]->attrib[VARYING_SLOT_POS][2] = z[1];
+      v[2]->attrib[VARYING_SLOT_POS][2] = z[2];
    }
 
    if (IND & SS_TWOSIDE_BIT) {
@@ -194,16 +194,16 @@ static void TAG(triangle)(struct gl_context *ctx, GLuint e0, GLuint e1, GLuint e
 	    COPY_CHAN4(v[2]->color, saved_color[2]);
 	  }
 	  else {
-	    COPY_4V(v[0]->attrib[FRAG_ATTRIB_COL0], saved_col0[0]);
-	    COPY_4V(v[1]->attrib[FRAG_ATTRIB_COL0], saved_col0[1]);
-	    COPY_4V(v[2]->attrib[FRAG_ATTRIB_COL0], saved_col0[2]);
+	    COPY_4V(v[0]->attrib[VARYING_SLOT_COL0], saved_col0[0]);
+	    COPY_4V(v[1]->attrib[VARYING_SLOT_COL0], saved_col0[1]);
+	    COPY_4V(v[2]->attrib[VARYING_SLOT_COL0], saved_col0[2]);
 	  }
 	}
 
 	if (VB->BackfaceSecondaryColorPtr) {
-	  COPY_4V(v[0]->attrib[FRAG_ATTRIB_COL1], saved_spec[0]);
-	  COPY_4V(v[1]->attrib[FRAG_ATTRIB_COL1], saved_spec[1]);
-	  COPY_4V(v[2]->attrib[FRAG_ATTRIB_COL1], saved_spec[2]);
+	  COPY_4V(v[0]->attrib[VARYING_SLOT_COL1], saved_spec[0]);
+	  COPY_4V(v[1]->attrib[VARYING_SLOT_COL1], saved_spec[1]);
+	  COPY_4V(v[2]->attrib[VARYING_SLOT_COL1], saved_spec[2]);
 	}
       }
    }

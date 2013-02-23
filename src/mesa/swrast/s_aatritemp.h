@@ -39,9 +39,9 @@
 /*void triangle( struct gl_context *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv )*/
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLfloat *p0 = v0->attrib[FRAG_ATTRIB_WPOS];
-   const GLfloat *p1 = v1->attrib[FRAG_ATTRIB_WPOS];
-   const GLfloat *p2 = v2->attrib[FRAG_ATTRIB_WPOS];
+   const GLfloat *p0 = v0->attrib[VARYING_SLOT_POS];
+   const GLfloat *p1 = v1->attrib[VARYING_SLOT_POS];
+   const GLfloat *p2 = v2->attrib[VARYING_SLOT_POS];
    const SWvertex *vMin, *vMid, *vMax;
    GLint iyMin, iyMax;
    GLfloat yMin, yMax;
@@ -55,7 +55,7 @@
 #endif
    GLfloat rPlane[4], gPlane[4], bPlane[4], aPlane[4];
 #if defined(DO_ATTRIBS)
-   GLfloat attrPlane[FRAG_ATTRIB_MAX][4][4];
+   GLfloat attrPlane[VARYING_SLOT_MAX][4][4];
    GLfloat wPlane[4];  /* win[3] */
 #endif
    GLfloat bf = SWRAST_CONTEXT(ctx)->_BackfaceCullSign;
@@ -67,9 +67,9 @@
 
    /* determine bottom to top order of vertices */
    {
-      GLfloat y0 = v0->attrib[FRAG_ATTRIB_WPOS][1];
-      GLfloat y1 = v1->attrib[FRAG_ATTRIB_WPOS][1];
-      GLfloat y2 = v2->attrib[FRAG_ATTRIB_WPOS][1];
+      GLfloat y0 = v0->attrib[VARYING_SLOT_POS][1];
+      GLfloat y1 = v1->attrib[VARYING_SLOT_POS][1];
+      GLfloat y2 = v2->attrib[VARYING_SLOT_POS][1];
       if (y0 <= y1) {
 	 if (y1 <= y2) {
 	    vMin = v0;   vMid = v1;   vMax = v2;   /* y0<=y1<=y2 */
@@ -94,13 +94,13 @@
       }
    }
 
-   majDx = vMax->attrib[FRAG_ATTRIB_WPOS][0] - vMin->attrib[FRAG_ATTRIB_WPOS][0];
-   majDy = vMax->attrib[FRAG_ATTRIB_WPOS][1] - vMin->attrib[FRAG_ATTRIB_WPOS][1];
+   majDx = vMax->attrib[VARYING_SLOT_POS][0] - vMin->attrib[VARYING_SLOT_POS][0];
+   majDy = vMax->attrib[VARYING_SLOT_POS][1] - vMin->attrib[VARYING_SLOT_POS][1];
 
    /* front/back-face determination and cullling */
    {
-      const GLfloat botDx = vMid->attrib[FRAG_ATTRIB_WPOS][0] - vMin->attrib[FRAG_ATTRIB_WPOS][0];
-      const GLfloat botDy = vMid->attrib[FRAG_ATTRIB_WPOS][1] - vMin->attrib[FRAG_ATTRIB_WPOS][1];
+      const GLfloat botDx = vMid->attrib[VARYING_SLOT_POS][0] - vMin->attrib[VARYING_SLOT_POS][0];
+      const GLfloat botDy = vMid->attrib[VARYING_SLOT_POS][1] - vMin->attrib[VARYING_SLOT_POS][1];
       const GLfloat area = majDx * botDy - botDx * majDy;
       /* Do backface culling */
       if (area * bf < 0 || area == 0 || IS_INF_OR_NAN(area))
@@ -134,12 +134,12 @@
    span.arrayMask |= SPAN_RGBA;
 #if defined(DO_ATTRIBS)
    {
-      const GLfloat invW0 = v0->attrib[FRAG_ATTRIB_WPOS][3];
-      const GLfloat invW1 = v1->attrib[FRAG_ATTRIB_WPOS][3];
-      const GLfloat invW2 = v2->attrib[FRAG_ATTRIB_WPOS][3];
+      const GLfloat invW0 = v0->attrib[VARYING_SLOT_POS][3];
+      const GLfloat invW1 = v1->attrib[VARYING_SLOT_POS][3];
+      const GLfloat invW2 = v2->attrib[VARYING_SLOT_POS][3];
       compute_plane(p0, p1, p2, invW0, invW1, invW2, wPlane);
-      span.attrStepX[FRAG_ATTRIB_WPOS][3] = plane_dx(wPlane);
-      span.attrStepY[FRAG_ATTRIB_WPOS][3] = plane_dy(wPlane);
+      span.attrStepX[VARYING_SLOT_POS][3] = plane_dx(wPlane);
+      span.attrStepY[VARYING_SLOT_POS][3] = plane_dy(wPlane);
       ATTRIB_LOOP_BEGIN
          GLuint c;
          if (swrast->_InterpMode[attr] == GL_FLAT) {
@@ -169,16 +169,16 @@
     * edges, stopping when we find that coverage = 0.  If the long edge
     * is on the left we scan left-to-right.  Else, we scan right-to-left.
     */
-   yMin = vMin->attrib[FRAG_ATTRIB_WPOS][1];
-   yMax = vMax->attrib[FRAG_ATTRIB_WPOS][1];
+   yMin = vMin->attrib[VARYING_SLOT_POS][1];
+   yMax = vMax->attrib[VARYING_SLOT_POS][1];
    iyMin = (GLint) yMin;
    iyMax = (GLint) yMax + 1;
 
    if (ltor) {
       /* scan left to right */
-      const GLfloat *pMin = vMin->attrib[FRAG_ATTRIB_WPOS];
-      const GLfloat *pMid = vMid->attrib[FRAG_ATTRIB_WPOS];
-      const GLfloat *pMax = vMax->attrib[FRAG_ATTRIB_WPOS];
+      const GLfloat *pMin = vMin->attrib[VARYING_SLOT_POS];
+      const GLfloat *pMid = vMid->attrib[VARYING_SLOT_POS];
+      const GLfloat *pMax = vMax->attrib[VARYING_SLOT_POS];
       const GLfloat dxdy = majDx / majDy;
       const GLfloat xAdj = dxdy < 0.0F ? -dxdy : 0.0F;
       GLint iy;
@@ -208,7 +208,7 @@
 
 #if defined(DO_ATTRIBS)
          /* compute attributes at left-most fragment */
-         span.attrStart[FRAG_ATTRIB_WPOS][3] = solve_plane(ix + 0.5F, iy + 0.5F, wPlane);
+         span.attrStart[VARYING_SLOT_POS][3] = solve_plane(ix + 0.5F, iy + 0.5F, wPlane);
          ATTRIB_LOOP_BEGIN
             GLuint c;
             for (c = 0; c < 4; c++) {
@@ -245,9 +245,9 @@
    }
    else {
       /* scan right to left */
-      const GLfloat *pMin = vMin->attrib[FRAG_ATTRIB_WPOS];
-      const GLfloat *pMid = vMid->attrib[FRAG_ATTRIB_WPOS];
-      const GLfloat *pMax = vMax->attrib[FRAG_ATTRIB_WPOS];
+      const GLfloat *pMin = vMin->attrib[VARYING_SLOT_POS];
+      const GLfloat *pMid = vMid->attrib[VARYING_SLOT_POS];
+      const GLfloat *pMax = vMax->attrib[VARYING_SLOT_POS];
       const GLfloat dxdy = majDx / majDy;
       const GLfloat xAdj = dxdy > 0 ? dxdy : 0.0F;
       GLint iy;
@@ -300,7 +300,7 @@
          
 #if defined(DO_ATTRIBS)
          /* compute attributes at left-most fragment */
-         span.attrStart[FRAG_ATTRIB_WPOS][3] = solve_plane(ix + 1.5F, iy + 0.5F, wPlane);
+         span.attrStart[VARYING_SLOT_POS][3] = solve_plane(ix + 1.5F, iy + 0.5F, wPlane);
          ATTRIB_LOOP_BEGIN
             GLuint c;
             for (c = 0; c < 4; c++) {

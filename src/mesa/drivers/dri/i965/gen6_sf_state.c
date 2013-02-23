@@ -56,7 +56,7 @@ uint32_t
 get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color, uint32_t *max_source_attr)
 {
-   if (fs_attr == FRAG_ATTRIB_WPOS) {
+   if (fs_attr == VARYING_SLOT_POS) {
       /* This attribute will be overwritten by the fragment shader's
        * interpolation code (see emit_interp() in brw_wm_fp.c), so just let it
        * reference the first available attribute.
@@ -141,7 +141,7 @@ upload_sf_state(struct brw_context *brw)
    int attr = 0, input_index = 0;
    int urb_entry_read_offset = 1;
    float point_size;
-   uint16_t attr_overrides[FRAG_ATTRIB_MAX];
+   uint16_t attr_overrides[VARYING_SLOT_MAX];
    uint32_t point_sprite_origin;
 
    dw1 = GEN6_SF_SWIZZLE_ENABLE | num_outputs << GEN6_SF_NUM_OUTPUTS_SHIFT;
@@ -281,22 +281,22 @@ upload_sf_state(struct brw_context *brw)
     * they source from.
     */
    uint32_t max_source_attr = 0;
-   for (; attr < FRAG_ATTRIB_MAX; attr++) {
+   for (; attr < VARYING_SLOT_MAX; attr++) {
       enum glsl_interp_qualifier interp_qualifier =
          brw->fragment_program->InterpQualifier[attr];
-      bool is_gl_Color = attr == FRAG_ATTRIB_COL0 || attr == FRAG_ATTRIB_COL1;
+      bool is_gl_Color = attr == VARYING_SLOT_COL0 || attr == VARYING_SLOT_COL1;
 
       if (!(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)))
 	 continue;
 
       /* _NEW_POINT */
       if (ctx->Point.PointSprite &&
-	  (attr >= FRAG_ATTRIB_TEX0 && attr <= FRAG_ATTRIB_TEX7) &&
-	  ctx->Point.CoordReplace[attr - FRAG_ATTRIB_TEX0]) {
+	  (attr >= VARYING_SLOT_TEX0 && attr <= VARYING_SLOT_TEX7) &&
+	  ctx->Point.CoordReplace[attr - VARYING_SLOT_TEX0]) {
 	 dw16 |= (1 << input_index);
       }
 
-      if (attr == FRAG_ATTRIB_PNTC)
+      if (attr == VARYING_SLOT_PNTC)
 	 dw16 |= (1 << input_index);
 
       /* flat shading */
@@ -320,7 +320,7 @@ upload_sf_state(struct brw_context *brw)
                            &max_source_attr);
    }
 
-   for (; input_index < FRAG_ATTRIB_MAX; input_index++)
+   for (; input_index < VARYING_SLOT_MAX; input_index++)
       attr_overrides[input_index] = 0;
 
    /* From the Sandy Bridge PRM, Volume 2, Part 1, documentation for

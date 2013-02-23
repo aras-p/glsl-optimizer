@@ -671,7 +671,7 @@ i915_update_sprite_point_enable(struct gl_context *ctx)
       /* _NEW_POINT */
       if (ctx->Point.CoordReplace[i] && ctx->Point.PointSprite)
          coord_replace_bits |= (1 << i);
-      if (inputsRead & FRAG_BIT_TEX(i))
+      if (inputsRead & VARYING_BIT_TEX(i))
          tex_coord_unit_bits |= (1 << i);
    }
 

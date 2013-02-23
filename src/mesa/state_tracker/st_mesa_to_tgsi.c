@@ -790,7 +790,7 @@ emit_wpos_adjustment( struct st_translate *t,
 
    struct ureg_src wpostrans = ureg_DECL_constant( ureg, wposTransConst );
    struct ureg_dst wpos_temp = ureg_DECL_temporary( ureg );
-   struct ureg_src wpos_input = t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]];
+   struct ureg_src wpos_input = t->inputs[t->inputMapping[VARYING_SLOT_POS]];
 
    /* First, apply the coordinate shift: */
    if (adjX || adjY[0] || adjY[1]) {
@@ -841,7 +841,7 @@ emit_wpos_adjustment( struct st_translate *t,
 
    /* Use wpos_temp as position input from here on:
     */
-   t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]] = ureg_src(wpos_temp);
+   t->inputs[t->inputMapping[VARYING_SLOT_POS]] = ureg_src(wpos_temp);
 }
 
 
@@ -961,7 +961,7 @@ emit_face_var( struct st_translate *t,
 {
    struct ureg_program *ureg = t->ureg;
    struct ureg_dst face_temp = ureg_DECL_temporary( ureg );
-   struct ureg_src face_input = t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]];
+   struct ureg_src face_input = t->inputs[t->inputMapping[VARYING_SLOT_FACE]];
 
    /* MOV_SAT face_temp, input[face]
     */
@@ -970,7 +970,7 @@ emit_face_var( struct st_translate *t,
 
    /* Use face_temp as face input from here on:
     */
-   t->inputs[t->inputMapping[FRAG_ATTRIB_FACE]] = ureg_src(face_temp);
+   t->inputs[t->inputMapping[VARYING_SLOT_FACE]] = ureg_src(face_temp);
 }
 
 
@@ -1051,14 +1051,14 @@ st_translate_mesa_program(
                                            interpMode[i]);
       }
 
-      if (program->InputsRead & FRAG_BIT_WPOS) {
+      if (program->InputsRead & VARYING_BIT_POS) {
          /* Must do this after setting up t->inputs, and before
           * emitting constant references, below:
           */
          emit_wpos(st_context(ctx), t, program, ureg);
       }
 
-      if (program->InputsRead & FRAG_BIT_FACE) {
+      if (program->InputsRead & VARYING_BIT_FACE) {
          emit_face_var( t, program );
       }
 

@@ -93,7 +93,7 @@ public:
    explicit src_reg(dst_reg reg);
 
    gl_register_file file; /**< PROGRAM_* from Mesa */
-   int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
+   int index; /**< temporary index, VERT_ATTRIB_*, VARYING_SLOT_*, etc. */
    GLuint swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
    int negate; /**< NEGATE_XYZW mask from mesa */
    /** Register index should be offset by the integer in this reg. */
@@ -123,7 +123,7 @@ public:
    explicit dst_reg(src_reg reg);
 
    gl_register_file file; /**< PROGRAM_* from Mesa */
-   int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
+   int index; /**< temporary index, VERT_ATTRIB_*, VARYING_SLOT_*, etc. */
    int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
    GLuint cond_mask:4;
    /** Register index should be offset by the integer in this reg. */

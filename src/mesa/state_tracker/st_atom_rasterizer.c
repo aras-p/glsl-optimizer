@@ -171,9 +171,9 @@ static void update_raster_state( struct st_context *st )
             raster->sprite_coord_enable |= 1 << i;
          }
       }
-      if (fragProg->Base.InputsRead & FRAG_BIT_PNTC) {
+      if (fragProg->Base.InputsRead & VARYING_BIT_PNTC) {
          raster->sprite_coord_enable |=
-            1 << (FRAG_ATTRIB_PNTC - FRAG_ATTRIB_TEX0);
+            1 << (VARYING_SLOT_PNTC - VARYING_SLOT_TEX0);
       }
 
       raster->point_quad_rasterization = 1;

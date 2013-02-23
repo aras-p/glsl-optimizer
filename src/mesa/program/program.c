@@ -738,7 +738,7 @@ _mesa_combine_programs(struct gl_context *ctx,
        * of progB_colorFile/progB_colorIndex below...
        */
       progB_colorFile = PROGRAM_INPUT;
-      progB_colorIndex = FRAG_ATTRIB_COL0;
+      progB_colorIndex = VARYING_SLOT_COL0;
 
       /*
        * The fragment program may get color from a state var rather than
@@ -754,7 +754,7 @@ _mesa_combine_programs(struct gl_context *ctx,
              p->StateIndexes[0] == STATE_INTERNAL &&
              p->StateIndexes[1] == STATE_CURRENT_ATTRIB &&
              (int) p->StateIndexes[2] == (int) VERT_ATTRIB_COLOR0) {
-            progB_inputsRead |= FRAG_BIT_COL0;
+            progB_inputsRead |= VARYING_BIT_COL0;
             progB_colorFile = PROGRAM_STATE_VAR;
             progB_colorIndex = i;
             break;
@@ -765,7 +765,7 @@ _mesa_combine_programs(struct gl_context *ctx,
        * new temporary register.
        */
       if ((progA->OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_COLOR)) &&
-          (progB_inputsRead & FRAG_BIT_COL0)) {
+          (progB_inputsRead & VARYING_BIT_COL0)) {
          GLint tempReg = _mesa_find_free_register(usedTemps, MAX_PROGRAM_TEMPS,
                                                   firstTemp);
          if (tempReg < 0) {
@@ -788,7 +788,7 @@ _mesa_combine_programs(struct gl_context *ctx,
       /* compute combined program's InputsRead */
       inputsB = progB_inputsRead;
       if (progA->OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_COLOR)) {
-         inputsB &= ~(1 << FRAG_ATTRIB_COL0);
+         inputsB &= ~(1 << VARYING_SLOT_COL0);
       }
       newProg->InputsRead = progA->InputsRead | inputsB;
       newProg->OutputsWritten = progB->OutputsWritten;
@@ -934,7 +934,7 @@ _mesa_valid_register_index(const struct gl_context *ctx,
       case MESA_SHADER_VERTEX:
          return index < VERT_ATTRIB_GENERIC0 + (GLint) c->MaxAttribs;
       case MESA_SHADER_FRAGMENT:
-         return index < FRAG_ATTRIB_VAR0 + (GLint) ctx->Const.MaxVarying;
+         return index < VARYING_SLOT_VAR0 + (GLint) ctx->Const.MaxVarying;
       case MESA_SHADER_GEOMETRY:
          return index < VARYING_SLOT_VAR0 + (GLint) ctx->Const.MaxVarying;
       default:

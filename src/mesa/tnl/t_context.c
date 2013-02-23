@@ -142,7 +142,7 @@ _tnl_InvalidateState( struct gl_context *ctx, GLuint new_state )
     */
    tnl->render_inputs_bitset = BITFIELD64_BIT(_TNL_ATTRIB_POS);
 
-   if (!fp || (fp->Base.InputsRead & FRAG_BIT_COL0)) {
+   if (!fp || (fp->Base.InputsRead & VARYING_BIT_COL0)) {
      tnl->render_inputs_bitset |= BITFIELD64_BIT(_TNL_ATTRIB_COLOR0);
    }
 
@@ -151,13 +151,13 @@ _tnl_InvalidateState( struct gl_context *ctx, GLuint new_state )
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
      if (ctx->Texture._EnabledCoordUnits & (1 << i) ||
-	 (fp && fp->Base.InputsRead & FRAG_BIT_TEX(i))) {
+	 (fp && fp->Base.InputsRead & VARYING_BIT_TEX(i))) {
        tnl->render_inputs_bitset |= BITFIELD64_BIT(_TNL_ATTRIB_TEX(i));
      }
    }
 
    if (ctx->Fog.Enabled
-       || (fp != NULL && (fp->Base.InputsRead & FRAG_BIT_FOGC) != 0)) {
+       || (fp != NULL && (fp->Base.InputsRead & VARYING_BIT_FOGC) != 0)) {
       /* Either fixed-function fog or a fragment program needs fog coord.
        */
       tnl->render_inputs_bitset |= BITFIELD64_BIT(_TNL_ATTRIB_FOG);

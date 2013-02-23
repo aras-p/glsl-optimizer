@@ -66,7 +66,7 @@ _mesa_need_secondary_color(const struct gl_context *ctx)
 
    if (ctx->FragmentProgram._Current &&
        (ctx->FragmentProgram._Current != ctx->FragmentProgram._TexEnvProgram) &&
-       (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_COL1))
+       (ctx->FragmentProgram._Current->Base.InputsRead & VARYING_BIT_COL1))
       return GL_TRUE;
 
    return GL_FALSE;

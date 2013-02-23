@@ -275,8 +275,8 @@ st_prepare_vertex_program(struct gl_context *ctx,
          default:
             assert(attr < VARYING_SLOT_MAX);
             stvp->output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            stvp->output_semantic_index[slot] = (FRAG_ATTRIB_VAR0 - 
-                                                FRAG_ATTRIB_TEX0 +
+            stvp->output_semantic_index[slot] = (VARYING_SLOT_VAR0 - 
+                                                VARYING_SLOT_TEX0 +
                                                 attr - 
                                                 VARYING_SLOT_VAR0);
             break;
@@ -472,7 +472,7 @@ st_translate_fragment_program(struct st_context *st,
    GLboolean deleteFP = GL_FALSE;
 
    GLuint outputMapping[FRAG_RESULT_MAX];
-   GLuint inputMapping[FRAG_ATTRIB_MAX];
+   GLuint inputMapping[VARYING_SLOT_MAX];
    GLuint interpMode[PIPE_MAX_SHADER_INPUTS];  /* XXX size? */
    GLuint attr;
    GLbitfield64 inputsRead;
@@ -529,7 +529,7 @@ st_translate_fragment_program(struct st_context *st,
     * Convert Mesa program inputs to TGSI input register semantics.
     */
    inputsRead = stfp->Base.Base.InputsRead;
-   for (attr = 0; attr < FRAG_ATTRIB_MAX; attr++) {
+   for (attr = 0; attr < VARYING_SLOT_MAX; attr++) {
       if ((inputsRead & BITFIELD64_BIT(attr)) != 0) {
          const GLuint slot = fs_num_inputs++;
 
@@ -537,46 +537,46 @@ st_translate_fragment_program(struct st_context *st,
          is_centroid[slot] = (stfp->Base.IsCentroid & BITFIELD64_BIT(attr)) != 0;
 
          switch (attr) {
-         case FRAG_ATTRIB_WPOS:
+         case VARYING_SLOT_POS:
             input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
             input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
-         case FRAG_ATTRIB_COL0:
+         case VARYING_SLOT_COL0:
             input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
             input_semantic_index[slot] = 0;
             interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr],
                                                    TRUE);
             break;
-         case FRAG_ATTRIB_COL1:
+         case VARYING_SLOT_COL1:
             input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
             input_semantic_index[slot] = 1;
             interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr],
                                                    TRUE);
             break;
-         case FRAG_ATTRIB_FOGC:
+         case VARYING_SLOT_FOGC:
             input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
             input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
-         case FRAG_ATTRIB_FACE:
+         case VARYING_SLOT_FACE:
             input_semantic_name[slot] = TGSI_SEMANTIC_FACE;
             input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
             break;
-         case FRAG_ATTRIB_CLIP_DIST0:
+         case VARYING_SLOT_CLIP_DIST0:
             input_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
             input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
-         case FRAG_ATTRIB_CLIP_DIST1:
+         case VARYING_SLOT_CLIP_DIST1:
             input_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
             input_semantic_index[slot] = 1;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
             /* In most cases, there is nothing special about these
              * inputs, so adopt a convention to use the generic
-             * semantic name and the mesa FRAG_ATTRIB_ number as the
+             * semantic name and the mesa VARYING_SLOT_ number as the
              * index.
              *
              * All that is required is that the vertex shader labels
@@ -589,24 +589,24 @@ st_translate_fragment_program(struct st_context *st,
              * zero or be restricted to a particular range -- nobody
              * should be building tables based on semantic index.
              */
-         case FRAG_ATTRIB_PNTC:
-         case FRAG_ATTRIB_TEX0:
-         case FRAG_ATTRIB_TEX1:
-         case FRAG_ATTRIB_TEX2:
-         case FRAG_ATTRIB_TEX3:
-         case FRAG_ATTRIB_TEX4:
-         case FRAG_ATTRIB_TEX5:
-         case FRAG_ATTRIB_TEX6:
-         case FRAG_ATTRIB_TEX7:
-         case FRAG_ATTRIB_VAR0:
+         case VARYING_SLOT_PNTC:
+         case VARYING_SLOT_TEX0:
+         case VARYING_SLOT_TEX1:
+         case VARYING_SLOT_TEX2:
+         case VARYING_SLOT_TEX3:
+         case VARYING_SLOT_TEX4:
+         case VARYING_SLOT_TEX5:
+         case VARYING_SLOT_TEX6:
+         case VARYING_SLOT_TEX7:
+         case VARYING_SLOT_VAR0:
          default:
             /* Actually, let's try and zero-base this just for
              * readability of the generated TGSI.
              */
-            assert(attr >= FRAG_ATTRIB_TEX0);
-            input_semantic_index[slot] = (attr - FRAG_ATTRIB_TEX0);
+            assert(attr >= VARYING_SLOT_TEX0);
+            input_semantic_index[slot] = (attr - VARYING_SLOT_TEX0);
             input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            if (attr == FRAG_ATTRIB_PNTC)
+            if (attr == VARYING_SLOT_PNTC)
                interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             else
                interpMode[slot] = st_translate_interp(stfp->Base.InterpQualifier[attr],

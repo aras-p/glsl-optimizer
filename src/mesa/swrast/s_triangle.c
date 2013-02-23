@@ -57,10 +57,10 @@ _swrast_culltriangle( struct gl_context *ctx,
                       const SWvertex *v2 )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLfloat ex = v1->attrib[FRAG_ATTRIB_WPOS][0] - v0->attrib[FRAG_ATTRIB_WPOS][0];
-   GLfloat ey = v1->attrib[FRAG_ATTRIB_WPOS][1] - v0->attrib[FRAG_ATTRIB_WPOS][1];
-   GLfloat fx = v2->attrib[FRAG_ATTRIB_WPOS][0] - v0->attrib[FRAG_ATTRIB_WPOS][0];
-   GLfloat fy = v2->attrib[FRAG_ATTRIB_WPOS][1] - v0->attrib[FRAG_ATTRIB_WPOS][1];
+   GLfloat ex = v1->attrib[VARYING_SLOT_POS][0] - v0->attrib[VARYING_SLOT_POS][0];
+   GLfloat ey = v1->attrib[VARYING_SLOT_POS][1] - v0->attrib[VARYING_SLOT_POS][1];
+   GLfloat fx = v2->attrib[VARYING_SLOT_POS][0] - v0->attrib[VARYING_SLOT_POS][0];
+   GLfloat fy = v2->attrib[VARYING_SLOT_POS][1] - v0->attrib[VARYING_SLOT_POS][1];
    GLfloat c = ex*fy-ey*fx;
 
    if (c * swrast->_BackfaceSign * swrast->_BackfaceCullSign <= 0.0F)
@@ -678,13 +678,13 @@ fast_persp_span(struct gl_context *ctx, SWspan *span,
    const GLuint texEnableSave = ctx->Texture._EnabledCoordUnits;
    ctx->Texture._EnabledCoordUnits = 0;
 
-   tex_coord[0] = span->attrStart[FRAG_ATTRIB_TEX0][0]  * (info->smask + 1);
-   tex_step[0] = span->attrStepX[FRAG_ATTRIB_TEX0][0] * (info->smask + 1);
-   tex_coord[1] = span->attrStart[FRAG_ATTRIB_TEX0][1] * (info->tmask + 1);
-   tex_step[1] = span->attrStepX[FRAG_ATTRIB_TEX0][1] * (info->tmask + 1);
-   /* span->attrStart[FRAG_ATTRIB_TEX0][2] only if 3D-texturing, here only 2D */
-   tex_coord[2] = span->attrStart[FRAG_ATTRIB_TEX0][3];
-   tex_step[2] = span->attrStepX[FRAG_ATTRIB_TEX0][3];
+   tex_coord[0] = span->attrStart[VARYING_SLOT_TEX0][0]  * (info->smask + 1);
+   tex_step[0] = span->attrStepX[VARYING_SLOT_TEX0][0] * (info->smask + 1);
+   tex_coord[1] = span->attrStart[VARYING_SLOT_TEX0][1] * (info->tmask + 1);
+   tex_step[1] = span->attrStepX[VARYING_SLOT_TEX0][1] * (info->tmask + 1);
+   /* span->attrStart[VARYING_SLOT_TEX0][2] only if 3D-texturing, here only 2D */
+   tex_coord[2] = span->attrStart[VARYING_SLOT_TEX0][3];
+   tex_step[2] = span->attrStepX[VARYING_SLOT_TEX0][3];
 
    switch (info->filter) {
    case GL_NEAREST:
@@ -939,23 +939,23 @@ _swrast_add_spec_terms_triangle(struct gl_context *ctx, const SWvertex *v0,
    COPY_CHAN4( cSave[1], ncv1->color );
    COPY_CHAN4( cSave[2], ncv2->color );
    /* sum v0 */
-   rSum = CHAN_TO_FLOAT(ncv0->color[0]) + ncv0->attrib[FRAG_ATTRIB_COL1][0];
-   gSum = CHAN_TO_FLOAT(ncv0->color[1]) + ncv0->attrib[FRAG_ATTRIB_COL1][1];
-   bSum = CHAN_TO_FLOAT(ncv0->color[2]) + ncv0->attrib[FRAG_ATTRIB_COL1][2];
+   rSum = CHAN_TO_FLOAT(ncv0->color[0]) + ncv0->attrib[VARYING_SLOT_COL1][0];
+   gSum = CHAN_TO_FLOAT(ncv0->color[1]) + ncv0->attrib[VARYING_SLOT_COL1][1];
+   bSum = CHAN_TO_FLOAT(ncv0->color[2]) + ncv0->attrib[VARYING_SLOT_COL1][2];
    UNCLAMPED_FLOAT_TO_CHAN(ncv0->color[0], rSum);
    UNCLAMPED_FLOAT_TO_CHAN(ncv0->color[1], gSum);
    UNCLAMPED_FLOAT_TO_CHAN(ncv0->color[2], bSum);
    /* sum v1 */
-   rSum = CHAN_TO_FLOAT(ncv1->color[0]) + ncv1->attrib[FRAG_ATTRIB_COL1][0];
-   gSum = CHAN_TO_FLOAT(ncv1->color[1]) + ncv1->attrib[FRAG_ATTRIB_COL1][1];
-   bSum = CHAN_TO_FLOAT(ncv1->color[2]) + ncv1->attrib[FRAG_ATTRIB_COL1][2];
+   rSum = CHAN_TO_FLOAT(ncv1->color[0]) + ncv1->attrib[VARYING_SLOT_COL1][0];
+   gSum = CHAN_TO_FLOAT(ncv1->color[1]) + ncv1->attrib[VARYING_SLOT_COL1][1];
+   bSum = CHAN_TO_FLOAT(ncv1->color[2]) + ncv1->attrib[VARYING_SLOT_COL1][2];
    UNCLAMPED_FLOAT_TO_CHAN(ncv1->color[0], rSum);
    UNCLAMPED_FLOAT_TO_CHAN(ncv1->color[1], gSum);
    UNCLAMPED_FLOAT_TO_CHAN(ncv1->color[2], bSum);
    /* sum v2 */
-   rSum = CHAN_TO_FLOAT(ncv2->color[0]) + ncv2->attrib[FRAG_ATTRIB_COL1][0];
-   gSum = CHAN_TO_FLOAT(ncv2->color[1]) + ncv2->attrib[FRAG_ATTRIB_COL1][1];
-   bSum = CHAN_TO_FLOAT(ncv2->color[2]) + ncv2->attrib[FRAG_ATTRIB_COL1][2];
+   rSum = CHAN_TO_FLOAT(ncv2->color[0]) + ncv2->attrib[VARYING_SLOT_COL1][0];
+   gSum = CHAN_TO_FLOAT(ncv2->color[1]) + ncv2->attrib[VARYING_SLOT_COL1][1];
+   bSum = CHAN_TO_FLOAT(ncv2->color[2]) + ncv2->attrib[VARYING_SLOT_COL1][2];
    UNCLAMPED_FLOAT_TO_CHAN(ncv2->color[0], rSum);
    UNCLAMPED_FLOAT_TO_CHAN(ncv2->color[1], gSum);
    UNCLAMPED_FLOAT_TO_CHAN(ncv2->color[2], bSum);

@@ -181,7 +181,7 @@ brw_upload_sf_prog(struct brw_context *brw)
 	    key.point_sprite_coord_replace |= (1 << i);
       }
    }
-   if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(FRAG_ATTRIB_PNTC))
+   if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(VARYING_SLOT_PNTC))
       key.do_point_coord = 1;
    /*
     * Window coordinates in a FBO are inverted, which means point

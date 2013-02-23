@@ -1880,7 +1880,7 @@ sample_lambda_2d_aniso(struct gl_context *ctx,
     * from the context list of available texture objects.
     */
    const GLuint u = texture_unit_index(ctx, tObj);
-   const GLuint attr = FRAG_ATTRIB_TEX0 + u;
+   const GLuint attr = VARYING_SLOT_TEX0 + u;
    GLfloat texW, texH;
 
    const GLfloat dsdx = span->attrStepX[attr][0];

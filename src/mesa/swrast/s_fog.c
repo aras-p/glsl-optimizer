@@ -87,10 +87,10 @@ do {							\
  * \param COMPUTE_F  code to compute the fog blend factor, f.
  */
 #define FOG_LOOP(TYPE, FOG_FUNC)						\
-if (span->arrayAttribs & FRAG_BIT_FOGC) {					\
+if (span->arrayAttribs & VARYING_BIT_FOGC) {					\
    GLuint i;									\
    for (i = 0; i < span->end; i++) {						\
-      const GLfloat fogCoord = span->array->attribs[FRAG_ATTRIB_FOGC][i][0];	\
+      const GLfloat fogCoord = span->array->attribs[VARYING_SLOT_FOGC][i][0];	\
       const GLfloat c = FABSF(fogCoord);					\
       GLfloat f, oneMinusF;							\
       FOG_FUNC(f, c);								\
@@ -102,10 +102,10 @@ if (span->arrayAttribs & FRAG_BIT_FOGC) {					\
    }										\
 }										\
 else {										\
-   const GLfloat fogStep = span->attrStepX[FRAG_ATTRIB_FOGC][0];		\
-   GLfloat fogCoord = span->attrStart[FRAG_ATTRIB_FOGC][0];			\
-   const GLfloat wStep = span->attrStepX[FRAG_ATTRIB_WPOS][3];			\
-   GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];				\
+   const GLfloat fogStep = span->attrStepX[VARYING_SLOT_FOGC][0];		\
+   GLfloat fogCoord = span->attrStart[VARYING_SLOT_FOGC][0];			\
+   const GLfloat wStep = span->attrStepX[VARYING_SLOT_POS][3];			\
+   GLfloat w = span->attrStart[VARYING_SLOT_POS][3];				\
    GLuint i;									\
    for (i = 0; i < span->end; i++) {						\
       const GLfloat c = FABSF(fogCoord) / w;					\
@@ -173,7 +173,7 @@ _swrast_fog_rgba_span( const struct gl_context *ctx, SWspan *span )
                FOG_LOOP(GLushort, LINEAR_FOG);
             }
             else {
-               GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
+               GLfloat (*rgba)[4] = span->array->attribs[VARYING_SLOT_COL0];
                ASSERT(span->array->ChanType == GL_FLOAT);
                FOG_LOOP(GLfloat, LINEAR_FOG);
             }
@@ -192,7 +192,7 @@ _swrast_fog_rgba_span( const struct gl_context *ctx, SWspan *span )
                FOG_LOOP(GLushort, EXP_FOG);
             }
             else {
-               GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
+               GLfloat (*rgba)[4] = span->array->attribs[VARYING_SLOT_COL0];
                ASSERT(span->array->ChanType == GL_FLOAT);
                FOG_LOOP(GLfloat, EXP_FOG);
             }
@@ -211,7 +211,7 @@ _swrast_fog_rgba_span( const struct gl_context *ctx, SWspan *span )
                FOG_LOOP(GLushort, EXP2_FOG);
             }
             else {
-               GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
+               GLfloat (*rgba)[4] = span->array->attribs[VARYING_SLOT_COL0];
                ASSERT(span->array->ChanType == GL_FLOAT);
                FOG_LOOP(GLfloat, EXP2_FOG);
             }
@@ -236,7 +236,7 @@ _swrast_fog_rgba_span( const struct gl_context *ctx, SWspan *span )
          FOG_LOOP(GLushort, BLEND_FOG);
       }
       else {
-         GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
+         GLfloat (*rgba)[4] = span->array->attribs[VARYING_SLOT_COL0];
          ASSERT(span->array->ChanType == GL_FLOAT);
          FOG_LOOP(GLfloat, BLEND_FOG);
       }
