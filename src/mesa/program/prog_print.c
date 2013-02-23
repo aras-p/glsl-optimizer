@@ -139,10 +139,17 @@ arb_input_attrib_string(GLint index, GLenum progType)
       "fragment.texcoord[5]",
       "fragment.texcoord[6]",
       "fragment.texcoord[7]",
-      "fragment.(twelve)", /* FRAG_ATTRIB_FACE */
-      "fragment.(thirteen)", /* FRAG_ATTRIB_PNTC */
-      "fragment.(fourteen)", /* FRAG_ATTRIB_CLIP_DIST0 */
-      "fragment.(fifteen)", /* FRAG_ATTRIB_CLIP_DIST1 */
+      "fragment.(twelve)", /* VARYING_SLOT_PSIZ */
+      "fragment.(thirteen)", /* VARYING_SLOT_BFC0 */
+      "fragment.(fourteen)", /* VARYING_SLOT_BFC1 */
+      "fragment.(fifteen)", /* VARYING_SLOT_EDGE */
+      "fragment.(sixteen)", /* VARYING_SLOT_CLIP_VERTEX */
+      "fragment.(seventeen)", /* FRAG_ATTRIB_CLIP_DIST0 */
+      "fragment.(eighteen)", /* FRAG_ATTRIB_CLIP_DIST1 */
+      "fragment.(nineteen)", /* VARYING_SLOT_PRIMITIVE_ID */
+      "fragment.(twenty)", /* VARYING_SLOT_LAYER */
+      "fragment.(twenty-one)", /* FRAG_ATTRIB_FACE */
+      "fragment.(twenty-two)", /* FRAG_ATTRIB_PNTC */
       "fragment.varying[0]",
       "fragment.varying[1]",
       "fragment.varying[2]",

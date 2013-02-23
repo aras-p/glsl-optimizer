@@ -216,6 +216,7 @@ typedef enum
  *
  * When this enum is updated, the following code must be updated too:
  * - vertResults (in prog_print.c's arb_output_attrib_string())
+ * - fragAttribs (in prog_print.c's arb_input_attrib_string())
  * - _mesa_vert_result_to_frag_attrib()
  * - _mesa_frag_attrib_to_vert_result()
  */
@@ -292,24 +293,24 @@ typedef enum
  */
 typedef enum
 {
-   FRAG_ATTRIB_WPOS = 0,
-   FRAG_ATTRIB_COL0 = 1,
-   FRAG_ATTRIB_COL1 = 2,
-   FRAG_ATTRIB_FOGC = 3,
-   FRAG_ATTRIB_TEX0 = 4,
-   FRAG_ATTRIB_TEX1 = 5,
-   FRAG_ATTRIB_TEX2 = 6,
-   FRAG_ATTRIB_TEX3 = 7,
-   FRAG_ATTRIB_TEX4 = 8,
-   FRAG_ATTRIB_TEX5 = 9,
-   FRAG_ATTRIB_TEX6 = 10,
-   FRAG_ATTRIB_TEX7 = 11,
-   FRAG_ATTRIB_FACE = 12,  /**< front/back face */
-   FRAG_ATTRIB_PNTC = 13,  /**< sprite/point coord */
-   FRAG_ATTRIB_CLIP_DIST0 = 14,
-   FRAG_ATTRIB_CLIP_DIST1 = 15,
-   FRAG_ATTRIB_VAR0 = 16,  /**< shader varying */
-   FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
+   FRAG_ATTRIB_WPOS = VARYING_SLOT_POS,
+   FRAG_ATTRIB_COL0 = VARYING_SLOT_COL0,
+   FRAG_ATTRIB_COL1 = VARYING_SLOT_COL1,
+   FRAG_ATTRIB_FOGC = VARYING_SLOT_FOGC,
+   FRAG_ATTRIB_TEX0 = VARYING_SLOT_TEX0,
+   FRAG_ATTRIB_TEX1 = VARYING_SLOT_TEX1,
+   FRAG_ATTRIB_TEX2 = VARYING_SLOT_TEX2,
+   FRAG_ATTRIB_TEX3 = VARYING_SLOT_TEX3,
+   FRAG_ATTRIB_TEX4 = VARYING_SLOT_TEX4,
+   FRAG_ATTRIB_TEX5 = VARYING_SLOT_TEX5,
+   FRAG_ATTRIB_TEX6 = VARYING_SLOT_TEX6,
+   FRAG_ATTRIB_TEX7 = VARYING_SLOT_TEX7,
+   FRAG_ATTRIB_FACE = VARYING_SLOT_FACE,  /**< front/back face */
+   FRAG_ATTRIB_PNTC = VARYING_SLOT_PNTC,  /**< sprite/point coord */
+   FRAG_ATTRIB_CLIP_DIST0 = VARYING_SLOT_CLIP_DIST0,
+   FRAG_ATTRIB_CLIP_DIST1 = VARYING_SLOT_CLIP_DIST1,
+   FRAG_ATTRIB_VAR0 = VARYING_SLOT_VAR0,  /**< shader varying */
+   FRAG_ATTRIB_MAX = VARYING_SLOT_MAX
 } gl_frag_attrib;
 
 
@@ -329,11 +330,11 @@ _mesa_vert_result_to_frag_attrib(gl_varying_slot vert_result)
    else if (vert_result < VARYING_SLOT_CLIP_DIST0)
       return -1;
    else if (vert_result <= VARYING_SLOT_CLIP_DIST1)
-      return vert_result - VARYING_SLOT_CLIP_DIST0 + FRAG_ATTRIB_CLIP_DIST0;
+      return vert_result;
    else if (vert_result < VARYING_SLOT_VAR0)
       return -1;
    else
-      return vert_result - VARYING_SLOT_VAR0 + FRAG_ATTRIB_VAR0;
+      return vert_result;
 }
 
 
@@ -352,9 +353,9 @@ _mesa_frag_attrib_to_vert_result(gl_frag_attrib frag_attrib)
    else if (frag_attrib < FRAG_ATTRIB_CLIP_DIST0)
       return -1;
    else if (frag_attrib <= FRAG_ATTRIB_CLIP_DIST1)
-      return frag_attrib - FRAG_ATTRIB_CLIP_DIST0 + VARYING_SLOT_CLIP_DIST0;
+      return frag_attrib;
    else /* frag_attrib >= FRAG_ATTRIB_VAR0 */
-      return frag_attrib - FRAG_ATTRIB_VAR0 + VARYING_SLOT_VAR0;
+      return frag_attrib;
 }
 
 
