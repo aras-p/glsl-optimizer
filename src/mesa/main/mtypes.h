@@ -3417,10 +3417,6 @@ struct gl_debug_msg
    GLcharARB *message;
 };
 
-typedef enum {
-   API_ERROR_UNKNOWN,
-} gl_api_error;
-
 struct gl_debug_namespace
 {
    struct _mesa_HashTable *IDs;

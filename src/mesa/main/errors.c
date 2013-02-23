@@ -927,12 +927,18 @@ void
 _mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... )
 {
    GLboolean do_output, do_log;
+   /* Ideally this would be set up by the caller, so that we had proper IDs
+    * per different message.
+    */
+   static GLuint error_msg_id = 0;
+
+   debug_get_id(&error_msg_id);
 
    do_output = should_output(ctx, error, fmtString);
    do_log = should_log(ctx,
                        MESA_DEBUG_SOURCE_API,
                        MESA_DEBUG_TYPE_ERROR,
-                       API_ERROR_UNKNOWN,
+                       error_msg_id,
                        MESA_DEBUG_SEVERITY_HIGH);
 
    if (do_output || do_log) {
@@ -969,7 +975,7 @@ _mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... )
          _mesa_log_msg(ctx,
                        MESA_DEBUG_SOURCE_API,
                        MESA_DEBUG_TYPE_ERROR,
-                       API_ERROR_UNKNOWN,
+                       error_msg_id,
                        MESA_DEBUG_SEVERITY_HIGH, len, s2);
       }
    }
