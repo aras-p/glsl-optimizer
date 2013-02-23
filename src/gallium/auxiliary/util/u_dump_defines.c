@@ -73,6 +73,23 @@ util_dump_enum_continuous(unsigned value,
    }
 
 
+/**
+ * Same as DEFINE_UTIL_DUMP_CONTINUOUS but with static assertions to detect
+ * failures to update lists.
+ */
+#define DEFINE_UTIL_DUMP_CONTINUOUS_COUNT(_name, _count) \
+   const char * \
+   util_dump_##_name(unsigned value, boolean shortened) \
+   { \
+      STATIC_ASSERT(Elements(util_dump_##_name##_names) == _count); \
+      STATIC_ASSERT(Elements(util_dump_##_name##_short_names) == _count); \
+      if(shortened) \
+         return util_dump_enum_continuous(value, Elements(util_dump_##_name##_short_names), util_dump_##_name##_short_names); \
+      else \
+         return util_dump_enum_continuous(value, Elements(util_dump_##_name##_names), util_dump_##_name##_names); \
+   }
+
+
 static const char *
 util_dump_blend_factor_names[] = {
    UTIL_DUMP_INVALID_NAME, /* 0x0 */
@@ -282,7 +299,7 @@ util_dump_tex_target_short_names[] = {
    "cube_array",
 };
 
-DEFINE_UTIL_DUMP_CONTINUOUS(tex_target)
+DEFINE_UTIL_DUMP_CONTINUOUS_COUNT(tex_target, PIPE_MAX_TEXTURE_TYPES)
 
 
 static const char *
