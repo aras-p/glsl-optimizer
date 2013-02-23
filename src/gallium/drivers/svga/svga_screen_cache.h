@@ -96,7 +96,7 @@ struct svga_host_surface_cache_entry
  * 4. holding a flushed buffer with an expired fence
  * 
  * An entry progresses from 1 -> 2 -> 3 -> 4. When we need an entry to put a 
- * buffer into we preferencial take from 1, or from the least recentely used 
+ * buffer into we preferentially take from 1, or from the least recently used 
  * buffer from 3/4.
  */
 struct svga_host_surface_cache 
