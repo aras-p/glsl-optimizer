@@ -117,7 +117,8 @@ lp_sampler_static_texture_state(struct lp_static_texture_state *state,
    state->level_zero_only   = !view->u.tex.last_level;
 
    /*
-    * FIXME: Handle the remainder of pipe_sampler_view.
+    * the layer / element / level parameters are all either dynamic
+    * state or handled transparently wrt execution.
     */
 }
 

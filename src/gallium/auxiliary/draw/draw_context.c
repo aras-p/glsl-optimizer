@@ -764,6 +764,8 @@ draw_set_sampler_views(struct draw_context *draw,
    debug_assert(shader_stage < PIPE_SHADER_TYPES);
    debug_assert(num <= PIPE_MAX_SHADER_SAMPLER_VIEWS);
 
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+
    for (i = 0; i < num; ++i)
       draw->sampler_views[shader_stage][i] = views[i];
    for (i = num; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; ++i)
@@ -782,6 +784,8 @@ draw_set_samplers(struct draw_context *draw,
 
    debug_assert(shader_stage < PIPE_SHADER_TYPES);
    debug_assert(num <= PIPE_MAX_SAMPLERS);
+
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
    for (i = 0; i < num; ++i)
       draw->samplers[shader_stage][i] = samplers[i];
