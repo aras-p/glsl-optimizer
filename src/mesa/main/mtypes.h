@@ -218,7 +218,6 @@ typedef enum
  * - vertResults (in prog_print.c's arb_output_attrib_string())
  * - fragAttribs (in prog_print.c's arb_input_attrib_string())
  * - _mesa_varying_slot_in_fs()
- * - _mesa_frag_attrib_to_vert_result()
  */
 typedef enum
 {
@@ -287,9 +286,7 @@ typedef enum
 /*********************************************/
 
 /**
- * Indexes for fragment program input attributes.  Note that
- * _mesa_frag_attrib_to_vert_result() makes assumptions about the layout of
- * this enum.
+ * Indexes for fragment program input attributes.
  */
 typedef enum
 {
@@ -331,27 +328,6 @@ _mesa_varying_slot_in_fs(gl_varying_slot slot)
    default:
       return GL_TRUE;
    }
-}
-
-
-/**
- * Convert from a gl_frag_attrib value to the corresponding gl_varying_slot
- * for a vertex output.
- *
- * gl_frag_attrib values which have no corresponding vertex output
- * (FRAG_ATTRIB_FACE and FRAG_ATTRIB_PNTC) are converted to a value of -1.
- */
-static inline int
-_mesa_frag_attrib_to_vert_result(gl_frag_attrib frag_attrib)
-{
-   if (frag_attrib <= FRAG_ATTRIB_TEX7)
-      return frag_attrib;
-   else if (frag_attrib < FRAG_ATTRIB_CLIP_DIST0)
-      return -1;
-   else if (frag_attrib <= FRAG_ATTRIB_CLIP_DIST1)
-      return frag_attrib;
-   else /* frag_attrib >= FRAG_ATTRIB_VAR0 */
-      return frag_attrib;
 }
 
 

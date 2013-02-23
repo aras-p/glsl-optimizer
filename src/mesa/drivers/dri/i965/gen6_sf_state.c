@@ -56,24 +56,23 @@ uint32_t
 get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color, uint32_t *max_source_attr)
 {
-   int vs_attr = _mesa_frag_attrib_to_vert_result(fs_attr);
-   if (vs_attr < 0 || vs_attr == VARYING_SLOT_POS) {
-      /* These attributes will be overwritten by the fragment shader's
-       * interpolation code (see emit_interp() in brw_wm_fp.c), so just let
-       * them reference the first available attribute.
+   if (fs_attr == FRAG_ATTRIB_WPOS) {
+      /* This attribute will be overwritten by the fragment shader's
+       * interpolation code (see emit_interp() in brw_wm_fp.c), so just let it
+       * reference the first available attribute.
        */
       return 0;
    }
 
    /* Find the VUE slot for this attribute. */
-   int slot = vue_map->vert_result_to_slot[vs_attr];
+   int slot = vue_map->vert_result_to_slot[fs_attr];
 
    /* If there was only a back color written but not front, use back
     * as the color instead of undefined
     */
-   if (slot == -1 && vs_attr == VARYING_SLOT_COL0)
+   if (slot == -1 && fs_attr == VARYING_SLOT_COL0)
       slot = vue_map->vert_result_to_slot[VARYING_SLOT_BFC0];
-   if (slot == -1 && vs_attr == VARYING_SLOT_COL1)
+   if (slot == -1 && fs_attr == VARYING_SLOT_COL1)
       slot = vue_map->vert_result_to_slot[VARYING_SLOT_BFC1];
 
    if (slot == -1) {
