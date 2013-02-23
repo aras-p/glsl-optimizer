@@ -310,12 +310,15 @@ _mesa_log_msg(struct gl_context *ctx, enum mesa_debug_source source,
       emptySlot->id = id;
       emptySlot->severity = severity;
    } else {
+      static GLuint oom_msg_id = 0;
+      debug_get_id(&oom_msg_id);
+
       /* malloc failed! */
       emptySlot->message = out_of_memory;
       emptySlot->length = strlen(out_of_memory)+1;
       emptySlot->source = MESA_DEBUG_SOURCE_OTHER;
       emptySlot->type = MESA_DEBUG_TYPE_ERROR;
-      emptySlot->id = OTHER_ERROR_OUT_OF_MEMORY;
+      emptySlot->id = oom_msg_id;
       emptySlot->severity = MESA_DEBUG_SEVERITY_HIGH;
    }
 
