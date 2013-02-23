@@ -103,7 +103,10 @@ struct blitter_context_priv
    void *velem_state_readbuf;
 
    /* Sampler state. */
-   void *sampler_state, *sampler_state_linear;
+   void *sampler_state;
+   void *sampler_state_linear;
+   void *sampler_state_rect;
+   void *sampler_state_rect_linear;
 
    /* Rasterizer state. */
    void *rs_state, *rs_state_scissor, *rs_discard_state;
@@ -223,10 +226,15 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    sampler_state.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler_state.normalized_coords = 1;
    ctx->sampler_state = pipe->create_sampler_state(pipe, &sampler_state);
+   sampler_state.normalized_coords = 0;
+   ctx->sampler_state_rect = pipe->create_sampler_state(pipe, &sampler_state);
 
    sampler_state.min_img_filter = PIPE_TEX_FILTER_LINEAR;
    sampler_state.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
+   sampler_state.normalized_coords = 1;
    ctx->sampler_state_linear = pipe->create_sampler_state(pipe, &sampler_state);
+   sampler_state.normalized_coords = 0;
+   ctx->sampler_state_rect_linear = pipe->create_sampler_state(pipe, &sampler_state);
 
    /* rasterizer state */
    memset(&rs_state, 0, sizeof(rs_state));
@@ -365,8 +373,10 @@ void util_blitter_destroy(struct blitter_context *blitter)
          ctx->delete_fs_state(pipe, ctx->fs_col_int[i]);
    }
 
-   pipe->delete_sampler_state(pipe, ctx->sampler_state);
+   pipe->delete_sampler_state(pipe, ctx->sampler_state_rect_linear);
+   pipe->delete_sampler_state(pipe, ctx->sampler_state_rect);
    pipe->delete_sampler_state(pipe, ctx->sampler_state_linear);
+   pipe->delete_sampler_state(pipe, ctx->sampler_state);
    u_upload_destroy(ctx->upload);
    FREE(ctx);
 }
@@ -1317,9 +1327,17 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
        src_samples <= 1 &&
        (dstbox->width != abs(srcbox->width) ||
         dstbox->height != abs(srcbox->height))) {
-      sampler_state = ctx->sampler_state_linear;
+      if (src_target == PIPE_TEXTURE_RECT) {
+         sampler_state = ctx->sampler_state_rect_linear;
+      } else {
+         sampler_state = ctx->sampler_state_linear;
+      }
    } else {
-      sampler_state = ctx->sampler_state;
+      if (src_target == PIPE_TEXTURE_RECT) {
+         sampler_state = ctx->sampler_state_rect;
+      } else {
+         sampler_state = ctx->sampler_state;
+      }
    }
 
    /* Set samplers. */
