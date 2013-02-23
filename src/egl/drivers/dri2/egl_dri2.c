@@ -195,7 +195,14 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       for (i = 0; attr_list[i] != EGL_NONE; i += 2)
          _eglSetConfigKey(&base, attr_list[i], attr_list[i+1]);
 
-   if (depth > 0 && depth != base.BufferSize)
+   /* Allow a 24-bit RGB visual to match a 32-bit RGBA EGLConfig.  Otherwise
+    * it will only match a 32-bit RGBA visual.  On a composited window manager
+    * on X11, this will make all of the EGLConfigs with destination alpha get
+    * blended by the compositor.  This is probably not what the application
+    * wants... especially on drivers that only have 32-bit RGBA EGLConfigs!
+    */
+   if (depth > 0 && depth != base.BufferSize
+       && !(depth == 24 && base.BufferSize == 32))
       return NULL;
 
    if (rgba_masks && memcmp(rgba_masks, dri_masks, sizeof(dri_masks)))
