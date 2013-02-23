@@ -756,6 +756,11 @@ _mesa_init_errors(struct gl_context *ctx)
       }
 }
 
+static void
+do_nothing(GLuint key, void *data, void *userData)
+{
+}
+
 void
 _mesa_free_errors_data(struct gl_context *ctx)
 {
@@ -765,6 +770,7 @@ _mesa_free_errors_data(struct gl_context *ctx)
    /* Tear down state for filtering client-provided debug messages. */
    for (s = 0; s < SOURCE_COUNT; s++)
       for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
+         _mesa_HashDeleteAll(ClientIDs->Namespaces[s][t].IDs, do_nothing, NULL);
          _mesa_DeleteHashTable(ClientIDs->Namespaces[s][t].IDs);
          for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
             struct simple_node *node, *tmp;
