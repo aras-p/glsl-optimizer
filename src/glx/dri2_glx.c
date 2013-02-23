@@ -50,6 +50,7 @@
 #include "xf86drm.h"
 #include "dri2.h"
 #include "dri_common.h"
+#include "dri2_priv.h"
 
 /* From xmlpool/options.h, user exposed so should be stable */
 #define DRI_CONF_VBLANK_NEVER 0
@@ -76,26 +77,6 @@ struct dri2_display
    __glxHashTable *dri2Hash;
 
    const __DRIextension *loader_extensions[4];
-};
-
-struct dri2_screen {
-   struct glx_screen base;
-
-   __DRIscreen *driScreen;
-   __GLXDRIscreen vtable;
-   const __DRIdri2Extension *dri2;
-   const __DRIcoreExtension *core;
-
-   const __DRI2flushExtension *f;
-   const __DRI2configQueryExtension *config;
-   const __DRItexBufferExtension *texBuffer;
-   const __DRI2throttleExtension *throttle;
-   const __DRIconfig **driver_configs;
-
-   void *driver;
-   int fd;
-
-   int show_fps_interval;
 };
 
 struct dri2_context
