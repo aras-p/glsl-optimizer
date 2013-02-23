@@ -515,7 +515,7 @@ nvc0_blitter_make_vp(struct nvc0_blitter *blit)
       blit->vp.code = (uint32_t *)code_nvc0; /* const_cast */
       blit->vp.code_size = sizeof(code_nvc0);
    }
-   blit->vp.max_gpr = 7;
+   blit->vp.num_gprs = 7;
    blit->vp.vp.edgeflag = PIPE_MAX_ATTRIBS;
 
    blit->vp.hdr[0]  = 0x00020461; /* vertprog magic */

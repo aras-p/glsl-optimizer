@@ -430,6 +430,21 @@ nvc0_validate_sample_mask(struct nvc0_context *nvc0)
    PUSH_DATA (push, 0x01);
 }
 
+void
+nvc0_validate_global_residents(struct nvc0_context *nvc0,
+                               struct nouveau_bufctx *bctx, int bin)
+{
+   unsigned i;
+
+   for (i = 0; i < nvc0->global_residents.size / sizeof(struct pipe_resource *);
+        ++i) {
+      struct pipe_resource *res = *util_dynarray_element(
+         &nvc0->global_residents, struct pipe_resource *, i);
+      if (res)
+         nvc0_add_resident(bctx, bin, nv04_resource(res), NOUVEAU_BO_RDWR);
+   }
+}
+
 static void
 nvc0_validate_derived_1(struct nvc0_context *nvc0)
 {
@@ -513,6 +528,7 @@ static struct state_validate {
     { nvc0_validate_samplers,      NVC0_NEW_SAMPLERS },
     { nve4_set_tex_handles,        NVC0_NEW_TEXTURES | NVC0_NEW_SAMPLERS },
     { nvc0_vertex_arrays_validate, NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS },
+    { nvc0_validate_surfaces,      NVC0_NEW_SURFACES },
     { nvc0_idxbuf_validate,        NVC0_NEW_IDXBUF },
     { nvc0_tfb_validate,           NVC0_NEW_TFB_TARGETS | NVC0_NEW_GMTYPROG }
 };

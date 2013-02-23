@@ -22,7 +22,7 @@ struct nvc0_program {
    ubyte type;
    boolean translated;
    boolean need_tls;
-   uint8_t max_gpr;
+   uint8_t num_gprs;
 
    uint32_t *code;
    uint32_t *immd_data;
@@ -50,6 +50,13 @@ struct nvc0_program {
       uint32_t tess_mode; /* ~0 if defined by the other stage */
       uint32_t input_patch_size;
    } tp;
+   struct {
+      uint32_t lmem_size; /* local memory (TGSI PRIVATE resource) size */
+      uint32_t smem_size; /* shared memory (TGSI LOCAL resource) size */
+      void *syms;
+      unsigned num_syms;
+   } cp;
+   uint8_t num_barriers;
 
    void *relocs;
 

@@ -5,6 +5,7 @@
 #include "util/u_memory.h"
 
 typedef uint32_t u32;
+typedef uint16_t u16;
 
 extern int nouveau_mesa_debug;
 

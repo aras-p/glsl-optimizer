@@ -25,6 +25,7 @@
 #include "nvc0_context.h"
 
 #include "nv50/codegen/nv50_ir_driver.h"
+#include "nve4_compute.h"
 
 /* If only they told use the actual semantic instead of just GENERIC ... */
 static void
@@ -533,10 +534,11 @@ nvc0_program_dump(struct nvc0_program *prog)
 {
    unsigned pos;
 
-   for (pos = 0; pos < sizeof(prog->hdr) / sizeof(prog->hdr[0]); ++pos)
-      debug_printf("HDR[%02lx] = 0x%08x\n",
-                   pos * sizeof(prog->hdr[0]), prog->hdr[pos]);
-
+   if (prog->type != PIPE_SHADER_COMPUTE) {
+      for (pos = 0; pos < sizeof(prog->hdr) / sizeof(prog->hdr[0]); ++pos)
+         debug_printf("HDR[%02lx] = 0x%08x\n",
+                      pos * sizeof(prog->hdr[0]), prog->hdr[pos]);
+   }
    debug_printf("shader binary code (0x%x bytes):", prog->code_size);
    for (pos = 0; pos < prog->code_size / 4; ++pos) {
       if ((pos % 8) == 0)
@@ -569,11 +571,11 @@ nvc0_program_translate(struct nvc0_program *prog, uint16_t chipset)
    if (prog->type == PIPE_SHADER_COMPUTE) {
       if (chipset >= NVISA_GK104_CHIPSET) {
          info->io.resInfoCBSlot = 0;
-         info->io.texBindBase = 0; /* TODO */
-         info->io.suInfoBase = 0; /* TODO */
+         info->io.texBindBase = NVE4_CP_INPUT_TEX(0);
+         info->io.suInfoBase = NVE4_CP_INPUT_SUF(0);
       }
       info->io.msInfoCBSlot = 0;
-      info->io.msInfoBase = 0; /* TODO */
+      info->io.msInfoBase = NVE4_CP_INPUT_MS_OFFSETS;
    } else {
       if (chipset >= NVISA_GK104_CHIPSET) {
          info->io.resInfoCBSlot = 15;
@@ -598,14 +600,16 @@ nvc0_program_translate(struct nvc0_program *prog, uint16_t chipset)
       NOUVEAU_ERR("shader translation failed: %i\n", ret);
       goto out;
    }
-   FREE(info->bin.syms);
+   if (prog->type != PIPE_SHADER_COMPUTE)
+      FREE(info->bin.syms);
 
    prog->code = info->bin.code;
    prog->code_size = info->bin.codeSize;
    prog->immd_data = info->immd.buf;
    prog->immd_size = info->immd.bufSize;
    prog->relocs = info->bin.relocData;
-   prog->max_gpr = MAX2(4, (info->bin.maxGPR + 1));
+   prog->num_gprs = MAX2(4, (info->bin.maxGPR + 1));
+   prog->num_barriers = info->numBarriers;
 
    prog->vp.need_vertex_id = info->io.vertexId < PIPE_MAX_SHADER_INPUTS;
 
@@ -632,6 +636,10 @@ nvc0_program_translate(struct nvc0_program *prog, uint16_t chipset)
       break;
    case PIPE_SHADER_FRAGMENT:
       ret = nvc0_fp_gen_header(prog, info);
+      break;
+   case PIPE_SHADER_COMPUTE:
+      prog->cp.syms = info->bin.syms;
+      prog->cp.num_syms = info->bin.numSyms;
       break;
    default:
       ret = -1;
@@ -672,8 +680,9 @@ boolean
 nvc0_program_upload_code(struct nvc0_context *nvc0, struct nvc0_program *prog)
 {
    struct nvc0_screen *screen = nvc0->screen;
+   const boolean is_cp = prog->type == PIPE_SHADER_COMPUTE;
    int ret;
-   uint32_t size = prog->code_size + NVC0_SHADER_HEADER_SIZE;
+   uint32_t size = prog->code_size + (is_cp ? 0 : NVC0_SHADER_HEADER_SIZE);
    uint32_t lib_pos = screen->lib_code->start;
    uint32_t code_pos;
 
@@ -689,7 +698,7 @@ nvc0_program_upload_code(struct nvc0_context *nvc0, struct nvc0_program *prog)
     * latency information is expected only at certain positions.
     */
    if (screen->base.class_3d >= NVE4_3D_CLASS)
-      size = size + 0x70;
+      size = size + (is_cp ? 0x40 : 0x70);
    size = align(size, 0x40);
 
    ret = nouveau_heap_alloc(screen->text_heap, size, prog, &prog->mem);
@@ -714,18 +723,27 @@ nvc0_program_upload_code(struct nvc0_context *nvc0, struct nvc0_program *prog)
    assert((prog->immd_size == 0) || (prog->immd_base + prog->immd_size <=
                                      prog->mem->start + prog->mem->size));
 
-   if (screen->base.class_3d >= NVE4_3D_CLASS) {
-      switch (prog->mem->start & 0xff) {
-      case 0x40: prog->code_base += 0x70; break;
-      case 0x80: prog->code_base += 0x30; break;
-      case 0xc0: prog->code_base += 0x70; break;
-      default:
-         prog->code_base += 0x30;
-         assert((prog->mem->start & 0xff) == 0x00);
-         break;
+   if (!is_cp) {
+      if (screen->base.class_3d >= NVE4_3D_CLASS) {
+         switch (prog->mem->start & 0xff) {
+         case 0x40: prog->code_base += 0x70; break;
+         case 0x80: prog->code_base += 0x30; break;
+         case 0xc0: prog->code_base += 0x70; break;
+         default:
+            prog->code_base += 0x30;
+            assert((prog->mem->start & 0xff) == 0x00);
+            break;
+         }
       }
+      code_pos = prog->code_base + NVC0_SHADER_HEADER_SIZE;
+   } else {
+      if (screen->base.class_3d >= NVE4_3D_CLASS) {
+         if (prog->mem->start & 0x40)
+            prog->code_base += 0x40;
+         assert((prog->code_base & 0x7f) == 0x00);
+      }
+      code_pos = prog->code_base;
    }
-   code_pos = prog->code_base + NVC0_SHADER_HEADER_SIZE;
 
    if (prog->relocs)
       nv50_ir_relocate_code(prog->relocs, prog->code, code_pos, lib_pos, 0);
@@ -735,10 +753,10 @@ nvc0_program_upload_code(struct nvc0_context *nvc0, struct nvc0_program *prog)
       nvc0_program_dump(prog);
 #endif
 
-   nvc0->base.push_data(&nvc0->base, screen->text, prog->code_base,
-                        NOUVEAU_BO_VRAM, NVC0_SHADER_HEADER_SIZE, prog->hdr);
-   nvc0->base.push_data(&nvc0->base, screen->text,
-                        prog->code_base + NVC0_SHADER_HEADER_SIZE,
+   if (!is_cp)
+      nvc0->base.push_data(&nvc0->base, screen->text, prog->code_base,
+                           NOUVEAU_BO_VRAM, NVC0_SHADER_HEADER_SIZE, prog->hdr);
+   nvc0->base.push_data(&nvc0->base, screen->text, code_pos,
                         NOUVEAU_BO_VRAM, prog->code_size, prog->code);
    if (prog->immd_size)
       nvc0->base.push_data(&nvc0->base,
@@ -790,6 +808,8 @@ nvc0_program_destroy(struct nvc0_context *nvc0, struct nvc0_program *prog)
    FREE(prog->code);
    FREE(prog->immd_data);
    FREE(prog->relocs);
+   if (prog->type == PIPE_SHADER_COMPUTE && prog->cp.syms)
+      FREE(prog->cp.syms);
    if (prog->tfb) {
       if (nvc0->state.tfb == prog->tfb)
          nvc0->state.tfb = NULL;
@@ -800,4 +820,19 @@ nvc0_program_destroy(struct nvc0_context *nvc0, struct nvc0_program *prog)
 
    prog->pipe = pipe;
    prog->type = type;
+}
+
+uint32_t
+nvc0_program_symbol_offset(const struct nvc0_program *prog, uint32_t label)
+{
+   const struct nv50_ir_prog_symbol *syms =
+      (const struct nv50_ir_prog_symbol *)prog->cp.syms;
+   unsigned base = 0;
+   unsigned i;
+   if (prog->type != PIPE_SHADER_COMPUTE)
+      base = NVC0_SHADER_HEADER_SIZE;
+   for (i = 0; i < prog->cp.num_syms; ++i)
+      if (syms[i].label == label)
+         return prog->code_base + base + syms[i].offset;
+   return ~0;
 }
