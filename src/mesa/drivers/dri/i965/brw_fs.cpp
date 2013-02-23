@@ -2987,6 +2987,12 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    if (prog->Name != 0)
       key.proj_attrib_mask = ~(GLbitfield64) 0;
+   else {
+      /* Bit VARYING_BIT_POS of key.proj_attrib_mask is never used, so to
+       * avoid unnecessary recompiles, always set it to 1.
+       */
+      key.proj_attrib_mask |= VARYING_BIT_POS;
+   }
 
    if (intel->gen < 6)
       key.vp_outputs_written |= BITFIELD64_BIT(VARYING_SLOT_POS);

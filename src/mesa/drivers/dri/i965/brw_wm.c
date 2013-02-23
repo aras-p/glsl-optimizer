@@ -429,8 +429,12 @@ static void brw_wm_populate_key( struct brw_context *brw,
     */
    if (ctx->Shader.CurrentFragmentProgram)
       key->proj_attrib_mask = ~(GLbitfield64) 0;
-   else
-      key->proj_attrib_mask = brw->wm.input_size_masks[4-1];
+   else {
+      /* Bit VARYING_BIT_POS of key.proj_attrib_mask is never used, so to
+       * avoid unnecessary recompiles, always set it to 1.
+       */
+      key->proj_attrib_mask = brw->wm.input_size_masks[4-1] | VARYING_BIT_POS;
+   }
 
    /* _NEW_LIGHT */
    key->flat_shade = (ctx->Light.ShadeModel == GL_FLAT);
