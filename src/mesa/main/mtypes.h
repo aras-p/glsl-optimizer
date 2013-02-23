@@ -286,47 +286,6 @@ typedef enum
 /*********************************************/
 
 /**
- * Indexes for geometry program attributes.
- */
-typedef enum
-{
-   GEOM_ATTRIB_POSITION = VARYING_SLOT_POS,
-   GEOM_ATTRIB_COLOR0 = VARYING_SLOT_COL0,
-   GEOM_ATTRIB_COLOR1 = VARYING_SLOT_COL1,
-   GEOM_ATTRIB_SECONDARY_COLOR0 = VARYING_SLOT_BFC0,
-   GEOM_ATTRIB_SECONDARY_COLOR1 = VARYING_SLOT_BFC1,
-   GEOM_ATTRIB_FOG_FRAG_COORD = VARYING_SLOT_FOGC,
-   GEOM_ATTRIB_POINT_SIZE = VARYING_SLOT_PNTC,
-   GEOM_ATTRIB_CLIP_VERTEX = VARYING_SLOT_CLIP_VERTEX,
-   GEOM_ATTRIB_PRIMITIVE_ID = VARYING_SLOT_PRIMITIVE_ID,
-   GEOM_ATTRIB_TEX_COORD = VARYING_SLOT_TEX0,
-
-   GEOM_ATTRIB_VAR0 = VARYING_SLOT_VAR0,
-   GEOM_ATTRIB_MAX = VARYING_SLOT_MAX
-} gl_geom_attrib;
-
-/**
- * Bitflags for geometry attributes.
- * These are used in bitfields in many places.
- */
-/*@{*/
-#define GEOM_BIT_COLOR0      (1 << GEOM_ATTRIB_COLOR0)
-#define GEOM_BIT_COLOR1      (1 << GEOM_ATTRIB_COLOR1)
-#define GEOM_BIT_SCOLOR0     (1 << GEOM_ATTRIB_SECONDARY_COLOR0)
-#define GEOM_BIT_SCOLOR1     (1 << GEOM_ATTRIB_SECONDARY_COLOR1)
-#define GEOM_BIT_TEX_COORD   (1 << GEOM_ATTRIB_TEX_COORD)
-#define GEOM_BIT_FOG_COORD   (1 << GEOM_ATTRIB_FOG_FRAG_COORD)
-#define GEOM_BIT_POSITION    (1 << GEOM_ATTRIB_POSITION)
-#define GEOM_BIT_POINT_SIDE  (1 << GEOM_ATTRIB_POINT_SIZE)
-#define GEOM_BIT_CLIP_VERTEX (1 << GEOM_ATTRIB_CLIP_VERTEX)
-#define GEOM_BIT_PRIM_ID     (1 << GEOM_ATTRIB_PRIMITIVE_ID)
-#define GEOM_BIT_VAR0        (1 << GEOM_ATTRIB_VAR0)
-
-#define GEOM_BIT_VAR(g)  (1 << (GEOM_BIT_VAR0 + (g)))
-/*@}*/
-
-
-/**
  * Indexes for geometry program result attributes
  */
 typedef enum

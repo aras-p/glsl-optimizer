@@ -198,14 +198,14 @@ struct st_geometry_program
    /** map GP input back to VP output */
    GLuint input_map[PIPE_MAX_SHADER_INPUTS];
 
-   /** maps a Mesa GEOM_ATTRIB_x to a packed TGSI input index */
-   GLuint input_to_index[GEOM_ATTRIB_MAX];
-   /** maps a TGSI input index back to a Mesa GEOM_ATTRIB_x */
+   /** maps a Mesa VARYING_SLOT_x to a packed TGSI input index */
+   GLuint input_to_index[VARYING_SLOT_MAX];
+   /** maps a TGSI input index back to a Mesa VARYING_SLOT_x */
    GLuint index_to_input[PIPE_MAX_SHADER_INPUTS];
 
    GLuint num_inputs;
 
-   GLuint input_to_slot[GEOM_ATTRIB_MAX];  /**< Maps GEOM_ATTRIB_x to slot */
+   GLuint input_to_slot[VARYING_SLOT_MAX];  /**< Maps VARYING_SLOT_x to slot */
    GLuint num_input_slots;
 
    ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];

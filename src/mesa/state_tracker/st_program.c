@@ -800,7 +800,7 @@ st_translate_geometry_program(struct st_context *st,
                               struct st_geometry_program *stgp,
                               const struct st_gp_variant_key *key)
 {
-   GLuint inputMapping[GEOM_ATTRIB_MAX];
+   GLuint inputMapping[VARYING_SLOT_MAX];
    GLuint outputMapping[GEOM_RESULT_MAX];
    struct pipe_context *pipe = st->pipe;
    GLuint attr;
@@ -844,7 +844,7 @@ st_translate_geometry_program(struct st_context *st,
     * Convert Mesa program inputs to TGSI input register semantics.
     */
    inputsRead = stgp->Base.Base.InputsRead;
-   for (attr = 0; attr < GEOM_ATTRIB_MAX; attr++) {
+   for (attr = 0; attr < VARYING_SLOT_MAX; attr++) {
       if ((inputsRead & BITFIELD64_BIT(attr)) != 0) {
          const GLuint slot = gs_num_inputs;
 
@@ -857,7 +857,7 @@ st_translate_geometry_program(struct st_context *st,
          stgp->index_to_input[vslot] = attr;
          ++vslot;
 
-         if (attr != GEOM_ATTRIB_PRIMITIVE_ID) {
+         if (attr != VARYING_SLOT_PRIMITIVE_ID) {
             gs_array_offset += 2;
          } else
             ++gs_builtin_inputs;
@@ -868,31 +868,31 @@ st_translate_geometry_program(struct st_context *st,
 #endif
 
          switch (attr) {
-         case GEOM_ATTRIB_PRIMITIVE_ID:
+         case VARYING_SLOT_PRIMITIVE_ID:
             stgp->input_semantic_name[slot] = TGSI_SEMANTIC_PRIMID;
             stgp->input_semantic_index[slot] = 0;
             break;
-         case GEOM_ATTRIB_POSITION:
+         case VARYING_SLOT_POS:
             stgp->input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
             stgp->input_semantic_index[slot] = 0;
             break;
-         case GEOM_ATTRIB_COLOR0:
+         case VARYING_SLOT_COL0:
             stgp->input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
             stgp->input_semantic_index[slot] = 0;
             break;
-         case GEOM_ATTRIB_COLOR1:
+         case VARYING_SLOT_COL1:
             stgp->input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
             stgp->input_semantic_index[slot] = 1;
             break;
-         case GEOM_ATTRIB_FOG_FRAG_COORD:
+         case VARYING_SLOT_FOGC:
             stgp->input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
             stgp->input_semantic_index[slot] = 0;
             break;
-         case GEOM_ATTRIB_TEX_COORD:
+         case VARYING_SLOT_TEX0:
             stgp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
             stgp->input_semantic_index[slot] = num_generic++;
             break;
-         case GEOM_ATTRIB_VAR0:
+         case VARYING_SLOT_VAR0:
             /* fall-through */
          default:
             stgp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
