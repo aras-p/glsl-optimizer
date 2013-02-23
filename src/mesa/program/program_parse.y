@@ -643,7 +643,7 @@ maskedDstReg: dstReg optionalMask optionalCcMask
 	       * set in fragment program mode, so it is somewhat irrelevant.
 	       */
 	      if (state->option.PositionInvariant
-	       && ($$.Index == VERT_RESULT_HPOS)) {
+	       && ($$.Index == VARYING_SLOT_POS)) {
 		 yyerror(& @1, state, "position-invariant programs cannot "
 			 "write position");
 		 YYERROR;
@@ -2005,7 +2005,7 @@ OUTPUT_statement: optVarSize OUTPUT IDENTIFIER '=' resultBinding
 resultBinding: RESULT POSITION
 	{
 	   if (state->mode == ARB_vertex) {
-	      $$ = VERT_RESULT_HPOS;
+	      $$ = VARYING_SLOT_POS;
 	   } else {
 	      yyerror(& @2, state, "invalid program result name");
 	      YYERROR;
@@ -2014,7 +2014,7 @@ resultBinding: RESULT POSITION
 	| RESULT FOGCOORD
 	{
 	   if (state->mode == ARB_vertex) {
-	      $$ = VERT_RESULT_FOGC;
+	      $$ = VARYING_SLOT_FOGC;
 	   } else {
 	      yyerror(& @2, state, "invalid program result name");
 	      YYERROR;
@@ -2027,7 +2027,7 @@ resultBinding: RESULT POSITION
 	| RESULT POINTSIZE
 	{
 	   if (state->mode == ARB_vertex) {
-	      $$ = VERT_RESULT_PSIZ;
+	      $$ = VARYING_SLOT_PSIZ;
 	   } else {
 	      yyerror(& @2, state, "invalid program result name");
 	      YYERROR;
@@ -2036,7 +2036,7 @@ resultBinding: RESULT POSITION
 	| RESULT TEXCOORD optTexCoordUnitNum
 	{
 	   if (state->mode == ARB_vertex) {
-	      $$ = VERT_RESULT_TEX0 + $3;
+	      $$ = VARYING_SLOT_TEX0 + $3;
 	   } else {
 	      yyerror(& @2, state, "invalid program result name");
 	      YYERROR;
@@ -2062,7 +2062,7 @@ resultColBinding: COLOR optResultFaceType optResultColorType
 optResultFaceType:
 	{
 	   if (state->mode == ARB_vertex) {
-	      $$ = VERT_RESULT_COL0;
+	      $$ = VARYING_SLOT_COL0;
 	   } else {
 	      if (state->option.DrawBuffers)
 		 $$ = FRAG_RESULT_DATA0;
@@ -2101,7 +2101,7 @@ optResultFaceType:
 	| FRONT
 	{
 	   if (state->mode == ARB_vertex) {
-	      $$ = VERT_RESULT_COL0;
+	      $$ = VARYING_SLOT_COL0;
 	   } else {
 	      yyerror(& @1, state, "invalid program result name");
 	      YYERROR;
@@ -2110,7 +2110,7 @@ optResultFaceType:
 	| BACK
 	{
 	   if (state->mode == ARB_vertex) {
-	      $$ = VERT_RESULT_BFC0;
+	      $$ = VARYING_SLOT_BFC0;
 	   } else {
 	      yyerror(& @1, state, "invalid program result name");
 	      YYERROR;

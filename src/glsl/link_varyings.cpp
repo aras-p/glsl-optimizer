@@ -604,7 +604,7 @@ private:
       /**
        * The location which has been assigned for this varying.  This is
        * expressed in multiples of a float, with the first generic varying
-       * (i.e. the one referred to by VERT_RESULT_VAR0 or FRAG_ATTRIB_VAR0)
+       * (i.e. the one referred to by VARYING_SLOT_VAR0 or FRAG_ATTRIB_VAR0)
        * represented by the value 0.
        */
       unsigned generic_location;
@@ -959,7 +959,7 @@ assign_varying_locations(struct gl_context *ctx,
                          tfeedback_decl *tfeedback_decls)
 {
    /* FINISHME: Set dynamically when geometry shader support is added. */
-   const unsigned producer_base = VERT_RESULT_VAR0;
+   const unsigned producer_base = VARYING_SLOT_VAR0;
    const unsigned consumer_base = FRAG_ATTRIB_VAR0;
    varying_matches matches(ctx->Const.DisableVaryingPacking);
    hash_table *tfeedback_candidates

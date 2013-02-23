@@ -431,23 +431,23 @@ static GLboolean r200_run_tcl_render( struct gl_context *ctx,
 	 rmesa->curr_vp_hw->mesa_program.Base.OutputsWritten;
 
       vimap_rev = &rmesa->curr_vp_hw->inputmap_rev[0];
-      assert(vp_out & BITFIELD64_BIT(VERT_RESULT_HPOS));
+      assert(vp_out & BITFIELD64_BIT(VARYING_SLOT_POS));
       out_compsel = R200_OUTPUT_XYZW;
-      if (vp_out & BITFIELD64_BIT(VERT_RESULT_COL0)) {
+      if (vp_out & BITFIELD64_BIT(VARYING_SLOT_COL0)) {
 	 out_compsel |= R200_OUTPUT_COLOR_0;
       }
-      if (vp_out & BITFIELD64_BIT(VERT_RESULT_COL1)) {
+      if (vp_out & BITFIELD64_BIT(VARYING_SLOT_COL1)) {
 	 out_compsel |= R200_OUTPUT_COLOR_1;
       }
-      if (vp_out & BITFIELD64_BIT(VERT_RESULT_FOGC)) {
+      if (vp_out & BITFIELD64_BIT(VARYING_SLOT_FOGC)) {
          out_compsel |= R200_OUTPUT_DISCRETE_FOG;
       }
-      if (vp_out & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
+      if (vp_out & BITFIELD64_BIT(VARYING_SLOT_PSIZ)) {
 	 out_compsel |= R200_OUTPUT_PT_SIZE;
       }
-      for (i = VERT_RESULT_TEX0; i < VERT_RESULT_TEX6; i++) {
+      for (i = VARYING_SLOT_TEX0; i < VARYING_SLOT_TEX6; i++) {
 	 if (vp_out & BITFIELD64_BIT(i)) {
-	    out_compsel |= R200_OUTPUT_TEX_0 << (i - VERT_RESULT_TEX0);
+	    out_compsel |= R200_OUTPUT_TEX_0 << (i - VARYING_SLOT_TEX0);
 	 }
       }
       if (rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] != out_compsel) {

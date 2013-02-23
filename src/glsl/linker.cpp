@@ -1777,7 +1777,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    if (prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL) {
       link_invalidate_variable_locations(
             prog->_LinkedShaders[MESA_SHADER_VERTEX],
-            VERT_ATTRIB_GENERIC0, VERT_RESULT_VAR0);
+            VERT_ATTRIB_GENERIC0, VARYING_SLOT_VAR0);
    }
    /* FINISHME: Geometry shaders not implemented yet */
    if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL) {

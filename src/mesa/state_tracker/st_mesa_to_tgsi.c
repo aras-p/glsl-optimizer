@@ -175,7 +175,7 @@ dst_register( struct st_translate *t,
 
    case PROGRAM_OUTPUT:
       if (t->procType == TGSI_PROCESSOR_VERTEX)
-         assert(index < VERT_RESULT_MAX);
+         assert(index < VARYING_SLOT_MAX);
       else if (t->procType == TGSI_PROCESSOR_FRAGMENT)
          assert(index < FRAG_RESULT_MAX);
       else
@@ -310,10 +310,10 @@ translate_dst( struct st_translate *t,
       case TGSI_PROCESSOR_VERTEX:
          /* XXX if the geometry shader is present, this must be done there
           * instead of here. */
-         if (DstReg->Index == VERT_RESULT_COL0 ||
-             DstReg->Index == VERT_RESULT_COL1 ||
-             DstReg->Index == VERT_RESULT_BFC0 ||
-             DstReg->Index == VERT_RESULT_BFC1) {
+         if (DstReg->Index == VARYING_SLOT_COL0 ||
+             DstReg->Index == VARYING_SLOT_COL1 ||
+             DstReg->Index == VARYING_SLOT_BFC0 ||
+             DstReg->Index == VARYING_SLOT_BFC1) {
             dst = ureg_saturate(dst);
          }
          break;
@@ -979,7 +979,7 @@ emit_edgeflags( struct st_translate *t,
                  const struct gl_program *program )
 {
    struct ureg_program *ureg = t->ureg;
-   struct ureg_dst edge_dst = t->outputs[t->outputMapping[VERT_RESULT_EDGE]];
+   struct ureg_dst edge_dst = t->outputs[t->outputMapping[VARYING_SLOT_EDGE]];
    struct ureg_src edge_src = t->inputs[t->inputMapping[VERT_ATTRIB_EDGEFLAG]];
 
    ureg_MOV( ureg, edge_dst, edge_src );

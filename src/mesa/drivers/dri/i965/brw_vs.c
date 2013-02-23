@@ -66,9 +66,9 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vs_compile *c)
    int i;
 
    vue_map->num_slots = 0;
-   for (i = 0; i < BRW_VERT_RESULT_MAX; ++i) {
+   for (i = 0; i < BRW_VARYING_SLOT_MAX; ++i) {
       vue_map->vert_result_to_slot[i] = -1;
-      vue_map->slot_to_vert_result[i] = BRW_VERT_RESULT_MAX;
+      vue_map->slot_to_vert_result[i] = BRW_VARYING_SLOT_MAX;
    }
 
    /* VUE header: format depends on chip generation and whether clipping is
@@ -81,9 +81,9 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vs_compile *c)
        * dword 4-7 is ndc position
        * dword 8-11 is the first vertex data.
        */
-      assign_vue_slot(vue_map, VERT_RESULT_PSIZ);
-      assign_vue_slot(vue_map, BRW_VERT_RESULT_NDC);
-      assign_vue_slot(vue_map, VERT_RESULT_HPOS);
+      assign_vue_slot(vue_map, VARYING_SLOT_PSIZ);
+      assign_vue_slot(vue_map, BRW_VARYING_SLOT_NDC);
+      assign_vue_slot(vue_map, VARYING_SLOT_POS);
       break;
    case 5:
       /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
@@ -98,13 +98,13 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vs_compile *c)
        * contiguous with the other vert_results, so we make dword 24-27 a
        * duplicate copy of the 4D space position.
        */
-      assign_vue_slot(vue_map, VERT_RESULT_PSIZ);
-      assign_vue_slot(vue_map, BRW_VERT_RESULT_NDC);
-      assign_vue_slot(vue_map, BRW_VERT_RESULT_HPOS_DUPLICATE);
-      assign_vue_slot(vue_map, VERT_RESULT_CLIP_DIST0);
-      assign_vue_slot(vue_map, VERT_RESULT_CLIP_DIST1);
-      assign_vue_slot(vue_map, BRW_VERT_RESULT_PAD);
-      assign_vue_slot(vue_map, VERT_RESULT_HPOS);
+      assign_vue_slot(vue_map, VARYING_SLOT_PSIZ);
+      assign_vue_slot(vue_map, BRW_VARYING_SLOT_NDC);
+      assign_vue_slot(vue_map, BRW_VARYING_SLOT_POS_DUPLICATE);
+      assign_vue_slot(vue_map, VARYING_SLOT_CLIP_DIST0);
+      assign_vue_slot(vue_map, VARYING_SLOT_CLIP_DIST1);
+      assign_vue_slot(vue_map, BRW_VARYING_SLOT_PAD);
+      assign_vue_slot(vue_map, VARYING_SLOT_POS);
       break;
    case 6:
    case 7:
@@ -115,24 +115,24 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vs_compile *c)
        * enabled.
        * dword 8-11 or 16-19 is the first vertex element data we fill.
        */
-      assign_vue_slot(vue_map, VERT_RESULT_PSIZ);
-      assign_vue_slot(vue_map, VERT_RESULT_HPOS);
+      assign_vue_slot(vue_map, VARYING_SLOT_PSIZ);
+      assign_vue_slot(vue_map, VARYING_SLOT_POS);
       if (c->key.userclip_active) {
-         assign_vue_slot(vue_map, VERT_RESULT_CLIP_DIST0);
-         assign_vue_slot(vue_map, VERT_RESULT_CLIP_DIST1);
+         assign_vue_slot(vue_map, VARYING_SLOT_CLIP_DIST0);
+         assign_vue_slot(vue_map, VARYING_SLOT_CLIP_DIST1);
       }
       /* front and back colors need to be consecutive so that we can use
        * ATTRIBUTE_SWIZZLE_INPUTATTR_FACING to swizzle them when doing
        * two-sided color.
        */
-      if (outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0))
-         assign_vue_slot(vue_map, VERT_RESULT_COL0);
-      if (outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0))
-         assign_vue_slot(vue_map, VERT_RESULT_BFC0);
-      if (outputs_written & BITFIELD64_BIT(VERT_RESULT_COL1))
-         assign_vue_slot(vue_map, VERT_RESULT_COL1);
-      if (outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC1))
-         assign_vue_slot(vue_map, VERT_RESULT_BFC1);
+      if (outputs_written & BITFIELD64_BIT(VARYING_SLOT_COL0))
+         assign_vue_slot(vue_map, VARYING_SLOT_COL0);
+      if (outputs_written & BITFIELD64_BIT(VARYING_SLOT_BFC0))
+         assign_vue_slot(vue_map, VARYING_SLOT_BFC0);
+      if (outputs_written & BITFIELD64_BIT(VARYING_SLOT_COL1))
+         assign_vue_slot(vue_map, VARYING_SLOT_COL1);
+      if (outputs_written & BITFIELD64_BIT(VARYING_SLOT_BFC1))
+         assign_vue_slot(vue_map, VARYING_SLOT_BFC1);
       break;
    default:
       assert (!"VUE map not known for this chip generation");
@@ -143,14 +143,14 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vs_compile *c)
     * assign them contiguously.  Don't reassign outputs that already have a
     * slot.
     *
-    * Also, prior to Gen6, don't assign a slot for VERT_RESULT_CLIP_VERTEX,
-    * since it is unsupported.  In Gen6 and above, VERT_RESULT_CLIP_VERTEX may
+    * Also, prior to Gen6, don't assign a slot for VARYING_SLOT_CLIP_VERTEX,
+    * since it is unsupported.  In Gen6 and above, VARYING_SLOT_CLIP_VERTEX may
     * be needed for transform feedback; since we don't want to have to
     * recompute the VUE map (and everything that depends on it) when transform
     * feedback is enabled or disabled, just go ahead and assign a slot for it.
     */
-   for (int i = 0; i < VERT_RESULT_MAX; ++i) {
-      if (intel->gen < 6 && i == VERT_RESULT_CLIP_VERTEX)
+   for (int i = 0; i < VARYING_SLOT_MAX; ++i) {
+      if (intel->gen < 6 && i == VARYING_SLOT_CLIP_VERTEX)
          continue;
       if ((outputs_written & BITFIELD64_BIT(i)) &&
           vue_map->vert_result_to_slot[i] == -1) {
@@ -254,7 +254,7 @@ do_vs_prog(struct brw_context *brw,
    c.prog_data.inputs_read = vp->program.Base.InputsRead;
 
    if (c.key.copy_edgeflag) {
-      c.prog_data.outputs_written |= BITFIELD64_BIT(VERT_RESULT_EDGE);
+      c.prog_data.outputs_written |= BITFIELD64_BIT(VARYING_SLOT_EDGE);
       c.prog_data.inputs_read |= VERT_BIT_EDGEFLAG;
    }
 
@@ -267,7 +267,7 @@ do_vs_prog(struct brw_context *brw,
        */
       for (i = 0; i < 8; i++) {
          if (c.key.point_coord_replace & (1 << i))
-            c.prog_data.outputs_written |= BITFIELD64_BIT(VERT_RESULT_TEX0 + i);
+            c.prog_data.outputs_written |= BITFIELD64_BIT(VARYING_SLOT_TEX0 + i);
       }
    }
 

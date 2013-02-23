@@ -233,7 +233,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
    struct brw_indirect outlist_ptr = brw_indirect(5, 0);
    struct brw_indirect freelist_ptr = brw_indirect(6, 0);
    GLuint hpos_offset = brw_vert_result_to_offset(&c->vue_map,
-                                                  VERT_RESULT_HPOS);
+                                                  VARYING_SLOT_POS);
    
    brw_MOV(p, get_addr_reg(vtxPrev),     brw_address(c->reg.vertex[2]) );
    brw_MOV(p, get_addr_reg(plane_ptr),   brw_clip_plane0_address(c));
@@ -485,7 +485,7 @@ static void brw_clip_test( struct brw_clip_compile *c )
     struct brw_reg tmp0 = c->reg.loopcount; /* handy temporary */
 
     GLuint hpos_offset = brw_vert_result_to_offset(&c->vue_map,
-                                                   VERT_RESULT_HPOS);
+                                                   VARYING_SLOT_POS);
 
     brw_MOV(p, get_addr_reg(vt0), brw_address(c->reg.vertex[0]));
     brw_MOV(p, get_addr_reg(vt1), brw_address(c->reg.vertex[1]));

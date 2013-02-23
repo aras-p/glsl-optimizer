@@ -63,7 +63,7 @@ check_float(float x)
  */
 struct vp_stage_data {
    /** The results of running the vertex program go into these arrays. */
-   GLvector4f results[VERT_RESULT_MAX];
+   GLvector4f results[VARYING_SLOT_MAX];
 
    GLvector4f ndcCoords;              /**< normalized device coords */
    GLubyte *clipmask;                 /**< clip flags */
@@ -300,7 +300,7 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
    struct vertex_buffer *VB = &tnl->vb;
    struct gl_vertex_program *program = ctx->VertexProgram._Current;
    struct gl_program_machine *machine = &store->machine;
-   GLuint outputs[VERT_RESULT_MAX], numOutputs;
+   GLuint outputs[VARYING_SLOT_MAX], numOutputs;
    GLuint i, j;
 
    if (!program)
@@ -311,7 +311,7 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
 
    /* make list of outputs to save some time below */
    numOutputs = 0;
-   for (i = 0; i < VERT_RESULT_MAX; i++) {
+   for (i = 0; i < VARYING_SLOT_MAX; i++) {
       if (program->Base.OutputsWritten & BITFIELD64_BIT(i)) {
          outputs[numOutputs++] = i;
       }
@@ -321,7 +321,7 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
     * memory that would never be used if we don't run the software tnl pipeline.
     */
    if (!store->results[0].storage) {
-      for (i = 0; i < VERT_RESULT_MAX; i++) {
+      for (i = 0; i < VARYING_SLOT_MAX; i++) {
          assert(!store->results[i].storage);
          _mesa_vector4f_alloc( &store->results[i], 0, VB->Size, 32 );
          store->results[i].size = 4;
@@ -386,10 +386,10 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
       }
 
       /* FOGC is a special case.  Fragment shader expects (f,0,0,1) */
-      if (program->Base.OutputsWritten & BITFIELD64_BIT(VERT_RESULT_FOGC)) {
-         store->results[VERT_RESULT_FOGC].data[i][1] = 0.0;
-         store->results[VERT_RESULT_FOGC].data[i][2] = 0.0;
-         store->results[VERT_RESULT_FOGC].data[i][3] = 1.0;
+      if (program->Base.OutputsWritten & BITFIELD64_BIT(VARYING_SLOT_FOGC)) {
+         store->results[VARYING_SLOT_FOGC].data[i][1] = 0.0;
+         store->results[VARYING_SLOT_FOGC].data[i][2] = 0.0;
+         store->results[VARYING_SLOT_FOGC].data[i][3] = 1.0;
       }
 #ifdef NAN_CHECK
       ASSERT(machine->Outputs[0][3] != 0.0F);
@@ -433,28 +433,28 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
       /* Setup the VB pointers so that the next pipeline stages get
        * their data from the right place (the program output arrays).
        */
-      VB->ClipPtr = &store->results[VERT_RESULT_HPOS];
+      VB->ClipPtr = &store->results[VARYING_SLOT_POS];
       VB->ClipPtr->size = 4;
       VB->ClipPtr->count = VB->Count;
    }
 
-   VB->AttribPtr[VERT_ATTRIB_COLOR0] = &store->results[VERT_RESULT_COL0];
-   VB->AttribPtr[VERT_ATTRIB_COLOR1] = &store->results[VERT_RESULT_COL1];
-   VB->AttribPtr[VERT_ATTRIB_FOG] = &store->results[VERT_RESULT_FOGC];
-   VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->results[VERT_RESULT_PSIZ];
-   VB->BackfaceColorPtr = &store->results[VERT_RESULT_BFC0];
-   VB->BackfaceSecondaryColorPtr = &store->results[VERT_RESULT_BFC1];
+   VB->AttribPtr[VERT_ATTRIB_COLOR0] = &store->results[VARYING_SLOT_COL0];
+   VB->AttribPtr[VERT_ATTRIB_COLOR1] = &store->results[VARYING_SLOT_COL1];
+   VB->AttribPtr[VERT_ATTRIB_FOG] = &store->results[VARYING_SLOT_FOGC];
+   VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->results[VARYING_SLOT_PSIZ];
+   VB->BackfaceColorPtr = &store->results[VARYING_SLOT_BFC0];
+   VB->BackfaceSecondaryColorPtr = &store->results[VARYING_SLOT_BFC1];
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]
-         = &store->results[VERT_RESULT_TEX0 + i];
+         = &store->results[VARYING_SLOT_TEX0 + i];
    }
 
    for (i = 0; i < ctx->Const.MaxVarying; i++) {
-      if (program->Base.OutputsWritten & BITFIELD64_BIT(VERT_RESULT_VAR0 + i)) {
+      if (program->Base.OutputsWritten & BITFIELD64_BIT(VARYING_SLOT_VAR0 + i)) {
          /* Note: varying results get put into the generic attributes */
 	 VB->AttribPtr[VERT_ATTRIB_GENERIC0+i]
-            = &store->results[VERT_RESULT_VAR0 + i];
+            = &store->results[VARYING_SLOT_VAR0 + i];
       }
    }
 
@@ -502,7 +502,7 @@ dtr(struct tnl_pipeline_stage *stage)
       GLuint i;
 
       /* free the vertex program result arrays */
-      for (i = 0; i < VERT_RESULT_MAX; i++)
+      for (i = 0; i < VARYING_SLOT_MAX; i++)
          _mesa_vector4f_free( &store->results[i] );
 
       /* free misc arrays */

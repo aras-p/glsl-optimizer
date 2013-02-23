@@ -348,7 +348,7 @@ dummy_enum_func(void)
    gl_frag_result fr = FRAG_RESULT_DEPTH;
    gl_texture_index ti = TEXTURE_2D_ARRAY_INDEX;
    gl_vert_attrib va = VERT_ATTRIB_POS;
-   gl_vert_result vr = VERT_RESULT_HPOS;
+   gl_varying_slot vs = VARYING_SLOT_POS;
    gl_geom_attrib ga = GEOM_ATTRIB_POSITION;
    gl_geom_result gr = GEOM_RESULT_POS;
 
@@ -358,7 +358,7 @@ dummy_enum_func(void)
    (void) fr;
    (void) ti;
    (void) va;
-   (void) vr;
+   (void) vs;
    (void) ga;
    (void) gr;
 }
@@ -677,7 +677,7 @@ static void
 check_context_limits(struct gl_context *ctx)
 {
    /* check that we don't exceed the size of various bitfields */
-   assert(VERT_RESULT_MAX <=
+   assert(VARYING_SLOT_MAX <=
 	  (8 * sizeof(ctx->VertexProgram._Current->Base.OutputsWritten)));
    assert(FRAG_ATTRIB_MAX <=
 	  (8 * sizeof(ctx->FragmentProgram._Current->Base.InputsRead)));

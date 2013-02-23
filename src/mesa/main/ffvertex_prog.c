@@ -456,7 +456,7 @@ static struct ureg register_input( struct tnl_program *p, GLuint input )
 
 
 /**
- * \param input  one of VERT_RESULT_x tokens.
+ * \param input  one of VARYING_SLOT_x tokens.
  */
 static struct ureg register_output( struct tnl_program *p, GLuint output )
 {
@@ -833,7 +833,7 @@ static struct ureg get_transformed_normal( struct tnl_program *p )
 static void build_hpos( struct tnl_program *p )
 {
    struct ureg pos = register_input( p, VERT_ATTRIB_POS );
-   struct ureg hpos = register_output( p, VERT_RESULT_HPOS );
+   struct ureg hpos = register_output( p, VARYING_SLOT_POS );
    struct ureg mvp[4];
 
    if (p->mvp_with_dp4) {
@@ -1088,22 +1088,22 @@ static void build_lighting( struct tnl_program *p )
    /* If no lights, still need to emit the scenecolor.
     */
    {
-      struct ureg res0 = register_output( p, VERT_RESULT_COL0 );
+      struct ureg res0 = register_output( p, VARYING_SLOT_COL0 );
       emit_op1(p, OPCODE_MOV, res0, 0, _col0);
    }
 
    if (separate) {
-      struct ureg res1 = register_output( p, VERT_RESULT_COL1 );
+      struct ureg res1 = register_output( p, VARYING_SLOT_COL1 );
       emit_op1(p, OPCODE_MOV, res1, 0, _col1);
    }
 
    if (twoside) {
-      struct ureg res0 = register_output( p, VERT_RESULT_BFC0 );
+      struct ureg res0 = register_output( p, VARYING_SLOT_BFC0 );
       emit_op1(p, OPCODE_MOV, res0, 0, _bfc0);
    }
 
    if (twoside && separate) {
-      struct ureg res1 = register_output( p, VERT_RESULT_BFC1 );
+      struct ureg res1 = register_output( p, VARYING_SLOT_BFC1 );
       emit_op1(p, OPCODE_MOV, res1, 0, _bfc1);
    }
 
@@ -1189,14 +1189,14 @@ static void build_lighting( struct tnl_program *p )
 	       if (separate) {
 		  mask0 = WRITEMASK_XYZ;
 		  mask1 = WRITEMASK_XYZ;
-		  res0 = register_output( p, VERT_RESULT_COL0 );
-		  res1 = register_output( p, VERT_RESULT_COL1 );
+		  res0 = register_output( p, VARYING_SLOT_COL0 );
+		  res1 = register_output( p, VARYING_SLOT_COL1 );
 	       }
 	       else {
 		  mask0 = 0;
 		  mask1 = WRITEMASK_XYZ;
 		  res0 = _col0;
-		  res1 = register_output( p, VERT_RESULT_COL0 );
+		  res1 = register_output( p, VARYING_SLOT_COL0 );
 	       }
 	    }
             else {
@@ -1244,14 +1244,14 @@ static void build_lighting( struct tnl_program *p )
 	       if (separate) {
 		  mask0 = WRITEMASK_XYZ;
 		  mask1 = WRITEMASK_XYZ;
-		  res0 = register_output( p, VERT_RESULT_BFC0 );
-		  res1 = register_output( p, VERT_RESULT_BFC1 );
+		  res0 = register_output( p, VARYING_SLOT_BFC0 );
+		  res1 = register_output( p, VARYING_SLOT_BFC1 );
 	       }
 	       else {
 		  mask0 = 0;
 		  mask1 = WRITEMASK_XYZ;
 		  res0 = _bfc0;
-		  res1 = register_output( p, VERT_RESULT_BFC0 );
+		  res1 = register_output( p, VARYING_SLOT_BFC0 );
 	       }
 	    }
             else {
@@ -1306,7 +1306,7 @@ static void build_lighting( struct tnl_program *p )
 
 static void build_fog( struct tnl_program *p )
 {
-   struct ureg fog = register_output(p, VERT_RESULT_FOGC);
+   struct ureg fog = register_output(p, VARYING_SLOT_FOGC);
    struct ureg input;
 
    if (p->state->fog_source_is_depth) {
@@ -1417,7 +1417,7 @@ static void build_texture_transform( struct tnl_program *p )
 	  p->state->unit[i].texmat_enabled) {
 
 	 GLuint texmat_enabled = p->state->unit[i].texmat_enabled;
-	 struct ureg out = register_output(p, VERT_RESULT_TEX0 + i);
+	 struct ureg out = register_output(p, VARYING_SLOT_TEX0 + i);
 	 struct ureg out_texgen = undef;
 
 	 if (p->state->unit[i].texgen_enabled) {
@@ -1512,7 +1512,7 @@ static void build_texture_transform( struct tnl_program *p )
 	 release_temps(p);
       }
       else {
-	 emit_passthrough(p, VERT_ATTRIB_TEX0+i, VERT_RESULT_TEX0+i);
+	 emit_passthrough(p, VERT_ATTRIB_TEX0+i, VARYING_SLOT_TEX0+i);
       }
    }
 }
@@ -1526,7 +1526,7 @@ static void build_atten_pointsize( struct tnl_program *p )
    struct ureg eye = get_eye_position_z(p);
    struct ureg state_size = register_param2(p, STATE_INTERNAL, STATE_POINT_SIZE_CLAMPED);
    struct ureg state_attenuation = register_param1(p, STATE_POINT_ATTENUATION);
-   struct ureg out = register_output(p, VERT_RESULT_PSIZ);
+   struct ureg out = register_output(p, VARYING_SLOT_PSIZ);
    struct ureg ut = get_temp(p);
 
    /* dist = |eyez| */
@@ -1562,7 +1562,7 @@ static void build_atten_pointsize( struct tnl_program *p )
 static void build_array_pointsize( struct tnl_program *p )
 {
    struct ureg in = register_input(p, VERT_ATTRIB_POINT_SIZE);
-   struct ureg out = register_output(p, VERT_RESULT_PSIZ);
+   struct ureg out = register_output(p, VARYING_SLOT_PSIZ);
    emit_op1(p, OPCODE_MOV, out, WRITEMASK_X, in);
 }
 
@@ -1580,10 +1580,10 @@ static void build_tnl_program( struct tnl_program *p )
 	 build_lighting(p);
       else {
 	 if (p->state->fragprog_inputs_read & FRAG_BIT_COL0)
-	    emit_passthrough(p, VERT_ATTRIB_COLOR0, VERT_RESULT_COL0);
+	    emit_passthrough(p, VERT_ATTRIB_COLOR0, VARYING_SLOT_COL0);
 
 	 if (p->state->fragprog_inputs_read & FRAG_BIT_COL1)
-	    emit_passthrough(p, VERT_ATTRIB_COLOR1, VERT_RESULT_COL1);
+	    emit_passthrough(p, VERT_ATTRIB_COLOR1, VARYING_SLOT_COL1);
       }
    }
 

@@ -133,7 +133,7 @@ enum {
 	_TNL_ATTRIB_MAT_FRONT_INDEXES = 27,
 	_TNL_ATTRIB_MAT_BACK_INDEXES = 28,
 
-	/* This is really a VERT_RESULT, not an attrib.  Need to fix
+	/* This is really a VARYING_SLOT, not an attrib.  Need to fix
 	 * tnl to understand the difference.
 	 */
 	_TNL_ATTRIB_POINTSIZE = 16,

@@ -57,7 +57,7 @@ get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
                   int fs_attr, bool two_side_color, uint32_t *max_source_attr)
 {
    int vs_attr = _mesa_frag_attrib_to_vert_result(fs_attr);
-   if (vs_attr < 0 || vs_attr == VERT_RESULT_HPOS) {
+   if (vs_attr < 0 || vs_attr == VARYING_SLOT_POS) {
       /* These attributes will be overwritten by the fragment shader's
        * interpolation code (see emit_interp() in brw_wm_fp.c), so just let
        * them reference the first available attribute.
@@ -71,10 +71,10 @@ get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
    /* If there was only a back color written but not front, use back
     * as the color instead of undefined
     */
-   if (slot == -1 && vs_attr == VERT_RESULT_COL0)
-      slot = vue_map->vert_result_to_slot[VERT_RESULT_BFC0];
-   if (slot == -1 && vs_attr == VERT_RESULT_COL1)
-      slot = vue_map->vert_result_to_slot[VERT_RESULT_BFC1];
+   if (slot == -1 && vs_attr == VARYING_SLOT_COL0)
+      slot = vue_map->vert_result_to_slot[VARYING_SLOT_BFC0];
+   if (slot == -1 && vs_attr == VARYING_SLOT_COL1)
+      slot = vue_map->vert_result_to_slot[VARYING_SLOT_BFC1];
 
    if (slot == -1) {
       /* This attribute does not exist in the VUE--that means that the vertex
@@ -107,10 +107,10 @@ get_attr_override(struct brw_vue_map *vue_map, int urb_entry_read_offset,
     * do back-facing swizzling.
     */
    bool swizzling = two_side_color &&
-      ((vue_map->slot_to_vert_result[slot] == VERT_RESULT_COL0 &&
-        vue_map->slot_to_vert_result[slot+1] == VERT_RESULT_BFC0) ||
-       (vue_map->slot_to_vert_result[slot] == VERT_RESULT_COL1 &&
-        vue_map->slot_to_vert_result[slot+1] == VERT_RESULT_BFC1));
+      ((vue_map->slot_to_vert_result[slot] == VARYING_SLOT_COL0 &&
+        vue_map->slot_to_vert_result[slot+1] == VARYING_SLOT_BFC0) ||
+       (vue_map->slot_to_vert_result[slot] == VARYING_SLOT_COL1 &&
+        vue_map->slot_to_vert_result[slot+1] == VARYING_SLOT_BFC1));
 
    /* Update max_source_attr.  If swizzling, the SF will read this slot + 1. */
    if (*max_source_attr < source_attr + swizzling)

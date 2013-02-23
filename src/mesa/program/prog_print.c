@@ -241,7 +241,7 @@ static const char *
 arb_output_attrib_string(GLint index, GLenum progType)
 {
    /*
-    * These strings should match the VERT_RESULT_x and FRAG_RESULT_x tokens.
+    * These strings should match the VARYING_SLOT_x and FRAG_RESULT_x tokens.
     */
    static const char *const vertResults[] = {
       "result.position",
@@ -256,13 +256,13 @@ arb_output_attrib_string(GLint index, GLenum progType)
       "result.texcoord[5]",
       "result.texcoord[6]",
       "result.texcoord[7]",
-      "result.pointsize", /* VERT_RESULT_PSIZ */
-      "result.(thirteen)", /* VERT_RESULT_BFC0 */
-      "result.(fourteen)", /* VERT_RESULT_BFC1 */
-      "result.(fifteen)", /* VERT_RESULT_EDGE */
-      "result.(sixteen)", /* VERT_RESULT_CLIP_VERTEX */
-      "result.(seventeen)", /* VERT_RESULT_CLIP_DIST0 */
-      "result.(eighteen)", /* VERT_RESULT_CLIP_DIST1 */
+      "result.pointsize", /* VARYING_SLOT_PSIZ */
+      "result.(thirteen)", /* VARYING_SLOT_BFC0 */
+      "result.(fourteen)", /* VARYING_SLOT_BFC1 */
+      "result.(fifteen)", /* VARYING_SLOT_EDGE */
+      "result.(sixteen)", /* VARYING_SLOT_CLIP_VERTEX */
+      "result.(seventeen)", /* VARYING_SLOT_CLIP_DIST0 */
+      "result.(eighteen)", /* VARYING_SLOT_CLIP_DIST1 */
       "result.(nineteen)", /* VARYING_SLOT_PRIMITIVE_ID */
       "result.(twenty)", /* VARYING_SLOT_LAYER */
       "result.(twenty-one)", /* VARYING_SLOT_FACE */
@@ -315,10 +315,10 @@ arb_output_attrib_string(GLint index, GLenum progType)
    };
 
    /* sanity checks */
-   STATIC_ASSERT(Elements(vertResults) == VERT_RESULT_MAX);
+   STATIC_ASSERT(Elements(vertResults) == VARYING_SLOT_MAX);
    STATIC_ASSERT(Elements(fragResults) == FRAG_RESULT_MAX);
-   assert(strcmp(vertResults[VERT_RESULT_HPOS], "result.position") == 0);
-   assert(strcmp(vertResults[VERT_RESULT_VAR0], "result.varying[0]") == 0);
+   assert(strcmp(vertResults[VARYING_SLOT_POS], "result.position") == 0);
+   assert(strcmp(vertResults[VARYING_SLOT_VAR0], "result.varying[0]") == 0);
    assert(strcmp(fragResults[FRAG_RESULT_DATA0], "result.color[0]") == 0);
 
    if (progType == GL_VERTEX_PROGRAM_ARB) {

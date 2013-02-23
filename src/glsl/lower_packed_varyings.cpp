@@ -117,7 +117,7 @@ private:
 
    /**
     * Location representing the first generic varying slot for this shader
-    * stage (e.g. VERT_RESULT_VAR0 if we are packing vertex shader outputs).
+    * stage (e.g. VARYING_SLOT_VAR0 if we are packing vertex shader outputs).
     * Varyings whose location is less than this value are assumed to
     * correspond to special fixed function hardware, so they are not lowered.
     */

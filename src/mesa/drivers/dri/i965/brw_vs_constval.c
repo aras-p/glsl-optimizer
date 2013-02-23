@@ -111,13 +111,13 @@ static GLubyte get_active( struct tracker *t,
 }
 
 /**
- * Return the size (1,2,3 or 4) of the output/result for VERT_RESULT_idx.
+ * Return the size (1,2,3 or 4) of the output/result for VARYING_SLOT_idx.
  */
 static GLubyte get_output_size( struct tracker *t,
 				GLuint idx )
 {
    GLubyte active;
-   assert(idx < VERT_RESULT_MAX);
+   assert(idx < VARYING_SLOT_MAX);
    active = t->active[PROGRAM_OUTPUT][idx];
    if (active & (1<<3)) return 4;
    if (active & (1<<2)) return 3;
@@ -133,17 +133,17 @@ static void calc_sizes( struct tracker *t )
    GLint vertRes;
 
    if (t->twoside) {
-      t->active[PROGRAM_OUTPUT][VERT_RESULT_COL0] |= 
-	 t->active[PROGRAM_OUTPUT][VERT_RESULT_BFC0];
+      t->active[PROGRAM_OUTPUT][VARYING_SLOT_COL0] |= 
+	 t->active[PROGRAM_OUTPUT][VARYING_SLOT_BFC0];
 
-      t->active[PROGRAM_OUTPUT][VERT_RESULT_COL1] |= 
-	 t->active[PROGRAM_OUTPUT][VERT_RESULT_BFC1];
+      t->active[PROGRAM_OUTPUT][VARYING_SLOT_COL1] |= 
+	 t->active[PROGRAM_OUTPUT][VARYING_SLOT_BFC1];
    }
 
    /* Examine vertex program output sizes to set the size_masks[] info
     * which describes the fragment program input sizes.
     */
-   for (vertRes = 0; vertRes < VERT_RESULT_MAX; vertRes++) {
+   for (vertRes = 0; vertRes < VARYING_SLOT_MAX; vertRes++) {
 
       /* map vertex program output index to fragment program input index */
       GLint fragAttrib = _mesa_vert_result_to_frag_attrib(vertRes);

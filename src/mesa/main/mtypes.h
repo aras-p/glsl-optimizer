@@ -283,37 +283,6 @@ typedef enum
 /*@}*/
 
 
-/**
- * Indexes for vertex program result attributes.  Note that
- * _mesa_vert_result_to_frag_attrib() and _mesa_frag_attrib_to_vert_result() make
- * assumptions about the layout of this enum.
- */
-typedef enum
-{
-   VERT_RESULT_HPOS = VARYING_SLOT_POS,
-   VERT_RESULT_COL0 = VARYING_SLOT_COL0,
-   VERT_RESULT_COL1 = VARYING_SLOT_COL1,
-   VERT_RESULT_FOGC = VARYING_SLOT_FOGC,
-   VERT_RESULT_TEX0 = VARYING_SLOT_TEX0,
-   VERT_RESULT_TEX1 = VARYING_SLOT_TEX1,
-   VERT_RESULT_TEX2 = VARYING_SLOT_TEX2,
-   VERT_RESULT_TEX3 = VARYING_SLOT_TEX3,
-   VERT_RESULT_TEX4 = VARYING_SLOT_TEX4,
-   VERT_RESULT_TEX5 = VARYING_SLOT_TEX5,
-   VERT_RESULT_TEX6 = VARYING_SLOT_TEX6,
-   VERT_RESULT_TEX7 = VARYING_SLOT_TEX7,
-   VERT_RESULT_PSIZ = VARYING_SLOT_PSIZ,
-   VERT_RESULT_BFC0 = VARYING_SLOT_BFC0,
-   VERT_RESULT_BFC1 = VARYING_SLOT_BFC1,
-   VERT_RESULT_EDGE = VARYING_SLOT_EDGE,
-   VERT_RESULT_CLIP_VERTEX = VARYING_SLOT_CLIP_VERTEX,
-   VERT_RESULT_CLIP_DIST0 = VARYING_SLOT_CLIP_DIST0,
-   VERT_RESULT_CLIP_DIST1 = VARYING_SLOT_CLIP_DIST1,
-   VERT_RESULT_VAR0 = VARYING_SLOT_VAR0,  /**< shader varying */
-   VERT_RESULT_MAX = VARYING_SLOT_MAX
-} gl_vert_result;
-
-
 /*********************************************/
 
 /**
@@ -415,36 +384,34 @@ typedef enum
 
 
 /**
- * Convert from a gl_vert_result value to the corresponding gl_frag_attrib.
+ * Convert from a gl_varying_slot value for a vertex output to the
+ * corresponding gl_frag_attrib.
  *
- * VERT_RESULT_HPOS is converted to FRAG_ATTRIB_WPOS.
- *
- * gl_vert_result values which have no corresponding gl_frag_attrib
- * (VERT_RESULT_PSIZ, VERT_RESULT_BFC0, VERT_RESULT_BFC1, and
- * VERT_RESULT_EDGE) are converted to a value of -1.
+ * Varying output values which have no corresponding gl_frag_attrib
+ * (VARYING_SLOT_PSIZ, VARYING_SLOT_BFC0, VARYING_SLOT_BFC1, and
+ * VARYING_SLOT_EDGE) are converted to a value of -1.
  */
 static inline int
-_mesa_vert_result_to_frag_attrib(gl_vert_result vert_result)
+_mesa_vert_result_to_frag_attrib(gl_varying_slot vert_result)
 {
-   if (vert_result <= VERT_RESULT_TEX7)
+   if (vert_result <= VARYING_SLOT_TEX7)
       return vert_result;
-   else if (vert_result < VERT_RESULT_CLIP_DIST0)
+   else if (vert_result < VARYING_SLOT_CLIP_DIST0)
       return -1;
-   else if (vert_result <= VERT_RESULT_CLIP_DIST1)
-      return vert_result - VERT_RESULT_CLIP_DIST0 + FRAG_ATTRIB_CLIP_DIST0;
-   else if (vert_result < VERT_RESULT_VAR0)
+   else if (vert_result <= VARYING_SLOT_CLIP_DIST1)
+      return vert_result - VARYING_SLOT_CLIP_DIST0 + FRAG_ATTRIB_CLIP_DIST0;
+   else if (vert_result < VARYING_SLOT_VAR0)
       return -1;
    else
-      return vert_result - VERT_RESULT_VAR0 + FRAG_ATTRIB_VAR0;
+      return vert_result - VARYING_SLOT_VAR0 + FRAG_ATTRIB_VAR0;
 }
 
 
 /**
- * Convert from a gl_frag_attrib value to the corresponding gl_vert_result.
+ * Convert from a gl_frag_attrib value to the corresponding gl_varying_slot
+ * for a vertex output.
  *
- * FRAG_ATTRIB_WPOS is converted to VERT_RESULT_HPOS.
- *
- * gl_frag_attrib values which have no corresponding gl_vert_result
+ * gl_frag_attrib values which have no corresponding vertex output
  * (FRAG_ATTRIB_FACE and FRAG_ATTRIB_PNTC) are converted to a value of -1.
  */
 static inline int
@@ -455,9 +422,9 @@ _mesa_frag_attrib_to_vert_result(gl_frag_attrib frag_attrib)
    else if (frag_attrib < FRAG_ATTRIB_CLIP_DIST0)
       return -1;
    else if (frag_attrib <= FRAG_ATTRIB_CLIP_DIST1)
-      return frag_attrib - FRAG_ATTRIB_CLIP_DIST0 + VERT_RESULT_CLIP_DIST0;
+      return frag_attrib - FRAG_ATTRIB_CLIP_DIST0 + VARYING_SLOT_CLIP_DIST0;
    else /* frag_attrib >= FRAG_ATTRIB_VAR0 */
-      return frag_attrib - FRAG_ATTRIB_VAR0 + VERT_RESULT_VAR0;
+      return frag_attrib - FRAG_ATTRIB_VAR0 + VARYING_SLOT_VAR0;
 }
 
 

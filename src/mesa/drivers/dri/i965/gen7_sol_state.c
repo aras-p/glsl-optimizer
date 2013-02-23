@@ -134,8 +134,8 @@ upload_3dstate_so_decl_list(struct brw_context *brw,
       unsigned component_mask =
          (1 << linked_xfb_info->Outputs[i].NumComponents) - 1;
 
-      /* gl_PointSize is stored in VERT_RESULT_PSIZ.w. */
-      if (vert_result == VERT_RESULT_PSIZ) {
+      /* gl_PointSize is stored in VARYING_SLOT_PSIZ.w. */
+      if (vert_result == VARYING_SLOT_PSIZ) {
          assert(linked_xfb_info->Outputs[i].NumComponents == 1);
          component_mask <<= 3;
       } else {

@@ -58,7 +58,7 @@ struct brw_gs_prog_key {
 
    /**
     * Map from the index of a transform feedback binding table entry to the
-    * gl_vert_result that should be streamed out through that binding table
+    * gl_varying_slot that should be streamed out through that binding table
     * entry.
     */
    unsigned char transform_feedback_bindings[BRW_MAX_SOL_BINDINGS];

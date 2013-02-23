@@ -167,24 +167,24 @@ static unsigned long t_dst(struct prog_dst_register *dst)
 	 | R200_VSF_OUT_CLASS_TMP);
    case PROGRAM_OUTPUT:
       switch (dst->Index) {
-      case VERT_RESULT_HPOS:
+      case VARYING_SLOT_POS:
 	 return R200_VSF_OUT_CLASS_RESULT_POS;
-      case VERT_RESULT_COL0:
+      case VARYING_SLOT_COL0:
 	 return R200_VSF_OUT_CLASS_RESULT_COLOR;
-      case VERT_RESULT_COL1:
+      case VARYING_SLOT_COL1:
 	 return ((1 << R200_VPI_OUT_REG_INDEX_SHIFT)
 	    | R200_VSF_OUT_CLASS_RESULT_COLOR);
-      case VERT_RESULT_FOGC:
+      case VARYING_SLOT_FOGC:
 	 return R200_VSF_OUT_CLASS_RESULT_FOGC;
-      case VERT_RESULT_TEX0:
-      case VERT_RESULT_TEX1:
-      case VERT_RESULT_TEX2:
-      case VERT_RESULT_TEX3:
-      case VERT_RESULT_TEX4:
-      case VERT_RESULT_TEX5:
-	 return (((dst->Index - VERT_RESULT_TEX0) << R200_VPI_OUT_REG_INDEX_SHIFT)
+      case VARYING_SLOT_TEX0:
+      case VARYING_SLOT_TEX1:
+      case VARYING_SLOT_TEX2:
+      case VARYING_SLOT_TEX3:
+      case VARYING_SLOT_TEX4:
+      case VARYING_SLOT_TEX5:
+	 return (((dst->Index - VARYING_SLOT_TEX0) << R200_VPI_OUT_REG_INDEX_SHIFT)
 	    | R200_VSF_OUT_CLASS_RESULT_TEXC);
-      case VERT_RESULT_PSIZ:
+      case VARYING_SLOT_PSIZ:
 	 return R200_VSF_OUT_CLASS_RESULT_POINTSIZE;
       default:
 	 fprintf(stderr, "problem in %s, unknown dst output reg %d\n", __FUNCTION__, dst->Index);
@@ -429,10 +429,10 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
 #endif
 
    if ((mesa_vp->Base.OutputsWritten &
-      ~((1 << VERT_RESULT_HPOS) | (1 << VERT_RESULT_COL0) | (1 << VERT_RESULT_COL1) |
-      (1 << VERT_RESULT_FOGC) | (1 << VERT_RESULT_TEX0) | (1 << VERT_RESULT_TEX1) |
-      (1 << VERT_RESULT_TEX2) | (1 << VERT_RESULT_TEX3) | (1 << VERT_RESULT_TEX4) |
-      (1 << VERT_RESULT_TEX5) | (1 << VERT_RESULT_PSIZ))) != 0) {
+      ~((1 << VARYING_SLOT_POS) | (1 << VARYING_SLOT_COL0) | (1 << VARYING_SLOT_COL1) |
+      (1 << VARYING_SLOT_FOGC) | (1 << VARYING_SLOT_TEX0) | (1 << VARYING_SLOT_TEX1) |
+      (1 << VARYING_SLOT_TEX2) | (1 << VARYING_SLOT_TEX3) | (1 << VARYING_SLOT_TEX4) |
+      (1 << VARYING_SLOT_TEX5) | (1 << VARYING_SLOT_PSIZ))) != 0) {
       if (R200_DEBUG & RADEON_FALLBACKS) {
 	 fprintf(stderr, "can't handle vert prog outputs 0x%llx\n",
                  (unsigned long long) mesa_vp->Base.OutputsWritten);
@@ -450,13 +450,13 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
 /* FIXME: is changing the prog safe to do here? */
    if (mesa_vp->IsPositionInvariant &&
       /* make sure we only do this once */
-       !(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
+       !(mesa_vp->Base.OutputsWritten & (1 << VARYING_SLOT_POS))) {
 	 _mesa_insert_mvp_code(ctx, mesa_vp);
       }
 
    /* for fogc, can't change mesa_vp, as it would hose swtnl, and exp with
       base e isn't directly available neither. */
-   if ((mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_FOGC)) && !vp->fogpidx) {
+   if ((mesa_vp->Base.OutputsWritten & (1 << VARYING_SLOT_FOGC)) && !vp->fogpidx) {
       struct gl_program_parameter_list *paramList;
       gl_state_index tokens[STATE_LENGTH] = { STATE_FOG_PARAMS, 0, 0, 0, 0 };
       paramList = mesa_vp->Base.Parameters;
@@ -578,7 +578,7 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
       }
    }
 
-   if (!(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
+   if (!(mesa_vp->Base.OutputsWritten & (1 << VARYING_SLOT_POS))) {
       if (R200_DEBUG & RADEON_FALLBACKS) {
 	 fprintf(stderr, "can't handle vert prog without position output\n");
       }
@@ -684,7 +684,7 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
 
       dst = vpi->DstReg;
       if (dst.File == PROGRAM_OUTPUT &&
-	  dst.Index == VERT_RESULT_FOGC &&
+	  dst.Index == VARYING_SLOT_FOGC &&
 	  dst.WriteMask & WRITEMASK_X) {
 	  fog_temp_i = u_temp_i;
 	  dst.File = PROGRAM_TEMPORARY;

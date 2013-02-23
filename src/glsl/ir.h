@@ -505,7 +505,7 @@ public:
     * The precise meaning of this field depends on the nature of the variable.
     *
     *   - Vertex shader input: one of the values from \c gl_vert_attrib.
-    *   - Vertex shader output: one of the values from \c gl_vert_result.
+    *   - Vertex shader output: one of the values from \c gl_varying_slot.
     *   - Fragment shader input: one of the values from \c gl_frag_attrib.
     *   - Fragment shader output: one of the values from \c gl_frag_result.
     *   - Uniforms: Per-stage uniform slot number for default uniform block.

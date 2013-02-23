@@ -86,11 +86,11 @@ static void copy_bfc( struct brw_sf_compile *c,
    GLuint i;
 
    for (i = 0; i < 2; i++) {
-      if (have_attr(c, VERT_RESULT_COL0+i) &&
-	  have_attr(c, VERT_RESULT_BFC0+i))
+      if (have_attr(c, VARYING_SLOT_COL0+i) &&
+	  have_attr(c, VARYING_SLOT_BFC0+i))
 	 brw_MOV(p, 
-		 get_vert_result(c, vert, VERT_RESULT_COL0+i),
-		 get_vert_result(c, vert, VERT_RESULT_BFC0+i));
+		 get_vert_result(c, vert, VARYING_SLOT_COL0+i),
+		 get_vert_result(c, vert, VARYING_SLOT_BFC0+i));
    }
 }
 
@@ -109,8 +109,8 @@ static void do_twoside_color( struct brw_sf_compile *c )
     * for user-supplied vertex programs, as t_vp_build.c always does
     * the right thing.
     */
-   if (!(have_attr(c, VERT_RESULT_COL0) && have_attr(c, VERT_RESULT_BFC0)) &&
-       !(have_attr(c, VERT_RESULT_COL1) && have_attr(c, VERT_RESULT_BFC1)))
+   if (!(have_attr(c, VARYING_SLOT_COL0) && have_attr(c, VARYING_SLOT_BFC0)) &&
+       !(have_attr(c, VARYING_SLOT_COL1) && have_attr(c, VARYING_SLOT_BFC1)))
       return;
    
    /* Need to use BRW_EXECUTE_4 and also do an 4-wide compare in order
@@ -138,8 +138,8 @@ static void do_twoside_color( struct brw_sf_compile *c )
  * Flat shading
  */
 
-#define VERT_RESULT_COLOR_BITS (BITFIELD64_BIT(VERT_RESULT_COL0) | \
-				BITFIELD64_BIT(VERT_RESULT_COL1))
+#define VARYING_SLOT_COLOR_BITS (BITFIELD64_BIT(VARYING_SLOT_COL0) | \
+                                 BITFIELD64_BIT(VARYING_SLOT_COL1))
 
 static void copy_colors( struct brw_sf_compile *c,
 		     struct brw_reg dst,
@@ -148,7 +148,7 @@ static void copy_colors( struct brw_sf_compile *c,
    struct brw_compile *p = &c->func;
    GLuint i;
 
-   for (i = VERT_RESULT_COL0; i <= VERT_RESULT_COL1; i++) {
+   for (i = VARYING_SLOT_COL0; i <= VARYING_SLOT_COL1; i++) {
       if (have_attr(c,i))
 	 brw_MOV(p, 
 		 get_vert_result(c, dst, i),
@@ -167,7 +167,7 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
    struct brw_reg ip = brw_ip_reg();
-   GLuint nr = _mesa_bitcount_64(c->key.attrs & VERT_RESULT_COLOR_BITS);
+   GLuint nr = _mesa_bitcount_64(c->key.attrs & VARYING_SLOT_COLOR_BITS);
    GLuint jmpi = 1;
 
    if (!nr)
@@ -206,7 +206,7 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
    struct brw_reg ip = brw_ip_reg();
-   GLuint nr = _mesa_bitcount_64(c->key.attrs & VERT_RESULT_COLOR_BITS);
+   GLuint nr = _mesa_bitcount_64(c->key.attrs & VARYING_SLOT_COLOR_BITS);
    GLuint jmpi = 1;
 
    if (!nr)
@@ -334,15 +334,15 @@ calculate_masks(struct brw_sf_compile *c,
    GLbitfield64 linear_mask;
 
    if (c->key.do_flat_shading)
-      persp_mask = c->key.attrs & ~(BITFIELD64_BIT(VERT_RESULT_HPOS) |
-                                    BITFIELD64_BIT(VERT_RESULT_COL0) |
-                                    BITFIELD64_BIT(VERT_RESULT_COL1));
+      persp_mask = c->key.attrs & ~(BITFIELD64_BIT(VARYING_SLOT_POS) |
+                                    BITFIELD64_BIT(VARYING_SLOT_COL0) |
+                                    BITFIELD64_BIT(VARYING_SLOT_COL1));
    else
-      persp_mask = c->key.attrs & ~(BITFIELD64_BIT(VERT_RESULT_HPOS));
+      persp_mask = c->key.attrs & ~(BITFIELD64_BIT(VARYING_SLOT_POS));
 
    if (c->key.do_flat_shading)
-      linear_mask = c->key.attrs & ~(BITFIELD64_BIT(VERT_RESULT_COL0) |
-                                     BITFIELD64_BIT(VERT_RESULT_COL1));
+      linear_mask = c->key.attrs & ~(BITFIELD64_BIT(VARYING_SLOT_COL0) |
+                                     BITFIELD64_BIT(VARYING_SLOT_COL1));
    else
       linear_mask = c->key.attrs;
 
@@ -358,7 +358,7 @@ calculate_masks(struct brw_sf_compile *c,
 
    /* Maybe only processs one attribute on the final round:
     */
-   if (vert_reg_to_vert_result(c, reg, 1) != BRW_VERT_RESULT_MAX) {
+   if (vert_reg_to_vert_result(c, reg, 1) != BRW_VARYING_SLOT_MAX) {
       *pc |= 0xf0;
 
       if (persp_mask & BITFIELD64_BIT(vert_reg_to_vert_result(c, reg, 1)))
@@ -381,20 +381,20 @@ calculate_point_sprite_mask(struct brw_sf_compile *c, GLuint reg)
    uint16_t pc = 0;
 
    vert_result1 = vert_reg_to_vert_result(c, reg, 0);
-   if (vert_result1 >= VERT_RESULT_TEX0 && vert_result1 <= VERT_RESULT_TEX7) {
-      if (c->key.point_sprite_coord_replace & (1 << (vert_result1 - VERT_RESULT_TEX0)))
+   if (vert_result1 >= VARYING_SLOT_TEX0 && vert_result1 <= VARYING_SLOT_TEX7) {
+      if (c->key.point_sprite_coord_replace & (1 << (vert_result1 - VARYING_SLOT_TEX0)))
 	 pc |= 0x0f;
    }
-   if (vert_result1 == BRW_VERT_RESULT_PNTC)
+   if (vert_result1 == BRW_VARYING_SLOT_PNTC)
       pc |= 0x0f;
 
    vert_result2 = vert_reg_to_vert_result(c, reg, 1);
-   if (vert_result2 >= VERT_RESULT_TEX0 && vert_result2 <= VERT_RESULT_TEX7) {
+   if (vert_result2 >= VARYING_SLOT_TEX0 && vert_result2 <= VARYING_SLOT_TEX7) {
       if (c->key.point_sprite_coord_replace & (1 << (vert_result2 -
-                                                     VERT_RESULT_TEX0)))
+                                                     VARYING_SLOT_TEX0)))
          pc |= 0xf0;
    }
-   if (vert_result2 == BRW_VERT_RESULT_PNTC)
+   if (vert_result2 == BRW_VARYING_SLOT_PNTC)
       pc |= 0xf0;
 
    return pc;

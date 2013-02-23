@@ -1259,13 +1259,13 @@ fs_visitor::calculate_urb_setup()
       }
    } else {
       /* FINISHME: The sf doesn't map VS->FS inputs for us very well. */
-      for (unsigned int i = 0; i < VERT_RESULT_MAX; i++) {
+      for (unsigned int i = 0; i < VARYING_SLOT_MAX; i++) {
          /* Point size is packed into the header, not as a general attribute */
-         if (i == VERT_RESULT_PSIZ)
+         if (i == VARYING_SLOT_PSIZ)
             continue;
 
 	 if (c->key.vp_outputs_written & BITFIELD64_BIT(i)) {
-	    int fp_index = _mesa_vert_result_to_frag_attrib((gl_vert_result) i);
+	    int fp_index = _mesa_vert_result_to_frag_attrib((gl_varying_slot) i);
 
 	    /* The back color slot is skipped when the front color is
 	     * also written to.  In addition, some slots can be
@@ -3001,7 +3001,7 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
          key.proj_attrib_mask |= BITFIELD64_BIT(i);
 
       if (intel->gen < 6) {
-         int vp_index = _mesa_vert_result_to_frag_attrib((gl_vert_result) i);
+         int vp_index = _mesa_vert_result_to_frag_attrib((gl_varying_slot) i);
 
          if (vp_index >= 0)
             key.vp_outputs_written |= BITFIELD64_BIT(vp_index);

@@ -323,26 +323,26 @@ struct brw_wm_prog_data {
 
 /**
  * Enum representing the i965-specific vertex results that don't correspond
- * exactly to any element of gl_vert_result.  The values of this enum are
- * assigned such that they don't conflict with gl_vert_result.
+ * exactly to any element of gl_varying_slot.  The values of this enum are
+ * assigned such that they don't conflict with gl_varying_slot.
  */
 typedef enum
 {
-   BRW_VERT_RESULT_NDC = VERT_RESULT_MAX,
-   BRW_VERT_RESULT_HPOS_DUPLICATE,
-   BRW_VERT_RESULT_PAD,
+   BRW_VARYING_SLOT_NDC = VARYING_SLOT_MAX,
+   BRW_VARYING_SLOT_POS_DUPLICATE,
+   BRW_VARYING_SLOT_PAD,
    /*
     * It's actually not a vert_result but just a _mark_ to let sf aware that
     * he need do something special to handle gl_PointCoord builtin variable
     * correctly. see compile_sf_prog() for more info.
     */
-   BRW_VERT_RESULT_PNTC,
-   BRW_VERT_RESULT_MAX
-} brw_vert_result;
+   BRW_VARYING_SLOT_PNTC,
+   BRW_VARYING_SLOT_MAX
+} brw_varying_slot;
 
 
 /**
- * Data structure recording the relationship between the gl_vert_result enum
+ * Data structure recording the relationship between the gl_varying_slot enum
  * and "slots" within the vertex URB entry (VUE).  A "slot" is defined as a
  * single octaword within the VUE (128 bits).
  *
@@ -354,23 +354,23 @@ typedef enum
  */
 struct brw_vue_map {
    /**
-    * Map from gl_vert_result value to VUE slot.  For gl_vert_results that are
+    * Map from gl_varying_slot value to VUE slot.  For gl_varying_slots that are
     * not stored in a slot (because they are not written, or because
     * additional processing is applied before storing them in the VUE), the
     * value is -1.
     */
-   int vert_result_to_slot[BRW_VERT_RESULT_MAX];
+   int vert_result_to_slot[BRW_VARYING_SLOT_MAX];
 
    /**
-    * Map from VUE slot to gl_vert_result value.  For slots that do not
-    * directly correspond to a gl_vert_result, the value comes from
-    * brw_vert_result.
+    * Map from VUE slot to gl_varying_slot value.  For slots that do not
+    * directly correspond to a gl_varying_slot, the value comes from
+    * brw_varying_slot.
     *
-    * For slots that are not in use, the value is BRW_VERT_RESULT_MAX (this
+    * For slots that are not in use, the value is BRW_VARYING_SLOT_MAX (this
     * simplifies code that uses the value stored in slot_to_vert_result to
     * create a bit mask).
     */
-   int slot_to_vert_result[BRW_VERT_RESULT_MAX];
+   int slot_to_vert_result[BRW_VARYING_SLOT_MAX];
 
    /**
     * Total number of VUE slots in use
@@ -387,7 +387,8 @@ static inline GLuint brw_vue_slot_to_offset(GLuint slot)
 }
 
 /**
- * Convert a vert_result into a byte offset within the VUE.
+ * Convert a vertex output (brw_varying_slot) into a byte offset within the
+ * VUE.
  */
 static inline GLuint brw_vert_result_to_offset(struct brw_vue_map *vue_map,
                                                GLuint vert_result)

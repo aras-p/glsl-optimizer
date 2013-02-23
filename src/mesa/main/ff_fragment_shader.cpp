@@ -304,7 +304,6 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
 
 
 #define VERT_BIT_TEX_ANY    (0xff << VERT_ATTRIB_TEX0)
-#define VERT_RESULT_TEX_ANY (0xff << VERT_RESULT_TEX0)
 
 /**
  * Identify all possible varying inputs.  The fragment program will
@@ -398,12 +397,12 @@ static GLbitfield get_fp_input_mask( struct gl_context *ctx )
       if (ctx->Point.PointSprite)
          vp_outputs |= FRAG_BITS_TEX_ANY;
 
-      if (vp_outputs & (1 << VERT_RESULT_COL0))
+      if (vp_outputs & (1 << VARYING_SLOT_COL0))
          fp_inputs |= FRAG_BIT_COL0;
-      if (vp_outputs & (1 << VERT_RESULT_COL1))
+      if (vp_outputs & (1 << VARYING_SLOT_COL1))
          fp_inputs |= FRAG_BIT_COL1;
 
-      fp_inputs |= (((vp_outputs & VERT_RESULT_TEX_ANY) >> VERT_RESULT_TEX0) 
+      fp_inputs |= (((vp_outputs & VARYING_BITS_TEX_ANY) >> VARYING_SLOT_TEX0) 
                     << FRAG_ATTRIB_TEX0);
    }
    
