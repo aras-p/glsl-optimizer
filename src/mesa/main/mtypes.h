@@ -217,7 +217,7 @@ typedef enum
  * When this enum is updated, the following code must be updated too:
  * - vertResults (in prog_print.c's arb_output_attrib_string())
  * - fragAttribs (in prog_print.c's arb_input_attrib_string())
- * - _mesa_vert_result_to_frag_attrib()
+ * - _mesa_varying_slot_in_fs()
  * - _mesa_frag_attrib_to_vert_result()
  */
 typedef enum
@@ -288,8 +288,8 @@ typedef enum
 
 /**
  * Indexes for fragment program input attributes.  Note that
- * _mesa_vert_result_to_frag_attrib() and frag_attrib_to_vert_result() make
- * assumptions about the layout of this enum.
+ * _mesa_frag_attrib_to_vert_result() makes assumptions about the layout of
+ * this enum.
  */
 typedef enum
 {
@@ -315,26 +315,22 @@ typedef enum
 
 
 /**
- * Convert from a gl_varying_slot value for a vertex output to the
- * corresponding gl_frag_attrib.
- *
- * Varying output values which have no corresponding gl_frag_attrib
- * (VARYING_SLOT_PSIZ, VARYING_SLOT_BFC0, VARYING_SLOT_BFC1, and
- * VARYING_SLOT_EDGE) are converted to a value of -1.
+ * Determine if the given gl_varying_slot appears in the fragment shader.
  */
-static inline int
-_mesa_vert_result_to_frag_attrib(gl_varying_slot vert_result)
+static inline GLboolean
+_mesa_varying_slot_in_fs(gl_varying_slot slot)
 {
-   if (vert_result <= VARYING_SLOT_TEX7)
-      return vert_result;
-   else if (vert_result < VARYING_SLOT_CLIP_DIST0)
-      return -1;
-   else if (vert_result <= VARYING_SLOT_CLIP_DIST1)
-      return vert_result;
-   else if (vert_result < VARYING_SLOT_VAR0)
-      return -1;
-   else
-      return vert_result;
+   switch (slot) {
+   case VARYING_SLOT_PSIZ:
+   case VARYING_SLOT_BFC0:
+   case VARYING_SLOT_BFC1:
+   case VARYING_SLOT_EDGE:
+   case VARYING_SLOT_CLIP_VERTEX:
+   case VARYING_SLOT_LAYER:
+      return GL_FALSE;
+   default:
+      return GL_TRUE;
+   }
 }
 
 

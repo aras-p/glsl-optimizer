@@ -144,17 +144,14 @@ static void calc_sizes( struct tracker *t )
     * which describes the fragment program input sizes.
     */
    for (vertRes = 0; vertRes < VARYING_SLOT_MAX; vertRes++) {
-
-      /* map vertex program output index to fragment program input index */
-      GLint fragAttrib = _mesa_vert_result_to_frag_attrib(vertRes);
-      if (fragAttrib < 0)
+      if (!_mesa_varying_slot_in_fs(vertRes))
          continue;
 
       switch (get_output_size(t, vertRes)) {
-      case 4: t->size_masks[4-1] |= BITFIELD64_BIT(fragAttrib);
-      case 3: t->size_masks[3-1] |= BITFIELD64_BIT(fragAttrib);
-      case 2: t->size_masks[2-1] |= BITFIELD64_BIT(fragAttrib);
-      case 1: t->size_masks[1-1] |= BITFIELD64_BIT(fragAttrib);
+      case 4: t->size_masks[4-1] |= BITFIELD64_BIT(vertRes);
+      case 3: t->size_masks[3-1] |= BITFIELD64_BIT(vertRes);
+      case 2: t->size_masks[2-1] |= BITFIELD64_BIT(vertRes);
+      case 1: t->size_masks[1-1] |= BITFIELD64_BIT(vertRes);
 	 break;
       }
    }
