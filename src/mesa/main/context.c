@@ -349,7 +349,6 @@ dummy_enum_func(void)
    gl_texture_index ti = TEXTURE_2D_ARRAY_INDEX;
    gl_vert_attrib va = VERT_ATTRIB_POS;
    gl_varying_slot vs = VARYING_SLOT_POS;
-   gl_geom_result gr = GEOM_RESULT_POS;
 
    (void) bi;
    (void) fi;
@@ -358,7 +357,6 @@ dummy_enum_func(void)
    (void) ti;
    (void) va;
    (void) vs;
-   (void) gr;
 }
 
 

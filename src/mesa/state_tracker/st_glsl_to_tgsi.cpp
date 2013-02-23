@@ -4148,7 +4148,7 @@ dst_register(struct st_translate *t,
       else if (t->procType == TGSI_PROCESSOR_FRAGMENT)
          assert(index < FRAG_RESULT_MAX);
       else
-         assert(index < GEOM_RESULT_MAX);
+         assert(index < VARYING_SLOT_MAX);
 
       assert(t->outputMapping[index] < Elements(t->outputs));
 

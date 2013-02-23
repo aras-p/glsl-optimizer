@@ -801,7 +801,7 @@ st_translate_geometry_program(struct st_context *st,
                               const struct st_gp_variant_key *key)
 {
    GLuint inputMapping[VARYING_SLOT_MAX];
-   GLuint outputMapping[GEOM_RESULT_MAX];
+   GLuint outputMapping[VARYING_SLOT_MAX];
    struct pipe_context *pipe = st->pipe;
    GLuint attr;
    GLbitfield64 inputsRead;
@@ -912,7 +912,7 @@ st_translate_geometry_program(struct st_context *st,
     * Determine number of outputs, the (default) output register
     * mapping and the semantic information for each output.
     */
-   for (attr = 0; attr < GEOM_RESULT_MAX; attr++) {
+   for (attr = 0; attr < VARYING_SLOT_MAX; attr++) {
       if (stgp->Base.Base.OutputsWritten & BITFIELD64_BIT(attr)) {
          GLuint slot;
 
@@ -921,45 +921,45 @@ st_translate_geometry_program(struct st_context *st,
          outputMapping[attr] = slot;
 
          switch (attr) {
-         case GEOM_RESULT_POS:
+         case VARYING_SLOT_POS:
             assert(slot == 0);
             gs_output_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
             gs_output_semantic_index[slot] = 0;
             break;
-         case GEOM_RESULT_COL0:
+         case VARYING_SLOT_COL0:
             gs_output_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
             gs_output_semantic_index[slot] = 0;
             break;
-         case GEOM_RESULT_COL1:
+         case VARYING_SLOT_COL1:
             gs_output_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
             gs_output_semantic_index[slot] = 1;
             break;
-         case GEOM_RESULT_SCOL0:
+         case VARYING_SLOT_BFC0:
             gs_output_semantic_name[slot] = TGSI_SEMANTIC_BCOLOR;
             gs_output_semantic_index[slot] = 0;
             break;
-         case GEOM_RESULT_SCOL1:
+         case VARYING_SLOT_BFC1:
             gs_output_semantic_name[slot] = TGSI_SEMANTIC_BCOLOR;
             gs_output_semantic_index[slot] = 1;
             break;
-         case GEOM_RESULT_FOGC:
+         case VARYING_SLOT_FOGC:
             gs_output_semantic_name[slot] = TGSI_SEMANTIC_FOG;
             gs_output_semantic_index[slot] = 0;
             break;
-         case GEOM_RESULT_PSIZ:
+         case VARYING_SLOT_PSIZ:
             gs_output_semantic_name[slot] = TGSI_SEMANTIC_PSIZE;
             gs_output_semantic_index[slot] = 0;
             break;
-         case GEOM_RESULT_TEX0:
-         case GEOM_RESULT_TEX1:
-         case GEOM_RESULT_TEX2:
-         case GEOM_RESULT_TEX3:
-         case GEOM_RESULT_TEX4:
-         case GEOM_RESULT_TEX5:
-         case GEOM_RESULT_TEX6:
-         case GEOM_RESULT_TEX7:
+         case VARYING_SLOT_TEX0:
+         case VARYING_SLOT_TEX1:
+         case VARYING_SLOT_TEX2:
+         case VARYING_SLOT_TEX3:
+         case VARYING_SLOT_TEX4:
+         case VARYING_SLOT_TEX5:
+         case VARYING_SLOT_TEX6:
+         case VARYING_SLOT_TEX7:
             /* fall-through */
-         case GEOM_RESULT_VAR0:
+         case VARYING_SLOT_VAR0:
             /* fall-through */
          default:
             assert(slot < Elements(gs_output_semantic_name));
@@ -973,7 +973,7 @@ st_translate_geometry_program(struct st_context *st,
    assert(gs_output_semantic_name[0] == TGSI_SEMANTIC_POSITION);
 
    /* find max output slot referenced to compute gs_num_outputs */
-   for (attr = 0; attr < GEOM_RESULT_MAX; attr++) {
+   for (attr = 0; attr < VARYING_SLOT_MAX; attr++) {
       if (outputMapping[attr] != ~0 && outputMapping[attr] > maxSlot)
          maxSlot = outputMapping[attr];
    }

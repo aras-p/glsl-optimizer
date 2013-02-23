@@ -951,7 +951,7 @@ _mesa_valid_register_index(const struct gl_context *ctx,
       case MESA_SHADER_FRAGMENT:
          return index < FRAG_RESULT_DATA0 + (GLint) ctx->Const.MaxDrawBuffers;
       case MESA_SHADER_GEOMETRY:
-         return index < GEOM_RESULT_VAR0 + (GLint) ctx->Const.MaxVarying;
+         return index < VARYING_SLOT_VAR0 + (GLint) ctx->Const.MaxVarying;
       default:
          return GL_FALSE;
       }

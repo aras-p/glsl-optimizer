@@ -286,34 +286,6 @@ typedef enum
 /*********************************************/
 
 /**
- * Indexes for geometry program result attributes
- */
-typedef enum
-{
-   GEOM_RESULT_POS  = VARYING_SLOT_POS,
-   GEOM_RESULT_COL0  = VARYING_SLOT_COL0,
-   GEOM_RESULT_COL1  = VARYING_SLOT_COL1,
-   GEOM_RESULT_SCOL0 = VARYING_SLOT_BFC0,
-   GEOM_RESULT_SCOL1 = VARYING_SLOT_BFC1,
-   GEOM_RESULT_FOGC = VARYING_SLOT_FOGC,
-   GEOM_RESULT_TEX0 = VARYING_SLOT_TEX0,
-   GEOM_RESULT_TEX1 = VARYING_SLOT_TEX1,
-   GEOM_RESULT_TEX2 = VARYING_SLOT_TEX2,
-   GEOM_RESULT_TEX3 = VARYING_SLOT_TEX3,
-   GEOM_RESULT_TEX4 = VARYING_SLOT_TEX4,
-   GEOM_RESULT_TEX5 = VARYING_SLOT_TEX5,
-   GEOM_RESULT_TEX6 = VARYING_SLOT_TEX6,
-   GEOM_RESULT_TEX7 = VARYING_SLOT_TEX7,
-   GEOM_RESULT_PSIZ = VARYING_SLOT_PSIZ,
-   GEOM_RESULT_CLPV = VARYING_SLOT_CLIP_VERTEX,
-   GEOM_RESULT_PRID = VARYING_SLOT_PRIMITIVE_ID,
-   GEOM_RESULT_LAYR = VARYING_SLOT_LAYER,
-   GEOM_RESULT_VAR0 = VARYING_SLOT_VAR0,
-   GEOM_RESULT_MAX  = VARYING_SLOT_MAX
-} gl_geom_result;
-
-
-/**
  * Indexes for fragment program input attributes.  Note that
  * _mesa_vert_result_to_frag_attrib() and frag_attrib_to_vert_result() make
  * assumptions about the layout of this enum.
