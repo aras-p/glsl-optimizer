@@ -79,6 +79,7 @@ private:
    void emitSTORE(const Instruction *);
    void emitMOV(const Instruction *);
    void emitATOM(const Instruction *);
+   void emitMEMBAR(const Instruction *);
 
    void emitINTERP(const Instruction *);
    void emitPFETCH(const Instruction *);
@@ -121,6 +122,7 @@ private:
    void emitQUADOP(const Instruction *, uint8_t qOp, uint8_t laneMask);
 
    void emitFlow(const Instruction *);
+   void emitBAR(const Instruction *);
 
    void emitSUCLAMPMode(uint16_t);
    void emitSUCalc(Instruction *);
@@ -1290,6 +1292,78 @@ CodeEmitterNVC0::emitFlow(const Instruction *i)
 }
 
 void
+CodeEmitterNVC0::emitBAR(const Instruction *i)
+{
+   Value *rDef = NULL, *pDef = NULL;
+
+   switch (i->subOp) {
+   case NV50_IR_SUBOP_BAR_ARRIVE:   code[0] = 0x84; break;
+   case NV50_IR_SUBOP_BAR_RED_AND:  code[0] = 0x24; break;
+   case NV50_IR_SUBOP_BAR_RED_OR:   code[0] = 0x44; break;
+   case NV50_IR_SUBOP_BAR_RED_POPC: code[0] = 0x04; break;
+   default:
+      code[0] = 0x04;
+      assert(i->subOp == NV50_IR_SUBOP_BAR_SYNC);
+      break;
+   }
+   code[1] = 0x50000000;
+
+   code[0] |= 63 << 14;
+   code[1] |= 7 << 21;
+
+   emitPredicate(i);
+
+   // barrier id
+   if (i->src(0).getFile() == FILE_GPR) {
+      srcId(i->src(0), 20);
+   } else {
+      ImmediateValue *imm = i->getSrc(0)->asImm();
+      assert(imm);
+      code[0] |= imm->reg.data.u32 << 20;
+   }
+
+   // thread count
+   if (i->src(1).getFile() == FILE_GPR) {
+      srcId(i->src(1), 26);
+   } else {
+      ImmediateValue *imm = i->getSrc(1)->asImm();
+      assert(imm);
+      code[0] |= imm->reg.data.u32 << 26;
+      code[1] |= imm->reg.data.u32 >> 6;
+   }
+
+   if (i->srcExists(2) && (i->predSrc != 2)) {
+      srcId(i->src(2), 32 + 17);
+      if (i->src(2).mod == Modifier(NV50_IR_MOD_NOT))
+         code[1] |= 1 << 20;
+   } else {
+      code[1] |= 7 << 17;
+   }
+
+   if (i->defExists(0)) {
+      if (i->def(0).getFile() == FILE_GPR)
+         rDef = i->getDef(0);
+      else
+         pDef = i->getDef(0);
+
+      if (i->defExists(1)) {
+         if (i->def(1).getFile() == FILE_GPR)
+            rDef = i->getDef(1);
+         else
+            pDef = i->getDef(1);
+      }
+   }
+   if (rDef) {
+      code[0] &= ~(63 << 14);
+      defId(rDef, 14);
+   }
+   if (pDef) {
+      code[1] &= ~(7 << 21);
+      defId(pDef, 32 + 21);
+   }
+}
+
+void
 CodeEmitterNVC0::emitPFETCH(const Instruction *i)
 {
    uint32_t prim = i->src(0).get()->reg.data.u32;
@@ -1754,6 +1828,22 @@ CodeEmitterNVC0::emitATOM(const Instruction *i)
 }
 
 void
+CodeEmitterNVC0::emitMEMBAR(const Instruction *i)
+{
+   switch (NV50_IR_SUBOP_MEMBAR_SCOPE(i->subOp)) {
+   case NV50_IR_SUBOP_MEMBAR_CTA: code[0] = 0x05; break;
+   case NV50_IR_SUBOP_MEMBAR_GL:  code[0] = 0x25; break;
+   default:
+      code[0] = 0x45;
+      assert(NV50_IR_SUBOP_MEMBAR_SCOPE(i->subOp) == NV50_IR_SUBOP_MEMBAR_SYS);
+      break;
+   }
+   code[1] = 0xe0000000;
+
+   emitPredicate(i);
+}
+
+void
 CodeEmitterNVC0::emitSUCLAMPMode(uint16_t subOp)
 {
    uint8_t m;
@@ -2209,6 +2299,12 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
    case OP_JOIN:
       emitNOP(insn);
       insn->join = 1;
+      break;
+   case OP_BAR:
+      emitBAR(insn);
+      break;
+   case OP_MEMBAR:
+      emitMEMBAR(insn);
       break;
    case OP_VSHL:
       emitVSHL(insn);

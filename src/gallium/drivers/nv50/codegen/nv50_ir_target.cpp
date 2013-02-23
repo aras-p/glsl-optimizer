@@ -264,6 +264,11 @@ CodeEmitter::prepareEmission(BasicBlock *bb)
    for (i = bb->getEntry(); i; i = next) {
       next = i->next;
 
+      if (i->op == OP_MEMBAR && !targ->isOpSupported(OP_MEMBAR, TYPE_NONE)) {
+         bb->remove(i);
+         continue;
+      }
+
       i->encSize = getMinEncodingSize(i);
       if (next && i->encSize < 8)
          ++nShort;

@@ -394,6 +394,7 @@ TargetNV50::isOpSupported(operation op, DataType ty) const
    case OP_INSBF:
    case OP_EXTBF:
    case OP_EXIT: // want exit modifier instead (on NOP if required)
+   case OP_MEMBAR:
       return false;
    case OP_SAD:
       return ty == TYPE_S32;

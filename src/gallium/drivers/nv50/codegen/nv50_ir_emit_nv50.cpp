@@ -122,6 +122,7 @@ private:
 
    void emitFlow(const Instruction *, uint8_t flowOp);
    void emitPRERETEmu(const FlowInstruction *);
+   void emitBAR(const Instruction *);
 
    void emitATOM(const Instruction *);
 };
@@ -1535,6 +1536,19 @@ CodeEmitterNV50::emitFlow(const Instruction *i, uint8_t flowOp)
 }
 
 void
+CodeEmitterNV50::emitBAR(const Instruction *i)
+{
+   ImmediateValue *barId = i->getSrc(0)->asImm();
+   assert(barId);
+
+   code[0] = 0x82000003 | (barId->reg.data.u32 << 21);
+   code[1] = 0x00004000;
+
+   if (i->subOp == NV50_IR_SUBOP_BAR_SYNC)
+      code[0] |= 1 << 26;
+}
+
+void
 CodeEmitterNV50::emitATOM(const Instruction *i)
 {
    uint8_t subOp;
@@ -1752,6 +1766,9 @@ CodeEmitterNV50::emitInstruction(Instruction *insn)
       break;
    case OP_ATOM:
       emitATOM(insn);
+      break;
+   case OP_BAR:
+      emitBAR(insn);
       break;
    case OP_PHI:
    case OP_UNION:

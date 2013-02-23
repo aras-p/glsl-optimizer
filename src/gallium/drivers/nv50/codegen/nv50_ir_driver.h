@@ -167,6 +167,8 @@ struct nv50_ir_prog_info
       } cp;
    } prop;
 
+   uint8_t numBarriers;
+
    struct {
       uint8_t clipDistance;      /* index of first clip distance output */
       uint8_t clipDistanceMask;  /* mask of clip distances defined */
