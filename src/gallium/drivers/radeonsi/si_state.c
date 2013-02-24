@@ -2523,6 +2523,7 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint i
 
 	default:
 		R600_ERR("unsupported %d\n", shader);
+		FREE(pm4);
 	}
 
 	if (cb->buffer != &rbuffer->b.b)
