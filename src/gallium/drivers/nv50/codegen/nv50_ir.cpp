@@ -546,6 +546,9 @@ Symbol::equals(const Value *that, bool strict) const
    if (this->baseSym != that->asSym()->baseSym)
       return false;
 
+   if (reg.file == FILE_SYSTEM_VALUE)
+      return (this->reg.data.sv.sv    == that->reg.data.sv.sv &&
+              this->reg.data.sv.index == that->reg.data.sv.index);
    return this->reg.data.offset == that->reg.data.offset;
 }
 
