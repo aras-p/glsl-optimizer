@@ -40,7 +40,7 @@
 struct tracker {
    bool twoside;
    GLubyte active[PROGRAM_OUTPUT+1][MAX_PROGRAM_TEMPS];
-   GLbitfield size_masks[4];  /**< one bit per fragment program input attrib */
+   GLbitfield64 size_masks[4];  /**< one bit per fragment program input attrib */
 };
 
 
@@ -151,10 +151,10 @@ static void calc_sizes( struct tracker *t )
          continue;
 
       switch (get_output_size(t, vertRes)) {
-      case 4: t->size_masks[4-1] |= 1 << fragAttrib;
-      case 3: t->size_masks[3-1] |= 1 << fragAttrib;
-      case 2: t->size_masks[2-1] |= 1 << fragAttrib;
-      case 1: t->size_masks[1-1] |= 1 << fragAttrib;
+      case 4: t->size_masks[4-1] |= BITFIELD64_BIT(fragAttrib);
+      case 3: t->size_masks[3-1] |= BITFIELD64_BIT(fragAttrib);
+      case 2: t->size_masks[2-1] |= BITFIELD64_BIT(fragAttrib);
+      case 1: t->size_masks[1-1] |= BITFIELD64_BIT(fragAttrib);
 	 break;
       }
    }
@@ -200,10 +200,10 @@ static void calc_wm_input_sizes( struct brw_context *brw )
     * that correct code is generated.
     */
    if (vp->program.Base.NumInstructions == 0) {
-      brw->wm.input_size_masks[0] = ~0;
-      brw->wm.input_size_masks[1] = ~0;
-      brw->wm.input_size_masks[2] = ~0;
-      brw->wm.input_size_masks[3] = ~0;
+      brw->wm.input_size_masks[0] = ~(GLbitfield64) 0;
+      brw->wm.input_size_masks[1] = ~(GLbitfield64) 0;
+      brw->wm.input_size_masks[2] = ~(GLbitfield64) 0;
+      brw->wm.input_size_masks[3] = ~(GLbitfield64) 0;
       return;
    }
 

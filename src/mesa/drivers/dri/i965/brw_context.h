@@ -986,7 +986,7 @@ struct brw_context
       /** Input sizes, calculated from active vertex program.
        * One bit per fragment program input attribute.
        */
-      GLbitfield input_size_masks[4];
+      GLbitfield64 input_size_masks[4];
 
       /** offsets in the batch to sampler default colors (texture border color)
        */

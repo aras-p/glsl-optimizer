@@ -1044,7 +1044,8 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 		*/
 	       if (location >= FRAG_ATTRIB_TEX0 &&
 		   location <= FRAG_ATTRIB_TEX7 &&
-		   k == 3 && !(c->key.proj_attrib_mask & (1 << location))) {
+		   k == 3 && !(c->key.proj_attrib_mask
+                               & BITFIELD64_BIT(location))) {
 		  emit(BRW_OPCODE_MOV, attr, fs_reg(1.0f));
 	       } else {
 		  struct brw_reg interp = interp_reg(location, k);
@@ -2987,7 +2988,7 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 
    if (prog->Name != 0)
-      key.proj_attrib_mask = 0xffffffff;
+      key.proj_attrib_mask = ~(GLbitfield64) 0;
 
    if (intel->gen < 6)
       key.vp_outputs_written |= BITFIELD64_BIT(FRAG_ATTRIB_WPOS);
@@ -2997,7 +2998,7 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 	 continue;
 
       if (prog->Name == 0)
-         key.proj_attrib_mask |= 1 << i;
+         key.proj_attrib_mask |= BITFIELD64_BIT(i);
 
       if (intel->gen < 6) {
          int vp_index = _mesa_vert_result_to_frag_attrib((gl_vert_result) i);

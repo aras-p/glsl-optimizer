@@ -428,7 +428,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
     * useful for programs using shaders.
     */
    if (ctx->Shader.CurrentFragmentProgram)
-      key->proj_attrib_mask = 0xffffffff;
+      key->proj_attrib_mask = ~(GLbitfield64) 0;
    else
       key->proj_attrib_mask = brw->wm.input_size_masks[4-1];
 
