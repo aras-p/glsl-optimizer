@@ -31,6 +31,7 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
    {
 	   ctx->Extensions.OES_standard_derivatives = GL_TRUE;
 	   ctx->Extensions.EXT_shadow_samplers = GL_TRUE;
+	   ctx->Extensions.EXT_frag_depth = GL_TRUE;
    }
 
    ctx->Const.GLSLVersion = 140;

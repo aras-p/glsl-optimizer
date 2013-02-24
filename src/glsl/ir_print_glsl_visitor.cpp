@@ -140,6 +140,8 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			ralloc_strcat (&buffer, "#extension GL_OES_standard_derivatives : enable\n");
 		if (state->EXT_shadow_samplers_enable)
 			ralloc_strcat (&buffer, "#extension GL_EXT_shadow_samplers : enable\n");
+		if (state->EXT_frag_depth_enable)
+			ralloc_strcat (&buffer, "#extension GL_EXT_frag_depth : enable\n");
 	}
    if (state) {
 	   ir_struct_usage_visitor v;
