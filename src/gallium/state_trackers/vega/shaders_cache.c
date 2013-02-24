@@ -225,8 +225,10 @@ combine_shaders(const struct shader_asm_info *shaders[SHADER_STAGES], int num_sh
    ureg_END(ureg);
 
    shader->tokens = ureg_finalize(ureg);
-   if(!shader->tokens)
+   if (!shader->tokens) {
+      ureg_destroy(ureg);
       return NULL;
+   }
 
    p = pipe->create_fs_state(pipe, shader);
 
