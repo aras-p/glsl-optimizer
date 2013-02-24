@@ -324,6 +324,8 @@ ConstantFolding::findOriginForTestWithZero(Value *value)
 void
 Modifier::applyTo(ImmediateValue& imm) const
 {
+   if (!bits) // avoid failure if imm.reg.type is unhandled (e.g. b128)
+      return;
    switch (imm.reg.type) {
    case TYPE_F32:
       if (bits & NV50_IR_MOD_ABS)
