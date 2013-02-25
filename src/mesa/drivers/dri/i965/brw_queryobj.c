@@ -179,12 +179,11 @@ brw_queryobj_get_results(struct gl_context *ctx,
           * The low 32 bits rolls over in ~343 seconds.  Our 36-bit result
           * rolls over every ~69 seconds.
           */
-	 query->Base.Result = 80 * (results[1] & 0xffffffff);
+	 query->Base.Result = 80 * (results[0] & 0xffffffff);
          query->Base.Result &= (1ull << 36) - 1;
       } else {
-	 query->Base.Result = 1000 * (results[1] >> 32);
+	 query->Base.Result = 1000 * (results[0] >> 32);
       }
-
       break;
 
    case GL_SAMPLES_PASSED_ARB:
@@ -479,7 +478,7 @@ brw_query_counter(struct gl_context *ctx, struct gl_query_object *q)
 
    drm_intel_bo_unreference(query->bo);
    query->bo = drm_intel_bo_alloc(intel->bufmgr, "timestamp query", 4096, 4096);
-   write_timestamp(intel, query->bo, 1);
+   write_timestamp(intel, query->bo, 0);
 }
 
 static uint64_t
