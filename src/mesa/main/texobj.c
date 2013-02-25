@@ -960,6 +960,9 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
    GLuint first;
    GLint i;
 
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glGenTextures %d\n", n);
+
    if (n < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glGenTextures" );
       return;
@@ -1068,6 +1071,9 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glDeleteTextures %d\n", n);
 
    FLUSH_VERTICES(ctx, 0); /* too complex */
 
@@ -1290,6 +1296,9 @@ _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
 
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glPrioritizeTextures %d\n", n);
+
    FLUSH_VERTICES(ctx, 0);
 
    if (n < 0) {
@@ -1333,6 +1342,9 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
    GLboolean allResident = GL_TRUE;
    GLint i;
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glAreTexturesResident %d\n", n);
 
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident(n)");
@@ -1378,6 +1390,9 @@ _mesa_IsTexture( GLuint texture )
    struct gl_texture_object *t;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glIsTexture %d\n", texture);
 
    if (!texture)
       return GL_FALSE;
@@ -1427,6 +1442,9 @@ _mesa_InvalidateTexSubImage(GLuint texture, GLint level, GLint xoffset,
    struct gl_texture_object *t;
    struct gl_texture_image *image;
    GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glInvalidateTexSubImage %d\n", texture);
 
    t = invalidate_tex_image_error_check(ctx, texture, level,
                                         "glInvalidateTexSubImage");
@@ -1565,6 +1583,9 @@ void GLAPIENTRY
 _mesa_InvalidateTexImage(GLuint texture, GLint level)
 {
    GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glInvalidateTexImage(%d, %d)\n", texture, level);
 
    invalidate_tex_image_error_check(ctx, texture, level,
                                     "glInvalidateTexImage");
