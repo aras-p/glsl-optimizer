@@ -1955,7 +1955,9 @@ RegAlloc::InsertConstraintsPass::visit(BasicBlock *bb)
          if (i->src(0).isIndirect(0) && typeSizeof(i->dType) >= 8)
             addHazard(i, i->src(0).getIndirect(0));
       } else
-      if (i->op == OP_UNION) {
+      if (i->op == OP_UNION ||
+          i->op == OP_MERGE ||
+          i->op == OP_SPLIT) {
          constrList.push_back(i);
       }
    }
