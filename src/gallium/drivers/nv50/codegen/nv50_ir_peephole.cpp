@@ -933,6 +933,7 @@ private:
    void handleSLCT(Instruction *);
    void handleLOGOP(Instruction *);
    void handleCVT(Instruction *);
+   void handleSUCLAMP(Instruction *);
 
    BuildUtil bld;
 };
@@ -1217,6 +1218,47 @@ AlgebraicOpt::handleCVT(Instruction *cvt)
    delete_Instruction(prog, cvt);
 }
 
+// SUCLAMP dst, (ADD b imm), k, 0 -> SUCLAMP dst, b, k, imm (if imm fits s6)
+void
+AlgebraicOpt::handleSUCLAMP(Instruction *insn)
+{
+   ImmediateValue imm;
+   int32_t val = insn->getSrc(2)->asImm()->reg.data.s32;
+   int s;
+   Instruction *add;
+
+   assert(insn->srcExists(0) && insn->src(0).getFile() == FILE_GPR);
+
+   // look for ADD (TODO: only count references by non-SUCLAMP)
+   if (insn->getSrc(0)->refCount() > 1)
+      return;
+   add = insn->getSrc(0)->getInsn();
+   if (!add || add->op != OP_ADD ||
+       (add->dType != TYPE_U32 &&
+        add->dType != TYPE_S32))
+      return;
+
+   // look for immediate
+   for (s = 0; s < 2; ++s)
+      if (add->src(s).getImmediate(imm))
+         break;
+   if (s >= 2)
+      return;
+   s = s ? 0 : 1;
+   // determine if immediate fits
+   val += imm.reg.data.s32;
+   if (val > 31 || val < -32)
+      return;
+   // determine if other addend fits
+   if (add->src(s).getFile() != FILE_GPR || add->src(s).mod != Modifier(0))
+      return;
+
+   bld.setPosition(insn, false); // make sure bld is init'ed
+   // replace sources
+   insn->setSrc(2, bld.mkImm(val));
+   insn->setSrc(0, add->getSrc(s));
+}
+
 bool
 AlgebraicOpt::visit(BasicBlock *bb)
 {
@@ -1247,6 +1289,9 @@ AlgebraicOpt::visit(BasicBlock *bb)
          break;
       case OP_CVT:
          handleCVT(i);
+         break;
+      case OP_SUCLAMP:
+         handleSUCLAMP(i);
          break;
       default:
          break;
