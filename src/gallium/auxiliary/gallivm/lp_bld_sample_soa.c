@@ -1422,7 +1422,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    struct lp_static_sampler_state derived_sampler_state = *static_sampler_state;
    LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
    LLVMBuilderRef builder = gallivm->builder;
-   LLVMValueRef tex_width, tex_height, tex_depth;
+   LLVMValueRef tex_width;
    LLVMValueRef s;
    LLVMValueRef t;
    LLVMValueRef r;
@@ -1514,8 +1514,6 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
 
    /* Get the dynamic state */
    tex_width = dynamic_state->width(dynamic_state, gallivm, texture_index);
-   tex_height = dynamic_state->height(dynamic_state, gallivm, texture_index);
-   tex_depth = dynamic_state->depth(dynamic_state, gallivm, texture_index);
    bld.row_stride_array = dynamic_state->row_stride(dynamic_state, gallivm, texture_index);
    bld.img_stride_array = dynamic_state->img_stride(dynamic_state, gallivm, texture_index);
    bld.base_ptr = dynamic_state->base_ptr(dynamic_state, gallivm, texture_index);
@@ -1534,9 +1532,13 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
       bld.int_size = LLVMBuildInsertElement(builder, bld.int_size_in_bld.undef,
                                             tex_width, LLVMConstInt(i32t, 0, 0), "");
       if (dims >= 2) {
+         LLVMValueRef tex_height =
+            dynamic_state->height(dynamic_state, gallivm, texture_index);
          bld.int_size = LLVMBuildInsertElement(builder, bld.int_size,
                                                tex_height, LLVMConstInt(i32t, 1, 0), "");
          if (dims >= 3) {
+            LLVMValueRef tex_depth =
+               dynamic_state->depth(dynamic_state, gallivm, texture_index);
             bld.int_size = LLVMBuildInsertElement(builder, bld.int_size,
                                                   tex_depth, LLVMConstInt(i32t, 2, 0), "");
          }

@@ -60,28 +60,6 @@ static struct llvmpipe_resource resource_list;
 static unsigned id_counter = 0;
 
 
-static INLINE boolean
-resource_is_texture(const struct pipe_resource *resource)
-{
-   switch (resource->target) {
-   case PIPE_BUFFER:
-      return FALSE;
-   case PIPE_TEXTURE_1D:
-   case PIPE_TEXTURE_1D_ARRAY:
-   case PIPE_TEXTURE_2D:
-   case PIPE_TEXTURE_2D_ARRAY:
-   case PIPE_TEXTURE_RECT:
-   case PIPE_TEXTURE_3D:
-   case PIPE_TEXTURE_CUBE:
-      return TRUE;
-   default:
-      assert(0);
-      return FALSE;
-   }
-}
-
-
-
 /**
  * Allocate storage for llvmpipe_texture::layout array.
  * The number of elements is width_in_tiles * height_in_tiles.
@@ -294,7 +272,7 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
 
    /* assert(lpr->base.bind); */
 
-   if (resource_is_texture(&lpr->base)) {
+   if (llvmpipe_resource_is_texture(&lpr->base)) {
       if (lpr->base.bind & (PIPE_BIND_DISPLAY_TARGET |
                             PIPE_BIND_SCANOUT |
                             PIPE_BIND_SHARED)) {
@@ -357,7 +335,7 @@ llvmpipe_resource_destroy(struct pipe_screen *pscreen,
 
       FREE(lpr->layout[0]);
    }
-   else if (resource_is_texture(pt)) {
+   else if (llvmpipe_resource_is_texture(pt)) {
       /* regular texture */
       uint level;
 
@@ -447,7 +425,7 @@ llvmpipe_resource_map(struct pipe_resource *resource,
 
       return map2;
    }
-   else if (resource_is_texture(resource)) {
+   else if (llvmpipe_resource_is_texture(resource)) {
 
       map = llvmpipe_get_texture_image(lpr, layer, level,
                                        tex_usage, layout);
@@ -492,7 +470,7 @@ llvmpipe_resource_data(struct pipe_resource *resource)
 {
    struct llvmpipe_resource *lpr = llvmpipe_resource(resource);
 
-   assert(!resource_is_texture(resource));
+   assert(!llvmpipe_resource_is_texture(resource));
 
    return lpr->data;
 }
@@ -967,7 +945,7 @@ llvmpipe_get_texture_tile_layout(const struct llvmpipe_resource *lpr,
                                  unsigned x, unsigned y)
 {
    uint i;
-   assert(resource_is_texture(&lpr->base));
+   assert(llvmpipe_resource_is_texture(&lpr->base));
    assert(x < lpr->tiles_per_row[level]);
    i = face_slice * lpr->tiles_per_image[level]
       + y * lpr->tiles_per_row[level] + x;
@@ -982,7 +960,7 @@ llvmpipe_set_texture_tile_layout(struct llvmpipe_resource *lpr,
                                  enum lp_texture_layout layout)
 {
    uint i;
-   assert(resource_is_texture(&lpr->base));
+   assert(llvmpipe_resource_is_texture(&lpr->base));
    assert(x < lpr->tiles_per_row[level]);
    i = face_slice * lpr->tiles_per_image[level]
       + y * lpr->tiles_per_row[level] + x;
@@ -1264,7 +1242,7 @@ llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
    boolean convert;
    uint8_t *tiled_image, *linear_image;
 
-   assert(resource_is_texture(&lpr->base));
+   assert(llvmpipe_resource_is_texture(&lpr->base));
    assert(x % TILE_SIZE == 0);
    assert(y % TILE_SIZE == 0);
 

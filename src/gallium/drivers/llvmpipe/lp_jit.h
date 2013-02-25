@@ -49,9 +49,9 @@ struct llvmpipe_screen;
 
 struct lp_jit_texture
 {
-   uint32_t width;
+   uint32_t width;        /* same as number of elements */
    uint32_t height;
-   uint32_t depth;
+   uint32_t depth;        /* doubles as array size */
    uint32_t first_level;
    uint32_t last_level;
    const void *base;

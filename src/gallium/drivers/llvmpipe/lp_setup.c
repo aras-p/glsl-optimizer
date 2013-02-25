@@ -674,70 +674,108 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
       if (view) {
-         struct pipe_resource *tex = view->texture;
-         struct llvmpipe_resource *lp_tex = llvmpipe_resource(tex);
+         struct pipe_resource *res = view->texture;
+         struct llvmpipe_resource *lp_tex = llvmpipe_resource(res);
          struct lp_jit_texture *jit_tex;
          jit_tex = &setup->fs.current.jit_context.textures[i];
-         jit_tex->width = tex->width0;
-         jit_tex->height = tex->height0;
-         jit_tex->first_level = view->u.tex.first_level;
-         jit_tex->last_level = tex->last_level;
-
-         if (tex->target == PIPE_TEXTURE_3D) {
-            jit_tex->depth = tex->depth0;
-         }
-         else {
-            jit_tex->depth = tex->array_size;
-         }
 
          /* We're referencing the texture's internal data, so save a
           * reference to it.
           */
-         pipe_resource_reference(&setup->fs.current_tex[i], tex);
+         pipe_resource_reference(&setup->fs.current_tex[i], res);
 
          if (!lp_tex->dt) {
             /* regular texture - setup array of mipmap level offsets */
             void *mip_ptr;
             int j;
-            /*
-             * XXX this is messed up we don't want to accidentally trigger
-             * tiled->linear conversion for levels we don't need.
-             * So ask for first_level data (which will allocate all levels)
-             * then if successful get base ptr.
-             */
-            mip_ptr = llvmpipe_get_texture_image_all(lp_tex, view->u.tex.first_level,
-                                                     LP_TEX_USAGE_READ,
-                                                     LP_TEX_LAYOUT_LINEAR);
+            unsigned first_level = 0;
+            unsigned last_level = 0;
+
+            if (llvmpipe_resource_is_texture(res)) {
+               first_level = view->u.tex.first_level;
+               last_level = view->u.tex.last_level;
+               assert(first_level <= last_level);
+               assert(last_level <= res->last_level);
+
+               /*
+                * The complexity here is only necessary for depth textures which
+                * still are tiled.
+                */
+               mip_ptr = llvmpipe_get_texture_image_all(lp_tex, first_level,
+                                                        LP_TEX_USAGE_READ,
+                                                        LP_TEX_LAYOUT_LINEAR);
+               jit_tex->base = lp_tex->linear_img.data;
+            }
+            else {
+               mip_ptr = lp_tex->data;
+               jit_tex->base = mip_ptr;
+            }
+
             if ((LP_PERF & PERF_TEX_MEM) || !mip_ptr) {
                /* out of memory - use dummy tile memory */
+               /* Note if using PERF_TEX_MEM will also skip tile conversion */
                jit_tex->base = lp_dummy_tile;
                jit_tex->width = TILE_SIZE/8;
                jit_tex->height = TILE_SIZE/8;
                jit_tex->depth = 1;
                jit_tex->first_level = 0;
                jit_tex->last_level = 0;
+               jit_tex->mip_offsets[j] = 0;
+               jit_tex->row_stride[j] = 0;
+               jit_tex->img_stride[j] = 0;
             }
             else {
-               jit_tex->base = lp_tex->linear_img.data;
-            }
-            for (j = view->u.tex.first_level; j <= tex->last_level; j++) {
-               mip_ptr = llvmpipe_get_texture_image_all(lp_tex, j,
-                                                        LP_TEX_USAGE_READ,
-                                                        LP_TEX_LAYOUT_LINEAR);
-               jit_tex->mip_offsets[j] = (uint8_t *)mip_ptr - (uint8_t *)jit_tex->base;
-               /*
-                * could get mip offset directly but need call above to
-                * invoke tiled->linear conversion.
-                */
-               assert(lp_tex->linear_mip_offsets[j] == jit_tex->mip_offsets[j]);
-               jit_tex->row_stride[j] = lp_tex->row_stride[j];
-               jit_tex->img_stride[j] = lp_tex->img_stride[j];
+               jit_tex->width = res->width0;
+               jit_tex->height = res->height0;
+               jit_tex->depth = res->depth0;
+               jit_tex->first_level = first_level;
+               jit_tex->last_level = last_level;
 
-               if (jit_tex->base == lp_dummy_tile) {
-                  /* out of memory - use dummy tile memory */
-                  jit_tex->mip_offsets[j] = 0;
-                  jit_tex->row_stride[j] = 0;
-                  jit_tex->img_stride[j] = 0;
+               if (llvmpipe_resource_is_texture(res)) {
+                  for (j = first_level; j <= last_level; j++) {
+                     mip_ptr = llvmpipe_get_texture_image_all(lp_tex, j,
+                                                              LP_TEX_USAGE_READ,
+                                                              LP_TEX_LAYOUT_LINEAR);
+                     jit_tex->mip_offsets[j] = (uint8_t *)mip_ptr - (uint8_t *)jit_tex->base;
+                     /*
+                      * could get mip offset directly but need call above to
+                      * invoke tiled->linear conversion.
+                      */
+                     assert(lp_tex->linear_mip_offsets[j] == jit_tex->mip_offsets[j]);
+                     jit_tex->row_stride[j] = lp_tex->row_stride[j];
+                     jit_tex->img_stride[j] = lp_tex->img_stride[j];
+                  }
+
+                  /*
+                   * We don't use anything like first_element (for buffers) or
+                   * first_layer (for arrays), instead adjust the last_element
+                   * (width) or last_layer (depth) plus the base pointer.
+                   * Less parameters and faster at shader execution.
+                   * XXX Could do the same for mip levels.
+                   */
+                  if (res->target == PIPE_TEXTURE_1D_ARRAY ||
+                      res->target == PIPE_TEXTURE_2D_ARRAY) {
+                     jit_tex->depth = view->u.tex.last_layer - view->u.tex.first_layer + 1;
+                     jit_tex->base = (uint8_t *)jit_tex->base +
+                                     view->u.tex.first_layer * lp_tex->img_stride[0];
+                     assert(view->u.tex.first_layer <= view->u.tex.last_layer);
+                     assert(view->u.tex.last_layer < res->array_size);
+                  }
+               }
+               else {
+                  unsigned view_blocksize = util_format_get_blocksize(view->format);
+                  /* probably don't really need to fill that out */
+                  jit_tex->mip_offsets[0] = 0;
+                  jit_tex->row_stride[0] = 0;
+                  jit_tex->row_stride[0] = 0;
+
+                  /* everything specified in number of elements here. */
+                  jit_tex->width = view->u.buf.last_element - view->u.buf.first_element + 1;
+                  jit_tex->base = (uint8_t *)jit_tex->base + view->u.buf.first_element *
+                                  view_blocksize;
+                  /* XXX Unsure if we need to sanitize parameters? */
+                  assert(view->u.buf.first_element <= view->u.buf.last_element);
+                  assert(view->u.buf.last_element * view_blocksize < res->width0);
                }
             }
          }
@@ -746,13 +784,17 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
             /*
              * XXX: Where should this be unmapped?
              */
-            struct llvmpipe_screen *screen = llvmpipe_screen(tex->screen);
+            struct llvmpipe_screen *screen = llvmpipe_screen(res->screen);
             struct sw_winsys *winsys = screen->winsys;
             jit_tex->base = winsys->displaytarget_map(winsys, lp_tex->dt,
                                                          PIPE_TRANSFER_READ);
             jit_tex->row_stride[0] = lp_tex->row_stride[0];
             jit_tex->img_stride[0] = lp_tex->img_stride[0];
             jit_tex->mip_offsets[0] = 0;
+            jit_tex->width = res->width0;
+            jit_tex->height = res->height0;
+            jit_tex->depth = res->depth0;
+            jit_tex->first_level = jit_tex->last_level = 0;
             assert(jit_tex->base);
          }
       }

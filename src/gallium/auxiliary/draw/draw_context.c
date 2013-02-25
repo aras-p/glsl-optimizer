@@ -799,7 +799,7 @@ draw_set_samplers(struct draw_context *draw,
 void
 draw_set_mapped_texture(struct draw_context *draw,
                         unsigned shader_stage,
-                        unsigned sampler_idx,
+                        unsigned sview_idx,
                         uint32_t width, uint32_t height, uint32_t depth,
                         uint32_t first_level, uint32_t last_level,
                         const void *base_ptr,
@@ -811,7 +811,7 @@ draw_set_mapped_texture(struct draw_context *draw,
 #ifdef HAVE_LLVM
       if (draw->llvm)
          draw_llvm_set_mapped_texture(draw,
-                                      sampler_idx,
+                                      sview_idx,
                                       width, height, depth, first_level,
                                       last_level, base_ptr,
                                       row_stride, img_stride, mip_offsets);

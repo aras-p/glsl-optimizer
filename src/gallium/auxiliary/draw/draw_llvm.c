@@ -1497,7 +1497,7 @@ draw_llvm_dump_variant_key(struct draw_llvm_variant_key *key)
 
 void
 draw_llvm_set_mapped_texture(struct draw_context *draw,
-                             unsigned sampler_idx,
+                             unsigned sview_idx,
                              uint32_t width, uint32_t height, uint32_t depth,
                              uint32_t first_level, uint32_t last_level,
                              const void *base_ptr,
@@ -1508,9 +1508,9 @@ draw_llvm_set_mapped_texture(struct draw_context *draw,
    unsigned j;
    struct draw_jit_texture *jit_tex;
 
-   assert(sampler_idx < Elements(draw->llvm->jit_context.textures));
+   assert(sview_idx < Elements(draw->llvm->jit_context.textures));
 
-   jit_tex = &draw->llvm->jit_context.textures[sampler_idx];
+   jit_tex = &draw->llvm->jit_context.textures[sview_idx];
 
    jit_tex->width = width;
    jit_tex->height = height;

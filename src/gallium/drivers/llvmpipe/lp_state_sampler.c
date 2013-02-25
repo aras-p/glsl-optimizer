@@ -268,14 +268,10 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
       if (view) {
          struct pipe_resource *tex = view->texture;
          struct llvmpipe_resource *lp_tex = llvmpipe_resource(tex);
-         unsigned num_layers;
-
-         if (tex->target == PIPE_TEXTURE_3D) {
-            num_layers = tex->depth0;
-         }
-         else {
-            num_layers = tex->array_size;
-         }
+         unsigned width0 = tex->width0;
+         unsigned num_layers = tex->depth0;
+         unsigned first_level = 0;
+         unsigned last_level = 0;
 
          /* We're referencing the texture's internal data, so save a
           * reference to it.
@@ -283,27 +279,61 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
          pipe_resource_reference(&lp->mapped_vs_tex[i], tex);
 
          if (!lp_tex->dt) {
-            /* regular texture - setup array of mipmap level pointers */
-            /* XXX this may fail due to OOM ? */
+            /* regular texture - setup array of mipmap level offsets */
+            struct pipe_resource *res = view->texture;
             int j;
             void *mip_ptr;
-            /* must trigger allocation first before we can get base ptr */
-            mip_ptr = llvmpipe_get_texture_image_all(lp_tex, view->u.tex.first_level,
-                                                     LP_TEX_USAGE_READ,
-                                                     LP_TEX_LAYOUT_LINEAR);
-            addr = lp_tex->linear_img.data;
-            for (j = view->u.tex.first_level; j <= tex->last_level; j++) {
-               mip_ptr = llvmpipe_get_texture_image_all(lp_tex, j,
+
+            if (llvmpipe_resource_is_texture(res)) {
+               first_level = view->u.tex.first_level;
+               last_level = view->u.tex.last_level;
+               assert(first_level <= last_level);
+               assert(last_level <= res->last_level);
+
+               /* must trigger allocation first before we can get base ptr */
+               /* XXX this may fail due to OOM ? */
+               mip_ptr = llvmpipe_get_texture_image_all(lp_tex, view->u.tex.first_level,
                                                         LP_TEX_USAGE_READ,
                                                         LP_TEX_LAYOUT_LINEAR);
-               mip_offsets[j] = (uint8_t *)mip_ptr - (uint8_t *)addr;
-               /*
-                * could get mip offset directly but need call above to
-                * invoke tiled->linear conversion.
-                */
-               assert(lp_tex->linear_mip_offsets[j] == mip_offsets[j]);
-               row_stride[j] = lp_tex->row_stride[j];
-               img_stride[j] = lp_tex->img_stride[j];
+               addr = lp_tex->linear_img.data;
+
+               for (j = first_level; j <= last_level; j++) {
+                  mip_ptr = llvmpipe_get_texture_image_all(lp_tex, j,
+                                                           LP_TEX_USAGE_READ,
+                                                           LP_TEX_LAYOUT_LINEAR);
+                  mip_offsets[j] = (uint8_t *)mip_ptr - (uint8_t *)addr;
+                  /*
+                   * could get mip offset directly but need call above to
+                   * invoke tiled->linear conversion.
+                   */
+                  assert(lp_tex->linear_mip_offsets[j] == mip_offsets[j]);
+                  row_stride[j] = lp_tex->row_stride[j];
+                  img_stride[j] = lp_tex->img_stride[j];
+               }
+               if (res->target == PIPE_TEXTURE_1D_ARRAY ||
+                   res->target == PIPE_TEXTURE_2D_ARRAY) {
+                  num_layers = view->u.tex.last_layer - view->u.tex.first_layer + 1;
+                  addr = (uint8_t *)addr +
+                                  view->u.tex.first_layer * lp_tex->img_stride[0];
+                  assert(view->u.tex.first_layer <= view->u.tex.last_layer);
+                  assert(view->u.tex.last_layer < res->array_size);
+               }
+            }
+            else {
+               unsigned view_blocksize = util_format_get_blocksize(view->format);
+               mip_ptr = lp_tex->data;
+               addr = mip_ptr;
+               /* probably don't really need to fill that out */
+               mip_offsets[0] = 0;
+               row_stride[0] = 0;
+               row_stride[0] = 0;
+
+               /* everything specified in number of elements here. */
+               width0 = view->u.buf.last_element - view->u.buf.first_element + 1;
+               addr = (uint8_t *)addr + view->u.buf.first_element *
+                               view_blocksize;
+               assert(view->u.buf.first_element <= view->u.buf.last_element);
+               assert(view->u.buf.last_element * view_blocksize < res->width0);
             }
          }
          else {
@@ -323,8 +353,8 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
          draw_set_mapped_texture(lp->draw,
                                  PIPE_SHADER_VERTEX,
                                  i,
-                                 tex->width0, tex->height0, num_layers,
-                                 view->u.tex.first_level, tex->last_level,
+                                 width0, tex->height0, num_layers,
+                                 first_level, last_level,
                                  addr,
                                  row_stride, img_stride, mip_offsets);
       }
