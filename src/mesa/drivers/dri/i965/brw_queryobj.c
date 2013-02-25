@@ -34,11 +34,6 @@
  * fragments that passed the depth test, or the hardware timer.  They are
  * appropriately synced with the stage of the pipeline for our extensions'
  * needs.
- *
- * To avoid getting samples from another context's rendering in our results,
- * we capture the counts at the start and end of every batchbuffer while the
- * query is active, and sum up the differences.  (We should do so for
- * GL_TIME_ELAPSED as well, but don't).
  */
 #include "main/imports.h"
 
@@ -48,6 +43,9 @@
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
 
+/**
+ * Emit PIPE_CONTROLs to write the current GPU timestamp into a buffer.
+ */
 static void
 write_timestamp(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
 {
@@ -90,6 +88,9 @@ write_timestamp(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
    }
 }
 
+/**
+ * Emit PIPE_CONTROLs to write the PS_DEPTH_COUNT register into a buffer.
+ */
 static void
 write_depth_count(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
 {
@@ -129,7 +130,9 @@ write_depth_count(struct intel_context *intel, drm_intel_bo *query_bo, int idx)
    }
 }
 
-/** Waits on the query object's BO and totals the results for this query */
+/**
+ * Wait on the query object's BO and calculate the final result.
+ */
 static void
 brw_queryobj_get_results(struct gl_context *ctx,
 			 struct brw_query_object *query)
@@ -142,6 +145,10 @@ brw_queryobj_get_results(struct gl_context *ctx,
    if (query->bo == NULL)
       return;
 
+   /* If the application has requested the query result, but this batch is
+    * still contributing to it, flush it now so the results will be present
+    * when mapped.
+    */
    if (drm_intel_bo_references(intel->batch.bo, query->bo))
       intel_batchbuffer_flush(intel);
 
@@ -155,6 +162,9 @@ brw_queryobj_get_results(struct gl_context *ctx,
    results = query->bo->virtual;
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
+      /* The query BO contains the starting and ending timestamps.
+       * Subtract the two and convert to nanoseconds.
+       */
       if (intel->gen >= 6)
 	 query->Base.Result += 80 * (results[1] - results[0]);
       else
@@ -162,6 +172,7 @@ brw_queryobj_get_results(struct gl_context *ctx,
       break;
 
    case GL_TIMESTAMP:
+      /* The query BO contains a single timestamp value in results[0]. */
       if (intel->gen >= 6) {
          /* Our timer is a clock that increments every 80ns (regardless of
           * other clock scaling in the system).  The timestamp register we can
@@ -187,7 +198,16 @@ brw_queryobj_get_results(struct gl_context *ctx,
       break;
 
    case GL_SAMPLES_PASSED_ARB:
-      /* Map and count the pixels from the current query BO */
+      /* Loop over pairs of values from the BO, which are the PS_DEPTH_COUNT
+       * value at the start and end of the batchbuffer.  Subtract them to
+       * get the number of fragments which passed the depth test in each
+       * individual batch, and add those differences up to get the number
+       * of fragments for the entire query.
+       *
+       * Note that query->Base.Result may already be non-zero.  We may have
+       * run out of space in the query's BO and allocated a new one.  If so,
+       * this function was already called to accumulate the results so far.
+       */
       for (i = query->first_index; i <= query->last_index; i++) {
 	 query->Base.Result += results[i * 2 + 1] - results[i * 2];
       }
@@ -195,7 +215,9 @@ brw_queryobj_get_results(struct gl_context *ctx,
 
    case GL_ANY_SAMPLES_PASSED:
    case GL_ANY_SAMPLES_PASSED_CONSERVATIVE:
-      /* Set true if any of the sub-queries passed. */
+      /* If the starting and ending PS_DEPTH_COUNT from any of the batches
+       * differ, then some fragments passed the depth test.
+       */
       for (i = query->first_index; i <= query->last_index; i++) {
 	 if (results[i * 2 + 1] != results[i * 2]) {
             query->Base.Result = GL_TRUE;
@@ -218,10 +240,18 @@ brw_queryobj_get_results(struct gl_context *ctx,
    }
    drm_intel_bo_unmap(query->bo);
 
+   /* Now that we've processed the data stored in the query's buffer object,
+    * we can release it.
+    */
    drm_intel_bo_unreference(query->bo);
    query->bo = NULL;
 }
 
+/**
+ * The NewQueryObject() driver hook.
+ *
+ * Allocates and initializes a new query object.
+ */
 static struct gl_query_object *
 brw_new_query_object(struct gl_context *ctx, GLuint id)
 {
@@ -237,6 +267,9 @@ brw_new_query_object(struct gl_context *ctx, GLuint id)
    return &query->Base;
 }
 
+/**
+ * The DeleteQuery() driver hook.
+ */
 static void
 brw_delete_query(struct gl_context *ctx, struct gl_query_object *q)
 {
@@ -246,6 +279,12 @@ brw_delete_query(struct gl_context *ctx, struct gl_query_object *q)
    free(query);
 }
 
+/**
+ * Driver hook for glBeginQuery().
+ *
+ * Initializes driver structures and emits any GPU commands required to begin
+ * recording data for the query.
+ */
 static void
 brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 {
@@ -255,6 +294,25 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
+      /* For timestamp queries, we record the starting time right away so that
+       * we measure the full time between BeginQuery and EndQuery.  There's
+       * some debate about whether this is the right thing to do.  Our decision
+       * is based on the following text from the ARB_timer_query extension:
+       *
+       * "(5) Should the extension measure total time elapsed between the full
+       *      completion of the BeginQuery and EndQuery commands, or just time
+       *      spent in the graphics library?
+       *
+       *  RESOLVED:  This extension will measure the total time elapsed
+       *  between the full completion of these commands.  Future extensions
+       *  may implement a query to determine time elapsed at different stages
+       *  of the graphics pipeline."
+       *
+       * We write a starting timestamp now (at index 0).  At EndQuery() time,
+       * we'll write a second timestamp (at index 1), and subtract the two to
+       * obtain the time elapsed.  Notably, this includes time elapsed while
+       * the system was doing other work, such as running other applications.
+       */
       drm_intel_bo_unreference(query->bo);
       query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query", 4096, 4096);
       write_timestamp(intel, query->bo, 0);
@@ -263,13 +321,24 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
    case GL_ANY_SAMPLES_PASSED:
    case GL_ANY_SAMPLES_PASSED_CONSERVATIVE:
    case GL_SAMPLES_PASSED_ARB:
-      /* Reset our driver's tracking of query state. */
+      /* For occlusion queries, we delay taking an initial sample until the
+       * first drawing occurs in this batch.  See the reasoning in the comments
+       * for brw_emit_query_begin() below.
+       *
+       * Since we're starting a new query, we need to be sure to throw away
+       * any previous occlusion query results.
+       */
       drm_intel_bo_unreference(query->bo);
       query->bo = NULL;
       query->first_index = -1;
       query->last_index = -1;
 
       brw->query.obj = query;
+
+      /* Depth statistics on Gen4 require strange workarounds, so we try to
+       * avoid them when necessary.  They're required for occlusion queries,
+       * so turn them on now.
+       */
       intel->stats_wm++;
       break;
 
@@ -296,7 +365,12 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
 }
 
 /**
- * Begin the ARB_occlusion_query query on a query object.
+ * Driver hook for glEndQuery().
+ *
+ * Emits GPU commands to record a final query value, ending any data capturing.
+ * However, the final result isn't necessarily available until the GPU processes
+ * those commands.  brw_queryobj_get_results() processes the captured data to
+ * produce the final result.
  */
 static void
 brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
@@ -307,6 +381,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
+      /* Write the final timestamp. */
       write_timestamp(intel, query->bo, 1);
       break;
 
@@ -376,6 +451,12 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
    }
 }
 
+/**
+ * The WaitQuery() driver hook.
+ *
+ * Wait for a query result to become available and return it.  This is the
+ * backing for glGetQueryObjectiv() with the GL_QUERY_RESULT pname.
+ */
 static void brw_wait_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct brw_query_object *query = (struct brw_query_object *)q;
@@ -384,6 +465,12 @@ static void brw_wait_query(struct gl_context *ctx, struct gl_query_object *q)
    query->Base.Ready = true;
 }
 
+/**
+ * The CheckQuery() driver hook.
+ *
+ * Checks whether a query result is ready yet.  If not, flushes.
+ * This is the backing for glGetQueryObjectiv()'s QUERY_RESULT_AVAILABLE pname.
+ */
 static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
 {
    struct intel_context *intel = intel_context(ctx);
@@ -405,7 +492,28 @@ static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
    }
 }
 
-/** Called just before primitive drawing to get a beginning PS_DEPTH_COUNT. */
+/**
+ * Record the PS_DEPTH_COUNT value (for occlusion queries) just before
+ * primitive drawing.
+ *
+ * In a pre-hardware context world, the single PS_DEPTH_COUNT register is
+ * shared among all applications using the GPU.  However, our query value
+ * needs to only include fragments generated by our application/GL context.
+ *
+ * To accommodate this, we record PS_DEPTH_COUNT at the start and end of
+ * each batchbuffer (technically, the first primitive drawn and flush time).
+ * Subtracting each pair of values calculates the change in PS_DEPTH_COUNT
+ * caused by a batchbuffer.  Since there is no preemption inside batches,
+ * this is guaranteed to only measure the effects of our current application.
+ *
+ * Adding each of these differences (in case drawing is done over many batches)
+ * produces the final expected value.
+ *
+ * In a world with hardware contexts, PS_DEPTH_COUNT is saved and restored
+ * as part of the context state, so this is unnecessary.  We could simply
+ * read two values and subtract them.  However, it's safe to continue using
+ * the old approach.
+ */
 void
 brw_emit_query_begin(struct brw_context *brw)
 {
@@ -413,11 +521,16 @@ brw_emit_query_begin(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    struct brw_query_object *query = brw->query.obj;
 
-   /* Skip if we're not doing any queries, or we've emitted the start. */
+   /* Skip if we're not doing any queries, or we've already recorded the
+    * initial query value for this batchbuffer.
+    */
    if (!query || brw->query.begin_emitted)
       return;
 
-   /* Get a new query BO if we're going to need it. */
+   /* Ensure the buffer has enough space to store a new pair of values.
+    * If not, create a new one of the same size; we'll gather the existing
+    * buffer's results momentarily.
+    */
    if (brw->query.bo == NULL ||
        brw->query.index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
       drm_intel_bo_unreference(brw->query.bo);
@@ -425,7 +538,7 @@ brw_emit_query_begin(struct brw_context *brw)
 
       brw->query.bo = drm_intel_bo_alloc(intel->bufmgr, "query", 4096, 1);
 
-      /* clear target buffer */
+      /* Fill the buffer with zeroes.  This is probably superfluous. */
       drm_intel_bo_map(brw->query.bo, true);
       memset((char *)brw->query.bo->virtual, 0, 4096);
       drm_intel_bo_unmap(brw->query.bo);
@@ -436,8 +549,13 @@ brw_emit_query_begin(struct brw_context *brw)
    write_depth_count(intel, brw->query.bo, brw->query.index * 2);
 
    if (query->bo != brw->query.bo) {
-      if (query->bo != NULL)
+      if (query->bo != NULL) {
+         /* The old query BO did not have enough space, so we allocated a new
+          * one.  Gather the results so far (adding up the differences) and
+          * release the old BO.
+          */
 	 brw_queryobj_get_results(ctx, query);
+      }
       drm_intel_bo_reference(brw->query.bo);
       query->bo = brw->query.bo;
       query->first_index = brw->query.index;
@@ -446,7 +564,11 @@ brw_emit_query_begin(struct brw_context *brw)
    brw->query.begin_emitted = true;
 }
 
-/** Called at batchbuffer flush to get an ending PS_DEPTH_COUNT */
+/**
+ * Called at batchbuffer flush to get an ending PS_DEPTH_COUNT.
+ *
+ * See the explanation in brw_emit_query_begin().
+ */
 void
 brw_emit_query_end(struct brw_context *brw)
 {
@@ -481,6 +603,11 @@ brw_query_counter(struct gl_context *ctx, struct gl_query_object *q)
    write_timestamp(intel, query->bo, 0);
 }
 
+/**
+ * Read the TIMESTAMP register immediately (in a non-pipelined fashion).
+ *
+ * This is used to implement the GetTimestamp() driver hook.
+ */
 static uint64_t
 brw_get_timestamp(struct gl_context *ctx)
 {
