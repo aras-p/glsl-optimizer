@@ -486,9 +486,14 @@ _mesa_QueryCounter(GLuint id, GLenum target)
    q->Result = 0;
    q->Ready = GL_FALSE;
 
-   /* QueryCounter is implemented using EndQuery without BeginQuery
-    * in drivers. This is actually Direct3D and Gallium convention. */
-   ctx->Driver.EndQuery(ctx, q);
+   if (ctx->Driver.QueryCounter) {
+      ctx->Driver.QueryCounter(ctx, q);
+   } else {
+      /* QueryCounter is implemented using EndQuery without BeginQuery
+       * in drivers. This is actually Direct3D and Gallium convention.
+       */
+      ctx->Driver.EndQuery(ctx, q);
+   }
 }
 
 
