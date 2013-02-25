@@ -307,12 +307,6 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    switch (query->Base.Target) {
-   case GL_TIMESTAMP:
-      drm_intel_bo_unreference(query->bo);
-      query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query",
-				     4096, 4096);
-      /* FALLTHROUGH */
-
    case GL_TIME_ELAPSED_EXT:
       write_timestamp(intel, query->bo, 1);
       break;
@@ -468,6 +462,26 @@ brw_emit_query_end(struct brw_context *brw)
    brw->query.index++;
 }
 
+/**
+ * Driver hook for glQueryCounter().
+ *
+ * This handles GL_TIMESTAMP queries, which perform a pipelined read of the
+ * current GPU time.  This is unlike GL_TIME_ELAPSED, which measures the
+ * time while the query is active.
+ */
+static void
+brw_query_counter(struct gl_context *ctx, struct gl_query_object *q)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct brw_query_object *query = (struct brw_query_object *) q;
+
+   assert(q->Target == GL_TIMESTAMP);
+
+   drm_intel_bo_unreference(query->bo);
+   query->bo = drm_intel_bo_alloc(intel->bufmgr, "timestamp query", 4096, 4096);
+   write_timestamp(intel, query->bo, 1);
+}
+
 static uint64_t
 brw_get_timestamp(struct gl_context *ctx)
 {
@@ -490,6 +504,7 @@ void brw_init_queryobj_functions(struct dd_function_table *functions)
    functions->DeleteQuery = brw_delete_query;
    functions->BeginQuery = brw_begin_query;
    functions->EndQuery = brw_end_query;
+   functions->QueryCounter = brw_query_counter;
    functions->CheckQuery = brw_check_query;
    functions->WaitQuery = brw_wait_query;
    functions->GetTimestamp = brw_get_timestamp;
