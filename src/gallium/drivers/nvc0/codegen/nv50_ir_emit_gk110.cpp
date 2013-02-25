@@ -38,7 +38,7 @@ public:
    inline void setProgramType(Program::Type pType) { progType = pType; }
 
 private:
-   const TargetNVC0 *targ;
+   const TargetNVC0 *targNVC0;
 
    Program::Type progType;
 
@@ -1116,7 +1116,7 @@ CodeEmitterGK110::emitFlow(const Instruction *i)
    if (f->op == OP_CALL) {
       if (f->builtin) {
          assert(f->absolute);
-         uint32_t pcAbs = targ->getBuiltinOffset(f->target.builtin);
+         uint32_t pcAbs = targNVC0->getBuiltinOffset(f->target.builtin);
          addReloc(RelocEntry::TYPE_BUILTIN, 0, pcAbs, 0xff800000, 23);
          addReloc(RelocEntry::TYPE_BUILTIN, 1, pcAbs, 0x007fffff, -9);
       } else {
@@ -1609,6 +1609,7 @@ CodeEmitterGK110::prepareEmission(Function *func)
 
 CodeEmitterGK110::CodeEmitterGK110(const TargetNVC0 *target)
    : CodeEmitter(target),
+     targNVC0(target),
      writeIssueDelays(target->hasSWSched)
 {
    code = NULL;

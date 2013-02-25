@@ -38,7 +38,7 @@ public:
    inline void setProgramType(Program::Type pType) { progType = pType; }
 
 private:
-   const TargetNVC0 *targ;
+   const TargetNVC0 *targNVC0;
 
    Program::Type progType;
 
@@ -1174,7 +1174,7 @@ CodeEmitterNVC0::emitFlow(const Instruction *i)
    if (f->op == OP_CALL) {
       if (f->builtin) {
          assert(f->absolute);
-         uint32_t pcAbs = targ->getBuiltinOffset(f->target.builtin);
+         uint32_t pcAbs = targNVC0->getBuiltinOffset(f->target.builtin);
          addReloc(RelocEntry::TYPE_BUILTIN, 0, pcAbs, 0xfc000000, 26);
          addReloc(RelocEntry::TYPE_BUILTIN, 1, pcAbs, 0x03ffffff, -6);
       } else {
@@ -2307,8 +2307,6 @@ calculateSchedDataNVC0(const Target *targ, Function *func)
 void
 CodeEmitterNVC0::prepareEmission(Function *func)
 {
-   const Target *targ = func->getProgram()->getTarget();
-
    CodeEmitter::prepareEmission(func);
 
    if (targ->hasSWSched)
@@ -2317,6 +2315,7 @@ CodeEmitterNVC0::prepareEmission(Function *func)
 
 CodeEmitterNVC0::CodeEmitterNVC0(const TargetNVC0 *target)
    : CodeEmitter(target),
+     targNVC0(target),
      writeIssueDelays(target->hasSWSched)
 {
    code = NULL;
