@@ -250,13 +250,6 @@ extern void
 llvmpipe_print_resources(void);
 
 
-extern void
-llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen);
-
-extern void
-llvmpipe_init_context_texture_funcs(struct pipe_context *pipe);
-
-
 #define LP_UNREFERENCED         0
 #define LP_REFERENCED_FOR_READ  (1 << 0)
 #define LP_REFERENCED_FOR_WRITE (1 << 1)
