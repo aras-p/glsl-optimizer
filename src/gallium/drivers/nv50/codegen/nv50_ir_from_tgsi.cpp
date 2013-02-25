@@ -25,6 +25,8 @@ extern "C" {
 #include "tgsi/tgsi_scan.h"
 }
 
+#include <set>
+
 #include "nv50_ir.h"
 #include "nv50_ir_util.h"
 #include "nv50_ir_build_util.h"
@@ -657,6 +659,10 @@ public:
    int tempArrayCount;
    int immdArrayCount;
 
+   typedef nv50_ir::BuildUtil::Location Location;
+   // these registers are per-subroutine, cannot be used for parameter passing
+   std::set<Location> locals;
+
    bool mainTempsInLMem;
 
    int clipVertexOutput;
@@ -850,7 +856,7 @@ int Source::inferSysValDirection(unsigned sn) const
 
 bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
 {
-   unsigned i;
+   unsigned i, c;
    unsigned sn = TGSI_SEMANTIC_GENERIC;
    unsigned si = 0;
    const unsigned first = decl->Range.First, last = decl->Range.Last;
@@ -858,6 +864,15 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
    if (decl->Declaration.Semantic) {
       sn = decl->Semantic.Name;
       si = decl->Semantic.Index;
+   }
+
+   if (decl->Declaration.Local) {
+      for (i = first; i <= last; ++i) {
+         for (c = 0; c < 4; ++c) {
+            locals.insert(
+               Location(decl->Declaration.File, decl->Dim.Index2D, i, c));
+         }
+      }
    }
 
    switch (decl->Declaration.File) {
@@ -960,7 +975,6 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
       if (decl->Dim.Index2D >= immdArrayCount)
          immdArrayCount = decl->Dim.Index2D + 1;
       immdArrays[decl->Dim.Index2D].u32 = (last + 1) << 2;
-      int c;
       uint32_t base, count;
       switch (decl->Declaration.UsageMask) {
       case 0x1: c = 1; break;
@@ -985,7 +999,6 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
       if (decl->Dim.Index2D >= tempArrayCount)
          tempArrayCount = decl->Dim.Index2D + 1;
       tempArrays[decl->Dim.Index2D].u32 = (last + 1) << 2;
-      int c;
       uint32_t count;
       switch (decl->Declaration.UsageMask) {
       case 0x1: c = 1; break;
@@ -1175,6 +1188,8 @@ private:
    private:
       Converter &conv;
       Subroutine *sub;
+
+      inline const Location *getValueLocation(Subroutine *, Value *);
 
       template<typename T> inline void
       updateCallArgs(Instruction *i, void (Instruction::*setArg)(int, Value *),
@@ -2745,6 +2760,13 @@ Converter::~Converter()
 {
 }
 
+inline const Converter::Location *
+Converter::BindArgumentsPass::getValueLocation(Subroutine *s, Value *v)
+{
+   ValueMap::l_iterator it = s->values.l.find(v);
+   return it == s->values.l.end() ? NULL : &it->second;
+}
+
 template<typename T> inline void
 Converter::BindArgumentsPass::updateCallArgs(
    Instruction *i, void (Instruction::*setArg)(int, Value *),
@@ -2755,7 +2777,7 @@ Converter::BindArgumentsPass::updateCallArgs(
 
    for (unsigned a = 0; a < (g->*proto).size(); ++a) {
       Value *v = (g->*proto)[a].get();
-      const Converter::Location &l = subg->values.l.find(v)->second;
+      const Converter::Location &l = *getValueLocation(subg, v);
       Converter::DataArray *array = conv.getArrayForFile(l.array, l.arrayIdx);
 
       (i->*setArg)(a, array->acquire(sub->values, l.i, l.c));
@@ -2770,9 +2792,10 @@ Converter::BindArgumentsPass::updatePrototype(
 
    for (unsigned i = 0; i < set->getSize(); ++i) {
       Value *v = func->getLValue(i);
+      const Converter::Location *l = getValueLocation(sub, v);
 
       // only include values with a matching TGSI register
-      if (set->test(i) && sub->values.l.find(v) != sub->values.l.end())
+      if (set->test(i) && l && !conv.code->locals.count(*l))
          (func->*proto).push_back(v);
    }
 }
