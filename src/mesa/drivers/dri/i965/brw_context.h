@@ -1044,7 +1044,6 @@ struct brw_context
    struct {
       struct brw_query_object *obj;
       drm_intel_bo *bo;
-      int index;
       bool begin_emitted;
    } query;
 

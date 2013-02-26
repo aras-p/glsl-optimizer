@@ -531,7 +531,7 @@ brw_emit_query_begin(struct brw_context *brw)
     * buffer's results momentarily.
     */
    if (brw->query.bo == NULL ||
-       brw->query.index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
+       query->last_index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
       drm_intel_bo_unreference(brw->query.bo);
       brw->query.bo = NULL;
 
@@ -542,10 +542,10 @@ brw_emit_query_begin(struct brw_context *brw)
       memset((char *)brw->query.bo->virtual, 0, 4096);
       drm_intel_bo_unmap(brw->query.bo);
 
-      brw->query.index = 0;
+      query->last_index = 0;
    }
 
-   write_depth_count(intel, brw->query.bo, brw->query.index * 2);
+   write_depth_count(intel, brw->query.bo, query->last_index * 2);
 
    if (query->bo != brw->query.bo) {
       if (query->bo != NULL) {
@@ -558,7 +558,6 @@ brw_emit_query_begin(struct brw_context *brw)
       drm_intel_bo_reference(brw->query.bo);
       query->bo = brw->query.bo;
    }
-   query->last_index = brw->query.index;
    brw->query.begin_emitted = true;
 }
 
@@ -571,14 +570,15 @@ void
 brw_emit_query_end(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
+   struct brw_query_object *query = brw->query.obj;
 
    if (!brw->query.begin_emitted)
       return;
 
-   write_depth_count(intel, brw->query.bo, brw->query.index * 2 + 1);
+   write_depth_count(intel, brw->query.bo, query->last_index * 2 + 1);
 
    brw->query.begin_emitted = false;
-   brw->query.index++;
+   query->last_index++;
 }
 
 /**
