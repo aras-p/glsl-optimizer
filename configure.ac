@@ -688,17 +688,6 @@ if test "x$enable_opengl" = xno -a \
 fi
 
 API_DEFINES=""
-if test "x$enable_opengl" = xno; then
-    API_DEFINES="$API_DEFINES -DFEATURE_GL=0"
-else
-    API_DEFINES="$API_DEFINES -DFEATURE_GL=1"
-fi
-if test "x$enable_gles1" = xyes; then
-    API_DEFINES="$API_DEFINES -DFEATURE_ES1=1"
-fi
-if test "x$enable_gles2" = xyes; then
-    API_DEFINES="$API_DEFINES -DFEATURE_ES2=1"
-fi
 AC_SUBST([API_DEFINES])
 
 AM_CONDITIONAL(HAVE_OPENGL, test "x$enable_opengl" = xyes)
@@ -957,7 +946,7 @@ DRI_DIRS=""
 case "$with_dri_drivers" in
 no) ;;
 yes)
-    # classic DRI drivers require FEATURE_GL to build
+    # classic DRI drivers
     if test "x$enable_opengl" = xyes; then
         DRI_DIRS="yes"
     fi
