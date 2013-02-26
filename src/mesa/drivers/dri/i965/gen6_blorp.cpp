@@ -855,6 +855,9 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
        * tile_x and tile_y to 0.  This is a temporary workaround until we come
        * up with a better solution.
        */
+      WARN_ONCE((tile_x & 7) || (tile_y & 7),
+                "Depth/stencil buffer needs alignment to 8-pixel boundaries.\n"
+                "Truncating offset, bad rendering may occur.\n");
       tile_x &= ~7;
       tile_y &= ~7;
 
