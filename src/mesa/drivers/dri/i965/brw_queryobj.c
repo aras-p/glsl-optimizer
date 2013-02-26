@@ -532,10 +532,19 @@ brw_emit_query_begin(struct brw_context *brw)
     */
    if (brw->query.bo == NULL ||
        query->last_index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
+
+      if (query->bo != NULL) {
+         /* The old query BO did not have enough space, so we allocated a new
+          * one.  Gather the results so far (adding up the differences) and
+          * release the old BO.
+          */
+         brw_queryobj_get_results(ctx, query);
+      }
       drm_intel_bo_unreference(brw->query.bo);
       brw->query.bo = NULL;
 
       brw->query.bo = drm_intel_bo_alloc(intel->bufmgr, "query", 4096, 1);
+      drm_intel_bo_reference(brw->query.bo);
 
       /* Fill the buffer with zeroes.  This is probably superfluous. */
       drm_intel_bo_map(brw->query.bo, true);
@@ -543,21 +552,11 @@ brw_emit_query_begin(struct brw_context *brw)
       drm_intel_bo_unmap(brw->query.bo);
 
       query->last_index = 0;
+      query->bo = brw->query.bo;
    }
 
    write_depth_count(intel, brw->query.bo, query->last_index * 2);
 
-   if (query->bo != brw->query.bo) {
-      if (query->bo != NULL) {
-         /* The old query BO did not have enough space, so we allocated a new
-          * one.  Gather the results so far (adding up the differences) and
-          * release the old BO.
-          */
-	 brw_queryobj_get_results(ctx, query);
-      }
-      drm_intel_bo_reference(brw->query.bo);
-      query->bo = brw->query.bo;
-   }
    brw->query.begin_emitted = true;
 }
 
