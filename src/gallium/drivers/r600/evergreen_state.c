@@ -1710,6 +1710,11 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	if (rctx->framebuffer.state.zsbuf) {
 		rctx->flags |= R600_CONTEXT_WAIT_3D_IDLE | R600_CONTEXT_FLUSH_AND_INV;
+
+		rtex = (struct r600_texture*)rctx->framebuffer.state.zsbuf->texture;
+		if (rtex->htile) {
+			rctx->flags |= R600_CONTEXT_FLUSH_AND_INV_DB_META;
+		}
 	}
 
 	util_copy_framebuffer_state(&rctx->framebuffer.state, state);

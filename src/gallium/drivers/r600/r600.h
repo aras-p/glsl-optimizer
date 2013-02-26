@@ -152,6 +152,7 @@ struct r600_so_target {
 #define R600_CONTEXT_FLUSH_AND_INV		(1 << 4)
 #define R600_CONTEXT_FLUSH_AND_INV_CB_META	(1 << 5)
 #define R600_CONTEXT_PS_PARTIAL_FLUSH		(1 << 6)
+#define R600_CONTEXT_FLUSH_AND_INV_DB_META      (1 << 7)
 
 struct r600_context;
 struct r600_screen;

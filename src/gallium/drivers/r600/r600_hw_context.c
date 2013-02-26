@@ -652,6 +652,12 @@ void r600_flush_emit(struct r600_context *rctx)
 		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_FLUSH_AND_INV_CB_META) | EVENT_INDEX(0);
 	}
 
+	if (rctx->chip_class >= R700 &&
+	    (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB_META)) {
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_FLUSH_AND_INV_DB_META) | EVENT_INDEX(0);
+	}
+
 	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV) {
 		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
@@ -747,6 +753,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	 */
 	ctx->flags |= R600_CONTEXT_FLUSH_AND_INV |
 		      R600_CONTEXT_FLUSH_AND_INV_CB_META |
+		      R600_CONTEXT_FLUSH_AND_INV_DB_META |
 		      R600_CONTEXT_WAIT_3D_IDLE |
 		      R600_CONTEXT_WAIT_CP_DMA_IDLE;
 
@@ -1099,6 +1106,7 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES |
 		       R600_CONTEXT_FLUSH_AND_INV |
 		       R600_CONTEXT_FLUSH_AND_INV_CB_META |
+		       R600_CONTEXT_FLUSH_AND_INV_DB_META |
 		       R600_CONTEXT_STREAMOUT_FLUSH |
 		       R600_CONTEXT_WAIT_3D_IDLE;
 
