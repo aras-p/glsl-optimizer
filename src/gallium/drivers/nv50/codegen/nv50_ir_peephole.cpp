@@ -203,6 +203,9 @@ LoadPropagation::visit(BasicBlock *bb)
    for (Instruction *i = bb->getEntry(); i; i = next) {
       next = i->next;
 
+      if (i->op == OP_CALL) // calls have args as sources, they must be in regs
+         continue;
+
       if (i->srcExists(1))
          checkSwapSrc01(i);
 
