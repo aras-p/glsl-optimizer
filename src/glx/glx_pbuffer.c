@@ -241,7 +241,7 @@ CreateDRIDrawable(Display *dpy, const struct glx_config * fbconfig,
 		  XID drawable, XID glxdrawable,
 		  const int *attrib_list, size_t num_attribs)
 {
-    return GL_FALSE;
+    return GL_TRUE;
 }
 
 static void
