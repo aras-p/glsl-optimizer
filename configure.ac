@@ -742,11 +742,6 @@ if test "x$enable_dri" = xno; then
     enable_shared_glapi=no
 fi
 
-if test "x$enable_shared_glapi" = xyes; then
-    # libGL will use libglapi for function lookups (IN_DRI_DRIVER means to use
-    # the remap table)
-    DEFINES="$DEFINES -DIN_DRI_DRIVER"
-fi
 AM_CONDITIONAL(HAVE_SHARED_GLAPI, test "x$enable_shared_glapi" = xyes)
 
 dnl
@@ -970,7 +965,7 @@ if test "x$enable_dri" = xyes; then
     # Platform specific settings and drivers to build
     case "$host_os" in
     linux*)
-        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
+        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DHAVE_ALIAS"
 
         case "$host_cpu" in
@@ -995,21 +990,21 @@ if test "x$enable_dri" = xyes; then
         ;;
     freebsd* | dragonfly* | *netbsd*)
         DEFINES="$DEFINES -DHAVE_PTHREAD -DUSE_EXTERNAL_DXTN_LIB=1"
-        DEFINES="$DEFINES -DIN_DRI_DRIVER -DHAVE_ALIAS"
+        DEFINES="$DEFINES -DHAVE_ALIAS"
 
         if test "x$DRI_DIRS" = "xyes"; then
             DRI_DIRS="i915 i965 nouveau r200 radeon swrast"
         fi
         ;;
     gnu*)
-        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
+        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DHAVE_ALIAS"
 	;;
     solaris*)
-        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
+        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
         ;;
     cygwin*)
-        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
+        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
         if test "x$DRI_DIRS" = "xyes"; then
             DRI_DIRS="swrast"
         fi
