@@ -679,6 +679,10 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    }
 
    dri2_dpy->wl_queue = wl_display_create_queue(dri2_dpy->wl_dpy);
+
+   if (dri2_dpy->own_device)
+      wl_display_dispatch_pending(dri2_dpy->wl_dpy);
+
    dri2_dpy->wl_registry = wl_display_get_registry(dri2_dpy->wl_dpy);
    wl_proxy_set_queue((struct wl_proxy *) dri2_dpy->wl_registry,
                       dri2_dpy->wl_queue);
