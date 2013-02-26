@@ -1043,7 +1043,6 @@ struct brw_context
 
    struct {
       struct brw_query_object *obj;
-      drm_intel_bo *bo;
       bool begin_emitted;
    } query;
 

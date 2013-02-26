@@ -408,9 +408,6 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 
       brw_emit_query_end(brw);
 
-      drm_intel_bo_unreference(brw->query.bo);
-      brw->query.bo = NULL;
-
       brw->query.obj = NULL;
 
       intel->stats_wm--;
@@ -530,8 +527,7 @@ brw_emit_query_begin(struct brw_context *brw)
     * If not, create a new one of the same size; we'll gather the existing
     * buffer's results momentarily.
     */
-   if (brw->query.bo == NULL ||
-       query->last_index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
+   if (!query->bo || query->last_index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
 
       if (query->bo != NULL) {
          /* The old query BO did not have enough space, so we allocated a new
@@ -540,22 +536,18 @@ brw_emit_query_begin(struct brw_context *brw)
           */
          brw_queryobj_get_results(ctx, query);
       }
-      drm_intel_bo_unreference(brw->query.bo);
-      brw->query.bo = NULL;
 
-      brw->query.bo = drm_intel_bo_alloc(intel->bufmgr, "query", 4096, 1);
-      drm_intel_bo_reference(brw->query.bo);
+      query->bo = drm_intel_bo_alloc(intel->bufmgr, "query", 4096, 1);
 
       /* Fill the buffer with zeroes.  This is probably superfluous. */
-      drm_intel_bo_map(brw->query.bo, true);
-      memset((char *)brw->query.bo->virtual, 0, 4096);
-      drm_intel_bo_unmap(brw->query.bo);
+      drm_intel_bo_map(query->bo, true);
+      memset((char *) query->bo->virtual, 0, 4096);
+      drm_intel_bo_unmap(query->bo);
 
       query->last_index = 0;
-      query->bo = brw->query.bo;
    }
 
-   write_depth_count(intel, brw->query.bo, query->last_index * 2);
+   write_depth_count(intel, query->bo, query->last_index * 2);
 
    brw->query.begin_emitted = true;
 }
@@ -574,7 +566,7 @@ brw_emit_query_end(struct brw_context *brw)
    if (!brw->query.begin_emitted)
       return;
 
-   write_depth_count(intel, brw->query.bo, query->last_index * 2 + 1);
+   write_depth_count(intel, query->bo, query->last_index * 2 + 1);
 
    brw->query.begin_emitted = false;
    query->last_index++;
