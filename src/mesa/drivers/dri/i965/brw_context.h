@@ -728,8 +728,7 @@ struct brw_query_object {
 
    /** Last query BO associated with this query. */
    drm_intel_bo *bo;
-   /** First index in bo with query data for this object. */
-   int first_index;
+
    /** Last index in bo with query data for this object. */
    int last_index;
 };

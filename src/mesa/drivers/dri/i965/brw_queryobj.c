@@ -208,7 +208,7 @@ brw_queryobj_get_results(struct gl_context *ctx,
        * run out of space in the query's BO and allocated a new one.  If so,
        * this function was already called to accumulate the results so far.
        */
-      for (i = query->first_index; i <= query->last_index; i++) {
+      for (i = 0; i <= query->last_index; i++) {
 	 query->Base.Result += results[i * 2 + 1] - results[i * 2];
       }
       break;
@@ -218,7 +218,7 @@ brw_queryobj_get_results(struct gl_context *ctx,
       /* If the starting and ending PS_DEPTH_COUNT from any of the batches
        * differ, then some fragments passed the depth test.
        */
-      for (i = query->first_index; i <= query->last_index; i++) {
+      for (i = 0; i <= query->last_index; i++) {
 	 if (results[i * 2 + 1] != results[i * 2]) {
             query->Base.Result = GL_TRUE;
             break;
@@ -330,7 +330,6 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        */
       drm_intel_bo_unreference(query->bo);
       query->bo = NULL;
-      query->first_index = -1;
       query->last_index = -1;
 
       brw->query.obj = query;
@@ -558,7 +557,6 @@ brw_emit_query_begin(struct brw_context *brw)
       }
       drm_intel_bo_reference(brw->query.bo);
       query->bo = brw->query.bo;
-      query->first_index = brw->query.index;
    }
    query->last_index = brw->query.index;
    brw->query.begin_emitted = true;
