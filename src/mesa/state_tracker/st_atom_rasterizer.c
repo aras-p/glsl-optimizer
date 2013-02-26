@@ -84,11 +84,10 @@ static void update_raster_state( struct st_context *st )
 
    /* _NEW_LIGHT
     */
-   if (ctx->Light.ShadeModel == GL_FLAT)
-      raster->flatshade = 1;
-
-   if (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION_EXT)
-      raster->flatshade_first = 1;
+   raster->flatshade = ctx->Light.ShadeModel == GL_FLAT;
+      
+   raster->flatshade_first = ctx->Light.ProvokingVertex ==
+                             GL_FIRST_VERTEX_CONVENTION_EXT;
 
    /* _NEW_LIGHT | _NEW_PROGRAM */
    raster->light_twoside = ctx->VertexProgram._TwoSideEnabled;
@@ -145,18 +144,13 @@ static void update_raster_state( struct st_context *st )
       raster->offset_scale = ctx->Polygon.OffsetFactor;
    }
 
-   if (ctx->Polygon.SmoothFlag)
-      raster->poly_smooth = 1;
-
-   if (ctx->Polygon.StippleFlag)
-      raster->poly_stipple_enable = 1;
+   raster->poly_smooth = ctx->Polygon.SmoothFlag;
+   raster->poly_stipple_enable = ctx->Polygon.StippleFlag;
 
    /* _NEW_POINT
     */
    raster->point_size = ctx->Point.Size;
-
-   if (!ctx->Point.PointSprite && ctx->Point.SmoothFlag)
-      raster->point_smooth = 1;
+   raster->point_smooth = !ctx->Point.PointSprite && ctx->Point.SmoothFlag;
 
    /* _NEW_POINT | _NEW_PROGRAM
     */
@@ -229,8 +223,7 @@ static void update_raster_state( struct st_context *st )
    raster->multisample = ctx->Multisample._Enabled;
 
    /* _NEW_SCISSOR */
-   if (ctx->Scissor.Enabled)
-      raster->scissor = 1;
+   raster->scissor = ctx->Scissor.Enabled;
 
    /* _NEW_FRAG_CLAMP */
    raster->clamp_fragment_color = !st->clamp_frag_color_in_shader &&
