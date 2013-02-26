@@ -404,12 +404,12 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
          brw_emit_query_begin(brw);
       }
 
-      if (query->bo) {
-	 brw_emit_query_end(brw);
+      assert(query->bo);
 
-	 drm_intel_bo_unreference(brw->query.bo);
-	 brw->query.bo = NULL;
-      }
+      brw_emit_query_end(brw);
+
+      drm_intel_bo_unreference(brw->query.bo);
+      brw->query.bo = NULL;
 
       brw->query.obj = NULL;
 
