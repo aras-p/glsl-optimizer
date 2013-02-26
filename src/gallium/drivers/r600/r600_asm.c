@@ -475,12 +475,6 @@ static int check_and_set_bank_swizzle(struct r600_bytecode *bc,
 	bank_swizzle[4] = SQ_ALU_SCL_210;
 	while(bank_swizzle[4] <= SQ_ALU_SCL_221) {
 
-		if (max_slots == 4) {
-			for (i = 0; i < max_slots; i++) {
-				if (bank_swizzle[i] == SQ_ALU_VEC_210)
-				  return -1;
-			}
-		}
 		init_bank_swizzle(&bs);
 		if (scalar_only == false) {
 			for (i = 0; i < 4; i++) {
@@ -512,8 +506,10 @@ static int check_and_set_bank_swizzle(struct r600_bytecode *bc,
 					bank_swizzle[i]++;
 					if (bank_swizzle[i] <= SQ_ALU_VEC_210)
 						break;
-					else
+					else if (i < max_slots - 1)
 						bank_swizzle[i] = SQ_ALU_VEC_012;
+					else
+						return -1;
 				}
 			}
 		}
