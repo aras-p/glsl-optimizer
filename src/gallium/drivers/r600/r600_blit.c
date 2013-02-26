@@ -58,8 +58,8 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	util_blitter_save_vertex_buffer_slot(rctx->blitter, rctx->vertex_buffer_state.vb);
 	util_blitter_save_vertex_elements(rctx->blitter, rctx->vertex_fetch_shader.cso);
 	util_blitter_save_vertex_shader(rctx->blitter, rctx->vs_shader);
-	util_blitter_save_so_targets(rctx->blitter, rctx->num_so_targets,
-				     (struct pipe_stream_output_target**)rctx->so_targets);
+	util_blitter_save_so_targets(rctx->blitter, rctx->streamout.num_targets,
+				     (struct pipe_stream_output_target**)rctx->streamout.targets);
 	util_blitter_save_rasterizer(rctx->blitter, rctx->rasterizer_state.cso);
 
 	if (op & R600_SAVE_FRAGMENT_STATE) {

@@ -168,8 +168,6 @@ void r600_context_emit_fence(struct r600_context *ctx, struct r600_resource *fen
                              unsigned offset, unsigned value);
 void r600_flush_emit(struct r600_context *ctx);
 
-void r600_context_streamout_begin(struct r600_context *ctx);
-void r600_context_streamout_end(struct r600_context *ctx);
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
 void r600_need_dma_space(struct r600_context *ctx, unsigned num_dw);
 void r600_dma_copy(struct r600_context *rctx,

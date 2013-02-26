@@ -35,7 +35,7 @@
 #include "r600_resource.h"
 #include "evergreen_compute.h"
 
-#define R600_NUM_ATOMS 37
+#define R600_NUM_ATOMS 38
 
 #define R600_TRACE_CS 0
 
@@ -416,6 +416,19 @@ struct r600_fetch_shader {
 	unsigned			offset;
 };
 
+struct r600_streamout {
+	struct r600_atom		begin_atom;
+	bool				begin_emitted;
+	unsigned			num_dw_for_end;
+
+	unsigned			enabled_mask;
+	unsigned			num_targets;
+	struct r600_so_target		*targets[PIPE_MAX_SO_BUFFERS];
+
+	unsigned			append_bitmask;
+	bool				suspended;
+};
+
 struct r600_ring {
 	struct radeon_winsys_cs		*cs;
 	bool				flushing;
@@ -504,6 +517,7 @@ struct r600_context {
 	struct r600_vertexbuf_state	vertex_buffer_state;
 	/** Vertex buffers for compute shaders */
 	struct r600_vertexbuf_state	cs_vertex_buffer_state;
+	struct r600_streamout		streamout;
 
 	/* Additional context states. */
 	unsigned			flags;
@@ -538,14 +552,6 @@ struct r600_context {
 	struct pipe_query		*current_render_cond;
 	unsigned			current_render_cond_mode;
 	boolean				predicate_drawing;
-
-	/* Streamout state. */
-	unsigned			num_cs_dw_streamout_end;
-	unsigned			num_so_targets;
-	struct r600_so_target		*so_targets[PIPE_MAX_SO_BUFFERS];
-	boolean				streamout_start;
-	unsigned			streamout_append_bitmask;
-	bool				streamout_suspended;
 
 	/* Deprecated state management. */
 	struct r600_range		*range;
@@ -718,6 +724,10 @@ unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
 				   const unsigned char *swizzle_view,
 				   boolean vtx);
 
+/* r600_hw_context.c */
+void r600_emit_streamout_begin(struct r600_context *ctx, struct r600_atom *atom);
+void r600_emit_streamout_end(struct r600_context *ctx);
+
 /* r600_state_common.c */
 void r600_init_common_state_functions(struct r600_context *rctx);
 void r600_emit_cso_state(struct r600_context *rctx, struct r600_atom *atom);
@@ -737,6 +747,7 @@ void r600_sampler_views_dirty(struct r600_context *rctx,
 void r600_sampler_states_dirty(struct r600_context *rctx,
 			       struct r600_sampler_states *state);
 void r600_constant_buffers_dirty(struct r600_context *rctx, struct r600_constbuf_state *state);
+void r600_streamout_buffers_dirty(struct r600_context *rctx);
 void r600_draw_rectangle(struct blitter_context *blitter,
 			 int x1, int y1, int x2, int y2, float depth,
 			 enum blitter_attrib_type type, const union pipe_color_union *attrib);

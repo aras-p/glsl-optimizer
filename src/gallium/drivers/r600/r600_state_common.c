@@ -1014,31 +1014,60 @@ static void r600_so_target_destroy(struct pipe_context *ctx,
 	FREE(t);
 }
 
-static void r600_set_so_targets(struct pipe_context *ctx,
-				unsigned num_targets,
-				struct pipe_stream_output_target **targets,
-				unsigned append_bitmask)
+void r600_streamout_buffers_dirty(struct r600_context *rctx)
+{
+	rctx->streamout.num_dw_for_end =
+		12 + /* flush_vgt_streamout */
+		util_bitcount(rctx->streamout.enabled_mask) * 8 + /* STRMOUT_BUFFER_UPDATE */
+		3 /* set_streamout_enable(0) */;
+
+	rctx->streamout.begin_atom.num_dw =
+		12 + /* flush_vgt_streamout */
+		6 + /* set_streamout_enable */
+		util_bitcount(rctx->streamout.enabled_mask) * 7 + /* SET_CONTEXT_REG */
+		(rctx->family >= CHIP_RS780 &&
+		 rctx->family <= CHIP_RV740 ? util_bitcount(rctx->streamout.enabled_mask) * 5 : 0) + /* STRMOUT_BASE_UPDATE */
+		util_bitcount(rctx->streamout.enabled_mask & rctx->streamout.append_bitmask) * 8 + /* STRMOUT_BUFFER_UPDATE */
+		util_bitcount(rctx->streamout.enabled_mask & ~rctx->streamout.append_bitmask) * 6 + /* STRMOUT_BUFFER_UPDATE */
+		(rctx->family > CHIP_R600 && rctx->family < CHIP_RS780 ? 2 : 0) + /* SURFACE_BASE_UPDATE */
+		rctx->streamout.num_dw_for_end;
+
+	rctx->streamout.begin_atom.dirty = true;
+}
+
+static void r600_set_streamout_targets(struct pipe_context *ctx,
+				       unsigned num_targets,
+				       struct pipe_stream_output_target **targets,
+				       unsigned append_bitmask)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	unsigned i;
 
 	/* Stop streamout. */
-	if (rctx->num_so_targets && !rctx->streamout_start) {
-		r600_context_streamout_end(rctx);
+	if (rctx->streamout.num_targets && rctx->streamout.begin_emitted) {
+		r600_emit_streamout_end(rctx);
 	}
 
 	/* Set the new targets. */
 	for (i = 0; i < num_targets; i++) {
-		pipe_so_target_reference((struct pipe_stream_output_target**)&rctx->so_targets[i], targets[i]);
+		pipe_so_target_reference((struct pipe_stream_output_target**)&rctx->streamout.targets[i], targets[i]);
 		r600_context_add_resource_size(ctx, targets[i]->buffer);
 	}
-	for (; i < rctx->num_so_targets; i++) {
-		pipe_so_target_reference((struct pipe_stream_output_target**)&rctx->so_targets[i], NULL);
+	for (; i < rctx->streamout.num_targets; i++) {
+		pipe_so_target_reference((struct pipe_stream_output_target**)&rctx->streamout.targets[i], NULL);
 	}
 
-	rctx->num_so_targets = num_targets;
-	rctx->streamout_start = num_targets != 0;
-	rctx->streamout_append_bitmask = append_bitmask;
+	rctx->streamout.enabled_mask = (num_targets >= 1 && targets[0] ? 1 : 0) |
+				       (num_targets >= 2 && targets[1] ? 2 : 0) |
+				       (num_targets >= 3 && targets[2] ? 4 : 0) |
+				       (num_targets >= 4 && targets[3] ? 8 : 0);
+
+	rctx->streamout.num_targets = num_targets;
+	rctx->streamout.append_bitmask = append_bitmask;
+
+	if (num_targets) {
+		r600_streamout_buffers_dirty(rctx);
+	}
 }
 
 static void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
@@ -1350,12 +1379,6 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		}
 	} else {
 		info.index_bias = info.start;
-	}
-
-	/* Enable stream out if needed. */
-	if (rctx->streamout_start) {
-		r600_context_streamout_begin(rctx);
-		rctx->streamout_start = FALSE;
 	}
 
 	/* Set the index offset and multi primitive */
@@ -1764,7 +1787,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->context.texture_barrier = r600_texture_barrier;
 	rctx->context.create_stream_output_target = r600_create_so_target;
 	rctx->context.stream_output_target_destroy = r600_so_target_destroy;
-	rctx->context.set_stream_output_targets = r600_set_so_targets;
+	rctx->context.set_stream_output_targets = r600_set_streamout_targets;
 	rctx->context.draw_vbo = r600_draw_vbo;
 }
 

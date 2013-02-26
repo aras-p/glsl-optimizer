@@ -438,10 +438,6 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	ctx->ws->buffer_wait(onebo->buf, 0);
 
 	COMPUTE_DBG("...\n");
-
-	ctx->streamout_start = TRUE;
-	ctx->streamout_append_bitmask = ~0;
-
 }
 
 

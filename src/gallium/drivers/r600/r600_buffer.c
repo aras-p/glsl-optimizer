@@ -126,11 +126,13 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 				}
 			}
 			/* Streamout buffers. */
-			for (i = 0; i < rctx->num_so_targets; i++) {
-				if (rctx->so_targets[i]->b.buffer == &rbuffer->b.b) {
-					r600_context_streamout_end(rctx);
-					rctx->streamout_start = TRUE;
-					rctx->streamout_append_bitmask = ~0;
+			for (i = 0; i < rctx->streamout.num_targets; i++) {
+				if (rctx->streamout.targets[i]->b.buffer == &rbuffer->b.b) {
+					if (rctx->streamout.begin_emitted) {
+						r600_emit_streamout_end(rctx);
+					}
+					rctx->streamout.append_bitmask = rctx->streamout.enabled_mask;
+					r600_streamout_buffers_dirty(rctx);
 				}
 			}
 			/* Constant buffers. */
