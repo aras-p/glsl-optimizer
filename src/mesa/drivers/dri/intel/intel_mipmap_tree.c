@@ -1571,9 +1571,10 @@ intel_miptree_map_singlesample(struct intel_context *intel,
 
    if (mt->format == MESA_FORMAT_S8) {
       intel_miptree_map_s8(intel, mt, map, level, slice);
-   } else if (mt->etc_format != MESA_FORMAT_NONE) {
+   } else if (mt->etc_format != MESA_FORMAT_NONE &&
+              !(mode & BRW_MAP_DIRECT_BIT)) {
       intel_miptree_map_etc(intel, mt, map, level, slice);
-   } else if (mt->stencil_mt) {
+   } else if (mt->stencil_mt && !(mode & BRW_MAP_DIRECT_BIT)) {
       intel_miptree_map_depthstencil(intel, mt, map, level, slice);
    }
    /* According to the Ivy Bridge PRM, Vol1 Part4, section 1.2.1.2 (Graphics
@@ -1629,9 +1630,10 @@ intel_miptree_unmap_singlesample(struct intel_context *intel,
 
    if (mt->format == MESA_FORMAT_S8) {
       intel_miptree_unmap_s8(intel, mt, map, level, slice);
-   } else if (mt->etc_format != MESA_FORMAT_NONE) {
+   } else if (mt->etc_format != MESA_FORMAT_NONE &&
+              !(map->mode & BRW_MAP_DIRECT_BIT)) {
       intel_miptree_unmap_etc(intel, mt, map, level, slice);
-   } else if (mt->stencil_mt) {
+   } else if (mt->stencil_mt && !(map->mode & BRW_MAP_DIRECT_BIT)) {
       intel_miptree_unmap_depthstencil(intel, mt, map, level, slice);
    } else if (map->bo) {
       intel_miptree_unmap_blit(intel, mt, map, level, slice);
