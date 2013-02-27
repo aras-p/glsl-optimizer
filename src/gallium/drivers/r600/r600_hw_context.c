@@ -827,7 +827,6 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->framebuffer.atom.dirty = true;
 	ctx->poly_offset_state.atom.dirty = true;
 	ctx->vgt_state.atom.dirty = true;
-	ctx->vgt2_state.atom.dirty = true;
 	ctx->sample_mask.atom.dirty = true;
 	ctx->scissor.atom.dirty = true;
 	ctx->config_state.atom.dirty = true;

@@ -127,10 +127,6 @@ struct r600_vgt_state {
 	struct r600_atom atom;
 	uint32_t vgt_multi_prim_ib_reset_en;
 	uint32_t vgt_multi_prim_ib_reset_indx;
-};
-
-struct r600_vgt2_state {
-	struct r600_atom atom;
 	uint32_t vgt_indx_offset;
 };
 
@@ -506,7 +502,6 @@ struct r600_context {
 	struct r600_config_state	config_state;
 	struct r600_stencil_ref_state	stencil_ref;
 	struct r600_vgt_state		vgt_state;
-	struct r600_vgt2_state		vgt2_state;
 	struct r600_viewport_state	viewport;
 	/* Shaders and shader resources. */
 	struct r600_cso_state		vertex_fetch_shader;
@@ -734,7 +729,6 @@ void r600_emit_cso_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_alphatest_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_blend_color(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_vgt_state(struct r600_context *rctx, struct r600_atom *atom);
-void r600_emit_vgt2_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_clip_misc_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_stencil_ref(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_viewport_state(struct r600_context *rctx, struct r600_atom *atom);

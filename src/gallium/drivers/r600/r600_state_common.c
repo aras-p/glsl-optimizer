@@ -192,15 +192,9 @@ void r600_emit_vgt_state(struct r600_context *rctx, struct r600_atom *atom)
 	struct r600_vgt_state *a = (struct r600_vgt_state *)atom;
 
 	r600_write_context_reg(cs, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, a->vgt_multi_prim_ib_reset_en);
-	r600_write_context_reg(cs, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, a->vgt_multi_prim_ib_reset_indx);
-}
-
-void r600_emit_vgt2_state(struct r600_context *rctx, struct r600_atom *atom)
-{
-	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
-	struct r600_vgt2_state *a = (struct r600_vgt2_state *)atom;
-
-	r600_write_context_reg(cs, R_028408_VGT_INDX_OFFSET, a->vgt_indx_offset);
+	r600_write_context_reg_seq(cs, R_028408_VGT_INDX_OFFSET, 2);
+	r600_write_value(cs, a->vgt_indx_offset); /* R_028408_VGT_INDX_OFFSET */
+	r600_write_value(cs, a->vgt_multi_prim_ib_reset_indx); /* R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX */
 }
 
 static void r600_set_clip_state(struct pipe_context *ctx,
@@ -1381,15 +1375,13 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		info.index_bias = info.start;
 	}
 
-	/* Set the index offset and multi primitive */
-	if (rctx->vgt2_state.vgt_indx_offset != info.index_bias) {
-		rctx->vgt2_state.vgt_indx_offset = info.index_bias;
-		rctx->vgt2_state.atom.dirty = true;
-	}
+	/* Set the index offset and primitive restart. */
 	if (rctx->vgt_state.vgt_multi_prim_ib_reset_en != info.primitive_restart ||
-	    rctx->vgt_state.vgt_multi_prim_ib_reset_indx != info.restart_index) {
+	    rctx->vgt_state.vgt_multi_prim_ib_reset_indx != info.restart_index ||
+	    rctx->vgt_state.vgt_indx_offset != info.index_bias) {
 		rctx->vgt_state.vgt_multi_prim_ib_reset_en = info.primitive_restart;
 		rctx->vgt_state.vgt_multi_prim_ib_reset_indx = info.restart_index;
+		rctx->vgt_state.vgt_indx_offset = info.index_bias;
 		rctx->vgt_state.atom.dirty = true;
 	}
 
