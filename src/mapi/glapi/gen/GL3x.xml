@@ -424,26 +424,26 @@
 
   <function name="Uniform1uiv" es2="3.0" offset="assign">
     <param name="location" type="GLint"/>
-    <param name="count" type="GLsizei"/>
-    <param name="value" type="const GLuint *"/>
+    <param name="count" type="GLsizei" counter="true"/>
+    <param name="value" type="const GLuint *" count="count"/>
   </function>
 
   <function name="Uniform2uiv" es2="3.0" offset="assign">
     <param name="location" type="GLint"/>
-    <param name="count" type="GLsizei"/>
-    <param name="value" type="const GLuint *"/>
+    <param name="count" type="GLsizei" counter="true"/>
+    <param name="value" type="const GLuint *" count="count" count_scale="2"/>
   </function>
 
   <function name="Uniform3uiv" es2="3.0" offset="assign">
     <param name="location" type="GLint"/>
-    <param name="count" type="GLsizei"/>
-    <param name="value" type="const GLuint *"/>
+    <param name="count" type="GLsizei" counter="true"/>
+    <param name="value" type="const GLuint *" count="count" count_scale="3"/>
   </function>
 
   <function name="Uniform4uiv" es2="3.0" offset="assign">
     <param name="location" type="GLint"/>
-    <param name="count" type="GLsizei"/>
-    <param name="value" type="const GLuint *"/>
+    <param name="count" type="GLsizei" counter="true"/>
+    <param name="value" type="const GLuint *" count="count" count_scale="4"/>
   </function>
 
   <!-- These functions alias ones from GL_EXT_texture_integer -->

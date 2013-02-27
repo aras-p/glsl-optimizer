@@ -5685,83 +5685,83 @@
 
     <function name="Uniform1fv" es2="2.0" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="count" type="GLsizei" counter="true"/>
+        <param name="value" type="const GLfloat *" count="count"/>
         <glx ignore="true"/>
         <glx ignore="true"/>
     </function>
     <function name="Uniform2fv" es2="2.0" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="count" type="GLsizei" counter="true"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="2"/>
         <glx ignore="true"/>
         <glx ignore="true"/>
     </function>
     <function name="Uniform3fv" es2="2.0" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="count" type="GLsizei" counter="true"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="3"/>
         <glx ignore="true"/>
         <glx ignore="true"/>
     </function>
     <function name="Uniform4fv" es2="2.0" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="count" type="GLsizei" counter="true"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="4"/>
         <glx ignore="true"/>
         <glx ignore="true"/>
     </function>
 
     <function name="Uniform1iv" es2="2.0" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
-        <param name="value" type="const GLint *"/>
+        <param name="count" type="GLsizei" counter="true"/>
+        <param name="value" type="const GLint *" count="count"/>
         <glx ignore="true"/>
         <glx ignore="true"/>
     </function>
     <function name="Uniform2iv" es2="2.0" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
-        <param name="value" type="const GLint *"/>
+        <param name="count" type="GLsizei" counter="true"/>
+        <param name="value" type="const GLint *" count="count" count_scale="2"/>
         <glx ignore="true"/>
         <glx ignore="true"/>
     </function>
     <function name="Uniform3iv" es2="2.0" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
-        <param name="value" type="const GLint *"/>
+        <param name="count" type="GLsizei" counter="true"/>
+        <param name="value" type="const GLint *" count="count" count_scale="3"/>
         <glx ignore="true"/>
         <glx ignore="true"/>
     </function>
     <function name="Uniform4iv" es2="2.0" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
-        <param name="value" type="const GLint *"/>
+        <param name="count" type="GLsizei" counter="true"/>
+        <param name="value" type="const GLint *" count="count" count_scale="4"/>
         <glx ignore="true"/>
         <glx ignore="true"/>
     </function>
 
     <function name="UniformMatrix2fv" es2="2.0" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
+        <param name="count" type="GLsizei" counter="true"/>
         <param name="transpose" type="GLboolean"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="4"/>
         <glx ignore="true"/>
         <glx ignore="true"/>
     </function>
     <function name="UniformMatrix3fv" es2="2.0" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
+        <param name="count" type="GLsizei" counter="true"/>
         <param name="transpose" type="GLboolean"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="9"/>
         <glx ignore="true"/>
         <glx ignore="true"/>
     </function>
     <function name="UniformMatrix4fv" es2="2.0" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
+        <param name="count" type="GLsizei" counter="true"/>
         <param name="transpose" type="GLboolean"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="16"/>
         <glx ignore="true"/>
         <glx ignore="true"/>
     </function>
@@ -6004,44 +6004,44 @@
 
     <function name="UniformMatrix2x3fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
+        <param name="count" type="GLsizei" counter="true"/>
         <param name="transpose" type="GLboolean"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="6"/>
         <glx ignore="true"/>
     </function>
     <function name="UniformMatrix3x2fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
+        <param name="count" type="GLsizei" counter="true"/>
         <param name="transpose" type="GLboolean"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="6"/>
         <glx ignore="true"/>
     </function>
     <function name="UniformMatrix2x4fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
+        <param name="count" type="GLsizei" counter="true"/>
         <param name="transpose" type="GLboolean"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="6"/>
         <glx ignore="true"/>
     </function>
     <function name="UniformMatrix4x2fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
+        <param name="count" type="GLsizei" counter="true"/>
         <param name="transpose" type="GLboolean"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="8"/>
         <glx ignore="true"/>
     </function>
     <function name="UniformMatrix3x4fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
+        <param name="count" type="GLsizei" counter="true"/>
         <param name="transpose" type="GLboolean"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="12"/>
         <glx ignore="true"/>
     </function>
     <function name="UniformMatrix4x3fv" offset="assign" es2="3.0">
         <param name="location" type="GLint"/>
-        <param name="count" type="GLsizei"/>
+        <param name="count" type="GLsizei" counter="true"/>
         <param name="transpose" type="GLboolean"/>
-        <param name="value" type="const GLfloat *"/>
+        <param name="value" type="const GLfloat *" count="count" count_scale="12"/>
         <glx ignore="true"/>
     </function>
 
