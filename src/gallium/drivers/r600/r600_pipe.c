@@ -23,6 +23,7 @@
 #include "r600_pipe.h"
 #include "r600_public.h"
 #include "r600_isa.h"
+#include "r600d.h"
 
 #include <errno.h>
 #include "pipe/p_shader_tokens.h"
@@ -166,12 +167,23 @@ static void r600_flush_gfx_ring(void *ctx, unsigned flags)
 static void r600_flush_dma_ring(void *ctx, unsigned flags)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct radeon_winsys_cs *cs = rctx->rings.dma.cs;
+	unsigned padding_dw, i;
 
-	if (!rctx->rings.dma.cs->cdw) {
+	if (!cs->cdw) {
 		return;
 	}
+
+	/* Pad the DMA CS to a multiple of 8 dwords. */
+	padding_dw = 8 - cs->cdw % 8;
+	if (padding_dw < 8) {
+		for (i = 0; i < padding_dw; i++) {
+			cs->buf[cs->cdw++] = DMA_PACKET(DMA_PACKET_NOP, 0, 0, 0);
+		}
+	}
+
 	rctx->rings.dma.flushing = true;
-	rctx->ws->cs_flush(rctx->rings.dma.cs, flags);
+	rctx->ws->cs_flush(cs, flags);
 	rctx->rings.dma.flushing = false;
 }
 
