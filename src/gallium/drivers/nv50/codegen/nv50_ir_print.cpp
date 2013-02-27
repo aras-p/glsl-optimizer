@@ -602,7 +602,28 @@ private:
 bool
 PrintPass::visit(Function *fn)
 {
-   INFO("\n%s:%i\n", fn->getName(), fn->getLabel());
+   char str[16];
+
+   INFO("\n%s:%i (", fn->getName(), fn->getLabel());
+
+   if (!fn->outs.empty())
+      INFO("out");
+   for (std::deque<ValueRef>::iterator it = fn->outs.begin();
+        it != fn->outs.end();
+        ++it) {
+      it->get()->print(str, sizeof(str), typeOfSize(it->get()->reg.size));
+      INFO(" %s", str);
+   }
+
+   if (!fn->ins.empty())
+      INFO("%s%sin", colour[TXT_DEFAULT], fn->outs.empty() ? "" : ", ");
+   for (std::deque<ValueDef>::iterator it = fn->ins.begin();
+        it != fn->ins.end();
+        ++it) {
+      it->get()->print(str, sizeof(str), typeOfSize(it->get()->reg.size));
+      INFO(" %s", str);
+   }
+   INFO("%s)\n", colour[TXT_DEFAULT]);
 
    return true;
 }
