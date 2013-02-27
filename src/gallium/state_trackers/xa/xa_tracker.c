@@ -468,6 +468,7 @@ xa_tracker_version(int *major, int *minor, int *patch)
 
 XA_EXPORT int
 xa_surface_handle(struct xa_surface *srf,
+		  enum xa_handle_type type,
 		  uint32_t * handle, unsigned int *stride)
 {
     struct winsys_handle whandle;
@@ -476,7 +477,15 @@ xa_surface_handle(struct xa_surface *srf,
     boolean res;
 
     memset(&whandle, 0, sizeof(whandle));
-    whandle.type = DRM_API_HANDLE_TYPE_SHARED;
+    switch (type) {
+    case xa_handle_type_kms:
+	whandle.type = DRM_API_HANDLE_TYPE_KMS;
+	break;
+    case xa_handle_type_shared:
+    default:
+	whandle.type = DRM_API_HANDLE_TYPE_SHARED;
+	break;
+    }
     res = screen->resource_get_handle(screen, srf->tex, &whandle);
     if (!res)
 	return -XA_ERR_INVAL;

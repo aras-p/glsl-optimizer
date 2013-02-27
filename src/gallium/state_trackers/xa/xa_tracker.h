@@ -142,6 +142,11 @@ struct xa_box {
     uint16_t x1, y1, x2, y2;
 };
 
+enum xa_handle_type {
+    xa_handle_type_shared,
+    xa_handle_type_kms,
+};
+
 extern void xa_tracker_version(int *major, int *minor, int *patch);
 
 extern struct xa_tracker *xa_tracker_create(int drm_fd);
@@ -183,6 +188,8 @@ extern int xa_surface_redefine(struct xa_surface *srf,
 			       int copy_contents);
 
 extern int xa_surface_handle(struct xa_surface *srf,
-			     uint32_t * handle, unsigned int *byte_stride);
+			     enum xa_handle_type type,
+			     uint32_t * handle,
+			     unsigned int *byte_stride);
 
 #endif
