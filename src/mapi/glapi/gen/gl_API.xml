@@ -7656,8 +7656,8 @@
 
     <function name="BufferDataARB" alias="BufferData">
         <param name="target" type="GLenum"/>
-        <param name="size" type="GLsizeiptrARB"/>
-        <param name="data" type="const GLvoid *"/>
+        <param name="size" type="GLsizeiptrARB" counter="true"/>
+        <param name="data" type="const GLvoid *" count="size"/>
         <param name="usage" type="GLenum"/>
     </function>
 
