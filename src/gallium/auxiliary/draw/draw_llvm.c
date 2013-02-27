@@ -1177,10 +1177,15 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    LLVMValueRef fetch_max;
    struct lp_build_sampler_soa *sampler = 0;
    LLVMValueRef ret, clipmask_bool_ptr;
-   const boolean bypass_viewport = variant->key.bypass_viewport;
-   const boolean enable_cliptest = variant->key.clip_xy || 
-                                   variant->key.clip_z  ||
-                                   variant->key.clip_user;
+   const struct draw_geometry_shader *gs = draw->gs.geometry_shader;
+   /* If geometry shader is present we need to skip both the viewport
+    * transformation and clipping otherwise the inputs to the geometry
+    * shader will be incorrect.
+    */
+   const boolean bypass_viewport = gs || variant->key.bypass_viewport;
+   const boolean enable_cliptest = !gs && (variant->key.clip_xy ||
+                                           variant->key.clip_z  ||
+                                           variant->key.clip_user);
    LLVMValueRef variant_func;
    const unsigned pos = draw_current_shader_position_output(llvm->draw);
    const unsigned cv = draw_current_shader_clipvertex_output(llvm->draw);
