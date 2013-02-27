@@ -1586,6 +1586,13 @@ RegAlloc::execFunc()
    unsigned int i, retries;
    bool ret;
 
+   if (!func->ins.empty()) {
+      // Insert a nop at the entry so inputs only used by the first instruction
+      // don't count as having an empty live range.
+      Instruction *nop = new_Instruction(func, OP_NOP, TYPE_NONE);
+      BasicBlock::get(func->cfg.getRoot())->insertHead(nop);
+   }
+
    ret = insertConstr.exec(func);
    if (!ret)
       goto out;
