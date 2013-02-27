@@ -441,12 +441,21 @@ bool RenamePass::run()
    return true;
 }
 
+// Go through BBs in dominance order, create new values for each definition,
+// and replace all sources with their current new values.
+//
+// NOTE: The values generated for function inputs/outputs have no connection
+// to their corresponding outputs/inputs in other functions. Only allocation
+// of physical registers will establish this connection.
+//
 void RenamePass::search(BasicBlock *bb)
 {
    LValue *lval, *ssa;
    int d, s;
    const Target *targ = prog->getTarget();
 
+   // Put current definitions for function inputs values on the stack.
+   // They can be used before any redefinitions are pushed.
    if (bb == BasicBlock::get(func->cfg.getRoot())) {
       for (std::deque<ValueDef>::iterator it = func->ins.begin();
            it != func->ins.end(); ++it) {
@@ -463,11 +472,15 @@ void RenamePass::search(BasicBlock *bb)
    }
 
    for (Instruction *stmt = bb->getFirst(); stmt; stmt = stmt->next) {
+      // PHI sources get definitions from the passes through the incident BBs,
+      // so skip them here.
       if (stmt->op != OP_PHI) {
          for (s = 0; stmt->srcExists(s); ++s) {
             lval = stmt->getSrc(s)->asLValue();
             if (!lval)
                continue;
+            // Values on the stack created in previously visited blocks, and
+            // function inputs, will be valid because they dominate this one.
             lval = getStackTop(lval);
             if (!lval)
                lval = mkUndefined(stmt->getSrc(s));
@@ -485,6 +498,7 @@ void RenamePass::search(BasicBlock *bb)
       }
    }
 
+   // Update sources of PHI ops corresponding to this BB in outgoing BBs.
    for (Graph::EdgeIterator ei = bb->cfg.outgoing(); !ei.end(); ei.next()) {
       Instruction *phi;
       int p = 0;
@@ -506,9 +520,12 @@ void RenamePass::search(BasicBlock *bb)
       }
    }
 
+   // Visit the BBs we dominate.
    for (Graph::EdgeIterator ei = bb->dom.outgoing(); !ei.end(); ei.next())
       search(BasicBlock::get(ei.getNode()));
 
+   // Update function outputs to the last definitions of their pre-SSA values.
+   // I hope they're unique, i.e. that we get PHIs for all of them ...
    if (bb == BasicBlock::get(func->cfgExit)) {
       for (std::deque<ValueRef>::iterator it = func->outs.begin();
            it != func->outs.end(); ++it) {
@@ -522,6 +539,8 @@ void RenamePass::search(BasicBlock *bb)
       }
    }
 
+   // Pop the values we created in this block from the stack because we will
+   // return to blocks that we do not dominate.
    for (Instruction *stmt = bb->getFirst(); stmt; stmt = stmt->next) {
       if (stmt->op == OP_NOP)
          continue;
