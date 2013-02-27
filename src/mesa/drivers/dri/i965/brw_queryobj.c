@@ -489,6 +489,38 @@ static void brw_check_query(struct gl_context *ctx, struct gl_query_object *q)
 }
 
 /**
+ * Ensure there query's BO has enough space to store a new pair of values.
+ *
+ * If not, gather the existing BO's results and create a new buffer of the
+ * same size.
+ */
+static void
+ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
+{
+   struct intel_context *intel = intel_context(ctx);
+
+   if (!query->bo || query->last_index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
+
+      if (query->bo != NULL) {
+         /* The old query BO did not have enough space, so we allocated a new
+          * one.  Gather the results so far (adding up the differences) and
+          * release the old BO.
+          */
+         brw_queryobj_get_results(ctx, query);
+      }
+
+      query->bo = drm_intel_bo_alloc(intel->bufmgr, "query", 4096, 1);
+
+      /* Fill the buffer with zeroes.  This is probably superfluous. */
+      drm_intel_bo_map(query->bo, true);
+      memset((char *) query->bo->virtual, 0, 4096);
+      drm_intel_bo_unmap(query->bo);
+
+      query->last_index = 0;
+   }
+}
+
+/**
  * Record the PS_DEPTH_COUNT value (for occlusion queries) just before
  * primitive drawing.
  *
@@ -523,29 +555,7 @@ brw_emit_query_begin(struct brw_context *brw)
    if (!query || brw->query.begin_emitted)
       return;
 
-   /* Ensure the buffer has enough space to store a new pair of values.
-    * If not, create a new one of the same size; we'll gather the existing
-    * buffer's results momentarily.
-    */
-   if (!query->bo || query->last_index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
-
-      if (query->bo != NULL) {
-         /* The old query BO did not have enough space, so we allocated a new
-          * one.  Gather the results so far (adding up the differences) and
-          * release the old BO.
-          */
-         brw_queryobj_get_results(ctx, query);
-      }
-
-      query->bo = drm_intel_bo_alloc(intel->bufmgr, "query", 4096, 1);
-
-      /* Fill the buffer with zeroes.  This is probably superfluous. */
-      drm_intel_bo_map(query->bo, true);
-      memset((char *) query->bo->virtual, 0, 4096);
-      drm_intel_bo_unmap(query->bo);
-
-      query->last_index = 0;
-   }
+   ensure_bo_has_space(ctx, query);
 
    write_depth_count(intel, query->bo, query->last_index * 2);
 
