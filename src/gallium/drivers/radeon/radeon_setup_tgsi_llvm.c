@@ -1281,6 +1281,8 @@ void radeon_llvm_finalize_module(struct radeon_llvm_context * ctx)
 
 	/* Add some optimization passes */
 	LLVMAddScalarReplAggregatesPass(gallivm->passmgr);
+	LLVMAddLICMPass(gallivm->passmgr);
+	LLVMAddAggressiveDCEPass(gallivm->passmgr);
 	LLVMAddCFGSimplificationPass(gallivm->passmgr);
 
 	/* Run the passs */
