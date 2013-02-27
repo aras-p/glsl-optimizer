@@ -216,7 +216,6 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 }
 
 static const struct r600_reg r600_context_reg_list[] = {
-	{R_028D24_DB_HTILE_SURFACE, 0, 0},
 	{R_028614_SPI_VS_OUT_ID_0, 0, 0},
 	{R_028618_SPI_VS_OUT_ID_1, 0, 0},
 	{R_02861C_SPI_VS_OUT_ID_2, 0, 0},
@@ -233,8 +232,6 @@ static const struct r600_reg r600_context_reg_list[] = {
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028868_SQ_PGM_RESOURCES_VS, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_0288A4_SQ_PGM_RESOURCES_FS, 0, 0},
-	{R_0288DC_SQ_PGM_CF_OFFSET_FS, 0, 0},
 	{R_028644_SPI_PS_INPUT_CNTL_0, 0, 0},
 	{R_028648_SPI_PS_INPUT_CNTL_1, 0, 0},
 	{R_02864C_SPI_PS_INPUT_CNTL_2, 0, 0},

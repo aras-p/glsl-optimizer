@@ -2840,6 +2840,13 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 		r600_store_context_reg(cb, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);
 	}
 
+	r600_store_context_reg(cb, R_028010_DB_RENDER_OVERRIDE2, 0);
+	r600_store_context_reg(cb, R_028234_PA_SU_HARDWARE_SCREEN_OFFSET, 0);
+	r600_store_context_reg(cb, R_0286C8_SPI_THREAD_GROUPING, 0);
+	r600_store_context_reg(cb, R_0286E8_SPI_COMPUTE_INPUT_CNTL, 0);
+	r600_store_context_reg(cb, R_028B54_VGT_SHADER_STAGES_EN, 0);
+	r600_store_context_reg(cb, R_028838_SQ_DYN_GPR_RESOURCE_LIMIT_1, 0);
+
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0, 0x01000FFF);
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF);
 }
@@ -3288,6 +3295,13 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	if (rctx->screen->has_streamout) {
 		r600_store_context_reg(cb, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);
 	}
+
+	r600_store_context_reg(cb, R_028010_DB_RENDER_OVERRIDE2, 0);
+	r600_store_context_reg(cb, R_028234_PA_SU_HARDWARE_SCREEN_OFFSET, 0);
+	r600_store_context_reg(cb, R_0286C8_SPI_THREAD_GROUPING, 0);
+	r600_store_context_reg(cb, R_0286E8_SPI_COMPUTE_INPUT_CNTL, 0);
+	r600_store_context_reg(cb, R_0288EC_SQ_LDS_ALLOC_PS, 0);
+	r600_store_context_reg(cb, R_028B54_VGT_SHADER_STAGES_EN, 0);
 
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0, 0x01000FFF);
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF);
