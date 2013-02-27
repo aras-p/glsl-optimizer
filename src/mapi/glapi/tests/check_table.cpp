@@ -1511,7 +1511,7 @@ const struct name_offset known_dispatch[] = {
    { NULL, 0 }
 };
 
-#ifndef GLX_INDIRECT_RENDERING
+#ifdef GLX_INDIRECT_RENDERING
 extern "C" {
 GLAPI GLboolean GLAPIENTRY
 glAreTexturesResidentEXT(GLsizei n, const GLuint *textures,

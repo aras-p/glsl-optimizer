@@ -1,6 +1,7 @@
 if !HAVE_SHARED_GLAPI
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = \
+	$(DEFINES) \
 	-I$(top_srcdir)/src/gtest/include \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/include
