@@ -297,6 +297,12 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
       assert(templat->depth0 == 1);
       assert(templat->last_level == 0);
       lpr->data = align_malloc(bytes, 16);
+      /*
+       * buffers don't really have stride but it's probably safer
+       * (for code doing same calculations for buffers and textures)
+       * to put something sane in there.
+       */
+      lpr->row_stride[0] = bytes;
       if (!lpr->data)
          goto fail;
       memset(lpr->data, 0, bytes);
@@ -578,12 +584,23 @@ llvmpipe_create_surface(struct pipe_context *pipe,
       pipe_resource_reference(&ps->texture, pt);
       ps->context = pipe;
       ps->format = surf_tmpl->format;
-      ps->width = u_minify(pt->width0, surf_tmpl->u.tex.level);
-      ps->height = u_minify(pt->height0, surf_tmpl->u.tex.level);
-
-      ps->u.tex.level = surf_tmpl->u.tex.level;
-      ps->u.tex.first_layer = surf_tmpl->u.tex.first_layer;
-      ps->u.tex.last_layer = surf_tmpl->u.tex.last_layer;
+      if (llvmpipe_resource_is_texture(pt)) {
+         assert(surf_tmpl->u.tex.level <= pt->last_level);
+         ps->width = u_minify(pt->width0, surf_tmpl->u.tex.level);
+         ps->height = u_minify(pt->height0, surf_tmpl->u.tex.level);
+         ps->u.tex.level = surf_tmpl->u.tex.level;
+         ps->u.tex.first_layer = surf_tmpl->u.tex.first_layer;
+         ps->u.tex.last_layer = surf_tmpl->u.tex.last_layer;
+      }
+      else {
+         /* setting width as number of elements should get us correct renderbuffer width */
+         ps->width = surf_tmpl->u.buf.last_element - surf_tmpl->u.buf.first_element + 1;
+         ps->height = pt->height0;
+         ps->u.buf.first_element = surf_tmpl->u.buf.first_element;
+         ps->u.buf.last_element = surf_tmpl->u.buf.last_element;
+         assert(ps->u.buf.first_element <= ps->u.buf.last_element);
+         assert(ps->u.buf.last_element < ps->width);
+      }
    }
    return ps;
 }
@@ -1342,12 +1359,17 @@ llvmpipe_resource_size(const struct pipe_resource *resource)
    const struct llvmpipe_resource *lpr = llvmpipe_resource_const(resource);
    unsigned lvl, size = 0;
 
-   for (lvl = 0; lvl <= lpr->base.last_level; lvl++) {
-      if (lpr->linear_img.data)
-         size += tex_image_size(lpr, lvl, LP_TEX_LAYOUT_LINEAR);
+   if (llvmpipe_resource_is_texture(resource)) {
+      for (lvl = 0; lvl <= lpr->base.last_level; lvl++) {
+         if (lpr->linear_img.data)
+            size += tex_image_size(lpr, lvl, LP_TEX_LAYOUT_LINEAR);
 
-      if (lpr->tiled_img.data)
-         size += tex_image_size(lpr, lvl, LP_TEX_LAYOUT_TILED);
+         if (lpr->tiled_img.data)
+            size += tex_image_size(lpr, lvl, LP_TEX_LAYOUT_TILED);
+      }
+   }
+   else {
+      size = resource->width0;
    }
 
    return size;

@@ -165,32 +165,13 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
 
          for (i = 0; i < scene->fb.nr_cbufs; i++) {
             enum pipe_format format = scene->fb.cbufs[i]->format;
-            /*
-             * XXX the format_write_4i/ui functions do clamping to max value
-             * and I'm not sure that's actually right - spec doesn't seem to
-             * say much about that topic. If it is should probably adjust the
-             * border color handling to do the same. If not and chopping off
-             * bits is the way to go, the write_4i and write_4ui functions
-             * would be identical.
-             */
-            if (util_format_is_pure_sint(format)) {
-               int rgba[4];
-               rgba[0] = arg.clear_color.i[0];
-               rgba[1] = arg.clear_color.i[1];
-               rgba[2] = arg.clear_color.i[2];
-               rgba[3] = arg.clear_color.i[3];
 
-               util_format_write_4i(format, rgba, 0, &uc, 0, 0, 0, 1, 1);
+            if (util_format_is_pure_sint(format)) {
+               util_format_write_4i(format, arg.clear_color.i, 0, &uc, 0, 0, 0, 1, 1);
             }
             else {
-               unsigned rgba[4];
-               rgba[0] = arg.clear_color.ui[0];
-               rgba[1] = arg.clear_color.ui[1];
-               rgba[2] = arg.clear_color.ui[2];
-               rgba[3] = arg.clear_color.ui[3];
-
                assert(util_format_is_pure_uint(format));
-               util_format_write_4ui(format, rgba, 0, &uc, 0, 0, 0, 1, 1);
+               util_format_write_4ui(format, arg.clear_color.ui, 0, &uc, 0, 0, 0, 1, 1);
             }
 
             util_fill_rect(scene->cbufs[i].map,

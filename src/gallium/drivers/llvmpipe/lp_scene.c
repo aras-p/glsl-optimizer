@@ -141,15 +141,24 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
 
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       struct pipe_surface *cbuf = scene->fb.cbufs[i];
-      assert(cbuf->u.tex.first_layer == cbuf->u.tex.last_layer);
-      scene->cbufs[i].stride = llvmpipe_resource_stride(cbuf->texture,
-                                                        cbuf->u.tex.level);
+      if (llvmpipe_resource_is_texture(cbuf->texture)) {
+         assert(cbuf->u.tex.first_layer == cbuf->u.tex.last_layer);
+         scene->cbufs[i].stride = llvmpipe_resource_stride(cbuf->texture,
+                                                           cbuf->u.tex.level);
 
-      scene->cbufs[i].map = llvmpipe_resource_map(cbuf->texture,
-                                                  cbuf->u.tex.level,
-                                                  cbuf->u.tex.first_layer,
-                                                  LP_TEX_USAGE_READ_WRITE,
-                                                  LP_TEX_LAYOUT_LINEAR);
+         scene->cbufs[i].map = llvmpipe_resource_map(cbuf->texture,
+                                                     cbuf->u.tex.level,
+                                                     cbuf->u.tex.first_layer,
+                                                     LP_TEX_USAGE_READ_WRITE,
+                                                     LP_TEX_LAYOUT_LINEAR);
+      }
+      else {
+         struct llvmpipe_resource *lpr = llvmpipe_resource(cbuf->texture);
+         unsigned pixstride = util_format_get_blocksize(cbuf->format);
+         scene->cbufs[i].stride = cbuf->texture->width0;
+         scene->cbufs[i].map = lpr->data;
+         scene->cbufs[i].map += cbuf->u.buf.first_element * pixstride;
+      }
    }
 
    if (fb->zsbuf) {
@@ -182,9 +191,11 @@ lp_scene_end_rasterization(struct lp_scene *scene )
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       if (scene->cbufs[i].map) {
          struct pipe_surface *cbuf = scene->fb.cbufs[i];
-         llvmpipe_resource_unmap(cbuf->texture,
-                                 cbuf->u.tex.level,
-                                 cbuf->u.tex.first_layer);
+         if (llvmpipe_resource_is_texture(cbuf->texture)) {
+            llvmpipe_resource_unmap(cbuf->texture,
+                                    cbuf->u.tex.level,
+                                    cbuf->u.tex.first_layer);
+         }
          scene->cbufs[i].map = NULL;
       }
    }

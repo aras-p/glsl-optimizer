@@ -196,7 +196,7 @@ lp_rast_get_unswizzled_color_tile_pointer(struct lp_rasterizer_task *task,
       struct pipe_surface *cbuf = scene->fb.cbufs[buf];
       assert(cbuf);
 
-      format_bytes = util_format_description(cbuf->format)->block.bits / 8;
+      format_bytes = util_format_get_blocksize(cbuf->format);
       task->color_tiles[buf] = scene->cbufs[buf].map + scene->cbufs[buf].stride * task->y + format_bytes * task->x;
    }
 
@@ -221,7 +221,7 @@ lp_rast_get_unswizzled_color_block_pointer(struct lp_rasterizer_task *task,
    assert((y % TILE_VECTOR_HEIGHT) == 0);
    assert(buf < task->scene->fb.nr_cbufs);
 
-   format_bytes = util_format_description(task->scene->fb.cbufs[buf]->format)->block.bits / 8;
+   format_bytes = util_format_get_blocksize(task->scene->fb.cbufs[buf]->format);
 
    color = lp_rast_get_unswizzled_color_tile_pointer(task, buf, LP_TEX_USAGE_READ_WRITE);
    assert(color);
