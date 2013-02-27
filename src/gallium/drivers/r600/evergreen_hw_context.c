@@ -241,4 +241,7 @@ void evergreen_dma_copy(struct r600_context *rctx,
 		src_offset += csize << shift;
 		size -= csize;
 	}
+
+	util_range_add(&rdst->valid_buffer_range, dst_offset,
+		       dst_offset + size);
 }

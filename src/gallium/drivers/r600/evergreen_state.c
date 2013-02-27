@@ -1377,6 +1377,10 @@ void evergreen_init_color_surface_rat(struct r600_context *rctx,
 	 * elements. */
 	surf->cb_color_dim = pipe_buffer->width0;
 
+	/* Set the buffer range the GPU will have access to: */
+	util_range_add(&r600_resource(pipe_buffer)->valid_buffer_range,
+		       0, pipe_buffer->width0);
+
 	surf->cb_color_cmask = surf->cb_color_base;
 	surf->cb_color_cmask_slice = 0;
 	surf->cb_color_fmask = surf->cb_color_base;

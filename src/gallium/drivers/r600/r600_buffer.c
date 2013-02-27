@@ -34,6 +34,7 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 {
 	struct r600_resource *rbuffer = r600_resource(buf);
 
+	util_range_destroy(&rbuffer->valid_buffer_range);
 	pb_reference(&rbuffer->buf, NULL);
 	FREE(rbuffer);
 }
@@ -97,6 +98,14 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 	uint8_t *data;
 
 	assert(box->x + box->width <= resource->width0);
+
+	/* See if the buffer range being mapped has never been initialized,
+	 * in which case it can be mapped unsynchronized. */
+	if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED) &&
+	    usage & PIPE_TRANSFER_WRITE &&
+	    !util_ranges_intersect(&rbuffer->valid_buffer_range, box->x, box->x + box->width)) {
+		usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
+	}
 
 	if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE &&
 	    !(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
@@ -180,6 +189,7 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 {
 	struct r600_context *rctx = (struct r600_context*)pipe;
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
+	struct r600_resource *rbuffer = r600_resource(transfer->resource);
 
 	if (rtransfer->staging) {
 		struct pipe_resource *dst, *src;
@@ -204,6 +214,11 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 			r600_copy_buffer(pipe, dst, doffset, src, &box);
 		}
 		pipe_resource_reference((struct pipe_resource**)&rtransfer->staging, NULL);
+	}
+
+	if (transfer->usage & PIPE_TRANSFER_WRITE) {
+		util_range_add(&rbuffer->valid_buffer_range, transfer->box.x,
+			       transfer->box.x + transfer->box.width);
 	}
 	util_slab_free(&rctx->pool_transfers, transfer);
 }
@@ -261,6 +276,7 @@ bool r600_init_resource(struct r600_screen *rscreen,
 
 	res->cs_buf = rscreen->ws->buffer_get_cs_handle(res->buf);
 	res->domains = domains;
+	util_range_set_empty(&res->valid_buffer_range);
 	return true;
 }
 
@@ -277,6 +293,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	pipe_reference_init(&rbuffer->b.b.reference, 1);
 	rbuffer->b.b.screen = screen;
 	rbuffer->b.vtbl = &r600_buffer_vtbl;
+	util_range_init(&rbuffer->valid_buffer_range);
 
 	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, TRUE, templ->usage)) {
 		FREE(rbuffer);

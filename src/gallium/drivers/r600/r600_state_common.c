@@ -977,6 +977,7 @@ r600_create_so_target(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_so_target *t;
+	struct r600_resource *rbuffer = (struct r600_resource*)buffer;
 
 	t = CALLOC_STRUCT(r600_so_target);
 	if (!t) {
@@ -996,6 +997,9 @@ r600_create_so_target(struct pipe_context *ctx,
 	pipe_resource_reference(&t->b.buffer, buffer);
 	t->b.buffer_offset = buffer_offset;
 	t->b.buffer_size = buffer_size;
+
+	util_range_add(&rbuffer->valid_buffer_range, buffer_offset,
+		       buffer_offset + buffer_size);
 	return &t->b;
 }
 

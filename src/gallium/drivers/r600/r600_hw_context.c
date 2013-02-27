@@ -1148,6 +1148,9 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 
 	/* Invalidate the read caches. */
 	rctx->flags |= R600_CONTEXT_INVAL_READ_CACHES;
+
+	util_range_add(&r600_resource(dst)->valid_buffer_range, dst_offset,
+		       dst_offset + size);
 }
 
 void r600_need_dma_space(struct r600_context *ctx, unsigned num_dw)
@@ -1194,4 +1197,7 @@ void r600_dma_copy(struct r600_context *rctx,
 		src_offset += csize << shift;
 		size -= csize;
 	}
+
+	util_range_add(&rdst->valid_buffer_range, dst_offset,
+		       dst_offset + size);
 }
