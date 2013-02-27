@@ -431,7 +431,7 @@ static void si_llvm_init_export_args(struct lp_build_tgsi_context *bld_base,
 						"llvm.SI.packf16",
 						LLVMInt32TypeInContext(base->gallivm->context),
 						args, 2,
-						LLVMReadNoneAttribute);
+						LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
 			args[chan + 7] = args[chan + 5] =
 				LLVMBuildBitCast(base->gallivm->builder,
 						 args[chan + 5],
