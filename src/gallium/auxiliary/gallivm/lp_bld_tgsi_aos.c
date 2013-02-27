@@ -536,7 +536,7 @@ lp_emit_instruction_aos(
    case TGSI_OPCODE_MIN:
       src0 = lp_build_emit_fetch(&bld->bld_base, inst, 0, LP_CHAN_ALL);
       src1 = lp_build_emit_fetch(&bld->bld_base, inst, 1, LP_CHAN_ALL);
-      dst0 = lp_build_max(&bld->bld_base.base, src0, src1);
+      dst0 = lp_build_min(&bld->bld_base.base, src0, src1);
       break;
 
    case TGSI_OPCODE_MAX:
