@@ -44,12 +44,12 @@ typedef void (*wrap_linear_func)(float s,
                                  int *icoord1,
                                  float *w);
 
-typedef float (*compute_lambda_func)(const struct sp_sampler_variant *sampler,
+typedef float (*compute_lambda_func)(const struct sp_sampler_variant *samp,
                                      const float s[TGSI_QUAD_SIZE],
                                      const float t[TGSI_QUAD_SIZE],
                                      const float p[TGSI_QUAD_SIZE]);
 
-typedef void (*img_filter_func)(struct tgsi_sampler *tgsi_sampler,
+typedef void (*img_filter_func)(struct sp_sampler_variant *samp,
                                 float s,
                                 float t,
                                 float p,
@@ -57,7 +57,7 @@ typedef void (*img_filter_func)(struct tgsi_sampler *tgsi_sampler,
                                 unsigned face_id,
                                 float *rgba);
 
-typedef void (*filter_func)(struct tgsi_sampler *tgsi_sampler,
+typedef void (*filter_func)(struct sp_sampler_variant *sp_samp,
                             const float s[TGSI_QUAD_SIZE],
                             const float t[TGSI_QUAD_SIZE],
                             const float p[TGSI_QUAD_SIZE],
@@ -65,6 +65,16 @@ typedef void (*filter_func)(struct tgsi_sampler *tgsi_sampler,
                             const float lod[TGSI_QUAD_SIZE],
                             enum tgsi_sampler_control control,
                             float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
+
+
+typedef void (*get_dim_func)(struct sp_sampler_variant *sp_samp,
+                             int level, int dims[4]);
+
+typedef void (*fetch_func)(struct sp_sampler_variant *sp_samp,
+                           const int i[TGSI_QUAD_SIZE],
+                           const int j[TGSI_QUAD_SIZE], const int k[TGSI_QUAD_SIZE],
+                           const int lod[TGSI_QUAD_SIZE], const int8_t offset[3],
+                           float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
 
 
 union sp_sampler_key {
@@ -82,13 +92,9 @@ union sp_sampler_key {
    unsigned value;
 };
 
-/**
- * Subclass of tgsi_sampler
- */
+
 struct sp_sampler_variant
 {
-   struct tgsi_sampler base;  /**< base class */
-
    union sp_sampler_key key;
 
    /* The owner of this struct:
@@ -100,8 +106,6 @@ struct sp_sampler_variant
     */
    const struct pipe_sampler_view *view;
    struct softpipe_tex_tile_cache *cache;
-
-   unsigned processor;
 
    /* For sp_get_samples_2d_linear_POT:
     */
@@ -126,11 +130,28 @@ struct sp_sampler_variant
    filter_func mip_filter;
    filter_func compare;
    filter_func sample_target;
-   
+
+   filter_func get_samples;
+   fetch_func get_texel;
+   get_dim_func get_dims;
+
+
    /* Linked list:
     */
    struct sp_sampler_variant *next;
 };
+
+
+/**
+ * Subclass of tgsi_sampler
+ */
+struct sp_tgsi_sampler
+{
+   struct tgsi_sampler base;  /**< base class */
+   struct sp_sampler_variant *sp_sampler[PIPE_MAX_SAMPLERS];
+
+};
+
 
 struct sp_sampler;
 
@@ -161,6 +182,10 @@ sp_get_samples(struct tgsi_sampler *tgsi_sampler,
                const float p[TGSI_QUAD_SIZE],
                float lodbias,
                float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
+
+
+struct sp_tgsi_sampler *
+sp_create_tgsi_sampler(void);
 
 
 #endif /* SP_TEX_SAMPLE_H */

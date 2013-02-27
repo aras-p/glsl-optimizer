@@ -81,7 +81,7 @@ struct sp_fragment_shader_variant
 
    void (*prepare)(const struct sp_fragment_shader_variant *shader,
 		   struct tgsi_exec_machine *machine,
-		   struct tgsi_sampler **samplers);
+		   struct tgsi_sampler *sampler);
 
    unsigned (*run)(const struct sp_fragment_shader_variant *shader,
 		   struct tgsi_exec_machine *machine,

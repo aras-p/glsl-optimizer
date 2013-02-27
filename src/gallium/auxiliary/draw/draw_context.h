@@ -132,10 +132,9 @@ draw_num_shader_outputs(const struct draw_context *draw);
 
 
 void
-draw_texture_samplers(struct draw_context *draw,
-                      uint shader_type,
-                      uint num_samplers,
-                      struct tgsi_sampler **samplers);
+draw_texture_sampler(struct draw_context *draw,
+                     uint shader_type,
+                     struct tgsi_sampler *sampler);
 
 void
 draw_set_sampler_views(struct draw_context *draw,

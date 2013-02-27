@@ -115,6 +115,8 @@ struct tgsi_sampler
     * lod - lod value, except for shadow cube arrays (compare value there).
     */
    void (*get_samples)(struct tgsi_sampler *sampler,
+                       const unsigned sview_index,
+                       const unsigned sampler_index,
                        const float s[TGSI_QUAD_SIZE],
                        const float t[TGSI_QUAD_SIZE],
                        const float r[TGSI_QUAD_SIZE],
@@ -122,12 +124,15 @@ struct tgsi_sampler
                        const float c1[TGSI_QUAD_SIZE],
                        enum tgsi_sampler_control control,
                        float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
-   void (*get_dims)(struct tgsi_sampler *sampler, int level,
-		    int dims[4]);
-   void (*get_texel)(struct tgsi_sampler *sampler, const int i[TGSI_QUAD_SIZE],
-		     const int j[TGSI_QUAD_SIZE], const int k[TGSI_QUAD_SIZE],
-		     const int lod[TGSI_QUAD_SIZE], const int8_t offset[3],
-		     float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
+   void (*get_dims)(struct tgsi_sampler *sampler,
+                    const unsigned sview_index,
+                    int level, int dims[4]);
+   void (*get_texel)(struct tgsi_sampler *sampler,
+                     const unsigned sview_index,
+                     const int i[TGSI_QUAD_SIZE],
+                     const int j[TGSI_QUAD_SIZE], const int k[TGSI_QUAD_SIZE],
+                     const int lod[TGSI_QUAD_SIZE], const int8_t offset[3],
+                     float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
 };
 
 #define TGSI_EXEC_NUM_TEMPS       4096
@@ -276,7 +281,7 @@ struct tgsi_exec_machine
    struct tgsi_exec_vector       *Addrs;
    struct tgsi_exec_vector       *Predicates;
 
-   struct tgsi_sampler           **Samplers;
+   struct tgsi_sampler           *Sampler;
 
    unsigned                      ImmLimit;
 
@@ -363,8 +368,7 @@ void
 tgsi_exec_machine_bind_shader(
    struct tgsi_exec_machine *mach,
    const struct tgsi_token *tokens,
-   uint numSamplers,
-   struct tgsi_sampler **samplers);
+   struct tgsi_sampler *sampler);
 
 uint
 tgsi_exec_machine_run(

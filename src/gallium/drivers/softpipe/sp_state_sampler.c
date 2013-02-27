@@ -314,13 +314,13 @@ reset_sampler_variants(struct softpipe_context *softpipe,
 
    for (i = 0; i <= max_sampler; i++) {
       if (softpipe->samplers[shader][i]) {
-         softpipe->tgsi.samplers_list[shader][i] = 
+         softpipe->tgsi.sampler[shader]->sp_sampler[i] =
             get_sampler_variant(i,
                                 sp_sampler(softpipe->samplers[shader][i]),
                                 softpipe->sampler_views[shader][i],
                                 tgsi_shader);
 
-         sp_sampler_variant_bind_view(softpipe->tgsi.samplers_list[shader][i],
+         sp_sampler_variant_bind_view(softpipe->tgsi.sampler[shader]->sp_sampler[i],
                                       softpipe->tex_cache[shader][i],
                                       softpipe->sampler_views[shader][i]);
       }

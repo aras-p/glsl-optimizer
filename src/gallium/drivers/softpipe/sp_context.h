@@ -159,7 +159,7 @@ struct softpipe_context {
 
    /** TGSI exec things */
    struct {
-      struct sp_sampler_variant *samplers_list[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+      struct sp_tgsi_sampler *sampler[PIPE_SHADER_TYPES];
    } tgsi;
 
    struct tgsi_exec_machine *fs_machine;

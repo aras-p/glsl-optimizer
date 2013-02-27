@@ -581,18 +581,15 @@ draw_num_shader_outputs(const struct draw_context *draw)
  * This might only be used by software drivers for the time being.
  */
 void
-draw_texture_samplers(struct draw_context *draw,
-                      uint shader,
-                      uint num_samplers,
-                      struct tgsi_sampler **samplers)
+draw_texture_sampler(struct draw_context *draw,
+                     uint shader,
+                     struct tgsi_sampler *sampler)
 {
    if (shader == PIPE_SHADER_VERTEX) {
-      draw->vs.tgsi.num_samplers = num_samplers;
-      draw->vs.tgsi.samplers = samplers;
+      draw->vs.tgsi.sampler = sampler;
    } else {
       debug_assert(shader == PIPE_SHADER_GEOMETRY);
-      draw->gs.tgsi.num_samplers = num_samplers;
-      draw->gs.tgsi.samplers = samplers;
+      draw->gs.tgsi.sampler = sampler;
    }
 }
 

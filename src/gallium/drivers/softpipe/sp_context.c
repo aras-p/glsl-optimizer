@@ -51,6 +51,7 @@
 #include "sp_texture.h"
 #include "sp_query.h"
 #include "sp_screen.h"
+#include "sp_tex_sample.h"
 
 
 static void
@@ -114,6 +115,10 @@ softpipe_destroy( struct pipe_context *pipe )
    }
 
    tgsi_exec_machine_destroy(softpipe->fs_machine);
+
+   for (i = 0; i < PIPE_SHADER_TYPES; i++) {
+      FREE(softpipe->tgsi.sampler[i]);
+   }
 
    FREE( softpipe );
 }
@@ -190,6 +195,10 @@ softpipe_create_context( struct pipe_screen *screen,
 
    util_init_math();
 
+   for (i = 0; i < PIPE_SHADER_TYPES; i++) {
+      softpipe->tgsi.sampler[i] = sp_create_tgsi_sampler();
+   }
+
    softpipe->dump_fs = debug_get_bool_option( "SOFTPIPE_DUMP_FS", FALSE );
    softpipe->dump_gs = debug_get_bool_option( "SOFTPIPE_DUMP_GS", FALSE );
 
@@ -256,17 +265,15 @@ softpipe_create_context( struct pipe_screen *screen,
    if (!softpipe->draw) 
       goto fail;
 
-   draw_texture_samplers(softpipe->draw,
-                         PIPE_SHADER_VERTEX,
-                         PIPE_MAX_SAMPLERS,
-                         (struct tgsi_sampler **)
-                            softpipe->tgsi.samplers_list[PIPE_SHADER_VERTEX]);
+   draw_texture_sampler(softpipe->draw,
+                        PIPE_SHADER_VERTEX,
+                        (struct tgsi_sampler *)
+                           softpipe->tgsi.sampler[PIPE_SHADER_VERTEX]);
 
-   draw_texture_samplers(softpipe->draw,
-                         PIPE_SHADER_GEOMETRY,
-                         PIPE_MAX_SAMPLERS,
-                         (struct tgsi_sampler **)
-                            softpipe->tgsi.samplers_list[PIPE_SHADER_GEOMETRY]);
+   draw_texture_sampler(softpipe->draw,
+                        PIPE_SHADER_GEOMETRY,
+                        (struct tgsi_sampler *)
+                           softpipe->tgsi.sampler[PIPE_SHADER_GEOMETRY]);
 
    if (debug_get_bool_option( "SOFTPIPE_NO_RAST", FALSE ))
       softpipe->no_rast = TRUE;

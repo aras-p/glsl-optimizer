@@ -898,7 +898,7 @@ print_sample_4(const char *function, float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZ
 /* Some image-filter fastpaths:
  */
 static INLINE void
-img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
+img_filter_2d_linear_repeat_POT(struct sp_sampler_variant *samp,
                                 float s,
                                 float t,
                                 float p,
@@ -906,7 +906,6 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
                                 unsigned face_id,
                                 float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    unsigned xpot = pot_level_size(samp->xpot, level);
    unsigned ypot = pot_level_size(samp->ypot, level);
    unsigned xmax = (xpot - 1) & (TILE_SIZE - 1); /* MIN2(TILE_SIZE, xpot) - 1; */
@@ -956,7 +955,7 @@ img_filter_2d_linear_repeat_POT(struct tgsi_sampler *tgsi_sampler,
 
 
 static INLINE void
-img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
+img_filter_2d_nearest_repeat_POT(struct sp_sampler_variant *samp,
                                  float s,
                                  float t,
                                  float p,
@@ -964,7 +963,6 @@ img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
                                  unsigned face_id,
                                  float rgba[TGSI_QUAD_SIZE])
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    unsigned xpot = pot_level_size(samp->xpot, level);
    unsigned ypot = pot_level_size(samp->ypot, level);
    const float *out;
@@ -994,7 +992,7 @@ img_filter_2d_nearest_repeat_POT(struct tgsi_sampler *tgsi_sampler,
 
 
 static INLINE void
-img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
+img_filter_2d_nearest_clamp_POT(struct sp_sampler_variant *samp,
                                 float s,
                                 float t,
                                 float p,
@@ -1002,7 +1000,6 @@ img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
                                 unsigned face_id,
                                 float rgba[TGSI_QUAD_SIZE])
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    unsigned xpot = pot_level_size(samp->xpot, level);
    unsigned ypot = pot_level_size(samp->ypot, level);
    union tex_tile_address addr;
@@ -1040,7 +1037,7 @@ img_filter_2d_nearest_clamp_POT(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
+img_filter_1d_nearest(struct sp_sampler_variant *samp,
                       float s,
                       float t,
                       float p,
@@ -1048,7 +1045,6 @@ img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
                       unsigned face_id,
                       float rgba[TGSI_QUAD_SIZE])
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width;
    int x;
@@ -1076,7 +1072,7 @@ img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-img_filter_1d_array_nearest(struct tgsi_sampler *tgsi_sampler,
+img_filter_1d_array_nearest(struct sp_sampler_variant *samp,
                             float s,
                             float t,
                             float p,
@@ -1084,7 +1080,6 @@ img_filter_1d_array_nearest(struct tgsi_sampler *tgsi_sampler,
                             unsigned face_id,
                             float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width;
    int x, layer;
@@ -1113,7 +1108,7 @@ img_filter_1d_array_nearest(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
+img_filter_2d_nearest(struct sp_sampler_variant *samp,
                       float s,
                       float t,
                       float p,
@@ -1121,7 +1116,6 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
                       unsigned face_id,
                       float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width, height;
    int x, y;
@@ -1152,7 +1146,7 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-img_filter_2d_array_nearest(struct tgsi_sampler *tgsi_sampler,
+img_filter_2d_array_nearest(struct sp_sampler_variant *samp,
                             float s,
                             float t,
                             float p,
@@ -1160,7 +1154,6 @@ img_filter_2d_array_nearest(struct tgsi_sampler *tgsi_sampler,
                             unsigned face_id,
                             float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width, height;
    int x, y, layer;
@@ -1200,7 +1193,7 @@ face(union tex_tile_address addr, unsigned face )
 
 
 static void
-img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
+img_filter_cube_nearest(struct sp_sampler_variant *samp,
                         float s,
                         float t,
                         float p,
@@ -1208,7 +1201,6 @@ img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
                         unsigned face_id,
                         float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width, height;
    int x, y;
@@ -1247,7 +1239,7 @@ img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
 }
 
 static void
-img_filter_cube_array_nearest(struct tgsi_sampler *tgsi_sampler,
+img_filter_cube_array_nearest(struct sp_sampler_variant *samp,
                         float s,
                         float t,
                         float p,
@@ -1255,7 +1247,6 @@ img_filter_cube_array_nearest(struct tgsi_sampler *tgsi_sampler,
                         unsigned face_id,
                         float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width, height;
    int x, y, layer;
@@ -1286,7 +1277,7 @@ img_filter_cube_array_nearest(struct tgsi_sampler *tgsi_sampler,
 }
 
 static void
-img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
+img_filter_3d_nearest(struct sp_sampler_variant *samp,
                       float s,
                       float t,
                       float p,
@@ -1294,7 +1285,6 @@ img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
                       unsigned face_id,
                       float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width, height, depth;
    int x, y, z;
@@ -1324,7 +1314,7 @@ img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
+img_filter_1d_linear(struct sp_sampler_variant *samp,
                      float s,
                      float t,
                      float p,
@@ -1332,7 +1322,6 @@ img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
                      unsigned face_id,
                      float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width;
    int x0, x1;
@@ -1360,7 +1349,7 @@ img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-img_filter_1d_array_linear(struct tgsi_sampler *tgsi_sampler,
+img_filter_1d_array_linear(struct sp_sampler_variant *samp,
                            float s,
                            float t,
                            float p,
@@ -1368,7 +1357,6 @@ img_filter_1d_array_linear(struct tgsi_sampler *tgsi_sampler,
                            unsigned face_id,
                            float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width;
    int x0, x1, layer;
@@ -1397,7 +1385,7 @@ img_filter_1d_array_linear(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
+img_filter_2d_linear(struct sp_sampler_variant *samp,
                      float s,
                      float t,
                      float p,
@@ -1405,7 +1393,6 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
                      unsigned face_id,
                      float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width, height;
    int x0, y0, x1, y1;
@@ -1440,7 +1427,7 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-img_filter_2d_array_linear(struct tgsi_sampler *tgsi_sampler,
+img_filter_2d_array_linear(struct sp_sampler_variant *samp,
                            float s,
                            float t,
                            float p,
@@ -1448,7 +1435,6 @@ img_filter_2d_array_linear(struct tgsi_sampler *tgsi_sampler,
                            unsigned face_id,
                            float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width, height;
    int x0, y0, x1, y1, layer;
@@ -1484,7 +1470,7 @@ img_filter_2d_array_linear(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
+img_filter_cube_linear(struct sp_sampler_variant *samp,
                        float s,
                        float t,
                        float p,
@@ -1492,7 +1478,6 @@ img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
                        unsigned face_id,
                        float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width, height;
    int x0, y0, x1, y1;
@@ -1545,7 +1530,7 @@ img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-img_filter_cube_array_linear(struct tgsi_sampler *tgsi_sampler,
+img_filter_cube_array_linear(struct sp_sampler_variant *samp,
                              float s,
                              float t,
                              float p,
@@ -1553,7 +1538,6 @@ img_filter_cube_array_linear(struct tgsi_sampler *tgsi_sampler,
                              unsigned face_id,
                              float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width, height;
    int x0, y0, x1, y1, layer;
@@ -1588,7 +1572,7 @@ img_filter_cube_array_linear(struct tgsi_sampler *tgsi_sampler,
 }
 
 static void
-img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
+img_filter_3d_linear(struct sp_sampler_variant *samp,
                      float s,
                      float t,
                      float p,
@@ -1596,7 +1580,6 @@ img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
                      unsigned face_id,
                      float *rgba)
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int width, height, depth;
    int x0, x1, y0, y1, z0, z1;
@@ -1731,7 +1714,7 @@ compute_lambda_lod(struct sp_sampler_variant *samp,
 
 
 static void
-mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
+mip_filter_linear(struct sp_sampler_variant *samp,
                   const float s[TGSI_QUAD_SIZE],
                   const float t[TGSI_QUAD_SIZE],
                   const float p[TGSI_QUAD_SIZE],
@@ -1740,7 +1723,6 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
                   enum tgsi_sampler_control control,
                   float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int j;
    float lod[TGSI_QUAD_SIZE];
@@ -1751,11 +1733,11 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
       int level0 = samp->view->u.tex.first_level + (int)lod[j];
 
       if (lod[j] < 0.0)
-         samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level,
+         samp->mag_img_filter(samp, s[j], t[j], p[j], samp->view->u.tex.first_level,
                               samp->faces[j], &rgba[0][j]);
 
       else if (level0 >= texture->last_level)
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], texture->last_level,
+         samp->min_img_filter(samp, s[j], t[j], p[j], texture->last_level,
                               samp->faces[j], &rgba[0][j]);
 
       else {
@@ -1763,9 +1745,9 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
          float rgbax[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
          int c;
 
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], level0,
+         samp->min_img_filter(samp, s[j], t[j], p[j], level0,
                               samp->faces[j], &rgbax[0][0]);
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], level0+1,
+         samp->min_img_filter(samp, s[j], t[j], p[j], level0+1,
                               samp->faces[j], &rgbax[0][1]);
 
          for (c = 0; c < 4; c++) {
@@ -1786,7 +1768,7 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
  * \param c0  the LOD bias factors, or absolute LODs (depending on control)
  */
 static void
-mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
+mip_filter_nearest(struct sp_sampler_variant *samp,
                    const float s[TGSI_QUAD_SIZE],
                    const float t[TGSI_QUAD_SIZE],
                    const float p[TGSI_QUAD_SIZE],
@@ -1795,7 +1777,6 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
                    enum tgsi_sampler_control control,
                    float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    float lod[TGSI_QUAD_SIZE];
    int j;
@@ -1804,12 +1785,12 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       if (lod[j] < 0.0)
-         samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level,
+         samp->mag_img_filter(samp, s[j], t[j], p[j], samp->view->u.tex.first_level,
                               samp->faces[j], &rgba[0][j]);
       else {
          float level = samp->view->u.tex.first_level + (int)(lod[j] + 0.5F) ;
          level = MIN2(level, (int)texture->last_level);
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], level, samp->faces[j],
+         samp->min_img_filter(samp, s[j], t[j], p[j], level, samp->faces[j],
                               &rgba[0][j]);
       }
    }
@@ -1821,7 +1802,7 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-mip_filter_none(struct tgsi_sampler *tgsi_sampler,
+mip_filter_none(struct sp_sampler_variant *samp,
                 const float s[TGSI_QUAD_SIZE],
                 const float t[TGSI_QUAD_SIZE],
                 const float p[TGSI_QUAD_SIZE],
@@ -1830,7 +1811,6 @@ mip_filter_none(struct tgsi_sampler *tgsi_sampler,
                 enum tgsi_sampler_control control,
                 float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    float lod[TGSI_QUAD_SIZE];
    int j;
 
@@ -1838,11 +1818,11 @@ mip_filter_none(struct tgsi_sampler *tgsi_sampler,
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++) {
       if (lod[j] < 0.0) { 
-         samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level,
+         samp->mag_img_filter(samp, s[j], t[j], p[j], samp->view->u.tex.first_level,
                               samp->faces[j], &rgba[0][j]);
       }
       else {
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level,
+         samp->min_img_filter(samp, s[j], t[j], p[j], samp->view->u.tex.first_level,
                               samp->faces[j], &rgba[0][j]);
       }
    }
@@ -1850,7 +1830,7 @@ mip_filter_none(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-mip_filter_none_no_filter_select(struct tgsi_sampler *tgsi_sampler,
+mip_filter_none_no_filter_select(struct sp_sampler_variant *samp,
                                      const float s[TGSI_QUAD_SIZE],
                                      const float t[TGSI_QUAD_SIZE],
                                      const float p[TGSI_QUAD_SIZE],
@@ -1859,11 +1839,10 @@ mip_filter_none_no_filter_select(struct tgsi_sampler *tgsi_sampler,
                                      enum tgsi_sampler_control control,
                                      float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    int j;
 
    for (j = 0; j < TGSI_QUAD_SIZE; j++)
-      samp->mag_img_filter(tgsi_sampler, s[j], t[j], p[j], samp->view->u.tex.first_level,
+      samp->mag_img_filter(samp, s[j], t[j], p[j], samp->view->u.tex.first_level,
                            samp->faces[j], &rgba[0][j]);
 }
 
@@ -1901,7 +1880,7 @@ create_filter_table(void)
  * "Fundamentals of Texture Mapping and Image Warping" (1989)
  */
 static void
-img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
+img_filter_2d_ewa(struct sp_sampler_variant *samp,
                   const float s[TGSI_QUAD_SIZE],
                   const float t[TGSI_QUAD_SIZE],
                   const float p[TGSI_QUAD_SIZE],
@@ -1910,7 +1889,6 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
                   const float dudy, const float dvdy,
                   float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
 
    // ??? Won't the image filters blow up if level is negative?
@@ -2016,7 +1994,7 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
                    * accelerated img_filter_2d_nearest_XXX functions.
                    */
                   for (jj = 0; jj < buffer_next; jj++) {
-                     samp->min_img_filter(tgsi_sampler, s_buffer[jj], t_buffer[jj], p[jj],
+                     samp->min_img_filter(samp, s_buffer[jj], t_buffer[jj], p[jj],
                                           level, samp->faces[j], &rgba_temp[0][jj]);
                      num[0] += weight_buffer[jj] * rgba_temp[0][jj];
                      num[1] += weight_buffer[jj] * rgba_temp[1][jj];
@@ -2044,7 +2022,7 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
           * accelerated img_filter_2d_nearest_XXX functions.
           */
          for (jj = 0; jj < buffer_next; jj++) {
-            samp->min_img_filter(tgsi_sampler, s_buffer[jj], t_buffer[jj], p[jj], level,
+            samp->min_img_filter(samp, s_buffer[jj], t_buffer[jj], p[jj], level,
                                  samp->faces[j], &rgba_temp[0][jj]);
             num[0] += weight_buffer[jj] * rgba_temp[0][jj];
             num[1] += weight_buffer[jj] * rgba_temp[1][jj];
@@ -2064,7 +2042,7 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
          rgba[2]=0;
          rgba[3]=0;*/
          /* not enough pixels in resampling, resort to direct interpolation */
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], level, samp->faces[j],
+         samp->min_img_filter(samp, s[j], t[j], p[j], level, samp->faces[j],
                               &rgba_temp[0][j]);
          den = 1;
          num[0] = rgba_temp[0][j];
@@ -2085,7 +2063,7 @@ img_filter_2d_ewa(struct tgsi_sampler *tgsi_sampler,
  * Sample 2D texture using an anisotropic filter.
  */
 static void
-mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
+mip_filter_linear_aniso(struct sp_sampler_variant *samp,
                         const float s[TGSI_QUAD_SIZE],
                         const float t[TGSI_QUAD_SIZE],
                         const float p[TGSI_QUAD_SIZE],
@@ -2094,7 +2072,6 @@ mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
                         enum tgsi_sampler_control control,
                         float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int level0;
    float lambda;
@@ -2164,14 +2141,14 @@ mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
    if (level0 >= (int) texture->last_level) {
       int j;
       for (j = 0; j < TGSI_QUAD_SIZE; j++)
-         samp->min_img_filter(tgsi_sampler, s[j], t[j], p[j], texture->last_level,
+         samp->min_img_filter(samp, s[j], t[j], p[j], texture->last_level,
                               samp->faces[j], &rgba[0][j]);
    }
    else {
       /* don't bother interpolating between multiple LODs; it doesn't
        * seem to be worth the extra running time.
        */
-      img_filter_2d_ewa(tgsi_sampler, s, t, p, level0,
+      img_filter_2d_ewa(samp, s, t, p, level0,
                         dudx, dvdx, dudy, dvdy, rgba);
    }
 
@@ -2187,7 +2164,7 @@ mip_filter_linear_aniso(struct tgsi_sampler *tgsi_sampler,
  */
 static void
 mip_filter_linear_2d_linear_repeat_POT(
-   struct tgsi_sampler *tgsi_sampler,
+   struct sp_sampler_variant *samp,
    const float s[TGSI_QUAD_SIZE],
    const float t[TGSI_QUAD_SIZE],
    const float p[TGSI_QUAD_SIZE],
@@ -2196,7 +2173,6 @@ mip_filter_linear_2d_linear_repeat_POT(
    enum tgsi_sampler_control control,
    float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_resource *texture = samp->view->texture;
    int j;
    float lod[TGSI_QUAD_SIZE];
@@ -2210,11 +2186,11 @@ mip_filter_linear_2d_linear_repeat_POT(
        */
       if ((unsigned)level0 >= texture->last_level) { 
          if (level0 < 0)
-            img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j],
+            img_filter_2d_linear_repeat_POT(samp, s[j], t[j], p[j],
                                             samp->view->u.tex.first_level,
                                             samp->faces[j], &rgba[0][j]);
          else
-            img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j],
+            img_filter_2d_linear_repeat_POT(samp, s[j], t[j], p[j],
                                             samp->view->texture->last_level,
                                             samp->faces[j], &rgba[0][j]);
 
@@ -2224,9 +2200,9 @@ mip_filter_linear_2d_linear_repeat_POT(
          float rgbax[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
          int c;
 
-         img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], level0,
+         img_filter_2d_linear_repeat_POT(samp, s[j], t[j], p[j], level0,
                                          samp->faces[j], &rgbax[0][0]);
-         img_filter_2d_linear_repeat_POT(tgsi_sampler, s[j], t[j], p[j], level0+1,
+         img_filter_2d_linear_repeat_POT(samp, s[j], t[j], p[j], level0+1,
                                          samp->faces[j], &rgbax[0][1]);
 
          for (c = 0; c < TGSI_NUM_CHANNELS; c++)
@@ -2244,7 +2220,7 @@ mip_filter_linear_2d_linear_repeat_POT(
  * Do shadow/depth comparisons.
  */
 static void
-sample_compare(struct tgsi_sampler *tgsi_sampler,
+sample_compare(struct sp_sampler_variant *samp,
                const float s[TGSI_QUAD_SIZE],
                const float t[TGSI_QUAD_SIZE],
                const float p[TGSI_QUAD_SIZE],
@@ -2253,13 +2229,12 @@ sample_compare(struct tgsi_sampler *tgsi_sampler,
                enum tgsi_sampler_control control,
                float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    const struct pipe_sampler_state *sampler = samp->sampler;
    int j, k0, k1, k2, k3;
    float val;
    float pc0, pc1, pc2, pc3;
 
-   samp->mip_filter(tgsi_sampler, s, t, p, c0, c1, control, rgba);
+   samp->mip_filter(samp, s, t, p, c0, c1, control, rgba);
 
    /**
     * Compare texcoord 'p' (aka R) against texture value 'rgba[0]'
@@ -2360,7 +2335,7 @@ sample_compare(struct tgsi_sampler *tgsi_sampler,
  * Put face info into the sampler faces[] array.
  */
 static void
-sample_cube(struct tgsi_sampler *tgsi_sampler,
+sample_cube(struct sp_sampler_variant *samp,
             const float s[TGSI_QUAD_SIZE],
             const float t[TGSI_QUAD_SIZE],
             const float p[TGSI_QUAD_SIZE],
@@ -2369,7 +2344,6 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
             enum tgsi_sampler_control control,
             float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    unsigned j;
    float ssss[4], tttt[4];
 
@@ -2449,7 +2423,7 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
     * is not active, this will point somewhere deeper into the
     * pipeline, eg. to mip_filter or even img_filter.
     */
-   samp->compare(tgsi_sampler, ssss, tttt, pppp, c0, c1, control, rgba);
+   samp->compare(samp, ssss, tttt, pppp, c0, c1, control, rgba);
 }
 
 
@@ -2527,7 +2501,7 @@ do_swizzling(const struct sp_sampler_variant *samp,
 
 
 static void
-sample_swizzle(struct tgsi_sampler *tgsi_sampler,
+sample_swizzle(struct sp_sampler_variant *samp,
                const float s[TGSI_QUAD_SIZE],
                const float t[TGSI_QUAD_SIZE],
                const float p[TGSI_QUAD_SIZE],
@@ -2536,10 +2510,9 @@ sample_swizzle(struct tgsi_sampler *tgsi_sampler,
                enum tgsi_sampler_control control,
                float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    float rgba_temp[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
 
-   samp->sample_target(tgsi_sampler, s, t, p, c0, c1, control, rgba_temp);
+   samp->sample_target(samp, s, t, p, c0, c1, control, rgba_temp);
 
    do_swizzling(samp, rgba_temp, rgba);
 }
@@ -2782,10 +2755,9 @@ sp_sampler_variant_destroy( struct sp_sampler_variant *samp )
 
 
 static void
-sample_get_dims(struct tgsi_sampler *tgsi_sampler, int level,
-		int dims[4])
+sample_get_dims(struct sp_sampler_variant *samp, int level,
+                int dims[4])
 {
-    struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
     const struct pipe_sampler_view *view = samp->view;
     const struct pipe_resource *texture = view->texture;
 
@@ -2834,7 +2806,7 @@ sample_get_dims(struct tgsi_sampler *tgsi_sampler, int level,
  * coords to the texture image size.
  */
 static void
-sample_get_texels(struct tgsi_sampler *tgsi_sampler,
+sample_get_texels(struct sp_sampler_variant *samp,
                   const int v_i[TGSI_QUAD_SIZE],
                   const int v_j[TGSI_QUAD_SIZE],
                   const int v_k[TGSI_QUAD_SIZE],
@@ -2842,7 +2814,6 @@ sample_get_texels(struct tgsi_sampler *tgsi_sampler,
                   const int8_t offset[3],
                   float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
-   const struct sp_sampler_variant *samp = sp_sampler_variant(tgsi_sampler);
    union tex_tile_address addr;
    const struct pipe_resource *texture = samp->view->texture;
    int j, c;
@@ -3045,13 +3016,80 @@ sp_create_sampler_variant( const struct pipe_sampler_state *sampler,
    }
 
    if (any_swizzle(key)) {
-      samp->base.get_samples = sample_swizzle;
+      samp->get_samples = sample_swizzle;
    }
    else {
-      samp->base.get_samples = samp->sample_target;
+      samp->get_samples = samp->sample_target;
    }
 
-   samp->base.get_dims = sample_get_dims;
-   samp->base.get_texel = sample_get_texels;
+   samp->get_dims = sample_get_dims;
+   samp->get_texel = sample_get_texels;
    return samp;
 }
+
+
+
+static void
+sp_tgsi_get_dims(struct tgsi_sampler *tgsi_sampler,
+                 const unsigned sview_index,
+                 int level, int dims[4])
+{
+   const struct sp_tgsi_sampler *sp_samp = (struct sp_tgsi_sampler *)tgsi_sampler;
+
+   assert(sp_samp->sp_sampler[sview_index]);
+   sp_samp->sp_sampler[sview_index]->get_dims(sp_samp->sp_sampler[sview_index],
+                                              level, dims);
+}
+
+
+static void
+sp_tgsi_get_samples(struct tgsi_sampler *tgsi_sampler,
+                    const unsigned sview_index,
+                    const unsigned sampler_index,
+                    const float s[TGSI_QUAD_SIZE],
+                    const float t[TGSI_QUAD_SIZE],
+                    const float p[TGSI_QUAD_SIZE],
+                    const float c0[TGSI_QUAD_SIZE],
+                    const float lod[TGSI_QUAD_SIZE],
+                    enum tgsi_sampler_control control,
+                    float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
+{
+   const struct sp_tgsi_sampler *sp_samp = (struct sp_tgsi_sampler *)tgsi_sampler;
+   assert(sview_index < PIPE_MAX_SAMPLERS);
+   assert(sview_index == sampler_index);
+   assert(sp_samp->sp_sampler[sampler_index]);
+   sp_samp->sp_sampler[sview_index]->get_samples(sp_samp->sp_sampler[sampler_index],
+                                                 s, t, p, c0, lod, control, rgba);
+}
+
+
+static void
+sp_tgsi_get_texel(struct tgsi_sampler *tgsi_sampler,
+                  const unsigned sview_index,
+                  const int i[TGSI_QUAD_SIZE],
+                  const int j[TGSI_QUAD_SIZE], const int k[TGSI_QUAD_SIZE],
+                  const int lod[TGSI_QUAD_SIZE], const int8_t offset[3],
+                  float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
+{
+   const struct sp_tgsi_sampler *sp_samp = (struct sp_tgsi_sampler *)tgsi_sampler;
+   assert(sview_index < PIPE_MAX_SAMPLERS);
+   assert(sp_samp->sp_sampler[sview_index]);
+   sp_samp->sp_sampler[sview_index]->get_texel(sp_samp->sp_sampler[sview_index],
+                                               i, j, k, lod, offset, rgba);
+}
+
+
+struct sp_tgsi_sampler *
+sp_create_tgsi_sampler(void)
+{
+   struct sp_tgsi_sampler *samp = CALLOC_STRUCT(sp_tgsi_sampler);
+   if (!samp)
+      return NULL;
+
+   samp->base.get_dims = sp_tgsi_get_dims;
+   samp->base.get_samples = sp_tgsi_get_samples;
+   samp->base.get_texel = sp_tgsi_get_texel;
+
+   return samp;
+}
+

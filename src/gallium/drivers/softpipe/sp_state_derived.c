@@ -246,8 +246,8 @@ update_fragment_shader(struct softpipe_context *softpipe, unsigned prim)
       /* prepare the TGSI interpreter for FS execution */
       softpipe->fs_variant->prepare(softpipe->fs_variant, 
                                     softpipe->fs_machine,
-                                    (struct tgsi_sampler **) softpipe->
-                                    tgsi.samplers_list[PIPE_SHADER_FRAGMENT]);
+                                    (struct tgsi_sampler *) softpipe->
+                                    tgsi.sampler[PIPE_SHADER_FRAGMENT]);
    }
    else {
       softpipe->fs_variant = NULL;

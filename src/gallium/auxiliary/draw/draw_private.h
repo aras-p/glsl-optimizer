@@ -248,8 +248,7 @@ struct draw_context
       struct {
          struct tgsi_exec_machine *machine;
 
-         struct tgsi_sampler **samplers;
-         uint num_samplers;
+         struct tgsi_sampler *sampler;
       } tgsi;
 
       struct translate *fetch;
@@ -268,8 +267,7 @@ struct draw_context
       struct {
          struct tgsi_exec_machine *machine;
 
-         struct tgsi_sampler **samplers;
-         uint num_samplers;
+         struct tgsi_sampler *sampler;
       } tgsi;
 
    } gs;
