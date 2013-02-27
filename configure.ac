@@ -687,9 +687,6 @@ if test "x$enable_opengl" = xno -a \
     AC_MSG_ERROR([Building OpenGL ES2 without OpenGL is not supported])
 fi
 
-API_DEFINES=""
-AC_SUBST([API_DEFINES])
-
 AM_CONDITIONAL(HAVE_OPENGL, test "x$enable_opengl" = xyes)
 AM_CONDITIONAL(HAVE_OPENGL_ES1, test "x$enable_gles1" = xyes)
 AM_CONDITIONAL(HAVE_OPENGL_ES2, test "x$enable_gles2" = xyes)

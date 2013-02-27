@@ -29,7 +29,6 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/src/mesa/main \
 	$(X11_INCLUDES) \
-	$(API_DEFINES) \
 	$(DEFINES)
 
 if HAVE_X11_DRIVER

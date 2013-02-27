@@ -21,7 +21,7 @@
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mesa/main \
-	$(API_DEFINES) $(DEFINES) $(INCLUDE_DIRS)
+	$(DEFINES) $(INCLUDE_DIRS)
 
 LDADD = \
 	$(top_builddir)/src/mesa/libmesa.la \

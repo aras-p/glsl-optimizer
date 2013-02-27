@@ -33,7 +33,6 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mesa/drivers/dri/r200/server \
 	-I$(top_builddir)/src/mesa/drivers/dri/common \
 	$(DEFINES) \
-	$(API_DEFINES) \
 	$(VISIBILITY_CFLAGS) \
 	$(RADEON_CFLAGS)
 

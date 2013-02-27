@@ -28,7 +28,6 @@ noinst_PROGRAMS =
 
 AM_CPPFLAGS = \
 	$(INCLUDE_DIRS) \
-	$(API_DEFINES) \
 	$(DEFINES) \
 	-DUSE_DRICORE
 

@@ -27,7 +27,6 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
 	$(DEFINES) \
-	$(API_DEFINES) \
 	$(LIBDRM_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
 

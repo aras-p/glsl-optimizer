@@ -27,8 +27,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/mesa/ \
 	-I$(top_srcdir)/src/glsl/glcpp \
 	-I$(top_srcdir)/src/gtest/include \
-	$(DEFINES) \
-	$(API_DEFINES)
+	$(DEFINES)
 AM_CFLAGS = $(VISIBILITY_CFLAGS)
 AM_CXXFLAGS = $(VISIBILITY_CXXFLAGS)
 
