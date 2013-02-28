@@ -197,18 +197,23 @@ CodeEmitter::prepareEmission(Program *prog)
 
       // adjust sizes & positions for schedulding info:
       if (prog->getTarget()->hasSWSched) {
+         uint32_t adjPos = func->binPos;
          BasicBlock *bb = NULL;
          for (int i = 0; i < func->bbCount; ++i) {
             bb = func->bbArray[i];
-            const uint32_t oldPos = bb->binPos;
-            const uint32_t oldEnd = bb->binPos + bb->binSize;
-            uint32_t adjPos = oldPos + sizeToBundlesNVE4(oldPos) * 8;
-            uint32_t adjEnd = oldEnd + sizeToBundlesNVE4(oldEnd) * 8;
+            int32_t adjSize = bb->binSize;
+            if (adjPos % 64) {
+               adjSize -= 64 - adjPos % 64;
+               if (adjSize < 0)
+                  adjSize = 0;
+            }
+            adjSize = bb->binSize + sizeToBundlesNVE4(adjSize) * 8;
             bb->binPos = adjPos;
-            bb->binSize = adjEnd - adjPos;
+            bb->binSize = adjSize;
+            adjPos += adjSize;
          }
          if (bb)
-            func->binSize = bb->binPos + bb->binSize;
+            func->binSize = adjPos - func->binPos;
       }
 
       prog->binSize += func->binSize;
