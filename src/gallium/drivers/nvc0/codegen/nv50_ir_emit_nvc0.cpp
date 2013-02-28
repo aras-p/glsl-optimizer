@@ -2559,7 +2559,7 @@ private:
 void
 SchedDataCalculator::setDelay(Instruction *insn, int delay, Instruction *next)
 {
-   if (insn->op == OP_EXIT)
+   if (insn->op == OP_EXIT || insn->op == OP_RET)
       delay = MAX2(delay, 14);
 
    if (insn->op == OP_TEXBAR) {
