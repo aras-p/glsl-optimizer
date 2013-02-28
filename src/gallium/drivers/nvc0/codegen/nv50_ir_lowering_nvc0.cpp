@@ -1489,8 +1489,13 @@ NVC0LoweringPass::visit(Instruction *i)
       return handleWRSV(i);
    case OP_LOAD:
       if (i->src(0).getFile() == FILE_SHADER_INPUT) {
-         i->op = OP_VFETCH;
-         assert(prog->getType() != Program::TYPE_FRAGMENT);
+         if (prog->getType() == Program::TYPE_COMPUTE) {
+            i->getSrc(0)->reg.file = FILE_MEMORY_CONST;
+            i->getSrc(0)->reg.fileIndex = 0;
+         } else {
+            i->op = OP_VFETCH;
+            assert(prog->getType() != Program::TYPE_FRAGMENT); // INTERP
+         }
       }
       break;
    case OP_ATOM:
