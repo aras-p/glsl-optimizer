@@ -130,6 +130,9 @@ struct gl_enable_attrib
    GLboolean VertexProgramPointSize;
    GLboolean VertexProgramTwoSide;
 
+   /* GL_ARB_fragment_program */
+   GLboolean FragmentProgram;
+
    /* GL_ARB_point_sprite / GL_NV_point_sprite */
    GLboolean PointSprite;
    GLboolean FragmentShaderATI;
@@ -316,6 +319,10 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->VertexProgram = ctx->VertexProgram.Enabled;
       attr->VertexProgramPointSize = ctx->VertexProgram.PointSizeEnabled;
       attr->VertexProgramTwoSide = ctx->VertexProgram.TwoSideEnabled;
+
+      /* GL_ARB_fragment_program */
+      attr->FragmentProgram = ctx->FragmentProgram.Enabled;
+
       save_attrib_data(&head, GL_ENABLE_BIT, attr);
 
       /* GL_ARB_framebuffer_sRGB / GL_EXT_framebuffer_sRGB */
@@ -606,6 +613,11 @@ pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
    TEST_AND_UPDATE(ctx->VertexProgram.TwoSideEnabled,
                    enable->VertexProgramTwoSide,
                    GL_VERTEX_PROGRAM_TWO_SIDE_ARB);
+
+   /* GL_ARB_fragment_program */
+   TEST_AND_UPDATE(ctx->FragmentProgram.Enabled,
+                   enable->FragmentProgram,
+                   GL_FRAGMENT_PROGRAM_ARB);
 
    /* GL_ARB_framebuffer_sRGB / GL_EXT_framebuffer_sRGB */
    TEST_AND_UPDATE(ctx->Color.sRGBEnabled, enable->sRGBEnabled,
