@@ -214,6 +214,13 @@ llvmpipe_create_sampler_view(struct pipe_context *pipe,
                             const struct pipe_sampler_view *templ)
 {
    struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+   /*
+    * XXX we REALLY want to see the correct bind flag here but the OpenGL
+    * state tracker can't guarantee that at least for texture buffer objects.
+    */
+#if 0
+   assert(texture->bind & PIPE_BIND_SAMPLER_VIEW);
+#endif
 
    if (view) {
       *view = *templ;

@@ -577,6 +577,7 @@ llvmpipe_create_surface(struct pipe_context *pipe,
    struct pipe_surface *ps;
 
    assert(surf_tmpl->u.tex.level <= pt->last_level);
+   assert(pt->bind & (PIPE_BIND_DEPTH_STENCIL | PIPE_BIND_RENDER_TARGET));
 
    ps = CALLOC_STRUCT(pipe_surface);
    if (ps) {
@@ -755,7 +756,15 @@ llvmpipe_is_resource_referenced( struct pipe_context *pipe,
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
 
-   if (presource->target == PIPE_BUFFER)
+   /*
+    * XXX checking only resources with the right bind flags
+    * is unsafe since with opengl state tracker we can end up
+    * with resources bound to places they weren't supposed to be
+    * (buffers bound as sampler views is one possibility here).
+    */
+   if (!(presource->bind & (PIPE_BIND_DEPTH_STENCIL |
+                            PIPE_BIND_RENDER_TARGET |
+                            PIPE_BIND_SAMPLER_VIEW)))
       return LP_UNREFERENCED;
 
    return lp_setup_is_resource_referenced(llvmpipe->setup, presource);

@@ -65,13 +65,6 @@ lp_resource_copy(struct pipe_context *pipe,
    unsigned depth = src_box->depth;
    unsigned z;
 
-   /* Fallback for buffers. */
-   if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
-      util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
-                                src, src_level, src_box);
-      return;
-   }
-
    llvmpipe_flush_resource(pipe,
                            dst, dst_level,
                            FALSE, /* read_only */
@@ -85,6 +78,13 @@ lp_resource_copy(struct pipe_context *pipe,
                            TRUE, /* cpu_access */
                            FALSE, /* do_not_block */
                            "blit src");
+
+   /* Fallback for buffers. */
+   if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+      util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
+                                src, src_level, src_box);
+      return;
+   }
 
    /*
    printf("surface copy from %u lvl %u to %u lvl %u: %u,%u,%u to %u,%u,%u %u x %u x %u\n",
