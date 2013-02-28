@@ -29,17 +29,6 @@
 #include "util/u_math.h"
 
 static const struct r600_reg evergreen_context_reg_list[] = {
-	{R_02861C_SPI_VS_OUT_ID_0, 0, 0},
-	{R_028620_SPI_VS_OUT_ID_1, 0, 0},
-	{R_028624_SPI_VS_OUT_ID_2, 0, 0},
-	{R_028628_SPI_VS_OUT_ID_3, 0, 0},
-	{R_02862C_SPI_VS_OUT_ID_4, 0, 0},
-	{R_028630_SPI_VS_OUT_ID_5, 0, 0},
-	{R_028634_SPI_VS_OUT_ID_6, 0, 0},
-	{R_028638_SPI_VS_OUT_ID_7, 0, 0},
-	{R_02863C_SPI_VS_OUT_ID_8, 0, 0},
-	{R_028640_SPI_VS_OUT_ID_9, 0, 0},
-	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028644_SPI_PS_INPUT_CNTL_0, 0, 0},
 	{R_028648_SPI_PS_INPUT_CNTL_1, 0, 0},
 	{R_02864C_SPI_PS_INPUT_CNTL_2, 0, 0},
@@ -73,7 +62,6 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_0286BC_SPI_PS_INPUT_CNTL_30, 0, 0},
 	{R_0286C0_SPI_PS_INPUT_CNTL_31, 0, 0},
 	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_0286C4_SPI_VS_OUT_CONFIG, 0, 0},
 	{R_0286CC_SPI_PS_IN_CONTROL_0, 0, 0},
 	{R_0286D0_SPI_PS_IN_CONTROL_1, 0, 0},
 	{R_0286D8_SPI_INPUT_Z, 0, 0},
@@ -82,21 +70,9 @@ static const struct r600_reg evergreen_context_reg_list[] = {
 	{R_028840_SQ_PGM_START_PS, REG_FLAG_NEED_BO, 0},
 	{R_028844_SQ_PGM_RESOURCES_PS, 0, 0},
 	{R_02884C_SQ_PGM_EXPORTS_PS, 0, 0},
-	{R_02885C_SQ_PGM_START_VS, REG_FLAG_NEED_BO, 0},
-	{R_028860_SQ_PGM_RESOURCES_VS, 0, 0},
 };
 
 static const struct r600_reg cayman_context_reg_list[] = {
-	{R_02861C_SPI_VS_OUT_ID_0, 0, 0},
-	{R_028620_SPI_VS_OUT_ID_1, 0, 0},
-	{R_028624_SPI_VS_OUT_ID_2, 0, 0},
-	{R_028628_SPI_VS_OUT_ID_3, 0, 0},
-	{R_02862C_SPI_VS_OUT_ID_4, 0, 0},
-	{R_028630_SPI_VS_OUT_ID_5, 0, 0},
-	{R_028634_SPI_VS_OUT_ID_6, 0, 0},
-	{R_028638_SPI_VS_OUT_ID_7, 0, 0},
-	{R_02863C_SPI_VS_OUT_ID_8, 0, 0},
-	{R_028640_SPI_VS_OUT_ID_9, 0, 0},
 	{R_028644_SPI_PS_INPUT_CNTL_0, 0, 0},
 	{R_028648_SPI_PS_INPUT_CNTL_1, 0, 0},
 	{R_02864C_SPI_PS_INPUT_CNTL_2, 0, 0},
@@ -129,7 +105,6 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_0286B8_SPI_PS_INPUT_CNTL_29, 0, 0},
 	{R_0286BC_SPI_PS_INPUT_CNTL_30, 0, 0},
 	{R_0286C0_SPI_PS_INPUT_CNTL_31, 0, 0},
-	{R_0286C4_SPI_VS_OUT_CONFIG, 0, 0},
 	{R_0286CC_SPI_PS_IN_CONTROL_0, 0, 0},
 	{R_0286D0_SPI_PS_IN_CONTROL_1, 0, 0},
 	{R_0286D8_SPI_INPUT_Z, 0, 0},
@@ -138,8 +113,6 @@ static const struct r600_reg cayman_context_reg_list[] = {
 	{R_028840_SQ_PGM_START_PS, REG_FLAG_NEED_BO, 0},
 	{R_028844_SQ_PGM_RESOURCES_PS, 0, 0},
 	{R_02884C_SQ_PGM_EXPORTS_PS, 0, 0},
-	{R_02885C_SQ_PGM_START_VS, REG_FLAG_NEED_BO, 0},
-	{R_028860_SQ_PGM_RESOURCES_VS, 0, 0},
 };
 
 int evergreen_context_init(struct r600_context *ctx)

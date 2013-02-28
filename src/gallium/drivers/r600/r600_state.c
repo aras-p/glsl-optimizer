@@ -2280,73 +2280,6 @@ static void r600_emit_vertex_fetch_shader(struct r600_context *rctx, struct r600
 	r600_write_value(cs, r600_context_bo_reloc(rctx, &rctx->rings.gfx, shader->buffer, RADEON_USAGE_READ));
 }
 
-void r600_init_state_functions(struct r600_context *rctx)
-{
-	unsigned id = 4;
-
-	/* !!!
-	 *  To avoid GPU lockup registers must be emited in a specific order
-	 * (no kidding ...). The order below is important and have been
-	 * partialy infered from analyzing fglrx command stream.
-	 *
-	 * Don't reorder atom without carefully checking the effect (GPU lockup
-	 * or piglit regression).
-	 * !!!
-	 */
-
-	r600_init_atom(rctx, &rctx->framebuffer.atom, id++, r600_emit_framebuffer_state, 0);
-
-	/* shader const */
-	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_VERTEX].atom, id++, r600_emit_vs_constant_buffers, 0);
-	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_GEOMETRY].atom, id++, r600_emit_gs_constant_buffers, 0);
-	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_FRAGMENT].atom, id++, r600_emit_ps_constant_buffers, 0);
-
-	/* sampler must be emited before TA_CNTL_AUX otherwise DISABLE_CUBE_WRAP change
-	 * does not take effect (TA_CNTL_AUX emited by r600_emit_seamless_cube_map)
-	 */
-	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_VERTEX].states.atom, id++, r600_emit_vs_sampler_states, 0);
-	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_GEOMETRY].states.atom, id++, r600_emit_gs_sampler_states, 0);
-	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_FRAGMENT].states.atom, id++, r600_emit_ps_sampler_states, 0);
-	/* resource */
-	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_VERTEX].views.atom, id++, r600_emit_vs_sampler_views, 0);
-	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_GEOMETRY].views.atom, id++, r600_emit_gs_sampler_views, 0);
-	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_FRAGMENT].views.atom, id++, r600_emit_ps_sampler_views, 0);
-	r600_init_atom(rctx, &rctx->vertex_buffer_state.atom, id++, r600_emit_vertex_buffers, 0);
-
-	r600_init_atom(rctx, &rctx->vgt_state.atom, id++, r600_emit_vgt_state, 7);
-
-	r600_init_atom(rctx, &rctx->seamless_cube_map.atom, id++, r600_emit_seamless_cube_map, 3);
-	r600_init_atom(rctx, &rctx->sample_mask.atom, id++, r600_emit_sample_mask, 3);
-	rctx->sample_mask.sample_mask = ~0;
-
-	r600_init_atom(rctx, &rctx->alphatest_state.atom, id++, r600_emit_alphatest_state, 6);
-	r600_init_atom(rctx, &rctx->blend_color.atom, id++, r600_emit_blend_color, 6);
-	r600_init_atom(rctx, &rctx->blend_state.atom, id++, r600_emit_cso_state, 0);
-	r600_init_atom(rctx, &rctx->cb_misc_state.atom, id++, r600_emit_cb_misc_state, 7);
-	r600_init_atom(rctx, &rctx->clip_misc_state.atom, id++, r600_emit_clip_misc_state, 6);
-	r600_init_atom(rctx, &rctx->clip_state.atom, id++, r600_emit_clip_state, 26);
-	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, r600_emit_db_misc_state, 7);
-	r600_init_atom(rctx, &rctx->db_state.atom, id++, r600_emit_db_state, 11);
-	r600_init_atom(rctx, &rctx->dsa_state.atom, id++, r600_emit_cso_state, 0);
-	r600_init_atom(rctx, &rctx->poly_offset_state.atom, id++, r600_emit_polygon_offset, 6);
-	r600_init_atom(rctx, &rctx->rasterizer_state.atom, id++, r600_emit_cso_state, 0);
-	r600_init_atom(rctx, &rctx->scissor.atom, id++, r600_emit_scissor_state, 4);
-	r600_init_atom(rctx, &rctx->config_state.atom, id++, r600_emit_config_state, 3);
-	r600_init_atom(rctx, &rctx->stencil_ref.atom, id++, r600_emit_stencil_ref, 4);
-	r600_init_atom(rctx, &rctx->viewport.atom, id++, r600_emit_viewport_state, 8);
-	r600_init_atom(rctx, &rctx->vertex_fetch_shader.atom, id++, r600_emit_vertex_fetch_shader, 5);
-	r600_init_atom(rctx, &rctx->streamout.begin_atom, id++, r600_emit_streamout_begin, 0);
-
-	rctx->context.create_blend_state = r600_create_blend_state;
-	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;
-	rctx->context.create_rasterizer_state = r600_create_rs_state;
-	rctx->context.create_sampler_state = r600_create_sampler_state;
-	rctx->context.create_sampler_view = r600_create_sampler_view;
-	rctx->context.set_framebuffer_state = r600_set_framebuffer_state;
-	rctx->context.set_polygon_stipple = r600_set_polygon_stipple;
-	rctx->context.set_scissor_state = r600_set_scissor_state;
-}
-
 /* Adjust GPR allocation on R6xx/R7xx */
 bool r600_adjust_gprs(struct r600_context *rctx)
 {
@@ -2876,14 +2809,10 @@ void r600_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 
 void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = &shader->rstate;
+	struct r600_command_buffer *cb = &shader->command_buffer;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned spi_vs_out_id[10] = {};
 	unsigned i, tmp, nparams = 0;
-
-	/* clear previous register */
-	rstate->nregs = 0;
 
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].spi_sid) {
@@ -2893,10 +2822,11 @@ void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 		}
 	}
 
+	r600_init_command_buffer(cb, 32);
+
+	r600_store_context_reg_seq(cb, R_028614_SPI_VS_OUT_ID_0, 10);
 	for (i = 0; i < 10; i++) {
-		r600_pipe_state_add_reg(rstate,
-					R_028614_SPI_VS_OUT_ID_0 + i * 4,
-					spi_vs_out_id[i]);
+		r600_store_value(cb, spi_vs_out_id[i]);
 	}
 
 	/* Certain attributes (position, psize, etc.) don't count as params.
@@ -2906,16 +2836,13 @@ void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 	if (nparams < 1)
 		nparams = 1;
 
-	r600_pipe_state_add_reg(rstate,
-				R_0286C4_SPI_VS_OUT_CONFIG,
-				S_0286C4_VS_EXPORT_COUNT(nparams - 1));
-	r600_pipe_state_add_reg(rstate,
-				R_028868_SQ_PGM_RESOURCES_VS,
-				S_028868_NUM_GPRS(rshader->bc.ngpr) |
-				S_028868_STACK_SIZE(rshader->bc.nstack));
-	r600_pipe_state_add_reg_bo(rstate,
-			R_028858_SQ_PGM_START_VS,
-			0, shader->bo, RADEON_USAGE_READ);
+	r600_store_context_reg(cb, R_0286C4_SPI_VS_OUT_CONFIG,
+			       S_0286C4_VS_EXPORT_COUNT(nparams - 1));
+	r600_store_context_reg(cb, R_028868_SQ_PGM_RESOURCES_VS,
+			       S_028868_NUM_GPRS(rshader->bc.ngpr) |
+			       S_028868_STACK_SIZE(rshader->bc.nstack));
+	r600_store_context_reg(cb, R_028858_SQ_PGM_START_VS, 0);
+	/* After that, the NOP relocation packet must be emitted (shader->bo, RADEON_USAGE_READ). */
 
 	shader->pa_cl_vs_out_cntl =
 		S_02881C_VS_OUT_CCDIST0_VEC_ENA((rshader->clip_dist_write & 0x0F) != 0) |
@@ -3207,3 +3134,72 @@ boolean r600_dma_blit(struct pipe_context *ctx,
 	}
 	return TRUE;
 }
+
+void r600_init_state_functions(struct r600_context *rctx)
+{
+	unsigned id = 4;
+
+	/* !!!
+	 *  To avoid GPU lockup registers must be emited in a specific order
+	 * (no kidding ...). The order below is important and have been
+	 * partialy infered from analyzing fglrx command stream.
+	 *
+	 * Don't reorder atom without carefully checking the effect (GPU lockup
+	 * or piglit regression).
+	 * !!!
+	 */
+
+	r600_init_atom(rctx, &rctx->framebuffer.atom, id++, r600_emit_framebuffer_state, 0);
+
+	/* shader const */
+	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_VERTEX].atom, id++, r600_emit_vs_constant_buffers, 0);
+	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_GEOMETRY].atom, id++, r600_emit_gs_constant_buffers, 0);
+	r600_init_atom(rctx, &rctx->constbuf_state[PIPE_SHADER_FRAGMENT].atom, id++, r600_emit_ps_constant_buffers, 0);
+
+	/* sampler must be emited before TA_CNTL_AUX otherwise DISABLE_CUBE_WRAP change
+	 * does not take effect (TA_CNTL_AUX emited by r600_emit_seamless_cube_map)
+	 */
+	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_VERTEX].states.atom, id++, r600_emit_vs_sampler_states, 0);
+	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_GEOMETRY].states.atom, id++, r600_emit_gs_sampler_states, 0);
+	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_FRAGMENT].states.atom, id++, r600_emit_ps_sampler_states, 0);
+	/* resource */
+	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_VERTEX].views.atom, id++, r600_emit_vs_sampler_views, 0);
+	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_GEOMETRY].views.atom, id++, r600_emit_gs_sampler_views, 0);
+	r600_init_atom(rctx, &rctx->samplers[PIPE_SHADER_FRAGMENT].views.atom, id++, r600_emit_ps_sampler_views, 0);
+	r600_init_atom(rctx, &rctx->vertex_buffer_state.atom, id++, r600_emit_vertex_buffers, 0);
+
+	r600_init_atom(rctx, &rctx->vgt_state.atom, id++, r600_emit_vgt_state, 7);
+
+	r600_init_atom(rctx, &rctx->seamless_cube_map.atom, id++, r600_emit_seamless_cube_map, 3);
+	r600_init_atom(rctx, &rctx->sample_mask.atom, id++, r600_emit_sample_mask, 3);
+	rctx->sample_mask.sample_mask = ~0;
+
+	r600_init_atom(rctx, &rctx->alphatest_state.atom, id++, r600_emit_alphatest_state, 6);
+	r600_init_atom(rctx, &rctx->blend_color.atom, id++, r600_emit_blend_color, 6);
+	r600_init_atom(rctx, &rctx->blend_state.atom, id++, r600_emit_cso_state, 0);
+	r600_init_atom(rctx, &rctx->cb_misc_state.atom, id++, r600_emit_cb_misc_state, 7);
+	r600_init_atom(rctx, &rctx->clip_misc_state.atom, id++, r600_emit_clip_misc_state, 6);
+	r600_init_atom(rctx, &rctx->clip_state.atom, id++, r600_emit_clip_state, 26);
+	r600_init_atom(rctx, &rctx->db_misc_state.atom, id++, r600_emit_db_misc_state, 7);
+	r600_init_atom(rctx, &rctx->db_state.atom, id++, r600_emit_db_state, 11);
+	r600_init_atom(rctx, &rctx->dsa_state.atom, id++, r600_emit_cso_state, 0);
+	r600_init_atom(rctx, &rctx->poly_offset_state.atom, id++, r600_emit_polygon_offset, 6);
+	r600_init_atom(rctx, &rctx->rasterizer_state.atom, id++, r600_emit_cso_state, 0);
+	r600_init_atom(rctx, &rctx->scissor.atom, id++, r600_emit_scissor_state, 4);
+	r600_init_atom(rctx, &rctx->config_state.atom, id++, r600_emit_config_state, 3);
+	r600_init_atom(rctx, &rctx->stencil_ref.atom, id++, r600_emit_stencil_ref, 4);
+	r600_init_atom(rctx, &rctx->viewport.atom, id++, r600_emit_viewport_state, 8);
+	r600_init_atom(rctx, &rctx->vertex_fetch_shader.atom, id++, r600_emit_vertex_fetch_shader, 5);
+	r600_init_atom(rctx, &rctx->streamout.begin_atom, id++, r600_emit_streamout_begin, 0);
+	r600_init_atom(rctx, &rctx->vertex_shader.atom, id++, r600_emit_shader, 23);
+
+	rctx->context.create_blend_state = r600_create_blend_state;
+	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;
+	rctx->context.create_rasterizer_state = r600_create_rs_state;
+	rctx->context.create_sampler_state = r600_create_sampler_state;
+	rctx->context.create_sampler_view = r600_create_sampler_view;
+	rctx->context.set_framebuffer_state = r600_set_framebuffer_state;
+	rctx->context.set_polygon_stipple = r600_set_polygon_stipple;
+	rctx->context.set_scissor_state = r600_set_scissor_state;
+}
+/* this function must be last */

@@ -846,19 +846,20 @@ static void r600_bind_vs_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	rctx->vs_shader = (struct r600_pipe_shader_selector *)state;
-	if (state) {
-		r600_context_pipe_state_set(rctx, &rctx->vs_shader->current->rstate);
+	if (!state)
+		return;
 
-		r600_context_add_resource_size(ctx, (struct pipe_resource *)rctx->vs_shader->current->bo);
+	rctx->vertex_shader.shader = rctx->vs_shader = (struct r600_pipe_shader_selector *)state;
+	rctx->vertex_shader.atom.dirty = true;
 
-		/* Update clip misc state. */
-		if (rctx->vs_shader->current->pa_cl_vs_out_cntl != rctx->clip_misc_state.pa_cl_vs_out_cntl ||
-		    rctx->vs_shader->current->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write) {
-			rctx->clip_misc_state.pa_cl_vs_out_cntl = rctx->vs_shader->current->pa_cl_vs_out_cntl;
-			rctx->clip_misc_state.clip_dist_write = rctx->vs_shader->current->shader.clip_dist_write;
-			rctx->clip_misc_state.atom.dirty = true;
-		}
+	r600_context_add_resource_size(ctx, (struct pipe_resource *)rctx->vs_shader->current->bo);
+
+	/* Update clip misc state. */
+	if (rctx->vs_shader->current->pa_cl_vs_out_cntl != rctx->clip_misc_state.pa_cl_vs_out_cntl ||
+	    rctx->vs_shader->current->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write) {
+		rctx->clip_misc_state.pa_cl_vs_out_cntl = rctx->vs_shader->current->pa_cl_vs_out_cntl;
+		rctx->clip_misc_state.clip_dist_write = rctx->vs_shader->current->shader.clip_dist_write;
+		rctx->clip_misc_state.atom.dirty = true;
 	}
 }
 
@@ -1746,6 +1747,17 @@ bool sampler_state_needs_border_color(const struct pipe_sampler_state *state)
 	       (wrap_mode_uses_border_color(state->wrap_s, linear_filter) ||
 		wrap_mode_uses_border_color(state->wrap_t, linear_filter) ||
 		wrap_mode_uses_border_color(state->wrap_r, linear_filter));
+}
+
+void r600_emit_shader(struct r600_context *rctx, struct r600_atom *a)
+{
+	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
+	struct r600_pipe_shader *shader = ((struct r600_shader_state*)a)->shader->current;
+
+	r600_emit_command_buffer(cs, &shader->command_buffer);
+
+	r600_write_value(cs, PKT3(PKT3_NOP, 0, 0));
+	r600_write_value(cs, r600_context_bo_reloc(rctx, &rctx->rings.gfx, shader->bo, RADEON_USAGE_READ));
 }
 
 /* keep this at the end of this file, please */

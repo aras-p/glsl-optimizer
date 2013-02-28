@@ -34,7 +34,7 @@
 #include "r600_public.h"
 #include "r600_resource.h"
 
-#define R600_NUM_ATOMS 38
+#define R600_NUM_ATOMS 39
 
 #define R600_TRACE_CS 0
 
@@ -425,6 +425,11 @@ struct r600_fetch_shader {
 	unsigned			offset;
 };
 
+struct r600_shader_state {
+	struct r600_atom		atom;
+	struct r600_pipe_shader_selector *shader;
+};
+
 struct r600_streamout {
 	struct r600_atom		begin_atom;
 	bool				begin_emitted;
@@ -518,6 +523,8 @@ struct r600_context {
 	struct r600_viewport_state	viewport;
 	/* Shaders and shader resources. */
 	struct r600_cso_state		vertex_fetch_shader;
+	struct r600_shader_state	vertex_shader;
+	struct r600_shader_state	pixel_shader;
 	struct r600_cs_shader_state	cs_shader_state;
 	struct r600_constbuf_state	constbuf_state[PIPE_SHADER_TYPES];
 	struct r600_textures_info	samplers[PIPE_SHADER_TYPES];
@@ -530,8 +537,8 @@ struct r600_context {
 	/* Additional context states. */
 	unsigned			flags;
 	unsigned			compute_cb_target_mask;
-	struct r600_pipe_shader_selector 	*ps_shader;
-	struct r600_pipe_shader_selector 	*vs_shader;
+	struct r600_pipe_shader_selector *ps_shader;
+	struct r600_pipe_shader_selector *vs_shader;
 	struct r600_rasterizer_state	*rasterizer;
 	bool				alpha_to_one;
 	bool				force_blend_disable;
@@ -745,6 +752,7 @@ void r600_emit_vgt_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_clip_misc_state(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_stencil_ref(struct r600_context *rctx, struct r600_atom *atom);
 void r600_emit_viewport_state(struct r600_context *rctx, struct r600_atom *atom);
+void r600_emit_shader(struct r600_context *rctx, struct r600_atom *a);
 void r600_init_atom(struct r600_context *rctx, struct r600_atom *atom, unsigned id,
 		    void (*emit)(struct r600_context *ctx, struct r600_atom *state),
 		    unsigned num_dw);

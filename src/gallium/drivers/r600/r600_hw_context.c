@@ -216,22 +216,6 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 }
 
 static const struct r600_reg r600_context_reg_list[] = {
-	{R_028614_SPI_VS_OUT_ID_0, 0, 0},
-	{R_028618_SPI_VS_OUT_ID_1, 0, 0},
-	{R_02861C_SPI_VS_OUT_ID_2, 0, 0},
-	{R_028620_SPI_VS_OUT_ID_3, 0, 0},
-	{R_028624_SPI_VS_OUT_ID_4, 0, 0},
-	{R_028628_SPI_VS_OUT_ID_5, 0, 0},
-	{R_02862C_SPI_VS_OUT_ID_6, 0, 0},
-	{R_028630_SPI_VS_OUT_ID_7, 0, 0},
-	{R_028634_SPI_VS_OUT_ID_8, 0, 0},
-	{R_028638_SPI_VS_OUT_ID_9, 0, 0},
-	{R_0286C4_SPI_VS_OUT_CONFIG, 0, 0},
-	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_028858_SQ_PGM_START_VS, REG_FLAG_NEED_BO, 0},
-	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_028868_SQ_PGM_RESOURCES_VS, 0, 0},
-	{GROUP_FORCE_NEW_BLOCK, 0, 0},
 	{R_028644_SPI_PS_INPUT_CNTL_0, 0, 0},
 	{R_028648_SPI_PS_INPUT_CNTL_1, 0, 0},
 	{R_02864C_SPI_PS_INPUT_CNTL_2, 0, 0},
@@ -829,6 +813,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->config_state.atom.dirty = true;
 	ctx->stencil_ref.atom.dirty = true;
 	ctx->vertex_fetch_shader.atom.dirty = true;
+	ctx->vertex_shader.atom.dirty = true;
 	ctx->viewport.atom.dirty = true;
 
 	if (ctx->blend_state.cso)
