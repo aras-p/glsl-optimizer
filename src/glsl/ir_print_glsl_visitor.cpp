@@ -607,9 +607,17 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		sampler_uv_dim = 3;
 	const bool is_proj = (uv_dim > sampler_uv_dim);
 	
-	// texture function name
-	ralloc_asprintf_append (&buffer, "%s", is_shadow ? "shadow" : "texture");
-	ralloc_asprintf_append (&buffer, "%s", tex_sampler_dim_name[sampler_dim]);
+    // texture function name
+    //ACS: shadow lookups and lookups with dimensionality included in the name were deprecated in 130
+    if(state->language_version<130) 
+    {
+        ralloc_asprintf_append (&buffer, "%s", is_shadow ? "shadow" : "texture");
+        ralloc_asprintf_append (&buffer, "%s", tex_sampler_dim_name[sampler_dim]);
+    }
+    else 
+    {
+        ralloc_asprintf_append (&buffer, "texture");
+    }
 	
 	if (is_proj)
 		ralloc_asprintf_append (&buffer, "Proj");
