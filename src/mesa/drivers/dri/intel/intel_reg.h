@@ -266,6 +266,19 @@
 #define FENCE_XMAJOR 1
 #define FENCE_YMAJOR 2
 
+/* Pipeline Statistics Counter Registers */
+#define IA_VERTICES_COUNT               0x2310
+#define IA_PRIMITIVES_COUNT             0x2318
+#define VS_INVOCATION_COUNT             0x2320
+#define HS_INVOCATION_COUNT             0x2300
+#define DS_INVOCATION_COUNT             0x2308
+#define GS_INVOCATION_COUNT             0x2328
+#define GS_PRIMITIVES_COUNT             0x2330
+#define CL_INVOCATION_COUNT             0x2338
+#define CL_PRIMITIVES_COUNT             0x2340
+#define PS_INVOCATION_COUNT             0x2348
+#define PS_DEPTH_COUNT                  0x2350
+
 #define SO_NUM_PRIM_STORAGE_NEEDED	0x2280
 #define SO_PRIM_STORAGE_NEEDED0_IVB	0x5240
 #define SO_PRIM_STORAGE_NEEDED1_IVB	0x5248
