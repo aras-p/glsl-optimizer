@@ -421,7 +421,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
       query->Base.Result = brw->sol.primitives_generated;
       brw->sol.counting_primitives_generated = false;
 
-      /* And set brw->query.obj to NULL so that this query won't try to wait
+      /* And set query->bo to NULL so that this query won't try to wait
        * for any rendering to complete.
        */
       query->bo = NULL;
@@ -435,7 +435,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
       query->Base.Result = brw->sol.primitives_written;
       brw->sol.counting_primitives_written = false;
 
-      /* And set brw->query.obj to NULL so that this query won't try to wait
+      /* And set query->bo to NULL so that this query won't try to wait
        * for any rendering to complete.
        */
       query->bo = NULL;
