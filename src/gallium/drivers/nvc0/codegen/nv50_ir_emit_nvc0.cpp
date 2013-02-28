@@ -2623,15 +2623,16 @@ SchedDataCalculator::visit(BasicBlock *bb)
    score = &scoreBoards.at(bb->getId());
 
    for (Graph::EdgeIterator ei = bb->cfg.incident(); !ei.end(); ei.next()) {
+      // back branches will wait until all target dependencies are satisfied
+      if (ei.getType() == Graph::Edge::BACK) // sched would be uninitialized
+         continue;
       BasicBlock *in = BasicBlock::get(ei.getNode());
       if (in->getExit()) {
          if (prevData != 0x04)
             prevData = in->getExit()->sched;
          prevOp = in->getExit()->op;
       }
-      if (ei.getType() != Graph::Edge::BACK)
-         score->setMax(&scoreBoards.at(in->getId()));
-      // back branches will wait until all target dependencies are satisfied
+      score->setMax(&scoreBoards.at(in->getId()));
    }
    if (bb->cfg.incidentCount() > 1)
       prevOp = OP_NOP;
