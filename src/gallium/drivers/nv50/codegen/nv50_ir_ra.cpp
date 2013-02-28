@@ -857,10 +857,19 @@ static inline uint8_t makeCompMask(int compSize, int base, int size)
    }
 }
 
+// Used when coalescing moves. The non-compound value will become one, e.g.:
+// mov b32 $r0 $r2            / merge b64 $r0d { $r0 $r1 }
+// split b64 { $r0 $r1 } $r0d / mov b64 $r0d f64 $r2d
 static inline void copyCompound(Value *dst, Value *src)
 {
    LValue *ldst = dst->asLValue();
    LValue *lsrc = src->asLValue();
+
+   if (ldst->compound && !lsrc->compound) {
+      LValue *swap = lsrc;
+      lsrc = ldst;
+      ldst = swap;
+   }
 
    ldst->compound = lsrc->compound;
    ldst->compMask = lsrc->compMask;
