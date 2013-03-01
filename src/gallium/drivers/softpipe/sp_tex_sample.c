@@ -1645,6 +1645,8 @@ compute_lod(const struct pipe_sampler_state *sampler,
    switch (control) {
    case tgsi_sampler_lod_none:
    case tgsi_sampler_lod_zero:
+   /* XXX FIXME */
+   case tgsi_sampler_derivs_explicit:
       lod[0] = lod[1] = lod[2] = lod[3] = CLAMP(biased_lambda, min_lod, max_lod);
       break;
    case tgsi_sampler_lod_bias:
@@ -1687,6 +1689,8 @@ compute_lambda_lod(struct sp_sampler_variant *samp,
 
    switch (control) {
    case tgsi_sampler_lod_none:
+      /* XXX FIXME */
+   case tgsi_sampler_derivs_explicit:
       lambda = samp->compute_lambda(samp, s, t, p) + lod_bias;
       lod[0] = lod[1] = lod[2] = lod[3] = CLAMP(lambda, min_lod, max_lod);
       break;
@@ -2085,7 +2089,9 @@ mip_filter_linear_aniso(struct sp_sampler_variant *samp,
    float dvdy = (t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT]) * t_to_v;
    
    if (control == tgsi_sampler_lod_bias ||
-       control == tgsi_sampler_lod_none) {
+       control == tgsi_sampler_lod_none ||
+       /* XXX FIXME */
+       control == tgsi_sampler_derivs_explicit) {
       /* note: instead of working with Px and Py, we will use the 
        * squared length instead, to avoid sqrt.
        */
@@ -3051,6 +3057,8 @@ sp_tgsi_get_samples(struct tgsi_sampler *tgsi_sampler,
                     const float p[TGSI_QUAD_SIZE],
                     const float c0[TGSI_QUAD_SIZE],
                     const float lod[TGSI_QUAD_SIZE],
+                    float derivs[3][2][TGSI_QUAD_SIZE],
+                    const int8_t offset[3],
                     enum tgsi_sampler_control control,
                     float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {

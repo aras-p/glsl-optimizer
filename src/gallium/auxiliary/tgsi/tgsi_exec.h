@@ -92,8 +92,8 @@ enum tgsi_sampler_control {
    tgsi_sampler_lod_none,
    tgsi_sampler_lod_bias,
    tgsi_sampler_lod_explicit,
-   tgsi_sampler_lod_zero
-   /* FIXME: tgsi_sampler_derivs_explicit */
+   tgsi_sampler_lod_zero,
+   tgsi_sampler_derivs_explicit
 };
 
 /**
@@ -108,10 +108,12 @@ struct tgsi_sampler
     * s - the first texture coordinate for sampling.
     * t - the second texture coordinate for sampling - unused for 1D,
           layer for 1D arrays.
-    * p - the third coordinate for sampling for 3D, cube, cube arrays,
+    * r - the third coordinate for sampling for 3D, cube, cube arrays,
     *     layer for 2D arrays. Compare value for 1D/2D shadows.
     * c0 - Compare value for shadow cube and shadow 2d arrays,
     *      layer for cube arrays.
+    * derivs - explicit derivatives.
+    * offset - texel offsets
     * lod - lod value, except for shadow cube arrays (compare value there).
     */
    void (*get_samples)(struct tgsi_sampler *sampler,
@@ -122,6 +124,8 @@ struct tgsi_sampler
                        const float r[TGSI_QUAD_SIZE],
                        const float c0[TGSI_QUAD_SIZE],
                        const float c1[TGSI_QUAD_SIZE],
+                       float derivs[3][2][TGSI_QUAD_SIZE],
+                       const int8_t offset[3],
                        enum tgsi_sampler_control control,
                        float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
    void (*get_dims)(struct tgsi_sampler *sampler,
