@@ -406,6 +406,7 @@ nv50_surface_from_miptree(struct nv50_miptree *mt,
    pipe_resource_reference(&ps->texture, &mt->base.base);
 
    ps->format = templ->format;
+   ps->writable = templ->writable;
    ps->u.tex.level = templ->u.tex.level;
    ps->u.tex.first_layer = templ->u.tex.first_layer;
    ps->u.tex.last_layer = templ->u.tex.last_layer;

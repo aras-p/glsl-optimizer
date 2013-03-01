@@ -43,6 +43,7 @@ nv50_surface_from_buffer(struct pipe_context *pipe,
    pipe_resource_reference(&sf->base.texture, pbuf);
 
    sf->base.format = templ->format;
+   sf->base.writable = templ->writable;
    sf->base.u.buf.first_element = templ->u.buf.first_element;
    sf->base.u.buf.last_element = templ->u.buf.last_element;
 
