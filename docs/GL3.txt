@@ -63,7 +63,7 @@ Base vertex offset(GL_ARB_draw_elements_base_vertex)  DONE (i965, r300, r600, sw
 Frag shader coord (GL_ARB_fragment_coord_conventions) DONE (i965, r300, r600, swrast)
 Provoking vertex (GL_ARB_provoking_vertex)            DONE (i965, r300, r600, swrast)
 Seamless cubemaps (GL_ARB_seamless_cube_map)          DONE (i965, r600)
-Multisample textures (GL_ARB_texture_multisample)     not started
+Multisample textures (GL_ARB_texture_multisample)     DONE (i965)
 Frag depth clamp (GL_ARB_depth_clamp)                 DONE (i965, r600, swrast)
 Fence objects (GL_ARB_sync)                           DONE (i965, r300, r600, swrast)
 GLX_ARB_create_context_profile                        DONE
@@ -119,7 +119,7 @@ GLSL 4.2                                             not started
 GL_ARB_texture_compression_bptc                      not started
 GL_ARB_compressed_texture_pixel_storage              not started
 GL_ARB_shader_atomic_counters                        not started
-GL_ARB_texture_storage                               DONE (r300, r600, swrast, gallium)
+GL_ARB_texture_storage                               DONE (i965, r300, r600, swrast, gallium)
 GL_ARB_transform_feedback_instanced                  DONE
 GL_ARB_base_instance                                 DONE (i965, nv50, nvc0, r600, radeonsi)
 GL_ARB_shader_image_load_store                       not started
