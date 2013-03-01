@@ -989,7 +989,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 	uint32_t result = 0, word4 = 0, yuv_format = 0;
 	const struct util_format_description *desc;
 	boolean uniform = TRUE;
-	static int r600_enable_s3tc = -1;
+	bool enable_s3tc = rscreen->info.drm_minor >= 9;
 	bool is_srgb_valid = FALSE;
 	const unsigned char swizzle_xxxx[4] = {0, 0, 0, 0};
 	const unsigned char swizzle_yyyy[4] = {1, 1, 1, 1};
@@ -1083,15 +1083,8 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 		break;
 	}
 
-	if (r600_enable_s3tc == -1) {
-		if (rscreen->info.drm_minor >= 9)
-			r600_enable_s3tc = 1;
-		else
-			r600_enable_s3tc = debug_get_bool_option("R600_ENABLE_S3TC", FALSE);
-	}
-
 	if (desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
-		if (!r600_enable_s3tc)
+		if (!enable_s3tc)
 			goto out_unknown;
 
 		switch (format) {
@@ -1116,7 +1109,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 
 	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
 
-		if (!r600_enable_s3tc)
+		if (!enable_s3tc)
 			goto out_unknown;
 
 		if (!util_format_s3tc_enabled) {
