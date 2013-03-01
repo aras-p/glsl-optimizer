@@ -277,6 +277,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
                             LLVMValueRef coord,
                             LLVMValueRef length,
                             LLVMValueRef length_f,
+                            LLVMValueRef offset,
                             boolean is_pot,
                             unsigned wrap_mode,
                             LLVMValueRef *x0_out,
@@ -296,6 +297,10 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          /* mul by size and subtract 0.5 */
          coord = lp_build_mul(coord_bld, coord, length_f);
          coord = lp_build_sub(coord_bld, coord, half);
+         if (offset) {
+            offset = lp_build_int_to_float(coord_bld, offset);
+            coord = lp_build_add(coord_bld, coord, offset);
+         }
          /* convert to int, compute lerp weight */
          lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
@@ -305,6 +310,11 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       }
       else {
          LLVMValueRef mask;
+         if (offset) {
+            offset = lp_build_int_to_float(coord_bld, offset);
+            offset = lp_build_div(coord_bld, offset, length_f);
+            coord = lp_build_add(coord_bld, coord, offset);
+         }
          lp_build_coord_repeat_npot_linear(bld, coord,
                                            length, length_f,
                                            &coord0, &weight);
@@ -320,6 +330,10 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       if (bld->static_sampler_state->normalized_coords) {
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
+      }
+      if (offset) {
+         offset = lp_build_int_to_float(coord_bld, offset);
+         coord = lp_build_add(coord_bld, coord, offset);
       }
 
       /* clamp to [0, length] */
@@ -341,6 +355,11 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
             /* mul by tex size */
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
+         if (offset) {
+            offset = lp_build_int_to_float(coord_bld, offset);
+            coord = lp_build_add(coord_bld, coord, offset);
+         }
+
          /* clamp to length max */
          coord = lp_build_min(coord_bld, coord, length_f);
          /* subtract 0.5 */
@@ -360,6 +379,10 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
+      if (offset) {
+         offset = lp_build_int_to_float(coord_bld, offset);
+         coord = lp_build_add(coord_bld, coord, offset);
+      }
       /* was: clamp to [-0.5, length + 0.5], then sub 0.5 */
       /* can skip clamp (though might not work for very large coord values */
       coord = lp_build_sub(coord_bld, coord, half);
@@ -375,6 +398,10 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       /* scale coord to length */
       coord = lp_build_mul(coord_bld, coord, length_f);
       coord = lp_build_sub(coord_bld, coord, half);
+      if (offset) {
+         offset = lp_build_int_to_float(coord_bld, offset);
+         coord = lp_build_add(coord_bld, coord, offset);
+      }
 
       /* convert to int, compute lerp weight */
       lp_build_ifloor_fract(coord_bld, coord, &coord0, &weight);
@@ -387,12 +414,15 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       break;
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
-      coord = lp_build_abs(coord_bld, coord);
-
       if (bld->static_sampler_state->normalized_coords) {
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
+      if (offset) {
+         offset = lp_build_int_to_float(coord_bld, offset);
+         coord = lp_build_add(coord_bld, coord, offset);
+      }
+      coord = lp_build_abs(coord_bld, coord);
 
       /* clamp to [0, length] */
       coord = lp_build_min(coord_bld, coord, length_f);
@@ -409,12 +439,16 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          LLVMValueRef min, max;
          struct lp_build_context abs_coord_bld = bld->coord_bld;
          abs_coord_bld.type.sign = FALSE;
-         coord = lp_build_abs(coord_bld, coord);
 
          if (bld->static_sampler_state->normalized_coords) {
             /* scale coord to length */
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
+         if (offset) {
+            offset = lp_build_int_to_float(coord_bld, offset);
+            coord = lp_build_add(coord_bld, coord, offset);
+         }
+         coord = lp_build_abs(coord_bld, coord);
 
          /* clamp to [0.5, length - 0.5] */
          min = half;
@@ -431,12 +465,15 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       {
-         coord = lp_build_abs(coord_bld, coord);
-
          if (bld->static_sampler_state->normalized_coords) {
             /* scale coord to length */
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
+         if (offset) {
+            offset = lp_build_int_to_float(coord_bld, offset);
+            coord = lp_build_add(coord_bld, coord, offset);
+         }
+         coord = lp_build_abs(coord_bld, coord);
 
          /* was: clamp to [-0.5, length + 0.5] then sub 0.5 */
          /* skip clamp - always positive, and other side
@@ -466,6 +503,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
  * Build LLVM code for texture wrap mode for nearest filtering.
  * \param coord  the incoming texcoord (nominally in [0,1])
  * \param length  the texture size along one dimension, as int vector
+ * \param length_f  the texture size along one dimension, as float vector
+ * \param offset  texel offset along one dimension (as int vector)
  * \param is_pot  if TRUE, length is a power of two
  * \param wrap_mode  one of PIPE_TEX_WRAP_x
  */
@@ -474,6 +513,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
                              LLVMValueRef coord,
                              LLVMValueRef length,
                              LLVMValueRef length_f,
+                             LLVMValueRef offset,
                              boolean is_pot,
                              unsigned wrap_mode)
 {
@@ -488,9 +528,17 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       if (is_pot) {
          coord = lp_build_mul(coord_bld, coord, length_f);
          icoord = lp_build_ifloor(coord_bld, coord);
+         if (offset) {
+            icoord = lp_build_add(int_coord_bld, icoord, offset);
+         }
          icoord = LLVMBuildAnd(builder, icoord, length_minus_one, "");
       }
       else {
+          if (offset) {
+             offset = lp_build_int_to_float(coord_bld, offset);
+             offset = lp_build_div(coord_bld, offset, length_f);
+             coord = lp_build_add(coord_bld, coord, offset);
+          }
           /* take fraction, unnormalize */
           coord = lp_build_fract_safe(coord_bld, coord);
           coord = lp_build_mul(coord_bld, coord, length_f);
@@ -508,6 +556,9 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       /* floor */
       /* use itrunc instead since we clamp to 0 anyway */
       icoord = lp_build_itrunc(coord_bld, coord);
+      if (offset) {
+         icoord = lp_build_add(int_coord_bld, icoord, offset);
+      }
 
       /* clamp to [0, length - 1]. */
       icoord = lp_build_clamp(int_coord_bld, icoord, int_coord_bld->zero,
@@ -521,9 +572,17 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       }
       /* no clamp necessary, border masking will handle this */
       icoord = lp_build_ifloor(coord_bld, coord);
+      if (offset) {
+         icoord = lp_build_add(int_coord_bld, icoord, offset);
+      }
       break;
 
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
+      if (offset) {
+         offset = lp_build_int_to_float(coord_bld, offset);
+         offset = lp_build_div(coord_bld, offset, length_f);
+         coord = lp_build_add(coord_bld, coord, offset);
+      }
       /* compute mirror function */
       coord = lp_build_coord_mirror(bld, coord);
 
@@ -540,12 +599,15 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
-      coord = lp_build_abs(coord_bld, coord);
-
       if (bld->static_sampler_state->normalized_coords) {
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
+      if (offset) {
+         offset = lp_build_int_to_float(coord_bld, offset);
+         coord = lp_build_add(coord_bld, coord, offset);
+      }
+      coord = lp_build_abs(coord_bld, coord);
 
       /* itrunc == ifloor here */
       icoord = lp_build_itrunc(coord_bld, coord);
@@ -555,12 +617,15 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       break;
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-      coord = lp_build_abs(coord_bld, coord);
-
       if (bld->static_sampler_state->normalized_coords) {
          /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
+      if (offset) {
+         offset = lp_build_int_to_float(coord_bld, offset);
+         coord = lp_build_add(coord_bld, coord, offset);
+      }
+      coord = lp_build_abs(coord_bld, coord);
 
       /* itrunc == ifloor here */
       icoord = lp_build_itrunc(coord_bld, coord);
@@ -590,6 +655,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                               LLVMValueRef s,
                               LLVMValueRef t,
                               LLVMValueRef r,
+                              const LLVMValueRef *offsets,
                               LLVMValueRef colors_out[4])
 {
    const unsigned dims = bld->dims;
@@ -619,19 +685,19 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    /*
     * Compute integer texcoords.
     */
-   x = lp_build_sample_wrap_nearest(bld, s, width_vec, flt_width_vec,
+   x = lp_build_sample_wrap_nearest(bld, s, width_vec, flt_width_vec, offsets[0],
                                     bld->static_texture_state->pot_width,
                                     bld->static_sampler_state->wrap_s);
    lp_build_name(x, "tex.x.wrapped");
 
    if (dims >= 2) {
-      y = lp_build_sample_wrap_nearest(bld, t, height_vec, flt_height_vec,
+      y = lp_build_sample_wrap_nearest(bld, t, height_vec, flt_height_vec, offsets[1],
                                        bld->static_texture_state->pot_height,
                                        bld->static_sampler_state->wrap_t);
       lp_build_name(y, "tex.y.wrapped");
 
       if (dims == 3) {
-         z = lp_build_sample_wrap_nearest(bld, r, depth_vec, flt_depth_vec,
+         z = lp_build_sample_wrap_nearest(bld, r, depth_vec, flt_depth_vec, offsets[2],
                                           bld->static_texture_state->pot_depth,
                                           bld->static_sampler_state->wrap_r);
          lp_build_name(z, "tex.z.wrapped");
@@ -670,6 +736,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              LLVMValueRef s,
                              LLVMValueRef t,
                              LLVMValueRef r,
+                             const LLVMValueRef *offsets,
                              LLVMValueRef colors_out[4])
 {
    const unsigned dims = bld->dims;
@@ -702,7 +769,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    /*
     * Compute integer texcoords.
     */
-   lp_build_sample_wrap_linear(bld, s, width_vec, flt_width_vec,
+   lp_build_sample_wrap_linear(bld, s, width_vec, flt_width_vec, offsets[0],
                                bld->static_texture_state->pot_width,
                                bld->static_sampler_state->wrap_s,
                                &x0, &x1, &s_fpart);
@@ -710,7 +777,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    lp_build_name(x1, "tex.x1.wrapped");
 
    if (dims >= 2) {
-      lp_build_sample_wrap_linear(bld, t, height_vec, flt_height_vec,
+      lp_build_sample_wrap_linear(bld, t, height_vec, flt_height_vec, offsets[1],
                                   bld->static_texture_state->pot_height,
                                   bld->static_sampler_state->wrap_t,
                                   &y0, &y1, &t_fpart);
@@ -718,7 +785,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       lp_build_name(y1, "tex.y1.wrapped");
 
       if (dims == 3) {
-         lp_build_sample_wrap_linear(bld, r, depth_vec, flt_depth_vec,
+         lp_build_sample_wrap_linear(bld, r, depth_vec, flt_depth_vec, offsets[2],
                                      bld->static_texture_state->pot_depth,
                                      bld->static_sampler_state->wrap_r,
                                      &z0, &z1, &r_fpart);
@@ -851,6 +918,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                        LLVMValueRef s,
                        LLVMValueRef t,
                        LLVMValueRef r,
+                       const LLVMValueRef *offsets,
                        LLVMValueRef ilevel0,
                        LLVMValueRef ilevel1,
                        LLVMValueRef lod_fpart,
@@ -886,7 +954,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
       lp_build_sample_image_nearest(bld, sampler_unit,
                                     size0,
                                     row_stride0_vec, img_stride0_vec,
-                                    data_ptr0, mipoff0, s, t, r,
+                                    data_ptr0, mipoff0, s, t, r, offsets,
                                     colors0);
    }
    else {
@@ -894,7 +962,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
       lp_build_sample_image_linear(bld, sampler_unit,
                                    size0,
                                    row_stride0_vec, img_stride0_vec,
-                                   data_ptr0, mipoff0, s, t, r,
+                                   data_ptr0, mipoff0, s, t, r, offsets,
                                    colors0);
    }
 
@@ -950,14 +1018,14 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
             lp_build_sample_image_nearest(bld, sampler_unit,
                                           size1,
                                           row_stride1_vec, img_stride1_vec,
-                                          data_ptr1, mipoff1, s, t, r,
+                                          data_ptr1, mipoff1, s, t, r, offsets,
                                           colors1);
          }
          else {
             lp_build_sample_image_linear(bld, sampler_unit,
                                          size1,
                                          row_stride1_vec, img_stride1_vec,
-                                         data_ptr1, mipoff1, s, t, r,
+                                         data_ptr1, mipoff1, s, t, r, offsets,
                                          colors1);
          }
 
@@ -1120,6 +1188,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         LLVMValueRef s,
                         LLVMValueRef t,
                         LLVMValueRef r,
+                        const LLVMValueRef *offsets,
                         LLVMValueRef lod_ipart,
                         LLVMValueRef lod_fpart,
                         LLVMValueRef ilevel0,
@@ -1147,7 +1216,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       /* no need to distinguish between minification and magnification */
       lp_build_sample_mipmap(bld, sampler_unit,
                              min_filter, mip_filter,
-                             s, t, r,
+                             s, t, r, offsets,
                              ilevel0, ilevel1, lod_fpart,
                              texels);
    }
@@ -1180,7 +1249,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
          /* Use the minification filter */
          lp_build_sample_mipmap(bld, sampler_unit,
                                 min_filter, mip_filter,
-                                s, t, r,
+                                s, t, r, offsets,
                                 ilevel0, ilevel1, lod_fpart,
                                 texels);
       }
@@ -1189,7 +1258,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
          /* Use the magnification filter */
          lp_build_sample_mipmap(bld, sampler_unit,
                                 mag_filter, PIPE_TEX_MIPFILTER_NONE,
-                                s, t, r,
+                                s, t, r, offsets,
                                 ilevel0, NULL, NULL,
                                 texels);
       }
@@ -1605,7 +1674,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
          if (use_aos) {
             /* do sampling/filtering with fixed pt arithmetic */
             lp_build_sample_aos(&bld, sampler_index,
-                                s, t, r,
+                                s, t, r, offsets,
                                 lod_ipart, lod_fpart,
                                 ilevel0, ilevel1,
                                 texel_out);
@@ -1613,7 +1682,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
 
          else {
             lp_build_sample_general(&bld, sampler_index,
-                                    s, t, r,
+                                    s, t, r, offsets,
                                     lod_ipart, lod_fpart,
                                     ilevel0, ilevel1,
                                     texel_out);
@@ -1681,10 +1750,21 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
             LLVMValueRef lod_iparts, lod_fparts = NULL;
             LLVMValueRef ilevel0s, ilevel1s = NULL;
             LLVMValueRef indexi = lp_build_const_int32(gallivm, i);
+            LLVMValueRef offsets4[4] = { NULL };
 
             s4 = lp_build_extract_range(gallivm, s, 4*i, 4);
             t4 = lp_build_extract_range(gallivm, t, 4*i, 4);
             r4 = lp_build_extract_range(gallivm, r, 4*i, 4);
+
+            if (offsets[0]) {
+               offsets4[0] = lp_build_extract_range(gallivm, offsets[0], 4*i, 4);
+               if (dims > 1) {
+                  offsets4[1] = lp_build_extract_range(gallivm, offsets[1], 4*i, 4);
+                  if (dims > 2) {
+                     offsets4[2] = lp_build_extract_range(gallivm, offsets[2], 4*i, 4);
+                  }
+               }
+            }
             lod_iparts = LLVMBuildExtractElement(builder, lod_ipart, indexi, "");
             ilevel0s = LLVMBuildExtractElement(builder, ilevel0, indexi, "");
             if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
@@ -1695,7 +1775,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
             if (use_aos) {
                /* do sampling/filtering with fixed pt arithmetic */
                lp_build_sample_aos(&bld4, sampler_index,
-                                   s4, t4, r4,
+                                   s4, t4, r4, offsets4,
                                    lod_iparts, lod_fparts,
                                    ilevel0s, ilevel1s,
                                    texelout4);
@@ -1703,7 +1783,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
 
             else {
                lp_build_sample_general(&bld4, sampler_index,
-                                       s4, t4, r4,
+                                       s4, t4, r4, offsets4,
                                        lod_iparts, lod_fparts,
                                        ilevel0s, ilevel1s,
                                        texelout4);
