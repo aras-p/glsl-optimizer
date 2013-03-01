@@ -58,17 +58,13 @@ vmwgfx_dri_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/svga/libsvga.la \
 	$(GALLIUM_DRI_LIB_DEPS)
 
-if HAVE_MESA_LLVM
 vmwgfx_dri_la_LINK = $(CXXLINK) $(vmwgfx_dri_la_LDFLAGS)
 # Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
 nodist_EXTRA_vmwgfx_dri_la_SOURCES = dummy-cpp.cpp
 
+if HAVE_MESA_LLVM
 vmwgfx_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
 vmwgfx_dri_la_LIBADD += $(LLVM_LIBS)
-else
-vmwgfx_dri_la_LINK = $(LINK) $(vmwgfx_dri_la_LDFLAGS)
-# Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_vmwgfx_dri_la_SOURCES = dummy-c.c
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
