@@ -210,7 +210,7 @@ fs_visitor::emit_lrp(fs_reg dst, fs_reg x, fs_reg y, fs_reg a)
       emit(MUL(y_times_a, y, a));
 
       a.negate = !a.negate;
-      emit(ADD(one_minus_a, fs_reg(1.0f), a));
+      emit(ADD(one_minus_a, a, fs_reg(1.0f)));
       emit(MUL(x_times_one_minus_a, x, one_minus_a));
 
       emit(ADD(dst, x_times_one_minus_a, y_times_a));
