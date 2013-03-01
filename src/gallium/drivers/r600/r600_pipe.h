@@ -33,7 +33,6 @@
 #include "r600_llvm.h"
 #include "r600_public.h"
 #include "r600_resource.h"
-#include "evergreen_compute.h"
 
 #define R600_NUM_ATOMS 38
 

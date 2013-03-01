@@ -42,6 +42,7 @@
 #include "r600_pipe.h"
 #include "r600_formats.h"
 #include "evergreend.h"
+#include "evergreen_compute.h"
 #include "evergreen_compute_internal.h"
 #include "r600_hw_context_priv.h"
 

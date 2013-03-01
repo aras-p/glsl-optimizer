@@ -22,6 +22,7 @@
  */
 
 #include "r600_pipe.h"
+#include "evergreen_compute.h"
 
 static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)

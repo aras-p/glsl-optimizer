@@ -23,6 +23,7 @@
 #include "r600_pipe.h"
 #include "r600_public.h"
 #include "r600_isa.h"
+#include "evergreen_compute.h"
 #include "r600d.h"
 
 #include <errno.h>

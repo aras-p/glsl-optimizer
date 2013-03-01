@@ -39,6 +39,7 @@
 #include "r600_pipe.h"
 #include "r600_formats.h"
 #include "compute_memory_pool.h"
+#include "evergreen_compute.h"
 #include "evergreen_compute_internal.h"
 #include <inttypes.h>
 

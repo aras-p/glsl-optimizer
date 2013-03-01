@@ -25,6 +25,7 @@
  *      Corbin Simpson
  */
 #include "r600_formats.h"
+#include "evergreen_compute.h"
 #include "r600d.h"
 
 #include <errno.h>
