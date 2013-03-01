@@ -84,10 +84,9 @@ static struct si_shader_context * si_shader_context(
 
 enum sgpr_type {
 	SGPR_CONST_PTR_F32,
-	SGPR_CONST_PTR_V4I32,
-	SGPR_CONST_PTR_V8I32,
-	SGPR_I32,
-	SGPR_I64
+	SGPR_CONST_PTR_V16I8,
+	SGPR_CONST_PTR_V32I8,
+	SGPR_I32
 };
 
 /**
@@ -149,22 +148,17 @@ static LLVMValueRef use_sgpr(
 		ret_type = LLVMInt32TypeInContext(gallivm->context);
 		break;
 
-	case SGPR_I64:
+	case SGPR_CONST_PTR_V16I8:
 		assert(sgpr % 2 == 0);
-		ret_type= LLVMInt64TypeInContext(gallivm->context);
-		break;
-
-	case SGPR_CONST_PTR_V4I32:
-		assert(sgpr % 2 == 0);
-		ret_type = LLVMInt32TypeInContext(gallivm->context);
-		ret_type = LLVMVectorType(ret_type, 4);
+		ret_type = LLVMInt8TypeInContext(gallivm->context);
+		ret_type = LLVMVectorType(ret_type, 16);
 		ret_type = LLVMPointerType(ret_type, CONST_ADDR_SPACE);
 		break;
 
-	case SGPR_CONST_PTR_V8I32:
+	case SGPR_CONST_PTR_V32I8:
 		assert(sgpr % 2 == 0);
-		ret_type = LLVMInt32TypeInContext(gallivm->context);
-		ret_type = LLVMVectorType(ret_type, 8);
+		ret_type = LLVMInt8TypeInContext(gallivm->context);
+		ret_type = LLVMVectorType(ret_type, 32);
 		ret_type = LLVMPointerType(ret_type, CONST_ADDR_SPACE);
 		break;
 
@@ -197,7 +191,7 @@ static void declare_input_vs(
 	unsigned chan;
 
 	/* Load the T list */
-	t_list_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_V4I32, SI_SGPR_VERTEX_BUFFER);
+	t_list_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_V16I8, SI_SGPR_VERTEX_BUFFER);
 
 	t_offset = lp_build_const_int32(base->gallivm, input_index);
 
@@ -944,14 +938,14 @@ static void tex_fetch_args(
 	emit_data->args[1] = lp_build_gather_values(gallivm, address, count);
 
 	/* Resource */
-	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V8I32, SI_SGPR_RESOURCE);
+	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V32I8, SI_SGPR_RESOURCE);
 	offset = lp_build_const_int32(bld_base->base.gallivm,
 				  emit_data->inst->Src[1].Register.Index);
 	emit_data->args[2] = build_indexed_load(bld_base->base.gallivm,
 						ptr, offset);
 
 	/* Sampler */
-	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V4I32, SI_SGPR_SAMPLER);
+	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V16I8, SI_SGPR_SAMPLER);
 	offset = lp_build_const_int32(bld_base->base.gallivm,
 				  emit_data->inst->Src[1].Register.Index);
 	emit_data->args[3] = build_indexed_load(bld_base->base.gallivm,
