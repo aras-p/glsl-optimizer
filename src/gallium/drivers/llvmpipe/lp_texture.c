@@ -577,7 +577,8 @@ llvmpipe_create_surface(struct pipe_context *pipe,
    struct pipe_surface *ps;
 
    assert(surf_tmpl->u.tex.level <= pt->last_level);
-   assert(pt->bind & (PIPE_BIND_DEPTH_STENCIL | PIPE_BIND_RENDER_TARGET));
+   if (!(pt->bind & (PIPE_BIND_DEPTH_STENCIL | PIPE_BIND_RENDER_TARGET)))
+      debug_printf("Illegal surface creation without bind flag\n");
 
    ps = CALLOC_STRUCT(pipe_surface);
    if (ps) {

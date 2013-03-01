@@ -218,9 +218,8 @@ llvmpipe_create_sampler_view(struct pipe_context *pipe,
     * XXX we REALLY want to see the correct bind flag here but the OpenGL
     * state tracker can't guarantee that at least for texture buffer objects.
     */
-#if 0
-   assert(texture->bind & PIPE_BIND_SAMPLER_VIEW);
-#endif
+   if (!(texture->bind & PIPE_BIND_SAMPLER_VIEW))
+      debug_printf("Illegal sampler view creation without bind flag\n");
 
    if (view) {
       *view = *templ;
