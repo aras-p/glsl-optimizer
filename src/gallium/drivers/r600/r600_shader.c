@@ -108,6 +108,33 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				 struct r600_pipe_shader *pipeshader,
 				 struct r600_shader_key key);
 
+static unsigned tgsi_get_processor_type(const struct tgsi_token *tokens)
+{
+	struct tgsi_parse_context parse;
+
+	if (tgsi_parse_init( &parse, tokens ) != TGSI_PARSE_OK) {
+		debug_printf("tgsi_parse_init() failed in %s:%i!\n", __func__, __LINE__);
+		return ~0;
+	}
+	return parse.FullHeader.Processor.Processor;
+}
+
+static bool r600_can_dump_shader(struct r600_screen *rscreen, unsigned processor_type)
+{
+	switch (processor_type) {
+	case TGSI_PROCESSOR_VERTEX:
+		return (rscreen->debug_flags & DBG_VS) != 0;
+	case TGSI_PROCESSOR_GEOMETRY:
+		return (rscreen->debug_flags & DBG_GS) != 0;
+	case TGSI_PROCESSOR_FRAGMENT:
+		return (rscreen->debug_flags & DBG_PS) != 0;
+	case TGSI_PROCESSOR_COMPUTE:
+		return (rscreen->debug_flags & DBG_CS) != 0;
+	default:
+		return false;
+	}
+}
+
 static void r600_dump_streamout(struct pipe_stream_output_info *so)
 {
 	unsigned i;
@@ -132,19 +159,14 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 			    struct r600_pipe_shader *shader,
 			    struct r600_shader_key key)
 {
-	static int dump_shaders = -1;
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_shader_selector *sel = shader->selector;
 	int r;
+	bool dump = r600_can_dump_shader(rctx->screen, tgsi_get_processor_type(sel->tokens));
 
 	shader->shader.bc.isa = rctx->isa;
 
-	/* Would like some magic "get_bool_option_once" routine.
-	*/
-	if (dump_shaders == -1)
-		dump_shaders = debug_get_num_option("R600_DUMP_SHADERS", 0);
-
-	if (dump_shaders) {
+	if (dump) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
 		tgsi_dump(sel->tokens, 0);
 
@@ -162,12 +184,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		R600_ERR("building bytecode failed !\n");
 		return r;
 	}
-	if (dump_shaders & 1) {
-		fprintf(stderr, "--------------------------------------------------------------\n");
-		r600_bytecode_dump(&shader->shader.bc);
-		fprintf(stderr, "______________________________________________________________\n");
-	}
-	if (dump_shaders & 2) {
+	if (dump) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
 		r600_bytecode_disasm(&shader->shader.bc);
 		fprintf(stderr, "______________________________________________________________\n");
@@ -260,11 +277,7 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 	unsigned char * bytes;
 	unsigned byte_count;
 	struct r600_shader_ctx shader_ctx;
-	unsigned dump = 0;
-
-	if (debug_get_bool_option("R600_DUMP_SHADERS", FALSE)) {
-		dump = 1;
-	}
+	bool dump = (r600_ctx->screen->debug_flags & DBG_CS) != 0;
 
 	r600_llvm_compile(mod, &bytes, &byte_count, r600_ctx->family , dump);
 	shader_ctx.bc = bytecode;
@@ -278,7 +291,7 @@ int r600_compute_shader_create(struct pipe_context * ctx,
 	}
 	r600_bytecode_build(shader_ctx.bc);
 	if (dump) {
-		r600_bytecode_dump(shader_ctx.bc);
+		r600_bytecode_disasm(shader_ctx.bc);
 	}
 	free(bytes);
 	return 1;
@@ -1240,7 +1253,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	unsigned inst_byte_count = 0;
 
 #ifdef R600_USE_LLVM
-	use_llvm = debug_get_bool_option("R600_LLVM", TRUE);
+	use_llvm = !(ctx->screen->debug_flags & DBG_NO_LLVM);
 #endif
 	ctx.bc = &shader->bc;
 	ctx.shader = shader;
@@ -1416,7 +1429,8 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	if (use_llvm) {
 		struct radeon_llvm_context radeon_llvm_ctx;
 		LLVMModuleRef mod;
-		unsigned dump = 0;
+		bool dump = r600_can_dump_shader(rscreen, ctx.type);
+
 		memset(&radeon_llvm_ctx, 0, sizeof(radeon_llvm_ctx));
 		radeon_llvm_ctx.type = ctx.type;
 		radeon_llvm_ctx.two_side = shader->two_side;
@@ -1430,11 +1444,9 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		radeon_llvm_ctx.clip_vertex = ctx.cv_output;
 		radeon_llvm_ctx.alpha_to_one = key.alpha_to_one;
 		mod = r600_tgsi_llvm(&radeon_llvm_ctx, tokens);
-		if (debug_get_bool_option("R600_DUMP_SHADERS", FALSE)) {
-			dump = 1;
-		}
+
 		if (r600_llvm_compile(mod, &inst_bytes, &inst_byte_count,
-							rscreen->family, dump)) {
+				      rscreen->family, dump)) {
 			FREE(inst_bytes);
 			radeon_llvm_dispose(&radeon_llvm_ctx);
 			use_llvm = 0;

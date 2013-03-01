@@ -54,20 +54,16 @@ void r600_compute_global_transfer_inline_write( struct pipe_context *, struct pi
                                                 unsigned usage, const struct pipe_box *, const void *data, unsigned stride, unsigned layer_stride);
 
 
-static inline void COMPUTE_DBG(const char *fmt, ...)
+static inline void COMPUTE_DBG(struct r600_screen *rscreen, const char *fmt, ...)
 {
-   static bool check_debug = false, debug = false;
+	if (!(rscreen->debug_flags & DBG_COMPUTE)) {
+		return;
+	}
 
-   if (!check_debug) {
-		debug = debug_get_bool_option("R600_COMPUTE_DEBUG", FALSE);
-   }
-
-   if (debug) {
-      va_list ap;
-      va_start(ap, fmt);
-      _debug_vprintf(fmt, ap);
-      va_end(ap);
-   }
+	va_list ap;
+	va_start(ap, fmt);
+	_debug_vprintf(fmt, ap);
+	va_end(ap);
 }
 
 #endif

@@ -2465,7 +2465,6 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 				      const struct pipe_vertex_element *elements)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	static int dump_shaders = -1;
 	struct r600_bytecode bc;
 	struct r600_bytecode_vtx vtx;
 	const struct util_format_description *desc;
@@ -2571,15 +2570,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 		return NULL;
 	}
 
-	if (dump_shaders == -1)
-		dump_shaders = debug_get_num_option("R600_DUMP_SHADERS", 0);
-
-	if (dump_shaders & 1) {
-		fprintf(stderr, "--------------------------------------------------------------\n");
-		r600_bytecode_dump(&bc);
-		fprintf(stderr, "______________________________________________________________\n");
-	}
-	if (dump_shaders & 2) {
+	if (rctx->screen->debug_flags & DBG_FS) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
 		r600_bytecode_disasm(&bc);
 		fprintf(stderr, "______________________________________________________________\n");

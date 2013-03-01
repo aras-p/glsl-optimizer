@@ -223,9 +223,23 @@ typedef boolean (*r600g_dma_blit_t)(struct pipe_context *ctx,
 				unsigned src_level,
 				const struct pipe_box *src_box);
 
+/* logging */
+#define DBG_TEX_DEPTH		(1 << 0)
+#define DBG_COMPUTE		(1 << 1)
+/* shaders */
+#define DBG_FS			(1 << 8)
+#define DBG_VS			(1 << 9)
+#define DBG_GS			(1 << 10)
+#define DBG_PS			(1 << 11)
+#define DBG_CS			(1 << 12)
+/* features */
+#define DBG_NO_HYPERZ		(1 << 16)
+#define DBG_NO_LLVM		(1 << 17)
+
 struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon_winsys		*ws;
+	unsigned			debug_flags;
 	unsigned			family;
 	enum chip_class			chip_class;
 	struct radeon_info		info;
@@ -233,7 +247,6 @@ struct r600_screen {
 	bool				has_msaa;
 	bool				has_cp_dma;
 	enum r600_msaa_texture_mode	msaa_texture_support;
-	bool				use_hyperz;
 	struct r600_tiling_info		tiling_info;
 	struct r600_pipe_fences		fences;
 

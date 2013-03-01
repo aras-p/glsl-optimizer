@@ -281,7 +281,7 @@ void evergreen_set_rat(
 
 	rctx = pipe->ctx;
 
-	COMPUTE_DBG("bind rat: %i \n", id);
+	COMPUTE_DBG(rctx->screen, "bind rat: %i \n", id);
 
 	/* Create the RAT surface */
 	memset(&rat_templ, 0, sizeof(rat_templ));

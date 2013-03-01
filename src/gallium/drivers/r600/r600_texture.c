@@ -400,8 +400,6 @@ static void r600_texture_allocate_cmask(struct r600_screen *rscreen,
 #endif
 }
 
-DEBUG_GET_ONCE_BOOL_OPTION(print_texdepth, "R600_PRINT_TEXDEPTH", FALSE);
-
 static struct r600_texture *
 r600_texture_create_object(struct pipe_screen *screen,
 			   const struct pipe_resource *base,
@@ -457,7 +455,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 	rtex->htile = NULL;
 	if (!(base->flags & (R600_RESOURCE_FLAG_TRANSFER | R600_RESOURCE_FLAG_FLUSHED_DEPTH)) &&
 	    util_format_is_depth_or_stencil(base->format) &&
-	    rscreen->use_hyperz &&
+	    rscreen->info.drm_minor >= 26 &&
+	    !(rscreen->debug_flags & DBG_NO_HYPERZ) &&
 	    base->target == PIPE_TEXTURE_2D &&
 	    rtex->surface.level[0].nblk_x >= 32 &&
 	    rtex->surface.level[0].nblk_y >= 32) {
@@ -511,7 +510,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 		rscreen->ws->buffer_unmap(resource->cs_buf);
 	}
 
-	if (debug_get_option_print_texdepth() && rtex->is_depth && rtex->non_disp_tiling) {
+	if (rscreen->debug_flags & DBG_TEX_DEPTH && rtex->is_depth && rtex->non_disp_tiling) {
 		printf("Texture: npix_x=%u, npix_y=%u, npix_z=%u, blk_w=%u, "
 		       "blk_h=%u, blk_d=%u, array_size=%u, last_level=%u, "
 		       "bpe=%u, nsamples=%u, flags=%u\n",

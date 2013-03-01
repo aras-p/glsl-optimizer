@@ -29,6 +29,7 @@
 #include <errno.h>
 #include "pipe/p_shader_tokens.h"
 #include "util/u_blitter.h"
+#include "util/u_debug.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
@@ -37,6 +38,27 @@
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
 #include "os/os_time.h"
+
+static const struct debug_named_value debug_options[] = {
+	/* logging */
+	{ "texdepth", DBG_TEX_DEPTH, "Print texture depth info" },
+	{ "compute", DBG_COMPUTE, "Print compute info" },
+
+	/* shaders */
+	{ "fs", DBG_FS, "Print fetch shaders" },
+	{ "vs", DBG_VS, "Print vertex shaders" },
+	{ "gs", DBG_GS, "Print geometry shaders" },
+	{ "ps", DBG_PS, "Print pixel shaders" },
+	{ "cs", DBG_CS, "Print compute shaders" },
+
+	/* features */
+	{ "nohyperz", DBG_NO_HYPERZ, "Disable Hyper-Z" },
+#if defined(R600_USE_LLVM)
+	{ "nollvm", DBG_NO_LLVM, "Disable the LLVM shader compiler" },
+#endif
+
+	DEBUG_NAMED_VALUE_END /* must be last */
+};
 
 /*
  * pipe_context
@@ -1071,8 +1093,10 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->ws = ws;
 	ws->query_info(ws, &rscreen->info);
 
+	rscreen->debug_flags = debug_get_flags_option("R600_DEBUG", debug_options, 0);
 	rscreen->family = rscreen->info.family;
 	rscreen->chip_class = rscreen->info.chip_class;
+
 	if (rscreen->family == CHIP_UNKNOWN) {
 		fprintf(stderr, "r600: Unknown chipset 0x%04X\n", rscreen->info.pci_id);
 		FREE(rscreen);
@@ -1163,14 +1187,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	LIST_INITHEAD(&rscreen->fences.pool);
 	LIST_INITHEAD(&rscreen->fences.blocks);
 	pipe_mutex_init(rscreen->fences.mutex);
-
-	/* Hyperz is very lockup prone any code that touch related part should be
-	 * carefully tested especialy on r6xx/r7xx Development show that some piglit
-	 * case were triggering lockup quickly such as :
-	 * piglit/bin/depthstencil-render-miplevels 1024 d=s=z24_s8
-	 */
-	rscreen->use_hyperz = debug_get_bool_option("R600_HYPERZ", TRUE);
-	rscreen->use_hyperz = rscreen->info.drm_minor >= 26 ? rscreen->use_hyperz : FALSE;
 
 	rscreen->global_pool = compute_memory_pool_new(rscreen);
 

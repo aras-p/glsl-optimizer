@@ -37,7 +37,7 @@ int r600_isa_init(struct r600_context *ctx, struct r600_isa *isa) {
 #if defined R600_USE_LLVM || defined HAVE_OPENCL
 	unsigned i, use_llvm;
 
-	use_llvm = debug_get_bool_option("R600_LLVM", TRUE);
+	use_llvm = !(ctx->screen->debug_flags & DBG_NO_LLVM);
 
 	if (!use_llvm)
 		return 0;
