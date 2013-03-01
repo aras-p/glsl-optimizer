@@ -1222,9 +1222,9 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 	     (rctx->rasterizer->flatshade != rctx->ps_shader->current->flatshade))) {
 
 		if (rctx->chip_class >= EVERGREEN)
-			evergreen_pipe_shader_ps(ctx, rctx->ps_shader->current);
+			evergreen_update_ps_state(ctx, rctx->ps_shader->current);
 		else
-			r600_pipe_shader_ps(ctx, rctx->ps_shader->current);
+			r600_update_ps_state(ctx, rctx->ps_shader->current);
 
 		ps_dirty = 1;
 	}

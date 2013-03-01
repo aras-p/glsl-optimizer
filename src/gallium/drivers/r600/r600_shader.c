@@ -58,52 +58,6 @@ issued in the w slot as well.
 The compiler must issue the source argument to slots z, y, and x
 */
 
-static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_shader *rshader = &shader->shader;
-	uint32_t *ptr;
-	int	i;
-
-	/* copy new shader */
-	if (shader->bo == NULL) {
-		shader->bo = (struct r600_resource*)
-			pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE, rshader->bc.ndw * 4);
-		if (shader->bo == NULL) {
-			return -ENOMEM;
-		}
-		ptr = r600_buffer_mmap_sync_with_rings(rctx, shader->bo, PIPE_TRANSFER_WRITE);
-		if (R600_BIG_ENDIAN) {
-			for (i = 0; i < rshader->bc.ndw; ++i) {
-				ptr[i] = bswap_32(rshader->bc.bytecode[i]);
-			}
-		} else {
-			memcpy(ptr, rshader->bc.bytecode, rshader->bc.ndw * sizeof(*ptr));
-		}
-		rctx->ws->buffer_unmap(shader->bo->cs_buf);
-	}
-	/* build state */
-	switch (rshader->processor_type) {
-	case TGSI_PROCESSOR_VERTEX:
-		if (rctx->chip_class >= EVERGREEN) {
-			evergreen_pipe_shader_vs(ctx, shader);
-		} else {
-			r600_pipe_shader_vs(ctx, shader);
-		}
-		break;
-	case TGSI_PROCESSOR_FRAGMENT:
-		if (rctx->chip_class >= EVERGREEN) {
-			evergreen_pipe_shader_ps(ctx, shader);
-		} else {
-			r600_pipe_shader_ps(ctx, shader);
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
-
 static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				 struct r600_pipe_shader *pipeshader,
 				 struct r600_shader_key key);
@@ -161,7 +115,8 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_shader_selector *sel = shader->selector;
-	int r;
+	int r, i;
+	uint32_t *ptr;
 	bool dump = r600_can_dump_shader(rctx->screen, tgsi_get_processor_type(sel->tokens));
 
 	shader->shader.bc.isa = rctx->isa;
@@ -190,7 +145,45 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		fprintf(stderr, "______________________________________________________________\n");
 	}
 
-	return r600_pipe_shader(ctx, shader);
+
+	/* Store the shader in a buffer. */
+	if (shader->bo == NULL) {
+		shader->bo = (struct r600_resource*)
+			pipe_buffer_create(ctx->screen, PIPE_BIND_CUSTOM, PIPE_USAGE_IMMUTABLE, shader->shader.bc.ndw * 4);
+		if (shader->bo == NULL) {
+			return -ENOMEM;
+		}
+		ptr = r600_buffer_mmap_sync_with_rings(rctx, shader->bo, PIPE_TRANSFER_WRITE);
+		if (R600_BIG_ENDIAN) {
+			for (i = 0; i < shader->shader.bc.ndw; ++i) {
+				ptr[i] = bswap_32(shader->shader.bc.bytecode[i]);
+			}
+		} else {
+			memcpy(ptr, shader->shader.bc.bytecode, shader->shader.bc.ndw * sizeof(*ptr));
+		}
+		rctx->ws->buffer_unmap(shader->bo->cs_buf);
+	}
+
+	/* Build state. */
+	switch (shader->shader.processor_type) {
+	case TGSI_PROCESSOR_VERTEX:
+		if (rctx->chip_class >= EVERGREEN) {
+			evergreen_update_vs_state(ctx, shader);
+		} else {
+			r600_update_vs_state(ctx, shader);
+		}
+		break;
+	case TGSI_PROCESSOR_FRAGMENT:
+		if (rctx->chip_class >= EVERGREEN) {
+			evergreen_update_ps_state(ctx, shader);
+		} else {
+			r600_update_ps_state(ctx, shader);
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
 }
 
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader)

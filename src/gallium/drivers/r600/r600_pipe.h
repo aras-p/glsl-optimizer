@@ -626,8 +626,8 @@ void cayman_init_common_regs(struct r600_command_buffer *cb,
 
 void evergreen_init_state_functions(struct r600_context *rctx);
 void evergreen_init_atom_start_cs(struct r600_context *rctx);
-void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
-void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+void evergreen_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+void evergreen_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void *evergreen_create_db_flush_dsa(struct r600_context *rctx);
 void *evergreen_create_resolve_blend(struct r600_context *rctx);
 void *evergreen_create_decompress_blend(struct r600_context *rctx);
@@ -701,8 +701,8 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 				unsigned width_first_level, unsigned height_first_level);
 void r600_init_state_functions(struct r600_context *rctx);
 void r600_init_atom_start_cs(struct r600_context *rctx);
-void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
-void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+void r600_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void *r600_create_db_flush_dsa(struct r600_context *rctx);
 void *r600_create_resolve_blend(struct r600_context *rctx);
 void *r700_create_resolve_blend(struct r600_context *rctx);

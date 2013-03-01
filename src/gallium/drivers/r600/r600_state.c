@@ -2754,7 +2754,7 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_loop_const(cb, R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x1000FFF);
 }
 
-void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+void r600_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
@@ -2874,7 +2874,7 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 		shader->flatshade = rctx->rasterizer->flatshade;
 }
 
-void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;

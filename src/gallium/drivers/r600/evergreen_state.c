@@ -3311,7 +3311,7 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF);
 }
 
-void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+void evergreen_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
@@ -3460,7 +3460,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 		shader->flatshade = rctx->rasterizer->flatshade;
 }
 
-void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+void evergreen_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
