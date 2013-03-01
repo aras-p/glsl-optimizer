@@ -138,7 +138,7 @@ static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_p
 	printf("**** %s:\n", name);
 	//_mesa_print_ir (ir, state);
 	char* foobar = _mesa_print_ir_glsl(ir, state, ralloc_strdup(memctx, ""), kPrintGlslFragment);
-	printf(foobar);
+	printf("%s\n", foobar);
 	validate_ir_tree(ir);
 	#endif
 }
