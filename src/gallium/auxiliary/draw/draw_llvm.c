@@ -1349,35 +1349,40 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                   sampler,
                   variant->key.clamp_vertex_color);
 
-      /* store original positions in clip before further manipulation */
-      store_clip(gallivm, vs_type, io, outputs, 0, cv);
-      store_clip(gallivm, vs_type, io, outputs, 1, pos);
+      if (pos != -1) {
+         /* store original positions in clip before further manipulation */
+         store_clip(gallivm, vs_type, io, outputs, 0, cv);
+         store_clip(gallivm, vs_type, io, outputs, 1, pos);
 
-      /* do cliptest */
-      if (enable_cliptest) {
-         LLVMValueRef temp = LLVMBuildLoad(builder, clipmask_bool_ptr, "");
-         /* allocate clipmask, assign it integer type */
-         clipmask = generate_clipmask(llvm,
-                                      gallivm,
-                                      vs_type,
-                                      outputs,
-                                      variant->key.clip_xy,
-                                      variant->key.clip_z, 
-                                      variant->key.clip_user,
-                                      variant->key.clip_halfz,
-                                      variant->key.ucp_enable,
-                                      context_ptr, &have_clipdist);
-         temp = LLVMBuildOr(builder, clipmask, temp, "");
-         /* store temporary clipping boolean value */
-         LLVMBuildStore(builder, temp, clipmask_bool_ptr);
+         /* do cliptest */
+         if (enable_cliptest) {
+            LLVMValueRef temp = LLVMBuildLoad(builder, clipmask_bool_ptr, "");
+            /* allocate clipmask, assign it integer type */
+            clipmask = generate_clipmask(llvm,
+                                         gallivm,
+                                         vs_type,
+                                         outputs,
+                                         variant->key.clip_xy,
+                                         variant->key.clip_z,
+                                         variant->key.clip_user,
+                                         variant->key.clip_halfz,
+                                         variant->key.ucp_enable,
+                                         context_ptr, &have_clipdist);
+            temp = LLVMBuildOr(builder, clipmask, temp, "");
+            /* store temporary clipping boolean value */
+            LLVMBuildStore(builder, temp, clipmask_bool_ptr);
+         }
+         else {
+            clipmask = lp_build_const_int_vec(gallivm, lp_int_type(vs_type), 0);
+         }
+
+         /* do viewport mapping */
+         if (!bypass_viewport) {
+            generate_viewport(variant, builder, vs_type, outputs, context_ptr);
+         }
       }
       else {
          clipmask = lp_build_const_int_vec(gallivm, lp_int_type(vs_type), 0);
-      }
-      
-      /* do viewport mapping */
-      if (!bypass_viewport) {
-         generate_viewport(variant, builder, vs_type, outputs, context_ptr);
       }
 
       /* store clipmask in vertex header, 
