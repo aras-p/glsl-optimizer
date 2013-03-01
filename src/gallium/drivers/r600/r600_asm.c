@@ -28,6 +28,7 @@
 
 #include <errno.h>
 #include <byteswap.h>
+#include "util/u_dump.h"
 #include "util/u_memory.h"
 #include "pipe/p_shader_tokens.h"
 
@@ -2333,6 +2334,13 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 
 	if (rctx->screen->debug_flags & DBG_FS) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
+		fprintf(stderr, "Vertex elements state:\n");
+		for (i = 0; i < count; i++) {
+			fprintf(stderr, "   ");
+			util_dump_vertex_element(stderr, elements+i);
+			fprintf(stderr, "\n");
+		}
+
 		r600_bytecode_disasm(&bc);
 		fprintf(stderr, "______________________________________________________________\n");
 	}
