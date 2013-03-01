@@ -957,15 +957,15 @@ static boolean radeon_winsys_bo_get_handle(struct pb_buffer *buffer,
 
             bo->flinked = TRUE;
             bo->flink = flink.name;
+
+            pipe_mutex_lock(bo->mgr->bo_handles_mutex);
+            util_hash_table_set(bo->mgr->bo_handles, (void*)(uintptr_t)bo->flink, bo);
+            pipe_mutex_unlock(bo->mgr->bo_handles_mutex);
         }
         whandle->handle = bo->flink;
     } else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
         whandle->handle = bo->handle;
     }
-
-    pipe_mutex_lock(bo->mgr->bo_handles_mutex);
-    util_hash_table_set(bo->mgr->bo_handles, (void*)(uintptr_t)whandle->handle, bo);
-    pipe_mutex_unlock(bo->mgr->bo_handles_mutex);
 
     whandle->stride = stride;
     return TRUE;
