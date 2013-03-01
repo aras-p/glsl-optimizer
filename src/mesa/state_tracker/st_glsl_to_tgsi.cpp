@@ -1942,6 +1942,10 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
       }
       break;
    }
+   case ir_triop_lrp:
+      /* note: we have to reorder the three args here */
+      emit(ir, TGSI_OPCODE_LRP, result_dst, op[2], op[1], op[0]);
+      break;
    case ir_unop_pack_snorm_2x16:
    case ir_unop_pack_unorm_2x16:
    case ir_unop_pack_half_2x16:
@@ -5189,7 +5193,6 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
                          DIV_TO_MUL_RCP |
                          EXP_TO_EXP2 |
                          LOG_TO_LOG2 |
-                         LRP_TO_ARITH |
                          (options->EmitNoPow ? POW_TO_EXP2 : 0) |
                          (!ctx->Const.NativeIntegers ? INT_DIV_TO_MUL_RCP : 0));
 
