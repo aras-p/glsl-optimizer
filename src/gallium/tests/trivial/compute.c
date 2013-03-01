@@ -1076,6 +1076,13 @@ static void test_surface_ld(struct context *ctx)
 
                 printf("   - %s\n", util_format_name(surface_fmts[i]));
 
+                if (!ctx->screen->is_format_supported(ctx->screen,
+                       surface_fmts[i], PIPE_TEXTURE_2D, 1,
+                       PIPE_BIND_COMPUTE_RESOURCE)) {
+                   printf("(unsupported)\n");
+                   continue;
+                }
+
                 init_tex(ctx, 0, PIPE_TEXTURE_2D, true, surface_fmts[i],
                          128, 32, (is_int ? init0i : init0f));
                 init_tex(ctx, 1, PIPE_TEXTURE_2D, true, PIPE_FORMAT_R32_FLOAT,
@@ -1175,6 +1182,13 @@ static void test_surface_st(struct context *ctx)
                 bool is_int = util_format_is_pure_integer(surface_fmts[i]);
 
                 printf("   - %s\n", util_format_name(surface_fmts[i]));
+
+                if (!ctx->screen->is_format_supported(ctx->screen,
+                       surface_fmts[i], PIPE_TEXTURE_2D, 1,
+                       PIPE_BIND_COMPUTE_RESOURCE)) {
+                   printf("(unsupported)\n");
+                   continue;
+                }
 
                 init_tex(ctx, 0, PIPE_TEXTURE_2D, true, PIPE_FORMAT_R32_FLOAT,
                          512, 32, (is_int ? init0i : init0f));
@@ -1561,24 +1575,45 @@ int main(int argc, char *argv[])
 {
         struct context *ctx = CALLOC_STRUCT(context);
 
+        unsigned tests = (argc > 1) ? strtoul(argv[1], NULL, 0) : ~0;
+
         init_ctx(ctx);
-        test_system_values(ctx);
-        test_resource_access(ctx);
-        test_function_calls(ctx);
-        test_input_global(ctx);
-        test_private(ctx);
-        test_local(ctx);
-        test_sample(ctx);
-        test_many_kern(ctx);
-        test_constant(ctx);
-        test_resource_indirect(ctx);
-        test_surface_ld(ctx);
-        test_surface_st(ctx);
-        test_barrier(ctx);
-        test_atom_ops(ctx, true);
-        test_atom_race(ctx, true);
-        test_atom_ops(ctx, false);
-        test_atom_race(ctx, false);
+
+        if (tests & (1 << 0))
+           test_system_values(ctx);
+        if (tests & (1 << 1))
+           test_resource_access(ctx);
+        if (tests & (1 << 2))
+           test_function_calls(ctx);
+        if (tests & (1 << 3))
+           test_input_global(ctx);
+        if (tests & (1 << 4))
+           test_private(ctx);
+        if (tests & (1 << 5))
+           test_local(ctx);
+        if (tests & (1 << 6))
+           test_sample(ctx);
+        if (tests & (1 << 7))
+           test_many_kern(ctx);
+        if (tests & (1 << 8))
+           test_constant(ctx);
+        if (tests & (1 << 9))
+           test_resource_indirect(ctx);
+        if (tests & (1 << 10))
+           test_surface_ld(ctx);
+        if (tests & (1 << 11))
+           test_surface_st(ctx);
+        if (tests & (1 << 12))
+           test_barrier(ctx);
+        if (tests & (1 << 13))
+           test_atom_ops(ctx, true);
+        if (tests & (1 << 14))
+           test_atom_race(ctx, true);
+        if (tests & (1 << 15))
+           test_atom_ops(ctx, false);
+        if (tests & (1 << 16))
+           test_atom_race(ctx, false);
+
         destroy_ctx(ctx);
 
         return 0;
