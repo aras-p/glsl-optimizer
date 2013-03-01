@@ -234,7 +234,6 @@ int r600_bytecode_add_alu_type(struct r600_bytecode *bc,
 void r600_bytecode_special_constants(uint32_t value,
 		unsigned *sel, unsigned *neg);
 void r600_bytecode_disasm(struct r600_bytecode *bc);
-void r600_bytecode_dump(struct r600_bytecode *bc);
 void r600_bytecode_alu_read(struct r600_bytecode *bc,
 		struct r600_bytecode_alu *alu, uint32_t word0, uint32_t word1);
 
