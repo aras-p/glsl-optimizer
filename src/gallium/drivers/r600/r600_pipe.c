@@ -1123,7 +1123,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		break;
 	}
 
-	rscreen->has_cp_dma = rscreen->info.drm_minor >= 27 && rscreen->chip_class >= R700;
+	rscreen->has_cp_dma = rscreen->info.drm_minor >= 27;
 
 	if (r600_init_tiling(rscreen)) {
 		FREE(rscreen);
