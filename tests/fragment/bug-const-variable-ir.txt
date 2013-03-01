@@ -1,0 +1,42 @@
+uniform float mode;
+vec3 func (
+  in vec3 c_1
+)
+{
+  if ((mode == 2.0)) {
+    return c_1;
+  };
+  if ((mode == 3.0)) {
+    discard;
+  };
+  if ((mode == 10.0)) {
+    vec3 tmpvar_2;
+    tmpvar_2 = vec3(0.6, 0.6, 0.6);
+    c_1 = tmpvar_2;
+  };
+  return c_1;
+}
+
+void main ()
+{
+  vec3 col_3;
+  vec4 c_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = gl_FragCoord;
+  c_4 = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = c_4.xyz;
+  col_3 = tmpvar_6;
+  vec3 tmpvar_7;
+  tmpvar_7 = func (col_3);
+  vec3 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  col_3 = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9.xyz = col_3.xyz;
+  tmpvar_9.w = c_4.w;
+  vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  gl_FragColor = tmpvar_10;
+}
+

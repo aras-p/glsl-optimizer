@@ -1,0 +1,18 @@
+uniform float mode;
+void main ()
+{
+  vec3 tmpvar_1;
+  if ((mode == 2.0)) {
+    tmpvar_1 = vec3(0.6, 0.6, 0.6);
+  } else {
+    if ((mode == 3.0)) {
+      discard;
+    };
+    tmpvar_1 = vec3(0.6, 0.6, 0.6);
+  };
+  vec4 tmpvar_2;
+  tmpvar_2.xyz = tmpvar_1;
+  tmpvar_2.w = gl_FragCoord.w;
+  gl_FragColor = tmpvar_2;
+}
+
