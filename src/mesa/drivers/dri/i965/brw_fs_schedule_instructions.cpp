@@ -57,7 +57,7 @@ static bool debug = false;
 class schedule_node : public exec_node
 {
 public:
-   schedule_node(fs_inst *inst, int gen)
+   schedule_node(fs_inst *inst, const struct intel_context *intel)
    {
       this->inst = inst;
       this->child_array_size = 0;
@@ -67,14 +67,14 @@ public:
       this->parent_count = 0;
       this->unblocked_time = 0;
 
-      if (gen >= 7)
-         set_latency_gen7();
+      if (intel->gen >= 7)
+         set_latency_gen7(intel->is_haswell);
       else
          set_latency_gen4();
    }
 
    void set_latency_gen4();
-   void set_latency_gen7();
+   void set_latency_gen7(bool is_haswell);
 
    fs_inst *inst;
    schedule_node **children;
@@ -125,7 +125,7 @@ schedule_node::set_latency_gen4()
 }
 
 void
-schedule_node::set_latency_gen7()
+schedule_node::set_latency_gen7(bool is_haswell)
 {
    switch (inst->opcode) {
    case BRW_OPCODE_MAD:
@@ -137,7 +137,7 @@ schedule_node::set_latency_gen7()
        * mad(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g2.1<4,1,1>F.x { align16 WE_normal 1Q };
        * mov(8) null   g4<4,4,1>F                     { align16 WE_normal 1Q };
        */
-      latency = 17;
+      latency = is_haswell ? 16 : 17;
       break;
 
    case SHADER_OPCODE_RCP:
@@ -156,7 +156,7 @@ schedule_node::set_latency_gen7()
        *
        * Same for exp2, log2, rsq, sqrt, sin, cos.
        */
-      latency = 16;
+      latency = is_haswell ? 14 : 16;
       break;
 
    case SHADER_OPCODE_POW:
@@ -167,7 +167,7 @@ schedule_node::set_latency_gen7()
        * math pow(8) g4<1>F g2<0,1,0>F   g2.1<0,1,0>F  { align1 WE_normal 1Q };
        * mov(8)      null   g4<8,8,1>F                 { align1 WE_normal 1Q };
        */
-      latency = 24;
+      latency = is_haswell ? 22 : 24;
       break;
 
    case SHADER_OPCODE_TEX:
@@ -335,7 +335,7 @@ public:
 void
 instruction_scheduler::add_inst(fs_inst *inst)
 {
-   schedule_node *n = new(mem_ctx) schedule_node(inst, v->intel->gen);
+   schedule_node *n = new(mem_ctx) schedule_node(inst, v->intel);
 
    assert(!inst->is_head_sentinel());
    assert(!inst->is_tail_sentinel());
