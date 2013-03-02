@@ -568,14 +568,6 @@ struct r600_context {
 	unsigned			current_render_cond_mode;
 	boolean				predicate_drawing;
 
-	/* Deprecated state management. */
-	struct r600_range		*range;
-	unsigned			nblocks;
-	struct r600_block		**blocks;
-	struct list_head		dirty;
-	struct list_head		enable_list;
-	unsigned			pm4_dirty_cdwords;
-
 	struct r600_isa		*isa;
 };
 

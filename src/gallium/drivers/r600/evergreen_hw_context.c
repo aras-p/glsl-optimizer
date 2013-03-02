@@ -28,22 +28,6 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
-int evergreen_context_init(struct r600_context *ctx)
-{
-	int r = 0;
-
-	/* add blocks */
-	r = r600_setup_block_table(ctx);
-	if (r)
-		goto out_err;
-
-	ctx->max_db = 8;
-	return 0;
-out_err:
-	r600_context_fini(ctx);
-	return r;
-}
-
 void evergreen_flush_vgt_streamout(struct r600_context *ctx)
 {
 	struct radeon_winsys_cs *cs = ctx->rings.gfx.cs;

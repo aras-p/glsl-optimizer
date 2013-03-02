@@ -318,8 +318,6 @@ static void r600_destroy_context(struct pipe_context *context)
 	}
 	util_unreference_framebuffer_state(&rctx->framebuffer.state);
 
-	r600_context_fini(rctx);
-
 	if (rctx->blitter) {
 		util_blitter_destroy(rctx->blitter);
 	}
@@ -343,7 +341,6 @@ static void r600_destroy_context(struct pipe_context *context)
 		rctx->ws->cs_destroy(rctx->rings.dma.cs);
 	}
 
-	FREE(rctx->range);
 	FREE(rctx);
 }
 
@@ -372,18 +369,11 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->keep_tiling_flags = rscreen->info.drm_minor >= 12;
 
 	LIST_INITHEAD(&rctx->active_nontimer_queries);
-	LIST_INITHEAD(&rctx->dirty);
-	LIST_INITHEAD(&rctx->enable_list);
-
-	rctx->range = CALLOC(NUM_RANGES, sizeof(struct r600_range));
-	if (!rctx->range)
-		goto fail;
 
 	r600_init_blit_functions(rctx);
 	r600_init_query_functions(rctx);
 	r600_init_context_resource_functions(rctx);
 	r600_init_surface_functions(rctx);
-
 
 	rctx->context.create_video_decoder = vl_create_decoder;
 	rctx->context.create_video_buffer = vl_video_buffer_create;
@@ -395,8 +385,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case R700:
 		r600_init_state_functions(rctx);
 		r600_init_atom_start_cs(rctx);
-		if (r600_context_init(rctx))
-			goto fail;
+		rctx->max_db = 4;
 		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
 		rctx->custom_blend_resolve = rctx->chip_class == R700 ? r700_create_resolve_blend(rctx)
 								      : r600_create_resolve_blend(rctx);
@@ -412,8 +401,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		evergreen_init_state_functions(rctx);
 		evergreen_init_atom_start_cs(rctx);
 		evergreen_init_atom_start_compute_cs(rctx);
-		if (evergreen_context_init(rctx))
-			goto fail;
+		rctx->max_db = 8;
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 		rctx->custom_blend_resolve = evergreen_create_resolve_blend(rctx);
 		rctx->custom_blend_decompress = evergreen_create_decompress_blend(rctx);

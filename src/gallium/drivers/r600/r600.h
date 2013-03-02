@@ -63,63 +63,6 @@ struct r600_resource {
 	struct util_range		valid_buffer_range;
 };
 
-#define R600_BLOCK_MAX_BO		32
-#define R600_BLOCK_MAX_REG		128
-
-/* each range covers 9 bits of dword space = 512 dwords = 2k bytes */
-/* there is a block entry for each register so 512 blocks */
-/* we have no registers to read/write below 0x8000 (0x2000 in dw space) */
-/* we use some fake offsets at 0x40000 to do evergreen sampler borders so take 0x42000 as a max bound*/
-#define RANGE_OFFSET_START 0x8000
-#define HASH_SHIFT 9
-#define NUM_RANGES (0x42000 - RANGE_OFFSET_START) / (4 << HASH_SHIFT) /* 128 << 9 = 64k */
-
-#define CTX_RANGE_ID(offset) ((((offset - RANGE_OFFSET_START) >> 2) >> HASH_SHIFT) & 255)
-#define CTX_BLOCK_ID(offset) (((offset - RANGE_OFFSET_START) >> 2) & ((1 << HASH_SHIFT) - 1))
-
-struct r600_pipe_reg {
-	uint32_t			value;
-	struct r600_block 		*block;
-	struct r600_resource		*bo;
-	enum radeon_bo_usage		bo_usage;
-	uint32_t			id;
-};
-
-struct r600_pipe_state {
-	unsigned			id;
-	unsigned			nregs;
-	struct r600_pipe_reg		regs[R600_BLOCK_MAX_REG];
-};
-
-#define R600_BLOCK_STATUS_ENABLED	(1 << 0)
-#define R600_BLOCK_STATUS_DIRTY		(1 << 1)
-
-struct r600_block_reloc {
-	struct r600_resource	*bo;
-	enum radeon_bo_usage	bo_usage;
-	unsigned		bo_pm4_index;
-};
-
-struct r600_block {
-	struct list_head	list;
-	struct list_head	enable_list;
-	unsigned		status;
-	unsigned                flags;
-	unsigned		start_offset;
-	unsigned		pm4_ndwords;
-	unsigned		nbo;
-	uint16_t 		nreg;
-	uint16_t                nreg_dirty;
-	uint32_t		*reg;
-	uint32_t		pm4[R600_BLOCK_MAX_REG];
-	unsigned		pm4_bo_index[R600_BLOCK_MAX_REG];
-	struct r600_block_reloc	reloc[R600_BLOCK_MAX_BO];
-};
-
-struct r600_range {
-	struct r600_block	**blocks;
-};
-
 struct r600_query_buffer {
 	/* The buffer where query results are stored. */
 	struct r600_resource			*buf;
@@ -169,10 +112,6 @@ struct r600_context;
 struct r600_screen;
 
 void r600_get_backend_mask(struct r600_context *ctx);
-int r600_context_init(struct r600_context *ctx);
-void r600_context_fini(struct r600_context *ctx);
-void r600_context_pipe_state_emit(struct r600_context *ctx, struct r600_pipe_state *state, unsigned pkt_flags);
-void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_state *state);
 void r600_context_flush(struct r600_context *ctx, unsigned flags);
 void r600_begin_new_cs(struct r600_context *ctx);
 
@@ -208,27 +147,9 @@ boolean evergreen_dma_blit(struct pipe_context *ctx,
 			struct pipe_resource *src,
 			unsigned src_level,
 			const struct pipe_box *src_box);
-void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block, unsigned pkt_flags);
 void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 			     struct pipe_resource *dst, uint64_t dst_offset,
 			     struct pipe_resource *src, uint64_t src_offset,
 			     unsigned size);
-
-int evergreen_context_init(struct r600_context *ctx);
-
-void _r600_pipe_state_add_reg_bo(struct r600_context *ctx,
-				 struct r600_pipe_state *state,
-				 uint32_t offset, uint32_t value,
-				 uint32_t range_id, uint32_t block_id,
-				 struct r600_resource *bo,
-				 enum radeon_bo_usage usage);
-
-void _r600_pipe_state_add_reg(struct r600_context *ctx,
-			      struct r600_pipe_state *state,
-			      uint32_t offset, uint32_t value,
-			      uint32_t range_id, uint32_t block_id);
-
-#define r600_pipe_state_add_reg_bo(state, offset, value, bo, usage) _r600_pipe_state_add_reg_bo(rctx, state, offset, value, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset), bo, usage)
-#define r600_pipe_state_add_reg(state, offset, value) _r600_pipe_state_add_reg(rctx, state, offset, value, CTX_RANGE_ID(offset), CTX_BLOCK_ID(offset))
 
 #endif

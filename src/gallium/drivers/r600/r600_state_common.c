@@ -1319,7 +1319,6 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	struct pipe_draw_info info = *dinfo;
 	struct pipe_index_buffer ib = {};
 	unsigned i;
-	struct r600_block *dirty_block = NULL, *next_block = NULL;
 	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
 
 	if (!info.count && (info.indexed || !info.count_from_stream_output)) {
@@ -1410,10 +1409,6 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		}
 		r600_emit_atom(rctx, rctx->atoms[i]);
 	}
-	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &rctx->dirty,list) {
-		r600_context_block_emit_dirty(rctx, dirty_block, 0 /* pkt_flags */);
-	}
-	rctx->pm4_dirty_cdwords = 0;
 
 	/* Update start instance. */
 	if (rctx->last_start_instance != info.start_instance) {
@@ -1583,41 +1578,6 @@ void r600_draw_rectangle(struct blitter_context *blitter,
 	util_draw_vertex_buffer(&rctx->context, NULL, buf, rctx->blitter->vb_slot, offset,
 				R600_PRIM_RECTANGLE_LIST, 3, 2);
 	pipe_resource_reference(&buf, NULL);
-}
-
-void _r600_pipe_state_add_reg_bo(struct r600_context *ctx,
-				 struct r600_pipe_state *state,
-				 uint32_t offset, uint32_t value,
-				 uint32_t range_id, uint32_t block_id,
-				 struct r600_resource *bo,
-				 enum radeon_bo_usage usage)
-			      
-{
-	struct r600_range *range;
-	struct r600_block *block;
-
-	if (bo) assert(usage);
-
-	range = &ctx->range[range_id];
-	block = range->blocks[block_id];
-	state->regs[state->nregs].block = block;
-	state->regs[state->nregs].id = (offset - block->start_offset) >> 2;
-
-	state->regs[state->nregs].value = value;
-	state->regs[state->nregs].bo = bo;
-	state->regs[state->nregs].bo_usage = usage;
-
-	state->nregs++;
-	assert(state->nregs < R600_BLOCK_MAX_REG);
-}
-
-void _r600_pipe_state_add_reg(struct r600_context *ctx,
-			      struct r600_pipe_state *state,
-			      uint32_t offset, uint32_t value,
-			      uint32_t range_id, uint32_t block_id)
-{
-	_r600_pipe_state_add_reg_bo(ctx, state, offset, value,
-				    range_id, block_id, NULL, 0);
 }
 
 uint32_t r600_translate_stencil_op(int s_op)

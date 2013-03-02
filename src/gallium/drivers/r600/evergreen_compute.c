@@ -430,7 +430,6 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 
 	ctx->ws->cs_flush(ctx->rings.gfx.cs, flush_flags);
 
-	ctx->pm4_dirty_cdwords = 0;
 	ctx->flags = 0;
 
 	COMPUTE_DBG(ctx->screen, "shader started\n");

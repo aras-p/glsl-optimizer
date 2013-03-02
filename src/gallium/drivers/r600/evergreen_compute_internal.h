@@ -58,7 +58,6 @@ struct evergreen_compute_resource {
 };
 
 struct compute_sampler_state {
-	struct r600_pipe_state base;
 	struct pipe_sampler_state state;
 };
 

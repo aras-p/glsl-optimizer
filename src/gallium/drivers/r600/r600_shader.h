@@ -76,7 +76,6 @@ struct r600_pipe_shader {
 	struct r600_pipe_shader	*next_variant;
 	struct r600_shader	shader;
 	struct r600_command_buffer command_buffer; /* register writes */
-	struct r600_pipe_state	rstate;
 	struct r600_resource	*bo;
 	unsigned		sprite_coord_enable;
 	unsigned		flatshade;
