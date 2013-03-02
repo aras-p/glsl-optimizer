@@ -284,27 +284,27 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
     * XXX: Stream output surely needs to respect the prim_info->elt
     *      lists.
     */
-   draw_pt_so_emit( fpme->so_emit,
-                    vert_info,
-                    prim_info );
+   draw_pt_so_emit( fpme->so_emit, vert_info, prim_info );
 
-   if (draw_pt_post_vs_run( fpme->post_vs,
-                            vert_info ))
-   {
-      opt |= PT_PIPELINE;
-   }
-
-   /* Do we need to run the pipeline?
+   /*
+    * if there's no position, need to stop now, or the latter stages
+    * will try to access non-existent position output.
     */
-   if (opt & PT_PIPELINE) {
-      pipeline( fpme,
-                vert_info,
-                prim_info );
-   }
-   else {
-      emit( fpme->emit,
-            vert_info,
-            prim_info );
+   if (draw_current_shader_position_output(draw) != -1) {
+
+      if (draw_pt_post_vs_run( fpme->post_vs, vert_info ))
+      {
+         opt |= PT_PIPELINE;
+      }
+
+      /* Do we need to run the pipeline?
+       */
+      if (opt & PT_PIPELINE) {
+         pipeline( fpme, vert_info, prim_info );
+      }
+      else {
+         emit( fpme->emit, vert_info, prim_info );
+      }
    }
    FREE(vert_info->verts);
 }
