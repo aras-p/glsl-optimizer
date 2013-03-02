@@ -2690,7 +2690,7 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 void r600_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_pipe_state *rstate = &shader->rstate;
+	struct r600_command_buffer *cb = &shader->command_buffer;
 	struct r600_shader *rshader = &shader->shader;
 	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control;
 	int pos_index = -1, face_index = -1;
@@ -2699,8 +2699,13 @@ void r600_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 	unsigned z_export = 0, stencil_export = 0;
 	unsigned sprite_coord_enable = rctx->rasterizer ? rctx->rasterizer->sprite_coord_enable : 0;
 
-	rstate->nregs = 0;
+	if (!cb->buf) {
+		r600_init_command_buffer(cb, 64);
+	} else {
+		cb->num_dw = 0;
+	}
 
+	r600_store_context_reg_seq(cb, R_028644_SPI_PS_INPUT_CNTL_0, rshader->ninput);
 	for (i = 0; i < rshader->ninput; i++) {
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
 			pos_index = i;
@@ -2730,8 +2735,7 @@ void r600_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 			tmp |= S_028644_SEL_LINEAR(1);
 		}
 
-		r600_pipe_state_add_reg(rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4,
-				tmp);
+		r600_store_value(cb, tmp);
 	}
 
 	db_shader_control = 0;
@@ -2771,7 +2775,7 @@ void r600_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 					S_0286CC_POSITION_CENTROID(rshader->input[pos_index].centroid) |
 					S_0286CC_POSITION_ADDR(rshader->input[pos_index].gpr) |
 					S_0286CC_BARYC_SAMPLE_CNTL(1));
-		spi_input_z |= 1;
+		spi_input_z |= S_0286D8_PROVIDE_Z_TO_SPI(1);
 	}
 
 	spi_ps_in_control_1 = 0;
@@ -2784,20 +2788,22 @@ void r600_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 	if (rctx->family == CHIP_R600)
 		ufi = 1;
 
-	r600_pipe_state_add_reg(rstate, R_0286CC_SPI_PS_IN_CONTROL_0, spi_ps_in_control_0);
-	r600_pipe_state_add_reg(rstate, R_0286D0_SPI_PS_IN_CONTROL_1, spi_ps_in_control_1);
-	r600_pipe_state_add_reg(rstate, R_0286D8_SPI_INPUT_Z, spi_input_z);
-	r600_pipe_state_add_reg_bo(rstate,
-				   R_028840_SQ_PGM_START_PS,
-				   0, shader->bo, RADEON_USAGE_READ);
-	r600_pipe_state_add_reg(rstate,
-				R_028850_SQ_PGM_RESOURCES_PS,
-				S_028850_NUM_GPRS(rshader->bc.ngpr) |
-				S_028850_STACK_SIZE(rshader->bc.nstack) |
-				S_028850_UNCACHED_FIRST_INST(ufi));
-	r600_pipe_state_add_reg(rstate,
-				R_028854_SQ_PGM_EXPORTS_PS,
-				exports_ps);
+	r600_store_context_reg_seq(cb, R_0286CC_SPI_PS_IN_CONTROL_0, 2);
+	r600_store_value(cb, spi_ps_in_control_0); /* R_0286CC_SPI_PS_IN_CONTROL_0 */
+	r600_store_value(cb, spi_ps_in_control_1); /* R_0286D0_SPI_PS_IN_CONTROL_1 */
+
+	r600_store_context_reg(cb, R_0286D8_SPI_INPUT_Z, spi_input_z);
+
+	r600_store_context_reg_seq(cb, R_028850_SQ_PGM_RESOURCES_PS, 2);
+	r600_store_value(cb, /* R_028850_SQ_PGM_RESOURCES_PS*/
+			 S_028850_NUM_GPRS(rshader->bc.ngpr) |
+			 S_028850_STACK_SIZE(rshader->bc.nstack) |
+			 S_028850_UNCACHED_FIRST_INST(ufi));
+	r600_store_value(cb, exports_ps); /* R_028854_SQ_PGM_EXPORTS_PS */
+
+	r600_store_context_reg(cb, R_028840_SQ_PGM_START_PS, 0);
+	/* After that, the NOP relocation packet must be emitted (shader->bo, RADEON_USAGE_READ). */
+
 	/* only set some bits here, the other bits are set in the dsa state */
 	shader->db_shader_control = db_shader_control;
 	shader->ps_depth_export = z_export | stencil_export;
@@ -3192,6 +3198,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->vertex_fetch_shader.atom, id++, r600_emit_vertex_fetch_shader, 5);
 	r600_init_atom(rctx, &rctx->streamout.begin_atom, id++, r600_emit_streamout_begin, 0);
 	r600_init_atom(rctx, &rctx->vertex_shader.atom, id++, r600_emit_shader, 23);
+	r600_init_atom(rctx, &rctx->pixel_shader.atom, id++, r600_emit_shader, 0);
 
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.create_depth_stencil_alpha_state = r600_create_dsa_state;

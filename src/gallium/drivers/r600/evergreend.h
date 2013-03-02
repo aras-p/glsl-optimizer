@@ -1798,6 +1798,7 @@
 #define R_0286C0_SPI_PS_INPUT_CNTL_31                0x000286C0
 #define R_0286C8_SPI_THREAD_GROUPING                 0x000286C8
 #define R_0286D8_SPI_INPUT_Z                         0x000286D8
+#define   S_0286D8_PROVIDE_Z_TO_SPI(x)			(((x) & 0x1) << 0)
 #define R_0286DC_SPI_FOG_CNTL                        0x000286DC
 #define R_0286E4_SPI_PS_IN_CONTROL_2                 0x000286E4
 #define R_0286E8_SPI_COMPUTE_INPUT_CNTL              0x000286E8

@@ -34,7 +34,7 @@
 #include "r600_public.h"
 #include "r600_resource.h"
 
-#define R600_NUM_ATOMS 39
+#define R600_NUM_ATOMS 40
 
 #define R600_TRACE_CS 0
 
@@ -803,6 +803,13 @@ bool sampler_state_needs_border_color(const struct pipe_sampler_state *state);
 static INLINE void r600_store_value(struct r600_command_buffer *cb, unsigned value)
 {
 	cb->buf[cb->num_dw++] = value;
+}
+
+static INLINE void r600_store_array(struct r600_command_buffer *cb, unsigned num, unsigned *ptr)
+{
+	assert(cb->num_dw+num <= cb->max_num_dw);
+	memcpy(&cb->buf[cb->num_dw], ptr, num * sizeof(ptr[0]));
+	cb->num_dw += num;
 }
 
 static INLINE void r600_store_config_reg_seq(struct r600_command_buffer *cb, unsigned reg, unsigned num)

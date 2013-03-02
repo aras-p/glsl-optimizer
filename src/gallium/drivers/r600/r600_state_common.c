@@ -39,6 +39,7 @@
 
 void r600_init_command_buffer(struct r600_command_buffer *cb, unsigned num_dw)
 {
+	assert(!cb->buf);
 	cb->buf = CALLOC(1, 4 * num_dw);
 	cb->max_num_dw = num_dw;
 }
@@ -707,7 +708,7 @@ static INLINE struct r600_shader_key r600_shader_selector_key(struct pipe_contex
  * (*dirty) is set to 1 if current variant was changed */
 static int r600_shader_select(struct pipe_context *ctx,
         struct r600_pipe_shader_selector* sel,
-        unsigned *dirty)
+        bool *dirty)
 {
 	struct r600_shader_key key;
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -766,7 +767,7 @@ static int r600_shader_select(struct pipe_context *ctx,
 	}
 
 	if (dirty)
-		*dirty = 1;
+		*dirty = true;
 
 	shader->next_variant = sel->current;
 	sel->current = shader;
@@ -816,8 +817,9 @@ static void r600_bind_ps_state(struct pipe_context *ctx, void *state)
 	if (!state)
 		state = rctx->dummy_pixel_shader;
 
-	rctx->ps_shader = (struct r600_pipe_shader_selector *)state;
-	r600_context_pipe_state_set(rctx, &rctx->ps_shader->current->rstate);
+	rctx->pixel_shader.shader = rctx->ps_shader = (struct r600_pipe_shader_selector *)state;
+	rctx->pixel_shader.atom.num_dw = rctx->ps_shader->current->command_buffer.num_dw;
+	rctx->pixel_shader.atom.dirty = true;
 
 	r600_context_add_resource_size(ctx, (struct pipe_resource *)rctx->ps_shader->current->bo);
 
@@ -1198,7 +1200,7 @@ static void r600_setup_txq_cube_array_constants(struct r600_context *rctx, int s
 static bool r600_update_derived_state(struct r600_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
-	unsigned ps_dirty = 0;
+	bool ps_dirty = false;
 	bool blend_disable;
 
 	if (!rctx->blitter->running) {
@@ -1227,11 +1229,13 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 		else
 			r600_update_ps_state(ctx, rctx->ps_shader->current);
 
-		ps_dirty = 1;
+		ps_dirty = true;
 	}
 
-	if (ps_dirty)
-		r600_context_pipe_state_set(rctx, &rctx->ps_shader->current->rstate);
+	if (ps_dirty) {
+		rctx->pixel_shader.atom.num_dw = rctx->ps_shader->current->command_buffer.num_dw;
+		rctx->pixel_shader.atom.dirty = true;
+	}
 
 	/* on R600 we stuff masks + txq info into one constant buffer */
 	/* on evergreen we only need a txq info one */

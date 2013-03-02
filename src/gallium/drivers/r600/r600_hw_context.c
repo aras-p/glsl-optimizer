@@ -215,49 +215,6 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 	return 0;
 }
 
-static const struct r600_reg r600_context_reg_list[] = {
-	{R_028644_SPI_PS_INPUT_CNTL_0, 0, 0},
-	{R_028648_SPI_PS_INPUT_CNTL_1, 0, 0},
-	{R_02864C_SPI_PS_INPUT_CNTL_2, 0, 0},
-	{R_028650_SPI_PS_INPUT_CNTL_3, 0, 0},
-	{R_028654_SPI_PS_INPUT_CNTL_4, 0, 0},
-	{R_028658_SPI_PS_INPUT_CNTL_5, 0, 0},
-	{R_02865C_SPI_PS_INPUT_CNTL_6, 0, 0},
-	{R_028660_SPI_PS_INPUT_CNTL_7, 0, 0},
-	{R_028664_SPI_PS_INPUT_CNTL_8, 0, 0},
-	{R_028668_SPI_PS_INPUT_CNTL_9, 0, 0},
-	{R_02866C_SPI_PS_INPUT_CNTL_10, 0, 0},
-	{R_028670_SPI_PS_INPUT_CNTL_11, 0, 0},
-	{R_028674_SPI_PS_INPUT_CNTL_12, 0, 0},
-	{R_028678_SPI_PS_INPUT_CNTL_13, 0, 0},
-	{R_02867C_SPI_PS_INPUT_CNTL_14, 0, 0},
-	{R_028680_SPI_PS_INPUT_CNTL_15, 0, 0},
-	{R_028684_SPI_PS_INPUT_CNTL_16, 0, 0},
-	{R_028688_SPI_PS_INPUT_CNTL_17, 0, 0},
-	{R_02868C_SPI_PS_INPUT_CNTL_18, 0, 0},
-	{R_028690_SPI_PS_INPUT_CNTL_19, 0, 0},
-	{R_028694_SPI_PS_INPUT_CNTL_20, 0, 0},
-	{R_028698_SPI_PS_INPUT_CNTL_21, 0, 0},
-	{R_02869C_SPI_PS_INPUT_CNTL_22, 0, 0},
-	{R_0286A0_SPI_PS_INPUT_CNTL_23, 0, 0},
-	{R_0286A4_SPI_PS_INPUT_CNTL_24, 0, 0},
-	{R_0286A8_SPI_PS_INPUT_CNTL_25, 0, 0},
-	{R_0286AC_SPI_PS_INPUT_CNTL_26, 0, 0},
-	{R_0286B0_SPI_PS_INPUT_CNTL_27, 0, 0},
-	{R_0286B4_SPI_PS_INPUT_CNTL_28, 0, 0},
-	{R_0286B8_SPI_PS_INPUT_CNTL_29, 0, 0},
-	{R_0286BC_SPI_PS_INPUT_CNTL_30, 0, 0},
-	{R_0286C0_SPI_PS_INPUT_CNTL_31, 0, 0},
-	{R_0286CC_SPI_PS_IN_CONTROL_0, 0, 0},
-	{R_0286D0_SPI_PS_IN_CONTROL_1, 0, 0},
-	{R_0286D8_SPI_INPUT_Z, 0, 0},
-	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_028840_SQ_PGM_START_PS, REG_FLAG_NEED_BO, 0},
-	{GROUP_FORCE_NEW_BLOCK, 0, 0},
-	{R_028850_SQ_PGM_RESOURCES_PS, 0, 0},
-	{R_028854_SQ_PGM_EXPORTS_PS, 0, 0},
-};
-
 /* initialize */
 void r600_context_fini(struct r600_context *ctx)
 {
@@ -321,12 +278,6 @@ int r600_setup_block_table(struct r600_context *ctx)
 int r600_context_init(struct r600_context *ctx)
 {
 	int r;
-
-	/* add blocks */
-	r = r600_context_add_block(ctx, r600_context_reg_list,
-				   Elements(r600_context_reg_list), PKT3_SET_CONTEXT_REG, R600_CONTEXT_REG_OFFSET);
-	if (r)
-		goto out_err;
 
 	r = r600_setup_block_table(ctx);
 	if (r)
@@ -806,6 +757,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->db_misc_state.atom.dirty = true;
 	ctx->db_state.atom.dirty = true;
 	ctx->framebuffer.atom.dirty = true;
+	ctx->pixel_shader.atom.dirty = true;
 	ctx->poly_offset_state.atom.dirty = true;
 	ctx->vgt_state.atom.dirty = true;
 	ctx->sample_mask.atom.dirty = true;
