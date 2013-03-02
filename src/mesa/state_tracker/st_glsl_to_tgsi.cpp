@@ -2746,6 +2746,9 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
 	 offset = this->result;
       }
       break;
+   case ir_txf_ms:
+      assert(!"Unexpected ir_txf_ms opcode");
+      break;
    }
 
    if (ir->projector) {
