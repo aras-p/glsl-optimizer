@@ -48,7 +48,7 @@ enum operation
    OP_MOV, // simple copy, no modifiers allowed
    OP_LOAD,
    OP_STORE,
-   OP_ADD,
+   OP_ADD, // NOTE: add u64 + u32 is legal for targets w/o 64-bit integer adds
    OP_SUB,
    OP_MUL,
    OP_DIV,
@@ -707,6 +707,7 @@ public:
 
    inline void setFlagsSrc(int s, Value *);
    inline void setFlagsDef(int d, Value *);
+   inline bool usesFlags() const { return flagsSrc >= 0; }
 
    unsigned int defCount() const { return defs.size(); };
    unsigned int defCount(unsigned int mask, bool singleFile = false) const;

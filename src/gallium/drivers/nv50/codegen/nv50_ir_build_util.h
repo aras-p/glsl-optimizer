@@ -101,6 +101,10 @@ public:
 
    Value *loadImm(Value *dst, int i) { return loadImm(dst, (uint32_t)i); }
 
+   // returns high part of the operation
+   static Instruction *split64BitOpPostRA(Function *, Instruction *,
+                                          Value *zero, Value *carry);
+
    struct Location
    {
       Location(unsigned array, unsigned arrayIdx, unsigned i, unsigned c)

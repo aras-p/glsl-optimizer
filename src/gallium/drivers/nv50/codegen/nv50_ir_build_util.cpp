@@ -541,4 +541,74 @@ BuildUtil::DataArray::mkSymbol(int i, int c)
    return sym;
 }
 
+
+Instruction *
+BuildUtil::split64BitOpPostRA(Function *fn, Instruction *i,
+                              Value *zero,
+                              Value *carry)
+{
+   DataType hTy;
+   int srcNr;
+
+   switch (i->dType) {
+   case TYPE_U64: hTy = TYPE_U32; break;
+   case TYPE_S64: hTy = TYPE_S32; break;
+   default:
+      return NULL;
+   }
+
+   switch (i->op) {
+   case OP_MOV: srcNr = 1; break;
+   case OP_ADD:
+   case OP_SUB:
+      if (!carry)
+         return NULL;
+      srcNr = 2;
+      break;
+   default:
+      // TODO when needed
+      return NULL;
+   }
+
+   i->setType(hTy);
+   i->setDef(0, cloneShallow(fn, i->getDef(0)));
+   i->getDef(0)->reg.size = 4;
+   Instruction *lo = i;
+   Instruction *hi = cloneForward(fn, i);
+   lo->bb->insertAfter(lo, hi);
+
+   hi->getDef(0)->reg.data.id++;
+
+   for (int s = 0; s < srcNr; ++s) {
+      if (lo->getSrc(s)->reg.size < 8) {
+         hi->setSrc(s, zero);
+      } else {
+         if (lo->getSrc(s)->refCount() > 1)
+            lo->setSrc(s, cloneShallow(fn, lo->getSrc(s)));
+         lo->getSrc(s)->reg.size /= 2;
+         hi->setSrc(s, cloneShallow(fn, lo->getSrc(s)));
+
+         switch (hi->src(s).getFile()) {
+         case FILE_IMMEDIATE:
+            hi->getSrc(s)->reg.data.u64 >>= 32;
+            break;
+         case FILE_MEMORY_CONST:
+         case FILE_MEMORY_SHARED:
+         case FILE_SHADER_INPUT:
+            hi->getSrc(s)->reg.data.offset += 4;
+            break;
+         default:
+            assert(hi->src(s).getFile() == FILE_GPR);
+            hi->getSrc(s)->reg.data.id++;
+            break;
+         }
+      }
+   }
+   if (srcNr == 2) {
+      lo->setDef(1, carry);
+      hi->setFlagsSrc(hi->srcCount(), carry);
+   }
+   return hi;
+}
+
 } // namespace nv50_ir

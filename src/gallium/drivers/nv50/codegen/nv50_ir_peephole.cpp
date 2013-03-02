@@ -667,6 +667,8 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
       }
       break;
    case OP_ADD:
+      if (i->usesFlags())
+         break;
       if (imm0.isInteger(0)) {
          if (s == 0) {
             i->setSrc(0, i->getSrc(1));

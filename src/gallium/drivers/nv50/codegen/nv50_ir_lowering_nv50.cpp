@@ -122,7 +122,6 @@ private:
 
    void handlePRERET(FlowInstruction *);
    void replaceZero(Instruction *);
-   void split64BitOp(Instruction *);
 
    LValue *r63;
 };
@@ -157,22 +156,6 @@ NV50LegalizePostRA::replaceZero(Instruction *i)
       ImmediateValue *imm = i->getSrc(s)->asImm();
       if (imm && imm->reg.data.u64 == 0)
          i->setSrc(s, r63);
-   }
-}
-
-void
-NV50LegalizePostRA::split64BitOp(Instruction *i)
-{
-   if (i->dType == TYPE_F64) {
-      if (i->op == OP_MAD)
-         i->op = OP_FMA;
-      if (i->op == OP_ADD || i->op == OP_MUL || i->op == OP_FMA ||
-          i->op == OP_CVT || i->op == OP_MIN || i->op == OP_MAX ||
-          i->op == OP_SET)
-         return;
-      i->dType = i->sType = TYPE_U32;
-
-      i->bb->insertAfter(i, cloneForward(func, i));
    }
 }
 
@@ -229,12 +212,18 @@ NV50LegalizePostRA::visit(BasicBlock *bb)
       if (i->op == OP_PRERET && prog->getTarget()->getChipset() < 0xa0) {
          handlePRERET(i->asFlow());
       } else {
+         // TODO: We will want to do this before register allocation,
+         // since have to use a $c register for the carry flag.
+         if (typeSizeof(i->dType) == 8) {
+            Instruction *hi = BuildUtil::split64BitOpPostRA(func, i, r63, NULL);
+            if (hi)
+               next = hi;
+         }
+
          if (i->op != OP_MOV && i->op != OP_PFETCH &&
              i->op != OP_BAR &&
              (!i->defExists(0) || i->def(0).getFile() != FILE_ADDRESS))
             replaceZero(i);
-         if (typeSizeof(i->dType) == 8)
-            split64BitOp(i);
       }
    }
    if (!bb->getEntry())

@@ -128,7 +128,6 @@ private:
    virtual bool visit(BasicBlock *);
 
    void replaceZero(Instruction *);
-   void split64BitOp(Instruction *);
    bool tryReplaceContWithBra(BasicBlock *);
    void propagateJoin(BasicBlock *);
 
@@ -158,6 +157,7 @@ private:
 
 private:
    LValue *rZero;
+   LValue *carry;
    const bool needTexBar;
 };
 
@@ -468,8 +468,10 @@ NVC0LegalizePostRA::visit(Function *fn)
       insertTextureBarriers(fn);
 
    rZero = new_LValue(fn, FILE_GPR);
+   carry = new_LValue(fn, FILE_FLAGS);
 
    rZero->reg.data.id = prog->getTarget()->getFileSize(FILE_GPR);
+   carry->reg.data.id = 0;
 
    return true;
 }
@@ -483,22 +485,6 @@ NVC0LegalizePostRA::replaceZero(Instruction *i)
       ImmediateValue *imm = i->getSrc(s)->asImm();
       if (imm && imm->reg.data.u64 == 0)
          i->setSrc(s, rZero);
-   }
-}
-
-void
-NVC0LegalizePostRA::split64BitOp(Instruction *i)
-{
-   if (i->dType == TYPE_F64) {
-      if (i->op == OP_MAD)
-         i->op = OP_FMA;
-      if (i->op == OP_ADD || i->op == OP_MUL || i->op == OP_FMA ||
-          i->op == OP_CVT || i->op == OP_MIN || i->op == OP_MAX ||
-          i->op == OP_SET)
-         return;
-      i->dType = i->sType = TYPE_U32;
-
-      i->bb->insertAfter(i, cloneForward(func, i));
    }
 }
 
@@ -565,10 +551,17 @@ NVC0LegalizePostRA::visit(BasicBlock *bb)
       if (i->isNop()) {
          bb->remove(i);
       } else {
+         // TODO: Move this to before register allocation for operations that
+         // need the $c register !
+         if (typeSizeof(i->dType) == 8) {
+            Instruction *hi;
+            hi = BuildUtil::split64BitOpPostRA(func, i, rZero, carry);
+            if (hi)
+               next = hi;
+         }
+
          if (i->op != OP_MOV && i->op != OP_PFETCH)
             replaceZero(i);
-         if (typeSizeof(i->dType) == 8)
-            split64BitOp(i);
       }
    }
    if (!bb->getEntry())
