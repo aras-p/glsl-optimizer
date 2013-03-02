@@ -300,31 +300,31 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
       FREE(vert_info->verts);
       vert_info = &gs_vert_info;
       prim_info = &gs_prim_info;
-
-      clipped = draw_pt_post_vs_run( fpme->post_vs, vert_info );
-
    }
 
    /* stream output needs to be done before clipping */
-   draw_pt_so_emit( fpme->so_emit,
-		    vert_info,
-                    prim_info );
+   draw_pt_so_emit( fpme->so_emit, vert_info, prim_info );
 
-   if (clipped) {
-      opt |= PT_PIPELINE;
-   }
-
-   /* Do we need to run the pipeline? Now will come here if clipped
+   /*
+    * if there's no position, need to stop now, or the latter stages
+    * will try to access non-existent position output.
     */
-   if (opt & PT_PIPELINE) {
-      pipeline( fpme,
-                vert_info,
-                prim_info );
-   }
-   else {
-      emit( fpme->emit,
-            vert_info,
-            prim_info );
+   if (draw_current_shader_position_output(draw) != -1) {
+      if ((opt & PT_SHADE) && gshader) {
+         clipped = draw_pt_post_vs_run( fpme->post_vs, vert_info );
+      }
+      if (clipped) {
+         opt |= PT_PIPELINE;
+      }
+
+      /* Do we need to run the pipeline? Now will come here if clipped
+       */
+      if (opt & PT_PIPELINE) {
+         pipeline( fpme, vert_info, prim_info );
+      }
+      else {
+         emit( fpme->emit, vert_info, prim_info );
+      }
    }
    FREE(vert_info->verts);
 }
