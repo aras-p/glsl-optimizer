@@ -41,7 +41,9 @@ nouveau_buffer_allocate(struct nouveau_screen *screen,
 {
    uint32_t size = buf->base.width0;
 
-   if (buf->base.bind & PIPE_BIND_CONSTANT_BUFFER)
+   if (buf->base.bind & (PIPE_BIND_CONSTANT_BUFFER |
+                         PIPE_BIND_COMPUTE_RESOURCE |
+                         PIPE_BIND_SHADER_RESOURCE))
       size = align(size, 0x100);
 
    if (domain == NOUVEAU_BO_VRAM) {
