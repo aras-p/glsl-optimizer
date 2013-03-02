@@ -865,6 +865,8 @@ public:
       tex.target = targ;
    }
 
+   void setIndirectR(Value *);
+   void setIndirectS(Value *);
    inline Value *getIndirectR() const;
    inline Value *getIndirectS() const;
 

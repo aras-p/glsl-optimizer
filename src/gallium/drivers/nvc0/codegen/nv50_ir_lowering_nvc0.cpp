@@ -604,6 +604,7 @@ private:
 
    Value *loadResInfo32(Value *ptr, uint32_t off);
    Value *loadMsInfo32(Value *ptr, uint32_t off);
+   Value *loadTexHandle(Value *ptr, unsigned int slot);
 
    void adjustCoordinatesMS(TexInstruction *);
    void processSurfaceCoordsNVE4(TexInstruction *);
@@ -645,6 +646,15 @@ NVC0LoweringPass::visit(BasicBlock *bb)
    return true;
 }
 
+inline Value *
+NVC0LoweringPass::loadTexHandle(Value *ptr, unsigned int slot)
+{
+   uint8_t b = prog->driver->io.resInfoCBSlot;
+   uint32_t off = prog->driver->io.texBindBase + slot * 4;
+   return bld.
+      mkLoadv(TYPE_U32, bld.mkSymbol(FILE_MEMORY_CONST, b, TYPE_U32, off), ptr);
+}
+
 // move array source to first slot, convert to u16, add indirections
 bool
 NVC0LoweringPass::handleTEX(TexInstruction *i)
@@ -653,11 +663,22 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
    const int arg = i->tex.target.getArgCount();
 
    if (prog->getTarget()->getChipset() >= NVISA_GK104_CHIPSET) {
+      if (i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
+         WARN("indirect TEX not implemented\n");
+      }
       if (i->tex.r == i->tex.s) {
          i->tex.r += prog->driver->io.texBindBase / 4;
          i->tex.s  = 0; // only a single cX[] value possible here
       } else {
-         // TODO: extract handles and use register to select TIC/TSC entries
+         Value *hnd = bld.getScratch();
+         Value *rHnd = loadTexHandle(NULL, i->tex.r);
+         Value *sHnd = loadTexHandle(NULL, i->tex.s);
+
+         bld.mkOp3(OP_INSBF, TYPE_U32, hnd, rHnd, bld.mkImm(0x1400), sHnd);
+
+         i->tex.r = 0; // not used for indirect tex
+         i->tex.s = 0;
+         i->setIndirectR(hnd);
       }
       if (i->tex.target.isArray()) {
          LValue *layer = new_LValue(func, FILE_GPR);
@@ -668,42 +689,6 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
          for (int s = dim; s >= 1; --s)
             i->setSrc(s, i->getSrc(s - 1));
          i->setSrc(0, layer);
-      }
-      if (i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
-         Value *tmp[2];
-         Symbol *bind;
-         Value *rRel = i->getIndirectR();
-         Value *sRel = i->getIndirectS();
-         Value *shCnt = bld.loadImm(NULL, 2);
-
-         if (rRel) {
-            tmp[0] = bld.getScratch();
-            bind = bld.mkSymbol(FILE_MEMORY_CONST, 15, TYPE_U32, i->tex.r * 4);
-            bld.mkOp2(OP_SHL, TYPE_U32, tmp[0], rRel, shCnt);
-            tmp[1] = bld.mkLoadv(TYPE_U32, bind, tmp[0]);
-            bld.mkOp2(OP_AND, TYPE_U32, tmp[0], tmp[1],
-                      bld.loadImm(tmp[0], 0x00ffffffu));
-            rRel = tmp[0];
-            i->setSrc(i->tex.rIndirectSrc, NULL);
-         }
-         if (sRel) {
-            tmp[0] = bld.getScratch();
-            bind = bld.mkSymbol(FILE_MEMORY_CONST, 15, TYPE_U32, i->tex.s * 4);
-            bld.mkOp2(OP_SHL, TYPE_U32, tmp[0], sRel, shCnt);
-            tmp[1] = bld.mkLoadv(TYPE_U32, bind, tmp[0]);
-            bld.mkOp2(OP_AND, TYPE_U32, tmp[0], tmp[1],
-                      bld.loadImm(tmp[0], 0xff000000u));
-            sRel = tmp[0];
-            i->setSrc(i->tex.sIndirectSrc, NULL);
-         }
-         bld.mkOp2(OP_OR, TYPE_U32, rRel, rRel, sRel);
-
-         int min = i->tex.rIndirectSrc;
-         if (min < 0 || min > i->tex.sIndirectSrc)
-            min = i->tex.sIndirectSrc;
-         for (int s = min; s >= 1; --s)
-            i->setSrc(s, i->getSrc(s - 1));
-         i->setSrc(0, rRel);
       }
    } else
    // (nvc0) generate and move the tsc/tic/array source to the front

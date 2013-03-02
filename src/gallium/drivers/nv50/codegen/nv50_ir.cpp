@@ -687,6 +687,11 @@ Instruction::moveSources(const int s, const int delta)
    }
    moveSourcesAdjustIndex(predSrc, s, delta);
    moveSourcesAdjustIndex(flagsSrc, s, delta);
+   if (asTex()) {
+      TexInstruction *tex = asTex();
+      moveSourcesAdjustIndex(tex->tex.rIndirectSrc, s, delta);
+      moveSourcesAdjustIndex(tex->tex.sIndirectSrc, s, delta);
+   }
 
    if (delta > 0) {
       --k;
@@ -949,6 +954,28 @@ const struct TexInstruction::Target::Desc TexInstruction::Target::descTable[] =
    { "CUBE_ARRAY_SHADOW", 2, 4, true,  true,  true  },
    { "BUFFER",            1, 1, false, false, false },
 };
+
+void
+TexInstruction::setIndirectR(Value *v)
+{
+   int p = ((tex.rIndirectSrc < 0) && v) ? srcs.size() : tex.rIndirectSrc;
+   if (p >= 0) {
+      tex.rIndirectSrc = p;
+      setSrc(p, v);
+      srcs[p].usedAsPtr = !!v;
+   }
+}
+
+void
+TexInstruction::setIndirectS(Value *v)
+{
+   int p = ((tex.sIndirectSrc < 0) && v) ? srcs.size() : tex.sIndirectSrc;
+   if (p >= 0) {
+      tex.sIndirectSrc = p;
+      setSrc(p, v);
+      srcs[p].usedAsPtr = !!v;
+   }
+}
 
 CmpInstruction::CmpInstruction(Function *fn, operation op)
    : Instruction(fn, op, TYPE_F32)
