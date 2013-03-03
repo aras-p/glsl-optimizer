@@ -49,22 +49,12 @@ struct assignment_entry {
 
 class ir_constant_variable_visitor : public ir_hierarchical_visitor {
 public:
-   ir_constant_variable_visitor()
-   {
-      this->nesting_depth = 0;
-   }
-
    virtual ir_visitor_status visit_enter(ir_dereference_variable *);
    virtual ir_visitor_status visit(ir_variable *);
    virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_enter(ir_call *);
-   virtual ir_visitor_status visit_enter(class ir_loop *);
-   virtual ir_visitor_status visit_leave(class ir_loop *);
-   virtual ir_visitor_status visit_enter(class ir_if *);
-   virtual ir_visitor_status visit_leave(class ir_if *);
 
    exec_list list;
-   int nesting_depth;
 };
 
 } /* unnamed namespace */
@@ -109,8 +99,6 @@ ir_constant_variable_visitor::visit_enter(ir_assignment *ir)
 
    entry = get_assignment_entry(ir->lhs->variable_referenced(), &this->list);
    assert(entry);
-   if (this->nesting_depth != 0)
-      entry->our_scope = false;
    entry->assignment_count++;
 
    /* If it's already constant, don't do the work. */
@@ -156,8 +144,6 @@ ir_constant_variable_visitor::visit_enter(ir_call *ir)
 
 	 assert(var);
 	 entry = get_assignment_entry(var, &this->list);
-	 if (this->nesting_depth != 0)
-	    entry->our_scope = false;
 	 entry->assignment_count++;
       }
       sig_iter.next();
@@ -170,39 +156,11 @@ ir_constant_variable_visitor::visit_enter(ir_call *ir)
 
       assert(var);
       entry = get_assignment_entry(var, &this->list);
-      if (this->nesting_depth != 0)
-         entry->our_scope = false;
       entry->assignment_count++;
    }
 
    return visit_continue;
 }
-
-ir_visitor_status
-ir_constant_variable_visitor::visit_enter(ir_loop *)
-{
-   this->nesting_depth++;
-   return visit_continue;
-}
-ir_visitor_status
-ir_constant_variable_visitor::visit_leave(ir_loop *)
-{
-   this->nesting_depth--;
-   return visit_continue;
-}
-ir_visitor_status
-ir_constant_variable_visitor::visit_enter(ir_if *)
-{
-   this->nesting_depth++;
-   return visit_continue;
-}
-ir_visitor_status
-ir_constant_variable_visitor::visit_leave(ir_if *)
-{
-   this->nesting_depth--;
-   return visit_continue;
-}
-
 
 /**
  * Does a copy propagation pass on the code present in the instruction stream.
