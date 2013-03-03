@@ -435,8 +435,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 	}
 
 	if (base->nr_samples > 1 && !rtex->is_depth && !buf) {
-		r600_texture_allocate_cmask(rscreen, rtex);
 		r600_texture_allocate_fmask(rscreen, rtex);
+		r600_texture_allocate_cmask(rscreen, rtex);
 	}
 
 	if (!rtex->is_depth && base->nr_samples > 1 &&
