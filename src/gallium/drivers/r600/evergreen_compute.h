@@ -26,7 +26,6 @@
 
 #ifndef EVERGREEN_COMPUTE_H
 #define EVERGREEN_COMPUTE_H
-#include "r600.h"
 #include "r600_pipe.h"
 
 struct r600_atom;

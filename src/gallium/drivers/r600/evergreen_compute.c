@@ -38,7 +38,6 @@
 #include "util/u_inlines.h"
 #include "util/u_framebuffer.h"
 #include "pipebuffer/pb_buffer.h"
-#include "r600.h"
 #include "evergreend.h"
 #include "r600_resource.h"
 #include "r600_shader.h"

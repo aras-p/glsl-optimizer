@@ -7,7 +7,6 @@
 #include "util/u_double_list.h"
 #include "util/u_memory.h"
 
-#include "r600.h"
 #include "r600_asm.h"
 #include "r600_sq.h"
 #include "r600_opcodes.h"
