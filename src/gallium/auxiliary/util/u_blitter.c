@@ -703,7 +703,7 @@ static void blitter_set_texcoords(struct blitter_context_priv *ctx,
 
    case PIPE_TEXTURE_2D:
       for (i = 0; i < 4; i++) {
-         ctx->vertices[i][1][2] = (float) sample; /*r*/
+         ctx->vertices[i][1][3] = (float) sample; /*r*/
       }
       break;
 

@@ -400,7 +400,7 @@ util_make_fs_blit_msaa_gen(struct pipe_context *pipe,
          "DCL TEMP[0]\n"
 
          "F2U TEMP[0], IN[0]\n"
-         "TXF OUT[0]%s, TEMP[0].xyzz, SAMP[0], %s\n"
+         "TXF OUT[0]%s, TEMP[0], SAMP[0], %s\n"
          "END\n";
 
    const char *type = tgsi_texture_names[tgsi_tex];
