@@ -44,7 +44,6 @@
 #include "evergreend.h"
 #include "evergreen_compute.h"
 #include "evergreen_compute_internal.h"
-#include "r600_hw_context_priv.h"
 
 int get_compute_resource_num(void)
 {

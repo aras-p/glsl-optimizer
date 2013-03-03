@@ -38,6 +38,11 @@
 
 #define R600_TRACE_CS 0
 
+/* the number of CS dwords for flushing and drawing */
+#define R600_MAX_FLUSH_CS_DWORDS	16
+#define R600_MAX_DRAW_CS_DWORDS		34
+#define R600_TRACE_CS_DWORDS		7
+
 #define R600_MAX_USER_CONST_BUFFERS 13
 #define R600_MAX_DRIVER_CONST_BUFFERS 3
 #define R600_MAX_CONST_BUFFERS (R600_MAX_USER_CONST_BUFFERS + R600_MAX_DRIVER_CONST_BUFFERS)
@@ -734,6 +739,12 @@ unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
 /* r600_hw_context.c */
 void r600_emit_streamout_begin(struct r600_context *ctx, struct r600_atom *atom);
 void r600_emit_streamout_end(struct r600_context *ctx);
+
+/*
+ * evergreen_hw_context.c
+ */
+void evergreen_flush_vgt_streamout(struct r600_context *ctx);
+void evergreen_set_streamout_enable(struct r600_context *ctx, unsigned buffer_enable_bit);
 
 /* r600_state_common.c */
 void r600_init_common_state_functions(struct r600_context *rctx);

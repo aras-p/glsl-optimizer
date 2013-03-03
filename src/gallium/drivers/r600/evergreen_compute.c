@@ -45,7 +45,6 @@
 #include "r600_pipe.h"
 #include "r600_formats.h"
 #include "evergreen_compute.h"
-#include "r600_hw_context_priv.h"
 #include "evergreen_compute_internal.h"
 #include "compute_memory_pool.h"
 #ifdef HAVE_OPENCL
