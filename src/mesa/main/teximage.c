@@ -40,6 +40,7 @@
 #include "imports.h"
 #include "macros.h"
 #include "mfeatures.h"
+#include "multisample.h"
 #include "state.h"
 #include "texcompress.h"
 #include "texcompress_cpal.h"
@@ -4199,6 +4200,7 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
    struct gl_texture_image *texImage;
    GLboolean sizeOK, dimensionsOK;
    gl_format texFormat;
+   GLenum sample_count_error;
 
    GET_CURRENT_CONTEXT(ctx);
 
@@ -4225,34 +4227,12 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
       return;
    }
 
-   if (_mesa_is_enum_format_integer(internalformat)) {
-      if (samples > ctx->Const.MaxIntegerSamples) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-               "glTexImage%uDMultisample(samples>GL_MAX_INTEGER_SAMPLES)",
-               dims);
-         return;
-      }
+   sample_count_error = _mesa_check_sample_count(ctx, target,
+         internalformat, samples);
+   if (sample_count_error != GL_NO_ERROR) {
+      _mesa_error(ctx, sample_count_error, "glTexImage%uDMultisample(samples)", dims);
+      return;
    }
-   else if (_mesa_is_depth_or_stencil_format(internalformat)) {
-      if (samples > ctx->Const.MaxDepthTextureSamples) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-               "glTexImage%uDMultisample(samples>GL_MAX_DEPTH_TEXTURE_SAMPLES)",
-               dims);
-         return;
-      }
-   }
-   else {
-      if (samples > ctx->Const.MaxColorTextureSamples) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-               "glTexImage%uDMultisample(samples>GL_MAX_COLOR_TEXTURE_SAMPLES)",
-               dims);
-         return;
-      }
-   }
-
-   /* TODO: should ask the driver for the exact limit for this internalformat
-    * once IDR's internalformat_query bits land
-    */
 
    texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_get_tex_image(ctx, texObj, 0, 0);

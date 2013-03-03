@@ -142,19 +142,42 @@ _mesa_check_sample_count(struct gl_context *ctx, GLenum target,
       return samples > limit ? GL_INVALID_OPERATION : GL_NO_ERROR;
    }
 
-   /* If ARB_texture_multisample is supported, we have separate limits for
-    * integer formats.
+   /* If ARB_texture_multisample is supported, we have separate limits,
+    * which may be lower than MAX_SAMPLES:
     *
-    * From the ARB_texture_multisample spec:
+    * From the ARB_texture_multisample spec, when describing the operation
+    * of RenderbufferStorageMultisample:
     *
     * "If <internalformat> is a signed or unsigned integer format and
     * <samples> is greater than the value of MAX_INTEGER_SAMPLES, then the
     * error INVALID_OPERATION is generated"
+    *
+    * And when describing the operation of TexImage*Multisample:
+    *
+    * "The error INVALID_OPERATION may be generated if any of the following are true:
+    *
+    * * <internalformat> is a depth/stencil-renderable format and <samples>
+    *   is greater than the value of MAX_DEPTH_TEXTURE_SAMPLES
+    * * <internalformat> is a color-renderable format and <samples> is
+    *   grater than the value of MAX_COLOR_TEXTURE_SAMPLES
+    * * <internalformat> is a signed or unsigned integer format and
+    *   <samples> is greater than the value of MAX_INTEGER_SAMPLES
     */
 
    if (ctx->Extensions.ARB_texture_multisample) {
       if (_mesa_is_enum_format_integer(internalFormat))
          return samples > ctx->Const.MaxIntegerSamples ? GL_INVALID_OPERATION : GL_NO_ERROR;
+
+      if (target == GL_TEXTURE_2D_MULTISAMPLE ||
+          target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
+
+         if (_mesa_is_depth_or_stencil_format(internalFormat))
+            return samples > ctx->Const.MaxDepthTextureSamples
+               ? GL_INVALID_OPERATION : GL_NO_ERROR;
+         else
+            return samples > ctx->Const.MaxColorTextureSamples
+               ? GL_INVALID_OPERATION : GL_NO_ERROR;
+      }
    }
 
    /* No more specific limit is available, so just use MAX_SAMPLES:
