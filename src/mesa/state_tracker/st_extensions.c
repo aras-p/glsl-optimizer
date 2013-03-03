@@ -37,7 +37,7 @@
 
 #include "st_context.h"
 #include "st_extensions.h"
-
+#include "st_format.h"
 
 static int _min(int a, int b)
 {
@@ -397,7 +397,8 @@ void st_init_extensions(struct st_context *st)
       { o(MESA_texture_array),               PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS         },
 
       { o(OES_standard_derivatives),         PIPE_CAP_SM3                              },
-      { o(ARB_texture_cube_map_array),       PIPE_CAP_CUBE_MAP_ARRAY                   }
+      { o(ARB_texture_cube_map_array),       PIPE_CAP_CUBE_MAP_ARRAY                   },
+      { o(ARB_texture_multisample),          PIPE_CAP_TEXTURE_MULTISAMPLE              }
    };
 
    /* Required: render target and sampler support */
@@ -657,10 +658,33 @@ void st_init_extensions(struct st_context *st)
 
    /* Maximum sample count. */
    for (i = 16; i > 0; --i) {
-      if (screen->is_format_supported(screen, PIPE_FORMAT_B8G8R8A8_UNORM,
-                                      PIPE_TEXTURE_2D, i,
-                                      PIPE_BIND_RENDER_TARGET)) {
+      enum pipe_format pformat = st_choose_format(st, GL_RGBA,
+                                                  GL_NONE, GL_NONE,
+                                                  PIPE_TEXTURE_2D, i,
+                                                  PIPE_BIND_RENDER_TARGET, FALSE);
+      if (pformat != PIPE_FORMAT_NONE) {
          ctx->Const.MaxSamples = i;
+         ctx->Const.MaxColorTextureSamples = i;
+         break;
+      }
+   }
+   for (i = ctx->Const.MaxSamples; i > 0; --i) {
+      enum pipe_format pformat = st_choose_format(st, GL_DEPTH_STENCIL,
+                                                  GL_NONE, GL_NONE,
+                                                  PIPE_TEXTURE_2D, i,
+                                                  PIPE_BIND_DEPTH_STENCIL, FALSE);
+      if (pformat != PIPE_FORMAT_NONE) {
+         ctx->Const.MaxDepthTextureSamples = i;
+         break;
+      }
+   }
+   for (i = ctx->Const.MaxSamples; i > 0; --i) {
+      enum pipe_format pformat = st_choose_format(st, GL_RGBA_INTEGER,
+                                                  GL_NONE, GL_NONE,
+                                                  PIPE_TEXTURE_2D, i,
+                                                  PIPE_BIND_RENDER_TARGET, FALSE);
+      if (pformat != PIPE_FORMAT_NONE) {
+         ctx->Const.MaxIntegerSamples = i;
          break;
       }
    }

@@ -60,6 +60,7 @@ st_texture_create(struct st_context *st,
 		  GLuint height0,
 		  GLuint depth0,
                   GLuint layers,
+                  GLuint nr_samples,
                   GLuint bind )
 {
    struct pipe_resource pt, *newtex;
@@ -90,6 +91,7 @@ st_texture_create(struct st_context *st,
    pt.usage = PIPE_USAGE_DEFAULT;
    pt.bind = bind;
    pt.flags = 0;
+   pt.nr_samples = nr_samples;
 
    newtex = screen->resource_create(screen, &pt);
 
@@ -138,6 +140,8 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
    case GL_TEXTURE_RECTANGLE:
    case GL_PROXY_TEXTURE_RECTANGLE:
    case GL_TEXTURE_EXTERNAL_OES:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE:
+   case GL_TEXTURE_2D_MULTISAMPLE:
       assert(depthIn == 1);
       *widthOut = widthIn;
       *heightOut = heightIn;
@@ -159,7 +163,9 @@ st_gl_texture_dims_to_pipe_dims(GLenum texture,
       *layersOut = 6;
       break;
    case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
    case GL_PROXY_TEXTURE_2D_ARRAY:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY:
       *widthOut = widthIn;
       *heightOut = heightIn;
       *depthOut = 1;
@@ -402,7 +408,7 @@ st_create_color_map_texture(struct gl_context *ctx)
 
    /* create texture for color map/table */
    pt = st_texture_create(st, PIPE_TEXTURE_2D, format, 0,
-                          texSize, texSize, 1, 1, PIPE_BIND_SAMPLER_VIEW);
+                          texSize, texSize, 1, 1, 0, PIPE_BIND_SAMPLER_VIEW);
    return pt;
 }
 

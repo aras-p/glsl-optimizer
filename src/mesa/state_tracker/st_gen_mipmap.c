@@ -172,6 +172,7 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
                                     oldTex->height0,
                                     oldTex->depth0,
                                     oldTex->array_size,
+                                    0,
                                     oldTex->bind);
 
       /* This will copy the old texture's base image into the new texture

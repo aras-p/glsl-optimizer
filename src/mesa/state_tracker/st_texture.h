@@ -153,6 +153,7 @@ st_texture_create(struct st_context *st,
                   GLuint height0,
                   GLuint depth0,
                   GLuint layers,
+                  GLuint nr_samples,
                   GLuint tex_usage );
 
 

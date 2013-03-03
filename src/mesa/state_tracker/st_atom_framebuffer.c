@@ -59,6 +59,7 @@ update_renderbuffer_surface(struct st_context *st,
    enum pipe_format format = st->ctx->Color.sRGBEnabled ? resource->format : util_format_linear(resource->format);
 
    if (!strb->surface ||
+       strb->surface->texture->nr_samples != strb->Base.NumSamples ||
        strb->surface->format != format ||
        strb->surface->texture != resource ||
        strb->surface->width != rtt_width ||

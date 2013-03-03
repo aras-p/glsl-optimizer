@@ -62,7 +62,8 @@ static void update_sample_mask( struct st_context *st )
          if (st->ctx->Multisample.SampleCoverageInvert)
             sample_mask = ~sample_mask;
       }
-      /* TODO merge with app-supplied sample mask */
+      if (st->ctx->Multisample.SampleMask)
+         sample_mask &= st->ctx->Multisample.SampleMaskValue;
    }
 
    /* mask off unused bits or don't care? */
