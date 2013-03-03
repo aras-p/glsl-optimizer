@@ -145,6 +145,7 @@ int r600_bytecode_add_output(struct r600_bytecode *bc,
 		output->swizzle_y == bc->cf_last->output.swizzle_y &&
 		output->swizzle_z == bc->cf_last->output.swizzle_z &&
 		output->swizzle_w == bc->cf_last->output.swizzle_w &&
+		output->comp_mask == bc->cf_last->output.comp_mask &&
 		(output->burst_count + bc->cf_last->output.burst_count) <= 16) {
 
 		if ((output->gpr + output->burst_count) == bc->cf_last->output.gpr &&
