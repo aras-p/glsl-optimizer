@@ -49,6 +49,7 @@
 #include "st_cb_eglimage.h"
 #include "st_cb_fbo.h"
 #include "st_cb_feedback.h"
+#include "st_cb_msaa.h"
 #include "st_cb_program.h"
 #include "st_cb_queryobj.h"
 #include "st_cb_readpixels.h"
@@ -340,6 +341,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
 
    st_init_fbo_functions(functions);
    st_init_feedback_functions(functions);
+   st_init_msaa_functions(functions);
    st_init_program_functions(functions);
    st_init_query_functions(functions);
    st_init_cond_render_functions(functions);

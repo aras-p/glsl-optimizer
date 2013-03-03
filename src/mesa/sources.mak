@@ -224,6 +224,7 @@ STATETRACKER_FILES = \
 	$(SRCDIR)state_tracker/st_cb_eglimage.c \
 	$(SRCDIR)state_tracker/st_cb_fbo.c \
 	$(SRCDIR)state_tracker/st_cb_feedback.c \
+	$(SRCDIR)state_tracker/st_cb_msaa.c \
 	$(SRCDIR)state_tracker/st_cb_program.c \
 	$(SRCDIR)state_tracker/st_cb_queryobj.c \
 	$(SRCDIR)state_tracker/st_cb_rasterpos.c \
