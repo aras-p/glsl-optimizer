@@ -924,6 +924,11 @@ void util_blitter_cache_all_shaders(struct blitter_context *blitter)
              (target == PIPE_TEXTURE_CUBE_ARRAY))
             continue;
 
+	 if (i > 1 &&
+	     (target != PIPE_TEXTURE_2D &&
+	      target != PIPE_TEXTURE_2D_ARRAY))
+	    continue;
+
          blitter_get_fs_texfetch_col(ctx, target, i);
          blitter_get_fs_texfetch_depth(ctx, target, i);
          if (ctx->has_stencil_export) {
