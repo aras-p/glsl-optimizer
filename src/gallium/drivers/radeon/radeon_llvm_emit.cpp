@@ -28,10 +28,12 @@
 #if HAVE_LLVM < 0x0303
 #include <llvm/LLVMContext.h>
 #include <llvm/Module.h>
+#include <llvm/Function.h>
 #include <llvm/DataLayout.h>
 #else
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Function.h>
 #include <llvm/IR/DataLayout.h>
 #endif
 
@@ -66,6 +68,26 @@ public:
 
 static LLVMEnsureMultithreaded lLVMEnsureMultithreaded;
 
+}
+
+/**
+ * Set the shader type we want to compile
+ *
+ * @param type shader type to set
+ */
+extern "C" void
+radeon_llvm_shader_type(LLVMValueRef F, unsigned type)
+{
+  Function *Func = unwrap<Function>(F);
+  int Idx = AttributeSet::FunctionIndex;
+  AttrBuilder B;
+  char Str[2];
+
+  sprintf(Str, "%1d", type);
+  B.addAttribute("ShaderType", Str);
+
+  AttributeSet Set = AttributeSet::get(Func->getContext(), Idx, B);
+  Func->addAttributes(Idx, Set);
 }
 
 /**

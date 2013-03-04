@@ -33,6 +33,8 @@
 extern "C" {
 #endif
 
+void radeon_llvm_shader_type(LLVMValueRef F, unsigned type);
+
 unsigned radeon_llvm_bitcode_compile(
    unsigned char * bitcode, unsigned bitcode_len,
    unsigned char ** bytes, unsigned * byte_count,
