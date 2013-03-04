@@ -35,7 +35,7 @@ vdpaudir = $(VDPAU_LIB_INSTALL_DIR)
 vdpau_LTLIBRARIES = libvdpau_softpipe.la
 
 libvdpau_softpipe_la_SOURCES = \
-	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
+	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_xsp.c
 
 libvdpau_softpipe_la_LDFLAGS = \
 	-module \
