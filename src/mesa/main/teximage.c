@@ -520,7 +520,7 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
-   if (_mesa_is_gles3(ctx)) {
+   if (_mesa_is_gles3(ctx) || ctx->Extensions.ARB_ES3_compatibility) {
       switch (internalFormat) {
       case GL_COMPRESSED_RGB8_ETC2:
       case GL_COMPRESSED_SRGB8_ETC2:
