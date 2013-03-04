@@ -1460,6 +1460,12 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          *params = (GLfloat) obj->Immutable;
          break;
 
+      case GL_TEXTURE_IMMUTABLE_LEVELS:
+         if (!_mesa_is_gles3(ctx))
+            goto invalid_pname;
+         *params = (GLfloat) obj->ImmutableLevels;
+         break;
+
       case GL_REQUIRED_TEXTURE_IMAGE_UNITS_OES:
          if (!_mesa_is_gles(ctx) || !ctx->Extensions.OES_EGL_image_external)
             goto invalid_pname;
@@ -1635,6 +1641,12 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          if (!ctx->Extensions.ARB_texture_storage)
             goto invalid_pname;
          *params = (GLint) obj->Immutable;
+         break;
+
+      case GL_TEXTURE_IMMUTABLE_LEVELS:
+         if (!_mesa_is_gles3(ctx))
+            goto invalid_pname;
+         *params = obj->ImmutableLevels;
          break;
 
       case GL_REQUIRED_TEXTURE_IMAGE_UNITS_OES:

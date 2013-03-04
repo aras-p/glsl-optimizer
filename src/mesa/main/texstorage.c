@@ -397,6 +397,7 @@ texstorage(GLuint dims, GLenum target, GLsizei levels, GLenum internalformat,
       }
 
       texObj->Immutable = GL_TRUE;
+      texObj->ImmutableLevels = levels;
    }
 }
 
