@@ -81,10 +81,6 @@ struct cmd_block {
    struct cmd_block *next;
 };
 
-struct cmd_block_list {
-   struct cmd_block *head;
-   struct cmd_block *tail;
-};
 
 struct data_block {
    ubyte data[DATA_BLOCK_SIZE];
