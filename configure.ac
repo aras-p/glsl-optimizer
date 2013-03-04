@@ -832,12 +832,6 @@ if test "x$enable_dri" = xyes; then
     fi
 fi
 
-dnl Try to tell the user that the --x-* options are only used when
-dnl pkg-config is not available. This must be right after AC_PATH_XTRA.
-m4_divert_once([HELP_BEGIN],
-[These options are only used when the X libraries cannot be found by the
-pkg-config utility.])
-
 dnl Direct rendering or just indirect rendering
 case "$host_os" in
 gnu*)
