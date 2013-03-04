@@ -510,12 +510,6 @@ ensure_bo_has_space(struct gl_context *ctx, struct brw_query_object *query)
       }
 
       query->bo = drm_intel_bo_alloc(intel->bufmgr, "query", 4096, 1);
-
-      /* Fill the buffer with zeroes.  This is probably superfluous. */
-      drm_intel_bo_map(query->bo, true);
-      memset((char *) query->bo->virtual, 0, 4096);
-      drm_intel_bo_unmap(query->bo);
-
       query->last_index = 0;
    }
 }
