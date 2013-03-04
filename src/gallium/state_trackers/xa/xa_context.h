@@ -40,6 +40,8 @@ extern struct xa_context *xa_context_create(struct xa_tracker *xa);
 
 extern void xa_context_destroy(struct xa_context *r);
 
+extern void xa_context_flush(struct xa_context *ctx);
+
 /**
  * xa_yuv_planar_blit - 2D blit with color conversion and scaling.
  *
