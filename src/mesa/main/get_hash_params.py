@@ -412,7 +412,7 @@ descriptor=[
   [ "DEPTH_SCALE", "CONTEXT_FLOAT(Pixel.DepthScale), NO_EXTRA" ],
   [ "DOUBLEBUFFER", "BUFFER_INT(Visual.doubleBufferMode), NO_EXTRA" ],
   [ "DRAW_BUFFER", "BUFFER_ENUM(ColorDrawBuffer[0]), NO_EXTRA" ],
-  [ "EDGE_FLAG", "LOC_CUSTOM, TYPE_BOOLEAN, 0, NO_EXTRA" ],
+  [ "EDGE_FLAG", "LOC_CUSTOM, TYPE_BOOLEAN, 0, extra_flush_current" ],
   [ "FEEDBACK_BUFFER_SIZE", "CONTEXT_INT(Feedback.BufferSize), NO_EXTRA" ],
   [ "FEEDBACK_BUFFER_TYPE", "CONTEXT_ENUM(Feedback.Type), NO_EXTRA" ],
   [ "FOG_INDEX", "CONTEXT_FLOAT(Fog.Index), NO_EXTRA" ],
