@@ -160,6 +160,9 @@ void radeon_llvm_emit_prepare_cube_coords(struct lp_build_tgsi_context * bld_bas
 
 void radeon_llvm_context_init(struct radeon_llvm_context * ctx);
 
+void radeon_llvm_create_func(struct radeon_llvm_context * ctx,
+                             LLVMTypeRef *ParamTypes, unsigned ParamCount);
+
 void radeon_llvm_dispose(struct radeon_llvm_context * ctx);
 
 inline static struct radeon_llvm_context * radeon_llvm_context(

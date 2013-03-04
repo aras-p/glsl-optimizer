@@ -524,6 +524,7 @@ LLVMModuleRef r600_tgsi_llvm(
 	struct tgsi_shader_info shader_info;
 	struct lp_build_tgsi_context * bld_base = &ctx->soa.bld_base;
 	radeon_llvm_context_init(ctx);
+	radeon_llvm_create_func(ctx, NULL, 0);
 	tgsi_scan_shader(tokens, &shader_info);
 
 	bld_base->info = &shader_info;

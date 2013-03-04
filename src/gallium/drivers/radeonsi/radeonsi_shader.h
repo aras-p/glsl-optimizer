@@ -37,6 +37,17 @@
 #define SI_VS_NUM_USER_SGPR	8
 #define SI_PS_NUM_USER_SGPR	6
 
+/* LLVM function parameter indices */
+#define SI_PARAM_CONST		0
+#define SI_PARAM_SAMPLER	1
+#define SI_PARAM_RESOURCE	2
+
+/* VS only parameters */
+#define SI_PARAM_VERTEX_BUFFER	3
+
+/* PS only parameters */
+#define SI_PARAM_PRIM_MASK	3
+
 struct si_shader_io {
 	unsigned		name;
 	int			sid;

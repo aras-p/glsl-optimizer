@@ -82,13 +82,6 @@ static struct si_shader_context * si_shader_context(
 #define CONST_ADDR_SPACE 2
 #define USER_SGPR_ADDR_SPACE 8
 
-enum sgpr_type {
-	SGPR_CONST_PTR_F32,
-	SGPR_CONST_PTR_V16I8,
-	SGPR_CONST_PTR_V32I8,
-	SGPR_I32
-};
-
 /**
  * Build an LLVM bytecode indexed load using LLVMBuildGEP + LLVMBuildLoad
  *
@@ -112,66 +105,6 @@ static LLVMValueRef build_indexed_load(
 	return LLVMBuildLoad(gallivm->builder, computed_ptr, "");
 }
 
-/**
- * Load a value stored in one of the user SGPRs
- *
- * @param sgpr This is the sgpr to load the value from.  If you need to load a
- * value that is stored in consecutive SGPR registers (e.g. a 64-bit pointer),
- * then you should pass the index of the first SGPR that holds the value.  For
- * example, if you want to load a pointer that is stored in SGPRs 2 and 3, then
- * use pass 2 for the sgpr parameter.
- *
- * The value of the sgpr parameter must also be aligned to the width of the type
- * being loaded, so that the sgpr parameter is divisible by the dword width of the
- * type.  For example, if the value being loaded is two dwords wide, then the sgpr
- * parameter must be divisible by two.
- */
-static LLVMValueRef use_sgpr(
-	struct gallivm_state * gallivm,
-	enum sgpr_type type,
-	unsigned sgpr)
-{
-	LLVMValueRef sgpr_index;
-	LLVMTypeRef ret_type;
-	LLVMValueRef ptr;
-
-	sgpr_index = lp_build_const_int32(gallivm, sgpr);
-
-	switch (type) {
-	case SGPR_CONST_PTR_F32:
-		assert(sgpr % 2 == 0);
-		ret_type = LLVMFloatTypeInContext(gallivm->context);
-		ret_type = LLVMPointerType(ret_type, CONST_ADDR_SPACE);
-		break;
-
-	case SGPR_I32:
-		ret_type = LLVMInt32TypeInContext(gallivm->context);
-		break;
-
-	case SGPR_CONST_PTR_V16I8:
-		assert(sgpr % 2 == 0);
-		ret_type = LLVMInt8TypeInContext(gallivm->context);
-		ret_type = LLVMVectorType(ret_type, 16);
-		ret_type = LLVMPointerType(ret_type, CONST_ADDR_SPACE);
-		break;
-
-	case SGPR_CONST_PTR_V32I8:
-		assert(sgpr % 2 == 0);
-		ret_type = LLVMInt8TypeInContext(gallivm->context);
-		ret_type = LLVMVectorType(ret_type, 32);
-		ret_type = LLVMPointerType(ret_type, CONST_ADDR_SPACE);
-		break;
-
-	default:
-		assert(!"Unsupported SGPR type in use_sgpr()");
-		return NULL;
-	}
-
-	ret_type = LLVMPointerType(ret_type, USER_SGPR_ADDR_SPACE);
-	ptr = LLVMBuildIntToPtr(gallivm->builder, sgpr_index, ret_type, "");
-	return LLVMBuildLoad(gallivm->builder, ptr, "");
-}
-
 static void declare_input_vs(
 	struct si_shader_context * si_shader_ctx,
 	unsigned input_index,
@@ -191,7 +124,7 @@ static void declare_input_vs(
 	unsigned chan;
 
 	/* Load the T list */
-	t_list_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_V16I8, SI_SGPR_VERTEX_BUFFER);
+	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_VERTEX_BUFFER);
 
 	t_offset = lp_build_const_int32(base->gallivm, input_index);
 
@@ -244,7 +177,7 @@ static void declare_input_fs(
 	 * [32:16] ParamOffset
 	 *
 	 */
-	LLVMValueRef params = use_sgpr(base->gallivm, SGPR_I32, SI_PS_NUM_USER_SGPR);
+	LLVMValueRef params = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_PRIM_MASK);
 	LLVMValueRef attr_number;
 
 	if (decl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
@@ -419,6 +352,7 @@ static LLVMValueRef fetch_constant(
 	enum tgsi_opcode_type type,
 	unsigned swizzle)
 {
+	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
 	struct lp_build_context * base = &bld_base->base;
 	unsigned idx;
 
@@ -442,7 +376,7 @@ static LLVMValueRef fetch_constant(
 		return bitcast(bld_base, type, load);
 	}
 
-	const_ptr = use_sgpr(base->gallivm, SGPR_CONST_PTR_F32, SI_SGPR_CONST);
+	const_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
 
 	/* XXX: This assumes that the constant buffer is not packed, so
 	 * CONST[0].x will have an offset of 0 and CONST[1].x will have an
@@ -804,6 +738,7 @@ static void tex_fetch_args(
 	struct lp_build_tgsi_context * bld_base,
 	struct lp_build_emit_data * emit_data)
 {
+	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
 	struct gallivm_state *gallivm = bld_base->base.gallivm;
 	const struct tgsi_full_instruction * inst = emit_data->inst;
 	unsigned opcode = inst->Instruction.Opcode;
@@ -927,14 +862,14 @@ static void tex_fetch_args(
 	emit_data->args[1] = lp_build_gather_values(gallivm, address, count);
 
 	/* Resource */
-	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V32I8, SI_SGPR_RESOURCE);
+	ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_RESOURCE);
 	offset = lp_build_const_int32(bld_base->base.gallivm,
 				  emit_data->inst->Src[1].Register.Index);
 	emit_data->args[2] = build_indexed_load(bld_base->base.gallivm,
 						ptr, offset);
 
 	/* Sampler */
-	ptr = use_sgpr(bld_base->base.gallivm, SGPR_CONST_PTR_V16I8, SI_SGPR_SAMPLER);
+	ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_SAMPLER);
 	offset = lp_build_const_int32(bld_base->base.gallivm,
 				  emit_data->inst->Src[1].Register.Index);
 	emit_data->args[3] = build_indexed_load(bld_base->base.gallivm,
@@ -984,6 +919,31 @@ static const struct lp_build_tgsi_action txl_action = {
 	.intr_name = "llvm.SI.samplel."
 };
 
+static void create_function(struct si_shader_context *si_shader_ctx)
+{
+	struct gallivm_state *gallivm = si_shader_ctx->radeon_bld.soa.bld_base.base.gallivm;
+	LLVMTypeRef params[4], f, i8;
+	unsigned i;
+
+	f = LLVMFloatTypeInContext(gallivm->context);
+	i8 = LLVMInt8TypeInContext(gallivm->context);
+	params[SI_PARAM_CONST] = LLVMPointerType(f, CONST_ADDR_SPACE);
+	params[SI_PARAM_SAMPLER] = LLVMPointerType(LLVMVectorType(i8, 16), CONST_ADDR_SPACE);
+	params[SI_PARAM_RESOURCE] = LLVMPointerType(LLVMVectorType(i8, 32), CONST_ADDR_SPACE);
+
+	if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX)
+		params[SI_PARAM_VERTEX_BUFFER] = params[SI_PARAM_SAMPLER];
+	else
+		params[SI_PARAM_PRIM_MASK] = LLVMInt32TypeInContext(gallivm->context);
+
+	radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 4);
+
+	radeon_llvm_shader_type(si_shader_ctx->radeon_bld.main_fn, si_shader_ctx->type);
+	for (i = SI_PARAM_CONST; i <= SI_PARAM_VERTEX_BUFFER; ++i) {
+		LLVMValueRef P = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, i);
+		LLVMAddAttribute(P, LLVMInRegAttribute);
+	}
+}
 
 int si_pipe_shader_create(
 	struct pipe_context *ctx,
@@ -1036,7 +996,7 @@ int si_pipe_shader_create(
 	si_shader_ctx.type = si_shader_ctx.parse.FullHeader.Processor.Processor;
 	si_shader_ctx.rctx = rctx;
 
-	radeon_llvm_shader_type(si_shader_ctx.radeon_bld.main_fn, si_shader_ctx.type);
+	create_function(&si_shader_ctx);
 
 	shader->shader.nr_cbufs = rctx->framebuffer.nr_cbufs;
 

@@ -1094,8 +1094,6 @@ static void build_tgsi_intrinsic_readonly(
 void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 {
 	struct lp_type type;
-	LLVMTypeRef main_fn_type;
-	LLVMBasicBlockRef main_fn_body;
 
 	/* Initialize the gallivm object:
 	 * We are only using the module, context, and builder fields of this struct.
@@ -1108,14 +1106,6 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 	ctx->gallivm.module = LLVMModuleCreateWithNameInContext("tgsi",
 						ctx->gallivm.context);
 	ctx->gallivm.builder = LLVMCreateBuilderInContext(ctx->gallivm.context);
-
-	/* Setup the module */
-	main_fn_type = LLVMFunctionType(LLVMVoidTypeInContext(ctx->gallivm.context),
-					 NULL, 0, 0);
-	ctx->main_fn = LLVMAddFunction(ctx->gallivm.module, "main", main_fn_type);
-	main_fn_body = LLVMAppendBasicBlockInContext(ctx->gallivm.context,
-			ctx->main_fn, "main_body");
-	 LLVMPositionBuilderAtEnd(ctx->gallivm.builder, main_fn_body);
 
 	ctx->store_output_intr = "llvm.AMDGPU.store.output.";
 	ctx->swizzle_intr = "llvm.AMDGPU.swizzle";
@@ -1259,6 +1249,21 @@ void radeon_llvm_context_init(struct radeon_llvm_context * ctx)
 
 	bld_base->rsq_action.emit = build_tgsi_intrinsic_nomem;
 	bld_base->rsq_action.intr_name = "llvm.AMDGPU.rsq";
+}
+
+void radeon_llvm_create_func(struct radeon_llvm_context * ctx,
+			     LLVMTypeRef *ParamTypes, unsigned ParamCount)
+{
+	LLVMTypeRef main_fn_type;
+	LLVMBasicBlockRef main_fn_body;
+
+	/* Setup the function */
+	main_fn_type = LLVMFunctionType(LLVMVoidTypeInContext(ctx->gallivm.context),
+					ParamTypes, ParamCount, 0);
+	ctx->main_fn = LLVMAddFunction(ctx->gallivm.module, "main", main_fn_type);
+	main_fn_body = LLVMAppendBasicBlockInContext(ctx->gallivm.context,
+			ctx->main_fn, "main_body");
+	LLVMPositionBuilderAtEnd(ctx->gallivm.builder, main_fn_body);
 }
 
 void radeon_llvm_finalize_module(struct radeon_llvm_context * ctx)
