@@ -20,4 +20,5 @@ if env['platform'] == 'windows':
            'gdi_sw_winsys.c',
         ]
     )
+    env.Alias('ws_gdi', ws_gdi)
     Export('ws_gdi')

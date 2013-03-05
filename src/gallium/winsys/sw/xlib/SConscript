@@ -20,4 +20,5 @@ if env['platform'] in ('cygwin', 'darwin', 'freebsd', 'linux', 'sunos'):
            'xlib_sw_winsys.c',
         ]
     )
+    env.Alias('ws_xlib', ws_xlib)
     Export('ws_xlib')
