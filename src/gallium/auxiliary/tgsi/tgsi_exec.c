@@ -1908,7 +1908,9 @@ exec_tex(struct tgsi_exec_machine *mach,
       FETCH(&r[0], 0, TGSI_CHAN_X);
       FETCH(&r[1], 0, TGSI_CHAN_Y);
 
-      assert(modifier != TEX_MODIFIER_PROJECTED);
+      if (modifier == TEX_MODIFIER_PROJECTED) {
+         micro_div(&r[0], &r[0], &r[3]);
+      }
 
       fetch_texel(mach->Sampler, unit, unit,
                   &r[0], &r[1], &ZeroVec, &ZeroVec, lod,   /* S, T, P, C, LOD */
@@ -1920,7 +1922,10 @@ exec_tex(struct tgsi_exec_machine *mach,
       FETCH(&r[1], 0, TGSI_CHAN_Y);
       FETCH(&r[2], 0, TGSI_CHAN_Z);
 
-      assert(modifier != TEX_MODIFIER_PROJECTED);
+      if (modifier == TEX_MODIFIER_PROJECTED) {
+         micro_div(&r[0], &r[0], &r[3]);
+         micro_div(&r[2], &r[2], &r[3]);
+      }
 
       fetch_texel(mach->Sampler, unit, unit,
                   &r[0], &r[1], &r[2], &ZeroVec, lod,   /* S, T, P, C, LOD */
@@ -1933,7 +1938,10 @@ exec_tex(struct tgsi_exec_machine *mach,
       FETCH(&r[1], 0, TGSI_CHAN_Y);
       FETCH(&r[2], 0, TGSI_CHAN_Z);
 
-      assert(modifier != TEX_MODIFIER_PROJECTED);
+      if (modifier == TEX_MODIFIER_PROJECTED) {
+         micro_div(&r[0], &r[0], &r[3]);
+         micro_div(&r[1], &r[1], &r[3]);
+      }
 
       fetch_texel(mach->Sampler, unit, unit,
                   &r[0], &r[1], &r[2], &ZeroVec, lod,   /* S, T, P, C, LOD */
