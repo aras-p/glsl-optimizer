@@ -159,13 +159,15 @@ static void declare_input_fs(
 	unsigned input_index,
 	const struct tgsi_full_declaration *decl)
 {
-	const char * intr_name;
-	unsigned chan;
 	struct si_shader *shader = &si_shader_ctx->shader->shader;
 	struct lp_build_context * base =
 				&si_shader_ctx->radeon_bld.soa.bld_base.base;
 	struct gallivm_state * gallivm = base->gallivm;
 	LLVMTypeRef input_type = LLVMFloatTypeInContext(gallivm->context);
+	LLVMValueRef main_fn = si_shader_ctx->radeon_bld.main_fn;
+
+	LLVMValueRef interp_param;
+	const char * intr_name;
 
 	/* This value is:
 	 * [15:0] NewPrimMask (Bit mask for each quad.  It is set it the
@@ -177,16 +179,14 @@ static void declare_input_fs(
 	LLVMValueRef params = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_PRIM_MASK);
 	LLVMValueRef attr_number;
 
+	unsigned chan;
+
 	if (decl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
-			LLVMValueRef args[1];
 			unsigned soa_index =
 				radeon_llvm_reg_index_soa(input_index, chan);
-			args[0] = lp_build_const_int32(gallivm, chan);
 			si_shader_ctx->radeon_bld.inputs[soa_index] =
-				build_intrinsic(base->gallivm->builder,
-					"llvm.SI.fs.read.pos", input_type,
-					args, 1, LLVMReadNoneAttribute);
+				LLVMGetParam(main_fn, SI_PARAM_POS_X_FLOAT + chan);
 
 			if (chan == 3)
 				/* RCP for fragcoord.w */
@@ -202,10 +202,8 @@ static void declare_input_fs(
 	if (decl->Semantic.Name == TGSI_SEMANTIC_FACE) {
 		LLVMValueRef face, is_face_positive;
 
-		face = build_intrinsic(gallivm->builder,
-				       "llvm.SI.fs.read.face",
-				       input_type,
-				       NULL, 0, LLVMReadNoneAttribute);
+		face = LLVMGetParam(main_fn, SI_PARAM_FRONT_FACE);
+
 		is_face_positive = LLVMBuildFCmp(gallivm->builder,
 						 LLVMRealUGT, face,
 						 lp_build_const_float(gallivm, 0.0f),
@@ -234,28 +232,28 @@ static void declare_input_fs(
 	switch (decl->Interp.Interpolate) {
 	case TGSI_INTERPOLATE_COLOR:
 		if (si_shader_ctx->key.flatshade) {
-			intr_name = "llvm.SI.fs.interp.constant";
+			interp_param = 0;
 		} else {
 			if (decl->Interp.Centroid)
-				intr_name = "llvm.SI.fs.interp.persp.centroid";
+				interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_CENTROID);
 			else
-				intr_name = "llvm.SI.fs.interp.persp.center";
+				interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_CENTER);
 		}
 		break;
 	case TGSI_INTERPOLATE_CONSTANT:
-		intr_name = "llvm.SI.fs.interp.constant";
+		interp_param = 0;
 		break;
 	case TGSI_INTERPOLATE_LINEAR:
 		if (decl->Interp.Centroid)
-			intr_name = "llvm.SI.fs.interp.linear.centroid";
+			interp_param = LLVMGetParam(main_fn, SI_PARAM_LINEAR_CENTROID);
 		else
-			intr_name = "llvm.SI.fs.interp.linear.center";
+			interp_param = LLVMGetParam(main_fn, SI_PARAM_LINEAR_CENTER);
 		break;
 	case TGSI_INTERPOLATE_PERSPECTIVE:
 		if (decl->Interp.Centroid)
-			intr_name = "llvm.SI.fs.interp.persp.centroid";
+			interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_CENTROID);
 		else
-			intr_name = "llvm.SI.fs.interp.persp.center";
+			interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_CENTER);
 		break;
 	default:
 		fprintf(stderr, "Warning: Unhandled interpolation mode.\n");
@@ -270,25 +268,26 @@ static void declare_input_fs(
 				   NULL, 0);
 	}
 
+	intr_name = interp_param ? "llvm.SI.fs.interp" : "llvm.SI.fs.constant";
+
 	/* XXX: Could there be more than TGSI_NUM_CHANNELS (4) ? */
 	if (decl->Semantic.Name == TGSI_SEMANTIC_COLOR &&
 	    si_shader_ctx->key.color_two_side) {
-		LLVMValueRef args[3];
+		LLVMValueRef args[4];
 		LLVMValueRef face, is_face_positive;
 		LLVMValueRef back_attr_number =
 			lp_build_const_int32(gallivm,
 					     shader->input[input_index].param_offset + 1);
 
-		face = build_intrinsic(gallivm->builder,
-				       "llvm.SI.fs.read.face",
-				       input_type,
-				       NULL, 0, LLVMReadNoneAttribute);
+		face = LLVMGetParam(main_fn, SI_PARAM_FRONT_FACE);
+
 		is_face_positive = LLVMBuildFCmp(gallivm->builder,
 						 LLVMRealUGT, face,
 						 lp_build_const_float(gallivm, 0.0f),
 						 "");
 
 		args[2] = params;
+		args[3] = interp_param;
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
 			LLVMValueRef llvm_chan = lp_build_const_int32(gallivm, chan);
 			unsigned soa_index = radeon_llvm_reg_index_soa(input_index, chan);
@@ -297,11 +296,13 @@ static void declare_input_fs(
 			args[0] = llvm_chan;
 			args[1] = attr_number;
 			front = build_intrinsic(base->gallivm->builder, intr_name,
-						input_type, args, 3, LLVMReadOnlyAttribute);
+						input_type, args, args[3] ? 4 : 3,
+						LLVMReadOnlyAttribute | LLVMNoUnwindAttribute);
 
 			args[1] = back_attr_number;
 			back = build_intrinsic(base->gallivm->builder, intr_name,
-					       input_type, args, 3, LLVMReadOnlyAttribute);
+					       input_type, args, args[3] ? 4 : 3,
+					       LLVMReadOnlyAttribute | LLVMNoUnwindAttribute);
 
 			si_shader_ctx->radeon_bld.inputs[soa_index] =
 				LLVMBuildSelect(gallivm->builder,
@@ -314,15 +315,17 @@ static void declare_input_fs(
 		shader->ninterp++;
 	} else {
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
-			LLVMValueRef args[3];
+			LLVMValueRef args[4];
 			LLVMValueRef llvm_chan = lp_build_const_int32(gallivm, chan);
 			unsigned soa_index = radeon_llvm_reg_index_soa(input_index, chan);
 			args[0] = llvm_chan;
 			args[1] = attr_number;
 			args[2] = params;
+			args[3] = interp_param;
 			si_shader_ctx->radeon_bld.inputs[soa_index] =
 				build_intrinsic(base->gallivm->builder, intr_name,
-						input_type, args, 3, LLVMReadOnlyAttribute);
+						input_type, args, args[3] ? 4 : 3,
+						LLVMReadOnlyAttribute | LLVMNoUnwindAttribute);
 		}
 	}
 }
@@ -919,14 +922,16 @@ static const struct lp_build_tgsi_action txl_action = {
 static void create_function(struct si_shader_context *si_shader_ctx)
 {
 	struct gallivm_state *gallivm = si_shader_ctx->radeon_bld.soa.bld_base.base.gallivm;
-	LLVMTypeRef params[5], f, i8, i32;
+	LLVMTypeRef params[20], f32, i8, i32, v2i32, v3i32;
 	unsigned i;
 
-	f = LLVMFloatTypeInContext(gallivm->context);
 	i8 = LLVMInt8TypeInContext(gallivm->context);
 	i32 = LLVMInt32TypeInContext(gallivm->context);
+	f32 = LLVMFloatTypeInContext(gallivm->context);
+	v2i32 = LLVMVectorType(i32, 2);
+	v3i32 = LLVMVectorType(i32, 3);
 
-	params[SI_PARAM_CONST] = LLVMPointerType(f, CONST_ADDR_SPACE);
+	params[SI_PARAM_CONST] = LLVMPointerType(f32, CONST_ADDR_SPACE);
 	params[SI_PARAM_SAMPLER] = LLVMPointerType(LLVMVectorType(i8, 16), CONST_ADDR_SPACE);
 	params[SI_PARAM_RESOURCE] = LLVMPointerType(LLVMVectorType(i8, 32), CONST_ADDR_SPACE);
 
@@ -934,9 +939,26 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 		params[SI_PARAM_VERTEX_BUFFER] = params[SI_PARAM_SAMPLER];
 		params[SI_PARAM_VERTEX_INDEX] = i32;
 		radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 5);
+
 	} else {
-		params[SI_PARAM_PRIM_MASK] = LLVMInt32TypeInContext(gallivm->context);
-		radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 4);
+		params[SI_PARAM_PRIM_MASK] = i32;
+		params[SI_PARAM_PERSP_SAMPLE] = v2i32;
+		params[SI_PARAM_PERSP_CENTER] = v2i32;
+		params[SI_PARAM_PERSP_CENTROID] = v2i32;
+		params[SI_PARAM_PERSP_PULL_MODEL] = v3i32;
+		params[SI_PARAM_LINEAR_SAMPLE] = v2i32;
+		params[SI_PARAM_LINEAR_CENTER] = v2i32;
+		params[SI_PARAM_LINEAR_CENTROID] = v2i32;
+		params[SI_PARAM_LINE_STIPPLE_TEX] = f32;
+		params[SI_PARAM_POS_X_FLOAT] = f32;
+		params[SI_PARAM_POS_Y_FLOAT] = f32;
+		params[SI_PARAM_POS_Z_FLOAT] = f32;
+		params[SI_PARAM_POS_W_FLOAT] = f32;
+		params[SI_PARAM_FRONT_FACE] = f32;
+		params[SI_PARAM_ANCILLARY] = f32;
+		params[SI_PARAM_SAMPLE_COVERAGE] = f32;
+		params[SI_PARAM_POS_FIXED_PT] = f32;
+		radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 20);
 	}
 
 	radeon_llvm_shader_type(si_shader_ctx->radeon_bld.main_fn, si_shader_ctx->type);
