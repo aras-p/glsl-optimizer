@@ -2714,16 +2714,28 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
    switch (ir->op) {
    case ir_tex:
       opcode = (is_cube_array && ir->shadow_comparitor) ? TGSI_OPCODE_TEX2 : TGSI_OPCODE_TEX; 
+      if (ir->offset) {
+         ir->offset->accept(this);
+         offset = this->result;
+      }
       break;
    case ir_txb:
       opcode = is_cube_array ? TGSI_OPCODE_TXB2 : TGSI_OPCODE_TXB;
       ir->lod_info.bias->accept(this);
       lod_info = this->result;
+      if (ir->offset) {
+         ir->offset->accept(this);
+         offset = this->result;
+      }
       break;
    case ir_txl:
       opcode = is_cube_array ? TGSI_OPCODE_TXL2 : TGSI_OPCODE_TXL;
       ir->lod_info.lod->accept(this);
       lod_info = this->result;
+      if (ir->offset) {
+         ir->offset->accept(this);
+         offset = this->result;
+      }
       break;
    case ir_txd:
       opcode = TGSI_OPCODE_TXD;
@@ -2731,6 +2743,10 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       dx = this->result;
       ir->lod_info.grad.dPdy->accept(this);
       dy = this->result;
+      if (ir->offset) {
+         ir->offset->accept(this);
+         offset = this->result;
+      }
       break;
    case ir_txs:
       opcode = TGSI_OPCODE_TXQ;
@@ -2742,8 +2758,8 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       ir->lod_info.lod->accept(this);
       lod_info = this->result;
       if (ir->offset) {
-	 ir->offset->accept(this);
-	 offset = this->result;
+         ir->offset->accept(this);
+         offset = this->result;
       }
       break;
    case ir_txf_ms:
