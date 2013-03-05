@@ -249,6 +249,9 @@ typedef boolean (*r600g_dma_blit_t)(struct pipe_context *ctx,
 /* features */
 #define DBG_NO_HYPERZ		(1 << 16)
 #define DBG_NO_LLVM		(1 << 17)
+#define DBG_NO_CP_DMA		(1 << 18)
+#define DBG_NO_ASYNC_DMA	(1 << 19)
+#define DBG_NO_DISCARD_RANGE	(1 << 20)
 
 struct r600_tiling_info {
 	unsigned num_channels;

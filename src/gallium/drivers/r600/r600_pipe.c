@@ -56,6 +56,10 @@ static const struct debug_named_value debug_options[] = {
 #if defined(R600_USE_LLVM)
 	{ "nollvm", DBG_NO_LLVM, "Disable the LLVM shader compiler" },
 #endif
+	{ "nocpdma", DBG_NO_CP_DMA, "Disable CP DMA" },
+	{ "nodma", DBG_NO_ASYNC_DMA, "Disable asynchronous DMA" },
+	/* GL uses the word INVALIDATE, gallium uses the word DISCARD */
+	{ "noinvalrange", DBG_NO_DISCARD_RANGE, "Disable handling of INVALIDATE_RANGE map flags" },
 
 	DEBUG_NAMED_VALUE_END /* must be last */
 };
@@ -425,7 +429,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->rings.gfx.flushing = false;
 
 	rctx->rings.dma.cs = NULL;
-	if (rscreen->info.r600_has_dma) {
+	if (rscreen->info.r600_has_dma && !(rscreen->debug_flags & DBG_NO_ASYNC_DMA)) {
 		rctx->rings.dma.cs = rctx->ws->cs_create(rctx->ws, RING_DMA);
 		rctx->rings.dma.flush = r600_flush_dma_ring;
 		rctx->ws->cs_set_flush_callback(rctx->rings.dma.cs, r600_flush_dma_from_winsys, rctx);
@@ -1136,7 +1140,8 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		break;
 	}
 
-	rscreen->has_cp_dma = rscreen->info.drm_minor >= 27;
+	rscreen->has_cp_dma = rscreen->info.drm_minor >= 27 &&
+			      !(rscreen->debug_flags & DBG_NO_CP_DMA);
 
 	if (r600_init_tiling(rscreen)) {
 		FREE(rscreen);
