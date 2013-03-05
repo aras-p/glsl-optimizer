@@ -1062,26 +1062,24 @@ if test "x$enable_dri" = xyes; then
     DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
 
     # Check for expat
-    if test "x$enable_dri" = xyes; then
-        EXPAT_INCLUDES=""
-        EXPAT_LIB=-lexpat
-        AC_ARG_WITH([expat],
-            [AS_HELP_STRING([--with-expat=DIR],
-                [expat install directory])],[
-            EXPAT_INCLUDES="-I$withval/include"
-            CPPFLAGS="$CPPFLAGS $EXPAT_INCLUDES"
-            LDFLAGS="$LDFLAGS -L$withval/$LIB_DIR"
-            EXPAT_LIB="-L$withval/$LIB_DIR -lexpat"
-            ])
-        AC_CHECK_HEADER([expat.h],[],[AC_MSG_ERROR([Expat required for DRI.])])
-	save_LIBS="$LIBS"
-        AC_CHECK_LIB([expat],[XML_ParserCreate],[],
-            [AC_MSG_ERROR([Expat required for DRI.])])
-	LIBS="$save_LIBS"
-    fi
+    EXPAT_INCLUDES=""
+    EXPAT_LIB=-lexpat
+    AC_ARG_WITH([expat],
+        [AS_HELP_STRING([--with-expat=DIR],
+            [expat install directory])],[
+        EXPAT_INCLUDES="-I$withval/include"
+        CPPFLAGS="$CPPFLAGS $EXPAT_INCLUDES"
+        LDFLAGS="$LDFLAGS -L$withval/$LIB_DIR"
+        EXPAT_LIB="-L$withval/$LIB_DIR -lexpat"
+        ])
+    AC_CHECK_HEADER([expat.h],[],[AC_MSG_ERROR([Expat required for DRI.])])
+    save_LIBS="$LIBS"
+    AC_CHECK_LIB([expat],[XML_ParserCreate],[],
+        [AC_MSG_ERROR([Expat required for DRI.])])
+    LIBS="$save_LIBS"
 
     # if we are building any dri driver other than swrast or using the dri state tracker ...
-    if test -n "$DRI_DIRS" -a x"$DRI_DIRS" != xswrast -a "x$enable_dri" = xyes; then
+    if test -n "$DRI_DIRS" -a x"$DRI_DIRS" != xswrast; then
         # ... libdrm is required
         if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([DRI drivers requires libdrm >= $LIBDRM_REQUIRED])
