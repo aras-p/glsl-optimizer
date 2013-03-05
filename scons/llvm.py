@@ -174,7 +174,7 @@ def generate(env):
                 env.Append(LINKFLAGS = ['/nodefaultlib:LIBCMT'])
     else:
         if not env.Detect('llvm-config'):
-            print 'scons: llvm-config script not found' % llvm_version
+            print 'scons: llvm-config script not found'
             return
 
         llvm_version = env.backtick('llvm-config --version').rstrip()
