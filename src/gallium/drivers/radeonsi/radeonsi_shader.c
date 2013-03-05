@@ -118,7 +118,6 @@ static void declare_input_vs(
 	LLVMValueRef args[3];
 	LLVMTypeRef vec4_type;
 	LLVMValueRef input;
-	struct lp_build_context * uint = &si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
 	struct lp_build_context * base = &si_shader_ctx->radeon_bld.soa.bld_base.base;
 	//struct pipe_vertex_element *velem = &rctx->vertex_elements->elements[input_index];
 	unsigned chan;
@@ -133,11 +132,9 @@ static void declare_input_vs(
 	/* Build the attribute offset */
 	attribute_offset = lp_build_const_int32(base->gallivm, 0);
 
-	/* Load the buffer index is always, which is always stored in VGPR0
+	/* Load the buffer index, which is always stored in VGPR0
 	 * for Vertex Shaders */
-	buffer_index_reg = build_intrinsic(base->gallivm->builder,
-		"llvm.SI.vs.load.buffer.index", uint->elem_type, NULL, 0,
-		LLVMReadNoneAttribute);
+	buffer_index_reg = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_VERTEX_INDEX);
 
 	vec4_type = LLVMVectorType(base->elem_type, 4);
 	args[0] = t_list;
@@ -922,21 +919,25 @@ static const struct lp_build_tgsi_action txl_action = {
 static void create_function(struct si_shader_context *si_shader_ctx)
 {
 	struct gallivm_state *gallivm = si_shader_ctx->radeon_bld.soa.bld_base.base.gallivm;
-	LLVMTypeRef params[4], f, i8;
+	LLVMTypeRef params[5], f, i8, i32;
 	unsigned i;
 
 	f = LLVMFloatTypeInContext(gallivm->context);
 	i8 = LLVMInt8TypeInContext(gallivm->context);
+	i32 = LLVMInt32TypeInContext(gallivm->context);
+
 	params[SI_PARAM_CONST] = LLVMPointerType(f, CONST_ADDR_SPACE);
 	params[SI_PARAM_SAMPLER] = LLVMPointerType(LLVMVectorType(i8, 16), CONST_ADDR_SPACE);
 	params[SI_PARAM_RESOURCE] = LLVMPointerType(LLVMVectorType(i8, 32), CONST_ADDR_SPACE);
 
-	if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX)
+	if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
 		params[SI_PARAM_VERTEX_BUFFER] = params[SI_PARAM_SAMPLER];
-	else
+		params[SI_PARAM_VERTEX_INDEX] = i32;
+		radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 5);
+	} else {
 		params[SI_PARAM_PRIM_MASK] = LLVMInt32TypeInContext(gallivm->context);
-
-	radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 4);
+		radeon_llvm_create_func(&si_shader_ctx->radeon_bld, params, 4);
+	}
 
 	radeon_llvm_shader_type(si_shader_ctx->radeon_bld.main_fn, si_shader_ctx->type);
 	for (i = SI_PARAM_CONST; i <= SI_PARAM_VERTEX_BUFFER; ++i) {

@@ -44,6 +44,7 @@
 
 /* VS only parameters */
 #define SI_PARAM_VERTEX_BUFFER	3
+#define SI_PARAM_VERTEX_INDEX	4
 
 /* PS only parameters */
 #define SI_PARAM_PRIM_MASK	3
