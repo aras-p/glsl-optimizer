@@ -1078,7 +1078,7 @@ if test "x$enable_dri" = xyes; then
         [AC_MSG_ERROR([Expat required for DRI.])])
     LIBS="$save_LIBS"
 
-    # if we are building any dri driver other than swrast or using the dri state tracker ...
+    # If we are building any DRI driver other than swrast.
     if test -n "$DRI_DIRS" -a x"$DRI_DIRS" != xswrast; then
         # ... libdrm is required
         if test "x$have_libdrm" != xyes; then
@@ -1146,14 +1146,6 @@ case $DRI_DIRS in
     HAVE_SWRAST_DRI=yes;
     ;;
 esac
-
-AM_CONDITIONAL(HAVE_I915_DRI, test x$HAVE_I915_DRI = xyes)
-AM_CONDITIONAL(HAVE_I965_DRI, test x$HAVE_I965_DRI = xyes)
-AM_CONDITIONAL(HAVE_NOUVEAU_DRI, test x$HAVE_NOUVEAU_DRI = xyes)
-AM_CONDITIONAL(HAVE_R200_DRI, test x$HAVE_R200_DRI = xyes)
-AM_CONDITIONAL(HAVE_RADEON_DRI, test x$HAVE_RADEON_DRI = xyes)
-AM_CONDITIONAL(HAVE_SWRAST_DRI, test x$HAVE_SWRAST_DRI = xyes)
-AM_CONDITIONAL(HAVE_COMMON_DRI, test x$HAVE_COMMON_DRI = xyes)
 
 dnl
 dnl OSMesa configuration
@@ -1753,6 +1745,7 @@ gallium_check_st() {
     fi
     if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $2"
+         HAVE_COMMON_DRI=yes
     fi
     if test "x$HAVE_ST_XORG" = xyes && test "x$3" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
@@ -1993,6 +1986,14 @@ for driver in $GALLIUM_DRIVERS_DIRS; do
 	    ;;
     esac
 done
+
+AM_CONDITIONAL(HAVE_I915_DRI, test x$HAVE_I915_DRI = xyes)
+AM_CONDITIONAL(HAVE_I965_DRI, test x$HAVE_I965_DRI = xyes)
+AM_CONDITIONAL(HAVE_NOUVEAU_DRI, test x$HAVE_NOUVEAU_DRI = xyes)
+AM_CONDITIONAL(HAVE_R200_DRI, test x$HAVE_R200_DRI = xyes)
+AM_CONDITIONAL(HAVE_RADEON_DRI, test x$HAVE_RADEON_DRI = xyes)
+AM_CONDITIONAL(HAVE_SWRAST_DRI, test x$HAVE_SWRAST_DRI = xyes)
+AM_CONDITIONAL(HAVE_COMMON_DRI, test x$HAVE_COMMON_DRI = xyes)
 
 AM_CONDITIONAL(HAVE_GALAHAD_GALLIUM, test x$HAVE_GALAHAD_GALLIUM = xyes)
 AM_CONDITIONAL(HAVE_IDENTITY_GALLIUM, test x$HAVE_IDENTITY_GALLIUM = xyes)
