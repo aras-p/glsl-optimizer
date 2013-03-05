@@ -322,7 +322,7 @@ emit_mem2gmem(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	if (ctx->restore & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL))
 		emit_mem2gmem_surf(ring, 0, bin_w * bin_h, pfb->zsbuf);
 
-	if (ctx->resolve & FD_BUFFER_COLOR)
+	if (ctx->restore & FD_BUFFER_COLOR)
 		emit_mem2gmem_surf(ring, 1, 0, pfb->cbufs[0]);
 
 	/* TODO blob driver seems to toss in a CACHE_FLUSH after each DRAW_INDX.. */
