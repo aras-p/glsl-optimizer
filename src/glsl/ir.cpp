@@ -399,6 +399,10 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
       this->type = op0->type;
       break;
 
+   case ir_binop_vector_extract:
+      this->type = op0->type->get_scalar_type();
+      break;
+
    default:
       assert(!"not reached: missing automatic type setup for ir_expression");
       this->type = glsl_type::float_type;
@@ -510,6 +514,7 @@ static const char *const operator_strs[] = {
    "packHalf2x16_split",
    "bfm",
    "ubo_load",
+   "vector_extract",
    "lrp",
    "bfi",
    "bitfield_extract",

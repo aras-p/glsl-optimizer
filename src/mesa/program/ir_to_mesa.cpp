@@ -1489,6 +1489,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       emit(ir, OPCODE_LRP, result_dst, op[2], op[1], op[0]);
       break;
 
+   case ir_binop_vector_extract:
    case ir_binop_bfm:
    case ir_triop_bfi:
    case ir_triop_bitfield_extract:

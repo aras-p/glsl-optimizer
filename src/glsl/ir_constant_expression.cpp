@@ -391,10 +391,17 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
    }
 
    if (op[1] != NULL)
-      assert(op[0]->type->base_type == op[1]->type->base_type ||
-	     this->operation == ir_binop_lshift ||
-             this->operation == ir_binop_rshift ||
-             this->operation == ir_triop_bitfield_extract);
+      switch (this->operation) {
+      case ir_binop_lshift:
+      case ir_binop_rshift:
+      case ir_binop_vector_extract:
+      case ir_triop_bitfield_extract:
+         break;
+
+      default:
+         assert(op[0]->type->base_type == op[1]->type->base_type);
+         break;
+      }
 
    bool op0_scalar = op[0]->type->is_scalar();
    bool op1_scalar = op[1] != NULL && op[1]->type->is_scalar();
@@ -1230,6 +1237,29 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
           }
       }
       break;
+
+   case ir_binop_vector_extract: {
+      const int c = CLAMP(op[1]->value.i[0], 0,
+			  (int) op[0]->type->vector_elements - 1);
+
+      switch (op[0]->type->base_type) {
+      case GLSL_TYPE_UINT:
+         data.u[0] = op[0]->value.u[c];
+         break;
+      case GLSL_TYPE_INT:
+         data.i[0] = op[0]->value.i[c];
+         break;
+      case GLSL_TYPE_FLOAT:
+         data.f[0] = op[0]->value.f[c];
+         break;
+      case GLSL_TYPE_BOOL:
+         data.b[0] = op[0]->value.b[c];
+         break;
+      default:
+         assert(0);
+      }
+      break;
+   }
 
    case ir_binop_bit_xor:
       for (unsigned c = 0, c0 = 0, c1 = 0;

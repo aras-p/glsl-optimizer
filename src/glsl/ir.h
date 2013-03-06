@@ -1136,9 +1136,17 @@ enum ir_expression_operation {
    ir_binop_ubo_load,
 
    /**
+    * Extract a scalar from a vector
+    *
+    * operand0 is the vector
+    * operand1 is the index of the field to read from operand0
+    */
+   ir_binop_vector_extract,
+
+   /**
     * A sentinel marking the last of the binary operations.
     */
-   ir_last_binop = ir_binop_ubo_load,
+   ir_last_binop = ir_binop_vector_extract,
 
    ir_triop_lrp,
 
