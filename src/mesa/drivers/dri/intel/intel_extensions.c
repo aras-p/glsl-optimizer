@@ -110,8 +110,10 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_texture_multisample = true;
    }
 
-   if (intel->gen >= 5)
+   if (intel->gen >= 5) {
+      ctx->Extensions.ARB_texture_query_lod = true;
       ctx->Extensions.EXT_timer_query = true;
+   }
 
    if (intel->gen >= 6) {
       uint64_t dummy;

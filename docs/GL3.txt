@@ -87,7 +87,7 @@ GL_ARB_vertex_type_2_10_10_10_rev                     DONE (i965, r600)
 GL 4.0:
 
 GLSL 4.0                                             not started
-GL_ARB_texture_query_lod                             not started
+GL_ARB_texture_query_lod                             DONE (i965)
 GL_ARB_draw_buffers_blend                            DONE (i965, r600, softpipe)
 GL_ARB_draw_indirect                                 not started
 GL_ARB_gpu_shader5                                   not started
