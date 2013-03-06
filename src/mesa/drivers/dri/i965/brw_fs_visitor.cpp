@@ -1084,6 +1084,9 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       mlen += reg_width;
       inst = emit(SHADER_OPCODE_TXF_MS, dst);
       break;
+   case ir_lod:
+      inst = emit(SHADER_OPCODE_LOD, dst);
+      break;
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
@@ -1124,6 +1127,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    /* Set up the LOD info */
    switch (ir->op) {
    case ir_tex:
+   case ir_lod:
       break;
    case ir_txb:
       emit(MOV(fs_reg(MRF, base_mrf + mlen), lod));
@@ -1237,6 +1241,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txf: inst = emit(SHADER_OPCODE_TXF, dst); break;
    case ir_txf_ms: inst = emit(SHADER_OPCODE_TXF_MS, dst); break;
    case ir_txs: inst = emit(SHADER_OPCODE_TXS, dst); break;
+   case ir_lod: inst = emit(SHADER_OPCODE_LOD, dst); break;
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
@@ -1388,6 +1393,7 @@ fs_visitor::visit(ir_texture *ir)
    fs_reg lod, lod2, sample_index;
    switch (ir->op) {
    case ir_tex:
+   case ir_lod:
       break;
    case ir_txb:
       ir->lod_info.bias->accept(this);

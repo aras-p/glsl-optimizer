@@ -338,7 +338,8 @@ fs_inst::is_tex()
            opcode == SHADER_OPCODE_TXF ||
            opcode == SHADER_OPCODE_TXF_MS ||
            opcode == SHADER_OPCODE_TXL ||
-           opcode == SHADER_OPCODE_TXS);
+           opcode == SHADER_OPCODE_TXS ||
+           opcode == SHADER_OPCODE_LOD);
 }
 
 bool
@@ -732,6 +733,7 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case SHADER_OPCODE_TXF_MS:
    case SHADER_OPCODE_TXL:
    case SHADER_OPCODE_TXS:
+   case SHADER_OPCODE_LOD:
       return 1;
    case FS_OPCODE_FB_WRITE:
       return 2;

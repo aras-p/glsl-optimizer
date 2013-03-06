@@ -2127,6 +2127,7 @@ vec4_visitor::visit(ir_texture *ir)
       lod_type = ir->lod_info.grad.dPdx->type;
       break;
    case ir_txb:
+   case ir_lod:
       break;
    }
 
@@ -2150,6 +2151,10 @@ vec4_visitor::visit(ir_texture *ir)
       break;
    case ir_txb:
       assert(!"TXB is not valid for vertex shaders.");
+      break;
+   case ir_lod:
+      assert(!"LOD is not valid for vertex shaders.");
+      break;
    }
 
    bool use_texture_offset = ir->offset != NULL && ir->op != ir_txf;
