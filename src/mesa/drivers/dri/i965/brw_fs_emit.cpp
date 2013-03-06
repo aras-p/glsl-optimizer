@@ -647,6 +647,8 @@ fs_generator::generate_uniform_pull_constant_load_gen7(fs_inst *inst,
    uint32_t surf_index = index.dw1.ud;
 
    assert(offset.file == BRW_GENERAL_REGISTER_FILE);
+   /* Reference just the dword we need, to avoid angering validate_reg(). */
+   offset = brw_vec1_grf(offset.nr, 0);
 
    brw_push_insn_state(p);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
@@ -654,20 +656,22 @@ fs_generator::generate_uniform_pull_constant_load_gen7(fs_inst *inst,
    struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_pop_insn_state(p);
 
+   /* We use the SIMD4x2 mode because we want to end up with 4 components in
+    * the destination loaded consecutively from the same offset (which appears
+    * in the first component, and the rest are ignored).
+    */
+   dst.width = BRW_WIDTH_4;
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, offset);
-
-   uint32_t msg_control = BRW_DATAPORT_OWORD_BLOCK_2_OWORDS;
-   uint32_t msg_type = BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ;
-   bool header_present = true;
-   brw_set_dp_read_message(p, send,
+   brw_set_sampler_message(p, send,
                            surf_index,
-                           msg_control,
-                           msg_type,
-                           BRW_DATAPORT_READ_TARGET_DATA_CACHE,
-                           1,
-                           header_present,
-                           1);
+                           0, /* LD message ignores sampler unit */
+                           GEN5_SAMPLER_MESSAGE_SAMPLE_LD,
+                           1, /* rlen */
+                           1, /* mlen */
+                           false, /* no header */
+                           BRW_SAMPLER_SIMD_MODE_SIMD4X2,
+                           0);
 }
 
 void
@@ -858,31 +862,23 @@ brw_reg_from_fs_reg(fs_reg *reg)
 }
 
 /**
- * Sets the second dword of a vgrf for gen7+ message setup.
+ * Sets the first word of a vgrf for gen7+ simd4x2 uniform pull constant
+ * sampler LD messages.
  *
- * For setting up gen7 messages in VGRFs, we need to be able to set the second
- * dword for some payloads where in the MRF world we'd have just used
- * brw_message_reg().  We don't want to bake it into the send message's code
- * generation because that means we don't get a chance to schedule the
- * instructions.
+ * We don't want to bake it into the send message's code generation because
+ * that means we don't get a chance to schedule the instructions.
  */
 void
-fs_generator::generate_set_global_offset(fs_inst *inst,
-                                         struct brw_reg dst,
-                                         struct brw_reg src,
-                                         struct brw_reg value)
+fs_generator::generate_set_simd4x2_offset(fs_inst *inst,
+                                          struct brw_reg dst,
+                                          struct brw_reg value)
 {
-   /* We use a matching src and dst to get the information on how this
-    * instruction works exposed to various optimization passes that would
-    * otherwise treat it as completely overwriting the dst.
-    */
-   assert(src.file == dst.file && src.nr == dst.nr);
    assert(value.file == BRW_IMMEDIATE_VALUE);
 
    brw_push_insn_state(p);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
-   brw_MOV(p, retype(brw_vec1_reg(dst.file, dst.nr, 2), value.type), value);
+   brw_MOV(p, retype(brw_vec1_reg(dst.file, dst.nr, 0), value.type), value);
    brw_pop_insn_state(p);
 }
 
@@ -1298,8 +1294,8 @@ fs_generator::generate_code(exec_list *instructions)
          brw_shader_time_add(p, inst->base_mrf, SURF_INDEX_WM_SHADER_TIME);
          break;
 
-      case FS_OPCODE_SET_GLOBAL_OFFSET:
-         generate_set_global_offset(inst, dst, src[0], src[1]);
+      case FS_OPCODE_SET_SIMD4X2_OFFSET:
+         generate_set_simd4x2_offset(inst, dst, src[0]);
          break;
 
       case FS_OPCODE_PACK_HALF_2x16_SPLIT:

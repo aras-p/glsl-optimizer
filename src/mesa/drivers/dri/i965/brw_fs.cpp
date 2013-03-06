@@ -2461,6 +2461,11 @@ fs_visitor::insert_gen4_send_dependency_workarounds()
  * scheduling full flexibility, while the conversion to native instructions
  * allows the post-register-allocation scheduler the best information
  * possible.
+ *
+ * Note that execution masking for setting up pull constant loads is special:
+ * the channels that need to be written are unrelated to the current execution
+ * mask, since a later instruction will use one of the result channels as a
+ * source operand for all 8 or 16 of its channels.
  */
 void
 fs_visitor::lower_uniform_pull_constant_loads()
@@ -2477,26 +2482,24 @@ fs_visitor::lower_uniform_pull_constant_loads()
                 const_offset_reg.type == BRW_REGISTER_TYPE_UD);
          const_offset_reg.imm.u /= 16;
          fs_reg payload = fs_reg(this, glsl_type::uint_type);
-         struct brw_reg g0 = retype(brw_vec8_grf(0, 0),
-                                    BRW_REGISTER_TYPE_UD);
 
-         fs_inst *setup1 = MOV(payload, fs_reg(g0));
-         setup1->force_writemask_all = true;
-         /* We don't need the second half of this vgrf to be filled with g1
-          * in the 16-wide case, but if we use force_uncompressed then live
-          * variable analysis won't consider this a def!
+         /* This is actually going to be a MOV, but since only the first dword
+          * is accessed, we have a special opcode to do just that one.  Note
+          * that this needs to be an operation that will be considered a def
+          * by live variable analysis, or register allocation will explode.
           */
+         fs_inst *setup = new(mem_ctx) fs_inst(FS_OPCODE_SET_SIMD4X2_OFFSET,
+                                               payload, const_offset_reg);
+         setup->force_writemask_all = true;
 
-         fs_inst *setup2 = new(mem_ctx) fs_inst(FS_OPCODE_SET_GLOBAL_OFFSET,
-                                                payload, payload,
-                                                const_offset_reg);
+         setup->ir = inst->ir;
+         setup->annotation = inst->annotation;
+         inst->insert_before(setup);
 
-         setup1->ir = inst->ir;
-         setup1->annotation = inst->annotation;
-         inst->insert_before(setup1);
-         setup2->ir = inst->ir;
-         setup2->annotation = inst->annotation;
-         inst->insert_before(setup2);
+         /* Similarly, this will only populate the first 4 channels of the
+          * result register (since we only use smear values from 0-3), but we
+          * don't tell the optimizer.
+          */
          inst->opcode = FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7;
          inst->src[1] = payload;
 
@@ -2533,7 +2536,7 @@ fs_visitor::dump_instruction(fs_inst *inst)
       case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7:
          printf("uniform_pull_const_gen7");
          break;
-      case FS_OPCODE_SET_GLOBAL_OFFSET:
+      case FS_OPCODE_SET_SIMD4X2_OFFSET:
          printf("set_global_offset");
          break;
       default:
