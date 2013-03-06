@@ -40,7 +40,7 @@
 #include "main/samplerobj.h"
 
 
-static struct gl_sampler_object *
+struct gl_sampler_object *
 _mesa_lookup_samplerobj(struct gl_context *ctx, GLuint name)
 {
    if (name == 0)

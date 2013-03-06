@@ -62,6 +62,8 @@ _mesa_reference_sampler_object(struct gl_context *ctx,
       _mesa_reference_sampler_object_(ctx, ptr, samp);
 }
 
+extern struct gl_sampler_object *
+_mesa_lookup_samplerobj(struct gl_context *ctx, GLuint name);
 
 extern struct gl_sampler_object *
 _mesa_new_sampler_object(struct gl_context *ctx, GLuint name);

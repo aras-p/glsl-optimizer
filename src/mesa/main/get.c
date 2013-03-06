@@ -34,6 +34,7 @@
 #include "state.h"
 #include "texcompress.h"
 #include "framebuffer.h"
+#include "samplerobj.h"
 
 /* This is a table driven implemetation of the glGet*v() functions.
  * The basic idea is that most getters just look up an int somewhere
@@ -827,7 +828,16 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       {
          struct gl_sampler_object *samp =
             ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler;
-         v->value_int = samp ? samp->Name : 0;
+
+         /*
+          * The sampler object may have been deleted on another context,
+          * so we try to lookup the sampler object before returning its Name.
+          */
+         if (samp && _mesa_lookup_samplerobj(ctx, samp->Name)) {
+            v->value_int = samp->Name;
+         } else {
+            v->value_int = 0;
+         }
       }
       break;
    /* GL_ARB_uniform_buffer_object */
