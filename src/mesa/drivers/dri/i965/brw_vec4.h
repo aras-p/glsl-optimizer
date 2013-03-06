@@ -126,7 +126,7 @@ public:
    src_reg(int32_t i);
    src_reg(struct brw_reg reg);
 
-   bool equals(src_reg *r);
+   bool equals(const src_reg &r) const;
    bool is_zero() const;
    bool is_one() const;
    bool is_accumulator() const;

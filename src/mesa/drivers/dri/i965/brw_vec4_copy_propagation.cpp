@@ -82,7 +82,7 @@ try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
     */
    src_reg value = *values[0];
    for (int i = 1; i < 4; i++) {
-      if (!value.equals(values[i]))
+      if (!value.equals(*values[i]))
 	 return false;
    }
 
@@ -289,7 +289,7 @@ vec4_visitor::try_copy_propagation(vec4_instruction *inst, int arg,
       return false;
 
    /* Don't report progress if this is a noop. */
-   if (value.equals(&inst->src[arg]))
+   if (value.equals(inst->src[arg]))
       return false;
 
    value.type = inst->src[arg].type;

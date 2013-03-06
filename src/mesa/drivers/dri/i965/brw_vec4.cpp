@@ -323,19 +323,19 @@ vec4_visitor::implied_mrf_writes(vec4_instruction *inst)
 }
 
 bool
-src_reg::equals(src_reg *r)
+src_reg::equals(const src_reg &r) const
 {
-   return (file == r->file &&
-	   reg == r->reg &&
-	   reg_offset == r->reg_offset &&
-	   type == r->type &&
-	   negate == r->negate &&
-	   abs == r->abs &&
-	   swizzle == r->swizzle &&
-	   !reladdr && !r->reladdr &&
-	   memcmp(&fixed_hw_reg, &r->fixed_hw_reg,
+   return (file == r.file &&
+	   reg == r.reg &&
+	   reg_offset == r.reg_offset &&
+	   type == r.type &&
+	   negate == r.negate &&
+	   abs == r.abs &&
+	   swizzle == r.swizzle &&
+	   !reladdr && !r.reladdr &&
+	   memcmp(&fixed_hw_reg, &r.fixed_hw_reg,
 		  sizeof(fixed_hw_reg)) == 0 &&
-	   imm.u == r->imm.u);
+	   imm.u == r.imm.u);
 }
 
 static bool
