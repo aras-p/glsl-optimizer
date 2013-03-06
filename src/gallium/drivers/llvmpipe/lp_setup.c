@@ -720,9 +720,9 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                jit_tex->depth = 1;
                jit_tex->first_level = 0;
                jit_tex->last_level = 0;
-               jit_tex->mip_offsets[j] = 0;
-               jit_tex->row_stride[j] = 0;
-               jit_tex->img_stride[j] = 0;
+               jit_tex->mip_offsets[0] = 0;
+               jit_tex->row_stride[0] = 0;
+               jit_tex->img_stride[0] = 0;
             }
             else {
                jit_tex->width = res->width0;
