@@ -754,6 +754,8 @@ static void emit_icmp(
 	case TGSI_OPCODE_ISLT: pred = LLVMIntSLT; break;
 	default:
 		assert(!"unknown instruction");
+		pred = 0;
+		break;
 	}
 
 	LLVMValueRef v = LLVMBuildICmp(builder, pred,
@@ -770,10 +772,7 @@ static void emit_ucmp(
 		struct lp_build_tgsi_context * bld_base,
 		struct lp_build_emit_data * emit_data)
 {
-	unsigned pred;
 	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
-	LLVMContextRef context = bld_base->base.gallivm->context;
-
 
 	LLVMValueRef v = LLVMBuildFCmp(builder, LLVMRealUGE,
 			emit_data->args[0], lp_build_const_float(bld_base->base.gallivm, 0.), "");
@@ -802,7 +801,7 @@ static void emit_cmp(
 	case TGSI_OPCODE_SLT: pred = LLVMRealULT; break;
 	case TGSI_OPCODE_SNE: pred = LLVMRealUNE; break;
 	case TGSI_OPCODE_SGT: pred = LLVMRealUGT; break;
-	default: assert(!"unknown instruction");
+	default: assert(!"unknown instruction"); pred = 0; break;
 	}
 
 	cond = LLVMBuildFCmp(builder,
