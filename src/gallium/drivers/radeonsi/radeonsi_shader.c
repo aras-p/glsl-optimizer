@@ -478,7 +478,6 @@ static void si_llvm_init_export_args(struct lp_build_tgsi_context *bld_base,
 		int cbuf = target - V_008DFC_SQ_EXP_MRT;
 
 		if (cbuf >= 0 && cbuf < 8) {
-			struct r600_context *rctx = si_shader_ctx->rctx;
 			compressed = (si_shader_ctx->key.export_16bpc >> cbuf) & 0x1;
 
 			if (compressed)
