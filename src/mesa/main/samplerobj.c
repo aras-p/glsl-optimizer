@@ -206,9 +206,19 @@ _mesa_DeleteSamplers(GLsizei count, const GLuint *samplers)
 
    for (i = 0; i < count; i++) {
       if (samplers[i]) {
+         GLuint j;
          struct gl_sampler_object *sampObj =
             _mesa_lookup_samplerobj(ctx, samplers[i]);
+   
          if (sampObj) {
+            /* If the sampler is currently bound, unbind it. */
+            for (j = 0; j < ctx->Const.MaxCombinedTextureImageUnits; j++) {
+               if (ctx->Texture.Unit[j].Sampler == sampObj) {
+                  FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+                  _mesa_reference_sampler_object(ctx, &ctx->Texture.Unit[j].Sampler, NULL);
+               }
+            }
+
             /* The ID is immediately freed for re-use */
             _mesa_HashRemove(ctx->Shared->SamplerObjects, samplers[i]);
             /* But the object exists until its reference count goes to zero */
