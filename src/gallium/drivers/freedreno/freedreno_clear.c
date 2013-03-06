@@ -54,7 +54,7 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 {
 	struct fd_context *ctx = fd_context(pctx);
 	struct fd_ringbuffer *ring = ctx->ring;
-	struct pipe_framebuffer_state *fb = &ctx->framebuffer.base;
+	struct pipe_framebuffer_state *fb = &ctx->framebuffer;
 	uint32_t reg, colr = 0;
 
 	ctx->cleared |= buffers;
@@ -170,11 +170,6 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 	OUT_RING(ring, xy2d(0,0));	        /* PA_SC_WINDOW_SCISSOR_TL */
 	OUT_RING(ring, xy2d(fb->width,      /* PA_SC_WINDOW_SCISSOR_BR */
 			fb->height));
-
-	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
-	OUT_RING(ring, CP_REG(REG_RB_COLOR_INFO));
-	OUT_RING(ring, RB_COLOR_INFO_COLOR_SWAP(1) |
-			RB_COLOR_INFO_COLOR_FORMAT(fd_pipe2color(fb->cbufs[0]->format)));
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_RB_COLOR_MASK));

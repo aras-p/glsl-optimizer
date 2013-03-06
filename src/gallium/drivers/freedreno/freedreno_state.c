@@ -115,7 +115,7 @@ fd_set_framebuffer_state(struct pipe_context *pctx,
 		const struct pipe_framebuffer_state *framebuffer)
 {
 	struct fd_context *ctx = fd_context(pctx);
-	struct pipe_framebuffer_state *cso = &ctx->framebuffer.base;
+	struct pipe_framebuffer_state *cso = &ctx->framebuffer;
 	unsigned i;
 
 	DBG("%d: cbufs[0]=%p, zsbuf=%p", ctx->needs_flush,
@@ -125,7 +125,7 @@ fd_set_framebuffer_state(struct pipe_context *pctx,
 
 	for (i = 0; i < framebuffer->nr_cbufs; i++)
 		pipe_surface_reference(&cso->cbufs[i], framebuffer->cbufs[i]);
-	for (; i < ctx->framebuffer.base.nr_cbufs; i++)
+	for (; i < ctx->framebuffer.nr_cbufs; i++)
 		pipe_surface_reference(&cso->cbufs[i], NULL);
 
 	cso->nr_cbufs = framebuffer->nr_cbufs;
@@ -133,9 +133,6 @@ fd_set_framebuffer_state(struct pipe_context *pctx,
 	cso->height = framebuffer->height;
 
 	pipe_surface_reference(&cso->zsbuf, framebuffer->zsbuf);
-
-	if (cso->nr_cbufs > 0)
-		fd_gmem_calculate_tiles(pctx);
 
 	ctx->dirty |= FD_DIRTY_FRAMEBUFFER;
 }
@@ -355,30 +352,6 @@ fd_emit_vertex_bufs(struct fd_ringbuffer *ring, uint32_t val,
 }
 
 void
-fd_emit_framebuffer_state(struct fd_ringbuffer *ring,
-		struct fd_framebuffer_stateobj *fb)
-{
-	struct pipe_framebuffer_state *pfb = &fb->base;
-	uint32_t reg, base;
-
-	/* this should be true because bin_w/bin_h should be multiples of 32: */
-	assert(((fb->bin_w * fb->bin_h) % 1024) == 0);
-
-	/* depth/stencil starts after color buffer in GMEM: */
-	base = (fb->bin_w * fb->bin_h) / 1024;
-
-	OUT_PKT3(ring, CP_SET_CONSTANT, 4);
-	OUT_RING(ring, CP_REG(REG_RB_SURFACE_INFO));
-	OUT_RING(ring, fb->bin_w);                   /* RB_SURFACE_INFO */
-	OUT_RING(ring, RB_COLOR_INFO_COLOR_SWAP(1) | /* RB_COLOR_INFO */
-			RB_COLOR_INFO_COLOR_FORMAT(fd_pipe2color(pfb->cbufs[0]->format)));
-	reg = RB_DEPTH_INFO_DEPTH_BASE(ALIGN(base, 4));
-	if (pfb->zsbuf)
-		reg |= RB_DEPTH_INFO_DEPTH_FORMAT(fd_pipe2depth(pfb->zsbuf->format));
-	OUT_RING(ring, reg);                         /* RB_DEPTH_INFO */
-}
-
-void
 fd_state_emit(struct pipe_context *pctx, uint32_t dirty)
 {
 	struct fd_context *ctx = fd_context(pctx);
@@ -418,7 +391,7 @@ fd_state_emit(struct pipe_context *pctx, uint32_t dirty)
 		OUT_RING(ring, CP_REG(REG_PA_CL_CLIP_CNTL));
 		OUT_RING(ring, ctx->rasterizer->pa_cl_clip_cntl);
 		OUT_RING(ring, ctx->rasterizer->pa_su_sc_mode_cntl |
-				ctx->framebuffer.pa_su_sc_mode_cntl);
+				PA_SU_SC_MODE_CNTL_VTX_WINDOW_OFFSET_ENABLE);
 
 		OUT_PKT3(ring, CP_SET_CONSTANT, 5);
 		OUT_RING(ring, CP_REG(REG_PA_SU_POINT_SIZE));
@@ -436,9 +409,6 @@ fd_state_emit(struct pipe_context *pctx, uint32_t dirty)
 		OUT_RING(ring, f2d(1.0));                /* PA_CL_GB_HORZ_DISC_ADJ */
 	}
 
-	if (dirty & FD_DIRTY_FRAMEBUFFER)
-		fd_emit_framebuffer_state(ring, &ctx->framebuffer);
-
 	if (dirty & FD_DIRTY_SCISSOR) {
 		OUT_PKT3(ring, CP_SET_CONSTANT, 3);
 		OUT_RING(ring, CP_REG(REG_PA_SC_WINDOW_SCISSOR_TL));
@@ -446,6 +416,11 @@ fd_state_emit(struct pipe_context *pctx, uint32_t dirty)
 				ctx->scissor.miny));
 		OUT_RING(ring, xy2d(ctx->scissor.maxx,   /* PA_SC_WINDOW_SCISSOR_BR */
 				ctx->scissor.maxy));
+
+		ctx->max_scissor.minx = min(ctx->max_scissor.minx, ctx->scissor.minx);
+		ctx->max_scissor.miny = min(ctx->max_scissor.miny, ctx->scissor.miny);
+		ctx->max_scissor.maxx = max(ctx->max_scissor.maxx, ctx->scissor.maxx);
+		ctx->max_scissor.maxy = max(ctx->max_scissor.maxy, ctx->scissor.maxy);
 	}
 
 	if (dirty & FD_DIRTY_VIEWPORT) {

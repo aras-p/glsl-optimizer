@@ -45,8 +45,6 @@ struct fd_vertex_buf {
 
 void fd_emit_vertex_bufs(struct fd_ringbuffer *ring, uint32_t val,
 		struct fd_vertex_buf *vbufs, uint32_t n);
-void fd_emit_framebuffer_state(struct fd_ringbuffer *ring,
-		struct fd_framebuffer_stateobj *fb);
 void fd_state_emit(struct pipe_context *pctx, uint32_t dirty);
 void fd_state_emit_setup(struct pipe_context *pctx);
 

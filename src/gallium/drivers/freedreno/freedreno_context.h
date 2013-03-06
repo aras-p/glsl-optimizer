@@ -79,11 +79,13 @@ struct fd_vertexbuf_stateobj {
 	uint32_t dirty_mask;
 };
 
-struct fd_framebuffer_stateobj {
-	struct pipe_framebuffer_state base;
+struct fd_gmem_stateobj {
+	struct pipe_scissor_state scissor;
+	uint cpp;
+	uint16_t minx, miny;
 	uint16_t bin_h, nbins_y;
 	uint16_t bin_w, nbins_x;
-	uint32_t pa_su_sc_mode_cntl;
+	uint16_t width, height;
 };
 
 struct fd_context {
@@ -129,6 +131,17 @@ struct fd_context {
 	 */
 	struct pipe_scissor_state scissor;
 
+	/* Track the maximal bounds of the scissor of all the draws within a
+	 * batch.  Used at the tile rendering step (fd_gmem_render_tiles(),
+	 * mem2gmem/gmem2mem) to avoid needlessly moving data in/out of gmem.
+	 */
+	struct pipe_scissor_state max_scissor;
+
+	/* Current gmem/tiling configuration.. gets updated on render_tiles()
+	 * if out of date with current maximal-scissor/cpp:
+	 */
+	struct fd_gmem_stateobj gmem;
+
 	/* which state objects need to be re-emit'd: */
 	enum {
 		FD_DIRTY_BLEND       = (1 << 0),
@@ -163,7 +176,7 @@ struct fd_context {
 	struct pipe_blend_color blend_color;
 	struct pipe_stencil_ref stencil_ref;
 	unsigned sample_mask;
-	struct fd_framebuffer_stateobj framebuffer;
+	struct pipe_framebuffer_state framebuffer;
 	struct pipe_poly_stipple stipple;
 	struct pipe_viewport_state viewport;
 	struct fd_constbuf_stateobj constbuf[PIPE_SHADER_TYPES];

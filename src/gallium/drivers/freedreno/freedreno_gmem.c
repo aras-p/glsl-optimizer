@@ -110,8 +110,7 @@ static void
 emit_gmem2mem(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		uint32_t xoff, uint32_t yoff, uint32_t bin_w, uint32_t bin_h)
 {
-	struct fd_framebuffer_stateobj *fb = &ctx->framebuffer;
-	struct pipe_framebuffer_state *pfb = &fb->base;
+	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
 
 	fd_emit_vertex_bufs(ring, 0x9c, (struct fd_vertex_buf[]) {
 			{ .prsc = ctx->solid_vertexbuf, .size = 48 },
@@ -224,8 +223,7 @@ static void
 emit_mem2gmem(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		uint32_t xoff, uint32_t yoff, uint32_t bin_w, uint32_t bin_h)
 {
-	struct fd_framebuffer_stateobj *fb = &ctx->framebuffer;
-	struct pipe_framebuffer_state *pfb = &fb->base;
+	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
 	float x0, y0, x1, y1;
 
 	fd_emit_vertex_bufs(ring, 0x9c, (struct fd_vertex_buf[]) {
@@ -328,50 +326,146 @@ emit_mem2gmem(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	/* TODO blob driver seems to toss in a CACHE_FLUSH after each DRAW_INDX.. */
 }
 
+static void
+calculate_tiles(struct fd_context *ctx)
+{
+	struct fd_gmem_stateobj *gmem = &ctx->gmem;
+	struct pipe_scissor_state *scissor = &ctx->max_scissor;
+	uint32_t cpp = util_format_get_blocksize(ctx->framebuffer.cbufs[0]->format);
+	uint32_t gmem_size = ctx->screen->gmemsize_bytes;
+	uint32_t minx, miny, width, height;
+	uint32_t nbins_x = 1, nbins_y = 1;
+	uint32_t bin_w, bin_h;
+	uint32_t max_width = 992;
+
+	if ((gmem->cpp == cpp) &&
+			!memcmp(&gmem->scissor, scissor, sizeof(gmem->scissor))) {
+		/* everything is up-to-date */
+		return;
+	}
+
+	minx = scissor->minx & ~31; /* round down to multiple of 32 */
+	miny = scissor->miny & ~31;
+	width = scissor->maxx - minx;
+	height = scissor->maxy - miny;
+
+// TODO we probably could optimize this a bit if we know that
+// Z or stencil is not enabled for any of the draw calls..
+//	if (fd_stencil_enabled(ctx->zsa) || fd_depth_enabled(ctx->zsa)) {
+		gmem_size /= 2;
+		max_width = 256;
+//	}
+
+	bin_w = ALIGN(width, 32);
+	bin_h = ALIGN(height, 32);
+
+	/* first, find a bin width that satisfies the maximum width
+	 * restrictions:
+	 */
+	while (bin_w > max_width) {
+		nbins_x++;
+		bin_w = ALIGN(width / nbins_x, 32);
+	}
+
+	/* then find a bin height that satisfies the memory constraints:
+	 */
+	while ((bin_w * bin_h * cpp) > gmem_size) {
+		nbins_y++;
+		bin_h = ALIGN(height / nbins_y, 32);
+	}
+
+	DBG("using %d bins of size %dx%d", nbins_x*nbins_y, bin_w, bin_h);
+
+	gmem->scissor = *scissor;
+	gmem->cpp = cpp;
+	gmem->minx = minx;
+	gmem->miny = miny;
+	gmem->bin_h = bin_h;
+	gmem->bin_w = bin_w;
+	gmem->nbins_x = nbins_x;
+	gmem->nbins_y = nbins_y;
+	gmem->width = width;
+	gmem->height = height;
+}
+
 void
 fd_gmem_render_tiles(struct pipe_context *pctx)
 {
 	struct fd_context *ctx = fd_context(pctx);
-	struct fd_framebuffer_stateobj *fb = &ctx->framebuffer;
-	struct pipe_framebuffer_state *pfb = &fb->base;
-	struct fd_ringbuffer *ring;
-	uint32_t i, yoff = 0;
-	uint32_t timestamp;
-	ring = ctx->ring;
+	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
+	struct fd_gmem_stateobj *gmem = &ctx->gmem;
+	struct fd_ringbuffer *ring = ctx->ring;
+	enum rb_colorformatx colorformatx = fd_pipe2color(pfb->cbufs[0]->format);
+	uint32_t i, timestamp, yoff = 0;
+	uint32_t base, reg;
 
-	DBG("rendering %dx%d tiles (%s/%s)", fb->nbins_x, fb->nbins_y,
+	calculate_tiles(ctx);
+
+	/* this should be true because bin_w/bin_h should be multiples of 32: */
+	assert(((gmem->bin_w * gmem->bin_h) % 1024) == 0);
+
+	/* depth/stencil starts after color buffer in GMEM: */
+	base = (gmem->bin_w * gmem->bin_h) / 1024;
+
+	DBG("rendering %dx%d tiles (%s/%s)", gmem->nbins_x, gmem->nbins_y,
 			util_format_name(pfb->cbufs[0]->format),
 			pfb->zsbuf ? util_format_name(pfb->zsbuf->format) : "none");
 
 	/* mark the end of the clear/draw cmds before emitting per-tile cmds: */
 	fd_ringmarker_mark(ctx->draw_end);
 
-	for (i = 0; i < fb->nbins_y; i++) {
-		uint32_t j, xoff = 0;
-		uint32_t bin_h = fb->bin_h;
+	/* RB_SURFACE_INFO / RB_DEPTH_INFO can be emitted once per tile pass,
+	 * but RB_COLOR_INFO gets overwritten by gmem2mem and mem2gmem and so
+	 * needs to be emitted for each tile:
+	 */
+	OUT_PKT3(ring, CP_SET_CONSTANT, 4);
+	OUT_RING(ring, CP_REG(REG_RB_SURFACE_INFO));
+	OUT_RING(ring, gmem->bin_w);                 /* RB_SURFACE_INFO */
+	OUT_RING(ring, RB_COLOR_INFO_COLOR_SWAP(1) | /* RB_COLOR_INFO */
+			RB_COLOR_INFO_COLOR_FORMAT(colorformatx));
+	reg = RB_DEPTH_INFO_DEPTH_BASE(ALIGN(base, 4));
+	if (pfb->zsbuf)
+		reg |= RB_DEPTH_INFO_DEPTH_FORMAT(fd_pipe2depth(pfb->zsbuf->format));
+	OUT_RING(ring, reg);                         /* RB_DEPTH_INFO */
+
+	yoff= gmem->miny;
+	for (i = 0; i < gmem->nbins_y; i++) {
+		uint32_t j, xoff = gmem->minx;
+		uint32_t bh = gmem->bin_h;
 
 		/* clip bin height: */
-		bin_h = min(bin_h, pfb->height - yoff);
+		bh = min(bh, gmem->height - yoff);
 
-		for (j = 0; j < fb->nbins_x; j++) {
-			uint32_t bin_w = fb->bin_w;
+		for (j = 0; j < gmem->nbins_x; j++) {
+			uint32_t bw = gmem->bin_w;
 
 			/* clip bin width: */
-			bin_w = min(bin_w, pfb->width - xoff);
+			bw = min(bw, gmem->width - xoff);
 
 			DBG("bin_h=%d, yoff=%d, bin_w=%d, xoff=%d",
-					bin_h, yoff, bin_w, xoff);
+					bh, yoff, bw, xoff);
 
-			fd_emit_framebuffer_state(ring, &ctx->framebuffer);
+			if ((i == 0) && (j == 0)) {
+				uint32_t reg;
+
+
+			} else {
+
+			}
 
 			/* setup screen scissor for current tile (same for mem2gmem): */
 			OUT_PKT3(ring, CP_SET_CONSTANT, 3);
 			OUT_RING(ring, CP_REG(REG_PA_SC_SCREEN_SCISSOR_TL));
 			OUT_RING(ring, xy2d(0,0));           /* PA_SC_SCREEN_SCISSOR_TL */
-			OUT_RING(ring, xy2d(bin_w, bin_h));  /* PA_SC_SCREEN_SCISSOR_BR */
+			OUT_RING(ring, xy2d(bw, bh));        /* PA_SC_SCREEN_SCISSOR_BR */
 
 			if (ctx->restore)
-				emit_mem2gmem(ctx, ring, xoff, yoff, bin_w, bin_h);
+				emit_mem2gmem(ctx, ring, xoff, yoff, bw, bh);
+
+			OUT_PKT3(ring, CP_SET_CONSTANT, 2);
+			OUT_RING(ring, CP_REG(REG_RB_COLOR_INFO));
+			OUT_RING(ring, RB_COLOR_INFO_COLOR_SWAP(1) | /* RB_COLOR_INFO */
+					RB_COLOR_INFO_COLOR_FORMAT(colorformatx));
 
 			/* setup window scissor and offset for current tile (different
 			 * from mem2gmem):
@@ -389,12 +483,12 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 			OUT_RING(ring, 0x00000000);          /* PA_SC_WINDOW_OFFSET */
 
 			/* emit gmem2mem to transfer tile back to system memory: */
-			emit_gmem2mem(ctx, ring, xoff, yoff, bin_w, bin_h);
+			emit_gmem2mem(ctx, ring, xoff, yoff, bw, bh);
 
-			xoff += bin_w;
+			xoff += bw;
 		}
 
-		yoff += bin_h;
+		yoff += bh;
 	}
 
 	/* GPU executes starting from tile cmds, which IB back to draw cmds: */
@@ -408,6 +502,10 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 	fd_resource(pfb->cbufs[0]->texture)->timestamp = timestamp;
 	if (pfb->zsbuf)
 		fd_resource(pfb->zsbuf->texture)->timestamp = timestamp;
+
+	/* reset maximal bounds: */
+	ctx->max_scissor.minx = ctx->max_scissor.miny = ~0;
+	ctx->max_scissor.maxx = ctx->max_scissor.maxy = 0;
 
 	/* Note that because the per-tile setup and mem2gmem/gmem2mem are emitted
 	 * after the draw/clear calls, but executed before, we need to preemptively
@@ -430,62 +528,4 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 			FD_DIRTY_VERTTEX |
 			FD_DIRTY_FRAGTEX |
 			FD_DIRTY_BLEND;
-}
-
-void
-fd_gmem_calculate_tiles(struct pipe_context *pctx)
-{
-	struct fd_context *ctx = fd_context(pctx);
-	struct fd_framebuffer_stateobj *fb = &ctx->framebuffer;
-	struct pipe_framebuffer_state *pfb = &fb->base;
-	uint32_t nbins_x = 1, nbins_y = 1;
-	uint32_t bin_w, bin_h;
-	uint32_t cpp = util_format_get_blocksize(pfb->cbufs[0]->format);
-	uint32_t gmem_size = ctx->screen->gmemsize_bytes;
-	uint32_t max_width = 992;
-
-// TODO we probably could optimize this a bit if we know that
-// Z or stencil is not enabled for any of the draw calls..
-//	if (fd_stencil_enabled(ctx->zsa) || fd_depth_enabled(ctx->zsa)) {
-		gmem_size /= 2;
-		max_width = 256;
-//	}
-
-	bin_w = ALIGN(pfb->width, 32);
-	bin_h = ALIGN(pfb->height, 32);
-
-	/* first, find a bin width that satisfies the maximum width
-	 * restrictions:
-	 */
-	while (bin_w > max_width) {
-		nbins_x++;
-		bin_w = ALIGN(pfb->width / nbins_x, 32);
-	}
-
-	/* then find a bin height that satisfies the memory constraints:
-	 */
-	while ((bin_w * bin_h * cpp) > gmem_size) {
-		nbins_y++;
-		bin_h = ALIGN(pfb->height / nbins_y, 32);
-	}
-
-	if ((nbins_x > 1) || (nbins_y > 1)) {
-		fb->pa_su_sc_mode_cntl |= PA_SU_SC_MODE_CNTL_VTX_WINDOW_OFFSET_ENABLE;
-	} else {
-		fb->pa_su_sc_mode_cntl &= ~PA_SU_SC_MODE_CNTL_VTX_WINDOW_OFFSET_ENABLE;
-	}
-
-	DBG("using %d bins of size %dx%d", nbins_x*nbins_y, bin_w, bin_h);
-
-//if we use hw binning, tile sizes (in multiple of 32) need to
-//fit in 5 bits.. for now don't care because we aren't using
-//that:
-//	assert(!(bin_h/32 & ~0x1f));
-//	assert(!(bin_w/32 & ~0x1f));
-
-	fb->nbins_x = nbins_x;
-	fb->nbins_y = nbins_y;
-	fb->bin_w = bin_w;
-	fb->bin_h = bin_h;
-
 }

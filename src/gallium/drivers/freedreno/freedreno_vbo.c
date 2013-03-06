@@ -141,13 +141,19 @@ static void
 fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 {
 	struct fd_context *ctx = fd_context(pctx);
-	struct pipe_framebuffer_state *fb = &ctx->framebuffer.base;
+	struct pipe_framebuffer_state *fb = &ctx->framebuffer;
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct fd_bo *idx_bo = NULL;
 	enum pc_di_index_size idx_type = INDEX_SIZE_IGN;
 	enum pc_di_src_sel src_sel;
 	uint32_t idx_size, idx_offset;
 	unsigned buffers;
+
+	/* if we supported transform feedback, we'd have to disable this: */
+	if (((ctx->scissor.maxx - ctx->scissor.minx) *
+			(ctx->scissor.maxy - ctx->scissor.miny)) == 0) {
+		return;
+	}
 
 	ctx->needs_flush = true;
 

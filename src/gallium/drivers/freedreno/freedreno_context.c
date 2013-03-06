@@ -69,7 +69,7 @@ void
 fd_context_render(struct pipe_context *pctx)
 {
 	struct fd_context *ctx = fd_context(pctx);
-	struct pipe_framebuffer_state *fb = &ctx->framebuffer.base;
+	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
 
 	DBG("needs_flush: %d", ctx->needs_flush);
 
@@ -89,9 +89,9 @@ fd_context_render(struct pipe_context *pctx)
 	ctx->needs_flush = false;
 	ctx->cleared = ctx->restore = ctx->resolve = 0;
 
-	fd_resource(fb->cbufs[0]->texture)->dirty = false;
-	if (fb->zsbuf)
-		fd_resource(fb->zsbuf->texture)->dirty = false;
+	fd_resource(pfb->cbufs[0]->texture)->dirty = false;
+	if (pfb->zsbuf)
+		fd_resource(pfb->zsbuf->texture)->dirty = false;
 }
 
 static void

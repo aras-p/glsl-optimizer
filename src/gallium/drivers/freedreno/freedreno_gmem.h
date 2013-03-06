@@ -32,6 +32,5 @@
 #include "pipe/p_context.h"
 
 void fd_gmem_render_tiles(struct pipe_context *pctx);
-void fd_gmem_calculate_tiles(struct pipe_context *pctx);
 
 #endif /* FREEDRENO_GMEM_H_ */
