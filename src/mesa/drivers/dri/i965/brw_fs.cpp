@@ -2499,6 +2499,8 @@ fs_visitor::lower_uniform_pull_constant_loads()
          inst->insert_before(setup2);
          inst->opcode = FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD_GEN7;
          inst->src[1] = payload;
+
+         this->live_intervals_valid = false;
       } else {
          /* Before register allocation, we didn't tell the scheduler about the
           * MRF we use.  We know it's safe to use this MRF because nothing
