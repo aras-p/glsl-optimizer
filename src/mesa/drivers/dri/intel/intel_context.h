@@ -420,7 +420,6 @@ extern int INTEL_DEBUG;
 #define DEBUG_BLIT	0x8
 #define DEBUG_MIPTREE   0x10
 #define DEBUG_PERF	0x20
-#define DEBUG_VERBOSE	0x40
 #define DEBUG_BATCH     0x80
 #define DEBUG_PIXEL     0x100
 #define DEBUG_BUFMGR    0x200
@@ -432,10 +431,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_VERTS	0x8000
 #define DEBUG_DRI       0x10000
 #define DEBUG_SF        0x20000
-#define DEBUG_SANITY    0x40000
-#define DEBUG_SLEEP     0x80000
 #define DEBUG_STATS     0x100000
-#define DEBUG_TILE      0x200000
 #define DEBUG_WM        0x400000
 #define DEBUG_URB       0x800000
 #define DEBUG_VS        0x1000000
