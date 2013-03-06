@@ -253,7 +253,7 @@ vbo_save_playback_vertex_list(struct gl_context *ctx, void *data)
    struct vbo_save_context *save = &vbo_context(ctx)->save;
    GLboolean remap_vertex_store = GL_FALSE;
 
-   if (save->vertex_store->buffer) {
+   if (save->vertex_store && save->vertex_store->buffer) {
       /* The vertex store is currently mapped but we're about to replay
        * a display list.  This can happen when a nested display list is
        * being build with GL_COMPILE_AND_EXECUTE.
