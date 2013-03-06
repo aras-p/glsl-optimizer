@@ -53,6 +53,10 @@ public:
    }
 
    ir_rvalue *convert_vec_index_to_cond_assign(ir_rvalue *val);
+   ir_rvalue *convert_vec_index_to_cond_assign(void *mem_ctx,
+                                               ir_rvalue *orig_vector,
+                                               ir_rvalue *orig_index,
+                                               const glsl_type *type);
 
    virtual ir_visitor_status visit_enter(ir_expression *);
    virtual ir_visitor_status visit_enter(ir_swizzle *);
@@ -65,24 +69,16 @@ public:
 };
 
 ir_rvalue *
-ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue *ir)
+ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(void *mem_ctx,
+                                                                      ir_rvalue *orig_vector,
+                                                                      ir_rvalue *orig_index,
+                                                                      const glsl_type *type)
 {
-   ir_dereference_array *orig_deref = ir->as_dereference_array();
    ir_assignment *assign, *value_assign;
    ir_variable *index, *var, *value;
    ir_dereference *deref, *deref_value;
    unsigned i;
 
-   if (!orig_deref)
-      return ir;
-
-   if (orig_deref->array->type->is_matrix() ||
-       orig_deref->array->type->is_array())
-      return ir;
-
-   void *mem_ctx = ralloc_parent(ir);
-
-   assert(orig_deref->array_index->type->base_type == GLSL_TYPE_INT);
 
    exec_list list;
 
@@ -92,19 +88,19 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
 				    ir_var_temporary);
    list.push_tail(index);
    deref = new(base_ir) ir_dereference_variable(index);
-   assign = new(base_ir) ir_assignment(deref, orig_deref->array_index, NULL);
+   assign = new(base_ir) ir_assignment(deref, orig_index, NULL);
    list.push_tail(assign);
 
    /* Store the value inside a temp, thus avoiding matrixes duplication */
-   value = new(base_ir) ir_variable(orig_deref->array->type, "vec_value_tmp",
-				    ir_var_temporary);
+   value = new(base_ir) ir_variable(orig_vector->type, "vec_value_tmp",
+                                    ir_var_temporary);
    list.push_tail(value);
    deref_value = new(base_ir) ir_dereference_variable(value);
-   value_assign = new(base_ir) ir_assignment(deref_value, orig_deref->array);
+   value_assign = new(base_ir) ir_assignment(deref_value, orig_vector);
    list.push_tail(value_assign);
 
    /* Temporary where we store whichever value we swizzle out. */
-   var = new(base_ir) ir_variable(ir->type, "vec_index_tmp_v",
+   var = new(base_ir) ir_variable(type, "vec_index_tmp_v",
 				  ir_var_temporary);
    list.push_tail(var);
 
@@ -113,13 +109,14 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
     */
    ir_rvalue *const cond_deref =
       compare_index_block(&list, index, 0,
-			  orig_deref->array->type->vector_elements,
+                          orig_vector->type->vector_elements,
 			  mem_ctx);
 
    /* Generate a conditional move of each vector element to the temp. */
-   for (i = 0; i < orig_deref->array->type->vector_elements; i++) {
+   for (i = 0; i < orig_vector->type->vector_elements; i++) {
       ir_rvalue *condition_swizzle =
-	 new(base_ir) ir_swizzle(cond_deref->clone(ir, NULL), i, 0, 0, 0, 1);
+         new(base_ir) ir_swizzle(cond_deref->clone(mem_ctx, NULL),
+                                 i, 0, 0, 0, 1);
 
       /* Just clone the rest of the deref chain when trying to get at the
        * underlying variable.
@@ -140,6 +137,26 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
 
    this->progress = true;
    return new(base_ir) ir_dereference_variable(var);
+}
+
+ir_rvalue *
+ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue *ir)
+{
+   ir_dereference_array *orig_deref = ir->as_dereference_array();
+
+   if (!orig_deref)
+      return ir;
+
+   if (orig_deref->array->type->is_matrix() ||
+       orig_deref->array->type->is_array())
+      return ir;
+
+   assert(orig_deref->array_index->type->base_type == GLSL_TYPE_INT);
+
+   return convert_vec_index_to_cond_assign(ralloc_parent(ir),
+                                           orig_deref->array,
+                                           orig_deref->array_index,
+                                           ir->type);
 }
 
 ir_visitor_status
