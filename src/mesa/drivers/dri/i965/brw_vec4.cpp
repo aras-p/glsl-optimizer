@@ -1675,6 +1675,7 @@ vec4_visitor::run()
       progress = dead_control_flow_eliminate(this) || progress;
       progress = opt_copy_propagation() || progress;
       progress = opt_algebraic() || progress;
+      progress = opt_cse() || progress;
       progress = opt_register_coalesce() || progress;
    } while (progress);
 

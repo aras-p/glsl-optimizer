@@ -102,6 +102,7 @@ i965_FILES = \
 	brw_util.c \
 	brw_vec4.cpp \
 	brw_vec4_copy_propagation.cpp \
+	brw_vec4_cse.cpp \
 	brw_vec4_generator.cpp \
 	brw_vec4_gs.c \
 	brw_vec4_gs_visitor.cpp \
