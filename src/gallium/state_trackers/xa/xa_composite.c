@@ -527,7 +527,6 @@ XA_EXPORT void
 xa_composite_done(struct xa_context *ctx)
 {
     renderer_draw_flush(ctx);
-    xa_context_flush(ctx);
 
     ctx->comp = NULL;
     ctx->has_solid_color = FALSE;

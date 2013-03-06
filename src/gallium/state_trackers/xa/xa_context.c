@@ -123,8 +123,6 @@ xa_surface_dma(struct xa_context *ctx,
 			   0);
 	}
 	pipe->transfer_unmap(pipe, transfer);
-	if (to_surface)
-	    xa_context_flush(ctx);
     }
     return XA_ERR_NONE;
 }
@@ -248,10 +246,8 @@ XA_EXPORT void
 xa_copy_done(struct xa_context *ctx)
 {
     if (!ctx->simple_copy) {
-	   renderer_draw_flush(ctx);
-	   xa_context_flush(ctx);
-    } else
-	xa_context_flush(ctx);
+	renderer_draw_flush(ctx);
+    }
 }
 
 static void
@@ -330,8 +326,6 @@ XA_EXPORT void
 xa_solid_done(struct xa_context *ctx)
 {
     renderer_draw_flush(ctx);
-    xa_context_flush(ctx);
-
     ctx->comp = NULL;
     ctx->has_solid_color = FALSE;
     ctx->num_bound_samplers = 0;
