@@ -600,7 +600,7 @@ clip_init_state( struct draw_stage *stage )
    const struct draw_geometry_shader *gs = stage->draw->gs.geometry_shader;
    const struct draw_fragment_shader *fs = stage->draw->fs.fragment_shader;
    uint i;
-   struct tgsi_shader_info *vs_info = gs ? &gs->info : &vs->info;
+   const struct tgsi_shader_info *vs_info = gs ? &gs->info : &vs->info;
 
    /* We need to know for each attribute what kind of interpolation is
     * done on it (flat, smooth or noperspective).  But the information
