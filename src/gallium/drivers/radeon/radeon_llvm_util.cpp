@@ -43,12 +43,7 @@ extern "C" unsigned radeon_llvm_get_num_kernels(const unsigned char *bitcode,
 				unsigned bitcode_len)
 {
 	LLVMModuleRef mod = radeon_llvm_parse_bitcode(bitcode, bitcode_len);
-	llvm::Module *M = llvm::unwrap(mod);
-	const llvm::NamedMDNode *kernel_node
-				= M->getNamedMetadata("opencl.kernels");
-	unsigned kernel_count = kernel_node->getNumOperands();
-	delete M;
-	return kernel_count;
+	return LLVMGetNamedMetadataNumOperands(mod, "opencl.kernels");
 }
 
 extern "C" LLVMModuleRef radeon_llvm_get_kernel_module(unsigned index,
