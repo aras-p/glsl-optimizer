@@ -1,6 +1,6 @@
 CPP_FILES := \
-	radeon_llvm_emit.cpp \
-	radeon_llvm_util.cpp
+	radeon_llvm_emit.cpp
 
 C_FILES := \
-	radeon_setup_tgsi_llvm.c
+	radeon_setup_tgsi_llvm.c \
+	radeon_llvm_util.c
