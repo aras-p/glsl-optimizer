@@ -69,7 +69,8 @@ nouveau_flush(struct gl_context *ctx)
 		__DRIdri2LoaderExtension *dri2 = screen->dri2.loader;
 		__DRIdrawable *drawable = nctx->dri_context->driDrawablePriv;
 
-		dri2->flushFrontBuffer(drawable, drawable->loaderPrivate);
+		if (drawable && drawable->loaderPrivate)
+			dri2->flushFrontBuffer(drawable, drawable->loaderPrivate);
 	}
 }
 
