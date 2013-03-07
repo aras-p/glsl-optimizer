@@ -3190,7 +3190,9 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       }
    }
 
-   if (!mask) {
+   if (!mask ||
+       (srcX1 - srcX0) == 0 || (srcY1 - srcY0) == 0 ||
+       (dstX1 - dstX0) == 0 || (dstY1 - dstY0) == 0) {
       return;
    }
 
