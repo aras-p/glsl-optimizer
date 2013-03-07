@@ -176,7 +176,8 @@ extern struct xa_surface * xa_surface_from_handle(struct xa_tracker *xa,
 
 enum xa_formats xa_surface_format(const struct xa_surface *srf);
 
-extern void xa_surface_destroy(struct xa_surface *srf);
+extern struct xa_surface *xa_surface_ref(struct xa_surface *srf);
+extern void xa_surface_unref(struct xa_surface *srf);
 
 extern int xa_surface_redefine(struct xa_surface *srf,
 			       int width,

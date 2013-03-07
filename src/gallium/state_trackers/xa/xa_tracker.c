@@ -328,6 +328,7 @@ surface_create(struct xa_tracker *xa,
     if (!srf->tex)
 	goto out_no_tex;
 
+    srf->refcount = 1;
     srf->xa = xa;
     srf->flags = flags;
     srf->fdesc = fdesc;
@@ -451,9 +452,22 @@ xa_surface_redefine(struct xa_surface *srf,
     return XA_ERR_NONE;
 }
 
-XA_EXPORT void
-xa_surface_destroy(struct xa_surface *srf)
+XA_EXPORT struct xa_surface*
+xa_surface_ref(struct xa_surface *srf)
 {
+    if (srf == NULL) {
+	return NULL;
+    }
+    srf->refcount++;
+    return srf;
+}
+
+XA_EXPORT void
+xa_surface_unref(struct xa_surface *srf)
+{
+    if (srf == NULL || --srf->refcount) {
+	return;
+    }
     pipe_resource_reference(&srf->tex, NULL);
     free(srf);
 }

@@ -59,6 +59,7 @@ struct xa_format_descriptor {
 };
 
 struct xa_surface {
+    int refcount;
     struct pipe_resource template;
     struct xa_tracker *xa;
     struct pipe_resource *tex;
