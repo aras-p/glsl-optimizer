@@ -274,6 +274,17 @@ static const char* r600_get_vendor(struct pipe_screen* pscreen)
 	return "X.Org";
 }
 
+const char *r600_get_llvm_processor_name(enum radeon_family family)
+{
+	switch (family) {
+		case CHIP_TAHITI: return "tahiti";
+		case CHIP_PITCAIRN: return "pitcairn";
+		case CHIP_VERDE: return "verde";
+		case CHIP_OLAND: return "oland";
+		default: return "";
+	}
+}
+
 static const char *r600_get_family_name(enum radeon_family family)
 {
 	switch(family) {

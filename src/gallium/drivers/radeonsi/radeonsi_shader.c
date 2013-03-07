@@ -1165,7 +1165,9 @@ int si_pipe_shader_create(
 	if (dump) {
 		LLVMDumpModule(mod);
 	}
-	radeon_llvm_compile(mod, &inst_bytes, &inst_byte_count, "SI", dump);
+	radeon_llvm_compile(mod, &inst_bytes, &inst_byte_count,
+			r600_get_llvm_processor_name(rctx->screen->family)
+			, dump);
 	if (dump) {
 		fprintf(stderr, "SI CODE:\n");
 		for (i = 0; i < inst_byte_count; i+=4 ) {

@@ -550,69 +550,6 @@ LLVMModuleRef r600_tgsi_llvm(
 	return ctx->gallivm.module;
 }
 
-const char * r600_llvm_gpu_string(enum radeon_family family)
-{
-	const char * gpu_family;
-
-	switch (family) {
-	case CHIP_R600:
-	case CHIP_RV610:
-	case CHIP_RV630:
-	case CHIP_RV620:
-	case CHIP_RV635:
-	case CHIP_RV670:
-	case CHIP_RS780:
-	case CHIP_RS880:
-		gpu_family = "r600";
-		break;
-	case CHIP_RV710:
-		gpu_family = "rv710";
-		break;
-	case CHIP_RV730:
-		gpu_family = "rv730";
-		break;
-	case CHIP_RV740:
-	case CHIP_RV770:
-		gpu_family = "rv770";
-		break;
-	case CHIP_PALM:
-	case CHIP_CEDAR:
-		gpu_family = "cedar";
-		break;
-	case CHIP_SUMO:
-	case CHIP_SUMO2:
-	case CHIP_REDWOOD:
-		gpu_family = "redwood";
-		break;
-	case CHIP_JUNIPER:
-		gpu_family = "juniper";
-		break;
-	case CHIP_HEMLOCK:
-	case CHIP_CYPRESS:
-		gpu_family = "cypress";
-		break;
-	case CHIP_BARTS:
-		gpu_family = "barts";
-		break;
-	case CHIP_TURKS:
-		gpu_family = "turks";
-		break;
-	case CHIP_CAICOS:
-		gpu_family = "caicos";
-		break;
-	case CHIP_CAYMAN:
-        case CHIP_ARUBA:
-		gpu_family = "cayman";
-		break;
-	default:
-		gpu_family = "";
-		fprintf(stderr, "Chip not supported by r600 llvm "
-			"backend, please file a bug at " PACKAGE_BUGREPORT "\n");
-		break;
-	}
-	return gpu_family;
-}
-
 unsigned r600_llvm_compile(
 	LLVMModuleRef mod,
 	unsigned char ** inst_bytes,

@@ -15,8 +15,6 @@ LLVMModuleRef r600_tgsi_llvm(
 	struct radeon_llvm_context * ctx,
 	const struct tgsi_token * tokens);
 
-const char * r600_llvm_gpu_string(enum radeon_family family);
-
 unsigned r600_llvm_compile(
 	LLVMModuleRef mod,
 	unsigned char ** inst_bytes,

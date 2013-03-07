@@ -110,7 +110,8 @@ namespace {
 
    llvm::Module *
    compile(const std::string &source, const std::string &name,
-           const std::string &triple, const std::string &opts) {
+           const std::string &triple, const std::string &processor,
+           const std::string &opts) {
 
       clang::CompilerInstance c;
       clang::CompilerInvocation invocation;
@@ -175,6 +176,7 @@ namespace {
 
       c.getLangOpts().NoBuiltin = true;
       c.getTargetOpts().Triple = triple;
+      c.getTargetOpts().CPU = processor;
 #if HAVE_LLVM <= 0x0301
       c.getInvocation().setLangDefaults(clang::IK_OpenCL);
 #else
@@ -215,12 +217,14 @@ namespace {
 
    void
    link(llvm::Module *mod, const std::string &triple,
+        const std::string &processor,
         const std::vector<llvm::Function *> &kernels) {
 
       llvm::PassManager PM;
       llvm::PassManagerBuilder Builder;
       llvm::sys::Path libclc_path =
-                            llvm::sys::Path(LIBCLC_LIBEXECDIR + triple + ".bc");
+                            llvm::sys::Path(LIBCLC_LIBEXECDIR + processor +
+			                    "-" + triple + ".bc");
 
       // Link the kernel with libclc
 #if HAVE_LLVM < 0x0303
@@ -339,18 +343,22 @@ namespace {
 module
 clover::compile_program_llvm(const compat::string &source,
                              enum pipe_shader_ir ir,
-                             const compat::string &triple,
+                             const compat::string &target,
                              const compat::string &opts) {
 
    std::vector<llvm::Function *> kernels;
+   size_t processor_str_len = std::string(target.begin()).find_first_of("-");
+   std::string processor(target.begin(), 0, processor_str_len);
+   std::string triple(target.begin(), processor_str_len + 1,
+                      target.size() - processor_str_len - 1);
 
    // The input file name must have the .cl extension in order for the
    // CompilerInvocation class to recognize it as an OpenCL source file.
-   llvm::Module *mod = compile(source, "input.cl", triple, opts);
+   llvm::Module *mod = compile(source, "input.cl", triple, processor, opts);
 
    find_kernels(mod, kernels);
 
-   link(mod, triple, kernels);
+   link(mod, triple, processor, kernels);
 
    // Build the clover::module
    switch (ir) {

@@ -218,6 +218,7 @@ void r600_upload_index_buffer(struct r600_context *rctx,
 /* r600_pipe.c */
 void radeonsi_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 		    unsigned flags);
+const char *r600_get_llvm_processor_name(enum radeon_family family);
 
 /* r600_query.c */
 void r600_init_query_functions(struct r600_context *rctx);
