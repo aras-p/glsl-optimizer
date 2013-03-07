@@ -10,18 +10,22 @@
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Transforms/IPO.h>
+#include <llvm-c/BitReader.h>
+#include <llvm-c/Core.h>
 
 #include "radeon_llvm_util.h"
 
 
-extern "C" LLVMModuleRef radeon_llvm_parse_bitcode(const unsigned char * bitcode, unsigned bitcode_len)
+static LLVMModuleRef radeon_llvm_parse_bitcode(const unsigned char * bitcode,
+							unsigned bitcode_len)
 {
-	llvm::OwningPtr<llvm::Module> M;
-	llvm::StringRef str((const char*)bitcode, bitcode_len);
-	llvm::MemoryBuffer*  buffer = llvm::MemoryBuffer::getMemBufferCopy(str);
-	llvm::SMDiagnostic Err;
-	M.reset(llvm::ParseIR(buffer, Err, llvm::getGlobalContext()));
-	return wrap(M.take());
+	LLVMMemoryBufferRef buf;
+	LLVMModuleRef module = LLVMModuleCreateWithName("radeon");
+
+	buf = LLVMCreateMemoryBufferWithMemoryRangeCopy((const char*)bitcode,
+							bitcode_len, "radeon");
+	LLVMParseBitcode(buf, &module, NULL);
+	return module;
 }
 
 extern "C" void radeon_llvm_strip_unused_kernels(LLVMModuleRef mod, const char *kernel_name)
