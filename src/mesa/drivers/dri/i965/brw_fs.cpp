@@ -2300,7 +2300,8 @@ clear_deps_for_inst_src(fs_inst *inst, int dispatch_width, bool *deps,
 void
 fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
 {
-   int write_len = inst->regs_written() * dispatch_width / 8;
+   int reg_size = dispatch_width / 8;
+   int write_len = inst->regs_written() * reg_size;
    int first_write_grf = inst->dst.reg;
    bool needs_dep[BRW_MAX_MRF];
    assert(write_len < (int)sizeof(needs_dep) - 1);
@@ -2339,14 +2340,19 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
        * instruction but a MOV that might have left us an outstanding
        * dependency has more latency than a MOV.
        */
-      if (scan_inst->dst.file == GRF &&
-          scan_inst->dst.reg >= first_write_grf &&
-          scan_inst->dst.reg < first_write_grf + write_len &&
-          needs_dep[scan_inst->dst.reg - first_write_grf]) {
-         inst->insert_before(DEP_RESOLVE_MOV(scan_inst->dst.reg));
-         needs_dep[scan_inst->dst.reg - first_write_grf] = false;
-         if (scan_inst_16wide)
-            needs_dep[scan_inst->dst.reg - first_write_grf + 1] = false;
+      if (scan_inst->dst.file == GRF) {
+         for (int i = 0; i < scan_inst->regs_written(); i++) {
+            int reg = scan_inst->dst.reg + i * reg_size;
+
+            if (reg >= first_write_grf &&
+                reg < first_write_grf + write_len &&
+                needs_dep[reg - first_write_grf]) {
+               inst->insert_before(DEP_RESOLVE_MOV(reg));
+               needs_dep[reg - first_write_grf] = false;
+               if (scan_inst_16wide)
+                  needs_dep[reg - first_write_grf + 1] = false;
+            }
+         }
       }
 
       /* Clear the flag for registers that actually got read (as expected). */
