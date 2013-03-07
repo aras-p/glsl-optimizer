@@ -33,6 +33,7 @@
 #include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_logic.h"
 #include "gallivm/lp_bld_tgsi.h"
+#include "gallivm/lp_bld_arit.h"
 #include "radeon_llvm.h"
 #include "radeon_llvm_emit.h"
 #include "tgsi/tgsi_info.h"
@@ -372,13 +373,14 @@ static LLVMValueRef fetch_constant(
 	ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
 	args[0] = build_indexed_load(base->gallivm, ptr, bld_base->uint_bld.zero);
 
-	/* currently not supported */
+	args[1] = lp_build_const_int32(base->gallivm, (reg->Register.Index * 4 + swizzle) * 4);
 	if (reg->Register.Indirect) {
-		assert(0);
-		result = lp_build_const_int32(base->gallivm, 0);
-		return bitcast(bld_base, type, result);
-	} else
-		args[1] = lp_build_const_int32(base->gallivm, (reg->Register.Index * 4 + swizzle) * 4);
+		const struct tgsi_ind_register *ireg = &reg->Indirect;
+		LLVMValueRef addr = si_shader_ctx->radeon_bld.soa.addr[ireg->Index][ireg->Swizzle];
+		LLVMValueRef idx = LLVMBuildLoad(base->gallivm->builder, addr, "load addr reg");
+		idx = lp_build_mul_imm(&bld_base->uint_bld, idx, 16);
+		args[1] = lp_build_add(&bld_base->uint_bld, idx, args[1]);
+	}
 
 	result = build_intrinsic(base->gallivm->builder, "llvm.SI.load.const", base->elem_type,
                                  args, 2, LLVMReadOnlyAttribute | LLVMNoUnwindAttribute);
