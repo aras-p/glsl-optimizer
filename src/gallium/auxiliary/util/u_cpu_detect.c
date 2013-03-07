@@ -270,7 +270,7 @@ util_cpu_detect(void)
              util_cpu_caps.x86_cpu_type = 8 + ((regs2[0] >> 20) & 255); /* use extended family (P4, IA64) */
 
          /* general feature flags */
-         util_cpu_caps.has_tsc    = (regs2[3] >>  8) & 1; /* 0x0000010 */
+         util_cpu_caps.has_tsc    = (regs2[3] >>  4) & 1; /* 0x0000010 */
          util_cpu_caps.has_mmx    = (regs2[3] >> 23) & 1; /* 0x0800000 */
          util_cpu_caps.has_sse    = (regs2[3] >> 25) & 1; /* 0x2000000 */
          util_cpu_caps.has_sse2   = (regs2[3] >> 26) & 1; /* 0x4000000 */
