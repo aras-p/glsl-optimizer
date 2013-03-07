@@ -310,6 +310,10 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
        * node.
        */
       for (int j = 0; j < this->virtual_grf_count; j++) {
+         /* Note that we use a <= comparison, unlike virtual_grf_interferes(),
+          * in order to not have to worry about the uniform issue described in
+          * calculate_live_intervals().
+          */
          if (this->virtual_grf_def[j] <= payload_last_use_ip[i] ||
              this->virtual_grf_use[j] <= payload_last_use_ip[i]) {
             ra_add_node_interference(g, first_payload_node + i, j);
