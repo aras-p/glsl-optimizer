@@ -405,7 +405,7 @@ tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
           fsrc->Register.File == TGSI_FILE_INPUT)) {
          src.indirect = 1;
          src.indirect_reg = fsrc->Indirect.Index;
-         src.indirect_swz = fsrc->Indirect.SwizzleX;
+         src.indirect_swz = fsrc->Indirect.Swizzle;
       } else {
          src.reg.index = 0;
          src.reg.type = -1;

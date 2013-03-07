@@ -1193,7 +1193,7 @@ fetch_source(const struct tgsi_exec_machine *mach,
       index2.i[2] =
       index2.i[3] = reg->Indirect.Index;
       /* get current value of address register[swizzle] */
-      swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, TGSI_CHAN_X );
+      swizzle = reg->Indirect.Swizzle;
       fetch_src_file_channel(mach,
                              chan_index,
                              reg->Indirect.File,
@@ -1253,7 +1253,7 @@ fetch_source(const struct tgsi_exec_machine *mach,
          index2.i[2] =
          index2.i[3] = reg->DimIndirect.Index;
 
-         swizzle = tgsi_util_get_src_register_swizzle( &reg->DimIndirect, TGSI_CHAN_X );
+         swizzle = reg->DimIndirect.Swizzle;
          fetch_src_file_channel(mach,
                                 chan_index,
                                 reg->DimIndirect.File,
@@ -1357,7 +1357,7 @@ store_dest(struct tgsi_exec_machine *mach,
       index.i[3] = reg->Indirect.Index;
 
       /* get current value of address register[swizzle] */
-      swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, TGSI_CHAN_X );
+      swizzle = reg->Indirect.Swizzle;
 
       /* fetch values from the address/indirection register */
       fetch_src_file_channel(mach,
@@ -1409,7 +1409,7 @@ store_dest(struct tgsi_exec_machine *mach,
          index2.i[2] =
          index2.i[3] = reg->DimIndirect.Index;
 
-         swizzle = tgsi_util_get_src_register_swizzle( &reg->DimIndirect, TGSI_CHAN_X );
+         swizzle = reg->DimIndirect.Swizzle;
          fetch_src_file_channel(mach,
                                 chan_index,
                                 reg->DimIndirect.File,

@@ -816,6 +816,43 @@ tgsi_build_src_register(
    return src_register;
 }
 
+static struct tgsi_ind_register
+tgsi_default_ind_register( void )
+{
+   struct tgsi_ind_register ind_register;
+
+   ind_register.File = TGSI_FILE_NULL;
+   ind_register.Swizzle = TGSI_SWIZZLE_X;
+   ind_register.ArrayID = 0;
+
+   return ind_register;
+}
+
+static struct tgsi_ind_register
+tgsi_build_ind_register(
+   unsigned file,
+   unsigned swizzle,
+   unsigned arrayid,
+   int index,
+   struct tgsi_instruction *instruction,
+   struct tgsi_header *header )
+{
+   struct tgsi_ind_register   ind_register;
+
+   assert( file < TGSI_FILE_COUNT );
+   assert( swizzle <= TGSI_SWIZZLE_W );
+   assert( index >= -0x8000 && index <= 0x7FFF );
+
+   ind_register.File = file;
+   ind_register.Swizzle = swizzle;
+   ind_register.Index = index;
+   ind_register.ArrayID = arrayid;
+
+   instruction_grow( instruction, header );
+
+   return ind_register;
+}
+
 static struct tgsi_dimension
 tgsi_default_dimension( void )
 {
@@ -835,9 +872,9 @@ tgsi_default_full_src_register( void )
    struct tgsi_full_src_register full_src_register;
 
    full_src_register.Register = tgsi_default_src_register();
-   full_src_register.Indirect = tgsi_default_src_register();
+   full_src_register.Indirect = tgsi_default_ind_register();
    full_src_register.Dimension = tgsi_default_dimension();
-   full_src_register.DimIndirect = tgsi_default_src_register();
+   full_src_register.DimIndirect = tgsi_default_ind_register();
 
    return full_src_register;
 }
@@ -910,9 +947,9 @@ tgsi_default_full_dst_register( void )
    struct tgsi_full_dst_register full_dst_register;
 
    full_dst_register.Register = tgsi_default_dst_register();
-   full_dst_register.Indirect = tgsi_default_src_register();
+   full_dst_register.Indirect = tgsi_default_ind_register();
    full_dst_register.Dimension = tgsi_default_dimension();
-   full_dst_register.DimIndirect = tgsi_default_src_register();
+   full_dst_register.DimIndirect = tgsi_default_ind_register();
 
    return full_dst_register;
 }
@@ -1057,24 +1094,18 @@ tgsi_build_full_instruction(
          header );
 
       if( reg->Register.Indirect ) {
-         struct tgsi_src_register *ind;
+         struct tgsi_ind_register *ind;
 
          if( maxsize <= size )
             return 0;
-         ind = (struct tgsi_src_register *) &tokens[size];
+         ind = (struct tgsi_ind_register *) &tokens[size];
          size++;
 
-         *ind = tgsi_build_src_register(
+         *ind = tgsi_build_ind_register(
             reg->Indirect.File,
-            reg->Indirect.SwizzleX,
-            reg->Indirect.SwizzleY,
-            reg->Indirect.SwizzleZ,
-            reg->Indirect.SwizzleW,
-            reg->Indirect.Negate,
-            reg->Indirect.Absolute,
-            reg->Indirect.Indirect,
-            reg->Indirect.Dimension,
+            reg->Indirect.Swizzle,
             reg->Indirect.Index,
+            reg->Indirect.ArrayID,
             instruction,
             header );
       }
@@ -1096,24 +1127,18 @@ tgsi_build_full_instruction(
             header );
 
          if( reg->Dimension.Indirect ) {
-            struct tgsi_src_register *ind;
+            struct tgsi_ind_register *ind;
 
             if( maxsize <= size )
                return 0;
-            ind = (struct tgsi_src_register *) &tokens[size];
+            ind = (struct tgsi_ind_register *) &tokens[size];
             size++;
 
-            *ind = tgsi_build_src_register(
+            *ind = tgsi_build_ind_register(
                reg->DimIndirect.File,
-               reg->DimIndirect.SwizzleX,
-               reg->DimIndirect.SwizzleY,
-               reg->DimIndirect.SwizzleZ,
-               reg->DimIndirect.SwizzleW,
-               reg->DimIndirect.Negate,
-               reg->DimIndirect.Absolute,
-               reg->DimIndirect.Indirect,
-               reg->DimIndirect.Dimension,
+               reg->DimIndirect.Swizzle,
                reg->DimIndirect.Index,
+               reg->DimIndirect.ArrayID,
                instruction,
                header );
          }
@@ -1144,24 +1169,18 @@ tgsi_build_full_instruction(
          header );
 
       if( reg->Register.Indirect ) {
-         struct  tgsi_src_register *ind;
+         struct  tgsi_ind_register *ind;
 
          if( maxsize <= size )
             return 0;
-         ind = (struct tgsi_src_register *) &tokens[size];
+         ind = (struct tgsi_ind_register *) &tokens[size];
          size++;
 
-         *ind = tgsi_build_src_register(
+         *ind = tgsi_build_ind_register(
             reg->Indirect.File,
-            reg->Indirect.SwizzleX,
-            reg->Indirect.SwizzleY,
-            reg->Indirect.SwizzleZ,
-            reg->Indirect.SwizzleW,
-            reg->Indirect.Negate,
-            reg->Indirect.Absolute,
-            reg->Indirect.Indirect,
-            reg->Indirect.Dimension,
+            reg->Indirect.Swizzle,
             reg->Indirect.Index,
+            reg->Indirect.ArrayID,
             instruction,
             header );
       }
@@ -1183,24 +1202,18 @@ tgsi_build_full_instruction(
             header );
 
          if( reg->Dimension.Indirect ) {
-            struct tgsi_src_register *ind;
+            struct tgsi_ind_register *ind;
 
             if( maxsize <= size )
                return 0;
-            ind = (struct tgsi_src_register *) &tokens[size];
+            ind = (struct tgsi_ind_register *) &tokens[size];
             size++;
 
-            *ind = tgsi_build_src_register(
+            *ind = tgsi_build_ind_register(
                reg->DimIndirect.File,
-               reg->DimIndirect.SwizzleX,
-               reg->DimIndirect.SwizzleY,
-               reg->DimIndirect.SwizzleZ,
-               reg->DimIndirect.SwizzleW,
-               reg->DimIndirect.Negate,
-               reg->DimIndirect.Absolute,
-               reg->DimIndirect.Indirect,
-               reg->DimIndirect.Dimension,
+               reg->DimIndirect.Swizzle,
                reg->DimIndirect.Index,
+               reg->DimIndirect.ArrayID,
                instruction,
                header );
          }

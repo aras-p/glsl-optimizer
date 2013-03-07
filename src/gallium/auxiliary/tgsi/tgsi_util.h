@@ -76,6 +76,9 @@ unsigned
 tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
                               unsigned src_idx);
 
+struct tgsi_src_register
+tgsi_util_get_src_from_ind(const struct tgsi_ind_register *reg);
+
 #if defined __cplusplus
 }
 #endif

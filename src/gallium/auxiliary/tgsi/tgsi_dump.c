@@ -107,13 +107,18 @@ _dump_register_src(
          CHR( '[' );
          SID( src->DimIndirect.Index );
          TXT( "]." );
-         ENM( src->DimIndirect.SwizzleX, tgsi_swizzle_names );
+         ENM( src->DimIndirect.Swizzle, tgsi_swizzle_names );
          if (src->Dimension.Index != 0) {
             if (src->Dimension.Index > 0)
                CHR( '+' );
             SID( src->Dimension.Index );
          }
          CHR( ']' );
+         if (src->DimIndirect.ArrayID) {
+            CHR( '(' );
+            SID( src->DimIndirect.ArrayID );
+            CHR( ')' );
+         }
       } else {
          CHR('[');
          SID(src->Dimension.Index);
@@ -126,13 +131,18 @@ _dump_register_src(
       CHR( '[' );
       SID( src->Indirect.Index );
       TXT( "]." );
-      ENM( src->Indirect.SwizzleX, tgsi_swizzle_names );
+      ENM( src->Indirect.Swizzle, tgsi_swizzle_names );
       if (src->Register.Index != 0) {
          if (src->Register.Index > 0)
             CHR( '+' );
          SID( src->Register.Index );
       }
       CHR( ']' );
+      if (src->Indirect.ArrayID) {
+         CHR( '(' );
+         SID( src->Indirect.ArrayID );
+         CHR( ')' );
+      }
    } else {
       CHR( '[' );
       SID( src->Register.Index );
@@ -154,13 +164,18 @@ _dump_register_dst(
          CHR( '[' );
          SID( dst->DimIndirect.Index );
          TXT( "]." );
-         ENM( dst->DimIndirect.SwizzleX, tgsi_swizzle_names );
+         ENM( dst->DimIndirect.Swizzle, tgsi_swizzle_names );
          if (dst->Dimension.Index != 0) {
             if (dst->Dimension.Index > 0)
                CHR( '+' );
             SID( dst->Dimension.Index );
          }
          CHR( ']' );
+         if (dst->DimIndirect.ArrayID) {
+            CHR( '(' );
+            SID( dst->DimIndirect.ArrayID );
+            CHR( ')' );
+         }
       } else {
          CHR('[');
          SID(dst->Dimension.Index);
@@ -173,13 +188,18 @@ _dump_register_dst(
       CHR( '[' );
       SID( dst->Indirect.Index );
       TXT( "]." );
-      ENM( dst->Indirect.SwizzleX, tgsi_swizzle_names );
+      ENM( dst->Indirect.Swizzle, tgsi_swizzle_names );
       if (dst->Register.Index != 0) {
          if (dst->Register.Index > 0)
             CHR( '+' );
          SID( dst->Register.Index );
       }
       CHR( ']' );
+      if (dst->Indirect.ArrayID) {
+         CHR( '(' );
+         SID( dst->Indirect.ArrayID );
+         CHR( ')' );
+      }
    } else {
       CHR( '[' );
       SID( dst->Register.Index );

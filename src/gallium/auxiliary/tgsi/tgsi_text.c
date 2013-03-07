@@ -441,6 +441,7 @@ struct parsed_bracket {
    uint ind_file;
    int ind_index;
    uint ind_comp;
+   uint ind_array;
 };
 
 
@@ -508,6 +509,20 @@ parse_register_bracket(
       return FALSE;
    }
    ctx->cur++;
+   if (*ctx->cur == '(') {
+      ctx->cur++;
+      eat_opt_white( &ctx->cur );
+      if (!parse_uint( &ctx->cur, &brackets->ind_array )) {
+         report_error( ctx, "Expected literal unsigned integer" );
+         return FALSE;
+      }
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur != ')') {
+         report_error( ctx, "Expected `)'" );
+         return FALSE;
+      }
+      ctx->cur++;
+   }
    return TRUE;
 }
 
@@ -711,10 +726,8 @@ parse_dst_operand(
       dst->Register.Indirect = 1;
       dst->Indirect.File = bracket[0].ind_file;
       dst->Indirect.Index = bracket[0].ind_index;
-      dst->Indirect.SwizzleX = bracket[0].ind_comp;
-      dst->Indirect.SwizzleY = bracket[0].ind_comp;
-      dst->Indirect.SwizzleZ = bracket[0].ind_comp;
-      dst->Indirect.SwizzleW = bracket[0].ind_comp;
+      dst->Indirect.Swizzle = bracket[0].ind_comp;
+      dst->Indirect.ArrayID = bracket[0].ind_array;
    }
    return TRUE;
 }
@@ -797,10 +810,8 @@ parse_src_operand(
       src->Register.Indirect = 1;
       src->Indirect.File = bracket[0].ind_file;
       src->Indirect.Index = bracket[0].ind_index;
-      src->Indirect.SwizzleX = bracket[0].ind_comp;
-      src->Indirect.SwizzleY = bracket[0].ind_comp;
-      src->Indirect.SwizzleZ = bracket[0].ind_comp;
-      src->Indirect.SwizzleW = bracket[0].ind_comp;
+      src->Indirect.Swizzle = bracket[0].ind_comp;
+      src->Indirect.ArrayID = bracket[0].ind_array;
    }
 
    /* Parse optional swizzle.

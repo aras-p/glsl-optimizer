@@ -62,6 +62,7 @@ struct ureg_src
    int      IndirectIndex    : 16; /* SINT */
    int      DimensionIndex   : 16; /* SINT */
    int      DimIndIndex      : 16; /* SINT */
+   unsigned ArrayID          : 10; /* UINT */
 };
 
 /* Very similar to a tgsi_dst_register, removing unsupported fields
@@ -84,6 +85,7 @@ struct ureg_dst
    int      Index           : 16; /* SINT */
    int      IndirectIndex   : 16; /* SINT */
    int      IndirectSwizzle : 2;  /* TGSI_SWIZZLE_ */
+   unsigned ArrayID         : 10; /* UINT */
 };
 
 struct pipe_context;
@@ -1129,6 +1131,7 @@ ureg_dst( struct ureg_src src )
    dst.PredSwizzleZ = TGSI_SWIZZLE_Z;
    dst.PredSwizzleW = TGSI_SWIZZLE_W;
    dst.Index     = src.Index;
+   dst.ArrayID = src.ArrayID;
 
    return dst;
 }
@@ -1157,6 +1160,7 @@ ureg_src_register(unsigned file,
    src.DimIndFile = TGSI_FILE_NULL;
    src.DimIndIndex = 0;
    src.DimIndSwizzle = 0;
+   src.ArrayID = 0;
 
    return src;
 }
@@ -1184,6 +1188,7 @@ ureg_src( struct ureg_dst dst )
    src.DimIndFile = TGSI_FILE_NULL;
    src.DimIndIndex = 0;
    src.DimIndSwizzle = 0;
+   src.ArrayID = dst.ArrayID;
 
    return src;
 }
@@ -1208,6 +1213,7 @@ ureg_dst_undef( void )
    dst.PredSwizzleZ = TGSI_SWIZZLE_Z;
    dst.PredSwizzleW = TGSI_SWIZZLE_W;
    dst.Index     = 0;
+   dst.ArrayID = 0;
 
    return dst;
 }
@@ -1235,6 +1241,7 @@ ureg_src_undef( void )
    src.DimIndFile = TGSI_FILE_NULL;
    src.DimIndIndex = 0;
    src.DimIndSwizzle = 0;
+   src.ArrayID = 0;
 
    return src;
 }

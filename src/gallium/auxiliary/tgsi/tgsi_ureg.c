@@ -59,6 +59,7 @@ union tgsi_any_token {
    struct tgsi_instruction_texture insn_texture;
    struct tgsi_texture_offset insn_texture_offset;
    struct tgsi_src_register src;
+   struct tgsi_ind_register ind;
    struct tgsi_dimension dim;
    struct tgsi_dst_register dst;
    unsigned value;
@@ -267,6 +268,7 @@ ureg_dst_register( unsigned file,
    dst.PredSwizzleZ = TGSI_SWIZZLE_Z;
    dst.PredSwizzleW = TGSI_SWIZZLE_W;
    dst.Index     = index;
+   dst.ArrayID = 0;
 
    return dst;
 }
@@ -597,8 +599,10 @@ struct ureg_dst ureg_DECL_array_temporary( struct ureg_program *ureg,
    /* and also at the end of the array */
    util_bitmask_set(ureg->decl_temps, ureg->nr_temps);
 
-   if (ureg->nr_array_temps < UREG_MAX_ARRAY_TEMPS)
+   if (ureg->nr_array_temps < UREG_MAX_ARRAY_TEMPS) {
       ureg->array_temps[ureg->nr_array_temps++] = i;
+      dst.ArrayID = ureg->nr_array_temps;
+   }
 
    return dst;
 }
@@ -881,12 +885,10 @@ ureg_emit_src( struct ureg_program *ureg,
    if (src.Indirect) {
       out[0].src.Indirect = 1;
       out[n].value = 0;
-      out[n].src.File = src.IndirectFile;
-      out[n].src.SwizzleX = src.IndirectSwizzle;
-      out[n].src.SwizzleY = src.IndirectSwizzle;
-      out[n].src.SwizzleZ = src.IndirectSwizzle;
-      out[n].src.SwizzleW = src.IndirectSwizzle;
-      out[n].src.Index = src.IndirectIndex;
+      out[n].ind.File = src.IndirectFile;
+      out[n].ind.Swizzle = src.IndirectSwizzle;
+      out[n].ind.Index = src.IndirectIndex;
+      out[n].ind.ArrayID = src.ArrayID;
       n++;
    }
 
@@ -899,12 +901,10 @@ ureg_emit_src( struct ureg_program *ureg,
          out[n].dim.Index = src.DimensionIndex;
          n++;
          out[n].value = 0;
-         out[n].src.File = src.DimIndFile;
-         out[n].src.SwizzleX = src.DimIndSwizzle;
-         out[n].src.SwizzleY = src.DimIndSwizzle;
-         out[n].src.SwizzleZ = src.DimIndSwizzle;
-         out[n].src.SwizzleW = src.DimIndSwizzle;
-         out[n].src.Index = src.DimIndIndex;
+         out[n].ind.File = src.DimIndFile;
+         out[n].ind.Swizzle = src.DimIndSwizzle;
+         out[n].ind.Index = src.DimIndIndex;
+         out[n].ind.ArrayID = src.ArrayID;
       } else {
          out[n].dim.Indirect = 0;
          out[n].dim.Index = src.DimensionIndex;
@@ -943,12 +943,10 @@ ureg_emit_dst( struct ureg_program *ureg,
    
    if (dst.Indirect) {
       out[n].value = 0;
-      out[n].src.File = TGSI_FILE_ADDRESS;
-      out[n].src.SwizzleX = dst.IndirectSwizzle;
-      out[n].src.SwizzleY = dst.IndirectSwizzle;
-      out[n].src.SwizzleZ = dst.IndirectSwizzle;
-      out[n].src.SwizzleW = dst.IndirectSwizzle;
-      out[n].src.Index = dst.IndirectIndex;
+      out[n].ind.File = TGSI_FILE_ADDRESS;
+      out[n].ind.Swizzle = dst.IndirectSwizzle;
+      out[n].ind.Index = dst.IndirectIndex;
+      out[n].ind.ArrayID = dst.ArrayID;
       n++;
    }
 

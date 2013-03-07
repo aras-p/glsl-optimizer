@@ -517,12 +517,12 @@ emit_mask_scatter(struct lp_build_tgsi_soa_context *bld,
 static LLVMValueRef
 get_indirect_index(struct lp_build_tgsi_soa_context *bld,
                    unsigned reg_file, unsigned reg_index,
-                   const struct tgsi_src_register *indirect_reg)
+                   const struct tgsi_ind_register *indirect_reg)
 {
    LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
    struct lp_build_context *uint_bld = &bld->bld_base.uint_bld;
    /* always use X component of address register */
-   unsigned swizzle = indirect_reg->SwizzleX;
+   unsigned swizzle = indirect_reg->Swizzle;
    LLVMValueRef base;
    LLVMValueRef rel;
    LLVMValueRef max_index;

@@ -563,7 +563,7 @@ struct tgsi_instruction_predicate
  *
  * Index specifies the element number of a register in the register file.
  *
- * If Indirect is TRUE, Index should be offset by the X component of a source
+ * If Indirect is TRUE, Index should be offset by the X component of the indirect
  * register that follows. The register can be now fetched into local storage
  * for further processing.
  *
@@ -589,14 +589,26 @@ struct tgsi_src_register
 };
 
 /**
- * If tgsi_src_register::Modifier is TRUE, tgsi_src_register_modifier follows.
- * 
- * Then, if tgsi_src_register::Indirect is TRUE, another tgsi_src_register
- * follows.
+ * If tgsi_src_register::Indirect is TRUE, tgsi_ind_register follows.
  *
- * Then, if tgsi_src_register::Dimension is TRUE, tgsi_dimension follows.
+ * File, Index and Swizzle are handled the same as in tgsi_src_register.
+ *
+ * If ArrayID is zero the whole register file might be is indirectly addressed,
+ * if not only the Declaration with this ArrayID is accessed by this operand.
+ *
  */
 
+struct tgsi_ind_register
+{
+   unsigned File    : 4;  /* TGSI_FILE_ */
+   int      Index   : 16; /* SINT */
+   unsigned Swizzle : 2;  /* TGSI_SWIZZLE_ */
+   unsigned ArrayID : 10; /* UINT */
+};
+
+/**
+ * If tgsi_src_register::Dimension is TRUE, tgsi_dimension follows.
+ */
 
 struct tgsi_dimension
 {

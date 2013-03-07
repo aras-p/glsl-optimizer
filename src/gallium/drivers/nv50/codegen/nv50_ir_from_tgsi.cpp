@@ -23,6 +23,7 @@
 extern "C" {
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_scan.h"
+#include "tgsi/tgsi_util.h"
 }
 
 #include <set>
@@ -54,6 +55,11 @@ public:
       { }
 
       SrcRegister(const struct tgsi_src_register& src) : reg(src), fsr(NULL) { }
+
+      SrcRegister(const struct tgsi_ind_register& ind)
+         : reg(tgsi_util_get_src_from_ind(&ind)),
+           fsr(NULL)
+      { }
 
       struct tgsi_src_register offsetToSrc(struct tgsi_texture_offset off)
       {

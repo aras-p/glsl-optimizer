@@ -34,7 +34,7 @@ static LLVMValueRef llvm_fetch_const(
 	};
 	if (reg->Register.Indirect) {
 		struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
-		LLVMValueRef index = LLVMBuildLoad(bld_base->base.gallivm->builder, bld->addr[reg->Indirect.Index][reg->Indirect.SwizzleX], "");
+		LLVMValueRef index = LLVMBuildLoad(bld_base->base.gallivm->builder, bld->addr[reg->Indirect.Index][reg->Indirect.Swizzle], "");
 		offset[1] = LLVMBuildAdd(bld_base->base.gallivm->builder, offset[1], index, "");
 	}
 	unsigned ConstantAddressSpace = CONSTANT_BUFFER_0_ADDR_SPACE ;

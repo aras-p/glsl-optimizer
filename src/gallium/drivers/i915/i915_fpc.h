@@ -276,9 +276,9 @@ struct i915_full_dst_register
 {
    struct i915_dst_register               Register;
 /*
-   struct tgsi_src_register               Indirect;
+   struct tgsi_ind_register               Indirect;
    struct tgsi_dimension                  Dimension;
-   struct tgsi_src_register               DimIndirect;
+   struct tgsi_ind_register               DimIndirect;
 */
 };
 
@@ -286,9 +286,9 @@ struct i915_full_src_register
 {
    struct i915_src_register         Register;
 /*
-   struct tgsi_src_register         Indirect;
+   struct tgsi_ind_register         Indirect;
    struct tgsi_dimension            Dimension;
-   struct tgsi_src_register         DimIndirect;
+   struct tgsi_ind_register         DimIndirect;
 */
 };
 
