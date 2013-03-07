@@ -347,44 +347,6 @@ iter_declaration(
       TXT( ", INVARIANT" );
    }
 
-
-   if (decl->Declaration.File == TGSI_FILE_IMMEDIATE_ARRAY) {
-      unsigned i;
-      char range_indent[4];
-
-      TXT(" {");
-
-      if (decl->Range.Last < 10)
-         range_indent[0] = '\0';
-      else if (decl->Range.Last < 100) {
-         range_indent[0] = ' ';
-         range_indent[1] = '\0';
-      } else if (decl->Range.Last < 1000) {
-         range_indent[0] = ' ';
-         range_indent[1] = ' ';
-         range_indent[2] = '\0';
-      } else {
-         range_indent[0] = ' ';
-         range_indent[1] = ' ';
-         range_indent[2] = ' ';
-         range_indent[3] = '\0';
-      }
-
-      dump_imm_data(iter, decl->ImmediateData.u,
-                    4, TGSI_IMM_FLOAT32);
-      for(i = 1; i <= decl->Range.Last; ++i) {
-         /* indent by strlen of:
-          *   "DCL IMMX[0..1] {" */
-         CHR('\n');
-         TXT( "                " );
-         TXT( range_indent );
-         dump_imm_data(iter, decl->ImmediateData.u + i,
-                       4, TGSI_IMM_FLOAT32);
-      }
-
-      TXT(" }");
-   }
-
    EOL();
 
    return TRUE;

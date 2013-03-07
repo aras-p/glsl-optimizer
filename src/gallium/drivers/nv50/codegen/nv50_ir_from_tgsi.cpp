@@ -318,8 +318,6 @@ static nv50_ir::DataFile translateFile(uint file)
    case TGSI_FILE_PREDICATE:       return nv50_ir::FILE_PREDICATE;
    case TGSI_FILE_IMMEDIATE:       return nv50_ir::FILE_IMMEDIATE;
    case TGSI_FILE_SYSTEM_VALUE:    return nv50_ir::FILE_SYSTEM_VALUE;
-   case TGSI_FILE_IMMEDIATE_ARRAY: return nv50_ir::FILE_IMMEDIATE;
-   case TGSI_FILE_TEMPORARY_ARRAY: return nv50_ir::FILE_MEMORY_LOCAL;
    case TGSI_FILE_RESOURCE:        return nv50_ir::FILE_MEMORY_GLOBAL;
    case TGSI_FILE_SAMPLER:
    case TGSI_FILE_NULL:
@@ -656,8 +654,6 @@ public:
 
    nv50_ir::DynArray tempArrays;
    nv50_ir::DynArray immdArrays;
-   int tempArrayCount;
-   int immdArrayCount;
 
    typedef nv50_ir::BuildUtil::Location Location;
    // these registers are per-subroutine, cannot be used for parameter passing
@@ -728,8 +724,6 @@ bool Source::scanSource()
    resources.resize(scan.file_max[TGSI_FILE_RESOURCE] + 1);
 
    info->immd.bufSize = 0;
-   tempArrayCount = 0;
-   immdArrayCount = 0;
 
    info->numInputs = scan.file_max[TGSI_FILE_INPUT] + 1;
    info->numOutputs = scan.file_max[TGSI_FILE_OUTPUT] + 1;
@@ -970,48 +964,6 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
       for (i = first; i <= last; ++i)
          textureViews[i].target = decl->SamplerView.Resource;
       break;
-   case TGSI_FILE_IMMEDIATE_ARRAY:
-   {
-      if (decl->Dim.Index2D >= immdArrayCount)
-         immdArrayCount = decl->Dim.Index2D + 1;
-      immdArrays[decl->Dim.Index2D].u32 = (last + 1) << 2;
-      uint32_t base, count;
-      switch (decl->Declaration.UsageMask) {
-      case 0x1: c = 1; break;
-      case 0x3: c = 2; break;
-      default:
-         c = 4;
-         break;
-      }
-      immdArrays[decl->Dim.Index2D].u32 |= c;
-      count = (last + 1) * c;
-      base = info->immd.bufSize / 4;
-      info->immd.bufSize = (info->immd.bufSize + count * 4 + 0xf) & ~0xf;
-      info->immd.buf = (uint32_t *)REALLOC(info->immd.buf, base * 4,
-                                           info->immd.bufSize);
-      // NOTE: this assumes array declarations are ordered by Dim.Index2D
-      for (i = 0; i < count; ++i)
-         info->immd.buf[base + i] = decl->ImmediateData.u[i].Uint;
-   }
-      break;
-   case TGSI_FILE_TEMPORARY_ARRAY:
-   {
-      if (decl->Dim.Index2D >= tempArrayCount)
-         tempArrayCount = decl->Dim.Index2D + 1;
-      tempArrays[decl->Dim.Index2D].u32 = (last + 1) << 2;
-      uint32_t count;
-      switch (decl->Declaration.UsageMask) {
-      case 0x1: c = 1; break;
-      case 0x3: c = 2; break;
-      default:
-         c = 4;
-         break;
-      }
-      tempArrays[decl->Dim.Index2D].u32 |= c;
-      count = (last + 1) * c;
-      info->bin.tlsSpace += (info->bin.tlsSpace + count * 4 + 0xf) & ~0xf;
-   }
-      break;
    case TGSI_FILE_NULL:
    case TGSI_FILE_TEMPORARY:
    case TGSI_FILE_ADDRESS:
@@ -1224,8 +1176,6 @@ private:
    DataArray aData; // TGSI_FILE_ADDRESS
    DataArray pData; // TGSI_FILE_PREDICATE
    DataArray oData; // TGSI_FILE_OUTPUT (if outputs in registers)
-   std::vector<DataArray> lData; // TGSI_FILE_TEMPORARY_ARRAY
-   std::vector<DataArray> iData; // TGSI_FILE_IMMEDIATE_ARRAY
 
    Value *zero;
    Value *fragCoord[4];
@@ -1405,12 +1355,6 @@ Converter::getArrayForFile(unsigned file, int idx)
       return &pData;
    case TGSI_FILE_ADDRESS:
       return &aData;
-   case TGSI_FILE_TEMPORARY_ARRAY:
-      assert(idx < code->tempArrayCount);
-      return &lData[idx];
-   case TGSI_FILE_IMMEDIATE_ARRAY:
-      assert(idx < code->immdArrayCount);
-      return &iData[idx];
    case TGSI_FILE_OUTPUT:
       assert(prog->getType() == Program::TYPE_FRAGMENT);
       return &oData;
@@ -1467,7 +1411,6 @@ Converter::acquireDst(int d, int c)
       return NULL;
 
    if (dst.isIndirect(0) ||
-       f == TGSI_FILE_TEMPORARY_ARRAY ||
        f == TGSI_FILE_SYSTEM_VALUE ||
        (f == TGSI_FILE_OUTPUT && prog->getType() != Program::TYPE_FRAGMENT))
       return getScratch();
@@ -1525,7 +1468,6 @@ Converter::storeDst(const tgsi::Instruction::DstRegister dst, int c,
          mkStore(OP_EXPORT, TYPE_U32, dstToSym(dst, c), ptr, val);
    } else
    if (f == TGSI_FILE_TEMPORARY ||
-       f == TGSI_FILE_TEMPORARY_ARRAY ||
        f == TGSI_FILE_PREDICATE ||
        f == TGSI_FILE_ADDRESS ||
        f == TGSI_FILE_OUTPUT) {
@@ -2728,28 +2670,6 @@ Converter::Converter(Program *ir, const tgsi::Source *code) : BuildUtil(ir),
    pData.setup(TGSI_FILE_PREDICATE, 0, 0, pSize, 4, 4, FILE_PREDICATE, 0);
    aData.setup(TGSI_FILE_ADDRESS, 0, 0, aSize, 4, 4, FILE_ADDRESS, 0);
    oData.setup(TGSI_FILE_OUTPUT, 0, 0, oSize, 4, 4, FILE_GPR, 0);
-
-   for (int vol = 0, i = 0; i < code->tempArrayCount; ++i) {
-      int len = code->tempArrays[i].u32 >> 2;
-      int dim = code->tempArrays[i].u32 & 3;
-
-      lData.push_back(DataArray(this));
-      lData.back().setup(TGSI_FILE_TEMPORARY_ARRAY, i, vol, len, dim, 4,
-                         FILE_MEMORY_LOCAL, 0);
-
-      vol += (len * dim * 4 + 0xf) & ~0xf;
-   }
-
-   for (int vol = 0, i = 0; i < code->immdArrayCount; ++i) {
-      int len = code->immdArrays[i].u32 >> 2;
-      int dim = code->immdArrays[i].u32 & 3;
-
-      lData.push_back(DataArray(this));
-      lData.back().setup(TGSI_FILE_IMMEDIATE_ARRAY, i, vol, len, dim, 4,
-                         FILE_MEMORY_CONST, 14);
-
-      vol += (len * dim * 4 + 0xf) & ~0xf;
-   }
 
    zero = mkImm((uint32_t)0);
 

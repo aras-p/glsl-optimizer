@@ -336,7 +336,6 @@ tgsi_default_full_declaration( void )
    full_declaration.Range = tgsi_default_declaration_range();
    full_declaration.Semantic = tgsi_default_declaration_semantic();
    full_declaration.Interp = tgsi_default_declaration_interp();
-   full_declaration.ImmediateData.u = NULL;
    full_declaration.Resource = tgsi_default_declaration_resource();
    full_declaration.SamplerView = tgsi_default_declaration_sampler_view();
 
@@ -423,24 +422,6 @@ tgsi_build_full_declaration(
          full_decl->Semantic.Index,
          declaration,
          header );
-   }
-
-   if (full_decl->Declaration.File == TGSI_FILE_IMMEDIATE_ARRAY) {
-      unsigned i, j;
-      union tgsi_immediate_data *data;
-
-      for (i = 0; i <= dr->Last; ++i) {
-         for (j = 0; j < 4; ++j) {
-            unsigned idx = i*4 + j;
-            if (maxsize <= size)
-               return 0;
-            data = (union tgsi_immediate_data *) &tokens[size];
-            ++size;
-
-            *data = full_decl->ImmediateData.u[idx];
-            declaration_grow( declaration, header );
-         }
-      }
    }
 
    if (full_decl->Declaration.File == TGSI_FILE_RESOURCE) {

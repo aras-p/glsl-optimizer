@@ -1084,7 +1084,6 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    const char *cur, *cur2;
    uint advance;
    boolean is_vs_input;
-   boolean is_imm_array;
 
    if (!eat_white( &ctx->cur )) {
       report_error( ctx, "Syntax error" );
@@ -1112,7 +1111,6 @@ static boolean parse_declaration( struct translate_ctx *ctx )
 
    is_vs_input = (file == TGSI_FILE_INPUT &&
                   ctx->processor == TGSI_PROCESSOR_VERTEX);
-   is_imm_array = (file == TGSI_FILE_IMMEDIATE_ARRAY);
 
    cur = ctx->cur;
    eat_opt_white( &cur );
@@ -1264,44 +1262,6 @@ static boolean parse_declaration( struct translate_ctx *ctx )
             }
          }
       }
-   } else if (is_imm_array) {
-      unsigned i;
-      union tgsi_immediate_data *vals_itr;
-      /* we have our immediate data */
-      if (*cur != '{') {
-         report_error( ctx, "Immediate array without data" );
-         return FALSE;
-      }
-      ++cur;
-      ctx->cur = cur;
-
-      decl.ImmediateData.u =
-         MALLOC(sizeof(union tgsi_immediate_data) * 4 *
-                (decl.Range.Last + 1));
-      vals_itr = decl.ImmediateData.u;
-      for (i = 0; i <= decl.Range.Last; ++i) {
-         if (!parse_immediate_data(ctx, TGSI_IMM_FLOAT32, vals_itr)) {
-            FREE(decl.ImmediateData.u);
-            return FALSE;
-         }
-         vals_itr += 4;
-         eat_opt_white( &ctx->cur );
-         if (*ctx->cur != ',') {
-            if (i !=  decl.Range.Last) {
-               report_error( ctx, "Not enough data in immediate array!" );
-               FREE(decl.ImmediateData.u);
-               return FALSE;
-            }
-         } else
-            ++ctx->cur;
-      }
-      eat_opt_white( &ctx->cur );
-      if (*ctx->cur != '}') {
-         FREE(decl.ImmediateData.u);
-         report_error( ctx, "Immediate array data missing closing '}'" );
-         return FALSE;
-      }
-      ++ctx->cur;
    }
 
    cur = ctx->cur;
@@ -1331,9 +1291,6 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       ctx->tokens_cur,
       ctx->header,
       (uint) (ctx->tokens_end - ctx->tokens_cur) );
-
-   if (is_imm_array)
-      FREE(decl.ImmediateData.u);
 
    if (advance == 0)
       return FALSE;

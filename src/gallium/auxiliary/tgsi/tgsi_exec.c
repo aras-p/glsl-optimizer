@@ -749,19 +749,6 @@ tgsi_exec_machine_bind_shader(
                ++mach->NumOutputs;
             }
          }
-         if (parse.FullToken.FullDeclaration.Declaration.File ==
-             TGSI_FILE_IMMEDIATE_ARRAY) {
-            unsigned reg;
-            struct tgsi_full_declaration *decl =
-               &parse.FullToken.FullDeclaration;
-            debug_assert(decl->Range.Last < TGSI_EXEC_NUM_IMMEDIATES);
-            for (reg = decl->Range.First; reg <= decl->Range.Last; ++reg) {
-               for( i = 0; i < 4; i++ ) {
-                  int idx = reg * 4 + i;
-                  mach->ImmArray[reg][i] = decl->ImmediateData.u[idx].Float;
-               }
-            }
-         }
          memcpy(declarations + numDeclarations,
                 &parse.FullToken.FullDeclaration,
                 sizeof(declarations[0]));
@@ -1116,30 +1103,12 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
       }
       break;
 
-   case TGSI_FILE_TEMPORARY_ARRAY:
-      for (i = 0; i < TGSI_QUAD_SIZE; i++) {
-         assert(index->i[i] < TGSI_EXEC_NUM_TEMPS);
-         assert(index2D->i[i] < TGSI_EXEC_NUM_TEMP_ARRAYS);
-
-         chan->u[i] =
-            mach->TempArray[index2D->i[i]][index->i[i]].xyzw[swizzle].u[i];
-      }
-      break;
-
    case TGSI_FILE_IMMEDIATE:
       for (i = 0; i < TGSI_QUAD_SIZE; i++) {
          assert(index->i[i] >= 0 && index->i[i] < (int)mach->ImmLimit);
          assert(index2D->i[i] == 0);
 
          chan->f[i] = mach->Imms[index->i[i]][swizzle];
-      }
-      break;
-
-   case TGSI_FILE_IMMEDIATE_ARRAY:
-      for (i = 0; i < TGSI_QUAD_SIZE; i++) {
-         assert(index2D->i[i] == 0);
-
-         chan->f[i] = mach->ImmArray[index->i[i]][swizzle];
       }
       break;
 
@@ -1502,16 +1471,6 @@ store_dest(struct tgsi_exec_machine *mach,
       index = reg->Register.Index;
       assert( index < TGSI_EXEC_NUM_TEMPS );
       dst = &mach->Temps[offset + index].xyzw[chan_index];
-      break;
-
-   case TGSI_FILE_TEMPORARY_ARRAY:
-      index = reg->Register.Index;
-      assert( index < TGSI_EXEC_NUM_TEMPS );
-      assert( index2D.i[0] < TGSI_EXEC_NUM_TEMP_ARRAYS );
-      /* XXX we use index2D.i[0] here but somehow we might
-       * end up with someone trying to store indirectly in
-       * different buffers */
-      dst = &mach->TempArray[index2D.i[0]][offset + index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_ADDRESS:

@@ -52,8 +52,6 @@ const char *tgsi_file_names[TGSI_FILE_COUNT] =
    "IMM",
    "PRED",
    "SV",
-   "IMMX",
-   "TEMPX",
    "RES",
    "SVIEW"
 };

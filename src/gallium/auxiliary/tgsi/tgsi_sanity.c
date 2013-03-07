@@ -257,8 +257,6 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "IMM",
    "PRED",
    "SV",
-   "IMMX",
-   "TEMPX",
    "RES"
 };
 
