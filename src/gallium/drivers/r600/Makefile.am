@@ -16,8 +16,7 @@ libr600_la_SOURCES = \
 if R600_NEED_RADEON_GALLIUM
 
 libr600_la_SOURCES += \
-	$(LLVM_C_SOURCES) \
-	$(LLVM_CXX_SOURCES)
+	$(LLVM_C_SOURCES)
 
 libr600_la_LIBADD = ../radeon/libllvmradeon@VERSION@.la
 
@@ -25,9 +24,6 @@ AM_CFLAGS += \
 	$(LLVM_CFLAGS) \
 	-I$(top_srcdir)/src/gallium/drivers/radeon/
 
-AM_CXXFLAGS= \
-	$(LLVM_CXXFLAGS) \
-	$(DEFINES)
 endif
 
 if USE_R600_LLVM_COMPILER

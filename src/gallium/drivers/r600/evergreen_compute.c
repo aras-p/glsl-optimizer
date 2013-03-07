@@ -47,7 +47,7 @@
 #include "evergreen_compute_internal.h"
 #include "compute_memory_pool.h"
 #ifdef HAVE_OPENCL
-#include "llvm_wrapper.h"
+#include "radeon_llvm_util.h"
 #endif
 
 /**
@@ -140,12 +140,12 @@ void *evergreen_create_compute_state(
 	shader->input_size = cso->req_input_mem;
 
 #ifdef HAVE_OPENCL 
-	shader->num_kernels = llvm_get_num_kernels(code, header->num_bytes);
+	shader->num_kernels = radeon_llvm_get_num_kernels(code, header->num_bytes);
 	shader->kernels = CALLOC(sizeof(struct r600_kernel), shader->num_kernels);
 
 	for (i = 0; i < shader->num_kernels; i++) {
 		struct r600_kernel *kernel = &shader->kernels[i];
-		kernel->llvm_module = llvm_get_kernel_module(i, code,
+		kernel->llvm_module = radeon_llvm_get_kernel_module(i, code,
 							header->num_bytes);
 	}
 #endif

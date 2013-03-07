@@ -20,4 +20,3 @@ C_SOURCES = \
 	compute_memory_pool.c
 
 LLVM_C_SOURCES = r600_llvm.c
-LLVM_CXX_SOURCES = llvm_wrapper.cpp
