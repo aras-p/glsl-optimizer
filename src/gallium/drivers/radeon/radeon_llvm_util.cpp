@@ -14,6 +14,7 @@
 #include <llvm-c/Core.h>
 
 #include "radeon_llvm_util.h"
+#include "util/u_memory.h"
 
 
 static LLVMModuleRef radeon_llvm_parse_bitcode(const unsigned char * bitcode,
@@ -49,13 +50,19 @@ extern "C" unsigned radeon_llvm_get_num_kernels(const unsigned char *bitcode,
 extern "C" LLVMModuleRef radeon_llvm_get_kernel_module(unsigned index,
 		const unsigned char *bitcode, unsigned bitcode_len)
 {
-	LLVMModuleRef mod = radeon_llvm_parse_bitcode(bitcode, bitcode_len);
-	llvm::Module *M = llvm::unwrap(mod);
-	const llvm::NamedMDNode *kernel_node =
-				M->getNamedMetadata("opencl.kernels");
-	const char* kernel_name = kernel_node->getOperand(index)->
-					getOperand(0)->getName().data();
-	radeon_llvm_strip_unused_kernels(mod, kernel_name);
-	return mod;
+	LLVMModuleRef mod;
+	unsigned num_kernels;
+	LLVMValueRef *kernel_metadata;
+	LLVMValueRef kernel_signature, kernel_function;
 
+	mod = radeon_llvm_parse_bitcode(bitcode, bitcode_len);
+	num_kernels = LLVMGetNamedMetadataNumOperands(mod, "opencl.kernels");
+	kernel_metadata = (LLVMValueRef*)MALLOC(num_kernels * sizeof(LLVMValueRef));
+	LLVMGetNamedMetadataOperands(mod, "opencl.kernels", kernel_metadata);
+	kernel_signature = kernel_metadata[index];
+	LLVMGetMDNodeOperands(kernel_signature, &kernel_function);
+	const char* kernel_name = LLVMGetValueName(kernel_function);
+	radeon_llvm_strip_unused_kernels(mod, kernel_name);
+	FREE(kernel_metadata);
+	return mod;
 }

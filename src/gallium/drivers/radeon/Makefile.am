@@ -14,6 +14,7 @@ noinst_LTLIBRARIES = libllvmradeon@VERSION@.la
 endif
 
 AM_CXXFLAGS = \
+	$(GALLIUM_CFLAGS) \
 	$(filter-out -DDEBUG, $(LLVM_CXXFLAGS)) \
 	$(DEFINES)
 
