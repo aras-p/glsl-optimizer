@@ -190,6 +190,37 @@ fs_visitor::calculate_live_intervals()
 	    int reg = inst->src[i].reg;
 
 	    use[reg] = ip;
+
+            /* In most cases, a register can be written over safely by the
+             * same instruction that is its last use.  For a single
+             * instruction, the sources are dereferenced before writing of the
+             * destination starts (naturally).  This gets more complicated for
+             * simd16, because the instruction:
+             *
+             * mov(16)      g4<1>F      g4<8,8,1>F   g6<8,8,1>F
+             *
+             * is actually decoded in hardware as:
+             *
+             * mov(8)       g4<1>F      g4<8,8,1>F   g6<8,8,1>F
+             * mov(8)       g5<1>F      g5<8,8,1>F   g7<8,8,1>F
+             *
+             * Which is safe.  However, if we have uniform accesses
+             * happening, we get into trouble:
+             *
+             * mov(8)       g4<1>F      g4<0,1,0>F   g6<8,8,1>F
+             * mov(8)       g5<1>F      g4<0,1,0>F   g7<8,8,1>F
+             *
+             * Now our destination for the first instruction overwrote the
+             * second instruction's src0, and we get garbage for those 8
+             * pixels.  There's a similar issue for the pre-gen6
+             * pixel_x/pixel_y, which are registers of 16-bit values and thus
+             * would get stomped by the first decode as well.
+             */
+            if (dispatch_width == 16 && (inst->src[i].smear ||
+                                         (this->pixel_x.reg == reg ||
+                                          this->pixel_y.reg == reg))) {
+               use[reg]++;
+            }
 	 }
       }
 
@@ -263,29 +294,6 @@ fs_visitor::virtual_grf_interferes(int a, int b)
 
    int start = MAX2(a_def, b_def);
    int end = MIN2(a_use, b_use);
-
-   /* If the register is used to store 16 values of less than float
-    * size (only the case for pixel_[xy]), then we can't allocate
-    * another dword-sized thing to that register that would be used in
-    * the same instruction.  This is because when the GPU decodes (for
-    * example):
-    *
-    * (declare (in ) vec4 gl_FragCoord@0x97766a0)
-    * add(16)         g6<1>F          g6<8,8,1>UW     0.5F { align1 compr };
-    *
-    * it's actually processed as:
-    * add(8)         g6<1>F          g6<8,8,1>UW     0.5F { align1 };
-    * add(8)         g7<1>F          g6.8<8,8,1>UW   0.5F { align1 sechalf };
-    *
-    * so our second half values in g6 got overwritten in the first
-    * half.
-    */
-   if (dispatch_width == 16 && (this->pixel_x.reg == a ||
-				this->pixel_x.reg == b ||
-				this->pixel_y.reg == a ||
-				this->pixel_y.reg == b)) {
-      return start <= end;
-   }
 
    return start < end;
 }
