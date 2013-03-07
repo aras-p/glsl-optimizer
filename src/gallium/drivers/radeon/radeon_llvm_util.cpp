@@ -29,17 +29,6 @@ static LLVMModuleRef radeon_llvm_parse_bitcode(const unsigned char * bitcode,
 	return module;
 }
 
-extern "C" void radeon_llvm_strip_unused_kernels(LLVMModuleRef mod, const char *kernel_name)
-{
-	llvm::Module *M = llvm::unwrap(mod);
-	std::vector<const char *> export_list;
-	export_list.push_back(kernel_name);
-	llvm::PassManager PM;
-	PM.add(llvm::createInternalizePass(export_list));
-	PM.add(llvm::createGlobalDCEPass());
-	PM.run(*M);
-}
-
 extern "C" unsigned radeon_llvm_get_num_kernels(const unsigned char *bitcode,
 				unsigned bitcode_len)
 {
@@ -53,16 +42,21 @@ extern "C" LLVMModuleRef radeon_llvm_get_kernel_module(unsigned index,
 	LLVMModuleRef mod;
 	unsigned num_kernels;
 	LLVMValueRef *kernel_metadata;
-	LLVMValueRef kernel_signature, kernel_function;
+	unsigned i;
 
 	mod = radeon_llvm_parse_bitcode(bitcode, bitcode_len);
 	num_kernels = LLVMGetNamedMetadataNumOperands(mod, "opencl.kernels");
 	kernel_metadata = (LLVMValueRef*)MALLOC(num_kernels * sizeof(LLVMValueRef));
 	LLVMGetNamedMetadataOperands(mod, "opencl.kernels", kernel_metadata);
-	kernel_signature = kernel_metadata[index];
-	LLVMGetMDNodeOperands(kernel_signature, &kernel_function);
-	const char* kernel_name = LLVMGetValueName(kernel_function);
-	radeon_llvm_strip_unused_kernels(mod, kernel_name);
+	for (i = 0; i < num_kernels; i++) {
+		LLVMValueRef kernel_signature, kernel_function;
+		if (i == index) {
+			continue;
+		}
+		kernel_signature = kernel_metadata[i];
+		LLVMGetMDNodeOperands(kernel_signature, &kernel_function);
+		LLVMDeleteFunction(kernel_function);
+	}
 	FREE(kernel_metadata);
 	return mod;
 }
