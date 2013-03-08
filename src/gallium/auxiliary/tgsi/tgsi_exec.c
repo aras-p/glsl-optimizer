@@ -2147,13 +2147,20 @@ exec_txf(struct tgsi_exec_machine *mach,
    float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
    int j;
    int8_t offsets[3];
+   unsigned target;
 
    /* always fetch all 3 offsets, overkill but keeps code simple */
    fetch_texel_offsets(mach, inst, offsets);
 
    IFETCH(&r[3], 0, TGSI_CHAN_W);
 
-   switch(inst->Texture.Texture) {
+   if (inst->Instruction.Opcode == TGSI_OPCODE_SAMPLE_I) {
+      target = mach->SamplerViews[unit].Resource;
+   }
+   else {
+      target = inst->Texture.Texture;
+   }
+   switch(target) {
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_2D_ARRAY:
    case TGSI_TEXTURE_SHADOW2D_ARRAY:
@@ -4339,7 +4346,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_SAMPLE_I:
-      assert(0);
+      exec_txf(mach, inst);
       break;
 
    case TGSI_OPCODE_SAMPLE_I_MS:
@@ -4375,7 +4382,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_SVIEWINFO:
-      assert(0);
+      exec_txq(mach, inst);
       break;
 
    case TGSI_OPCODE_SAMPLE_POS:
