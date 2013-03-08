@@ -991,7 +991,8 @@ intel_renderbuffer_resolve_depth(struct intel_context *intel,
 
 void
 intel_renderbuffer_move_to_temp(struct intel_context *intel,
-                                struct intel_renderbuffer *irb)
+                                struct intel_renderbuffer *irb,
+                                bool invalidate)
 {
    struct intel_texture_image *intel_image =
       intel_texture_image(irb->tex_image);
@@ -1009,7 +1010,8 @@ intel_renderbuffer_move_to_temp(struct intel_context *intel,
                                  irb->mt->num_samples,
                                  false /* force_y_tiling */);
 
-   intel_miptree_copy_teximage(intel, intel_image, new_mt);
+   intel_miptree_copy_teximage(intel, intel_image, new_mt, invalidate);
+
    intel_miptree_reference(&irb->mt, intel_image->mt);
    intel_renderbuffer_set_draw_offset(irb);
    intel_miptree_release(&new_mt);

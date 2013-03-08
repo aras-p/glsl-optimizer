@@ -198,7 +198,8 @@ intel_renderbuffer_resolve_depth(struct intel_context *intel,
 				 struct intel_renderbuffer *irb);
 
 void intel_renderbuffer_move_to_temp(struct intel_context *intel,
-                                     struct intel_renderbuffer *irb);
+                                     struct intel_renderbuffer *irb,
+                                     bool invalidate);
 
 unsigned
 intel_quantize_num_samples(struct intel_screen *intel, unsigned num_samples);

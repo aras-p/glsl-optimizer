@@ -439,7 +439,7 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
    /* This workaround has to happen outside of brw_upload_state() because it
     * may flush the batchbuffer for a blit, affecting the state flags.
     */
-   brw_workaround_depthstencil_alignment(brw);
+   brw_workaround_depthstencil_alignment(brw, 0);
 
    /* Resolves must occur after updating renderbuffers, updating context state,
     * and finalizing textures but before setting up any hardware state for

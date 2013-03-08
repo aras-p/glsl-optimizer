@@ -123,7 +123,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 		 break;
 
          if (intelObj->mt != intelImage->mt) {
-            intel_miptree_copy_teximage(intel, intelImage, intelObj->mt);
+            intel_miptree_copy_teximage(intel, intelImage, intelObj->mt,
+                                        false /* invalidate */);
          }
 
          /* After we're done, we'd better agree that our layout is

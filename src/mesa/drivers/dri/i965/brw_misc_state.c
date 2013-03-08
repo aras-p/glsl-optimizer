@@ -41,6 +41,7 @@
 #include "brw_defines.h"
 
 #include "main/fbobject.h"
+#include "main/glformats.h"
 
 /* Constant single cliprect for framebuffer object or DRI2 drawing */
 static void upload_drawing_rect(struct brw_context *brw)
@@ -328,7 +329,8 @@ get_stencil_miptree(struct intel_renderbuffer *irb)
 }
 
 void
-brw_workaround_depthstencil_alignment(struct brw_context *brw)
+brw_workaround_depthstencil_alignment(struct brw_context *brw,
+                                      GLbitfield clear_mask)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -341,9 +343,28 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
    struct intel_mipmap_tree *stencil_mt = get_stencil_miptree(stencil_irb);
    uint32_t tile_x = 0, tile_y = 0, stencil_tile_x = 0, stencil_tile_y = 0;
    uint32_t stencil_draw_x = 0, stencil_draw_y = 0;
+   bool invalidate_depth = clear_mask & BUFFER_BIT_DEPTH;
+   bool invalidate_stencil = clear_mask & BUFFER_BIT_STENCIL;
 
    if (depth_irb)
       depth_mt = depth_irb->mt;
+
+   /* Check if depth buffer is in depth/stencil format.  If so, then it's only
+    * safe to invalidate it if we're also clearing stencil, and both depth_irb
+    * and stencil_irb point to the same miptree.
+    *
+    * Note: it's not sufficient to check for the case where
+    * _mesa_get_format_base_format(depth_mt->format) == GL_DEPTH_STENCIL,
+    * because this fails to catch depth/stencil buffers on hardware that uses
+    * separate stencil.  To catch that case, we check whether
+    * depth_mt->stencil_mt is non-NULL.
+    */
+   if (depth_irb && invalidate_depth &&
+       (_mesa_get_format_base_format(depth_mt->format) == GL_DEPTH_STENCIL ||
+        depth_mt->stencil_mt)) {
+      invalidate_depth = invalidate_stencil && depth_irb && stencil_irb
+         && depth_irb->mt == stencil_irb->mt;
+   }
 
    uint32_t tile_mask_x, tile_mask_y;
    brw_get_depthstencil_tile_masks(depth_mt, stencil_mt,
@@ -373,8 +394,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
          perf_debug("HW workaround: blitting depth level %d to a temporary "
                     "to fix alignment (depth tile offset %d,%d)\n",
                     depth_irb->mt_level, tile_x, tile_y);
-
-         intel_renderbuffer_move_to_temp(intel, depth_irb);
+         intel_renderbuffer_move_to_temp(intel, depth_irb, invalidate_depth);
          /* In the case of stencil_irb being the same packed depth/stencil
           * texture but not the same rb, make it point at our rebased mt, too.
           */
@@ -435,7 +455,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
                  "to fix alignment (stencil tile offset %d,%d)\n",
                  stencil_irb->mt_level, stencil_tile_x, stencil_tile_y);
 
-      intel_renderbuffer_move_to_temp(intel, stencil_irb);
+      intel_renderbuffer_move_to_temp(intel, stencil_irb, invalidate_stencil);
       stencil_mt = get_stencil_miptree(stencil_irb);
 
       intel_miptree_get_image_offset(stencil_mt,
@@ -459,7 +479,8 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw)
                        tile_x, tile_y,
                        stencil_tile_x, stencil_tile_y);
 
-            intel_renderbuffer_move_to_temp(intel, depth_irb);
+            intel_renderbuffer_move_to_temp(intel, depth_irb,
+                                            invalidate_depth);
 
             tile_x = depth_irb->draw_x & tile_mask_x;
             tile_y = depth_irb->draw_y & tile_mask_y;

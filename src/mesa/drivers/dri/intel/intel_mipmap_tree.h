@@ -482,7 +482,7 @@ void intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
 void
 intel_miptree_copy_teximage(struct intel_context *intel,
                             struct intel_texture_image *intelImage,
-                            struct intel_mipmap_tree *dst_mt);
+                            struct intel_mipmap_tree *dst_mt, bool invalidate);
 
 /**
  * Copy the stencil data from \c mt->stencil_mt->region to \c mt->region for

@@ -1224,7 +1224,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	  * select the image.  So, instead, we just make a new single-level
 	  * miptree and render into that.
 	  */
-	 intel_renderbuffer_move_to_temp(intel, irb);
+	 intel_renderbuffer_move_to_temp(intel, irb, false);
 	 mt = irb->mt;
       }
    }

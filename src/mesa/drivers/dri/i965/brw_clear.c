@@ -223,6 +223,8 @@ brw_clear(struct gl_context *ctx, GLbitfield mask)
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_context *intel = &brw->intel;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   bool partial_clear = ctx->Scissor.Enabled && !noop_scissor(ctx, fb);
 
    if (!_mesa_check_conditional_render(ctx))
       return;
@@ -232,7 +234,7 @@ brw_clear(struct gl_context *ctx, GLbitfield mask)
    }
 
    intel_prepare_render(intel);
-   brw_workaround_depthstencil_alignment(brw);
+   brw_workaround_depthstencil_alignment(brw, partial_clear ? 0 : mask);
 
    if (mask & BUFFER_BIT_DEPTH) {
       if (brw_fast_clear_depth(ctx)) {
