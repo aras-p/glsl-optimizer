@@ -163,7 +163,7 @@ wayland_shm_display_init_screen(struct native_display *ndpy)
       return FALSE;
 
    if (shmdpy->base.formats == 0)
-      wayland_roundtrip(shmdpy->base.dpy);
+      wayland_roundtrip(&shmdpy->base);
    if (shmdpy->base.formats == 0)
       return FALSE;
 
