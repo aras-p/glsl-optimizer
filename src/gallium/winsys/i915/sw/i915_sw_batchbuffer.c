@@ -100,7 +100,8 @@ i915_sw_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
 
 static void
 i915_sw_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
-                          struct pipe_fence_handle **fence)
+                          struct pipe_fence_handle **fence,
+                          enum i915_winsys_flush_flags flags)
 {
    struct i915_sw_batchbuffer *batch = i915_sw_batchbuffer(ibatch);
    unsigned used = 0;

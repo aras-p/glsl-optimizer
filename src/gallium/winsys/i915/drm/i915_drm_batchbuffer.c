@@ -151,7 +151,7 @@ i915_drm_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
    return ret;
 }
 
-static void 
+static void
 i915_drm_throttle(struct i915_drm_winsys *idws)
 {
    drmIoctl(idws->fd, DRM_IOCTL_I915_GEM_THROTTLE, NULL);
@@ -159,7 +159,8 @@ i915_drm_throttle(struct i915_drm_winsys *idws)
 
 static void
 i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
-                            struct pipe_fence_handle **fence)
+                           struct pipe_fence_handle **fence,
+                           enum i915_winsys_flush_flags flags)
 {
    struct i915_drm_batchbuffer *batch = i915_drm_batchbuffer(ibatch);
    unsigned used;
@@ -180,7 +181,8 @@ i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
    if (ret == 0 && i915_drm_winsys(ibatch->iws)->send_cmd)
       ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
 
-   i915_drm_throttle(i915_drm_winsys(ibatch->iws));
+   if (flags & I915_FLUSH_END_OF_FRAME)
+      i915_drm_throttle(i915_drm_winsys(ibatch->iws));
 
    if (ret != 0 || i915_drm_winsys(ibatch->iws)->dump_cmd) {
       i915_dump_batchbuffer(ibatch);

@@ -145,7 +145,7 @@ emit_prim( struct draw_stage *stage,
    assert(vertex_size >= 12); /* never smaller than 12 bytes */
 
    if (!BEGIN_BATCH( 1 + nr * vertex_size / 4)) {
-      FLUSH_BATCH(NULL);
+      FLUSH_BATCH(NULL, I915_FLUSH_ASYNC);
 
       /* Make sure state is re-emitted after a flush: 
        */

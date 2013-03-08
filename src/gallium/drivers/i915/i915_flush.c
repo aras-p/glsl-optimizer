@@ -33,9 +33,9 @@
 #include "pipe/p_defines.h"
 #include "draw/draw_context.h"
 #include "i915_context.h"
-#include "i915_reg.h"
 #include "i915_batch.h"
 #include "i915_debug.h"
+#include "i915_reg.h"
 
 
 static void i915_flush_pipe( struct pipe_context *pipe,
@@ -43,6 +43,7 @@ static void i915_flush_pipe( struct pipe_context *pipe,
                              enum pipe_flush_flags flags )
 {
    struct i915_context *i915 = i915_context(pipe);
+   enum i915_winsys_flush_flags winsys_flags = I915_FLUSH_ASYNC;
 
    /* Only shortcut this if we have no fence, otherwise we must flush the
     * empty batchbuffer to get our fence back.
@@ -51,9 +52,10 @@ static void i915_flush_pipe( struct pipe_context *pipe,
       return;
    }
 
-   /* If there are no flags, just flush pending commands to hardware:
-    */
-   FLUSH_BATCH(fence);
+   if (flags == PIPE_FLUSH_END_OF_FRAME)
+      winsys_flags = I915_FLUSH_END_OF_FRAME;
+
+   FLUSH_BATCH(fence, winsys_flags);
 
    I915_DBG(DBG_FLUSH, "%s: #####\n", __FUNCTION__);
 }
@@ -67,11 +69,13 @@ void i915_init_flush_functions( struct i915_context *i915 )
  * Here we handle all the notifications that needs to go out on a flush.
  * XXX might move above function to i915_pipe_flush.c and leave this here.
  */
-void i915_flush(struct i915_context *i915, struct pipe_fence_handle **fence)
+void i915_flush(struct i915_context *i915,
+                struct pipe_fence_handle **fence,
+                enum pipe_flush_flags flags)
 {
    struct i915_winsys_batchbuffer *batch = i915->batch;
 
-   batch->iws->batchbuffer_flush(batch, fence);
+   batch->iws->batchbuffer_flush(batch, fence, flags);
    i915->vbo_flushed = 1;
    i915->hardware_dirty = ~0;
    i915->immediate_dirty = ~0;

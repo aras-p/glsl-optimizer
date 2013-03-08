@@ -123,7 +123,7 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
          i915_emit_hardware_state(i915);
 
       if (!BEGIN_BATCH(1 + 2*(7 + 7))) {
-         FLUSH_BATCH(NULL);
+         FLUSH_BATCH(NULL, I915_FLUSH_ASYNC);
 
          i915_emit_hardware_state(i915);
          i915->vbo_flushed = 1;
@@ -174,7 +174,7 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
          i915_emit_hardware_state(i915);
 
       if (!BEGIN_BATCH(1 + 7 + 7)) {
-         FLUSH_BATCH(NULL);
+         FLUSH_BATCH(NULL, I915_FLUSH_ASYNC);
 
          i915_emit_hardware_state(i915);
          i915->vbo_flushed = 1;
@@ -206,7 +206,7 @@ i915_clear_emit(struct pipe_context *pipe, unsigned buffers,
    /* Flush after clear, its expected to be a costly operation.
     * This is not required, just a heuristic, but without the flush we'd need to
     * clobber the SCISSOR_ENABLE dynamic state. */
-   FLUSH_BATCH(NULL);
+   FLUSH_BATCH(NULL, I915_FLUSH_ASYNC);
 
    i915->last_fired_vertices = i915->fired_vertices;
    i915->fired_vertices = 0;

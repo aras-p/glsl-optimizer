@@ -494,12 +494,12 @@ i915_emit_hardware_state(struct i915_context *i915 )
       i915_dump_hardware_dirty(i915, __FUNCTION__);
 
    if (!i915_validate_state(i915, &batch_space)) {
-      FLUSH_BATCH(NULL);
+      FLUSH_BATCH(NULL, I915_FLUSH_ASYNC);
       assert(i915_validate_state(i915, &batch_space));
    }
 
    if(!BEGIN_BATCH(batch_space)) {
-      FLUSH_BATCH(NULL);
+      FLUSH_BATCH(NULL, I915_FLUSH_ASYNC);
       assert(i915_validate_state(i915, &batch_space));
       assert(BEGIN_BATCH(batch_space));
    }
