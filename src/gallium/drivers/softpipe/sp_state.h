@@ -156,6 +156,14 @@ void
 softpipe_update_derived(struct softpipe_context *softpipe, unsigned prim);
 
 void
+softpipe_set_sampler_views(struct pipe_context *pipe,
+                           unsigned shader,
+                           unsigned start,
+                           unsigned num,
+                           struct pipe_sampler_view **views);
+
+
+void
 softpipe_draw_vbo(struct pipe_context *pipe,
                   const struct pipe_draw_info *info);
 

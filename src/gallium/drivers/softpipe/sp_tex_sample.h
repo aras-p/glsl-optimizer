@@ -32,7 +32,9 @@
 
 #include "tgsi/tgsi_exec.h"
 
-struct sp_sampler_variant;
+
+struct sp_sampler_view;
+struct sp_sampler;
 
 typedef void (*wrap_nearest_func)(float s,
                                   unsigned size,
@@ -44,12 +46,13 @@ typedef void (*wrap_linear_func)(float s,
                                  int *icoord1,
                                  float *w);
 
-typedef float (*compute_lambda_func)(const struct sp_sampler_variant *samp,
+typedef float (*compute_lambda_func)(const struct sp_sampler_view *sp_sview,
                                      const float s[TGSI_QUAD_SIZE],
                                      const float t[TGSI_QUAD_SIZE],
                                      const float p[TGSI_QUAD_SIZE]);
 
-typedef void (*img_filter_func)(struct sp_sampler_variant *samp,
+typedef void (*img_filter_func)(struct sp_sampler_view *sp_sview,
+                                struct sp_sampler *sp_samp,
                                 float s,
                                 float t,
                                 float p,
@@ -57,7 +60,21 @@ typedef void (*img_filter_func)(struct sp_sampler_variant *samp,
                                 unsigned face_id,
                                 float *rgba);
 
-typedef void (*filter_func)(struct sp_sampler_variant *sp_samp,
+typedef void (*mip_filter_func)(struct sp_sampler_view *sp_sview,
+                                struct sp_sampler *sp_samp,
+                                img_filter_func min_filter,
+                                img_filter_func mag_filter,
+                                const float s[TGSI_QUAD_SIZE],
+                                const float t[TGSI_QUAD_SIZE],
+                                const float p[TGSI_QUAD_SIZE],
+                                const float c0[TGSI_QUAD_SIZE],
+                                const float lod[TGSI_QUAD_SIZE],
+                                enum tgsi_sampler_control control,
+                                float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
+
+
+typedef void (*filter_func)(struct sp_sampler_view *sp_sview,
+                            struct sp_sampler *sp_samp,
                             const float s[TGSI_QUAD_SIZE],
                             const float t[TGSI_QUAD_SIZE],
                             const float p[TGSI_QUAD_SIZE],
@@ -67,53 +84,44 @@ typedef void (*filter_func)(struct sp_sampler_variant *sp_samp,
                             float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
 
 
-typedef void (*get_dim_func)(struct sp_sampler_variant *sp_samp,
-                             int level, int dims[4]);
-
-typedef void (*fetch_func)(struct sp_sampler_variant *sp_samp,
+typedef void (*fetch_func)(struct sp_sampler_view *sp_sview,
                            const int i[TGSI_QUAD_SIZE],
                            const int j[TGSI_QUAD_SIZE], const int k[TGSI_QUAD_SIZE],
                            const int lod[TGSI_QUAD_SIZE], const int8_t offset[3],
                            float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
 
 
-union sp_sampler_key {
-   struct {
-      unsigned target:5;
-      unsigned is_pot:1;
-      unsigned processor:2;
-      unsigned unit:4;
-      unsigned swizzle_r:3;
-      unsigned swizzle_g:3;
-      unsigned swizzle_b:3;
-      unsigned swizzle_a:3;
-      unsigned pad:8;
-   } bits;
-   unsigned value;
-};
-
-
-struct sp_sampler_variant
+struct sp_sampler_view
 {
-   union sp_sampler_key key;
-
-   /* The owner of this struct:
-    */
-   const struct pipe_sampler_state *sampler;
-
-
-   /* Currently bound texture:
-    */
-   const struct pipe_sampler_view *view;
-   struct softpipe_tex_tile_cache *cache;
+   struct pipe_sampler_view base;
 
    /* For sp_get_samples_2d_linear_POT:
     */
    unsigned xpot;
    unsigned ypot;
 
+   boolean need_swizzle;
+   boolean pot2d;
+
+   filter_func get_samples;
+
+   /* this is just abusing the sampler_view object as local storage */
    unsigned faces[TGSI_QUAD_SIZE];
-   
+
+   /* these are different per shader type */
+   struct softpipe_tex_tile_cache *cache;
+   compute_lambda_func compute_lambda;
+
+};
+
+
+struct sp_sampler {
+   struct pipe_sampler_state base;
+
+   boolean min_mag_equal_repeat_linear;
+   boolean min_mag_equal;
+   unsigned min_img_filter;
+
    wrap_nearest_func nearest_texcoord_s;
    wrap_nearest_func nearest_texcoord_t;
    wrap_nearest_func nearest_texcoord_p;
@@ -122,23 +130,7 @@ struct sp_sampler_variant
    wrap_linear_func linear_texcoord_t;
    wrap_linear_func linear_texcoord_p;
 
-   img_filter_func min_img_filter;
-   img_filter_func mag_img_filter;
-
-   compute_lambda_func compute_lambda;
-
-   filter_func mip_filter;
-   filter_func compare;
-   filter_func sample_target;
-
-   filter_func get_samples;
-   fetch_func get_texel;
-   get_dim_func get_dims;
-
-
-   /* Linked list:
-    */
-   struct sp_sampler_variant *next;
+   mip_filter_func mip_filter;
 };
 
 
@@ -148,40 +140,24 @@ struct sp_sampler_variant
 struct sp_tgsi_sampler
 {
    struct tgsi_sampler base;  /**< base class */
-   struct sp_sampler_variant *sp_sampler[PIPE_MAX_SAMPLERS];
+   struct sp_sampler *sp_sampler[PIPE_MAX_SAMPLERS];
+   struct sp_sampler_view sp_sview[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
 };
 
-
-struct sp_sampler;
-
-/* Create a sampler variant for a given set of non-orthogonal state.  Currently the 
- */
-struct sp_sampler_variant *
-sp_create_sampler_variant( const struct pipe_sampler_state *sampler,
-                           const union sp_sampler_key key );
-
-void sp_sampler_variant_bind_view( struct sp_sampler_variant *variant,
-                                   struct softpipe_tex_tile_cache *tex_cache,
-                                   const struct pipe_sampler_view *view );
-
-void sp_sampler_variant_destroy( struct sp_sampler_variant * );
+compute_lambda_func
+softpipe_get_lambda_func(const struct pipe_sampler_view *view, unsigned shader);
 
 
+void *
+softpipe_create_sampler_state(struct pipe_context *pipe,
+                              const struct pipe_sampler_state *sampler);
 
-static INLINE struct sp_sampler_variant *
-sp_sampler_variant(const struct tgsi_sampler *sampler)
-{
-   return (struct sp_sampler_variant *) sampler;
-}
 
-extern void
-sp_get_samples(struct tgsi_sampler *tgsi_sampler,
-               const float s[TGSI_QUAD_SIZE],
-               const float t[TGSI_QUAD_SIZE],
-               const float p[TGSI_QUAD_SIZE],
-               float lodbias,
-               float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE]);
+struct pipe_sampler_view *
+softpipe_create_sampler_view(struct pipe_context *pipe,
+                             struct pipe_resource *resource,
+                             const struct pipe_sampler_view *templ);
 
 
 struct sp_tgsi_sampler *

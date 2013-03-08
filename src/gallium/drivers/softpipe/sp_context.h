@@ -80,7 +80,7 @@ struct softpipe_context {
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct pipe_sampler_view *sampler_views[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *sampler_views[PIPE_SHADER_TYPES][PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
@@ -184,8 +184,10 @@ struct softpipe_context {
     * Texture caches for vertex, fragment, geometry stages.
     * Don't use PIPE_SHADER_TYPES here to avoid allocating unused memory
     * for compute shaders.
+    * XXX wouldn't it make more sense for the tile cache to just be part
+    * of sp_sampler_view?
     */
-   struct softpipe_tex_tile_cache *tex_cache[PIPE_SHADER_GEOMETRY+1][PIPE_MAX_SAMPLERS];
+   struct softpipe_tex_tile_cache *tex_cache[PIPE_SHADER_GEOMETRY+1][PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
    unsigned dump_fs : 1;
    unsigned dump_gs : 1;
@@ -199,8 +201,6 @@ softpipe_context( struct pipe_context *pipe )
    return (struct softpipe_context *)pipe;
 }
 
-void
-softpipe_reset_sampler_variants(struct softpipe_context *softpipe);
 
 struct pipe_context *
 softpipe_create_context( struct pipe_screen *, void *priv );
