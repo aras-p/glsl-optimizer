@@ -40,6 +40,8 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 
+#include "brw_context.h"
+
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
 static const char *buffer_names[] = {
@@ -219,7 +221,8 @@ brw_fast_clear_depth(struct gl_context *ctx)
 static void
 brw_clear(struct gl_context *ctx, GLbitfield mask)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct brw_context *brw = brw_context(ctx);
+   struct intel_context *intel = &brw->intel;
 
    if (!_mesa_check_conditional_render(ctx))
       return;
@@ -229,6 +232,7 @@ brw_clear(struct gl_context *ctx, GLbitfield mask)
    }
 
    intel_prepare_render(intel);
+   brw_workaround_depthstencil_alignment(brw);
 
    if (mask & BUFFER_BIT_DEPTH) {
       if (brw_fast_clear_depth(ctx)) {
