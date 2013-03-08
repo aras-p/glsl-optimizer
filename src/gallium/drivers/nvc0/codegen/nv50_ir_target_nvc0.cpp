@@ -286,6 +286,12 @@ void TargetNVC0::initOpInfo()
       OP_SUREDB, OP_BAR
    };
 
+   static const operation noPred[] =
+   {
+      OP_CALL, OP_PRERET, OP_QUADON, OP_QUADPOP,
+      OP_JOINAT, OP_PREBREAK, OP_PRECONT, OP_BRKPT
+   };
+
    for (i = 0; i < DATA_FILE_COUNT; ++i)
       nativeFileMap[i] = (DataFile)i;
    nativeFileMap[FILE_ADDRESS] = FILE_GPR;
@@ -315,6 +321,8 @@ void TargetNVC0::initOpInfo()
    }
    for (i = 0; i < sizeof(noDest) / sizeof(noDest[0]); ++i)
       opInfo[noDest[i]].hasDest = 0;
+   for (i = 0; i < sizeof(noPred) / sizeof(noPred[0]); ++i)
+      opInfo[noPred[i]].predicate = 0;
 
    for (i = 0; i < sizeof(_initProps) / sizeof(_initProps[0]); ++i) {
       const struct opProperties *prop = &_initProps[i];
