@@ -1260,24 +1260,23 @@ emit_decl_fs(struct ureg_program *ureg,
    out[3].decl_semantic.Index = semantic_index;
 }
 
-
-static void emit_decl( struct ureg_program *ureg,
-                       unsigned file,
-                       unsigned index,
-                       boolean local )
+static void
+emit_decl_temps( struct ureg_program *ureg,
+                 unsigned first, unsigned last,
+                 boolean local )
 {
    union tgsi_any_token *out = get_tokens( ureg, DOMAIN_DECL, 2 );
 
    out[0].value = 0;
    out[0].decl.Type = TGSI_TOKEN_TYPE_DECLARATION;
    out[0].decl.NrTokens = 2;
-   out[0].decl.File = file;
+   out[0].decl.File = TGSI_FILE_TEMPORARY;
    out[0].decl.UsageMask = TGSI_WRITEMASK_XYZW;
    out[0].decl.Local = local;
 
    out[1].value = 0;
-   out[1].decl_range.First = index;
-   out[1].decl_range.Last = index;
+   out[1].decl_range.First = first;
+   out[1].decl_range.Last = last;
 }
 
 static void emit_decl_range( struct ureg_program *ureg,
@@ -1535,16 +1534,13 @@ static void emit_decls( struct ureg_program *ureg )
    }
 
    if (ureg->nr_temps) {
-      if (util_bitmask_get_first_index(ureg->local_temps) ==  UTIL_BITMASK_INVALID_INDEX) {
-         emit_decl_range( ureg,
-                          TGSI_FILE_TEMPORARY,
-                          0, ureg->nr_temps );
+      for (i = 0; i < ureg->nr_temps;) {
+         boolean local = util_bitmask_get(ureg->local_temps, i);
+         unsigned first = i++;
+         while (i < ureg->nr_temps && local == util_bitmask_get(ureg->local_temps, i))
+            ++i;
 
-      } else {
-         for (i = 0; i < ureg->nr_temps; i++) {
-            emit_decl( ureg, TGSI_FILE_TEMPORARY, i,
-                       util_bitmask_get(ureg->local_temps, i) );
-         }
+         emit_decl_temps( ureg, first, i - 1, local );
       }
    }
 
