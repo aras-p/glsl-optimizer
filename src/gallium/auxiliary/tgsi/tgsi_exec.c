@@ -681,6 +681,7 @@ tgsi_exec_machine_bind_shader(
 
    mach->Processor = parse.FullHeader.Processor.Processor;
    mach->ImmLimit = 0;
+   mach->NumOutputs = 0;
 
    if (mach->Processor == TGSI_PROCESSOR_GEOMETRY &&
        !mach->UsedGeometryShader) {
@@ -1484,12 +1485,15 @@ store_dest(struct tgsi_exec_machine *mach,
          + reg->Register.Index;
       dst = &mach->Outputs[offset + index].xyzw[chan_index];
 #if 0
+      debug_printf("NumOutputs = %d, TEMP_O_C/I = %d, redindex = %d\n",
+                   mach->NumOutputs, mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0],
+                   reg->Register.Index);
       if (TGSI_PROCESSOR_GEOMETRY == mach->Processor) {
-         fprintf(stderr, "STORING OUT[%d] mask(%d), = (", offset + index, execmask);
+         debug_printf("STORING OUT[%d] mask(%d), = (", offset + index, execmask);
          for (i = 0; i < TGSI_QUAD_SIZE; i++)
             if (execmask & (1 << i))
-               fprintf(stderr, "%f, ", chan->f[i]);
-         fprintf(stderr, ")\n");
+               debug_printf("%f, ", chan->f[i]);
+         debug_printf(")\n");
       }
 #endif
       break;
