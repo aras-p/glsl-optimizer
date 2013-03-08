@@ -2139,9 +2139,9 @@ exec_txd(struct tgsi_exec_machine *mach,
 
 static void
 exec_txf(struct tgsi_exec_machine *mach,
-	 const struct tgsi_full_instruction *inst)
+         const struct tgsi_full_instruction *inst)
 {
-   const uint unit = inst->Src[2].Register.Index;
+   const uint unit = inst->Src[1].Register.Index;
    union tgsi_exec_channel r[4];
    uint chan;
    float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE];
