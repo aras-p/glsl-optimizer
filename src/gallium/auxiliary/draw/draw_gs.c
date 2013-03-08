@@ -172,6 +172,7 @@ draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
 {
    struct tgsi_exec_machine *machine = shader->machine;
    unsigned prim_idx, j, slot;
+   unsigned current_idx = 0;
    float (*output)[4];
 
    output = *p_output;
@@ -184,9 +185,8 @@ draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
       shader->primitive_lengths[prim_idx +   shader->emitted_primitives] =
          machine->Primitives[prim_idx];
       shader->emitted_vertices += num_verts_per_prim;
-      for (j = 0; j < num_verts_per_prim; j++) {
-         int idx = (prim_idx * num_verts_per_prim + j) *
-                   shader->info.num_outputs;
+      for (j = 0; j < num_verts_per_prim; j++, current_idx++) {
+         int idx = current_idx * shader->info.num_outputs;
 #ifdef DEBUG_OUTPUTS
          debug_printf("%d) Output vert:\n", idx / shader->info.num_outputs);
 #endif
@@ -208,7 +208,7 @@ draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
       }
    }
    *p_output = output;
-         shader->emitted_primitives += num_primitives;
+   shader->emitted_primitives += num_primitives;
 }
 
 /*#define DEBUG_INPUTS 1*/
