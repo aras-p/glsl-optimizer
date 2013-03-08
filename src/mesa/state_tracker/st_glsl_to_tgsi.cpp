@@ -1078,13 +1078,11 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
           */
          assert((int) ir->num_state_slots == type_size(ir->type));
 
-         storage = new(mem_ctx) variable_storage(ir, PROGRAM_TEMPORARY,
-        					 this->next_temp);
-         this->variables.push_tail(storage);
-         this->next_temp += type_size(ir->type);
+         dst = st_dst_reg(get_temp(ir->type));
 
-         dst = st_dst_reg(st_src_reg(PROGRAM_TEMPORARY, storage->index,
-               native_integers ? ir->type->base_type : GLSL_TYPE_FLOAT));
+         storage = new(mem_ctx) variable_storage(ir, dst.file, dst.index);
+
+         this->variables.push_tail(storage);
       }
 
 
@@ -2052,11 +2050,11 @@ glsl_to_tgsi_visitor::visit(ir_dereference_variable *ir)
          break;
       case ir_var_auto:
       case ir_var_temporary:
-         entry = new(mem_ctx) variable_storage(var, PROGRAM_TEMPORARY,
-        				       this->next_temp);
+         st_src_reg src = get_temp(var->type);
+
+         entry = new(mem_ctx) variable_storage(var, src.file, src.index);
          this->variables.push_tail(entry);
 
-         next_temp += type_size(var->type);
          break;
       }
 
@@ -2574,11 +2572,10 @@ glsl_to_tgsi_visitor::get_function_signature(ir_function_signature *sig)
       storage = find_variable_storage(param);
       assert(!storage);
 
-      storage = new(mem_ctx) variable_storage(param, PROGRAM_TEMPORARY,
-        				      this->next_temp);
-      this->variables.push_tail(storage);
+      st_src_reg src = get_temp(param->type);
 
-      this->next_temp += type_size(param->type);
+      storage = new(mem_ctx) variable_storage(param, src.file, src.index);
+      this->variables.push_tail(storage);
    }
 
    if (!sig->return_type->is_void()) {
