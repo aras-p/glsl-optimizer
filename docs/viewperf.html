@@ -203,6 +203,35 @@ This causes the object in question to be drawn in a strange orientation
 and with a semi-random color (between white and black) since GL_FOG is enabled.
 </p>
 
+
+<h2>Proe-05 test 1</h2>
+
+<p>
+This uses depth testing but there's two problems:
+<ol>
+<li>The glXChooseFBConfig() call doesn't request a depth buffer
+<li>The test never calls glClear(GL_DEPTH_BUFFER_BIT) to initialize the depth buffer
+</ol>
+<p>
+If the chosen visual does not have a depth buffer, you'll see the wireframe
+car model but it won't be rendered correctly.
+</p>
+If (by luck) the chosen visual has a depth buffer, its initial contents
+will be undefined so you may or may not see parts of the model.
+<p>
+Interestingly, with NVIDIA's driver most visuals happen to have a depth buffer
+and apparently the contents are initialized to 1.0 by default so this test
+just happens to work with their drivers.
+</p>
+
+<p>
+Finally, even if a depth buffer was requested and the glClear(GL_COLOR_BUFFER_BIT)
+calls were changed to glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+the problem still wouldn't be fixed because GL_DEPTH_WRITEMASK=GL_FALSE when
+glClear is called so clearing the depth buffer would be a no-op anyway.
+</p>
+
+
 </div>
 </body>
 </html>
