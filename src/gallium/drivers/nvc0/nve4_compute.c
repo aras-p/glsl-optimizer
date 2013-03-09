@@ -151,6 +151,25 @@ nve4_screen_compute_setup(struct nvc0_screen *screen,
    PUSH_DATA (push, 1);
    PUSH_DATA (push, 3); /* 7 */
    PUSH_DATA (push, 1);
+
+#ifdef DEBUG
+   BEGIN_NVC0(push, NVE4_COMPUTE(UPLOAD_ADDRESS_HIGH), 2);
+   PUSH_DATAh(push, screen->parm->offset + NVE4_CP_INPUT_TRAP_INFO_PTR);
+   PUSH_DATA (push, screen->parm->offset + NVE4_CP_INPUT_TRAP_INFO_PTR);
+   BEGIN_NVC0(push, NVE4_COMPUTE(UPLOAD_SIZE), 2);
+   PUSH_DATA (push, 28);
+   PUSH_DATA (push, NVE4_COMPUTE_UPLOAD_UNK0184_UNKVAL);
+   BEGIN_1IC0(push, NVE4_COMPUTE(UPLOAD_EXEC), 8);
+   PUSH_DATA (push, NVE4_COMPUTE_UPLOAD_EXEC_UNKVAL_DATA);
+   PUSH_DATA (push, screen->parm->offset + NVE4_CP_PARAM_TRAP_INFO);
+   PUSH_DATAh(push, screen->parm->offset + NVE4_CP_PARAM_TRAP_INFO);
+   PUSH_DATA (push, screen->tls->offset);
+   PUSH_DATAh(push, screen->tls->offset);
+   PUSH_DATA (push, screen->tls->size / 2); /* MP TEMP block size */
+   PUSH_DATA (push, screen->tls->size / 2 / 64); /* warp TEMP block size */
+   PUSH_DATA (push, 0); /* warp cfstack size */
+#endif
+
    BEGIN_NVC0(push, NVE4_COMPUTE(FLUSH), 1);
    PUSH_DATA (push, NVE4_COMPUTE_FLUSH_CB);
 
@@ -617,3 +636,34 @@ nve4_compute_dump_launch_desc(const struct nve4_cp_launch_desc *desc)
    }
 }
 
+static void
+nve4_compute_trap_info(struct nvc0_context *nvc0)
+{
+   struct nvc0_screen *screen = nvc0->screen;
+   struct nouveau_bo *bo = screen->parm;
+   int ret, i;
+   volatile struct nve4_mp_trap_info *info;
+   uint8_t *map;
+
+   ret = nouveau_bo_map(bo, NOUVEAU_BO_RDWR, nvc0->base.client);
+   if (ret)
+      return;
+   map = (uint8_t *)bo->map;
+   info = (volatile struct nve4_mp_trap_info *)(map + NVE4_CP_PARAM_TRAP_INFO);
+
+   if (info->lock) {
+      debug_printf("trapstat = %08x\n", info->trapstat);
+      debug_printf("warperr = %08x\n", info->warperr);
+      debug_printf("PC = %x\n", info->pc);
+      debug_printf("tid = %u %u %u\n",
+                   info->tid[0], info->tid[1], info->tid[2]);
+      debug_printf("ctaid = %u %u %u\n",
+                   info->ctaid[0], info->ctaid[1], info->ctaid[2]);
+      for (i = 0; i <= 63; ++i)
+         debug_printf("$r%i = %08x\n", i, info->r[i]);
+      for (i = 0; i <= 6; ++i)
+         debug_printf("$p%i = %i\n", i, (info->flags >> i) & 1);
+      debug_printf("$c = %x\n", info->flags >> 12);
+   }
+   info->lock = 0;
+}

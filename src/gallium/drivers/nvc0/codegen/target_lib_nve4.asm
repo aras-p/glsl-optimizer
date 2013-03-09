@@ -561,3 +561,138 @@ long ret
 //
 long nop
 long ret
+//
+// Trap handler.
+// Requires at least 4 GPRs and 32 bytes of l[] memory to temporarily save GPRs.
+// Low 32 bytes of l[] memory shouldn't be used if resumeability is required.
+//
+// Trap info:
+// 0x000: mutex
+// 0x004: PC
+// 0x008: trapstat
+// 0x00c: warperr
+// 0x010: tidx
+// 0x014: tidy
+// 0x018: tidz
+// 0x01c: ctaidx
+// 0x020: ctaidy
+// 0x024: ctaidz
+// 0x030: $r0q
+// 0x130: $flags
+// 0x140: s[]
+//
+st b128 wb l[0x00] $r0q
+// check state of the warp and continue if it didn't cause the trap
+long mov b32 $r1 $trapstat
+long mov b32 $r3 $warperr
+mov $r2 $flags mask 0xffff
+and b32 0 $c $r1 $r3
+e $c bra #end_cont
+// spill control flow stack to l[]
+long mov b32 $r3 16
+spill_cfstack:
+preret #end_exit
+sub b32 $r3 $c $r3 0x1
+lg $c bra #spill_cfstack
+// retrieve pointer to trap info
+mov b32 $r0 c0[0x1900]
+mov b32 $r1 c0[0x1904]
+// we only let a single faulting thread store its state
+mov b32 $r3 0x1
+exch b32 $r3 g[$r0d] $r3
+joinat #end_exit
+set $p0 0x1 eq u32 $r3 0x1
+join $p0 nop
+// store $c and $p registers
+st b32 wb g[$r0d+0x130] $r2
+// store $trapstat and $warperr
+long mov b32 $r2 $trapstat
+long mov b32 $r3 $warperr
+st b64 wb g[$r0d+0x8] $r2d
+// store registers
+st b128 wb g[$r0d+0x40] $r4q
+st b128 wb g[$r0d+0x50] $r8q
+st b128 wb g[$r0d+0x60] $r12q
+st b128 wb g[$r0d+0x70] $r16q
+st b128 wb g[$r0d+0x80] $r20q
+st b128 wb g[$r0d+0x90] $r24q
+st b128 wb g[$r0d+0xa0] $r28q
+st b128 wb g[$r0d+0xb0] $r32q
+st b128 wb g[$r0d+0xc0] $r36q
+st b128 wb g[$r0d+0xd0] $r40q
+st b128 wb g[$r0d+0xe0] $r44q
+st b128 wb g[$r0d+0xf0] $r48q
+st b128 wb g[$r0d+0x100] $r52q
+st b128 wb g[$r0d+0x110] $r56q
+st b128 wb g[$r0d+0x120] $r60q
+ld b64 $r2d cs l[0x0]
+st b64 wb g[$r0d+0x30] $r2d
+ld b64 $r2d cs l[0x8]
+st b64 wb g[$r0d+0x38] $r2d
+// store thread id
+long mov b32 $r2 $tidx
+long mov b32 $r3 $tidy
+st b64 wb g[$r0d+0x10] $r2d
+long mov b32 $r2 $tidz
+long mov b32 $r3 $ctaidx
+st b64 wb g[$r0d+0x18] $r2d
+long mov b32 $r2 $ctaidy
+long mov b32 $r3 $ctaidz
+st b64 wb g[$r0d+0x20] $r2d
+// store shared memory (in reverse order so $r0d is base again at the end)
+long mov b32 $r3 $smemsz
+sub b32 $r3 $c $r3 0x4
+s $c bra #shared_done
+add b32 $r0 $c $r0 $r3
+add b32 $r1 $r1 0x0 $c
+shared_loop:
+long ld b32 $r2 s[$r3]
+long st b32 wb g[$r0d+0x140] $r2
+sub b32 $r0 $c $r0 0x4
+sub b32 $r1 $r1 0x0 $c
+sub b32 $r3 $c $r3 0x4
+lg $c bra #shared_loop
+shared_done:
+// search the stack for trap entry to retrieve PC
+mov b32 $r0 c0[0x1908]
+mov b32 $r1 c0[0x190c]
+membar sys
+// invalidate caches so we can read stack entries via g[]
+cctl ivall 0 l[0]
+cctl ivall 0 g[$r0d]
+// get offsets
+mov b32 $r2 $physid
+ext u32 $r3 $r2 0x0814 // MP id
+ext u32 $r2 $r2 0x0608 // warp id
+mul $r2 u32 $r2 u32 c0[0x1914] // warp offset
+mul $r3 u32 $r3 u32 c0[0x1910] // MP offset
+add b32 $r2 $r2 $r3 // MP + warp offset
+add b32 $r0 $c $r0 $r2
+add b32 $r1 $r1 0x0 $c
+search_cstack:
+mov b32 $r3 c0[0x1918] // cstack size
+ld u8 $r2 cv g[$r0d+0x8]
+set $p0 0x1 eq u32 $r2 0xa
+$p0 bra #entry_found
+add b32 $r0 $c $r0 0x10
+add b32 $r1 $r1 0x0 $c
+sub b32 $r3 $c $r3 0x10
+lg $c bra #search_cstack
+bra #end_exit
+entry_found:
+// load PC (may be unaligned and spread out)
+ld b32 $r2 cv g[$r0d]
+mov b32 $r0 c0[0x1900]
+mov b32 $r1 c0[0x1904]
+st b32 wb g[$r0d+0x4] $r2
+join nop
+// invalidate caches and exit
+end_exit:
+cctl ivall 0 g[0]
+bpt pause 0x0
+rtt terminate
+end_cont:
+bpt pause 0x0
+mov $flags $r2 mask 0xffff
+ld b128 $r0q cs l[0x00]
+rtt

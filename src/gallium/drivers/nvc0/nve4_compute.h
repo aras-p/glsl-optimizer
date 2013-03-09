@@ -7,21 +7,28 @@
 
 /* Input space is implemented as c0[], to which we bind the screen->parm bo.
  */
-#define NVE4_CP_INPUT_USER          0x0000
-#define NVE4_CP_INPUT_USER_LIMIT    0x1000
-#define NVE4_CP_INPUT_GRID_INFO(i) (0x1000 + (i) * 4)
-#define NVE4_CP_INPUT_NTID(i)      (0x1000 + (i) * 4)
-#define NVE4_CP_INPUT_NCTAID(i)    (0x100c + (i) * 4)
-#define NVE4_CP_INPUT_GRIDID        0x1018
-#define NVE4_CP_INPUT_TEX(i)       (0x1040 + (i) * 4)
-#define NVE4_CP_INPUT_TEX_STRIDE    4
-#define NVE4_CP_INPUT_TEX_MAX       32
-#define NVE4_CP_INPUT_MS_OFFSETS    0x10c0
-#define NVE4_CP_INPUT_SUF_STRIDE    64
-#define NVE4_CP_INPUT_SUF(i)       (0x1100 + (i) * NVE4_CP_INPUT_SUF_STRIDE)
-#define NVE4_CP_INPUT_SUF_MAX       32
-#define NVE4_CP_INPUT_SIZE          0x1900
-#define NVE4_CP_PARAM_SIZE          0x2000
+#define NVE4_CP_INPUT_USER           0x0000
+#define NVE4_CP_INPUT_USER_LIMIT     0x1000
+#define NVE4_CP_INPUT_GRID_INFO(i)  (0x1000 + (i) * 4)
+#define NVE4_CP_INPUT_NTID(i)       (0x1000 + (i) * 4)
+#define NVE4_CP_INPUT_NCTAID(i)     (0x100c + (i) * 4)
+#define NVE4_CP_INPUT_GRIDID         0x1018
+#define NVE4_CP_INPUT_TEX(i)        (0x1040 + (i) * 4)
+#define NVE4_CP_INPUT_TEX_STRIDE     4
+#define NVE4_CP_INPUT_TEX_MAX        32
+#define NVE4_CP_INPUT_MS_OFFSETS     0x10c0
+#define NVE4_CP_INPUT_SUF_STRIDE     64
+#define NVE4_CP_INPUT_SUF(i)        (0x1100 + (i) * NVE4_CP_INPUT_SUF_STRIDE)
+#define NVE4_CP_INPUT_SUF_MAX        32
+#define NVE4_CP_INPUT_TRAP_INFO_PTR  0x1900
+#define NVE4_CP_INPUT_TEMP_PTR       0x1908
+#define NVE4_CP_INPUT_MP_TEMP_SIZE   0x1910
+#define NVE4_CP_INPUT_WARP_TEMP_SIZE 0x1914
+#define NVE4_CP_INPUT_CSTACK_SIZE    0x1918
+#define NVE4_CP_INPUT_SIZE           0x1a00
+#define NVE4_CP_PARAM_TRAP_INFO      0x2000
+#define NVE4_CP_PARAM_TRAP_INFO_SZ  (1 << 16)
+#define NVE4_CP_PARAM_SIZE          (NVE4_CP_PARAM_TRAP_INFO + (1 << 16))
 
 struct nve4_cp_launch_desc
 {
@@ -110,5 +117,19 @@ nve4_cp_launch_desc_set_ctx_cb(struct nve4_cp_launch_desc *desc,
                                  buf->bo, buf->offset + cb->offset, cb->size);
    }
 }
+
+struct nve4_mp_trap_info {
+   u32 lock;
+   u32 pc;
+   u32 trapstat;
+   u32 warperr;
+   u32 tid[3];
+   u32 ctaid[3];
+   u32 pad028[2];
+   u32 r[64];
+   u32 flags;
+   u32 pad134[3];
+   u32 s[0x3000];
+};
 
 #endif /* NVE4_COMPUTE_H */
