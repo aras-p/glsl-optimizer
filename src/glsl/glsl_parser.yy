@@ -165,6 +165,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <type_qualifier> layout_qualifier
 %type <type_qualifier> layout_qualifier_id_list layout_qualifier_id
 %type <type_qualifier> interface_block_layout_qualifier
+%type <type_qualifier> interface_qualifier
 %type <type_specifier> type_specifier
 %type <type_specifier> type_specifier_no_prec
 %type <type_specifier> type_specifier_nonarray
@@ -1215,11 +1216,11 @@ layout_qualifier_id:
 	{
 	   $$ = $1;
 	   /* Layout qualifiers for ARB_uniform_buffer_object. */
-	   if (!state->ARB_uniform_buffer_object_enable) {
+	   if ($$.flags.q.uniform && !state->ARB_uniform_buffer_object_enable) {
 	      _mesa_glsl_error(& @1, state,
 			       "#version 140 / GL_ARB_uniform_buffer_object "
 			       "layout qualifier `%s' is used\n", $1);
-	   } else if (state->ARB_uniform_buffer_object_warn) {
+	   } else if ($$.flags.q.uniform && state->ARB_uniform_buffer_object_warn) {
 	      _mesa_glsl_warning(& @1, state,
 				 "#version 140 / GL_ARB_uniform_buffer_object "
 				 "layout qualifier `%s' is used\n", $1);
@@ -1909,21 +1910,29 @@ interface_block:
 	;
 
 basic_interface_block:
-	UNIFORM NEW_IDENTIFIER '{' member_list '}' instance_name_opt ';'
+	interface_qualifier NEW_IDENTIFIER '{' member_list '}' instance_name_opt ';'
 	{
 	   ast_interface_block *const block = $6;
 
 	   block->block_name = $2;
 	   block->declarations.push_degenerate_list_at_head(& $4->link);
 
-	   if (!state->ARB_uniform_buffer_object_enable) {
-	      _mesa_glsl_error(& @1, state,
-			       "#version 140 / GL_ARB_uniform_buffer_object "
-			       "required for defining uniform blocks\n");
-	   } else if (state->ARB_uniform_buffer_object_warn) {
-	      _mesa_glsl_warning(& @1, state,
-				 "#version 140 / GL_ARB_uniform_buffer_object "
-				 "required for defining uniform blocks\n");
+	   if ($1.flags.q.uniform) {
+	      if (!state->ARB_uniform_buffer_object_enable) {
+	         _mesa_glsl_error(& @1, state,
+	                          "#version 140 / GL_ARB_uniform_buffer_object "
+	                          "required for defining uniform blocks\n");
+	      } else if (state->ARB_uniform_buffer_object_warn) {
+	         _mesa_glsl_warning(& @1, state,
+	                            "#version 140 / GL_ARB_uniform_buffer_object "
+	                            "required for defining uniform blocks\n");
+	      }
+	   } else {
+	      if (state->es_shader || state->language_version < 150) {
+	         _mesa_glsl_error(& @1, state,
+	                         "#version 150 required for using "
+	                         "interface blocks.\n");
+	      }
 	   }
 
 	   /* Since block arrays require names, and both features are added in
@@ -1937,7 +1946,27 @@ basic_interface_block:
 			       "blocks with an instance name\n");
 	   }
 
+	   block->layout.flags.i |= $1.flags.i;
+
 	   $$ = block;
+	}
+	;
+
+interface_qualifier:
+	IN_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.flags.q.in = 1;
+	}
+	| OUT_TOK
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.flags.q.out = 1;
+	}
+	| UNIFORM
+	{
+	   memset(& $$, 0, sizeof($$));
+	   $$.flags.q.uniform = 1;
 	}
 	;
 
