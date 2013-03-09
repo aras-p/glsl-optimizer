@@ -217,13 +217,13 @@ clGetDeviceInfo(cl_device_id dev, cl_device_info param,
       return string_property(buf, size, size_ret, dev->vendor_name());
 
    case CL_DRIVER_VERSION:
-      return string_property(buf, size, size_ret, MESA_VERSION);
+      return string_property(buf, size, size_ret, PACKAGE_VERSION);
 
    case CL_DEVICE_PROFILE:
       return string_property(buf, size, size_ret, "FULL_PROFILE");
 
    case CL_DEVICE_VERSION:
-      return string_property(buf, size, size_ret, "OpenCL 1.1 MESA " MESA_VERSION);
+      return string_property(buf, size, size_ret, "OpenCL 1.1 MESA " PACKAGE_VERSION);
 
    case CL_DEVICE_EXTENSIONS:
       return string_property(buf, size, size_ret, "");

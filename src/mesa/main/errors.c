@@ -848,7 +848,7 @@ _mesa_problem( const struct gl_context *ctx, const char *fmtString, ... )
       _mesa_vsnprintf( str, MAX_DEBUG_MESSAGE_LENGTH, fmtString, args );
       va_end( args );
       fprintf(stderr, "Mesa %s implementation error: %s\n",
-              MESA_VERSION_STRING, str);
+              PACKAGE_VERSION, str);
       fprintf(stderr, "Please report at bugs.freedesktop.org\n");
    }
 }

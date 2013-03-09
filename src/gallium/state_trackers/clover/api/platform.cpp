@@ -51,7 +51,7 @@ clGetPlatformInfo(cl_platform_id platform, cl_platform_info param_name,
 
    case CL_PLATFORM_VERSION:
       return string_property(buf, size, size_ret,
-                             "OpenCL 1.1 MESA " MESA_VERSION);
+                             "OpenCL 1.1 MESA " PACKAGE_VERSION);
 
    case CL_PLATFORM_NAME:
       return string_property(buf, size, size_ret, "Default");

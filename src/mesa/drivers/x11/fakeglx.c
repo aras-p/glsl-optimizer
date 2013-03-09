@@ -63,7 +63,7 @@
 #define SERVER_MINOR_VERSION 4
 
 /* This is appended onto the glXGetClient/ServerString version strings. */
-#define MESA_GLX_VERSION "Mesa " MESA_VERSION_STRING
+#define MESA_GLX_VERSION "Mesa " PACKAGE_VERSION
 
 /* Who implemented this GLX? */
 #define VENDOR "Brian Paul"

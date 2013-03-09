@@ -25,8 +25,7 @@ include $(top_srcdir)/src/gallium/Automake.inc
 AM_CFLAGS = $(GALLIUM_CFLAGS)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/src/mapi \
-	-DVEGA_VERSION_STRING=\"$(MESA_VERSION)\"
+	-I$(top_srcdir)/src/mapi
 
 noinst_LTLIBRARIES = libvega.la
 

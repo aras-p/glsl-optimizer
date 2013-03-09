@@ -12,7 +12,7 @@ env.Append(CPPPATH = [
     Dir('.'),
 ])
 env.Append(CPPDEFINES = [
-    'VEGA_VERSION_STRING=',
+    'PACKAGE_VERSION='
     'KHRONOS_DLL_EXPORTS',
 ])
 
