@@ -805,9 +805,9 @@ public:
    ast_compound_statement *body;
 };
 
-class ast_uniform_block : public ast_node {
+class ast_interface_block : public ast_node {
 public:
-   ast_uniform_block(ast_type_qualifier layout,
+   ast_interface_block(ast_type_qualifier layout,
                      const char *instance_name,
 		     ast_expression *array_size)
    : layout(layout), block_name(NULL), instance_name(instance_name),

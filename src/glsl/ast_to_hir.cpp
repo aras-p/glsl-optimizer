@@ -4120,12 +4120,12 @@ ast_struct_specifier::hir(exec_list *instructions,
 }
 
 ir_rvalue *
-ast_uniform_block::hir(exec_list *instructions,
-		       struct _mesa_glsl_parse_state *state)
+ast_interface_block::hir(exec_list *instructions,
+		          struct _mesa_glsl_parse_state *state)
 {
    YYLTYPE loc = this->get_location();
 
-   /* The ast_uniform_block has a list of ast_declarator_lists.  We
+   /* The ast_interface_block has a list of ast_declarator_lists.  We
     * need to turn those into ir_variables with an association
     * with this uniform block.
     */

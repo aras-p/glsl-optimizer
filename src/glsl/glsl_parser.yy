@@ -79,7 +79,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
    ast_case_label_list *case_label_list;
    ast_case_statement *case_statement;
    ast_case_statement_list *case_statement_list;
-   ast_uniform_block *uniform_block;
+   ast_interface_block *interface_block;
 
    struct {
       ast_node *cond;
@@ -1900,7 +1900,7 @@ uniform_block:
 	}
 	| layout_qualifier basic_uniform_block
 	{
-	   ast_uniform_block *block = $2;
+	   ast_interface_block *block = $2;
 	   if (!block->layout.merge_qualifier(& @1, state, $1)) {
 	      YYERROR;
 	   }
@@ -1911,7 +1911,7 @@ uniform_block:
 basic_uniform_block:
 	UNIFORM NEW_IDENTIFIER '{' member_list '}' instance_name_opt ';'
 	{
-	   ast_uniform_block *const block = $6;
+	   ast_interface_block *const block = $6;
 
 	   block->block_name = $2;
 	   block->declarations.push_degenerate_list_at_head(& $4->link);
@@ -1944,19 +1944,19 @@ basic_uniform_block:
 instance_name_opt:
 	/* empty */
 	{
-	   $$ = new(state) ast_uniform_block(*state->default_uniform_qualifier,
+	   $$ = new(state) ast_interface_block(*state->default_uniform_qualifier,
 					     NULL,
 					     NULL);
 	}
 	| NEW_IDENTIFIER
 	{
-	   $$ = new(state) ast_uniform_block(*state->default_uniform_qualifier,
+	   $$ = new(state) ast_interface_block(*state->default_uniform_qualifier,
 					     $1,
 					     NULL);
 	}
 	| NEW_IDENTIFIER '[' constant_expression ']'
 	{
-	   $$ = new(state) ast_uniform_block(*state->default_uniform_qualifier,
+	   $$ = new(state) ast_interface_block(*state->default_uniform_qualifier,
 					     $1,
 					     $3);
 	}
@@ -1965,7 +1965,7 @@ instance_name_opt:
 	   _mesa_glsl_error(& @1, state,
 			    "instance block arrays must be explicitly sized\n");
 
-	   $$ = new(state) ast_uniform_block(*state->default_uniform_qualifier,
+	   $$ = new(state) ast_interface_block(*state->default_uniform_qualifier,
 					     $1,
 					     NULL);
 	}
