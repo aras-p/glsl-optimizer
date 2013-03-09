@@ -115,7 +115,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %token STRUCT VOID_TOK WHILE
 %token <identifier> IDENTIFIER TYPE_IDENTIFIER NEW_IDENTIFIER
 %type <identifier> any_identifier
-%type <uniform_block> instance_name_opt
+%type <interface_block> instance_name_opt
 %token <real> FLOATCONSTANT
 %token <n> INTCONSTANT UINTCONSTANT BOOLCONSTANT
 %token <identifier> FIELD_SELECTION
@@ -164,7 +164,7 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <type_qualifier> interpolation_qualifier
 %type <type_qualifier> layout_qualifier
 %type <type_qualifier> layout_qualifier_id_list layout_qualifier_id
-%type <type_qualifier> uniform_block_layout_qualifier
+%type <type_qualifier> interface_block_layout_qualifier
 %type <type_specifier> type_specifier
 %type <type_specifier> type_specifier_no_prec
 %type <type_specifier> type_specifier_nonarray
@@ -223,8 +223,8 @@ static void yyerror(YYLTYPE *loc, _mesa_glsl_parse_state *st, const char *msg)
 %type <node> declaration
 %type <node> declaration_statement
 %type <node> jump_statement
-%type <node> uniform_block
-%type <uniform_block> basic_uniform_block
+%type <node> interface_block
+%type <interface_block> basic_interface_block
 %type <struct_specifier> struct_specifier
 %type <declarator_list> struct_declaration_list
 %type <declarator_list> struct_declaration
@@ -784,7 +784,7 @@ declaration:
 	   $3->is_precision_statement = true;
 	   $$ = $3;
 	}
-	| uniform_block
+	| interface_block
 	{
 	   $$ = $1;
 	}
@@ -1140,7 +1140,7 @@ layout_qualifier_id:
 	      }
 	   }
 
-	   /* See also uniform_block_layout_qualifier. */
+	   /* See also interface_block_layout_qualifier. */
 	   if (!$$.flags.i && state->ARB_uniform_buffer_object_enable) {
 	      if (strcmp($1, "std140") == 0) {
 	         $$.flags.q.std140 = 1;
@@ -1211,7 +1211,7 @@ layout_qualifier_id:
 				 "identifier `%s' used\n", $1);
 	   }
 	}
-	| uniform_block_layout_qualifier
+	| interface_block_layout_qualifier
 	{
 	   $$ = $1;
 	   /* Layout qualifiers for ARB_uniform_buffer_object. */
@@ -1232,7 +1232,7 @@ layout_qualifier_id:
  * most qualifiers.  See the any_identifier path of
  * layout_qualifier_id for the others.
  */
-uniform_block_layout_qualifier:
+interface_block_layout_qualifier:
 	ROW_MAJOR
 	{
 	   memset(& $$, 0, sizeof($$));
@@ -1893,12 +1893,12 @@ function_definition:
 	;
 
 /* layout_qualifieropt is packed into this rule */
-uniform_block:
-	basic_uniform_block
+interface_block:
+	basic_interface_block
 	{
 	   $$ = $1;
 	}
-	| layout_qualifier basic_uniform_block
+	| layout_qualifier basic_interface_block
 	{
 	   ast_interface_block *block = $2;
 	   if (!block->layout.merge_qualifier(& @1, state, $1)) {
@@ -1908,7 +1908,7 @@ uniform_block:
 	}
 	;
 
-basic_uniform_block:
+basic_interface_block:
 	UNIFORM NEW_IDENTIFIER '{' member_list '}' instance_name_opt ';'
 	{
 	   ast_interface_block *const block = $6;
