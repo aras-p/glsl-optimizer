@@ -1077,7 +1077,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
                        LLVMValueRef *s,
                        LLVMValueRef *t,
                        LLVMValueRef *r,
-                       const struct lp_derivatives *derivs,
+                       const struct lp_derivatives *derivs, /* optional */
                        LLVMValueRef lod_bias, /* optional */
                        LLVMValueRef explicit_lod, /* optional */
                        LLVMValueRef *lod_ipart,
@@ -1090,7 +1090,6 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
    const unsigned mag_filter = bld->static_sampler_state->mag_img_filter;
    const unsigned target = bld->static_texture_state->target;
    LLVMValueRef first_level;
-   struct lp_derivatives face_derivs;
 
    /*
    printf("%s mip %d  min %d  mag %d\n", __FUNCTION__,
@@ -1107,11 +1106,6 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
       *t = face_t; /* vec */
       /* use 'r' to indicate cube face */
       *r = face; /* vec */
-
-      /* recompute ddx, ddy using the new (s,t) face texcoords */
-      face_derivs.ddx_ddy[0] = lp_build_packed_ddx_ddy_twocoord(&bld->coord_bld, *s, *t);
-      face_derivs.ddx_ddy[1] = NULL;
-      derivs = &face_derivs;
    }
    else if (target == PIPE_TEXTURE_1D_ARRAY) {
       *r = lp_build_iround(&bld->coord_bld, *t);
@@ -1131,6 +1125,7 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
        * distinguish between minification/magnification with one mipmap level.
        */
       lp_build_lod_selector(bld, texture_index, sampler_index,
+                            *s, *t, *r,
                             derivs, lod_bias, explicit_lod,
                             mip_filter,
                             lod_ipart, lod_fpart);
@@ -1479,7 +1474,7 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
                     unsigned sampler_index,
                     const LLVMValueRef *coords,
                     const LLVMValueRef *offsets,
-                    const struct lp_derivatives *derivs,
+                    const struct lp_derivatives *derivs, /* optional */
                     LLVMValueRef lod_bias, /* optional */
                     LLVMValueRef explicit_lod, /* optional */
                     LLVMValueRef texel_out[4])

@@ -363,7 +363,7 @@ emit_tex(struct lp_build_tgsi_aos_context *bld,
    unsigned target;
    unsigned unit;
    LLVMValueRef coords;
-   struct lp_derivatives derivs;
+   struct lp_derivatives derivs = { {NULL}, {NULL} };
 
    if (!bld->sampler) {
       _debug_printf("warning: found texture instruction but no sampler generator supplied\n");
@@ -374,22 +374,15 @@ emit_tex(struct lp_build_tgsi_aos_context *bld,
 
    coords = lp_build_emit_fetch( &bld->bld_base, inst, 0 , LP_CHAN_ALL);
 
-   if (0 && modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
-      lp_build_emit_fetch( &bld->bld_base, inst, 1 , LP_CHAN_ALL);
-      lp_build_emit_fetch( &bld->bld_base, inst, 2 , LP_CHAN_ALL);
+   if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
+      /* probably not going to work */
+      derivs.ddx[0] = lp_build_emit_fetch( &bld->bld_base, inst, 1 , LP_CHAN_ALL);
+      derivs.ddy[0] = lp_build_emit_fetch( &bld->bld_base, inst, 2 , LP_CHAN_ALL);
       unit = inst->Src[3].Register.Index;
-   }  else {
-#if 0
-      ddx = lp_build_ddx( &bld->bld_base.base, coords );
-      ddy = lp_build_ddy( &bld->bld_base.base, coords );
-#else
-      /* TODO */
-      derivs.ddx_ddy[0] = bld->bld_base.base.one;
-      derivs.ddx_ddy[1] = bld->bld_base.base.one;
-#endif
+   }
+   else {
       unit = inst->Src[1].Register.Index;
    }
-
    return bld->sampler->emit_fetch_texel(bld->sampler,
                                          &bld->bld_base.base,
                                          target, unit,

@@ -79,14 +79,9 @@ lp_build_ddy(struct lp_build_context *bld,
 }
 
 /*
- * To be able to handle multiple quads at once in texture sampling and
- * do lod calculations per quad, it is necessary to get the per-quad
- * derivatives into the lp_build_rho function.
- * For 8-wide vectors the packed derivative values for 3 coords would
- * look like this, this scales to a arbitrary (multiple of 4) vector size:
- * ds1dx ds1dy dt1dx dt1dy ds2dx ds2dy dt2dx dt2dy
+ * Helper for building packed ddx/ddy vector for one coord (scalar per quad
+ * values). The vector will look like this (8-wide):
  * dr1dx dr1dy _____ _____ dr2dx dr2dy _____ _____
- * The second vector will be unused for 1d and 2d textures.
  */
 LLVMValueRef
 lp_build_packed_ddx_ddy_onecoord(struct lp_build_context *bld,
@@ -121,6 +116,11 @@ lp_build_packed_ddx_ddy_onecoord(struct lp_build_context *bld,
 }
 
 
+/*
+ * Helper for building packed ddx/ddy vector for one coord (scalar per quad
+ * values). The vector will look like this (8-wide):
+ * ds1dx ds1dy dt1dx dt1dy ds2dx ds2dy dt2dx dt2dy
+ */
 LLVMValueRef
 lp_build_packed_ddx_ddy_twocoord(struct lp_build_context *bld,
                                  LLVMValueRef a, LLVMValueRef b)

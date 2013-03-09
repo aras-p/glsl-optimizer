@@ -56,7 +56,8 @@ struct lp_build_context;
  */
 struct lp_derivatives
 {
-   LLVMValueRef ddx_ddy[2];
+   LLVMValueRef ddx[3];
+   LLVMValueRef ddy[3];
 };
 
 
@@ -366,6 +367,9 @@ void
 lp_build_lod_selector(struct lp_build_sample_context *bld,
                       unsigned texture_index,
                       unsigned sampler_index,
+                      LLVMValueRef s,
+                      LLVMValueRef t,
+                      LLVMValueRef r,
                       const struct lp_derivatives *derivs,
                       LLVMValueRef lod_bias, /* optional */
                       LLVMValueRef explicit_lod, /* optional */

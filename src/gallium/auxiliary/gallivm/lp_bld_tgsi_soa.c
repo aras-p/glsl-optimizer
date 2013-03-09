@@ -1164,14 +1164,13 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
           enum lp_build_tex_modifier modifier,
           LLVMValueRef *texel)
 {
-   LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
-   struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
    unsigned unit;
    LLVMValueRef lod_bias, explicit_lod;
    LLVMValueRef oow = NULL;
    LLVMValueRef coords[4];
    LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
+   struct lp_derivatives *deriv_ptr = NULL;
    unsigned num_coords;
    unsigned dims;
    unsigned i;
@@ -1183,9 +1182,6 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       }
       return;
    }
-
-   derivs.ddx_ddy[0] = bld->bld_base.base.undef;
-   derivs.ddx_ddy[1] = bld->bld_base.base.undef;
 
    switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
@@ -1259,58 +1255,14 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    }
 
    if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
-      LLVMValueRef i32undef = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
-      LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
-      LLVMValueRef ddxdyonec[3];
-      unsigned length = bld->bld_base.base.type.length;
-      unsigned num_quads = length / 4;
       unsigned dim;
-      unsigned quad;
-
       for (dim = 0; dim < dims; ++dim) {
-         LLVMValueRef srcx = lp_build_emit_fetch( &bld->bld_base, inst, 1, dim );
-         LLVMValueRef srcy = lp_build_emit_fetch( &bld->bld_base, inst, 2, dim );
-         for (quad = 0; quad < num_quads; ++quad) {
-            unsigned s1 = 4*quad;
-            unsigned s2 = 4*quad + length;
-            shuffles[4*quad + 0] = lp_build_const_int32(gallivm, s1);
-            shuffles[4*quad + 1] = lp_build_const_int32(gallivm, s2);
-            shuffles[4*quad + 2] = i32undef;
-            shuffles[4*quad + 3] = i32undef;
-         }
-         ddxdyonec[dim] = LLVMBuildShuffleVector(builder, srcx, srcy,
-                                               LLVMConstVector(shuffles, length), "");
+         derivs.ddx[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 1, dim );
+         derivs.ddy[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 2, dim );
       }
-      if (dims == 1) {
-         derivs.ddx_ddy[0] = ddxdyonec[0];
-      }
-      else if (dims >= 2) {
-         for (quad = 0; quad < num_quads; ++quad) {
-            unsigned s1 = 4*quad;
-            unsigned s2 = 4*quad + length;
-            shuffles[4*quad + 0] = lp_build_const_int32(gallivm, s1);
-            shuffles[4*quad + 1] = lp_build_const_int32(gallivm, s1 + 1);
-            shuffles[4*quad + 2] = lp_build_const_int32(gallivm, s2);
-            shuffles[4*quad + 3] = lp_build_const_int32(gallivm, s2 + 1);
-         }
-         derivs.ddx_ddy[0] = LLVMBuildShuffleVector(builder, ddxdyonec[0], ddxdyonec[1],
-                                                  LLVMConstVector(shuffles, length), "");
-         if (dims == 3) {
-            derivs.ddx_ddy[1] = ddxdyonec[2];
-         }
-      }
+      deriv_ptr = &derivs;
       unit = inst->Src[3].Register.Index;
    }  else {
-      if (dims == 1) {
-         derivs.ddx_ddy[0] = lp_build_packed_ddx_ddy_onecoord(&bld->bld_base.base, coords[0]);
-      }
-      else if (dims >= 2) {
-         derivs.ddx_ddy[0] = lp_build_packed_ddx_ddy_twocoord(&bld->bld_base.base,
-                                                            coords[0], coords[1]);
-         if (dims == 3) {
-            derivs.ddx_ddy[1] = lp_build_packed_ddx_ddy_onecoord(&bld->bld_base.base, coords[2]);
-         }
-      }
       unit = inst->Src[1].Register.Index;
    }
 
@@ -1329,7 +1281,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
                                   unit, unit,
                                   coords,
                                   offsets,
-                                  &derivs,
+                                  deriv_ptr,
                                   lod_bias, explicit_lod,
                                   texel);
 }
@@ -1341,13 +1293,13 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
             boolean compare,
             LLVMValueRef *texel)
 {
-   LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
    struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
    unsigned texture_unit, sampler_unit;
    LLVMValueRef lod_bias, explicit_lod;
    LLVMValueRef coords[4];
    LLVMValueRef offsets[3] = { NULL };
    struct lp_derivatives derivs;
+   struct lp_derivatives *deriv_ptr = NULL;
    unsigned num_coords, dims;
    unsigned i;
 
@@ -1365,9 +1317,6 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
     */
    texture_unit = inst->Src[1].Register.Index;
    sampler_unit = inst->Src[2].Register.Index;
-
-   derivs.ddx_ddy[0] = bld->bld_base.base.undef;
-   derivs.ddx_ddy[1] = bld->bld_base.base.undef;
 
    /*
     * Note inst->Texture.Texture will contain the number of offsets,
@@ -1449,57 +1398,12 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
    }
 
    if (modifier == LP_BLD_TEX_MODIFIER_EXPLICIT_DERIV) {
-      LLVMValueRef i32undef = LLVMGetUndef(LLVMInt32TypeInContext(gallivm->context));
-      LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
-      LLVMValueRef ddxdyonec[3];
-      unsigned length = bld->bld_base.base.type.length;
-      unsigned num_quads = length / 4;
       unsigned dim;
-      unsigned quad;
-
       for (dim = 0; dim < dims; ++dim) {
-         LLVMValueRef srcx = lp_build_emit_fetch( &bld->bld_base, inst, 3, dim );
-         LLVMValueRef srcy = lp_build_emit_fetch( &bld->bld_base, inst, 4, dim );
-         for (quad = 0; quad < num_quads; ++quad) {
-            unsigned s1 = 4*quad;
-            unsigned s2 = 4*quad + length;
-            shuffles[4*quad + 0] = lp_build_const_int32(gallivm, s1);
-            shuffles[4*quad + 1] = lp_build_const_int32(gallivm, s2);
-            shuffles[4*quad + 2] = i32undef;
-            shuffles[4*quad + 3] = i32undef;
-         }
-         ddxdyonec[dim] = LLVMBuildShuffleVector(builder, srcx, srcy,
-                                               LLVMConstVector(shuffles, length), "");
+         derivs.ddx[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 3, dim );
+         derivs.ddy[dim] = lp_build_emit_fetch( &bld->bld_base, inst, 4, dim );
       }
-      if (dims == 1) {
-         derivs.ddx_ddy[0] = ddxdyonec[0];
-      }
-      else if (dims >= 2) {
-         for (quad = 0; quad < num_quads; ++quad) {
-            unsigned s1 = 4*quad;
-            unsigned s2 = 4*quad + length;
-            shuffles[4*quad + 0] = lp_build_const_int32(gallivm, s1);
-            shuffles[4*quad + 1] = lp_build_const_int32(gallivm, s1 + 1);
-            shuffles[4*quad + 2] = lp_build_const_int32(gallivm, s2);
-            shuffles[4*quad + 3] = lp_build_const_int32(gallivm, s2 + 1);
-         }
-         derivs.ddx_ddy[0] = LLVMBuildShuffleVector(builder, ddxdyonec[0], ddxdyonec[1],
-                                                  LLVMConstVector(shuffles, length), "");
-         if (dims == 3) {
-            derivs.ddx_ddy[1] = ddxdyonec[2];
-         }
-      }
-   }  else {
-      if (dims == 1) {
-         derivs.ddx_ddy[0] = lp_build_packed_ddx_ddy_onecoord(&bld->bld_base.base, coords[0]);
-      }
-      else if (dims >= 2) {
-         derivs.ddx_ddy[0] = lp_build_packed_ddx_ddy_twocoord(&bld->bld_base.base,
-                                                            coords[0], coords[1]);
-         if (dims == 3) {
-            derivs.ddx_ddy[1] = lp_build_packed_ddx_ddy_onecoord(&bld->bld_base.base, coords[2]);
-         }
-      }
+      deriv_ptr = &derivs;
    }
 
    /* some advanced gather instructions (txgo) would require 4 offsets */
@@ -1517,7 +1421,7 @@ emit_sample(struct lp_build_tgsi_soa_context *bld,
                                   texture_unit, sampler_unit,
                                   coords,
                                   offsets,
-                                  &derivs,
+                                  deriv_ptr,
                                   lod_bias, explicit_lod,
                                   texel);
 }
@@ -1533,7 +1437,6 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
    LLVMValueRef explicit_lod = NULL;
    LLVMValueRef coords[3];
    LLVMValueRef offsets[3] = { NULL };
-   struct lp_derivatives derivs;
    unsigned num_coords;
    unsigned dims;
    unsigned i;
@@ -1547,9 +1450,6 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
    }
 
    unit = inst->Src[1].Register.Index;
-
-   derivs.ddx_ddy[0] = coord_undef;
-   derivs.ddx_ddy[1] = coord_undef;
 
    if (is_samplei) {
       target = bld->sv[unit].Resource;
@@ -1612,7 +1512,7 @@ emit_fetch_texels( struct lp_build_tgsi_soa_context *bld,
                                   unit, unit,
                                   coords,
                                   offsets,
-                                  &derivs,
+                                  NULL,
                                   NULL, explicit_lod,
                                   texel);
 }
