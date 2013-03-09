@@ -7,17 +7,21 @@
 
 /* Input space is implemented as c0[], to which we bind the screen->parm bo.
  */
-#define NVE4_CP_INPUT_USER        0x0000
-#define NVE4_CP_INPUT_USER_LIMIT  0x1000
-#define NVE4_CP_INPUT_TEX(i)     (0x1020 + (i) * 4)
-#define NVE4_CP_INPUT_TEX_STRIDE  4
-#define NVE4_CP_INPUT_TEX_MAX     32
-#define NVE4_CP_INPUT_MS_OFFSETS  0x10c0
-#define NVE4_CP_INPUT_SUF_STRIDE  64
-#define NVE4_CP_INPUT_SUF(i)     (0x1100 + (i) * NVE4_CP_INPUT_SUF_STRIDE)
-#define NVE4_CP_INPUT_SUF_MAX     32
-#define NVE4_CP_INPUT_SIZE        0x1900
-#define NVE4_CP_PARAM_SIZE        0x2000
+#define NVE4_CP_INPUT_USER          0x0000
+#define NVE4_CP_INPUT_USER_LIMIT    0x1000
+#define NVE4_CP_INPUT_GRID_INFO(i) (0x1000 + (i) * 4)
+#define NVE4_CP_INPUT_NTID(i)      (0x1000 + (i) * 4)
+#define NVE4_CP_INPUT_NCTAID(i)    (0x100c + (i) * 4)
+#define NVE4_CP_INPUT_GRIDID        0x1018
+#define NVE4_CP_INPUT_TEX(i)       (0x1040 + (i) * 4)
+#define NVE4_CP_INPUT_TEX_STRIDE    4
+#define NVE4_CP_INPUT_TEX_MAX       32
+#define NVE4_CP_INPUT_MS_OFFSETS    0x10c0
+#define NVE4_CP_INPUT_SUF_STRIDE    64
+#define NVE4_CP_INPUT_SUF(i)       (0x1100 + (i) * NVE4_CP_INPUT_SUF_STRIDE)
+#define NVE4_CP_INPUT_SUF_MAX       32
+#define NVE4_CP_INPUT_SIZE          0x1900
+#define NVE4_CP_PARAM_SIZE          0x2000
 
 struct nve4_cp_launch_desc
 {

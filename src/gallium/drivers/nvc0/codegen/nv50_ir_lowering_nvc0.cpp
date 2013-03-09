@@ -1304,14 +1304,22 @@ bool
 NVC0LoweringPass::handleRDSV(Instruction *i)
 {
    Symbol *sym = i->getSrc(0)->asSym();
+   const SVSemantic sv = sym->reg.data.sv.sv;
    Value *vtx = NULL;
    Instruction *ld;
    uint32_t addr = targ->getSVAddress(FILE_SHADER_INPUT, sym);
 
-   if (addr >= 0x400) // mov $sreg
+   if (addr >= 0x400) {
+      // mov $sreg
+      if (sym->reg.data.sv.index == 3) {
+         // TGSI backend may use 4th component of TID,NTID,CTAID,NCTAID
+         i->op = OP_MOV;
+         i->setSrc(0, bld.mkImm((sv == SV_NTID || sv == SV_NCTAID) ? 1 : 0));
+      }
       return true;
+   }
 
-   switch (i->getSrc(0)->reg.data.sv.sv) {
+   switch (sv) {
    case SV_POSITION:
       assert(prog->getType() == Program::TYPE_FRAGMENT);
       bld.mkInterp(NV50_IR_INTERP_LINEAR, i->getDef(0), addr, NULL);
@@ -1329,6 +1337,19 @@ NVC0LoweringPass::handleRDSV(Instruction *i)
    case SV_TESS_COORD:
       assert(prog->getType() == Program::TYPE_TESSELLATION_EVAL);
       readTessCoord(i->getDef(0)->asLValue(), i->getSrc(0)->reg.data.sv.index);
+      break;
+   case SV_NTID:
+   case SV_NCTAID:
+   case SV_GRIDID:
+      assert(targ->getChipset() >= NVISA_GK104_CHIPSET); // mov $sreg otherwise
+      if (sym->reg.data.sv.index == 3) {
+         i->op = OP_MOV;
+         i->setSrc(0, bld.mkImm(sv == SV_GRIDID ? 0 : 1));
+         return true;
+      }
+      addr += prog->driver->prop.cp.gridInfoBase;
+      bld.mkLoad(TYPE_U32, i->getDef(0),
+                 bld.mkSymbol(FILE_MEMORY_CONST, 0, TYPE_U32, addr), NULL);
       break;
    default:
       if (prog->getType() == Program::TYPE_TESSELLATION_EVAL)

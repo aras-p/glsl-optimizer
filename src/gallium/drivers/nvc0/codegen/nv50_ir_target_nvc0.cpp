@@ -260,6 +260,7 @@ TargetNVC0::getSVAddress(DataFile shaderFile, const Symbol *sym) const
    const SVSemantic sv = sym->reg.data.sv.sv;
 
    const bool isInput = shaderFile == FILE_SHADER_INPUT;
+   const bool kepler = getChipset() >= NVISA_GK104_CHIPSET;
 
    switch (sv) {
    case SV_POSITION:       return 0x070 + idx * 4;
@@ -274,6 +275,9 @@ TargetNVC0::getSVAddress(DataFile shaderFile, const Symbol *sym) const
    case SV_FACE:           return 0x3fc;
    case SV_TESS_FACTOR:    return 0x000 + idx * 4;
    case SV_TESS_COORD:     return 0x2f0 + idx * 4;
+   case SV_NTID:           return kepler ? (0x00 + idx * 4) : ~0;
+   case SV_NCTAID:         return kepler ? (0x0c + idx * 4) : ~0;
+   case SV_GRIDID:         return kepler ? 0x18 : ~0;
    default:
       return 0xffffffff;
    }

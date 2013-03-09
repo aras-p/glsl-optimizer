@@ -335,24 +335,36 @@ nve4_compute_state_validate(struct nvc0_context *nvc0)
 
 
 static void
-nve4_compute_upload_input(struct nvc0_context *nvc0, const void *input)
+nve4_compute_upload_input(struct nvc0_context *nvc0, const void *input,
+                          const uint *block_layout,
+                          const uint *grid_layout)
 {
    struct nvc0_screen *screen = nvc0->screen;
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_program *cp = nvc0->compprog;
 
-   if (!cp->parm_size)
-      return;
-
+   if (cp->parm_size) {
+      BEGIN_NVC0(push, NVE4_COMPUTE(UPLOAD_ADDRESS_HIGH), 2);
+      PUSH_DATAh(push, screen->parm->offset);
+      PUSH_DATA (push, screen->parm->offset);
+      BEGIN_NVC0(push, NVE4_COMPUTE(UPLOAD_SIZE), 2);
+      PUSH_DATA (push, cp->parm_size);
+      PUSH_DATA (push, 0x1);
+      BEGIN_1IC0(push, NVE4_COMPUTE(UPLOAD_EXEC), 1 + (cp->parm_size / 4));
+      PUSH_DATA (push, NVE4_COMPUTE_UPLOAD_EXEC_UNKVAL_DATA);
+      PUSH_DATAp(push, input, cp->parm_size / 4);
+   }
    BEGIN_NVC0(push, NVE4_COMPUTE(UPLOAD_ADDRESS_HIGH), 2);
-   PUSH_DATAh(push, screen->parm->offset);
-   PUSH_DATA (push, screen->parm->offset);
+   PUSH_DATAh(push, screen->parm->offset + NVE4_CP_INPUT_GRID_INFO(0));
+   PUSH_DATA (push, screen->parm->offset + NVE4_CP_INPUT_GRID_INFO(0));
    BEGIN_NVC0(push, NVE4_COMPUTE(UPLOAD_SIZE), 2);
-   PUSH_DATA (push, cp->parm_size);
+   PUSH_DATA (push, 7 * 4);
    PUSH_DATA (push, 0x1);
-   BEGIN_1IC0(push, NVE4_COMPUTE(UPLOAD_EXEC), 1 + (cp->parm_size / 4));
+   BEGIN_1IC0(push, NVE4_COMPUTE(UPLOAD_EXEC), 1 + 7);
    PUSH_DATA (push, NVE4_COMPUTE_UPLOAD_EXEC_UNKVAL_DATA);
-   PUSH_DATAp(push, input, cp->parm_size / 4);
+   PUSH_DATAp(push, block_layout, 3);
+   PUSH_DATAp(push, grid_layout, 3);
+   PUSH_DATA (push, 0);
 
    BEGIN_NVC0(push, NVE4_COMPUTE(FLUSH), 1);
    PUSH_DATA (push, NVE4_COMPUTE_FLUSH_CB);
@@ -448,7 +460,7 @@ nve4_launch_grid(struct pipe_context *pipe,
    nve4_compute_setup_launch_desc(nvc0, desc, label, block_layout, grid_layout);
    nve4_compute_dump_launch_desc(desc);
 
-   nve4_compute_upload_input(nvc0, input);
+   nve4_compute_upload_input(nvc0, input, block_layout, grid_layout);
 
    /* upload descriptor and flush */
 #if 0
