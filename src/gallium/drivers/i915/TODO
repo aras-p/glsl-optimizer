@@ -1,18 +1,10 @@
 Random list of problems with i915g:
 
-- Add support for PIPE_CAP_POINT_SPRITE either via the draw module or directly
-  via the hardware, look at the classic driver, more advanced.
-
 - What does this button do? Figure out LIS7 with regards to depth offset.
 
 - Dies with BadDrawable on GLXFBconfig changes/destruction. Makes piglit totally
   unusable :( Upgrading xserver helped here, it doesn't crash anymore. Still
   broken, it doesn't update the viewport/get new buffers.
-
-- Kills the chip in 3D_PRIMITIVE LINELIST with mesa-demos/fbotexture in
-  wireframe mode. Changing the cullmode to cw from none mitigates the crash. As
-  does emitting only one line segment (2 indices) per 3D_PRIMITIVE command in
-  the batch.
 
 - Y-tiling is even more fun. i915c doesn't use it, maybe there's a reason?
   Texture sampling from Y-tiled buffers seems to work, though (save above
@@ -34,16 +26,13 @@ Random list of problems with i915g:
 
 - Replace constants and immediates which are 0,1,-1 or a combination of those with a swizzle.
 
-- i915_delete_fs_state doesn't call draw_delete_fragment_shader. Why?
-
 - Schedule instructions to minimize the number of phases. One way is to replace
   R registers responsible for a boundary with U registers to avoid phase
   boundaries.
 
 - Continue a previous primitive when there are no state changes
 
-- Switch to the blitter for those buggy blit copies
-- Or state save/restore has a bug with u_blitter, fix it.
+- Fix fragment discard
 
 Other bugs can be found here:
 https://bugs.freedesktop.org/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&component=Drivers/Gallium/i915g
