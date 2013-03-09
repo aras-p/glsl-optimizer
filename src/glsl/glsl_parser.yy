@@ -1935,6 +1935,20 @@ basic_interface_block:
 	      }
 	   }
 
+	   /* From the GLSL 1.50.11 spec, section 4.3.7 ("Interface Blocks"):
+	    * "It is illegal to have an input block in a vertex shader
+	    *  or an output block in a fragment shader"
+	    */
+	   if ((state->target == vertex_shader) && $1.flags.q.in) {
+	      _mesa_glsl_error(& @1, state,
+	                       "`in' interface block is not allowed for "
+	                       "a vertex shader\n");
+	   } else if ((state->target == fragment_shader) && $1.flags.q.out) {
+	      _mesa_glsl_error(& @1, state,
+	                       "`out' interface block is not allowed for "
+	                       "a fragment shader\n");
+	   }
+
 	   /* Since block arrays require names, and both features are added in
 	    * the same language versions, we don't have to explicitly
 	    * version-check both things.
