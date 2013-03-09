@@ -1953,11 +1953,9 @@ basic_interface_block:
 	    * the same language versions, we don't have to explicitly
 	    * version-check both things.
 	    */
-	   if (block->instance_name != NULL
-	       && !(state->language_version == 300 && state->es_shader)) {
-	      _mesa_glsl_error(& @1, state,
-			       "#version 300 es required for using uniform "
-			       "blocks with an instance name\n");
+	   if (block->instance_name != NULL) {
+	      state->check_version(150, 300, & @1, "interface blocks with "
+	                "an instance name are not allowed");
 	   }
 
 	   block->layout.flags.i |= $1.flags.i;
