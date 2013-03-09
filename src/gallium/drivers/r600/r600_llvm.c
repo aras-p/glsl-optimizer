@@ -618,7 +618,7 @@ const char * r600_llvm_gpu_string(enum radeon_family family)
 	default:
 		gpu_family = "";
 		fprintf(stderr, "Chip not supported by r600 llvm "
-			"backend, please file a bug at bugs.freedesktop.org\n");
+			"backend, please file a bug at " PACKAGE_BUGREPORT "\n");
 		break;
 	}
 	return gpu_family;
