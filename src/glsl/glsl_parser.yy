@@ -2067,41 +2067,28 @@ member_list:
 	}
 	;
 
-/* Specifying "uniform" inside of a uniform block is redundant. */
-uniformopt:
-	/* nothing */
-	| UNIFORM
-	;
-
 member_declaration:
-	layout_qualifier uniformopt type_specifier struct_declarator_list ';'
+	fully_specified_type struct_declarator_list ';'
 	{
 	   void *ctx = state;
-	   ast_fully_specified_type *type = new(ctx) ast_fully_specified_type();
+	   ast_fully_specified_type *type = $1;
 	   type->set_location(yylloc);
 
-	   type->qualifier = $1;
-	   type->qualifier.flags.q.uniform = true;
-	   type->specifier = $3;
+	   if (type->qualifier.flags.q.attribute) {
+	      _mesa_glsl_error(& @1, state,
+	                      "keyword 'attribute' cannot be used with "
+	                      "interface block member\n");
+	   } else if (type->qualifier.flags.q.varying) {
+	      _mesa_glsl_error(& @1, state,
+	                      "keyword 'varying' cannot be used with "
+	                      "interface block member\n");
+	   }
+
 	   $$ = new(ctx) ast_declarator_list(type);
 	   $$->set_location(yylloc);
 	   $$->ubo_qualifiers_valid = true;
 
-	   $$->declarations.push_degenerate_list_at_head(& $4->link);
-	}
-	| uniformopt type_specifier struct_declarator_list ';'
-	{
-	   void *ctx = state;
-	   ast_fully_specified_type *type = new(ctx) ast_fully_specified_type();
-	   type->set_location(yylloc);
-
-	   type->qualifier.flags.q.uniform = true;
-	   type->specifier = $2;
-	   $$ = new(ctx) ast_declarator_list(type);
-	   $$->set_location(yylloc);
-	   $$->ubo_qualifiers_valid = true;
-
-	   $$->declarations.push_degenerate_list_at_head(& $3->link);
+	   $$->declarations.push_degenerate_list_at_head(& $2->link);
 	}
 	;
 
