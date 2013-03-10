@@ -1796,6 +1796,7 @@ struct gl_transform_feedback_state
 typedef enum
 {
    PROGRAM_TEMPORARY,   /**< machine->Temporary[] */
+   PROGRAM_ARRAY,       /**< Arrays & Matrixes */
    PROGRAM_INPUT,       /**< machine->Inputs[] */
    PROGRAM_OUTPUT,      /**< machine->Outputs[] */
    PROGRAM_LOCAL_PARAM, /**< gl_program->LocalParams[] */
