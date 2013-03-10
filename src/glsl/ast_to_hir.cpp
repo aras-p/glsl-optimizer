@@ -4162,16 +4162,32 @@ ast_interface_block::hir(exec_list *instructions,
                                                true,
                                                block_row_major);
 
+   ir_variable_mode var_mode;
+   const char *iface_type_name;
+   if (this->layout.flags.q.in) {
+      var_mode = ir_var_shader_in;
+      iface_type_name = "in";
+   } else if (this->layout.flags.q.out) {
+      var_mode = ir_var_shader_out;
+      iface_type_name = "out";
+   } else if (this->layout.flags.q.uniform) {
+      var_mode = ir_var_uniform;
+      iface_type_name = "uniform";
+   } else {
+      assert(!"interface block layout qualifier not found!");
+   }
+
    const glsl_type *block_type =
       glsl_type::get_interface_instance(fields,
                                         num_variables,
                                         packing,
                                         this->block_name);
 
-   if (!state->symbols->add_interface(block_type->name, block_type, ir_var_uniform)) {
+   if (!state->symbols->add_interface(block_type->name, block_type, var_mode)) {
       YYLTYPE loc = this->get_location();
-      _mesa_glsl_error(&loc, state, "Uniform block name `%s' already taken in "
-                       "the current scope.\n", this->block_name);
+      _mesa_glsl_error(&loc, state, "Interface block `%s' with type `%s' "
+                       "already taken in the current scope.\n",
+                       this->block_name, iface_type_name);
    }
 
    /* Since interface blocks cannot contain statements, it should be
@@ -4195,11 +4211,11 @@ ast_interface_block::hir(exec_list *instructions,
 
          var = new(state) ir_variable(block_array_type,
                                       this->instance_name,
-                                      ir_var_uniform);
+                                      var_mode);
       } else {
          var = new(state) ir_variable(block_type,
                                       this->instance_name,
-                                      ir_var_uniform);
+                                      var_mode);
       }
 
       var->interface_type = block_type;
@@ -4215,7 +4231,7 @@ ast_interface_block::hir(exec_list *instructions,
          ir_variable *var =
             new(state) ir_variable(fields[i].type,
                                    ralloc_strdup(state, fields[i].name),
-                                   ir_var_uniform);
+                                   var_mode);
          var->interface_type = block_type;
 
          state->symbols->add_variable(var);
