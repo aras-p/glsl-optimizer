@@ -25,7 +25,6 @@
 #
 # The following variables are examined
 #
-#   EGL_PLATFORMS       - platforms to support
 #   EGL_CLIENT_APIS     - state trackers to support
 #   GALLIUM_WINSYS_DIRS - pipe drivers to support
 #

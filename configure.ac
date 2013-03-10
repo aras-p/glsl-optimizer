@@ -1423,8 +1423,6 @@ AC_ARG_WITH([egl-platforms],
 	with_egl_platforms=""
     fi])
 
-EGL_PLATFORMS=""
-
 if test "x$with_egl_platforms" != "x" -a "x$enable_egl" != xyes; then
     AC_MSG_ERROR([cannot build egl state tracker without EGL library])
 fi
@@ -1478,8 +1476,6 @@ else
     EGL_NATIVE_PLATFORM="_EGL_INVALID_PLATFORM"
 fi
 
-EGL_PLATFORMS="$egl_platforms"
-
 if echo "$egl_platforms" | grep 'x11' >/dev/null 2>&1; then
     NEED_WINSYS_XLIB=yes
 fi
@@ -1493,7 +1489,6 @@ AM_CONDITIONAL(HAVE_EGL_DRIVER_DRI2, test "x$HAVE_EGL_DRIVER_DRI2" != "x")
 AM_CONDITIONAL(HAVE_EGL_DRIVER_GLX, test "x$HAVE_EGL_DRIVER_GLX" != "x")
 
 AC_SUBST([EGL_NATIVE_PLATFORM])
-AC_SUBST([EGL_PLATFORMS])
 AC_SUBST([EGL_CFLAGS])
 
 # If we don't have the X11 platform, set this define so we don't try to include
@@ -2184,7 +2179,7 @@ dnl EGL
 echo ""
 echo "        EGL:             $enable_egl"
 if test "$enable_egl" = yes; then
-    echo "        EGL platforms:   $EGL_PLATFORMS"
+    echo "        EGL platforms:   $egl_platforms"
 
     egl_drivers=""
     if test "x$HAVE_EGL_DRIVER_GLX" != "x"; then
