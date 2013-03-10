@@ -618,19 +618,19 @@ AC_ARG_ENABLE([opencl],
           @<:@default=no@:>@])],
    [],
    [enable_opencl=no])
-AC_ARG_ENABLE([xlib_glx],
+AC_ARG_ENABLE([xlib-glx],
     [AS_HELP_STRING([--enable-xlib-glx],
         [make GLX library Xlib-based instead of DRI-based @<:@default=disabled@:>@])],
     [enable_xlib_glx="$enableval"],
     [enable_xlib_glx=no])
-AC_ARG_ENABLE([gallium_egl],
+AC_ARG_ENABLE([gallium-egl],
     [AS_HELP_STRING([--enable-gallium-egl],
         [enable optional EGL state tracker (not required
          for EGL support in Gallium with OpenGL and OpenGL ES)
          @<:@default=disable@:>@])],
     [enable_gallium_egl="$enableval"],
     [enable_gallium_egl=no])
-AC_ARG_ENABLE([gallium_gbm],
+AC_ARG_ENABLE([gallium-gbm],
     [AS_HELP_STRING([--enable-gallium-gbm],
         [enable optional gbm state tracker (not required for
          gbm support in Gallium)
@@ -644,7 +644,7 @@ AC_ARG_ENABLE([r600-llvm-compiler],
     [enable_r600_llvm="$enableval"],
     [enable_r600_llvm=no])
 
-AC_ARG_ENABLE([gallium_tests],
+AC_ARG_ENABLE([gallium-tests],
     [AS_HELP_STRING([--enable-gallium-tests],
         [Enable optional Gallium tests) @<:@default=disable@:>@])],
     [enable_gallium_tests="$enableval"],
