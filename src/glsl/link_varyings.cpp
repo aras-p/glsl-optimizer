@@ -993,6 +993,8 @@ assign_varying_locations(struct gl_context *ctx,
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
    hash_table *consumer_inputs
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
+   hash_table *consumer_interface_inputs
+      = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
 
    /* Operate in a total of three passes.
     *
@@ -1011,8 +1013,17 @@ assign_varying_locations(struct gl_context *ctx,
             ((ir_instruction *) node)->as_variable();
 
          if ((input_var != NULL) && (input_var->mode == ir_var_shader_in)) {
-            hash_table_insert(consumer_inputs, input_var,
-                              ralloc_strdup(mem_ctx, input_var->name));
+            if (input_var->interface_type != NULL) {
+               char *const iface_field_name =
+                  ralloc_asprintf(mem_ctx, "%s.%s",
+                                  input_var->interface_type->name,
+                                  input_var->name);
+               hash_table_insert(consumer_interface_inputs, input_var,
+                                 iface_field_name);
+            } else {
+               hash_table_insert(consumer_inputs, input_var,
+                                 ralloc_strdup(mem_ctx, input_var->name));
+            }
          }
       }
    }
@@ -1026,8 +1037,19 @@ assign_varying_locations(struct gl_context *ctx,
       tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates);
       g.process(output_var);
 
-      ir_variable *input_var =
-         (ir_variable *) hash_table_find(consumer_inputs, output_var->name);
+      ir_variable *input_var;
+      if (output_var->interface_type != NULL) {
+         char *const iface_field_name =
+            ralloc_asprintf(mem_ctx, "%s.%s",
+                            output_var->interface_type->name,
+                            output_var->name);
+         input_var =
+            (ir_variable *) hash_table_find(consumer_interface_inputs,
+                                            iface_field_name);
+      } else {
+         input_var =
+            (ir_variable *) hash_table_find(consumer_inputs, output_var->name);
+      }
 
       if (input_var && input_var->mode != ir_var_shader_in)
          input_var = NULL;
@@ -1047,6 +1069,7 @@ assign_varying_locations(struct gl_context *ctx,
       if (matched_candidate == NULL) {
          hash_table_dtor(tfeedback_candidates);
          hash_table_dtor(consumer_inputs);
+         hash_table_dtor(consumer_interface_inputs);
          return false;
       }
 
@@ -1064,12 +1087,14 @@ assign_varying_locations(struct gl_context *ctx,
       if (!tfeedback_decls[i].assign_location(ctx, prog)) {
          hash_table_dtor(tfeedback_candidates);
          hash_table_dtor(consumer_inputs);
+         hash_table_dtor(consumer_interface_inputs);
          return false;
       }
    }
 
    hash_table_dtor(tfeedback_candidates);
    hash_table_dtor(consumer_inputs);
+   hash_table_dtor(consumer_interface_inputs);
 
    if (ctx->Const.DisableVaryingPacking) {
       /* Transform feedback code assumes varyings are packed, so if the driver
