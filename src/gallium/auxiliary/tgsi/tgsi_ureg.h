@@ -71,17 +71,17 @@ struct ureg_src
  */
 struct ureg_dst
 {
-   unsigned File        : 4;  /* TGSI_FILE_ */
-   unsigned WriteMask   : 4;  /* TGSI_WRITEMASK_ */
-   unsigned Indirect    : 1;  /* BOOL */
-   unsigned Saturate    : 1;  /* BOOL */
-   unsigned Predicate   : 1;
-   unsigned PredNegate  : 1;  /* BOOL */
-   unsigned PredSwizzleX: 2;  /* TGSI_SWIZZLE_ */
-   unsigned PredSwizzleY: 2;  /* TGSI_SWIZZLE_ */
-   unsigned PredSwizzleZ: 2;  /* TGSI_SWIZZLE_ */
-   unsigned PredSwizzleW: 2;  /* TGSI_SWIZZLE_ */
-   int      Index       : 16; /* SINT */
+   unsigned File            : 4;  /* TGSI_FILE_ */
+   unsigned WriteMask       : 4;  /* TGSI_WRITEMASK_ */
+   unsigned Indirect        : 1;  /* BOOL */
+   unsigned Saturate        : 1;  /* BOOL */
+   unsigned Predicate       : 1;
+   unsigned PredNegate      : 1;  /* BOOL */
+   unsigned PredSwizzleX    : 2;  /* TGSI_SWIZZLE_ */
+   unsigned PredSwizzleY    : 2;  /* TGSI_SWIZZLE_ */
+   unsigned PredSwizzleZ    : 2;  /* TGSI_SWIZZLE_ */
+   unsigned PredSwizzleW    : 2;  /* TGSI_SWIZZLE_ */
+   int      Index           : 16; /* SINT */
    int      IndirectIndex   : 16; /* SINT */
    int      IndirectSwizzle : 2;  /* TGSI_SWIZZLE_ */
 };
@@ -279,6 +279,14 @@ ureg_DECL_temporary( struct ureg_program * );
  */
 struct ureg_dst
 ureg_DECL_local_temporary( struct ureg_program * );
+
+/**
+ * Declare "size" continuous temporary registers.
+ */
+struct ureg_dst
+ureg_DECL_array_temporary( struct ureg_program *,
+                           unsigned size,
+                           boolean local );
 
 void 
 ureg_release_temporary( struct ureg_program *ureg,
@@ -1090,6 +1098,14 @@ ureg_src_dimension_indirect( struct ureg_src reg, struct ureg_src addr,
    reg.DimIndFile = addr.File;
    reg.DimIndIndex = addr.Index;
    reg.DimIndSwizzle = addr.SwizzleX;
+   return reg;
+}
+
+static INLINE struct ureg_dst
+ureg_dst_array_offset( struct ureg_dst reg, int offset )
+{
+   assert(reg.File == TGSI_FILE_TEMPORARY);
+   reg.Index += offset;
    return reg;
 }
 

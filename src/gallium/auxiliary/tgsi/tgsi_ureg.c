@@ -153,6 +153,7 @@ struct ureg_program
 
    struct util_bitmask *free_temps;
    struct util_bitmask *local_temps;
+   struct util_bitmask *decl_temps;
    unsigned nr_temps;
 
    struct const_decl const_decls;
@@ -547,13 +548,18 @@ static struct ureg_dst alloc_temporary( struct ureg_program *ureg,
 
    /* Or allocate a new one.
     */
-   if (i == UTIL_BITMASK_INVALID_INDEX)
+   if (i == UTIL_BITMASK_INVALID_INDEX) {
       i = ureg->nr_temps++;
 
-   util_bitmask_clear(ureg->free_temps, i);
+      if (local)
+         util_bitmask_set(ureg->local_temps, i);
 
-   if (local)
-      util_bitmask_set(ureg->local_temps, i);
+      /* Start a new declaration when the local flag changes */
+      if (!i || util_bitmask_get(ureg->local_temps, i - 1) != local)
+         util_bitmask_set(ureg->decl_temps, i);
+   }
+
+   util_bitmask_clear(ureg->free_temps, i);
 
    return ureg_dst_register( TGSI_FILE_TEMPORARY, i );
 }
@@ -566,6 +572,24 @@ struct ureg_dst ureg_DECL_temporary( struct ureg_program *ureg )
 struct ureg_dst ureg_DECL_local_temporary( struct ureg_program *ureg )
 {
    return alloc_temporary(ureg, TRUE);
+}
+
+struct ureg_dst ureg_DECL_array_temporary( struct ureg_program *ureg,
+                                           unsigned size,
+                                           boolean local )
+{
+   unsigned i = ureg->nr_temps;
+   struct ureg_dst dst = ureg_dst_register( TGSI_FILE_TEMPORARY, i );
+
+   if (local)
+      util_bitmask_set(ureg->local_temps, i);
+
+   util_bitmask_set(ureg->decl_temps, i);
+
+   ureg->nr_temps += size;
+   util_bitmask_set(ureg->decl_temps, ureg->nr_temps);
+
+   return dst;
 }
 
 void ureg_release_temporary( struct ureg_program *ureg,
@@ -856,11 +880,11 @@ ureg_emit_src( struct ureg_program *ureg,
    }
 
    if (src.Dimension) {
+      out[0].src.Dimension = 1;
+      out[n].dim.Dimension = 0;
+      out[n].dim.Padding = 0;
       if (src.DimIndirect) {
-         out[0].src.Dimension = 1;
          out[n].dim.Indirect = 1;
-         out[n].dim.Dimension = 0;
-         out[n].dim.Padding = 0;
          out[n].dim.Index = src.DimensionIndex;
          n++;
          out[n].value = 0;
@@ -871,10 +895,7 @@ ureg_emit_src( struct ureg_program *ureg,
          out[n].src.SwizzleW = src.DimIndSwizzle;
          out[n].src.Index = src.DimIndIndex;
       } else {
-         out[0].src.Dimension = 1;
          out[n].dim.Indirect = 0;
-         out[n].dim.Dimension = 0;
-         out[n].dim.Padding = 0;
          out[n].dim.Index = src.DimensionIndex;
       }
       n++;
@@ -1536,9 +1557,10 @@ static void emit_decls( struct ureg_program *ureg )
    if (ureg->nr_temps) {
       for (i = 0; i < ureg->nr_temps;) {
          boolean local = util_bitmask_get(ureg->local_temps, i);
-         unsigned first = i++;
-         while (i < ureg->nr_temps && local == util_bitmask_get(ureg->local_temps, i))
-            ++i;
+         unsigned first = i;
+         i = util_bitmask_get_next_index(ureg->decl_temps, i + 1);
+         if (i == UTIL_BITMASK_INVALID_INDEX)
+            i = ureg->nr_temps;
 
          emit_decl_temps( ureg, first, i - 1, local );
       }
@@ -1707,8 +1729,14 @@ struct ureg_program *ureg_create( unsigned processor )
    if (ureg->local_temps == NULL)
       goto no_local_temps;
 
+   ureg->decl_temps = util_bitmask_create();
+   if (ureg->decl_temps == NULL)
+      goto no_decl_temps;
+
    return ureg;
 
+no_decl_temps:
+   util_bitmask_destroy(ureg->local_temps);
 no_local_temps:
    util_bitmask_destroy(ureg->free_temps);
 no_free_temps:
@@ -1730,6 +1758,7 @@ void ureg_destroy( struct ureg_program *ureg )
 
    util_bitmask_destroy(ureg->free_temps);
    util_bitmask_destroy(ureg->local_temps);
+   util_bitmask_destroy(ureg->decl_temps);
 
    FREE(ureg);
 }
