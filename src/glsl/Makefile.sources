@@ -63,6 +63,7 @@ LIBGLSL_FILES = \
 	$(GLSL_SRCDIR)/lower_mat_op_to_vec.cpp \
 	$(GLSL_SRCDIR)/lower_noise.cpp \
 	$(GLSL_SRCDIR)/lower_packed_varyings.cpp \
+	$(GLSL_SRCDIR)/lower_named_interface_blocks.cpp \
 	$(GLSL_SRCDIR)/lower_packing_builtins.cpp \
 	$(GLSL_SRCDIR)/lower_texture_projection.cpp \
 	$(GLSL_SRCDIR)/lower_variable_index_to_cond_assign.cpp \
