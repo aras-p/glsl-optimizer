@@ -325,7 +325,6 @@ public:
 
    int num_address_regs;
    int samplers_used;
-   bool indirect_addr_temps;
    bool indirect_addr_consts;
    
    int glsl_version;
@@ -557,10 +556,6 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
    /* Update indirect addressing status used by TGSI */
    if (dst.reladdr) {
       switch(dst.file) {
-      case PROGRAM_TEMPORARY:
-      case PROGRAM_ARRAY:
-         this->indirect_addr_temps = true;
-         break;
       case PROGRAM_LOCAL_PARAM:
       case PROGRAM_ENV_PARAM:
       case PROGRAM_STATE_VAR:
@@ -579,10 +574,6 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
       for (i=0; i<3; i++) {
          if(inst->src[i].reladdr) {
             switch(inst->src[i].file) {
-            case PROGRAM_TEMPORARY:
-            case PROGRAM_ARRAY:
-               this->indirect_addr_temps = true;
-               break;
             case PROGRAM_LOCAL_PARAM:
             case PROGRAM_ENV_PARAM:
             case PROGRAM_STATE_VAR:
@@ -3000,7 +2991,6 @@ glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
    current_function = NULL;
    num_address_regs = 0;
    samplers_used = 0;
-   indirect_addr_temps = false;
    indirect_addr_consts = false;
    glsl_version = 0;
    native_integers = false;
@@ -3839,7 +3829,6 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    v->next_temp = original->next_temp;
    v->num_address_regs = original->num_address_regs;
    v->samplers_used = prog->SamplersUsed = original->samplers_used;
-   v->indirect_addr_temps = original->indirect_addr_temps;
    v->indirect_addr_consts = original->indirect_addr_consts;
    memcpy(&v->immediates, &original->immediates, sizeof(v->immediates));
    v->num_immediates = original->num_immediates;
@@ -3970,7 +3959,6 @@ get_bitmap_visitor(struct st_fragment_program *fp,
    v->next_temp = original->next_temp;
    v->num_address_regs = original->num_address_regs;
    v->samplers_used = prog->SamplersUsed = original->samplers_used;
-   v->indirect_addr_temps = original->indirect_addr_temps;
    v->indirect_addr_consts = original->indirect_addr_consts;
    memcpy(&v->immediates, &original->immediates, sizeof(v->immediates));
    v->num_immediates = original->num_immediates;
@@ -4840,17 +4828,6 @@ st_translate_program(
       }
    }
 
-   if (program->indirect_addr_temps) {
-      /* If temps are accessed with indirect addressing, declare temporaries
-       * in sequential order.  Else, we declare them on demand elsewhere.
-       * (Note: the number of temporaries is equal to program->next_temp)
-       */
-      for (i = 0; i < (unsigned)program->next_temp; i++) {
-         /* XXX use TGSI_FILE_TEMPORARY_ARRAY when it's supported by ureg */
-         t->temps[i] = ureg_DECL_local_temporary(t->ureg);
-      }
-   }
-
    /* Copy over array sizes
     */
    memcpy(t->array_sizes, program->array_sizes, sizeof(unsigned) * program->next_array);
@@ -5088,16 +5065,9 @@ get_mesa_program(struct gl_context *ctx,
    v->copy_propagate();
    while (v->eliminate_dead_code_advanced());
 
-   /* FIXME: These passes to optimize temporary registers don't work when there
-    * is indirect addressing of the temporary register space.  We need proper 
-    * array support so that we don't have to give up these passes in every 
-    * shader that uses arrays.
-    */
-   if (!v->indirect_addr_temps) {
-      v->eliminate_dead_code();
-      v->merge_registers();
-      v->renumber_registers();
-   }
+   v->eliminate_dead_code();
+   v->merge_registers();
+   v->renumber_registers();
    
    /* Write the END instruction. */
    v->emit(NULL, TGSI_OPCODE_END);
