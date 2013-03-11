@@ -1354,7 +1354,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                   sampler,
                   variant->key.clamp_vertex_color);
 
-      if (pos != -1) {
+      if (pos != -1 && cv != -1) {
          /* store original positions in clip before further manipulation */
          store_clip(gallivm, vs_type, io, outputs, 0, cv);
          store_clip(gallivm, vs_type, io, outputs, 1, pos);
