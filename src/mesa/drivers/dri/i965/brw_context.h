@@ -571,6 +571,14 @@ struct brw_vs_prog_data {
 #define SURF_INDEX_SOL_BINDING(t)    ((t))
 #define BRW_MAX_GS_SURFACES          SURF_INDEX_SOL_BINDING(BRW_MAX_SOL_BINDINGS)
 
+/**
+ * Stride in bytes between shader_time entries.
+ *
+ * We separate entries by a cacheline to reduce traffic between EUs writing to
+ * different entries.
+ */
+#define SHADER_TIME_STRIDE 64
+
 enum brw_cache_id {
    BRW_BLEND_STATE,
    BRW_DEPTH_STENCIL_STATE,

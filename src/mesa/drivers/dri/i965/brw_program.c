@@ -228,7 +228,8 @@ brw_init_shader_time(struct brw_context *brw)
 
    const int max_entries = 4096;
    brw->shader_time.bo = drm_intel_bo_alloc(intel->bufmgr, "shader time",
-                                            max_entries * 4, 4096);
+                                            max_entries * SHADER_TIME_STRIDE,
+                                            4096);
    brw->shader_time.programs = rzalloc_array(brw, struct gl_shader_program *,
                                              max_entries);
    brw->shader_time.types = rzalloc_array(brw, enum shader_time_shader_type,
@@ -409,7 +410,7 @@ brw_collect_shader_time(struct brw_context *brw)
    uint32_t *times = brw->shader_time.bo->virtual;
 
    for (int i = 0; i < brw->shader_time.num_entries; i++) {
-      brw->shader_time.cumulative[i] += times[i];
+      brw->shader_time.cumulative[i] += times[i * SHADER_TIME_STRIDE / 4];
    }
 
    /* Zero the BO out to clear it out for our next collection.

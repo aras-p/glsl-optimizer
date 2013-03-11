@@ -1225,7 +1225,7 @@ vec4_visitor::emit_shader_time_write(enum shader_time_shader_type type,
 
    dst_reg offset_mrf = dst_reg(MRF, base_mrf);
    offset_mrf.type = BRW_REGISTER_TYPE_UD;
-   emit(MOV(offset_mrf, src_reg(shader_time_index * 4)));
+   emit(MOV(offset_mrf, src_reg(shader_time_index * SHADER_TIME_STRIDE)));
 
    dst_reg time_mrf = dst_reg(MRF, base_mrf + 1);
    time_mrf.type = BRW_REGISTER_TYPE_UD;

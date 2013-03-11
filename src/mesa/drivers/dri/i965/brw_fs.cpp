@@ -621,7 +621,7 @@ fs_visitor::emit_shader_time_write(enum shader_time_shader_type type,
 
    fs_reg offset_mrf = fs_reg(MRF, base_mrf);
    offset_mrf.type = BRW_REGISTER_TYPE_UD;
-   emit(MOV(offset_mrf, fs_reg(shader_time_index * 4)));
+   emit(MOV(offset_mrf, fs_reg(shader_time_index * SHADER_TIME_STRIDE)));
 
    fs_reg time_mrf = fs_reg(MRF, base_mrf + 1);
    time_mrf.type = BRW_REGISTER_TYPE_UD;
