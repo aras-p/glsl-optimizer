@@ -651,8 +651,8 @@ _mesa_DebugMessageControlARB(GLenum gl_source, GLenum gl_type,
       return;
    }
 
-   source = gl_enum_to_debug_severity(gl_source);
-   type = gl_enum_to_debug_severity(gl_type);
+   source = gl_enum_to_debug_source(gl_source);
+   type = gl_enum_to_debug_type(gl_type);
    severity = gl_enum_to_debug_severity(gl_severity);
 
    control_app_messages(ctx, source, type, severity, count, ids, enabled);
