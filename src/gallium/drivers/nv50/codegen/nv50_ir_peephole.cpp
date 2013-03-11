@@ -1791,7 +1791,7 @@ MemoryOpt::runOpt(BasicBlock *bb)
             purgeRecords(NULL, FILE_MEMORY_SHARED);
             purgeRecords(NULL, FILE_SHADER_OUTPUT);
          } else
-         if (ldst->op == OP_ATOM) {
+         if (ldst->op == OP_ATOM || ldst->op == OP_CCTL) {
             if (ldst->src(0).getFile() == FILE_MEMORY_GLOBAL) {
                purgeRecords(NULL, FILE_MEMORY_LOCAL);
                purgeRecords(NULL, FILE_MEMORY_GLOBAL);

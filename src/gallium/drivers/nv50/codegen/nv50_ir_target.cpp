@@ -53,7 +53,7 @@ const uint8_t Target::operationSrcNr[OP_LAST + 1] =
    2, 3, 2, 3,             // POPCNT, INSBF, EXTBF, PERMT
    2, 2,                   // ATOM, BAR
    2, 2, 2, 2, 3, 2,       // VADD, VAVG, VMIN, VMAX, VSAD, VSET,
-   2, 2, 2,                // VSHR, VSHL, VSEL
+   2, 2, 2, 1,             // VSHR, VSHL, VSEL, CCTL
    0
 };
 
@@ -123,8 +123,8 @@ const OpClass Target::operationClass[OP_LAST + 1] =
    OPCLASS_VECTOR, OPCLASS_VECTOR, OPCLASS_VECTOR, OPCLASS_VECTOR,
    // VSAD, VSET, VSHR, VSHL
    OPCLASS_VECTOR, OPCLASS_VECTOR, OPCLASS_VECTOR, OPCLASS_VECTOR,
-   // VSEL
-   OPCLASS_VECTOR,
+   // VSEL, CCTL
+   OPCLASS_VECTOR, OPCLASS_CONTROL,
    OPCLASS_PSEUDO // LAST
 };
 

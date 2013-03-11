@@ -183,6 +183,7 @@ const char *operationStr[OP_LAST + 1] =
    "vshr",
    "vshl",
    "vsel",
+   "cctl",
    "(invalid)"
 };
 

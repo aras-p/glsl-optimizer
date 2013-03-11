@@ -153,6 +153,7 @@ enum operation
    OP_VSHR,
    OP_VSHL,
    OP_VSEL,
+   OP_CCTL, // cache control
    OP_LAST
 };
 
@@ -199,6 +200,8 @@ enum operation
 #define NV50_IR_SUBOP_ATOM_XOR      7
 #define NV50_IR_SUBOP_ATOM_CAS      8
 #define NV50_IR_SUBOP_ATOM_EXCH     9
+#define NV50_IR_SUBOP_CCTL_IV      5
+#define NV50_IR_SUBOP_CCTL_IVALL   6
 #define NV50_IR_SUBOP_SUST_IGN     0
 #define NV50_IR_SUBOP_SUST_TRAP    1
 #define NV50_IR_SUBOP_SUST_SDCL    3

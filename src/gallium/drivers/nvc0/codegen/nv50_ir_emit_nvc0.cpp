@@ -82,6 +82,7 @@ private:
    void emitMOV(const Instruction *);
    void emitATOM(const Instruction *);
    void emitMEMBAR(const Instruction *);
+   void emitCCTL(const Instruction *);
 
    void emitINTERP(const Instruction *);
    void emitPFETCH(const Instruction *);
@@ -1886,6 +1887,27 @@ CodeEmitterNVC0::emitMEMBAR(const Instruction *i)
 }
 
 void
+CodeEmitterNVC0::emitCCTL(const Instruction *i)
+{
+   code[0] = 0x00000005 | (i->subOp << 5);
+
+   if (i->src(0).getFile() == FILE_MEMORY_GLOBAL) {
+      code[1] = 0x98000000;
+      srcAddr32(i->src(0), 28, 2);
+   } else {
+      code[1] = 0xd0000000;
+      setAddress24(i->src(0));
+   }
+   if (uses64bitAddress(i))
+      code[1] |= 1 << 26;
+   srcId(i->src(0).getIndirect(0), 20);
+
+   emitPredicate(i);
+
+   defId(i, 0, 14);
+}
+
+void
 CodeEmitterNVC0::emitSUCLAMPMode(uint16_t subOp)
 {
    uint8_t m;
@@ -2347,6 +2369,9 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
       break;
    case OP_MEMBAR:
       emitMEMBAR(insn);
+      break;
+   case OP_CCTL:
+      emitCCTL(insn);
       break;
    case OP_VSHL:
       emitVSHL(insn);
