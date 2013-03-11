@@ -1247,7 +1247,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	unsigned inst_byte_count = 0;
 
 #ifdef R600_USE_LLVM
-	use_llvm = !(ctx->screen->debug_flags & DBG_NO_LLVM);
+	use_llvm = !(rscreen->debug_flags & DBG_NO_LLVM);
 #endif
 	ctx.bc = &shader->bc;
 	ctx.shader = shader;
