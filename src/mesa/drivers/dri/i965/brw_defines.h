@@ -967,7 +967,44 @@ enum brw_message_target {
 
 /* GEN7 */
 #define GEN7_DATAPORT_WRITE_MESSAGE_OWORD_DUAL_BLOCK_WRITE          10
+#define GEN7_DATAPORT_DC_OWORD_BLOCK_READ                           0
+#define GEN7_DATAPORT_DC_UNALIGNED_OWORD_BLOCK_READ                 1
+#define GEN7_DATAPORT_DC_OWORD_DUAL_BLOCK_READ                      2
 #define GEN7_DATAPORT_DC_DWORD_SCATTERED_READ                       3
+#define GEN7_DATAPORT_DC_BYTE_SCATTERED_READ                        4
+#define GEN7_DATAPORT_DC_UNTYPED_SURFACE_READ                       5
+#define GEN7_DATAPORT_DC_UNTYPED_ATOMIC_OP                          6
+#define GEN7_DATAPORT_DC_MEMORY_FENCE                               7
+#define GEN7_DATAPORT_DC_OWORD_BLOCK_WRITE                          8
+#define GEN7_DATAPORT_DC_OWORD_DUAL_BLOCK_WRITE                     10
+#define GEN7_DATAPORT_DC_DWORD_SCATTERED_WRITE                      11
+#define GEN7_DATAPORT_DC_BYTE_SCATTERED_WRITE                       12
+#define GEN7_DATAPORT_DC_UNTYPED_SURFACE_WRITE                      13
+
+/* HSW */
+#define HSW_DATAPORT_DC_PORT0_OWORD_BLOCK_READ                      0
+#define HSW_DATAPORT_DC_PORT0_UNALIGNED_OWORD_BLOCK_READ            1
+#define HSW_DATAPORT_DC_PORT0_OWORD_DUAL_BLOCK_READ                 2
+#define HSW_DATAPORT_DC_PORT0_DWORD_SCATTERED_READ                  3
+#define HSW_DATAPORT_DC_PORT0_BYTE_SCATTERED_READ                   4
+#define HSW_DATAPORT_DC_PORT0_MEMORY_FENCE                          7
+#define HSW_DATAPORT_DC_PORT0_OWORD_BLOCK_WRITE                     8
+#define HSW_DATAPORT_DC_PORT0_OWORD_DUAL_BLOCK_WRITE                10
+#define HSW_DATAPORT_DC_PORT0_DWORD_SCATTERED_WRITE                 11
+#define HSW_DATAPORT_DC_PORT0_BYTE_SCATTERED_WRITE                  12
+
+#define HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_READ                  1
+#define HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP                     2
+#define HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP_SIMD4X2             3
+#define HSW_DATAPORT_DC_PORT1_MEDIA_BLOCK_READ                      4
+#define HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_READ                    5
+#define HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP                       6
+#define HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP_SIMD4X2               7
+#define HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_WRITE                 9
+#define HSW_DATAPORT_DC_PORT1_MEDIA_BLOCK_WRITE                     10
+#define HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP                     11
+#define HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP_SIMD4X2             12
+#define HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_WRITE                   13
 
 /* dataport atomic operations. */
 #define BRW_AOP_AND                   1
