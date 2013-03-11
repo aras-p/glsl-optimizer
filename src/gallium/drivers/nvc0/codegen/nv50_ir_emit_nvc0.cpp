@@ -52,6 +52,8 @@ private:
    void emitPredicate(const Instruction *);
 
    void setAddress16(const ValueRef&);
+   void setAddress24(const ValueRef&);
+   void setAddressByFile(const ValueRef&);
    void setImmediate(const Instruction *, const int s); // needs op already set
    void setImmediateS8(const ValueRef&);
    void setSUConst16(const Instruction *, const int s);
@@ -133,11 +135,11 @@ private:
    void emitVectorSubOp(const Instruction *);
 
    inline void defId(const ValueDef&, const int pos);
+   inline void defId(const Instruction *, int d, const int pos);
    inline void srcId(const ValueRef&, const int pos);
    inline void srcId(const ValueRef *, const int pos);
    inline void srcId(const Instruction *, int s, const int pos);
-
-   inline void srcAddr32(const ValueRef&, const int pos); // address / 4
+   inline void srcAddr32(const ValueRef&, int pos, int shr);
 
    inline bool isLIMM(const ValueRef&, DataType ty);
 };
@@ -164,14 +166,25 @@ void CodeEmitterNVC0::srcId(const Instruction *insn, int s, int pos)
    code[pos / 32] |= r << (pos % 32);
 }
 
-void CodeEmitterNVC0::srcAddr32(const ValueRef& src, const int pos)
+void
+CodeEmitterNVC0::srcAddr32(const ValueRef& src, int pos, int shr)
 {
-   code[pos / 32] |= (SDATA(src).offset >> 2) << (pos % 32);
+   const uint32_t offset = SDATA(src).offset >> shr;
+
+   code[pos / 32] |= offset << (pos % 32);
+   if (pos && (pos < 32))
+      code[1] |= offset >> (32 - pos);
 }
 
 void CodeEmitterNVC0::defId(const ValueDef& def, const int pos)
 {
    code[pos / 32] |= (def.get() ? DDATA(def).id : 63) << (pos % 32);
+}
+
+void CodeEmitterNVC0::defId(const Instruction *insn, int d, int pos)
+{
+   int r = insn->defExists(d) ? DDATA(insn->def(d)).id : 63;
+   code[pos / 32] |= r << (pos % 32);
 }
 
 bool CodeEmitterNVC0::isLIMM(const ValueRef& ref, DataType ty)
@@ -254,6 +267,24 @@ CodeEmitterNVC0::emitPredicate(const Instruction *i)
 }
 
 void
+CodeEmitterNVC0::setAddressByFile(const ValueRef& src)
+{
+   switch (src.getFile()) {
+   case FILE_MEMORY_GLOBAL:
+      srcAddr32(src, 26, 0);
+      break;
+   case FILE_MEMORY_LOCAL:
+   case FILE_MEMORY_SHARED:
+      setAddress24(src);
+      break;
+   default:
+      assert(src.getFile() == FILE_MEMORY_CONST);
+      setAddress16(src);
+      break;
+   }
+}
+
+void
 CodeEmitterNVC0::setAddress16(const ValueRef& src)
 {
    Symbol *sym = src.get()->asSym();
@@ -262,6 +293,17 @@ CodeEmitterNVC0::setAddress16(const ValueRef& src)
 
    code[0] |= (sym->reg.data.offset & 0x003f) << 26;
    code[1] |= (sym->reg.data.offset & 0xffc0) >> 6;
+}
+
+void
+CodeEmitterNVC0::setAddress24(const ValueRef& src)
+{
+   Symbol *sym = src.get()->asSym();
+
+   assert(sym);
+
+   code[0] |= (sym->reg.data.offset & 0x00003f) << 26;
+   code[1] |= (sym->reg.data.offset & 0xffffc0) >> 6;
 }
 
 void
@@ -429,7 +471,7 @@ CodeEmitterNVC0::emitShortSrc2(const ValueRef &src)
          assert(!"unsupported file index for short op");
          break;
       }
-      srcAddr32(src, 20);
+      srcAddr32(src, 20, 2);
    } else {
       srcId(src, 20);
       assert(src.getFile() == FILE_GPR);
@@ -1585,7 +1627,7 @@ CodeEmitterNVC0::emitSTORE(const Instruction *i)
    code[0] = 0x00000005;
    code[1] = opc;
 
-   setAddress16(i->src(0));
+   setAddressByFile(i->src(0));
    srcId(i->src(1), 14);
    srcId(i->src(0).getIndirect(0), 20);
    if (uses64bitAddress(i))
@@ -1625,7 +1667,7 @@ CodeEmitterNVC0::emitLOAD(const Instruction *i)
 
    defId(i->def(0), 14);
 
-   setAddress16(i->src(0));
+   setAddressByFile(i->src(0));
    srcId(i->src(0).getIndirect(0), 20);
    if (uses64bitAddress(i))
       code[1] |= 1 << 26;
@@ -1813,7 +1855,7 @@ CodeEmitterNVC0::emitATOM(const Instruction *i)
       code[1] |= (offset & 0x1ffc0) >> 6;
       code[1] |= (offset & 0xe0000) << 6;
    } else {
-      srcAddr32(i->src(0), 26);
+      srcAddr32(i->src(0), 26, 0);
    }
    if (i->getIndirect(0, 0)) {
       srcId(i->getIndirect(0, 0), 20);
